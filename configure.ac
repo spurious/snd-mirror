@@ -1239,7 +1239,7 @@ AC_ARG_WITH(ruby,
               AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE,"${RUBY_RELEASE_DATE}")
 
               #[ms] XEN_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]` 
-              XEN_CFLAGS=`$RUBY -rrbconfig -e [['if Config::CONFIG["rubyhdrdir"] then print "-I", Config::CONFIG["rubyhdrdir"], " -I", Config::CONFIG["rubyhdrdir"] + Config::CONFIG["arch"]; else \$:.each {|path| print "-I", path, " "}; end']]` 
+              XEN_CFLAGS=`$RUBY -rrbconfig -e [['if Config::CONFIG["rubyhdrdir"] then print "-I", Config::CONFIG["rubyhdrdir"], " -I", Config::CONFIG["rubyhdrdir"] + "/" + Config::CONFIG["arch"]; else \$:.each {|path| print "-I", path, " "}; end']]` 
 
 	      # this is apparently actually intended for ruby programs (*.rb), not programs embedding ruby
 	      # we have to conjure up some plausible includes by hand:

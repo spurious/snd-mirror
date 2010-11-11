@@ -13470,6 +13470,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if 0
 s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj) 
 {
   /* used in xen.c */
@@ -13484,6 +13485,7 @@ s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj)
 
   return(s7_reverse(sc, p));
 }
+#endif
 
 
 static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
@@ -16678,7 +16680,7 @@ must be compatible with the arity of the first."
   hook_functions(hook) = args;
   gc_loc = s7_gc_protect(sc, hook);
   
-  for (i = 1, x = args; is_pair(x); x = cdr(x), i++)
+  for (i = 2, x = cdr(args); is_pair(x); x = cdr(x), i++)
     if (!function_arity_ok(sc, hook, car(x)))
       return(s7_wrong_type_arg_error(sc, "hook", i, car(x), "compatible function"));
 
@@ -16702,7 +16704,7 @@ to the current list."
 
 static s7_pointer g_hook_set_functions(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x, hook, funcs;
+  s7_pointer x, y, hook, funcs;
   hook = car(args);
 
   if (!is_hook(hook))
@@ -16715,13 +16717,21 @@ static s7_pointer g_hook_set_functions(s7_scheme *sc, s7_pointer args)
 
   if (is_pair(funcs))
     {
-      for (x = funcs; is_pair(x); x = cdr(x))
+      for (x = funcs, y = funcs; is_pair(x); x = cdr(x), y = cdr(y))
 	{
 	  if (!is_function_with_arity(car(x)))
 	    return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a list of functions"));
 	  if (!function_arity_ok(sc, hook, car(x)))
 	    return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a list of functions of the correct arity"));
+	  if (is_pair(y)) 
+	    {
+	      y = cdr(y);
+	      if (x == y)
+		return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a proper (non-circular) list of functions"));
+	    }
 	}
+      if (x != sc->NIL)
+	return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a proper list of functions"));
     }
 
   hook_functions(hook) = funcs;
@@ -16809,9 +16819,9 @@ static bool hooks_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 }
 
 /* TODO: doc (+scheme/C examples)
- *       fix local hooks [set check -> list]
+ *       fix local hooks [set check -> list, and s7.html *.scm] *load-hook* *trace-hook* *error-hook* *unbound-variable-hook*
+ *       remove add-hook! remove-hook! from *.scm
  *       libxm configuration
- *       remove guile-hook stuff from *.scm? [add-hook! remove-hook!]
  */
 
 

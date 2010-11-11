@@ -260,7 +260,7 @@ s7_pointer s7_list_ref(s7_scheme *sc, s7_pointer lst, int num);              /* 
 s7_pointer s7_list_set(s7_scheme *sc, s7_pointer lst, int num, s7_pointer val); /* (list-set! lst num val) */
 s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst);          /* (assoc sym lst) */
 s7_pointer s7_member(s7_scheme *sc, s7_pointer sym, s7_pointer lst);         /* (member sym lst) */
-s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj);             /* (remv a obj) */
+  /* s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj);   */          /* (remv a obj) */
 
 
 bool s7_is_string(s7_pointer p);                                             /* (string? p) */
