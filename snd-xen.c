@@ -154,8 +154,8 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
 
 #if HAVE_SCHEME
   if (handler == NULL)
-    s7_symbol_set_value(s7, s7_make_symbol(s7, "*error-hook*"), s7_nil(s7));
-  else s7_eval_c_string(s7, "(set! *error-hook*                                      \n\
+    s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) '())");
+  else s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) (list               \n\
                                (lambda (tag args)                                    \n\
                                  (_snd_s7_error_handler_                             \n\
                                    (string-append                                    \n\
@@ -171,7 +171,7 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
                                                  (*error-info* 4)                    \n\
                                                  (*error-info* 3)                    \n\
                                                  (*error-info* 2))                   \n\
-                                         \"\")))))");
+                                         \"\"))))))");
 #endif
 }
 

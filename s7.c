@@ -571,10 +571,11 @@ struct s7_scheme {
   s7_pointer output_port;             /* current-output-port (nil = stderr) */
   s7_pointer error_port;              /* current-error-port (nil = stderr) */
   s7_pointer error_info;              /* the vector bound to *error-info* */
-  s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
-  s7_pointer vector_print_length;     /* same for *vector-print-length* */
   bool input_is_file;
   s7_pointer standard_input, standard_output, standard_error;
+
+  s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
+  s7_pointer vector_print_length;     /* same for *vector-print-length* */
   s7_pointer trace_hook;              /* *trace-hook* hook object */
   s7_pointer load_hook;               /* *load-hook* hook object */
   s7_pointer unbound_variable_hook;   /* *unbound-variable-hook* hook object */
@@ -2283,18 +2284,6 @@ static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
    *   apparently the idea is to allow any string to be converted to a symbol for fast comparisons 
    *   (i.e. it's an ugly optimization hack).
    */
-}
-
-
-void s7_provide(s7_scheme *sc, const char *feature)
-{
-  char *expr;
-  int len;
-  len = safe_strlen(feature) + 64;
-  expr = (char *)calloc(len, sizeof(char));
-  snprintf(expr, len, "(set! *features* (cons '%s *features*))", feature);
-  s7_eval_c_string(sc, expr);
-  free(expr);
 }
 
 
@@ -5012,6 +5001,27 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
     s7_gc_unprotect_at(sc, args_loc);
 
   return(value);
+}
+
+
+static s7_pointer g_sharp_readers_set(s7_scheme *sc, s7_pointer args)
+{
+  /* new value must be either '() or a proper list of conses (char . func) */
+  if (cadr(args) == sc->NIL) return(cadr(args));
+  if (is_pair(cadr(args)))
+    {
+      s7_pointer x;
+      for (x = cadr(args); is_pair(x); x = cdr(x))
+	{
+	  if ((!is_pair(car(x))) ||
+	      (!s7_is_character(caar(x))) ||
+	      (!s7_is_procedure(cdar(x))))
+	    return(sc->ERROR);
+	}
+      if (x == sc->NIL)
+	return(cadr(args));
+    }
+  return(sc->ERROR);
 }
 
 
@@ -11048,6 +11058,23 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
 }
 
 
+static s7_pointer g_load_path_set(s7_scheme *sc, s7_pointer args)
+{
+  /* new value must be either '() or a proper list of strings */
+  if (cadr(args) == sc->NIL) return(cadr(args));
+  if (is_pair(cadr(args)))
+    {
+      s7_pointer x;
+      for (x = cadr(args); is_pair(x); x = cdr(x))
+	if (!s7_is_string(car(x)))
+	  return(sc->ERROR);
+      if (x == sc->NIL)
+	return(cadr(args));
+    }
+  return(sc->ERROR);
+}
+
+
 static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
 {
   s7_pointer port;
@@ -13668,6 +13695,22 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 				s7_symbol_value(sc, features)));
   return(car(args));
 }
+
+
+void s7_provide(s7_scheme *sc, const char *feature)
+{
+  g_provide(sc, s7_cons(sc, s7_make_symbol(sc, feature), sc->NIL));
+}
+
+
+static s7_pointer g_features_set(s7_scheme *sc, s7_pointer args)
+{
+  if ((is_pair(cadr(args))) ||
+      (cadr(args) == sc->NIL))
+    return(cadr(args));
+  return(sc->ERROR);
+}
+
 
 
 static s7_pointer g_list(s7_scheme *sc, s7_pointer args)
@@ -29337,8 +29380,8 @@ s7_scheme *s7_init(void)
   (*(sc->gc_off)) = false;
 
   /* pws first so that make-procedure-with-setter has a type tag */
-  s7_define_function(sc, "make-procedure-with-setter",         g_make_procedure_with_setter,         2, 0, false, H_make_procedure_with_setter);
-  s7_define_function(sc, "procedure-with-setter?",             g_is_procedure_with_setter,           1, 0, false, H_is_procedure_with_setter);
+  s7_define_function(sc, "make-procedure-with-setter", g_make_procedure_with_setter, 2, 0, false, H_make_procedure_with_setter);
+  s7_define_function(sc, "procedure-with-setter?",     g_is_procedure_with_setter,   1, 0, false, H_is_procedure_with_setter);
   pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
   
 
@@ -29693,8 +29736,14 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, s_type_ref_name,           s_type_ref,                2, 0, false, "internal object value");
   s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name copy fill", H_make_type);
 
+
   s7_define_variable(sc, "*features*", sc->NIL);
-  s7_define_variable(sc, "*load-path*", sc->NIL);
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*features*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *features*)", g_features_set, 2, 0, false, "called if *features* is set"), 
+				   s7_make_function(sc, "(bind *features*)", g_features_set, 2, 0, false, "called if *features* is bound")));
+
 
   /* these hook variables should use s7_define_constant, but we need to be backwards compatible */
 
@@ -29730,6 +29779,7 @@ s7_scheme *s7_init(void)
 				   s7_make_function(sc, "(set *error-hook*)", g_error_hook_set, 2, 0, false, "called if *error-hook* is set"), 
 				   sc->F));
 
+
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
   sc->vector_print_length = symbol_global_slot(make_symbol(sc, "*vector-print-length*"));
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*vector-print-length*"), 
@@ -29745,6 +29795,7 @@ s7_scheme *s7_init(void)
 				   s7_make_function(sc, "(set *safety*)", g_safety_set, 2, 0, false, "called if *safety* is set"), 
 				   s7_make_function(sc, "(bind *safety*)", g_safety_bind, 2, 0, false, "called if *safety* is bound")));
 
+
   /* the next two are for the test suite */
   s7_define_variable(sc, "-s7-symbol-table-locked?", 
 		     s7_make_procedure_with_setter(sc, "-s7-symbol-table-locked?", 
@@ -29754,11 +29805,20 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "-s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
 
 
-  /* PERHAPS: symbol-access checks for *#readers* *load-path* *features*
-   */
+  s7_define_variable(sc, "*load-path*", sc->NIL);
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*load-path*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *load-path*)", g_load_path_set, 2, 0, false, "called if *load-path* is set"), 
+				   s7_make_function(sc, "(bind *load-path*)", g_load_path_set, 2, 0, false, "called if *load-path* is bound")));
 
   s7_define_variable(sc, "*#readers*", sc->NIL);
   sc->sharp_readers = symbol_global_slot(make_symbol(sc, "*#readers*"));
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*#readers*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *#readers*)", g_sharp_readers_set, 2, 0, false, "called if *#readers* is set"), 
+				   s7_make_function(sc, "(bind *#readers*)", g_sharp_readers_set, 2, 0, false, "called if *#readers* is bound")));
 
   sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);
   s7_define_constant(sc, "*error-info*", sc->error_info);

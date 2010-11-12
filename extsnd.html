@@ -595,7 +595,7 @@ Snd does not exit.</p>
 	  (unsaved-edits? (cdr lst)))
       #f))
 
-(add-hook! <em class=red>before-exit-hook</em> (lambda () (unsaved-edits? (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
+(hook-push <em class=red>before-exit-hook</em> (lambda () (unsaved-edits? (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
 </pre></td></tr></table>
 
 <p>Now when Snd is told to exit, it checks before-exit-hook, runs
@@ -1007,7 +1007,7 @@ Currently, the optimizer is able to speed up Scheme code by factors between
 If you set the optimization-hook to print out whatever its argument is, you can
 find out what the optimizer found confusing:  
 <pre>
-    (add-hook! <a class=quiet href="#optimizationhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_optimizationhook_tip)">optimization-hook</a> (lambda (n) (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "opt: ~A~%" n))))
+    (hook-push <a class=quiet href="#optimizationhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_optimizationhook_tip)">optimization-hook</a> (lambda (n) (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "opt: ~A~%" n))))
 </pre>
 See also <a href="#maxvirtualptrees">max-virtual-ptrees</a>.
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -1386,7 +1386,7 @@ For example, the hook that is checked when you click the sound's name in the min
 name-click-hook.  We can cause that action to print "hi":</p>
 
 <pre>
-  Scheme: (add-hook! <a class=quiet href="#nameclickhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_nameclickhook_tip)">name-click-hook</a> (lambda (snd) (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> "hi") #t))
+  Scheme: (hook-push <a class=quiet href="#nameclickhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_nameclickhook_tip)">name-click-hook</a> (lambda (snd) (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> "hi") #t))
 
   Ruby:   $name_click_hook.add_hook!("print") do |snd| snd_print("hi"); true end
 
@@ -1462,14 +1462,14 @@ some of these sequences.
 
 <p>
 You can find out what's on a given hook with the following (which is mostly adding carriage returns to the
-printout from hook-&gt;list):
+printout from hook-functions):
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define (describe-hook hook)
   (for-each 
     (lambda (n) 
       (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A~%" n)))
-    (reverse (<em class=red>hook-&gt;list</em> hook))))
+    (reverse (<em class=red>hook-functions</em> hook))))
 </pre></td></tr></table>
 
 <p>Here's the Ruby version of some of the hook-related functions:
@@ -1564,7 +1564,7 @@ together but are independent of any other sound), united channels (all chans in 
 and filled graphs (not line segments or dots, etc):
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>after-open-hook</em>
+(hook-push <em class=red>after-open-hook</em>
   (lambda (snd)
     (if (&gt; (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> snd) 1)
         (begin
@@ -1619,7 +1619,7 @@ This hook is called just after an FFT (or spectrum) is calculated.
       (<a class=quiet href="#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> 
         (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctpeak_tip)">vct-peak</a> (<a class=quiet href="#transformtovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformtovct_tip)">transform-&gt;vct</a> snd chn))) 
                            (<a class=quiet href="#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size</a> snd chn))))))
-(add-hook! <em class=red>after-transform-hook</em> report-fft-peak)
+(hook-push <em class=red>after-transform-hook</em> report-fft-peak)
 </pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1631,7 +1631,7 @@ This hook is called if a file has a bogus-looking header (that is,
 a header with what appear to be bad values such as a negative number of channels). 
 If a hook function returns #t, Snd does not try to open the file.
 <pre>
-    (add-hook! bad-header-hook (lambda (n) #t)) ; don't open bogus-looking files
+    (hook-push bad-header-hook (lambda (n) #t)) ; don't open bogus-looking files
 </pre>
 If no header is found, <a href="#openrawsoundhook">open-raw-sound-hook</a> is invoked instead ("raw" = "headerless").
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -1668,7 +1668,7 @@ just before a sound is saved.  The arguments to the hook function describe the r
 we're saving the selection.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>before-save-as-hook</em>
+(hook-push <em class=red>before-save-as-hook</em>
   (lambda (index filename selection sr type format comment)
     (if (not (= sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index)))
         (let ((chns (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> index)))
@@ -1694,7 +1694,7 @@ file.  If the hook functions return #t, the save state file is opened in append 
 so you can write preliminary stuff via this hook, then instruct Snd not to clobber it during the save process.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>before-save-state-hook</em>
+(hook-push <em class=red>before-save-state-hook</em>
   (lambda (name) 
     (<span  onmouseout="UnTip()" onmouseover="Tip('io-open-write in Forth (see fs.fs); File.open in Ruby (I think &mdash; see extensions.rb)')">with-output-to-file name</span>
       (lambda ()
@@ -1712,7 +1712,7 @@ an integer, that value is used as the starting point (sample number) of the fft.
 the fft starts from the left window edge.  To have it start at mid-window:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>before-transform-hook</em>
+(hook-push <em class=red>before-transform-hook</em>
   (lambda (snd chn)        ; 0.5 * (left + right) = midpoint
     (round (* 0.5 (+ (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn) (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn))))))
 </pre></td></tr></table>
@@ -1723,8 +1723,8 @@ of a moving mark:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define fft-position #f)
-(add-hook! <em class=red>before-transform-hook</em> (lambda (snd chn) fft-position))
-(add-hook! <a class=quiet href="#markdraghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_markdraghook_tip)">mark-drag-hook</a> (lambda (id)
+(hook-push <em class=red>before-transform-hook</em> (lambda (snd chn) fft-position))
+(hook-push <a class=quiet href="#markdraghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_markdraghook_tip)">mark-drag-hook</a> (lambda (id)
                             (set! fft-position (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> id))
                             (<a class=quiet href="#updatetransformgraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetransformgraph_tip)">update-transform-graph</a>)))
 </pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
@@ -1747,7 +1747,7 @@ This hook is called when a file is closed (before the actual close, so the index
 
 <table border=0><tr><td>
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>close-hook</em>
+(hook-push <em class=red>close-hook</em>
   (lambda (snd) 
     (system "sndplay wood16.wav")))
 </pre></td></tr></table>
@@ -1818,7 +1818,7 @@ Snd opens it as if you had called <a href="#opensound">open-sound</a>.  If you d
 Snd mixes it at the mouse location in that channel.  To get Snd to
 mix the dragged file even from the menubar:
 <pre>
-    (add-hook! <em class=red>drop-hook</em> (lambda (filename) (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> filename) #t)) ; return #t = we already dealt with the drop
+    (hook-push <em class=red>drop-hook</em> (lambda (filename) (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> filename) #t)) ; return #t = we already dealt with the drop
 </pre>
 snd-motif.scm has examples that add a drop callback to an arbitrary widget, or
 change an existing callback (to pass the sound and channel number to the drop callback function, bypassing drop-hook).
@@ -1833,7 +1833,7 @@ This hook is called after file is opened, but before data has been read.
 This provides an opportunity to set sndlib prescaling values:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>during-open-hook</em>
+(hook-push <em class=red>during-open-hook</em>
   (lambda (fd name reason)
     (if (= (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> name) <a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_musraw_tip)">mus-raw</a>)
         (set! (<a href="#musfileprescaler" onmouseout="UnTip()" onmouseover="Tip(extsnd_musfileprescaler_tip)">mus-file-prescaler</a> fd) 500.0))))
@@ -1877,7 +1877,7 @@ and decay portions in the envelope editor, or use functions such as
 <a href="sndscm.html#stretchenvelope">stretch-envelope</a> from env.scm:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>enved-hook</em>
+(hook-push <em class=red>enved-hook</em>
   (lambda (env pt x y reason)
     (if (= reason enved-move-point)
         (if (and (&gt; x 0.0) (&lt; x (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopelastx_tip)">envelope-last-x</a> env))) ; from env.scm
@@ -1913,7 +1913,7 @@ If its hook functions return #t, the display is not updated.
 See examp.scm for many examples.  If you want to add your own graphics to the display, use <a href="#aftergraphhook">after-graph-hook</a>.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>graph-hook</em>
+(hook-push <em class=red>graph-hook</em>
   (lambda (snd chn y0 y1)
     "set the dot size depending on the number of samples being displayed"
     (let ((dots (- (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn) (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn))))
@@ -1936,7 +1936,7 @@ This hook is called from <a href="#sndhelp">snd-help</a> with the current help s
 Say we want the index.scm
 procedure <a href="sndscm.html#html">html</a> called any time snd-help is called (from C-? for example):
 <pre>
-    (add-hook! <em class=red>help-hook</em> (lambda (subject help) (<a class=quiet href="sndscm.html#html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_function_tip)">html</a> subject) #f))
+    (hook-push <em class=red>help-hook</em> (lambda (subject help) (<a class=quiet href="sndscm.html#html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_function_tip)">html</a> subject) #f))
 </pre>
 If there is more than one hook function, each function's result is passed as input to the next function.
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -1955,19 +1955,19 @@ If the hook function returns a list, the list's contents are interpreted as:
 initial x and y axis limits and the x axis label.
 The default (an empty hook) is equivalent to:
 <pre>
-    (add-hook! <em class=red>initial-graph-hook</em> (lambda (snd chn dur) (list 0.0 0.1 -1.0 1.0 "time" -1.0 1.0)))
+    (hook-push <em class=red>initial-graph-hook</em> (lambda (snd chn dur) (list 0.0 0.1 -1.0 1.0 "time" -1.0 1.0)))
 </pre>
 The 'dur' argument is the total length in seconds of the displayed portion of the channel, so to cause the
 entire sound to be displayed initially:
 <pre>
-    (add-hook! <em class=red>initial-graph-hook</em> (lambda (snd chn dur) (list 0.0 dur)))
+    (hook-push <em class=red>initial-graph-hook</em> (lambda (snd chn dur) (list 0.0 dur)))
 </pre>
 To get other the data limits (rather than the default y axis limits of -1.0 to 1.0), you can use <a href="#mussoundmaxamp">mus-sound-maxamp</a>,
 but if that sound's maxamp isn't already known, it can require a long process of reading the file. The following hook procedure
 uses the maxamp data if it is already available or the file is short:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>initial-graph-hook</em>
+(hook-push <em class=red>initial-graph-hook</em>
   (lambda (snd chn dur)
     (if (or (<a class=quiet href="#mussoundmaxampexists" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxampexists_tip)">mus-sound-maxamp-exists?</a> (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd))
             (&lt; (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) 10000000))
@@ -2003,7 +2003,7 @@ If its function returns a list of pixels (xm style), these are used in order by 
 If it returns a function (of no arguments), that function is called rather than the standard graph routine:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>lisp-graph-hook</em>
+(hook-push <em class=red>lisp-graph-hook</em>
 	   (lambda (snd chn)
 	     (lambda ()
 	       (<a class=quiet href="#drawstring" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawstring_tip)">draw-string</a> "hi" 
@@ -2034,7 +2034,7 @@ This hook is called when a mark is clicked; return #t to squelch the default min
 hook function is used in <a href="sndscm.html#withmarkedsound">with-marked-sound</a> in ws.scm to display arbitrary info about a mark.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>mark-click-hook</em>
+(hook-push <em class=red>mark-click-hook</em>
   (lambda (n) 
     (if (not (defined? 'mark-properties)) (load "marks.scm"))
     (<a class=quiet href="#infodialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_infodialog_tip)">info-dialog</a> "Mark Help"
@@ -2077,7 +2077,7 @@ This hook is called when a mark is dragged.
               (cadr sndchn)
 	      (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> samp (car sndchn) (cadr sndchn))))))
 
-(add-hook! <em class=red>mark-drag-hook</em> report-mark-location)
+(hook-push <em class=red>mark-drag-hook</em> report-mark-location)
 </pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -2094,7 +2094,7 @@ and #t thereafter:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (let ((first-x 0))
-  (add-hook! <em class=red>mark-drag-triangle-hook</em>
+  (hook-push <em class=red>mark-drag-triangle-hook</em>
     (lambda (id x time dragged-before)
       (if (not dragged-before)
 	  (set! first-x x)
@@ -2116,7 +2116,7 @@ and if the <a href="#marksync">mark-sync</a> is not 0, the hook is called on eac
 (define (<A NAME="snpmark">snap-mark-to-beat</a>)
   ;; when a mark is dragged, its end position is always on a beat
   (let ((mark-release 4))
-    (add-hook! <em class=red>mark-hook</em>
+    (hook-push <em class=red>mark-hook</em>
       (lambda (mrk snd chn reason)
         (if (= reason mark-release)
             (let* ((samp (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> mrk))
@@ -2143,7 +2143,7 @@ Here's an example that sets a mix's amps to 0 if you click it (see <a href="snds
 in mix.scm for a fancier version):
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>mix-click-hook</em>
+(hook-push <em class=red>mix-click-hook</em>
   (lambda (n)
     (set! (<a class=quiet href="#mixamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixamp_tip)">mix-amp</a> n) 0.0)
     #t))
@@ -2157,7 +2157,7 @@ in mix.scm for a fancier version):
 This hook is called when a mix is dragged.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>mix-drag-hook</em>
+(hook-push <em class=red>mix-drag-hook</em>
   (lambda (n x y) 
     (<a class=quiet href="#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> 
       (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "mix ~A at ~D: ~,3F" 
@@ -2168,7 +2168,7 @@ This hook is called when a mix is dragged.
 A neat example is to set up an empty sound with a 1.0 in sample 0, mix in a vct containing one element of 0.5, then set
 up this mix-drag-hook:
 <pre>
-    (add-hook! mix-drag-hook (lambda (id x y) (<a class=quiet href="#updatetransformgraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetransformgraph_tip)">update-transform-graph</a>)))
+    (hook-push mix-drag-hook (lambda (id x y) (<a class=quiet href="#updatetransformgraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetransformgraph_tip)">update-transform-graph</a>)))
 </pre>
 and turn on the FFT graph.  As you drag the mix, you can see the spectral effect of that
 moving value as a comb filter.
@@ -2203,10 +2203,10 @@ This hook is called upon a mouse button release or click (with various exception
 	(<a class=quiet href="#updatetimegraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetimegraph_tip)">update-time-graph</a>)
 	#t)
       #f))
-(add-hook! <em class=red>mouse-click-hook</em> click-to-center)
+(hook-push <em class=red>mouse-click-hook</em> click-to-center)
 
 ;;; this example disables button 2 -&gt; insert selection
-(add-hook! <em class=red>mouse-click-hook</em>
+(hook-push <em class=red>mouse-click-hook</em>
   (lambda (snd chn button state x y axis)
     (and (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>) (= button 2))))
 </pre></td></tr></table>
@@ -2215,7 +2215,7 @@ The mouse scroll wheel is sometimes reported as buttons 4 and 5; in the next exa
 turning the wheel zooms the graph in or out:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>mouse-click-hook</em>
+(hook-push <em class=red>mouse-click-hook</em>
   (lambda (snd chn button state x y axis)
     (if (and (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>)
 	     (or (= button 4) (= button 5))) ; mouse scroll wheel
@@ -2258,7 +2258,7 @@ This hook is called when the mouse is dragged within the lisp graph (see enved.s
 This hook is called when the mouse enters a channel's drawing area (graph pane).
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>mouse-enter-graph-hook</em>
+(hook-push <em class=red>mouse-enter-graph-hook</em>
   (lambda (snd chn) 
     (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A[~A]" (<a class=quiet href="#shortfilename" onmouseout="UnTip()" onmouseover="Tip(extsnd_shortfilename_tip)">short-file-name</a> snd) chn))))
 </pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
@@ -2275,7 +2275,7 @@ The label itself is 'label'. We can use the <a href="sndscm.html#finfo">finfo</a
 to popup file info as follows:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>mouse-enter-label-hook</em>
+(hook-push <em class=red>mouse-enter-label-hook</em>
   (lambda (type position name)
     (if (not (= type 2))
         (<a class=quiet href="#infodialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_infodialog_tip)">info-dialog</a> name (finfo name)))))
@@ -2295,11 +2295,11 @@ ensure that the pane under the mouse is the one that receives keyboard input, we
 hook procedures:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>mouse-enter-graph-hook</em>
+(hook-push <em class=red>mouse-enter-graph-hook</em>
   (lambda (snd chn)
     (if (<a class=quiet href="#soundp" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundp_tip)">sound?</a> snd) (<a class=quiet href="#focuswidget" onmouseout="UnTip()" onmouseover="Tip(extsnd_focuswidget_tip)">focus-widget</a> (car (<a class=quiet href="#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a> snd chn))))))
 
-(add-hook! <em class=red>mouse-enter-listener-hook</em>
+(hook-push <em class=red>mouse-enter-listener-hook</em>
   (lambda (widget)
     (<a class=quiet href="#focuswidget" onmouseout="UnTip()" onmouseover="Tip(extsnd_focuswidget_tip)">focus-widget</a> widget)))
 </pre></td></tr></table>
@@ -2315,7 +2315,7 @@ I much prefer this style of operation.
 This hook is called when the mouse enters a text widget (this is the third of the pointer focus hooks).
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>mouse-enter-text-hook</em>
+(hook-push <em class=red>mouse-enter-text-hook</em>
   (lambda (w)
     (<a class=quiet href="#focuswidget" onmouseout="UnTip()" onmouseover="Tip(extsnd_focuswidget_tip)">focus-widget</a> w)))
 </pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
@@ -2376,7 +2376,7 @@ Both mus_error and mus_print run this hook; in the mus_print case, the 'type' is
 You can redirect mus_print output from stderr (the default) to stdout via:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>mus-error-hook</em>
+(hook-push <em class=red>mus-error-hook</em>
   (lambda (typ msg)
     (and (= typ 0)         ; it's mus_print, not mus_error
          (display msg))))  ; display returns some non-#f result, I assume
@@ -2394,7 +2394,7 @@ This hook is called when the sound name is clicked (in the label in the minibuff
 If the function returns #t, the usual highly informative minibuffer babbling is squelched.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>name-click-hook</em>
+(hook-push <em class=red>name-click-hook</em>
   (lambda (snd) ; toggle read-only
     (set! (<a class=quiet href="#readonly" onmouseout="UnTip()" onmouseover="Tip(extsnd_readonly_tip)">read-only</a> snd) (not (<a class=quiet href="#readonly" onmouseout="UnTip()" onmouseover="Tip(extsnd_readonly_tip)">read-only</a> snd)))
     #t))
@@ -2430,7 +2430,7 @@ and any corresponding <a href="#afteropenhook">after-open-hook</a> functions are
 If it returns a string (a filename), that file is opened instead of the original one.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>open-hook</em>
+(hook-push <em class=red>open-hook</em>
   (lambda (filename)
     (if (= (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> filename) <a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_headertype_tip)">mus-raw</a>)
         ;; check for "OggS" first word, if found, translate to something Snd can read
@@ -2462,7 +2462,7 @@ be omitted ('data-location' defaults to 0, and 'data-length' defaults to the fil
 If there is more than one function on the hook list, functions after the first get the
 on-going list result (if any) as the 'current-choices' argument (the empty list is the default).
 <pre>
-    (add-hook! <em class=red>open-raw-sound-hook</em> (lambda (file choices) (list 1 44100 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-lshort</a>)))
+    (hook-push <em class=red>open-raw-sound-hook</em> (lambda (file choices) (list 1 44100 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-lshort</a>)))
 </pre>
 Return '() to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
 The raw header defaults are stereo, 44100 Hz, big endian short data; these values can be changed in the
@@ -2478,7 +2478,7 @@ If the hook function returns #t, the <a href="#opensound">open-sound</a> returns
 </td></tr><tr><td></td><td colspan=2>
 This hook is called each time the optimizer hits something it can't handle; 'message' tries to give some information about the situation.
 <pre>
-    (add-hook! <em class=red>optimization-hook</em> (lambda (n) (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A~%" n))))
+    (hook-push <em class=red>optimization-hook</em> (lambda (n) (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A~%" n))))
 </pre>
 Normally, if the optimizer fails for some reason, it falls back silently on the Scheme evaluator, so
 the code runs slower.  This hook gives you a way to find out why the optimizer gave up.
@@ -2503,7 +2503,7 @@ If there is more than one hook function, each function's result is passed as inp
 
 <table border=0 cellpadding=5 vspace=10><tr><td>
 <pre>
-(add-hook! <em class=red>output-comment-hook</em>
+(hook-push <em class=red>output-comment-hook</em>
   (lambda (str)   ; append a time-stamp
     (string-append str ": written " (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time))))))
 
@@ -2521,7 +2521,7 @@ making it slightly easier to set default output names.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (let ((file-ctr -1))
-  (add-hook! <em class=red>output-name-hook</em>
+  (hook-push <em class=red>output-name-hook</em>
     (lambda (ignored-name)
       (set! file-ctr (+ file-ctr 1))
       (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A-~D.snd"    ; make new file name based on date and file-ctr: "Jun-01-23.snd"
@@ -2563,7 +2563,7 @@ distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, bu
 in some other way &mdash; I should rewrite this part of Snd.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>print-hook</em>
+(hook-push <em class=red>print-hook</em>
   (lambda (msg) 
     (if (char=? (string-ref msg 0) #\newline)
 	(<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> msg)
@@ -2636,7 +2636,7 @@ If it returns #t, Snd flushes the error (it assumes you've
 dealt with it via the hook).
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>snd-error-hook</em>
+(hook-push <em class=red>snd-error-hook</em>
   (lambda (msg) 
     (<a class=quiet href="#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> "bong.snd") ; or if xm is loaded, (XBell (XtDisplay (cadr (<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>))) 10)
     #f))
@@ -2655,7 +2655,7 @@ reported it via the hook).
 (define without-warnings
   (lambda (thunk)
     (define no-warning (lambda (msg) #t))
-    (add-hook! <em class=red>snd-warning-hook</em> no-warning)
+    (hook-push <em class=red>snd-warning-hook</em> no-warning)
     (thunk)
     (hook-remove <em class=red>snd-warning-hook</em> no-warning)))
 </pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
@@ -2672,7 +2672,7 @@ Snd to exit back to the shell if its file argument is not
 found (this code has to be in the ~/.snd init file):
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>start-hook</em>
+(hook-push <em class=red>start-hook</em>
   (lambda (file)
     (if (not (file-exists? file))
 	(begin
@@ -2691,7 +2691,7 @@ We can use this hook to replace "play" with "play selection" if the
 selection is active:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>start-playing-hook</em>
+(hook-push <em class=red>start-playing-hook</em>
   (lambda (snd)
     (if (and (<a class=quiet href="#selectionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionok_tip)">selection?</a>)
 	     (<a class=quiet href="#selectionmember" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionmember_tip)">selection-member?</a> snd))
@@ -2748,7 +2748,7 @@ This hook is called just before each channel's time domain graph is updated if <
 If its function returns a pixel, that color is used to draw that channel's data.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>time-graph-hook</em>
+(hook-push <em class=red>time-graph-hook</em>
 	   (lambda (snd chn)
 	     (lambda ()
 	       (apply <a class=quiet href="#makecolor">make-color</a> (<a class=quiet href="#colormapref">colormap-ref</a> (<a class=quiet href="#colormap">colormap</a>) (/ chn (<a class=quiet href="#channels">channels</a> snd)))))))
@@ -2772,7 +2772,7 @@ the newly updated sound may have a different index.  <a href="sndscm.html#addmar
 the returned procedure to make sure the mark pane is reactivated right away when a sound is updated. The basic idea is:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>update-hook</em>
+(hook-push <em class=red>update-hook</em>
   (lambda (snd-about-to-be-updated)
     ;; this function called just before update
     (lambda (updated-snd)
@@ -2783,7 +2783,7 @@ the returned procedure to make sure the mark pane is reactivated right away when
 I use update-hook to make sure the y axis bounds reflect the new maxamp, if it is greater than 1.0:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <em class=red>update-hook</em>
+(hook-push <em class=red>update-hook</em>
   (lambda (old-snd)
     (lambda (snd)
       (do ((i 0 (+ 1 i)))
@@ -2802,7 +2802,7 @@ then get the exploding bomb icon because their underlying data has changed):
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (let ((eds #f))
-  (add-hook! <em class=red>update-hook</em>
+  (hook-push <em class=red>update-hook</em>
 	     (lambda (cursnd)     ; called before actual update -- save our edits
 	       (set! eds (<a href="#editlisttofunction">edit-list-&gt;function</a> cursnd 0))
 	       (lambda (newsnd)   ; called after update -- reapply our edits
@@ -2841,7 +2841,7 @@ edit-hook is called just before any attempt to edit the channel's data; if it re
 the edit is cancelled. So,
 </td></tr></table>
 <pre>
-             Scheme: (add-hook! (edit-hook snd chn) (lambda () #t))
+             Scheme: (hook-push (edit-hook snd chn) (lambda () #t))
              Ruby:   edit_hook(snd, chn).add_hook!(\"stop-edit\") do | | true end
              Forth:  snd chn edit-hook lambda: &lt;{ }&gt; #t ; add-hook!
 </pre>
@@ -2861,7 +2861,7 @@ up protected portions of the edit history:
   (let* ((edit-pos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn))
          (hook (<em class=red>edit-hook</em> snd chn)))
     (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_reset_hook_tip)">reset-hook!</a> hook)
-    (add-hook! hook 
+    (hook-push hook 
       (lambda ()
         (let ((val (&lt; (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn) edit-pos)))
           (if val (<a class=quiet href="#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> "protected"))
@@ -4687,7 +4687,7 @@ instead; you type <code>(start-sync)</code>, then click each of the marks that y
 (define (start-sync) (set! mark-sync-number (+ (<a class=quiet href="#marksyncmax" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksyncmax_tip)">mark-sync-max</a>) 1)))
 (define (stop-sync) (set! mark-sync-number 0))
 (define (click-to-sync id) (set! (<em class=red>mark-sync</em> id) mark-sync-number) #f)
-(add-hook! <a class=quiet href="#markclickhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_markclickhook_tip)">mark-click-hook</a> click-to-sync)
+(hook-push <a class=quiet href="#markclickhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_markclickhook_tip)">mark-click-hook</a> click-to-sync)
 </pre></td></tr></table>
 
 Now control-click and drag one of them, and all of them move together deleting data, or
@@ -6214,7 +6214,7 @@ Possible values are <code>channels-separate</code>, <code>channels-combined</cod
 The following code sets the 'unite' button if the current sound has more than 4 channels: 
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <a class=quiet href="#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> 
+(hook-push <a class=quiet href="#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> 
   (lambda (snd)
     (if (&gt; (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd) 4)
         (set! (<em class=red>channel-style</em> snd) <a class=quiet href="#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channels-combined</a>))))
@@ -6507,7 +6507,7 @@ placement of the fixed point, but not to worry!  Your data is ok:
 these files automatically in Snd.  Perhaps the simplest is to use one of the open hooks:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <a class=quiet href="#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> 
+(hook-push <a class=quiet href="#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> 
   (lambda (snd) 
     ;; this could also (alternatively) set the y-bounds as above
     (if (= (<em class=red>data-format</em> snd) mus-lint)
@@ -6517,7 +6517,7 @@ these files automatically in Snd.  Perhaps the simplest is to use one of the ope
 or (an alternative that sets the underlying database entry, rather than the current in-Snd choice):
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(add-hook! <a class=quiet href="#openhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_openhook_tip)">open-hook</a> 
+(hook-push <a class=quiet href="#openhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_openhook_tip)">open-hook</a> 
   (lambda (name)
     (if (= (<a class=quiet href="#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> name) mus-lint)
         (set! (<a class=quiet href="#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> name) mus-lintn))
@@ -7028,7 +7028,7 @@ the lisp-graph-hook, where the redisplay is automatic.
       (<a class=quiet href="#vctmultiply" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmultiply_tip)">vct-multiply!</a> data data)
       (<em class=red>graph</em> data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
 
-(add-hook! <a href="#lispgraphhook">lisp-graph-hook</a> display-energy)
+(hook-push <a href="#lispgraphhook">lisp-graph-hook</a> display-energy)
 </pre></td></tr></table>
 <img src="pix/energy.png" alt="picture of examp.scm in action">
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -7665,7 +7665,7 @@ the information to that file, otherwise it posts the data in a help window
 by <a href="#maxfftpeaks">max-transform-peaks</a>.
 
 <pre>
-(add-hook! <a class=quiet href="#aftertransformhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftertransformhook_tip)">after-transform-hook</a> (lambda (a b c) 
+(hook-push <a class=quiet href="#aftertransformhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftertransformhook_tip)">after-transform-hook</a> (lambda (a b c) 
                                   (<em class=red>peaks</em>))) ; post a detailed list of peaks after each FFT
 </pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -7742,7 +7742,7 @@ And here we play from the cursor with a moving ("tracking") cursor:
 (define (<A NAME="pfc">pfc</a>)
   (let ((old-tracking (<a class=quiet href="#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>)))
     (set! (<a class=quiet href="#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) #t)
-    (add-hook! <a class=quiet href="#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a> 
+    (hook-push <a class=quiet href="#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a> 
 	       (lambda (snd)
 		 (set! (<a class=quiet href="#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) old-tracking)))
     (<em class=red>play</em> (selected-sound) (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))))
@@ -10707,7 +10707,7 @@ this information to highlight the changed portions of a given sound.
                    (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn)
                    (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn)))
 
-(add-hook! <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> show-original)
+(hook-push <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> show-original)
 </pre>
 </td></tr></table></td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -13177,7 +13177,7 @@ The color chooser function in <a href="#timegraphhook">time-graph-hook</a> can u
 and color-scale to drive colormap choices:
 
 <pre>
-  (add-hook! <a class=quiet href="#timegraphhook">time-graph-hook</a>
+  (hook-push <a class=quiet href="#timegraphhook">time-graph-hook</a>
 	     (lambda (snd chn)
                (apply <a class=quiet href="#makecolor">make-color</a> (<a class=quiet href="#colormapref">colormap-ref</a>
 		                   (<a class=quiet href="#colormap">colormap</a>) 
@@ -13376,7 +13376,7 @@ currently in the time-domain graph:
 	       (<em class=red>draw-string</em> text (- xpos (/ text-width 2)) 18)))))
      comments)))
 
-(add-hook! <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> show-comments)
+(hook-push <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> show-comments)
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -13491,7 +13491,7 @@ sound over another at an arbitrary point, and so on (see draw.scm):
                   (list new-low-data new-high-data) snd chn <a class=quiet href="#copycontext" onmouseout="UnTip()" onmouseover="Tip(extsnd_copycontext_tip)">copy-context</a> left-bin right-bin)
 		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) old-color)))))))
 
-(add-hook! <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> display-samps-in-red)
+(hook-push <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> display-samps-in-red)
 </pre></td></tr></table></td></tr>
 <tr><td></td><td>
 
@@ -13557,7 +13557,7 @@ The result can be used in the lisp graph:
 	            0.0 60.0
 	            snd chn))))))
 
-(add-hook! <a class=quiet href="#lispgraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_lispgraphhook_tip)">lisp-graph-hook</a> display-db)
+(hook-push <a class=quiet href="#lispgraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_lispgraphhook_tip)">lisp-graph-hook</a> display-db)
 </pre>
 </td></tr></table>
 

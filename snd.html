@@ -858,7 +858,7 @@ window size:</p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td>
 <pre>
-(add-hook! <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a>
+(hook-push <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a>
   (lambda (snd chn y0 y1)
     ;; check that we are displaying an FFT, 
     ;; if so, set the FFT size to reflect the graph boundaries
