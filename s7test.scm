@@ -9191,6 +9191,8 @@ yow!! -- I'm using mpc_cmp
 (test (let ((x (cons 1 2))) (set-cdr! x x) (if x 1 2)) 1)
 (test (let ((ctr 0)) (if (let ((ctr 123)) (set! ctr (+ ctr 1)) (= ctr 124)) (let () (set! ctr (+ ctr 100)) ctr) (let () (set! ctr (+ ctr 1000)) ctr)) ctr) 100)
 (test (if (let ((if 3)) (> 2 if)) 4 5) 5)
+(test (let () (if #t (define (hi a) a)) (hi 1)) 1)
+(test (let () (if #f (define (hi a) (+ a 1)) (define (hi a) a)) (hi 1)) 1)
 
 (test (let ((ctr 0)) (call/cc (lambda (exit) (if (> 3 2) (let () (exit ctr) (set! ctr 100) ctr) #f)))) 0)
 (test (let ((ctr 0)) (call/cc (lambda (exit) (if (< 3 2) #f (let () (exit ctr) (set! ctr 100) ctr))))) 0)
@@ -10358,6 +10360,11 @@ yow!! -- I'm using mpc_cmp
 (test (or . (1 2)) 1)
 (test (or . ()) (or))
 
+(test (let () (or (define (hi a) a)) (hi 1)) 1)
+(test (let () (or #t (define (hi a) a)) (hi 1)) 'error)
+(test (let () (and (define (hi a) a) (define (hi a) (+ a 1))) (hi 1)) 2) ; guile agrees with this
+
+
 
 
 ;;; -------- and --------
@@ -10409,6 +10416,11 @@ yow!! -- I'm using mpc_cmp
 (test (and . #t) 'error)
 (test (and 1 . 2) 'error)
 (test (and . (1 2)) 2)
+
+(test (let () (and (define (hi a) a)) (hi 1)) 1)
+(test (let () (and #f (define (hi a) a)) (hi 1)) 'error)
+(test (+ 1 (and (define (hi a) a) (hi 2))) 3)
+
 
 
 
@@ -10471,6 +10483,9 @@ yow!! -- I'm using mpc_cmp
 (test (let ((x 1)) ((cond ((let () (set! x 2) #f) => boolean?) (lambda => (lambda (a) (apply a '((b) (+ b 123)))))) x)) 125)
 (test (cond ((values 1 2 3) => '(1 (2 3 (4 5 6 7 8))))) 7)
 (test (cond ((values #f #f) => equal?)) #t) ; (values #f #f) is not #f
+(test (let () (cond (#t (define (hi a) a))) (hi 1)) 1)
+(test (let () (cond (#f (define (hi a) a))) (hi 1)) 'error)
+(test (let () (cond ((define (hi a) a) (hi 1)))) 1)
 
 (test (cond (else 1)) 1)
 (test (call/cc (lambda (r) (cond ((r 4) 3) (else 1)))) 4)
@@ -10638,6 +10653,9 @@ yow!! -- I'm using mpc_cmp
 
 (test (case 1 (else #f)) #f)
 (test (case 1 ((1 2) (let ((case 3)) (+ case 1))) ((3 4) 0)) 4)
+(test (let () (case 0 ((0) (define (hi a) a)) (else (define (hi a) (+ a 1)))) (hi 1)) 1)
+(test (let () (case 1 ((0) (define (hi a) a)) (else (define (hi a) (+ a 1)))) (hi 1)) 2)
+(test (let () (case (define (hi a) a) ((hi) (hi 1)))) 1)
 
 (for-each
  (lambda (arg)

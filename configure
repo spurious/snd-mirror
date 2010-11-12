@@ -9488,6 +9488,41 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
 fi
 
 
+              { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ruby_vsnprintf" >&5
+$as_echo_n "checking for ruby_vsnprintf... " >&6; }
+              if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <ruby.h>
+int
+main ()
+{
+ruby_init(); ruby_vsnprintf(0, 0, 0, 0); return(0)
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  $as_echo "#define HAVE_VSNPRINTF 0" >>confdefs.h
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
 	      CFLAGS="$CFLAGS -Werror"
     	      { $as_echo "$as_me:${as_lineno-$LINENO}: checking that rb_find_file deals in char*" >&5
 $as_echo_n "checking that rb_find_file deals in char*... " >&6; }
@@ -9525,7 +9560,6 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 $as_echo "$as_me: WARNING: can't find Ruby!" >&2;}
   	      $as_echo "#define HAVE_RUBY 0" >>confdefs.h
 
-#              AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
             fi
 	fi
 fi

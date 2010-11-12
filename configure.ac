@@ -1348,6 +1348,16 @@ AC_ARG_WITH(ruby,
                  AC_MSG_RESULT(no)
                 )
 
+              AC_MSG_CHECKING([for ruby_vsnprintf]) 
+              AC_RUN_IFELSE( 
+               [AC_LANG_PROGRAM([#include <ruby.h>], 
+                                [ruby_init(); ruby_vsnprintf(0, 0, 0, 0); return(0)])], 
+               [AC_DEFINE(HAVE_VSNPRINTF, 0) 
+                AC_MSG_RESULT(yes) 
+               ], 
+                AC_MSG_RESULT(no) 
+               ) 
+
 	      CFLAGS="$CFLAGS -Werror"
     	      AC_MSG_CHECKING([that rb_find_file deals in char*])
               AC_COMPILE_IFELSE(
@@ -1367,7 +1377,6 @@ AC_ARG_WITH(ruby,
             else 
               AC_MSG_WARN([can't find Ruby!])
   	      AC_DEFINE(HAVE_RUBY,0)
-#              AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
             fi
 	fi)
 

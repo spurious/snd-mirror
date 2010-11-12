@@ -567,12 +567,13 @@ static XEN xen_rb_rescue(XEN val)
 }
 
 
-#if (!HAVE_RB_ERRINFO)
-XEN rb_errinfo(void)
-{
-  return ruby_errinfo;
-}
-#endif
+#ifndef HAVE_RB_ERRINFO 
+#define rb_errinfo()          rb_gv_get("$!") 
+#endif 
+
+#ifndef HAVE_RB_GET_LOAD_PATH 
+#define rb_get_load_path()    rb_gv_get("$:") 
+#endif 
 
 
 void xen_repl(int argc, char **argv)
@@ -613,22 +614,15 @@ XEN xen_rb_load_file_with_error(XEN file)
 }
 
 
-XEN xen_rb_add_to_load_path(char *path)
-{
-#if (!HAVE_RB_GET_LOAD_PATH)
-  extern VALUE rb_load_path;
-  XEN rpath;
-  rpath = rb_str_new2(path);
-  if (XEN_FALSE_P(rb_ary_includes(rb_load_path, rpath)))
-    rb_ary_unshift(rb_load_path, rpath);
-#else
-  XEN rpath;
-  rpath = rb_str_new2(path);
-  if (XEN_FALSE_P(rb_ary_includes(rb_get_load_path(), rpath)))
-    rb_ary_unshift(rb_get_load_path(), rpath);
-#endif
-  return(XEN_FALSE);
-}
+XEN xen_rb_add_to_load_path(char *path) 
+{ 
+ XEN rpath, load_path; 
+ rpath = rb_str_new2(path); 
+ load_path = rb_get_load_path(); 
+ if (XEN_FALSE_P(rb_ary_includes(load_path, rpath))) 
+   rb_ary_unshift(load_path, rpath); 
+ return(XEN_FALSE); 
+} 
 
 
 static char *lstbuf = NULL;
