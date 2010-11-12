@@ -14683,8 +14683,6 @@ why are these different (read-time `#() ? )
 	  (format #t ";load-hook-test: ~A~%" (load-hook-test 1))))
   (set! (hook-functions *load-hook*) old-load-hook))
 
-;;; TODO: *load-hook* as hook tests
-
 (let ((old-vlen *vector-print-length*))
   (set! *vector-print-length* 0)
   (test (format #f "~A" #()) "#()")
@@ -15816,8 +15814,24 @@ why are these different (read-time `#() ? )
     (set! *trace-hook* '())
     (test sum 9))
 
-  ;;; TODO: check *trace-hook* for bad funcs
+  (for-each
+   (lambda (arg)
+     (test (set! *trace-hook* arg) 'error)
+     (test (set! *unbound-variable-hook* arg) 'error)
+     (test (set! *error-hook* arg) 'error)
+     (test (set! *load-hook* arg) 'error)
 
+     (test (set! (hook-functions *trace-hook*) arg) 'error)
+     (test (set! (hook-functions *unbound-variable-hook*) arg) 'error)
+     (test (set! (hook-functions *error-hook*) arg) 'error)
+     (test (set! (hook-functions *load-hook*) arg) 'error)
+
+     (test (set! (hook-functions *trace-hook*) (list arg)) 'error)
+     (test (set! (hook-functions *unbound-variable-hook*) (list arg)) 'error)
+     (test (set! (hook-functions *error-hook*) (list arg)) 'error)
+     (test (set! (hook-functions *load-hook*) (list arg)) 'error)
+     )
+   (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi :hi #<eof> #(1 2 3) '#(()) "hi" '(1 . 2) '(1 2 3)))
 
   (for-each
    (lambda (arg)

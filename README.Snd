@@ -646,7 +646,7 @@ process moved the previous X11R6 directory to X11R6 1, which is untypable).
 
 -------- Ruby 1.9.2 --------
 
-The CFLAGS setting is messed up (not to mention all the directory names.
+The CFLAGS setting is messed up (not to mention all the directory names).
 After running configure, add 
 
 -I/usr/local/include/ruby-1.9.1/x86_64-linux -I/usr/local/include/ruby-1.9.1/ruby -I/usr/local/include/ruby-1.9.1
@@ -659,6 +659,5 @@ After running configure, add
 #define HAVE_RB_ERRINFO 1
 #define HAVE_RB_GET_LOAD_PATH 1
 
-
-
-
+and also change HAVE_VSNPRINTF to 0 -- Ruby's version of vsnprintf segfaults
+when passed %lld and 64-bit ints.

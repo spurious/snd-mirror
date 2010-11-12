@@ -164,14 +164,14 @@
     (define (local-dac-func data)
       (for-each
        (lambda (snd)
-   (do ((i 0 (1+ i)))
+   (do ((i 0 (+ 1 i)))
        ((= i (channels snd)))
      (if (not (= (cursor snd i) (original-cursor snd i)))
          (set! (current-cursor snd i) (cursor snd i)))))
        (sounds)))
     
     (define (local-start-playing-func snd)
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ 1 i)))
     ((= i (channels snd)))
   (set! (original-cursor snd i) (cursor snd i))
   (set! (current-cursor snd i) (cursor snd i))))

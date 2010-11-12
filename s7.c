@@ -16693,7 +16693,7 @@ to the current list."
 
 static s7_pointer g_hook_set_functions(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x, y, hook, funcs;
+  s7_pointer hook, funcs;
   hook = car(args);
 
   if (!is_hook(hook))
@@ -16706,6 +16706,7 @@ static s7_pointer g_hook_set_functions(s7_scheme *sc, s7_pointer args)
 
   if (is_pair(funcs))
     {
+      s7_pointer x, y;
       for (x = funcs, y = funcs; is_pair(x); x = cdr(x), y = cdr(y))
 	{
 	  if (!is_function_with_arity(car(x)))
@@ -16807,23 +16808,36 @@ static bool hooks_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	 s7_is_equal(sc, hook_functions(x), hook_functions(y)));
 }
 
-/* TODO: remaining tests of local hooks etc
- *       libxm configuration
- *       add-hook! et al are still in *.html because they're used by ruby and forth
- */
+
+static bool internal_hook_arity_ok(s7_scheme *sc, s7_pointer hook, s7_pointer funcs)
+{
+  s7_pointer x;
+  for (x = funcs; is_pair(x); x = cdr(x))
+    if ((!is_function_with_arity(car(x))) ||
+	(!function_arity_ok(sc, hook, car(x))))
+      return(false);
+  return(x == sc->NIL);
+}
+
 
 static s7_pointer g_trace_hook_set(s7_scheme *sc, s7_pointer args)
 {
   /* in normal use, we'd (set! (hook-functions *trace-hook*) ...), but for backwards compatibility,
    *   we also need to support (set! *trace-hook* func).
    */
-  if ((cadr(args) == sc->NIL) ||
-      (is_pair(cadr(args))))
-    hook_functions(sc->trace_hook) = cadr(args); /* TODO: error checks? */
+  s7_pointer funcs;
+  funcs = cadr(args);
+  if ((funcs == sc->NIL) ||
+      (is_pair(funcs)))
+    {
+      if (internal_hook_arity_ok(sc, sc->trace_hook, funcs))
+	hook_functions(sc->trace_hook) = funcs;
+      else return(sc->ERROR);;
+    }
   else
     {
-      if (s7_is_procedure(cadr(args)))
-	hook_functions(sc->trace_hook) = s7_cons(sc, cadr(args), sc->NIL);
+      if (s7_is_procedure(funcs))
+	hook_functions(sc->trace_hook) = s7_cons(sc, funcs, sc->NIL);
       else return(sc->ERROR);
     }
   return(sc->trace_hook); /* kinda pointless... */
@@ -16835,13 +16849,19 @@ static s7_pointer g_load_hook_set(s7_scheme *sc, s7_pointer args)
   /* in normal use, we'd (set! (hook-functions *load-hook*) ...), but for backwards compatibility,
    *   we also need to support (set! *load-hook* func).
    */
-  if ((cadr(args) == sc->NIL) ||
-      (is_pair(cadr(args))))
-    hook_functions(sc->load_hook) = cadr(args); /* TODO: error checks? */
+  s7_pointer funcs;
+  funcs = cadr(args);
+  if ((funcs == sc->NIL) ||
+      (is_pair(funcs)))
+    {
+      if (internal_hook_arity_ok(sc, sc->load_hook, funcs))
+	hook_functions(sc->load_hook) = funcs; 
+      else return(sc->ERROR);
+    }
   else
     {
-      if (s7_is_procedure(cadr(args)))
-	hook_functions(sc->load_hook) = s7_cons(sc, cadr(args), sc->NIL);
+      if (s7_is_procedure(funcs))
+	hook_functions(sc->load_hook) = s7_cons(sc, funcs, sc->NIL);
       else return(sc->ERROR);
     }
   return(sc->load_hook);
@@ -16853,13 +16873,19 @@ static s7_pointer g_unbound_variable_hook_set(s7_scheme *sc, s7_pointer args)
   /* in normal use, we'd (set! (hook-functions *unbound-variable-hook*) ...), but for backwards compatibility,
    *   we also need to support (set! *unbound-variable-hook* func).
    */
-  if ((cadr(args) == sc->NIL) ||
-      (is_pair(cadr(args))))
-    hook_functions(sc->unbound_variable_hook) = cadr(args); /* TODO: error checks? */
+  s7_pointer funcs;
+  funcs = cadr(args);
+  if ((funcs == sc->NIL) ||
+      (is_pair(funcs)))
+    {
+      if (internal_hook_arity_ok(sc, sc->unbound_variable_hook, funcs))
+	hook_functions(sc->unbound_variable_hook) = funcs;
+      else return(sc->ERROR);
+    }
   else
     {
-      if (s7_is_procedure(cadr(args)))
-	hook_functions(sc->unbound_variable_hook) = s7_cons(sc, cadr(args), sc->NIL);
+      if (s7_is_procedure(funcs))
+	hook_functions(sc->unbound_variable_hook) = s7_cons(sc, funcs, sc->NIL);
       else return(sc->ERROR);
     }
   return(sc->unbound_variable_hook);
@@ -16871,13 +16897,19 @@ static s7_pointer g_error_hook_set(s7_scheme *sc, s7_pointer args)
   /* in normal use, we'd (set! (hook-functions *error-hook*) ...), but for backwards compatibility,
    *   we also need to support (set! *error-hook* func).
    */
-  if ((cadr(args) == sc->NIL) ||
-      (is_pair(cadr(args))))
-    hook_functions(sc->error_hook) = cadr(args); /* TODO: error checks? */
+  s7_pointer funcs;
+  funcs = cadr(args);
+  if ((funcs == sc->NIL) ||
+      (is_pair(funcs)))
+    {
+      if (internal_hook_arity_ok(sc, sc->error_hook, funcs))
+	hook_functions(sc->error_hook) = funcs;
+      else return(sc->ERROR);
+    }
   else
     {
-      if (s7_is_procedure(cadr(args)))
-	hook_functions(sc->error_hook) = s7_cons(sc, cadr(args), sc->NIL);
+      if (s7_is_procedure(funcs))
+	hook_functions(sc->error_hook) = s7_cons(sc, funcs, sc->NIL);
       else return(sc->ERROR);
     }
   return(sc->error_hook);
@@ -29636,7 +29668,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
-  s7_define_variable(sc, "*trace-hook*", sc->NIL);
 
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
@@ -29699,10 +29730,6 @@ s7_scheme *s7_init(void)
 				   s7_make_function(sc, "(set *error-hook*)", g_error_hook_set, 2, 0, false, "called if *error-hook* is set"), 
 				   sc->F));
 
-
-  s7_define_variable(sc, "*#readers*", sc->NIL);
-  sc->sharp_readers = symbol_global_slot(make_symbol(sc, "*#readers*"));
-
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
   sc->vector_print_length = symbol_global_slot(make_symbol(sc, "*vector-print-length*"));
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*vector-print-length*"), 
@@ -29711,8 +29738,12 @@ s7_scheme *s7_init(void)
 				   s7_make_function(sc, "(set *vector-print-length*)", g_vector_print_length_set, 2, 0, false, "called if *vector-print-length* is set"), 
 				   sc->F));
 
-  /* PERHAPS: symbol-access checks for *load-hook* *trace-hook* *#readers*, perhaps *load-path* and *features*
-   */
+  s7_define_variable(sc, "*safety*", small_int(sc->safety));
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*safety*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *safety*)", g_safety_set, 2, 0, false, "called if *safety* is set"), 
+				   s7_make_function(sc, "(bind *safety*)", g_safety_bind, 2, 0, false, "called if *safety* is bound")));
 
   /* the next two are for the test suite */
   s7_define_variable(sc, "-s7-symbol-table-locked?", 
@@ -29723,15 +29754,14 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "-s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
 
 
+  /* PERHAPS: symbol-access checks for *#readers* *load-path* *features*
+   */
+
+  s7_define_variable(sc, "*#readers*", sc->NIL);
+  sc->sharp_readers = symbol_global_slot(make_symbol(sc, "*#readers*"));
+
   sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);
   s7_define_constant(sc, "*error-info*", sc->error_info);
-
-  s7_define_variable(sc, "*safety*", small_int(sc->safety));
-  s7_symbol_set_access(sc, s7_make_symbol(sc, "*safety*"), 
-		       make_list_3(sc, 
-				   sc->F, 
-				   s7_make_function(sc, "(set *safety*)", g_safety_set, 2, 0, false, "called if *safety* is set"), 
-				   s7_make_function(sc, "(bind *safety*)", g_safety_bind, 2, 0, false, "called if *safety* is bound")));
 
   g_provide(sc, make_list_1(sc, make_symbol(sc, "s7")));
 

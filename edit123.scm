@@ -32,7 +32,7 @@
 ;  (lambda (snd)
 ;      (if (> (channels snd) 1)
 ;        (begin
-;        (set! (sync snd) (1+ snd)) ; 0 = #f
+;        (set! (sync snd) (+ 1 snd)) ; 0 = #f
 ;         (set! (channel-style snd) channels-combined)
 ;))
 
@@ -47,15 +47,15 @@
 
     (define (file-from-path curfile)
       (let ((last-slash 0))
-	(do ((i 0 (1+ i)))
+	(do ((i 0 (+ 1 i)))
 	    ((= i (string-length curfile)))
 	  (if (char=? (string-ref curfile i) #\/)
 	      (set! last-slash i)))
-	(substring curfile (1+ last-slash))))
+	(substring curfile (+ 1 last-slash))))
 
     (define (directory-from-path curfile)
       (let ((last-slash 0))
-	(do ((i 0 (1+ i)))
+	(do ((i 0 (+ 1 i)))
 	    ((= i (string-length curfile)))
 	  (if (char=? (string-ref curfile i) #\/)
 	      (set! last-slash i)))
