@@ -2260,7 +2260,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
    beg dur snd chn edpos #f
    (lambda (frag-beg frag-dur)
      (let ((incr (/ (* 2 pi freq) (srate snd))))
-       (vct (fmod (* frag-beg incr) (* 2 pi)) incr)))
+       (vct (modulo (* frag-beg incr) (* 2 pi)) incr)))
    (format #f "ring-modulate-channel ~A ~A ~A" freq beg dur)))
 
 ;;; amplitude-modulate-channel could be (lambda (y data forward) (* y 0.5 (+ 1.0 (sin angle))) etc ...)

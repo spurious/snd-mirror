@@ -386,7 +386,6 @@ typedef struct snd_info {
   char *name_string;
   fam_info *file_watcher;
   bool writing, bomb_in_progress;
-  int watchers_size;
 #if HAVE_PTHREADS
   mus_lock_t *starred_name_lock, *stop_sign_lock, *edit_history_lock;
 #endif
@@ -501,7 +500,6 @@ typedef struct snd_state {
   void *xen_error_data;
   void (*snd_print_handler)(const char *msg, void *data);
   void *snd_print_data;
-  int watchers_size;
   channel_style_t update_sound_channel_style;
 #if HAVE_GL && WITH_GL2PS
   bool gl_printing;

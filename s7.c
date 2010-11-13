@@ -29747,7 +29747,7 @@ s7_scheme *s7_init(void)
 
   /* these hook variables should use s7_define_constant, but we need to be backwards compatible */
 
-  sc->load_hook = s7_make_hook(sc, 1, 0, false, "*load-hook* is called when a file is loaded");
+  sc->load_hook = s7_make_hook(sc, 1, 0, false, "*load-hook* is called when a file is loaded.  Its functions take one argument, the filename.");
   s7_define_variable(sc, "*load-hook*", sc->load_hook);
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*load-hook*"), 
 		       make_list_3(sc, 
@@ -29755,7 +29755,7 @@ s7_scheme *s7_init(void)
 				   s7_make_function(sc, "(set *load-hook*)", g_load_hook_set, 2, 0, false, "called if *load-hook* is set"), 
 				   sc->F));
 
-  sc->trace_hook = s7_make_hook(sc, 2, 0, false, "*trace-hook* customizes tracing");
+  sc->trace_hook = s7_make_hook(sc, 2, 0, false, "*trace-hook* customizes tracing.  Its functions take 2 arguments, the function being traced, and its current arguments.");
   s7_define_variable(sc, "*trace-hook*", sc->trace_hook); 
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*trace-hook*"), 
 		       make_list_3(sc, 
@@ -29763,7 +29763,8 @@ s7_scheme *s7_init(void)
 				   s7_make_function(sc, "(set *trace-hook*)", g_trace_hook_set, 2, 0, false, "called if *trace-hook* is set"), 
 				   sc->F));
   
-  sc->unbound_variable_hook = s7_make_hook(sc, 1, 0, false, "*unbound-variable-hook* customizes is called when an unbound variable is encountered");
+  sc->unbound_variable_hook = s7_make_hook(sc, 1, 0, false, "*unbound-variable-hook* is called when an unbound variable is encountered.  Its functions \
+take 1 argument, the unbound symbol.");
   s7_define_variable(sc, "*unbound-variable-hook*", sc->unbound_variable_hook); 
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*unbound-variable-hook*"), 
 		       make_list_3(sc, 
@@ -29771,7 +29772,8 @@ s7_scheme *s7_init(void)
 				   s7_make_function(sc, "(set *unbound-variable-hook*)", g_unbound_variable_hook_set, 2, 0, false, "called if *unbound-variable-hook* is set"), 
 				   sc->F));
   
-  sc->error_hook = s7_make_hook(sc, 2, 0, false, "*error-hook* is called when an error is not caught");
+  sc->error_hook = s7_make_hook(sc, 2, 0, false, "*error-hook* is called when an error is not caught.  Its functions take two arguments, \
+the error type and the info passed to the error handler.");
   s7_define_variable(sc, "*error-hook*", sc->error_hook);
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*error-hook*"), 
 		       make_list_3(sc, 

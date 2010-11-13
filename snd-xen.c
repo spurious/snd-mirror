@@ -1383,6 +1383,18 @@ static XEN g_snd_sound_pointer(XEN snd)
 #endif
 
 
+#if (!HAVE_SCHEME)
+/* fmod is the same as modulo in s7:
+   (do ((i 0 (+ i 1))) 
+       ((= i 100)) 
+     (let ((val1 (- (random 1.0) 2.0)) 
+           (val2 (- (random 1.0) 2.0)))
+       (let ((f (fmod val1 val2)) 
+             (m (modulo val1 val2))) 
+         (if (> (abs (- f m)) 1e-9) 
+             (format *stderr* "~A ~A -> ~A ~A~%" val1 val2 f m)))))
+*/
+
 static XEN g_fmod(XEN a, XEN b)
 {
   double val, x, y;
@@ -1396,6 +1408,7 @@ static XEN g_fmod(XEN a, XEN b)
     return(C_TO_XEN_DOUBLE(val + y));
   return(C_TO_XEN_DOUBLE(val));
 }
+#endif
 
 
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
@@ -2519,7 +2532,9 @@ XEN_NARGIFY_1(g_add_source_file_extension_w, g_add_source_file_extension)
   XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
 #endif
 
+#if (!HAVE_SCHEME)
 XEN_NARGIFY_2(g_fmod_w, g_fmod)
+#endif
 
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
   XEN_NARGIFY_1(g_j0_w, g_j0)
@@ -2574,7 +2589,11 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #if MUS_DEBUGGING
   #define g_snd_sound_pointer_w g_snd_sound_pointer
 #endif
+
+#if (!HAVE_SCHEME)
 #define g_fmod_w g_fmod
+#endif
+
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
   #define g_j0_w g_j0
   #define g_j1_w g_j1
@@ -2705,7 +2724,12 @@ void g_xen_initialize(void)
 
   XEN_DEFINE_PROCEDURE(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print);
   XEN_DEFINE_PROCEDURE("little-endian?", g_little_endian_w, 0, 0, 0, "return " PROC_TRUE " if host is little endian");
+
+#if HAVE_SCHEME
+  XEN_EVAL_C_STRING("(define fmod modulo)");
+#else
   XEN_DEFINE_PROCEDURE("fmod",           g_fmod_w,          2, 0, 0, "C's fmod");
+#endif
 
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
   XEN_DEFINE_PROCEDURE(S_bes_j0, g_j0_w,     1, 0, 0, H_j0);

@@ -407,7 +407,7 @@
     (set! (noddcos-angle gen) (+ angle fm (noddcos-frequency gen)))
 
     (if (< (abs den) nearly-zero)
-	(let ((fang (fmod (abs angle) (* 2 pi))))
+	(let ((fang (modulo (abs angle) (* 2 pi))))
 	  ;; hopefully this almost never happens...
 	  (if (or (< fang 0.001)
 		  (< (abs (- fang (* 2 pi))) 0.001))
@@ -448,7 +448,7 @@
     (set! (noddssb-angle gen) (+ cx fm (noddssb-frequency gen)))
 
     (if (< (abs den) nearly-zero)
-	(if (< (fmod (abs mx) (* 2 pi)) .1)
+	(if (< (modulo (abs mx) (* 2 pi)) .1)
 	    -1.0
 	    1.0)
 
@@ -3170,7 +3170,7 @@
   (let* ((x (r2k2cos-angle gen))
 	 (a (r2k2cos-r gen)))
     (if (> x (* 2 pi))
-	(set! x (fmod x (* 2 pi))))
+	(set! x (modulo x (* 2 pi))))
 
     (set! (r2k2cos-angle gen) (+ x fm (r2k2cos-frequency gen)))
 
@@ -4061,7 +4061,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; --------------------------------------------------------------------------------
 
 #|
-;;; do we need fmod 2*pi for the angles? (it is not used in clm.c)
+;;; do we need modulo 2*pi for the angles? (it is not used in clm.c)
 
 :(let ((ph 0.0)) (do ((i 0 (+ i 1))) ((= i 22050)) (set! ph (+ ph (hz->radians 100.0)))) ph)
 628.31850751536
@@ -4388,7 +4388,7 @@ index 10 (so 10/2 is the bes-jn arg):
    (k3sin gen (fm 0.0)) returns a sum of sines scaled by k^3."
   (declare (gen k3sin) (fm float))
   (let ((x (k3sin-angle gen)))
-    (set! (k3sin-angle gen) (fmod (+ x fm (k3sin-frequency gen)) (* 2 pi)))
+    (set! (k3sin-angle gen) (modulo (+ x fm (k3sin-frequency gen)) (* 2 pi)))
     (polynomial (k3sin-coeffs gen) x)))
 
 #|
@@ -5033,7 +5033,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (if (or (>= x two-pi)
 	    (< x 0.0))
 	(begin
-	  (set! x (fmod x two-pi))
+	  (set! x (modulo x two-pi))
 	  (if (< x 0.0) (set! x (+ x two-pi)))
 	  (set! (brown-noise-sum gen) (+ (brown-noise-sum gen) (mus-random (brown-noise-amplitude gen))))))
     (set! (brown-noise-angle gen) (+ x fm (brown-noise-frequency gen)))
@@ -5070,7 +5070,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (if (or (>= x two-pi)
 	    (< x 0.0))
 	(begin
-	  (set! x (fmod x two-pi))
+	  (set! x (modulo x two-pi))
 	  (if (< x 0.0) (set! x (+ x two-pi)))
 	  (let ((val (mus-random (green-noise-amplitude gen))))
 	    (set! (green-noise-sum gen) (+ (green-noise-sum gen) val))
@@ -5114,7 +5114,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (if (or (>= x two-pi)
 	    (< x 0.0))
 	(begin
-	  (set! x (fmod x two-pi))
+	  (set! x (modulo x two-pi))
 	  (if (< x 0.0) (set! x (+ x two-pi)))
 	  (let* ((val (mus-random (green-noise-interp-amplitude gen)))
 		 (end (+ (green-noise-interp-sum gen) val)))
@@ -6122,7 +6122,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 	    (do ((i 0 (+ i 1))
 		 (ks 0.0 (+ ks kscl)))
 		((= i n2))
-	      (let ((diff (fmod (- (vct-ref new-freq-incs i) (vct-ref freq-incs i)) (* 2 pi))))
+	      (let ((diff (modulo (- (vct-ref new-freq-incs i) (vct-ref freq-incs i)) (* 2 pi))))
 		(vct-set! freq-incs i (vct-ref new-freq-incs i))
 		(if (> diff pi) (set! diff (- diff (* 2 pi))))
 		(if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
@@ -6433,8 +6433,7 @@ taking input from the readin generator 'reader'.  The output data is available v
   "(make-circler (frequency 0.0) returns a circler generator.\n\
 (circler gen (fm 0.0)) produces a waveform made up of half circles"
   (declare (gen circler) (fm float))
-  (let* ((x (fmod (circler-angle gen) (* 2 pi)))
-         ;; modulo will also work
+  (let* ((x (modulo (circler-angle gen) (* 2 pi)))
 	 (xx (/ (* 4 x) (* 2 pi)))
 	 (y (if (< xx 2)
 		(sqrt (- 1 (* (- 1 xx) (- 1 xx))))

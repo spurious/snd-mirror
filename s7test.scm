@@ -804,6 +804,7 @@ yow!! -- I'm using mpc_cmp
 (test (let () (define (hi) 1) (procedure? hi)) #t)
 (test (let () (define-macro (hi a) `(+ ,a 1)) (procedure? hi)) #f)
 (test (procedure? begin) #f)
+(test (procedure? lambda) #f)
 (test (procedure? (lambda* ((a 1)) a)) #t)
 (test (procedure? and) #f)
 (test (procedure? (make-procedure-with-setter (lambda () 1) (lambda (x) x))) #t)
@@ -881,6 +882,8 @@ yow!! -- I'm using mpc_cmp
    (if (char? arg)
        (format #t ";(char? ~A) -> #t?~%" arg)))
  (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) (lambda (a) (+ a 1))))
+
+(test (char? begin) #f)
 
 (do ((i 0 (+ i 1)))
     ((= i 256))
@@ -1615,6 +1618,8 @@ yow!! -- I'm using mpc_cmp
 (test (string? "aaaaaa") #t)
 (test (string? #\a) #f)
 (test (string? "\"\\\"") #t)
+(test (string? lambda) #f)
+(test (string? format) #f)
 
 (for-each
  (lambda (arg)
@@ -3483,6 +3488,8 @@ yow!! -- I'm using mpc_cmp
 (test (pair? (cons 1 (cons 2 3))) #t)
 (test (pair?) 'error)
 (test (pair? `'1) #t)
+(test (pair? begin) #f)
+(test (pair? list) #f)
 
 (for-each
  (lambda (arg)
@@ -3564,6 +3571,8 @@ yow!! -- I'm using mpc_cmp
 (test (null? '#()) #f)
 (test (null? (make-vector '(2 0 3))) #f)
 (test (null? "") #f)
+(test (null? lambda) #f)
+(test (null? cons) #f)
 
 (test (null? () '()) 'error)
 (test (null?) 'error)
@@ -4426,6 +4435,8 @@ yow!! -- I'm using mpc_cmp
 
 (test (vector?) 'error)
 (test (vector? #() #(1)) 'error)
+(test (vector? begin) #f)
+(test (vector? vector?) #f)
 
 ;;; make a shared ref -- we'll check it later after enough has happened that an intervening GC is likely
 
@@ -5709,6 +5720,16 @@ yow!! -- I'm using mpc_cmp
 (test (let ((l (list 1 2))) 
 	(list-set! l 0 l) 
 	(string=? (object->string l) "#1=(#1# 2)")) 
+      #t)
+(test (let ((lst (list 1)))
+	(set! (car lst) lst)
+	(set! (cdr lst) lst)
+	(string=? (object->string lst) "#1=(#1# . #1#)"))
+      #t)
+(test (let ((lst (list 1)))
+	(set! (car lst) lst)
+	(set! (cdr lst) lst)
+	(equal? (car lst) (cdr lst)))
       #t)
 (test (let ((lst (cons 1 2))) 
 	(set-cdr! lst lst)
@@ -10587,6 +10608,46 @@ yow!! -- I'm using mpc_cmp
 
 
 
+;;; -------- cond-expand --------
+;;; cond-expand
+
+(test (let ()
+	(cond-expand (guile )
+		     (s7 (define (hi a) a)))
+	(hi 1))
+      1)
+(test (let ((x 0))
+	(cond-expand (guile (format #t ";oops~%"))
+		     (else (set! x 32)))
+	x)
+      32)
+(test (let ()
+	(cond-expand
+	 (guile 
+	  (define (hi a) (+ a 1)))
+	 ((or common-lisp s7)
+	  (define (hi a) a)))
+	(hi 1))
+      1)
+(test (let ()
+	(cond-expand
+	 ((not guile)
+	  (define (hi a) a))
+	 (else 
+	  (define (hi a) (+ a 1))))
+	(hi 1))
+      1)
+(test (let ()
+	(cond-expand 
+	 ((and s7 clm)
+	  (define (hi a) a))
+	 (else 
+	  (define (hi a) (+ a 1))))
+	(hi 1))
+      1)
+
+
+
 
 ;;; -------- case --------
 ;;; case
@@ -12149,6 +12210,9 @@ yow!! -- I'm using mpc_cmp
 ;(test (let :hi ((i 0)) i) 'error)
 
 (test (let func ((a 1) . b) a) 'error)
+(test (let func a . b) 'error)
+(test (let let func ((a 1)) func) 'error)
+(test (let func 1 ((x 1)) x) 'error)
 (test (let func ((a 1) . b) (if (> a 0) (func (- a 1) 2 3) b)) 'error)
 (test (let func ((a . 1)) a) 'error)
 (test (let func (a . 1) a) 'error)
@@ -12245,7 +12309,7 @@ yow!! -- I'm using mpc_cmp
 ;;; these are confusing:
 ;(letrec ((if 0.0)) ((lambda () (if #t "hi")))) -> "hi"
 ;(let ((let 0)) let) -> 0
-;(let* ((lambda 0)) ((lambda () 1.5))) -> 1.5
+;(let* ((lambda 0)) ((lambda () 1.5))) -> 1.5 ; syntax error in Guile
 ;(let* ((lambda 0)) lambda) -> 0
 
 ;; from test-submodel.scm, from MIT I think
@@ -15832,7 +15896,7 @@ why are these different (read-time `#() ? )
     (test sum 9))
 
   (test (hook-arity *trace-hook*) '(2 0 #f))
-  (test (hook-documentation *trace-hook*) "*trace-hook* customizes tracing")
+  (test (hook-documentation *trace-hook*) "*trace-hook* customizes tracing.  Its functions take 2 arguments, the function being traced, and its current arguments.")
   (test (hook-functions *trace-hook*) '())
 
   (let ((sum 0))
@@ -38807,6 +38871,8 @@ why are these different (read-time `#() ? )
 (num-test (modulo -1.5 2) 0.5)
 (num-test (modulo -3/2 -2) -3/2)
 (num-test (modulo -1.5 -2) -1.5)
+(num-test (modulo 3.5 1.5) 0.5)
+(num-test (modulo -3.5 1.5) 1.0)
 
 (num-test (remainder 3.1 2.0) 1.1)
 (num-test (remainder 3.1 2) 1.1)
