@@ -4207,6 +4207,9 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
 	if ((isinf(val)) || (isnan(val)))
 	  return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, x, "a normal real"));
 
+	if ((val > LLONG_MAX) || (val < LLONG_MIN)) /* ?? or should it pin at the min/max?? an example: #e78.5e65 */
+	  return(s7_make_real(sc, NAN));
+
 	if (c_rationalize(val, default_rationalize_error, &numer, &denom))
 	  return(s7_make_ratio(sc, numer, denom));
       }
@@ -5177,7 +5180,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	      x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix);
 	      if (is_abnormal(sc, x))                    /* (string->number "#e#b0/0") */
 		return(sc->NIL);
-	      if (!s7_is_real(x))                        /* (string->number "#e#b1/0+i") */
+	      if (!s7_is_real(x))                        /* (string->number "#e#b1+i") */
 		return(sc->NIL);
 #if WITH_GMP
 	      return(big_inexact_to_exact(sc, make_list_1(sc, x)));
@@ -5188,10 +5191,14 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	}
 
       x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS);
-
+#if WITH_GMP
+      /* #e1e310 is a simple case */
+      if (s7_is_bignum(x))
+	return(big_inexact_to_exact(sc, make_list_1(sc, x)));
+#endif	
       if (is_abnormal(sc, x))                            /* (string->number "#e0/0") */
 	return(sc->NIL);
-      if (!s7_is_real(x))                                /* (string->number "#e1/0+i") */
+      if (!s7_is_real(x))                                /* (string->number "#e1+i") */
 	return(sc->NIL);
       
 #if WITH_GMP
@@ -5452,7 +5459,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	}
       
 #if WITH_GMP
-      (*overflow) = (int_part > 0);
+      (*overflow) = ((int_part > 0) || (exponent > 20));    /* .1e310 is a tricky case */
 #endif
       
       if (int_len <= max_len)
@@ -20336,7 +20343,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 	      
 	      endc = orig_str[k];
 	      orig_str[k] = '\0';
-	      
+
 	      if (atom_case)
 		{
 		  switch (*orig_str)
@@ -27526,6 +27533,30 @@ static s7_pointer big_is_negative(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer big_is_infinite(s7_scheme *sc, s7_pointer args)
+{
+  /* (infinite? 1e310) would return #t if left to g_is_infinite
+   */
+  s7_pointer x;
+  x = car(args);
+  if (is_c_object(x))
+    {
+      if ((c_object_type(x) == big_integer_tag) ||
+	  (c_object_type(x) == big_ratio_tag))
+	return(sc->F);
+
+      if (c_object_type(x) == big_real_tag)
+	return(make_boolean(sc, mpfr_inf_p(S7_BIG_REAL(x)) != 0));
+      
+      if (c_object_type(x) == big_complex_tag)
+	return(make_boolean(sc, 
+			    (mpfr_inf_p(S7_BIG_REAL(big_real_part(sc, args))) != 0) &&
+			    (mpfr_inf_p(S7_BIG_REAL(big_imag_part(sc, args))) != 0)));
+    }
+  return(g_is_infinite(sc, args));
+}
+
+
 static s7_pointer big_lognot(s7_scheme *sc, s7_pointer args)
 {
   if ((is_c_object(car(args))) &&
@@ -28917,6 +28948,8 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 }
 
 
+
+
 static void s7_gmp_init(s7_scheme *sc)
 {
   big_integer_tag = s7_new_type_x("<big-integer>", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL, NULL, copy_big_integer, NULL);
@@ -28971,6 +29004,7 @@ static void s7_gmp_init(s7_scheme *sc)
   s7_define_function(sc, "zero?",               big_is_zero,          1, 0, false, H_is_zero);
   s7_define_function(sc, "positive?",           big_is_positive,      1, 0, false, H_is_positive);
   s7_define_function(sc, "negative?",           big_is_negative,      1, 0, false, H_is_negative);
+  s7_define_function(sc, "infinite?",           big_is_infinite,      1, 0, false, H_is_infinite);
 
   s7_define_function(sc, "abs",                 big_abs,              1, 0, false, H_abs);
   s7_define_function(sc, "exp",                 big_exp,              1, 0, false, H_exp);
