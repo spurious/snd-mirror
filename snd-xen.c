@@ -302,8 +302,6 @@ void snd_rb_raise(XEN tag, XEN throw_args)
   bool need_comma = false;
   int size = 2048;
 
-  /* fprintf(stderr, "err: %s %s\n", XEN_AS_STRING(tag), XEN_AS_STRING(throw_args)); */
-
   if (strcmp(rb_id2name(tag), "Out_of_range") == 0) 
     err = rb_eRangeError;
   else
@@ -459,8 +457,6 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   else
     {
       arity = XEN_ARITY(proc);
-
-      /* fprintf(stderr,"procedure_ok: %s arity: %s %p\n", XEN_AS_STRING(proc), XEN_AS_STRING(arity), proc); */
 
 #if HAVE_RUBY
       rargs = XEN_TO_C_INT(arity);

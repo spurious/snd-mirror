@@ -2523,6 +2523,41 @@ yow!! -- I'm using mpc_cmp
 	str)
       "1h2i3h4o")
 
+(let ((size 1024))
+  (let ((str (make-string size)))
+    (do ((i 0 (+ i 1)))
+	((= i size))
+      (set! (str i) (integer->char (+ 1 (modulo i 255)))))
+    (let ((str1 (string-copy str)))
+      (test (string? str1) #t)
+      (test (string-length str1) 1024)
+      (test (string-ref str1 556) (string-ref str 556))
+      (test (string=? str str1) #t)
+      (test (string<=? str str1) #t)
+      (test (string>=? str str1) #t)
+      (test (string-ci=? str str1) #t)
+      (test (string-ci<=? str str1) #t)
+      (test (string-ci>=? str str1) #t)
+      (test (string<? str str1) #f)
+      (test (string>? str str1) #f)
+      (test (string-ci<? str str1) #f)
+      (test (string-ci>? str str1) #f)
+      (test (substring str 123 321) (substring str1 123 321))
+
+      (string-set! str1 1000 #\space)
+      (test (string=? str str1) #f)
+      (test (string<=? str str1) #f)
+      (test (string>=? str str1) #t)
+      (test (string-ci=? str str1) #f)
+      (test (string-ci<=? str str1) #f)
+      (test (string-ci>=? str str1) #t)
+      (test (string<? str str1) #f)
+      (test (string>? str str1) #t)
+      (test (string-ci<? str str1) #f)
+      (test (string-ci>? str str1) #t)
+
+      (test (string-length (string-append str str1)) 2048)
+      )))
 
 
 
@@ -6655,9 +6690,9 @@ yow!! -- I'm using mpc_cmp
   (test (and (equal? tag 'tag)
 	     (equal? args '(1 2 3))))
   (set! (hook-functions *error-hook*) old-error-hook))
-
-;;; can't include these because they interrupt the load
 |#
+;;; can't include this because it interrupts the load
+
 
 
 
@@ -8089,7 +8124,7 @@ yow!! -- I'm using mpc_cmp
       (test (format #f "~10,'.D" (bignum "3/4")) ".......3/4")
       (test (format #f "~10D" (bignum "3/4")) "       3/4")
       (test (length (format #f "~100D" (bignum "34"))) 100)
-      (test (format #f "~50F" (bignum "12345678.7654321")) "           1.23456787654321007430553436279296875E7")
+      (test (format #f "~50F" (bignum "12345678.7654321")) "                                1.23456787654321E7")
       ))
 
 
@@ -42575,6 +42610,11 @@ why are these different (read-time `#() ? )
       (num-test (inexact->exact .1e20) 10000000000000000000)
       (num-test (inexact->exact 1e19) 10000000000000000000)
       (num-test (inexact->exact 1e20) 100000000000000000000)
+      
+      (num-test (inexact->exact 9007199254740995.0) 9007199254740995)
+      (num-test (inexact->exact 4611686018427388404.0) 4611686018427388404)
+      (num-test #e9007199254740995.0 9007199254740995)
+      (num-test #e4611686018427388404.0 4611686018427388404)
 
       (for-each
        (lambda (op)
@@ -42594,6 +42634,11 @@ why are these different (read-time `#() ? )
       (test (truncate 1e19) 'error)
       (test (ceiling 1e19) 'error)
       (test (rationalize 1e19) 'error)))
+
+;(num-test (inexact->exact 9007199254740995.0) 9007199254740995)
+;this can't work in the non-gmp case -- see s7.c under BIGNUM_PLUS
+;#e4611686018427388404.0 -> 4611686018427387904
+
 
 
 
@@ -49104,6 +49149,9 @@ why are these different (read-time `#() ? )
 ;      (num-test (expt 324518553658426726783156020576256 1/3) 68719476736)
 ;      (num-test (expt 4722366482869645213696/6561 1/2) 68719476736/81)
 ;      (num-test (expt 324518553658426726783156020576256/19683 1/3) 68719476736/27)
+
+      (num-test (- (+ (expt 2.0 62) 512) (+ (expt 2.0 62) 513)) -1.0)
+      (num-test (+ (- 512 (expt 2.0 62)) (- (expt 2.0 62) 513)) -1.0)
       
       (num-test (expt 4722366482869645213696/6561 -1/2) (/ 68719476736/81))
       (num-test (expt (expt -4722366482869645213696/6561 1/2) 2) -4722366482869645213696/6561)
@@ -53378,7 +53426,7 @@ why are these different (read-time `#() ? )
 
 (num-test #x0000000000000000000000000001.0 1.0)
 (num-test #x1.0000000000000000000000000000 1.0)
-(test (number->string 1222222222.222222 16) "48d9a18e.38e38c")
+;(test (number->string 1222222222.222222 16) "48d9a18e.38e38c")
 (num-test (string->number (number->string 1222222222.222222222222222222 16) 16) 1222222222.222222222222222222)
 
 (if with-bignums
@@ -53796,7 +53844,8 @@ why are these different (read-time `#() ? )
 (num-test #e2/3 2/3)
 
 ;; nutty: #e+inf.0 #e+nan.0 
-;;    these don't arise in s7 because we don't define inf.0 and nan.0 
+;;    these don't arise in s7 because we don't define inf.0 and nan.0
+(if with-bignums (num-test #e9007199254740995.0 9007199254740995))
 
 (num-test #b0/1 0)
 ;(test #b0/0 'division-by-zero) ; read-error
@@ -54066,7 +54115,7 @@ why are these different (read-time `#() ? )
       ((= i 17))
     (no-char (number->string (* 1.0 (/ 1 i)) i) i)
     (no-char (number->string (* 1.0 (/ 1 (* i i))) i) i)
-    (no-char (number->string (* 0.999999999999999 (/ 1 i)) i) i)
+    (no-char (number->string (* 0.99999999999999 (/ 1 i)) i) i)
     (no-char (number->string (* 0.999999 (/ 1 i)) i) i)))
 
 (let ((happy #t))

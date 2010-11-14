@@ -999,6 +999,10 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
  *   4611686018427387904
  *   :(floor (+ (expt 2.0 62) 513))
  *   4611686018427388928
+ *
+ * This spells trouble for normal arithmetic in this range.  If no gmp,
+ *    (- (+ (expt 2.0 62) 512) (+ (expt 2.0 62) 513)) = -1024.0 (should be -1.0)
+ *    but we don't currently give an error in this case -- not sure what the right thing is.
  */
 
 
@@ -4207,8 +4211,8 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
 	if ((isinf(val)) || (isnan(val)))
 	  return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, x, "a normal real"));
 
-	if ((val > LLONG_MAX) || (val < LLONG_MIN)) /* ?? or should it pin at the min/max?? an example: #e78.5e65 */
-	  return(s7_make_real(sc, NAN));
+	if ((val > BIGNUM_PLUS) || (val < BIGNUM_MINUS)) /* see comment at definition of BIGNUM_PLUS */
+	  return(s7_make_real(sc, NAN));                 /* should this be an error? */
 
 	if (c_rationalize(val, default_rationalize_error, &numer, &denom))
 	  return(s7_make_ratio(sc, numer, denom));
@@ -5403,6 +5407,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
     }
 
 #if WITH_GMP
+  /* 9007199254740995.0 */
+
   if (int_len + frac_len >= max_len)
     {
       (*overflow) = true;
@@ -18491,7 +18497,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   s7_pointer catcher;
   const char *call_name = NULL, *call_file = NULL;
   int call_line = 0;
-  
+
   /* set up *error-info*, look for a catch that matches 'type', if found
    *   call its error-handler, else if *error-hook* is bound, call it,
    *   else send out the error info ourselves.
@@ -18640,6 +18646,7 @@ GOT_CATCH:
   if (catcher != sc->F)
     {
       int loc;
+
       sc->args = make_list_2(sc, type, info);
       sc->code = catch_handler(catcher);
       loc = catch_goto_loc(catcher);
@@ -18669,6 +18676,7 @@ GOT_CATCH:
 	  (is_pair(hook_functions(sc->error_hook))))
 	{
 	  s7_pointer error_list;
+	  /* (set! (hook-functions *error-hook*) (list (lambda args (format *stderr* "got error ~A~%" args)))) */
 
 	  error_list = hook_functions(sc->error_hook);
 	  hook_functions(sc->error_hook) = sc->NIL;
@@ -18677,7 +18685,12 @@ GOT_CATCH:
 	  push_stack(sc, opcode(OP_ERROR_HOOK_QUIT), sc->NIL, error_list); /* restore *error-hook* upon successful (or any!) evaluation */
 	  sc->args = make_list_2(sc, type, info);
 	  sc->code = error_list;
-	  push_stack(sc, opcode(OP_HOOK_APPLY), sc->args, sc->code);
+	  /* push_stack(sc, opcode(OP_HOOK_APPLY), sc->args, sc->code); */
+
+	  /* if we drop into the longjmp below, the hook functions are not called!
+	   *   OP_ERROR_HOOK_QUIT performs the longjmp, so it should be safe to go to eval.
+	   */
+	  eval(sc, OP_HOOK_APPLY);
 	}
       else
 	{
@@ -18796,7 +18809,7 @@ GOT_CATCH:
 	  sc->op = OP_ERROR_QUIT;
 	}
     }
-  
+
   if (sc->longjmp_ok)
     {
       longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
@@ -27956,6 +27969,8 @@ static s7_pointer big_inexact_to_exact(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
   p = car(args);
 
+  /* (inexact->exact 9007199254740995.0) */
+
   /* here we have to check for floats > most-positive-fixnum etc */
   if (is_c_object(p))
     {
@@ -29910,8 +29925,19 @@ the error type and the info passed to the error handler.");
 
   {
     int i, top;
+#if WITH_GMP
+    /* use BIGNUM_PLUS and MINUS here so that 9007199254740995.0 doesn't get turned into 9007199254740996.0 
+     *   (using 53 and 24 bits)
+     */
+    #define LOG_LLONG_MAX 36.736800
+    #define LOG_LONG_MAX  16.6355322
+#else
+    /* actually not safe = (log (- (expt 2 63) 1)) and (log (- (expt 2 31) 1)) 
+     *   (using 63 and 31 bits)
+     */
     #define LOG_LLONG_MAX 43.668274
     #define LOG_LONG_MAX  21.487562
+#endif
 
     top = sizeof(s7_Int);
     s7_int_max = (top == 8) ? S7_LONG_MAX : SHRT_MAX;
