@@ -212,7 +212,7 @@
 # with_sound.  with_sound returns a filename which can be used in the
 # sound_let body.
 #
-# sound_let(lambda do | | fm_violin(0, 1, 330, 0.5) end,
+# sound_let(Proc.new do | | fm_violin(0, 1, 330, 0.5) end,
 #           1024) do |tmp_file, val|
 # end
 #
@@ -221,7 +221,7 @@
 # If with_sound needs args, the args and the procedure must be in an
 # array.
 #
-# sound_let([:scaled_to, 0.3, :output, "sl.snd", lambda do | | fm_violin(0, 1, 330, 0.5) end],
+# sound_let([:scaled_to, 0.3, :output, "sl.snd", Proc.new do | | fm_violin(0, 1, 330, 0.5) end],
 #           1024) do |tmp_file, val|
 # end
 # 
@@ -229,15 +229,15 @@
 # 
 # One with_sound-call and one temporary file name, arbitrary called TMP:
 # 
-# sound_let([:reverb, :jc_reverb, lambda do | | fm_violin(0, 1, 220, 0.2) end]) do |tmp|
+# sound_let([:reverb, :jc_reverb, Proc.new do | | fm_violin(0, 1, 220, 0.2) end]) do |tmp|
 #   mus_mix(@output, tmp)
 # end
 # 
 # Two with_sound-calls and two temporary file names, arbitrary
 # called TEMP_1 and TEMP_2:
 # 
-# sound_let([:reverb, :jc_reverb, lambda do | | fm_violin(0, 1, 220, 0.2) end],
-#           lambda do | | fm_violin(0.5, 1, 440, 0.3) end) do |temp_1, temp_2|
+# sound_let([:reverb, :jc_reverb, Proc.new do | | fm_violin(0, 1, 220, 0.2) end],
+#           Proc.new do | | fm_violin(0.5, 1, 440, 0.3) end) do |temp_1, temp_2|
 #   mus_mix(temp_1, temp_2)
 #   mus_mix(@output, temp_1)
 # end
@@ -347,7 +347,7 @@ end
 
 with_sound() do
   with_mix "s1", %Q{
-  sound_let(lambda do | | fm_violin(0, 1, 440, 0.1) end) do |tmp|
+  sound_let(Proc.new do | | fm_violin(0, 1, 440, 0.1) end) do |tmp|
     clm_mix(tmp)
   end
   }
@@ -355,8 +355,8 @@ end
 
 with_sound(:verbose, true) do
   with_mix "s6", %Q{
-  sound_let(lambda do | | fm_violin(0, 1, 440, 0.1) end,
-            [:reverb, :nrev, lambda do | | clm_mix("oboe.snd") end]) do |tmp, tmp1|
+  sound_let(Proc.new do | | fm_violin(0, 1, 440, 0.1) end,
+            [:reverb, :nrev, Proc.new do | | clm_mix("oboe.snd") end]) do |tmp, tmp1|
     clm_mix(tmp1)
     clm_mix(tmp, :scale, 0.2, :output_frame, seconds2samples(1))
   end
@@ -365,10 +365,10 @@ with_sound(:verbose, true) do
 end
 
 with_sound(:verbose, true) do
-  sound_let(lambda do | |
+  sound_let(Proc.new do | |
                 with_mix "s7", 0, %Q{
-                  sound_let(lambda do | | fm_violin(0, 1, 440, 0.1) end,
-                            lambda do | | clm_mix("oboe.snd") end) do |tmp, tmp1|
+                  sound_let(Proc.new do | | fm_violin(0, 1, 440, 0.1) end,
+                            Proc.new do | | clm_mix("oboe.snd") end) do |tmp, tmp1|
                     clm_mix(tmp1)
                     clm_mix(tmp, :output_frame, @srate)
                   end
@@ -412,7 +412,7 @@ __ws_verbose__ = $VERBOSE
 __ws_debug__   = $DEBUG
 # get rid of `undefined variable' messages
 with_silence do
-  $clm_version            = "ruby 05-Jan-2010"
+  $clm_version            = "ruby 16-Nov-2010"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -556,7 +556,7 @@ with_reverb(:jl_reverb, 0.2)")
   add_help(:with_temp_sound, ws_doc)
   def with_temp_sound(*args, &body)
     old_output = $clm_file_name
-    $clm_file_name = tempnam
+    $clm_file_name = tempnam()
     ws = with_sound(:clm, true, *args, &body)
     $clm_file_name = old_output
     ws
@@ -587,11 +587,21 @@ with_reverb(:jl_reverb, 0.2)")
 Saves SND in a temporary file, which name can be accessed in the body code.  \
 After finishing the body, the file will be removed.")
   def with_temp_snd(snd = false, &body)
-    t = tempnam
+    t = tempnam()
     save_sound_as(t, snd)
     ret = body.call(t)
     remove_file(t)
     ret
+  end
+
+  if defined? snd_tempnam
+    alias tempnam snd_tempnam
+  else
+    $file_number = 0
+    def tempnam
+      dir = (ENV.map do |k, v| v if /TMP/ =~ k end.compact.first or "/tmp")
+      format("%s/snd_%d_%d.snd", dir, $$, $file_number += 1)
+    end
   end
 
   def make_default_comment
@@ -640,7 +650,6 @@ end
 class With_sound
   include Info
   include WS
-  @@file_number = 0
 
   def initialize(*args, &body)
     @output          = get_args(args, :output,            $clm_file_name)
@@ -811,7 +820,7 @@ installs the @with_sound_note_hook and prints the line
   def with_current_sound(*args, &body)
     output, offset, scaled_to, scaled_by = nil
     optkey(args, binding,
-           [:output,    tempnam],
+           [:output,    tempnam()],
            [:offset,    0.0],
            [:scaled_to, false],
            [:scaled_by, false])
@@ -973,6 +982,21 @@ installs the @with_sound_note_hook and prints the line
   end
 
   protected
+  # INFO [ms]
+  # Mon Nov 15 14:46:13 CET 2010
+  #
+  # previous (1.?.? ... 1.9.1)
+  #   instance_eval do | | body end
+  #
+  # current (1.9.2 since July 2010)
+  #   instance_eval do |self| body end
+  #
+  #   if BODY: lambda do | | ... end
+  #     ArgumentError: wrong number of arguments (1 for 0)
+  #   if BODY: Proc.new do | | ... end
+  #     okay (Proc ignores arity)
+  #
+  # tomorrow?
   def run_body
     instance_eval(&@body)
     if provided?(:snd) and sound?(@out_snd)
@@ -981,14 +1005,13 @@ installs the @with_sound_note_hook and prints the line
     end
   rescue Interrupt, ScriptError, NameError, StandardError
     finish_sound
-    err, $! = $!, nil
     show_local_variables
-    case err
+    case $!
     when Interrupt, Break
       # C-g, ws_break
-      Snd.message("with_sound body: %s", err.message)
+      Snd.message("with_sound body: %s", $!.message)
     else
-      raise err
+      raise $!
     end
   end
   
@@ -1001,14 +1024,13 @@ installs the @with_sound_note_hook and prints the line
     end
   rescue Interrupt, ScriptError, NameError, StandardError
     finish_sound
-    err, $! = $!, nil
     show_local_variables
-    case err
+    case $!
     when Interrupt, Break
       # C-g, ws_break
-      Snd.message("with_sound body (reverb): %s", err.message)
+      Snd.message("with_sound body (reverb): %s", $!.message)
     else
-      raise err
+      raise $!
     end
   end
 
@@ -1037,23 +1059,18 @@ installs the @with_sound_note_hook and prints the line
     # sorted by value[start]
     # environ == proc
     @clm_instruments.sort do |a, b| a.cadr.cadr <=> b.cadr.cadr end.each do |environ, vals|
+      # INFO
+      # changes on Mon Nov 15 14:31:46 CET 2010 [ms]
+      # ruby19: wrong argument type Proc (expected Binding)
+      #   environ to environ.binding
+      #   var to var.to_s (var is now of kind Symbol)
       Snd.message("=== %s [%1.3f-%1.3f] ===", *vals)
-      eval("local_variables", environ).each do |var|
-        Snd.message("%s = %s", var, eval(var, environ).inspect)
+      eval("local_variables", environ.binding).each do |var|
+        Snd.message("%s = %s", var, eval(var.to_s, environ.binding).inspect)
       end
       Snd.message()
     end
     @clm_instruments.values
-  end
-  
-  def tempnam
-    if defined? snd_tempname
-      snd_tempnam()
-    else
-      @@file_number += 1
-      dir = (ENV.map do |k, v| v if /TMP/ =~ k end.compact.first or "/tmp")
-      format("%s/snd_%d_%d.snd", dir, $$, @@file_number)
-    end
   end
 
   def make_reverb_file_name

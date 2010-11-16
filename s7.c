@@ -5315,7 +5315,9 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 #else
   if ((tmp - tmp1 - 2) > s7_int_digits_by_radix[radix])
     {
-      /* I can't decide what to do with these non-gmp overflows.  Perhaps NAN in all cases? */
+      /* I can't decide what to do with these non-gmp overflows.  Perhaps NAN in all cases? 
+       *     overflow: 9223372036854775810 -> -9223372036854775806 -- this is not caught currently
+       */
       (*overflow) = true;
       if (negative)
 	return(LLONG_MIN);
@@ -5468,9 +5470,16 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
       (*overflow) = ((int_part > 0) || (exponent > 20));    /* .1e310 is a tricky case */
 #endif
       
-      if (int_len <= max_len)
-	dval = int_part * ipow(radix, exponent);
-      else dval = int_part * ipow(radix, exponent + int_len - max_len);
+      if (int_part != 0) /* 0.<310 zeros here>1e310 for example --
+			  *   pow (via ipow) thinks it has to be too big, returns Nan,
+			  *   then Nan * 0 -> Nan and the NaN progogates
+			  */
+	{
+	  if (int_len <= max_len)
+	    dval = int_part * ipow(radix, exponent);
+	  else dval = int_part * ipow(radix, exponent + int_len - max_len);
+	}
+      else dval = 0.0;
 
       /* shift by exponent, but if int_len > max_len then we assumed (see below) int_len - max_len 0's on the left */
       /*   using int_to_int or table lookups here instead of pow did not make any difference in speed */
@@ -5489,7 +5498,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	      for (i = 0; i < flen; i++)
 		frac_part = digits[(int)(*str++)] + (frac_part * radix);
 
-	      dval += frac_part * ipow(radix, exponent - flen - k);
+	      if (frac_part != 0)                                /* same pow->NaN problem as above can occur here */
+		dval += frac_part * ipow(radix, exponent - flen - k);
 	    }
 	}
       else
@@ -15811,6 +15821,7 @@ static bool call_s_object_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
 
 static s7_pointer call_s_object_getter(s7_scheme *sc, s7_pointer a, s7_pointer args)
 {
+  /* I think this is no longer accessible */
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
   return(s7_call(sc, object_types[obj->type].getter_func, s7_cons(sc, obj->value, args))); /* ?? */
@@ -15819,6 +15830,7 @@ static s7_pointer call_s_object_getter(s7_scheme *sc, s7_pointer a, s7_pointer a
 
 static s7_pointer call_s_object_setter(s7_scheme *sc, s7_pointer a, s7_pointer args)
 {
+  /* I think this is no longer accessible */
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
   return(s7_call(sc, object_types[obj->type].setter_func, s7_cons(sc, obj->value, args))); /* ?? */
@@ -15850,6 +15862,23 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
   car(sc->s_function_args) = obj->value;
   return(s7_call(sc, object_types[obj->type].length_func, sc->s_function_args));
 }
+
+/* (call-with-exit (lambda (exit) (length ((cadr (make-type :length (lambda (a) (exit 32)))) 1))))
+ *    segfaults because of the s7_call -- can it be avoided? [we pop_stack past the start]
+ *    [fixed, but still callable via object_reverse and applicable_length]
+ * 
+ *    (call-with-exit (lambda (exit) (((cadr (make-type :getter (lambda (a n) (exit 32)))) 1) 0))) -> 32
+ *       but here the getter s7_call is not called (eval apply uses getter_func directly)
+ *
+ *  these also segfault:
+ *    (call-with-exit (lambda (exit) (object->string ((cadr (make-type :print (lambda (a) (exit 32)))) 1))))
+ *    (call-with-exit (lambda (exit) (copy ((cadr (make-type :copy (lambda (a) (exit 32)))) 1))))
+ *    (call-with-exit (lambda (exit) (fill! ((cadr (make-type :fill (lambda (a n) (exit 32)))) 1) 0)))
+ *    (call-with-exit (lambda (exit) (let ((typ (make-type :equal (lambda (a n) (exit 32))))) (equal? ((cadr typ) 1) ((cadr typ) 1)))))
+ *    reverse? one way to fix this is to use e.g. OP_LENGTH etc, another involves fully implementing objects/classes/methods
+ *
+ * the *#readers*, *unbound-variable-hook* funcs have the same problem [symbol-bind, thread func?]
+ */ 
 
 
 static s7_pointer make_s_object(s7_scheme *sc, int type, void *value)
@@ -17229,9 +17258,22 @@ list has infinite length."
     case T_HASH_TABLE:
       return(g_hash_table_size(sc, args));
 
-    case T_S_OBJECT:
     case T_C_OBJECT:
       return(object_length(sc, lst));
+
+    case T_S_OBJECT:
+      {
+	s_type_t *obj;
+	obj = (s_type_t *)s7_object_value(lst);
+	if (object_types[obj->type].length)
+	  {
+	    sc->code = object_types[obj->type].length_func;
+	    sc->args = make_list_1(sc, obj->value);
+	    push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+	    return(sc->UNSPECIFIED);
+	  }
+	return(eval_error(sc, "attempt to get length of ~A?", lst));
+      }
 
     default:
       return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
