@@ -895,9 +895,13 @@ yow!! -- I'm using mpc_cmp
 (test (char? #\a #\b) 'error)
 (test (char? #\x65) #t)
 (test (char? #\x000000000065) #t)
-;(test (char=? #\x+65 #\x0000000000065) #t)
 (test (char? #\x0) #t)
 (test (char=? #\x000 #\null) #t)
+(test (char=? #\x08 #\x8) #t)
+(test (char=? #\x0e #\xe) #t) ; Guile thinks both of these names are bogus
+(test (char=? #\x00e #\xe) #t)
+(test (char=? #\x0000e #\xe) #t)
+(test (char=? #\x00000000e #\xe) #t) ; hmmm -- surely this is a bug
 (test (char? #\xff) #t)
 ;; any larger number is a reader error
 
@@ -3978,6 +3982,7 @@ yow!! -- I'm using mpc_cmp
 (test (let ((x (list 1 2 3))) (eq? (list-tail x 2) (cddr x))) #t)
 (test (list-tail '() 0) '())
 (test (list-tail '() 1) 'error)
+(test (list-tail '(1 2 3) 4) 'error)
 (test (list-tail '() -1) 'error)
 (test (list-tail (list 1 2) 2) '())
 (test (list-tail (cons 1 2) 0) '(1 . 2))
@@ -4923,6 +4928,12 @@ yow!! -- I'm using mpc_cmp
       (vector-fill! v (make-rectangular (expt 2 70) 1.0))
       (num-test (v 0) (make-rectangular (expt 2 70) 1.0))))
 
+(let ((v (make-vector 3)))
+  (vector-fill! v v)
+  (test (v 0) v)
+  (set! (v 1) 32)
+  (test ((v 0) 1) 32))
+  
 
 (test (let ((sum 0)) (for-each (lambda (n) (set! sum (+ sum n))) (vector 1 2 3)) sum) 6)
 (test (let ((sum 0)) (for-each (lambda (n m) (set! sum (+ sum n (- m)))) (vector 1 2 3) (vector 4 5 6)) sum) -9)
@@ -5581,6 +5592,11 @@ yow!! -- I'm using mpc_cmp
 (test (let ((lst (list 1 (list 2 3)))) (fill! lst 0) lst) '(0 0))
 (test (let ((lst (cons 1 2))) (fill! lst 0) lst) '(0 . 0))
 (test (let ((lst (cons 1 (cons 2 3)))) (fill! lst 0) lst) '(0 0 . 0))
+(let ((lst (make-list 3)))
+  (fill! lst lst)
+  (test lst (lst 0))
+  (set! (lst 1) 32)
+  (test ((lst 0) 1) 32))
 
 (let ((lst1 (list 1 2))) 
   (test (length lst1) 2)
@@ -6325,6 +6341,15 @@ yow!! -- I'm using mpc_cmp
   (test (fact 5) 120)
   (test (fact 2) 2))
 
+(test (let ((f #f))
+	(set! f (lambda () 
+		  (let* ((code (procedure-source f))
+			 (pos (- (length code) 1)))
+		    (set! (code pos) (+ (code pos) 1)))
+		  1))
+	(f) (f) (f))
+      4)
+
 (let* ((x (list 1 2 3)) ; from Lambda the Ultimate I think -- I lost the reference
        (y (list 4 5))	
        (z (cons (car x) (cdr y)))
@@ -6895,6 +6920,11 @@ yow!! -- I'm using mpc_cmp
   )
 
 (let ((h (make-hook '(1 0 #t))))
+  (test (object->string h) "#<hook>")
+  (test (reverse h) 'error)
+  (test (length h) 'error)
+  (test (fill! h) 'error)
+  (test (copy h) h)
   (test (hook-arity h) '(1 0 #t))
   (set! (hook-functions h) (list (lambda (x . y) x)))
   (test (hook-apply h '(1 2 3)) (h 1 2 3))
@@ -7005,6 +7035,9 @@ yow!! -- I'm using mpc_cmp
       #t)
 (test (load "empty-file") 3)
 
+(test (reverse *stdin*) 'error)
+(test (fill! (current-output-port)) 'error)
+(test (length *stderr*) 'error)
 
 ;; these apparently jump out of the enclosing load too
 (for-each
@@ -9091,6 +9124,49 @@ yow!! -- I'm using mpc_cmp
 (test (object->string dynamic-wind) "dynamic-wind")
 (test (object->string (make-procedure-with-setter (lambda () 1) (lambda (val) val))) "#<procedure-with-setter>")
 (test (object->string object->string) "object->string")
+
+(test (object->string #\n #f) "n")
+(test (object->string #\n) "#\\n")
+(test (object->string #\r) "#\\r")
+(test (object->string #\r #f) "r")
+(test (object->string #\t #f) "t")
+(test (object->string #\t) "#\\t")
+
+#|
+(do ((i 0 (+ i 1))) 
+    ((= i 256)) 
+  (let ((c (integer->char i))) 
+    (let ((str (object->string c))) 
+      (if (and (not (= (length str) 3))       ; "#\\a"
+	       (or (not (char=? (str 2) #\x))
+		   (not (= (length str) 5)))) ; "#\\xee"
+	  (format #t "(#t) ~C: ~S~%" c str))
+      (set! str (object->string c #f))
+      (if (not (= (length str) 1))
+	  (format #t "(#f) ~C: ~S~%" c str)))))
+this prints:
+(#t) : "#\\null"
+(#f) : ""
+(#t) : "#\\x1"
+(#t) : "#\\x2"
+(#t) : "#\\x3"
+(#t) : "#\\x4"
+(#t) : "#\\x5"
+(#t) : "#\\x6"
+(#t) : "#\\x7"
+(#t): "#\\x8"
+(#t) 	: "#\\tab"
+(#t) 
+: "#\\newline"
+(#t) 
+     : "#\\xb"
+(#t) 
+     : "#\\xc"
+: "#\\return"
+(#t) : "#\\xe"
+(#t) : "#\\xf"
+(#t)  : "#\\space"
+|#
 
 (test (object->string #\x30) "#\\0")
 (test (object->string #\x91) "#\\x91")
@@ -17082,11 +17158,78 @@ why are these different (read-time `#() ? )
     (test (hi (1 2 3)) 6))
 
 
-  (let ()
+
+  (let ((old-readers *#readers*))
+
+    ;; testing *#readers* is slightly tricky because the reader runs before we evaluate the test expression
+    ;;    so in these cases, the new reader use is always in a string 
+
     (set! *#readers* (list (cons #\s (lambda (str) 123))))
     (let ((val (eval-string "(+ 1 #s1)"))) ; force this into the current reader
       (test val 124))
-    (set! *#readers* '()))
+    (set! *#readers* '())
+
+    (set! *#readers* 
+	  (cons (cons #\t (lambda (str) 
+			    (string->number (substring str 1) 12)))
+		*#readers*))
+    (num-test (string->number "#tb") 11)
+    (num-test (string->number "#t11.3") 13.25)
+    (num-test (string->number "#e#t11.3") 53/4)
+    (num-test (string->number "#t#e1.5") 17/12)
+    (num-test (string->number "#i#t1a") 22.0)
+    (num-test (string->number "#t#i1a") 22.0) ; ??? this is analogous to #x#i1a = 26.0
+    (num-test (string->number "#t#t1a") 22.0)
+    (num-test (string->number "#t#t#t1a") 22.0)
+
+    (set! *#readers*
+	  (cons (cons #\. (lambda (str)
+			    (if (string=? str ".") (eval (read)) #f)))
+		*#readers*))
+
+    (test (eval-string "'(1 2 #.(* 3 4) 5)") '(1 2 12 5))
+    (num-test (string->number "#t1a") 22)
+    (test (eval-string "'(1 #t(2))") '(1 #t (2)))
+    (num-test (string->number "#t1r") #f)
+
+    (set! *#readers* (list (cons #\t (lambda (str) 
+				       ;; in the duplicated case: "t#t..."
+				       (if (< (length str) 3)
+					   (string->number (substring str 1) 12)
+					   (and (not (char=? (str 1) #\#)) 
+						(not (char=? (str 2) #\t)) 
+						(string->number (substring str 1) 12)))))))
+    (test (string->number "#t#t1a") #f)
+
+    (set! *#readers* (cons (cons #\x (lambda (str) 
+				       (or (if (< (length str) 3)
+					       (string->number (substring str 1) 7)
+					       (and (not (char=? (str 1) #\#)) 
+						    (not (char=? (str 2) #\x)) 
+						    (string->number (substring str 1) 7)))
+					   'error)))
+			   *#readers*))
+
+    (num-test (string->number "#x12") 9)
+    (num-test (string->number "#x-142.1e-1") -11.30612244898)
+    (num-test (string->number "#e#x-142.1e-1") -554/49)
+    (num-test (string->number "#t460.88") 648.72222222222)
+    (num-test (string->number "#e#ta.a") 65/6)
+    (num-test (string->number "#x1") 1)
+    (test (string->number "#te") #f)
+    (num-test (string->number "#x10") 7)
+    (test (string->number "#x17") #f)
+    (num-test (string->number "#x106") 55)
+    (test (string->number "#x#t1") #f)
+
+    (set! *#readers* old-readers)
+    
+    (num-test (string->number "#x106") 262)
+    (num-test (string->number "#x17") 23)
+
+    )
+
+;;; (call-with-exit (lambda (exit) (set! *#readers* (cons (cons #\p (lambda (str) (exit 23))) *#readers*)) #p123))
   
   (begin
     (define-macro (hi a) `(+ ,a 1))
@@ -17325,6 +17468,7 @@ why are these different (read-time `#() ? )
     (test ((cadr (make-type :length (lambda () 1))) "hi") 'error)
     (test (length ((cadr (make-type :length (lambda (a) (+ 1 a)))) (vector 1 2 3))) 'error)
     (test (call-with-exit (lambda (exit) (length ((cadr (make-type :length (lambda (a) (exit 32)))) 1)))) 32)
+    (test (call-with-exit (lambda (exit) (fill! ((cadr (make-type :fill (lambda (a n) (exit 32)))) 1) 0))) 32)
 
     (test (let* ((vzt (make-type :name "vzt" 
 				 :length (lambda (v) (vector-length v))
@@ -53708,6 +53852,7 @@ why are these different (read-time `#() ? )
 (num-test (string->number "#e#x001ee11e1") 32379361)
 (num-test (string->number "#x+e/00011ee0") 7/36720)
 (num-test (string->number "#e#x010e10.e1") 17699041/256)
+(num-test (string->number "#x10+10i") 16+16i)
 (num-test (string->number "#d.0d1+i") 0+1i)
 (num-test (string->number "+.0d-1+i") 0+1i)
 (num-test (string->number "#d1d+0-1d-1i") 1-0.1i)
@@ -53780,6 +53925,8 @@ why are these different (read-time `#() ? )
 ;;; and they cause valgrind to hang!!
 ;(num-test (string->number "#e.1e-11") 0)
 ;(num-test (string->number "#e1e-12") 0)
+(num-test (string->number "#e1e-11") 1/90909090910)
+(test (string->number "#e#f1") #f)
 
 (if with-bignums
     (begin
@@ -54336,6 +54483,10 @@ why are these different (read-time `#() ? )
 (num-test (string->number "#i10.01" 10) 10.01)
 (num-test (string->number "#i10.01" 14) 14.005102040816)
 (num-test (string->number "#i-.c2e9" 16) -0.76136779785156)
+
+(test (string->number "#x#|1|#1") #f)
+(test (string->number "#||#1") #f)
+
 
 (if with-bignums
     (begin

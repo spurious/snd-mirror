@@ -61,7 +61,7 @@
  *        logior, logxor, logand, lognot, ash, integer-length, integer-decode-float, nan?, infinite?
  *        procedure-source, procedure-arity, procedure-documentation, help
  *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
- *        symbol-table, symbol->value, global-environment, current-environment, procedure-environment
+ *        symbol-table, symbol->value, global-environment, current-environment, procedure-environment, initial-environment
  *        provide, provided?, defined?
  *        port-line-number, port-filename
  *        object->string, eval-string
@@ -71,7 +71,7 @@
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *        symbol-calls if profiling is enabled
  *        stacktrace, trace and untrace, *trace-hook*, __func__, macroexpand
- *        length, copy, fill!, map, for-each are generic
+ *        length, copy, fill!, reverse, map, for-each are generic
  *        make-type creates a new scheme type
  *        symbol-access modifies symbol value lookup
  *
@@ -4968,15 +4968,6 @@ static bool is_white_space(int c)
 }
 
 
-static bool is_radix_prefix(char prefix)
-{ /* perhaps include caps here */
-  return((prefix == 'b') ||
-	 (prefix == 'd') ||
-	 (prefix == 'x') ||
-	 (prefix == 'o'));
-}
-
-
 static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
 {
   s7_pointer reader, value, args;
@@ -5060,8 +5051,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
   if ((name[0] == 'f') && (name[1] == '\0'))
     return(sc->F);
 
-  if ((at_top) &&
-      (symbol_value(sc->sharp_readers) != sc->NIL))
+  if (symbol_value(sc->sharp_readers) != sc->NIL)
     {
       x = check_sharp_readers(sc, name);
       if (x != sc->F)
@@ -5150,10 +5140,18 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	{
 	  /* there are special cases here: "#e0/0" or "#e#b0/0" -- all infs are complex: 
 	   *    #i1/0=nan.0 but #i1/0+i=inf+1i so e->i is a no-op but i->e is not
+	   *
+	   * even trickier: a *#reader* like #t<num> could be used as #e#t13.25 so make_sharp_constant
+	   *   needs to be willing to call the readers even when not at_top (i.e. when NESTED_SHARP).
 	   */
-	  if (is_radix_prefix(name[2]))
+
+	  if ((name[2] == 'e') ||                        /* #i#e1 -- assume these aren't redefinable? */
+	      (name[2] == 'i'))
+	    return(sc->NIL);
+
+	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix);
+	  if (s7_is_number(x))
 	    {
-	      x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix);
 	      if (is_abnormal(sc, x))
 		return(sc->NIL);
 #if WITH_GMP
@@ -5179,9 +5177,13 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
     case 'e':   /* #e<num> = ->exact */
       if (name[1] == '#')
 	{
-	  if (is_radix_prefix(name[2]))
+	  if ((name[2] == 'e') ||                        /* #e#e1 */
+	      (name[2] == 'i'))
+	    return(sc->NIL);
+
+	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix);
+	  if (s7_is_number(x))
 	    {
-	      x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix);
 	      if (is_abnormal(sc, x))                    /* (string->number "#e#b0/0") */
 		return(sc->NIL);
 	      if (!s7_is_real(x))                        /* (string->number "#e#b1+i") */
@@ -15863,21 +15865,30 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
   return(s7_call(sc, object_types[obj->type].length_func, sc->s_function_args));
 }
 
-/* (call-with-exit (lambda (exit) (length ((cadr (make-type :length (lambda (a) (exit 32)))) 1))))
- *    segfaults because of the s7_call -- can it be avoided? [we pop_stack past the start]
- *    [fixed, but still callable via object_reverse and applicable_length]
- * 
- *    (call-with-exit (lambda (exit) (((cadr (make-type :getter (lambda (a n) (exit 32)))) 1) 0))) -> 32
- *       but here the getter s7_call is not called (eval apply uses getter_func directly)
+/* s7_call in this context can lead to segfaults:
  *
- *  these also segfault:
+ *    (call-with-exit (lambda (exit) (length ((cadr (make-type :length (lambda (a) (exit 32)))) 1))))
+ *      [partly fixed; still callable via object_reverse and applicable_length]
+ * 
  *    (call-with-exit (lambda (exit) (object->string ((cadr (make-type :print (lambda (a) (exit 32)))) 1))))
+ *      [hard to fix -- very low level access to the method (atom_to_c_string)]
+ *
  *    (call-with-exit (lambda (exit) (copy ((cadr (make-type :copy (lambda (a) (exit 32)))) 1))))
+ *      [called in object_reverse and s7_copy, g_copy calls s7_copy]
+ *      [hard to fix because hash-tables use s7_copy -- needs at least expansion of g_copy]
+ *
  *    (call-with-exit (lambda (exit) (fill! ((cadr (make-type :fill (lambda (a n) (exit 32)))) 1) 0)))
+ *      [fixed]
+ *
  *    (call-with-exit (lambda (exit) (let ((typ (make-type :equal (lambda (a n) (exit 32))))) (equal? ((cadr typ) 1) ((cadr typ) 1)))))
- *    reverse? one way to fix this is to use e.g. OP_LENGTH etc, another involves fully implementing objects/classes/methods
+ *      [callable via s7_is_equal and s7_is_equal_ci]
+ *      [hard to fix: g_is_equal calls s7_is_equal]
+ *
+ *    reverse uses length and copy
  *
  * the *#readers*, *unbound-variable-hook* funcs have the same problem [symbol-bind, thread func?]
+ * can *#readers* be treated as a hook using 'or'?
+ *   [reader funcs are s7_call'ed in check_sharp_readers called from make_sharp_constant]
  */ 
 
 
@@ -15914,6 +15925,7 @@ static s7_pointer call_s_object_copy(s7_scheme *sc, s7_pointer a)
 
 static s7_pointer call_s_object_fill(s7_scheme *sc, s7_pointer a, s7_pointer val)
 {
+  /* I think this is no longer accessible */
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
   return(s7_call(sc, object_types[obj->type].fill_func, make_list_2(sc, obj->value, val)));
@@ -17267,9 +17279,8 @@ list has infinite length."
 	obj = (s_type_t *)s7_object_value(lst);
 	if (object_types[obj->type].length)
 	  {
-	    sc->code = object_types[obj->type].length_func;
-	    sc->args = make_list_1(sc, obj->value);
-	    push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+	    car(args) = obj->value;
+	    push_stack(sc, opcode(OP_APPLY), args, object_types[obj->type].length_func);
 	    return(sc->UNSPECIFIED);
 	  }
 	return(eval_error(sc, "attempt to get length of ~A?", lst));
@@ -17442,9 +17453,21 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
     case T_VECTOR:
       return(g_vector_fill(sc, args));
 
-    case T_S_OBJECT:
     case T_C_OBJECT:
       return(object_fill(sc, car(args), cadr(args)));
+
+    case T_S_OBJECT:
+      {
+	s_type_t *obj;
+	obj = (s_type_t *)s7_object_value(car(args));
+	if (object_types[obj->type].fill)
+	  {
+	    car(args) = obj->value;
+	    push_stack(sc, opcode(OP_APPLY), args, object_types[obj->type].fill_func);
+	    return(sc->UNSPECIFIED);
+	  }
+	return(eval_error(sc, "attempt to fill ~A?", car(args)));
+      }
 
     case T_PAIR:
       return(list_fill(sc, car(args), cadr(args)));
