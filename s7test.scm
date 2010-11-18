@@ -1696,6 +1696,31 @@ yow!! -- I'm using mpc_cmp
 (test "\x3012" "012")
 
 
+;; there is some serious strangeness here!
+(test (call-with-input-string "1\n2" (lambda (p) (read p))) 1)
+(test (call-with-input-string "1\\ \n2" (lambda (p) (read p))) (symbol "1\\"))
+(test (call-with-input-string "1\ 2" (lambda (p) (read p))) 12)
+(test (call-with-input-string "1\ \ \ 2" (lambda (p) (read p))) 12)
+
+(test (call-with-input-string "1\
+2" (lambda (p) (read p))) 12)
+
+(test (call-with-input-string "1\ \
+2" (lambda (p) (read p))) 12)
+
+(test (let ((xyzzy 32)) (call-with-input-string "xy\
+zzy" (lambda (p) (read p)))) 'xyzzy)
+
+(test (let ((xyzzy 32)) (call-with-input-string "xy\
+zzy" (lambda (p) (eval (read p))))) 32)
+
+(test (let ((xyzzy 32)) (call-with-input-string "(set! xyzzy;\
+ this is presumably a comment
+ 321)" (lambda (p) (eval (read p)))) xyzzy) 321)
+
+;;; multiline comment?
+
+
 ;;; string<?
 (test (string<? "aaaa" "aaab") #t)
 (test (string<? "aaaa" "aaaaa") #t)
@@ -56386,7 +56411,14 @@ etc
 
 
 (let ()
-  (define (logxor1 . ints) ; returns bits that are on in just one of ints TODO: this can be made much more elegant
+
+  (define (log-none-of . ints)  ; bits on in none of ints
+    (lognot (apply logior ints)))
+
+  (define (log-all-of . ints)   ; bits on in all of ints
+    (apply logand ints))
+
+  (define (log-1-of . ints)     ; bits on in exactly 1 of ints
     (let ((len (length ints)))
       (cond ((= len 0) 
 	     0)
@@ -56394,62 +56426,259 @@ etc
 	     (car ints))
 	    ((= len 2) 
 	     (apply logxor ints))
-
 	    ((= len 3) 
 	     (logxor (apply logxor ints) (apply logand ints)))
+	    (#t 
+	     (do ((iors '())
+		  (i 0 (+ i 1)))
+		 ((= i len) (apply logior iors))
+	       (let ((cur (ints i)))
+		 (set! (ints i) 0)
+		 (set! iors (cons (logand cur (lognot (apply logior ints))) iors))
+		 (set! (ints i) cur)))))))
 
-	    ((= len 4)
-	     (logand (apply logxor ints)
-		     (lognot
-		      (logior (logand (ints 0) (ints 1) (ints 2))
-			      (logand (ints 0) (ints 1) (ints 3))
-			      (logand (ints 0) (ints 2) (ints 3))
-			      (logand (ints 1) (ints 2) (ints 3))
-			      (apply logand ints)))))
+  (test (log-1-of 1 2 3 4 8 9) 4)
+  (test (log-1-of -1 1 2 3) -4)
+  (test (log-1-of 1 2 3 5) 4)
+  (test (log-1-of -6 -31 -19 -9) 0)
+  (test (log-1-of -45 -15 -7 -3) 6)
+  (test (log-1-of -1 most-positive-fixnum -1) 0)
+  (test (log-1-of -1 most-negative-fixnum -1) 0)
+  (test (log-1-of 1 most-negative-fixnum 1) most-negative-fixnum)
+  (test (log-1-of 31 11 27 -38) -60)
+  (test (log-1-of -254) #b-11111110) ; (-254)
+  (test (log-1-of 406 26 439 -361 -133 -480 312) #b1000000) ; (64)
+  (test (log-1-of 47 110) #b1000001) ; (65)
+  (test (log-1-of) 0)
+  (test (log-1-of -52 108 97 48) #b-1101111) ; (-111)
+  (test (log-1-of -113 -391 -129 -58 -374 -297 -498) #b0) ; (0)
+  (test (log-1-of -251 138 418 494 -300 -224) #b10001) ; (17)
+  (test (log-1-of 385 364 372) #b10011001) ; (153)
+  (test (log-1-of -221 -56 173) #b1000110) ; (70)
+  (test (log-1-of 31 -309 244 -478 396 -352 162 -479 -500) #b100000000) ; (256)
+  (test (log-1-of -152 495 80 -403 -439 387) #b10000) ; (16)
+  (test (log-1-of 115 71 110 568 10 382 124 378 23) #b1000000000) ; (512)
+  (test (log-1-of 766 332 285 280 489 229) #b1000000010) ; (514)
+  (test (log-1-of 424 935) #b1000001111) ; (527)
+  (test (log-1-of 788 268 388) #b1010011000) ; (664)
+  (test (log-1-of 389 237 398 530) #b1001110000) ; (624)
+  (test (log-1-of 554 550 215 44 892 668) #b100000001) ; (257)
+  (test (log-1-of 562 171 772 480 6 211 542 678) #b0) ; (0)
 
-	    (#t (let ((all-bits (apply logior ints)))
+  (do ((i 0 (+ i 1)))
+      ((= i 10))
+    
+    (let ((len (+ 1 (random 10)))
+	  (ints '()))
+      (do ((k 0 (+ k 1)))
+	  ((= k len))
+	(set! ints (cons (- (random 1000) 500) ints)))
+      
+      (let ((result (apply log-1-of ints)))
+	;;(format #t "(test (log-1-of ~{~D~^ ~}) #b~B) ; (~D)~%" ints result result)
+	
+	(do ((b 0 (+ b 1)))
+	    ((= b 64))
+	  (let ((counts 0))
+	    (for-each
+	     (lambda (int)
+	       (if (not (zero? (logand int (ash 1 b))))
+		   (set! counts (+ counts 1))))
+	     ints)
+	    
+	    (if (not (zero? (logand result (ash 1 b))))
+		(if (not (= counts 1))
+		    (format #t ";(log-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" ints result (ash 1 b) counts))
+		(if (= counts 1)
+		    (format #t ";(log-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts = 1 but we're off]~%" ints result (ash 1 b)))))))))
+  
+  (define (log-n-1-of . ints) ; bits on in exactly n-1 of ints
+    (let ((len (length ints)))
+      (cond ((= len 0) 
+	     0)
+	    ((= len 1) 
+	     0)
+	    ((= len 2) 
+	     (apply logxor ints))
+	    ((= len 3) 
+	     (logand (lognot (apply logxor ints)) (apply logior ints)))
+	    (#t 
+	     (do ((iors '())
+		  (i 0 (+ i 1)))
+		 ((= i len) (apply logior iors))
+	       (let ((cur (ints i)))
+		 (set! (ints i) -1)
+		 (set! iors (cons (logand (lognot cur) (apply logand ints)) iors))
+		 (set! (ints i) cur)))))))
+  
+  (test (log-n-1-of -336 -225 275) #b-11111101) ; (-253)
+  (test (log-n-1-of -35 32 -17 -310 256 -360 171 -370) #b0) ; (0)
+  (test (log-n-1-of 311 237) #b111011010) ; (474)
+  (test (log-n-1-of 32 348 -340 147) #b0) ; (0)
+  (test (log-n-1-of -334 -267 -478 -93 239 423 18 496) #b100000) ; (32)
+  (test (log-n-1-of -347 149 135 107 -436) #b101) ; (5)
+  (test (log-n-1-of -181 406 480 390 207 13 0) #b0) ; (0)
+  (test (log-n-1-of 348) #b0) ; (0)
+  (test (log-n-1-of -498 226) #b-100010100) ; (-276)
+  (test (log-n-1-of 259 -171 146 -344 63 -240 290 -418) #b0) ; (0)
+  (test (log-n-1-of 86 -74 61 -138 215 -277 358) #b110) ; (6)
+  (test (log-n-1-of -144 425 -356 -341 211 -390) #b0) ; (0)
+  (test (log-n-1-of -223 390 195 265) #b100000001) ; (257)
+  (test (log-n-1-of 103 263 -92 -7) #b100100101) ; (293)
+  (test (log-n-1-of -78 -199 68 218 -98 -464 307 301) #b0) ; (0)
+  (test (log-n-1-of -355 258 -134 -371 211) #b0) ; (0)
+  (test (log-n-1-of -222 -39 408 -50 -207 58) #b100000000) ; (256)
+  (test (log-n-1-of 66 93 484) #b100) ; (4)
+  (test (log-n-1-of 36 -384 3 49 359 -284 -284 -133 268) #b0) ; (0)
+  (test (log-n-1-of -339 -50 243 -159 -159) #b-110011111) ; (-415)
+  (test (log-n-1-of 154 -260 -219 400 -196 -236 421 -277 375 -67) #b0) ; (0)
+  (test (log-n-1-of 45 112) #b1011101) ; (93)
+  (test (log-n-1-of -493 131 48 45 311 197 491 -86 164) #b0) ; (0)
+  (test (log-n-1-of 371 -75 -107 -348 -9 7 -129) #b101) ; (5)
+  (test (log-n-1-of 349 -219 -160) #b-110011011) ; (-411)
+  (test (log-n-1-of 412 456 407 -13 352 467 327 147) #b100000000) ; (256)
+  (test (log-n-1-of 133 -133 -471 -284 -58 -266) #b-1000000000) ; (-512)
+  (test (log-n-1-of 43 -339 22 150 49 259) #b0) ; (0)
+  (test (log-n-1-of 258 -138 185 400 -476 -312 69 380) #b0) ; (0)
+  (test (log-n-1-of 260 -85 -208 -21) #b-111100000) ; (-480)
+  (test (log-n-1-of -294 177 -78) #b-111011110) ; (-478)
+  (test (log-n-1-of -40 81 445 -300) #b11000000) ; (192)
+  (test (log-n-1-of -325 -393 411 -441 -221 -43 -231 -283 -223) #b-1000000000) ; (-512)
+  (test (log-n-1-of 18 -36 -351 -160 211 412) #b0) ; (0)
+  
+  (do ((i 0 (+ i 1)))
+      ((= i 10))
+    
+    (let ((len (+ 1 (random 10)))
+	  (ints '()))
+      (do ((k 0 (+ k 1)))
+	  ((= k len))
+	(set! ints (cons (- (random 1000) 500) ints)))
+      
+      (let ((result (apply log-n-1-of ints)))
+	;;(format #t "(test (log-n-1-of ~{~D~^ ~}) #b~B) ; (~D)~%" ints result result)
+	
+	(do ((b 0 (+ b 1)))
+	    ((= b 64))
+	  (let ((counts 0))
+	    (for-each
+	     (lambda (int)
+	       (if (not (zero? (logand int (ash 1 b))))
+		   (set! counts (+ counts 1))))
+	     ints)
+	    
+	    (if (not (zero? (logand result (ash 1 b))))
+		(if (not (= counts (- len 1)))
+		    (format #t ";(log-n-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" ints result (ash 1 b) counts))
+		(if (and (> len 1) (= counts (- len 1)))
+		    (format #t ";(log-n-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" ints result (ash 1 b) counts))))))))
+  
+  (define (log-2-of . ints) ; bits on in exactly 2 of ints
+    (let ((len (length ints)))
+      (cond ((= len 0)
+	     0)
+	    ((= len 1) ; bits on in none (0 of ints) -- not very sensible
+	     0)
+	    ((= len 2) 
+	     (apply logand ints))
+	    ((= len 3) 
+	     (logand (lognot (apply logxor ints)) (apply logior ints)))
+	    (#t 
+	     (do ((1s '())
+		  (prev ints)
+		  (i 0 (+ i 1)))
+		 ((= i len) (apply logior 1s))
+	       (let ((cur (ints i)))
+		 (if (= i 0)
+		     (set! 1s (cons (logand cur (apply log-1-of (cdr ints))) 1s))
+		     (let* ((mid (cdr prev))
+			    (nxt (if (= i (- len 1)) '() (cdr mid))))
+		       (set! (cdr prev) nxt)
+		       (set! 1s (cons (logand cur (apply log-1-of ints)) 1s))
+		       (set! (cdr prev) mid)
+		       (set! prev mid)))))))))
+  
+  (test (log-2-of 287 319 -48) #b1111) ; (15)
+  (test (log-2-of 361) #b0) ; (0)
+  (test (log-2-of -165 302 -494) #b-11101000) ; (-232)
+  (test (log-2-of 366 -345 -86 311 -366 453 129) #b1011000) ; (88)
+  (test (log-2-of -84 -46 -13 -391 -384 -17 -105 -62 75 -163) #b0) ; (0)
+  (test (log-2-of 274 200 294 -293 -291 -25 -3) #b0) ; (0)
+  (test (log-2-of -72 -81 -293 -407 230 44) #b100010000) ; (272)
+  (test (log-2-of -389 -20 406 133 -127 379 -460 -417) #b0) ; (0)
+  (test (log-2-of 152 -429 -43) #b-100111111) ; (-319)
+  (test (log-2-of -443 70) #b1000100) ; (68)
+  (test (log-2-of -361 -360 52 -209 106 140 -324 82) #b1000001) ; (65)
+  (test (log-2-of 364 335 -119 226 -422) #b-101011011) ; (-347)
+  (test (log-2-of -17 -252 433) #b-101011011) ; (-347)
+  (test (log-2-of -426 -243 -230 -315) #b101011011) ; (347)
 
-		  ;; in (non-gmp) 64-bit case we can't (ash 1 63) so...
-		  (if (negative? all-bits)
-		      (let ((negatives 0))
-			(call-with-exit
-			 (lambda (ok)
-			   (for-each
-			    (lambda (n)
-			      (if (negative? n)
-				  (begin
-				    (set! negatives (+ negatives 1))
-				    (if (> negatives 1)
-					(begin
-					  (set! all-bits (abs all-bits))
-					  (ok)))))))))))
-		  (do ((i 0 (+ i 1)))
-		      ((or (= i 63) (zero? all-bits))
-		       all-bits)
-		    (if (not (zero? (logand all-bits (ash 1 i))))
-			(let ((count 0))
-			  (call-with-exit
-			   (lambda (ok)
-			     (for-each
-			      (lambda (int)
-				(if (not (zero? (logand (ash 1 i) int)))
-				    (begin
-				      (set! count (+ count 1))
-				      (if (> count 1)
-					  (begin
-					    (set! all-bits (logand all-bits (lognot (ash 1 i))))
-					    (ok))))))
-			      ints)))))))))))
+  (do ((i 0 (+ i 1)))
+      ((= i 10))
+    
+    (let ((len (+ 1 (random 10)))
+	  (ints '()))
+      (do ((k 0 (+ k 1)))
+	  ((= k len))
+	(set! ints (cons (- (random 1000) 500) ints)))
+      
+      (let ((result (apply log-2-of ints)))
+	;;(format #t "(test (log-2-of ~{~D~^ ~}) #b~B) ; (~D)~%" ints result result)
+	
+	(do ((b 0 (+ b 1)))
+	    ((= b 64))
+	  (let ((counts 0))
+	    (for-each
+	     (lambda (int)
+	       (if (not (zero? (logand int (ash 1 b))))
+		   (set! counts (+ counts 1))))
+	     ints)
+	    
+	    (if (not (zero? (logand result (ash 1 b))))
+		(if (not (= counts 2))
+		    (format #t ";(log-2-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" ints result (ash 1 b) counts))
+		(if (and (> len 1) (= counts 2))
+		    (format #t ";(log-2-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" ints result (ash 1 b) counts))))))))
+  
+  (define (log-n-of n . ints) ; bits on in exactly n of ints
+    (let ((len (length ints)))
+      (cond ((= len 0)
+	     (if (= n 0) -1 0))
+	    
+	    ((= n 0)
+	     (apply log-none-of ints))
+	    
+	    ((= n len)
+	     (apply log-all-of ints))
+	    
+	    ((> n len)
+	     0)
+	    
+	    ((= n 1)
+	     (apply log-1-of ints))
+	    
+	    ((= n (- len 1))
+	     (apply log-n-1-of ints))
+	    
+	    ;; now n is between 2 and len-2, and len is 3 or more
+	    (#t 
+	     (do ((1s '())
+		  (prev ints)
+		  (i 0 (+ i 1)))
+		 ((= i len) (apply logior 1s))
+	       (let ((cur (ints i)))
+		 (if (= i 0)
+		     (set! 1s (cons (logand cur (apply log-n-of (- n 1) (cdr ints))) 1s))
+		     (let* ((mid (cdr prev))
+			    (nxt (if (= i (- len 1)) '() (cdr mid))))
+		       (set! (cdr prev) nxt)
+		       (set! 1s (cons (logand cur (apply log-n-of (- n 1) ints)) 1s))
+		       (set! (cdr prev) mid)
+		       (set! prev mid)))))))))
 
-  (test (logxor1 1 2 3 4 8 9) 4)
-  (test (logxor1 -1 1 2 3) -4)
-  (test (logxor1 1 2 3 5) 4)
-  (test (logxor1 -6 -31 -19 -9) 0)
-  (test (logxor1 -45 -15 -7 -3) 6)
-  (test (logxor1 -1 most-positive-fixnum -1) 0)
-  (test (logxor1 -1 most-negative-fixnum -1) 0)
-  (test (logxor1 1 most-negative-fixnum 1) most-negative-fixnum)
-  (test (logxor1 31 11 27 -38) -60))
+  ;; TODO: test log-n-of
+  )
+
 
 (if with-bignums
     (begin
