@@ -3,12 +3,11 @@
 
 # Ruby Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Mar 06 03:58:02 CET 2003
-# Changed: Thu Oct 15 00:18:16 CEST 2009
+# Changed: Wed Nov 17 22:45:00 CET 2010
 
 module Piano
   require "ws"
   require "env"
-  include Env
   include Math
 
   Number_of_stiffness_allpasses = 8
@@ -321,7 +320,7 @@ module Piano
       openStrings = (wetTap_amp_expseg.call(wetamprate) * \
                      wetTap_one_pole_swept.call(one_pole_one_zero(wetTap0, wetTap1, noi.call(amp)),
                                                 wetTap_coef_expseg.call(wetcoefrate)))
-      adelIn = totalTap = dryTap + openStrings
+      adelIn = dryTap + openStrings
       0.upto(3) do |i| adelIn = one_pole(hammer_one_pole[i], adelIn) end
       combedExcitationSignal = hammerGain * (adelOut + adelIn * strikePositionInvFac)
       adelOut = agraffe_tuning_ap1.call(delay0(agraffe_delay1, adelIn))
@@ -465,8 +464,9 @@ module Piano
   end
 end
 
-=begin
 include Piano
+
+=begin
 with_sound(:clm, false, :channels, 1) do
   7.times do |i|
     p(i * 0.5,

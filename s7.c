@@ -560,8 +560,8 @@ struct s7_scheme {
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS;
   s7_pointer __FUNC__;
-  s7_pointer FEED_TO;                 /* => */
   s7_pointer OBJECT_SET;              /* applicable object set method */
+  s7_pointer FEED_TO;                 /* => */
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
   s7_pointer S_IS_TYPE, S_TYPE_MAKE, S_TYPE_REF, S_TYPE_ARG;
   s7_pointer s_function_args;
@@ -4975,7 +4975,7 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
   value = sc->F;
 
   /* *#reader* is assumed to be an alist of (char . proc)
-   *    where each proc takes one argument, the string from the "#" to the next delimiter.
+   *    where each proc takes one argument, the string from just beyond the "#" to the next delimiter.
    *    The procedure can call read-char to read ahead in the current-input-port.
    *    If it returns anything other than #f, that is the value of the sharp expression.
    * This search happens after #|, #!, #t, and #f.
@@ -15726,6 +15726,9 @@ static s7_pointer object_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 
 static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
 {
+  /* someday this should be embedded in the evaluator
+   *    it's called only in g_reverse.
+   */
   int tag;
   tag = c_object_type(obj);
   if ((object_types[tag].copy) &&
@@ -15823,7 +15826,7 @@ static bool call_s_object_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
 
 static s7_pointer call_s_object_getter(s7_scheme *sc, s7_pointer a, s7_pointer args)
 {
-  /* I think this is no longer accessible */
+  /* still accessible via for-each */
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
   return(s7_call(sc, object_types[obj->type].getter_func, s7_cons(sc, obj->value, args))); /* ?? */
@@ -15832,7 +15835,7 @@ static s7_pointer call_s_object_getter(s7_scheme *sc, s7_pointer a, s7_pointer a
 
 static s7_pointer call_s_object_setter(s7_scheme *sc, s7_pointer a, s7_pointer args)
 {
-  /* I think this is no longer accessible */
+  /* still accessible via reverse, for-each */
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
   return(s7_call(sc, object_types[obj->type].setter_func, s7_cons(sc, obj->value, args))); /* ?? */
@@ -15887,7 +15890,6 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
  *    reverse uses length and copy
  *
  * the *#readers*, *unbound-variable-hook* funcs have the same problem [symbol-bind, thread func?]
- * can *#readers* be treated as a hook using 'or'?
  *   [reader funcs are s7_call'ed in check_sharp_readers called from make_sharp_constant]
  */ 
 
@@ -16662,6 +16664,23 @@ s7_pointer s7_make_hook(s7_scheme *sc, int required_args, int optional_args, boo
 }
 
 
+static s7_pointer hook_copy(s7_scheme *sc, s7_pointer hook)
+{
+  s7_pointer new_hook, arity;
+  int gc_loc;
+
+  arity = hook_arity(hook);
+  new_hook = s7_make_hook(sc, s7_integer(car(arity)), s7_integer(cadr(arity)), s7_boolean(sc, caddr(arity)), s7_string(hook_documentation(hook)));
+  if (hook_functions(hook) == sc->NIL)
+    return(new_hook);
+
+  gc_loc = s7_gc_protect(sc, new_hook);
+  hook_functions(new_hook) = copy_list(sc, hook_functions(hook));
+  s7_gc_unprotect_at(sc, gc_loc);
+  return(new_hook);
+}
+
+
 s7_pointer s7_hook_apply(s7_scheme *sc, s7_pointer hook, s7_pointer args)
 {
   if (is_pair(hook_functions(hook)))
@@ -17322,6 +17341,13 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
 
     case T_PAIR:
       return(s7_cons(sc, car(obj), list_copy(sc, cdr(obj), obj, true)));  /* this is the only use of list_copy */
+
+    case T_HOOK:
+      return(hook_copy(sc, obj));
+
+      /* perhaps copy input port -> saves current read position? 
+       *   would this require copying or protecting the string (sort of like a shared vector)?
+       */
     }
   return(obj);
 }
@@ -22763,7 +22789,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  
 	  if (s7_is_symbol(caar(sc->code)))
-	    sc->x = s7_symbol_value(sc, caar(sc->code));
+	    sc->x = s7_symbol_value(sc, caar(sc->code));                     /* this can't be simply symbol_value */
 	  else sc->x = caar(sc->code);                                       /* might be the pws function itself */
 	  
 	  /* code here is the accessor and the value without the "set!": ((window-width) 800) */
@@ -22804,12 +22830,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
 		  if (is_pair(cdar(sc->code)))
 		    {
-		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, s7_symbol_value(sc, sc->OBJECT_SET)), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->OBJECT_SET), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 		      sc->code = cadar(sc->code);
 		    }
 		  else /* (set! (window-width) 800) -> ((window-width) 800) so cdar(sc->code) is nil */
 		    {
-		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, s7_symbol_value(sc, sc->OBJECT_SET)), cddr(sc->code));
+		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->OBJECT_SET), cddr(sc->code));
 		      sc->code = cadr(sc->code);
 		    }
 		}
@@ -23599,14 +23625,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *            (case 1 ((2 2 2) 1)): guile says #<unspecified>
 	   */
 
-	  /* the selector (sc->value) is evaluated, but the search key is not, so we get weird
-	   *    results:
+	  /* the selector (sc->value) is evaluated, but the search key is not
 	   *    (case '2 ((2) 3) (else 1)) -> 3
 	   *    (case '2 (('2) 3) (else 1)) -> 1
-	   * this affects '() in the same way, so it's one place in s7 where '() is not the same as () even though
-	   *    (eqv? () '()) -> #t
-	   *    (eqv? ''2 '2) -> #f and (eqv? '2 2) -> #t whereas (eqv? ''hi 'hi) -> #f
-	   *    (eqv? 'car car) -> #f and (eqv? '#\a #\a) -> #t and (eqv? ''#\a '#\a) -> #f
 	   */
 
 	  if (s7_is_eqv(car(sc->y), sc->value)) 
@@ -29391,10 +29412,6 @@ s7_scheme *s7_init(void)
   sc->FEED_TO = make_symbol(sc, "=>");
   typeflag(sc->FEED_TO) |= T_DONT_COPY; 
   
-  #define object_set_name "(generalized set!)"
-  sc->OBJECT_SET = make_symbol(sc, object_set_name);   /* will call g_object_set */
-  typeflag(sc->OBJECT_SET) |= T_DONT_COPY; 
-
   #define s_is_type_name "[?]"                         /* these were "(?)" etc, but the procedure-source needs to be usable */
   sc->S_IS_TYPE = make_symbol(sc, s_is_type_name);
   typeflag(sc->S_IS_TYPE) |= T_DONT_COPY; 
@@ -29844,7 +29861,11 @@ s7_scheme *s7_init(void)
   
   s7_define_function(sc, "s7-version",              g_s7_version,              0, 0, false, H_s7_version);
 
-  s7_define_function(sc, object_set_name,           g_object_set,              1, 0, true,  "internal setter redirection");
+  #define object_set_name "(generalized set!)"
+  s7_define_function(sc, object_set_name,           g_object_set,              1, 0, true,  "internal object setter redirection");
+  sc->OBJECT_SET = s7_symbol_value(sc, make_symbol(sc, object_set_name));
+  typeflag(sc->OBJECT_SET) |= T_DONT_COPY; 
+
   s7_define_function(sc, s_is_type_name,            s_is_type,                 2, 0, false, "internal object type check");
   s7_define_function(sc, s_type_make_name,          s_type_make,               2, 0, false, "internal object creation");
   s7_define_function(sc, s_type_ref_name,           s_type_ref,                2, 0, false, "internal object value");

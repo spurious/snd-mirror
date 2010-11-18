@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Apr 05 00:17:04 CEST 2005
-# Changed: Sun Dec 20 00:41:56 CET 2009
+# Changed: Wed Nov 17 21:38:19 CET 2010
 
 # Commentary:
 #
@@ -136,10 +136,8 @@ overlays onto its first argument all subsequent arguments: overlay_sounds(1, 0, 
 displays time domain graph using current colormap (just an example of colormap-ref)")
   def samples_via_colormap(snd, chn)
     left = left_sample(snd, chn)
-    right = right_sample(snd, chn)
     old_color = foreground_color(snd, chn)
-    data, ignore = make_graph_data(snd, chn)
-    samps = right - left
+    data = make_graph_data(snd, chn)[0]
     x0 = x2position(left / srate())
     y0 = y2position(data[0])
     colors = make_array(colormap_size)

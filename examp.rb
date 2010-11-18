@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Thu Nov 26 19:34:47 CET 2009
+# Changed: Wed Nov 17 21:23:26 CET 2010
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -797,7 +797,6 @@ ffts an entire sound, removes all energy below low-Hz and all above high-Hz, the
            "fft_squelch(squelch, [snd=false, [chn=false]]) \
 ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts")
   def fft_squelch(squelch, snd = false, chn = false)
-    sr = srate(snd).to_f
     len = frames(snd, chn)
     fsize = (2.0 ** (log(len) / log(2.0)).ceil).to_i
     rdata = channel2vct(0, fsize, snd, chn)
@@ -903,7 +902,6 @@ suppresses portions of a sound that look like steady-state")
            "fft_env_data(fft-env, [snd=false, [chn=false]]) \
 applies fft_env as spectral env to current sound, returning vct of new data")
   def fft_env_data(fft_env, snd = false, chn = false)
-    sr = srate(snd)
     len = frames(snd, chn)
     fsize = (2 ** (log(len) / log(2.0)).ceil).to_i
     rdata = channel2vct(0, fsize, snd, chn)
@@ -1049,7 +1047,7 @@ returns 3 formant filters in parallel: map_channel(formants(0.99, 900, 0.98, 180
     fr1 = make_formant(f1, r1)
     fr2 = make_formant(f2, r2)
     fr3 = make_formant(f3, r3)
-    lambda do |inval| formant(fr1, inval) + formant(fr1, inval) + formant(fr1, inval) end
+    lambda do |inval| formant(fr1, inval) + formant(fr2, inval) + formant(fr3, inval) end
   end
 
   add_help(:moving_formant,
@@ -1128,8 +1126,6 @@ map_channel(ring_mod(10, [0, 0, 1, hz2radians(100)]))")
   def ring_mod(freq, gliss_env)
     os = make_oscil(:frequency, freq)
     len = frames()
-    sr = srate()
-    dur = (len / sr).round
     genv = make_env(:envelope, gliss_env, :length, len)
     lambda do |inval| oscil(os, env(genv)) * inval end
   end
@@ -1679,7 +1675,8 @@ end")
   def files_popup_buffer(type, position, name)
     if snd = find_sound(name)
       curr_buffer = Snd.snd
-      width, height= widget_size(sound_widgets(curr_buffer)[0])
+      vals = widget_size(sound_widgets(curr_buffer)[0])
+      height = vals[1]
       Snd.sounds.each do |s| hide_widget(sound_widgets(s)[0]) end
       show_widget(sound_widgets(snd)[0])
       set_widget_size(sound_widgets(snd)[0], [widht, height])

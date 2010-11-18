@@ -412,7 +412,7 @@ __ws_verbose__ = $VERBOSE
 __ws_debug__   = $DEBUG
 # get rid of `undefined variable' messages
 with_silence do
-  $clm_version            = "ruby 16-Nov-2010"
+  $clm_version            = "ruby 17-Nov-2010"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -753,20 +753,15 @@ end
 installs the @with_sound_note_hook and prints the line
 
   `# fm_violin: start 0.000, dur 1.000'.")
-    if @notehook
-      assert_type((proc?(@notehook) or func?(@notehook)), @notehook, 0, "a proc or a function name")
-      prc = case @notehook
-            when Proc
-              @notehook
-            when Symbol, String
-              # older Ruby versions return -1 on method(:func).to_proc.arity
-              if method(@notehook).to_proc.arity == 3
-                method(@notehook).to_proc
-              else
-                lambda do |inst_name, start, dur| @notehook.call(inst_name, start, dur) end
-              end
-            end
-      @with_sound_note_hook.add_hook!("with-sound-note-hook", &prc)
+    case @notehook
+    when Proc
+      @with_sound_note_hook.add_hook!("with-sound-note-hook") do |name, start, dur|
+        @notehook.call(name, start, dur)
+      end
+    when Symbol, String
+      @with_sound_note_hook.add_hook!("with-sound-note-hook") do |name, start, dur|
+        snd_proc(@notehook, name, start, dur)
+      end
     end
     set_help
   end
@@ -1936,13 +1931,13 @@ class With_DAC < Snd_Instrument
            [:degree, random(90.0)],
            [:distance, 1.0],
            [:reverb_amount, 0.05])
-    loc = make_locsig(:degree,   degree,
-                      :distance, distance,
-                      :reverb,   reverb_amount,
-                      :output,   @ws_output,
-                      :revout,   @ws_reverb,
-                      :channels, @channels,
-                      :type,     @locsig_type)
+    @locsig = make_locsig(:degree,   degree,
+                          :distance, distance,
+                          :reverb,   reverb_amount,
+                          :output,   @ws_output,
+                          :revout,   @ws_reverb,
+                          :channels, @channels,
+                          :type,     @locsig_type)
     beg, ends = times2samples(start, dur)
     @instruments.push([beg, ends, body])
     ws_interrupt?

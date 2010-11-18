@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Sat Feb 06 14:34:38 CET 2010
+# Changed: Wed Nov 17 21:18:12 CET 2010
 
 # Commentary:
 # 
@@ -437,7 +437,6 @@ reads mono files as new sound data (from external program)")
            "temp_to_selection(data, filename, [origin=false]) \
 sets selection from (multichannel) file (from external program)")
   def temp_to_selection(data, filename, origin = false)
-    cursnd = selected_sound
     delete_temp_data_files(data, filename)
     chan = 0
     len = mus_sound_frames(filename)
@@ -456,7 +455,6 @@ sets selection from (multichannel) file (from external program)")
 sets selection from mono files (from external program)")
   def temps_to_selection(data, filenames, origin = false)
     delete_temp_data_files(data, filenames)
-    cursnd = selected_sound
     chan = 0
     Snd.sounds.each do |snd|
       channels(snd).times do |chn|

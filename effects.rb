@@ -2,13 +2,13 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Wed Oct 20 23:06:02 CEST 2010
+# Changed: Wed Nov 17 23:00:23 CET 2010
 
 # Commentary:
 #
 # Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 #
-# Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Ruby 1.8.7
+# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.20.1, Ruby 1.8.0/7, 1.9.2/3.
 #
 # module Effects (see new-effects.scm)
 #  plausible_mark_samples
@@ -46,7 +46,6 @@ require "clm"
 require "env"
 require "extensions"
 require "rubber"
-include Rubber
 include Math
 require "hooks"
 
@@ -536,7 +535,6 @@ module X_Effects
       unless @dlg.kind_of?(Dialog) and widget?(@dlg.dialog)
         init_amount = 1.0
         sliders = Array.new(1)
-        fr = nil
         @dlg = make_dialog(@label,
                            :info, "Move the slider to change the gain scaling amount",
                            :target_cb, lambda do | | effect_target_ok(@target) end,
@@ -1464,9 +1462,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
     def post_dialog
       unless @dlg.kind_of?(Dialog) and widget?(@dlg.dialog)
         init_scale = 1.0
-        init_env = 
         sliders = Array.new(1)
-        fr = nil
         @dlg = make_dialog(@label,
                            :info, "Move the slider to change the src-timevar scaling amount.",
                            :target_cb, lambda do | | effect_target_ok(@target) end,
@@ -1524,7 +1520,6 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
       unless @dlg.kind_of?(Dialog) and widget?(@dlg.dialog)
         init_amount = 100.0
         sliders = Array.new(1)
-        fr = nil
         @dlg = make_dialog(@label,
                            :info, "Move the slider to change the modulation amount.",
                            :target_cb, lambda do | | effect_target_ok(@target) end,
@@ -1584,7 +1579,6 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         init_frequency = 100
         init_radians = 100
         sliders = Array.new(2)
-        fr = nil
         @dlg = make_dialog(@label,
                            :info, "Move the sliders to change the modulation parameters.",
                            :target_cb, lambda do | | effect_target_ok(@target) end,
@@ -1603,8 +1597,6 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
                                          }) do |ignored|
             os = make_oscil(@frequency)
             e = (need_env and make_env(@envelope.envelope, :length, effect_frames(@target)))
-            len = frames()
-            genv = make_env([0, 0, 1, hz2radians(@radians)], :length, len)
             if need_env
               lambda do |inval| inval * (env(e) * oscil(os)) end
             else
@@ -1814,7 +1806,6 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data.",
     end
 
     def place_sound(pan_env)
-      len = frames(@mono_snd)
       if number?(pan_env)
         effects_position_sound(@mono_snd, pos, @stereo_snd, 1)
         effects_position_sound(@mono_snd, 1.0 - pos, @stereo_snd, 0)

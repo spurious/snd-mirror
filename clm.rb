@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Oct 14 23:02:57 CEST 2009
-# Changed: Thu Apr 15 13:32:46 CEST 2010
+# Changed: Thu Nov 18 01:38:01 CET 2010
 
 # Commentary:
 #
@@ -28,6 +28,7 @@
 # assert_type(condition, obj, pos, msg)
 # identity(arg)
 # ignore(*rest)
+# with_silence(exception) do |old_verbose, old_debug| ... end
 # 
 # provided?(feature)
 # provide(feature)
@@ -212,8 +213,6 @@
 # as_one_edit_rb(*origin, &body)
 # map_channel_rb(beg, dur, snd, chn, edpos, edname, &body)
 # map_chan_rb(beg, dur, edpos, snd, chn, &body)
-#
-# with_silence(exception) do |old_verbose, old_debug| ... end
 # 
 # module Info
 #  description=(text)
@@ -405,19 +404,15 @@ def ignore(*rest)
   nil
 end
 
-unless defined? $LOADED_FEATURES then alias $LOADED_FEATURES $" end
-
-# Ruby 1.9.x moved Continuation to 'continuation'!
-# (See ruby/ChangeLog Tue Jan 20 16:17:12 2009.)
-unless defined? Kernel.callcc then require 'continuation' end
+unless defined? $LOADED_FEATURES
+  alias $LOADED_FEATURES $"
+end
 
 def provided?(feature)
-  assert_type((symbol?(feature) or string?(feature)), feature, 0, "a symbol or a string")
   $LOADED_FEATURES.map do |f| File.basename(f) end.member?(feature.to_s.tr("_", "-"))
 end
 
 def provide(feature)
-  assert_type((symbol?(feature) or string?(feature)), feature, 0, "a symbol or a string")
   $LOADED_FEATURES.push(feature.to_s)
 end
 
@@ -432,7 +427,59 @@ def features(all = nil)
   end
 end
 
-require "sndlib" unless provided? :sndlib
+# with_silence(exception) do |old_verbose, old_debug| ... end
+# 
+# subpress debug messages (mostly on older Ruby versions)
+# 
+# with_silence do $global_var ||= value end
+# with_silence(LoadError) do require("nonexistent.file") end
+def with_silence(exception = StandardError)
+  old_verbose = $VERBOSE
+  old_debug   = $DEBUG
+  $VERBOSE = false
+  $DEBUG   = false
+  ret = if block_given?
+          begin
+            yield(old_verbose, old_debug)
+          rescue exception
+            false
+          end
+        else
+          false
+        end
+  $VERBOSE = old_verbose
+  $DEBUG   = old_debug
+  ret
+end
+
+# ruby19 moved complex.rb and rational.rb to C
+# (See ruby/Changelog Sun Mar 16 08:51:41 2008.)
+# FIXME
+# Thu Nov 18 01:26:45 CET 2010
+# with ruby193 and C Complex
+# val < 1.0 ==> Math::DomainError: Numerical argument is out of domain - "acosh"
+#unless defined? Complex
+with_silence do
+  require "complex"
+end
+unless defined? Rational
+  # warning: method redefined; discarding old numerator|denominator|gcd|lcm
+  with_silence do
+    require "rational"
+  end
+end
+
+# ruby19 moved Continuation to 'continuation'!
+# (See ruby/ChangeLog Tue Jan 20 16:17:12 2009.)
+unless defined? Kernel.callcc
+  require "continuation"
+end
+
+unless provided?(:sndlib)
+  with_silence do
+    require "sndlib"
+  end
+end
 
 #
 # Backward compatibility aliases and constants (from sndXX.scm)
@@ -700,31 +747,6 @@ end
 
 alias object_id __id__ unless defined? object_id
 
-# with_silence(exception) do |old_verbose, old_debug| ... end
-# 
-# subpress debug messages (mostly on older Ruby versions)
-# 
-# with_silence do $global_var ||= value end
-# with_silence(LoadError) do require("nonexistent.file") end
-def with_silence(exception = StandardError)
-  old_verbose = $VERBOSE
-  old_debug = $DEBUG
-  $VERBOSE = false
-  $DEBUG = false
-  ret = if block_given?
-          begin
-            yield(old_verbose, old_debug)
-          rescue exception
-            false
-          end
-        else
-          false
-        end
-  $VERBOSE = old_verbose
-  $DEBUG = old_debug
-  ret
-end
-
 # Provides descriptions of instances of classes, see nb.rb,
 # xm-enved.rb, etc.
 #
@@ -923,64 +945,54 @@ class Array
   alias rand! array_rand!
   
   def add(other)
-    assert_type((array?(other) or vct?(other)), 0, other, "an array, a vector or a vct")
     new_ary = self.dup
     [self.length, other.length].min.times do |i| new_ary[i] += other[i] end
     new_ary
   end
 
   def add!(other)
-    assert_type((array?(other) or vct?(other)), 0, other, "an array, a vector or a vct")
     [self.length, other.length].min.times do |i| self[i] += other[i] end
     self
   end
 
   def subtract(other)
-    assert_type((array?(other) or vct?(other)), 0, other, "an array, a vector or a vct")
     new_ary = self.dup
     [self.length, other.length].min.times do |i| new_ary[i] -= other[i] end
     new_ary
   end
 
   def subtract!(other)
-    assert_type((array?(other) or vct?(other)), 0, other, "an array, a vector or a vct")
     [self.length, other.length].min.times do |i| self[i] -= other[i] end
     self
   end
   
   def multiply(other)
-    assert_type((array?(other) or vct?(other)), 0, other, "an array, a vector or a vct")
     new_ary = self.dup
     [self.length, other.length].min.times do |i| new_ary[i] *= other[i] end
     new_ary
   end
 
   def multiply!(other)
-    assert_type((array?(other) or vct?(other)), 0, other, "an array, a vector or a vct")
     [self.length, other.length].min.times do |i| self[i] *= other[i] end
     self
   end
 
   def offset(scl)
-    assert_type(number?(scl), 0, scl, "a number")
     scl = Float(scl)
     self.class.new(self.length) do |i| self[i] + scl end
   end
 
   def offset!(scl)
-    assert_type(number?(scl), 0, scl, "a number")
     scl = Float(scl)
     self.map! do |val| val += scl end
   end
 
   def scale(scl)
-    assert_type(number?(scl), 0, scl, "a number")
     scl = Float(scl)
     self.class.new(self.length) do |i| self[i] * scl end
   end
 
   def scale!(scl)
-    assert_type(number?(scl), 0, scl, "a number")
     scl = Float(scl)
     self.map! do |val| val *= scl end
   end
@@ -1058,8 +1070,6 @@ a: 2
       rest.unshift(func)
       self.map do |item| yield(*rest + [item]) end
     else
-      assert_type((func?(func) or proc?(func) or method?(func)),
-                  func, 0, "a function (string or symbol), a method or a proc")
       case func
       when Proc, Method
         self.map do |item| func.call(*rest + [item]) end
@@ -1304,8 +1314,6 @@ class Vct
   end
   
   def +(other)
-    assert_type((number?(other) or vct?(other) or array?(other) or other.nil?), other, 0,
-                "a number, an array, a vector or a vct")
     case other
     when Numeric
       self.offset(other)
@@ -1317,8 +1325,6 @@ class Vct
   end
 
   def -(other)
-    assert_type((number?(other) or vct?(other) or array?(other) or other.nil?), other, 0,
-                "a number, an array, a vector or a vct")
     case other
     when Numeric
       self.offset(-other)
@@ -1330,8 +1336,6 @@ class Vct
   end
 
   def *(other)
-    assert_type((number?(other) or vct?(other) or array?(other) or other.nil?), other, 0,
-                "a number, an array, a vector or a vct")
     case other
     when Numeric
       self.scale(other)
@@ -1786,7 +1790,6 @@ func(1, 2, 3) ==> [1, 2, 3]
 lambda do |x| p x end.to_method(:foo);  foo(\"text1\") ==> \"text1\"
 lambda do |x| p x end.to_method(\"bar\"); bar(\"text2\") ==> \"text2\"")
   def to_method(name, klass = Object)
-    assert_type((symbol?(name) or string?(name)), name, 0, "a symbol or a string")
     assert_type((klass.kind_of?(Class) and klass.class == Class), name, 1, "a class, e.g. Object")
     name = case name
            when String
@@ -1894,8 +1897,6 @@ Proc#inspect must return #<Proc:0x01234567@xxx:x> not only %s!",
 end
 
 def make_proc2method(name, prc)
-  assert_type(func?(name), name, 0, "a symbol or a string")
-  assert_type(proc?(prc), prc, 1, "a proc")
   prc.to_method(name)
 end
 
@@ -1924,8 +1925,6 @@ end
 # puts
 # prc.call          ==> ..., 0.97679449812022
 def make_proc_with_source(string, bind = binding)
-  assert_type(string?(string), string, 0, "a string")
-  assert_type(binding?(bind), bind, 1, "a binding object")
   if proc?(prc = (res = Snd.catch(:all) do eval(string, bind) end).first)
     prc.source = string
     prc
@@ -1935,15 +1934,8 @@ def make_proc_with_source(string, bind = binding)
 end
 
 make_proc_with_setter(:proc_source,
-                      lambda { |prc|
-                        assert_type(proc?(prc), prc, 0, "a proc")
-                        prc.source
-                      },
-                      lambda { |prc, val|
-                        assert_type(proc?(prc), prc, 0, "a proc")
-                        assert_type(string?(val), val, 1, "a string")
-                        prc.source = val
-                      })
+                      lambda do |prc| prc.source end,
+                      lambda do |prc, val| prc.source = val end)
 
 # Multi-line input to the Snd listener and Emacs/inf-snd.el.
 # A simple parser collects multi-line input, e.g.
@@ -2673,7 +2665,7 @@ def snd_error_to_message
                               end)
           end
   end
-  str.gsub(rb_error_to_mus_tag.to_s.capitalize + ": ", "")
+  str.gsub(/#{rb_error_to_mus_tag.to_s.capitalize + ": "}/, "")
 rescue Interrupt, ScriptError, NameError, StandardError
   if $DEBUG
     $stderr.printf("# Warning (%s)\n", get_func_name)

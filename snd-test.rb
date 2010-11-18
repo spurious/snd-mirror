@@ -3,10 +3,11 @@
 # Commentary:
 #
 # Tested with:
-#   Snd version 11.11 of 15-Nov-10
+#   Snd version 11.11 of 18-Nov-10
+#   ruby 1.8.0 (2003-08-04)
 #   ruby 1.8.7 (2009-12-24 patchlevel 248)
 #   ruby 1.9.2p0 (2010-08-18 revision 29036)
-#   ruby 1.9.3dev (2010-11-16 trunk 29803)
+#   ruby 1.9.3dev (2010-11-17 trunk 29819)
 
 #
 # Reads an init file ./.sndtest.rb or ~/.sndtest.rb where you may set
@@ -16,8 +17,8 @@
 # 
 =begin
 % cat ./.sndtest.rb
-# $VERBOSE = true
-# $DEBUG   = true
+$VERBOSE = true
+# $DEBUG = true
 
 (ENV["RUBYLIB"] or $HOME + "/share/snd").split(/:/).each do |f| $LOAD_PATH.unshift(f) end
 
@@ -25,11 +26,13 @@ $original_save_dir           = set_save_dir(ENV["TMPDIR"])
 $original_temp_dir           = set_temp_dir(ENV["TMPDIR"])
 $original_output_data_format = default_output_data_format
 
-# $all_args    = true
 $with_big_file = true
 $bigger_snd    = "/usr/opt/sound/SFiles/bigger.snd"
 $sf_dir        = "/usr/opt/sound/sf1/"
-$tests         = 2
+# $all_args    = true
+# $tests       = 2
+
+alias bye exit
 =end
 
 #
@@ -89,9 +92,9 @@ $all_args       = false
 
 # global variables may be overridden in `pwd`/.sndtest.rb or ~/.sndtest.rb
 lambda do |file|
-  if File.exists?(file)
+  if File.file?(file)
     load(file)
-  elsif File.exists?(f = $HOME + "/" + file)
+  elsif File.file?(f = $HOME + "/" + file)
     load(f)
   end
 end.call(".sndtest.rb")
@@ -137,7 +140,6 @@ if $with_test_nogui
   end
 end
 
-require "rational"
 require "examp"
 require "ws"
 require "hooks"
@@ -173,7 +175,7 @@ if $with_test_motif
                       end)
 end
 
-# Returns the Ascii value of KEY as a Fixnum.
+# Returns Ascii value of KEY as a Fixnum.
 #
 # Since Ruby 1.9.0 (July/August 2006) ?x returns string "x" instead of
 # fixnum 120, so we need a new function.
@@ -239,6 +241,33 @@ def snd_info(fmt, *args)
   nil
 end
 
+if RUBY_VERSION < "1.9"
+  # FIXME
+  # ruby line number bug (below ruby19, I think [ms])
+  # 
+  # If line_number is above 8 ** 5 (32768), line_number returns wrong
+  # value.  32768 xor (or +) line_number returns correct value.
+
+  RB_LINENO_MAX = 8 ** 5
+
+  def rb_line_number(str)
+    line1 = Integer(str)
+    line2 = RB_LINENO_MAX ^ line1
+    if line1 <= TEST_FIRST_LINE_NUMBER
+      format("%d", line2)
+    elsif line2 >= TEST_LAST_LINE_NUMBER
+      format("%d", line1)
+    else
+      # no idea which one is correct
+      format("%d or %d", line1, line2)
+    end
+  end
+else
+  def rb_line_number(str)
+    str
+  end
+end
+
 def snd_display(*args)
   args[0] = String(args[0])
   olda = mus_array_print_length()
@@ -249,18 +278,20 @@ def snd_display(*args)
   set_mus_array_print_length(olda)
   set_print_length(oldv)
   if line = caller(1)[0].scan(/:(.*):in /).first
-    snd_info("[%s] %s", line.first, format(*args))
+    snd_info("[%s] %s", rb_line_number(line.first), format(*args))
   else
     snd_info("%s", format(*args))
   end
 end
 
+TEST_FIRST_LINE_NUMBER = __LINE__
+
 def snd_debug(*args)
   if args.empty?
-    snd_display("#<SND-DEBUG>")
+    snd_info("#<SND-DEBUG>")
   else
     args[0] = String(args[0])
-    snd_display("#<SND-DEBUG: %s>", format(*args))
+    snd_info("#<SND-DEBUG: %s>", format(*args))
   end
 end
 
@@ -274,7 +305,7 @@ lambda do
   targs = []
   if script_arg.positive?
     script_args[script_arg..-1].each do |arg|
-      if integer?(n = Snd.catch(:all, nil) do Integer(arg) end.first)
+ if integer?(n = Snd.catch(:all, nil) do Integer(arg) end.first)
         if n < 0
           nargs << n.abs
         elsif n <= 30             # test_30 for short tests
@@ -396,6 +427,7 @@ end
 
 if $with_test_nogui
   def dismiss_all_dialogs
+    GC.start
   end
 else
   def dismiss_all_dialogs
@@ -412,11 +444,12 @@ else
         end
       end
     end
+    GC.start
   end
 end
 
 def safe_display_edits(snd = false, chn = false, edpos = false, with_source = true)
-  Snd.catch(:all, lambda do |args| snd_display("display_edits error: %s", args) end) do
+  Snd.catch(:all, lambda do |*args| snd_display("display_edits error: %s", args) end) do
     display_edits(snd, chn, edpos, with_source)
   end.first
 end
@@ -466,25 +499,24 @@ def with_gc_disabled
   GC.disable
   ret = yield
   GC.enable
+  GC.start
   ret
 end
 
-lambda do
-  Snd_error_tags.each do |tag|
-    if (res = Snd.catch(tag) do Snd.throw(tag, "snd-test") end).first != tag
-      snd_display("Snd.catch (throwing 1): %s -> %s", tag.inspect, res.inspect)
-    end
-    if (res = Snd.catch(tag) do Snd.raise(tag, "snd-test") end).first != tag
-      snd_display("Snd.catch (raising 1): %s -> %s", tag.inspect, res.inspect)
-    end
-    if (res = Snd.catch(tag, :okay) do Snd.throw(tag, "snd-test") end).first != :okay
-      snd_display("Snd.catch (throwing 2): %s -> %s", tag.inspect, res.inspect)
-    end
-    if (res = Snd.catch(tag, :okay) do Snd.raise(tag, "snd-test") end).first != :okay
-      snd_display("Snd.catch (raising 2): %s -> %s", tag.inspect, res.inspect)
-    end
+Snd_error_tags.each do |tag|
+  if (res = Snd.catch(tag) do Snd.throw(tag, "snd-test") end).first != tag
+    snd_display("Snd.catch (throwing 1): %s -> %s", tag.inspect, res.inspect)
   end
-end.call
+  if (res = Snd.catch(tag) do Snd.raise(tag, "snd-test") end).first != tag
+    snd_display("Snd.catch (raising 1): %s -> %s", tag.inspect, res.inspect)
+  end
+  if (res = Snd.catch(tag, :okay) do Snd.throw(tag, "snd-test") end).first != :okay
+    snd_display("Snd.catch (throwing 2): %s -> %s", tag.inspect, res.inspect)
+  end
+  if (res = Snd.catch(tag, :okay) do Snd.raise(tag, "snd-test") end).first != :okay
+    snd_display("Snd.catch (raising 2): %s -> %s", tag.inspect, res.inspect)
+  end
+end
 
 def cwd
   Dir.pwd + "/"
@@ -1010,11 +1042,9 @@ def test_00_00(lst, exec = false)
     # global snd_func functions
     lst.each do |sym, val|
       next unless symbol?(sym)
-      old_val = snd_func(sym)
-      if (res = set_snd_func(sym, old_val)) != val
+      if (res = set_snd_func(sym, snd_func(sym))) != val
         snd_display("set_%s: res %s != val %s?", sym, res, val.inspect)
       end
-      set_snd_func(sym, old_val)
     end
   else
     # constants
@@ -1181,7 +1211,6 @@ def test_00
   #
   defs = [[:ask_before_overwrite, false],
           [:audio_output_device, 0],
-          [:auto_resize, true],
           [:auto_update, false],
           [:auto_update_interval, 60.0],
           [:beats_per_measure, 4],
@@ -1317,11 +1346,11 @@ def test_00
      :tiny_font,
      :peaks_font,
      :bold_peaks_font].each do |sym|
-      val = snd_func(sym)
-      if (res = set_snd_func(sym, "8x123")) != val
-        snd_display("set_%s to bogus value: %s %s?", sym, val, res)
+      old_val = snd_func(sym)
+      if (res = set_snd_func(sym, "8x123")) != old_val
+        snd_display("set_%s to bogus value: old_val %s != res %s?", sym, old_val, res)
       end
-      set_snd_func(sym, val)
+      set_snd_func(sym, old_val)
     end
   end
   if $with_test_gui
@@ -1372,7 +1401,6 @@ def test_01
   Snd.sounds.apply(:close_sound)
   controls = [[:ask_before_overwrite, false],
               [:audio_output_device, 0],
-              [:auto_resize, true],
               [:auto_update, false],
               [:channel_style, 1],
               [:color_cutoff, 0.003],
@@ -1815,7 +1843,7 @@ def test_03_00(lst, type = :normal)
     lst.each do |sym, initval, newval|
       next unless symbol?(sym)
       # INFO Sat Nov 13 19:33:20 CET 2010 [ms]
-      # initval is replaced by current val to run tests more than once.
+      # initval is set to current val to run tests more than once.
       initval = snd_func(sym)
       set_snd_func(sym, newval)
       nowval = snd_func(sym)
@@ -1836,7 +1864,7 @@ def test_03_00(lst, type = :normal)
     lst.each do |sym, initval, newval|
       next unless symbol?(sym)
       # INFO Sat Nov 13 19:33:20 CET 2010 [ms]
-      # initval is replaced by current val to run tests more than once.
+      # initval is set to current val to run tests more than once.
       initval = snd_func(sym)
       begin
         set_snd_func(sym, newval)
@@ -1857,7 +1885,6 @@ def test_03
           [:ask_before_overwrite, false, true],
           [:audio_input_device, 0, 1],
           [:audio_output_device, 0, 1],
-          [:auto_resize, true, false],
           [:auto_update, false, true],
           [:channel_style, 0, 1],
           if $with_test_gui
@@ -6317,29 +6344,29 @@ def test_05_08
   if $all_args
     # 4 case
     [[scale_by_two, cscale_by_two, :scale_by_two],
-      [ramp_to_1, cramp_to_1, :ramp_to_1],
-      [xramp_to_1, cxramp_to_1, :xramp_to_1],
-      [scale_by_half, cscale_by_half, :scale_by_half],
-      [scale_mid, cscale_mid, :scale_mid],
-      [on_air, con_air, :on_air]].each do |func, check, name|
+     [ramp_to_1, cramp_to_1, :ramp_to_1],
+     [xramp_to_1, cxramp_to_1, :xramp_to_1],
+     [scale_by_half, cscale_by_half, :scale_by_half],
+     [scale_mid, cscale_mid, :scale_mid],
+     [on_air, con_air, :on_air]].each do |func, check, name|
       [[scale_by_two, cscale_by_two, :scale_by_two],
-        [ramp_to_1, cramp_to_1, :ramp_to_1],
-        [xramp_to_1, cxramp_to_1, :xramp_to_1],
-        [scale_by_half, cscale_by_half, :scale_by_half],
-        [scale_mid, cscale_mid, :scale_mid],
-        [on_air, con_air, :on_air]].each do |func1, check1, name1|
+       [ramp_to_1, cramp_to_1, :ramp_to_1],
+       [xramp_to_1, cxramp_to_1, :xramp_to_1],
+       [scale_by_half, cscale_by_half, :scale_by_half],
+       [scale_mid, cscale_mid, :scale_mid],
+       [on_air, con_air, :on_air]].each do |func1, check1, name1|
         [[scale_by_two, cscale_by_two, :scale_by_two],
-          [ramp_to_1, cramp_to_1, :ramp_to_1],
-          [xramp_to_1, cxramp_to_1, :xramp_to_1],
-          [scale_by_half, cscale_by_half, :scale_by_half],
-          [scale_mid, cscale_mid, :scale_mid],
-          [on_air, con_air, :on_air]].each do |func2, check2, name2|
+         [ramp_to_1, cramp_to_1, :ramp_to_1],
+         [xramp_to_1, cxramp_to_1, :xramp_to_1],
+         [scale_by_half, cscale_by_half, :scale_by_half],
+         [scale_mid, cscale_mid, :scale_mid],
+         [on_air, con_air, :on_air]].each do |func2, check2, name2|
           [[scale_by_two, cscale_by_two, :scale_by_two],
-            [ramp_to_1, cramp_to_1, :ramp_to_1],
-            [xramp_to_1, cxramp_to_1, :xramp_to_1],
-            [scale_by_half, cscale_by_half, :scale_by_half],
-            [scale_mid, cscale_mid, :scale_mid],
-            [on_air, con_air, :on_air]].each do |func3, check3, name3|
+           [ramp_to_1, cramp_to_1, :ramp_to_1],
+           [xramp_to_1, cxramp_to_1, :xramp_to_1],
+           [scale_by_half, cscale_by_half, :scale_by_half],
+           [scale_mid, cscale_mid, :scale_mid],
+           [on_air, con_air, :on_air]].each do |func3, check3, name3|
             revert_sound
             set_to_1.call
             cset_to_1.call(data)
@@ -6365,35 +6392,35 @@ def test_05_08
     end
     # 5 case
     [[scale_by_two, cscale_by_two, :scale_by_two],
-      [ramp_to_1, cramp_to_1, :ramp_to_1],
-      [xramp_to_1, cxramp_to_1, :xramp_to_1],
-      [scale_by_half, cscale_by_half, :scale_by_half],
-      [scale_mid, cscale_mid, :scale_mid],
-      [on_air, con_air, :on_air]].each do |func, check, name|
+     [ramp_to_1, cramp_to_1, :ramp_to_1],
+     [xramp_to_1, cxramp_to_1, :xramp_to_1],
+     [scale_by_half, cscale_by_half, :scale_by_half],
+     [scale_mid, cscale_mid, :scale_mid],
+     [on_air, con_air, :on_air]].each do |func, check, name|
       [[scale_by_two, cscale_by_two, :scale_by_two],
-        [ramp_to_1, cramp_to_1, :ramp_to_1],
-        [xramp_to_1, cxramp_to_1, :xramp_to_1],
-        [scale_by_half, cscale_by_half, :scale_by_half],
-        [scale_mid, cscale_mid, :scale_mid],
-        [on_air, con_air, :on_air]].each do |func1, check1, name1|
+       [ramp_to_1, cramp_to_1, :ramp_to_1],
+       [xramp_to_1, cxramp_to_1, :xramp_to_1],
+       [scale_by_half, cscale_by_half, :scale_by_half],
+       [scale_mid, cscale_mid, :scale_mid],
+       [on_air, con_air, :on_air]].each do |func1, check1, name1|
         [[scale_by_two, cscale_by_two, :scale_by_two],
-          [ramp_to_1, cramp_to_1, :ramp_to_1],
-          [xramp_to_1, cxramp_to_1, :xramp_to_1],
-          [scale_by_half, cscale_by_half, :scale_by_half],
-          [scale_mid, cscale_mid, :scale_mid],
-          [on_air, con_air, :on_air]].each do |func2, check2, name2|
+         [ramp_to_1, cramp_to_1, :ramp_to_1],
+         [xramp_to_1, cxramp_to_1, :xramp_to_1],
+         [scale_by_half, cscale_by_half, :scale_by_half],
+         [scale_mid, cscale_mid, :scale_mid],
+         [on_air, con_air, :on_air]].each do |func2, check2, name2|
           [[scale_by_two, cscale_by_two, :scale_by_two],
-            [ramp_to_1, cramp_to_1, :ramp_to_1],
-            [xramp_to_1, cxramp_to_1, :xramp_to_1],
-            [scale_by_half, cscale_by_half, :scale_by_half],
-            [scale_mid, cscale_mid, :scale_mid],
-            [on_air, con_air, :on_air]].each do |func3, check3, name3|
+           [ramp_to_1, cramp_to_1, :ramp_to_1],
+           [xramp_to_1, cxramp_to_1, :xramp_to_1],
+           [scale_by_half, cscale_by_half, :scale_by_half],
+           [scale_mid, cscale_mid, :scale_mid],
+           [on_air, con_air, :on_air]].each do |func3, check3, name3|
             [[scale_by_two, cscale_by_two, :scale_by_two],
-              [ramp_to_1, cramp_to_1, :ramp_to_1],
-              [xramp_to_1, cxramp_to_1, :xramp_to_1],
-              [scale_by_half, cscale_by_half, :scale_by_half],
-              [scale_mid, cscale_mid, :scale_mid],
-              [on_air, con_air, :on_air]].each do |func4, check4, name4|
+             [ramp_to_1, cramp_to_1, :ramp_to_1],
+             [xramp_to_1, cxramp_to_1, :xramp_to_1],
+             [scale_by_half, cscale_by_half, :scale_by_half],
+             [scale_mid, cscale_mid, :scale_mid],
+             [on_air, con_air, :on_air]].each do |func4, check4, name4|
               revert_sound
               set_to_1.call
               cset_to_1.call(data)
@@ -6422,41 +6449,41 @@ def test_05_08
     end
     # 6 case
     [[scale_by_two, cscale_by_two, :scale_by_two],
-      [ramp_to_1, cramp_to_1, :ramp_to_1],
-      [xramp_to_1, cxramp_to_1, :xramp_to_1],
-      [scale_by_half, cscale_by_half, :scale_by_half],
-      [scale_mid, cscale_mid, :scale_mid],
-      [on_air, con_air, :on_air]].each do |func, check, name|
+     [ramp_to_1, cramp_to_1, :ramp_to_1],
+     [xramp_to_1, cxramp_to_1, :xramp_to_1],
+     [scale_by_half, cscale_by_half, :scale_by_half],
+     [scale_mid, cscale_mid, :scale_mid],
+     [on_air, con_air, :on_air]].each do |func, check, name|
       [[scale_by_two, cscale_by_two, :scale_by_two],
-        [ramp_to_1, cramp_to_1, :ramp_to_1],
-        [xramp_to_1, cxramp_to_1, :xramp_to_1],
-        [scale_by_half, cscale_by_half, :scale_by_half],
-        [scale_mid, cscale_mid, :scale_mid],
-        [on_air, con_air, :on_air]].each do |func1, check1, name1|
+       [ramp_to_1, cramp_to_1, :ramp_to_1],
+       [xramp_to_1, cxramp_to_1, :xramp_to_1],
+       [scale_by_half, cscale_by_half, :scale_by_half],
+       [scale_mid, cscale_mid, :scale_mid],
+       [on_air, con_air, :on_air]].each do |func1, check1, name1|
         [[scale_by_two, cscale_by_two, :scale_by_two],
-          [ramp_to_1, cramp_to_1, :ramp_to_1],
-          [xramp_to_1, cxramp_to_1, :xramp_to_1],
-          [scale_by_half, cscale_by_half, :scale_by_half],
-          [scale_mid, cscale_mid, :scale_mid],
-          [on_air, con_air, :on_air]].each do |func2, check2, name2|
+         [ramp_to_1, cramp_to_1, :ramp_to_1],
+         [xramp_to_1, cxramp_to_1, :xramp_to_1],
+         [scale_by_half, cscale_by_half, :scale_by_half],
+         [scale_mid, cscale_mid, :scale_mid],
+         [on_air, con_air, :on_air]].each do |func2, check2, name2|
           [[scale_by_two, cscale_by_two, :scale_by_two],
-            [ramp_to_1, cramp_to_1, :ramp_to_1],
-            [xramp_to_1, cxramp_to_1, :xramp_to_1],
-            [scale_by_half, cscale_by_half, :scale_by_half],
-            [scale_mid, cscale_mid, :scale_mid],
-            [on_air, con_air, :on_air]].each do |func3, check3, name3|
+           [ramp_to_1, cramp_to_1, :ramp_to_1],
+           [xramp_to_1, cxramp_to_1, :xramp_to_1],
+           [scale_by_half, cscale_by_half, :scale_by_half],
+           [scale_mid, cscale_mid, :scale_mid],
+           [on_air, con_air, :on_air]].each do |func3, check3, name3|
             [[scale_by_two, cscale_by_two, :scale_by_two],
-              [ramp_to_1, cramp_to_1, :ramp_to_1],
-              [xramp_to_1, cxramp_to_1, :xramp_to_1],
-              [scale_by_half, cscale_by_half, :scale_by_half],
-              [scale_mid, cscale_mid, :scale_mid],
-              [on_air, con_air, :on_air]].each do |func4, check4, name4|
+             [ramp_to_1, cramp_to_1, :ramp_to_1],
+             [xramp_to_1, cxramp_to_1, :xramp_to_1],
+             [scale_by_half, cscale_by_half, :scale_by_half],
+             [scale_mid, cscale_mid, :scale_mid],
+             [on_air, con_air, :on_air]].each do |func4, check4, name4|
               [[scale_by_two, cscale_by_two, :scale_by_two],
-                [ramp_to_1, cramp_to_1, :ramp_to_1],
-                [xramp_to_1, cxramp_to_1, :xramp_to_1],
-                [scale_by_half, cscale_by_half, :scale_by_half],
-                [scale_mid, cscale_mid, :scale_mid],
-                [on_air, con_air, :on_air]].each do |func5, check5, name5|
+               [ramp_to_1, cramp_to_1, :ramp_to_1],
+               [xramp_to_1, cxramp_to_1, :xramp_to_1],
+               [scale_by_half, cscale_by_half, :scale_by_half],
+               [scale_mid, cscale_mid, :scale_mid],
+               [on_air, con_air, :on_air]].each do |func5, check5, name5|
                 revert_sound
                 set_to_1.call
                 cset_to_1.call(data)
@@ -6593,7 +6620,7 @@ def test_05_10
   end
   set_time_graph?(true, ind, 0)
   # 
-  Snd.catch(:all, lambda do |args| snd_display("axis label error: %s", args) end) do
+  Snd.catch(:all, lambda do |*args| snd_display("axis label error: %s", args) end) do
     if (res = x_axis_label(ind, 0, Time_graph)) != "time"
       snd_display("get time x_axis_label: %s?", res)
     end
@@ -6667,7 +6694,7 @@ def test_05_10
   end
   set_x_bounds([0.0, 0.1])
   update_transform_graph
-  Snd.catch(:no_such_axis, lambda do |args| snd_display("transform axis not displayed?") end) do
+  Snd.catch(:no_such_axis, lambda do |*args| snd_display("transform axis not displayed?") end) do
     if (res = x_axis_label(ind, 0, Transform_graph)) != "frequency"
       snd_display("def fft x_axis_label: %s", res)
     end
@@ -19650,10 +19677,10 @@ def test_09_00
   snd_display("mix_amp: %s?", amp) if fneq(amp, 1.0)
   snd_display("mix_speed: %s?", spd) if fneq(spd, 1.0)
   snd_display("mix_name: %s?", nam) unless nam.null?
-  Snd.catch(:mus_error, lambda do |args| snd_display("can\'t play mix: %s", args) end) do
+  Snd.catch(:mus_error, lambda do |*args| snd_display("cannot play mix: %s", args) end) do
     play(mix_id)
   end
-  Snd.catch(:mus_error, lambda do |args| snd_display("can\'t play mix from 1000: %s", args) end) do
+  Snd.catch(:mus_error, lambda do |*args| snd_display("cannot play mix from 1000: %s", args) end) do
     play(mix_id, :start, 1000)
   end
   set_mix_name(mix_id, "test-mix")
@@ -20094,25 +20121,31 @@ def test_09_03
     view_mixes_dialog
     set_mix_dialog_mix(mix1)
     mixd = dialog_widgets[16]
-    nxt = find_child(mixd, "Next")
-    prev = find_child(mixd, "Previous")
-    force_event
-    if (not RXtIsSensitive(nxt)) or RXtIsSensitive(prev)
-      snd_display("mix_dialog next/previous: %s %s %s %s?",
-                  nxt, RXtIsSensitive(nxt), prev, RXtIsSensitive(prev))
+    if widget?(nxt = Snd.catch(:no_such_widget) do find_child(mixd, "Next") end.first)
+      if widget?(prev = Snd.catch(:no_such_widget) do find_child(mixd, "Previous") end.first)
+        force_event
+        if (not RXtIsSensitive(nxt)) or RXtIsSensitive(prev)
+          snd_display("mix_dialog next/previous: %s %s %s %s?",
+                      nxt, RXtIsSensitive(nxt), prev, RXtIsSensitive(prev))
+        end
+        click_button(nxt)
+        force_event
+        click_button(nxt)
+        force_event
+        if RXtIsSensitive(nxt) or (not RXtIsSensitive(prev))
+          snd_display("mix_dialog next/previous: %s %s %s %s?",
+                      nxt, RXtIsSensitive(nxt), prev, RXtIsSensitive(prev))
+        end
+        click_button(prev)
+        force_event
+        click_button(prev)
+        force_event
+      else
+        snd_display("find_child cannot find Previous: %s?", prev.inspect)
+      end
+    else
+      snd_display("find_child cannot find Next: %s?", nxt.inspect)
     end
-    click_button(nxt)
-    force_event
-    click_button(nxt)
-    force_event
-    if RXtIsSensitive(nxt) or (not RXtIsSensitive(prev))
-      snd_display("mix_dialog next/previous: %s %s %s %s?",
-                  nxt, RXtIsSensitive(nxt), prev, RXtIsSensitive(prev))
-    end
-    click_button(prev)
-    force_event
-    click_button(prev)
-    force_event
     close_sound(ind)
   end
   # 
@@ -23496,7 +23529,6 @@ def test_14
     # new variable settings
     #
     [[:amp_control, true, 0.1, 1.0],
-     [:auto_resize, false, false, true],
      [:auto_update, false, false, true],
      [:channel_style, false, 0, 2],
      [:color_cutoff, false, 0.0,0.2],
@@ -27374,7 +27406,7 @@ def test_16_05
   set_squelch_update(true, ind0, true)
   set_squelch_update(true, ind1, true)
   set_squelch_update(true, ind2, true)
-  Snd.catch(:mus_error, lambda do |*args| snd_display("caught error: %s", args.inspect) end) do
+  Snd.catch(:mus_error, lambda do |*args| snd_display("caught error: %s", args) end) do
     500.times do
       set_sync(random(3), ind0)
       set_sync(random(3), ind1)
@@ -28195,10 +28227,10 @@ def test_19_01
   ind0 = open_sound("oboe.snd")
   ind1 = open_sound("oboe.snd")
   if (res = find_sound("oboe.snd", 0)) != ind0
-    snd_display("find_sound 0: %s %s?", ind0, res)
+    snd_display("find_sound 0: ind0 %s res %s?", ind0, res)
   end
   if (res = find_sound("oboe.snd", 1)) != ind1
-    snd_display("find_sound 1: %s %s?", ind1, res)
+    snd_display("find_sound 1: ind1 %s res %s?", ind1, res)
   end
   add_mark(123, ind0)
   add_mark(321, ind1)
@@ -29169,8 +29201,8 @@ def test_19_02
    [lambda { effects_jc_reverb_1(0.1, 0, false) },
     "Proc.new {|snd, chn|  effects_jc_reverb_1(0.1, 0, false, snd, chn) }"]
   ].each_with_index do |args, i|
-    func1, descr = args
-    func1.call
+    func, descr = args
+    func.call
     unless proc?(func = edit_list2function)
       snd_display("edit_list2function proc 20[%s]: %s", i, func.inspect)
     end
@@ -31304,7 +31336,7 @@ def test_21_00
   display_db(ind1, 0)
   display_samps_in_red(ind1, 0)
   update_time_graph
-  Snd.catch(:all, lambda do |args| snd_display("show_hiho trouble: %s", args) end) do
+  Snd.catch(:all, lambda do |*args| snd_display("show_hiho trouble: %s", args) end) do
     show_hiho(ind1, 0)
   end
   update_time_graph
@@ -32995,6 +33027,7 @@ def test_23_04
   notch_selection(freqs, false)
   play_sound do |data| data.map!(0) do |val| val * 2.0 end end
   close_sound(ind)
+  #
   with_sound(:srate, 44100) do
     bigbird_2(0, 60.0, 60, 0, 0.5,
               [0, 0, 1, 1],
@@ -33075,8 +33108,7 @@ def test_23_04
       variable_display(wid4,
                        variable_display(wid2,
                                         variable_display(wid3,
-                                                         sin(variable_display(wid1, 1) * 0.1)) *
-                                          0.5))
+                                                         sin(variable_display(wid1, 1) * 0.1)) *0.5))
     end
     tag = Snd.catch do set_sample(0, 0.5, wid3.snd, 0) end
     if (res = edit_position(wid3.snd, 0)) > 0
@@ -33313,7 +33345,6 @@ end
 require "strad"
 require "noise"
 require "piano"
-include Piano
 require "maraca"
 require "play"
 require "prc95"
@@ -33321,7 +33352,10 @@ require "singer"
 require "zip"
 
 def test_23
-  if $test_loop_index.zero?
+  # FIXME
+  # Wed Nov 17 13:46:56 CET 2010
+  # gc issues with ruby19
+  if RUBY_VERSION < "1.9" or $test_loop_index.zero?
     $clm_verbose    = false
     $clm_statistics = false
     $clm_play       = false
@@ -35003,42 +35037,9 @@ def test_30
   $clm_verbose    = false
   $clm_statistics = false
   $clm_play       = false
-  outer = with_sound() do
-    sound_let(Proc.new do fm_violin(0, 0.1, 440, 0.1) end) do |a|
-      mus_mix(@output, a)
-    end
-  end.output
-  unless string?(outer) then snd_display("with_sound returns: %s?", outer) end
-  ind = find_sound(outer)
-  if (not sound?(ind)) or frames(ind) != (mus_srate * 0.1).floor
-    snd_display("sound_let: %s %s?", frames(ind), (mus_srate * 0.1).floor)
-  end
-  close_sound(ind)
-  delete_file("test.snd")
-  with_sound(:srate, 22050) do
-    sound_let(Proc.new do
-                fm_violin(0, 1, 440, 0.1)
-              end,
-              Proc.new do
-                fm_violin(0, 2, 660, 0.1, :base, 32.0)
-                fm_violin(0.125, 0.5, 880, 0.1)
-              end) do |temp_1, temp_2|
-      mus_mix(@output, temp_1, 0)
-      mus_mix(@output, temp_2, 22050)
-    end
-  end
-  if sound?(ind = find_sound("test.snd"))
-    unless maxamp(ind).between?(0.15, 0.2)
-      snd_display("with_sound+sound_lets maxamp: %s?", maxamp(ind))
-    end
-    if fneq(res = frames(ind) / srate(ind).to_f, 3.0)
-      snd_display("with_sound+sound_lets dur: res %s frms %s sr %s?", res, frames(ind), srate(ind))
-    end
-    close_sound(ind)
-  else
-    snd_display("with_sound+sound_lets init: no test.snd?")
-  end
 end
+
+TEST_LAST_LINE_NUMBER = __LINE__
 
 main_test
 

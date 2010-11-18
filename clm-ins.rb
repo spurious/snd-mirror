@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Thu Oct 15 00:12:59 CEST 2009
+# Changed: Wed Nov 17 18:42:38 CET 2010
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -483,7 +483,6 @@ def stereo_flute(start, dur, freq, flow, *args)
          [:vib_amount, 0.03],
          [:ran_rate, 5],
          [:ran_amount, 0.03])
-  beg        = seconds2samples(start)
   flowf      = make_env(:envelope, flow_envelope, :scaler, flow,
                         :length, seconds2samples(dur - decay))
   periodic_vib = make_oscil(:frequency, vib_rate)
@@ -2263,7 +2262,7 @@ def expfil(start, dur, hopsecs, rampsecs, steadysecs, file1, file2)
   steadylen = seconds2samples(steadysecs)
   grn1 = Grn.new(0.0, 1.0 / ramplen, 0, 0, 0, ramplen, steadylen, 0)
   grn2 = Grn.new(0.0, 1.0 / ramplen, 0, 0, 0, ramplen, steadylen, 0)
-  beg, len = times2samples(start, dur)
+  beg = seconds2samples(start)
   out1 = beg
   out2 = hop + beg
   run_instrument(start, dur) do |i|

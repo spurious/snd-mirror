@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Aug 01 22:58:31 CEST 2006
-# Changed: Wed Oct 14 23:10:21 CEST 2009
+# Changed: Wed Nov 17 22:07:58 CET 2010
 
 # Commentary:
 #
@@ -37,7 +37,6 @@
 
 # Code:
 
-require "complex"
 require "clm"
 require "dsp"
 

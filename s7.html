@@ -2601,6 +2601,10 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
                  (let () (set! x 3) #f)))
   x) 
 3
+
+&gt; (let ((x 1))                ; (apply and ...) has the same effect
+    (apply and (list #f (set! x 3))) x)
+3
 </pre>
 
 <p>At the top-level, since there's nothing to splice into, so you simply get your values back:
@@ -4342,6 +4346,10 @@ These symbols are not just a silly optimization of string comparison:
        (arg '(x)) 
        (body `((+ ,x x 1)))) 
   ((apply lambda arg body) 12)) ; "legolambda"?
+
+(let ()
+  (define (hi a) (+ a x))
+  ((apply let '((x 32)) (list (procedure-source hi))) 12)) ; one function, many closures?
 </pre>
 
 <p>If you apply define or define-macro, the returned value is a symbol, so to apply the

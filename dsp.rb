@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Thu Oct 15 00:13:33 CEST 2009
+# Changed: Wed Nov 17 22:09:54 CET 2010
 
 # Commentary:
 #
@@ -189,7 +189,6 @@
 
 require "ws"
 require "env"
-require "complex"
 
 module Dsp
   # src_duration (see src-channel in extsnd.html)

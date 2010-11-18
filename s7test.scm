@@ -785,6 +785,7 @@ yow!! -- I'm using mpc_cmp
 (test (symbol? and) #f)
 (test (symbol? lambda) #f)
 (test (symbol? call/cc) #f)
+;;; but (symbol? 1.2.3) -> error so we're not perfect either
 
 (test (let ((sym000000000000000000000 3))
 	(let ((sym000000000000000000001 4))
@@ -2364,11 +2365,15 @@ yow!! -- I'm using mpc_cmp
 (test (substring "hi there" 3 6) "the")
 (test (substring "hi there" 0 (string-length "hi there")) "hi there")
 (test (substring "" 0 0) "")
-(test (let ((str "012345"))
-	(let ((str1 (substring str 2 4)))
-	  (string-set! str1 1 #\x))
-	(string=? str "012345"))
-      #t)
+(let ((str "012345"))
+  (let ((str1 (substring str 2 4)))
+    (string-set! str1 1 #\x)
+    (test (string=? str "012345") #t)
+    (let ((str2 (substring str1 1)))
+      (set! (str2 0) #\z)
+      (test (string=? str "012345") #t)
+      (test (string=? str1 "2x") #t)
+      (test (string=? str2 "z") #t))))
 (test (substring (substring "hiho" 0 2) 1) "i")
 (test (substring (substring "hiho" 0 2) 2) "")
 (test (substring (substring "hiho" 0 2) 0 1) "h")
@@ -3998,6 +4003,12 @@ yow!! -- I'm using mpc_cmp
 (let ((x '(1 . 2))) (set-cdr! x x) (test (list-tail x 1) (cdr x)))
 (let ((x '(1 . 2))) (set-cdr! x x) (test (list-tail x 100) x))
 
+(let ((x (list 1 2 3)))
+  (let ((y (list-tail x 1)))
+    (set! (y 1) 32)
+    (test (equal? y '(2 32)) #t)
+    (test (equal? x '(1 2 32)) #t))) ; list-tail is not like substring
+
 (for-each
  (lambda (name op1 op2)
    (for-each
@@ -4450,6 +4461,8 @@ yow!! -- I'm using mpc_cmp
 ;(test-w "(let ((. 3)) .)")
 (test-w "#0d()")
 (test-w "`#0d()")
+(test-w "'#t:") ; guile interprets this as #t : and complains unbound variable :
+(test-w "#t1")  ;   similarly this is #t 1 in guile
 
 
 
@@ -6924,7 +6937,6 @@ yow!! -- I'm using mpc_cmp
   (test (reverse h) 'error)
   (test (length h) 'error)
   (test (fill! h) 'error)
-  (test (copy h) h)
   (test (hook-arity h) '(1 0 #t))
   (set! (hook-functions h) (list (lambda (x . y) x)))
   (test (hook-apply h '(1 2 3)) (h 1 2 3))
@@ -6939,7 +6951,26 @@ yow!! -- I'm using mpc_cmp
   (h 3)
   (if (not (= sum 4)) (format #t ";hook called by hook function: ~A~%" sum)))
 
-
+(let ((h1 (make-hook '(1 0 #f))))
+  (let ((h2 (copy h1)))
+    (test (hook-arity h2) '(1 0 #f))
+    (test (hook-functions h2) '())
+    (test (equal? h1 h2) #t)
+    (test (eq? h1 h2) #f)
+    (set! (hook-functions h1) (list (lambda (a) (+ a 1))))
+    (test (hook-functions h2) '())
+    (set! (hook-functions h1) '())
+    (set! (hook-functions h2) (list (lambda (a) (+ a 1))))
+    (test (hook-functions h1) '())
+    (let ((x 0))
+      (set! (hook-functions h1) (list (lambda (a) (set! x (+ a 1)))))
+      (test (let () (h1 3) (= x 4)) #t)
+      (let ((h3 (copy h1)))
+	(test (equal? (hook-functions h1) (hook-functions h3)) #t)
+	(test (equal? h1 h3) #t)
+	(test (equal? h2 h3) #f)
+	(h3 4)
+	(test x 5)))))
 
 
 
@@ -7794,7 +7825,7 @@ yow!! -- I'm using mpc_cmp
  (list #\a '#(1 2 3) "hi" '() 'hi abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
 
 (test (format #f "~D") 'error)
-					;	    (test (format () "hi") "hi") ; not sure this is a good idea
+(test (format () "hi") 'error)
 (test (format #f "~F" "hi") 'error)
 (test (format #f "~D" #\x) 'error)
 (test (format #f "~C" (list 1 2 3)) 'error)
@@ -9965,7 +9996,7 @@ this prints:
 (test (do ((i 4 (- i 1)) (a 1 (* a i))) ((zero? i) a)) 24)
 (test (do ((i 2 (+ i 1))) ((> i 0) 123)) 123)
 
-					;(test (do () (() ()) ()) '()) ; ?? -- is '() the same as ()? -- scheme bboard sez not necessarily
+(test (do () (() ()) ()) '())
 (test (do () ('() '())) '())
 (test (do () ('())) '())
 (test (do () (())) '())
@@ -11216,6 +11247,10 @@ this prints:
 (test ((lambda (a) a) #<eof>) #<eof>)
 (test ((lambda () (let ((a #<undefined>)) a))) #<undefined>)
 
+(let ()
+  (define (hi a) (+ a x))
+  (test ((apply let '((x 32)) (list (procedure-source hi))) 12) 44))
+;; i.e. make a closure from (let ((x 32)) <procedure-source hi>)
 
 
 
@@ -11482,16 +11517,22 @@ this prints:
 (test (define x) 'error)
 (test (define . x) 'error)
 (test (define x 1 2) 'error)
+(test (define x x) 'error)
 (test (define (x 1)) 'error)
 (test (define (x)) 'error)
 (test (define 1 2) 'error)
 (test (define "hi" 2) 'error)
+(test (define :hi 2) 'error)
 (test (define x 1 2) 'error)
 (test (define x 1 . 2) 'error)
 (test (define x . 1) 'error)
 (test (define x (lambda ())) 'error)
 (test (define #<eof> 3) 'error)
 (test (define (#<undefined>) 4) 'error)
+(test (define (:hi a) a) 'error)
+(test (define (hi: a) a) 'error)
+(test (define (#b1 a) a) 'error)
+(test (define (hi #b1) #b1) 'error)
 					;(test (define 'hi 1) 'error) ; this redefines quote, which maybe isn't an error
 (test (let () (define . 1) 1) 'error)
 (test (let () (define func (do () (#t (lambda (y) 2)))) (func 1)) 2)
@@ -13532,7 +13573,7 @@ who says the continuation has to restart the map from the top?
 
 (num-test (/ 1 (call/cc (lambda (go) (go 9) 0))) 1/9)
 
-(test (call/cc (lambda (g) (call/cc (lambda (f) (f 1)) (g 2)))) 2) ; !! guile agrees!
+(test (call/cc (lambda (g) (call/cc (lambda (f) (f 1)) (g 2)))) 2) ; !! guile agrees! (evaluating the extraneous arg jumps)
 (test (call/cc (lambda (g) (abs -1 (g 2)))) 2)                     ; perhaps this should be an error
 (test (call/cc (lambda (g) (if #t #f #f (g 2)))) 'error)
 
@@ -17222,11 +17263,32 @@ why are these different (read-time `#() ? )
     (num-test (string->number "#x106") 55)
     (test (string->number "#x#t1") #f)
 
+    (let ()
+      (define (read-in-radix str radix)
+	;; no error checking, only integers
+	(define (char->digit c)
+	  (cond ((char-numeric? c)
+		 (- (char->integer c) (char->integer #\0)))
+		((char-lower-case? c)
+		 (+ 10 (- (char->integer c) (char->integer #\a))))
+		(#t
+		 (+ 10 (- (char->integer c) (char->integer #\A))))))
+	(let* ((negative (char=? (str 0) #\-))
+	       (len (length str))
+	       (j (if (or negative (char=? (str 0) #\+)) 2 1))) ; 1st char is "z"
+	  (do ((sum (char->digit (str j))
+		    (+ (* sum radix) (char->digit (str j)))))
+	      ((= j (- len 1)) sum)
+	    (set! j (+ j 1)))))
+      
+      (set! *#readers* (list (cons #\z (lambda (str) (read-in-radix str 32)))))
+      (num-test (string->number "#z1p") 57)
+      )
+      
     (set! *#readers* old-readers)
     
     (num-test (string->number "#x106") 262)
     (num-test (string->number "#x17") 23)
-
     )
 
 ;;; (call-with-exit (lambda (exit) (set! *#readers* (cons (cons #\p (lambda (str) (exit 23))) *#readers*)) #p123))
@@ -22149,7 +22211,7 @@ why are these different (read-time `#() ? )
 	  
 	  ;; (define (nbody-test)
 	  
-	  (let ((n 1000) ; (command-line #:args (n) (string->number n)))
+	  (let ((n 10) ;(n 1000) ; (command-line #:args (n) (string->number n)))
 		(system (list *sun* *jupiter* *saturn* *uranus* *neptune*)))
 	    (offset-momentum system)
 	    (let ((initial (energy system)))
@@ -54486,6 +54548,7 @@ why are these different (read-time `#() ? )
 
 (test (string->number "#x#|1|#1") #f)
 (test (string->number "#||#1") #f)
+(test (string->number "#<") #f)
 
 
 (if with-bignums
@@ -56323,7 +56386,7 @@ etc
 
 
 (let ()
-  (define (logxor1 . ints) ; returns bits that are on in just one of ints
+  (define (logxor1 . ints) ; returns bits that are on in just one of ints TODO: this can be made much more elegant
     (let ((len (length ints)))
       (cond ((= len 0) 
 	     0)

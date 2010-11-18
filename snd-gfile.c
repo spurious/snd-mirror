@@ -3670,6 +3670,7 @@ static char *new_file_dialog_filename(int header_type)
   char *filename = NULL;
   const char *extensions[6] = {"aiff", "aiff", "wav", "wav", "caf", "snd"};
   int extension = 0;
+
   filename = (char *)calloc(64, sizeof(char));
   switch (header_type)
     {
@@ -3681,6 +3682,7 @@ static char *new_file_dialog_filename(int header_type)
     default:       extension = 5;  break;
     }
   mus_snprintf(filename, 64, _("new-%d.%s"), new_file_dialog_file_ctr++, extensions[extension]);
+
   return(filename);
 }
 

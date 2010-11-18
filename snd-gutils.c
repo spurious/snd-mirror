@@ -872,6 +872,7 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
   GtkWidget *parent;
   GtkAdjustment *v;
   gdouble maximum, size, new_value, minimum;
+
   parent = gtk_widget_get_parent(list);
 #if HAVE_GTK_3
   v = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(parent));
@@ -899,16 +900,19 @@ GtkWidget *sg_button_new_from_stock_with_label(const char *text, const gchar *st
 {
   /* borrowed from gtk/gtkbutton.c */
   GtkWidget *button, *image, *label, *hbox, *align;
+
   button = gtk_button_new();
   label = gtk_label_new(text);
   image = (GtkWidget *)g_object_ref(gtk_image_new_from_stock(stock_id, GTK_ICON_SIZE_BUTTON));
   hbox = gtk_hbox_new(false, 2);
   align = gtk_alignment_new (0.5, 0.5, 0.0, 0.0);
+
   gtk_box_pack_start(GTK_BOX(hbox), image, false, false, 0);
   gtk_box_pack_end(GTK_BOX(hbox), label, false, false, 0);
   gtk_container_add(GTK_CONTAINER(button), align);
   gtk_container_add(GTK_CONTAINER(align), hbox);
   gtk_widget_show_all(align);
+
   g_object_unref(image);
   return(button);
 }
@@ -939,17 +943,6 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
   return(false);
 }
 
-
-/* Valgrind complains:
- *
- * ==30220== 6,555,096 bytes in 4,005 blocks are possibly lost in loss record 526 of 529
- * ==30220==    by 0x415DB57: gtk_button_new_with_label (gtkbutton.c:822)
- *
- * but these are primarily from the edit history lists which can be very long in snd-test
- *   and the open file dialog (400 files if running in the snd dir).
- *   we could put off allocating a button until someone opens the pane, but even 4000 buttons
- *   doesn't seem so bad to me.
- */
 
 static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
 {
@@ -1003,21 +996,26 @@ slist *slist_new_with_title_and_table_data(const char *title,
     case PANED_ADD1: 
       gtk_paned_add1(GTK_PANED(parent), topw);
       break;
+
     case PANED_ADD2: 
       gtk_paned_add2(GTK_PANED(parent), topw);
       break;
+
     case BOX_PACK: 
       gtk_box_pack_start(GTK_BOX(parent), topw, true, true, 4); 
       break;
+
     case BOX_PACK_END: 
       gtk_box_pack_end(GTK_BOX(parent), topw, false, false, 4); 
       break;
+
     case TABLE_ATTACH: 
       gtk_table_attach(GTK_TABLE(parent), topw, t1, t2, t3, t4,
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
 		       0, 0);
       break;
+
     case CONTAINER_ADD: 
       gtk_container_add(GTK_CONTAINER(parent), topw); 
       break;

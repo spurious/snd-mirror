@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Apr 23 13:07:53 CEST 2005
-# Changed: Fri Jul 06 01:52:50 CEST 2007
+# Changed: Wed Nov 17 21:36:29 CET 2010
 
 # Commentary:
 #
@@ -78,8 +78,6 @@ def singer(start, amp, data)
   table_size = 1000                               # size of glottis wave-table
   noseposition = 3
   noselength = 6
-  noselength_1 = noselength - 1
-  noselength_2 = noselength - 2
   nose_ring_time = 1000                           # naso pharynx response decay time
   one_over_two_pi = 1.0 / TWO_PI
   two_pi_over_table_size = TWO_PI / table_size

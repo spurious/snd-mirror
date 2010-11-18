@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Mar 27 00:19:51 CET 2004
-# Changed: Thu Nov 26 18:15:00 CET 2009
+# Changed: Wed Nov 17 21:31:20 CET 2010
 
 # Comment:
 # 
@@ -231,7 +231,6 @@ def pvoc(*rest)
   fundamental = TWO_PI / fftsize
   output = interp
   resynth_oscils = make_array(fftsize2) do make_oscil(:frequency, 0) end
-  nextpct = 10.0
   outlen = (time * len).floor
   in_data = channel2vct(0, fftsize * 2, snd, chn)
   in_data_beg = 0

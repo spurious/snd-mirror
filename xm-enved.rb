@@ -2,29 +2,11 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Changed: Mon Oct 25 19:48:49 CEST 2010
-
-# Important:
-#
-# Motif works without problems.
-# 
-# Gtk Version: Gtk+ 2.20.1, Glib 2.24.2, Pango 1.28.1, Cairo 1.8.10
-#
-# tested with provided?(:gtk2):
-#     in snd-xm.rb:
-#
-#     in add_event_handler:
-#
-#     Rg_signal_lookup(event, RG_OBJECT_TYPE(RG_OBJECT(parent)))
-#     RG_OBJECT  (not RGTK_OBJECT!)
-#
-#     in is_managed?:
-#
-#     Rgtk_widget_get_realized() exists and is used.
+# Changed: Wed Nov 17 22:58:35 CET 2010
 
 # Commentary:
 #
-# Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Ruby 1.8.7
+# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.20.1, Ruby 1.8.0/7, 1.9.2/3.
 #
 # module Snd_enved
 #  channel_enved(snd, chn)
@@ -117,6 +99,9 @@ require "extensions"
 if provided?(:snd_motif) or provided?(:snd_gtk)
   require "snd-xm"
   include Snd_XM
+else
+  $with_motif = false
+  $with_gtk   = false
 end
 
 #

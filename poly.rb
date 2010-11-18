@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Apr 09 23:55:07 CEST 2005
-# Changed: Wed Oct 14 23:12:00 CEST 2009
+# Changed: Wed Nov 17 23:02:10 CET 2010
 
 # Commentary: (see poly.scm)
 #
@@ -52,7 +52,6 @@
 #
 # Code:
 
-require "complex"
 require "clm"
 require "mix"
 

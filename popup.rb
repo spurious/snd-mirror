@@ -2,13 +2,13 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Sat Feb 06 13:55:21 CET 2010
+# Changed: Wed Nov 17 22:55:49 CET 2010
 
 # Commentary:
 #
 # Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 # 
-# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.18.6, Ruby 1.8.7.
+# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.20.1, Ruby 1.8.0/7, 1.9.2/3.
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
 # $edhist_save_hook:  lambda do |prc| ... end
@@ -1026,7 +1026,6 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
   #
   make_snd_popup("Edits", :target, :edhist) do
     funcs = []
-    widgets = []
     make_hook("$edhist_save_hook", 1,
               "lambda do |prc| ... end:  for debugging; \
 called in menu entry Save with new delivered PROC from edit_list2function as only argument, e.g.\n\
@@ -1165,7 +1164,7 @@ all saved edit lists.",
         end
         each_entry do |w1|
           if widget?(w1)
-            if (name = widget_name(w1)) == "Help"
+            if widget_name(w1) == "Help"
               if subject = listener_selection
                 change_label(w1, format("Help on %s", subject.inspect))
                 show_widget(w1)

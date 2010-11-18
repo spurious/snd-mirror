@@ -8,7 +8,7 @@
 #
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Mar 16 02:46:52 CET 2003
-# Changed: Thu Oct 15 00:21:16 CEST 2009
+# Changed: Wed Nov 17 23:56:56 CET 2010
 
 require "ws"
 
@@ -51,7 +51,7 @@ def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
          [:degree, 45],
          [:dist, 0.0025],
          [:reverb, 0.005])
-  beg, len = times2samples(start, dur)
+  len = seconds2samples(dur)
   ampf     = make_env(:envelope, ampenv, :scaler, amp, :length, len)
   dcblocker  = DCBlock.new
   vinut      = make_vct(bufsize)

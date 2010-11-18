@@ -2,7 +2,7 @@
 # Perry Cook's Physical Modelling Toolkit
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Changed: Thu Oct 15 00:19:37 CEST 2009
+# Changed: Wed Nov 17 21:36:01 CET 2010
 
 require "ws"
 
@@ -295,7 +295,6 @@ module PRC
     filter = make_onep()
     dcblocker = make_dc_block()
     jetrefl = 0.6
-    endrefl = 0.6
     sinphase = 0.0
     blowing = true
     breathpressure = 0.0

@@ -2,13 +2,13 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sat Nov 06 23:32:50 CET 2010
+# Changed: Wed Nov 17 22:57:45 CET 2010
 
 # Commentary:
 #
 # Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 #
-# Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Ruby 1.8.7
+# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.20.1, Ruby 1.8.0/7, 1.9.2/3.
 #
 # module Snd_XM
 #  make_snd_menu(name, args) do ... end
@@ -405,16 +405,26 @@ module Snd_XM
            "find_child(widget, name)  \
 returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'")
   def find_child(widget, name)
+    res = false
     each_child(widget) do |child|
       if widget_name(child) == name
-        return child
+        # INFO
+        # Wed Nov 17 14:41:50 CET 2010
+        # "return child"
+        # RETURN seems not to return a value with RUBY_VERSION 1.8.0
+        res = child
+        return res
       end
     end
-    Snd.raise(:no_such_widget, name)
+    if res
+      res
+    else
+      Snd.raise(:no_such_widget, name)
+    end
   end
 
   def set_label_sensitive(widget, name, set_p = false)
-    if widget?(wid = find_child(widget, name))
+    if widget?(wid = Snd.catch(:no_such_widget) do find_child(widget, name) end.first)
       set_sensitive(wid, set_p)
     end
   end
@@ -776,7 +786,6 @@ module Snd_Gtk
     def display
       win = RGDK_DRAWABLE(Rgtk_widget_get_window(@meter))
       major_tick = (@width / 24.0).round
-      minor_tick = (major_tick * 0.6).round
       ang0 = 45 * 64
       ang1 = 90 * 64
       wid2 = (@width / 2.0).floor
@@ -1438,7 +1447,7 @@ the current free space (for use with $after_open_hook)")
     end
 
     def deactivate_channel(snd, chn)
-      if (current_length = length(snd, chn)) > 0 and RWidget?(list(snd, chn))
+      if length(snd, chn) > 0 and RWidget?(list(snd, chn))
         RXtGetValues(list(snd, chn), [RXmNchildren, 0], 1).cadr.each do |n|
           RXtUnmanageChild(n)
         end
@@ -1529,7 +1538,6 @@ the current free space (for use with $after_open_hook)")
       dpy = RXtDisplay(@meter)
       win = RXtWindow(@meter)
       major_tick = (@width / 24.0).round
-      minor_tick = (major_tick * 0.6).round
       ang0 = 45 * 64
       ang1 = 90 * 64
       wid2 = (@width / 2.0).floor
@@ -1733,14 +1741,12 @@ the current free space (for use with $after_open_hook)")
     def create
       page_info = super
       row_pane = page_info[2]
-      pane = page_info[1]
       var_label = @variable + ":"
       row = RXtCreateManagedWidget(@variable + "-row",
                                    RxmRowColumnWidgetClass, row_pane,
                                    [RXmNorientation, RXmHORIZONTAL,
                                      RXmNbackground, basic_color])
-      label = RXtCreateManagedWidget(var_label, RxmLabelWidgetClass, row,
-                                     [RXmNbackground, basic_color])
+      RXtCreateManagedWidget(var_label, RxmLabelWidgetClass, row, [RXmNbackground, basic_color])
       @widget = RXtCreateManagedWidget(@variable + "-value", RxmTextFieldWidgetClass, row,
                                        [RXmNeditable, false,
                                          RXmNresizeWidth, true,
@@ -1771,7 +1777,6 @@ the current free space (for use with $after_open_hook)")
     def create
       page_info = super()
       row_pane = page_info[2]
-      pane = page_info[1]
       var_label = @variable + ":"
       title = RXmStringCreateLocalized(var_label)
       @widget = RXtCreateManagedWidget(@variable, RxmScaleWidgetClass, row_pane,
@@ -1782,8 +1787,10 @@ the current free space (for use with $after_open_hook)")
                                          RXmNdecimalPoints, 2,
                                          RXmNtitleString, title,
                                          RXmNorientation, RXmHORIZONTAL,
-                                         RXmNshowValue, RXmNEAR_BORDER])
-      RXtVaSetValues(find_child(@widget, "Scrollbar"), [RXmNtroughColor, red_pixel])
+                                        RXmNshowValue, RXmNEAR_BORDER])
+      if widget?(wid = Snd.catch(:no_such_widget) do find_child(@widget, "Scrollbar") end.first)
+        RXtVaSetValues(wid, [RXmNtroughColor, red_pixel])
+      end
       RXmStringFree(title)
     end
 
@@ -1797,12 +1804,10 @@ the current free space (for use with $after_open_hook)")
     def create
       page_info = super
       row_pane = page_info[2]
-      pane = page_info[1]
       var_label = @variable + ":"
       height = 70
       width = 210
-      label = RXtCreateManagedWidget(var_label, RxmLabelWidgetClass, row_pane,
-                                     [RXmNbackground, basic_color])
+      RXtCreateManagedWidget(var_label, RxmLabelWidgetClass, row_pane, [RXmNbackground, basic_color])
       @widget = make_level_meter(row_pane, width, height, [], false)
     end
 
@@ -1817,7 +1822,6 @@ the current free space (for use with $after_open_hook)")
   class Variable_display_graph < Variable_display
     def create
       page_info = super
-      row_pane = page_info[2]
       pane = page_info[1]
       var_label = @variable + ":"
       form = RXtCreateManagedWidget(var_label, RxmFormWidgetClass, pane,
@@ -1849,7 +1853,6 @@ the current free space (for use with $after_open_hook)")
   class Variable_display_spectrum < Variable_display
     def create
       page_info = super
-      row_pane = page_info[2]
       pane = page_info[1]
       var_label = @variable + ":"
       form = RXtCreateManagedWidget(var_label, RxmFormWidgetClass, pane,

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 28 03:04:03 CET 2003
-# Changed: Wed Oct 14 23:12:39 CEST 2009
+# Changed: Wed Nov 17 23:00:31 CET 2010
 
 # module Rubber (see rubber.scm)
 #  add_named_mark(samp, name, snd, chn)
@@ -103,7 +103,6 @@ module Rubber
                   sum = 0.0
                   last_cross = 0
                   cross = 0
-                  silences = 0
                   silence = $extension * 0.001
                   (0...len).each do |i|
                     samp1 = next_sample(sr0)
@@ -285,5 +284,7 @@ module Rubber
                 end, "(rubber_sound(#{args.join(', ')})")
   end
 end
+
+include Rubber
 
 # rubber.rb ends here
