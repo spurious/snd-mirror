@@ -351,6 +351,33 @@ r1
 19
 </pre>
 
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<pre>
+(define (log-n-of n . ints)     ; return the bits on in exactly n of ints
+  (let ((len (length ints)))
+    (cond ((= len 0) (if (= n 0) -1 0))
+	  ((= n 0)   (lognot (apply logior ints)))
+	  ((= n len) (apply logand ints))
+	  ((&gt; n len) 0)
+	  (#t 
+	   (do ((1s 0)
+		(prev ints)
+		(i 0 (+ i 1)))
+	       ((= i len) 1s)
+	     (let ((cur (ints i)))
+	       (if (= i 0)
+		   (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) (cdr ints)))))
+		   (let* ((mid (cdr prev))
+			  (nxt (if (= i (- len 1)) '() (cdr mid))))
+		     (set! (cdr prev) nxt)  ; set-cdr! to get the len-choose-len-minus-1 combinations of ints
+		     (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) ints))))
+		     (set! (cdr prev) mid)
+		     (set! prev mid)))))))))
+</pre>
+
 </blockquote>
 </small>
 

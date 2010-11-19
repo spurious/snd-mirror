@@ -984,12 +984,16 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 /* this is where a truncated double starts to skip integers (expt 2 53) = ca 1e16 
  *   :(ceiling (+ 1e16 1))
  *   10000000000000000
+ *   :(> 9007199254740993.0 9007199254740992.0)
+ *   #f ; in non-gmp 64-bit doubles
  *
  * but we can't fix this except in the gmp case because:
  *   :(integer-decode-float (+ (expt 2.0 62) 100))
  *   (4503599627370496 10 1)
  *   :(integer-decode-float (+ (expt 2.0 62) 500))
  *   (4503599627370496 10 1)
+ *   :(> (+ (expt 2.0 62) 500) (+ (expt 2.0 62) 100))
+ *   #f ; non-gmp again
  *
  * i.e. the bits are identical.  We can't even detect when it has happened, so should
  *   we just give an error for any floor (or whatever) of an arg>1e16?  (sin has a similar problem)?
@@ -30238,6 +30242,11 @@ the error type and the info passed to the error handler.");
  *   both would benefit from an optional start point
  *   char/any str/any any/list|vector|c-obj 
  *   would we use eq? or equal? (leave that to position-if?  isn't sort backwards now?
+ *
+ * could vectors maintain element type like hash-tables?  Then "uniform" vectors are
+ *   automatic, and run would not have to check elements, etc.  The obvious problem
+ *   is shared vectors in the multidimensional case (both directions).  (Or maybe
+ *   :element-type but that requires type names)
  *
  * function equality? 
  *
