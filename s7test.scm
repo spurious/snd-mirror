@@ -1696,7 +1696,7 @@ yow!! -- I'm using mpc_cmp
 (test "\x3012" "012")
 
 
-;; there is some serious strangeness here!
+;; this strikes me as highly dubious
 (test (call-with-input-string "1\n2" (lambda (p) (read p))) 1)
 (test (call-with-input-string "1\\ \n2" (lambda (p) (read p))) (symbol "1\\"))
 (test (call-with-input-string "1\ 2" (lambda (p) (read p))) 12)
@@ -1718,7 +1718,46 @@ zzy" (lambda (p) (eval (read p))))) 32)
  this is presumably a comment
  321)" (lambda (p) (eval (read p)))) xyzzy) 321)
 
-;;; multiline comment?
+(test (let ((xyzzy 32)) (call-with-input-string "(set! xyzzy;\
+ this is presumably a comment;\
+ and more commentary
+ 321)" (lambda (p) (eval (read p)))) xyzzy) 321)
+
+(test (eval-string "1\ 2") 12)
+(test (length "\ \ \ \ \ \ \ ") 0)
+(test (eval-string "(length \"\\ 1\")") 1)
+(test (eval-string "\"\\ \x30\\ \"") "0") ; (integer->char #x30) = "0"
+(num-test (string->number "\ \x30\ ") 0)
+(num-test (string->number "\ \x31\ /\ \x32\ ") 1/2)
+(num-test (string->number "\ \ 4\ 3\ /43\ ") 1)
+(num-test (string->number "+\x36\ 4/\x36\ \ 4") 1)
+(num-test (string->number "\ +\ \x33\ 4/3\ 4") 1)
+(num-test (string->number "#x\x34\ 4\ /\ 44") 1)
+(num-test (string->number "+\x30\ \ \ \ \x33/3") 1)
+(num-test (string->number "4\ 4/\ \ 4\x34\ ") 1)
+(num-test (string->number "4\ \ \ /\ \ \ \x34") 1)
+(num-test (string->number "\ 3\x34\ /\ 3\ 4") 1)
+(num-test (string->number "\ #\ x\ \x34/\x30\x34") 1)
+(num-test (string->number "3\ /\ \x33\ \ ") 1)
+(num-test (string->number "\ 3\ /\x32\ ") 3/2)
+(num-test (string->number "\ \ +\ 3/\ \x32") 3/2)
+(num-test (string->number "#\ x\x36/4") 3/2)
+(num-test (string->number "#x\x38/\ 4\ \ ") 2)
+(num-test (string->number "4\x32\x37") 427)
+(num-test (string->number "\x32.\x39") 2.9)
+(num-test (string->number "\ 4\ e\x32\ ") 400.0)
+(num-test (string->number "#i\x32\x38\x36\ ") 286.0)
+(num-test (string->number "#\ i.3\ ") 0.3)
+(num-test (string->number "4\x31+3\x36i") 41+36i)
+(num-test (string->number "34\ \ \ /4\ \x32\x32") 17/211)
+(num-test (string->number "#x4\ 4\ e\ /4") 551/2)
+(num-test (string->number "\ \ #\ x33\x34/\x33") 820/3)
+(num-test (string->number ".\ 44\ \ e\ -\ \ \x36\ \ ") 4.4e-07)
+(num-test (string->number "#\ \ x34\ 4\ \x38\ +4i") 13384+4i)
+(num-test (string->number "#i\x31.\ 4+\ \x39\ .\ \ i") 1.4+9i)
+(num-test (string->number "#\ \ x#i\ \x38\x31+4\ 4i") 129+68i)
+(num-test (string->number "#i\ #x4\ \x37\ -4/\ 4\ i") 71-1i)
+
 
 
 ;;; string<?
@@ -53680,6 +53719,13 @@ why are these different (read-time `#() ? )
 (test (string->number (string (integer->char 189))) #f) ; 1/2 as single char
 (test (string->number (string #\1 (integer->char 127) #\0)) #f) ; backspace
 
+;; but...
+(test (string->number "1\ 2") 12)
+(test (string->number "1\
+2") 12)
+(num-test (string->number "1\ \ \ \ \ .\ \ \ 2\ \ ") 1.2)
+(test (string->number "1\ \ \ \ \ . \ \ \ 2\ \ ") #f) ; yowza
+
 (test (string->number "1E1") 10.0)
 (test (string->number "1D1") 10.0)
 (test (string->number "1S1") 10.0)
@@ -56418,6 +56464,9 @@ etc
   (define (log-all-of . ints)   ; bits on in all of ints
     (apply logand ints))
 
+  (define (log-any-of . ints)   ; bits on in at least 1 of ints
+    (apply logior ints))
+
   (define (log-1-of . ints)     ; bits on in exactly 1 of ints
     (let ((len (length ints)))
       (cond ((= len 0) 
@@ -56437,6 +56486,10 @@ etc
 		 (set! iors (cons (logand cur (lognot (apply logior ints))) iors))
 		 (set! (ints i) cur)))))))
 
+  (test (log-1-of 1 1) 0)
+  (test (log-1-of 1 2) 3)
+  (test (log-1-of 1 2 2) 1)
+  (test (log-1-of 1 2 2 1) 0)
   (test (log-1-of 1 2 3 4 8 9) 4)
   (test (log-1-of -1 1 2 3) -4)
   (test (log-1-of 1 2 3 5) 4)
@@ -56511,6 +56564,10 @@ etc
 		 (set! iors (cons (logand (lognot cur) (apply logand ints)) iors))
 		 (set! (ints i) cur)))))))
   
+  (test (log-n-1-of 1 1) 0)
+  (test (log-n-1-of 1 2) 3)
+  (test (log-n-1-of 1 2 2) 2)
+  (test (log-n-1-of 1 2 2 3) 2)
   (test (log-n-1-of -336 -225 275) #b-11111101) ; (-253)
   (test (log-n-1-of -35 32 -17 -310 256 -360 171 -370) #b0) ; (0)
   (test (log-n-1-of 311 237) #b111011010) ; (474)
@@ -56597,7 +56654,11 @@ etc
 		       (set! 1s (cons (logand cur (apply log-1-of ints)) 1s))
 		       (set! (cdr prev) mid)
 		       (set! prev mid)))))))))
-  
+
+  (test (log-2-of 1 1) 1)
+  (test (log-2-of 1 2) 0)
+  (test (log-2-of 1 2 2) 2)
+  (test (log-2-of 1 2 2 3) 1)
   (test (log-2-of 287 319 -48) #b1111) ; (15)
   (test (log-2-of 361) #b0) ; (0)
   (test (log-2-of -165 302 -494) #b-11101000) ; (-232)
@@ -56661,6 +56722,7 @@ etc
 	     (apply log-n-1-of ints))
 	    
 	    ;; now n is between 2 and len-2, and len is 3 or more
+	    ;;   I think it would be less inefficient here to choose either this or the n-1 case based on n<=len/2
 	    (#t 
 	     (do ((1s '())
 		  (prev ints)
@@ -56676,7 +56738,85 @@ etc
 		       (set! (cdr prev) mid)
 		       (set! prev mid)))))))))
 
-  ;; TODO: test log-n-of
+  (test (log-n-of 1 1 1) 0)
+  (test (log-n-of 1 1 2) 3)
+  (test (log-n-of 2 1 2) 0)
+  (test (log-n-of 2 2 2) 2)
+  (test (log-n-of 2 2 2 2) 0)
+  (test (log-n-of 3 2 2 2) 2)
+  (test (log-n-of 3 2 2 3) 2)
+  (test (log-n-of 3 2 1 3 3) 3)
+
+  (test (log-n-of 1 158 172 -4 432 147 497 -236 85 -454 -447) #b0) ; (0)
+  (test (log-n-of 1 377 -232 295) #b-110111010) ; (-442)
+  (test (log-n-of 1 -110) #b-1101110) ; (-110)
+  (test (log-n-of 1 304 -36 64 -140 -165 -85) #b0) ; (0)
+  (test (log-n-of 1 226 -135 -392 55 -358 260 -447) #b0) ; (0)
+  (test (log-n-of 1 -241 454 178 107 312) #b-1000000000) ; (-512)
+  (test (log-n-of 1 -122 419 -121) #b100000) ; (32)
+  (test (log-n-of 1 378 -233 -332 -308) #b1) ; (1)
+  (test (log-n-of 1 -381 44 -99 -161 338) #b100000) ; (32)
+  
+  (test (log-n-of 2 6 -45 331 339 156 207 -308) #b-1000000000) ; (-512)
+  (test (log-n-of 2 -483) #b0) ; (0)
+  (test (log-n-of 2 -113 75 465 -434 -164 291) #b10010000) ; (144)
+  (test (log-n-of 2 -95 -314 187 40) #b-111110101) ; (-501)
+  (test (log-n-of 2 126 -254) #b10) ; (2)
+  (test (log-n-of 2 -228) #b0) ; (0)
+  (test (log-n-of 2 -472 163 6 -185 -208 -481 -60 -331 479) #b0) ; (0)
+  (test (log-n-of 2 357 -468 490 -423 33) #b-11111100) ; (-252)
+  (test (log-n-of 2 13 343 -276 148 -425 -116 361 -305 344 -361) #b100000) ; (32)
+  (test (log-n-of 2 -79) #b0) ; (0)
+  
+  (test (log-n-of 3 268 134 46 -207 414) #b100001010) ; (266)
+  (test (log-n-of 3 455 -138 58 -225 -250) #b-111110000) ; (-496)
+  (test (log-n-of 3 -267 154 -217 468 -455 43 307 364) #b-101000000) ; (-320)
+  (test (log-n-of 3 14 197 65 -327 -86 -438) #b-100111101) ; (-317)
+  (test (log-n-of 3 229 452 434 -75 -405 440 -420 40) #b-111111111) ; (-511)
+  (test (log-n-of 3 -24 -450 437 -467 -487 -479 14 394 -433 53) #b110000000) ; (384)
+  (test (log-n-of 3 474 442 303 -203 -59) #b10111111) ; (191)
+  (test (log-n-of 3 -401 104 66) #b1000000) ; (64)
+  (test (log-n-of 3 -129 79 215 -272 -259) #b-101010110) ; (-342)
+  (test (log-n-of 3 -139 36 -489 352 -364 498 -11) #b10000001) ; (129)
+  
+  (test (log-n-of 4 23) #b0) ; (0)
+  (test (log-n-of 4 407 225 417 269 -174 181 -332) #b100110100) ; (308)
+  (test (log-n-of 4 439 480 -278 168 189) #b0) ; (0)
+  (test (log-n-of 4 -206 295) #b0) ; (0)
+  (test (log-n-of 4 -260 24 -320) #b0) ; (0)
+  (test (log-n-of 4 354 -463 -66 137 -364) #b0) ; (0)
+  (test (log-n-of 4 -117 -68 -343 -285) #b-110000000) ; (-384)
+  (test (log-n-of 4 -206 -449 118 -211 -125 391 232) #b-11111011) ; (-251)
+  (test (log-n-of 4 -164 -499 -291 325 -143 -268 135 103) #b10000) ; (16)
+  
+  (do ((i 0 (+ i 1)))
+      ((= i 10))
+    
+    (let ((len (+ 1 (random 10)))
+	  (ints '())
+	  (n 4))
+      
+      (do ((k 0 (+ k 1)))
+	  ((= k len))
+	(set! ints (cons (- (random 1000) 500) ints)))
+      
+      (let ((result (apply log-n-of n ints)))
+	;;(format #t "(test (log-n-of ~D ~{~D~^ ~}) #b~B) ; (~D)~%" n ints result result)
+	
+	(do ((b 0 (+ b 1)))
+	    ((= b 64))
+	  (let ((counts 0))
+	    (for-each
+	     (lambda (int)
+	       (if (not (zero? (logand int (ash 1 b))))
+		   (set! counts (+ counts 1))))
+	     ints)
+	    
+	    (if (not (zero? (logand result (ash 1 b))))
+		(if (not (= counts n))
+		    (format #t ";(log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" n ints result (ash 1 b) counts))
+		(if (and (> len 1) (= counts n))
+		    (format #t ";(log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" n ints result (ash 1 b) counts))))))))
   )
 
 

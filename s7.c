@@ -20631,8 +20631,15 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 			}
 		      else
 			if (!is_white_space(c))
-			  return(sc->T); /* #f here would give confusing error message "end of input", so return #t=bad backslash */
-		      /* this is not optimal. It's easy to forget that backslash needs to be backslashed. */
+			  return(sc->T); 
+
+		      /* #f here would give confusing error message "end of input", so return #t=bad backslash.
+		       *     this is not optimal. It's easy to forget that backslash needs to be backslashed. 
+		       *
+		       * the white_space business implements Scheme's \<newline> or \<space> feature -- the character after \ is flushed.
+		       *   It may be that r6rs expects all white space after \ to be flushed, but in that case
+		       *   (string->number "1\   2") is 12??  Too bizarre.
+		       */
 		    }
 		}
 	    }
