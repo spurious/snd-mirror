@@ -54654,6 +54654,11 @@ why are these different (read-time `#() ? )
 \
 5\ 6") 1234.56)
 
+(for-each
+ (lambda (i)
+   (test (eval-string (format #f "(string->number \"~A\")" (string #\1 #\\ (integer->char i) #\2))) 12))
+ (list 9 10 11 12 13 32))
+
 
 (if with-bignums
     (begin
@@ -56943,6 +56948,26 @@ etc
 		(if (and (> len 1) (= counts n))
 		    (format #t ";(simple-log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" n ints result (ash 1 b) counts))))))))
   )
+
+#|
+(define (for-each-combination func args)
+  (let ((num-args (length args))
+	(required-args (car (procedure-arity func))))
+    (if (= num-args required-args)
+	(apply func args)
+	(if (> num-args required-args)
+	    (do ((prev args)
+		 (i 0 (+ i 1)))
+		((= i num-args))
+	      (if (= i 0)
+		  (for-each-combination func (cdr args))
+		  (let* ((mid (cdr prev))
+			 (nxt (if (= i (- num-args 1)) '() (cdr mid))))
+		    (set! (cdr prev) nxt)
+		    (for-each-combination func args)
+		    (set! (cdr prev) mid)
+		    (set! prev mid))))))))
+|#
 
 
 (if with-bignums
@@ -61627,5 +61652,7 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff8000000000000 nan
 
 but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ? (would need check for invalid args)
+
+
 
 |#

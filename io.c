@@ -1882,7 +1882,11 @@ int mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
 char *mus_format(const char *format, ...)
 {
   /* caller should free result */
+#if HAVE_VSNPRINTF
   #define MUS_FORMAT_BUFFER_SIZE 256
+#else
+  #define MUS_FORMAT_BUFFER_SIZE 8192
+#endif
   char *buf = NULL;
   int needed_bytes = 0;
   va_list ap;
