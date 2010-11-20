@@ -14534,9 +14534,13 @@ who says the continuation has to restart the map from the top?
        "(- ` -0 '1)" "(- ` 1 )" "(- ` `1)" "(- `, 1)" "(- `,1)" "(- `,`,1)" "(- `,`1)" "(- ``,,1)" "(- ``,1)" "(- ``1 )" "(- ```,1)" 
        "(- ```1)" "(-(  / 1))" "(-( -  -1 ))" "(-( `,- 1 0))" "(-(' (1)0))" "(-('(,1)00))" "(-(- '`1) 0)" "(-(- -1))" "(-(/(/(/ 1))))" 
        "(-(`'1 '1))" "(-(`(,1 )'0))" "(-(`,/ ,1))" "(-(`,@''1))" "(/ '-1 '1 )" "(/ ,, `,-1)" "(/ ,11 -11)" "(/ 01 (- '1))" "(/ `1 '`-1)" 
-       "(/(- '1)  )" "(/(- '1)1)" "(/(- 001)1)" "(/(- 1),,1)" "(/(/ -1))" "(` ,- 1)" "(` `,(-1)0)" "(`' , -1 1)"
+       "(/(- '1)  )" "(/(- '1)1)" "(/(- 001)1)" "(/(- 1),,1)" "(/(/ -1))" "(` ,- 1)" "(` `,(-1)0)" "(`' , -1 1)" "(/(- -001(+)))"
        "(`' -1 '1/1)" "(`','-1 ,1)" "(`(,-1)-00)" "(`(-0 -1)1)" "(`(-1 -.')0)" "(`(-1 1')0)" "(`(` -1)'`0)" "(`, - 1)" "(`,- '1)" "(`,- .(1))" 
-       "(`,- 1 )" "(`,- `,1)" "(`,- `1)" "(`,/ . (-1))" "(``,,- `01)" "('''-1 '1 '1)" "('(-1 //.01 / 0,'`)0)"
+       "(`,- 1 )" "(`,- `,1)" "(`,- `1)" "(`,/ . (-1))" "(``,,- `01)" "('''-1 '1 '1)" "(/ `-1 1)" "(/ .( -1))" "(-(+(+)0)1)" "(/ ,`,`-1/1)" 
+       "(-(*).())" "(*(- +1))" "(-(`,*))" "(-(+)'1)" "(+(-(*)))" "(-(+(*)))" "(-(+)(*))" "(-(/(*)))" "(*(-(*)))" "(-(*(*)))" "(/(-(*)))" "(-(+(*)))"
+       "(/ .(-1))" "(-(*))" "(- 000(*))" "(-(*(+ 1)))" "(- .((*)))" "(- +0/10(*))" "(-(`,/ .(1)))" "(+ .(' -01))" "(-(''1 01))" "(- -1/1 +0)"
+       "(- `,'0 `01)" "( - `,(+)'1)" "(+(- . (`1)))" "(* '`,``-1)" "(-(+ -0)1)" "(+ +0(-(*)))" "(+(- '+1 ))" "(+ '-01(+))" "(`, -(+)1)" 
+       "(`,+ 0 -1)" "(-(/(/(*))))" "(`,* .( -1))" "(-(*(*(*))))" "(`,@(list +)-1)" "(+(`,@''-1))"
        ))
 
 #|
@@ -16367,6 +16371,12 @@ why are these different (read-time `#() ? )
   (test (eval `(+ 1 (eval-string "(* 2 3)"))) 7)
   (test (eval-string "(+ 1 (eval-string \"(* 2 3)\"))") 7)
   (test (eval `(+ 1 2 . 3)) 'error)
+  (test (eval-string) 'error)
+  (test (eval) 'error)
+  (test (eval-string "") #f)
+  (test (eval ()) ())
+  (test (eval-string "1" () ()) 'error)
+  (test (eval () () ()) 'error)
 
   (test (apply "hi" 1 ()) #\i)
   (test (eval ("hi" 1)) #\i)
@@ -18168,6 +18178,10 @@ why are these different (read-time `#() ? )
 (test (let ((a 1)) (+ (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32))) a)) 34)
 (test (let ((a 1)) (+ (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32) (cons 'a 12))) a)) 45)
 
+(test (let ((a 1)) (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32)))) 33)
+(test (let ((a 1)) (+ (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32))) a)) 34)
+(test (let ((a 1)) (+ (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32) (cons 'a 12))) a)) 45)
+
 (test (augment-environment) 'error)
 (for-each
  (lambda (arg)
@@ -18180,7 +18194,11 @@ why are these different (read-time `#() ? )
 			      (cons 'b 12))))
   (test (eval '(+ a b) e) 44)
   (test (eval '(+ a b c) (augment-environment e (cons 'c 3))) 47)
-  (test (eval '(+ a b) (augment-environment e (cons 'b 3))) 35))
+  (test (eval '(+ a b) (augment-environment e (cons 'b 3))) 35)
+  (test (eval-string "(+ a b)" e) 44)
+  (test (eval-string "(+ a b c)" (augment-environment e (cons 'c 3))) 47)
+  (test (eval-string "(+ a b)" (augment-environment e (cons 'b 3))) 35)
+  )
 
 (test (with-environment (current-environment) (let ((x 1)) x)) 1)
 
@@ -19116,6 +19134,7 @@ why are these different (read-time `#() ? )
 (test (((lambda* ((a :optional) (b :key)) (apply lambda* (list (list a b 'c) 'c)))) 1) 1) ; (lambda* (:optional :key c) c)
 (test (procedure? ((((((lambda* ((x (lambda () x))) x))))))) #t)
 (test (procedure? ((((((letrec ((x (lambda () x))) x))))))) #t)
+(test (procedure? ((((((letrec ((x (lambda () y)) (y (lambda () x))) x))))))) #t)
 (test (procedure? ((((((let x () x))))))) #t)
 (test (procedure? ((((((lambda (x) (set! x (lambda () x))) (lambda () x))))))) #t)
 (test ((do ((i 0 (+ i 1))) ((= i 1) (lambda () 3)))) 3)
@@ -61652,7 +61671,4 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff8000000000000 nan
 
 but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ? (would need check for invalid args)
-
-
-
 |#
