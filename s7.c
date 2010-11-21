@@ -2521,13 +2521,20 @@ arguments (each a cons: symbol . value) directly to the environment env, and ret
 environment."
 
   s7_pointer x, e;
+  int i;
+
   e = car(args);
   if (!is_environment(sc, e))
     return(s7_wrong_type_arg_error(sc, "augment-environment!", 1, e, "an environment"));
 
+  for (i = 2, x = cdr(args); x != sc->NIL; x = cdr(x), i++)
+    if ((!is_pair(car(x))) ||
+	(!s7_is_symbol(caar(x))))
+      return(s7_wrong_type_arg_error(sc, "augment-environment!", i, car(x), "a pair: '(symbol . value)"));
+
   for (x = cdr(args); x != sc->NIL; x = cdr(x))
-    if (is_pair(car(x)))
-      add_to_environment(sc, e, caar(x), cdar(x));
+    add_to_environment(sc, e, caar(x), cdar(x));
+
   return(e);
 }
 
@@ -2541,8 +2548,7 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
   gc_loc = s7_gc_protect(sc, new_e);
 
   for (x = bindings; x != sc->NIL; x = cdr(x))
-    if (is_pair(car(x)))
-      add_to_environment(sc, new_e, caar(x), cdar(x));
+    add_to_environment(sc, new_e, caar(x), cdar(x));
 
   s7_gc_unprotect_at(sc, gc_loc);
   return(new_e);
@@ -2555,10 +2561,17 @@ static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
 arguments (each a cons: symbol . value) to the environment env, and returns the \
 new environment."
 
-  s7_pointer e;
+  s7_pointer e, x;
+  int i;
+
   e = car(args);
   if (!is_environment(sc, e))
     return(s7_wrong_type_arg_error(sc, "augment-environment", 1, e, "an environment"));
+
+  for (i = 2, x = cdr(args); x != sc->NIL; x = cdr(x), i++)
+    if ((!is_pair(car(x))) ||
+	(!s7_is_symbol(caar(x))))
+      return(s7_wrong_type_arg_error(sc, "augment-environment", i, car(x), "a pair: '(symbol . value)"));
 
   return(s7_augment_environment(sc, e, cdr(args)));
 }
@@ -5865,7 +5878,21 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	else
 	  {
 	    if (slash1)
-	      rl = (s7_Double)string_to_integer(q, radix, &overflow) / (s7_Double)string_to_integer(slash1, radix, &overflow);
+	      {
+		/* here the overflow could be innocuous if it's in the denominator and the numerator is 0
+		 *    0/100000000000000000000000000000000000000-0i
+		 */
+		s7_Int num, den;
+		num = string_to_integer(q, radix, &overflow);
+		den = string_to_integer(slash1, radix, &overflow);
+		
+		if ((num == 0) && (den != 0))
+		  {
+		    rl = 0.0;
+		    overflow = false;
+		  }
+		else rl = (s7_Double)num / (s7_Double)den;
+	      }
 	    else rl = (s7_Double)string_to_integer(q, radix, &overflow);
 	    if (overflow) return(s7_make_real(sc, NAN));
 	  }
@@ -5877,7 +5904,19 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	else
 	  {
 	    if (slash2)
-	      im = (s7_Double)string_to_integer(plus, radix, &overflow) / (s7_Double)string_to_integer(slash2, radix, &overflow);
+	      {
+		/* same as above: 0-0/100000000000000000000000000000000000000i
+		 */
+		s7_Int num, den;
+		num = string_to_integer(plus, radix, &overflow);
+		den = string_to_integer(slash2, radix, &overflow);
+		if ((num == 0) && (den != 0))
+		  {
+		    im = 0.0;
+		    overflow = false;
+		  }
+		else im = (s7_Double)num / (s7_Double)den;
+	      }
 	    else im = (s7_Double)string_to_integer(plus, radix, &overflow);
 	    if (overflow) return(s7_make_real(sc, NAN));
 	  }
@@ -5932,10 +5971,15 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 #if (!WITH_GMP)
       {
 	s7_Int n, d;
+
 	n = string_to_integer(q, radix, &overflow);
 	d = string_to_integer(slash1, radix, &overflow);
+
+	if ((n == 0) && (d != 0))                        /* 0/100000000000000000000000000000000000000 */
+	  return(small_int(0));
 	if ((d == 0) || (overflow))
 	  return(s7_make_real(sc, NAN));
+
 	return(s7_make_ratio(sc, n, d));
       }
 #else
