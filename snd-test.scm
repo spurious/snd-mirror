@@ -4910,8 +4910,8 @@
 	  (for-each (lambda (snd) (close-sound snd)) (sounds))
 	  ))
     
-    (if (file-is-directory? "oboe.snd") (snd-display #__line__ ";file-is-directory? oboe.snd!"))
-    (if (not (file-is-directory? ".")) (snd-display #__line__ ";file-is-directory? . #f!"))
+    (if (directory? "oboe.snd") (snd-display #__line__ ";directory? oboe.snd!"))
+    (if (not (directory? ".")) (snd-display #__line__ ";directory? . #f!"))
     (if (not (getenv "PATH")) (snd-display #__line__ ";getenv: no PATH?"))
     (if (not (number? (getpid))) (snd-display #__line__ ";getpid: ~A" (getpid)))
     

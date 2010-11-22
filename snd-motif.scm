@@ -289,7 +289,7 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 		       (format #t "filename: ~A~%" filename)
 
 		       (if (file-exists? filename)
-			   (if (not (file-is-directory? filename))
+			   (if (not (directory? filename))
 			       (let ((snd (open-sound filename)))
 				 (select-channel 0))
 			       (snd-error (format #f "~S is a directory" filename)))

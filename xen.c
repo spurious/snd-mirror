@@ -1941,7 +1941,8 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 
   XEN_DEFINE_PROCEDURE("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
   XEN_DEFINE_PROCEDURE("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
-  XEN_DEFINE_PROCEDURE("file-is-directory?",  g_file_is_directory_w,  1, 0, 0, H_file_is_directory); /* "directory?" would be a better name, but we follow Guile */
+  XEN_DEFINE_PROCEDURE("directory?",          g_file_is_directory_w,  1, 0, 0, H_file_is_directory);
+  XEN_EVAL_C_STRING("(define file-is-directory? directory?)");    /* backwards compatibility: */
   XEN_DEFINE_PROCEDURE("system",              g_system_w,             1, 0, 0, H_system);
   XEN_DEFINE_PROCEDURE("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
   XEN_DEFINE_PROCEDURE("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);

@@ -18533,6 +18533,16 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if 0
+void s7_catch(s7_scheme *sc, s7_pointer tag, s7_pointer thunk, s7_pointer error_handler)
+{
+  /* ideally this would return the thunk evaluation value, but that requires s7_call
+   */
+  g_catch(sc, make_list_3(sc, tag, thunk, error_handler));
+}
+#endif
+
+
 /* error reporting info -- save filename and line number */
 
 #define INITIAL_FILE_NAMES_SIZE 8
@@ -30315,12 +30325,14 @@ the error type and the info passed to the error handler.");
 
  *
  * in s7.html: example of C threads? or dynamic_wind to protect if error?
+ *     or standard Posix funcs? catch? 
  *
  * things to fix: nonce-symbols need to be garbage collected
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
  *                could the profiler give block counts as well?
  * if user creates an enormous list, it can seem to hang the listener:
  *   *list-print-length* ?
+ * add pretty-print to format? ~W I think. (current pretty-print.scm doesn't know about lambda* etc)
  *
  * s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10
  *    intel core duo (1.83G):    3162     2690 1.921     2426 1.830
