@@ -18185,10 +18185,20 @@ why are these different (read-time `#() ? )
 (test (let ((a 1)) (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32)))) 33)
 (test (let ((a 1)) (+ (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32))) a)) 34)
 (test (let ((a 1)) (+ (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32) (cons 'a 12))) a)) 45)
+(test (let ((a 2)) (eval '(+ a 1) (augment-environment (current-environment)))) 3)
+(test (let ((a 1)) (+ (eval '(+ a b) (augment-environment (augment-environment (current-environment) (cons 'b 32)) (cons 'a 12))) a)) 45)
+(test (eval (list + 'a (eval (list - 'b) (augment-environment (initial-environment) (cons 'b 1)))) 
+	    (augment-environment (initial-environment) (cons 'a 2))) 
+      1)
 
 (test (let ((a 1)) (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32)))) 33)
 (test (let ((a 1)) (+ (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32))) a)) 34)
 (test (let ((a 1)) (+ (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32) (cons 'a 12))) a)) 45)
+(test (let ((a 2)) (eval-string "(+ a 1)" (augment-environment (current-environment)))) 3)
+(test (let ((a 1)) (+ (eval-string "(+ a b)" (augment-environment (augment-environment (current-environment) (cons 'b 32)) (cons 'a 12))) a)) 45)
+(test (eval-string (string-append "(+ a " (number->string (eval (list - 'b) (augment-environment (initial-environment) (cons 'b 1)))) ")")
+		   (augment-environment (initial-environment) (cons 'a 2)))
+      1)
 
 (test (augment-environment) 'error)
 (for-each
@@ -18208,8 +18218,6 @@ why are these different (read-time `#() ? )
   (test (eval-string "(+ a b)" (augment-environment e (cons 'b 3))) 35)
   )
 
-
-;;; TODO: augment-environment checks: [also bad names] [also call out? and from with-env] (augment-environment (current-environment))?
 (for-each
  (lambda (arg)
    (test (augment-environment (current-environment) arg) 'error)
@@ -18271,6 +18279,19 @@ why are these different (read-time `#() ? )
 (test (augment-environment 3) 'error)
 (test (augment-environment! 3) 'error)
 
+(test (catch #t
+	     (lambda ()
+	       (with-environment (current-environment)
+		 (error 'testing "a test")
+		 32))
+	     (lambda args (car args)))
+      'testing)
+(test (call-with-exit
+       (lambda (go)
+	 (with-environment (current-environment)
+	   (go 1)
+	   32)))
+      1)
 
 
 (test (call-with-exit (lambda (c) (0 (c 1)))) 1)

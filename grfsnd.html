@@ -65,7 +65,6 @@
   <ul>
   <li><a href="#emacssnd" onmouseout="UnTip()" onmouseover="Tip('Use Emacs as the listener')">Snd as an Emacs subjob</a>
   <li><a href="#dynamic" onmouseout="UnTip()" onmouseover="Tip('Load your own C code into Snd')">Dynamically loaded modules</a>
-  <li><a href="#programs" onmouseout="UnTip()" onmouseover="Tip('Use other programs for editing operations')">External Programs</a>
   <li><a href="#sndaswidget" onmouseout="UnTip()" onmouseover="Tip('Embed Snd in some other program')">Snd as a Widget</a>
   <li><a href="#sndwithclm" onmouseout="UnTip()" onmouseover="Tip('CLM is built into Snd')">Snd and CLM</a>
   <li><a href="#sndwithcm" onmouseout="UnTip()" onmouseover="Tip('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
@@ -1091,33 +1090,6 @@ Scholz.  It starts with a long and detailed commentary.
   (<em class=red>dynamic-call</em> "init_hiho" lib)
 </pre>
 
-
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="programs">External Programs</a></h3></td></tr></table>
-
-<p>Any external program that knows about sound files can be used to perform editing operations
-in Snd.  You get Snd's display, analysis, header and format conversion, and edit-tree support,
-and can concentrate on the actual sound effect you're developing.
-The original impetus for Snd came from CLM, a large lisp-listener based program
-which normally runs without a graphical
-user interface, and without any simple way to move around
-in what Snd calls the edit history.  Since interprocess
-communication proved problematic in this case,
-the communication path was simplified to
-consist of little more than shared files, with CLM treated
-as a batch program.
-</p>
-
-<p>
-Say we have a sound processing CLM instrument we like; it takes
-two sound file names as its arguments, reading the first and writing the second.
-In Snd we write the current edited state to a temporary file (<a href="extsnd.html#savesoundas">save-sound-as</a>),
-start CLM, call the instrument 
-passing it the input filename (just written by Snd), then pass CLM's output back
-to Snd.  Snd replaces (via set-samples) the current data with the data our instrument wrote, as if it had incorporated that
-instrument as an editing operation from the beginning.
-We then delete the Snd output (the input to CLM).
-</p>
 
 <br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndaswidget">Snd as a Widget</a></h3></td></tr></table>

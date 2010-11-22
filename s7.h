@@ -785,6 +785,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 21-Nov:    Load C module example in s7.html.
  * 12-Nov:    *trace-hook*, *load-hook*, *error-hook*, and *unbound-variable-hook* are now s7 hooks.
  * 9-Nov:     hooks: C side: s7_is_hook, s7_make_hook, s7_hook_apply, s7_hook_functions, s7_hook_arity, s7_hook_documentation.
  *                   s7 side: hook?, make-hook, hook, hook-apply, hook-functions, hook-arity, hook-documentation.
