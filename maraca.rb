@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Apr 22 23:29:22 CEST 2005
-# Changed: Fri Jul 06 01:53:44 CEST 2007
+# Changed: Mon Nov 22 13:36:07 CET 2010
 
 # Commentary:
 #
@@ -43,10 +43,12 @@ def maraca(start, dur,
     end
     j += 1
     shake_energy *= system_decay
-    if random(1.0) < probability then snd_level += gain * shake_energy end
+    if random(1.0) < probability
+      snd_level = snd_level + gain * shake_energy
+    end
     input = snd_level * (random(2.0) - 1.0)
     snd_level *= sound_decay
-    input -= output[0] * coeffs[0] -  output[1] * coeffs[1]
+    input = input - output[0] * coeffs[0] -  output[1] * coeffs[1]
     output[1], output[0] = output[0], input
     sndamp * (output[0] - output[1])
   end
@@ -98,7 +100,7 @@ def big_maraca(start, dur,
     j += 1
     shake_energy *= system_decay
     if random(1.0) < probability
-      snd_level += gain * shake_energy
+      snd_level = snd_level + gain * shake_energy
       basesf.each_with_index do |val, i|
         coeffs[i * 2] = val + (random(2.0 * randiff) - randiff)
       end
@@ -110,7 +112,7 @@ def big_maraca(start, dur,
     sum = 0.0
     resn.times do |i|
       input = temp1
-      input -= output[i * 2] * coeffs[i * 2] -  output[i * 2 + 1] * coeffs[i * 2 + 1]
+      input = input - output[i * 2] * coeffs[i * 2] -  output[i * 2 + 1] * coeffs[i * 2 + 1]
       output[i * 2 + 1], output[i * 2] = output[i * 2], input
       sum += input
     end

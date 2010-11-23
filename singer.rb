@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Apr 23 13:07:53 CEST 2005
-# Changed: Wed Nov 17 21:36:29 CET 2010
+# Changed: Mon Nov 22 13:36:42 CET 2010
 
 # Commentary:
 #
@@ -284,8 +284,8 @@ def singer(start, amp, data)
         sines[1] = (cos(a2) + (sin(a2) - sin(b2)) * temp) * temp1 * one_over_two_pi
         cosines[1] = (-sin(a2) + (cos(a2) - cos(b2)) * temp) * temp1 * one_over_two_pi
       end
-      sines[1] += (0.75 + -cos(a2) + cos(2.0 * a2) * 0.25) * one_over_two_pi
-      cosines[1] += (sin(a2) - sin(2.0 * a2) * 0.25) * one_over_two_pi - a * 0.5
+      sines[1] = sines[1] + (0.75 + -cos(a2) + cos(2.0 * a2) * 0.25) * one_over_two_pi
+      cosines[1] = cosines[1] + (sin(a2) - sin(2.0 * a2) * 0.25) * one_over_two_pi - a * 0.5
       ka1 = a2
       ka2 = 2 * a2
       ka3 = 3 * a2
@@ -295,11 +295,11 @@ def singer(start, amp, data)
           sines[k] = (cos(ka2) + (sin(ka2) - sin(k * b2)) * temp) * (temp1 / k)
           cosines[k] = (-sin(ka2) + (cos(ka2) - cos(k * b2)) * temp) * (temp1 / k)
         end
-        sines[k] += ((1.0 - cos(ka2)) / k) +
-          ((cos(ka1) - 1.0) * 0.5) / (k - 1) +
+        sines[k] = sines[k] + ((1.0 - cos(ka2)) / k) + \
+          ((cos(ka1) - 1.0) * 0.5) / (k - 1) + \
           ((cos(ka3) - 1.0) * 0.5) / (k + 1)
         sines[k] *= one_over_two_pi
-        cosines[k] += sin(ka2) / k - (sin(ka1) * 0.5) / (k - 1) - (sin(ka3) * 0.5) / (k + 1)
+        cosines[k] = cosines[k] + sin(ka2) / k - (sin(ka1) * 0.5) / (k - 1) - (sin(ka3) * 0.5) / (k + 1)
         cosines[k] *= one_over_two_pi
         ka1 += a2
         ka2 += a2
@@ -309,7 +309,7 @@ def singer(start, amp, data)
       x = 0.0
       glot_table.length.times do |j|
         1.upto(harms) do |k|
-          glot_table[j] += cosines[k] * cos(k * x) + sines[k] * sin(k * x)
+          glot_table[j] = glot_table[j] + cosines[k] * cos(k * x) + sines[k] * sin(k * x)
         end
         x += two_pi_over_table_size
       end
@@ -340,7 +340,7 @@ def singer(start, amp, data)
       int_loc = table_location.floor
       table1 = glot_table[int_loc]
       table2 = glot_table2[int_loc]
-      glotsamp += s_glot * (table1 + s_glot_mix * (table2 - table1))
+      glotsamp = glotsamp + s_glot * (table1 + s_glot_mix * (table2 - table1))
       # glot noise tick
       if gn_table[int_loc].nonzero? and gn_gain.nonzero?
         gn_out = gn_gain * s_glot * (1.0 - random(2.0)) -
@@ -351,7 +351,7 @@ def singer(start, amp, data)
         3.downto(1) do |j| gn_del[j] = gn_del[j - 1] end
         gn_del[0] = gn_out
       end
-      glotsamp += gn_out * gn_table[int_loc]
+      glotsamp = glotsamp + gn_out * gn_table[int_loc]
     end
     # next tract tick
     lt[0] = dline1[2] + dline2[2]
@@ -408,12 +408,16 @@ def singer(start, amp, data)
     dline1[tractlength - 2] = temp
     if noise_gain.nonzero?
       noise_input = 1.0 - random(2.0)             # a guess
-      3.downto(1) do |j| outz[j] = outz[j - 1] end
+      3.downto(1) do |j|
+        outz[j] = outz[j - 1]
+      end
       outz[0] = noise_output
       noise_output = noise_input - inz2
-      4.times do |j| noise_output -= noise_c[j] * outz[j] end
+      4.times do |j|
+        noise_output = noise_output - noise_c[j] * outz[j]
+      end
       inz2, inz1 = inz1, noise_input
-      dline1[noise_pos] += noise_output * noise_gain * s_noise
+      dline1[noise_pos] = dline1[noise_pos] + noise_output * noise_gain * s_noise
     end
     last_tract_plus = dline1[tractlength - 1] * lip_radius
     lt[1] = ltgain * (lt[0] + ltcoeff * lt[1])

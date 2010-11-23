@@ -2,7 +2,7 @@
 # Perry Cook's Physical Modelling Toolkit
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Changed: Wed Nov 17 21:36:01 CET 2010
+# Changed: Mon Nov 22 13:28:27 CET 2010
 
 require "ws"
 
@@ -313,7 +313,7 @@ module PRC
       pressurediff = 0.0
       sinphase += 0.0007
       sinphase -= 6.28 if sinphase > 6.28
-      randpressure += 0.05 * breathpressure * sin(sinphase)
+      randpressure = randpressure + 0.05 * breathpressure * sin(sinphase)
       if blowing
         unless maxpressure == breathpressure
           if breathpressure < maxpressure

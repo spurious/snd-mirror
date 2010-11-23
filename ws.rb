@@ -383,22 +383,30 @@ end
 # Code:
 
 require "clm"
-require "sndlib" unless provided? :sndlib
-with_silence do
-  unless defined? Etc.getlogin
-    require "etc"
-  end
-  unless defined? Socket.gethostname
-    require "socket"
+require "hooks"
+
+def clm_find_sound_file(file)
+  if File.exists?(file)
+    file
+  else
+    fname = false
+    if array?($clm_search_list)
+      $clm_search_list.each do |path|
+        if File.exists?(fs = path + "/" + file)
+          fname = fs
+          break
+        end
+      end
+    end
+    fname
   end
 end
-require "hooks"
 
 def clm_player(s)
   if provided?(:snd) and sound?(s)
     play(s, :wait, true)
-  elsif string?(s) and File.exist?(s)
-    system("sndplay #{s}")
+  elsif string?(s) and File.exists?(fs = clm_find_sound_file(s))
+    system("sndplay #{fs}")
   else
     Snd.raise(:no_such_sound, s, "need a sound index or a file name")
   end
@@ -407,12 +415,9 @@ end
 trace_var(:$clm_default_frequency) do |val| set_clm_default_frequency(val) end
 trace_var(:$clm_table_size)        do |val| set_clm_table_size(val) end
 
-# with_silence sets $VERBOSE and $DEBUG temporary to false
-__ws_verbose__ = $VERBOSE
-__ws_debug__   = $DEBUG
-# get rid of `undefined variable' messages
 with_silence do
-  $clm_version            = "ruby 17-Nov-2010"
+  # warning: undefined variable
+  $clm_version            = "ruby 22-Nov-2010"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -423,7 +428,7 @@ with_silence do
   $clm_delete_reverb      ||= false
   $clm_file_buffer_size   ||= 65536
   $clm_file_name          ||= "test.snd"
-  $clm_info               ||= __ws_debug__
+  $clm_info               ||= false
   $clm_notehook           ||= nil
   $clm_play               ||= 0
   $clm_player             ||= :clm_player
@@ -433,8 +438,9 @@ with_silence do
   $clm_reverb_file_name   ||= nil
   $clm_statistics         ||= false
   $clm_table_size         ||= 512
-  $clm_verbose            ||= __ws_verbose__
+  $clm_verbose            ||= false
   $clm_default_frequency  ||= 0.0
+  $clm_search_list        ||= (ENV["CLM_SEARCH_PATH"] or ".").split(/:/)
 
   if provided? :snd
     $clm_channels      ||= default_output_chans
@@ -498,6 +504,31 @@ module WS
    :device             $clm_output_device    0
  
  Usage: with_sound(:play, 1, :statistics, true) do fm_violin end"
+
+  with_silence do
+    unless defined? Etc.getlogin
+      require "etc"
+    end
+    unless defined? Socket.gethostname
+      require "socket"
+    end
+  end
+
+  def ws_getlogin
+    if defined? Etc.getlogin
+      Etc.getlogin
+    else
+      ENV["USER"] or "xen"
+    end
+  end
+
+  def ws_gethostname
+    if defined? Socket.gethostname
+      Socket.gethostname
+    else
+      ENV["HOST"] or "localhost"
+    end
+  end
   
   def ws_interrupt?
     if c_g?
@@ -529,7 +560,6 @@ with_reverb(:jl_reverb, 0.2)")
   
   add_help(:with_sound, ws_doc)
   def with_sound(*args, &body)
-    #clm = get_args(args, :clm, (not provided?(:snd)))
     clm = get_args(args, :clm, true)
     out = get_args(args, :out_buffer, false)
     if vct?(out) or sound_data?(out) then clm = false end
@@ -575,7 +605,7 @@ with_reverb(:jl_reverb, 0.2)")
   
   add_help(:clm_load, "clm_load(rbm_file, *with_sound_args)\n" + ws_doc)
   def clm_load(rbm_file, *args)
-    assert_type(File.exist?(rbm_file), rbm_file, 1, "an existing file")
+    assert_type(File.exists?(rbm_file), rbm_file, 1, "an existing file")
     with_sound(*args) do
       if @verbose then Snd.message("Loading %s", rbm_file.inspect) end
       eval(File.open(rbm_file).read, nil, format("(clm_load %s)", rbm_file), 1)
@@ -607,8 +637,8 @@ After finishing the body, the file will be removed.")
   def make_default_comment
     format("# Written %s by %s at %s using clm (%s)",
            Time.new.localtime.strftime("%a %d-%b-%y %H:%M %Z"),
-           Etc.getlogin,
-           Socket.gethostname,
+           ws_getlogin,
+           ws_gethostname,
            $clm_version)
   end
   
@@ -693,7 +723,6 @@ class With_sound
     @stat_maxamp      = nil
     @stat_revamp      = nil
     @body = body
-    @old_sync = false
     if @reverb and @revfile.null?
       @revfile = make_reverb_file_name
     end
@@ -879,12 +908,12 @@ installs the @with_sound_note_hook and prints the line
     assert_type(string?(fname), fname, 0, "a string (filename)")
     out_file = fname + ".snd"
     rbm_file = fname + ".rbm"
-    snd_time = if File.exist?(out_file)
+    snd_time = if File.exists?(out_file)
                  File.mtime(out_file)
                else
                  :load
                end
-    old_body = if File.exist?(rbm_file)
+    old_body = if File.exists?(rbm_file)
                  File.open(rbm_file).read
                else
                  ""
@@ -963,14 +992,32 @@ installs the @with_sound_note_hook and prints the line
     run_body
     after_output
     stop_process_time
-    ws_update_sound do |snd|
-      @old_sync = sync(snd)
-      set_sync(true, snd)
+    old_sync = false
+    if provided? :snd
+      if sound?(snd = find_sound(@output))
+        old_sync = sync(snd)
+        @out_snd = update_sound(snd)
+      else
+        @out_snd = if @header_type == Mus_raw
+                       open_raw_sound(@output, @channels, @srate.to_i, @data_format)
+                     else
+                       open_sound(@output)
+                     end
+      end
+      set_sync(true, @out_snd)
     end
     set_statistics
     frm2 = ws_frame_location
     if @scaled_to then scaled_to_sound(frm1, frm2 - frm1) end
     if @scaled_by then scaled_by_sound(frm1, frm2 - frm1) end
+    if provided? :snd
+      if sound?(snd = find_sound(@output))
+        if old_sync
+          set_sync(old_sync, snd)
+        end
+        update_time_graph(snd)
+      end
+    end
     finish_sound
     if @statistics then statistics end
     1.upto(@play) do play_it end
@@ -994,10 +1041,6 @@ installs the @with_sound_note_hook and prints the line
   # tomorrow?
   def run_body
     instance_eval(&@body)
-    if provided?(:snd) and sound?(@out_snd)
-      update_sound(@out_snd)
-      save_sound(@out_snd)
-    end
   rescue Interrupt, ScriptError, NameError, StandardError
     finish_sound
     show_local_variables
@@ -1028,40 +1071,17 @@ installs the @with_sound_note_hook and prints the line
       raise $!
     end
   end
-
-  def ws_update_sound
-    ret = nil
-    if provided? :snd
-      if sound?(@out_snd = find_sound(@output))
-        update_sound(@out_snd)
-      else
-        @out_snd = if @header_type == Mus_raw
-                       open_raw_sound(@output, @channels, @srate.to_i, @data_format)
-                     else
-                       open_sound(@output)
-                     end
-      end
-      select_sound(@out_snd)
-      if block_given? then ret = yield(@out_snd) end
-      save_sound(@out_snd)
-    end
-    ret
-  end
   
   def show_local_variables
     Snd.message()
-    # {run_instrument|reverb-proc => [instrument-name, start, dur]}
-    # sorted by value[start]
-    # environ == proc
-    @clm_instruments.sort do |a, b| a.cadr.cadr <=> b.cadr.cadr end.each do |environ, vals|
-      # INFO
-      # changes on Mon Nov 15 14:31:46 CET 2010 [ms]
-      # ruby19: wrong argument type Proc (expected Binding)
-      #   environ to environ.binding
-      #   var to var.to_s (var is now of kind Symbol)
+    # run_instrument|reverb-proc => [instrument-name, start, dur]
+    # sorted by values[start]
+    @clm_instruments.sort do |a, b|
+      a[1][1] <=> b[1][1]
+    end.each do |proc, vals|
       Snd.message("=== %s [%1.3f-%1.3f] ===", *vals)
-      eval("local_variables", environ.binding).each do |var|
-        Snd.message("%s = %s", var, eval(var.to_s, environ.binding).inspect)
+      each_variables(binding?(proc) ? proc : proc.binding) do |var, val|
+        Snd.message("%s = %s", var, val)
       end
       Snd.message()
     end
@@ -1135,10 +1155,6 @@ installs the @with_sound_note_hook and prints the line
     @reverb and @delete_reverb and (not @continue) and remove_file(@revfile)
     set_mus_srate(@old_srate)
     @stat_frames = ws_frame_location
-    ws_update_sound do |snd|
-      if number?(@old_sync) then set_sync(@old_sync, snd) end
-      # update_time_graph(snd)
-    end
   end
 
   def play_it
@@ -1381,7 +1397,6 @@ class Snd_Instrument < Instrument
       snd
     else
       Snd.snd(snd)
-      #Snd.raise(:no_such_sound, snd.inspect)
     end
   end
   private :get_snd
@@ -1486,9 +1501,7 @@ class CLM_Instrument < Instrument
   end
   
   def ws_duration(file)
-    with_closed_output do
-      mus_sound_duration(file)
-    end
+    mus_sound_duration(file)
   end
 end
 
@@ -1663,7 +1676,7 @@ Example: clm_mix(\"tmp\")")
         set_channels(snd, @channels)
         set_comment(snd, @comment)
         channels(snd).times do |chn| set_frames(1, snd, chn) end
-        update_sound(snd)
+        snd = update_sound(snd)
       end
     else
       unless @continue then remove_file(@output) end
@@ -1852,8 +1865,9 @@ Example: clm_mix(\"tmp\")")
   
   def scaled_to_sound(beg, len)
     if provided? :snd
-      ws_update_sound do |snd|
-        @channels.times do |chn| scale_to(@scaled_to, snd, chn) end
+      if sound?(@out_snd = find_sound(@output))
+        @channels.times do |chn| scale_to(@scaled_to, @out_snd, chn) end
+        save_sound(@out_snd)
       end
     else
       omax = mus_sound_maxamp(@output)
@@ -1866,8 +1880,9 @@ Example: clm_mix(\"tmp\")")
 
   def scaled_by_sound(beg, len)
     if provided? :snd
-      ws_update_sound do |snd|
-        @channels.times do |chn| scale_channel(@scaled_by, beg, len, snd, chn) end
+      if sound?(@out_snd = find_sound(@output))
+        @channels.times do |chn| scale_channel(@scaled_by, beg, len, @out_snd, chn) end
+        save_sound(@out_snd)
       end
     else
       scale_it(beg, len, @scaled_by)

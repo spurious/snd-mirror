@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Apr 22 23:36:39 CEST 2005
-# Changed: Tue Dec 08 22:30:20 CET 2009
+# Changed: Mon Nov 22 13:26:11 CET 2010
 
 # Commentary:
 #
@@ -322,7 +322,9 @@ def play_sines(freq_and_amps)
       break if c_g?
       data.map!(0) do |val|
         val = 0.0
-        oscs.zip(amps) do |o, a| val += a * oscil(o) end
+        oscs.zip(amps) do |o, a|
+          val = val + a * oscil(o)
+        end
         val
       end
       mus_audio_write(audio_fd, data, pframes)

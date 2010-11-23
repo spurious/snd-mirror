@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Wed Nov 17 18:42:38 CET 2010
+# Changed: Mon Nov 22 13:11:19 CET 2010
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -357,7 +357,7 @@ end
 # translation of CLM pqwvox.ins (itself translated from MUS10 of MLB's
 # waveshaping voice instrument (using phase quadrature waveshaping))
 add_help(:pqw_vox,
-         "pqw_vox(beg, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl, phonemes, formant_amps, formant_shapes)  \
+         "pqw_vox(start, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl, phonemes, formant_amps, formant_shapes)  \
 produces vocal sounds using phase quadrature waveshaping")
 def pqw_vox(start, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl,
             phonemes, formant_amps, formant_shapes)
@@ -419,11 +419,11 @@ def pqw_vox(start, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl,
       end
       fax = polynomial(cos_coeffs[j], carcos)
       yfax = carsin * polynomial(sin_coeffs[j], carcos)
-      sum += amps[j] *
-             (even_amp * (yfax * oscil(sin_evens[j], even_freq) -
-                                fax * oscil(cos_evens[j], even_freq)) +
-                        odd_amp * (yfax * oscil(sin_odds[j], odd_freq) -
-                                         fax * oscil(cos_odds[j], odd_freq)))
+      sum = sum + amps[j] * \
+        (even_amp * (yfax * oscil(sin_evens[j], even_freq) - \
+                     fax * oscil(cos_evens[j], even_freq)) + \
+         odd_amp * (yfax * oscil(sin_odds[j], odd_freq) - \
+                    fax * oscil(cos_odds[j], odd_freq)))
     end
     env(ampf) * sum
   end
@@ -686,8 +686,8 @@ def attract(start, dur, amp, c)
   y = z = 0.0
   run_instrument(start, dur) do
     x1 = x - dt * (y + z)
-    y += dt * (x + a * y)
-    z += dt * ((b + x * z) - c * z)
+    y = y + dt * (x + a * y)
+    z = z + dt * ((b + x * z) - c * z)
     x = x1
     scale * x
   end
@@ -1098,7 +1098,7 @@ def reson(start, dur, pitch, amp, numformants, indxfun, skewfun, pcskew, skewat,
     modsig = oscil(modulator, vib)
     outsum = 0.0
     numformants.times do |j|
-      outsum += env(ampfs[j]) * oscil(carriers[j], vib * c_rats[j] + env(indfs[j]) * modsig)
+      outsum = outsum + env(ampfs[j]) * oscil(carriers[j], vib * c_rats[j] + env(indfs[j]) * modsig)
     end
     outsum
   end
@@ -1730,7 +1730,9 @@ def lbj_piano(start, dur, freq, amp, *args)
                  :reverb_amount, reverb_amount) do
     sktr += 1
     let(0.0) do |sum|
-      oscils.each_with_index do |osc, i| sum += (oscil(osc) * alist[i]) end
+      oscils.each_with_index do |osc, i|
+        sum = sum + oscil(osc) * alist[i]
+      end
       sum * env(((sktr > env1samples) ? ampenv2 : ampenv1))
     end
   end
@@ -1803,7 +1805,7 @@ end
 
 # SCRATCH
 def scratch(start, file, src_ratio, turntable)
-  assert_type(File.exist?(file), file, 1, "an existing file")
+  assert_type(File.exists?(file), file, 1, "an existing file")
   f = make_file2sample(file)
   turn_i = 1
   turns = turntable.length
@@ -1853,7 +1855,7 @@ end
 #
 # spectral modeling (SMS)
 def pins(start, dur, file, amp, *args)
-  assert_type(File.exist?(file), file, 2, "an existing file")
+  assert_type(File.exists?(file), file, 2, "an existing file")
   transposition, time_scaler, fftsize, highest_bin, max_peaks, attack = nil
   optkey(args, binding,
          [:transposition, 1.0], # this can be used to transpose the sound
@@ -2077,7 +2079,7 @@ def pins(start, dur, file, amp, *args)
       end
       cur_oscils.times do |j|
         if amps[j].nonzero? or rates[j].nonzero?
-          sum += amps[j] * oscil(resynth_oscils[j], freqs[j])
+          sum = sum + amps[j] * oscil(resynth_oscils[j], freqs[j])
           amps[j] += rates[j]
           freqs[j] += sweeps[j]
         end
@@ -2144,7 +2146,7 @@ end
 # shape, segment length, hop length, and input file resampling rate
 def exp_snd(file, start, dur, amp,
             exp_amt = 1.0, ramp = 0.4, seglen = 0.15, sr = 1.0, hop = 0.05, ampenv = nil)
-  assert_type(File.exist?(file), file, 0, "an existing file")
+  assert_type(File.exists?(file), file, 0, "an existing file")
   f0 = make_ws_reader(file, :start, 0)
   expenv = make_env(:envelope, (exp_amt.kind_of?(Array) ? exp_amt : [0, exp_amt, 1, exp_amt]),
                     :duration, dur)
@@ -2253,8 +2255,8 @@ Grn = Struct.new("Grn",
                  :loc, :segctr, :whichseg, :ramplen, :steadylen, :trigger)
 
 def expfil(start, dur, hopsecs, rampsecs, steadysecs, file1, file2)
-  assert_type(File.exist?(file1), file1, 5, "an existing file")
-  assert_type(File.exist?(file2), file2, 6, "an existing file")
+  assert_type(File.exists?(file1), file1, 5, "an existing file")
+  assert_type(File.exists?(file2), file2, 6, "an existing file")
   fil1 = make_file2sample(file1)
   fil2 = make_file2sample(file2)
   hop = seconds2samples(hopsecs)
@@ -2383,7 +2385,7 @@ nil doesnt print anything, which will speed up a bit the process.
 =end
 #
 def graph_eq(file, *args)
-  assert_type(File.exist?(file), file, 0, "an existing file")
+  assert_type(File.exists?(file), file, 0, "an existing file")
   start, dur, or_beg, amp, amp_env, amp_base, offset_gain = nil
   gain_freq_list, filt_gain_scale, filt_gain_base, a1 = nil
   optkey(args, binding,
@@ -2431,7 +2433,7 @@ def graph_eq(file, *args)
       if if_list_in_gain
         gains[j] = env(env_size[j]) * (1.0 - a1)
       end
-      outval += gains[j] * formant(frm_size[j], inval)
+      outval = outval + gains[j] * formant(frm_size[j], inval)
     end
     env(ampenv) * outval
   end
@@ -2446,7 +2448,7 @@ end
 # noise
 # this is based on Perry Cook's Scrubber.m
 def anoi(infile, start, dur, fftsize = 128, amp_scaler = 1.0, r = TWO_PI)
-  assert_type(File.exist?(infile), infile, 0, "an existing file")
+  assert_type(File.exists?(infile), infile, 0, "an existing file")
   freq_inc = (fftsize / 2).floor
   fdi = make_vct(fftsize)
   fdr = make_vct(fftsize)
@@ -2483,7 +2485,7 @@ def anoi(infile, start, dur, fftsize = 128, amp_scaler = 1.0, r = TWO_PI)
     outval = 0.0
     1.upto(freq_inc - 1) do |j|
       cur_scale = scales[j]
-      outval += cur_scale * formant(fs[j], inval)
+      outval = outval + cur_scale * formant(fs[j], inval)
       scales[j] += diffs[j]
     end
     amp * outval
@@ -2527,7 +2529,7 @@ def fullmix(in_file,
             matrix = nil,
             srate = nil,
             reverb_amount = 0.05)
-  assert_type(File.exist?(in_file), in_file, 0, "an existing file")
+  assert_type(File.exists?(in_file), in_file, 0, "an existing file")
   dur = Float((outdur or (ws_duration(in_file) / Float((srate or 1.0)).abs)))
   in_chans = ws_channels(in_file)
   inloc = (Float(inbeg) * ws_srate(in_file)).round
@@ -2813,7 +2815,7 @@ Grani_to_grain_random      = 4
 Grani_to_grain_allchans    = 5
 
 def grani(start, dur, amp, file, *args)
-  assert_type(File.exist?(file), file, 3, "an existing file")
+  assert_type(File.exists?(file), file, 3, "an existing file")
   input_channel, grain_degree_spread = nil
   grains, amp_envelope, grain_envelope, grain_envelope_end, grain_envelope_transition = nil
   grain_envelope_array_size, grain_duration, grain_duration_spread, grain_duration_limit = nil
@@ -3066,7 +3068,7 @@ def bes_fm(start, dur, freq, amp, ratio, index)
   ampenv = make_env(:envelope, [0, 0, 25, 1, 75, 1, 100, 0], :scaler, amp, :duration, dur)
   run_instrument(start, dur) do
     out_val = env(ampenv) * bes_j1(car_ph)
-    car_ph += car_incr + index.to_f * bes_j1(mod_ph)
+    car_ph = car_ph + car_incr + index.to_f * bes_j1(mod_ph)
     mod_ph += mod_incr
     out_val
   end

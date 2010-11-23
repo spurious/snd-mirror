@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Mon Dec 14 16:08:26 CET 2009
+# Changed: Mon Nov 22 13:20:28 CET 2010
 
 # Commentary:
 #
@@ -187,7 +187,9 @@ multiply_envelopes([0, 0, 2, 0.5], [0, 0, 1, 2, 2, 1]) -> [0.0, 0.0, 0.5, 0.5, 1
   add_help(:integrate_envelope, "integrate_envelope(env) -> area under env")
   def integrate_envelope(en)
     sum = 0.0
-    0.step(en.length - 3, 2) do |i| sum += (en[i + 1] + en[i + 3]) * (en[i + 2] - en[i]) * 0.5 end
+    0.step(en.length - 3, 2) do |i|
+      sum = sum + (en[i + 1] + en[i + 3]) * (en[i + 2] - en[i]) * 0.5
+    end
     sum
   end
 
@@ -227,7 +229,9 @@ stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
           y0 = fn[1]
           new_fn = [x0, y0]
           scl = (new_att - x0) / [0.0001, old_att - x0].max
-          old_dec += 0.000001 * last_x if old_dec and old_dec == old_att
+          if old_dec and old_dec == old_att
+            old_dec = old_dec + 0.000001 * last_x
+          end
           fn[2..-1].each_pair do |x1, y1|
             if x0 < old_att and x1 >= old_att
               y0 = if x1 == old_att
@@ -256,7 +260,7 @@ stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
               scl = (last_x - new_dec) / (last_x - old_dec)
             end
             if x0 != x1
-              new_x += scl * (x1 - x0)
+              new_x = new_x + scl * (x1 - x0)
               new_fn.push(new_x, y1)
               x0, y0 = x1, y1
             end
@@ -349,7 +353,7 @@ REFLECTED causes every other repetition to be in reverse.")
         new_env.push(x, en[j + 1])
       end
       if (i < tms - 1) and (not first_y_is_last_y)
-        x += x_max / 100.0
+        x = x + x_max / 100.0
         new_env.push(x, first_y)
       end
     end

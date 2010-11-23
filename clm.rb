@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Oct 14 23:02:57 CEST 2009
-# Changed: Thu Nov 18 01:38:01 CET 2010
+# Changed: Mon Nov 22 13:16:31 CET 2010
 
 # Commentary:
 #
@@ -255,7 +255,7 @@
 # debug_property(key, name)   set_debug_property(key, val, name)
 # debug_binding(name)         set_debug_binding(bind, name)
 # display_all_variables(name)
-# each_variables(&body)
+# each_variables(bind, &body)
 #
 # let(*rest) do |*rest| ... end
 #
@@ -452,19 +452,25 @@ def with_silence(exception = StandardError)
   ret
 end
 
+include Math
+
+TWO_PI  = PI * 2.0 unless defined? TWO_PI
+HALF_PI = PI * 0.5 unless defined? HALF_PI
+
 # ruby19 moved complex.rb and rational.rb to C
 # (See ruby/Changelog Sun Mar 16 08:51:41 2008.)
 # FIXME
 # Thu Nov 18 01:26:45 CET 2010
-# with ruby193 and C Complex
+# with ruby19 and C Complex
 # val < 1.0 ==> Math::DomainError: Numerical argument is out of domain - "acosh"
 #unless defined? Complex
 with_silence do
+  # lib/complex.rb is deprecated
   require "complex"
 end
 unless defined? Rational
-  # warning: method redefined; discarding old numerator|denominator|gcd|lcm
   with_silence do
+    # warning: method redefined; discarding old numerator|denominator|gcd|lcm
     require "rational"
   end
 end
@@ -477,6 +483,7 @@ end
 
 unless provided?(:sndlib)
   with_silence do
+    # warning: method redefined; discarding old rand
     require "sndlib"
   end
 end
@@ -589,10 +596,13 @@ end
 # Bar     == 1
 # FOO_BAR == 2
 def enum(*names)
+  cap_alpha = ?A.kind_of?(String) ? ?A.sum : ?A
+  lit_alpha = ?a.kind_of?(String) ? ?a.sum : ?a
+  letter_diff = cap_alpha - lit_alpha
   names.flatten.map_with_index do |name, i|
     const_name = name.to_s
     if const_name[0].between?(?a, ?z)
-      const_name[0] += ?A - ?a
+      const_name[0] += letter_diff
     end
     Object.const_set(const_name, i)
     const_name
@@ -625,12 +635,10 @@ class Object
   alias Float new_Float
 
   def snd_func(name, *rest, &body)
-    assert_type(func?(name), name, 0, "a string or symbol")
     send(name.to_s, *rest, &body)
   end
   
   def set_snd_func(name, val, *rest, &body)
-    assert_type(func?(name), name, 0, "a string or symbol")
     send(format("set_%s", name.to_s), val, *rest, &body)
   end
 
@@ -769,7 +777,9 @@ module Info
   alias info description
 end
 
-alias snd_help get_help unless defined? snd_help
+unless defined? snd_help
+  alias snd_help get_help
+end
 
 $array_print_length = 10
 
@@ -843,12 +853,14 @@ end
 # make_array(10, 1.0)
 # make_array(10) do |i| ... end
 def make_array(len = 0, init = nil)
-  assert_type((number?(len) and len >= 0), len, 0, "a number")
-  len = Integer(len)
-  if block_given?
-    Array.new(len, init).map_with_index do |x, i| yield(i) end
+  if len >= 0
+    if block_given?
+      Array.new(len, init).map_with_index do |x, i| yield(i) end
+    else
+      Array.new(len, init)
+    end
   else
-    Array.new(len, init)
+    Kernel.raise(TypeError, format("array length < 0 (%s)?", len.inspect))
   end
 end
 
@@ -888,7 +900,7 @@ class Array
     str = "["
     ary.each_with_index do |val, i|
       if i < len
-        str += "%1.3f, " % val.to_f
+        str = str + "%1.3f, " % val.to_f
       else
         break
       end
@@ -1068,7 +1080,7 @@ a: 2
   def apply(func, *rest, &body)
     if block_given? and (not symbol?(func))
       rest.unshift(func)
-      self.map do |item| yield(*rest + [item]) end
+      self.map do |item| body.call(*rest + [item]) end
     else
       case func
       when Proc, Method
@@ -1168,21 +1180,24 @@ class Vec < Array
   end
   
   def initialize(len, init = 0.0, &body)
-    assert_type((number?(len) and len >= 0), len, 0, "a number")
     @name = "vector"
-    len = Integer(len)
-    if block_given?
-      super(len, &body)
+    if len >= 0
+      if block_given?
+        super(len, &body)
+      else
+        super(len, init)
+      end
     else
-      super(len, init)
+      Kernel.raise(TypeError, format("array length < 0 (%s)?", len.inspect))
     end
-    test = self.detect do |x| (not number?(x)) end
-    assert_type((not test), test, 0, "only numeric elements")
+    if test = self.detect do |x| (not number?(x)) end
+      Kernel.raise(TypeError, format("only numeric elements (%s)?", test.inspect))
+    end
   end
 
   def inspect
     str = "%s(" % @name
-    self.each do |val| str += "%s, " % val end
+    self.each do |val| str = str + "%s, " % val end
     if self.length > 0 then str.chop!.chop! end
     str += ")"
     str
@@ -1191,7 +1206,7 @@ class Vec < Array
   def to_s
     if self.length > 0
       vals = ":"
-      self.map do |val| vals += " %s" % val end
+      self.map do |val| vals = vals + " %s" % val end
     else
       vals = ""
     end
@@ -1394,7 +1409,7 @@ class Vct
 end
 
 class Fixnum
-  # no reloading (load "examp.rb")
+  # no reloading (load "clm.rb")
   unless defined? 0.new_int_plus
     alias int_plus +
     def new_int_plus(other)
@@ -1427,7 +1442,7 @@ class Fixnum
 end
 
 class Float
-  # no reloading (load "examp.rb")
+  # no reloading (load "clm.rb")
   unless defined? 0.0.new_float_plus
     alias float_plus +
     def new_float_plus(other)
@@ -1790,7 +1805,6 @@ func(1, 2, 3) ==> [1, 2, 3]
 lambda do |x| p x end.to_method(:foo);  foo(\"text1\") ==> \"text1\"
 lambda do |x| p x end.to_method(\"bar\"); bar(\"text2\") ==> \"text2\"")
   def to_method(name, klass = Object)
-    assert_type((klass.kind_of?(Class) and klass.class == Class), name, 1, "a class, e.g. Object")
     name = case name
            when String
              name.intern
@@ -1839,7 +1853,7 @@ lambda do |x| p x end.to_method(\"bar\"); bar(\"text2\") ==> \"text2\"")
         warning("%s#%s: no file found for procedure %s", self.class, get_func_name, self.inspect)
       end
       body = ""
-    elsif (not File.exist?(file))
+    elsif (not File.exists?(file))
       if $VERBOSE
         warning("%s#%s: Sorry, you need a higher ruby version to use Proc#to_str.
 It works only with newer ruby versions (I assume >= 1.8.x).
@@ -1956,7 +1970,7 @@ make_hook("$emacs_eval_hook", 1, "\
 emacs_eval_hook(line):  called each time inf-snd.el sends a line to the Snd process.  \
 The hook functions may do their best to deal with multi-line input; \
 they can collect multi-line input and eval it by itself.  \
-One example is install_eval_hooks(file, retval, input, hook, &reset_cursor) in examp.rb.")
+One example is install_eval_hooks(file, retval, input, hook, &reset_cursor) in clm.rb.")
 
 # inf-snd.el calls this function each time a line was sent to the
 # emacs buffer.
@@ -2082,47 +2096,44 @@ end
 # Debugging resp. inspecting local variables
 
 make_proc_with_setter(:debug_properties,
-                      lambda { |name|
-                        property(name, :debug_property)
-                      },
-                      lambda { |name, val|
-                        set_property(name, :debug_property, val)
-                      })
+                      lambda do |name| property(name, :debug_property) end,
+                      lambda do |name, val| set_property(name, :debug_property, val) end)
 
 make_proc_with_setter(:debug_property,
-                      lambda { |key, name|
+                      lambda do |key, name|
                         hash?(h = debug_properties(name)) and h[key]
-                      },
-                      lambda { |key, val, name|
+                      end,
+                      lambda do |key, val, name|
                         unless hash?(h = debug_properties(name)) and h.store(key, [val] + h[key])
                           unless array?(a = property(:debug, :names)) and a.push(name)
                             set_property(:debug, :names, [name])
                           end
                           set_debug_properties(name, {key => [val]})
                         end
-                      })
+                      end)
 
 make_proc_with_setter(:debug_binding,
-                      lambda { |name|
+                      lambda do |name|
                         debug_property(:binding, name)
-                      },
-                      lambda { |bind, *name|
-                        assert_type(binding?(bind), bind, 0, "a binding object")
-                        name = (name.car or get_func_name(3))
-                        set_debug_property(:binding, bind, name)
-                      })
+                      end,
+                      lambda do |bind, *name|
+                        set_debug_property(:binding, bind, (name[0] or get_func_name(3)))
+                      end)
 
-# shows all local variables of functions prepared by set_debug_binding(binding)
+# Shows all local variables of last call of functions prepared with
+# set_debug_binding(binding)
 # 
 # def function1
 #   [...]
 #   set_debug_binding(binding)
 # end
-# 
 # def function2
 #   [...]
 #   set_debug_binding(binding)
 # end
+# [...]
+# function1
+# function2
 # [...]
 # 
 # display_all_variables
@@ -2135,8 +2146,8 @@ def display_all_variables(name = nil)
     debug_binding(nm).each do |bind|
       Snd.message("=== %s ===", nm)
       Snd.message()
-      eval("local_variables", bind).each do |var|
-        Snd.message("%s = %s", var, eval(var, bind).inspect)
+      each_variables(bind) do |var, val|
+        Snd.message("%s = %s", var, val.inspect)
       end
       Snd.message()
     end
@@ -2152,8 +2163,11 @@ end
 #     Snd.display("%s = %s", k, v)
 #   end
 # end
-def each_variables(&prc)
-  eval("local_variables", prc).each do |var| yield(var, eval(var, prc)) end
+def each_variables(bind = binding, &prc)
+  eval("local_variables", bind).each do |name|
+    name = name.to_s
+    prc.call(name, eval(name, bind))
+  end
 end
 
 # let(8, :foo, "bar") do |a, b, c|
@@ -2162,35 +2176,22 @@ end
 #
 # Simulates a save local variable environment and restores old
 # variables to their original values.
-#
-# EVAL doesn't take any longer a proc for a binding.  The date is a
-# guess.
-if RUBY_RELEASE_DATE > "2006-12-21"
-  def let(*args, &prc)
-    prc.call(*args)
-  rescue Interrupt, ScriptError, NameError, StandardError
-    Kernel.raise
+def let(*args, &prc)
+  locals = Hash.new
+  bind = prc.binding
+  each_variables(bind) do |var, val|
+    locals[var] = val
   end
-else
-  def let(*args, &prc)
-    locals = Hash.new
-    eval("local_variables", prc).each do |name| locals[name] = eval(name, prc) end
-    # yield(*args)
-    # See ruby/ChangeLog: Tue Jul 18 16:52:29 2006  Yukihiro Matsumoto  <matz@ruby-lang.org>
-    prc.call(*args)
-  rescue Interrupt, ScriptError, NameError, StandardError
-    Kernel.raise
-  ensure
-    @locals = locals
-    locals.each_key do |name| eval("#{name} = @locals[#{name.inspect}]", prc) end
-    remove_instance_variable("@locals")
+  prc.call(*args)
+rescue Interrupt, ScriptError, NameError, StandardError
+  Kernel.raise
+ensure
+  @locals = locals
+  locals.each_key do |name|
+    eval("#{name} = @locals[#{name.inspect}]", bind)
   end
+  remove_instance_variable("@locals")
 end
-
-include Math
-
-TWO_PI = PI * 2.0  unless defined? TWO_PI
-HALF_PI = PI * 0.5 unless defined? HALF_PI
 
 # for irb (rgb.rb)
 def make_color(r, g, b)
@@ -2381,12 +2382,12 @@ class Snd
     end
 
     def fullname(fname)
-      if File.exist?(fname)
+      if File.exists?(fname)
         fname
       else
         f = File.basename(fname)
         Snd_path.each do |path|
-          if File.exist?(path + "/" + f)
+          if File.exists?(path + "/" + f)
             return path + "/" + f
           end
         end
@@ -2669,7 +2670,7 @@ def snd_error_to_message
 rescue Interrupt, ScriptError, NameError, StandardError
   if $DEBUG
     $stderr.printf("# Warning (%s)\n", get_func_name)
-    each_variables do |k, v| $stderr.printf("# %s = %s\n", k, v.inspect) end
+    each_variables do |var, val| $stderr.printf("# %s = %s\n", var, val.inspect) end
   end
   str
 end
@@ -2933,9 +2934,9 @@ add_help(:load_init_file,
 Returns false if file doesn't exist, otherwise loads it. \
 File may reside in current working dir or in $HOME dir.")
 def load_init_file(file)
-  if File.exist?(file)
+  if File.exists?(file)
     Snd.catch do load(file) end
-  elsif File.exist?(f = ENV["HOME"] + "/" + file)
+  elsif File.exists?(f = ENV["HOME"] + "/" + file)
     Snd.catch do load(f) end
   else
     false

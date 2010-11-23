@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Wed Nov 17 21:18:12 CET 2010
+# Changed: Mon Nov 22 13:22:55 CET 2010
 
 # Commentary:
 # 
@@ -397,13 +397,13 @@ writes sound data as mono files (for external program)")
     case filenames
     when String
       (data or []).each do |temp_file|
-        if File.exist?(temp_file) and temp_file != filenames
+        if File.exists?(temp_file) and temp_file != filenames
           File.unlink(temp_file)
         end
       end
     when Array
       (data or []).each_with_index do |temp_file, i|
-        if File.exist?(temp_file) and temp_file != filenames[i]
+        if File.exists?(temp_file) and temp_file != filenames[i]
           File.unlink(temp_file)
         end
       end
@@ -655,7 +655,9 @@ turns a sound-data object's data into a list of lists (one for each channel)")
              Vct.new(gens.length, 0.0)
            end
     sum = 0.0
-    gens.each_with_index do |gen, i| sum += amps[i] * mus_run(gen, inp1[i], inp2[i]) end
+    gens.each_with_index do |gen, i|
+      sum = sum + amps[i] * mus_run(gen, inp1[i], inp2[i])
+    end
     sum
   end
 
@@ -685,7 +687,9 @@ turns a sound-data object's data into a list of lists (one for each channel)")
              Vct.new(gens.length, 0.0)
            end
     sum = 0.0
-    gens.each_with_index do |gen, i| sum += amps[i] * oscil(gen, inp1[i], inp2[i]) end
+    gens.each_with_index do |gen, i|
+      sum = sum + amps[i] * oscil(gen, inp1[i], inp2[i])
+    end
     sum
   end
 
@@ -770,7 +774,9 @@ turns a sound-data object's data into a list of lists (one for each channel)")
   def sine_bank(amps, phases, size = nil)
     len = (size or amps.length)
     sum = 0.0
-    len.times do |i| sum += amps[i] * sin(phases[i]) end
+    len.times do |i|
+      sum = sum + amps[i] * sin(phases[i])
+    end
     sum
   end
 end
@@ -1204,7 +1210,7 @@ applies body to each sound file in dir")
   def each_sound_file(*args, &func)
     if args.empty? then args.push(Dir.pwd) end
     args.map do |dir|
-      if File.exist?(dir)
+      if File.exists?(dir)
         sound_files_in_directory(dir).each do |f| func.call(dir + "/" + f) end
       end
     end
@@ -1425,7 +1431,7 @@ choice == 3: across runs remembering")
       end
       $open_hook.remove_hook!(hook_name)
       $before_exit_hook.remove_hook!(hook_name)
-      if File.exist?($remember_sound_filename)
+      if File.exists?($remember_sound_filename)
         File.unlink($remember_sound_filename)
       end
     end
@@ -1474,7 +1480,7 @@ choice == 3: across runs remembering")
       end
       if choice != 1
         $open_hook.add_hook!(hook_name) do |fname|
-          if states.empty? and File.exist?($remember_sound_filename)
+          if states.empty? and File.exists?($remember_sound_filename)
             load($remember_sound_filename)
             states = $_saved_remember_sound_states_states_
           end
@@ -1934,7 +1940,7 @@ applies contrast enhancement to the sound" )
                     brief_name,
                     lambda do | |
                       remove_from_menu(@reopen_menu, brief_name)
-                      if File.exist?(long_name) then open_sound(long_name) end
+                      if File.exists?(long_name) then open_sound(long_name) end
                     end,
                     0)
         @reopen_names.push(brief_name)

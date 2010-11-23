@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Wed Nov 17 22:57:45 CET 2010
+# Changed: Sat Nov 20 00:57:07 CET 2010
 
 # Commentary:
 #
@@ -149,6 +149,7 @@
 # >  variable_display(vd, var)
 # >  variable_display_close(vd)
 # >  variable_display_reset(vd)
+# >  variable_display?(vd)
 # >  
 # >  class Dialog
 # >    add_frame(args)
@@ -1911,6 +1912,10 @@ the current free space (for use with $after_open_hook)")
   
   def variable_display_reset(vd)
     vd.reset
+  end
+
+  def variable_display?(vd)
+    vd.kind_of?(Variable_display)
   end
   
   class Scale_widget

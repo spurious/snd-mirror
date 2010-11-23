@@ -2019,7 +2019,7 @@ module DL
       (1...n).each do |i|
         (1..[Path_maxcoeff - 1, m].min).each do |j|
           3.times do |k|
-            d[k][i] += ac(j, n) * (ref.call(p, k, i + j) - ref.call(p, k, i - j))
+            d[k][i] = d[k][i] + ac(j, n) * (ref.call(p, k, i + j) - ref.call(p, k, i - j))
           end
         end
       end
@@ -2098,7 +2098,7 @@ module DL
       n.times do |i|
         (1..m).each do |j|
           3.times do |k|
-            d[k][i] += a(j, n) * (ref.call(p, k, i + j) - ref.call(p, k, i - j))
+            d[k][i] = d[k][i] + a(j, n) * (ref.call(p, k, i + j) - ref.call(p, k, i - j))
           end
         end
       end
@@ -2270,7 +2270,7 @@ module DL
       td = 0.0
       times = (0...dp.length - 1).map do |i|
         di, df = dp[i, 2]
-        td += (df - di) / 4.0
+        td = td + (df - di) / 4.0
       end
       @rx = x
       @ry = y

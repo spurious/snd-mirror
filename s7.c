@@ -5339,7 +5339,7 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
        */
       (*overflow) = true;
       if (negative)
-	return(LLONG_MIN);
+	return(LLONG_MIN);  /* or INFINITY? */
       return(LLONG_MAX);             /* 0/100000000000000000000000000000000000000000000000000000000000000000000 */
     }
 #endif
@@ -5979,7 +5979,10 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	  return(small_int(0));
 	if ((d == 0) || (overflow))
 	  return(s7_make_real(sc, NAN));
-
+	/* it would be neat to return 1 from 10000000000000000000000000000/10000000000000000000000000000 
+	 *   but q is the entire number ('/' included) and slash1 is the stuff after the '/', and every 
+	 *   big number comes through here, so there's no clean and safe way to check that q == slash1.
+	 */
 	return(s7_make_ratio(sc, n, d));
       }
 #else
@@ -5991,7 +5994,8 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
     {
       s7_Int x;
       x = string_to_integer(q, radix, &overflow);
-      if (overflow) return(s7_make_real(sc, NAN));
+      if (overflow) 
+	return(s7_make_real(sc, (q[0] == '-') ? -INFINITY : INFINITY)); /* was NaN */
       return(s7_make_integer(sc, x));
     }
 #else

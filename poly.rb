@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Apr 09 23:55:07 CEST 2005
-# Changed: Wed Nov 17 23:02:10 CET 2010
+# Changed: Mon Nov 22 13:27:11 CET 2010
 
 # Commentary: (see poly.scm)
 #
@@ -125,7 +125,7 @@ class Poly < Vec
       m = Poly.new(len, 0.0)
       self.each_with_index do |val1, i|
         other.each_with_index do |val2, j|
-          m[i + j] += val1 * val2
+          m[i + j] = m[i + j] + val1 * val2
         end
       end
       m

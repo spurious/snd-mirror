@@ -3,11 +3,11 @@
 # Commentary:
 #
 # Tested with:
-#   Snd version 11.11 of 18-Nov-10
+#   Snd version 11.11 of 23-Nov-10
 #   ruby 1.8.0 (2003-08-04)
-#   ruby 1.8.7 (2009-12-24 patchlevel 248)
+#   ruby 1.8.7 (2010-08-16 patchlevel 302)
 #   ruby 1.9.2p0 (2010-08-18 revision 29036)
-#   ruby 1.9.3dev (2010-11-17 trunk 29819)
+#   ruby 1.9.3dev (2010-11-22 trunk 29847)
 
 #
 # Reads an init file ./.sndtest.rb or ~/.sndtest.rb where you may set
@@ -17,19 +17,20 @@
 # 
 =begin
 % cat ./.sndtest.rb
-$VERBOSE = true
-# $DEBUG = true
+# $VERBOSE = true
+# $DEBUG   = true
 
 (ENV["RUBYLIB"] or $HOME + "/share/snd").split(/:/).each do |f| $LOAD_PATH.unshift(f) end
 
 $original_save_dir           = set_save_dir(ENV["TMPDIR"])
-$original_temp_dir           = set_temp_dir(ENV["TMPDIR"])
+$original_temp_dir           = set_temp_dir(save_dir)
 $original_output_data_format = default_output_data_format
 
 $with_big_file = true
 $bigger_snd    = "/usr/opt/sound/SFiles/bigger.snd"
 $sf_dir        = "/usr/opt/sound/sf1/"
 # $all_args    = true
+# $bigtest_08  = true
 # $tests       = 2
 
 alias bye exit
@@ -88,7 +89,9 @@ $info_array_print_length        = 48
 $sf_dir         = "/home/bil/sf1/"
 $bigger_snd     = "/home/bil/zap/sounds/bigger.snd"
 $with_big_file  = false
+# $bigtest_08 not included in $all_args
 $all_args       = false
+$bigtest_08     = false
 
 # global variables may be overridden in `pwd`/.sndtest.rb or ~/.sndtest.rb
 lambda do |file|
@@ -100,7 +103,7 @@ lambda do |file|
 end.call(".sndtest.rb")
 
 unless $my_snd_error_hook
-  $my_snd_error_hook = lambda do |msg| true end
+  $my_snd_error_hook = Proc.new do |msg| true end
 end
 
 require "clm"
@@ -181,10 +184,12 @@ end
 # fixnum 120, so we need a new function.
 #
 # key_to_int(?x) => 120
-def key_to_int(key)
-  if key.kind_of?(String)
-    key.sum(10)
-  else
+if ?x.kind_of?(String)
+  def key_to_int(key)
+    key.sum
+  end
+else
+  def key_to_int(key)
     key
   end
 end
@@ -198,14 +203,15 @@ trap("SIGINT") do |sig|
   snd_info("")
   $timings.last.last.stop
   finish_snd_test
+  clear_test_files
   exit(2)
 end
 
 # let procs $snd|mus_error_hook("sndtestrc") untouched
 def reset_almost_all_hooks
   reset_all_hooks
-  if proc? $my_snd_error_hook then $snd_error_hook.add_hook!("sndtestrc", &$my_snd_error_hook) end
-  if proc? $my_mus_error_hook then $mus_error_hook.add_hook!("sndtestrc", &$my_mus_error_hook) end
+  if proc?($my_snd_error_hook) then $snd_error_hook.add_hook!("sndtest", &$my_snd_error_hook) end
+  if proc?($my_mus_error_hook) then $mus_error_hook.add_hook!("sndtest", &$my_mus_error_hook) end
 end
 
 reset_almost_all_hooks
@@ -227,44 +233,64 @@ def main_test
     end
     finish_snd_test(i + 1)
   end
+  clear_test_files
   exit(0)
 end
 
-def snd_info(fmt, *args)
-  str = format(fmt, *args)
-  if $with_test_nogui
-    clm_print("# %s\n", str)
-  else
+if $with_test_nogui
+  def snd_info(fmt, *args)
+    clm_print("# %s\n", format(fmt, *args))
+    nil
+  end
+else
+  def snd_info(fmt, *args)
+    str = format(fmt, *args)
     clm_print("\n# %s", str)
     $stderr.printf("# %s\n", str)
+    nil
   end
-  nil
+end
+
+def check_for_line_number_bug(lineno)
+  if (ln = caller(1)[0].scan(/:(.*):in /).first)
+    ln = ln.first.to_i
+    if lineno == ln
+      printf("# LINENO OKAY (%d == %d)\n", lineno, ln)
+    else
+      printf("# LINENO WRONG (%d != %d)\n", lineno, ln)
+    end
+  else
+    puts("no line number found in caller")
+  end
 end
 
 if RUBY_VERSION < "1.9"
   # FIXME
-  # ruby line number bug (below ruby19, I think [ms])
-  # 
-  # If line_number is above 8 ** 5 (32768), line_number returns wrong
-  # value.  32768 xor (or +) line_number returns correct value.
+  # ruby line number bug (below version 1.9, I think [ms])
 
-  RB_LINENO_MAX = 8 ** 5
+  RB_LINENO_MAX_08 = 2 ** 13
+  RB_LINENO_MAX_16 = 2 ** 14
+  RB_LINENO_MAX_32 = 2 ** 15
 
   def rb_line_number(str)
-    line1 = Integer(str)
-    line2 = RB_LINENO_MAX ^ line1
-    if line1 <= TEST_FIRST_LINE_NUMBER
-      format("%d", line2)
-    elsif line2 >= TEST_LAST_LINE_NUMBER
-      format("%d", line1)
+    line = Integer(str)
+    line_08 = RB_LINENO_MAX_08 ^ line
+    line_16 = RB_LINENO_MAX_16 ^ line
+    line_32 = RB_LINENO_MAX_32 ^ line
+
+    if line_32 >= TEST_LAST_LINE_NUMBER
+      if line <= TEST_FIRST_LINE_NUMBER
+        format("%d/%d", line_08, line_16)
+      else
+        format("%d/%d/%d", line, line_08, line_16)
+      end
     else
-      # no idea which one is correct
-      format("%d or %d", line1, line2)
+      if line <= TEST_FIRST_LINE_NUMBER
+        format("%d/%d/%d", line_08, line_16, line_32)
+      else
+        format("%d/%d/%d/%d", line, line_08, line_16, line_32)
+      end
     end
-  end
-else
-  def rb_line_number(str)
-    str
   end
 end
 
@@ -277,14 +303,12 @@ def snd_display(*args)
   str = format(*args)
   set_mus_array_print_length(olda)
   set_print_length(oldv)
-  if line = caller(1)[0].scan(/:(.*):in /).first
-    snd_info("[%s] %s", rb_line_number(line.first), format(*args))
+  if (line = caller(1)[0].scan(/:(.*):in /).first) and RUBY_VERSION >= "1.9"
+    snd_info("[%s] %s", line.first, str)
   else
-    snd_info("%s", format(*args))
+    snd_info("%s", str)
   end
 end
-
-TEST_FIRST_LINE_NUMBER = __LINE__
 
 def snd_debug(*args)
   if args.empty?
@@ -293,6 +317,30 @@ def snd_debug(*args)
     args[0] = String(args[0])
     snd_info("#<SND-DEBUG: %s>", format(*args))
   end
+end
+
+def snd_test_format(sndfmt, res, req, fmt = "", *args)
+  if fmt.empty?
+    format(sndfmt, res, req)
+  else
+    format(fmt, *args) + ": " + format(sndfmt, res, req)
+  end
+end
+
+def snd_int_format_neq(res, req, fmt = "", *args)
+  snd_test_format("res %d != req %d?", res, req, fmt, *args)
+end
+
+def snd_float_format_neq(res, req, fmt = "", *args)
+  snd_test_format("res %1.3f != req %1.3f?", res, req, fmt, *args)
+end
+
+def snd_seq_format_neq(res, req, fmt = "", *args)
+  snd_test_format("res != req?\n#res %s\n#req %s", res, req, fmt, *args)
+end
+
+def snd_seq_format_eq(res, req, fmt = "", *args)
+  snd_test_format("res == req?\n#res %s\n#req %s", res, req, fmt, *args)
 end
 
 # command line args: last arg(s) may be zero or many test numbers
@@ -323,7 +371,7 @@ lambda do
 end.call
 
 def fneq_err(f1, f2, err = 0.001)
-  (Float(f1) - Float(f2)).abs > err
+  (f1 - f2).abs > err
 end
 
 def fneq(a, b)
@@ -427,7 +475,6 @@ end
 
 if $with_test_nogui
   def dismiss_all_dialogs
-    GC.start
   end
 else
   def dismiss_all_dialogs
@@ -444,9 +491,10 @@ else
         end
       end
     end
-    GC.start
   end
 end
+
+TEST_FIRST_LINE_NUMBER = __LINE__
 
 def safe_display_edits(snd = false, chn = false, edpos = false, with_source = true)
   Snd.catch(:all, lambda do |*args| snd_display("display_edits error: %s", args) end) do
@@ -468,7 +516,7 @@ rescue
 end
 
 def file_copy(f1, f2)
-  if File.exist?(f1)
+  if File.exists?(f1)
     fin = File.open(f1, "r")
     fout = File.open(f2, "w")
     fout.write(fin.read) until fin.eof?
@@ -486,7 +534,7 @@ def delete_files(*files)
 end
 
 def with_file(file, verbose = $DEBUG, &body)
-  if File.exist?(full_name = $sf_dir + file)
+  if File.exists?(full_name = $sf_dir + file)
     body.call(full_name)
   else
     if verbose
@@ -611,9 +659,12 @@ def finish_snd_test(n = 1)
   save_listener(format("test-ruby.%02d.output", n))
   clear_listener
   set_show_listener(true)
+end
+
+def clear_test_files
   fs = 0
   [$original_save_dir, $original_temp_dir, "/tmp"].each do |path|
-    if File.exist?(path)
+    if File.exists?(path)
       fs += Dir[path + "/snd_*"].length
       Dir[path + "/snd_*"].each do |f| delete_file(f) end
     end
@@ -1366,7 +1417,7 @@ end
 # INFO: Wed Sep  1 22:48:47 CEST 2010 [ms]
 # snd-0.h:603:#define DEFAULT_COLOR_MAP 2
 # 2 -> HOT_COLORMAP
-$good_colormap = $hot_colormap
+$good_colormap   = $hot_colormap
 $better_colormap = $black_and_white_colormap
 
 # :normal        = [[Symbol, val], ...]
@@ -1848,9 +1899,7 @@ def test_03_00(lst, type = :normal)
       set_snd_func(sym, newval)
       nowval = snd_func(sym)
       if float?(newval)
-        # INFO [ms]
-        # fneq_err(a, b, 0.002) because of set_expand_control 1.998400308 != 2.0
-        if fneq_err(nowval, newval, 0.002)
+        if fneq(nowval, newval)
           snd_display("set_%s nowval %s != newval %s?", sym, nowval, newval)
         end
       else
@@ -2162,7 +2211,7 @@ def play_sound_1(file)
     audio_fd = mus_audio_open_output(0, srate, chans, Mus_bshort, bytes)
   end
   if audio_fd == -1
-    snd_display("can\'t play %s", file)
+    snd_display("cannot play %s", file)
   else
     0.step(frames, bufsize) do
       mus_sound_read(sound_fd, 0, bufsize - 1, chans, data)
@@ -2171,7 +2220,7 @@ def play_sound_1(file)
     mus_audio_close(audio_fd)
   end
 rescue
-  snd_display("can\'t open audio (%s)", file)
+  snd_display("cannot open audio (%s)", file)
 ensure
   data = nil
   mus_sound_close_input(sound_fd)
@@ -2279,7 +2328,7 @@ def test_04_01
   save_sound_as(lfname, ind)
   close_sound(ind)
   ind = open_sound(lfname)
-  snd_display("can\'t find test...snd") unless sound?(ind)
+  snd_display("cannot find test...snd") unless sound?(ind)
   if (not file_name(ind).length >= lfname.length) or
       (not short_file_name(ind).length >= lfname.length)
     snd_display("file_name lengths: %s %s %s?",
@@ -2399,7 +2448,7 @@ def test_04_04
   vct2channel(Vct.new(10, 0.3), 0, 10, nd, 1)
   save_sound_as("fmv1.snd", nd)
   close_sound(nd)
-  unless File.exist?("fmv1.snd") then snd_display("fmv1.snd not saved?") end
+  unless File.exists?("fmv1.snd") then snd_display("fmv1.snd not saved?") end
   set_samples(0, 10, "fmv1.snd", ind, 0, false, "another name 6", 1)
   unless vequal(res = channel2vct(0, 20, ind, 0),
                 vct(0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
@@ -2460,20 +2509,20 @@ end
 
 def test_04_05
   len = 100
-  [[Mus_bshort, 2 ** -15],
-   [Mus_lshort, 2 ** -15],
-   [Mus_mulaw, 0.02],
-   [Mus_alaw, 0.02],
-   [Mus_byte, 2 ** -7],
-   [Mus_lfloat, 2 ** -23],
-   [Mus_bint, 2 ** -23],
-   [Mus_lint, 2 ** -23],
-   [Mus_b24int, 2 ** -23],
-   [Mus_l24int, 2 ** -23],
+  [[Mus_bshort,  2 ** -15],
+   [Mus_lshort,  2 ** -15],
+   [Mus_mulaw,   0.02],
+   [Mus_alaw,    0.02],
+   [Mus_byte,    2 ** -7],
+   [Mus_lfloat,  2 ** -23],
+   [Mus_bint,    2 ** -23],
+   [Mus_lint,    2 ** -23],
+   [Mus_b24int,  2 ** -23],
+   [Mus_l24int,  2 ** -23],
    [Mus_ubshort, 2 ** -15],
    [Mus_ulshort, 2 ** -15],
-   [Mus_ubyte, 2 ** -7],
-   [Mus_bfloat, 2 ** -23],
+   [Mus_ubyte,   2 ** -7],
+   [Mus_bfloat,  2 ** -23],
    [Mus_bdouble, 2 ** -23],
    [Mus_ldouble, 2 ** -23]].each do |type, allowed_diff|
     ind = new_sound("test.snd", Mus_next, Mus_lfloat, 22050, 1)
@@ -2507,33 +2556,6 @@ def test_04_05
     end
     close_sound(ind)
     delete_file("test1.snd")
-  end
-  [Mus_bshort,
-   Mus_lshort,
-   Mus_mulaw,
-   Mus_alaw,
-   Mus_byte,
-   Mus_lfloat,
-   Mus_bint,
-   Mus_lint,
-   Mus_b24int,
-   Mus_l24int,
-   Mus_ubshort,
-   Mus_ulshort,
-   Mus_ubyte,
-   Mus_bfloat,
-   Mus_bdouble,
-   Mus_ldouble].each do |type|
-    ind = find_sound(with_sound(:data_format, type) do
-                       fm_violin_rb(0, 0.1, 440, 0.1)
-                       fm_violin_rb(10, 0.1, 440, 0.1)
-                       fm_violin_rb(100, 0.1, 440, 0.1)
-                       fm_violin_rb(1000, 0.1, 440, 0.1)
-                     end.output)
-    if ffneq(res = maxamp(ind), 0.1)
-      snd_display("max: %s, format: %s?", res, mus_data_format2string(type))
-    end
-    close_sound(ind)
   end
 end
 
@@ -3602,7 +3624,7 @@ end
 # end
 
 def test_04_11
-  if File.exist?($bigger_snd)
+  if File.exists?($bigger_snd)
     if (res = mus_sound_samples($bigger_snd)) != 3175160310
       snd_display("bigger samples: %s?", res)
     end
@@ -4376,28 +4398,33 @@ def test_edpos_1(func_sym, ind1, &body)
   v0 = channel2vct(12000, 10, ind1, 0)
   body.call(ind1, 0)
   v1 = channel2vct(12000, 10, ind1, 0)
-  snd_display("%s (0) no change!\n# %s\n# %s", func_sym, v0, v1) if vequal(v0, v1)
+  if vequal(v0, v1)
+    snd_display(snd_seq_format_eq(v1, v0, "%s (0) no change!", func_sym))
+  end
   body.call(ind1, 0)
   v2 = channel2vct(12000, 10, ind1, 0)
-  snd_display("%s (1)\n# %s\n# %s", func_sym, v1, v2) unless vequal(v1, v2)
+  unless vequal(v1, v2)
+    snd_display(snd_seq_format_neq(v2, v1, "%s (1)", func_sym))
+  end
   body.call(ind1, lambda do |snd, chn| 0 end)
   v2 = channel2vct(12000, 10, ind1, 0)
-  snd_display("%s (2)\n# %s\n# %s", func_sym, v1, v2) unless vequal(v1, v2)
+  unless vequal(v1, v2)
+    snd_display(snd_seq_format_neq(v2, v1, "%s (2)", func_sym))
+  end
   revert_sound(ind1)
 end
 
-def test_orig(func0, func1, func_name, ind1)
+def test_orig(func0, func1, name, ind1)
   v0 = channel2vct(12000, 10, ind1, 0)
   func0.call(ind1)
   v1 = channel2vct(12000, 10, ind1, 0)
   if vfequal(v0, v1)
-    snd_display("%s (orig: 0) no change!\n# %s\n# %s", func_name, v0, v1)
+    snd_display(snd_seq_format_eq(v1, v0, "%s (orig 0) no change!", name))
   end
   func1.call(ind1)
   v2 = channel2vct(12000, 10, ind1, 0)
-  # INFO: vfequal --> vffequal [ms]
-  unless vffequal(v0, v2)
-    snd_display("%s (orig: 1)\n# %s\n# %s", func_name, v0, v2)
+  unless vfequal(v0, v2)
+    snd_display(snd_seq_format_neq(v2, v0, "%s (orig 1)", name))
   end
   revert_sound(ind1)
 end
@@ -6577,7 +6604,7 @@ def test_05_10
   if (res = snd_completion(" open-so")) != " open-sound"
     snd_display("completion (1): %s", res)
   end
-  # INFO:
+  # FIXME
   # Zoom_focus_right (constant) replaced by zoom_focus_style [ms]
   if (res = snd_completion(" zoom_focus_s")) != " zoom_focus_style"
     snd_display("completion (2): %s", res)
@@ -6767,7 +6794,7 @@ def test_05_10
       delete_file(psf)
       set_graph_style(i)
       graph2ps
-      unless File.exist?(psf)
+      unless File.exists?(psf)
         snd_display("graph2ps: %s?", psf)
       end
       delete_file(psf)
@@ -6838,11 +6865,15 @@ def test_05_10
   if (res = short_file_name(ind)) != "oboe.snd"
     snd_display("oboe: short name: %s?", res)
   end
-  if (res = count_matches(lambda do |y| y > 0.125 end)) != 1314
-    snd_display("oboe: count_matches %s?", res)
+  req = 1314
+  res = count_matches(lambda do |y| y > 0.125 end)
+  if res != req
+    snd_display("oboe: count_matches res %s != req %s?", res, req)
   end
-  if (res = count_matches(lambda do |y| a = [0.1, 0.2]; (y > a.car); end)) != 2852
-    snd_display("oboe: unopt count_matches %s?", res)
+  req = 2852
+  res = count_matches(lambda do |y| y > 0.1 end)
+  if res != req
+    snd_display(snd_int_format_neq(res, req, "oboe: unopt count_matches"))
   end
   spot = find_channel(lambda do |y| y > 0.13 end)
   if spot.kind_of?(FalseClass) or spot != 8862
@@ -6884,7 +6915,7 @@ def test_05_10
     snd_display("selection_maxamp_position (1): %s %s?", res1, res2)
   end
   save_region(r0, "temp.dat")
-  if File.exist?("temp.dat")
+  if File.exists?("temp.dat")
     File.unlink("temp.dat")
   else
     snd_display("save_region file disappeared?")
@@ -7444,7 +7475,7 @@ def test_05_12
   end
   set_amp_control(2.0, obind)
   if (res = Snd.catch do apply_controls(obind) end).first == :no_such_sound
-    snd_display("apply_controls: can\'t find oboe.snd? %s", res.inspect)
+    snd_display("apply_controls: cannot find oboe.snd? %s", res.inspect)
   end
   newamp = maxamp(obind)
   snd_display("apply amp: %s -> %s?", vol, newamp) if (2.0 * vol - newamp).abs > 0.05
@@ -7476,7 +7507,9 @@ def test_05_12
   if fneq(secamp, 0.989)
     snd_display("apply contrast: %s?", secamp)
   end
-  snd_display("apply contrast length: %s -> %s?", newdur, secdur) if secdur != newdur
+  if secdur != newdur
+    snd_display("apply contrast length: %s -> %s?", newdur, secdur)
+  end
   undo_edit(3, obind)
   set_reverb_control?(true, obind)
   set_reverb_control_scale_bounds([0.0, 1.0], obind)
@@ -7491,8 +7524,7 @@ def test_05_12
   apply_controls(obind)
   revamp = maxamp(obind)
   revdur = frames(obind)
-  # INFO: original ffneq(revamp, 0.214) [ms]
-  if fffneq(revamp, 0.214)
+  if ffneq(revamp, 0.214)
     snd_display("apply reverb scale: %s?", revamp)
   end
   unless revdur - ((reverb_control_decay * 22050.0).round + 50828) < 256
@@ -7518,18 +7550,22 @@ def test_05_12
   undo_edit(1, obind)
   set_filter_control?(true, obind)
   set_filter_control_order(40, obind)
-  set_filter_control_envelope([0, 0, 1, 0.5, 2, 0], obind)
+  set_filter_control_envelope([0.0, 0.0, 1.0, 0.5, 2.0, 0.0], obind)
   apply_controls(obind)
   fltamp = maxamp(obind)
   fltdur = frames(obind)
-  # INFO: original: fltamp - 0.02 [ms]
-  if (fltamp - 0.05).abs > 0.005
-    snd_display("apply filter scale: %s?", fltamp)
+  # FIXME
+  # from command line: => 0.054348257295914 (snd-s7|ruby|forth)
+  #     from listener: => less than 0.025
+  if (fltamp - 0.02).abs > 0.005
+    snd_display(snd_float_format_neq(fltamp, 0.025, "apply filter scale"))
   end
+  req = 40 + 50828 + 256
   if fltdur - (40 + 50828) > 256
-    snd_display("apply filter length: %s?", fltdur)
+    snd_display(snd_int_format_neq(fltdur, req, "apply filter length"))
   end
   undo_edit(1, obind)
+  # 
   revert_sound(obind)
   make_selection(1000, 1000)
   scale_selection_to(0.1)
@@ -7915,99 +7951,13 @@ def test_05_14
   close_sound(ind)
 end
 
-def xtest_05_15(obind)
-  axinfo = axis_info(obind, 0, Time_graph)
-  losamp, hisamp, x0, y0, x1, y1 = axinfo[0, 6]
-  xpos = x0 + 0.5 * (x1 - x0.to_f)
-  ypos = y0 + 0.75 * (y1 - y0.to_f)
-  cp_x = lambda do |x|
-    (axinfo[10] + ((x - x0.to_f) * ((axinfo[12] - axinfo[10].to_f) / (x1 - x0.to_f)))).floor
-  end
-  cp_y = lambda do |y|
-    (axinfo[13] + ((y1.to_f - y) * ((axinfo[11] - axinfo[13].to_f) / (y1 - y0.to_f)))).floor
-  end
-  select_channel(0)
-  set_cursor(100, obind)
-  xy = cursor_position(obind)
-  if fneq(res0 = position2x(xy[0]), res1 = cursor(obind).to_f / srate(obind))
-    snd_display("cursor_position: %s %s %s?", xy[0], res0, res1)
-  end
-  if fneq(res = position2x(x2position(xpos)), xpos)
-    snd_display("x<->position: %s %s?", res, xpos)
-  end
-  if ((res = position2y(y2position(ypos))) - ypos).abs > 0.5
-    snd_display("y<->position: %s %s?", res, ypos)
-  end
-  if losamp != (res = left_sample(obind, 0))
-    snd_display("axis-info[0 losamp]: %s %s?", losamp, res)
-  end
-  if hisamp != (res = right_sample(obind, 0))
-    snd_display("axis-info[1 hisamp]: %s %s?", hisamp, res)
-  end
-  snd_display("axis_info[6 xmin]: %s?", axinfo[6]) if fneq(axinfo[6], 0.0)
-  snd_display("axis_info[7 ymin]: %s?", axinfo[7]) if fneq(axinfo[7], -1.0)
-  snd_display("axis_info[9 ymax]: %s?", axinfo[9]) if fneq(axinfo[9], 1.0)
-  res = our_x2position(obind, x0)
-  snd_display("x0->position: %s?", res) if (res[0] - res[1]).abs > 1
-  res = our_x2position(obind, x1)
-  snd_display("x1->position: %s?", res) if (res[0] - res[1]).abs > 1
-  res = our_x2position(obind, 0.5 * (x0 + x1))
-  snd_display("xmid->position: %s?", res) if (res[0] - res[1]).abs > 1
-  if $test_loop_index.zero?
-    if ((res = x2position(xpos)) - cp_x.call(xpos)).abs > 1
-      snd_display("cp_x 0.5: %s %s?", res, cp_x.call(xpos))
-    end
-    if ((res = y2position(ypos)) - cp_y.call(ypos)).abs > 1
-      snd_display("cp_y 0.75: %s %s?", res, cp_y.call(ypos))
-    end
-    10.times do |i|
-      xxpos = x0 + random(x1 - x0)
-      yypos = y0 + random(y1 - y0)
-      if ((res1 = x2position(xxpos)) - (res2 = cp_x.call(xxpos))).abs > 1
-        snd_display("cp_x[%s] %s: %s %s?", i, xxpos, res1, res2)
-      end
-      if ((res1 = y2position(yypos)) - (res2 = cp_y.call(yypos))).abs > 1
-        snd_display("cp_y[%s] %s: %s %s?", i, yypos, res1, res2)
-      end
-      if fneq(res = position2x(cp_x.call(xxpos)), xxpos)
-        snd_display("x2position cp_x[%s]: %s %s?", i, xxpos, res)
-      end
-      # INFO: position2y(cp_y.call(yypos)) returns values between -0.5, 0.0, 0.5, 1.0
-      if fneq_err(res = position2y(cp_y.call(yypos)), yypos, 0.5)
-        snd_display("y2position cp_y[%s]: %s %s?", i, yypos, res)
-      end
-    end
-  end
-  old_samp = left_sample(obind, 0)
-  set_left_sample(1234, obind, 0)
-  if (res = axis_info(obind, 0)[0]) != 1234
-    snd_display("axis_info[0 losamp at 1234]: %s?", res)
-  end
-  set_left_sample(old_samp, obind, 0)
-  axinfo = axis_info(obind, 0)
-  x0 = axinfo[2]
-  x1 = axinfo[4]
-  res = our_x2position(obind, x0)
-  snd_display("x0a->position: %s?", res) if (res[0] - res[1]).abs > 1
-  res = our_x2position(obind, x1)
-  snd_display("x1a->position: %s?", res) if (res[0] - res[1]).abs > 1
-  res = our_x2position(obind, 0.5 * (x0 + x1))
-  snd_display("xmida->position: %s?", res) if (res[0] - res[1]).abs > 1
-  set_y_bounds([-2.0, 3.0], obind, 0)
-  if fneq(res = axis_info(obind, 0)[7], -2.0)
-    snd_display("axis_info[7 ymin -2.0]: %s?", res)
-  end
-  if fneq(res = axis_info(obind, 0)[9], 3.0)
-    snd_display("axis_info[9 ymax 2.0]: %s?", res)
-  end
-end
-
 def test_05_15
   obind = open_sound("4.aiff")
   amps = maxamp(obind, true)
   times = maxamp_position(obind, true)
-  if times != [810071, 810071, 810071, 810071]
-    snd_display("4.aiff times: %s?", times)
+  req = [810071, 810071, 810071, 810071]
+  if times != req
+    snd_display(snd_seq_format_neq(times, req, "4.aiff times"))
   end
   set_window_width(600) if window_width < 600
   set_window_height(600) if window_height < 600
@@ -8017,14 +7967,14 @@ def test_05_15
   set_amp_control(0.1, obind)
   select_channel(2)
   if (res = Snd.catch do apply_controls(obind, 1) end).first == :no_such_sound
-    snd_display("apply_controls can\'t find 4.aiff: %s?", res.inspect)
+    snd_display("apply_controls cannot find 4.aiff: %s?", res.inspect)
   end
   newamps = maxamp(obind, true)
   if fneq(amps[0], newamps[0]) or
       fneq(amps[1], newamps[1]) or
       (0.1 * amps[2] - newamps[2]).abs > 0.05 or
       fneq(amps[3], newamps[3])
-    snd_display("apply amps:\n# %s\n# %s", amps, newamps)
+    snd_display(snd_seq_format_neq(newamps, amps, "apply amps"))
   end
   undo_edit(1, obind, 2)
   set_amp_control(0.1, obind)
@@ -8035,79 +7985,215 @@ def test_05_15
       (0.1 * amps[1] - newamps[1]).abs > 0.05 or
       fneq(amps[2], newamps[2]) or
       fneq(amps[3], newamps[3])
-    snd_display("apply selection amp:\n# %s\n# %s", amps, newamps)
+    snd_display(snd_seq_format_neq(newamps, amps, "apply selection amps"))
   end
-  xtest_05_15(obind) if $with_test_gui
+  # 
+  if $with_test_gui
+    axinfo = axis_info(obind, 0, Time_graph)
+    losamp, hisamp, x0, y0, x1, y1 = axinfo[0, 6]
+    xpos = x0 + 0.5 * (x1 - x0.to_f)
+    ypos = y0 + 0.75 * (y1 - y0.to_f)
+    select_channel(0)
+    set_cursor(100, obind)
+    xy = cursor_position(obind)
+    if fneq(res0 = position2x(xy[0]), res1 = cursor(obind).to_f / srate(obind))
+      snd_display(snd_float_format_neq(res0, res1, "cursor_position %s", xy[0]))
+    end
+    if fneq(res = position2x(x2position(xpos)), xpos)
+      snd_display(snd_float_format_neq(res, xpos, "x<->position"))
+    end
+    if ((res = position2y(y2position(ypos))) - ypos).abs > 0.5
+      snd_display(snd_float_format_neq(res, ypos, "y<->position"))
+    end
+    if losamp != (res = left_sample(obind, 0))
+      snd_display(snd_float_format_neq(res, losamp, "axis_info[0 losamp]"))
+    end
+    if hisamp != (res = right_sample(obind, 0))
+      snd_display(snd_float_format_neq(res, hisamp, "axis_info[1 hisamp]"))
+    end
+    req = 0.0
+    res = axinfo[6]
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "axis_info[6 xmin]"))
+    end
+    req = -1.0
+    res = axinfo[7]
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "axis_info[7 ymin]"))
+    end
+    req = 1.0
+    res = axinfo[9]
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "axis_info[9 ymax]"))
+    end
+    res = our_x2position(obind, x0)
+    if (res[0] - res[1]).abs > 1
+      snd_display(snd_float_format_neq(res[0], res[1], "x0->position"))
+    end
+    res = our_x2position(obind, x1)
+    if (res[0] - res[1]).abs > 1
+      snd_display(snd_float_format_neq(res[0], res[1], "x1->position"))
+    end
+    res = our_x2position(obind, 0.5 * (x0 + x1))
+    if (res[0] - res[1]).abs > 1
+      snd_display(snd_float_format_neq(res[0], res[1], "xmid->position"))
+    end
+    if $test_loop_index.zero?
+      cp_x = lambda do |x|
+        (axinfo[10] + ((x - x0.to_f) * ((axinfo[12] - axinfo[10].to_f) / (x1 - x0.to_f)))).floor
+      end
+      cp_y = lambda do |y|
+        (axinfo[13] + ((y1.to_f - y) * ((axinfo[11] - axinfo[13].to_f) / (y1 - y0.to_f)))).floor
+      end
+      if ((res1 = x2position(xpos)) - (res2 = cp_x.call(xpos))).abs > 1
+        snd_display(snd_float_format_neq(res2, res1, "cp_x 0.5"))
+      end
+      if ((res1 = y2position(ypos)) - (res2 = cp_y.call(ypos))).abs > 1
+        snd_display(snd_float_format_neq(res2, res1, "cp_y 0.75"))
+      end
+      10.times do |i|
+        xxpos = x0 + random(x1 - x0)
+        yypos = y0 + random(y1 - y0)
+        if ((res1 = x2position(xxpos)) - (res2 = cp_x.call(xxpos))).abs > 1
+          snd_display(snd_float_format_neq(res2, res1, "cp_x[%d] %1.3f", i, xxpos))
+        end
+        if ((res1 = y2position(yypos)) - (res2 = cp_y.call(yypos))).abs > 1
+          snd_display(snd_float_format_neq(res2, res1, "cp_y[%d] %1.3f", i, yypos))
+        end
+        if fneq(res = position2x(cp_x.call(xxpos)), xxpos)
+          snd_display(snd_float_format_neq(res, xxpos, "x2position cp_x[%d]", i))
+        end
+        if fffneq(res = position2y(cp_y.call(yypos)), yypos)
+          snd_display(snd_float_format_neq(res, yypos, "y2position cp_y[%d]", i))
+        end
+      end
+    end
+    old_samp = left_sample(obind, 0)
+    set_left_sample(1234, obind, 0)
+    req = 1234
+    res = axis_info(obind, 0)[0]
+    if res != req
+      snd_display(snd_int_format_neq(res, req, "axis_info[0 losamp at %d]", req))
+    end
+    set_left_sample(old_samp, obind, 0)
+    axinfo = axis_info(obind, 0)
+    x0 = axinfo[2]
+    x1 = axinfo[4]
+    res = our_x2position(obind, x0)
+    if (res[0] - res[1]).abs > 1
+      snd_display("x0a->position: %s?", res)
+    end
+    res = our_x2position(obind, x1)
+    if (res[0] - res[1]).abs > 1
+      snd_display("x1a->position: %s?", res)
+    end
+    res = our_x2position(obind, 0.5 * (x0 + x1))
+    if (res[0] - res[1]).abs > 1
+      snd_display("xmida->position: %s?", res)
+    end
+    set_y_bounds([-2.0, 3.0], obind, 0)
+    req = -2.0
+    res = axis_info(obind, 0)[7]
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "axis_info[7 ymin %1.3f]", req))
+    end
+    req = 3.0
+    res = axis_info(obind, 0)[9]
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "axis_info[9 ymax %1.3f]", req))
+    end
+  end
+  # 
   close_sound(obind)
 end
 
 def test_05_16
   ind1 = open_sound("oboe.snd")
-  test_orig(lambda { |snd| src_sound(2.0, 1.0, ind1) },
-            lambda { |snd| src_sound(0.5, 1.0, ind1) },
-            :src_sound, ind1)
+  test_orig(lambda { |snd| src_sound(2.0, 1.0, snd) },
+            lambda { |snd| src_sound(0.5, 1.0, snd) },
+            "src_sound(2.0, 1.0, snd)",
+            ind1)
   test_orig(lambda { |snd| src_channel(2.0) },
             lambda { |snd| src_channel(0.5) },
-            :src_channel, ind1)
-  test_orig(lambda { |snd| scale_by(2.0, ind1) },
-            lambda { |snd| scale_by(0.5, ind1) },
-            :scale_by, ind1)
+            "src_channel(2.5)",
+            ind1)
+  test_orig(lambda { |snd| scale_by(2.0, snd) },
+            lambda { |snd| scale_by(0.5, snd) },
+            "scale_by(2.0, snd)",
+            ind1)
   test_orig(lambda { |snd| scale_channel(2.0) },
             lambda { |snd| scale_channel(0.5) },
-            :scale_channel, ind1)
-  test_orig(lambda { |snd| reverse_sound(ind1) },
-            lambda { |snd| reverse_sound(ind1) },
-            :reverse_sound, ind1)
+            "scale_channel(2.0)",
+            ind1)
+  test_orig(lambda { |snd| reverse_sound(snd) },
+            lambda { |snd| reverse_sound(snd) },
+            "reverse_sound(snd)",
+            ind1)
   test_orig(lambda { |snd| reverse_channel() },
             lambda { |snd| reverse_channel() },
-            :reverse_channel, ind1)
+            "reverse_channel()",
+            ind1)
   test_orig(lambda { |snd| env_sound([0, 1.0, 1, 2.0]) },
             lambda { |snd| env_sound([0, 1.0, 1, 0.5]) },
-            :env_sound, ind1)
+            "env_sound([0, 1.0, 1, 2.0])",
+            ind1)
   test_orig(lambda { |snd| env_sound([0, 1.0, 1, 2.0, 2, 1.0]) },
             lambda { |snd| env_sound([0, 1.0, 1, 0.5, 2, 1.0]) },
-            :env_sound, ind1)
-  test_orig(lambda { |snd| env_channel(make_env(:envelope, [0, 1.0, 1, 2.0], :length, frames)) },
-            lambda { |snd| env_channel(make_env(:envelope, [0, 1.0, 1, 2.0], :length, frames)) },
-            :env_channel, ind1)
+            "env_sound([0, 1.0, 1, 2.0, 2, 1.0])",
+            ind1)
+  test_orig(lambda { |snd| env_channel(make_env([0, 1.0, 1, 2.0], :length, frames(snd))) },
+            lambda { |snd| env_channel(make_env([[0, 1.0], [1, 0.5]], :length, frames(snd))) },
+            "env_channel(make_env([0, 1.0, 1, 2.0]))",
+            ind1)
   test_orig(lambda { |snd| env_channel([0, 1.0, 1, 2.0]) },
             lambda { |snd| env_channel([0, 1.0, 1, 0.5]) },
-            :env_channel, ind1)
+            "env_channel([0, 1.0, 1, 2.0])",
+            ind1)
   test_orig(lambda { |snd|
-              env_channel(make_env(:envelope, [0, 2, 1, 2, 2, 0.5, 3, 0.5], :base, 0, :length, frames))
+              env_channel(make_env([0, 2, 1, 2, 2, 0.5, 3, 0.5], :base, 0, :length, frames(snd)))
             },
             lambda { |snd|
-              env_channel(make_env(:envelope, [0, 0.5, 1, 0.5, 2, 2, 3, 2], :base, 0, :length, frames))
+              env_channel(make_env([0, 0.5, 1, 0.5, 2, 2, 3, 2], :base, 0, :length, frames(snd)))
             },
-            :env_channel, ind1)
+            "env_channel(make_env([0, 2, 1, 2, 2, 0.5, 3, 0.5]))",
+            ind1)
   test_orig(lambda { |snd| map_channel(lambda { |y| y * 2.0 }) },
             lambda { |snd| map_channel(lambda { |y| y * 0.5 }) },
-            :map_channel, ind1)
+            "map_channel(lambda { |y| y * 2.0 })",
+            ind1)
   test_orig(lambda { |snd| map_channel(lambda { |y| y * 2.0 }, 1234) },
             lambda { |snd| map_channel(lambda { |y| y * 0.5 }, 1234) },
-            :map_channel, ind1)
+            "map_channel(lambda { |y| y * 2.0 }, 1234)",
+            ind1)
   test_orig(lambda { |snd| map_channel(lambda { |y| y * 2.0 }, 12005, 10) },
             lambda { |snd| map_channel(lambda { |y| y * 0.5 }, 12005, 10) },
-            :map_channel, ind1)
+            "map_channel(lambda { |y| y * 2.0 }, 12005, 10)",
+            ind1)
   outp = false
-  test_orig(lambda { |snd| map_channel(lambda { |y| [y * 2.0, y * 2.0].to_vct}) },
-            lambda { |snd| map_channel(lambda { |y| outp = outp ? false : y * 0.5}) },
-            :map_channel, ind1)
+  test_orig(lambda { |snd| map_channel(lambda { |y| vct(y * 2.0, y * 2.0) }) },
+            lambda { |snd| map_channel(lambda { |y| outp = (outp ? false : y * 0.5) }) },
+            "map_channel(lambda { |y| vct(y * 2.0, y * 2.0) })",
+            ind1)
   test_orig(lambda { |snd| map_chan(lambda { |y| y * 2.0 }) },
             lambda { |snd| map_chan(lambda { |y| y * 0.5 }) },
-            :map_chan, ind1)
-  test_orig(lambda { |snd| pad_channel(1000, 2000, ind1) },
-            lambda { |snd| delete_samples(1000, 2000, ind1) },
-            :pad_channel, ind1)
+            "map_chan(lambda { |y| y * 2.0 })",
+            ind1)
+  test_orig(lambda { |snd| pad_channel(1000, 2000, snd) },
+            lambda { |snd| delete_samples(1000, 2000, snd) },
+            "pad_channel(1000, 2000, snd)",
+            ind1)
   test_orig(lambda { |snd| clm_channel(make_one_zero(:a0, 2.0, :a1, 0.0)) },
             lambda { |snd| clm_channel(make_one_zero(:a0, 0.5, :a1, 0.0)) },
-            :clm_channel, ind1)
+            "clm_channel(make_one_zero)",
+            ind1)
   test_orig(lambda { |snd| clm_channel(make_one_pole(:a0, 2.0, :b1, 0.0)) },
             lambda { |snd| clm_channel(make_one_pole(:a0, 0.5, :b1, 0.0)) },
-            :clm_channel, ind1)
-  test_orig(lambda { |snd| filter_sound(make_one_zero(:a0, 2.0, :a1, 0.0), 2, ind1, 0) },
-            lambda { |snd| filter_sound(make_one_zero(:a0, 0.5, :a1, 0.0), 2, ind1, 0) },
-            :filter_sound, ind1)
+            "clm_channel(make_one_pole)",
+            ind1)
+  test_orig(lambda { |snd| filter_sound(make_one_zero(:a0, 2.0, :a1, 0.0), 2, snd, 0) },
+            lambda { |snd| filter_sound(make_one_zero(:a0, 0.5, :a1, 0.0), 2, snd, 0) },
+            "filter_sound(make_one_zero)",
+            ind1)
   if (res = Snd.catch do src_sound([0, 0, 1, 1]) end).first != :out_of_range
     snd_display("src_sound env at 0: %s", res.inspect)
   end
@@ -9056,7 +9142,7 @@ def test_05_25
     rid20_data = region2vct_1(rid2, 0, l1)
     rid21_data = region2vct_1(rid2, 1, l2)
     if (res = region_chans(rid2)) != 2
-      snd_display("region_chans of sync\'d sound: %s?", res)
+      snd_display("region_chans of synced sound: %s?", res)
     end
     swap_channels(ind, 0, ind, 1)
     unless vequal(res = region2vct_1(rid2, 0, l1), rid20_data)
@@ -9247,8 +9333,8 @@ def test_05_25
   set_edit_position(edpos, ind, 0)
   close_sound(ind)
   #
-  reader = nil
-  last_proc = nil
+  reader = false
+  last_proc = false
   scan_again = lambda do
     result = false
     until sampler_at_end?(reader)
@@ -9271,17 +9357,22 @@ def test_05_25
   if fneq(res = sample(1000), sample())
     snd_display("sample no args: %s %s", sample(), res)
   end
-  if res = my_scan_chan.call(lambda do |y| y > 0.1 end) != [true, 4477] # INFO: original 4423 [ms]
-    snd_display("my_scan_chan: %s?", res)
+  req = [true, 4423]
+  res = my_scan_chan.call(lambda do |y| y > 0.1 end)
+  if res != req
+    snd_display("my_scan_chan: res %s != req %s?", res, req)
   end
-  if (res = scan_again.call) != [true, 4516] # INFO: original 4463 [ms]
-    snd_display("scan_again: %s?", res)
+  req = [true, 4463]
+  res = scan_again.call
+  if res != req
+    snd_display("scan_again: res %s != req %s?", res, req)
   end
   set_cursor(1000)
-  # INFO: set_sample(0.5) isn't possible [ms]
-  set_sample(1000, 0.5)
-  if fneq(sample(1000), 0.5)
-    snd_display("set sample no arg: %s %s?", sample(1000), sample(0))
+  # FIXME
+  # set_sample(0.5) isn't possible [ms]
+  set_sample(:undefined, 0.5)
+  if fneq(res = sample(1000), 0.5)
+    snd_display("set sample no arg: %s %s?", res, sample(0))
   end
   close_sound(ind)
 end
@@ -9723,8 +9814,10 @@ def test_05_27
     snd_display("channel_clipped? oboe.snd: %s?", res)
   end
   scale_to(1.5, ind0, 0)
-  if (res = channel_clipped?(ind0, 0)) != 4517 # INFO: original 4503 [ms]
-    snd_display("channel_clipped? after scale: %s?", res)
+  req = 4503
+  res = channel_clipped?(ind0, 0)
+  if res != req
+    snd_display("channel_clipped? after scale: res %s != req %s?", res, req)
   end
   revert_sound(ind0)
   4.times do ramp_channel(0.0, 1.0, 0, false, ind1, 0) end
@@ -9781,8 +9874,8 @@ def test_06
   v0 = make_vct(10)
   v1 = Vct.new(10)
   vlst = make_vct(3)
-  snd_display("v0 isn\'t a vct?") unless vct?(v0)
-  snd_display("v0 isn\'t kind_of? Vct?") unless v0.kind_of?(Vct)
+  snd_display("v0 is not a vct?") unless vct?(v0)
+  snd_display("v0 is not kind_of? Vct?") unless v0.kind_of?(Vct)
   snd_display("v0 is 10!?") if v0 == 10
   snd_display("10 is a vct?") if vct?(10)
   snd_display("v0 length = %s?", v0.length) if v0.length != 10
@@ -9947,10 +10040,10 @@ def test_06
   vct_multiply!(v2, v1)
   v2.each_with_index do |x, i| snd_display("multiply v2[%s] = %s?", i, x) if fneq(x, 2.5) end
   # 
-  snd_display("v2\'s peak is %s?", vct_peak(v2)) if fneq(vct_peak(v2), 2.5)
+  snd_display("peak of v2 is %s?", vct_peak(v2)) if fneq(vct_peak(v2), 2.5)
   snd_display("v2.peak is %s?", vct_peak(v2)) if fneq(v2.peak, 2.5)
   v2[5] = 123.0
-  snd_display("v2\'s set peak is %s?", vct_peak(v2)) if fneq(vct_peak(v2), 123.0)
+  snd_display("set peak of v2 is %s?", vct_peak(v2)) if fneq(vct_peak(v2), 123.0)
   snd_display("v2.peak is %s?", vct_peak(v2)) if fneq(v2.peak, 123.0)
   vn = Vct.new(32) do |i| i end
   vb = make_vct(64)
@@ -10372,7 +10465,7 @@ def test_07_01
           (fneq_err(r, r1, err) or
            fneq_err(g, g1, err) or
            fneq_err(b, b1, err))
-        snd_display("bone %.3f (%.3f): %s %s",
+        snd_display("bone %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10386,7 +10479,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("copper %.3f (%.3f): %s %s",
+        snd_display("copper %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10400,7 +10493,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("winter %.3f (%.3f): %s %s",
+        snd_display("winter %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10414,7 +10507,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("autumn %.3f (%.3f): %s %s",
+        snd_display("autumn %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10428,7 +10521,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("cool %.3f (%.3f): %s %s",
+        snd_display("cool %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10442,7 +10535,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("hot %.3f (%.3f): %s %s",
+        snd_display("hot %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10460,7 +10553,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("jet %.3f (%.3f): %s %s",
+        snd_display("jet %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10475,7 +10568,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("pink %.3f (%.3f): %s %s",
+        snd_display("pink %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10489,7 +10582,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("spring %.3f (%.3f): %s %s",
+        snd_display("spring %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10503,7 +10596,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("gray %.3f (%.3f): %s %s",
+        snd_display("gray %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10517,7 +10610,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("black_and_white %.3f (%.3f): %s %s",
+        snd_display("black_and_white %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10531,7 +10624,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("summer %.3f (%.3f): %s %s",
+        snd_display("summer %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10547,7 +10640,7 @@ def test_07_01
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("rainbow %.3f (%.3f): %s %s",
+        snd_display("rainbow %1.3f (%1.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -10690,7 +10783,7 @@ def test_07_02(old_colormap_size)
       if n > 2 and
           x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
-        snd_display("copper size reset %s: %.3f (%.3f): %s %s",
+        snd_display("copper size reset %s: %1.3f (%1.3f): %s %s",
                     n, x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
       end
@@ -11085,8 +11178,8 @@ def analog_filter_tests
   f1 = make_inverse_chebyshev_lowpass(8, 0.1)
   vals = sweep2bins(f1, 10)
   if ffneq(vals[0], 0.51) then snd_display("inverse_chebyshev lp 8 max: %s?", vals[0]) end
-  # INFO: vequal --> vffequal [ms]
-  unless vffequal(vals[1], vct(0.501, 0.496, 0.001, 0, 0.001, 0, 0, 0, 0, 0.001))
+  if (not vequal(vals[1], vct(0.501, 0.496, 0.001, 0, 0.001, 0, 0, 0, 0, 0.001))) and
+      (not vequal(vals[1], vct(0.500, 0.498, 0.001, 0, 0.001, 0, 0, 0, 0, 0.001)))
     snd_display("inverse_chebyshev lp 8 0.1 spect: %s?", vals[1])
   end
   f1 = make_inverse_chebyshev_lowpass(12, 0.25)
@@ -11108,13 +11201,7 @@ def analog_filter_tests
   unless vequal(vals[1], vct(0.501, 0.501, 0.501, 0.501, 0.501, 0.500, 0.345, 0.007, 0, 0))
     snd_display("inverse_chebyshev lp 10 0.4 120 spect: %s?", vals[1])
   end
-  f1 = make_inverse_chebyshev_lowpass(10, 0.4, 10)
-  vals = sweep2bins(f1, 10)
-  if ffneq(vals[0], 0.51) then snd_display("inverse_chebyshev lp 10 0.4 max: %s?", vals[0]) end
-  # INFO: vequal --> vfffequal [ms]
-  unless vfffequal(vals[1], vct(0.5, 0.500, 0.500, 0.500, 0.500, 0.500, 0.500, 0.500, 0.372, 0.302))
-    snd_display("inverse_chebyshev lp 10 0.4 10 spect: %s?", vals[1])
-  end
+  # 
   2.step(10, 2) do |i|
     0.1.step(0.35, 0.1) do |j|
       f1 = make_inverse_chebyshev_lowpass(i, j)
@@ -11149,14 +11236,7 @@ def analog_filter_tests
   unless vequal(vals[1], vct(0, 0, 0.007, 0.328, 0.502, 0.502, 0.502, 0.501, 0.501, 0.501))
     snd_display("inverse_chebyshev hp 10 0.1 120 spect: %s?", vals[1])
   end
-  f1 = make_inverse_chebyshev_highpass(10, 0.1, 10)
-  vals = sweep2bins(f1, 10)
-  # INFO: ffneq --> fffneq [ms]
-  if fffneq(vals[0], 0.55) then snd_display("inverse_chebyshev hp 10 0.1 10 max: %s?", vals[0]) end
-  # INFO: vequal --> vfffequal [ms]
-  unless vfffequal(vals[1], vct(0.366, 0.312, 0.558, 0.504, 0.502, 0.501, 0.501, 0.500, 0.500, 0.5))
-    snd_display("inverse_chebyshev hp 10 0.1 10 spect: %s?", vals[1])
-  end
+  # 
   2.step(10, 2) do |i|
     0.1.step(0.35, 0.1) do |j|
       f1 = make_inverse_chebyshev_highpass(i, j)
@@ -11394,8 +11474,8 @@ def analog_filter_tests
     f1 = make_elliptic_bandstop(8, 0.1, 0.3, 0.1, 120)
     vals = sweep2bins(f1, 10)
     if fffneq(vals[0], 0.5) then snd_display("elliptic bs 8 max: %s?", vals[0]) end
-    # INFO: vequal --> vfequal [ms]
-    unless vfequal(vals[1], vct(0.500, 0.499, 0.476, 0, 0, 0.495, 0.526, 0.505, 0.501, 0.501))
+    if (not vequal(vals[1], vct(0.500, 0.499, 0.476, 0, 0, 0.495, 0.526, 0.505, 0.501, 0.501))) and
+        (not vequal(vals[1], vct(0.500, 0.499, 0.475, 0, 0, 0.495, 0.526, 0.505, 0.501, 0.501)))
       snd_display("elliptic bs 8 0.1 0.3 0.1 120 spect: %s?", vals[1])
     end
   end
@@ -11593,7 +11673,8 @@ def poly_roots_tests
   unless vequal(res = poly_roots(vct(2, -1, -2, 1)), [2.0, -1.0, 1.0])
     snd_display("poly_roots 2 -1 -2 1: %s?", res)
   end
-  # INFO: 0.544 comes first with poly.rb [ms]
+  # FIXME
+  # 0.544 comes first with poly.rb [ms]
   if vcneql(res = poly(-1, 1, 1, 1).roots,
             [0.544, Complex(-0.772, 1.115), Complex(-0.772, -1.115)]) and
       vcneql(res = poly(-1, 1, 1, 1).roots,
@@ -11611,9 +11692,11 @@ def poly_roots_tests
       vcneql(res, [Complex(0.397, 0.687), Complex(0.397, -0.687), -0.794])
     snd_display("poly_roots 0.5 0 0 1: %s?", res)
   end
-  # INFO: reduce added [ms]
-  res =(poly(-1, 1) * poly(1, 1) * poly(-2, 1) * poly(2, 1) * poly(-3, 1) * poly(3, 1)).reduce.roots
-  unless vequal(res, [-3.0, 3.0, -1.0, 1.0, -2.0, 2.0])
+  # FIXME
+  # reduce added [ms]
+  # without reduce: 3.0 -1.0 -2.0 -3.0 2.0-1.1555579666323415e-33i 1.0+2.9582283945787943e-31i
+  res = (poly(-1, 1) * poly(1, 1) * poly(-2, 1) * poly(2, 1) * poly(-3, 1) * poly(3, 1)).reduce.roots
+  if vcneql(res, [-3.0, 3.0, -1.0, 1.0, -2.0, 2.0])
     snd_display("cube in 2: %s?", res)
   end
 end
@@ -11816,7 +11899,7 @@ def rough_spectrum(ind)
     sum = 0.0
     1000.times do
       val = rd.call
-      sum += val * val
+      sum = sum + val * val
     end
     if sum > mx
       mx = sum
@@ -13473,7 +13556,7 @@ def test_08_03
     if fneq(val1 = cos(a), val2 = gen.call(0.0, 0.0))
       snd_display("oscil (cos): %s: %s %s?", i, val1, val2)
     end
-    a += (2 * PI * 440) / 22050
+    a = a + (2 * PI * 440) / 22050
   end
   gen = make_oscil(0.0)
   gen1 = make_oscil(40.0)
@@ -13482,7 +13565,7 @@ def test_08_03
     if fneq(val1 = sin(sin(a)), val2 = oscil(gen, 0.0, oscil(gen1, 0.0)))
       snd_display("oscil  pm: %s: %s %s?", i, val1, val2)
     end
-    a += (2 * PI * 40) / 22050
+    a = a + (2 * PI * 40) / 22050
   end
   gen = make_oscil(0.0)
   gen1 = make_oscil(40.0)
@@ -13493,7 +13576,7 @@ def test_08_03
     if fneq(val1 = sin(a1), val2 = oscil(gen, oscil(gen1, 0.0)))
       snd_display("oscil  fm: %s: %s %s?", i, val1, val2)
     end
-    a += (2 * PI * 40) / 22050
+    a = a + (2 * PI * 40) / 22050
     a1 += fm
   end
   #
@@ -13855,21 +13938,19 @@ def test_08_05
   freq_sweep(0.45)
   sp = rough_spectrum(ind)
   if (not vequal(sp, vct(0.962, 0.998, 0.998, 0.998, 0.998, 0.999, 0.999, 0.998, 0.997, 1))) and
-      (not vequal(sp, vct(0.963, 0.999, 0.999, 0.999, 0.999, 0.999, 1, 1, 0.998, 0.997))) and
-      (not vequal(sp, vct(0.949, 1, 1, 1, 0.999, 0.999, 0.999, 0.999, 1, 1))) # results here [ms]
+      (not vequal(sp, vct(0.963, 0.999, 0.999, 0.999, 0.999, 0.999, 1, 1, 0.998, 0.997)))
     snd_display("initial rough spectrum: %s?", sp)
   end
   b = make_butter_high_pass(440.0)
   v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
-  unless vequal(v,vct(0.915, -0.162, -0.146, -0.131, -0.117, -0.103, -0.09, -0.078, -0.066, -0.056))
+  unless vequal(v, vct(0.915, -0.162, -0.146, -0.131, -0.117, -0.103, -0.09, -0.078, -0.066, -0.056))
     snd_display("butter high: %s?", v)
   end
   b = make_butter_high_pass(1000.0)
   map_channel(lambda do |y| butter(b, y) end)
   sp = rough_spectrum(ind)
   if (not vequal(sp, vct(0.150, 0.833, 0.980, 0.994, 0.997, 0.998, 0.999, 0.998, 0.997, 1))) and
-      (not vequal(sp, vct(0.150, 0.833, 0.981, 0.995, 0.998, 0.999, 1, 1, 0.998, 0.997))) and
-      (not vequal(sp, vct(0.014, 0.290, 0.743, 0.924, 0.974, 0.989, 0.995, 0.998, 0.999, 1))) # [ms]
+      (not vequal(sp, vct(0.150, 0.833, 0.981, 0.995, 0.998, 0.999, 1, 1, 0.998, 0.997)))
     snd_display("hp rough spectrum: %s?", sp)
   end
   undo_edit
@@ -13882,8 +13963,7 @@ def test_08_05
   b = make_butter_low_pass(1000.0)
   map_channel(lambda do |y| butter(b, y) end)
   sp = rough_spectrum(ind)
-  if (not vequal(sp, vct(1, 0.212, 0.024, 0.005, 0.001, 0.000, 0.000, 0.000, 0.000, 0.000))) and
-      (not vequal(sp, vct(1, 0.760, 0.279, 0.084, 0.030, 0.012, 0.006, 0.003, 0.001, 0.001))) # [ms]
+  unless vequal(sp, vct(1, 0.212, 0.024, 0.005, 0.001, 0.000, 0.000, 0.000, 0.000, 0.000))
     snd_display("lp rough spectrum: %s?", sp)
   end
   undo_edit
@@ -13896,8 +13976,7 @@ def test_08_05
   b = make_butter_band_pass(1000.0, 500.0)
   map_channel(lambda do |y| butter(b, y) end)
   sp = rough_spectrum(ind)
-  if (not vequal(sp, vct(0.888, 1, 0.144, 0.056, 0.027, 0.014, 0.008, 0.004, 0.002, 0))) and
-      (not vequal(sp, vct(0.057, 1, 0.905, 0.236, 0.106, 0.060, 0.038, 0.026, 0.018, 0.013))) # [ms]
+  unless vequal(sp, vct(0.888, 1, 0.144, 0.056, 0.027, 0.014, 0.008, 0.004, 0.002, 0))
     snd_display("bp rough spectrum: %s?", sp)
   end
   undo_edit
@@ -13912,8 +13991,7 @@ def test_08_05
   map_channel(lambda do |y| butter(b, y) end)
   sp = rough_spectrum(ind)
   if (not vequal(sp, vct(0.662, 0.687, 0.953, 0.980, 0.989, 0.994, 0.997, 0.997, 0.997, 1))) and
-      (not vequal(sp, vct(0.664, 0.689, 0.955, 0.982, 0.992, 0.996, 0.999, 1, 0.999, 0.998))) and
-      (not vequal(sp, vct(0.921, 0.436, 0.510, 0.877, 0.948, 0.973, 0.985, 0.992, 0.997, 1))) # [ms]
+      (not vequal(sp, vct(0.664, 0.689, 0.955, 0.982, 0.992, 0.996, 0.999, 1, 0.999, 0.998)))
     snd_display("bs rough spectrum: %s?", sp)
   end
   undo_edit
@@ -13943,8 +14021,7 @@ def test_08_05
   flt = make_fir_filter(20, v)
   map_channel(lambda do |y| fir_filter(flt, y) end)
   sp = rough_spectrum(ind)
-  if (not vequal(sp, vct(0.007, 0.493, 1.000, 0.068, 0.030, 0.019, 0.014, 0.011, 0.009, 0.009))) and
-      (not vequal(sp, vct(0.002, 0.008, 0.058, 0.613, 1, 0.330, 0.029, 0.062, 0.010, 0.031))) # results here [ms]
+  unless vequal(sp, vct(0.007, 0.493, 1.000, 0.068, 0.030, 0.019, 0.014, 0.011, 0.009, 0.009))
     snd_display("sp->coeff rough spectrum: %s?", sp)
   end
   undo_edit
@@ -13957,78 +14034,62 @@ def test_08_05
   end
   b = make_highpass(hz2radians(1000.0), 10)
   v = make_vct!(20) do |i| highpass(b, i.zero? ? 1.0 : 0.0) end
-  if (not vequal(v, vct(-0.001, -0.002, -0.005, -0.011, -0.021, -0.034, -0.049, -0.065,
-                        -0.078, -0.087, 0.909, -0.087, -0.078, -0.065, -0.049, -0.034,
-                        -0.021, -0.011, -0.005, -0.002))) and
-      (not vequal(v, vct(-0.003, -0.003, -0.006, -0.010, -0.016, -0.022, -0.029, -0.036,
-                         -0.041, -0.044, 0.955, -0.044, -0.041, -0.036, -0.029, -0.022,
-                         -0.016, -0.010, -0.006, -0.003))) # results here [ms]
+  unless vequal(v, vct(-0.001, -0.002, -0.005, -0.011, -0.021, -0.034, -0.049, -0.065,
+                       -0.078, -0.087, 0.909, -0.087, -0.078, -0.065, -0.049, -0.034,
+                       -0.021, -0.011, -0.005, -0.002))
     snd_display("dsp.rb high: %p?", v)
   end
   b = make_highpass(hz2radians(1000.0), 20)
   map_channel(lambda do |y| highpass(b, y) end)
   sp = rough_spectrum(ind)
   if (not vequal(sp, vct(0.053, 0.774, 0.998, 0.997, 0.997, 0.996, 0.996, 0.996, 0.997, 1))) and
-      (not vequal(sp, vct(0.053, 0.776, 1.000, 0.998, 0.998, 0.998, 0.998, 0.998, 0.998, 1))) and
-      (not vequal(sp, vct(0.105, 0.566, 0.957, 1, 0.996, 0.997, 0.996, 0.996, 0.996, 0.996))) # results here [ms]
+      (not vequal(sp, vct(0.053, 0.776, 1.000, 0.998, 0.998, 0.998, 0.998, 0.998, 0.998, 1)))
     snd_display("dsp hp rough spectrum: %s?", sp)
   end
   undo_edit
   # 
   b = make_lowpass(hz2radians(1000.0), 10)
   v = make_vct!(20) do |i| lowpass(b, i.zero? ? 1.0 : 0.0) end
-  if (not vequal(v, vct(0.001, 0.002, 0.005, 0.011, 0.021, 0.034, 0.049, 0.065,
-                        0.078, 0.087, 0.091, 0.087, 0.078, 0.065, 0.049, 0.034,
-                        0.021, 0.011, 0.005, 0.002))) and
-      (not vequal(v, vct(0.003, 0.003, 0.006, 0.010, 0.016, 0.022, 0.029, 0.036,
-                         0.041, 0.044, 0.045, 0.044, 0.041, 0.036, 0.029, 0.022,
-                         0.016, 0.010, 0.006, 0.003))) # results here [ms]
+  unless vequal(v, vct(0.001, 0.002, 0.005, 0.011, 0.021, 0.034, 0.049, 0.065,
+                       0.078, 0.087, 0.091, 0.087, 0.078, 0.065, 0.049, 0.034,
+                       0.021, 0.011, 0.005, 0.002))
     snd_display("dsp.rb low: %s?", v)
   end
   b = make_lowpass(hz2radians(1000.0), 20)
   map_channel(lambda do |y| lowpass(b, y) end)
   sp = rough_spectrum(ind)
-  if (not vequal(sp, vct(1, 0.054, 0, 0, 0, 0, 0, 0, 0, 0))) and
-      (not vequal(sp, vct(1, 0.184, 0.002, 0, 0, 0, 0, 0, 0, 0))) # results here [ms]
+  unless vequal(sp, vct(1, 0.054, 0, 0, 0, 0, 0, 0, 0, 0))
     snd_display("dsp lp rough spectrum: %s?", sp)
   end
   undo_edit
   # 
   b = make_bandpass(hz2radians(1500.0), hz2radians(2000.0), 10)
   v = make_vct!(20) do |i| bandpass(b, i.zero? ? 1.0 : 0.0) end
-  if (not vequal(v, vct(0.001, -0.001, -0.005, -0.011, -0.017, -0.019, -0.013, 0.003,
-                        0.022, 0.039, 0.045, 0.039, 0.022, 0.003, -0.013, -0.019,
-                        -0.017, -0.011, -0.005, -0.001))) and
-      (not vequal(v, vct(-0.001, -0.001, -0.002, -0.001, 0.001, 0.004, 0.008, 0.013,
-                         0.018, 0.021, 0.023, 0.021, 0.018, 0.013, 0.008, 0.004,
-                         0.001, -0.001, -0.002, -0.001))) # results here [ms]
+  unless vequal(v, vct(0.001, -0.001, -0.005, -0.011, -0.017, -0.019, -0.013, 0.003,
+                       0.022, 0.039, 0.045, 0.039, 0.022, 0.003, -0.013, -0.019,
+                       -0.017, -0.011, -0.005, -0.001))
     snd_display("dsp.rb bp: %s?", v)
   end
   b = make_bandpass(hz2radians(1500.0), hz2radians(2000.0), 20)
   map_channel(lambda do |y| bandpass(b, y) end)
   sp = rough_spectrum(ind)
-  if (not vequal(sp, vct(0.010, 1, 0.154, 0, 0, 0, 0, 0, 0, 0))) and
-      (not vequal(sp, vct(0.195, 1, 0.462, 0.012, 0, 0, 0, 0, 0, 0))) # results here [ms]
+  unless vequal(sp, vct(0.010, 1, 0.154, 0, 0, 0, 0, 0, 0, 0))
     snd_display("dsp bp rough spectrum: %s?", sp)
   end
   undo_edit
   # 
   b = make_bandstop(hz2radians(1500.0), hz2radians(2000.0), 10)
   v = make_vct!(20) do |i| bandstop(b, i.zero? ? 1.0 : 0.0) end
-  if (not vequal(v, vct(-0.001, 0.001, 0.005, 0.011, 0.017, 0.019, 0.013, -0.003,
-                        -0.022, -0.039, 0.955, -0.039, -0.022, -0.003, 0.013, 0.019,
-                        0.017, 0.011, 0.005, 0.001))) and
-      (not vequal(v, vct(0.001, 0.001, 0.002, 0.001, -0.001, -0.004, -0.008, -0.013,
-                         -0.018, -0.021, 0.977, -0.021, -0.018, -0.013, -0.008, -0.004,
-                         -0.001, 0.001, 0.002, 0.001))) # results here [ms]
+  unless vequal(v, vct(-0.001, 0.001, 0.005, 0.011, 0.017, 0.019, 0.013, -0.003,
+                       -0.022, -0.039, 0.955, -0.039, -0.022, -0.003, 0.013, 0.019,
+                       0.017, 0.011, 0.005, 0.001))
     snd_display("dsp.rb bs: %s?", v)
   end
   b = make_bandstop(hz2radians(1500.0), hz2radians(2000.0), 20)
   map_channel(lambda do |y| bandstop(b, y) end)
   sp = rough_spectrum(ind)
   if (not vequal(sp, vct(0.904, 0.425, 0.821, 0.998, 0.997, 0.996, 0.996, 0.996, 0.997, 1))) and
-      (not vequal(sp, vct(0.906, 0.425, 0.822, 1.000, 0.999, 0.998, 0.998, 0.998, 0.998, 1))) and
-      (not vequal(sp, vct(0.761, 0.603, 0.734, 0.966, 1, 0.999, 0.997, 0.999, 0.997, 0.999))) # [ms]
+      (not vequal(sp, vct(0.906, 0.425, 0.822, 1.000, 0.999, 0.998, 0.998, 0.998, 0.998, 1)))
     snd_display("dsp bp rough spectrum: %s?", sp)
   end
   undo_edit
@@ -14042,70 +14103,61 @@ def test_08_05
   b = make_differentiator(20)
   map_channel(lambda do |y| differentiator(b, y) end)
   sp = rough_spectrum(ind)
-  if (not vequal(sp, vct(0.004, 0.027, 0.075, 0.147, 0.242, 0.362, 0.506, 0.674, 0.864, 1))) and
-      (not vequal(sp, vct(0.003, 0.025, 0.069, 0.135, 0.223, 0.334, 0.465, 0.622, 0.796, 1))) # [ms]
+  unless vequal(sp, vct(0.004, 0.027, 0.075, 0.147, 0.242, 0.362, 0.506, 0.674, 0.864, 1))
     snd_display("dsp df rough spectrum: %s?", sp)
   end
   undo_edit
   # 
   b = make_iir_high_pass_2(440.0)
   v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
-  if (not vequal(v, vct(0.915, -0.162, -0.146, -0.131, -0.117, -0.103, -0.090, -0.078, -0.066, -0.056))) and
-      (not vequal(v, vct(0.957, -0.085, -0.081, -0.077, -0.073, -0.069, -0.066, -0.062, -0.058, -0.055))) # [ms]
+  unless vequal(v, vct(0.915, -0.162, -0.146, -0.131, -0.117, -0.103, -0.09, -0.078, -0.066, -0.056))
     snd_display("iir-2 high: %s?", v)
   end
   b = make_iir_high_pass_2(1000.0)
   map_channel(lambda do |y| butter(b, y) end)
   sp = rough_spectrum(ind)
   if (not vequal(sp, vct(0.150, 0.833, 0.980, 0.994, 0.997, 0.998, 0.999, 0.998, 0.997, 1))) and
-      (not vequal(sp, vct(0.150, 0.833, 0.981, 0.995, 0.998, 0.999, 1, 1, 0.998, 0.997))) and
-      (not vequal(sp, vct(0.148, 0.831, 0.981, 0.996, 0.998, 0.999, 0.999, 0.999, 1, 1))) # [ms]
+      (not vequal(sp, vct(0.150, 0.833, 0.981, 0.995, 0.998, 0.999, 1, 1, 0.998, 0.997)))
     snd_display("iir-2 hp rough spectrum: %s?", sp)
   end
   undo_edit
   #
   b = make_iir_low_pass_2(440.0)
   v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
-  if (not vequal(v, vct(0.004, 0.014, 0.026, 0.035, 0.043, 0.049, 0.053, 0.055, 0.057, 0.057))) and
-      (not vequal(v, vct(0.001, 0.004, 0.007, 0.010, 0.013, 0.016, 0.018, 0.020, 0.022, 0.023))) # [ms]
+  unless vequal(v, vct(0.004, 0.014, 0.026, 0.035, 0.043, 0.049, 0.053, 0.055, 0.057, 0.057))
     snd_display("iir-2 low: %s?", v)
   end
   b = make_iir_low_pass_2(1000.0)
   map_channel(lambda do |y| butter(b, y) end)
   sp = rough_spectrum(ind)
-  if (not vequal(sp, vct(1, 0.212, 0.024, 0.005, 0.001, 0, 0, 0, 0, 0))) and
-      (not vequal(sp, vct(1, 0.223, 0.028, 0.007, 0.002, 0.001, 0, 0, 0, 0))) # [ms]
+  unless vequal(sp, vct(1, 0.212, 0.024, 0.005, 0.001, 0, 0, 0, 0, 0))
     snd_display("iir-2 lp rough spectrum: %s?", sp)
   end
   undo_edit
   #
   b = make_iir_band_pass_2(440.0, 490.0)
   v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
-  if (not vequal(v, vct(0.007, 0.014, 0.013, 0.013, 0.012, 0.010, 0.009, 0.008, 0.006, 0.004))) and
-      (not vequal(v, vct(0.004, 0.007, 0.007, 0.007, 0.007, 0.006, 0.006, 0.006, 0.006, 0.006))) # [ms]
+  unless vequal(v, vct(0.007, 0.014, 0.013, 0.013, 0.012, 0.010, 0.009, 0.008, 0.006, 0.004))
     snd_display("iir bp-2 bandpass: %s?", v)
   end
   b = make_iir_band_pass_2(1000.0, 1500.0)
   map_channel(lambda do |y| butter(b, y) end)
   sp = rough_spectrum(ind)
-  if (not vequal(sp, vct(0.239, 1, 0.117, 0.041, 0.019, 0.010, 0.005, 0.003, 0.001, 0))) and
-      (not vequal(sp, vct(0.220, 1, 0.121, 0.045, 0.024, 0.015, 0.010, 0.007, 0.005, 0.004))) # [ms]
+  unless vequal(sp, vct(0.239, 1, 0.117, 0.041, 0.019, 0.010, 0.005, 0.003, 0.001, 0))
     snd_display("iir bp-2 rough spectrum: %s?", sp)
   end
   undo_edit
   #
   b = make_iir_band_stop_2(440.0, 500.0)
   v = make_vct!(10) do |i| butter(b, i.zero? ? 1.0 : 0.0) end
-  if (not vequal(v, vct(0.992, -0.017, -0.016, -0.015, -0.014, -0.012, -0.011, -0.009, -0.007, -0.005))) and
-      (not vequal(v, vct(0.996, -0.008, -0.008, -0.008, -0.008, -0.008, -0.007, -0.007, -0.007, -0.006))) # [ms]
+  unless vequal(v, vct(0.992, -0.017, -0.016, -0.015, -0.014, -0.012, -0.011, -0.009, -0.007,-0.005))
     snd_display("iir bp-2 bandstop: %s?", v)
   end
   b = make_iir_band_stop_2(1000.0, 1500.0)
   map_channel(lambda do |y| butter(b, y) end)
   sp = rough_spectrum(ind)
   if (not vequal(sp, vct(0.836, 0.525, 0.943, 0.979, 0.989, 0.994, 0.997, 0.997, 0.997, 1))) and
-      (not vequal(sp, vct(0.838, 0.527, 0.945, 0.981, 0.991, 0.996, 0.999, 1, 0.999, 0.998))) and
-      (not vequal(sp, vct(0.822, 0.527, 0.944, 0.979, 0.990, 0.994, 0.996, 0.998, 0.999, 1))) # [ms]
+      (not vequal(sp, vct(0.838, 0.527, 0.945, 0.981, 0.991, 0.996, 0.999, 1, 0.999, 0.998)))
     snd_display("iir bs-2 rough spectrum: %s?", sp)
   end
   undo_edit
@@ -14127,8 +14179,7 @@ def test_08_05
       (not vequal(sp, vct(0.051, 0.982, 1.0, 1.0, 0.998, 0.998, 0.998, 0.999, 0.997, 0.995))) and
       (not vequal(sp, vct(0.051, 0.991, 1.0, 1.0, 0.998, 0.998, 0.999, 0.999, 0.997, 0.995))) and
       (not vequal(sp, vct(0.045, 0.970, 1.0, 1.0, 0.998, 0.998, 0.999, 0.999, 0.997, 0.995))) and
-      (not vequal(sp, vct(0.052, 0.971, 1.0, 1.0, 0.998, 0.998, 0.999, 0.999, 0.997, 0.995))) and
-      (not vequal(sp, vct(0.036, 1.0, 0.998, 0.997, 0.997, 0.996, 0.995, 0.995, 0.995, 0.995))) # [ms]
+      (not vequal(sp, vct(0.052, 0.971, 1.0, 1.0, 0.998, 0.998, 0.999, 0.999, 0.997, 0.995)))
     snd_display("butter hp rough spectrum: %s?", sp)
   end
   undo_edit
@@ -14142,8 +14193,7 @@ def test_08_05
   map_channel(lambda do |y| butter(b, y) end)
   sp = rough_spectrum(ind)
   if (not vequal(sp, vct(1, 0.035, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))) and
-      (not vequal(sp, vct(1, 0.038, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))) and
-      (not vequal(sp, vct(1, 0.058, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))) # [ms]
+      (not vequal(sp, vct(1, 0.038, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000)))
     snd_display("butter lp rough spectrum: %s?", sp)
   end
   undo_edit
@@ -14164,9 +14214,7 @@ def test_08_05
       (not vequal(v, vct(0.978, -0.043, -0.041, -0.038, -0.035,
                          -0.031, -0.027, -0.022, -0.017, -0.011))) and
       (not vequal(v, vct(0.978, -0.043, -0.041, -0.038, -0.035,
-                         -0.031, -0.027, -0.021, -0.014, -0.011))) and
-      (not vequal(v, vct(0.989, -0.022, -0.022, -0.021, -0.021,
-                         -0.020, -0.019, -0.018, -0.017, -0.016))) # results here [ms]
+                         -0.031, -0.027, -0.021, -0.014, -0.011)))
     snd_display("butter bs: %s?", v)
   end
   b = make_butter_bs(4, 1000.0, 1500.0)
@@ -15685,7 +15733,7 @@ def test_08_09
       break
     end
     a1 += cos(a)
-    a += (TWO_PI * 40.0) / 22050.0
+    a = a + (TWO_PI * 40.0) / 22050.0
   end
 end
 
@@ -16673,7 +16721,9 @@ def test_08_13
     n.times do |i| hits[(5 + mus_random(5.0)).floor] += 1 end
     sum = 0.0
     pp = n / 10.0
-    hits.each do |val| sum += (((val - pp) * (val - pp)) / pp) end
+    hits.each do |val|
+      sum = sum + (((val - pp) * (val - pp)) / pp)
+    end
     sum
   end.call(10000)
   if res < 4.0
@@ -16685,7 +16735,9 @@ def test_08_13
     n.times do |i| hits[(5 + 5 * rand(gen, 0.0)).floor] += 1 end
     sum = 0.0
     pp = n / 10.0
-    hits.each do |val| sum += (((val - pp) * (val - pp)) / pp) end
+    hits.each do |val|
+      sum = sum + (((val - pp) * (val - pp)) / pp)
+    end
     sum
   end.call(10000)
   if res < 4.0
@@ -16889,7 +16941,11 @@ def test_08_14
   delete_files("fmv4.snd", "fmv4.reverb")
   mus_sound_prune
   #
-  [Mus_caff, Mus_aifc, Mus_next, Mus_riff, Mus_rf64].each do |ht|
+  [Mus_caff,
+   Mus_aifc,
+   Mus_next,
+   Mus_riff,
+   Mus_rf64].each do |ht|
     ind = find_sound(with_sound(:channels, 8) do
                        8.times do |i|
                          locsig(make_locsig(:degree, i * 45, :output, $output), i, 0.5)
@@ -17354,20 +17410,28 @@ def test_08_14
 end
 
 def test_08_15
-  gen = make_src(:srate, 2.0)
-  gen1 = make_src(:srate, 2.0)
-  gen2 = make_src(:srate, 0.0)
   rd = make_readin("oboe.snd", 0, 2000)
-  rd1 = make_readin("oboe.snd", 0, 2000)
+  gen = make_src(:srate, 2.0, :input, rd)
+  gen1 = make_src(:srate, 2.0, :input, make_readin("oboe.snd", 0, 2000))
+  gen2 = make_src(:srate, 0.0)
   print_and_check(gen, "src", "src width: 10, x: 0.000, incr: 2.000, sinc table len: 10000")
-  v0 = make_vct!(10) do src(gen, 0.0, lambda do |dir| readin(rd) end) end
+  v0 = Vct.new(10) do
+    src(gen)
+  end
   v1 = make_vct(10)
-  vct_map!(v1, lambda do || src?(gen1) ? src(gen1, 0.0, lambda do |dir| readin(rd1) end) : -1.0 end)
+  vct_map!(v1, lambda do ||
+               src?(gen1) ? src(gen1) : -1.0
+           end)
   snd_display("run src: %s %s?", v0, v1) unless vequal(v0, v1)
   snd_display("%s not src?", gen) unless src?(gen)
-  # INFO: original fneq(v0[1], 0.001) or fneq(v0[7], 0.021)
-  if fneq(v0[1], -0.001) or fneq(v0[7], -0.037)
-    snd_display("src output: %s?", v0)
+  req1 = 0.001
+  req2 = 0.021
+  if fneq(v0[1], req1) or fneq(v0[7], req2)
+    if fneq(v0[1], req1)
+      snd_display(snd_float_format_neq(v0[1], req1, "src output"))
+    else
+      snd_display(snd_float_format_neq(v0[7], req2, "src output"))
+    end
   end
   snd_display("src increment: %s?", gen.increment) if fneq(gen.increment, 2.0)
   snd_display("src 0.0 increment: %s?", gen2.increment) if fneq(gen2.increment, 0.0)
@@ -17430,7 +17494,7 @@ def test_08_15
   snd_display("%s not granulate?", gen) unless granulate?(gen)
   snd_display("granulate increment: %s?", gen.increment) if fneq(gen.increment, 2.0)
   snd_display("granulate scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.6)
-  snd_display("granulate frequency: %s?", gen.frequency) if fffneq(gen.frequency, 0.05) # 0.025 [ms]
+  snd_display("granulate frequency: %s?", gen.frequency) if ffneq(gen.frequency, 0.05)
   snd_display("granulate ramp: %s?", gen.ramp) if gen.ramp != 1323
   snd_display("granulate length: %s?", gen.length) if gen.length != 3308
   snd_display("granulate hop: %s?", gen.hop) if gen.hop != 1102
@@ -19186,7 +19250,7 @@ def test_08_22
     sum = 0.0
     4.times do |j|
       if i + j >= 0
-        sum += data[i + j] * data[i + j]
+        sum = sum + data[i + j] * data[i + j]
       end
     end
     if fneq(odata[k], sqrt(sum / 4.0))
@@ -19321,7 +19385,7 @@ def test_08_23
     if (not number?(tag)) and (not frame?(tag))
       snd_display("%s (make_gen, gen, gen? test): %s %s?", name_sym, arg, tag)
     end
-    if RUBY_VERSION > "1.6.8"
+    if RUBY_VERSION >= "1.8.0"
       [:mus_channel,
        :mus_channels,
        :mus_data,
@@ -19423,7 +19487,6 @@ def test_08_23
     end
     2.times do |k|
       mus_reset(gen)
-      #if name_sym != :env and name_sym != :locsig
       unless proc?(run_func)
         not_zero = false
         first_val = k.zero? ? snd_func(name_sym, gen, 1.0) : mus_apply(gen, 1.0, 0.0)
@@ -19461,21 +19524,17 @@ def test_08_23
                  1234,
                  make_vct(3),
                  make_color_with_catch(0.95, 0.95, 0.95),
-                 [0, 1],
-                 3 / 4.0,
                  :mus_error,
                  sqrt(-1.0),
                  make_delay(32),
-                 lambda { || true },
+                 lambda do || true end,
                  make_sound_data(2, 3),
-                 :order,
                  0,
                  1,
                  -1,
                  make_hook("snd_test"),
                  false,
                  true,
-                 ?c,
                  0.0,
                  1.0,
                  -1.0, 
@@ -19487,11 +19546,8 @@ def test_08_23
                  16,
                  32,
                  64,
-                 make_array(0),
-                 [1, 2],
                  2.0 ** 21.5,
-                 2.0 ** -18.0,
-                 12345678901234567890]
+                 2.0 ** -18.0]
   functions.each do |name_sym, make_args, run_func|
     gen = if make_args
             snd_func(format("make_%s", name_sym), *make_args)
@@ -19507,42 +19563,41 @@ def test_08_23
         end
       end
       random_args.each do |arg2|
-        Snd.catch do mus_run(gen, arg1, arg2) end
+        Snd.catch do
+          mus_run(gen, arg1, arg2)
+        end
       end
     end
   end
 end
 
 def test_08_24
-  random_args = [
-    2.0 ** 21.5,
-    2.0 ** -18.0,
-    12345678901234567890,
-    1.5,
-    "/hiho",
-    [0, 1],
-    1234,
-    make_vct(3),
-    make_color_with_catch(0.1, 0.2, 0.3),
-    [0, 1],
-    3 / 4.0,
-    sqrt(-1.0),
-    make_delay(32),
-    lambda { || 0.0 },
-    lambda { |dir| 1.0 },
-    lambda { |a, b, c| 1.0 },
-    0,
-    1,
-    -1,
-    false,
-    true,
-    ?c,
-    0.0,
-    1.0,
-    -1.0,
-    [],
-    32,
-    [1, 2]]
+  random_args = [2.0 ** 21.5,
+                 2.0 ** -18.0,
+                 1.5,
+                 "/hiho",
+                 [0, 1],
+                 1234,
+                 # FIXME
+                 # make_vct(3) removed from list because:
+                 #   if $all_args is true
+                 #   0x08096617 in print_vct (obj=Cannot access memory at address 0xbf003038)
+                 # make_vct(3),
+                 make_color_with_catch(0.1, 0.2, 0.3),
+                 sqrt(-1.0),
+                 make_delay(32),
+                 lambda do || 0.0 end,
+                 lambda do |dir| 1.0 end,
+                 lambda do |a, b, c| 1.0 end,
+                 0,
+                 1,
+                 -1,
+                 false,
+                 true,
+                 0.0,
+                 1.0,
+                 -1.0,
+                 []]
   random_gen = lambda do |*args|
     [:make_all_pass,
      :make_asymmetric_fm,
@@ -19550,15 +19605,14 @@ def test_08_24
      :make_table_lookup,
      :make_triangle_wave,
      :make_comb,
-     :make_convolve,
      :make_delay,
      :make_env,
      :make_fft_window,
      :make_filter,
+     :make_filtered_comb,
      :make_fir_filter,
      :make_formant,
      :make_frame,
-     :make_granulate,
      :make_iir_filter,
      :make_locsig,
      :make_mixer,
@@ -19566,37 +19620,45 @@ def test_08_24
      :make_one_pole,
      :make_one_zero,
      :make_oscil,
+     :make_ppolar,
      :make_pulse_train,
      :make_rand,
      :make_rand_interp,
      :make_sawtooth_wave,
+     :make_polyshape,
+     :make_polywave,
      :make_square_wave,
-     :make_src,
      :make_two_pole,
      :make_two_zero,
      :make_wave_train,
-     :make_polyshape,
-     :make_phase_vocoder,
+     :make_zpolar,
      :make_ssb_am].each do |make_func|
-      if mus_generator?(gen = Snd.catch do snd_func(make_func, *args) end.first)
+      if mus_generator?(gen = Snd.catch do
+                          snd_func(make_func, *args)
+                        end.first)
         random_args.each do |arg|
-          Snd.catch do gen.run(arg) end
+          Snd.catch do
+            gen.run(arg)
+          end
         end
       end
     end
   end
-  random_gen.call
+  random_gen.call([])
   random_args.each do |arg1|
     random_gen.call(arg1)
     random_args.each do |arg2|
       random_gen.call(arg1, arg2)
-      # INFO: it's very long [ms]
-      # random_args.each do |arg3|
-      #   random_gen.call(arg1, arg2, arg3)
-      #   random_args.each do |arg4|
-      #     random_gen.call(arg1, arg2, arg3, arg4)
-      #   end
-      # end
+      if $all_args or $bigtest_08
+        random_args.each do |arg3|
+          random_gen.call(arg1, arg2, arg3)
+          if $bigtest_08
+            random_args.each do |arg4|
+              random_gen.call(arg1, arg2, arg3, arg4)
+            end
+          end
+        end
+      end
     end
   end
 end
@@ -19626,7 +19688,7 @@ def test_08
   test_08_21
   test_08_22
   test_08_23
-  test_08_24 if $all_args
+  test_08_24
 end
 
 # ---------------- test 09: mix ----------------
@@ -20053,11 +20115,11 @@ def test_09_03
     ho_val = ho.call
     hi_val = hi.call
     if fneq(hi_val, i * 0.025)
-      snd_display("mix_reader env\'d at %s from 0: %s?", i, hi_val)
+      snd_display("mix_reader enved at %s from 0: %s?", i, hi_val)
       break
     end
     if fneq(ho_val, (i + 10)* 0.025)
-      snd_display("mix_reader env\'d at %s from 5: %s?", i, ho_val)
+      snd_display("mix_reader enved at %s from 5: %s?", i, ho_val)
       break
     end
   end
@@ -20579,7 +20641,7 @@ def test_10_01
   s1 = find_sound("oboe.snd", 0)
   s2 = find_sound("oboe.snd", 1)
   if (not sound?(s1)) or (not sound?(s2))
-    snd_display("can\'t re-open sounds: %s %s?", s1, s2)
+    snd_display("cannot re-open sounds: %s %s?", s1, s2)
   else
     m1 = marks(s1)
     m2 = marks(s2)
@@ -20751,7 +20813,7 @@ def test_10_02
     snd_display("selection_frames 1001: %s?", selection_frames) if selection_frames != 1001
   end
   set_selection_member?(false, true)
-  snd_display("can\'t clear selection via selection_members?") if selection?
+  snd_display("cannot clear selection via selection_members?") if selection?
   set_selection_member?(true, ind, 0)
   set_selection_position(2000, ind, 0)
   set_selection_frames(1234, ind, 0)
@@ -20967,9 +21029,9 @@ def test_10_02
   m1 = add_mark(23, ind, 0)
   set_mark_name(m1, "23")
   delete_sample(0)
-  snd_display("can\'t find 00th mark") unless find_mark(123, ind, 0, 0)
-  snd_display("can\'t find 01th mark") unless find_mark("23")
-  snd_display("can\'t find 02th mark") unless find_mark(121)
+  snd_display("cannot find 00th mark") unless find_mark(123, ind, 0, 0)
+  snd_display("cannot find 01th mark") unless find_mark("23")
+  snd_display("cannot find 02th mark") unless find_mark(121)
   delete_mark(find_mark("23"))
   scale_by(2.0)
   m1 = add_mark(1234)
@@ -20979,14 +21041,14 @@ def test_10_02
       snd_display("mark 10th: %s?", res)
     end
   else
-    snd_display("can\'t find 10th mark?")
+    snd_display("cannot find 10th mark?")
   end
   if (m11 = find_mark("23", ind, 0, 1))
     if (res = mark_sample(m11, 1)) != 23
       snd_display("mark 11th: %s?", res)
     end
   else
-    snd_display("can\'t find 11th mark?")
+    snd_display("cannot find 11th mark?")
   end
   if (m12 = find_mark("23", ind, 0, 2))
     snd_display("found 12th mark: %s %s %s?", m12, mark_sample(m12, 2), mark_name(m12, 2))
@@ -21192,7 +21254,7 @@ def test_10_02
   add_mark(20)
   add_mark(30)
   mark_explode
-  if File.exist?("mark-0.snd")
+  if File.exists?("mark-0.snd")
     ind1 = open_sound("mark-0.snd")
     if frames(ind1, 0) != 10 then snd_display("mark-0 frames: %s?", frames(ind1, 0)) end
     unless vequal(res = channel2vct, Vct.new(10, 0.1)) then snd_display("mark-0 vals: %s?", res) end
@@ -21201,7 +21263,7 @@ def test_10_02
   else
     snd_display("mark_explode did not write mark-0.snd?")
   end
-  if File.exist?("mark-1.snd")
+  if File.exists?("mark-1.snd")
     ind1 = open_sound("mark-1.snd")
     if frames(ind1, 0) != 10 then snd_display("mark-1 frames: %s?", frames(ind1, 0)) end
     unless vequal(res = channel2vct, Vct.new(10, 0.4)) then snd_display("mark-1 vals: %s?", res) end
@@ -21210,7 +21272,7 @@ def test_10_02
   else
     snd_display("mark_explode did not write mark-1.snd?")
   end
-  if File.exist?("mark-2.snd")
+  if File.exists?("mark-2.snd")
     ind1 = open_sound("mark-2.snd")
     if frames(ind1, 0) != 10 then snd_display("mark-2 frames: %s?", frames(ind1, 0)) end
     unless vequal(res = channel2vct, Vct.new(10, 0.8)) then snd_display("mark-2 vals: %s?", res) end
@@ -21219,7 +21281,7 @@ def test_10_02
   else
     snd_display("mark_explode did not write mark-2.snd?")
   end
-  if File.exist?("mark-3.snd")
+  if File.exists?("mark-3.snd")
     snd_display("mark_explode wrote too many files?")
     delete_file("mark-3.snd")
   end
@@ -21668,7 +21730,7 @@ def test_12
         end
       end
     end
-    if File.exist?("s24.snd") and
+    if File.exists?("s24.snd") and
         (ffiles != [$sf_dir + "s24.snd"] or
          sfiles != [$sf_dir + "s24.snd"])
       snd_display("map|for_each_sound_file(s): %s %s?", ffiles, sfiles)
@@ -22021,7 +22083,8 @@ def test_13_00
   #
   fd = open_sound("obtest.snd")
   Snd.sounds.apply(:close_sound)
-  # INFO: method(:func).to_proc.arity returns -1 on older versions [ms]
+  # INFO
+  # method(:func).to_proc.arity returns -1 on older versions [ms]
   if method(:display_energy).to_proc.arity == 2
     test_hooks
   else
@@ -22059,7 +22122,7 @@ def test_13_00
   end
   key(key_to_int(?s), 4, ind, 0)
   key(key_to_int(?s), 4, ind, 0)
-  if cursor(ind, 0) != 4477     # INFO: original 4423
+  if cursor(ind, 0) != 4423
     snd_display("search_procedure C-s C-s cursor: %s?", cursor(ind, 0))
   end
   set_search_procedure(ind, lambda do |n| n > 0.2 end)
@@ -22398,14 +22461,14 @@ def test_13_01
   after_edit_hook(other, 0).add_hook!("snd-test-2") do | | a1 = true end
   # 
   delete_sample(0, ind, 0)
-  snd_display("edit_hook true didn\'t disallow edit!") if edit_position(ind, 0) != 0
+  snd_display("edit_hook true did not disallow edit!") if edit_position(ind, 0) != 0
   snd_display("edit_hook true not called?") unless e0
   snd_display("after_edit_hook 0 called?") if a0
   undo_edit(1, ind, 0)
   snd_display("undo_hook called?") if u0
   # 
   delete_sample(0, other, 0)
-  snd_display("edit_hook false didn\'t allow edit!") if edit_position(other, 0) != 1
+  snd_display("edit_hook false did not allow edit!") if edit_position(other, 0) != 1
   snd_display("edit_hook false not called?") unless e1
   snd_display("after_edit_hook 1 not called?") unless a1
   undo_edit(1, other, 0)
@@ -22458,8 +22521,8 @@ def test_13_01
   end
   save_sound_as("baddy.snd", ind)
   snd_display("$save_hook not called?") unless sh
-  if File.exist?("baddy.snd")
-    snd_display("$save_hook didn\'t cancel save?")
+  if File.exists?("baddy.snd")
+    snd_display("$save_hook did not cancel save?")
     delete_file("baddy.snd")
   end
   $save_hook.reset_hook!
@@ -23223,7 +23286,7 @@ def test_14
     if (res = edit_position(zz)).nonzero?
       snd_display("revert_sound edit_position: %s?", res)
     end
-    s8_snd = (File.exist?("s8.snd") ? "s8.snd" : "oboe.snd")
+    s8_snd = (File.exists?("s8.snd") ? "s8.snd" : "oboe.snd")
     as_one_edit_rb do
       mix(s8_snd, 24000)
       reg = select_all
@@ -23482,7 +23545,7 @@ def test_14
           Vct.new(128) do |i|
             final_y = buffer[position]
             val = sum_of_squares > 0.01 ? final_y : 0.0
-            sum_of_squares -= final_y * final_y
+            sum_of_squares = sum_of_squares - final_y * final_y
             position += 1
             if position == 128 then position = 0 end
             val
@@ -23954,8 +24017,9 @@ def test_15_00
   unless every_sample? do |val| val < 5.0 end then snd_display("every_sample? (1)?") end
   select_sound(obi)
   bins = sort_samples(32)
-  # INFO: original 4504 [ms]
-  if bins[1] != 4466 then snd_display("sort_samples: %s?", bins) end
+  if bins[1] != 4504
+    snd_display(snd_int_format_neq(bins[1], 4504, "sort_samples"))
+  end
   revert_sound(s2i)
   revert_sound(obi)
   set_sync(3, obi)
@@ -24081,27 +24145,21 @@ def test_15_01
   map_channel(lambda do |val| sound_interp(reader, len * (0.5 + 0.5 * oscil(osc))) end)
   undo_edit
   env_sound_interp([0, 0, 1, 1])
-  if (not vequal(res = channel2vct,
-                 vct(0.000, 0.053, 0.105, 0.158, 0.211, 0.263, 0.316, 0.368, 0.421, 0.474,
-                     0.526, 0.579, 0.632, 0.684, 0.737, 0.789, 0.842, 0.895, 0.947, 1.000))) and
-      (not vequal(res,
-                  vct(0.000, 0.055, 0.111, 0.166, 0.222, 0.277, 0.332, 0.388, 0.443, 0.499,
-                      0.554, 0.609, 0.665, 0.720, 0.776, 0.831, 0.886, 0.942, 0.997, 0.000))) # [ms]
-    snd_display("env_sound_interp no change: %s?", res)
+  req = vct(0.000, 0.053, 0.105, 0.158, 0.211, 0.263, 0.316, 0.368, 0.421, 0.474,
+            0.526, 0.579, 0.632, 0.684, 0.737, 0.789, 0.842, 0.895, 0.947, 1.000)
+  res = channel2vct()
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "env_sound_interp no change"))
   end
   undo_edit
   env_sound_interp([0, 0, 1, 0.95, 2, 0], 2.0)
-  if (not vequal(res = channel2vct,
-                 vct(0.000, 0.050, 0.100, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450,
-                     0.500, 0.550, 0.600, 0.650, 0.700, 0.750, 0.800, 0.850, 0.900, 0.950,
-                     1.000, 0.950, 0.900, 0.850, 0.800, 0.750, 0.700, 0.650, 0.600, 0.550,
-                     0.500, 0.450, 0.400, 0.350, 0.300, 0.250, 0.200, 0.150, 0.100, 0.050))) and
-      (not vequal(res,
-                  vct(0.000, 0.050, 0.100, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450,
-                      0.500, 0.550, 0.600, 0.650, 0.700, 0.750, 0.800, 0.850, 0.900, 0.950,
-                      1.000, 0.947, 0.895, 0.842, 0.789, 0.737, 0.684, 0.632, 0.579, 0.526,
-                      0.474, 0.421, 0.368, 0.316, 0.263, 0.211, 0.158, 0.105, 0.053, 0.000))) # [ms]
-    snd_display("env_sound_interp twice len and back: %s?", res)
+  req = vct(0.000, 0.050, 0.100, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450,
+            0.500, 0.550, 0.600, 0.650, 0.700, 0.750, 0.800, 0.850, 0.900, 0.950,
+            1.000, 0.950, 0.900, 0.850, 0.800, 0.750, 0.700, 0.650, 0.600, 0.550,
+            0.500, 0.450, 0.400, 0.350, 0.300, 0.250, 0.200, 0.150, 0.100, 0.050)
+  res = channel2vct()
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "env_sound_interp twice len and back"))
   end
   revert_sound(ind)
   set_sample(10, 0.5)
@@ -24503,7 +24561,7 @@ def test_15_02
   end
   start_playing(1, srate(ind))
   if find_sound("1a.snd")
-    snd_display("stop proc didn\'t close?")
+    snd_display("stop proc did not close?")
     Snd.catch do close_sound(ind) end
   end
   set_with_background_processes(old_bp)
@@ -24917,7 +24975,7 @@ def test_15_03
   revert_sound(ind)
   close_sound(ind)
   #
-  if File.exist?("storm.snd")
+  if File.exists?("storm.snd")
     ind = open_sound("storm.snd")
     set_sinc_width(10)
     with_time("src_sound(1.3)") do src_sound(1.3) end
@@ -24937,7 +24995,7 @@ def test_15_03
     ramp_channel(0.0, 1.0)
     close_sound(ind)
   end
-  if File.exist?("1a.snd") and $all_args
+  if File.exists?("1a.snd") and $all_args
     ind = open_sound("1a.snd")
     with_time("rubber_sound(1.25)") do rubber_sound(1.25) end
     close_sound(ind)
@@ -25530,8 +25588,9 @@ def amp_envs_equal?(snd, chn, pos0, pos1, df)
           max0 = e0[i]
         else
           inc0.times do |j|
-            if e0[j + inc0 * i] > max0
-              max0 = e0[j + inc0 * i]
+            nmx = e0[j + inc0 * i]
+            if nmx > max0
+              max0 = nmx
             end
           end
         end
@@ -25539,17 +25598,15 @@ def amp_envs_equal?(snd, chn, pos0, pos1, df)
           max1 = e1[i]
         else
           inc1.times do |j|
-            if e1[j + inc1 * i] > max1
-              max1 = e1[j + inc1 * i]
+            nmx = e1[j + inc1 * i]
+            if nmx > max1
+              max1 = nmx
             end
           end
         end
         if (max0 - max1).abs > df
-          snd_display("amp_env[%s]: max0 %s max1 %s df %s (more may follow...)?", i, max0, max1, df)
-          return false
+          snd_display(snd_float_format_neq(max0, max1, "amp_env[%d of %d], df %1.3f", i, minlen, df))
         end
-        max0 = -1.0
-        max1 = -1.0
       end
     else
       snd_display("lens: %s %s?", len0, len1)
@@ -25736,10 +25793,7 @@ def test_16_00
   end
   #
   revert_sound(oboe)
-  # INFO: edpos_fnc requires two args; procedure_ok() in snd-xen.c
-  # raises an exception only if args > arity, that's why here three
-  # args instead of one. [ms]
-  edpos_fnc = lambda do |hi, ho, hu| false end
+  edpos_fnc = lambda do |hi| false end
   [[lambda { scale_channel(2.0, 0, 123, oboe, 0, edpos_fnc) }, :scale_channel],
    [lambda { env_channel(make_env([0, 0, 1, 1], :length, 123), 0, 123, oboe, 0, edpos_fnc)}, :env_channel],
    [lambda { clm_channel(make_oscil, 0, 123, oboe, 0, edpos_fnc) }, :clm_channel],
@@ -25879,7 +25933,7 @@ def test_16_01
   insert_sound("2.snd")
   if frames != fr * 3 then snd_display("2.snd 3x = %s %s?", fr, frames) end
   if (res1 = frames(ind, 0)) != (res2 = frames(ind, 1))
-    snd_display("insert sync\'d: %s %s?", res1, res2)
+    snd_display("insert synced: %s %s?", res1, res2)
   end
   swap_channels
   if fneq(res1 = maxamp(ind, 1), m0) or fneq(res2 = maxamp(ind, 0), m1)
@@ -26101,13 +26155,13 @@ def test_16_01
   if (res = Snd.catch do map_channel(lambda do |y| "hiho" end) end).first != :bad_type
     snd_display("map_channel bad_type: %s", res.inspect)
   end
-  if RUBY_VERSION > "1.8.0"
+  if RUBY_VERSION >= "1.8.0"
     ctr = 0
     if (res = Snd.catch do
-          scan_channel(lambda { |y|
+          scan_channel(lambda do |y|
                          ctr += 1
                          asdf
-                       })
+                       end)
         end).first != :name_error
       snd_display("scan_channel unbound: %s", res.inspect)
     end
@@ -27166,7 +27220,7 @@ def test_16_04
   end
   #
   data = ["1a.snd", "oboe.snd", "storm.snd"].map do |sound|
-    if File.exist?(sound)
+    if File.exists?(sound)
       ind = view_sound(sound)
       set_squelch_update(true, ind)
       tms = [lambda { scale_channel(2.0) },
@@ -27227,10 +27281,10 @@ def test_16_04
   undo_edit(1, ind, 0)
   src_channel(0.25)
   if fneq(res = maxamp(ind, 0), 0.5)
-    snd_display("src_channel max 0.25: %s?", res)
+    snd_display("src_channel max 0.25: res %1.3f != req 0.500?", res)
   end
   if fneq(res = sample(400), 0.5)
-    snd_display("src_channel 0.25 400: %s?", res)
+    snd_display("src_channel 0.25 400: res %1.3f != req 0.500?", res)
   end
   unless vequal(res = channel2vct(360, 80, ind, 0),
                 vct(0.000, -0.000, -0.000, -0.000, 0.000, 0.000, 0.001, 0.001,
@@ -27247,14 +27301,15 @@ def test_16_04
   end
   undo_edit(2, ind, 0)
   i = 0
+  pi_div_100 = PI / 100.0
   map_channel_rb do |y|
-    val = sin(i * (PI / 100))
+    val = sin(i * pi_div_100)
     i += 1
     val * 0.5
   end
-  [[2, 0.008],
-   [1.5, 0.01],
-   [3, 0.015],
+  [[2.00, 0.008],
+   [1.50, 0.010],
+   [3.00, 0.015],
    [3.14, 0.025]].each do |sr, df|
     src_channel(sr)
     if ((res = maxamp(ind, 0)) - 0.5).abs > df
@@ -27275,8 +27330,12 @@ def test_16_04
       s1 = sample(i, ind, 0, edit_position)
       s2 = sample((sr * i).round, ind, 0, edit_position - 1)
       s3 = sample(i, ind, 0, 1)
-      if (s1 - s2).abs > df then snd_display("sample %s src(%s): %s %s?", i, sr, s1, s2) end
-      if fneq(s3, 0.0) then snd_display("sample %s (1): %s?", i, s3) end
+      if (s1 - s2).abs > df
+        snd_display("sample %s src(%s): %s %s?", i, sr, s1, s2)
+      end
+      if fneq(s3, 0.0)
+        snd_display("sample %s (1): %s?", i, s3)
+      end
     end
     undo_edit(1, ind, 0)
   end
@@ -27284,35 +27343,38 @@ def test_16_04
   # 
   ind = open_sound("oboe.snd")
   orig_max = maxamp(ind, 0)
-  [[2.00, $with_test_nogui ? 0.02 : 0.008], # INFO: nogui's behavior differs from xm? [ms]
-   [1.50, 0.020],               # INFO: original df 0.01 [ms]
+  [[2.00, 0.008],
+   [1.50, 0.010],
    [3.00, 0.015],
    [3.14, 0.025]].each do |sr, df|
     src_channel(sr)
     if ((res = maxamp(ind, 0)) - orig_max).abs > df
-      snd_display("src_channel oboe (1) sr %s: orig-max %s mx %s (df %s)?", sr, orig_max, res, df)
+      snd_display(snd_float_format_neq(res, orig_max,
+                                       "src_channel oboe (1) sr %1.3f, df %1.3f", sr, df))
     end
     undo_edit(1, ind, 0)
   end
   #
-  [[0.50, $with_test_nogui ? 0.03 : 0.001], # INFO: nogui's behavior differs from xm? [ms]
+  [[0.50, 0.001],
    [0.25, 0.001],
-   [0.90, 0.030],               # INFO: original df 0.001
+   [0.90, 0.001],
    [0.10, 0.001]].each do |sr, df|
     src_channel(sr)
     if ((res = maxamp(ind, 0)) - orig_max).abs > df
-      snd_display("src_channel oboe (2) sr %s: orig-max %s mx %s (df 0.001)?", sr, orig_max, res)
+      snd_display(snd_float_format_neq(res, orig_max,
+                                       "src_channel oboe (2) sr %1.3f, df %1.3f", sr, df))
     end
     50.times do |i|
       samp = i * 100
       s1 = sample(samp, ind, 0, edit_position)
       s2 = sample((sr * samp).floor, ind, 0, edit_position - 1)
       if (s1 - s2).abs > df
-        snd_display("sample %s oboe (2) src(%s): s1 %s s2 %s (df 0.001)?", i, sr, s1, s2)
+        snd_display(snd_float_format_neq(s1, s2,
+                                         "sample %d oboe (2) sr %1.3f, df %1.3f", i, sr, df))
       end
     end
     undo_edit(1, ind, 0)
-    amp_envs_equal?(ind, 0, edit_position, edit_position + 1, 0.02) # INFO: original 0.01 [ms]
+    amp_envs_equal?(ind, 0, edit_position, edit_position + 1, 0.01)
   end
   #
   revert_sound(ind)
@@ -27653,7 +27715,7 @@ def test_17
     draw_fermata(200, 100, 60, 0, ind, 0)
     draw_line(100, 100, 200, 200, ind, 0)
     draw_dot(300, 300, 10, ind, 0)
-    unless RUBY_VERSION == "1.6.8" then draw_string("hiho", 20, 20, ind, 0) end
+    if RUBY_VERSION >= "1.8.0" then draw_string("hiho", 20, 20, ind, 0) end
     draw_dots([25, 25, 50, 50, 100, 100], 10, ind, 0)
     arrow2right(100, 50, 10, ind, 0)
     fill_rectangle(20, 20, 100, 100, ind, 0)
@@ -27877,7 +27939,7 @@ def test_19_00
   $save_state_hook.add_hook!("snd-test") do |fname| "savehook.snd" end
   save_state("s61.rb")
   close_sound(ind)
-  if File.exist?("savehook.snd")
+  if File.exists?("savehook.snd")
     load("s61.rb")
     ind = find_sound("oboe.snd")
     if sound?(ind)
@@ -27896,12 +27958,12 @@ def test_19_00
         "edit-list-to-function-saved.snd"
       end
       func = edit_list2function(ind, 0)
-      if File.exist?("edit-list-to-function-saved.snd")
+      if File.exists?("edit-list-to-function-saved.snd")
         snd_display("edit_list2function called $save_state_hook")
         delete_file("edit-list-to-function-saved.snd")
       end
       save_edit_history("save-edit-history-saved.rb", ind, 0)
-      if File.exist?("edit-list-to-function-saved.snd")
+      if File.exists?("edit-list-to-function-saved.snd")
         snd_display("save_edit_history called $save_state_hook")
         delete_file("edit-list-to-function-saved.snd")
       end
@@ -28564,8 +28626,10 @@ def test_19_02
   revert_sound(ind)
   # simple ramp
   ramp_channel(0.2, 0.9)
-  if ffneq(res = maxamp, 0.0899)
-    snd_display("edit_list2function ramp: %s?", res)
+  req = 0.0899
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function ramp"))
   end
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function 4: %s", func)
@@ -28574,14 +28638,18 @@ def test_19_02
     snd_display("edit_list2function 4: %s", res)
   end
   func.call(ind, 0)
-  if ffneq(res = maxamp, 0.061)
-    snd_display("edit_list2function called (4): %s?", res)
+  req = 0.061
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function called (4)"))
   end
   revert_sound(ind)
   # simple xramp
   xramp_channel(0.2, 0.9, 32.0)
-  if ffneq(res = maxamp, 0.055)
-    snd_display("edit_list2function xramp: %s?", res)
+  req = 0.055
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function xramp"))
   end
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function 5: %s", func)
@@ -28596,8 +28664,10 @@ def test_19_02
   revert_sound(ind)
   # simple env
   env_sound([0, 0, 1, 1])
-  if ffneq(res = maxamp, 0.0906)
-    snd_display("edit_list2function env: %s?", res)
+  req = 0.0906
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function env"))
   end
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function 6: %s", func)
@@ -28606,14 +28676,18 @@ def test_19_02
     snd_display("edit_list2function 6: %s", res)
   end
   func.call(ind, 0)
-  if ffneq(res = maxamp, 0.0634)
-    snd_display("edit_list2function called (6): %s?", res)
+  req = 0.0634
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function called (6)"))
   end
   revert_sound(ind)
   # less simple env
   env_sound([0, 0, 1, 0.3, 2, 0.8, 3, 0])
-  if ffneq(res = maxamp, 0.107)
-    snd_display("edit_list2function env (7): %s?", res)
+  req = 0.107
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function env (7)"))
   end
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function 7: %s", func)
@@ -28678,16 +28752,20 @@ def test_19_02
   end
   revert_sound(ind)
   func.call(ind, 0)
-  if ffneq(res = maxamp, 0.1459)
-    snd_display("edit_list2function 7e max: %s?", res)
+  req = 0.146
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function 7e max"))
   end
   if (res = edit_position) != 5
     snd_display("edit_list2function 7e edpos: %s?", res)
   end
   revert_sound(ind)
   env_sound([0, 0, 1, 1, 2, 0], 0, frames, 32.0)
-  if ffneq(res = maxamp, 0.146)
-    snd_display("edit_list2function 7f max: %s?", res)
+  req = 0.146
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function 7f max"))
   end
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function 7f: %s", func)
@@ -28697,8 +28775,10 @@ def test_19_02
   end
   revert_sound(ind)
   func.call(ind, 0)
-  if ffneq(res = maxamp, 0.146)
-    snd_display("edit_list2function called (7f): %s?", res)
+  req = 0.146
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function called (7f)"))
   end
   revert_sound(ind)
   env_sound([0, 0, 1, 1, 2, 1, 3, 0], 0, frames, 0.0)
@@ -28863,8 +28943,10 @@ def test_19_02
   end
   revert_sound(ind)
   func.call(ind, 0)
-  if ffneq(res = maxamp, 0.269)
-    snd_display("edit_list2function called (13): %s?", res)
+  req = 0.269
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function called (13)"))
   end
   revert_sound(ind)
   scale_selection_to(1.0)
@@ -28876,8 +28958,10 @@ def test_19_02
   end
   revert_sound(ind)
   env_selection([0, 0, 1, 1, 2, 0])
-  if fneq(res = sample(4000), 0.054) # INFO: original 0.0173 [ms]
-    snd_display("edit_list2function 14 samp: %s?", res)
+  req = 0.0173
+  res = sample(4000)
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function 14 samp"))
   end
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function 14: %s", func)
@@ -28887,8 +28971,10 @@ def test_19_02
   end
   revert_sound(ind)
   func.call(ind, 0)
-  if fneq(res = sample(4000), 0.054) # INFO: original 0.0173 [ms]
-    snd_display("edit_list2function called (14): %s?", res)
+  req = 0.0173
+  res = sample(4000)
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "edit_list2function called (14)"))
   end
   revert_sound(ind)
   make_selection(1000, 1100)
@@ -29248,8 +29334,8 @@ def test_19_03
   revert_sound(ind)
   func.call(ind, 0)
   revert_sound(ind)
-  if fffneq(res = speed_control(ind), 1.0)
-    snd_display("controls2channel speed: %s?", res)
+  if fneq(res = speed_control(ind), 1.0)
+    snd_display(snd_float_format_neq(res, 1.0, "controls2channel speed"))
   end
   #
   controls2channel([false, false, [0.5]])
@@ -30008,8 +30094,8 @@ def pwt(data, n, isign, cc, cr)
       1.upto(ncof) do |k|
         jf = n1 & (ni + k)
         jr = n1 & (nj + k)
-        data1[ii] += cc[k - 1] * data[jf]
-        data1[ii + nh] += cr[k - 1] * data[jr]
+        data1[ii] = data1[ii] + cc[k - 1] * data[jf]
+        data1[ii + nh] = data1[ii + nh] + cr[k - 1] * data[jr]
       end
       ii += 1
     end
@@ -30022,20 +30108,24 @@ def pwt(data, n, isign, cc, cr)
       1.upto(ncof) do |k|
         jf = n1 & (ni + k)
         jr = n1 & (nj + k)
-        data1[jf] += cc[k - 1] * ai
-        data1[jr] += cr[k - 1] * ai1
+        data1[jf] = data1[jf] + cc[k - 1] * ai
+        data1[jr] = data1[jr] + cr[k - 1] * ai1
       end
       ii += 1
     end
   end
-  data1.map_with_index do |val, i| data[i] = val end
+  data1.map_with_index do |val, i|
+    data[i] = val
+  end
 end
 
 def corr(x, y, n, m)
   r = Vct.new(m + 1)
   (m + 1).times do |i|
     r[i] = 0.0
-    (n - i).times do |j| r[i] += x[j + i] * y[j] end
+    (n - i).times do |j|
+      r[i] = r[i] + x[j + i] * y[j]
+    end
   end
   r
 end
@@ -30971,9 +31061,11 @@ end
 
 def test_20_02
   if defined? dolph # ancient ruby versions have no acos etc.
-    unless vequal(res = dolph(16, 2.5), vct(0.097, 0.113, 0.221, 0.366, 0.536, 0.709, 0.860, 0.963,
-                                            1.000, 0.963, 0.860, 0.709, 0.536, 0.366, 0.221, 0.113))
-      snd_display("dolph 16 2.5 (dsp.rb): %s?", res)
+    req = vct(0.097, 0.113, 0.221, 0.366, 0.536, 0.709, 0.860, 0.963,
+              1.000, 0.963, 0.860, 0.709, 0.536, 0.366, 0.221, 0.113)
+    res = dolph(16, 2.5)
+    unless vequal(res, req)
+      snd_display(snd_seq_format_neq(res, req, "dolph 16 2.5 (dsp.rb)"))
     end
   end
   v = Vct.new(8)
@@ -30982,20 +31074,28 @@ def test_20_02
   unless vvequal(v, v0) then snd_display("dht twice: %s %s?", v, v0) end
   v.fill 0.0
   v[1] = 1.0
-  v = dht(v)
-  unless vequal(v, vct(1.000, 1.414, 1.000, 0.000, -1.000, -1.414, -1.000, 0.000))
-    snd_display("dht of pulse: %s?", v)
+  req = vct(1.000, 1.414, 1.000, 0.000, -1.000, -1.414, -1.000, 0.000)
+  res = dht(v)
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "dht of pulse"))
   end
   #
   ind = open_sound("oboe.snd")
-  val1 = find_sine(553.0, 2000, 3000).first
-  val2 = find_sine(620.0, 2000, 3000).first
-  if fneq_err(val1, 0.03835, 0.0015) or fneq_err(val2, 0.0012, 0.0025)
-    snd_display("find_sine: (0.03835) %s (0.0012) %s?", val1, val2)
+  req1 = 0.03835
+  req2 = 0.0012
+  res1 = find_sine(553.0, 2000, 3000, ind).first
+  res2 = find_sine(620.0, 2000, 3000, ind).first
+  if fneq(res1, req1) or fneq(res2, req2)
+    if fneq(res1, req1)
+      snd_display(snd_float_format_neq(res1, req1, "find_sine"))
+    else
+      snd_display(snd_float_format_neq(res2, req2, "find_sine"))
+    end
   end
-  frq = spot_freq(2000, ind, 0)
-  if frq.round != 553
-    snd_display("spot_freq: %s?", frq)
+  req = 553
+  res = spot_freq(2000, ind, 0).round
+  if res != req
+    snd_display(snd_int_format_neq(res, req, "spot_freq"))
   end
   down_oct(2)
   frq = spot_freq(2000, ind, 0)
@@ -31004,9 +31104,13 @@ def test_20_02
   end
   undo_edit
   zero_phase
-  if fneq(sample(0), 0.1472) then snd_display("zero_phase: %s?", sample(0)) end
+  req = 0.1472
+  res = sample(0)
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "zero_phase"))
+  end
   undo_edit
-  rotate_phase(lambda { |x| x })
+  rotate_phase(lambda do |x| x end)
   undo_edit
   brighten_slightly(0.5)
   undo_edit
@@ -31014,43 +31118,64 @@ def test_20_02
   close_sound(ind)
   #
   ind = open_sound("1a.snd")
-  valf = find_sine(440.0, 0, frames).first
-  valg = 2 * (goertzel(440.0, 0, frames) / frames)
-  valf1 = find_sine(100.0, 0, frames).first
-  valg1 = 2 * (goertzel(100.0, 0, frames) / frames)
-  valf2 = find_sine(440.0, 0, frames).first
-  valg2 = 2 * (goertzel(440.0, 0, frames) / frames)
-  valf3 = find_sine(437.0, 0, frames).first
-  valg3 = 2 * (goertzel(437.0, 0, frames) / frames)
-  if fneq(valf, valg) then snd_display("goertzel 0: %s %s?", valf, valg) end
-  if fneq(valf1, valg1) then snd_display("goertzel 1: %s %s?", valf1, valg1) end
-  if fneq(valf2, valg2) then snd_display("goertzel 2: %s %s?", valf2, valg2) end
-  if fneq(valf3, valg3) then snd_display("goertzel 3: %s %s?", valf3, valg3) end
+  frms = frames(ind)
+  valf = find_sine(440.0, 0, frms, ind).first
+  valg = 2 * (goertzel(440.0, 0, frms, ind) / frms)
+  valf1 = find_sine(100.0, 0, frms, ind).first
+  valg1 = 2 * (goertzel(100.0, 0, frms, ind) / frms)
+  valf2 = find_sine(440.0, 0, frms, ind).first
+  valg2 = 2 * (goertzel(440.0, 0, frms, ind) / frms)
+  valf3 = find_sine(437.0, 0, frms, ind).first
+  valg3 = 2 * (goertzel(437.0, 0, frms, ind) / frms)
+  if fneq(valf, valg)
+    snd_display(snd_float_format_neq(valg, valf, "goertzel 0"))
+  end
+  if fneq(valf1, valg1)
+    snd_display(snd_float_format_neq(valg1, valf1, "goertzel 1"))
+  end
+  if fneq(valf2, valg2)
+    snd_display(snd_float_format_neq(valg2, valf2, "goertzel 2"))
+  end
+  if fneq(valf3, valg3)
+    snd_display(snd_float_format_neq(valg3, valf3, "goertzel 3"))
+  end
   close_sound(ind)
   #
-  unless vequal(res = vct_polynomial(vct(0, 2), vct(1, 2)), vct(1, 5))
-    snd_display("vct_polynomial 0: %s?", res)
+  req = vct(1, 5)
+  res = vct_polynomial(vct(0, 2), vct(1, 2))
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "vct_polynomial 0"))
   end
-  unless vequal(res = vct_polynomial(vct(0, 1, 2), vct(0, 2, 1)), vct(0, 3, 8))
-    snd_display("vct_polynomial 1: %s?", res)
+  req = vct(0, 3, 8)
+  res = vct_polynomial(vct(0, 1, 2), vct(0, 2, 1))
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "vct_polynomial 1"))
   end
-  unless vequal(res = vct_polynomial(vct(0, 1, 2), vct(0, 2, 1, 0.5)), vct(0, 3.5, 12))
-    snd_display("vct_polynomial 2: %s?", res)
+  req = vct(0, 3.5, 12)
+  res = vct_polynomial(vct(0, 1, 2), vct(0, 2, 1, 0.5))
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "vct_polynomial 2"))
   end
-  unless vequal(res = vct_polynomial(vct(0, 1, 2), vct(1)), vct(1, 1, 1))
-    snd_display("vct_polynomial 3: %s?", res)
+  req = vct(1, 1, 1)
+  res = vct_polynomial(vct(0, 1, 2), vct(1))
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "vct_polynomial 3"))
   end
   #
   ind = open_sound("pistol.snd")
   mx = maxamp(ind, 0)
   channel_polynomial(vct(0, 2), ind, 0)
-  if fneq(maxamp, mx * 2)
-    snd_display("channel_polynomial 2: %s?", maxamp)
+  req = mx * 2
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "channel_polynomial 2"))
   end
   undo_edit
   channel_polynomial(vct(0.0, 0.5, 0.25, 0.25), ind, 0)
-  if fneq_err(maxamp, 0.222, 0.12)
-    snd_display("channel_polynomial 3: %s?", maxamp)
+  req = 0.222
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "channel_polynomial 3"))
   end
   undo_edit
   channel_polynomial(vct(0, 0, 1), ind, 0)
@@ -31062,39 +31187,58 @@ def test_20_02
   if pos = scan_channel(lambda { |y| y < 0.0 })
     snd_display("channel_polynomial offset: %s?", pos)
   end
-  if fneq_err(maxamp, 0.8575, 0.14)
-    snd_display("channel_polynomial off mx: %s?", maxamp)
+  req = 0.8575
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "channel_polynomial off mx"))
   end
   undo_edit
   spectral_polynomial(vct(0, 1), ind, 0)
-  if ffneq(maxamp, 0.493)
-    snd_display("spectral_polynomial 0 mx: %s?", maxamp)
+  req = 0.493
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "spectral_polynomial 0 mx"))
   end
-  if (res = frames(ind, 0)) != 41623
-    snd_display("spectral_polynomial 0 len: %s?", res)
+  req = 41623
+  res = frames(ind, 0)
+  if res != req
+    snd_display(snd_int_format_neq(res, req, "spectral_polynomial 0 len"))
   end
   undo_edit
   spectral_polynomial(vct(0, 0.5, 0.5), ind, 0)
-  if ffneq(maxamp, 0.493)
-    snd_display("spectral_polynomial 1 mx: %s?", maxamp)
+  req = 0.493
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "spectral_polynomial 1 mx"))
   end
-  if (res = frames(ind, 0)) != 41623 * 2
-    snd_display("spectral_polynomial 1 len: %s?", res)
+  req = 41623 * 2
+  res = frames(ind, 0)
+  if res != req
+    snd_display(snd_int_format_neq(res, req, "spectral_polynomial 1 len"))
   end
   undo_edit
   spectral_polynomial(vct(0, 0, 0, 1), ind, 0)
-  if ffneq(maxamp, 0.493)
-    snd_display("spectral_polynomial 2 mx: %s?", maxamp)
+  req = 0.493
+  res = maxamp()
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "spectral_polynomial 2 mx"))
   end
-  if (res = frames(ind, 0)) != 41623 * 3
-    snd_display("spectral_polynomial 2 len: %s?", res)
+  req = 41623 * 3
+  res = frames(ind, 0)
+  if res != req
+    snd_display(snd_int_format_neq(res, req, "spectral_polynomial 2 len"))
   end
   close_sound(ind)
-  # 
+  #
+  req1 = 1876.085
+  req2 = 1447.004
   vals = scentroid("oboe.snd")
-  # INFO: original 1876.085, 1447.004 [ms]
-  if fneq(vals[0], 2512.300) or fneq(vals[1], 2502.201)
-    snd_display("scentroid: %s?", vals)
+  if fneq(vals[0], req1) or fneq(vals[1], req2)
+    if fneq(vals[0], req1)
+      snd_display(snd_float_format_neq(vals[0], req1, "scentroid"))
+    else
+      snd_display(snd_float_format_neq(vals[1], req2, "scentroid"))
+    end
   end
   flt = make_fir_filter(3, vct(0.5, 0.25, 0.125))
   data = Vct.new(10)
@@ -31103,7 +31247,9 @@ def test_20_02
   fdata = invert_filter(vct(0.5, 0.25, 0.125))
   flt = make_fir_filter(fdata.length, fdata)
   undata.map! do |val| fir_filter(flt, val) end
-  unless vequal(undata, data) then snd_display("invert_filter: %s?", undata) end
+  unless vequal(undata, data)
+    snd_display(snd_seq_format_neq(undata, data, "invert_filter"))
+  end
   # 
   top = 0.9
   coeffs = Vct.new(6) do
@@ -31117,44 +31263,55 @@ def test_20_02
   fdata = invert_filter(coeffs)
   flt = make_fir_filter(fdata.length, fdata)
   undata.map! do |val| fir_filter(flt, val) end
-  unless vequal(data, undata) then snd_display("invert_filter (6): %s?", undata) end
+  unless vequal(data, undata)
+    snd_display(snd_seq_format_neq(undata, data, "invert_filter (6)"))
+  end
   #
   flt = make_volterra_filter(vct(1, 0.4), vct(0.3, 0.2, 0.1))
-  data = Vct.new(10) do |i| volterra_filter(flt, (i == 1 ? 0.5 : 0.0)) end
-  unless vequal(data, vct(0.000, 0.575, 0.250, 0.025, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
-    snd_display("volterra_filter: %s?", data)
+  req = vct(0.000, 0.575, 0.250, 0.025, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000)
+  res = Vct.new(10) do |i| volterra_filter(flt, (i == 1 ? 0.5 : 0.0)) end
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "volterra_filter"))
   end
   # 
   flt = make_volterra_filter(vct(1.0), vct(1.0))
-  data = Vct.new(10) do |i| volterra_filter(flt, (i.zero? ? 1.0 : 0.0)) end
-  unless vequal(data, vct(2.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
-    snd_display("volterra_filter x + x^2: %s?", data)
+  req = vct(2.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000)
+  res = Vct.new(10) do |i| volterra_filter(flt, (i.zero? ? 1.0 : 0.0)) end
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "volterra_filter x + x^2"))
   end
   # 
   flt = make_volterra_filter(vct(1.0), vct(1.0))
   x = 1.1
-  data = Vct.new(10) do |i| volterra_filter(flt, x -= 0.1) end
-  unless vequal(data, vct(2.000, 1.710, 1.440, 1.190, 0.960, 0.750, 0.560, 0.390, 0.240, 0.110))
-    snd_display("volterra_filter x + x^2 by -0.1: %s?", data)
+  req = vct(2.000, 1.710, 1.440, 1.190, 0.960, 0.750, 0.560, 0.390, 0.240, 0.110)
+  res = Vct.new(10) do |i| volterra_filter(flt, x -= 0.1) end
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "volterra_filter x + x^2 by -0.1"))
   end
   # 
   flt = make_volterra_filter(vct(1.0, 0.5), vct(1.0))
-  data = Vct.new(10) do |i| volterra_filter(flt, (i.zero? ? 1.0 : 0.0)) end
-  unless vequal(data, vct(2.000, 0.500, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
-    snd_display("volterra_filter x + 0.5x(n-1) + x^2: %s?", data)
+  req = vct(2.000, 0.500, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000)
+  res = Vct.new(10) do |i| volterra_filter(flt, (i.zero? ? 1.0 : 0.0)) end
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "volterra_filter x + 0.5x(n-1) + x^2"))
   end
   # 
   flt = make_volterra_filter(vct(1.0, 0.5), vct(1.0, 0.6))
-  data = Vct.new(10) do |i| volterra_filter(flt, (i.zero? ? 0.9 : 0.0)) end
-  unless vequal(data, vct(1.710, 0.936, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000))
-    snd_display("volterra_filter x + 0.5x(n-1) + x^2 + 0.6: %s?", data)
+  req = vct(1.710, 0.936, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000)
+  res = Vct.new(10) do |i| volterra_filter(flt, (i.zero? ? 0.9 : 0.0)) end
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "volterra_filter x + 0.5x(n-1) + x^2 + 0.6"))
   end
   # 
   ind = new_sound("test.snd", :size, 100)
   gen = make_oscil(440)
   map_chan(lambda { |y| oscil(gen) })
   down_oct(2)
-  if frames != 200 then snd_display("down_oct new len: %s?", frames) end
+  req = 200
+  res = frames()
+  if res != req
+    snd_display(snd_int_format_neq(res, req, "down_oct new len"))
+  end
   r1 = make_sampler(0, ind, 0, 1, 1)
   r2 = make_sampler(0, ind, 0, 1, 2)
   200.times do |i|
@@ -31162,7 +31319,7 @@ def test_20_02
     val2 = r2.call
     val3 = r2.call
     if fneq(val1, val2) and fneq(val1, val3)
-      snd_display("down_oct: %s %s %s %s?", i, val1, val2, val3)
+      snd_display(snd_float_format_neq(val1, val2, "down_oct[%d]", i))
     end
   end
   close_sound(ind)
@@ -31170,10 +31327,15 @@ def test_20_02
   d0 = Vct.new(8)
   d1 = Vct.new(8)
   d0[2] = 1.0
+  req1 = vct(1, 0, -1, 0, 1, 0, -1, 0)
+  req2 = vct(0, 1, 0, -1, 0, 1, 0, -1)
   vals = fractional_fourier_transform(d0, d1, 8, 1.0)
-  if (not vequal(vals[0], vct(1, 0, -1, 0, 1, 0, -1, 0))) or
-      (not vequal(vals[1], vct(0, 1, 0, -1, 0, 1, 0, -1)))
-    snd_display("fractional_fourier_transform: %s?", vals)
+  if (not vequal(vals[0], req1)) or (not vequal(vals[1], req2))
+    unless vequal(vals[0], req1)
+      snd_display(snd_seq_format_neq(vals[0], req1, "fractional_fourier_transform"))
+    else
+      snd_display(snd_seq_format_neq(vals[1], req2, "fractional_fourier_transform"))
+    end
   end
   d0 = Vct.new(8)
   d1 = Vct.new(8)
@@ -31183,39 +31345,49 @@ def test_20_02
     d0[i] = val.real
     d1[i] = val.imag
   end
-  if (not vequal(d0, vct(1, 0, -1, 0, 1, 0, -1, 0))) or
-      (not vequal(d1, vct(0, 1, 0, -1, 0, 1, 0, -1)))
-    snd_display("z_transform: %s %s?", d0, d1)
+  req1 = vct(1, 0, -1, 0, 1, 0, -1, 0)
+  req2 = vct(0, 1, 0, -1, 0, 1, 0, -1)
+  if (not vequal(d0, req1)) or (not vequal(d1, req2))
+    unless vequal(d0, req1)
+      snd_display(snd_seq_format_neq(d0, req1, "z_transform"))
+    else
+      snd_display(snd_seq_format_neq(d1, req2, "z_transform"))
+    end
   end
   v1 = Vct.new(16)
   v1[0] = 1.0
-  unless vequal(res = z_transform(v1, 16, 0.5).to_vct, Vct.new(16, 1.0))
-    snd_display("z_transform 0.5 0=1: %s?", res)
+  req = Vct.new(16, 1.0)
+  res = z_transform(v1, 16, 0.5).to_vct
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "z_transform 0.5 0=1"))
   end
-  unless vequal(res = z_transform(v1, 16, -1.0).to_vct, Vct.new(16, 1.0))
-    snd_display("z_transform -1.0 0=1: %s?", res)
+  res = z_transform(v1, 16, -1.0).to_vct
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "z_transform -1.0 0=1"))
   end
   v1[0] = 0.0
   v1[1] = 1.0
-  unless vequal(res = z_transform(v1, 16, 0.5).to_vct,
-                vct(1, 0.5, 0.25, 0.125, 0.062, 0.031, 0.016, 0.008,
-                    0.004, 0.002, 0.001, 0, 0, 0, 0, 0))
-    snd_display("z_transform 0.5 1=1: %s?", res)
+  req = vct(1, 0.5, 0.25, 0.125, 0.062, 0.031, 0.016, 0.008, 0.004, 0.002, 0.001, 0, 0, 0, 0, 0)
+  res = z_transform(v1, 16, 0.5).to_vct
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "z_transform 0.5 1=1"))
   end
-  unless vequal(res = z_transform(v1, 16, 2.0).to_vct,
-                vct(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768))
-    snd_display("z_transform 2.0 1=1: %s?", res)
+  req = vct(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768)
+  res = z_transform(v1, 16, 2.0).to_vct
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "z_transform 2.0 1=1"))
   end
   v1[2] = 1.0
-  unless vequal(res = z_transform(v1, 16, 0.5).to_vct,
-                vct(2, 0.75, 0.3125, 0.14, 0.0664, 0.0322, 0.0158, 0.00787,
-                    0.0039, 0.0019, 0, 0, 0, 0, 0, 0))
-    snd_display("z_transform 0.5 1=1 2=1: %s?", res)
+  req = vct(2, 0.75, 0.3125, 0.14, 0.0664, 0.0322, 0.0158, 0.00787, 0.0039, 0.0019, 0, 0, 0, 0, 0, 0)
+  res = z_transform(v1, 16, 0.5).to_vct
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "z_transform 0.5 2=1"))
   end
-  unless vequal(res = z_transform(v1, 16, 2.0).to_vct,
-                vct(2, 6, 20, 72, 272, 1056, 4160, 16512,
-                    65792, 262656, 1049600, 4196352, 16781312, 67117056, 268451840, 1073774592))
-    snd_display("z_transform 2.0 1=1 2=1: %s?", res)
+  req = vct(2, 6, 20, 72, 272, 1056, 4160, 16512, 65792, 262656, 1049600,
+            4196352, 16781312, 67117056, 268451840, 1073774592)
+  res = z_transform(v1, 16, 2.0).to_vct
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "z_transform 2.0 1=1 2=1"))
   end
   j = 1.0
   v1.map! do |ignored|
@@ -31223,8 +31395,10 @@ def test_20_02
     j *= 0.4
     val
   end
-  unless vequal(res = z_transform(v1, 16, 1.0).to_vct, Vct.new(16, 1.0 / (1.0 - 0.4)))
-    snd_display("z_transform 1 0.4g: %s?", res)
+  req = Vct.new(16, 1.0 / (1.0 - 0.4))
+  res = z_transform(v1, 16, 1.0).to_vct
+  unless vequal(res, req)
+    snd_display(snd_seq_format_neq(res, req, "z_transform 1 0.4g"))
   end
   ind = open_sound("oboe.snd")
   automorph(Complex(0.0, 1.0), 0, 0, 1)
@@ -31239,7 +31413,9 @@ def test_20_02
                  if diff > mxdiff then mxdiff = diff end
                  false
                end)
-  if mxdiff > 0.003 then snd_display("automorph rotation: %s?", mxdiff) end
+  if mxdiff > 0.003
+    snd_display(snd_float_format_neq(mxdiff, 0.003, "automorph rotation"))
+  end
   close_sound(ind)
 end
 
@@ -31940,11 +32116,11 @@ def test_21_01
           0
         end
     if k > 127
-      k = ?x
+      k = key_to_int(?x)
       s = 4
     end
-    if k == ?e or k == ?E
-      snd_simulate_keystroke(ind, 0, ?q, 0)
+    if k == key_to_int(?e) or k == key_to_int(?E)
+      snd_simulate_keystroke(ind, 0, key_to_int(?q), 0)
     end
     snd_simulate_keystroke(ind, random(channels(ind)), k, s)
     if sound?(ind) and frames(ind, 0) > 1000000
@@ -32054,59 +32230,52 @@ def test_21_02
   #
   ind1 = open_sound("now.snd")
   ind2 = open_sound("oboe.snd")
-  if fneq(res = channel_mean(ind1, 0), 5.02560673308833e-5)
-    snd_display("channel_mean: %s?", res)
-  end
-  # INFO: original 50.7153476262465 [ms]
-  if fneq(res = channel_total_energy(ind1, 0), 269.693)
-    snd_display("channel_total_energy: %s?", res)
-  end
-  # INFO: original 0.00155078578803922 [ms]
-  if fneq(res = channel_average_power(ind1, 0), 0.012)
-    snd_display("channel_average_power: %s?", res)
-  end
-  # INFO: original 0.039380017623653 [ms]
-  if fneq(res = channel_rms(ind1, 0), 0.111)
-    snd_display("channel_rms: %s?", res)
-  end
-  # INFO: original 7.12147088923675 [ms]
-  if fneq(res = channel_norm(ind1, 0), 16.422)
-    snd_display("channel_norm: %s?", res)
-  end
-  # INFO: original 50.7153476237207 [ms]
-  if fneq(res = channel_variance(ind1, 0), 269.693)
-    snd_display("channel_variance: %s?", res)
-  end
-  # INFO: original 7.12147088923675 [ms]
-  if fneq(res = channel_lp(2, ind1, 0), 16.422)
-    snd_display("channel_lp 2: %s?", res)
-  end
-  # INFO: original 775.966033935547 [ms]
-  if fneq(res = channel_lp(1, ind1, 0), 2043.776)
-    snd_display("channel_lp 1: %s?", res)
-  end
-  # INFO: original 1.52892031334341 [ms]
-  if fneq(res = channel2_inner_product(ind1, 0, ind2, 0), -0.275)
-    snd_display("channel2_inner_product: %s?", res)
-  end
-  # INFO: original 1.55485084385627 [ms]
-  if defined? channel2_angle # ancient ruby versions have no acos etc.
-    if fneq(res = channel2_angle(ind1, 0, ind2, 0), 1.572)
-      snd_display("channel2_angle: %s?", res)
+  [[:channel_mean,          5.02560673308833e-5],
+   [:channel_total_energy,  50.7153476262465],
+   [:channel_average_power, 0.00155078578803922],
+   [:channel_rms,           0.039380017623653],
+   [:channel_norm,          7.12147088923675],
+   [:channel_variance,      50.7153476237207]].each do |func_sym, req|
+    res = snd_func(func_sym, ind1, 0)
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "%s", func_sym))
     end
   end
-  if res = channel2_orthogonal?(ind1, 0, ind2, 0)
-    snd_display("channel2_orthogonal?: %s?", res)
+  [[2, 7.12147088923675],
+   [1, 775.966033935547]].each do |arg, req|
+    res = channel_lp(arg, ind1, 0)
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "channel_lp %d", arg))
+    end
   end
-  # INFO: original 0.0301470932351876 [ms]
-  if fneq(res = channel2_coefficient_of_projection(ind1, 0, ind2, 0), -0.001)
-    snd_display("channel2_coefficient_of_projection: %s?", res)
+  req = 1.52892031334341
+  res = channel2_inner_product(ind1, 0, ind2, 0)
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "channel2_inner_product"))
+  end
+  if defined? channel2_angle # ancient ruby versions have no acos etc.
+    req = 1.55485084385627
+    res = channel2_angle(ind1, 0, ind2, 0)
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "channel2_angle"))
+    end
+  end
+  res = channel2_orthogonal?(ind1, 0, ind2, 0)
+  if res
+    snd_display("channel2_orthogonal?: res %s != false?", res)
+  end
+  req = 0.0301470932351876
+  res = channel2_coefficient_of_projection(ind1, 0, ind2, 0)
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "channel2_coefficient_of_projection"))
   end
   close_sound(ind1)
   ind1 = open_sound("oboe.snd")
   scale_by(0.99, ind1, 0)
-  if fneq(res = channel_distance(ind1, 0, ind2, 0), 0.1346)
-    snd_display("channel_distance: %s?", res)
+  req = 0.1346
+  res = channel_distance(ind1, 0, ind2, 0)
+  if fneq(res, req)
+    snd_display(snd_float_format_neq(res, req, "channel_distance"))
   end
   [ind1, ind2].apply(:close_sound)
   #
@@ -32139,10 +32308,10 @@ def test_21_02
     diff = 0.0
     rd = make_sampler(0, ind, 0)
     home = sampler_home(rd)
-    scan_channel(lambda { |y|
+    scan_channel(lambda do |y|
                    if (cd = (y - rd.call).abs) > diff then diff = cd end
                    false
-                 }, 0, fr, old_ind, 0)
+                 end, 0, fr, old_ind, 0)
     if fneq(diff, 0.0)
       snd_display("update_sound looped overall max diff: %s, sounds: %s, old_ind: %s, rd: %s?",
                   diff, sounds.inspect, ind, old_ind, home.inspect)
@@ -32283,7 +32452,7 @@ end
 
 def test_21
   test_21_00 if $with_test_gui
-  test_21_01 if $all_args
+  test_21_01
   test_21_02
 end
 
@@ -32376,7 +32545,9 @@ def step_src
   os = make_oscil(2205)
   sr = make_src(:srate, 0.0)
   incr = 2.0 + oscil(os)
-  tempfile = with_sound(:output, snd_tempnam, :srate, srate, :comment, get_func_name) do
+  tempfile = with_sound(:output,  snd_tempnam,
+                        :srate,   srate,
+                        :comment, get_func_name) do
     samp = 0
     until c_g? or sampler_at_end?(rd)
       out_any(samp, src(sr, incr, lambda do |dir| read_sample(rd) end), 0, $output)
@@ -32611,9 +32782,22 @@ end
 def test_23_02
   set_mus_srate($clm_srate = 22050)
   set_default_output_srate(22050)
-  [Mus_bshort, Mus_lshort, Mus_mulaw, Mus_alaw, Mus_byte, Mus_lfloat, Mus_bint,
-   Mus_lint, Mus_b24int, Mus_l24int, Mus_ubshort, Mus_ulshort, Mus_ubyte,
-   Mus_bfloat, Mus_bdouble, Mus_ldouble].each do |type|
+  [Mus_bshort,
+   Mus_lshort,
+   Mus_mulaw,
+   Mus_alaw,
+   Mus_byte,
+   Mus_lfloat,
+   Mus_bint,
+   Mus_lint,
+   Mus_b24int,
+   Mus_l24int,
+   Mus_ubshort,
+   Mus_ulshort,
+   Mus_ubyte,
+   Mus_bfloat,
+   Mus_bdouble,
+   Mus_ldouble].each do |type|
     ind = find_sound(with_sound(:data_format, type) do
                        fm_violin(0, 0.1, 440, 0.1)
                        fm_violin(10, 0.1, 440, 0.1)
@@ -32625,7 +32809,9 @@ def test_23_02
     end
   end
   3.times do |i|
-    with_sound(:srate, 22050) do fm_violin(0, 0.1, 110.0 * (1.0 + i), 0.1) end
+    with_sound(:srate, 22050) do
+      fm_violin(0, 0.1, 110.0 * (1.0 + i), 0.1)
+    end
     ind = find_sound("test.snd")
     unless ind then snd_display("with_sound: %s?", Snd.sounds.map do |s| file_name(s) end) end
     if fneq(res = maxamp, 0.1) then snd_display("with_sound max (%s): %s?", i, res) end
@@ -32635,7 +32821,9 @@ def test_23_02
     end
     if frames(ind) != 2205 then snd_display("with_sound frames (%s): %s?", i, frames(ind)) end
   end
-  with_sound(:continue_old_file, true) do fm_violin(0.2, 0.1, 440, 0.25) end
+  with_sound(:continue_old_file, true) do
+    fm_violin(0.2, 0.1, 440, 0.25)
+  end
   ind = find_sound("test.snd")
   unless ind then snd_display("with_sound continued: %s?", file_name(true)) end
   if Snd.sounds.length != 1
@@ -32649,8 +32837,12 @@ def test_23_02
   if frames(ind) != 3 * 2205 then snd_display("with_sound continued frames: %s?", frames(ind)) end
   close_sound(ind)
   # 
-  with_sound() do fm_violin(0, 0.1, 440, 0.1) end
-  with_sound(:continue_old_file, true) do fm_violin(0.2, 0.1, 660, 0.04) end
+  with_sound do
+    fm_violin(0, 0.1, 440, 0.1)
+  end
+  with_sound(:continue_old_file, true) do
+    fm_violin(0.2, 0.1, 660, 0.04)
+  end
   ind = find_sound("test.snd")
   if fneq(res = maxamp, 0.1) then snd_display("maxamp after continued sound: %s?", res) end
   if fneq(res = frames(ind) / srate(ind).to_f, 0.3)
@@ -32658,7 +32850,9 @@ def test_23_02
   end
   close_sound(ind)
   # 
-  with_sound(:srate, 22050, :channels, 2, :output, "test1.snd") do
+  with_sound(:srate,    22050,
+             :channels, 2,
+             :output,   "test1.snd") do
     fm_violin(0, 0.1, 440, 0.1, :degree, 45.0)
   end
   ind = find_sound("test1.snd")
@@ -32675,8 +32869,11 @@ def test_23_02
   close_sound(ind)
   delete_file("test1.snd")
   #
-  with_sound(:srate, 48000, :channels, 2,
-             :header_type, Mus_riff, :data_format, Mus_lshort, :output, "test1.snd") do
+  with_sound(:srate,       48000,
+             :channels,    2,
+             :header_type, Mus_riff,
+             :data_format, Mus_lshort,
+             :output,      "test1.snd") do
     fm_violin(0, 0.1, 440, 0.1)
   end
   ind = find_sound("test1.snd")
@@ -32695,8 +32892,11 @@ def test_23_02
   close_sound(ind)
   delete_file("test1.snd")
   # 
-  with_sound(:srate, 48000, :channels, 2, :header_type, Mus_caff,
-             :data_format, Mus_lshort, :output, "test1.snd") do
+  with_sound(:srate,       48000,
+             :channels,    2,
+             :header_type, Mus_caff,
+             :data_format, Mus_lshort,
+             :output,      "test1.snd") do
     fm_violin(0, 0.1, 440, 0.1)
   end
   ind = find_sound("test1.snd")
@@ -32715,7 +32915,10 @@ def test_23_02
   close_sound(ind)
   delete_file("test1.snd")
   # 
-  with_sound(:srate, 8000, :channels, 3, :header_type, Mus_next, :output, "test1.snd") do
+  with_sound(:srate,       8000,
+             :channels,    3,
+             :header_type, Mus_next,
+             :output,      "test1.snd") do
     fm_violin(0, 0.1, 440, 0.1)
   end
   ind = find_sound("test1.snd")
@@ -32735,7 +32938,10 @@ def test_23_02
   delete_file("test1.snd")
   #
   my_srate = 96000
-  with_sound(:srate, my_srate, :channels, 4, :header_type, Mus_aifc, :output, "test1.snd") do
+  with_sound(:srate,       my_srate,
+             :channels,    4,
+             :header_type, Mus_aifc,
+             :output,      "test1.snd") do
     fm_violin(0, 0.1, 440, 0.1)
   end
   ind = find_sound("test1.snd")
@@ -32754,7 +32960,10 @@ def test_23_02
   end
   close_sound(ind)
   delete_file("test1.snd")
-  with_sound(:srate, 22050, :channels, 1, :header_type, Mus_raw, :output, "test1.snd") do
+  with_sound(:srate,       22050,
+             :channels,    1,
+             :header_type, Mus_raw,
+             :output,      "test1.snd") do
     fm_violin(0, 0.1, 440, 0.1)
   end
   ind = find_sound("test1.snd")
@@ -32773,7 +32982,10 @@ def test_23_02
   close_sound(ind)
   delete_file("test1.snd")
   # 
-  with_sound(:srate, 22050, :channels, 2, :output, "test1.snd", :reverb, :jc_reverb) do
+  with_sound(:srate,    22050,
+             :channels, 2,
+             :output,   "test1.snd",
+             :reverb,   :jc_reverb) do
     if (res = mus_sound_srate(mus_file_name($output))) != 22050
       snd_display("srate file $output: %s?", res)
     end
@@ -32792,7 +33004,9 @@ def test_23_02
   end
   # 
   3.times do
-    with_sound(:srate, 22050, :output, "test1.snd", :reverb, :jc_reverb) do
+    with_sound(:srate,  22050,
+               :output, "test1.snd",
+               :reverb, :jc_reverb) do
       fm_violin(0, 0.1, 440, 0.1)
     end
   end
@@ -32804,7 +33018,9 @@ def test_23_02
   close_sound(ind)
   delete_file("test1.snd")
   # 
-  with_sound(:srate, 22050, :comment, "Snd+Run!", :scaled_to, 0.5) do
+  with_sound(:srate,     22050,
+             :comment,   "Snd+Run!",
+             :scaled_to, 0.5) do
     fm_violin(0, 0.1, 440, 0.1)
   end
   ind = find_sound("test.snd")
@@ -32815,7 +33031,10 @@ def test_23_02
   end
   close_sound(ind)
   # 
-  with_sound(:srate, 22050, :scaled_by, 0.5, :header_type, Mus_aifc, :data_format, Mus_bfloat) do
+  with_sound(:srate,       22050,
+             :scaled_by,   0.5,
+             :header_type, Mus_aifc,
+             :data_format, Mus_bfloat) do
     fm_violin(0, 0.1, 440, 0.1)
   end
   ind = find_sound("test.snd")
@@ -32830,7 +33049,9 @@ def test_23_02
   close_sound(ind)
   # 
   $open_raw_sound_hook.add_hook!("with-sound") do |file, choice| [1, 22050, Mus_bshort] end
-  with_sound(:header_type, Mus_raw) do fm_violin(0, 0.1, 440, 0.1) end
+  with_sound(:header_type, Mus_raw) do
+    fm_violin(0, 0.1, 440, 0.1)
+  end
   $open_raw_sound_hook.remove_hook!("with-sound")
   unless sound?(ind = find_sound("test.snd"))
     snd_display("with_sound (raw out): %s?", file_name(true))
@@ -32843,7 +33064,9 @@ def test_23_02
   end
   close_sound(ind)
   # 
-  with_sound(:srate, 44100) do ws_sine(1000) end
+  with_sound(:srate, 44100) do
+    ws_sine(1000)
+  end
   ind = find_sound("test.snd")
   i = -1
   scan_channel(lambda { |y|
@@ -32857,7 +33080,7 @@ def test_23_02
                })
   close_sound(ind)
   # 
-  if File.exist?("ii.rb")
+  if File.exists?("ii.rb")
     with_time("load(\"ii.rb\")") do load("ii.rb") end
     Snd.sounds.apply(:close_sound)
     delete_files("test.snd", "rest.reverb")
@@ -32865,7 +33088,7 @@ def test_23_02
   set_mus_srate($clm_srate = 22050)
   set_default_output_srate(22050)
   #
-  outer = with_sound() do
+  outer = with_sound do
     sound_let(Proc.new do fm_violin(0, 0.1, 440, 0.1) end) do |a|
       mus_mix(@output, a)
     end
@@ -32878,7 +33101,7 @@ def test_23_02
   close_sound(ind)
   delete_file("test.snd")
   #  
-  outer = with_sound() do
+  outer = with_sound do
     sound_let(Proc.new do fm_violin(0, 0.1, 440, 0.1) end,
               100) do |a, b|
       mus_mix(@output, a, b)
@@ -32893,7 +33116,7 @@ def test_23_02
   if (not sound?(ind)) or frames(ind) != (res = 100 + (mus_srate * 0.1).floor)
     snd_display("sound_let (2): %s %s?", frames(ind), res)
   end
-  if File.exist?("temp.snd") then snd_display("sound_let explicit output exists?") end
+  if File.exists?("temp.snd") then snd_display("sound_let explicit output exists?") end
   close_sound(ind)
 end
 
@@ -32908,46 +33131,71 @@ def test_23_03
   with_sound(:channels, 2) do
     fullmix("4.aiff", 0.0, 0.1, 36.4, [[0.0, 0.0], [0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
   end
-  # INFO: original 0.664947509765625 [ms]
   if sound?(ind = find_sound("test.snd"))
-    if fneq(res = maxamp, 0.887) then snd_display("4->2(0) fullmix: %s?", res) end
+    req = 0.664947509765625
+    res = maxamp()
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "4->2(0) fullmix"))
+    end
     close_sound(ind)
   end
   with_sound(:channels, 1) do
     fullmix("4.aiff", 0.0, 0.1, 36.4, [[1.0], [0.0], [0.0], [0.0]])
   end
   if sound?(ind = find_sound("test.snd"))
-    if fneq(res = maxamp, 0.221649169921875) then snd_display("4->1(0) fullmix: %s?", res) end
+    req = 0.221649169921875
+    res = maxamp()
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "4->1(0) fullmix"))
+    end
     close_sound(ind)
   end
   with_sound(:channels, 1) do
     fullmix("4.aiff", 0.0, 0.1, 36.4, [[0.0], [1.0], [0.0], [0.0]])
   end
   if sound?(ind = find_sound("test.snd"))
-    if fneq(res = maxamp, 0.44329833984375) then snd_display("4->1(1) fullmix: %s?", res) end
+    req = 0.44329833984375
+    res = maxamp()
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "4->1(1) fullmix"))
+    end
     close_sound(ind)
   end
   with_sound(:channels, 1) do
     fullmix("4.aiff", 0.0, 0.1, 36.4, [[0.0], [0.0], [1.0], [0.0]])
   end
   if sound?(ind = find_sound("test.snd"))
-    if fneq(res = maxamp, 0.664947509765625) then snd_display("4->1(2) fullmix: %s?", res) end
+    req = 0.664947509765625
+    res = maxamp()
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "4->1(2) fullmix"))
+    end
     close_sound(ind)
   end
   with_sound(:channels, 1) do
     fullmix("4.aiff", 0.0, 0.1, 36.4, [[0.0], [0.0], [0.0], [1.0]])
   end
   if sound?(ind = find_sound("test.snd"))
-    if fneq(res = maxamp, 0.8865966796875) then snd_display("4->1(3) fullmix: %s?", res) end
+    req = 0.8865966796875
+    res = maxamp()
+    if fneq(res, req)
+      snd_display(snd_float_format_neq(res, req, "4->1(3) fullmix"))
+    end
     close_sound(ind)
   end
   with_sound(:channels, 2) do
     fullmix("4.aiff", 0.0, 0.1, 36.4, [[0.0, 0.0], [0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
   end
   if sound?(ind = find_sound("test.snd"))
+    req1 = 0.664947509765625
+    req2 = 0.8865966796875
     mxs = maxamp(ind, true)
-    if fneq(mxs[0], 0.664947509765625) or fneq(mxs[1], 0.8865966796875)
-      snd_display("4->2(1) fullmix: %s?", res)
+    if fneq(mxs[0], req1) or fneq(mxs[1], req2)
+      if fneq(mxs[0], req1)
+        snd_display(snd_float_format_neq(mxs[0], req1, "4->2(1) fullmix"))
+      elsif
+        snd_display(snd_float_format_neq(mxs[1], req2, "4->2(1) fullmix"))
+      end
     end
     close_sound(ind)
   end
@@ -32955,9 +33203,15 @@ def test_23_03
     fullmix("4.aiff", 0.0, 0.1, 36.4, [[0.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 0.0]])
   end
   if sound?(ind = find_sound("test.snd"))
+    req1 = 0.664947509765625
+    req2 = 0.8865966796875
     mxs = maxamp(ind, true)
-    if fneq(mxs[0], 0.8865966796875) or fneq(mxs[1], 0.664947509765625)
-      snd_display("4->2(2) fullmix: %s?", res)
+    if fneq(mxs[0], req2) or fneq(mxs[1], req1)
+      if fneq(mxs[0], req1)
+        snd_display(snd_float_format_neq(mxs[0], req2, "4->2(2) fullmix"))
+      elsif
+        snd_display(snd_float_format_neq(mxs[1], req1, "4->2(2) fullmix"))
+      end
     end
     close_sound(ind)
   end
@@ -33048,29 +33302,39 @@ def test_23_04
                [667, 0.01], [789, 0.034], [910, 0.032]])
   #
   ind = open_sound("oboe.snd")
-  with_sound(:output, "test1.snd") do fm_violin(0, 0.1, 440, 0.1) end
+  with_sound(:output, "test1.snd") do
+    fm_violin(0, 0.1, 440, 0.1)
+  end
   set_samples(0, 2205, "test1.snd", ind, 0, false, "set_samples auto-delete test", 0, false, true)
-  unless File.exist?("test1.snd") then snd_display("oops: auto-delete test1.snd?") end
+  unless File.exists?("test1.snd") then snd_display("oops: auto-delete test1.snd?") end
   undo_edit(1, ind)
-  with_sound(:output, "test2.snd") do fm_violin(0, 0.1, 440, 0.1) end
+  with_sound(:output, "test2.snd") do
+    fm_violin(0, 0.1, 440, 0.1)
+  end
   insert_sound("test2.snd", 0, 0, ind, 0, false, true)
-  if File.exist?("test1.snd") then snd_display("auto-delete set_samples?") end
+  if File.exists?("test1.snd") then snd_display("auto-delete set_samples?") end
   undo_edit(1, ind)
-  with_sound(:output, "test3.snd") do fm_violin(0, 0.1, 440, 0.1) end
+  with_sound(:output, "test3.snd") do
+    fm_violin(0, 0.1, 440, 0.1)
+  end
   insert_samples(0, 2205, "test3.snd", ind, 0, false, true)
-  if File.exist?("test2.snd") then snd_display("auto-delete insert_sound?") end
+  if File.exists?("test2.snd") then snd_display("auto-delete insert_sound?") end
   undo_edit(1, ind)
-  with_sound(:output, "test4.snd") do fm_violin(0, 0.1, 440, 0.1) end
+  with_sound(:output, "test4.snd") do
+    fm_violin(0, 0.1, 440, 0.1)
+  end
   mix("test4.snd", 0, 0, ind, 0, false, true)
-  if File.exist?("test3.snd") then snd_display("auto-delete insert_samples?") end
+  if File.exists?("test3.snd") then snd_display("auto-delete insert_samples?") end
   undo_edit(1, ind)
   delete_sample(100, ind, 0)
-  if File.exist?("test4.snd") then snd_display("auto-delete mix?") end
-  with_sound(:output, "test5.snd") do fm_violin(0, 0.1, 440, 0.1) end
+  if File.exists?("test4.snd") then snd_display("auto-delete mix?") end
+  with_sound(:output, "test5.snd") do
+    fm_violin(0, 0.1, 440, 0.1)
+  end
   mix("test5.snd", 0, 0, ind, 0, true, true)
   revert_sound(ind)
   close_sound(ind)
-  if File.exist?("test5.snd") then snd_display("auto-delete mix (with-tag)?") end
+  if File.exists?("test5.snd") then snd_display("auto-delete mix (with-tag)?") end
   Snd.sounds.apply(:close_sound)
   # 
   if (res = optkey_1(1))     != 1   then snd_display("optkey_1: %s?", res) end
@@ -33100,21 +33364,38 @@ def test_23_04
   end
   # 
   if defined? variable_display
-    wid1 = make_variable_display("do-loop-1", "i*1", :text)
-    wid2 = make_variable_display("do-loop-2", "i*2", :scale, [-1.0, 1.0])
-    wid3 = make_variable_display("do-loop-3", "i3", :spectrum)
-    wid4 = make_variable_display("do-loop-4", "i4", :graph)
-    1000.times do |i|
-      variable_display(wid4,
-                       variable_display(wid2,
-                                        variable_display(wid3,
-                                                         sin(variable_display(wid1, 1) * 0.1)) *0.5))
+    wid1 = Snd.catch do make_variable_display("do-loop-1", "i*1", :text) end.first
+    wid2 = Snd.catch do make_variable_display("do-loop-2", "i*2", :scale, [-1.0, 1.0]) end.first
+    wid3 = Snd.catch do make_variable_display("do-loop-3", "i3", :spectrum) end.first
+    wid4 = Snd.catch do make_variable_display("do-loop-4", "i4", :graph) end.first
+    if variable_display?(wid1) and
+        variable_display?(wid2) and
+        variable_display?(wid3) and
+        variable_display?(wid4)
+      1000.times do |i|
+        variable_display(wid4,
+                         variable_display(wid3,
+                                          variable_display(wid2,
+                                                           sin(variable_display(wid1, 1) * 0.1)) * \
+                                          0.5))
+      end
+      tag = Snd.catch do set_sample(0, 0.5, wid3.snd, 0) end
+      if (res = edit_position(wid3.snd, 0)) > 0
+        snd_display("edited variable graph: %s %s?", tag, res)
+      end
+      [wid1, wid2, wid3, wid4].each do |w|
+        variable_display_close(w)
+      end
+    else
+      [wid1, wid2, wid3, wid4].each_with_index do |w, i|
+        if variable_display?(w)
+          variable_display_close(w)
+        else
+          snd_display("variable_display(do-loop-%d): %s", i, w.inspect)
+        end
+      end
     end
-    tag = Snd.catch do set_sample(0, 0.5, wid3.snd, 0) end
-    if (res = edit_position(wid3.snd, 0)) > 0
-      snd_display("edited variable graph: %s %s?", tag, res)
-    end
-    variable_display_close(wid1)
+    dismiss_all_dialogs
   end
   # 
   if (res1 = $clm_srate) != (res2 = default_output_srate)
@@ -33174,7 +33455,7 @@ def test_23_04
     if (res = frames(ind)) != 88200
       snd_display("reverb+1 sec out in ws: %s?", res)
     end
-    if File.exist?("test.reverb")
+    if File.exists?("test.reverb")
       snd_display("perhaps reverb not deleted in ws?")
     end
     close_sound(ind)
@@ -33183,13 +33464,17 @@ def test_23_04
   val = 0
   old_hook = $clm_notehook
   $clm_notehook = lambda do |*args| val = 1 end
-  with_sound(:comment, "$clm_notehook") do fm_violin(0, 0.1, 440, 0.1) end
+  with_sound(:comment, "$clm_notehook") do
+    fm_violin(0, 0.1, 440, 0.1)
+  end
   if val != 1 then snd_display("$clm_notehook (1): %s %s?", val, $clm_notehook.inspect) end
   with_sound(:notehook, lambda do |*args| val=2 end, :comment, ":notehook") do
     fm_violin(0, 0.1, 440, 0.1) 
   end
   if val != 2 then snd_display(":notehook: %s?", val) end
-  with_sound(:comment, "$clm_notehook (2)") do fm_violin(0, 0.1, 440, 0.1) end
+  with_sound(:comment, "$clm_notehook (2)") do
+    fm_violin(0, 0.1, 440, 0.1)
+  end
   if val != 1 then snd_display("$clm_notehook (2): %s %s?", val, $clm_notehook.inspect) end
   $clm_notehook = old_hook
   # 
@@ -33241,31 +33526,35 @@ def test_23_04
   # 
   # clm23.scm tests skipped
   #
-  file = with_sound(:clipped, false, :data_format, Mus_bfloat, :header_type, Mus_next) do
+  file = with_sound(:clipped,     false,
+                    :data_format, Mus_bfloat,
+                    :header_type, Mus_next) do
     fm_violin(0, 0.1, 440, PI)
   end.output
   ind = find_sound(file)
   if fneq(res = maxamp(ind), PI) then snd_display("clipped false: %s?", res) end
   close_sound(ind)
-  file = with_sound(:clipped, true, :data_format, Mus_bfloat, :header_type, Mus_next) do
+  file = with_sound(:clipped,     true,
+                    :data_format, Mus_bfloat,
+                    :header_type, Mus_next) do
     fm_violin(0, 0.1, 440, PI)
   end.output
   ind = find_sound(file)
   if fneq(res = maxamp(ind), 1.0) then snd_display("clipped true: %s?", res) end
   close_sound(ind)
-  file = with_sound(:data_format, Mus_bfloat,
+  file = with_sound(:clipped,     false,
+                    :data_format, Mus_bfloat,
                     :header_type, Mus_next,
-                    :scaled_by, 0.1,
-                    :clipped, false) do
+                    :scaled_by,   0.1) do
     fm_violin(0, 0.1, 440, PI)
   end.output
   ind = find_sound(file)
   if fneq(res = maxamp(ind), 0.314159) then snd_display("scaled_by: %s?", res) end
   close_sound(ind)
-  file = with_sound(:data_format, Mus_bfloat,
+  file = with_sound(:clipped,     false,
+                    :data_format, Mus_bfloat,
                     :header_type, Mus_next,
-                    :scaled_to, 0.1,
-                    :clipped, false) do
+                    :scaled_to,   0.1) do
     fm_violin(0, 0.1, 440, PI)
   end.output
   ind = find_sound(file)
@@ -33281,7 +33570,8 @@ def test_23_04
   tsize = 0
   arrp = 0
   mx = 0
-  file = with_sound(:data_format, Mus_bfloat, :header_type, Mus_next) do
+  file = with_sound(:data_format, Mus_bfloat,
+                    :header_type, Mus_next) do
     mx = mus_file_buffer_size
     tsize = clm_table_size
     arrp = mus_array_print_length
@@ -33295,18 +33585,27 @@ def test_23_04
   $clm_table_size = old_tsize
   $clm_array_print_length = old_arrp
   close_sound(ind)
-  # 
-  file = with_sound(:clm, false) do fm_violin(0, 3, 440, 0.1) end.output
-  ind = find_sound(file)
-  set_amp_control(0.5, ind)
-  set_x_bounds([1.0, 2.0], ind, 0)
-  file = with_sound(:clm, false) do fm_violin(0, 4, 440, 0.1) end.output
-  # INFO: with_sound resets x_bounds anyhow [ms]
-  set_x_bounds([1.0, 2.0], ind, 0)
-  ind = find_sound(file)
-  if fneq(res = amp_control(ind), 0.5) then snd_display("update ws amp: %s?", res) end
-  if $with_test_gui and (fneq(x_bounds(ind, 0).car, 1.0) or fneq(x_bounds(ind, 0).cadr, 2.0))
-    snd_display("update ws bounds: %s?", x_bounds(ind, 0))
+  #
+  # FIXME
+  # bug in ws.rb (with_sound) [ms]
+  ind = find_sound(with_sound do
+                     fm_violin(0, 3, 440, 0.1)
+                   end.output)
+  if $with_test_gui
+    set_amp_control(0.5, ind)
+    set_x_bounds([1.0, 2.0], ind, 0)
+  end
+  ind = find_sound(with_sound do
+                     fm_violin(0, 4, 440, 0.1)
+                   end.output)
+  if $with_test_gui
+    if fneq(res = amp_control(ind), 0.5)
+      snd_display("update ws amp: %s?", res)
+    end
+    res = x_bounds(ind, 0)
+    if (fneq(res[0], 1.0) or fneq(res[1], 2.0))
+      snd_display("update ws bounds: %s?", res)
+    end
   end
   close_sound(ind)
   # 
@@ -33329,7 +33628,7 @@ def test_23_04
   close_sound(ind)
   Snd.sounds.apply(:close_sound)
   #
-  file = with_sound() do
+  file = with_sound do
     gen = make_sinc_train(440.0, 9 * PI)
     1102.times do |i| outa(i, sinc_train(gen), $output) end
   end.output
@@ -33352,19 +33651,15 @@ require "singer"
 require "zip"
 
 def test_23
-  # FIXME
-  # Wed Nov 17 13:46:56 CET 2010
-  # gc issues with ruby19
-  if RUBY_VERSION < "1.9" or $test_loop_index.zero?
-    $clm_verbose    = false
-    $clm_statistics = false
-    $clm_play       = false
-    test_23_00
-    test_23_01
-    test_23_02
-    test_23_03
-    test_23_04
-  end
+  $clm_verbose    = false
+  $clm_statistics = false
+  $clm_play       = false
+  $clm_info       = $DEBUG
+  test_23_00
+  test_23_01
+  test_23_02
+  test_23_03
+  test_23_04
 end
 
 # ---------------- test 28: errors ----------------
@@ -34593,7 +34888,7 @@ def test_28_03
   #
   # key args
   #
-  snd_info("keyargs-2-args")
+  snd_info("keyargs-2-args") if $VERBOSE
   Keyargs.each do |arg1|
     random_args.each do |arg2|
       Make_procs.each do |n|
@@ -34603,7 +34898,7 @@ def test_28_03
   end
   dismiss_all_dialogs
   if $all_args
-    snd_info("keyargs-3-args")
+    snd_info("keyargs-3-args") if $VERBOSE
     random_args.each do |arg1|
       Keyargs.each do |arg2|
         random_args.each do |arg3|
@@ -34614,7 +34909,7 @@ def test_28_03
       end
     end
     dismiss_all_dialogs
-    snd_info("keyargs-4-args")
+    snd_info("keyargs-4-args") if $VERBOSE
     random_args.each do |arg1|
       Keyargs.each do |arg2|
         random_args.each do |arg3|
@@ -34632,7 +34927,7 @@ def test_28_03
   # 0 Args
   #
   unless Procs00.empty?
-    snd_info("no-args")
+    snd_info("no-args") if $VERBOSE
     Procs00.each do |n|
       if (tag = Snd.catch do
             snd_func(n)
@@ -34646,12 +34941,7 @@ def test_28_03
   # set no Args
   #
   unless Set_procs00.empty?
-    snd_info("set-no-args")
-    if $with_test_gui
-      # INFO: [ms] (eval):587:in `set_enved_envelope'
-      # [:name_error] undefined local variable or method `feedback' for main: Object (NameError)
-      Set_procs00.delete(:enved_envelope)
-    end
+    snd_info("set-no-args") if $VERBOSE
     main_args.each do |val|
       Set_procs00.each do |n|
         if (tag = Snd.catch do
@@ -34667,7 +34957,7 @@ def test_28_03
   # 1 Arg
   #
   unless Procs01.empty?
-    snd_info("1-arg")
+    snd_info("1-arg") if $VERBOSE
     main_args.each do |arg|
       Procs01.each do |n|
         if (tag = Snd.catch do
@@ -34683,7 +34973,7 @@ def test_28_03
   # set 1 Arg
   #
   unless Set_procs01.empty?
-    snd_info("set-1-arg")
+    snd_info("set-1-arg") if $VERBOSE
     main_args.each do |arg1|
       main_args.each do |arg2|
         Set_procs01.each do |n|
@@ -34701,7 +34991,7 @@ def test_28_03
   # 2 Args
   #
   unless Procs02.empty?
-    snd_info("2-args")
+    snd_info("2-args") if $VERBOSE
     main_args.each do |arg1|
       main_args.each do |arg2|
         Procs02.each do |n|
@@ -34719,7 +35009,7 @@ def test_28_03
   # set 2 Args
   #
   unless Set_procs02.empty?
-    snd_info("set-2-args")
+    snd_info("set-2-args") if $VERBOSE
     less_args.each do |arg1|
       less_args.each do |arg2|
         less_args.each do |arg3|
@@ -34739,7 +35029,7 @@ def test_28_03
   # 3 Args
   #
   unless Procs03.empty?
-    snd_info("3-args")
+    snd_info("3-args") if $VERBOSE
     less_args.each do |arg1|
       less_args.each do |arg2|
         less_args.each do |arg3|
@@ -34759,7 +35049,7 @@ def test_28_03
   # set 3 Args
   #
   unless Set_procs03.empty?
-    snd_info("set-3-args")
+    snd_info("set-3-args") if $VERBOSE
     less_args.each do |arg1|
       less_args.each do |arg2|
         less_args.each do |arg3|
@@ -34781,7 +35071,7 @@ def test_28_03
   # 4 Args
   #
   unless Procs04.empty?
-    snd_info("4-args")
+    snd_info("4-args") if $VERBOSE
     few_args.each do |arg1|
       few_args.each do |arg2|
         few_args.each do |arg3|
@@ -34803,7 +35093,7 @@ def test_28_03
   # set 4 Args
   #
   unless Set_procs04.empty?
-    snd_info("set-4-args")
+    snd_info("set-4-args") if $VERBOSE
     few_args.each do |arg1|
       few_args.each do |arg2|
         few_args.each do |arg3|
@@ -34829,7 +35119,7 @@ def test_28_03
   # 5 Args
   #
   unless Procs05.empty?
-    snd_info("5-args")
+    snd_info("5-args") if $VERBOSE
     fewer_args.each do |arg1|
       fewer_args.each do |arg2|
         fewer_args.each do |arg3|
@@ -34854,7 +35144,7 @@ def test_28_03
   # 6 Args
   #
   unless Procs06.empty?
-    snd_info("6-args")
+    snd_info("6-args") if $VERBOSE
     fewer_args.each do |arg1|
       fewer_args.each do |arg2|
         fewer_args.each do |arg3|
@@ -34880,7 +35170,7 @@ def test_28_03
   # 8 Args
   #
   unless Procs08.empty?
-    snd_info("8-args")
+    snd_info("8-args") if $VERBOSE
     fewer_args.each do |arg1|
       fewer_args.each do |arg2|
         fewer_args.each do |arg3|
@@ -34910,7 +35200,7 @@ def test_28_03
   # 10 Args
   #
   unless Procs10.empty?
-    snd_info("10-args")
+    snd_info("10-args") if $VERBOSE
     fewer_args.each do |arg1|
       fewer_args.each do |arg2|
         fewer_args.each do |arg3|
@@ -34946,7 +35236,7 @@ end
 
 def test_28_04
   if defined? mus_audio_reinitialize then mus_audio_reinitialize end
-  File.exist?("test.snd") and File.chmod(0644, "test.snd") and File.unlink("test.snd")
+  File.exists?("test.snd") and File.chmod(0644, "test.snd") and File.unlink("test.snd")
   file_copy("oboe.snd", "test.snd")
   ind = open_sound("test.snd")
   delete_file("test.snd")
@@ -34997,24 +35287,26 @@ end
 
 def test_28
   set_with_background_processes(true)
-  snd_info("procs  prcs/set-prcs")
-  snd_info("====================")
-  snd_info("proc00: %3d/%3d", Procs00.length, Set_procs00.length)
-  snd_info("proc01: %3d/%3d", Procs01.length, Set_procs01.length)
-  snd_info("proc02: %3d/%3d", Procs02.length, Set_procs02.length)
-  snd_info("proc03: %3d/%3d", Procs03.length, Set_procs03.length)
-  snd_info("proc04: %3d/%3d", Procs04.length, Set_procs04.length)
-  snd_info("proc05: %3d", Procs05.length)
-  snd_info("proc06: %3d", Procs06.length)
-  snd_info("proc07: %3d", Procs07.length)
-  snd_info("proc08: %3d", Procs08.length)
-  snd_info("proc10: %3d", Procs10.length)
+  if $VERBOSE
+    snd_info("procs  prcs/set-prcs")
+    snd_info("====================")
+    snd_info("proc00: %3d/%3d", Procs00.length, Set_procs00.length)
+    snd_info("proc01: %3d/%3d", Procs01.length, Set_procs01.length)
+    snd_info("proc02: %3d/%3d", Procs02.length, Set_procs02.length)
+    snd_info("proc03: %3d/%3d", Procs03.length, Set_procs03.length)
+    snd_info("proc04: %3d/%3d", Procs04.length, Set_procs04.length)
+    snd_info("proc05: %3d", Procs05.length)
+    snd_info("proc06: %3d", Procs06.length)
+    snd_info("proc07: %3d", Procs07.length)
+    snd_info("proc08: %3d", Procs08.length)
+    snd_info("proc10: %3d", Procs10.length)
+  end
   if $with_test_gui
     unless Procs.empty?
-      snd_info("procs: %s?", Procs)
+      snd_display("procs: %s?", Procs)
     end
     unless Set_procs.empty?
-      snd_info("set_procs: %s?", Set_procs)
+      snd_display("set_procs: %s?", Set_procs)
     end
   end
   reset_almost_all_hooks
@@ -35023,7 +35315,7 @@ def test_28
     test_28_01
     test_28_02
   end
-  # INFO: with snd-gtk [ms]
+  # FIXME: with snd-gtk [ms]
   # test_28_04 should come before test_28_03 because of:
   # (snd-ruby-xg:2371): Gdk-WARNING **: GdkWindow 0x160015b unexpectedly destroyed
   # ...
@@ -35034,9 +35326,31 @@ end
 # ---------------- test all done
 
 def test_30
+  # check_for_line_number_bug(__LINE__)
+  # return
   $clm_verbose    = false
   $clm_statistics = false
   $clm_play       = false
+  ind = find_sound(with_sound do
+                     fm_violin(0, 3, 440, 0.1)
+                   end.output)
+  if $with_test_gui
+    set_amp_control(0.5, ind)
+    set_x_bounds([1.0, 2.0], ind, 0)
+  end
+  ind = find_sound(with_sound do
+                     fm_violin(0, 4, 440, 0.1)
+                   end.output)
+  if $with_test_gui
+    if fneq(res = amp_control(ind), 0.5)
+      snd_display("update ws amp: %s?", res)
+    end
+    res = x_bounds(ind, 0)
+    if (fneq(res[0], 1.0) or fneq(res[1], 2.0))
+      snd_display("update ws bounds: %s?", res)
+    end
+  end
+  close_sound(ind)
 end
 
 TEST_LAST_LINE_NUMBER = __LINE__

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Wed Nov 17 21:23:26 CET 2010
+# Changed: Mon Nov 22 13:21:43 CET 2010
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -167,7 +167,7 @@ module Examp
       sum = 0.0
       len.times do
         val = next_sample(reader)
-        sum += val * val
+        sum = sum + val * val
       end
       free_sampler(reader)
       sqrt(sum / len)
@@ -477,7 +477,7 @@ end")
     end
     if flag
       aufile = filename + ".au"
-      File.unlink(aufile) if File.exist?(aufile)
+      File.unlink(aufile) if File.exists?(aufile)
       system(format("ogg123 -d au -f %s %s", aufile, filename))
       aufile
     else
@@ -500,7 +500,7 @@ end")
 
   def read_speex(filename)
     wavfile = filename + ".wav"
-    File.unlink(wavfile) if File.exist?(wavfile)
+    File.unlink(wavfile) if File.exists?(wavfile)
     system(format("speexdec %s %s", filename, wavfile))
     wavfile
   end
@@ -1576,7 +1576,7 @@ reads snd's channel chn according to env and time-scale")
       sum = 0.0
       readers.each_with_index do |rd, j|
         if sampler?(rd)
-          sum += env(grain_envs[j]) * next_sample(rd)
+          sum = sum + env(grain_envs[j]) * next_sample(rd)
         end
       end
       sound_data_set!(data, 0, data_ctr, sum)
@@ -1970,7 +1970,7 @@ region_play_sequence([0, 2, 1])")
     time = 0.0
     region_play_list(data.map do |id|
                        cur = time
-                       time += region_frames(id) / region_srate(id)
+                       time = time + region_frames(id) / region_srate(id)
                        [cur, id]
                      end)
   end

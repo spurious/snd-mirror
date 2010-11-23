@@ -8859,6 +8859,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (cadr '(1 .#d2)) '.#d2)
 (test '(1 .(2 3)) '(1 2 3))
 (test '(1 .(2 3)) '(1 . (2 3)))
+(test (+ .(2 .(3))) 5)
 (test (cadr '(1 '0,)) ''0,)
 (test (equal? 3 ' 3) #t)
 (test (equal? '   
@@ -16421,6 +16422,20 @@ why are these different (read-time `#() ? )
   (test ((eval-string "(lambda (a) (+ a 1))") 2) 3)
   (test (eval ((eval-string "(lambda (a) (list '+ a 1))") 2)) 3)
   (test (eval-string "(+ 1 (eval (list '+ 1 2)))") 4)
+
+  (num-test (eval-string "\ +\ \ 1") 1)
+  (num-test (eval-string "'\ `\ 1") 1)
+  (num-test (eval-string "\ 1\ +i") 1+1i)
+  (num-test (eval-string "\x32\x37/\x37\ ") 27/7)
+  (num-test (eval-string "\ '-1\ ") -1)
+  (num-test (eval-string "\ .\ 10") 0.1)
+  (num-test (eval-string "#\ i\ -\x34") -4.0)
+  (num-test (eval-string "1\ 1.\x37\ ") 11.7)
+  (num-test (eval-string "1/\ \ 1\x30") 1/10)
+  (num-test (eval-string "#\ xe\ \x36\ ") 230)
+  (num-test (eval-string "\ \ \x35\ .  ") 5.0)
+  (num-test (eval-string "#x01/\ \x34") 1/4)
+  (num-test (eval-string "-\ 1\ .\x35\ e\ 0") -1.5)
 
   (for-each
    (lambda (arg)
@@ -53804,21 +53819,21 @@ why are these different (read-time `#() ? )
 (num-test 0 0/100000000000000000000000000000000000000000000000000000000000000+0i)
 (num-test 0 0/100000000000000000000000000000000000000000000000000000000000000000000-0i)
 
+(test (positive? 1000000000000000000000000000000000) #t)
+(test (negative? 1000000000000000000000000000000000) #f)
+(test (positive? -1000000000000000000000000000000000) #f)
+(test (negative? -1000000000000000000000000000000000) #t)
+
+(test (< 0 1000000000000000000000000000000000) #t)
+(test (> 0 -1000000000000000000000000000000000) #t)
+
 #|
 ;;; are these worth fixing?
 :(* 0 1000000000000000000000000000000000)
 nan.0
 :(* 0.0 1000000000000000000000000000000000)
 nan.0
-:(/ 1 10000000000000000000000000000)
-nan.0
-:(/ 0 10000000000000000000000000000)
-nan.0
-:(positive? 1000000000000000000000000000000000)
-#f
 :(integer? 1000000000000000000000000000000000)
-#f
-:(< 0 1000000000000000000000000000000000)
 #f
 :(positive? 1/1000000000000000000000000000000000)
 #f
@@ -54366,7 +54381,7 @@ etc....
       ;; so
       ;; (positive? (/ most-positive-fixnum most-negative-fixnum)) -> #t!
 
-      (test (nan? (string->number "775f81b8fee51b723f" 16)) #t) ; and others similarly -- is this a good idea?
+      (test (infinite? (string->number "775f81b8fee51b723f" 16)) #t) ; and others similarly -- is this a good idea?
 
       ))
 

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Wed Nov 17 22:09:54 CET 2010
+# Changed: Mon Nov 22 22:17:47 CET 2010
 
 # Commentary:
 #
@@ -12,34 +12,34 @@
 #  src_duration(e)
 #  dolph(n, gamma)
 #  dolph_1(n, gamma)
-#  down_oct(n, snd = false, chn = false)
+#  down_oct(n, snd, chn)
 #  edot_product(freq, data)
-#  stretch_sound_via_dft(factor, snd = false, chn = false)
+#  stretch_sound_via_dft(factor, snd, chn)
 #  compute_uniform_circular_string(size, x0, x1, x2, mass, xspring, damp)
 #  testunif(mass, xspring, damp)
 #  test_scanned_synthesis(amp, dur, mass, xspring, damp)
 #  compute_string(size, x0, x1, x2, masses, xsprings, esprings, damps, haptics)
-#  freqdiv(n, snd = false, chn = false)
-#  adsat(size, beg = false, dur = false, snd = false, chn = false)
-#  spike(snd = false, chn = false)
-#  spot_freq(samp = 0, snd = false, chn = false)
+#  freqdiv(n, snd, chn)
+#  adsat(size, beg, dur, snd, chn)
+#  spike(snd, chn)
+#  spot_freq(samp, snd, chn)
 
 #  class Flanger < Musgen
-#   initialize(time = 0.05, amount = 20.0, speed = 10.0)
+#   initialize(time, amount, speed)
 #   inspect
 #   to_s
 #   run_func(val1, val2)
 #   flanger(inval)
 
-#  make_flanger(time = 0.05, amount = 20.0, speed = 10.0)
+#  make_flanger(time, amount, speed)
 #  flanger?(obj)
 #  flanger(gen, inval)
 
-#  chorus(size = 5)
-#  chordalize(amount = 0.95, base = 100, chord = [1.00, 0.75, 1.25])
+#  chorus(size)
+#  chordalize(amount, base, chord)
 
-#  zero_phase(snd = false, chn = false)
-#  rotate_phase(func, snd = false, chn = false)
+#  zero_phase(snd, chn)
+#  rotate_phase(func, snd, chn)
 
 #  class Asyfm < Musgen
 #   initialize(*args)
@@ -64,17 +64,17 @@
 #  sum_of_n_odd_cosines(angle, n)
 
 #  band_limited_sawtooth(x, a, n, fi)
-#  brighten_slightly(amount, snd = false, chn = false)
-#  brighten_slightly_1(coeffs, snd = false, chn = false)
+#  brighten_slightly(amount, snd, chn)
+#  brighten_slightly_1(coeffs, snd, chn)
 #  spectrum2coeffs(order, spectr)
 #  fltit_1(order, spectr)
 
-#  make_hilbert_transform(len = 30)
-#  make_highpass(fc, len = 30)
-#  make_lowpass(fc, len = 30)
-#  make_bandpass(flo, fhi, len = 30)
-#  make_bandstop(flo, fhi, len = 30)
-#  make_differentiator(len = 30)
+#  make_hilbert_transform(len)
+#  make_highpass(fc, len)
+#  make_lowpass(fc, len)
+#  make_bandpass(flo, fhi, len)
+#  make_bandstop(flo, fhi, len)
+#  make_differentiator(len)
 
 #  make_butter_high_pass(freq)
 #  make_butter_low_pass(freq)
@@ -82,12 +82,12 @@
 #  make_butter_band_reject(freq, band)
 
 #  make_biquad(a0, a1, a2, b1, b2)
-#  make_iir_low_pass_2(fc, din = false)
-#  make_iir_high_pass_2(fc, din = false)
+#  make_iir_low_pass_2(fc, din)
+#  make_iir_high_pass_2(fc, din)
 #  make_iir_band_pass_2(f1, f2)
 #  make_iir_band_stop_2(f1, f2)
 
-#  make_eliminate_hum(hum_freq = 60.0, hum_harmonics = 5, bandwidth = 10)
+#  make_eliminate_hum(hum_freq, hum_harmonics, bandwidth)
 #  eliminate_hum(gens, x0)
 #  make_peaking_2(f1, f2, m)
 #  cascade2canonical(a)
@@ -97,31 +97,31 @@
 #  make_butter_bp(m, f1, f2)
 #  make_butter_bs(m, f1, f2)
 
-#  make_notch_frequency_response(cur_srate, freqs, notch_width = 2)
+#  make_notch_frequency_response(cur_srate, freqs, notch_width)
 #  notch_channel(freqs, filter_order, beg, dur, snd, chn, edpos, truncate, notch_width)
-#  notch_sound(freqs, filter_order = false, snd = false, chn = false, notch_width = 2)
-#  notch_selection(freqs, filter_order = false, snd = false, chn = false, notch_width = 2)
+#  notch_sound(freqs, filter_order, snd, chn, notch_width)
+#  notch_selection(freqs, filter_order, snd, chn, notch_width)
 #  fractional_fourier_transform(fr, fi, n, v)
 #  z_transform(f, n, z)
 #  dht(data)
-#  find_sine(freq, beg, dur)
-#  goertzel(freq, beg = 0, dur = frames())
+#  find_sine(freq, beg, dur, snd)
+#  goertzel(freq, beg, dur, snd)
 #  make_spencer_filter
 
-#  any_random(amount, e = false)
+#  any_random(amount, e)
 #  gaussian_distribution(s)
 #  pareto_distribution(a)
-#  inverse_integrate(dist, data_size = 512, e_size = 50)
+#  inverse_integrate(dist, data_size, e_size)
 #  gaussian_envelope(s)
 
-#  channel_mean(snd = false, chn = false)
-#  channel_total_energy(snd = false, chn = false)
-#  channel_average_power(snd = false, chn = false)
-#  channel_rms(snd = false, chn = false)
-#  channel_variance(snd = false, chn = false)
-#  channel_norm(snd = false, chn = false)
-#  channel_lp(p, snd = false, chn = false)
-#  channel_lp_inf(snd = false, chn = false)
+#  channel_mean(snd, chn)
+#  channel_total_energy(snd, chn)
+#  channel_average_power(snd, chn)
+#  channel_rms(snd, chn)
+#  channel_variance(snd, chn)
+#  channel_norm(snd, chn)
+#  channel_lp(p, snd, chn)
+#  channel_lp_inf(snd, chn)
 #  channel2_inner_product(s1, c1, s2, c2)
 #  channel2_angle(s1, c1, s2, c2)
 #  channel2_orthogonal?(s1, c1, s2, c2)
@@ -135,9 +135,9 @@
 #  ssb_bank_env(old_freq, new_freq, freq_env, pairs, order, bw, beg, dur, snd, chn, edpos)
 #
 #  vct_polynomial(v, coeffs)
-#  channel_polynomial(coeffs, snd = false, chn = false)
-#  spectral_polynomial(coeffs, snd = false, chn = false)
-#  scentroid(file, *args)
+#  channel_polynomial(coeffs, snd, chn)
+#  spectral_polynomial(coeffs, snd, chn)
+#  scentroid(file, beg, dur, db_floor, rfreq, fftsize)
 #  invert_filter(fcoeffs)
 #
 #  class Volterra_filter < Musgen
@@ -151,22 +151,22 @@
 #  volterra_filter(flt, x)
 #
 #  class Moving_max < Musgen
-#   initialize(size = 128)
+#   initialize(size)
 #   inspect
 #   to_s
 #   run_func(val1, val2)
 #   moving_max(y)
 #   
-#  make_moving_max(size = 128)
+#  make_moving_max(size)
 #  moving_max(gen, y)
-#  make_moving_sum(size = 128)
+#  make_moving_sum(size)
 #  moving_sum(gen, y)
-#  make_moving_rms(size = 128)
+#  make_moving_rms(size)
 #  moving_rms(gen, y)
-#  make_moving_length(size = 128)
+#  make_moving_length(size)
 #  moving_length(gen, y)
 #  harmonicizer(freq, coeffs, pairs, order, bw, beg, dur, snd, chn, edpos)
-#  linear_src_channel(srinc, snd = false, chn = false)
+#  linear_src_channel(srinc, snd, chn)
 #
 #  class Mfilter < Musgen
 #   initialize(decay, freq)
@@ -193,8 +193,8 @@ require "env"
 module Dsp
   # src_duration (see src-channel in extsnd.html)
   add_help(:src_duration,
-           "src_duration(envelope)  returns the new duration of a sound after using 'envelope' \
-for time-varying sampling-rate conversion.")
+           "src_duration(envelope)  \
+returns the new duration of a sound after using ENVELOPE for time-varying sampling-rate conversion.")
   def src_duration(e)
     e.map! do |x| x.to_f end
     ex0 = e.first
@@ -220,8 +220,8 @@ for time-varying sampling-rate conversion.")
   # formula taken from Richard Lyons, "Understanding DSP"
   # see clm.c for C version (using either GSL's or GCC's complex trig functions)
   add_help(:dolph,
-           "dolph(n, gamma) produces a Dolph-Chebyshev FFT data window of 'n' points \
-using 'gamma' as the window parameter.")
+           "dolph(n, gamma)  \
+produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window parameter.")
   def dolph(n, gamma)
     alpha = cosh(acosh(10.0 ** gamma) / n)
     den = 1.0 / cosh(n * acosh(alpha))
@@ -251,6 +251,9 @@ using 'gamma' as the window parameter.")
   # this version taken from Julius Smith's "Spectral Audio..." with
   # three changes it does the DFT by hand, and is independent of
   # anything from Snd (fft, vcts etc)
+  add_help(:dolph_1,
+           "dolph_1(n, gamma)  \
+produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window parameter.")
   def dolph_1(n, gamma)
     alpha = cosh(acosh(10.0 ** gamma) / n)
     den = 1.0 / cosh(n * acosh(alpha))
@@ -268,7 +271,7 @@ using 'gamma' as the window parameter.")
     n.times do |i|
       sum = 0.0
       n.times do |j|
-        sum += vals[j] * exp((2.0 * Complex(0.0, 1.0) * PI * j * i) / n)
+        sum = sum + vals[j] * exp((2.0 * Complex(0.0, 1.0) * PI * j * i) / n)
       end
       w[i] = sum.abs
       if w[i] > pk
@@ -284,7 +287,9 @@ using 'gamma' as the window parameter.")
   # limitation is based on the underlying fft function's insistence on
   # power-of-2 data sizes see stretch-sound-via-dft below for a
   # general version
-  add_help(:down_oct, "down_oct(n, [snd=false, [chn=false]]) moves a sound down by power of 2 n")
+  add_help(:down_oct,
+           "down_oct(n, snd=false, chn=false)  \
+moves a sound down by power of 2 n")
   def down_oct(n, snd = false, chn = false)
     len = frames(snd, chn)
     pow2 = (log(len) / log(2)).ceil
@@ -311,13 +316,21 @@ using 'gamma' as the window parameter.")
     vct2channel(rl2, 0, n * len, snd, chn, false, format("%s(%s", get_func_name, n))
   end
 
-  add_help(:edot_product, "edot_product(freq, data): sum of (e^freq*i) * data[i]")
+  add_help(:edot_product,
+           "edot_product(freq, data)  \
+sum of (e^freq*i) * data[i]")
   def edot_product(freq, data)
     sum = 0.0
-    data.each_with_index do |val, i| sum += exp(i.to_f * freq) * val end
+    data.each_with_index do |val, i|
+      sum = sum + exp(i.to_f * freq) * val
+    end
     sum
   end unless defined? edot_product
-  
+
+  add_help(:stretch_sound_via_dft,
+           "stretch_sound_via_dft(factor, snd=false, chn=false)  \
+makes the given channel longer (FACTOR should be > 1.0) by squeezing in the frequency domain, \
+then using the inverse DFT to get the time domain result.")
   def stretch_sound_via_dft(factor, snd = false, chn = false)
     factor = factor.to_f
     n = frames(snd, chn)
@@ -448,7 +461,7 @@ using 'gamma' as the window parameter.")
 
   # "frequency division" -- an effect from sed_sed@my-dejanews.com
   add_help(:freqdiv,
-           "freqdiv(n, [snd=false, [chn=false]]) \
+           "freqdiv(n, snd=false, chn=false)  \
 repeats each nth sample n times (clobbering the intermediate samples): freqdiv(8)")
   def freqdiv(n, snd = false, chn = false)
     div = 0
@@ -465,7 +478,8 @@ repeats each nth sample n times (clobbering the intermediate samples): freqdiv(8
   # 
   # a more extreme effect is "saturation":
   # (map-channel (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
-  add_help(:adsat, "adsat(size, [beg=false, [dur=false, [snd=false, [chn=false]]]]) \
+  add_help(:adsat,
+           "adsat(size, beg=false, dur=false, snd=false, chn=false)  \
 is an 'adaptive saturation' sound effect")
   def adsat(size, beg = false, dur = false, snd = false, chn = false)
     mn = 0.0
@@ -500,7 +514,7 @@ is an 'adaptive saturation' sound effect")
   # 
   # makes sound more spikey -- sometimes a nice effect
   add_help(:spike,
-           "spike([snd=false, [chn=false]]) \
+           "spike(snd=false, chn=false)  \
 multiplies successive samples together to make a sound more spikey")
   def spike(snd = false, chn = false)
     x1 = x2 = 0.0
@@ -514,7 +528,7 @@ multiplies successive samples together to make a sound more spikey")
 
   # easily-fooled autocorrelation-based pitch tracker
   add_help(:spot_freq,
-           "spot_freq([samp=0, [snd=false, [chn=false]]]) \
+           "spot_freq(samp=0, snd=false, chn=false)  \
 tries to determine the current pitch: spot_freq(left_sample)")
   def spot_freq(samp = 0, snd = false, chn = false)
     pow2 = (log(srate(snd) / 20.0) / log(2)).ceil
@@ -590,7 +604,9 @@ tries to determine the current pitch: spot_freq(left_sample)")
     gen.flanger(inval)
   end
 
-  add_help(:chorus, "chorus([size=5]) tries to produce the chorus sound effect")
+  add_help(:chorus,
+           "chorus(size=5)  \
+tries to produce the chorus sound effect")
   def chorus(size = 5)
     dlys = make_array(size) do make_flanger end
     sum = 0.0
@@ -603,7 +619,7 @@ tries to determine the current pitch: spot_freq(left_sample)")
   # chordalize (comb filters to make a chord using chordalize-amount
   # and chordalize-base)
   add_help(:chordalize,
-           "chordalize([amount=0.95, [base=100, [chord=[1.00, 0.75, 1.25]]]]) \
+           "chordalize(amount=0.95, base=100, chord=[1.00, 0.75, 1.25])  \
 uses harmonically-related comb-filters to bring out a chord in a sound")
   def chordalize(amount = 0.95, base = 100, chord = [1.00, 0.75, 1.25])
     combs = chord.map do |interval| make_comb(:scaler, amount, :size, (base * interval).round) end
@@ -617,7 +633,8 @@ uses harmonically-related comb-filters to bring out a chord in a sound")
   
   # zero-phase, rotate-phase
   # fft games (from the "phazor" package of Scott McNab)
-  add_help(:zero_phase, "zero_phase([snd=false, [chn=false]]) \
+  add_help(:zero_phase,
+           "zero_phase(snd=false, chn=false)  \
 calls fft, sets all phases to 0, and un-ffts")
   def zero_phase(snd = false, chn = false)
     len = frames(snd, chn)
@@ -636,8 +653,11 @@ calls fft, sets all phases to 0, and un-ffts")
     vct2channel(vct_scale!(rl, old_pk / pk), 0, len, snd, chn, false, "zero_phase(")
   end
 
-  # (set_)edit_list_proc_counter is defined in examp.rb
+  # (set_)edit_list_proc_counter is defined in clm.rb
   # it's necessary to produce a uniq method name
+  add_help(:rotate_phase,
+           "rotate_phase(func, snd=false, chn=false)  \
+calls fft, applies func to each phase, then un-ffts")
   def rotate_phase(func, snd = false, chn = false)
     func_name = format("%s_%d", get_func_name, set_edit_list_proc_counter).intern
     # Proc converted to Method (ie. normal function) for edit_list2function
@@ -713,7 +733,7 @@ calls fft, sets all phases to 0, and un-ffts")
       modphase = @ratio * @phase
       result = exp(0.5 * @index * (@r - r1) * (one + cos(modphase))) *
         cos(@phase + 0.5 * @index * (@r + r1) * sin(modphase))
-      @phase += (input + @freq)
+      @phase = @phase + input + @freq
       result
     end
     
@@ -722,7 +742,7 @@ calls fft, sets all phases to 0, and un-ffts")
       modphase = @ratio * @phase
       result = exp(0.5 * @index * (@r + r1) * (cos(modphase) - 1.0)) -
         cos(@phase + 0.5 * @index * (@r - r1) * sin(modphase))
-      @phase += (input + @freq)
+      @phase = @phase + input + @freq
       result
     end
   end
@@ -747,8 +767,8 @@ calls fft, sets all phases to 0, and un-ffts")
   # 
   # from Andrews, Askey, Roy "Special Functions" 5.1.16
   add_help(:cosine_summation,
-           ":cosine_summation(gen, r): is a variant of the CLM sine-summation generator; \
-R controls successive sinusoid amplitudes.")
+           "cosine_summation(gen, r)  \
+is a variant of the CLM sine-summation generator; R controls successive sinusoid amplitudes.")
   def cosine_summation(gen, r)
     rr = r * r
     rrp1 = 1.0 + rr
@@ -769,7 +789,8 @@ R controls successive sinusoid amplitudes.")
   # hypergeometric series (looks like r^n/n! (~=e^n?) with a million
   # other terms).
   add_help(:kosine_summation,
-           "kosine_summation(gen, r, k): is a variant of sum-of-cosines; \
+           "kosine_summation(gen, r, k)  \
+is a variant of sum-of-cosines; \
 R controls successive sinusoid amplitude; \
 K controls how many sinusoids are produced.")
   def kosine_summation(gen, r, k)
@@ -846,6 +867,9 @@ K controls how many sinusoids are produced.")
   end
 
   # brighten-slightly
+  add_help(:brighten_slightly,
+           "brighten_slightly(amount, snd=false, chn=false)  \
+is a form of contrast-enhancement (AMOUNT between ca 0.1 and 1.0)")
   def brighten_slightly(amount, snd = false, chn = false)
     mx = maxamp
     brt = (TWO_PI * amount) / mx
@@ -854,8 +878,10 @@ K controls how many sinusoids are produced.")
                 end, 0, false, snd, chn, false, format("%s(%s", get_func_name, amount))
   end
 
+  add_help(:brighten_slightly_1,
+           "brighten_slightly_1(coeffs, snd=false, chn=false)  \
+is a form of contrast-enhancement: brighten_slightly-1([1, 0.5, 3, 1])")
   def brighten_slightly_1(coeffs, snd = false, chn = false)
-    # another version: brighten_slightly_1([1, 0.5, 3, 1])
     pcoeffs = partials2polynomial(coeffs)
     mx = maxamp(snd, chn)
     map_channel(lambda do |y| mx * polynomial(pcoeffs, y / mx) end,
@@ -865,6 +891,9 @@ K controls how many sinusoids are produced.")
   # FIR filters
 
   # Snd's (very simple) spectrum->coefficients procedure is:
+  add_help(:spectrum2coeffs,
+           "spectrum2coeffs(order, spectr)  \
+returns FIR filter coefficients given the filter order and desired spectral envelope (a vct)")
   def spectrum2coeffs(order, spectr)
     coeffs = make_vct(order)
     n = order
@@ -874,7 +903,9 @@ K controls how many sinusoids are produced.")
     jj = n - 1
     m.times do |j|
       xt = 0.5 * spectr[0]
-      (1...m).each do |i| xt += spectr[i] * cos(q * i * (am - j - 1)) end
+      (1...m).each do |i|
+        xt = xt + spectr[i] * cos(q * i * (am - j - 1))
+      end
       coeff = 2.0 * (xt / n)
       coeffs[j] = coeff
       coeffs[jj] = coeff
@@ -884,7 +915,7 @@ K controls how many sinusoids are produced.")
   end
 
   add_help(:fltit_1,
-           "fltit_1(order, spectrum) \
+           "fltit_1(order, spectrum)  \
 creates an FIR filter from spectrum and order and returns a closure that calls it: 
 map_channel(fltit_1(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0)))")
   def fltit_1(order, spectr)
@@ -894,7 +925,8 @@ map_channel(fltit_1(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0)))")
 
   # Hilbert transform
   add_help(:make_hilbert_transform,
-           "make_hilbert_transform([len=30]) makes a Hilbert transform filter")
+           "make_hilbert_transform(len=30)  \
+makes a Hilbert transform filter")
   def make_hilbert_transform(len = 30)
     arrlen = len * 2 + 1
     arr = make_vct(arrlen)
@@ -910,10 +942,16 @@ map_channel(fltit_1(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0)))")
     end
     make_fir_filter(arrlen, arr)
   end
+
+  add_help(:hilbert_transform,
+           "hilbert_transform(f, in)  \
+is the generator corresponding to make_hilbert_transform")
   alias hilbert_transform fir_filter
 
   # highpass filter
-  add_help(:make_highpass, "make_highpass(fc, [len=30]) makes an FIR highpass filter")
+  add_help(:make_highpass,
+           "make_highpass(fc, len=30)  \
+makes an FIR highpass filter")
   def make_highpass(fc, len = 30)
     fc = fc.to_f
     arrlen = len * 2 + 1
@@ -930,10 +968,16 @@ map_channel(fltit_1(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0)))")
     end
     make_fir_filter(arrlen, arr)
   end
+
+  add_help(:highpass,
+           "highpass(f, in)  \
+is the generator corresponding to make_highpass")
   alias highpass fir_filter
 
   # lowpass filter
-  add_help(:make_lowpass, "make_lowpass(fc, [len=30]) makes an FIR lowpass filter")
+  add_help(:make_lowpass,
+           "make_lowpass(fc, len=30)  \
+makes an FIR lowpass filter")
   def make_lowpass(fc, len = 30)
     fc = fc.to_f
     arrlen = len * 2 + 1
@@ -950,10 +994,16 @@ map_channel(fltit_1(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0)))")
     end
     make_fir_filter(arrlen, arr)
   end
+
+  add_help(:lowpass,
+           "lowpass(f, in)  \
+is the generator corresponding to make_lowpass")
   alias lowpass fir_filter
 
   # bandpass filter
-  add_help(:make_bandpass, "make_bandpass(flo, fhi, [len=30]) makes an FIR bandpass filter")
+  add_help(:make_bandpass,
+           "make_bandpass(flo, fhi, len=30)  \
+makes an FIR bandpass filter")
   def make_bandpass(flo, fhi, len = 30)
     flo = flo.to_f
     fhi = fhi.to_f
@@ -971,10 +1021,16 @@ map_channel(fltit_1(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0)))")
     end
     make_fir_filter(arrlen, arr)
   end
+
+  add_help(:bandpass,
+           "bandpass(f, in)  \
+is the generator corresponding to make_bandpass")
   alias bandpass fir_filter
 
   # bandstop filter
-  add_help(:make_bandstop, "make_bandstop(flo, fhi, [len=30]) makes an FIR bandstop (notch) filter")
+  add_help(:make_bandstop,
+           "make_bandstop(flo, fhi, len=30)  \
+makes an FIR bandstop (notch) filter")
   def make_bandstop(flo, fhi, len = 30)
     flo = flo.to_f
     fhi = fhi.to_f
@@ -992,11 +1048,16 @@ map_channel(fltit_1(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0)))")
     end
     make_fir_filter(arrlen, arr)
   end
+
+  add_help(:bandstop,
+           "bandstop(f, in)  \
+is the generator corresponding to make_bandstop")
   alias bandstop fir_filter
 
   # differentiator
   add_help(:make_differentiator,
-           "make_differentiator([len=30]) makes an FIR differentiator (highpass) filter")
+           "make_differentiator(len=30)  \
+makes an FIR differentiator (highpass) filter")
   def make_differentiator(len = 30)
     arrlen = len * 2 + 1
     arr = make_vct(arrlen)
@@ -1011,6 +1072,10 @@ map_channel(fltit_1(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0)))")
     end
     make_fir_filter(arrlen, arr)
   end
+
+  add_help(:differentiator,
+           "differentiator(f, in)  \
+is the generator corresponding to make_differentiator")
   alias differentiator fir_filter
 
   # IIR filters
@@ -1025,10 +1090,12 @@ map_channel(fltit_1(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0)))")
   # Computer music: synthesis, composition, and performance.
 
   add_help(:butter,
-           "butter(b, sig) is the generator side for the various make_butter procedure")
+           "butter(b, sig)  \
+is the generator side for the various make_butter procedure")
   alias butter filter
   add_help(:make_butter_high_pass,
-           "make_butter_high_pass(freq) makes a Butterworth filter with high pass cutoff at 'freq'")
+           "make_butter_high_pass(freq)  \
+makes a Butterworth filter with high pass cutoff at FREQ")
   def make_butter_high_pass(freq)
     r = tan(PI * freq / srate())
     r2 = r * r
@@ -1041,7 +1108,8 @@ map_channel(fltit_1(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0)))")
   end
   
   add_help(:make_butter_low_pass,
-           "make_butter_low_pass(freq) makes a Butterworth filter with high pass cutoff at 'freq'. \
+           "make_butter_low_pass(freq)  \
+makes a Butterworth filter with high pass cutoff at FREQ.  \
 The result can be used directly: \
 filter_sound(make_butter_low_pass(500.0)), or via the 'butter' generator")
   def make_butter_low_pass(freq)
@@ -1056,8 +1124,8 @@ filter_sound(make_butter_low_pass(500.0)), or via the 'butter' generator")
   end
   
   add_help(:make_butter_band_pass,
-           "make_butter_band_pass(freq, band) \
-makes a bandpass Butterworth filter with low edge at 'freq' and width 'band'")
+           "make_butter_band_pass(freq, band)  \
+makes a bandpass Butterworth filter with low edge at FREQ and width BAND")
   def make_butter_band_pass(freq, band)
     d = 2.0 * cos(2.0 * PI * freq / srate())
     c = 1.0 / tan(PI * band / srate())
@@ -1070,8 +1138,8 @@ makes a bandpass Butterworth filter with low edge at 'freq' and width 'band'")
   end
 
   add_help(:make_butter_band_reject,
-           "make_butter_band_reject(freq, band) \
-makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'")
+           "make_butter_band_reject(freq, band)  \
+makes a band-reject Butterworth filter with low edge at FREQ and width BAND")
   def make_butter_band_reject(freq, band)
     d = 2.0 * cos(2.0 * PI * freq / srate())
     c = tan(PI * band / srate())
@@ -1090,7 +1158,8 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   #   (filter gen 1.0)
   #   etc
   add_help(:make_biquad,
-           "make_biquad(a0, a1, a2, b1, b2) returns a biquad filter (use with the CLM filter gen)")
+           "make_biquad(a0, a1, a2, b1, b2)  \
+returns a biquad filter (use with the CLM filter gen)")
   def make_biquad(a0, a1, a2, b1, b2)
     make_filter(3, vct(a0, a1, a2), vct(0.0, b1, b2))
   end
@@ -1175,11 +1244,14 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
     (l + m).times do |i|
       y[i] = 0.0
       ([0, i - (1 + l)].max..[i, m].min).each do |j|
-        y[i] += h[j] * x[i - j]
+        y[i] = y[i] + h[j] * x[i - j]
       end
     end
   end
 
+  add_help(:cascade2canonical,
+           "cascade2canonical(a)  \
+converts a list of cascade coeffs (vcts with 3 entries) to canonical form")
   def cascade2canonical(a)
     k = a.length
     d = make_vct(2 * k + 1)
@@ -1195,6 +1267,9 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   end
 
   # order is M*2, fc is cutoff freq (Hz)
+  add_help(:make_butter_lp,
+           "make_butter_lp(m, fc)  \
+returns a butterworth low-pass filter; its order is M * 2, FC is the cutoff frequency in Hz")
   def make_butter_lp(m, fc)
     fc = fc.to_f
     xcoeffs = make_array(m)
@@ -1214,6 +1289,9 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   end
 
   # order is M*2, fc is cutoff freq (Hz)
+  add_help(:make_butter_hp,
+           "make_butter_hp(m, fc)  \
+returns a butterworth high-pass filter; its order is M * 2, FC is the cutoff frequency in Hz")
   def make_butter_hp(m, fc)
     fc = fc.to_f
     xcoeffs = make_array(m)
@@ -1233,6 +1311,10 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   end
 
   # order is M*2, f1 and f2 are band edge freqs (Hz)
+  add_help(:make_butter_bp,
+           "make_butter_bp(m, f1, f2)  \
+returns a butterworth band-pass filter; \
+its order is M * 2, F1 and F2 are the band edge frequencies in Hz")
   def make_butter_bp(m, f1, f2)
     f1 = f1.to_f
     f2 = f2.to_f
@@ -1269,6 +1351,10 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   end
 
   # order is M*2, f1 and f2 are band edge freqs (Hz)
+  add_help(:make_butter_bs,
+           "make_butter_bs(m, f1, f2)  \
+returns a butterworth band-stop filter; \
+its order is M * 2, F1 and F2 are the band edge frequencies in Hz")
   def make_butter_bs(m, f1, f2)
     f1 = f1.to_f
     f2 = f2.to_f
@@ -1323,8 +1409,8 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   end
 
   add_help(:notch_channel,
-           "notch_channel(freqs, [filter_order=false, [beg=false, [dur=false, \
-[snd=false, [chn=false [edpos=false, [truncate=true, [notch_width=2]]]]]]]] \
+           "notch_channel(freqs, order=false, beg=false, dur=false, \
+snd=false, chn=false, edpos=false, trunc=true, notch_width=2)  \
 -> notch filter removing freqs")
   def notch_channel(freqs,
                     filter_order = false,
@@ -1343,7 +1429,7 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   end
 
   add_help(:notch_sound,
-           "notch_sound(freqs, [filter_order=false, [snd=false, [chn=false [notch_width=2]]]] \
+           "notch_sound(freqs, order=false, snd=false, chn=false, notch_width=2)  \
 -> notch filter removing freqs")
   def notch_sound(freqs, filter_order = false, snd = false, chn = false, notch_width = 2)
     filter_sound(make_notch_frequency_response(srate(snd).to_f, freqs, notch_width),
@@ -1353,7 +1439,7 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   end
 
   add_help(:notch_selection,
-           "notch_selection(freqs, [filter_order=false, [notch_width=2]] \
+           "notch_selection(freqs, order=false, notch_width=2)  \
 -> notch filter removing freqs")
   def notch_selection(freqs, filter_order = false, snd = false, chn = false, notch_width = 2)
     if selection?
@@ -1367,8 +1453,9 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   #
   # translated from the fxt package of Joerg Arndt
   add_help(:fractional_fourier_transform,
-           "fractional_fourier_transform(real, imaginary, n, angle) \
-performs a fractional Fourier transform on data; if angle=1.0, you get a normal Fourier transform")
+           "fractional_fourier_transform(real, imaginary, n, angle)  \
+performs a fractional Fourier transform on data; \
+if angle=1.0, you get a normal Fourier transform")
   def fractional_fourier_transform(fr, fi, n, v)
     hr = make_vct(n)
     hi = make_vct(n)
@@ -1396,7 +1483,8 @@ performs a fractional Fourier transform on data; if angle=1.0, you get a normal 
   # using vector to allow complex sums (z=e^2*pi*i/n -> fourier transform)
   # z_transform(data, n, exp(Complex(0.0, (2.0 / n) * PI)))
   add_help(:z_transform,
-           "z_transform(data, n, z) performs a Z transform on data; \
+           "z_transform(data, n, z)  \
+performs a Z transform on data; \
 if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector")
   def z_transform(f, n, z)
     make_array(n) do |w|
@@ -1404,7 +1492,7 @@ if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector"
       t = 1.0
       m = z ** w
       n.times do |k|
-        sum += f[k] * t
+        sum = sum + f[k] * t
         t *= m
       end
       sum
@@ -1415,31 +1503,34 @@ if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector"
   #
   # taken from Perry Cook's SignalProcessor.m (the slow version of the
   # Hartley transform)
-  add_help(:dht, "dht(data) returns the Hartley transform of 'data'.")
+  add_help(:dht,
+           "dht(data)  \
+returns the Hartley transform of DATA.")
   def dht(data)
     len = data.length
     arr = make_vct(len)
-    w = (2.0 * PI) / len
+    w = TWO_PI / len
     len.times do |i|
       data.each_with_index do |val, j|
-        arr[i] += val * (cos(i * j * w) + sin(i * j * w))
+        arr[i] = arr[i] + val * (cos(i * j * w) + sin(i * j * w))
       end
     end
     arr
   end
 
   add_help(:find_sine,
-           "find_sine(freq, beg, dur) \
+           "find_sine(freq, beg, dur, snd=false)  \
 returns the amplitude and initial-phase (for sin) at freq between beg and dur")
-  def find_sine(freq, beg, dur)
-    incr = hz2radians(freq)
+  def find_sine(freq, beg, dur, snd = false)
+    incr = (TWO_PI * freq) / srate(snd)
     sw = 0.0
     cw = 0.0
-    reader = make_sampler(beg, false, false, 1, false)
+    reader = make_sampler(beg, snd)
     dur.times do |i|
       samp = next_sample(reader)
-      sw += samp * sin(i * incr)
-      cw += samp * cos(i * incr)
+      inc = i * incr
+      sw = sw + samp * sin(inc)
+      cw = cw + samp * cos(inc)
     end
     [2.0 * (sqrt(sw * sw + cw * cw) / dur), atan2(cw, sw)]
   end
@@ -1449,20 +1540,27 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
 # it returns the same result as find_sine above if you take (* 2 (/
 # (goertzel...) dur)) -- see snd-test.rb examples
 
-  def goertzel(freq, beg = 0, dur = frames())
+  add_help(:goertzel,
+           "goertzel(freq, beg=0, dur=false, snd=false)  \
+returns the amplitude of the FREQ spectral component")
+  def goertzel(freq, beg = 0, dur = false, snd = false)
     y0 = 0.0
     y1 = 0.0
     y2 = 0.0
-    rfreq = (TWO_PI * freq) / srate()
+    rfreq = (TWO_PI * freq) / srate(snd)
     cs = 2.0 * cos(rfreq)
     scan_channel(lambda do |y|
                    y2, y1 = y1, y0
                    y0 = (y1 * cs - y2) + y
                    false
-                 end, beg, dur)
+                 end, beg, (dur or frames(snd)), snd)
     (y0 - y1 * exp(Complex(0.0, -rfreq))).abs
   end
 
+  add_help(:make_spencer_filter,
+           "make_spencer_filter()  \
+is a version of make_fir_filter; \
+it returns one of the standard smoothing filters from the era when computers were human beings")
   def make_spencer_filter
     data = [-3, -6, -5, 3, 21, 46, 67, 74, 67, 46, 21, 3, -5, -6, -3].map do |n| n / 320.0 end
     make_fir_filter(15, vector2vct(data))
@@ -1548,7 +1646,6 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   end
 
   def gaussian_envelope(s)
-    e = []
     den = 2.0 * s * s
     x = -1.0
     y = -4.0
@@ -1566,60 +1663,103 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   # Julius Smith stuff
   #
   # these are from "Mathematics of the DFT", W3K Pubs
-  def channel_mean(snd = false, chn = false)
+  add_help(:channel_mean,
+           "channel_mean(snd, chn)  \
+returns the average of the samples in the given channel: <f,1>/n")
+  def channel_mean(snd, chn)
     sum = 0.0
     n = frames(snd, chn)
-    scan_channel(lambda do |y| sum += y; false; end, 0, n, snd, chn)
+    scan_channel(lambda do |y|
+                   sum += y
+                   false
+                 end, 0, n, snd, chn)
     sum / n
   end
 
-  def channel_total_energy(snd = false, chn = false)
+  add_help(:channel_total_energy,
+           "channel_total_energy(snd, chn)  \
+returns the sum of the squares of all the samples in the given channel: <f,f>")
+  def channel_total_energy(snd, chn)
     sum = 0.0
-    scan_channel(lambda do |y| sum += y * y; false; end, 0, frames(snd, chn), snd, chn)
+    scan_channel(lambda do |y|
+                   sum = sum + y * y
+                   false
+                 end, 0, frames(snd, chn), snd, chn)
     sum
   end
 
-  def channel_average_power(snd = false, chn = false)
+  add_help(:channel_average_power,
+           "channel_average_power(snd, chn)  \
+returns the average power in the given channel: <f,f>/n")
+  def channel_average_power(snd, chn)
     channel_total_energy(snd, chn) / frames(snd, chn)
   end
 
-  def channel_rms(snd = false, chn = false)
+  add_help(:channel_rms,
+           "channel_rms(snd, chn)  \
+returns the RMS value of the samples in the given channel: sqrt(<f,f>/n)")
+  def channel_rms(snd, chn)
     sqrt(channel_average_power(snd, chn))
   end
 
-  def channel_variance(snd = false, chn = false)
-    n = frames(snd, chn)
-    mu = (n / (n - 1)) * channel_mean(snd, chn)
+  add_help(:channel_variance,
+           "channel_variance(snd, chn)  \
+returns the sample variance in the given channel: <f,f>-((<f,1>/ n)^2")
+  def channel_variance(snd, chn)
+    n = frames(snd, chn).to_f
+    mu = (n / (n - 1.0)) * channel_mean(snd, chn)
     p = channel_total_energy(snd, chn)
     p - mu * mu
   end
 
-  def channel_norm(snd = false, chn = false)
+  add_help(:channel_norm,
+           "channel_norm(snd, chn)  \
+returns the norm of the samples in the given channel: sqrt(<f,f>)")
+  def channel_norm(snd, chn)
     sqrt(channel_total_energy(snd, chn))
   end
 
-  def channel_lp(p, snd = false, chn = false)
+  add_help(:channel_lp,
+           "channel_lp(p, snd, chn)  \
+returns the Lp norm of the samples in the given channel")
+  def channel_lp(lp, snd, chn)
     sum = 0.0
-    n = frames(snd, chn)
-    scan_channel(lambda do |y| sum += y.abs ** p; false; end, 0, n, snd, chn)
-    sum ** (1.0 / p)
+    scan_channel(lambda do |y|
+                   sum = sum + y.abs ** lp
+                   false
+                 end, 0, frames(snd, chn), snd, chn)
+    sum ** (1.0 / lp)
   end
 
-  def channel_lp_inf(snd = false, chn = false)
+  add_help(:channel_lp_inf,
+           "channel_lp_inf(snd, chn)  \
+returns the maxamp in the given channel (the name is just math jargon for maxamp)")
+  def channel_lp_inf(snd, chn)
     mx = 0.0
-    n = frames(snd, chn)
-    scan_channel(lambda do |y| mx = [mx, y.abs].max; false; end, 0, n, snd, chn)
+    scan_channel(lambda do |y|
+                   mx = [mx, y.abs].max
+                   false
+                 end, 0, frames(snd, chn), snd, chn)
     mx
   end
 
+  add_help(:channel2_inner_product,
+           "channel2_inner_product(s1, c1, s2, c2)  \
+returns the inner-product of the two channels: <f,g>")
   def channel2_inner_product(s1, c1, s2, c2)
     sum = 0.0
     r1 = make_sampler(0, s1, c1)
     r2 = make_sampler(0, s2, c2)
-    frames(s1, c1).times do |i| sum += r1.call * r2.call end
+    frames(s1, c1).times do |i|
+      sum = sum + r1.call * r2.call
+    end
     sum
   end
 
+  add_help(:channel2_angle,
+           "channel2_angle(s1, c1, s2, c2)  \
+treats the two channels as vectors, \
+returning the 'angle' between them: acos(<f,g>/(sqrt(<f,f>)*sqrt(<g,g>)))")
   def channel2_angle(s1, c1, s2, c2)
     inprod = channel2_inner_product(s1, c1, s2, c2)
     norm1 = channel_norm(s1, c1)
@@ -1627,31 +1767,40 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     acos(inprod / (norm1 * norm2))
   end if defined? acos
 
+  add_help(:channel2_orthogonal?,
+           "channel2_orthogonal?(s1, c1, s2, c2)  \
+returns true if the two channels' inner-product is 0: <f,g>==0")
   def channel2_orthogonal?(s1, c1, s2, c2)
     channel2_inner_product(s1, c1, s2, c2).zero?
   end
 
+  add_help(:channel2_coefficient_of_projection,
+           "channel2_coefficient_of_projection(s1, c1, s2, c2) \
+returns <f,g>/<f,f>")
   def channel2_coefficient_of_projection(s1, c1, s2, c2)
-    inprod = channel2_inner_product(s1, c1, s2, c2)
-    norm1 = channel_norm(s1, c1)
-    inprod / (norm1 * norm1)
+    channel2_inner_product(s1, c1, s2, c2) / channel_total_energy(s1, c1)
   end
 
   # end of JOS stuff
 
+  add_help(:channel_distance,
+           "channel_distance(s1, c1, s2, c2)  \
+returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)")
   def channel_distance(s1, c1, s2, c2)
     r1 = make_sampler(0, s1, c1)
     r2 = make_sampler(0, s2, c2)
     sum = 0.0
     [frames(s1, c1), frames(s2, c2)].min.times do
       diff = r1.call - r2.call
-      sum += diff * diff
+      sum = sum + diff * diff
     end
     sqrt(sum)
   end
 
+  add_help(:periodogram,
+           "periodogram(n)  \
+displays an N point Bartlett periodogram of the samples in the current channel")
   def periodogram(n)
-    # the "Bartlett" version, apparently
     len = frames()
     average_data = make_vct(n)
     rd = make_sampler(0)
@@ -1661,23 +1810,36 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     len.times do
       vct_scale!(rl, 0.0)
       vct_scale!(im, 0.0)
-      n.times do |k| rl[k] = rd.call end
+      n.times do |k|
+        rl[k] = rd.call
+      end
       mus_fft(rl, im)
-      n.times do |k| average_data[k] += (rl[k] * rl[k] + im[k] * im[k]) end
+      n.times do |k|
+        average_data[k] = average_data[k] + rl[k] * rl[k] + im[k] * im[k]
+      end
     end
-    graph(vct_scale!(average_data, 1.0 / (len / n).ceil))
+    graph(vct_scale!(average_data, 1.0 / (len.to_f / n).ceil))
   end
 
   # ssb-am friends
 
+  add_help(:shift_channel_pitch,
+           "shift_channel_pitch(freq, order=40, beg=0, dur=false, snd=false, chn=false, edpos=false)\
+  uses the ssb-am CLM generator to shift the given channel in pitch without changing its length.  \
+The higher ORDER, the better usually.")
   def shift_channel_pitch(freq, order = 40, beg = 0, dur = false,
                           snd = false, chn = false, edpos = false)
     gen = make_ssb_am(freq, order)
-    map_channel(lambda do |y| ssb_am(gen, y) end, beg, dur, snd, chn, edpos,
+    map_channel(lambda do |y|
+                  ssb_am(gen, y)
+                end,
+                beg, dur, snd, chn, edpos,
                 format("%s(%s, %s, %s, %s", get_func_name, freq, order, beg, dur))
-
   end
 
+  add_help(:hz_to_2pi,
+           "hz_to_2pi(freq)  \
+is like hz2radians but uses the current sound's srate, not mus_srate")
   def hz_to_2pi(freq)
     (TWO_PI * freq) / srate()
   end
@@ -1699,7 +1861,9 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
       nmx = 0.0
       map_channel_rb(beg, dur, snd, chn, edpos) do |y|
         sum = 0.0
-        ssbs.zip(bands) do |sbs, bds| sum += ssb_am(sbs, bandpass(bds, y)) end
+        ssbs.zip(bands) do |sbs, bds|
+          sum += ssb_am(sbs, bandpass(bds, y))
+        end
         nmx = [nmx, sum.abs].max
         sum
       end
@@ -1821,22 +1985,20 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   # FFTSIZE -- FFT window size. Must be a power of 2. 4096 is
   # recommended.
 
-  def scentroid(file, *args)
-    beg, dur, db_floor, rfreq, fftsize = nil
-    optkey(args, binding,
-           [:beg, 0.0],
-           :dur,
-           [:db_floor, -40.0],
-           [:rfreq, 100.0],
-           [:fftsize, 4096])
-    assert_type(File.exist?(file), file, 0, "an existing file")
-    fsr = mus_sound_srate(file)
+  add_help(:scentroid,
+           "scentroid(file, beg=0, dur=false, db_floor=-40, rfreq=100, fftsize=4096)  \
+returns the spectral centroid envelope of a sound; \
+RFREQ is the rendering frequency, the number of measurements per second; \
+DB_FLOOR is the level below which data will be ignored")
+  def scentroid(file, beg = 0.0, dur = false, db_floor = -40, rfreq = 100.0, fftsize = 4096)
+    assert_type(File.exists?(file), file, 0, "an existing file")
+    fsr = srate(file)
     incrsamps = (fsr / rfreq).floor
     start = (beg * fsr).floor
-    ende = start + (dur ? (dur.to_f * fsr).to_i : (mus_sound_frames(file) - beg))
+    ende = start + (dur ? (dur * fsr).floor : (frames(file) - beg))
     fdr = make_vct(fftsize)
     fdi = make_vct(fftsize)
-    windows = ((ende - start.to_f) / incrsamps).floor + 1
+    windows = ((ende - start) / incrsamps).floor + 1
     results = make_vct(windows)
     fft2 = (fftsize / 2.0).floor
     binwidth = fsr / fftsize.to_f
@@ -1847,7 +2009,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
       sum_of_squares = 0.0
       fdr.map! do
         val = readin(rd)
-        sum_of_squares += val * val
+        sum_of_squares = sum_of_squares + val * val
         val
       end
       if linear2db(sqrt(sum_of_squares / fftsize.to_f)) >= db_floor
@@ -1857,7 +2019,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
         mus_fft(fdr, fdi, fftsize)
         rectangular2polar(fdr, fdi)
         fft2.times do |j|
-          numsum += j * binwidth * fdr[j]
+          numsum = numsum + j * binwidth * fdr[j]
           densum += fdr[j]
         end
         results[loc] = numsum / densum
@@ -1891,7 +2053,7 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
       sum = 0.0
       k = i
       i.times do |j|
-        sum += nfilt[j] * coeffs[k]
+        sum = sum + nfilt[j] * coeffs[k]
         k -= 1
         nfilt[i] = sum / -coeffs.first
       end
@@ -1932,21 +2094,28 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
       sum = dot_product(@as, @xs, @as.length)
       @bs.length.times do |i|
         @bs.length.times do |j|
-          sum += @bs[j] * @xs[i] * @xs[j]
+          sum = sum + @bs[j] * @xs[i] * @xs[j]
         end
       end
       sum
     end
   end
-  
+
+  add_help(:make_volterra_filter,
+           "make_volterra_filter(acoeffs, bcoeffs)  \
+returns a list for use with volterra-filter, producing one of the standard non-linear filters")
   def make_volterra_filter(acoeffs, bcoeffs)
     Volterra_filter.new(acoeffs, bcoeffs)
   end
 
+  add_help(:volterra_filter,
+           "volterra_filter(flt, x)  \
+takes FLT, a Volterra_filter object returned by make_volterra_filter, \
+and an input X, and returns the (non-linear filtered) result")
   def volterra_filter(flt, x)
     flt.volterra_filter(x)
   end
-  # flt = make_volterra_filter([0.5, 0.1].to_vct, [0.3, 0.2, 0.1].to_vct)
+  # flt = make_volterra_filter(vct(0.5, 0.1), vct(0.3, 0.2, 0.1))
   # map_channel(lambda do |y| volterra_filter(flt, y) end)
 
   class Moving_max < Musgen
@@ -1986,9 +2155,9 @@ tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
   end
 
   add_help(:make_moving_max,
-           "make_moving_max(size = 128)  returns a windowed-maxamp generator.  \
-The generator keeps a running window of the last 'size' inputs, \
-returning the maxamp in that window.")
+           "make_moving_max(size = 128)  \
+returns a windowed-maxamp generator.  \
+The generator keeps a running window of the last SIZE inputs, returning the maxamp in that window.")
   def make_moving_max(size = 128)
     Moving_max.new(size)
   end
@@ -2005,8 +2174,9 @@ returns the maxamp in a running window on the last few inputs.")
   # moving-sum generator (the sum norm or 1-norm)
   
   add_help(:make_moving_sum,
-           "make_moving_sum([size=128])  returns a moving-sum generator.  \
-The generator keeps a running window of the last 'size' inputs, \
+           "make_moving_sum(size=128)  \
+returns a moving-sum generator.  \
+The generator keeps a running window of the last SIZE inputs, \
 returning the sum of the absolute values of the samples in that window.")
   def make_moving_sum(size = 128)
     gen = make_moving_average(size)
@@ -2024,8 +2194,9 @@ returns the sum of the absolute values in a moving window over the last few inpu
   # moving-rms generator
 
   add_help(:make_moving_rms,
-           "make_moving_rms([size=128])  returns a moving-rms generator.  \
-The generator keeps a running window of the last 'size' inputs, \
+           "make_moving_rms(size=128)  \
+returns a moving-rms generator.  \
+The generator keeps a running window of the last SIZE inputs, \
 returning the rms of the samples in that window.")
   def make_moving_rms(size = 128)
     make_moving_average(size)
@@ -2041,8 +2212,9 @@ returns the rms of the values in a window over the last few inputs.")
   # moving-length generator (euclidean norm or 2-norm)
 
   add_help(:make_moving_length,
-           "make_moving_length([size=128])  returns a moving-length generator.  \
-The generator keeps a running window of the last 'size' inputs, \
+           "make_moving_length(size=128)  \
+returns a moving-length generator.  \
+The generator keeps a running window of the last SIZE inputs, \
 returning the euclidean length of the vector in that window.")
   def make_moving_length(size = 128)
     gen = make_moving_average(size)
@@ -2062,8 +2234,8 @@ returns the length of the values in a window over the last few inputs.")
   # obviously very similar to ssb_bank above, but splits harmonics
   # individually, rather than pitch-shifting them
   add_help(:harmonicizer,
-           "harmonicizer(freq, coeffs, pairs,
-[order=40, [bw=50.0, [beg=0, [dur=false, [snd=false [chn=false, [edpos=false]]]]]]])  \
+           "harmonicizer(freq, coeffs, pairs, \
+order=40, bw=50.0, beg=0, dur=false, snd=false, chn=false, edpos=false)  \
 splits out each harmonic and replaces it with the spectrum given in coeffs")
   def harmonicizer(freq, coeffs, pairs,
                    order = 40,
@@ -2096,7 +2268,7 @@ splits out each harmonic and replaces it with the spectrum given in coeffs")
           mx = moving_max(ps, sig)
           amp = moving_average(as, mx > 0.0 ? [100.0, 1.0 / mx].min : 0.0)
           if amp > 0.0
-            sum += mx * polynomial(pcoeffs, amp * sig)
+            sum = sum + mx * polynomial(pcoeffs, amp * sig)
           end
         end
         val = filter(flt, sum)
@@ -2117,7 +2289,7 @@ splits out each harmonic and replaces it with the spectrum given in coeffs")
   # linear sampling rate conversion
 
   add_help(:linear_src_channel,
-          "linear_src_channel(sr, [snd=false, [chn=false]]) \
+          "linear_src_channel(sr, snd=false, chn=false)  \
 performs sampling rate conversion using linear interpolation.")
   def linear_src_channel(srinc, snd = false, chn = false)
     rd = make_sampler(0, snd, chn)
@@ -2203,7 +2375,7 @@ performs sampling rate conversion using linear interpolation.")
     10000.times do |i|
       sum = 0.0
       input = 0.01 * rand(noi)
-      filters.each do |f| sum += (1.0 / (j + 1)) * mfilter(f, input) end
+      filters.each do |f| sum = sum + (1.0 / (j + 1)) * mfilter(f, input) end
       outa(i, sum $output)
     end
   end

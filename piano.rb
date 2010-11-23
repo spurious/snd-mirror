@@ -3,7 +3,7 @@
 
 # Ruby Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Mar 06 03:58:02 CET 2003
-# Changed: Wed Nov 17 22:45:00 CET 2010
+# Changed: Mon Nov 22 13:25:33 CET 2010
 
 module Piano
   require "ws"
@@ -362,7 +362,7 @@ module Piano
   def make_expseg(cv = 0.0, tv = 0.0)
     lambda do |r|
       old_cv = cv
-      cv += (tv - cv) * r
+      cv = cv + (tv - cv) * r
       old_cv     # ; (bil) this is slightly different (getting clicks)
     end            
   end

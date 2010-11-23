@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Sat Nov 06 23:43:02 CET 2010
+# Changed: Thu Nov 18 23:11:01 CET 2010
 
 # Commentary:
 #
@@ -124,8 +124,10 @@ need a String or Symbol, not %s"
       var = Hook.new(var_sym.to_s, arity, help)
     end
     if block_given?
-      name = format("%s hook", var_sym.to_s) if name.empty?
-      var.add_hook!(name, &body)
+      unless string?(hook_name)
+        hook_name = format("%s hook", var_sym.to_s)
+      end
+      var.add_hook!(hook_name, &body)
     end
     Hook.instance_eval("#{var_sym} = var")
   end

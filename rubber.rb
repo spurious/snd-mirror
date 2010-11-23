@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 28 03:04:03 CET 2003
-# Changed: Wed Nov 17 23:00:31 CET 2010
+# Changed: Mon Nov 22 13:29:07 CET 2010
 
 # module Rubber (see rubber.scm)
 #  add_named_mark(samp, name, snd, chn)
@@ -245,7 +245,7 @@ module Rubber
                         if mult > 1
                           (1...mult).each do |k| insert_samples(beg + k * len, len, new_samps) end
                         end
-                        changed_len += mult * len
+                        changed_len = changed_len + mult * len
                         (0...weights).each do |j|
                           curbeg = cross_samples[j]
                           if curbeg > beg

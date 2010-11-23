@@ -915,6 +915,7 @@ void snd_load_init_file(bool no_global, bool no_init)
    *
    * there are parallel choices for the global configuration file: /etc/snd_ruby|forth|s7.conf
    */
+
 #if HAVE_EXTENSION_LANGUAGE
 #if HAVE_RUBY
   #define SND_EXT_CONF "/etc/snd_ruby.conf"
