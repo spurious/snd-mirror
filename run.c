@@ -143,6 +143,11 @@
 
 #include <mus-config.h>
 
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define _GNU_SOURCE
+  /* this is needed to get the vasprintf declaration */
+#endif
+
 #if HAVE_SCHEME
 /* (almost) entire file is on this switch */
 
@@ -601,8 +606,10 @@ XEN run_hook(s7_pointer hook, s7_pointer args, const char *caller)
 #endif
 
 
-#define OPTIMIZER_WARNING_BUFFER_SIZE 1024
-static char *optimizer_warning_buffer = NULL;
+#if (!HAVE_VASPRINTF)
+  #define OPTIMIZER_WARNING_BUFFER_SIZE 1024
+  static char *optimizer_warning_buffer = NULL;
+#endif
 
 #ifdef __GNUC__
 static xen_value *run_warn(const char *format, ...) __attribute ((format (printf, 1, 2)));
@@ -610,23 +617,39 @@ static xen_value *run_warn(const char *format, ...) __attribute ((format (printf
 
 static xen_value *run_warn(const char *format, ...)
 {
-  va_list ap;
-  if (!optimizer_warning_buffer)
-    optimizer_warning_buffer = (char *)calloc(OPTIMIZER_WARNING_BUFFER_SIZE, sizeof(char));
   run_warned = true;
-  va_start(ap, format);
-#if HAVE_VSNPRINTF
-  vsnprintf(optimizer_warning_buffer, OPTIMIZER_WARNING_BUFFER_SIZE, format, ap);
-#else
-  vsprintf(optimizer_warning_buffer, format, ap);
-#endif
-  va_end(ap);
-
   if (XEN_HOOKED(optimization_hook))
-    run_hook(optimization_hook, 
-	     scheme_list_1(scheme_make_string(optimizer_warning_buffer)),
-	     S_optimization_hook);
+    {
+      va_list ap;
+      char *result;
 
+      va_start(ap, format);
+
+#if HAVE_VASPRINTF
+      vasprintf(&result, format, ap);
+#else
+
+      if (!optimizer_warning_buffer)
+	optimizer_warning_buffer = (char *)calloc(OPTIMIZER_WARNING_BUFFER_SIZE, sizeof(char));
+#if HAVE_VSNPRINTF
+      vsnprintf(optimizer_warning_buffer, OPTIMIZER_WARNING_BUFFER_SIZE, format, ap);
+#else
+      vsprintf(optimizer_warning_buffer, format, ap);
+#endif
+
+      result = optimizer_warning_buffer;
+#endif
+
+      va_end(ap);
+
+      run_hook(optimization_hook, 
+	       scheme_list_1(scheme_make_string(result)),
+	       S_optimization_hook);
+
+#if HAVE_VASPRINTF
+      free(result);
+#endif
+    }
   return(NULL); /* this is so we can insert the call into the error return call chain */
 }
 

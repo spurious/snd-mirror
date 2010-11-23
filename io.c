@@ -1,5 +1,10 @@
 #include <mus-config.h>
 
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define _GNU_SOURCE
+  /* this is needed to get the vasprintf declaration */
+#endif
+
 #if USE_SND
   #include "snd.h"
 #endif
@@ -1882,21 +1887,36 @@ int mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
 char *mus_format(const char *format, ...)
 {
   /* caller should free result */
+#if HAVE_VASPRINTF
+  va_list ap;
+  int bytes;
+  char *result = NULL;
+  va_start(ap, format);
+  bytes = vasprintf(&result, format, ap);
+  va_end(ap);
+  if (bytes == -1)
+    return(NULL);
+  return(result);
+#else
+
 #if HAVE_VSNPRINTF
   #define MUS_FORMAT_BUFFER_SIZE 256
 #else
   #define MUS_FORMAT_BUFFER_SIZE 8192
 #endif
+
   char *buf = NULL;
   int needed_bytes = 0;
   va_list ap;
   buf = (char *)calloc(MUS_FORMAT_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
+
 #if HAVE_VSNPRINTF
   needed_bytes = vsnprintf(buf, MUS_FORMAT_BUFFER_SIZE, format, ap);
 #else
   needed_bytes = vsprintf(buf, format, ap);
 #endif
+
   va_end(ap);
 
   if (needed_bytes >= MUS_FORMAT_BUFFER_SIZE) /* "=" here because we need room for the trailing 0 */
@@ -1912,6 +1932,7 @@ char *mus_format(const char *format, ...)
       va_end(ap);
     }
   return(buf);
+#endif
 }
 
 

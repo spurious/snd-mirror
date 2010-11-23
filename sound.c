@@ -1,5 +1,10 @@
 #include <mus-config.h>
 
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define _GNU_SOURCE
+  /* this is needed to get the vasprintf declaration */
+#endif
+
 #if USE_SND
   #include "snd.h"
 #endif
@@ -74,8 +79,10 @@ mus_error_handler_t *mus_thread_get_previous_error_handler(void)
 #endif
 
 
-static char *mus_error_buffer = NULL;
-static int mus_error_buffer_size = 1024;
+#if (!HAVE_VASPRINTF)
+  static char *mus_error_buffer = NULL;
+  static int mus_error_buffer_size = 1024;
+#endif
 
 #if HAVE_PTHREADS
   static mus_lock_t sound_error_lock = MUS_LOCK_INITIALIZER;
@@ -85,11 +92,18 @@ int mus_error(int error, const char *format, ...)
 {
   int bytes_needed = 0;
   va_list ap;
+  char *result = NULL;
 
   if (format == NULL) 
     return(MUS_ERROR); /* else bus error in Mac OSX */
 
   MUS_LOCK(&sound_error_lock);
+
+#if HAVE_VASPRINTF
+  va_start(ap, format);
+  bytes_needed = vasprintf(&result, format, ap);
+  va_end(ap);
+#else
 
   if (mus_error_buffer == NULL)
     mus_error_buffer = (char *)calloc(mus_error_buffer_size, sizeof(char));
@@ -115,6 +129,9 @@ int mus_error(int error, const char *format, ...)
 #endif
       va_end(ap);
     }
+  result = mus_error_buffer;
+#endif
+  /* end HAVE_VASPRINTF */
 
 #if HAVE_PTHREADS
   MUS_UNLOCK(&sound_error_lock);
@@ -124,20 +141,24 @@ int mus_error(int error, const char *format, ...)
 #endif
 
   if (mus_error_handler)
-    (*mus_error_handler)(error, mus_error_buffer);
+    (*mus_error_handler)(error, result);
   else 
     {
 #if USE_SND && HAVE_PTHREADS
       /* thread local error handler isn't set up with the default error handler so... */
-      mus_error_to_snd(error, mus_error_buffer);
+      mus_error_to_snd(error, result);
 #else
-      fprintf(stderr, "%s", mus_error_buffer);
+      fprintf(stderr, "%s", result);
       fputc('\n', stderr);
 #endif
     }
 
 #if HAVE_PTHREADS
   }
+#endif
+
+#if HAVE_VASPRINTF
+  free(result);
 #endif
 
   return(MUS_ERROR);
@@ -166,10 +187,16 @@ void mus_print(const char *format, ...)
 
   if (mus_print_handler)
     {
+      char *result;
       int bytes_needed = 0;
 
       MUS_LOCK(&sound_print_lock);
 
+#if HAVE_VASPRINTF
+      va_start(ap, format);
+      bytes_needed = vasprintf(&result, format, ap);
+      va_end(ap);
+#else
       if (mus_error_buffer == NULL)
 	mus_error_buffer = (char *)calloc(mus_error_buffer_size, sizeof(char));
 
@@ -193,10 +220,16 @@ void mus_print(const char *format, ...)
 #endif
 	  va_end(ap);
 	}
+      result = mus_error_buffer;
+#endif
 
       MUS_UNLOCK(&sound_print_lock);
 
-      (*mus_print_handler)(mus_error_buffer);
+      (*mus_print_handler)(result);
+
+#if HAVE_VASPRINTF
+      free(result);
+#endif
     }
   else
     {

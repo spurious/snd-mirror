@@ -1,3 +1,8 @@
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define _GNU_SOURCE
+  /* this is needed to get the vasprintf declaration */
+#endif
+
 #include "snd.h"
 
 
@@ -234,6 +239,9 @@ char *file_to_string(const char *filename)
 char *vstr(const char *format, va_list ap)
 {
   char *buf;
+#if HAVE_VASPRINTF
+  vasprintf(&buf, format, ap);
+#else
   int len;
   len = mus_strlen(format) + PRINT_BUFFER_SIZE;
   buf = (char *)calloc(len, sizeof(char));
@@ -242,6 +250,7 @@ char *vstr(const char *format, va_list ap)
  #else
   vsprintf(buf, format, ap);
  #endif
+#endif
   return(buf);
 }
 

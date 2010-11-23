@@ -1,3 +1,8 @@
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define _GNU_SOURCE
+  /* this is needed to get the vasprintf declaration */
+#endif
+
 #include "snd.h"
 
 static const char *io_error_names[IO_ERROR_NUM] = {"no error", "save-hook cancellation", "bad channel",
@@ -156,16 +161,27 @@ static void snd_warning_1(const char *msg)
 }
 
 
-static int snd_error_buffer_size = 1024;
-static char *snd_error_buffer = NULL;
+#if (!HAVE_VASPRINTF)
+  static int snd_error_buffer_size = 1024;
+  static char *snd_error_buffer = NULL;
+#endif
 
 void snd_warning(const char *format, ...)
 {
+  char *result;
   int bytes_needed = 0;
   va_list ap;
+
+  va_start(ap, format);
+
+#if HAVE_VASPRINTF
+  va_start(ap, format);
+  bytes_needed = vasprintf(&result, format, ap);
+  va_end(ap);
+#else
+
   if (snd_error_buffer == NULL) 
     snd_error_buffer = (char *)calloc(snd_error_buffer_size, sizeof(char));
-  va_start(ap, format);
 #if HAVE_VSNPRINTF
   bytes_needed = vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
 #else
@@ -185,7 +201,14 @@ void snd_warning(const char *format, ...)
 #endif
       va_end(ap);
     }
-  snd_warning_1(snd_error_buffer);
+  result = snd_error_buffer;
+#endif
+
+  snd_warning_1(result);
+
+#if HAVE_VASPRINTF
+  free(result);
+#endif
 }
 
 
@@ -199,9 +222,19 @@ void snd_error(const char *format, ...)
 {
   int bytes_needed = 0;
   va_list ap;
+  char *result;
+
+  va_start(ap, format);
+
+#if HAVE_VASPRINTF
+  va_start(ap, format);
+  bytes_needed = vasprintf(&result, format, ap);
+  va_end(ap);
+#else
+
   if (snd_error_buffer == NULL) 
     snd_error_buffer = (char *)calloc(snd_error_buffer_size, sizeof(char));
-  va_start(ap, format);
+
 #if HAVE_VSNPRINTF
   bytes_needed = vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
 #else
@@ -221,7 +254,14 @@ void snd_error(const char *format, ...)
 #endif
       va_end(ap);
     }
-  snd_error_1(snd_error_buffer, true);
+  result = snd_error_buffer;
+#endif
+
+  snd_error_1(result, true);
+
+#if HAVE_VASPRINTF
+  free(result);
+#endif
 }
 
 
