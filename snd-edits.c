@@ -8300,6 +8300,8 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 
   name = XEN_TO_C_STRING(filename);
   mcf = mus_expand_filename(name);
+  if (!mcf) return(XEN_FALSE);
+
   fd = FOPEN(mcf, "w");
   if (mcf) free(mcf);
 

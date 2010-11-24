@@ -1869,7 +1869,7 @@ char *mus_expand_filename(const char *filename)
 }
 
 
-int mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
+void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
 {
   int bytes_needed = 0;
   va_list ap;
@@ -1880,7 +1880,6 @@ int mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
   bytes_needed = vsprintf(buffer, format, ap);
 #endif
   va_end(ap);
-  return(bytes_needed + 1); /* +1 for trailing 0 */
 }
 
 

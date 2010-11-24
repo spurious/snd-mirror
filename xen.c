@@ -1569,7 +1569,8 @@ void xen_s7_ignore(s7_function func) /* squelch compiler warnings */
 XEN xen_define_variable(const char *name, XEN value)
 {
   XEN_DEFINE(name, value);
-  s7_gc_protect(s7, value);
+  /* s7_gc_protect(s7, value); */
+  /* XEN_DEFINE places value in the global env, so it is already gc protected */
   return(C_STRING_TO_XEN_SYMBOL(name));
 }
 
@@ -1577,7 +1578,7 @@ XEN xen_define_variable(const char *name, XEN value)
 XEN xen_s7_define_hook(const char *name, XEN value)
 {
   s7_define_constant(s7, name, value);
-  s7_gc_protect(s7, value);
+  /* s7_gc_protect(s7, value); -- see above */
   return(value);
 }
 

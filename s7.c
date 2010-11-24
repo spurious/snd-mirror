@@ -20118,8 +20118,10 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 		    if ((!is_pair(caddr(orig))) ||
 			(cdddr(orig) != sc->NIL) ||
 			(!is_pair(caaddr(orig))))
-		      return(read_error(sc, "stray dot?"));
-
+		      {
+			s7_gc_unprotect_at(sc, loc);
+			return(read_error(sc, "stray dot?"));
+		      }
 		    sc->w = make_list_3(sc, sc->QQ_APPEND, sc->w, caaddr(orig));
 		  }
 		break;
@@ -28030,6 +28032,8 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 		mpq_set_den(*q, q0);
 
 		mpz_clear(i);
+		mpz_clear(i0);
+		mpz_clear(i1);
 		mpfr_clear(ux);
 		mpfr_clear(x0);
 		mpfr_clear(x1);
@@ -28239,6 +28243,7 @@ static s7_pointer big_round(s7_scheme *sc, s7_pointer args)
 		    mpz_add_ui(*n, *n, 1);
 		}
 	    }
+	  mpz_clear(rm);
 	  return(s7_make_object(sc, big_integer_tag, (void *)n));
 	}
 
@@ -28277,6 +28282,7 @@ static s7_pointer big_round(s7_scheme *sc, s7_pointer args)
 	  mpz_clear(ce);
 	  mpfr_clear(dfl);
 	  mpfr_clear(dce);
+	  mpfr_clear(x);
 	  return(s7_make_object(sc, big_integer_tag, (void *)n));
 	}
     }

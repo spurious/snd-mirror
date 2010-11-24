@@ -53720,8 +53720,6 @@ why are these different (read-time `#() ? )
 ;;; --------------------------------------------------------------------------------
 ;;; string->number 
 ;;; number->string
-;;;
-;;;   this section needs some serious reorganization!
 
 (test (string->number "+#.#") #f)
 (test (string->number "-#.#") #f)

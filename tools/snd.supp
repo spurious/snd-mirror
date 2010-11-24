@@ -14,6 +14,7 @@
 #   (remember -g switch)
 #   callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 #                      --inclusive=yes|no
+#                      --threshold=100
 
 
 # first section copied (unnecessarily) from default: /usr/local/lib/valgrind/default.supp
@@ -421,280 +422,6 @@
    obj:/usr/X11R6/lib/libXaw.so.6.1
 }
 
-
-
-##----------------------------------------------------------------------##
-{
-   scm-1
-   Memcheck:Cond
-   fun:scm_i_find_heap_segment_containing_object
-   fun:*
-}
-{
-   scm-2
-   Memcheck:Cond
-   fun:scm_gc_mark
-   fun:*
-}
-
-{
-   scm-3
-   Memcheck:Cond
-   fun:scm_mark_locations
-   fun:*
-}
-
-{
-   scm-4
-   Memcheck:Value4
-   fun:scm_gc_mark
-   fun:*
-}
-
-{
-   scm-5
-   Memcheck:Value4
-   fun:scm_gc_mark_dependencies
-   fun:*
-}
-
-{
-   scm-6
-   Memcheck:Value4
-   fun:scm_i_string_mark
-   fun:*
-}
-
-{
-   scm-7
-   Memcheck:Cond
-   fun:scm_gc_mark_dependencies
-   fun:*
-}
-
-{
-   scm-8
-   Memcheck:Cond
-   fun:scm_mark_weak_vector_spines
-   fun:*
-}
-
-{
-   scm-9
-   Memcheck:Cond
-   fun:scm_i_sweep_card
-   fun:*
-}
-
-{
-   scm-10
-   Memcheck:Value4
-   fun:scm_i_symbol_mark
-   fun:*
-}
-
-{
-   scm-11
-   Memcheck:Value4
-   fun:scm_markcdr
-   fun:*
-}
-
-{
-   scm-12
-   Memcheck:Cond
-   fun:scan_weak_hashtables
-   fun:*
-}
-
-{
-   scm-13
-   Memcheck:Value4
-   fun:scm_markstream
-   fun:*
-}
-
-{
-   scm-14
-   Memcheck:Addr4
-   fun:scm_make_continuation
-   fun:*
-}
-
-{
-   scm-15
-   Memcheck:Value4
-   fun:continuation_mark
-   fun:scm_gc_mark_dependencies
-   fun:*
-}
-
-{
-   scm-17
-   Memcheck:Value4
-   fun:scm_i_sweep_card
-   fun:*
-}
-
-# older guile here
-{
-   scm-22
-   Memcheck:Cond
-   fun:heap_segment
-   fun:*
-}
-
-{
-   scm-23
-   Memcheck:Cond
-   fun:scm_gc_sweep
-   fun:*
-}
-
-{
-   scm-24
-   Memcheck:Value4
-   fun:root_mark
-   fun:scm_gc_mark
-   fun:*
-}
-
-{
-   scm-25
-   Memcheck:Value4
-   fun:scm_mark_weak_vector_spines
-   fun:*
-}
-
-{
-   scm-26
-   Memcheck:Cond
-   fun:scm_scan_weak_vectors
-   fun:*
-}
-
-{
-   scm-27
-   Memcheck:Value4
-   fun:scm_scan_weak_vectors
-   fun:*
-}
-
-{
-   scm-28
-   Memcheck:Value4
-   fun:mark_mus_xen
-   fun:scm_gc_mark
-   fun:*
-}
-
-{
-   scm-29
-   Memcheck:Cond
-   fun:mark_dependencies_in_tconc
-   fun:*
-}
-
-{
-   scm-30
-   Memcheck:Value4
-   fun:async_mark
-   fun:*
-}
-
-{
-   scm-31
-   Memcheck:Value4
-   fun:environment_mark
-   fun:*
-}
-
-{
-   scm-32
-   Memcheck:Value4
-   fun:leaf_environment_mark
-   fun:*
-}
-
-{
-   scm-33
-   Memcheck:Value4
-   fun:core_environments_mark
-   fun:*
-}
-
-{
-   scm-34
-   Memcheck:Cond
-   fun:scm_long2num
-   fun:*
-}
-
-{
-   scm-35
-   Memcheck:Cond
-   fun:scm_i_long2big
-   fun:*
-}
-
-{
-   scm-36
-   Memcheck:Cond
-   fun:scm_i_mkbig
-   fun:*
-}
-
-{
-   scm-37
-   Memcheck:Value4
-   fun:scm_gc_sweep
-   fun:scm_igc
-   fun:check_mtrigger
-   fun:scm_must_malloc
-}
-
-{
-   scm-38
-   Memcheck:Value4
-   fun:scm_gc_sweep
-   fun:scm_igc
-   fun:scm_gc_for_newcell
-   fun:scm_cons2
-}
-
-{
-   scm-39
-   Memcheck:Value4
-   fun:scm_gc_sweep
-   fun:scm_igc
-   fun:scm_gc_for_newcell
-   fun:scm_cons
-}
-
-{
-   scm-40
-   Memcheck:Cond
-   fun:scm_from_int32
-   fun:*
-}
-
-{
-   scm-41
-   Memcheck:Cond
-   fun:__gmpz_init_set_si
-   fun:scm_from_int32
-   fun:*
-}
-
-{
-   scm-42
-   Memcheck:Cond
-   fun:scan_dynamic_states_and_fluids
-   fun:scm_c_hook_run
-   fun:*
-}
-
-
 {
    Xt-1
    Memcheck:Overlap
@@ -921,15 +648,6 @@
 }
 
 {
-   Xm-16
-   Memcheck:Addr1
-   obj:/usr/X11R6/lib/libX11.so.6.2
-   obj:/usr/X11R6/lib/libX11.so.6.2
-   fun:gxm_XSubImage
-   fun:scm_gsubr_apply
-}
-
-{
    Glibc-1
    Memcheck:Cond
    fun:strlen
@@ -1000,15 +718,6 @@
    fun:_IO_vfscanf_internal
    fun:_IO_vsscanf
    fun:__GI_sscanf
-}
-
-{
-   snd-3
-   Memcheck:Value4
-   fun:mark_mus_xen
-   fun:scm_gc_mark_dependencies
-   fun:scm_gc_mark
-   fun:scm_mark_locations
 }
 
 {
@@ -1135,20 +844,6 @@
    gtk-7
    Memcheck:Value4
    fun:ps_set_color
-   fun:*
-}
-
-{
-   gtk-8
-   Memcheck:Value4
-   fun:g_color_to_list
-   fun:*
-}
-
-{
-   gtk-9
-   Memcheck:Value4
-   fun:g_color_to_list
    fun:*
 }
 
@@ -1516,13 +1211,6 @@
 }
 
 {
-   addr3
-   Addrcheck:Addr4
-   fun:scm_make_continuation
-   fun:*
-}
-
-{
    mem-1
    Memcheck:Leak
    fun:malloc
@@ -1708,14 +1396,6 @@
 }
 
 {
-   mem23
-   Memcheck:Leak
-   fun:malloc
-   fun:realloc
-   fun:scm_*
-}
-
-{
    mem24
    Memcheck:Leak
    fun:malloc
@@ -1729,6 +1409,95 @@
    fun:malloc
    fun:XtMalloc
    fun:_Xm*
+}
+
+{
+   alsa-1
+   Memcheck:Leak
+   fun:malloc
+   fun:strdup
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   fun:snd_config_update_r
+}
+
+{
+   alsa-2
+   Memcheck:Leak
+   fun:malloc
+   fun:strdup
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   fun:alsa_get_hardware_params
+}
+
+{
+   alsa-3
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   fun:snd_config_hook_load
+}
+
+{
+   alsa-4
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   fun:alsa_get_hardware_params
+   fun:alsa_set_playback_parameters
+}
+
+{
+   alsa-5
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   fun:snd_config_update_r
+}
+
+{
+   alsa-6
+   Memcheck:Leak
+   fun:calloc
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   obj:/lib64/libasound.so.2.0.0
+   fun:snd_config_update_r
+}
+
+{
+   alsa-7
+   Memcheck:Leak
+   fun:calloc
+   obj:/lib64/libasound.so.2.0.0
+}
+
+{
+   transform-1
+   Memcheck:Leak
+   fun:malloc
+   fun:xen_transform_make
+   fun:*
+}
+
+{
+   colormap-1
+   Memcheck:Leak
+   fun:malloc
+   fun:xen_colormap_make
+   fun:*
 }
 
 {
@@ -1757,86 +1526,120 @@
 }
 
 {
-   scmx1
-   Memcheck:Cond
-   fun:scm_i_mark_weak_vectors
+   s71
+   Memcheck:Leak
+   fun:calloc
+   fun:s7_remove_from_heap
    fun:*
 }
 
 {
-   scmx2
-   Memcheck:Cond
-   fun:scm_i_remove_weaks_*
-}
-
-{
-   scmx3
-   Memcheck:Cond
-   fun:scm_i_mark_weak_vectors
+   s72
+   Memcheck:Leak
+   fun:malloc
+   fun:s7_remove_from_heap
    fun:*
 }
 
 {
-   scmx4
-   Memcheck:Cond
-   fun:scm_i_scan_weak_hashtables
+   s73
+   Memcheck:Leak
+   fun:realloc
+   fun:s7_remove_from_heap
    fun:*
 }
 
 {
-   scmx5
-   Memcheck:Value4
-   fun:scm_i_mark_weak_vector
+   s76
+   Memcheck:Leak
+   fun:malloc
+   fun:s7_make_string_with_length
    fun:*
 }
 
 {
-   scmx6
-   Memcheck:Value4
-   fun:scm_i_mark_weak_vectors_non_weaks
+   s77
+   Memcheck:Leak
+   fun:malloc
+   fun:copy_string_with_len
+   fun:copy_string
+   fun:make_standard_ports
+   fun:s7_init
+   fun:s7_xen_initialize
+}
+
+{
+   walker-1
+   Memcheck:Leak
+   fun:calloc
+   fun:make_walker
    fun:*
 }
 
 {
-   scmx7
-   Memcheck:Cond
-   fun:scm_i_mark_weak_vectors_non_weaks
+   walker-2
+   Memcheck:Leak
+   fun:calloc
+   fun:walker_with_declare
    fun:*
 }
 
 {
-   scmx8
-   Memcheck:Cond
-   fun:scm_i_mark_weak_vectors_non_weaks
+   pws-1
+   Memcheck:Leak
+   fun:malloc
+   fun:copy_string_with_len
+   fun:copy_string
+   fun:s7_make_procedure_with_setter
    fun:*
 }
 
 {
-   scmx9
-   Memcheck:Value4
-   fun:scm_i_remove_weaks_from_weak_vectors
+   pws-2
+   Memcheck:Leak
+   fun:calloc
+   fun:s7_make_procedure_with_setter
    fun:*
 }
 
 {
-   scmx10
-   Memcheck:Cond
-   fun:scm_i_remove_weaks_from_weak_vectors
+   s75
+   Memcheck:Leak
+   fun:calloc
+   fun:permanent_calloc
    fun:*
+}
+
+{
+   Xm_entry
+   Memcheck:Addr8
+   fun:_XmEntryTextGet
+   fun:_XmStringDrawSegment
+   fun:*
+}
+
+{
+   run-1
+   Memcheck:Leak
+   fun:malloc
+   fun:make_walker
+}
+
+{
+   run-2
+   Memcheck:Leak
+   fun:calloc
+   fun:add_clm_type
+   fun:g_add_clm_field
+   fun:g_add_clm_field_w
+   fun:eval
+   fun:s7_load
 }
 
 {
    xmn1
    Memcheck:Cond
    fun:XmRenderTableCopy
-   fun:*
-}
-
-{
-   scmx11
-   Memcheck:Value4
-   fun:winder_mark
-   fun:scm_gc_mark_dependencies
    fun:*
 }
 
@@ -2047,14 +1850,6 @@
    Memcheck:Cond
    fun:_swrast_depth_test_span
    fun:_swrast_write_rgba_span
-   fun:*
-}
-
-{
-   s1
-   Memcheck:Value4
-   fun:continuation_mark
-   fun:scm_gc_mark
    fun:*
 }
 
