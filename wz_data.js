@@ -1506,10 +1506,6 @@ var zip_doc_tip = "The zipper marches through the two sounds taking equal short 
                   " of each, then abutting them while resampling so that as one sound<br>" +
                   " takes less overall frame space, the other takes more.";
 
-var scheme_add_hook_tip = "<code>(add-hook! hook function append)</code>: adds 'function'<br>" +
-                          "to the list of functions associated with 'hook'.  If 'append' is #t,<br>" +
-                          "the function is added at the end of the list, otherwise at the start";
-
 var scheme_format_tip = "<code>(format destination control-string :rest args)</code> produces formatted output.<br>" +
                         "If 'destination' is #f (the usual case in Snd), the output is a string.<br>" +
                         "The output depends on 'control-string' which can contain characters preceded by tilde.<br>" +

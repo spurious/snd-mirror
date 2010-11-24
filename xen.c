@@ -927,7 +927,10 @@ XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc
 
 XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc) 
 {
-  /* called from C, not Ruby, to add a function to a Ruby-side hook */ 
+  /* called from C, not Ruby, to add a function to a Ruby-side hook 
+   *   this doesn't work in g++ because it thinks the funcs are invalid:
+   *   "error: invalid conversion from 'VALUE (*)(VALUE, VALUE)' to 'VALUE (*)(...)'" (snd-file.c etc)
+   */ 
   XEN var; 
   char *temp; 
   temp = xen_scheme_procedure_to_ruby(name); 

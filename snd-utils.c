@@ -1,4 +1,4 @@
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
+#if (defined(__GNUC__)) && (!(defined(__cplusplus)))
   #define _GNU_SOURCE
   /* this is needed to get the vasprintf declaration */
 #endif
@@ -240,7 +240,8 @@ char *vstr(const char *format, va_list ap)
 {
   char *buf;
 #if HAVE_VASPRINTF
-  vasprintf(&buf, format, ap);
+  if (vasprintf(&buf, format, ap) == -1)
+    return(NULL);
 #else
   int len;
   len = mus_strlen(format) + PRINT_BUFFER_SIZE;

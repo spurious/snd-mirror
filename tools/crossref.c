@@ -57,6 +57,7 @@ int add_name(char *name, char *hdr)
   /*
   if (isupper(name[0])) return(-1);
   */
+  if (name[0] == '_') return(-1);
 
   if ((strcmp(hdr, "snd-nogui0.h") == 0) ||
       (strcmp(hdr, "snd-nogui1.h") == 0))
@@ -124,7 +125,11 @@ static char *get_call(char *input, int input_loc, int curname_len, char *curname
 	break;
       }
   if (start == 0)
-    fprintf(stderr, "%s at %d found no begin cr\n", curname, input_loc);
+    {
+      if (input[0] == '_')
+	return(NULL);
+      fprintf(stderr, "%s at %d found no begin cr\n", curname, input_loc);
+    }
   for (i = input_loc; i < chars; i++)
     {
       if (input[i] == ')')
@@ -654,7 +659,8 @@ int main(int argc, char **argv)
 		int m;
 		bool name_printed = false;
 		for (m = 0; m < all_names_top; m++)
-		  if (all_names_counts[m] == 0)
+		  if ((all_names_counts[m] == 0) &&
+		      (all_names[m][0] != '_'))
 		    {
 		      if (!name_printed)
 			{
@@ -722,6 +728,7 @@ int main(int argc, char **argv)
 	  /* try to get rid of a bunch of annoying false positives */
 	  if ((strcmp(qs[i]->hname, "xen.h") == 0) || 
 	      (strcmp(qs[i]->hname, "mus-config.h.in") == 0) ||
+	      (qs[i]->name[0] == '_') ||
 	      ((qs[i]->name[strlen(qs[i]->name) - 2] == '_') &&
 	       ((qs[i]->name[strlen(qs[i]->name) - 1] == 't') || 
 		(qs[i]->name[strlen(qs[i]->name) - 1] == 'H'))))

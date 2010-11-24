@@ -10864,8 +10864,9 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 
       if (port == sc->standard_input)
 	{
-	  fgets(sc->read_line_buf, sc->read_line_buf_size, stdin);
-	  return(s7_make_string(sc, sc->read_line_buf)); /* fgets adds the trailing '\0' */
+	  if (fgets(sc->read_line_buf, sc->read_line_buf_size, stdin) != NULL)
+	    return(s7_make_string(sc, sc->read_line_buf)); /* fgets adds the trailing '\0' */
+	  return(s7_make_string_with_length(sc, NULL, 0));
 	}
       else c = inchar(sc, port);
 
@@ -30211,11 +30212,11 @@ the error type and the info passed to the error handler.");
   initialize_pows();
   save_initial_environment(sc);
 
-  initial_add = s7_symbol_value(sc, make_symbol(sc, "+"));
+  initial_add =      s7_symbol_value(sc, make_symbol(sc, "+"));
   initial_subtract = s7_symbol_value(sc, make_symbol(sc, "-"));
-  initial_equal = s7_symbol_value(sc, make_symbol(sc, "="));
-  initial_lt = s7_symbol_value(sc, make_symbol(sc, "<"));
-  initial_gt = s7_symbol_value(sc, make_symbol(sc, ">"));
+  initial_equal =    s7_symbol_value(sc, make_symbol(sc, "="));
+  initial_lt =       s7_symbol_value(sc, make_symbol(sc, "<"));
+  initial_gt =       s7_symbol_value(sc, make_symbol(sc, ">"));
 
   return(sc);
 }

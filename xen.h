@@ -157,7 +157,16 @@
 
 #if HAVE_RUBY
 
-#include <ruby.h>
+#ifdef _GNU_SOURCE 
+  #undef _GNU_SOURCE 
+#endif 
+#include <ruby.h> 
+#if defined(__GNUC__) && (!(defined(__cplusplus))) 
+  #ifndef _GNU_SOURCE 
+    #define _GNU_SOURCE 
+  #endif 
+#endif
+
 #define XEN_OK 1
 
 #define XEN                             VALUE
@@ -987,7 +996,7 @@ extern s7_scheme *s7;  /* s7 is a pointer to the current scheme */
 
 #define XEN                                        s7_pointer
 #define XEN_FILE_EXTENSION                         "scm"
-#define XEN_LANGUAGE_NAME                          "S7"
+#define XEN_LANGUAGE_NAME                          "s7"
 #define XEN_COMMENT_STRING                         ";"
 
 extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;

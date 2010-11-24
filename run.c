@@ -143,7 +143,7 @@
 
 #include <mus-config.h>
 
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
+#if (defined(__GNUC__)) && (!(defined(__cplusplus)))
   #define _GNU_SOURCE
   /* this is needed to get the vasprintf declaration */
 #endif
@@ -626,7 +626,8 @@ static xen_value *run_warn(const char *format, ...)
       va_start(ap, format);
 
 #if HAVE_VASPRINTF
-      vasprintf(&result, format, ap);
+      if (vasprintf(&result, format, ap) == -1)
+	result = NULL;
 #else
 
       if (!optimizer_warning_buffer)

@@ -802,14 +802,6 @@
 }
 
 {
-   gtk-2
-   Memcheck:Addr1
-   fun:strcpy
-   fun:free_pending_nulls
-   fun:*
-}
-
-{
    gtk-3
    Memcheck:Cond
    fun:g_strdup
@@ -1189,6 +1181,55 @@
    fun:*
 }
 
+{
+   r1
+   Memcheck:Cond
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:*
+}
+
+{
+   r2
+   Memcheck:Cond
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   fun:rb_newobj
+   obj:/usr/lib/libruby.so.1.8.4
+   fun:rb_hash_new
+   fun:*
+}
+
+{
+   r3
+   Memcheck:Value4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:*
+}
+
+{
+   r4
+   Memcheck:Value4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   fun:rb_gc_mark_locations
+   obj:/usr/lib/libruby.so.1.8.4
+   fun:rb_newobj
+   fun:*
+}
+
+{
+   r5
+   Memcheck:Value4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   obj:/usr/lib/libruby.so.1.8.4
+   fun:rb_newobj
+   fun:*
+}
+
 
 
 # addcheck
@@ -1336,14 +1377,6 @@
 }
 
 {
-   mem-16
-   Memcheck:Leak
-   fun:malloc
-   fun:calc_epsdest
-   fun:*
-}
-
-{
    mem-17
    Memcheck:Leak
    fun:malloc
@@ -1417,71 +1450,26 @@
    fun:malloc
    fun:strdup
    obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   fun:snd_config_update_r
+   obj:*
+   fun:*
 }
 
 {
    alsa-2
    Memcheck:Leak
    fun:malloc
-   fun:strdup
    obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   fun:alsa_get_hardware_params
+   obj:*
+   fun:*
 }
 
 {
    alsa-3
    Memcheck:Leak
-   fun:malloc
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   fun:snd_config_hook_load
-}
-
-{
-   alsa-4
-   Memcheck:Leak
-   fun:malloc
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   fun:alsa_get_hardware_params
-   fun:alsa_set_playback_parameters
-}
-
-{
-   alsa-5
-   Memcheck:Leak
-   fun:malloc
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   fun:snd_config_update_r
-}
-
-{
-   alsa-6
-   Memcheck:Leak
    fun:calloc
    obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   obj:/lib64/libasound.so.2.0.0
-   fun:snd_config_update_r
-}
-
-{
-   alsa-7
-   Memcheck:Leak
-   fun:calloc
-   obj:/lib64/libasound.so.2.0.0
+   obj:*
+   fun:*
 }
 
 {
@@ -1498,13 +1486,6 @@
    fun:malloc
    fun:xen_colormap_make
    fun:*
-}
-
-{
-   mem26
-   Memcheck:Leak
-   fun:malloc
-   fun:__gmp_*
 }
 
 {
@@ -1684,55 +1665,6 @@
 }
 
 {
-   r1
-   Memcheck:Cond
-   obj:/usr/lib/libruby.so.1.8.4
-   obj:*
-}
-
-{
-   r2
-   Memcheck:Cond
-   obj:/usr/lib/libruby.so.1.8.4
-   obj:/usr/lib/libruby.so.1.8.4
-   obj:/usr/lib/libruby.so.1.8.4
-   obj:/usr/lib/libruby.so.1.8.4
-   fun:rb_newobj
-   obj:/usr/lib/libruby.so.1.8.4
-   fun:rb_hash_new
-   fun:*
-}
-
-{
-   r3
-   Memcheck:Value4
-   obj:/usr/lib/libruby.so.1.8.4
-   obj:*
-}
-
-{
-   r4
-   Memcheck:Value4
-   obj:/usr/lib/libruby.so.1.8.4
-   obj:/usr/lib/libruby.so.1.8.4
-   fun:rb_gc_mark_locations
-   obj:/usr/lib/libruby.so.1.8.4
-   fun:rb_newobj
-   fun:*
-}
-
-{
-   r5
-   Memcheck:Value4
-   obj:/usr/lib/libruby.so.1.8.4
-   obj:/usr/lib/libruby.so.1.8.4
-   obj:/usr/lib/libruby.so.1.8.4
-   obj:/usr/lib/libruby.so.1.8.4
-   fun:rb_newobj
-   fun:*
-}
-
-{
    g1
    Memcheck:Cond
    fun:XInitImage
@@ -1858,5 +1790,160 @@
    Memcheck:Cond
    obj:/usr/lib/libXm.so.4.0.0
    fun:_XmTextShowPosition
+   fun:*
+}
+
+{
+   init-1
+   Memcheck:Leak
+   fun:calloc
+   fun:g_init_edits
+   fun:*
+}
+
+{
+   init-2
+   Memcheck:Leak
+   fun:malloc
+   fun:make_vector_1
+   fun:s7_make_and_fill_vector
+   fun:define_procedures
+   fun:*
+}
+
+{
+   init-3
+   Memcheck:Leak
+   fun:malloc
+   fun:XtMalloc
+   fun:CopyRendition
+   fun:XmRenderTableAddRenditions
+   fun:get_xm_font
+   fun:*
+}
+
+{
+   init-4
+   Memcheck:Leak
+   fun:malloc
+   fun:s7_make_terminated_string_with_length
+   fun:read_string_constant
+   fun:eval
+   fun:s7_eval_c_string
+   fun:Init_libxm
+   fun:*
+}
+
+{
+   init-5
+   Memcheck:Leak
+   fun:calloc
+   fun:XtCalloc
+   fun:XmSetToolTipString
+   fun:*
+}
+
+{
+   init-6
+   Memcheck:Leak
+   fun:malloc
+   fun:__gmp_default_allocate
+   fun:*
+}
+
+{
+   init-7
+   Memcheck:Leak
+   fun:malloc
+   fun:XtMalloc
+   fun:LookupContextBlock
+   fun:*
+}
+
+{
+   init-8
+   Memcheck:Leak
+   fun:malloc
+   fun:xen_make_vct
+   fun:g_init_edits
+   fun:*
+}
+
+{
+   init-9
+   Memcheck:Leak
+   fun:realloc
+   fun:XtRealloc
+   fun:*
+}
+
+{
+   init-10
+   Memcheck:Leak
+   fun:calloc
+   fun:XtCalloc
+   fun:CreateInfo
+   fun:*
+}
+
+{
+   init-11
+   Memcheck:Leak
+   fun:calloc
+   fun:XtCalloc
+   fun:InsertInfo
+   fun:*
+}
+
+{
+   init-12
+   Memcheck:Leak
+   fun:malloc
+   fun:XtMalloc
+   fun:InitializePrehook
+   fun:*
+}
+
+{
+   init-13
+   Memcheck:Leak
+   fun:malloc
+   fun:XCreateGC
+   fun:*
+}
+
+{
+   init-14
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib64/libX11.so.6.3.0
+   fun:XLoadQueryFont
+   fun:*
+}
+
+{
+   init-15
+   Memcheck:Leak
+   fun:malloc
+   fun:XtMalloc
+   fun:InitializeImageSet
+   fun:*
+}
+
+{
+   heap-1
+   Memcheck:Leak
+   fun:calloc
+   fun:s7_init
+   fun:s7_xen_initialize
+   fun:xen_initialize
+   fun:main
+}
+
+{
+   init-16
+   Memcheck:Leak
+   fun:calloc
+   fun:gxm_XGCValues
    fun:*
 }

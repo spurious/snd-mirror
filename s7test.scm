@@ -17738,6 +17738,28 @@ why are these different (read-time `#() ? )
 		      (if (not (real? arg))
 			  (error 'wrong-type-arg-error "float-vector element must be real: ~S in ~S" arg args))
 		      (set! (v i) (* 1.0 arg))))))))
+
+      (let ((val (catch #t
+			(lambda ()
+			  (let ((t (make-type)))
+			    (for-each
+			     (lambda (n) 
+			       (format #t ";for-each called non-applicable type!~%"))
+			     ((cadr t) 0))))
+			(lambda args 'error))))
+	(if (not (eq? val 'error))
+	    (format #t ";for-each on non-applicable type: ~A~%" val)))
+      
+      (let ((val (catch #t
+			(lambda ()
+			  (let ((t (make-type :length (lambda (x) 3))))
+			    (for-each
+			     (lambda (n) 
+			       (format #t ";for-each called non-applicable type!~%"))
+			     ((cadr t) 0))))
+			(lambda args 'error))))
+	(if (not (eq? val 'error))
+	    (format #t ";for-each on non-applicable type: ~A~%" val)))
       
       (let ((v (make-float-vector 3 0.0)))
 	(test (length v) 3)
