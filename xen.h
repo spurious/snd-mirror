@@ -3,18 +3,19 @@
 
 /* macros for extension language support 
  *
- * Ruby:      covers 1.6 to present
+ * Ruby:      covers 1.8.0 to present
  * Forth:     covers 1.0 to present
  * s7:        all versions
  * None:      all versions
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 6
-#define XEN_VERSION "3.6"
+#define XEN_MINOR_VERSION 7
+#define XEN_VERSION "3.7"
 
 /* HISTORY:
  *
+ *  25-Nov:    updates for Ruby 1.9.*.
  *  7-Nov:     XEN_ADD_HOOK.
  *  23-Oct:    use s7_call_with_location, rather than s7_call, for better error reporting.
  *  19-Mar:    removed s7_define_set_function (removed encapsulation from s7, so it's not useful anymore).
@@ -310,7 +311,7 @@
 #define XEN_DEFINE_HOOK(Name, Arity, Help) xen_rb_create_hook((char *)(Name), Arity, (char *)Help)
 /* #define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_hook_c_new((char *)"simple_hook", Arity, NULL); */ 
 #define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_create_simple_hook(Arity); 
-#define XEN_ADD_HOOK(Hook, Func, Name, Doc) xen_rb_add_hook(Hook, Func, Name, Doc)
+#define XEN_ADD_HOOK(Hook, Func, Name, Doc) xen_rb_add_hook(Hook, (XEN (*)())Func, Name, Doc)
 
 /* ---- vectors ---- */
 #define XEN_VECTOR_P(Arg)               (TYPE(Arg) == T_ARRAY)

@@ -1230,6 +1230,81 @@
    fun:*
 }
 
+{
+   r6
+   Memcheck:Cond
+   fun:mark_current_machine_context
+   fun:garbage_collect
+   fun:rb_newobj
+   fun:*
+}
+
+{
+   r7
+   Memcheck:Cond
+   fun:gc_mark_children
+   fun:mark_current_machine_context
+   fun:garbage_collect
+   fun:rb_newobj
+   fun:*
+}
+
+{
+   r8
+   Memcheck:Value8
+   fun:mark_current_machine_context
+   fun:garbage_collect
+   fun:rb_newobj
+   fun:*
+}
+
+{
+   r9
+   Memcheck:Value8
+   fun:gc_mark_children
+   fun:mark_current_machine_context
+   fun:garbage_collect
+   fun:rb_newobj
+   fun:*
+}
+
+{
+   r10
+   Memcheck:Cond
+   fun:mark_current_machine_context
+   fun:garbage_collect
+   fun:rb_node_newnode
+   fun:*
+}
+
+{
+   r11
+   Memcheck:Value8
+   fun:mark_current_machine_context
+   fun:garbage_collect
+   fun:rb_node_newnode
+   fun:*
+}
+
+{
+   r12
+   Memcheck:Cond
+   fun:gc_mark_children
+   fun:mark_current_machine_context
+   fun:garbage_collect
+   fun:rb_node_newnode
+   fun:*
+}
+
+{
+   r13
+   Memcheck:Value8
+   fun:gc_mark_children
+   fun:mark_current_machine_context
+   fun:garbage_collect
+   fun:rb_node_newnode
+   fun:*
+}
 
 
 # addcheck

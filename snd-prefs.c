@@ -4772,16 +4772,12 @@ static char *find_sources(void) /* returns full filename if found else null */
 #endif
 
 #if HAVE_RUBY
-  #if RB_FIND_FILE_TAKES_VALUE
   {
     XEN xfile;
     xfile = rb_find_file(C_TO_XEN_STRING(BASE_FILE));
     if (XEN_STRING_P(xfile))
       file = mus_expand_filename(XEN_TO_C_STRING(xfile));
   }
-  #else
-    file = mus_expand_filename(rb_find_file(BASE_FILE));
-  #endif
 #endif
 
 #if HAVE_FORTH

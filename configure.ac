@@ -81,7 +81,6 @@ AC_ARG_WITH(jack,        [  --with-jack		  use JACK])
 AC_ARG_WITH(static-alsa, [  --with-static-alsa	  use ALSA statically loaded])
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(no-gui,      [  --with-no-gui  	  make Snd without any graphics support])
-AC_ARG_WITH(static-gsl,  [  --with-static-gsl	  use libgsl.a to build Snd (for obsolete RPM version)])
 AC_ARG_WITH(static-xm,   [  --with-static-xm	  include the xm module])
 AC_ARG_WITH(static-xg,   [  --with-static-xg	  include the xg module])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support, Motif only])
@@ -1088,6 +1087,7 @@ AC_SUBST(GX_FILES)
 AC_SUBST(GX_HEADERS)
 
 
+
 #--------------------------------------------------------------------------------
 # OpenGL
 #--------------------------------------------------------------------------------
@@ -1166,6 +1166,7 @@ AC_SUBST(GL_FILES)
 AC_SUBST(GL_FLAGS)
 
 
+
 #--------------------------------------------------------------------------------
 # fam/gamin (needs GUI)
 #--------------------------------------------------------------------------------
@@ -1206,19 +1207,94 @@ AC_SUBST(FAM_LIB)
 
 ac_snd_have_extension_language=no
 
+
 #--------------------------------------------------------------------------------
 # Ruby
 #--------------------------------------------------------------------------------
+
+dnl AC_CHECK_RUBY([MINIMUM-VERSION [, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
+dnl Test for Ruby, defines
+dnl   RUBY_VERSION
+dnl   RUBY_RELEASE_DATE
+dnl   RUBY_SEARCH_PATH
+dnl   RUBY_CFLAGS
+dnl   RUBY_LIBS
+
+AC_DEFUN([AC_CHECK_RUBY],
+[
+  [AC_PATH_PROGS([RUBY], [$RUBY ruby], [no])]
+  RUBY_VERSION=""
+  RUBY_RELEASE_DATE=""
+  RUBY_SEARCH_PATH=""
+  RUBY_CFLAGS=""
+  RUBY_LIBS=""
+  AC_MSG_CHECKING([for Ruby])
+  if test "$RUBY" != no ; then
+    minimum_version=ifelse([$1], [], [1.8.0], [$1])
+    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
+    if `$RUBY -e "exit(RUBY_VERSION >= '$minimum_version' ? 0 : 1)"` ; then
+      AC_MSG_RESULT([$RUBY_VERSION])
+      RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
+      RUBY_SEARCH_PATH=`$RUBY -e 'puts $:.join(":")'`
+      ruby_ldflags=""
+      ruby_libs=""
+      if `$RUBY -e "exit(RUBY_VERSION < '1.9.0' ? 0 : 1)"` ; then
+        ruby_hdrdir=`$RUBY -rrbconfig -e [["puts Config::CONFIG['archdir']"]]`
+        AC_MSG_CHECKING([for ruby.h])
+        if test -e "$ruby_hdrdir/ruby.h" ; then
+          RUBY_CFLAGS="-I$ruby_hdrdir"
+          AC_MSG_RESULT([$ruby_hdrdir/ruby.h])
+        else
+          RUBY_CFLAGS=`$RUBY -e 'puts "-I" + $:.join(" -I")'`
+          AC_MSG_RESULT([use \$LOAD_PATH])
+        fi
+        ruby_ldflags=`$RUBY -rrbconfig -e [["puts Config::CONFIG['LIBRUBYARG']"]]`
+        ruby_libs=`$RUBY -rrbconfig -e [["puts Config::CONFIG['LIBS']"]]`
+      else
+        ruby_hdrdir=`$RUBY -rrbconfig -e [["puts RbConfig::CONFIG['rubyhdrdir']"]]`
+        ruby_arch=`$RUBY -rrbconfig -e [["puts RbConfig::CONFIG['arch']"]]`
+        AC_MSG_CHECKING([for ruby.h])
+        if test -e "$ruby_hdrdir/ruby.h" ; then
+          RUBY_CFLAGS="-I$ruby_hdrdir -I$ruby_hdrdir/$ruby_arch"
+          AC_MSG_RESULT([$ruby_hdrdir/ruby.h])
+        else
+          ruby_hdrdir=`$RUBY -rrbconfig -e [["puts RbConfig::CONFIG['archdir']"]]`
+          if test -e "$ruby_hdrdir/ruby.h" ; then
+            RUBY_CFLAGS="-I$ruby_hdrdir"
+            AC_MSG_RESULT([$ruby_hdrdir/ruby.h])
+	  else
+            RUBY_CFLAGS=`$RUBY -e 'puts "-I" + $:.join(" -I")'`
+            AC_MSG_RESULT([use \$LOAD_PATH])
+	  fi
+        fi
+        ruby_ldflags=`$RUBY -rrbconfig -e [["puts RbConfig::CONFIG['LIBRUBYARG']"]]`
+        ruby_libs=`$RUBY -rrbconfig -e [["puts RbConfig::CONFIG['LIBS']"]]`
+      fi
+      RUBY_LIBS="$ruby_ldflags $ruby_libs"
+      [$2]
+    else
+      AC_MSG_RESULT([Ruby version $RUBY_VERSION < $minimum_version])
+      [$3]
+    fi
+  else
+    AC_MSG_RESULT([no])
+    [$3]
+  fi
+  AC_SUBST([RUBY_VERSION])
+  AC_SUBST([RUBY_RELEASE_DATE])
+  AC_SUBST([RUBY_SEARCH_PATH])
+  AC_SUBST([RUBY_CFLAGS])
+  AC_SUBST([RUBY_LIBS])
+])# AC_CHECK_RUBY
 
 # readline (for Ruby)
 AC_ARG_ENABLE(readline,
   [  --enable-readline      include readline (the default)], ,)
 
-RUBY="ruby"
 AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
-            	ruby_prefix="$withval"
-		RUBY="$ruby_prefix/bin/ruby",
-		ruby_prefix="/usr/local")
+                ruby_prefix="$withval"
+                RUBY="$ruby_prefix/bin/ruby",
+                ruby_prefix="/usr/local")
 
 if test "$with_ruby" = yes && test "$ac_snd_have_extension_language" = yes ; then
   with_ruby=no
@@ -1226,159 +1302,63 @@ if test "$with_ruby" = yes && test "$ac_snd_have_extension_language" = yes ; the
 fi
 
 AC_ARG_WITH(ruby,
-	[  --with-ruby	  	  use Ruby as the extension language],
-  	if test "$with_ruby" = yes ; then
-            AC_MSG_CHECKING([for Ruby])
-	    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
-	    RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
-            if test "$RUBY_VERSION" > "0" ; then
-	      AC_DEFINE(HAVE_RUBY)
-	      AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
-              AC_MSG_RESULT($RUBY_VERSION)
-              AC_DEFINE_UNQUOTED(MUS_RUBY_VERSION,"${RUBY_VERSION}")
-              AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE,"${RUBY_RELEASE_DATE}")
+        [  --with-ruby            use Ruby as the extension language],
+        if test "$with_ruby" = yes ; then
+           AC_CHECK_RUBY([1.8.0],
+                         [AC_DEFINE(HAVE_RUBY)
+                          AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+                          AC_DEFINE_UNQUOTED(MUS_RUBY_VERSION,  "$RUBY_VERSION")
+                          AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE, "$RUBY_RELEASE_DATE")
+                          AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,  "$RUBY_SEARCH_PATH")
+                          XEN_CFLAGS="$XEN_CFLAGS $RUBY_CFLAGS"
+                          XEN_LIBS="$XEN_LIBS $RUBY_LIBS" 
+                          if test "$enable_readline" != no ; then
+                            AC_CHECK_LIB(readline, readline,
+                                         [AC_DEFINE(HAVE_READLINE)
+                                          XEN_LIBS="$XEN_LIBS -lreadline -lncurses"], ,"-lncurses")
+                          fi
+                          AC_SUBST(XEN_LIBS)
+                          AC_SUBST(XEN_CFLAGS)
+                          OLD_LIBS="$LIBS"
+                          LIBS="$XEN_LIBS $LIBS -lm"
+                          OLD_CFLAGS="$CFLAGS"
+                          CFLAGS="$XEN_CFLAGS $CFLAGS"
+                          AC_MSG_CHECKING([for rb_proc_new])
 
-              #[ms] XEN_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]` 
-              XEN_CFLAGS=`$RUBY -rrbconfig -e [['if Config::CONFIG["rubyhdrdir"] then print "-I", Config::CONFIG["rubyhdrdir"], " -I", Config::CONFIG["rubyhdrdir"] + "/" + Config::CONFIG["arch"]; else \$:.each {|path| print "-I", path, " "}; end']]` 
+                          AC_RUN_IFELSE( 
+                           [AC_LANG_PROGRAM([@%:@include <ruby.h> 
+                                            VALUE proc_call(VALUE args, VALUE id) {return(rb_apply(rb_mKernel, (ID)id, args));} 
+                                            ], 
+                                            [VALUE proc; 
+                                             ruby_init(); 
+@%:@ifdef __cplusplus 
+                                             proc = rb_proc_new((VALUE (*)(...))proc_call, rb_intern("hi")) 
+@%:@else 
+                                             proc = rb_proc_new(proc_call, rb_intern("hi")) 
+@%:@endif 
+                           ]) 
+                                            ], 
+                           [AC_DEFINE(HAVE_RB_PROC_NEW) 
+                            AC_MSG_RESULT(yes) 
+                           ], 
+                           AC_MSG_RESULT(no) 
+                           ) 
 
-	      # this is apparently actually intended for ruby programs (*.rb), not programs embedding ruby
-	      # we have to conjure up some plausible includes by hand:
-	      XEN_CFLAGS="$XEN_CFLAGS -I$ruby_prefix/include/ruby-$RUBY_VERSION/i686-linux -I$ruby_prefix/include/ruby-$RUBY_VERSION"
+                          AC_MSG_CHECKING([for ruby_vsnprintf]) 
+                          AC_RUN_IFELSE( 
+                            [AC_LANG_PROGRAM([@%:@include <ruby.h>], 
+                                             [ruby_init(); ruby_vsnprintf(0, 0, 0, 0); return(0)])], 
+                            [AC_DEFINE(HAVE_VSNPRINTF, 0) 
+                             AC_MSG_RESULT(yes) 
+                            ], 
+                            AC_MSG_RESULT(no) 
+                            ) 
+                          LIBS="$OLD_LIBS"
+                          CFLAGS="$OLD_CFLAGS"
+                          LOCAL_LANGUAGE="Ruby"
+                          ac_snd_have_extension_language=yes])
+        fi)
 
-	      XEN_LIBS=`$RUBY -rrbconfig -e [['puts Config::CONFIG["LIBRUBYARG"]']]` 
-              #[ms] XEN_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]` 
-
-	      RUBY_SEARCH_PATH=`$RUBY -e [['\$:.each {|path| print path, ":"}']]`
-
-              RUBY_LIBS=`$RUBY -rrbconfig -e [['puts Config::CONFIG["LIBS"]']]` 
-              #[ms] RUBY_LIBS=`$RUBY -e [['require "rbconfig"; include Config; print CONFIG["LIBS"]']]` 
-
-	      # these are the non-ruby libraries required by ruby
-	      #   so look for -lruby, then libruby-static.a
-
-              #[ms] LIBRUBY=`$RUBY -rrbconfig -e [['puts Config::CONFIG["LIBRUBYARG_STATIC"]']]` 
-              #[ms] LIBRUBY="$ruby_prefix/lib/libruby-static.a" 
-              #[ms] AC_CHECK_LIB(ruby, rb_intern, [LIBRUBY="-lruby"]) 
-
-	      AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,"${RUBY_SEARCH_PATH}")
-
-              XEN_LIBS="$XEN_LIBS $RUBY_LIBS" 
-              #[ms] XEN_LIBS="$XEN_LIBS $LIBRUBY $RUBY_LIBS" 
-
-	      if test "$enable_readline" != no ; then
-	        AC_CHECK_LIB(readline, readline, 
-			   [AC_DEFINE(HAVE_READLINE)
-			    XEN_LIBS="$XEN_LIBS -lreadline -lncurses"], ,"-lncurses")
-              fi
-              AC_SUBST(XEN_LIBS)
-              AC_SUBST(XEN_CFLAGS)
-
-              OLD_LIBS="$LIBS"
-    	      LIBS="$XEN_LIBS $LIBS"
-              OLD_CFLAGS="$CFLAGS"
-              CFLAGS="$XEN_CFLAGS -lm $CFLAGS"
-
-    	      AC_MSG_CHECKING([for rb_gc_disable])
-              AC_RUN_IFELSE(
-                [AC_LANG_PROGRAM([#include <ruby.h>],
-                                 [ruby_init(); rb_gc_disable(); return(0)])], 
-                [AC_DEFINE(HAVE_RB_GC_DISABLE)
-                 AC_MSG_RESULT(yes)
-                ],
-                 AC_MSG_RESULT(no)
-                )
-
-    	      AC_MSG_CHECKING([for rb_ary_dup])
-              AC_RUN_IFELSE(
-                [AC_LANG_PROGRAM([#include <ruby.h>],
-                                 [VALUE lst; ruby_init(); lst = rb_ary_dup(rb_ary_new()); return(0)])], 
-                [AC_DEFINE(HAVE_RB_ARY_DUP)
-                 AC_MSG_RESULT(yes)
-                ],
-                 AC_MSG_RESULT(no)
-                )
-
-    	      AC_MSG_CHECKING([for rb_errinfo])
-              AC_RUN_IFELSE(
-                [AC_LANG_PROGRAM([#include <ruby.h>],
-                                 [VALUE str; ruby_init(); str = rb_errinfo(); return(0)])], 
-                [AC_DEFINE(HAVE_RB_ERRINFO)
-                 AC_MSG_RESULT(yes)
-                ],
-                 AC_MSG_RESULT(no)
-                )
-
-    	      AC_MSG_CHECKING([for rb_get_load_path])
-              AC_RUN_IFELSE(
-                [AC_LANG_PROGRAM([#include <ruby.h>],
-                                 [VALUE load_path; ruby_init(); load_path = rb_get_load_path()])], 
-                [AC_DEFINE(HAVE_RB_GET_LOAD_PATH)
-                 AC_MSG_RESULT(yes)
-                ],
-                 AC_MSG_RESULT(no)
-                )
-
-    	      AC_MSG_CHECKING([for rb_proc_new])
-              AC_RUN_IFELSE(
-                [AC_LANG_PROGRAM([#include <ruby.h>
-                                  VALUE proc_call(VALUE args, VALUE id) {return(rb_apply(rb_mKernel, (ID)id, args));}
-			         ],
-                                 [VALUE proc; 
-                                  ruby_init(); 
-                                  proc = rb_proc_new(proc_call, rb_intern("hi"))])
-				  ], 
-                [AC_DEFINE(HAVE_RB_PROC_NEW)
-                 AC_MSG_RESULT(yes)
-                ],
-                 AC_MSG_RESULT(no)
-                )
-
-# these don't work if libruby.so doesn't exist (but libruby-static.a does)
-#             AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
-#	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])
-#	      AC_CHECK_LIB(ruby, rb_errinfo, [AC_DEFINE(HAVE_RB_ERRINFO)])
-
-    	      AC_MSG_CHECKING([for working rb_gc_mark])
-              AC_RUN_IFELSE(
-                [AC_LANG_PROGRAM([#include <ruby.h>],
-                                 [VALUE val = Qnil; ruby_init(); rb_gc_mark(val); return(0)])], 
-                [AC_DEFINE(HAVE_REASONABLE_RB_GC_MARK)
-                 AC_MSG_RESULT(yes)
-                ],
-                 AC_MSG_RESULT(no)
-                )
-
-              AC_MSG_CHECKING([for ruby_vsnprintf]) 
-              AC_RUN_IFELSE( 
-               [AC_LANG_PROGRAM([#include <ruby.h>], 
-                                [ruby_init(); ruby_vsnprintf(0, 0, 0, 0); return(0)])], 
-               [AC_DEFINE(HAVE_VSNPRINTF, 0) 
-                AC_MSG_RESULT(yes) 
-               ], 
-                AC_MSG_RESULT(no) 
-               ) 
-
-	      CFLAGS="$CFLAGS -Werror"
-    	      AC_MSG_CHECKING([that rb_find_file deals in char*])
-              AC_COMPILE_IFELSE(
-                [AC_LANG_PROGRAM([#include <ruby.h>],
-                                 [char *file; ruby_init(); file = rb_find_file("hiho")])], 
-                [AC_MSG_RESULT(yes)
-                ],
-		[AC_DEFINE(RB_FIND_FILE_TAKES_VALUE)
-                 AC_MSG_RESULT(no)
-		])
-
-              LIBS="$OLD_LIBS"
-              CFLAGS="$OLD_CFLAGS"
-              LOCAL_LANGUAGE="Ruby"
-	      ac_snd_have_extension_language=yes
-
-            else 
-              AC_MSG_WARN([can't find Ruby!])
-  	      AC_DEFINE(HAVE_RUBY,0)
-            fi
-	fi)
 
 
 #--------------------------------------------------------------------------------

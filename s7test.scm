@@ -151,7 +151,8 @@ yow!! -- I'm using mpc_cmp
 
 (define (number-ok? tst result expected)
   ;; (number? +nan.0) returns #t in Guile and Gauche
-  
+					;  (if (not (eq? (number? result) (complex? result)))
+					;      (format #t ";number? and complex? differ: ~A~%" tst))
   (if (not (eq? result expected))
       (if (or (and (not (number? expected))
 		   (not (eq? result expected)))
@@ -18309,6 +18310,40 @@ why are these different (read-time `#() ? )
 	    a)
 	   a))
       11)
+(test (let ((a 1))
+	(+ (with-environment
+	    (augment-environment (current-environment) (cons 'a 10))
+	    (+ a
+	       (with-environment
+		(augment-environment (current-environment) (cons 'a 100))
+		a)))
+	   a))
+      111)
+(test (let ((a 1))
+	(+ (with-environment
+	    (augment-environment (current-environment) (cons 'a 10))
+	    (+ a
+	       (with-environment
+		(augment-environment (current-environment) (cons 'b 100))
+		a)))
+	   a))
+      21)
+(test (let ((a 1))
+	(let ((e (current-environment)))
+	  (+ (with-environment
+	      (augment-environment (current-environment) (cons 'a 10))
+	      (+ a
+		 (with-environment e a)))
+	   a)))
+      12)
+(test (let ((a 1))
+	(let ((e (current-environment)))
+	  (+ (with-environment
+	      (augment-environment e (cons 'a 10))
+	      (+ a
+		 (with-environment e a)))
+	   a)))
+      'error) ; "e" is not in the current-environment at the top, so it's not in the nested env
 
 (test (let ((x 3))
 	(augment-environment! (current-environment)
@@ -42342,7 +42377,7 @@ why are these different (read-time `#() ? )
   (test (complex? nan) #t)
   (test (real? nan) #t)
   (test (rational? nan) #f)
-  (test (complex? inf+) #t)
+  (test (complex? inf+) #t) ; do number? and complex? ever differ?
   (test (real? inf-) #t)
   (test (rational? inf-) #f)
   (test (integer? inf-) #f)
@@ -42690,6 +42725,7 @@ why are these different (read-time `#() ? )
   (test (expt nan.0) 'error)
   (test (nan? (random nan.0)) #t)
   (test (random nan.0 inf.0) 'error)
+  (test (infinite? (random (log 0.0))) #t) ; should (random inf inf) be 0?
 
   ;; these are errors because the arg is a real
   (test (lcm nan.0) 'error)
@@ -54502,7 +54538,8 @@ etc....
 (num-test #x7fffffffffffffff/7 1317624576693539401)
 (num-test (string->number "#x1234/12") (string->number "1234/12" 16))
 (num-test #e#x1234/12 (string->number "#x#e1234/12"))
-
+(num-test #x#e.1 #e#x.1)
+(num-test #d#i1/10 #i#d1/10)
 
 (test (equal? 0.0 #b0e0) #t)
 (test (equal? 0.0 #b0e-0) #t)

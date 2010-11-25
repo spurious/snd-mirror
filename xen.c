@@ -162,9 +162,7 @@ int xen_to_c_int_or_else(XEN obj, int fallback)
 
 void xen_gc_mark(XEN val)
 {
-#if HAVE_REASONABLE_RB_GC_MARK
   rb_gc_mark(val);
-#endif
 }
 
 
@@ -567,15 +565,6 @@ static XEN xen_rb_rescue(XEN val)
 }
 
 
-#ifndef HAVE_RB_ERRINFO 
-#define rb_errinfo()          rb_gv_get("$!") 
-#endif 
-
-#ifndef HAVE_RB_GET_LOAD_PATH 
-#define rb_get_load_path()    rb_gv_get("$:") 
-#endif 
-
-
 void xen_repl(int argc, char **argv)
 {
   while (true)
@@ -586,7 +575,7 @@ void xen_repl(int argc, char **argv)
 		 &status);
       if (status != 0)
 	{
-	  fprintf(stderr, "%s\n", XEN_AS_STRING(rb_errinfo()));
+	  fprintf(stderr, "%s\n", XEN_AS_STRING(rb_gv_get("$!")));
 	  status = 0;
 	}
     }
@@ -599,7 +588,7 @@ XEN xen_rb_eval_string_with_error(const char *str)
   XEN res;
   res = rb_eval_string_protect(str, &status);
   if (status != 0)
-    return(XEN_TO_STRING(rb_errinfo()));
+    return(XEN_TO_STRING(rb_gv_get("$!")));
   return(res);
 }
 
@@ -609,7 +598,7 @@ XEN xen_rb_load_file_with_error(XEN file)
   int status = 0;
   rb_load_protect(file, 0, &status);
   if (status != 0)
-    return(XEN_TO_STRING(rb_errinfo()));
+    return(XEN_TO_STRING(rb_gv_get("$!")));
   return(XEN_TRUE);
 }
 
@@ -618,7 +607,7 @@ XEN xen_rb_add_to_load_path(char *path)
 { 
  XEN rpath, load_path; 
  rpath = rb_str_new2(path); 
- load_path = rb_get_load_path(); 
+ load_path = rb_gv_get("$:");
  if (XEN_FALSE_P(rb_ary_includes(load_path, rpath))) 
    rb_ary_unshift(load_path, rpath); 
  return(XEN_FALSE); 
@@ -701,7 +690,7 @@ XEN xen_rb_apply(XEN func, XEN args)
 		   XEN_LIST_2(func, args),
 		   &status);
   if (status != 0)
-    return(XEN_TO_STRING(rb_errinfo()));
+    return(XEN_TO_STRING(rb_gv_get("$!")));
   return(val);
 }
 
@@ -720,7 +709,7 @@ XEN xen_rb_funcall_0(XEN func)
 		   func,
 		   &status);
   if (status != 0)
-    return(XEN_TO_STRING(rb_errinfo()));
+    return(XEN_TO_STRING(rb_gv_get("$!")));
   return(val);
 }
 
@@ -729,22 +718,7 @@ XEN xen_rb_copy_list(XEN val)
 { 
   if ((val == XEN_EMPTY_LIST) || (!XEN_CONS_P(val)))
     return XEN_EMPTY_LIST; 
-
-#if (!HAVE_RB_ARY_DUP) 
-  { 
-    /* if this is considered bad form, we could fall back on flatten (rb_ary_dup?) */ 
-    long len, i; 
-    VALUE collect; 
-    len = RB_ARRAY_LEN(val); 
-    collect = rb_ary_new2(len); 
-    for (i = 0; i < len; i++) 
-      RB_ARRAY_PTR(collect)[i] = RB_ARRAY_PTR(val)[i]; 
-    RB_ARRAY_LEN(collect) = len; 
-    return(collect); 
-  } 
-#else 
   return rb_ary_dup(val); 
-#endif 
 } 
 
 
@@ -907,7 +881,7 @@ XEN xen_rb_proc_new(const char *name, XEN (*func)(), int arity, const char* doc)
 { 
   rb_define_module_function(rb_mKernel, name, XEN_PROCEDURE_CAST func, arity); 
   if (doc) C_SET_OBJECT_HELP(name, doc); 
-  return(rb_proc_new(xen_proc_call, rb_intern(name))); 
+  return(rb_proc_new(XEN_PROCEDURE_CAST xen_proc_call, rb_intern(name))); 
 } 
 
 
@@ -1253,24 +1227,16 @@ XEN rb_properties(void)
 
 static XEN g_gc_off(void) 
 {
-#if HAVE_RB_GC_DISABLE
   #define H_gc_off "(" S_gc_off ") turns off garbage collection"
   rb_gc_disable();
-#else
-  #define H_gc_off "(" S_gc_off ") is a no-op"
-#endif
   return(XEN_FALSE);
 }
 
 
 static XEN g_gc_on(void) 
 {
-#if HAVE_RB_GC_DISABLE
   #define H_gc_on "(" S_gc_on ") turns on garbage collection"
   rb_gc_enable();
-#else
-  #define H_gc_on "(" S_gc_on ") is a no-op"
-#endif
   return(XEN_FALSE);
 }
 

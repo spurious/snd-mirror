@@ -1737,7 +1737,7 @@ static s7_pointer new_cell(s7_scheme *sc)
 
 static s7_pointer g_gc(s7_scheme *sc, s7_pointer args)
 {
-  #define H_gc "(gc :optional on) runs the garbage collector.  If 'on' is supplied, it turns the GC on or off. \
+  #define H_gc "(gc (on #t)) runs the garbage collector.  If 'on' is supplied, it turns the GC on or off. \
 Evaluation produces a surprising amount of garbage, so don't leave the GC off for very long!"
 
   if (args != sc->NIL)
@@ -2153,7 +2153,7 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 
 static s7_pointer g_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_table_is_locked "set (symbol-table-locked?) to #t to prohibit the creation of any new symbols"
+  #define H_symbol_table_is_locked "set (-s7-symbol-table-locked?) to #t to prohibit the creation of any new symbols"
   return(make_boolean(sc, (*(sc->symbol_table_is_locked))));
 }
 
@@ -2222,7 +2222,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
 {
-  #define H_gensym "(gensym :optional prefix) returns a new, unused symbol"
+  #define H_gensym "(gensym (prefix \"gensym\")) returns a new, unused symbol"
   if (args != sc->NIL)
     {
       if (!s7_is_string(car(args)))
@@ -2658,7 +2658,7 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
 
 static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_to_value "(symbol->value sym :optional env) returns the binding of (the value associated with) the \
+  #define H_symbol_to_value "(symbol->value sym (env (current-environment))) returns the binding of (the value associated with) the \
 symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
 
   s7_pointer local_env;
@@ -2781,7 +2781,7 @@ static s7_pointer thread_environment(s7_scheme *sc, s7_pointer obj);
 static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 {
 #if HAVE_PTHREADS
-  #define H_current_environment "(current-environment :optional thread) returns the current definitions (symbol bindings)"
+  #define H_current_environment "(current-environment (thread #f)) returns the current definitions (symbol bindings)"
   if (args != sc->NIL)
     {
       if (!(is_thread(car(args))))
@@ -2832,7 +2832,7 @@ s7_pointer s7_current_environment(s7_scheme *sc)
 
 static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_defined "(defined? obj :optional env) returns #t if obj has a binding (a value) in the environment env"
+  #define H_is_defined "(defined? obj (env (current-environment))) returns #t if obj has a binding (a value) in the environment env"
   s7_pointer x;
 
   if (!s7_is_symbol(car(args)))
@@ -4852,7 +4852,7 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 
 static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_number_to_string "(number->string num :optional (radix 10)) converts the number num into a string."
+  #define H_number_to_string "(number->string num (radix 10)) converts the number num into a string."
   s7_Int radix = 10;
   int size = 20;
   char *res;
@@ -6017,7 +6017,7 @@ static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
 
 static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
 {
-  #define H_string_to_number "(string->number str :optional (radix 10)) converts str into a number. \
+  #define H_string_to_number "(string->number str (radix 10)) converts str into a number. \
 If str does not represent a number, string->number returns #f."
 
   s7_Int radix = 0;
@@ -6275,7 +6275,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 {
-  #define H_log "(log z1 :optional z2) returns log(z1) / log(z2) where z2 (the base) defaults to e: (log 8 2) = 3"
+  #define H_log "(log z1 (z2 e)) returns log(z1) / log(z2) where z2 (the base) defaults to e: (log 8 2) = 3"
   s7_pointer x;
   
   x = car(args);
@@ -9020,7 +9020,7 @@ double s7_random(s7_scheme *sc)
 
 static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 {
-  #define H_random "(random num :optional state) returns a random number between 0 and num (0 if num=0)."
+  #define H_random "(random num (state #f)) returns a random number between 0 and num (0 if num=0)."
   s7_pointer num, state;
   s7_rng_t *r;
 
@@ -9461,7 +9461,7 @@ static s7_pointer g_is_string(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_string "(make-string len :optional val) makes a string of length len filled with the character val (default: space)"
+  #define H_make_string "(make-string len (val #\\space)) makes a string of length len filled with the character val (default: space)"
   s7_Int len;
   char fill = ' ';
   
@@ -9605,7 +9605,7 @@ static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
 {
-  #define H_substring "(substring str start :optional end) returns the portion of the string str between start and \
+  #define H_substring "(substring str start (end (length str))) returns the portion of the string str between start and \
 end: (substring \"01234\" 1 2) -> \"1\""
   
   s7_pointer x, start, end, str;
@@ -10216,7 +10216,7 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_char_ready "(char-ready? :optional port) returns #t if a character is ready for input on the given port"
+  #define H_is_char_ready "(char-ready? (port (current-input-port))) returns #t if a character is ready for input on the given port"
   if (args != sc->NIL)
     {
       s7_pointer pt = car(args);
@@ -10422,7 +10422,7 @@ s7_pointer s7_open_input_file(s7_scheme *sc, const char *name, const char *mode)
 
 static s7_pointer g_open_input_file(s7_scheme *sc, s7_pointer args)
 {
-  #define H_open_input_file "(open-input-file filename :optional mode) opens filename for reading"
+  #define H_open_input_file "(open-input-file filename (mode \"r\")) opens filename for reading"
   s7_pointer name = car(args);
 
   if (!s7_is_string(name))
@@ -10529,7 +10529,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
 
 static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
 {
-  #define H_open_output_file "(open-output-file filename :optional mode) opens filename for writing"
+  #define H_open_output_file "(open-output-file filename (mode \"w\")) opens filename for writing"
   s7_pointer name = car(args);
 
   if (!s7_is_string(name))
@@ -10803,14 +10803,14 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
 
 static s7_pointer g_read_char(s7_scheme *sc, s7_pointer args)
 {
-  #define H_read_char "(read-char :optional port) returns the next character in the input port"
+  #define H_read_char "(read-char (port (current-input-port))) returns the next character in the input port"
   return(g_read_char_1(sc, args, false));
 }
 
 
 static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
 {
-  #define H_peek_char "(peek-char :optional port) returns the next character in the input port, but does not remove it from the input stream"
+  #define H_peek_char "(peek-char (port (current-input-port))) returns the next character in the input port, but does not remove it from the input stream"
   return(g_read_char_1(sc, args, true));
 }
 
@@ -10914,7 +10914,7 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 
 static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
 {
-  #define H_read "(read :optional port) returns the next object in the input port"
+  #define H_read "(read (port (current-input-port))) returns the next object in the input port"
   s7_pointer port;
   
   if (args != sc->NIL)
@@ -11058,7 +11058,7 @@ static bool is_directory(const char *filename)
 
 static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 {
-  #define H_load "(load file :optional env) loads the scheme file 'file'. The 'env' argument \
+  #define H_load "(load file (env (global-environment))) loads the scheme file 'file'. The 'env' argument \
 defaults to the global environment.  To load into the current environment instead, pass (current-environment)."
 
   FILE *fp = NULL;
@@ -11228,7 +11228,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 
 static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_eval_string "(eval-string str :optional env) returns the result of evaluating the string str as Scheme code"
+  #define H_eval_string "(eval-string str (env (current-environment))) returns the result of evaluating the string str as Scheme code"
   s7_pointer old_port, port;
   
   if (!s7_is_string(car(args)))
@@ -12278,7 +12278,7 @@ void s7_newline(s7_scheme *sc, s7_pointer port)
 
 static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
 {
-  #define H_newline "(newline :optional port) writes a carriage return to the port"
+  #define H_newline "(newline (port (current-output-port))) writes a carriage return to the port"
   s7_pointer port;
   
   if (args != sc->NIL)
@@ -12304,7 +12304,7 @@ void s7_write_char(s7_scheme *sc, int c, s7_pointer port)
 
 static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
 {
-  #define H_write_char "(write-char char :optional port) writes char to the output port"
+  #define H_write_char "(write-char char (port (current-output-port))) writes char to the output port"
   s7_pointer port;
   
   if (!s7_is_character(car(args)))
@@ -12345,7 +12345,7 @@ void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 
 static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
 {
-  #define H_write "(write str :optional port) writes str (a string) to the output port"
+  #define H_write "(write str (port (current-output-port))) writes str (a string) to the output port"
   s7_pointer port;
   
   if (is_pair(cdr(args)))
@@ -12370,7 +12370,7 @@ void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 
 static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
 {
-  #define H_display "(display str :optional port) writes str (a string) to the output port"
+  #define H_display "(display str (port (current-output-port))) writes str (a string) to the output port"
   s7_pointer port;
   
   if (is_pair(cdr(args)))
@@ -12389,7 +12389,7 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
 {
-  #define H_read_byte "(read-byte :optional port): reads a byte from the input port"
+  #define H_read_byte "(read-byte (port (current-input-port))): reads a byte from the input port"
   s7_pointer port;
   
   if (args != sc->NIL)
@@ -12424,7 +12424,7 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
 {
-  #define H_write_byte "(write-byte byte :optional port): writes byte to the output port"
+  #define H_write_byte "(write-byte byte (port (current-output-port))): writes byte to the output port"
   s7_pointer port;
   
   if (!s7_is_integer(car(args)))
@@ -14262,7 +14262,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 
 static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_vector "(make-vector len :optional (value #f)) returns a vector of len elements initialized to value. \
+  #define H_make_vector "(make-vector len (value #f)) returns a vector of len elements initialized to value. \
 To create a multidimensional vector, put the dimension bounds in a list (this is to avoid ambiguities such as \
 (make-vector 1 2) where it's not clear whether the '2' is an initial value or a dimension size).  (make-vector '(2 3) 1.0) \
 returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
@@ -14650,7 +14650,7 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_hash_table "(make-hash-table :optional size) returns a new hash table"
+  #define H_make_hash_table "(make-hash-table (size 511)) returns a new hash table"
   s7_Int size = DEFAULT_HASH_TABLE_SIZE;
 
   if (args != sc->NIL)
@@ -19199,7 +19199,7 @@ static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
    *           =continuation, show its stack
    * if trailing arg is a port, it sets where the output goes
    */
-  #define H_stacktrace "(stacktrace :optional obj port) displays a stacktrace.  If obj is not \
+  #define H_stacktrace "(stacktrace (obj #f) (port (current-output-port))) displays a stacktrace.  If obj is not \
 given, the current stack is displayed, if obj is a thread object, its stack is displayed, \
 if obj is *error-info*, the stack at the point of the error is displayed, and if obj \
 is a continuation, its stack is displayed.  If the trailing port argument is not given, \
@@ -19359,7 +19359,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_eval(s7_scheme *sc, s7_pointer args)
 {
-  #define H_eval "(eval code :optional env) evaluates code in the environment env. 'env' \
+  #define H_eval "(eval code (env (current-environment))) evaluates code in the environment env. 'env' \
 defaults to the current environment; to evaluate something in the top-level environment instead, \
 pass (global-environment):\n\
 \n\
@@ -25988,7 +25988,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 
 static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
 {
-  #define H_bignum "(bignum val :optional radix) returns a multiprecision version of the string 'val'"
+  #define H_bignum "(bignum val (radix 10)) returns a multiprecision version of the string 'val'"
   s7_pointer p;
 
   p = g_string_to_number(sc, args);
@@ -30344,6 +30344,8 @@ the error type and the info passed to the error handler.");
  * if user creates an enormous list, it can seem to hang the listener:
  *   *list-print-length* ?
  * add pretty-print to format? ~W I think. (current pretty-print.scm doesn't know about lambda* etc)
+ *
+ * The help strings use lambda* syntax for optional args, but these are not keyword args.
  *
  * s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10
  *    intel core duo (1.83G):    3162     2690 1.921     2426 1.830

@@ -636,6 +636,12 @@ FTH_CFLAGS
 FTH_VERSION
 XEN_CFLAGS
 XEN_LIBS
+RUBY
+RUBY_LIBS
+RUBY_CFLAGS
+RUBY_SEARCH_PATH
+RUBY_RELEASE_DATE
+RUBY_VERSION
 FAM_LIB
 GL_FLAGS
 GL_FILES
@@ -732,7 +738,6 @@ with_jack
 with_static_alsa
 with_gtk
 with_no_gui
-with_static_gsl
 with_static_xm
 with_static_xg
 with_gl
@@ -1421,7 +1426,6 @@ Optional Packages:
   --with-static-alsa	  use ALSA statically loaded
   --with-gtk		  use Gtk+ to build Snd
   --with-no-gui  	  make Snd without any graphics support
-  --with-static-gsl	  use libgsl.a to build Snd (for obsolete RPM version)
   --with-static-xm	  include the xm module
   --with-static-xg	  include the xg module
   --with-gl		  include OpenGL support, Motif only
@@ -1455,7 +1459,7 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
   --with-x                use the X Window System
   --with-ruby-prefix=PFX  where Ruby is installed
-  --with-ruby	  	  use Ruby as the extension language
+  --with-ruby            use Ruby as the extension language
   --with-forth	  	  use Forth as the extension language
   --with-shared-sndlib	  try to load libsndlib.so
 
@@ -4089,12 +4093,6 @@ fi
 # Check whether --with-no-gui was given.
 if test "${with_no_gui+set}" = set; then :
   withval=$with_no_gui;
-fi
-
-
-# Check whether --with-static-gsl was given.
-if test "${with_static_gsl+set}" = set; then :
-  withval=$with_static_gsl;
 fi
 
 
@@ -8925,6 +8923,7 @@ fi
 
 
 
+
 #--------------------------------------------------------------------------------
 # OpenGL
 #--------------------------------------------------------------------------------
@@ -9045,6 +9044,7 @@ fi
 
 
 
+
 #--------------------------------------------------------------------------------
 # fam/gamin (needs GUI)
 #--------------------------------------------------------------------------------
@@ -9134,9 +9134,13 @@ fi
 
 ac_snd_have_extension_language=no
 
+
 #--------------------------------------------------------------------------------
 # Ruby
 #--------------------------------------------------------------------------------
+
+
+# AC_CHECK_RUBY
 
 # readline (for Ruby)
 # Check whether --enable-readline was given.
@@ -9145,12 +9149,11 @@ if test "${enable_readline+set}" = set; then :
 fi
 
 
-RUBY="ruby"
 
 # Check whether --with-ruby-prefix was given.
 if test "${with_ruby_prefix+set}" = set; then :
   withval=$with_ruby_prefix; ruby_prefix="$withval"
-		RUBY="$ruby_prefix/bin/ruby"
+                RUBY="$ruby_prefix/bin/ruby"
 else
   ruby_prefix="/usr/local"
 fi
@@ -9166,58 +9169,130 @@ fi
 # Check whether --with-ruby was given.
 if test "${with_ruby+set}" = set; then :
   withval=$with_ruby; if test "$with_ruby" = yes ; then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Ruby" >&5
+
+  for ac_prog in $RUBY ruby
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_RUBY+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $RUBY in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_RUBY="$RUBY" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_RUBY="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+RUBY=$ac_cv_path_RUBY
+if test -n "$RUBY"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RUBY" >&5
+$as_echo "$RUBY" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$RUBY" && break
+done
+test -n "$RUBY" || RUBY="no"
+
+  RUBY_VERSION=""
+  RUBY_RELEASE_DATE=""
+  RUBY_SEARCH_PATH=""
+  RUBY_CFLAGS=""
+  RUBY_LIBS=""
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Ruby" >&5
 $as_echo_n "checking for Ruby... " >&6; }
-	    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
-	    RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
-            if test "$RUBY_VERSION" > "0" ; then
-	      $as_echo "#define HAVE_RUBY 1" >>confdefs.h
-
-	      $as_echo "#define HAVE_EXTENSION_LANGUAGE 1" >>confdefs.h
-
-              { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RUBY_VERSION" >&5
+  if test "$RUBY" != no ; then
+    minimum_version=1.8.0
+    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
+    if `$RUBY -e "exit(RUBY_VERSION >= '$minimum_version' ? 0 : 1)"` ; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RUBY_VERSION" >&5
 $as_echo "$RUBY_VERSION" >&6; }
-              cat >>confdefs.h <<_ACEOF
-#define MUS_RUBY_VERSION "${RUBY_VERSION}"
+      RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
+      RUBY_SEARCH_PATH=`$RUBY -e 'puts $:.join(":")'`
+      ruby_ldflags=""
+      ruby_libs=""
+      if `$RUBY -e "exit(RUBY_VERSION < '1.9.0' ? 0 : 1)"` ; then
+        ruby_hdrdir=`$RUBY -rrbconfig -e "puts Config::CONFIG['archdir']"`
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ruby.h" >&5
+$as_echo_n "checking for ruby.h... " >&6; }
+        if test -e "$ruby_hdrdir/ruby.h" ; then
+          RUBY_CFLAGS="-I$ruby_hdrdir"
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ruby_hdrdir/ruby.h" >&5
+$as_echo "$ruby_hdrdir/ruby.h" >&6; }
+        else
+          RUBY_CFLAGS=`$RUBY -e 'puts "-I" + $:.join(" -I")'`
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: use \$LOAD_PATH" >&5
+$as_echo "use \$LOAD_PATH" >&6; }
+        fi
+        ruby_ldflags=`$RUBY -rrbconfig -e "puts Config::CONFIG['LIBRUBYARG']"`
+        ruby_libs=`$RUBY -rrbconfig -e "puts Config::CONFIG['LIBS']"`
+      else
+        ruby_hdrdir=`$RUBY -rrbconfig -e "puts RbConfig::CONFIG['rubyhdrdir']"`
+        ruby_arch=`$RUBY -rrbconfig -e "puts RbConfig::CONFIG['arch']"`
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ruby.h" >&5
+$as_echo_n "checking for ruby.h... " >&6; }
+        if test -e "$ruby_hdrdir/ruby.h" ; then
+          RUBY_CFLAGS="-I$ruby_hdrdir -I$ruby_hdrdir/$ruby_arch"
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ruby_hdrdir/ruby.h" >&5
+$as_echo "$ruby_hdrdir/ruby.h" >&6; }
+        else
+          ruby_hdrdir=`$RUBY -rrbconfig -e "puts RbConfig::CONFIG['archdir']"`
+          if test -e "$ruby_hdrdir/ruby.h" ; then
+            RUBY_CFLAGS="-I$ruby_hdrdir"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ruby_hdrdir/ruby.h" >&5
+$as_echo "$ruby_hdrdir/ruby.h" >&6; }
+	  else
+            RUBY_CFLAGS=`$RUBY -e 'puts "-I" + $:.join(" -I")'`
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: use \$LOAD_PATH" >&5
+$as_echo "use \$LOAD_PATH" >&6; }
+	  fi
+        fi
+        ruby_ldflags=`$RUBY -rrbconfig -e "puts RbConfig::CONFIG['LIBRUBYARG']"`
+        ruby_libs=`$RUBY -rrbconfig -e "puts RbConfig::CONFIG['LIBS']"`
+      fi
+      RUBY_LIBS="$ruby_ldflags $ruby_libs"
+      $as_echo "#define HAVE_RUBY 1" >>confdefs.h
+
+                          $as_echo "#define HAVE_EXTENSION_LANGUAGE 1" >>confdefs.h
+
+                          cat >>confdefs.h <<_ACEOF
+#define MUS_RUBY_VERSION "$RUBY_VERSION"
 _ACEOF
 
-              cat >>confdefs.h <<_ACEOF
-#define RUBY_RELEASE_DATE "${RUBY_RELEASE_DATE}"
+                          cat >>confdefs.h <<_ACEOF
+#define RUBY_RELEASE_DATE "$RUBY_RELEASE_DATE"
 _ACEOF
 
-
-              #[ms] XEN_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]`
-              XEN_CFLAGS=`$RUBY -rrbconfig -e 'if Config::CONFIG["rubyhdrdir"] then print "-I", Config::CONFIG["rubyhdrdir"], " -I", Config::CONFIG["rubyhdrdir"] + "/" + Config::CONFIG["arch"]; else \$:.each {|path| print "-I", path, " "}; end'`
-
-	      # this is apparently actually intended for ruby programs (*.rb), not programs embedding ruby
-	      # we have to conjure up some plausible includes by hand:
-	      XEN_CFLAGS="$XEN_CFLAGS -I$ruby_prefix/include/ruby-$RUBY_VERSION/i686-linux -I$ruby_prefix/include/ruby-$RUBY_VERSION"
-
-	      XEN_LIBS=`$RUBY -rrbconfig -e 'puts Config::CONFIG["LIBRUBYARG"]'`
-              #[ms] XEN_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]`
-
-	      RUBY_SEARCH_PATH=`$RUBY -e '\$:.each {|path| print path, ":"}'`
-
-              RUBY_LIBS=`$RUBY -rrbconfig -e 'puts Config::CONFIG["LIBS"]'`
-              #[ms] RUBY_LIBS=`$RUBY -e [['require "rbconfig"; include Config; print CONFIG["LIBS"]']]`
-
-	      # these are the non-ruby libraries required by ruby
-	      #   so look for -lruby, then libruby-static.a
-
-              #[ms] LIBRUBY=`$RUBY -rrbconfig -e [['puts Config::CONFIG["LIBRUBYARG_STATIC"]']]`
-              #[ms] LIBRUBY="$ruby_prefix/lib/libruby-static.a"
-              #[ms] AC_CHECK_LIB(ruby, rb_intern, [LIBRUBY="-lruby"])
-
-	      cat >>confdefs.h <<_ACEOF
-#define RUBY_SEARCH_PATH "${RUBY_SEARCH_PATH}"
+                          cat >>confdefs.h <<_ACEOF
+#define RUBY_SEARCH_PATH "$RUBY_SEARCH_PATH"
 _ACEOF
 
-
-              XEN_LIBS="$XEN_LIBS $RUBY_LIBS"
-              #[ms] XEN_LIBS="$XEN_LIBS $LIBRUBY $RUBY_LIBS"
-
-	      if test "$enable_readline" != no ; then
-	        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for readline in -lreadline" >&5
+                          XEN_CFLAGS="$XEN_CFLAGS $RUBY_CFLAGS"
+                          XEN_LIBS="$XEN_LIBS $RUBY_LIBS"
+                          if test "$enable_readline" != no ; then
+                            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for readline in -lreadline" >&5
 $as_echo_n "checking for readline in -lreadline... " >&6; }
 if ${ac_cv_lib_readline_readline+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9256,161 +9331,20 @@ $as_echo "$ac_cv_lib_readline_readline" >&6; }
 if test "x$ac_cv_lib_readline_readline" = xyes; then :
   $as_echo "#define HAVE_READLINE 1" >>confdefs.h
 
-			    XEN_LIBS="$XEN_LIBS -lreadline -lncurses"
+                                          XEN_LIBS="$XEN_LIBS -lreadline -lncurses"
 fi
 
-              fi
+                          fi
 
 
-
-              OLD_LIBS="$LIBS"
-    	      LIBS="$XEN_LIBS $LIBS"
-              OLD_CFLAGS="$CFLAGS"
-              CFLAGS="$XEN_CFLAGS -lm $CFLAGS"
-
-    	      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rb_gc_disable" >&5
-$as_echo_n "checking for rb_gc_disable... " >&6; }
-              if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ruby.h>
-int
-main ()
-{
-ruby_init(); rb_gc_disable(); return(0)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  $as_echo "#define HAVE_RB_GC_DISABLE 1" >>confdefs.h
-
-                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-
-    	      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rb_ary_dup" >&5
-$as_echo_n "checking for rb_ary_dup... " >&6; }
-              if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ruby.h>
-int
-main ()
-{
-VALUE lst; ruby_init(); lst = rb_ary_dup(rb_ary_new()); return(0)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  $as_echo "#define HAVE_RB_ARY_DUP 1" >>confdefs.h
-
-                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-
-    	      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rb_errinfo" >&5
-$as_echo_n "checking for rb_errinfo... " >&6; }
-              if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ruby.h>
-int
-main ()
-{
-VALUE str; ruby_init(); str = rb_errinfo(); return(0)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  $as_echo "#define HAVE_RB_ERRINFO 1" >>confdefs.h
-
-                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-
-    	      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rb_get_load_path" >&5
-$as_echo_n "checking for rb_get_load_path... " >&6; }
-              if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ruby.h>
-int
-main ()
-{
-VALUE load_path; ruby_init(); load_path = rb_get_load_path()
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  $as_echo "#define HAVE_RB_GET_LOAD_PATH 1" >>confdefs.h
-
-                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-
-    	      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rb_proc_new" >&5
+                          OLD_LIBS="$LIBS"
+                          LIBS="$XEN_LIBS $LIBS -lm"
+                          OLD_CFLAGS="$CFLAGS"
+                          CFLAGS="$XEN_CFLAGS $CFLAGS"
+                          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rb_proc_new" >&5
 $as_echo_n "checking for rb_proc_new... " >&6; }
-              if test "$cross_compiling" = yes; then :
+
+                          if test "$cross_compiling" = yes; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "cannot run test program while cross compiling
@@ -9419,14 +9353,19 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <ruby.h>
-                                  VALUE proc_call(VALUE args, VALUE id) {return(rb_apply(rb_mKernel, (ID)id, args));}
+                                            VALUE proc_call(VALUE args, VALUE id) {return(rb_apply(rb_mKernel, (ID)id, args));}
 
 int
 main ()
 {
 VALUE proc;
-                                  ruby_init();
-                                  proc = rb_proc_new(proc_call, rb_intern("hi"))
+                                             ruby_init();
+#ifdef __cplusplus
+                                             proc = rb_proc_new((VALUE (*)(...))proc_call, rb_intern("hi"))
+#else
+                                             proc = rb_proc_new(proc_call, rb_intern("hi"))
+#endif
+
   ;
   return 0;
 }
@@ -9435,7 +9374,7 @@ _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
   $as_echo "#define HAVE_RB_PROC_NEW 1" >>confdefs.h
 
-                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+                            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
 else
@@ -9448,49 +9387,9 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
 fi
 
 
-# these don't work if libruby.so doesn't exist (but libruby-static.a does)
-#             AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
-#	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])
-#	      AC_CHECK_LIB(ruby, rb_errinfo, [AC_DEFINE(HAVE_RB_ERRINFO)])
-
-    	      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for working rb_gc_mark" >&5
-$as_echo_n "checking for working rb_gc_mark... " >&6; }
-              if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ruby.h>
-int
-main ()
-{
-VALUE val = Qnil; ruby_init(); rb_gc_mark(val); return(0)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  $as_echo "#define HAVE_REASONABLE_RB_GC_MARK 1" >>confdefs.h
-
-                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-
-              { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ruby_vsnprintf" >&5
+                          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ruby_vsnprintf" >&5
 $as_echo_n "checking for ruby_vsnprintf... " >&6; }
-              if test "$cross_compiling" = yes; then :
+                          if test "$cross_compiling" = yes; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "cannot run test program while cross compiling
@@ -9510,7 +9409,7 @@ _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
   $as_echo "#define HAVE_VSNPRINTF 0" >>confdefs.h
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+                             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
 else
@@ -9522,47 +9421,29 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
+                          LIBS="$OLD_LIBS"
+                          CFLAGS="$OLD_CFLAGS"
+                          LOCAL_LANGUAGE="Ruby"
+                          ac_snd_have_extension_language=yes
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: Ruby version $RUBY_VERSION < $minimum_version" >&5
+$as_echo "Ruby version $RUBY_VERSION < $minimum_version" >&6; }
 
-	      CFLAGS="$CFLAGS -Werror"
-    	      { $as_echo "$as_me:${as_lineno-$LINENO}: checking that rb_find_file deals in char*" >&5
-$as_echo_n "checking that rb_find_file deals in char*... " >&6; }
-              cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ruby.h>
-int
-main ()
-{
-char *file; ruby_init(); file = rb_find_file("hiho")
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-  $as_echo "#define RB_FIND_FILE_TAKES_VALUE 1" >>confdefs.h
-
-                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+    fi
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
+  fi
+
+
+
+
+
+
+        fi
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-              LIBS="$OLD_LIBS"
-              CFLAGS="$OLD_CFLAGS"
-              LOCAL_LANGUAGE="Ruby"
-	      ac_snd_have_extension_language=yes
-
-            else
-              { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find Ruby!" >&5
-$as_echo "$as_me: WARNING: can't find Ruby!" >&2;}
-  	      $as_echo "#define HAVE_RUBY 0" >>confdefs.h
-
-            fi
-	fi
-fi
 
 
 
