@@ -1143,6 +1143,7 @@ char *slist_selection(slist *lst)
 
 /* TODO: cairo troubles:
  *
+ *       lots of things leave an empty graph
  *       do meters work in rec?  in Motif they're drawn incorrectly
  *       Mac native? quartz surface like GL?
  *         sep chans, syncd marks don't move together

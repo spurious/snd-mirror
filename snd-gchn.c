@@ -1052,8 +1052,9 @@ void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, 
   cp->cgx->fft_pix_y0 = y0;
   cp->cgx->fft_pix_cutoff = cp->spectrum_end;
 #if HAVE_GTK_3
-  /* TODO: gtk 3 fft pix? -- should this use cairo regions? 
+  /* TODO: gtk 3 background pix -- should this use cairo regions? 
    *          we need a way to copy/save/later redraw a small portion of a drawing area widget's display
+   *          the current code flickers and doesn't actually draw sometimes
    *
    *  cairo_rectangle_t to hold bounds: typedef struct {double x, y, width, height;} cairo_rectangle_t;
    *  cairo_rectangle_int_t: typedef struct {int x, y; int width, height;} cairo_rectangle_int_t;
@@ -1061,6 +1062,11 @@ void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, 
    *  then perhaps cairo_region_copy (will need cairo_region_destroy on original and copy I think)
    *  but then how to overwrite?  I see subtract, xor, union
    */
+  
+  cp->cgx->fft_pix = gdk_pixbuf_get_from_window(ax->wn, 
+						cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0,
+						cp->cgx->fft_pix_width, cp->cgx->fft_pix_height);
+
 #else
   cp->cgx->fft_pix = gdk_pixbuf_get_from_drawable(cp->cgx->fft_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 						  cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0, 0, 0,
@@ -1106,7 +1112,9 @@ void save_cursor_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheigh
   cp->cgx->cursor_pix_x0 = x0;
   cp->cgx->cursor_pix_y0 = y0;
 #if HAVE_GTK_3
-  /* TODO: gtk3 cursor? */
+  cp->cgx->cursor_pix = gdk_pixbuf_get_from_window(ax->wn,
+						   cp->cgx->cursor_pix_x0, cp->cgx->cursor_pix_y0,
+						   cp->cgx->cursor_pix_width, cp->cgx->cursor_pix_height);
 #else
   cp->cgx->cursor_pix = gdk_pixbuf_get_from_drawable(cp->cgx->cursor_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 						     cp->cgx->cursor_pix_x0, cp->cgx->cursor_pix_y0, 0, 0,
@@ -1148,7 +1156,9 @@ void save_sono_cursor_pix(chan_info *cp, graphics_context *ax, int fwidth, int f
   cp->cgx->sono_cursor_pix_x0 = x0;
   cp->cgx->sono_cursor_pix_y0 = y0;
 #if HAVE_GTK_3
-  /* gtk3 pix? */
+  cp->cgx->sono_cursor_pix = gdk_pixbuf_get_from_window(ax->wn,
+							cp->cgx->sono_cursor_pix_x0, cp->cgx->sono_cursor_pix_y0,
+							cp->cgx->sono_cursor_pix_width, cp->cgx->sono_cursor_pix_height);
 #else
   cp->cgx->sono_cursor_pix = gdk_pixbuf_get_from_drawable(cp->cgx->sono_cursor_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 							  cp->cgx->sono_cursor_pix_x0, cp->cgx->sono_cursor_pix_y0, 0, 0,

@@ -4510,6 +4510,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+
+
 ;;; --------------------------------------------------------------------------------
 ;;; VECTORS
 ;;; --------------------------------------------------------------------------------
@@ -11614,6 +11616,64 @@ this prints:
        5)
       120)
 
+(let ()
+  (define (Cholesky:decomp P)
+    ;; from Marco Maggi based on a Scheme bboard post
+    ;; (Cholesky:decomp '((2 -2) (-2 5))) -> ((1.4142135623731 0) (-1.4142135623731 1.7320508075689))
+    (define (Cholesky:make-square L)
+      (define (zero-vector n)
+	(if (zero? n)
+	    '()
+	    (cons 0 (zero-vector (- n 1)))))
+      (map (lambda (v)
+	     (append v (zero-vector (- (length L) (length v)))))
+	   L))
+    (define (Cholesky:add-element P L i j)
+      (define (Cholesky:smaller P)
+	(if (null? (cdr P))
+	    '()
+	    (reverse (cdr (reverse P)))))
+      (define (Cholesky:last-row L)
+	(car (reverse L)))
+      (define (matrix:element A i j)
+	(list-ref (list-ref A i) j))
+      (define (Cholesky:make-element P L i j)
+	(define (Cholesky:partial-sum L i j)
+	  (let loop ((k j))
+	    (case k
+	      ((0) 0)
+	      ((1) (* (matrix:element L i 0)
+		      (matrix:element L j 0)))
+	      (else
+	       (+ (* (matrix:element L i k)
+		     (matrix:element L j k))
+		  (loop (- k 1)))))))
+	(let ((x (- (matrix:element P i j)
+		    (Cholesky:partial-sum L i j))))
+	  (if (= i j)
+	      (sqrt x)
+	      (/ x (matrix:element L j j)))))
+      (if (zero? j)
+	  (append L `((,(Cholesky:make-element P L i j))))
+	  (append (Cholesky:smaller L)
+		  (list (append
+			 (Cholesky:last-row L)
+			 (list (Cholesky:make-element P L i j)))))))
+    (Cholesky:make-square
+     (let iter ((i 0) (j 0) (L '()))
+       (if (>= i (length P))
+	   L
+	   (iter (if (= i j) (+ 1 i) i)
+		 (if (= i j) 0 (+ 1 j))
+		 (Cholesky:add-element P L i j))))))
+  (let* ((lst (Cholesky:decomp '((2 -2) (-2 5))))
+	 (lst0 (car lst))
+	 (lst1 (cadr lst)))
+    (if (or (> (abs (- (car lst0) (sqrt 2))) .0001)
+	    (not (= (cadr lst0) 0))
+	    (> (abs (+ (car lst1) (sqrt 2))) .0001)
+	    (> (abs (- (cadr lst1) (sqrt 3))) .0001))
+	(format #t ";cholesky decomp: ~A~%" lst))))
 
 
 
