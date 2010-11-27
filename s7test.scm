@@ -712,6 +712,7 @@ yow!! -- I'm using mpc_cmp
 (test (boolean? (lambda (x) #f)) #f)
 (test (boolean? and) #f)
 (test (boolean? if) #f)
+(test (boolean? (values)) #f)
 ;(test (boolean? else) #f) ; this could also be an error -> unbound variable, like (symbol? else)
 
 
@@ -911,7 +912,7 @@ yow!! -- I'm using mpc_cmp
 (test (char? #\xff) #t)
 ;; any larger number is a reader error
 
-;(test (char? #\x#b0) #f)
+(test (eval-string "(char? #\\x#b0)") 'error)
 
 (test-w "(char? #\\100)")
 (test-w "(char? #\\x-65)")
@@ -4737,9 +4738,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (#(1)) 'error)
 (test (#2d((1 2) (3 4))) 'error)
 (test (apply (make-vector '(1 2))) 'error)
-;; these 2 are read-errors
-;(test #2/3d(1 2) 'error)
-;(test #2.1d(1 2) 'error)
+
+(test (eval-string "#2/3d(1 2)") 'error)
+(test (eval-string "#2.1d(1 2)") 'error)
 (test (#(#(#(#t))) 0 0 0) #t)
 
 
@@ -5275,6 +5276,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (vector->list #2d((1 2) (3 4))) '(1 2 3 4))
 (test (list->vector '((1 2) (3 4))) #((1 2) (3 4)))
 (test (vector->list (make-vector (list 2 0))) '())
+(test (vector-dimensions #2d((1 2 3))) '(1 3))
 
 (test (#2d((1 2 3) (4 5 6)) 0 0) 1)
 (test (#2d((1 2 3) (4 5 6)) 0 1) 2)
@@ -5291,11 +5293,16 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (apply v (make-list 100 0)) 0)
   (test (v 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0) 0))
 
-
-;; these are read-time errors 
-					;(test #3D(((1 2) (3 4)) ((5 6) (7))) 'error)
-					;(test #3D(((1 2) (3 4)) ((5 6) (7 8 9))) 'error)
-					;(test #3D(((1 2) (3 4)) (5 (7 8 9))) 'error)
+;;; eval-string here else these are read errors
+(test (eval-string "#3D(((1 2) (3 4)) ((5 6) (7)))") 'error)
+(test (eval-string "#3D(((1 2) (3 4)) ((5) (7 8)))") 'error)
+(test (eval-string "#3D(((1 2) (3 4)) (() (7 8)))") 'error)
+(test (eval-string "#3D(((1 2) (3 4)) ((5 6) (7 8 9)))") 'error)
+(test (eval-string "#3D(((1 2) (3 4)) (5 (7 8 9)))") 'error)
+(test (eval-string "#3D(((1 2) (3 4)) ((5 6) (7 . 8)))") 'error)
+(test (eval-string "#3D(((1 2) (3 4)) ((5 6) (7 8 . 9)))") 'error)
+(test (eval-string "#3D(((1 2) (3 4)) ((5 6) ()))") 'error)
+(test (eval-string "#3D(((1 2) (3 4)) ((5 6)))") 'error)
 
 (test (vector-dimensions #3D(((1 2) (3 4)) ((5 6) (7 8)))) '(2 2 2))
 (test (vector-dimensions #2d((1 2 3) (4 5 6))) '(2 3))
@@ -5490,7 +5497,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (equal? #2d((1) (2)) #2d((1) (3))) #f)
 (test (equal? #2d((1) (2)) (copy #2d((1) (2)))) #t)
 (test (equal? (make-vector '(3 0 1)) (make-vector '(3 0 2))) #f)
-;(test #0d() 'error) ; a read-error?
+(test (eval-string "#0d()") 'error)
 
 (let ((v1 (make-vector '(3 2 1) #f))
       (v2 (make-vector '(3 2 1) #f)))
@@ -9362,7 +9369,6 @@ this prints:
 
 (test (let ((a #t) (b #f) (c #t) (d #f)) (if (if (if (if d d c) d b) d a) 'a 'd)) 'a)
 (test (let ((a #t) (b #f) (c #t) (d #f)) (if a (if b (if c (if d d c) c) 'b) 'a)) 'b)
-					;(test (let ((a #t) (b #f) (c #t) (d #f)) (((if a if 'gad) c if 'gad) (not d) 'a 'gad)) 'a)
 (test (let ((a #t) (b #f) (c #t) (d #f)) (if b (if a (if d 'gad) 'gad) (if d 'gad 'a))) 'a)
 
 (let ((a #t))
@@ -9479,6 +9485,7 @@ this prints:
 (test (if 1 2 . 3) 'error)
 (test (if . 1) 'error)
 (test (if _no_var_ 1) 'error)
+(test (if (values) (values) (values) 1) 'error)
 
 
 
@@ -9709,7 +9716,7 @@ this prints:
 (test (let* ((x (list (list 1 2 3))) (y (apply for-each abs x))) x) '((1 2 3)))
 
 (test (for-each (lambda (x) (display "for-each should not have called this"))) 'error)
-;(test (for-each (lambda () 1) '()) 'error)
+(test (for-each (lambda () 1) '()) #<unspecified>)
 (test (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr x y z))) '(1) '(3) '()) ctr) 0)
 (test (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr x y z))) '(0 1) '(2 3) '(4 5 6)) ctr) 15)
 (test (for-each (lambda (a b) (+ a b)) (list 1)) 'error)
@@ -9892,7 +9899,7 @@ this prints:
 
 (test (map abs '() abs) 'error)
 (test (map (lambda (x) (display "map should not have called this"))) 'error)
-;(test (map (lambda () 1) '()) 'error)
+(test (map (lambda () 1) '()) '())
 (test (let ((ctr 0)) (map (lambda (x y z) (set! ctr (+ ctr x y z)) ctr) '(1) '(3) '())) '())
 (test (let ((ctr 0)) (map (lambda (x y z) (set! ctr (+ ctr x y z))) '(0 1) '(2 3) '(4 5 6))) '(6 15))
 
@@ -10741,7 +10748,7 @@ this prints:
 (test (cond (3 => (lambda (a . b) a))) 3)
 (test (cond ((list 3 4) => (lambda (a . b) b))) '())
 (test (cond) 'error)
-					;(test (cond ((= 1 2) 3) (else 4) (4 5)) 'error)
+					;(test (cond ((= 1 2) 3) (else 4) (4 5)) 'error) ; trailing ignored 
 (test (cond ((+ 1 2) => (lambda (a b) (+ a b)))) 'error)
 (test (equal? (cond (else)) else) #t)
 (test (cond (#t => 'ok)) 'error)
@@ -10935,8 +10942,8 @@ this prints:
 (test (case #\newline ((#\newline) 1)) 1)
 
 ; case use eqv? -- why not case-equal?
-;(test (case "" (("") 1)) 1)
-;(test (case abs ((abs) 1)) 1)
+(test (case "" (("") 1)) #<unspecified>)
+(test (case abs ((abs) 1)) #<unspecified>)
 
 (test (case 1) 'error)
 (test (case 1 . "hi") 'error)
@@ -11197,6 +11204,19 @@ this prints:
 	   (ho hi)))
       37)
 
+(test (let ((x 0)
+	    (b 4)
+	    (f1 #f)
+	    (f2 #f))
+	(let ((x 1))
+	  (let ((x 2))
+	    (set! f1 (lambda (a) (+ a b x)))))
+	(let ((x 3))
+	  (let ((b 5))
+	    (set! f2 (lambda (a) (+ a b x)))))
+	(+ (f1 10) (f2 100)))  ; (+ 10 4 2) (+ 100 5 3)
+      124)
+
 (test ((if (> 3 2) + -) 3 2) 5)
 (test (let ((op +)) (op 3 2)) 5)
 (test (((lambda () +)) 3 2) 5)
@@ -11264,7 +11284,7 @@ this prints:
 (test (lambda (x (y)) x) 'error)
 (test ((lambda (x) x . 5) 2) 'error)
 (test (lambda (1) #f) 'error)
-;(test (lambda (x . y z) x) 'error) 
+(test (eval-string "(lambda (x . y z) x)") 'error) 
 (test ((lambda () 1) 1) 'error)
 (test ((lambda (()) 1) 1) 'error)
 (test ((lambda (x) x) 1 2) 'error)
@@ -11303,6 +11323,8 @@ this prints:
 ;;; -------- begin --------
 ;;; begin
 
+(test (begin) '()) ; I think Guile returns #<unspecified> here
+(test (begin (begin)) '())
 (test (let () (begin) #f) #f)
 (test (let () (begin (begin (begin (begin)))) #f) #f)
 (test (let () (begin (define x 2) (define y 1)) (+ x y)) 3)
@@ -11396,7 +11418,7 @@ this prints:
 (test (vector? (apply make-vector '(1))) #t)
 (test (apply make-vector '(1 1)) '#(1))
 (test (let ((f +)) (apply f '(1 2))) 3)
-					;(test (let* ((x '(1 2 3)) (y (apply list x))) (not (eq? x y))) #f) ; is this standard?
+(test (let* ((x '(1 2 3)) (y (apply list x))) (eq? x y)) #t) ; is this standard?
 (test (apply min '(1 2 3 5 4 0 9)) 0)
 (test (apply min 1 2 4 3 '(4 0 9)) 0)
 (test (apply vector 1 2 '(3)) '#(1 2 3))
@@ -11711,7 +11733,7 @@ this prints:
 (test (string-ref (values "hiho" 2)) #\h)
 (test (vector-ref (values (vector 1 2 3)) 1) 2)
 (test (+ (values (+ 1 (values 2 3)) 4) 5 (values 6) (values 7 8 (+ (values 9 10) 11))) 66)
-(test (+ (if (values) (values 1 2) (values 3 4)) (if (null? (values)) (values 5 6) (values 7 8))) 18) ; (values) is now #<unspecified> 
+(test (+ (if (values) (values 1 2) (values 3 4)) (if (null? (values)) (values 5 6) (values 7 8))) 18) ; (values) is now #<unspecified> (sort of)
 (test (+ (cond (#f (values 1 2)) (#t (values 3 4))) 5) 12)
 (test (+ (cond (#t (values 1 2)) (#f (values 3 4))) 5) 8)
 (test (apply + (list (values 1 2))) 3)
@@ -11794,8 +11816,8 @@ this prints:
 (test ((lambda* ((a 1) (b 2)) (list a b)) (values :a 3)) '(3 2))
 (test (+ (values (values 1 2) (values 4 5))) 12)
 (test (+ (begin 3 (values 1 2) 4)) 4)
-;;; (test (equal? (values) (if #f #f)) #f)
 (test (map (lambda (x) (if #f x (values))) (list 1 2)) '())
+(test (map (lambda (x) (if #f x (begin (values)))) (list 1 2)) '())
 (test (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) '(1 20 3 60))
 (test (object->string (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4))) "(1 20 3 60)") ; make sure no "values" floats through
 (test (map (lambda (x) (if (odd? x) (values x (* x 20) (cons x (+ x 1))) (values))) (list 1 2 3 4 5 6)) '(1 20 (1 . 2) 3 60 (3 . 4) 5 100 (5 . 6)))
@@ -11938,6 +11960,10 @@ this prints:
 (test (cons (values 1 2)) '(1 . 2))
 (test (number->string (values 1 2)) "1")
 (test (object->string (values)) "#<unspecified>")
+(test (equal? (values) #<unspecified>) #f) ; hmmm -- this means that
+(test (equal? (begin) (begin (values))) #f) ;   maybe this is a bug, but we want this:
+(test (map (lambda (x) (if #f x #<unspecified>)) (list 1 2)) '(#<unspecified> #<unspecified>))
+(test (equal? (values) (if #f #f)) #f)
 (test (substring (values "hi") (values 1 2)) "i")
 (test (cond (call-with-exit (values "hi"))) "hi")
 (test (procedure-arity (cond (values))) '(0 0 #t)) ; values as a procedure here
@@ -12432,10 +12458,10 @@ this prints:
 (test (let* ((x 1))) 'error)
 (test (let ((x 1)) (letrec ((x 32) (y x)) (+ 1 y))) 'error) ; #<unspecified> seems reasonable if not the 1+ 
 (test (let ((x 1)) (letrec ((y x) (x 32)) (+ 1 y))) 'error)
-					;(test (let ((x 1)) (letrec ((y x) (x 32)) 1)) 'error)
+(test (let ((x 1)) (letrec ((y x) (x 32)) 1)) 1)
 (test (let ((x 1)) (letrec ((y (let () (+ x 1))) (x 32)) (+ 1 y))) 'error)
 (test (let ((x 1)) (letrec ((y (let ((xx (+ x 1))) xx)) (x 32)) (+ 1 y))) 'error)
-					;(test (let ((x 32)) (letrec ((y (apply list `(* ,x 2))) (x 1)) y)) 'error)
+(test (let ((x 32)) (letrec ((y (apply list `(* ,x 2))) (x 1)) y)) '(* #<undefined> 2))
 (test (letrec) 'error)
 (test (letrec*) 'error)
 (test (let ((x . 1)) x) 'error)
@@ -12465,13 +12491,13 @@ this prints:
 (test (let ((() 3)) 3) 'error)
 (test (let ((#\c 3)) 3) 'error)
 (test (let (("hi" 3)) 3) 'error)
-;(test (let ((:hi 3)) 3) 'error)
+(test (let ((:hi 3)) 3) 'error)
 
 (test (let 1 ((i 0)) i) 'error)
 (test (let #f ((i 0)) i) 'error)
 (test (let "hi" ((i 0)) i) 'error)
 (test (let #\c ((i 0)) i) 'error)
-;(test (let :hi ((i 0)) i) 'error)
+(test (let :hi ((i 0)) i) 'error)
 
 (test (let func ((a 1) . b) a) 'error)
 (test (let func a . b) 'error)
@@ -12500,6 +12526,8 @@ this prints:
 (test (let* hi () 1) 'error)
 (test (letrec (1 2) #t) 'error)
 (test (letrec* (1 2) #t) 'error)
+(test (let hi (()) 1) 'error)
+(test (let hi a 1) 'error)
 
 ;;; these ought to work, but see s7.c under EVAL: (it's a speed issue)
 ;(test (let let ((i 0)) (if (< i 3) (let (+ i 1)) i)) 3)
@@ -14396,7 +14424,7 @@ who says the continuation has to restart the map from the top?
 (test `(1 2 ,(* 9 9) 3 4) '(1 2 81 3 4))
 (test `(1 ,(+ 1 1) 3) '(1 2 3))                     
 (test `(,(+ 1 2)) '(3))
-;(test `(,'a . ,'b) (cons 'a 'b))
+(test `(,'a . ,'b) (cons 'a 'b))
 (test `(,@'() . foo) 'foo)
 (test `(1 , 2) '(1 2))
 (test `(1 , @(list 2 3)) 'error) ; ?? this is an error in Guile and Clisp
@@ -14569,7 +14597,6 @@ who says the continuation has to restart the map from the top?
 	`(1 ,@x 4))
       '(1 2 3 4))
 
-;(test (let ((x '(2 3))) `#(9 ,@x 9)) '#(9 2 3 9))
 (test `#(1 ,(/ 12 2)) '#(1 6))
 (test ((lambda () `#(1 ,(/ 12 2)))) '#(1 6))
 
@@ -14679,7 +14706,6 @@ who says the continuation has to restart the map from the top?
 ;;; some weirder cases...
 (test (begin . `''1) ''1)
 (test (`,@''1) 1) ; ((unquote-splicing (quote (quote 1)))) -> ((unquote-splicing (list quote 1))) ->(quote 1) -> 1!  hmmm
-;(test (if . `''1) 'quote) ; or '1?
 (test (`,@ `'1) 1)
 (test (`,@''.'.) '.'.)
 (test #(`,1) #(1))
@@ -16545,7 +16571,17 @@ why are these different (read-time `#() ? )
   (test (procedure-source) 'error)
   (test (procedure-source abs abs) 'error)
 
-  
+  (let ((p (make-procedure-with-setter (lambda (a) (+ a 1)) (lambda (a b) (+ a b)))))
+    (test (object->string (procedure-source p)) "(lambda (a) (+ a 1))")
+    (let ((p1 p)
+	  (p2 (make-procedure-with-setter (lambda (a) "pws doc" (+ a 1)) (lambda (a b) (+ a b)))))
+      (test (equal? p p1) #t)
+      (test (equal? p1 p2) #f)
+      (test (procedure-documentation p2) "pws doc")
+      (test (apply p2 '(2)) 3)))
+
+  (test (procedure-documentation hook-functions) "(hook-functions hook) returns the list of functions on the hook. It is settable;  (set! (hook-functions hook) (cons func (hook-functions hook))) adds func to the current list.")
+
   (test (make-list 0) '())
   (test (make-list 0 123) '())
   (test (make-list 1) '(#f))
@@ -16562,7 +16598,7 @@ why are these different (read-time `#() ? )
   (for-each
    (lambda (arg)
      (test (make-list arg) 'error))
-   (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i '() #t 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+   (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i '() #t 'hi '#(()) (list 1 2 3) '(1 . 2) "hi" (- (real-part (log 0.0)))))
 
   (for-each
    (lambda (arg)
@@ -60883,6 +60919,8 @@ etc
 (define (s7-test-at-random)
   (let ((group-1 #t)
 	(group-2 #t))
+
+    ;(gc)
     
     (let ((ops (list gensym symbol-table symbol? symbol->string string->symbol symbol->value 
 		     global-environment current-environment provided? provide defined? keyword?
@@ -60967,7 +61005,7 @@ etc
 	
 	(if group-1
 	    (begin
-					;(display "no args") (newline)
+					(display "no args") (newline)
 	      (for-each
 	       (lambda (f)
 		 (catch #t 
@@ -60976,7 +61014,7 @@ etc
 			(lambda args #f)))
 	       ops)
 	      
-					;(display "one arg") (newline)
+					(display "one arg") (newline)
 	      (for-each
 	       (lambda (f)
 		 (for-each
@@ -60993,7 +61031,7 @@ etc
 		  argls))
 	       ops)
 	      
-					;(display "two args") (newline)
+					(display "two args") (newline)
 	      (for-each
 	       (lambda (f)
 		 (for-each
@@ -61015,7 +61053,7 @@ etc
 		  argls))
 	       ops)
 	      
-					;(display "three args") (newline)
+					(display "three args") (newline)
 	      (for-each
 	       (lambda (f)
 		 (for-each
@@ -61036,7 +61074,7 @@ etc
 	      ))
 	))
     
-					;(display "second group") (newline)
+					(display "second group") (newline)
     
     (let ((ops (list 'lambda 'define 'quote 'if 'begin 'set! 'let 'let* 'letrec 'cond 'case 'and 'or 'do
 		     'call-with-exit 'apply 'for-each 'map 'values 'dynamic-wind 'define* 'defmacro 'define-macro
@@ -61060,6 +61098,7 @@ etc
       (if group-2
 	  (let ((long-cases #f))
 	    
+					(display "group 2") (newline)
 	    (for-each
 	     (lambda (op)
 	       (for-each
@@ -61077,7 +61116,6 @@ etc
 		args))
 	     ops)
 	    
-					;(display "group 2") (newline)
 	    (if long-cases 
 		(begin
 		  (for-each
@@ -61102,7 +61140,7 @@ etc
 		   ops)
 		  ))
 	    
-					;(display "group 3") (newline)
+					(display "group 3") (newline)
 	    (for-each
 	     (lambda (op)
 	       (for-each
@@ -61115,7 +61153,7 @@ etc
 		args))
 	     ops)
 	    
-					;(display "group 4") (newline)    
+					(display "group 4") (newline)    
 	    (for-each
 	     (lambda (op)
 	       (for-each
@@ -61131,7 +61169,7 @@ etc
 		args))
 	     ops)
 	    
-					;(display "group 5") (newline)
+					(display "group 5") (newline)
 	    (for-each
 	     (lambda (arg1)
 	       (for-each
@@ -61144,7 +61182,7 @@ etc
 		args))
 	     args)
 	    
-					;(display "group 6") (newline)
+					(display "group 6") (newline)
 	    (for-each
 	     (lambda (arg1)
 	       (for-each
@@ -61157,23 +61195,25 @@ etc
 		ops))
 	     args)
 	    
-					;(display "group 7") (newline)
+					(display "group 7") (newline)
 	    (for-each
 	     (lambda (arg1)
 	       (for-each
 		(lambda (arg2)
 		  (catch #t
 			 (lambda () 
-			   ;(format #t "~A ~A ~%" arg1 arg2)
-			   (eval (list 'set! (cons arg1 arg2) arg1)))
+			   ;(format #t "(set! (~A . ~A) ~A)~%" arg1 arg2 arg1)
+			   (eval (list 'set! (cons arg1 arg2) arg1))
+			   ;(gc)
+			   )
 			 (lambda args
 			   #f)))
 		args))
 	     args)
-	    
+
 	    (if long-cases
 		(begin
-					;(display "group 8") (newline)
+					(display "group 8") (newline)
 		  (for-each
 		   (lambda (op)
 		     (for-each
@@ -61192,7 +61232,7 @@ etc
 		      args))
 		   ops)
 		  
-					;(display "group 9") (newline)    
+					(display "group 9") (newline)    
 		  (for-each
 		   (lambda (op)
 		     (for-each
@@ -61211,7 +61251,7 @@ etc
 		      ops))
 		   ops)
 		  
-					;(display "group 10") (newline)    
+					(display "group 10") (newline)    
 		  (for-each
 		   (lambda (op)
 		     (for-each
@@ -61233,16 +61273,18 @@ etc
 	    ))
       )
 
-    (let ((ops (list 'lambda 'define 'if 'begin 'set! 'let 'let* 'letrec 'cond 'case 'and 'or 'else
+    (let ((ops (list 'lambda 'define 'if 'begin ;'set! 
+		     'let 'let* 'letrec 'cond 'case 'and 'or 'else
 		     'call-with-exit 'apply 'for-each 'map 'dynamic-wind 'define* 'defmacro 'define-macro 'define-constant
 		     ))
 	  ;; no 'do -> infinite loops, no 'values -> format error confusion
+	  ;; no set! or at least set *safety* to 1
 
-	  (args (list "hi" :hi 'hi (list 1) (list 1 2) '(1 . 2) '() 1 '((1 2)) '((1)) '#(1) '(()) '=>
+	  (args (list "hi" :hi 'hi (list 1) (list 1 2) (cons 1 2) '() 1 (list (list 1 2)) (list (list 1)) (vector 1) (list ()) '=>
 		      'i '(i) '(i 1) '((i 0 (+ i 1))) '((i))))
 	  (printing #f))
 
-      (display "0...")
+      (display "0...") (newline)
       (for-each
        (lambda (arg)
 	 (for-each
@@ -61255,7 +61297,7 @@ etc
 	  ops))
        args)
       
-      (display "1...")
+      (display "1...") (newline)
       (for-each
        (lambda (arg2)
 	 (for-each
@@ -61271,7 +61313,7 @@ etc
 	  args))
        args)
       
-      (display "2a...")
+      (display "2a...") (newline)
       (for-each
        (lambda (arg3)
 	 (for-each
@@ -61290,7 +61332,7 @@ etc
 	  args))
        args)
       
-      (display "2b...")
+      (display "2b...") (newline)
       (for-each
        (lambda (arg3)
 	 (for-each
@@ -61301,6 +61343,8 @@ etc
 		(lambda (op) 
 		  (let ((form (cons op (cons (cons arg1 arg2) arg3)))
 			(result 'error))
+		       ;(format #t "2b: ~A~%" form)
+		       ;(gc)
 		    (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
 		      (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 		      )))
@@ -61308,8 +61352,8 @@ etc
 	     args))
 	  args))
        args)
-      
-      (display "3a...")
+
+      (display "3a...") (newline)
       (for-each
        (lambda (arg4)
 	 (for-each
@@ -61322,6 +61366,8 @@ etc
 		   (lambda (op)
 		     (let ((form (cons op (cons arg1 (cons arg2 (cons arg3 arg4)))))
 			   (result 'error))
+		       ;(format #t "3a: ~A~%" form)
+		       ;(gc)
 		       (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
 			 (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			 )))
@@ -61331,7 +61377,7 @@ etc
 	  args))
        args)
       
-      (display "3b...")
+      (display "3b...") (newline)
       (for-each
        (lambda (arg4)
 	 (for-each
@@ -61353,7 +61399,7 @@ etc
 	  args))
        args)
       
-      (display "3c...")
+      (display "3c...") (newline)
       (for-each
        (lambda (arg4)
 	 (for-each
@@ -61375,7 +61421,7 @@ etc
 	  args))
        args)
       
-      (display "3d...")
+      (display "3d...") (newline)
       (for-each
        (lambda (arg4)
 	 (for-each
@@ -61397,7 +61443,7 @@ etc
 	  args))
        args)
       
-      (display "3e...")
+      (display "3e...") (newline)
       (for-each
        (lambda (arg4)
 	 (for-each
@@ -61420,7 +61466,7 @@ etc
        args)
       
       
-      (display "4a...")
+      (display "4a...") (newline)
       (for-each
        (lambda (arg5)
 	 (for-each
@@ -61445,7 +61491,7 @@ etc
 	  args))
        args)
       
-      (display "4b...")
+      (display "4b...") (newline)
       (for-each
        (lambda (arg5)
 	 (for-each
@@ -61471,7 +61517,7 @@ etc
        args)
       
       
-      (display "4c...")
+      (display "4c...") (newline)
       (for-each
        (lambda (arg5)
 	 (for-each
@@ -61497,7 +61543,7 @@ etc
        args)
       
       
-      (display "4d...")
+      (display "4d...") (newline)
       (for-each
        (lambda (arg5)
 	 (for-each
@@ -61522,7 +61568,7 @@ etc
 	  args))
        args)
       
-      (display "4e...")
+      (display "4e...") (newline)
       (for-each
        (lambda (arg5)
 	 (for-each
@@ -61547,7 +61593,7 @@ etc
 	  args))
        args)
       
-      (display "4f...")
+      (display "4f...") (newline)
       (for-each
        (lambda (arg5)
 	 (for-each

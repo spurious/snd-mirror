@@ -16420,6 +16420,7 @@ occurs as the object of set!."
   arity = s7_procedure_arity(sc, getter);
   if (is_pair(arity))
     f->get_req_args = s7_integer(car(arity));
+  f->documentation = copy_string(s7_procedure_documentation(sc, getter)); /* pws might be GC'd whereupon the doc string is freed */
   
   f->scheme_setter = setter;
   arity = s7_procedure_arity(sc, setter);
@@ -17245,6 +17246,10 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
   
   switch (type(x))
     {
+      /* one problematic case: #<unspecified> is currently not equal to (values) but they print the same.
+       *   case T_UNTYPED: return((s7_is_unspecified(sc, x)) && (s7_is_unspecified(sc, y)))
+       */
+
     case T_STRING:
       return(scheme_strings_are_equal(x, y));
 
