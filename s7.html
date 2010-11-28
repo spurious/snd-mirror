@@ -3755,15 +3755,15 @@ done!
 are:
 </p>
 
-<ul>
-<li>with-output-to-string
-<li>with-input-from-string
-<li>call-with-output-string
-<li>call-with-input-string,
-<li>open-output-string
-<li>open-input-string
-<li>get-output-string
-</ul>
+<pre>
+    (with-output-to-string thunk)         ; open a string port as current-output-port, call thunk, return string
+    (with-input-from-string string thunk) ; open string as current-input-port, call thunk
+    (call-with-output-string proc)        ; open a string port, apply proc to it, return string
+    (call-with-input-string string proc)  ; open string as current-input-port, apply proc to it
+    (open-output-string)                  ; open a string output port
+    (get-output-string port)              ; return output accumulated in the string output port
+    (open-input-string string)            ; open a string input port reading string
+</pre>
 
 <pre>
 (let ((result #f) 

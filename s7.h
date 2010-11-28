@@ -74,9 +74,9 @@ typedef double s7_Double;
    *    stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
    *    such as multiprecision arithmetic, multidimensional vectors, initial heap and stack size, etc.
    *
-   *    The functions map, for-each, length, copy, and fill! are generic.
+   *    The functions map, for-each, length, reverse, copy, and fill! are generic.
    *
-   * I think s7 has built-in support for srfi-6 (basic string ports), srfi-8 (receive), srfi-17 (generalized-set!), 
+   * I think s7 has built-in support for srfi-0 (cond-expand), srfi-6 (basic string ports), srfi-8 (receive), srfi-17 (generalized-set!), 
    *   srfi-18 (multithreading), srfi-28 (format, also nearly all of srfi-48), srfi-30 (block comments),
    *   srfi-88 (keywords), and srfi-89 (define*).  It also supports the functionality of many others
    *   but under a slightly different syntax: srfi-69 (hash-tables), srfi-16 (define*), srfi-25 (multidimensional
