@@ -1,29 +1,36 @@
-Snd 11.10
+Snd 11.11
 
-Mike made innumerable improvements in the scripts.
+Rene Bastian has written a French version of the cmn manual:
+    manuel-cmn-fr.html in the cmn tarball.
 
-removed snd7.scm and snd8.scm.
+Mike provided a bunch more script and configuration improvements, and 
+    C/Ruby expertise.
 
-defgenerator replaces def-clm-struct.
+Michael Edwards added an optional argument to moog-filter in moog.lisp
+  to control saturation.
 
-deprecated verbose-cursor (use with-verbose-cursor).
+s7: *safety*: an integer, defaults to 0 meaning don't be paranoid.
+            There is one case where you might need to set *safety*
+            to 1 -- see the "bad-idea" function in s7.html.
+          
+    hooks.  s7 had several built-in hooks, but the hook support 
+            was in xen.c and xen.h.  It's now in s7 with backwards
+            compatibility definitions in xen.c.  See s7.h and xen.h
+            for the C API, and s7.html for the scheme side. Also,
+            with much help from Mike, it's now possible to add a
+            C-side function to an extension language hook, so
+            the "watcher" stuff in Snd has been removed and
+            replaced with normal hooks: add-watcher and 
+            delete-watcher have been replaced by effects-hook.
+            In *.scm and *.html I've replaced the old Guile
+            hook functions with shiny new replacements: hook-push,
+            hook-append, hook-remove, and various uses of hook-functions.
 
-added 'gtk3 or 'gtk2 to *features*.
+            *trace-hook*, *load-hook*, *error-hook*, and *unbound-variable-hook*
+            are now s7 hooks.
 
-s7: added setters for current-input-port, current-output-port, 
-       and current-error-port.
+    cond-expand (taken originally from MIT Scheme I think).
 
-    *stdin*, *stdout*, *stderr* as the default IO ports 
-       (rather than nil which is ambiguous).
+checked: gtk 2.91.2|3|4, sbcl 1.0.44, Ruby 1.9.3
 
-    removed special variable (dynamic binding) support (it gets
-       in the way of tail recursion).
-
-    s7_call_with_location to improve error handling.
-
-    s7 is about 10% faster in this version -- there are timings
-       at the end of s7.c and snd-test.scm.
-
-checked: autoconf 2.68, sbcl 1.0.43, gtk 2.91.0|1, gmp 5.0.1
-
-Thanks!: Mike Scholz
+Thanks!: Rene Bastian, Mike Scholz, Rick Taube, Michael Edwards

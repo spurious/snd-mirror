@@ -30340,8 +30340,7 @@ the error type and the info passed to the error handler.");
  ;map argument 1, lambda, is symbol but should be a procedure
 
  *
- * in s7.html: example of C threads? or dynamic_wind to protect if error?
- *     or standard Posix funcs? catch? 
+ * in s7.html: example of C threads? gmp? emacs subjob support?
  *
  * things to fix: nonce-symbols need to be garbage collected
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
