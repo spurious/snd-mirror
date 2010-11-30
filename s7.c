@@ -1610,9 +1610,9 @@ static int gc(s7_scheme *sc)
       double secs;
       gettimeofday(&t0, &z0);
       secs = (t0.tv_sec - start_time.tv_sec) +  0.000001 * (t0.tv_usec - start_time.tv_usec);
-      fprintf(stdout, "freed %ld, time: %f\n", sc->free_heap_top - old_free_heap_top, secs);
+      fprintf(stdout, "freed %ld/%d, time: %f\n", sc->free_heap_top - old_free_heap_top, sc->heap_size, secs);
 #else
-      fprintf(stdout, "freed %ld\n", sc->free_heap_top - old_free_heap_top);
+      fprintf(stdout, "freed %ld/%d\n", sc->free_heap_top - old_free_heap_top, sc->heap_size);
 #endif
     }
 

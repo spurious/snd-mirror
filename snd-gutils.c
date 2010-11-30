@@ -769,7 +769,7 @@ void sg_make_resizable(GtkWidget *w)
 }
 
 
-idle_t add_work_proc(GtkFunction func, gpointer data)
+idle_t add_work_proc(GSourceFunc func, gpointer data)
 {
   /* during auto-testing I need to force the background procs to run to completion */
   if (with_background_processes(ss))

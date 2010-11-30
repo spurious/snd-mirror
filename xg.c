@@ -588,10 +588,6 @@ XM_TYPE_PTR_1(GtkRange_, GtkRange*)
 #define XEN_TO_C_GtkUpdateType(Arg) (GtkUpdateType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkUpdateType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GtkRcStyle_, GtkRcStyle*)
-XM_TYPE_PTR_1(GtkRuler_, GtkRuler*)
-#define C_TO_XEN_GtkMetricType(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkMetricType(Arg) (GtkMetricType)(XEN_TO_C_INT(Arg))
-#define XEN_GtkMetricType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(GtkScale_, GtkScale*)
 XM_TYPE_PTR_1(GtkScrolledWindow_, GtkScrolledWindow*)
 #define C_TO_XEN_GtkPolicyType(Arg) C_TO_XEN_INT(Arg)
@@ -883,7 +879,7 @@ XM_TYPE_PTR(GtkToolItemGroup_, GtkToolItemGroup*)
 XM_TYPE_1(GtkToolPaletteDragTargets, GtkToolPaletteDragTargets)
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
 XM_TYPE_PTR_1(GdkModifierType_, GdkModifierType*)
 XM_TYPE_PTR(GdkDevice_, GdkDevice*)
 XM_TYPE_PTR_2(GdkDeviceManager_, GdkDeviceManager*)
@@ -897,6 +893,10 @@ XM_TYPE(GtkAlign, GtkAlign)
 XM_TYPE_PTR(GtkComboBoxText_, GtkComboBoxText*)
 XM_TYPE_PTR(GtkGrid_, GtkGrid*)
 XM_TYPE_PTR(GtkScrollable_, GtkScrollable*)
+#define C_TO_XEN_GtkScrollablePolicy(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkScrollablePolicy(Arg) (GtkScrollablePolicy)(XEN_TO_C_INT(Arg))
+#define XEN_GtkScrollablePolicy_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR(GtkSwitch_, GtkSwitch*)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -6193,12 +6193,6 @@ static XEN gxg_gtk_hpaned_new(void)
   return(C_TO_XEN_GtkWidget_(gtk_hpaned_new()));
 }
 
-static XEN gxg_gtk_hruler_new(void)
-{
-  #define H_gtk_hruler_new "GtkWidget* gtk_hruler_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_hruler_new()));
-}
-
 static XEN gxg_gtk_hscale_new(XEN adjustment)
 {
   #define H_gtk_hscale_new "GtkWidget* gtk_hscale_new(GtkAdjustment* adjustment)"
@@ -8619,49 +8613,6 @@ static XEN gxg_gtk_rc_get_im_module_file(void)
    g_free(result);
    return(rtn);
   }
-}
-
-static XEN gxg_gtk_ruler_set_metric(XEN ruler, XEN metric)
-{
-  #define H_gtk_ruler_set_metric "void gtk_ruler_set_metric(GtkRuler* ruler, GtkMetricType metric)"
-  XEN_ASSERT_TYPE(XEN_GtkRuler__P(ruler), ruler, 1, "gtk_ruler_set_metric", "GtkRuler*");
-  XEN_ASSERT_TYPE(XEN_GtkMetricType_P(metric), metric, 2, "gtk_ruler_set_metric", "GtkMetricType");
-  gtk_ruler_set_metric(XEN_TO_C_GtkRuler_(ruler), XEN_TO_C_GtkMetricType(metric));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_ruler_set_range(XEN ruler, XEN lower, XEN upper, XEN position, XEN max_size)
-{
-  #define H_gtk_ruler_set_range "void gtk_ruler_set_range(GtkRuler* ruler, gdouble lower, gdouble upper, \
-gdouble position, gdouble max_size)"
-  XEN_ASSERT_TYPE(XEN_GtkRuler__P(ruler), ruler, 1, "gtk_ruler_set_range", "GtkRuler*");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(lower), lower, 2, "gtk_ruler_set_range", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(upper), upper, 3, "gtk_ruler_set_range", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(position), position, 4, "gtk_ruler_set_range", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(max_size), max_size, 5, "gtk_ruler_set_range", "gdouble");
-  gtk_ruler_set_range(XEN_TO_C_GtkRuler_(ruler), XEN_TO_C_gdouble(lower), XEN_TO_C_gdouble(upper), XEN_TO_C_gdouble(position), 
-                      XEN_TO_C_gdouble(max_size));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_ruler_get_metric(XEN ruler)
-{
-  #define H_gtk_ruler_get_metric "GtkMetricType gtk_ruler_get_metric(GtkRuler* ruler)"
-  XEN_ASSERT_TYPE(XEN_GtkRuler__P(ruler), ruler, 1, "gtk_ruler_get_metric", "GtkRuler*");
-  return(C_TO_XEN_GtkMetricType(gtk_ruler_get_metric(XEN_TO_C_GtkRuler_(ruler))));
-}
-
-static XEN gxg_gtk_ruler_get_range(XEN ruler, XEN ignore_lower, XEN ignore_upper, XEN ignore_position, XEN ignore_max_size)
-{
-  #define H_gtk_ruler_get_range "void gtk_ruler_get_range(GtkRuler* ruler, gdouble* [lower], gdouble* [upper], \
-gdouble* [position], gdouble* [max_size])"
-  gdouble ref_lower;
-  gdouble ref_upper;
-  gdouble ref_position;
-  gdouble ref_max_size;
-  XEN_ASSERT_TYPE(XEN_GtkRuler__P(ruler), ruler, 1, "gtk_ruler_get_range", "GtkRuler*");
-  gtk_ruler_get_range(XEN_TO_C_GtkRuler_(ruler), &ref_lower, &ref_upper, &ref_position, &ref_max_size);
-  return(XEN_LIST_4(C_TO_XEN_gdouble(ref_lower), C_TO_XEN_gdouble(ref_upper), C_TO_XEN_gdouble(ref_position), C_TO_XEN_gdouble(ref_max_size)));
 }
 
 static XEN gxg_gtk_scale_set_digits(XEN scale, XEN digits)
@@ -13841,12 +13792,6 @@ static XEN gxg_gtk_vpaned_new(void)
 {
   #define H_gtk_vpaned_new "GtkWidget* gtk_vpaned_new( void)"
   return(C_TO_XEN_GtkWidget_(gtk_vpaned_new()));
-}
-
-static XEN gxg_gtk_vruler_new(void)
-{
-  #define H_gtk_vruler_new "GtkWidget* gtk_vruler_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_vruler_new()));
 }
 
 static XEN gxg_gtk_vscale_new(XEN adjustment)
@@ -28953,7 +28898,7 @@ static XEN gxg_gtk_widget_get_mapped(XEN widget)
 
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
 static XEN gxg_gdk_keymap_add_virtual_modifiers(XEN keymap, XEN state)
 {
   #define H_gdk_keymap_add_virtual_modifiers "void gdk_keymap_add_virtual_modifiers(GdkKeymap* keymap, \
@@ -29300,13 +29245,6 @@ static XEN gxg_gtk_radio_action_join_group(XEN action, XEN group_source)
   XEN_ASSERT_TYPE(XEN_GtkRadioAction__P(group_source), group_source, 2, "gtk_radio_action_join_group", "GtkRadioAction*");
   gtk_radio_action_join_group(XEN_TO_C_GtkRadioAction_(action), XEN_TO_C_GtkRadioAction_(group_source));
   return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_ruler_new(XEN orientation)
-{
-  #define H_gtk_ruler_new "GtkWidget* gtk_ruler_new(GtkOrientation orientation)"
-  XEN_ASSERT_TYPE(XEN_GtkOrientation_P(orientation), orientation, 1, "gtk_ruler_new", "GtkOrientation");
-  return(C_TO_XEN_GtkWidget_(gtk_ruler_new(XEN_TO_C_GtkOrientation(orientation))));
 }
 
 static XEN gxg_gtk_scale_new(XEN orientation, XEN adjustment)
@@ -31198,6 +31136,85 @@ GtkAdjustment* vadjustment)"
   return(XEN_FALSE);
 }
 
+static XEN gxg_gtk_assistant_next_page(XEN assistant)
+{
+  #define H_gtk_assistant_next_page "void gtk_assistant_next_page(GtkAssistant* assistant)"
+  XEN_ASSERT_TYPE(XEN_GtkAssistant__P(assistant), assistant, 1, "gtk_assistant_next_page", "GtkAssistant*");
+  gtk_assistant_next_page(XEN_TO_C_GtkAssistant_(assistant));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_assistant_previous_page(XEN assistant)
+{
+  #define H_gtk_assistant_previous_page "void gtk_assistant_previous_page(GtkAssistant* assistant)"
+  XEN_ASSERT_TYPE(XEN_GtkAssistant__P(assistant), assistant, 1, "gtk_assistant_previous_page", "GtkAssistant*");
+  gtk_assistant_previous_page(XEN_TO_C_GtkAssistant_(assistant));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_combo_box_new_with_model_and_entry(XEN model)
+{
+  #define H_gtk_combo_box_new_with_model_and_entry "GtkWidget* gtk_combo_box_new_with_model_and_entry(GtkTreeModel* model)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeModel__P(model), model, 1, "gtk_combo_box_new_with_model_and_entry", "GtkTreeModel*");
+  return(C_TO_XEN_GtkWidget_(gtk_combo_box_new_with_model_and_entry(XEN_TO_C_GtkTreeModel_(model))));
+}
+
+static XEN gxg_gtk_scrollable_get_hscroll_policy(XEN scrollable)
+{
+  #define H_gtk_scrollable_get_hscroll_policy "GtkScrollablePolicy gtk_scrollable_get_hscroll_policy(GtkScrollable* scrollable)"
+  XEN_ASSERT_TYPE(XEN_GtkScrollable__P(scrollable), scrollable, 1, "gtk_scrollable_get_hscroll_policy", "GtkScrollable*");
+  return(C_TO_XEN_GtkScrollablePolicy(gtk_scrollable_get_hscroll_policy(XEN_TO_C_GtkScrollable_(scrollable))));
+}
+
+static XEN gxg_gtk_scrollable_set_hscroll_policy(XEN scrollable, XEN policy)
+{
+  #define H_gtk_scrollable_set_hscroll_policy "void gtk_scrollable_set_hscroll_policy(GtkScrollable* scrollable, \
+GtkScrollablePolicy policy)"
+  XEN_ASSERT_TYPE(XEN_GtkScrollable__P(scrollable), scrollable, 1, "gtk_scrollable_set_hscroll_policy", "GtkScrollable*");
+  XEN_ASSERT_TYPE(XEN_GtkScrollablePolicy_P(policy), policy, 2, "gtk_scrollable_set_hscroll_policy", "GtkScrollablePolicy");
+  gtk_scrollable_set_hscroll_policy(XEN_TO_C_GtkScrollable_(scrollable), XEN_TO_C_GtkScrollablePolicy(policy));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_scrollable_get_vscroll_policy(XEN scrollable)
+{
+  #define H_gtk_scrollable_get_vscroll_policy "GtkScrollablePolicy gtk_scrollable_get_vscroll_policy(GtkScrollable* scrollable)"
+  XEN_ASSERT_TYPE(XEN_GtkScrollable__P(scrollable), scrollable, 1, "gtk_scrollable_get_vscroll_policy", "GtkScrollable*");
+  return(C_TO_XEN_GtkScrollablePolicy(gtk_scrollable_get_vscroll_policy(XEN_TO_C_GtkScrollable_(scrollable))));
+}
+
+static XEN gxg_gtk_scrollable_set_vscroll_policy(XEN scrollable, XEN policy)
+{
+  #define H_gtk_scrollable_set_vscroll_policy "void gtk_scrollable_set_vscroll_policy(GtkScrollable* scrollable, \
+GtkScrollablePolicy policy)"
+  XEN_ASSERT_TYPE(XEN_GtkScrollable__P(scrollable), scrollable, 1, "gtk_scrollable_set_vscroll_policy", "GtkScrollable*");
+  XEN_ASSERT_TYPE(XEN_GtkScrollablePolicy_P(policy), policy, 2, "gtk_scrollable_set_vscroll_policy", "GtkScrollablePolicy");
+  gtk_scrollable_set_vscroll_policy(XEN_TO_C_GtkScrollable_(scrollable), XEN_TO_C_GtkScrollablePolicy(policy));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_switch_new(void)
+{
+  #define H_gtk_switch_new "GtkWidget* gtk_switch_new( void)"
+  return(C_TO_XEN_GtkWidget_(gtk_switch_new()));
+}
+
+static XEN gxg_gtk_switch_set_active(XEN sw, XEN is_active)
+{
+  #define H_gtk_switch_set_active "void gtk_switch_set_active(GtkSwitch* sw, gboolean is_active)"
+  XEN_ASSERT_TYPE(XEN_GtkSwitch__P(sw), sw, 1, "gtk_switch_set_active", "GtkSwitch*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(is_active), is_active, 2, "gtk_switch_set_active", "gboolean");
+  gtk_switch_set_active(XEN_TO_C_GtkSwitch_(sw), XEN_TO_C_gboolean(is_active));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_switch_get_active(XEN sw)
+{
+  #define H_gtk_switch_get_active "gboolean gtk_switch_get_active(GtkSwitch* sw)"
+  XEN_ASSERT_TYPE(XEN_GtkSwitch__P(sw), sw, 1, "gtk_switch_get_active", "GtkSwitch*");
+  return(C_TO_XEN_gboolean(gtk_switch_get_active(XEN_TO_C_GtkSwitch_(sw))));
+}
+
 #endif
 
 #if (!HAVE_GTK_3)
@@ -31533,22 +31550,6 @@ GdkPixmap* pixmap, GdkBitmap* mask, gint hot_x, gint hot_y)"
   XEN_ASSERT_TYPE(XEN_gint_P(hot_y), hot_y, 6, "gtk_drag_set_icon_pixmap", "gint");
   gtk_drag_set_icon_pixmap(XEN_TO_C_GdkDragContext_(context), XEN_TO_C_GdkColormap_(colormap), XEN_TO_C_GdkPixmap_(pixmap), 
                            XEN_TO_C_GdkBitmap_(mask), XEN_TO_C_gint(hot_x), XEN_TO_C_gint(hot_y));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_ruler_draw_ticks(XEN ruler)
-{
-  #define H_gtk_ruler_draw_ticks "void gtk_ruler_draw_ticks(GtkRuler* ruler)"
-  XEN_ASSERT_TYPE(XEN_GtkRuler__P(ruler), ruler, 1, "gtk_ruler_draw_ticks", "GtkRuler*");
-  gtk_ruler_draw_ticks(XEN_TO_C_GtkRuler_(ruler));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_ruler_draw_pos(XEN ruler)
-{
-  #define H_gtk_ruler_draw_pos "void gtk_ruler_draw_pos(GtkRuler* ruler)"
-  XEN_ASSERT_TYPE(XEN_GtkRuler__P(ruler), ruler, 1, "gtk_ruler_draw_pos", "GtkRuler*");
-  gtk_ruler_draw_pos(XEN_TO_C_GtkRuler_(ruler));
   return(XEN_FALSE);
 }
 
@@ -34814,7 +34815,6 @@ static XEN gxg_GTK_HANDLE_BOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIS
 static XEN gxg_GTK_HBUTTON_BOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHButtonBox_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_HBOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHBox_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_HPANED(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHPaned_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_HRULER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHRuler_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_HSCALE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHScale_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_HSCROLLBAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHScrollbar_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_HSEPARATOR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHSeparator_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34840,7 +34840,6 @@ static XEN gxg_GTK_PROGRESS_BAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_L
 static XEN gxg_GTK_RADIO_BUTTON(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkRadioButton_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_RADIO_MENU_ITEM(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkRadioMenuItem_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_RANGE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkRange_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_RULER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkRuler_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SCALE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkScale_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SCROLLBAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkScrollbar_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SCROLLED_WINDOW(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkScrolledWindow_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34873,7 +34872,6 @@ static XEN gxg_GTK_TREE_VIEW(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST
 static XEN gxg_GTK_VBUTTON_BOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVButtonBox_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_VIEWPORT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkViewport_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_VPANED(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVPaned_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_VRULER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVRuler_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_VSCALE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVScale_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_VSCROLLBAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVScrollbar_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_VSEPARATOR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVSeparator_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34974,10 +34972,11 @@ static XEN gxg_GTK_TOOL_PALETTE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_L
 static XEN gxg_GTK_TOOL_ITEM_GROUP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkToolItemGroup_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
 static XEN gxg_GTK_COMBO_BOX_TEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkComboBoxText_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_GRID(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkGrid_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SCROLLABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkScrollable_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GTK_SWITCH(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSwitch_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
 #if (!HAVE_GTK_3)
@@ -35031,7 +35030,6 @@ static XEN gxg_GTK_IS_HANDLE_BOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJEC
 static XEN gxg_GTK_IS_HBUTTON_BOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HBUTTON_BOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_HBOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HBOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_HPANED(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HPANED((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_HRULER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HRULER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_HSCALE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HSCALE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_HSCROLLBAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HSCROLLBAR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_HSEPARATOR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HSEPARATOR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -35058,7 +35056,6 @@ static XEN gxg_GTK_IS_RADIO_BUTTON(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJ
 static XEN gxg_GTK_IS_RADIO_MENU_ITEM(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RADIO_MENU_ITEM((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_RANGE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RANGE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_RC_STYLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RC_STYLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_RULER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RULER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SCALE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SCALE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SCROLLBAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SCROLLBAR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SCROLLED_WINDOW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SCROLLED_WINDOW((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -35091,7 +35088,6 @@ static XEN gxg_GTK_IS_TREE_VIEW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT
 static XEN gxg_GTK_IS_VBUTTON_BOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VBUTTON_BOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_VIEWPORT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VIEWPORT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_VPANED(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VPANED((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_VRULER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VRULER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_VSCALE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VSCALE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_VSCROLLBAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VSCROLLBAR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_VSEPARATOR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VSEPARATOR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -35174,10 +35170,11 @@ static XEN gxg_GTK_IS_TOOL_PALETTE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJ
 static XEN gxg_GTK_IS_TOOL_ITEM_GROUP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOOL_ITEM_GROUP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
 static XEN gxg_GTK_IS_COMBO_BOX_TEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_COMBO_BOX_TEXT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_GRID(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_GRID((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SCROLLABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SCROLLABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_SWITCH(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SWITCH((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
 #if (!HAVE_GTK_3)
@@ -36119,7 +36116,6 @@ XEN_NARGIFY_1(gxg_gtk_handle_box_get_snap_edge_w, gxg_gtk_handle_box_get_snap_ed
 XEN_NARGIFY_0(gxg_gtk_hbutton_box_new_w, gxg_gtk_hbutton_box_new)
 XEN_NARGIFY_2(gxg_gtk_hbox_new_w, gxg_gtk_hbox_new)
 XEN_NARGIFY_0(gxg_gtk_hpaned_new_w, gxg_gtk_hpaned_new)
-XEN_NARGIFY_0(gxg_gtk_hruler_new_w, gxg_gtk_hruler_new)
 XEN_NARGIFY_1(gxg_gtk_hscale_new_w, gxg_gtk_hscale_new)
 XEN_NARGIFY_3(gxg_gtk_hscale_new_with_range_w, gxg_gtk_hscale_new_with_range)
 XEN_NARGIFY_1(gxg_gtk_hscrollbar_new_w, gxg_gtk_hscrollbar_new)
@@ -36396,10 +36392,6 @@ XEN_NARGIFY_0(gxg_gtk_rc_get_theme_dir_w, gxg_gtk_rc_get_theme_dir)
 XEN_NARGIFY_0(gxg_gtk_rc_get_module_dir_w, gxg_gtk_rc_get_module_dir)
 XEN_NARGIFY_0(gxg_gtk_rc_get_im_module_path_w, gxg_gtk_rc_get_im_module_path)
 XEN_NARGIFY_0(gxg_gtk_rc_get_im_module_file_w, gxg_gtk_rc_get_im_module_file)
-XEN_NARGIFY_2(gxg_gtk_ruler_set_metric_w, gxg_gtk_ruler_set_metric)
-XEN_NARGIFY_5(gxg_gtk_ruler_set_range_w, gxg_gtk_ruler_set_range)
-XEN_NARGIFY_1(gxg_gtk_ruler_get_metric_w, gxg_gtk_ruler_get_metric)
-XEN_ARGIFY_5(gxg_gtk_ruler_get_range_w, gxg_gtk_ruler_get_range)
 XEN_NARGIFY_2(gxg_gtk_scale_set_digits_w, gxg_gtk_scale_set_digits)
 XEN_NARGIFY_1(gxg_gtk_scale_get_digits_w, gxg_gtk_scale_get_digits)
 XEN_NARGIFY_2(gxg_gtk_scale_set_draw_value_w, gxg_gtk_scale_set_draw_value)
@@ -36929,7 +36921,6 @@ XEN_NARGIFY_2(gxg_gtk_viewport_new_w, gxg_gtk_viewport_new)
 XEN_NARGIFY_2(gxg_gtk_viewport_set_shadow_type_w, gxg_gtk_viewport_set_shadow_type)
 XEN_NARGIFY_1(gxg_gtk_viewport_get_shadow_type_w, gxg_gtk_viewport_get_shadow_type)
 XEN_NARGIFY_0(gxg_gtk_vpaned_new_w, gxg_gtk_vpaned_new)
-XEN_NARGIFY_0(gxg_gtk_vruler_new_w, gxg_gtk_vruler_new)
 XEN_NARGIFY_1(gxg_gtk_vscale_new_w, gxg_gtk_vscale_new)
 XEN_NARGIFY_3(gxg_gtk_vscale_new_with_range_w, gxg_gtk_vscale_new_with_range)
 XEN_NARGIFY_1(gxg_gtk_vscrollbar_new_w, gxg_gtk_vscrollbar_new)
@@ -38638,7 +38629,7 @@ XEN_NARGIFY_2(gxg_gtk_widget_set_mapped_w, gxg_gtk_widget_set_mapped)
 XEN_NARGIFY_1(gxg_gtk_widget_get_mapped_w, gxg_gtk_widget_get_mapped)
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
 XEN_NARGIFY_2(gxg_gdk_keymap_add_virtual_modifiers_w, gxg_gdk_keymap_add_virtual_modifiers)
 XEN_ARGIFY_5(gxg_gdk_window_coords_to_parent_w, gxg_gdk_window_coords_to_parent)
 XEN_ARGIFY_5(gxg_gdk_window_coords_from_parent_w, gxg_gdk_window_coords_from_parent)
@@ -38675,7 +38666,6 @@ XEN_NARGIFY_2(gxg_gtk_device_grab_remove_w, gxg_gtk_device_grab_remove)
 XEN_NARGIFY_0(gxg_gtk_get_current_event_device_w, gxg_gtk_get_current_event_device)
 XEN_NARGIFY_1(gxg_gtk_paned_new_w, gxg_gtk_paned_new)
 XEN_NARGIFY_2(gxg_gtk_radio_action_join_group_w, gxg_gtk_radio_action_join_group)
-XEN_NARGIFY_1(gxg_gtk_ruler_new_w, gxg_gtk_ruler_new)
 XEN_NARGIFY_2(gxg_gtk_scale_new_w, gxg_gtk_scale_new)
 XEN_NARGIFY_4(gxg_gtk_scale_new_with_range_w, gxg_gtk_scale_new_with_range)
 XEN_NARGIFY_2(gxg_gtk_scrollbar_new_w, gxg_gtk_scrollbar_new)
@@ -38846,6 +38836,16 @@ XEN_NARGIFY_1(gxg_gtk_scrollable_get_hadjustment_w, gxg_gtk_scrollable_get_hadju
 XEN_NARGIFY_2(gxg_gtk_scrollable_set_hadjustment_w, gxg_gtk_scrollable_set_hadjustment)
 XEN_NARGIFY_1(gxg_gtk_scrollable_get_vadjustment_w, gxg_gtk_scrollable_get_vadjustment)
 XEN_NARGIFY_2(gxg_gtk_scrollable_set_vadjustment_w, gxg_gtk_scrollable_set_vadjustment)
+XEN_NARGIFY_1(gxg_gtk_assistant_next_page_w, gxg_gtk_assistant_next_page)
+XEN_NARGIFY_1(gxg_gtk_assistant_previous_page_w, gxg_gtk_assistant_previous_page)
+XEN_NARGIFY_1(gxg_gtk_combo_box_new_with_model_and_entry_w, gxg_gtk_combo_box_new_with_model_and_entry)
+XEN_NARGIFY_1(gxg_gtk_scrollable_get_hscroll_policy_w, gxg_gtk_scrollable_get_hscroll_policy)
+XEN_NARGIFY_2(gxg_gtk_scrollable_set_hscroll_policy_w, gxg_gtk_scrollable_set_hscroll_policy)
+XEN_NARGIFY_1(gxg_gtk_scrollable_get_vscroll_policy_w, gxg_gtk_scrollable_get_vscroll_policy)
+XEN_NARGIFY_2(gxg_gtk_scrollable_set_vscroll_policy_w, gxg_gtk_scrollable_set_vscroll_policy)
+XEN_NARGIFY_0(gxg_gtk_switch_new_w, gxg_gtk_switch_new)
+XEN_NARGIFY_2(gxg_gtk_switch_set_active_w, gxg_gtk_switch_set_active)
+XEN_NARGIFY_1(gxg_gtk_switch_get_active_w, gxg_gtk_switch_get_active)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -38878,8 +38878,6 @@ XEN_ARGIFY_7(gxg_gtk_cell_renderer_get_size_w, gxg_gtk_cell_renderer_get_size)
 XEN_NARGIFY_7(gxg_gtk_cell_renderer_render_w, gxg_gtk_cell_renderer_render)
 XEN_NARGIFY_4(gxg_gtk_drag_source_set_icon_w, gxg_gtk_drag_source_set_icon)
 XEN_NARGIFY_6(gxg_gtk_drag_set_icon_pixmap_w, gxg_gtk_drag_set_icon_pixmap)
-XEN_NARGIFY_1(gxg_gtk_ruler_draw_ticks_w, gxg_gtk_ruler_draw_ticks)
-XEN_NARGIFY_1(gxg_gtk_ruler_draw_pos_w, gxg_gtk_ruler_draw_pos)
 XEN_NARGIFY_9(gxg_gtk_style_apply_default_background_w, gxg_gtk_style_apply_default_background)
 XEN_NARGIFY_9(gxg_gtk_paint_hline_w, gxg_gtk_paint_hline)
 XEN_NARGIFY_9(gxg_gtk_paint_vline_w, gxg_gtk_paint_vline)
@@ -39243,7 +39241,6 @@ XEN_NARGIFY_1(gxg_GTK_HANDLE_BOX_w, gxg_GTK_HANDLE_BOX)
 XEN_NARGIFY_1(gxg_GTK_HBUTTON_BOX_w, gxg_GTK_HBUTTON_BOX)
 XEN_NARGIFY_1(gxg_GTK_HBOX_w, gxg_GTK_HBOX)
 XEN_NARGIFY_1(gxg_GTK_HPANED_w, gxg_GTK_HPANED)
-XEN_NARGIFY_1(gxg_GTK_HRULER_w, gxg_GTK_HRULER)
 XEN_NARGIFY_1(gxg_GTK_HSCALE_w, gxg_GTK_HSCALE)
 XEN_NARGIFY_1(gxg_GTK_HSCROLLBAR_w, gxg_GTK_HSCROLLBAR)
 XEN_NARGIFY_1(gxg_GTK_HSEPARATOR_w, gxg_GTK_HSEPARATOR)
@@ -39269,7 +39266,6 @@ XEN_NARGIFY_1(gxg_GTK_PROGRESS_BAR_w, gxg_GTK_PROGRESS_BAR)
 XEN_NARGIFY_1(gxg_GTK_RADIO_BUTTON_w, gxg_GTK_RADIO_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_RADIO_MENU_ITEM_w, gxg_GTK_RADIO_MENU_ITEM)
 XEN_NARGIFY_1(gxg_GTK_RANGE_w, gxg_GTK_RANGE)
-XEN_NARGIFY_1(gxg_GTK_RULER_w, gxg_GTK_RULER)
 XEN_NARGIFY_1(gxg_GTK_SCALE_w, gxg_GTK_SCALE)
 XEN_NARGIFY_1(gxg_GTK_SCROLLBAR_w, gxg_GTK_SCROLLBAR)
 XEN_NARGIFY_1(gxg_GTK_SCROLLED_WINDOW_w, gxg_GTK_SCROLLED_WINDOW)
@@ -39302,7 +39298,6 @@ XEN_NARGIFY_1(gxg_GTK_TREE_VIEW_w, gxg_GTK_TREE_VIEW)
 XEN_NARGIFY_1(gxg_GTK_VBUTTON_BOX_w, gxg_GTK_VBUTTON_BOX)
 XEN_NARGIFY_1(gxg_GTK_VIEWPORT_w, gxg_GTK_VIEWPORT)
 XEN_NARGIFY_1(gxg_GTK_VPANED_w, gxg_GTK_VPANED)
-XEN_NARGIFY_1(gxg_GTK_VRULER_w, gxg_GTK_VRULER)
 XEN_NARGIFY_1(gxg_GTK_VSCALE_w, gxg_GTK_VSCALE)
 XEN_NARGIFY_1(gxg_GTK_VSCROLLBAR_w, gxg_GTK_VSCROLLBAR)
 XEN_NARGIFY_1(gxg_GTK_VSEPARATOR_w, gxg_GTK_VSEPARATOR)
@@ -39403,10 +39398,11 @@ XEN_NARGIFY_1(gxg_GTK_TOOL_PALETTE_w, gxg_GTK_TOOL_PALETTE)
 XEN_NARGIFY_1(gxg_GTK_TOOL_ITEM_GROUP_w, gxg_GTK_TOOL_ITEM_GROUP)
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
 XEN_NARGIFY_1(gxg_GTK_COMBO_BOX_TEXT_w, gxg_GTK_COMBO_BOX_TEXT)
 XEN_NARGIFY_1(gxg_GTK_GRID_w, gxg_GTK_GRID)
 XEN_NARGIFY_1(gxg_GTK_SCROLLABLE_w, gxg_GTK_SCROLLABLE)
+XEN_NARGIFY_1(gxg_GTK_SWITCH_w, gxg_GTK_SWITCH)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -39460,7 +39456,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_HANDLE_BOX_w, gxg_GTK_IS_HANDLE_BOX)
 XEN_NARGIFY_1(gxg_GTK_IS_HBUTTON_BOX_w, gxg_GTK_IS_HBUTTON_BOX)
 XEN_NARGIFY_1(gxg_GTK_IS_HBOX_w, gxg_GTK_IS_HBOX)
 XEN_NARGIFY_1(gxg_GTK_IS_HPANED_w, gxg_GTK_IS_HPANED)
-XEN_NARGIFY_1(gxg_GTK_IS_HRULER_w, gxg_GTK_IS_HRULER)
 XEN_NARGIFY_1(gxg_GTK_IS_HSCALE_w, gxg_GTK_IS_HSCALE)
 XEN_NARGIFY_1(gxg_GTK_IS_HSCROLLBAR_w, gxg_GTK_IS_HSCROLLBAR)
 XEN_NARGIFY_1(gxg_GTK_IS_HSEPARATOR_w, gxg_GTK_IS_HSEPARATOR)
@@ -39487,7 +39482,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_RADIO_BUTTON_w, gxg_GTK_IS_RADIO_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_IS_RADIO_MENU_ITEM_w, gxg_GTK_IS_RADIO_MENU_ITEM)
 XEN_NARGIFY_1(gxg_GTK_IS_RANGE_w, gxg_GTK_IS_RANGE)
 XEN_NARGIFY_1(gxg_GTK_IS_RC_STYLE_w, gxg_GTK_IS_RC_STYLE)
-XEN_NARGIFY_1(gxg_GTK_IS_RULER_w, gxg_GTK_IS_RULER)
 XEN_NARGIFY_1(gxg_GTK_IS_SCALE_w, gxg_GTK_IS_SCALE)
 XEN_NARGIFY_1(gxg_GTK_IS_SCROLLBAR_w, gxg_GTK_IS_SCROLLBAR)
 XEN_NARGIFY_1(gxg_GTK_IS_SCROLLED_WINDOW_w, gxg_GTK_IS_SCROLLED_WINDOW)
@@ -39520,7 +39514,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_TREE_VIEW_w, gxg_GTK_IS_TREE_VIEW)
 XEN_NARGIFY_1(gxg_GTK_IS_VBUTTON_BOX_w, gxg_GTK_IS_VBUTTON_BOX)
 XEN_NARGIFY_1(gxg_GTK_IS_VIEWPORT_w, gxg_GTK_IS_VIEWPORT)
 XEN_NARGIFY_1(gxg_GTK_IS_VPANED_w, gxg_GTK_IS_VPANED)
-XEN_NARGIFY_1(gxg_GTK_IS_VRULER_w, gxg_GTK_IS_VRULER)
 XEN_NARGIFY_1(gxg_GTK_IS_VSCALE_w, gxg_GTK_IS_VSCALE)
 XEN_NARGIFY_1(gxg_GTK_IS_VSCROLLBAR_w, gxg_GTK_IS_VSCROLLBAR)
 XEN_NARGIFY_1(gxg_GTK_IS_VSEPARATOR_w, gxg_GTK_IS_VSEPARATOR)
@@ -39603,10 +39596,11 @@ XEN_NARGIFY_1(gxg_GTK_IS_TOOL_PALETTE_w, gxg_GTK_IS_TOOL_PALETTE)
 XEN_NARGIFY_1(gxg_GTK_IS_TOOL_ITEM_GROUP_w, gxg_GTK_IS_TOOL_ITEM_GROUP)
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
 XEN_NARGIFY_1(gxg_GTK_IS_COMBO_BOX_TEXT_w, gxg_GTK_IS_COMBO_BOX_TEXT)
 XEN_NARGIFY_1(gxg_GTK_IS_GRID_w, gxg_GTK_IS_GRID)
 XEN_NARGIFY_1(gxg_GTK_IS_SCROLLABLE_w, gxg_GTK_IS_SCROLLABLE)
+XEN_NARGIFY_1(gxg_GTK_IS_SWITCH_w, gxg_GTK_IS_SWITCH)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -40114,7 +40108,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_hbutton_box_new_w gxg_gtk_hbutton_box_new
 #define gxg_gtk_hbox_new_w gxg_gtk_hbox_new
 #define gxg_gtk_hpaned_new_w gxg_gtk_hpaned_new
-#define gxg_gtk_hruler_new_w gxg_gtk_hruler_new
 #define gxg_gtk_hscale_new_w gxg_gtk_hscale_new
 #define gxg_gtk_hscale_new_with_range_w gxg_gtk_hscale_new_with_range
 #define gxg_gtk_hscrollbar_new_w gxg_gtk_hscrollbar_new
@@ -40391,10 +40384,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_rc_get_module_dir_w gxg_gtk_rc_get_module_dir
 #define gxg_gtk_rc_get_im_module_path_w gxg_gtk_rc_get_im_module_path
 #define gxg_gtk_rc_get_im_module_file_w gxg_gtk_rc_get_im_module_file
-#define gxg_gtk_ruler_set_metric_w gxg_gtk_ruler_set_metric
-#define gxg_gtk_ruler_set_range_w gxg_gtk_ruler_set_range
-#define gxg_gtk_ruler_get_metric_w gxg_gtk_ruler_get_metric
-#define gxg_gtk_ruler_get_range_w gxg_gtk_ruler_get_range
 #define gxg_gtk_scale_set_digits_w gxg_gtk_scale_set_digits
 #define gxg_gtk_scale_get_digits_w gxg_gtk_scale_get_digits
 #define gxg_gtk_scale_set_draw_value_w gxg_gtk_scale_set_draw_value
@@ -40924,7 +40913,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_viewport_set_shadow_type_w gxg_gtk_viewport_set_shadow_type
 #define gxg_gtk_viewport_get_shadow_type_w gxg_gtk_viewport_get_shadow_type
 #define gxg_gtk_vpaned_new_w gxg_gtk_vpaned_new
-#define gxg_gtk_vruler_new_w gxg_gtk_vruler_new
 #define gxg_gtk_vscale_new_w gxg_gtk_vscale_new
 #define gxg_gtk_vscale_new_with_range_w gxg_gtk_vscale_new_with_range
 #define gxg_gtk_vscrollbar_new_w gxg_gtk_vscrollbar_new
@@ -42633,7 +42621,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_widget_get_mapped_w gxg_gtk_widget_get_mapped
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
 #define gxg_gdk_keymap_add_virtual_modifiers_w gxg_gdk_keymap_add_virtual_modifiers
 #define gxg_gdk_window_coords_to_parent_w gxg_gdk_window_coords_to_parent
 #define gxg_gdk_window_coords_from_parent_w gxg_gdk_window_coords_from_parent
@@ -42670,7 +42658,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_get_current_event_device_w gxg_gtk_get_current_event_device
 #define gxg_gtk_paned_new_w gxg_gtk_paned_new
 #define gxg_gtk_radio_action_join_group_w gxg_gtk_radio_action_join_group
-#define gxg_gtk_ruler_new_w gxg_gtk_ruler_new
 #define gxg_gtk_scale_new_w gxg_gtk_scale_new
 #define gxg_gtk_scale_new_with_range_w gxg_gtk_scale_new_with_range
 #define gxg_gtk_scrollbar_new_w gxg_gtk_scrollbar_new
@@ -42841,6 +42828,16 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_scrollable_set_hadjustment_w gxg_gtk_scrollable_set_hadjustment
 #define gxg_gtk_scrollable_get_vadjustment_w gxg_gtk_scrollable_get_vadjustment
 #define gxg_gtk_scrollable_set_vadjustment_w gxg_gtk_scrollable_set_vadjustment
+#define gxg_gtk_assistant_next_page_w gxg_gtk_assistant_next_page
+#define gxg_gtk_assistant_previous_page_w gxg_gtk_assistant_previous_page
+#define gxg_gtk_combo_box_new_with_model_and_entry_w gxg_gtk_combo_box_new_with_model_and_entry
+#define gxg_gtk_scrollable_get_hscroll_policy_w gxg_gtk_scrollable_get_hscroll_policy
+#define gxg_gtk_scrollable_set_hscroll_policy_w gxg_gtk_scrollable_set_hscroll_policy
+#define gxg_gtk_scrollable_get_vscroll_policy_w gxg_gtk_scrollable_get_vscroll_policy
+#define gxg_gtk_scrollable_set_vscroll_policy_w gxg_gtk_scrollable_set_vscroll_policy
+#define gxg_gtk_switch_new_w gxg_gtk_switch_new
+#define gxg_gtk_switch_set_active_w gxg_gtk_switch_set_active
+#define gxg_gtk_switch_get_active_w gxg_gtk_switch_get_active
 #endif
 
 #if (!HAVE_GTK_3)
@@ -42873,8 +42870,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_cell_renderer_render_w gxg_gtk_cell_renderer_render
 #define gxg_gtk_drag_source_set_icon_w gxg_gtk_drag_source_set_icon
 #define gxg_gtk_drag_set_icon_pixmap_w gxg_gtk_drag_set_icon_pixmap
-#define gxg_gtk_ruler_draw_ticks_w gxg_gtk_ruler_draw_ticks
-#define gxg_gtk_ruler_draw_pos_w gxg_gtk_ruler_draw_pos
 #define gxg_gtk_style_apply_default_background_w gxg_gtk_style_apply_default_background
 #define gxg_gtk_paint_hline_w gxg_gtk_paint_hline
 #define gxg_gtk_paint_vline_w gxg_gtk_paint_vline
@@ -43238,7 +43233,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_HBUTTON_BOX_w gxg_GTK_HBUTTON_BOX
 #define gxg_GTK_HBOX_w gxg_GTK_HBOX
 #define gxg_GTK_HPANED_w gxg_GTK_HPANED
-#define gxg_GTK_HRULER_w gxg_GTK_HRULER
 #define gxg_GTK_HSCALE_w gxg_GTK_HSCALE
 #define gxg_GTK_HSCROLLBAR_w gxg_GTK_HSCROLLBAR
 #define gxg_GTK_HSEPARATOR_w gxg_GTK_HSEPARATOR
@@ -43264,7 +43258,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_RADIO_BUTTON_w gxg_GTK_RADIO_BUTTON
 #define gxg_GTK_RADIO_MENU_ITEM_w gxg_GTK_RADIO_MENU_ITEM
 #define gxg_GTK_RANGE_w gxg_GTK_RANGE
-#define gxg_GTK_RULER_w gxg_GTK_RULER
 #define gxg_GTK_SCALE_w gxg_GTK_SCALE
 #define gxg_GTK_SCROLLBAR_w gxg_GTK_SCROLLBAR
 #define gxg_GTK_SCROLLED_WINDOW_w gxg_GTK_SCROLLED_WINDOW
@@ -43297,7 +43290,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_VBUTTON_BOX_w gxg_GTK_VBUTTON_BOX
 #define gxg_GTK_VIEWPORT_w gxg_GTK_VIEWPORT
 #define gxg_GTK_VPANED_w gxg_GTK_VPANED
-#define gxg_GTK_VRULER_w gxg_GTK_VRULER
 #define gxg_GTK_VSCALE_w gxg_GTK_VSCALE
 #define gxg_GTK_VSCROLLBAR_w gxg_GTK_VSCROLLBAR
 #define gxg_GTK_VSEPARATOR_w gxg_GTK_VSEPARATOR
@@ -43398,10 +43390,11 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_TOOL_ITEM_GROUP_w gxg_GTK_TOOL_ITEM_GROUP
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
 #define gxg_GTK_COMBO_BOX_TEXT_w gxg_GTK_COMBO_BOX_TEXT
 #define gxg_GTK_GRID_w gxg_GTK_GRID
 #define gxg_GTK_SCROLLABLE_w gxg_GTK_SCROLLABLE
+#define gxg_GTK_SWITCH_w gxg_GTK_SWITCH
 #endif
 
 #if (!HAVE_GTK_3)
@@ -43455,7 +43448,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_HBUTTON_BOX_w gxg_GTK_IS_HBUTTON_BOX
 #define gxg_GTK_IS_HBOX_w gxg_GTK_IS_HBOX
 #define gxg_GTK_IS_HPANED_w gxg_GTK_IS_HPANED
-#define gxg_GTK_IS_HRULER_w gxg_GTK_IS_HRULER
 #define gxg_GTK_IS_HSCALE_w gxg_GTK_IS_HSCALE
 #define gxg_GTK_IS_HSCROLLBAR_w gxg_GTK_IS_HSCROLLBAR
 #define gxg_GTK_IS_HSEPARATOR_w gxg_GTK_IS_HSEPARATOR
@@ -43482,7 +43474,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_RADIO_MENU_ITEM_w gxg_GTK_IS_RADIO_MENU_ITEM
 #define gxg_GTK_IS_RANGE_w gxg_GTK_IS_RANGE
 #define gxg_GTK_IS_RC_STYLE_w gxg_GTK_IS_RC_STYLE
-#define gxg_GTK_IS_RULER_w gxg_GTK_IS_RULER
 #define gxg_GTK_IS_SCALE_w gxg_GTK_IS_SCALE
 #define gxg_GTK_IS_SCROLLBAR_w gxg_GTK_IS_SCROLLBAR
 #define gxg_GTK_IS_SCROLLED_WINDOW_w gxg_GTK_IS_SCROLLED_WINDOW
@@ -43515,7 +43506,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_VBUTTON_BOX_w gxg_GTK_IS_VBUTTON_BOX
 #define gxg_GTK_IS_VIEWPORT_w gxg_GTK_IS_VIEWPORT
 #define gxg_GTK_IS_VPANED_w gxg_GTK_IS_VPANED
-#define gxg_GTK_IS_VRULER_w gxg_GTK_IS_VRULER
 #define gxg_GTK_IS_VSCALE_w gxg_GTK_IS_VSCALE
 #define gxg_GTK_IS_VSCROLLBAR_w gxg_GTK_IS_VSCROLLBAR
 #define gxg_GTK_IS_VSEPARATOR_w gxg_GTK_IS_VSEPARATOR
@@ -43598,10 +43588,11 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_TOOL_ITEM_GROUP_w gxg_GTK_IS_TOOL_ITEM_GROUP
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
 #define gxg_GTK_IS_COMBO_BOX_TEXT_w gxg_GTK_IS_COMBO_BOX_TEXT
 #define gxg_GTK_IS_GRID_w gxg_GTK_IS_GRID
 #define gxg_GTK_IS_SCROLLABLE_w gxg_GTK_IS_SCROLLABLE
+#define gxg_GTK_IS_SWITCH_w gxg_GTK_IS_SWITCH
 #endif
 
 #if (!HAVE_GTK_3)
@@ -44116,7 +44107,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_hbutton_box_new, gxg_gtk_hbutton_box_new_w, 0, 0, 0, H_gtk_hbutton_box_new);
   XG_DEFINE_PROCEDURE(gtk_hbox_new, gxg_gtk_hbox_new_w, 2, 0, 0, H_gtk_hbox_new);
   XG_DEFINE_PROCEDURE(gtk_hpaned_new, gxg_gtk_hpaned_new_w, 0, 0, 0, H_gtk_hpaned_new);
-  XG_DEFINE_PROCEDURE(gtk_hruler_new, gxg_gtk_hruler_new_w, 0, 0, 0, H_gtk_hruler_new);
   XG_DEFINE_PROCEDURE(gtk_hscale_new, gxg_gtk_hscale_new_w, 1, 0, 0, H_gtk_hscale_new);
   XG_DEFINE_PROCEDURE(gtk_hscale_new_with_range, gxg_gtk_hscale_new_with_range_w, 3, 0, 0, H_gtk_hscale_new_with_range);
   XG_DEFINE_PROCEDURE(gtk_hscrollbar_new, gxg_gtk_hscrollbar_new_w, 1, 0, 0, H_gtk_hscrollbar_new);
@@ -44393,10 +44383,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_rc_get_module_dir, gxg_gtk_rc_get_module_dir_w, 0, 0, 0, H_gtk_rc_get_module_dir);
   XG_DEFINE_PROCEDURE(gtk_rc_get_im_module_path, gxg_gtk_rc_get_im_module_path_w, 0, 0, 0, H_gtk_rc_get_im_module_path);
   XG_DEFINE_PROCEDURE(gtk_rc_get_im_module_file, gxg_gtk_rc_get_im_module_file_w, 0, 0, 0, H_gtk_rc_get_im_module_file);
-  XG_DEFINE_PROCEDURE(gtk_ruler_set_metric, gxg_gtk_ruler_set_metric_w, 2, 0, 0, H_gtk_ruler_set_metric);
-  XG_DEFINE_PROCEDURE(gtk_ruler_set_range, gxg_gtk_ruler_set_range_w, 5, 0, 0, H_gtk_ruler_set_range);
-  XG_DEFINE_PROCEDURE(gtk_ruler_get_metric, gxg_gtk_ruler_get_metric_w, 1, 0, 0, H_gtk_ruler_get_metric);
-  XG_DEFINE_PROCEDURE(gtk_ruler_get_range, gxg_gtk_ruler_get_range_w, 1, 4, 0, H_gtk_ruler_get_range);
   XG_DEFINE_PROCEDURE(gtk_scale_set_digits, gxg_gtk_scale_set_digits_w, 2, 0, 0, H_gtk_scale_set_digits);
   XG_DEFINE_PROCEDURE(gtk_scale_get_digits, gxg_gtk_scale_get_digits_w, 1, 0, 0, H_gtk_scale_get_digits);
   XG_DEFINE_PROCEDURE(gtk_scale_set_draw_value, gxg_gtk_scale_set_draw_value_w, 2, 0, 0, H_gtk_scale_set_draw_value);
@@ -44926,7 +44912,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_viewport_set_shadow_type, gxg_gtk_viewport_set_shadow_type_w, 2, 0, 0, H_gtk_viewport_set_shadow_type);
   XG_DEFINE_PROCEDURE(gtk_viewport_get_shadow_type, gxg_gtk_viewport_get_shadow_type_w, 1, 0, 0, H_gtk_viewport_get_shadow_type);
   XG_DEFINE_PROCEDURE(gtk_vpaned_new, gxg_gtk_vpaned_new_w, 0, 0, 0, H_gtk_vpaned_new);
-  XG_DEFINE_PROCEDURE(gtk_vruler_new, gxg_gtk_vruler_new_w, 0, 0, 0, H_gtk_vruler_new);
   XG_DEFINE_PROCEDURE(gtk_vscale_new, gxg_gtk_vscale_new_w, 1, 0, 0, H_gtk_vscale_new);
   XG_DEFINE_PROCEDURE(gtk_vscale_new_with_range, gxg_gtk_vscale_new_with_range_w, 3, 0, 0, H_gtk_vscale_new_with_range);
   XG_DEFINE_PROCEDURE(gtk_vscrollbar_new, gxg_gtk_vscrollbar_new_w, 1, 0, 0, H_gtk_vscrollbar_new);
@@ -46635,7 +46620,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_get_mapped, gxg_gtk_widget_get_mapped_w, 1, 0, 0, H_gtk_widget_get_mapped);
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
   XG_DEFINE_PROCEDURE(gdk_keymap_add_virtual_modifiers, gxg_gdk_keymap_add_virtual_modifiers_w, 2, 0, 0, H_gdk_keymap_add_virtual_modifiers);
   XG_DEFINE_PROCEDURE(gdk_window_coords_to_parent, gxg_gdk_window_coords_to_parent_w, 3, 2, 0, H_gdk_window_coords_to_parent);
   XG_DEFINE_PROCEDURE(gdk_window_coords_from_parent, gxg_gdk_window_coords_from_parent_w, 3, 2, 0, H_gdk_window_coords_from_parent);
@@ -46672,7 +46657,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_get_current_event_device, gxg_gtk_get_current_event_device_w, 0, 0, 0, H_gtk_get_current_event_device);
   XG_DEFINE_PROCEDURE(gtk_paned_new, gxg_gtk_paned_new_w, 1, 0, 0, H_gtk_paned_new);
   XG_DEFINE_PROCEDURE(gtk_radio_action_join_group, gxg_gtk_radio_action_join_group_w, 2, 0, 0, H_gtk_radio_action_join_group);
-  XG_DEFINE_PROCEDURE(gtk_ruler_new, gxg_gtk_ruler_new_w, 1, 0, 0, H_gtk_ruler_new);
   XG_DEFINE_PROCEDURE(gtk_scale_new, gxg_gtk_scale_new_w, 2, 0, 0, H_gtk_scale_new);
   XG_DEFINE_PROCEDURE(gtk_scale_new_with_range, gxg_gtk_scale_new_with_range_w, 4, 0, 0, H_gtk_scale_new_with_range);
   XG_DEFINE_PROCEDURE(gtk_scrollbar_new, gxg_gtk_scrollbar_new_w, 2, 0, 0, H_gtk_scrollbar_new);
@@ -46843,6 +46827,16 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_scrollable_set_hadjustment, gxg_gtk_scrollable_set_hadjustment_w, 2, 0, 0, H_gtk_scrollable_set_hadjustment);
   XG_DEFINE_PROCEDURE(gtk_scrollable_get_vadjustment, gxg_gtk_scrollable_get_vadjustment_w, 1, 0, 0, H_gtk_scrollable_get_vadjustment);
   XG_DEFINE_PROCEDURE(gtk_scrollable_set_vadjustment, gxg_gtk_scrollable_set_vadjustment_w, 2, 0, 0, H_gtk_scrollable_set_vadjustment);
+  XG_DEFINE_PROCEDURE(gtk_assistant_next_page, gxg_gtk_assistant_next_page_w, 1, 0, 0, H_gtk_assistant_next_page);
+  XG_DEFINE_PROCEDURE(gtk_assistant_previous_page, gxg_gtk_assistant_previous_page_w, 1, 0, 0, H_gtk_assistant_previous_page);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_new_with_model_and_entry, gxg_gtk_combo_box_new_with_model_and_entry_w, 1, 0, 0, H_gtk_combo_box_new_with_model_and_entry);
+  XG_DEFINE_PROCEDURE(gtk_scrollable_get_hscroll_policy, gxg_gtk_scrollable_get_hscroll_policy_w, 1, 0, 0, H_gtk_scrollable_get_hscroll_policy);
+  XG_DEFINE_PROCEDURE(gtk_scrollable_set_hscroll_policy, gxg_gtk_scrollable_set_hscroll_policy_w, 2, 0, 0, H_gtk_scrollable_set_hscroll_policy);
+  XG_DEFINE_PROCEDURE(gtk_scrollable_get_vscroll_policy, gxg_gtk_scrollable_get_vscroll_policy_w, 1, 0, 0, H_gtk_scrollable_get_vscroll_policy);
+  XG_DEFINE_PROCEDURE(gtk_scrollable_set_vscroll_policy, gxg_gtk_scrollable_set_vscroll_policy_w, 2, 0, 0, H_gtk_scrollable_set_vscroll_policy);
+  XG_DEFINE_PROCEDURE(gtk_switch_new, gxg_gtk_switch_new_w, 0, 0, 0, H_gtk_switch_new);
+  XG_DEFINE_PROCEDURE(gtk_switch_set_active, gxg_gtk_switch_set_active_w, 2, 0, 0, H_gtk_switch_set_active);
+  XG_DEFINE_PROCEDURE(gtk_switch_get_active, gxg_gtk_switch_get_active_w, 1, 0, 0, H_gtk_switch_get_active);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -46875,8 +46869,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_cell_renderer_render, gxg_gtk_cell_renderer_render_w, 7, 0, 0, H_gtk_cell_renderer_render);
   XG_DEFINE_PROCEDURE(gtk_drag_source_set_icon, gxg_gtk_drag_source_set_icon_w, 4, 0, 0, H_gtk_drag_source_set_icon);
   XG_DEFINE_PROCEDURE(gtk_drag_set_icon_pixmap, gxg_gtk_drag_set_icon_pixmap_w, 6, 0, 0, H_gtk_drag_set_icon_pixmap);
-  XG_DEFINE_PROCEDURE(gtk_ruler_draw_ticks, gxg_gtk_ruler_draw_ticks_w, 1, 0, 0, H_gtk_ruler_draw_ticks);
-  XG_DEFINE_PROCEDURE(gtk_ruler_draw_pos, gxg_gtk_ruler_draw_pos_w, 1, 0, 0, H_gtk_ruler_draw_pos);
   XG_DEFINE_PROCEDURE(gtk_style_apply_default_background, gxg_gtk_style_apply_default_background_w, 9, 0, 0, H_gtk_style_apply_default_background);
   XG_DEFINE_PROCEDURE(gtk_paint_hline, gxg_gtk_paint_hline_w, 9, 0, 0, H_gtk_paint_hline);
   XG_DEFINE_PROCEDURE(gtk_paint_vline, gxg_gtk_paint_vline_w, 9, 0, 0, H_gtk_paint_vline);
@@ -47233,7 +47225,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_HBUTTON_BOX, gxg_GTK_HBUTTON_BOX_w, 1, 0, 0, "(GTK_HBUTTON_BOX obj) casts obj to GTK_HBUTTON_BOX");
   XG_DEFINE_PROCEDURE(GTK_HBOX, gxg_GTK_HBOX_w, 1, 0, 0, "(GTK_HBOX obj) casts obj to GTK_HBOX");
   XG_DEFINE_PROCEDURE(GTK_HPANED, gxg_GTK_HPANED_w, 1, 0, 0, "(GTK_HPANED obj) casts obj to GTK_HPANED");
-  XG_DEFINE_PROCEDURE(GTK_HRULER, gxg_GTK_HRULER_w, 1, 0, 0, "(GTK_HRULER obj) casts obj to GTK_HRULER");
   XG_DEFINE_PROCEDURE(GTK_HSCALE, gxg_GTK_HSCALE_w, 1, 0, 0, "(GTK_HSCALE obj) casts obj to GTK_HSCALE");
   XG_DEFINE_PROCEDURE(GTK_HSCROLLBAR, gxg_GTK_HSCROLLBAR_w, 1, 0, 0, "(GTK_HSCROLLBAR obj) casts obj to GTK_HSCROLLBAR");
   XG_DEFINE_PROCEDURE(GTK_HSEPARATOR, gxg_GTK_HSEPARATOR_w, 1, 0, 0, "(GTK_HSEPARATOR obj) casts obj to GTK_HSEPARATOR");
@@ -47259,7 +47250,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_RADIO_BUTTON, gxg_GTK_RADIO_BUTTON_w, 1, 0, 0, "(GTK_RADIO_BUTTON obj) casts obj to GTK_RADIO_BUTTON");
   XG_DEFINE_PROCEDURE(GTK_RADIO_MENU_ITEM, gxg_GTK_RADIO_MENU_ITEM_w, 1, 0, 0, "(GTK_RADIO_MENU_ITEM obj) casts obj to GTK_RADIO_MENU_ITEM");
   XG_DEFINE_PROCEDURE(GTK_RANGE, gxg_GTK_RANGE_w, 1, 0, 0, "(GTK_RANGE obj) casts obj to GTK_RANGE");
-  XG_DEFINE_PROCEDURE(GTK_RULER, gxg_GTK_RULER_w, 1, 0, 0, "(GTK_RULER obj) casts obj to GTK_RULER");
   XG_DEFINE_PROCEDURE(GTK_SCALE, gxg_GTK_SCALE_w, 1, 0, 0, "(GTK_SCALE obj) casts obj to GTK_SCALE");
   XG_DEFINE_PROCEDURE(GTK_SCROLLBAR, gxg_GTK_SCROLLBAR_w, 1, 0, 0, "(GTK_SCROLLBAR obj) casts obj to GTK_SCROLLBAR");
   XG_DEFINE_PROCEDURE(GTK_SCROLLED_WINDOW, gxg_GTK_SCROLLED_WINDOW_w, 1, 0, 0, "(GTK_SCROLLED_WINDOW obj) casts obj to GTK_SCROLLED_WINDOW");
@@ -47292,7 +47282,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_VBUTTON_BOX, gxg_GTK_VBUTTON_BOX_w, 1, 0, 0, "(GTK_VBUTTON_BOX obj) casts obj to GTK_VBUTTON_BOX");
   XG_DEFINE_PROCEDURE(GTK_VIEWPORT, gxg_GTK_VIEWPORT_w, 1, 0, 0, "(GTK_VIEWPORT obj) casts obj to GTK_VIEWPORT");
   XG_DEFINE_PROCEDURE(GTK_VPANED, gxg_GTK_VPANED_w, 1, 0, 0, "(GTK_VPANED obj) casts obj to GTK_VPANED");
-  XG_DEFINE_PROCEDURE(GTK_VRULER, gxg_GTK_VRULER_w, 1, 0, 0, "(GTK_VRULER obj) casts obj to GTK_VRULER");
   XG_DEFINE_PROCEDURE(GTK_VSCALE, gxg_GTK_VSCALE_w, 1, 0, 0, "(GTK_VSCALE obj) casts obj to GTK_VSCALE");
   XG_DEFINE_PROCEDURE(GTK_VSCROLLBAR, gxg_GTK_VSCROLLBAR_w, 1, 0, 0, "(GTK_VSCROLLBAR obj) casts obj to GTK_VSCROLLBAR");
   XG_DEFINE_PROCEDURE(GTK_VSEPARATOR, gxg_GTK_VSEPARATOR_w, 1, 0, 0, "(GTK_VSEPARATOR obj) casts obj to GTK_VSEPARATOR");
@@ -47393,10 +47382,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_TOOL_ITEM_GROUP, gxg_GTK_TOOL_ITEM_GROUP_w, 1, 0, 0, "(GTK_TOOL_ITEM_GROUP obj) casts obj to GTK_TOOL_ITEM_GROUP");
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
   XG_DEFINE_PROCEDURE(GTK_COMBO_BOX_TEXT, gxg_GTK_COMBO_BOX_TEXT_w, 1, 0, 0, "(GTK_COMBO_BOX_TEXT obj) casts obj to GTK_COMBO_BOX_TEXT");
   XG_DEFINE_PROCEDURE(GTK_GRID, gxg_GTK_GRID_w, 1, 0, 0, "(GTK_GRID obj) casts obj to GTK_GRID");
   XG_DEFINE_PROCEDURE(GTK_SCROLLABLE, gxg_GTK_SCROLLABLE_w, 1, 0, 0, "(GTK_SCROLLABLE obj) casts obj to GTK_SCROLLABLE");
+  XG_DEFINE_PROCEDURE(GTK_SWITCH, gxg_GTK_SWITCH_w, 1, 0, 0, "(GTK_SWITCH obj) casts obj to GTK_SWITCH");
 #endif
 
 #if (!HAVE_GTK_3)
@@ -47457,7 +47447,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_HBUTTON_BOX, gxg_GTK_IS_HBUTTON_BOX_w, 1, 0, 0, "(GTK_IS_HBUTTON_BOX obj): " PROC_TRUE " if obj is a GTK_IS_HBUTTON_BOX");
   XG_DEFINE_PROCEDURE(GTK_IS_HBOX, gxg_GTK_IS_HBOX_w, 1, 0, 0, "(GTK_IS_HBOX obj): " PROC_TRUE " if obj is a GTK_IS_HBOX");
   XG_DEFINE_PROCEDURE(GTK_IS_HPANED, gxg_GTK_IS_HPANED_w, 1, 0, 0, "(GTK_IS_HPANED obj): " PROC_TRUE " if obj is a GTK_IS_HPANED");
-  XG_DEFINE_PROCEDURE(GTK_IS_HRULER, gxg_GTK_IS_HRULER_w, 1, 0, 0, "(GTK_IS_HRULER obj): " PROC_TRUE " if obj is a GTK_IS_HRULER");
   XG_DEFINE_PROCEDURE(GTK_IS_HSCALE, gxg_GTK_IS_HSCALE_w, 1, 0, 0, "(GTK_IS_HSCALE obj): " PROC_TRUE " if obj is a GTK_IS_HSCALE");
   XG_DEFINE_PROCEDURE(GTK_IS_HSCROLLBAR, gxg_GTK_IS_HSCROLLBAR_w, 1, 0, 0, "(GTK_IS_HSCROLLBAR obj): " PROC_TRUE " if obj is a GTK_IS_HSCROLLBAR");
   XG_DEFINE_PROCEDURE(GTK_IS_HSEPARATOR, gxg_GTK_IS_HSEPARATOR_w, 1, 0, 0, "(GTK_IS_HSEPARATOR obj): " PROC_TRUE " if obj is a GTK_IS_HSEPARATOR");
@@ -47484,7 +47473,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_RADIO_MENU_ITEM, gxg_GTK_IS_RADIO_MENU_ITEM_w, 1, 0, 0, "(GTK_IS_RADIO_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_RADIO_MENU_ITEM");
   XG_DEFINE_PROCEDURE(GTK_IS_RANGE, gxg_GTK_IS_RANGE_w, 1, 0, 0, "(GTK_IS_RANGE obj): " PROC_TRUE " if obj is a GTK_IS_RANGE");
   XG_DEFINE_PROCEDURE(GTK_IS_RC_STYLE, gxg_GTK_IS_RC_STYLE_w, 1, 0, 0, "(GTK_IS_RC_STYLE obj): " PROC_TRUE " if obj is a GTK_IS_RC_STYLE");
-  XG_DEFINE_PROCEDURE(GTK_IS_RULER, gxg_GTK_IS_RULER_w, 1, 0, 0, "(GTK_IS_RULER obj): " PROC_TRUE " if obj is a GTK_IS_RULER");
   XG_DEFINE_PROCEDURE(GTK_IS_SCALE, gxg_GTK_IS_SCALE_w, 1, 0, 0, "(GTK_IS_SCALE obj): " PROC_TRUE " if obj is a GTK_IS_SCALE");
   XG_DEFINE_PROCEDURE(GTK_IS_SCROLLBAR, gxg_GTK_IS_SCROLLBAR_w, 1, 0, 0, "(GTK_IS_SCROLLBAR obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLBAR");
   XG_DEFINE_PROCEDURE(GTK_IS_SCROLLED_WINDOW, gxg_GTK_IS_SCROLLED_WINDOW_w, 1, 0, 0, "(GTK_IS_SCROLLED_WINDOW obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLED_WINDOW");
@@ -47517,7 +47505,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_VBUTTON_BOX, gxg_GTK_IS_VBUTTON_BOX_w, 1, 0, 0, "(GTK_IS_VBUTTON_BOX obj): " PROC_TRUE " if obj is a GTK_IS_VBUTTON_BOX");
   XG_DEFINE_PROCEDURE(GTK_IS_VIEWPORT, gxg_GTK_IS_VIEWPORT_w, 1, 0, 0, "(GTK_IS_VIEWPORT obj): " PROC_TRUE " if obj is a GTK_IS_VIEWPORT");
   XG_DEFINE_PROCEDURE(GTK_IS_VPANED, gxg_GTK_IS_VPANED_w, 1, 0, 0, "(GTK_IS_VPANED obj): " PROC_TRUE " if obj is a GTK_IS_VPANED");
-  XG_DEFINE_PROCEDURE(GTK_IS_VRULER, gxg_GTK_IS_VRULER_w, 1, 0, 0, "(GTK_IS_VRULER obj): " PROC_TRUE " if obj is a GTK_IS_VRULER");
   XG_DEFINE_PROCEDURE(GTK_IS_VSCALE, gxg_GTK_IS_VSCALE_w, 1, 0, 0, "(GTK_IS_VSCALE obj): " PROC_TRUE " if obj is a GTK_IS_VSCALE");
   XG_DEFINE_PROCEDURE(GTK_IS_VSCROLLBAR, gxg_GTK_IS_VSCROLLBAR_w, 1, 0, 0, "(GTK_IS_VSCROLLBAR obj): " PROC_TRUE " if obj is a GTK_IS_VSCROLLBAR");
   XG_DEFINE_PROCEDURE(GTK_IS_VSEPARATOR, gxg_GTK_IS_VSEPARATOR_w, 1, 0, 0, "(GTK_IS_VSEPARATOR obj): " PROC_TRUE " if obj is a GTK_IS_VSEPARATOR");
@@ -47600,10 +47587,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_TOOL_ITEM_GROUP, gxg_GTK_IS_TOOL_ITEM_GROUP_w, 1, 0, 0, "(GTK_IS_TOOL_ITEM_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_ITEM_GROUP");
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
   XG_DEFINE_PROCEDURE(GTK_IS_COMBO_BOX_TEXT, gxg_GTK_IS_COMBO_BOX_TEXT_w, 1, 0, 0, "(GTK_IS_COMBO_BOX_TEXT obj): " PROC_TRUE " if obj is a GTK_IS_COMBO_BOX_TEXT");
   XG_DEFINE_PROCEDURE(GTK_IS_GRID, gxg_GTK_IS_GRID_w, 1, 0, 0, "(GTK_IS_GRID obj): " PROC_TRUE " if obj is a GTK_IS_GRID");
   XG_DEFINE_PROCEDURE(GTK_IS_SCROLLABLE, gxg_GTK_IS_SCROLLABLE_w, 1, 0, 0, "(GTK_IS_SCROLLABLE obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLABLE");
+  XG_DEFINE_PROCEDURE(GTK_IS_SWITCH, gxg_GTK_IS_SWITCH_w, 1, 0, 0, "(GTK_IS_SWITCH obj): " PROC_TRUE " if obj is a GTK_IS_SWITCH");
 #endif
 
 #if (!HAVE_GTK_3)
@@ -48017,9 +48005,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_MENU_DIR_CHILD);
   DEFINE_INTEGER(GTK_MENU_DIR_NEXT);
   DEFINE_INTEGER(GTK_MENU_DIR_PREV);
-  DEFINE_INTEGER(GTK_PIXELS);
-  DEFINE_INTEGER(GTK_INCHES);
-  DEFINE_INTEGER(GTK_CENTIMETERS);
   DEFINE_INTEGER(GTK_MOVEMENT_LOGICAL_POSITIONS);
   DEFINE_INTEGER(GTK_MOVEMENT_VISUAL_POSITIONS);
   DEFINE_INTEGER(GTK_MOVEMENT_WORDS);
@@ -48472,7 +48457,7 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_WINDOW_OFFSCREEN);
 #endif
 
-#if HAVE_GTK_GRID_NEW
+#if HAVE_GTK_SWITCH_NEW
   DEFINE_INTEGER(GDK_KEY_VoidSymbol);
   DEFINE_INTEGER(GDK_KEY_BackSpace);
   DEFINE_INTEGER(GDK_KEY_Tab);
@@ -48715,6 +48700,10 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_KEY_asciitilde);
   DEFINE_INTEGER(GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH);
   DEFINE_INTEGER(GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT);
+  DEFINE_INTEGER(GTK_ASSISTANT_PAGE_CUSTOM);
+  DEFINE_INTEGER(GTK_TEXT_SEARCH_CASE_INSENSITIVE);
+  DEFINE_INTEGER(GTK_SCROLL_MINIMUM);
+  DEFINE_INTEGER(GTK_SCROLL_NATURAL);
 #endif
 
   DEFINE_INTEGER(CAIRO_STATUS_SUCCESS);
@@ -48921,7 +48910,6 @@ static void define_integers(void)
   DEFINE_ULONG(GTK_TYPE_HBUTTON_BOX);
   DEFINE_ULONG(GTK_TYPE_HBOX);
   DEFINE_ULONG(GTK_TYPE_HPANED);
-  DEFINE_ULONG(GTK_TYPE_HRULER);
   DEFINE_ULONG(GTK_TYPE_HSCALE);
   DEFINE_ULONG(GTK_TYPE_HSCROLLBAR);
   DEFINE_ULONG(GTK_TYPE_HSEPARATOR);
@@ -48948,7 +48936,6 @@ static void define_integers(void)
   DEFINE_ULONG(GTK_TYPE_RADIO_MENU_ITEM);
   DEFINE_ULONG(GTK_TYPE_RANGE);
   DEFINE_ULONG(GTK_TYPE_RC_STYLE);
-  DEFINE_ULONG(GTK_TYPE_RULER);
   DEFINE_ULONG(GTK_TYPE_SCALE);
   DEFINE_ULONG(GTK_TYPE_SCROLLBAR);
   DEFINE_ULONG(GTK_TYPE_SCROLLED_WINDOW);
@@ -48982,7 +48969,6 @@ static void define_integers(void)
   DEFINE_ULONG(GTK_TYPE_VBOX);
   DEFINE_ULONG(GTK_TYPE_VIEWPORT);
   DEFINE_ULONG(GTK_TYPE_VPANED);
-  DEFINE_ULONG(GTK_TYPE_VRULER);
   DEFINE_ULONG(GTK_TYPE_VSCALE);
   DEFINE_ULONG(GTK_TYPE_VSCROLLBAR);
   DEFINE_ULONG(GTK_TYPE_VSEPARATOR);
@@ -49321,7 +49307,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("01-Nov-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Nov-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

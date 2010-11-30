@@ -1051,8 +1051,8 @@ else
 	# for 2.19.n
 	AC_CHECK_LIB(m, gtk_widget_get_mapped, [AC_DEFINE(HAVE_GTK_WIDGET_GET_MAPPED)], ,$GTK_LIBS)
 	# for 2.9n.n
-	AC_CHECK_LIB(m, gtk_grid_new,
-                          [AC_DEFINE(HAVE_GTK_GRID_NEW)
+	AC_CHECK_LIB(m, gtk_switch_new,
+                          [AC_DEFINE(HAVE_GTK_SWITCH_NEW)
                            AC_DEFINE(HAVE_GTK_3)
                           ], ,$GTK_LIBS)
 

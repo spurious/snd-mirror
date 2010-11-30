@@ -1718,7 +1718,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-29x dpy thunk)
-  (dpy "#if HAVE_GTK_GRID_NEW~%")
+  (dpy "#if HAVE_GTK_SWITCH_NEW~%")
   (thunk)
   (dpy "#endif~%~%"))
 
