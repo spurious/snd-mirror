@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.74"
-#define S7_DATE "12-Nov-10"
+#define S7_VERSION "1.75"
+#define S7_DATE "1-Dec-10"
 
 
 typedef long long int s7_Int;
@@ -203,6 +203,7 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect_at(s7_scheme *sc, int loc);
 s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc);
 s7_pointer s7_gc_on(s7_scheme *sc, bool on);
+void s7_gc_stats(s7_scheme *sc, bool on);
 void s7_remove_from_heap(s7_scheme *sc, s7_pointer x);
 
   /* any s7_pointer object held in C (as a local variable for example) needs to be
@@ -785,6 +786,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 1-Dec:     *gc-stats* in Scheme, s7_gc_stats in C.
  * 21-Nov:    Load C module example in s7.html.
  * 12-Nov:    *trace-hook*, *load-hook*, *error-hook*, and *unbound-variable-hook* are now s7 hooks.
  * 9-Nov:     hooks: C side: s7_is_hook, s7_make_hook, s7_hook_apply, s7_hook_functions, s7_hook_arity, s7_hook_documentation.

@@ -54954,6 +54954,12 @@ etc....
 (test (string->number "2/#b1" 10) #f)
 (test (string->number "2.i" 10) #f)
 (num-test (string->number "6+3.i" 10) 6+3i)
+(num-test (string->number "#e8/2" 11) 4)
+(num-test (string->number "-61" 7) -43)
+(num-test (string->number "#eb8235.9865c01" 13) 19132998081/57607)
+(num-test (string->number "10100.000e11+011110111.1010110e00i" 2) 40960+247.671875i)
+(num-test (string->number "#i-0.e11" 2) 0.0)
+(num-test (string->number "+4a00/b" 16) 18944/11)
 
 (num-test (string->number "#i+9/9" 10) 1.0)
 (num-test (string->number "#e9e-999" 10) 0)
@@ -54968,6 +54974,9 @@ etc....
 (num-test (string->number "#b1000" 8) 8)
 (num-test (string->number "#b1000" 2) 8)
 (num-test (string->number "#b1000" 16) 8)
+(num-test (string->number "11" 2) 3)
+(num-test (string->number "#x11" 2) 17)
+(num-test (string->number "#b11" 16) 3)
 (num-test (string->number "#xffff" 2) 65535)
 (num-test (string->number "#xffff" 10) 65535)
 (num-test (string->number "#xffff" 6) 65535)
@@ -55205,6 +55214,88 @@ etc....
       (begin
 	(display "(number->string 1.0-1.0i) returned ") (display val) (display "?") (newline))))
 
+(let ()
+  (define (make-integer str j digits radix zero-ok)
+    (do ((k 0 (+ k 1)))
+	((= k digits))
+      (if zero-ok
+	  (set! (str j) (#(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\a #\b #\c #\d #\e #\f) (random radix)))
+	  (set! (str j) (#(#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\a #\b #\c #\d #\e #\f) (random (- radix 1)))))
+      (set! j (+ j 1)))
+    j)
+  
+  (define (make-ratio str j ndigits ddigits radix)
+    (set! j (make-integer str j (+ 1 ndigits) radix #t))
+    (set! (str j) #\/)
+    (make-integer str (+ j 1) (+ 1 ddigits) radix #f))
+  
+  (define (make-real str j digits edigits radix)
+    (let ((nj (make-integer str j (random digits) radix #t)))
+      (set! (str nj) #\.)
+      (set! j (make-integer str (+ nj 1) (+ (if (= j nj) 1 0) (random digits)) radix #t))
+      (if (and (> edigits 0)
+	       (<= radix 10))
+	  (begin
+	    (set! (str j) #\e)
+	    (set! j (make-integer str (+ j 1) (+ 1 (random edigits)) radix #t))))
+      j))
+  
+  (define (make-complex str j digits edigits radix)
+    (set! j (make-real str j digits edigits radix))
+    (set! (str j) (#(#\+ #\-) (random 2)))
+    (set! j (make-real str (+ j 1) digits edigits radix))
+    (set! (str j) #\i)
+    (+ j 1))
+  
+  (let ((str (make-string 512))
+	(max-digits 10))
+    
+    (do ((i 0 (+ i 1)))
+	((= i 100))
+      (let ((j 0)
+	    (radix (+ 2 (random 15)))
+	    (choice (case (random 10)
+		      ((0 1) 'integer)
+		      ((2 3) 'ratio)
+		      ((4 5 6) 'real)
+		      (else 'complex))))
+	
+	;; possible #e or #i
+	(if (and (not (eq? choice 'complex))
+		 (> (random 10) 8))
+	    (begin
+	      (set! (str j) #\#)
+	      (set! j (+ j 1))
+	      (set! (str j) (#(#\e #\i) (random 2)))
+	      (set! j (+ j 1))))
+	
+	;; possible #x etc
+	(if (> (random 10) 7)
+	    (begin
+	      (set! (str j) #\#)
+	      (set! j (+ j 1))
+	      (let ((rchoice (random 4)))
+		(set! (str j) (#(#\b #\d #\o #\x) rchoice))
+		(set! radix (#(2 10 8 16) rchoice)))
+	      (set! j (+ j 1))))
+	
+	;; possible sign
+	(if (> (random 10) 5)
+	    (begin
+	      (set! (str j) (#(#\+ #\-) (random 2)))
+	      (set! j (+ j 1))))
+	
+	(set! j (case choice
+		  ((integer) (make-integer str j (+ 1 (random max-digits)) radix #t))
+		  ((ratio)   (make-ratio str j (random max-digits) (random max-digits) radix))
+		  ((real)    (make-real str j max-digits 2 radix))
+		  ((complex) (make-complex str j max-digits 2 radix))))
+	
+	(let ((num (string->number (substring str 0 j) radix)))
+	  (if (not (number? num))
+	      (format *stderr* "(string->number ~S ~D) ~60T~A~%" (substring str 0 j) radix (string->number (substring str 0 j) radix)))))))
+  )
+
 (let ((string->number-2 (lambda (str radix)
 			  (let ((old-str (if (string? str) (string-copy str) str)))
 			    (let ((val (string->number str radix)))
@@ -55217,7 +55308,7 @@ etc....
 			      (if (not (string=? str old-str))
 				  (error 'string->number-messed-up)
 				  val))))))
-  
+
   (num-test (string->number-1 "100") 100)
   (num-test (string->number-2 "100" 16) 256)
   (num-test (string->number-2 "100" 2) 4)
@@ -55284,7 +55375,7 @@ etc....
   (test (string->number-1 "#i1+i1i") #f)
   (test (string->number-1 "#i1+1") #f)
   (test (string->number-1 "#i2i.") #f)
-
+  
   (test (string->number "1e0+i") 1+i)
   (test (string->number "1+ie0") #f)
   (test (string->number "1+e0") #f)

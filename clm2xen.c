@@ -7877,7 +7877,7 @@ static XEN g_mus_irandom(XEN val) {return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(
 
 
 #if HAVE_SCHEME
-#if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
+#if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!_MSC_VER)
 
 #include <time.h>
 #include <sys/time.h>
@@ -8996,7 +8996,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_VARIABLE(S_output, clm_output, XEN_FALSE);
   XEN_DEFINE_VARIABLE(S_reverb, clm_reverb, XEN_FALSE);
 
-#if HAVE_SCHEME && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
+#if HAVE_SCHEME && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!_MSC_VER)
   XEN_DEFINE_PROCEDURE(S_get_internal_real_time, g_get_internal_real_time_w, 0, 0, 0, H_get_internal_real_time);
   XEN_DEFINE_CONSTANT(S_internal_time_units_per_second, 1, "units used by " S_get_internal_real_time);
 #endif
@@ -9042,7 +9042,7 @@ XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt :optional args -- )");
     free(clm_version);
   }
 
-#if HAVE_SCHEME && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
+#if HAVE_SCHEME && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!_MSC_VER)
   {
     struct timezone z0;
     gettimeofday(&overall_start_time, &z0);

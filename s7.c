@@ -98,6 +98,9 @@
  *   #define HAVE_PTHREADS 1
  *
  * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1 and we're not in C++.
+ * 
+ * The *gc-stats* output includes timing info if HAVE_GETTIMEOFDAY.  In this
+ *   case we also assume we can load <time.h> and <sys/time.h>.
  *
  *
  * Complex number support (which is problematic in C++, Solaris, and netBSD)
@@ -225,7 +228,7 @@
  *    eval
  *    threads
  *    multiprecision arithmetic
- *    s7 init
+ *    initialization
  *
  * naming conventions: s7_* usually are C accessible (s7.h), g_* are scheme accessible (FFI), H_* are documentation strings,
  *   *_1 are auxilliary functions, big_* refer to gmp and friends, scheme "?" corresponds to C "_is_", scheme "->" to C "_to_".
@@ -582,7 +585,7 @@ struct s7_scheme {
   s7_pointer error_hook;              /* *error-hook* hook object */
 
   /* these 6 are pointers so that all thread refs are to the same thing */
-  bool *gc_off;                       /* if true, the GC won't run */
+  bool *gc_off, *gc_stats;            /* gc_off: if true, the GC won't run, gc_stats: if true, print stats during GC */
   bool *tracing, *trace_all;          /* if tracing, each function on the *trace* list prints its args upon application */
   long *gensym_counter;
   bool *symbol_table_is_locked;       /* this also needs to be global across threads */
@@ -1516,11 +1519,30 @@ void s7_mark_object(s7_pointer p)
 }
 
 
+#if HAVE_GETTIMEOFDAY && (!_MSC_VER)
+  #include <time.h>
+  #include <sys/time.h>
+  static struct timeval start_time;
+  static struct timezone z0;
+
+  /* TODO: s7test *gc-stats*, also s7.html (+ switch) */
+#endif
+
+
 static int gc(s7_scheme *sc)
 {
   int i;
   s7_cell **old_free_heap_top;
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
+
+  if (*(sc->gc_stats))
+    {
+      fprintf(stdout, "gc ");
+#if HAVE_GETTIMEOFDAY && (!_MSC_VER)
+      gettimeofday(&start_time, &z0);
+#endif
+    }
+
   S7_MARK(sc->global_env);
   S7_MARK(sc->args);
   S7_MARK(sc->envir);
@@ -1580,6 +1602,19 @@ static int gc(s7_scheme *sc)
       }
     sc->free_heap_top = fp;
   }
+
+  if (*(sc->gc_stats))
+    {
+#if HAVE_GETTIMEOFDAY && (!_MSC_VER)
+      struct timeval t0;
+      double secs;
+      gettimeofday(&t0, &z0);
+      secs = (t0.tv_sec - start_time.tv_sec) +  0.000001 * (t0.tv_usec - start_time.tv_usec);
+      fprintf(stdout, "freed %ld, time: %f\n", sc->free_heap_top - old_free_heap_top, secs);
+#else
+      fprintf(stdout, "freed %ld\n", sc->free_heap_top - old_free_heap_top);
+#endif
+    }
 
   return(sc->free_heap_top - old_free_heap_top); /* needed by cell allocator to decide when to increase heap size */
 }
@@ -1770,6 +1805,24 @@ s7_pointer s7_gc_on(s7_scheme *sc, bool on)
 {
   (*(sc->gc_off)) = !on;
   return(s7_make_boolean(sc, on));
+}
+
+
+static s7_pointer g_gc_stats_set(s7_scheme *sc, s7_pointer args)
+{
+  if (s7_is_boolean(cadr(args)))
+    {
+      (*(sc->gc_stats)) = (cadr(args) != sc->F);      
+      return(cadr(args));
+    }
+  return(sc->ERROR);
+}
+
+
+void s7_gc_stats(s7_scheme *sc, bool on)
+{
+  (*(sc->gc_stats)) = on;
+  s7_symbol_set_value(sc, s7_make_symbol(sc, "*gc-stats*"), (on) ? sc->T : sc->F);
 }
 
 
@@ -6018,7 +6071,8 @@ static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
 static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_number "(string->number str (radix 10)) converts str into a number. \
-If str does not represent a number, string->number returns #f."
+If str does not represent a number, string->number returns #f.  If 'str' has an embedded radix, \
+the 'radix' argument is ignored: (string->number \"#x11\" 2) -> 17 not 3."
 
   s7_Int radix = 0;
   char *str;
@@ -8600,6 +8654,9 @@ static s7_pointer g_is_complex(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_complex "(complex? obj) returns #t if obj is a complex number"
   return(make_boolean(sc, s7_is_complex(car(args))));
+
+  /* complex? is currently the same as number? -- perhaps (complex? nan) could be #f?
+   */
 }
 
 
@@ -18517,6 +18574,14 @@ each a function of no arguments, guaranteeing that finish is called even if body
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->F);
 }
+
+/* C-side dynamic-wind would need at least void* context pointer passed to each function,
+ *   and to fit with the scheme-side stuff above, the functions need to be s7 functions,
+ *   so I wonder if it could be s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_pointer finish)
+ *   and the caller would use the C-closure idea (s7.html) to package up C-side data.
+ *   Then, the caller would probably assume a return value, requiring s7_call?
+ *   -> g_dynamic_wind(sc, make_list_3(sc, init, body, finish)) but with eval(sc, OP_APPLY) at end?
+ */
 
 
 static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
@@ -29251,6 +29316,9 @@ s7_scheme *s7_init(void)
   
   sc->gc_off = (bool *)calloc(1, sizeof(bool));
   (*(sc->gc_off)) = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
+  sc->gc_stats = (bool *)calloc(1, sizeof(bool));
+  (*(sc->gc_stats)) = false;
+
   sc->longjmp_ok = false;
   sc->symbol_table_is_locked = (bool *)calloc(1, sizeof(bool));
   (*(sc->symbol_table_is_locked)) = false;
@@ -29923,7 +29991,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
-
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
 
@@ -29952,6 +30019,13 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, s_type_ref_name,           s_type_ref,                2, 0, false, "internal object value");
   s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name copy fill", H_make_type);
 
+
+  s7_define_variable(sc, "*gc-stats*", sc->F);
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*gc-stats*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *gc-stats*)", g_gc_stats_set, 2, 0, false, "called if *gc-stats* is set"), 
+				   s7_make_function(sc, "(bind *gc-stats*)", g_gc_stats_set, 2, 0, false, "called if *gc-stats* is bound")));
 
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*features*"), 
