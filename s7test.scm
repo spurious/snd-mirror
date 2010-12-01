@@ -20,7 +20,6 @@
 ;;;   N Higham, "Accuracy and Stability of Numerical Algorithms"
 ;;;   various mailing lists and websites (see individual cases below)
 
-
 (define with-bignums (provided? 'gmp))                         ; scheme number has any number of bits
 (define with-the-bug-finding-machine #f)                       ; run the machine (this variable can be set to the number of tries)
 					                       ;   the default number of tries is 10000
@@ -14717,6 +14716,8 @@ who says the continuation has to restart the map from the top?
 (test (apply - 1( )) -1)               ; (apply - 1 ())
 (num-test (apply - 1.()) -1.0)
 (num-test (apply - .1()) -0.1)
+(num-test (apply - .1 .(())) -0.1)
+(num-test (apply - .1 .('(1))) -0.9)
 (test (apply - -1()) 1)                ; (apply - -1 ())
 (test (apply . `(())) '())             ; (apply {list} ())
 (test (apply . ''(1)) 1)               ; (apply quote '(1))
@@ -15034,6 +15035,12 @@ why are these different (read-time `#() ? )
  (lambda (arg)
    (test (provided? arg) 'error))
  (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
+   (test (set! *gc-stats* arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() '#(()) (list 1 2 3) '(1 . 2)))
+(test *gc-stats* #f)
 
 (let ((f (sort! *features* (lambda (a b) (string<? (object->string a #f) (object->string b #f))))))
   (let ((last 'not-in-*features*))
@@ -15922,10 +15929,11 @@ why are these different (read-time `#() ? )
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :c 1 2 3)) '(#f 2 (3)))
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1 :a 2 3)) '(2 1 (3)))
 
+  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi)) 1)
   (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :b :a :a 3)) 3)
   (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :b 3)) 1)
   (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :a 3)) 3)
-  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :a 3)) 3)
+  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi a: 3)) 3)
   (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi 3)) 3)
   (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi 3 :b 2)) 3)
   (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
@@ -15941,6 +15949,8 @@ why are these different (read-time `#() ? )
   (test (let () (define* (hi :optional (a 1) :key :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
   (test (let () (define* (hi :key :optional :allow-other-keys) 1) (hi :c 1 :a 3 :b 2)) 1)
   (test (let () (define* (hi :key :optional :allow-other-keys) 1) (hi)) 1)
+  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :a 2 32)) 'error)
+  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi 2 32)) 'error)
 
   (test (let () (define* (hi (a 1) :rest c :allow-other-keys) (list a c)) (hi :a 3 :b 2)) '(3 (:b 2)))
   (test (let () (define* (hi (a 1) :rest c) (list a c)) (hi :a 3 :b 2)) '(3 (:b 2)))
@@ -16041,6 +16051,11 @@ why are these different (read-time `#() ? )
   (test ((lambda* ((x (lambda* ((y (+ 1 2))) y))) (x))) 3)
   ;; (let () (define* (x (x (x))) :optional) (x (x x))) -> segfault infinite loop in prepare_closure_star
 
+  ;;; define-macro
+  ;;; define-macro*
+  ;;; define-bacro
+  ;;; define-bacro*
+
   (test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(+ 1 ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((1 0) 0))
   (test (let ((x 0)) (define-bacro* (hi (a (let () (set! x (+ x 1)) x))) `(+ 1 ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((1 0) 0))
   (test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(+ x ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((-1 0) 0))
@@ -16049,6 +16064,12 @@ why are these different (read-time `#() ? )
   (test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(let ((x -1)) (+ x ,a))) (list (hi) x)) '(-1 0)) 
   (test (let ((x 0)) (let ((x -1)) (+ x (let () (set! x (+ x 1)) x)))) -1)
   (test (let ((x 0)) (define-macro (hi a) `(let ((x -1)) (+ x ,a))) (list (hi (let () (set! x (+ x 1)) x)) x)) '(-1 0))
+  (test (let () (define-macro (hi a) `(let ((b 1)) (+ ,a b))) (hi (+ 1 b))) 3)
+  (test (let ((b 321)) (define-macro (hi a) `(let ((b 1)) (+ ,a b))) (hi b)) 2)
+  (test (let ((b 321)) (define-macro* (hi (a b)) `(let ((b 1)) (+ ,a b))) (hi b)) 2)
+  (test (let ((b 321)) (define-macro* (hi (a b)) `(let ((b 1)) (+ ,a b))) (hi)) 2) ; ???
+  (test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(+ ,a ,a)) (hi)) 3) ; ??? -- default val is substituted directly
+  ;; but (let () (define-macro* (hi a (b a)) `(+ ,a ,b)) (hi 1)) -> "a: unbound variable" -- "a" itself is substituted, but does not exist at expansion(?)
 
   ;; can we implement bacros via define-macro* default args?
   ;;  I don't think so -- macro arguments can't be evaluated in that environment because 
@@ -18362,8 +18383,13 @@ why are these different (read-time `#() ? )
    (test (augment-environment! (current-environment) arg) 'error))
  (list -1 #\a #(1 2 3) 3.14 3/4 1.0+1.0i 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
+(test (with-environment (augment-environment (current-environment) (cons '+ (lambda args (apply * args)))) (+ 1 2 3 4)) 24)
+(test (with-environment (cons (list (cons 'add (lambda args (apply * args)))) (current-environment)) (add 1 2 3 4)) 24)
+;;; (with-environment (cons (list (cons '+ (lambda args (apply * args)))) (current-environment)) (+ 1 2 3 4)) -> 10
+;;;  presumably it's not setting the not-a-global flag -- but when should that happen? is this a bug?
 
 (test (with-environment (current-environment) (let ((x 1)) x)) 1)
+
 
 (test (let ((x 12))
 	(let ((e (current-environment)))
@@ -43037,6 +43063,10 @@ why are these different (read-time `#() ? )
 (test (rational? most-negative-fixnum) #t)
 (test (rational? 0/0) #f)  ; I like this
 (test (rational? 1/0) #f)
+(test (rational? (/ 1 2)) #t)
+(test (rational? (/ -4 4)) #t)
+(test (rational? (/ 1.0 2)) #f)
+(test (rational? 1/2+i) #f)
 (test (if 1/0 0 1) 0)
 (test (nan? (random 1/0)) #t)
 (let ((val (random (log 0.0))))
@@ -43058,6 +43088,8 @@ why are these different (read-time `#() ? )
 (test (exact? 1/0) #f)
 (test (number? 0/0) #t)
 (test (integer? #e.1e010) #t)
+(test (integer? (/ 2 1)) #t)
+(test (integer? (/ 2 1.0)) #f)
 
 (test (real? 1/2) #t)
 (test (real? 2) #t)
@@ -43141,6 +43173,7 @@ why are these different (read-time `#() ? )
 (test (inexact? 1.0) #t)
 (test (exact? most-positive-fixnum) #t)
 (test (exact? our-pi) #f)
+(test (exact? (/ 1 2)) #t)
 
 (test (exact?) 'error)
 (test (exact? "hi") 'error)
@@ -43156,6 +43189,7 @@ why are these different (read-time `#() ? )
 (num-test (inexact->exact 1.0) 1)
 (num-test (exact->inexact 1) 1.0)
 (num-test (exact->inexact 1.0) 1.0)
+(num-test (inexact->exact 0.0) 0)
 
 (if (not with-bignums)
     (begin

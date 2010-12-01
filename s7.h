@@ -42,6 +42,7 @@ typedef double s7_Double;
    *    *trace-hook*            hook called upon trace; takes a function of two args, the traced function name and its current args
    *    *unbound-variable-hook* hook called when an unbound symbol is accessed.
    *    *#readers*              #... readers
+   *    *gc-stats*              #t to turn on GC statistics
    *
    * s7 constants:
    *
@@ -787,6 +788,7 @@ void s7_mark_object(s7_pointer p);
  *        s7 changes
  *
  * 1-Dec:     *gc-stats* in Scheme, s7_gc_stats in C.
+ *            gmp example in s7.html.
  * 21-Nov:    Load C module example in s7.html.
  * 12-Nov:    *trace-hook*, *load-hook*, *error-hook*, and *unbound-variable-hook* are now s7 hooks.
  * 9-Nov:     hooks: C side: s7_is_hook, s7_make_hook, s7_hook_apply, s7_hook_functions, s7_hook_arity, s7_hook_documentation.

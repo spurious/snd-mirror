@@ -1524,8 +1524,6 @@ void s7_mark_object(s7_pointer p)
   #include <sys/time.h>
   static struct timeval start_time;
   static struct timezone z0;
-
-  /* TODO: s7test *gc-stats*, also s7.html (+ switch) */
 #endif
 
 
@@ -8655,8 +8653,7 @@ static s7_pointer g_is_complex(s7_scheme *sc, s7_pointer args)
   #define H_is_complex "(complex? obj) returns #t if obj is a complex number"
   return(make_boolean(sc, s7_is_complex(car(args))));
 
-  /* complex? is currently the same as number? -- perhaps (complex? nan) could be #f?
-   */
+  /* complex? is currently the same as number? */
 }
 
 
@@ -25065,7 +25062,7 @@ s7_pointer s7_make_big_integer(s7_scheme *sc, mpz_t *val)
 }
 
 
-s7_pointer copy_big_integer(s7_scheme *sc, s7_pointer obj)
+static s7_pointer copy_big_integer(s7_scheme *sc, s7_pointer obj)
 {
   return(s7_make_big_integer(sc, s7_big_integer(obj)));
 }
@@ -25107,7 +25104,7 @@ s7_pointer s7_make_big_ratio(s7_scheme *sc, mpq_t *val)
 }
 
 
-s7_pointer copy_big_ratio(s7_scheme *sc, s7_pointer obj)
+static s7_pointer copy_big_ratio(s7_scheme *sc, s7_pointer obj)
 {
   return(s7_make_big_ratio(sc, s7_big_ratio(obj)));
 }
@@ -25201,7 +25198,7 @@ s7_pointer s7_make_big_real(s7_scheme *sc, mpfr_t *val)
 }
 
 
-s7_pointer copy_big_real(s7_scheme *sc, s7_pointer obj)
+static s7_pointer copy_big_real(s7_scheme *sc, s7_pointer obj)
 {
   return(s7_make_big_real(sc, s7_big_real(obj)));
 }
@@ -25320,7 +25317,7 @@ s7_pointer s7_make_big_complex(s7_scheme *sc, mpc_t *val)
 }
 
 
-s7_pointer copy_big_complex(s7_scheme *sc, s7_pointer obj)
+static s7_pointer copy_big_complex(s7_scheme *sc, s7_pointer obj)
 {
   return(s7_make_big_complex(sc, s7_big_complex(obj)));
 }
@@ -30414,8 +30411,8 @@ the error type and the info passed to the error handler.");
  ;map argument 1, lambda, is symbol but should be a procedure
 
  *
- * in s7.html: example of C threads? gmp? emacs subjob support?
- *
+ * in s7.html: example of C threads? emacs subjob support? s7 thread for GUI?
+ * 
  * things to fix: nonce-symbols need to be garbage collected
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
  *                could the profiler give block counts as well?

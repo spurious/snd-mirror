@@ -4055,6 +4055,7 @@ bind it to something else, which is asking for confusion).
 <li>port-closed?
 <li>current-input-port, current-output-port, and current-error-port have setters
 <li>the default IO ports are named *stdin*, *stdout*, and *stderr*.
+<li>*gc-stats* is a boolean that controls whether GC stats are printed.
 </ul>
 
 <small>
@@ -4702,6 +4703,7 @@ compile-time flags:
     HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
     WITH_PROFILING                 1 if you want profiling support (default is 0)
     S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
+    HAVE_GETTIMEOFDAY              1 if you want timing info from the GC (default is 0)
 </pre>
 
 <p>See the comment at the start of s7.c for more information about these switches.
@@ -4728,6 +4730,7 @@ The examples that follow show:
 <li><a href="#closure">Closure defined in C</a>
 <li><a href="#testhook">Hooks in C and Scheme</a>
 <li><a href="#cload">Load a C module dynamically</a>
+<li><a href="#gmpex">gmp and friends</a>
 </ul>
 
 <br><br>
@@ -6316,6 +6319,144 @@ int main(int argc, char **argv)
 </pre>
 </td></tr></table>
 <br><br>
+
+
+
+<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<A NAME="gmpex"></a>
+<p>Bignum support depends on gmp, mpfr, and mpc.  In this example, we define "add-1" which adds
+1 to any kind of number.  The s7_big_* functions return the underlying gmp/mpfr/mpc pointer,
+so we have to copy that into a new number before adding.
+</p>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<tr><td bgcolor="#fbfbf0">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include &lt;gmp.h&gt;
+#include &lt;mpfr.h&gt;
+#include &lt;mpc.h&gt;
+
+#include "s7.h"
+
+static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
+
+static s7_pointer big_add_1(s7_scheme *sc, s7_pointer args)
+{
+  /* add 1 to either a normal number or a bignum */
+  s7_pointer x;
+  x = s7_car(args);
+  if (s7_is_bignum(x))
+    {
+      s7_pointer n;
+      if (s7_is_integer(x))
+	{
+	  mpz_t *big_n;
+	  n = s7_make_big_integer(sc, s7_big_integer(x)); /* copy x */
+	  big_n = s7_big_integer(n);                      /* get mpz_t pointer of copy */
+	  mpz_add_ui(*big_n, *big_n, 1);                  /* add 1 to that */
+	  return(n);                                      /* return the new bignum */
+	}
+      if (s7_is_ratio(x))
+	{
+	  mpq_t *big_q;
+	  mpz_t num, den;
+	  n = s7_make_big_ratio(sc, s7_big_ratio(x));
+	  big_q = s7_big_ratio(n);
+	  mpz_init_set(num, mpq_numref(*big_q));
+	  mpz_init_set(den, mpq_denref(*big_q));
+	  mpz_add(num, num, den);
+	  mpq_set_num(*big_q, num);
+	  mpz_clear(num);
+	  mpz_clear(den);
+	  return(n);
+	}
+      if (s7_is_real(x))
+	{
+	  mpfr_t *big_x;
+	  n = s7_make_big_real(sc, s7_big_real(x));
+	  big_x = s7_big_real(n);
+	  mpfr_add_ui(*big_x, *big_x, 1, GMP_RNDN);
+	  return(n);
+	}
+      /* x must be big complex */
+      {
+	mpc_t *big_z;
+	n = s7_make_big_complex(sc, s7_big_complex(x));
+	big_z = s7_big_complex(n);
+	mpc_add_ui(*big_z, *big_z, 1, MPC_RNDNN);
+	return(n);
+      }
+    }
+  else
+    {
+      if (s7_is_integer(x))
+	return(s7_make_integer(sc, 1 + s7_integer(x)));
+      if (s7_is_rational(x))
+	return(s7_make_ratio(sc, s7_numerator(x) + s7_denominator(x), s7_denominator(x)));
+      if (s7_is_real(x))
+	return(s7_make_real(sc, 1.0 + s7_real(x)));
+      if (s7_is_complex(x))
+	return(s7_make_complex(sc, 1.0 + s7_real_part(x), s7_imag_part(x)));
+    }
+  return(s7_wrong_type_arg_error(sc, "add-1", 0, x, "a number"));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+
+  s7 = s7_init();  
+  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
+  s7_define_function(s7, "add-1", big_add_1, 1, 0, false, "(add-1 num) adds 1 to num");
+
+  while (1) 
+    {
+      fprintf(stdout, "\n&gt; ");
+      fgets(buffer, 512, stdin);
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) &gt; 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response);
+	}
+    }
+}
+
+/* 
+ *   gcc -DWITH_GMP=1 -c s7.c -I. -O2 -g3
+ *   gcc -DWITH_GMP=1 -o ex2 ex2.c s7.o -I. -O2 -lm -lgmp -lmpfr -lmpc
+ *
+ *   ex2
+ *   &gt; (add-1 1)   
+ *   2
+ *   &gt; (add-1 2/3)
+ *   5/3
+ *   &gt; (add-1 1.4) 
+ *   2.4
+ *   &gt; (add-1 1.5+i)
+ *   2.5+1i
+ *   &gt; (add-1 (bignum "3"))
+ *   4          ; this is the bignum 4
+ *   &gt; (add-1 (bignum "3/4"))
+ *   7/4
+ *   &gt; (add-1 (bignum "1.4"))
+ *   2.399999999999999911182158029987476766109E0
+ *   &gt; (add-1 (bignum "1.5+i"))
+ *   2.500E0+1.000E0i
+ */
+</pre>
+</td></tr></table>
+<br><br>
+
+
 
 </body>
 </html>
