@@ -459,7 +459,7 @@
 	      :sortby (string-downcase (checked-substring str (+ 1 mid))))))
 
 
-(define scm-variable-names
+(define scheme-variable-names
   (list "after-graph-hook" "lisp-graph-hook" "before-transform-hook" "mix-release-hook" "stop-playing-channel-hook" "save-hook" "mus-error-hook"
 	"mouse-enter-graph-hook" "mouse-leave-graph-hook" "open-raw-sound-hook" "select-channel-hook" "after-open-hook" "close-hook" "drop-hook" "update-hook"
 	"just-sounds-hook" "mark-click-hook" "mark-drag-hook" "name-click-hook" "open-hook" "help-hook"
@@ -474,7 +474,7 @@
 	"before-save-state-hook" "after-save-as-hook" "after-transform-hook" "before-save-as-hook"))
 
 
-(define scm-constant-names
+(define scheme-constant-names
   (list "mus-out-format" "mus-unsupported" "mus-next" "mus-aifc" "mus-riff" "mus-rf64" "mus-nist" "mus-raw" "mus-ircam" "mus-aiff" "mus-bicsf"
 	"mus-voc" "mus-svx" "mus-soundfont" "mus-unknown" "mus-bshort" "mus-lshort" "mus-mulaw" "mus-alaw" "mus-byte" "mus-ubyte"
 	"mus-bfloat" "mus-lfloat" "mus-bint" "mus-lint" "mus-bintn" "mus-lintn" "mus-b24int" "mus-l24int" "mus-bdouble" "mus-ldouble"
@@ -499,25 +499,25 @@
 	"mus-interp-linear" "mus-interp-none" "mus-interp-sinusoidal"))	
 
 
-(define (scm->rb scm-name)
-  (if (string=? scm-name "frame*")
+(define (scheme->ruby scheme-name)
+  (if (string=? scheme-name "frame*")
       "frame_multiply"
-      (if (string=? scm-name "frame+")
+      (if (string=? scheme-name "frame+")
 	  "frame_add"
-	  (if (string=? scm-name "vct*")
+	  (if (string=? scheme-name "vct*")
 	      "vct_multiply"
-	      (if (string=? scm-name "vct+")
+	      (if (string=? scheme-name "vct+")
 		  "vct_add"
-		  (if (string=? scm-name "mixer*")
+		  (if (string=? scheme-name "mixer*")
 		      "mixer_multiply"
-		      (if (string=? scm-name "mixer+")
+		      (if (string=? scheme-name "mixer+")
 			  "mixer_add"
-			  (if (string=? scm-name "redo")
+			  (if (string=? scheme-name "redo")
 			      "redo_edit"
-			      (if (string=? scm-name "in")
+			      (if (string=? scheme-name "in")
 				  "call_in"
-				  (let* ((len (length scm-name))
-					 (var-case (string-list-position scm-name scm-variable-names))
+				  (let* ((len (length scheme-name))
+					 (var-case (string-list-position scheme-name scheme-variable-names))
 					 (strlen (if var-case (+ 1 len) len))
 					 (rb-name (make-string strlen #\space))
 					 (i 0)
@@ -526,14 +526,14 @@
 					(begin
 					 (set! (rb-name 0) #\$)
 					 (set! j 1))
-					(if (string-list-position scm-name scm-constant-names)
+					(if (string-list-position scheme-name scheme-constant-names)
 					    (begin
-					     (set! (rb-name 0) (char-upcase (scm-name 0)))
+					     (set! (rb-name 0) (char-upcase (scheme-name 0)))
 					     (set! i 1)
 					     (set! j 1))))
 				    (do ()
 					((>= i len))
-				      (let ((c (scm-name i)))
+				      (let ((c (scheme-name i)))
 					(if (or (alphanumeric? c)
 						(char=? c #\?)
 						(char=? c #\!))
@@ -542,7 +542,7 @@
 					     (incf i)
 					     (incf j))
 					    (if (and (char=? c #\-)
-						     (char=? (scm-name (+ i 1)) #\>))
+						     (char=? (scheme-name (+ i 1)) #\>))
 						(begin
 						 (set! (rb-name j) #\2)
 						 (incf j)
@@ -916,9 +916,16 @@
 				  (if (ind-name name)
 				      (ind-name name)
 				      "    "))
+;			      (if (and (not (ind-char name))
+;				       (string? (ind-file name))
+;				       (string=? (ind-file name) "s7.html"))
+;				  " (s7)"
+;				  "")
+;; this looks kinda dumb
 			      (if (ind-char name)
 				  "</center>"
-				  "</em>"))
+				  "</em>")
+			      )
 		      (if (ind-indexed name) 
 			  (format #t "~A indexed twice~%" (ind-name name)))
 		      (set! (ind-indexed name) #t))
@@ -1004,8 +1011,8 @@
 		       ((null? lname))
 		     (let ((name (car lname)))
 		       (if (= (modulo ctr 6) 0)
-			   (format sfil ",~% ~S" (without-dollar-sign (scm->rb name)))
-			   (format sfil ", ~S" (without-dollar-sign (scm->rb name))))))
+			   (format sfil ",~% ~S" (without-dollar-sign (scheme->ruby name)))
+			   (format sfil ", ~S" (without-dollar-sign (scheme->ruby name))))))
 
 		   (format sfil "};~%#endif~%")
 		   (format sfil "#if (!HAVE_EXTENSION_LANGUAGE)~%static const char **help_names = NULL;~%#endif~%")

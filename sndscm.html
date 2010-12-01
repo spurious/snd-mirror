@@ -50,7 +50,7 @@
 
 <br>
 
-<!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
+<!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (make-index.scm) -->
 
 <A NAME="introduction"></a>
 
@@ -5755,7 +5755,7 @@ The result returned by 'thunk' is returned by with-local-hook.
 
 <p>index.scm provides a connection between firefox, mozilla or netscape
 and the Snd documentation.  The index itself is
-built by index.cl, then accessed through the functions html and ?.
+built by make-index.scm, then accessed through the functions html and ?.
 <code>(html arg)</code>, where 'arg' can be a string, a symbol, or a procedure sends the html reader to the corresponding url
 in the Snd documents.
 <code>(? obj)</code> prints out any help it can find for 'obj', and tries to find 'obj' in the documentation.
@@ -9083,7 +9083,7 @@ the smallest, throw away this crossing, 6) sort the remaining crossings by least
 shortened.
 rubber-sound is incredibly slow, and almost never works.  The idea seems good however...
 
-<!-- ((((((( --><!-- this matches the preceding open parens for index.cl's benefit -->
+<!-- ((((((( --><!-- this matches the preceding open parens for make-index.scm's benefit -->
 </p>
 
 <table bgcolor="aliceblue" border=0><tr>

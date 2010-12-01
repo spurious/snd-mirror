@@ -5091,7 +5091,7 @@ static s7_pointer g_sharp_readers_set(s7_scheme *sc, s7_pointer args)
 }
 
 
-static bool is_abnormal(s7_scheme *sc, s7_pointer x)
+static bool is_abnormal(s7_pointer x)
 {
   return((!s7_is_number(x)) ||
 	 (isinf(s7_real_part(x))) || 
@@ -5178,7 +5178,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	 * surely if #e1+i is an error (or #f), and #e#x1+i is an error,
 	 *   #x#e1+i should also be an error, but #e1+0i is not an error I guess since there actually isn't any imaginary part
 	 */
-	if (is_abnormal(sc, x))
+	if (is_abnormal(x))
 	  return(sc->NIL);
 
 	if ((!to_exact) && (!to_inexact))
@@ -5220,7 +5220,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix);
 	  if (s7_is_number(x))
 	    {
-	      if (is_abnormal(sc, x))
+	      if (is_abnormal(x))
 		return(sc->NIL);
 #if WITH_GMP
 	      if (s7_is_bignum(x))                        /* (string->number "#b#e-11e+111") */
@@ -5252,7 +5252,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix);
 	  if (s7_is_number(x))
 	    {
-	      if (is_abnormal(sc, x))                    /* (string->number "#e#b0/0") */
+	      if (is_abnormal(x))                        /* (string->number "#e#b0/0") */
 		return(sc->NIL);
 	      if (!s7_is_real(x))                        /* (string->number "#e#b1+i") */
 		return(sc->NIL);
@@ -5270,7 +5270,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
       if (s7_is_bignum(x))
 	return(big_inexact_to_exact(sc, make_list_1(sc, x)));
 #endif	
-      if (is_abnormal(sc, x))                            /* (string->number "#e0/0") */
+      if (is_abnormal(x))                                /* (string->number "#e0/0") */
 	return(sc->NIL);
       if (!s7_is_real(x))                                /* (string->number "#e1+i") */
 	return(sc->NIL);
@@ -8650,7 +8650,7 @@ static s7_pointer g_is_real(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_is_complex(s7_scheme *sc, s7_pointer args) 
 {
-  #define H_is_complex "(complex? obj) returns #t if obj is a complex number"
+  #define H_is_complex "(complex? obj) returns #t if obj is a number"
   return(make_boolean(sc, s7_is_complex(car(args))));
 
   /* complex? is currently the same as number? */
@@ -8903,7 +8903,7 @@ static s7_pointer g_logand(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_lognot(s7_scheme *sc, s7_pointer args)
 {
-  #define H_lognot "(lognot num) returns the bitwise negation (the complement, the bits that are not on) in num"
+  #define H_lognot "(lognot num) returns the bitwise negation (the complement, the bits that are not on) in num: (lognot 0) -> -1"
   if (!s7_is_integer(car(args)))
     return(s7_wrong_type_arg_error(sc, "lognot", 1, car(args), "an integer"));
   return(s7_make_integer(sc, ~s7_integer(car(args))));
@@ -8981,7 +8981,10 @@ static bool equal_rng(void *val1, void *val2)
   
 static s7_pointer g_make_random_state(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'"
+  #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'. \
+Pass this as the second argument to 'random' to get a repeatable random number sequence:\n\
+    (let ((seed (make-random-state 1234))) (random 1.0 seed))"
+
   s7_rng_t *r;
 
   if (!s7_is_integer(car(args)))
@@ -10759,11 +10762,9 @@ static void pop_input_port(s7_scheme *sc)
 }
 
 
-static int inchar(s7_scheme *sc, s7_pointer pt)
+static int inchar(s7_pointer pt)
 {
   int c;
-  /* if (pt == sc->standard_input) return(EOF); */
-  
   if (is_file_port(pt))
     c = fgetc(port_file(pt)); /* not unsigned char! -- could be EOF */
   else 
@@ -10781,10 +10782,8 @@ static int inchar(s7_scheme *sc, s7_pointer pt)
 }
 
 
-static void backchar(s7_scheme *sc, char c, s7_pointer pt) 
+static void backchar(char c, s7_pointer pt) 
 {
-  /* if (pt == sc->standard_input) return; */
-  
   if (c == '\n')
     port_line_number(pt)--;
 
@@ -10816,7 +10815,7 @@ static int s7_read_char_1(s7_scheme *sc, s7_pointer port, s7_read_t read_choice)
     }
 
   if ((read_choice == S7_PEEK_CHAR) && (c != EOF))
-    backchar(sc, c, port);
+    backchar(c, port);
   return(c);
 }
 
@@ -10922,7 +10921,7 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 	    return(s7_make_string(sc, sc->read_line_buf)); /* fgets adds the trailing '\0' */
 	  return(s7_make_string_with_length(sc, NULL, 0));
 	}
-      else c = inchar(sc, port);
+      else c = inchar(port);
 
       if (c == EOF)
 	{
@@ -11956,7 +11955,7 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 }
 
 
-static shared_info *new_shared_info(s7_scheme *sc)
+static shared_info *new_shared_info(void)
 {
   shared_info *ci;
   ci = (shared_info *)calloc(1, sizeof(shared_info));
@@ -11974,7 +11973,7 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
   shared_info *ci;
   int i, refs;
 
-  ci = new_shared_info(sc);
+  ci = new_shared_info();
 
   /* collect all pointers associated with top */
   collect_shared_info(sc, ci, top);
@@ -12158,7 +12157,7 @@ static s7_pointer vector_to_string(s7_scheme *sc, s7_pointer vect)
 }
 
 
-static int circular_list_entries(s7_scheme *sc, s7_pointer lst)
+static int circular_list_entries(s7_pointer lst)
 {
   int i;
   s7_pointer x;
@@ -12188,7 +12187,7 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
       if (true_len == 0)               /* either '() or a circular list */
 	{
 	  if (lst != sc->NIL)
-	    len = circular_list_entries(sc, lst);
+	    len = circular_list_entries(lst);
 	  else return(copy_string("()"));
 	}
       else len = true_len;
@@ -12768,7 +12767,7 @@ s7_pointer s7_member(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 }
 
 
-static bool symbol_is_in_list(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
+static bool symbol_is_in_list(s7_pointer sym, s7_pointer lst)
 {
   s7_pointer x;
   for (x = lst; is_pair(x); x = cdr(x))
@@ -17329,7 +17328,7 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
       {
 	shared_info *ci;
 	bool result;
-	ci = new_shared_info(sc);
+	ci = new_shared_info();
 	result = structures_are_equal(sc, x, y, ci);
 	free_shared_info(ci);
 	return(result);
@@ -20251,7 +20250,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 {
   int c;
   /* inchar can return EOF, so it can't be used directly as an index into the digits array */
-  c = inchar(sc, pt);
+  c = inchar(pt);
   if (c == EOF)
     s7_error(sc, sc->READ_ERROR,
 	     make_list_1(sc, make_protected_string(sc, "unexpected '#' at end of input")));
@@ -20268,7 +20267,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 
       while (true)
 	{
-	  d = inchar(sc, pt);
+	  d = inchar(pt);
 	  if (d == EOF)
 	    s7_error(sc, sc->READ_ERROR,
 		     make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #n...")));
@@ -20281,7 +20280,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
       sc->strbuf[loc++] = d;
       if ((d == 'D') || (d == 'd'))
 	{
-	  d = inchar(sc, pt);
+	  d = inchar(pt);
 	  if (d == EOF)
 	    s7_error(sc, sc->READ_ERROR,
 		     make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #nD...")));
@@ -20295,7 +20294,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 
       /* try to back out */
       for (d = loc - 1; d > 0; d--)
-	backchar(sc, sc->strbuf[d], pt);
+	backchar(sc->strbuf[d], pt);
     }
 
 #if (!S7_DISABLE_DEPRECATED)
@@ -20311,7 +20310,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
     {
       char last_char;
       last_char = ' ';
-      while ((c = inchar(sc, pt)) != EOF)
+      while ((c = inchar(pt)) != EOF)
 	{
 	  if ((c == '#') &&
 	      (last_char == '!'))
@@ -20329,7 +20328,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
     {
       char last_char;
       last_char = ' ';
-      while ((c = inchar(sc, pt)) != EOF)
+      while ((c = inchar(pt)) != EOF)
 	{
 	  if ((c == '#') &&
 	      (last_char == '|'))
@@ -20391,7 +20390,7 @@ static token_t read_comma(s7_scheme *sc, s7_pointer pt)
      what about , @foo -- is the space significant?  We accept ,@ foo.
   */
 
-  if ((c = inchar(sc, pt)) == '@') 
+  if ((c = inchar(pt)) == '@') 
     return(TOKEN_AT_MARK);
 
   if (c == EOF)
@@ -20399,7 +20398,7 @@ static token_t read_comma(s7_scheme *sc, s7_pointer pt)
       sc->strbuf[0] = ',';  /* was '@' which doesn't make any sense */
       return(TOKEN_COMMA);  /* was TOKEN_ATOM, which also doesn't seem sensible */
     }
-  backchar(sc, c, pt);
+  backchar(c, pt);
   return(TOKEN_COMMA);
 }
 
@@ -20407,10 +20406,10 @@ static token_t read_comma(s7_scheme *sc, s7_pointer pt)
 static token_t read_dot(s7_scheme *sc, s7_pointer pt)
 {
   int c;
-  c = inchar(sc, pt);
+  c = inchar(pt);
   if (c != EOF)
     {
-      backchar(sc, c, pt);
+      backchar(c, pt);
 
       if ((!char_ok_in_a_name[c]) && (c != 0))
 	return(TOKEN_DOT);
@@ -20640,28 +20639,28 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 
 #define NOT_AN_X_CHAR -1
 
-static int read_x_char(s7_scheme *sc, s7_pointer pt)
+static int read_x_char(s7_pointer pt)
 {
   /* possible "\xnn" char (write creates these things, so we have to read them) 
    *   but we could have crazy input like "\x -- with no trailing double quote
    */
   int d1, d2, c;
 
-  c = inchar(sc, pt);
+  c = inchar(pt);
   if (c == EOF)
     return(NOT_AN_X_CHAR);
 
   d1 = digits[c];
   if (d1 < 16)
     {
-      c = inchar(sc, pt);
+      c = inchar(pt);
       if (c == EOF)
 	return(NOT_AN_X_CHAR);
       d2 = digits[c];
       if (d2 < 16)
 	return(16 * d1 + d2);           /* following char can be anything, including a number -- we ignore it */
       /* apparently one digit is also ok */
-      backchar(sc, c, pt);
+      backchar(c, pt);
       return(d1);
     }
   return(NOT_AN_X_CHAR);
@@ -20737,7 +20736,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	  return(s7_make_terminated_string_with_length(sc, sc->strbuf, i));
 
 	case '\\':
-	  c = inchar(sc, pt);
+	  c = inchar(pt);
 
 	  if (c == EOF) 
 	    return(sc->F);
@@ -20756,7 +20755,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 		    {
 		      if (c == 'x')
 			{
-			  c = read_x_char(sc, pt);
+			  c = read_x_char(pt);
 			  if (c == NOT_AN_X_CHAR)
 			    return(sc->T);
 			  sc->strbuf[i++] = (unsigned char)c;
@@ -20815,7 +20814,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  if (sc->tok == TOKEN_DOT) 
 	    {
 	      back_up_stack(sc);
-	      do {c = inchar(sc, sc->input_port);} while ((c != ')') && (c != EOF));
+	      do {c = inchar(sc->input_port);} while ((c != ')') && (c != EOF));
 	      return(read_error(sc, "stray dot after '('?"));         /* (car '( . )) */
 	    }
 
@@ -20884,7 +20883,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 	case TOKEN_DOT:                                             /* (catch #t (lambda () (+ 1 . . )) (lambda args 'hiho)) */
 	  back_up_stack(sc);
-	  do {c = inchar(sc, sc->input_port);} while ((c != ')') && (c != EOF));
+	  do {c = inchar(sc->input_port);} while ((c != ')') && (c != EOF));
 	  return(read_error(sc, "stray dot in list?"));             /* (+ 1 . . ) */
 
 	case TOKEN_RIGHT_PAREN:                                     /* (catch #t (lambda () '(1 2 . )) (lambda args 'hiho)) */
@@ -20979,7 +20978,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 }
 
 
-static bool memq(s7_scheme *sc, s7_pointer symbol, s7_pointer list)
+static bool memq(s7_pointer symbol, s7_pointer list)
 {
   s7_pointer x;
   for (x = list; is_pair(x); x = cdr(x))
@@ -21131,7 +21130,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		       * this has become much trickier than I anticipated...
 		       */
 		      if ((allow_other_keys) ||
-			  (memq(sc, sc->KEY_ALLOW_OTHER_KEYS, sc->x)))
+			  (memq(sc->KEY_ALLOW_OTHER_KEYS, sc->x)))
 			{
 			  allow_other_keys = true;
 			  /* in CL: (defun hi (&key (a 1) &allow-other-keys) a) (hi :b :a :a 3) -> 3 
@@ -21534,7 +21533,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  if (c != 0)
 	    {
-	      backchar(sc, c, sc->input_port);
+	      backchar(c, sc->input_port);
 	      push_stack(sc, opcode(OP_EVAL_STRING), sc->NIL, sc->value);
 	      push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
 	    }
@@ -21566,7 +21565,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  if (c != 0)
 	    {
-	      backchar(sc, c, sc->input_port);
+	      backchar(c, sc->input_port);
 	      push_stack(sc, opcode(OP_EVAL_STRING_1), sc->NIL, sc->value);
 	      push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
 	    }
@@ -22620,7 +22619,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if (s7_is_constant(car(sc->x)))                      /* (lambda (pi) pi) */
 		return(eval_error(sc, "lambda parameter '~A is a constant", car(sc->x)));
-	      if (symbol_is_in_list(sc, car(sc->x), cdr(sc->x)))   /* (lambda (a a) ...) or (lambda (a . a) ...) */
+	      if (symbol_is_in_list(car(sc->x), cdr(sc->x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
 		return(eval_error(sc, "lambda parameter '~A is used twice in the parameter list", car(sc->x)));
 	    }
 	  if ((sc->x != sc->NIL) &&
@@ -22657,7 +22656,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  if (s7_is_constant(caar(sc->w)))                            /* (lambda* ((:a 1)) ...) */
 		    return(eval_error(sc, "lambda* parameter '~A is a constant", caar(sc->w)));
-		  if (symbol_is_in_list(sc, caar(sc->w), cdr(sc->w)))         /* (lambda* ((a 1) a) ...) */
+		  if (symbol_is_in_list(caar(sc->w), cdr(sc->w)))             /* (lambda* ((a 1) a) ...) */
 		    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", caar(sc->w)));
 		  if (!is_pair(cdar(sc->w)))                                  /* (lambda* ((a . 0.0)) a) */
 		    {
@@ -22677,7 +22676,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  (car(sc->w) != sc->KEY_OPTIONAL) &&
 			  (car(sc->w) != sc->KEY_ALLOW_OTHER_KEYS))           /* (lambda* (pi) ...) */
 			return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->w)));
-		      if (symbol_is_in_list(sc, car(sc->w), cdr(sc->w)))      /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
+		      if (symbol_is_in_list(car(sc->w), cdr(sc->w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
 			return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(sc->w)));
 
 		      if ((car(sc->w) == sc->KEY_ALLOW_OTHER_KEYS) &&         /* (lambda* (:allow-other-keys x) x) */
@@ -28996,7 +28995,10 @@ static bool equal_big_rng(void *val1, void *val2)
   
 static s7_pointer make_big_random_state(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'"
+  #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'. \
+Pass this as the second argument to 'random' to get a repeatable random number sequence:\n\
+    (let ((seed (make-random-state 1234))) (random 1.0 seed))"
+
   s7_big_rng_t *r;
   s7_pointer seed;
 
@@ -30411,7 +30413,7 @@ the error type and the info passed to the error handler.");
  ;map argument 1, lambda, is symbol but should be a procedure
 
  *
- * in s7.html: example of C threads? emacs subjob support? s7 thread for GUI?
+ * in s7.html: example of C threads? s7 thread for GUI?
  * 
  * things to fix: nonce-symbols need to be garbage collected
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?

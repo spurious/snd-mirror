@@ -77,7 +77,7 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
   <li><a href="#define*">define*</a>
   <li><a href="#macros">define-macro</a>
   <li><a href="#constants">define-constant, symbol-access</a>
-  <li><a href="#maketype">make-type</a>
+  <li><a href="#maketype1">make-type</a>
   <li><a href="#pws">procedure-with-setter</a>
   <li><a href="#generalizedset">generalized set!</a>
   <li><a href="#multidimensionalvectors">multidimensional vectors</a>
@@ -85,8 +85,8 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
   <li><a href="#hooks">hooks</a>
   <li><a href="#multithreading">multithreading</a>
   <li><a href="#multiplevalues">multiple-values</a>
-  <li><a href="#callwithexit">call-with-exit</a>
-  <li><a href="#format">format</a>
+  <li><a href="#callwithexit1">call-with-exit</a>
+  <li><a href="#format1">format</a>
   <li><a href="#errors">errors, stacktrace, trace</a>
   <li><a href="#procedureinfo">procedure info</a>
   <li><a href="#environments">environments</a>
@@ -118,7 +118,7 @@ s7 can be built with multiprecision support
 for all types,  using the gmp, mpfr, and mpc libraries (set WITH_GMP to 1 in s7.c).  
 If multiprecision arithmetic is
 enabled, the following functions are included: bignum, bignum?, and bignum-precision.
-bignum-precision, which defaults to 128, sets the number of bits each float takes.
+<a name="bignumprecision">bignum-precision</a>, which defaults to 128, sets the number of bits each float takes.
 pi automatically reflects the current bignum-precision:
 </p>
 
@@ -137,9 +137,9 @@ pi automatically reflects the current bignum-precision:
 </pre>
 
 <p>
-bignum? returns #t if its argument is a big number of some type; I use "bignum" 
+<a name="bignump">bignum?</a> returns #t if its argument is a big number of some type; I use "bignum" 
 for any big number, not just integers.  To create a big number,
-either include enough digits to overflow the default types, or use the bignum function.
+either include enough digits to overflow the default types, or use the <a name="bignum">bignum</a> function.
 Its argument is a string representing the desired number:
 </p>
 
@@ -319,10 +319,10 @@ of -0.0 is ignored, and they really are equal.
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>The random function takes a range and an optional state, and returns a number 
+<p>The <a name="random">random</a> function takes a range and an optional state, and returns a number 
 between zero and the range, of the same type as the range.  It is perfectly reasonable
 to use a range of 0, in which case random returns 0.
-make-random-state creates a new random state from a seed.  If no state is passed,
+<a name="makerandomstate">make-random-state</a> creates a new random state from a seed.  If no state is passed,
 random uses some default state initialized from the current time.
 </p>
 
@@ -393,7 +393,8 @@ r1
 </td></tr></table>
 </dt>
 
-<dd><p>These are extensions of define and lambda that make it easier to
+<dd><p><a name="definestar">define*</a> and <a name="lambdastar">lambda*</a>
+are extensions of define and lambda that make it easier to
 to deal with optional, keyword, and rest arguments.  
 The syntax is very simple: every argument to define* has a default value
 and is automatically available as a keyword argument.  The default value
@@ -607,7 +608,8 @@ f
 </td></tr></table>
 </dt>
 
-<dd><p>define-macro, define-macro*, defmacro, defmacro*, macroexpand, gensym, and macro?
+<dd><p><a name="definemacro">define-macro</a>, <a name="definemacrostar">define-macro*</a>, 
+defmacro, defmacro*, <a name="macroexpand">macroexpand</a>, <a name="gensym">gensym</a>, and <a name="macrop">macro?</a>
 implement the standard (CL-style) macro definers.  
 </p>
 
@@ -1176,7 +1178,7 @@ to quote the result (if the result does not already evaluate to itself):
 </td></tr></table>
 </dt>
 
-<dd><p>define-constant defines a constant and constant? returns #t if its argument
+<dd><p><a name="defineconstant">define-constant</a> defines a constant and <a name="constantp">constant?</a> returns #t if its argument
 is a constant.  A constant in s7 is really constant: it can't be set or rebound.
 </p>
 
@@ -1213,7 +1215,7 @@ or in C; I wanted this many years ago in Snd).  The notification function is esp
 you have a Scheme variable and want to reflect any change in its value immediately in C (see <a href="#notify">below</a>).
 All of these cases modify
 the path between a symbol and its value.  
-s7 gives you a handle on that path via the procedure-with-setter <b>symbol-access</b>.
+s7 gives you a handle on that path via the procedure-with-setter <b><a name="symbolaccess">symbol-access</a></b>.
 <code>(symbol-access symbol)</code> returns that symbol's accessors, and <code>(set! (symbol-access symbol) accessor-list)</code>
 changes them.  The accessor-list is a list of three functions, the get, set, and bind functions.
 The set and bind functions take two arguments, the symbol in question
@@ -1310,14 +1312,14 @@ with this mechanism, including property lists.
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
-<A NAME="maketype"></a>
+<A NAME="maketype1"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>make-type</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
 <dd><p>
-<b>make-type</b>, borrowed from Alaric Snell-Pym,
+<b><a name="maketype">make-type</a></b>, borrowed from Alaric Snell-Pym,
 returns a type-object: a list of three functions
 '?, 'make, and 'ref.  The <b>?</b> func returns #t if its argument
 is of the new type, the <b>make</b> function returns a new object of the new type with the
@@ -1660,7 +1662,7 @@ v
 </td></tr></table>
 </dt>
 
-<dd><p>A procedure-with-setter consists of two functions, the "getter" and the "setter".
+<dd><p>A <a name="procedurewithsetter">procedure-with-setter</a> consists of two functions, the "getter" and the "setter".
 The getter is called when the object is encountered as a function, and the setter when
 it is set:
 </p>
@@ -2279,8 +2281,8 @@ This also affects format and sort!:
 
 <dd><br>
 <ul>
-<li>(make-hash-table (size 512))
-<li>(hash-table ...)
+<li>(<a name="makehashtable">make-hash-table</a> (size 512))
+<li>(<a name="hashtable">hash-table</a> ...)
 <li>(hash-table-ref ht key)
 <li>(hash-table-set! ht key value)
 <li>(hash-table? obj)
@@ -2359,11 +2361,11 @@ an entry, <code>'(key . value)</code>, in whatever order the entries are encount
 <dd>
 
 <pre>
-    (make-hook (arity (0 0 #f)) (documentation ""))  ; make a new hook
-    (hook ...)                                       ; make a hook, the args are functions
+    (<a name="makehook">make-hook</a> (arity (0 0 #f)) (documentation ""))  ; make a new hook
+    (<a name="hook">hook</a> ...)                                       ; make a hook, the args are functions
     (hook? obj)                                      ; return #t if obj is a hook
-    (hook-functions hook)                            ; the hook's list of functions
-    (hook-arity hook)                                ; the hook's arity list: (required optional rest)
+    (<a name="hookfunctions">hook-functions</a> hook)                            ; the hook's list of functions
+    (<a name="hookarity">hook-arity</a> hook)                                ; the hook's arity list: (required optional rest)
     (hook-documentation hook)                        ; the hook's documentation string
     (hook-apply hook ...) and (&lt;hook&gt; ...)           ; run the hook (it is an applicable object)
 </pre>
@@ -2404,14 +2406,14 @@ the way the hook itself is invoked, so the hook has an arity, hook-arity.
 </p>
 
 <pre>
-    (make-thread thunk (stack-size 300)) ; create a thread running thunk, return id: pthread_create
-    (join-thread thread)                 ; wait for thread to finish, return value returned by thunk: pthread_join
+    (<a name="makethread">make-thread</a> thunk (stack-size 300)) ; create a thread running thunk, return id: pthread_create
+    (<a name="jointhread">join-thread</a> thread)                 ; wait for thread to finish, return value returned by thunk: pthread_join
     (thread? obj)                        ; #t if obj is a thread 
-    (make-lock)                          ; mutex allocation and pthread_mutext_init
-    (grab-lock lock)                     ; pthread_mutex_lock
-    (release-lock lock)                  ; pthread_mutex_unlock
+    (<a name="makelock">make-lock</a>)                          ; mutex allocation and pthread_mutext_init
+    (<a name="grablock">grab-lock</a> lock)                     ; pthread_mutex_lock
+    (<a name="releaselock">release-lock</a> lock)                  ; pthread_mutex_unlock
     (lock? obj)                          ; #t if obj is a lock
-    (make-thread-variable)               ; pthread_key_create
+    (<a name="makethreadvariable">make-thread-variable</a>)               ; pthread_key_create
     (thread-variable? obj)               ; #t if obj is a thread-variable (pthread_key)
 </pre>
 
@@ -2767,13 +2769,13 @@ is 15, as anyone would expect.
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
-<A NAME="callwithexit"></a>
+<A NAME="callwithexit1"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>call-with-exit and continuation?</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
-<dd><p><b>call-with-exit</b> is call/cc without the ability to jump back into the original context,
+<dd><p><b><a name="callwithexit">call-with-exit</a></b> is call/cc without the ability to jump back into the original context,
 similar to "return" in C.  This takes the place of CL's catch/throw (s7 uses "catch" for error handling).
 </p>
 
@@ -2850,13 +2852,13 @@ This is similar to trying to read from a closed input port.
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
-<A NAME="format"></a>
+<A NAME="format1"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>format, object-&gt;string</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
-<dd><p>s7's built-in format function is very close to that in srfi-48.
+<dd><p>s7's built-in <a name="format">format</a> function is very close to that in srfi-48.
 </p>
 
 <pre>
@@ -3055,7 +3057,7 @@ a modern GUI will leave formatting decisions to a text or table widget.
 </dt>
 
 <dd><p>s7's error handling mimics that of Guile.  An error is signalled
-via the error function, and can be trapped and dealt with via catch.
+via the error function, and can be trapped and dealt with via <a name="catch">catch</a>.
 </p>
 
 <pre>
@@ -3155,7 +3157,7 @@ the error type and whatever other info accompanies it.
 (set! (hook-functions *error-hook*) (list (lambda (tag args) (apply format #t args))))
 </pre>
 
-<p>stacktrace can be called anytime to see the chain of function calls.  Its optional argument
+<p><a name="stacktrace">stacktrace</a> can be called anytime to see the chain of function calls.  Its optional argument
 can be *error-info* to show the stack at the point of the last error,
 a thread object to show that thread's stack, or a continuation to
 show the continuation stack. 
@@ -3226,7 +3228,7 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
 </p>
 
-<p>trace and untrace provide tracing:
+<p><a name="trace">trace</a> and untrace provide tracing:
 </p>
 <pre>
     (define (hiho arg) 
@@ -3282,7 +3284,7 @@ traced function call (that is, global to the function, not the function's local 
 </td></tr></table>
 </dt>
 
-<dd><p>procedure-source, procedure-arity, procedure-documentation, and help provide a look into a
+<dd><p><a name="proceduresource">procedure-source</a>, procedure-arity, procedure-documentation, and help provide a look into a
 scheme function.
 procedure-documentation returns the documentation string associated with a procedure: the initial string in the
 function's body. procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
@@ -3462,14 +3464,14 @@ Environments are first class objects in s7.
 </p>
 
 <pre>
-  (global-environment)          the top-level environment
-  (current-environment)         the currently visible variables and their values
+  (<a name="globalenvironment">global-environment</a>)          the top-level environment
+  (<a name="currentenvironment">current-environment</a>)         the currently visible variables and their values
   (procedure-environment proc)  the environment at the time when proc was defined
   (initial-environment)         the current environment, but all built-in functions have their original values
 
-  (with-environment env . body) evaluate body in the environment env 
+  (<a name="withenvironment">with-environment</a> env . body) evaluate body in the environment env 
 
-  (augment-environment env . bindings)   add bindings to env
+  (<a name="augmentenvironment">augment-environment</a> env . bindings)   add bindings to env
   (augment-environment! env . bindings)
   (symbol-&gt;value sym (env (current-environment)))
   (defined? sym (env (current-environment)))
@@ -4712,7 +4714,7 @@ The examples that follow show:
 </p>
 
 <ul>
-<li><a href="#repl">read-eval-print loop</a>
+<li><a href="#repl">read-eval-print loop (and emacs)</a>
 <li><a href="#defun">define a function with arguments and a returned value, and define a variable </a>
 <li><a href="#defvar">call a scheme function from C, and get/set scheme variable values in C</a>
 <li><a href="#juce">C++ and Juce</a>
@@ -4720,8 +4722,8 @@ The examples that follow show:
 <li><a href="#pwstype">add a new scheme type and a procedure-with-setter</a>
 <li><a href="#functionportexample">redirect display output to a C procedure</a>
 <li><a href="#extendop">extend a built-in operator ("+" in this case)</a>
-<li><a href="#definestar">C-side define* (s7_define_function_star)</a>
-<li><a href="#definemacro">C-side define-macro (s7_define_macro)</a>
+<li><a href="#definestar1">C-side define* (s7_define_function_star)</a>
+<li><a href="#definemacro1">C-side define-macro (s7_define_macro)</a>
 <li><a href="#signal">signal handling (C-C to break out of an infinite loop)</a>
 <li><a href="#vector">direct multidimensional vector element access</a>
 <li><a href="#notify">notification in C that a Scheme variable has been set!</a>
@@ -4806,6 +4808,39 @@ int main(int argc, char **argv)
  */
 </pre>
 </td></tr></table>
+<br>
+<p>Since this reads stdin and writes stdout, it can be run as a scheme subjob of emacs.
+One (inconvenient) way to do this is to set the emacs variable scheme-program-name to
+the name of the exectuable created above ("doc7"), then call the emacs function run-scheme:
+M-x eval-expression in emacs, followed by (setq scheme-program-name "doc7"), then
+M-x run-scheme, and you're talking to s7 in emacs.  Of course, this connection can be
+customized indefinitely.  See, for example, snd-inf.el in the Snd package.
+</p>
+
+<p>To read stdin while working in a GUI-based program is trickier.  In glib/gtk, you can use
+something like this:
+</p>
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<tr><td bgcolor="#fbfbf0">
+<pre>
+static gboolean read_stdin(GIOChannel *source, GIOCondition condition, gpointer data)
+{
+  /* here read from g_io_channel_unix_get_fd(source) and call s7_eval_string */
+  return(true);
+}
+
+/* ... during initialization ... */
+
+GIOChannel *channel;
+channel = g_io_channel_unix_new(STDIN_FILENO);  /* watch stdin */
+stdin_id = g_io_add_watch_full(channel,         /* and call read_stdin above if input is noticed */
+			       G_PRIORITY_DEFAULT, 
+			       (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 
+			       <em class=red>read_stdin</em>, NULL, NULL);
+g_io_channel_unref(channel);
+</pre>
+</td></tr></table>
+
 <br><br>
 
 
@@ -5396,7 +5431,7 @@ int main(int argc, char **argv)
 <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<A NAME="definestar"></a>
+<A NAME="definestar1"></a>
 <p>C-side define* (s7_define_function_star):
 </p>
 
@@ -5458,7 +5493,7 @@ int main(int argc, char **argv)
 <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<A NAME="definemacro"></a>
+<A NAME="definemacro1"></a>
 <p>C-side define-macro (s7_define_macro):
 </p>
 
