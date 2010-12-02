@@ -119,7 +119,7 @@ static char *packLADSPAFilename(const char * pcFilename) {
 /*****************************************************************************/
 
 
-static void unloadLADSPA() {
+static void unloadLADSPA(void) {
 
   long lIndex;
   LADSPAPluginInfo *pvPluginHandle = NULL;
@@ -253,7 +253,7 @@ static void loadLADSPADirectory(const char *pcDirectory) {
 /*****************************************************************************/
 
 
-static void loadLADSPA() {
+static void loadLADSPA(void) {
 
   char *pcBuffer = NULL;
   const char *pcEnd;
@@ -413,7 +413,7 @@ it can be useful when the plugins on the system have changed."
 
 #define S_list_ladspa "list-ladspa"
 
-static XEN g_list_ladspa() {
+static XEN g_list_ladspa(void) {
 
 #define H_list_ladspa "(" S_list_ladspa "): return a list of lists containing \
 information of the LADSPA plugins currently available. For each plugin a \

@@ -4529,7 +4529,7 @@ static bool s7_is_positive(s7_pointer x)
     {
     case NUM_INT:   return(s7_integer(x) > 0);
     case NUM_RATIO: return(s7_numerator(x) > 0);
-    default:        return(s7_real(x) > 0);
+    default:        return(s7_real(x) > 0.0);
     }
 }
 #endif
@@ -5310,7 +5310,9 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	  (strings_are_equal(name + 1, "nul")))
 	return(chars[0]);
 
-      if (name[1] == 'x')     /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e */
+      if (name[1] == 'x')     /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e -- Guile doesn't have this
+			       *    (it is from r6rs -- perhaps it is a bad idea...)
+			       */
 	{
 	  /* sscanf here misses errors like #\x1.4, but make_atom misses #\x6/3,
 	   *   #\x#b0, #\x#e0.0, #\x-0, #\x#e0e100 etc, so we have to do it at
@@ -30381,7 +30383,7 @@ the error type and the info passed to the error handler.");
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
  *
  * position and position-if generics [member-if? assoc-if?]
- *   these would have many tie-ins in Snd (snd-snd 2347)
+ *   these would have many tie-ins in Snd 
  *   both would benefit from an optional start point
  *   char/any str/any any/list|vector|c-obj 
  *   would we use eq? or equal? (leave that to position-if?  isn't sort backwards now?

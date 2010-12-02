@@ -4733,6 +4733,7 @@ The examples that follow show:
 <li><a href="#testhook">Hooks in C and Scheme</a>
 <li><a href="#cload">Load a C module dynamically</a>
 <li><a href="#gmpex">gmp and friends</a>
+<li><a href="#gtkrepl">Gtk-based REPL</a>
 </ul>
 
 <br><br>
@@ -6491,6 +6492,209 @@ int main(int argc, char **argv)
 </td></tr></table>
 <br><br>
 
+
+
+<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<A NAME="gtkrepl"></A>
+<p>In this example, we use Gtk to make a window with a scrolled text widget, running s7
+in a read-eval-print loop.  I've tried to make this as short as possible; see Snd for
+a much more elaborate REPL.  From s7's point of view, the only tricky part involves
+catching errors.
+</p>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<tr><td bgcolor="#fbfbf0">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+/* use Gtk to post a text widget as a REPL.
+ */
+#include &lt;gtk/gtk.h&gt;
+
+#if HAVE_GTK_3
+  #include &lt;gdk/gdk.h&gt;
+  #define Return_Key GDK_KEY_Return
+#else
+  #include &lt;gdk/gdkkeysyms.h&gt;
+  #define Return_Key GDK_Return
+#endif
+
+#include "s7.h"
+static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
+
+#define S7_PROMPT "s7&gt; "
+#define S7_PROMPT_LENGTH 4
+
+static GtkWidget* repl;                        /* the REPL text widget */
+static GtkTextBuffer *repl_buf;                /* its text buffer */
+static GtkTextTag *prompt_not_editable = NULL; /* a tag to make sure the prompt can't be erased */
+
+static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context)
+{
+  /* called when you click the 'x' window decoration */
+  exit(0);
+}
+
+static void evaluate_expression(s7_scheme *sc, char *expression)
+{
+  /* evaluate expression, display result, catching and displaying any errors */
+  if ((expression) &&
+      (*expression))
+    {
+      if ((strlen(expression) &gt; 1) || 
+	  (expression[0] != '\n'))
+	{
+	  const char *errmsg;
+	  int gc_loc = -1;
+	  s7_pointer old_port, result;
+	  GtkTextIter pos;
+
+	  /* open a port to catch error info */
+	  old_port = s7_set_current_error_port(sc, s7_open_output_string(sc));
+	  if (old_port != s7_nil(sc))
+	    gc_loc = s7_gc_protect(sc, old_port);
+	  
+	  result = s7_eval_c_string(sc, expression);
+	  
+	  errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
+	  /* if error, display it, else display result of evaluation */
+	  gtk_text_buffer_get_end_iter(repl_buf, &pos);
+	  
+	  if ((errmsg) && (*errmsg))
+	    gtk_text_buffer_insert(repl_buf, &pos, errmsg, strlen(errmsg));
+	  else 
+	    {
+	      char *result_as_string;
+	      result_as_string = s7_object_to_c_string(sc, result);
+	      if (result_as_string)
+		{
+		  gtk_text_buffer_insert(repl_buf, &pos, "\n", 1);
+		  gtk_text_buffer_insert(repl_buf, &pos, result_as_string, strlen(result_as_string));
+		  free(result_as_string);
+		}
+	    }
+	  
+	  s7_close_output_port(sc, s7_current_error_port(sc));
+	  s7_set_current_error_port(sc, old_port);
+	  if (gc_loc != -1)
+	    s7_gc_unprotect_at(sc, gc_loc);
+	}
+      g_free(expression);
+    }
+}
+
+static char *get_current_expression(void)
+{
+  /* find the enclosing expression and return it.  This could be a lot smarter, but
+   *    for the current example, I'll just look back to the previous prompt, then
+   *    forward for the next prompt or the buffer end.
+   */
+  GtkTextIter pos, previous, next, temp;
+  GtkTextMark *m;
+
+  m = gtk_text_buffer_get_insert(repl_buf);
+  gtk_text_buffer_get_iter_at_mark(repl_buf, &pos, m);
+
+  if (gtk_text_iter_backward_search(&pos, S7_PROMPT, 0, &temp, &previous, NULL))
+    {
+      /* previous now marks the end of the previous prompt */
+      if (!gtk_text_iter_forward_search(&pos, S7_PROMPT, 0, &next, &temp, NULL))
+	gtk_text_buffer_get_end_iter(repl_buf, &next);
+
+      /* next now marks either the start of the next prompt or the end of the buffer */
+      return(gtk_text_buffer_get_text(repl_buf, &previous, &next, true));
+    }
+  return(NULL);
+}
+
+static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  /* called when you type anything in the text widget.
+   *   'data' is our s7 interpreter.
+   */
+  guint key;
+  key = event-&gt;keyval;
+  if (key == Return_Key)
+    {
+      GtkTextIter pos;
+      /* get enclosing expression, evaluate it, display result (or error), prompt for next */
+      evaluate_expression((s7_scheme *)data, get_current_expression());
+
+      /* prompt for next expression */
+      gtk_text_buffer_get_end_iter(repl_buf, &pos);
+      gtk_text_buffer_insert_with_tags(repl_buf, &pos, "\n" S7_PROMPT, 1 + S7_PROMPT_LENGTH, prompt_not_editable, NULL);
+
+      /* make sure the stuff we added is visible */
+      gtk_text_buffer_place_cursor(repl_buf, &pos);
+      gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(repl), gtk_text_buffer_get_insert(repl_buf));
+
+      /* tell Gtk that we already sent the '\n' */
+      g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
+    }
+  return(false);
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  GtkWidget *shell, *scrolled_window;
+  GtkTextIter pos;
+
+  s7 = s7_init();  
+  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
+
+  /* make a window with a scrolled text widget */
+  gtk_init(&argc, &argv);
+  shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
+
+  scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_container_add(GTK_CONTAINER(shell), scrolled_window);
+
+  repl = gtk_text_view_new();
+  repl_buf = gtk_text_buffer_new(NULL);
+  gtk_container_add(GTK_CONTAINER(scrolled_window), repl);
+
+  gtk_text_view_set_buffer(GTK_TEXT_VIEW(repl), repl_buf);
+  gtk_text_view_set_editable(GTK_TEXT_VIEW(repl), true);
+  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(repl), GTK_WRAP_NONE);
+  gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(repl), true);
+  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(repl), 4);
+
+  /* whenever a key is pressed, call repl_key_press */
+  gtk_widget_set_events(repl, GDK_ALL_EVENTS_MASK);
+  g_signal_connect(G_OBJECT(repl), "key_press_event", G_CALLBACK(repl_key_press), (void *)s7);
+
+  gtk_widget_show(repl);
+  gtk_widget_show(scrolled_window);
+  gtk_widget_show(shell);
+
+  /* start with a boldface '&gt;' prompt that can't be stepped on */
+  prompt_not_editable = gtk_text_buffer_create_tag(repl_buf, "prompt_not_editable", 
+						   "editable", false, 
+						   "weight", PANGO_WEIGHT_BOLD,
+						   NULL);
+  gtk_text_buffer_get_end_iter(repl_buf, &pos);
+  gtk_text_buffer_insert_with_tags(repl_buf, &pos, S7_PROMPT, S7_PROMPT_LENGTH, prompt_not_editable, NULL);
+
+  /* make the initial window size reasonable */
+  gdk_window_resize(gtk_widget_get_window(shell), 400, 200);
+  gtk_main();
+}
+
+/* 
+ *   gcc -c s7.c -I. 
+ *   gcc -o listener listener.c s7.o -lm -I. &lt;insert all the gtk flags and libraries here&gt;
+ */
+
+</pre>
+</td></tr></table>
+<br><br>
 
 
 </body>

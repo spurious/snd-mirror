@@ -121,7 +121,7 @@ void append_listener_text(int end, const char *msg)
 
 static GtkTextTag *prompt_not_editable = NULL;
 
-static void append_listener_prompt()
+static void append_listener_prompt(void)
 {
   /* append cr + prompt with not-editable tag */
   if (listener_text)
