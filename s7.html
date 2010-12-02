@@ -95,6 +95,28 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
   <li><a href="#miscellanea">miscellanea</a>
   <li><a href="#s7rundoc">the run macro</a>
   <li><a href="#FFIexamples">FFI examples</a>
+  <ul>
+      <li><a href="#repl">read-eval-print loop (and emacs)</a>
+      <li><a href="#defun">define a function with arguments and a returned value, and define a variable </a>
+      <li><a href="#defvar">call a scheme function from C, and get/set scheme variable values in C</a>
+      <li><a href="#juce">C++ and Juce</a>
+      <li><a href="#sndlib">load sndlib using the XEN functions and macros</a>
+      <li><a href="#pwstype">add a new scheme type and a procedure-with-setter</a>
+      <li><a href="#functionportexample">redirect display output to a C procedure</a>
+      <li><a href="#extendop">extend a built-in operator ("+" in this case)</a>
+      <li><a href="#definestar1">C-side define* (s7_define_function_star)</a>
+      <li><a href="#definemacro1">C-side define-macro (s7_define_macro)</a>
+      <li><a href="#signal">signal handling (C-C to break out of an infinite loop)</a>
+      <li><a href="#vector">direct multidimensional vector element access</a>
+      <li><a href="#notify">notification in C that a Scheme variable has been set!</a>
+      <li><a href="#namespace">Load C defined stuff into a separate namespace</a>
+      <li><a href="#Cerrors">Error handling in C</a>
+      <li><a href="#closure">Closure defined in C</a>
+      <li><a href="#testhook">Hooks in C and Scheme</a>
+      <li><a href="#cload">Load a C module dynamically</a>
+      <li><a href="#gmpex">gmp and friends</a>
+      <li><a href="#gtkrepl">Gtk-based REPL</a>
+  </ul>
 </ul>
 
 <br>
@@ -6603,9 +6625,18 @@ static char *get_current_expression(void)
     {
       /* previous now marks the end of the previous prompt */
       if (!gtk_text_iter_forward_search(&pos, S7_PROMPT, 0, &next, &temp, NULL))
-	gtk_text_buffer_get_end_iter(repl_buf, &next);
-
-      /* next now marks either the start of the next prompt or the end of the buffer */
+	{
+	  gtk_text_buffer_get_end_iter(repl_buf, &next);
+	  /* next now marks the end of the buffer, so there's no complication */
+	  return(gtk_text_buffer_get_text(repl_buf, &previous, &next, true));
+	}
+      /* here next marks the start of the next prompt, but that probably includes
+       *   the result printout from an earlier evaluation.  s7_eval_c_string evaluates
+       *   all the expressions in its string, returning the value of the last one,
+       *   but we want the first.  We'll backup two '\n'.
+       */
+      gtk_text_iter_backward_search(&next, "\n", 0, &pos, &temp, NULL);     
+      gtk_text_iter_backward_search(&pos, "\n", 0, &next, &temp, NULL);      
       return(gtk_text_buffer_get_text(repl_buf, &previous, &next, true));
     }
   return(NULL);
@@ -6613,7 +6644,7 @@ static char *get_current_expression(void)
 
 static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
-  /* called when you type anything in the text widget.
+  /* called when we type anything in the text widget.
    *   'data' is our s7 interpreter.
    */
   guint key;
@@ -6626,14 +6657,16 @@ static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 
       /* prompt for next expression */
       gtk_text_buffer_get_end_iter(repl_buf, &pos);
-      gtk_text_buffer_insert_with_tags(repl_buf, &pos, "\n" S7_PROMPT, 1 + S7_PROMPT_LENGTH, prompt_not_editable, NULL);
+      gtk_text_buffer_insert_with_tags(repl_buf, &pos, 
+                                       "\n" S7_PROMPT, 1 + S7_PROMPT_LENGTH, prompt_not_editable, NULL);
 
       /* make sure the stuff we added is visible */
       gtk_text_buffer_place_cursor(repl_buf, &pos);
       gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(repl), gtk_text_buffer_get_insert(repl_buf));
 
       /* tell Gtk that we already sent the '\n' */
-      g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
+      g_signal_stop_emission((gpointer)w, 
+                             g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
     }
   return(false);
 }
@@ -6653,7 +6686,8 @@ int main(int argc, char **argv)
   g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
 
   scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), 
+                                 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_container_add(GTK_CONTAINER(shell), scrolled_window);
 
   repl = gtk_text_view_new();
@@ -6680,7 +6714,8 @@ int main(int argc, char **argv)
 						   "weight", PANGO_WEIGHT_BOLD,
 						   NULL);
   gtk_text_buffer_get_end_iter(repl_buf, &pos);
-  gtk_text_buffer_insert_with_tags(repl_buf, &pos, S7_PROMPT, S7_PROMPT_LENGTH, prompt_not_editable, NULL);
+  gtk_text_buffer_insert_with_tags(repl_buf, &pos, 
+                                   S7_PROMPT, S7_PROMPT_LENGTH, prompt_not_editable, NULL);
 
   /* make the initial window size reasonable */
   gdk_window_resize(gtk_widget_get_window(shell), 400, 200);
