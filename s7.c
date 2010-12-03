@@ -15206,7 +15206,7 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 
   /* make_object sets the T_PROCEDURE bit if the object has an apply function,
    *   but we currently return (procedure? "hi") -> #f, so we can't simply use
-   *   is_procedure.  s7_define_macro (T_C_MACRO) also sets that bit.
+   *   is_procedure. 
    * 
    * Unfortunately much C code depends on s7_is_procedure treating applicable
    *  objects and macros as procedures.  Ideally we'd have s7_is_applicable.
@@ -15282,6 +15282,8 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
     }
 #endif
 
+  if (is_c_macro(p))
+    return(s7_wrong_type_arg_error(sc, "procedure-source", 0, p, "a scheme macro"));
   if ((!is_procedure(p)) &&
       (!is_macro(p)) &&
       (!is_bacro(p)))
@@ -15348,7 +15350,7 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 {
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  set_type(func, T_C_MACRO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_ANY_MACRO | T_DONT_COPY_CDR);
+  set_type(func, T_C_MACRO | T_SIMPLE | T_DONT_COPY | T_ANY_MACRO | T_DONT_COPY_CDR); /* this used to include T_PROCEDURE */
   s7_define(sc, s7_global_environment(sc), make_symbol(sc, name), func);
 }
 
@@ -29330,15 +29332,15 @@ s7_scheme *s7_init(void)
   sc->read_line_buf = NULL;
   sc->read_line_buf_size = 0;
 
-  sc->NIL = &sc->_NIL;
-  sc->T = &sc->_T;
-  sc->F = &sc->_F;
-  sc->EOF_OBJECT = &sc->_EOF_OBJECT;
+  sc->NIL =         &sc->_NIL;
+  sc->T =           &sc->_T;
+  sc->F =           &sc->_F;
+  sc->EOF_OBJECT =  &sc->_EOF_OBJECT;
   sc->UNSPECIFIED = &sc->_UNSPECIFIED;  
-  sc->UNDEFINED = &sc->_UNDEFINED;
-  sc->NO_VALUE = &sc->_NO_VALUE;  
-  sc->ELSE = &sc->_ELSE;
-  sc->TEMP_CELL = &sc->_TEMP_CELL;
+  sc->UNDEFINED =   &sc->_UNDEFINED;
+  sc->NO_VALUE =    &sc->_NO_VALUE;  
+  sc->ELSE =        &sc->_ELSE;
+  sc->TEMP_CELL =   &sc->_TEMP_CELL;
   sc->TEMP_CELL_1 = &sc->_TEMP_CELL_1;
 
   set_type(sc->NIL, T_NIL | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
@@ -30415,8 +30417,6 @@ the error type and the info passed to the error handler.");
  ;map argument 1, lambda, is symbol but should be a procedure
 
  *
- * in s7.html: example of C threads? s7 thread for GUI?
- * 
  * things to fix: nonce-symbols need to be garbage collected
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
  *                could the profiler give block counts as well?

@@ -13051,6 +13051,25 @@ this prints:
         count)
       2)
 
+(let ((c #f)
+      (vals '()))
+  (let ((val (+ 1 2 (call/cc (lambda (r) (set! c r) (r 3))))))
+    (set! vals (cons val vals))
+    (if (< val 20) (c (+ val 1)))
+    (test vals '(22 18 14 10 6))))
+(let ((c #f)
+      (vals '()))
+  (let ((val (+ 1 2 (call/cc (lambda (r) (set! c r) (r 3))))))
+    (set! vals (cons val vals))
+    (if (< val 20) (apply c vals))
+    (test vals '(36 18 9 6))))
+(let ((c #f)
+      (vals '()))
+  (let ((val (+ 1 2 (call/cc (lambda (r) (set! c r) (r 3))))))
+    (set! vals (cons val vals))
+    (if (< val 20) (c (apply values vals)))
+    (test vals '(36 18 9 6))))
+
 (test (procedure? (call/cc call/cc)) #t)
 (test (call/cc (lambda (c) (0 (c 1)))) 1)
 (test (call/cc (lambda (k) (k "foo"))) "foo")
@@ -13710,6 +13729,7 @@ who says the continuation has to restart the map from the top?
 
 (test ((call-with-exit (lambda (go) (go go))) eval) 'error)
 (test ((call/cc (lambda (go) (go go))) eval) eval)
+(test (call-with-exit quasiquote) 'error)
 
 (test (call-with-exit (lambda (go) (if (go 1) (go 2) (go 3)))) 1)
 (test (call-with-exit (lambda (go) (set! (go 1) 2))) 'error) 
@@ -16591,6 +16611,8 @@ why are these different (read-time `#() ? )
   (test (procedure-arity abs abs) 'error)
   (test (procedure-source) 'error)
   (test (procedure-source abs abs) 'error)
+  (test (procedure-source quasiquote) 'error)
+  (test (let () (define-macro (hi a) `(+ 1 ,a)) (cadr (caddr (procedure-source hi)))) '(lambda (a) ({list} '+ 1 a)))
 
   (let ((p (make-procedure-with-setter (lambda (a) (+ a 1)) (lambda (a b) (+ a b)))))
     (test (object->string (procedure-source p)) "(lambda (a) (+ a 1))")
@@ -16610,6 +16632,7 @@ why are these different (read-time `#() ? )
   (test (make-list 1 '()) '(()))
   (test (make-list 2) '(#f #f))
   (test (make-list 2 1) '(1 1))
+  (test (make-list 2/1 1) '(1 1))
   (test (make-list 2 (make-list 1 1)) '((1) (1)))
   (test (make-list -1) 'error)
   (test (make-list -0) '())
@@ -16619,7 +16642,7 @@ why are these different (read-time `#() ? )
   (for-each
    (lambda (arg)
      (test (make-list arg) 'error))
-   (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i '() #t 'hi '#(()) (list 1 2 3) '(1 . 2) "hi" (- (real-part (log 0.0)))))
+   (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i 0.0 1.0 '() #t 'hi '#(()) (list 1 2 3) '(1 . 2) "hi" (- (real-part (log 0.0)))))
 
   (for-each
    (lambda (arg)
@@ -16988,6 +17011,10 @@ why are these different (read-time `#() ? )
   (test (macro? pi) #f)
   (test (macro? quasiquote) #t) ; s7_define_macro in s7.c
   (test (let ((m quasiquote)) (macro? m)) #t)
+  (test (macro? macroexpand) #t)
+  ;; not ideal: (let () (define (hi a) (+ a 1)) (macroexpand (hi 2))) ->
+  ;;              ;+ argument 1, (hi 2), is pair but should be a number
+  ;;              ;    (+ a 1)
   (for-each
    (lambda (arg)
      (test (macro? arg) #f))
@@ -18738,6 +18765,7 @@ why are these different (read-time `#() ? )
 (test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
 
 
+;;; make-procedure-with-setter
 (test (let ((local 123))
 	(define pws-test (make-procedure-with-setter
 			  (lambda () local)
@@ -18862,6 +18890,14 @@ why are these different (read-time `#() ? )
     (test x 2)
     (set! (pws) 3)
     (test x 5)))
+
+(let ((p1 (make-procedure-with-setter (lambda () 1) (lambda (a) a))))
+  (let ((p2 (make-procedure-with-setter p1 p1)))
+    (test (p2) 1)))
+(let () (define-macro (hi a) `(+ ,a 1)) (test (make-procedure-with-setter hi hi) 'error))
+(test (make-procedure-with-setter quasiquote call/cc) 'error)
+(test ((make-procedure-with-setter call-with-exit call/cc) (lambda (a) (a 1))) 1)
+
 
 ;; generic length/reverse/copy/fill!
 (test (length (list 1 2)) 2)
