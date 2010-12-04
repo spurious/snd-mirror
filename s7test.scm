@@ -1,4 +1,4 @@
-;;; s7 test suite
+;; s7 test suite
 ;;;
 ;;; sources include 
 ;;;   clisp test suite
@@ -1050,6 +1050,8 @@ yow!! -- I'm using mpc_cmp
   (test (char-upcase) 'error)
   (test (char-upcase #\a #\b) 'error)
   (test (char-upcase #<eof>) 'error)
+  (test (char-upcase #f) 'error)
+  (test (char-upcase (list)) 'error)
 
 
   
@@ -4825,7 +4827,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (let ((L '#(#(#(1 2 3) #(4 5 6)) #(#(7 8 9) #(10 11 12))))) (vector-ref (L one) zero)) '#(7 8 9))
   (test (let ((L '#(#(#(1 2 3) #(4 5 6)) #(#(7 8 9) #(10 11 12))))) ((vector-ref (L one) zero) two)) 9))
 
-
+(test ((#(#(:hi) #\a (3)) (#("hi" 2) 1)) (#2d((#() ()) (0 #(0))) 1 ('(cons 0) 1))) 3)
+(test (#(1 2 3) (#(1 2 3) 1)) 3)
+(test ((#(#(1 2)) (#(1 0) 1)) (#(3 2 1 0) 2)) 2)
+(test (apply min (#(1 #\a (3)) (#(1 2) 1))) 3) ; i.e vector ref here 2 levels -- (#(1 2) 1) is 2 and (#(1 #\a (3)) 2) is (3) 
 
 
 ;;; vector-set!
@@ -5134,6 +5139,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (vector-dimensions (vector-ref #2d((1 2 3) (3 4 5)) 0)) '(3))
 (test (vector-dimensions (vector-ref #3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2))) 0)) '(2 3))
 (test (vector-dimensions (vector-ref #3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2))) 0 1)) '(3))
+(test (set! (vector-dimensions #(1 2)) 1) 'error)
+(test (let ((v #(1 2 3))) (set! (car (vector-dimensions v)) 0) v) #(1 2 3))
 
 (let ((old-len *vector-print-length*))
   (let ((vect1 #3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2))))
@@ -8557,6 +8564,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
   
 (test (close-output-port (open-input-string "hiho")) 'error)
 (test (close-input-port (open-output-string)) 'error)
+(test (set! (port-filename) "hiho") 'error)
+(test (set! (port-closed (current-output-port)) "hiho") 'error)
 
 (let* ((new-error-port (open-output-string))
        (old-error-port (set-current-error-port new-error-port)))
@@ -9280,6 +9289,12 @@ this prints:
 (test (object->string "h\\i" #f) "h\\i")
 (test (object->string -1.(list? -1e0)) "-1.0")
 
+(test (object->string catch) "catch")
+(test (object->string lambda) "lambda")
+(test (object->string dynamic-wind) "dynamic-wind")
+(test (object->string else) "else") ; this depends on previous code
+(test (object->string do) "do")
+
 (for-each
  (lambda (arg)
    (test (object->string 1 arg) 'error))
@@ -9797,6 +9812,7 @@ this prints:
 (test (map (lambda args (apply + args)) '(0 1 2) '(3 4 5) '(6 7 8) '(9 10 11) '(12 13 14)) '(30 35 40))
 (test (map (lambda (a b . args) (+ a b (apply + args))) '(0 1 2) '(3 4 5) '(6 7 8) '(9 10 11) '(12 13 14)) '(30 35 40))
 (test (map (lambda (a b . args) (+ a b (apply + args))) '(0 1 2) '(3 4 5)) '(3 5 7))
+(test (map (lambda args args) '(1 2 3)) '((1) (2) (3)))
 (test (map + () ()) ())
 (test (map + (#(#() #()) 1)) '())
 (test (map + #(1) #(1) #(1)) '(3))
@@ -9885,6 +9901,8 @@ this prints:
 (test (map values '(1 2 3)) '(1 2 3))
 ;(test ((lambda* ('a) quote) 1) 1)
 
+;;; it's not ideal that (apply lambda '() '(1)) -> closure, but (map lambda '(()) '((1))) -> error that lambda is not a procedure
+
 #|
 (let ((val '())) (list (map (lambda a (set! val (cons a val)) a) '(1 2 3)) val))
 ((#3=(1) #2=(2) #1=(3)) (#1# #2# #3#))
@@ -9926,6 +9944,16 @@ this prints:
 (test (map (lambda (a b) (set-cdr! a b) b) '((1) (2) (3)) '(4 5 6)) '(4 5 6))
 (test (let ((str "0123")) (set! (str 2) #\null) (map append str)) '(#\0 #\1 #\null #\3))
 
+(test (map ((lambda () abs)) '(-1 -2 -3)) '(1 2 3))
+(test (apply map ((lambda () abs)) (list (list -1 -2 -3))) '(1 2 3))
+(test (apply apply map ((lambda () abs)) (list (list (list -1 -2 -3)))) '(1 2 3))
+(test (apply apply apply map ((lambda () abs)) '((((-1 -2 -3))))) '(1 2 3))
+(test (apply apply apply (list (list map abs (list (list -1 -2 -3))))) '(1 2 3))
+(test (apply + (apply apply apply (list (list map abs (list (list -1 -2 -3)))))) 6)
+(test (apply map vector (values (list (vector 1 2)))) '(#(1) #(2)))
+(test (apply map string (list "123")) '("1" "2" "3"))
+(test (map string "123") '("1" "2" "3"))
+
 (for-each
  (lambda (arg)
    (test (map arg (list 1)) 'error))
@@ -9957,6 +9985,13 @@ this prints:
 (test (map map (list abs) (list (list -1))) '((1)))
 (test (map map (list map) (list (list abs)) (list (list (list -1)))) '(((1))))
 (test (map map (list map) (list (list map)) (list (list (list abs))) (list (list (list (list -1 -3))))) '((((1 3)))))
+(test (map map (list lcm) (vector #(1 2))) '((1 2)))
+(test (map map (list integer?) (list (vector "hi" 1 2/3))) '((#f #t #f)))
+(test (map map (list char-lower-case?) (list "hAba")) '((#t #f #t #t)))
+(test (map map (list char-lower-case? char-upper-case?) (list "hAba" "HacDf")) '((#t #f #t #t) (#t #f #f #t #f)))
+(test (map map (list + -) (list (list 1 2) (list 3 4))) '((1 2) (-3 -4)))
+(test (map map (list map map) (list (list + -) (list - +)) '(((1 2) (3 4)) ((4 5) (6 7)))) '(((1 2) (-3 -4)) ((-4 -5) (6 7))))
+
 (test (let () (define (mrec a b) (if (<= b 0) (list a) (map mrec (list a) (list (- b 1))))) (mrec (list 1 2) 5)) '(((((((1 2))))))))
 (test (map append '(3/4)) '(3/4))
 (test (map list '(1.5)) '((1.5)))
@@ -10021,6 +10056,7 @@ this prints:
 (test (map abs '(1 . 2)) '(1))
 ;; problematic because last thing is completely ignored:
 (test (map abs '(1 . "hi")) '(1))
+(test (map floor '(1 . "hi")) '(1))
 
 (test (map append (make-vector (list 2 0))) '())
 
@@ -11095,6 +11131,7 @@ this prints:
 (test ((lambda (a) "this is a doc string" a) 1) 1)
 ;;; ideally ((lambda (a) "hiho" (define x 1) x) 1) -> 1 but I'm not sure it's r5rs-ish
 (test (let ((g (lambda () '3))) (= (g) 3)) #t)
+(test ((((lambda () lambda)) () 1)) 1)
 
 (test ((lambda lambda lambda) 'x) '(x))
 					;(test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) 3)
@@ -11474,6 +11511,15 @@ this prints:
 (let ((lst (list 1 2 3)))
    (set! (cdr (cddr lst)) lst)
    (test (apply + lst) 'error))
+
+(test (apply values (values (cons 1 ()))) 1)
+(test (+ (apply values (values (list 1 2)))) 3)
+(test (port-filename) (apply port-filename (list)))
+(num-test (apply atan (#(1 #\a (3)) (max (values 1 2)))) 1.2490457723983)
+(test (apply #2D((1 2) (3 4)) (list (acosh 1))) #(1 2))
+(test ((apply values (list + 1 2)) 3) 6)
+(num-test (* 0-2i (acosh (asin 0.0))) pi)
+(test (apply truncate (lognot (min 1)) (list)) -2)
 
 (test (apply dynamic-wind (list (lambda () #f) (lambda () 1) (lambda () #f))) 1)
 (test (apply call-with-exit (list (lambda (exit) 1))) 1)
@@ -13193,6 +13239,7 @@ this prints:
 (test (call/cc (lambda (return) (apply return (list  (cons 1 2))) (format #t "; call/cc: we shouldn't be here!"))) (cons 1 2))
 (test (procedure? (call-with-exit (lambda (return) (call-with-exit return)))) #t)
 (test (call-with-exit (lambda (return) #f) 1) 'error)
+(test (+ (call-with-exit ((lambda () (lambda (k) (k 1 2 3)))))) 6)
 
 (test (let ((x 0))
 	(define (quit z1) (z1 1) (set! x 1))
@@ -15586,6 +15633,51 @@ why are these different (read-time `#() ? )
 (test (catch-test-1 'a3) '(a1 a2 a3))
 (test (catch-test-1 'a4) '(a1 a2 a3 a4))
 
+(test (catch #t (catch #t (lambda () (lambda () 1)) (lambda args 'oops)) (lambda args 'error)) 1)
+(test (catch #t (catch #t (lambda () (error 'oops)) (lambda args (lambda () 1))) (lambda args 'error)) 1)
+(test ((catch #t (lambda () (error 'oops)) (lambda args (lambda () 1)))) 1)
+(test ((catch #t (lambda () (error 'oops)) (catch #t (lambda () (lambda args (lambda () 1))) (lambda args 'error)))) 1)
+(test (catch #t (dynamic-wind (lambda () #f) (lambda () (lambda () 1)) (lambda () #f)) (lambda args 'error)) 1)
+(test (dynamic-wind (catch #t (lambda () (lambda () #f)) (lambda args 'error)) (lambda () 1) (lambda () #f)) 1)
+(test (dynamic-wind ((lambda () (lambda () #f))) (lambda () 1) (((lambda () (lambda () (lambda () #t)))))) 1)
+(test (catch #t ((lambda () (lambda () 1))) (lambda b a)) 1)
+(test (map (catch #t (lambda () abs) abs) '(-1 -2 -3)) '(1 2 3))
+(test (catch + (((lambda () lambda)) () 1) +) 1)
+(test (catch #t + +) 'error)
+(test (string? (catch + s7-version +)) #t)
+(test (string? (apply catch + s7-version (list +))) #t)
+(test (catch #t (lambda () (catch '#t (lambda () (error '#t)) (lambda args 1))) (lambda args 2)) 1)
+(test (catch #t (lambda () (catch "hi" (lambda () (error "hi")) (lambda args 1))) (lambda args 2)) 2) ; guile agrees with this
+(test (let ((str (list 1 2))) (catch #t (lambda () (catch str (lambda () (error str)) (lambda args 1))) (lambda args 2))) 1)
+(test (let ((str "hi")) (catch #t (lambda () (catch str (lambda () (error str)) (lambda args 1))) (lambda args 2))) 2) ; this doesn't make sense
+
+#|
+(for-each 
+ (lambda (str) 
+   (format #t "~A ~A~%" str (catch #t (lambda () 
+					(catch str (lambda () 
+						     (error str))  ; use throw for guile
+					       (lambda args 1))) 
+				   (lambda args 2)))) 
+ (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
+        s7     Guile
+"hi"    2       2
+()      1       2
+(1)     1       2
+(1 . 2) 1       2
+#f      1       2
+a-symbol 1      1
+#(#<unspecified> #<unspecified> #<unspecified>) 1 2
+abs     1       2
+3.14    1       2
+3/4     1       2
+1+1i    1       2
+#t      1       1
+#<unspecified> 1 2
+#<closure> 1    2
+|#
+
 (let ((x 0))
   (catch #t
 	 (lambda ()
@@ -16229,7 +16321,9 @@ why are these different (read-time `#() ? )
   (test (procedure-arity) 'error)
   (test (procedure-arity abs abs) 'error)
   (test (procedure-arity "hi") 'error)
-					;(test (procedure-arity vector-set!) '(3 0 #f)) ; can be '(3 0 #t)
+  (test (let () (set! (car (procedure-arity abs)) 0) (procedure-arity abs)) '(1 0 #f))
+
+  (test (procedure-arity vector-set!) '(3 0 #t))
   (test (let ((hi (lambda () 1))) (procedure-arity hi)) '(0 0 #f))
   (test (let ((hi (lambda (a) 1))) (procedure-arity hi)) '(1 0 #f))
   (test (let ((hi (lambda (a b) 1))) (procedure-arity hi)) '(2 0 #f))
@@ -16356,6 +16450,9 @@ why are these different (read-time `#() ? )
   (test (string=? (let () (define* (hi (a "a string")) a) (procedure-documentation hi)) "") #t)
   (test (string=? (let () (define* (hi (a "a string")) "another string" a) (procedure-documentation hi)) "another string") #t)
   (test (string=? (let () (define (hi a) "hi doc" (define (ho b) "ho doc" b) (ho a)) (procedure-documentation hi)) "hi doc") #t)
+  (test (set! (procedure-documentation abs) "X the unknown") 'error)
+  (test (let ((str (procedure-documentation abs))) (set! ((procedure-documentation abs) 1) #\x) (equal? str (procedure-documentation abs))) #t)
+  (test (let ((str (procedure-documentation abs))) (fill! (procedure-documentation abs) #\x) (equal? str (procedure-documentation abs))) #t)
   
   (for-each
    (lambda (arg)
@@ -42857,6 +42954,10 @@ why are these different (read-time `#() ? )
   (test (+ 0 inf.0) inf.0)
   (test (- 0 inf.0) -inf.0)
   (test (/ 0 inf.0) 0.0)
+
+  (num-test (real-part (+ 2 0+1/0i)) 2)
+  (num-test (imag-part (+ 0+2i 1/0)) 2)
+
   (test (max 0 inf.0) inf.0)
   (test (min 0 inf.0) 0)
   (test (= 0 inf.0) #f)

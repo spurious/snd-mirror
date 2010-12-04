@@ -6922,7 +6922,9 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	return(s7_make_real(sc, pow(x, y)));
     }
   
-  /* (expt 0+i 1e+16) = 0.98156860153485-0.19111012657867i ? */
+  /* (expt 0+i 1e+16) = 0.98156860153485-0.19111012657867i ? 
+   * (expt 0+i 1+1/0i) = 0.0 ??
+   */
   return(s7_from_c_complex(sc, cpow(s7_complex(n), s7_complex(pw))));
 }
 
@@ -18589,6 +18591,8 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches tag (#t matches all), the handler is called"
   s7_pointer p;
 
+  /* should this check for a tag that can't possibly be eq? to anything that error might throw? (a string for example)
+   */
   if (!is_thunk(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, "catch", 2, cadr(args), "a thunk"));
   if (!is_procedure(caddr(args)))
