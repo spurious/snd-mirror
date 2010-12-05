@@ -14636,6 +14636,10 @@ If its first argument is a list, the list is copied (despite the '!')."
   return(sc->F);
   
   /* if the comparison function waffles, sort! can hang: (sort! '(1 2 3) =)
+   *    but (sort! '(1 2) =) is ok, as is (sort! (list 1/0 1/0 1/0) =)
+   *    given NaNs and infs, it seems no numerical sort is completely safe.
+   * Could we count the comparisons, and if more than (say) n^2 give up with error?
+   *    or have another sort guaranteed not to hang? or optional arg #t=safe?
    */
 }
 
@@ -20624,7 +20628,10 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 	      
 	      orig_str[k] = endc;
 	      if (*str != 0) port_string_point(pt)--;
-	      
+	      /* skipping the null has one minor consequence:
+	       *    (let ((str "(+ 1 2 3)")) (set! (str 2) #\null) (eval-string str)) ; "(+\x001 2 3)" -> 6
+	       *    (let ((str "(+ 1 2 3)")) (set! (str 3) #\null) (eval-string str)) ; "(+ \x00 2 3)" -> missing paren error
+	       */
 	      return(result);
 	    }
 	  

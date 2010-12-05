@@ -7059,6 +7059,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (call-with-input-string "(+ 1 2)" input-port?) #t)
 (test (let ((this-file (open-input-string "(+ 1 2)"))) (let ((res (input-port? this-file))) (close-input-port this-file) res)) #t)
 
+;;; read
+;;; write
 (test (+ 100 (call-with-input-string "123" (lambda (p) (values (read p) 1)))) 224)
 
 (test (call-with-input-string
@@ -7098,6 +7100,23 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (call-with-input-file "empty-file" (lambda (p) (and (string=? (symbol->string (read p)) "a") (eof-object? (read p))))) #t) ; Guile also returns a symbol here
 (test (call-with-input-file "empty-file" (lambda (p) (and (char=? (integer->char (read-byte p)) #\a) (eof-object? (read-byte p))))) #t)
 (test (call-with-input-file "empty-file" (lambda (p) (and (string=? (read-line p) "a") (eof-object? (read-line p))))) #t)
+
+(test (call-with-input-string "(lambda (a) (+ a 1))" (lambda (p) (let ((f (eval (read p)))) (f 123)))) 124)
+(test (call-with-input-string "(let ((x 21)) (+ x 1))" (lambda (p) (eval (read p)))) 22)
+(test (call-with-input-string "(1 2 3) (4 5 6)" (lambda (p) (list (read p) (read p)))) '((1 2 3) (4 5 6)))
+
+(test (let ()
+	(call-with-output-file "empty-file" (lambda (p) (write '(lambda (a) (+ a 1)) p)))
+	(call-with-input-file "empty-file" (lambda (p) (let ((f (eval (read p)))) (f 123)))))
+      124)
+(test (let ()
+	(call-with-output-file "empty-file" (lambda (p) (write '(let ((x 21)) (+ x 1)) p)))
+	(call-with-input-file "empty-file" (lambda (p) (eval (read p)))))
+      22)
+(test (let ()
+	(call-with-output-file "empty-file" (lambda (p) (write '(1 2 3) p) (write '(4 5 6) p)))
+	(call-with-input-file "empty-file" (lambda (p) (list (read p) (read p)))))
+      '((1 2 3) (4 5 6)))
 
 (call-with-output-file "empty-file" (lambda (p) (for-each (lambda (c) (write-char c p)) "#b11")))
 (test (call-with-input-file "empty-file" (lambda (p) 
@@ -10722,7 +10741,7 @@ this prints:
 (test (cond ((list) 3) (#t 4)) 3)
 ;;; (cond (1 1) (asdf 3)) -- should this be an error?
 (test (cond (+ 0)) 0)
-
+(test (cond (lambda ())) ())
 (test (cond . ((1 2) ((3 4)))) 2)
 
 (for-each
@@ -15433,6 +15452,8 @@ why are these different (read-time `#() ? )
 (test (equal? (sort! '#() <) '#()) #t)
 (test (sort! '(1 2 . 3) <) 'error)
 (test (sort! #(1 3 8 7 5 6 4 2) (lambda (a b) (if (even? a) (or (odd? b) (< a b)) (and (odd? b) (< a b))))) #(2 4 6 8 1 3 5 7))
+(let ((ninf (real-part (log 0.0))) (pinf (- (real-part (log 0.0))))) (test (sort! (list pinf 0.0 ninf) <) (list ninf 0.0 pinf)))
+(test (sort! '(1 1 1) <) '(1 1 1))
 
 (test (call/cc (lambda (return) (sort! '(1 2 3) (lambda (a b) (return "oops"))))) "oops")
 
@@ -15492,6 +15513,7 @@ why are these different (read-time `#() ? )
 (test (sort! (list "hi" "ho") <) 'error)
 (test (sort! '(1 2 #t) <) 'error)
 (test (sort! '(1 2 . #t) <) 'error)
+(test (sort! '(#\c #\a #\b) <) 'error)
 
 (test (sort! (list) <) '())
 (test (sort! (vector) <) #())
@@ -15504,6 +15526,7 @@ why are these different (read-time `#() ? )
                    (let ((val (map (lambda (n) (+ n 1)) (list a b))))
                      (apply < val)))))
       '(1 1 3 4 12))
+(test (sort! '(#\c #\a #\b) (lambda (a b) (string<? (string a) (string b)))) '(#\a #\b #\c))
 
 (for-each
  (lambda (arg)
