@@ -41984,7 +41984,7 @@ EDITS: 1
   
   
   (define (gammln xx)			;Ln(gamma(xx)), xx>0 
-    (let* ((stp 2.5066282746310005d0)
+    (let* ((stp 2.5066282746310005e0)
 	   (x xx)
 	   (tmp (+ x 5.5))
 	   (tmp1 (- tmp (* (+ x 0.5) (log tmp))))

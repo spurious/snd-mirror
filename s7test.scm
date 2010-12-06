@@ -8930,8 +8930,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
 ;(test (keyword? '#:#) #t) ; probably not for long... (Guile compatibility)
 (test (char? #\#) #t)
-(test (car `(,.1d0)) .1)
-(test (car `(,.1S0)) .1)
+(test (car `(,.1e0)) .1)
+(test (car `(,.1E0)) .1)
 (test (let ((x "hi")) (set! x"asdf") x) "asdf")
 (test (let ((x 1)) (set! x(list 1 2)) x) '(1 2))
 (num-test (let ((x 1)) (set!;"
@@ -19571,11 +19571,13 @@ abs     1       2
 (num-test(cos(sin(log(tan(*))))) 0.90951841537482)
 (num-test (asinh (- 9223372036854775807)) -44.361419555836)
 (num-test (imag-part (asin -9223372036854775808)) 44.361419555836)
-(num-test (string->number "1l1") 10.0)
-(num-test (string->number "1l1+1l1i") 10+10i)
-(num-test (string->number "1l11+11l1i") 100000000000+110i)
-(num-test (string->number "#d1d1") 10.0)
-(num-test (string->number "#d0001d0001") 10.0)
+(if (provided? 'dfls-exponents)
+    (begin
+      (num-test (string->number "1l1") 10.0)
+      (num-test (string->number "1l1+1l1i") 10+10i)
+      (num-test (string->number "1l11+11l1i") 100000000000+110i)
+      (num-test (string->number "#d1d1") 10.0)
+      (num-test (string->number "#d0001d0001") 10.0)))
 (test (#|#<|# = #|#f#|# #o#e0 #|#>|# #e#o0 #|#t#|#) #t)
 (num-test (apply * (map (lambda (r) (sin (* pi (/ r 130)))) (list 1 67 69 73 81 97))) (/ 1.0 64))
 (num-test (max 0(+)(-(*))1) 1)
@@ -21533,9 +21535,9 @@ abs     1       2
 	(define-constant double-float-epsilon 1.1102230246251568e-16)
 	(define-constant double-float-negative-epsilon 5.551115123125784e-17)
 	(define-constant least-negative-double-float -2.2250738585072014e-308)
-	(define-constant least-negative-long-float -5.676615526003731344L-646456994)
+	(define-constant least-negative-long-float -5.676615526003731344e-646456994)
 	(define-constant least-negative-normalized-double-float -2.2250738585072014e-308)
-	(define-constant least-negative-normalized-long-float -5.676615526003731344L-646456994)
+	(define-constant least-negative-normalized-long-float -5.676615526003731344e-646456994)
 	(define-constant least-negative-normalized-short-float -1.1755e-38)
 	(define-constant least-negative-normalized-single-float -1.1754944e-38)
 	(define-constant least-negative-short-float -1.1755e-38)
@@ -21552,7 +21554,7 @@ abs     1       2
 	(define-constant long-float-negative-epsilon 2.7105054312137610853e-20)
 	(define-constant most-negative-double-float -1.7976931348623157e308)
 	;; most-negative-fixnum 
-	(define-constant most-negative-long-float -8.8080652584198167656L646456992) 
+	(define-constant most-negative-long-float -8.8080652584198167656e646456992) 
 	(define-constant most-negative-short-float -3.4028e38)
 	(define-constant most-negative-single-float -3.4028235e38)
 	(define-constant most-positive-double-float 1.7976931348623157e308)
@@ -32964,17 +32966,19 @@ abs     1       2
 (num-test (tanh -2.0e+00-9.42512322775237976202e+00i) -9.6402758819508310550e-1-2.439339541035071690e-5i)
 (num-test (tanh 50) 1.0)
 
-(num-test (tanh 1s13)    1s0)
-(num-test (tanh 1s3)     1s0)
-(num-test (tanh 1s2)     1s0)
-(num-test (tanh 1s1)     1s0)
-(num-test (tanh 1l0)     0.7615941559557648881L0)
-(num-test (tanh 1l1)     0.9999999958776927636L0)
-(num-test (tanh 1l100)   1L0)
-(num-test (tanh 1f10)    1f0)
-(num-test (tanh 1L-10)   1L-10)
-(num-test (tanh 1L-17)   1L-17)
-(num-test (tanh 1L-47)   1L-47)
+(if (provided? 'dfls-exponents)
+    (begin
+      (num-test (tanh 1s13)    1s0)
+      (num-test (tanh 1s3)     1s0)
+      (num-test (tanh 1s2)     1s0)
+      (num-test (tanh 1s1)     1s0)
+      (num-test (tanh 1l0)     0.7615941559557648881L0)
+      (num-test (tanh 1l1)     0.9999999958776927636L0)
+      (num-test (tanh 1l100)   1L0)
+      (num-test (tanh 1f10)    1f0)
+      (num-test (tanh 1L-10)   1L-10)
+      (num-test (tanh 1L-17)   1L-17)
+      (num-test (tanh 1L-47)   1L-47)))
 
 #|
 ;; this is a reader problem
@@ -49951,117 +49955,120 @@ abs     1       2
 	    (num-test (* 2 12345678901234567890+12345678901234567890i) 2.469135780246913578E19+2.469135780246913578E19i)
 	    (num-test (- 2 12345678901234567890+12345678901234567890i) -12345678901234567890-12345678901234567890i)
 	    
-	    (test (> (string->number "1.0L100") 1.0e98) #t)
-	    (test (> (string->number "1.0l100") 1.0e98) #t)
-	    (test (> (string->number "1.0s100") 1.0e98) #t)
-	    (test (> (string->number "1.0S100") 1.0e98) #t)
-	    (test (> (string->number "1.0d100") 1.0e98) #t)
-	    (test (> (string->number "1.0D100") 1.0e98) #t)
-	    (test (> (string->number "1.0f100") 1.0e98) #t)
-	    (test (> (string->number "1.0F100") 1.0e98) #t)
-	    (test (> (string->number "1.0E100") 1.0e98) #t)
-	    
-	    (test (> 1.0L100 1.0e98) #t)
-	    (test (> 1.0l100 1.0e98) #t)
-	    (test (> 1.0s100 1.0e98) #t)
-	    (test (> 1.0S100 1.0e98) #t)
-	    (test (> 1.0d100 1.0e98) #t)
-	    (test (> 1.0D100 1.0e98) #t)
-	    (test (> 1.0f100 1.0e98) #t)
-	    (test (> 1.0F100 1.0e98) #t)
-	    
-	    (test (> (real-part (string->number "1.0L100+i")) 1.0e98) #t)
-	    (test (> (real-part (string->number "1.0l100+i")) 1.0e98) #t)
-	    (test (> (real-part (string->number "1.0s100+i")) 1.0e98) #t)
-	    (test (> (real-part (string->number "1.0S100+i")) 1.0e98) #t)
-	    (test (> (real-part (string->number "1.0d100+i")) 1.0e98) #t)
-	    (test (> (real-part (string->number "1.0D100+i")) 1.0e98) #t)
-	    (test (> (real-part (string->number "1.0f100+i")) 1.0e98) #t)
-	    (test (> (real-part (string->number "1.0F100+i")) 1.0e98) #t)
-	    
-	    (test (> (real-part 1.0L100+i) 1.0e98) #t)
-	    (test (> (real-part 1.0l100+i) 1.0e98) #t)
-	    (test (> (real-part 1.0s100+i) 1.0e98) #t)
-	    (test (> (real-part 1.0S100+i) 1.0e98) #t)
-	    (test (> (real-part 1.0d100+i) 1.0e98) #t)
-	    (test (> (real-part 1.0D100+i) 1.0e98) #t)
-	    (test (> (real-part 1.0f100+i) 1.0e98) #t)
-	    (test (> (real-part 1.0F100+i) 1.0e98) #t)
-	    
-	    (test (> (imag-part (string->number "1.0+1.0L100i")) 1.0e98) #t)
-	    (test (> (imag-part (string->number "1.0+1.0l100i")) 1.0e98) #t)
-	    (test (> (imag-part (string->number "1.0+1.0s100i")) 1.0e98) #t)
-	    (test (> (imag-part (string->number "1.0+1.0S100i")) 1.0e98) #t)
-	    (test (> (imag-part (string->number "1.0+1.0d100i")) 1.0e98) #t)
-	    (test (> (imag-part (string->number "1.0+1.0D100i")) 1.0e98) #t)
-	    (test (> (imag-part (string->number "1.0+1.0f100i")) 1.0e98) #t)
-	    (test (> (imag-part (string->number "1.0+1.0F100i")) 1.0e98) #t)
-	    
-	    (test (> (imag-part 1.0+1.0L100i) 1.0e98) #t)
-	    (test (> (imag-part 1.0+1.0l100i) 1.0e98) #t)
-	    (test (> (imag-part 1.0+1.0s100i) 1.0e98) #t)
-	    (test (> (imag-part 1.0+1.0S100i) 1.0e98) #t)
-	    (test (> (imag-part 1.0+1.0d100i) 1.0e98) #t)
-	    (test (> (imag-part 1.0+1.0D100i) 1.0e98) #t)
-	    (test (> (imag-part 1.0+1.0f100i) 1.0e98) #t)
-	    (test (> (imag-part 1.0+1.0F100i) 1.0e98) #t)
-	    ))
+	    (if (provided? 'dfls-exponents)
+		(begin
+		  (test (> (string->number "1.0L100") 1.0e98) #t)
+		  (test (> (string->number "1.0l100") 1.0e98) #t)
+		  (test (> (string->number "1.0s100") 1.0e98) #t)
+		  (test (> (string->number "1.0S100") 1.0e98) #t)
+		  (test (> (string->number "1.0d100") 1.0e98) #t)
+		  (test (> (string->number "1.0D100") 1.0e98) #t)
+		  (test (> (string->number "1.0f100") 1.0e98) #t)
+		  (test (> (string->number "1.0F100") 1.0e98) #t)
+		  (test (> (string->number "1.0E100") 1.0e98) #t)
+		  
+		  (test (> 1.0L100 1.0e98) #t)
+		  (test (> 1.0l100 1.0e98) #t)
+		  (test (> 1.0s100 1.0e98) #t)
+		  (test (> 1.0S100 1.0e98) #t)
+		  (test (> 1.0d100 1.0e98) #t)
+		  (test (> 1.0D100 1.0e98) #t)
+		  (test (> 1.0f100 1.0e98) #t)
+		  (test (> 1.0F100 1.0e98) #t)
+		  
+		  (test (> (real-part (string->number "1.0L100+i")) 1.0e98) #t)
+		  (test (> (real-part (string->number "1.0l100+i")) 1.0e98) #t)
+		  (test (> (real-part (string->number "1.0s100+i")) 1.0e98) #t)
+		  (test (> (real-part (string->number "1.0S100+i")) 1.0e98) #t)
+		  (test (> (real-part (string->number "1.0d100+i")) 1.0e98) #t)
+		  (test (> (real-part (string->number "1.0D100+i")) 1.0e98) #t)
+		  (test (> (real-part (string->number "1.0f100+i")) 1.0e98) #t)
+		  (test (> (real-part (string->number "1.0F100+i")) 1.0e98) #t)
+		  
+		  (test (> (real-part 1.0L100+i) 1.0e98) #t)
+		  (test (> (real-part 1.0l100+i) 1.0e98) #t)
+		  (test (> (real-part 1.0s100+i) 1.0e98) #t)
+		  (test (> (real-part 1.0S100+i) 1.0e98) #t)
+		  (test (> (real-part 1.0d100+i) 1.0e98) #t)
+		  (test (> (real-part 1.0D100+i) 1.0e98) #t)
+		  (test (> (real-part 1.0f100+i) 1.0e98) #t)
+		  (test (> (real-part 1.0F100+i) 1.0e98) #t)
+		  
+		  (test (> (imag-part (string->number "1.0+1.0L100i")) 1.0e98) #t)
+		  (test (> (imag-part (string->number "1.0+1.0l100i")) 1.0e98) #t)
+		  (test (> (imag-part (string->number "1.0+1.0s100i")) 1.0e98) #t)
+		  (test (> (imag-part (string->number "1.0+1.0S100i")) 1.0e98) #t)
+		  (test (> (imag-part (string->number "1.0+1.0d100i")) 1.0e98) #t)
+		  (test (> (imag-part (string->number "1.0+1.0D100i")) 1.0e98) #t)
+		  (test (> (imag-part (string->number "1.0+1.0f100i")) 1.0e98) #t)
+		  (test (> (imag-part (string->number "1.0+1.0F100i")) 1.0e98) #t)
+		  
+		  (test (> (imag-part 1.0+1.0L100i) 1.0e98) #t)
+		  (test (> (imag-part 1.0+1.0l100i) 1.0e98) #t)
+		  (test (> (imag-part 1.0+1.0s100i) 1.0e98) #t)
+		  (test (> (imag-part 1.0+1.0S100i) 1.0e98) #t)
+		  (test (> (imag-part 1.0+1.0d100i) 1.0e98) #t)
+		  (test (> (imag-part 1.0+1.0D100i) 1.0e98) #t)
+		  (test (> (imag-part 1.0+1.0f100i) 1.0e98) #t)
+		  (test (> (imag-part 1.0+1.0F100i) 1.0e98) #t)
+		  ))))
       ))
 
-(test (> 1.0L10 1.0e9) #t)
-(test (> 1.0l10 1.0e9) #t)
-(test (> 1.0s10 1.0e9) #t)
-(test (> 1.0S10 1.0e9) #t)
-(test (> 1.0d10 1.0e9) #t)
-(test (> 1.0D10 1.0e9) #t)
-(test (> 1.0f10 1.0e9) #t)
-(test (> 1.0F10 1.0e9) #t)
-
-(test (> (real-part 1.0L10+i) 1.0e9) #t)
-(test (> (real-part 1.0l10+i) 1.0e9) #t)
-(test (> (real-part 1.0s10+i) 1.0e9) #t)
-(test (> (real-part 1.0S10+i) 1.0e9) #t)
-(test (> (real-part 1.0d10+i) 1.0e9) #t)
-(test (> (real-part 1.0D10+i) 1.0e9) #t)
-(test (> (real-part 1.0f10+i) 1.0e9) #t)
-(test (> (real-part 1.0F10+i) 1.0e9) #t)
-
-(test (> (imag-part 1.0+1.0L10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0l10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0s10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0S10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0d10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0D10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0f10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0F10i) 1.0e9) #t)
-
-(test (> (string->number "1.0L10") 1.0e9) #t)
-(test (> (string->number "1.0l10") 1.0e9) #t)
-(test (> (string->number "1.0s10") 1.0e9) #t)
-(test (> (string->number "1.0S10") 1.0e9) #t)
-(test (> (string->number "1.0d10") 1.0e9) #t)
-(test (> (string->number "1.0D10") 1.0e9) #t)
-(test (> (string->number "1.0f10") 1.0e9) #t)
-(test (> (string->number "1.0F10") 1.0e9) #t)
-
-(test (> (real-part (string->number "1.0L10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0l10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0s10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0S10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0d10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0D10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0f10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0F10+i")) 1.0e9) #t)
-
-(test (> (imag-part (string->number "1.0+1.0L10i")) 1.0e9) #t)
-(test (> (imag-part (string->number "1.0+1.0l10i")) 1.0e9) #t)
-(test (> (imag-part (string->number "1.0+1.0s10i")) 1.0e9) #t)
-(test (> (imag-part (string->number "1.0+1.0S10i")) 1.0e9) #t)
-(test (> (imag-part (string->number "1.0+1.0d10i")) 1.0e9) #t)
-(test (> (imag-part (string->number "1.0+1.0D10i")) 1.0e9) #t)
-(test (> (imag-part (string->number "1.0+1.0f10i")) 1.0e9) #t)
-(test (> (imag-part (string->number "1.0+1.0F10i")) 1.0e9) #t)
-
+(if (provided? 'dfls-exponents)
+    (begin
+      (test (> 1.0L10 1.0e9) #t)
+      (test (> 1.0l10 1.0e9) #t)
+      (test (> 1.0s10 1.0e9) #t)
+      (test (> 1.0S10 1.0e9) #t)
+      (test (> 1.0d10 1.0e9) #t)
+      (test (> 1.0D10 1.0e9) #t)
+      (test (> 1.0f10 1.0e9) #t)
+      (test (> 1.0F10 1.0e9) #t)
+      
+      (test (> (real-part 1.0L10+i) 1.0e9) #t)
+      (test (> (real-part 1.0l10+i) 1.0e9) #t)
+      (test (> (real-part 1.0s10+i) 1.0e9) #t)
+      (test (> (real-part 1.0S10+i) 1.0e9) #t)
+      (test (> (real-part 1.0d10+i) 1.0e9) #t)
+      (test (> (real-part 1.0D10+i) 1.0e9) #t)
+      (test (> (real-part 1.0f10+i) 1.0e9) #t)
+      (test (> (real-part 1.0F10+i) 1.0e9) #t)
+      
+      (test (> (imag-part 1.0+1.0L10i) 1.0e9) #t)
+      (test (> (imag-part 1.0+1.0l10i) 1.0e9) #t)
+      (test (> (imag-part 1.0+1.0s10i) 1.0e9) #t)
+      (test (> (imag-part 1.0+1.0S10i) 1.0e9) #t)
+      (test (> (imag-part 1.0+1.0d10i) 1.0e9) #t)
+      (test (> (imag-part 1.0+1.0D10i) 1.0e9) #t)
+      (test (> (imag-part 1.0+1.0f10i) 1.0e9) #t)
+      (test (> (imag-part 1.0+1.0F10i) 1.0e9) #t)
+      
+      (test (> (string->number "1.0L10") 1.0e9) #t)
+      (test (> (string->number "1.0l10") 1.0e9) #t)
+      (test (> (string->number "1.0s10") 1.0e9) #t)
+      (test (> (string->number "1.0S10") 1.0e9) #t)
+      (test (> (string->number "1.0d10") 1.0e9) #t)
+      (test (> (string->number "1.0D10") 1.0e9) #t)
+      (test (> (string->number "1.0f10") 1.0e9) #t)
+      (test (> (string->number "1.0F10") 1.0e9) #t)
+      
+      (test (> (real-part (string->number "1.0L10+i")) 1.0e9) #t)
+      (test (> (real-part (string->number "1.0l10+i")) 1.0e9) #t)
+      (test (> (real-part (string->number "1.0s10+i")) 1.0e9) #t)
+      (test (> (real-part (string->number "1.0S10+i")) 1.0e9) #t)
+      (test (> (real-part (string->number "1.0d10+i")) 1.0e9) #t)
+      (test (> (real-part (string->number "1.0D10+i")) 1.0e9) #t)
+      (test (> (real-part (string->number "1.0f10+i")) 1.0e9) #t)
+      (test (> (real-part (string->number "1.0F10+i")) 1.0e9) #t)
+      
+      (test (> (imag-part (string->number "1.0+1.0L10i")) 1.0e9) #t)
+      (test (> (imag-part (string->number "1.0+1.0l10i")) 1.0e9) #t)
+      (test (> (imag-part (string->number "1.0+1.0s10i")) 1.0e9) #t)
+      (test (> (imag-part (string->number "1.0+1.0S10i")) 1.0e9) #t)
+      (test (> (imag-part (string->number "1.0+1.0d10i")) 1.0e9) #t)
+      (test (> (imag-part (string->number "1.0+1.0D10i")) 1.0e9) #t)
+      (test (> (imag-part (string->number "1.0+1.0f10i")) 1.0e9) #t)
+      (test (> (imag-part (string->number "1.0+1.0F10i")) 1.0e9) #t)))
 
 (if with-bignums 
     (begin
@@ -51294,7 +51301,7 @@ abs     1       2
       ))
 
 (num-test (+ 1/2 0.5) 1.0)
-(num-test (- 1/2 0.5d0) 0.0d0)
+(num-test (- 1/2 0.5e0) 0.0e0)
 (num-test (+ 0.5 -0.5 1/2) 0.5)
 (test (= 1.0+1.0i 1.0+1.0i) #t)
 (test (= 0.0+0.0i 0.0+0.0i) #t)
@@ -54299,15 +54306,17 @@ etc....
 (test (string->number "1\ \ \ \ \ . \ \ \ 2\ \ ") #f) ; yowza
 
 (test (string->number "1E1") 10.0)
-(test (string->number "1D1") 10.0)
-(test (string->number "1S1") 10.0)
-(test (string->number "1F1") 10.0)
-(test (string->number "1L1") 10.0)
 (test (string->number "1e1") 10.0)
-(test (string->number "1d1") 10.0)
-(test (string->number "1s1") 10.0)
-(test (string->number "1f1") 10.0)
-(test (string->number "1l1") 10.0)
+(if (provided? 'dfls-exponents)
+    (begin
+      (test (string->number "1D1") 10.0)
+      (test (string->number "1S1") 10.0)
+      (test (string->number "1F1") 10.0)
+      (test (string->number "1L1") 10.0)
+      (test (string->number "1d1") 10.0)
+      (test (string->number "1s1") 10.0)
+      (test (string->number "1f1") 10.0)
+      (test (string->number "1l1") 10.0)))
 
 (num-test (string->number "1234567890123456789012345678901234567890.123456789e-30") 1234567890.1235)
 (num-test (string->number "123456789012345678901234567890123456789012345678901234567890.123456789e-50") 1234567890.1235)
@@ -54558,24 +54567,31 @@ etc....
 (num-test (string->number "#x+e/00011ee0") 7/36720)
 (num-test (string->number "#e#x010e10.e1") 17699041/256)
 (num-test (string->number "#x10+10i") 16+16i)
-(num-test (string->number "#d.0d1+i") 0+1i)
-(num-test (string->number "+.0d-1+i") 0+1i)
-(num-test (string->number "#d1d+0-1d-1i") 1-0.1i)
-(num-test (string->number "#i+1+0.d-0i") 1.0)
+
+(if (provided? 'dfls-exponents)
+    (begin
+      (num-test (string->number "#d.0d1+i") 0+1i)
+      (num-test (string->number "+.0d-1+i") 0+1i)
+      (num-test (string->number "#d1d+0-1d-1i") 1-0.1i)
+      (num-test (string->number "#i+1+0.d-0i") 1.0)
+      (num-test (string->number "#o#i-101d+0") -65.0)
+      (num-test (string->number "+001.110d+1") 11.1)
+      (num-test (string->number "#e01+0d000i") 1)
+      (num-test (string->number "#d1d0-0.d0i") 1.0)
+      (num-test (string->number "#d#i001d+00") 1.0)
+      (num-test (string->number "#o0010111/1") 4169)
+      (num-test (string->number "0d00-0.d+0i") 0.0)
+      (num-test (string->number "#o1.d0+10.d00i") 1+8i)
+      (num-test (string->number "0d+01+1e+1i") 0+10i)
+      (num-test (string->number "10.d-005" 2) 0.0625)
+      (num-test (string->number "+7f2-73i" 8) 448-59i)
+      ))
+
 (num-test (string->number "#e#d+11.e-0") 11)
-(num-test (string->number "#o#i-101d+0") -65.0)
-(num-test (string->number "+001.110d+1") 11.1)
-(num-test (string->number "#e01+0d000i") 1)
-(num-test (string->number "#d1d0-0.d0i") 1.0)
 (num-test (string->number "#d.0e011110") 0.0)
 (num-test (string->number "+01e01+0/1i") 10.0)
 (num-test (string->number "#i#d1e1+.0i") 10.0)
 (num-test (string->number "1.-0.0e+00i") 1.0)
-(num-test (string->number "0d+01+1e+1i") 0+10i)
-(num-test (string->number "#d#i001d+00") 1.0)
-(num-test (string->number "#o0010111/1") 4169)
-(num-test (string->number "0d00-0.d+0i") 0.0)
-(num-test (string->number "#o1.d0+10.d00i") 1+8i)
 
 (test (string->number "#o#e10.+1.i") #f)
 (test (string->number "#x#e1+i") #f)
@@ -54596,7 +54612,6 @@ etc....
 (num-test (string->number "1000e+03" 2) 64.0)
 (num-test (string->number "-1e+1-1i" 2) -2-1i)
 (num-test (string->number ".1-110e03i" 2) 0.5-48i)
-(num-test (string->number "10.d-005" 2) 0.0625)
 (num-test (string->number "1e9" 2) 512.0)
 
 (num-test (string->number "52/7" 8) 6)
@@ -54605,14 +54620,11 @@ etc....
 (num-test (string->number "12/15150" 8) 1/676)
 (num-test (string->number "612444175735" 8) 52958395357)
 (num-test (string->number "31005331+.4i" 8) 6556377+0.5i)
-(num-test (string->number "+7f2-73i" 8) 448-59i)
 (num-test (string->number "42220e-2" 8) 274.25)
 (num-test (string->number "1e9" 8) 134217728.0)
-
 (test (string->number "1e9" 12) #f) ; this may not be ideal...
 (num-test (string->number "1b9/64" 12) 15/4)
 (num-test (string->number "a880+i" 12) 18528+1i)
-
 (num-test (string->number "dc-i" 16) 220-1i)
 (num-test (string->number "dcd-fi" 16) 3533-15i)
 (num-test (string->number "d/ebee" 16) 1/4646)
@@ -54694,8 +54706,8 @@ etc....
       (num-test (string->number "e/4246061597ec79345a" 15) 7/204584420774687563055)
       (num-test (string->number "c57252467ff.cfd94d" 16) 1.3568424830975811909496784210205078125E13)
       (num-test (string->number "f309e9b9ba.7c52ff2" 16) 1.043843365306485641427338123321533203125E12)
-      (num-test (string->number "+42f-0106653" 10) 4.199999999999999999999999999999999999999E-106652)
-      (test (infinite? (string->number "8f7290491476" 10)) #t)
+      (num-test (string->number "+42e-0106653" 10) 4.199999999999999999999999999999999999999E-106652)
+      (test (infinite? (string->number "8e7290491476" 10)) #t)
       (num-test (string->number "4ff7da4d/ab09e16255c06a55c5cb7193ebb2fbb" 16) 1341643341/14209330580250438592763227155654717371)
 
       (num-test (string->number "#d3000000000000000000000000000000") 3000000000000000000000000000000)
@@ -54924,7 +54936,14 @@ etc....
 (test (number? '00-) #f)
 (test (string->number "00-") #f)
 
-(num-test #i1s0 1.0)
+(if (provided? 'dfls-exponents)
+    (begin
+      (num-test (string->number "#i1s0") 1.0) ; need the s->n to avoid confusing reader in non-dfls case
+      (num-test -0d-0 0.0)
+      (num-test +1d+1 10.0)
+      (num-test +1s00 1.0)
+      ))
+
 (num-test #e0.1 1/10)
 (num-test #i1/1 1.0)
 (num-test #o-11 -9)
@@ -54939,9 +54958,6 @@ etc....
 (num-test #x+00 0)
 (num-test #x.c0 0.75)
 (num-test #x-fc -252)
-(num-test -0d-0 0.0)
-(num-test +1d+1 10.0)
-(num-test +1s00 1.0)
 (test (equal? #e1.5 3/2) #t)
 (test (equal? #e1.0 1) #t)
 (test (equal? #e-.1 -1/10) #t)
@@ -55003,7 +55019,9 @@ etc....
 	      (integer->char (+ (char->integer #\a) (- digit 10)))))
 	
 	(define (exponent-marker)
-	  (string-ref "eEsSfFdDlL" (random 10)))
+	  (if (provided? 'dfls-exponents)
+	      (string-ref "eEsSfFdDlL" (random 10))
+	      (string-ref "eE" (random 2))))
 	
 	(if signed 
 	    (begin
@@ -55588,7 +55606,7 @@ etc....
 (test (let* ((str "1+0i") (x (string->number str))) (and (number? x) (string=? str "1+0i"))) #t)
 
 (test (= 1 #e1 1/1 #e1/1 #e1.0 #e1e0 #b1 #x1 #o1 #d1 #o001 #o+1 #o#e1 #e#x1 #e1+0i #e10e-1 #e0.1e1 #e+1-0i #e#b1) #t)
-(test (= 0.3 3e-1 3d-1 0.3e0 3e-1) #t)
+(test (= 0.3 3e-1 0.3e0 3e-1) #t)
 (test (= 0 +0 0.0 +0.0 0/1 +0/24 0+0i #e0 #b0 #x0 #o0 #e#b0) #t)
 
 (let ((things (vector 123 #e123 #b1111011 #e#b1111011 #b#e1111011 #o173 #e#o173 #o#e173 
@@ -55612,28 +55630,45 @@ etc....
      (if (not nb)
 	 (begin
 	   (display "(number? ") (display n) (display ") returned #f?") (newline)))))
- (list 1 -1 +1 +.1 -.1 .1 .0 0. 0.0 -0 +0 -0. +0.
-       +1.1 -1.1 1.1
-       '1.0e2 '-1.0e2 '+1.0e2
-       '1.1e-2 '-1.1e-2 '+1.1e-2
-       '1.1e+2 '-1.1e+2 '+1.1e+2
-       '1/2 '-1/2 '+1/2
-       '1.0s2 '-1.0s2 '+1.0s2
-       '1.0d2 '-1.0d2 '+1.0d2
-       '1.0f2 '-1.0f2 '+1.0f2
-       '1.0l2 '-1.0l2 '+1.0l2
-       '1.0+1.0i '1.0-1.0i '-1.0-1.0i '-1.0+1.0i
-       '1+i '1-i '-1-i '-1+i
-       '2/3+i '2/3-i '-2/3+i
-       '1+2/3i '1-2/3i '2/3+2/3i '2.3-2/3i '2/3-2.3i
-       '2e2+1e3i '2e2-2e2i '2.0e2+i '1+2.0e2i '2.0e+2-2.0e-1i '2/3-2.0e3i '2e-3-2/3i
-       '-2.0e-2-2.0e-2i '+2.0e+2+2.0e+2i '+2/3-2/3i '2e2-2/3i
-       '1e1-i '1.-i '.0+i '-.0-1e-1i '1.+.1i '0.-.1i
-       '.1+.0i '1.+.0i '.1+.1i '1.-.1i '.0+.00i '.10+.0i '-1.+.0i '.1-.01i '1.0+.1i 
-       '1e1+.1i '-1.-.10i '1e01+.0i '0e11+.0i '1.e1+.0i '1.00-.0i '-1e1-.0i '1.-.1e0i 
-       '1.+.001i '1e10-.1i '1e+0-.1i '-0e0-.1i
-       '-1.0e-1-1.0e-1i '-111e1-.1i '1.1-.1e11i '-1e-1-.11i '-1.1-.1e1i '-.1+.1i
-       ))
+ (if (provided? 'dfls-exponents)
+     (list 1 -1 +1 +.1 -.1 .1 .0 0. 0.0 -0 +0 -0. +0.
+	   +1.1 -1.1 1.1
+	   '1.0e2 '-1.0e2 '+1.0e2
+	   '1.1e-2 '-1.1e-2 '+1.1e-2
+	   '1.1e+2 '-1.1e+2 '+1.1e+2
+	   '1/2 '-1/2 '+1/2
+	   '1.0s2 '-1.0s2 '+1.0s2
+	   '1.0d2 '-1.0d2 '+1.0d2
+	   '1.0f2 '-1.0f2 '+1.0f2
+	   '1.0l2 '-1.0l2 '+1.0l2
+	   '1.0+1.0i '1.0-1.0i '-1.0-1.0i '-1.0+1.0i
+	   '1+i '1-i '-1-i '-1+i
+	   '2/3+i '2/3-i '-2/3+i
+	   '1+2/3i '1-2/3i '2/3+2/3i '2.3-2/3i '2/3-2.3i
+	   '2e2+1e3i '2e2-2e2i '2.0e2+i '1+2.0e2i '2.0e+2-2.0e-1i '2/3-2.0e3i '2e-3-2/3i
+	   '-2.0e-2-2.0e-2i '+2.0e+2+2.0e+2i '+2/3-2/3i '2e2-2/3i
+	   '1e1-i '1.-i '.0+i '-.0-1e-1i '1.+.1i '0.-.1i
+	   '.1+.0i '1.+.0i '.1+.1i '1.-.1i '.0+.00i '.10+.0i '-1.+.0i '.1-.01i '1.0+.1i 
+	   '1e1+.1i '-1.-.10i '1e01+.0i '0e11+.0i '1.e1+.0i '1.00-.0i '-1e1-.0i '1.-.1e0i 
+	   '1.+.001i '1e10-.1i '1e+0-.1i '-0e0-.1i
+	   '-1.0e-1-1.0e-1i '-111e1-.1i '1.1-.1e11i '-1e-1-.11i '-1.1-.1e1i '-.1+.1i)
+     (list 1 -1 +1 +.1 -.1 .1 .0 0. 0.0 -0 +0 -0. +0.
+	   +1.1 -1.1 1.1
+	   '1.0e2 '-1.0e2 '+1.0e2
+	   '1.1e-2 '-1.1e-2 '+1.1e-2
+	   '1.1e+2 '-1.1e+2 '+1.1e+2
+	   '1/2 '-1/2 '+1/2
+	   '1.0+1.0i '1.0-1.0i '-1.0-1.0i '-1.0+1.0i
+	   '1+i '1-i '-1-i '-1+i
+	   '2/3+i '2/3-i '-2/3+i
+	   '1+2/3i '1-2/3i '2/3+2/3i '2.3-2/3i '2/3-2.3i
+	   '2e2+1e3i '2e2-2e2i '2.0e2+i '1+2.0e2i '2.0e+2-2.0e-1i '2/3-2.0e3i '2e-3-2/3i
+	   '-2.0e-2-2.0e-2i '+2.0e+2+2.0e+2i '+2/3-2/3i '2e2-2/3i
+	   '1e1-i '1.-i '.0+i '-.0-1e-1i '1.+.1i '0.-.1i
+	   '.1+.0i '1.+.0i '.1+.1i '1.-.1i '.0+.00i '.10+.0i '-1.+.0i '.1-.01i '1.0+.1i 
+	   '1e1+.1i '-1.-.10i '1e01+.0i '0e11+.0i '1.e1+.0i '1.00-.0i '-1e1-.0i '1.-.1e0i 
+	   '1.+.001i '1e10-.1i '1e+0-.1i '-0e0-.1i
+	   '-1.0e-1-1.0e-1i '-111e1-.1i '1.1-.1e11i '-1e-1-.11i '-1.1-.1e1i '-.1+.1i)))
 
 (for-each
  (lambda (n rl im)
@@ -55654,10 +55689,7 @@ etc....
        '1.1e-2 '-1.1e-2 '+1.1e-2
        '1.1e+2 '-1.1e+2 '+1.1e+2
        '1/2 '-1/2 '+1/2
-       '1.0s2 '-1.0s2 '+1.0s2
-       '1.0d2 '-1.0d2 '+1.0d2
-       '1.0f2 '-1.0f2 '+1.0f2
-       '1.0l2 '-1.0l2 '+1.0l2
+
        '1.0+1.0i '1.0-1.0i '-1.0-1.0i '-1.0+1.0i
        '1+i '1-i '-1-i '-1+i
        '2/3+i '2/3-i '-2/3+i
@@ -55671,8 +55703,8 @@ etc....
        '-1.0e-1-1.0e-1i '-111e1-.1i '1.1-.1e11i '-1e-1-.11i '-1.1-.1e1i)
  
  (list 1.0 -1.0 1.0 0.1 -0.1 0.1 0.0 0.0 0.0 0.0 0.0 -0.0 0.0 1.1 -1.1 1.1 100.0 -100.0 
-       100.0 0.011 -0.011 0.011 110.0 -110.0 110.0 0.5 -0.5 0.5 100.0 -100.0 100.0 100.0 
-       -100.0 100.0 100.0 -100.0 100.0 100.0 -100.0 100.0 1.0 1.0 -1.0 -1.0 1.0 1.0 -1.0 
+       100.0 0.011 -0.011 0.011 110.0 -110.0 110.0 0.5 -0.5 0.5 
+       1.0 1.0 -1.0 -1.0 1.0 1.0 -1.0 
        -1.0 0.66666666666667 0.66666666666667 -0.66666666666667 1.0 1.0 0.66666666666667 
        2.3 0.66666666666667 200.0 200.0 200.0 1.0 200.0 0.66666666666667 0.002 -0.02 200.0 
        0.66666666666667 200.0 10.0 1.0 0.0 -0.0 1.0 0.0 0.1 1.0 0.1 1.0 0.0 0.1 -1.0 0.1 
@@ -55680,7 +55712,7 @@ etc....
        1.1 -0.1 -1.1)
  
  (list 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 
-       0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 -1.0 
+       0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 -1.0 
        -1.0 1.0 1.0 -1.0 -1.0 1.0 1.0 -1.0 1.0 0.66666666666667 -0.66666666666667 
        0.66666666666667 -0.66666666666667 -2.3 1000.0 -200.0 1.0 200.0 -0.2 -2000.0 
        -0.66666666666667 -0.02 200.0 -0.66666666666667 -0.66666666666667 -1.0 -1.0 1.0 
@@ -55755,16 +55787,15 @@ etc....
 		       01 +1 1. 
 		       
 		       001 +01 1/1 1.0 1e0 01. +1. #b1 #d1 #e1 #o1 #x1 2/2 3/3 4/4 5/5 6/6 7/7 8/8 9/9
-		       1D0 1E0 1F0 1L0 1S0 1d0 1e0 1f0 1l0 1s0
+		       1E0 1e0
 		       
 		       0001 +001 1/01 .1e1 01/1 +1/1 1.00 1e00 01.0 +1.0 1e+0 1e-0 01e0 +1e0 1.e0 001. +01. 1+0i 1-0i 
 		       #b+1 #b01 #b1. #d+1 #d01 #d1. #e+1 #e01 #e1. #i+1 #i01 #i1. #o+1 #o01 #o1. #x+1 #x01 #x1.
-		       +1D0 +1E0 +1F0 +1L0 +1S0 +1d0 +1e0 +1f0 +1l0 +1s0 +2/2 +3/3 +4/4 +5/5 +6/6 +7/7 +8/8 +9/9
-		       .1D1 .1E1 .1F1 .1L1 .1S1 .1d1 .1f1 .1l1 .1s1 0001 001. 01.0 01/1 01D0 01E0 01F0 01L0 01S0 
-		       01d0 01f0 01l0 01s0 02/2 03/3 04/4 05/5 06/6 07/7 08/8 09/9  
-		       1.D0 1.E0 1.F0 1.L0 1.S0 1.d0 1.f0 1.l0 1.s0 1/01 1D+0 1D-0 1D00 1E+0 1E-0 1E00 1F+0 1F-0 1F00 
-		       1L+0 1L-0 1L00 1S+0 1S-0 1S00 1d+0 1d-0 1d00 1f+0 1f-0 1f00 1l+0 1l-0 1l00 1s+0 1s-0 
-		       1s00 2/02 3/03 4/04 5/05 6/06 7/07 8/08 9/09 
+		       +1E0 +1e0 +2/2 +3/3 +4/4 +5/5 +6/6 +7/7 +8/8 +9/9
+		       .1E1 0001 001. 01.0 01/1 01E0
+		       02/2 03/3 04/4 05/5 06/6 07/7 08/8 09/9  
+		       1.E0 1/01 1E+0 1E-0 1E00 
+		       2/02 3/03 4/04 5/05 6/06 7/07 8/08 9/09 
 		       
 		       11/11 00001 +0001 1/001 .1e01 01/01 +1/01 .1e+1 10e-1 0.1e1 +.1e1 .10e1 001/1 +01/1 10/10 1.000 1e000 
 		       01.00 +1.00 1e+00 1e-00 01e00 +1e00 1.e00 001.0 +01.0 01e+0 +1e+0 1.e+0 01e-0 +1e-0 1.e-0 001e0 +01e0 
@@ -55777,7 +55808,8 @@ etc....
 		       +1.e+0 001e-0 +01e-0 1.0e-0 01.e-0 +1.e-0 0001e0 +001e0 1.00e0 01.0e0 +1.0e0 001.e0 +01.e0 00001. +0001. 
 		       1+0e1i 1-0e1i 1+0/1i 1-0/1i 1+000i 1-000i 1+.00i 1-.00i 01+00i +1+00i 1.+00i 01-00i +1-00i 1.-00i 1+0.0i 
 		       1-0.0i 01+.0i +1+.0i 1.+.0i 01-.0i +1-.0i 1.-.0i 001+0i +01+0i 1/1+0i 1.0+0i 1e0+0i 01.+0i +1.+0i 001-0i 
-		       +01-0i 1/1-0i 1.0-0i 1e0-0i 01.-0i +1.-0i 1+0e0i 1-0e0i 1+00.i 1-00.i 01+0.i +1+0.i 1.+0.i 01-0.i +1-0.i 1.-0.i 
+		       +01-0i 1/1-0i 1.0-0i 1e0-0i 01.-0i +1.-0i 1+0e0i 1-0e0i 1+00.i 1-00.i 01+0.i +1+0.i 1.+0.i 01-0.i +1-0.i 
+		       1.-0.i 
 		       
 		       111/111 11/0011 011/011 +11/011 0011/11 +011/11 101/101 0000001 +000001 1/00001 .1e0001 01/0001 +1/0001 
 		       .1e+001 10e-001 0.1e001 +.1e001 .10e001 001/001 +01/001 0.1e+01 +.1e+01 .10e+01 010e-01 +10e-01 10.e-01 
@@ -55839,27 +55871,24 @@ etc....
   
   (list "01" "+1" "1.")
   
-  (list "001" "+01" "#e1" "#i1" "1/1" "#b1" "#x1" "#d1" "#o1" "1.0" "1e0" "1d0" "1l0" "1s0" "1f0" "9/9" "01." "+1." "1E0" "1D0" "1L0" "1S0" "1F0")
+  (list "001" "+01" "#e1" "#i1" "1/1" "#b1" "#x1" "#d1" "#o1" "1.0" "1e0" "9/9" "01." "+1." "1E0")
   
-  (list "0001" "+001" "#e01" "#i01" "1/01" "#b01" "#x01" "#d01" "#o01" "#e+1" "#i+1" "#b+1" "#x+1" "#d+1" "#o+1" ".1e1" "01/1" "+1/1" ".1d1" ".1l1" ".1s1" ".1f1" "1.00" "1e00" "1d00" "1l00" "1s00" "1f00" "01.0" "+1.0" "1e+0" "1d+0" "1l+0" "1s+0" "1f+0" "1e-0" "1d-0" "1l-0" "1s-0" "1f-0" "01e0" "+1e0" "1.e0" "01d0" "+1d0" "1.d0" "01l0" "+1l0" "1.l0" "01s0" "+1s0" "1.s0" "01f0" "+1f0" "1.f0" "9/09" "09/9" "+9/9" "001." "+01." "#e1." "#i1." "1+0i" "1-0i" "#d1.")
+  (list "0001" "+001" "#e01" "#i01" "1/01" "#b01" "#x01" "#d01" "#o01" "#e+1" "#i+1" "#b+1" "#x+1" "#d+1" "#o+1" ".1e1" "01/1" "+1/1" "1.00" "1e00" "01.0" "+1.0" "1e+0" "1e-0" "01e0" "+1e0" "1.e0" "9/09" "09/9" "+9/9" "001." "+01." "#e1." "#i1." "1+0i" "1-0i" "#d1.")
   
-  (list "11/11" "00001" "+0001" "#e001" "#i001" "1/001" "#b001" "#x001" "#d001" "#o001" "#e+01" "#i+01" "#b+01" "#x+01" "#d+01" "#o+01" ".1e01" "01/01" "+1/01" ".1d01" ".1l01" ".1s01" ".1f01" "91/91" ".1e+1" ".1d+1" ".1l+1" ".1s+1" ".1f+1" "10e-1" "10d-1" "10l-1" "10s-1" "10f-1" "0.1e1" "+.1e1" ".10e1" "#b#e1" "#x#e1" "#d#e1" "#o#e1" "#b#i1" "#x#i1" "#d#i1" "#o#i1" "001/1" "+01/1" "#e1/1" "#i1/1" "#b1/1" "#x1/1" "#d1/1" "#o1/1" "#e#b1" "#i#b1" "#e#x1" "#i#x1" "0.1d1" "+.1d1" ".10d1" "#e#d1" "#i#d1" "#e#o1" "#i#o1" "0.1l1" "+.1l1" ".10l1" "0.1s1" "+.1s1" ".10s1" "0.1f1" "+.1f1" ".10f1" "10/10" "1.000" "1e000" "1d000" "1l000" "1s000" "1f000" "01.00" "+1.00" "1e+00" "1d+00" "1l+00" "1s+00" "1f+00" "1e-00" "1d-00" "1l-00" "1s-00" "1f-00" "01e00" "+1e00" "1.e00" "01d00" "+1d00" "1.d00" "01l00" "+1l00" "1.l00" "01s00" "+1s00" "1.s00" "01f00" "+1f00" "1.f00" "90/90" "001.0" "+01.0" "#e1.0" "#i1.0" "01e+0" "+1e+0" "1.e+0" "01d+0" "+1d+0" "1.d+0" "01l+0" "+1l+0" "1.l+0" "01s+0" "+1s+0" "1.s+0" "01f+0" "+1f+0" "1.f+0" "01e-0" "+1e-0" "1.e-0" "01d-0" "+1d-0" "1.d-0" "01l-0" "+1l-0" "1.l-0" "01s-0" "+1s-0" "1.s-0" "01f-0" "+1f-0" "1.f-0" "001e0" "+01e0" "#e1e0" "#i1e0" "1.0e0" "01.e0" "+1.e0" "001d0" "+01d0" "#e1d0" "#i1d0" "1.0d0" "01.d0" "+1.d0" "001l0" "+01l0" "#e1l0" "#i1l0" "1.0l0" "01.l0" "+1.l0" "001s0" "+01s0" "#e1s0" "#i1s0" "1.0s0" "01.s0" "+1.s0" "001f0" "+01f0" "#e1f0" "#i1f0" "1.0f0" "01.f0" "+1.f0" "19/19" "9/009" "09/09" "+9/09" "99/99" "009/9" "+09/9" "#e9/9" "#i9/9" "#x9/9" "#d9/9" "0001." "+001." "#e01." "#i01." "#e+1." "#i+1." "#xe/e" "1+00i" "1-00i" "1+.0i" "1-.0i" "01+0i" "+1+0i" "1.+0i" "01-0i" "+1-0i" "1.-0i" "1+0.i" "1-0.i" "#xb/b" "#xd/d" "#xf/f" "#d1d0")
+  (list "11/11" "00001" "+0001" "#e001" "#i001" "1/001" "#b001" "#x001" "#d001" "#o001" "#e+01" "#i+01" "#b+01" "#x+01" "#d+01" "#o+01" ".1e01" "01/01" "+1/01" "91/91" ".1e+1" "10e-1" "0.1e1" "+.1e1" ".10e1" "#b#e1" "#x#e1" "#d#e1" "#o#e1" "#b#i1" "#x#i1" "#d#i1" "#o#i1" "001/1" "+01/1" "#e1/1" "#i1/1" "#b1/1" "#x1/1" "#d1/1" "#o1/1" "#e#b1" "#i#b1" "#e#x1" "#i#x1" "#e#d1" "#i#d1" "#e#o1" "#i#o1" "10/10" "1.000" "1e000" "01.00" "+1.00" "1e+00" "1e-00" "01e00" "+1e00" "1.e00" "90/90" "001.0" "+01.0" "#e1.0" "#i1.0" "01e+0" "+1e+0" "1.e+0" "01e-0" "+1e-0" "1.e-0" "001e0" "+01e0" "#e1e0" "#i1e0" "1.0e0" "01.e0" "+1.e0" "19/19" "9/009" "09/09" "+9/09" "99/99" "009/9" "+09/9" "#e9/9" "#i9/9" "#x9/9" "#d9/9" "0001." "+001." "#e01." "#i01." "#e+1." "#i+1." "#xe/e" "1+00i" "1-00i" "1+.0i" "1-.0i" "01+0i" "+1+0i" "1.+0i" "01-0i" "+1-0i" "1.-0i" "1+0.i" "1-0.i" "#xb/b" "#xd/d" "#xf/f")
   
   ;; remove "9":
   
-  (list "11/011" "011/11" "+11/11" "000001" "+00001" "#e0001" "#i0001" "1/0001" "#b0001" "#x0001" "#d0001" "#o0001" "#e+001" "#i+001" "#b+001" "#x+001" "#d+001" "#o+001" ".1e001" "01/001" "+1/001" ".1d001" ".1l001" ".1s001" ".1f001" ".1e+01" ".1d+01" ".1l+01" ".1s+01" ".1f+01" "10e-01" "10d-01" "10l-01" "10s-01" "10f-01" "0.1e01" "+.1e01" ".10e01" "#b#e01" "#x#e01" "#d#e01" "#o#e01" "#b#i01" "#x#i01" "#d#i01" "#o#i01" "001/01" "+01/01" "#e1/01" "#i1/01" "#b1/01" "#x1/01" "#d1/01" "#o1/01" "#e#b01" "#i#b01" "#e#x01" "#i#x01" "0.1d01" "+.1d01" ".10d01" "#e#d01" "#i#d01" "#e#o01" "#i#o01" "0.1l01" "+.1l01" ".10l01" "0.1s01" "+.1s01" ".10s01" "0.1f01" "+.1f01" ".10f01" "0.1e+1" "+.1e+1" ".10e+1" "#b#e+1" "#x#e+1" "#d#e+1" "#o#e+1" "#b#i+1" "#x#i+1" "#d#i+1" "#o#i+1" "#e#b+1" "#i#b+1" "#e#x+1" "#i#x+1" "0.1d+1" "+.1d+1" ".10d+1" "#e#d+1" "#i#d+1" "#e#o+1" "#i#o+1" "0.1l+1" "+.1l+1" ".10l+1" "0.1s+1" "+.1s+1" ".10s+1" "0.1f+1" "+.1f+1" ".10f+1" "010e-1" "+10e-1" "10.e-1" "010d-1" "+10d-1" "10.d-1" "010l-1" "+10l-1" "10.l-1" "010s-1" "+10s-1" "10.s-1" "010f-1" "+10f-1" "10.f-1" "00.1e1" "+0.1e1" "#e.1e1" "#i.1e1" "0.10e1" "+.10e1" ".100e1" "0001/1" "+001/1" "#e01/1" "#i01/1" "#b01/1" "#x01/1" "#d01/1" "#o01/1" "#e+1/1" "#i+1/1" "#b+1/1" "#x+1/1" "#d+1/1" "#o+1/1" "00.1d1" "+0.1d1" "#e.1d1" "#i.1d1" "0.10d1" "+.10d1" ".100d1" "00.1l1" "+0.1l1" "#e.1l1" "#i.1l1" "0.10l1" "+.10l1" ".100l1" "00.1s1" "+0.1s1" "#e.1s1" "#i.1s1" "0.10s1" "+.10s1" ".100s1" "00.1f1" "+0.1f1" "#e.1f1" "#i.1f1" "0.10f1" "+.10f1" ".100f1" "10/010" "010/10" "+10/10" "1.0000" "1e0000" "1d0000" "1l0000" "1s0000" "1f0000" "01.000" "+1.000" "1e+000" "1d+000" "1l+000" "1s+000" "1f+000" "1e-000" "1d-000" "1l-000" "1s-000" "1f-000" "01e000" "+1e000" "1.e000" "01d000" "+1d000" "1.d000" "01l000" "+1l000" "1.l000" "01s000" "+1s000" "1.s000" "01f000" "+1f000" "1.f000" "001.00" "+01.00" "#e1.00" "#i1.00" "01e+00" "+1e+00" "1.e+00" "01d+00" "+1d+00" "1.d+00" "01l+00" "+1l+00" "1.l+00" "01s+00" "+1s+00" "1.s+00" "01f+00" "+1f+00" "1.f+00" "01e-00" "+1e-00" "1.e-00" "01d-00" "+1d-00" "1.d-00" "01l-00" "+1l-00" "1.l-00" "01s-00" "+1s-00" "1.s-00" "01f-00" "+1f-00" "1.f-00" "001e00" "+01e00" "#e1e00" "#i1e00" "1.0e00" "01.e00" "+1.e00" "001d00" "+01d00" "#e1d00" "#i1d00" "1.0d00" "01.d00" "+1.d00" "001l00" "+01l00" "#e1l00" "#i1l00" "1.0l00" "01.l00" "+1.l00" "001s00" "+01s00" "#e1s00" "#i1s00" "1.0s00" "01.s00" "+1.s00" "001f00" "+01f00" "#e1f00" "#i1f00" "1.0f00" "01.f00" "+1.f00" "0001.0" "+001.0" "#e01.0" "#i01.0" "#e+1.0" "#i+1.0" "001e+0" "+01e+0" "#e1e+0" "#i1e+0" "1.0e+0" "01.e+0" "+1.e+0" "001d+0" "+01d+0" "#e1d+0" "#i1d+0" "1.0d+0" "01.d+0" "+1.d+0" "001l+0" "+01l+0" "#e1l+0" "#i1l+0" "1.0l+0" "01.l+0" "+1.l+0" "001s+0" "+01s+0" "#e1s+0" "#i1s+0" "1.0s+0" "01.s+0" "+1.s+0" "001f+0" "+01f+0" "#e1f+0" "#i1f+0" "1.0f+0" "01.f+0" "+1.f+0" "001e-0" "+01e-0" "#e1e-0" "#i1e-0" "1.0e-0" "01.e-0" "+1.e-0" "001d-0" "+01d-0" "#e1d-0" "#i1d-0" "1.0d-0" "01.d-0" "+1.d-0" "001l-0" "+01l-0" "#e1l-0" "#i1l-0" "1.0l-0" "01.l-0" "+1.l-0" "001s-0" "+01s-0" "#e1s-0" "#i1s-0" "1.0s-0" "01.s-0" "+1.s-0" "001f-0" "+01f-0" "#e1f-0" "#i1f-0" "1.0f-0" "01.f-0" "+1.f-0" "0001e0" "+001e0" "#e01e0" "#i01e0" "#e+1e0" "#i+1e0" "1.00e0" "01.0e0" "+1.0e0" "001.e0" "+01.e0" "#e1.e0" "#i1.e0" "0001d0" "+001d0" "#e01d0" "#i01d0" "#e+1d0" "#i+1d0" "1.00d0" "01.0d0" "+1.0d0" "001.d0" "+01.d0" "#e1.d0" "#i1.d0" "0001l0" "+001l0" "#e01l0" "#i01l0" "#e+1l0" "#i+1l0" "1.00l0" "01.0l0" "+1.0l0" "001.l0" "+01.l0" "#e1.l0" "#i1.l0" "0001s0" "+001s0" "#e01s0" "#i01s0" "#e+1s0" "#i+1s0" "1.00s0" "01.0s0" "+1.0s0" "001.s0" "+01.s0" "#e1.s0" "#i1.s0" "0001f0" "+001f0" "#e01f0" "#i01f0" "#e+1f0" "#i+1f0" "1.00f0" "01.0f0" "+1.0f0" "001.f0" "+01.f0" "#e1.f0" "#i1.f0" "00001." "+0001." "#e001." "#i001." "#e+01." "#i+01." "#xe/0e" "#x0e/e" "#x+e/e" "1+0e1i" "1-0e1i" "1+0/1i" "1-0/1i" "1+0d1i" "1-0d1i" "1+0l1i" "1-0l1i" "1+0s1i" "1-0s1i" "1+0f1i" "1-0f1i" "1+000i" "1-000i" "1+.00i" "1-.00i" "01+00i" "+1+00i" "1.+00i" "01-00i" "+1-00i" "1.-00i" "1+0.0i" "1-0.0i" "01+.0i" "+1+.0i" "1.+.0i" "01-.0i" "+1-.0i" "1.-.0i" "001+0i" "+01+0i" "#e1+0i" "#i1+0i" "1/1+0i" "1.0+0i" "1e0+0i" "1d0+0i" "1l0+0i" "1s0+0i" "1f0+0i" "01.+0i" "+1.+0i" "001-0i" "+01-0i" "#e1-0i" "#i1-0i" "1/1-0i" "1.0-0i" "1e0-0i" "1d0-0i" "1l0-0i" "1s0-0i" "1f0-0i" "01.-0i" "+1.-0i" "1+0e0i" "1-0e0i" "1+0d0i" "1-0d0i" "1+0l0i" "1-0l0i" "1+0s0i" "1-0s0i" "1+0f0i" "1-0f0i" "1+00.i" "1-00.i" "01+0.i" "+1+0.i" "1.+0.i" "01-0.i" "+1-0.i" "1.-0.i" "#xb/0b" "#x0b/b" "#x+b/b" "#xd/0d" "#x0d/d" "#x+d/d" "#xf/0f" "#x0f/f" "#x+f/f")
+  (list "11/011" "011/11" "+11/11" "000001" "+00001" "#e0001" "#i0001" "1/0001" "#b0001" "#x0001" "#d0001" "#o0001" "#e+001" "#i+001" "#b+001" "#x+001" "#d+001" "#o+001" ".1e001" "01/001" "+1/001" ".1e+01" "10e-01" "0.1e01" "+.1e01" ".10e01" "#b#e01" "#x#e01" "#d#e01" "#o#e01" "#b#i01" "#x#i01" "#d#i01" "#o#i01" "001/01" "+01/01" "#e1/01" "#i1/01" "#b1/01" "#x1/01" "#d1/01" "#o1/01" "#e#b01" "#i#b01" "#e#x01" "#i#x01" "#e#d01" "#i#d01" "#e#o01" "#i#o01" "0.1e+1" "+.1e+1" ".10e+1" "#b#e+1" "#x#e+1" "#d#e+1" "#o#e+1" "#b#i+1" "#x#i+1" "#d#i+1" "#o#i+1" "#e#b+1" "#i#b+1" "#e#x+1" "#i#x+1" "#e#d+1" "#i#d+1" "#e#o+1" "#i#o+1" "010e-1" "+10e-1" "10.e-1" "00.1e1" "+0.1e1" "#e.1e1" "#i.1e1" "0.10e1" "+.10e1" ".100e1" "0001/1" "+001/1" "#e01/1" "#i01/1" "#b01/1" "#x01/1" "#d01/1" "#o01/1" "#e+1/1" "#i+1/1" "#b+1/1" "#x+1/1" "#d+1/1" "#o+1/1" "10/010" "010/10" "+10/10" "1.0000" "1e0000" "01.000" "+1.000" "1e+000" "1e-000" "01e000" "+1e000" "1.e000" "001.00" "+01.00" "#e1.00" "#i1.00" "01e+00" "+1e+00" "1.e+00" "01e-00" "+1e-00" "1.e-00" "001e00" "+01e00" "#e1e00" "#i1e00" "1.0e00" "01.e00" "+1.e00" "0001.0" "+001.0" "#e01.0" "#i01.0" "#e+1.0" "#i+1.0" "001e+0" "+01e+0" "#e1e+0" "#i1e+0" "1.0e+0" "01.e+0" "+1.e+0" "001e-0" "+01e-0" "#e1e-0" "#i1e-0" "1.0e-0" "01.e-0" "+1.e-0" "0001e0" "+001e0" "#e01e0" "#i01e0" "#e+1e0" "#i+1e0" "1.00e0" "01.0e0" "+1.0e0" "001.e0" "+01.e0" "#e1.e0" "#i1.e0" "00001." "+0001." "#e001." "#i001." "#e+01." "#i+01." "#xe/0e" "#x0e/e" "#x+e/e" "1+0e1i" "1-0e1i" "1+0/1i" "1-0/1i" "1+000i" "1-000i" "1+.00i" "1-.00i" "01+00i" "+1+00i" "1.+00i" "01-00i" "+1-00i" "1.-00i" "1+0.0i" "1-0.0i" "01+.0i" "+1+.0i" "1.+.0i" "01-.0i" "+1-.0i" "1.-.0i" "001+0i" "+01+0i" "#e1+0i" "#i1+0i" "1/1+0i" "1.0+0i" "1e0+0i" "01.+0i" "+1.+0i" "001-0i" "+01-0i" "#e1-0i" "#i1-0i" "1/1-0i" "1.0-0i" "1e0-0i" "01.-0i" "+1.-0i" "1+0e0i" "1-0e0i" "1+00.i" "1-00.i" "01+0.i" "+1+0.i" "1.+0.i" "01-0.i" "+1-0.i" "1.-0.i" "#xb/0b" "#x0b/b" "#x+b/b" "#xd/0d" "#x0d/d" "#x+d/d" "#xf/0f" "#x0f/f" "#x+f/f")
   
-  ;; remove "l" and "s" and others...
-  
-  (list "111/111" "11/0011" "011/011" "+11/011" "0011/11" "+011/11" "#e11/11" "#i11/11" "#b11/11" "#x11/11" "#d11/11" "#o11/11" "101/101" "0000001" "+000001" "#e00001" "#i00001" "1/00001" "#b00001" "#x00001" "#d00001" "#o00001" "#e+0001" "#i+0001" "#b+0001" "#x+0001" "#d+0001" "#o+0001" ".1e0001" "01/0001" "+1/0001" ".1d0001" ".1f0001" ".1e+001" ".1d+001" ".1f+001" "10e-001" "10d-001" "10f-001" "0.1e001" "+.1e001" ".10e001" "#b#e001" "#x#e001" "#d#e001" "#o#e001" "#b#i001" "#x#i001" "#d#i001" "#o#i001" "001/001" "+01/001" "#e1/001" "#i1/001" "#b1/001" "#x1/001" "#d1/001" "#o1/001" "#e#b001" "#i#b001" "#e#x001" "#i#x001" "0.1d001" "+.1d001" ".10d001" "#e#d001" "#i#d001" "#e#o001" "#i#o001" "0.1f001" "+.1f001" ".10f001" "0.1e+01" "+.1e+01" ".10e+01" "#b#e+01" "#x#e+01" "#d#e+01" "#o#e+01" "#b#i+01" "#x#i+01" "#d#i+01" "#o#i+01" "#e#b+01" "#i#b+01" "#e#x+01" "#i#x+01" "0.1d+01" "+.1d+01" ".10d+01" "#e#d+01" "#i#d+01" "#e#o+01" "#i#o+01" "0.1f+01" "+.1f+01" ".10f+01" "010e-01" "+10e-01" "10.e-01" "010d-01" "+10d-01" "10.d-01" "010f-01" "+10f-01" "1.00000" "1e00000" "1d00000" "1f00000" "01.0000" "+1.0000" "1e+0000" "1d+0000" "1f+0000" "1e-0000" "1d-0000" "1f-0000" "01e0000" "+1e0000" "1.e0000" "01d0000" "+1d0000" "1.d0000" "01f0000" "+1f0000" "1.f0000" "001.000" "+01.000" "#e1.000" "#i1.000" "#d1.000" "01e+000" "+1e+000" "1.e+000" "01d+000" "+1d+000" "1.d+000" "01f+000" "+1f+000" "1.f+000" "01e-000" "+1e-000" "1.e-000" "01d-000" "+1d-000" "1.d-000" "01f-000" "+1f-000" "1.f-000" "001e000" "+01e000" "#e1e000" "#i1e000" "#d1e000" "1.0e000" "+1.e000" "001d000" "+01d000" "#e1d000" "#i1d000" "#d1d000" "1.0d000" "01.d000" "+1.d000" "001f000" "+01f000" "#e1f000" "#i1f000" "#d1f000" "1.0f000" "01.f000" "+1.f000" "0001.00" "+001.00" "#e01.00" "#i01.00" "#d01.00" "#e+1.00" "#i+1.00" "#d+1.00" "001e+00" "+01e+00" "#e1e+00" "#i1e+00" "#d1e+00" "1.0e+00" "01.e+00" "+1.e+00" "001d+00" "+01d+00" "#e1d+00" "#i1d+00" "#d1d+00" "1.0d+00" "01.d+00" "+1.d+00" "001f+00" "+01f+00" "#e1f+00" "#i1f+00" "#d1f+00" "1.0f+00" "01.f+00" "+1.f+00" "001e-00" "+01e-00" "#e1e-00" "#i1e-00" "#d1e-00" "1.0e-00" "01.e-00" "+1.e-00" "001d-00" "+01d-00" "#e1d-00" "#i1d-00" "#d1d-00" "1.0d-00" "01.d-00" "+1.d-00" "001f-00" "+01f-00" "#e1f-00" "#i1f-00" "#d1f-00" "1.0f-00" "0001.f0" "+001.f0" "#e01.f0" "#i01.f0" "#d01.f0" "#e+1.f0" "#i+1.f0" "#d+1.f0" "#xf0/f0" "000001." "+00001." "#e0001." "#i0001." "#d0001." "#e+001." "#i+001." "#d+001." "#d#e01." "#d#i01." "#e#d01." "#i#d01." "#d#e+1." "#d#i+1." "#e#d+1." "#i#d+1." "#x1e/1e" "#xe/00e" "#x0e/0e" "#x+e/0e" "#xee/ee" "#x00e/e" "#x+0e/e" "#x#ee/e" "#x#ie/e" "#e#xe/e" "#i#xe/e" "#xbe/be" "#xde/de" "#xfe/fe" "1+0e11i" "1-0e11i" "1+0/11i" "1-0/11i" "1+0d11i" "1-0d11i" "1+0f11i" "1-0f11i" "1+0e01i" "1-0e01i" "1+0/01i" "1-0/01i" "1+0d01i" "1-0d01i" "1+0f01i" "1-0f01i" "1+0e+1i" "1-0e+1i" "1+0d+1i" "1-0d+1i" "1+0f+1i" "1-0f+1i" "1+0e-1i" "1-0e-1i" "1+0d-1i" "1-0d-1i" "1+0f-1i" "1-0f-1i" "1+00e1i" "1-00e1i" "1+.0e1i" "1-.0e1i" "01+0e1i" "+1+0e1i" "1.+0e1i" "01-0e1i" "+1-0e1i" "1.-0e1i" "1+0.e1i" "1-0.e1i" "1+00/1i" "1-00/1i" "01+0/1i" "+1+0/1i" "1.+0/1i" "01-0/1i" "+1-0/1i" "1.-0/1i" "1+00d1i" "1-00d1i" "1+.0d1i" "1-.0d1i" "01+0d1i" "+1+0d1i" "1.+0d1i" "01-0d1i" "+1-0d1i" "1.-0d1i" "1+0.d1i" "1-0.d1i" "1+00f1i" "1-00f1i" "1+.0f1i" "1-.0f1i" "01+0f1i" "+1+0f1i" "1.+0f1i" "01-0f1i" "+1-0f1i" "1.-0f1i" "1+0.f1i" "1-0.f1i" "1+0e10i" "1-0e10i" "1+0/10i" "1-0/10i" "1+0d10i" "1-0d10i" "1+0f10i" "1-0f10i" "1+0000i" "1-0000i" "1+.000i" "1-.000i" "01+000i" "+1+000i" "1.+000i" "01-000i" "+1-000i" "1.-000i" "1+0.00i" "1-0.00i" "01+.00i" "+1+.00i" "1.+.00i" "01-.00i" "+1-.00i" "1.-.00i" "001+00i" "+01+00i" "#e1+00i" "#i1+00i" "1/1+00i" "#b1+00i" "#x1+00i" "#d1+00i" "#o1+00i" "1.0+00i" "1e0+00i" "1d0+00i" "1f0+00i" "01.+00i" "+1.+00i" "001-00i" "+01-00i" "#e1-00i" "#i1-00i" "1/1-00i" "#b1-00i" "#x1-00i" "#d1-00i" "#o1-00i" "1.0-00i" "1e0-00i" "1d0-00i" "1f0-00i" "01.-00i" "+1.-00i" "1+0e00i" "1-0e00i" "1+0d00i" "1-0d00i" "1+0f00i" "1-0f00i" "1+00.0i" "1-00.0i" "01+0.0i" "+1+0.0i" "1.+0.0i" "01-0.0i" "+1-0.0i" "1.-0.0i" "001+.0i" "+01+.0i" "#e1+.0i" "#i1+.0i" "1/1+.0i" "#d1+.0i" "1.0+.0i" "1e0+.0i" "1d0+.0i" "1f0+.0i" "01.+.0i" "+1.+.0i" "001-.0i" "+01-.0i" "#e1-.0i" "#i1-.0i" "1/1-.0i" "#d1-.0i" "1.0-.0i" "1e0-.0i" "1d0-.0i" "1f0-.0i" "01.-.0i" "+1.-.0i" "0001+0i" "+001+0i" "#e01+0i" "#i01+0i" "1/01+0i" "#b01+0i" "#x01+0i" "#d01+0i" "#o01+0i" "#e+1+0i" "#i+1+0i" "#b+1+0i" "#x+1+0i" "#d+1+0i" "#o+1+0i" ".1e1+0i" "01/1+0i" "+1/1+0i" ".1d1+0i" ".1f1+0i" "1.00+0i" "1e00+0i" "1d00+0i" "1f00+0i" "01.0+0i" "+1.0+0i" "1e+0+0i" "1d+0+0i" "1f+0+0i" "1e-0+0i" "1d-0+0i" "1f-0+0i" "01e0+0i" "+1e0+0i" "1.e0+0i" "01d0+0i" "+1d0+0i" "1.d0+0i" "01f0+0i" "+1f0+0i" "1.f0+0i" "001.+0i" "+01.+0i" "#e1.+0i" "#i1.+0i" "#d1.+0i" "1+0e+0i" "1-0e+0i" "1+0d+0i" "1-0d+0i" "1+0f+0i" "1-0f+0i" "0001-0i" "+001-0i" "#e01-0i" "#i01-0i" "1/01-0i" "#b01-0i" "#x01-0i" "#d01-0i" "#o01-0i" "#e+1-0i" "#i+1-0i" "#b+1-0i" "#x+1-0i" "#d+1-0i" "#o+1-0i" ".1e1-0i" "01/1-0i" "+1/1-0i" ".1d1-0i" ".1f1-0i" "1.00-0i" "1e00-0i" "1d00-0i" "1f00-0i" "01.0-0i" "+1.0-0i" "1e+0-0i" "1d+0-0i" "1f+0-0i" "1e-0-0i" "1d-0-0i" "1f-0-0i" "01e0-0i" "+1e0-0i" "1.e0-0i" "01d0-0i" "+1d0-0i" "1.d0-0i" "01f0-0i" "+1f0-0i" "1.f0-0i" "001.-0i" "+01.-0i" "#e1.-0i" "#i1.-0i" "#d1.-0i" "1+0e-0i" "1-0e-0i" "1+0d-0i" "1-0d-0i" "1+0f-0i" "1-0f-0i" "1+00e0i" "1-00e0i" "1+.0e0i" "1-.0e0i" "01+0e0i" "+1+0e0i" "1.+0e0i" "01-0e0i" "+1-0e0i" "1.-0e0i" "1+0.e0i" "1-0.e0i" "1+00d0i" "1-00d0i" "1+.0d0i" "1-.0d0i" "01+0d0i" "+1+0d0i" "1.+0d0i" "01-0d0i" "+1-0d0i" "1.-0d0i" "1+0.d0i" "1-0.d0i" "1+00f0i" "1-00f0i" "1+.0f0i" "1-.0f0i" "01+0f0i" "+1+0f0i" "1.+0f0i" "01-0f0i" "+1-0f0i" "1.-0f0i" 
-	"1+000.i" "1-000.i" "01+00.i" "+1+00.i" "1.+00.i" "01-00.i" "+1-00.i" "1.-00.i" "001+0.i" "+01+0.i" "#e1+0.i" "#i1+0.i" "1/1+0.i" "#d1+0.i" "1.0+0.i" "1e0+0.i" "1d0+0.i" "1f0+0.i" "+1.+0.i" "001-0.i" "+01-0.i" "#e1-0.i" "#i1-0.i" "1/1-0.i" "#d1-0.i" "1.0-0.i" "1e0-0.i" "1d0-0.i" "1f0-0.i" "01.-0.i" "+1.-0.i" "#xb/00b" "#x0b/0b" "#x+b/0b" "#xeb/eb" "#x00b/b" "#x+0b/b" "#x#eb/b" "#x#ib/b" "#e#xb/b" "#i#xb/b" "#xbb/bb" "#xdb/db" "#xfb/fb" "#x1d/1d" "#xd/00d" "#x0d/0d" "#x+d/0d" "#xed/ed" )
+  (list "111/111" "11/0011" "011/011" "+11/011" "0011/11" "+011/11" "#e11/11" "#i11/11" "#b11/11" "#x11/11" "#d11/11" "#o11/11" "101/101" "0000001" "+000001" "#e00001" "#i00001" "1/00001" "#b00001" "#x00001" "#d00001" "#o00001" "#e+0001" "#i+0001" "#b+0001" "#x+0001" "#d+0001" "#o+0001" ".1e0001" "01/0001" "+1/0001" ".1e+001" "10e-001" "0.1e001" "+.1e001" ".10e001" "#b#e001" "#x#e001" "#d#e001" "#o#e001" "#b#i001" "#x#i001" "#d#i001" "#o#i001" "001/001" "+01/001" "#e1/001" "#i1/001" "#b1/001" "#x1/001" "#d1/001" "#o1/001" "#e#b001" "#i#b001" "#e#x001" "#i#x001" "#e#d001" "#i#d001" "#e#o001" "#i#o001" "0.1e+01" "+.1e+01" ".10e+01" "#b#e+01" "#x#e+01" "#d#e+01" "#o#e+01" "#b#i+01" "#x#i+01" "#d#i+01" "#o#i+01" "#e#b+01" "#i#b+01" "#e#x+01" "#i#x+01" "#e#d+01" "#i#d+01" "#e#o+01" "#i#o+01" "010e-01" "+10e-01" "10.e-01" "1.00000" "1e00000" "01.0000" "+1.0000" "1e+0000" "1e-0000" "01e0000" "+1e0000" "1.e0000" "001.000" "+01.000" "#e1.000" "#i1.000" "#d1.000" "01e+000" "+1e+000" "1.e+000" "01e-000" "+1e-000" "1.e-000" "001e000" "+01e000" "#e1e000" "#i1e000" "#d1e000" "1.0e000" "+1.e000" "0001.00" "+001.00" "#e01.00" "#i01.00" "#d01.00" "#e+1.00" "#i+1.00" "#d+1.00" "001e+00" "+01e+00" "#e1e+00" "#i1e+00" "#d1e+00" "1.0e+00" "01.e+00" "+1.e+00" "001e-00" "+01e-00" "#e1e-00" "#i1e-00" "#d1e-00" "1.0e-00" "01.e-00" "+1.e-00" "000001." "+00001." "#e0001." "#i0001." "#d0001." "#e+001." "#i+001." "#d+001." "#d#e01." "#d#i01." "#e#d01." "#i#d01." "#d#e+1." "#d#i+1." "#e#d+1." "#i#d+1." "#x1e/1e" "#xe/00e" "#x0e/0e" "#x+e/0e" "#xee/ee" "#x00e/e" "#x+0e/e" "#x#ee/e" "#x#ie/e" "#e#xe/e" "#i#xe/e" "#xbe/be" "#xde/de" "1+0e11i" "1-0e11i" "1+0/11i" "1-0/11i" "1+0e01i" "1-0e01i" "1+0/01i" "1-0/01i" "1+0e+1i" "1-0e+1i" "1+0e-1i" "1-0e-1i" "1+00e1i" "1-00e1i" "1+.0e1i" "1-.0e1i" "01+0e1i" "+1+0e1i" "1.+0e1i" "01-0e1i" "+1-0e1i" "1.-0e1i" "1+0.e1i" "1-0.e1i" "1+00/1i" "1-00/1i" "01+0/1i" "+1+0/1i" "1.+0/1i" "01-0/1i" "+1-0/1i" "1.-0/1i" "1+0e10i" "1-0e10i" "1+0/10i" "1-0/10i" "1+0000i" "1-0000i" "1+.000i" "1-.000i" "01+000i" "+1+000i" "1.+000i" "01-000i" "+1-000i" "1.-000i" "1+0.00i" "1-0.00i" "01+.00i" "+1+.00i" "1.+.00i" "01-.00i" "+1-.00i" "1.-.00i" "001+00i" "+01+00i" "#e1+00i" "#i1+00i" "1/1+00i" "#b1+00i" "#x1+00i" "#d1+00i" "#o1+00i" "1.0+00i" "1e0+00i" "01.+00i" "+1.+00i" "001-00i" "+01-00i" "#e1-00i" "#i1-00i" "1/1-00i" "#b1-00i" "#x1-00i" "#d1-00i" "#o1-00i" "1.0-00i" "1e0-00i" "01.-00i" "+1.-00i" "1+0e00i" "1-0e00i" "1+00.0i" "1-00.0i" "01+0.0i" "+1+0.0i" "1.+0.0i" "01-0.0i" "+1-0.0i" "1.-0.0i" "001+.0i" "+01+.0i" "#e1+.0i" "#i1+.0i" "1/1+.0i" "#d1+.0i" "1.0+.0i" "1e0+.0i" "01.+.0i" "+1.+.0i" "001-.0i" "+01-.0i" "#e1-.0i" "#i1-.0i" "1/1-.0i" "#d1-.0i" "1.0-.0i" "1e0-.0i" "01.-.0i" "+1.-.0i" "0001+0i" "+001+0i" "#e01+0i" "#i01+0i" "1/01+0i" "#b01+0i" "#x01+0i" "#d01+0i" "#o01+0i" "#e+1+0i" "#i+1+0i" "#b+1+0i" "#x+1+0i" "#d+1+0i" "#o+1+0i" ".1e1+0i" "01/1+0i" "+1/1+0i" "1.00+0i" "1e00+0i" "01.0+0i" "+1.0+0i" "1e+0+0i" "1e-0+0i" "01e0+0i" "+1e0+0i" "1.e0+0i" "001.+0i" "+01.+0i" "#e1.+0i" "#i1.+0i" "#d1.+0i" "1+0e+0i" "1-0e+0i" "0001-0i" "+001-0i" "#e01-0i" "#i01-0i" "1/01-0i" "#b01-0i" "#x01-0i" "#d01-0i" "#o01-0i" "#e+1-0i" "#i+1-0i" "#b+1-0i" "#x+1-0i" "#d+1-0i" "#o+1-0i" ".1e1-0i" "01/1-0i" "+1/1-0i" "1.00-0i" "1e00-0i" "01.0-0i" "+1.0-0i" "1e+0-0i" "1e-0-0i" "01e0-0i" "+1e0-0i" "1.e0-0i" "001.-0i" "+01.-0i" "#e1.-0i" "#i1.-0i" "#d1.-0i" "1+0e-0i" "1-0e-0i" "1+00e0i" "1-00e0i" "1+.0e0i" "1-.0e0i" "01+0e0i" "+1+0e0i" "1.+0e0i" "01-0e0i" "+1-0e0i" "1.-0e0i" "1+0.e0i" "1-0.e0i"	"1+000.i" "1-000.i" "01+00.i" "+1+00.i" "1.+00.i" "01-00.i" "+1-00.i" "1.-00.i" "001+0.i" "+01+0.i" "#e1+0.i" "#i1+0.i" "1/1+0.i" "#d1+0.i" "1.0+0.i" "1e0+0.i" "+1.+0.i" "001-0.i" "+01-0.i" "#e1-0.i" "#i1-0.i" "1/1-0.i" "#d1-0.i" "1.0-0.i" "1e0-0.i" "01.-0.i" "+1.-0.i" "#xb/00b" "#x0b/0b" "#x+b/0b" "#xeb/eb" "#x00b/b" "#x+0b/b" "#x#eb/b" "#x#ib/b" "#e#xb/b" "#i#xb/b" "#xbb/bb" "#xdb/db" "#xd/00d" "#x0d/0d" "#x+d/0d" "#xed/ed")
   
 ;;; selected ones...
   
-  (list "#i+11/011" "#xf11/f11" "+101/0101" "#o#e11/11" "#d+11/011" "#e1/0001" "010d-001" "#e#b+001" ".10f+001" "+10f-001" ".10d0001" "#d10d-1" "#e10e-1"
-	"#e.1d0001" "#d.01d002" "#i0.1f001" "#x#e1/001" "000000001" "#i+.1e+01" "#d+.1e+01" "00.10e+01" "+0.10e+01" "#e.10e+01" "#i.10e+01" "#d.10e+01"
-	"#e.10e+01" "#i10.0e-01" "#d+.1d+01" "#d.10f+01" "#i0.1f+01" "+010.e-01" "#e10.e-01" "#e00.1e01" "#e#d.1e01" "#i#d1e0+0e0i" 
-	"#e#d10e-1+0e-2i" "#e#d1e0+0e-2i" "#d.1d+01+.0d01i" "#d0.001d+03+0.0d-10i" "#i#d+0.001d+03+0.0d-10i" "#i#d+1/1-0/1i"
+  (list "#i+11/011" "+101/0101" "#o#e11/11" "#d+11/011" "#e1/0001" "#e#b+001" "#e10e-1"
+	"#x#e1/001" "000000001" "#i+.1e+01" "#d+.1e+01" "00.10e+01" "+0.10e+01" "#e.10e+01" "#i.10e+01" "#d.10e+01"
+	"#e.10e+01" "#i10.0e-01" "+010.e-01" "#e10.e-01" "#e00.1e01" "#e#d.1e01" "#i#d1e0+0e0i" 
+	"#e#d10e-1+0e-2i" "#e#d1e0+0e-2i" "#i#d+0.001e+03+0.0e-10i" "#i#d+1/1-0/1i"
 	)
   ))
 
@@ -56181,8 +56210,8 @@ etc....
 	    (format #t ";(string->number ~A) returned ~A but expected ~A (~A ~A ~A ~A)~%"
 		    x (string->number x) y
 		    xx (eq? xx #f)
-		    (and (rational? y) (not (eqv? xx y)))
-		    (abs (- xx y))))))
+		    (if (and xx y) (and (rational? y) (not (eqv? xx y))) #f)
+		    (if (and xx y) (abs (- xx y)) #f)))))
     couple))
  '(
    ("#b0" 0)  ("#b1" 1) ("#o0" 0) ("#b-1" -1) ("#b+1" 1)
@@ -56214,9 +56243,7 @@ etc....
    ("#xE" 14) ("#xF" 15) ("#x-ABC" -2748)
    ("#xaBC" 2748) ("#xAbC" 2748) ("#xabC" 2748) ("#xABc" 2748)
    ("1/1" 1) ("1/2" 1/2) ("-1/2" -1/2) ("#e9/10" 9/10) ("#i6/8" 0.75) ("#i1/1" 1.0)
-   ("1e2" 100.0) ("1s2" 100.0)
-   ("1f2" 100.0) ("1d2" 100.0) 
-   ("1l2" 100.0) 
+   ("1e2" 100.0) 
    ("1e+2" 100.0) ("1e-2" 0.01)
    (".1" .1) (".0123456789" 123456789e-10) 
    (".0123456789e10" 123456789.0)
@@ -57863,32 +57890,32 @@ etc
 (idf-test (integer-decode-float 90000.0) '(6184752906240000 -36 1))
 (idf-test (integer-decode-float -90000.0) '(6184752906240000 -36 -1))
 (idf-test (integer-decode-float 0.00001) '(5902958103587057 -69 1))
-(idf-test (integer-decode-float 1.0d-6) '(4722366482869645 -72 1))
-(idf-test (integer-decode-float 1.0d-8) '(6044629098073146 -79 1))
-(idf-test (integer-decode-float 1.0d-12) '(4951760157141521 -92 1))
-(idf-test (integer-decode-float 1.0d-16) '(8112963841460668 -106 1))
-(idf-test (integer-decode-float 1.0d-17) '(6490371073168535 -109 1))
-(idf-test (integer-decode-float 1.0d-18) '(5192296858534828 -112 1))
-(idf-test (integer-decode-float 1.0d-19) '(8307674973655724 -116 1))
-(idf-test (integer-decode-float 1.0d-25) '(8711228593176025 -136 1))
-(idf-test (integer-decode-float 1.0d6)  '(8589934592000000 -33 1))
-(idf-test (integer-decode-float 1.0d12) '(8192000000000000 -13 1))
-(idf-test (integer-decode-float 1.0d17) '(6250000000000000 4 1))
-(idf-test (integer-decode-float 1.0d18) '(7812500000000000 7 1))
-(idf-test (integer-decode-float 1.0d19) '(4882812500000000 11 1))
-(idf-test (integer-decode-float 1.0d20) '(6103515625000000 14 1))
-(idf-test (integer-decode-float 1.0d-100) '(7880401239278896 -385 1))
-(idf-test (integer-decode-float 1.0d100) '(5147557589468029 280 1))
-(idf-test (integer-decode-float 1.0d200) '(5883593420661338 612 1))
-(idf-test (integer-decode-float 1.0d-200) '(6894565328877484 -717 1))
-(idf-test (integer-decode-float 1.0d307) '(8016673440035891 967 1))
+(idf-test (integer-decode-float 1.0e-6) '(4722366482869645 -72 1))
+(idf-test (integer-decode-float 1.0e-8) '(6044629098073146 -79 1))
+(idf-test (integer-decode-float 1.0e-12) '(4951760157141521 -92 1))
+(idf-test (integer-decode-float 1.0e-16) '(8112963841460668 -106 1))
+(idf-test (integer-decode-float 1.0e-17) '(6490371073168535 -109 1))
+(idf-test (integer-decode-float 1.0e-18) '(5192296858534828 -112 1))
+(idf-test (integer-decode-float 1.0e-19) '(8307674973655724 -116 1))
+(idf-test (integer-decode-float 1.0e-25) '(8711228593176025 -136 1))
+(idf-test (integer-decode-float 1.0e6)  '(8589934592000000 -33 1))
+(idf-test (integer-decode-float 1.0e12) '(8192000000000000 -13 1))
+(idf-test (integer-decode-float 1.0e17) '(6250000000000000 4 1))
+(idf-test (integer-decode-float 1.0e18) '(7812500000000000 7 1))
+(idf-test (integer-decode-float 1.0e19) '(4882812500000000 11 1))
+(idf-test (integer-decode-float 1.0e20) '(6103515625000000 14 1))
+(idf-test (integer-decode-float 1.0e-100) '(7880401239278896 -385 1))
+(idf-test (integer-decode-float 1.0e100) '(5147557589468029 280 1))
+(idf-test (integer-decode-float 1.0e200) '(5883593420661338 612 1))
+(idf-test (integer-decode-float 1.0e-200) '(6894565328877484 -717 1))
+(idf-test (integer-decode-float 1.0e307) '(8016673440035891 967 1))
 
-(let ((val (integer-decode-float 1.0d-307)))
+(let ((val (integer-decode-float 1.0e-307)))
   (if (and (not (equal? val '(5060056332682765 -1072 1)))
 	   (not (equal? val '(5060056332682766 -1072 1))))
-      (format #t ";(integer-decode-float 1.0d-307) got ~A?~%" val)))
+      (format #t ";(integer-decode-float 1.0e-307) got ~A?~%" val)))
 
-(test (integer-decode-float (/ 1.0d-307 100.0d0)) '(4706001880677807 -1075 1)) ; denormal
+(test (integer-decode-float (/ 1.0e-307 100.0e0)) '(4706001880677807 -1075 1)) ; denormal
 (test (integer-decode-float (/ (log 0.0))) '(6755399441055744 972 -1)) ; nan
 (test (integer-decode-float (- (real-part (log 0.0)))) '(4503599627370496 972 1)) ; +inf
 (test (integer-decode-float (real-part (log 0.0))) '(4503599627370496 972 -1)) ; -inf
@@ -57899,7 +57926,7 @@ etc
 (test (integer-decode-float 1.0e-322) '(4503599627370516 -1075 1))
 (test (integer-decode-float (expt 2.0 31)) (list #x10000000000000 -21 1))
 (test (integer-decode-float (expt 2.0 52)) (list #x10000000000000 0 1))
-(test (integer-decode-float 1d23) '(5960464477539062 24 1))
+(test (integer-decode-float 1e23) '(5960464477539062 24 1))
 
 (for-each
  (lambda (arg)

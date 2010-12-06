@@ -179,6 +179,7 @@
 
 
 
+
 /* ---------------- scheme choices ---------------- */
 
 #ifndef WITH_GMP
@@ -192,6 +193,12 @@
   #define WITH_PROFILING 0
   /* this includes a simple profiler -- see the profile function in Snd's extensions.scm 
    *   added function: symbol-calls
+   */
+#endif
+
+#ifndef WITH_EXTRA_EXPONENT_MARKERS
+  #define WITH_EXTRA_EXPONENT_MARKERS 1
+  /* if 1, s7 recognizes "d", "f", "l", and "s" as exponent markers, in addition to "e" (also "D", "F", "L", "S")
    */
 #endif
 
@@ -5001,10 +5008,12 @@ static void init_ctables(void)
 
   /* surely only 'e' is needed... */
   exponent_table['e'] = true; exponent_table['E'] = true;
+#if WITH_EXTRA_EXPONENT_MARKERS
   exponent_table['s'] = true; exponent_table['S'] = true; 
   exponent_table['f'] = true; exponent_table['F'] = true;
   exponent_table['d'] = true; exponent_table['D'] = true;
   exponent_table['l'] = true; exponent_table['L'] = true;
+#endif
 
   for (i = 0; i < 32; i++)
     slashify_table[i] = true;
@@ -5784,10 +5793,12 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		
 		/* -------- exponent marker -------- */
 	      case 'e': case 'E':
+#if WITH_EXTRA_EXPONENT_MARKERS
 	      case 's': case 'S':
 	      case 'd': case 'D':
 	      case 'f': case 'F':
 	      case 'l': case 'L':
+#endif
 		if (current_radix > 10)
 		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		/* see note above */
@@ -13792,6 +13803,24 @@ static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
 static s7_pointer g_memv(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "memv", s7_is_eqv_1));}
 static s7_pointer g_member(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "member", s7_is_equal));}
 
+/* r7rs apparently will add an optional equality-function argument to member and assoc.
+ *   to support that, I think the best thing would be either to add explicit ops/loops in eval,
+ *   or transform it to a loop.  (do ((L lst (cdr L))) ((or (null? L) (equal-func val (car L))) (if (null? L) #f L)))
+ *
+ * sc->args = make_list_3(car(args), cadr(args), caddr(args))
+ * value = #f
+ * op_member:
+ *   lst = caddr(args)
+ *   if value = #t return lst
+ *   if (!lst) -> #f
+ *   func = cadr(args)
+ *   val = car(args)
+ *   args = cdr(args)
+ *   push op member code args
+ *   code = func
+ *   args = list_2(val, car(lst))
+ *   goto apply
+ */
 
 static bool is_member(s7_pointer sym, s7_pointer lst)
 {
@@ -13805,7 +13834,7 @@ static bool is_member(s7_pointer sym, s7_pointer lst)
 
 static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_provided "(provided? sym) returns #t if sym is a member of the *features* list"
+  #define H_is_provided "(provided? symbol) returns #t if symbol is a member of the *features* list"
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "provided?", 1, car(args), "a symbol"));
 
@@ -13815,7 +13844,7 @@ static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 {
-  #define H_provide "(provide sym) adds sym to the *features* list"
+  #define H_provide "(provide symbol) adds symbol to the *features* list"
   s7_pointer features;
 
   if ((typeflag(car(args)) & (T_MASKTYPE | T_SYNTAX)) != T_SYMBOL)
@@ -30135,6 +30164,10 @@ the error type and the info passed to the error handler.");
   g_provide(sc, make_list_1(sc, make_symbol(sc, "profiling")));  
 #endif
 
+#if WITH_EXTRA_EXPONENT_MARKERS
+  g_provide(sc, make_list_1(sc, make_symbol(sc, "dfls-exponents")));
+#endif
+
 
 #if HAVE_PTHREADS
   thread_tag = s7_new_type("<thread>",          thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
@@ -30311,6 +30344,10 @@ the error type and the info passed to the error handler.");
   initial_lt =       s7_symbol_value(sc, make_symbol(sc, "<"));
   initial_gt =       s7_symbol_value(sc, make_symbol(sc, ">"));
 
+#if WITH_R7RS
+  /* define some r7rs stupidities */
+#endif
+
   return(sc);
 }
 
@@ -30397,7 +30434,7 @@ the error type and the info passed to the error handler.");
  *
  * position and position-if generics [member-if? assoc-if?]
  *   these would have many tie-ins in Snd 
- *   both would benefit from an optional start point
+ *   both would benefit from an optional start point = subseq so not needed [list-tail substring but vector?]
  *   char/any str/any any/list|vector|c-obj 
  *   would we use eq? or equal? (leave that to position-if?  isn't sort backwards now?
  *

@@ -4565,6 +4565,7 @@ have any number after, for example, #b:
    remove char-ready?
    change eof-object? to eof? or better end-of-input?
    use @ as the exponent marker if base &gt; 10
+   remove the "d", "f", "s", and "l" exponent markers (leaving "e" and "E")
 </pre>
 
 <p>and perhaps:
@@ -4606,6 +4607,17 @@ have any number after, for example, #b:
 <br>
 <br><br>
 
+
+<!--
+for r7rs: (?)
+  (define (finite? n) (and (number" n) (not (nan? n)) (not (infinite? n))))
+  (define vector-map map)
+  (define vector-for-each for-each)
+  (define string-map map)
+  (define string-for-each for-each)
+  (define list-copy copy)
+  (define vector-copy copy)
+-->
 
 
 
@@ -4728,6 +4740,7 @@ compile-time flags:
     WITH_PROFILING                 1 if you want profiling support (default is 0)
     S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
     HAVE_GETTIMEOFDAY              1 if you want timing info from the GC (default is 0)
+    WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 1)
 </pre>
 
 <p>See the comment at the start of s7.c for more information about these switches.
