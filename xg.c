@@ -209,6 +209,11 @@ static void define_xm_obj(void)
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
+#define XM_TYPE_PTR_CONST(Name, XType) \
+  static XEN C_TO_XEN_ ## Name (const XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
+  static const XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((const XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+
 #define XM_TYPE_PTR_1(Name, XType) \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
@@ -362,11 +367,11 @@ XM_TYPE_PTR(GdkPixbuf_, GdkPixbuf*)
 #define XEN_TO_C_GLogLevelFlags(Arg) (GLogLevelFlags)(XEN_TO_C_INT(Arg))
 #define XEN_GLogLevelFlags_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(GdkAtom, GdkAtom)
-XM_TYPE_PTR(guint8_, guint8*)
+XM_TYPE_PTR_CONST(guint8_, guint8*)
 #define C_TO_XEN_gsize(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gsize(Arg) (gsize)(XEN_TO_C_INT(Arg))
 #define XEN_gsize_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkRecentFilterInfo_, GtkRecentFilterInfo*)
+XM_TYPE_PTR_CONST(GtkRecentFilterInfo_, GtkRecentFilterInfo*)
 XM_TYPE_PTR(GtkRecentInfo_, GtkRecentInfo*)
 #define C_TO_XEN_GType(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GType(Arg) (GType)(XEN_TO_C_ULONG(Arg))
@@ -49307,7 +49312,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Nov-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Dec-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

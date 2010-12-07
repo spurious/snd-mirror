@@ -954,7 +954,10 @@
 			       (if (member type no-xen-to-c)
 				   "_PTR_2"
 				   "_PTR_NO_P")
-			       "_PTR"))
+			       (if (or (string=? type "guint8*")
+				       (string=? type "GtkRecentFilterInfo*"))
+				   "_PTR_CONST"
+				   "_PTR")))
 		       (if (member type no-c-to-xen)
 			   "_1"
 			   (if (member type no-xen-p)
@@ -2017,10 +2020,11 @@
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
 (hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
 (hey "~%")
-					;(hey "#define XM_TYPE_PTR_NO_P(Name, XType) \\~%")
-					;(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
-					;(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
-					;(hey "~%")
+(hey "#define XM_TYPE_PTR_CONST(Name, XType) \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (const XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
+(hey "  static const XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((const XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+(hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
+(hey "~%")
 (hey "#define XM_TYPE_PTR_1(Name, XType) \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
 (hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")

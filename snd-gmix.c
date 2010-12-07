@@ -567,7 +567,7 @@ static void mix_sync_callback(GtkWidget *w, gpointer context)
 	  mix_set_sync_from_id(mix_dialog_id, 0);
 	}
     }
-  for_each_normal_chan(display_channel_mixes);
+  for_each_normal_chan(display_channel_data);
 }
 
 
@@ -997,7 +997,7 @@ void reflect_mix_change(int mix_id)
 	      mix_set_color_from_id(mix_dialog_id, ss->sgx->red);
 	      syncd_mix_set_color(mix_dialog_id, ss->sgx->red);
 
-	      for_each_normal_chan(display_channel_mixes);
+	      for_each_normal_chan(display_channel_data);
 
 	      if (!dragging)
 		{

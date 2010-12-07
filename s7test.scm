@@ -4134,6 +4134,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (assq 'b (list '(a . 1) '(b . 2) '() '(c . 3) #f)) '(b . 2))
 (test (assq 'asdf (list '(a . 1) '(b . 2) '() '(c . 3) #f)) #f)
 (test (assq "" (list '("a" . 1) '("" . 2) '(#() . 3))) #f) ; since (eq? "" "") is #f
+(test (assq 'a '((a . 1) (a . 2) (a . 3))) '(a . 1)) ; is this specified?
+(test (assq 'a '((b . 1) (a . 2) (a . 3))) '(a . 2))
 
 ;; check the even/odd cases
 (let ((odd '((3 . 1) (a . 2) (3.0 . 3) (b . 4) (3/4 . 5) (c . 6) (#(1) . 7) (d . 8)))
@@ -4198,6 +4200,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (assv 'c '((a . 1) (b . 2) () (c . 3) . 4)) '(c . 3))
 (test (assv 'asdf '((a . 1) (b . 2) () (c . 3) . 4)) #f)
 (test (assv 'd '((a . 1) (b . 2) () (c . 3) (d . 5))) '(d . 5))
+(test (assv 'a '((a . 1) (a . 2) (a . 3))) '(a . 1)) ; is this specified?
+(test (assv 'a '((b . 1) (a . 2) (a . 3))) '(a . 2))
 
 (let ((odd '((3 . 1) (a . 2) (3.0 . 3) (b . 4) (3/4 . 5) (c . 6) (#(1) . 7) (d . 8)))
       (even '((e . 1) (3 . 2) (a . 3) (3.0 . 4) (b . 5) (3/4 . 6) (c . 7) (#(1) . 8) (d . 9))))
@@ -4260,12 +4264,15 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (assoc (let ((x (cons 1 2))) (set-cdr! x x)) 1) 'error)
 (test (assoc '((1 2) .3) 1) 'error)
 (test (assoc ''foo quote) 'error)
+(test (assoc 3 '((a . 3)) abs =) 'error)
 (test (assoc 1 '(1 2 . 3)) #f)
 (test (assoc 1 '((1 2) . 3)) '(1 2))
 (test (assoc 1 '((1) (1 3) (1 . 2))) '(1))
 (test (assoc 1 '((1 2 . 3) (1 . 2))) '(1 2 . 3))
 (test (assoc '(((1 2))) '((1 2) ((1 2) 3) (((1 2) 3) 4) ((((1 2) 3) 4) 5))) #f)
 (test (assoc '(((1 2))) '((1 2) ((1 2)) (((1 2))) ((((1 2)))))) '((((1 2)))))
+(test (assoc 'a '((a . 1) (a . 2) (a . 3))) '(a . 1)) ; is this specified?
+(test (assoc 'a '((b . 1) (a . 2) (a . 3))) '(a . 2))
 
 (test (assoc '() '((() 1) (#f 2))) '(() 1))
 (test (assoc '() '((1) (#f 2))) #f)
@@ -4293,7 +4300,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (assoc 3 even) '(3 . 2))
   (test (assoc 3/4 odd) '(3/4 . 5))
   (test (assoc 3/4 even) '(3/4 . 6))
-  (test (assoc 3.0 odd) '(3.0 . 3))  ; presumably = would find the 3 case
+  (test (assoc 3.0 odd =) '(3 . 1)) 
+  (test (assoc 3.0 odd) '(3.0 . 3)) 
   (test (assoc 3.0 even) '(3.0 . 4))
   (test (assoc #(1) odd) '(#(1) . 7))
   (test (assoc #(1) even) '(#(1) . 8)))
@@ -4305,6 +4313,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (assoc #\a '((#\A . 1) (#\b . 2)) char=?) #f)
 (test (assoc #\a '((#\A . 1) (#\b . 2)) char-ci=?) '(#\A . 1))
 (test (assoc #\a '((#\A . 1) (#\b . 2)) (lambda (a b) (char-ci=? a b))) '(#\A . 1))
+(test (assoc 3 '((1 . a) (2 . b) (3 . c) (4 . d)) #(1)) 'error)
 (test (assoc 3 '((1 . a) (2 . b) (3 . c) (4 . d)) abs) 'error)
 (test (assoc 3 '((1 . a) (2 . b) (3 . c) (4 . d)) quasiquote) 'error)
 (test (assoc 3 '((1 . a) (2 . b) (3 . c) (4 . d)) (lambda (a b c) (= a b))) 'error)
@@ -4313,6 +4322,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (assoc 4.0 '((1 . a) (2 . b) (3 . c) (4 . d)) (make-procedure-with-setter = =)) '(4 . d))
 (test (catch #t (lambda () (assoc 4.0 '((1 . a) (2 . b) (3 . c) (4 . d)) (lambda (a b) (error 'assoc a)))) (lambda args (car args))) 'assoc)
 (test (call-with-exit (lambda (go) (assoc 4.0 '((1 . a) (2 . b) (3 . c) (4 . d)) (lambda (a b) (go 'assoc))))) 'assoc)
+(test (assoc 3 '((#\a . 3) (#() . 2) (3.0 . 1) ("3" . 0))) #f)
+(test (assoc 3 '((#\a . 3) (#() . 2) (3.0 . 1) ("3" . 0)) (lambda (a b) (= a b))) 'error)
+(test (assoc 3 '((#\a . 3) (#() . 2) (3.0 . 1) ("3" . 0)) (lambda (a b) (and (number? b) (= a b)))) '(3.0 . 1)) ; is this order specified?
 
 
 
@@ -4346,6 +4358,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((x (cons 1 2))) (memq x (list x (cons 3 4)))) '((1 . 2) (3 . 4)))
 (test (pair? (let ((x (lambda () 1))) (memq x (list 1 2 x 3)))) #t)
 (test (memq memq (list abs + memq car)) (list memq car))
+(test (memq 'a '(a a a)) '(a a a)) ;?
+(test (memq 'a '(b a a)) '(a a))
 
 (let ((odd '(3 a 3.0 b 3/4 c #(1) d))
       (even '(e 3 a 3.0 b 3/4 c #(1) d)))
@@ -4379,6 +4393,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (memv ''a '('a b c)) #f)
 (test (let ((x (cons 1 2))) (memv x (list (cons 1 2) (cons 3 4)))) #f)
 (test (let ((x (cons 1 2))) (memv x (list x (cons 3 4)))) '((1 . 2) (3 . 4)))
+(test (memv 'a '(a a a)) '(a a a)) ;?
+(test (memv 'a '(b a a)) '(a a))
 
 (let ((odd '(3 a 3.0 b 3/4 c #(1) d))
       (even '(e 3 a 3.0 b 3/4 c #(1) d)))
@@ -4422,6 +4438,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((x (cons 1 2))) (member x (list (cons 1 2) (cons 3 4)))) '((1 . 2) (3 . 4)))
 (test (let ((x (list 1 2))) (member x (list (cons 1 2) (list 1 2)))) '((1 2)))
 (test (member ''a '('a b c)) '('a b c))
+(test (member 'a '(a a a)) '(a a a)) ;?
+(test (member 'a '(b a a)) '(a a))
 
 (for-each
  (lambda (arg)
@@ -4429,6 +4447,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (list "hi" (integer->char 65) #f 'a-symbol abs 3/4 #\f #t (if #f #f) '(1 2 (3 (4))) most-positive-fixnum))
 
 (test (member 3 . (1 '(2 3))) 'error)
+(test (member 3 '(1 2 3) = =) 'error)
 (test (member 3 . ('(1 2 3))) '(3))
 (test (member 3 . ('(1 2 3 . 4))) '(3 . 4))
 (test (member . (3 '(1 2 3))) '(3))
@@ -4464,8 +4483,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (member 3 '(1 2 3 4) (make-procedure-with-setter = =)) '(3 4))
 (test (catch #t (lambda () (member 3 '(1 2 3) (lambda (a b) (error 'member a)))) (lambda args (car args))) 'member)
 (test (call-with-exit (lambda (go) (member 3 '(1 2 3) (lambda (a b) (go 'member))))) 'member)
-
-
+(test (member 'a '(a a a) eq?) '(a a a))
+(test (member 'a '(b a a) eqv?) '(a a))
+(test (member 3.0 '(1 #\a (3 . 3) abs #() 3+i)) #f)
+(test (member 3.0 '(1 #\a (3 . 3) abs #() 3+i) (lambda (a b) (= (real-part a) b))) 'error)
+(test (member 3.0 '(1 #\a (3 . 3) abs #() 3+i) (lambda (a b) (and (number? b) (= (real-part b) a)))) '(3+i))
+;; is it guaranteed that in the comparison function the value is 1st and the list member 2nd?
 
 
 (for-each
@@ -19193,6 +19216,10 @@ abs     1       2
 (test ((make-procedure-with-setter call-with-exit call/cc) (lambda (a) (a 1))) 1)
 (test (length (make-procedure-with-setter < >)) 'error)
 
+(let ((p1 (make-procedure-with-setter (lambda (a) (+ a 1)) (lambda (a b) (+ a b)))))
+  (let ((p2 (make-procedure-with-setter p1 p1)))
+    (test (p2 1) 2)))
+
 
 
 ;; generic length/reverse/copy/fill!
@@ -19324,6 +19351,8 @@ abs     1       2
      (test (equal? c (copy c)) #t)
      (set! c1 c)))
   (test (procedure? c1) #t))
+
+(test (let ((lst '(1 2 3))) (fill! lst (cons 1 2)) (set! (car (car lst)) 3) (caadr lst)) 3)
 
 
 ;; generic for-each/map

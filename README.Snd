@@ -487,6 +487,11 @@ In some cases, if you installed gtk from an RPM file, you
 also need to install gtk-devel.
 
 
+Gtk is changing rapidly these days, moving toward Gtk 3. Snd is struggling
+to keep pace, but expect trouble! 
+
+
+
 
 ---- Mac OSX: ---- 
 

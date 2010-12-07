@@ -16796,6 +16796,12 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
       if ((!is_pair(funcs)) ||
 	  (s7_list_length(sc, funcs) != 3))
 	return(s7_wrong_type_arg_error(sc, "set! symbol-access,", 2, funcs, "a list of 3 settings"));	
+      if ((is_procedure(car(funcs))) && (!args_match(sc, car(funcs), 2)))
+	return(s7_wrong_type_arg_error(sc, "set! symbol-access get function,", 2, car(funcs), "a procedure of 2 arguments"));	
+      if ((is_procedure(cadr(funcs))) && (!args_match(sc, cadr(funcs), 2)))
+	return(s7_wrong_type_arg_error(sc, "set! symbol-access set function,", 2, cadr(funcs), "a procedure of 2 arguments"));	
+      if ((is_procedure(caddr(funcs))) && (!args_match(sc, caddr(funcs), 2)))
+	return(s7_wrong_type_arg_error(sc, "set! symbol-access bind function,", 2, caddr(funcs), "a procedure of 2 arguments"));	
     }
   return(s7_symbol_set_access(sc, sym, funcs));
 }
@@ -21921,7 +21927,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_MEMBER_IF:
-      /* coming in 1st time: code=func, args=((val (car list)) list), value=result of comparison
+      /* code=func, args=((val (car list)) list), value=result of comparison
        */
       if (sc->value != sc->F)            /* previous comparison was not #f -- return list */
 	{
@@ -21943,7 +21949,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_ASSOC_IF:
-      /* coming in 1st time: code=func, args=((val (caar list)) list), value=result of comparison
+      /* code=func, args=((val (caar list)) list), value=result of comparison
        *   (assoc 3 '((1 . a) (2 . b) (3 . c) (4 . d)) =)
        */
       if (sc->value != sc->F)            /* previous comparison was not #f -- return (car list) */

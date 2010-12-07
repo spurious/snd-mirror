@@ -2232,8 +2232,12 @@ void move_mix_tag(int mix_id, int x, int y)
 	drag_end = cur_end;
       if (ms->beg < drag_beg)
 	drag_beg = ms->beg;
+#if USE_MOTIF
       make_partial_graph(cp, drag_beg, drag_end);
       display_channel_mixes_with_bounds(cp, drag_beg, drag_end);
+#else
+      display_channel_data(cp);
+#endif
     }
 
   if (XEN_HOOKED(mix_drag_hook))
@@ -2335,8 +2339,12 @@ void mix_display_during_drag(int mix_id, mus_long_t drag_beg, mus_long_t drag_en
 	drag_end = cur_end;
       if (ms_beg < drag_beg)
 	drag_beg = ms_beg;
+#if USE_MOTIF
       make_partial_graph(cp, drag_beg, drag_end);
       display_channel_mixes_with_bounds(cp, drag_beg, drag_end);
+#else
+      display_channel_data(cp);
+#endif
     }
 }
 

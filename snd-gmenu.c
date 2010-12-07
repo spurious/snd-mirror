@@ -1149,6 +1149,10 @@ GtkWidget *add_menu(void)
   SG_SIGNAL_CONNECT(edit_menu, "activate", edit_menu_update_1, NULL);
   SG_SIGNAL_CONNECT(view_menu, "activate", view_menu_update_1, NULL);
 
+  /* to override system-wide no-menu-icon preference choice:
+   *    g_object_set (gtk_settings_get_default (), "gtk-menu-images", true, NULL);
+   */
+
   return(main_menu);
 }
 
