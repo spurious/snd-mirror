@@ -74,6 +74,7 @@
  *        length, copy, fill!, reverse, map, for-each are generic
  *        make-type creates a new scheme type
  *        symbol-access modifies symbol value lookup
+ *        member and assoc accept an optional 3rd argument, the comparison function
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -318,7 +319,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO,
 	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO,
-	      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS, OP_HOOK_APPLY,
+	      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS, OP_HOOK_APPLY, OP_MEMBER_IF, OP_ASSOC_IF,
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
@@ -336,12 +337,12 @@ static const char *op_names[OP_MAX_DEFINED] =
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
    "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort",
-   "eval-string", "eval-string", "set-access", "hook-apply"
+   "eval-string", "eval-string", "set-access", "hook-apply", "member-if", "assoc-if"
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 91 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 93 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -1122,6 +1123,7 @@ static void pop_input_port(s7_scheme *sc);
 static bool s7_is_negative(s7_pointer obj);
 static bool s7_is_positive(s7_pointer obj);
 static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d);
+static bool args_match(s7_scheme *sc, s7_pointer x, int args);
 
 #if HAVE_PTHREADS
   static bool is_thread(s7_pointer obj);
@@ -13669,7 +13671,6 @@ static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
 
   x = cadr(args);
   if (x == sc->NIL) return(sc->F);
-
   if (!is_pair(x))
     return(s7_wrong_type_arg_error(sc, "assq", 2, x, "a list"));
 
@@ -13693,28 +13694,26 @@ static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_scheme *sc, s7_pointer a, s7_pointer b))
+static s7_pointer g_assv(s7_scheme *sc, s7_pointer args)
 {
   #define H_assv "(assv obj alist) returns the key-value pair associated (via eqv?) with the key obj in the association list alist"
-  #define H_assoc "(assoc obj alist) returns the key-value pair associated (via equal?) with the key obj in the association list alist"
   s7_pointer x, y, obj;
 
   x = cadr(args);
   if (x == sc->NIL) return(sc->F);
-
   if (!is_pair(x))
-    return(s7_wrong_type_arg_error(sc, name, 2, x, "a list"));
+    return(s7_wrong_type_arg_error(sc, "assv", 2, x, "a list"));
 
   y = x;
   obj = car(args);
 
   while (true)
     {
-      if ((is_pair(car(x))) && (eq_func(sc, obj, caar(x)))) return(car(x));
+      if ((is_pair(car(x))) && (s7_is_eqv(obj, caar(x)))) return(car(x));
       x = cdr(x);
       if (!is_pair(x)) return(sc->F);
 
-      if ((is_pair(car(x))) && (eq_func(sc, obj, caar(x)))) return(car(x));
+      if ((is_pair(car(x))) && (s7_is_eqv(obj, caar(x)))) return(car(x));
       x = cdr(x);
       if (!is_pair(x)) return(sc->F);
 
@@ -13725,10 +13724,63 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
 }
 
 
-static bool s7_is_eqv_1(s7_scheme *sc, s7_pointer a, s7_pointer b) {return(s7_is_eqv(a, b));}
+static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args)
+{
+  #define H_assoc "(assoc obj alist (func #f)) returns the key-value pair associated (via equal?) with the key obj in the association list alist.\
+If 'func' is a function of 2 arguments, it is used for the comparison instead of 'equal?"
 
-static s7_pointer g_assv(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assv", s7_is_eqv_1));}
-static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assoc", s7_is_equal));}
+  s7_pointer x, y, obj;
+
+  if (cddr(args) != sc->NIL) 
+    {
+      s7_pointer eq_func;
+      /* check 3rd arg before 2nd (trailing arg error check) */
+
+      eq_func = caddr(args);
+      if (!is_procedure(eq_func))
+	return(s7_wrong_type_arg_error(sc, "assoc function,", 3, eq_func, "a function"));
+      if (!args_match(sc, eq_func, 2))
+	return(s7_wrong_type_arg_error(sc, "assoc", 3, eq_func, "a procedure that can take 2 arguments"));
+
+      x = cadr(args);      
+      if (x == sc->NIL) return(sc->F);
+      if (!is_pair(x))
+	return(s7_wrong_type_arg_error(sc, "assoc", 2, x, "a list"));
+      
+      sc->code = eq_func;
+      sc->args = make_list_2(sc, make_list_2(sc, car(args), caar(x)), x);
+      sc->value = sc->F;
+      push_stack(sc, opcode(OP_ASSOC_IF), sc->args, sc->code);
+
+      sc->args = car(sc->args);
+      push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+      return(sc->UNSPECIFIED);
+    }
+
+  x = cadr(args);
+  if (x == sc->NIL) return(sc->F);
+  if (!is_pair(x))
+    return(s7_wrong_type_arg_error(sc, "assoc", 2, x, "a list"));
+
+  y = x;
+  obj = car(args);
+
+  while (true)
+    {
+      if ((is_pair(car(x))) && (s7_is_equal(sc, obj, caar(x)))) return(car(x));
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      if ((is_pair(car(x))) && (s7_is_equal(sc, obj, caar(x)))) return(car(x));
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      y = cdr(y);
+      if (x == y) return(sc->F);
+    }
+  return(sc->F); /* not reached */
+}
+
 
 
 static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
@@ -13740,7 +13792,6 @@ static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
 
   x = cadr(args);
   if (x == sc->NIL) return(sc->F);
-
   if (!is_pair(x))
     return(s7_wrong_type_arg_error(sc, "memq", 2, x, "a list"));
 
@@ -13768,29 +13819,26 @@ static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_scheme *sc, s7_pointer a, s7_pointer b))
+static s7_pointer g_memv(s7_scheme *sc, s7_pointer args)
 {
   #define H_memv "(memv obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memv uses eqv?"
-  #define H_member "(member obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. member uses equal?"
-
   s7_pointer x, y, obj;
 
   x = cadr(args);
   if (x == sc->NIL) return(sc->F);
-
   if (!is_pair(x))
-    return(s7_wrong_type_arg_error(sc, name, 2, x, "a list"));
+    return(s7_wrong_type_arg_error(sc, "memv", 2, x, "a list"));
 
   y = x;
   obj = car(args);
 
   while (true)
     {
-      if (eq_func(sc, obj, car(x))) return(x);
+      if (s7_is_eqv(obj, car(x))) return(x);
       x = cdr(x);
       if (!is_pair(x)) return(sc->F);
 
-      if (eq_func(sc, obj, car(x))) return(x);
+      if (s7_is_eqv(obj, car(x))) return(x);
       x = cdr(x);
       if (!is_pair(x)) return(sc->F);
 
@@ -13800,27 +13848,65 @@ static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
   return(sc->F); /* not reached */
 }
 
-static s7_pointer g_memv(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "memv", s7_is_eqv_1));}
-static s7_pointer g_member(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "member", s7_is_equal));}
 
-/* r7rs apparently will add an optional equality-function argument to member and assoc.
- *   to support that, I think the best thing would be either to add explicit ops/loops in eval,
- *   or transform it to a loop.  (do ((L lst (cdr L))) ((or (null? L) (equal-func val (car L))) (if (null? L) #f L)))
- *
- * sc->args = make_list_3(car(args), cadr(args), caddr(args))
- * value = #f
- * op_member:
- *   lst = caddr(args)
- *   if value = #t return lst
- *   if (!lst) -> #f
- *   func = cadr(args)
- *   val = car(args)
- *   args = cdr(args)
- *   push op member code args
- *   code = func
- *   args = list_2(val, car(lst))
- *   goto apply
- */
+static s7_pointer g_member(s7_scheme *sc, s7_pointer args)
+{
+  #define H_member "(member obj list (func #f)) looks for obj in list and returns the list from that point if it is found, otherwise #f. \
+member uses equal?  If 'func' is a function of 2 arguments, it is used for the comparison instead of 'equal?"
+
+  s7_pointer x, y, obj;
+
+  if (cddr(args) != sc->NIL) 
+    {
+      s7_pointer eq_func;
+      /* check 3rd arg before 2nd (trailing arg error check) */
+
+      eq_func = caddr(args);
+      if (!is_procedure(eq_func))
+	return(s7_wrong_type_arg_error(sc, "member function,", 3, eq_func, "a function"));
+      if (!args_match(sc, eq_func, 2))
+	return(s7_wrong_type_arg_error(sc, "member", 3, eq_func, "a procedure that can take 2 arguments"));
+
+      x = cadr(args);      
+      if (x == sc->NIL) return(sc->F);
+      if (!is_pair(x))
+	return(s7_wrong_type_arg_error(sc, "member", 2, x, "a list"));
+      
+      sc->code = eq_func;
+      sc->args = make_list_2(sc, make_list_2(sc, car(args), car(x)), x);
+      sc->value = sc->F;
+      push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
+
+      sc->args = car(sc->args);
+      push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+      return(sc->UNSPECIFIED);
+    }
+
+  x = cadr(args);
+  if (x == sc->NIL) return(sc->F);
+  if (!is_pair(x))
+    return(s7_wrong_type_arg_error(sc, "member", 2, x, "a list"));
+  
+  y = x;
+  obj = car(args);
+
+  while (true)
+    {
+      if (s7_is_equal(sc, obj, car(x))) return(x);
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      if (s7_is_equal(sc, obj, car(x))) return(x);
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      y = cdr(y);
+      if (x == y) return(sc->F);
+    }
+  return(sc->F); /* not reached */
+}
+
+
 
 static bool is_member(s7_pointer sym, s7_pointer lst)
 {
@@ -14611,16 +14697,17 @@ If its first argument is a list, the list is copied (despite the '!')."
   s7_Int len, n, k;
 
   data = car(args);
-  if (data == sc->NIL)
-    return(sc->NIL);
-  lessp = cadr(args);
-
+  if (data == sc->NIL) return(sc->NIL);
   if ((!is_pair(data)) && (!s7_is_vector(data)))
     return(s7_wrong_type_arg_error(sc, "sort! data,", 1, data, "a vector or a list"));
+
+  lessp = cadr(args);
   if (!is_procedure(lessp))
     return(s7_wrong_type_arg_error(sc, "sort! function,", 2, lessp, "a function"));
   if ((is_continuation(lessp)) || is_goto(lessp))
     return(s7_wrong_type_arg_error(sc, "sort!", 2, lessp, "a normal procedure (not a continuation)"));
+  if (!args_match(sc, lessp, 2))
+    return(s7_wrong_type_arg_error(sc, "sort!", 2, lessp, "a procedure that can take 2 arguments"));
 
   if (is_pair(data))
     {
@@ -15568,42 +15655,6 @@ static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
   if (!is_procedure(x))
     return(s7_wrong_type_arg_error(sc, "procedure-arity", 0, x, "a procedure"));
   return(s7_procedure_arity(sc, x));
-}
-
-
-static bool is_thunk(s7_scheme *sc, s7_pointer x)
-{
-  switch (type(x))
-    {
-    case T_C_FUNCTION:
-      return(c_function_all_args(x) == 0);
-
-    case T_CLOSURE:
-    case T_CLOSURE_STAR:
-      return(caar(x) == sc->NIL);
-    }
-  return(false);
-}
-
-
-static bool args_match(s7_scheme *sc, s7_pointer x, int args)
-{
-  switch (type(x))
-    {
-    case T_C_ANY_ARGS_FUNCTION:
-    case T_C_OPT_ARGS_FUNCTION:
-    case T_C_RST_ARGS_FUNCTION:
-    case T_C_LST_ARGS_FUNCTION:
-    case T_C_FUNCTION:
-      return((c_function_required_args(x) <= args) &&
-	     (c_function_all_args(x) >= args));
-
-    case T_CLOSURE:
-    case T_CLOSURE_STAR:
-      return((s7_is_symbol(closure_args(x))) ||
-	     (safe_list_length(sc, closure_args(x)) >= args));
-    }
-  return(false);
 }
 
 
@@ -16580,6 +16631,78 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
   s7_define_variable(sc, name, 
     s7_make_procedure_with_setter(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc));
 }
+
+
+static bool args_match(s7_scheme *sc, s7_pointer x, int args)
+{
+  switch (type(x))
+    {
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
+    case T_C_LST_ARGS_FUNCTION:
+    case T_C_FUNCTION:
+      return((c_function_required_args(x) <= args) &&
+	     (c_function_all_args(x) >= args));
+
+    case T_CLOSURE:
+      return((s7_is_symbol(closure_args(x))) ||
+	     (safe_list_length(sc, closure_args(x)) == args));
+
+    case T_CLOSURE_STAR:
+      return((s7_is_symbol(closure_args(x))) ||
+	     (safe_list_length(sc, closure_args(x)) >= args));
+
+    case T_C_OBJECT:
+      if (c_object_type(x) == pws_tag)
+	{
+	  s7_pws_t *f;
+	  if (s7_procedure_with_setter_getter(x) != sc->NIL) /* a scheme function in this case */
+	    return(args_match(sc, s7_procedure_with_setter_getter(x), 2));
+
+	  f = (s7_pws_t *)s7_object_value(x);	  
+	  return((f->get_req_args <= args) &&
+		 ((f->get_req_args + f->get_opt_args) >= args));
+	}
+      
+      /* pws is a special case because the direct value is the getter procedure -- I don't think
+       *   T_S_OBJECT object value should be included here???
+       *   (let ((p (make-procedure-with-setter < > ))) (procedure? p)) -> #t
+       *   (procedure? ((cadr (make-type)) (lambda () 1))) -> #f
+       * other T_C_OBJECTs can't mimic pws because only is is recognized specially by procedure? 
+       */
+    }
+  return(false);
+}
+
+
+static bool is_thunk(s7_scheme *sc, s7_pointer x)
+{
+  switch (type(x))
+    {
+    case T_C_FUNCTION:
+      return(c_function_all_args(x) == 0);
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      return(caar(x) == sc->NIL);
+
+    case T_C_OBJECT:
+      if (c_object_type(x) == pws_tag)
+	{
+	  s7_pws_t *f;
+	  if (s7_procedure_with_setter_getter(x) != sc->NIL) /* a scheme function in this case */
+	    return(is_thunk(sc, s7_procedure_with_setter_getter(x)));
+
+	  f = (s7_pws_t *)s7_object_value(x);	  
+	  return((f->get_req_args == 0) &&
+		 (f->get_opt_args == 0));
+	}
+    }
+  return(false);
+}
+
+
 
 
 /* -------------------------------- symbol-access ------------------------------------------------ */
@@ -21795,6 +21918,51 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       sc->value = sc->UNSPECIFIED;
       goto START;
+
+
+    case OP_MEMBER_IF:
+      /* coming in 1st time: code=func, args=((val (car list)) list), value=result of comparison
+       */
+      if (sc->value != sc->F)            /* previous comparison was not #f -- return list */
+	{
+	  sc->value = cadr(sc->args);
+	  goto START;
+	}
+
+      cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
+      if (cadr(sc->args) == sc->NIL)     /* no more args -- return #f */
+	{
+	  sc->value = sc->F;
+	  goto START;
+	}
+
+      push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
+      cadar(sc->args) = caadr(sc->args);
+      sc->args = car(sc->args);
+      goto APPLY;
+
+
+    case OP_ASSOC_IF:
+      /* coming in 1st time: code=func, args=((val (caar list)) list), value=result of comparison
+       *   (assoc 3 '((1 . a) (2 . b) (3 . c) (4 . d)) =)
+       */
+      if (sc->value != sc->F)            /* previous comparison was not #f -- return (car list) */
+	{
+	  sc->value = caadr(sc->args);
+	  goto START;
+	}
+
+      cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
+      if (cadr(sc->args) == sc->NIL)     /* no more args -- return #f */
+	{
+	  sc->value = sc->F;
+	  goto START;
+	}
+
+      push_stack(sc, opcode(OP_ASSOC_IF), sc->args, sc->code);
+      cadar(sc->args) = caaadr(sc->args);
+      sc->args = car(sc->args);
+      goto APPLY;
 
 
     case OP_HOOK_APPLY:
@@ -29952,10 +30120,10 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "cdddar",                  g_cdddar,                  1, 0, false, H_cdddar);
   s7_define_function(sc, "assq",                    g_assq,                    2, 0, false, H_assq);
   s7_define_function(sc, "assv",                    g_assv,                    2, 0, false, H_assv);
-  s7_define_function(sc, "assoc",                   g_assoc,                   2, 0, false, H_assoc);
+  s7_define_function(sc, "assoc",                   g_assoc,                   2, 1, false, H_assoc);
   s7_define_function(sc, "memq",                    g_memq,                    2, 0, false, H_memq);
   s7_define_function(sc, "memv",                    g_memv,                    2, 0, false, H_memv);
-  s7_define_function(sc, "member",                  g_member,                  2, 0, false, H_member);
+  s7_define_function(sc, "member",                  g_member,                  2, 1, false, H_member);
   s7_define_function(sc, "append",                  g_append,                  0, 0, true,  H_append);
   s7_define_function(sc, "list",                    g_list,                    0, 0, true,  H_list);
   s7_define_function(sc, "list-ref",                g_list_ref,                2, 0, true,  H_list_ref);
@@ -30431,12 +30599,6 @@ the error type and the info passed to the error handler.");
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
- *
- * position and position-if generics [member-if? assoc-if?]
- *   these would have many tie-ins in Snd 
- *   both would benefit from an optional start point = subseq so not needed [list-tail substring but vector?]
- *   char/any str/any any/list|vector|c-obj 
- *   would we use eq? or equal? (leave that to position-if?  isn't sort backwards now?
  *
  * could vectors maintain element type like hash-tables?  Then "uniform" vectors are
  *   automatic, and run would not have to check elements, etc.  The obvious problem
