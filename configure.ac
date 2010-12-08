@@ -1023,7 +1023,7 @@ else
 
       	AC_SUBST(GTK_LD_LIBS)
 
-	# assume 2.9 or later
+	# assume 2.10 or later
 	if test x$PKG_CONFIG != xno ; then
           CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
       	  AC_SUBST(CAIRO_CFLAGS)
@@ -1031,8 +1031,6 @@ else
           AC_DEFINE_UNQUOTED(MUS_CAIRO_VERSION,"${cairo_version}")
           fi
 
-	AC_CHECK_LIB(m, gtk_label_get_line_wrap_mode, [AC_DEFINE(HAVE_GTK_LABEL_GET_LINE_WRAP_MODE)], ,$GTK_LIBS)
-	# for 2.10.0
 	AC_CHECK_LIB(m, gtk_print_operation_new, [AC_DEFINE(HAVE_GTK_PRINT_OPERATION_NEW)], ,$GTK_LIBS)
 	# for 2.11.0..6
 	AC_CHECK_LIB(m, gtk_widget_get_has_tooltip, [AC_DEFINE(HAVE_GTK_WIDGET_GET_HAS_TOOLTIP)], ,$GTK_LIBS)
@@ -1051,8 +1049,8 @@ else
 	# for 2.19.n
 	AC_CHECK_LIB(m, gtk_widget_get_mapped, [AC_DEFINE(HAVE_GTK_WIDGET_GET_MAPPED)], ,$GTK_LIBS)
 	# for 2.9n.n
-	AC_CHECK_LIB(m, gtk_switch_new,
-                          [AC_DEFINE(HAVE_GTK_SWITCH_NEW)
+	AC_CHECK_LIB(m, gtk_combo_box_get_id_column,
+                          [AC_DEFINE(HAVE_GTK_COMBO_BOX_GET_ID_COLUMN)
                            AC_DEFINE(HAVE_GTK_3)
                           ], ,$GTK_LIBS)
 
@@ -1987,7 +1985,7 @@ AC_SUBST(SNDLIB_LIB)
 AC_ARG_ENABLE(deprecated,
   [  --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, snd, or sndlib],
   if test "$enable_deprecated" = no ; then
-    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED -DGSEAL_ENABLE -DGTK_DISABLE_SINGLE_INCLUDES $CFLAGS"
+    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED -DGSEAL_ENABLE -DGTK_DISABLE_SINGLE_INCLUDES -Wall $CFLAGS"
     AC_DEFINE(XM_DISABLE_DEPRECATED)
     AC_DEFINE(CLM_DISABLE_DEPRECATED)
     AC_DEFINE(SNDLIB_DISABLE_DEPRECATED)

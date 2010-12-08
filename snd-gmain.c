@@ -143,8 +143,11 @@ void top_level_catch(int ignore)
 
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
-static bool noglob = false, noinit = false, batch = false, nostdin = false, nogtkrc = false;
+static bool noglob = false, noinit = false, batch = false, nostdin = false;
 
+#if (!HAVE_GTK_3)
+  static bool nogtkrc = false;
+#endif
 
 #if HAVE_EXTENSION_LANGUAGE
 static gint stdin_id = 0;
@@ -185,59 +188,59 @@ static void setup_gcs(void)
   sx = ss->sgx;
   wn = MAIN_WINDOW(ss);
 
-  sx->basic_gc = gc_new(wn);
+  sx->basic_gc = gc_new();
   gc_set_background(sx->basic_gc, sx->graph_color);
   gc_set_foreground(sx->basic_gc, sx->data_color);
 
-  sx->combined_basic_gc = gc_new(wn);
+  sx->combined_basic_gc = gc_new();
   gc_set_background(sx->combined_basic_gc, sx->graph_color);
   gc_set_foreground(sx->combined_basic_gc, sx->data_color);
 
-  sx->mix_gc = gc_new(wn);
+  sx->mix_gc = gc_new();
   gc_set_background(sx->mix_gc, sx->graph_color);
   gc_set_foreground(sx->mix_gc, sx->mix_color);
 
-  sx->cursor_gc = gc_new(wn);
+  sx->cursor_gc = gc_new();
   gc_set_background(sx->cursor_gc, sx->graph_color);
   gc_set_colors(sx->cursor_gc, sx->cursor_color, sx->graph_color);
 
-  sx->selection_gc = gc_new(wn);
+  sx->selection_gc = gc_new();
   gc_set_background(sx->selection_gc, sx->graph_color);
   gc_set_colors(sx->selection_gc, sx->selection_color, sx->graph_color);
 
-  sx->mark_gc = gc_new(wn);
+  sx->mark_gc = gc_new();
   gc_set_background(sx->mark_gc, sx->graph_color);
   gc_set_colors(sx->mark_gc, sx->mark_color, sx->graph_color);
 
-  sx->erase_gc = gc_new(wn);
+  sx->erase_gc = gc_new();
   gc_set_background(sx->erase_gc, sx->data_color);
   gc_set_foreground(sx->erase_gc, sx->graph_color);
 
-  sx->selected_basic_gc = gc_new(wn);
+  sx->selected_basic_gc = gc_new();
   gc_set_background(sx->selected_basic_gc, sx->selected_graph_color);
   gc_set_foreground(sx->selected_basic_gc, sx->selected_data_color);
 
-  sx->selected_cursor_gc = gc_new(wn);
+  sx->selected_cursor_gc = gc_new();
   gc_set_background(sx->selected_cursor_gc, sx->graph_color);
   gc_set_colors(sx->selected_cursor_gc, sx->cursor_color, sx->graph_color);
 
-  sx->selected_selection_gc = gc_new(wn);
+  sx->selected_selection_gc = gc_new();
   gc_set_background(sx->selected_selection_gc, sx->graph_color);
   gc_set_colors(sx->selected_selection_gc, sx->selection_color, sx->graph_color);
 
-  sx->selected_mark_gc = gc_new(wn);
+  sx->selected_mark_gc = gc_new();
   gc_set_background(sx->selected_mark_gc, sx->selected_graph_color);
   gc_set_colors(sx->selected_mark_gc, sx->mark_color, sx->selected_graph_color);
 
-  sx->selected_erase_gc = gc_new(wn);
+  sx->selected_erase_gc = gc_new();
   gc_set_background(sx->selected_erase_gc, sx->selected_data_color);
   gc_set_foreground(sx->selected_erase_gc, sx->selected_graph_color);
 
-  sx->fltenv_basic_gc = gc_new(wn);
+  sx->fltenv_basic_gc = gc_new();
   gc_set_background(sx->fltenv_basic_gc, sx->basic_color);
   gc_set_foreground(sx->fltenv_basic_gc, sx->black);
 
-  sx->fltenv_data_gc = gc_new(wn);
+  sx->fltenv_data_gc = gc_new();
   gc_set_background(sx->fltenv_data_gc, sx->basic_color);
   gc_set_foreground(sx->fltenv_data_gc, sx->filter_control_waveform_color);
 
@@ -430,7 +433,6 @@ GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_
 void snd_doit(int argc, char **argv)
 {
 #endif
-  char *str = NULL;
   GtkWidget *shell;
   int i;
   state_context *sx;
@@ -486,9 +488,11 @@ void snd_doit(int argc, char **argv)
 	      else
 		if (strcmp(argv[i], "-nostdin") == 0)
 		  nostdin = true;
+#if (!HAVE_GTK_3)
 		else
 		  if (strcmp(argv[i], "-nogtkrc") == 0)
 		    nogtkrc = true;
+#endif
 		  else
 		    if ((strcmp(argv[i], "-b") == 0) || 
 			(strcmp(argv[i], "-batch") == 0) ||
@@ -588,8 +592,10 @@ void snd_doit(int argc, char **argv)
   ss->orig_listener_font = mus_strdup(listener_font(ss));
   ss->orig_tiny_font = mus_strdup(tiny_font(ss));
 
+#if (!HAVE_GTK_3)
   if (!nogtkrc)
     {
+      char *str = NULL;
       str = mus_expand_filename("~/.gtkrc-2.0");
       if (mus_file_probe(str))
 	gtk_rc_parse(str);
@@ -607,6 +613,7 @@ void snd_doit(int argc, char **argv)
 	}
       if (str) free(str);
     } /* not nogtkrc */
+#endif
   
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
   

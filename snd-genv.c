@@ -947,15 +947,15 @@ GtkWidget *create_envelope_editor(void)
       gtk_window_resize(GTK_WINDOW(enved_dialog), 500, 500);
       widget_modify_bg(enved_dialog, GTK_STATE_NORMAL, ss->sgx->basic_color);
 
-      gc = gc_new(MAIN_WINDOW(ss));
+      gc = gc_new();
       gc_set_background(gc, ss->sgx->white);
       gc_set_foreground(gc, ss->sgx->black);
 
-      rgc = gc_new(MAIN_WINDOW(ss));
+      rgc = gc_new();
       gc_set_background(rgc, ss->sgx->white);
       gc_set_foreground(rgc, ss->sgx->red);
 
-      ggc = gc_new(MAIN_WINDOW(ss));
+      ggc = gc_new();
       gc_set_background(ggc, ss->sgx->white);
       gc_set_foreground(ggc, ss->sgx->enved_waveform_color);
 

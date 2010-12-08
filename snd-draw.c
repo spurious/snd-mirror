@@ -1520,7 +1520,10 @@ void set_selected_graph_color(color_t color)
 #if USE_MOTIF
       XtVaSetValues(channel_graph(cp), XmNbackground, ss->sgx->selected_graph_color, NULL);
 #else
+#if (!HAVE_GTK_3)
+      /* TODO: how to mark selected channel in gtk3? */
       widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, ss->sgx->selected_graph_color);
+#endif
 #endif
     }
 }
@@ -1570,9 +1573,11 @@ static void recolor_everything_1(widget_t w, gpointer color)
 {
   if (GTK_IS_WIDGET(w)) 
     {
+#if (!HAVE_GTK_3)
       gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)color);
       if (GTK_IS_CONTAINER(w))
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything_1, color);
+#endif
     }
 }
 

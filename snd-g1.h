@@ -281,7 +281,7 @@ void goto_window(GtkWidget *text);
 void gc_set_foreground(gc_t *gp, color_info *color);
 void gc_set_background(gc_t *gp, color_info *color);
 void gc_set_colors(gc_t *gp, color_info *col1, color_info *col2);
-gc_t *gc_new(GdkDrawable *wn);
+gc_t *gc_new(void);
 
 void color_cursor(color_info *color);
 void color_marks(color_info *color);

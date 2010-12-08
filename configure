@@ -8334,7 +8334,7 @@ _ACEOF
 
 
 
-	# assume 2.9 or later
+	# assume 2.10 or later
 	if test x$PKG_CONFIG != xno ; then
           CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
 
@@ -8345,48 +8345,6 @@ _ACEOF
 
           fi
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_label_get_line_wrap_mode in -lm" >&5
-$as_echo_n "checking for gtk_label_get_line_wrap_mode in -lm... " >&6; }
-if ${ac_cv_lib_m_gtk_label_get_line_wrap_mode+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm $GTK_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char gtk_label_get_line_wrap_mode ();
-int
-main ()
-{
-return gtk_label_get_line_wrap_mode ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_gtk_label_get_line_wrap_mode=yes
-else
-  ac_cv_lib_m_gtk_label_get_line_wrap_mode=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_label_get_line_wrap_mode" >&5
-$as_echo "$ac_cv_lib_m_gtk_label_get_line_wrap_mode" >&6; }
-if test "x$ac_cv_lib_m_gtk_label_get_line_wrap_mode" = xyes; then :
-  $as_echo "#define HAVE_GTK_LABEL_GET_LINE_WRAP_MODE 1" >>confdefs.h
-
-fi
-
-	# for 2.10.0
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_print_operation_new in -lm" >&5
 $as_echo_n "checking for gtk_print_operation_new in -lm... " >&6; }
 if ${ac_cv_lib_m_gtk_print_operation_new+:} false; then :
@@ -8765,9 +8723,9 @@ if test "x$ac_cv_lib_m_gtk_widget_get_mapped" = xyes; then :
 fi
 
 	# for 2.9n.n
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_switch_new in -lm" >&5
-$as_echo_n "checking for gtk_switch_new in -lm... " >&6; }
-if ${ac_cv_lib_m_gtk_switch_new+:} false; then :
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_combo_box_get_id_column in -lm" >&5
+$as_echo_n "checking for gtk_combo_box_get_id_column in -lm... " >&6; }
+if ${ac_cv_lib_m_gtk_combo_box_get_id_column+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -8781,28 +8739,28 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char gtk_switch_new ();
+char gtk_combo_box_get_id_column ();
 int
 main ()
 {
-return gtk_switch_new ();
+return gtk_combo_box_get_id_column ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_gtk_switch_new=yes
+  ac_cv_lib_m_gtk_combo_box_get_id_column=yes
 else
-  ac_cv_lib_m_gtk_switch_new=no
+  ac_cv_lib_m_gtk_combo_box_get_id_column=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_switch_new" >&5
-$as_echo "$ac_cv_lib_m_gtk_switch_new" >&6; }
-if test "x$ac_cv_lib_m_gtk_switch_new" = xyes; then :
-  $as_echo "#define HAVE_GTK_SWITCH_NEW 1" >>confdefs.h
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_combo_box_get_id_column" >&5
+$as_echo "$ac_cv_lib_m_gtk_combo_box_get_id_column" >&6; }
+if test "x$ac_cv_lib_m_gtk_combo_box_get_id_column" = xyes; then :
+  $as_echo "#define HAVE_GTK_COMBO_BOX_GET_ID_COLUMN 1" >>confdefs.h
 
                            $as_echo "#define HAVE_GTK_3 1" >>confdefs.h
 
@@ -11345,7 +11303,7 @@ fi
 # Check whether --enable-deprecated was given.
 if test "${enable_deprecated+set}" = set; then :
   enableval=$enable_deprecated; if test "$enable_deprecated" = no ; then
-    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED -DGSEAL_ENABLE -DGTK_DISABLE_SINGLE_INCLUDES $CFLAGS"
+    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED -DGSEAL_ENABLE -DGTK_DISABLE_SINGLE_INCLUDES -Wall $CFLAGS"
     $as_echo "#define XM_DISABLE_DEPRECATED 1" >>confdefs.h
 
     $as_echo "#define CLM_DISABLE_DEPRECATED 1" >>confdefs.h

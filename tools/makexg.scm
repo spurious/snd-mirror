@@ -25,14 +25,6 @@
 (define struct-fields '())
 (define settable-struct-fields '())
 
-(define funcs-210 '())
-(define strings-210 '())
-(define ints-210 '())
-(define names-210 '())
-(define types-210 '())
-(define casts-210 '())
-(define checks-210 '())
-
 (define funcs-211 '())
 (define strings-211 '())
 (define ints-211 '())
@@ -101,6 +93,7 @@
 (define names-29x '())
 (define types-29x '())
 (define ints-29x '())
+(define strings-29x '())
 
 (define funcs-gtk2 '())
 (define casts-gtk2 '())
@@ -128,8 +121,10 @@
 (define all-types '())
 
 ;;; preset some types that are getting confused
-(set! types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*" "GdkEventAny*" "GdkEvent*"))
-(set! all-types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*" "GdkEventAny*" "GdkEvent*"))
+(set! types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*" "GdkEventAny*" "GdkEvent*" 
+		  "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
+(set! all-types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*" "GdkEventAny*" "GdkEvent*" 
+		      "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
 
 (define idlers (list "g_source_remove" "g_idle_remove_by_data"
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
@@ -198,6 +193,9 @@
 ;	"cairo_text_cluster_flags_t" 
 ;	"cairo_rectangle_int_t" 
 	"cairo_rectangle_t*"
+
+	"GtkContainerClass*" "GtkComboBoxText*" "GtkGrid*" "GtkScrollable*" "GtkSwitch*" 
+	"cairo_text_cluster_flags_t" "cairo_text_cluster_flags_t*" "cairo_rectangle_int_t*"
 	))
 
 (define no-xen-p 
@@ -239,6 +237,7 @@
 	"GdkEventAny*" "GdkDeviceManager*"
 	
 	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t" "cairo_bool_t"
+	"cairo_region_overlap_t" "cairo_device_type_t" "GtkSizeRequestMode"
 	))
 
 (define (cadr-str data)
@@ -426,7 +425,6 @@
 			    (begin
 			      (set! all-types (cons type all-types))
 			      (case extra
-				((210 callback-210)   (set! types-210 (cons type types-210)))
 				((211 callback-211)   (set! types-211 (cons type types-211)))
 				((213 callback-213)   (set! types-213 (cons type types-213)))
 				((2134 callback-2134) (set! types-2134 (cons type types-2134)))
@@ -1026,22 +1024,6 @@
 	    (set! funcs-22 (cons (list name type strs args) funcs-22))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-210 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-210: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-210 (cons type types-210))))
-	  (let ((strs (parse-args args '210)))
-	    (if spec
-		(set! funcs-210 (cons (list name type strs args spec) funcs-210))
-		(set! funcs-210 (cons (list name type strs args) funcs-210)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
 (define* (CFNC-211 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -1308,19 +1290,13 @@
 	(set! atoms (cons name atoms))
 	(set! names (cons (cons name 'atom) names)))))
 
+
 (define (CSTR name)
   (if (assoc name names)
       (no-way "~A CSTR~%" name)
       (begin
 	(set! strings (cons name strings))
 	(set! names (cons (cons name 'string) names)))))
-
-(define (CSTR-210 name)
-  (if (assoc name names-210)
-      (no-way "~A CSTR-210~%" name)
-      (begin
-	(set! strings-210 (cons name strings-210))
-	(set! names-210 (cons (cons name 'string) names-210)))))
 
 (define (CSTR-211 name)
   (if (assoc name names-211)
@@ -1335,6 +1311,14 @@
       (begin
 	(set! strings-2150 (cons name strings-2150))
 	(set! names-2150 (cons (cons name 'string) names-2150)))))
+
+(define (CSTR-29x name)
+  (if (assoc name names-29x)
+      (no-way "~A CSTR-29x~%" name)
+      (begin
+	(set! strings-29x (cons name strings-29x))
+	(set! names-29x (cons (cons name 'string) names-29x)))))
+
 
 (define (CDBL name)
   (if (assoc name names)
@@ -1379,14 +1363,6 @@
       (no-way "~A CINT~%" name)
       (begin
 	(set! ints (cons name ints))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-210 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-210~%" name)
-      (begin
-	(set! ints-210 (cons name ints-210))
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-211 name type)
@@ -1502,13 +1478,6 @@
 	(set! casts (cons (list name type) casts))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-210 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-210~%" name)
-      (begin
-	(set! casts-210 (cons (list name type) casts-210))
-	(set! names (cons (cons name 'def) names)))))
-
 (define (CCAST-211 name type)
   (if (assoc name names)
       (no-way "~A CCAST-211~%" name)
@@ -1556,13 +1525,6 @@
       (no-way "~A CCHK~%" name)
       (begin
 	(set! checks (cons (list name type) checks))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-210 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-210~%" name)
-      (begin
-	(set! checks-210 (cons (list name type) checks-210))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCHK-211 name type)
@@ -1675,11 +1637,6 @@
  types)
 
 
-(define (with-210 dpy thunk)
-  (dpy "#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
 (define (with-211 dpy thunk)
   (dpy "#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP~%")
   (thunk)
@@ -1721,7 +1678,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-29x dpy thunk)
-  (dpy "#if HAVE_GTK_SWITCH_NEW~%")
+  (dpy "#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN~%")
   (thunk)
   (dpy "#endif~%~%"))
 
@@ -1751,29 +1708,29 @@
 
 
 
-(define all-types (list types-210 types-211 types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-29x types-gtk2
+(define all-types (list types-211 types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-29x types-gtk2
 			cairo-types cairo-types-810 cairo-types-912))
-(define all-type-withs (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-29x with-gtk2
+(define all-type-withs (list with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-29x with-gtk2
 			     with-cairo with-cairo-810 with-cairo-912))
 
-(define all-funcs (list funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-29x funcs-gtk2
+(define all-funcs (list funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-29x funcs-gtk2
 			cairo-funcs cairo-png-funcs cairo-funcs-810 cairo-funcs-912))
-(define all-func-withs (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-29x with-gtk2
+(define all-func-withs (list with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-29x with-gtk2
 			     with-cairo with-cairo-png with-cairo-810 with-cairo-912))
 
-(define all-ints (list ints-210 ints-211 ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-29x ints-gtk2
+(define all-ints (list ints-211 ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-29x ints-gtk2
 		       cairo-ints cairo-ints-810 cairo-ints-912))
-(define all-int-withs (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-29x with-gtk2
+(define all-int-withs (list with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-29x with-gtk2
 			    with-cairo with-cairo-810 with-cairo-912))
 
-(define all-casts (list casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-29x casts-gtk2))
-(define all-cast-withs (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-29x with-gtk2))
+(define all-casts (list casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-29x casts-gtk2))
+(define all-cast-withs (list with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-29x with-gtk2))
 
-(define all-checks (list checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-29x checks-gtk2))
-(define all-check-withs (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-29x with-gtk2))
+(define all-checks (list checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-29x checks-gtk2))
+(define all-check-withs (list with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-29x with-gtk2))
 
-(define all-strings (list strings-210 strings-211 strings-213 strings-2134 strings-2150 cairo-strings-912))
-(define all-string-withs (list with-210 with-211 with-213 with-2134 with-2150 with-cairo-912))
+(define all-strings (list strings-211 strings-213 strings-2134 strings-2150 strings-29x cairo-strings-912))
+(define all-string-withs (list with-211 with-213 with-2134 with-2150 with-29x with-cairo-912))
 
 (define all-ulongs (list ulongs-211 ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173))
 (define all-ulong-withs (list with-211 with-213 with-2134 with-2150 with-2173))
@@ -2279,8 +2236,6 @@
 (hey "                                     XEN_CADR((XEN)data),~%")
 (hey "                                     c__FUNCTION__)));~%")
 (hey "}~%")
-
-(hey "~%#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE~%")
 (hey "~%static gboolean gxg_func4(GtkPrintOperation *op, GtkPrintContext *context, gint page_nr, gpointer data)~%")
 (hey "{~%")
 (hey "  return(XEN_TO_C_BOOLEAN(XEN_CALL_4(XEN_CAR((XEN)data),~%")
@@ -2289,13 +2244,7 @@
 (hey "                                     C_TO_XEN_INT(page_nr),~%")
 (hey "                                     XEN_CADR((XEN)data),~%")
 (hey "                                     c__FUNCTION__)));~%")
-(hey "}~%")
-(hey "#else~%")
-(hey "static gboolean gxg_func4(int arg1, int arg2, int arg3, int arg4)~%")
-(hey "{~%")
-(hey "  return(false);~%")
-(hey "}~%")
-(hey "#endif~%~%")
+(hey "}~%~%")
 
 
 (hey "~%~%/* ---------------------------------------- functions ---------------------------------------- */~%~%")

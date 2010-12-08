@@ -119,7 +119,7 @@ are different enough that gl.c can be a pain to build).
 
 
 Version info:
-  if Gtk, then Gtk+ 2.9.0 or later and Cairo 1.6.4 or later
+  if Gtk, then Gtk+ 2.10.0 or later and Cairo 1.6.4 or later
   if Motif, then Motif 2.n but not Lesstif
   in Linux, if ALSA, then ALSA 1.0 or later (or any version of OSS)
   if Ruby, Ruby 1.8.0 or later.  

@@ -141,9 +141,19 @@ typedef struct {
 
 #define picture_t GdkPixbuf
 
+#if HAVE_GTK_3
+  typedef GdkWindow Drawable;
+  #define DRAWABLE(Widget) GDK_WINDOW(Widget)
+  #define IS_DRAWABLE(Widget) GDK_IS_WINDOW(Widget)
+#else
+  typedef GdkDrawable Drawable;
+  #define DRAWABLE(Widget) GDK_DRAWABLE(Widget)
+  #define IS_DRAWABLE(Widget) GDK_IS_DRAWABLE(Widget)
+#endif
+
 typedef struct {
   gc_t *gc;
-  GdkDrawable *wn;
+  Drawable *wn;
   PangoFontDescription *current_font;
   GtkWidget *w;
   cairo_t *cr;

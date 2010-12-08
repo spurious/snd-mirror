@@ -748,9 +748,9 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 {
   if (with_pointer_focus(ss))
     goto_window(w);
-
+#if (!HAVE_GTK_3)
   widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->white);
-
+#endif
   if (XEN_HOOKED(mouse_enter_text_hook))
     run_hook(mouse_enter_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
@@ -762,7 +762,9 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 
 static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
+#if (!HAVE_GTK_3)
   widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
+#endif
   if (XEN_HOOKED(mouse_leave_text_hook))
     run_hook(mouse_leave_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
@@ -789,11 +791,13 @@ GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_backgro
   g_object_set(settings, "gtk-entry-select-on-focus", false, NULL);
   gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
   gtk_widget_show(text);
+#if (!HAVE_GTK_3)
   if (with_white_background == WITH_WHITE_BACKGROUND) 
     {
       widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
       widget_modify_base(text, GTK_STATE_SELECTED, ss->sgx->white); 
     }
+#endif
   connect_mouse_to_text(text);
   return(text);
 }
@@ -964,16 +968,20 @@ void goto_listener(void)
 void color_listener(color_info *pix)
 {
   ss->sgx->listener_color = pix;
+#if (!HAVE_GTK_3)
   if (listener_text) 
     widget_modify_base(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_color);
+#endif
 }
 
 
 void color_listener_text(color_info *pix)
 {
   ss->sgx->listener_text_color = pix;
+#if (!HAVE_GTK_3)
   if (listener_text) 
     gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, rgb_to_gdk_color(ss->sgx->listener_text_color));
+#endif
 }
 
 
@@ -1045,8 +1053,10 @@ static XEN g_listener_selection(void)
 
 void set_listener_text_font(void)
 {
+#if (!HAVE_GTK_3)
   if (listener_text)
     gtk_widget_modify_font(GTK_WIDGET(listener_text), LISTENER_FONT(ss));
+#endif
 }
 
 

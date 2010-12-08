@@ -786,6 +786,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 7-Dec:     member and assoc have an optional 3rd arg, the comparison function.
  * 1-Dec:     *gc-stats* in Scheme, s7_gc_stats in C.
  *            gmp and gtk-repl examples in s7.html.
  * 21-Nov:    Load C module example in s7.html.

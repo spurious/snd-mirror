@@ -304,7 +304,7 @@ static void mix_amp_env_resize(GtkWidget *w)
     {
       GdkWindow *wn;
       wn = MAIN_WINDOW(ss);
-      cur_gc = gc_new(wn);
+      cur_gc = gc_new();
       gc_set_background(cur_gc, ss->sgx->graph_color);
       gc_set_foreground(cur_gc, ss->sgx->data_color);
       ax = (graphics_context *)calloc(1, sizeof(graphics_context));

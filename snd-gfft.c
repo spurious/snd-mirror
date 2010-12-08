@@ -43,7 +43,7 @@ static axis_info *axis_ap = NULL;
 
 static void graph_redisplay(void)
 {
-  GdkDrawable *wn;
+  Drawable *wn;
   int ix0, iy0, ix1, iy1, i;
   mus_float_t xincr, x;
   graphics_context *ax;
@@ -1209,11 +1209,11 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	widget_modify_bg(graph_drawer, GTK_STATE_NORMAL, ss->sgx->white);
 	gtk_widget_show(g_vbox);
 
-	fgc = gc_new(MAIN_WINDOW(ss));
+	fgc = gc_new();
 	gc_set_background(fgc, ss->sgx->white);
 	gc_set_foreground(fgc, ss->sgx->enved_waveform_color);
 
-	gc = gc_new(MAIN_WINDOW(ss));
+	gc = gc_new();
 	gc_set_background(gc, ss->sgx->white);
 	gc_set_foreground(gc, ss->sgx->black);
 

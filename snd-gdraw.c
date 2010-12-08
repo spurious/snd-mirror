@@ -187,7 +187,7 @@ void draw_rotated_axis_label(chan_info *cp, graphics_context *ax, const char *te
 void draw_picture(graphics_context *ax, picture_t *src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
 {
   cairo_t *cr;
-  if ((ax) && (GDK_IS_DRAWABLE(ax->wn)))
+  if ((ax) && (IS_DRAWABLE(ax->wn)))
     {
       cr = gdk_cairo_create(ax->wn);
       gdk_cairo_set_source_pixbuf(cr, src, xsrc + xdest, ysrc + ydest);

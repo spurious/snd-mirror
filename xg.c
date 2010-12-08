@@ -317,6 +317,9 @@ static XEN C_TO_XEN_GError_(GError *err)
 
 /* ---------------------------------------- types ---------------------------------------- */
 
+XM_TYPE_PTR(PangoFontDescription_, PangoFontDescription*)
+XM_TYPE_PTR(cairo_font_options_t_, cairo_font_options_t*)
+XM_TYPE_PTR(cairo_t_, cairo_t*)
 XM_TYPE_PTR(GdkEvent_, GdkEvent*)
 XM_TYPE_PTR_2(GdkEventAny_, GdkEventAny*)
 XM_TYPE_PTR_1(gdouble_, gdouble*)
@@ -555,15 +558,14 @@ XM_TYPE_PTR(GtkIconSet_, GtkIconSet*)
 #define C_TO_XEN_GtkIconSize(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkIconSize(Arg) (GtkIconSize)(XEN_TO_C_INT(Arg))
 #define XEN_GtkIconSize_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkStyle_, GtkStyle*)
+XM_TYPE_PTR(GtkIconSource_, GtkIconSource*)
+XM_TYPE_PTR_2(GtkIconSize_, GtkIconSize*)
 #define C_TO_XEN_GtkTextDirection(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTextDirection(Arg) (GtkTextDirection)(XEN_TO_C_INT(Arg))
 #define XEN_GtkTextDirection_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkStateType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkStateType(Arg) (GtkStateType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkStateType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkIconSource_, GtkIconSource*)
-XM_TYPE_PTR_2(GtkIconSize_, GtkIconSize*)
 XM_TYPE_PTR_1(GtkImage_, GtkImage*)
 #define C_TO_XEN_GtkImageType(Arg) C_TO_XEN_INT(Arg)
 XM_TYPE_PTR_1(GtkImageMenuItem_, GtkImageMenuItem*)
@@ -592,7 +594,6 @@ XM_TYPE_PTR_1(GtkRange_, GtkRange*)
 #define C_TO_XEN_GtkUpdateType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkUpdateType(Arg) (GtkUpdateType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkUpdateType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkRcStyle_, GtkRcStyle*)
 XM_TYPE_PTR_1(GtkScale_, GtkScale*)
 XM_TYPE_PTR_1(GtkScrolledWindow_, GtkScrolledWindow*)
 #define C_TO_XEN_GtkPolicyType(Arg) C_TO_XEN_INT(Arg)
@@ -614,7 +615,6 @@ XM_TYPE_PTR_1(GtkSpinButton_, GtkSpinButton*)
 #define XEN_GtkSpinType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(GtkStatusbar_, GtkStatusbar*)
 XM_TYPE_PTR(GtkStockItem_, GtkStockItem*)
-XM_TYPE_PTR(GtkBorder_, GtkBorder*)
 XM_TYPE_PTR_1(GtkTable_, GtkTable*)
 #define XEN_TO_C_GtkAttachOptions(Arg) (GtkAttachOptions)(XEN_TO_C_INT(Arg))
 #define XEN_GtkAttachOptions_P(Arg) XEN_INTEGER_P(Arg)
@@ -664,7 +664,6 @@ XM_TYPE_PTR_1(GtkAllocation_, GtkAllocation*)
 #define XEN_TO_C_GtkDirectionType(Arg) (GtkDirectionType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkDirectionType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_2(AtkObject_, AtkObject*)
-XM_TYPE_PTR(PangoFontDescription_, PangoFontDescription*)
 #define XEN_TO_C_GtkWindowType(Arg) (GtkWindowType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkWindowType_P(Arg) XEN_INTEGER_P(Arg)
 #define XEN_TO_C_GtkWindowPosition(Arg) (GtkWindowPosition)(XEN_TO_C_INT(Arg))
@@ -817,9 +816,6 @@ XM_TYPE_NO_P_2(time_t, time_t)
 XM_TYPE_PTR(GtkStatusIcon_, GtkStatusIcon*)
 XM_TYPE_1(GtkTextBufferSerializeFunc, GtkTextBufferSerializeFunc)
 XM_TYPE_1(GtkTextBufferDeserializeFunc, GtkTextBufferDeserializeFunc)
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
-XM_TYPE_PTR(cairo_t_, cairo_t*)
-XM_TYPE_PTR(GdkDrawable_, GdkDrawable*)
 XM_TYPE_PTR_1(GtkRecentData_, GtkRecentData*)
 #define C_TO_XEN_GtkTreeViewGridLines(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTreeViewGridLines(Arg) (GtkTreeViewGridLines)(XEN_TO_C_INT(Arg))
@@ -844,8 +840,6 @@ XM_TYPE(GtkPrintPages, GtkPrintPages)
 XM_TYPE_PTR(GtkPageRange_, GtkPageRange*)
 XM_TYPE(GtkPageSet, GtkPageSet)
 XM_TYPE_PTR_2(GtkSettings_, GtkSettings*)
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 XM_TYPE_PTR_1(GtkTooltip_, GtkTooltip*)
 #endif
@@ -884,37 +878,42 @@ XM_TYPE_PTR(GtkToolItemGroup_, GtkToolItemGroup*)
 XM_TYPE_1(GtkToolPaletteDragTargets, GtkToolPaletteDragTargets)
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
 XM_TYPE_PTR_1(GdkModifierType_, GdkModifierType*)
 XM_TYPE_PTR(GdkDevice_, GdkDevice*)
 XM_TYPE_PTR_2(GdkDeviceManager_, GdkDeviceManager*)
 XM_TYPE_PTR_1(GtkMessageDialog_, GtkMessageDialog*)
 XM_TYPE_PTR(cairo_region_t_, cairo_region_t*)
-#define XEN_TO_C_GtkExpanderStyle(Arg) (GtkExpanderStyle)(XEN_TO_C_INT(Arg))
-#define XEN_GtkExpanderStyle_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(GtkSizeRequestMode, GtkSizeRequestMode)
-XM_TYPE_PTR(GtkContainerClass_, GtkContainerClass*)
+XM_TYPE_PTR_1(GtkContainerClass_, GtkContainerClass*)
 XM_TYPE(GtkAlign, GtkAlign)
-XM_TYPE_PTR(GtkComboBoxText_, GtkComboBoxText*)
-XM_TYPE_PTR(GtkGrid_, GtkGrid*)
-XM_TYPE_PTR(GtkScrollable_, GtkScrollable*)
+XM_TYPE_PTR_1(GtkComboBoxText_, GtkComboBoxText*)
+XM_TYPE_PTR_1(GtkGrid_, GtkGrid*)
+XM_TYPE_PTR_1(GtkScrollable_, GtkScrollable*)
 #define C_TO_XEN_GtkScrollablePolicy(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkScrollablePolicy(Arg) (GtkScrollablePolicy)(XEN_TO_C_INT(Arg))
 #define XEN_GtkScrollablePolicy_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkSwitch_, GtkSwitch*)
+XM_TYPE_PTR_1(GtkSwitch_, GtkSwitch*)
 #endif
 
 #if (!HAVE_GTK_3)
 XM_TYPE_PTR(GdkColormap_, GdkColormap*)
+XM_TYPE_PTR(GdkDrawable_, GdkDrawable*)
 XM_TYPE_PTR(GdkBitmap_, GdkBitmap*)
 #define C_TO_XEN_int(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_int(Arg) (int)(XEN_TO_C_INT(Arg))
 #define XEN_int_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GdkPixmap_, GdkPixmap*)
 XM_TYPE_PTR(GtkObject_, GtkObject*)
-#define C_TO_XEN_GtkOrientation(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkOrientation(Arg) (GtkOrientation)(XEN_TO_C_INT(Arg))
-#define XEN_GtkOrientation_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR(GtkStyle_, GtkStyle*)
+#define C_TO_XEN_GtkTextDirection(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkTextDirection(Arg) (GtkTextDirection)(XEN_TO_C_INT(Arg))
+#define XEN_GtkTextDirection_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_GtkStateType(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkStateType(Arg) (GtkStateType)(XEN_TO_C_INT(Arg))
+#define XEN_GtkStateType_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR(GtkRcStyle_, GtkRcStyle*)
+XM_TYPE_PTR(GtkBorder_, GtkBorder*)
 XM_TYPE_PTR(GtkRequisition_, GtkRequisition*)
 #endif
 
@@ -942,7 +941,6 @@ XM_TYPE_PTR_1(cairo_matrix_t_, cairo_matrix_t*)
 #define C_TO_XEN_bool(Arg) C_TO_XEN_BOOLEAN(Arg)
 #define XEN_TO_C_bool(Arg) (bool)(XEN_TO_C_BOOLEAN(Arg))
 #define XEN_bool_P(Arg) XEN_BOOLEAN_P(Arg)
-XM_TYPE_PTR(cairo_font_options_t_, cairo_font_options_t*)
 #define C_TO_XEN_cairo_status_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_status_t(Arg) (cairo_status_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_status_t_P(Arg) XEN_INTEGER_P(Arg)
@@ -985,10 +983,10 @@ XM_TYPE_PTR(void_, void*)
 XM_TYPE_PTR(cairo_rectangle_list_t_, cairo_rectangle_list_t*)
 #if HAVE_CAIRO_GLYPH_ALLOCATE
 XM_TYPE_PTR(cairo_text_cluster_t_, cairo_text_cluster_t*)
-XM_TYPE(cairo_text_cluster_flags_t, cairo_text_cluster_flags_t)
+XM_TYPE_1(cairo_text_cluster_flags_t, cairo_text_cluster_flags_t)
 XM_TYPE_PTR_1(cairo_glyph_t__, cairo_glyph_t**)
 XM_TYPE_PTR_1(cairo_text_cluster_t__, cairo_text_cluster_t**)
-XM_TYPE_PTR(cairo_text_cluster_flags_t_, cairo_text_cluster_flags_t*)
+XM_TYPE_PTR_1(cairo_text_cluster_flags_t_, cairo_text_cluster_flags_t*)
 #define C_TO_XEN_cairo_bool_t(Arg) C_TO_XEN_INT(Arg)
 #endif
 
@@ -997,7 +995,7 @@ XM_TYPE_PTR(cairo_device_t_, cairo_device_t*)
 XM_TYPE(cairo_device_type_t, cairo_device_type_t)
 XM_TYPE_PTR_1(cairo_rectangle_t_, cairo_rectangle_t*)
 XM_TYPE_PTR(double_, double*)
-XM_TYPE_PTR(cairo_rectangle_int_t_, cairo_rectangle_int_t*)
+XM_TYPE_PTR_1(cairo_rectangle_int_t_, cairo_rectangle_int_t*)
 XM_TYPE(cairo_region_overlap_t, cairo_region_overlap_t)
 #endif
 
@@ -1460,8 +1458,6 @@ static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)
                                      c__FUNCTION__)));
 }
 
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
-
 static gboolean gxg_func4(GtkPrintOperation *op, GtkPrintContext *context, gint page_nr, gpointer data)
 {
   return(XEN_TO_C_BOOLEAN(XEN_CALL_4(XEN_CAR((XEN)data),
@@ -1471,12 +1467,6 @@ static gboolean gxg_func4(GtkPrintOperation *op, GtkPrintContext *context, gint 
                                      XEN_CADR((XEN)data),
                                      c__FUNCTION__)));
 }
-#else
-static gboolean gxg_func4(int arg1, int arg2, int arg3, int arg4)
-{
-  return(false);
-}
-#endif
 
 
 
@@ -3431,20 +3421,6 @@ static XEN gxg_gdk_window_get_user_data(XEN window, XEN ignore_data)
   XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_user_data", "GdkWindow*");
   gdk_window_get_user_data(XEN_TO_C_GdkWindow_(window), &ref_data);
   return(XEN_LIST_1(C_TO_XEN_gpointer(ref_data)));
-}
-
-static XEN gxg_gdk_window_get_geometry(XEN window, XEN ignore_x, XEN ignore_y, XEN ignore_width, XEN ignore_height, XEN ignore_depth)
-{
-  #define H_gdk_window_get_geometry "void gdk_window_get_geometry(GdkWindow* window, gint* [x], gint* [y], \
-gint* [width], gint* [height], gint* [depth])"
-  gint ref_x;
-  gint ref_y;
-  gint ref_width;
-  gint ref_height;
-  gint ref_depth;
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_geometry", "GdkWindow*");
-  gdk_window_get_geometry(XEN_TO_C_GdkWindow_(window), &ref_x, &ref_y, &ref_width, &ref_height, &ref_depth);
-  return(XEN_LIST_5(C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y), C_TO_XEN_gint(ref_width), C_TO_XEN_gint(ref_height), C_TO_XEN_gint(ref_depth)));
 }
 
 static XEN gxg_gdk_window_get_position(XEN window, XEN ignore_x, XEN ignore_y)
@@ -6356,22 +6332,6 @@ static XEN gxg_gtk_icon_set_copy(XEN icon_set)
   return(C_TO_XEN_GtkIconSet_(gtk_icon_set_copy(XEN_TO_C_GtkIconSet_(icon_set))));
 }
 
-static XEN gxg_gtk_icon_set_render_icon(XEN icon_set, XEN style, XEN direction, XEN state, XEN size, XEN widget, XEN detail)
-{
-  #define H_gtk_icon_set_render_icon "GdkPixbuf* gtk_icon_set_render_icon(GtkIconSet* icon_set, GtkStyle* style, \
-GtkTextDirection direction, GtkStateType state, GtkIconSize size, GtkWidget* widget, char* detail)"
-  XEN_ASSERT_TYPE(XEN_GtkIconSet__P(icon_set), icon_set, 1, "gtk_icon_set_render_icon", "GtkIconSet*");
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style) || XEN_FALSE_P(style), style, 2, "gtk_icon_set_render_icon", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GtkTextDirection_P(direction), direction, 3, "gtk_icon_set_render_icon", "GtkTextDirection");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 4, "gtk_icon_set_render_icon", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(size), size, 5, "gtk_icon_set_render_icon", "GtkIconSize");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget) || XEN_FALSE_P(widget), widget, 6, "gtk_icon_set_render_icon", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_char__P(detail), detail, 7, "gtk_icon_set_render_icon", "char*");
-  return(C_TO_XEN_GdkPixbuf_(gtk_icon_set_render_icon(XEN_TO_C_GtkIconSet_(icon_set), XEN_TO_C_GtkStyle_(style), XEN_TO_C_GtkTextDirection(direction), 
-                                                      XEN_TO_C_GtkStateType(state), XEN_TO_C_GtkIconSize(size), XEN_TO_C_GtkWidget_(widget), 
-                                                      XEN_TO_C_char_(detail))));
-}
-
 static XEN gxg_gtk_icon_set_add_source(XEN icon_set, XEN source)
 {
   #define H_gtk_icon_set_add_source "void gtk_icon_set_add_source(GtkIconSet* icon_set, GtkIconSource* source)"
@@ -8490,136 +8450,6 @@ static XEN gxg_gtk_range_get_value(XEN range)
   return(C_TO_XEN_gdouble(gtk_range_get_value(XEN_TO_C_GtkRange_(range))));
 }
 
-static XEN gxg_gtk_rc_add_default_file(XEN filename)
-{
-  #define H_gtk_rc_add_default_file "void gtk_rc_add_default_file(gchar* filename)"
-  XEN_ASSERT_TYPE(XEN_gchar__P(filename), filename, 1, "gtk_rc_add_default_file", "gchar*");
-  gtk_rc_add_default_file(XEN_TO_C_gchar_(filename));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_rc_set_default_files(XEN filenames)
-{
-  #define H_gtk_rc_set_default_files "void gtk_rc_set_default_files(gchar** filenames)"
-  XEN_ASSERT_TYPE(XEN_gchar___P(filenames), filenames, 1, "gtk_rc_set_default_files", "gchar**");
-  gtk_rc_set_default_files(XEN_TO_C_gchar__(filenames));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_rc_get_default_files(void)
-{
-  #define H_gtk_rc_get_default_files "gchar** gtk_rc_get_default_files( void)"
-  return(C_TO_XEN_gchar__(gtk_rc_get_default_files()));
-}
-
-static XEN gxg_gtk_rc_get_style(XEN widget)
-{
-  #define H_gtk_rc_get_style "GtkStyle* gtk_rc_get_style(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_rc_get_style", "GtkWidget*");
-  return(C_TO_XEN_GtkStyle_(gtk_rc_get_style(XEN_TO_C_GtkWidget_(widget))));
-}
-
-static XEN gxg_gtk_rc_parse(XEN filename)
-{
-  #define H_gtk_rc_parse "void gtk_rc_parse(gchar* filename)"
-  XEN_ASSERT_TYPE(XEN_gchar__P(filename), filename, 1, "gtk_rc_parse", "gchar*");
-  gtk_rc_parse(XEN_TO_C_gchar_(filename));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_rc_parse_string(XEN rc_string)
-{
-  #define H_gtk_rc_parse_string "void gtk_rc_parse_string(gchar* rc_string)"
-  XEN_ASSERT_TYPE(XEN_gchar__P(rc_string), rc_string, 1, "gtk_rc_parse_string", "gchar*");
-  gtk_rc_parse_string(XEN_TO_C_gchar_(rc_string));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_rc_reparse_all(void)
-{
-  #define H_gtk_rc_reparse_all "gboolean gtk_rc_reparse_all( void)"
-  return(C_TO_XEN_gboolean(gtk_rc_reparse_all()));
-}
-
-static XEN gxg_gtk_rc_style_new(void)
-{
-  #define H_gtk_rc_style_new "GtkRcStyle* gtk_rc_style_new( void)"
-  return(C_TO_XEN_GtkRcStyle_(gtk_rc_style_new()));
-}
-
-static XEN gxg_gtk_rc_style_copy(XEN orig)
-{
-  #define H_gtk_rc_style_copy "GtkRcStyle* gtk_rc_style_copy(GtkRcStyle* orig)"
-  XEN_ASSERT_TYPE(XEN_GtkRcStyle__P(orig), orig, 1, "gtk_rc_style_copy", "GtkRcStyle*");
-  return(C_TO_XEN_GtkRcStyle_(gtk_rc_style_copy(XEN_TO_C_GtkRcStyle_(orig))));
-}
-
-static XEN gxg_gtk_rc_find_module_in_path(XEN module_file)
-{
-  #define H_gtk_rc_find_module_in_path "gchar* gtk_rc_find_module_in_path(gchar* module_file)"
-  XEN_ASSERT_TYPE(XEN_gchar__P(module_file), module_file, 1, "gtk_rc_find_module_in_path", "gchar*");
-  {
-   gchar* result;
-   XEN rtn;
-   result = gtk_rc_find_module_in_path(XEN_TO_C_gchar_(module_file));
-   rtn = C_TO_XEN_gchar_(result);
-   g_free(result);
-   return(rtn);
-  }
-}
-
-static XEN gxg_gtk_rc_get_theme_dir(void)
-{
-  #define H_gtk_rc_get_theme_dir "gchar* gtk_rc_get_theme_dir( void)"
-  {
-   gchar* result;
-   XEN rtn;
-   result = gtk_rc_get_theme_dir();
-   rtn = C_TO_XEN_gchar_(result);
-   g_free(result);
-   return(rtn);
-  }
-}
-
-static XEN gxg_gtk_rc_get_module_dir(void)
-{
-  #define H_gtk_rc_get_module_dir "gchar* gtk_rc_get_module_dir( void)"
-  {
-   gchar* result;
-   XEN rtn;
-   result = gtk_rc_get_module_dir();
-   rtn = C_TO_XEN_gchar_(result);
-   g_free(result);
-   return(rtn);
-  }
-}
-
-static XEN gxg_gtk_rc_get_im_module_path(void)
-{
-  #define H_gtk_rc_get_im_module_path "gchar* gtk_rc_get_im_module_path( void)"
-  {
-   gchar* result;
-   XEN rtn;
-   result = gtk_rc_get_im_module_path();
-   rtn = C_TO_XEN_gchar_(result);
-   g_free(result);
-   return(rtn);
-  }
-}
-
-static XEN gxg_gtk_rc_get_im_module_file(void)
-{
-  #define H_gtk_rc_get_im_module_file "gchar* gtk_rc_get_im_module_file( void)"
-  {
-   gchar* result;
-   XEN rtn;
-   result = gtk_rc_get_im_module_file();
-   rtn = C_TO_XEN_gchar_(result);
-   g_free(result);
-   return(rtn);
-  }
-}
-
 static XEN gxg_gtk_scale_set_digits(XEN scale, XEN digits)
 {
   #define H_gtk_scale_set_digits "void gtk_scale_set_digits(GtkScale* scale, gint digits)"
@@ -9355,85 +9185,6 @@ static XEN gxg_gtk_stock_item_free(XEN item)
   #define H_gtk_stock_item_free "void gtk_stock_item_free(GtkStockItem* item)"
   XEN_ASSERT_TYPE(XEN_GtkStockItem__P(item), item, 1, "gtk_stock_item_free", "GtkStockItem*");
   gtk_stock_item_free(XEN_TO_C_GtkStockItem_(item));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_style_new(void)
-{
-  #define H_gtk_style_new "GtkStyle* gtk_style_new( void)"
-  return(C_TO_XEN_GtkStyle_(gtk_style_new()));
-}
-
-static XEN gxg_gtk_style_copy(XEN style)
-{
-  #define H_gtk_style_copy "GtkStyle* gtk_style_copy(GtkStyle* style)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_copy", "GtkStyle*");
-  return(C_TO_XEN_GtkStyle_(gtk_style_copy(XEN_TO_C_GtkStyle_(style))));
-}
-
-static XEN gxg_gtk_style_attach(XEN style, XEN window)
-{
-  #define H_gtk_style_attach "GtkStyle* gtk_style_attach(GtkStyle* style, GdkWindow* window)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_attach", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_style_attach", "GdkWindow*");
-  return(C_TO_XEN_GtkStyle_(gtk_style_attach(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window))));
-}
-
-static XEN gxg_gtk_style_detach(XEN style)
-{
-  #define H_gtk_style_detach "void gtk_style_detach(GtkStyle* style)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_detach", "GtkStyle*");
-  gtk_style_detach(XEN_TO_C_GtkStyle_(style));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_style_set_background(XEN style, XEN window, XEN state_type)
-{
-  #define H_gtk_style_set_background "void gtk_style_set_background(GtkStyle* style, GdkWindow* window, \
-GtkStateType state_type)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_set_background", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_style_set_background", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_style_set_background", "GtkStateType");
-  gtk_style_set_background(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_style_lookup_icon_set(XEN style, XEN stock_id)
-{
-  #define H_gtk_style_lookup_icon_set "GtkIconSet* gtk_style_lookup_icon_set(GtkStyle* style, gchar* stock_id)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_lookup_icon_set", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(stock_id), stock_id, 2, "gtk_style_lookup_icon_set", "gchar*");
-  return(C_TO_XEN_GtkIconSet_(gtk_style_lookup_icon_set(XEN_TO_C_GtkStyle_(style), XEN_TO_C_gchar_(stock_id))));
-}
-
-static XEN gxg_gtk_style_render_icon(XEN style, XEN source, XEN direction, XEN state, XEN size, XEN widget, XEN detail)
-{
-  #define H_gtk_style_render_icon "GdkPixbuf* gtk_style_render_icon(GtkStyle* style, GtkIconSource* source, \
-GtkTextDirection direction, GtkStateType state, GtkIconSize size, GtkWidget* widget, gchar* detail)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_render_icon", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GtkIconSource__P(source), source, 2, "gtk_style_render_icon", "GtkIconSource*");
-  XEN_ASSERT_TYPE(XEN_GtkTextDirection_P(direction), direction, 3, "gtk_style_render_icon", "GtkTextDirection");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 4, "gtk_style_render_icon", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(size), size, 5, "gtk_style_render_icon", "GtkIconSize");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_style_render_icon", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_style_render_icon", "gchar*");
-  return(C_TO_XEN_GdkPixbuf_(gtk_style_render_icon(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GtkIconSource_(source), XEN_TO_C_GtkTextDirection(direction), 
-                                                   XEN_TO_C_GtkStateType(state), XEN_TO_C_GtkIconSize(size), XEN_TO_C_GtkWidget_(widget), 
-                                                   XEN_TO_C_gchar_(detail))));
-}
-
-static XEN gxg_gtk_border_copy(XEN border)
-{
-  #define H_gtk_border_copy "GtkBorder* gtk_border_copy(GtkBorder* border)"
-  XEN_ASSERT_TYPE(XEN_GtkBorder__P(border), border, 1, "gtk_border_copy", "GtkBorder*");
-  return(C_TO_XEN_GtkBorder_(gtk_border_copy(XEN_TO_C_GtkBorder_(border))));
-}
-
-static XEN gxg_gtk_border_free(XEN border)
-{
-  #define H_gtk_border_free "void gtk_border_free(GtkBorder* border)"
-  XEN_ASSERT_TYPE(XEN_GtkBorder__P(border), border, 1, "gtk_border_free", "GtkBorder*");
-  gtk_border_free(XEN_TO_C_GtkBorder_(border));
   return(XEN_FALSE);
 }
 
@@ -14337,97 +14088,6 @@ static XEN gxg_gtk_widget_hide_on_delete(XEN widget)
   return(C_TO_XEN_gboolean(gtk_widget_hide_on_delete(XEN_TO_C_GtkWidget_(widget))));
 }
 
-static XEN gxg_gtk_widget_set_style(XEN widget, XEN style)
-{
-  #define H_gtk_widget_set_style "void gtk_widget_set_style(GtkWidget* widget, GtkStyle* style)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_style", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style) || XEN_FALSE_P(style), style, 2, "gtk_widget_set_style", "GtkStyle*");
-  gtk_widget_set_style(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStyle_(style));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_ensure_style(XEN widget)
-{
-  #define H_gtk_widget_ensure_style "void gtk_widget_ensure_style(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_ensure_style", "GtkWidget*");
-  gtk_widget_ensure_style(XEN_TO_C_GtkWidget_(widget));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_get_style(XEN widget)
-{
-  #define H_gtk_widget_get_style "GtkStyle* gtk_widget_get_style(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_style", "GtkWidget*");
-  return(C_TO_XEN_GtkStyle_(gtk_widget_get_style(XEN_TO_C_GtkWidget_(widget))));
-}
-
-static XEN gxg_gtk_widget_modify_style(XEN widget, XEN style)
-{
-  #define H_gtk_widget_modify_style "void gtk_widget_modify_style(GtkWidget* widget, GtkRcStyle* style)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_style", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_GtkRcStyle__P(style), style, 2, "gtk_widget_modify_style", "GtkRcStyle*");
-  gtk_widget_modify_style(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkRcStyle_(style));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_get_modifier_style(XEN widget)
-{
-  #define H_gtk_widget_get_modifier_style "GtkRcStyle* gtk_widget_get_modifier_style(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_modifier_style", "GtkWidget*");
-  return(C_TO_XEN_GtkRcStyle_(gtk_widget_get_modifier_style(XEN_TO_C_GtkWidget_(widget))));
-}
-
-static XEN gxg_gtk_widget_modify_fg(XEN widget, XEN state, XEN color)
-{
-  #define H_gtk_widget_modify_fg "void gtk_widget_modify_fg(GtkWidget* widget, GtkStateType state, GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_fg", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 2, "gtk_widget_modify_fg", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 3, "gtk_widget_modify_fg", "GdkColor*");
-  gtk_widget_modify_fg(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateType(state), XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_modify_bg(XEN widget, XEN state, XEN color)
-{
-  #define H_gtk_widget_modify_bg "void gtk_widget_modify_bg(GtkWidget* widget, GtkStateType state, GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_bg", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 2, "gtk_widget_modify_bg", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 3, "gtk_widget_modify_bg", "GdkColor*");
-  gtk_widget_modify_bg(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateType(state), XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_modify_text(XEN widget, XEN state, XEN color)
-{
-  #define H_gtk_widget_modify_text "void gtk_widget_modify_text(GtkWidget* widget, GtkStateType state, \
-GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_text", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 2, "gtk_widget_modify_text", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 3, "gtk_widget_modify_text", "GdkColor*");
-  gtk_widget_modify_text(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateType(state), XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_modify_base(XEN widget, XEN state, XEN color)
-{
-  #define H_gtk_widget_modify_base "void gtk_widget_modify_base(GtkWidget* widget, GtkStateType state, \
-GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_base", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 2, "gtk_widget_modify_base", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 3, "gtk_widget_modify_base", "GdkColor*");
-  gtk_widget_modify_base(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateType(state), XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_modify_font(XEN widget, XEN font_desc)
-{
-  #define H_gtk_widget_modify_font "void gtk_widget_modify_font(GtkWidget* widget, PangoFontDescription* font_desc)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_font", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_PangoFontDescription__P(font_desc), font_desc, 2, "gtk_widget_modify_font", "PangoFontDescription*");
-  gtk_widget_modify_font(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_PangoFontDescription_(font_desc));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_widget_create_pango_context(XEN widget)
 {
   #define H_gtk_widget_create_pango_context "PangoContext* gtk_widget_create_pango_context(GtkWidget* widget)"
@@ -14479,14 +14139,6 @@ static XEN gxg_gtk_widget_get_composite_name(XEN widget)
   return(C_TO_XEN_gchar_(gtk_widget_get_composite_name(XEN_TO_C_GtkWidget_(widget))));
 }
 
-static XEN gxg_gtk_widget_reset_rc_styles(XEN widget)
-{
-  #define H_gtk_widget_reset_rc_styles "void gtk_widget_reset_rc_styles(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_reset_rc_styles", "GtkWidget*");
-  gtk_widget_reset_rc_styles(XEN_TO_C_GtkWidget_(widget));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_widget_push_composite_child(void)
 {
   #define H_gtk_widget_push_composite_child "void gtk_widget_push_composite_child( void)"
@@ -14499,12 +14151,6 @@ static XEN gxg_gtk_widget_pop_composite_child(void)
   #define H_gtk_widget_pop_composite_child "void gtk_widget_pop_composite_child( void)"
   gtk_widget_pop_composite_child();
   return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_get_default_style(void)
-{
-  #define H_gtk_widget_get_default_style "GtkStyle* gtk_widget_get_default_style( void)"
-  return(C_TO_XEN_GtkStyle_(gtk_widget_get_default_style()));
 }
 
 static XEN gxg_gtk_widget_set_direction(XEN widget, XEN dir)
@@ -14543,30 +14189,6 @@ static XEN gxg_gtk_widget_reset_shapes(XEN widget)
   XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_reset_shapes", "GtkWidget*");
   gtk_widget_reset_shapes(XEN_TO_C_GtkWidget_(widget));
   return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_path(XEN widget, XEN path_length, XEN ignore_path, XEN ignore_path_reversed)
-{
-  #define H_gtk_widget_path "void gtk_widget_path(GtkWidget* widget, guint* path_length, gchar** [path], \
-gchar** [path_reversed])"
-  gchar* ref_path = NULL;
-  gchar* ref_path_reversed = NULL;
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_path", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_guint__P(path_length), path_length, 2, "gtk_widget_path", "guint*");
-  gtk_widget_path(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_guint_(path_length), &ref_path, &ref_path_reversed);
-  return(XEN_LIST_2(C_TO_XEN_gchar_(ref_path), C_TO_XEN_gchar_(ref_path_reversed)));
-}
-
-static XEN gxg_gtk_widget_class_path(XEN widget, XEN path_length, XEN ignore_path, XEN ignore_path_reversed)
-{
-  #define H_gtk_widget_class_path "void gtk_widget_class_path(GtkWidget* widget, guint* path_length, \
-gchar** [path], gchar** [path_reversed])"
-  gchar* ref_path = NULL;
-  gchar* ref_path_reversed = NULL;
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_class_path", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_guint__P(path_length), path_length, 2, "gtk_widget_class_path", "guint*");
-  gtk_widget_class_path(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_guint_(path_length), &ref_path, &ref_path_reversed);
-  return(XEN_LIST_2(C_TO_XEN_gchar_(ref_path), C_TO_XEN_gchar_(ref_path_reversed)));
 }
 
 static XEN gxg_gtk_widget_can_activate_accel(XEN widget, XEN signal_id)
@@ -23180,16 +22802,6 @@ static XEN gxg_gtk_size_group_get_widgets(XEN size_group)
   return(C_TO_XEN_GSList_(gtk_size_group_get_widgets(XEN_TO_C_GtkSizeGroup_(size_group))));
 }
 
-static XEN gxg_gtk_style_lookup_color(XEN style, XEN color_name, XEN color)
-{
-  #define H_gtk_style_lookup_color "gboolean gtk_style_lookup_color(GtkStyle* style, gchar* color_name, \
-GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_lookup_color", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(color_name), color_name, 2, "gtk_style_lookup_color", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 3, "gtk_style_lookup_color", "GdkColor*");
-  return(C_TO_XEN_gboolean(gtk_style_lookup_color(XEN_TO_C_GtkStyle_(style), XEN_TO_C_gchar_(color_name), XEN_TO_C_GdkColor_(color))));
-}
-
 static XEN gxg_gtk_text_buffer_get_has_selection(XEN buffer)
 {
   #define H_gtk_text_buffer_get_has_selection "gboolean gtk_text_buffer_get_has_selection(GtkTextBuffer* buffer)"
@@ -24553,14 +24165,6 @@ GtkTextBuffer* content_buffer, GdkAtom format, GtkTextIter* iter, guint8* data, 
    }
 }
 
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
-static XEN gxg_gdk_cairo_create(XEN drawable)
-{
-  #define H_gdk_cairo_create "cairo_t* gdk_cairo_create(GdkDrawable* drawable)"
-  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_cairo_create", "GdkDrawable*");
-  return(C_TO_XEN_cairo_t_(gdk_cairo_create(XEN_TO_C_GdkDrawable_(drawable))));
-}
-
 static XEN gxg_gtk_recent_manager_add_item(XEN manager, XEN uri)
 {
   #define H_gtk_recent_manager_add_item "gboolean gtk_recent_manager_add_item(GtkRecentManager* manager, \
@@ -25684,8 +25288,6 @@ static XEN gxg_gdk_cairo_rectangle(XEN cr, XEN rectangle)
   return(XEN_FALSE);
 }
 
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 static XEN gxg_gtk_about_dialog_get_program_name(XEN about)
 {
@@ -26260,17 +25862,6 @@ gint bx, gint by, gint* [tx], gint* [ty])"
   gtk_tree_view_convert_bin_window_to_tree_coords(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gint(bx), XEN_TO_C_gint(by), 
                                                   &ref_tx, &ref_ty);
   return(XEN_LIST_2(C_TO_XEN_gint(ref_tx), C_TO_XEN_gint(ref_ty)));
-}
-
-static XEN gxg_gtk_widget_modify_cursor(XEN widget, XEN primary, XEN secondary)
-{
-  #define H_gtk_widget_modify_cursor "void gtk_widget_modify_cursor(GtkWidget* widget, GdkColor* primary, \
-GdkColor* secondary)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_cursor", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(primary), primary, 2, "gtk_widget_modify_cursor", "GdkColor*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(secondary), secondary, 3, "gtk_widget_modify_cursor", "GdkColor*");
-  gtk_widget_modify_cursor(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GdkColor_(primary), XEN_TO_C_GdkColor_(secondary));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_widget_set_tooltip_text(XEN widget, XEN text)
@@ -28847,13 +28438,6 @@ static XEN gxg_gtk_status_icon_set_name(XEN status_icon, XEN name)
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_widget_has_rc_style(XEN widget)
-{
-  #define H_gtk_widget_has_rc_style "gboolean gtk_widget_has_rc_style(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_has_rc_style", "GtkWidget*");
-  return(C_TO_XEN_gboolean(gtk_widget_has_rc_style(XEN_TO_C_GtkWidget_(widget))));
-}
-
 static XEN gxg_gtk_paned_get_handle_window(XEN paned)
 {
   #define H_gtk_paned_get_handle_window "GdkWindow* gtk_paned_get_handle_window(GtkPaned* paned)"
@@ -28903,7 +28487,27 @@ static XEN gxg_gtk_widget_get_mapped(XEN widget)
 
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
+static XEN gxg_gdk_cairo_create(XEN window)
+{
+  #define H_gdk_cairo_create "cairo_t* gdk_cairo_create(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_cairo_create", "GdkWindow*");
+  return(C_TO_XEN_cairo_t_(gdk_cairo_create(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gdk_window_get_geometry(XEN window, XEN ignore_x, XEN ignore_y, XEN ignore_width, XEN ignore_height)
+{
+  #define H_gdk_window_get_geometry "void gdk_window_get_geometry(GdkWindow* window, gint* [x], gint* [y], \
+gint* [width], gint* [height])"
+  gint ref_x;
+  gint ref_y;
+  gint ref_width;
+  gint ref_height;
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_geometry", "GdkWindow*");
+  gdk_window_get_geometry(XEN_TO_C_GdkWindow_(window), &ref_x, &ref_y, &ref_width, &ref_height);
+  return(XEN_LIST_4(C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y), C_TO_XEN_gint(ref_width), C_TO_XEN_gint(ref_height)));
+}
+
 static XEN gxg_gdk_keymap_add_virtual_modifiers(XEN keymap, XEN state)
 {
   #define H_gdk_keymap_add_virtual_modifiers "void gdk_keymap_add_virtual_modifiers(GdkKeymap* keymap, \
@@ -29476,20 +29080,6 @@ static XEN gxg_gtk_selection_data_get_length(XEN selection_data)
   return(C_TO_XEN_gint(gtk_selection_data_get_length(XEN_TO_C_GtkSelectionData_(selection_data))));
 }
 
-static XEN gxg_gdk_drawable_get_clip_region(XEN drawable)
-{
-  #define H_gdk_drawable_get_clip_region "cairo_region_t* gdk_drawable_get_clip_region(GdkDrawable* drawable)"
-  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_drawable_get_clip_region", "GdkDrawable*");
-  return(C_TO_XEN_cairo_region_t_(gdk_drawable_get_clip_region(XEN_TO_C_GdkDrawable_(drawable))));
-}
-
-static XEN gxg_gdk_drawable_get_visible_region(XEN drawable)
-{
-  #define H_gdk_drawable_get_visible_region "cairo_region_t* gdk_drawable_get_visible_region(GdkDrawable* drawable)"
-  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_drawable_get_visible_region", "GdkDrawable*");
-  return(C_TO_XEN_cairo_region_t_(gdk_drawable_get_visible_region(XEN_TO_C_GdkDrawable_(drawable))));
-}
-
 static XEN gxg_gdk_pango_layout_line_get_clip_region(XEN line, XEN x_origin, XEN y_origin, XEN index_ranges, XEN n_ranges)
 {
   #define H_gdk_pango_layout_line_get_clip_region "cairo_region_t* gdk_pango_layout_line_get_clip_region(PangoLayoutLine* line, \
@@ -29760,572 +29350,6 @@ GtkTreePath* path)"
   XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_create_drag_icon", "GtkIconView*");
   XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_icon_view_create_drag_icon", "GtkTreePath*");
   return(C_TO_XEN_cairo_surface_t_(gtk_icon_view_create_drag_icon(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkTreePath_(path))));
-}
-
-static XEN gxg_gtk_style_apply_default_background(XEN style, XEN cr, XEN window, XEN state_type, XEN x, XEN y, XEN width, XEN height)
-{
-  #define H_gtk_style_apply_default_background "void gtk_style_apply_default_background(GtkStyle* style, \
-cairo_t* cr, GdkWindow* window, GtkStateType state_type, gint x, gint y, gint width, gint height)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_apply_default_background", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_style_apply_default_background", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 3, "gtk_style_apply_default_background", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 4, "gtk_style_apply_default_background", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 5, "gtk_style_apply_default_background", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 6, "gtk_style_apply_default_background", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 7, "gtk_style_apply_default_background", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 8, "gtk_style_apply_default_background", "gint");
-  gtk_style_apply_default_background(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), 
-                                     XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_hline(XEN style, XEN cr, XEN state_type, XEN widget, XEN detail, XEN x1, XEN x2, XEN y)
-{
-  #define H_gtk_paint_hline "void gtk_paint_hline(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkWidget* widget, gchar* detail, gint x1, gint x2, gint y)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_hline", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_hline", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_hline", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 4, "gtk_paint_hline", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 5, "gtk_paint_hline", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x1), x1, 6, "gtk_paint_hline", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(x2), x2, 7, "gtk_paint_hline", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_hline", "gint");
-  gtk_paint_hline(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkWidget_(widget), 
-                  XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x1), XEN_TO_C_gint(x2), XEN_TO_C_gint(y));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_vline(XEN style, XEN cr, XEN state_type, XEN widget, XEN detail, XEN y1, XEN y2, XEN x)
-{
-  #define H_gtk_paint_vline "void gtk_paint_vline(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkWidget* widget, gchar* detail, gint y1, gint y2, gint x)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_vline", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_vline", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_vline", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 4, "gtk_paint_vline", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 5, "gtk_paint_vline", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(y1), y1, 6, "gtk_paint_vline", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y2), y2, 7, "gtk_paint_vline", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_vline", "gint");
-  gtk_paint_vline(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkWidget_(widget), 
-                  XEN_TO_C_gchar_(detail), XEN_TO_C_gint(y1), XEN_TO_C_gint(y2), XEN_TO_C_gint(x));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_shadow(XEN arglist)
-{
-  #define H_gtk_paint_shadow "void gtk_paint_shadow(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_shadow", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_shadow", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_shadow", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_shadow", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_shadow", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_shadow", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_shadow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_shadow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_shadow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_shadow", "gint");
-  gtk_paint_shadow(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                   XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                   XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_arrow(XEN arglist)
-{
-  #define H_gtk_paint_arrow "void gtk_paint_arrow(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, GtkArrowType arrow_type, gboolean fill, \
-gint x, gint y, gint width, gint height)"
-  XEN style, cr, state_type, shadow_type, widget, detail, arrow_type, fill, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  arrow_type = XEN_LIST_REF(arglist, 6);
-  fill = XEN_LIST_REF(arglist, 7);
-  x = XEN_LIST_REF(arglist, 8);
-  y = XEN_LIST_REF(arglist, 9);
-  width = XEN_LIST_REF(arglist, 10);
-  height = XEN_LIST_REF(arglist, 11);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_arrow", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_arrow", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_arrow", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_arrow", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_arrow", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_arrow", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GtkArrowType_P(arrow_type), arrow_type, 7, "gtk_paint_arrow", "GtkArrowType");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(fill), fill, 8, "gtk_paint_arrow", "gboolean");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 9, "gtk_paint_arrow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 10, "gtk_paint_arrow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 11, "gtk_paint_arrow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 12, "gtk_paint_arrow", "gint");
-  gtk_paint_arrow(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                  XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_GtkArrowType(arrow_type), XEN_TO_C_gboolean(fill), 
-                  XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_diamond(XEN arglist)
-{
-  #define H_gtk_paint_diamond "void gtk_paint_diamond(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_diamond", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_diamond", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_diamond", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_diamond", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_diamond", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_diamond", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_diamond", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_diamond", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_diamond", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_diamond", "gint");
-  gtk_paint_diamond(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                    XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                    XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_box(XEN arglist)
-{
-  #define H_gtk_paint_box "void gtk_paint_box(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_box", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_box", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_box", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_box", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_box", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_box", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_box", "gint");
-  gtk_paint_box(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_flat_box(XEN arglist)
-{
-  #define H_gtk_paint_flat_box "void gtk_paint_flat_box(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_flat_box", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_flat_box", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_flat_box", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_flat_box", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_flat_box", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_flat_box", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_flat_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_flat_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_flat_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_flat_box", "gint");
-  gtk_paint_flat_box(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                     XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                     XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_check(XEN arglist)
-{
-  #define H_gtk_paint_check "void gtk_paint_check(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_check", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_check", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_check", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_check", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_check", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_check", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_check", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_check", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_check", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_check", "gint");
-  gtk_paint_check(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                  XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                  XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_option(XEN arglist)
-{
-  #define H_gtk_paint_option "void gtk_paint_option(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_option", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_option", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_option", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_option", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_option", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_option", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_option", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_option", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_option", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_option", "gint");
-  gtk_paint_option(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                   XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                   XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_tab(XEN arglist)
-{
-  #define H_gtk_paint_tab "void gtk_paint_tab(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_tab", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_tab", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_tab", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_tab", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_tab", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_tab", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_tab", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_tab", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_tab", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_tab", "gint");
-  gtk_paint_tab(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_shadow_gap(XEN arglist)
-{
-  #define H_gtk_paint_shadow_gap "void gtk_paint_shadow_gap(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height, \
-GtkPositionType gap_side, gint gap_x, gint gap_width)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height, gap_side, gap_x, gap_width;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  gap_side = XEN_LIST_REF(arglist, 10);
-  gap_x = XEN_LIST_REF(arglist, 11);
-  gap_width = XEN_LIST_REF(arglist, 12);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_shadow_gap", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_shadow_gap", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_shadow_gap", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_shadow_gap", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_shadow_gap", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_shadow_gap", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_shadow_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_shadow_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_shadow_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_shadow_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkPositionType_P(gap_side), gap_side, 11, "gtk_paint_shadow_gap", "GtkPositionType");
-  XEN_ASSERT_TYPE(XEN_gint_P(gap_x), gap_x, 12, "gtk_paint_shadow_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(gap_width), gap_width, 13, "gtk_paint_shadow_gap", "gint");
-  gtk_paint_shadow_gap(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                       XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                       XEN_TO_C_gint(height), XEN_TO_C_GtkPositionType(gap_side), XEN_TO_C_gint(gap_x), XEN_TO_C_gint(gap_width));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_box_gap(XEN arglist)
-{
-  #define H_gtk_paint_box_gap "void gtk_paint_box_gap(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height, \
-GtkPositionType gap_side, gint gap_x, gint gap_width)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height, gap_side, gap_x, gap_width;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  gap_side = XEN_LIST_REF(arglist, 10);
-  gap_x = XEN_LIST_REF(arglist, 11);
-  gap_width = XEN_LIST_REF(arglist, 12);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_box_gap", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_box_gap", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_box_gap", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_box_gap", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_box_gap", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_box_gap", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_box_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_box_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_box_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_box_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkPositionType_P(gap_side), gap_side, 11, "gtk_paint_box_gap", "GtkPositionType");
-  XEN_ASSERT_TYPE(XEN_gint_P(gap_x), gap_x, 12, "gtk_paint_box_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(gap_width), gap_width, 13, "gtk_paint_box_gap", "gint");
-  gtk_paint_box_gap(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                    XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                    XEN_TO_C_gint(height), XEN_TO_C_GtkPositionType(gap_side), XEN_TO_C_gint(gap_x), XEN_TO_C_gint(gap_width));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_extension(XEN arglist)
-{
-  #define H_gtk_paint_extension "void gtk_paint_extension(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height, \
-GtkPositionType gap_side)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height, gap_side;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  gap_side = XEN_LIST_REF(arglist, 10);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_extension", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_extension", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_extension", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_extension", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_extension", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_extension", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_extension", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_extension", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_extension", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_extension", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkPositionType_P(gap_side), gap_side, 11, "gtk_paint_extension", "GtkPositionType");
-  gtk_paint_extension(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                      XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                      XEN_TO_C_gint(height), XEN_TO_C_GtkPositionType(gap_side));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_focus(XEN style, XEN cr, XEN state_type, XEN widget, XEN detail, XEN x, XEN y, XEN width, XEN height)
-{
-  #define H_gtk_paint_focus "void gtk_paint_focus(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_focus", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_focus", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_focus", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 4, "gtk_paint_focus", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 5, "gtk_paint_focus", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 6, "gtk_paint_focus", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 7, "gtk_paint_focus", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 8, "gtk_paint_focus", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 9, "gtk_paint_focus", "gint");
-  gtk_paint_focus(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkWidget_(widget), 
-                  XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_slider(XEN arglist)
-{
-  #define H_gtk_paint_slider "void gtk_paint_slider(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height, \
-GtkOrientation orientation)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height, orientation;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  orientation = XEN_LIST_REF(arglist, 10);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_slider", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_slider", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_slider", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_slider", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_slider", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_slider", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_slider", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_slider", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_slider", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_slider", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkOrientation_P(orientation), orientation, 11, "gtk_paint_slider", "GtkOrientation");
-  gtk_paint_slider(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                   XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                   XEN_TO_C_gint(height), XEN_TO_C_GtkOrientation(orientation));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_handle(XEN arglist)
-{
-  #define H_gtk_paint_handle "void gtk_paint_handle(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkShadowType shadow_type, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height, \
-GtkOrientation orientation)"
-  XEN style, cr, state_type, shadow_type, widget, detail, x, y, width, height, orientation;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  orientation = XEN_LIST_REF(arglist, 10);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_handle", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_handle", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_handle", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_handle", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_handle", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_handle", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_handle", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_handle", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_handle", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_handle", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkOrientation_P(orientation), orientation, 11, "gtk_paint_handle", "GtkOrientation");
-  gtk_paint_handle(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                   XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                   XEN_TO_C_gint(height), XEN_TO_C_GtkOrientation(orientation));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_expander(XEN style, XEN cr, XEN state_type, XEN widget, XEN detail, XEN x, XEN y, XEN expander_style)
-{
-  #define H_gtk_paint_expander "void gtk_paint_expander(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkWidget* widget, gchar* detail, gint x, gint y, GtkExpanderStyle expander_style)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_expander", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_expander", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_expander", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 4, "gtk_paint_expander", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 5, "gtk_paint_expander", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 6, "gtk_paint_expander", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 7, "gtk_paint_expander", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkExpanderStyle_P(expander_style), expander_style, 8, "gtk_paint_expander", "GtkExpanderStyle");
-  gtk_paint_expander(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkWidget_(widget), 
-                     XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_GtkExpanderStyle(expander_style));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_layout(XEN style, XEN cr, XEN state_type, XEN use_text, XEN widget, XEN detail, XEN x, XEN y, XEN layout)
-{
-  #define H_gtk_paint_layout "void gtk_paint_layout(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-gboolean use_text, GtkWidget* widget, gchar* detail, gint x, gint y, PangoLayout* layout)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_layout", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_layout", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_layout", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(use_text), use_text, 4, "gtk_paint_layout", "gboolean");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_layout", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_layout", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_layout", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_layout", "gint");
-  XEN_ASSERT_TYPE(XEN_PangoLayout__P(layout), layout, 9, "gtk_paint_layout", "PangoLayout*");
-  gtk_paint_layout(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_gboolean(use_text), 
-                   XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_PangoLayout_(layout));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_resize_grip(XEN arglist)
-{
-  #define H_gtk_paint_resize_grip "void gtk_paint_resize_grip(GtkStyle* style, cairo_t* cr, GtkStateType state_type, \
-GtkWidget* widget, gchar* detail, GdkWindowEdge edge, gint x, gint y, gint width, gint height)"
-  XEN style, cr, state_type, widget, detail, edge, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  cr = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  widget = XEN_LIST_REF(arglist, 3);
-  detail = XEN_LIST_REF(arglist, 4);
-  edge = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_resize_grip", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 2, "gtk_paint_resize_grip", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_resize_grip", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 4, "gtk_paint_resize_grip", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 5, "gtk_paint_resize_grip", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GdkWindowEdge_P(edge), edge, 6, "gtk_paint_resize_grip", "GdkWindowEdge");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_resize_grip", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_resize_grip", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_resize_grip", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_resize_grip", "gint");
-  gtk_paint_resize_grip(XEN_TO_C_GtkStyle_(style), XEN_TO_C_cairo_t_(cr), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkWidget_(widget), 
-                        XEN_TO_C_gchar_(detail), XEN_TO_C_GdkWindowEdge(edge), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                        XEN_TO_C_gint(height));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_tree_view_create_row_drag_icon(XEN tree_view, XEN path)
@@ -31270,6 +30294,13 @@ static XEN gxg_gdk_colormap_get_visual(XEN colormap)
   return(C_TO_XEN_GdkVisual_(gdk_colormap_get_visual(XEN_TO_C_GdkColormap_(colormap))));
 }
 
+static XEN gxg_gdk_cairo_create(XEN drawable)
+{
+  #define H_gdk_cairo_create "cairo_t* gdk_cairo_create(GdkDrawable* drawable)"
+  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_cairo_create", "GdkDrawable*");
+  return(C_TO_XEN_cairo_t_(gdk_cairo_create(XEN_TO_C_GdkDrawable_(drawable))));
+}
+
 static XEN gxg_gdk_drawable_get_size(XEN drawable, XEN ignore_width, XEN ignore_height)
 {
   #define H_gdk_drawable_get_size "void gdk_drawable_get_size(GdkDrawable* drawable, gint* [width], gint* [height])"
@@ -31463,6 +30494,20 @@ gboolean parent_relative)"
   return(XEN_FALSE);
 }
 
+static XEN gxg_gdk_window_get_geometry(XEN window, XEN ignore_x, XEN ignore_y, XEN ignore_width, XEN ignore_height, XEN ignore_depth)
+{
+  #define H_gdk_window_get_geometry "void gdk_window_get_geometry(GdkWindow* window, gint* [x], gint* [y], \
+gint* [width], gint* [height], gint* [depth])"
+  gint ref_x;
+  gint ref_y;
+  gint ref_width;
+  gint ref_height;
+  gint ref_depth;
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_geometry", "GdkWindow*");
+  gdk_window_get_geometry(XEN_TO_C_GdkWindow_(window), &ref_x, &ref_y, &ref_width, &ref_height, &ref_depth);
+  return(XEN_LIST_5(C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y), C_TO_XEN_gint(ref_width), C_TO_XEN_gint(ref_height), C_TO_XEN_gint(ref_depth)));
+}
+
 static XEN gxg_gtk_adjustment_new(XEN value, XEN lower, XEN upper, XEN step_increment, XEN page_increment, XEN page_size)
 {
   #define H_gtk_adjustment_new "GtkObject* gtk_adjustment_new(gdouble value, gdouble lower, gdouble upper, \
@@ -31558,6 +30603,192 @@ GdkPixmap* pixmap, GdkBitmap* mask, gint hot_x, gint hot_y)"
   return(XEN_FALSE);
 }
 
+static XEN gxg_gtk_icon_set_render_icon(XEN icon_set, XEN style, XEN direction, XEN state, XEN size, XEN widget, XEN detail)
+{
+  #define H_gtk_icon_set_render_icon "GdkPixbuf* gtk_icon_set_render_icon(GtkIconSet* icon_set, GtkStyle* style, \
+GtkTextDirection direction, GtkStateType state, GtkIconSize size, GtkWidget* widget, char* detail)"
+  XEN_ASSERT_TYPE(XEN_GtkIconSet__P(icon_set), icon_set, 1, "gtk_icon_set_render_icon", "GtkIconSet*");
+  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style) || XEN_FALSE_P(style), style, 2, "gtk_icon_set_render_icon", "GtkStyle*");
+  XEN_ASSERT_TYPE(XEN_GtkTextDirection_P(direction), direction, 3, "gtk_icon_set_render_icon", "GtkTextDirection");
+  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 4, "gtk_icon_set_render_icon", "GtkStateType");
+  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(size), size, 5, "gtk_icon_set_render_icon", "GtkIconSize");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget) || XEN_FALSE_P(widget), widget, 6, "gtk_icon_set_render_icon", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_char__P(detail), detail, 7, "gtk_icon_set_render_icon", "char*");
+  return(C_TO_XEN_GdkPixbuf_(gtk_icon_set_render_icon(XEN_TO_C_GtkIconSet_(icon_set), XEN_TO_C_GtkStyle_(style), XEN_TO_C_GtkTextDirection(direction), 
+                                                      XEN_TO_C_GtkStateType(state), XEN_TO_C_GtkIconSize(size), XEN_TO_C_GtkWidget_(widget), 
+                                                      XEN_TO_C_char_(detail))));
+}
+
+static XEN gxg_gtk_rc_add_default_file(XEN filename)
+{
+  #define H_gtk_rc_add_default_file "void gtk_rc_add_default_file(gchar* filename)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(filename), filename, 1, "gtk_rc_add_default_file", "gchar*");
+  gtk_rc_add_default_file(XEN_TO_C_gchar_(filename));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_rc_set_default_files(XEN filenames)
+{
+  #define H_gtk_rc_set_default_files "void gtk_rc_set_default_files(gchar** filenames)"
+  XEN_ASSERT_TYPE(XEN_gchar___P(filenames), filenames, 1, "gtk_rc_set_default_files", "gchar**");
+  gtk_rc_set_default_files(XEN_TO_C_gchar__(filenames));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_rc_get_default_files(void)
+{
+  #define H_gtk_rc_get_default_files "gchar** gtk_rc_get_default_files( void)"
+  return(C_TO_XEN_gchar__(gtk_rc_get_default_files()));
+}
+
+static XEN gxg_gtk_rc_get_style(XEN widget)
+{
+  #define H_gtk_rc_get_style "GtkStyle* gtk_rc_get_style(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_rc_get_style", "GtkWidget*");
+  return(C_TO_XEN_GtkStyle_(gtk_rc_get_style(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_rc_parse(XEN filename)
+{
+  #define H_gtk_rc_parse "void gtk_rc_parse(gchar* filename)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(filename), filename, 1, "gtk_rc_parse", "gchar*");
+  gtk_rc_parse(XEN_TO_C_gchar_(filename));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_rc_parse_string(XEN rc_string)
+{
+  #define H_gtk_rc_parse_string "void gtk_rc_parse_string(gchar* rc_string)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(rc_string), rc_string, 1, "gtk_rc_parse_string", "gchar*");
+  gtk_rc_parse_string(XEN_TO_C_gchar_(rc_string));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_rc_reparse_all(void)
+{
+  #define H_gtk_rc_reparse_all "gboolean gtk_rc_reparse_all( void)"
+  return(C_TO_XEN_gboolean(gtk_rc_reparse_all()));
+}
+
+static XEN gxg_gtk_rc_style_new(void)
+{
+  #define H_gtk_rc_style_new "GtkRcStyle* gtk_rc_style_new( void)"
+  return(C_TO_XEN_GtkRcStyle_(gtk_rc_style_new()));
+}
+
+static XEN gxg_gtk_rc_style_copy(XEN orig)
+{
+  #define H_gtk_rc_style_copy "GtkRcStyle* gtk_rc_style_copy(GtkRcStyle* orig)"
+  XEN_ASSERT_TYPE(XEN_GtkRcStyle__P(orig), orig, 1, "gtk_rc_style_copy", "GtkRcStyle*");
+  return(C_TO_XEN_GtkRcStyle_(gtk_rc_style_copy(XEN_TO_C_GtkRcStyle_(orig))));
+}
+
+static XEN gxg_gtk_rc_find_module_in_path(XEN module_file)
+{
+  #define H_gtk_rc_find_module_in_path "gchar* gtk_rc_find_module_in_path(gchar* module_file)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(module_file), module_file, 1, "gtk_rc_find_module_in_path", "gchar*");
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_rc_find_module_in_path(XEN_TO_C_gchar_(module_file));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
+}
+
+static XEN gxg_gtk_rc_get_theme_dir(void)
+{
+  #define H_gtk_rc_get_theme_dir "gchar* gtk_rc_get_theme_dir( void)"
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_rc_get_theme_dir();
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
+}
+
+static XEN gxg_gtk_rc_get_module_dir(void)
+{
+  #define H_gtk_rc_get_module_dir "gchar* gtk_rc_get_module_dir( void)"
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_rc_get_module_dir();
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
+}
+
+static XEN gxg_gtk_rc_get_im_module_path(void)
+{
+  #define H_gtk_rc_get_im_module_path "gchar* gtk_rc_get_im_module_path( void)"
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_rc_get_im_module_path();
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
+}
+
+static XEN gxg_gtk_rc_get_im_module_file(void)
+{
+  #define H_gtk_rc_get_im_module_file "gchar* gtk_rc_get_im_module_file( void)"
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_rc_get_im_module_file();
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
+}
+
+static XEN gxg_gtk_style_new(void)
+{
+  #define H_gtk_style_new "GtkStyle* gtk_style_new( void)"
+  return(C_TO_XEN_GtkStyle_(gtk_style_new()));
+}
+
+static XEN gxg_gtk_style_copy(XEN style)
+{
+  #define H_gtk_style_copy "GtkStyle* gtk_style_copy(GtkStyle* style)"
+  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_copy", "GtkStyle*");
+  return(C_TO_XEN_GtkStyle_(gtk_style_copy(XEN_TO_C_GtkStyle_(style))));
+}
+
+static XEN gxg_gtk_style_attach(XEN style, XEN window)
+{
+  #define H_gtk_style_attach "GtkStyle* gtk_style_attach(GtkStyle* style, GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_attach", "GtkStyle*");
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_style_attach", "GdkWindow*");
+  return(C_TO_XEN_GtkStyle_(gtk_style_attach(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gtk_style_detach(XEN style)
+{
+  #define H_gtk_style_detach "void gtk_style_detach(GtkStyle* style)"
+  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_detach", "GtkStyle*");
+  gtk_style_detach(XEN_TO_C_GtkStyle_(style));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_style_set_background(XEN style, XEN window, XEN state_type)
+{
+  #define H_gtk_style_set_background "void gtk_style_set_background(GtkStyle* style, GdkWindow* window, \
+GtkStateType state_type)"
+  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_set_background", "GtkStyle*");
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_style_set_background", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_style_set_background", "GtkStateType");
+  gtk_style_set_background(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type));
+  return(XEN_FALSE);
+}
+
 static XEN gxg_gtk_style_apply_default_background(XEN style, XEN window, XEN set_bg, XEN state_type, XEN area, XEN x, XEN y, XEN width, XEN height)
 {
   #define H_gtk_style_apply_default_background "void gtk_style_apply_default_background(GtkStyle* style, \
@@ -31578,601 +30809,42 @@ gint height)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_paint_hline(XEN style, XEN window, XEN state_type, XEN area, XEN widget, XEN detail, XEN x1, XEN x2, XEN y)
+static XEN gxg_gtk_style_lookup_icon_set(XEN style, XEN stock_id)
 {
-  #define H_gtk_paint_hline "void gtk_paint_hline(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x1, gint x2, gint y)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_hline", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_hline", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_hline", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 4, "gtk_paint_hline", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_hline", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_hline", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x1), x1, 7, "gtk_paint_hline", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(x2), x2, 8, "gtk_paint_hline", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_hline", "gint");
-  gtk_paint_hline(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GdkRectangle_(area), 
-                  XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x1), XEN_TO_C_gint(x2), XEN_TO_C_gint(y));
-  return(XEN_FALSE);
+  #define H_gtk_style_lookup_icon_set "GtkIconSet* gtk_style_lookup_icon_set(GtkStyle* style, gchar* stock_id)"
+  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_lookup_icon_set", "GtkStyle*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(stock_id), stock_id, 2, "gtk_style_lookup_icon_set", "gchar*");
+  return(C_TO_XEN_GtkIconSet_(gtk_style_lookup_icon_set(XEN_TO_C_GtkStyle_(style), XEN_TO_C_gchar_(stock_id))));
 }
 
-static XEN gxg_gtk_paint_vline(XEN style, XEN window, XEN state_type, XEN area, XEN widget, XEN detail, XEN y1, XEN y2, XEN x)
+static XEN gxg_gtk_style_render_icon(XEN style, XEN source, XEN direction, XEN state, XEN size, XEN widget, XEN detail)
 {
-  #define H_gtk_paint_vline "void gtk_paint_vline(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GdkRectangle* area, GtkWidget* widget, gchar* detail, gint y1, gint y2, gint x)"
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_vline", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_vline", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_vline", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 4, "gtk_paint_vline", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_vline", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_vline", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(y1), y1, 7, "gtk_paint_vline", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y2), y2, 8, "gtk_paint_vline", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 9, "gtk_paint_vline", "gint");
-  gtk_paint_vline(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GdkRectangle_(area), 
-                  XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(y1), XEN_TO_C_gint(y2), XEN_TO_C_gint(x));
-  return(XEN_FALSE);
+  #define H_gtk_style_render_icon "GdkPixbuf* gtk_style_render_icon(GtkStyle* style, GtkIconSource* source, \
+GtkTextDirection direction, GtkStateType state, GtkIconSize size, GtkWidget* widget, gchar* detail)"
+  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_render_icon", "GtkStyle*");
+  XEN_ASSERT_TYPE(XEN_GtkIconSource__P(source), source, 2, "gtk_style_render_icon", "GtkIconSource*");
+  XEN_ASSERT_TYPE(XEN_GtkTextDirection_P(direction), direction, 3, "gtk_style_render_icon", "GtkTextDirection");
+  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 4, "gtk_style_render_icon", "GtkStateType");
+  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(size), size, 5, "gtk_style_render_icon", "GtkIconSize");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_style_render_icon", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_style_render_icon", "gchar*");
+  return(C_TO_XEN_GdkPixbuf_(gtk_style_render_icon(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GtkIconSource_(source), XEN_TO_C_GtkTextDirection(direction), 
+                                                   XEN_TO_C_GtkStateType(state), XEN_TO_C_GtkIconSize(size), XEN_TO_C_GtkWidget_(widget), 
+                                                   XEN_TO_C_gchar_(detail))));
 }
 
-static XEN gxg_gtk_paint_shadow(XEN arglist)
+static XEN gxg_gtk_border_copy(XEN border)
 {
-  #define H_gtk_paint_shadow "void gtk_paint_shadow(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_shadow", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_shadow", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_shadow", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_shadow", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_shadow", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_shadow", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_shadow", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_shadow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_shadow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_shadow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_shadow", "gint");
-  gtk_paint_shadow(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                   XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
-                   XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(XEN_FALSE);
+  #define H_gtk_border_copy "GtkBorder* gtk_border_copy(GtkBorder* border)"
+  XEN_ASSERT_TYPE(XEN_GtkBorder__P(border), border, 1, "gtk_border_copy", "GtkBorder*");
+  return(C_TO_XEN_GtkBorder_(gtk_border_copy(XEN_TO_C_GtkBorder_(border))));
 }
 
-static XEN gxg_gtk_paint_arrow(XEN arglist)
+static XEN gxg_gtk_border_free(XEN border)
 {
-  #define H_gtk_paint_arrow "void gtk_paint_arrow(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, GtkArrowType arrow_type, \
-gboolean fill, gint x, gint y, gint width, gint height)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, arrow_type, fill, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  arrow_type = XEN_LIST_REF(arglist, 7);
-  fill = XEN_LIST_REF(arglist, 8);
-  x = XEN_LIST_REF(arglist, 9);
-  y = XEN_LIST_REF(arglist, 10);
-  width = XEN_LIST_REF(arglist, 11);
-  height = XEN_LIST_REF(arglist, 12);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_arrow", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_arrow", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_arrow", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_arrow", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_arrow", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_arrow", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_arrow", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GtkArrowType_P(arrow_type), arrow_type, 8, "gtk_paint_arrow", "GtkArrowType");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(fill), fill, 9, "gtk_paint_arrow", "gboolean");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 10, "gtk_paint_arrow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 11, "gtk_paint_arrow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 12, "gtk_paint_arrow", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 13, "gtk_paint_arrow", "gint");
-  gtk_paint_arrow(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                  XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_GtkArrowType(arrow_type), 
-                  XEN_TO_C_gboolean(fill), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_diamond(XEN arglist)
-{
-  #define H_gtk_paint_diamond "void gtk_paint_diamond(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_diamond", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_diamond", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_diamond", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_diamond", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_diamond", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_diamond", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_diamond", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_diamond", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_diamond", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_diamond", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_diamond", "gint");
-  gtk_paint_diamond(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                    XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
-                    XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_box(XEN arglist)
-{
-  #define H_gtk_paint_box "void gtk_paint_box(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_box", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_box", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_box", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_box", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_box", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_box", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_box", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_box", "gint");
-  gtk_paint_box(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
-                XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_flat_box(XEN arglist)
-{
-  #define H_gtk_paint_flat_box "void gtk_paint_flat_box(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_flat_box", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_flat_box", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_flat_box", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_flat_box", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_flat_box", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_flat_box", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_flat_box", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_flat_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_flat_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_flat_box", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_flat_box", "gint");
-  gtk_paint_flat_box(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                     XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
-                     XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_check(XEN arglist)
-{
-  #define H_gtk_paint_check "void gtk_paint_check(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_check", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_check", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_check", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_check", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_check", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_check", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_check", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_check", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_check", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_check", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_check", "gint");
-  gtk_paint_check(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                  XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
-                  XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_option(XEN arglist)
-{
-  #define H_gtk_paint_option "void gtk_paint_option(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_option", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_option", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_option", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_option", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_option", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_option", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_option", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_option", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_option", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_option", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_option", "gint");
-  gtk_paint_option(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                   XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
-                   XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_tab(XEN arglist)
-{
-  #define H_gtk_paint_tab "void gtk_paint_tab(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_tab", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_tab", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_tab", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_tab", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_tab", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_tab", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_tab", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_tab", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_tab", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_tab", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_tab", "gint");
-  gtk_paint_tab(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
-                XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_shadow_gap(XEN arglist)
-{
-  #define H_gtk_paint_shadow_gap "void gtk_paint_shadow_gap(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height, GtkPositionType gap_side, gint gap_x, gint gap_width)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height, gap_side, gap_x, gap_width;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  gap_side = XEN_LIST_REF(arglist, 11);
-  gap_x = XEN_LIST_REF(arglist, 12);
-  gap_width = XEN_LIST_REF(arglist, 13);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_shadow_gap", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_shadow_gap", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_shadow_gap", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_shadow_gap", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_shadow_gap", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_shadow_gap", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_shadow_gap", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_shadow_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_shadow_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_shadow_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_shadow_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkPositionType_P(gap_side), gap_side, 12, "gtk_paint_shadow_gap", "GtkPositionType");
-  XEN_ASSERT_TYPE(XEN_gint_P(gap_x), gap_x, 13, "gtk_paint_shadow_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(gap_width), gap_width, 14, "gtk_paint_shadow_gap", "gint");
-  gtk_paint_shadow_gap(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                       XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
-                       XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GtkPositionType(gap_side), 
-                       XEN_TO_C_gint(gap_x), XEN_TO_C_gint(gap_width));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_box_gap(XEN arglist)
-{
-  #define H_gtk_paint_box_gap "void gtk_paint_box_gap(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height, GtkPositionType gap_side, gint gap_x, gint gap_width)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height, gap_side, gap_x, gap_width;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  gap_side = XEN_LIST_REF(arglist, 11);
-  gap_x = XEN_LIST_REF(arglist, 12);
-  gap_width = XEN_LIST_REF(arglist, 13);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_box_gap", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_box_gap", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_box_gap", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_box_gap", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_box_gap", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_box_gap", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_box_gap", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_box_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_box_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_box_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_box_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkPositionType_P(gap_side), gap_side, 12, "gtk_paint_box_gap", "GtkPositionType");
-  XEN_ASSERT_TYPE(XEN_gint_P(gap_x), gap_x, 13, "gtk_paint_box_gap", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(gap_width), gap_width, 14, "gtk_paint_box_gap", "gint");
-  gtk_paint_box_gap(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                    XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
-                    XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GtkPositionType(gap_side), XEN_TO_C_gint(gap_x), 
-                    XEN_TO_C_gint(gap_width));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_extension(XEN arglist)
-{
-  #define H_gtk_paint_extension "void gtk_paint_extension(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height, GtkPositionType gap_side)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height, gap_side;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  gap_side = XEN_LIST_REF(arglist, 11);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_extension", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_extension", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_extension", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_extension", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_extension", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_extension", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_extension", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_extension", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_extension", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_extension", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_extension", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkPositionType_P(gap_side), gap_side, 12, "gtk_paint_extension", "GtkPositionType");
-  gtk_paint_extension(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                      XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
-                      XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GtkPositionType(gap_side));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_focus(XEN arglist)
-{
-  #define H_gtk_paint_focus "void gtk_paint_focus(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, gint height)"
-  XEN style, window, state_type, area, widget, detail, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  area = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  x = XEN_LIST_REF(arglist, 6);
-  y = XEN_LIST_REF(arglist, 7);
-  width = XEN_LIST_REF(arglist, 8);
-  height = XEN_LIST_REF(arglist, 9);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_focus", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_focus", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_focus", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 4, "gtk_paint_focus", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_focus", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_focus", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 7, "gtk_paint_focus", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 8, "gtk_paint_focus", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 9, "gtk_paint_focus", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 10, "gtk_paint_focus", "gint");
-  gtk_paint_focus(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GdkRectangle_(area), 
-                  XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
-                  XEN_TO_C_gint(height));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_slider(XEN arglist)
-{
-  #define H_gtk_paint_slider "void gtk_paint_slider(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height, GtkOrientation orientation)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height, orientation;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  orientation = XEN_LIST_REF(arglist, 11);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_slider", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_slider", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_slider", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_slider", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_slider", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_slider", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_slider", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_slider", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_slider", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_slider", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_slider", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkOrientation_P(orientation), orientation, 12, "gtk_paint_slider", "GtkOrientation");
-  gtk_paint_slider(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                   XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
-                   XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GtkOrientation(orientation));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_handle(XEN arglist)
-{
-  #define H_gtk_paint_handle "void gtk_paint_handle(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GtkShadowType shadow_type, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width, \
-gint height, GtkOrientation orientation)"
-  XEN style, window, state_type, shadow_type, area, widget, detail, x, y, width, height, orientation;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  shadow_type = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  orientation = XEN_LIST_REF(arglist, 11);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_handle", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_handle", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_handle", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GtkShadowType_P(shadow_type), shadow_type, 4, "gtk_paint_handle", "GtkShadowType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_handle", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_handle", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_handle", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_handle", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_handle", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_handle", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_handle", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkOrientation_P(orientation), orientation, 12, "gtk_paint_handle", "GtkOrientation");
-  gtk_paint_handle(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
-                   XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
-                   XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GtkOrientation(orientation));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_layout(XEN arglist)
-{
-  #define H_gtk_paint_layout "void gtk_paint_layout(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-gboolean use_text, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, PangoLayout* layout)"
-  XEN style, window, state_type, use_text, area, widget, detail, x, y, layout;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  use_text = XEN_LIST_REF(arglist, 3);
-  area = XEN_LIST_REF(arglist, 4);
-  widget = XEN_LIST_REF(arglist, 5);
-  detail = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  layout = XEN_LIST_REF(arglist, 9);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_layout", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_layout", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_layout", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(use_text), use_text, 4, "gtk_paint_layout", "gboolean");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 5, "gtk_paint_layout", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 6, "gtk_paint_layout", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 7, "gtk_paint_layout", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_layout", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_layout", "gint");
-  XEN_ASSERT_TYPE(XEN_PangoLayout__P(layout), layout, 10, "gtk_paint_layout", "PangoLayout*");
-  gtk_paint_layout(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_gboolean(use_text), 
-                   XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
-                   XEN_TO_C_gint(y), XEN_TO_C_PangoLayout_(layout));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_paint_resize_grip(XEN arglist)
-{
-  #define H_gtk_paint_resize_grip "void gtk_paint_resize_grip(GtkStyle* style, GdkWindow* window, GtkStateType state_type, \
-GdkRectangle* area, GtkWidget* widget, gchar* detail, GdkWindowEdge edge, gint x, gint y, gint width, \
-gint height)"
-  XEN style, window, state_type, area, widget, detail, edge, x, y, width, height;
-  style = XEN_LIST_REF(arglist, 0);
-  window = XEN_LIST_REF(arglist, 1);
-  state_type = XEN_LIST_REF(arglist, 2);
-  area = XEN_LIST_REF(arglist, 3);
-  widget = XEN_LIST_REF(arglist, 4);
-  detail = XEN_LIST_REF(arglist, 5);
-  edge = XEN_LIST_REF(arglist, 6);
-  x = XEN_LIST_REF(arglist, 7);
-  y = XEN_LIST_REF(arglist, 8);
-  width = XEN_LIST_REF(arglist, 9);
-  height = XEN_LIST_REF(arglist, 10);
-  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_paint_resize_grip", "GtkStyle*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_paint_resize_grip", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state_type), state_type, 3, "gtk_paint_resize_grip", "GtkStateType");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(area), area, 4, "gtk_paint_resize_grip", "GdkRectangle*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 5, "gtk_paint_resize_grip", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(detail), detail, 6, "gtk_paint_resize_grip", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GdkWindowEdge_P(edge), edge, 7, "gtk_paint_resize_grip", "GdkWindowEdge");
-  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 8, "gtk_paint_resize_grip", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 9, "gtk_paint_resize_grip", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(width), width, 10, "gtk_paint_resize_grip", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(height), height, 11, "gtk_paint_resize_grip", "gint");
-  gtk_paint_resize_grip(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GdkRectangle_(area), 
-                        XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_GdkWindowEdge(edge), XEN_TO_C_gint(x), 
-                        XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
+  #define H_gtk_border_free "void gtk_border_free(GtkBorder* border)"
+  XEN_ASSERT_TYPE(XEN_GtkBorder__P(border), border, 1, "gtk_border_free", "GtkBorder*");
+  gtk_border_free(XEN_TO_C_GtkBorder_(border));
   return(XEN_FALSE);
 }
 
@@ -32228,6 +30900,105 @@ static XEN gxg_gtk_widget_set_colormap(XEN widget, XEN colormap)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gtk_widget_set_style(XEN widget, XEN style)
+{
+  #define H_gtk_widget_set_style "void gtk_widget_set_style(GtkWidget* widget, GtkStyle* style)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_style", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style) || XEN_FALSE_P(style), style, 2, "gtk_widget_set_style", "GtkStyle*");
+  gtk_widget_set_style(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStyle_(style));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_ensure_style(XEN widget)
+{
+  #define H_gtk_widget_ensure_style "void gtk_widget_ensure_style(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_ensure_style", "GtkWidget*");
+  gtk_widget_ensure_style(XEN_TO_C_GtkWidget_(widget));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_style(XEN widget)
+{
+  #define H_gtk_widget_get_style "GtkStyle* gtk_widget_get_style(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_style", "GtkWidget*");
+  return(C_TO_XEN_GtkStyle_(gtk_widget_get_style(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_modify_style(XEN widget, XEN style)
+{
+  #define H_gtk_widget_modify_style "void gtk_widget_modify_style(GtkWidget* widget, GtkRcStyle* style)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_style", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkRcStyle__P(style), style, 2, "gtk_widget_modify_style", "GtkRcStyle*");
+  gtk_widget_modify_style(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkRcStyle_(style));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_modifier_style(XEN widget)
+{
+  #define H_gtk_widget_get_modifier_style "GtkRcStyle* gtk_widget_get_modifier_style(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_modifier_style", "GtkWidget*");
+  return(C_TO_XEN_GtkRcStyle_(gtk_widget_get_modifier_style(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_modify_fg(XEN widget, XEN state, XEN color)
+{
+  #define H_gtk_widget_modify_fg "void gtk_widget_modify_fg(GtkWidget* widget, GtkStateType state, GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_fg", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 2, "gtk_widget_modify_fg", "GtkStateType");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 3, "gtk_widget_modify_fg", "GdkColor*");
+  gtk_widget_modify_fg(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateType(state), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_modify_bg(XEN widget, XEN state, XEN color)
+{
+  #define H_gtk_widget_modify_bg "void gtk_widget_modify_bg(GtkWidget* widget, GtkStateType state, GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_bg", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 2, "gtk_widget_modify_bg", "GtkStateType");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 3, "gtk_widget_modify_bg", "GdkColor*");
+  gtk_widget_modify_bg(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateType(state), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_modify_text(XEN widget, XEN state, XEN color)
+{
+  #define H_gtk_widget_modify_text "void gtk_widget_modify_text(GtkWidget* widget, GtkStateType state, \
+GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_text", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 2, "gtk_widget_modify_text", "GtkStateType");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 3, "gtk_widget_modify_text", "GdkColor*");
+  gtk_widget_modify_text(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateType(state), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_modify_base(XEN widget, XEN state, XEN color)
+{
+  #define H_gtk_widget_modify_base "void gtk_widget_modify_base(GtkWidget* widget, GtkStateType state, \
+GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_base", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkStateType_P(state), state, 2, "gtk_widget_modify_base", "GtkStateType");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 3, "gtk_widget_modify_base", "GdkColor*");
+  gtk_widget_modify_base(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateType(state), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_modify_font(XEN widget, XEN font_desc)
+{
+  #define H_gtk_widget_modify_font "void gtk_widget_modify_font(GtkWidget* widget, PangoFontDescription* font_desc)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_modify_font", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_PangoFontDescription__P(font_desc), font_desc, 2, "gtk_widget_modify_font", "PangoFontDescription*");
+  gtk_widget_modify_font(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_PangoFontDescription_(font_desc));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_reset_rc_styles(XEN widget)
+{
+  #define H_gtk_widget_reset_rc_styles "void gtk_widget_reset_rc_styles(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_reset_rc_styles", "GtkWidget*");
+  gtk_widget_reset_rc_styles(XEN_TO_C_GtkWidget_(widget));
+  return(XEN_FALSE);
+}
+
 static XEN gxg_gtk_widget_push_colormap(XEN cmap)
 {
   #define H_gtk_widget_push_colormap "void gtk_widget_push_colormap(GdkColormap* cmap)"
@@ -32249,6 +31020,12 @@ static XEN gxg_gtk_widget_set_default_colormap(XEN colormap)
   XEN_ASSERT_TYPE(XEN_GdkColormap__P(colormap), colormap, 1, "gtk_widget_set_default_colormap", "GdkColormap*");
   gtk_widget_set_default_colormap(XEN_TO_C_GdkColormap_(colormap));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_default_style(void)
+{
+  #define H_gtk_widget_get_default_style "GtkStyle* gtk_widget_get_default_style( void)"
+  return(C_TO_XEN_GtkStyle_(gtk_widget_get_default_style()));
 }
 
 static XEN gxg_gtk_widget_get_default_colormap(void)
@@ -32273,6 +31050,30 @@ gint offset_x, gint offset_y)"
   XEN_ASSERT_TYPE(XEN_gint_P(offset_y), offset_y, 4, "gtk_widget_shape_combine_mask", "gint");
   gtk_widget_shape_combine_mask(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GdkBitmap_(shape_mask), XEN_TO_C_gint(offset_x), XEN_TO_C_gint(offset_y));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_path(XEN widget, XEN path_length, XEN ignore_path, XEN ignore_path_reversed)
+{
+  #define H_gtk_widget_path "void gtk_widget_path(GtkWidget* widget, guint* path_length, gchar** [path], \
+gchar** [path_reversed])"
+  gchar* ref_path = NULL;
+  gchar* ref_path_reversed = NULL;
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_path", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_guint__P(path_length), path_length, 2, "gtk_widget_path", "guint*");
+  gtk_widget_path(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_guint_(path_length), &ref_path, &ref_path_reversed);
+  return(XEN_LIST_2(C_TO_XEN_gchar_(ref_path), C_TO_XEN_gchar_(ref_path_reversed)));
+}
+
+static XEN gxg_gtk_widget_class_path(XEN widget, XEN path_length, XEN ignore_path, XEN ignore_path_reversed)
+{
+  #define H_gtk_widget_class_path "void gtk_widget_class_path(GtkWidget* widget, guint* path_length, \
+gchar** [path], gchar** [path_reversed])"
+  gchar* ref_path = NULL;
+  gchar* ref_path_reversed = NULL;
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_class_path", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_guint__P(path_length), path_length, 2, "gtk_widget_class_path", "guint*");
+  gtk_widget_class_path(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_guint_(path_length), &ref_path, &ref_path_reversed);
+  return(XEN_LIST_2(C_TO_XEN_gchar_(ref_path), C_TO_XEN_gchar_(ref_path_reversed)));
 }
 
 static XEN gxg_gtk_requisition_copy(XEN requisition)
@@ -32322,6 +31123,16 @@ GtkTreePath* path, GtkRequisition* requisition)"
   XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_cell_view_get_size_of_row", "GtkTreePath*");
   XEN_ASSERT_TYPE(XEN_GtkRequisition__P(requisition), requisition, 3, "gtk_cell_view_get_size_of_row", "GtkRequisition*");
   return(C_TO_XEN_gboolean(gtk_cell_view_get_size_of_row(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GtkTreePath_(path), XEN_TO_C_GtkRequisition_(requisition))));
+}
+
+static XEN gxg_gtk_style_lookup_color(XEN style, XEN color_name, XEN color)
+{
+  #define H_gtk_style_lookup_color "gboolean gtk_style_lookup_color(GtkStyle* style, gchar* color_name, \
+GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkStyle__P(style), style, 1, "gtk_style_lookup_color", "GtkStyle*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(color_name), color_name, 2, "gtk_style_lookup_color", "gchar*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 3, "gtk_style_lookup_color", "GdkColor*");
+  return(C_TO_XEN_gboolean(gtk_style_lookup_color(XEN_TO_C_GtkStyle_(style), XEN_TO_C_gchar_(color_name), XEN_TO_C_GdkColor_(color))));
 }
 
 #endif
@@ -34776,7 +33587,6 @@ cairo_rectangle_int_t* rectangle)"
 
 static XEN gxg_GPOINTER(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("gpointer"), (WRAPPED_OBJECT_P(obj)) ? XEN_CADR(obj) : XEN_WRAP_C_POINTER(obj)));}
 static XEN gxg_GDK_DRAG_CONTEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDragContext_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GDK_DRAWABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDrawable_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_DEVICE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDevice_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_KEYMAP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkKeymap_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_VISUAL(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkVisual_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34854,7 +33664,6 @@ static XEN gxg_GTK_SIZE_GROUP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIS
 static XEN gxg_GTK_SOCKET(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSocket_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SPIN_BUTTON(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSpinButton_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_STATUSBAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkStatusbar_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_STYLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkStyle_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_TABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTable_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_TEAROFF_MENU_ITEM(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTearoffMenuItem_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_TEXT_BUFFER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTextBuffer_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34951,13 +33760,10 @@ static XEN gxg_GTK_RECENT_CHOOSER_WIDGET(XEN obj) {return((WRAPPED_OBJECT_P(obj)
 static XEN gxg_GTK_RECENT_FILTER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkRecentFilter_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_RECENT_MANAGER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkRecentManager_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_STATUS_ICON(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkStatusIcon_"), XEN_CADR(obj)) : XEN_FALSE);}
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
 static XEN gxg_GTK_PRINT_CONTEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkPrintContext_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_PRINT_OPERATION(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkPrintOperation_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_PRINT_OPERATION_PREVIEW(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkPrintOperationPreview_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_PRINT_SETTINGS(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkPrintSettings_"), XEN_CADR(obj)) : XEN_FALSE);}
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 static XEN gxg_GTK_TOOLTIP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTooltip_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
@@ -34977,7 +33783,7 @@ static XEN gxg_GTK_TOOL_PALETTE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_L
 static XEN gxg_GTK_TOOL_ITEM_GROUP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkToolItemGroup_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
 static XEN gxg_GTK_COMBO_BOX_TEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkComboBoxText_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_GRID(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkGrid_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SCROLLABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkScrollable_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34986,12 +33792,13 @@ static XEN gxg_GTK_SWITCH(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(
 
 #if (!HAVE_GTK_3)
 static XEN gxg_GDK_COLORMAP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColormap_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GDK_DRAWABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDrawable_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_PIXMAP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixmap_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_OBJECT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkObject_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GTK_STYLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkStyle_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
 static XEN gxg_GDK_IS_DRAG_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DRAG_CONTEXT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GDK_IS_DRAWABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DRAWABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DEVICE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DEVICE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_KEYMAP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_KEYMAP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_VISUAL(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_VISUAL((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -35060,7 +33867,6 @@ static XEN gxg_GTK_IS_PROGRESS_BAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJ
 static XEN gxg_GTK_IS_RADIO_BUTTON(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RADIO_BUTTON((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_RADIO_MENU_ITEM(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RADIO_MENU_ITEM((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_RANGE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RANGE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_RC_STYLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RC_STYLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SCALE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SCALE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SCROLLBAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SCROLLBAR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SCROLLED_WINDOW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SCROLLED_WINDOW((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -35070,7 +33876,6 @@ static XEN gxg_GTK_IS_SIZE_GROUP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJEC
 static XEN gxg_GTK_IS_SOCKET(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SOCKET((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SPIN_BUTTON(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SPIN_BUTTON((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_STATUSBAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_STATUSBAR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_STYLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_STYLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TEAROFF_MENU_ITEM(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TEAROFF_MENU_ITEM((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TEXT_BUFFER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TEXT_BUFFER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -35149,13 +33954,10 @@ static XEN gxg_GTK_IS_RECENT_CHOOSER_WIDGET(XEN obj) {return(C_TO_XEN_BOOLEAN(WR
 static XEN gxg_GTK_IS_RECENT_FILTER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RECENT_FILTER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_RECENT_MANAGER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RECENT_MANAGER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_STATUS_ICON(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_STATUS_ICON((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
 static XEN gxg_GTK_IS_PRINT_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PRINT_CONTEXT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_PRINT_OPERATION(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PRINT_OPERATION((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_PRINT_OPERATION_PREVIEW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PRINT_OPERATION_PREVIEW((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_PRINT_SETTINGS(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PRINT_SETTINGS((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 static XEN gxg_GTK_IS_TOOLTIP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOOLTIP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
@@ -35175,7 +33977,7 @@ static XEN gxg_GTK_IS_TOOL_PALETTE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJ
 static XEN gxg_GTK_IS_TOOL_ITEM_GROUP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOOL_ITEM_GROUP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
 static XEN gxg_GTK_IS_COMBO_BOX_TEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_COMBO_BOX_TEXT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_GRID(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_GRID((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SCROLLABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SCROLLABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -35184,8 +33986,11 @@ static XEN gxg_GTK_IS_SWITCH(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(
 
 #if (!HAVE_GTK_3)
 static XEN gxg_GDK_IS_COLORMAP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_COLORMAP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+static XEN gxg_GDK_IS_DRAWABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DRAWABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_PIXMAP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_PIXMAP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_OBJECT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_OBJECT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_RC_STYLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_RC_STYLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_STYLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_STYLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
 
@@ -35843,7 +34648,6 @@ XEN_NARGIFY_2(gxg_gdk_window_set_transient_for_w, gxg_gdk_window_set_transient_f
 XEN_NARGIFY_2(gxg_gdk_window_set_background_w, gxg_gdk_window_set_background)
 XEN_NARGIFY_2(gxg_gdk_window_set_cursor_w, gxg_gdk_window_set_cursor)
 XEN_ARGIFY_2(gxg_gdk_window_get_user_data_w, gxg_gdk_window_get_user_data)
-XEN_ARGIFY_6(gxg_gdk_window_get_geometry_w, gxg_gdk_window_get_geometry)
 XEN_ARGIFY_3(gxg_gdk_window_get_position_w, gxg_gdk_window_get_position)
 XEN_ARGIFY_3(gxg_gdk_window_get_origin_w, gxg_gdk_window_get_origin)
 XEN_NARGIFY_0(gxg_gdk_get_default_root_window_w, gxg_gdk_get_default_root_window)
@@ -36141,7 +34945,6 @@ XEN_NARGIFY_1(gxg_gtk_icon_set_new_from_pixbuf_w, gxg_gtk_icon_set_new_from_pixb
 XEN_NARGIFY_1(gxg_gtk_icon_set_ref_w, gxg_gtk_icon_set_ref)
 XEN_NARGIFY_1(gxg_gtk_icon_set_unref_w, gxg_gtk_icon_set_unref)
 XEN_NARGIFY_1(gxg_gtk_icon_set_copy_w, gxg_gtk_icon_set_copy)
-XEN_NARGIFY_7(gxg_gtk_icon_set_render_icon_w, gxg_gtk_icon_set_render_icon)
 XEN_NARGIFY_2(gxg_gtk_icon_set_add_source_w, gxg_gtk_icon_set_add_source)
 XEN_ARGIFY_3(gxg_gtk_icon_set_get_sizes_w, gxg_gtk_icon_set_get_sizes)
 XEN_NARGIFY_0(gxg_gtk_icon_source_new_w, gxg_gtk_icon_source_new)
@@ -36383,20 +35186,6 @@ XEN_NARGIFY_3(gxg_gtk_range_set_increments_w, gxg_gtk_range_set_increments)
 XEN_NARGIFY_3(gxg_gtk_range_set_range_w, gxg_gtk_range_set_range)
 XEN_NARGIFY_2(gxg_gtk_range_set_value_w, gxg_gtk_range_set_value)
 XEN_NARGIFY_1(gxg_gtk_range_get_value_w, gxg_gtk_range_get_value)
-XEN_NARGIFY_1(gxg_gtk_rc_add_default_file_w, gxg_gtk_rc_add_default_file)
-XEN_NARGIFY_1(gxg_gtk_rc_set_default_files_w, gxg_gtk_rc_set_default_files)
-XEN_NARGIFY_0(gxg_gtk_rc_get_default_files_w, gxg_gtk_rc_get_default_files)
-XEN_NARGIFY_1(gxg_gtk_rc_get_style_w, gxg_gtk_rc_get_style)
-XEN_NARGIFY_1(gxg_gtk_rc_parse_w, gxg_gtk_rc_parse)
-XEN_NARGIFY_1(gxg_gtk_rc_parse_string_w, gxg_gtk_rc_parse_string)
-XEN_NARGIFY_0(gxg_gtk_rc_reparse_all_w, gxg_gtk_rc_reparse_all)
-XEN_NARGIFY_0(gxg_gtk_rc_style_new_w, gxg_gtk_rc_style_new)
-XEN_NARGIFY_1(gxg_gtk_rc_style_copy_w, gxg_gtk_rc_style_copy)
-XEN_NARGIFY_1(gxg_gtk_rc_find_module_in_path_w, gxg_gtk_rc_find_module_in_path)
-XEN_NARGIFY_0(gxg_gtk_rc_get_theme_dir_w, gxg_gtk_rc_get_theme_dir)
-XEN_NARGIFY_0(gxg_gtk_rc_get_module_dir_w, gxg_gtk_rc_get_module_dir)
-XEN_NARGIFY_0(gxg_gtk_rc_get_im_module_path_w, gxg_gtk_rc_get_im_module_path)
-XEN_NARGIFY_0(gxg_gtk_rc_get_im_module_file_w, gxg_gtk_rc_get_im_module_file)
 XEN_NARGIFY_2(gxg_gtk_scale_set_digits_w, gxg_gtk_scale_set_digits)
 XEN_NARGIFY_1(gxg_gtk_scale_get_digits_w, gxg_gtk_scale_get_digits)
 XEN_NARGIFY_2(gxg_gtk_scale_set_draw_value_w, gxg_gtk_scale_set_draw_value)
@@ -36478,15 +35267,6 @@ XEN_NARGIFY_2(gxg_gtk_stock_lookup_w, gxg_gtk_stock_lookup)
 XEN_NARGIFY_0(gxg_gtk_stock_list_ids_w, gxg_gtk_stock_list_ids)
 XEN_NARGIFY_1(gxg_gtk_stock_item_copy_w, gxg_gtk_stock_item_copy)
 XEN_NARGIFY_1(gxg_gtk_stock_item_free_w, gxg_gtk_stock_item_free)
-XEN_NARGIFY_0(gxg_gtk_style_new_w, gxg_gtk_style_new)
-XEN_NARGIFY_1(gxg_gtk_style_copy_w, gxg_gtk_style_copy)
-XEN_NARGIFY_2(gxg_gtk_style_attach_w, gxg_gtk_style_attach)
-XEN_NARGIFY_1(gxg_gtk_style_detach_w, gxg_gtk_style_detach)
-XEN_NARGIFY_3(gxg_gtk_style_set_background_w, gxg_gtk_style_set_background)
-XEN_NARGIFY_2(gxg_gtk_style_lookup_icon_set_w, gxg_gtk_style_lookup_icon_set)
-XEN_NARGIFY_7(gxg_gtk_style_render_icon_w, gxg_gtk_style_render_icon)
-XEN_NARGIFY_1(gxg_gtk_border_copy_w, gxg_gtk_border_copy)
-XEN_NARGIFY_1(gxg_gtk_border_free_w, gxg_gtk_border_free)
 XEN_NARGIFY_3(gxg_gtk_table_new_w, gxg_gtk_table_new)
 XEN_NARGIFY_3(gxg_gtk_table_resize_w, gxg_gtk_table_resize)
 XEN_VARGIFY(gxg_gtk_table_attach_w, gxg_gtk_table_attach)
@@ -36988,33 +35768,19 @@ XEN_ARGIFY_3(gxg_gtk_widget_get_pointer_w, gxg_gtk_widget_get_pointer)
 XEN_NARGIFY_2(gxg_gtk_widget_is_ancestor_w, gxg_gtk_widget_is_ancestor)
 XEN_ARGIFY_6(gxg_gtk_widget_translate_coordinates_w, gxg_gtk_widget_translate_coordinates)
 XEN_NARGIFY_1(gxg_gtk_widget_hide_on_delete_w, gxg_gtk_widget_hide_on_delete)
-XEN_NARGIFY_2(gxg_gtk_widget_set_style_w, gxg_gtk_widget_set_style)
-XEN_NARGIFY_1(gxg_gtk_widget_ensure_style_w, gxg_gtk_widget_ensure_style)
-XEN_NARGIFY_1(gxg_gtk_widget_get_style_w, gxg_gtk_widget_get_style)
-XEN_NARGIFY_2(gxg_gtk_widget_modify_style_w, gxg_gtk_widget_modify_style)
-XEN_NARGIFY_1(gxg_gtk_widget_get_modifier_style_w, gxg_gtk_widget_get_modifier_style)
-XEN_NARGIFY_3(gxg_gtk_widget_modify_fg_w, gxg_gtk_widget_modify_fg)
-XEN_NARGIFY_3(gxg_gtk_widget_modify_bg_w, gxg_gtk_widget_modify_bg)
-XEN_NARGIFY_3(gxg_gtk_widget_modify_text_w, gxg_gtk_widget_modify_text)
-XEN_NARGIFY_3(gxg_gtk_widget_modify_base_w, gxg_gtk_widget_modify_base)
-XEN_NARGIFY_2(gxg_gtk_widget_modify_font_w, gxg_gtk_widget_modify_font)
 XEN_NARGIFY_1(gxg_gtk_widget_create_pango_context_w, gxg_gtk_widget_create_pango_context)
 XEN_NARGIFY_1(gxg_gtk_widget_get_pango_context_w, gxg_gtk_widget_get_pango_context)
 XEN_NARGIFY_2(gxg_gtk_widget_create_pango_layout_w, gxg_gtk_widget_create_pango_layout)
 XEN_NARGIFY_4(gxg_gtk_widget_render_icon_w, gxg_gtk_widget_render_icon)
 XEN_NARGIFY_2(gxg_gtk_widget_set_composite_name_w, gxg_gtk_widget_set_composite_name)
 XEN_NARGIFY_1(gxg_gtk_widget_get_composite_name_w, gxg_gtk_widget_get_composite_name)
-XEN_NARGIFY_1(gxg_gtk_widget_reset_rc_styles_w, gxg_gtk_widget_reset_rc_styles)
 XEN_NARGIFY_0(gxg_gtk_widget_push_composite_child_w, gxg_gtk_widget_push_composite_child)
 XEN_NARGIFY_0(gxg_gtk_widget_pop_composite_child_w, gxg_gtk_widget_pop_composite_child)
-XEN_NARGIFY_0(gxg_gtk_widget_get_default_style_w, gxg_gtk_widget_get_default_style)
 XEN_NARGIFY_2(gxg_gtk_widget_set_direction_w, gxg_gtk_widget_set_direction)
 XEN_NARGIFY_1(gxg_gtk_widget_get_direction_w, gxg_gtk_widget_get_direction)
 XEN_NARGIFY_1(gxg_gtk_widget_set_default_direction_w, gxg_gtk_widget_set_default_direction)
 XEN_NARGIFY_0(gxg_gtk_widget_get_default_direction_w, gxg_gtk_widget_get_default_direction)
 XEN_NARGIFY_1(gxg_gtk_widget_reset_shapes_w, gxg_gtk_widget_reset_shapes)
-XEN_ARGIFY_4(gxg_gtk_widget_path_w, gxg_gtk_widget_path)
-XEN_ARGIFY_4(gxg_gtk_widget_class_path_w, gxg_gtk_widget_class_path)
 XEN_NARGIFY_2(gxg_gtk_widget_can_activate_accel_w, gxg_gtk_widget_can_activate_accel)
 XEN_NARGIFY_1(gxg_gtk_window_is_active_w, gxg_gtk_window_is_active)
 XEN_NARGIFY_1(gxg_gtk_window_has_toplevel_focus_w, gxg_gtk_window_has_toplevel_focus)
@@ -37971,7 +36737,6 @@ XEN_NARGIFY_3(gxg_gtk_targets_include_rich_text_w, gxg_gtk_targets_include_rich_
 XEN_NARGIFY_3(gxg_gtk_targets_include_image_w, gxg_gtk_targets_include_image)
 XEN_NARGIFY_2(gxg_gtk_targets_include_uri_w, gxg_gtk_targets_include_uri)
 XEN_NARGIFY_1(gxg_gtk_size_group_get_widgets_w, gxg_gtk_size_group_get_widgets)
-XEN_NARGIFY_3(gxg_gtk_style_lookup_color_w, gxg_gtk_style_lookup_color)
 XEN_NARGIFY_1(gxg_gtk_text_buffer_get_has_selection_w, gxg_gtk_text_buffer_get_has_selection)
 XEN_NARGIFY_1(gxg_gtk_text_buffer_get_copy_target_list_w, gxg_gtk_text_buffer_get_copy_target_list)
 XEN_NARGIFY_1(gxg_gtk_text_buffer_get_paste_target_list_w, gxg_gtk_text_buffer_get_paste_target_list)
@@ -38123,8 +36888,6 @@ XEN_ARGIFY_2(gxg_gtk_text_buffer_get_serialize_formats_w, gxg_gtk_text_buffer_ge
 XEN_ARGIFY_2(gxg_gtk_text_buffer_get_deserialize_formats_w, gxg_gtk_text_buffer_get_deserialize_formats)
 XEN_ARGIFY_6(gxg_gtk_text_buffer_serialize_w, gxg_gtk_text_buffer_serialize)
 XEN_ARGIFY_7(gxg_gtk_text_buffer_deserialize_w, gxg_gtk_text_buffer_deserialize)
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
-XEN_NARGIFY_1(gxg_gdk_cairo_create_w, gxg_gdk_cairo_create)
 XEN_NARGIFY_2(gxg_gtk_recent_manager_add_item_w, gxg_gtk_recent_manager_add_item)
 XEN_NARGIFY_3(gxg_gtk_recent_manager_add_full_w, gxg_gtk_recent_manager_add_full)
 XEN_NARGIFY_3(gxg_gtk_tree_model_filter_convert_child_iter_to_iter_w, gxg_gtk_tree_model_filter_convert_child_iter_to_iter)
@@ -38249,8 +37012,6 @@ XEN_NARGIFY_5(gxg_pango_cairo_error_underline_path_w, gxg_pango_cairo_error_unde
 XEN_NARGIFY_2(gxg_gdk_cairo_set_source_color_w, gxg_gdk_cairo_set_source_color)
 XEN_NARGIFY_4(gxg_gdk_cairo_set_source_pixbuf_w, gxg_gdk_cairo_set_source_pixbuf)
 XEN_NARGIFY_2(gxg_gdk_cairo_rectangle_w, gxg_gdk_cairo_rectangle)
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 XEN_NARGIFY_1(gxg_gtk_about_dialog_get_program_name_w, gxg_gtk_about_dialog_get_program_name)
 XEN_NARGIFY_2(gxg_gtk_about_dialog_set_program_name_w, gxg_gtk_about_dialog_set_program_name)
@@ -38309,7 +37070,6 @@ XEN_ARGIFY_5(gxg_gtk_tree_view_convert_widget_to_bin_window_coords_w, gxg_gtk_tr
 XEN_ARGIFY_5(gxg_gtk_tree_view_convert_bin_window_to_widget_coords_w, gxg_gtk_tree_view_convert_bin_window_to_widget_coords)
 XEN_ARGIFY_5(gxg_gtk_tree_view_convert_tree_to_bin_window_coords_w, gxg_gtk_tree_view_convert_tree_to_bin_window_coords)
 XEN_ARGIFY_5(gxg_gtk_tree_view_convert_bin_window_to_tree_coords_w, gxg_gtk_tree_view_convert_bin_window_to_tree_coords)
-XEN_NARGIFY_3(gxg_gtk_widget_modify_cursor_w, gxg_gtk_widget_modify_cursor)
 XEN_NARGIFY_2(gxg_gtk_widget_set_tooltip_text_w, gxg_gtk_widget_set_tooltip_text)
 XEN_NARGIFY_1(gxg_gtk_widget_get_tooltip_text_w, gxg_gtk_widget_get_tooltip_text)
 XEN_NARGIFY_2(gxg_gtk_widget_set_tooltip_markup_w, gxg_gtk_widget_set_tooltip_markup)
@@ -38625,7 +37385,6 @@ XEN_NARGIFY_1(gxg_gtk_range_get_min_slider_size_w, gxg_gtk_range_get_min_slider_
 XEN_NARGIFY_2(gxg_gtk_range_get_range_rect_w, gxg_gtk_range_get_range_rect)
 XEN_ARGIFY_3(gxg_gtk_range_get_slider_range_w, gxg_gtk_range_get_slider_range)
 XEN_NARGIFY_2(gxg_gtk_status_icon_set_name_w, gxg_gtk_status_icon_set_name)
-XEN_NARGIFY_1(gxg_gtk_widget_has_rc_style_w, gxg_gtk_widget_has_rc_style)
 XEN_NARGIFY_1(gxg_gtk_paned_get_handle_window_w, gxg_gtk_paned_get_handle_window)
 XEN_NARGIFY_1(gxg_gtk_widget_style_attach_w, gxg_gtk_widget_style_attach)
 XEN_NARGIFY_2(gxg_gtk_widget_set_realized_w, gxg_gtk_widget_set_realized)
@@ -38634,7 +37393,9 @@ XEN_NARGIFY_2(gxg_gtk_widget_set_mapped_w, gxg_gtk_widget_set_mapped)
 XEN_NARGIFY_1(gxg_gtk_widget_get_mapped_w, gxg_gtk_widget_get_mapped)
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
+XEN_NARGIFY_1(gxg_gdk_cairo_create_w, gxg_gdk_cairo_create)
+XEN_ARGIFY_5(gxg_gdk_window_get_geometry_w, gxg_gdk_window_get_geometry)
 XEN_NARGIFY_2(gxg_gdk_keymap_add_virtual_modifiers_w, gxg_gdk_keymap_add_virtual_modifiers)
 XEN_ARGIFY_5(gxg_gdk_window_coords_to_parent_w, gxg_gdk_window_coords_to_parent)
 XEN_ARGIFY_5(gxg_gdk_window_coords_from_parent_w, gxg_gdk_window_coords_from_parent)
@@ -38697,8 +37458,6 @@ XEN_NARGIFY_1(gxg_gtk_font_selection_dialog_get_font_selection_w, gxg_gtk_font_s
 XEN_NARGIFY_1(gxg_gtk_message_dialog_get_message_area_w, gxg_gtk_message_dialog_get_message_area)
 XEN_ARGIFY_3(gxg_gtk_table_get_size_w, gxg_gtk_table_get_size)
 XEN_NARGIFY_1(gxg_gtk_selection_data_get_length_w, gxg_gtk_selection_data_get_length)
-XEN_NARGIFY_1(gxg_gdk_drawable_get_clip_region_w, gxg_gdk_drawable_get_clip_region)
-XEN_NARGIFY_1(gxg_gdk_drawable_get_visible_region_w, gxg_gdk_drawable_get_visible_region)
 XEN_NARGIFY_5(gxg_gdk_pango_layout_line_get_clip_region_w, gxg_gdk_pango_layout_line_get_clip_region)
 XEN_NARGIFY_5(gxg_gdk_pango_layout_get_clip_region_w, gxg_gdk_pango_layout_get_clip_region)
 XEN_NARGIFY_4(gxg_gdk_window_shape_combine_region_w, gxg_gdk_window_shape_combine_region)
@@ -38727,26 +37486,6 @@ XEN_NARGIFY_6(gxg_gtk_adjustment_new_w, gxg_gtk_adjustment_new)
 XEN_NARGIFY_4(gxg_gtk_binding_set_activate_w, gxg_gtk_binding_set_activate)
 XEN_NARGIFY_3(gxg_gtk_bindings_activate_w, gxg_gtk_bindings_activate)
 XEN_NARGIFY_2(gxg_gtk_icon_view_create_drag_icon_w, gxg_gtk_icon_view_create_drag_icon)
-XEN_NARGIFY_8(gxg_gtk_style_apply_default_background_w, gxg_gtk_style_apply_default_background)
-XEN_NARGIFY_8(gxg_gtk_paint_hline_w, gxg_gtk_paint_hline)
-XEN_NARGIFY_8(gxg_gtk_paint_vline_w, gxg_gtk_paint_vline)
-XEN_VARGIFY(gxg_gtk_paint_shadow_w, gxg_gtk_paint_shadow)
-XEN_VARGIFY(gxg_gtk_paint_arrow_w, gxg_gtk_paint_arrow)
-XEN_VARGIFY(gxg_gtk_paint_diamond_w, gxg_gtk_paint_diamond)
-XEN_VARGIFY(gxg_gtk_paint_box_w, gxg_gtk_paint_box)
-XEN_VARGIFY(gxg_gtk_paint_flat_box_w, gxg_gtk_paint_flat_box)
-XEN_VARGIFY(gxg_gtk_paint_check_w, gxg_gtk_paint_check)
-XEN_VARGIFY(gxg_gtk_paint_option_w, gxg_gtk_paint_option)
-XEN_VARGIFY(gxg_gtk_paint_tab_w, gxg_gtk_paint_tab)
-XEN_VARGIFY(gxg_gtk_paint_shadow_gap_w, gxg_gtk_paint_shadow_gap)
-XEN_VARGIFY(gxg_gtk_paint_box_gap_w, gxg_gtk_paint_box_gap)
-XEN_VARGIFY(gxg_gtk_paint_extension_w, gxg_gtk_paint_extension)
-XEN_NARGIFY_9(gxg_gtk_paint_focus_w, gxg_gtk_paint_focus)
-XEN_VARGIFY(gxg_gtk_paint_slider_w, gxg_gtk_paint_slider)
-XEN_VARGIFY(gxg_gtk_paint_handle_w, gxg_gtk_paint_handle)
-XEN_NARGIFY_8(gxg_gtk_paint_expander_w, gxg_gtk_paint_expander)
-XEN_NARGIFY_9(gxg_gtk_paint_layout_w, gxg_gtk_paint_layout)
-XEN_VARGIFY(gxg_gtk_paint_resize_grip_w, gxg_gtk_paint_resize_grip)
 XEN_NARGIFY_2(gxg_gtk_tree_view_create_row_drag_icon_w, gxg_gtk_tree_view_create_row_drag_icon)
 XEN_NARGIFY_2(gxg_gdk_cairo_get_clip_rectangle_w, gxg_gdk_cairo_get_clip_rectangle)
 XEN_NARGIFY_1(gxg_gdk_cairo_region_create_from_surface_w, gxg_gdk_cairo_region_create_from_surface)
@@ -38859,6 +37598,7 @@ XEN_NARGIFY_0(gxg_gdk_colormap_get_system_w, gxg_gdk_colormap_get_system)
 XEN_NARGIFY_6(gxg_gdk_colormap_alloc_colors_w, gxg_gdk_colormap_alloc_colors)
 XEN_NARGIFY_4(gxg_gdk_colormap_alloc_color_w, gxg_gdk_colormap_alloc_color)
 XEN_NARGIFY_1(gxg_gdk_colormap_get_visual_w, gxg_gdk_colormap_get_visual)
+XEN_NARGIFY_1(gxg_gdk_cairo_create_w, gxg_gdk_cairo_create)
 XEN_ARGIFY_3(gxg_gdk_drawable_get_size_w, gxg_gdk_drawable_get_size)
 XEN_NARGIFY_2(gxg_gdk_drawable_set_colormap_w, gxg_gdk_drawable_set_colormap)
 XEN_NARGIFY_1(gxg_gdk_drawable_get_colormap_w, gxg_gdk_drawable_get_colormap)
@@ -38876,6 +37616,7 @@ XEN_NARGIFY_4(gxg_gdk_window_shape_combine_mask_w, gxg_gdk_window_shape_combine_
 XEN_NARGIFY_4(gxg_gdk_window_set_icon_w, gxg_gdk_window_set_icon)
 XEN_ARGIFY_4(gxg_gdk_window_get_internal_paint_info_w, gxg_gdk_window_get_internal_paint_info)
 XEN_NARGIFY_3(gxg_gdk_window_set_back_pixmap_w, gxg_gdk_window_set_back_pixmap)
+XEN_ARGIFY_6(gxg_gdk_window_get_geometry_w, gxg_gdk_window_get_geometry)
 XEN_NARGIFY_6(gxg_gtk_adjustment_new_w, gxg_gtk_adjustment_new)
 XEN_NARGIFY_3(gxg_gtk_bindings_activate_w, gxg_gtk_bindings_activate)
 XEN_NARGIFY_4(gxg_gtk_binding_set_activate_w, gxg_gtk_binding_set_activate)
@@ -38883,43 +37624,64 @@ XEN_ARGIFY_7(gxg_gtk_cell_renderer_get_size_w, gxg_gtk_cell_renderer_get_size)
 XEN_NARGIFY_7(gxg_gtk_cell_renderer_render_w, gxg_gtk_cell_renderer_render)
 XEN_NARGIFY_4(gxg_gtk_drag_source_set_icon_w, gxg_gtk_drag_source_set_icon)
 XEN_NARGIFY_6(gxg_gtk_drag_set_icon_pixmap_w, gxg_gtk_drag_set_icon_pixmap)
+XEN_NARGIFY_7(gxg_gtk_icon_set_render_icon_w, gxg_gtk_icon_set_render_icon)
+XEN_NARGIFY_1(gxg_gtk_rc_add_default_file_w, gxg_gtk_rc_add_default_file)
+XEN_NARGIFY_1(gxg_gtk_rc_set_default_files_w, gxg_gtk_rc_set_default_files)
+XEN_NARGIFY_0(gxg_gtk_rc_get_default_files_w, gxg_gtk_rc_get_default_files)
+XEN_NARGIFY_1(gxg_gtk_rc_get_style_w, gxg_gtk_rc_get_style)
+XEN_NARGIFY_1(gxg_gtk_rc_parse_w, gxg_gtk_rc_parse)
+XEN_NARGIFY_1(gxg_gtk_rc_parse_string_w, gxg_gtk_rc_parse_string)
+XEN_NARGIFY_0(gxg_gtk_rc_reparse_all_w, gxg_gtk_rc_reparse_all)
+XEN_NARGIFY_0(gxg_gtk_rc_style_new_w, gxg_gtk_rc_style_new)
+XEN_NARGIFY_1(gxg_gtk_rc_style_copy_w, gxg_gtk_rc_style_copy)
+XEN_NARGIFY_1(gxg_gtk_rc_find_module_in_path_w, gxg_gtk_rc_find_module_in_path)
+XEN_NARGIFY_0(gxg_gtk_rc_get_theme_dir_w, gxg_gtk_rc_get_theme_dir)
+XEN_NARGIFY_0(gxg_gtk_rc_get_module_dir_w, gxg_gtk_rc_get_module_dir)
+XEN_NARGIFY_0(gxg_gtk_rc_get_im_module_path_w, gxg_gtk_rc_get_im_module_path)
+XEN_NARGIFY_0(gxg_gtk_rc_get_im_module_file_w, gxg_gtk_rc_get_im_module_file)
+XEN_NARGIFY_0(gxg_gtk_style_new_w, gxg_gtk_style_new)
+XEN_NARGIFY_1(gxg_gtk_style_copy_w, gxg_gtk_style_copy)
+XEN_NARGIFY_2(gxg_gtk_style_attach_w, gxg_gtk_style_attach)
+XEN_NARGIFY_1(gxg_gtk_style_detach_w, gxg_gtk_style_detach)
+XEN_NARGIFY_3(gxg_gtk_style_set_background_w, gxg_gtk_style_set_background)
 XEN_NARGIFY_9(gxg_gtk_style_apply_default_background_w, gxg_gtk_style_apply_default_background)
-XEN_NARGIFY_9(gxg_gtk_paint_hline_w, gxg_gtk_paint_hline)
-XEN_NARGIFY_9(gxg_gtk_paint_vline_w, gxg_gtk_paint_vline)
-XEN_VARGIFY(gxg_gtk_paint_shadow_w, gxg_gtk_paint_shadow)
-XEN_VARGIFY(gxg_gtk_paint_arrow_w, gxg_gtk_paint_arrow)
-XEN_VARGIFY(gxg_gtk_paint_diamond_w, gxg_gtk_paint_diamond)
-XEN_VARGIFY(gxg_gtk_paint_box_w, gxg_gtk_paint_box)
-XEN_VARGIFY(gxg_gtk_paint_flat_box_w, gxg_gtk_paint_flat_box)
-XEN_VARGIFY(gxg_gtk_paint_check_w, gxg_gtk_paint_check)
-XEN_VARGIFY(gxg_gtk_paint_option_w, gxg_gtk_paint_option)
-XEN_VARGIFY(gxg_gtk_paint_tab_w, gxg_gtk_paint_tab)
-XEN_VARGIFY(gxg_gtk_paint_shadow_gap_w, gxg_gtk_paint_shadow_gap)
-XEN_VARGIFY(gxg_gtk_paint_box_gap_w, gxg_gtk_paint_box_gap)
-XEN_VARGIFY(gxg_gtk_paint_extension_w, gxg_gtk_paint_extension)
-XEN_VARGIFY(gxg_gtk_paint_focus_w, gxg_gtk_paint_focus)
-XEN_VARGIFY(gxg_gtk_paint_slider_w, gxg_gtk_paint_slider)
-XEN_VARGIFY(gxg_gtk_paint_handle_w, gxg_gtk_paint_handle)
-XEN_VARGIFY(gxg_gtk_paint_layout_w, gxg_gtk_paint_layout)
-XEN_VARGIFY(gxg_gtk_paint_resize_grip_w, gxg_gtk_paint_resize_grip)
+XEN_NARGIFY_2(gxg_gtk_style_lookup_icon_set_w, gxg_gtk_style_lookup_icon_set)
+XEN_NARGIFY_7(gxg_gtk_style_render_icon_w, gxg_gtk_style_render_icon)
+XEN_NARGIFY_1(gxg_gtk_border_copy_w, gxg_gtk_border_copy)
+XEN_NARGIFY_1(gxg_gtk_border_free_w, gxg_gtk_border_free)
 XEN_NARGIFY_2(gxg_gtk_tree_view_create_row_drag_icon_w, gxg_gtk_tree_view_create_row_drag_icon)
 XEN_NARGIFY_1(gxg_gtk_widget_hide_all_w, gxg_gtk_widget_hide_all)
 XEN_NARGIFY_2(gxg_gtk_widget_size_request_w, gxg_gtk_widget_size_request)
 XEN_NARGIFY_2(gxg_gtk_widget_get_child_requisition_w, gxg_gtk_widget_get_child_requisition)
 XEN_NARGIFY_1(gxg_gtk_widget_get_colormap_w, gxg_gtk_widget_get_colormap)
 XEN_NARGIFY_2(gxg_gtk_widget_set_colormap_w, gxg_gtk_widget_set_colormap)
+XEN_NARGIFY_2(gxg_gtk_widget_set_style_w, gxg_gtk_widget_set_style)
+XEN_NARGIFY_1(gxg_gtk_widget_ensure_style_w, gxg_gtk_widget_ensure_style)
+XEN_NARGIFY_1(gxg_gtk_widget_get_style_w, gxg_gtk_widget_get_style)
+XEN_NARGIFY_2(gxg_gtk_widget_modify_style_w, gxg_gtk_widget_modify_style)
+XEN_NARGIFY_1(gxg_gtk_widget_get_modifier_style_w, gxg_gtk_widget_get_modifier_style)
+XEN_NARGIFY_3(gxg_gtk_widget_modify_fg_w, gxg_gtk_widget_modify_fg)
+XEN_NARGIFY_3(gxg_gtk_widget_modify_bg_w, gxg_gtk_widget_modify_bg)
+XEN_NARGIFY_3(gxg_gtk_widget_modify_text_w, gxg_gtk_widget_modify_text)
+XEN_NARGIFY_3(gxg_gtk_widget_modify_base_w, gxg_gtk_widget_modify_base)
+XEN_NARGIFY_2(gxg_gtk_widget_modify_font_w, gxg_gtk_widget_modify_font)
+XEN_NARGIFY_1(gxg_gtk_widget_reset_rc_styles_w, gxg_gtk_widget_reset_rc_styles)
 XEN_NARGIFY_1(gxg_gtk_widget_push_colormap_w, gxg_gtk_widget_push_colormap)
 XEN_NARGIFY_0(gxg_gtk_widget_pop_colormap_w, gxg_gtk_widget_pop_colormap)
 XEN_NARGIFY_1(gxg_gtk_widget_set_default_colormap_w, gxg_gtk_widget_set_default_colormap)
+XEN_NARGIFY_0(gxg_gtk_widget_get_default_style_w, gxg_gtk_widget_get_default_style)
 XEN_NARGIFY_0(gxg_gtk_widget_get_default_colormap_w, gxg_gtk_widget_get_default_colormap)
 XEN_NARGIFY_0(gxg_gtk_widget_get_default_visual_w, gxg_gtk_widget_get_default_visual)
 XEN_NARGIFY_4(gxg_gtk_widget_shape_combine_mask_w, gxg_gtk_widget_shape_combine_mask)
+XEN_ARGIFY_4(gxg_gtk_widget_path_w, gxg_gtk_widget_path)
+XEN_ARGIFY_4(gxg_gtk_widget_class_path_w, gxg_gtk_widget_class_path)
 XEN_NARGIFY_1(gxg_gtk_requisition_copy_w, gxg_gtk_requisition_copy)
 XEN_NARGIFY_1(gxg_gtk_requisition_free_w, gxg_gtk_requisition_free)
 XEN_NARGIFY_1(gxg_gdk_screen_get_default_colormap_w, gxg_gdk_screen_get_default_colormap)
 XEN_NARGIFY_2(gxg_gdk_screen_set_default_colormap_w, gxg_gdk_screen_set_default_colormap)
 XEN_NARGIFY_1(gxg_gdk_screen_get_system_colormap_w, gxg_gdk_screen_get_system_colormap)
 XEN_NARGIFY_3(gxg_gtk_cell_view_get_size_of_row_w, gxg_gtk_cell_view_get_size_of_row)
+XEN_NARGIFY_3(gxg_gtk_style_lookup_color_w, gxg_gtk_style_lookup_color)
 #endif
 
 XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
@@ -39202,7 +37964,6 @@ XEN_NARGIFY_3(xg_object_get_w, xg_object_get);
 XEN_ARGIFY_2(gxg_gtk_init_w, gxg_gtk_init)
 XEN_ARGIFY_2(gxg_gtk_init_check_w, gxg_gtk_init_check)
 XEN_NARGIFY_1(gxg_GDK_DRAG_CONTEXT_w, gxg_GDK_DRAG_CONTEXT)
-XEN_NARGIFY_1(gxg_GDK_DRAWABLE_w, gxg_GDK_DRAWABLE)
 XEN_NARGIFY_1(gxg_GDK_DEVICE_w, gxg_GDK_DEVICE)
 XEN_NARGIFY_1(gxg_GDK_KEYMAP_w, gxg_GDK_KEYMAP)
 XEN_NARGIFY_1(gxg_GDK_VISUAL_w, gxg_GDK_VISUAL)
@@ -39280,7 +38041,6 @@ XEN_NARGIFY_1(gxg_GTK_SIZE_GROUP_w, gxg_GTK_SIZE_GROUP)
 XEN_NARGIFY_1(gxg_GTK_SOCKET_w, gxg_GTK_SOCKET)
 XEN_NARGIFY_1(gxg_GTK_SPIN_BUTTON_w, gxg_GTK_SPIN_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_STATUSBAR_w, gxg_GTK_STATUSBAR)
-XEN_NARGIFY_1(gxg_GTK_STYLE_w, gxg_GTK_STYLE)
 XEN_NARGIFY_1(gxg_GTK_TABLE_w, gxg_GTK_TABLE)
 XEN_NARGIFY_1(gxg_GTK_TEAROFF_MENU_ITEM_w, gxg_GTK_TEAROFF_MENU_ITEM)
 XEN_NARGIFY_1(gxg_GTK_TEXT_BUFFER_w, gxg_GTK_TEXT_BUFFER)
@@ -39377,13 +38137,10 @@ XEN_NARGIFY_1(gxg_GTK_RECENT_CHOOSER_WIDGET_w, gxg_GTK_RECENT_CHOOSER_WIDGET)
 XEN_NARGIFY_1(gxg_GTK_RECENT_FILTER_w, gxg_GTK_RECENT_FILTER)
 XEN_NARGIFY_1(gxg_GTK_RECENT_MANAGER_w, gxg_GTK_RECENT_MANAGER)
 XEN_NARGIFY_1(gxg_GTK_STATUS_ICON_w, gxg_GTK_STATUS_ICON)
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
 XEN_NARGIFY_1(gxg_GTK_PRINT_CONTEXT_w, gxg_GTK_PRINT_CONTEXT)
 XEN_NARGIFY_1(gxg_GTK_PRINT_OPERATION_w, gxg_GTK_PRINT_OPERATION)
 XEN_NARGIFY_1(gxg_GTK_PRINT_OPERATION_PREVIEW_w, gxg_GTK_PRINT_OPERATION_PREVIEW)
 XEN_NARGIFY_1(gxg_GTK_PRINT_SETTINGS_w, gxg_GTK_PRINT_SETTINGS)
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 XEN_NARGIFY_1(gxg_GTK_TOOLTIP_w, gxg_GTK_TOOLTIP)
 #endif
@@ -39403,7 +38160,7 @@ XEN_NARGIFY_1(gxg_GTK_TOOL_PALETTE_w, gxg_GTK_TOOL_PALETTE)
 XEN_NARGIFY_1(gxg_GTK_TOOL_ITEM_GROUP_w, gxg_GTK_TOOL_ITEM_GROUP)
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
 XEN_NARGIFY_1(gxg_GTK_COMBO_BOX_TEXT_w, gxg_GTK_COMBO_BOX_TEXT)
 XEN_NARGIFY_1(gxg_GTK_GRID_w, gxg_GTK_GRID)
 XEN_NARGIFY_1(gxg_GTK_SCROLLABLE_w, gxg_GTK_SCROLLABLE)
@@ -39412,12 +38169,13 @@ XEN_NARGIFY_1(gxg_GTK_SWITCH_w, gxg_GTK_SWITCH)
 
 #if (!HAVE_GTK_3)
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
+XEN_NARGIFY_1(gxg_GDK_DRAWABLE_w, gxg_GDK_DRAWABLE)
 XEN_NARGIFY_1(gxg_GDK_PIXMAP_w, gxg_GDK_PIXMAP)
 XEN_NARGIFY_1(gxg_GTK_OBJECT_w, gxg_GTK_OBJECT)
+XEN_NARGIFY_1(gxg_GTK_STYLE_w, gxg_GTK_STYLE)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_IS_DRAG_CONTEXT_w, gxg_GDK_IS_DRAG_CONTEXT)
-XEN_NARGIFY_1(gxg_GDK_IS_DRAWABLE_w, gxg_GDK_IS_DRAWABLE)
 XEN_NARGIFY_1(gxg_GDK_IS_DEVICE_w, gxg_GDK_IS_DEVICE)
 XEN_NARGIFY_1(gxg_GDK_IS_KEYMAP_w, gxg_GDK_IS_KEYMAP)
 XEN_NARGIFY_1(gxg_GDK_IS_VISUAL_w, gxg_GDK_IS_VISUAL)
@@ -39486,7 +38244,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_PROGRESS_BAR_w, gxg_GTK_IS_PROGRESS_BAR)
 XEN_NARGIFY_1(gxg_GTK_IS_RADIO_BUTTON_w, gxg_GTK_IS_RADIO_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_IS_RADIO_MENU_ITEM_w, gxg_GTK_IS_RADIO_MENU_ITEM)
 XEN_NARGIFY_1(gxg_GTK_IS_RANGE_w, gxg_GTK_IS_RANGE)
-XEN_NARGIFY_1(gxg_GTK_IS_RC_STYLE_w, gxg_GTK_IS_RC_STYLE)
 XEN_NARGIFY_1(gxg_GTK_IS_SCALE_w, gxg_GTK_IS_SCALE)
 XEN_NARGIFY_1(gxg_GTK_IS_SCROLLBAR_w, gxg_GTK_IS_SCROLLBAR)
 XEN_NARGIFY_1(gxg_GTK_IS_SCROLLED_WINDOW_w, gxg_GTK_IS_SCROLLED_WINDOW)
@@ -39496,7 +38253,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_SIZE_GROUP_w, gxg_GTK_IS_SIZE_GROUP)
 XEN_NARGIFY_1(gxg_GTK_IS_SOCKET_w, gxg_GTK_IS_SOCKET)
 XEN_NARGIFY_1(gxg_GTK_IS_SPIN_BUTTON_w, gxg_GTK_IS_SPIN_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_IS_STATUSBAR_w, gxg_GTK_IS_STATUSBAR)
-XEN_NARGIFY_1(gxg_GTK_IS_STYLE_w, gxg_GTK_IS_STYLE)
 XEN_NARGIFY_1(gxg_GTK_IS_TABLE_w, gxg_GTK_IS_TABLE)
 XEN_NARGIFY_1(gxg_GTK_IS_TEAROFF_MENU_ITEM_w, gxg_GTK_IS_TEAROFF_MENU_ITEM)
 XEN_NARGIFY_1(gxg_GTK_IS_TEXT_BUFFER_w, gxg_GTK_IS_TEXT_BUFFER)
@@ -39575,13 +38331,10 @@ XEN_NARGIFY_1(gxg_GTK_IS_RECENT_CHOOSER_WIDGET_w, gxg_GTK_IS_RECENT_CHOOSER_WIDG
 XEN_NARGIFY_1(gxg_GTK_IS_RECENT_FILTER_w, gxg_GTK_IS_RECENT_FILTER)
 XEN_NARGIFY_1(gxg_GTK_IS_RECENT_MANAGER_w, gxg_GTK_IS_RECENT_MANAGER)
 XEN_NARGIFY_1(gxg_GTK_IS_STATUS_ICON_w, gxg_GTK_IS_STATUS_ICON)
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
 XEN_NARGIFY_1(gxg_GTK_IS_PRINT_CONTEXT_w, gxg_GTK_IS_PRINT_CONTEXT)
 XEN_NARGIFY_1(gxg_GTK_IS_PRINT_OPERATION_w, gxg_GTK_IS_PRINT_OPERATION)
 XEN_NARGIFY_1(gxg_GTK_IS_PRINT_OPERATION_PREVIEW_w, gxg_GTK_IS_PRINT_OPERATION_PREVIEW)
 XEN_NARGIFY_1(gxg_GTK_IS_PRINT_SETTINGS_w, gxg_GTK_IS_PRINT_SETTINGS)
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 XEN_NARGIFY_1(gxg_GTK_IS_TOOLTIP_w, gxg_GTK_IS_TOOLTIP)
 #endif
@@ -39601,7 +38354,7 @@ XEN_NARGIFY_1(gxg_GTK_IS_TOOL_PALETTE_w, gxg_GTK_IS_TOOL_PALETTE)
 XEN_NARGIFY_1(gxg_GTK_IS_TOOL_ITEM_GROUP_w, gxg_GTK_IS_TOOL_ITEM_GROUP)
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
 XEN_NARGIFY_1(gxg_GTK_IS_COMBO_BOX_TEXT_w, gxg_GTK_IS_COMBO_BOX_TEXT)
 XEN_NARGIFY_1(gxg_GTK_IS_GRID_w, gxg_GTK_IS_GRID)
 XEN_NARGIFY_1(gxg_GTK_IS_SCROLLABLE_w, gxg_GTK_IS_SCROLLABLE)
@@ -39610,8 +38363,11 @@ XEN_NARGIFY_1(gxg_GTK_IS_SWITCH_w, gxg_GTK_IS_SWITCH)
 
 #if (!HAVE_GTK_3)
 XEN_NARGIFY_1(gxg_GDK_IS_COLORMAP_w, gxg_GDK_IS_COLORMAP)
+XEN_NARGIFY_1(gxg_GDK_IS_DRAWABLE_w, gxg_GDK_IS_DRAWABLE)
 XEN_NARGIFY_1(gxg_GDK_IS_PIXMAP_w, gxg_GDK_IS_PIXMAP)
 XEN_NARGIFY_1(gxg_GTK_IS_OBJECT_w, gxg_GTK_IS_OBJECT)
+XEN_NARGIFY_1(gxg_GTK_IS_RC_STYLE_w, gxg_GTK_IS_RC_STYLE)
+XEN_NARGIFY_1(gxg_GTK_IS_STYLE_w, gxg_GTK_IS_STYLE)
 #endif
 
 XEN_NARGIFY_1(gxg_blue_w, gxg_blue)
@@ -39835,7 +38591,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_window_set_background_w gxg_gdk_window_set_background
 #define gxg_gdk_window_set_cursor_w gxg_gdk_window_set_cursor
 #define gxg_gdk_window_get_user_data_w gxg_gdk_window_get_user_data
-#define gxg_gdk_window_get_geometry_w gxg_gdk_window_get_geometry
 #define gxg_gdk_window_get_position_w gxg_gdk_window_get_position
 #define gxg_gdk_window_get_origin_w gxg_gdk_window_get_origin
 #define gxg_gdk_get_default_root_window_w gxg_gdk_get_default_root_window
@@ -40133,7 +38888,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_icon_set_ref_w gxg_gtk_icon_set_ref
 #define gxg_gtk_icon_set_unref_w gxg_gtk_icon_set_unref
 #define gxg_gtk_icon_set_copy_w gxg_gtk_icon_set_copy
-#define gxg_gtk_icon_set_render_icon_w gxg_gtk_icon_set_render_icon
 #define gxg_gtk_icon_set_add_source_w gxg_gtk_icon_set_add_source
 #define gxg_gtk_icon_set_get_sizes_w gxg_gtk_icon_set_get_sizes
 #define gxg_gtk_icon_source_new_w gxg_gtk_icon_source_new
@@ -40375,20 +39129,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_range_set_range_w gxg_gtk_range_set_range
 #define gxg_gtk_range_set_value_w gxg_gtk_range_set_value
 #define gxg_gtk_range_get_value_w gxg_gtk_range_get_value
-#define gxg_gtk_rc_add_default_file_w gxg_gtk_rc_add_default_file
-#define gxg_gtk_rc_set_default_files_w gxg_gtk_rc_set_default_files
-#define gxg_gtk_rc_get_default_files_w gxg_gtk_rc_get_default_files
-#define gxg_gtk_rc_get_style_w gxg_gtk_rc_get_style
-#define gxg_gtk_rc_parse_w gxg_gtk_rc_parse
-#define gxg_gtk_rc_parse_string_w gxg_gtk_rc_parse_string
-#define gxg_gtk_rc_reparse_all_w gxg_gtk_rc_reparse_all
-#define gxg_gtk_rc_style_new_w gxg_gtk_rc_style_new
-#define gxg_gtk_rc_style_copy_w gxg_gtk_rc_style_copy
-#define gxg_gtk_rc_find_module_in_path_w gxg_gtk_rc_find_module_in_path
-#define gxg_gtk_rc_get_theme_dir_w gxg_gtk_rc_get_theme_dir
-#define gxg_gtk_rc_get_module_dir_w gxg_gtk_rc_get_module_dir
-#define gxg_gtk_rc_get_im_module_path_w gxg_gtk_rc_get_im_module_path
-#define gxg_gtk_rc_get_im_module_file_w gxg_gtk_rc_get_im_module_file
 #define gxg_gtk_scale_set_digits_w gxg_gtk_scale_set_digits
 #define gxg_gtk_scale_get_digits_w gxg_gtk_scale_get_digits
 #define gxg_gtk_scale_set_draw_value_w gxg_gtk_scale_set_draw_value
@@ -40470,15 +39210,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_stock_list_ids_w gxg_gtk_stock_list_ids
 #define gxg_gtk_stock_item_copy_w gxg_gtk_stock_item_copy
 #define gxg_gtk_stock_item_free_w gxg_gtk_stock_item_free
-#define gxg_gtk_style_new_w gxg_gtk_style_new
-#define gxg_gtk_style_copy_w gxg_gtk_style_copy
-#define gxg_gtk_style_attach_w gxg_gtk_style_attach
-#define gxg_gtk_style_detach_w gxg_gtk_style_detach
-#define gxg_gtk_style_set_background_w gxg_gtk_style_set_background
-#define gxg_gtk_style_lookup_icon_set_w gxg_gtk_style_lookup_icon_set
-#define gxg_gtk_style_render_icon_w gxg_gtk_style_render_icon
-#define gxg_gtk_border_copy_w gxg_gtk_border_copy
-#define gxg_gtk_border_free_w gxg_gtk_border_free
 #define gxg_gtk_table_new_w gxg_gtk_table_new
 #define gxg_gtk_table_resize_w gxg_gtk_table_resize
 #define gxg_gtk_table_attach_w gxg_gtk_table_attach
@@ -40980,33 +39711,19 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_widget_is_ancestor_w gxg_gtk_widget_is_ancestor
 #define gxg_gtk_widget_translate_coordinates_w gxg_gtk_widget_translate_coordinates
 #define gxg_gtk_widget_hide_on_delete_w gxg_gtk_widget_hide_on_delete
-#define gxg_gtk_widget_set_style_w gxg_gtk_widget_set_style
-#define gxg_gtk_widget_ensure_style_w gxg_gtk_widget_ensure_style
-#define gxg_gtk_widget_get_style_w gxg_gtk_widget_get_style
-#define gxg_gtk_widget_modify_style_w gxg_gtk_widget_modify_style
-#define gxg_gtk_widget_get_modifier_style_w gxg_gtk_widget_get_modifier_style
-#define gxg_gtk_widget_modify_fg_w gxg_gtk_widget_modify_fg
-#define gxg_gtk_widget_modify_bg_w gxg_gtk_widget_modify_bg
-#define gxg_gtk_widget_modify_text_w gxg_gtk_widget_modify_text
-#define gxg_gtk_widget_modify_base_w gxg_gtk_widget_modify_base
-#define gxg_gtk_widget_modify_font_w gxg_gtk_widget_modify_font
 #define gxg_gtk_widget_create_pango_context_w gxg_gtk_widget_create_pango_context
 #define gxg_gtk_widget_get_pango_context_w gxg_gtk_widget_get_pango_context
 #define gxg_gtk_widget_create_pango_layout_w gxg_gtk_widget_create_pango_layout
 #define gxg_gtk_widget_render_icon_w gxg_gtk_widget_render_icon
 #define gxg_gtk_widget_set_composite_name_w gxg_gtk_widget_set_composite_name
 #define gxg_gtk_widget_get_composite_name_w gxg_gtk_widget_get_composite_name
-#define gxg_gtk_widget_reset_rc_styles_w gxg_gtk_widget_reset_rc_styles
 #define gxg_gtk_widget_push_composite_child_w gxg_gtk_widget_push_composite_child
 #define gxg_gtk_widget_pop_composite_child_w gxg_gtk_widget_pop_composite_child
-#define gxg_gtk_widget_get_default_style_w gxg_gtk_widget_get_default_style
 #define gxg_gtk_widget_set_direction_w gxg_gtk_widget_set_direction
 #define gxg_gtk_widget_get_direction_w gxg_gtk_widget_get_direction
 #define gxg_gtk_widget_set_default_direction_w gxg_gtk_widget_set_default_direction
 #define gxg_gtk_widget_get_default_direction_w gxg_gtk_widget_get_default_direction
 #define gxg_gtk_widget_reset_shapes_w gxg_gtk_widget_reset_shapes
-#define gxg_gtk_widget_path_w gxg_gtk_widget_path
-#define gxg_gtk_widget_class_path_w gxg_gtk_widget_class_path
 #define gxg_gtk_widget_can_activate_accel_w gxg_gtk_widget_can_activate_accel
 #define gxg_gtk_window_is_active_w gxg_gtk_window_is_active
 #define gxg_gtk_window_has_toplevel_focus_w gxg_gtk_window_has_toplevel_focus
@@ -41963,7 +40680,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_targets_include_image_w gxg_gtk_targets_include_image
 #define gxg_gtk_targets_include_uri_w gxg_gtk_targets_include_uri
 #define gxg_gtk_size_group_get_widgets_w gxg_gtk_size_group_get_widgets
-#define gxg_gtk_style_lookup_color_w gxg_gtk_style_lookup_color
 #define gxg_gtk_text_buffer_get_has_selection_w gxg_gtk_text_buffer_get_has_selection
 #define gxg_gtk_text_buffer_get_copy_target_list_w gxg_gtk_text_buffer_get_copy_target_list
 #define gxg_gtk_text_buffer_get_paste_target_list_w gxg_gtk_text_buffer_get_paste_target_list
@@ -42115,8 +40831,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_text_buffer_get_deserialize_formats_w gxg_gtk_text_buffer_get_deserialize_formats
 #define gxg_gtk_text_buffer_serialize_w gxg_gtk_text_buffer_serialize
 #define gxg_gtk_text_buffer_deserialize_w gxg_gtk_text_buffer_deserialize
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
-#define gxg_gdk_cairo_create_w gxg_gdk_cairo_create
 #define gxg_gtk_recent_manager_add_item_w gxg_gtk_recent_manager_add_item
 #define gxg_gtk_recent_manager_add_full_w gxg_gtk_recent_manager_add_full
 #define gxg_gtk_tree_model_filter_convert_child_iter_to_iter_w gxg_gtk_tree_model_filter_convert_child_iter_to_iter
@@ -42241,8 +40955,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_cairo_set_source_color_w gxg_gdk_cairo_set_source_color
 #define gxg_gdk_cairo_set_source_pixbuf_w gxg_gdk_cairo_set_source_pixbuf
 #define gxg_gdk_cairo_rectangle_w gxg_gdk_cairo_rectangle
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 #define gxg_gtk_about_dialog_get_program_name_w gxg_gtk_about_dialog_get_program_name
 #define gxg_gtk_about_dialog_set_program_name_w gxg_gtk_about_dialog_set_program_name
@@ -42301,7 +41013,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_tree_view_convert_bin_window_to_widget_coords_w gxg_gtk_tree_view_convert_bin_window_to_widget_coords
 #define gxg_gtk_tree_view_convert_tree_to_bin_window_coords_w gxg_gtk_tree_view_convert_tree_to_bin_window_coords
 #define gxg_gtk_tree_view_convert_bin_window_to_tree_coords_w gxg_gtk_tree_view_convert_bin_window_to_tree_coords
-#define gxg_gtk_widget_modify_cursor_w gxg_gtk_widget_modify_cursor
 #define gxg_gtk_widget_set_tooltip_text_w gxg_gtk_widget_set_tooltip_text
 #define gxg_gtk_widget_get_tooltip_text_w gxg_gtk_widget_get_tooltip_text
 #define gxg_gtk_widget_set_tooltip_markup_w gxg_gtk_widget_set_tooltip_markup
@@ -42617,7 +41328,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_range_get_range_rect_w gxg_gtk_range_get_range_rect
 #define gxg_gtk_range_get_slider_range_w gxg_gtk_range_get_slider_range
 #define gxg_gtk_status_icon_set_name_w gxg_gtk_status_icon_set_name
-#define gxg_gtk_widget_has_rc_style_w gxg_gtk_widget_has_rc_style
 #define gxg_gtk_paned_get_handle_window_w gxg_gtk_paned_get_handle_window
 #define gxg_gtk_widget_style_attach_w gxg_gtk_widget_style_attach
 #define gxg_gtk_widget_set_realized_w gxg_gtk_widget_set_realized
@@ -42626,7 +41336,9 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_widget_get_mapped_w gxg_gtk_widget_get_mapped
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
+#define gxg_gdk_cairo_create_w gxg_gdk_cairo_create
+#define gxg_gdk_window_get_geometry_w gxg_gdk_window_get_geometry
 #define gxg_gdk_keymap_add_virtual_modifiers_w gxg_gdk_keymap_add_virtual_modifiers
 #define gxg_gdk_window_coords_to_parent_w gxg_gdk_window_coords_to_parent
 #define gxg_gdk_window_coords_from_parent_w gxg_gdk_window_coords_from_parent
@@ -42689,8 +41401,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_message_dialog_get_message_area_w gxg_gtk_message_dialog_get_message_area
 #define gxg_gtk_table_get_size_w gxg_gtk_table_get_size
 #define gxg_gtk_selection_data_get_length_w gxg_gtk_selection_data_get_length
-#define gxg_gdk_drawable_get_clip_region_w gxg_gdk_drawable_get_clip_region
-#define gxg_gdk_drawable_get_visible_region_w gxg_gdk_drawable_get_visible_region
 #define gxg_gdk_pango_layout_line_get_clip_region_w gxg_gdk_pango_layout_line_get_clip_region
 #define gxg_gdk_pango_layout_get_clip_region_w gxg_gdk_pango_layout_get_clip_region
 #define gxg_gdk_window_shape_combine_region_w gxg_gdk_window_shape_combine_region
@@ -42719,26 +41429,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_binding_set_activate_w gxg_gtk_binding_set_activate
 #define gxg_gtk_bindings_activate_w gxg_gtk_bindings_activate
 #define gxg_gtk_icon_view_create_drag_icon_w gxg_gtk_icon_view_create_drag_icon
-#define gxg_gtk_style_apply_default_background_w gxg_gtk_style_apply_default_background
-#define gxg_gtk_paint_hline_w gxg_gtk_paint_hline
-#define gxg_gtk_paint_vline_w gxg_gtk_paint_vline
-#define gxg_gtk_paint_shadow_w gxg_gtk_paint_shadow
-#define gxg_gtk_paint_arrow_w gxg_gtk_paint_arrow
-#define gxg_gtk_paint_diamond_w gxg_gtk_paint_diamond
-#define gxg_gtk_paint_box_w gxg_gtk_paint_box
-#define gxg_gtk_paint_flat_box_w gxg_gtk_paint_flat_box
-#define gxg_gtk_paint_check_w gxg_gtk_paint_check
-#define gxg_gtk_paint_option_w gxg_gtk_paint_option
-#define gxg_gtk_paint_tab_w gxg_gtk_paint_tab
-#define gxg_gtk_paint_shadow_gap_w gxg_gtk_paint_shadow_gap
-#define gxg_gtk_paint_box_gap_w gxg_gtk_paint_box_gap
-#define gxg_gtk_paint_extension_w gxg_gtk_paint_extension
-#define gxg_gtk_paint_focus_w gxg_gtk_paint_focus
-#define gxg_gtk_paint_slider_w gxg_gtk_paint_slider
-#define gxg_gtk_paint_handle_w gxg_gtk_paint_handle
-#define gxg_gtk_paint_expander_w gxg_gtk_paint_expander
-#define gxg_gtk_paint_layout_w gxg_gtk_paint_layout
-#define gxg_gtk_paint_resize_grip_w gxg_gtk_paint_resize_grip
 #define gxg_gtk_tree_view_create_row_drag_icon_w gxg_gtk_tree_view_create_row_drag_icon
 #define gxg_gdk_cairo_get_clip_rectangle_w gxg_gdk_cairo_get_clip_rectangle
 #define gxg_gdk_cairo_region_create_from_surface_w gxg_gdk_cairo_region_create_from_surface
@@ -42851,6 +41541,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_colormap_alloc_colors_w gxg_gdk_colormap_alloc_colors
 #define gxg_gdk_colormap_alloc_color_w gxg_gdk_colormap_alloc_color
 #define gxg_gdk_colormap_get_visual_w gxg_gdk_colormap_get_visual
+#define gxg_gdk_cairo_create_w gxg_gdk_cairo_create
 #define gxg_gdk_drawable_get_size_w gxg_gdk_drawable_get_size
 #define gxg_gdk_drawable_set_colormap_w gxg_gdk_drawable_set_colormap
 #define gxg_gdk_drawable_get_colormap_w gxg_gdk_drawable_get_colormap
@@ -42868,6 +41559,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_window_set_icon_w gxg_gdk_window_set_icon
 #define gxg_gdk_window_get_internal_paint_info_w gxg_gdk_window_get_internal_paint_info
 #define gxg_gdk_window_set_back_pixmap_w gxg_gdk_window_set_back_pixmap
+#define gxg_gdk_window_get_geometry_w gxg_gdk_window_get_geometry
 #define gxg_gtk_adjustment_new_w gxg_gtk_adjustment_new
 #define gxg_gtk_bindings_activate_w gxg_gtk_bindings_activate
 #define gxg_gtk_binding_set_activate_w gxg_gtk_binding_set_activate
@@ -42875,43 +41567,64 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_cell_renderer_render_w gxg_gtk_cell_renderer_render
 #define gxg_gtk_drag_source_set_icon_w gxg_gtk_drag_source_set_icon
 #define gxg_gtk_drag_set_icon_pixmap_w gxg_gtk_drag_set_icon_pixmap
+#define gxg_gtk_icon_set_render_icon_w gxg_gtk_icon_set_render_icon
+#define gxg_gtk_rc_add_default_file_w gxg_gtk_rc_add_default_file
+#define gxg_gtk_rc_set_default_files_w gxg_gtk_rc_set_default_files
+#define gxg_gtk_rc_get_default_files_w gxg_gtk_rc_get_default_files
+#define gxg_gtk_rc_get_style_w gxg_gtk_rc_get_style
+#define gxg_gtk_rc_parse_w gxg_gtk_rc_parse
+#define gxg_gtk_rc_parse_string_w gxg_gtk_rc_parse_string
+#define gxg_gtk_rc_reparse_all_w gxg_gtk_rc_reparse_all
+#define gxg_gtk_rc_style_new_w gxg_gtk_rc_style_new
+#define gxg_gtk_rc_style_copy_w gxg_gtk_rc_style_copy
+#define gxg_gtk_rc_find_module_in_path_w gxg_gtk_rc_find_module_in_path
+#define gxg_gtk_rc_get_theme_dir_w gxg_gtk_rc_get_theme_dir
+#define gxg_gtk_rc_get_module_dir_w gxg_gtk_rc_get_module_dir
+#define gxg_gtk_rc_get_im_module_path_w gxg_gtk_rc_get_im_module_path
+#define gxg_gtk_rc_get_im_module_file_w gxg_gtk_rc_get_im_module_file
+#define gxg_gtk_style_new_w gxg_gtk_style_new
+#define gxg_gtk_style_copy_w gxg_gtk_style_copy
+#define gxg_gtk_style_attach_w gxg_gtk_style_attach
+#define gxg_gtk_style_detach_w gxg_gtk_style_detach
+#define gxg_gtk_style_set_background_w gxg_gtk_style_set_background
 #define gxg_gtk_style_apply_default_background_w gxg_gtk_style_apply_default_background
-#define gxg_gtk_paint_hline_w gxg_gtk_paint_hline
-#define gxg_gtk_paint_vline_w gxg_gtk_paint_vline
-#define gxg_gtk_paint_shadow_w gxg_gtk_paint_shadow
-#define gxg_gtk_paint_arrow_w gxg_gtk_paint_arrow
-#define gxg_gtk_paint_diamond_w gxg_gtk_paint_diamond
-#define gxg_gtk_paint_box_w gxg_gtk_paint_box
-#define gxg_gtk_paint_flat_box_w gxg_gtk_paint_flat_box
-#define gxg_gtk_paint_check_w gxg_gtk_paint_check
-#define gxg_gtk_paint_option_w gxg_gtk_paint_option
-#define gxg_gtk_paint_tab_w gxg_gtk_paint_tab
-#define gxg_gtk_paint_shadow_gap_w gxg_gtk_paint_shadow_gap
-#define gxg_gtk_paint_box_gap_w gxg_gtk_paint_box_gap
-#define gxg_gtk_paint_extension_w gxg_gtk_paint_extension
-#define gxg_gtk_paint_focus_w gxg_gtk_paint_focus
-#define gxg_gtk_paint_slider_w gxg_gtk_paint_slider
-#define gxg_gtk_paint_handle_w gxg_gtk_paint_handle
-#define gxg_gtk_paint_layout_w gxg_gtk_paint_layout
-#define gxg_gtk_paint_resize_grip_w gxg_gtk_paint_resize_grip
+#define gxg_gtk_style_lookup_icon_set_w gxg_gtk_style_lookup_icon_set
+#define gxg_gtk_style_render_icon_w gxg_gtk_style_render_icon
+#define gxg_gtk_border_copy_w gxg_gtk_border_copy
+#define gxg_gtk_border_free_w gxg_gtk_border_free
 #define gxg_gtk_tree_view_create_row_drag_icon_w gxg_gtk_tree_view_create_row_drag_icon
 #define gxg_gtk_widget_hide_all_w gxg_gtk_widget_hide_all
 #define gxg_gtk_widget_size_request_w gxg_gtk_widget_size_request
 #define gxg_gtk_widget_get_child_requisition_w gxg_gtk_widget_get_child_requisition
 #define gxg_gtk_widget_get_colormap_w gxg_gtk_widget_get_colormap
 #define gxg_gtk_widget_set_colormap_w gxg_gtk_widget_set_colormap
+#define gxg_gtk_widget_set_style_w gxg_gtk_widget_set_style
+#define gxg_gtk_widget_ensure_style_w gxg_gtk_widget_ensure_style
+#define gxg_gtk_widget_get_style_w gxg_gtk_widget_get_style
+#define gxg_gtk_widget_modify_style_w gxg_gtk_widget_modify_style
+#define gxg_gtk_widget_get_modifier_style_w gxg_gtk_widget_get_modifier_style
+#define gxg_gtk_widget_modify_fg_w gxg_gtk_widget_modify_fg
+#define gxg_gtk_widget_modify_bg_w gxg_gtk_widget_modify_bg
+#define gxg_gtk_widget_modify_text_w gxg_gtk_widget_modify_text
+#define gxg_gtk_widget_modify_base_w gxg_gtk_widget_modify_base
+#define gxg_gtk_widget_modify_font_w gxg_gtk_widget_modify_font
+#define gxg_gtk_widget_reset_rc_styles_w gxg_gtk_widget_reset_rc_styles
 #define gxg_gtk_widget_push_colormap_w gxg_gtk_widget_push_colormap
 #define gxg_gtk_widget_pop_colormap_w gxg_gtk_widget_pop_colormap
 #define gxg_gtk_widget_set_default_colormap_w gxg_gtk_widget_set_default_colormap
+#define gxg_gtk_widget_get_default_style_w gxg_gtk_widget_get_default_style
 #define gxg_gtk_widget_get_default_colormap_w gxg_gtk_widget_get_default_colormap
 #define gxg_gtk_widget_get_default_visual_w gxg_gtk_widget_get_default_visual
 #define gxg_gtk_widget_shape_combine_mask_w gxg_gtk_widget_shape_combine_mask
+#define gxg_gtk_widget_path_w gxg_gtk_widget_path
+#define gxg_gtk_widget_class_path_w gxg_gtk_widget_class_path
 #define gxg_gtk_requisition_copy_w gxg_gtk_requisition_copy
 #define gxg_gtk_requisition_free_w gxg_gtk_requisition_free
 #define gxg_gdk_screen_get_default_colormap_w gxg_gdk_screen_get_default_colormap
 #define gxg_gdk_screen_set_default_colormap_w gxg_gdk_screen_set_default_colormap
 #define gxg_gdk_screen_get_system_colormap_w gxg_gdk_screen_get_system_colormap
 #define gxg_gtk_cell_view_get_size_of_row_w gxg_gtk_cell_view_get_size_of_row
+#define gxg_gtk_style_lookup_color_w gxg_gtk_style_lookup_color
 #endif
 
 #define gxg_cairo_create_w gxg_cairo_create
@@ -43194,7 +41907,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_init_w gxg_gtk_init
 #define gxg_gtk_init_check_w gxg_gtk_init_check
 #define gxg_GDK_DRAG_CONTEXT_w gxg_GDK_DRAG_CONTEXT
-#define gxg_GDK_DRAWABLE_w gxg_GDK_DRAWABLE
 #define gxg_GDK_DEVICE_w gxg_GDK_DEVICE
 #define gxg_GDK_KEYMAP_w gxg_GDK_KEYMAP
 #define gxg_GDK_VISUAL_w gxg_GDK_VISUAL
@@ -43272,7 +41984,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_SOCKET_w gxg_GTK_SOCKET
 #define gxg_GTK_SPIN_BUTTON_w gxg_GTK_SPIN_BUTTON
 #define gxg_GTK_STATUSBAR_w gxg_GTK_STATUSBAR
-#define gxg_GTK_STYLE_w gxg_GTK_STYLE
 #define gxg_GTK_TABLE_w gxg_GTK_TABLE
 #define gxg_GTK_TEAROFF_MENU_ITEM_w gxg_GTK_TEAROFF_MENU_ITEM
 #define gxg_GTK_TEXT_BUFFER_w gxg_GTK_TEXT_BUFFER
@@ -43369,13 +42080,10 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_RECENT_FILTER_w gxg_GTK_RECENT_FILTER
 #define gxg_GTK_RECENT_MANAGER_w gxg_GTK_RECENT_MANAGER
 #define gxg_GTK_STATUS_ICON_w gxg_GTK_STATUS_ICON
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
 #define gxg_GTK_PRINT_CONTEXT_w gxg_GTK_PRINT_CONTEXT
 #define gxg_GTK_PRINT_OPERATION_w gxg_GTK_PRINT_OPERATION
 #define gxg_GTK_PRINT_OPERATION_PREVIEW_w gxg_GTK_PRINT_OPERATION_PREVIEW
 #define gxg_GTK_PRINT_SETTINGS_w gxg_GTK_PRINT_SETTINGS
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 #define gxg_GTK_TOOLTIP_w gxg_GTK_TOOLTIP
 #endif
@@ -43395,7 +42103,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_TOOL_ITEM_GROUP_w gxg_GTK_TOOL_ITEM_GROUP
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
 #define gxg_GTK_COMBO_BOX_TEXT_w gxg_GTK_COMBO_BOX_TEXT
 #define gxg_GTK_GRID_w gxg_GTK_GRID
 #define gxg_GTK_SCROLLABLE_w gxg_GTK_SCROLLABLE
@@ -43404,12 +42112,13 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 
 #if (!HAVE_GTK_3)
 #define gxg_GDK_COLORMAP_w gxg_GDK_COLORMAP
+#define gxg_GDK_DRAWABLE_w gxg_GDK_DRAWABLE
 #define gxg_GDK_PIXMAP_w gxg_GDK_PIXMAP
 #define gxg_GTK_OBJECT_w gxg_GTK_OBJECT
+#define gxg_GTK_STYLE_w gxg_GTK_STYLE
 #endif
 
 #define gxg_GDK_IS_DRAG_CONTEXT_w gxg_GDK_IS_DRAG_CONTEXT
-#define gxg_GDK_IS_DRAWABLE_w gxg_GDK_IS_DRAWABLE
 #define gxg_GDK_IS_DEVICE_w gxg_GDK_IS_DEVICE
 #define gxg_GDK_IS_KEYMAP_w gxg_GDK_IS_KEYMAP
 #define gxg_GDK_IS_VISUAL_w gxg_GDK_IS_VISUAL
@@ -43478,7 +42187,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_RADIO_BUTTON_w gxg_GTK_IS_RADIO_BUTTON
 #define gxg_GTK_IS_RADIO_MENU_ITEM_w gxg_GTK_IS_RADIO_MENU_ITEM
 #define gxg_GTK_IS_RANGE_w gxg_GTK_IS_RANGE
-#define gxg_GTK_IS_RC_STYLE_w gxg_GTK_IS_RC_STYLE
 #define gxg_GTK_IS_SCALE_w gxg_GTK_IS_SCALE
 #define gxg_GTK_IS_SCROLLBAR_w gxg_GTK_IS_SCROLLBAR
 #define gxg_GTK_IS_SCROLLED_WINDOW_w gxg_GTK_IS_SCROLLED_WINDOW
@@ -43488,7 +42196,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_SOCKET_w gxg_GTK_IS_SOCKET
 #define gxg_GTK_IS_SPIN_BUTTON_w gxg_GTK_IS_SPIN_BUTTON
 #define gxg_GTK_IS_STATUSBAR_w gxg_GTK_IS_STATUSBAR
-#define gxg_GTK_IS_STYLE_w gxg_GTK_IS_STYLE
 #define gxg_GTK_IS_TABLE_w gxg_GTK_IS_TABLE
 #define gxg_GTK_IS_TEAROFF_MENU_ITEM_w gxg_GTK_IS_TEAROFF_MENU_ITEM
 #define gxg_GTK_IS_TEXT_BUFFER_w gxg_GTK_IS_TEXT_BUFFER
@@ -43567,13 +42274,10 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_RECENT_FILTER_w gxg_GTK_IS_RECENT_FILTER
 #define gxg_GTK_IS_RECENT_MANAGER_w gxg_GTK_IS_RECENT_MANAGER
 #define gxg_GTK_IS_STATUS_ICON_w gxg_GTK_IS_STATUS_ICON
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
 #define gxg_GTK_IS_PRINT_CONTEXT_w gxg_GTK_IS_PRINT_CONTEXT
 #define gxg_GTK_IS_PRINT_OPERATION_w gxg_GTK_IS_PRINT_OPERATION
 #define gxg_GTK_IS_PRINT_OPERATION_PREVIEW_w gxg_GTK_IS_PRINT_OPERATION_PREVIEW
 #define gxg_GTK_IS_PRINT_SETTINGS_w gxg_GTK_IS_PRINT_SETTINGS
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 #define gxg_GTK_IS_TOOLTIP_w gxg_GTK_IS_TOOLTIP
 #endif
@@ -43593,7 +42297,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_TOOL_ITEM_GROUP_w gxg_GTK_IS_TOOL_ITEM_GROUP
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
 #define gxg_GTK_IS_COMBO_BOX_TEXT_w gxg_GTK_IS_COMBO_BOX_TEXT
 #define gxg_GTK_IS_GRID_w gxg_GTK_IS_GRID
 #define gxg_GTK_IS_SCROLLABLE_w gxg_GTK_IS_SCROLLABLE
@@ -43602,8 +42306,11 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 
 #if (!HAVE_GTK_3)
 #define gxg_GDK_IS_COLORMAP_w gxg_GDK_IS_COLORMAP
+#define gxg_GDK_IS_DRAWABLE_w gxg_GDK_IS_DRAWABLE
 #define gxg_GDK_IS_PIXMAP_w gxg_GDK_IS_PIXMAP
 #define gxg_GTK_IS_OBJECT_w gxg_GTK_IS_OBJECT
+#define gxg_GTK_IS_RC_STYLE_w gxg_GTK_IS_RC_STYLE
+#define gxg_GTK_IS_STYLE_w gxg_GTK_IS_STYLE
 #endif
 
 #define gxg_blue_w gxg_blue
@@ -43834,7 +42541,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_set_background, gxg_gdk_window_set_background_w, 2, 0, 0, H_gdk_window_set_background);
   XG_DEFINE_PROCEDURE(gdk_window_set_cursor, gxg_gdk_window_set_cursor_w, 2, 0, 0, H_gdk_window_set_cursor);
   XG_DEFINE_PROCEDURE(gdk_window_get_user_data, gxg_gdk_window_get_user_data_w, 1, 1, 0, H_gdk_window_get_user_data);
-  XG_DEFINE_PROCEDURE(gdk_window_get_geometry, gxg_gdk_window_get_geometry_w, 1, 5, 0, H_gdk_window_get_geometry);
   XG_DEFINE_PROCEDURE(gdk_window_get_position, gxg_gdk_window_get_position_w, 1, 2, 0, H_gdk_window_get_position);
   XG_DEFINE_PROCEDURE(gdk_window_get_origin, gxg_gdk_window_get_origin_w, 1, 2, 0, H_gdk_window_get_origin);
   XG_DEFINE_PROCEDURE(gdk_get_default_root_window, gxg_gdk_get_default_root_window_w, 0, 0, 0, H_gdk_get_default_root_window);
@@ -44132,7 +42838,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_icon_set_ref, gxg_gtk_icon_set_ref_w, 1, 0, 0, H_gtk_icon_set_ref);
   XG_DEFINE_PROCEDURE(gtk_icon_set_unref, gxg_gtk_icon_set_unref_w, 1, 0, 0, H_gtk_icon_set_unref);
   XG_DEFINE_PROCEDURE(gtk_icon_set_copy, gxg_gtk_icon_set_copy_w, 1, 0, 0, H_gtk_icon_set_copy);
-  XG_DEFINE_PROCEDURE(gtk_icon_set_render_icon, gxg_gtk_icon_set_render_icon_w, 7, 0, 0, H_gtk_icon_set_render_icon);
   XG_DEFINE_PROCEDURE(gtk_icon_set_add_source, gxg_gtk_icon_set_add_source_w, 2, 0, 0, H_gtk_icon_set_add_source);
   XG_DEFINE_PROCEDURE(gtk_icon_set_get_sizes, gxg_gtk_icon_set_get_sizes_w, 1, 2, 0, H_gtk_icon_set_get_sizes);
   XG_DEFINE_PROCEDURE(gtk_icon_source_new, gxg_gtk_icon_source_new_w, 0, 0, 0, H_gtk_icon_source_new);
@@ -44374,20 +43079,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_range_set_range, gxg_gtk_range_set_range_w, 3, 0, 0, H_gtk_range_set_range);
   XG_DEFINE_PROCEDURE(gtk_range_set_value, gxg_gtk_range_set_value_w, 2, 0, 0, H_gtk_range_set_value);
   XG_DEFINE_PROCEDURE(gtk_range_get_value, gxg_gtk_range_get_value_w, 1, 0, 0, H_gtk_range_get_value);
-  XG_DEFINE_PROCEDURE(gtk_rc_add_default_file, gxg_gtk_rc_add_default_file_w, 1, 0, 0, H_gtk_rc_add_default_file);
-  XG_DEFINE_PROCEDURE(gtk_rc_set_default_files, gxg_gtk_rc_set_default_files_w, 1, 0, 0, H_gtk_rc_set_default_files);
-  XG_DEFINE_PROCEDURE(gtk_rc_get_default_files, gxg_gtk_rc_get_default_files_w, 0, 0, 0, H_gtk_rc_get_default_files);
-  XG_DEFINE_PROCEDURE(gtk_rc_get_style, gxg_gtk_rc_get_style_w, 1, 0, 0, H_gtk_rc_get_style);
-  XG_DEFINE_PROCEDURE(gtk_rc_parse, gxg_gtk_rc_parse_w, 1, 0, 0, H_gtk_rc_parse);
-  XG_DEFINE_PROCEDURE(gtk_rc_parse_string, gxg_gtk_rc_parse_string_w, 1, 0, 0, H_gtk_rc_parse_string);
-  XG_DEFINE_PROCEDURE(gtk_rc_reparse_all, gxg_gtk_rc_reparse_all_w, 0, 0, 0, H_gtk_rc_reparse_all);
-  XG_DEFINE_PROCEDURE(gtk_rc_style_new, gxg_gtk_rc_style_new_w, 0, 0, 0, H_gtk_rc_style_new);
-  XG_DEFINE_PROCEDURE(gtk_rc_style_copy, gxg_gtk_rc_style_copy_w, 1, 0, 0, H_gtk_rc_style_copy);
-  XG_DEFINE_PROCEDURE(gtk_rc_find_module_in_path, gxg_gtk_rc_find_module_in_path_w, 1, 0, 0, H_gtk_rc_find_module_in_path);
-  XG_DEFINE_PROCEDURE(gtk_rc_get_theme_dir, gxg_gtk_rc_get_theme_dir_w, 0, 0, 0, H_gtk_rc_get_theme_dir);
-  XG_DEFINE_PROCEDURE(gtk_rc_get_module_dir, gxg_gtk_rc_get_module_dir_w, 0, 0, 0, H_gtk_rc_get_module_dir);
-  XG_DEFINE_PROCEDURE(gtk_rc_get_im_module_path, gxg_gtk_rc_get_im_module_path_w, 0, 0, 0, H_gtk_rc_get_im_module_path);
-  XG_DEFINE_PROCEDURE(gtk_rc_get_im_module_file, gxg_gtk_rc_get_im_module_file_w, 0, 0, 0, H_gtk_rc_get_im_module_file);
   XG_DEFINE_PROCEDURE(gtk_scale_set_digits, gxg_gtk_scale_set_digits_w, 2, 0, 0, H_gtk_scale_set_digits);
   XG_DEFINE_PROCEDURE(gtk_scale_get_digits, gxg_gtk_scale_get_digits_w, 1, 0, 0, H_gtk_scale_get_digits);
   XG_DEFINE_PROCEDURE(gtk_scale_set_draw_value, gxg_gtk_scale_set_draw_value_w, 2, 0, 0, H_gtk_scale_set_draw_value);
@@ -44469,15 +43160,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_stock_list_ids, gxg_gtk_stock_list_ids_w, 0, 0, 0, H_gtk_stock_list_ids);
   XG_DEFINE_PROCEDURE(gtk_stock_item_copy, gxg_gtk_stock_item_copy_w, 1, 0, 0, H_gtk_stock_item_copy);
   XG_DEFINE_PROCEDURE(gtk_stock_item_free, gxg_gtk_stock_item_free_w, 1, 0, 0, H_gtk_stock_item_free);
-  XG_DEFINE_PROCEDURE(gtk_style_new, gxg_gtk_style_new_w, 0, 0, 0, H_gtk_style_new);
-  XG_DEFINE_PROCEDURE(gtk_style_copy, gxg_gtk_style_copy_w, 1, 0, 0, H_gtk_style_copy);
-  XG_DEFINE_PROCEDURE(gtk_style_attach, gxg_gtk_style_attach_w, 2, 0, 0, H_gtk_style_attach);
-  XG_DEFINE_PROCEDURE(gtk_style_detach, gxg_gtk_style_detach_w, 1, 0, 0, H_gtk_style_detach);
-  XG_DEFINE_PROCEDURE(gtk_style_set_background, gxg_gtk_style_set_background_w, 3, 0, 0, H_gtk_style_set_background);
-  XG_DEFINE_PROCEDURE(gtk_style_lookup_icon_set, gxg_gtk_style_lookup_icon_set_w, 2, 0, 0, H_gtk_style_lookup_icon_set);
-  XG_DEFINE_PROCEDURE(gtk_style_render_icon, gxg_gtk_style_render_icon_w, 7, 0, 0, H_gtk_style_render_icon);
-  XG_DEFINE_PROCEDURE(gtk_border_copy, gxg_gtk_border_copy_w, 1, 0, 0, H_gtk_border_copy);
-  XG_DEFINE_PROCEDURE(gtk_border_free, gxg_gtk_border_free_w, 1, 0, 0, H_gtk_border_free);
   XG_DEFINE_PROCEDURE(gtk_table_new, gxg_gtk_table_new_w, 3, 0, 0, H_gtk_table_new);
   XG_DEFINE_PROCEDURE(gtk_table_resize, gxg_gtk_table_resize_w, 3, 0, 0, H_gtk_table_resize);
   XG_DEFINE_PROCEDURE(gtk_table_attach, gxg_gtk_table_attach_w, 0, 0, 1, H_gtk_table_attach);
@@ -44979,33 +43661,19 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_is_ancestor, gxg_gtk_widget_is_ancestor_w, 2, 0, 0, H_gtk_widget_is_ancestor);
   XG_DEFINE_PROCEDURE(gtk_widget_translate_coordinates, gxg_gtk_widget_translate_coordinates_w, 4, 2, 0, H_gtk_widget_translate_coordinates);
   XG_DEFINE_PROCEDURE(gtk_widget_hide_on_delete, gxg_gtk_widget_hide_on_delete_w, 1, 0, 0, H_gtk_widget_hide_on_delete);
-  XG_DEFINE_PROCEDURE(gtk_widget_set_style, gxg_gtk_widget_set_style_w, 2, 0, 0, H_gtk_widget_set_style);
-  XG_DEFINE_PROCEDURE(gtk_widget_ensure_style, gxg_gtk_widget_ensure_style_w, 1, 0, 0, H_gtk_widget_ensure_style);
-  XG_DEFINE_PROCEDURE(gtk_widget_get_style, gxg_gtk_widget_get_style_w, 1, 0, 0, H_gtk_widget_get_style);
-  XG_DEFINE_PROCEDURE(gtk_widget_modify_style, gxg_gtk_widget_modify_style_w, 2, 0, 0, H_gtk_widget_modify_style);
-  XG_DEFINE_PROCEDURE(gtk_widget_get_modifier_style, gxg_gtk_widget_get_modifier_style_w, 1, 0, 0, H_gtk_widget_get_modifier_style);
-  XG_DEFINE_PROCEDURE(gtk_widget_modify_fg, gxg_gtk_widget_modify_fg_w, 3, 0, 0, H_gtk_widget_modify_fg);
-  XG_DEFINE_PROCEDURE(gtk_widget_modify_bg, gxg_gtk_widget_modify_bg_w, 3, 0, 0, H_gtk_widget_modify_bg);
-  XG_DEFINE_PROCEDURE(gtk_widget_modify_text, gxg_gtk_widget_modify_text_w, 3, 0, 0, H_gtk_widget_modify_text);
-  XG_DEFINE_PROCEDURE(gtk_widget_modify_base, gxg_gtk_widget_modify_base_w, 3, 0, 0, H_gtk_widget_modify_base);
-  XG_DEFINE_PROCEDURE(gtk_widget_modify_font, gxg_gtk_widget_modify_font_w, 2, 0, 0, H_gtk_widget_modify_font);
   XG_DEFINE_PROCEDURE(gtk_widget_create_pango_context, gxg_gtk_widget_create_pango_context_w, 1, 0, 0, H_gtk_widget_create_pango_context);
   XG_DEFINE_PROCEDURE(gtk_widget_get_pango_context, gxg_gtk_widget_get_pango_context_w, 1, 0, 0, H_gtk_widget_get_pango_context);
   XG_DEFINE_PROCEDURE(gtk_widget_create_pango_layout, gxg_gtk_widget_create_pango_layout_w, 2, 0, 0, H_gtk_widget_create_pango_layout);
   XG_DEFINE_PROCEDURE(gtk_widget_render_icon, gxg_gtk_widget_render_icon_w, 4, 0, 0, H_gtk_widget_render_icon);
   XG_DEFINE_PROCEDURE(gtk_widget_set_composite_name, gxg_gtk_widget_set_composite_name_w, 2, 0, 0, H_gtk_widget_set_composite_name);
   XG_DEFINE_PROCEDURE(gtk_widget_get_composite_name, gxg_gtk_widget_get_composite_name_w, 1, 0, 0, H_gtk_widget_get_composite_name);
-  XG_DEFINE_PROCEDURE(gtk_widget_reset_rc_styles, gxg_gtk_widget_reset_rc_styles_w, 1, 0, 0, H_gtk_widget_reset_rc_styles);
   XG_DEFINE_PROCEDURE(gtk_widget_push_composite_child, gxg_gtk_widget_push_composite_child_w, 0, 0, 0, H_gtk_widget_push_composite_child);
   XG_DEFINE_PROCEDURE(gtk_widget_pop_composite_child, gxg_gtk_widget_pop_composite_child_w, 0, 0, 0, H_gtk_widget_pop_composite_child);
-  XG_DEFINE_PROCEDURE(gtk_widget_get_default_style, gxg_gtk_widget_get_default_style_w, 0, 0, 0, H_gtk_widget_get_default_style);
   XG_DEFINE_PROCEDURE(gtk_widget_set_direction, gxg_gtk_widget_set_direction_w, 2, 0, 0, H_gtk_widget_set_direction);
   XG_DEFINE_PROCEDURE(gtk_widget_get_direction, gxg_gtk_widget_get_direction_w, 1, 0, 0, H_gtk_widget_get_direction);
   XG_DEFINE_PROCEDURE(gtk_widget_set_default_direction, gxg_gtk_widget_set_default_direction_w, 1, 0, 0, H_gtk_widget_set_default_direction);
   XG_DEFINE_PROCEDURE(gtk_widget_get_default_direction, gxg_gtk_widget_get_default_direction_w, 0, 0, 0, H_gtk_widget_get_default_direction);
   XG_DEFINE_PROCEDURE(gtk_widget_reset_shapes, gxg_gtk_widget_reset_shapes_w, 1, 0, 0, H_gtk_widget_reset_shapes);
-  XG_DEFINE_PROCEDURE(gtk_widget_path, gxg_gtk_widget_path_w, 2, 2, 0, H_gtk_widget_path);
-  XG_DEFINE_PROCEDURE(gtk_widget_class_path, gxg_gtk_widget_class_path_w, 2, 2, 0, H_gtk_widget_class_path);
   XG_DEFINE_PROCEDURE(gtk_widget_can_activate_accel, gxg_gtk_widget_can_activate_accel_w, 2, 0, 0, H_gtk_widget_can_activate_accel);
   XG_DEFINE_PROCEDURE(gtk_window_is_active, gxg_gtk_window_is_active_w, 1, 0, 0, H_gtk_window_is_active);
   XG_DEFINE_PROCEDURE(gtk_window_has_toplevel_focus, gxg_gtk_window_has_toplevel_focus_w, 1, 0, 0, H_gtk_window_has_toplevel_focus);
@@ -45962,7 +44630,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_targets_include_image, gxg_gtk_targets_include_image_w, 3, 0, 0, H_gtk_targets_include_image);
   XG_DEFINE_PROCEDURE(gtk_targets_include_uri, gxg_gtk_targets_include_uri_w, 2, 0, 0, H_gtk_targets_include_uri);
   XG_DEFINE_PROCEDURE(gtk_size_group_get_widgets, gxg_gtk_size_group_get_widgets_w, 1, 0, 0, H_gtk_size_group_get_widgets);
-  XG_DEFINE_PROCEDURE(gtk_style_lookup_color, gxg_gtk_style_lookup_color_w, 3, 0, 0, H_gtk_style_lookup_color);
   XG_DEFINE_PROCEDURE(gtk_text_buffer_get_has_selection, gxg_gtk_text_buffer_get_has_selection_w, 1, 0, 0, H_gtk_text_buffer_get_has_selection);
   XG_DEFINE_PROCEDURE(gtk_text_buffer_get_copy_target_list, gxg_gtk_text_buffer_get_copy_target_list_w, 1, 0, 0, H_gtk_text_buffer_get_copy_target_list);
   XG_DEFINE_PROCEDURE(gtk_text_buffer_get_paste_target_list, gxg_gtk_text_buffer_get_paste_target_list_w, 1, 0, 0, H_gtk_text_buffer_get_paste_target_list);
@@ -46114,8 +44781,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_text_buffer_get_deserialize_formats, gxg_gtk_text_buffer_get_deserialize_formats_w, 1, 1, 0, H_gtk_text_buffer_get_deserialize_formats);
   XG_DEFINE_PROCEDURE(gtk_text_buffer_serialize, gxg_gtk_text_buffer_serialize_w, 5, 1, 0, H_gtk_text_buffer_serialize);
   XG_DEFINE_PROCEDURE(gtk_text_buffer_deserialize, gxg_gtk_text_buffer_deserialize_w, 6, 1, 0, H_gtk_text_buffer_deserialize);
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
-  XG_DEFINE_PROCEDURE(gdk_cairo_create, gxg_gdk_cairo_create_w, 1, 0, 0, H_gdk_cairo_create);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_add_item, gxg_gtk_recent_manager_add_item_w, 2, 0, 0, H_gtk_recent_manager_add_item);
   XG_DEFINE_PROCEDURE(gtk_recent_manager_add_full, gxg_gtk_recent_manager_add_full_w, 3, 0, 0, H_gtk_recent_manager_add_full);
   XG_DEFINE_PROCEDURE(gtk_tree_model_filter_convert_child_iter_to_iter, gxg_gtk_tree_model_filter_convert_child_iter_to_iter_w, 3, 0, 0, H_gtk_tree_model_filter_convert_child_iter_to_iter);
@@ -46240,8 +44905,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_cairo_set_source_color, gxg_gdk_cairo_set_source_color_w, 2, 0, 0, H_gdk_cairo_set_source_color);
   XG_DEFINE_PROCEDURE(gdk_cairo_set_source_pixbuf, gxg_gdk_cairo_set_source_pixbuf_w, 4, 0, 0, H_gdk_cairo_set_source_pixbuf);
   XG_DEFINE_PROCEDURE(gdk_cairo_rectangle, gxg_gdk_cairo_rectangle_w, 2, 0, 0, H_gdk_cairo_rectangle);
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
   XG_DEFINE_PROCEDURE(gtk_about_dialog_get_program_name, gxg_gtk_about_dialog_get_program_name_w, 1, 0, 0, H_gtk_about_dialog_get_program_name);
   XG_DEFINE_PROCEDURE(gtk_about_dialog_set_program_name, gxg_gtk_about_dialog_set_program_name_w, 2, 0, 0, H_gtk_about_dialog_set_program_name);
@@ -46300,7 +44963,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_view_convert_bin_window_to_widget_coords, gxg_gtk_tree_view_convert_bin_window_to_widget_coords_w, 3, 2, 0, H_gtk_tree_view_convert_bin_window_to_widget_coords);
   XG_DEFINE_PROCEDURE(gtk_tree_view_convert_tree_to_bin_window_coords, gxg_gtk_tree_view_convert_tree_to_bin_window_coords_w, 3, 2, 0, H_gtk_tree_view_convert_tree_to_bin_window_coords);
   XG_DEFINE_PROCEDURE(gtk_tree_view_convert_bin_window_to_tree_coords, gxg_gtk_tree_view_convert_bin_window_to_tree_coords_w, 3, 2, 0, H_gtk_tree_view_convert_bin_window_to_tree_coords);
-  XG_DEFINE_PROCEDURE(gtk_widget_modify_cursor, gxg_gtk_widget_modify_cursor_w, 3, 0, 0, H_gtk_widget_modify_cursor);
   XG_DEFINE_PROCEDURE(gtk_widget_set_tooltip_text, gxg_gtk_widget_set_tooltip_text_w, 2, 0, 0, H_gtk_widget_set_tooltip_text);
   XG_DEFINE_PROCEDURE(gtk_widget_get_tooltip_text, gxg_gtk_widget_get_tooltip_text_w, 1, 0, 0, H_gtk_widget_get_tooltip_text);
   XG_DEFINE_PROCEDURE(gtk_widget_set_tooltip_markup, gxg_gtk_widget_set_tooltip_markup_w, 2, 0, 0, H_gtk_widget_set_tooltip_markup);
@@ -46616,7 +45278,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_range_get_range_rect, gxg_gtk_range_get_range_rect_w, 2, 0, 0, H_gtk_range_get_range_rect);
   XG_DEFINE_PROCEDURE(gtk_range_get_slider_range, gxg_gtk_range_get_slider_range_w, 1, 2, 0, H_gtk_range_get_slider_range);
   XG_DEFINE_PROCEDURE(gtk_status_icon_set_name, gxg_gtk_status_icon_set_name_w, 2, 0, 0, H_gtk_status_icon_set_name);
-  XG_DEFINE_PROCEDURE(gtk_widget_has_rc_style, gxg_gtk_widget_has_rc_style_w, 1, 0, 0, H_gtk_widget_has_rc_style);
   XG_DEFINE_PROCEDURE(gtk_paned_get_handle_window, gxg_gtk_paned_get_handle_window_w, 1, 0, 0, H_gtk_paned_get_handle_window);
   XG_DEFINE_PROCEDURE(gtk_widget_style_attach, gxg_gtk_widget_style_attach_w, 1, 0, 0, H_gtk_widget_style_attach);
   XG_DEFINE_PROCEDURE(gtk_widget_set_realized, gxg_gtk_widget_set_realized_w, 2, 0, 0, H_gtk_widget_set_realized);
@@ -46625,7 +45286,9 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_get_mapped, gxg_gtk_widget_get_mapped_w, 1, 0, 0, H_gtk_widget_get_mapped);
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
+  XG_DEFINE_PROCEDURE(gdk_cairo_create, gxg_gdk_cairo_create_w, 1, 0, 0, H_gdk_cairo_create);
+  XG_DEFINE_PROCEDURE(gdk_window_get_geometry, gxg_gdk_window_get_geometry_w, 1, 4, 0, H_gdk_window_get_geometry);
   XG_DEFINE_PROCEDURE(gdk_keymap_add_virtual_modifiers, gxg_gdk_keymap_add_virtual_modifiers_w, 2, 0, 0, H_gdk_keymap_add_virtual_modifiers);
   XG_DEFINE_PROCEDURE(gdk_window_coords_to_parent, gxg_gdk_window_coords_to_parent_w, 3, 2, 0, H_gdk_window_coords_to_parent);
   XG_DEFINE_PROCEDURE(gdk_window_coords_from_parent, gxg_gdk_window_coords_from_parent_w, 3, 2, 0, H_gdk_window_coords_from_parent);
@@ -46688,8 +45351,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_message_dialog_get_message_area, gxg_gtk_message_dialog_get_message_area_w, 1, 0, 0, H_gtk_message_dialog_get_message_area);
   XG_DEFINE_PROCEDURE(gtk_table_get_size, gxg_gtk_table_get_size_w, 1, 2, 0, H_gtk_table_get_size);
   XG_DEFINE_PROCEDURE(gtk_selection_data_get_length, gxg_gtk_selection_data_get_length_w, 1, 0, 0, H_gtk_selection_data_get_length);
-  XG_DEFINE_PROCEDURE(gdk_drawable_get_clip_region, gxg_gdk_drawable_get_clip_region_w, 1, 0, 0, H_gdk_drawable_get_clip_region);
-  XG_DEFINE_PROCEDURE(gdk_drawable_get_visible_region, gxg_gdk_drawable_get_visible_region_w, 1, 0, 0, H_gdk_drawable_get_visible_region);
   XG_DEFINE_PROCEDURE(gdk_pango_layout_line_get_clip_region, gxg_gdk_pango_layout_line_get_clip_region_w, 5, 0, 0, H_gdk_pango_layout_line_get_clip_region);
   XG_DEFINE_PROCEDURE(gdk_pango_layout_get_clip_region, gxg_gdk_pango_layout_get_clip_region_w, 5, 0, 0, H_gdk_pango_layout_get_clip_region);
   XG_DEFINE_PROCEDURE(gdk_window_shape_combine_region, gxg_gdk_window_shape_combine_region_w, 4, 0, 0, H_gdk_window_shape_combine_region);
@@ -46718,26 +45379,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_binding_set_activate, gxg_gtk_binding_set_activate_w, 4, 0, 0, H_gtk_binding_set_activate);
   XG_DEFINE_PROCEDURE(gtk_bindings_activate, gxg_gtk_bindings_activate_w, 3, 0, 0, H_gtk_bindings_activate);
   XG_DEFINE_PROCEDURE(gtk_icon_view_create_drag_icon, gxg_gtk_icon_view_create_drag_icon_w, 2, 0, 0, H_gtk_icon_view_create_drag_icon);
-  XG_DEFINE_PROCEDURE(gtk_style_apply_default_background, gxg_gtk_style_apply_default_background_w, 8, 0, 0, H_gtk_style_apply_default_background);
-  XG_DEFINE_PROCEDURE(gtk_paint_hline, gxg_gtk_paint_hline_w, 8, 0, 0, H_gtk_paint_hline);
-  XG_DEFINE_PROCEDURE(gtk_paint_vline, gxg_gtk_paint_vline_w, 8, 0, 0, H_gtk_paint_vline);
-  XG_DEFINE_PROCEDURE(gtk_paint_shadow, gxg_gtk_paint_shadow_w, 0, 0, 1, H_gtk_paint_shadow);
-  XG_DEFINE_PROCEDURE(gtk_paint_arrow, gxg_gtk_paint_arrow_w, 0, 0, 1, H_gtk_paint_arrow);
-  XG_DEFINE_PROCEDURE(gtk_paint_diamond, gxg_gtk_paint_diamond_w, 0, 0, 1, H_gtk_paint_diamond);
-  XG_DEFINE_PROCEDURE(gtk_paint_box, gxg_gtk_paint_box_w, 0, 0, 1, H_gtk_paint_box);
-  XG_DEFINE_PROCEDURE(gtk_paint_flat_box, gxg_gtk_paint_flat_box_w, 0, 0, 1, H_gtk_paint_flat_box);
-  XG_DEFINE_PROCEDURE(gtk_paint_check, gxg_gtk_paint_check_w, 0, 0, 1, H_gtk_paint_check);
-  XG_DEFINE_PROCEDURE(gtk_paint_option, gxg_gtk_paint_option_w, 0, 0, 1, H_gtk_paint_option);
-  XG_DEFINE_PROCEDURE(gtk_paint_tab, gxg_gtk_paint_tab_w, 0, 0, 1, H_gtk_paint_tab);
-  XG_DEFINE_PROCEDURE(gtk_paint_shadow_gap, gxg_gtk_paint_shadow_gap_w, 0, 0, 1, H_gtk_paint_shadow_gap);
-  XG_DEFINE_PROCEDURE(gtk_paint_box_gap, gxg_gtk_paint_box_gap_w, 0, 0, 1, H_gtk_paint_box_gap);
-  XG_DEFINE_PROCEDURE(gtk_paint_extension, gxg_gtk_paint_extension_w, 0, 0, 1, H_gtk_paint_extension);
-  XG_DEFINE_PROCEDURE(gtk_paint_focus, gxg_gtk_paint_focus_w, 9, 0, 0, H_gtk_paint_focus);
-  XG_DEFINE_PROCEDURE(gtk_paint_slider, gxg_gtk_paint_slider_w, 0, 0, 1, H_gtk_paint_slider);
-  XG_DEFINE_PROCEDURE(gtk_paint_handle, gxg_gtk_paint_handle_w, 0, 0, 1, H_gtk_paint_handle);
-  XG_DEFINE_PROCEDURE(gtk_paint_expander, gxg_gtk_paint_expander_w, 8, 0, 0, H_gtk_paint_expander);
-  XG_DEFINE_PROCEDURE(gtk_paint_layout, gxg_gtk_paint_layout_w, 9, 0, 0, H_gtk_paint_layout);
-  XG_DEFINE_PROCEDURE(gtk_paint_resize_grip, gxg_gtk_paint_resize_grip_w, 0, 0, 1, H_gtk_paint_resize_grip);
   XG_DEFINE_PROCEDURE(gtk_tree_view_create_row_drag_icon, gxg_gtk_tree_view_create_row_drag_icon_w, 2, 0, 0, H_gtk_tree_view_create_row_drag_icon);
   XG_DEFINE_PROCEDURE(gdk_cairo_get_clip_rectangle, gxg_gdk_cairo_get_clip_rectangle_w, 2, 0, 0, H_gdk_cairo_get_clip_rectangle);
   XG_DEFINE_PROCEDURE(gdk_cairo_region_create_from_surface, gxg_gdk_cairo_region_create_from_surface_w, 1, 0, 0, H_gdk_cairo_region_create_from_surface);
@@ -46850,6 +45491,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_colormap_alloc_colors, gxg_gdk_colormap_alloc_colors_w, 6, 0, 0, H_gdk_colormap_alloc_colors);
   XG_DEFINE_PROCEDURE(gdk_colormap_alloc_color, gxg_gdk_colormap_alloc_color_w, 4, 0, 0, H_gdk_colormap_alloc_color);
   XG_DEFINE_PROCEDURE(gdk_colormap_get_visual, gxg_gdk_colormap_get_visual_w, 1, 0, 0, H_gdk_colormap_get_visual);
+  XG_DEFINE_PROCEDURE(gdk_cairo_create, gxg_gdk_cairo_create_w, 1, 0, 0, H_gdk_cairo_create);
   XG_DEFINE_PROCEDURE(gdk_drawable_get_size, gxg_gdk_drawable_get_size_w, 1, 2, 0, H_gdk_drawable_get_size);
   XG_DEFINE_PROCEDURE(gdk_drawable_set_colormap, gxg_gdk_drawable_set_colormap_w, 2, 0, 0, H_gdk_drawable_set_colormap);
   XG_DEFINE_PROCEDURE(gdk_drawable_get_colormap, gxg_gdk_drawable_get_colormap_w, 1, 0, 0, H_gdk_drawable_get_colormap);
@@ -46867,6 +45509,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_set_icon, gxg_gdk_window_set_icon_w, 4, 0, 0, H_gdk_window_set_icon);
   XG_DEFINE_PROCEDURE(gdk_window_get_internal_paint_info, gxg_gdk_window_get_internal_paint_info_w, 1, 3, 0, H_gdk_window_get_internal_paint_info);
   XG_DEFINE_PROCEDURE(gdk_window_set_back_pixmap, gxg_gdk_window_set_back_pixmap_w, 3, 0, 0, H_gdk_window_set_back_pixmap);
+  XG_DEFINE_PROCEDURE(gdk_window_get_geometry, gxg_gdk_window_get_geometry_w, 1, 5, 0, H_gdk_window_get_geometry);
   XG_DEFINE_PROCEDURE(gtk_adjustment_new, gxg_gtk_adjustment_new_w, 6, 0, 0, H_gtk_adjustment_new);
   XG_DEFINE_PROCEDURE(gtk_bindings_activate, gxg_gtk_bindings_activate_w, 3, 0, 0, H_gtk_bindings_activate);
   XG_DEFINE_PROCEDURE(gtk_binding_set_activate, gxg_gtk_binding_set_activate_w, 4, 0, 0, H_gtk_binding_set_activate);
@@ -46874,43 +45517,64 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_cell_renderer_render, gxg_gtk_cell_renderer_render_w, 7, 0, 0, H_gtk_cell_renderer_render);
   XG_DEFINE_PROCEDURE(gtk_drag_source_set_icon, gxg_gtk_drag_source_set_icon_w, 4, 0, 0, H_gtk_drag_source_set_icon);
   XG_DEFINE_PROCEDURE(gtk_drag_set_icon_pixmap, gxg_gtk_drag_set_icon_pixmap_w, 6, 0, 0, H_gtk_drag_set_icon_pixmap);
+  XG_DEFINE_PROCEDURE(gtk_icon_set_render_icon, gxg_gtk_icon_set_render_icon_w, 7, 0, 0, H_gtk_icon_set_render_icon);
+  XG_DEFINE_PROCEDURE(gtk_rc_add_default_file, gxg_gtk_rc_add_default_file_w, 1, 0, 0, H_gtk_rc_add_default_file);
+  XG_DEFINE_PROCEDURE(gtk_rc_set_default_files, gxg_gtk_rc_set_default_files_w, 1, 0, 0, H_gtk_rc_set_default_files);
+  XG_DEFINE_PROCEDURE(gtk_rc_get_default_files, gxg_gtk_rc_get_default_files_w, 0, 0, 0, H_gtk_rc_get_default_files);
+  XG_DEFINE_PROCEDURE(gtk_rc_get_style, gxg_gtk_rc_get_style_w, 1, 0, 0, H_gtk_rc_get_style);
+  XG_DEFINE_PROCEDURE(gtk_rc_parse, gxg_gtk_rc_parse_w, 1, 0, 0, H_gtk_rc_parse);
+  XG_DEFINE_PROCEDURE(gtk_rc_parse_string, gxg_gtk_rc_parse_string_w, 1, 0, 0, H_gtk_rc_parse_string);
+  XG_DEFINE_PROCEDURE(gtk_rc_reparse_all, gxg_gtk_rc_reparse_all_w, 0, 0, 0, H_gtk_rc_reparse_all);
+  XG_DEFINE_PROCEDURE(gtk_rc_style_new, gxg_gtk_rc_style_new_w, 0, 0, 0, H_gtk_rc_style_new);
+  XG_DEFINE_PROCEDURE(gtk_rc_style_copy, gxg_gtk_rc_style_copy_w, 1, 0, 0, H_gtk_rc_style_copy);
+  XG_DEFINE_PROCEDURE(gtk_rc_find_module_in_path, gxg_gtk_rc_find_module_in_path_w, 1, 0, 0, H_gtk_rc_find_module_in_path);
+  XG_DEFINE_PROCEDURE(gtk_rc_get_theme_dir, gxg_gtk_rc_get_theme_dir_w, 0, 0, 0, H_gtk_rc_get_theme_dir);
+  XG_DEFINE_PROCEDURE(gtk_rc_get_module_dir, gxg_gtk_rc_get_module_dir_w, 0, 0, 0, H_gtk_rc_get_module_dir);
+  XG_DEFINE_PROCEDURE(gtk_rc_get_im_module_path, gxg_gtk_rc_get_im_module_path_w, 0, 0, 0, H_gtk_rc_get_im_module_path);
+  XG_DEFINE_PROCEDURE(gtk_rc_get_im_module_file, gxg_gtk_rc_get_im_module_file_w, 0, 0, 0, H_gtk_rc_get_im_module_file);
+  XG_DEFINE_PROCEDURE(gtk_style_new, gxg_gtk_style_new_w, 0, 0, 0, H_gtk_style_new);
+  XG_DEFINE_PROCEDURE(gtk_style_copy, gxg_gtk_style_copy_w, 1, 0, 0, H_gtk_style_copy);
+  XG_DEFINE_PROCEDURE(gtk_style_attach, gxg_gtk_style_attach_w, 2, 0, 0, H_gtk_style_attach);
+  XG_DEFINE_PROCEDURE(gtk_style_detach, gxg_gtk_style_detach_w, 1, 0, 0, H_gtk_style_detach);
+  XG_DEFINE_PROCEDURE(gtk_style_set_background, gxg_gtk_style_set_background_w, 3, 0, 0, H_gtk_style_set_background);
   XG_DEFINE_PROCEDURE(gtk_style_apply_default_background, gxg_gtk_style_apply_default_background_w, 9, 0, 0, H_gtk_style_apply_default_background);
-  XG_DEFINE_PROCEDURE(gtk_paint_hline, gxg_gtk_paint_hline_w, 9, 0, 0, H_gtk_paint_hline);
-  XG_DEFINE_PROCEDURE(gtk_paint_vline, gxg_gtk_paint_vline_w, 9, 0, 0, H_gtk_paint_vline);
-  XG_DEFINE_PROCEDURE(gtk_paint_shadow, gxg_gtk_paint_shadow_w, 0, 0, 1, H_gtk_paint_shadow);
-  XG_DEFINE_PROCEDURE(gtk_paint_arrow, gxg_gtk_paint_arrow_w, 0, 0, 1, H_gtk_paint_arrow);
-  XG_DEFINE_PROCEDURE(gtk_paint_diamond, gxg_gtk_paint_diamond_w, 0, 0, 1, H_gtk_paint_diamond);
-  XG_DEFINE_PROCEDURE(gtk_paint_box, gxg_gtk_paint_box_w, 0, 0, 1, H_gtk_paint_box);
-  XG_DEFINE_PROCEDURE(gtk_paint_flat_box, gxg_gtk_paint_flat_box_w, 0, 0, 1, H_gtk_paint_flat_box);
-  XG_DEFINE_PROCEDURE(gtk_paint_check, gxg_gtk_paint_check_w, 0, 0, 1, H_gtk_paint_check);
-  XG_DEFINE_PROCEDURE(gtk_paint_option, gxg_gtk_paint_option_w, 0, 0, 1, H_gtk_paint_option);
-  XG_DEFINE_PROCEDURE(gtk_paint_tab, gxg_gtk_paint_tab_w, 0, 0, 1, H_gtk_paint_tab);
-  XG_DEFINE_PROCEDURE(gtk_paint_shadow_gap, gxg_gtk_paint_shadow_gap_w, 0, 0, 1, H_gtk_paint_shadow_gap);
-  XG_DEFINE_PROCEDURE(gtk_paint_box_gap, gxg_gtk_paint_box_gap_w, 0, 0, 1, H_gtk_paint_box_gap);
-  XG_DEFINE_PROCEDURE(gtk_paint_extension, gxg_gtk_paint_extension_w, 0, 0, 1, H_gtk_paint_extension);
-  XG_DEFINE_PROCEDURE(gtk_paint_focus, gxg_gtk_paint_focus_w, 0, 0, 1, H_gtk_paint_focus);
-  XG_DEFINE_PROCEDURE(gtk_paint_slider, gxg_gtk_paint_slider_w, 0, 0, 1, H_gtk_paint_slider);
-  XG_DEFINE_PROCEDURE(gtk_paint_handle, gxg_gtk_paint_handle_w, 0, 0, 1, H_gtk_paint_handle);
-  XG_DEFINE_PROCEDURE(gtk_paint_layout, gxg_gtk_paint_layout_w, 0, 0, 1, H_gtk_paint_layout);
-  XG_DEFINE_PROCEDURE(gtk_paint_resize_grip, gxg_gtk_paint_resize_grip_w, 0, 0, 1, H_gtk_paint_resize_grip);
+  XG_DEFINE_PROCEDURE(gtk_style_lookup_icon_set, gxg_gtk_style_lookup_icon_set_w, 2, 0, 0, H_gtk_style_lookup_icon_set);
+  XG_DEFINE_PROCEDURE(gtk_style_render_icon, gxg_gtk_style_render_icon_w, 7, 0, 0, H_gtk_style_render_icon);
+  XG_DEFINE_PROCEDURE(gtk_border_copy, gxg_gtk_border_copy_w, 1, 0, 0, H_gtk_border_copy);
+  XG_DEFINE_PROCEDURE(gtk_border_free, gxg_gtk_border_free_w, 1, 0, 0, H_gtk_border_free);
   XG_DEFINE_PROCEDURE(gtk_tree_view_create_row_drag_icon, gxg_gtk_tree_view_create_row_drag_icon_w, 2, 0, 0, H_gtk_tree_view_create_row_drag_icon);
   XG_DEFINE_PROCEDURE(gtk_widget_hide_all, gxg_gtk_widget_hide_all_w, 1, 0, 0, H_gtk_widget_hide_all);
   XG_DEFINE_PROCEDURE(gtk_widget_size_request, gxg_gtk_widget_size_request_w, 2, 0, 0, H_gtk_widget_size_request);
   XG_DEFINE_PROCEDURE(gtk_widget_get_child_requisition, gxg_gtk_widget_get_child_requisition_w, 2, 0, 0, H_gtk_widget_get_child_requisition);
   XG_DEFINE_PROCEDURE(gtk_widget_get_colormap, gxg_gtk_widget_get_colormap_w, 1, 0, 0, H_gtk_widget_get_colormap);
   XG_DEFINE_PROCEDURE(gtk_widget_set_colormap, gxg_gtk_widget_set_colormap_w, 2, 0, 0, H_gtk_widget_set_colormap);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_style, gxg_gtk_widget_set_style_w, 2, 0, 0, H_gtk_widget_set_style);
+  XG_DEFINE_PROCEDURE(gtk_widget_ensure_style, gxg_gtk_widget_ensure_style_w, 1, 0, 0, H_gtk_widget_ensure_style);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_style, gxg_gtk_widget_get_style_w, 1, 0, 0, H_gtk_widget_get_style);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_style, gxg_gtk_widget_modify_style_w, 2, 0, 0, H_gtk_widget_modify_style);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_modifier_style, gxg_gtk_widget_get_modifier_style_w, 1, 0, 0, H_gtk_widget_get_modifier_style);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_fg, gxg_gtk_widget_modify_fg_w, 3, 0, 0, H_gtk_widget_modify_fg);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_bg, gxg_gtk_widget_modify_bg_w, 3, 0, 0, H_gtk_widget_modify_bg);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_text, gxg_gtk_widget_modify_text_w, 3, 0, 0, H_gtk_widget_modify_text);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_base, gxg_gtk_widget_modify_base_w, 3, 0, 0, H_gtk_widget_modify_base);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_font, gxg_gtk_widget_modify_font_w, 2, 0, 0, H_gtk_widget_modify_font);
+  XG_DEFINE_PROCEDURE(gtk_widget_reset_rc_styles, gxg_gtk_widget_reset_rc_styles_w, 1, 0, 0, H_gtk_widget_reset_rc_styles);
   XG_DEFINE_PROCEDURE(gtk_widget_push_colormap, gxg_gtk_widget_push_colormap_w, 1, 0, 0, H_gtk_widget_push_colormap);
   XG_DEFINE_PROCEDURE(gtk_widget_pop_colormap, gxg_gtk_widget_pop_colormap_w, 0, 0, 0, H_gtk_widget_pop_colormap);
   XG_DEFINE_PROCEDURE(gtk_widget_set_default_colormap, gxg_gtk_widget_set_default_colormap_w, 1, 0, 0, H_gtk_widget_set_default_colormap);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_default_style, gxg_gtk_widget_get_default_style_w, 0, 0, 0, H_gtk_widget_get_default_style);
   XG_DEFINE_PROCEDURE(gtk_widget_get_default_colormap, gxg_gtk_widget_get_default_colormap_w, 0, 0, 0, H_gtk_widget_get_default_colormap);
   XG_DEFINE_PROCEDURE(gtk_widget_get_default_visual, gxg_gtk_widget_get_default_visual_w, 0, 0, 0, H_gtk_widget_get_default_visual);
   XG_DEFINE_PROCEDURE(gtk_widget_shape_combine_mask, gxg_gtk_widget_shape_combine_mask_w, 4, 0, 0, H_gtk_widget_shape_combine_mask);
+  XG_DEFINE_PROCEDURE(gtk_widget_path, gxg_gtk_widget_path_w, 2, 2, 0, H_gtk_widget_path);
+  XG_DEFINE_PROCEDURE(gtk_widget_class_path, gxg_gtk_widget_class_path_w, 2, 2, 0, H_gtk_widget_class_path);
   XG_DEFINE_PROCEDURE(gtk_requisition_copy, gxg_gtk_requisition_copy_w, 1, 0, 0, H_gtk_requisition_copy);
   XG_DEFINE_PROCEDURE(gtk_requisition_free, gxg_gtk_requisition_free_w, 1, 0, 0, H_gtk_requisition_free);
   XG_DEFINE_PROCEDURE(gdk_screen_get_default_colormap, gxg_gdk_screen_get_default_colormap_w, 1, 0, 0, H_gdk_screen_get_default_colormap);
   XG_DEFINE_PROCEDURE(gdk_screen_set_default_colormap, gxg_gdk_screen_set_default_colormap_w, 2, 0, 0, H_gdk_screen_set_default_colormap);
   XG_DEFINE_PROCEDURE(gdk_screen_get_system_colormap, gxg_gdk_screen_get_system_colormap_w, 1, 0, 0, H_gdk_screen_get_system_colormap);
   XG_DEFINE_PROCEDURE(gtk_cell_view_get_size_of_row, gxg_gtk_cell_view_get_size_of_row_w, 3, 0, 0, H_gtk_cell_view_get_size_of_row);
+  XG_DEFINE_PROCEDURE(gtk_style_lookup_color, gxg_gtk_style_lookup_color_w, 3, 0, 0, H_gtk_style_lookup_color);
 #endif
 
   XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -47186,7 +45850,6 @@ static void define_functions(void)
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, "(GPOINTER obj) casts obj to GPOINTER");
   XG_DEFINE_PROCEDURE(GDK_DRAG_CONTEXT, gxg_GDK_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_DRAG_CONTEXT obj) casts obj to GDK_DRAG_CONTEXT");
-  XG_DEFINE_PROCEDURE(GDK_DRAWABLE, gxg_GDK_DRAWABLE_w, 1, 0, 0, "(GDK_DRAWABLE obj) casts obj to GDK_DRAWABLE");
   XG_DEFINE_PROCEDURE(GDK_DEVICE, gxg_GDK_DEVICE_w, 1, 0, 0, "(GDK_DEVICE obj) casts obj to GDK_DEVICE");
   XG_DEFINE_PROCEDURE(GDK_KEYMAP, gxg_GDK_KEYMAP_w, 1, 0, 0, "(GDK_KEYMAP obj) casts obj to GDK_KEYMAP");
   XG_DEFINE_PROCEDURE(GDK_VISUAL, gxg_GDK_VISUAL_w, 1, 0, 0, "(GDK_VISUAL obj) casts obj to GDK_VISUAL");
@@ -47264,7 +45927,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_SOCKET, gxg_GTK_SOCKET_w, 1, 0, 0, "(GTK_SOCKET obj) casts obj to GTK_SOCKET");
   XG_DEFINE_PROCEDURE(GTK_SPIN_BUTTON, gxg_GTK_SPIN_BUTTON_w, 1, 0, 0, "(GTK_SPIN_BUTTON obj) casts obj to GTK_SPIN_BUTTON");
   XG_DEFINE_PROCEDURE(GTK_STATUSBAR, gxg_GTK_STATUSBAR_w, 1, 0, 0, "(GTK_STATUSBAR obj) casts obj to GTK_STATUSBAR");
-  XG_DEFINE_PROCEDURE(GTK_STYLE, gxg_GTK_STYLE_w, 1, 0, 0, "(GTK_STYLE obj) casts obj to GTK_STYLE");
   XG_DEFINE_PROCEDURE(GTK_TABLE, gxg_GTK_TABLE_w, 1, 0, 0, "(GTK_TABLE obj) casts obj to GTK_TABLE");
   XG_DEFINE_PROCEDURE(GTK_TEAROFF_MENU_ITEM, gxg_GTK_TEAROFF_MENU_ITEM_w, 1, 0, 0, "(GTK_TEAROFF_MENU_ITEM obj) casts obj to GTK_TEAROFF_MENU_ITEM");
   XG_DEFINE_PROCEDURE(GTK_TEXT_BUFFER, gxg_GTK_TEXT_BUFFER_w, 1, 0, 0, "(GTK_TEXT_BUFFER obj) casts obj to GTK_TEXT_BUFFER");
@@ -47361,13 +46023,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_RECENT_FILTER, gxg_GTK_RECENT_FILTER_w, 1, 0, 0, "(GTK_RECENT_FILTER obj) casts obj to GTK_RECENT_FILTER");
   XG_DEFINE_PROCEDURE(GTK_RECENT_MANAGER, gxg_GTK_RECENT_MANAGER_w, 1, 0, 0, "(GTK_RECENT_MANAGER obj) casts obj to GTK_RECENT_MANAGER");
   XG_DEFINE_PROCEDURE(GTK_STATUS_ICON, gxg_GTK_STATUS_ICON_w, 1, 0, 0, "(GTK_STATUS_ICON obj) casts obj to GTK_STATUS_ICON");
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
   XG_DEFINE_PROCEDURE(GTK_PRINT_CONTEXT, gxg_GTK_PRINT_CONTEXT_w, 1, 0, 0, "(GTK_PRINT_CONTEXT obj) casts obj to GTK_PRINT_CONTEXT");
   XG_DEFINE_PROCEDURE(GTK_PRINT_OPERATION, gxg_GTK_PRINT_OPERATION_w, 1, 0, 0, "(GTK_PRINT_OPERATION obj) casts obj to GTK_PRINT_OPERATION");
   XG_DEFINE_PROCEDURE(GTK_PRINT_OPERATION_PREVIEW, gxg_GTK_PRINT_OPERATION_PREVIEW_w, 1, 0, 0, "(GTK_PRINT_OPERATION_PREVIEW obj) casts obj to GTK_PRINT_OPERATION_PREVIEW");
   XG_DEFINE_PROCEDURE(GTK_PRINT_SETTINGS, gxg_GTK_PRINT_SETTINGS_w, 1, 0, 0, "(GTK_PRINT_SETTINGS obj) casts obj to GTK_PRINT_SETTINGS");
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
   XG_DEFINE_PROCEDURE(GTK_TOOLTIP, gxg_GTK_TOOLTIP_w, 1, 0, 0, "(GTK_TOOLTIP obj) casts obj to GTK_TOOLTIP");
 #endif
@@ -47387,7 +46046,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_TOOL_ITEM_GROUP, gxg_GTK_TOOL_ITEM_GROUP_w, 1, 0, 0, "(GTK_TOOL_ITEM_GROUP obj) casts obj to GTK_TOOL_ITEM_GROUP");
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
   XG_DEFINE_PROCEDURE(GTK_COMBO_BOX_TEXT, gxg_GTK_COMBO_BOX_TEXT_w, 1, 0, 0, "(GTK_COMBO_BOX_TEXT obj) casts obj to GTK_COMBO_BOX_TEXT");
   XG_DEFINE_PROCEDURE(GTK_GRID, gxg_GTK_GRID_w, 1, 0, 0, "(GTK_GRID obj) casts obj to GTK_GRID");
   XG_DEFINE_PROCEDURE(GTK_SCROLLABLE, gxg_GTK_SCROLLABLE_w, 1, 0, 0, "(GTK_SCROLLABLE obj) casts obj to GTK_SCROLLABLE");
@@ -47396,8 +46055,10 @@ static void define_functions(void)
 
 #if (!HAVE_GTK_3)
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, "(GDK_COLORMAP obj) casts obj to GDK_COLORMAP");
+  XG_DEFINE_PROCEDURE(GDK_DRAWABLE, gxg_GDK_DRAWABLE_w, 1, 0, 0, "(GDK_DRAWABLE obj) casts obj to GDK_DRAWABLE");
   XG_DEFINE_PROCEDURE(GDK_PIXMAP, gxg_GDK_PIXMAP_w, 1, 0, 0, "(GDK_PIXMAP obj) casts obj to GDK_PIXMAP");
   XG_DEFINE_PROCEDURE(GTK_OBJECT, gxg_GTK_OBJECT_w, 1, 0, 0, "(GTK_OBJECT obj) casts obj to GTK_OBJECT");
+  XG_DEFINE_PROCEDURE(GTK_STYLE, gxg_GTK_STYLE_w, 1, 0, 0, "(GTK_STYLE obj) casts obj to GTK_STYLE");
 #endif
 
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);
@@ -47408,7 +46069,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init);
   XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check);
   XG_DEFINE_PROCEDURE(GDK_IS_DRAG_CONTEXT, gxg_GDK_IS_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_IS_DRAG_CONTEXT obj): " PROC_TRUE " if obj is a GDK_IS_DRAG_CONTEXT");
-  XG_DEFINE_PROCEDURE(GDK_IS_DRAWABLE, gxg_GDK_IS_DRAWABLE_w, 1, 0, 0, "(GDK_IS_DRAWABLE obj): " PROC_TRUE " if obj is a GDK_IS_DRAWABLE");
   XG_DEFINE_PROCEDURE(GDK_IS_DEVICE, gxg_GDK_IS_DEVICE_w, 1, 0, 0, "(GDK_IS_DEVICE obj): " PROC_TRUE " if obj is a GDK_IS_DEVICE");
   XG_DEFINE_PROCEDURE(GDK_IS_KEYMAP, gxg_GDK_IS_KEYMAP_w, 1, 0, 0, "(GDK_IS_KEYMAP obj): " PROC_TRUE " if obj is a GDK_IS_KEYMAP");
   XG_DEFINE_PROCEDURE(GDK_IS_VISUAL, gxg_GDK_IS_VISUAL_w, 1, 0, 0, "(GDK_IS_VISUAL obj): " PROC_TRUE " if obj is a GDK_IS_VISUAL");
@@ -47477,7 +46137,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_RADIO_BUTTON, gxg_GTK_IS_RADIO_BUTTON_w, 1, 0, 0, "(GTK_IS_RADIO_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_RADIO_BUTTON");
   XG_DEFINE_PROCEDURE(GTK_IS_RADIO_MENU_ITEM, gxg_GTK_IS_RADIO_MENU_ITEM_w, 1, 0, 0, "(GTK_IS_RADIO_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_RADIO_MENU_ITEM");
   XG_DEFINE_PROCEDURE(GTK_IS_RANGE, gxg_GTK_IS_RANGE_w, 1, 0, 0, "(GTK_IS_RANGE obj): " PROC_TRUE " if obj is a GTK_IS_RANGE");
-  XG_DEFINE_PROCEDURE(GTK_IS_RC_STYLE, gxg_GTK_IS_RC_STYLE_w, 1, 0, 0, "(GTK_IS_RC_STYLE obj): " PROC_TRUE " if obj is a GTK_IS_RC_STYLE");
   XG_DEFINE_PROCEDURE(GTK_IS_SCALE, gxg_GTK_IS_SCALE_w, 1, 0, 0, "(GTK_IS_SCALE obj): " PROC_TRUE " if obj is a GTK_IS_SCALE");
   XG_DEFINE_PROCEDURE(GTK_IS_SCROLLBAR, gxg_GTK_IS_SCROLLBAR_w, 1, 0, 0, "(GTK_IS_SCROLLBAR obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLBAR");
   XG_DEFINE_PROCEDURE(GTK_IS_SCROLLED_WINDOW, gxg_GTK_IS_SCROLLED_WINDOW_w, 1, 0, 0, "(GTK_IS_SCROLLED_WINDOW obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLED_WINDOW");
@@ -47487,7 +46146,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_SOCKET, gxg_GTK_IS_SOCKET_w, 1, 0, 0, "(GTK_IS_SOCKET obj): " PROC_TRUE " if obj is a GTK_IS_SOCKET");
   XG_DEFINE_PROCEDURE(GTK_IS_SPIN_BUTTON, gxg_GTK_IS_SPIN_BUTTON_w, 1, 0, 0, "(GTK_IS_SPIN_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_SPIN_BUTTON");
   XG_DEFINE_PROCEDURE(GTK_IS_STATUSBAR, gxg_GTK_IS_STATUSBAR_w, 1, 0, 0, "(GTK_IS_STATUSBAR obj): " PROC_TRUE " if obj is a GTK_IS_STATUSBAR");
-  XG_DEFINE_PROCEDURE(GTK_IS_STYLE, gxg_GTK_IS_STYLE_w, 1, 0, 0, "(GTK_IS_STYLE obj): " PROC_TRUE " if obj is a GTK_IS_STYLE");
   XG_DEFINE_PROCEDURE(GTK_IS_TABLE, gxg_GTK_IS_TABLE_w, 1, 0, 0, "(GTK_IS_TABLE obj): " PROC_TRUE " if obj is a GTK_IS_TABLE");
   XG_DEFINE_PROCEDURE(GTK_IS_TEAROFF_MENU_ITEM, gxg_GTK_IS_TEAROFF_MENU_ITEM_w, 1, 0, 0, "(GTK_IS_TEAROFF_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_TEAROFF_MENU_ITEM");
   XG_DEFINE_PROCEDURE(GTK_IS_TEXT_BUFFER, gxg_GTK_IS_TEXT_BUFFER_w, 1, 0, 0, "(GTK_IS_TEXT_BUFFER obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_BUFFER");
@@ -47566,13 +46224,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_RECENT_FILTER, gxg_GTK_IS_RECENT_FILTER_w, 1, 0, 0, "(GTK_IS_RECENT_FILTER obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_FILTER");
   XG_DEFINE_PROCEDURE(GTK_IS_RECENT_MANAGER, gxg_GTK_IS_RECENT_MANAGER_w, 1, 0, 0, "(GTK_IS_RECENT_MANAGER obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_MANAGER");
   XG_DEFINE_PROCEDURE(GTK_IS_STATUS_ICON, gxg_GTK_IS_STATUS_ICON_w, 1, 0, 0, "(GTK_IS_STATUS_ICON obj): " PROC_TRUE " if obj is a GTK_IS_STATUS_ICON");
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
   XG_DEFINE_PROCEDURE(GTK_IS_PRINT_CONTEXT, gxg_GTK_IS_PRINT_CONTEXT_w, 1, 0, 0, "(GTK_IS_PRINT_CONTEXT obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_CONTEXT");
   XG_DEFINE_PROCEDURE(GTK_IS_PRINT_OPERATION, gxg_GTK_IS_PRINT_OPERATION_w, 1, 0, 0, "(GTK_IS_PRINT_OPERATION obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_OPERATION");
   XG_DEFINE_PROCEDURE(GTK_IS_PRINT_OPERATION_PREVIEW, gxg_GTK_IS_PRINT_OPERATION_PREVIEW_w, 1, 0, 0, "(GTK_IS_PRINT_OPERATION_PREVIEW obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_OPERATION_PREVIEW");
   XG_DEFINE_PROCEDURE(GTK_IS_PRINT_SETTINGS, gxg_GTK_IS_PRINT_SETTINGS_w, 1, 0, 0, "(GTK_IS_PRINT_SETTINGS obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_SETTINGS");
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
   XG_DEFINE_PROCEDURE(GTK_IS_TOOLTIP, gxg_GTK_IS_TOOLTIP_w, 1, 0, 0, "(GTK_IS_TOOLTIP obj): " PROC_TRUE " if obj is a GTK_IS_TOOLTIP");
 #endif
@@ -47592,7 +46247,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_TOOL_ITEM_GROUP, gxg_GTK_IS_TOOL_ITEM_GROUP_w, 1, 0, 0, "(GTK_IS_TOOL_ITEM_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_ITEM_GROUP");
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
   XG_DEFINE_PROCEDURE(GTK_IS_COMBO_BOX_TEXT, gxg_GTK_IS_COMBO_BOX_TEXT_w, 1, 0, 0, "(GTK_IS_COMBO_BOX_TEXT obj): " PROC_TRUE " if obj is a GTK_IS_COMBO_BOX_TEXT");
   XG_DEFINE_PROCEDURE(GTK_IS_GRID, gxg_GTK_IS_GRID_w, 1, 0, 0, "(GTK_IS_GRID obj): " PROC_TRUE " if obj is a GTK_IS_GRID");
   XG_DEFINE_PROCEDURE(GTK_IS_SCROLLABLE, gxg_GTK_IS_SCROLLABLE_w, 1, 0, 0, "(GTK_IS_SCROLLABLE obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLABLE");
@@ -47601,8 +46256,11 @@ static void define_functions(void)
 
 #if (!HAVE_GTK_3)
   XG_DEFINE_PROCEDURE(GDK_IS_COLORMAP, gxg_GDK_IS_COLORMAP_w, 1, 0, 0, "(GDK_IS_COLORMAP obj): " PROC_TRUE " if obj is a GDK_IS_COLORMAP");
+  XG_DEFINE_PROCEDURE(GDK_IS_DRAWABLE, gxg_GDK_IS_DRAWABLE_w, 1, 0, 0, "(GDK_IS_DRAWABLE obj): " PROC_TRUE " if obj is a GDK_IS_DRAWABLE");
   XG_DEFINE_PROCEDURE(GDK_IS_PIXMAP, gxg_GDK_IS_PIXMAP_w, 1, 0, 0, "(GDK_IS_PIXMAP obj): " PROC_TRUE " if obj is a GDK_IS_PIXMAP");
   XG_DEFINE_PROCEDURE(GTK_IS_OBJECT, gxg_GTK_IS_OBJECT_w, 1, 0, 0, "(GTK_IS_OBJECT obj): " PROC_TRUE " if obj is a GTK_IS_OBJECT");
+  XG_DEFINE_PROCEDURE(GTK_IS_RC_STYLE, gxg_GTK_IS_RC_STYLE_w, 1, 0, 0, "(GTK_IS_RC_STYLE obj): " PROC_TRUE " if obj is a GTK_IS_RC_STYLE");
+  XG_DEFINE_PROCEDURE(GTK_IS_STYLE, gxg_GTK_IS_STYLE_w, 1, 0, 0, "(GTK_IS_STYLE obj): " PROC_TRUE " if obj is a GTK_IS_STYLE");
 #endif
 
 }
@@ -47772,7 +46430,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_DROP_FINISHED);
   DEFINE_INTEGER(GDK_CLIENT_EVENT);
   DEFINE_INTEGER(GDK_VISIBILITY_NOTIFY);
-  DEFINE_INTEGER(GDK_NO_EXPOSE);
   DEFINE_INTEGER(GDK_SCROLL);
   DEFINE_INTEGER(GDK_WINDOW_STATE);
   DEFINE_INTEGER(GDK_SETTING);
@@ -47863,8 +46520,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_VISUAL_PSEUDO_COLOR);
   DEFINE_INTEGER(GDK_VISUAL_TRUE_COLOR);
   DEFINE_INTEGER(GDK_VISUAL_DIRECT_COLOR);
-  DEFINE_INTEGER(GDK_INPUT_OUTPUT);
-  DEFINE_INTEGER(GDK_INPUT_ONLY);
   DEFINE_INTEGER(GDK_WINDOW_ROOT);
   DEFINE_INTEGER(GDK_WINDOW_TOPLEVEL);
   DEFINE_INTEGER(GDK_WINDOW_CHILD);
@@ -48118,10 +46773,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_BUTTONS_OK_CANCEL);
   DEFINE_INTEGER(GTK_NOTEBOOK_TAB_FIRST);
   DEFINE_INTEGER(GTK_NOTEBOOK_TAB_LAST);
-  DEFINE_INTEGER(GTK_RC_FG);
-  DEFINE_INTEGER(GTK_RC_BG);
-  DEFINE_INTEGER(GTK_RC_TEXT);
-  DEFINE_INTEGER(GTK_RC_BASE);
   DEFINE_INTEGER(GTK_SIZE_GROUP_NONE);
   DEFINE_INTEGER(GTK_SIZE_GROUP_HORIZONTAL);
   DEFINE_INTEGER(GTK_SIZE_GROUP_VERTICAL);
@@ -48393,7 +47044,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_RECENT_MANAGER_ERROR_READ);
   DEFINE_INTEGER(GTK_RECENT_MANAGER_ERROR_WRITE);
   DEFINE_INTEGER(GTK_RECENT_MANAGER_ERROR_UNKNOWN);
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
   DEFINE_INTEGER(GTK_MESSAGE_OTHER);
   DEFINE_INTEGER(GTK_TREE_VIEW_GRID_LINES_NONE);
   DEFINE_INTEGER(GTK_TREE_VIEW_GRID_LINES_HORIZONTAL);
@@ -48419,8 +47069,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_PRINT_ERROR_GENERAL);
   DEFINE_INTEGER(GTK_PRINT_ERROR_INTERNAL_ERROR);
   DEFINE_INTEGER(GTK_PRINT_ERROR_NOMEM);
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
   DEFINE_INTEGER(GTK_BUTTONBOX_CENTER);
   DEFINE_INTEGER(GTK_ICON_LOOKUP_GENERIC_FALLBACK);
@@ -48462,7 +47110,7 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_WINDOW_OFFSCREEN);
 #endif
 
-#if HAVE_GTK_SWITCH_NEW
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
   DEFINE_INTEGER(GDK_KEY_VoidSymbol);
   DEFINE_INTEGER(GDK_KEY_BackSpace);
   DEFINE_INTEGER(GDK_KEY_Tab);
@@ -48703,12 +47351,24 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_KEY_bar);
   DEFINE_INTEGER(GDK_KEY_braceright);
   DEFINE_INTEGER(GDK_KEY_asciitilde);
+  DEFINE_INTEGER(GTK_STATE_INCONSISTENT);
+  DEFINE_INTEGER(GTK_STATE_FOCUSED);
   DEFINE_INTEGER(GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH);
   DEFINE_INTEGER(GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT);
   DEFINE_INTEGER(GTK_ASSISTANT_PAGE_CUSTOM);
   DEFINE_INTEGER(GTK_TEXT_SEARCH_CASE_INSENSITIVE);
   DEFINE_INTEGER(GTK_SCROLL_MINIMUM);
   DEFINE_INTEGER(GTK_SCROLL_NATURAL);
+#endif
+
+#if (!HAVE_GTK_3)
+  DEFINE_INTEGER(GDK_NO_EXPOSE);
+  DEFINE_INTEGER(GDK_INPUT_OUTPUT);
+  DEFINE_INTEGER(GDK_INPUT_ONLY);
+  DEFINE_INTEGER(GTK_RC_FG);
+  DEFINE_INTEGER(GTK_RC_BG);
+  DEFINE_INTEGER(GTK_RC_TEXT);
+  DEFINE_INTEGER(GTK_RC_BASE);
 #endif
 
   DEFINE_INTEGER(CAIRO_STATUS_SUCCESS);
@@ -48864,164 +47524,7 @@ static void define_integers(void)
   DEFINE_INTEGER(CAIRO_SURFACE_TYPE_SKIA);
 #endif
 
-  DEFINE_ULONG(GDK_TYPE_PIXBUF);
-  DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION);
-  DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION_ITER);
   DEFINE_ULONG(GDK_PIXBUF_ERROR);
-  DEFINE_ULONG(GDK_TYPE_PIXBUF_ALPHA_MODE);
-  DEFINE_ULONG(GDK_TYPE_COLORSPACE);
-  DEFINE_ULONG(GDK_TYPE_PIXBUF_ERROR);
-  DEFINE_ULONG(GDK_TYPE_INTERP_TYPE);
-  DEFINE_ULONG(GTK_TYPE_ICON_SET);
-  DEFINE_ULONG(GTK_TYPE_ICON_SOURCE);
-  DEFINE_ULONG(GTK_TYPE_SELECTION_DATA);
-  DEFINE_ULONG(GTK_TYPE_BORDER);
-  DEFINE_ULONG(GTK_TYPE_TREE_ITER);
-  DEFINE_ULONG(GTK_TYPE_TREE_PATH);
-  DEFINE_ULONG(GTK_TYPE_IDENTIFIER);
-  DEFINE_ULONG(GTK_TYPE_REQUISITION);
-  DEFINE_ULONG(GTK_TYPE_ACCEL_GROUP);
-  DEFINE_ULONG(GTK_TYPE_ACCEL_LABEL);
-  DEFINE_ULONG(GTK_TYPE_ACCESSIBLE);
-  DEFINE_ULONG(GTK_TYPE_ADJUSTMENT);
-  DEFINE_ULONG(GTK_TYPE_ALIGNMENT);
-  DEFINE_ULONG(GTK_TYPE_ARROW);
-  DEFINE_ULONG(GTK_TYPE_ASPECT_FRAME);
-  DEFINE_ULONG(GTK_TYPE_BUTTON_BOX);
-  DEFINE_ULONG(GTK_TYPE_BIN);
-  DEFINE_ULONG(GTK_TYPE_BOX);
-  DEFINE_ULONG(GTK_TYPE_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_CALENDAR);
-  DEFINE_ULONG(GTK_TYPE_CELL_EDITABLE);
-  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER);
-  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_PIXBUF);
-  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_TEXT);
-  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_TOGGLE);
-  DEFINE_ULONG(GTK_TYPE_CHECK_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_CHECK_MENU_ITEM);
-  DEFINE_ULONG(GTK_TYPE_COLOR_SELECTION_DIALOG);
-  DEFINE_ULONG(GTK_TYPE_COLOR_SELECTION);
-  DEFINE_ULONG(GTK_TYPE_CONTAINER);
-  DEFINE_ULONG(GTK_TYPE_DIALOG);
-  DEFINE_ULONG(GTK_TYPE_DRAWING_AREA);
-  DEFINE_ULONG(GTK_TYPE_EDITABLE);
-  DEFINE_ULONG(GTK_TYPE_ENTRY);
-  DEFINE_ULONG(GTK_TYPE_EVENT_BOX);
-  DEFINE_ULONG(GTK_TYPE_FIXED);
-  DEFINE_ULONG(GTK_TYPE_FONT_SELECTION);
-  DEFINE_ULONG(GTK_TYPE_FONT_SELECTION_DIALOG);
-  DEFINE_ULONG(GTK_TYPE_FRAME);
-  DEFINE_ULONG(GTK_TYPE_HANDLE_BOX);
-  DEFINE_ULONG(GTK_TYPE_HBUTTON_BOX);
-  DEFINE_ULONG(GTK_TYPE_HBOX);
-  DEFINE_ULONG(GTK_TYPE_HPANED);
-  DEFINE_ULONG(GTK_TYPE_HSCALE);
-  DEFINE_ULONG(GTK_TYPE_HSCROLLBAR);
-  DEFINE_ULONG(GTK_TYPE_HSEPARATOR);
-  DEFINE_ULONG(GTK_TYPE_IMAGE);
-  DEFINE_ULONG(GTK_TYPE_IMAGE_MENU_ITEM);
-  DEFINE_ULONG(GTK_TYPE_IM_CONTEXT);
-  DEFINE_ULONG(GTK_TYPE_IM_CONTEXT_SIMPLE);
-  DEFINE_ULONG(GTK_TYPE_IM_MULTICONTEXT);
-  DEFINE_ULONG(GTK_TYPE_INVISIBLE);
-  DEFINE_ULONG(GTK_TYPE_LABEL);
-  DEFINE_ULONG(GTK_TYPE_LAYOUT);
-  DEFINE_ULONG(GTK_TYPE_LIST_STORE);
-  DEFINE_ULONG(GTK_TYPE_MENU_BAR);
-  DEFINE_ULONG(GTK_TYPE_MENU);
-  DEFINE_ULONG(GTK_TYPE_MENU_ITEM);
-  DEFINE_ULONG(GTK_TYPE_MENU_SHELL);
-  DEFINE_ULONG(GTK_TYPE_MESSAGE_DIALOG);
-  DEFINE_ULONG(GTK_TYPE_MISC);
-  DEFINE_ULONG(GTK_TYPE_NOTEBOOK);
-  DEFINE_ULONG(GTK_TYPE_PANED);
-  DEFINE_ULONG(GTK_TYPE_PLUG);
-  DEFINE_ULONG(GTK_TYPE_PROGRESS_BAR);
-  DEFINE_ULONG(GTK_TYPE_RADIO_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_RADIO_MENU_ITEM);
-  DEFINE_ULONG(GTK_TYPE_RANGE);
-  DEFINE_ULONG(GTK_TYPE_RC_STYLE);
-  DEFINE_ULONG(GTK_TYPE_SCALE);
-  DEFINE_ULONG(GTK_TYPE_SCROLLBAR);
-  DEFINE_ULONG(GTK_TYPE_SCROLLED_WINDOW);
-  DEFINE_ULONG(GTK_TYPE_SEPARATOR);
-  DEFINE_ULONG(GTK_TYPE_SEPARATOR_MENU_ITEM);
-  DEFINE_ULONG(GTK_TYPE_SIZE_GROUP);
-  DEFINE_ULONG(GTK_TYPE_SOCKET);
-  DEFINE_ULONG(GTK_TYPE_SPIN_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_STATUSBAR);
-  DEFINE_ULONG(GTK_TYPE_STYLE);
-  DEFINE_ULONG(GTK_TYPE_TABLE);
-  DEFINE_ULONG(GTK_TYPE_TEAROFF_MENU_ITEM);
-  DEFINE_ULONG(GTK_TYPE_TEXT_BUFFER);
-  DEFINE_ULONG(GTK_TYPE_TEXT_CHILD_ANCHOR);
-  DEFINE_ULONG(GTK_TYPE_TEXT_MARK);
-  DEFINE_ULONG(GTK_TYPE_TEXT_TAG);
-  DEFINE_ULONG(GTK_TYPE_TEXT_TAG_TABLE);
-  DEFINE_ULONG(GTK_TYPE_TEXT_VIEW);
-  DEFINE_ULONG(GTK_TYPE_TOGGLE_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_TOOLBAR);
-  DEFINE_ULONG(GTK_TYPE_TREE_DRAG_SOURCE);
-  DEFINE_ULONG(GTK_TYPE_TREE_DRAG_DEST);
-  DEFINE_ULONG(GTK_TYPE_TREE_MODEL);
-  DEFINE_ULONG(GTK_TYPE_TREE_MODEL_SORT);
-  DEFINE_ULONG(GTK_TYPE_TREE_SELECTION);
-  DEFINE_ULONG(GTK_TYPE_TREE_SORTABLE);
-  DEFINE_ULONG(GTK_TYPE_TREE_STORE);
-  DEFINE_ULONG(GTK_TYPE_TREE_VIEW_COLUMN);
-  DEFINE_ULONG(GTK_TYPE_TREE_VIEW);
-  DEFINE_ULONG(GTK_TYPE_VBUTTON_BOX);
-  DEFINE_ULONG(GTK_TYPE_VBOX);
-  DEFINE_ULONG(GTK_TYPE_VIEWPORT);
-  DEFINE_ULONG(GTK_TYPE_VPANED);
-  DEFINE_ULONG(GTK_TYPE_VSCALE);
-  DEFINE_ULONG(GTK_TYPE_VSCROLLBAR);
-  DEFINE_ULONG(GTK_TYPE_VSEPARATOR);
-  DEFINE_ULONG(GTK_TYPE_WIDGET);
-  DEFINE_ULONG(GTK_TYPE_WINDOW);
-  DEFINE_ULONG(GTK_TYPE_WINDOW_GROUP);
-  DEFINE_ULONG(GDK_TYPE_COLOR);
-  DEFINE_ULONG(GDK_TYPE_CURSOR);
-  DEFINE_ULONG(GDK_TYPE_DRAG_CONTEXT);
-  DEFINE_ULONG(GDK_TYPE_DRAWABLE);
-  DEFINE_ULONG(GDK_TYPE_CURSOR_TYPE);
-  DEFINE_ULONG(GDK_TYPE_DRAG_ACTION);
-  DEFINE_ULONG(GDK_TYPE_DRAG_PROTOCOL);
-  DEFINE_ULONG(GDK_TYPE_FILTER_RETURN);
-  DEFINE_ULONG(GDK_TYPE_EVENT_TYPE);
-  DEFINE_ULONG(GDK_TYPE_EVENT_MASK);
-  DEFINE_ULONG(GDK_TYPE_VISIBILITY_STATE);
-  DEFINE_ULONG(GDK_TYPE_SCROLL_DIRECTION);
-  DEFINE_ULONG(GDK_TYPE_NOTIFY_TYPE);
-  DEFINE_ULONG(GDK_TYPE_CROSSING_MODE);
-  DEFINE_ULONG(GDK_TYPE_PROPERTY_STATE);
-  DEFINE_ULONG(GDK_TYPE_WINDOW_STATE);
-  DEFINE_ULONG(GDK_TYPE_SETTING_ACTION);
-  DEFINE_ULONG(GDK_TYPE_EXTENSION_MODE);
-  DEFINE_ULONG(GDK_TYPE_INPUT_SOURCE);
-  DEFINE_ULONG(GDK_TYPE_INPUT_MODE);
-  DEFINE_ULONG(GDK_TYPE_AXIS_USE);
-  DEFINE_ULONG(GDK_TYPE_PROP_MODE);
-  DEFINE_ULONG(GDK_TYPE_BYTE_ORDER);
-  DEFINE_ULONG(GDK_TYPE_MODIFIER_TYPE);
-  DEFINE_ULONG(GDK_TYPE_STATUS);
-  DEFINE_ULONG(GDK_TYPE_GRAB_STATUS);
-  DEFINE_ULONG(GDK_TYPE_VISUAL_TYPE);
-  DEFINE_ULONG(GDK_TYPE_WINDOW_CLASS);
-  DEFINE_ULONG(GDK_TYPE_WINDOW_TYPE);
-  DEFINE_ULONG(GDK_TYPE_WINDOW_ATTRIBUTES_TYPE);
-  DEFINE_ULONG(GDK_TYPE_WINDOW_HINTS);
-  DEFINE_ULONG(GDK_TYPE_WINDOW_TYPE_HINT);
-  DEFINE_ULONG(GDK_TYPE_WM_DECORATION);
-  DEFINE_ULONG(GDK_TYPE_WM_FUNCTION);
-  DEFINE_ULONG(GDK_TYPE_GRAVITY);
-  DEFINE_ULONG(GDK_TYPE_WINDOW_EDGE);
-  DEFINE_ULONG(GDK_TYPE_EVENT);
-  DEFINE_ULONG(GDK_TYPE_RECTANGLE);
-  DEFINE_ULONG(GDK_TYPE_DEVICE);
-  DEFINE_ULONG(GDK_TYPE_KEYMAP);
-  DEFINE_ULONG(GDK_TYPE_VISUAL);
-  DEFINE_ULONG(GDK_TYPE_WINDOW);
   DEFINE_ULONG(G_TYPE_IO_CONDITION);
   DEFINE_ULONG(G_TYPE_INVALID);
   DEFINE_ULONG(G_TYPE_NONE);
@@ -49044,60 +47547,10 @@ static void define_integers(void)
   DEFINE_ULONG(G_TYPE_BOXED);
   DEFINE_ULONG(G_TYPE_PARAM);
   DEFINE_ULONG(G_TYPE_OBJECT);
-  DEFINE_ULONG(GDK_TYPE_SCREEN);
-  DEFINE_ULONG(GDK_TYPE_DISPLAY);
-  DEFINE_ULONG(GTK_TYPE_FILE_CHOOSER_DIALOG);
-  DEFINE_ULONG(GTK_TYPE_FILE_CHOOSER_WIDGET);
-  DEFINE_ULONG(GTK_TYPE_TREE_MODEL_FILTER);
-  DEFINE_ULONG(GTK_TYPE_ACTION);
-  DEFINE_ULONG(GTK_TYPE_ACTION_GROUP);
-  DEFINE_ULONG(GTK_TYPE_COMBO_BOX);
-  DEFINE_ULONG(GTK_TYPE_EXPANDER);
-  DEFINE_ULONG(GTK_TYPE_FONT_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_COLOR_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_ENTRY_COMPLETION);
-  DEFINE_ULONG(GTK_TYPE_UI_MANAGER);
-  DEFINE_ULONG(GTK_TYPE_RADIO_TOOL_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_RADIO_ACTION);
-  DEFINE_ULONG(GTK_TYPE_SEPARATOR_TOOL_ITEM);
-  DEFINE_ULONG(GTK_TYPE_TOGGLE_ACTION);
-  DEFINE_ULONG(GTK_TYPE_TOGGLE_TOOL_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_FILE_FILTER);
-  DEFINE_ULONG(GTK_TYPE_CELL_LAYOUT);
-  DEFINE_ULONG(GTK_TYPE_CLIPBOARD);
-  DEFINE_ULONG(GTK_TYPE_FILE_CHOOSER);
-  DEFINE_ULONG(GTK_TYPE_ICON_INFO);
-  DEFINE_ULONG(GTK_TYPE_ICON_THEME);
-  DEFINE_ULONG(GTK_TYPE_TOOL_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_TOOL_ITEM);
-  DEFINE_ULONG(GTK_TYPE_CELL_VIEW);
-  DEFINE_ULONG(GTK_TYPE_ABOUT_DIALOG);
-  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_COMBO);
-  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_PROGRESS);
-  DEFINE_ULONG(GTK_TYPE_ICON_VIEW);
-  DEFINE_ULONG(GTK_TYPE_FILE_CHOOSER_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_MENU_TOOL_BUTTON);
   DEFINE_ULONG(PANGO_TYPE_ITEM);
   DEFINE_ULONG(PANGO_TYPE_LAYOUT_LINE);
-  DEFINE_ULONG(GTK_TYPE_RECENT_INFO);
-  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_ACCEL);
-  DEFINE_ULONG(GTK_TYPE_ASSISTANT);
-  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_SPIN);
-  DEFINE_ULONG(GTK_TYPE_LINK_BUTTON);
-  DEFINE_ULONG(GTK_TYPE_RECENT_CHOOSER_DIALOG);
-  DEFINE_ULONG(GTK_TYPE_RECENT_CHOOSER);
-  DEFINE_ULONG(GTK_TYPE_RECENT_CHOOSER_MENU);
-  DEFINE_ULONG(GTK_TYPE_RECENT_CHOOSER_WIDGET);
-  DEFINE_ULONG(GTK_TYPE_STATUS_ICON);
-  DEFINE_ULONG(GTK_TYPE_RECENT_MANAGER);
-  DEFINE_ULONG(GTK_TYPE_RECENT_FILTER);
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
-  DEFINE_ULONG(GTK_TYPE_TOOLTIP);
-#endif
-
 #if HAVE_GTK_STATUS_ICON_GET_TITLE
   DEFINE_ULONG(GTK_ENTRY_BUFFER_MAX_SIZE);
-  DEFINE_ULONG(GTK_TYPE_ENTRY_BUFFER);
 #endif
 
 }
@@ -49250,7 +47703,6 @@ static void define_strings(void)
   DEFINE_STRING(GTK_STOCK_ORIENTATION_LANDSCAPE);
   DEFINE_STRING(GTK_STOCK_ORIENTATION_REVERSE_LANDSCAPE);
   DEFINE_STRING(GTK_STOCK_SELECT_ALL);
-#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
   DEFINE_STRING(GTK_STOCK_ORIENTATION_REVERSE_PORTRAIT);
   DEFINE_STRING(GTK_PRINT_SETTINGS_PRINTER);
   DEFINE_STRING(GTK_PRINT_SETTINGS_ORIENTATION);
@@ -49276,8 +47728,6 @@ static void define_strings(void)
   DEFINE_STRING(GTK_PRINT_SETTINGS_OUTPUT_BIN);
   DEFINE_STRING(GTK_PRINT_SETTINGS_OUTPUT_FILE_FORMAT);
   DEFINE_STRING(GTK_PRINT_SETTINGS_OUTPUT_URI);
-#endif
-
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
   DEFINE_STRING(GTK_STOCK_DISCARD);
 #endif
@@ -49312,7 +47762,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Dec-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("08-Dec-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -279,7 +279,7 @@ void stop_bomb(snd_info *sp)
 
 
 
-static GdkDrawable *sound_pix_wn(chan_info *cp)
+static Drawable *sound_pix_wn(chan_info *cp)
 {
   snd_info *sp = NULL;
   if (cp) sp = cp->sound;
@@ -290,14 +290,14 @@ static GdkDrawable *sound_pix_wn(chan_info *cp)
       if ((cp->chan < sp->sgx->num_clock_widgets) &&
 	  (CLOCK_PIX(sp, cp->chan)) &&
 	  (sp->sgx->clock_pix_ax[cp->chan]))
-	return(GDK_DRAWABLE(WIDGET_TO_WINDOW(CLOCK_PIX(sp, cp->chan))));
-      return(GDK_DRAWABLE(WIDGET_TO_WINDOW(CLOCK_PIX(sp, 0))));
+	return(DRAWABLE(WIDGET_TO_WINDOW(CLOCK_PIX(sp, cp->chan))));
+      return(DRAWABLE(WIDGET_TO_WINDOW(CLOCK_PIX(sp, 0))));
     }
   return(NULL);
 }
 
 
-static void show_happy_face(GdkDrawable *wn, mus_float_t pct)
+static void show_happy_face(Drawable *wn, mus_float_t pct)
 {
   cairo_t *cr;
   cr = gdk_cairo_create(wn);
@@ -356,7 +356,7 @@ static void show_happy_face(GdkDrawable *wn, mus_float_t pct)
 }
 
 
-static void hide_happy_face(GdkDrawable *wn)
+static void hide_happy_face(Drawable *wn)
 {
   cairo_t *cr;
   cr = gdk_cairo_create(wn);

@@ -386,7 +386,7 @@ void gc_set_colors(gc_t *gp, color_info *col1, color_info *col2)
 }
 
 
-gc_t *gc_new(GdkDrawable *wn)
+gc_t *gc_new(void)
 {
   gc_t *gp;
   gp = (gc_t *)calloc(1, sizeof(gc_t));
@@ -507,19 +507,25 @@ void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
 {
   /* the color has to stick around??? */
   /* another stop-gap: allocate a color each time... */
+#if (!HAVE_GTK_3)
   gtk_widget_modify_bg(w, type, rgb_to_gdk_color(color));
+#endif
 }
 
 
 void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
 {
+#if (!HAVE_GTK_3)
   gtk_widget_modify_fg(w, type, rgb_to_gdk_color(color));
+#endif
 }
 
 
 void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 {
+#if (!HAVE_GTK_3)
   gtk_widget_modify_base(w, type, rgb_to_gdk_color(color));
+#endif
 }
 
 
