@@ -425,10 +425,12 @@ static void menu_drag_watcher(Widget w, const char *str, Position x, Position y,
       XmChangeColor(w, ss->sgx->selection_color);
       free(new_title);
       break;
+
     case DRAG_LEAVE:
       reflect_file_change_in_title();
       XmChangeColor(w, ss->sgx->highlight_color);
       break;
+
     default:
       break;
     }

@@ -1719,6 +1719,24 @@ it is set:
 32
 </pre>
 
+<p>make-procedure-with-setter can add generalized set! support to any function:
+</p>
+
+<pre>
+&gt; (define cadr (make-procedure-with-setter 
+                 cadr 
+                 (lambda (lst val) 
+                   (set! (car (cdr lst) ) val))))
+cadr
+&gt; (cadr '(1 2 3))
+2
+&gt; (let ((lst (list 1 2 3))) 
+    (set! (cadr lst) 4) 
+    lst)
+(1 4 3)
+</pre>
+
+
 <small>
 <blockquote>
 
