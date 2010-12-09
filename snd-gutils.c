@@ -1158,7 +1158,22 @@ char *slist_selection(slist *lst)
  *       if combined, initial drag of mix does not reflect drag until button release
  *       mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *       perhaps play triangle for mix
+ * now there are no fonts in the drawer? [is this a pango-cairo bug? graph labels are handled by pango]
+ * channel graph is unlabelled and has extra space on right? (it's cut off)
+ * freq response curve in controls is broken -- mouse actions are caught but no display update
+ * fft window graph is broken
+ * view files dialog amp env is broken
+ * edit env graph is cutoff on right
+ * prefs sliders have no color
+ * hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
+ *  and then there are no horizontal sliders??
+ *  for num-dot (dots graph) only every other one is noticed, or perhaps graphed
+ * the slist entries look bad
+ * segfault in test 20 (same problem as earlier)
  *  (see also goto_window above)
+ *
+ * the graph problems are all the same: the drawingarea widget is not updating itself when cairo draws on it.
+ *   gdk_window_invalidate_rect does not help
  *
  * TODO: try cairo-trace and the new GL surface (1.10.0)
  */

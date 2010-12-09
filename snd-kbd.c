@@ -2482,7 +2482,7 @@ static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd, XEN raw)
 
   #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg :optional callback snd raw): post msg in snd's minibuffer \
 then when the user eventually responds, invoke the function callback, if any, with the response.  If 'raw' is " PROC_TRUE ", the response is \
-passed as a string to the prompt callback function; otherwise it is evaluated first as Scheme code.\n  " prompt_example
+passed as a string to the prompt callback function; otherwise it is evaluated first.\n  " prompt_example
 
   snd_info *sp;
 

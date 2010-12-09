@@ -237,7 +237,7 @@
 	"GdkEventAny*" "GdkDeviceManager*"
 	
 	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t" "cairo_bool_t"
-	"cairo_region_overlap_t" "cairo_device_type_t" "GtkSizeRequestMode"
+	"cairo_region_overlap_t" "cairo_device_type_t"
 	))
 
 (define (cadr-str data)
@@ -798,6 +798,7 @@
 	(cons "GdkWindowTypeHint" "INT")
 	(cons "GdkGravity" "INT")
 	(cons "GdkWindowHints" "INT")
+	(cons "GtkSizeRequestMode" "INT")
 	
 	(cons "GtkEntryIconPosition" "INT")
 	

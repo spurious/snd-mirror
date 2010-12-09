@@ -884,7 +884,9 @@ XM_TYPE_PTR(GdkDevice_, GdkDevice*)
 XM_TYPE_PTR_2(GdkDeviceManager_, GdkDeviceManager*)
 XM_TYPE_PTR_1(GtkMessageDialog_, GtkMessageDialog*)
 XM_TYPE_PTR(cairo_region_t_, cairo_region_t*)
-XM_TYPE(GtkSizeRequestMode, GtkSizeRequestMode)
+#define C_TO_XEN_GtkSizeRequestMode(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkSizeRequestMode(Arg) (GtkSizeRequestMode)(XEN_TO_C_INT(Arg))
+#define XEN_GtkSizeRequestMode_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(GtkContainerClass_, GtkContainerClass*)
 XM_TYPE(GtkAlign, GtkAlign)
 XM_TYPE_PTR_1(GtkComboBoxText_, GtkComboBoxText*)
@@ -894,6 +896,7 @@ XM_TYPE_PTR_1(GtkScrollable_, GtkScrollable*)
 #define XEN_TO_C_GtkScrollablePolicy(Arg) (GtkScrollablePolicy)(XEN_TO_C_INT(Arg))
 #define XEN_GtkScrollablePolicy_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(GtkSwitch_, GtkSwitch*)
+XM_TYPE_PTR(GtkBorder_, GtkBorder*)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -913,7 +916,6 @@ XM_TYPE_PTR(GtkStyle_, GtkStyle*)
 #define XEN_TO_C_GtkStateType(Arg) (GtkStateType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkStateType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GtkRcStyle_, GtkRcStyle*)
-XM_TYPE_PTR(GtkBorder_, GtkBorder*)
 XM_TYPE_PTR(GtkRequisition_, GtkRequisition*)
 #endif
 
@@ -30244,6 +30246,107 @@ static XEN gxg_gtk_switch_get_active(XEN sw)
   return(C_TO_XEN_gboolean(gtk_switch_get_active(XEN_TO_C_GtkSwitch_(sw))));
 }
 
+static XEN gxg_gdk_window_get_clip_region(XEN window)
+{
+  #define H_gdk_window_get_clip_region "cairo_region_t* gdk_window_get_clip_region(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_clip_region", "GdkWindow*");
+  return(C_TO_XEN_cairo_region_t_(gdk_window_get_clip_region(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gdk_window_get_visible_region(XEN window)
+{
+  #define H_gdk_window_get_visible_region "cairo_region_t* gdk_window_get_visible_region(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_visible_region", "GdkWindow*");
+  return(C_TO_XEN_cairo_region_t_(gdk_window_get_visible_region(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gtk_border_new(void)
+{
+  #define H_gtk_border_new "GtkBorder* gtk_border_new( void)"
+  return(C_TO_XEN_GtkBorder_(gtk_border_new()));
+}
+
+static XEN gxg_gtk_border_copy(XEN border_)
+{
+  #define H_gtk_border_copy "GtkBorder* gtk_border_copy(GtkBorder* border_)"
+  XEN_ASSERT_TYPE(XEN_GtkBorder__P(border_), border_, 1, "gtk_border_copy", "GtkBorder*");
+  return(C_TO_XEN_GtkBorder_(gtk_border_copy(XEN_TO_C_GtkBorder_(border_))));
+}
+
+static XEN gxg_gtk_border_free(XEN border_)
+{
+  #define H_gtk_border_free "void gtk_border_free(GtkBorder* border_)"
+  XEN_ASSERT_TYPE(XEN_GtkBorder__P(border_), border_, 1, "gtk_border_free", "GtkBorder*");
+  gtk_border_free(XEN_TO_C_GtkBorder_(border_));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_combo_box_get_id_column(XEN combo_box)
+{
+  #define H_gtk_combo_box_get_id_column "gint gtk_combo_box_get_id_column(GtkComboBox* combo_box)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_get_id_column", "GtkComboBox*");
+  return(C_TO_XEN_gint(gtk_combo_box_get_id_column(XEN_TO_C_GtkComboBox_(combo_box))));
+}
+
+static XEN gxg_gtk_combo_box_set_id_column(XEN combo_box, XEN id_column)
+{
+  #define H_gtk_combo_box_set_id_column "void gtk_combo_box_set_id_column(GtkComboBox* combo_box, gint id_column)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_set_id_column", "GtkComboBox*");
+  XEN_ASSERT_TYPE(XEN_gint_P(id_column), id_column, 2, "gtk_combo_box_set_id_column", "gint");
+  gtk_combo_box_set_id_column(XEN_TO_C_GtkComboBox_(combo_box), XEN_TO_C_gint(id_column));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_combo_box_get_active_id(XEN combo_box)
+{
+  #define H_gtk_combo_box_get_active_id "gchar* gtk_combo_box_get_active_id(GtkComboBox* combo_box)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_get_active_id", "GtkComboBox*");
+  return(C_TO_XEN_gchar_(gtk_combo_box_get_active_id(XEN_TO_C_GtkComboBox_(combo_box))));
+}
+
+static XEN gxg_gtk_combo_box_set_active_id(XEN combo_box, XEN active_id)
+{
+  #define H_gtk_combo_box_set_active_id "void gtk_combo_box_set_active_id(GtkComboBox* combo_box, gchar* active_id)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_set_active_id", "GtkComboBox*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(active_id), active_id, 2, "gtk_combo_box_set_active_id", "gchar*");
+  gtk_combo_box_set_active_id(XEN_TO_C_GtkComboBox_(combo_box), (const gchar*)XEN_TO_C_gchar_(active_id));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_combo_box_text_insert(XEN combo_box, XEN position, XEN id, XEN text)
+{
+  #define H_gtk_combo_box_text_insert "void gtk_combo_box_text_insert(GtkComboBoxText* combo_box, gint position, \
+gchar* id, gchar* text)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBoxText__P(combo_box), combo_box, 1, "gtk_combo_box_text_insert", "GtkComboBoxText*");
+  XEN_ASSERT_TYPE(XEN_gint_P(position), position, 2, "gtk_combo_box_text_insert", "gint");
+  XEN_ASSERT_TYPE(XEN_gchar__P(id), id, 3, "gtk_combo_box_text_insert", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 4, "gtk_combo_box_text_insert", "gchar*");
+  gtk_combo_box_text_insert(XEN_TO_C_GtkComboBoxText_(combo_box), XEN_TO_C_gint(position), (const gchar*)XEN_TO_C_gchar_(id), (const gchar*)XEN_TO_C_gchar_(text));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_combo_box_text_append(XEN combo_box, XEN id, XEN text)
+{
+  #define H_gtk_combo_box_text_append "void gtk_combo_box_text_append(GtkComboBoxText* combo_box, gchar* id, \
+gchar* text)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBoxText__P(combo_box), combo_box, 1, "gtk_combo_box_text_append", "GtkComboBoxText*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(id), id, 2, "gtk_combo_box_text_append", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 3, "gtk_combo_box_text_append", "gchar*");
+  gtk_combo_box_text_append(XEN_TO_C_GtkComboBoxText_(combo_box), (const gchar*)XEN_TO_C_gchar_(id), (const gchar*)XEN_TO_C_gchar_(text));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_combo_box_text_prepend(XEN combo_box, XEN id, XEN text)
+{
+  #define H_gtk_combo_box_text_prepend "void gtk_combo_box_text_prepend(GtkComboBoxText* combo_box, gchar* id, \
+gchar* text)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBoxText__P(combo_box), combo_box, 1, "gtk_combo_box_text_prepend", "GtkComboBoxText*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(id), id, 2, "gtk_combo_box_text_prepend", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 3, "gtk_combo_box_text_prepend", "gchar*");
+  gtk_combo_box_text_prepend(XEN_TO_C_GtkComboBoxText_(combo_box), (const gchar*)XEN_TO_C_gchar_(id), (const gchar*)XEN_TO_C_gchar_(text));
+  return(XEN_FALSE);
+}
+
 #endif
 
 #if (!HAVE_GTK_3)
@@ -30833,21 +30936,6 @@ GtkTextDirection direction, GtkStateType state, GtkIconSize size, GtkWidget* wid
                                                    XEN_TO_C_gchar_(detail))));
 }
 
-static XEN gxg_gtk_border_copy(XEN border)
-{
-  #define H_gtk_border_copy "GtkBorder* gtk_border_copy(GtkBorder* border)"
-  XEN_ASSERT_TYPE(XEN_GtkBorder__P(border), border, 1, "gtk_border_copy", "GtkBorder*");
-  return(C_TO_XEN_GtkBorder_(gtk_border_copy(XEN_TO_C_GtkBorder_(border))));
-}
-
-static XEN gxg_gtk_border_free(XEN border)
-{
-  #define H_gtk_border_free "void gtk_border_free(GtkBorder* border)"
-  XEN_ASSERT_TYPE(XEN_GtkBorder__P(border), border, 1, "gtk_border_free", "GtkBorder*");
-  gtk_border_free(XEN_TO_C_GtkBorder_(border));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_tree_view_create_row_drag_icon(XEN tree_view, XEN path)
 {
   #define H_gtk_tree_view_create_row_drag_icon "GdkPixmap* gtk_tree_view_create_row_drag_icon(GtkTreeView* tree_view, \
@@ -31050,30 +31138,6 @@ gint offset_x, gint offset_y)"
   XEN_ASSERT_TYPE(XEN_gint_P(offset_y), offset_y, 4, "gtk_widget_shape_combine_mask", "gint");
   gtk_widget_shape_combine_mask(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GdkBitmap_(shape_mask), XEN_TO_C_gint(offset_x), XEN_TO_C_gint(offset_y));
   return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_widget_path(XEN widget, XEN path_length, XEN ignore_path, XEN ignore_path_reversed)
-{
-  #define H_gtk_widget_path "void gtk_widget_path(GtkWidget* widget, guint* path_length, gchar** [path], \
-gchar** [path_reversed])"
-  gchar* ref_path = NULL;
-  gchar* ref_path_reversed = NULL;
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_path", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_guint__P(path_length), path_length, 2, "gtk_widget_path", "guint*");
-  gtk_widget_path(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_guint_(path_length), &ref_path, &ref_path_reversed);
-  return(XEN_LIST_2(C_TO_XEN_gchar_(ref_path), C_TO_XEN_gchar_(ref_path_reversed)));
-}
-
-static XEN gxg_gtk_widget_class_path(XEN widget, XEN path_length, XEN ignore_path, XEN ignore_path_reversed)
-{
-  #define H_gtk_widget_class_path "void gtk_widget_class_path(GtkWidget* widget, guint* path_length, \
-gchar** [path], gchar** [path_reversed])"
-  gchar* ref_path = NULL;
-  gchar* ref_path_reversed = NULL;
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_class_path", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_guint__P(path_length), path_length, 2, "gtk_widget_class_path", "guint*");
-  gtk_widget_class_path(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_guint_(path_length), &ref_path, &ref_path_reversed);
-  return(XEN_LIST_2(C_TO_XEN_gchar_(ref_path), C_TO_XEN_gchar_(ref_path_reversed)));
 }
 
 static XEN gxg_gtk_requisition_copy(XEN requisition)
@@ -37590,6 +37654,18 @@ XEN_NARGIFY_2(gxg_gtk_scrollable_set_vscroll_policy_w, gxg_gtk_scrollable_set_vs
 XEN_NARGIFY_0(gxg_gtk_switch_new_w, gxg_gtk_switch_new)
 XEN_NARGIFY_2(gxg_gtk_switch_set_active_w, gxg_gtk_switch_set_active)
 XEN_NARGIFY_1(gxg_gtk_switch_get_active_w, gxg_gtk_switch_get_active)
+XEN_NARGIFY_1(gxg_gdk_window_get_clip_region_w, gxg_gdk_window_get_clip_region)
+XEN_NARGIFY_1(gxg_gdk_window_get_visible_region_w, gxg_gdk_window_get_visible_region)
+XEN_NARGIFY_0(gxg_gtk_border_new_w, gxg_gtk_border_new)
+XEN_NARGIFY_1(gxg_gtk_border_copy_w, gxg_gtk_border_copy)
+XEN_NARGIFY_1(gxg_gtk_border_free_w, gxg_gtk_border_free)
+XEN_NARGIFY_1(gxg_gtk_combo_box_get_id_column_w, gxg_gtk_combo_box_get_id_column)
+XEN_NARGIFY_2(gxg_gtk_combo_box_set_id_column_w, gxg_gtk_combo_box_set_id_column)
+XEN_NARGIFY_1(gxg_gtk_combo_box_get_active_id_w, gxg_gtk_combo_box_get_active_id)
+XEN_NARGIFY_2(gxg_gtk_combo_box_set_active_id_w, gxg_gtk_combo_box_set_active_id)
+XEN_NARGIFY_4(gxg_gtk_combo_box_text_insert_w, gxg_gtk_combo_box_text_insert)
+XEN_NARGIFY_3(gxg_gtk_combo_box_text_append_w, gxg_gtk_combo_box_text_append)
+XEN_NARGIFY_3(gxg_gtk_combo_box_text_prepend_w, gxg_gtk_combo_box_text_prepend)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -37647,8 +37723,6 @@ XEN_NARGIFY_3(gxg_gtk_style_set_background_w, gxg_gtk_style_set_background)
 XEN_NARGIFY_9(gxg_gtk_style_apply_default_background_w, gxg_gtk_style_apply_default_background)
 XEN_NARGIFY_2(gxg_gtk_style_lookup_icon_set_w, gxg_gtk_style_lookup_icon_set)
 XEN_NARGIFY_7(gxg_gtk_style_render_icon_w, gxg_gtk_style_render_icon)
-XEN_NARGIFY_1(gxg_gtk_border_copy_w, gxg_gtk_border_copy)
-XEN_NARGIFY_1(gxg_gtk_border_free_w, gxg_gtk_border_free)
 XEN_NARGIFY_2(gxg_gtk_tree_view_create_row_drag_icon_w, gxg_gtk_tree_view_create_row_drag_icon)
 XEN_NARGIFY_1(gxg_gtk_widget_hide_all_w, gxg_gtk_widget_hide_all)
 XEN_NARGIFY_2(gxg_gtk_widget_size_request_w, gxg_gtk_widget_size_request)
@@ -37673,8 +37747,6 @@ XEN_NARGIFY_0(gxg_gtk_widget_get_default_style_w, gxg_gtk_widget_get_default_sty
 XEN_NARGIFY_0(gxg_gtk_widget_get_default_colormap_w, gxg_gtk_widget_get_default_colormap)
 XEN_NARGIFY_0(gxg_gtk_widget_get_default_visual_w, gxg_gtk_widget_get_default_visual)
 XEN_NARGIFY_4(gxg_gtk_widget_shape_combine_mask_w, gxg_gtk_widget_shape_combine_mask)
-XEN_ARGIFY_4(gxg_gtk_widget_path_w, gxg_gtk_widget_path)
-XEN_ARGIFY_4(gxg_gtk_widget_class_path_w, gxg_gtk_widget_class_path)
 XEN_NARGIFY_1(gxg_gtk_requisition_copy_w, gxg_gtk_requisition_copy)
 XEN_NARGIFY_1(gxg_gtk_requisition_free_w, gxg_gtk_requisition_free)
 XEN_NARGIFY_1(gxg_gdk_screen_get_default_colormap_w, gxg_gdk_screen_get_default_colormap)
@@ -41533,6 +41605,18 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_switch_new_w gxg_gtk_switch_new
 #define gxg_gtk_switch_set_active_w gxg_gtk_switch_set_active
 #define gxg_gtk_switch_get_active_w gxg_gtk_switch_get_active
+#define gxg_gdk_window_get_clip_region_w gxg_gdk_window_get_clip_region
+#define gxg_gdk_window_get_visible_region_w gxg_gdk_window_get_visible_region
+#define gxg_gtk_border_new_w gxg_gtk_border_new
+#define gxg_gtk_border_copy_w gxg_gtk_border_copy
+#define gxg_gtk_border_free_w gxg_gtk_border_free
+#define gxg_gtk_combo_box_get_id_column_w gxg_gtk_combo_box_get_id_column
+#define gxg_gtk_combo_box_set_id_column_w gxg_gtk_combo_box_set_id_column
+#define gxg_gtk_combo_box_get_active_id_w gxg_gtk_combo_box_get_active_id
+#define gxg_gtk_combo_box_set_active_id_w gxg_gtk_combo_box_set_active_id
+#define gxg_gtk_combo_box_text_insert_w gxg_gtk_combo_box_text_insert
+#define gxg_gtk_combo_box_text_append_w gxg_gtk_combo_box_text_append
+#define gxg_gtk_combo_box_text_prepend_w gxg_gtk_combo_box_text_prepend
 #endif
 
 #if (!HAVE_GTK_3)
@@ -41590,8 +41674,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_style_apply_default_background_w gxg_gtk_style_apply_default_background
 #define gxg_gtk_style_lookup_icon_set_w gxg_gtk_style_lookup_icon_set
 #define gxg_gtk_style_render_icon_w gxg_gtk_style_render_icon
-#define gxg_gtk_border_copy_w gxg_gtk_border_copy
-#define gxg_gtk_border_free_w gxg_gtk_border_free
 #define gxg_gtk_tree_view_create_row_drag_icon_w gxg_gtk_tree_view_create_row_drag_icon
 #define gxg_gtk_widget_hide_all_w gxg_gtk_widget_hide_all
 #define gxg_gtk_widget_size_request_w gxg_gtk_widget_size_request
@@ -41616,8 +41698,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_widget_get_default_colormap_w gxg_gtk_widget_get_default_colormap
 #define gxg_gtk_widget_get_default_visual_w gxg_gtk_widget_get_default_visual
 #define gxg_gtk_widget_shape_combine_mask_w gxg_gtk_widget_shape_combine_mask
-#define gxg_gtk_widget_path_w gxg_gtk_widget_path
-#define gxg_gtk_widget_class_path_w gxg_gtk_widget_class_path
 #define gxg_gtk_requisition_copy_w gxg_gtk_requisition_copy
 #define gxg_gtk_requisition_free_w gxg_gtk_requisition_free
 #define gxg_gdk_screen_get_default_colormap_w gxg_gdk_screen_get_default_colormap
@@ -45483,6 +45563,18 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_switch_new, gxg_gtk_switch_new_w, 0, 0, 0, H_gtk_switch_new);
   XG_DEFINE_PROCEDURE(gtk_switch_set_active, gxg_gtk_switch_set_active_w, 2, 0, 0, H_gtk_switch_set_active);
   XG_DEFINE_PROCEDURE(gtk_switch_get_active, gxg_gtk_switch_get_active_w, 1, 0, 0, H_gtk_switch_get_active);
+  XG_DEFINE_PROCEDURE(gdk_window_get_clip_region, gxg_gdk_window_get_clip_region_w, 1, 0, 0, H_gdk_window_get_clip_region);
+  XG_DEFINE_PROCEDURE(gdk_window_get_visible_region, gxg_gdk_window_get_visible_region_w, 1, 0, 0, H_gdk_window_get_visible_region);
+  XG_DEFINE_PROCEDURE(gtk_border_new, gxg_gtk_border_new_w, 0, 0, 0, H_gtk_border_new);
+  XG_DEFINE_PROCEDURE(gtk_border_copy, gxg_gtk_border_copy_w, 1, 0, 0, H_gtk_border_copy);
+  XG_DEFINE_PROCEDURE(gtk_border_free, gxg_gtk_border_free_w, 1, 0, 0, H_gtk_border_free);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_get_id_column, gxg_gtk_combo_box_get_id_column_w, 1, 0, 0, H_gtk_combo_box_get_id_column);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_set_id_column, gxg_gtk_combo_box_set_id_column_w, 2, 0, 0, H_gtk_combo_box_set_id_column);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_get_active_id, gxg_gtk_combo_box_get_active_id_w, 1, 0, 0, H_gtk_combo_box_get_active_id);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_set_active_id, gxg_gtk_combo_box_set_active_id_w, 2, 0, 0, H_gtk_combo_box_set_active_id);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_text_insert, gxg_gtk_combo_box_text_insert_w, 4, 0, 0, H_gtk_combo_box_text_insert);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_text_append, gxg_gtk_combo_box_text_append_w, 3, 0, 0, H_gtk_combo_box_text_append);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_text_prepend, gxg_gtk_combo_box_text_prepend_w, 3, 0, 0, H_gtk_combo_box_text_prepend);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -45540,8 +45632,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_style_apply_default_background, gxg_gtk_style_apply_default_background_w, 9, 0, 0, H_gtk_style_apply_default_background);
   XG_DEFINE_PROCEDURE(gtk_style_lookup_icon_set, gxg_gtk_style_lookup_icon_set_w, 2, 0, 0, H_gtk_style_lookup_icon_set);
   XG_DEFINE_PROCEDURE(gtk_style_render_icon, gxg_gtk_style_render_icon_w, 7, 0, 0, H_gtk_style_render_icon);
-  XG_DEFINE_PROCEDURE(gtk_border_copy, gxg_gtk_border_copy_w, 1, 0, 0, H_gtk_border_copy);
-  XG_DEFINE_PROCEDURE(gtk_border_free, gxg_gtk_border_free_w, 1, 0, 0, H_gtk_border_free);
   XG_DEFINE_PROCEDURE(gtk_tree_view_create_row_drag_icon, gxg_gtk_tree_view_create_row_drag_icon_w, 2, 0, 0, H_gtk_tree_view_create_row_drag_icon);
   XG_DEFINE_PROCEDURE(gtk_widget_hide_all, gxg_gtk_widget_hide_all_w, 1, 0, 0, H_gtk_widget_hide_all);
   XG_DEFINE_PROCEDURE(gtk_widget_size_request, gxg_gtk_widget_size_request_w, 2, 0, 0, H_gtk_widget_size_request);
@@ -45566,8 +45656,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_get_default_colormap, gxg_gtk_widget_get_default_colormap_w, 0, 0, 0, H_gtk_widget_get_default_colormap);
   XG_DEFINE_PROCEDURE(gtk_widget_get_default_visual, gxg_gtk_widget_get_default_visual_w, 0, 0, 0, H_gtk_widget_get_default_visual);
   XG_DEFINE_PROCEDURE(gtk_widget_shape_combine_mask, gxg_gtk_widget_shape_combine_mask_w, 4, 0, 0, H_gtk_widget_shape_combine_mask);
-  XG_DEFINE_PROCEDURE(gtk_widget_path, gxg_gtk_widget_path_w, 2, 2, 0, H_gtk_widget_path);
-  XG_DEFINE_PROCEDURE(gtk_widget_class_path, gxg_gtk_widget_class_path_w, 2, 2, 0, H_gtk_widget_class_path);
   XG_DEFINE_PROCEDURE(gtk_requisition_copy, gxg_gtk_requisition_copy_w, 1, 0, 0, H_gtk_requisition_copy);
   XG_DEFINE_PROCEDURE(gtk_requisition_free, gxg_gtk_requisition_free_w, 1, 0, 0, H_gtk_requisition_free);
   XG_DEFINE_PROCEDURE(gdk_screen_get_default_colormap, gxg_gdk_screen_get_default_colormap_w, 1, 0, 0, H_gdk_screen_get_default_colormap);

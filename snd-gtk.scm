@@ -183,7 +183,7 @@
       (if (and (> ax1 ax0)
 	       (> ay1 ay0))
 	  (let* ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
-		 (wn (GDK_DRAWABLE (gtk_widget_get_window scan-pane)))
+		 (wn ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window scan-pane)))
 		 (cr (gdk_cairo_create wn))
 		 (xincr (/ (- ax1 ax0) size))
 		 (bg-color (color->list (basic-color))))
@@ -672,7 +672,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define snd-clock-icon
   (lambda (snd hour)
-    (let* ((window (GDK_DRAWABLE (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
+    (let* ((window ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
 	   (cr (gdk_cairo_create window))
 	   (bg (color->list (basic-color))))
       (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
@@ -694,7 +694,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; this is the happy face progress bar
 
 (define (snd-happy-face snd progress)
-  (let* ((window (GDK_DRAWABLE (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
+  (let* ((window ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
 	 (cr (gdk_cairo_create window))
 	 (bg (color->list (basic-color)))
 	 (fc (list 1.0 progress 0.0)))
@@ -816,7 +816,7 @@ Reverb-feedback sets the scaler on the feedback.
 	(g_signal_connect meter "configure_event" 
 			  (lambda (w e d)
 			    (let ((xy (if (provided? 'gtk2)
-					  (gdk_drawable_get_size (GDK_DRAWABLE (gtk_widget_get_window w)))
+					  (gdk_drawable_get_size ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window w)))
 					  (list (gtk_widget_get_allocated_width w)
 						(gtk_widget_get_allocated_height w)))))
 			      (list-set! d 5 (car xy))
@@ -833,7 +833,7 @@ Reverb-feedback sets the scaler on the feedback.
 	 (width (list-ref meter-data 5))
 	 (height (list-ref meter-data 6))
 	 ;; (size (list-ref meter-data 2))
-	 (win (GDK_DRAWABLE (gtk_widget_get_window meter)))
+	 (win ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window meter)))
 	 (major-tick (round (/ width 24)))
 	 (minor-tick (round (* major-tick .6)))
 	 (wid2 (floor (/ width 2)))
@@ -931,7 +931,7 @@ Reverb-feedback sets the scaler on the feedback.
   ;; add n level meters to a pane at the top of the Snd window
   (let* ((parent (list-ref (main-widgets) 5))
 	 (height (if (> n 2) 70 85))
-	 (parent-width (cadr (gdk_drawable_get_size (GDK_DRAWABLE (gtk_widget_get_window parent)))))
+	 (parent-width (cadr (gdk_drawable_get_size ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window parent)))))
 	 (width (floor (/ parent-width n)))
 	 (meters (gtk_hbox_new #t 4))
 	 (meter-list '()))

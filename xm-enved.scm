@@ -371,7 +371,7 @@
 			    (set! ly cy)))))
 		    (let* ((lx #f)
 			   (ly #f)
-			   (cr (gdk_cairo_create (GDK_DRAWABLE wn)))
+			   (cr (gdk_cairo_create ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) wn)))
 			   (size (widget-size (GTK_WIDGET widget))))
 		      
 		      (cairo_push_group cr)
