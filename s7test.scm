@@ -3695,12 +3695,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((x '(((1 2) . 3) 4))) (set-car! x 1) x) '(1 4))
 (test (let ((lst (cons 1 (cons 2 3)))) (set-car! (cdr lst) 4) lst) (cons 1 (cons 4 3)))
 (test (let ((lst (cons 1 (cons 2 3)))) (set-car! lst 4) lst) (cons 4 (cons 2 3)))
-
-					;(set-car! '(1 . 2) 3)  ??
-
 (test (let ((x (list 1 2))) (set! (car x) 0) x) (list 0 2))
 (test (let ((x (cons 1 2))) (set! (cdr x) 0) x) (cons 1 0))
-
+(test (let ((x (list 1 2))) (set-car! x (list 3 4)) x) '((3 4) 2))
+(test (let ((x (cons 1 2))) (set-car! x (list 3 4)) x) '((3 4) . 2))
+(test (let ((x (cons (list 1 2) 3))) (set-car! (car x) (list 3 4)) x) '(((3 4) 2) . 3))
 
 (test (let ((x (cons 1 2))) (set-cdr! x 3) x) (cons 1 3))
 (test (let ((x (list 1 2))) (set-cdr! x 3) x) (cons 1 3))
@@ -3715,6 +3714,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((x (list 1))) (set-cdr! x '()) x) (list 1))
 (test (let ((x '(1 . (2 . (3 (4 5)))))) (set-cdr! x 4) x) '(1 . 4))
 (test (let ((lst (cons 1 (cons 2 3)))) (set-cdr! (cdr lst) 4) lst) (cons 1 (cons 2 4)))
+(test (let ((x (cons (list 1 2) 3))) (set-cdr! (car x) (list 3 4)) x) '((1 3 4) . 3))
+(test (let ((x (list 1 2))) (set-cdr! x (list 4 5)) x) '(1 4 5))
+(test (let ((x (cons 1 2))) (set-cdr! x (list 4 5)) x) '(1 4 5)) ;!
+(test (let ((x (cons 1 2))) (set-cdr! x (cons 4 5)) x) '(1 4 . 5))
 
 (test (set-car! '() 32) 'error)
 (test (set-car! () 32) 'error)
@@ -4325,7 +4328,21 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (assoc 3 '((#\a . 3) (#() . 2) (3.0 . 1) ("3" . 0))) #f)
 (test (assoc 3 '((#\a . 3) (#() . 2) (3.0 . 1) ("3" . 0)) (lambda (a b) (= a b))) 'error)
 (test (assoc 3 '((#\a . 3) (#() . 2) (3.0 . 1) ("3" . 0)) (lambda (a b) (and (number? b) (= a b)))) '(3.0 . 1)) ; is this order specified?
-
+(test (let ((lst (list (cons 1 2) (cons 3 4) (cons 5 6)))) (set! (cdr (cdr lst)) lst) (assoc 3 lst)) '(3 . 4))
+(test (let ((lst '((1 . 2) (3 . 4) . 5))) (assoc 3 lst)) '(3 . 4))
+(test (let ((lst '((1 . 2) (3 . 4) . 5))) (assoc 5 lst)) #f)
+(test (let ((lst '((1 . 2) (3 . 4) . 5))) (assoc 3 lst =)) '(3 . 4))
+(test (let ((lst '((1 . 2) (3 . 4) . 5))) (assoc 5 lst =)) #f)
+(test (assoc 3 '((1 . 2) . 3)) #f)
+(test (assoc 1 '((1 . 2) . 3)) '(1 . 2))
+(test (assoc 3 '((1 . 2) . 3) =) #f)
+(test (assoc 1 '((1 . 2) . 3) =) '(1 . 2))
+(test (let ((lst (list (cons 1 2) (cons 2 3) (cons 3 4)))) (and (assoc 2 lst =) lst)) '((1 . 2) (2 . 3) (3 . 4)))
+(test (let ((lst (list (cons 1 2) (cons 2 3) (cons 3 4)))) (set! (cdr (cdr lst)) lst) (assoc 2 lst)) '(2 . 3))
+(test (let ((lst (list (cons 1 2) (cons 2 3) (cons 3 4)))) (set! (cdr (cdr lst)) lst) (assoc 2 lst =)) '(2 . 3))
+(test (let ((lst (list (cons 1 2) (cons 2 3) (cons 3 4)))) (set! (cdr (cdr lst)) lst) (assoc 4 lst)) #f)
+(test (let ((lst (list (cons 1 2) (cons 2 3) (cons 3 4)))) (set! (cdr (cdr lst)) lst) (assoc 4 lst =)) #f)
+(test (let ((lst (list (cons 1 2) (cons 2 3) (cons 3 4)))) (set! (cdr (cdr (cdr lst))) lst) (assoc 3 lst =)) '(3 . 4))
 
 
 
@@ -4440,6 +4457,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (member ''a '('a b c)) '('a b c))
 (test (member 'a '(a a a)) '(a a a)) ;?
 (test (member 'a '(b a a)) '(a a))
+(test (member (member 3 '(1 2 3 4)) '((1 2) (2 3) (3 4) (4 5))) '((3 4) (4 5)))
 
 (for-each
  (lambda (arg)
@@ -4457,6 +4475,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (member . '(quote . ((quote) .()))) '(quote))
 (test (member '(((1))) '((((1).()).()).())) '((((1)))))
 (test (member '((1)) '(1 (1) ((1)) (((1))))) '(((1)) (((1)))))
+(test (member member (list abs car memq member +)) (list member +))
 
 (let ((odd '(3 a 3.0 b 3/4 c #(1) d))
       (even '(e 3 a 3.0 b 3/4 c #(1) d)))
@@ -4489,7 +4508,46 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (member 3.0 '(1 #\a (3 . 3) abs #() 3+i) (lambda (a b) (= (real-part a) b))) 'error)
 (test (member 3.0 '(1 #\a (3 . 3) abs #() 3+i) (lambda (a b) (and (number? b) (= (real-part b) a)))) '(3+i))
 ;; is it guaranteed that in the comparison function the value is 1st and the list member 2nd?
+(test (member 4 '((1 2 3) (4 5 6) (7 8 9)) member) '((4 5 6) (7 8 9)))
+(test (member 4 '(1 2 3) member) 'error)
+(test (member 4 '((1 2) (3 5) 7) (lambda (a b) (member a (map (lambda (c) (+ c 1)) b)))) '((3 5) 7))
+(test (member 4 '((1 2) (3 5) 7) (lambda (a b) (assoc a (map (lambda (c) (cons (+ c 1) c)) b)))) '((3 5) 7))
 
+(test (member 4 '(1 2 3 4 . 5)) '(4 . 5))
+(test (member 4 '(1 2 3 4 . 5) =) '(4 . 5))
+(test (member 4 '(1 2 3 . 4)) #f)
+(test (member 4 '(1 2 3 . 4) =) #f)
+(test (let ((lst (list 1 2 3))) (and (member 2 lst =) lst)) '(1 2 3))
+(test (pair? (let ((lst (list 1 2 3))) (set! (cdr (cdr lst)) lst) (member 2 lst))) #t)
+(test (pair? (let ((lst (list 1 2 3))) (set! (cdr (cdr lst)) lst) (member 2 lst =))) #t)
+(test (let ((lst (list 1 2 3))) (set! (cdr (cdr lst)) lst) (member 4 lst)) #f)
+(test (let ((lst (list 1 2 3))) (set! (cdr (cdr lst)) lst) (member 4 lst =)) #f)
+(test (pair? (let ((lst (list 1 2 3))) (set! (cdr (cdr (cdr lst))) lst) (member 3 lst =))) #t)
+(test (pair? (let ((lst (list 1 2 3 4))) (set! (cdr (cdr (cdr lst))) (cdr (cdr lst))) (member 3 lst =))) #t)
+(test (let ((lst (list 1 2 3 4))) (set! (cdr (cdr (cdr lst))) (cdr (cdr lst))) (member 5 lst =)) #f)
+(test (let ((lst (list 1 2 3 4))) (set! (cdr (cdr (cdr lst))) (cdr lst)) (member 4 lst =)) #f)
+(test (let ((lst '(1 2 3 5 6 9 10))) (member 3 lst (let ((last (car lst))) (lambda (a b) (let ((result (= (- b last) a))) (set! last b) result))))) '(9 10))
+(test (let ((lst '(1 2 3 5 6 9 10))) (member 2 lst (let ((last (car lst))) (lambda (a b) (let ((result (= (- b last) a))) (set! last b) result))))) '(5 6 9 10))
+
+(let ()
+  (define-macro (do-list lst . body) 
+    `(member #t ,(cadr lst) (lambda (a b) 
+			      (let ((,(car lst) b)) 
+				,@body 
+				#f))))
+  (let ((sum 0))
+    (do-list (x '(1 2 3)) (set! sum (+ sum x)))
+    (test (= sum 6))))
+
+(let ()
+  (define (tree-member a lst) 
+    (member a lst (lambda (c d) 
+		    (if (pair? d) 
+			(tree-member c d) 
+			(equal? c d)))))
+  (test (tree-member 1 '(2 3 (4 1) 5)) '((4 1) 5))
+  (test (tree-member -1 '(2 3 (4 1) 5)) #f)
+  (test (tree-member 1 '(2 3 ((4 (1) 5)))) '(((4 (1) 5)))))
 
 (for-each
  (lambda (op)
@@ -14990,6 +15048,23 @@ who says the continuation has to restart the map from the top?
 (test (apply . ''(())) '())
 (test (apply . `((()))) '(()))
 
+;; make sure the macro funcs really are constants
+(test (defined? '{list}) #t)
+(test (let () (set! {list} 2)) 'error)
+(test (let (({list} 2)) {list}) 'error)
+(test (defined? '{values}) #t)
+(test (let () (set! {values} 2)) 'error)
+(test (let (({values} 2)) {values}) 'error)
+(test (defined? '{apply}) #t)
+(test (let () (set! {apply} 2)) 'error)
+(test (let (({apply} 2)) {apply}) 'error)
+(test (defined? '{append}) #t)
+(test (let () (set! {append} 2)) 'error)
+(test (let (({append} 2)) {append}) 'error)
+(test (defined? '{multivector}) #t)
+(test (let () (set! {multivector} 2)) 'error)
+(test (let (({multivector} 2)) {multivector}) 'error)
+
 (test (+ 1 ((`#(,(lambda () 0) ,(lambda () 2) ,(lambda () 4)) 1))) 3) ; this calls vector each time, just like using vector directly
 (test (+ 1 ((`(,(lambda () 0)  ,(lambda () 2) ,(lambda () 4)) 1))) 3)
 
@@ -15323,6 +15398,9 @@ why are these different (read-time `#() ? )
 (test (or (null? *#readers*) (pair? *#readers*)) #t)
 (test (or (null? *load-path*) (pair? *load-path*)) #t)
 (test (vector? *error-info*) #t)
+
+(test (let () (set! *error-info* 2)) 'error)
+(test (let ((*error-info* 2)) *error-info*) 'error)
 
 (let ((old-len *vector-print-length*))
   (for-each
@@ -18619,6 +18697,8 @@ abs     1       2
 (test (current-environment 1) 'error)
 (test (global-environment 1) 'error)
 (test (initial-environment 1) 'error)
+(test (let () (set! initial-environment 2)) 'error)
+(test (let ((initial-environment 2)) initial-environment) 'error)
 
 (test (let () (augment-environment! (initial-environment) (cons 'a 32)) (symbol->value 'a (initial-environment))) #<undefined>)
 (test (let ((caar 123)) (+ caar (with-environment (initial-environment) (caar '((2) 3))))) 125)
@@ -29244,6 +29324,14 @@ abs     1       2
 ;;; --------------------------------------------------------------------------------
 ;;; NUMBERS
 ;;; --------------------------------------------------------------------------------
+
+
+(test (let () (set! most-positive-fixnum 2)) 'error)
+(test (let ((most-positive-fixnum 2)) most-positive-fixnum) 'error)
+(test (let () (set! most-negative-fixnum 2)) 'error)
+(test (let ((most-negative-fixnum 2)) most-negative-fixnum) 'error)
+(test (let () (set! pi 2)) 'error)
+(test (let ((pi 2)) pi) 'error)
 
 
 ;; -------- sin

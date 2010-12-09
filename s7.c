@@ -319,7 +319,8 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO,
 	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO,
-	      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS, OP_HOOK_APPLY, OP_MEMBER_IF, OP_ASSOC_IF,
+	      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS, OP_HOOK_APPLY, 
+	      OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
@@ -337,12 +338,13 @@ static const char *op_names[OP_MAX_DEFINED] =
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
    "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort",
-   "eval-string", "eval-string", "set-access", "hook-apply", "member-if", "assoc-if"
+   "eval-string", "eval-string", "set-access", "hook-apply", 
+   "member-if", "assoc-if", "member-if", "assoc-if"
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 93 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 95 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -825,6 +827,7 @@ struct s7_scheme {
 #define caaddr(p)                     car(car(cdr(cdr(p))))
 #define cddddr(p)                     cdr(cdr(cdr(cdr(p))))
 #define caddar(p)                     car(cdr(cdr(car(p))))
+#define cdaddr(p)                     cdr(car(cdr(cdr(p))))
 #define pair_line_number(p)           (p)->object.cons.line
 #define port_file_number(p)           (p)->object.port->file_number
 
@@ -13748,7 +13751,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 	return(s7_wrong_type_arg_error(sc, "assoc", 2, x, "a list"));
       
       sc->code = eq_func;
-      sc->args = make_list_2(sc, make_list_2(sc, car(args), caar(x)), x);
+      sc->args = make_list_3(sc, make_list_2(sc, car(args), caar(x)), x, x);
       sc->value = sc->F;
       push_stack(sc, opcode(OP_ASSOC_IF), sc->args, sc->code);
 
@@ -13873,7 +13876,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 	return(s7_wrong_type_arg_error(sc, "member", 2, x, "a list"));
       
       sc->code = eq_func;
-      sc->args = make_list_2(sc, make_list_2(sc, car(args), car(x)), x);
+      sc->args = make_list_3(sc, make_list_2(sc, car(args), car(x)), x, x);
       sc->value = sc->F;
       push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
 
@@ -21926,8 +21929,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
 
+    case OP_MEMBER_IF1:
     case OP_MEMBER_IF:
-      /* code=func, args=((val (car list)) list), value=result of comparison
+      /* code=func, args=((val (car list)) list list), value=result of comparison
        */
       if (sc->value != sc->F)            /* previous comparison was not #f -- return list */
 	{
@@ -21936,18 +21940,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
-      if (cadr(sc->args) == sc->NIL)     /* no more args -- return #f */
+      if ((cadr(sc->args) == sc->NIL) || /* no more args -- return #f */
+	  (!is_pair(cadr(sc->args))))    /* (member 3 '(1 2 . 3) =) */
 	{
 	  sc->value = sc->F;
 	  goto START;
 	}
 
-      push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
+      if (sc->op == OP_MEMBER_IF1)
+	{
+	  /* circular list check */
+	  caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list */
+	  if (cadr(sc->args) == caddr(sc->args))
+	    {
+	      sc->value = sc->F;
+	      goto START;
+	    }
+	  push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
+	}
+      else push_stack(sc, opcode(OP_MEMBER_IF1), sc->args, sc->code);
       cadar(sc->args) = caadr(sc->args);
       sc->args = car(sc->args);
       goto APPLY;
 
 
+    case OP_ASSOC_IF1:
     case OP_ASSOC_IF:
       /* code=func, args=((val (caar list)) list), value=result of comparison
        *   (assoc 3 '((1 . a) (2 . b) (3 . c) (4 . d)) =)
@@ -21959,13 +21976,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
-      if (cadr(sc->args) == sc->NIL)     /* no more args -- return #f */
+      if ((cadr(sc->args) == sc->NIL) || /* no more args -- return #f */
+	  (!is_pair(cadr(sc->args))))    /* (assoc 3 '((1 . 2) . 3) =) */
 	{
 	  sc->value = sc->F;
 	  goto START;
 	}
 
-      push_stack(sc, opcode(OP_ASSOC_IF), sc->args, sc->code);
+      if (sc->op == OP_ASSOC_IF1)
+	{
+	  /* circular list check */
+	  caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list */
+	  if (cadr(sc->args) == caddr(sc->args))
+	    {
+	      sc->value = sc->F;
+	      goto START;
+	    }
+	  push_stack(sc, opcode(OP_ASSOC_IF), sc->args, sc->code);
+	}
+      else push_stack(sc, opcode(OP_ASSOC_IF1), sc->args, sc->code);
       cadar(sc->args) = caaadr(sc->args);
       sc->args = car(sc->args);
       goto APPLY;
