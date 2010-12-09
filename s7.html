@@ -4286,6 +4286,30 @@ number if passed a dotted list.  In the dotted case, the absolute value of the l
 the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
 </p>
 
+<p>Here's an amusing use of circular lists:
+</p>
+
+<pre>
+(define (for-each-permutation func vals)          ; for-each-combination is similar but simpler
+  ;; apply func to every permutation of vals: 
+  ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
+  (define (pinner cur nvals len)
+    (if (= len 1)
+        (apply func (cons (car nvals) cur))
+        (do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
+            ((= i len))
+          (let ((start nvals))
+            (set! nvals (cdr nvals))
+            (let ((cur1 (cons (car nvals) cur)))  ; add (car nvals) to our arg list
+              (set! (cdr start) (cdr nvals))      ; splice out that element and 
+              (pinner cur1 (cdr start) (- len 1)) ;   pass a smaller circle on down
+              (set! (cdr start) nvals))))))       ; restore original circle
+  (let ((len (length vals)))
+    (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
+    (pinner '() vals len)
+    (set-cdr! (list-tail vals (- len 1)) '())))   ; restore its original shape
+</pre>
+
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
