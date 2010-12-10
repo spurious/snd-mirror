@@ -4528,6 +4528,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((lst (list 1 2 3 4))) (set! (cdr (cdr (cdr lst))) (cdr lst)) (member 4 lst =)) #f)
 (test (let ((lst '(1 2 3 5 6 9 10))) (member 3 lst (let ((last (car lst))) (lambda (a b) (let ((result (= (- b last) a))) (set! last b) result))))) '(9 10))
 (test (let ((lst '(1 2 3 5 6 9 10))) (member 2 lst (let ((last (car lst))) (lambda (a b) (let ((result (= (- b last) a))) (set! last b) result))))) '(5 6 9 10))
+(test (member 1 '() =) #f)
+(test (member 1 #(1) =) 'error)
 
 (let ()
   (define-macro (do-list lst . body) 
@@ -4537,7 +4539,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 				#f))))
   (let ((sum 0))
     (do-list (x '(1 2 3)) (set! sum (+ sum x)))
-    (test (= sum 6))))
+    (test (= sum 6) #t)))
 
 (let ()
   (define (tree-member a lst) 
@@ -6616,6 +6618,66 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (set-cdr! (cdr x) (list 8))
   (test (object->string (list x y z w v)) "((6 . #3=(2 8)) (7 . #1=(5)) #2=(1 . #1#) (4 5 . #2#) (#3# . #1#))"))
 ;; guile gets this result, but prints it as: ((6 2 8) (7 5) (1 5) (4 5 1 5) ((2 8) 5))
+
+
+(let ()
+  (define (for-each-combination func args)
+    (let ((num-args (length args))
+	  (required-args (car (procedure-arity func))))
+      (if (= num-args required-args)
+	  (apply func args)
+	  (if (> num-args required-args)
+	      (do ((prev args)
+		   (i 0 (+ i 1)))
+		  ((= i num-args))
+		(if (= i 0)
+		    (for-each-combination func (cdr args))
+		    (let* ((mid (cdr prev))
+			   (nxt (if (= i (- num-args 1)) '() (cdr mid))))
+		      (set! (cdr prev) nxt)
+		      (for-each-combination func args)
+		      (set! (cdr prev) mid)
+		      (set! prev mid))))))))
+  
+  (define (for-each-permutation func vals)          ; for-each-combination is similar but simpler
+    ;; apply func to every permutation of vals: 
+    ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
+    (define (pinner cur nvals len)
+      (if (= len 1)
+	  (apply func (cons (car nvals) cur))
+	  (do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
+	      ((= i len))
+	    (let ((start nvals))
+	      (set! nvals (cdr nvals))
+	      (let ((cur1 (cons (car nvals) cur)))  ; add (car nvals) to our arg list
+		(set! (cdr start) (cdr nvals))      ; splice out that element and 
+		(pinner cur1 (cdr start) (- len 1)) ;   pass a smaller circle on down
+		(set! (cdr start) nvals))))))       ; restore original circle
+    (let ((len (length vals)))
+      (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
+      (pinner '() vals len)
+      (set-cdr! (list-tail vals (- len 1)) '())))   ; restore its original shape
+  
+  (let ((perms '((3 1 2) (1 3 2) (1 2 3) (2 1 3) (2 3 1) (3 2 1)))
+	(pos '()))
+    (for-each-permutation
+     (lambda args
+       (call-with-exit
+	(lambda (ok)
+	  (let ((ctr 0))
+	    (for-each
+	     (lambda (a)
+	       (if (equal? a args)
+		   (begin
+		     (set! pos (cons ctr pos))
+		     (ok)))
+	       (set! ctr (+ ctr 1)))
+	     perms)))))
+     '(1 2 3))
+    (test pos '(5 4 3 2 1 0)))
+  )
+  
+  
 
 
 
@@ -57620,6 +57682,7 @@ etc
 		(if (= counts 1)
 		    (format #t ";(log-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts = 1 but we're off]~%" ints result (ash 1 b)))))))))
   
+#|
   (define (log-n-1-of . ints) ; bits on in exactly n-1 of ints
     (let ((len (length ints)))
       (cond ((= len 0) 
@@ -57704,77 +57767,6 @@ etc
 		    (format #t ";(log-n-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" ints result (ash 1 b) counts))
 		(if (and (> len 1) (= counts (- len 1)))
 		    (format #t ";(log-n-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" ints result (ash 1 b) counts))))))))
-  
-  (define (log-2-of . ints) ; bits on in exactly 2 of ints
-    (let ((len (length ints)))
-      (cond ((= len 0)
-	     0)
-	    ((= len 1) ; bits on in none (0 of ints) -- not very sensible
-	     0)
-	    ((= len 2) 
-	     (apply logand ints))
-	    ((= len 3) 
-	     (logand (lognot (apply logxor ints)) (apply logior ints)))
-	    (#t 
-	     (do ((1s '())
-		  (prev ints)
-		  (i 0 (+ i 1)))
-		 ((= i len) (apply logior 1s))
-	       (let ((cur (ints i)))
-		 (if (= i 0)
-		     (set! 1s (cons (logand cur (apply log-1-of (cdr ints))) 1s))
-		     (let* ((mid (cdr prev))
-			    (nxt (if (= i (- len 1)) '() (cdr mid))))
-		       (set! (cdr prev) nxt)
-		       (set! 1s (cons (logand cur (apply log-1-of ints)) 1s))
-		       (set! (cdr prev) mid)
-		       (set! prev mid)))))))))
-
-  (test (log-2-of 1 1) 1)
-  (test (log-2-of 1 2) 0)
-  (test (log-2-of 1 2 2) 2)
-  (test (log-2-of 1 2 2 3) 1)
-  (test (log-2-of 287 319 -48) #b1111) ; (15)
-  (test (log-2-of 361) #b0) ; (0)
-  (test (log-2-of -165 302 -494) #b-11101000) ; (-232)
-  (test (log-2-of 366 -345 -86 311 -366 453 129) #b1011000) ; (88)
-  (test (log-2-of -84 -46 -13 -391 -384 -17 -105 -62 75 -163) #b0) ; (0)
-  (test (log-2-of 274 200 294 -293 -291 -25 -3) #b0) ; (0)
-  (test (log-2-of -72 -81 -293 -407 230 44) #b100010000) ; (272)
-  (test (log-2-of -389 -20 406 133 -127 379 -460 -417) #b0) ; (0)
-  (test (log-2-of 152 -429 -43) #b-100111111) ; (-319)
-  (test (log-2-of -443 70) #b1000100) ; (68)
-  (test (log-2-of -361 -360 52 -209 106 140 -324 82) #b1000001) ; (65)
-  (test (log-2-of 364 335 -119 226 -422) #b-101011011) ; (-347)
-  (test (log-2-of -17 -252 433) #b-101011011) ; (-347)
-  (test (log-2-of -426 -243 -230 -315) #b101011011) ; (347)
-
-  (do ((i 0 (+ i 1)))
-      ((= i 10))
-    
-    (let ((len (+ 1 (random 10)))
-	  (ints '()))
-      (do ((k 0 (+ k 1)))
-	  ((= k len))
-	(set! ints (cons (- (random 1000) 500) ints)))
-      
-      (let ((result (apply log-2-of ints)))
-	;;(format #t "(test (log-2-of ~{~D~^ ~}) #b~B) ; (~D)~%" ints result result)
-	
-	(do ((b 0 (+ b 1)))
-	    ((= b top-checked-bit))
-	  (let ((counts 0))
-	    (for-each
-	     (lambda (int)
-	       (if (not (zero? (logand int (ash 1 b))))
-		   (set! counts (+ counts 1))))
-	     ints)
-	    
-	    (if (not (zero? (logand result (ash 1 b))))
-		(if (not (= counts 2))
-		    (format #t ";(log-2-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" ints result (ash 1 b) counts))
-		(if (and (> len 1) (= counts 2))
-		    (format #t ";(log-2-of ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" ints result (ash 1 b) counts))))))))
   
   (define (log-n-of n . ints) ; bits on in exactly n of ints
     (let ((len (length ints)))
@@ -57874,7 +57866,7 @@ etc
   (test (log-n-of 4 -164 -499 -291 325 -143 -268 135 103) #b10000) ; (16)
   
   (do ((i 0 (+ i 1)))
-      ((= i 100))
+      ((= i 10))
     
     (let ((len (+ 1 (random 10)))
 	  (ints '())
@@ -57901,6 +57893,7 @@ etc
 		    (format #t ";(log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" n ints result (ash 1 b) counts))
 		(if (and (> len 1) (= counts n))
 		    (format #t ";(log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" n ints result (ash 1 b) counts))))))))
+|#  
 
   (define (simple-log-n-of n . ints)     ; bits on in exactly n of ints
     (let ((len (length ints)))
@@ -57931,7 +57924,7 @@ etc
   (num-test (simple-log-n-of 4 0 -1 -1 -1) 0)
   
   (do ((i 0 (+ i 1)))
-      ((= i 100))
+      ((= i 10))
     
     (let ((len (+ 1 (random 10)))
 	  (ints '())
@@ -57957,27 +57950,6 @@ etc
 		(if (and (> len 1) (= counts n))
 		    (format #t ";(simple-log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" n ints result (ash 1 b) counts))))))))
   )
-
-#|
-(define (for-each-combination func args)
-  (let ((num-args (length args))
-	(required-args (car (procedure-arity func))))
-    (if (= num-args required-args)
-	(apply func args)
-	(if (> num-args required-args)
-	    (do ((prev args)
-		 (i 0 (+ i 1)))
-		((= i num-args))
-	      (if (= i 0)
-		  (for-each-combination func (cdr args))
-		  (let* ((mid (cdr prev))
-			 (nxt (if (= i (- num-args 1)) '() (cdr mid))))
-		    (set! (cdr prev) nxt)
-		    (for-each-combination func args)
-		    (set! (cdr prev) mid)
-		    (set! prev mid))))))))
-|#
-
 
 (if with-bignums
     (begin

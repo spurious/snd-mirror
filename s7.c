@@ -2445,7 +2445,8 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
        *     set multilocal
        * so find could use both the not_local = use global_slot
        *                        and not multilocal = use local_slot
-       * but how to catch out-of-scope ref?
+       * but how to catch out-of-scope ref? we'd need a frame pointer, then search for that to check unbound case
+       *   is there a place for this pointer?
        */
     }
 
@@ -21950,7 +21951,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->op == OP_MEMBER_IF1)
 	{
 	  /* circular list check */
-	  caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list */
+	  caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list (check for circular list) */
 	  if (cadr(sc->args) == caddr(sc->args))
 	    {
 	      sc->value = sc->F;

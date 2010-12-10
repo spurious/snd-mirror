@@ -4302,13 +4302,14 @@ the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
             (set! nvals (cdr nvals))
             (let ((cur1 (cons (car nvals) cur)))  ; add (car nvals) to our arg list
               (set! (cdr start) (cdr nvals))      ; splice out that element and 
-              (pinner cur1 (cdr start) (- len 1)) ;   pass a smaller circle on down
+              (pinner cur1 (cdr start) (- len 1)) ;   pass a smaller circle on down, "wheels within wheels"
               (set! (cdr start) nvals))))))       ; restore original circle
   (let ((len (length vals)))
     (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
     (pinner '() vals len)
     (set-cdr! (list-tail vals (- len 1)) '())))   ; restore its original shape
 </pre>
+<br>
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
