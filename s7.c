@@ -428,9 +428,10 @@ typedef struct s7_cell {
     
     struct {
       int length;
-      char *svalue;
-      s7_pointer global_slot; /* for strings that represent symbol names, this is the global environment (symbol value) cons */
       int location;
+      char *svalue;
+      s7_pointer global_slot; /* for strings that represent symbol names, this is the global slot */
+      s7_pointer *local_data; /* similarly, this is the frame and slot if the symbol is unique and not global */
     } string;
     
     s7_num_t number;
@@ -733,6 +734,12 @@ struct s7_scheme {
 #define set_local(p)                  typeflag(p) |= T_LOCAL
 /* this marks a symbol that has been used at some time as a local variable */
 
+#define T_UNIQUE_LOCAL                (1 << (TYPE_BITS + 15))
+#define is_unique_local(p)            ((typeflag(p) & T_UNIQUE_LOCAL) != 0)
+#define set_locals(p)                 typeflag(p) |= (T_LOCAL | T_UNIQUE_LOCAL)
+#define clear_unique_local(p)         typeflag(p) &= ~(T_UNIQUE_LOCAL)
+#define is_not_ordinary_local(p)      ((typeflag(p) & (T_UNIQUE_LOCAL | T_LOCAL)) != T_LOCAL)
+
 #define T_DONT_COPY_CDR               (1 << (TYPE_BITS + 17))
 #define dont_copy_cdr(p)              ((typeflag(p) & T_DONT_COPY_CDR) != 0)
 /* copy_object (continuations) optimization */
@@ -783,10 +790,10 @@ struct s7_scheme {
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
-#define UNUSED_BITS                   0x81884800
+#define UNUSED_BITS                   0x81084800
 
 /* TYPE_BITS could be 5
- * TYPE_BITS + 3, 6, 11, 15, 16 and 23 are currently unused
+ * TYPE_BITS + 3, 6, 11, 16 and 23 are currently unused
  */
 
 
@@ -847,6 +854,9 @@ struct s7_scheme {
   #define symbol_calls(p)             (p)->calls
 #endif
 #define symbol_global_slot(p)         (car(p))->object.string.global_slot
+#define symbol_local_data(p)          (car(p))->object.string.local_data
+#define symbol_local_frame(p)         (car(p))->object.string.local_data[0]
+#define symbol_local_slot(p)          (car(p))->object.string.local_data[1]
 
 #define vector_length(p)              ((p)->object.vector.length)
 #define vector_element(p, i)          ((p)->object.vector.elements[i])
@@ -1620,9 +1630,9 @@ static int gc(s7_scheme *sc)
       double secs;
       gettimeofday(&t0, &z0);
       secs = (t0.tv_sec - start_time.tv_sec) +  0.000001 * (t0.tv_usec - start_time.tv_usec);
-      fprintf(stdout, "freed %ld/%d, time: %f\n", sc->free_heap_top - old_free_heap_top, sc->heap_size, secs);
+      fprintf(stdout, "freed %d/%d, time: %f\n", (int)(sc->free_heap_top - old_free_heap_top), sc->heap_size, secs);
 #else
-      fprintf(stdout, "freed %ld/%d\n", sc->free_heap_top - old_free_heap_top, sc->heap_size);
+      fprintf(stdout, "freed %d/%d\n", (int)(sc->free_heap_top - old_free_heap_top), sc->heap_size);
 #endif
     }
 
@@ -2097,7 +2107,8 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   str = s7_make_permanent_string(name);
   x = permanent_cons(str, sc->NIL, T_SYMBOL | T_SIMPLE | T_DONT_COPY);
   symbol_location(x) = location;   /* accesses car(x) */
-  symbol_global_slot(x) = sc->NIL; /* accesses car(x) */
+  symbol_global_slot(x) = sc->NIL; /* same */
+  symbol_local_data(x) = NULL;
 
   if ((symbol_name_length(x) > 1) &&                           /* not 0, otherwise : is a keyword */
       ((name[0] == ':') ||
@@ -2395,6 +2406,36 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 } 
 
 
+static void initialize_local(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer slot)
+{
+  if (is_local(variable))
+    {
+      /* if it's currently a unique variable, then it won't be anymore once we're done here, 
+       *    so clear that bit and release the associated data.
+       */
+      clear_unique_local(variable);
+      if (symbol_local_data(variable))
+	{
+	  free(symbol_local_data(variable));
+	  symbol_local_data(variable) = NULL;
+	}
+    }
+  else
+    {
+      /* it's a new local variable, so if it's not a global, set up the unique local data pointers
+       */
+      if (symbol_global_slot(variable) == sc->NIL) 
+	{
+	  set_locals(variable);
+	  symbol_local_data(variable) = (s7_pointer *)malloc(2 * sizeof(s7_pointer));
+	  symbol_local_frame(variable) = env;
+	  symbol_local_slot(variable) = slot;
+	}
+      else set_local(variable);
+    }
+}
+
+
 static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
   s7_pointer slot, e;
@@ -2424,6 +2465,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       loc = symbol_location(variable);
       vector_element(e, loc) = s7_cons(sc, slot, vector_element(e, loc));
       symbol_global_slot(variable) = slot;
+      clear_unique_local(variable);
 
       /* so if we (define hi "hiho") at the top level,  "hi" hashes to 1746 with symbol table size 2207
        *   s7->symbol_table->object.vector.elements[1746]->object.cons.car->object.cons.car->object.string.global_slot is (hi . \"hiho\")
@@ -2437,16 +2479,20 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       cdr(x) = e;
       set_type(x, T_PAIR | T_STRUCTURE);
       car(env) = x;
-      set_local(variable);
+      if (is_not_ordinary_local(variable))
+	initialize_local(sc, env, variable, slot);
 
-      /* if symbol_global_slot is nil 
-       *   if this was not local before now,
-       *     set local and local_slot
-       *     set multilocal
-       * so find could use both the not_local = use global_slot
-       *                        and not multilocal = use local_slot
-       * but how to catch out-of-scope ref? we'd need a frame pointer, then search for that to check unbound case
-       *   is there a place for this pointer?
+      /* currently any top-level value is in symbol_global_slot
+       *   if never a local binding, is_local bit is off, so we go straight to the global binding
+       *   if any local binding, local bit is set and never cleared, so even if we
+       *     later define the same symbol at top-level, then go back to the local env case,
+       *     the local bit protects us from accidentally grabbing the global value.
+       *
+       * if a local variable is unique, the unique_local bit is set and the local_data pointers
+       *   hold its env (frame) and binding (slot).  To find that symbol, we make sure the frame
+       *   is currently active, then return the slot directly.
+       *
+       * so, we only search the environment lists for non-unique ("ordinary") local variables.
        */
     }
 
@@ -2492,7 +2538,8 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   cdr(x) = car(sc->envir);
   set_type(x, T_PAIR | T_STRUCTURE);
   car(sc->envir) = x;
-  set_local(variable);
+  if (is_not_ordinary_local(variable))
+    initialize_local(sc, sc->envir, variable, y);
 
   return(y);
 } 
@@ -2645,8 +2692,10 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
 { 
   s7_pointer x;
   /* this is a list (of alists, each representing a frame) ending with a vector (the global environment).
-   *   max linear search in s7test: 361! average search len in s7test: 9.  Although this takes about 12%
+   *   max linear search in s7test: 351! average search len in s7test: 9.  Although this takes about 10%
    *   the total compute time in s7test.scm, in snd-test it is around 1% -- s7test is a special case.
+   *   The longest searches are in the huge let ca line 12638 (each variable in let has a new frame),
+   *   and push/pop in the CLisms section (they aren't unique so we have searches of length ca 320).
    */
 
   for (x = env; is_pair(x); x = cdr(x)) 
@@ -2677,6 +2726,19 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
 } 
 
 
+static s7_pointer find_unique_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  s7_pointer x, frame;
+  frame = symbol_local_frame(hdl);
+
+  for (x = env; is_pair(x); x = cdr(x)) 
+    if (x == frame)
+      return(symbol_local_slot(hdl));
+
+  return(sc->NIL); 
+} 
+
+
 static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer y;
@@ -2687,13 +2749,20 @@ static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hd
   if (s7_is_vector(y))
     return(symbol_global_slot(hdl));
 
-  if (caar(y) == hdl)
-    return(car(y));
+  if (is_unique_local(hdl))
+    {
+      if (env == symbol_local_frame(hdl))
+	return(symbol_local_slot(hdl));
+    }
+  else
+    {
+      if (caar(y) == hdl)
+	return(car(y));
       
-  for (y = cdr(y); is_pair(y); y = cdr(y))
-    if (caar(y) == hdl)
-      return(car(y));
-
+      for (y = cdr(y); is_pair(y); y = cdr(y))
+	if (caar(y) == hdl)
+	  return(car(y));
+    }
   return(sc->NIL); 
 } 
 
@@ -2764,7 +2833,7 @@ static lstar_err_t lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym,
       {
 	/* car(x) is our binding (symbol . value) */
 	if (is_not_local(car(x)))
-	  set_local(car(x));
+	  set_local(car(x)); /* this is a special use of this bit, I think -- not initialize_local here */
 	else return(LSTAR_ALREADY_SET);
 	cdar(x) = val;
 	return(LSTAR_OK);
@@ -11750,26 +11819,27 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
-	     is_simple(obj) ? " simple" : "",
-	     is_procedure(obj) ? " procedure" : "",
-	     is_marked(obj) ? " gc-marked" : "",
-	     is_immutable(obj) ? " immutable" : "",
-	     is_syntax(obj) ? " syntax" : "",
-	     dont_copy(obj) ? " dont-copy" : "",
-	     dont_copy_cdr(obj) ? "dont-copy-cdr" : "",
-	     is_finalizable(obj) ? " gc-finalize" : "",
-	     is_any_macro(obj) ? " (anymac)" : "",
-	     is_expansion(obj) ? " (expansion)" : "",
-	     (!is_not_local(obj)) ? " (local)" : "",
-	     symbol_accessed(obj) ? " (accessed)" : "",
-	     symbol_has_accessor(obj) ? " (accessor)" : "",
-	     has_structure(obj) ? " (structure)" : "",
-	     is_multiple_value(obj) ? " (values)" : "",
-	     is_keyword(obj) ? " keyword" : "",
+	     is_simple(obj) ?             " simple" : "",
+	     is_procedure(obj) ?          " procedure" : "",
+	     is_marked(obj) ?             " gc-marked" : "",
+	     is_immutable(obj) ?          " immutable" : "",
+	     is_syntax(obj) ?             " syntax" : "",
+	     dont_copy(obj) ?             " dont-copy" : "",
+	     dont_copy_cdr(obj) ?         " dont-copy-cdr" : "",
+	     is_finalizable(obj) ?        " gc-finalize" : "",
+	     is_any_macro(obj) ?          " anymac" : "",
+	     is_expansion(obj) ?          " expansion" : "",
+	     is_local(obj) ?              " local" : "",
+	     is_unique_local(obj) ?       " unique" : "",
+	     symbol_accessed(obj) ?       " accessed" : "",
+	     symbol_has_accessor(obj) ?   " accessor" : "",
+	     has_structure(obj) ?         " structure" : "",
+	     is_multiple_value(obj) ?     " values" : "",
+	     is_keyword(obj) ?            " keyword" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
 #if DEBUGGING
     if ((saved_typeflag(obj) != typeflag(obj)) &&
@@ -22317,7 +22387,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    if (is_not_local(sc->code))
 	      x = symbol_global_slot(sc->code);
-	    else x = find_symbol(sc, sc->envir, sc->code);
+	    else 
+	      {
+		if (is_unique_local(sc->code))
+		  x = find_unique_symbol(sc, sc->envir, sc->code);
+		else x = find_symbol(sc, sc->envir, sc->code);
+	      }
 	    if (x != sc->NIL) 
 	      sc->value = symbol_value(x);
 	    else sc->value = eval_symbol_1(sc, sc->code);
@@ -22421,7 +22496,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      s7_pointer x;
 	      if (is_not_local(car_code))
 		x = symbol_global_slot(car_code);
-	      else x = find_symbol(sc, sc->envir, car_code);
+	      else 
+		{
+		  if (is_unique_local(car_code))
+		    x = find_unique_symbol(sc, sc->envir, car_code);
+		  else x = find_symbol(sc, sc->envir, car_code);
+		}
 	      if (x != sc->NIL) 
 		sc->value = symbol_value(x);
 	      else sc->value = eval_symbol_1(sc, car_code);
@@ -22670,7 +22750,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		set_type(x, T_PAIR | T_STRUCTURE);
 
 		car(sc->envir) = x;
-		set_local(z);
+		if (is_not_ordinary_local(z))
+		  initialize_local(sc, sc->envir, z, y);
 	      }
 #endif
 	    }
@@ -30537,7 +30618,7 @@ the error type and the info passed to the error handler.");
                         	    code)                        \n\
                         	   (else (loop (cdr clauses))))))))");
 
-  /* fprintf(stderr, "size: %d %d\n", sizeof(s7_cell), sizeof(s7_num_t)); */
+  /* fprintf(stderr, "size: %d %d\n", (int)sizeof(s7_cell), (int)sizeof(s7_num_t)); */
 
   initialize_pows();
   save_initial_environment(sc);
