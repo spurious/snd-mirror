@@ -4536,6 +4536,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((lst '(1 2 3 5 6 9 10))) (member 2 lst (let ((last (car lst))) (lambda (a b) (let ((result (= (- b last) a))) (set! last b) result))))) '(5 6 9 10))
 (test (member 1 '() =) #f)
 (test (member 1 #(1) =) 'error)
+(test (member 3 '(5 4 3 2 1) >) '(2 1))
+(test (member 3 '(5 4 3 2 1) >=) '(3 2 1))
 
 (let ()
   (define-macro (do-list lst . body) 
@@ -13448,6 +13450,8 @@ this prints:
 (test (call/cc s7-version s7-version) 'error)
 (test (call/cc (lambda () 1)) 'error)
 (test (call/cc (lambda (a b) (a 1))) 'error)
+(test (+ 1 (call/cc (lambda (k) (k #\a)))) 'error)
+(test (+ 1 (call-with-exit (lambda (k) (k #\a)))) 'error)
 
 (let ((p1 (make-procedure-with-setter (lambda (k) (k 3)) (lambda (k a) (k a)))))
   (test (call/cc p1) 3)
@@ -55529,7 +55533,8 @@ etc....
 (num-test (string->number "6+3.i" 10) 6+3i)
 (num-test (string->number "#e8/2" 11) 4)
 (num-test (string->number "-61" 7) -43)
-(num-test (string->number "#eb8235.9865c01" 13) 19132998081/57607)
+;(num-test (string->number "#eb8235.9865c01" 13) 19132998081/57607)
+; this one depends on the underlying size (32/64)
 (num-test (string->number "10100.000e11+011110111.1010110e00i" 2) 40960+247.671875i)
 (num-test (string->number "#i-0.e11" 2) 0.0)
 (num-test (string->number "+4a00/b" 16) 18944/11)
@@ -58746,27 +58751,6 @@ etc
     )
   )
 
-
-;;; unique local tests
-(define global_1234 0)
-(test global_1234 0)
-(let ((global_1234 32))
-  (test global_1234 32))
-(test global_1234 0)
-(define global_1234 3)
-(let ((local_1234 0))
-  (test global_1234 3)
-  (test local_1234 0))
-(test local_1234 'error)
-(let ((local_1234 32))
-  (test local_1234 32))
-(test local_1234 'error)
-(define local_1234 123)
-(test local_1234 123)
-(let ((local_4321 0))
-  (test local_4321 0))
-(let ((local_4321 32))
-  (test local_4321 32))
 
 
 

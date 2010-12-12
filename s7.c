@@ -431,7 +431,6 @@ typedef struct s7_cell {
       int location;
       char *svalue;
       s7_pointer global_slot; /* for strings that represent symbol names, this is the global slot */
-      s7_pointer *local_data; /* similarly, this is the frame and slot if the symbol is unique and not global */
     } string;
     
     s7_num_t number;
@@ -734,12 +733,6 @@ struct s7_scheme {
 #define set_local(p)                  typeflag(p) |= T_LOCAL
 /* this marks a symbol that has been used at some time as a local variable */
 
-#define T_UNIQUE_LOCAL                (1 << (TYPE_BITS + 15))
-#define is_unique_local(p)            ((typeflag(p) & T_UNIQUE_LOCAL) != 0)
-#define set_locals(p)                 typeflag(p) |= (T_LOCAL | T_UNIQUE_LOCAL)
-#define clear_unique_local(p)         typeflag(p) &= ~(T_UNIQUE_LOCAL)
-#define is_not_ordinary_local(p)      ((typeflag(p) & (T_UNIQUE_LOCAL | T_LOCAL)) != T_LOCAL)
-
 #define T_DONT_COPY_CDR               (1 << (TYPE_BITS + 17))
 #define dont_copy_cdr(p)              ((typeflag(p) & T_DONT_COPY_CDR) != 0)
 /* copy_object (continuations) optimization */
@@ -790,10 +783,10 @@ struct s7_scheme {
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
-#define UNUSED_BITS                   0x81084800
+#define UNUSED_BITS                   0x81884800
 
 /* TYPE_BITS could be 5
- * TYPE_BITS + 3, 6, 11, 16 and 23 are currently unused
+ * TYPE_BITS + 3, 6, 11, 15, 16 and 23 are currently unused
  */
 
 
@@ -854,9 +847,6 @@ struct s7_scheme {
   #define symbol_calls(p)             (p)->calls
 #endif
 #define symbol_global_slot(p)         (car(p))->object.string.global_slot
-#define symbol_local_data(p)          (car(p))->object.string.local_data
-#define symbol_local_frame(p)         (car(p))->object.string.local_data[0]
-#define symbol_local_slot(p)          (car(p))->object.string.local_data[1]
 
 #define vector_length(p)              ((p)->object.vector.length)
 #define vector_element(p, i)          ((p)->object.vector.elements[i])
@@ -990,17 +980,17 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define complex_real_part(p)          real_part(number(p))
 #define complex_imag_part(p)          imag_part(number(p))
 
-#ifndef LLONG_MAX
-  #define LLONG_MAX 9223372036854775807LL
-  #define LLONG_MIN (-LLONG_MAX - 1LL)
-  /* LONG_MAX is either the same or 2147483647 */
-#endif
 
-/* on 64-bit systems, LONG_MAX == LLONG_MAX, but we need the 32-bit max to decide when to 
- *   move into gmp (when it's in use), so...
- */
+#define S7_LLONG_MAX 9223372036854775807LL
+#define S7_LLONG_MIN (-S7_LLONG_MAX - 1LL)
+
 #define S7_LONG_MAX 2147483647LL
-#define S7_LONG_MIN -2147483648LL
+#define S7_LONG_MIN (-S7_LONG_MAX - 1LL)
+
+#define S7_SHORT_MAX 32767
+#define S7_SHORT_MIN -32768
+
+static s7_Int s7_Int_max = 0, s7_Int_min = 0;
 
 #define BIGNUM_PLUS   9007199254740992LL
 #define BIGNUM_MINUS -9007199254740992LL
@@ -2108,7 +2098,6 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   x = permanent_cons(str, sc->NIL, T_SYMBOL | T_SIMPLE | T_DONT_COPY);
   symbol_location(x) = location;   /* accesses car(x) */
   symbol_global_slot(x) = sc->NIL; /* same */
-  symbol_local_data(x) = NULL;
 
   if ((symbol_name_length(x) > 1) &&                           /* not 0, otherwise : is a keyword */
       ((name[0] == ':') ||
@@ -2406,36 +2395,6 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 } 
 
 
-static void initialize_local(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer slot)
-{
-  if (is_local(variable))
-    {
-      /* if it's currently a unique variable, then it won't be anymore once we're done here, 
-       *    so clear that bit and release the associated data.
-       */
-      clear_unique_local(variable);
-      if (symbol_local_data(variable))
-	{
-	  free(symbol_local_data(variable));
-	  symbol_local_data(variable) = NULL;
-	}
-    }
-  else
-    {
-      /* it's a new local variable, so if it's not a global, set up the unique local data pointers
-       */
-      if (symbol_global_slot(variable) == sc->NIL) 
-	{
-	  set_locals(variable);
-	  symbol_local_data(variable) = (s7_pointer *)malloc(2 * sizeof(s7_pointer));
-	  symbol_local_frame(variable) = env;
-	  symbol_local_slot(variable) = slot;
-	}
-      else set_local(variable);
-    }
-}
-
-
 static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
   s7_pointer slot, e;
@@ -2465,7 +2424,6 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       loc = symbol_location(variable);
       vector_element(e, loc) = s7_cons(sc, slot, vector_element(e, loc));
       symbol_global_slot(variable) = slot;
-      clear_unique_local(variable);
 
       /* so if we (define hi "hiho") at the top level,  "hi" hashes to 1746 with symbol table size 2207
        *   s7->symbol_table->object.vector.elements[1746]->object.cons.car->object.cons.car->object.string.global_slot is (hi . \"hiho\")
@@ -2479,21 +2437,30 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       cdr(x) = e;
       set_type(x, T_PAIR | T_STRUCTURE);
       car(env) = x;
-      if (is_not_ordinary_local(variable))
-	initialize_local(sc, env, variable, slot);
+      set_local(variable);
 
       /* currently any top-level value is in symbol_global_slot
        *   if never a local binding, is_local bit is off, so we go straight to the global binding
        *   if any local binding, local bit is set and never cleared, so even if we
        *     later define the same symbol at top-level, then go back to the local env case,
        *     the local bit protects us from accidentally grabbing the global value.
-       *
-       * if a local variable is unique, the unique_local bit is set and the local_data pointers
-       *   hold its env (frame) and binding (slot).  To find that symbol, we make sure the frame
-       *   is currently active, then return the slot directly.
-       *
-       * so, we only search the environment lists for non-unique ("ordinary") local variables.
        */
+
+      /* I tried adding a unique_local bit for symbols defined locally only once, but
+       *   there's no way to be sure the frame originally holding it is active (it might have been
+       *   GC'd, then reallocated as a frame that is currently active!).  
+       * 
+       * this will hit the problem:
+
+            (do ((i 0 (+ i 1))) ((= i 1000))
+              (let ((str (format #f "(let ((v~D ~D)) v~D)" i i i)))
+                (eval-string str)
+                (gc)
+                (do ((k 0 (+ k 1))) ((= k i))
+                  (let ((str (format #f "(let ((a 1) (b 2) (c 3) (d 4)) \
+                                           (if (defined? 'v~D) (format #t \"v~D is defined? ~~A~~%\" v~D)))" k k k)))
+            	    (eval-string str)))))
+      */
     }
 
   return(slot); /* csr(slot) might be used at some point by symbol_access */
@@ -2538,8 +2505,7 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   cdr(x) = car(sc->envir);
   set_type(x, T_PAIR | T_STRUCTURE);
   car(sc->envir) = x;
-  if (is_not_ordinary_local(variable))
-    initialize_local(sc, sc->envir, variable, y);
+  set_local(variable);
 
   return(y);
 } 
@@ -2695,7 +2661,7 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
    *   max linear search in s7test: 351! average search len in s7test: 9.  Although this takes about 10%
    *   the total compute time in s7test.scm, in snd-test it is around 1% -- s7test is a special case.
    *   The longest searches are in the huge let ca line 12638 (each variable in let has a new frame),
-   *   and push/pop in the CLisms section (they aren't unique so we have searches of length ca 320).
+   *   and push/pop in the CLisms section.
    */
 
   for (x = env; is_pair(x); x = cdr(x)) 
@@ -2726,19 +2692,6 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
 } 
 
 
-static s7_pointer find_unique_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
-{ 
-  s7_pointer x, frame;
-  frame = symbol_local_frame(hdl);
-
-  for (x = env; is_pair(x); x = cdr(x)) 
-    if (x == frame)
-      return(symbol_local_slot(hdl));
-
-  return(sc->NIL); 
-} 
-
-
 static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer y;
@@ -2749,20 +2702,13 @@ static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hd
   if (s7_is_vector(y))
     return(symbol_global_slot(hdl));
 
-  if (is_unique_local(hdl))
-    {
-      if (env == symbol_local_frame(hdl))
-	return(symbol_local_slot(hdl));
-    }
-  else
-    {
-      if (caar(y) == hdl)
-	return(car(y));
+  if (caar(y) == hdl)
+    return(car(y));
       
-      for (y = cdr(y); is_pair(y); y = cdr(y))
-	if (caar(y) == hdl)
-	  return(car(y));
-    }
+  for (y = cdr(y); is_pair(y); y = cdr(y))
+    if (caar(y) == hdl)
+      return(car(y));
+
   return(sc->NIL); 
 } 
 
@@ -2833,7 +2779,7 @@ static lstar_err_t lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym,
       {
 	/* car(x) is our binding (symbol . value) */
 	if (is_not_local(car(x)))
-	  set_local(car(x)); /* this is a special use of this bit, I think -- not initialize_local here */
+	  set_local(car(x)); /* this is a special use of this bit, I think */
 	else return(LSTAR_ALREADY_SET);
 	cdar(x) = val;
 	return(LSTAR_OK);
@@ -3952,20 +3898,21 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
 			     (ceiling (/ e0p e1p)))))))))
   */
   
-  s7_Double x0, x1, val;
+  double x0, x1, val;
   s7_Int i, i0, i1, r, r1, p0, q0, p1, q1;
-  s7_Double e0, e1, e0p, e1p;
+  double e0, e1, e0p, e1p;
   s7_Int old_p1, old_q1;
-  s7_Double old_e0, old_e1, old_e0p;
+  double old_e0, old_e1, old_e0p;
+  /* don't use s7_Double here;  if it is "long double", the loop below will hang */
 
   /* #e1e19 is a killer -- it's bigger than most-positive-fixnum, but if we ceil(ux) below
    *   it turns into most-negative-fixnum.  1e19 is trouble in many places.
    */
-  if ((ux > LLONG_MAX) || (ux < LLONG_MIN))
+  if ((ux > s7_Int_max) || (ux < s7_Int_min))
     {
       /* can't return false here because that confuses some of the callers!
        */
-      if (ux > LLONG_MIN) (*numer) = LLONG_MAX; else (*numer) = LLONG_MIN;
+      if (ux > s7_Int_min) (*numer) = s7_Int_max; else (*numer) = s7_Int_min;
       (*denom) = 1;
       return(true);
     }
@@ -4277,7 +4224,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
     return(s7_make_integer(sc, a));
 
 #if (!WITH_GMP)
-  if (b == LLONG_MIN)
+  if (b == S7_LLONG_MIN)
     {
       if (a == b)
 	return(small_int(1));
@@ -4506,7 +4453,7 @@ static s7_pointer s7_negate(s7_scheme *sc, s7_pointer p)     /* can't use "negat
     {
     case NUM_INT: 
 #if WITH_GMP
-      if (integer(a) == LLONG_MIN)
+      if (integer(a) == S7_LLONG_MIN)
 	return(big_negate(sc, make_list_1(sc, promote_number(sc, T_BIG_INTEGER, p))));
 #endif	
       return(s7_make_integer(sc, -integer(a)));
@@ -4533,7 +4480,7 @@ static s7_pointer s7_invert(s7_scheme *sc, s7_pointer p)      /* s7_ to be consi
     {
     case NUM_INT:
 #if WITH_GMP
-      if (integer(a) == LLONG_MIN)
+      if (integer(a) == S7_LLONG_MIN)
 	return(big_invert(sc, make_list_1(sc, promote_number(sc, T_BIG_INTEGER, p))));
 #endif
       return(s7_make_ratio(sc, 1, integer(a)));      /* a already checked, not 0 */
@@ -4694,7 +4641,7 @@ static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
       return;
     }
 
-  if (n == LLONG_MIN)
+  if (n == S7_LLONG_MIN)
     {
       /* a special case -- we can't use abs on this because it goes to 0, we won't get here if gmp.
        * (number->string most-negative-fixnum 2) -> "-0" unless we do something special 
@@ -5476,8 +5423,8 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
        */
       (*overflow) = true;
       if (negative)
-	return(LLONG_MIN);  /* or INFINITY? */
-      return(LLONG_MAX);             /* 0/100000000000000000000000000000000000000000000000000000000000000000000 */
+	return(s7_Int_min);       /* or INFINITY? */
+      return(s7_Int_max);         /* 0/100000000000000000000000000000000000000000000000000000000000000000000 */
     }
 #endif
 
@@ -6291,7 +6238,7 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
     case NUM_INT:     
       /* as in exact->inexact, (abs most-negative-fixnum) is a bother */
 #if WITH_GMP
-      if ((integer(n)) == LLONG_MIN)
+      if ((integer(n)) == S7_LLONG_MIN)
 	return(big_abs(sc, make_list_1(sc, s7_Int_to_big_integer(sc, integer(n)))));
 #endif
       return(s7_make_integer(sc, s7_Int_abs(integer(n))));
@@ -6842,7 +6789,7 @@ static s7_Int int_to_int(s7_Int x, s7_Int n)
 
 
 static long long int nth_roots[63] = {
-  LLONG_MAX, LLONG_MAX, 3037000499LL, 2097151, 55108, 6208, 1448, 511, 234, 127, 78, 52, 38, 28, 22, 
+  S7_LLONG_MAX, S7_LLONG_MAX, 3037000499LL, 2097151, 55108, 6208, 1448, 511, 234, 127, 78, 52, 38, 28, 22, 
   18, 15, 13, 11, 9, 8, 7, 7, 6, 6, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 
@@ -6945,7 +6892,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	      return(small_int(1));
 	    }
 
-	  if (y == LLONG_MIN)
+	  if (y == S7_LLONG_MIN)
 	    return(small_int(0));                      /* (expt x most-negative-fixnum) !! */
 
 	  if (int_pow_ok(x, s7_Int_abs(y)))
@@ -7707,7 +7654,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
       switch (ret_type)
 	{
 	case NUM_INT: 
-	  if (integer(b) == LLONG_MIN)
+	  if (integer(b) == S7_LLONG_MIN)
 	    {
 #if WITH_GMP
 	      return(big_divide(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), old_x)));
@@ -11819,7 +11766,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -11834,7 +11781,6 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_any_macro(obj) ?          " anymac" : "",
 	     is_expansion(obj) ?          " expansion" : "",
 	     is_local(obj) ?              " local" : "",
-	     is_unique_local(obj) ?       " unique" : "",
 	     symbol_accessed(obj) ?       " accessed" : "",
 	     symbol_has_accessor(obj) ?   " accessor" : "",
 	     has_structure(obj) ?         " structure" : "",
@@ -18992,7 +18938,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
    */
 
   /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
-
   if (is_pair(sc->cur_code))
     {
       int line, j, top;
@@ -19947,7 +19892,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   len = applicable_length(sc, obj);
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "for-each", 2, obj, "a vector, list, string, or applicable object"));
-    if (len == 0) return(sc->UNSPECIFIED);    /* circular -> LONG_MAX in this case, so 0 -> nil */
+    if (len == 0) return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
 
   sc->x = make_list_1(sc, sc->NIL);
   sc->z = make_list_1(sc, obj);
@@ -19972,7 +19917,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	}
     }
 
-  /* if at this point len == LONG_MAX, then all args are circular lists, assuming that
+  /* if at this point len == S7_LONG_MAX, then all args are circular lists, assuming that
    *    we're not looking at some enormous vector or string -- perhaps -1 would be a
    *    better marker.  This actually might not be an error (the for-each function could
    *    have call-with-exit), but it seems better to complain about it.
@@ -20102,7 +20047,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   len = applicable_length(sc, obj);
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, or applicable object"));
-  if (len == 0) return(sc->NIL);    /* obj has no elements (the circular list case will return LONG_MAX here) */
+  if (len == 0) return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
 
   sc->z = make_list_1(sc, obj);
   /* we have to copy the args if any of them is a list:
@@ -20125,7 +20070,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	}
     }
 
-  /* if at this point len == LONG_MAX, then all args are circular */
+  /* if at this point len == S7_LONG_MAX, then all args are circular */
   if (len == S7_LONG_MAX)
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    make_list_2(sc, make_protected_string(sc, "map's arguments are circular lists! ~A"), cdr(args))));
@@ -21156,6 +21101,14 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       s7_pointer x, cur_code;
 
       cur_code = sc->cur_code;
+      if (!is_pair(cur_code))
+	{
+	  /* isolated typo perhaps -- no pair to hold the position info, so make one.
+	   *   sc->cur_code is GC-protected, so this should be safe.
+	   */
+	  cur_code = s7_cons(sc, sym, sc->NIL); /* the error will say "(sym)" which is not too misleading */
+	  pair_line_number(cur_code) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
+	}
       cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
 
       SAVE_X_Y_Z(save_x, save_y, save_z);
@@ -21173,16 +21126,16 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       sc->cur_code = cur_code;
       s7_gc_unprotect_at(sc, cur_code_loc);
 
-      return(x);
+      if (x != sc->UNDEFINED)
+	return(x);
     }
-  return(sc->UNDEFINED);
+  
+  return(eval_error(sc, "~A: unbound variable", sym));
 }
 
 
 static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
 {
-  s7_pointer x;
-
   if ((is_keyword(sym)) ||
       (is_syntax(sym)))
     return(sym);
@@ -21191,15 +21144,10 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
     return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
   if (sym == sc->UNQUOTE_SPLICING)
     return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred without quasiquote"));
-
   /* actually we'll normally get an error from apply. (,@ 1) triggers this error.
    */
 
-  x = unbound_variable(sc, sym);
-  if (x != sc->UNDEFINED)
-    return(x);
-
-  return(eval_error(sc, "~A: unbound variable", sym));
+  return(unbound_variable(sc, sym));
 }
 
 
@@ -22387,12 +22335,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    if (is_not_local(sc->code))
 	      x = symbol_global_slot(sc->code);
-	    else 
-	      {
-		if (is_unique_local(sc->code))
-		  x = find_unique_symbol(sc, sc->envir, sc->code);
-		else x = find_symbol(sc, sc->envir, sc->code);
-	      }
+	    else x = find_symbol(sc, sc->envir, sc->code);
+
 	    if (x != sc->NIL) 
 	      sc->value = symbol_value(x);
 	    else sc->value = eval_symbol_1(sc, sc->code);
@@ -22496,12 +22440,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      s7_pointer x;
 	      if (is_not_local(car_code))
 		x = symbol_global_slot(car_code);
-	      else 
-		{
-		  if (is_unique_local(car_code))
-		    x = find_unique_symbol(sc, sc->envir, car_code);
-		  else x = find_symbol(sc, sc->envir, car_code);
-		}
+	      else x = find_symbol(sc, sc->envir, car_code);
 	      if (x != sc->NIL) 
 		sc->value = symbol_value(x);
 	      else sc->value = eval_symbol_1(sc, car_code);
@@ -22750,8 +22689,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		set_type(x, T_PAIR | T_STRUCTURE);
 
 		car(sc->envir) = x;
-		if (is_not_ordinary_local(z))
-		  initialize_local(sc, sc->envir, z, y);
+		set_local(z);
 	      }
 #endif
 	    }
@@ -25684,7 +25622,7 @@ static void mpz_init_set_s7_Int(mpz_t n, s7_Int uval)
 	  long long int val;
 	  val = (long long int)uval;
 	  /* handle one special case (sigh) */
-	  if (val == LLONG_MIN)
+	  if (val == S7_LLONG_MIN)
 	    mpz_init_set_str(n, "-9223372036854775808", 10);
 	  else
 	    {
@@ -25729,8 +25667,8 @@ static s7_Int big_integer_to_s7_Int(mpz_t n)
       mpz_neg(x, x);
     }
   low = mpz_get_ui(x);
-  if (low == LLONG_MIN)
-    return(LLONG_MIN);
+  if (low == S7_LLONG_MIN)
+    return(S7_LLONG_MIN);
 
   mpz_fdiv_q_2exp(x, x, 32);
   high = mpz_get_ui(x);
@@ -27613,7 +27551,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	  mpz_t n, d;
 	  mpq_t *r;
 
-	  if (yval > (LLONG_MAX >> 4)) /* gmp aborts or segfaults if this is too large, but I don't know where the actual boundary is */
+	  if (yval > (S7_LLONG_MAX >> 4)) /* gmp aborts or segfaults if this is too large, but I don't know where the actual boundary is */
 	    return(s7_out_of_range_error(sc, "integer expt exponent,", 1, y, "gmp will segfault"));
 
 	  x = promote_number(sc, T_BIG_RATIO, x);
@@ -30502,30 +30440,33 @@ the error type and the info passed to the error handler.");
     /* use BIGNUM_PLUS and MINUS here so that 9007199254740995.0 doesn't get turned into 9007199254740996.0 
      *   (using 53 and 24 bits)
      */
-    #define LOG_LLONG_MAX 36.736800
-    #define LOG_LONG_MAX  16.6355322
+    #define S7_LOG_LLONG_MAX 36.736800
+    #define S7_LOG_LONG_MAX  16.6355322
 #else
     /* actually not safe = (log (- (expt 2 63) 1)) and (log (- (expt 2 31) 1)) 
      *   (using 63 and 31 bits)
      */
-    #define LOG_LLONG_MAX 43.668274
-    #define LOG_LONG_MAX  21.487562
+    #define S7_LOG_LLONG_MAX 43.668274
+    #define S7_LOG_LONG_MAX  21.487562
 #endif
 
     top = sizeof(s7_Int);
-    s7_int_max = (top == 8) ? S7_LONG_MAX : SHRT_MAX;
-    s7_int_min = (top == 8) ? S7_LONG_MIN : SHRT_MIN;
+    s7_int_max = (top == 8) ? S7_LONG_MAX : S7_SHORT_MAX;
+    s7_int_min = (top == 8) ? S7_LONG_MIN : S7_SHORT_MIN;
     s7_int_bits = (top == 8) ? 63 : 31;
     s7_int_digits = (top == 8) ? 18 : 8;
+
+    s7_Int_max = (top == 8) ? S7_LLONG_MAX : S7_LONG_MAX;
+    s7_Int_min = (top == 8) ? S7_LLONG_MIN : S7_LONG_MIN;
 
     s7_int_digits_by_radix[0] = 0;
     s7_int_digits_by_radix[1] = 0;
 
     for (i = 2; i < 17; i++)
-      s7_int_digits_by_radix[i] = (int)(floor(((top == 8) ? LOG_LLONG_MAX : LOG_LONG_MAX) / log((double)i)));
+      s7_int_digits_by_radix[i] = (int)(floor(((top == 8) ? S7_LOG_LLONG_MAX : S7_LOG_LONG_MAX) / log((double)i)));
 
-    s7_define_constant(sc, "most-positive-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MAX : ((top == 4) ? LONG_MAX : SHRT_MAX)));
-    s7_define_constant(sc, "most-negative-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MIN : ((top == 4) ? LONG_MIN : SHRT_MIN)));
+    s7_define_constant(sc, "most-positive-fixnum", s7_make_integer(sc, (top == 8) ? S7_LLONG_MAX : ((top == 4) ? S7_LONG_MAX : S7_SHORT_MAX)));
+    s7_define_constant(sc, "most-negative-fixnum", s7_make_integer(sc, (top == 8) ? S7_LLONG_MIN : ((top == 4) ? S7_LONG_MIN : S7_SHORT_MIN)));
 
     if (top == 4) default_rationalize_error = 1.0e-6;
     s7_define_constant(sc, "pi", s7_make_real(sc, 3.1415926535897932384626433832795029L)); /* M_PI is not good enough for s7_Double = long double */

@@ -6,10 +6,14 @@
 
 
 typedef long long int s7_Int;
-/* This sets the size of integers in scheme and s7.c; s7_Int can be any (signed) integer type: "int" is ok */
+/* This sets the size of integers in scheme and s7.c; s7_Int can be almost any (signed) integer type: 
+ *    "int" is ok, but "short" is problematic -- lots of things assume s7_Int is at least 32 bits.
+ */
 
 typedef double s7_Double;
-/* similarly for doubles (reals in scheme) -- only "double" works in C++ */
+/* similarly for doubles (reals in scheme) -- only "double" works in C++, and
+ *    integer-decode-float assumes s7_Double is double.
+ */
 
 
   /* --------------------------------------------------------------------------------
