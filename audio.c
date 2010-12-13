@@ -991,6 +991,7 @@ static void yes_no(int condition)
   else pprint("   no     "); 
 }
 
+#if SOUND_VERSION < 0x040000 
 static int set_dsp(int fd, int channels, int bits, int *rate)
 {
   int val, fmt;
@@ -1008,6 +1009,7 @@ static int set_dsp(int fd, int channels, int bits, int *rate)
   ioctl(fd, MUS_OSS_WRITE_RATE, rate);
   return(MUS_NO_ERROR);
 }
+#endif
 
 static void oss_describe_audio_state_1(void)
 {
@@ -1015,7 +1017,9 @@ static void oss_describe_audio_state_1(void)
   /* it is explicitly released under the GPL, so I think I can use it here without elaborate disguises */
   int fd;
   int status = 0, level, i, recsrc, devmask, recmask, stereodevs, caps;
+#if SOUND_VERSION < 0x040000 
   int rate = 0, channels = 0, blocksize = 0, formats = 0, deffmt = 0, min_rate = 0, max_rate = 0;
+#endif
   const char *sound_device_names[] = SOUND_DEVICE_LABELS;
   char dsp_name[LABEL_BUFFER_SIZE];
   char version[LABEL_BUFFER_SIZE];
@@ -1209,7 +1213,6 @@ AUDIO_INFO:
   if (fd == -1) return;
 
 #if SOUND_VERSION < 0x040000
-
   /* Here's Yair K's explanation:
 
      In OSSv4 we can use the same ioctls as the equivalents of the 
@@ -1286,6 +1289,7 @@ AUDIO_INFO:
     }
   pprint("--------------------------------\n");
 #endif
+
   linux_audio_close(fd); 
   fd = -1;
   dsp_num++; 

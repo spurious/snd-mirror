@@ -104,8 +104,7 @@ If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files mus-config.h, config.log, and makefile,
 created (or updated) by configure.
 
-Snd comes with s7, but
-if you insist on building Snd without any extension 
+Snd comes with s7, but if you insist on building Snd without any extension 
 language, you'll find that it's severely limited in what it can do.  
 Snd can also be built without any graphics toolkit.  Without either the GUI 
 or an extension language, however, there's nothing it can do.
@@ -220,7 +219,7 @@ Plus many other contributions from
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
 C, Scheme, Ruby, Forth, m4, Emacs Lisp, javascript,
-Fortran, expect, and postscript (altogether about 700,000 lines).
+Fortran, and postscript (altogether about 700,000 lines).
 
 
 ----------------------------------------------------------------
@@ -470,7 +469,7 @@ On 64-bit machines, use motif 2.3.2 or later.
 
 ---- Gtk+: ----
 
-Only Gtk 2.9 or later is supported.  
+Only Gtk 2.10 or later is supported.  
 
 If you get an error like:
 

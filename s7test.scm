@@ -4350,6 +4350,14 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((lst (list (cons 1 2) (cons 2 3) (cons 3 4)))) (set! (cdr (cdr lst)) lst) (assoc 4 lst =)) #f)
 (test (let ((lst (list (cons 1 2) (cons 2 3) (cons 3 4)))) (set! (cdr (cdr (cdr lst))) lst) (assoc 3 lst =)) '(3 . 4))
 
+(test (assoc #t (list 1 2) #()) 'error)
+(test (assoc #t (list 1 2) (integer->char 127)) 'error)
+(test (assoc #t (list 1 2) (lambda (x y) (+ x 1))) 'error) ; (+ #t 1)
+(test (assoc #t (list 1 2) abs) 'error)
+(test (assoc #t (list 1 2) (lambda args args)) 'error)
+(test (assoc 1 '((3 . 2) 3) =) 'error)
+(test (assoc 1 '((1 . 2) 3) =) '(1 . 2)) ; this is like other trailing error unchecked cases -- should we check?
+
 
 
 ;;; memq
@@ -14097,6 +14105,7 @@ who says the continuation has to restart the map from the top?
 (test (let ((c1 #f)) (call/cc (lambda (c2) (call-with-exit (lambda (c3) (set! c1 c3) (c2))))) (c1)) 'error)
 (test (let ((cont #f)) (catch #t (lambda () (call-with-exit (lambda (return) (set! cont return) (error 'testing " a test")))) (lambda args 'error)) (apply cont)) 'error)
 (test (let ((cont #f)) (catch #t (lambda () (call-with-exit (lambda (return) (set! cont return) (error 'testing " a test")))) (lambda args 'error)) (cont 1)) 'error)
+(test (let ((e (call-with-exit (lambda (go) (lambda () (go 1)))))) (e)) 'error)
 
 (test (let ((cc #f)
 	    (doit #t)
@@ -19053,6 +19062,19 @@ abs     1       2
 (test (augment-environment!) 'error)
 (test (augment-environment 3) 'error)
 (test (augment-environment! 3) 'error)
+
+(test (let ((e (current-environment))) (environment? e)) #t)
+(test (let ((f (lambda (x) (environment? x)))) (f (current-environment))) #t)
+(test (let ((e (augment-environment! '() '(a . 1)))) (environment? e)) #t)
+(test (let ((e (augment-environment! '() '(a . 1)))) ((lambda (x) (environment? x)) e)) #t)
+(test (environment? ((lambda () (current-environment)))) #t)
+(test (environment? ((lambda (x) x) (current-environment))) #t)
+(test (let ((e (let ((x 32)) (lambda (y) (let ((z 123)) (current-environment))))))
+	(eval `(+ x y z) (e 1)))
+      156)
+(test (let ((e #f)) (set! e (let ((x 32)) (lambda (y) (let ((z 123)) (procedure-environment e)))))
+	   (eval `(+ x 1) (e 1)))
+      33)
 
 
 (test (catch #t

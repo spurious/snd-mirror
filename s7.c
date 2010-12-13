@@ -203,8 +203,10 @@
    */
 #endif
 
+#ifndef DEBUGGING
+  #define DEBUGGING 0
+#endif
 
-#define DEBUGGING 0
 
 
 /* -------------------------------------------------------------------------------- */
@@ -810,8 +812,8 @@ struct s7_scheme {
 
 #define is_pair(p)                    (type(p) == T_PAIR)
 /* using a bit here, rather than a type number) was much slower */
-#define car(p)                        ((p)->object.cons.car)
-#define cdr(p)                        ((p)->object.cons.cdr)
+#define car(p)                      ((p)->object.cons.car)
+#define cdr(p)                      ((p)->object.cons.cdr)
 #define caar(p)                       car(car(p))
 #define cadr(p)                       car(cdr(p))
 #define cdar(p)                       cdr(car(p))
@@ -1134,10 +1136,6 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args);
 #if HAVE_PTHREADS
   static bool is_thread(s7_pointer obj);
 #endif
-
-
-
-
 
 
 
@@ -11783,6 +11781,8 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       return(copy_string("#<vector>"));
 
     case T_PAIR: 
+      if (is_environment(obj))
+	return(copy_string("#<environment>"));
       return(copy_string("#<pair>"));
 #endif
 
@@ -13794,6 +13794,8 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
       if (x == sc->NIL) return(sc->F);
       if (!is_pair(x))
 	return(s7_wrong_type_arg_error(sc, "assoc", 2, x, "a list"));
+      if (!is_pair(car(x)))
+	return(s7_wrong_type_arg_error(sc, "assoc", 2, x, "an a-list")); /* we're assuming caar below so it better exist */
       
       sc->code = eq_func;
       sc->args = make_list_3(sc, make_list_2(sc, car(args), caar(x)), x, x);
@@ -18579,6 +18581,10 @@ static void trace_apply(s7_scheme *sc)
 	{
 	  push_stack(sc, opcode(OP_TRACE_HOOK_QUIT), sc->args, sc->code); /* restore current state after dealing with the trace hook func */
 	  s7_hook_apply(sc, sc->trace_hook, make_list_2(sc, sc->code, sc->args));
+
+	  /* it would be nice if *trace-hook* could return #f to turn off trace printout.
+	   *   then it could be used (more cleanly) for a call-history list (a circular list)
+	   */
 	}
     }
 }
@@ -21990,7 +21996,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
       if ((cadr(sc->args) == sc->NIL) || /* no more args -- return #f */
-	  (!is_pair(cadr(sc->args))))    /* (member 3 '(1 2 . 3) =) */
+	  (!is_pair(cadr(sc->args))))    /* (member 3 '(1 2 . 3) =) -- we access caadr below */
 	{
 	  sc->value = sc->F;
 	  goto START;
@@ -22044,6 +22050,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, opcode(OP_ASSOC_IF), sc->args, sc->code);
 	}
       else push_stack(sc, opcode(OP_ASSOC_IF1), sc->args, sc->code);
+
+      if (!is_pair(caadr(sc->args)))     /* (assoc 1 '((2 . 2) 3) =) -- we access caaadr below */
+	return(eval_error(sc, "assoc: 2nd arg is not an alist: ~S", caddr(sc->args)));
+      /* not sure about this -- we could simply skip the entry both here and in g_assoc
+       *   (assoc 1 '((2 . 2) 3)) -> #f
+       *   (assoc 1 '((2 . 2) 3) =) -> error currently
+       */
+
       cadar(sc->args) = caaadr(sc->args);
       sc->args = car(sc->args);
       goto APPLY;
