@@ -1,4 +1,4 @@
-;; s7 test suite
+;;; s7 test suite
 ;;;
 ;;; sources include 
 ;;;   clisp test suite
@@ -4383,6 +4383,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (memq memq (list abs + memq car)) (list memq car))
 (test (memq 'a '(a a a)) '(a a a)) ;?
 (test (memq 'a '(b a a)) '(a a))
+(test (memq "hi" '(1 "hi" 2)) #f)
+(test (memq #\a '(1 #f #\a 2)) '(#\a 2))
 
 (let ((odd '(3 a 3.0 b 3/4 c #(1) d))
       (even '(e 3 a 3.0 b 3/4 c #(1) d)))
@@ -4418,6 +4420,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((x (cons 1 2))) (memv x (list x (cons 3 4)))) '((1 . 2) (3 . 4)))
 (test (memv 'a '(a a a)) '(a a a)) ;?
 (test (memv 'a '(b a a)) '(a a))
+(test (memv "hi" '(1 "hi" 2)) #f)
+(test (memv #\a '(1 #f #\a 2)) '(#\a 2))
 
 (let ((odd '(3 a 3.0 b 3/4 c #(1) d))
       (even '(e 3 a 3.0 b 3/4 c #(1) d)))
@@ -4464,6 +4468,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (member 'a '(a a a)) '(a a a)) ;?
 (test (member 'a '(b a a)) '(a a))
 (test (member (member 3 '(1 2 3 4)) '((1 2) (2 3) (3 4) (4 5))) '((3 4) (4 5)))
+(test (member "hi" '(1 "hi" 2)) '("hi" 2))
+(test (member #\a '(1 #f #\a 2)) '(#\a 2))
 
 (for-each
  (lambda (arg)
@@ -4558,6 +4564,30 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (tree-member 1 '(2 3 (4 1) 5)) '((4 1) 5))
   (test (tree-member -1 '(2 3 (4 1) 5)) #f)
   (test (tree-member 1 '(2 3 ((4 (1) 5)))) '(((4 (1) 5)))))
+
+(let ((lst (list 1 2 3)))
+  (set! (cdr (cdr (cdr lst))) lst)
+  (test (member 2 lst) (member 2 lst equal?)))
+
+(let ((lst (list 1 2 3)))
+  (set! (cdr (cdr (cdr lst))) lst)
+  (test (member 4 lst) (member 4 lst equal?)))
+
+(let ((lst (list 1 2 3 4)))
+  (set! (cdr (cdr (cdr (cdr lst)))) lst)
+  (test (member 4 lst) (member 4 lst equal?)))
+
+(let ((lst (list 1 2 3 4)))
+  (set! (cdr (cdr (cdr (cdr lst)))) (cdr lst))
+  (test (member 4 lst) (member 4 lst equal?)))
+
+(for-each
+  (lambda (arg lst)
+    (test (member arg lst eq?) (memq arg lst))
+    (test (member arg lst eqv?) (memv arg lst))
+    (test (member arg lst equal?) (member arg lst)))
+  (list 'a #f (list 'a) 'a 1 3/4 #(1) "hi")
+  (list '(a b c) '(1 "hi" #t #f 2) '(b (a) c) '(d a b . c) '(1 3/4 23) '(1 3/4 23) '(a 1 #(1) 23) '(1 "hi" 23)))
 
 (for-each
  (lambda (op)
@@ -18661,6 +18691,7 @@ abs     1       2
 (test (let () (define (__c1__ a) a) (__c1__ 3)) 'error)
 (test (let () (set! __c1__ 3)) 'error)
 
+;;; constant?
 (test (constant? '__c1__) #t)
 (test (constant? pi) #t)
 (test (constant? 'pi) #t) ; take that, Clisp!
@@ -18731,6 +18762,7 @@ abs     1       2
 ;; that is, hi is the constant as a vector, not the vector elements
 
 
+;;; defined?
 (test (defined? 'pi) #t)
 (test (defined? 'pi (global-environment)) #t)
 (test (defined? 'abs (global-environment)) #t)
@@ -18750,7 +18782,7 @@ abs     1       2
 (test (defined? lambda gensym) 'error)
 (test (defined? 'lambda defined?) 'error)
 (test (defined? 'define car) 'error)
-(test (defined? 'abs '(())) #f)
+(test (defined? 'abs (augment-environment '())) #f)
 (test (defined? lambda) #t)
 (test (defined? 'lambda) #t)
 (test (defined? 'dynamic-wind) #t)
@@ -18765,6 +18797,35 @@ abs     1       2
 (test (defined? ''+) 'error)
 
 
+;;; environment?
+;;; global-environment
+;;; initial-environment
+;;; current-environment
+;;; augment-environment
+;;; with-environment
+
+(for-each
+ (lambda (arg)
+   (test (environment? arg) #f))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
+(let () (test (environment? (initial-environment)) #t))
+(test (environment? (current-environment)) #t)
+(test (environment? (global-environment)) #t)
+(test (environment? (augment-environment '())) #t)
+(test (environment? (augment-environment! '())) #t)
+(test (environment? (augment-environment (augment-environment '()) '(a . 1))) #t)
+(test (environment? (augment-environment! (augment-environment! '()) '(a . 1))) #t)
+(test (environment? (augment-environment '() '(a . 1))) #t)
+(test (environment? (augment-environment! '() '(a . 1))) #t)
+(let ((f1 (lambda (a) (+ a 1)))
+      (f2 (lambda* ((a 2)) (+ a 1))))
+  (define (hi a) (+ a 1))
+  (define* (ho (a 1)) (+ a 1))
+  (test (environment? (procedure-environment hi)) #t)
+  (test (environment? (procedure-environment ho)) #t)
+  (test (environment? (procedure-environment f1)) #t)
+  (test (environment? (procedure-environment f2)) #t)
+  (test (environment? (procedure-environment abs)) #t))
 
 (test (current-environment 1) 'error)
 (test (global-environment 1) 'error)
@@ -18873,6 +18934,33 @@ abs     1       2
   (test (eval-string "(+ a b)" (augment-environment e (cons 'b 3))) 35)
   )
 
+(test (defined? 'a (augment-environment '() '(a . 1))) #t)
+(test (defined? 'b (augment-environment '() '(a . 1))) #f)
+(test (defined? 'a '((a . 1))) 'error)
+(test (defined? 'a '((a . 1) 2)) 'error)
+(test (defined? 'a (augment-environment '())) #f)
+
+(test (symbol->value 'a (augment-environment '() '(a . 1))) 1)
+(test (symbol->value 'b (augment-environment '() '(a . 1))) #<undefined>)
+(test (symbol->value 'a '((a . 1))) 'error)
+(test (symbol->value 'a '((a . 1) 2)) 'error)
+
+(test (eval 'a (augment-environment '() '(a . 1))) 1)
+(test (eval 'a (augment-environment '() '(b . 1))) 'error)
+(test (eval 'a '((a . 1))) 'error)
+(test (eval 'a '((a . 1) 2)) 'error)
+
+(test (eval-string "a" (augment-environment '() '(a . 1))) 1)
+(test (eval-string "a" (augment-environment '() '(b . 1))) 'error)
+(test (eval-string "a" '((a . 1))) 'error)
+(test (eval-string "a" '((a . 1) 2)) 'error)
+
+(test (with-environment (augment-environment '() '(a . 1)) a) 1)
+(test (with-environment (augment-environment '()) 1) 1)
+(test (with-environment (augment-environment '() '(b . 1)) a) 'error)
+(test (with-environment '((a . 1)) a) 'error)
+(test (with-environment '((a . 1) 2) a) 'error)
+
 (for-each
  (lambda (arg)
    (test (augment-environment (current-environment) arg) 'error)
@@ -18880,12 +18968,7 @@ abs     1       2
  (list -1 #\a #(1 2 3) 3.14 3/4 1.0+1.0i 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
 (test (with-environment (augment-environment (current-environment) (cons '+ (lambda args (apply * args)))) (+ 1 2 3 4)) 24)
-(test (with-environment (cons (list (cons 'add (lambda args (apply * args)))) (current-environment)) (add 1 2 3 4)) 24)
-;;; (with-environment (cons (list (cons '+ (lambda args (apply * args)))) (current-environment)) (+ 1 2 3 4)) -> 10
-;;;  presumably it's not setting the not-a-global flag -- but when should that happen? is this a bug?
-
 (test (with-environment (current-environment) (let ((x 1)) x)) 1)
-
 
 (test (let ((x 12))
 	(let ((e (current-environment)))
@@ -18917,10 +19000,8 @@ abs     1       2
    (test (with-environment arg #f) 'error))
  (list -1 #\a #(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
-;;; but:
-(test (with-environment '((a . 1)) 1) 1)
-(test (with-environment '((a . 1)) a) 'error)
-
+(test (with-environment (augment-environment (augment-environment '()) '(a . 1)) 1) 1)
+(test (with-environment (augment-environment (augment-environment '()) '(a . 1)) a) 1)
 (test (with-environment (current-environment) 1) 1)
 (test (let ((a 1))
 	(+ (with-environment
@@ -18972,6 +19053,7 @@ abs     1       2
 (test (augment-environment!) 'error)
 (test (augment-environment 3) 'error)
 (test (augment-environment! 3) 'error)
+
 
 (test (catch #t
 	     (lambda ()

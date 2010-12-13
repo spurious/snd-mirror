@@ -733,6 +733,9 @@ struct s7_scheme {
 #define set_local(p)                  typeflag(p) |= T_LOCAL
 /* this marks a symbol that has been used at some time as a local variable */
 
+#define T_ENVIRONMENT                 (1 << (TYPE_BITS + 15))
+#define is_environment(p)             ((typeflag(p) & T_ENVIRONMENT) != 0)
+
 #define T_DONT_COPY_CDR               (1 << (TYPE_BITS + 17))
 #define dont_copy_cdr(p)              ((typeflag(p) & T_DONT_COPY_CDR) != 0)
 /* copy_object (continuations) optimization */
@@ -783,10 +786,10 @@ struct s7_scheme {
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
-#define UNUSED_BITS                   0x81884800
+#define UNUSED_BITS                   0x81084800
 
 /* TYPE_BITS could be 5
- * TYPE_BITS + 3, 6, 11, 15, 16 and 23 are currently unused
+ * TYPE_BITS + 3, 6, 11, 16 and 23 are currently unused
  */
 
 
@@ -2378,7 +2381,7 @@ static s7_pointer g_symbol_calls(s7_scheme *sc, s7_pointer args)
       NEW_CELL(Sc, x);                   \
       car(x) = Sc->NIL;                  \
       cdr(x) = Old_Env;                  \
-      set_type(x, T_PAIR | T_STRUCTURE); \
+      set_type(x, T_PAIR | T_STRUCTURE | T_ENVIRONMENT); \
       New_Env = x;                       \
      } while (0)
 
@@ -2390,9 +2393,16 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
   NEW_CELL(sc, x);
   car(x) = sc->NIL;
   cdr(x) = old_env;
-  set_type(x, T_PAIR | T_STRUCTURE);
+  set_type(x, T_PAIR | T_STRUCTURE | T_ENVIRONMENT);
   return(x);
 } 
+
+
+static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_environment "(environment? obj) returns #t if obj is an environment."
+  return(make_boolean(sc, is_environment(car(args))));
+}
 
 
 static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
@@ -2511,18 +2521,6 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
 } 
 
 
-static bool is_environment(s7_scheme *sc, s7_pointer x)
-{
-  /* perhaps we need an environment type so this can't be fooled? 
-   *   then for user-specified envs, we'd use with-environment where '() is the empty env?
-   *   and it means a bit to mark the pairs that head the env (not many bits and this
-   *   needs to be as fast as possible) -- I guess I'll limp along as before.
-   */
-  return((is_pair(x)) &&
-	 ((car(x) == sc->NIL) || (is_pair(car(x))) || (s7_is_vector(car(x)))));
-}
-
-
 static void save_initial_environment(s7_scheme *sc)
 {
   /* there are ca 270 predefined functions (and another 30 or so other things)
@@ -2598,19 +2596,34 @@ arguments (each a cons: symbol . value) directly to the environment env, and ret
 environment."
 
   s7_pointer x, e;
-  int i;
+  int i, gc_loc = -1;
 
   e = car(args);
-  if (!is_environment(sc, e))
-    return(s7_wrong_type_arg_error(sc, "augment-environment!", 1, e, "an environment"));
+
+  if (!is_environment(e))
+    {
+      if (e == sc->NIL)       /* the empty environment */
+	{
+	  e = new_frame_in_env(sc, sc->NIL);
+	  gc_loc = s7_gc_protect(sc, e);
+	}
+      else return(s7_wrong_type_arg_error(sc, "augment-environment!", 1, e, "an environment"));
+    }
 
   for (i = 2, x = cdr(args); x != sc->NIL; x = cdr(x), i++)
     if ((!is_pair(car(x))) ||
 	(!s7_is_symbol(caar(x))))
-      return(s7_wrong_type_arg_error(sc, "augment-environment!", i, car(x), "a pair: '(symbol . value)"));
+      {
+	if (gc_loc != -1)
+	  s7_gc_unprotect_at(sc, gc_loc);
+	return(s7_wrong_type_arg_error(sc, "augment-environment!", i, car(x), "a pair: '(symbol . value)"));
+      }
 
   for (x = cdr(args); x != sc->NIL; x = cdr(x))
     add_to_environment(sc, e, caar(x), cdar(x));
+
+  if (gc_loc != -1)
+    s7_gc_unprotect_at(sc, gc_loc);
 
   return(e);
 }
@@ -2639,16 +2652,30 @@ arguments (each a cons: symbol . value) to the environment env, and returns the 
 new environment."
 
   s7_pointer e, x;
-  int i;
+  int i, gc_loc = -1;
 
   e = car(args);
-  if (!is_environment(sc, e))
-    return(s7_wrong_type_arg_error(sc, "augment-environment", 1, e, "an environment"));
+  if (!is_environment(e))
+    {
+      if (e == sc->NIL)       /* the empty environment */
+	{
+	  e = new_frame_in_env(sc, sc->NIL);
+	  gc_loc = s7_gc_protect(sc, e);
+	}
+      else return(s7_wrong_type_arg_error(sc, "augment-environment", 1, e, "an environment"));
+    }
 
   for (i = 2, x = cdr(args); x != sc->NIL; x = cdr(x), i++)
     if ((!is_pair(car(x))) ||
 	(!s7_is_symbol(caar(x))))
-      return(s7_wrong_type_arg_error(sc, "augment-environment", i, car(x), "a pair: '(symbol . value)"));
+      {
+	if (gc_loc != -1)
+	  s7_gc_unprotect_at(sc, gc_loc);
+	return(s7_wrong_type_arg_error(sc, "augment-environment", i, car(x), "a pair: '(symbol . value)"));
+      }
+
+  if (gc_loc != -1)
+    s7_gc_unprotect_at(sc, gc_loc);
 
   return(s7_augment_environment(sc, e, cdr(args)));
 }
@@ -2747,7 +2774,7 @@ symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
 
   if (cdr(args) != sc->NIL)
     {
-      if (!is_environment(sc, cadr(args)))
+      if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "symbol->value", 2, cadr(args), "an environment"));
       local_env = cadr(args);
     }
@@ -2919,7 +2946,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
   
   if (cdr(args) != sc->NIL)
     {
-      if (!is_environment(sc, cadr(args)))
+      if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "defined?", 2, cadr(args), "an environment"));
       x = cadr(args);
     }
@@ -11161,7 +11188,7 @@ defaults to the global environment.  To load into the current environment instea
 
   if (cdr(args) != sc->NIL) 
     {
-      if (!is_environment(sc, cadr(args)))
+      if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "load", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
@@ -11326,7 +11353,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   
   if (cdr(args) != sc->NIL)
     {
-      if (!is_environment(sc, cadr(args)))
+      if (!is_environment(cadr(args)))
  	return(s7_wrong_type_arg_error(sc, "eval-string", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
@@ -11766,7 +11793,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -11786,6 +11813,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     has_structure(obj) ?         " structure" : "",
 	     is_multiple_value(obj) ?     " values" : "",
 	     is_keyword(obj) ?            " keyword" : "",
+	     is_environment(obj) ?        " environment" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
 #if DEBUGGING
     if ((saved_typeflag(obj) != typeflag(obj)) &&
@@ -15459,6 +15487,7 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
   if (s7_is_symbol(car(args)))
     p = s7_symbol_value(sc, car(args));
   else p = car(args);
+
   if ((!is_procedure(p)) && 
       (!is_macro(p)) &&
       (!is_bacro(p)))
@@ -19626,7 +19655,7 @@ pass (global-environment):\n\
   
   if (cdr(args) != sc->NIL)
     {
-      if (!is_environment(sc, cadr(args)))
+      if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
@@ -21106,7 +21135,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  /* isolated typo perhaps -- no pair to hold the position info, so make one.
 	   *   sc->cur_code is GC-protected, so this should be safe.
 	   */
-	  cur_code = s7_cons(sc, sym, sc->NIL); /* the error will say "(sym)" which is not too misleading */
+	  cur_code = s7_cons(sc, sym, sc->NIL);     /* the error will say "(sym)" which is not too misleading */
 	  pair_line_number(cur_code) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
 	}
       cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
@@ -21144,6 +21173,7 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
     return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
   if (sym == sc->UNQUOTE_SPLICING)
     return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred without quasiquote"));
+
   /* actually we'll normally get an error from apply. (,@ 1) triggers this error.
    */
 
@@ -23084,6 +23114,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  closure_environment(sc->value) = s7_cons(sc, 
 						   make_list_1(sc, sc->x),
 						   closure_environment(sc->value));
+	  typeflag(closure_environment(sc->value)) |= T_ENVIRONMENT;
 	}
       else
 	{
@@ -23325,6 +23356,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	    }
 	  set_symbol_value(sc->y, sc->value); 
+	  sc->y = sc->NIL;
 	  goto START;
 	}
       /* if unbound variable hook here, we need the binding, not the current value */
@@ -24214,7 +24246,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_WITH_ENV2:
-      if (!is_environment(sc, sc->value))                /* (with-environment . "hi") */
+      if (!is_environment(sc->value))                    /* (with-environment . "hi") */
 	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->value));
 
       sc->envir = sc->value;                             /* in new env... */
@@ -24710,7 +24742,7 @@ static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
       stack_size = s7_integer(cadr(args));
     }
   
-  frame = immutable_cons(sc, sc->NIL, sc->envir);
+  frame = new_frame_in_env(sc, sc->envir);
   floc = s7_gc_protect(sc, frame);
   vect = s7_make_vector(sc, stack_size);
   vloc = s7_gc_protect(sc, vect);
@@ -29727,6 +29759,7 @@ s7_scheme *s7_init(void)
 #endif
   
   sc->global_env = make_list_1(sc, s7_make_vector(sc, SYMBOL_TABLE_SIZE));
+  typeflag(sc->global_env) |= T_ENVIRONMENT;
   sc->envir = sc->global_env;
   
   /* keep the small_ints out of the heap */
@@ -29948,6 +29981,7 @@ s7_scheme *s7_init(void)
   s7_define_constant_function(sc, "initial-environment", g_initial_environment, 0, 0, false, H_initial_environment);
   s7_define_function(sc, "augment-environment",     g_augment_environment,     1, 0, true,  H_augment_environment);
   s7_define_function(sc, "augment-environment!",    g_augment_environment_direct, 1, 0, true,  H_augment_environment_direct);
+  s7_define_function(sc, "environment?",            g_is_environment,          1, 0, false, H_is_environment);
   s7_define_function(sc, "provided?",               g_is_provided,             1, 0, false, H_is_provided);
   s7_define_function(sc, "provide",                 g_provide,                 1, 0, false, H_provide);
   s7_define_function(sc, "defined?",                g_is_defined,              1, 1, false, H_is_defined);

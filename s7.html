@@ -3504,6 +3504,7 @@ Environments are first class objects in s7.
 </p>
 
 <pre>
+  (environment? obj)            #t if obj is an environment
   (<a name="globalenvironment">global-environment</a>)          the top-level environment
   (<a name="currentenvironment">current-environment</a>)         the currently visible variables and their values
   (procedure-environment proc)  the environment at the time when proc was defined
@@ -3539,7 +3540,9 @@ To add or change a symbol's value, use augment-environment:
 <p>augment-environment does not change the environment passed to it.  It
 just prepends the new bindings, shadowing any old ones,
 as if you had called "let".  To add the bindings directly to the environment,
-use augment-environment!.
+use augment-environment!.  Both of these functions accept nil as the
+'env' argument.  In this case, they return an environment containing
+only the bindings you pass in.
 </p>
 
 <p>It is possible in Scheme to redefine built-in functions such as car.

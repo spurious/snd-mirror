@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.75"
-#define S7_DATE "1-Dec-10"
+#define S7_VERSION "1.76"
+#define S7_DATE "12-Dec-10"
 
 
 typedef long long int s7_Int;
@@ -790,6 +790,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 12-Dec:    environment? 
  * 7-Dec:     member and assoc have an optional 3rd arg, the comparison function.
  * 1-Dec:     *gc-stats* in Scheme, s7_gc_stats in C.
  *            gmp and gtk-repl examples in s7.html.
