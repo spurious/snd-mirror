@@ -898,6 +898,7 @@
 	(cons "GdkSubwindowMode" "INT")
 	(cons "GdkPropertyState" "INT")
 	(cons "GtkScrollablePolicy" "INT")
+
 	))
 
 (define (type-it type)

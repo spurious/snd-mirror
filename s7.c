@@ -929,13 +929,11 @@ struct s7_scheme {
 #define closure_body(Obj)             cdr(closure_source(Obj))
 #define closure_environment(Obj)      cdr(Obj)
 
-#define is_catch(p)                   (type(p) == T_CATCH)
 #define catch_tag(p)                  (p)->object.rcatch.tag
 #define catch_goto_loc(p)             (p)->object.rcatch.goto_loc
 #define catch_handler(p)              (p)->object.rcatch.handler
 
 enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
-#define is_dynamic_wind(p)            (type(p) == T_DYNAMIC_WIND)
 #define dynamic_wind_state(p)         (p)->object.winder.state
 #define dynamic_wind_in(p)            (p)->object.winder.in
 #define dynamic_wind_out(p)           (p)->object.winder.out
