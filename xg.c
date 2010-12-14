@@ -9350,7 +9350,7 @@ static XEN gxg_gtk_tearoff_menu_item_new(void)
 static XEN gxg_gtk_text_buffer_new(XEN table)
 {
   #define H_gtk_text_buffer_new "GtkTextBuffer* gtk_text_buffer_new(GtkTextTagTable* table)"
-  XEN_ASSERT_TYPE(XEN_GtkTextTagTable__P(table), table, 1, "gtk_text_buffer_new", "GtkTextTagTable*");
+  XEN_ASSERT_TYPE(XEN_GtkTextTagTable__P(table) || XEN_FALSE_P(table), table, 1, "gtk_text_buffer_new", "GtkTextTagTable*");
   return(C_TO_XEN_GtkTextBuffer_(gtk_text_buffer_new(XEN_TO_C_GtkTextTagTable_(table))));
 }
 
@@ -9514,6 +9514,7 @@ GtkTextIter* iter, gchar* text, gint len, etc tags)"
     if (XEN_LIST_P(tags)) etc_len = XEN_LIST_LENGTH(tags);
     if (etc_len < 1) XEN_OUT_OF_RANGE_ERROR("gtk_text_buffer_insert_with_tags_by_name", 4, tags, "... list must have at least 1 entry");
     if (etc_len > 6) XEN_OUT_OF_RANGE_ERROR("gtk_text_buffer_insert_with_tags_by_name", 4, tags, "... list too long (max len: 6)");
+    if ((etc_len % 2) != 0) XEN_OUT_OF_RANGE_ERROR("gtk_text_buffer_insert_with_tags_by_name", 4, tags, "... list len must be multiple of 2");
     p_arg0 = XEN_TO_C_GtkTextBuffer_(buffer);
     p_arg1 = XEN_TO_C_GtkTextIter_(iter);
     p_arg2 = XEN_TO_C_gchar_(text);
@@ -9521,11 +9522,8 @@ GtkTextIter* iter, gchar* text, gint len, etc tags)"
     switch (etc_len)
       {
         case 1: gtk_text_buffer_insert_with_tags_by_name(p_arg0, p_arg1, p_arg2, p_arg3, XLS(tags, 0), NULL); break;
-        case 2: gtk_text_buffer_insert_with_tags_by_name(p_arg0, p_arg1, p_arg2, p_arg3, XLS(tags, 0), XLS(tags, 1), NULL); break;
-        case 3: gtk_text_buffer_insert_with_tags_by_name(p_arg0, p_arg1, p_arg2, p_arg3, XLS(tags, 0), XLS(tags, 1), XLS(tags, 2), NULL); break;
-        case 4: gtk_text_buffer_insert_with_tags_by_name(p_arg0, p_arg1, p_arg2, p_arg3, XLS(tags, 0), XLS(tags, 1), XLS(tags, 2), XLS(tags, 3), NULL); break;
-        case 5: gtk_text_buffer_insert_with_tags_by_name(p_arg0, p_arg1, p_arg2, p_arg3, XLS(tags, 0), XLS(tags, 1), XLS(tags, 2), XLS(tags, 3), XLS(tags, 4), NULL); break;
-        case 6: gtk_text_buffer_insert_with_tags_by_name(p_arg0, p_arg1, p_arg2, p_arg3, XLS(tags, 0), XLS(tags, 1), XLS(tags, 2), XLS(tags, 3), XLS(tags, 4), XLS(tags, 5), NULL); break;
+        case 3: gtk_text_buffer_insert_with_tags_by_name(p_arg0, p_arg1, p_arg2, p_arg3, XLS(tags, 0), XLI(tags, 1), XLS(tags, 2), NULL); break;
+        case 5: gtk_text_buffer_insert_with_tags_by_name(p_arg0, p_arg1, p_arg2, p_arg3, XLS(tags, 0), XLI(tags, 1), XLS(tags, 2), XLI(tags, 3), XLS(tags, 4), NULL); break;
       }
     return(XEN_FALSE);
   }
@@ -9783,17 +9781,15 @@ gchar* tag_name, etc tags)"
     gchar* p_arg1;
     if (XEN_LIST_P(tags)) etc_len = XEN_LIST_LENGTH(tags);
     if (etc_len > 6) XEN_OUT_OF_RANGE_ERROR("gtk_text_buffer_create_tag", 2, tags, "... list too long (max len: 6)");
+    if ((etc_len % 2) != 0) XEN_OUT_OF_RANGE_ERROR("gtk_text_buffer_create_tag", 2, tags, "... list len must be multiple of 2");
     p_arg0 = XEN_TO_C_GtkTextBuffer_(buffer);
     p_arg1 = XEN_TO_C_gchar_(tag_name);
     switch (etc_len)
       {
         case 0: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, NULL); break;
-        case 1: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), NULL); break;
-        case 2: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLS(tags, 1), NULL); break;
-        case 3: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLS(tags, 1), XLS(tags, 2), NULL); break;
-        case 4: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLS(tags, 1), XLS(tags, 2), XLS(tags, 3), NULL); break;
-        case 5: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLS(tags, 1), XLS(tags, 2), XLS(tags, 3), XLS(tags, 4), NULL); break;
-        case 6: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLS(tags, 1), XLS(tags, 2), XLS(tags, 3), XLS(tags, 4), XLS(tags, 5), NULL); break;
+        case 2: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLI(tags, 1), NULL); break;
+        case 4: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLI(tags, 1), XLS(tags, 2), XLI(tags, 3), NULL); break;
+        case 6: result = gtk_text_buffer_create_tag(p_arg0, p_arg1, XLS(tags, 0), XLI(tags, 1), XLS(tags, 2), XLI(tags, 3), XLS(tags, 4), XLI(tags, 5), NULL); break;
       }
     return(C_TO_XEN_GtkTextTag_(result));
   }
@@ -34293,6 +34289,13 @@ static XEN xg_object_get(XEN val, XEN name, XEN string_type)
   else {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &str, NULL); return(C_TO_XEN_STRING(str));}
 }
 
+static XEN xg_gtk_event_keyval(XEN event)
+{
+ GdkEventKey *e;
+ e = XEN_TO_C_GdkEventKey_(event);
+ return(C_TO_XEN_INT((int)(e->keyval)));
+}
+
 static XEN xen_list_to_c_array(XEN val, XEN type)
 {
   int i, len;
@@ -38032,7 +38035,8 @@ XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)
 XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)
 XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)
 XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)
-XEN_NARGIFY_3(xg_object_get_w, xg_object_get);
+XEN_NARGIFY_3(xg_object_get_w, xg_object_get)
+XEN_NARGIFY_1(xg_gtk_event_keyval_w, xg_gtk_event_keyval)
 XEN_ARGIFY_2(gxg_gtk_init_w, gxg_gtk_init)
 XEN_ARGIFY_2(gxg_gtk_init_check_w, gxg_gtk_init_check)
 XEN_NARGIFY_1(gxg_GDK_DRAG_CONTEXT_w, gxg_GDK_DRAG_CONTEXT)
@@ -41984,6 +41988,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_make_target_entry_w gxg_make_target_entry
 #define c_to_xen_string_w c_to_xen_string
 #define xg_object_get_w xg_object_get
+#define xg_gtk_event_keyval_w xg_gtk_event_keyval
 #define gxg_gtk_init_w gxg_gtk_init
 #define gxg_gtk_init_check_w gxg_gtk_init_check
 #define gxg_GDK_DRAG_CONTEXT_w gxg_GDK_DRAG_CONTEXT
@@ -46154,6 +46159,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);
   XG_DEFINE_PROCEDURE(g_object_get, xg_object_get_w, 3, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(gtk_event_keyval, xg_gtk_event_keyval_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init);
   XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check);
   XG_DEFINE_PROCEDURE(GDK_IS_DRAG_CONTEXT, gxg_GDK_IS_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_IS_DRAG_CONTEXT obj): " PROC_TRUE " if obj is a GDK_IS_DRAG_CONTEXT");
@@ -46608,6 +46614,8 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_VISUAL_PSEUDO_COLOR);
   DEFINE_INTEGER(GDK_VISUAL_TRUE_COLOR);
   DEFINE_INTEGER(GDK_VISUAL_DIRECT_COLOR);
+  DEFINE_INTEGER(GDK_INPUT_OUTPUT);
+  DEFINE_INTEGER(GDK_INPUT_ONLY);
   DEFINE_INTEGER(GDK_WINDOW_ROOT);
   DEFINE_INTEGER(GDK_WINDOW_TOPLEVEL);
   DEFINE_INTEGER(GDK_WINDOW_CHILD);
@@ -47451,8 +47459,246 @@ static void define_integers(void)
 
 #if (!HAVE_GTK_3)
   DEFINE_INTEGER(GDK_NO_EXPOSE);
-  DEFINE_INTEGER(GDK_INPUT_OUTPUT);
-  DEFINE_INTEGER(GDK_INPUT_ONLY);
+  DEFINE_INTEGER(GDK_VoidSymbol);
+  DEFINE_INTEGER(GDK_BackSpace);
+  DEFINE_INTEGER(GDK_Tab);
+  DEFINE_INTEGER(GDK_Linefeed);
+  DEFINE_INTEGER(GDK_Clear);
+  DEFINE_INTEGER(GDK_Return);
+  DEFINE_INTEGER(GDK_Pause);
+  DEFINE_INTEGER(GDK_Scroll_Lock);
+  DEFINE_INTEGER(GDK_Sys_Req);
+  DEFINE_INTEGER(GDK_Escape);
+  DEFINE_INTEGER(GDK_Delete);
+  DEFINE_INTEGER(GDK_Home);
+  DEFINE_INTEGER(GDK_Left);
+  DEFINE_INTEGER(GDK_Up);
+  DEFINE_INTEGER(GDK_Right);
+  DEFINE_INTEGER(GDK_Down);
+  DEFINE_INTEGER(GDK_Prior);
+  DEFINE_INTEGER(GDK_Page_Up);
+  DEFINE_INTEGER(GDK_Next);
+  DEFINE_INTEGER(GDK_Page_Down);
+  DEFINE_INTEGER(GDK_End);
+  DEFINE_INTEGER(GDK_Begin);
+  DEFINE_INTEGER(GDK_Select);
+  DEFINE_INTEGER(GDK_Print);
+  DEFINE_INTEGER(GDK_Execute);
+  DEFINE_INTEGER(GDK_Insert);
+  DEFINE_INTEGER(GDK_Undo);
+  DEFINE_INTEGER(GDK_Redo);
+  DEFINE_INTEGER(GDK_Menu);
+  DEFINE_INTEGER(GDK_Find);
+  DEFINE_INTEGER(GDK_Cancel);
+  DEFINE_INTEGER(GDK_Help);
+  DEFINE_INTEGER(GDK_Break);
+  DEFINE_INTEGER(GDK_Mode_switch);
+  DEFINE_INTEGER(GDK_script_switch);
+  DEFINE_INTEGER(GDK_Num_Lock);
+  DEFINE_INTEGER(GDK_KP_Space);
+  DEFINE_INTEGER(GDK_KP_Tab);
+  DEFINE_INTEGER(GDK_KP_Enter);
+  DEFINE_INTEGER(GDK_KP_F1);
+  DEFINE_INTEGER(GDK_KP_F2);
+  DEFINE_INTEGER(GDK_KP_F3);
+  DEFINE_INTEGER(GDK_KP_F4);
+  DEFINE_INTEGER(GDK_KP_Home);
+  DEFINE_INTEGER(GDK_KP_Left);
+  DEFINE_INTEGER(GDK_KP_Up);
+  DEFINE_INTEGER(GDK_KP_Right);
+  DEFINE_INTEGER(GDK_KP_Down);
+  DEFINE_INTEGER(GDK_KP_Prior);
+  DEFINE_INTEGER(GDK_KP_Page_Up);
+  DEFINE_INTEGER(GDK_KP_Next);
+  DEFINE_INTEGER(GDK_KP_Page_Down);
+  DEFINE_INTEGER(GDK_KP_End);
+  DEFINE_INTEGER(GDK_KP_Begin);
+  DEFINE_INTEGER(GDK_KP_Insert);
+  DEFINE_INTEGER(GDK_KP_Delete);
+  DEFINE_INTEGER(GDK_KP_Equal);
+  DEFINE_INTEGER(GDK_KP_Multiply);
+  DEFINE_INTEGER(GDK_KP_Add);
+  DEFINE_INTEGER(GDK_KP_Separator);
+  DEFINE_INTEGER(GDK_KP_Subtract);
+  DEFINE_INTEGER(GDK_KP_Decimal);
+  DEFINE_INTEGER(GDK_KP_Divide);
+  DEFINE_INTEGER(GDK_KP_0);
+  DEFINE_INTEGER(GDK_KP_1);
+  DEFINE_INTEGER(GDK_KP_2);
+  DEFINE_INTEGER(GDK_KP_3);
+  DEFINE_INTEGER(GDK_KP_4);
+  DEFINE_INTEGER(GDK_KP_5);
+  DEFINE_INTEGER(GDK_KP_6);
+  DEFINE_INTEGER(GDK_KP_7);
+  DEFINE_INTEGER(GDK_KP_8);
+  DEFINE_INTEGER(GDK_KP_9);
+  DEFINE_INTEGER(GDK_F1);
+  DEFINE_INTEGER(GDK_F2);
+  DEFINE_INTEGER(GDK_F3);
+  DEFINE_INTEGER(GDK_F4);
+  DEFINE_INTEGER(GDK_F5);
+  DEFINE_INTEGER(GDK_F6);
+  DEFINE_INTEGER(GDK_F7);
+  DEFINE_INTEGER(GDK_F8);
+  DEFINE_INTEGER(GDK_F9);
+  DEFINE_INTEGER(GDK_F10);
+  DEFINE_INTEGER(GDK_F11);
+  DEFINE_INTEGER(GDK_L1);
+  DEFINE_INTEGER(GDK_F12);
+  DEFINE_INTEGER(GDK_L2);
+  DEFINE_INTEGER(GDK_F13);
+  DEFINE_INTEGER(GDK_L3);
+  DEFINE_INTEGER(GDK_F14);
+  DEFINE_INTEGER(GDK_L4);
+  DEFINE_INTEGER(GDK_F15);
+  DEFINE_INTEGER(GDK_L5);
+  DEFINE_INTEGER(GDK_F16);
+  DEFINE_INTEGER(GDK_L6);
+  DEFINE_INTEGER(GDK_F17);
+  DEFINE_INTEGER(GDK_L7);
+  DEFINE_INTEGER(GDK_F18);
+  DEFINE_INTEGER(GDK_L8);
+  DEFINE_INTEGER(GDK_F19);
+  DEFINE_INTEGER(GDK_L9);
+  DEFINE_INTEGER(GDK_F20);
+  DEFINE_INTEGER(GDK_L10);
+  DEFINE_INTEGER(GDK_F21);
+  DEFINE_INTEGER(GDK_R1);
+  DEFINE_INTEGER(GDK_F22);
+  DEFINE_INTEGER(GDK_R2);
+  DEFINE_INTEGER(GDK_F23);
+  DEFINE_INTEGER(GDK_R3);
+  DEFINE_INTEGER(GDK_F24);
+  DEFINE_INTEGER(GDK_R4);
+  DEFINE_INTEGER(GDK_F25);
+  DEFINE_INTEGER(GDK_R5);
+  DEFINE_INTEGER(GDK_F26);
+  DEFINE_INTEGER(GDK_R6);
+  DEFINE_INTEGER(GDK_F27);
+  DEFINE_INTEGER(GDK_R7);
+  DEFINE_INTEGER(GDK_F28);
+  DEFINE_INTEGER(GDK_R8);
+  DEFINE_INTEGER(GDK_F29);
+  DEFINE_INTEGER(GDK_R9);
+  DEFINE_INTEGER(GDK_F30);
+  DEFINE_INTEGER(GDK_R10);
+  DEFINE_INTEGER(GDK_F31);
+  DEFINE_INTEGER(GDK_R11);
+  DEFINE_INTEGER(GDK_F32);
+  DEFINE_INTEGER(GDK_R12);
+  DEFINE_INTEGER(GDK_F33);
+  DEFINE_INTEGER(GDK_R13);
+  DEFINE_INTEGER(GDK_F34);
+  DEFINE_INTEGER(GDK_R14);
+  DEFINE_INTEGER(GDK_F35);
+  DEFINE_INTEGER(GDK_R15);
+  DEFINE_INTEGER(GDK_Shift_L);
+  DEFINE_INTEGER(GDK_Shift_R);
+  DEFINE_INTEGER(GDK_Control_L);
+  DEFINE_INTEGER(GDK_Control_R);
+  DEFINE_INTEGER(GDK_Caps_Lock);
+  DEFINE_INTEGER(GDK_Shift_Lock);
+  DEFINE_INTEGER(GDK_Meta_L);
+  DEFINE_INTEGER(GDK_Meta_R);
+  DEFINE_INTEGER(GDK_Alt_L);
+  DEFINE_INTEGER(GDK_Alt_R);
+  DEFINE_INTEGER(GDK_space);
+  DEFINE_INTEGER(GDK_exclam);
+  DEFINE_INTEGER(GDK_quotedbl);
+  DEFINE_INTEGER(GDK_numbersign);
+  DEFINE_INTEGER(GDK_dollar);
+  DEFINE_INTEGER(GDK_percent);
+  DEFINE_INTEGER(GDK_ampersand);
+  DEFINE_INTEGER(GDK_apostrophe);
+  DEFINE_INTEGER(GDK_quoteright);
+  DEFINE_INTEGER(GDK_parenleft);
+  DEFINE_INTEGER(GDK_parenright);
+  DEFINE_INTEGER(GDK_asterisk);
+  DEFINE_INTEGER(GDK_plus);
+  DEFINE_INTEGER(GDK_comma);
+  DEFINE_INTEGER(GDK_minus);
+  DEFINE_INTEGER(GDK_period);
+  DEFINE_INTEGER(GDK_slash);
+  DEFINE_INTEGER(GDK_0);
+  DEFINE_INTEGER(GDK_1);
+  DEFINE_INTEGER(GDK_2);
+  DEFINE_INTEGER(GDK_3);
+  DEFINE_INTEGER(GDK_4);
+  DEFINE_INTEGER(GDK_5);
+  DEFINE_INTEGER(GDK_6);
+  DEFINE_INTEGER(GDK_7);
+  DEFINE_INTEGER(GDK_8);
+  DEFINE_INTEGER(GDK_9);
+  DEFINE_INTEGER(GDK_colon);
+  DEFINE_INTEGER(GDK_semicolon);
+  DEFINE_INTEGER(GDK_less);
+  DEFINE_INTEGER(GDK_equal);
+  DEFINE_INTEGER(GDK_greater);
+  DEFINE_INTEGER(GDK_question);
+  DEFINE_INTEGER(GDK_at);
+  DEFINE_INTEGER(GDK_A);
+  DEFINE_INTEGER(GDK_B);
+  DEFINE_INTEGER(GDK_C);
+  DEFINE_INTEGER(GDK_D);
+  DEFINE_INTEGER(GDK_E);
+  DEFINE_INTEGER(GDK_F);
+  DEFINE_INTEGER(GDK_G);
+  DEFINE_INTEGER(GDK_H);
+  DEFINE_INTEGER(GDK_I);
+  DEFINE_INTEGER(GDK_J);
+  DEFINE_INTEGER(GDK_K);
+  DEFINE_INTEGER(GDK_L);
+  DEFINE_INTEGER(GDK_M);
+  DEFINE_INTEGER(GDK_N);
+  DEFINE_INTEGER(GDK_O);
+  DEFINE_INTEGER(GDK_P);
+  DEFINE_INTEGER(GDK_Q);
+  DEFINE_INTEGER(GDK_R);
+  DEFINE_INTEGER(GDK_S);
+  DEFINE_INTEGER(GDK_T);
+  DEFINE_INTEGER(GDK_U);
+  DEFINE_INTEGER(GDK_V);
+  DEFINE_INTEGER(GDK_W);
+  DEFINE_INTEGER(GDK_X);
+  DEFINE_INTEGER(GDK_Y);
+  DEFINE_INTEGER(GDK_Z);
+  DEFINE_INTEGER(GDK_bracketleft);
+  DEFINE_INTEGER(GDK_backslash);
+  DEFINE_INTEGER(GDK_bracketright);
+  DEFINE_INTEGER(GDK_asciicircum);
+  DEFINE_INTEGER(GDK_underscore);
+  DEFINE_INTEGER(GDK_grave);
+  DEFINE_INTEGER(GDK_quoteleft);
+  DEFINE_INTEGER(GDK_a);
+  DEFINE_INTEGER(GDK_b);
+  DEFINE_INTEGER(GDK_c);
+  DEFINE_INTEGER(GDK_d);
+  DEFINE_INTEGER(GDK_e);
+  DEFINE_INTEGER(GDK_f);
+  DEFINE_INTEGER(GDK_g);
+  DEFINE_INTEGER(GDK_h);
+  DEFINE_INTEGER(GDK_i);
+  DEFINE_INTEGER(GDK_j);
+  DEFINE_INTEGER(GDK_k);
+  DEFINE_INTEGER(GDK_l);
+  DEFINE_INTEGER(GDK_m);
+  DEFINE_INTEGER(GDK_n);
+  DEFINE_INTEGER(GDK_o);
+  DEFINE_INTEGER(GDK_p);
+  DEFINE_INTEGER(GDK_q);
+  DEFINE_INTEGER(GDK_r);
+  DEFINE_INTEGER(GDK_s);
+  DEFINE_INTEGER(GDK_t);
+  DEFINE_INTEGER(GDK_u);
+  DEFINE_INTEGER(GDK_v);
+  DEFINE_INTEGER(GDK_w);
+  DEFINE_INTEGER(GDK_x);
+  DEFINE_INTEGER(GDK_y);
+  DEFINE_INTEGER(GDK_z);
+  DEFINE_INTEGER(GDK_braceleft);
+  DEFINE_INTEGER(GDK_bar);
+  DEFINE_INTEGER(GDK_braceright);
+  DEFINE_INTEGER(GDK_asciitilde);
   DEFINE_INTEGER(GTK_RC_FG);
   DEFINE_INTEGER(GTK_RC_BG);
   DEFINE_INTEGER(GTK_RC_TEXT);
@@ -47850,7 +48096,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("08-Dec-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("14-Dec-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

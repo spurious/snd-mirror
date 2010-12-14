@@ -116,6 +116,7 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
       <li><a href="#cload">Load a C module dynamically</a>
       <li><a href="#gmpex">gmp and friends</a>
       <li><a href="#gtkrepl">Gtk-based REPL</a>
+      <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
   </ul>
 </ul>
 
@@ -4816,6 +4817,7 @@ The examples that follow show:
 <li><a href="#cload">Load a C module dynamically</a>
 <li><a href="#gmpex">gmp and friends</a>
 <li><a href="#gtkrepl">Gtk-based REPL</a>
+<li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
 </ul>
 
 <br><br>
@@ -6790,6 +6792,159 @@ int main(int argc, char **argv)
 </pre>
 </td></tr></table>
 <br><br>
+
+
+
+<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<A NAME="gtkschemerepl"></A>
+
+<p>In the same vein, we can use libxm's Gtk/s7 bindings to make the REPL in Scheme.
+Here is the same code, but now using libxm; first the C side, called gtkex.c:
+</p>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<tr><td bgcolor="#fbfbf0">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include &lt;mus-config.h&gt;
+#include "xen.h"
+void Init_libxg(void);
+
+static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  s7 = s7_init();             /* start s7 */
+  s7_xen_initialize(s7);     /* start the xen connection to libxm */
+  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
+  Init_libxg();              /* load up all the glib/gdk/gtk/cairo/pango bindings in libxm */
+  s7_load(s7, "gtkex.scm");  /* load and run our REPL (below) */ 
+}
+
+/*   libxm: configure --with-gtk, then make
+ *   gcc -o gtkex gtkex.c libxg.so -lm -I.
+ *   ;; you may need to include the libxm directory above
+ */
+</pre>
+</td></tr></table>
+
+<p>And here is gtkex.scm.  The main problem with this code is that Gtk is moving
+rapidly toward gtk3, and libxm is running along behind panting and complaining.
+There are several things that may change once Gtk settles down.
+</p>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<tr><td bgcolor="#fbfbf0">
+<pre>
+(gtk_init 0 #f)
+
+(let ((shell (gtk_window_new GTK_WINDOW_TOPLEVEL))
+      (s7-prompt "s7&gt; ")
+      (return-key (if (provided? 'gtk3) GDK_KEY_Return GDK_Return)))
+  
+  (g_signal_connect (G_OBJECT shell) "delete_event"
+		    (lambda (window event data)
+		      (gtk_main_quit)
+		      (exit)))
+  (g_signal_connect (G_OBJECT shell) "destroy" 
+		    (lambda (window data)
+		      (gtk_main_quit)
+		      (exit)))
+  
+  (let ((scrolled_window (gtk_scrolled_window_new #f #f)))
+    
+    (gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW scrolled_window) GTK_POLICY_AUTOMATIC GTK_POLICY_AUTOMATIC)
+    (gtk_container_add (GTK_CONTAINER shell) scrolled_window)
+    
+    (let* ((repl (gtk_text_view_new))
+	   (repl_buf (gtk_text_buffer_new #f))
+	   (prompt_not_editable #f))
+
+      (define (evaluate-expression expr)
+	(let ((pos (GtkTextIter))
+	      (result (catch #t
+			     (lambda ()
+			       (object-&gt;string (eval-string expr)))
+			     (lambda args
+			       (format #f "~A: ~S" (car args) (apply format #f (cadr args)))))))
+	  (gtk_text_buffer_get_end_iter repl_buf pos)
+	  (gtk_text_buffer_insert repl_buf pos "\n" 1)
+	  (gtk_text_buffer_insert repl_buf pos result (length result))))
+
+      (define (get-current-expression)
+	(let ((m (gtk_text_buffer_get_insert repl_buf))
+	      (pos (GtkTextIter))
+	      (previous (GtkTextIter))
+	      (next (GtkTextIter))
+	      (temp (GtkTextIter)))
+	  (gtk_text_buffer_get_iter_at_mark repl_buf pos m)
+	  (if (gtk_text_iter_backward_search pos s7-prompt 0 temp previous #f)
+	      (if (not (gtk_text_iter_forward_search pos s7-prompt 0 next temp #f))
+		  (begin
+		    (gtk_text_buffer_get_end_iter repl_buf next)
+		    (gtk_text_buffer_get_text repl_buf previous next #t))
+		  (begin
+		    (gtk_text_iter_backward_search next "\n" 0 pos temp #f)
+		    (gtk_text_iter_backward_search pos "\n" 0 next temp #f)
+		    (gtk_text_buffer_get_text repl_buf previous next #t)))
+	      "")))
+
+      (define (repl-key-press w event data)
+	(let ((key (gtk_event_keyval event)))
+	  (if (equal? key return-key)
+	      (let ((pos (GtkTextIter)))
+
+		(evaluate-expression (get-current-expression))
+		
+		(gtk_text_buffer_get_end_iter repl_buf pos)
+		(gtk_text_buffer_insert_with_tags repl_buf pos
+						  (string-append (string #\newline) s7-prompt) 
+						  (+ 1  (length s7-prompt))
+						  (list prompt_not_editable))
+		(gtk_text_buffer_place_cursor repl_buf pos)
+		(gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW repl) 
+						    (gtk_text_buffer_get_insert repl_buf))
+		(g_signal_stop_emission (GPOINTER w)
+					(g_signal_lookup "key_press_event" 
+							 (G_OBJECT_TYPE (G_OBJECT w))) 
+					0)))))
+      
+      (gtk_container_add (GTK_CONTAINER scrolled_window) repl)
+      (gtk_text_view_set_buffer (GTK_TEXT_VIEW repl) repl_buf)
+      (gtk_text_view_set_editable (GTK_TEXT_VIEW repl) #t)
+      (gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW repl) GTK_WRAP_NONE)
+      (gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW repl) #t)
+      (gtk_text_view_set_left_margin (GTK_TEXT_VIEW repl) 4)
+      
+      (gtk_widget_set_events repl GDK_ALL_EVENTS_MASK)
+      (g_signal_connect (G_OBJECT repl) "key_press_event" repl-key-press)
+
+      (gtk_widget_show repl)
+      (gtk_widget_show scrolled_window)
+      (gtk_widget_show shell)
+      
+      (set! prompt_not_editable 
+	    (gtk_text_buffer_create_tag repl_buf "prompt_not_editable" 
+					(list "editable" 0 "weight" PANGO_WEIGHT_BOLD)))
+      (let ((pos (GtkTextIter)))
+	(gtk_text_buffer_get_end_iter repl_buf pos)
+	(gtk_text_buffer_insert_with_tags repl_buf pos 
+					  s7-prompt (length s7-prompt)
+					  (list prompt_not_editable))
+	(gdk_window_resize (gtk_widget_get_window shell) 400 200)
+	(gtk_main)))))
+
+;; build gtkex as above, then run it and it will load/run this code
+</pre>
+</td></tr></table>
+<br><br>
+
 
 
 </body>

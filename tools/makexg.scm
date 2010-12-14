@@ -234,7 +234,7 @@
 	"time_t" "GtkSettings*" ;"GdkDevice*" 
 	"GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
-	"GdkEventAny*" "GdkDeviceManager*"
+	"GdkDeviceManager*" "GdkEventAny*"
 	
 	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t" "cairo_bool_t"
 	"cairo_region_overlap_t" "cairo_device_type_t"
@@ -2853,6 +2853,13 @@
 (hey "  else {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &str, NULL); return(C_TO_XEN_STRING(str));}~%")
 (hey "}~%~%")
 
+(hey "static XEN xg_gtk_event_keyval(XEN event)~%")
+(hey "{~%")
+(hey " GdkEventKey *e;~%")
+(hey " e = XEN_TO_C_GdkEventKey_(event);~%")
+(hey " return(C_TO_XEN_INT((int)(e->keyval)));~%")
+(hey "}~%~%")
+
 (hey "static XEN xen_list_to_c_array(XEN val, XEN type)~%")
 (hey "{~%")
 (hey "  int i, len;~%")
@@ -3048,7 +3055,8 @@
 (hey "XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)~%")
 (hey "XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)~%")
 (hey "XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)~%")
-(hey "XEN_NARGIFY_3(xg_object_get_w, xg_object_get);~%")
+(hey "XEN_NARGIFY_3(xg_object_get_w, xg_object_get)~%")
+(hey "XEN_NARGIFY_1(xg_gtk_event_keyval_w, xg_gtk_event_keyval)~%")
 
 (hey "XEN_ARGIFY_2(gxg_gtk_init_w, gxg_gtk_init)~%")
 (hey "XEN_ARGIFY_2(gxg_gtk_init_check_w, gxg_gtk_init_check)~%")
@@ -3114,6 +3122,7 @@
 (hey "#define gxg_make_target_entry_w gxg_make_target_entry~%")
 (hey "#define c_to_xen_string_w c_to_xen_string~%")
 (hey "#define xg_object_get_w xg_object_get~%")
+(hey "#define xg_gtk_event_keyval_w xg_gtk_event_keyval~%")
 
 (hey "#define gxg_gtk_init_w gxg_gtk_init~%")
 (hey "#define gxg_gtk_init_check_w gxg_gtk_init_check~%")
@@ -3219,6 +3228,7 @@
 (hey "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);~%")
 (hey "  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);~%")
 (hey "  XG_DEFINE_PROCEDURE(g_object_get, xg_object_get_w, 3, 0, 0, NULL);~%")
+(hey "  XG_DEFINE_PROCEDURE(gtk_event_keyval, xg_gtk_event_keyval_w, 1, 0, 0, NULL);~%")
 
 (hey "  XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init);~%")
 (hey "  XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check);~%")
