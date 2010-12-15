@@ -737,6 +737,7 @@ struct s7_scheme {
 
 #define T_ENVIRONMENT                 (1 << (TYPE_BITS + 15))
 #define is_environment(p)             ((typeflag(p) & T_ENVIRONMENT) != 0)
+/* this marks a pair that is also an environment */
 
 #define T_DONT_COPY_CDR               (1 << (TYPE_BITS + 17))
 #define dont_copy_cdr(p)              ((typeflag(p) & T_DONT_COPY_CDR) != 0)

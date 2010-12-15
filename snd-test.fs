@@ -1,29 +1,67 @@
-\ snd-test.fs -- snd-test.scm|rb tests -*- snd-forth -*-
+\ snd-test.fs -- Snd Forth code and tests
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sun Nov 07 10:46:47 CET 2010
+\ Changed: Tue Dec 14 23:43:18 CET 2010
 
 \ Commentary:
 \
-\ You may use an init file name `pwd`/.sndtest.fs or ~/.sndtest.fs to set
-\ global variables or define other special functions, hooks, etc.
+\ Tested with:
+\   Snd version 11.12 of 15-Dec-10
+\   FTH 1.2.9 (10-Nov-2010)
+
 \
-\ snd-forth -noinit -load snd-test.fs          \ all tests
-\ snd-forth -noinit -load snd-test.fs 10 15 19 \ test 10 15 19
-\ snd-forth -noinit -load snd-test.fs -23      \ all tests but 23
+\ Reads init file ./.sndtest.fs or ~/.sndtest.fs for global variables,
+\ hooks, etc.
 \
-\ test  0: general
+\ Example:
+\
+\ cat ./.sndtest.fs
+\ "TMPDIR" getenv set-save-dir       to original-save-dir
+\ save-dir        set-temp-dir       to original-temp-dir
+\ 
+\ #t                                 to with-big-file
+\ "/usr/opt/sound/SFiles/bigger.snd" to bigger-snd
+\ "/usr/opt/sound/sf1/"              to sf-dir
+\ \ #t                      	   to all-args
+\ \ #t                      	   to *snd-test-verbose*
+\ \ #t                      	   to *snd-test-ws-play*
+\ \ #t                      	   to *snd-test-ws-statistics*
+\ \ #t                      	   to *snd-test-ws-verbose*
+
+\
+\ Start tests:
+\
+\ snd -noinit -load snd-test.fs          \ all tests
+\ snd -noinit -load snd-test.fs 10 15 19 \ test 10 15 19
+\ snd -noinit -load snd-test.fs -23      \ all tests except 23
+\
+\ test 00: constants
+\ test 01: defaults
+\ test 02: headers
+\ test 03: variables
 \ test 10: marks
 \ test 15: chan-local vars
 \ test 19: save and restore
 \ test 23: with-sound
 \ test 26: Gtk
+\ test 27: general ( will be replaced in the future )
 \ test 28: errors
+
+'snd-nogui  provided? constant *with-test-nogui*
+*with-test-nogui* not constant *with-test-gui*
+'snd-motif  provided? constant *with-test-motif*
+'snd-gtk    provided? constant *with-test-gtk*
+'snd-ladspa provided? constant *with-test-ladspa*
+'gl         provided? constant *with-test-gl*
+'gl2ps      provided? constant *with-test-gl2ps*
+'gsl        provided? constant *with-test-gsl*
+'alsa       provided? constant *with-test-alsa*
+'complex    provided? constant *with-test-complex*
 
 24 set-object-print-length
 
-'snd-nogui provided? [if]
+*with-test-nogui* [if]
   #f value stdout-io
   #f value stderr-io
 [else]
@@ -49,12 +87,12 @@
 : snd-test-message ( fmt args -- ) ." \ " fth-print cr ;
 
 \ SND-DISPLAY: Wraps text like snd-test-message and prepends text with
-\ current line number ("\ [0010] text\n").
-hide
-: (snd-display) { fmt args lno -- } $" \\ [%04d] %s\n" #( lno fmt args string-format ) fth-print ;
-set-current
-: snd-display ( -- ; fmt args -- ) postpone *lineno* postpone (snd-display) ; immediate
-previous
+\ current line number ("\ [102] text\n").
+: (snd-display) { fmt args lno -- }
+  fmt args string-format { str }
+  $" \\ [%d] %s\n" #( lno str ) fth-print
+;
+: snd-display ( fmt args -- ) postpone *lineno* postpone (snd-display) ; immediate
 
 \ *SND-TEST-VERBOSE*: progress information in long tests
 \
@@ -75,38 +113,66 @@ previous
 #f value my-snd-error-hook
 #f value my-mus-error-hook
 
-save-dir "/home/bil/zap/snd" ||   value original-save-dir
-temp-dir "/home/bil/zap/tmp" ||   value original-temp-dir
+"HOME" getenv          		  value *home*
+save-dir *home* "/zap/snd" $+ ||  value original-save-dir
+temp-dir *home* "/zap/tmp" $+ ||  value original-temp-dir
+sound-file-extensions             value original-sound-file-extensions
 listener-prompt        		  value original-prompt
-1024 8 *               		  value default-file-buffer-size
-"HOME" getenv          		  value home-dir
+65536               		  value default-file-buffer-size
+8                                 value *info-array-print-length*
+
 "/home/bil/sf1/"       		  value sf-dir
-#f                     		  value all-args
 "/home/bil/zap/sounds/bigger.snd" value bigger-snd
+#f                                value with-big-file
+#f                     		  value all-args
 
-\ let: ( -- )
-\   file-pwd "/peaks" $+ { dir }
-\   dir file-directory? unless dir 0o755 file-mkdir then
-\   dir set-peak-env-dir drop
-\ ;let
-
-\ Global variables may be overridden in `pwd`/.sndtest.fs or ~/.sndtest.fs
+\ Global variables may be overridden in `pwd`/.sndtest.fs or ~/.sndtest.fs.
 ".sndtest.fs" load-init-file
 
-\
-\ lambda: <{ -- }> cr gc-stats cr .memory cr cr ; at-exit
-\
-\ before-load-hook lambda: <{ file -- f }> $" loading " file $+ #f snd-test-message #t ; add-hook!
-\
+*with-test-nogui* [if]
+  '( 0.0 0.1 ) value x-bounds-value
+  : x-bounds <{ :optional snd 0 chn 0 axis 0 -- val }> x-bounds-value ;
+  : set-x-bounds <{ bounds :optional snd 0 chn 0 axis 0 -- val }> bounds dup to x-bounds-value ;
 
-'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
-'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
+  '( -1.0 1.0 ) value y-bounds-value
+  : y-bounds <{ :optional snd 0 chn 0 axis 0 -- val }> y-bounds-value ;
+  : set-y-bounds <{ bounds :optional snd 0 chn 0 axis 0 -- val }> bounds dup to y-bounds-value ;
 
-'snd-nogui provided? [if]
-  : x-bounds <{ :optional snd 0 chn 0 axis 0 -- }> #f ;
-  : y-bounds <{ :optional snd 0 chn 0 axis 0 -- }> #f ;
-  : set-x-bounds <{ bounds :optional snd 0 chn 0 axis 0 -- }> bounds ;
-  : set-y-bounds <{ bounds :optional snd 0 chn 0 axis 0 -- }> bounds ;
+  #t value enved-filter-value
+  : enved-filter <{ -- val }> enved-filter-value ;
+  : set-enved-filter <{ val -- val }> val dup to enved-filter-value ;
+
+  34 value graph-cursor-value
+  : graph-cursor <{ -- val }> graph-cursor-value ;
+  : set-graph-cursor <{ val -- val }> val dup to graph-cursor-value ;
+
+  nil value enved-envelope-value
+  : enved-envelope <{ -- val }> enved-envelope-value ;
+  : set-enved-envelope <{ val -- val }> val dup to enved-envelope-value ;
+
+  hot-colormap value colormap-value
+  : colormap <{ -- val }> colormap-value ;
+  : set-colormap <{ val -- val }>
+    val positive?
+    val 20 <= && if
+      val to colormap-value
+    then
+    val
+  ;
+
+  <'> noop alias integer->colormap
+  <'> noop alias colormap->integer
+  
+  \ These are already created in snd-nogui.c
+  \ 
+  \ 2 #f create-hook mouse-enter-graph-hook
+  \ 3 #f create-hook mouse-enter-label-hook
+  \ 1 #f create-hook mouse-enter-listener-hook
+  \ 1 #f create-hook mouse-enter-text-hook
+  \ 2 #f create-hook mouse-leave-graph-hook
+  \ 3 #f create-hook mouse-leave-label-hook
+  \ 1 #f create-hook mouse-leave-listener-hook
+  \ 1 #f create-hook mouse-leave-text-hook
 [then]
 
 require clm
@@ -126,7 +192,7 @@ require bird.fsm
 
 reset-all-hooks
 
-'snd-motif provided? [if]
+*with-test-motif* [if]
   lambda: <{ dpy e -- }>
     dpy e Ferror_code   nil 1024 FXGetErrorText { res }
     $" Xlib error_code[%s]: %s"   res fth-warning
@@ -140,7 +206,11 @@ reset-all-hooks
   ; FXSetIOErrorHandler drop
 [then]
 
-: fneq-err ( r1 r2 err -- f ) -rot f- fabs f<= ;
+: fneq-err ( r1 r2 err -- f ) -rot ( r1 r2 ) f- fabs f<= ;
+
+: fneq   ( a b -- f ) 0.001 fneq-err ;
+: ffneq  ( a b -- f ) 0.010 fneq-err ;
+: fffneq ( a b -- f ) 0.100 fneq-err ;
 
 : cneq-err ( c1 c2 err -- f )
   { c1 c2 err }
@@ -148,10 +218,11 @@ reset-all-hooks
   c1 image-ref c2 image-ref err fneq-err ||
 ;
 
-: fneq   ( a b -- f ) 0.001 fneq-err ;
-: ffneq  ( a b -- f ) 0.010 fneq-err ;
-: fffneq ( a b -- f ) 0.100 fneq-err ;
 : cneq   ( a b -- f ) 0.001 cneq-err ;
+
+: fequal-err ( r1 r2 err -- f ) -rot ( r1 r2 ) f- fabs f> ;
+
+: fequal? ( a b -- f ) 0.001 fequal-err ;
 
 : any->vct ( obj )
   { obj }
@@ -176,11 +247,14 @@ reset-all-hooks
   then
 ;
 
-: vequal    ( v0 v1 -- f ) 0.001   vequal-err ;
+: vequal?   ( v0 v1 -- f ) 0.001   vequal-err ;
+
 : vvequal   ( v0 v1 -- f ) 0.00002 vequal-err ;
 : vfequal   ( v0 v1 -- f ) 0.01    vequal-err ;
 : vffequal  ( v0 v1 -- f ) 0.1     vequal-err ;
 : vfffequal ( v0 v1 -- f ) 0.5     vequal-err ;
+
+<'> vequal? alias vequal
 
 : feql-err ( obj0 obj1 err -- f )
   { obj0 obj1 err }
@@ -218,6 +292,92 @@ reset-all-hooks
   then
 ;
 
+: symbol-defined? ( sym -- f ) $" defined? " swap symbol-name $+ string-eval ;
+
+: object-sequence? ( obj -- f )
+  dup length 0>
+  swap string? not &&
+;
+
+<'> object-sequence? alias sequence? ( obj -- f )
+
+: snd-test-format { sndfmt res req fmt args -- str }
+  sndfmt #( res req ) string-format { str }
+  fmt empty? if
+    str
+  else
+    fmt args string-format $" : " $+ str $+
+  then
+;
+
+: snd-format { res req op fmt args -- str }
+  req sequence? if
+    mus-array-print-length { old-alen }
+    print-length { old-vlen }
+    *info-array-print-length* set-mus-array-print-length drop
+    *info-array-print-length* set-print-length drop
+    $" res " op $+ $"  req?\n\\ => res %S\n\\ => req %S" $+ res req fmt args snd-test-format ( str )
+    old-alen set-mus-array-print-length drop
+    old-vlen set-print-length drop
+    ( str )
+  else
+    $" res %S " op $+ $"  req %S?" $+ res req fmt args snd-test-format ( str )
+  then
+;
+
+: snd-test-equal? { res req -- f }
+  res req  req float? if
+    fequal?
+  else
+    req object-sequence? if
+      vequal?
+    else
+      equal?
+    then
+  then
+;
+
+: (snd-test-neq) { res req fmt args lno -- }
+  res req snd-test-equal? unless
+    res req "!=" fmt args snd-format { str }
+    $" \\ [%d] %s\n" #( lno str ) fth-print
+  then
+;
+
+: (snd-test-eq) { res req fmt args lno -- }
+  res req snd-test-equal? if
+    res req "==" fmt args snd-format { str }
+    $" \\ [%d] %s\n" #( lno str ) fth-print
+  then
+;
+
+: (snd-test-any-neq) { res req func fmt args lno -- }
+  res req func execute unless
+    res req "!=" fmt args snd-format { str }
+    $" \\ [%d] %s\n" #( lno str ) fth-print
+  then
+;
+
+: (snd-test-any-eq) { res req func fmt args lno -- }
+  res req func execute if
+    res req "==" fmt args snd-format { str }
+    $" \\ [%d] %s\n" #( lno str ) fth-print
+  then
+;
+
+: snd-test-neq ( res req fmt args -- ) postpone *lineno* postpone (snd-test-neq) ; immediate
+: snd-test-eq  ( res req fmt args -- ) postpone *lineno* postpone (snd-test-eq)  ; immediate
+
+\ res req <'> ffequal? "more info" #() snd-test-any-neq
+: snd-test-any-neq ( res req func fmt args -- )
+  postpone *lineno* postpone (snd-test-any-neq)
+; immediate
+
+\ res req <'> ffequal? "more info" #() snd-test-any-eq
+: snd-test-any-eq  ( res req func fmt args -- )
+  postpone *lineno* postpone (snd-test-any-eq)
+; immediate
+
 : set-arity-ok <{ proc args -- f }> proc set-xt args arity-ok ; 
 
 : make-color-with-catch ( c1 c2 c3 -- color )
@@ -230,7 +390,7 @@ reset-all-hooks
   my-mus-error-hook proc? if mus-error-hook my-mus-error-hook add-hook! then
 ;
 
-'snd-nogui provided? [if]
+*with-test-nogui* [if]
   <'> noop alias dismiss-all-dialogs
 [else]
   : dismiss-all-dialogs ( -- )
@@ -273,13 +433,13 @@ reset-all-hooks
 ;
 
 : start-snd-test ( -- )
-  'snd-motif provided? if
+  *with-test-motif* if
     "motif"
   else
-    'snd-gtk provided? if
+    *with-test-gtk* if
       "gtk"
     else
-      'snd-nogui provided? if
+      *with-test-nogui* if
 	#t set-with-mix-tags drop
 	"nogui"
       else
@@ -296,7 +456,6 @@ reset-all-hooks
   ""   #f snd-test-message
   default-file-buffer-size set-mus-file-buffer-size to *clm-file-buffer-size*
   #f  set-with-background-processes drop
-  #f  set-trap-segfault  	    drop
   600 set-window-x       	    drop
   10  set-window-y       	    drop
   #t  set-show-listener      	    drop
@@ -422,762 +581,1434 @@ SIGINT lambda: { sig -- }
   0 snd-exit drop
 ; signal drop
 
-'complex provided? [if]
-  : complex-test ( -- )
-    \ edot-product (test008)
-    0.0 vct( 1.0 ) edot-product dup 1.0 fneq if
-      $" edot 1.0: %s?" swap snd-display
-    else
-      drop
-    then
-    0.0 vct( 0.0 ) edot-product dup 0.0 fneq if
-      $" edot 0.0: %s?" swap snd-display
-    else
-      drop
-    then
-    0.0 #( 1.0 ) edot-product dup 1.0 fneq if
-      $" edot 1.0: %s?" swap snd-display
-    else
-      drop
-    then
-    0.0 #( 0+1i ) edot-product dup 0+1i cneq if
-      $" edot i: %s?" swap snd-display
-    else
-      drop
-    then
-    0.25 two-pi f* vct( 1.0 1.0 1.0 1.0 ) edot-product
-    0.00 two-pi f* fexp
-    0.25 two-pi f* fexp f+
-    0.50 two-pi f* fexp f+
-    0.75 two-pi f* fexp f+ over over fneq if
-      2 >array $" edot 4: %s %s?" swap snd-display
-    else
-      2drop
-    then
-    0.25 two-pi f* 0-1i c* #( 1.0 2.0 3.0 4.0 ) edot-product
-    0.00 two-pi f* 0-1i c* cexp 1 c* 
-    0.25 two-pi f* 0-1i c* cexp 2 c* c+
-    0.50 two-pi f* 0-1i c* cexp 3 c* c+
-    0.75 two-pi f* 0-1i c* cexp 4 c* c+ over over cneq if
-      2 >array $" edot 4 -i: %s %s?" swap snd-display
-    else
-      2drop
-    then
-    0.25 two-pi f* 0-1i c* #( 1+1i 2+1i 3+1i 4+1i ) edot-product
-    0.00 two-pi f* 0-1i c* cexp 1+1i c* 
-    0.25 two-pi f* 0-1i c* cexp 2+1i c* c+
-    0.50 two-pi f* 0-1i c* cexp 3+1i c* c+
-    0.75 two-pi f* 0-1i c* cexp 4+1i c* c+ over over cneq if
-      2 >array $" edot 4 -i * i: %s %s?" swap snd-display
-    else
-      2drop
-    then
-  ;
+\ snd-test.scm translations
+\ ---------------- test 00: constants ----------------
+
+*with-test-motif* [if]
+  $" 6x12"
 [else]
-  <'> noop alias complex-test
-[then]
+  *with-test-gtk* [if]
+    $" Sans 8"
+  [else]
+    $" 9x15"
+  [then]
+[then] constant tiny-font-string
 
-: print-and-check ( gen name desc -- )
-  { gen name desc }
-  gen mus-name name string<> if $" mus-name %s: %s?" #( name gen mus-name ) snd-display then
-  gen mus-describe desc string<> if $" mus-describe %s: %s?" #( name gen ) snd-display then
-  gen { egen }
-  gen egen object-equal? unless $" equal? %s: %s %s?" #( name gen egen ) snd-display then
+*with-test-motif* [if]
+  $" 9x15"
+[else]
+  *with-test-gtk* [if]
+    $" Monospace 10"
+  [else]
+    $" 6x12"
+  [then]
+[then] constant tiny-font-set-string
+
+\ FIXME
+\
+\ temp-dir
+\ save-dir
+\ ladspa-dir
+\ peak-env-dir
+\
+\ These variables default to NULL (snd.c/snd-0.h).
+\ snd-test.scm checks for #f
+\ snd-test.fs  checks for ""
+
+: 00-constants ( -- )
+  sounds { snds }
+  undef undef mixes { mxs }
+  undef undef undef marks { mks }
+  regions { rgns }
+  snds
+  mxs ||
+  mks ||
+  rgns || if
+    $" start up sounds: %s, mixes: %s, marks: %s, regions: %s?" #( snds mxs mks rgns ) snd-display
+  then
+  \
+  nil nil nil nil { vals sym req res }
+  #( #( <'> enved-amplitude 0 )
+     #( <'> bartlett-window 4 )
+     #( <'> bartlett-hann-window 21 )
+     #( <'> blackman2-window 6 )
+     #( <'> blackman3-window 7 )
+     #( <'> blackman4-window 8 )
+     #( <'> blackman5-window 24 )
+     #( <'> blackman6-window 25 )
+     #( <'> blackman7-window 26 )
+     #( <'> blackman8-window 27 )
+     #( <'> blackman9-window 28 )
+     #( <'> blackman10-window 29 )
+     #( <'> bohman-window 22 )
+     #( <'> cauchy-window 12 )
+     #( <'> mlt-sine-window 33 )
+     #( <'> papoulis-window 34 )
+     #( <'> dpss-window 35 )
+     #( <'> sinc-window 36 )
+     #( <'> channels-combined 1 )
+     #( <'> channels-separate 0 )
+     #( <'> channels-superimposed 2 )
+     #( <'> connes-window 18 )
+     #( <'> cursor-in-middle 3 )
+     #( <'> cursor-in-view 0 )
+     #( <'> cursor-on-left 1 )
+     #( <'> cursor-on-right 2 )
+     #( <'> dolph-chebyshev-window 16 )
+     #( <'> exponential-window 9 )
+     #( <'> flat-top-window 23 )
+     #( <'> zoom-focus-active 2 )
+     #( <'> zoom-focus-left 0 )
+     #( <'> zoom-focus-middle 3 )
+     #( <'> zoom-focus-right 1 )
+     #( <'> gaussian-window 14 )
+     #( <'> graph-dots 1 )
+     #( <'> graph-dots-and-lines 3 )
+     #( <'> graph-filled 2 )
+     #( <'> graph-lines 0 )
+     #( <'> graph-lollipops 4 )
+     #( <'> hamming-window 5 )
+     #( <'> hann-window 1 )
+     #( <'> hann-poisson-window 17 )
+     #( <'> kaiser-window 11 )
+     #( <'> keyboard-no-action 4 )
+     #( <'> graph-once 0 )
+     #( <'> parzen-window 3 )
+     #( <'> poisson-window 13 )
+     #( <'> rectangular-window 0 )
+     #( <'> riemann-window 10 )
+     #( <'> rv2-window 30 )
+     #( <'> rv3-window 31 )
+     #( <'> rv4-window 32 )
+     #( <'> samaraki-window 19 )
+     #( <'> ultraspherical-window 20 )
+     #( <'> graph-as-sonogram 1 )
+     #( <'> graph-as-spectrogram 2 )
+     #( <'> graph-once 0 )
+     #( <'> graph-as-wavogram 3 )
+     #( <'> enved-spectrum 1 )
+     #( <'> speed-control-as-float 0 )
+     #( <'> speed-control-as-ratio 1 )
+     #( <'> speed-control-as-semitone 2 )
+     #( <'> enved-srate 2 )
+     #( <'> tukey-window 15 )
+     #( <'> welch-window 2 )
+     #( <'> cursor-cross 0 )
+     #( <'> cursor-line 1 )
+     #( <'> dont-normalize 0 )
+     #( <'> envelope-linear 0 )
+     #( <'> envelope-exponential 1 )
+     #( <'> normalize-by-channel 1 )
+     #( <'> normalize-by-sound 2 )
+     #( <'> normalize-globally 3 )
+     #( <'> x-axis-in-samples 1 )
+     #( <'> x-axis-in-beats 3 )
+     #( <'> x-axis-in-measures 4 )
+     #( <'> x-axis-in-seconds 0 )
+     #( <'> x-axis-as-clock 5 )
+     #( <'> x-axis-as-percentage 2 )
+     #( <'> enved-add-point 0 )
+     #( <'> enved-delete-point 1 )
+     #( <'> enved-move-point 2 )
+     #( <'> time-graph 0 )
+     #( <'> transform-graph 1 )
+     #( <'> lisp-graph 2 )
+     #( <'> copy-context 0 )
+     #( <'> cursor-context 3 )
+     #( <'> selection-context 2 )
+     #( <'> mark-context 4 )
+     #( <'> show-no-axes 0 )
+     #( <'> show-all-axes 1 )
+     #( <'> show-x-axis 2 )
+     #( <'> show-all-axes-unlabelled 3 )
+     #( <'> show-x-axis-unlabelled 4 )
+     #( <'> show-bare-x-axis 5 )
+     \ sndlib constants
+     #( <'> mus-unsupported 0 )
+     #( <'> mus-next 1 )
+     #( <'> mus-aifc 2 )
+     #( <'> mus-riff 3 )
+     #( <'> mus-nist 6 )
+     #( <'> mus-raw 12 )
+     #( <'> mus-ircam 15 )
+     #( <'> mus-aiff 49 )
+     #( <'> mus-bicsf 5 )
+     #( <'> mus-voc 10 )
+     #( <'> mus-svx 9 )
+     #( <'> mus-soundfont 26 )
+     #( <'> mus-rf64 4 )
+     #( <'> mus-caff 60 )
+     \ 
+     #( <'> mus-interp-none 0 )
+     #( <'> mus-interp-linear 1 )
+     #( <'> mus-interp-sinusoidal 2 )
+     #( <'> mus-interp-all-pass 3 )
+     #( <'> mus-interp-lagrange 4 )
+     #( <'> mus-interp-bezier 5 )
+     #( <'> mus-interp-hermite 6 )
+     \ 
+     #( <'> mus-chebyshev-first-kind 1 )
+     #( <'> mus-chebyshev-second-kind 2 )
+     \ 
+     #( <'> mus-unknown 0 )
+     #( <'> mus-bshort 1 )
+     #( <'> mus-lshort 10 )
+     #( <'> mus-mulaw 2 )
+     #( <'> mus-alaw 6 )
+     #( <'> mus-byte 3 )
+     #( <'> mus-ubyte 7 )
+     #( <'> mus-bfloat 4 )
+     #( <'> mus-lfloat 12 )
+     #( <'> mus-bint 5 )
+     #( <'> mus-lint 11 )
+     #( <'> mus-bintn 17 )
+     #( <'> mus-lintn 18 )
+     #( <'> mus-b24int 8 )
+     #( <'> mus-l24int 16 )
+     #( <'> mus-bdouble 9 )
+     #( <'> mus-ldouble 13 )
+     #( <'> mus-ubshort 14 )
+     #( <'> mus-ulshort 15 )
+     #( <'> mus-bfloat-unscaled 19 )
+     #( <'> mus-lfloat-unscaled 20 )
+     #( <'> mus-bdouble-unscaled 21 )
+     #( <'> mus-ldouble-unscaled 22 ) ) { consts }
+  consts each to vals
+    vals 0 array-ref to sym
+    vals 1 array-ref to req
+    sym execute ( res ) req "%s" #( sym ) snd-test-neq
+  end-each
+  \
+  temp-dir { old-dir }
+  #f set-temp-dir drop
+  #( #( <'> region-graph-style graph-lines )
+     #( <'> ask-before-overwrite #f )
+     #( <'> audio-output-device 0 )
+     #( <'> auto-resize #t )
+     #( <'> auto-update #f )
+     #( <'> channel-style 1 )
+     #( <'> color-cutoff 0.003 )
+     #( <'> color-inverted #t )
+     #( <'> color-scale 1.0 )
+     #( <'> auto-update-interval 60.0 )
+     #( <'> cursor-update-interval 0.05 )
+     #( <'> cursor-location-offset 0 )
+     #( <'> dac-combines-channels #t )
+     #( <'> dac-size 256 )
+     #( <'> minibuffer-history-length 8 )
+     #( <'> clipping #f )
+     #( <'> default-output-chans 1 )
+     #( <'> default-output-data-format mus-lfloat )
+     #( <'> default-output-srate 44100 )
+     #( <'> default-output-header-type mus-next )
+     #( <'> dot-size 1 )
+     #( <'> cursor-size 15 )
+     #( <'> cursor-style cursor-cross )
+     #( <'> tracking-cursor-style cursor-cross )
+     #( <'> enved-base 1.0 )
+     #( <'> enved-clip? #t )
+     #( <'> enved-filter #t )
+     #( <'> enved-filter-order 40 )
+     #( <'> enved-in-dB #f )
+     #( <'> enved-style envelope-linear )
+     #( <'> enved-power 3.0 )
+     #( <'> enved-target 0 )
+     #( <'> enved-wave? #f )
+     #( <'> enved-envelope nil )
+     #( <'> eps-file "snd.eps" )
+     #( <'> eps-bottom-margin 0.0 )
+     #( <'> eps-left-margin 0.0 )
+     #( <'> eps-size 1.0 )
+     #( <'> fft-window-alpha 0.0 )
+     #( <'> fft-window-beta 0.0 )
+     #( <'> fft-log-frequency #f )
+     #( <'> fft-log-magnitude #f )
+     #( <'> fft-with-phases #f )
+     #( <'> transform-size 512 )
+     #( <'> transform-graph-type graph-once )
+     #( <'> fft-window 6 )
+     #( <'> graph-cursor 34 )
+     #( <'> graph-style graph-lines )
+     #( <'> graphs-horizontal #t )
+     #( <'> html-dir "." )
+     #( <'> html-program "firefox" )
+     #( <'> just-sounds #t )
+     #( <'> listener-prompt ">" )
+     #( <'> max-transform-peaks 100 )
+     #( <'> max-regions 16 )
+     #( <'> max-virtual-ptrees 32 )
+     #( <'> min-dB -60.0 )
+     #( <'> log-freq-start 32.0 )
+     #( <'> selection-creates-region #t )
+     #( <'> transform-normalization normalize-by-channel )
+     #( <'> view-files-sort 0 )
+     #( <'> print-length 12 )
+     #( <'> save-state-file "saved-snd.fs" )
+     #( <'> show-axes 1 )
+     #( <'> show-transform-peaks #f )
+     #( <'> show-indices #f )
+     #( <'> show-marks #t )
+     #( <'> show-mix-waveforms #t )
+     #( <'> show-selection-transform #f )
+     #( <'> show-y-zero #f )
+     #( <'> show-grid #f )
+     #( <'> grid-density 1.0 )
+     #( <'> show-sonogram-cursor #f )
+     #( <'> sinc-width 10 )
+     #( <'> spectrum-end 1.0 )
+     #( <'> spectro-hop 4 )
+     #( <'> spectrum-start 0.0 )
+     #( <'> spectro-x-angle *with-test-gl* if 300.0 else 90.0 then )
+     #( <'> spectro-x-scale *with-test-gl* if 1.5 else 1.0 then )
+     #( <'> spectro-y-angle *with-test-gl* if 320.0 else 0.0 then )
+     #( <'> spectro-y-scale 1.0 )
+     #( <'> spectro-z-angle *with-test-gl* if 0.0 else 358.0 then )
+     #( <'> spectro-z-scale *with-test-gl* if 1.0 else 0.1 then )
+     #( <'> temp-dir "" )
+     #( <'> ladspa-dir "" )
+     #( <'> peak-env-dir "" )
+     #( <'> tiny-font tiny-font-string )
+     #( <'> transform-type fourier-transform )
+     #( <'> trap-segfault #t )
+     #( <'> with-file-monitor #t )
+     \ FIXME
+     \ Forth doesn't optimize
+     #( <'> optimization 0 )
+     #( <'> clm-table-size 512 )
+     #( <'> clm-default-frequency 0.0 )
+     #( <'> with-verbose-cursor #f )
+     #( <'> with-inset-graph #f )
+     #( <'> with-pointer-focus #f )
+     #( <'> wavelet-type 0 )
+     #( <'> time-graph-type graph-once )
+     #( <'> wavo-hop 3 )
+     #( <'> wavo-trace 64 )
+     #( <'> x-axis-style 0 )
+     #( <'> beats-per-minute 60.0 )
+     #( <'> beats-per-measure 4 )
+     #( <'> zero-pad 0 )
+     #( <'> zoom-focus-style 2 )
+     #( <'> mix-waveform-height 20 )
+     #( <'> mix-tag-width 6 )
+     #( <'> mix-tag-height 14 )
+     #( <'> mark-tag-width 10 )
+     #( <'> mark-tag-height 4 ) ) { vars }
+  vars each to vals
+    vals 0 array-ref to sym
+    vals 1 array-ref to req
+    sym execute ( val ) sym set-execute ( res ) req "set-%s" #( sym ) snd-test-neq
+  end-each
+  old-dir set-temp-dir drop
+  \
+  -123 set-max-transform-peaks drop
+  -123 set-zero-pad drop
+  max-transform-peaks set-max-transform-peaks 100 "set-max-transform-peaks" #() snd-test-neq
+  zero-pad set-zero-pad 0 "set-zero-pad" #() snd-test-neq
+  #t #t zero-pad nil $" #t #t zero-pad" #() snd-test-neq
+  *with-test-motif* if
+    #( <'> axis-label-font
+       <'> axis-numbers-font
+       <'> tiny-font
+       <'> peaks-font
+       <'> bold-peaks-font ) { fonts }
+    fonts each to sym
+      sym execute to req
+      "8x123" sym set-execute ( res ) req $" set-%s to bogus value" #( sym ) snd-test-neq
+    end-each
+  then
 ;
 
-\ ====== test 0: general
-: test-gen-equal ( g0 g1 g2 -- )
-  { g0 g1 g2 }
-  \ g0 g1 =
-  \ g0 g2 <> at start
-  g0 { g3 }
-  2 make-frame { gad }
-  g0 g3 object-equal? unless $" let %s: %s equal? %s?" #( g0 mus-name g0 g3 ) snd-display then
-  g0 g1 object-equal? unless $" %s: %s equal? %s?"     #( g0 mus-name g0 g1 ) snd-display then
-  g0 g2 object-equal?     if $" %s: %s equal? %s?"     #( g0 mus-name g0 g2 ) snd-display then
-  g0 gad object-equal?    if $" %s/frame: %s equal? %s?" #( g0 mus-name g0 gad ) snd-display then
-  g0 0.0 0.0 mus-apply drop
-  g3 #( 0.0 0.0 ) object-apply drop
-  g3 0.0 0.0 mus-apply drop
-  g0 g3 object-equal? unless $" run let %s: %s equal? %s?" #( g0 mus-name g0 g3 ) snd-display then
-  g0 g1 object-equal?     if $" run %s: %s equal? %s?"     #( g0 mus-name g0 g1 ) snd-display then
-  g0 g2 object-equal?     if $" run %s: %s equal? %s?"     #( g0 mus-name g0 g2 ) snd-display then
+\ ---------------- test 01: defaults ----------------
+
+hot-colormap             constant *good-colormap*
+black-and-white-colormap constant *better-colormap*
+
+: 01-defaults ( -- )
+  nil { res }
+  *with-test-gui* if
+    *good-colormap* colormap? unless
+      #f to *good-colormap*
+      21 1 do
+	i integer->colormap to res
+	res colormap? if
+	  res to *good-colormap*
+	  leave
+	then
+      loop
+    then
+    *better-colormap* colormap? unless
+      #f to *better-colormap*
+      21 *good-colormap* colormap->integer do
+	i integer->colormap to res
+	res colormap? if
+	  res to *better-colormap*
+	  leave
+	then
+      loop
+    then
+  then
+  \ 
+  temp-dir { old-dir }
+  #f set-temp-dir drop
+  #( #( <'> ask-before-overwrite #f )
+     #( <'> audio-output-device 0 )
+     #( <'> auto-resize #t )
+     #( <'> auto-update #f )
+     #( <'> auto-update-interval 60.0 )
+     #( <'> beats-per-measure 4 )
+     #( <'> beats-per-minute 60.0 )
+     #( <'> channel-style 1 )
+     #( <'> clipping #f )
+     #( <'> clm-table-size 512 )
+     #( <'> clm-default-frequency 0.0 )
+     #( <'> color-cutoff 0.003 )
+     #( <'> color-inverted #t )
+     #( <'> color-scale 1.0 )
+     #( <'> colormap *good-colormap* )
+     #( <'> contrast-control-amp 1.0 )
+     #( <'> cursor-follows-play #f )
+     #( <'> cursor-location-offset 0 )
+     #( <'> cursor-size 15 )
+     #( <'> cursor-style cursor-cross )
+     #( <'> cursor-update-interval 0.05 )
+     #( <'> dac-combines-channels #t )
+     #( <'> dac-size 256 )
+     #( <'> default-output-chans 1 )
+     #( <'> default-output-data-format mus-lfloat )
+     #( <'> default-output-header-type mus-next )
+     #( <'> default-output-srate 44100 )
+     #( <'> dot-size 1 )
+     #( <'> enved-base 1.0 )
+     #( <'> enved-clip? #t )
+     #( <'> enved-envelope nil )
+     #( <'> enved-filter #t )
+     #( <'> enved-filter-order 40 )
+     #( <'> enved-in-dB #f )
+     #( <'> enved-power 3.0 )
+     #( <'> enved-style envelope-linear )
+     #( <'> enved-target 0 )
+     #( <'> enved-wave? #f )
+     #( <'> eps-bottom-margin 0.0 )
+     #( <'> eps-file "snd.eps" )
+     #( <'> eps-left-margin 0.0 )
+     #( <'> eps-size 1.0 )
+     #( <'> expand-control-hop 0.05 )
+     #( <'> expand-control-jitter 0.1 )
+     #( <'> expand-control-length 0.15 )
+     #( <'> expand-control-ramp 0.4 )
+     #( <'> fft-log-frequency #f )
+     #( <'> fft-log-magnitude #f )
+     #( <'> fft-with-phases #f )
+     #( <'> fft-window 6 )
+     #( <'> fft-window-alpha 0.0 )
+     #( <'> fft-window-beta 0.0 )
+     #( <'> filter-control-in-dB #f )
+     #( <'> filter-control-in-hz #f )
+     #( <'> filter-control-order 20 )
+     #( <'> graph-cursor 34 )
+     #( <'> graph-style graph-lines )
+     #( <'> graphs-horizontal #t )
+     #( <'> grid-density 1.0 )
+     #( <'> html-dir "." )
+     #( <'> html-program "firefox" )
+     #( <'> just-sounds #t )
+     #( <'> ladspa-dir "" )
+     #( <'> peak-env-dir "" )
+     #( <'> listener-prompt ">" )
+     #( <'> log-freq-start 32.0 )
+     #( <'> mark-tag-height 4 )
+     #( <'> mark-tag-width 10 )
+     #( <'> max-regions 16 )
+     #( <'> max-virtual-ptrees 32 )
+     #( <'> max-transform-peaks 100 )
+     #( <'> min-dB -60.0 )
+     #( <'> minibuffer-history-length 8 )
+     #( <'> mix-tag-height 14 )
+     #( <'> mix-tag-width 6 )
+     #( <'> mix-waveform-height 20 )
+     #( <'> mus-array-print-length 8 )
+     #( <'> mus-clipping #f )
+     #( <'> mus-float-equal-fudge-factor 0.0000001 )
+     #( <'> mus-prescaler 1.0 )
+     #( <'> optimization 0 ) \ Forth doesn't optimize
+     #( <'> print-length 12 )
+     #( <'> region-graph-style graph-lines )
+     #( <'> reverb-control-feedback 1.09 )
+     #( <'> reverb-control-lowpass 0.7 )
+     #( <'> save-state-file "saved-snd.fs" )
+     #( <'> selection-creates-region #t )
+     #( <'> show-axes 1 )
+     #( <'> show-controls #f )
+     #( <'> show-grid #f )
+     #( <'> show-indices #f )
+     #( <'> show-marks #t )
+     #( <'> show-mix-waveforms #t )
+     #( <'> show-selection-transform #f )
+     #( <'> show-sonogram-cursor #f )
+     #( <'> show-transform-peaks #f )
+     #( <'> show-y-zero #f )
+     #( <'> sinc-width 10 )
+     #( <'> spectrum-end 1.0 )
+     #( <'> spectro-hop 4 )
+     #( <'> spectrum-start 0.0 )
+     #( <'> spectro-x-angle *with-test-gl* if 300.0 else 90.0 then )
+     #( <'> spectro-x-scale *with-test-gl* if 1.5 else 1.0 then )
+     #( <'> spectro-y-angle *with-test-gl* if 320.0 else 0.0 then )
+     #( <'> spectro-y-scale 1.0 )
+     #( <'> spectro-z-angle *with-test-gl* if 0.0 else 358.0 then )
+     #( <'> spectro-z-scale *with-test-gl* if 1.0 else 0.1 then )
+     #( <'> temp-dir "" )
+     #( <'> time-graph-type graph-once )
+     #( <'> tiny-font tiny-font-string )
+     #( <'> tracking-cursor-style cursor-cross )
+     #( <'> transform-graph-type graph-once )
+     #( <'> transform-normalization normalize-by-channel )
+     #( <'> transform-size 512 )
+     #( <'> transform-type fourier-transform )
+     #( <'> view-files-sort 0 )
+     #( <'> wavelet-type 0 )
+     #( <'> wavo-hop 3 )
+     #( <'> wavo-trace 64 )
+     #( <'> with-mix-tags #t )
+     #( <'> with-relative-panes #t )
+     #( <'> with-tracking-cursor #f )
+     #( <'> with-verbose-cursor #f )
+     #( <'> with-inset-graph #f )
+     #( <'> with-pointer-focus #f )
+     #( <'> x-axis-style 0 )
+     #( <'> zero-pad 0 )
+     #( <'> zoom-focus-style 2 ) ) { procs }
+  nil nil nil nil { vals sym req res }
+  procs each to vals
+    vals 0 array-ref to sym
+    vals 1 array-ref to req
+    sym execute ( res ) req "%s" #( sym ) snd-test-neq
+  end-each
+  old-dir set-temp-dir drop
+  \ without-errors
+  #( <'> amp-control
+     <'> contrast-control
+     <'> contrast-control?
+     <'> expand-control
+     <'> expand-control?
+     <'> filter-control-coeffs
+     <'> filter-control-envelope
+     <'> filter-control?
+     <'> lisp-graph?
+     <'> read-only
+     <'> reverb-control-length
+     <'> reverb-control-scale
+     <'> reverb-control?
+     <'> speed-control
+     <'> sync
+     <'> time-graph?
+     <'> transform-graph? ) to procs
+  'no-such-sound to req
+  procs each to sym
+    sym #t nil fth-catch car 'no-such-sound "%s" #( sym ) snd-test-neq
+  end-each
+  \ 1 array-ref
+  #( #( <'> amp-control-bounds 8.0 )
+     #( <'> contrast-control-bounds 10.0 )
+     #( <'> expand-control-bounds 20.0 )
+     #( <'> reverb-control-length-bounds 5.0 )
+     #( <'> reverb-control-scale-bounds 4.0 )
+     #( <'> speed-control-bounds 20.0 ) ) to procs
+  procs each to vals
+    vals 0 array-ref to sym
+    vals 1 array-ref to req
+    sym execute 1 array-ref ( res ) req "%s" #( sym ) snd-test-neq
+  end-each
+  \ 
+  *snd-opened-sound* if
+    $" *snd-opened-sound*: %S" #( *snd-opened-sound* ) snd-display
+  then
+  default-output-data-format mus-bfloat <>
+  default-output-data-format mus-lfloat <> && if
+    mus-lfloat set-default-output-data-format drop
+  then
 ;
 
-\ bind-key proc
-: C-xC-c <{ -- }> 0 snd-exit ;
+\ ---------------- test 02: headers ----------------
 
-\ hooks
-: my-test1-proc <{ fname -- f }> #f ;
-<'> my-test1-proc alias my-test2-proc
-<'> my-test1-proc alias my-test3-proc
-<'> my-test1-proc alias my-test4-proc
-<'> my-test1-proc alias my-test5-proc
-
-: my-local-thunk <{ -- }>
-  open-hook object-length 3 <> if
-    $" add-hook! local length: %d?" #( open-hook object-length ) snd-display
-  then
-  open-hook $" my-test3-proc" hook-member? unless
-    $" local3 add-hook!: %s" #( open-hook ) snd-display
-  then
-  open-hook $" my-test4-proc" hook-member? unless
-    $" local4 add-hook!: %s" #( open-hook ) snd-display
-  then
-  open-hook $" my-test5-proc" hook-member? unless
-    $" local5 add-hook!: %s" #( open-hook ) snd-display
-  then
+: test-header-check { res req lno name info -- }
+  res req $" %s: %s" #( name info ) lno (snd-test-neq)
 ;
 
-: map-10-times-cb <{ y -- y' }> y 10.0 f* ;
-
-: map-diff-plus-cb { mx -- proc; y self -- y' }
-  1 proc-create 1.001 mx f- , ( proc )
- does> { y self -- y' }
-  self @ y f+
-;
-
-: scan-less-than-zero-cb <{ y -- y' }> y f0< ;
-
-: 00-sel-from-snd ( -- )
-  \ hooks
-  open-hook reset-hook!
-  open-hook <'> my-test1-proc add-hook!
-  open-hook <'> my-test2-proc add-hook!
-  open-hook object-length 2 <> if
-    $" add-hook! global length: %d?" #( open-hook object-length ) snd-display
-  then
-  open-hook "my-test1-proc" hook-member? unless
-    $" global1 add-hook!: %s" #( open-hook ) snd-display
-  then
-  open-hook <'> my-test2-proc hook-member? unless
-    $" global2 add-hook!: %s" #( open-hook ) snd-display
-  then
-  open-hook
-  #( <'> my-test3-proc
-     <'> my-test4-proc
-     <'> my-test5-proc ) <'> my-local-thunk with-local-hook
-  open-hook object-length 2 <> if
-    $" add-hook! reset length: %d?" #( open-hook object-length ) snd-display
-  then
-  open-hook <'> my-test1-proc hook-member? unless
-    $" reset1 add-hook!: %s" #( open-hook ) snd-display
-  then
-  open-hook "my-test2-proc" hook-member? unless
-    $" reset2 add-hook!: %s" #( open-hook ) snd-display
-  then
-  \ bind-key
-  <'> C-xC-c { prc }
-  "c" 4 #t key-binding { old-prc }
-  "c" 4 prc #t bind-key { prc1 }
-  "c" 4 #t key-binding { prc2 }
-  prc prc1 = unless $" bind-key: %s %s?" #( prc prc1 ) snd-display then
-  prc prc2 = unless $" key-binding: %s %s?" #( prc prc2 ) snd-display then
-  old-prc proc? if
-    "c" 4 old-prc #t bind-key drop
+: (test-headers-with-loop) { name chns sr dur typ frm loop-start loop-end lno -- }
+  name file-exists? if
+    name
   else
-    "c" 4 #t unbind-key drop
+    sf-dir name $+
+  then { file }
+  file file-exists? if
+    file mus-sound-chans       { fchns }
+    file mus-sound-srate       { fsr }
+    file mus-sound-duration    { fdur }
+    file mus-sound-data-format { ffrm }
+    file mus-sound-header-type { ftyp }
+    file mus-sound-frames      { fframes }
+    file mus-sound-samples     { fsamps }
+    file mus-sound-length      { flen }
+    fchns chns lno name "chans"    test-header-check
+    fsr   sr   lno name "srate"    test-header-check
+    fdur  dur  lno name "duration" test-header-check
+    file mus-sound-datum-size fdur f* fsr f* fchns f* floor f>s { fsize }
+    ffrm mus-unknown <>
+    ftyp 27 <> && if
+      flen 1+ fsize < if
+	flen 1+ fsize lno name "length" test-header-check
+      then
+    then
+    fframes fsr f/ fdur lno name "frames" test-header-check
+    fframes fsamps fchns f/ f- floor fabs f>s { res }
+    res 1 > if
+      res 1 lno name "samples" test-header-check
+    then
+    ftyp mus-header-type-name typ lno name "type"   test-header-check
+    ffrm mus-data-format-name frm lno name "format" test-header-check
+    file mus-sound-loop-info { lst }
+    loop-start if
+      lst nil? if
+	$" [%d] %s loop info empty?" #( lno name ) snd-test-message
+      else
+	lst car  loop-start lno name "loop-start" test-header-check
+	lst cadr loop-end   lno name "loop-end"   test-header-check
+      then
+    else
+      lst empty? unless
+	$" [%d] %s thinks it has loop info: %s?" #( lno name lst ) snd-test-message
+      then
+    then
+  else
+    *fth-debug* if
+      $" [%d] %s missing?" #( lno file ) snd-test-message
+    then
   then
-  \ new-sound
-  "fmv.snd" mus-next mus-bshort 22050 1 $" set-samples test" 100 new-sound { ind }
-  10  3  3 0.1 make-vct set-samples drop
-  0 20 ind 0 channel->vct { res }
-  res vct( 0 0 0 0 0 0 0 0 0 0 0.1 0.1 0.1 0 0 0 0 0 0 0 ) vequal unless
-    $" 1 set samples 0 for 0.1: %s?" #( res ) snd-display
+;
+
+: test-headers-with-loop ( name chns sr dur typ frm loop-start loop-end -- )
+  postpone *lineno* postpone (test-headers-with-loop)
+; immediate
+: test-headers ( name chns sr dur typ frm -- )
+  postpone #f postpone #f postpone *lineno* postpone (test-headers-with-loop)
+; immediate
+
+: 02-headers ( -- )
+  "5_secs.aiff" 1 44100 5.303107 $" AIFF" $" big endian short (16 bits)" test-headers
+  "8svx-8.snd" 1 22050 1.88766443729401 $" SVX8" $" signed byte (8 bits)" test-headers
+  "Fnonull.aif" 1 8000 0.00112499995157123 $" AIFC" $" mulaw (8 bits)" test-headers
+  "Pmiscck.aif" 1 8000 0.00112499995157123 $" AIFC" $" mulaw (8 bits)" test-headers
+  "Pmiscck.wav" 1 8000 0.00112499995157123 $" RIFF" $" mulaw (8 bits)" test-headers
+  "Poffset.aif" 1 8000 0.00112499995157123 $" AIFC" $" mulaw (8 bits)" test-headers
+  "Porder.aif" 1 8000 0.00112499995157123 $" AIFC" $" mulaw (8 bits)" test-headers
+  "Ptjunk.aif" 1 8000 0.00112499995157123 $" AIFC" $" mulaw (8 bits)" test-headers
+  "Ptjunk.wav" 1 8000 0.00112499995157123 $" RIFF" $" mulaw (8 bits)" test-headers
+  "SINE24-S.WAV" 2 44100 2.0 $" RIFF" $" little endian int (24 bits)" test-headers
+  "a1.asf" 1 16000 3.736562 $" asf" $" unknown" test-headers
+  "a2.asf" 1 8000 4.630625 $" asf" $" unknown" test-headers
+  "addf8.afsp" 1 8000 2.9760000705719 $" Sun/Next" $" big endian short (16 bits)" test-headers
+  "addf8.d" 1 8000 2.9760000705719 $" SPPACK" $" big endian short (16 bits)" test-headers
+  "addf8.dwd" 1 8000 2.976000071 $" DiamondWare" $" little endian short (16 bits)" test-headers
+  "addf8.nh" 2 44100 0.269931972 $" raw (no header)" $" big endian short (16 bits)" test-headers
+  "addf8.sd" 1 8000 2.9760000705719 $" ESPS" $" big endian short (16 bits)" test-headers
+  "addf8.sf_mipseb" 1 8000 2.9760000705719 $" IRCAM" $" big endian short (16 bits)" test-headers
+  "addf8.sf_sun" 1 8000 2.9760000705719 $" IRCAM" $" big endian short (16 bits)" test-headers
+  "addf8.sf_vax_b" 1 8000 2.9760000705719 $" IRCAM" $" big endian short (16 bits)" test-headers
+  "addf8.wav" 1 8000 2.9760000705719 $" RIFF" $" little endian short (16 bits)" test-headers
+  "aebass.krz" 1 44100 3.0 $" Kurzweil 2000" $" big endian short (16 bits)" test-headers
+  "aiff-16.snd" 2 44100 0.746666669845581 $" AIFF" $" big endian short (16 bits)" test-headers
+  "aiff-8.snd" 2 44100 0.746666669845581 $" AIFF" $" signed byte (8 bits)" test-headers
+  "alaw.aifc" 1 44100 0.0367800444364548 $" AIFC" $" alaw (8 bits)" test-headers
+  "alaw.wav" 1 11025 8.70666694641113 $" RIFF" $" alaw (8 bits)" test-headers
+  "astor_basia.mp2" 2 44100 1.022 $" raw (no header)" $" big endian short (16 bits)" test-headers
+  "c.asf" 1 8000 21.368126 $" asf" $" unknown" test-headers
+  "ce-c3.w02" 1 33000 3.88848495483398 $" TX-16W" $" unknown" test-headers
+  "ce-c4.w03" 1 33000 2.91618180274963 $" TX-16W" $" unknown" test-headers
+  "ce-d2.w01" 1 33000 3.46439385414124 $" TX-16W" $" unknown" test-headers
+  "clbonef.wav" 1 22050 2.57832193374634 $" RIFF" $" little endian float (32 bits)" test-headers
+  "cranker.krz" 1 44100 3.48267579 $" Kurzweil 2000" $" big endian short (16 bits)" test-headers
+  "d40130.aif" 1 10000 0.100000001490116 $" AIFF" $" big endian short (16 bits)" test-headers
+  "d40130.au" 1 10000 0.100000001490116 $" Sun/Next" $" big endian short (16 bits)" test-headers
+  "d40130.dsf" 1 8000 0.125 $" Delusion" $" little endian short (16 bits)" test-headers
+  "d40130.fsm" 1 8000 0.12524999678 $" Farandole" $" little endian short (16 bits)" test-headers
+  "d40130.iff" 1 10000 0.100000001490116 $" SVX8" $" signed byte (8 bits)" test-headers
+  "d40130.pat" 1 10000 0.100000001490116 $" Gravis Ultrasound patch" $" little endian short (16 bits)" test-headers
+  "d40130.sds" 1 10000 0.100000001490116 $" MIDI sample dump" $" unknown" test-headers
+  "d40130.sdx" 1 10000 0.100000001490116 $" Sample dump" $" unsigned little endian short (16 bits)" test-headers
+  "d40130.sf" 1 10000 0.100000001490116 $" IRCAM" $" little endian short (16 bits)" test-headers
+  "d40130.smp" 1 8000 0.125 $" SMP" $" little endian short (16 bits)" test-headers
+  "d40130.sou" 1 8000 0.125 $" SBStudioII" $" little endian short (16 bits)" test-headers
+  "d40130.st3" 1 8000 0.125 $" Digiplayer ST3" $" unsigned little endian short (16 bits)" test-headers
+  "d40130.uwf" 1 8000 0.1252499 $" Ultratracker" $" little endian short (16 bits)" test-headers
+  "d40130.voc" 1 10000 0.100100003182888 $" VOC" $" unsigned byte (8 bits)" test-headers
+  "d40130.w00" 1 16000 0.0625 $" TX-16W" $" unknown" test-headers
+  "d40130.wav" 1 10000 0.100000001490116 $" RIFF" $" little endian short (16 bits)" test-headers
+  "d43.wav" 1 10000 0.100000001490116 $" RIFF" $" little endian short (16 bits)" test-headers
+  "digit0v0.aiff" 1 8000 0.560000002384186 $" AIFC" $" big endian short (16 bits)" test-headers
+  "esps-16.snd" 1 8000 3.09737491607666 $" ESPS" $" big endian short (16 bits)" test-headers
+  "forest.aiff" 2 44100 3.907143 $" AIFF" $" big endian short (16 bits)" 24981 144332 test-headers-with-loop
+  "g721.au" 1 11025 4.35328817367554 $" Sun/Next" $" unknown" test-headers
+  "g722.aifc" 1 44100 0.0184353739023209 $" AIFC" $" unknown" test-headers
+  "gong.wve" 1 8000 3.96799993515015 $" PSION" $" alaw (8 bits)" test-headers
+  "gsm610.wav" 1 11025 1.7687075138092 $" RIFF" $" unknown" test-headers
+  "inrs-16.snd" 1 8000 2.46399998664856 $" INRS" $" little endian short (16 bits)" test-headers
+  "kirk.wve" 1 8000 1.40799999237061 $" PSION" $" alaw (8 bits)" test-headers
+  "loop.aiff" 1 44100 0.0367120169103146 $" AIFC" $" big endian short (16 bits)" 12 23 test-headers-with-loop
+  "m.asf" 1 8000 64.964622 $" asf" $" unknown" test-headers
+  "mary-sun4.sig" 1 8000 4.47612476348877 $" Comdisco SPW signal" $" big endian double (64 bits)" test-headers
+  "mocksong.wav" 1 11025 7.869569301605 $" RIFF" $" little endian short (16 bits)" test-headers
+  "mono24.wav" 1 22050 1.98997735977173 $" RIFF" $" little endian int (24 bits)" test-headers
+  "msadpcm.wav" 1 11025 4.43501138687134 $" RIFF" $" unknown" test-headers
+  "n8.snd" 1 44100 0.0367800444364548 $" Sun/Next" $" signed byte (8 bits)" test-headers
+  "nasahal.aif" 1 11025 9.89841270446777 $" AIFF" $" signed byte (8 bits)" test-headers
+  "nasahal.avi" 1 11025 10.432744 $" AVI" $" little endian short (16 bits)" test-headers
+  "nasahal.dig" 1 11025 9.8984 $" Sound Designer 1" $" big endian short (16 bits)" test-headers
+  "nasahal.ivc" 2 44100 0.449 $" raw (no header)" $" big endian short (16 bits)" test-headers
+  "nasahal.pat" 1 11025 3.95410442352295 $" Gravis Ultrasound patch" $" unsigned byte (8 bits)" test-headers
+  "nasahal.snd" 1 11025 9.89841270446777 $" SNDT" $" unsigned byte (8 bits)" test-headers
+  "nasahal.svx" 1 11025 9.89841270446777 $" SVX8" $" signed byte (8 bits)" test-headers
+  "nasahal.v8" 1 8000 13.6412496566772 $" Covox V8" $" unsigned byte (8 bits)" test-headers
+  "nasahal.voc" 1 11025 9.89941024780273 $" VOC" $" unsigned byte (8 bits)" test-headers
+  "nasahal.vox" 2 44100 0.22444 $" raw (no header)" $" big endian short (16 bits)" test-headers
+  "nasahal8.wav" 1 11025 9.89841270446777 $" RIFF" $" unsigned byte (8 bits)" test-headers
+  "nasahalad.smp" 1 11025 4.94920635223389 $" Goldwave sample" $" little endian short (16 bits)" test-headers
+  "next-16.snd" 1 22050 1.00004529953003 $" Sun/Next" $" big endian short (16 bits)" test-headers
+  "next-8.snd" 1 22050 0.226757362484932 $" Sun/Next" $" signed byte (8 bits)" test-headers
+  "next-dbl.snd" 1 22050 0.226757362484932 $" Sun/Next" $" big endian double (64 bits)" test-headers
+  "oboe.ldbl" 1 22050 2.30512475967407 $" RIFF" $" little endian double (64 bits)" test-headers
+  "next-flt.snd" 1 22050 0.226757362484932 $" Sun/Next" $" big endian float (32 bits)" test-headers
+  "aifc-float.snd" 1 22050 0.2267573624849 $" AIFC" $" big endian float (32 bits)" test-headers
+  "next-mulaw.snd" 1 8012 2.03295063972473 $" Sun/Next" $" mulaw (8 bits)" test-headers
+  "next24.snd" 1 44100 0.0367800444364548 $" Sun/Next" $" big endian int (24 bits)" test-headers
+  "nist-01.wav" 1 16000 2.26912498474121 $" NIST" $" little endian short (16 bits)" test-headers
+  "nist-10.wav" 1 16000 2.26912498474121 $" NIST" $" big endian short (16 bits)" test-headers
+  "nist-16.snd" 1 16000 1.02400004863739 $" NIST" $" big endian short (16 bits)" test-headers
+  "nist-shortpack.wav" 1 16000 4.53824996948242 $" NIST" $" unknown" test-headers
+  "none.aifc" 1 44100 0.0367800444364548 $" AIFC" $" big endian short (16 bits)" test-headers
+  "nylon2.wav" 2 22050 1.14376413822174 $" RIFF" $" unknown" test-headers
+  "o2.adf" 1 44100 0.036780 $" CSRE adf" $" little endian short (16 bits)" test-headers
+  "o2.avr" 1 44100 0.0183900222182274 $" AVR" $" big endian short (16 bits)" test-headers
+  "o2.bicsf" 1 44100 0.0367800444364548 $" IRCAM" $" big endian short (16 bits)" test-headers
+  "o2.mpeg1" 2 44100 0.0070975 $" raw (no header)" $" big endian short (16 bits)" test-headers
+  "o2.sd2" 2 44100 0.0183900222 $" raw (no header)" $" big endian short (16 bits)" test-headers
+  "o2.sf2" 1 44100 0.036780044436 $" SoundFont" $" little endian short (16 bits)" test-headers
+  "o2.smp" 1 8000 0.202749997377396 $" SMP" $" little endian short (16 bits)" test-headers
+  "o2.voc" 1 44100 0.0368934236466885 $" VOC" $" little endian short (16 bits)" test-headers
+  "o2.wave" 1 44100 0.0367800444364548 $" RIFF" $" little endian short (16 bits)" test-headers
+  "o2_12bit.aiff" 1 44100 0.036780044436 $" AIFF" $" big endian short (16 bits)" test-headers
+  "o2_18bit.aiff" 1 44100 0.0367800444364548 $" AIFF" $" big endian int (24 bits)" test-headers
+  "o2_711u.wave" 1 44100 0.0367800444364548 $" RIFF" $" mulaw (8 bits)" test-headers
+  "o2_722.snd" 1 44100 0.0183900222182274 $" Sun/Next" $" unknown" test-headers
+  "o2_726.aiff" 1 8000 0.0367499999701977 $" AIFC" $" unknown" test-headers
+  "o2_726.snd" 1 44100 0.0230158735066652 $" Sun/Next" $" unknown" test-headers
+  "o2_728.aiff" 1 8000 0.0367499999701977 $" AIFC" $" unknown" test-headers
+  "o2_8.iff" 1 44100 0.0367800444364548 $" SVX8" $" signed byte (8 bits)" test-headers
+  "o2_8.voc" 1 44100 0.0370294786989689 $" VOC" $" unsigned byte (8 bits)" test-headers
+  "o2_dvi.wave" 1 44100 0.0232199542224407 $" RIFF" $" unknown" test-headers
+  "o2_float.bicsf" 1 44100 0.0367800444 $" IRCAM" $" big endian float (32 bits)" test-headers
+  "o2_gsm.aiff" 1 8000 0.0367499999701977 $" AIFC" $" unknown" test-headers
+  "o2_u8.avr" 1 44100 0.0367800444364548 $" AVR" $" unsigned byte (8 bits)" test-headers
+  "o2_u8.wave" 1 44100 0.0367800444364548 $" RIFF" $" unsigned byte (8 bits)" test-headers
+  "o28.mpc" 1 44100 0.036780 $" AKAI 4" $" little endian short (16 bits)" test-headers
+  "oboe.g721" 1 22050 1.15287983417511 $" Sun/Next" $" unknown" test-headers
+  "oboe.g723_24" 1 22050 0.864761888980865 $" Sun/Next" $" unknown" test-headers
+  "oboe.g723_40" 1 22050 1.44126987457275 $" Sun/Next" $" unknown" test-headers
+  "oboe.kts" 1 22050 2.305125 $" Korg" $" big endian short (16 bits)" test-headers
+  "oboe.its" 1 22050 2.305125 $" Impulse Tracker" $" little endian short (16 bits)" test-headers
+  "oboe.sf2" 1 22050 2.305124759674 $" SoundFont" $" little endian short (16 bits)" test-headers
+  "oboe.paf" 1 22050 2.305125 $" Ensoniq Paris" $" big endian short (16 bits)" test-headers
+  "oboe.pf1" 1 22050 2.305125 $" Ensoniq Paris" $" little endian short (16 bits)" test-headers
+  "oboe.smp" 1 22050 2.305125 $" snack SMP" $" little endian short (16 bits)" test-headers
+  "oboe.rf64" 1 22050 2.305125 $" rf64" $" little endian short (16 bits)" test-headers
+  "oboe-be32.caf" 1 22050 2.305125 $" caff" $" normalized big endian int (32 bits)" test-headers
+  "oboe-bf64.caf" 1 22050 2.305125 $" caff" $" big endian double (64 bits)" test-headers
+  "oboe-lf32.caf" 1 22050 2.305125 $" caff" $" little endian float (32 bits)" test-headers
+  "oboe-ulaw.caf" 1 22050 2.305125 $" caff" $" mulaw (8 bits)" test-headers
+  "oboe.nsp" 1 22050 2.305125 $" CSL" $" little endian short (16 bits)" test-headers
+  "oboe.nvf" 1 8000 6.353500 $" Creative NVF" $" unknown" test-headers
+  "oboe-ulaw.voc" 1 22050 2.305669 $" VOC" $" mulaw (8 bits)" test-headers
+  "oboe-lf32.sf" 1 22050 2.305669 $" IRCAM" $" little endian float (32 bits)" test-headers
+  "oboe.wfp" 1 22050 2.305125 $" Turtle Beach" $" little endian short (16 bits)" test-headers
+  "oboe.sox" 1 22050 2.305125 $" Sox" $" normalized little endian int (32 bits)" test-headers
+  "oki.snd" 2 44100 0.004195011 $" raw (no header)" $" big endian short (16 bits)" test-headers
+  "oki.wav" 1 44100 0.016780 $" RIFF" $" unknown" test-headers
+  "orv-dvi-adpcm.wav" 1 44100 1.92725622653961 $" RIFF" $" unknown" test-headers
+  "riff-16.snd" 1 22050 1.88766443729401 $" RIFF" $" little endian short (16 bits)" test-headers
+  "riff-8-u.snd" 1 11025 0.506848096847534 $" RIFF" $" unsigned byte (8 bits)" test-headers
+  "rooster.wve" 1 8000 2.04800009727478 $" PSION" $" alaw (8 bits)" test-headers
+  "sd1-16.snd" 1 44100 0.40054 $" Sound Designer 1" $" big endian short (16 bits)" test-headers
+  "sf-16.snd" 1 22050 1.88766443729401 $" IRCAM" $" big endian short (16 bits)" test-headers
+  "si654.adc" 1 16000 6.71362495422363 $" ADC/OGI" $" big endian short (16 bits)" test-headers
+  "smp-16.snd" 1 8000 5.2028751373291 $" SMP" $" little endian short (16 bits)" test-headers
+  "sound.pat" 1 8000 1.95050001144409 $" Gravis Ultrasound patch" $" unsigned little endian short (16 bits)" test-headers
+  "sound.sap" 1 8000 1.95050001144409 $" Goldwave sample" $" little endian short (16 bits)" test-headers
+  "sound.sds" 1 8000 1.95050001144409 $" MIDI sample dump" $" unknown" test-headers
+  "sound.sfr" 1 8000 1.95050001144409 $" SRFS" $" little endian short (16 bits)" test-headers
+  "sound.v8" 1 8000 1.95050001144409 $" Covox V8" $" unsigned byte (8 bits)" test-headers
+  "sound.vox" 2 44100 0.0442177 $" raw (no header)" $" big endian short (16 bits)" test-headers
+  "step.omf" 1 11025 8.70666694641113 $" OMF" $" signed byte (8 bits)" test-headers
+  "step.qt" 1 11025 8.70630359649658 $" Quicktime" $" unsigned byte (8 bits)" test-headers
+  "sun-16-afsp.snd" 1 8000 2.9760000705719 $" Sun/Next" $" big endian short (16 bits)" test-headers
+  "sun-mulaw.snd" 1 8000 4.61950016021729 $" Sun/Next" $" mulaw (8 bits)" test-headers
+  "sw1038t_short.wav" 2 8000 6.0 $" NIST" $" mulaw (8 bits)" test-headers
+  "swirl.pat" 1 22050 1.0619500875473 $" Gravis Ultrasound patch" $" unsigned little endian short (16 bits)" test-headers
+  "sy85.snd" 1 8000 5.05600023269653 $" Sy-85" $" big endian short (16 bits)" test-headers
+  "sy99.snd" 1 8000 4.54400014877319 $" Sy-99" $" big endian short (16 bits)" test-headers
+  "telephone.wav" 1 16000 2.2788124084 $" NIST" $" little endian short (16 bits)" test-headers
+  "trumps22.adp" 1 22050 3.092880 $" RIFF" $" unknown" test-headers
+  "truspech.wav" 1 8000 1.1599999666214 $" RIFF" $" unknown" test-headers
+  "ulaw.aifc" 1 44100 0.0367800444364548 $" AIFC" $" mulaw (8 bits)" test-headers
+  "voc-8-u.snd" 1 8000 1.49937498569489 $" VOC" $" unsigned byte (8 bits)" test-headers
+  "o28.voc" 1 44100 0.036893 $" VOC" $" little endian short (16 bits)" test-headers
+  "voxware.wav" 1 8000 0.324000000953674 $" RIFF" $" unknown" test-headers
+  "wd.w00" 1 8000 0.202749997377396 $" Sy-99" $" big endian short (16 bits)" test-headers
+  "wd1.smp" 1 8000 0.202749997377396 $" SMP" $" little endian short (16 bits)" test-headers
+  "wd1.wav" 1 44100 0.0367800444364548 $" RIFF" $" little endian short (16 bits)" test-headers
+  "wheel.mat" 2 44100 0.14564626 $" raw (no header)" $" big endian short (16 bits)" test-headers
+  "b8.pvf" 1 44100 0.036803 $" Portable Voice Format" $" signed byte (8 bits)" test-headers
+  "b16.pvf" 1 44100 0.0368 $" Portable Voice Format" $" big endian short (16 bits)" test-headers
+  "b32.pvf" 1 44100 0.036803 $" Portable Voice Format" $" big endian int (32 bits)" test-headers
+  "water.voc" 2 32000 42.3463897705078 $" VOC" $" little endian short (16 bits)" test-headers
+  "wood.dsf" 1 8000 0.202749997377 $" Delusion" $" little endian short (16 bits)" test-headers
+  "wood.dvi" 1 22100 0.0278733037412167 $" RIFF" $" unknown" test-headers
+  "wood.dwd" 1 22100 0.0733936652541161 $" DiamondWare" $" signed byte (8 bits)" test-headers
+  "wood.fsm" 1 8000 0.2029999942 $" Farandole" $" little endian short (16 bits)" test-headers
+  "wood.mad" 1 22100 0.0372398197650909 $" RIFF" $" unknown" test-headers
+  "wood.maud" 1 44100 0.0183900222182274 $" MAUD" $" big endian short (16 bits)" test-headers
+  "wood.pat" 1 22100 0.0733936652541161 $" Gravis Ultrasound patch" $" little endian short (16 bits)" test-headers
+  "wood.riff" 1 44100 0.0367800444364548 $" RIFF" $" little endian short (16 bits)" test-headers
+  "wood.rifx" 1 44100 0.0367800444364548 $" RIFF" $" big endian short (16 bits)" test-headers
+  "wood.sds" 1 22100 0.0733936652541161 $" MIDI sample dump" $" unknown" test-headers
+  "wood.sdx" 1 22100 0.0733936652541161 $" Sample dump" $" unsigned little endian short (16 bits)" test-headers
+  "wood.sf" 1 44100 0.0367800444364548 $" IRCAM" $" big endian short (16 bits)" test-headers
+  "wood.sndr" 2 44100 0.009229 $" raw (no header)" $" big endian short (16 bits)" test-headers
+  "wood.sndt" 1 44100 0.0367800444364548 $" SNDT" $" unsigned byte (8 bits)" test-headers
+  "wood.st3" 1 8000 0.202749997377396 $" Digiplayer ST3" $" unsigned little endian short (16 bits)" test-headers
+  "wood.uwf" 1 8000 0.202999994 $" Ultratracker" $" little endian short (16 bits)" test-headers
+  "wood.w00" 1 16000 0.101374998688698 $" TX-16W" $" unknown" test-headers
+  "wood12.aiff" 1 44100 0.0367800444364548 $" AIFF" $" big endian short (16 bits)" test-headers
+  "wood16.dwd" 2 44100 0.03678004 $" DiamondWare" $" little endian short (16 bits)" test-headers
+  "wood16.wav" 2 44100 0.03678004 $" RIFF" $" little endian short (16 bits)" test-headers
+  "wood16.nsp" 2 44100 0.03678004 $" CSL" $" little endian short (16 bits)" test-headers
+  "wood16.smp" 2 44100 0.03678004 $" snack SMP" $" little endian short (16 bits)" test-headers
+  "wood24.aiff" 1 44100 0.0367800444364548 $" AIFF" $" big endian int (24 bits)" test-headers
+  "woodblock.aiff" 1 44100 0.03678 $" AIFF" $" big endian short (16 bits)" test-headers
+  "woodflt.snd" 1 44100 0.0367800444364548 $" Sun/Next" $" big endian float (32 bits)" test-headers
+  "RealDrums.sf2" 1 44100 6.397256 $" SoundFont" $" little endian short (16 bits)" test-headers
+  "32bit.sf" 1 44100 4.6 $" IRCAM" $" little endian float (32 bits, unscaled)" test-headers
+  "PCM_48_8bit_m.w64" 1 48000 0.375 $" SoundForge" $" unsigned byte (8 bits)" test-headers
+  "oboe.sf6" 1 22050 2.305125 $" SoundForge" $" little endian short (16 bits)" test-headers
+  "addf8.24we" 1 8000 2.976000 $" RIFF" $" little endian int (24 bits)" test-headers
+  "hybrid.snd" 1 44100 4.600000 $" BICSF" $" big endian float (32 bits)" test-headers
+  "litmanna.sf" 1 44100 0.533 $" IRCAM" $" little endian short (16 bits)" test-headers
+  "M1F1-float64C-AFsp.aif" 2 8000 2.9366 $" AIFC" $" big endian double (64 bits)" test-headers
+  "MacBoing.wav" 1 11127 0.696 $" RIFF" $" unsigned byte (8 bits)" test-headers
+  "t15.aiff" 2 44100 135.00 $" AIFC" $" little endian short (16 bits)" test-headers
+  "tomf8.aud" 1 8000 2.016000 $" INRS" $" little endian short (16 bits)" test-headers
+  "Xhs001x.nsp" 1 10000 6.017400 $" CSL" $" little endian short (16 bits)" test-headers
+  "zulu_a4.w11" 1 33000 1.21987879276276 $" TX-16W" $" unknown" 23342 40042 test-headers-with-loop
+;
+
+\ ---------------- test 03: variables ----------------
+
+: y>0.1-cb <{ y -- f }> y 0.1 f> ;
+: y<0.0-cb <{ y -- f }> y f0< ;
+
+'( 0 0.0 50 0.5 100 1.0 ) value zero-to-one
+'( 0 1.0 50 0.5 100 0.0 ) value mod-down
+
+: rm-ladspa <{ sym reg -- f }> reg sym symbol-name regexp= ;
+
+: 03-variables ( -- )
+  "oboe.snd" open-sound { ind }
+  *home* "/test" $+ { test-dir }
+  test-dir file-exists? if
+    temp-dir { old-val }
+    test-dir set-temp-dir test-dir "set-temp-dir" #() snd-test-neq
+    old-val set-temp-dir drop
+  then
+  1000 sample 0.0328 $" sample 1000" #() snd-test-neq
+  \ 
+  #( output-name-hook
+     output-comment-hook
+     peak-env-hook
+     help-hook
+     mark-drag-hook
+     mark-drag-triangle-hook
+     mix-drag-hook
+     mouse-drag-hook
+     mouse-click-hook
+     mouse-press-hook
+     start-playing-hook
+     start-playing-selection-hook
+     stop-playing-hook
+     key-press-hook
+     snd-error-hook
+     snd-warning-hook
+     name-click-hook
+     after-apply-controls-hook
+     enved-hook
+     mouse-enter-label-hook
+     mouse-enter-graph-hook
+     mouse-enter-listener-hook
+     mouse-leave-label-hook
+     mouse-leave-graph-hook
+     mouse-leave-listener-hook
+     initial-graph-hook
+     after-graph-hook
+     graph-hook ) each { h }
+    h hook? not
+    h empty? not || if
+      $" %d: %s?" #( i h ) snd-display
+    then
+  end-each
+  \
+  *with-test-gui* if
+    show-controls { old-ctrl }
+    #t set-show-controls drop
+    enved-dialog { req }
+    dialog-widgets 2 array-ref req "enved-dialog" #() snd-test-neq
+    '( 0.0 0.0 1.0 1.0 2.0 0.0 ) to req
+    req set-enved-envelope drop
+    enved-envelope req "set-enved-envelope" #() snd-test-neq
+    enved-envelope set-enved-envelope drop
+    enved-envelope req $" set-enved-envelope to self" #() snd-test-neq
+    old-ctrl set-show-controls drop
+  then
+  \
+  #( #( <'> color-cutoff 0.003 0.01 )
+     #( <'> color-inverted #t #f )
+     #( <'> color-scale 1.0 0.5 )
+     #( <'> contrast-control? #f #t )
+     #( <'> enved-base 1.0 1.5 )
+     #( <'> enved-in-dB #f #t )
+     #( <'> enved-target 0 1 )
+     #( <'> enved-wave? #f #t )
+     #( <'> expand-control? #f #t )
+     #( <'> fft-log-frequency #f #t )
+     #( <'> fft-log-magnitude #f #t )
+     #( <'> fft-with-phases #f #t )
+     #( <'> enved-filter-order 40 20 )
+     #( <'> filter-control? #f #t )
+     #( <'> transform-normalization normalize-by-channel dont-normalize )
+     #( <'> reverb-control? #f #t )
+     #( <'> show-transform-peaks #f #t )
+     #( <'> show-selection-transform #f #t )
+     #( <'> spectrum-end 1.0 0.7 )
+     #( <'> spectro-hop 4 10 )
+     #( <'> spectrum-start 0.0 0.1 )
+     #( <'> spectro-x-angle *with-test-gl* if 300.0 else 90.0 then 60.0 )
+     #( <'> spectro-x-scale *with-test-gl* if 1.5 else 1.0 then 2.0 )
+     #( <'> spectro-y-angle *with-test-gl* if 320.0 else 0.0 then 60.0 )
+     #( <'> spectro-y-scale 1.0 2.0 )
+     #( <'> spectro-z-angle *with-test-gl* if 0.0 else 358.0 then 60.0 )
+     #( <'> spectro-z-scale *with-test-gl* if 1.0 else 0.1 then 0.2 ) ) { gui-lst }
+  #( #( <'> amp-control 1.0 0.5 )
+     #( <'> amp-control-bounds '( 0.0 8.0 ) '( 1.0 5.0 ) )
+     #( <'> ask-before-overwrite #f #t )
+     #( <'> audio-input-device 0 1 )
+     #( <'> audio-output-device 0 1 )
+     #( <'> auto-resize #t #f )
+     #( <'> auto-update #f #t )
+     #( <'> channel-style 0 1 )
+     #( <'> colormap *good-colormap* *better-colormap* )
+     #( <'> contrast-control 0.0 0.5 )
+     #( <'> contrast-control-bounds '( 0.0 10.0 ) '( 1.0 5.0 ) )
+     #( <'> contrast-control-amp 1.0 0.5 )
+     #( <'> auto-update-interval 60.0 120.0 )
+     #( <'> cursor-update-interval 0.05 0.1 )
+     #( <'> cursor-location-offset 0 32768 )
+     #( <'> with-tracking-cursor #f #t )
+     #( <'> cursor-size 15 30 )
+     #( <'> cursor-style cursor-cross cursor-line )
+     #( <'> tracking-cursor-style cursor-cross cursor-line )
+     #( <'> dac-combines-channels #t #f )
+     #( <'> dac-size 256 512 )
+     #( <'> minibuffer-history-length 8 16 )
+     #( <'> clipping #f #t )
+     #( <'> default-output-chans 1 2 )
+     #( <'> default-output-data-format 1 1 )
+     #( <'> default-output-srate 22050 44100 )
+     #( <'> default-output-header-type mus-next mus-aifc )
+     #( <'> dot-size 1 4 )
+     #( <'> enved-clip? #f #t )
+     #( <'> enved-style envelope-linear envelope-exponential )
+     #( <'> enved-power 3.0 3.5 )
+     #( <'> eps-file "snd.eps" "snd-1.eps" )
+     #( <'> eps-left-margin 0.0 72.0 )
+     #( <'> eps-size 1.0 2.0 )
+     #( <'> eps-bottom-margin 0.0 36.0 )
+     #( <'> expand-control 1.0 2.0 )
+     #( <'> expand-control-bounds '( 0.001 20.0 ) '( 1.0 2.0 ) )
+     #( <'> expand-control-hop 0.05 0.1 )
+     #( <'> expand-control-jitter 0.1 0.2 )
+     #( <'> expand-control-length 0.15 0.2 )
+     #( <'> expand-control-ramp 0.4 0.2 )
+     #( <'> fft-window-alpha 0.0 1.0 )
+     #( <'> fft-window-beta 0.0 0.5 )
+     #( <'> transform-size 512 1024 )
+     #( <'> transform-graph-type graph-once graph-as-sonogram )
+     #( <'> fft-window 6 5 )
+     #( <'> transform-graph? #f #t )
+     #( <'> filter-control-in-dB #f #t )
+     #( <'> filter-control-envelope '( 0.0 1.0 1.0 1.0 ) '( 0.0 1.0 1.0 0.0 ) )
+     #( <'> enved-filter #t #f )
+     #( <'> filter-control-in-hz #f #t )
+     #( <'> filter-control-order 20 40 )
+     #( <'> graph-cursor 34 33 )
+     #( <'> graph-style 0 1 )
+     #( <'> just-sounds #f #t )
+     #( <'> listener-prompt ">" ":" )
+     #( <'> max-transform-peaks 100 10 )
+     #( <'> max-regions 16 6 )
+     #( <'> min-dB -60.0 -90.0 )
+     #( <'> log-freq-start 32.0 10.0 )
+     #( <'> mix-waveform-height 20 40 )
+     #( <'> mix-tag-height 14 20 )
+     #( <'> mix-tag-width 6 20 )
+     #( <'> mark-tag-height 4 20 )
+     #( <'> mark-tag-width 10 20 )
+     #( <'> mus-prescaler 1.0 100.0 )
+     #( <'> mus-clipping #f #t )
+     #( <'> selection-creates-region #t #f )
+     #( <'> view-files-sort 0 1 )
+     #( <'> print-length 12 16 )
+     #( <'> region-graph-style graph-lines graph-lollipops )
+     #( <'> reverb-control-decay 1.0 2.0 )
+     #( <'> reverb-control-feedback 1.09 1.6 )
+     #( <'> reverb-control-length 1.0 2.0 )
+     #( <'> reverb-control-length-bounds '( 0.0 0.5 ) '( 1.0 2.0 ) )
+     #( <'> reverb-control-lowpass 0.7 0.9 )
+     #( <'> reverb-control-scale 0.0 0.2 )
+     #( <'> reverb-control-scale-bounds '( 0.0 4.0 ) '( 0.0 0.2 ) )
+     #( <'> show-axes 1 0 )
+     #( <'> show-indices #f #t )
+     #( <'> show-marks #t #f )
+     #( <'> show-mix-waveforms #t #f )
+     #( <'> show-y-zero #f #t )
+     #( <'> show-grid #f #t )
+     #( <'> grid-density 1.0 0.5 )
+     #( <'> show-sonogram-cursor #f #t )
+     #( <'> sinc-width 10 40 )
+     #( <'> speed-control 1.0 0.5 )
+     #( <'> speed-control-bounds '( 0.05 20.0 ) '( 1.0 5.0 ) )
+     #( <'> speed-control-style 0 1 )
+     #( <'> speed-control-tones 12 18 )
+     #( <'> sync 0 1 )
+     #( <'> tiny-font tiny-font-string tiny-font-set-string )
+     #( <'> transform-type fourier-transform autocorrelation )
+     #( <'> with-verbose-cursor #f #t )
+     #( <'> wavelet-type 0 1 )
+     #( <'> time-graph? #f #t )
+     #( <'> time-graph-type graph-once graph-as-wavogram )
+     #( <'> wavo-hop 3 6 )
+     #( <'> wavo-trace 64 128 )
+     #( <'> with-mix-tags #t #f )
+     #( <'> with-relative-panes #t #f )
+     #( <'> with-gl *with-test-gl* #f )
+     #( <'> x-axis-style 0 1 )
+     #( <'> beats-per-minute 30.0 120.0 )
+     #( <'> beats-per-measure 1 120 )
+     #( <'> zero-pad 0 1 )
+     #( <'> zoom-focus-style 2 1 ) ) { lst }
+  *with-test-gui* if
+    lst gui-lst array-append to lst
+  then
+  nil nil nil nil nil { vals sym initval newval nowval }
+  lst each to vals
+    vals 0 array-ref to sym
+    vals 1 array-ref to initval
+    vals 2 array-ref to newval
+    2 0 do
+      newval sym set-execute drop
+      sym execute to nowval
+      nowval newval "set-%s[%d]" #( sym i ) snd-test-neq
+      initval sym set-execute drop
+    loop
+  end-each
+  \ 
+  #( *with-test-gui* if
+       #( <'> amp-control 1.0 '( -1.0 123.123 ) )
+     then
+     #( <'> amp-control-bounds '( 0.0 8.0 ) '( #f '( 0.0 ) '( 1.0 0.0 ) 2.0 ) )
+     #( <'> channel-style 0 '( 32 -1 1.0 ) )
+     #( <'> colormap *good-colormap* '( 321 -123 ) )
+     #( <'> color-cutoff 0.003 '( -1.0 123.123 ) )
+     #( <'> color-scale 1.0 '( -32.0 2000.0 ) )
+     *with-test-gui* if
+       #( <'> contrast-control 0.0 '( -123.123 123.123 ) )
+     then
+     #( <'> contrast-control-bounds '( 0.0 10.0 ) '( #f '( 0.0 ) '( 1.0 0.0 ) 2.0 ) )
+     #( <'> cursor-size 15 '( 1.123 -2.5 ) )
+     #( <'> dac-size 256 '( -1 0 -123 ) )
+     #( <'> dot-size 1 '( 0 -1 -123 ) )
+     #( <'> enved-target 0 '( 123 -321 ) )
+     #( <'> expand-control 1.0 '( -1.0 0.0 ) )
+     #( <'> expand-control-bounds '( 0.001 20.0 ) '( #f '( 0.0 ) '( 1.0 0.0 ) 2.0 ) )
+     #( <'> expand-control-hop 0.05 '( -1.0 ) )
+     #( <'> expand-control-length 0.15 '( -1.0 0.0 ) )
+     #( <'> expand-control-ramp 0.4 '( -1.0 1.0 123.123 ) )
+     #( <'> fft-window-alpha 0.0 '( -1.0 123.123 ) )
+     #( <'> fft-window-beta 0.0 '( -1.0 123.123 ) )
+     #( <'> transform-size 512 '( -1 0 ) )
+     #( <'> zero-pad 0 '( -1 -123 ) )
+     #( <'> cursor-style cursor-cross '( -1 ) )
+     #( <'> cursor-style cursor-line '( 2 123 ) )
+     #( <'> tracking-cursor-style cursor-cross '( -1 ) )
+     #( <'> tracking-cursor-style cursor-line '( 2 123 ) )
+     #( <'> transform-graph-type graph-once '( -1 123 ) )
+     #( <'> fft-window 6 '( -1 123 ) )
+     #( <'> enved-filter-order 40 '( -1 0 ) )
+     #( <'> filter-control-order 20 '( -10 -1 0 ) )
+     #( <'> max-transform-peaks 100 '( -1 ) )
+     #( <'> max-regions 16 '( -1 -123 ) )
+     #( <'> view-files-sort 0 '( -1 123 ) )
+     #( <'> reverb-control-length 1.0 '( -1.0 ) )
+     #( <'> show-axes 1 '( -1 123 ) )
+     #( <'> sinc-width 10 '( -10 ) )
+     #( <'> spectrum-end 1.0 '( -1.0 ) )
+     #( <'> spectro-hop 4 '( -10 -1 0 ) )
+     #( <'> spectrum-start 0.0 '( -1.0 ) )
+     #( <'> speed-control 1.0 '( 0.0 ) )
+     #( <'> speed-control-bounds '( 0.05 20.0 ) '( #f '( 0.0 ) '( 1.0 0.0 ) 2.0 ) )
+     #( <'> speed-control-style 0 '( -1 10 ) )
+     #( <'> transform-type fourier-transform '( -1 integer->transform 123 integer->transform ) )
+     #( <'> wavelet-type 0 '( -1 123 ) )
+     #( <'> wavo-hop 1 '( 0 -123 ) )
+     #( <'> wavo-trace 1 '( 0 -123 ) )
+     #( <'> x-axis-style 0 '( -1 123 ) )
+     #( <'> zoom-focus-style 2 '( -1 123 ) ) ) to lst
+  nil { newvals }
+  lst each to vals
+    vals 0 array-ref to sym
+    vals 1 array-ref to initval
+    vals 2 array-ref to newvals
+    newvals each to newval
+      newval sym <'> set-execute #t nil fth-catch stack-reset
+      sym execute to nowval
+      nowval newval $" set-%s (bad set)" #( sym ) snd-test-eq
+      initval sym set-execute drop
+    end-each
+  end-each
+  \
+  *with-test-gui* if
+    300 set-window-width drop
+    300 set-window-height drop
+    window-width  300 "window-width"  #() snd-test-neq
+    window-height 300 "window-height" #() snd-test-neq
+    123 set-window-x drop
+    321 set-window-y drop
+    window-x 123 "window-x" #() snd-test-neq
+    window-y 321 "window-y" #() snd-test-neq
+    10 set-window-y drop
+    color-scale { old-val }
+    100.0 set-color-scale drop
+    color-scale 100.0 "color-scale" #() snd-test-neq
+    old-val set-color-scale drop
+  then
+  \
+  search-procedure proc? if
+    $" global search procedure: %s?" #( search-procedure ) snd-display
+  then
+  <'> y>0.1-cb set-search-procedure drop
+  search-procedure proc? unless
+    $" set global search procedure: %s?" #( search-procedure ) snd-display
+  then
+  search-procedure #( 0.2 ) run-proc unless
+    $" search 0.1 > 0.2?" #() snd-display
+  then
+  search-procedure #( 0.02 ) run-proc if
+    $" search 0.1 > 0.02?" #() snd-display
+  then
+  <'> y<0.0-cb set-search-procedure drop
+  search-procedure #( 0.02 ) run-proc if
+    $" search 0.0 < 0.02?" #() snd-display
+  then
+  #f set-search-procedure drop
+  search-procedure proc? if
+    $" global search procedure after reset: %s?" #( search-procedure ) snd-display
+  then
+  <'> y>0.1-cb set-search-procedure drop
+  search-procedure proc? unless
+    $" set global search procedure: %s?" #( search-procedure ) snd-display
+  then
+  #f set-search-procedure drop
+  \
+  *with-test-gui* if
+    enved-filter-order { old-val }
+    5 set-enved-filter-order drop
+    enved-filter-order 6 $" set-enved-filter-order 5" #() snd-test-neq
+    old-val set-enved-filter-order drop
+    \ FIXME
+    \ It does work with global variables. [ms]
+    'zero-to-one <'> set-enved-envelope #t nil fth-catch stack-reset
+    enved-envelope zero-to-one $" set-enved-envelope (symbol)" #() snd-test-neq
+    "mod-down"   <'> set-enved-envelope #t nil fth-catch stack-reset
+    enved-envelope mod-down    $" set-enved-envelope (string)" #() snd-test-neq
   then
   ind close-sound drop
-  \ check clipping choices (test004)
-  "oboe.snd" view-sound to ind
-  #f set-clipping drop
-  <'> map-10-times-cb 0 ind undef undef frames ind 0 map-channel drop
-  "test.snd" ind mus-next mus-bfloat save-sound-as drop
-  1 ind 0 undo drop
-  "test.snd" open-sound { ind1 }
-  ind1 0 undef maxamp { res1 }
-  ind  0 undef maxamp { ind-mx }
-  res1 ind-mx 10.0 f*  fneq if $" clipping 0: %s %s?" #( res1 ind-mx ) snd-display then
-  ind1 close-sound drop
-  "test.snd" file-delete
-  \ 
-  #t set-clipping drop
-  <'> map-10-times-cb 0 ind undef undef frames ind 0 map-channel drop
-  "test.snd" ind mus-next mus-bfloat save-sound-as drop
-  1 ind 0 undo drop
-  "test.snd" open-sound to ind1
-  ind1 0 undef maxamp to res1
-  \ ind-mx == ind 0 maxamp from above
-  res1 1.0 fneq if $" clipping 1: %s %s?" #( res1 ind-mx ) snd-display then
-  ind1 close-sound drop
-  "test.snd" file-delete
-  \ 
-  #f set-clipping drop
-  ind-mx map-diff-plus-cb 0 ind undef undef frames ind 0 map-channel drop
-  "test.snd" ind mus-next mus-bshort save-sound-as drop
-  "test.snd" open-sound to ind1
-  <'> scan-less-than-zero-cb scan-channel to res1
-  res1 unless $" clipping 2: %s?" #( res1 ) snd-display then
-  ind1 close-sound drop
-  "test.snd" file-delete
-  \ 
-  #t set-clipping drop
-  "test.snd" ind mus-next mus-bshort save-sound-as drop
-  "test.snd" open-sound to ind1
-  <'> scan-less-than-zero-cb scan-channel to res1
-  res1 if $" clipping 3: %s?" #( res1 ) snd-display then
-  ind1 close-sound drop
-  "test.snd" file-delete
-  #f set-clipping drop
-  ind close-sound drop
-  \
-  #f set-clipping drop
-  "test.snd" :data-format mus-lshort new-sound { snd }
-  0 10 pad-channel drop
-  1  1.0    set-sample drop
-  2 -1.0    set-sample drop
-  3  0.9999 set-sample drop
-  4  2.0    set-sample drop
-  5 -2.0    set-sample drop
-  6  1.3    set-sample drop
-  7 -1.3    set-sample drop
-  8  1.8    set-sample drop
-  9 -1.8    set-sample drop
-  snd save-sound drop
-  snd close-sound drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
+  dismiss-all-dialogs
+  #() { undefined }
   \ FIXME
-  \ clipping(#f)
-  \ data-format mus-lshort:
-  \ GCC   vct( 0.0 1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 )
-  \ Clang vct( 0.0 1.0 -1.0 1.0  0.0  0.0 -0.7  0.7 -0.2  0.2 )
-  res vct( 0.0 1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal unless
-    res vct( 0.0 1.0 -1.0 1.0 0.0 0.0 -0.7 0.7 -0.2 0.2 ) vequal if
-      $" clipping(#f): clang" #() snd-display
-    else
-      $" clipping(#f):: %s?" #( res ) snd-display
-    then
-  then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \ 
-  #t set-clipping drop
-  "test.snd" :data-format mus-lshort new-sound { snd }
-  0 10 pad-channel drop
-  1  1.0    set-sample drop
-  2 -1.0    set-sample drop
-  3  0.9999 set-sample drop
-  4  2.0    set-sample drop
-  5 -2.0    set-sample drop
-  6  1.3    set-sample drop
-  7 -1.3    set-sample drop
-  8  1.8    set-sample drop
-  9 -1.8    set-sample drop
-  snd save-sound drop
-  snd close-sound drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
-  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal unless
-    $" clipping(#t): %s?" #( res ) snd-display
-  then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \ 
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
-  data vct->sound-data { sdata }
-  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
-  snd #f set-mus-file-clipping drop
-  snd 0 9 1 sdata mus-sound-write drop
-  snd 40 mus-sound-close-output drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
+  \ changes from original snd-test.scm list [ms]:
+  \
+  \ removed (Scheme specific):
+  \   'add-clm-field (run.c)
+  \   'run           (macro in run.c)
+  \   'file->string  (snd-utils.c)
+  \
+  \ added:
+  \   'snd-exit      (xen.c; in Forth exit is already in use)
+  \
   \ FIXME
-  \ mus-file-clipping(#f)
-  \ data-format mus-lshort:
-  \ GCC   vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 )
-  \ Clang vct( 0.0 -1.0 -1.0 1.0  0.0  0.0 -0.7  0.7 -0.2  0.2 )
-  res vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal unless
-    res vct( 0.0 -1.0 -1.0 1.0 0.0 0.0 -0.7 0.7 -0.2 0.2 ) vequal if
-      $" mus-file-clipping(#f): clang" #() snd-display
-    else
-      $" mus-file-clipping(#f): %s?" #( res ) snd-display
-    then
-  then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
+  \ Splitted in two arrays because we have a 1024 stack limit. [ms]
+  #( '*snd-opened-sound* 'abort 'add-colormap 'add-directory-to-view-files-list
+     'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
+     'add-player 'add-sound-file-extension 'add-source-file-extension 'add-to-main-menu 'add-to-menu
+     'add-transform 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook
+     'after-lisp-graph-hook 'after-open-hook 'after-save-as-hook 'after-save-state-hook
+     'after-transform-hook 'all-pass 'all-pass? 'amp-control 'amp-control-bounds
+     'amplitude-modulate 'analyse-ladspa 'apply-controls 'apply-ladspa 'array->file 'array-interp
+     'as-one-edit 'ask-before-overwrite 'asymmetric-fm 'asymmetric-fm? 'audio-input-device
+     'audio-output-device 'auto-resize 'auto-update 'auto-update-interval 'autocorrelate
+     'autocorrelation 'moving-average 'moving-average? 'axis-color 'axis-info 'axis-label-font
+     'axis-numbers-font 'bad-header-hook 'bartlett-window 'bartlett-hann-window 'basic-color
+     'beats-per-measure 'beats-per-minute 'before-close-hook 'before-exit-hook
+     'before-save-as-hook 'before-save-state-hook 'before-transform-hook 'bind-key
+     'blackman2-window 'blackman3-window 'blackman4-window 'blackman5-window 'blackman6-window
+     'blackman7-window 'blackman8-window 'blackman9-window 'blackman10-window 'bohman-window
+     'bold-peaks-font 'bomb 'c-g! 'c-g? 'cauchy-window 'mlt-sine-window 'cepstrum
+     'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
+     'channel-properties 'channel-property 'channel-style 'channel-widgets 'channels
+     'channels-combined 'channels-separate 'channels-superimposed 'chans 'clear-array
+     'clear-listener 'clear-minibuffer 'clear-sincs 'clip-hook 'clipping 'clm-channel
+     'clm-print 'clm-table-size 'clm-default-frequency 'close-hook 'close-sound 'color->list
+     'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted 'color-scale 'color?
+     'colormap 'colormap-name 'colormap-ref 'colormap-size 'colormap? 'comb 'comb? 'comment
+     'connes-window 'continue-frame->file 'continue-sample->file 'contrast-control
+     'contrast-control-amp 'contrast-control-bounds
+     'contrast-control? 'contrast-enhancement 'controls->channel 'convolution 'convolve
+     'convolve-files 'convolve-selection-with 'convolve-with 'convolve? 'copy-context
+     'copy-sampler 'count-matches 'current-edit-position
+     'current-font 'cursor 'cursor-color 'cursor-context 'cursor-cross
+     'cursor-in-middle 'cursor-in-view 'cursor-line 'cursor-location-offset 'cursor-on-left
+     'cursor-on-right 'cursor-position 'cursor-size 'cursor-style 'cursor-update-interval
+     'dac-combines-channels 'dac-hook 'dac-size 'data-color 'data-format
+     'data-location 'data-size 'db->linear 'default-output-chans 'default-output-data-format
+     'default-output-header-type 'default-output-srate 'define-envelope 'degrees->radians 'delay
+     'delay-tick 'delay? 'delete-colormap 'delete-file-filter 'delete-file-sorter
+     'delete-mark 'delete-marks 'delete-sample 'delete-samples
+     'delete-selection 'delete-transform 'dialog-widgets 'disk-kspace
+     'display-edits 'dolph-chebyshev-window 'dont-normalize
+     'dot-product 'dot-size 'draw-axes 'draw-dot 'draw-dots
+     'draw-line 'draw-lines 'draw-mark-hook 'draw-mix-hook 'draw-string 'drop-hook
+     'during-open-hook 'edit-fragment 'edit-header-dialog 'edit-hook 'edit-list->function
+     'edit-position 'edit-tree 'edits 'edot-product 'env
+     'env-channel 'env-channel-with-base 'env-interp 'env-selection 'env-sound
+     'env? 'enved-add-point 'enved-amplitude 'enved-base 'enved-clip?
+     'enved-delete-point 'enved-dialog 'enved-envelope 'enved-filter 'enved-filter-order
+     'enved-hook 'enved-in-dB 'enved-move-point 'enved-power 'enved-spectrum
+     'enved-srate 'enved-style 'enved-target 'enved-wave? 'enved-waveform-color
+     'envelope-exponential 'envelope-linear 'eps-bottom-margin 'eps-file
+     'eps-left-margin 'eps-size 'exit 'exit-hook 'expand-control 'expand-control-bounds
+     'expand-control-hop 'expand-control-jitter 'expand-control-length
+     'expand-control-ramp 'expand-control? 'exponential-window 'fft 'fft-log-frequency
+     'fft-log-magnitude 'fft-window 'fft-window-alpha 'fft-window-beta 'fft-with-phases 'file->array
+     'file->frame 'file->frame? 'file->sample 'file->sample?
+     'file-name 'file-write-date 'fill-polygon 'fill-rectangle 'filter 'filtered-comb
+     'filtered-comb? 'filter-channel 'filter-control-coeffs 'filter-control-envelope
+     'filter-control-in-dB 'filter-control-in-hz 'filter-control-order
+     'filter-control-waveform-color 'filter-control? 'filter-selection 'filter-sound 'filter?
+     'find-channel 'find-dialog 'find-mark 'find-sound 'finish-progress-report 'fir-filter
+     'fir-filter? 'flat-top-window 'focus-widget 'foreground-color
+     'forget-region 'formant 'formant-bank 'formant? 'firmant 'firmant? 
+     'fourier-transform
+     'frame 'frame* 'frame+ 'frame->file 'frame->file?
+     'frame->frame 'frame->list 'frame->sample 'frame-ref 'frame-set!
+     'frame? 'frames 'free-player
+     'free-sampler 'gaussian-window 'gc-off 'gc-on
+     'gl-graph->ps 'glSpectrogram 'goto-listener-end 'granulate 'granulate?
+     'graph 'graph->ps 'graph-as-sonogram 'graph-as-spectrogram 'graph-as-wavogram
+     'graph-color 'graph-cursor 'graph-data 'graph-dots 'graph-dots-and-lines
+     'graph-filled 'graph-hook 'graph-lines 'graph-lollipops 'graph-once
+     'graph-style 'graphs-horizontal 'grid-density 'haar-transform 'hamming-window
+     'hann-poisson-window 'hann-window 'header-type 'help-dialog
+     'help-hook 'hide-widget 'highlight-color 'html-dir 'html-program
+     'hz->radians 'iir-filter 'iir-filter? 'in 'in-any
+     'ina 'inb 'info-dialog 'init-ladspa 'initial-graph-hook
+     'insert-file-dialog 'insert-region 'insert-sample 'insert-samples 'insert-samples-with-origin
+     'insert-selection 'insert-silence 'insert-sound 'just-sounds 'kaiser-window
+     'key 'key-binding 'key-press-hook 'keyboard-no-action 'ladspa-activate 'ladspa-cleanup
+     'ladspa-connect-port 'ladspa-deactivate 'ladspa-descriptor 'ladspa-dir 'peak-env-dir
+     'ladspa-instantiate 'ladspa-run 'ladspa-run-adding 'ladspa-set-run-adding-gain 'left-sample
+     'linear->db 'lisp-graph 'lisp-graph-hook 'lisp-graph-style 'lisp-graph?
+     'list->vct 'list-ladspa 'listener-click-hook 'listener-color 'listener-font
+     'listener-prompt 'listener-selection 'listener-text-color 'little-endian? 'locsig
+     'locsig-ref 'locsig-reverb-ref 'locsig-reverb-set! 'locsig-set! 'locsig-type
+     'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
+     'make-asymmetric-fm 'make-moving-average 'make-bezier 'make-color 'make-comb 'make-filtered-comb
+     'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->frame
+     'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant
+     'make-frame 'make-frame->file 'make-granulate 'make-graph-data 'make-iir-filter
+     'make-locsig 'make-mix-sampler 'make-mixer 'make-move-sound 'make-notch 'make-one-pole
+     'make-one-zero 'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape 'make-polywave
+     'make-pulse-train 'make-rand 'make-rand-interp 'make-readin 'make-region 'make-region-sampler
+     'make-sample->file 'make-sampler 'make-sawtooth-wave 'make-scalar-mixer 'make-nrxysin
+     'make-nrxycos 'make-snd->sample 'make-sound-data 'make-square-wave 'make-src 'make-ssb-am
+     'make-ncos 'make-nsin 'make-table-lookup 'make-triangle-wave 'make-two-pole 'make-two-zero
+     'make-variable-graph 'make-vct 'make-wave-train 'map-chan 'map-channel 'mark-click-hook
+     'mark-color 'mark-context 'mark-drag-hook 'mark-drag-triangle-hook 'mark-home 'mark-hook
+     'mark-name 'mark-properties 'mark-property 'mark-sample 'mark-sync 'mark-sync-max
+     'mark-tag-height 'mark-tag-width 'mark? 'marks 'max-regions 'max-transform-peaks
+     'max-virtual-ptrees 'maxamp 'maxamp-position 'menu-widgets 'min-dB 'minibuffer-history-length
+     'mix 'mix-amp 'mix-amp-env 'mix-click-hook 'mix-color 'mix-dialog-mix 'mix-drag-hook
+     'mix-file-dialog 'mix-length 'mix-home 'mix-name 'mix-position 'mix-properties 'mix-property
+     'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max 'mix-sampler? 'mix-selection
+     'mix-speed 'mix-tag-height 'mix-tag-width 'mix-tag-y 'mix-vct 'mix-waveform-height
+     'mix? 'mixer 'mixer* 'mixer+ 'mixer-ref 'mixer-set! 'mixer? 'mixes 'mouse-click-hook
+     'mouse-drag-hook 'mouse-enter-graph-hook 'mouse-enter-label-hook 'mouse-enter-listener-hook
+     'mouse-enter-text-hook 'mouse-leave-graph-hook 'mouse-leave-label-hook
+     'mouse-leave-listener-hook 'mouse-leave-text-hook 'mouse-press-hook 'move-locsig
+     'move-sound 'move-sound? 'multiply-arrays 'mus-aifc 'mus-aiff 'mus-alaw
+     'mus-alsa-buffer-size 'mus-alsa-buffers 'mus-alsa-capture-device 'mus-alsa-device
+     'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply 'mus-array-print-length
+     'mus-float-equal-fudge-factor 'mus-b24int 'mus-bdouble 'mus-bdouble-unscaled 'mus-bfloat
+     'mus-bfloat-unscaled 'mus-bicsf 'mus-bint 'mus-bintn
+     'mus-bshort 'mus-byte 'mus-bytes-per-sample 'mus-caff 'mus-channel 'mus-channels
+     'mus-chebyshev-first-kind 'mus-chebyshev-second-kind 'mus-clipping 'mus-close
+     'mus-data 'mus-data-format->string 'mus-data-format-name 'mus-describe 'mus-error-hook
+     'mus-error-type->string 'mus-expand-filename 'mus-feedback 'mus-feedforward 'mus-fft
+     'mus-file-buffer-size 'mus-file-clipping 'mus-file-name 'mus-file-prescaler 'mus-frequency
+     'mus-generator? 'mus-header-raw-defaults 'mus-header-type->string 'mus-header-type-name
+     'mus-hop 'mus-increment 'mus-input? 'mus-interp-all-pass 'mus-interp-bezier
+     'mus-interp-hermite 'mus-interp-lagrange 'mus-interp-linear 'mus-interp-none
+     'mus-interp-sinusoidal 'mus-interp-type 'mus-interpolate 'mus-ircam 'mus-l24int
+     'mus-ldouble 'mus-ldouble-unscaled 'mus-length 'mus-lfloat 'mus-lfloat-unscaled
+     'mus-lint 'mus-lintn 'mus-location 'mus-lshort 'mus-max-malloc 'mus-max-table-size
+     'mus-mix 'mus-mulaw 'mus-name 'mus-next 'mus-nist 'mus-offset 'mus-order
+     'mus-oss-set-buffers 'mus-out-format 'mus-output? 'mus-phase 'mus-prescaler
+     'mus-ramp 'mus-rand-seed 'mus-random 'mus-raw 'mus-reset 'mus-riff 'mus-run
+     'mus-scaler 'mus-set-formant-radius-and-frequency 'mus-sound-chans 'mus-sound-close-input
+     'mus-sound-close-output 'mus-sound-comment 'mus-sound-data-format 'mus-sound-data-location
+     'mus-sound-datum-size 'mus-sound-duration 'mus-sound-forget 'mus-sound-frames
+     'mus-sound-header-type 'mus-sound-length 'mus-sound-loop-info 'mus-sound-mark-info
+     'mus-sound-maxamp 'mus-sound-maxamp-exists? 'mus-sound-open-input 'mus-sound-open-output
+     'mus-sound-prune 'mus-sound-read 'mus-sound-reopen-output 'mus-sound-report-cache
+     'mus-sound-samples 'mus-sound-seek-frame 'mus-sound-srate 'mus-sound-type-specifier
+     'mus-sound-write 'mus-sound-write-date 'mus-soundfont 'mus-srate 'mus-svx 'mus-ubshort
+     'mus-ubyte 'mus-ulshort 'mus-unknown 'mus-unsupported 'mus-voc
+     'mus-width 'mus-xcoeff 'mus-xcoeffs 'mus-ycoeff 'mus-ycoeffs ) { lst-01 }
+  #( 'name-click-hook 'new-sound 'new-sound-dialog 'new-sound-hook 'new-widget-hook 'next-sample
+     'normalize-by-channel 'normalize-by-sound 'normalize-channel 'normalize-globally 'notch
+     'notch? 'one-pole 'one-pole? 'one-zero 'one-zero? 'open-file-dialog
+     'open-file-dialog-directory 'open-hook 'open-raw-sound 'open-raw-sound-hook
+     'open-sound 'optimization 'optimization-hook 
+     'orientation-hook 'oscil 'oscil? 'out-any 'outa
+     'outb 'outc 'outd 'output-comment-hook 'output-name-hook 
+     'override-samples-with-origin 'pad-channel 'partials->polynomial 'partials->wave
+     'parzen-window 'pausing 'peak-env-hook 'peaks 'peaks-font 'phase-partials->wave
+     'phase-vocoder 'phase-vocoder-amp-increments 'phase-vocoder-amps 'phase-vocoder-freqs
+     'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play
+     'play-hook 'player-home 'player? 'players
+     'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape 'polywave
+     'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
+     'previous-sample 'print-dialog 'print-hook 'print-length 'progress-report
+     'prompt-in-minibuffer 'ptree-channel 'pulse-train
+     'pulse-train? 'radians->degrees 'radians->hz
+     'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
+     'read-hook 'read-mix-sample 'read-only 'read-region-sample
+     'read-sample 'readin 'readin? 
+     'rectangular->magnitudes 'rectangular->polar 'rectangular-window 'redo 'redo-edit
+     'region->vct 'region-chans 'region-home 'region-frames 'region-graph-style 'region-maxamp
+     'region-maxamp-position 'region-position 'region-sample 'region-sampler? 'region-srate
+     'region? 'regions 'remove-from-menu 'report-in-minibuffer 'reset-controls
+     'reset-listener-cursor 'restore-controls 'restore-region 'reverb-control-decay
+     'reverb-control-feedback 'reverb-control-length 'reverb-control-length-bounds
+     'reverb-control-lowpass 'reverb-control-scale 'reverb-control-scale-bounds 'reverb-control?
+     'reverse-channel 'reverse-selection 'reverse-sound 'revert-sound 'riemann-window
+     'right-sample 'ring-modulate 'rv2-window 'rv3-window 'rv4-window 'samaraki-window
+     'sample 'sample->file
+     'sample->file? 'sample->frame 'sampler-at-end? 'sampler-home 'sampler-position
+     'sampler? 'samples 'samples->seconds 'sash-color
+     'save-controls 'save-dir 'save-edit-history 'save-envelopes 'save-hook
+     'save-listener 'save-macros 'save-marks 'save-region 'save-region-dialog
+     'save-selection 'save-selection-dialog 'save-sound 'save-sound-as 'save-sound-dialog
+     'save-state 'save-state-file 'save-state-hook 'sawtooth-wave 'sawtooth-wave?
+     'scale-by 'scale-channel 'scale-selection-by 'scale-selection-to 'scale-to
+     'scan-chan 'scan-channel 'script-arg 'script-args 'search-procedure 'seconds->samples
+     'select-all 'select-channel 'select-channel-hook 'select-sound 'select-sound-hook
+     'selected-channel 'selected-data-color 'selected-graph-color 'selected-sound 'selection-chans
+     'selection-color 'selection-context 'selection-creates-region 'selection-frames
+     'selection-maxamp 'selection-maxamp-position 'selection-member? 'selection-position
+     'selection-srate 'selection?
+     'short-file-name 'show-all-axes 'show-all-axes-unlabelled 'show-bare-x-axis
+     'show-axes 'show-controls 'show-grid 'show-indices
+     'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection-transform
+     'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
+     'show-y-zero 'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos? 'smooth-channel
+     'smooth-selection 'smooth-sound 'snd->sample 'snd->sample? 'snd-error 'snd-error-hook
+     'snd-exit ( added ) 'snd-gcs 'snd-help 'snd-font 'snd-color 'snd-print 'snd-simulate-keystroke
+     'snd-spectrum 'snd-tempnam 'snd-url 'snd-urls 'snd-version 'snd-warning 'snd-warning-hook
+     'sound-data->sound-data 'sound-data->vct 'sound-data-chans 'sound-data-length
+     'sound-data-maxamp 'sound-data-ref 'sound-data-peak 'sound-data-set! 'sound-data-scale!
+     'sound-data-fill! 'sound-data? 'sound-data-multiply! 'sound-data-add! 'sound-data-offset!
+     'sound-data* 'sound-data+ 'sound-data-copy 'sound-data-reverse! 'sound-file-extensions
+     'sound-file? 'sound-files-in-directory 'sound-loop-info 'sound-properties 'sound-property
+     'sound-widgets 'sound? 'soundfont-info 'sounds 'spectrum-end 'spectro-hop 'spectrum-start
+     'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle
+     'spectro-z-scale 'spectrum 'speed-control 'speed-control-as-float 'speed-control-as-ratio
+     'speed-control-as-semitone 'speed-control-bounds 'speed-control-style 'speed-control-tones
+     'square-wave 'square-wave? 'squelch-update 'srate 'src 'src-channel 'src-selection
+     'src-sound 'src? 'ssb-am 'ssb-am? 'start-hook 'start-playing 'start-playing-hook
+     'start-playing-selection-hook 'start-progress-report 'stop-dac-hook 'stop-player
+     'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'ncos 'ncos? 'nsin 'nsin?
+     'swap-channels 'sync 'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap 'temp-dir
+     'text-focus-color 'time-graph 'time-graph-hook 'time-graph-style 'time-graph-type
+     'time-graph? 'tiny-font 'tracking-cursor-style 'transform->vct 'transform-dialog
+     'transform-frames 'transform-graph 'transform-graph-style 'transform-graph-type
+     'transform-graph? 'transform-normalization 'transform-sample 'transform-size
+     'transform-type 'transform? 'trap-segfault 'triangle-wave 'triangle-wave? 'tukey-window
+     'two-pole 'two-pole? 'two-zero 'two-zero? 'ultraspherical-window 'unbind-key  'undo
+     'undo-edit 'undo-hook 'update-hook 'update-lisp-graph 'update-sound 'update-time-graph
+     'update-transform-graph 'variable-graph? 'vct 'vct* 'vct+ 'vct->channel 'vct->list
+     'vct->sound-data 'vct->string 'vct->vector 'vct-add! 'vct-copy 'vct-fill! 'vct-length
+     'vct-map! 'vct-move! 'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!
+     'vct-scale! 'vct-set! 'vct-subseq 'vct-subtract! 'vct? 'vector->vct 'view-files-amp
+     'view-files-amp-env 'view-files-dialog 'view-files-files 'view-files-select-hook
+     'view-files-selected-files 'view-files-sort 'view-files-speed 'view-files-speed-style
+     'view-mixes-dialog 'view-regions-dialog 'view-sound 'walsh-transform 'wave-train
+     'wave-train? 'wavelet-transform 'wavelet-type 'wavo-hop 'wavo-trace 'welch-window
+     'widget-position 'widget-size 'widget-text 'window-height 'window-width 'window-x
+     'window-y 'with-background-processes 'with-file-monitor 'with-gl 'with-mix-tags
+     'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 'with-inset-graph
+     'with-pointer-focus 'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats
+     'x-axis-in-measures 'x-axis-in-samples 'x-axis-in-seconds 'x-axis-label 'x-axis-style
+     'x-bounds 'x-position-slider 'x-zoom-slider 'xramp-channel 'y->position 'y-axis-label
+     'y-bounds 'y-position-slider 'y-zoom-slider 'zero-pad 'zoom-color 'zoom-focus-active
+     'zoom-focus-left 'zoom-focus-middle 'zoom-focus-right 'zoom-focus-style ) { lst-02 }
   \ 
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
-  data vct->sound-data { sdata }
-  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
-  snd #t set-mus-file-clipping drop
-  snd 0 9 1 sdata mus-sound-write drop
-  snd #f set-mus-file-clipping drop
-  snd 40 mus-sound-close-output drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
-  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal unless
-    $" mus-file-clipping(#t): %s?" #( res ) snd-display
-  then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \
-  #f set-mus-clipping drop
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
-  data vct->sound-data { sdata }
-  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
-  snd 0 9 1 sdata mus-sound-write drop
-  snd 40 mus-sound-close-output drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
-  \ FIXME
-  \ mus-clipping(#f)
-  \ data-format mus-lshort:
-  \ GCC   vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 )
-  \ Clang vct( 0.0 -1.0 -1.0 1.0  0.0  0.0 -0.7  0.7 -0.2  0.2 )
-  res vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal unless
-    res vct( 0.0 -1.0 -1.0 1.0 0.0 0.0 -0.7 0.7 -0.2 0.2 ) vequal if
-      $" mus-clipping(#f): clang" #() snd-display
-    else
-      $" mus-clipping(#f): %s?" #( res ) snd-display
+  lst-01 lst-02 array-append each to sym
+    sym symbol-defined? unless
+      undefined sym array-push to undefined
     then
+  end-each
+  *with-test-ladspa* unless
+    undefined <'> rm-ladspa #( /ladspa/ ) array-reject! to undefined
   then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \ 
-  #t set-mus-clipping drop
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
-  data vct->sound-data { sdata }
-  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
-  snd 0 9 1 sdata mus-sound-write drop
-  snd 40 mus-sound-close-output drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
-  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal unless
-    $" mus-clipping(#t): %s?" #( res ) snd-display
+  *with-test-gl* unless
+    undefined 'glSpectrogram array-delete-key drop
   then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \
-  #t set-mus-clipping drop
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
-  data vct->sound-data { sdata }
-  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
-  snd 0 10 1 sdata <'> mus-sound-write #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'out-of-range <> if
-    $" mus-sound-write too many bytes: %s" #( res ) snd-display
+  *with-test-gl2ps* unless
+    undefined 'gl-graph->ps array-delete-key drop
   then
-  snd 0 10 1 sdata <'> mus-sound-read #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'out-of-range <> if
-    $" mus-sound-read too many bytes: %s" #( res ) snd-display
-  then
-  snd 0 mus-sound-close-output drop
-  "test.snd" file-delete
-  "test.snd" mus-sound-forget drop
-  #f set-mus-clipping drop 		\ default
-  #f set-clipping drop
-  \ x-axis-label (test005)
-  'snd-nogui provided? unless
-    "oboe.snd" open-sound to ind
-    #t set-transform-graph? drop
-    #t set-time-graph? drop
-    x-axis-label to res
-    res "time" string<> if $" get time x-axis-label: %s?" #( res ) snd-display then
-    "hiho1" ind 0 time-graph set-x-axis-label drop
-    x-axis-label to res
-    res "hiho1" string<> if $" set time x-axis-label: %s?" #( res ) snd-display then
-    update-transform-graph drop
-    ind 0 transform-graph x-axis-label to res
-    res "frequency" string<> if $" get fft x-axis-label: %s?" #( res ) snd-display then
-    "hiho2" ind 0 transform-graph set-x-axis-label drop
-    update-transform-graph drop
-    ind 0 transform-graph x-axis-label to res
-    res "hiho2" string<> if $" set fft x-axis-label: %s?" #( res ) snd-display then
-    "frequency" ind 0 transform-graph set-x-axis-label drop
-    '( 0 0 1 1 2 0 ) "lisp" graph drop
-    update-lisp-graph drop
-    ind 0 lisp-graph x-axis-label to res
-    res "lisp" string<> if $" get lisp x-axis-label: %s?" #( res ) snd-display then
-    "hiho3" ind 0 lisp-graph set-x-axis-label drop
-    ind 0 lisp-graph x-axis-label to res
-    res "hiho3" string<> if $" set lisp x-axis-label: %s?" #( res ) snd-display then
-    "hiho4" ind 0 time-graph set-y-axis-label drop
-    y-axis-label to res
-    res "hiho4" string<> if $" set time y-axis-label: %s?" #( res ) snd-display then
-    "hiho5" ind 0 lisp-graph set-y-axis-label drop
-    ind 0 lisp-graph y-axis-label to res
-    res "hiho5" string<> if $" set lisp y-axis-label: %s?" #( res ) snd-display then
-    #f set-y-axis-label drop
-    "hiho6" ind 0 set-y-axis-label drop
-    ind 0 y-axis-label to res
-    res "hiho6" string<> if $" set time y-axis-label (time): %s?" #( res ) snd-display then
-    #f set-y-axis-label drop
-    ind close-sound drop
-  then
-  \ edot-product (test008)
-  complex-test
-  \ delay (test008)
-  3 make-delay { gen }
-  3 make-delay { gen2 }
-  4 :initial-contents #( 1.0 0.5 0.25 0.0 ) make-delay { gen1 }
-  4 :initial-contents vct( 1.0 0.5 0.25 0.0 ) make-delay { gen3 }
-  gen "delay" $" delay line[3, step]: [0.000 0.000 0.000]" print-and-check
-  10 0.0 make-vct map gen i 0.0 delay end-map { v0 }
-  10 0.0 make-vct map gen2 delay? if gen2 i 0.0 delay else -1.0 then end-map { v1 }
-  v0 v1 vequal unless $" map delay: %s %s?" #( v0 v1 ) snd-display then
-  gen delay? unless $" %s not a delay?" #( gen ) snd-display then
-  gen mus-length 3 <> if $" delay length: %d?" #( gen mus-length ) snd-display then
-  v0 1 vct-ref 0.0 fneq
-  v0 4 vct-ref 1.0 fneq ||
-  v0 8 vct-ref 5.0 fneq || if $" delay output: %s?" #( v0 ) snd-display then
-  gen1 0.0 0.0 delay 1.0  fneq
-  gen1 0.0 0.0 delay 0.5  fneq ||
-  gen1 0.0 0.0 delay 0.25 fneq ||
-  gen1 0.0 0.0 delay 0.0  fneq ||
-  gen1 0.0 0.0 delay 0.0  fneq || if
-    $" delay with list initial-contents confused" #f snd-display
-  then
-  gen3 0.0 0.0 delay 1.0  fneq
-  gen3 0.0 0.0 delay 0.5  fneq ||
-  gen3 0.0 0.0 delay 0.25 fneq ||
-  gen3 0.0 0.0 delay 0.0  fneq ||
-  gen3 0.0 0.0 delay 0.0  fneq || if
-    $" delay with vct initial-contents confused" #f snd-display
-  then
-  :size #f <'> make-delay #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'wrong-type-arg object-equal? unless
-    $" make-delay bad size false: %s" #( res ) snd-display
-  then
-  make-oscil { osc }
-  3 :initial-element osc <'> make-delay #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'wrong-type-arg object-equal? unless
-    $" make-delay bad initial element: %s" #( res ) snd-display
-  then
-  -3 <'> make-delay #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'out-of-range object-equal? unless
-    $" make-delay bad size: %s" #( res ) snd-display
-  then
-  3 make-delay { d1 }
-  3 make-delay { d2 }
-  4 make-delay { d3 }
-  d1 1.0 0.0 delay drop
-  d2 1.0 0.0 delay drop
-  d3 1.0 0.0 delay drop
-  d1 d2 d3 test-gen-equal
-  3 :initial-element 1.0 make-delay to d1
-  3 :initial-element 1.0 make-delay to d2
-  3 :initial-element 0.5 make-delay to d3
-  d1 d2 d3 test-gen-equal
-  3 :initial-contents #( 1.0 0.0 0.0 ) make-delay to d1
-  3 :initial-contents #( 1.0 0.0 0.0 ) make-delay to d2
-  3 :initial-contents #( 1.0 1.0 1.0 ) make-delay to d3
-  d1 d2 d3 test-gen-equal
-  \ mix (test009)
-  "hiho.wave" mus-next mus-bshort 22050 1 new-sound { new-index }
-  new-index select-sound drop
-  0 new-index 0 find-mix to res
-  res if $" found non-existent mix: %s?" #( res ) snd-display then
-  "pistol.snd" 100 mix car { mix-id }
-  mix-id mix? unless $" %s not mix?" #( mix-id ) snd-display then
-  view-mixes-dialog    { wid }
-  mix-id mix-position  { pos }
-  mix-id mix-length    { len }
-  mix-id mix-speed     { spd }
-  mix-id mix-home      { home-lst }
-  home-lst 0 array-ref { snd }
-  home-lst 1 array-ref { chn }
-  mix-id mix-amp       { amp }
-  mix-id make-mix-sampler { mr }
-  mr mix-sampler? unless $" %s is not mix-sampler?"  #( mr ) snd-display then
-  mr region-sampler?  if $" mix-sampler: region %s?" #( mr ) snd-display then
-  mr sampler-position to res
-  res 0<> if $" mix sampler-position: %d?" #( res ) snd-display then
-  mr sampler-at-end? if $" mix sampler-at-end: %s?" #( mr ) snd-display then
-  mr sampler-home to res
-  mix-id res object-equal? unless $" mix sampler-home: %d %s?" #( res mr ) snd-display then
-  mr object->string 0 16 string-substring to res
-  res $" #<mix-sampler mi" string<> if
-    $" mix sampler actually got: [%s]?" #( res ) snd-display
-  then
-  1234 integer->mix <'> mix-amp #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'no-such-mix object-equal? unless
-    $" mix-amp bad id: %s" #( res ) snd-display
-  then
-  1234 integer->mix 0.1 <'> set-mix-amp #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'no-such-mix object-equal? unless
-    $" set-mix-amp bad id: %s" #( res ) snd-display
-  then
-  1234 integer->mix #( 0 0 1 1 ) <'> set-mix-amp-env #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'no-such-mix object-equal? unless
-    $" set-mix-amp-env bad id: %s" #( res ) snd-display
-  then
-  0.0 0.0 { mx sx }
-  99 0 do
-    i odd? if mr read-mix-sample else mr read-mix-sample then to mx
-    100 i + sample to sx
-    mx sx fneq if $" read-mix-sample: %s %s?" #( mx sx ) snd-display then
-  loop
-  \ Scheme: (mr)
-  \ Ruby:   mr.call
-  \ Forth:  mr #() apply
-  mr #() object-apply to mx
-  199 sample to sx
-  mx sx fneq if $" read-mix-sample 100: %s %s?" #( mx sx ) snd-display then
-  mr free-sampler drop
-  \
-  100 pos <>   if $" mix-position: %d?"     #( pos ) snd-display then
-  41623 len <> if $" mix-length: %d?"       #( len ) snd-display then
-  snd new-index object-equal? unless $" snd mix-home: %s?" #( snd ) snd-display then
-  chn      0<> if $" chn mix-home: %d?"     #( chn ) snd-display then
-  amp 1.0 fneq if $" mix-amp: %s?"          #( amp ) snd-display then
-  spd 1.0 fneq if $" mix-speed: %s?"        #( spd ) snd-display then
-  mix-id <'> play 'mus-error nil fth-catch to res
-  stack-reset
-  res false? not if $" can't play mix: %s" #( res ) snd-display then
-  mix-id 200 set-mix-position drop
-  mix-id 0.5 set-mix-amp drop
-  mix-id 2.0 set-mix-speed drop
-  \ 
-  mix-id #( 0 0 1 1 ) set-mix-amp-env drop
-  mix-id mix-amp-env to res
-  mix-id res set-mix-amp-env drop
-  mix-id mix-amp-env { res1 }
-  res res1 vequal unless $" set-mix-amp-env to self: %s %s?" #( res res1 ) snd-display then
-  mix-id 20 set-mix-tag-y drop
-  mix-id mix-position to pos
-  mix-id mix-speed    to spd
-  mix-id mix-amp      to amp
-  mix-id mix-tag-y { my }
-  200 pos <>   if $" set-mix-position: %d?" #( pos ) snd-display then
-  spd 2.0 fneq if $" set-mix-speed: %s?"    #( spd ) snd-display then
-  my  20    <> if $" set-mix-tag-y: %d?"    #( my )  snd-display then
-  amp 0.5 fneq if $" set-mix-amp: %s?"      #( amp ) snd-display then
-  mix-id mix-amp-env to res
-  res #( 0.0 0.0 1.0 1.0 ) array= unless $" set-mix-amp-env: %s?" #( res ) snd-display then
-  \
-  3 0.1 make-vct 100 #f #f #t "" mix-vct drop
-  0 set-cursor drop
-  100 #f #f find-mix { nid }
-  nid mix? false? unless
-    nid mix-position 100 <> if
-      new-index 0 mixes map *key* mix-position end-map { mx-pos }
-      $" 100 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
-    then
-  else
-    $" 100 find-mix: not a mix %s?" #( nid ) snd-display
-  then
-  200 #f #f find-mix to nid
-  nid mix? false? unless
-    nid mix-position 200 <> if
-      new-index 0 mixes map *key* mix-position end-map { mx-pos }
-      $" 200 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
-    then
-  else
-    $" 200 find-mix: not a mix %s?" #( nid ) snd-display
-  then
-  \
-  "oboe.snd" 100 mix car to mix-id
-  40 set-mix-waveform-height drop
-  'hiho mix-id 123 set-mix-property
-  'hiho mix-id mix-property to res
-  res 123 <> if $" mix-property: %s?" #( res ) snd-display then
-  'not-here mix-id mix-property to res
-  res if $" mix-property not-here: %s?" #( res ) snd-display then
-  #f #f update-time-graph drop
-  20 set-mix-waveform-height drop
-  new-index revert-sound drop
-  new-index close-sound drop
-  wid hide-widget drop
-  \ envelopes (lists, vcts, arrays) (test015)
-  1.0 vct( 0.0 0.0 2.0 1.0 )           1.0 envelope-interp dup 0.5 fneq if
-    $" envelope-interp 0.5: %s?" swap snd-display
-  else
-    drop
-  then
-  1.0 #( 0.0 0.0 1.0 1.0 2.0 0.0 )     1.0 envelope-interp dup 1.0 fneq if
-    $" envelope-interp 1.0: %s?" swap snd-display
-  else
-    drop
-  then
-  2.0 #( 0.0 0.0 1.0 1.0 )             1.0 envelope-interp dup 1.0 fneq if
-    $" envelope-interp 1.0: %s?" swap snd-display
-  else
-    drop
-  then
-  0.0 #( 1.0 0.5 2.0 0.0 )             1.0 envelope-interp dup 0.5 fneq if
-    $" envelope-interp 0.5: %s?" swap snd-display
-  else
-    drop
-  then
-  0.0 #( -1.0 0.0 0.0 1.0 1.0 -1.0 )   1.0 envelope-interp dup 1.0 fneq if
-    $" envelope-interp 1.0; %s?" swap snd-display
-  else
-    drop
-  then
-  -0.5 #( -1.0 0.0 0.0 1.0 1.0 -1.0 )  1.0 envelope-interp dup 0.5 fneq if
-    $" envelope-interp 0.5: %s?" swap snd-display
-  else
-    drop
-  then
-  -0.5 #( -1.0 -1.0 0.0 1.0 1.0 -1.0 ) 1.0 envelope-interp dup 0.0 fneq if
-    $" envelope-interp 0.0: %s?" swap snd-display
-  else
-    drop
-  then
-  -0.5 #( -1.0 -1.0 1.0 1.0 )          1.0 envelope-interp dup -0.5 fneq if
-    $" envelope-interp -0.5: %s?" swap snd-display
-  else
-    drop
-  then
-  -1.5 #( -1.0 -1.0 1.0 1.0 )          1.0 envelope-interp dup -1.0 fneq if
-    $" envelope-interp -1.0: %s?" swap snd-display
-  else
-    drop
-  then
-  1.5 #( -1.0 -1.0 1.0 1.0 )           1.0 envelope-interp dup 1.0 fneq if
-    $" envelope-interp 1.0: %s?" swap snd-display
-  else
-    drop
-  then
-  0.1 #( 0.0 0.0 1.0 1.0 )             1.0 envelope-interp dup 0.1 fneq if
-    $" envelope-interp 0.1: %s?" swap snd-display
-  else
-    drop
-  then
-  0.1 #( 0.0 0.0 1.0 1.0 )            32.0 envelope-interp dup 0.01336172 fneq if
-    $" envelope-interp (exp 32): %s?" swap snd-display
-  else
-    drop
-  then
-  0.1 #( 0.0 0.0 1.0 1.0 )           0.012 envelope-interp dup 0.36177473 fneq if
-    $" envelope-interp (exp 0.012): %s?" swap snd-display
-  else
-    drop
-  then
-  0.3 #( 0.0 0.0 0.5 1.0 1.0 0.0 )     1.0 envelope-interp dup 0.6 fneq if
-    $" envelope-interp 0.6: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 0.0 0.5 0.5 1.0 0.5 ) { v0 }
-  #( 0.0 0.0 2.0 0.5 ) #( 0.0 0.0 1.0 2.0 2.0 1.0 ) multiply-envelopes dup v0 0 fveql unless
-    $" multiply-envelopes: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 0.0 0.5 0.5 1.0 0.0 ) to v0
-  #( 0.0 0.0 1.0 1.0 ) #( 0.0 0.0 1.0 1.0 2.0 0.0 ) multiply-envelopes dup v0 0 fveql unless
-    $" multiply-envelopes: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 0.0 1.0 1.0 2.0 3.0 4.0 0.0 ) max-envelope dup 3.0 fneq if
-    $" 0 max-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 1.0 ) max-envelope dup 1.0 fneq if
-    $" 1 max-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 1.0 1.0 1.0 2.0 2.0 ) max-envelope dup 2.0 fneq if
-    $" 2 max-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 -1.0 1.0 -2.0 ) max-envelope dup -1.0 fneq if
-    $" 3 max-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 -2.0 1.0 -1.0 ) max-envelope dup -1.0 fneq if
-    $" 4 max-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 0.0 1.0 1.0 2.0 3.0 4.0 0.0 ) min-envelope dup 0.0 fneq if
-    $" 0 min-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 1.0 ) min-envelope dup 1.0 fneq if
-    $" 1 min-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 1.0 1.0 1.0 2.0 2.0 ) min-envelope dup 1.0 fneq if
-    $" 2 min-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 -1.0 1.0 -2.0 ) min-envelope dup -2.0 fneq if
-    $" 3 min-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 -2.0 1.0 -1.0 ) min-envelope dup -2.0 fneq if
-    $" 4 min-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 0.0 0.2 0.1 1.0 1.0 ) to v0
-  #( 0.0 0.0 1.0 1.0 ) 0.1 0.2 #f #f stretch-envelope dup v0 0 fveql unless
-    $" stretch-envelope att: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 0.0 0.2 0.1 1.1 1.0 1.6 0.5 2.0 0.0 ) to v0
-  #( 0.0 0.0 1.0 1.0 2.0 0.0 ) 0.1 0.2 1.5 1.6 stretch-envelope dup v0 0 fveql unless
-    $" stretch-envelope dec: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 0.0 0.2 0.1 1.1 1.0 1.6 0.5 2.0 0.0 ) to v0
-  #( 0.0 0.0 1.0 1.0 2.0 0.0 ) 0.1 0.2 1.5 1.6 stretch-envelope dup v0 0 fveql unless
-    $" stretch-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 0.0 0.5 1.5 1.0 1.0 ) to v0
-  #( 0.0 0.0 1.0 1.0 2.0 0.0 ) #( 0.0 0.0 1.0 1.0 ) add-envelopes dup v0 0 fveql unless
-    $" add-envelopes: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 0.0 1.0 2.0 ) to v0
-  #( 0.0 0.0 1.0 1.0 ) 2.0 scale-envelope dup v0 0 fveql unless
-    $" scale-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 1.0 1.0 0.0 ) to v0
-  #( 0.0 0.0 1.0 1.0 ) reverse-envelope dup v0 0 fveql unless
-    $" reverse-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 0.0 1.5 1.0 2.0 0.0 ) to v0
-  #( 0.0 0.0 0.5 1.0 2.0 0.0 ) reverse-envelope dup v0 0 fveql unless
-    $" reverse-envelope: %s?" swap snd-display
-  else
-    drop
-  then
-  #( 0.0 1.0 1.5 1.0 2.0 0.0 ) to v0
-  #( 0.0 0.0 0.5 1.0 2.0 1.0 ) reverse-envelope dup v0 0 fveql unless
-    $" reverse-envelope: %s?" swap snd-display
-  else
-    drop
+  undefined empty? unless
+    $" undefined[%d]: %s" #( undefined length undefined ) snd-display
   then
 ;
 
-\ ====== test 10: marks
+\ ---------------- test 10: marks ----------------
+
 : 10-marks ( -- )
   "oboe.snd" open-sound { ind }
   123 add-mark drop
@@ -1252,7 +2083,8 @@ SIGINT lambda: { sig -- }
   ind close-sound drop
 ;
 
-\ ====== test 15: chan-local vars
+\ ---------------- test 15: chan-local vars ----------------
+
 : interpolated-peak-offset ( r1 r2 r3 -- r4 )
   { la ca ra }
   la ca fmax ra fmax 0.001 f+ { pk }
@@ -1293,16 +2125,16 @@ SIGINT lambda: { sig -- }
 : f4neq ( a b -- f ) f- fabs  1.0 f> ;
 : f5neq ( a b -- f ) { a b } a b f- fabs 10.0  a b fmax 0.05 f*  f> ;
 
-'complex provided? [if]
+*with-test-complex* [if]
   \ dolph/dolph-1 are only defined if complex numbers available
   : dolph-test ( -- )
     16 1.0 dolph { val1 }
     dolph-chebyshev-window 16 1.0 make-fft-window { val2 }
-    val1 val2 vequal unless
+    val1 val2 vequal? unless
       $" dolph/dolph 1: %s %s" #( val1 val2 ) snd-display
     then
     16 1.0 dolph-1 to val1
-    val1 val2 vequal unless
+    val1 val2 vequal? unless
       $" dolph-1/dolph 1: %s %s" #( val1 val2 ) snd-display
     then
   ;
@@ -1580,7 +2412,8 @@ SIGINT lambda: { sig -- }
   then
 ;
 
-\ ====== test 19: save and restore
+\ ---------------- test 19: save and restore ----------------
+
 : clm-channel-test <{ :optional snd #f chn #f -- gen }>
   1 -1 make-two-zero 0 #f snd chn #f #f get-func-name clm-channel
 ;
@@ -1808,7 +2641,8 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   ind close-sound drop
 ;
 
-\ ====== test 23: with-sound
+\ ---------------- test 23: with-sound ----------------
+
 : test23-notehook { ins start dur -- } $" %14s: %5.2f  %5.2f" #( ins start dur ) snd-test-message ;
 
 : test23-balance ( -- )
@@ -2202,1222 +3036,2004 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   old-stats to *clm-statistics*
 ;
 
-\ ====== test 26: Gtk
-'snd-gtk provided? [if]
-  #( <'> Fg_free <'> Fg_signal_lookup <'> Fg_source_remove <'> Fg_type_from_name
-     <'> Fg_type_is_a <'> Fg_type_name <'> Fg_type_parent <'> Fg_type_qname <'> Fgdk_atom_intern
-     <'> Fgdk_init <'> Fgdk_init_check <'> Fgdk_set_show_events <'> Fgdk_threads_enter
-     <'> Fgdk_threads_init <'> Fgdk_threads_leave <'> Fgdk_utf8_to_string_target
-     <'> Fgtk_accel_map_load <'> Fgtk_accel_map_load_fd <'> Fgtk_accel_map_lookup_entry
-     <'> Fgtk_accel_map_save <'> Fgtk_accel_map_save_fd <'> Fgtk_button_new_with_label
-     <'> Fgtk_check_button_new_with_label <'> Fgtk_check_menu_item_new_with_label
-     <'> Fgtk_color_selection_palette_from_string <'> Fgtk_disable_setlocale
-     <'> Fgtk_icon_size_from_name <'> Fgtk_image_menu_item_new_with_label <'> Fgtk_init
-     <'> Fgtk_init_check <'> Fgtk_key_snooper_install <'> Fgtk_key_snooper_remove
-     <'> Fgtk_main <'> Fgtk_main_do_event <'> Fgtk_main_iteration <'> Fgtk_main_iteration_do
-     <'> Fgtk_main_level <'> Fgtk_main_quit <'> Fgtk_menu_item_new_with_label
-     <'> Fgtk_radio_button_new_with_label <'> Fgtk_radio_menu_item_new_with_label
-     <'> Fgtk_rc_find_module_in_path <'> Fgtk_toggle_button_new_with_label
-     <'> Fpango_coverage_from_bytes <'> Fpango_find_paragraph_boundary
-     <'> Fpango_language_from_string <'> Fpango_script_iter_new ) constant breakable-gtk-procs
+\ ---------------- test 26: Gtk ----------------
 
-  #( <'> FGDK_DEVICE <'> FGDK_DISPLAY_OBJECT <'> FGDK_DRAG_CONTEXT
-     <'> FGDK_DRAWABLE <'> FGDK_EVENT_ANY <'> FGDK_EVENT_BUTTON
-     <'> FGDK_EVENT_CONFIGURE <'> FGDK_EVENT_CROSSING <'> FGDK_EVENT_DND
-     <'> FGDK_EVENT_EXPOSE <'> FGDK_EVENT_FOCUS <'> FGDK_EVENT_KEY
-     <'> FGDK_EVENT_MOTION <'> FGDK_EVENT_NOEXPOSE <'> FGDK_EVENT_PROPERTY
-     <'> FGDK_EVENT_PROXIMITY <'> FGDK_EVENT_SCROLL <'> FGDK_EVENT_SELECTION
-     <'> FGDK_EVENT_SETTING <'> FGDK_EVENT_VISIBILITY <'> FGDK_EVENT_WINDOWSTATE
-     <'> FGDK_IS_DEVICE <'> FGDK_IS_DISPLAY <'> FGDK_IS_DRAG_CONTEXT
-     <'> FGDK_IS_DRAWABLE <'> FGDK_IS_KEYMAP <'> FGDK_IS_SCREEN
-     <'> FGDK_IS_VISUAL <'> FGDK_IS_WINDOW <'> FGDK_KEYMAP <'> FGDK_SCREEN
-     <'> FGDK_VISUAL <'> FGDK_WINDOW <'> FGPOINTER <'> FGTK_ABOUT_DIALOG
-     <'> FGTK_ACCEL_GROUP <'> FGTK_ACCEL_LABEL <'> FGTK_ACCEL_MAP
-     <'> FGTK_ACCESSIBLE <'> FGTK_ACTION <'> FGTK_ACTION_GROUP <'> FGTK_ADJUSTMENT
-     <'> FGTK_ALIGNMENT <'> FGTK_ARROW <'> FGTK_ASPECT_FRAME <'> FGTK_BIN
-     <'> FGTK_BOX <'> FGTK_BUTTON <'> FGTK_BUTTON_BOX <'> FGTK_CALENDAR
-     <'> FGTK_CELL_EDITABLE <'> FGTK_CELL_LAYOUT <'> FGTK_CELL_RENDERER
-     <'> FGTK_CELL_RENDERER_COMBO <'> FGTK_CELL_RENDERER_PIXBUF
-     <'> FGTK_CELL_RENDERER_PROGRESS <'> FGTK_CELL_RENDERER_TEXT
-     <'> FGTK_CELL_RENDERER_TOGGLE <'> FGTK_CELL_VIEW <'> FGTK_CHECK_BUTTON
-     <'> FGTK_CHECK_MENU_ITEM <'> FGTK_CLIPBOARD <'> FGTK_COLOR_BUTTON
-     <'> FGTK_COLOR_SELECTION <'> FGTK_COLOR_SELECTION_DIALOG <'> FGTK_COMBO_BOX
-     <'> FGTK_CONTAINER <'> FGTK_DIALOG
-     <'> FGTK_DRAWING_AREA <'> FGTK_EDITABLE <'> FGTK_ENTRY
-     <'> FGTK_ENTRY_COMPLETION <'> FGTK_EVENT_BOX <'> FGTK_EXPANDER
-     <'> FGTK_FILE_CHOOSER <'> FGTK_FILE_CHOOSER_BUTTON
-     <'> FGTK_FILE_CHOOSER_DIALOG <'> FGTK_FILE_CHOOSER_WIDGET
-     <'> FGTK_FILE_FILTER <'> FGTK_FIXED <'> FGTK_FONT_BUTTON
-     <'> FGTK_FONT_SELECTION <'> FGTK_FONT_SELECTION_DIALOG
-     <'> FGTK_FRAME <'> FGTK_HANDLE_BOX <'> FGTK_HBOX <'> FGTK_HBUTTON_BOX
-     <'> FGTK_HPANED <'> FGTK_HRULER <'> FGTK_HSCALE <'> FGTK_HSCROLLBAR
-     <'> FGTK_HSEPARATOR <'> FGTK_ICON_FACTORY <'> FGTK_ICON_THEME
-     <'> FGTK_ICON_VIEW <'> FGTK_IMAGE <'> FGTK_IMAGE_MENU_ITEM
-     <'> FGTK_IM_CONTEXT <'> FGTK_IM_CONTEXT_SIMPLE <'> FGTK_IM_MULTICONTEXT
-     <'> FGTK_INVISIBLE <'> FGTK_IS_ABOUT_DIALOG <'> FGTK_IS_ACCEL_GROUP
-     <'> FGTK_IS_ACCEL_LABEL <'> FGTK_IS_ACCEL_MAP <'> FGTK_IS_ACCESSIBLE
-     <'> FGTK_IS_ACTION <'> FGTK_IS_ACTION_GROUP <'> FGTK_IS_ADJUSTMENT
-     <'> FGTK_IS_ALIGNMENT <'> FGTK_IS_ARROW <'> FGTK_IS_ASPECT_FRAME
-     <'> FGTK_IS_BIN <'> FGTK_IS_BOX <'> FGTK_IS_BUTTON <'> FGTK_IS_BUTTON_BOX
-     <'> FGTK_IS_CALENDAR <'> FGTK_IS_CELL_EDITABLE <'> FGTK_IS_CELL_LAYOUT
-     <'> FGTK_IS_CELL_RENDERER <'> FGTK_IS_CELL_RENDERER_COMBO
-     <'> FGTK_IS_CELL_RENDERER_PIXBUF <'> FGTK_IS_CELL_RENDERER_PROGRESS
-     <'> FGTK_IS_CELL_RENDERER_TEXT <'> FGTK_IS_CELL_RENDERER_TOGGLE
-     <'> FGTK_IS_CELL_VIEW <'> FGTK_IS_CHECK_BUTTON
-     <'> FGTK_IS_CHECK_MENU_ITEM <'> FGTK_IS_CLIPBOARD
-     <'> FGTK_IS_COLOR_BUTTON <'> FGTK_IS_COLOR_SELECTION
-     <'> FGTK_IS_COLOR_SELECTION_DIALOG <'> FGTK_IS_COMBO_BOX
-     <'> FGTK_IS_CONTAINER
-     <'> FGTK_IS_DIALOG <'> FGTK_IS_DRAWING_AREA <'> FGTK_IS_EDITABLE
-     <'> FGTK_IS_ENTRY <'> FGTK_IS_ENTRY_COMPLETION <'> FGTK_IS_EVENT_BOX
-     <'> FGTK_IS_EXPANDER <'> FGTK_IS_FILE_CHOOSER <'> FGTK_IS_FILE_CHOOSER_BUTTON
-     <'> FGTK_IS_FILE_CHOOSER_DIALOG <'> FGTK_IS_FILE_CHOOSER_WIDGET
-     <'> FGTK_IS_FILE_FILTER <'> FGTK_IS_FIXED <'> FGTK_IS_FONT_BUTTON
-     <'> FGTK_IS_FONT_SELECTION <'> FGTK_IS_FONT_SELECTION_DIALOG
-     <'> FGTK_IS_FRAME <'> FGTK_IS_HANDLE_BOX <'> FGTK_IS_HBOX
-     <'> FGTK_IS_HBUTTON_BOX <'> FGTK_IS_HPANED <'> FGTK_IS_HRULER
-     <'> FGTK_IS_HSCALE <'> FGTK_IS_HSCROLLBAR <'> FGTK_IS_HSEPARATOR
-     <'> FGTK_IS_ICON_FACTORY <'> FGTK_IS_ICON_THEME <'> FGTK_IS_ICON_VIEW
-     <'> FGTK_IS_IMAGE <'> FGTK_IS_IMAGE_MENU_ITEM <'> FGTK_IS_IM_CONTEXT
-     <'> FGTK_IS_IM_CONTEXT_SIMPLE <'> FGTK_IS_IM_MULTICONTEXT
-     <'> FGTK_IS_INVISIBLE <'> FGTK_IS_LABEL <'> FGTK_IS_LAYOUT
-     <'> FGTK_IS_LIST_STORE <'> FGTK_IS_MENU <'> FGTK_IS_MENU_BAR
-     <'> FGTK_IS_MENU_ITEM <'> FGTK_IS_MENU_SHELL <'> FGTK_IS_MENU_TOOL_BUTTON
-     <'> FGTK_IS_MISC <'> FGTK_IS_NOTEBOOK <'> FGTK_IS_OBJECT <'> FGTK_IS_PANED
-     <'> FGTK_IS_PLUG <'> FGTK_IS_PROGRESS_BAR <'> FGTK_IS_RADIO_ACTION
-     <'> FGTK_IS_RADIO_BUTTON <'> FGTK_IS_RADIO_MENU_ITEM
-     <'> FGTK_IS_RADIO_TOOL_BUTTON <'> FGTK_IS_RANGE <'> FGTK_IS_RC_STYLE
-     <'> FGTK_IS_RULER <'> FGTK_IS_SCALE <'> FGTK_IS_SCROLLBAR
-     <'> FGTK_IS_SCROLLED_WINDOW <'> FGTK_IS_SEPARATOR
-     <'> FGTK_IS_SEPARATOR_MENU_ITEM <'> FGTK_IS_SEPARATOR_TOOL_ITEM
-     <'> FGTK_IS_SIZE_GROUP <'> FGTK_IS_SOCKET <'> FGTK_IS_SPIN_BUTTON
-     <'> FGTK_IS_STATUSBAR <'> FGTK_IS_STYLE <'> FGTK_IS_TABLE
-     <'> FGTK_IS_TEAROFF_MENU_ITEM <'> FGTK_IS_TEXT_BUFFER
-     <'> FGTK_IS_TEXT_CHILD_ANCHOR <'> FGTK_IS_TEXT_MARK <'> FGTK_IS_TEXT_TAG
-     <'> FGTK_IS_TEXT_TAG_TABLE <'> FGTK_IS_TEXT_VIEW
-     <'> FGTK_IS_TOGGLE_ACTION <'> FGTK_IS_TOGGLE_BUTTON
-     <'> FGTK_IS_TOGGLE_TOOL_BUTTON <'> FGTK_IS_TOOLBAR <'> FGTK_IS_TOOL_BUTTON
-     <'> FGTK_IS_TOOL_ITEM <'> FGTK_IS_TREE_DRAG_DEST
-     <'> FGTK_IS_TREE_DRAG_SOURCE <'> FGTK_IS_TREE_MODEL
-     <'> FGTK_IS_TREE_MODEL_FILTER <'> FGTK_IS_TREE_MODEL_SORT
-     <'> FGTK_IS_TREE_SELECTION <'> FGTK_IS_TREE_SORTABLE
-     <'> FGTK_IS_TREE_STORE <'> FGTK_IS_TREE_VIEW
-     <'> FGTK_IS_TREE_VIEW_COLUMN <'> FGTK_IS_UI_MANAGER <'> FGTK_IS_VBOX
-     <'> FGTK_IS_VBUTTON_BOX <'> FGTK_IS_VIEWPORT <'> FGTK_IS_VPANED
-     <'> FGTK_IS_VRULER <'> FGTK_IS_VSCALE <'> FGTK_IS_VSCROLLBAR
-     <'> FGTK_IS_VSEPARATOR <'> FGTK_IS_WIDGET <'> FGTK_IS_WINDOW <'> FGTK_LABEL
-     <'> FGTK_LAYOUT <'> FGTK_LIST_STORE <'> FGTK_MENU <'> FGTK_MENU_BAR
-     <'> FGTK_MENU_ITEM <'> FGTK_MENU_SHELL <'> FGTK_MENU_TOOL_BUTTON
-     <'> FGTK_MISC <'> FGTK_NOTEBOOK <'> FGTK_PANED <'> FGTK_PLUG
-     <'> FGTK_PROGRESS_BAR <'> FGTK_RADIO_ACTION <'> FGTK_RADIO_BUTTON
-     <'> FGTK_RADIO_MENU_ITEM <'> FGTK_RADIO_TOOL_BUTTON
-     <'> FGTK_RANGE <'> FGTK_RULER <'> FGTK_SCALE <'> FGTK_SCROLLBAR
-     <'> FGTK_SCROLLED_WINDOW <'> FGTK_SEPARATOR <'> FGTK_SEPARATOR_MENU_ITEM
-     <'> FGTK_SEPARATOR_TOOL_ITEM <'> FGTK_SIZE_GROUP <'> FGTK_SOCKET
-     <'> FGTK_SPIN_BUTTON <'> FGTK_STATUSBAR <'> FGTK_STYLE <'> FGTK_TABLE
-     <'> FGTK_TEAROFF_MENU_ITEM <'> FGTK_TEXT_BUFFER <'> FGTK_TEXT_CHILD_ANCHOR
-     <'> FGTK_TEXT_MARK <'> FGTK_TEXT_TAG <'> FGTK_TEXT_TAG_TABLE
-     <'> FGTK_TEXT_VIEW <'> FGTK_TOGGLE_ACTION <'> FGTK_TOGGLE_BUTTON
-     <'> FGTK_TOGGLE_TOOL_BUTTON <'> FGTK_TOOLBAR <'> FGTK_TOOL_BUTTON
-     <'> FGTK_TOOL_ITEM <'> FGTK_TREE_DRAG_DEST <'> FGTK_TREE_DRAG_SOURCE
-     <'> FGTK_TREE_MODEL <'> FGTK_TREE_MODEL_FILTER
-     <'> FGTK_TREE_MODEL_SORT <'> FGTK_TREE_SELECTION
-     <'> FGTK_TREE_SORTABLE <'> FGTK_TREE_STORE <'> FGTK_TREE_VIEW
-     <'> FGTK_TREE_VIEW_COLUMN <'> FGTK_UI_MANAGER <'> FGTK_VBOX
-     <'> FGTK_VBUTTON_BOX <'> FGTK_VIEWPORT <'> FGTK_VPANED <'> FGTK_VRULER
-     <'> FGTK_VSCALE <'> FGTK_VSCROLLBAR <'> FGTK_VSEPARATOR <'> FGTK_WIDGET
-     <'> FG_IS_OBJECT <'> FG_OBJECT <'> FPANGO_CONTEXT <'> FPANGO_FONT
-     <'> FPANGO_FONT_FACE <'> FPANGO_FONT_FAMILY <'> FPANGO_FONT_MAP
-     <'> FPANGO_IS_CONTEXT <'> FPANGO_IS_FONT <'> FPANGO_IS_FONT_FACE
-     <'> FPANGO_IS_FONT_FAMILY <'> FPANGO_IS_FONT_MAP <'> FPANGO_IS_LAYOUT
-     <'> FPANGO_LAYOUT <'> Fg_cclosure_new <'> Fg_idle_add
-     <'> Fg_idle_add_full <'> Fg_idle_remove_by_data <'> Fg_list_copy
-     <'> Fg_list_first <'> Fg_list_free <'> Fg_list_last <'> Fg_list_length
-     <'> Fg_list_nth_data <'> Fg_list_remove_link <'> Fg_list_reverse
-     <'> Fg_object_get_data <'> Fg_object_ref <'> Fg_object_set_data
-     <'> Fg_object_unref <'> Fg_quark_from_string <'> Fg_quark_to_string
-     <'> Fg_signal_add_emission_hook <'> Fg_signal_connect_closure
-     <'> Fg_signal_connect_closure_by_id <'> Fg_signal_connect_data
-     <'> Fg_signal_get_invocation_hint <'> Fg_signal_handler_block
-     <'> Fg_signal_handler_disconnect <'> Fg_signal_handler_find
-     <'> Fg_signal_handler_is_connected <'> Fg_signal_handler_unblock
-     <'> Fg_signal_handlers_block_matched <'> Fg_signal_handlers_destroy
-     <'> Fg_signal_handlers_disconnect_matched
-     <'> Fg_signal_handlers_unblock_matched <'> Fg_signal_has_handler_pending
-     <'> Fg_signal_list_ids <'> Fg_signal_name <'> Fg_signal_newv
-     <'> Fg_signal_parse_name <'> Fg_signal_query
-     <'> Fg_signal_remove_emission_hook <'> Fg_signal_stop_emission
-     <'> Fg_signal_stop_emission_by_name <'> Fg_timeout_add
-     <'> Fg_timeout_add_full <'> Fgdk_add_client_message_filter
-     <'> Fgdk_atom_name <'> Fgdk_beep <'> Fgdk_color_copy <'> Fgdk_color_equal
-     <'> Fgdk_color_free <'> Fgdk_color_hash <'> Fgdk_color_parse
-     <'> Fgdk_display_add_client_message_filter <'> Fgdk_display_beep
-     <'> Fgdk_display_close <'> Fgdk_display_flush <'> Fgdk_display_get_default
-     <'> Fgdk_display_get_default_cursor_size <'> Fgdk_display_get_default_group
-     <'> Fgdk_display_get_default_screen <'> Fgdk_display_get_event
-     <'> Fgdk_display_get_maximal_cursor_size <'> Fgdk_display_get_n_screens
-     <'> Fgdk_display_get_name <'> Fgdk_display_get_pointer
-     <'> Fgdk_display_get_screen <'> Fgdk_display_get_window_at_pointer
-     <'> Fgdk_display_keyboard_ungrab <'> Fgdk_display_open
-     <'> Fgdk_display_peek_event <'> Fgdk_display_pointer_is_grabbed
-     <'> Fgdk_display_pointer_ungrab <'> Fgdk_display_put_event
-     <'> Fgdk_display_set_double_click_distance <'> Fgdk_display_set_double_click_time
-     <'> Fgdk_display_supports_clipboard_persistence <'> Fgdk_display_supports_cursor_alpha
-     <'> Fgdk_display_supports_cursor_color <'> Fgdk_display_sync
-     <'> Fgdk_drag_abort <'> Fgdk_drag_begin <'> Fgdk_drag_context_new
-     <'> Fgdk_drag_drop <'> Fgdk_drag_drop_succeeded <'> Fgdk_drag_find_window
-     <'> Fgdk_drag_get_protocol <'> Fgdk_drag_get_selection <'> Fgdk_drag_motion
-     <'> Fgdk_drag_status <'> Fgdk_drop_finish <'> Fgdk_drop_reply
-     <'> Fgdk_error_trap_pop <'> Fgdk_error_trap_push <'> Fgdk_event_copy
-     <'> Fgdk_event_free <'> Fgdk_event_get <'> Fgdk_event_get_coords
-     <'> Fgdk_event_get_root_coords <'> Fgdk_event_get_state
-     <'> Fgdk_event_get_time <'> Fgdk_event_handler_set <'> Fgdk_event_peek
-     <'> Fgdk_event_put <'> Fgdk_event_send_client_message
-     <'> Fgdk_event_send_clientmessage_toall <'> Fgdk_events_pending
-     <'> Fgdk_flush <'> Fgdk_get_default_root_window <'> Fgdk_get_display
-     <'> Fgdk_get_display_arg_name <'> Fgdk_get_program_class
-     <'> Fgdk_get_show_events <'> Fgdk_keyboard_grab <'> Fgdk_keyboard_ungrab
-     <'> Fgdk_keymap_get_default <'> Fgdk_keymap_get_direction
-     <'> Fgdk_keymap_get_entries_for_keycode <'> Fgdk_keymap_get_entries_for_keyval
-     <'> Fgdk_keymap_lookup_key <'> Fgdk_keyval_convert_case
-     <'> Fgdk_keyval_from_name <'> Fgdk_keyval_is_lower <'> Fgdk_keyval_is_upper
-     <'> Fgdk_keyval_name <'> Fgdk_keyval_to_lower <'> Fgdk_keyval_to_unicode
-     <'> Fgdk_keyval_to_upper <'> Fgdk_list_visuals
-     <'> Fgdk_notify_startup_complete <'> Fgdk_pango_context_get
-     <'> Fgdk_pixbuf_add_alpha <'> Fgdk_pixbuf_animation_get_height
-     <'> Fgdk_pixbuf_animation_get_iter <'> Fgdk_pixbuf_animation_get_static_image
-     <'> Fgdk_pixbuf_animation_get_width <'> Fgdk_pixbuf_animation_is_static_image
-     <'> Fgdk_pixbuf_animation_iter_advance <'> Fgdk_pixbuf_animation_iter_get_delay_time
-     <'> Fgdk_pixbuf_animation_iter_get_pixbuf
-     <'> Fgdk_pixbuf_animation_iter_on_currently_loading_frame
-     <'> Fgdk_pixbuf_animation_new_from_file <'> Fgdk_pixbuf_composite
-     <'> Fgdk_pixbuf_composite_color <'> Fgdk_pixbuf_composite_color_simple
-     <'> Fgdk_pixbuf_copy <'> Fgdk_pixbuf_copy_area <'> Fgdk_pixbuf_error_quark
-     <'> Fgdk_pixbuf_fill <'> Fgdk_pixbuf_get_bits_per_sample
-     <'> Fgdk_pixbuf_get_colorspace <'> Fgdk_pixbuf_get_has_alpha
-     <'> Fgdk_pixbuf_get_height <'> Fgdk_pixbuf_get_n_channels
-     <'> Fgdk_pixbuf_get_option <'> Fgdk_pixbuf_get_pixels
-     <'> Fgdk_pixbuf_get_rowstride <'> Fgdk_pixbuf_get_width
-     <'> Fgdk_pixbuf_new_from_data <'> Fgdk_pixbuf_new_from_file
-     <'> Fgdk_pixbuf_new_from_inline <'> Fgdk_pixbuf_new_from_xpm_data
-     <'> Fgdk_pixbuf_new_subpixbuf <'> Fgdk_pixbuf_saturate_and_pixelate
-     <'> Fgdk_pixbuf_savev <'> Fgdk_pixbuf_scale <'> Fgdk_pixbuf_scale_simple
-     <'> Fgdk_pointer_grab <'> Fgdk_pointer_is_grabbed <'> Fgdk_pointer_ungrab
-     <'> Fgdk_property_change <'> Fgdk_property_delete <'> Fgdk_property_get
-     <'> Fgdk_query_depths <'> Fgdk_query_visual_types
-     <'> Fgdk_rectangle_intersect <'> Fgdk_rectangle_union
-     <'> Fgdk_screen_broadcast_client_message <'> Fgdk_screen_get_default
-     <'> Fgdk_screen_get_display <'> Fgdk_screen_get_height
-     <'> Fgdk_screen_get_height_mm <'> Fgdk_screen_get_monitor_at_point
-     <'> Fgdk_screen_get_monitor_at_window <'> Fgdk_screen_get_monitor_geometry
-     <'> Fgdk_screen_get_n_monitors <'> Fgdk_screen_get_number
-     <'> Fgdk_screen_get_root_window <'> Fgdk_screen_get_system_visual
-     <'> Fgdk_screen_get_toplevel_windows <'> Fgdk_screen_get_width
-     <'> Fgdk_screen_get_width_mm <'> Fgdk_screen_height
-     <'> Fgdk_screen_height_mm <'> Fgdk_screen_list_visuals
-     <'> Fgdk_screen_make_display_name <'> Fgdk_screen_width
-     <'> Fgdk_screen_width_mm <'> Fgdk_selection_convert
-     <'> Fgdk_selection_owner_get <'> Fgdk_selection_owner_set
-     <'> Fgdk_selection_property_get <'> Fgdk_selection_send_notify
-     <'> Fgdk_set_double_click_time <'> Fgdk_set_locale
-     <'> Fgdk_set_program_class <'> Fgdk_set_sm_client_id
-     <'> Fgdk_unicode_to_keyval <'> Fgdk_visual_get_best
-     <'> Fgdk_visual_get_best_depth <'> Fgdk_visual_get_best_type
-     <'> Fgdk_visual_get_best_with_both <'> Fgdk_visual_get_best_with_depth
-     <'> Fgdk_visual_get_best_with_type <'> Fgdk_visual_get_system
-     <'> Fgdk_window_add_filter <'> Fgdk_window_at_pointer
-     <'> Fgdk_window_begin_move_drag <'> Fgdk_window_begin_paint_rect
-     <'> Fgdk_window_begin_resize_drag <'> Fgdk_window_configure_finished
-     <'> Fgdk_window_constrain_size <'> Fgdk_window_deiconify
-     <'> Fgdk_window_destroy <'> Fgdk_window_enable_synchronized_configure
-     <'> Fgdk_window_end_paint <'> Fgdk_window_focus
-     <'> Fgdk_window_foreign_new <'> Fgdk_window_freeze_updates
-     <'> Fgdk_window_get_children <'> Fgdk_window_get_decorations
-     <'> Fgdk_window_get_events <'> Fgdk_window_get_frame_extents
-     <'> Fgdk_window_get_geometry <'> Fgdk_window_get_group
-     <'> Fgdk_window_get_origin <'> Fgdk_window_get_parent
-     <'> Fgdk_window_get_pointer <'> Fgdk_window_get_position
-     <'> Fgdk_window_get_root_origin <'> Fgdk_window_get_state
-     <'> Fgdk_window_get_toplevel <'> Fgdk_window_get_user_data
-     <'> Fgdk_window_get_window_type <'> Fgdk_window_hide
-     <'> Fgdk_window_iconify <'> Fgdk_window_invalidate_rect
-     <'> Fgdk_window_is_viewable <'> Fgdk_window_is_visible
-     <'> Fgdk_window_lookup <'> Fgdk_window_lower
-     <'> Fgdk_window_maximize <'> Fgdk_window_merge_child_shapes
-     <'> Fgdk_window_move <'> Fgdk_window_move_resize <'> Fgdk_window_new
-     <'> Fgdk_window_peek_children <'> Fgdk_window_process_all_updates
-     <'> Fgdk_window_process_updates <'> Fgdk_window_raise
-     <'> Fgdk_window_register_dnd <'> Fgdk_window_remove_filter
-     <'> Fgdk_window_reparent <'> Fgdk_window_resize <'> Fgdk_window_scroll
-     <'> Fgdk_window_set_background <'> Fgdk_window_set_child_shapes
-     <'> Fgdk_window_set_cursor <'> Fgdk_window_set_debug_updates
-     <'> Fgdk_window_set_decorations <'> Fgdk_window_set_events
-     <'> Fgdk_window_set_functions <'> Fgdk_window_set_geometry_hints
-     <'> Fgdk_window_set_group <'> Fgdk_window_set_icon_list
-     <'> Fgdk_window_set_icon_name <'> Fgdk_window_set_keep_above
-     <'> Fgdk_window_set_keep_below <'> Fgdk_window_set_modal_hint
-     <'> Fgdk_window_set_override_redirect <'> Fgdk_window_set_role
-     <'> Fgdk_window_set_static_gravities <'> Fgdk_window_set_title
-     <'> Fgdk_window_set_transient_for <'> Fgdk_window_set_type_hint
-     <'> Fgdk_window_set_user_data <'> Fgdk_window_show
-     <'> Fgdk_window_show_unraised <'> Fgdk_window_stick
-     <'> Fgdk_window_thaw_updates <'> Fgdk_window_unmaximize
-     <'> Fgdk_window_unstick <'> Fgdk_window_withdraw
-     <'> Fgtk_about_dialog_get_artists <'> Fgtk_about_dialog_get_authors
-     <'> Fgtk_about_dialog_get_comments <'> Fgtk_about_dialog_get_copyright
-     <'> Fgtk_about_dialog_get_documenters <'> Fgtk_about_dialog_get_license
-     <'> Fgtk_about_dialog_get_logo <'> Fgtk_about_dialog_get_logo_icon_name
-     <'> Fgtk_about_dialog_get_translator_credits
-     <'> Fgtk_about_dialog_get_version <'> Fgtk_about_dialog_get_website
-     <'> Fgtk_about_dialog_get_website_label <'> Fgtk_about_dialog_new
-     <'> Fgtk_about_dialog_set_artists <'> Fgtk_about_dialog_set_authors
-     <'> Fgtk_about_dialog_set_comments <'> Fgtk_about_dialog_set_copyright
-     <'> Fgtk_about_dialog_set_documenters <'> Fgtk_about_dialog_set_license
-     <'> Fgtk_about_dialog_set_logo <'> Fgtk_about_dialog_set_logo_icon_name
-     <'> Fgtk_about_dialog_set_translator_credits
-     <'> Fgtk_about_dialog_set_version <'> Fgtk_about_dialog_set_website
-     <'> Fgtk_about_dialog_set_website_label
-     <'> Fgtk_accel_group_activate <'> Fgtk_accel_group_connect
-     <'> Fgtk_accel_group_connect_by_path <'> Fgtk_accel_group_disconnect
-     <'> Fgtk_accel_group_disconnect_key <'> Fgtk_accel_group_find
-     <'> Fgtk_accel_group_from_accel_closure <'> Fgtk_accel_group_lock
-     <'> Fgtk_accel_group_new <'> Fgtk_accel_group_query
-     <'> Fgtk_accel_group_unlock <'> Fgtk_accel_groups_activate
-     <'> Fgtk_accel_groups_from_object <'> Fgtk_accel_label_get_accel_widget
-     <'> Fgtk_accel_label_get_accel_width <'> Fgtk_accel_label_new
-     <'> Fgtk_accel_label_refetch <'> Fgtk_accel_label_set_accel_closure
-     <'> Fgtk_accel_label_set_accel_widget <'> Fgtk_accel_map_add_entry
-     <'> Fgtk_accel_map_add_filter <'> Fgtk_accel_map_change_entry
-     <'> Fgtk_accel_map_foreach <'> Fgtk_accel_map_foreach_unfiltered
-     <'> Fgtk_accel_map_get
-     <'> Fgtk_accelerator_get_label <'> Fgtk_accelerator_name
-     <'> Fgtk_accelerator_parse <'> Fgtk_accelerator_set_default_mod_mask
-     <'> Fgtk_accelerator_valid <'> Fgtk_accessible_connect_widget_destroyed
-     <'> Fgtk_action_activate <'> Fgtk_action_connect_accelerator
-     <'> Fgtk_action_create_icon <'> Fgtk_action_create_menu_item
-     <'> Fgtk_action_create_tool_item <'> Fgtk_action_disconnect_accelerator
-     <'> Fgtk_action_get_name <'> Fgtk_action_get_proxies
-     <'> Fgtk_action_get_sensitive <'> Fgtk_action_get_visible
-     <'> Fgtk_action_group_add_action <'> Fgtk_action_group_add_action_with_accel
-     <'> Fgtk_action_group_add_actions <'> Fgtk_action_group_add_toggle_actions
-     <'> Fgtk_action_group_add_toggle_actions_full
-     <'> Fgtk_action_group_get_action <'> Fgtk_action_group_get_name
-     <'> Fgtk_action_group_get_sensitive <'> Fgtk_action_group_get_visible
-     <'> Fgtk_action_group_list_actions <'> Fgtk_action_group_new
-     <'> Fgtk_action_group_remove_action <'> Fgtk_action_group_set_sensitive
-     <'> Fgtk_action_group_set_translation_domain
-     <'> Fgtk_action_group_set_visible <'> Fgtk_action_is_sensitive
-     <'> Fgtk_action_is_visible <'> Fgtk_action_new <'> Fgtk_action_set_sensitive
-     <'> Fgtk_action_set_visible <'> Fgtk_adjustment_changed
-     <'> Fgtk_adjustment_clamp_page <'> Fgtk_adjustment_get_value
-     <'> Fgtk_adjustment_new <'> Fgtk_adjustment_set_value
-     <'> Fgtk_adjustment_value_changed <'> Fgtk_alignment_get_padding
-     <'> Fgtk_alignment_new <'> Fgtk_alignment_set <'> Fgtk_alignment_set_padding
-     <'> Fgtk_alternative_dialog_button_order <'> Fgtk_arrow_new
-     <'> Fgtk_arrow_set <'> Fgtk_aspect_frame_new <'> Fgtk_aspect_frame_set
-     <'> Fgtk_bin_get_child <'> Fgtk_binding_entry_remove
-     <'> Fgtk_binding_set_add_path <'> Fgtk_binding_set_by_class
-     <'> Fgtk_binding_set_find <'> Fgtk_binding_set_new <'> Fgtk_border_copy
-     <'> Fgtk_border_free <'> Fgtk_box_get_homogeneous <'> Fgtk_box_get_spacing
-     <'> Fgtk_box_pack_end <'> Fgtk_box_pack_start
-     <'> Fgtk_box_query_child_packing <'> Fgtk_box_reorder_child
-     <'> Fgtk_box_set_child_packing <'> Fgtk_box_set_homogeneous
-     <'> Fgtk_box_set_spacing <'> Fgtk_button_box_get_child_secondary
-     <'> Fgtk_button_box_get_layout <'> Fgtk_button_box_set_child_secondary
-     <'> Fgtk_button_box_set_layout <'> Fgtk_button_get_alignment
-     <'> Fgtk_button_get_focus_on_click <'> Fgtk_button_get_image
-     <'> Fgtk_button_get_label <'> Fgtk_button_get_relief
-     <'> Fgtk_button_get_use_stock <'> Fgtk_button_get_use_underline
-     <'> Fgtk_button_new <'> Fgtk_button_new_from_stock
-     <'> Fgtk_button_new_with_mnemonic <'> Fgtk_button_set_alignment
-     <'> Fgtk_button_set_focus_on_click <'> Fgtk_button_set_image
-     <'> Fgtk_button_set_label <'> Fgtk_button_set_relief
-     <'> Fgtk_button_set_use_stock <'> Fgtk_button_set_use_underline
-     <'> Fgtk_calendar_clear_marks <'> Fgtk_calendar_get_date
-     <'> Fgtk_calendar_get_display_options <'> Fgtk_cell_editable_editing_done
-     <'> Fgtk_cell_editable_remove_widget <'> Fgtk_cell_editable_start_editing
-     <'> Fgtk_cell_layout_add_attribute <'> Fgtk_cell_layout_clear
-     <'> Fgtk_cell_layout_clear_attributes <'> Fgtk_cell_layout_pack_end
-     <'> Fgtk_cell_layout_pack_start <'> Fgtk_cell_layout_reorder
-     <'> Fgtk_cell_layout_set_attributes <'> Fgtk_cell_layout_set_cell_data_func
-     <'> Fgtk_cell_renderer_activate <'> Fgtk_cell_renderer_combo_new
-     <'> Fgtk_cell_renderer_get_fixed_size <'> Fgtk_cell_renderer_get_size
-     <'> Fgtk_cell_renderer_pixbuf_new <'> Fgtk_cell_renderer_progress_new
-     <'> Fgtk_cell_renderer_set_fixed_size <'> Fgtk_cell_renderer_start_editing
-     <'> Fgtk_cell_renderer_text_new <'> Fgtk_cell_renderer_text_set_fixed_height_from_font
-     <'> Fgtk_cell_renderer_toggle_get_active <'> Fgtk_cell_renderer_toggle_get_radio
-     <'> Fgtk_cell_renderer_toggle_new <'> Fgtk_cell_renderer_toggle_set_active
-     <'> Fgtk_cell_renderer_toggle_set_radio <'> Fgtk_cell_view_get_displayed_row
-     <'> Fgtk_cell_view_new <'> Fgtk_cell_view_new_with_markup
-     <'> Fgtk_cell_view_new_with_pixbuf <'> Fgtk_cell_view_new_with_text
-     <'> Fgtk_cell_view_set_background_color <'> Fgtk_cell_view_set_displayed_row
-     <'> Fgtk_cell_view_set_model <'> Fgtk_check_button_new
-     <'> Fgtk_check_button_new_with_mnemonic <'> Fgtk_check_menu_item_get_active
-     <'> Fgtk_check_menu_item_get_draw_as_radio <'> Fgtk_check_menu_item_get_inconsistent
-     <'> Fgtk_check_menu_item_new <'> Fgtk_check_menu_item_new_with_mnemonic
-     <'> Fgtk_check_menu_item_set_active <'> Fgtk_check_menu_item_set_draw_as_radio
-     <'> Fgtk_check_menu_item_set_inconsistent <'> Fgtk_check_menu_item_toggled
-     <'> Fgtk_check_version <'> Fgtk_clipboard_clear <'> Fgtk_clipboard_get
-     <'> Fgtk_clipboard_get_display <'> Fgtk_clipboard_get_for_display
-     <'> Fgtk_clipboard_get_owner <'> Fgtk_clipboard_request_contents
-     <'> Fgtk_clipboard_request_image <'> Fgtk_clipboard_request_targets
-     <'> Fgtk_clipboard_request_text <'> Fgtk_clipboard_set_can_store
-     <'> Fgtk_clipboard_set_image <'> Fgtk_clipboard_set_text
-     <'> Fgtk_clipboard_set_with_data <'> Fgtk_clipboard_store
-     <'> Fgtk_clipboard_wait_for_contents <'> Fgtk_clipboard_wait_for_image
-     <'> Fgtk_clipboard_wait_for_targets <'> Fgtk_clipboard_wait_for_text
-     <'> Fgtk_clipboard_wait_is_image_available <'> Fgtk_clipboard_wait_is_target_available
-     <'> Fgtk_clipboard_wait_is_text_available
-     <'> Fgtk_color_button_get_alpha <'> Fgtk_color_button_get_color
-     <'> Fgtk_color_button_get_title <'> Fgtk_color_button_get_use_alpha
-     <'> Fgtk_color_button_new <'> Fgtk_color_button_new_with_color
-     <'> Fgtk_color_button_set_alpha <'> Fgtk_color_button_set_color
-     <'> Fgtk_color_button_set_title <'> Fgtk_color_button_set_use_alpha
-     <'> Fgtk_color_selection_dialog_new <'> Fgtk_color_selection_get_current_alpha
-     <'> Fgtk_color_selection_get_current_color <'> Fgtk_color_selection_get_has_opacity_control
-     <'> Fgtk_color_selection_get_has_palette <'> Fgtk_color_selection_get_previous_alpha
-     <'> Fgtk_color_selection_get_previous_color <'> Fgtk_color_selection_is_adjusting
-     <'> Fgtk_color_selection_new <'> Fgtk_color_selection_palette_to_string
-     <'> Fgtk_color_selection_set_current_alpha <'> Fgtk_color_selection_set_current_color
-     <'> Fgtk_color_selection_set_has_opacity_control <'> Fgtk_color_selection_set_has_palette
-     <'> Fgtk_color_selection_set_previous_alpha <'> Fgtk_color_selection_set_previous_color
-     <'> Fgtk_combo_box_get_active <'> Fgtk_combo_box_get_active_iter
-     <'> Fgtk_combo_box_get_add_tearoffs
-     <'> Fgtk_combo_box_get_column_span_column <'> Fgtk_combo_box_get_focus_on_click
-     <'> Fgtk_combo_box_get_model <'> Fgtk_combo_box_get_row_span_column
-     <'> Fgtk_combo_box_get_wrap_width
-     <'> Fgtk_combo_box_new
-     <'> Fgtk_combo_box_new_with_model
-     <'> Fgtk_combo_box_popdown <'> Fgtk_combo_box_popup
-     <'> Fgtk_combo_box_set_active
-     <'> Fgtk_combo_box_set_active_iter
-     <'> Fgtk_combo_box_set_add_tearoffs <'> Fgtk_combo_box_set_column_span_column
-     <'> Fgtk_combo_box_set_focus_on_click <'> Fgtk_combo_box_set_model
-     <'> Fgtk_combo_box_set_row_separator_func <'> Fgtk_combo_box_set_row_span_column
-     <'> Fgtk_combo_box_set_wrap_width <'> Fgtk_container_add <'> Fgtk_container_check_resize
-     <'> Fgtk_container_foreach <'> Fgtk_container_get_border_width <'> Fgtk_container_get_children
-     <'> Fgtk_container_get_resize_mode <'> Fgtk_container_remove
-     <'> Fgtk_container_set_border_width
-     <'> Fgtk_container_set_resize_mode <'> Fgtk_dialog_add_action_widget
-     <'> Fgtk_dialog_add_button <'> Fgtk_dialog_add_buttons <'> Fgtk_dialog_new
-     <'> Fgtk_dialog_new_with_buttons <'> Fgtk_dialog_response <'> Fgtk_dialog_run
-     <'> Fgtk_dialog_set_alternative_button_order_from_array <'> Fgtk_dialog_set_default_response
-     <'> Fgtk_dialog_set_response_sensitive <'> Fgtk_drag_begin <'> Fgtk_drag_check_threshold
-     <'> Fgtk_drag_dest_add_image_targets <'> Fgtk_drag_dest_add_text_targets
-     <'> Fgtk_drag_dest_add_uri_targets <'> Fgtk_drag_dest_find_target
-     <'> Fgtk_drag_dest_get_target_list <'> Fgtk_drag_dest_set <'> Fgtk_drag_dest_set_proxy
-     <'> Fgtk_drag_dest_set_target_list <'> Fgtk_drag_dest_unset <'> Fgtk_drag_finish
-     <'> Fgtk_drag_get_data <'> Fgtk_drag_get_source_widget <'> Fgtk_drag_highlight
-     <'> Fgtk_drag_set_icon_default <'> Fgtk_drag_set_icon_pixbuf <'> Fgtk_drag_set_icon_stock
-     <'> Fgtk_drag_set_icon_widget <'> Fgtk_drag_source_add_image_targets
-     <'> Fgtk_drag_source_add_text_targets <'> Fgtk_drag_source_add_uri_targets
-     <'> Fgtk_drag_source_get_target_list <'> Fgtk_drag_source_set
-     <'> Fgtk_drag_source_set_icon_pixbuf <'> Fgtk_drag_source_set_icon_stock
-     <'> Fgtk_drag_source_set_target_list <'> Fgtk_drag_source_unset
-     <'> Fgtk_drag_unhighlight <'> Fgtk_drawing_area_new <'> Fgtk_editable_copy_clipboard
-     <'> Fgtk_editable_cut_clipboard <'> Fgtk_editable_delete_selection
-     <'> Fgtk_editable_delete_text
-     <'> Fgtk_editable_get_chars <'> Fgtk_editable_get_editable
-     <'> Fgtk_editable_get_position <'> Fgtk_editable_get_selection_bounds
-     <'> Fgtk_editable_insert_text <'> Fgtk_editable_paste_clipboard
-     <'> Fgtk_editable_set_editable <'> Fgtk_editable_set_position
-     <'> Fgtk_entry_completion_complete <'> Fgtk_entry_completion_delete_action
-     <'> Fgtk_entry_completion_get_entry <'> Fgtk_entry_completion_get_inline_completion
-     <'> Fgtk_entry_completion_get_minimum_key_length <'> Fgtk_entry_completion_get_model
-     <'> Fgtk_entry_completion_get_popup_completion <'> Fgtk_entry_completion_get_text_column
-     <'> Fgtk_entry_completion_insert_action_markup <'> Fgtk_entry_completion_insert_action_text
-     <'> Fgtk_entry_completion_insert_prefix <'> Fgtk_entry_completion_new
-     <'> Fgtk_entry_completion_set_inline_completion <'> Fgtk_entry_completion_set_match_func
-     <'> Fgtk_entry_completion_set_minimum_key_length <'> Fgtk_entry_completion_set_model
-     <'> Fgtk_entry_completion_set_popup_completion <'> Fgtk_entry_completion_set_text_column
-     <'> Fgtk_entry_get_activates_default <'> Fgtk_entry_get_alignment
-     <'> Fgtk_entry_get_completion
-     <'> Fgtk_entry_get_has_frame <'> Fgtk_entry_get_invisible_char <'> Fgtk_entry_get_layout
-     <'> Fgtk_entry_get_max_length <'> Fgtk_entry_get_text <'> Fgtk_entry_get_visibility
-     <'> Fgtk_entry_get_width_chars <'> Fgtk_entry_layout_index_to_text_index <'> Fgtk_entry_new
-     <'> Fgtk_entry_set_activates_default <'> Fgtk_entry_set_alignment
-     <'> Fgtk_entry_set_completion <'> Fgtk_entry_set_has_frame <'> Fgtk_entry_set_invisible_char
-     <'> Fgtk_entry_set_max_length <'> Fgtk_entry_set_text <'> Fgtk_entry_set_visibility
-     <'> Fgtk_entry_set_width_chars <'> Fgtk_entry_text_index_to_layout_index
-     <'> Fgtk_event_box_get_above_child <'> Fgtk_event_box_get_visible_window
-     <'> Fgtk_event_box_new <'> Fgtk_event_box_set_above_child
-     <'> Fgtk_event_box_set_visible_window <'> Fgtk_events_pending <'> Fgtk_expander_get_expanded
-     <'> Fgtk_expander_get_label <'> Fgtk_expander_get_label_widget
-     <'> Fgtk_expander_get_spacing <'> Fgtk_expander_get_use_markup
-     <'> Fgtk_expander_get_use_underline <'> Fgtk_expander_new <'> Fgtk_expander_new_with_mnemonic
-     <'> Fgtk_expander_set_expanded <'> Fgtk_expander_set_label <'> Fgtk_expander_set_label_widget
-     <'> Fgtk_expander_set_spacing <'> Fgtk_expander_set_use_markup
-     <'> Fgtk_expander_set_use_underline <'> Fgtk_false ) constant gtk-procs-1
+*with-test-gtk* [if]
+  \ FIXME
+  \ Splitted in four arrays because we have a 1024 stack limit. [ms]
+  #( 'Fg_free 'Fg_signal_lookup 'Fg_source_remove 'Fg_type_from_name
+     'Fg_type_is_a 'Fg_type_name 'Fg_type_parent 'Fg_type_qname 'Fgdk_atom_intern
+     'Fgdk_init 'Fgdk_init_check 'Fgdk_set_show_events 'Fgdk_threads_enter
+     'Fgdk_threads_init 'Fgdk_threads_leave 'Fgdk_utf8_to_string_target
+     'Fgtk_accel_map_load 'Fgtk_accel_map_load_fd 'Fgtk_accel_map_lookup_entry
+     'Fgtk_accel_map_save 'Fgtk_accel_map_save_fd 'Fgtk_button_new_with_label
+     'Fgtk_check_button_new_with_label 'Fgtk_check_menu_item_new_with_label
+     'Fgtk_color_selection_palette_from_string 'Fgtk_disable_setlocale
+     'Fgtk_icon_size_from_name 'Fgtk_image_menu_item_new_with_label 'Fgtk_init
+     'Fgtk_init_check 'Fgtk_key_snooper_install 'Fgtk_key_snooper_remove
+     'Fgtk_main 'Fgtk_main_do_event 'Fgtk_main_iteration 'Fgtk_main_iteration_do
+     'Fgtk_main_level 'Fgtk_main_quit 'Fgtk_menu_item_new_with_label
+     'Fgtk_radio_button_new_with_label 'Fgtk_radio_menu_item_new_with_label
+     'Fgtk_rc_find_module_in_path 'Fgtk_toggle_button_new_with_label
+     'Fpango_coverage_from_bytes 'Fpango_find_paragraph_boundary
+     'Fpango_language_from_string 'Fpango_script_iter_new ) constant breakable-gtk-procs
 
-  #( <'> Fgtk_file_chooser_add_filter <'> Fgtk_file_chooser_add_shortcut_folder
-     <'> Fgtk_file_chooser_add_shortcut_folder_uri <'> Fgtk_file_chooser_button_get_title
-     <'> Fgtk_file_chooser_button_get_width_chars <'> Fgtk_file_chooser_button_set_title
-     <'> Fgtk_file_chooser_button_set_width_chars <'> Fgtk_file_chooser_dialog_new
-     <'> Fgtk_file_chooser_get_action <'> Fgtk_file_chooser_get_current_folder
-     <'> Fgtk_file_chooser_get_current_folder_uri <'> Fgtk_file_chooser_get_extra_widget
-     <'> Fgtk_file_chooser_get_filename <'> Fgtk_file_chooser_get_filenames
-     <'> Fgtk_file_chooser_get_filter <'> Fgtk_file_chooser_get_local_only
-     <'> Fgtk_file_chooser_get_preview_filename <'> Fgtk_file_chooser_get_preview_uri
-     <'> Fgtk_file_chooser_get_preview_widget <'> Fgtk_file_chooser_get_preview_widget_active
-     <'> Fgtk_file_chooser_get_select_multiple <'> Fgtk_file_chooser_get_show_hidden 
-     <'> Fgtk_file_chooser_get_uri <'> Fgtk_file_chooser_get_uris 
-     <'> Fgtk_file_chooser_get_use_preview_label <'> Fgtk_file_chooser_list_filters
-     <'> Fgtk_file_chooser_list_shortcut_folder_uris <'> Fgtk_file_chooser_list_shortcut_folders
-     <'> Fgtk_file_chooser_remove_filter <'> Fgtk_file_chooser_remove_shortcut_folder
-     <'> Fgtk_file_chooser_remove_shortcut_folder_uri <'> Fgtk_file_chooser_select_all 
-     <'> Fgtk_file_chooser_select_filename <'> Fgtk_file_chooser_select_uri 
-     <'> Fgtk_file_chooser_set_action <'> Fgtk_file_chooser_set_current_folder
-     <'> Fgtk_file_chooser_set_current_folder_uri <'> Fgtk_file_chooser_set_current_name 
-     <'> Fgtk_file_chooser_set_extra_widget <'> Fgtk_file_chooser_set_filename 
-     <'> Fgtk_file_chooser_set_filter <'> Fgtk_file_chooser_set_local_only 
-     <'> Fgtk_file_chooser_set_preview_widget <'> Fgtk_file_chooser_set_preview_widget_active
-     <'> Fgtk_file_chooser_set_select_multiple <'> Fgtk_file_chooser_set_show_hidden 
-     <'> Fgtk_file_chooser_set_uri <'> Fgtk_file_chooser_set_use_preview_label
-     <'> Fgtk_file_chooser_unselect_all <'> Fgtk_file_chooser_unselect_filename
-     <'> Fgtk_file_chooser_unselect_uri <'> Fgtk_file_filter_add_pattern
-     <'> Fgtk_file_filter_add_pixbuf_formats <'> Fgtk_file_filter_filter
-     <'> Fgtk_file_filter_get_name <'> Fgtk_file_filter_get_needed
-     <'> Fgtk_file_filter_new <'> Fgtk_file_filter_set_name
-     <'> Fgtk_fixed_move <'> Fgtk_fixed_new <'> Fgtk_fixed_put
-     <'> Fgtk_font_button_get_font_name <'> Fgtk_font_button_get_show_size
-     <'> Fgtk_font_button_get_show_style <'> Fgtk_font_button_get_title
-     <'> Fgtk_font_button_get_use_font <'> Fgtk_font_button_get_use_size
-     <'> Fgtk_font_button_new <'> Fgtk_font_button_new_with_font
-     <'> Fgtk_font_button_set_font_name <'> Fgtk_font_button_set_show_size
-     <'> Fgtk_font_button_set_show_style <'> Fgtk_font_button_set_title
-     <'> Fgtk_font_button_set_use_font <'> Fgtk_font_button_set_use_size
-     <'> Fgtk_font_selection_dialog_get_font_name <'> Fgtk_font_selection_dialog_get_preview_text
-     <'> Fgtk_font_selection_dialog_new <'> Fgtk_font_selection_dialog_set_font_name
-     <'> Fgtk_font_selection_dialog_set_preview_text <'> Fgtk_font_selection_get_font_name
-     <'> Fgtk_font_selection_get_preview_text <'> Fgtk_font_selection_new
-     <'> Fgtk_font_selection_set_preview_text <'> Fgtk_frame_get_label
-     <'> Fgtk_frame_get_label_align <'> Fgtk_frame_get_label_widget
-     <'> Fgtk_frame_get_shadow_type <'> Fgtk_frame_new
-     <'> Fgtk_frame_set_label <'> Fgtk_frame_set_label_align
-     <'> Fgtk_frame_set_label_widget <'> Fgtk_frame_set_shadow_type
-     <'> Fgtk_get_current_event <'> Fgtk_get_current_event_state
-     <'> Fgtk_get_current_event_time <'> Fgtk_get_default_language
-     <'> Fgtk_get_event_widget <'> Fgtk_grab_add <'> Fgtk_grab_get_current
-     <'> Fgtk_grab_remove <'> Fgtk_handle_box_get_handle_position
-     <'> Fgtk_handle_box_get_shadow_type <'> Fgtk_handle_box_get_snap_edge
-     <'> Fgtk_handle_box_new <'> Fgtk_handle_box_set_handle_position
-     <'> Fgtk_handle_box_set_shadow_type <'> Fgtk_handle_box_set_snap_edge
-     <'> Fgtk_hbox_new <'> Fgtk_hbutton_box_new <'> Fgtk_hpaned_new
-     <'> Fgtk_hruler_new <'> Fgtk_hscale_new <'> Fgtk_hscale_new_with_range
-     <'> Fgtk_hscrollbar_new <'> Fgtk_hseparator_new <'> Fgtk_icon_factory_add
-     <'> Fgtk_icon_factory_add_default <'> Fgtk_icon_factory_lookup
-     <'> Fgtk_icon_factory_lookup_default <'> Fgtk_icon_factory_new
-     <'> Fgtk_icon_factory_remove_default <'> Fgtk_icon_info_copy
-     <'> Fgtk_icon_info_free <'> Fgtk_icon_info_get_base_size
-     <'> Fgtk_icon_info_get_builtin_pixbuf <'> Fgtk_icon_info_get_display_name
-     <'> Fgtk_icon_info_get_embedded_rect <'> Fgtk_icon_info_get_filename
-     <'> Fgtk_icon_info_load_icon <'> Fgtk_icon_info_set_raw_coordinates
-     <'> Fgtk_icon_set_add_source <'> Fgtk_icon_set_copy
-     <'> Fgtk_icon_set_get_sizes <'> Fgtk_icon_set_new
-     <'> Fgtk_icon_set_new_from_pixbuf <'> Fgtk_icon_set_ref
-     <'> Fgtk_icon_set_render_icon <'> Fgtk_icon_set_unref
-     <'> Fgtk_icon_size_get_name <'> Fgtk_icon_size_lookup
-     <'> Fgtk_icon_size_register <'> Fgtk_icon_size_register_alias
-     <'> Fgtk_icon_source_copy <'> Fgtk_icon_source_free
-     <'> Fgtk_icon_source_get_direction <'> Fgtk_icon_source_get_direction_wildcarded
-     <'> Fgtk_icon_source_get_filename
-     <'> Fgtk_icon_source_get_icon_name <'> Fgtk_icon_source_get_pixbuf
-     <'> Fgtk_icon_source_get_size <'> Fgtk_icon_source_get_size_wildcarded
-     <'> Fgtk_icon_source_get_state <'> Fgtk_icon_source_get_state_wildcarded
-     <'> Fgtk_icon_source_new <'> Fgtk_icon_source_set_direction
-     <'> Fgtk_icon_source_set_direction_wildcarded
-     <'> Fgtk_icon_source_set_filename <'> Fgtk_icon_source_set_pixbuf
-     <'> Fgtk_icon_source_set_size <'> Fgtk_icon_source_set_size_wildcarded
-     <'> Fgtk_icon_source_set_state <'> Fgtk_icon_source_set_state_wildcarded
-     <'> Fgtk_icon_theme_add_builtin_icon <'> Fgtk_icon_theme_append_search_path
-     <'> Fgtk_icon_theme_get_default <'> Fgtk_icon_theme_get_example_icon_name
-     <'> Fgtk_icon_theme_get_for_screen <'> Fgtk_icon_theme_get_icon_sizes
-     <'> Fgtk_icon_theme_get_search_path <'> Fgtk_icon_theme_has_icon
-     <'> Fgtk_icon_theme_list_icons <'> Fgtk_icon_theme_load_icon
-     <'> Fgtk_icon_theme_lookup_icon <'> Fgtk_icon_theme_new
-     <'> Fgtk_icon_theme_prepend_search_path <'> Fgtk_icon_theme_rescan_if_needed
-     <'> Fgtk_icon_theme_set_custom_theme <'> Fgtk_icon_theme_set_screen
-     <'> Fgtk_icon_view_get_markup_column <'> Fgtk_icon_view_get_model
-     <'> Fgtk_icon_view_get_path_at_pos <'> Fgtk_icon_view_get_pixbuf_column
-     <'> Fgtk_icon_view_get_selected_items <'> Fgtk_icon_view_get_selection_mode
-     <'> Fgtk_icon_view_get_text_column <'> Fgtk_icon_view_item_activated
-     <'> Fgtk_icon_view_new <'> Fgtk_icon_view_new_with_model
-     <'> Fgtk_icon_view_path_is_selected <'> Fgtk_icon_view_select_all
-     <'> Fgtk_icon_view_select_path <'> Fgtk_icon_view_selected_foreach
-     <'> Fgtk_icon_view_set_markup_column <'> Fgtk_icon_view_set_model
-     <'> Fgtk_icon_view_set_pixbuf_column <'> Fgtk_icon_view_set_selection_mode
-     <'> Fgtk_icon_view_set_text_column <'> Fgtk_icon_view_unselect_all
-     <'> Fgtk_icon_view_unselect_path <'> Fgtk_im_context_delete_surrounding
-     <'> Fgtk_im_context_filter_keypress <'> Fgtk_im_context_focus_in
-     <'> Fgtk_im_context_focus_out <'> Fgtk_im_context_get_preedit_string
-     <'> Fgtk_im_context_get_surrounding <'> Fgtk_im_context_reset
-     <'> Fgtk_im_context_set_client_window <'> Fgtk_im_context_set_cursor_location
-     <'> Fgtk_im_context_set_surrounding <'> Fgtk_im_context_set_use_preedit
-     <'> Fgtk_im_context_simple_add_table <'> Fgtk_im_context_simple_new
-     <'> Fgtk_im_multicontext_append_menuitems <'> Fgtk_im_multicontext_new
-     <'> Fgtk_label_get_attributes <'> Fgtk_label_get_ellipsize
-     <'> Fgtk_label_get_justify <'> Fgtk_label_get_label
-     <'> Fgtk_label_get_layout <'> Fgtk_label_get_layout_offsets
-     <'> Fgtk_label_get_line_wrap <'> Fgtk_label_get_mnemonic_keyval
-     <'> Fgtk_label_get_mnemonic_widget <'> Fgtk_label_get_selectable
-     <'> Fgtk_label_get_selection_bounds <'> Fgtk_label_get_single_line_mode
-     <'> Fgtk_label_get_text <'> Fgtk_label_get_use_markup
-     <'> Fgtk_label_get_use_underline <'> Fgtk_label_get_width_chars
-     <'> Fgtk_label_new <'> Fgtk_label_new_with_mnemonic <'> Fgtk_label_set_angle
-     <'> Fgtk_label_set_attributes <'> Fgtk_label_set_ellipsize
-     <'> Fgtk_label_set_justify <'> Fgtk_label_set_label
-     <'> Fgtk_label_set_line_wrap <'> Fgtk_label_set_markup
-     <'> Fgtk_label_set_markup_with_mnemonic <'> Fgtk_label_set_mnemonic_widget
-     <'> Fgtk_label_set_pattern <'> Fgtk_label_set_selectable
-     <'> Fgtk_label_set_single_line_mode <'> Fgtk_label_set_text
-     <'> Fgtk_label_set_text_with_mnemonic <'> Fgtk_label_set_use_markup
-     <'> Fgtk_label_set_use_underline <'> Fgtk_label_set_width_chars
-     <'> Fgtk_layout_get_size
-     <'> Fgtk_layout_move <'> Fgtk_layout_new
-     <'> Fgtk_layout_set_size
-     <'> Fgtk_list_store_append
-     <'> Fgtk_list_store_clear <'> Fgtk_list_store_insert
-     <'> Fgtk_list_store_insert_after <'> Fgtk_list_store_insert_before
-     <'> Fgtk_list_store_move_after <'> Fgtk_list_store_move_before
-     <'> Fgtk_list_store_new <'> Fgtk_list_store_newv <'> Fgtk_list_store_prepend
-     <'> Fgtk_list_store_remove <'> Fgtk_list_store_reorder
-     <'> Fgtk_list_store_set <'> Fgtk_list_store_set_column_types
-     <'> Fgtk_list_store_swap <'> Fgtk_menu_attach <'> Fgtk_menu_bar_new
-     <'> Fgtk_menu_detach <'> Fgtk_menu_get_accel_group <'> Fgtk_menu_get_active
-     <'> Fgtk_menu_get_attach_widget <'> Fgtk_menu_get_for_attach_widget
-     <'> Fgtk_menu_get_tearoff_state <'> Fgtk_menu_get_title
-     <'> Fgtk_menu_item_activate <'> Fgtk_menu_item_deselect
-     <'> Fgtk_menu_item_get_right_justified <'> Fgtk_menu_item_get_submenu
-     <'> Fgtk_menu_item_new <'> Fgtk_menu_item_new_with_mnemonic
-     <'> Fgtk_menu_item_select <'> Fgtk_menu_item_set_accel_path
-     <'> Fgtk_menu_item_set_right_justified <'> Fgtk_menu_item_set_submenu
-     <'> Fgtk_menu_item_toggle_size_allocate
-     <'> Fgtk_menu_item_toggle_size_request <'> Fgtk_menu_new
-     <'> Fgtk_menu_popdown <'> Fgtk_menu_popup <'> Fgtk_menu_reorder_child
-     <'> Fgtk_menu_reposition <'> Fgtk_menu_set_accel_group
-     <'> Fgtk_menu_set_accel_path <'> Fgtk_menu_set_active
-     <'> Fgtk_menu_set_monitor <'> Fgtk_menu_set_screen
-     <'> Fgtk_menu_set_tearoff_state <'> Fgtk_menu_set_title
-     <'> Fgtk_menu_shell_activate_item <'> Fgtk_menu_shell_append
-     <'> Fgtk_menu_shell_cancel <'> Fgtk_menu_shell_deactivate
-     <'> Fgtk_menu_shell_deselect <'> Fgtk_menu_shell_insert
-     <'> Fgtk_menu_shell_prepend <'> Fgtk_menu_shell_select_first
-     <'> Fgtk_menu_shell_select_item <'> Fgtk_menu_tool_button_get_menu
-     <'> Fgtk_menu_tool_button_new <'> Fgtk_menu_tool_button_new_from_stock
-     <'> Fgtk_menu_tool_button_set_menu <'> Fgtk_misc_get_alignment
-     <'> Fgtk_misc_get_padding <'> Fgtk_misc_set_alignment
-     <'> Fgtk_misc_set_padding <'> Fgtk_notebook_append_page
-     <'> Fgtk_notebook_append_page_menu <'> Fgtk_notebook_get_current_page
-     <'> Fgtk_notebook_get_menu_label <'> Fgtk_notebook_get_menu_label_text
-     <'> Fgtk_notebook_get_n_pages <'> Fgtk_notebook_get_nth_page
-     <'> Fgtk_notebook_get_scrollable <'> Fgtk_notebook_get_show_border
-     <'> Fgtk_notebook_get_show_tabs <'> Fgtk_notebook_get_tab_label
-     <'> Fgtk_notebook_get_tab_label_text <'> Fgtk_notebook_get_tab_pos
-     <'> Fgtk_notebook_insert_page <'> Fgtk_notebook_insert_page_menu
-     <'> Fgtk_notebook_new <'> Fgtk_notebook_next_page <'> Fgtk_notebook_page_num
-     <'> Fgtk_notebook_popup_disable <'> Fgtk_notebook_popup_enable
-     <'> Fgtk_notebook_prepend_page <'> Fgtk_notebook_prepend_page_menu
-     <'> Fgtk_notebook_prev_page <'> Fgtk_notebook_remove_page
-     <'> Fgtk_notebook_reorder_child <'> Fgtk_notebook_set_current_page
-     <'> Fgtk_notebook_set_menu_label <'> Fgtk_notebook_set_menu_label_text
-     <'> Fgtk_notebook_set_scrollable <'> Fgtk_notebook_set_show_border
-     <'> Fgtk_notebook_set_show_tabs <'> Fgtk_notebook_set_tab_label
-     <'> Fgtk_notebook_set_tab_label_text <'> Fgtk_notebook_set_tab_pos
-     <'> Fgtk_paned_add1 <'> Fgtk_paned_add2 <'> Fgtk_paned_get_child1
-     <'> Fgtk_paned_get_child2 <'> Fgtk_paned_get_position <'> Fgtk_paned_pack1
-     <'> Fgtk_paned_pack2 <'> Fgtk_paned_set_position <'> Fgtk_plug_construct
-     <'> Fgtk_plug_get_id <'> Fgtk_plug_new <'> Fgtk_progress_bar_get_ellipsize
-     <'> Fgtk_progress_bar_get_fraction <'> Fgtk_progress_bar_get_pulse_step
-     <'> Fgtk_progress_bar_get_text <'> Fgtk_progress_bar_new
-     <'> Fgtk_progress_bar_pulse <'> Fgtk_progress_bar_set_ellipsize
-     <'> Fgtk_progress_bar_set_fraction <'> Fgtk_progress_bar_set_pulse_step
-     <'> Fgtk_progress_bar_set_text <'> Fgtk_propagate_event
-     <'> Fgtk_radio_action_get_current_value <'> Fgtk_radio_action_get_group
-     <'> Fgtk_radio_action_new <'> Fgtk_radio_action_set_group
-     <'> Fgtk_radio_button_get_group <'> Fgtk_radio_button_new
-     <'> Fgtk_radio_button_new_from_widget <'> Fgtk_radio_button_new_with_label_from_widget
-     <'> Fgtk_radio_button_new_with_mnemonic <'> Fgtk_radio_button_new_with_mnemonic_from_widget
-     <'> Fgtk_radio_button_set_group <'> Fgtk_radio_menu_item_get_group
-     <'> Fgtk_radio_menu_item_new <'> Fgtk_radio_menu_item_new_from_widget
-     <'> Fgtk_radio_menu_item_new_with_label_from_widget
-     <'> Fgtk_radio_menu_item_new_with_mnemonic
-     <'> Fgtk_radio_menu_item_new_with_mnemonic_from_widget
-     <'> Fgtk_radio_menu_item_set_group <'> Fgtk_radio_tool_button_get_group
-     <'> Fgtk_radio_tool_button_new <'> Fgtk_radio_tool_button_new_from_stock
-     <'> Fgtk_radio_tool_button_new_from_widget
-     <'> Fgtk_radio_tool_button_new_with_stock_from_widget
-     <'> Fgtk_radio_tool_button_set_group <'> Fgtk_range_get_adjustment
-     <'> Fgtk_range_get_inverted <'> Fgtk_range_get_update_policy
-     <'> Fgtk_range_get_value <'> Fgtk_range_set_adjustment
-     <'> Fgtk_range_set_increments <'> Fgtk_range_set_inverted
-     <'> Fgtk_range_set_range <'> Fgtk_range_set_update_policy
-     <'> Fgtk_range_set_value <'> Fgtk_rc_add_default_file
-     <'> Fgtk_rc_get_default_files <'> Fgtk_rc_get_im_module_file
-     <'> Fgtk_rc_get_im_module_path <'> Fgtk_rc_get_module_dir
-     <'> Fgtk_rc_get_style <'> Fgtk_rc_get_theme_dir <'> Fgtk_rc_parse
-     <'> Fgtk_rc_reparse_all <'> Fgtk_rc_set_default_files <'> Fgtk_rc_style_copy
-     <'> Fgtk_rc_style_new <'> Fgtk_ruler_get_metric <'> Fgtk_ruler_get_range
-     <'> Fgtk_ruler_set_metric <'> Fgtk_ruler_set_range <'> Fgtk_scale_get_digits
-     <'> Fgtk_scale_get_draw_value <'> Fgtk_scale_get_layout
-     <'> Fgtk_scale_get_layout_offsets <'> Fgtk_scale_get_value_pos
-     <'> Fgtk_scale_set_digits <'> Fgtk_scale_set_draw_value
-     <'> Fgtk_scale_set_value_pos <'> Fgtk_scrolled_window_add_with_viewport
-     <'> Fgtk_scrolled_window_get_hadjustment <'> Fgtk_scrolled_window_get_placement
-     <'> Fgtk_scrolled_window_get_policy <'> Fgtk_scrolled_window_get_shadow_type
-     <'> Fgtk_scrolled_window_get_vadjustment <'> Fgtk_scrolled_window_new
-     <'> Fgtk_scrolled_window_set_hadjustment <'> Fgtk_scrolled_window_set_placement
-     <'> Fgtk_scrolled_window_set_policy <'> Fgtk_scrolled_window_set_shadow_type
-     <'> Fgtk_scrolled_window_set_vadjustment <'> Fgtk_selection_add_target
-     <'> Fgtk_selection_add_targets <'> Fgtk_selection_clear_targets
-     <'> Fgtk_selection_convert <'> Fgtk_selection_data_copy
-     <'> Fgtk_selection_data_free <'> Fgtk_selection_data_get_pixbuf
-     <'> Fgtk_selection_data_get_targets <'> Fgtk_selection_data_get_text
-     <'> Fgtk_selection_data_get_uris <'> Fgtk_selection_data_set
-     <'> Fgtk_selection_data_set_pixbuf <'> Fgtk_selection_data_set_text
-     <'> Fgtk_selection_data_set_uris <'> Fgtk_selection_data_targets_include_image
-     <'> Fgtk_selection_data_targets_include_text <'> Fgtk_selection_owner_set
-     <'> Fgtk_selection_remove_all <'> Fgtk_separator_menu_item_new
-     <'> Fgtk_separator_tool_item_get_draw <'> Fgtk_separator_tool_item_new
-     <'> Fgtk_separator_tool_item_set_draw <'> Fgtk_set_locale
-     <'> Fgtk_size_group_add_widget <'> Fgtk_size_group_get_mode
-     <'> Fgtk_size_group_new <'> Fgtk_size_group_remove_widget
-     <'> Fgtk_size_group_set_mode <'> Fgtk_socket_add_id
-     <'> Fgtk_socket_get_id <'> Fgtk_socket_new <'> Fgtk_spin_button_configure
-     <'> Fgtk_spin_button_get_adjustment <'> Fgtk_spin_button_get_digits
-     <'> Fgtk_spin_button_get_increments <'> Fgtk_spin_button_get_numeric
-     <'> Fgtk_spin_button_get_range <'> Fgtk_spin_button_get_snap_to_ticks
-     <'> Fgtk_spin_button_get_update_policy <'> Fgtk_spin_button_get_value
-     <'> Fgtk_spin_button_get_value_as_int <'> Fgtk_spin_button_get_wrap
-     <'> Fgtk_spin_button_new <'> Fgtk_spin_button_new_with_range
-     <'> Fgtk_spin_button_set_adjustment <'> Fgtk_spin_button_set_digits
-     <'> Fgtk_spin_button_set_increments <'> Fgtk_spin_button_set_numeric
-     <'> Fgtk_spin_button_set_range <'> Fgtk_spin_button_set_snap_to_ticks
-     <'> Fgtk_spin_button_set_update_policy <'> Fgtk_spin_button_set_value
-     <'> Fgtk_spin_button_set_wrap <'> Fgtk_spin_button_spin
-     <'> Fgtk_spin_button_update <'> Fgtk_statusbar_get_context_id
-     <'> Fgtk_statusbar_new
-     <'> Fgtk_statusbar_pop <'> Fgtk_statusbar_push
-     <'> Fgtk_statusbar_remove
-     <'> Fgtk_stock_add <'> Fgtk_stock_add_static <'> Fgtk_stock_item_copy
-     <'> Fgtk_stock_item_free <'> Fgtk_stock_list_ids <'> Fgtk_stock_lookup
-     <'> Fgtk_style_attach <'> Fgtk_style_copy <'> Fgtk_style_detach
-     <'> Fgtk_style_lookup_icon_set <'> Fgtk_style_new <'> Fgtk_style_render_icon
-     <'> Fgtk_style_set_background <'> Fgtk_table_attach
-     <'> Fgtk_table_attach_defaults <'> Fgtk_table_get_col_spacing
-     <'> Fgtk_table_get_default_col_spacing <'> Fgtk_table_get_default_row_spacing
-     <'> Fgtk_table_get_homogeneous <'> Fgtk_table_get_row_spacing
-     <'> Fgtk_table_new <'> Fgtk_table_resize <'> Fgtk_table_set_col_spacing
-     <'> Fgtk_table_set_col_spacings <'> Fgtk_table_set_homogeneous
-     <'> Fgtk_table_set_row_spacing <'> Fgtk_table_set_row_spacings
-     <'> Fgtk_target_list_add <'> Fgtk_target_list_add_image_targets
-     <'> Fgtk_target_list_add_table <'> Fgtk_target_list_add_text_targets
-     <'> Fgtk_target_list_add_uri_targets <'> Fgtk_target_list_find
-     <'> Fgtk_target_list_remove <'> Fgtk_target_list_unref
-     <'> Fgtk_tearoff_menu_item_new <'> Fgtk_text_attributes_copy
-     <'> Fgtk_text_attributes_copy_values <'> Fgtk_text_attributes_new
-     <'> Fgtk_text_attributes_unref <'> Fgtk_text_buffer_add_selection_clipboard
-     <'> Fgtk_text_buffer_apply_tag <'> Fgtk_text_buffer_apply_tag_by_name
-     <'> Fgtk_text_buffer_backspace <'> Fgtk_text_buffer_begin_user_action
-     <'> Fgtk_text_buffer_copy_clipboard <'> Fgtk_text_buffer_create_child_anchor
-     <'> Fgtk_text_buffer_create_mark <'> Fgtk_text_buffer_create_tag
-     <'> Fgtk_text_buffer_cut_clipboard <'> Fgtk_text_buffer_delete
-     <'> Fgtk_text_buffer_delete_interactive <'> Fgtk_text_buffer_delete_mark
-     <'> Fgtk_text_buffer_delete_mark_by_name
-     <'> Fgtk_text_buffer_delete_selection <'> Fgtk_text_buffer_end_user_action
-     <'> Fgtk_text_buffer_get_bounds <'> Fgtk_text_buffer_get_char_count
-     <'> Fgtk_text_buffer_get_end_iter <'> Fgtk_text_buffer_get_insert
-     <'> Fgtk_text_buffer_get_iter_at_child_anchor <'> Fgtk_text_buffer_get_iter_at_line
-     <'> Fgtk_text_buffer_get_iter_at_line_index <'> Fgtk_text_buffer_get_iter_at_line_offset
-     <'> Fgtk_text_buffer_get_iter_at_mark <'> Fgtk_text_buffer_get_iter_at_offset
-     <'> Fgtk_text_buffer_get_line_count <'> Fgtk_text_buffer_get_mark
-     <'> Fgtk_text_buffer_get_modified <'> Fgtk_text_buffer_get_selection_bound
-     <'> Fgtk_text_buffer_get_selection_bounds <'> Fgtk_text_buffer_get_slice
-     <'> Fgtk_text_buffer_get_start_iter <'> Fgtk_text_buffer_get_tag_table
-     <'> Fgtk_text_buffer_get_text <'> Fgtk_text_buffer_insert
-     <'> Fgtk_text_buffer_insert_at_cursor <'> Fgtk_text_buffer_insert_child_anchor
-     <'> Fgtk_text_buffer_insert_interactive <'> Fgtk_text_buffer_insert_interactive_at_cursor
-     <'> Fgtk_text_buffer_insert_pixbuf <'> Fgtk_text_buffer_insert_range
-     <'> Fgtk_text_buffer_insert_range_interactive <'> Fgtk_text_buffer_insert_with_tags
-     <'> Fgtk_text_buffer_insert_with_tags_by_name <'> Fgtk_text_buffer_move_mark
-     <'> Fgtk_text_buffer_move_mark_by_name <'> Fgtk_text_buffer_new
-     <'> Fgtk_text_buffer_paste_clipboard <'> Fgtk_text_buffer_place_cursor
-     <'> Fgtk_text_buffer_remove_all_tags <'> Fgtk_text_buffer_remove_selection_clipboard
-     <'> Fgtk_text_buffer_remove_tag <'> Fgtk_text_buffer_remove_tag_by_name
-     <'> Fgtk_text_buffer_select_range <'> Fgtk_text_buffer_set_modified
-     <'> Fgtk_text_buffer_set_text <'> Fgtk_text_child_anchor_get_deleted
-     <'> Fgtk_text_child_anchor_get_widgets <'> Fgtk_text_child_anchor_new
-     <'> Fgtk_text_iter_backward_char <'> Fgtk_text_iter_backward_chars
-     <'> Fgtk_text_iter_backward_cursor_position <'> Fgtk_text_iter_backward_cursor_positions
-     <'> Fgtk_text_iter_backward_find_char <'> Fgtk_text_iter_backward_line
-     <'> Fgtk_text_iter_backward_lines <'> Fgtk_text_iter_backward_search
-     <'> Fgtk_text_iter_backward_sentence_start <'> Fgtk_text_iter_backward_sentence_starts
-     <'> Fgtk_text_iter_backward_to_tag_toggle <'> Fgtk_text_iter_backward_word_start
-     <'> Fgtk_text_iter_backward_word_starts <'> Fgtk_text_iter_begins_tag
-     <'> Fgtk_text_iter_can_insert <'> Fgtk_text_iter_compare
-     <'> Fgtk_text_iter_copy <'> Fgtk_text_iter_editable
-     <'> Fgtk_text_iter_ends_line <'> Fgtk_text_iter_ends_sentence
-     <'> Fgtk_text_iter_ends_tag <'> Fgtk_text_iter_ends_word
-     <'> Fgtk_text_iter_equal <'> Fgtk_text_iter_forward_char
-     <'> Fgtk_text_iter_forward_chars <'> Fgtk_text_iter_forward_cursor_position
-     <'> Fgtk_text_iter_forward_cursor_positions <'> Fgtk_text_iter_forward_find_char 
-     <'> Fgtk_text_iter_forward_line <'> Fgtk_text_iter_forward_lines 
-     <'> Fgtk_text_iter_forward_search <'> Fgtk_text_iter_forward_sentence_end
-     <'> Fgtk_text_iter_forward_sentence_ends <'> Fgtk_text_iter_forward_to_end
-     <'> Fgtk_text_iter_forward_to_line_end
-     <'> Fgtk_text_iter_forward_to_tag_toggle <'> Fgtk_text_iter_forward_word_end
-     <'> Fgtk_text_iter_forward_word_ends <'> Fgtk_text_iter_free
-     <'> Fgtk_text_iter_get_attributes <'> Fgtk_text_iter_get_buffer
-     <'> Fgtk_text_iter_get_bytes_in_line <'> Fgtk_text_iter_get_char
-     <'> Fgtk_text_iter_get_chars_in_line <'> Fgtk_text_iter_get_child_anchor
-     <'> Fgtk_text_iter_get_language <'> Fgtk_text_iter_get_line
-     <'> Fgtk_text_iter_get_line_index <'> Fgtk_text_iter_get_line_offset
-     <'> Fgtk_text_iter_get_marks <'> Fgtk_text_iter_get_offset
-     <'> Fgtk_text_iter_get_pixbuf <'> Fgtk_text_iter_get_slice
-     <'> Fgtk_text_iter_get_tags <'> Fgtk_text_iter_get_text
-     <'> Fgtk_text_iter_get_toggled_tags <'> Fgtk_text_iter_get_visible_line_index
-     <'> Fgtk_text_iter_get_visible_line_offset
-     <'> Fgtk_text_iter_get_visible_slice <'> Fgtk_text_iter_get_visible_text
-     <'> Fgtk_text_iter_has_tag <'> Fgtk_text_iter_in_range
-     <'> Fgtk_text_iter_inside_sentence <'> Fgtk_text_iter_inside_word
-     <'> Fgtk_text_iter_is_cursor_position <'> Fgtk_text_iter_is_end
-     <'> Fgtk_text_iter_is_start <'> Fgtk_text_iter_order
-     <'> Fgtk_text_iter_set_line <'> Fgtk_text_iter_set_line_index
-     <'> Fgtk_text_iter_set_line_offset <'> Fgtk_text_iter_set_offset
-     <'> Fgtk_text_iter_set_visible_line_index
-     <'> Fgtk_text_iter_set_visible_line_offset <'> Fgtk_text_iter_starts_line
-     <'> Fgtk_text_iter_starts_sentence <'> Fgtk_text_iter_starts_word
-     <'> Fgtk_text_iter_toggles_tag <'> Fgtk_text_mark_get_buffer
-     <'> Fgtk_text_mark_get_deleted <'> Fgtk_text_mark_get_left_gravity
-     <'> Fgtk_text_mark_get_name <'> Fgtk_text_mark_get_visible
-     <'> Fgtk_text_mark_set_visible <'> Fgtk_text_tag_event
-     <'> Fgtk_text_tag_get_priority <'> Fgtk_text_tag_new
-     <'> Fgtk_text_tag_set_priority <'> Fgtk_text_tag_table_add
-     <'> Fgtk_text_tag_table_foreach <'> Fgtk_text_tag_table_get_size
-     <'> Fgtk_text_tag_table_lookup <'> Fgtk_text_tag_table_new
-     <'> Fgtk_text_tag_table_remove <'> Fgtk_text_view_add_child_at_anchor
-     <'> Fgtk_text_view_add_child_in_window <'> Fgtk_text_view_backward_display_line
-     <'> Fgtk_text_view_backward_display_line_start <'> Fgtk_text_view_buffer_to_window_coords
-     <'> Fgtk_text_view_forward_display_line <'> Fgtk_text_view_forward_display_line_end
-     <'> Fgtk_text_view_get_accepts_tab <'> Fgtk_text_view_get_border_window_size
-     <'> Fgtk_text_view_get_buffer <'> Fgtk_text_view_get_cursor_visible
-     <'> Fgtk_text_view_get_default_attributes <'> Fgtk_text_view_get_editable
-     <'> Fgtk_text_view_get_indent <'> Fgtk_text_view_get_iter_at_location
-     <'> Fgtk_text_view_get_iter_location <'> Fgtk_text_view_get_justification
-     <'> Fgtk_text_view_get_left_margin <'> Fgtk_text_view_get_line_at_y
-     <'> Fgtk_text_view_get_line_yrange <'> Fgtk_text_view_get_overwrite
-     <'> Fgtk_text_view_get_pixels_above_lines <'> Fgtk_text_view_get_pixels_below_lines
-     <'> Fgtk_text_view_get_pixels_inside_wrap <'> Fgtk_text_view_get_right_margin
-     <'> Fgtk_text_view_get_tabs <'> Fgtk_text_view_get_visible_rect
-     <'> Fgtk_text_view_get_window <'> Fgtk_text_view_get_window_type
-     <'> Fgtk_text_view_get_wrap_mode <'> Fgtk_text_view_move_child
-     <'> Fgtk_text_view_move_mark_onscreen <'> Fgtk_text_view_move_visually
-     <'> Fgtk_text_view_new <'> Fgtk_text_view_new_with_buffer
-     <'> Fgtk_text_view_place_cursor_onscreen
-     <'> Fgtk_text_view_scroll_mark_onscreen <'> Fgtk_text_view_scroll_to_iter
-     <'> Fgtk_text_view_scroll_to_mark <'> Fgtk_text_view_set_accepts_tab
-     <'> Fgtk_text_view_set_border_window_size <'> Fgtk_text_view_set_buffer
-     <'> Fgtk_text_view_set_cursor_visible <'> Fgtk_text_view_set_editable
-     <'> Fgtk_text_view_set_indent <'> Fgtk_text_view_set_justification
-     <'> Fgtk_text_view_set_left_margin <'> Fgtk_text_view_set_overwrite
-     <'> Fgtk_text_view_set_pixels_above_lines <'> Fgtk_text_view_set_pixels_below_lines
-     <'> Fgtk_text_view_set_pixels_inside_wrap <'> Fgtk_text_view_set_right_margin
-     <'> Fgtk_text_view_set_tabs <'> Fgtk_text_view_set_wrap_mode
-     <'> Fgtk_text_view_starts_display_line
-     <'> Fgtk_text_view_window_to_buffer_coords <'> Fgtk_toggle_action_get_active
-     <'> Fgtk_toggle_action_get_draw_as_radio <'> Fgtk_toggle_action_new
-     <'> Fgtk_toggle_action_set_active <'> Fgtk_toggle_action_set_draw_as_radio
-     <'> Fgtk_toggle_action_toggled <'> Fgtk_toggle_button_get_active
-     <'> Fgtk_toggle_button_get_inconsistent <'> Fgtk_toggle_button_get_mode
-     <'> Fgtk_toggle_button_new <'> Fgtk_toggle_button_new_with_mnemonic
-     <'> Fgtk_toggle_button_set_active <'> Fgtk_toggle_button_set_inconsistent
-     <'> Fgtk_toggle_button_set_mode <'> Fgtk_toggle_button_toggled
-     <'> Fgtk_toggle_tool_button_get_active <'> Fgtk_toggle_tool_button_new
-     <'> Fgtk_toggle_tool_button_new_from_stock
-     <'> Fgtk_toggle_tool_button_set_active <'> Fgtk_tool_button_get_icon_widget
-     <'> Fgtk_tool_button_get_label <'> Fgtk_tool_button_get_label_widget
-     <'> Fgtk_tool_button_get_stock_id <'> Fgtk_tool_button_get_use_underline
-     <'> Fgtk_tool_button_new <'> Fgtk_tool_button_new_from_stock
-     <'> Fgtk_tool_button_set_icon_widget <'> Fgtk_tool_button_set_label
-     <'> Fgtk_tool_button_set_label_widget <'> Fgtk_tool_button_set_stock_id
-     <'> Fgtk_tool_button_set_use_underline <'> Fgtk_tool_item_get_expand
-     <'> Fgtk_tool_item_get_homogeneous <'> Fgtk_tool_item_get_icon_size
-     <'> Fgtk_tool_item_get_is_important <'> Fgtk_tool_item_get_proxy_menu_item
-     <'> Fgtk_tool_item_get_relief_style <'> Fgtk_tool_item_get_toolbar_style
-     <'> Fgtk_tool_item_get_use_drag_window <'> Fgtk_tool_item_get_visible_horizontal
-     <'> Fgtk_tool_item_get_visible_vertical <'> Fgtk_tool_item_new
-     <'> Fgtk_tool_item_rebuild_menu <'> Fgtk_tool_item_retrieve_proxy_menu_item
-     <'> Fgtk_tool_item_set_expand <'> Fgtk_tool_item_set_homogeneous
-     <'> Fgtk_tool_item_set_is_important <'> Fgtk_tool_item_set_proxy_menu_item
-     <'> Fgtk_tool_item_set_visible_horizontal
-     <'> Fgtk_tool_item_set_visible_vertical <'> Fgtk_toolbar_get_drop_index
-     <'> Fgtk_toolbar_get_icon_size <'> Fgtk_toolbar_get_item_index
-     <'> Fgtk_toolbar_get_n_items <'> Fgtk_toolbar_get_nth_item
-     <'> Fgtk_toolbar_get_relief_style <'> Fgtk_toolbar_get_show_arrow
-     <'> Fgtk_toolbar_get_style <'> Fgtk_toolbar_insert <'> Fgtk_toolbar_new
-     <'> Fgtk_toolbar_set_show_arrow <'> Fgtk_toolbar_set_style
-     <'> Fgtk_toolbar_unset_style <'> Fgtk_tree_drag_dest_drag_data_received
-     <'> Fgtk_tree_drag_dest_row_drop_possible <'> Fgtk_tree_drag_source_drag_data_delete
-     <'> Fgtk_tree_drag_source_drag_data_get <'> Fgtk_tree_drag_source_row_draggable 
-     <'> Fgtk_tree_get_row_drag_data <'> Fgtk_tree_iter_copy <'> Fgtk_tree_iter_free
-     <'> Fgtk_tree_model_filter_clear_cache <'> Fgtk_tree_model_filter_convert_child_path_to_path
-     <'> Fgtk_tree_model_filter_convert_iter_to_child_iter
-     <'> Fgtk_tree_model_filter_convert_path_to_child_path
-     <'> Fgtk_tree_model_filter_get_model <'> Fgtk_tree_model_filter_new
-     <'> Fgtk_tree_model_filter_refilter
-     <'> Fgtk_tree_model_filter_set_visible_column <'> Fgtk_tree_model_foreach
-     <'> Fgtk_tree_model_get_column_type <'> Fgtk_tree_model_get_flags
-     <'> Fgtk_tree_model_get_iter <'> Fgtk_tree_model_get_iter_first
-     <'> Fgtk_tree_model_get_iter_from_string <'> Fgtk_tree_model_get_n_columns
-     <'> Fgtk_tree_model_get_path <'> Fgtk_tree_model_get_string_from_iter
-     <'> Fgtk_tree_model_iter_children <'> Fgtk_tree_model_iter_has_child
-     <'> Fgtk_tree_model_iter_n_children <'> Fgtk_tree_model_iter_next
-     <'> Fgtk_tree_model_iter_nth_child <'> Fgtk_tree_model_iter_parent
-     <'> Fgtk_tree_model_ref_node <'> Fgtk_tree_model_row_changed
-     <'> Fgtk_tree_model_row_deleted <'> Fgtk_tree_model_row_has_child_toggled
-     <'> Fgtk_tree_model_row_inserted <'> Fgtk_tree_model_rows_reordered
-     <'> Fgtk_tree_model_sort_clear_cache <'> Fgtk_tree_model_sort_convert_child_iter_to_iter
-     <'> Fgtk_tree_model_sort_convert_child_path_to_path
-     <'> Fgtk_tree_model_sort_convert_iter_to_child_iter
-     <'> Fgtk_tree_model_sort_convert_path_to_child_path
-     <'> Fgtk_tree_model_sort_get_model <'> Fgtk_tree_model_sort_iter_is_valid
-     <'> Fgtk_tree_model_sort_new_with_model <'> Fgtk_tree_model_sort_reset_default_sort_func
-     <'> Fgtk_tree_model_unref_node <'> Fgtk_tree_path_append_index
-     <'> Fgtk_tree_path_compare <'> Fgtk_tree_path_copy <'> Fgtk_tree_path_down
-     <'> Fgtk_tree_path_free <'> Fgtk_tree_path_get_depth
-     <'> Fgtk_tree_path_get_indices <'> Fgtk_tree_path_is_ancestor
-     <'> Fgtk_tree_path_is_descendant <'> Fgtk_tree_path_new
-     <'> Fgtk_tree_path_new_first <'> Fgtk_tree_path_new_from_string
-     <'> Fgtk_tree_path_next <'> Fgtk_tree_path_prepend_index
-     <'> Fgtk_tree_path_prev <'> Fgtk_tree_path_to_string <'> Fgtk_tree_path_up
-     <'> Fgtk_tree_row_reference_deleted <'> Fgtk_tree_row_reference_free
-     <'> Fgtk_tree_row_reference_get_path <'> Fgtk_tree_row_reference_inserted
-     <'> Fgtk_tree_row_reference_new <'> Fgtk_tree_row_reference_new_proxy
-     <'> Fgtk_tree_row_reference_reordered <'> Fgtk_tree_row_reference_valid
-     <'> Fgtk_tree_selection_count_selected_rows <'> Fgtk_tree_selection_get_mode
-     <'> Fgtk_tree_selection_get_selected <'> Fgtk_tree_selection_get_selected_rows
-     <'> Fgtk_tree_selection_get_tree_view <'> Fgtk_tree_selection_get_user_data
-     <'> Fgtk_tree_selection_iter_is_selected <'> Fgtk_tree_selection_path_is_selected
-     <'> Fgtk_tree_selection_select_all <'> Fgtk_tree_selection_select_iter
-     <'> Fgtk_tree_selection_select_path <'> Fgtk_tree_selection_select_range
-     <'> Fgtk_tree_selection_selected_foreach <'> Fgtk_tree_selection_set_mode
-     <'> Fgtk_tree_selection_set_select_function <'> Fgtk_tree_selection_unselect_all 
-     <'> Fgtk_tree_selection_unselect_iter <'> Fgtk_tree_selection_unselect_path 
-     <'> Fgtk_tree_set_row_drag_data <'> Fgtk_tree_sortable_get_sort_column_id
-     <'> Fgtk_tree_sortable_has_default_sort_func <'> Fgtk_tree_sortable_set_default_sort_func
-     <'> Fgtk_tree_sortable_set_sort_column_id <'> Fgtk_tree_sortable_set_sort_func
-     <'> Fgtk_tree_sortable_sort_column_changed <'> Fgtk_tree_store_append
-     <'> Fgtk_tree_store_clear <'> Fgtk_tree_store_insert
-     <'> Fgtk_tree_store_insert_after <'> Fgtk_tree_store_insert_before
-     <'> Fgtk_tree_store_is_ancestor <'> Fgtk_tree_store_iter_depth
-     <'> Fgtk_tree_store_new <'> Fgtk_tree_store_newv <'> Fgtk_tree_store_prepend
-     <'> Fgtk_tree_store_remove <'> Fgtk_tree_store_reorder
-     <'> Fgtk_tree_store_set <'> Fgtk_tree_store_set_column_types
-     <'> Fgtk_tree_store_swap <'> Fgtk_tree_view_append_column
-     <'> Fgtk_tree_view_collapse_all <'> Fgtk_tree_view_collapse_row
-     <'> Fgtk_tree_view_column_add_attribute <'> Fgtk_tree_view_column_cell_get_position
-     <'> Fgtk_tree_view_column_cell_get_size <'> Fgtk_tree_view_column_cell_is_visible
-     <'> Fgtk_tree_view_column_cell_set_cell_data <'> Fgtk_tree_view_column_clear
-     <'> Fgtk_tree_view_column_clear_attributes <'> Fgtk_tree_view_column_clicked
-     <'> Fgtk_tree_view_column_get_alignment <'> Fgtk_tree_view_column_get_clickable 
-     <'> Fgtk_tree_view_column_get_expand <'> Fgtk_tree_view_column_get_fixed_width
-     <'> Fgtk_tree_view_column_get_max_width <'> Fgtk_tree_view_column_get_min_width
-     <'> Fgtk_tree_view_column_get_reorderable <'> Fgtk_tree_view_column_get_resizable
-     <'> Fgtk_tree_view_column_get_sizing <'> Fgtk_tree_view_column_get_sort_column_id
-     <'> Fgtk_tree_view_column_get_sort_indicator <'> Fgtk_tree_view_column_get_sort_order
-     <'> Fgtk_tree_view_column_get_spacing <'> Fgtk_tree_view_column_get_title
-     <'> Fgtk_tree_view_column_get_visible <'> Fgtk_tree_view_column_get_widget
-     <'> Fgtk_tree_view_column_get_width <'> Fgtk_tree_view_column_new
-     <'> Fgtk_tree_view_column_new_with_attributes <'> Fgtk_tree_view_column_pack_end 
-     <'> Fgtk_tree_view_column_pack_start <'> Fgtk_tree_view_column_set_alignment
-     <'> Fgtk_tree_view_column_set_attributes <'> Fgtk_tree_view_column_set_cell_data_func
-     <'> Fgtk_tree_view_column_set_clickable <'> Fgtk_tree_view_column_set_expand
-     <'> Fgtk_tree_view_column_set_fixed_width <'> Fgtk_tree_view_column_set_max_width
-     <'> Fgtk_tree_view_column_set_min_width <'> Fgtk_tree_view_column_set_reorderable
-     <'> Fgtk_tree_view_column_set_resizable <'> Fgtk_tree_view_column_set_sizing
-     <'> Fgtk_tree_view_column_set_sort_column_id <'> Fgtk_tree_view_column_set_sort_indicator
-     <'> Fgtk_tree_view_column_set_sort_order
-     <'> Fgtk_tree_view_column_set_spacing <'> Fgtk_tree_view_column_set_title
-     <'> Fgtk_tree_view_column_set_visible <'> Fgtk_tree_view_column_set_widget
-     <'> Fgtk_tree_view_columns_autosize <'> Fgtk_tree_view_enable_model_drag_dest
-     <'> Fgtk_tree_view_enable_model_drag_source <'> Fgtk_tree_view_expand_all
-     <'> Fgtk_tree_view_expand_row <'> Fgtk_tree_view_expand_to_path
-     <'> Fgtk_tree_view_get_background_area <'> Fgtk_tree_view_get_bin_window
-     <'> Fgtk_tree_view_get_cell_area <'> Fgtk_tree_view_get_column
-     <'> Fgtk_tree_view_get_columns <'> Fgtk_tree_view_get_cursor
-     <'> Fgtk_tree_view_get_dest_row_at_pos <'> Fgtk_tree_view_get_drag_dest_row
-     <'> Fgtk_tree_view_get_enable_search <'> Fgtk_tree_view_get_expander_column
-     <'> Fgtk_tree_view_get_fixed_height_mode
-     <'> Fgtk_tree_view_get_headers_visible <'> Fgtk_tree_view_get_hover_expand
-     <'> Fgtk_tree_view_get_hover_selection <'> Fgtk_tree_view_get_model
-     <'> Fgtk_tree_view_get_path_at_pos <'> Fgtk_tree_view_get_reorderable ) constant gtk-procs-2
+  #( 'FGDK_DEVICE 'FGDK_DISPLAY_OBJECT 'FGDK_DRAG_CONTEXT
+     'FGDK_DRAWABLE 'FGDK_EVENT_ANY 'FGDK_EVENT_BUTTON
+     'FGDK_EVENT_CONFIGURE 'FGDK_EVENT_CROSSING 'FGDK_EVENT_DND
+     'FGDK_EVENT_EXPOSE 'FGDK_EVENT_FOCUS 'FGDK_EVENT_KEY
+     'FGDK_EVENT_MOTION 'FGDK_EVENT_NOEXPOSE 'FGDK_EVENT_PROPERTY
+     'FGDK_EVENT_PROXIMITY 'FGDK_EVENT_SCROLL 'FGDK_EVENT_SELECTION
+     'FGDK_EVENT_SETTING 'FGDK_EVENT_VISIBILITY 'FGDK_EVENT_WINDOWSTATE
+     'FGDK_IS_DEVICE 'FGDK_IS_DISPLAY 'FGDK_IS_DRAG_CONTEXT
+     'FGDK_IS_DRAWABLE 'FGDK_IS_KEYMAP 'FGDK_IS_SCREEN
+     'FGDK_IS_VISUAL 'FGDK_IS_WINDOW 'FGDK_KEYMAP 'FGDK_SCREEN
+     'FGDK_VISUAL 'FGDK_WINDOW 'FGPOINTER 'FGTK_ABOUT_DIALOG
+     'FGTK_ACCEL_GROUP 'FGTK_ACCEL_LABEL 'FGTK_ACCEL_MAP
+     'FGTK_ACCESSIBLE 'FGTK_ACTION 'FGTK_ACTION_GROUP 'FGTK_ADJUSTMENT
+     'FGTK_ALIGNMENT 'FGTK_ARROW 'FGTK_ASPECT_FRAME 'FGTK_BIN
+     'FGTK_BOX 'FGTK_BUTTON 'FGTK_BUTTON_BOX 'FGTK_CALENDAR
+     'FGTK_CELL_EDITABLE 'FGTK_CELL_LAYOUT 'FGTK_CELL_RENDERER
+     'FGTK_CELL_RENDERER_COMBO 'FGTK_CELL_RENDERER_PIXBUF
+     'FGTK_CELL_RENDERER_PROGRESS 'FGTK_CELL_RENDERER_TEXT
+     'FGTK_CELL_RENDERER_TOGGLE 'FGTK_CELL_VIEW 'FGTK_CHECK_BUTTON
+     'FGTK_CHECK_MENU_ITEM 'FGTK_CLIPBOARD 'FGTK_COLOR_BUTTON
+     'FGTK_COLOR_SELECTION 'FGTK_COLOR_SELECTION_DIALOG 'FGTK_COMBO_BOX
+     'FGTK_CONTAINER 'FGTK_DIALOG
+     'FGTK_DRAWING_AREA 'FGTK_EDITABLE 'FGTK_ENTRY
+     'FGTK_ENTRY_COMPLETION 'FGTK_EVENT_BOX 'FGTK_EXPANDER
+     'FGTK_FILE_CHOOSER 'FGTK_FILE_CHOOSER_BUTTON
+     'FGTK_FILE_CHOOSER_DIALOG 'FGTK_FILE_CHOOSER_WIDGET
+     'FGTK_FILE_FILTER 'FGTK_FIXED 'FGTK_FONT_BUTTON
+     'FGTK_FONT_SELECTION 'FGTK_FONT_SELECTION_DIALOG
+     'FGTK_FRAME 'FGTK_HANDLE_BOX 'FGTK_HBOX 'FGTK_HBUTTON_BOX
+     'FGTK_HSCALE 'FGTK_HSCROLLBAR
+     'FGTK_HSEPARATOR 'FGTK_ICON_FACTORY 'FGTK_ICON_THEME
+     'FGTK_ICON_VIEW 'FGTK_IMAGE 'FGTK_IMAGE_MENU_ITEM
+     'FGTK_IM_CONTEXT 'FGTK_IM_CONTEXT_SIMPLE 'FGTK_IM_MULTICONTEXT
+     'FGTK_INVISIBLE 'FGTK_IS_ABOUT_DIALOG 'FGTK_IS_ACCEL_GROUP
+     'FGTK_IS_ACCEL_LABEL 'FGTK_IS_ACCEL_MAP 'FGTK_IS_ACCESSIBLE
+     'FGTK_IS_ACTION 'FGTK_IS_ACTION_GROUP 'FGTK_IS_ADJUSTMENT
+     'FGTK_IS_ALIGNMENT 'FGTK_IS_ARROW 'FGTK_IS_ASPECT_FRAME
+     'FGTK_IS_BIN 'FGTK_IS_BOX 'FGTK_IS_BUTTON 'FGTK_IS_BUTTON_BOX
+     'FGTK_IS_CALENDAR 'FGTK_IS_CELL_EDITABLE 'FGTK_IS_CELL_LAYOUT
+     'FGTK_IS_CELL_RENDERER 'FGTK_IS_CELL_RENDERER_COMBO
+     'FGTK_IS_CELL_RENDERER_PIXBUF 'FGTK_IS_CELL_RENDERER_PROGRESS
+     'FGTK_IS_CELL_RENDERER_TEXT 'FGTK_IS_CELL_RENDERER_TOGGLE
+     'FGTK_IS_CELL_VIEW 'FGTK_IS_CHECK_BUTTON
+     'FGTK_IS_CHECK_MENU_ITEM 'FGTK_IS_CLIPBOARD
+     'FGTK_IS_COLOR_BUTTON 'FGTK_IS_COLOR_SELECTION
+     'FGTK_IS_COLOR_SELECTION_DIALOG 'FGTK_IS_COMBO_BOX
+     'FGTK_IS_CONTAINER
+     'FGTK_IS_DIALOG 'FGTK_IS_DRAWING_AREA 'FGTK_IS_EDITABLE
+     'FGTK_IS_ENTRY 'FGTK_IS_ENTRY_COMPLETION 'FGTK_IS_EVENT_BOX
+     'FGTK_IS_EXPANDER 'FGTK_IS_FILE_CHOOSER 'FGTK_IS_FILE_CHOOSER_BUTTON
+     'FGTK_IS_FILE_CHOOSER_DIALOG 'FGTK_IS_FILE_CHOOSER_WIDGET
+     'FGTK_IS_FILE_FILTER 'FGTK_IS_FIXED 'FGTK_IS_FONT_BUTTON
+     'FGTK_IS_FONT_SELECTION 'FGTK_IS_FONT_SELECTION_DIALOG
+     'FGTK_IS_FRAME 'FGTK_IS_HANDLE_BOX 'FGTK_IS_HBOX
+     'FGTK_IS_HBUTTON_BOX 'FGTK_IS_HPANED
+     'FGTK_IS_HSCALE 'FGTK_IS_HSCROLLBAR 'FGTK_IS_HSEPARATOR
+     'FGTK_IS_ICON_FACTORY 'FGTK_IS_ICON_THEME 'FGTK_IS_ICON_VIEW
+     'FGTK_IS_IMAGE 'FGTK_IS_IMAGE_MENU_ITEM 'FGTK_IS_IM_CONTEXT
+     'FGTK_IS_IM_CONTEXT_SIMPLE 'FGTK_IS_IM_MULTICONTEXT
+     'FGTK_IS_INVISIBLE 'FGTK_IS_LABEL 'FGTK_IS_LAYOUT
+     'FGTK_IS_LIST_STORE 'FGTK_IS_MENU 'FGTK_IS_MENU_BAR
+     'FGTK_IS_MENU_ITEM 'FGTK_IS_MENU_SHELL 'FGTK_IS_MENU_TOOL_BUTTON
+     'FGTK_IS_MISC 'FGTK_IS_NOTEBOOK 'FGTK_IS_OBJECT 'FGTK_IS_PANED
+     'FGTK_IS_PLUG 'FGTK_IS_PROGRESS_BAR 'FGTK_IS_RADIO_ACTION
+     'FGTK_IS_RADIO_BUTTON 'FGTK_IS_RADIO_MENU_ITEM
+     'FGTK_IS_RADIO_TOOL_BUTTON 'FGTK_IS_RANGE 'FGTK_IS_RC_STYLE
+     'FGTK_IS_SCALE 'FGTK_IS_SCROLLBAR
+     'FGTK_IS_SCROLLED_WINDOW 'FGTK_IS_SEPARATOR
+     'FGTK_IS_SEPARATOR_MENU_ITEM 'FGTK_IS_SEPARATOR_TOOL_ITEM
+     'FGTK_IS_SIZE_GROUP 'FGTK_IS_SOCKET 'FGTK_IS_SPIN_BUTTON
+     'FGTK_IS_STATUSBAR 'FGTK_IS_STYLE 'FGTK_IS_TABLE
+     'FGTK_IS_TEAROFF_MENU_ITEM 'FGTK_IS_TEXT_BUFFER
+     'FGTK_IS_TEXT_CHILD_ANCHOR 'FGTK_IS_TEXT_MARK 'FGTK_IS_TEXT_TAG
+     'FGTK_IS_TEXT_TAG_TABLE 'FGTK_IS_TEXT_VIEW
+     'FGTK_IS_TOGGLE_ACTION 'FGTK_IS_TOGGLE_BUTTON
+     'FGTK_IS_TOGGLE_TOOL_BUTTON 'FGTK_IS_TOOLBAR 'FGTK_IS_TOOL_BUTTON
+     'FGTK_IS_TOOL_ITEM 'FGTK_IS_TREE_DRAG_DEST
+     'FGTK_IS_TREE_DRAG_SOURCE 'FGTK_IS_TREE_MODEL
+     'FGTK_IS_TREE_MODEL_FILTER 'FGTK_IS_TREE_MODEL_SORT
+     'FGTK_IS_TREE_SELECTION 'FGTK_IS_TREE_SORTABLE
+     'FGTK_IS_TREE_STORE 'FGTK_IS_TREE_VIEW
+     'FGTK_IS_TREE_VIEW_COLUMN 'FGTK_IS_UI_MANAGER 'FGTK_IS_VBOX
+     'FGTK_IS_VBUTTON_BOX 'FGTK_IS_VIEWPORT 'FGTK_IS_VPANED
+     'FGTK_IS_VSCALE 'FGTK_IS_VSCROLLBAR
+     'FGTK_IS_VSEPARATOR 'FGTK_IS_WIDGET 'FGTK_IS_WINDOW 'FGTK_LABEL
+     'FGTK_LAYOUT 'FGTK_LIST_STORE 'FGTK_MENU 'FGTK_MENU_BAR
+     'FGTK_MENU_ITEM 'FGTK_MENU_SHELL 'FGTK_MENU_TOOL_BUTTON
+     'FGTK_MISC 'FGTK_NOTEBOOK 'FGTK_PANED 'FGTK_PLUG
+     'FGTK_PROGRESS_BAR 'FGTK_RADIO_ACTION 'FGTK_RADIO_BUTTON
+     'FGTK_RADIO_MENU_ITEM 'FGTK_RADIO_TOOL_BUTTON
+     'FGTK_RANGE 'FGTK_SCALE 'FGTK_SCROLLBAR
+     'FGTK_SCROLLED_WINDOW 'FGTK_SEPARATOR 'FGTK_SEPARATOR_MENU_ITEM
+     'FGTK_SEPARATOR_TOOL_ITEM 'FGTK_SIZE_GROUP 'FGTK_SOCKET
+     'FGTK_SPIN_BUTTON 'FGTK_STATUSBAR 'FGTK_STYLE 'FGTK_TABLE
+     'FGTK_TEAROFF_MENU_ITEM 'FGTK_TEXT_BUFFER 'FGTK_TEXT_CHILD_ANCHOR
+     'FGTK_TEXT_MARK 'FGTK_TEXT_TAG 'FGTK_TEXT_TAG_TABLE
+     'FGTK_TEXT_VIEW 'FGTK_TOGGLE_ACTION 'FGTK_TOGGLE_BUTTON
+     'FGTK_TOGGLE_TOOL_BUTTON 'FGTK_TOOLBAR 'FGTK_TOOL_BUTTON
+     'FGTK_TOOL_ITEM 'FGTK_TREE_DRAG_DEST 'FGTK_TREE_DRAG_SOURCE
+     'FGTK_TREE_MODEL 'FGTK_TREE_MODEL_FILTER
+     'FGTK_TREE_MODEL_SORT 'FGTK_TREE_SELECTION
+     'FGTK_TREE_SORTABLE 'FGTK_TREE_STORE 'FGTK_TREE_VIEW
+     'FGTK_TREE_VIEW_COLUMN 'FGTK_UI_MANAGER 'FGTK_VBOX
+     'FGTK_VBUTTON_BOX 'FGTK_VIEWPORT 'FGTK_VPANED
+     'FGTK_VSCALE 'FGTK_VSCROLLBAR 'FGTK_VSEPARATOR 'FGTK_WIDGET
+     'FG_IS_OBJECT 'FG_OBJECT 'FPANGO_CONTEXT 'FPANGO_FONT
+     'FPANGO_FONT_FACE 'FPANGO_FONT_FAMILY 'FPANGO_FONT_MAP
+     'FPANGO_IS_CONTEXT 'FPANGO_IS_FONT 'FPANGO_IS_FONT_FACE
+     'FPANGO_IS_FONT_FAMILY 'FPANGO_IS_FONT_MAP 'FPANGO_IS_LAYOUT
+     'FPANGO_LAYOUT 'Fg_cclosure_new 'Fg_idle_add
+     'Fg_idle_add_full 'Fg_idle_remove_by_data 'Fg_list_copy
+     'Fg_list_first 'Fg_list_free 'Fg_list_last 'Fg_list_length
+     'Fg_list_nth_data 'Fg_list_remove_link 'Fg_list_reverse
+     'Fg_object_get_data 'Fg_object_ref 'Fg_object_set_data
+     'Fg_object_unref 'Fg_quark_from_string 'Fg_quark_to_string
+     'Fg_signal_add_emission_hook 'Fg_signal_connect_closure
+     'Fg_signal_connect_closure_by_id 'Fg_signal_connect_data
+     'Fg_signal_get_invocation_hint 'Fg_signal_handler_block
+     'Fg_signal_handler_disconnect 'Fg_signal_handler_find
+     'Fg_signal_handler_is_connected 'Fg_signal_handler_unblock
+     'Fg_signal_handlers_block_matched 'Fg_signal_handlers_destroy
+     'Fg_signal_handlers_disconnect_matched
+     'Fg_signal_handlers_unblock_matched 'Fg_signal_has_handler_pending
+     'Fg_signal_list_ids 'Fg_signal_name 'Fg_signal_newv
+     'Fg_signal_parse_name 'Fg_signal_query
+     'Fg_signal_remove_emission_hook 'Fg_signal_stop_emission
+     'Fg_signal_stop_emission_by_name 'Fg_timeout_add
+     'Fg_timeout_add_full 'Fgdk_add_client_message_filter
+     'Fgdk_atom_name 'Fgdk_beep 'Fgdk_color_copy 'Fgdk_color_equal
+     'Fgdk_color_free 'Fgdk_color_hash 'Fgdk_color_parse
+     'Fgdk_display_add_client_message_filter 'Fgdk_display_beep
+     'Fgdk_display_close 'Fgdk_display_flush 'Fgdk_display_get_default
+     'Fgdk_display_get_default_cursor_size 'Fgdk_display_get_default_group
+     'Fgdk_display_get_default_screen 'Fgdk_display_get_event
+     'Fgdk_display_get_maximal_cursor_size 'Fgdk_display_get_n_screens
+     'Fgdk_display_get_name 'Fgdk_display_get_pointer
+     'Fgdk_display_get_screen 'Fgdk_display_get_window_at_pointer
+     'Fgdk_display_keyboard_ungrab 'Fgdk_display_open
+     'Fgdk_display_peek_event 'Fgdk_display_pointer_is_grabbed
+     'Fgdk_display_pointer_ungrab 'Fgdk_display_put_event
+     'Fgdk_display_set_double_click_distance 'Fgdk_display_set_double_click_time
+     'Fgdk_display_supports_clipboard_persistence 'Fgdk_display_supports_cursor_alpha
+     'Fgdk_display_supports_cursor_color 'Fgdk_display_sync
+     'Fgdk_drag_abort 'Fgdk_drag_begin 'Fgdk_drag_context_new
+     'Fgdk_drag_drop 'Fgdk_drag_drop_succeeded 'Fgdk_drag_find_window
+     'Fgdk_drag_get_protocol 'Fgdk_drag_get_selection 'Fgdk_drag_motion
+     'Fgdk_drag_status 'Fgdk_drop_finish 'Fgdk_drop_reply
+     'Fgdk_error_trap_pop 'Fgdk_error_trap_push 'Fgdk_event_copy
+     'Fgdk_event_free 'Fgdk_event_get 'Fgdk_event_get_coords
+     'Fgdk_event_get_root_coords 'Fgdk_event_get_state
+     'Fgdk_event_get_time 'Fgdk_event_handler_set 'Fgdk_event_peek
+     'Fgdk_event_put 'Fgdk_event_send_client_message
+     'Fgdk_event_send_clientmessage_toall 'Fgdk_events_pending
+     'Fgdk_flush 'Fgdk_get_default_root_window 'Fgdk_get_display
+     'Fgdk_get_display_arg_name 'Fgdk_get_program_class
+     'Fgdk_get_show_events 'Fgdk_keyboard_grab 'Fgdk_keyboard_ungrab
+     'Fgdk_keymap_get_default 'Fgdk_keymap_get_direction
+     'Fgdk_keymap_get_entries_for_keycode 'Fgdk_keymap_get_entries_for_keyval
+     'Fgdk_keymap_lookup_key 'Fgdk_keyval_convert_case
+     'Fgdk_keyval_from_name 'Fgdk_keyval_is_lower 'Fgdk_keyval_is_upper
+     'Fgdk_keyval_name 'Fgdk_keyval_to_lower 'Fgdk_keyval_to_unicode
+     'Fgdk_keyval_to_upper 'Fgdk_list_visuals
+     'Fgdk_notify_startup_complete 'Fgdk_pango_context_get
+     'Fgdk_pixbuf_add_alpha 'Fgdk_pixbuf_animation_get_height
+     'Fgdk_pixbuf_animation_get_iter 'Fgdk_pixbuf_animation_get_static_image
+     'Fgdk_pixbuf_animation_get_width 'Fgdk_pixbuf_animation_is_static_image
+     'Fgdk_pixbuf_animation_iter_advance 'Fgdk_pixbuf_animation_iter_get_delay_time
+     'Fgdk_pixbuf_animation_iter_get_pixbuf
+     'Fgdk_pixbuf_animation_iter_on_currently_loading_frame
+     'Fgdk_pixbuf_animation_new_from_file 'Fgdk_pixbuf_composite
+     'Fgdk_pixbuf_composite_color 'Fgdk_pixbuf_composite_color_simple
+     'Fgdk_pixbuf_copy 'Fgdk_pixbuf_copy_area 'Fgdk_pixbuf_error_quark
+     'Fgdk_pixbuf_fill 'Fgdk_pixbuf_get_bits_per_sample
+     'Fgdk_pixbuf_get_colorspace 'Fgdk_pixbuf_get_has_alpha
+     'Fgdk_pixbuf_get_height 'Fgdk_pixbuf_get_n_channels
+     'Fgdk_pixbuf_get_option 'Fgdk_pixbuf_get_pixels
+     'Fgdk_pixbuf_get_rowstride 'Fgdk_pixbuf_get_width
+     'Fgdk_pixbuf_new_from_data 'Fgdk_pixbuf_new_from_file
+     'Fgdk_pixbuf_new_from_inline 'Fgdk_pixbuf_new_from_xpm_data
+     'Fgdk_pixbuf_new_subpixbuf 'Fgdk_pixbuf_saturate_and_pixelate
+     'Fgdk_pixbuf_savev 'Fgdk_pixbuf_scale 'Fgdk_pixbuf_scale_simple
+     'Fgdk_pointer_grab 'Fgdk_pointer_is_grabbed 'Fgdk_pointer_ungrab
+     'Fgdk_property_change 'Fgdk_property_delete 'Fgdk_property_get
+     'Fgdk_query_depths 'Fgdk_query_visual_types
+     'Fgdk_rectangle_intersect 'Fgdk_rectangle_union
+     'Fgdk_screen_broadcast_client_message 'Fgdk_screen_get_default
+     'Fgdk_screen_get_display 'Fgdk_screen_get_height
+     'Fgdk_screen_get_height_mm 'Fgdk_screen_get_monitor_at_point
+     'Fgdk_screen_get_monitor_at_window 'Fgdk_screen_get_monitor_geometry
+     'Fgdk_screen_get_n_monitors 'Fgdk_screen_get_number
+     'Fgdk_screen_get_root_window 'Fgdk_screen_get_system_visual
+     'Fgdk_screen_get_toplevel_windows 'Fgdk_screen_get_width
+     'Fgdk_screen_get_width_mm 'Fgdk_screen_height
+     'Fgdk_screen_height_mm 'Fgdk_screen_list_visuals
+     'Fgdk_screen_make_display_name 'Fgdk_screen_width
+     'Fgdk_screen_width_mm 'Fgdk_selection_convert
+     'Fgdk_selection_owner_get 'Fgdk_selection_owner_set
+     'Fgdk_selection_property_get 'Fgdk_selection_send_notify
+     'Fgdk_set_double_click_time 'Fgdk_set_locale
+     'Fgdk_set_program_class 'Fgdk_set_sm_client_id
+     'Fgdk_unicode_to_keyval 'Fgdk_visual_get_best
+     'Fgdk_visual_get_best_depth 'Fgdk_visual_get_best_type
+     'Fgdk_visual_get_best_with_both 'Fgdk_visual_get_best_with_depth
+     'Fgdk_visual_get_best_with_type 'Fgdk_visual_get_system
+     'Fgdk_window_add_filter 'Fgdk_window_at_pointer
+     'Fgdk_window_begin_move_drag 'Fgdk_window_begin_paint_rect
+     'Fgdk_window_begin_resize_drag 'Fgdk_window_configure_finished
+     'Fgdk_window_constrain_size 'Fgdk_window_deiconify
+     'Fgdk_window_destroy 'Fgdk_window_enable_synchronized_configure
+     'Fgdk_window_end_paint 'Fgdk_window_focus
+     'Fgdk_window_foreign_new 'Fgdk_window_freeze_updates
+     'Fgdk_window_get_children 'Fgdk_window_get_decorations
+     'Fgdk_window_get_events 'Fgdk_window_get_frame_extents
+     'Fgdk_window_get_geometry 'Fgdk_window_get_group
+     'Fgdk_window_get_origin 'Fgdk_window_get_parent
+     'Fgdk_window_get_pointer 'Fgdk_window_get_position
+     'Fgdk_window_get_root_origin 'Fgdk_window_get_state
+     'Fgdk_window_get_toplevel 'Fgdk_window_get_user_data
+     'Fgdk_window_get_window_type 'Fgdk_window_hide
+     'Fgdk_window_iconify 'Fgdk_window_invalidate_rect
+     'Fgdk_window_is_viewable 'Fgdk_window_is_visible
+     'Fgdk_window_lookup 'Fgdk_window_lower
+     'Fgdk_window_maximize 'Fgdk_window_merge_child_shapes
+     'Fgdk_window_move 'Fgdk_window_move_resize 'Fgdk_window_new
+     'Fgdk_window_peek_children 'Fgdk_window_process_all_updates
+     'Fgdk_window_process_updates 'Fgdk_window_raise
+     'Fgdk_window_register_dnd 'Fgdk_window_remove_filter
+     'Fgdk_window_reparent 'Fgdk_window_resize 'Fgdk_window_scroll
+     'Fgdk_window_set_background 'Fgdk_window_set_child_shapes
+     'Fgdk_window_set_cursor 'Fgdk_window_set_debug_updates
+     'Fgdk_window_set_decorations 'Fgdk_window_set_events
+     'Fgdk_window_set_functions 'Fgdk_window_set_geometry_hints
+     'Fgdk_window_set_group 'Fgdk_window_set_icon_list
+     'Fgdk_window_set_icon_name 'Fgdk_window_set_keep_above
+     'Fgdk_window_set_keep_below 'Fgdk_window_set_modal_hint
+     'Fgdk_window_set_override_redirect 'Fgdk_window_set_role
+     'Fgdk_window_set_static_gravities 'Fgdk_window_set_title
+     'Fgdk_window_set_transient_for 'Fgdk_window_set_type_hint
+     'Fgdk_window_set_user_data 'Fgdk_window_show
+     'Fgdk_window_show_unraised 'Fgdk_window_stick
+     'Fgdk_window_thaw_updates 'Fgdk_window_unmaximize
+     'Fgdk_window_unstick 'Fgdk_window_withdraw
+     'Fgtk_about_dialog_get_artists 'Fgtk_about_dialog_get_authors
+     'Fgtk_about_dialog_get_comments 'Fgtk_about_dialog_get_copyright
+     'Fgtk_about_dialog_get_documenters 'Fgtk_about_dialog_get_license
+     'Fgtk_about_dialog_get_logo 'Fgtk_about_dialog_get_logo_icon_name
+     'Fgtk_about_dialog_get_translator_credits
+     'Fgtk_about_dialog_get_version 'Fgtk_about_dialog_get_website
+     'Fgtk_about_dialog_get_website_label 'Fgtk_about_dialog_new
+     'Fgtk_about_dialog_set_artists 'Fgtk_about_dialog_set_authors
+     'Fgtk_about_dialog_set_comments 'Fgtk_about_dialog_set_copyright
+     'Fgtk_about_dialog_set_documenters 'Fgtk_about_dialog_set_license
+     'Fgtk_about_dialog_set_logo 'Fgtk_about_dialog_set_logo_icon_name
+     'Fgtk_about_dialog_set_translator_credits
+     'Fgtk_about_dialog_set_version 'Fgtk_about_dialog_set_website
+     'Fgtk_about_dialog_set_website_label
+     'Fgtk_accel_group_activate 'Fgtk_accel_group_connect
+     'Fgtk_accel_group_connect_by_path 'Fgtk_accel_group_disconnect
+     'Fgtk_accel_group_disconnect_key 'Fgtk_accel_group_find
+     'Fgtk_accel_group_from_accel_closure 'Fgtk_accel_group_lock
+     'Fgtk_accel_group_new 'Fgtk_accel_group_query
+     'Fgtk_accel_group_unlock 'Fgtk_accel_groups_activate
+     'Fgtk_accel_groups_from_object 'Fgtk_accel_label_get_accel_widget
+     'Fgtk_accel_label_get_accel_width 'Fgtk_accel_label_new
+     'Fgtk_accel_label_refetch 'Fgtk_accel_label_set_accel_closure
+     'Fgtk_accel_label_set_accel_widget 'Fgtk_accel_map_add_entry
+     'Fgtk_accel_map_add_filter 'Fgtk_accel_map_change_entry
+     'Fgtk_accel_map_foreach 'Fgtk_accel_map_foreach_unfiltered
+     'Fgtk_accel_map_get
+     'Fgtk_accelerator_get_label 'Fgtk_accelerator_name
+     'Fgtk_accelerator_parse 'Fgtk_accelerator_set_default_mod_mask
+     'Fgtk_accelerator_valid 'Fgtk_accessible_connect_widget_destroyed
+     'Fgtk_action_activate 'Fgtk_action_connect_accelerator
+     'Fgtk_action_create_icon 'Fgtk_action_create_menu_item
+     'Fgtk_action_create_tool_item 'Fgtk_action_disconnect_accelerator
+     'Fgtk_action_get_name 'Fgtk_action_get_proxies
+     'Fgtk_action_get_sensitive 'Fgtk_action_get_visible
+     'Fgtk_action_group_add_action 'Fgtk_action_group_add_action_with_accel
+     'Fgtk_action_group_add_actions 'Fgtk_action_group_add_toggle_actions
+     'Fgtk_action_group_add_toggle_actions_full
+     'Fgtk_action_group_get_action 'Fgtk_action_group_get_name
+     'Fgtk_action_group_get_sensitive 'Fgtk_action_group_get_visible
+     'Fgtk_action_group_list_actions 'Fgtk_action_group_new
+     'Fgtk_action_group_remove_action 'Fgtk_action_group_set_sensitive
+     'Fgtk_action_group_set_translation_domain
+     'Fgtk_action_group_set_visible 'Fgtk_action_is_sensitive
+     'Fgtk_action_is_visible 'Fgtk_action_new 'Fgtk_action_set_sensitive
+     'Fgtk_action_set_visible 'Fgtk_adjustment_changed
+     'Fgtk_adjustment_clamp_page 'Fgtk_adjustment_get_value
+     'Fgtk_adjustment_new 'Fgtk_adjustment_set_value
+     'Fgtk_adjustment_value_changed 'Fgtk_alignment_get_padding
+     'Fgtk_alignment_new 'Fgtk_alignment_set 'Fgtk_alignment_set_padding
+     'Fgtk_alternative_dialog_button_order 'Fgtk_arrow_new
+     'Fgtk_arrow_set 'Fgtk_aspect_frame_new 'Fgtk_aspect_frame_set
+     'Fgtk_bin_get_child 'Fgtk_binding_entry_remove
+     'Fgtk_binding_set_add_path 'Fgtk_binding_set_by_class
+     'Fgtk_binding_set_find 'Fgtk_binding_set_new
+     'Fgtk_box_get_homogeneous 'Fgtk_box_get_spacing
+     'Fgtk_box_pack_end 'Fgtk_box_pack_start
+     'Fgtk_box_query_child_packing 'Fgtk_box_reorder_child
+     'Fgtk_box_set_child_packing 'Fgtk_box_set_homogeneous
+     'Fgtk_box_set_spacing 'Fgtk_button_box_get_child_secondary
+     'Fgtk_button_box_get_layout 'Fgtk_button_box_set_child_secondary
+     'Fgtk_button_box_set_layout 'Fgtk_button_get_alignment
+     'Fgtk_button_get_focus_on_click 'Fgtk_button_get_image
+     'Fgtk_button_get_label 'Fgtk_button_get_relief
+     'Fgtk_button_get_use_stock 'Fgtk_button_get_use_underline
+     'Fgtk_button_new 'Fgtk_button_new_from_stock
+     'Fgtk_button_new_with_mnemonic 'Fgtk_button_set_alignment
+     'Fgtk_button_set_focus_on_click 'Fgtk_button_set_image
+     'Fgtk_button_set_label 'Fgtk_button_set_relief
+     'Fgtk_button_set_use_stock 'Fgtk_button_set_use_underline
+     'Fgtk_calendar_clear_marks 'Fgtk_calendar_get_date
+     'Fgtk_calendar_get_display_options 'Fgtk_cell_editable_editing_done
+     'Fgtk_cell_editable_remove_widget 'Fgtk_cell_editable_start_editing
+     'Fgtk_cell_layout_add_attribute 'Fgtk_cell_layout_clear
+     'Fgtk_cell_layout_clear_attributes 'Fgtk_cell_layout_pack_end
+     'Fgtk_cell_layout_pack_start 'Fgtk_cell_layout_reorder
+     'Fgtk_cell_layout_set_attributes 'Fgtk_cell_layout_set_cell_data_func
+     'Fgtk_cell_renderer_activate 'Fgtk_cell_renderer_combo_new
+     'Fgtk_cell_renderer_get_fixed_size 'Fgtk_cell_renderer_get_size
+     'Fgtk_cell_renderer_pixbuf_new 'Fgtk_cell_renderer_progress_new
+     'Fgtk_cell_renderer_set_fixed_size 'Fgtk_cell_renderer_start_editing
+     'Fgtk_cell_renderer_text_new 'Fgtk_cell_renderer_text_set_fixed_height_from_font
+     'Fgtk_cell_renderer_toggle_get_active 'Fgtk_cell_renderer_toggle_get_radio
+     'Fgtk_cell_renderer_toggle_new 'Fgtk_cell_renderer_toggle_set_active
+     'Fgtk_cell_renderer_toggle_set_radio 'Fgtk_cell_view_get_displayed_row
+     'Fgtk_cell_view_new 'Fgtk_cell_view_new_with_markup
+     'Fgtk_cell_view_new_with_pixbuf 'Fgtk_cell_view_new_with_text
+     'Fgtk_cell_view_set_background_color 'Fgtk_cell_view_set_displayed_row
+     'Fgtk_cell_view_set_model 'Fgtk_check_button_new
+     'Fgtk_check_button_new_with_mnemonic 'Fgtk_check_menu_item_get_active
+     'Fgtk_check_menu_item_get_draw_as_radio 'Fgtk_check_menu_item_get_inconsistent
+     'Fgtk_check_menu_item_new 'Fgtk_check_menu_item_new_with_mnemonic
+     'Fgtk_check_menu_item_set_active 'Fgtk_check_menu_item_set_draw_as_radio
+     'Fgtk_check_menu_item_set_inconsistent 'Fgtk_check_menu_item_toggled
+     'Fgtk_check_version 'Fgtk_clipboard_clear 'Fgtk_clipboard_get
+     'Fgtk_clipboard_get_display 'Fgtk_clipboard_get_for_display
+     'Fgtk_clipboard_get_owner 'Fgtk_clipboard_request_contents
+     'Fgtk_clipboard_request_image 'Fgtk_clipboard_request_targets
+     'Fgtk_clipboard_request_text 'Fgtk_clipboard_set_can_store
+     'Fgtk_clipboard_set_image 'Fgtk_clipboard_set_text
+     'Fgtk_clipboard_set_with_data 'Fgtk_clipboard_store
+     'Fgtk_clipboard_wait_for_contents 'Fgtk_clipboard_wait_for_image
+     'Fgtk_clipboard_wait_for_targets 'Fgtk_clipboard_wait_for_text
+     'Fgtk_clipboard_wait_is_image_available 'Fgtk_clipboard_wait_is_target_available
+     'Fgtk_clipboard_wait_is_text_available
+     'Fgtk_color_button_get_alpha 'Fgtk_color_button_get_color
+     'Fgtk_color_button_get_title 'Fgtk_color_button_get_use_alpha
+     'Fgtk_color_button_new 'Fgtk_color_button_new_with_color
+     'Fgtk_color_button_set_alpha 'Fgtk_color_button_set_color
+     'Fgtk_color_button_set_title 'Fgtk_color_button_set_use_alpha
+     'Fgtk_color_selection_dialog_new 'Fgtk_color_selection_get_current_alpha
+     'Fgtk_color_selection_get_current_color 'Fgtk_color_selection_get_has_opacity_control
+     'Fgtk_color_selection_get_has_palette 'Fgtk_color_selection_get_previous_alpha
+     'Fgtk_color_selection_get_previous_color 'Fgtk_color_selection_is_adjusting
+     'Fgtk_color_selection_new 'Fgtk_color_selection_palette_to_string
+     'Fgtk_color_selection_set_current_alpha 'Fgtk_color_selection_set_current_color
+     'Fgtk_color_selection_set_has_opacity_control 'Fgtk_color_selection_set_has_palette
+     'Fgtk_color_selection_set_previous_alpha 'Fgtk_color_selection_set_previous_color
+     'Fgtk_combo_box_get_active 'Fgtk_combo_box_get_active_iter
+     'Fgtk_combo_box_get_add_tearoffs
+     'Fgtk_combo_box_get_column_span_column 'Fgtk_combo_box_get_focus_on_click
+     'Fgtk_combo_box_get_model 'Fgtk_combo_box_get_row_span_column
+     'Fgtk_combo_box_get_wrap_width
+     'Fgtk_combo_box_new
+     'Fgtk_combo_box_new_with_model
+     'Fgtk_combo_box_popdown 'Fgtk_combo_box_popup
+     'Fgtk_combo_box_set_active
+     'Fgtk_combo_box_set_active_iter
+     'Fgtk_combo_box_set_add_tearoffs 'Fgtk_combo_box_set_column_span_column
+     'Fgtk_combo_box_set_focus_on_click 'Fgtk_combo_box_set_model
+     'Fgtk_combo_box_set_row_separator_func 'Fgtk_combo_box_set_row_span_column
+     'Fgtk_combo_box_set_wrap_width 'Fgtk_container_add 'Fgtk_container_check_resize
+     'Fgtk_container_foreach 'Fgtk_container_get_border_width 'Fgtk_container_get_children
+     'Fgtk_container_get_resize_mode 'Fgtk_container_remove
+     'Fgtk_container_set_border_width
+     'Fgtk_container_set_resize_mode 'Fgtk_dialog_add_action_widget
+     'Fgtk_dialog_add_button 'Fgtk_dialog_add_buttons 'Fgtk_dialog_new
+     'Fgtk_dialog_new_with_buttons 'Fgtk_dialog_response 'Fgtk_dialog_run
+     'Fgtk_dialog_set_alternative_button_order_from_array 'Fgtk_dialog_set_default_response
+     'Fgtk_dialog_set_response_sensitive 'Fgtk_drag_begin 'Fgtk_drag_check_threshold
+     'Fgtk_drag_dest_add_image_targets 'Fgtk_drag_dest_add_text_targets
+     'Fgtk_drag_dest_add_uri_targets 'Fgtk_drag_dest_find_target
+     'Fgtk_drag_dest_get_target_list 'Fgtk_drag_dest_set 'Fgtk_drag_dest_set_proxy
+     'Fgtk_drag_dest_set_target_list 'Fgtk_drag_dest_unset 'Fgtk_drag_finish
+     'Fgtk_drag_get_data 'Fgtk_drag_get_source_widget 'Fgtk_drag_highlight
+     'Fgtk_drag_set_icon_default 'Fgtk_drag_set_icon_pixbuf 'Fgtk_drag_set_icon_stock
+     'Fgtk_drag_set_icon_widget 'Fgtk_drag_source_add_image_targets
+     'Fgtk_drag_source_add_text_targets 'Fgtk_drag_source_add_uri_targets
+     'Fgtk_drag_source_get_target_list 'Fgtk_drag_source_set
+     'Fgtk_drag_source_set_icon_pixbuf 'Fgtk_drag_source_set_icon_stock
+     'Fgtk_drag_source_set_target_list 'Fgtk_drag_source_unset
+     'Fgtk_drag_unhighlight 'Fgtk_drawing_area_new 'Fgtk_editable_copy_clipboard
+     'Fgtk_editable_cut_clipboard 'Fgtk_editable_delete_selection
+     'Fgtk_editable_delete_text
+     'Fgtk_editable_get_chars 'Fgtk_editable_get_editable
+     'Fgtk_editable_get_position 'Fgtk_editable_get_selection_bounds
+     'Fgtk_editable_insert_text 'Fgtk_editable_paste_clipboard
+     'Fgtk_editable_set_editable 'Fgtk_editable_set_position
+     'Fgtk_entry_completion_complete 'Fgtk_entry_completion_delete_action
+     'Fgtk_entry_completion_get_entry 'Fgtk_entry_completion_get_inline_completion
+     'Fgtk_entry_completion_get_minimum_key_length 'Fgtk_entry_completion_get_model
+     'Fgtk_entry_completion_get_popup_completion 'Fgtk_entry_completion_get_text_column
+     'Fgtk_entry_completion_insert_action_markup 'Fgtk_entry_completion_insert_action_text
+     'Fgtk_entry_completion_insert_prefix 'Fgtk_entry_completion_new
+     'Fgtk_entry_completion_set_inline_completion 'Fgtk_entry_completion_set_match_func
+     'Fgtk_entry_completion_set_minimum_key_length 'Fgtk_entry_completion_set_model
+     'Fgtk_entry_completion_set_popup_completion 'Fgtk_entry_completion_set_text_column
+     'Fgtk_entry_get_activates_default 'Fgtk_entry_get_alignment
+     'Fgtk_entry_get_completion
+     'Fgtk_entry_get_has_frame 'Fgtk_entry_get_invisible_char 'Fgtk_entry_get_layout
+     'Fgtk_entry_get_max_length 'Fgtk_entry_get_text 'Fgtk_entry_get_visibility
+     'Fgtk_entry_get_width_chars 'Fgtk_entry_layout_index_to_text_index 'Fgtk_entry_new
+     'Fgtk_entry_set_activates_default 'Fgtk_entry_set_alignment
+     'Fgtk_entry_set_completion 'Fgtk_entry_set_has_frame 'Fgtk_entry_set_invisible_char
+     'Fgtk_entry_set_max_length 'Fgtk_entry_set_text 'Fgtk_entry_set_visibility
+     'Fgtk_entry_set_width_chars 'Fgtk_entry_text_index_to_layout_index
+     'Fgtk_event_box_get_above_child 'Fgtk_event_box_get_visible_window
+     'Fgtk_event_box_new 'Fgtk_event_box_set_above_child
+     'Fgtk_event_box_set_visible_window 'Fgtk_events_pending 'Fgtk_expander_get_expanded
+     'Fgtk_expander_get_label 'Fgtk_expander_get_label_widget
+     'Fgtk_expander_get_spacing 'Fgtk_expander_get_use_markup
+     'Fgtk_expander_get_use_underline 'Fgtk_expander_new 'Fgtk_expander_new_with_mnemonic
+     'Fgtk_expander_set_expanded 'Fgtk_expander_set_label 'Fgtk_expander_set_label_widget
+     'Fgtk_expander_set_spacing 'Fgtk_expander_set_use_markup
+     'Fgtk_expander_set_use_underline 'Fgtk_false ) constant gtk-procs-1
 
-  #( <'> Fgtk_tree_view_get_rules_hint <'> Fgtk_tree_view_get_search_column
-     <'> Fgtk_tree_view_get_search_equal_func <'> Fgtk_tree_view_get_selection
-     <'> Fgtk_tree_view_get_visible_rect
-     <'> Fgtk_tree_view_insert_column <'> Fgtk_tree_view_insert_column_with_attributes
-     <'> Fgtk_tree_view_insert_column_with_data_func <'> Fgtk_tree_view_map_expanded_rows
-     <'> Fgtk_tree_view_move_column_after <'> Fgtk_tree_view_new <'> Fgtk_tree_view_new_with_model
-     <'> Fgtk_tree_view_remove_column <'> Fgtk_tree_view_row_activated
-     <'> Fgtk_tree_view_row_expanded <'> Fgtk_tree_view_scroll_to_cell
-     <'> Fgtk_tree_view_scroll_to_point <'> Fgtk_tree_view_set_column_drag_function
-     <'> Fgtk_tree_view_set_cursor <'> Fgtk_tree_view_set_drag_dest_row
-     <'> Fgtk_tree_view_set_enable_search <'> Fgtk_tree_view_set_expander_column
-     <'> Fgtk_tree_view_set_fixed_height_mode
-     <'> Fgtk_tree_view_set_headers_clickable <'> Fgtk_tree_view_set_headers_visible
-     <'> Fgtk_tree_view_set_hover_expand <'> Fgtk_tree_view_set_hover_selection
-     <'> Fgtk_tree_view_set_model <'> Fgtk_tree_view_set_reorderable
-     <'> Fgtk_tree_view_set_row_separator_func <'> Fgtk_tree_view_set_rules_hint
-     <'> Fgtk_tree_view_set_search_column <'> Fgtk_tree_view_set_search_equal_func
-     <'> Fgtk_tree_view_unset_rows_drag_dest
-     <'> Fgtk_tree_view_unset_rows_drag_source <'> Fgtk_true <'> Fgtk_ui_manager_add_ui
-     <'> Fgtk_ui_manager_add_ui_from_file <'> Fgtk_ui_manager_add_ui_from_string
-     <'> Fgtk_ui_manager_ensure_update <'> Fgtk_ui_manager_get_accel_group
-     <'> Fgtk_ui_manager_get_action <'> Fgtk_ui_manager_get_action_groups
-     <'> Fgtk_ui_manager_get_add_tearoffs <'> Fgtk_ui_manager_get_ui
-     <'> Fgtk_ui_manager_get_widget <'> Fgtk_ui_manager_insert_action_group
-     <'> Fgtk_ui_manager_new <'> Fgtk_ui_manager_new_merge_id
-     <'> Fgtk_ui_manager_remove_action_group <'> Fgtk_ui_manager_remove_ui
-     <'> Fgtk_ui_manager_set_add_tearoffs <'> Fgtk_vbox_new <'> Fgtk_vbutton_box_new
-     <'> Fgtk_viewport_get_shadow_type
-     <'> Fgtk_viewport_new
-     <'> Fgtk_viewport_set_shadow_type
-     <'> Fgtk_vpaned_new
-     <'> Fgtk_vruler_new <'> Fgtk_vscale_new <'> Fgtk_vscale_new_with_range <'> Fgtk_vscrollbar_new
-     <'> Fgtk_vseparator_new <'> Fgtk_widget_activate <'> Fgtk_widget_add_accelerator
-     <'> Fgtk_widget_add_events <'> Fgtk_widget_add_mnemonic_label
-     <'> Fgtk_widget_can_activate_accel <'> Fgtk_widget_child_focus <'> Fgtk_widget_child_notify
-     <'> Fgtk_widget_class_path <'> Fgtk_widget_create_pango_context
-     <'> Fgtk_widget_create_pango_layout <'> Fgtk_widget_destroy <'> Fgtk_widget_destroyed
-     <'> Fgtk_widget_ensure_style <'> Fgtk_widget_event <'> Fgtk_widget_freeze_child_notify
-     <'> Fgtk_widget_get_accessible <'> Fgtk_widget_get_ancestor
-     <'> Fgtk_widget_get_child_visible <'> Fgtk_widget_get_clipboard
-     <'> Fgtk_widget_get_composite_name <'> Fgtk_widget_get_default_direction
-     <'> Fgtk_widget_get_default_style <'> Fgtk_widget_get_direction <'> Fgtk_widget_get_display
-     <'> Fgtk_widget_get_events <'> Fgtk_widget_get_modifier_style <'> Fgtk_widget_get_name
-     <'> Fgtk_widget_get_no_show_all <'> Fgtk_widget_get_pango_context <'> Fgtk_widget_get_parent
-     <'> Fgtk_widget_get_parent_window <'> Fgtk_widget_get_pointer <'> Fgtk_widget_get_root_window
-     <'> Fgtk_widget_get_screen <'> Fgtk_widget_get_size_request <'> Fgtk_widget_get_style
-     <'> Fgtk_widget_get_toplevel <'> Fgtk_widget_get_visual <'> Fgtk_widget_grab_default
-     <'> Fgtk_widget_grab_focus <'> Fgtk_widget_has_screen <'> Fgtk_widget_hide
-     <'> Fgtk_widget_hide_all <'> Fgtk_widget_hide_on_delete <'> Fgtk_widget_intersect
-     <'> Fgtk_widget_is_ancestor <'> Fgtk_widget_is_focus <'> Fgtk_widget_list_accel_closures
-     <'> Fgtk_widget_list_mnemonic_labels <'> Fgtk_widget_map <'> Fgtk_widget_mnemonic_activate
-     <'> Fgtk_widget_modify_base <'> Fgtk_widget_modify_bg <'> Fgtk_widget_modify_fg
-     <'> Fgtk_widget_modify_font <'> Fgtk_widget_modify_style <'> Fgtk_widget_modify_text
-     <'> Fgtk_widget_path <'> Fgtk_widget_pop_composite_child <'> Fgtk_widget_push_composite_child
-     <'> Fgtk_widget_queue_draw <'> Fgtk_widget_queue_draw_area <'> Fgtk_widget_queue_resize
-     <'> Fgtk_widget_queue_resize_no_redraw <'> Fgtk_widget_realize
-     <'> Fgtk_widget_remove_accelerator <'> Fgtk_widget_remove_mnemonic_label
-     <'> Fgtk_widget_render_icon <'> Fgtk_widget_reparent <'> Fgtk_widget_reset_rc_styles
-     <'> Fgtk_widget_reset_shapes <'> Fgtk_widget_send_expose <'> Fgtk_widget_set_accel_path
-     <'> Fgtk_widget_set_app_paintable <'> Fgtk_widget_set_child_visible
-     <'> Fgtk_widget_set_composite_name <'> Fgtk_widget_set_default_direction
-     <'> Fgtk_widget_set_direction <'> Fgtk_widget_set_double_buffered <'> Fgtk_widget_set_events
-     <'> Fgtk_widget_set_name <'> Fgtk_widget_set_no_show_all <'> Fgtk_widget_set_parent
-     <'> Fgtk_widget_set_parent_window <'> Fgtk_widget_set_redraw_on_allocate
-     <'> Fgtk_widget_set_sensitive
-     <'> Fgtk_widget_set_size_request <'> Fgtk_widget_set_state <'> Fgtk_widget_set_style
-     <'> Fgtk_widget_show <'> Fgtk_widget_show_all <'> Fgtk_widget_show_now
-     <'> Fgtk_widget_size_allocate <'> Fgtk_widget_thaw_child_notify
-     <'> Fgtk_widget_translate_coordinates <'> Fgtk_widget_unmap <'> Fgtk_widget_unparent
-     <'> Fgtk_widget_unrealize <'> Fgtk_window_activate_default <'> Fgtk_window_activate_focus
-     <'> Fgtk_window_activate_key <'> Fgtk_window_add_accel_group <'> Fgtk_window_add_embedded_xid
-     <'> Fgtk_window_add_mnemonic <'> Fgtk_window_begin_move_drag <'> Fgtk_window_begin_resize_drag
-     <'> Fgtk_window_deiconify <'> Fgtk_window_get_accept_focus <'> Fgtk_window_get_decorated
-     <'> Fgtk_window_get_default_icon_list <'> Fgtk_window_get_default_size
-     <'> Fgtk_window_get_destroy_with_parent <'> Fgtk_window_get_focus
-     <'> Fgtk_window_get_focus_on_map <'> Fgtk_window_get_frame_dimensions
-     <'> Fgtk_window_get_gravity <'> Fgtk_window_get_has_frame <'> Fgtk_window_get_icon 
-     <'> Fgtk_window_get_icon_list <'> Fgtk_window_get_icon_name
-     <'> Fgtk_window_get_mnemonic_modifier
-     <'> Fgtk_window_get_modal <'> Fgtk_window_get_position <'> Fgtk_window_get_resizable
-     <'> Fgtk_window_get_role <'> Fgtk_window_get_size <'> Fgtk_window_get_title
-     <'> Fgtk_window_get_transient_for <'> Fgtk_window_has_toplevel_focus <'> Fgtk_window_iconify
-     <'> Fgtk_window_is_active <'> Fgtk_window_list_toplevels <'> Fgtk_window_maximize
-     <'> Fgtk_window_mnemonic_activate <'> Fgtk_window_move <'> Fgtk_window_new
-     <'> Fgtk_window_parse_geometry <'> Fgtk_window_present <'> Fgtk_window_propagate_key_event
-     <'> Fgtk_window_remove_accel_group <'> Fgtk_window_remove_embedded_xid
-     <'> Fgtk_window_remove_mnemonic <'> Fgtk_window_reshow_with_initial_size
-     <'> Fgtk_window_resize <'> Fgtk_window_set_accept_focus
-     <'> Fgtk_window_set_auto_startup_notification <'> Fgtk_window_set_decorated
-     <'> Fgtk_window_set_default <'> Fgtk_window_set_default_icon
-     <'> Fgtk_window_set_default_icon_list <'> Fgtk_window_set_default_icon_name
-     <'> Fgtk_window_set_default_size <'> Fgtk_window_set_destroy_with_parent
-     <'> Fgtk_window_set_focus <'> Fgtk_window_set_focus_on_map
-     <'> Fgtk_window_set_frame_dimensions <'> Fgtk_window_set_geometry_hints
-     <'> Fgtk_window_set_gravity <'> Fgtk_window_set_has_frame <'> Fgtk_window_set_icon
-     <'> Fgtk_window_set_icon_list <'> Fgtk_window_set_icon_name <'> Fgtk_window_set_keep_above
-     <'> Fgtk_window_set_keep_below <'> Fgtk_window_set_mnemonic_modifier
-     <'> Fgtk_window_set_modal <'> Fgtk_window_set_position <'> Fgtk_window_set_resizable
-     <'> Fgtk_window_set_role <'> Fgtk_window_set_title <'> Fgtk_window_set_transient_for
-     <'> Fgtk_window_set_type_hint <'> Fgtk_window_set_wmclass <'> Fgtk_window_stick
-     <'> Fgtk_window_unmaximize <'> Fgtk_window_unstick <'> Fpango_attr_background_new
-     <'> Fpango_attr_fallback_new <'> Fpango_attr_family_new <'> Fpango_attr_font_desc_new
-     <'> Fpango_attr_foreground_new <'> Fpango_attr_iterator_copy <'> Fpango_attr_iterator_destroy
-     <'> Fpango_attr_iterator_get <'> Fpango_attr_iterator_get_attrs
-     <'> Fpango_attr_iterator_get_font
-     <'> Fpango_attr_iterator_next <'> Fpango_attr_iterator_range <'> Fpango_attr_language_new
-     <'> Fpango_attr_letter_spacing_new <'> Fpango_attr_list_change <'> Fpango_attr_list_copy
-     <'> Fpango_attr_list_filter <'> Fpango_attr_list_get_iterator <'> Fpango_attr_list_insert
-     <'> Fpango_attr_list_insert_before <'> Fpango_attr_list_new <'> Fpango_attr_list_splice
-     <'> Fpango_attr_list_unref <'> Fpango_attr_rise_new <'> Fpango_attr_scale_new
-     <'> Fpango_attr_shape_new <'> Fpango_attr_size_new <'> Fpango_attr_stretch_new
-     <'> Fpango_attr_strikethrough_color_new <'> Fpango_attr_strikethrough_new
-     <'> Fpango_attr_style_new <'> Fpango_attr_type_register <'> Fpango_attr_underline_color_new
-     <'> Fpango_attr_underline_new <'> Fpango_attr_variant_new <'> Fpango_attr_weight_new
-     <'> Fpango_attribute_copy <'> Fpango_attribute_destroy <'> Fpango_attribute_equal
-     <'> Fpango_break <'> Fpango_color_copy <'> Fpango_color_free <'> Fpango_color_parse
-     <'> Fpango_context_get_base_dir <'> Fpango_context_get_font_description
-     <'> Fpango_context_get_language <'> Fpango_context_get_metrics
-     <'> Fpango_context_list_families <'> Fpango_context_load_font <'> Fpango_context_load_fontset
-     <'> Fpango_context_set_base_dir <'> Fpango_context_set_font_description
-     <'> Fpango_context_set_language <'> Fpango_coverage_copy <'> Fpango_coverage_get
-     <'> Fpango_coverage_max <'> Fpango_coverage_new <'> Fpango_coverage_ref
-     <'> Fpango_coverage_set
-     <'> Fpango_coverage_to_bytes <'> Fpango_coverage_unref <'> Fpango_font_describe
-     <'> Fpango_font_description_better_match <'> Fpango_font_description_copy
-     <'> Fpango_font_description_copy_static <'> Fpango_font_description_equal
-     <'> Fpango_font_description_free <'> Fpango_font_description_from_string
-     <'> Fpango_font_description_get_family <'> Fpango_font_description_get_set_fields
-     <'> Fpango_font_description_get_size <'> Fpango_font_description_get_stretch
-     <'> Fpango_font_description_get_style <'> Fpango_font_description_get_variant
-     <'> Fpango_font_description_get_weight <'> Fpango_font_description_hash
-     <'> Fpango_font_description_merge <'> Fpango_font_description_merge_static
-     <'> Fpango_font_description_new <'> Fpango_font_description_set_family
-     <'> Fpango_font_description_set_family_static <'> Fpango_font_description_set_size
-     <'> Fpango_font_description_set_stretch <'> Fpango_font_description_set_style
-     <'> Fpango_font_description_set_variant <'> Fpango_font_description_set_weight
-     <'> Fpango_font_description_to_filename <'> Fpango_font_description_to_string
-     <'> Fpango_font_description_unset_fields <'> Fpango_font_descriptions_free
-     <'> Fpango_font_face_describe <'> Fpango_font_face_get_face_name
-     <'> Fpango_font_face_list_sizes <'> Fpango_font_family_get_name
-     <'> Fpango_font_family_is_monospace <'> Fpango_font_family_list_faces
-     <'> Fpango_font_get_coverage <'> Fpango_font_get_glyph_extents
-     <'> Fpango_font_get_metrics <'> Fpango_font_map_list_families
-     <'> Fpango_font_map_load_font <'> Fpango_font_map_load_fontset
-     <'> Fpango_font_metrics_get_approximate_char_width
-     <'> Fpango_font_metrics_get_approximate_digit_width
-     <'> Fpango_font_metrics_get_ascent <'> Fpango_font_metrics_get_descent
-     <'> Fpango_font_metrics_get_strikethrough_position
-     <'> Fpango_font_metrics_get_strikethrough_thickness
-     <'> Fpango_font_metrics_get_underline_position
-     <'> Fpango_font_metrics_get_underline_thickness <'> Fpango_font_metrics_ref
-     <'> Fpango_font_metrics_unref <'> Fpango_get_log_attrs <'> Fpango_glyph_string_copy
-     <'> Fpango_glyph_string_extents <'> Fpango_glyph_string_extents_range
-     <'> Fpango_glyph_string_free <'> Fpango_glyph_string_get_logical_widths
-     <'> Fpango_glyph_string_index_to_x <'> Fpango_glyph_string_new
-     <'> Fpango_glyph_string_set_size <'> Fpango_glyph_string_x_to_index
-     <'> Fpango_item_copy <'> Fpango_item_free <'> Fpango_item_new <'> Fpango_item_split
-     <'> Fpango_itemize <'> Fpango_language_matches <'> Fpango_layout_context_changed
-     <'> Fpango_layout_copy <'> Fpango_layout_get_alignment <'> Fpango_layout_get_attributes
-     <'> Fpango_layout_get_auto_dir <'> Fpango_layout_get_context <'> Fpango_layout_get_cursor_pos
-     <'> Fpango_layout_get_extents <'> Fpango_layout_get_indent <'> Fpango_layout_get_iter
-     <'> Fpango_layout_get_justify <'> Fpango_layout_get_line <'> Fpango_layout_get_line_count
-     <'> Fpango_layout_get_lines <'> Fpango_layout_get_log_attrs
-     <'> Fpango_layout_get_pixel_extents
-     <'> Fpango_layout_get_pixel_size <'> Fpango_layout_get_single_paragraph_mode
-     <'> Fpango_layout_get_size <'> Fpango_layout_get_spacing <'> Fpango_layout_get_tabs
-     <'> Fpango_layout_get_text <'> Fpango_layout_get_width <'> Fpango_layout_get_wrap
-     <'> Fpango_layout_index_to_pos <'> Fpango_layout_iter_at_last_line <'> Fpango_layout_iter_free
-     <'> Fpango_layout_iter_get_baseline <'> Fpango_layout_iter_get_char_extents
-     <'> Fpango_layout_iter_get_cluster_extents <'> Fpango_layout_iter_get_index
-     <'> Fpango_layout_iter_get_layout_extents <'> Fpango_layout_iter_get_line
-     <'> Fpango_layout_iter_get_line_extents <'> Fpango_layout_iter_get_line_yrange
-     <'> Fpango_layout_iter_get_run <'> Fpango_layout_iter_get_run_extents
-     <'> Fpango_layout_iter_next_char <'> Fpango_layout_iter_next_cluster
-     <'> Fpango_layout_iter_next_line <'> Fpango_layout_iter_next_run
-     <'> Fpango_layout_line_get_extents <'> Fpango_layout_line_get_pixel_extents
-     <'> Fpango_layout_line_get_x_ranges <'> Fpango_layout_line_index_to_x
-     <'> Fpango_layout_line_x_to_index <'> Fpango_layout_move_cursor_visually
-     <'> Fpango_layout_new <'> Fpango_layout_set_alignment <'> Fpango_layout_set_attributes
-     <'> Fpango_layout_set_auto_dir <'> Fpango_layout_set_font_description
-     <'> Fpango_layout_set_indent <'> Fpango_layout_set_justify <'> Fpango_layout_set_markup
-     <'> Fpango_layout_set_markup_with_accel <'> Fpango_layout_set_single_paragraph_mode
-     <'> Fpango_layout_set_spacing <'> Fpango_layout_set_tabs <'> Fpango_layout_set_text
-     <'> Fpango_layout_set_width <'> Fpango_layout_set_wrap <'> Fpango_layout_xy_to_index
-     <'> Fpango_parse_markup <'> Fpango_renderer_deactivate
-     <'> Fpango_renderer_draw_error_underline
-     <'> Fpango_script_iter_free <'> Fpango_script_iter_get_range <'> Fpango_script_iter_next
-     <'> FGDK_COLORMAP <'> FGDK_IS_COLORMAP <'> FG_OBJECT_TYPE <'> Fgdk_colormap_alloc_color
-     <'> Fgdk_colormap_alloc_colors <'> Fgdk_colormap_get_system <'> Fgdk_colormap_get_visual
-     <'> Fgdk_colormap_new <'> Fgdk_drawable_get_depth <'> Fgdk_drawable_get_size
-     <'> Fgdk_drawable_get_visual <'> Fgdk_drawable_set_colormap <'> Fgdk_pixbuf_get_from_drawable
-     <'> Fgdk_pixbuf_render_pixmap_and_mask <'> Fgdk_pixbuf_render_pixmap_and_mask_for_colormap
-     <'> Fgdk_pixbuf_render_threshold_alpha <'> Fgdk_screen_get_default_colormap
-     <'> Fgdk_screen_get_system_colormap <'> Fgdk_screen_set_default_colormap
-     <'> Fgdk_window_clear <'> Fgdk_window_clear_area <'> Fgdk_window_clear_area_e
-     <'> Fgdk_window_get_internal_paint_info <'> Fgdk_window_set_back_pixmap
-     <'> Fgdk_window_set_icon
-     <'> Fgdk_window_shape_combine_mask <'> Fgtk_binding_set_activate <'> Fgtk_bindings_activate
-     <'> Fgtk_cell_renderer_render <'> Fgtk_cell_view_get_size_of_row <'> Fgtk_drag_set_icon_pixmap
-     <'> Fgtk_drag_source_set_icon <'> Fgtk_paint_arrow <'> Fgtk_paint_box <'> Fgtk_paint_box_gap
-     <'> Fgtk_paint_check <'> Fgtk_paint_diamond <'> Fgtk_paint_extension <'> Fgtk_paint_flat_box
-     <'> Fgtk_paint_focus <'> Fgtk_paint_handle <'> Fgtk_paint_hline <'> Fgtk_paint_layout
-     <'> Fgtk_paint_option <'> Fgtk_paint_resize_grip <'> Fgtk_paint_shadow
-     <'> Fgtk_paint_shadow_gap
-     <'> Fgtk_paint_slider <'> Fgtk_paint_tab <'> Fgtk_paint_vline <'> Fgtk_requisition_copy
-     <'> Fgtk_requisition_free <'> Fgtk_ruler_draw_pos <'> Fgtk_ruler_draw_ticks
-     <'> Fgtk_style_apply_default_background <'> Fgtk_tree_view_create_row_drag_icon
-     <'> Fgtk_widget_get_child_requisition <'> Fgtk_widget_get_colormap
-     <'> Fgtk_widget_get_default_colormap <'> Fgtk_widget_get_default_visual
-     <'> Fgtk_widget_pop_colormap <'> Fgtk_widget_push_colormap <'> Fgtk_widget_set_colormap
-     <'> Fgtk_widget_set_default_colormap <'> Fgtk_widget_shape_combine_mask
-     <'> Fgtk_widget_size_request <'> Fgdk_drawable_get_colormap
-     <'> Fpango_shape ) constant gtk-procs-3
+  #( 'Fgtk_file_chooser_add_filter 'Fgtk_file_chooser_add_shortcut_folder
+     'Fgtk_file_chooser_add_shortcut_folder_uri 'Fgtk_file_chooser_button_get_title
+     'Fgtk_file_chooser_button_get_width_chars 'Fgtk_file_chooser_button_set_title
+     'Fgtk_file_chooser_button_set_width_chars 'Fgtk_file_chooser_dialog_new
+     'Fgtk_file_chooser_get_action 'Fgtk_file_chooser_get_current_folder
+     'Fgtk_file_chooser_get_current_folder_uri 'Fgtk_file_chooser_get_extra_widget
+     'Fgtk_file_chooser_get_filename 'Fgtk_file_chooser_get_filenames
+     'Fgtk_file_chooser_get_filter 'Fgtk_file_chooser_get_local_only
+     'Fgtk_file_chooser_get_preview_filename 'Fgtk_file_chooser_get_preview_uri
+     'Fgtk_file_chooser_get_preview_widget 'Fgtk_file_chooser_get_preview_widget_active
+     'Fgtk_file_chooser_get_select_multiple 'Fgtk_file_chooser_get_show_hidden 
+     'Fgtk_file_chooser_get_uri 'Fgtk_file_chooser_get_uris 
+     'Fgtk_file_chooser_get_use_preview_label 'Fgtk_file_chooser_list_filters
+     'Fgtk_file_chooser_list_shortcut_folder_uris 'Fgtk_file_chooser_list_shortcut_folders
+     'Fgtk_file_chooser_remove_filter 'Fgtk_file_chooser_remove_shortcut_folder
+     'Fgtk_file_chooser_remove_shortcut_folder_uri 'Fgtk_file_chooser_select_all 
+     'Fgtk_file_chooser_select_filename 'Fgtk_file_chooser_select_uri 
+     'Fgtk_file_chooser_set_action 'Fgtk_file_chooser_set_current_folder
+     'Fgtk_file_chooser_set_current_folder_uri 'Fgtk_file_chooser_set_current_name 
+     'Fgtk_file_chooser_set_extra_widget 'Fgtk_file_chooser_set_filename 
+     'Fgtk_file_chooser_set_filter 'Fgtk_file_chooser_set_local_only 
+     'Fgtk_file_chooser_set_preview_widget 'Fgtk_file_chooser_set_preview_widget_active
+     'Fgtk_file_chooser_set_select_multiple 'Fgtk_file_chooser_set_show_hidden 
+     'Fgtk_file_chooser_set_uri 'Fgtk_file_chooser_set_use_preview_label
+     'Fgtk_file_chooser_unselect_all 'Fgtk_file_chooser_unselect_filename
+     'Fgtk_file_chooser_unselect_uri 'Fgtk_file_filter_add_pattern
+     'Fgtk_file_filter_add_pixbuf_formats 'Fgtk_file_filter_filter
+     'Fgtk_file_filter_get_name 'Fgtk_file_filter_get_needed
+     'Fgtk_file_filter_new 'Fgtk_file_filter_set_name
+     'Fgtk_fixed_move 'Fgtk_fixed_new 'Fgtk_fixed_put
+     'Fgtk_font_button_get_font_name 'Fgtk_font_button_get_show_size
+     'Fgtk_font_button_get_show_style 'Fgtk_font_button_get_title
+     'Fgtk_font_button_get_use_font 'Fgtk_font_button_get_use_size
+     'Fgtk_font_button_new 'Fgtk_font_button_new_with_font
+     'Fgtk_font_button_set_font_name 'Fgtk_font_button_set_show_size
+     'Fgtk_font_button_set_show_style 'Fgtk_font_button_set_title
+     'Fgtk_font_button_set_use_font 'Fgtk_font_button_set_use_size
+     'Fgtk_font_selection_dialog_get_font_name 'Fgtk_font_selection_dialog_get_preview_text
+     'Fgtk_font_selection_dialog_new 'Fgtk_font_selection_dialog_set_font_name
+     'Fgtk_font_selection_dialog_set_preview_text 'Fgtk_font_selection_get_font_name
+     'Fgtk_font_selection_get_preview_text 'Fgtk_font_selection_new
+     'Fgtk_font_selection_set_preview_text 'Fgtk_frame_get_label
+     'Fgtk_frame_get_label_align 'Fgtk_frame_get_label_widget
+     'Fgtk_frame_get_shadow_type 'Fgtk_frame_new
+     'Fgtk_frame_set_label 'Fgtk_frame_set_label_align
+     'Fgtk_frame_set_label_widget 'Fgtk_frame_set_shadow_type
+     'Fgtk_get_current_event 'Fgtk_get_current_event_state
+     'Fgtk_get_current_event_time 'Fgtk_get_default_language
+     'Fgtk_get_event_widget 'Fgtk_grab_add 'Fgtk_grab_get_current
+     'Fgtk_grab_remove 'Fgtk_handle_box_get_handle_position
+     'Fgtk_handle_box_get_shadow_type 'Fgtk_handle_box_get_snap_edge
+     'Fgtk_handle_box_new 'Fgtk_handle_box_set_handle_position
+     'Fgtk_handle_box_set_shadow_type 'Fgtk_handle_box_set_snap_edge
+     'Fgtk_hbox_new 'Fgtk_hbutton_box_new 'Fgtk_hpaned_new
+     'Fgtk_hscale_new 'Fgtk_hscale_new_with_range
+     'Fgtk_hscrollbar_new 'Fgtk_hseparator_new 'Fgtk_icon_factory_add
+     'Fgtk_icon_factory_add_default 'Fgtk_icon_factory_lookup
+     'Fgtk_icon_factory_lookup_default 'Fgtk_icon_factory_new
+     'Fgtk_icon_factory_remove_default 'Fgtk_icon_info_copy
+     'Fgtk_icon_info_free 'Fgtk_icon_info_get_base_size
+     'Fgtk_icon_info_get_builtin_pixbuf 'Fgtk_icon_info_get_display_name
+     'Fgtk_icon_info_get_embedded_rect 'Fgtk_icon_info_get_filename
+     'Fgtk_icon_info_load_icon 'Fgtk_icon_info_set_raw_coordinates
+     'Fgtk_icon_set_add_source 'Fgtk_icon_set_copy
+     'Fgtk_icon_set_get_sizes 'Fgtk_icon_set_new
+     'Fgtk_icon_set_new_from_pixbuf 'Fgtk_icon_set_ref
+     'Fgtk_icon_set_render_icon 'Fgtk_icon_set_unref
+     'Fgtk_icon_size_get_name 'Fgtk_icon_size_lookup
+     'Fgtk_icon_size_register 'Fgtk_icon_size_register_alias
+     'Fgtk_icon_source_copy 'Fgtk_icon_source_free
+     'Fgtk_icon_source_get_direction 'Fgtk_icon_source_get_direction_wildcarded
+     'Fgtk_icon_source_get_filename
+     'Fgtk_icon_source_get_icon_name 'Fgtk_icon_source_get_pixbuf
+     'Fgtk_icon_source_get_size 'Fgtk_icon_source_get_size_wildcarded
+     'Fgtk_icon_source_get_state 'Fgtk_icon_source_get_state_wildcarded
+     'Fgtk_icon_source_new 'Fgtk_icon_source_set_direction
+     'Fgtk_icon_source_set_direction_wildcarded
+     'Fgtk_icon_source_set_filename 'Fgtk_icon_source_set_pixbuf
+     'Fgtk_icon_source_set_size 'Fgtk_icon_source_set_size_wildcarded
+     'Fgtk_icon_source_set_state 'Fgtk_icon_source_set_state_wildcarded
+     'Fgtk_icon_theme_add_builtin_icon 'Fgtk_icon_theme_append_search_path
+     'Fgtk_icon_theme_get_default 'Fgtk_icon_theme_get_example_icon_name
+     'Fgtk_icon_theme_get_for_screen 'Fgtk_icon_theme_get_icon_sizes
+     'Fgtk_icon_theme_get_search_path 'Fgtk_icon_theme_has_icon
+     'Fgtk_icon_theme_list_icons 'Fgtk_icon_theme_load_icon
+     'Fgtk_icon_theme_lookup_icon 'Fgtk_icon_theme_new
+     'Fgtk_icon_theme_prepend_search_path 'Fgtk_icon_theme_rescan_if_needed
+     'Fgtk_icon_theme_set_custom_theme 'Fgtk_icon_theme_set_screen
+     'Fgtk_icon_view_get_markup_column 'Fgtk_icon_view_get_model
+     'Fgtk_icon_view_get_path_at_pos 'Fgtk_icon_view_get_pixbuf_column
+     'Fgtk_icon_view_get_selected_items 'Fgtk_icon_view_get_selection_mode
+     'Fgtk_icon_view_get_text_column 'Fgtk_icon_view_item_activated
+     'Fgtk_icon_view_new 'Fgtk_icon_view_new_with_model
+     'Fgtk_icon_view_path_is_selected 'Fgtk_icon_view_select_all
+     'Fgtk_icon_view_select_path 'Fgtk_icon_view_selected_foreach
+     'Fgtk_icon_view_set_markup_column 'Fgtk_icon_view_set_model
+     'Fgtk_icon_view_set_pixbuf_column 'Fgtk_icon_view_set_selection_mode
+     'Fgtk_icon_view_set_text_column 'Fgtk_icon_view_unselect_all
+     'Fgtk_icon_view_unselect_path 'Fgtk_im_context_delete_surrounding
+     'Fgtk_im_context_filter_keypress 'Fgtk_im_context_focus_in
+     'Fgtk_im_context_focus_out 'Fgtk_im_context_get_preedit_string
+     'Fgtk_im_context_get_surrounding 'Fgtk_im_context_reset
+     'Fgtk_im_context_set_client_window 'Fgtk_im_context_set_cursor_location
+     'Fgtk_im_context_set_surrounding 'Fgtk_im_context_set_use_preedit
+     'Fgtk_im_context_simple_add_table 'Fgtk_im_context_simple_new
+     'Fgtk_im_multicontext_append_menuitems 'Fgtk_im_multicontext_new
+     'Fgtk_label_get_attributes 'Fgtk_label_get_ellipsize
+     'Fgtk_label_get_justify 'Fgtk_label_get_label
+     'Fgtk_label_get_layout 'Fgtk_label_get_layout_offsets
+     'Fgtk_label_get_line_wrap 'Fgtk_label_get_mnemonic_keyval
+     'Fgtk_label_get_mnemonic_widget 'Fgtk_label_get_selectable
+     'Fgtk_label_get_selection_bounds 'Fgtk_label_get_single_line_mode
+     'Fgtk_label_get_text 'Fgtk_label_get_use_markup
+     'Fgtk_label_get_use_underline 'Fgtk_label_get_width_chars
+     'Fgtk_label_new 'Fgtk_label_new_with_mnemonic 'Fgtk_label_set_angle
+     'Fgtk_label_set_attributes 'Fgtk_label_set_ellipsize
+     'Fgtk_label_set_justify 'Fgtk_label_set_label
+     'Fgtk_label_set_line_wrap 'Fgtk_label_set_markup
+     'Fgtk_label_set_markup_with_mnemonic 'Fgtk_label_set_mnemonic_widget
+     'Fgtk_label_set_pattern 'Fgtk_label_set_selectable
+     'Fgtk_label_set_single_line_mode 'Fgtk_label_set_text
+     'Fgtk_label_set_text_with_mnemonic 'Fgtk_label_set_use_markup
+     'Fgtk_label_set_use_underline 'Fgtk_label_set_width_chars
+     'Fgtk_layout_get_size
+     'Fgtk_layout_move 'Fgtk_layout_new
+     'Fgtk_layout_set_size
+     'Fgtk_list_store_append
+     'Fgtk_list_store_clear 'Fgtk_list_store_insert
+     'Fgtk_list_store_insert_after 'Fgtk_list_store_insert_before
+     'Fgtk_list_store_move_after 'Fgtk_list_store_move_before
+     'Fgtk_list_store_new 'Fgtk_list_store_newv 'Fgtk_list_store_prepend
+     'Fgtk_list_store_remove 'Fgtk_list_store_reorder
+     'Fgtk_list_store_set 'Fgtk_list_store_set_column_types
+     'Fgtk_list_store_swap 'Fgtk_menu_attach 'Fgtk_menu_bar_new
+     'Fgtk_menu_detach 'Fgtk_menu_get_accel_group 'Fgtk_menu_get_active
+     'Fgtk_menu_get_attach_widget 'Fgtk_menu_get_for_attach_widget
+     'Fgtk_menu_get_tearoff_state 'Fgtk_menu_get_title
+     'Fgtk_menu_item_activate 'Fgtk_menu_item_deselect
+     'Fgtk_menu_item_get_right_justified 'Fgtk_menu_item_get_submenu
+     'Fgtk_menu_item_new 'Fgtk_menu_item_new_with_mnemonic
+     'Fgtk_menu_item_select 'Fgtk_menu_item_set_accel_path
+     'Fgtk_menu_item_set_right_justified 'Fgtk_menu_item_set_submenu
+     'Fgtk_menu_item_toggle_size_allocate
+     'Fgtk_menu_item_toggle_size_request 'Fgtk_menu_new
+     'Fgtk_menu_popdown 'Fgtk_menu_popup 'Fgtk_menu_reorder_child
+     'Fgtk_menu_reposition 'Fgtk_menu_set_accel_group
+     'Fgtk_menu_set_accel_path 'Fgtk_menu_set_active
+     'Fgtk_menu_set_monitor 'Fgtk_menu_set_screen
+     'Fgtk_menu_set_tearoff_state 'Fgtk_menu_set_title
+     'Fgtk_menu_shell_activate_item 'Fgtk_menu_shell_append
+     'Fgtk_menu_shell_cancel 'Fgtk_menu_shell_deactivate
+     'Fgtk_menu_shell_deselect 'Fgtk_menu_shell_insert
+     'Fgtk_menu_shell_prepend 'Fgtk_menu_shell_select_first
+     'Fgtk_menu_shell_select_item 'Fgtk_menu_tool_button_get_menu
+     'Fgtk_menu_tool_button_new 'Fgtk_menu_tool_button_new_from_stock
+     'Fgtk_menu_tool_button_set_menu 'Fgtk_misc_get_alignment
+     'Fgtk_misc_get_padding 'Fgtk_misc_set_alignment
+     'Fgtk_misc_set_padding 'Fgtk_notebook_append_page
+     'Fgtk_notebook_append_page_menu 'Fgtk_notebook_get_current_page
+     'Fgtk_notebook_get_menu_label 'Fgtk_notebook_get_menu_label_text
+     'Fgtk_notebook_get_n_pages 'Fgtk_notebook_get_nth_page
+     'Fgtk_notebook_get_scrollable 'Fgtk_notebook_get_show_border
+     'Fgtk_notebook_get_show_tabs 'Fgtk_notebook_get_tab_label
+     'Fgtk_notebook_get_tab_label_text 'Fgtk_notebook_get_tab_pos
+     'Fgtk_notebook_insert_page 'Fgtk_notebook_insert_page_menu
+     'Fgtk_notebook_new 'Fgtk_notebook_next_page 'Fgtk_notebook_page_num
+     'Fgtk_notebook_popup_disable 'Fgtk_notebook_popup_enable
+     'Fgtk_notebook_prepend_page 'Fgtk_notebook_prepend_page_menu
+     'Fgtk_notebook_prev_page 'Fgtk_notebook_remove_page
+     'Fgtk_notebook_reorder_child 'Fgtk_notebook_set_current_page
+     'Fgtk_notebook_set_menu_label 'Fgtk_notebook_set_menu_label_text
+     'Fgtk_notebook_set_scrollable 'Fgtk_notebook_set_show_border
+     'Fgtk_notebook_set_show_tabs 'Fgtk_notebook_set_tab_label
+     'Fgtk_notebook_set_tab_label_text 'Fgtk_notebook_set_tab_pos
+     'Fgtk_paned_add1 'Fgtk_paned_add2 'Fgtk_paned_get_child1
+     'Fgtk_paned_get_child2 'Fgtk_paned_get_position 'Fgtk_paned_pack1
+     'Fgtk_paned_pack2 'Fgtk_paned_set_position 'Fgtk_plug_construct
+     'Fgtk_plug_get_id 'Fgtk_plug_new 'Fgtk_progress_bar_get_ellipsize
+     'Fgtk_progress_bar_get_fraction 'Fgtk_progress_bar_get_pulse_step
+     'Fgtk_progress_bar_get_text 'Fgtk_progress_bar_new
+     'Fgtk_progress_bar_pulse 'Fgtk_progress_bar_set_ellipsize
+     'Fgtk_progress_bar_set_fraction 'Fgtk_progress_bar_set_pulse_step
+     'Fgtk_progress_bar_set_text 'Fgtk_propagate_event
+     'Fgtk_radio_action_get_current_value 'Fgtk_radio_action_get_group
+     'Fgtk_radio_action_new 'Fgtk_radio_action_set_group
+     'Fgtk_radio_button_get_group 'Fgtk_radio_button_new
+     'Fgtk_radio_button_new_from_widget 'Fgtk_radio_button_new_with_label_from_widget
+     'Fgtk_radio_button_new_with_mnemonic 'Fgtk_radio_button_new_with_mnemonic_from_widget
+     'Fgtk_radio_button_set_group 'Fgtk_radio_menu_item_get_group
+     'Fgtk_radio_menu_item_new 'Fgtk_radio_menu_item_new_from_widget
+     'Fgtk_radio_menu_item_new_with_label_from_widget
+     'Fgtk_radio_menu_item_new_with_mnemonic
+     'Fgtk_radio_menu_item_new_with_mnemonic_from_widget
+     'Fgtk_radio_menu_item_set_group 'Fgtk_radio_tool_button_get_group
+     'Fgtk_radio_tool_button_new 'Fgtk_radio_tool_button_new_from_stock
+     'Fgtk_radio_tool_button_new_from_widget
+     'Fgtk_radio_tool_button_new_with_stock_from_widget
+     'Fgtk_radio_tool_button_set_group 'Fgtk_range_get_adjustment
+     'Fgtk_range_get_inverted 'Fgtk_range_get_update_policy
+     'Fgtk_range_get_value 'Fgtk_range_set_adjustment
+     'Fgtk_range_set_increments 'Fgtk_range_set_inverted
+     'Fgtk_range_set_range 'Fgtk_range_set_update_policy
+     'Fgtk_range_set_value 'Fgtk_rc_add_default_file
+     'Fgtk_rc_get_default_files 'Fgtk_rc_get_im_module_file
+     'Fgtk_rc_get_im_module_path 'Fgtk_rc_get_module_dir
+     'Fgtk_rc_get_style 'Fgtk_rc_get_theme_dir 'Fgtk_rc_parse
+     'Fgtk_rc_reparse_all 'Fgtk_rc_set_default_files 'Fgtk_rc_style_copy
+     'Fgtk_rc_style_new 'Fgtk_scale_get_digits
+     'Fgtk_scale_get_draw_value 'Fgtk_scale_get_layout
+     'Fgtk_scale_get_layout_offsets 'Fgtk_scale_get_value_pos
+     'Fgtk_scale_set_digits 'Fgtk_scale_set_draw_value
+     'Fgtk_scale_set_value_pos 'Fgtk_scrolled_window_add_with_viewport
+     'Fgtk_scrolled_window_get_hadjustment 'Fgtk_scrolled_window_get_placement
+     'Fgtk_scrolled_window_get_policy 'Fgtk_scrolled_window_get_shadow_type
+     'Fgtk_scrolled_window_get_vadjustment 'Fgtk_scrolled_window_new
+     'Fgtk_scrolled_window_set_hadjustment 'Fgtk_scrolled_window_set_placement
+     'Fgtk_scrolled_window_set_policy 'Fgtk_scrolled_window_set_shadow_type
+     'Fgtk_scrolled_window_set_vadjustment 'Fgtk_selection_add_target
+     'Fgtk_selection_add_targets 'Fgtk_selection_clear_targets
+     'Fgtk_selection_convert 'Fgtk_selection_data_copy
+     'Fgtk_selection_data_free 'Fgtk_selection_data_get_pixbuf
+     'Fgtk_selection_data_get_targets 'Fgtk_selection_data_get_text
+     'Fgtk_selection_data_get_uris 'Fgtk_selection_data_set
+     'Fgtk_selection_data_set_pixbuf 'Fgtk_selection_data_set_text
+     'Fgtk_selection_data_set_uris 'Fgtk_selection_data_targets_include_image
+     'Fgtk_selection_data_targets_include_text 'Fgtk_selection_owner_set
+     'Fgtk_selection_remove_all 'Fgtk_separator_menu_item_new
+     'Fgtk_separator_tool_item_get_draw 'Fgtk_separator_tool_item_new
+     'Fgtk_separator_tool_item_set_draw 'Fgtk_set_locale
+     'Fgtk_size_group_add_widget 'Fgtk_size_group_get_mode
+     'Fgtk_size_group_new 'Fgtk_size_group_remove_widget
+     'Fgtk_size_group_set_mode 'Fgtk_socket_add_id
+     'Fgtk_socket_get_id 'Fgtk_socket_new 'Fgtk_spin_button_configure
+     'Fgtk_spin_button_get_adjustment 'Fgtk_spin_button_get_digits
+     'Fgtk_spin_button_get_increments 'Fgtk_spin_button_get_numeric
+     'Fgtk_spin_button_get_range 'Fgtk_spin_button_get_snap_to_ticks
+     'Fgtk_spin_button_get_update_policy 'Fgtk_spin_button_get_value
+     'Fgtk_spin_button_get_value_as_int 'Fgtk_spin_button_get_wrap
+     'Fgtk_spin_button_new 'Fgtk_spin_button_new_with_range
+     'Fgtk_spin_button_set_adjustment 'Fgtk_spin_button_set_digits
+     'Fgtk_spin_button_set_increments 'Fgtk_spin_button_set_numeric
+     'Fgtk_spin_button_set_range 'Fgtk_spin_button_set_snap_to_ticks
+     'Fgtk_spin_button_set_update_policy 'Fgtk_spin_button_set_value
+     'Fgtk_spin_button_set_wrap 'Fgtk_spin_button_spin
+     'Fgtk_spin_button_update 'Fgtk_statusbar_get_context_id
+     'Fgtk_statusbar_new
+     'Fgtk_statusbar_pop 'Fgtk_statusbar_push
+     'Fgtk_statusbar_remove
+     'Fgtk_stock_add 'Fgtk_stock_add_static 'Fgtk_stock_item_copy
+     'Fgtk_stock_item_free 'Fgtk_stock_list_ids 'Fgtk_stock_lookup
+     'Fgtk_style_attach 'Fgtk_style_copy 'Fgtk_style_detach
+     'Fgtk_style_lookup_icon_set 'Fgtk_style_new 'Fgtk_style_render_icon
+     'Fgtk_style_set_background 'Fgtk_table_attach
+     'Fgtk_table_attach_defaults 'Fgtk_table_get_col_spacing
+     'Fgtk_table_get_default_col_spacing 'Fgtk_table_get_default_row_spacing
+     'Fgtk_table_get_homogeneous 'Fgtk_table_get_row_spacing
+     'Fgtk_table_new 'Fgtk_table_resize 'Fgtk_table_set_col_spacing
+     'Fgtk_table_set_col_spacings 'Fgtk_table_set_homogeneous
+     'Fgtk_table_set_row_spacing 'Fgtk_table_set_row_spacings
+     'Fgtk_target_list_add 'Fgtk_target_list_add_image_targets
+     'Fgtk_target_list_add_table 'Fgtk_target_list_add_text_targets
+     'Fgtk_target_list_add_uri_targets 'Fgtk_target_list_find
+     'Fgtk_target_list_remove 'Fgtk_target_list_unref
+     'Fgtk_tearoff_menu_item_new 'Fgtk_text_attributes_copy
+     'Fgtk_text_attributes_copy_values 'Fgtk_text_attributes_new
+     'Fgtk_text_attributes_unref 'Fgtk_text_buffer_add_selection_clipboard
+     'Fgtk_text_buffer_apply_tag 'Fgtk_text_buffer_apply_tag_by_name
+     'Fgtk_text_buffer_backspace 'Fgtk_text_buffer_begin_user_action
+     'Fgtk_text_buffer_copy_clipboard 'Fgtk_text_buffer_create_child_anchor
+     'Fgtk_text_buffer_create_mark 'Fgtk_text_buffer_create_tag
+     'Fgtk_text_buffer_cut_clipboard 'Fgtk_text_buffer_delete
+     'Fgtk_text_buffer_delete_interactive 'Fgtk_text_buffer_delete_mark
+     'Fgtk_text_buffer_delete_mark_by_name
+     'Fgtk_text_buffer_delete_selection 'Fgtk_text_buffer_end_user_action
+     'Fgtk_text_buffer_get_bounds 'Fgtk_text_buffer_get_char_count
+     'Fgtk_text_buffer_get_end_iter 'Fgtk_text_buffer_get_insert
+     'Fgtk_text_buffer_get_iter_at_child_anchor 'Fgtk_text_buffer_get_iter_at_line
+     'Fgtk_text_buffer_get_iter_at_line_index 'Fgtk_text_buffer_get_iter_at_line_offset
+     'Fgtk_text_buffer_get_iter_at_mark 'Fgtk_text_buffer_get_iter_at_offset
+     'Fgtk_text_buffer_get_line_count 'Fgtk_text_buffer_get_mark
+     'Fgtk_text_buffer_get_modified 'Fgtk_text_buffer_get_selection_bound
+     'Fgtk_text_buffer_get_selection_bounds 'Fgtk_text_buffer_get_slice
+     'Fgtk_text_buffer_get_start_iter 'Fgtk_text_buffer_get_tag_table
+     'Fgtk_text_buffer_get_text 'Fgtk_text_buffer_insert
+     'Fgtk_text_buffer_insert_at_cursor 'Fgtk_text_buffer_insert_child_anchor
+     'Fgtk_text_buffer_insert_interactive 'Fgtk_text_buffer_insert_interactive_at_cursor
+     'Fgtk_text_buffer_insert_pixbuf 'Fgtk_text_buffer_insert_range
+     'Fgtk_text_buffer_insert_range_interactive 'Fgtk_text_buffer_insert_with_tags
+     'Fgtk_text_buffer_insert_with_tags_by_name 'Fgtk_text_buffer_move_mark
+     'Fgtk_text_buffer_move_mark_by_name 'Fgtk_text_buffer_new
+     'Fgtk_text_buffer_paste_clipboard 'Fgtk_text_buffer_place_cursor
+     'Fgtk_text_buffer_remove_all_tags 'Fgtk_text_buffer_remove_selection_clipboard
+     'Fgtk_text_buffer_remove_tag 'Fgtk_text_buffer_remove_tag_by_name
+     'Fgtk_text_buffer_select_range 'Fgtk_text_buffer_set_modified
+     'Fgtk_text_buffer_set_text 'Fgtk_text_child_anchor_get_deleted
+     'Fgtk_text_child_anchor_get_widgets 'Fgtk_text_child_anchor_new
+     'Fgtk_text_iter_backward_char 'Fgtk_text_iter_backward_chars
+     'Fgtk_text_iter_backward_cursor_position 'Fgtk_text_iter_backward_cursor_positions
+     'Fgtk_text_iter_backward_find_char 'Fgtk_text_iter_backward_line
+     'Fgtk_text_iter_backward_lines 'Fgtk_text_iter_backward_search
+     'Fgtk_text_iter_backward_sentence_start 'Fgtk_text_iter_backward_sentence_starts
+     'Fgtk_text_iter_backward_to_tag_toggle 'Fgtk_text_iter_backward_word_start
+     'Fgtk_text_iter_backward_word_starts 'Fgtk_text_iter_begins_tag
+     'Fgtk_text_iter_can_insert 'Fgtk_text_iter_compare
+     'Fgtk_text_iter_copy 'Fgtk_text_iter_editable
+     'Fgtk_text_iter_ends_line 'Fgtk_text_iter_ends_sentence
+     'Fgtk_text_iter_ends_tag 'Fgtk_text_iter_ends_word
+     'Fgtk_text_iter_equal 'Fgtk_text_iter_forward_char
+     'Fgtk_text_iter_forward_chars 'Fgtk_text_iter_forward_cursor_position
+     'Fgtk_text_iter_forward_cursor_positions 'Fgtk_text_iter_forward_find_char 
+     'Fgtk_text_iter_forward_line 'Fgtk_text_iter_forward_lines 
+     'Fgtk_text_iter_forward_search 'Fgtk_text_iter_forward_sentence_end
+     'Fgtk_text_iter_forward_sentence_ends 'Fgtk_text_iter_forward_to_end
+     'Fgtk_text_iter_forward_to_line_end
+     'Fgtk_text_iter_forward_to_tag_toggle 'Fgtk_text_iter_forward_word_end
+     'Fgtk_text_iter_forward_word_ends 'Fgtk_text_iter_free
+     'Fgtk_text_iter_get_attributes 'Fgtk_text_iter_get_buffer
+     'Fgtk_text_iter_get_bytes_in_line 'Fgtk_text_iter_get_char
+     'Fgtk_text_iter_get_chars_in_line 'Fgtk_text_iter_get_child_anchor
+     'Fgtk_text_iter_get_language 'Fgtk_text_iter_get_line
+     'Fgtk_text_iter_get_line_index 'Fgtk_text_iter_get_line_offset
+     'Fgtk_text_iter_get_marks 'Fgtk_text_iter_get_offset
+     'Fgtk_text_iter_get_pixbuf 'Fgtk_text_iter_get_slice
+     'Fgtk_text_iter_get_tags 'Fgtk_text_iter_get_text
+     'Fgtk_text_iter_get_toggled_tags 'Fgtk_text_iter_get_visible_line_index
+     'Fgtk_text_iter_get_visible_line_offset
+     'Fgtk_text_iter_get_visible_slice 'Fgtk_text_iter_get_visible_text
+     'Fgtk_text_iter_has_tag 'Fgtk_text_iter_in_range
+     'Fgtk_text_iter_inside_sentence 'Fgtk_text_iter_inside_word
+     'Fgtk_text_iter_is_cursor_position 'Fgtk_text_iter_is_end
+     'Fgtk_text_iter_is_start 'Fgtk_text_iter_order
+     'Fgtk_text_iter_set_line 'Fgtk_text_iter_set_line_index
+     'Fgtk_text_iter_set_line_offset 'Fgtk_text_iter_set_offset
+     'Fgtk_text_iter_set_visible_line_index
+     'Fgtk_text_iter_set_visible_line_offset 'Fgtk_text_iter_starts_line
+     'Fgtk_text_iter_starts_sentence 'Fgtk_text_iter_starts_word
+     'Fgtk_text_iter_toggles_tag 'Fgtk_text_mark_get_buffer
+     'Fgtk_text_mark_get_deleted 'Fgtk_text_mark_get_left_gravity
+     'Fgtk_text_mark_get_name 'Fgtk_text_mark_get_visible
+     'Fgtk_text_mark_set_visible 'Fgtk_text_tag_event
+     'Fgtk_text_tag_get_priority 'Fgtk_text_tag_new
+     'Fgtk_text_tag_set_priority 'Fgtk_text_tag_table_add
+     'Fgtk_text_tag_table_foreach 'Fgtk_text_tag_table_get_size
+     'Fgtk_text_tag_table_lookup 'Fgtk_text_tag_table_new
+     'Fgtk_text_tag_table_remove 'Fgtk_text_view_add_child_at_anchor
+     'Fgtk_text_view_add_child_in_window 'Fgtk_text_view_backward_display_line
+     'Fgtk_text_view_backward_display_line_start 'Fgtk_text_view_buffer_to_window_coords
+     'Fgtk_text_view_forward_display_line 'Fgtk_text_view_forward_display_line_end
+     'Fgtk_text_view_get_accepts_tab 'Fgtk_text_view_get_border_window_size
+     'Fgtk_text_view_get_buffer 'Fgtk_text_view_get_cursor_visible
+     'Fgtk_text_view_get_default_attributes 'Fgtk_text_view_get_editable
+     'Fgtk_text_view_get_indent 'Fgtk_text_view_get_iter_at_location
+     'Fgtk_text_view_get_iter_location 'Fgtk_text_view_get_justification
+     'Fgtk_text_view_get_left_margin 'Fgtk_text_view_get_line_at_y
+     'Fgtk_text_view_get_line_yrange 'Fgtk_text_view_get_overwrite
+     'Fgtk_text_view_get_pixels_above_lines 'Fgtk_text_view_get_pixels_below_lines
+     'Fgtk_text_view_get_pixels_inside_wrap 'Fgtk_text_view_get_right_margin
+     'Fgtk_text_view_get_tabs 'Fgtk_text_view_get_visible_rect
+     'Fgtk_text_view_get_window 'Fgtk_text_view_get_window_type
+     'Fgtk_text_view_get_wrap_mode 'Fgtk_text_view_move_child
+     'Fgtk_text_view_move_mark_onscreen 'Fgtk_text_view_move_visually
+     'Fgtk_text_view_new 'Fgtk_text_view_new_with_buffer
+     'Fgtk_text_view_place_cursor_onscreen
+     'Fgtk_text_view_scroll_mark_onscreen 'Fgtk_text_view_scroll_to_iter
+     'Fgtk_text_view_scroll_to_mark 'Fgtk_text_view_set_accepts_tab
+     'Fgtk_text_view_set_border_window_size 'Fgtk_text_view_set_buffer
+     'Fgtk_text_view_set_cursor_visible 'Fgtk_text_view_set_editable
+     'Fgtk_text_view_set_indent 'Fgtk_text_view_set_justification
+     'Fgtk_text_view_set_left_margin 'Fgtk_text_view_set_overwrite
+     'Fgtk_text_view_set_pixels_above_lines 'Fgtk_text_view_set_pixels_below_lines
+     'Fgtk_text_view_set_pixels_inside_wrap 'Fgtk_text_view_set_right_margin
+     'Fgtk_text_view_set_tabs 'Fgtk_text_view_set_wrap_mode
+     'Fgtk_text_view_starts_display_line
+     'Fgtk_text_view_window_to_buffer_coords 'Fgtk_toggle_action_get_active
+     'Fgtk_toggle_action_get_draw_as_radio 'Fgtk_toggle_action_new
+     'Fgtk_toggle_action_set_active 'Fgtk_toggle_action_set_draw_as_radio
+     'Fgtk_toggle_action_toggled 'Fgtk_toggle_button_get_active
+     'Fgtk_toggle_button_get_inconsistent 'Fgtk_toggle_button_get_mode
+     'Fgtk_toggle_button_new 'Fgtk_toggle_button_new_with_mnemonic
+     'Fgtk_toggle_button_set_active 'Fgtk_toggle_button_set_inconsistent
+     'Fgtk_toggle_button_set_mode 'Fgtk_toggle_button_toggled
+     'Fgtk_toggle_tool_button_get_active 'Fgtk_toggle_tool_button_new
+     'Fgtk_toggle_tool_button_new_from_stock
+     'Fgtk_toggle_tool_button_set_active 'Fgtk_tool_button_get_icon_widget
+     'Fgtk_tool_button_get_label 'Fgtk_tool_button_get_label_widget
+     'Fgtk_tool_button_get_stock_id 'Fgtk_tool_button_get_use_underline
+     'Fgtk_tool_button_new 'Fgtk_tool_button_new_from_stock
+     'Fgtk_tool_button_set_icon_widget 'Fgtk_tool_button_set_label
+     'Fgtk_tool_button_set_label_widget 'Fgtk_tool_button_set_stock_id
+     'Fgtk_tool_button_set_use_underline 'Fgtk_tool_item_get_expand
+     'Fgtk_tool_item_get_homogeneous 'Fgtk_tool_item_get_icon_size
+     'Fgtk_tool_item_get_is_important 'Fgtk_tool_item_get_proxy_menu_item
+     'Fgtk_tool_item_get_relief_style 'Fgtk_tool_item_get_toolbar_style
+     'Fgtk_tool_item_get_use_drag_window 'Fgtk_tool_item_get_visible_horizontal
+     'Fgtk_tool_item_get_visible_vertical 'Fgtk_tool_item_new
+     'Fgtk_tool_item_rebuild_menu 'Fgtk_tool_item_retrieve_proxy_menu_item
+     'Fgtk_tool_item_set_expand 'Fgtk_tool_item_set_homogeneous
+     'Fgtk_tool_item_set_is_important 'Fgtk_tool_item_set_proxy_menu_item
+     'Fgtk_tool_item_set_visible_horizontal
+     'Fgtk_tool_item_set_visible_vertical 'Fgtk_toolbar_get_drop_index
+     'Fgtk_toolbar_get_icon_size 'Fgtk_toolbar_get_item_index
+     'Fgtk_toolbar_get_n_items 'Fgtk_toolbar_get_nth_item
+     'Fgtk_toolbar_get_relief_style 'Fgtk_toolbar_get_show_arrow
+     'Fgtk_toolbar_get_style 'Fgtk_toolbar_insert 'Fgtk_toolbar_new
+     'Fgtk_toolbar_set_show_arrow 'Fgtk_toolbar_set_style
+     'Fgtk_toolbar_unset_style 'Fgtk_tree_drag_dest_drag_data_received
+     'Fgtk_tree_drag_dest_row_drop_possible 'Fgtk_tree_drag_source_drag_data_delete
+     'Fgtk_tree_drag_source_drag_data_get 'Fgtk_tree_drag_source_row_draggable 
+     'Fgtk_tree_get_row_drag_data 'Fgtk_tree_iter_copy 'Fgtk_tree_iter_free
+     'Fgtk_tree_model_filter_clear_cache 'Fgtk_tree_model_filter_convert_child_path_to_path
+     'Fgtk_tree_model_filter_convert_iter_to_child_iter
+     'Fgtk_tree_model_filter_convert_path_to_child_path
+     'Fgtk_tree_model_filter_get_model 'Fgtk_tree_model_filter_new
+     'Fgtk_tree_model_filter_refilter
+     'Fgtk_tree_model_filter_set_visible_column 'Fgtk_tree_model_foreach
+     'Fgtk_tree_model_get_column_type 'Fgtk_tree_model_get_flags
+     'Fgtk_tree_model_get_iter 'Fgtk_tree_model_get_iter_first
+     'Fgtk_tree_model_get_iter_from_string 'Fgtk_tree_model_get_n_columns
+     'Fgtk_tree_model_get_path 'Fgtk_tree_model_get_string_from_iter
+     'Fgtk_tree_model_iter_children 'Fgtk_tree_model_iter_has_child
+     'Fgtk_tree_model_iter_n_children 'Fgtk_tree_model_iter_next
+     'Fgtk_tree_model_iter_nth_child 'Fgtk_tree_model_iter_parent
+     'Fgtk_tree_model_ref_node 'Fgtk_tree_model_row_changed
+     'Fgtk_tree_model_row_deleted 'Fgtk_tree_model_row_has_child_toggled
+     'Fgtk_tree_model_row_inserted 'Fgtk_tree_model_rows_reordered
+     'Fgtk_tree_model_sort_clear_cache 'Fgtk_tree_model_sort_convert_child_iter_to_iter
+     'Fgtk_tree_model_sort_convert_child_path_to_path
+     'Fgtk_tree_model_sort_convert_iter_to_child_iter
+     'Fgtk_tree_model_sort_convert_path_to_child_path
+     'Fgtk_tree_model_sort_get_model 'Fgtk_tree_model_sort_iter_is_valid
+     'Fgtk_tree_model_sort_new_with_model 'Fgtk_tree_model_sort_reset_default_sort_func
+     'Fgtk_tree_model_unref_node 'Fgtk_tree_path_append_index
+     'Fgtk_tree_path_compare 'Fgtk_tree_path_copy 'Fgtk_tree_path_down
+     'Fgtk_tree_path_free 'Fgtk_tree_path_get_depth
+     'Fgtk_tree_path_get_indices 'Fgtk_tree_path_is_ancestor
+     'Fgtk_tree_path_is_descendant 'Fgtk_tree_path_new
+     'Fgtk_tree_path_new_first 'Fgtk_tree_path_new_from_string
+     'Fgtk_tree_path_next 'Fgtk_tree_path_prepend_index
+     'Fgtk_tree_path_prev 'Fgtk_tree_path_to_string 'Fgtk_tree_path_up
+     'Fgtk_tree_row_reference_deleted 'Fgtk_tree_row_reference_free
+     'Fgtk_tree_row_reference_get_path 'Fgtk_tree_row_reference_inserted
+     'Fgtk_tree_row_reference_new 'Fgtk_tree_row_reference_new_proxy
+     'Fgtk_tree_row_reference_reordered 'Fgtk_tree_row_reference_valid
+     'Fgtk_tree_selection_count_selected_rows 'Fgtk_tree_selection_get_mode
+     'Fgtk_tree_selection_get_selected 'Fgtk_tree_selection_get_selected_rows
+     'Fgtk_tree_selection_get_tree_view 'Fgtk_tree_selection_get_user_data
+     'Fgtk_tree_selection_iter_is_selected 'Fgtk_tree_selection_path_is_selected
+     'Fgtk_tree_selection_select_all 'Fgtk_tree_selection_select_iter
+     'Fgtk_tree_selection_select_path 'Fgtk_tree_selection_select_range
+     'Fgtk_tree_selection_selected_foreach 'Fgtk_tree_selection_set_mode
+     'Fgtk_tree_selection_set_select_function 'Fgtk_tree_selection_unselect_all 
+     'Fgtk_tree_selection_unselect_iter 'Fgtk_tree_selection_unselect_path 
+     'Fgtk_tree_set_row_drag_data 'Fgtk_tree_sortable_get_sort_column_id
+     'Fgtk_tree_sortable_has_default_sort_func 'Fgtk_tree_sortable_set_default_sort_func
+     'Fgtk_tree_sortable_set_sort_column_id 'Fgtk_tree_sortable_set_sort_func
+     'Fgtk_tree_sortable_sort_column_changed 'Fgtk_tree_store_append
+     'Fgtk_tree_store_clear 'Fgtk_tree_store_insert
+     'Fgtk_tree_store_insert_after 'Fgtk_tree_store_insert_before
+     'Fgtk_tree_store_is_ancestor 'Fgtk_tree_store_iter_depth
+     'Fgtk_tree_store_new 'Fgtk_tree_store_newv 'Fgtk_tree_store_prepend
+     'Fgtk_tree_store_remove 'Fgtk_tree_store_reorder
+     'Fgtk_tree_store_set 'Fgtk_tree_store_set_column_types
+     'Fgtk_tree_store_swap 'Fgtk_tree_view_append_column
+     'Fgtk_tree_view_collapse_all 'Fgtk_tree_view_collapse_row
+     'Fgtk_tree_view_column_add_attribute 'Fgtk_tree_view_column_cell_get_position
+     'Fgtk_tree_view_column_cell_get_size 'Fgtk_tree_view_column_cell_is_visible
+     'Fgtk_tree_view_column_cell_set_cell_data 'Fgtk_tree_view_column_clear
+     'Fgtk_tree_view_column_clear_attributes 'Fgtk_tree_view_column_clicked
+     'Fgtk_tree_view_column_get_alignment 'Fgtk_tree_view_column_get_clickable 
+     'Fgtk_tree_view_column_get_expand 'Fgtk_tree_view_column_get_fixed_width
+     'Fgtk_tree_view_column_get_max_width 'Fgtk_tree_view_column_get_min_width
+     'Fgtk_tree_view_column_get_reorderable 'Fgtk_tree_view_column_get_resizable
+     'Fgtk_tree_view_column_get_sizing 'Fgtk_tree_view_column_get_sort_column_id
+     'Fgtk_tree_view_column_get_sort_indicator 'Fgtk_tree_view_column_get_sort_order
+     'Fgtk_tree_view_column_get_spacing 'Fgtk_tree_view_column_get_title
+     'Fgtk_tree_view_column_get_visible 'Fgtk_tree_view_column_get_widget
+     'Fgtk_tree_view_column_get_width 'Fgtk_tree_view_column_new
+     'Fgtk_tree_view_column_new_with_attributes 'Fgtk_tree_view_column_pack_end 
+     'Fgtk_tree_view_column_pack_start 'Fgtk_tree_view_column_set_alignment
+     'Fgtk_tree_view_column_set_attributes 'Fgtk_tree_view_column_set_cell_data_func
+     'Fgtk_tree_view_column_set_clickable 'Fgtk_tree_view_column_set_expand
+     'Fgtk_tree_view_column_set_fixed_width 'Fgtk_tree_view_column_set_max_width
+     'Fgtk_tree_view_column_set_min_width 'Fgtk_tree_view_column_set_reorderable
+     'Fgtk_tree_view_column_set_resizable 'Fgtk_tree_view_column_set_sizing
+     'Fgtk_tree_view_column_set_sort_column_id 'Fgtk_tree_view_column_set_sort_indicator
+     'Fgtk_tree_view_column_set_sort_order
+     'Fgtk_tree_view_column_set_spacing 'Fgtk_tree_view_column_set_title
+     'Fgtk_tree_view_column_set_visible 'Fgtk_tree_view_column_set_widget
+     'Fgtk_tree_view_columns_autosize 'Fgtk_tree_view_enable_model_drag_dest
+     'Fgtk_tree_view_enable_model_drag_source 'Fgtk_tree_view_expand_all
+     'Fgtk_tree_view_expand_row 'Fgtk_tree_view_expand_to_path
+     'Fgtk_tree_view_get_background_area 'Fgtk_tree_view_get_bin_window
+     'Fgtk_tree_view_get_cell_area 'Fgtk_tree_view_get_column
+     'Fgtk_tree_view_get_columns 'Fgtk_tree_view_get_cursor
+     'Fgtk_tree_view_get_dest_row_at_pos 'Fgtk_tree_view_get_drag_dest_row
+     'Fgtk_tree_view_get_enable_search 'Fgtk_tree_view_get_expander_column
+     'Fgtk_tree_view_get_fixed_height_mode
+     'Fgtk_tree_view_get_headers_visible 'Fgtk_tree_view_get_hover_expand
+     'Fgtk_tree_view_get_hover_selection 'Fgtk_tree_view_get_model
+     'Fgtk_tree_view_get_path_at_pos 'Fgtk_tree_view_get_reorderable ) constant gtk-procs-2
 
-  \ FIXME missing functions
-
-  \ <'> FGTK_COMBO_BOX_ENTRY
-  \ <'> FGTK_IS_COMBO_BOX_ENTRY
-  \ <'> Fgtk_accel_map_load_scanner
-  \ <'> Fgtk_accelerator_get_default_mod_mask
-  \ <'> Fgtk_combo_box_append_text
-  \ <'> Fgtk_combo_box_entry_get_text_column
-  \ <'> Fgtk_combo_box_entry_new
-  \ <'> Fgtk_combo_box_entry_new_text
-  \ <'> Fgtk_combo_box_entry_new_with_model
-  \ <'> Fgtk_combo_box_entry_set_text_column
-  \ <'> Fgtk_combo_box_get_active_text
-  \ <'> Fgtk_combo_box_insert_text
-  \ <'> Fgtk_combo_box_new_text
-  \ <'> Fgtk_combo_box_prepend_text
-  \ <'> Fgtk_combo_box_remove_text
-  \ <'> Fgtk_init_add
-  \ <'> Fgtk_paint_expander ( special )
-  \ <'> Fgtk_quit_add
-  \ <'> Fgtk_quit_add_destroy
-  \ <'> Fgtk_quit_remove
-  \ <'> Fgtk_quit_remove_by_data
-  \ <'> Fgtk_statusbar_get_has_resize_grip
-  \ <'> Fgtk_statusbar_set_has_resize_grip
-
-  \ FIXME Wed Oct 27 22:08:17 CEST 2010
-  
-  \ <'> Fgtk_layout_get_hadjustment
-  \ <'> Fgtk_layout_get_vadjustment
-  \ <'> Fgtk_layout_put
-  \ <'> Fgtk_layout_set_hadjustment
-  \ <'> Fgtk_layout_set_vadjustment
-  \ <'> Fgtk_tree_view_get_hadjustment
-  \ <'> Fgtk_tree_view_get_vadjustment
-  \ <'> Fgtk_tree_view_set_hadjustment
-  \ <'> Fgtk_tree_view_set_vadjustment
-  \ <'> Fgtk_viewport_get_hadjustment
-  \ <'> Fgtk_viewport_get_vadjustment
-  \ <'> Fgtk_viewport_set_hadjustment
-  \ <'> Fgtk_viewport_set_vadjustment
-  \ <'> Fgtk_widget_set_scroll_adjustments
+  #( 'Fgtk_tree_view_get_rules_hint 'Fgtk_tree_view_get_search_column
+     'Fgtk_tree_view_get_search_equal_func 'Fgtk_tree_view_get_selection
+     'Fgtk_tree_view_get_visible_rect
+     'Fgtk_tree_view_insert_column 'Fgtk_tree_view_insert_column_with_attributes
+     'Fgtk_tree_view_insert_column_with_data_func 'Fgtk_tree_view_map_expanded_rows
+     'Fgtk_tree_view_move_column_after 'Fgtk_tree_view_new 'Fgtk_tree_view_new_with_model
+     'Fgtk_tree_view_remove_column 'Fgtk_tree_view_row_activated
+     'Fgtk_tree_view_row_expanded 'Fgtk_tree_view_scroll_to_cell
+     'Fgtk_tree_view_scroll_to_point 'Fgtk_tree_view_set_column_drag_function
+     'Fgtk_tree_view_set_cursor 'Fgtk_tree_view_set_drag_dest_row
+     'Fgtk_tree_view_set_enable_search 'Fgtk_tree_view_set_expander_column
+     'Fgtk_tree_view_set_fixed_height_mode
+     'Fgtk_tree_view_set_headers_clickable 'Fgtk_tree_view_set_headers_visible
+     'Fgtk_tree_view_set_hover_expand 'Fgtk_tree_view_set_hover_selection
+     'Fgtk_tree_view_set_model 'Fgtk_tree_view_set_reorderable
+     'Fgtk_tree_view_set_row_separator_func 'Fgtk_tree_view_set_rules_hint
+     'Fgtk_tree_view_set_search_column 'Fgtk_tree_view_set_search_equal_func
+     'Fgtk_tree_view_unset_rows_drag_dest
+     'Fgtk_tree_view_unset_rows_drag_source 'Fgtk_true 'Fgtk_ui_manager_add_ui
+     'Fgtk_ui_manager_add_ui_from_file 'Fgtk_ui_manager_add_ui_from_string
+     'Fgtk_ui_manager_ensure_update 'Fgtk_ui_manager_get_accel_group
+     'Fgtk_ui_manager_get_action 'Fgtk_ui_manager_get_action_groups
+     'Fgtk_ui_manager_get_add_tearoffs 'Fgtk_ui_manager_get_ui
+     'Fgtk_ui_manager_get_widget 'Fgtk_ui_manager_insert_action_group
+     'Fgtk_ui_manager_new 'Fgtk_ui_manager_new_merge_id
+     'Fgtk_ui_manager_remove_action_group 'Fgtk_ui_manager_remove_ui
+     'Fgtk_ui_manager_set_add_tearoffs 'Fgtk_vbox_new 'Fgtk_vbutton_box_new
+     'Fgtk_viewport_get_shadow_type
+     'Fgtk_viewport_new 'Fgtk_viewport_set_shadow_type 'Fgtk_vpaned_new
+     'Fgtk_vscale_new 'Fgtk_vscale_new_with_range 'Fgtk_vscrollbar_new
+     'Fgtk_vseparator_new 'Fgtk_widget_activate 'Fgtk_widget_add_accelerator
+     'Fgtk_widget_add_events 'Fgtk_widget_add_mnemonic_label
+     'Fgtk_widget_can_activate_accel 'Fgtk_widget_child_focus 'Fgtk_widget_child_notify
+     'Fgtk_widget_create_pango_context
+     'Fgtk_widget_create_pango_layout 'Fgtk_widget_destroy 'Fgtk_widget_destroyed
+     'Fgtk_widget_ensure_style 'Fgtk_widget_event 'Fgtk_widget_freeze_child_notify
+     'Fgtk_widget_get_accessible 'Fgtk_widget_get_ancestor
+     'Fgtk_widget_get_child_visible 'Fgtk_widget_get_clipboard
+     'Fgtk_widget_get_composite_name 'Fgtk_widget_get_default_direction
+     'Fgtk_widget_get_default_style 'Fgtk_widget_get_direction 'Fgtk_widget_get_display
+     'Fgtk_widget_get_events 'Fgtk_widget_get_modifier_style 'Fgtk_widget_get_name
+     'Fgtk_widget_get_no_show_all 'Fgtk_widget_get_pango_context 'Fgtk_widget_get_parent
+     'Fgtk_widget_get_parent_window 'Fgtk_widget_get_pointer 'Fgtk_widget_get_root_window
+     'Fgtk_widget_get_screen 'Fgtk_widget_get_size_request 'Fgtk_widget_get_style
+     'Fgtk_widget_get_toplevel 'Fgtk_widget_get_visual 'Fgtk_widget_grab_default
+     'Fgtk_widget_grab_focus 'Fgtk_widget_has_screen 'Fgtk_widget_hide
+     'Fgtk_widget_hide_all 'Fgtk_widget_hide_on_delete 'Fgtk_widget_intersect
+     'Fgtk_widget_is_ancestor 'Fgtk_widget_is_focus 'Fgtk_widget_list_accel_closures
+     'Fgtk_widget_list_mnemonic_labels 'Fgtk_widget_map 'Fgtk_widget_mnemonic_activate
+     'Fgtk_widget_modify_base 'Fgtk_widget_modify_bg 'Fgtk_widget_modify_fg
+     'Fgtk_widget_modify_font 'Fgtk_widget_modify_style 'Fgtk_widget_modify_text
+     'Fgtk_widget_pop_composite_child 'Fgtk_widget_push_composite_child
+     'Fgtk_widget_queue_draw 'Fgtk_widget_queue_draw_area 'Fgtk_widget_queue_resize
+     'Fgtk_widget_queue_resize_no_redraw 'Fgtk_widget_realize
+     'Fgtk_widget_remove_accelerator 'Fgtk_widget_remove_mnemonic_label
+     'Fgtk_widget_render_icon 'Fgtk_widget_reparent 'Fgtk_widget_reset_rc_styles
+     'Fgtk_widget_reset_shapes 'Fgtk_widget_send_expose 'Fgtk_widget_set_accel_path
+     'Fgtk_widget_set_app_paintable 'Fgtk_widget_set_child_visible
+     'Fgtk_widget_set_composite_name 'Fgtk_widget_set_default_direction
+     'Fgtk_widget_set_direction 'Fgtk_widget_set_double_buffered 'Fgtk_widget_set_events
+     'Fgtk_widget_set_name 'Fgtk_widget_set_no_show_all 'Fgtk_widget_set_parent
+     'Fgtk_widget_set_parent_window 'Fgtk_widget_set_redraw_on_allocate
+     'Fgtk_widget_set_sensitive
+     'Fgtk_widget_set_size_request 'Fgtk_widget_set_state 'Fgtk_widget_set_style
+     'Fgtk_widget_show 'Fgtk_widget_show_all 'Fgtk_widget_show_now
+     'Fgtk_widget_size_allocate 'Fgtk_widget_thaw_child_notify
+     'Fgtk_widget_translate_coordinates 'Fgtk_widget_unmap 'Fgtk_widget_unparent
+     'Fgtk_widget_unrealize 'Fgtk_window_activate_default 'Fgtk_window_activate_focus
+     'Fgtk_window_activate_key 'Fgtk_window_add_accel_group 'Fgtk_window_add_embedded_xid
+     'Fgtk_window_add_mnemonic 'Fgtk_window_begin_move_drag 'Fgtk_window_begin_resize_drag
+     'Fgtk_window_deiconify 'Fgtk_window_get_accept_focus 'Fgtk_window_get_decorated
+     'Fgtk_window_get_default_icon_list 'Fgtk_window_get_default_size
+     'Fgtk_window_get_destroy_with_parent 'Fgtk_window_get_focus
+     'Fgtk_window_get_focus_on_map 'Fgtk_window_get_frame_dimensions
+     'Fgtk_window_get_gravity 'Fgtk_window_get_has_frame 'Fgtk_window_get_icon 
+     'Fgtk_window_get_icon_list 'Fgtk_window_get_icon_name
+     'Fgtk_window_get_mnemonic_modifier
+     'Fgtk_window_get_modal 'Fgtk_window_get_position 'Fgtk_window_get_resizable
+     'Fgtk_window_get_role 'Fgtk_window_get_size 'Fgtk_window_get_title
+     'Fgtk_window_get_transient_for 'Fgtk_window_has_toplevel_focus 'Fgtk_window_iconify
+     'Fgtk_window_is_active 'Fgtk_window_list_toplevels 'Fgtk_window_maximize
+     'Fgtk_window_mnemonic_activate 'Fgtk_window_move 'Fgtk_window_new
+     'Fgtk_window_parse_geometry 'Fgtk_window_present 'Fgtk_window_propagate_key_event
+     'Fgtk_window_remove_accel_group 'Fgtk_window_remove_embedded_xid
+     'Fgtk_window_remove_mnemonic 'Fgtk_window_reshow_with_initial_size
+     'Fgtk_window_resize 'Fgtk_window_set_accept_focus
+     'Fgtk_window_set_auto_startup_notification 'Fgtk_window_set_decorated
+     'Fgtk_window_set_default 'Fgtk_window_set_default_icon
+     'Fgtk_window_set_default_icon_list 'Fgtk_window_set_default_icon_name
+     'Fgtk_window_set_default_size 'Fgtk_window_set_destroy_with_parent
+     'Fgtk_window_set_focus 'Fgtk_window_set_focus_on_map
+     'Fgtk_window_set_frame_dimensions 'Fgtk_window_set_geometry_hints
+     'Fgtk_window_set_gravity 'Fgtk_window_set_has_frame 'Fgtk_window_set_icon
+     'Fgtk_window_set_icon_list 'Fgtk_window_set_icon_name 'Fgtk_window_set_keep_above
+     'Fgtk_window_set_keep_below 'Fgtk_window_set_mnemonic_modifier
+     'Fgtk_window_set_modal 'Fgtk_window_set_position 'Fgtk_window_set_resizable
+     'Fgtk_window_set_role 'Fgtk_window_set_title 'Fgtk_window_set_transient_for
+     'Fgtk_window_set_type_hint 'Fgtk_window_set_wmclass 'Fgtk_window_stick
+     'Fgtk_window_unmaximize 'Fgtk_window_unstick 'Fpango_attr_background_new
+     'Fpango_attr_fallback_new 'Fpango_attr_family_new 'Fpango_attr_font_desc_new
+     'Fpango_attr_foreground_new 'Fpango_attr_iterator_copy 'Fpango_attr_iterator_destroy
+     'Fpango_attr_iterator_get 'Fpango_attr_iterator_get_attrs
+     'Fpango_attr_iterator_get_font
+     'Fpango_attr_iterator_next 'Fpango_attr_iterator_range 'Fpango_attr_language_new
+     'Fpango_attr_letter_spacing_new 'Fpango_attr_list_change 'Fpango_attr_list_copy
+     'Fpango_attr_list_filter 'Fpango_attr_list_get_iterator 'Fpango_attr_list_insert
+     'Fpango_attr_list_insert_before 'Fpango_attr_list_new 'Fpango_attr_list_splice
+     'Fpango_attr_list_unref 'Fpango_attr_rise_new 'Fpango_attr_scale_new
+     'Fpango_attr_shape_new 'Fpango_attr_size_new 'Fpango_attr_stretch_new
+     'Fpango_attr_strikethrough_color_new 'Fpango_attr_strikethrough_new
+     'Fpango_attr_style_new 'Fpango_attr_type_register 'Fpango_attr_underline_color_new
+     'Fpango_attr_underline_new 'Fpango_attr_variant_new 'Fpango_attr_weight_new
+     'Fpango_attribute_copy 'Fpango_attribute_destroy 'Fpango_attribute_equal
+     'Fpango_break 'Fpango_color_copy 'Fpango_color_free 'Fpango_color_parse
+     'Fpango_context_get_base_dir 'Fpango_context_get_font_description
+     'Fpango_context_get_language 'Fpango_context_get_metrics
+     'Fpango_context_list_families 'Fpango_context_load_font 'Fpango_context_load_fontset
+     'Fpango_context_set_base_dir 'Fpango_context_set_font_description
+     'Fpango_context_set_language 'Fpango_coverage_copy 'Fpango_coverage_get
+     'Fpango_coverage_max 'Fpango_coverage_new 'Fpango_coverage_ref
+     'Fpango_coverage_set
+     'Fpango_coverage_to_bytes 'Fpango_coverage_unref 'Fpango_font_describe
+     'Fpango_font_description_better_match 'Fpango_font_description_copy
+     'Fpango_font_description_copy_static 'Fpango_font_description_equal
+     'Fpango_font_description_free 'Fpango_font_description_from_string
+     'Fpango_font_description_get_family 'Fpango_font_description_get_set_fields
+     'Fpango_font_description_get_size 'Fpango_font_description_get_stretch
+     'Fpango_font_description_get_style 'Fpango_font_description_get_variant
+     'Fpango_font_description_get_weight 'Fpango_font_description_hash
+     'Fpango_font_description_merge 'Fpango_font_description_merge_static
+     'Fpango_font_description_new 'Fpango_font_description_set_family
+     'Fpango_font_description_set_family_static 'Fpango_font_description_set_size
+     'Fpango_font_description_set_stretch 'Fpango_font_description_set_style
+     'Fpango_font_description_set_variant 'Fpango_font_description_set_weight
+     'Fpango_font_description_to_filename 'Fpango_font_description_to_string
+     'Fpango_font_description_unset_fields 'Fpango_font_descriptions_free
+     'Fpango_font_face_describe 'Fpango_font_face_get_face_name
+     'Fpango_font_face_list_sizes 'Fpango_font_family_get_name
+     'Fpango_font_family_is_monospace 'Fpango_font_family_list_faces
+     'Fpango_font_get_coverage 'Fpango_font_get_glyph_extents
+     'Fpango_font_get_metrics 'Fpango_font_map_list_families
+     'Fpango_font_map_load_font 'Fpango_font_map_load_fontset
+     'Fpango_font_metrics_get_approximate_char_width
+     'Fpango_font_metrics_get_approximate_digit_width
+     'Fpango_font_metrics_get_ascent 'Fpango_font_metrics_get_descent
+     'Fpango_font_metrics_get_strikethrough_position
+     'Fpango_font_metrics_get_strikethrough_thickness
+     'Fpango_font_metrics_get_underline_position
+     'Fpango_font_metrics_get_underline_thickness 'Fpango_font_metrics_ref
+     'Fpango_font_metrics_unref 'Fpango_get_log_attrs 'Fpango_glyph_string_copy
+     'Fpango_glyph_string_extents 'Fpango_glyph_string_extents_range
+     'Fpango_glyph_string_free 'Fpango_glyph_string_get_logical_widths
+     'Fpango_glyph_string_index_to_x 'Fpango_glyph_string_new
+     'Fpango_glyph_string_set_size 'Fpango_glyph_string_x_to_index
+     'Fpango_item_copy 'Fpango_item_free 'Fpango_item_new 'Fpango_item_split
+     'Fpango_itemize 'Fpango_language_matches 'Fpango_layout_context_changed
+     'Fpango_layout_copy 'Fpango_layout_get_alignment 'Fpango_layout_get_attributes
+     'Fpango_layout_get_auto_dir 'Fpango_layout_get_context 'Fpango_layout_get_cursor_pos
+     'Fpango_layout_get_extents 'Fpango_layout_get_indent 'Fpango_layout_get_iter
+     'Fpango_layout_get_justify 'Fpango_layout_get_line 'Fpango_layout_get_line_count
+     'Fpango_layout_get_lines 'Fpango_layout_get_log_attrs
+     'Fpango_layout_get_pixel_extents
+     'Fpango_layout_get_pixel_size 'Fpango_layout_get_single_paragraph_mode
+     'Fpango_layout_get_size 'Fpango_layout_get_spacing 'Fpango_layout_get_tabs
+     'Fpango_layout_get_text 'Fpango_layout_get_width 'Fpango_layout_get_wrap
+     'Fpango_layout_index_to_pos 'Fpango_layout_iter_at_last_line 'Fpango_layout_iter_free
+     'Fpango_layout_iter_get_baseline 'Fpango_layout_iter_get_char_extents
+     'Fpango_layout_iter_get_cluster_extents 'Fpango_layout_iter_get_index
+     'Fpango_layout_iter_get_layout_extents 'Fpango_layout_iter_get_line
+     'Fpango_layout_iter_get_line_extents 'Fpango_layout_iter_get_line_yrange
+     'Fpango_layout_iter_get_run 'Fpango_layout_iter_get_run_extents
+     'Fpango_layout_iter_next_char 'Fpango_layout_iter_next_cluster
+     'Fpango_layout_iter_next_line 'Fpango_layout_iter_next_run
+     'Fpango_layout_line_get_extents 'Fpango_layout_line_get_pixel_extents
+     'Fpango_layout_line_get_x_ranges 'Fpango_layout_line_index_to_x
+     'Fpango_layout_line_x_to_index 'Fpango_layout_move_cursor_visually
+     'Fpango_layout_new 'Fpango_layout_set_alignment 'Fpango_layout_set_attributes
+     'Fpango_layout_set_auto_dir 'Fpango_layout_set_font_description
+     'Fpango_layout_set_indent 'Fpango_layout_set_justify 'Fpango_layout_set_markup
+     'Fpango_layout_set_markup_with_accel 'Fpango_layout_set_single_paragraph_mode
+     'Fpango_layout_set_spacing 'Fpango_layout_set_tabs 'Fpango_layout_set_text
+     'Fpango_layout_set_width 'Fpango_layout_set_wrap 'Fpango_layout_xy_to_index
+     'Fpango_parse_markup 'Fpango_renderer_deactivate
+     'Fpango_renderer_draw_error_underline
+     'Fpango_script_iter_free 'Fpango_script_iter_get_range 'Fpango_script_iter_next
+     'FGDK_COLORMAP 'FGDK_IS_COLORMAP 'FG_OBJECT_TYPE 'Fgdk_colormap_alloc_color
+     'Fgdk_colormap_alloc_colors 'Fgdk_colormap_get_system 'Fgdk_colormap_get_visual
+     'Fgdk_colormap_new 'Fgdk_drawable_get_depth 'Fgdk_drawable_get_size
+     'Fgdk_drawable_get_visual 'Fgdk_drawable_set_colormap 'Fgdk_pixbuf_get_from_drawable
+     'Fgdk_pixbuf_render_pixmap_and_mask 'Fgdk_pixbuf_render_pixmap_and_mask_for_colormap
+     'Fgdk_pixbuf_render_threshold_alpha 'Fgdk_screen_get_default_colormap
+     'Fgdk_screen_get_system_colormap 'Fgdk_screen_set_default_colormap
+     'Fgdk_window_clear 'Fgdk_window_clear_area 'Fgdk_window_clear_area_e
+     'Fgdk_window_get_internal_paint_info 'Fgdk_window_set_back_pixmap
+     'Fgdk_window_set_icon
+     'Fgdk_window_shape_combine_mask 'Fgtk_binding_set_activate 'Fgtk_bindings_activate
+     'Fgtk_cell_renderer_render 'Fgtk_cell_view_get_size_of_row 'Fgtk_drag_set_icon_pixmap
+     'Fgtk_drag_source_set_icon 'Fgtk_requisition_copy 'Fgtk_requisition_free
+     'Fgtk_style_apply_default_background 'Fgtk_tree_view_create_row_drag_icon
+     'Fgtk_widget_get_child_requisition 'Fgtk_widget_get_colormap
+     'Fgtk_widget_get_default_colormap 'Fgtk_widget_get_default_visual
+     'Fgtk_widget_pop_colormap 'Fgtk_widget_push_colormap 'Fgtk_widget_set_colormap
+     'Fgtk_widget_set_default_colormap 'Fgtk_widget_shape_combine_mask
+     'Fgtk_widget_size_request 'Fgdk_drawable_get_colormap
+     'Fpango_shape
+     \ FIXME
+     \ missing functions
+     'FGTK_COMBO_BOX_ENTRY
+     'FGTK_IS_COMBO_BOX_ENTRY
+     'Fgtk_accel_map_load_scanner
+     'Fgtk_accelerator_get_default_mod_mask
+     'Fgtk_combo_box_append_text
+     'Fgtk_combo_box_entry_get_text_column
+     'Fgtk_combo_box_entry_new
+     'Fgtk_combo_box_entry_new_text
+     'Fgtk_combo_box_entry_new_with_model
+     'Fgtk_combo_box_entry_set_text_column
+     'Fgtk_combo_box_get_active_text
+     'Fgtk_combo_box_insert_text
+     'Fgtk_combo_box_new_text
+     'Fgtk_combo_box_prepend_text
+     'Fgtk_combo_box_remove_text
+     'Fgtk_init_add
+     'Fgtk_paint_expander ( special )
+     'Fgtk_quit_add
+     'Fgtk_quit_add_destroy
+     'Fgtk_quit_remove
+     'Fgtk_quit_remove_by_data
+     'Fgtk_statusbar_get_has_resize_grip
+     'Fgtk_statusbar_set_has_resize_grip
+     \ FIXME
+     \ new missing functions from Wed Oct 27 22:08:17 CEST 2010
+     'Fgtk_layout_get_hadjustment
+     'Fgtk_layout_get_vadjustment
+     'Fgtk_layout_put
+     'Fgtk_layout_set_hadjustment
+     'Fgtk_layout_set_vadjustment
+     'Fgtk_tree_view_get_hadjustment
+     'Fgtk_tree_view_get_vadjustment
+     'Fgtk_tree_view_set_hadjustment
+     'Fgtk_tree_view_set_vadjustment
+     'Fgtk_viewport_get_hadjustment
+     'Fgtk_viewport_get_vadjustment
+     'Fgtk_viewport_set_hadjustment
+     'Fgtk_viewport_set_vadjustment
+     'Fgtk_widget_set_scroll_adjustments
+     \ FIXME
+     \ new missing functions from Mon Dec  6 14:16:32 CET 2010
+     'FGTK_HPANED
+     'FGTK_HRULER
+     'FGTK_IS_HRULER
+     'FGTK_IS_RULER
+     'FGTK_IS_VRULER
+     'FGTK_RULER
+     'FGTK_VRULER
+     'Fgtk_hruler_new
+     'Fgtk_ruler_get_metric
+     'Fgtk_ruler_get_range
+     'Fgtk_ruler_set_metric
+     'Fgtk_ruler_set_range
+     'Fgtk_vruler_new
+     'Fgtk_ruler_draw_pos
+     'Fgtk_ruler_draw_ticks
+     \ FIXME
+     \ new missing functions from Sun Dec 11 00:38:19 CET 2010
+     'Fgtk_border_copy
+     'Fgtk_border_free
+     'Fgtk_widget_class_path
+     'Fgtk_widget_path
+     'Fgtk_paint_arrow
+     'Fgtk_paint_box
+     'Fgtk_paint_box_gap
+     'Fgtk_paint_check
+     'Fgtk_paint_diamond
+     'Fgtk_paint_extension
+     'Fgtk_paint_flat_box
+     'Fgtk_paint_focus
+     'Fgtk_paint_handle
+     'Fgtk_paint_hline
+     'Fgtk_paint_layout
+     'Fgtk_paint_option
+     'Fgtk_paint_resize_grip
+     'Fgtk_paint_shadow
+     'Fgtk_paint_shadow_gap
+     'Fgtk_paint_slider
+     'Fgtk_paint_tab
+     'Fgtk_paint_vline ) constant gtk-procs-3
 
   : 26-gtk ( -- )
-    $" breakable gtk procs: %d" #( breakable-gtk-procs length ) snd-test-message
-    $"           gtk procs: %d" #(
-       gtk-procs-1 length gtk-procs-2 length + gtk-procs-3 length + ) snd-test-message
+    nil { sym }
+    #() { undefined }
+    breakable-gtk-procs gtk-procs-1 array-append { names }
+    names gtk-procs-2 array-append to names
+    names gtk-procs-3 array-append each to sym
+      sym symbol-defined? unless
+	undefined sym array-push to undefined
+      then
+    end-each
+    undefined empty? unless
+      $" Gtk undefined[%d]: %s" #( undefined dup length swap ) snd-display
+    then
   ; 
 [else]
   <'> noop alias 26-gtk
 [then]
 
-\ ====== test 28: errors
+\ ---------------- test 27: general ----------------
+
+*with-test-complex* [if]
+  : complex-test ( -- )
+    \ edot-product (test008)
+    0.0 vct( 1.0 ) edot-product dup 1.0 fneq if
+      $" edot 1.0: %s?" swap snd-display
+    else
+      drop
+    then
+    0.0 vct( 0.0 ) edot-product dup 0.0 fneq if
+      $" edot 0.0: %s?" swap snd-display
+    else
+      drop
+    then
+    0.0 #( 1.0 ) edot-product dup 1.0 fneq if
+      $" edot 1.0: %s?" swap snd-display
+    else
+      drop
+    then
+    0.0 #( 0+1i ) edot-product dup 0+1i cneq if
+      $" edot i: %s?" swap snd-display
+    else
+      drop
+    then
+    0.25 two-pi f* vct( 1.0 1.0 1.0 1.0 ) edot-product
+    0.00 two-pi f* fexp
+    0.25 two-pi f* fexp f+
+    0.50 two-pi f* fexp f+
+    0.75 two-pi f* fexp f+ over over fneq if
+      2 >array $" edot 4: %s %s?" swap snd-display
+    else
+      2drop
+    then
+    0.25 two-pi f* 0-1i c* #( 1.0 2.0 3.0 4.0 ) edot-product
+    0.00 two-pi f* 0-1i c* cexp 1 c* 
+    0.25 two-pi f* 0-1i c* cexp 2 c* c+
+    0.50 two-pi f* 0-1i c* cexp 3 c* c+
+    0.75 two-pi f* 0-1i c* cexp 4 c* c+ over over cneq if
+      2 >array $" edot 4 -i: %s %s?" swap snd-display
+    else
+      2drop
+    then
+    0.25 two-pi f* 0-1i c* #( 1+1i 2+1i 3+1i 4+1i ) edot-product
+    0.00 two-pi f* 0-1i c* cexp 1+1i c* 
+    0.25 two-pi f* 0-1i c* cexp 2+1i c* c+
+    0.50 two-pi f* 0-1i c* cexp 3+1i c* c+
+    0.75 two-pi f* 0-1i c* cexp 4+1i c* c+ over over cneq if
+      2 >array $" edot 4 -i * i: %s %s?" swap snd-display
+    else
+      2drop
+    then
+  ;
+[else]
+  <'> noop alias complex-test
+[then]
+
+: print-and-check ( gen name desc -- )
+  { gen name desc }
+  gen mus-name name string<> if $" mus-name %s: %s?" #( name gen mus-name ) snd-display then
+  gen mus-describe desc string<> if $" mus-describe %s: %s?" #( name gen ) snd-display then
+  gen { egen }
+  gen egen object-equal? unless $" equal? %s: %s %s?" #( name gen egen ) snd-display then
+;
+
+: test-gen-equal ( g0 g1 g2 -- )
+  { g0 g1 g2 }
+  \ g0 g1 =
+  \ g0 g2 <> at start
+  g0 { g3 }
+  2 make-frame { gad }
+  g0 g3 object-equal? unless $" let %s: %s equal? %s?" #( g0 mus-name g0 g3 ) snd-display then
+  g0 g1 object-equal? unless $" %s: %s equal? %s?"     #( g0 mus-name g0 g1 ) snd-display then
+  g0 g2 object-equal?     if $" %s: %s equal? %s?"     #( g0 mus-name g0 g2 ) snd-display then
+  g0 gad object-equal?    if $" %s/frame: %s equal? %s?" #( g0 mus-name g0 gad ) snd-display then
+  g0 0.0 0.0 mus-apply drop
+  g3 #( 0.0 0.0 ) object-apply drop
+  g3 0.0 0.0 mus-apply drop
+  g0 g3 object-equal? unless $" run let %s: %s equal? %s?" #( g0 mus-name g0 g3 ) snd-display then
+  g0 g1 object-equal?     if $" run %s: %s equal? %s?"     #( g0 mus-name g0 g1 ) snd-display then
+  g0 g2 object-equal?     if $" run %s: %s equal? %s?"     #( g0 mus-name g0 g2 ) snd-display then
+;
+
+\ bind-key proc
+: C-xC-c <{ -- }> 0 snd-exit ;
+
+\ hooks
+: my-test1-proc <{ fname -- f }> #f ;
+<'> my-test1-proc alias my-test2-proc
+<'> my-test1-proc alias my-test3-proc
+<'> my-test1-proc alias my-test4-proc
+<'> my-test1-proc alias my-test5-proc
+
+: my-local-thunk <{ -- }>
+  open-hook object-length 3 <> if
+    $" add-hook! local length: %d?" #( open-hook object-length ) snd-display
+  then
+  open-hook $" my-test3-proc" hook-member? unless
+    $" local3 add-hook!: %s" #( open-hook ) snd-display
+  then
+  open-hook $" my-test4-proc" hook-member? unless
+    $" local4 add-hook!: %s" #( open-hook ) snd-display
+  then
+  open-hook $" my-test5-proc" hook-member? unless
+    $" local5 add-hook!: %s" #( open-hook ) snd-display
+  then
+;
+
+: map-10-times-cb <{ y -- y' }> y 10.0 f* ;
+
+: map-diff-plus-cb { mx -- proc; y self -- y' }
+  1 proc-create 1.001 mx f- , ( proc )
+ does> { y self -- y' }
+  self @ y f+
+;
+
+: scan-less-than-zero-cb <{ y -- y' }> y f0< ;
+
+: 27-sel-from-snd ( -- )
+  \ hooks
+  open-hook reset-hook!
+  open-hook <'> my-test1-proc add-hook!
+  open-hook <'> my-test2-proc add-hook!
+  open-hook object-length 2 <> if
+    $" add-hook! global length: %d?" #( open-hook object-length ) snd-display
+  then
+  open-hook "my-test1-proc" hook-member? unless
+    $" global1 add-hook!: %s" #( open-hook ) snd-display
+  then
+  open-hook <'> my-test2-proc hook-member? unless
+    $" global2 add-hook!: %s" #( open-hook ) snd-display
+  then
+  open-hook
+  #( <'> my-test3-proc
+     <'> my-test4-proc
+     <'> my-test5-proc ) <'> my-local-thunk with-local-hook
+  open-hook object-length 2 <> if
+    $" add-hook! reset length: %d?" #( open-hook object-length ) snd-display
+  then
+  open-hook <'> my-test1-proc hook-member? unless
+    $" reset1 add-hook!: %s" #( open-hook ) snd-display
+  then
+  open-hook "my-test2-proc" hook-member? unless
+    $" reset2 add-hook!: %s" #( open-hook ) snd-display
+  then
+  \ bind-key
+  <'> C-xC-c { prc }
+  "c" 4 #t key-binding { old-prc }
+  "c" 4 prc #t bind-key { prc1 }
+  "c" 4 #t key-binding { prc2 }
+  prc prc1 = unless $" bind-key: %s %s?" #( prc prc1 ) snd-display then
+  prc prc2 = unless $" key-binding: %s %s?" #( prc prc2 ) snd-display then
+  old-prc proc? if
+    "c" 4 old-prc #t bind-key drop
+  else
+    "c" 4 #t unbind-key drop
+  then
+  \ new-sound
+  "fmv.snd" mus-next mus-bshort 22050 1 $" set-samples test" 100 new-sound { ind }
+  10  3  3 0.1 make-vct set-samples drop
+  0 20 ind 0 channel->vct { res }
+  res vct( 0 0 0 0 0 0 0 0 0 0 0.1 0.1 0.1 0 0 0 0 0 0 0 ) vequal? unless
+    $" 1 set samples 0 for 0.1: %s?" #( res ) snd-display
+  then
+  ind close-sound drop
+  \ check clipping choices (test004)
+  "oboe.snd" view-sound to ind
+  #f set-clipping drop
+  <'> map-10-times-cb 0 ind undef undef frames ind 0 map-channel drop
+  "test.snd" ind mus-next mus-bfloat save-sound-as drop
+  1 ind 0 undo drop
+  "test.snd" open-sound { ind1 }
+  ind1 0 undef maxamp { res1 }
+  ind  0 undef maxamp { ind-mx }
+  res1 ind-mx 10.0 f*  fneq if $" clipping 0: %s %s?" #( res1 ind-mx ) snd-display then
+  ind1 close-sound drop
+  "test.snd" file-delete
+  \ 
+  #t set-clipping drop
+  <'> map-10-times-cb 0 ind undef undef frames ind 0 map-channel drop
+  "test.snd" ind mus-next mus-bfloat save-sound-as drop
+  1 ind 0 undo drop
+  "test.snd" open-sound to ind1
+  ind1 0 undef maxamp to res1
+  \ ind-mx == ind 0 maxamp from above
+  res1 1.0 fneq if $" clipping 1: %s %s?" #( res1 ind-mx ) snd-display then
+  ind1 close-sound drop
+  "test.snd" file-delete
+  \ 
+  #f set-clipping drop
+  ind-mx map-diff-plus-cb 0 ind undef undef frames ind 0 map-channel drop
+  "test.snd" ind mus-next mus-bshort save-sound-as drop
+  "test.snd" open-sound to ind1
+  <'> scan-less-than-zero-cb scan-channel to res1
+  res1 unless $" clipping 2: %s?" #( res1 ) snd-display then
+  ind1 close-sound drop
+  "test.snd" file-delete
+  \ 
+  #t set-clipping drop
+  "test.snd" ind mus-next mus-bshort save-sound-as drop
+  "test.snd" open-sound to ind1
+  <'> scan-less-than-zero-cb scan-channel to res1
+  res1 if $" clipping 3: %s?" #( res1 ) snd-display then
+  ind1 close-sound drop
+  "test.snd" file-delete
+  #f set-clipping drop
+  ind close-sound drop
+  \
+  #f set-clipping drop
+  "test.snd" :data-format mus-lshort new-sound { snd }
+  0 10 pad-channel drop
+  1  1.0    set-sample drop
+  2 -1.0    set-sample drop
+  3  0.9999 set-sample drop
+  4  2.0    set-sample drop
+  5 -2.0    set-sample drop
+  6  1.3    set-sample drop
+  7 -1.3    set-sample drop
+  8  1.8    set-sample drop
+  9 -1.8    set-sample drop
+  snd save-sound drop
+  snd close-sound drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  res vct( 0.0 1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal? unless
+    $" clipping(#f): %s?" #( res ) snd-display
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \ 
+  #t set-clipping drop
+  "test.snd" :data-format mus-lshort new-sound { snd }
+  0 10 pad-channel drop
+  1  1.0    set-sample drop
+  2 -1.0    set-sample drop
+  3  0.9999 set-sample drop
+  4  2.0    set-sample drop
+  5 -2.0    set-sample drop
+  6  1.3    set-sample drop
+  7 -1.3    set-sample drop
+  8  1.8    set-sample drop
+  9 -1.8    set-sample drop
+  snd save-sound drop
+  snd close-sound drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal? unless
+    $" clipping(#t): %s?" #( res ) snd-display
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \ 
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
+  data vct->sound-data { sdata }
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd #f set-mus-file-clipping drop
+  snd 0 9 1 sdata mus-sound-write drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  res vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal? unless
+    $" mus-file-clipping(#f): %s?" #( res ) snd-display
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \ 
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
+  data vct->sound-data { sdata }
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd #t set-mus-file-clipping drop
+  snd 0 9 1 sdata mus-sound-write drop
+  snd #f set-mus-file-clipping drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal? unless
+    $" mus-file-clipping(#t): %s?" #( res ) snd-display
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \
+  #f set-mus-clipping drop
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
+  data vct->sound-data { sdata }
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd 0 9 1 sdata mus-sound-write drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  res vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal? unless
+    $" mus-clipping(#f): %s?" #( res ) snd-display
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \ 
+  #t set-mus-clipping drop
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
+  data vct->sound-data { sdata }
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd 0 9 1 sdata mus-sound-write drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal? unless
+    $" mus-clipping(#t): %s?" #( res ) snd-display
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \
+  #t set-mus-clipping drop
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
+  data vct->sound-data { sdata }
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd 0 10 1 sdata <'> mus-sound-write #t nil fth-catch to res
+  stack-reset
+  res 0 array-ref 'out-of-range <> if
+    $" mus-sound-write too many bytes: %s" #( res ) snd-display
+  then
+  snd 0 10 1 sdata <'> mus-sound-read #t nil fth-catch to res
+  stack-reset
+  res 0 array-ref 'out-of-range <> if
+    $" mus-sound-read too many bytes: %s" #( res ) snd-display
+  then
+  snd 0 mus-sound-close-output drop
+  "test.snd" file-delete
+  "test.snd" mus-sound-forget drop
+  #f set-mus-clipping drop 		\ default
+  #f set-clipping drop
+  \ x-axis-label (test005)
+  *with-test-nogui* unless
+    "oboe.snd" open-sound to ind
+    #t set-transform-graph? drop
+    #t set-time-graph? drop
+    x-axis-label to res
+    res "time" string<> if $" get time x-axis-label: %s?" #( res ) snd-display then
+    "hiho1" ind 0 time-graph set-x-axis-label drop
+    x-axis-label to res
+    res "hiho1" string<> if $" set time x-axis-label: %s?" #( res ) snd-display then
+    update-transform-graph drop
+    ind 0 transform-graph x-axis-label to res
+    res "frequency" string<> if $" get fft x-axis-label: %s?" #( res ) snd-display then
+    "hiho2" ind 0 transform-graph set-x-axis-label drop
+    update-transform-graph drop
+    ind 0 transform-graph x-axis-label to res
+    res "hiho2" string<> if $" set fft x-axis-label: %s?" #( res ) snd-display then
+    "frequency" ind 0 transform-graph set-x-axis-label drop
+    '( 0 0 1 1 2 0 ) "lisp" graph drop
+    update-lisp-graph drop
+    ind 0 lisp-graph x-axis-label to res
+    res "lisp" string<> if $" get lisp x-axis-label: %s?" #( res ) snd-display then
+    "hiho3" ind 0 lisp-graph set-x-axis-label drop
+    ind 0 lisp-graph x-axis-label to res
+    res "hiho3" string<> if $" set lisp x-axis-label: %s?" #( res ) snd-display then
+    "hiho4" ind 0 time-graph set-y-axis-label drop
+    y-axis-label to res
+    res "hiho4" string<> if $" set time y-axis-label: %s?" #( res ) snd-display then
+    "hiho5" ind 0 lisp-graph set-y-axis-label drop
+    ind 0 lisp-graph y-axis-label to res
+    res "hiho5" string<> if $" set lisp y-axis-label: %s?" #( res ) snd-display then
+    #f set-y-axis-label drop
+    "hiho6" ind 0 set-y-axis-label drop
+    ind 0 y-axis-label to res
+    res "hiho6" string<> if $" set time y-axis-label (time): %s?" #( res ) snd-display then
+    #f set-y-axis-label drop
+    ind close-sound drop
+  then
+  \ edot-product (test008)
+  complex-test
+  \ delay (test008)
+  3 make-delay { gen }
+  3 make-delay { gen2 }
+  4 :initial-contents #( 1.0 0.5 0.25 0.0 ) make-delay { gen1 }
+  4 :initial-contents vct( 1.0 0.5 0.25 0.0 ) make-delay { gen3 }
+  gen "delay" $" delay line[3, step]: [0.000 0.000 0.000]" print-and-check
+  10 0.0 make-vct map gen i 0.0 delay end-map { v0 }
+  10 0.0 make-vct map gen2 delay? if gen2 i 0.0 delay else -1.0 then end-map { v1 }
+  v0 v1 vequal? unless $" map delay: %s %s?" #( v0 v1 ) snd-display then
+  gen delay? unless $" %s not a delay?" #( gen ) snd-display then
+  gen mus-length 3 <> if $" delay length: %d?" #( gen mus-length ) snd-display then
+  v0 1 vct-ref 0.0 fneq
+  v0 4 vct-ref 1.0 fneq ||
+  v0 8 vct-ref 5.0 fneq || if $" delay output: %s?" #( v0 ) snd-display then
+  gen1 0.0 0.0 delay 1.0  fneq
+  gen1 0.0 0.0 delay 0.5  fneq ||
+  gen1 0.0 0.0 delay 0.25 fneq ||
+  gen1 0.0 0.0 delay 0.0  fneq ||
+  gen1 0.0 0.0 delay 0.0  fneq || if
+    $" delay with list initial-contents confused" #f snd-display
+  then
+  gen3 0.0 0.0 delay 1.0  fneq
+  gen3 0.0 0.0 delay 0.5  fneq ||
+  gen3 0.0 0.0 delay 0.25 fneq ||
+  gen3 0.0 0.0 delay 0.0  fneq ||
+  gen3 0.0 0.0 delay 0.0  fneq || if
+    $" delay with vct initial-contents confused" #f snd-display
+  then
+  :size #f <'> make-delay #t nil fth-catch to res
+  stack-reset
+  res 0 array-ref 'wrong-type-arg object-equal? unless
+    $" make-delay bad size false: %s" #( res ) snd-display
+  then
+  make-oscil { osc }
+  3 :initial-element osc <'> make-delay #t nil fth-catch to res
+  stack-reset
+  res 0 array-ref 'wrong-type-arg object-equal? unless
+    $" make-delay bad initial element: %s" #( res ) snd-display
+  then
+  -3 <'> make-delay #t nil fth-catch to res
+  stack-reset
+  res 0 array-ref 'out-of-range object-equal? unless
+    $" make-delay bad size: %s" #( res ) snd-display
+  then
+  3 make-delay { d1 }
+  3 make-delay { d2 }
+  4 make-delay { d3 }
+  d1 1.0 0.0 delay drop
+  d2 1.0 0.0 delay drop
+  d3 1.0 0.0 delay drop
+  d1 d2 d3 test-gen-equal
+  3 :initial-element 1.0 make-delay to d1
+  3 :initial-element 1.0 make-delay to d2
+  3 :initial-element 0.5 make-delay to d3
+  d1 d2 d3 test-gen-equal
+  3 :initial-contents #( 1.0 0.0 0.0 ) make-delay to d1
+  3 :initial-contents #( 1.0 0.0 0.0 ) make-delay to d2
+  3 :initial-contents #( 1.0 1.0 1.0 ) make-delay to d3
+  d1 d2 d3 test-gen-equal
+  \ mix (test009)
+  "hiho.wave" mus-next mus-bshort 22050 1 new-sound { new-index }
+  new-index select-sound drop
+  0 new-index 0 find-mix to res
+  res if $" found non-existent mix: %s?" #( res ) snd-display then
+  "pistol.snd" 100 mix car { mix-id }
+  mix-id mix? unless $" %s not mix?" #( mix-id ) snd-display then
+  view-mixes-dialog drop
+  mix-id mix-position  { pos }
+  mix-id mix-length    { len }
+  mix-id mix-speed     { spd }
+  mix-id mix-home      { home-lst }
+  home-lst 0 array-ref { snd }
+  home-lst 1 array-ref { chn }
+  mix-id mix-amp       { amp }
+  mix-id make-mix-sampler { mr }
+  mr mix-sampler? unless $" %s is not mix-sampler?"  #( mr ) snd-display then
+  mr region-sampler?  if $" mix-sampler: region %s?" #( mr ) snd-display then
+  mr sampler-position to res
+  res 0<> if $" mix sampler-position: %d?" #( res ) snd-display then
+  mr sampler-at-end? if $" mix sampler-at-end: %s?" #( mr ) snd-display then
+  mr sampler-home to res
+  mix-id res object-equal? unless $" mix sampler-home: %d %s?" #( res mr ) snd-display then
+  mr object->string 0 16 string-substring to res
+  res $" #<mix-sampler mi" string<> if
+    $" mix sampler actually got: [%s]?" #( res ) snd-display
+  then
+  1234 integer->mix <'> mix-amp #t nil fth-catch to res
+  stack-reset
+  res 0 array-ref 'no-such-mix object-equal? unless
+    $" mix-amp bad id: %s" #( res ) snd-display
+  then
+  1234 integer->mix 0.1 <'> set-mix-amp #t nil fth-catch to res
+  stack-reset
+  res 0 array-ref 'no-such-mix object-equal? unless
+    $" set-mix-amp bad id: %s" #( res ) snd-display
+  then
+  1234 integer->mix #( 0 0 1 1 ) <'> set-mix-amp-env #t nil fth-catch to res
+  stack-reset
+  res 0 array-ref 'no-such-mix object-equal? unless
+    $" set-mix-amp-env bad id: %s" #( res ) snd-display
+  then
+  0.0 0.0 { mx sx }
+  99 0 do
+    i odd? if mr read-mix-sample else mr read-mix-sample then to mx
+    100 i + sample to sx
+    mx sx fneq if $" read-mix-sample: %s %s?" #( mx sx ) snd-display then
+  loop
+  \ Scheme: (mr)
+  \ Ruby:   mr.call
+  \ Forth:  mr #() apply
+  mr #() object-apply to mx
+  199 sample to sx
+  mx sx fneq if $" read-mix-sample 100: %s %s?" #( mx sx ) snd-display then
+  mr free-sampler drop
+  \
+  100 pos <>   if $" mix-position: %d?"     #( pos ) snd-display then
+  41623 len <> if $" mix-length: %d?"       #( len ) snd-display then
+  snd new-index object-equal? unless $" snd mix-home: %s?" #( snd ) snd-display then
+  chn      0<> if $" chn mix-home: %d?"     #( chn ) snd-display then
+  amp 1.0 fneq if $" mix-amp: %s?"          #( amp ) snd-display then
+  spd 1.0 fneq if $" mix-speed: %s?"        #( spd ) snd-display then
+  .stack
+  mix-id <'> play #t nil fth-catch if
+    drop				\ on stack: mix-id
+    $" cannot play mix" #() snd-display
+  else
+    drop				\ on stack: play's return value
+  then
+  mix-id :start 1000 <'> play #t nil fth-catch if
+    stack-reset				\ on stack: mix-id :start 1000
+    $" cannot play mix from 1000" #() snd-display
+  else
+    drop				\ on stack: play's return value
+  then
+  .stack
+  \
+  mix-id 200 set-mix-position drop
+  mix-id 0.5 set-mix-amp drop
+  mix-id 2.0 set-mix-speed drop
+  mix-id #( 0 0 1 1 ) set-mix-amp-env drop
+  mix-id mix-amp-env to res
+  mix-id res set-mix-amp-env drop
+  mix-id mix-amp-env { res1 }
+  res res1 vequal? unless $" set-mix-amp-env to self: %s %s?" #( res res1 ) snd-display then
+  mix-id 20 set-mix-tag-y drop
+  mix-id mix-position to pos
+  mix-id mix-speed    to spd
+  mix-id mix-amp      to amp
+  mix-id mix-tag-y    { my }
+  200 pos <>   if $" set-mix-position: %d?" #( pos ) snd-display then
+  spd 2.0 fneq if $" set-mix-speed: %s?"    #( spd ) snd-display then
+  my  20    <> if $" set-mix-tag-y: %d?"    #( my )  snd-display then
+  amp 0.5 fneq if $" set-mix-amp: %s?"      #( amp ) snd-display then
+  mix-id mix-amp-env to res
+  res #( 0.0 0.0 1.0 1.0 ) array= unless $" set-mix-amp-env: %s?" #( res ) snd-display then
+  \
+  3 0.1 make-vct 100 #f #f #t "" mix-vct drop
+  0 set-cursor drop
+  100 #f #f find-mix { nid }
+  nid mix? false? unless
+    nid mix-position 100 <> if
+      new-index 0 mixes map *key* mix-position end-map { mx-pos }
+      $" 100 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
+    then
+  else
+    $" 100 find-mix: not a mix %s?" #( nid ) snd-display
+  then
+  200 #f #f find-mix to nid
+  nid mix? false? unless
+    nid mix-position 200 <> if
+      new-index 0 mixes map *key* mix-position end-map { mx-pos }
+      $" 200 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
+    then
+  else
+    $" 200 find-mix: not a mix %s?" #( nid ) snd-display
+  then
+  \
+  "oboe.snd" 100 mix car to mix-id
+  40 set-mix-waveform-height drop
+  'hiho mix-id 123 set-mix-property
+  'hiho mix-id mix-property to res
+  res 123 <> if $" mix-property: %s?" #( res ) snd-display then
+  'not-here mix-id mix-property to res
+  res if $" mix-property not-here: %s?" #( res ) snd-display then
+  #f #f update-time-graph drop
+  20 set-mix-waveform-height drop
+  new-index revert-sound drop
+  new-index close-sound drop
+  \ envelopes (lists, vcts, arrays) (test015)
+  1.0 vct( 0.0 0.0 2.0 1.0 )           1.0 envelope-interp dup 0.5 fneq if
+    $" envelope-interp 0.5: %s?" swap snd-display
+  else
+    drop
+  then
+  1.0 #( 0.0 0.0 1.0 1.0 2.0 0.0 )     1.0 envelope-interp dup 1.0 fneq if
+    $" envelope-interp 1.0: %s?" swap snd-display
+  else
+    drop
+  then
+  2.0 #( 0.0 0.0 1.0 1.0 )             1.0 envelope-interp dup 1.0 fneq if
+    $" envelope-interp 1.0: %s?" swap snd-display
+  else
+    drop
+  then
+  0.0 #( 1.0 0.5 2.0 0.0 )             1.0 envelope-interp dup 0.5 fneq if
+    $" envelope-interp 0.5: %s?" swap snd-display
+  else
+    drop
+  then
+  0.0 #( -1.0 0.0 0.0 1.0 1.0 -1.0 )   1.0 envelope-interp dup 1.0 fneq if
+    $" envelope-interp 1.0; %s?" swap snd-display
+  else
+    drop
+  then
+  -0.5 #( -1.0 0.0 0.0 1.0 1.0 -1.0 )  1.0 envelope-interp dup 0.5 fneq if
+    $" envelope-interp 0.5: %s?" swap snd-display
+  else
+    drop
+  then
+  -0.5 #( -1.0 -1.0 0.0 1.0 1.0 -1.0 ) 1.0 envelope-interp dup 0.0 fneq if
+    $" envelope-interp 0.0: %s?" swap snd-display
+  else
+    drop
+  then
+  -0.5 #( -1.0 -1.0 1.0 1.0 )          1.0 envelope-interp dup -0.5 fneq if
+    $" envelope-interp -0.5: %s?" swap snd-display
+  else
+    drop
+  then
+  -1.5 #( -1.0 -1.0 1.0 1.0 )          1.0 envelope-interp dup -1.0 fneq if
+    $" envelope-interp -1.0: %s?" swap snd-display
+  else
+    drop
+  then
+  1.5 #( -1.0 -1.0 1.0 1.0 )           1.0 envelope-interp dup 1.0 fneq if
+    $" envelope-interp 1.0: %s?" swap snd-display
+  else
+    drop
+  then
+  0.1 #( 0.0 0.0 1.0 1.0 )             1.0 envelope-interp dup 0.1 fneq if
+    $" envelope-interp 0.1: %s?" swap snd-display
+  else
+    drop
+  then
+  0.1 #( 0.0 0.0 1.0 1.0 )            32.0 envelope-interp dup 0.01336172 fneq if
+    $" envelope-interp (exp 32): %s?" swap snd-display
+  else
+    drop
+  then
+  0.1 #( 0.0 0.0 1.0 1.0 )           0.012 envelope-interp dup 0.36177473 fneq if
+    $" envelope-interp (exp 0.012): %s?" swap snd-display
+  else
+    drop
+  then
+  0.3 #( 0.0 0.0 0.5 1.0 1.0 0.0 )     1.0 envelope-interp dup 0.6 fneq if
+    $" envelope-interp 0.6: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 0.0 0.5 0.5 1.0 0.5 ) { v0 }
+  #( 0.0 0.0 2.0 0.5 ) #( 0.0 0.0 1.0 2.0 2.0 1.0 ) multiply-envelopes dup v0 0 fveql unless
+    $" multiply-envelopes: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 0.0 0.5 0.5 1.0 0.0 ) to v0
+  #( 0.0 0.0 1.0 1.0 ) #( 0.0 0.0 1.0 1.0 2.0 0.0 ) multiply-envelopes dup v0 0 fveql unless
+    $" multiply-envelopes: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 0.0 1.0 1.0 2.0 3.0 4.0 0.0 ) max-envelope dup 3.0 fneq if
+    $" 0 max-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 1.0 ) max-envelope dup 1.0 fneq if
+    $" 1 max-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 1.0 1.0 1.0 2.0 2.0 ) max-envelope dup 2.0 fneq if
+    $" 2 max-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 -1.0 1.0 -2.0 ) max-envelope dup -1.0 fneq if
+    $" 3 max-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 -2.0 1.0 -1.0 ) max-envelope dup -1.0 fneq if
+    $" 4 max-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 0.0 1.0 1.0 2.0 3.0 4.0 0.0 ) min-envelope dup 0.0 fneq if
+    $" 0 min-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 1.0 ) min-envelope dup 1.0 fneq if
+    $" 1 min-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 1.0 1.0 1.0 2.0 2.0 ) min-envelope dup 1.0 fneq if
+    $" 2 min-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 -1.0 1.0 -2.0 ) min-envelope dup -2.0 fneq if
+    $" 3 min-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 -2.0 1.0 -1.0 ) min-envelope dup -2.0 fneq if
+    $" 4 min-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 0.0 0.2 0.1 1.0 1.0 ) to v0
+  #( 0.0 0.0 1.0 1.0 ) 0.1 0.2 #f #f stretch-envelope dup v0 0 fveql unless
+    $" stretch-envelope att: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 0.0 0.2 0.1 1.1 1.0 1.6 0.5 2.0 0.0 ) to v0
+  #( 0.0 0.0 1.0 1.0 2.0 0.0 ) 0.1 0.2 1.5 1.6 stretch-envelope dup v0 0 fveql unless
+    $" stretch-envelope dec: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 0.0 0.2 0.1 1.1 1.0 1.6 0.5 2.0 0.0 ) to v0
+  #( 0.0 0.0 1.0 1.0 2.0 0.0 ) 0.1 0.2 1.5 1.6 stretch-envelope dup v0 0 fveql unless
+    $" stretch-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 0.0 0.5 1.5 1.0 1.0 ) to v0
+  #( 0.0 0.0 1.0 1.0 2.0 0.0 ) #( 0.0 0.0 1.0 1.0 ) add-envelopes dup v0 0 fveql unless
+    $" add-envelopes: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 0.0 1.0 2.0 ) to v0
+  #( 0.0 0.0 1.0 1.0 ) 2.0 scale-envelope dup v0 0 fveql unless
+    $" scale-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 1.0 1.0 0.0 ) to v0
+  #( 0.0 0.0 1.0 1.0 ) reverse-envelope dup v0 0 fveql unless
+    $" reverse-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 0.0 1.5 1.0 2.0 0.0 ) to v0
+  #( 0.0 0.0 0.5 1.0 2.0 0.0 ) reverse-envelope dup v0 0 fveql unless
+    $" reverse-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+  #( 0.0 1.0 1.5 1.0 2.0 0.0 ) to v0
+  #( 0.0 0.0 0.5 1.0 2.0 1.0 ) reverse-envelope dup v0 0 fveql unless
+    $" reverse-envelope: %s?" swap snd-display
+  else
+    drop
+  then
+;
+
+\ ---------------- test 28: errors ----------------
+
 : check-error-tag { xt expected-tag -- }
   xt #t nil fth-catch { tag }
   stack-reset
@@ -3428,7 +5044,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   then
 ;
 
-'snd-motif provided? [if]
+*with-test-motif* [if]
   : snd-motif-error-checks ( -- )
     #( 'Widget 0 ) 	      <'> widget-position     'no-such-widget check-error-tag
     #( 'Widget 0 ) 	      <'> widget-size         'no-such-widget check-error-tag
@@ -3553,7 +5169,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> reverb-control? <'>  reverse-sound <'> reverse-selection <'> revert-sound
    <'> right-sample <'> sample <'> sampler-at-end? <'>  sampler?
    <'> samples <'> sampler-position <'> save-controls
-   <'> ladspa-dir <'> peak-env-dir <'> save-dir <'> save-edit-history <'> save-envelopes
+   <'> peak-env-dir <'> save-dir <'> save-edit-history <'> save-envelopes
    <'> save-listener <'> save-marks <'> save-region <'> save-selection
    <'> save-sound <'> save-sound-as <'> save-state <'> save-state-file
    <'> scale-by <'> scale-selection-by <'> scale-selection-to <'> scale-to
@@ -3840,7 +5456,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   y
 ;
 
-'complex provided? [if]
+*with-test-complex* [if]
   : mc-3-cb <{ y -- val }> y 0.0+1.0i c* ;
 [else]
   noop alias mc-3-cb
@@ -3906,7 +5522,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "obtest.snd" open-sound { ind }
   args-1 each to arg
     prcs-1 each to prc
-      \ INFO: [ms]
+      \ FIXME
       \ snd/chn before value
       \ g_set_channels(snd, val)           arg 0
       \ snd/chn after value
@@ -4070,7 +5686,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> sawtooth-wave <'> nrxysin <'> nrxycos <'> square-wave <'> src
      <'> ncos <'> nsin <'> table-lookup <'> tap
      <'> triangle-wave <'> two-pole <'> two-zero <'> wave-train <'> ssb-am ) { clm-prcs-1 }
-  \ FIXME [ms]
+  \ FIXME
   \ 'bad-type added for      #( 1 1 1 ) partials->wave
   \ 'out-of-range added for  -1.0 csqrt make-frame
   \                          -1.0 csqrt make-moving-average
@@ -4107,7 +5723,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> mus-hop <'> mus-increment <'> mus-length <'> mus-location
      <'> mus-mix <'> mus-name <'> mus-order <'> mus-phase <'> mus-ramp
      <'> mus-random <'> mus-run <'> mus-scaler <'> mus-xcoeffs <'> mus-ycoeffs ) each to prc
-    \ FIXME: 'out-of-range added [ms].
+    \ FIXME
+    \ 'out-of-range added
     make-oscil vector-0 prc #t nil fth-catch to tag
     stack-reset
     tag if
@@ -4435,7 +6052,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     hook <'> noop 0 make-proc <'> add-hook! #t nil fth-catch to tag
     stack-reset
     tag if
-      tag car 'bad-arity      =	\ FTH special 'bad-arity (add-hook!) [ms]
+      \ FIXME
+      \ FTH special 'bad-arity (add-hook!) [ms]
+      tag car 'bad-arity      =
       tag car 'wrong-type-arg = || unless
 	$" [0] hooks %s: %s" #( hook hook-name tag ) snd-display
       then
@@ -4447,7 +6066,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     hook <'> noop 3 make-proc <'> add-hook! #t nil fth-catch to tag
     stack-reset
     tag if
-      tag car 'bad-arity      =	\ FTH special 'bad-arity (add-hook!) [ms]
+      \ FIXME
+      \ FTH special 'bad-arity (add-hook!) [ms]
+      tag car 'bad-arity      =
       tag car 'wrong-type-arg = || unless
 	$" [1] hooks %s: %s" #( hook hook-name tag ) snd-display
       then
@@ -4869,7 +6490,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   ind revert-sound drop
   \ 
   100 0.5 ind 0 set-sample drop
-  \ INFO:
+  \ FIXME
   \ Doesn't work like expected with FTH.  If more values on stack
   \ than needed, no exception can be raised.  No one knows who will
   \ take and need them.  So we have 'no-such-channel as first
@@ -4884,7 +6505,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   then
   ind revert-sound drop
-  'complex provided? if
+  *with-test-complex* if
     <'> mc-3-cb <'> map-channel #t nil fth-catch to tag
   then
   stack-reset
@@ -5281,14 +6902,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil
   { ind prc tag arg arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 tm }
   make-timer to tm
-  0.0 0.3 <'> anoi-test \ clm-ins-test
-  \ <'> sndclm-src2-test
-  :comment over object->string
-  :statistics #t
-  :verbose    #f
-  :play       #t
-  :srate      22050
-  :channels 2 with-sound ws-close-sound
   tm stop-timer
   \ "%s" #( tm ) snd-test-message
 ;
@@ -5309,15 +6922,19 @@ let: ( -- )
   test-numbers empty? if
     29 -1 do test-numbers i array-push to test-numbers loop
   then
-    numbs each abs { n } test-numbers test-numbers n array-index array-delete! drop end-each
+  numbs each abs { n } test-numbers test-numbers n array-index array-delete! drop end-each
   .stack
   start-snd-test
-  <'> 00-sel-from-snd    run-fth-test
+  <'> 00-constants       run-fth-test
+  <'> 01-defaults        run-fth-test
+  <'> 02-headers         run-fth-test
+  <'> 03-variables       run-fth-test
   <'> 10-marks           run-fth-test
   <'> 15-chan-local-vars run-fth-test
   <'> 19-save/restore    run-fth-test
   <'> 23-with-sound      run-fth-test
   <'> 26-gtk             run-fth-test
+  <'> 27-sel-from-snd    run-fth-test
   <'> 28-errors          run-fth-test
   <'> 30-test            run-fth-test	\ local fragment test
   finish-snd-test
