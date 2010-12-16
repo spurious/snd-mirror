@@ -202,6 +202,34 @@ So in the default case (precision = 128), using gmp:
 #f
 </pre>
 
+<p>In the gmp case, integers and ratios are limited only by the size of memory,
+but reals are limited by bignum-precision.  This means, for example, that
+</p>
+
+<pre>
+&gt; (floor 1e56) ; bignum-precision is 128
+99999999999999999999999999999999999999927942405962072064
+&gt; (set! (bignum-precision) 256)
+256
+&gt; (floor 1e56)
+100000000000000000000000000000000000000000000000000000000
+</pre>
+
+<p>The non-gmp case is similar, but s7 tries to give an error when it thinks you've
+wandered into a bad numerical neighborhood:
+</p>
+
+<pre>
+&gt; (floor (+ (expt 2.0 62) 512))
+;floor argument 1, 4.6116860184274e+18, is out of range (argument is too large)
+</pre>
+
+<p>If the error were turned off, you'd get 4611686018427387904 here, and
+4611686018427388928 for (floor (+ (expt 2.0 62) 513))!  But since gmp handles
+integers and ratios automatically, perhaps s7 should try to catch the parallel
+float cases, and automatically increase bignum-precision.
+</p>
+
 </blockquote>
 </small>
 

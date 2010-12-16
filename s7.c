@@ -17061,7 +17061,11 @@ with the hook arity.  'doc' is a documentation string."
 	{
 	  /* backwards compatibility -- this used to be just an integer => required args */
 	  if (s7_is_integer(arity))
-	    hook_arity(x) = make_list_3(sc, arity, small_int(0), sc->F);
+	    {
+	      if (s7_integer(arity) < 0)
+		return(s7_wrong_type_arg_error(sc, "make-hook", 1, arity, "a non-negative integer, or an arity list: (required optional rest)"));
+	      hook_arity(x) = make_list_3(sc, arity, small_int(0), sc->F);
+	    }
 	  else return(s7_wrong_type_arg_error(sc, "make-hook", 1, arity, "an arity list: (required optional rest)"));
 	}
 

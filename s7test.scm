@@ -687,6 +687,13 @@ yow!! -- I'm using mpc_cmp
 ;; so (eq? 3/4 3/4) is #f, (eqv? 3/4 3/4) is #t,
 ;;    (eqv? #(1) #(1)) is #f, (equal? #(1) #(1)) is #t
 ;;    (equal? 3 3.0) is #f, (= 3 3.0) is #t
+;; in s7 (since real_zero and real_one are separate)
+;;    (eq? 0.0 0.0) is #t,
+;;    (eq? 1.0 1.0) is #t,
+;;    (eq? 2.0 2.0) is #f
+(test (equal? .0 0.) #t)
+
+
 
 ;;; boolean?
 (test (boolean? #f) #t)
@@ -2949,6 +2956,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((lst (list 1 2))) (list lst (apply cons lst))) '((1 2) (1 . 2)))
 (test (cdadr (let ((lst (list 1 2))) (list (apply cons lst) lst))) '(2))
 (test (cons '+ '=) '(+ . =))
+(test (cons .(cadddr 10)) (cons cadddr 10))
 (test (cons 1 '()) '(
                       1
 		       ))
@@ -3170,6 +3178,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (cddddr '(a b c d e f g)) '(e f g))
 (test (cadr '(1 2 . 3)) 2)
 (test (cddr '(1 2 . 3)) 3)
+(test (cadadr '''1) 1)
+(test (cdadr '''1) '(1))
 
 ;; sacla
 (test (caar '((a) b c)) 'a)
@@ -4267,6 +4277,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (assoc 'key '()) #f)
 (test (assoc 'key '(() ())) #f)
 (test (assoc '() '()) #f)
+(test (assoc 1 '((1 (2)) (((3) 4)))) '(1 (2)))
 
 (test (assoc '() 1) 'error)
 (test (assoc (cons 1 2) 1) 'error)
@@ -4703,7 +4714,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (append arg) arg))
- (list "hi" #\a #f 'a-symbol (make-vector 3) abs 1 3.14 3/4 1.0+1.0i #t #<unspecified> #<eof> '() #() (list 1 2) (cons 1 2) #(0) (lambda (a) (+ a 1))))
+ (list "hi" #\a #f 'a-symbol (make-vector 3) abs 1 3.14 3/4 1.0+1.0i 0/0 #t #<unspecified> #<eof> '() #() (list 1 2) (cons 1 2) #(0) (lambda (a) (+ a 1))))
 
 (test (let ((ht (make-hash-table))) (set! (ht 'a) 123) (map values ht)) '((a . 123)))
 
@@ -4871,6 +4882,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (list->vector (list 1)) '#(1))
 (test (list->vector (list (list))) '#(()))
 (test (list->vector (list 1 #\a "hi" 'hi)) '#(1 #\a "hi" hi))
+(test (list->vector ''1) #(quote 1))
+(test (list->vector '''1) #(quote '1))
 
 (for-each
  (lambda (arg)
@@ -7210,6 +7223,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (make-hook '(1 -1 #f)) 'error)
 (test (make-hook '(1 . 2)) 'error)
 (test (make-hook '(1 2 . #f)) 'error)
+(test (make-hook (list 1 0/0 #f)) 'error)
+(test (make-hook (list 1 1/0 #f)) 'error)
+(test (hook? (make-hook 1)) #t)
+(test (make-hook -1) 'error)
+(test (let ((lst (list 1 2 #f))) (set! (cdr (cdr (cdr lst))) lst) (make-hook lst)) 'error)
 
 (let ((h (make-hook '(1 0 #f)))
       (x 0))
@@ -11908,6 +11926,7 @@ this prints:
 (test ((lambda (n) (apply n '(((x 1)) (+ x 2)))) let) 3)
 (test ((apply lambda (list (apply let (list (list) (quote (list (apply case '(0 ((0 1) 'n))))))) (quasiquote (+ n 1)))) 2) 3)
 (test (apply let '((x 1)) '((+ x 1))) 2)
+(test ((apply make-procedure-with-setter (list (lambda (x) (+ x 1)) (lambda (x y) (+ x y)))) 23) 24)
 
 
 
@@ -18240,12 +18259,15 @@ abs     1       2
 		     (= (rec1-ref r1) (rec2-ref r2)))
 		#t))))
 
-    (let ((rec3? (car (make-type))))
+    (let ((rec3? (car (make-type)))
+	  (rec4? (car (make-type #f))))
       (for-each
        (lambda (arg)
-	 (test (rec3? arg) #f))
+	 (test (rec3? arg) #f)
+	 (test (rec4? arg) #f))
        (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t '(1 . 2))))
 
+    (test (number? ((cadr (make-type #f #f)) 0)) #f)
     (test ((cadr (make-type :name 123))) 'error)
     (test ((cadr (make-type :length "hiho"))) 'error)
     (test ((cadr (make-type :print (lambda (a b) (= a b)))) "hi") 'error)
@@ -18725,6 +18747,10 @@ abs     1       2
 (test (constant?) 'error)
 (test (constant? 1 2) 'error)
 (test (constant? #<eof>) #t) ; ?
+(test (constant? '-) #f)
+(test (constant? ''-) #t)
+(test (constant? '''-) #t)
+(test (constant? '1) #t)
 
 ;; and some I wonder about -- in CL's terms, these always evaluate to the same thing, so they're constantp
 ;;   but Clisp:
@@ -19479,6 +19505,9 @@ abs     1       2
 
 
 ;; generic length/reverse/copy/fill!
+;;; copy
+;;; fill!
+
 (test (length (list 1 2)) 2)
 (test (length "hiho") 4)
 (test (length (vector 1 2)) 2)
@@ -19518,6 +19547,9 @@ abs     1       2
 (test (copy (string #\a #\null #\b)) "a\x00b")
 (test (copy #<eof>) #<eof>)
 (test ((copy abs) -123) 123)
+(test (copy ''1) ''1)
+(test (copy '''1) '''1)
+(test (hook? (copy (make-hook 1))) #t)
 
 
 (test (reverse "hi") "ih")
@@ -36662,7 +36694,10 @@ abs     1       2
 (num-test (log 10.0 0.001) -0.33333333333333)
 (num-test (log 10.0 -0.001) -0.27620436338394-0.12561556740966i)
 (num-test (log 10.0 100.0) 0.5)
-	
+(num-test (log -1) 0.0+3.141592653589793238462643383279502884197169399375105820974944592307816406286198E0i)
+(num-test (* 0-2i (log 0+i)) pi)	
+(num-test (log -0.1e001) (make-rectangular 0.0 pi))
+
 
 
 
@@ -36917,6 +36952,8 @@ abs     1       2
 (num-test (/ (expt 2 -53) 2) (expt 2 -54))
 (num-test (* 1/18014398509481984 1/2) (expt 2 -55))
 (num-test (/ (expt 2.3 50) (expt 2.3 49)) 2.3)
+(num-test (expt #e1 -111) 1)
+(num-test (expt -0(quasiquote #e0)) 1)
 
 (test (expt) 'error)
 (test (expt 1) 'error)
@@ -36935,10 +36972,17 @@ abs     1       2
 ;;      but (expt 0.0 1e-15-i) is 0.0??
 ;; clisp says (expt 0 1+i) is 0, but (expt 0 0+i) is division by zero??) -- sbcl agrees
 
-(test (expt 0.0 1e-15+i) 0.0)
-(test (expt 0.0 0+i) 0.0) ; why would they be radically different?
-(test (expt 0.0 1e-15-i) 0.0)
-(test (expt 0.0 0-i) 0.0)
+(num-test (expt 0.0 1e-15+i) 0.0)
+(num-test (expt 0.0 0+i) 0.0) ; why would they be radically different?
+(num-test (expt 0.0 1e-15-i) 0.0)
+(num-test (expt 0.0 0-i) 0.0)
+(num-test (expt -0.0 0-i) 0.0)
+(num-test (expt 0/11 000) 1)
+(num-test (expt 1 0+i) 1)
+(num-test (expt 1 0-i) 1)
+(num-test (expt -1 0-i) 2.314069263277926900572908636794854738026610624260021199344504640952434235069032E1)
+(num-test (expt -1 0+i) 4.321391826377224977441773717172801127572810981063308298071968740105076575701806E-2)
+
 
 (num-test (expt 1e-15 0+i) -0.999824358967590-0.018741697229594i)
 (num-test (expt 1e-15 0-i) -0.999824358967590+0.018741697229594i)
@@ -39037,6 +39081,9 @@ abs     1       2
 (num-test (real-part 1.4+0.0i) 1.4)
 (num-test (imag-part 5) 0.0)
 (num-test (imag-part 1.4+0.0i) 0.0)
+(num-test (real-part 3/4+1/2i) 0.75)
+(num-test (denominator (real-part 01/100)) 100)
+(test (denominator (real-part 3/4+1/2i)) 'error)
 
 (test (imag-part) 'error)
 (test (imag-part "hi") 'error)
@@ -41974,6 +42021,11 @@ abs     1       2
 (num-test (make-polar 1.0 (* 2000000 pi)) 1.0)
 (num-test (make-polar 1.0 (* 2000000000 pi)) 1.0)
 
+;;; should these return ratios:
+;;;   (make-rectangular 1/2 0) -> 0.5 ??
+;;;   (make-polar 1/2 0) -> 0.5 ??
+
+
 
 
 ;; -------- angle
@@ -42607,6 +42659,7 @@ abs     1       2
 (num-test (ceiling (- (+ 1 -1/123400000))) 0)
 (num-test (ceiling (/ (- most-positive-fixnum 1) most-positive-fixnum)) 1)
 (num-test (ceiling (/ most-positive-fixnum (- most-positive-fixnum 1))) 2)
+(num-test (ceiling #e-01-0i ) -1)
 
 (test (ceiling) 'error)
 (test (ceiling 1.23+1.0i) 'error)
@@ -43071,6 +43124,7 @@ abs     1       2
 (test (number? 0+0i) #t)
 (test (number? (log 0)) #t)
 (test (number? (real-part (log 0))) #t)
+(test (number? '-1-i) #t)
 
 (test (real? (+ 1+i 1-i)) #t)
 (test (real? (- 1+i 1+i)) #t)
@@ -43807,7 +43861,9 @@ abs     1       2
 (test (exact? most-positive-fixnum) #t)
 (test (exact? our-pi) #f)
 (test (exact? (/ 1 2)) #t)
-
+(test (exact? 0/1) #t)
+(test (exact? 0/0) #f)
+(test (exact? '0/1) #t)
 (test (exact?) 'error)
 (test (exact? "hi") 'error)
 (test (exact? 1.0+23.0i 1.0+23.0i) 'error)
@@ -43910,6 +43966,7 @@ abs     1       2
 (num-test (min -1/2 1) -1/2)
 (num-test (min 1/2 -1) -1)
 (num-test (min -1/2 -1) -1)
+(num-test (min 1010-0.i) 1010.0)
 
 (num-test (max 3/2 6/5) 3/2)
 (num-test (max -3/2 6/5) 6/5)
@@ -49686,6 +49743,12 @@ abs     1       2
 (num-test (+ 0.(+)) 0.0)
 (num-test (+ 0.(*)) 1.0)
 (num-test (/(*(/(*)))) 1)
+(num-test (+ 0-i(sqrt 00)) 0-i)
+(num-test (apply /(list 11 11)) 1)
+(num-test (/ 0+i) 0-1i)
+(num-test (/ 1/10 010) 1/100)
+(num-test (/ 0 -00-1i) 0.0)
+(num-test (* 0110/001) 110)
 
 (for-each
  (lambda (op)
@@ -54689,7 +54752,6 @@ etc....
 (test (equal? 0.0 0.0+0e0123456789i) #t)
 (num-test 0.0 1e-1000)
 
-
 (if with-bignums
     (begin
       (test (number? (string->number "#e1.0e564")) #t)
@@ -55036,6 +55098,9 @@ etc....
 (num-test (string->number "#x+e/00011ee0") 7/36720)
 (num-test (string->number "#e#x010e10.e1") 17699041/256)
 (num-test (string->number "#x10+10i") 16+16i)
+(num-test 00-10e+001i 0-100i)
+(num-test #b#i.110e-1 0.375)
+(num-test #e01.1e1+00.i 11)
 
 (if (provided? 'dfls-exponents)
     (begin
@@ -55361,6 +55426,7 @@ etc....
 (num-test #b#i0-0i 0.0)
 (num-test #b#e1e01 2)
 (num-test #b#e1e-0 1)
+(num-test 1e-0 1.0)
 (num-test #b#e11e-1 3/2)
 (num-test #b0100/10 2)
 (num-test #b0e+1-0.i 0.0)
@@ -57611,103 +57677,110 @@ etc
 
 ;;; --------------------------------------------------------------------------------
 
-(test (logior 0 1) 1)
-(test (logior #b101 #b10001) 21)
-(test (logior 1 3 6) 7)
-(test (logior -6 1) -5)
-(test (logior -6 3) -5)
-(test (logior #b1 #b11 #b111 #b1111) #b1111)
-(test (logior -1 0 -1 -1) -1)
-(test (logior 3 3 3 3) 3)
-(test (logior 1) 1)
-(test (logior -1) -1)
-(test (logior 12341234 10001111) 12378103)
-(test (logior 1 2 4 8) 15)
+;;; logior
+(num-test (logior 0 1) 1)
+(num-test (logior #b101 #b10001) 21)
+(num-test (logior 1 3 6) 7)
+(num-test (logior -6 1) -5)
+(num-test (logior -6 3) -5)
+(num-test (logior #b1 #b11 #b111 #b1111) #b1111)
+(num-test (logior -1 0 -1 -1) -1)
+(num-test (logior 3 3 3 3) 3)
+(num-test (logior 1) 1)
+(num-test (logior -1) -1)
+(num-test (logior 12341234 10001111) 12378103)
+(num-test (logior 1 2 4 8) 15)
 (test (logior 0 1.0) 'error)
 (test (logior 0 1/2) 'error)
-(test (logior 0 1/1) 1)
+(num-test (logior 0 1/1) 1)
 (test (logior 1.0 0) 'error)
 (test (logior 1/2 0) 'error)
-(test (logior 1/1 0) 1)
-(test (logior -1 1 0) -1)
-(test (logior 1 2 3 4) 7)
-(test (logior 1 3 5 7) 7)
+(num-test (logior 1/1 0) 1)
+(num-test (logior -1 1 0) -1)
+(num-test (logior 1 2 3 4) 7)
+(num-test (logior 1 3 5 7) 7)
 
 
-(test (logand 0 1) 0)
-(test (logand #b101 #b10001) 1)
-(test (logand 1 3 6) 0)
-(test (logand -1 3 6) 2)
-(test (logand -6 1) 0)
-(test (logand -6 3) 2)
-(test (logand #b1 #b11 #b111 #b1111) #b1)
-(test (logand -1 0 -1 -1) 0)
-(test (logand 3 3 3 3) 3)
-(test (logand 0) 0)
-(test (logand -1) -1)
-(test (logand 12341234 10001111) 9964242)
-(test (logand -1 1) 1)
-(test (logand -1 -1) -1)
-(test (logand 1 -1) 1)
-(test (logand 1 1) 1)
-(test (logand 16 31) 16)
+;;; logand
+(num-test (logand 0 1) 0)
+(num-test (logand 0 -1) 0)
+(num-test (logand #b101 #b10001) 1)
+(num-test (logand 1 3 6) 0)
+(num-test (logand -1 3 6) 2)
+(num-test (logand -6 1) 0)
+(num-test (logand -6 3) 2)
+(num-test (logand #b1 #b11 #b111 #b1111) #b1)
+(num-test (logand -1 0 -1 -1) 0)
+(num-test (logand 3 3 3 3) 3)
+(num-test (logand 0) 0)
+(num-test (logand -1) -1)
+(num-test (logand 12341234 10001111) 9964242)
+(num-test (logand -1 1) 1)
+(num-test (logand -1 -1) -1)
+(num-test (logand 1 -1) 1)
+(num-test (logand 1 1) 1)
+(num-test (logand 16 31) 16)
 (test (logand 0 1.0) 'error)
 (test (logand 0 1/2) 'error)
-(test (logand 0 1/1) 0)
+(num-test (logand 0 1/1) 0)
 (test (logand 1.0 0) 'error)
 (test (logand 1/2 0) 'error)
-(test (logand 1/1 0) 0)
-(test (logand 1 -1 -1) 1)
-(test (logand 1 2 3 4) 0)
-(test (logand 1 3 5 7) 1)
+(num-test (logand 1/1 0) 0)
+(num-test (logand 1 -1 -1) 1)
+(num-test (logand 1 2 3 4) 0)
+(num-test (logand 1 3 5 7) 1)
 
 
-(test (logxor 0 1) 1)
-(test (logxor #b101 #b10001) 20)
-(test (logxor 1 3 6) 4)
-(test (logxor -6 1) -5)
-(test (logxor -6 3) -7)
-(test (logxor #b1 #b11 #b111 #b1111) #b1010)
-(test (logxor 12341234 10001111) 2413861)
-(test (logxor 1 3 7 15) 10)
+;;; logxor
+(num-test (logxor 0 1) 1)
+(num-test (logxor #b101 #b10001) 20)
+(num-test (logxor 1 3 6) 4)
+(num-test (logxor -6 1) -5)
+(num-test (logxor -6 3) -7)
+(num-test (logxor #b1 #b11 #b111 #b1111) #b1010)
+(num-test (logxor 12341234 10001111) 2413861)
+(num-test (logxor 1 3 7 15) 10)
 (test (logxor 0 1.0) 'error)
 (test (logxor 0 1/2) 'error)
-(test (logxor 0 1/1) 1)
+(num-test (logxor 0 1/1) 1)
 (test (logxor 1.0 0) 'error)
 (test (logxor 1/2 0) 'error)
-(test (logxor 1/1 0) 1)
-(test (logxor 0 1 -1) -2)
-(test (logxor -1 -1 -1) -1) ; hmmm... "the bits that are on in an odd number of the arguments"
+(num-test (logxor 1/1 0) 1)
+(num-test (logxor 0 1 -1) -2)
+(num-test (logxor -1 -1 -1) -1) ; hmmm... "the bits that are on in an odd number of the arguments"
 ;; to get the bits that are on in just 1 argument? (logxor (logxor a b c) (logand a b c))
-(test (logxor 1 2 3 4) 4)
-(test (logxor 1 3 5 7) 0)
-(test (logxor -1 most-positive-fixnum) most-negative-fixnum)
-(test (logxor most-negative-fixnum most-positive-fixnum) -1)
-(test (logxor -100 -100 -100) -100)
-(test (logxor -100 -100 -100 -1) 99)
-(test (logxor -100 -100 -100 -1 -1) -100)
+(num-test (logxor 1 2 3 4) 4)
+(num-test (logxor 1 3 5 7) 0)
+(num-test (logxor -1 most-positive-fixnum) most-negative-fixnum)
+(num-test (logxor most-negative-fixnum most-positive-fixnum) -1)
+(num-test (logxor -100 -100 -100) -100)
+(num-test (logxor -100 -100 -100 -1) 99)
+(num-test (logxor -100 -100 -100 -1 -1) -100)
+(num-test (logxor 4/2 11/11) 3)
 
-(test (logxor) 0)
-(test (logior) 0)
-(test (logand) -1)
+(num-test (logxor) 0)
+(num-test (logior) 0)
+(num-test (logand) -1)
 
 
-
-(test (lognot 0) -1)
-(test (lognot -1) 0)
-(test (lognot 1) -2)
-(test (lognot #b101) -6)
-(test (lognot -6) #b101)
-(test (lognot 12341234) -12341235)
-(test (lognot #b-101) 4)
-(test (lognot (+ 1 (lognot 1000))) 999)
+;;; lognot
+(num-test (lognot 0) -1)
+(num-test (lognot -1) 0)
+(num-test (lognot 1) -2)
+(num-test (lognot #b101) -6)
+(num-test (lognot -6) #b101)
+(num-test (lognot 12341234) -12341235)
+(num-test (lognot #b-101) 4)
+(num-test (lognot (+ 1 (lognot 1000))) 999)
 (test (lognot) 'error)
 (test (lognot 1.0) 'error)
 (test (lognot 1/2) 'error)
 (test (lognot 1/1) -2)
+(num-test (lognot #e10e011) -1000000000001)
 
 
 
+;;; log-n-of
 (let ((top-checked-bit (if with-bignums 64 63)))
 
   (define (log-none-of . ints)  ; bits on in none of ints
@@ -58215,6 +58288,7 @@ etc
   )
 
 
+;;; integer-length
 (num-test (integer-length 0) 0)
 (num-test (integer-length 1) 1)
 (num-test (integer-length 2) 2)
