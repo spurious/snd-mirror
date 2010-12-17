@@ -1,5 +1,7 @@
 Snd change log
 
+2011 ----------------------------------------------------------------
+
  29-Nov:    Snd 11.11.
  5-Nov:     add|delete-watchers removed, replaced by effects-hook.
  25-Oct:    Snd 11.10.

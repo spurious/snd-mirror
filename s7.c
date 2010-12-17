@@ -311,7 +311,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR,
 	      OP_MACRO, OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
 	      OP_CASE, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
-	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
+	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
 	      OP_READ_VECTOR, OP_READ_DONE, 
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
 	      OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
@@ -569,7 +569,7 @@ struct s7_scheme {
   s7_pointer global_env;              /* global environment */
   s7_pointer initial_env;             /* original bindings of predefined functions */
   
-  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
+  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND;
   s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY, QQ_APPEND, MULTIVECTOR;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
@@ -20337,17 +20337,11 @@ static bool is_simple_code(s7_scheme *sc, s7_pointer form)
     else
       {
 	if ((car(tmp) == sc->UNQUOTE) ||
-	    (car(tmp) == sc->UNQUOTE_SPLICING) ||
 	    ((car(tmp) == sc->NIL) && (cdr(tmp) == sc->NIL)))
 	  return(false);
       }
   return(tmp == sc->NIL);
 }
-
-/* can we make this simpler?
- *    (define-macro (hi a) `(+ 1 2 3 ,a)) -> ({list} '+ 1 2 3 a)
- *    but better would be (args... '(+ 1 2 3) (list a) ...)
- */
 
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
@@ -20369,18 +20363,11 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
       return(cadr(form));
     }
 
-  if (car(form) == sc->UNQUOTE_SPLICING)
-    {
-      if (cddr(form) != sc->NIL)
-	return(eval_error(sc, "unquote-splicing: too many arguments, ~S", form));
-      return(make_list_3(sc, sc->QQ_APPLY, sc->QQ_VALUES, cadr(form)));
-    }
-
   /* it's a list, so return the list with each element handled as above.
    *    we try to support dotted lists which makes the code much messier.
    */
   
-  /* if no element of the list is a list or unquote|unquote_splicing, just return the original quoted */
+  /* if no element of the list is a list or unquote, just return the original quoted */
   if (is_simple_code(sc, form))
     return(make_list_2(sc, sc->QUOTE, form));
 
@@ -20410,8 +20397,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 	for (orig = form, bq = cdr(sc->w), i = 0; i < len; i++, orig = cdr(orig), bq = cdr(bq))
 	  {
 	    if ((is_pair(orig)) && 
-		((cadr(orig) == sc->UNQUOTE) ||
-		 (cadr(orig) == sc->UNQUOTE_SPLICING)))
+		(cadr(orig) == sc->UNQUOTE))
 	      {
 		/* `(1 . ,2) -> '(1 unquote 2) -> '(1 . 2) 
 		 */
@@ -21096,7 +21082,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  break;
 	  
 	case TOKEN_AT_MARK:
-	  push_stack(sc, opcode(OP_READ_UNQUOTE_SPLICING), sc->NIL, sc->NIL);
+	  push_stack(sc, opcode(OP_READ_APPLY_VALUES), sc->NIL, sc->NIL);
 	  sc->tok = token(sc);
 	  break;
 	  
@@ -21194,8 +21180,6 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
 
   if (sym == sc->UNQUOTE)
     return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
-  if (sym == sc->UNQUOTE_SPLICING)
-    return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred without quasiquote"));
 
   /* actually we'll normally get an error from apply. (,@ 1) triggers this error.
    */
@@ -24570,8 +24554,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
-    case OP_READ_UNQUOTE_SPLICING:
-      sc->value = make_list_2(sc, sc->UNQUOTE_SPLICING, sc->value);
+    case OP_READ_APPLY_VALUES:
+      sc->value = make_list_2(sc, sc->UNQUOTE, make_list_3(sc, sc->QQ_APPLY, sc->QQ_VALUES, sc->value));
       goto START;
       
       
@@ -29893,9 +29877,6 @@ s7_scheme *s7_init(void)
   
   sc->UNQUOTE = make_symbol(sc, "unquote");
   typeflag(sc->UNQUOTE) |= T_DONT_COPY; 
-  
-  sc->UNQUOTE_SPLICING = make_symbol(sc, "unquote-splicing");
-  typeflag(sc->UNQUOTE_SPLICING) |= T_DONT_COPY; 
   
   sc->MACROEXPAND = make_symbol(sc, "macroexpand");
   typeflag(sc->MACROEXPAND) |= T_DONT_COPY; 

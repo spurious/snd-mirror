@@ -785,7 +785,7 @@ make-mac
 
 <p>Backquote (quasiquote) in s7 is almost trivial.  Constants are unchanged, symbols are quoted,
 ",arg" becomes "arg", and ",@arg" becomes "(apply values arg)" &mdash; hooray for real multiple values!
-It's almost as easy to write the actual macro body as the backquoted version of it.
+It's almost as easy to write the actual macro body as the backquoted version of it. 
 </p>
 
 <pre>
@@ -810,7 +810,8 @@ hi
 </pre>
 
 <p>and so on.  "{list}" is a special version of "list" to avoid name collisions
-and handle a few tricky details (similarly for "{values}" and "{apply}").
+and handle a few tricky details (similarly for "{values}" and "{apply}").  There is no unquote-splicing
+macro in s7;  ",@(...)" becomes "(unquote (apply values ...))" at read-time.
 </p>
 
 
@@ -4686,7 +4687,7 @@ have any number after, for example, #b:
 
 <!--
 for r7rs: (?)
-  (define (finite? n) (and (number" n) (not (nan? n)) (not (infinite? n))))
+  (define (finite? n) (and (number? n) (not (nan? n)) (not (infinite? n))))
   (define vector-map map)
   (define vector-for-each for-each)
   (define string-map map)
@@ -6108,7 +6109,7 @@ int main(int argc, char **argv)
 	  errmsg = s7_get_output_string(s7, s7_current_error_port(s7));
 
 	  /* if we got something, wrap it in "[]" */
-	  if ((errmsg) && (*errmsg))
+	  if ((errmsg) &amp;&amp; (*errmsg))
 	    fprintf(stdout, "[%s]", errmsg); 
 
 	  s7_close_output_port(s7, s7_current_error_port(s7));
@@ -6654,7 +6655,7 @@ static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context)
 static void evaluate_expression(s7_scheme *sc, char *expression)
 {
   /* evaluate expression, display result, catching and displaying any errors */
-  if ((expression) &&
+  if ((expression) &amp;&amp;
       (*expression))
     {
       if ((strlen(expression) &gt; 1) || 
@@ -6674,18 +6675,18 @@ static void evaluate_expression(s7_scheme *sc, char *expression)
 	  
 	  errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
 	  /* if error, display it, else display result of evaluation */
-	  gtk_text_buffer_get_end_iter(repl_buf, &pos);
+	  gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
 	  
-	  if ((errmsg) && (*errmsg))
-	    gtk_text_buffer_insert(repl_buf, &pos, errmsg, strlen(errmsg));
+	  if ((errmsg) &amp;&amp; (*errmsg))
+	    gtk_text_buffer_insert(repl_buf, &amp;pos, errmsg, strlen(errmsg));
 	  else 
 	    {
 	      char *result_as_string;
 	      result_as_string = s7_object_to_c_string(sc, result);
 	      if (result_as_string)
 		{
-		  gtk_text_buffer_insert(repl_buf, &pos, "\n", 1);
-		  gtk_text_buffer_insert(repl_buf, &pos, result_as_string, strlen(result_as_string));
+		  gtk_text_buffer_insert(repl_buf, &amp;pos, "\n", 1);
+		  gtk_text_buffer_insert(repl_buf, &amp;pos, result_as_string, strlen(result_as_string));
 		  free(result_as_string);
 		}
 	    }
@@ -6709,25 +6710,25 @@ static char *get_current_expression(void)
   GtkTextMark *m;
 
   m = gtk_text_buffer_get_insert(repl_buf);
-  gtk_text_buffer_get_iter_at_mark(repl_buf, &pos, m);
+  gtk_text_buffer_get_iter_at_mark(repl_buf, &amp;pos, m);
 
-  if (gtk_text_iter_backward_search(&pos, S7_PROMPT, 0, &temp, &previous, NULL))
+  if (gtk_text_iter_backward_search(&amp;pos, S7_PROMPT, 0, &amp;temp, &amp;previous, NULL))
     {
       /* previous now marks the end of the previous prompt */
-      if (!gtk_text_iter_forward_search(&pos, S7_PROMPT, 0, &next, &temp, NULL))
+      if (!gtk_text_iter_forward_search(&amp;pos, S7_PROMPT, 0, &amp;next, &amp;temp, NULL))
 	{
-	  gtk_text_buffer_get_end_iter(repl_buf, &next);
+	  gtk_text_buffer_get_end_iter(repl_buf, &amp;next);
 	  /* next now marks the end of the buffer, so there's no complication */
-	  return(gtk_text_buffer_get_text(repl_buf, &previous, &next, true));
+	  return(gtk_text_buffer_get_text(repl_buf, &amp;previous, &amp;next, true));
 	}
       /* here next marks the start of the next prompt, but that probably includes
        *   the result printout from an earlier evaluation.  s7_eval_c_string evaluates
        *   all the expressions in its string, returning the value of the last one,
        *   but we want the first.  We'll backup two '\n'.
        */
-      gtk_text_iter_backward_search(&next, "\n", 0, &pos, &temp, NULL);     
-      gtk_text_iter_backward_search(&pos, "\n", 0, &next, &temp, NULL);      
-      return(gtk_text_buffer_get_text(repl_buf, &previous, &next, true));
+      gtk_text_iter_backward_search(&amp;next, "\n", 0, &amp;pos, &amp;temp, NULL);     
+      gtk_text_iter_backward_search(&amp;pos, "\n", 0, &amp;next, &amp;temp, NULL);      
+      return(gtk_text_buffer_get_text(repl_buf, &amp;previous, &amp;next, true));
     }
   return(NULL);
 }
@@ -6746,12 +6747,12 @@ static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
       evaluate_expression((s7_scheme *)data, get_current_expression());
 
       /* prompt for next expression */
-      gtk_text_buffer_get_end_iter(repl_buf, &pos);
-      gtk_text_buffer_insert_with_tags(repl_buf, &pos, 
+      gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
+      gtk_text_buffer_insert_with_tags(repl_buf, &amp;pos, 
                                        "\n" S7_PROMPT, 1 + S7_PROMPT_LENGTH, prompt_not_editable, NULL);
 
       /* make sure the stuff we added is visible */
-      gtk_text_buffer_place_cursor(repl_buf, &pos);
+      gtk_text_buffer_place_cursor(repl_buf, &amp;pos);
       gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(repl), gtk_text_buffer_get_insert(repl_buf));
 
       /* tell Gtk that we already sent the '\n' */
@@ -6771,7 +6772,7 @@ int main(int argc, char **argv)
   s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
   /* make a window with a scrolled text widget */
-  gtk_init(&argc, &argv);
+  gtk_init(&amp;argc, &amp;argv);
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
 
@@ -6803,8 +6804,8 @@ int main(int argc, char **argv)
 						   "editable", false, 
 						   "weight", PANGO_WEIGHT_BOLD,
 						   NULL);
-  gtk_text_buffer_get_end_iter(repl_buf, &pos);
-  gtk_text_buffer_insert_with_tags(repl_buf, &pos, 
+  gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
+  gtk_text_buffer_insert_with_tags(repl_buf, &amp;pos, 
                                    S7_PROMPT, S7_PROMPT_LENGTH, prompt_not_editable, NULL);
 
   /* make the initial window size reasonable */

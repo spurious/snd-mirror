@@ -15002,7 +15002,7 @@ who says the continuation has to restart the map from the top?
   (test `(1 x . ,x) '(1 x . 3))
   (test `(1 . ,(list 2 3)) '(1 2 3))
   (test `(1 ,@(list 2 3)) '(1 2 3))
-  (test `(1 . ,@('(2 3))) '(1 2 3))
+;;;  (test `(1 . ,@('(2 3))) '(1 2 3))
   (test `(1 ,(list 2 3)) '(1 (2 3)))
   (test `(1 . (list 2 3)) '(1 list 2 3))
   (test `(x . ,x) '(x . 3))
@@ -15173,7 +15173,7 @@ who says the continuation has to restart the map from the top?
 (test (- `,-1) 1)
 ;;; some weirder cases...
 (test (begin . `''1) ''1)
-(test (`,@''1) 1) ; ((unquote-splicing (quote (quote 1)))) -> ((unquote-splicing (list quote 1))) ->(quote 1) -> 1!  hmmm
+(test (`,@''1) 1)
 (test (`,@ `'1) 1)
 (test (`,@''.'.) '.'.)
 (test #(`,1) #(1))
@@ -15246,9 +15246,9 @@ unquote outside qq:
 (',- 1)
 (',1 1 )
 (',,= 1) -> (unquote =)
-(',@1 1) -> 1 ; ('(unquote-splicing 1) 1) -> 1 ; ((quote (unquote-splicing 1)) 1) -> 1
+(',@1 1) -> 1
 #(,1) -> #((unquote 1)) i.e. vector has 1 element the list '(unquote 1)
-#(,@1) -> #((unquote-splicing 1))
+#(,@1) -> #((unquote ({apply} {values} 1)))
 #(,,,1) -> #((unquote (unquote (unquote 1))))
 is this a bug?
 #(`'`1) -> #(({list} 'quote 1))
@@ -15257,7 +15257,7 @@ why are these different (read-time `#() ? )
 :`#(,@(list 1 2 3))
 #(1 2 3)
 :(quasiquote #(,@(list 1 2 3)))
-#((unquote-splicing (list 1 2 3)))
+#((unquote ({apply} {values} (list 1 2 3))))
 |#
 
 (test (`,@''()) '())
@@ -15288,10 +15288,8 @@ why are these different (read-time `#() ? )
 (test (quasiquote (,1 ,(quasiquote ,@(quasiquote (1))))) '(1 1))
 (test (quasiquote (,1 ,(quasiquote ,@(quasiquote (,1))))) '(1 1))
 (test (quasiquote (,1 ,@(quasiquote ,@(list (list 1))))) '(1 1))
-(test `(+ (unquote-splicing '(1 2))) '(+ 1 2))
 (test `(+ ,(apply values '(1 2))) '(+ 1 2))
 (test `(apply + (unquote '(1 2))) '(apply + (1 2)))
-(test (eval-string "`(+ (unquote-splicing '(1 2) 3))") 'error)
 (test (eval-string "`(apply + (unquote '(1 2) 3))") 'error)
 
 (test (apply quasiquote '((1 2 3))) '(1 2 3))
@@ -15318,6 +15316,16 @@ why are these different (read-time `#() ? )
 (test (+ ` 1 `  2) `   3)
 (test ` ( + ,(- 3 2) 2) '(+ 1 2))
 (test (quasiquote #(1)) `#(1))
+
+(test `(+ ,@(map sqrt '(1 4 9)) 2) '(+ 1 2 3 2))
+(test (let ((sqrt (lambda (a) (* a a)))) `(+ ,@(map sqrt '(1 4 9)) 2)) '(+ 1 16 81 2))
+(test `(+ ,(sqrt 9) 4) '(+ 3 4))
+(test (let ((sqrt (lambda (a) (* a a)))) `(+ ,(sqrt 9) 4)) '(+ 81 4))
+(test `(+ ,(let ((sqrt (lambda (a) (* a a)))) (sqrt 9)) 4) '(+ 81 4))
+(test `(+ (let ((sqrt (lambda (a) (* a a)))) ,(sqrt 9)) 4) '(+ (let ((sqrt (lambda (a) (* a a)))) 3) 4))
+(test `(+ ,(apply values (map sqrt '(1 4 9))) 2) '(+ 1 2 3 2))
+(test (let ((sqrt (lambda (a) (* a a)))) `(+ ,(apply values (map sqrt '(1 4 9))) 2)) '(+ 1 16 81 2))
+(test (let ((sqrt (lambda (a) (* a a)))) `(+ (unquote (apply values (map sqrt '(1 4 9)))) 2)) '(+ 1 16 81 2))
 
 
 
