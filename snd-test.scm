@@ -63682,5 +63682,15 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 10,045,760,800  run.c:eval_ptree [/home/bil/test-snd/snd]
  8,918,483,905  snd-sig.c:direct_filter [/home/bil/test-snd/snd]
 
+10-Dec-10 (64-bit)
+224,005,122,781  PROGRAM TOTALS
+32,349,320,555  s7.c:eval [/home/bil/snd-11/snd]
+24,560,182,751  s7.c:eval'2 [/home/bil/snd-11/snd]
+19,534,468,570  ???:sin [/lib64/libm-2.12.so]
+16,408,681,106  io.c:mus_read_any_1 [/home/bil/snd-11/snd]
+11,540,583,151  snd-edits.c:channel_local_maxamp [/home/bil/snd-11/snd]
+11,175,405,494  s7.c:gc [/home/bil/snd-11/snd]
+ 8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
+ 8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 |#
 

@@ -239,11 +239,7 @@
 
 (define (clean-string e)
   ;; make the envelope lists look prettier
-  (string-concatenate (append (list "(")
-			      (map (lambda (n)
-				     (format #f "~,3F " n))
-				   e)
-			      (list ")"))))
+  (format #f "(~{~,3F~^ ~})" e))
 
 (define (seldur) 
   (list (/ (selection-frames) 44100.0) 

@@ -4762,6 +4762,12 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 #if WITH_GMP
   if (is_c_object(obj))
     return(big_number_to_string_with_radix(obj, BASE_10, width));
+  /* this ignores precision because it's way too hard to get the mpfr string to look like
+   *   C's output -- we either have to call mpfr_get_str twice (the first time just to 
+   *   find out what the exponent is and how long the string actually is), or we have
+   *   to do messy string manipulations.  So (format #f "",3F" pi) ignores the "3" and
+   *   prints the full string.
+   */
 #endif
 
   switch (number_type(obj))
@@ -20357,10 +20363,18 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
     }
 
   if (car(form) == sc->UNQUOTE)
-    return(cadr(form));
+    {
+      if (cddr(form) != sc->NIL)
+	return(eval_error(sc, "unquote: too many arguments, ~S", form));
+      return(cadr(form));
+    }
 
   if (car(form) == sc->UNQUOTE_SPLICING)
-    return(make_list_3(sc, sc->QQ_APPLY, sc->QQ_VALUES, cadr(form)));
+    {
+      if (cddr(form) != sc->NIL)
+	return(eval_error(sc, "unquote-splicing: too many arguments, ~S", form));
+      return(make_list_3(sc, sc->QQ_APPLY, sc->QQ_VALUES, cadr(form)));
+    }
 
   /* it's a list, so return the list with each element handled as above.
    *    we try to support dotted lists which makes the code much messier.
@@ -25153,6 +25167,18 @@ static char *mpfr_to_string(mpfr_t val, int radix)
     return(copy_string("0.0"));
 
   str1 = mpfr_get_str(NULL, &expptr, radix, 0, val, GMP_RNDN);
+  /* 0 -> full precision, but it's too hard to make this look like C formatted output.
+   *  
+   *  :(format #f "~,3F" pi)
+   *  "3.141592653589793238462643383279502884195E0" 
+   *  :(format #f "~,3F" 1.1234567890123)  ; not a bignum
+   *  "1.123"
+   *  :(format #f "~,3F" 1.12345678901234) ; a bignum
+   *  "1.123456789012339999999999999999999999999E0"
+   * 
+   * but we don't know the exponent or the string length until after we call mpfr_get_str.
+   */
+
   str = str1;
   ep = (int)expptr;
   len = safe_strlen(str);

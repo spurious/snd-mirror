@@ -6716,7 +6716,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
       (pinner '() vals len)
       (set-cdr! (list-tail vals (- len 1)) '())))   ; restore its original shape
-  
+
+  ;; t224 applies this to +/*
+
   (let ((perms '((3 1 2) (1 3 2) (1 2 3) (2 1 3) (2 3 1) (3 2 1)))
 	(pos '()))
     (for-each-permutation
@@ -8104,6 +8106,21 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "~{testing ~D ~C ~}" (list 0 #\( 1 #\) 2 #\* 3 #\+ 4 #\, 5 #\- 6 #\. 7 #\/ 8 #\0 9 #\1 10 #\2 11 #\3 12 #\4 13 #\5 14 #\6 15 #\7 16 #\8 17 #\9 18 #\: 19 #\; 20 #\< 21 #\= 22 #\> 23 #\? 24 #\@ 25 #\A 26 #\B 27 #\C 28 #\D 29 #\E 30 #\F 31 #\G 32 #\H 33 #\I 34 #\J 35 #\K 36 #\L 37 #\M 38 #\N 39 #\O 40 #\P 41 #\Q 42 #\R 43 #\S 44 #\T 45 #\U 46 #\V 47 #\W 48 #\X 49 #\Y 50 #\( 51 #\) 52 #\* 53 #\+ 54 #\, 55 #\- 56 #\. 57 #\/ 58 #\0 59 #\1 60 #\2 61 #\3 62 #\4 63 #\5 64 #\6 65 #\7 66 #\8 67 #\9 68 #\: 69 #\; 70 #\< 71 #\= 72 #\> 73 #\? 74 #\@ 75 #\A 76 #\B 77 #\C 78 #\D 79 #\E 80 #\F 81 #\G 82 #\H 83 #\I 84 #\J 85 #\K 86 #\L 87 #\M 88 #\N 89 #\O 90 #\P 91 #\Q 92 #\R 93 #\S 94 #\T 95 #\U 96 #\V 97 #\W 98 #\X 99 #\Y))
       "testing 0 ( testing 1 ) testing 2 * testing 3 + testing 4 , testing 5 - testing 6 . testing 7 / testing 8 0 testing 9 1 testing 10 2 testing 11 3 testing 12 4 testing 13 5 testing 14 6 testing 15 7 testing 16 8 testing 17 9 testing 18 : testing 19 ; testing 20 < testing 21 = testing 22 > testing 23 ? testing 24 @ testing 25 A testing 26 B testing 27 C testing 28 D testing 29 E testing 30 F testing 31 G testing 32 H testing 33 I testing 34 J testing 35 K testing 36 L testing 37 M testing 38 N testing 39 O testing 40 P testing 41 Q testing 42 R testing 43 S testing 44 T testing 45 U testing 46 V testing 47 W testing 48 X testing 49 Y testing 50 ( testing 51 ) testing 52 * testing 53 + testing 54 , testing 55 - testing 56 . testing 57 / testing 58 0 testing 59 1 testing 60 2 testing 61 3 testing 62 4 testing 63 5 testing 64 6 testing 65 7 testing 66 8 testing 67 9 testing 68 : testing 69 ; testing 70 < testing 71 = testing 72 > testing 73 ? testing 74 @ testing 75 A testing 76 B testing 77 C testing 78 D testing 79 E testing 80 F testing 81 G testing 82 H testing 83 I testing 84 J testing 85 K testing 86 L testing 87 M testing 88 N testing 89 O testing 90 P testing 91 Q testing 92 R testing 93 S testing 94 T testing 95 U testing 96 V testing 97 W testing 98 X testing 99 Y ")
 
+(let ((old-len *vector-print-length*))
+  (let ((vect1 #3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2))))
+	(vect2 #2d((1 2 3 4 5 6) (7 8 9 10 11 12)))
+	(vect3 #(1 2 3 4 5 6 7 8 9 10 11 12 13 14))
+	(vect4 #3D(((1 2) (3 4) (5 6)) ((7 8) (9 10) (11 12)))))
+    (do ((i 0 (+ i 2)))
+	((>= i 10))
+      (set! *vector-print-length* i)
+      (test (object->string vect1) (format #f "~A" vect1))
+      (test (object->string vect2) (format #f "~A" vect2))
+      (test (object->string vect3) (format #f "~A" vect3))
+      (test (object->string vect4) (format #f "~A" vect4))))
+  (set! *vector-print-length* 0)
+  (test (format #f "~A" #()) "#()")
+  (set! *vector-print-length* old-len))
 
 (test (format #f "~D" 123) "123")
 (test (format #f "~X" 123) "7b")
@@ -8583,6 +8600,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (length (format #f "~20f" 1+i)) 20)
 (test (format #f "~20x" 17+23i) "          11.0+17.0i")
 (test (length (format #f "~20x" 17+23i)) 20)
+
+(let ()
+  (define* (clean-string e (precision 3))
+    (format #f (format #f "(~~{~~,~DF~~^ ~~})" precision) e))
+  (test (clean-string '(1.123123 -2.31231323 3.141592653589 4/3) 1) "(1.1 -2.3 3.1 4/3)")
+  (test (clean-string '(1.123123 -2.31231323 3.141592653589 4/3)) "(1.123 -2.312 3.142 4/3)")
+  (test (clean-string '(1.123123 -2.31231323 3.141592653589 4/3) 6) "(1.123123 -2.312313 3.141593 4/3)"))
 
 (if with-bignums
     (begin
@@ -9840,6 +9864,7 @@ this prints:
 (test (if . 1) 'error)
 (test (if _no_var_ 1) 'error)
 (test (if (values) (values) (values) 1) 'error)
+(num-test (+ 1 (if #t (values 3 4) (values 5 6)) 2) 10)
 
 
 
@@ -15263,6 +15288,11 @@ why are these different (read-time `#() ? )
 (test (quasiquote (,1 ,(quasiquote ,@(quasiquote (1))))) '(1 1))
 (test (quasiquote (,1 ,(quasiquote ,@(quasiquote (,1))))) '(1 1))
 (test (quasiquote (,1 ,@(quasiquote ,@(list (list 1))))) '(1 1))
+(test `(+ (unquote-splicing '(1 2))) '(+ 1 2))
+(test `(+ ,(apply values '(1 2))) '(+ 1 2))
+(test `(apply + (unquote '(1 2))) '(apply + (1 2)))
+(test (eval-string "`(+ (unquote-splicing '(1 2) 3))") 'error)
+(test (eval-string "`(apply + (unquote '(1 2) 3))") 'error)
 
 (test (apply quasiquote '((1 2 3))) '(1 2 3))
 (test (quasiquote (',,= 1)) 'error)
