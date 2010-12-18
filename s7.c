@@ -203,6 +203,11 @@
    */
 #endif
 
+#ifndef WITH_UNQUOTE_SPLICING
+  #define WITH_UNQUOTE_SPLICING 0
+  /* backwards compatibility */
+#endif
+
 #ifndef DEBUGGING
   #define DEBUGGING 0
 #endif
@@ -332,7 +337,7 @@ static const char *op_names[OP_MAX_DEFINED] =
    "cond", "cond", "and", "and", "or", "or", "defmacro", "defmacro*", "macro", 
    "define-macro", "define-macro*", "define-expansion", "expansion", "case", "case", 
    "case", "read-list", "read-dot", "read-quote", "read-quasiquote", "read-quasiquote-vector", 
-   "read-unquote", "read-unquote-splicing", "read-vector", "read-done", 
+   "read-unquote", "read-apply-values", "read-vector", "read-done", 
    "load-return-if-eof", "load-close-and-stop-if-eof", "eval-string", "eval-done", "catch", 
    "dynamic-wind", "define-constant", "define-constant", "do", "do", "do", 
    "do", "do", "do", "define*", "lambda*", 
@@ -580,6 +585,9 @@ struct s7_scheme {
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
   s7_pointer S_IS_TYPE, S_TYPE_MAKE, S_TYPE_REF, S_TYPE_ARG;
   s7_pointer s_function_args;
+#if WITH_UNQUOTE_SPLICING
+  s7_pointer UNQUOTE_SPLICING;
+#endif
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -20337,6 +20345,9 @@ static bool is_simple_code(s7_scheme *sc, s7_pointer form)
     else
       {
 	if ((car(tmp) == sc->UNQUOTE) ||
+#if WITH_UNQUOTE_SPLICING
+	    (car(tmp) == sc->UNQUOTE_SPLICING) ||
+#endif
 	    ((car(tmp) == sc->NIL) && (cdr(tmp) == sc->NIL)))
 	  return(false);
       }
@@ -20362,6 +20373,11 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 	return(eval_error(sc, "unquote: too many arguments, ~S", form));
       return(cadr(form));
     }
+
+#if WITH_UNQUOTE_SPLICING
+  if (car(form) == sc->UNQUOTE_SPLICING)
+    return(make_list_3(sc, sc->QQ_APPLY, sc->QQ_VALUES, cadr(form)));
+#endif
 
   /* it's a list, so return the list with each element handled as above.
    *    we try to support dotted lists which makes the code much messier.
@@ -20394,10 +20410,13 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
     
     if (!dotted)
       {
+	/* fprintf(stderr, "%s\n", s7_object_to_c_string(sc, form)); */
 	for (orig = form, bq = cdr(sc->w), i = 0; i < len; i++, orig = cdr(orig), bq = cdr(bq))
 	  {
+#if WITH_UNQUOTE_SPLICING
 	    if ((is_pair(orig)) && 
-		(cadr(orig) == sc->UNQUOTE))
+		((cadr(orig) == sc->UNQUOTE) ||
+		 (cadr(orig) == sc->UNQUOTE_SPLICING)))
 	      {
 		/* `(1 . ,2) -> '(1 unquote 2) -> '(1 . 2) 
 		 */
@@ -20421,16 +20440,37 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 		break;
 	      }
 	    else car(bq) = g_quasiquote_1(sc, car(orig));
+#else
+	    if ((is_pair(orig)) && 
+		(cadr(orig) == sc->UNQUOTE))
+	      {
+		/* `(1 . ,(+ 1 1)) -> '(1 unquote (+ 1 1)) -> '(1 . 2) 
+		 * `(1 . ,@'((2 3))) -> (1 unquote ({apply} {values} '((2 3)))) -> ({append} ({list} 1) ({apply} {values} '((2 3)))) -> '(1 2 3)
+		 * this used to be `(1 . ,@('(2 3))).  
+		 *     This now becomes (1 unquote ({apply} {values} ('(2 3)))) -> ({append} ({list} 1) ({apply} {values} ('(2 3)))) -> error
+		 * `(1 . (,@'(2 3))) works in both cases, and `(1 . (,(+ 1 1)))
+		 * so do we actually need this block? `(1 ,@'(2 3)) if undotted
+		 */
+		car(bq) = g_quasiquote_1(sc, car(orig));
+		cdr(bq) = sc->NIL;
+		sc->w = make_list_3(sc, sc->QQ_APPEND, sc->w, caddr(orig));
+		break;
+	      }
+	    else car(bq) = g_quasiquote_1(sc, car(orig));
+#endif
 	  }
+	/* fprintf(stderr, "%s\n", s7_object_to_c_string(sc, sc->w)); */
       }
     else
       {
-	/* `(1 2 . 3) etc */
+	/* `(1 2 . 3) */
 	len --;
 	for (orig = form, bq = cdr(sc->w), i = 0; i < len; i++, orig = cdr(orig), bq = cdr(bq))
 	  car(bq) = g_quasiquote_1(sc, car(orig));
 	car(bq) = g_quasiquote_1(sc, car(orig));
+
 	sc->w = make_list_3(sc, sc->QQ_APPEND, sc->w, g_quasiquote_1(sc, cdr(orig)));
+	/* quasiquote might quote a symbol in cdr(orig), so it's not completely pointless */
       }
 
     bq = sc->w;
@@ -21180,6 +21220,10 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
 
   if (sym == sc->UNQUOTE)
     return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
+#if WITH_UNQUOTE_SPLICING
+  if (sym == sc->UNQUOTE_SPLICING)
+    return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred without quasiquote"));
+#endif
 
   /* actually we'll normally get an error from apply. (,@ 1) triggers this error.
    */
@@ -24555,7 +24599,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_APPLY_VALUES:
+#if WITH_UNQUOTE_SPLICING
+      sc->value = make_list_2(sc, sc->UNQUOTE_SPLICING, sc->value);
+#else
       sc->value = make_list_2(sc, sc->UNQUOTE, make_list_3(sc, sc->QQ_APPLY, sc->QQ_VALUES, sc->value));
+#endif
       goto START;
       
       
@@ -29914,6 +29962,11 @@ s7_scheme *s7_init(void)
   
   sc->QQ_APPEND = make_symbol(sc, "{append}");
   typeflag(sc->QQ_APPEND) |= T_DONT_COPY; 
+
+#if WITH_UNQUOTE_SPLICING
+  sc->UNQUOTE_SPLICING = make_symbol(sc, "unquote-splicing");
+  typeflag(sc->UNQUOTE_SPLICING) |= T_DONT_COPY; 
+#endif
   
   sc->CDR = make_symbol(sc, "cdr");
   typeflag(sc->CDR) |= T_DONT_COPY; 

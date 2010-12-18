@@ -10377,6 +10377,9 @@ this prints:
 (test (map map (list + -) (list (list 1 2) (list 3 4))) '((1 2) (-3 -4)))
 (test (map map (list map map) (list (list + -) (list - +)) '(((1 2) (3 4)) ((4 5) (6 7)))) '(((1 2) (-3 -4)) ((-4 -5) (6 7))))
 
+(test (map member (list 1 2 3) (list (list 1 2 3) (list 1 3 4) (list 3 4 5))) '((1 2 3) #f (3 4 5)))
+(test (map - (list 1 2 3) (list 1 2 3) (list 1 3 4) (list 3 4 5)) '(-4 -7 -9))
+(test (map - (list 1 2 3) (list 1 2 3 'hi) (list 1 3 4 #\a "hi") (list 3 4 5)) '(-4 -7 -9))
 (test (let () (define (mrec a b) (if (<= b 0) (list a) (map mrec (list a) (list (- b 1))))) (mrec (list 1 2) 5)) '(((((((1 2))))))))
 (test (map append '(3/4)) '(3/4))
 (test (map list '(1.5)) '((1.5)))
@@ -15290,7 +15293,6 @@ why are these different (read-time `#() ? )
 (test (quasiquote (,1 ,@(quasiquote ,@(list (list 1))))) '(1 1))
 (test `(+ ,(apply values '(1 2))) '(+ 1 2))
 (test `(apply + (unquote '(1 2))) '(apply + (1 2)))
-(test (eval-string "`(apply + (unquote '(1 2) 3))") 'error)
 
 (test (apply quasiquote '((1 2 3))) '(1 2 3))
 (test (quasiquote (',,= 1)) 'error)
@@ -20098,6 +20100,9 @@ abs     1       2
 (test (* (*)) 1)
 (test (+ (+) (+ (+)) (+ (+ (+)))) 0)
 (test (+(*(+))(*)(+(+)(+)(*))) 2)
+(test (=(+(-(*).(+1))(*(+).(-1))(*(+).(-10))(*(-(+)0)1.)(-(+)(*).01)(*(-(+)).01)(-(+)(*)1.0)(-(*(+))1.0)(*(-(+))1.0)(-(+(*)1).0))-2.01) #t)
+(test (+(-(*).(+1.0))(*(+).(-1.0))(-(+)1.(*)0.)(-(*(+)0.)1.)(-(+(*)1.)0.)(+(-(*)0.)1.))1.0)
+
 (test (nan? (asinh (cos (real-part (log 0.0))))) #t)
 (num-test(cos(sin(log(tan(*))))) 0.90951841537482)
 (num-test (asinh (- 9223372036854775807)) -44.361419555836)
