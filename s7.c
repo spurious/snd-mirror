@@ -15454,9 +15454,15 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
   
   #define H_procedure_source "(procedure-source func) tries to return the definition of func"
   
-  if (s7_is_symbol(car(args)))
-    p = s7_symbol_value(sc, car(args));
-  else p = car(args);
+  p = car(args);
+  if (s7_is_symbol(p))
+    {
+      if (is_syntax(p))
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-source arg, ~S, is not a procedure"), p)));
+      p = s7_symbol_value(sc, p);
+      if (p == sc->UNDEFINED)
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-source arg, '~S, is unbound"), car(args))));
+    }
 
 #if HAVE_PTHREADS
   if (is_thread(p))
@@ -15472,7 +15478,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
   if ((!is_procedure(p)) &&
       (!is_macro(p)) &&
       (!is_bacro(p)))
-    return(s7_wrong_type_arg_error(sc, "procedure-source", 0, p, "a procedure or a macro"));
+    return(s7_wrong_type_arg_error(sc, "procedure-source", 0, car(args), "a procedure or a macro"));
 
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     return(append_in_place(sc, 
@@ -15499,14 +15505,20 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
   
   #define H_procedure_environment "(procedure-environment func) tries to return func's environment"
   
-  if (s7_is_symbol(car(args)))
-    p = s7_symbol_value(sc, car(args));
-  else p = car(args);
+  p = car(args);
+  if (s7_is_symbol(p))
+    {
+      if (is_syntax(p))
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-environment arg, ~S, is not a procedure"), p)));
+      p = s7_symbol_value(sc, p);
+      if (p == sc->UNDEFINED)
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-environment arg, '~S, is unbound"), car(args))));
+    }
 
   if ((!is_procedure(p)) && 
       (!is_macro(p)) &&
       (!is_bacro(p)))
-    return(s7_wrong_type_arg_error(sc, "procedure-environment", 0, p, "a procedure or a macro"));
+    return(s7_wrong_type_arg_error(sc, "procedure-environment", 0, car(args), "a procedure or a macro"));
 
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     return(closure_environment(p));
@@ -15625,14 +15637,21 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_documentation "(procedure-documentation func) returns func's documentation string"
-  s7_pointer x;
-  if (s7_is_symbol(car(args)))
-    x = s7_symbol_value(sc, car(args));
-  else x = car(args);
+  s7_pointer p;
 
-  if (!is_procedure(x))
-    return(s7_wrong_type_arg_error(sc, "procedure-documentation", 0, x, "a procedure"));
-  return(s7_make_string(sc, s7_procedure_documentation(sc, x)));
+  p = car(args);
+  if (s7_is_symbol(p))
+    {
+      if (is_syntax(p))
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-documentation arg, ~S, is not a procedure"), p)));
+      p = s7_symbol_value(sc, p);
+      if (p == sc->UNDEFINED)
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-documentation arg, '~S, is unbound"), car(args))));
+    }
+
+  if (!is_procedure(p))
+    return(s7_wrong_type_arg_error(sc, "procedure-documentation", 0, car(args), "a procedure"));
+  return(s7_make_string(sc, s7_procedure_documentation(sc, p)));
 }
 
 
@@ -15711,14 +15730,21 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_arity "(procedure-arity func) returns a list '(required optional rest)"
-  s7_pointer x;
-  if (s7_is_symbol(car(args)))
-    x = s7_symbol_value(sc, car(args));
-  else x = car(args);
+  s7_pointer p;
 
-  if (!is_procedure(x))
-    return(s7_wrong_type_arg_error(sc, "procedure-arity", 0, x, "a procedure"));
-  return(s7_procedure_arity(sc, x));
+  p = car(args);
+  if (s7_is_symbol(p))
+    {
+      if (is_syntax(p))
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-arity arg, ~S, is not a procedure"), p)));
+      p = s7_symbol_value(sc, p);
+      if (p == sc->UNDEFINED)
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-arity arg, '~S, is unbound"), car(args))));
+    }
+
+  if (!is_procedure(p))
+    return(s7_wrong_type_arg_error(sc, "procedure-arity", 0, car(args), "a procedure"));
+  return(s7_procedure_arity(sc, p));
 }
 
 

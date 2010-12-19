@@ -2820,6 +2820,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (string->symbol) 'error)
 (test (symbol->string 'hi 'ho) 'error)
 (test (string->symbol "hi" "ho") 'error)
+
 (test (symbol? (string->symbol (string #\x (integer->char 255) #\x))) #t)
 (test (symbol? (string->symbol (string #\x (integer->char 8) #\x))) #t)
 (test (symbol? (string->symbol (string #\x (integer->char 128) #\x))) #t)
@@ -2863,6 +2864,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; symbol->value
 (let ((sym 0))
   (test (symbol->value 'sym) 0)
   (for-each
@@ -2878,6 +2880,27 @@ zzy" (lambda (p) (eval (read p))))) 32)
   
 (test (symbol->value) 'error)
 (test (symbol->value 'hi 'ho) 'error)
+
+(test (symbol->value 'abs (initial-environment)) abs)
+(test (symbol->value 'abs (global-environment)) abs)
+(test (symbol->value 'lambda) #<undefined>) ; ?? all "syntax" words are like this, except 'else??
+(test (symbol->value 'do) #<undefined>)
+(test (symbol->value lambda) #<undefined>) ; ?? 
+(test (symbol->value do) #<undefined>)
+(test (symbol->value 'macroexpand) macroexpand)
+(test (symbol->value 'quasiquote) quasiquote)
+(test (symbol->value 'else) else)
+(test (symbol->value :hi) :hi)
+(test (symbol->value hi:) hi:)
+(test (symbol->value '#<eof>) 'error) ; ??
+(test (symbol? '#<eof>) #f)
+(test (let ((a1 32)) (let () (symbol->value 'a1 (current-environment)))) 32)
+(test (let ((a1 32)) (let ((a1 0)) (symbol->value 'a1 (current-environment)))) 0)
+(test (let ((a1 32)) (let ((a1 0)) (symbol->value 'b1 (current-environment)))) #<undefined>)
+(test (symbol->value 'abs '()) 'error)
+(test (let ((a1 (let ((b1 32)) (lambda () b1)))) (symbol->value 'b1 (procedure-environment a1))) 32)
+(test (let ((x #f)) (set! x (let ((a1 (let ((b1 32)) (lambda () b1)))) a1)) (symbol->value 'b1 (procedure-environment x))) 32)
+
 
 (test (let ((name "hiho"))
 	(string-set! name 2 #\null)
@@ -12397,8 +12420,11 @@ this prints:
 (test (let () (define-macro (hi a) `(+ 1 ,a)) (hi (values 2 3 4))) 10)
 (test (let () (+ 4 (let () (values 1 2 3)) 5)) 15)
 (test (let* () (+ 4 (let () (values 1 2 3)) 5)) 15)
+(test (let () (+ 4 (let* () (values 1 2 3)) 5)) 15)
 (test (letrec () (+ 4 (let () (values 1 2 3)) 5)) 15)
+(test (let () (+ 4 (letrec () (values 1 2 3)) 5)) 15)
 (test (letrec* () (+ 4 (let () (values 1 2 3)) 5)) 15)
+(test (let* () (+ 4 (letrec* () (values 1 2 3)) 5)) 15)
 
 (test (cons (values 1 2)) '(1 . 2))
 (test (number->string (values 1 2)) "1")
@@ -12410,6 +12436,7 @@ this prints:
 (test (substring (values "hi") (values 1 2)) "i")
 (test (cond (call-with-exit (values "hi"))) "hi")
 (test (procedure-arity (cond (values))) '(0 0 #t)) ; values as a procedure here
+(test (procedure-arity 'values) '(0 0 #t))
 (test (values (begin (values "hi"))) "hi")
 (test (< (values (values 1 2))) #t)
 
@@ -16774,6 +16801,7 @@ abs     1       2
 
   (test (let () (define-macro (hi a a) `(+ ,a 1)) (hi 1 2)) 'error)
 
+  ;;; procedure-arity
   (test (procedure-arity car) '(1 0 #f))
   (test (procedure-arity 'car) '(1 0 #f))
   (test (procedure-arity +) '(0 0 #t))
