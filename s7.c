@@ -3434,6 +3434,24 @@ static void call_with_exit(s7_scheme *sc)
 	  if (sc->trace_depth < 0) sc->trace_depth = 0;
 	  break;
 
+	  /* call/cc does not close files, but I think call-with-exit should */
+	case OP_UNWIND_OUTPUT:
+	  {
+	    s7_pointer x;
+	    x = stack_code(sc->stack, i);                /* "code" = port that we opened */
+	    s7_close_output_port(sc, x);
+	    x = stack_args(sc->stack, i);                /* "args" = port that we shadowed, if not #f */
+	    if (x != sc->F)
+	      sc->output_port = x;
+	  }
+	  break;
+
+	case OP_UNWIND_INPUT:
+	  s7_close_input_port(sc, stack_code(sc->stack, i)); /* "code" = port that we opened */
+	  sc->input_port = stack_args(sc->stack, i);         /* "args" = port that we shadowed */
+	  sc->input_is_file = (is_file_port(sc->input_port));
+	  break;
+
 	default:
 	  break;
 	}

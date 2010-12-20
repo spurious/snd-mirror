@@ -2676,6 +2676,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((x (cons #\a #\b))) (set-cdr! x x) (list->string x)) 'error)
+(test (let ((lst (list #\a #\b))) (set! (cdr (cdr lst)) lst) (list->string lst)) 'error)
+(test (let ((lst (list #\a #\b))) (set! (cdr (cdr lst)) lst) (apply string lst)) 'error)
 
 (for-each
  (lambda (arg)
@@ -4935,6 +4937,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((x (cons #\a #\b))) (set-cdr! x x) (list->vector x)) 'error)
 (test (list->vector (cons 1 2)) 'error)
 (test (list->vector '(1 2 . 3)) 'error)
+(test (let ((lst (list #\a #\b))) (set! (cdr (cdr lst)) lst) (list->vector lst)) 'error)
+(test (let ((lst (list #\a #\b))) (set! (cdr (cdr lst)) lst) (apply vector lst)) 'error)
 
 (for-each
  (lambda (arg)
@@ -7921,6 +7925,116 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (if (not (eof-object? val))
 	  (format #t "read again: ~A~%" val)))))
 
+(let ((port #f))
+  (call-with-exit
+   (lambda (go)
+     (call-with-input-string "0123456789"
+       (lambda (p)
+	 (set! port p)
+	 (if (not (char=? (peek-char p) #\0))
+	     (format #t ";peek-char input-string: ~A~%" (peek-char p)))
+	 (go)))))
+  (if (not (input-port? port))
+      (format #t ";c/e-> c/is -> port? ~A~%" port)
+      (if (not (port-closed? port))
+	  (begin
+	    (format #t ";c/e -> c/is -> closed? ~A~%" port)
+	    (close-input-port port)))))
+
+(call-with-output-file "tmp1.r5rs" (lambda (p) (display "0123456789" p)))
+
+(let ((port #f))
+  (call-with-exit
+   (lambda (go)
+     (call-with-input-file "tmp1.r5rs"
+       (lambda (p)
+	 (set! port p)
+	 (if (not (char=? (peek-char p) #\0))
+	     (format #t ";peek-char input-file: ~A~%" (peek-char p)))
+	 (go)))))
+  (if (not (input-port? port))
+      (format #t ";c/e -> c/if -> port? ~A~%" port)
+      (if (not (port-closed? port))
+	  (begin
+	    (format #t ";c/e -> c/if -> closed? ~A~%" port)
+	    (close-input-port port)))))
+
+(let ((port #f))
+  (call-with-exit
+   (lambda (go)
+     (dynamic-wind
+	 (lambda () #f)
+	 (lambda ()
+	   (call-with-input-string "0123456789"
+             (lambda (p)
+	       (set! port p)
+	       (if (not (char=? (peek-char p) #\0))
+		   (format #t ";peek-char input-string 1: ~A~%" (peek-char p)))
+	       (go))))
+	 (lambda ()
+	   (close-input-port port)))))
+  (if (not (input-port? port))
+      (format #t ";c/e -> dw -> c/is -> port? ~A~%" port)
+      (if (not (port-closed? port))
+	  (begin
+	    (format #t ";c/e -> dw -> c/is -> closed? ~A~%" port)
+	    (close-input-port port)))))
+
+(let ((port #f))
+  (call-with-exit
+   (lambda (go)
+     (dynamic-wind
+	 (lambda () #f)
+	 (lambda ()
+	   (call-with-input-file "tmp1.r5rs"
+            (lambda (p)
+	      (set! port p)
+	      (if (not (char=? (peek-char p) #\0))
+		  (format #t ";peek-char input-file: ~A~%" (peek-char p)))
+	      (go))))
+	 (lambda ()
+	   (close-input-port port)))))
+  (if (not (input-port? port))
+      (format #t ";c/e -> dw -> c/if -> port? ~A~%" port)
+      (if (not (port-closed? port))
+	  (begin
+	    (format #t ";c/e -> dw -> c/if -> closed? ~A~%" port)
+	    (close-input-port port)))))
+
+(let ((port #f))
+  (catch #t
+    (lambda ()
+     (call-with-input-string "0123456789"
+       (lambda (p)
+	 (set! port p)
+	 (if (not (char=? (peek-char p) #\0))
+	     (format #t ";peek-char input-string: ~A~%" (peek-char p)))
+	 (error 'oops))))
+    (lambda args #f))
+  (if (not (input-port? port))
+      (format #t ";catch -> c/is -> error -> port? ~A~%" port)
+      (if (not (port-closed? port))
+	  (begin
+	    (format #t ";catch -> c/is -> error -> closed? ~A~%" port)
+	    (close-input-port port)))))
+
+(let ((port #f))
+  (catch #t
+    (lambda ()
+     (call-with-input-file "tmp1.r5rs"
+       (lambda (p)
+	 (set! port p)
+	 (if (not (char=? (peek-char p) #\0))
+	     (format #t ";peek-char input-file: ~A~%" (peek-char p)))
+	 (error 'oops))))
+    (lambda args #f))
+  (if (not (input-port? port))
+      (format #t ";catch -> c/if -> error -> port? ~A~%" port)
+      (if (not (port-closed? port))
+	  (begin
+	    (format #t ";catch -> c/if -> error -> closed? ~A~%" port)
+	    (close-input-port port)))))
+
 (test (with-output-to-string (lambda () (write (string (integer->char 4) (integer->char 8) (integer->char 20) (integer->char 30))))) "\"\\x04\\x08\\x14\\x1e\"")
 (test (string-length "\x04\x08\x14\x1e") 4)
 (test (char->integer (string-ref "\x0" 0)) 0)
@@ -10479,6 +10593,8 @@ this prints:
 (test (map (lambda args (+ (car args) (cadr args))) '(1 2 3) '(3 2 1)) '(4 4 4))
 (test (map (lambda* (a (b 2)) (+ a b)) '(1 2 3) '(3 2 1)) '(4 4 4))
 (test (map (lambda* (a (b 2)) (+ a b)) '(1 2 3)) '(3 4 5))
+(test (map (lambda* ((a 1) (b (map (lambda (c) (+ c 1)) (list 1 2)))) (+ a (apply + b))) (list 4 5 6)) '(9 10 11))
+(test (let ((lst (list 0 1 2))) (map (lambda* ((a 1) (b (for-each (lambda (c) (set! (lst c) (+ (lst c) 1))) (list 0 1 2)))) a) lst)) '(0 2 4))
 
 
 
@@ -11042,6 +11158,9 @@ this prints:
 (test (let () (or (define (hi a) a)) (hi 1)) 1)
 (test (let () (or #t (define (hi a) a)) (hi 1)) 'error)
 (test (let () (and (define (hi a) a) (define (hi a) (+ a 1))) (hi 1)) 2) ; guile agrees with this
+(test ((lambda (arg) (arg #f 123)) or) 123)
+(test (let ((oar or)) (oar #f 43)) 43)
+(test (let ((oar #f)) (set! oar or) (oar #f #f 123)) 123)
 
 
 
@@ -11297,7 +11416,7 @@ this prints:
       1)
 (test (let ()
 	(cond-expand 
-	 ((and s7 clm)
+	 ((and s7 dfls-exponents)
 	  (define (hi a) a))
 	 (else 
 	  (define (hi a) (+ a 1))))
@@ -14953,6 +15072,13 @@ who says the continuation has to restart the map from the top?
 (test (+ 1 (eval (eval ```,@,,@(list ''(list 2 3))))) 6)
 (test (+ 1 (eval (eval (eval ````,@,,,@(list '''(list 2 3)))))) 6)
 (test (apply + `(1 ,@`(2 ,@(list 3)))) 6)
+(test (eval `(- ,@()',1)) -1)
+(test (eval `(,- ,@()'1)) -1)
+(test (eval (eval ``(- ,@,@'(,1())))) -1)
+(test (eval (eval ``(,@,@'(- ,1())))) -1)
+(test (eval (eval ``(,- ,@,@'(1())))) -1)
+(test (eval (eval ``(,- ,@'(,@()1)))) -1)
+(test (eval (eval ``(- ,@,@',().(1)))) -1)
 
 ;; from gauche
 (let ((quasi0 99)
@@ -61872,4 +61998,9 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff8000000000000 nan
 
 but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ? (would need check for invalid args)
+
+open-output-string open-input-string call-with-output-string
+peek-char
+hash-table? continuation? output-port?
 |#
+
