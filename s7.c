@@ -18280,6 +18280,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			i++;
 			if (isdigit(str[i]))
 			  precision = format_read_integer(sc, &i, str_len, str, args, fdat);
+			/* is (format #f "~12,12D" 1) an error?  The precision has no use here. */
 			else
 			  {
 			    if (str[i] == '\'')       /* (format #f "~12,'xD" 1) -> "xxxxxxxxxxx1" */
@@ -18287,6 +18288,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 				pad = str[i + 1];
 				i += 2;
 			      }
+			    /* is (let ((str "~12,'xD")) (set! (str 5) #\null) (format #f str 1)) an error? */
 			  }
 		      }
 		    if ((str[i] != 'T') && (str[i] != 't'))
