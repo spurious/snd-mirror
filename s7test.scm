@@ -125,24 +125,6 @@
 yow!! -- I'm using mpc_cmp
 |#
 
-(define (our-nan? x)
-  (or (and (real? x)
-	   (not (= 1 (+ (if (positive? x) 1 0)
-			(if (negative? x) 1 0)
-			(if (zero? x) 1 0)))))
-      (and (integer? x)
-	   (not (= 1 (+ (if (even? x) 1 0)
-			(if (odd? x) 1 0)))))
-      (let ((type (+ (if (integer? x) 1 0)
-		     (if (rational? x) 2 0)
-		     (if (real? x) 4 0)
-		     (if (complex? x) 8 0))))
-	(and (not (= type 8))
-	     (not (= type 12))
-	     (not (= type 14))
-	     (not (= type 15))))
-      (nan? x)))
-
 
 (define (number-ok? tst result expected)
   ;; (number? +nan.0) returns #t in Guile and Gauche
@@ -157,7 +139,7 @@ yow!! -- I'm using mpc_cmp
 		   (not (nan? expected)))
 	      (and (number? expected)
 		   (or (not (number? result))
-		       (our-nan? result)))
+		       (nan? result)))
 	      (and (rational? expected)
 		   (rational? result)
 		   (not (= result expected)))
@@ -183,7 +165,7 @@ yow!! -- I'm using mpc_cmp
 		(format #t ", (eq? ~A ~A) -> #f" result expected)
 		(if (and (number? expected)
 			 (or (not (number? result))
-			     (our-nan? result)))
+			     (nan? result)))
 		    (begin
 		      (if (not (number? result))
 			  (format #t ", (number? ~A) but not (number? ~A)" expected result)
@@ -6744,26 +6726,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 (let ()
-  (define (for-each-combination func args)
-    ;; this will repeat some combinations
-    (let ((num-args (length args))
-	  (required-args (car (procedure-arity func))))
-      (if (= num-args required-args)
-	  (apply func args)
-	  (if (> num-args required-args)
-	      (do ((prev args)
-		   (i 0 (+ i 1)))
-		  ((= i num-args))
-		(if (= i 0)
-		    (for-each-combination func (cdr args))
-		    (let* ((mid (cdr prev))
-			   (nxt (if (= i (- num-args 1)) '() (cdr mid))))
-		      (set! (cdr prev) nxt)
-		      (for-each-combination func args)
-		      (set! (cdr prev) mid)
-		      (set! prev mid))))))))
-  
-  (define (for-each-permutation func vals)          ; for-each-combination is similar but simpler
+  (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
     ;; apply func to every permutation of vals: 
     ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
     (define (pinner cur nvals len)
@@ -7115,6 +7078,23 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (ht) 'error)
   (test (ht 0 1) 'error))
 
+(let ()
+  (define-macro (memoize f)
+    `(define ,f (let ((ht (make-hash-table))
+		      (old-f ,f))
+		  (lambda args
+		    (let ((val (ht args)))
+		      (if val
+			  (val 0)
+			  (let ((new-val (apply old-f args)))
+			    (set! (ht args) (list new-val))
+			    new-val)))))))
+
+  (define (our-abs num) (abs num))
+  (memoize our-abs)
+  (num-test (our-abs -1) 1)
+  (with-environment (procedure-environment our-abs)
+    (test (ht '(-1)) '(1))))		    
 
 
 (test (error) 'error)
@@ -11632,7 +11612,6 @@ this prints:
 
 
 
-
 ;;; -------- lambda --------
 ;;; lambda
 
@@ -15207,6 +15186,10 @@ who says the continuation has to restart the map from the top?
 (test `#2d((1 ,(* 3 2)) (,@(list 2) 3)) #2D((1 6) (2 3)))
 (test `#3d() #3D())
 (test `#3D((,(list 1 2) (,(+ 1 2) 4)) (,@(list (list 5 6)) (7 8))) #3D(((1 2) (3 4)) ((5 6) (7 8))))
+(test (eval-string "`#2d(1 2)") 'error)
+(test (eval-string "`#2d((1) 2)") 'error)
+(test (eval-string "`#2d((1 2) (3 4) (5 6 7))") 'error)
+(test `#2d((1 2)) #2D((1 2)))
 
 (let ((x 3)
       (y '(a b c)))
@@ -17026,6 +17009,49 @@ abs     1       2
   (test (procedure-arity (make-procedure-with-setter (lambda (a . b) a) (lambda (a b) a))) '(1 0 #t 2 0 #f))
   (test (procedure-arity (make-procedure-with-setter (lambda* (a :optional b) a) (lambda (a b) a))) '(0 2 #f 2 0 #f))
     
+  (define (for-each-subset func args)
+    (let* ((arity (procedure-arity func))
+	   (min-args (car arity))
+	   (max-args (if (caddr arity)
+			 (length args)
+			 (+ min-args (cadr arity))))
+	   (subsets '()))
+      
+      (define (subset source dest len)
+	(if (null? source)
+	    (begin
+	      (if (member dest subsets)
+		  (format #t ";got ~S twice in for-each-subset: ~S~%" dest args))
+	      (set! subsets (cons dest subsets))
+	      (if (<= min-args len max-args)
+		  (apply func dest)))
+	    (begin
+	      (subset (cdr source) (cons (car source) dest) (+ len 1))
+	      (subset (cdr source) dest len))))
+      
+      (subset args '() 0)))
+
+  (test (let ((ctr 0))
+	  (for-each-subset (lambda args (set! ctr (+ ctr 1))) '(1 2 3 4))
+	  ctr)
+	16)
+  (test (let ((ctr 0))
+	  (for-each-subset (lambda (arg) (set! ctr (+ ctr 1))) '(1 2 3 4))
+	  ctr)
+	4)
+  (test (let ((ctr 0))
+	  (for-each-subset (lambda (arg1 arg2 arg3) (set! ctr (+ ctr 1))) '(1 2 3 4))
+	  ctr)
+	4)
+  (test (let ((ctr 0))
+	  (for-each-subset (lambda* (arg1 arg2 arg3) (set! ctr (+ ctr 1))) '(1 2 3 4))
+	  ctr)
+	15)
+  (test (let ((ctr 0))
+	  (for-each-subset (lambda () (set! ctr (+ ctr 1))) '(1 2 3 4))
+	  ctr)
+	1)
+
   (test (let ((c 1)) 
 	  (define* (a :optional (b c)) b) 
 	  (set! c 2) 
@@ -19427,7 +19453,6 @@ abs     1       2
 	   (go 1)
 	   32)))
       1)
-;; these do skip the OP_WITH_ENV1 env restore, so someone else is taking care of it as well
 
 (test (let ((x 0))
 	(call-with-exit
@@ -20285,6 +20310,16 @@ abs     1       2
   (let ((val (tc-21 0)))
     (if (> max-stack 10) (format #t "tc-21 max: ~D~%" max-stack))
     (if (not (= val 32)) (format #t "tc-21 returned: ~A~%" val))))
+
+(let ((max-stack 0))
+  (define (tc-env a c) 
+    (with-environment (augment-environment (current-environment) (cons 'b (+ a 1)))
+      (if (> (-s7-stack-size) max-stack)
+	  (set! max-stack (-s7-stack-size)))
+      (if (< b c) 
+	  (tc-env b c))))
+  (tc-env 0 32)
+  (if (> max-stack 10) (format #t "tc-env max: ~D~%" max-stack)))
 
 ;;; the next 3 are not tail-recursive
 ;;;
@@ -38432,6 +38467,7 @@ abs     1       2
       (let ((old-prec (bignum-precision)))
 	(set! (bignum-precision) 4096)
 	(test (bignum-precision) 4096)
+	(test (apply bignum-precision '()) 4096)
 
 	(test (check-rationalize pi 100) #t)
 	(test (check-rationalize (/ pi) 100) #t)
@@ -38441,8 +38477,13 @@ abs     1       2
 	   (test (set! (bignum-precision) arg) 'error))
 	 (list "hi" #\a 'a-symbol '#(1 2 3) -1 0 1 3.14 3/4 1.0+1.0i #t abs #<eof> #<unspecified> (lambda () 1)))
 
+	(test (bignum-precision 213) 'error)
+	(test (set! (bignum-precision 213) 123) 'error)
+
 	(set! (bignum-precision) 2)
 	(test (bignum-precision) 2)
+	(test (object->string pi) "3.0E0")
+
 	(set! (bignum-precision) old-prec))))
 
 (test (rationalize) 'error)
@@ -53561,7 +53602,7 @@ abs     1       2
 	  (let ((g1 (g (expt 10 (- i))))
 		(g2 (gx (expt 10 (- i)))))
 	    (let ((diff (abs (- g1 g2))))
-	      (if (or (our-nan? diff) (> diff (expt 10 (- -7 i))))
+	      (if (or (nan? diff) (> diff (expt 10 (- -7 i))))
 		  (format #t ";g(1e-~D) -> ~A ~A, diff: ~A~%" i g1 g2 (abs (- g1 g2))))))))
       
       (let ((p (lambda (x y) (+ (* 2 y y) (* 9 x x x x) (* -1 y y y y)))))
@@ -59281,6 +59322,12 @@ etc
     (if (> sqrt-err 1e-12) (format #t "sqrt err: ~A~%" sqrt-err))
     )
   )
+
+
+(test (let ((equal? #f)) (member 3 '(1 2 3))) '(3))
+(test (let ((eqv? #f)) (case 1 ((1) 1))) 1) ; scheme wg
+(test (let ((eqv? equal?)) (case "asd" (("asd") 1) (else 2))) 2)
+(test (let ((eq? #f)) (memq 'a '(a b c))) '(a b c))
 
 
 

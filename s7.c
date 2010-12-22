@@ -322,7 +322,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
+	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1,
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO,
 	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO,
@@ -342,7 +342,7 @@ static const char *op_names[OP_MAX_DEFINED] =
    "dynamic-wind", "define-constant", "define-constant", "do", "do", "do", 
    "do", "do", "do", "define*", "lambda*", 
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
-   "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
+   "trace-hook-quit", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
    "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort",
    "eval-string", "eval-string", "set-access", "hook-apply", 
@@ -14718,7 +14718,7 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
 	  (!is_pair(x)))
 	{
 	  free(sizes);
-	  return(s7_multivector_error(sc, "a list that fully specifies the vector's elements", data));
+	  return(s7_multivector_error(sc, "we need a list that fully specifies the vector's elements", data));
 	}
     }
 
@@ -14732,7 +14732,7 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
   free(sizes);
   s7_gc_unprotect_at(sc, vec_loc);
   if (err < 0) 
-    return(s7_multivector_error(sc, (err == MV_TOO_MANY_ELEMENTS) ? "too many elements" : "not enough elements", data));
+    return(s7_multivector_error(sc, (err == MV_TOO_MANY_ELEMENTS) ? "found too many elements" : "not enough elements found", data));
 
   return(vec);
 }
@@ -20232,7 +20232,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	case OP_LET_STAR1:
 	case OP_LETREC1:
 	  set_multiple_value(args);
-	  return(eval_error(sc, "can't bind some variable to ~A", args));
+	  return(eval_error_with_name(sc, "~A: can't bind some variable to ~A", args));
 
 	  /* handle 'and' and 'or' specially */
 	case OP_AND1:
@@ -24218,6 +24218,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
 
+    case OP_ERROR_QUIT: 
+    case OP_EVAL_DONE:
+      /* this is the "time to quit" operator */
+      return(sc->F);
+      break;
+      
+
+    case OP_BARRIER:
+    case OP_CATCH:
+      goto START;
+
+
     case OP_DEACTIVATE_GOTO:
       call_exit_active(sc->args) = false;      /* as we leave the call-with-exit body, deactivate the exiter */
       goto START;
@@ -24289,16 +24301,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
 
-    case OP_ERROR_QUIT: 
-      /* these 3 are used for unwinding the stack in dynamic-wind and error handling */
-
-
-    case OP_EVAL_DONE:
-      /* this is the "time to quit" operator */
-      return(sc->F);
-      break;
-      
-
     case OP_DYNAMIC_WIND:
       if (dynamic_wind_state(sc->code) == DWIND_INIT)
 	{
@@ -24330,31 +24332,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       break;
       
 
-    case OP_BARRIER:
-    case OP_CATCH:
-      goto START;
-
-
-    case OP_WITH_ENV1:
-      sc->envir = sc->args;                              /* restore previous environment */
-      goto START;
-
-
     case OP_WITH_ENV:
       /* (with-environment env . body) */
       if (!is_pair(sc->code))                            /* (with-environment . "hi") */
 	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->code));
       if (!is_pair(cdr(sc->code)))
 	return(eval_error(sc, "with-environment body is messed up: ~A", sc->code));
-
-      push_stack(sc, opcode(OP_WITH_ENV1), sc->envir, sc->NIL);  /* save current env */
-      push_stack(sc, opcode(OP_WITH_ENV2), sc->NIL, sc->code);
+      push_stack(sc, opcode(OP_WITH_ENV1), sc->NIL, sc->code);
       /* sc->args = sc->NIL; */
       sc->code = car(sc->code);                          /* eval env arg */
       goto EVAL;
 
       
-    case OP_WITH_ENV2:
+    case OP_WITH_ENV1:
       if (!is_environment(sc->value))                    /* (with-environment . "hi") */
 	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->value));
 
@@ -30731,10 +30721,6 @@ the error type and the info passed to the error handler.");
   initial_lt =       s7_symbol_value(sc, make_symbol(sc, "<"));
   initial_gt =       s7_symbol_value(sc, make_symbol(sc, ">"));
 
-#if WITH_R7RS
-  /* define some r7rs stupidities */
-#endif
-
   return(sc);
 }
 
@@ -30852,6 +30838,7 @@ the error type and the info passed to the error handler.");
  * if user creates an enormous list, it can seem to hang the listener:
  *   *list-print-length* ?
  * add pretty-print to format? ~W I think. (current pretty-print.scm doesn't know about lambda* etc)
+ * what about trace-output-port? or an arg to trace?
  *
  * The help strings use lambda* syntax for optional args, but these are not keyword args.
  *
