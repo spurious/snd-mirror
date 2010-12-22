@@ -423,7 +423,7 @@ r1
 		   (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) (cdr ints)))))
 		   (let* ((mid (cdr prev))
 			  (nxt (if (= i (- len 1)) '() (cdr mid))))
-		     (set! (cdr prev) nxt)  ; set-cdr! to get the len-choose-len-minus-1 combinations of ints
+		     (set! (cdr prev) nxt)  
 		     (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) ints))))
 		     (set! (cdr prev) mid)
 		     (set! prev mid)))))))))
@@ -931,7 +931,7 @@ mac
 
 <p>This is not the end of the story.
 Macro expansion happens
-in two different environments.  Leaving aside quasiquote which operates at read-time without reference to any environment,
+in two different environments.  Leaving aside quasiquote which operates at read-time in the global environment,
 a macro first evaluates its body to form a piece
 of code, a list with the macro's arguments plugged in.  Then
 it evaluates that code.  So the expansion into a piece of code takes place in one
@@ -4282,7 +4282,7 @@ it is GC'd.  Here is an example:
      result)))
 </pre>
 
-<p>Put this is a file, load it into the interpreter, than call <code>(bad-idea)</code> a
+<p>Put this is a file, load it into the interpreter, then call <code>(bad-idea)</code> a
 few times.  You can turn off the optimization in question by setting the variable <b>*safety*</b>
 to 1.  *safety* defaults to 0.
 </p>
@@ -4323,7 +4323,7 @@ the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
 </p>
 
 <pre>
-(define (for-each-permutation func vals)          ; for-each-combination is similar but simpler
+(define (for-each-permutation func vals)
   ;; apply func to every permutation of vals: 
   ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
   (define (pinner cur nvals len)

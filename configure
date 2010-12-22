@@ -8134,7 +8134,7 @@ fi
     no_gtk=yes
   fi
 
-  min_gtk_version=2.9.0
+  min_gtk_version=2.10.0
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK+ - version >= $min_gtk_version" >&5
 $as_echo_n "checking for GTK+ - version >= $min_gtk_version... " >&6; }
 
@@ -8171,8 +8171,8 @@ $as_echo "yes" >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
-    	    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: trouble with gtk -- will try to make Snd without any GUI" >&5
-$as_echo "$as_me: WARNING: trouble with gtk -- will try to make Snd without any GUI" >&2;}
+    	    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: trouble with gtk (we need version 2.10.0 or later) -- will try to make Snd without any GUI" >&5
+$as_echo "$as_me: WARNING: trouble with gtk (we need version 2.10.0 or later) -- will try to make Snd without any GUI" >&2;}
       	    with_gtk=no
 
   fi
@@ -8248,7 +8248,7 @@ fi
     no_gtk=yes
   fi
 
-  min_gtk_version=2.9.0
+  min_gtk_version=2.10.0
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK+ - version >= $min_gtk_version" >&5
 $as_echo_n "checking for GTK+ - version >= $min_gtk_version... " >&6; }
 
@@ -8285,8 +8285,8 @@ $as_echo "yes" >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
-    	    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: trouble with gtk -- will try to make Snd without any GUI" >&5
-$as_echo "$as_me: WARNING: trouble with gtk -- will try to make Snd without any GUI" >&2;}
+    	    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: trouble with gtk (we need version 2.10.0 or later) -- will try to make Snd without any GUI" >&5
+$as_echo "$as_me: WARNING: trouble with gtk (we need version 2.10.0 or later) -- will try to make Snd without any GUI" >&2;}
       	    with_gtk=no
 
   fi

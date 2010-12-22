@@ -964,24 +964,24 @@ else
           ])
       else
 
-        AM_PATH_GTK_2_0(2.9.0,
+        AM_PATH_GTK_2_0(2.10.0,
           [
 	    with_gtk=yes
           ],
           [
-    	    AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
+    	    AC_MSG_WARN([trouble with gtk (we need version 2.10.0 or later) -- will try to make Snd without any GUI])
       	    with_gtk=no
           ])
       fi
 
     else
 
-        AM_PATH_GTK_2_0(2.9.0,
+        AM_PATH_GTK_2_0(2.10.0,
           [
 	    with_gtk=yes
           ],
           [
-    	    AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
+    	    AC_MSG_WARN([trouble with gtk (we need version 2.10.0 or later) -- will try to make Snd without any GUI])
       	    with_gtk=no
           ])
     fi
@@ -1023,7 +1023,6 @@ else
 
       	AC_SUBST(GTK_LD_LIBS)
 
-	# assume 2.10 or later
 	if test x$PKG_CONFIG != xno ; then
           CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
       	  AC_SUBST(CAIRO_CFLAGS)

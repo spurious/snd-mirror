@@ -15520,8 +15520,12 @@ s7_pointer s7_procedure_environment(s7_pointer p)
 static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p;
-  
   #define H_procedure_environment "(procedure-environment func) tries to return func's environment"
+
+  /* this procedure gives direct access to a function's closure -- see s7test.scm 
+   *   for some wild examples.  At least it provides a not-too-kludgey way for several functions
+   *   to share a closure.
+   */ 
   
   p = car(args);
   if (s7_is_symbol(p))
@@ -23549,7 +23553,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   (if (define (x) 1) 2 3)
        *   (do () ((define (x) 1) (define (y) 2)))
        *
-       * but we can get some humourous results: 
+       * but we can get some humorous results: 
        *   (let ((x (lambda () 3))) (if (define (x) 4) (x) 0)) -> 4
        */
 
@@ -30854,7 +30858,7 @@ the error type and the info passed to the error handler.");
  * s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10
  *    intel core duo (1.83G):    3162     2690 1.921     2426 1.830
  *    intel E5200 (2.5G):                 1951 1.450     1751 1.28
- *    amd operon 2218 (2.5G):             1859 1.335     1667 1.33
+ *    amd opteron 2218 (2.5G):            1859 1.335     1667 1.33
  *    amd opteron 8356 (2.3G):   2181     1949 1.201     1752 1.18
  *    intel E6850 (3.0G):                 1952 1.045     1752 0.945
  *    intel Q9650 (3.0G):        2081     1856 0.938     1665 0.840

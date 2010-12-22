@@ -23,7 +23,6 @@
 (define with-bignums (provided? 'gmp))  ; scheme number has any number of bits
 					; we assume s7_Double is double, and s7_Int is long long int
 
-
 (define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
 
 
@@ -4417,6 +4416,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((lst (list (cons 1 2) (cons 2 3) (cons 3 4)))) (set! (cdr (cdr lst)) lst) (assoc 4 lst)) #f)
 (test (let ((lst (list (cons 1 2) (cons 2 3) (cons 3 4)))) (set! (cdr (cdr lst)) lst) (assoc 4 lst =)) #f)
 (test (let ((lst (list (cons 1 2) (cons 2 3) (cons 3 4)))) (set! (cdr (cdr (cdr lst))) lst) (assoc 3 lst =)) '(3 . 4))
+(test (assoc '(1 2) '((a . 3) ((1 2) . 4))) '((1 2) . 4))
+(test (assoc '(1 2) '((a . 3) ((1 2) . (3 4)))) '((1 2) 3 4))
+(test (assoc '(1 2) '((a . 3) ((1 2) . (3 . 4)))) '((1 2) 3 . 4))
+(test (cdr (assoc '(1 2) '((a . 3) ((1 2) . (3 . 4))))) (cons 3 4))
 
 (test (assoc #t (list 1 2) #()) 'error)
 (test (assoc #t (list 1 2) (integer->char 127)) 'error)
@@ -4620,6 +4623,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (member 1 #(1) =) 'error)
 (test (member 3 '(5 4 3 2 1) >) '(2 1))
 (test (member 3 '(5 4 3 2 1) >=) '(3 2 1))
+(test (member '(1 2) '((1) (1 . 2) (1 2 . 3) (1 2 3) (1 2) 1 . 2)) '((1 2) 1 . 2))
+(test (member '(1 2 . 3) '((1) (1 . 2) (1 2 . 3) (1 2 3) (1 2) 1 . 2)) '((1 2 . 3) (1 2 3) (1 2) 1 . 2))
 
 (let ()
   (define-macro (do-list lst . body) 
@@ -6740,6 +6745,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (let ()
   (define (for-each-combination func args)
+    ;; this will repeat some combinations
     (let ((num-args (length args))
 	  (required-args (car (procedure-arity func))))
       (if (= num-args required-args)
@@ -17167,7 +17173,7 @@ abs     1       2
 		  addr))))
     (let ((e (where-is ok?)))
       (test (and (pair? (cadr e))
-		 (< (abs (- 43 ((cadr e) 2))) 5))
+		 (< ((cadr e) 2) 100)) ; this depends on where ok? is in this file
 	    #t)
       (test (and (pair? (cadr e))
 		 (string=? (symbol->string (car (cadr e))) "ok?"))
@@ -19021,6 +19027,7 @@ abs     1       2
 ;; it's returning #t unless the arg is a symbol that is not a keyword or a defined constant
 ;; (it's seeing the value of v, not v):
 (test (let ((v (vector 1 2))) (constant? 'v)) #f)
+;; that is something that can be set! is not a constant?
 
 (test (constant? lambda) #f) ; I guess it can be rebound?
 (test (constant? (lambda () 1)) #t)
@@ -19327,6 +19334,23 @@ abs     1       2
 (test (let ((a 1))
 	(let ((e (current-environment)))
 	  (+ (with-environment
+	      (augment-environment! (augment-environment (current-environment) (cons 'a 10)) (cons 'a 20))
+	      (+ a
+		 (with-environment e a)))
+	   a)))
+      22)
+(test (let ((a 1))
+	(+ (with-environment
+	    (augment-environment (current-environment) (cons 'a 10))
+	    (+ (let ((b a))
+		 (augment-environment! (current-environment) (cons 'a 20))
+		 (+ a b))
+	       a))
+	   a))
+      41)
+(test (let ((a 1))
+	(let ((e (current-environment)))
+	  (+ (with-environment
 	      (augment-environment e (cons 'a 10))
 	      (+ a
 		 (with-environment e a)))
@@ -19338,6 +19362,39 @@ abs     1       2
           (cons 'y 123))
 	(+ x y))
       126)
+
+(test (let ()
+	(define (hiho a) (+ a b))
+	(augment-environment! (procedure-environment hiho) (cons 'b 21)) ; hmmm...
+	(hiho 1))
+      22)
+
+(test (let ()
+	(define hiho (let ((x 32)) (lambda (a) (+ a x b))))
+	(augment-environment! (procedure-environment hiho) (cons 'b 10) (cons 'x 100))
+	(hiho 1))
+      111)
+
+(test (let ()
+	(define hiho (let () 
+		       (define (hi b) 
+			 (+ b 1)) 
+		       (lambda (a) 
+			 (hi a))))
+	(augment-environment! (procedure-environment hiho) (cons 'hi (lambda (b) (+ b 123))))
+	(hiho 2))
+      125)
+
+(test (let () ; here's one way for multiple functions to share a normal scheme closure
+	(define f1 (let ((x 23))
+		     (lambda (a)
+		       (+ x a))))
+	(define f2
+	  (with-environment (procedure-environment f1)
+            (lambda (b)
+	      (+ b (* 2 x)))))
+	(+ (f1 1) (f2 1)))
+      71)
 
 (test (augment-environment!) 'error)
 (test (augment-environment 3) 'error)
@@ -19370,8 +19427,30 @@ abs     1       2
 	   (go 1)
 	   32)))
       1)
+;; these do skip the OP_WITH_ENV1 env restore, so someone else is taking care of it as well
 
+(test (let ((x 0))
+	(call-with-exit
+	 (lambda (go)
+	   (with-environment (augment-environment! (current-environment) (cons 'x 123))
+            (go 1))))
+	x)
+      0)
+(test (let ((x 1))
+	(+ x (call-with-exit
+	      (lambda (go)
+		(with-environment (augment-environment! (current-environment) (cons 'x 123))
+                  (go x))))
+	   x))
+      125)
 
+(test (let ((x 0))
+	(catch #t
+          (lambda ()
+	    (with-environment (augment-environment! (current-environment) (cons 'x 123))
+              (error 'oops) x)) 
+	  (lambda args x)))
+      0)
 (test (call-with-exit (lambda (c) (0 (c 1)))) 1)
 (test (call-with-exit (lambda (k) (k "foo"))) "foo")
 (test (call-with-exit (lambda (k) "foo")) "foo")

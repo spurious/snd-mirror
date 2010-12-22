@@ -3100,4 +3100,5 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
   XEN_YES_WE_HAVE("snd");
   XEN_YES_WE_HAVE("snd" SND_MAJOR_VERSION);
+  XEN_YES_WE_HAVE("snd-" SND_MAJOR_VERSION "." SND_MINOR_VERSION);
 }
