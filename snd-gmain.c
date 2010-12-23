@@ -443,8 +443,10 @@ void snd_doit(int argc, char **argv)
 #else
   gtk_init(&argc, &argv);
 
+#if (!HAVE_GTK_3)
 #ifndef HAVE_OSX
   gdk_set_locale();
+#endif
 #endif
 
 #endif

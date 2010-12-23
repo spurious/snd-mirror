@@ -61,7 +61,7 @@
  *        logior, logxor, logand, lognot, ash, integer-length, integer-decode-float, nan?, infinite?
  *        procedure-source, procedure-arity, procedure-documentation, help
  *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
- *        symbol-table, symbol->value, global-environment, current-environment, procedure-environment, initial-environment
+ *        symbol-table, symbol->value, global-environment, current-environment, procedure-environment, initial-environment, environment?
  *        provide, provided?, defined?
  *        port-line-number, port-filename
  *        object->string, eval-string

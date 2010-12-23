@@ -121,7 +121,7 @@
 (define all-types '())
 
 ;;; preset some types that are getting confused
-(set! types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*" "GdkEventAny*" "GdkEvent*" 
+(set! types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*" "GdkEventAny*" "GdkEvent*" "gboolean*"
 		  "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
 (set! all-types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*" "GdkEventAny*" "GdkEvent*" 
 		      "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
@@ -193,6 +193,7 @@
 ;	"cairo_text_cluster_flags_t" 
 ;	"cairo_rectangle_int_t" 
 	"cairo_rectangle_t*"
+	"double*"
 
 	"GtkContainerClass*" "GtkComboBoxText*" "GtkGrid*" "GtkScrollable*" "GtkSwitch*" 
 	"cairo_text_cluster_flags_t" "cairo_text_cluster_flags_t*" "cairo_rectangle_int_t*"
@@ -208,14 +209,14 @@
 	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
 					;"GdkOverlapType" 
 	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
-	"GtkImageType" "GtkTreeModelFlags" "gint8" "gshort" "guint8" "lambda" 
+	"GtkImageType" "GtkTreeModelFlags" "gint8" "gshort" "guint8" "lambda" "gboolean*"
 	
 	"time_t" ;"GtkWindowGroup*" 
 	"GtkSettings*" ;"GdkDevice*" 
 	"GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
 	"GdkEventAny*" "GdkDeviceManager*"
-	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t" "cairo_bool_t" 
+	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t" "cairo_bool_t" "cairo_region_overlap_t"
 	))
 
 (define no-xen-to-c 
@@ -228,7 +229,7 @@
 	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
 					;"GdkOverlapType" 
 	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
-	"GtkImageType" "GtkTreeModelFlags" "etc" "gshort"
+	"GtkImageType" "GtkTreeModelFlags" "etc" "gshort"  "gboolean*"
 	
 					;"GtkWindowGroup*" 
 	"time_t" "GtkSettings*" ;"GdkDevice*" 
@@ -499,7 +500,7 @@
 			(list 'GtkMenuPositionFunc
 			      "void"
 			      "menu_position_func"
-			      (parse-args "GtkMenu* menu gint* x gint* y gboolean* push lambda_data func_info" 'callback)
+			      (parse-args "GtkMenu* menu gint* [x] gint* [y] gboolean* [push] lambda_data func_info" 'callback)
 			      'permanent)
 			(list 'GtkTextTagTableForeach
 			      "void"

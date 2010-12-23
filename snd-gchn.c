@@ -1465,7 +1465,10 @@ static XEN g_set_graph_cursor(XEN curs)
   if ((val >= 0) && (val <= GDK_XTERM))
     {
       ss->Graph_Cursor = val;
+#if (!HAVE_GTK_3)
       if (ss->sgx->graph_cursor) gdk_cursor_unref(ss->sgx->graph_cursor);
+      /* TODO: is this now object_unref? */
+#endif
       ss->sgx->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
     }
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_cursor, 1, curs, "~A: invalid cursor");
