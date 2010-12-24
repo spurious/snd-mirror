@@ -484,10 +484,9 @@ above as an example:
 
 <pre>
 (<em class=red>define*</em> (make-parameter initial-value converter)
-  (let* ((unspecified (if #f #f))   ; #&lt;unspecified&gt;
-	 (value (if (procedure? converter) (converter initial-value) initial-value)))
-    (<em class=red>lambda*</em> ((val unspecified))
-      (if (not (eq? val unspecified))
+  (let ((value (if (procedure? converter) (converter initial-value) initial-value)))
+    (<em class=red>lambda*</em> ((val #&lt;unspecified&gt;))
+      (if (not (eq? val #&lt;unspecified&gt;))
 	  (set! value (if (procedure? converter) (converter val) val)))
       value)))
 
@@ -1998,15 +1997,15 @@ I like this syntax:  the less noise, the better!
 </p>
 
 <pre>
-(let ((lst (list 1 2 3)))
-  (set! (lst 1) 32)
-  (list (lst 0) (lst 1)))
--&gt; '(1 32)
+&gt; (let ((lst (list 1 2 3)))
+    (set! (lst 1) 32)
+    (list (lst 0) (lst 1)))
+(1 32)
 
-(let ((hash (make-hash-table)))
-  (set! (hash 'hi) 32)
-  (hash 'hi))
--&gt; 32
+&gt; (let ((hash (make-hash-table)))
+    (set! (hash 'hi) 32)
+    (hash 'hi))
+32
 
 &gt; (let ((str "123")) 
     (set! (str 1) #\x) str)

@@ -38115,6 +38115,33 @@ abs     1       2
       (num-test (expt -1234000000.0-1234000000.0i -1234.0-0.0i) 0.0-3.815800046393940013006703716489144169017E-11405i)
       ))
 
+(num-test (expt 2 (real-part (log 0))) (expt 2.0 (real-part (log 0))))
+(num-test (expt 1 (real-part (log 0))) (expt 1.0 (real-part (log 0))))
+(num-test (expt 1/2 (- (real-part (log 0)))) (expt 0.5 (- (real-part (log 0)))))
+(num-test (expt -1/2 (- (real-part (log 0)))) (expt -0.5 (- (real-part (log 0)))))
+
+;; there's a difference here between gmp/non-gmp:
+; (test (expt 0 (real-part (log 0))) (expt 0.0 (real-part (log 0)))) 
+; (num-test (expt 1.0 (/ (real-part (log 0)) (real-part (log 0)))) (expt 1 (/ (real-part (log 0)) (real-part (log 0)))))
+; (num-test (expt 0.0 (/ (real-part (log 0)) (real-part (log 0)))) (expt 0 (/ (real-part (log 0)) (real-part (log 0)))))
+#|
+(let ((eps 1e-7))
+  (do ((i 0 (+ i 1)))
+      ((= i 1000))
+    (let ((val (- (random 1000.0) 500.0)))
+      (let ((rval (rationalize val))
+	    (ival (floor val)))
+	(let ((frval (exact->inexact rval))
+	      (fival (exact->inexact ival)))
+	  (for-each
+	   (lambda (e)
+	     (if (> (magnitude (- (expt rval e) (expt frval e))) eps)
+		 (format #t "~A: ;(expt ~A e) != (expt ~A e) -> ~A~%" e rval frval (magnitude (- (expt rval e) (expt frval e)))))
+	     (if (> (magnitude (- (expt ival e) (expt fival e))) eps)
+		 (format #t "~A ;(expt ~A e) != (expt ~A e) -> ~A~%" e ival fival (magnitude (- (expt ival e) (expt fival e))))))
+	   (list 0 0.0 (log 0) (real-part (log 0)) (- (real-part (log 0))))))))))
+|#
+
 
 
 ;;; -------- rationalize
