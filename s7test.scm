@@ -92,29 +92,6 @@
 
 ;;; relative error (/ (abs (- x res) (abs x)))
 
-(define (types-consistent? n)
-  (not (or (and (integer? n) 
-		(or (not (= (denominator n) 1))
-		    (not (= n (numerator n)))
-		    (not (zero? (imag-part n)))
-		    (not (= (floor n) (ceiling n) (truncate n) (round n) n))
-		    (not (= n (real-part n)))))
-	   (and (rational? n)
-		(not (integer? n))
-		(or (not (zero? (imag-part n)))
-		    (= (denominator n) 1)
-		    (= (denominator n) 0)
-		    (not (= n (real-part n)))
-		    (not (= n (/ (numerator n) (denominator n))))))
-	   (and (real? n)
-		(not (rational? n))
-		(or (not (zero? (imag-part n)))
-		    (not (= n (real-part n)))))
-	   (and (complex? n) 
-		(not (real? n))
-		(or (zero? (imag-part n))
-		    (not (zero? (- n (+ (real-part n) (* 0+i (imag-part n)))))))))))
-
 #|
 :(= 9.92209574402351949043519108941671096176E-1726-4.788930572030484370393069119625570107346E-1726i (+ 9.92209574402351949043519108941671096176E-1726 (* 0+i -4.788930572030484370393069119625570107346E-1726)))
 #f
@@ -149,9 +126,7 @@ yow!! -- I'm using mpc_cmp
 		   (real? result)
 		   (> (abs (- result expected)) 1.0e-12))
 	      (and (pair? tst)
-		   (> (op-error (car tst) result expected) 1.0e-6))
-	      (and (number? result)
-		   (not (types-consistent? result))))
+		   (> (op-error (car tst) result expected) 1.0e-6)))
 	  (begin
 	    (format #t "~A: ~A got ~A~Abut expected ~A~%" 
 		    (port-line-number) tst result 
@@ -3799,7 +3774,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (list-ref '((1 2) (3 4)) 1) '(3 4))
 (test (list-ref (list-ref (list (list 1 2) (list 3 4)) 1) 1) 4)
 (test (let ((x (list 1 2 3))) (list-ref x (list-ref x 1))) 3)
-					; (list-ref '(1 2 . 3) 0) -- why is this acceptable?
+(test (list-ref '(1 2 . 3) 1) 2)
+(test (list-ref '(1 2 . 3) 2) 'error) ; hmm...
+(test ('(1 2 . 3) 0) 1)
+(test ('(1 . 2) 0) 1)
 
 (test (let ((lst (list 1 2))) (set! (list-ref lst 1) 0) lst) (list 1 0))
 (test (((lambda () list)) 'a 'b 'c) '(a b c))
@@ -3964,6 +3942,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (set-cdr! '(1 2) 4) 4)
 (test (fill! (list 1 2) 4) 4)
 (test (fill! '() 1) 1)
+(test (list-set! '(1 2 . 3) 1 23) 23)
+(test (list-set! '(1 2 . 3) 2 23) 'error)
+(test (set! ('(1 2 . 3) 1) 23) 23)
 
 (for-each
  (lambda (arg)
@@ -4139,6 +4120,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (list-tail) 'error)
 (test (list-tail '(1)) 'error)
 (test (list-tail '(1) 1 2) 'error)
+(test (set! (list-tail (list 1 2 3)) '(32)) 'error) ; should this work?
 
 (for-each
  (lambda (arg)

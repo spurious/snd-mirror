@@ -11523,7 +11523,10 @@ static void write_char(s7_scheme *sc, int c, s7_pointer pt)
 	  if (port_is_closed(pt))
 	    return;
 	  if (is_file_port(pt))
-	    fputc(c, port_file(pt));
+	    {
+	      if (fputc(c, port_file(pt)) == EOF)
+		fprintf(stderr, "write to %s: %s\n", port_filename(pt), strerror(errno));
+	    }
 	  else 
 	    {
 	      if (is_string_port(pt))
@@ -11551,7 +11554,10 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 	    return;
 	  
 	  if (is_file_port(pt))
-	    fputs(s, port_file(pt));
+	    {
+	      if (fputs(s, port_file(pt)) == EOF)
+		fprintf(stderr, "write to %s: %s\n", port_filename(pt), strerror(errno));
+	    }
 	  else 
 	    {
 	      if (is_string_port(pt))
@@ -12589,7 +12595,10 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "write-byte port", 2, port, "an open output port"));
 
   if (is_file_port(port))
-    fputc((unsigned char)s7_integer(car(args)), port_file(port));
+    {
+      if (fputc((unsigned char)s7_integer(car(args)), port_file(port)) == EOF)
+	fprintf(stderr, "write to %s: %s\n", port_filename(port), strerror(errno));
+    }
   else (*(port_output_function(port)))(sc, (char)s7_integer(car(args)), port);
 
   return(car(args));
@@ -16187,13 +16196,16 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
  *    (call-with-exit (lambda (exit) (copy ((cadr (make-type :copy (lambda (a) (exit 32)))) 1))))
  *      [called in object_reverse and s7_copy, g_copy calls s7_copy]
  *      [hard to fix because hash-tables use s7_copy -- needs at least expansion of g_copy]
+ *      [  and in g_copy we'd need another operator OP_MAKE_S_OBJECT maybe, to handle the ]
+ *      [  result = make_s_object(sc, new_obj->type, (void *)new_obj) business after the  ]
+ *      [  value has been copied.]
  *
  *    (call-with-exit (lambda (exit) (fill! ((cadr (make-type :fill (lambda (a n) (exit 32)))) 1) 0)))
  *      [fixed]
  *
  *    (call-with-exit (lambda (exit) (let ((typ (make-type :equal (lambda (a n) (exit 32))))) (equal? ((cadr typ) 1) ((cadr typ) 1)))))
  *      [callable via s7_is_equal and s7_is_equal_ci]
- *      [hard to fix: g_is_equal calls s7_is_equal]
+ *      [hard to fix: g_is_equal calls s7_is_equal, but here I think we could split out s_object_equal if equal_func exists]
  *
  *    reverse uses length and copy
  *
@@ -30335,6 +30347,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "list-ref",                g_list_ref,                2, 0, true,  H_list_ref);
   s7_define_function(sc, "list-set!",               g_list_set,                3, 0, true,  H_list_set);
   s7_define_function(sc, "list-tail",               g_list_tail,               2, 0, false, H_list_tail);
+  /* perhaps with setter? */
   s7_define_function(sc, "make-list",               g_make_list,               1, 1, false, H_make_list);
 
   s7_define_function(sc, "length",                  g_length,                  1, 0, false, H_length);

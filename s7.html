@@ -539,6 +539,10 @@ hi
 ;hi requires 1 argument: ()
 </pre>
 
+<!--
+  perhaps if :optional occurs in the arglist, make the preceding ones required by changing the arity?
+-->
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
@@ -4661,7 +4665,7 @@ have any number after, for example, #b:
    change string-&gt;symbol to symbol
    remove call-with-values and its friends
    remove char-ready?
-   change eof-object? to eof? or better end-of-input?
+   change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
    use @ as the exponent marker if base &gt; 10
    remove the "d", "f", "s", and "l" exponent markers (leaving "e" and "E")
 </pre>
@@ -4681,6 +4685,19 @@ have any number after, for example, #b:
 
 <p>Scheme needs a more elegant way to define functions that share a closure.
 </p>
+
+<!--
+(define f1 (let ((x 23))
+	     (lambda (a)
+	       (+ x a))))
+(define f2
+  (with-environment (procedure-environment f1)
+   (lambda (b)
+     (+ b (* 2 x)))))
+
+(+ (f1 1) (f2 1))
+71
+-->
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
