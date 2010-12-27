@@ -894,6 +894,7 @@ XM_TYPE_PTR_1(GtkScrollable_, GtkScrollable*)
 #define XEN_GtkScrollablePolicy_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(GtkSwitch_, GtkSwitch*)
 XM_TYPE_PTR(GtkBorder_, GtkBorder*)
+XM_TYPE_PTR_1(GtkActivatable_, GtkActivatable*)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -30177,6 +30178,65 @@ gchar* text)"
   return(XEN_FALSE);
 }
 
+static XEN gxg_gtk_button_box_new(XEN orientation)
+{
+  #define H_gtk_button_box_new "GtkWidget* gtk_button_box_new(GtkOrientation orientation)"
+  XEN_ASSERT_TYPE(XEN_GtkOrientation_P(orientation), orientation, 1, "gtk_button_box_new", "GtkOrientation");
+  return(C_TO_XEN_GtkWidget_(gtk_button_box_new(XEN_TO_C_GtkOrientation(orientation))));
+}
+
+static XEN gxg_gtk_box_new(XEN orientation, XEN spacing)
+{
+  #define H_gtk_box_new "GtkWidget* gtk_box_new(GtkOrientation orientation, gint spacing)"
+  XEN_ASSERT_TYPE(XEN_GtkOrientation_P(orientation), orientation, 1, "gtk_box_new", "GtkOrientation");
+  XEN_ASSERT_TYPE(XEN_gint_P(spacing), spacing, 2, "gtk_box_new", "gint");
+  return(C_TO_XEN_GtkWidget_(gtk_box_new(XEN_TO_C_GtkOrientation(orientation), XEN_TO_C_gint(spacing))));
+}
+
+static XEN gxg_gtk_activatable_sync_action_properties(XEN activatable, XEN action)
+{
+  #define H_gtk_activatable_sync_action_properties "void gtk_activatable_sync_action_properties(GtkActivatable* activatable, \
+GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkActivatable__P(activatable), activatable, 1, "gtk_activatable_sync_action_properties", "GtkActivatable*");
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 2, "gtk_activatable_sync_action_properties", "GtkAction*");
+  gtk_activatable_sync_action_properties(XEN_TO_C_GtkActivatable_(activatable), XEN_TO_C_GtkAction_(action));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_activatable_set_related_action(XEN activatable, XEN action)
+{
+  #define H_gtk_activatable_set_related_action "void gtk_activatable_set_related_action(GtkActivatable* activatable, \
+GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkActivatable__P(activatable), activatable, 1, "gtk_activatable_set_related_action", "GtkActivatable*");
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 2, "gtk_activatable_set_related_action", "GtkAction*");
+  gtk_activatable_set_related_action(XEN_TO_C_GtkActivatable_(activatable), XEN_TO_C_GtkAction_(action));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_activatable_get_related_action(XEN activatable)
+{
+  #define H_gtk_activatable_get_related_action "GtkAction* gtk_activatable_get_related_action(GtkActivatable* activatable)"
+  XEN_ASSERT_TYPE(XEN_GtkActivatable__P(activatable), activatable, 1, "gtk_activatable_get_related_action", "GtkActivatable*");
+  return(C_TO_XEN_GtkAction_(gtk_activatable_get_related_action(XEN_TO_C_GtkActivatable_(activatable))));
+}
+
+static XEN gxg_gtk_activatable_set_use_action_appearance(XEN activatable, XEN use_appearance)
+{
+  #define H_gtk_activatable_set_use_action_appearance "void gtk_activatable_set_use_action_appearance(GtkActivatable* activatable, \
+gboolean use_appearance)"
+  XEN_ASSERT_TYPE(XEN_GtkActivatable__P(activatable), activatable, 1, "gtk_activatable_set_use_action_appearance", "GtkActivatable*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(use_appearance), use_appearance, 2, "gtk_activatable_set_use_action_appearance", "gboolean");
+  gtk_activatable_set_use_action_appearance(XEN_TO_C_GtkActivatable_(activatable), XEN_TO_C_gboolean(use_appearance));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_activatable_get_use_action_appearance(XEN activatable)
+{
+  #define H_gtk_activatable_get_use_action_appearance "gboolean gtk_activatable_get_use_action_appearance(GtkActivatable* activatable)"
+  XEN_ASSERT_TYPE(XEN_GtkActivatable__P(activatable), activatable, 1, "gtk_activatable_get_use_action_appearance", "GtkActivatable*");
+  return(C_TO_XEN_gboolean(gtk_activatable_get_use_action_appearance(XEN_TO_C_GtkActivatable_(activatable))));
+}
+
 #endif
 
 #if (!HAVE_GTK_3)
@@ -33802,6 +33862,7 @@ static XEN gxg_GTK_COMBO_BOX_TEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN
 static XEN gxg_GTK_GRID(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkGrid_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SCROLLABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkScrollable_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SWITCH(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSwitch_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GTK_ACTIVATABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkActivatable_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
 #if (!HAVE_GTK_3)
@@ -33996,6 +34057,7 @@ static XEN gxg_GTK_IS_COMBO_BOX_TEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_O
 static XEN gxg_GTK_IS_GRID(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_GRID((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SCROLLABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SCROLLABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SWITCH(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SWITCH((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_ACTIVATABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ACTIVATABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
 #if (!HAVE_GTK_3)
@@ -37606,6 +37668,13 @@ XEN_NARGIFY_2(gxg_gtk_combo_box_set_active_id_w, gxg_gtk_combo_box_set_active_id
 XEN_NARGIFY_4(gxg_gtk_combo_box_text_insert_w, gxg_gtk_combo_box_text_insert)
 XEN_NARGIFY_3(gxg_gtk_combo_box_text_append_w, gxg_gtk_combo_box_text_append)
 XEN_NARGIFY_3(gxg_gtk_combo_box_text_prepend_w, gxg_gtk_combo_box_text_prepend)
+XEN_NARGIFY_1(gxg_gtk_button_box_new_w, gxg_gtk_button_box_new)
+XEN_NARGIFY_2(gxg_gtk_box_new_w, gxg_gtk_box_new)
+XEN_NARGIFY_2(gxg_gtk_activatable_sync_action_properties_w, gxg_gtk_activatable_sync_action_properties)
+XEN_NARGIFY_2(gxg_gtk_activatable_set_related_action_w, gxg_gtk_activatable_set_related_action)
+XEN_NARGIFY_1(gxg_gtk_activatable_get_related_action_w, gxg_gtk_activatable_get_related_action)
+XEN_NARGIFY_2(gxg_gtk_activatable_set_use_action_appearance_w, gxg_gtk_activatable_set_use_action_appearance)
+XEN_NARGIFY_1(gxg_gtk_activatable_get_use_action_appearance_w, gxg_gtk_activatable_get_use_action_appearance)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -38189,6 +38258,7 @@ XEN_NARGIFY_1(gxg_GTK_COMBO_BOX_TEXT_w, gxg_GTK_COMBO_BOX_TEXT)
 XEN_NARGIFY_1(gxg_GTK_GRID_w, gxg_GTK_GRID)
 XEN_NARGIFY_1(gxg_GTK_SCROLLABLE_w, gxg_GTK_SCROLLABLE)
 XEN_NARGIFY_1(gxg_GTK_SWITCH_w, gxg_GTK_SWITCH)
+XEN_NARGIFY_1(gxg_GTK_ACTIVATABLE_w, gxg_GTK_ACTIVATABLE)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -38383,6 +38453,7 @@ XEN_NARGIFY_1(gxg_GTK_IS_COMBO_BOX_TEXT_w, gxg_GTK_IS_COMBO_BOX_TEXT)
 XEN_NARGIFY_1(gxg_GTK_IS_GRID_w, gxg_GTK_IS_GRID)
 XEN_NARGIFY_1(gxg_GTK_IS_SCROLLABLE_w, gxg_GTK_IS_SCROLLABLE)
 XEN_NARGIFY_1(gxg_GTK_IS_SWITCH_w, gxg_GTK_IS_SWITCH)
+XEN_NARGIFY_1(gxg_GTK_IS_ACTIVATABLE_w, gxg_GTK_IS_ACTIVATABLE)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -41552,6 +41623,13 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_combo_box_text_insert_w gxg_gtk_combo_box_text_insert
 #define gxg_gtk_combo_box_text_append_w gxg_gtk_combo_box_text_append
 #define gxg_gtk_combo_box_text_prepend_w gxg_gtk_combo_box_text_prepend
+#define gxg_gtk_button_box_new_w gxg_gtk_button_box_new
+#define gxg_gtk_box_new_w gxg_gtk_box_new
+#define gxg_gtk_activatable_sync_action_properties_w gxg_gtk_activatable_sync_action_properties
+#define gxg_gtk_activatable_set_related_action_w gxg_gtk_activatable_set_related_action
+#define gxg_gtk_activatable_get_related_action_w gxg_gtk_activatable_get_related_action
+#define gxg_gtk_activatable_set_use_action_appearance_w gxg_gtk_activatable_set_use_action_appearance
+#define gxg_gtk_activatable_get_use_action_appearance_w gxg_gtk_activatable_get_use_action_appearance
 #endif
 
 #if (!HAVE_GTK_3)
@@ -42135,6 +42213,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_GRID_w gxg_GTK_GRID
 #define gxg_GTK_SCROLLABLE_w gxg_GTK_SCROLLABLE
 #define gxg_GTK_SWITCH_w gxg_GTK_SWITCH
+#define gxg_GTK_ACTIVATABLE_w gxg_GTK_ACTIVATABLE
 #endif
 
 #if (!HAVE_GTK_3)
@@ -42329,6 +42408,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_GRID_w gxg_GTK_IS_GRID
 #define gxg_GTK_IS_SCROLLABLE_w gxg_GTK_IS_SCROLLABLE
 #define gxg_GTK_IS_SWITCH_w gxg_GTK_IS_SWITCH
+#define gxg_GTK_IS_ACTIVATABLE_w gxg_GTK_IS_ACTIVATABLE
 #endif
 
 #if (!HAVE_GTK_3)
@@ -45505,6 +45585,13 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_combo_box_text_insert, gxg_gtk_combo_box_text_insert_w, 4, 0, 0, H_gtk_combo_box_text_insert);
   XG_DEFINE_PROCEDURE(gtk_combo_box_text_append, gxg_gtk_combo_box_text_append_w, 3, 0, 0, H_gtk_combo_box_text_append);
   XG_DEFINE_PROCEDURE(gtk_combo_box_text_prepend, gxg_gtk_combo_box_text_prepend_w, 3, 0, 0, H_gtk_combo_box_text_prepend);
+  XG_DEFINE_PROCEDURE(gtk_button_box_new, gxg_gtk_button_box_new_w, 1, 0, 0, H_gtk_button_box_new);
+  XG_DEFINE_PROCEDURE(gtk_box_new, gxg_gtk_box_new_w, 2, 0, 0, H_gtk_box_new);
+  XG_DEFINE_PROCEDURE(gtk_activatable_sync_action_properties, gxg_gtk_activatable_sync_action_properties_w, 2, 0, 0, H_gtk_activatable_sync_action_properties);
+  XG_DEFINE_PROCEDURE(gtk_activatable_set_related_action, gxg_gtk_activatable_set_related_action_w, 2, 0, 0, H_gtk_activatable_set_related_action);
+  XG_DEFINE_PROCEDURE(gtk_activatable_get_related_action, gxg_gtk_activatable_get_related_action_w, 1, 0, 0, H_gtk_activatable_get_related_action);
+  XG_DEFINE_PROCEDURE(gtk_activatable_set_use_action_appearance, gxg_gtk_activatable_set_use_action_appearance_w, 2, 0, 0, H_gtk_activatable_set_use_action_appearance);
+  XG_DEFINE_PROCEDURE(gtk_activatable_get_use_action_appearance, gxg_gtk_activatable_get_use_action_appearance_w, 1, 0, 0, H_gtk_activatable_get_use_action_appearance);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -46080,6 +46167,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_GRID, gxg_GTK_GRID_w, 1, 0, 0, "(GTK_GRID obj) casts obj to GTK_GRID");
   XG_DEFINE_PROCEDURE(GTK_SCROLLABLE, gxg_GTK_SCROLLABLE_w, 1, 0, 0, "(GTK_SCROLLABLE obj) casts obj to GTK_SCROLLABLE");
   XG_DEFINE_PROCEDURE(GTK_SWITCH, gxg_GTK_SWITCH_w, 1, 0, 0, "(GTK_SWITCH obj) casts obj to GTK_SWITCH");
+  XG_DEFINE_PROCEDURE(GTK_ACTIVATABLE, gxg_GTK_ACTIVATABLE_w, 1, 0, 0, "(GTK_ACTIVATABLE obj) casts obj to GTK_ACTIVATABLE");
 #endif
 
 #if (!HAVE_GTK_3)
@@ -46282,6 +46370,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_GRID, gxg_GTK_IS_GRID_w, 1, 0, 0, "(GTK_IS_GRID obj): " PROC_TRUE " if obj is a GTK_IS_GRID");
   XG_DEFINE_PROCEDURE(GTK_IS_SCROLLABLE, gxg_GTK_IS_SCROLLABLE_w, 1, 0, 0, "(GTK_IS_SCROLLABLE obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLABLE");
   XG_DEFINE_PROCEDURE(GTK_IS_SWITCH, gxg_GTK_IS_SWITCH_w, 1, 0, 0, "(GTK_IS_SWITCH obj): " PROC_TRUE " if obj is a GTK_IS_SWITCH");
+  XG_DEFINE_PROCEDURE(GTK_IS_ACTIVATABLE, gxg_GTK_IS_ACTIVATABLE_w, 1, 0, 0, "(GTK_IS_ACTIVATABLE obj): " PROC_TRUE " if obj is a GTK_IS_ACTIVATABLE");
 #endif
 
 #if (!HAVE_GTK_3)
@@ -47384,6 +47473,10 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_TEXT_SEARCH_CASE_INSENSITIVE);
   DEFINE_INTEGER(GTK_SCROLL_MINIMUM);
   DEFINE_INTEGER(GTK_SCROLL_NATURAL);
+  DEFINE_INTEGER(GTK_TARGET_SAME_APP);
+  DEFINE_INTEGER(GTK_TARGET_SAME_WIDGET);
+  DEFINE_INTEGER(GTK_TARGET_OTHER_APP);
+  DEFINE_INTEGER(GTK_TARGET_OTHER_WIDGET);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -48032,7 +48125,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("23-Dec-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Dec-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

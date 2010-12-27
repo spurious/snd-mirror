@@ -187,7 +187,7 @@
 	
 	"gdouble*" "GdkFill" "GdkSubwindowMode" "GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
 	"GtkInfoBar*" "GtkSpinner*" "GtkToolShell*" "GtkToolPalette*" "GtkToolPaletteDragTargets"
-	"GdkFunction" "GtkWrapBoxPacking" "GtkLinkButton*"
+	"GdkFunction" "GtkWrapBoxPacking" "GtkLinkButton*" "GtkActivatable*"
 
 	"GdkRectangle*" "PangoRenderer*" "cairo_glyph_t**" "cairo_text_cluster_t**"
 ;	"cairo_text_cluster_flags_t" 
@@ -772,6 +772,7 @@
 	(cons "GtkJustification" "INT")
 	(cons "GtkMessageType" "INT")
 	(cons "GtkButtonsType" "INT")
+	(cons "GtkTargetFlags" "INT")
 					;(cons "GtkProgressBarOrientation" "INT")
 	(cons "GtkUpdateType" "INT")
 	(cons "GtkMetricType" "INT")

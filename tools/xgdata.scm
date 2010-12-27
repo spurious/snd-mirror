@@ -7852,6 +7852,44 @@
 ;(CFNC-29x "void gtk_widget_path GtkWidget* widget guint* path_length gchar** [path] gchar** [path_reversed]")
 ;(CFNC-29x "void gtk_widget_class_path GtkWidget* widget guint* path_length gchar** [path] gchar** [path_reversed]")
 
+
+
+;; forgotten?
+(CFNC-29x "GtkWidget* gtk_button_box_new GtkOrientation orientation")
+(CFNC-29x "GtkWidget* gtk_box_new GtkOrientation orientation gint spacing")
+
+; are these leftovers?
+;(CCAST-29x "GTK_VOLUME_BUTTON" "GtkVolumeButton*")
+;(CCHK-29x "GTK_IS_VOLUME_BUTTON" "GtkVolumeButton*")
+;(CFNC-29x "GtkWidget* gtk_volume_button_new void")
+;(CCAST-29x "GTK_SCALE_BUTTON" "GtkScaleButton*")
+;(CCHK-29x "GTK_IS_SCALE_BUTTON" "GtkScaleButton*")
+;(CFNC-29x "GtkWidget* gtk_scale_button_new GtkIconSize size gdouble min gdouble max gdouble step gchar** icons" 'const)
+;(CFNC-29x "void gtk_scale_button_set_icons GtkScaleButton* button gchar** icons" 'const)
+;(CFNC-29x "gdouble gtk_scale_button_get_value GtkScaleButton* button")
+;(CFNC-29x "void gtk_scale_button_set_value GtkScaleButton* button gdouble value")
+;(CFNC-29x "GtkAdjustment* gtk_scale_button_get_adjustment GtkScaleButton* button")
+;(CFNC-29x "void gtk_scale_button_set_adjustment GtkScaleButton* button GtkAdjustment* adjustment")
+;(CFNC-29x "GtkWidget* gtk_scale_button_get_plus_button GtkScaleButton* button")
+;(CFNC-29x "GtkWidget* gtk_scale_button_get_minus_button GtkScaleButton* button")
+;(CFNC-29x "GtkWidget* gtk_scale_button_get_popup GtkScaleButton* button")
+
+;; message dialog depends completely on va lists
+
+(CCAST-29x "GTK_ACTIVATABLE" "GtkActivatable*")
+(CCHK-29x "GTK_IS_ACTIVATABLE" "GtkActivatable*")
+(CFNC-29x "void gtk_activatable_sync_action_properties GtkActivatable* activatable GtkAction* action")
+(CFNC-29x "void gtk_activatable_set_related_action GtkActivatable* activatable GtkAction* action")
+(CFNC-29x "GtkAction* gtk_activatable_get_related_action GtkActivatable* activatable")
+(CFNC-29x "void gtk_activatable_set_use_action_appearance GtkActivatable* activatable gboolean use_appearance")
+(CFNC-29x "gboolean gtk_activatable_get_use_action_appearance GtkActivatable* activatable")
+
+(CINT-29x "GTK_TARGET_SAME_APP" "GtkTargetFlags")
+(CINT-29x "GTK_TARGET_SAME_WIDGET" "GtkTargetFlags")
+(CINT-29x "GTK_TARGET_OTHER_APP" "GtkTargetFlags")
+(CINT-29x "GTK_TARGET_OTHER_WIDGET" "GtkTargetFlags")
+
+
 #|
 (CSTR-29x "GTK_STYLE_PROPERTY_BACKGROUND_COLOR")
 (CSTR-29x "GTK_STYLE_PROPERTY_COLOR")
@@ -8158,14 +8196,6 @@ gtkaction: gtk_action_block_activate
 gtkaction: gtk_action_unblock_activate
 gtkaction: gtk_action_set_accel_path
 gtkaction: gtk_action_set_accel_group
-gtkactivatable: GTK_ACTIVATABLE
-gtkactivatable: GTK_IS_ACTIVATABLE
-gtkactivatable: gtk_activatable_sync_action_properties
-gtkactivatable: gtk_activatable_set_related_action
-gtkactivatable: gtk_activatable_get_related_action
-gtkactivatable: gtk_activatable_set_use_action_appearance
-gtkactivatable: gtk_activatable_get_use_action_appearance
-gtkactivatable: gtk_activatable_do_set_related_action
 gtkappchooserbutton: GTK_APP_CHOOSER_BUTTON
 gtkappchooserbutton: GTK_IS_APP_CHOOSER_BUTTON
 gtkappchooserbutton: gtk_app_chooser_button_new
@@ -8210,11 +8240,9 @@ gtkapplication: gtk_application_add_window
 gtkapplication: gtk_application_remove_window
 gtkapplication: gtk_application_get_windows
 gtkassistant: gtk_assistant_commit
-gtkbbox: gtk_button_box_new
 gtkbindings: gtk_bindings_activate_event
 gtkbindings: gtk_binding_entry_add_signal
 gtkbindings: gtk_binding_entry_add_signall
-gtkbox: gtk_box_new
 gtkbuildable: GTK_BUILDABLE
 gtkbuildable: GTK_IS_BUILDABLE
 gtkbuildable: gtk_buildable_set_name
@@ -8325,10 +8353,6 @@ gtkcssprovider: gtk_css_provider_get_named
 gtkcustompaperunixdialog: GTK_CUSTOM_PAPER_UNIX_DIALOG
 gtkcustompaperunixdialog: GTK_IS_CUSTOM_PAPER_UNIX_DIALOG
 gtkdialog: gtk_dialog_set_alternative_button_order
-gtkdnd: GTK_TARGET_SAME_APP
-gtkdnd: GTK_TARGET_SAME_WIDGET
-gtkdnd: GTK_TARGET_OTHER_APP
-gtkdnd: GTK_TARGET_OTHER_WIDGET
 gtkdnd: gtk_drag_dest_set_proxy
 gtkentrycompletion: gtk_entry_completion_new_with_area
 gtkentry: gtk_entry_get_text_area
@@ -8388,24 +8412,6 @@ gtkenums: GTK_STATE_FLAG_SELECTED
 gtkenums: GTK_STATE_FLAG_INSENSITIVE
 gtkenums: GTK_STATE_FLAG_INCONSISTENT
 gtkenums: GTK_STATE_FLAG_FOCUSED
-gtkenums: GTK_REGION_EVEN
-gtkenums: GTK_REGION_ODD
-gtkenums: GTK_REGION_FIRST
-gtkenums: GTK_REGION_LAST
-gtkenums: GTK_REGION_SORTED
-gtkenums: GTK_JUNCTION_NONE
-gtkenums: GTK_JUNCTION_CORNER_TOPLEFT
-gtkenums: GTK_JUNCTION_CORNER_TOPRIGHT
-gtkenums: GTK_JUNCTION_CORNER_BOTTOMLEFT
-gtkenums: GTK_JUNCTION_CORNER_BOTTOMRIGHT
-gtkenums: GTK_JUNCTION_TOP
-gtkenums: GTK_JUNCTION_BOTTOM
-gtkenums: GTK_JUNCTION_LEFT
-gtkenums: GTK_JUNCTION_RIGHT
-gtkenums: GTK_BORDER_STYLE_NONE
-gtkenums: GTK_BORDER_STYLE_SOLID
-gtkenums: GTK_BORDER_STYLE_INSET
-gtkenums: GTK_BORDER_STYLE_OUTSET
 gtkfilechooserdefault: GTK_FILE_CHOOSER_DEFAULT
 gtkfilechooserdefault: GTK_IS_FILE_CHOOSER_DEFAULT
 gtkfilechooserembed: GTK_FILE_CHOOSER_EMBED
@@ -8799,30 +8805,6 @@ gtkprintunixdialog: gtk_print_unix_dialog_get_page_setup_set
 gtkprogressbar: gtk_progress_bar_set_show_text
 gtkquery: GTK_QUERY
 gtkquery: GTK_IS_QUERY
-gtkrbtree: GTK_RBNODE_BLACK
-gtkrbtree: GTK_RBNODE_RED
-gtkrbtree: GTK_RBNODE_IS_PARENT
-gtkrbtree: GTK_RBNODE_IS_SELECTED
-gtkrbtree: GTK_RBNODE_IS_PRELIT
-gtkrbtree: GTK_RBNODE_IS_SEMI_COLLAPSED
-gtkrbtree: GTK_RBNODE_IS_SEMI_EXPANDED
-gtkrbtree: GTK_RBNODE_INVALID
-gtkrbtree: GTK_RBNODE_COLUMN_INVALID
-gtkrbtree: GTK_RBNODE_DESCENDANTS_INVALID
-gtkrbtree: GTK_RBNODE_NON_COLORS
-gtkrbtree: GTK_RBNODE_IS_SELECTED
-gtkrbtree: GTK_RBNODE_IS_PRELIT
-gtkrbtree: GTK_RBNODE_IS_SEMI_COLLAPSED
-gtkrbtree: GTK_RBNODE_IS_SEMI_EXPANDED
-gtkrbtree: GTK_RBNODE_INVALID
-gtkrbtree: GTK_RBNODE_COLUMN_INVALID
-gtkrbtree: GTK_RBNODE_DESCENDANTS_INVALID
-gtkrbtree: GTK_RBNODE_GET_COLOR
-gtkrbtree: GTK_RBNODE_SET_COLOR
-gtkrbtree: GTK_RBNODE_GET_HEIGHT
-gtkrbtree: GTK_RBNODE_SET_FLAG
-gtkrbtree: GTK_RBNODE_UNSET_FLAG
-gtkrbtree: GTK_RBNODE_FLAG_SET
 gtkrecentaction: GTK_RECENT_ACTION
 gtkrecentaction: GTK_IS_RECENT_ACTION
 gtkrecentaction: gtk_recent_action_new
@@ -8854,14 +8836,6 @@ gtkrecentmanager: GTK_RECENT_MANAGER_ERROR
 gtkrecentmanager: gtk_recent_info_get_application_info
 gtkrecentmanager: gtk_recent_info_create_app_info
 gtkrecentmanager: gtk_recent_info_get_gicon
-gtkscalebutton: GTK_SCALE_BUTTON
-gtkscalebutton: GTK_IS_SCALE_BUTTON
-gtkscalebutton: gtk_scale_button_new
-gtkscalebutton: gtk_scale_button_set_icons
-gtkscalebutton: gtk_scale_button_get_value
-gtkscalebutton: gtk_scale_button_set_value
-gtkscalebutton: gtk_scale_button_get_adjustment
-gtkscalebutton: gtk_scale_button_set_adjustment
 gtksearchenginebeagle: GTK_SEARCH_ENGINE_BEAGLE
 gtksearchenginebeagle: GTK_IS_SEARCH_ENGINE_BEAGLE
 gtksearchengine: GTK_SEARCH_ENGINE
@@ -8909,43 +8883,6 @@ gtkstock: GTK_STOCK_PRINT_PAUSED
 gtkstock: GTK_STOCK_PRINT_REPORT
 gtkstock: GTK_STOCK_PRINT_WARNING
 gtkstock: GTK_STOCK_ZOOM_
-gtkstyle: GTK_STYLE
-gtkstyle: GTK_IS_STYLE
-gtkstyle: GTK_STYLE_ATTACHED
-gtkstyle: gtk_style_new
-gtkstyle: gtk_style_copy
-gtkstyle: gtk_style_attach
-gtkstyle: gtk_style_detach
-gtkstyle: gtk_style_set_background
-gtkstyle: gtk_style_apply_default_background
-gtkstyle: gtk_style_lookup_icon_set
-gtkstyle: gtk_style_lookup_color
-gtkstyle: gtk_style_render_icon
-gtkstyle: gtk_paint_hline
-gtkstyle: gtk_paint_vline
-gtkstyle: gtk_paint_shadow
-gtkstyle: gtk_paint_arrow
-gtkstyle: gtk_paint_diamond
-gtkstyle: gtk_paint_box
-gtkstyle: gtk_paint_flat_box
-gtkstyle: gtk_paint_check
-gtkstyle: gtk_paint_option
-gtkstyle: gtk_paint_tab
-gtkstyle: gtk_paint_shadow_gap
-gtkstyle: gtk_paint_box_gap
-gtkstyle: gtk_paint_extension
-gtkstyle: gtk_paint_focus
-gtkstyle: gtk_paint_slider
-gtkstyle: gtk_paint_handle
-gtkstyle: gtk_paint_expander
-gtkstyle: gtk_paint_layout
-gtkstyle: gtk_paint_resize_grip
-gtkstyle: gtk_paint_spinner
-gtkstyle: gtk_style_get_style_property
-gtkstyle: gtk_style_get_valist
-gtkstyle: gtk_style_get
-gtkstyle: gtk_draw_insertion_cursor
-gtkstyle: gtk_style_has_context
 gtkstyleproperties: GTK_STYLE_PROPERTIES
 gtkstyleproperties: GTK_IS_STYLE_PROPERTIES
 gtkstyleproperties: gtk_style_properties_register_property
@@ -9089,15 +9026,6 @@ gtkthemingengine: gtk_theming_engine_get_margin
 gtkthemingengine: gtk_theming_engine_get_font
 gtkthemingengine: gtk_theming_engine_load
 gtkthemingengine: gtk_theming_engine_get_screen
-gtktimeline: GTK_TIMELINE
-gtktimeline: GTK_IS_TIMELINE
-gtktimeline: GTK_TIMELINE_DIRECTION_FORWARD
-gtktimeline: GTK_TIMELINE_DIRECTION_BACKWARD
-gtktimeline: GTK_TIMELINE_PROGRESS_LINEAR
-gtktimeline: GTK_TIMELINE_PROGRESS_EASE
-gtktimeline: GTK_TIMELINE_PROGRESS_EASE_IN
-gtktimeline: GTK_TIMELINE_PROGRESS_EASE_OUT
-gtktimeline: GTK_TIMELINE_PROGRESS_EASE_IN_OUT
 gtktoolbar: GTK_TOOLBAR_SPACE_EMPTY
 gtktoolbar: GTK_TOOLBAR_SPACE_LINE
 gtktoolbar: gtk_toolbar_set_icon_size
@@ -9167,9 +9095,6 @@ gtkviewport: gtk_viewport_get_hadjustment
 gtkviewport: gtk_viewport_get_vadjustment
 gtkviewport: gtk_viewport_set_hadjustment
 gtkviewport: gtk_viewport_set_vadjustment
-gtkvolumebutton: GTK_VOLUME_BUTTON
-gtkvolumebutton: GTK_IS_VOLUME_BUTTON
-gtkvolumebutton: gtk_volume_button_new
 gtkwidget: GTK_WIDGET_HELP_TOOLTIP
 gtkwidget: GTK_WIDGET_HELP_WHATS_THIS
 gtkwidget: gtk_widget_new
@@ -9275,7 +9200,7 @@ gtkxembed: GTK_XEMBED_PROTOCOL_VERSION
 ;; fgrep "GTK_" *.h >> names
 ;; then get rid of all the obvious junk
 
-;; omit gtkrc.h, gtkcellarea*, gtkstylecontext.h
+;; omit gtkrc.h, gtkcellarea*, gtkstylecontext.h, gtkstyle.h, gtkrbtree.h (internal to gtktreeview), gtktimeline.h
 
 (call-with-input-file "names"
   (lambda (p)

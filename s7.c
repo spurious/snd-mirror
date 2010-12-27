@@ -9799,6 +9799,9 @@ end: (substring \"01234\" 1 2) -> \"1\""
   return(x);
 }
 
+/* (set! (substring...) ...)? -- might require allocation
+ */
+
 
 #define USE_WRITE true
 #define USE_DISPLAY false
@@ -17718,6 +17721,9 @@ list has infinite length."
   
   return(small_int(0));
 }
+
+/* what about (length file)? 
+ */
 
 
 static s7_pointer list_copy(s7_scheme *sc, s7_pointer x, s7_pointer y, bool step)

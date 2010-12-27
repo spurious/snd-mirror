@@ -71,6 +71,7 @@ static void graph_redisplay(void)
   axis_ap->x0 = 0.0;
   axis_ap->x1 = 1.0;
 
+  if (ax->cr) cairo_destroy(ax->cr);
   ax->cr = gdk_cairo_create(ax->wn);
   cairo_push_group(ax->cr);
 
@@ -106,7 +107,6 @@ static void graph_redisplay(void)
   axis_ap->height = widget_height(graph_drawer);
   axis_ap->graph_x0 = 0;
 
-
   make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1 /* "srate" */, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
 
   ax->gc = gc;
@@ -140,7 +140,7 @@ static void graph_redisplay(void)
 
   cairo_pop_group_to_source(ax->cr);
   cairo_paint(ax->cr);
-  cairo_destroy(ax->cr);
+  /* cairo_destroy(ax->cr); */
   ax->cr = NULL;
 }
 

@@ -1147,7 +1147,7 @@ char *slist_selection(slist *lst)
   return(NULL);
 }
 
-/* TODO: cairo troubles:
+/* TODO: gtk3 cairo troubles:
  *
  *       lots of things leave an empty graph
  *       do meters work in rec?  in Motif they're drawn incorrectly
@@ -1173,7 +1173,9 @@ char *slist_selection(slist *lst)
  *  (see also goto_window above)
  *
  * the graph problems are all the same: the drawingarea widget is not updating itself when cairo draws on it.
- *   gdk_window_invalidate_rect does not help
+ *   gdk_window_invalidate_rect does not help, cairo is drawing, but I think I need both cairo_rectangle before
+ *   the pop source, and don't call cairo_destroy, and even then it needs an explicit expose event.  This seems
+ *   very buggy!
  *
  * TODO: try cairo-trace and the new GL surface (1.10.0)
  */
