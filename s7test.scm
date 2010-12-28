@@ -4084,6 +4084,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (list-tail '((1 2) (3 4)) 1) '((3 4)))
 (test (list-tail (list-tail '(1 2 3) 1) 1) '(3))
 (test (list-tail (list-tail (list-tail '(1 2 3 4) 1) 1) 1) '(4))
+(test (list-tail '(1 2) (list-tail '(0 . 1) 1)) '(2))
 
 (let ((x '(1 . 2))) (set-cdr! x x) (test (list-tail x 0) x))
 (let ((x '(1 . 2))) (set-cdr! x x) (test (list-tail x 1) (cdr x)))
@@ -4736,13 +4737,22 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (append '(1 2 . 3) '(4)) 'error)
 (test (append '(1 2 . 3)) '(1 2 . 3))
 (test (append '(4) '(1 2 . 3)) '(4 1 2 . 3))
+(test (append '() 12 . ()) 12)
+(test (append '(1) 12) '(1 . 12))
+(test (append '(1) 12 . ()) '(1 . 12))
+(test (append '() '() '(1) 12) '(1 . 12))
+(test (append '(1) '(2) '(3) 12) '(1 2 3 . 12))
+(test (append '(((1))) '(((2)))) '(((1)) ((2))))
+(test (append '() . (2)) 2)
+(test (append . (2)) 2)
+(test (append ''() '()) ''())
 
 (for-each
  (lambda (arg)
-   (test (append arg) arg))
+   (test (append arg) arg)
+   (test (append '() arg) arg)
+   (test (append '() '() '() arg) arg))
  (list "hi" #\a #f 'a-symbol (make-vector 3) abs 1 3.14 3/4 1.0+1.0i 0/0 #t #<unspecified> #<eof> '() #() (list 1 2) (cons 1 2) #(0) (lambda (a) (+ a 1))))
-
-(test (let ((ht (make-hash-table))) (set! (ht 'a) 123) (map values ht)) '((a . 123)))
 
 
 
@@ -4836,8 +4846,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (make-vector 0 'hi) '#())
 (test (make-vector 3 (make-vector 1 'hi)) '#(#(hi) #(hi) #(hi)))
 (test (make-vector 3 '#(hi)) '#(#(hi) #(hi) #(hi)))
-(test (make-vector 3 (list)) '#(() () ()))
-(test (make-vector 3 (make-vector 1 (make-vector 1 'hi))) '#(#(#(hi)) #(#(hi)) #(#(hi))))
+(test (make-vector 9/3 (list)) '#(() () ()))
+(test (make-vector 3/1 (make-vector 1 (make-vector 1 'hi))) '#(#(#(hi)) #(#(hi)) #(#(hi))))
 
 (test (let ((v (make-vector 3 0))) (set! (vector-ref v 1) 32) v) #(0 32 0))
 
@@ -6810,6 +6820,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
 
 (test (hash-table? (make-vector 3 '())) #f)
+(test (let ((ht (make-hash-table))) (set! (ht 'a) 123) (map values ht)) '((a . 123)))
 
 (let ((ht (make-hash-table)))	
   (test (hash-table-ref ht 'not-a-key) #f)
@@ -56120,6 +56131,23 @@ etc....
 (num-test (string->number "-9+9e-9i" 10) -9+9e-09i)  ; why the 09?
 (num-test (string->number "#e-.9e+9" 10) -900000000)
 (num-test (string->number "9-9.e+9i" 10) 9-9000000000i)
+
+(num-test #e+32/1-0.i 32)
+(num-test #e+32.-0/1i 32)
+(num-test #e-32/1+.0i -32)
+(num-test #e+2.-0/31i 2)
+(num-test +2-0.e-1i 2.0)
+(num-test +2.-0e-1i 2.0)
+(num-test #b#e.01 1/4)
+(num-test #e#b.01 1/4)
+(num-test #b#e10. 2)
+(num-test #e#b10. 2)
+(num-test #b#e0.e11 0)
+(num-test #b#e1.e10 1024)
+(num-test #b#e-0.e+1 0)
+(num-test #b#e+.1e-0 1/2)
+(num-test #b#e+1.e-0 1)
+(num-test #b#e-1.e+0 -1)
 
 ;; weird cases:
 (num-test (string->number "#b1000" 8) 8)

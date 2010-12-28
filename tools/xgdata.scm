@@ -7889,6 +7889,97 @@
 (CINT-29x "GTK_TARGET_OTHER_APP" "GtkTargetFlags")
 (CINT-29x "GTK_TARGET_OTHER_WIDGET" "GtkTargetFlags")
 
+(CINT-29x "GTK_ALIGN_FILL" "GtkAlign")
+(CINT-29x "GTK_ALIGN_START" "GtkAlign")
+(CINT-29x "GTK_ALIGN_END" "GtkAlign")
+(CINT-29x "GTK_ALIGN_CENTER" "GtkAlign")
+
+(CINT-29x "GTK_ARROW_NONE" "GtkArrowType")
+
+;(CINT-29x "GTK_IM_PREEDIT_NOTHING" "GtkIMPreeditStyle")
+;(CINT-29x "GTK_IM_PREEDIT_CALLBACK" "GtkIMPreeditStyle")
+;(CINT-29x "GTK_IM_PREEDIT_NONE" "GtkIMPreeditStyle")
+
+;(CINT-29x "GTK_IM_STATUS_NOTHING" "GtkIMStatusStyle")
+;(CINT-29x "GTK_IM_STATUS_CALLBACK" "GtkIMStatusStyle")
+;(CINT-29x "GTK_IM_STATUS_NONE" "GtkIMStatusStyle")
+
+;; printer stuff
+;(CINT-29x "GTK_PRINT_PAGES_ALL" "GtkPrintPages")
+;(CINT-29x "GTK_PRINT_PAGES_CURRENT" "GtkPrintPages")
+;(CINT-29x "GTK_PRINT_PAGES_RANGES" "GtkPrintPages")
+
+;(CINT-29x "GTK_PRINT_PAGES_SELECTION" "GtkPrintPages")
+;(CINT-29x "GTK_PAGE_SET_ALL" "GtkPageSet")
+;(CINT-29x "GTK_PAGE_SET_EVEN" "GtkPageSet")
+;(CINT-29x "GTK_PAGE_SET_ODD" "GtkPageSet")
+
+;(CINT-29x "GTK_NUMBER_UP_LAYOUT_LEFT_TO_RIGHT_TOP_TO_BOTTOM" "GtkNumberUpLayout")
+;(CINT-29x "GTK_NUMBER_UP_LAYOUT_LEFT_TO_RIGHT_BOTTOM_TO_TOP" "GtkNumberUpLayout")
+;(CINT-29x "GTK_NUMBER_UP_LAYOUT_RIGHT_TO_LEFT_TOP_TO_BOTTOM" "GtkNumberUpLayout")
+;(CINT-29x "GTK_NUMBER_UP_LAYOUT_RIGHT_TO_LEFT_BOTTOM_TO_TOP" "GtkNumberUpLayout")
+;(CINT-29x "GTK_NUMBER_UP_LAYOUT_TOP_TO_BOTTOM_LEFT_TO_RIGHT" "GtkNumberUpLayout")
+;(CINT-29x "GTK_NUMBER_UP_LAYOUT_TOP_TO_BOTTOM_RIGHT_TO_LEFT" "GtkNumberUpLayout")
+;(CINT-29x "GTK_NUMBER_UP_LAYOUT_BOTTOM_TO_TOP_LEFT_TO_RIGHT" "GtkNumberUpLayout")
+;(CINT-29x "GTK_NUMBER_UP_LAYOUT_BOTTOM_TO_TOP_RIGHT_TO_LEFT" "GtkNumberUpLayout")
+
+;(CINT-29x "GTK_PAGE_ORIENTATION_PORTRAIT" "GtkPageOrientation")
+;(CINT-29x "GTK_PAGE_ORIENTATION_LANDSCAPE" "GtkPageOrientation")
+;(CINT-29x "GTK_PAGE_ORIENTATION_REVERSE_PORTRAIT" "GtkPageOrientation")
+;(CINT-29x "GTK_PAGE_ORIENTATION_REVERSE_LANDSCAPE" "GtkPageOrientation")
+
+;(CINT-29x "GTK_PRINT_QUALITY_LOW" "GtkPrintQuality")
+;(CINT-29x "GTK_PRINT_QUALITY_NORMAL" "GtkPrintQuality")
+;(CINT-29x "GTK_PRINT_QUALITY_HIGH" "GtkPrintQuality")
+;(CINT-29x "GTK_PRINT_QUALITY_DRAFT" "GtkPrintQuality")
+
+;(CINT-29x "GTK_PRINT_DUPLEX_SIMPLEX" "GtkPrintDuplex")
+;(CINT-29x "GTK_PRINT_DUPLEX_HORIZONTAL" "GtkPrintDuplex")
+;(CINT-29x "GTK_PRINT_DUPLEX_VERTICAL" "GtkPrintDuplex")
+
+;(CINT-29x "GTK_UNIT_PIXEL" "GtkUnit")
+;(CINT-29x "GTK_UNIT_POINTS" "GtkUnit")
+;(CINT-29x "GTK_UNIT_INCH" "GtkUnit")
+;(CINT-29x "GTK_UNIT_MM" "GtkUnit")
+
+;; these are still undeprecated?
+;(CINT-29x "GTK_STATE_FLAG_ACTIVE" "GtkStateFlags")
+;(CINT-29x "GTK_STATE_FLAG_PRELIGHT" "GtkStateFlags")
+;(CINT-29x "GTK_STATE_FLAG_SELECTED" "GtkStateFlags")
+;(CINT-29x "GTK_STATE_FLAG_INSENSITIVE" "GtkStateFlags")
+;(CINT-29x "GTK_STATE_FLAG_INCONSISTENT" "GtkStateFlags")
+;(CINT-29x "GTK_STATE_FLAG_FOCUSED" "GtkStateFlags")
+
+(CINT-29x "GTK_TOOL_PALETTE_DRAG_ITEMS" "GtkToolPaletteDragTargets")
+(CINT-29x "GTK_TOOL_PALETTE_DRAG_GROUPS" "GtkToolPaletteDragTargets")
+
+(CSTR-29x "GTK_STOCK_DIALOG_AUTHENTICATION")
+(CSTR-29x "GTK_STOCK_PAGE_SETUP")
+(CSTR-29x "GTK_STOCK_PRINT_ERROR")
+(CSTR-29x "GTK_STOCK_PRINT_PAUSED")
+(CSTR-29x "GTK_STOCK_PRINT_REPORT")
+(CSTR-29x "GTK_STOCK_PRINT_WARNING")
+
+(CFNC-29x "void gtk_tree_view_set_cursor_on_cell GtkTreeView* tree_view GtkTreePath* path GtkTreeViewColumn* focus_column GtkCellRenderer* focus_cell gboolean start_editing")
+(CFNC-29x "void gtk_tree_view_set_rubber_banding GtkTreeView* tree_view gboolean enable")
+(CFNC-29x "gboolean gtk_tree_view_get_rubber_banding GtkTreeView* tree_view")
+(CFNC-29x "void gtk_tooltip_set_markup GtkTooltip* tooltip gchar* markup" 'const)
+(CFNC-29x "void gtk_tooltip_set_icon GtkTooltip* tooltip GdkPixbuf* pixbuf")
+(CFNC-29x "void gtk_tooltip_set_icon_from_stock GtkTooltip* tooltip gchar* stock_id GtkIconSize size" 'const)
+(CFNC-29x "void gtk_tooltip_set_custom GtkTooltip* tooltip GtkWidget* custom_widget")
+(CFNC-29x "void gtk_tooltip_trigger_tooltip_query GdkDisplay* display")
+(CFNC-29x "void gtk_button_set_image_position GtkButton* button GtkPositionType position")
+(CFNC-29x "GtkPositionType gtk_button_get_image_position GtkButton* button")
+(CFNC-29x "gboolean gtk_show_uri GdkScreen* screen gchar* uri guint32 timestamp GError** [error]" 'const)
+(CFNC-29x "GtkTreeViewColumn* gtk_tree_view_column_new_with_area GtkCellArea* area")
+(CFNC-29x "GtkWidget* gtk_tree_view_column_get_button GtkTreeViewColumn* tree_column")
+(CFNC-29x "void gtk_tree_view_column_focus_cell GtkTreeViewColumn* tree_column GtkCellRenderer* cell")
+
+(CCAST-29x "GTK_ORIENTABLE" "GtkOrientable*")
+(CCHK-29x "GTK_IS_ORIENTABLE" "GtkOrientable*")
+(CFNC-29x "void gtk_orientable_set_orientation GtkOrientable* orientable GtkOrientation orientation")
+(CFNC-29x "GtkOrientation gtk_orientable_get_orientation GtkOrientable* orientable")
+
 
 #|
 (CSTR-29x "GTK_STYLE_PROPERTY_BACKGROUND_COLOR")
@@ -8182,15 +8273,8 @@
 gtkaboutdialog: gtk_show_about_dialog
 gtkaboutdialog: gtk_about_dialog_set_license_type
 gtkaboutdialog: gtk_about_dialog_get_license_type
-gtkaccelgroup: gtk_accelerator_get_default_mod_mask
-gtkaccelmap: gtk_accel_map_load_scanner
 gtkaccelmap: gtk_accel_map_lock_path
 gtkaccelmap: gtk_accel_map_unlock_path
-gtkactiongroup: gtk_action_group_add_radio_actions
-gtkactiongroup: gtk_action_group_add_actions_full
-gtkactiongroup: gtk_action_group_add_radio_actions_full
-gtkactiongroup: gtk_action_group_set_translate_func
-gtkactiongroup: gtk_action_group_translate_string
 gtkaction: gtk_action_get_accel_path
 gtkaction: gtk_action_block_activate
 gtkaction: gtk_action_unblock_activate
@@ -8240,9 +8324,6 @@ gtkapplication: gtk_application_add_window
 gtkapplication: gtk_application_remove_window
 gtkapplication: gtk_application_get_windows
 gtkassistant: gtk_assistant_commit
-gtkbindings: gtk_bindings_activate_event
-gtkbindings: gtk_binding_entry_add_signal
-gtkbindings: gtk_binding_entry_add_signall
 gtkbuildable: GTK_BUILDABLE
 gtkbuildable: GTK_IS_BUILDABLE
 gtkbuildable: gtk_buildable_set_name
@@ -8282,35 +8363,9 @@ gtkbuilder: gtk_builder_get_translation_domain
 gtkbuilder: gtk_builder_value_from_string
 gtkbuilder: gtk_builder_value_from_string_type
 gtkbuilder: GTK_BUILDER_WARN_INVALID_CHILD_TYPE
-gtkbutton: gtk_button_pressed
-gtkbutton: gtk_button_released
-gtkbutton: gtk_button_enter
-gtkbutton: gtk_button_leave
-gtkbutton: gtk_button_set_image_position
-gtkbutton: gtk_button_get_image_position
-gtkcelllayout: gtk_cell_layout_get_area
-gtkcellrenderer: GTK_CELL_RENDERER_MODE_INERT
-gtkcellrenderer: GTK_CELL_RENDERER_MODE_ACTIVATABLE
-gtkcellrenderer: GTK_CELL_RENDERER_MODE_EDITABLE
-gtkcellrenderer: gtk_cell_renderer_get_preferred_size
-gtkcellrenderer: gtk_cell_renderer_get_aligned_area
-gtkcellrenderer: gtk_cell_renderer_get_size
-gtkcellrenderer: gtk_cell_renderer_render
-gtkcellrenderer: gtk_cell_renderer_is_activatable
-gtkcellview: gtk_cell_view_get_size_of_row
-gtkcellview: gtk_cell_view_set_background_rgba
-gtkclipboard: gtk_clipboard_set_with_owner
 gtkclipboard: gtk_clipboard_request_uris
 gtkclipboard: gtk_clipboard_wait_for_uris
 gtkclipboard: gtk_clipboard_wait_is_uris_available
-gtkcolorbutton: gtk_color_button_new_with_rgba
-gtkcolorbutton: gtk_color_button_set_rgba
-gtkcolorbutton: gtk_color_button_get_rgba
-gtkcolorsel: gtk_color_selection_set_current_rgba
-gtkcolorsel: gtk_color_selection_get_current_rgba
-gtkcolorsel: gtk_color_selection_set_previous_rgba
-gtkcolorsel: gtk_color_selection_get_previous_rgba
-gtkcolorsel: gtk_color_selection_set_change_palette_with_screen_hook
 gtkcombobox: gtk_combo_box_get_row_separator_func
 gtkcombobox: gtk_combo_box_get_popup_accessible
 gtkcontainer: gtk_container_propagate_draw
@@ -8352,12 +8407,7 @@ gtkcssprovider: gtk_css_provider_get_default
 gtkcssprovider: gtk_css_provider_get_named
 gtkcustompaperunixdialog: GTK_CUSTOM_PAPER_UNIX_DIALOG
 gtkcustompaperunixdialog: GTK_IS_CUSTOM_PAPER_UNIX_DIALOG
-gtkdialog: gtk_dialog_set_alternative_button_order
-gtkdnd: gtk_drag_dest_set_proxy
-gtkentrycompletion: gtk_entry_completion_new_with_area
 gtkentry: gtk_entry_get_text_area
-gtkentry: gtk_entry_set_inner_border
-gtkentry: gtk_entry_get_inner_border
 gtkentry: gtk_entry_get_icon_storage_type
 gtkentry: gtk_entry_get_icon_pixbuf
 gtkentry: gtk_entry_get_icon_stock
@@ -8365,53 +8415,6 @@ gtkentry: gtk_entry_get_icon_gicon
 gtkentry: gtk_entry_get_icon_area
 gtkentry: gtk_entry_im_context_filter_keypress
 gtkentry: gtk_entry_reset_im_context
-gtkenums: GTK_ALIGN_FILL
-gtkenums: GTK_ALIGN_START
-gtkenums: GTK_ALIGN_END
-gtkenums: GTK_ALIGN_CENTER
-gtkenums: GTK_ARROW_NONE
-gtkenums: GTK_IM_PREEDIT_NOTHING
-gtkenums: GTK_IM_PREEDIT_CALLBACK
-gtkenums: GTK_IM_PREEDIT_NONE
-gtkenums: GTK_IM_STATUS_NOTHING
-gtkenums: GTK_IM_STATUS_CALLBACK
-gtkenums: GTK_IM_STATUS_NONE
-gtkenums: GTK_PRINT_PAGES_ALL
-gtkenums: GTK_PRINT_PAGES_CURRENT
-gtkenums: GTK_PRINT_PAGES_RANGES
-gtkenums: GTK_PRINT_PAGES_SELECTION
-gtkenums: GTK_PAGE_SET_ALL
-gtkenums: GTK_PAGE_SET_EVEN
-gtkenums: GTK_PAGE_SET_ODD
-gtkenums: GTK_NUMBER_UP_LAYOUT_LEFT_TO_RIGHT_TOP_TO_BOTTOM
-gtkenums: GTK_NUMBER_UP_LAYOUT_LEFT_TO_RIGHT_BOTTOM_TO_TOP
-gtkenums: GTK_NUMBER_UP_LAYOUT_RIGHT_TO_LEFT_TOP_TO_BOTTOM
-gtkenums: GTK_NUMBER_UP_LAYOUT_RIGHT_TO_LEFT_BOTTOM_TO_TOP
-gtkenums: GTK_NUMBER_UP_LAYOUT_TOP_TO_BOTTOM_LEFT_TO_RIGHT
-gtkenums: GTK_NUMBER_UP_LAYOUT_TOP_TO_BOTTOM_RIGHT_TO_LEFT
-gtkenums: GTK_NUMBER_UP_LAYOUT_BOTTOM_TO_TOP_LEFT_TO_RIGHT
-gtkenums: GTK_NUMBER_UP_LAYOUT_BOTTOM_TO_TOP_RIGHT_TO_LEFT
-gtkenums: GTK_PAGE_ORIENTATION_PORTRAIT
-gtkenums: GTK_PAGE_ORIENTATION_LANDSCAPE
-gtkenums: GTK_PAGE_ORIENTATION_REVERSE_PORTRAIT
-gtkenums: GTK_PAGE_ORIENTATION_REVERSE_LANDSCAPE
-gtkenums: GTK_PRINT_QUALITY_LOW
-gtkenums: GTK_PRINT_QUALITY_NORMAL
-gtkenums: GTK_PRINT_QUALITY_HIGH
-gtkenums: GTK_PRINT_QUALITY_DRAFT
-gtkenums: GTK_PRINT_DUPLEX_SIMPLEX
-gtkenums: GTK_PRINT_DUPLEX_HORIZONTAL
-gtkenums: GTK_PRINT_DUPLEX_VERTICAL
-gtkenums: GTK_UNIT_PIXEL
-gtkenums: GTK_UNIT_POINTS
-gtkenums: GTK_UNIT_INCH
-gtkenums: GTK_UNIT_MM
-gtkenums: GTK_STATE_FLAG_ACTIVE
-gtkenums: GTK_STATE_FLAG_PRELIGHT
-gtkenums: GTK_STATE_FLAG_SELECTED
-gtkenums: GTK_STATE_FLAG_INSENSITIVE
-gtkenums: GTK_STATE_FLAG_INCONSISTENT
-gtkenums: GTK_STATE_FLAG_FOCUSED
 gtkfilechooserdefault: GTK_FILE_CHOOSER_DEFAULT
 gtkfilechooserdefault: GTK_IS_FILE_CHOOSER_DEFAULT
 gtkfilechooserembed: GTK_FILE_CHOOSER_EMBED
@@ -8424,32 +8427,12 @@ gtkfilechooser: GTK_FILE_CHOOSER_ERROR_BAD_FILENAME
 gtkfilechooser: GTK_FILE_CHOOSER_ERROR_ALREADY_EXISTS
 gtkfilechooser: GTK_FILE_CHOOSER_ERROR_INCOMPLETE_HOSTNAME
 gtkfilechooser: gtk_file_chooser_error_quark
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_FIRST
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_ACTION
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_FILTER
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_LOCAL_ONLY
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_PREVIEW_WIDGET
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_PREVIEW_WIDGET_ACTIVE
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_USE_PREVIEW_LABEL
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_EXTRA_WIDGET
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_SELECT_MULTIPLE
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_SHOW_HIDDEN
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_DO_OVERWRITE_CONFIRMATION
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_CREATE_FOLDERS
-gtkfilechooserutils: GTK_FILE_CHOOSER_PROP_LAST
 gtkfilesystem: GTK_FILE_SYSTEM
 gtkfilesystem: GTK_IS_FILE_SYSTEM
 gtkfilesystem: GTK_FOLDER
 gtkfilesystem: GTK_IS_FOLDER
 gtkfilesystemmodel: GTK_FILE_SYSTEM_MODEL
 gtkfilesystemmodel: GTK_IS_FILE_SYSTEM_MODEL
-gtkfontsel: gtk_font_selection_dialog_get_font
-gtkgradient: gtk_gradient_new_linear
-gtkgradient: gtk_gradient_new_radial
-gtkgradient: gtk_gradient_add_color_stop
-gtkgradient: gtk_gradient_ref
-gtkgradient: gtk_gradient_unref
-gtkgradient: gtk_gradient_resolve
 gtkhsv: GTK_HSV
 gtkhsv: GTK_IS_HSV
 gtkhsv: gtk_hsv_new
@@ -8461,45 +8444,29 @@ gtkhsv: gtk_hsv_is_adjusting
 gtkhsv: gtk_hsv_to_rgb
 gtkhsv: gtk_rgb_to_hsv
 gtkiconfactory: gtk_icon_size_lookup_for_settings
-gtkiconfactory: gtk_icon_set_render_icon
-gtkiconfactory: gtk_icon_source_set_icon_name
 gtkicontheme: GTK_ICON_LOOKUP_FORCE_SIZE
 gtkicontheme: GTK_ICON_THEME_ERROR
 gtkicontheme: GTK_ICON_THEME_NOT_FOUND
 gtkicontheme: GTK_ICON_THEME_FAILED
 gtkicontheme: gtk_icon_theme_error_quark
-gtkicontheme: gtk_icon_theme_set_search_path
 gtkicontheme: gtk_icon_theme_choose_icon
 gtkicontheme: gtk_icon_theme_lookup_by_gicon
 gtkicontheme: gtk_icon_info_new_for_pixbuf
 gtkicontheme: gtk_icon_info_load_symbolic
 gtkicontheme: gtk_icon_info_load_symbolic_for_context
 gtkicontheme: gtk_icon_info_load_symbolic_for_style
-gtkicontheme: gtk_icon_info_get_attach_points
 gtkiconview: gtk_icon_view_set_item_orientation
 gtkiconview: gtk_icon_view_get_item_orientation
 gtkimage: GTK_IMAGE_GICON
 gtkimage: gtk_image_new_from_gicon
 gtkimage: gtk_image_set_from_gicon
-gtkimage: gtk_image_get_icon_name
 gtkimage: gtk_image_get_gicon
 gtkimcontextsimpleseqs: gtk_compose_seqs_compact
 gtkimmulticontext: gtk_im_multicontext_get_context_id
 gtkimmulticontext: gtk_im_multicontext_set_context_id
-gtkinfobar: gtk_info_bar_new_with_buttons
-gtkinfobar: gtk_info_bar_add_buttons
 gtkinvisible: gtk_invisible_new_for_screen
 gtkinvisible: gtk_invisible_set_screen
 gtkinvisible: gtk_invisible_get_screen
-gtklayout: gtk_layout_get_hadjustment
-gtklayout: gtk_layout_get_vadjustment
-gtklayout: gtk_layout_set_hadjustment
-gtklayout: gtk_layout_set_vadjustment
-gtkliststore: gtk_tree_model_get
-gtkliststore: gtk_list_store_set_value
-gtkliststore: gtk_list_store_set_valuesv
-gtkliststore: gtk_list_store_set_valist
-gtkliststore: gtk_list_store_iter_is_valid
 gtkmain: gtk_get_major_version
 gtkmain: gtk_get_minor_version
 gtkmain: gtk_get_micro_version
@@ -8513,32 +8480,6 @@ gtkmain: gtk_interface_age
 gtkmain: gtk_parse_args
 gtkmain: gtk_init_with_args
 gtkmain: gtk_get_option_group
-gtkmain: gtk_init_abi_check
-gtkmain: gtk_init_check_abi_check
-gtkmain: gtk_quit_add_destroy
-gtkmain: gtk_quit_add
-gtkmain: gtk_quit_add_full
-gtkmain: gtk_quit_remove
-gtkmain: gtk_quit_remove_by_data
-gtkmenu: gtk_menu_popup_for_device
-gtkmenu: gtk_menu_attach_to_widget
-gtkmessagedialog: GTK_MESSAGE_DIALOG
-gtkmessagedialog: GTK_IS_MESSAGE_DIALOG
-gtkmessagedialog: gtk_message_dialog_new
-gtkmessagedialog: gtk_message_dialog_new_with_markup
-gtkmessagedialog: gtk_message_dialog_set_image
-gtkmessagedialog: gtk_message_dialog_get_image
-gtkmessagedialog: gtk_message_dialog_set_markup
-gtkmessagedialog: gtk_message_dialog_format_secondary_text
-gtkmessagedialog: gtk_message_dialog_format_secondary_markup
-gtkmodifierstyle: GTK_MODIFIER_STYLE
-gtkmodifierstyle: GTK_IS_MODIFIER_STYLE
-gtkmodifierstyle: gtk_modifier_style_new
-gtkmodifierstyle: gtk_modifier_style_set_background_color
-gtkmodifierstyle: gtk_modifier_style_set_color
-gtkmodifierstyle: gtk_modifier_style_set_font
-gtkmodifierstyle: gtk_modifier_style_map_color
-gtkmodifierstyle: gtk_modifier_style_set_color_property
 gtkmodules: gtk_modules_args
 gtkmountoperation: GTK_MOUNT_OPERATION
 gtkmountoperation: GTK_IS_MOUNT_OPERATION
@@ -8553,10 +8494,6 @@ gtkoffscreenwindow: GTK_IS_OFFSCREEN_WINDOW
 gtkoffscreenwindow: gtk_offscreen_window_new
 gtkoffscreenwindow: gtk_offscreen_window_get_surface
 gtkoffscreenwindow: gtk_offscreen_window_get_pixbuf
-gtkorientable: GTK_ORIENTABLE
-gtkorientable: GTK_IS_ORIENTABLE
-gtkorientable: gtk_orientable_set_orientation
-gtkorientable: gtk_orientable_get_orientation
 gtkpagesetup: GTK_PAGE_SETUP
 gtkpagesetup: GTK_IS_PAGE_SETUP
 gtkpagesetup: gtk_page_setup_new
@@ -8587,9 +8524,6 @@ gtkpagesetupunixdialog: GTK_IS_PAGE_SETUP_UNIX_DIALOG
 gtkpagesetupunixdialog: gtk_page_setup_unix_dialog_new
 gtkpagesetupunixdialog: gtk_page_setup_unix_dialog_get_page_setup
 gtkpagesetupunixdialog: gtk_page_setup_unix_dialog_get_print_settings
-gtkpaned: gtk_paned_add
-gtkpaned: gtk_paned_pack
-gtkpaned: gtk_paned_get_child
 gtkpapersize: GTK_PAPER_NAME_A
 gtkpapersize: GTK_PAPER_NAME_A
 gtkpapersize: GTK_PAPER_NAME_LETTER
@@ -8813,56 +8747,15 @@ gtkrecentaction: gtk_recent_action_get_show_numbers
 gtkrecentaction: gtk_recent_action_set_show_numbers
 gtkrecentchooserdefault: GTK_RECENT_CHOOSER_DEFAULT
 gtkrecentchooserdefault: GTK_IS_RECENT_CHOOSER_DEFAULT
-gtkrecentchooserdialog: gtk_recent_chooser_dialog_new
-gtkrecentchooserdialog: gtk_recent_chooser_dialog_new_for_manager
+;gtkrecentchooserdialog: gtk_recent_chooser_dialog_new
+;gtkrecentchooserdialog: gtk_recent_chooser_dialog_new_for_manager
 gtkrecentchooser: GTK_RECENT_CHOOSER_ERROR
-gtkrecentchoosermenu: gtk_recent
-gtkrecentchoosermenu: gtk_recent
-gtkrecentchoosermenu: gtk_recent
-gtkrecentchoosermenu: gtk_recent
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_FIRST
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_RECENT_MANAGER
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_SHOW_PRIVATE
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_SHOW_NOT_FOUND
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_SHOW_TIPS
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_SHOW_ICONS
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_SELECT_MULTIPLE
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_LIMIT
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_LOCAL_ONLY
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_SORT_TYPE
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_FILTER
-gtkrecentchooserutils: GTK_RECENT_CHOOSER_PROP_LAST
 gtkrecentmanager: GTK_RECENT_MANAGER_ERROR
 gtkrecentmanager: gtk_recent_info_get_application_info
 gtkrecentmanager: gtk_recent_info_create_app_info
 gtkrecentmanager: gtk_recent_info_get_gicon
-gtksearchenginebeagle: GTK_SEARCH_ENGINE_BEAGLE
-gtksearchenginebeagle: GTK_IS_SEARCH_ENGINE_BEAGLE
-gtksearchengine: GTK_SEARCH_ENGINE
-gtksearchengine: GTK_IS_SEARCH_ENGINE
-gtksearchenginequartz: GTK_SEARCH_ENGINE_QUARTZ
-gtksearchenginequartz: GTK_IS_SEARCH_ENGINE_QUARTZ
-gtksearchenginesimple: GTK_SEARCH_ENGINE_SIMPLE
-gtksearchenginesimple: GTK_IS_SEARCH_ENGINE_SIMPLE
-gtksearchenginetracker: GTK_SEARCH_ENGINE_TRACKER
-gtksearchenginetracker: GTK_IS_SEARCH_ENGINE_TRACKER
 gtkselection: gtk_selection_owner_set_for_display
 gtkselection: gtk_selection_data_get_data
-gtksettings: GTK_SETTINGS
-gtksettings: GTK_IS_SETTINGS
-gtksettings: gtk_settings_get_default
-gtksettings: gtk_settings_install_property
-gtksettings: gtk_settings_install_property_parser
-gtksettings: gtk_rc_property_parse_color
-gtksettings: gtk_rc_property_parse_enum
-gtksettings: gtk_rc_property_parse_flags
-gtksettings: gtk_rc_property_parse_requisition
-gtksettings: gtk_rc_property_parse_border
-gtksettings: gtk_settings_set_property_value
-gtksettings: gtk_settings_set_string_property
-gtksettings: gtk_settings_set_long_property
-gtksettings: gtk_settings_set_double_property
-gtkshow: gtk_show_uri
 gtksizerequest: gtk_distribute_natural_allocation
 gtkstatusicon: gtk_status_icon_new_from_gicon
 gtkstatusicon: gtk_status_icon_set_from_gicon
@@ -8876,29 +8769,6 @@ gtkstatusicon: gtk_status_icon_get_tooltip_text
 gtkstatusicon: gtk_status_icon_get_tooltip_markup
 gtkstatusicon: gtk_status_icon_get_x
 gtkstock: gtk_stock_set_translate_func
-gtkstock: GTK_STOCK_DIALOG_AUTHENTICATION
-gtkstock: GTK_STOCK_PAGE_SETUP
-gtkstock: GTK_STOCK_PRINT_ERROR
-gtkstock: GTK_STOCK_PRINT_PAUSED
-gtkstock: GTK_STOCK_PRINT_REPORT
-gtkstock: GTK_STOCK_PRINT_WARNING
-gtkstock: GTK_STOCK_ZOOM_
-gtkstyleproperties: GTK_STYLE_PROPERTIES
-gtkstyleproperties: GTK_IS_STYLE_PROPERTIES
-gtkstyleproperties: gtk_style_properties_register_property
-gtkstyleproperties: gtk_style_properties_lookup_property
-gtkstyleproperties: gtk_style_properties_new
-gtkstyleproperties: gtk_style_properties_map_color
-gtkstyleproperties: gtk_style_properties_lookup_color
-gtkstyleproperties: gtk_style_properties_set_property
-gtkstyleproperties: gtk_style_properties_set_valist
-gtkstyleproperties: gtk_style_properties_set
-gtkstyleproperties: gtk_style_properties_get_property
-gtkstyleproperties: gtk_style_properties_get_valist
-gtkstyleproperties: gtk_style_properties_get
-gtkstyleproperties: gtk_style_properties_unset_property
-gtkstyleproperties: gtk_style_properties_clear
-gtkstyleproperties: gtk_style_properties_merge
 gtkstyleprovider: GTK_STYLE_PROVIDER
 gtkstyleprovider: GTK_IS_STYLE_PROVIDER
 gtkstyleprovider: GTK_STYLE_PROVIDER_PRIORITY_FALLBACK
@@ -8909,91 +8779,8 @@ gtkstyleprovider: GTK_STYLE_PROVIDER_PRIORITY_USER
 gtkstyleprovider: gtk_style_provider_get_style
 gtkstyleprovider: gtk_style_provider_get_style_property
 gtkstyleprovider: gtk_style_provider_get_icon_factory
-gtksymboliccolor: gtk_symbolic_color_new_literal
-gtksymboliccolor: gtk_symbolic_color_new_name
-gtksymboliccolor: gtk_symbolic_color_new_shade
-gtksymboliccolor: gtk_symbolic_color_new_alpha
-gtksymboliccolor: gtk_symbolic_color_new_mix
-gtksymboliccolor: gtk_symbolic_color_ref
-gtksymboliccolor: gtk_symbolic_color_unref
-gtksymboliccolor: gtk_symbolic_color_resolve
 gtktextdisplay: gtk_text_layout_draw
-gtktextiter: gtk_text_buffer_get_iter_
-gtktextiter: gtk_text_iter_forward_visible_word_end
-gtktextiter: gtk_text_iter_backward_visible_word_start
-gtktextiter: gtk_text_iter_forward_visible_word_ends
-gtktextiter: gtk_text_iter_backward_visible_word_starts
-gtktextiter: gtk_text_iter_forward_visible_cursor_position
-gtktextiter: gtk_text_iter_backward_visible_cursor_position
-gtktextiter: gtk_text_iter_forward_visible_cursor_positions
-gtktextiter: gtk_text_iter_backward_visible_cursor_positions
-gtktextlayout: GTK_TEXT_USE_INTERNAL_UNSUPPORTED_API
-gtktextlayout: GTK_TEXT_LAYOUT
-gtktextlayout: GTK_IS_TEXT_LAYOUT
-gtktextlayout: GTK_COMPILATION
-gtktextlayout: gtk_text_attr_appearance_type
-gtktextlayout: gtk_text_layout_new
-gtktextlayout: gtk_text_layout_set_buffer
-gtktextlayout: gtk_text_layout_get_buffer
-gtktextlayout: gtk_text_layout_set_default_style
-gtktextlayout: gtk_text_layout_set_contexts
-gtktextlayout: gtk_text_layout_set_cursor_direction
-gtktextlayout: gtk_text_layout_set_overwrite_mode
-gtktextlayout: gtk_text_layout_set_keyboard_direction
-gtktextlayout: gtk_text_layout_default_style_changed
-gtktextlayout: gtk_text_layout_set_screen_width
-gtktextlayout: gtk_text_layout_set_preedit_string
-gtktextlayout: gtk_text_layout_set_cursor_visible
-gtktextlayout: gtk_text_layout_get_cursor_visible
-gtktextlayout: gtk_text_layout_get_size
-gtktextlayout: gtk_text_layout_get_lines
-gtktextlayout: gtk_text_layout_wrap_loop_start
-gtktextlayout: gtk_text_layout_wrap_loop_end
-gtktextlayout: gtk_text_layout_get_line_display
-gtktextlayout: gtk_text_layout_free_line_display
-gtktextlayout: gtk_text_layout_get_line_at_y
-gtktextlayout: gtk_text_layout_get_iter_at_pixel
-gtktextlayout: gtk_text_layout_get_iter_at_position
-gtktextlayout: gtk_text_layout_invalidate
-gtktextlayout: gtk_text_layout_invalidate_cursors
-gtktextlayout: gtk_text_layout_free_line_data
-gtktextlayout: gtk_text_layout_is_valid
-gtktextlayout: gtk_text_layout_validate_yrange
-gtktextlayout: gtk_text_layout_validate
-gtktextlayout: gtk_text_layout_wrap
-gtktextlayout: gtk_text_layout_changed
-gtktextlayout: gtk_text_layout_cursors_changed
-gtktextlayout: gtk_text_layout_get_iter_location
-gtktextlayout: gtk_text_layout_get_line_yrange
-gtktextlayout: gtk_text_layout_get_cursor_locations
-gtktextlayout: gtk_text_layout_clamp_iter_to_vrange
-gtktextlayout: gtk_text_layout_move_iter_to_line_end
-gtktextlayout: gtk_text_layout_move_iter_to_previous_line
-gtktextlayout: gtk_text_layout_move_iter_to_next_line
-gtktextlayout: gtk_text_layout_move_iter_to_x
-gtktextlayout: gtk_text_layout_move_iter_visually
-gtktextlayout: gtk_text_layout_iter_starts_line
-gtktextlayout: gtk_text_layout_get_iter_at_line
-gtktextlayout: gtk_text_child_anchor_register_child
-gtktextlayout: gtk_text_child_anchor_unregister_child
-gtktextlayout: gtk_text_child_anchor_queue_resize
-gtktextlayout: gtk_text_anchored_child_set_layout
-gtktextlayout: gtk_text_layout_spew
 gtktextsegment: gtk_text_line_segment_split
-gtktexttag: GTK_WRAPMODE_CHAR
-gtktexttag: GTK_WRAPMODE_NONE
-gtktexttypes: gtk_text_char_type
-gtktexttypes: gtk_text_toggle_on_type
-gtktexttypes: gtk_text_toggle_off_type
-gtktexttypes: gtk_text_left_mark_type
-gtktexttypes: gtk_text_right_mark_type
-gtktexttypes: gtk_text_pixbuf_type
-gtktexttypes: gtk_text_child_type
-gtktexttypes: GTK_TEXT_UNKNOWN_CHAR
-gtktexttypes: GTK_TEXT_UNKNOWN_CHAR_UTF
-gtktexttypes: gtk_text_byte_begins_utf
-gtktextview: gtk_text_view_get_hadjustment
-gtktextview: gtk_text_view_get_vadjustment
 gtktextview: gtk_text_view_im_context_filter_keypress
 gtktextview: gtk_text_view_reset_im_context
 gtkthemes: GTK_THEME_ENGINE
@@ -9026,16 +8813,8 @@ gtkthemingengine: gtk_theming_engine_get_margin
 gtkthemingengine: gtk_theming_engine_get_font
 gtkthemingengine: gtk_theming_engine_load
 gtkthemingengine: gtk_theming_engine_get_screen
-gtktoolbar: GTK_TOOLBAR_SPACE_EMPTY
-gtktoolbar: GTK_TOOLBAR_SPACE_LINE
-gtktoolbar: gtk_toolbar_set_icon_size
-gtktoolbar: gtk_toolbar_unset_icon_size
 gtktoolbar: gtk_toolbar_set_drop_highlight_item
 gtktoolitem: gtk_tool_item_toolbar_reconfigured
-gtktoolpalette: GTK_TOOL_PALETTE_DRAG_ITEMS
-gtktoolpalette: GTK_TOOL_PALETTE_DRAG_GROUPS
-gtktoolpalette: gtk_tool_palette_get_hadjustment
-gtktoolpalette: gtk_tool_palette_get_vadjustment
 gtktoolshell: GTK_TOOL_SHELL
 gtktoolshell: GTK_IS_TOOL_SHELL
 gtktoolshell: gtk_tool_shell_get_icon_size
@@ -9043,110 +8822,9 @@ gtktoolshell: gtk_tool_shell_get_orientation
 gtktoolshell: gtk_tool_shell_get_style
 gtktoolshell: gtk_tool_shell_get_relief_style
 gtktoolshell: gtk_tool_shell_rebuild_menu
-gtktooltip: gtk_tooltip_set_markup
-gtktooltip: gtk_tooltip_set_icon
-gtktooltip: gtk_tooltip_set_icon_from_stock
-gtktooltip: gtk_tooltip_set_custom
-gtktooltip: gtk_tooltip_trigger_tooltip_query
-gtktrayicon: GTK_TRAY_ICON
-gtktrayicon: GTK_IS_TRAY_ICON
 gtktreednd: GTK_TREE_MODEL_ROW
-gtktreemodelfilter: gtk_tree_model_filter_set_visible_func
-gtktreemodelfilter: gtk_tree_model_filter_set_modify_func
-gtktreemodel: gtk_tree_path_new_from_indices
-gtktreemodel: gtk_tree_path_get_indices_with_depth
-gtktreemodel: gtk_tree_row_reference_copy
-gtktreemodel: gtk_tree_model_get_value
-gtktreemodel: gtk_tree_model_get
-gtktreemodel: gtk_tree_model_get_valist
-gtktreeselection: gtk_tree_selection_get_select_function
-gtktreeselection: gtk_tree_selection_unselect_range
-gtktreestore: gtk_tree_model_get
-gtktreestore: gtk_tree_store_set_value
-gtktreestore: gtk_tree_store_set_valuesv
-gtktreestore: gtk_tree_store_set_valist
-gtktreestore: gtk_tree_store_insert_with_values
-gtktreestore: gtk_tree_store_insert_with_valuesv
-gtktreestore: gtk_tree_store_iter_is_valid
-gtktreestore: gtk_tree_store_move_before
-gtktreestore: gtk_tree_store_move_after
-gtktreeviewcolumn: gtk_tree_view_column_new_with_area
-gtktreeviewcolumn: gtk_tree_view_column_focus_cell
-gtktreeviewcolumn: gtk_tree_view_column_get_button
-gtktreeview: gtk_tree_view_get_hadjustment
-gtktreeview: gtk_tree_view_set_hadjustment
-gtktreeview: gtk_tree_view_get_vadjustment
-gtktreeview: gtk_tree_view_set_vadjustment
-gtktreeview: gtk_tree_view_set_cursor_on_cell
-gtktreeview: gtk_tree_view_set_destroy_count_func
-gtktreeview: gtk_tree_view_set_rubber_banding
-gtktreeview: gtk_tree_view_get_rubber_banding
-gtktreeview: gtk_tree_view_get_row_separator_func
-gtktypeutils: GTK_VALUE_
 gtkuimanager: GTK_UI_MANAGER_POPUP_WITH_ACCELS
 gtkuimanager: gtk_ui_manager_get_toplevels
-gtkversion: GTK_MAJOR_VERSION
-gtkversion: GTK_MINOR_VERSION
-gtkversion: GTK_MICRO_VERSION
-gtkversion: GTK_BINARY_AGE
-gtkversion: GTK_INTERFACE_AGE
-gtkversion: GTK_CHECK_VERSION
-gtkviewport: gtk_viewport_get_hadjustment
-gtkviewport: gtk_viewport_get_vadjustment
-gtkviewport: gtk_viewport_set_hadjustment
-gtkviewport: gtk_viewport_set_vadjustment
-gtkwidget: GTK_WIDGET_HELP_TOOLTIP
-gtkwidget: GTK_WIDGET_HELP_WHATS_THIS
-gtkwidget: gtk_widget_new
-gtkwidget: gtk_widget_queue_draw_region
-gtkwidget: gtk_widget_size_request
-gtkwidget: gtk_widget_get_preferred_size
-gtkwidget: gtk_widget_get_child_requisition
-gtkwidget: gtk_widget_set_state_flags
-gtkwidget: gtk_widget_unset_state_flags
-gtkwidget: gtk_widget_get_state_flags
-gtkwidget: gtk_widget_get_allocation
-gtkwidget: gtk_widget_set_allocation
-gtkwidget: gtk_widget_get_requisition
-gtkwidget: gtk_widget_get_settings
-gtkwidget: gtk_widget_override_color
-gtkwidget: gtk_widget_override_background_color
-gtkwidget: gtk_widget_override_font
-gtkwidget: gtk_widget_override_symbolic_color
-gtkwidget: gtk_widget_override_cursor
-gtkwidget: gtk_widget_has_rc_style
-gtkwidget: gtk_widget_set_style
-gtkwidget: gtk_widget_ensure_style
-gtkwidget: gtk_widget_get_style
-gtkwidget: gtk_widget_modify_style
-gtkwidget: gtk_widget_get_modifier_style
-gtkwidget: gtk_widget_modify_fg
-gtkwidget: gtk_widget_modify_bg
-gtkwidget: gtk_widget_modify_text
-gtkwidget: gtk_widget_modify_base
-gtkwidget: gtk_widget_modify_cursor
-gtkwidget: gtk_widget_modify_font
-gtkwidget: gtk_widget_reset_rc_styles
-gtkwidget: gtk_widget_reset_style
-gtkwidget: gtk_widget_get_default_style
-gtkwidget: gtk_widget_path
-gtkwidget: gtk_widget_class_path
-gtkwidget: gtk_widget_render_icon
-gtkwidget: gtk_widget_render_icon_pixbuf
-gtkwidget: GTK_COMPOSITE_CHILD
-gtkwidget: gtk_widget_class_install_style_property
-gtkwidget: gtk_widget_class_install_style_property_parser
-gtkwidget: gtk_widget_class_find_style_property
-gtkwidget: gtk_widget_class_list_style_properties
-gtkwidget: gtk_widget_style_get_property
-gtkwidget: gtk_widget_style_get_valist
-gtkwidget: gtk_widget_style_get
-gtkwidget: gtk_requisition_new
-gtkwidget: gtk_requisition_copy
-gtkwidget: gtk_requisition_free
-gtkwidget: gtk_widget_in_destruction
-gtkwidget: gtk_widget_get_style_context
-gtkwidget: gtk_widget_get_path
 gtkwidgetpath: gtk_widget_path_new
 gtkwidgetpath: gtk_widget_path_copy
 gtkwidgetpath: gtk_widget_path_free
@@ -9194,13 +8872,13 @@ gtkwindow: gtk_window_group_list_windows
 gtkwindow: gtk_window_group_get_current_grab
 gtkwindow: gtk_window_get_application
 gtkwindow: gtk_window_set_application
-gtkxembed: GTK_XEMBED_PROTOCOL_VERSION
 
 ;; fgrep "gtk_" *.h > names
 ;; fgrep "GTK_" *.h >> names
 ;; then get rid of all the obvious junk
 
 ;; omit gtkrc.h, gtkcellarea*, gtkstylecontext.h, gtkstyle.h, gtkrbtree.h (internal to gtktreeview), gtktimeline.h
+;;      gtktextlayout.h (all internal), gtktexttypes.h, gtktrayicon.h, gtkrecentchooserutils.h, gtksearch*.h
 
 (call-with-input-file "names"
   (lambda (p)

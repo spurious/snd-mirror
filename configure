@@ -6164,7 +6164,7 @@ fi
 GSL_LIBS=""
 GSL_CFLAGS=""
 if test "$with_gsl" != no; then
-# Extract the first word of "gsl-config", so it can be a program name with args.
+  # Extract the first word of "gsl-config", so it can be a program name with args.
 set dummy gsl-config; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -6205,24 +6205,20 @@ $as_echo "no" >&6; }
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GSL" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GSL" >&5
 $as_echo_n "checking for GSL... " >&6; }
-if test "$GSL_CONFIG" = "no" ; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+  if test "$GSL_CONFIG" = "no" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-else
-  GSL_CFLAGS=`$GSL_CONFIG --cflags`
-  GSL_PREFIX=`$GSL_CONFIG --prefix`
-  GSL_LIBS=`$GSL_CONFIG --libs`
-  gsl_version="`$GSL_CONFIG --version`"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gsl_version" >&5
-$as_echo "$gsl_version" >&6; }
-  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
-
-  if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7" || test "`$GSL_CONFIG --version`" = "0.5"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Snd needs GSL 0.8 or later" >&5
-$as_echo "$as_me: WARNING: Snd needs GSL 0.8 or later" >&2;}
   else
+    GSL_CFLAGS=`$GSL_CONFIG --cflags`
+    GSL_PREFIX=`$GSL_CONFIG --prefix`
+    GSL_LIBS=`$GSL_CONFIG --libs`
+    gsl_version="`$GSL_CONFIG --version`"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gsl_version" >&5
+$as_echo "$gsl_version" >&6; }
+    OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
+
     $as_echo "#define HAVE_GSL 1" >>confdefs.h
 
     cat >>confdefs.h <<_ACEOF
@@ -6261,10 +6257,9 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
     LIBS=$SAVELIBS
+    fi
   fi
 
-fi
-fi
 
 
 
@@ -8334,7 +8329,6 @@ _ACEOF
 
 
 
-	# assume 2.10 or later
 	if test x$PKG_CONFIG != xno ; then
           CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
 

@@ -531,7 +531,7 @@ Extensions to Snd can be found in:
 <tr><td bgcolor="#f2f4ff"><a href="sndscm.html#singerdoc">singer</a></td>
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(singer_doc_tip)">Perry Cook's vocal-tract physical model</td></tr>
 
-<tr><td><a href="sndscm.html#sndolddoc">snd6|7|8|9|10|11.scm</a></td>
+<tr><td><a href="sndscm.html#sndolddoc">snd9|10|11.scm</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(sndold_doc_tip)">Backwards compatibility</td></tr>
 
 <tr><td bgcolor="#f2f4ff"><a href="sndscm.html#snddiffdoc">snddiff</a></td>
@@ -10843,21 +10843,6 @@ Here's an example that displays a histogram of the current values in 16 bins:
           (do ((j 0 (+ 1 j))) 
               ((= j steps))
             (set! (v (+ j bin)) (+ step (v (+ j bin))))))))))
-</pre></td></tr></table>
-
-This code ties the Hilbert transform in dsp.scm into the user-interface:
-
-<table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(<em class=red>add-transform</em> "Hilbert" "Hilbert" 0.0 1.0
-  (lambda (len fd)
-    (let ((flt (<a class=quiet href="sndscm.html#makehilberttransform" onmouseout="UnTip()" onmouseover="Tip(sndscm_makehilberttransform_tip)">make-hilbert-transform</a> 40)))
-      (do ((i 0 (+ 1 i))) ; preload first samples
-	  ((= i 40))
-	(<a class=quiet href="sndclm.html#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> fd)))
-      (<a class=quiet href="#vctmap" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmap_tip)">vct-map!</a> 
-       (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> len) 
-       (lambda () 
-	 (<a class=quiet href="sndclm.html#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> fd)))))))
 </pre></td></tr></table>
 
 If GSL is included in Snd, the following code ties in the (slow) Hankel transform:

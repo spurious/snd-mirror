@@ -120,11 +120,11 @@ are different enough that gl.c can be a pain to build).
 Version info:
   if Gtk, then Gtk+ 2.10.0 or later and Cairo 1.6.4 or later
   if Motif, then Motif 2.n but not Lesstif
-  in Linux, if ALSA, then ALSA 1.0 or later (or any version of OSS)
+  in Linux, if ALSA, then ALSA 1.0 or later
   if Ruby, Ruby 1.8.0 or later.  
   if Forth, any version
   if s7, any version
-  if GSL, version 0.8 or later
+  if GSL, version 1.0 or later
   if gamin, version 0.1.0 or later
 
 

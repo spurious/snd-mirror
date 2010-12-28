@@ -895,6 +895,8 @@ XM_TYPE_PTR_1(GtkScrollable_, GtkScrollable*)
 XM_TYPE_PTR_1(GtkSwitch_, GtkSwitch*)
 XM_TYPE_PTR(GtkBorder_, GtkBorder*)
 XM_TYPE_PTR_1(GtkActivatable_, GtkActivatable*)
+XM_TYPE_PTR_1(GtkCellArea_, GtkCellArea*)
+XM_TYPE_PTR_1(GtkOrientable_, GtkOrientable*)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -30237,6 +30239,155 @@ static XEN gxg_gtk_activatable_get_use_action_appearance(XEN activatable)
   return(C_TO_XEN_gboolean(gtk_activatable_get_use_action_appearance(XEN_TO_C_GtkActivatable_(activatable))));
 }
 
+static XEN gxg_gtk_tree_view_set_cursor_on_cell(XEN tree_view, XEN path, XEN focus_column, XEN focus_cell, XEN start_editing)
+{
+  #define H_gtk_tree_view_set_cursor_on_cell "void gtk_tree_view_set_cursor_on_cell(GtkTreeView* tree_view, \
+GtkTreePath* path, GtkTreeViewColumn* focus_column, GtkCellRenderer* focus_cell, gboolean start_editing)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_cursor_on_cell", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_tree_view_set_cursor_on_cell", "GtkTreePath*");
+  XEN_ASSERT_TYPE(XEN_GtkTreeViewColumn__P(focus_column), focus_column, 3, "gtk_tree_view_set_cursor_on_cell", "GtkTreeViewColumn*");
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(focus_cell), focus_cell, 4, "gtk_tree_view_set_cursor_on_cell", "GtkCellRenderer*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(start_editing), start_editing, 5, "gtk_tree_view_set_cursor_on_cell", "gboolean");
+  gtk_tree_view_set_cursor_on_cell(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkTreePath_(path), XEN_TO_C_GtkTreeViewColumn_(focus_column), 
+                                   XEN_TO_C_GtkCellRenderer_(focus_cell), XEN_TO_C_gboolean(start_editing));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tree_view_set_rubber_banding(XEN tree_view, XEN enable)
+{
+  #define H_gtk_tree_view_set_rubber_banding "void gtk_tree_view_set_rubber_banding(GtkTreeView* tree_view, \
+gboolean enable)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_rubber_banding", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(enable), enable, 2, "gtk_tree_view_set_rubber_banding", "gboolean");
+  gtk_tree_view_set_rubber_banding(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gboolean(enable));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tree_view_get_rubber_banding(XEN tree_view)
+{
+  #define H_gtk_tree_view_get_rubber_banding "gboolean gtk_tree_view_get_rubber_banding(GtkTreeView* tree_view)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_get_rubber_banding", "GtkTreeView*");
+  return(C_TO_XEN_gboolean(gtk_tree_view_get_rubber_banding(XEN_TO_C_GtkTreeView_(tree_view))));
+}
+
+static XEN gxg_gtk_tooltip_set_markup(XEN tooltip, XEN markup)
+{
+  #define H_gtk_tooltip_set_markup "void gtk_tooltip_set_markup(GtkTooltip* tooltip, gchar* markup)"
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 1, "gtk_tooltip_set_markup", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(markup), markup, 2, "gtk_tooltip_set_markup", "gchar*");
+  gtk_tooltip_set_markup(XEN_TO_C_GtkTooltip_(tooltip), (const gchar*)XEN_TO_C_gchar_(markup));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tooltip_set_icon(XEN tooltip, XEN pixbuf)
+{
+  #define H_gtk_tooltip_set_icon "void gtk_tooltip_set_icon(GtkTooltip* tooltip, GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 1, "gtk_tooltip_set_icon", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 2, "gtk_tooltip_set_icon", "GdkPixbuf*");
+  gtk_tooltip_set_icon(XEN_TO_C_GtkTooltip_(tooltip), XEN_TO_C_GdkPixbuf_(pixbuf));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tooltip_set_icon_from_stock(XEN tooltip, XEN stock_id, XEN size)
+{
+  #define H_gtk_tooltip_set_icon_from_stock "void gtk_tooltip_set_icon_from_stock(GtkTooltip* tooltip, \
+gchar* stock_id, GtkIconSize size)"
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 1, "gtk_tooltip_set_icon_from_stock", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(stock_id), stock_id, 2, "gtk_tooltip_set_icon_from_stock", "gchar*");
+  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(size), size, 3, "gtk_tooltip_set_icon_from_stock", "GtkIconSize");
+  gtk_tooltip_set_icon_from_stock(XEN_TO_C_GtkTooltip_(tooltip), (const gchar*)XEN_TO_C_gchar_(stock_id), XEN_TO_C_GtkIconSize(size));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tooltip_set_custom(XEN tooltip, XEN custom_widget)
+{
+  #define H_gtk_tooltip_set_custom "void gtk_tooltip_set_custom(GtkTooltip* tooltip, GtkWidget* custom_widget)"
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 1, "gtk_tooltip_set_custom", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(custom_widget), custom_widget, 2, "gtk_tooltip_set_custom", "GtkWidget*");
+  gtk_tooltip_set_custom(XEN_TO_C_GtkTooltip_(tooltip), XEN_TO_C_GtkWidget_(custom_widget));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tooltip_trigger_tooltip_query(XEN display)
+{
+  #define H_gtk_tooltip_trigger_tooltip_query "void gtk_tooltip_trigger_tooltip_query(GdkDisplay* display)"
+  XEN_ASSERT_TYPE(XEN_GdkDisplay__P(display), display, 1, "gtk_tooltip_trigger_tooltip_query", "GdkDisplay*");
+  gtk_tooltip_trigger_tooltip_query(XEN_TO_C_GdkDisplay_(display));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_button_set_image_position(XEN button, XEN position)
+{
+  #define H_gtk_button_set_image_position "void gtk_button_set_image_position(GtkButton* button, GtkPositionType position)"
+  XEN_ASSERT_TYPE(XEN_GtkButton__P(button), button, 1, "gtk_button_set_image_position", "GtkButton*");
+  XEN_ASSERT_TYPE(XEN_GtkPositionType_P(position), position, 2, "gtk_button_set_image_position", "GtkPositionType");
+  gtk_button_set_image_position(XEN_TO_C_GtkButton_(button), XEN_TO_C_GtkPositionType(position));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_button_get_image_position(XEN button)
+{
+  #define H_gtk_button_get_image_position "GtkPositionType gtk_button_get_image_position(GtkButton* button)"
+  XEN_ASSERT_TYPE(XEN_GtkButton__P(button), button, 1, "gtk_button_get_image_position", "GtkButton*");
+  return(C_TO_XEN_GtkPositionType(gtk_button_get_image_position(XEN_TO_C_GtkButton_(button))));
+}
+
+static XEN gxg_gtk_show_uri(XEN screen, XEN uri, XEN timestamp, XEN ignore_error)
+{
+  #define H_gtk_show_uri "gboolean gtk_show_uri(GdkScreen* screen, gchar* uri, guint32 timestamp, GError** [error])"
+  GError* ref_error = NULL;
+  XEN_ASSERT_TYPE(XEN_GdkScreen__P(screen), screen, 1, "gtk_show_uri", "GdkScreen*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(uri), uri, 2, "gtk_show_uri", "gchar*");
+  XEN_ASSERT_TYPE(XEN_guint32_P(timestamp), timestamp, 3, "gtk_show_uri", "guint32");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gtk_show_uri(XEN_TO_C_GdkScreen_(screen), (const gchar*)XEN_TO_C_gchar_(uri), XEN_TO_C_guint32(timestamp), 
+                                            &ref_error));
+    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
+   }
+}
+
+static XEN gxg_gtk_tree_view_column_new_with_area(XEN area)
+{
+  #define H_gtk_tree_view_column_new_with_area "GtkTreeViewColumn* gtk_tree_view_column_new_with_area(GtkCellArea* area)"
+  XEN_ASSERT_TYPE(XEN_GtkCellArea__P(area), area, 1, "gtk_tree_view_column_new_with_area", "GtkCellArea*");
+  return(C_TO_XEN_GtkTreeViewColumn_(gtk_tree_view_column_new_with_area(XEN_TO_C_GtkCellArea_(area))));
+}
+
+static XEN gxg_gtk_tree_view_column_get_button(XEN tree_column)
+{
+  #define H_gtk_tree_view_column_get_button "GtkWidget* gtk_tree_view_column_get_button(GtkTreeViewColumn* tree_column)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeViewColumn__P(tree_column), tree_column, 1, "gtk_tree_view_column_get_button", "GtkTreeViewColumn*");
+  return(C_TO_XEN_GtkWidget_(gtk_tree_view_column_get_button(XEN_TO_C_GtkTreeViewColumn_(tree_column))));
+}
+
+static XEN gxg_gtk_tree_view_column_focus_cell(XEN tree_column, XEN cell)
+{
+  #define H_gtk_tree_view_column_focus_cell "void gtk_tree_view_column_focus_cell(GtkTreeViewColumn* tree_column, \
+GtkCellRenderer* cell)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeViewColumn__P(tree_column), tree_column, 1, "gtk_tree_view_column_focus_cell", "GtkTreeViewColumn*");
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(cell), cell, 2, "gtk_tree_view_column_focus_cell", "GtkCellRenderer*");
+  gtk_tree_view_column_focus_cell(XEN_TO_C_GtkTreeViewColumn_(tree_column), XEN_TO_C_GtkCellRenderer_(cell));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_orientable_set_orientation(XEN orientable, XEN orientation)
+{
+  #define H_gtk_orientable_set_orientation "void gtk_orientable_set_orientation(GtkOrientable* orientable, \
+GtkOrientation orientation)"
+  XEN_ASSERT_TYPE(XEN_GtkOrientable__P(orientable), orientable, 1, "gtk_orientable_set_orientation", "GtkOrientable*");
+  XEN_ASSERT_TYPE(XEN_GtkOrientation_P(orientation), orientation, 2, "gtk_orientable_set_orientation", "GtkOrientation");
+  gtk_orientable_set_orientation(XEN_TO_C_GtkOrientable_(orientable), XEN_TO_C_GtkOrientation(orientation));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_orientable_get_orientation(XEN orientable)
+{
+  #define H_gtk_orientable_get_orientation "GtkOrientation gtk_orientable_get_orientation(GtkOrientable* orientable)"
+  XEN_ASSERT_TYPE(XEN_GtkOrientable__P(orientable), orientable, 1, "gtk_orientable_get_orientation", "GtkOrientable*");
+  return(C_TO_XEN_GtkOrientation(gtk_orientable_get_orientation(XEN_TO_C_GtkOrientable_(orientable))));
+}
+
 #endif
 
 #if (!HAVE_GTK_3)
@@ -33863,6 +34014,7 @@ static XEN gxg_GTK_GRID(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_
 static XEN gxg_GTK_SCROLLABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkScrollable_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SWITCH(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSwitch_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_ACTIVATABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkActivatable_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GTK_ORIENTABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkOrientable_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
 #if (!HAVE_GTK_3)
@@ -34058,6 +34210,7 @@ static XEN gxg_GTK_IS_GRID(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(ob
 static XEN gxg_GTK_IS_SCROLLABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SCROLLABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SWITCH(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SWITCH((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_ACTIVATABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ACTIVATABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_ORIENTABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ORIENTABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
 #if (!HAVE_GTK_3)
@@ -37675,6 +37828,22 @@ XEN_NARGIFY_2(gxg_gtk_activatable_set_related_action_w, gxg_gtk_activatable_set_
 XEN_NARGIFY_1(gxg_gtk_activatable_get_related_action_w, gxg_gtk_activatable_get_related_action)
 XEN_NARGIFY_2(gxg_gtk_activatable_set_use_action_appearance_w, gxg_gtk_activatable_set_use_action_appearance)
 XEN_NARGIFY_1(gxg_gtk_activatable_get_use_action_appearance_w, gxg_gtk_activatable_get_use_action_appearance)
+XEN_NARGIFY_5(gxg_gtk_tree_view_set_cursor_on_cell_w, gxg_gtk_tree_view_set_cursor_on_cell)
+XEN_NARGIFY_2(gxg_gtk_tree_view_set_rubber_banding_w, gxg_gtk_tree_view_set_rubber_banding)
+XEN_NARGIFY_1(gxg_gtk_tree_view_get_rubber_banding_w, gxg_gtk_tree_view_get_rubber_banding)
+XEN_NARGIFY_2(gxg_gtk_tooltip_set_markup_w, gxg_gtk_tooltip_set_markup)
+XEN_NARGIFY_2(gxg_gtk_tooltip_set_icon_w, gxg_gtk_tooltip_set_icon)
+XEN_NARGIFY_3(gxg_gtk_tooltip_set_icon_from_stock_w, gxg_gtk_tooltip_set_icon_from_stock)
+XEN_NARGIFY_2(gxg_gtk_tooltip_set_custom_w, gxg_gtk_tooltip_set_custom)
+XEN_NARGIFY_1(gxg_gtk_tooltip_trigger_tooltip_query_w, gxg_gtk_tooltip_trigger_tooltip_query)
+XEN_NARGIFY_2(gxg_gtk_button_set_image_position_w, gxg_gtk_button_set_image_position)
+XEN_NARGIFY_1(gxg_gtk_button_get_image_position_w, gxg_gtk_button_get_image_position)
+XEN_ARGIFY_4(gxg_gtk_show_uri_w, gxg_gtk_show_uri)
+XEN_NARGIFY_1(gxg_gtk_tree_view_column_new_with_area_w, gxg_gtk_tree_view_column_new_with_area)
+XEN_NARGIFY_1(gxg_gtk_tree_view_column_get_button_w, gxg_gtk_tree_view_column_get_button)
+XEN_NARGIFY_2(gxg_gtk_tree_view_column_focus_cell_w, gxg_gtk_tree_view_column_focus_cell)
+XEN_NARGIFY_2(gxg_gtk_orientable_set_orientation_w, gxg_gtk_orientable_set_orientation)
+XEN_NARGIFY_1(gxg_gtk_orientable_get_orientation_w, gxg_gtk_orientable_get_orientation)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -38259,6 +38428,7 @@ XEN_NARGIFY_1(gxg_GTK_GRID_w, gxg_GTK_GRID)
 XEN_NARGIFY_1(gxg_GTK_SCROLLABLE_w, gxg_GTK_SCROLLABLE)
 XEN_NARGIFY_1(gxg_GTK_SWITCH_w, gxg_GTK_SWITCH)
 XEN_NARGIFY_1(gxg_GTK_ACTIVATABLE_w, gxg_GTK_ACTIVATABLE)
+XEN_NARGIFY_1(gxg_GTK_ORIENTABLE_w, gxg_GTK_ORIENTABLE)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -38454,6 +38624,7 @@ XEN_NARGIFY_1(gxg_GTK_IS_GRID_w, gxg_GTK_IS_GRID)
 XEN_NARGIFY_1(gxg_GTK_IS_SCROLLABLE_w, gxg_GTK_IS_SCROLLABLE)
 XEN_NARGIFY_1(gxg_GTK_IS_SWITCH_w, gxg_GTK_IS_SWITCH)
 XEN_NARGIFY_1(gxg_GTK_IS_ACTIVATABLE_w, gxg_GTK_IS_ACTIVATABLE)
+XEN_NARGIFY_1(gxg_GTK_IS_ORIENTABLE_w, gxg_GTK_IS_ORIENTABLE)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -41630,6 +41801,22 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_activatable_get_related_action_w gxg_gtk_activatable_get_related_action
 #define gxg_gtk_activatable_set_use_action_appearance_w gxg_gtk_activatable_set_use_action_appearance
 #define gxg_gtk_activatable_get_use_action_appearance_w gxg_gtk_activatable_get_use_action_appearance
+#define gxg_gtk_tree_view_set_cursor_on_cell_w gxg_gtk_tree_view_set_cursor_on_cell
+#define gxg_gtk_tree_view_set_rubber_banding_w gxg_gtk_tree_view_set_rubber_banding
+#define gxg_gtk_tree_view_get_rubber_banding_w gxg_gtk_tree_view_get_rubber_banding
+#define gxg_gtk_tooltip_set_markup_w gxg_gtk_tooltip_set_markup
+#define gxg_gtk_tooltip_set_icon_w gxg_gtk_tooltip_set_icon
+#define gxg_gtk_tooltip_set_icon_from_stock_w gxg_gtk_tooltip_set_icon_from_stock
+#define gxg_gtk_tooltip_set_custom_w gxg_gtk_tooltip_set_custom
+#define gxg_gtk_tooltip_trigger_tooltip_query_w gxg_gtk_tooltip_trigger_tooltip_query
+#define gxg_gtk_button_set_image_position_w gxg_gtk_button_set_image_position
+#define gxg_gtk_button_get_image_position_w gxg_gtk_button_get_image_position
+#define gxg_gtk_show_uri_w gxg_gtk_show_uri
+#define gxg_gtk_tree_view_column_new_with_area_w gxg_gtk_tree_view_column_new_with_area
+#define gxg_gtk_tree_view_column_get_button_w gxg_gtk_tree_view_column_get_button
+#define gxg_gtk_tree_view_column_focus_cell_w gxg_gtk_tree_view_column_focus_cell
+#define gxg_gtk_orientable_set_orientation_w gxg_gtk_orientable_set_orientation
+#define gxg_gtk_orientable_get_orientation_w gxg_gtk_orientable_get_orientation
 #endif
 
 #if (!HAVE_GTK_3)
@@ -42214,6 +42401,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_SCROLLABLE_w gxg_GTK_SCROLLABLE
 #define gxg_GTK_SWITCH_w gxg_GTK_SWITCH
 #define gxg_GTK_ACTIVATABLE_w gxg_GTK_ACTIVATABLE
+#define gxg_GTK_ORIENTABLE_w gxg_GTK_ORIENTABLE
 #endif
 
 #if (!HAVE_GTK_3)
@@ -42409,6 +42597,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_SCROLLABLE_w gxg_GTK_IS_SCROLLABLE
 #define gxg_GTK_IS_SWITCH_w gxg_GTK_IS_SWITCH
 #define gxg_GTK_IS_ACTIVATABLE_w gxg_GTK_IS_ACTIVATABLE
+#define gxg_GTK_IS_ORIENTABLE_w gxg_GTK_IS_ORIENTABLE
 #endif
 
 #if (!HAVE_GTK_3)
@@ -45592,6 +45781,22 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_activatable_get_related_action, gxg_gtk_activatable_get_related_action_w, 1, 0, 0, H_gtk_activatable_get_related_action);
   XG_DEFINE_PROCEDURE(gtk_activatable_set_use_action_appearance, gxg_gtk_activatable_set_use_action_appearance_w, 2, 0, 0, H_gtk_activatable_set_use_action_appearance);
   XG_DEFINE_PROCEDURE(gtk_activatable_get_use_action_appearance, gxg_gtk_activatable_get_use_action_appearance_w, 1, 0, 0, H_gtk_activatable_get_use_action_appearance);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_cursor_on_cell, gxg_gtk_tree_view_set_cursor_on_cell_w, 5, 0, 0, H_gtk_tree_view_set_cursor_on_cell);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_rubber_banding, gxg_gtk_tree_view_set_rubber_banding_w, 2, 0, 0, H_gtk_tree_view_set_rubber_banding);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_rubber_banding, gxg_gtk_tree_view_get_rubber_banding_w, 1, 0, 0, H_gtk_tree_view_get_rubber_banding);
+  XG_DEFINE_PROCEDURE(gtk_tooltip_set_markup, gxg_gtk_tooltip_set_markup_w, 2, 0, 0, H_gtk_tooltip_set_markup);
+  XG_DEFINE_PROCEDURE(gtk_tooltip_set_icon, gxg_gtk_tooltip_set_icon_w, 2, 0, 0, H_gtk_tooltip_set_icon);
+  XG_DEFINE_PROCEDURE(gtk_tooltip_set_icon_from_stock, gxg_gtk_tooltip_set_icon_from_stock_w, 3, 0, 0, H_gtk_tooltip_set_icon_from_stock);
+  XG_DEFINE_PROCEDURE(gtk_tooltip_set_custom, gxg_gtk_tooltip_set_custom_w, 2, 0, 0, H_gtk_tooltip_set_custom);
+  XG_DEFINE_PROCEDURE(gtk_tooltip_trigger_tooltip_query, gxg_gtk_tooltip_trigger_tooltip_query_w, 1, 0, 0, H_gtk_tooltip_trigger_tooltip_query);
+  XG_DEFINE_PROCEDURE(gtk_button_set_image_position, gxg_gtk_button_set_image_position_w, 2, 0, 0, H_gtk_button_set_image_position);
+  XG_DEFINE_PROCEDURE(gtk_button_get_image_position, gxg_gtk_button_get_image_position_w, 1, 0, 0, H_gtk_button_get_image_position);
+  XG_DEFINE_PROCEDURE(gtk_show_uri, gxg_gtk_show_uri_w, 3, 1, 0, H_gtk_show_uri);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_new_with_area, gxg_gtk_tree_view_column_new_with_area_w, 1, 0, 0, H_gtk_tree_view_column_new_with_area);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_button, gxg_gtk_tree_view_column_get_button_w, 1, 0, 0, H_gtk_tree_view_column_get_button);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_focus_cell, gxg_gtk_tree_view_column_focus_cell_w, 2, 0, 0, H_gtk_tree_view_column_focus_cell);
+  XG_DEFINE_PROCEDURE(gtk_orientable_set_orientation, gxg_gtk_orientable_set_orientation_w, 2, 0, 0, H_gtk_orientable_set_orientation);
+  XG_DEFINE_PROCEDURE(gtk_orientable_get_orientation, gxg_gtk_orientable_get_orientation_w, 1, 0, 0, H_gtk_orientable_get_orientation);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -46168,6 +46373,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_SCROLLABLE, gxg_GTK_SCROLLABLE_w, 1, 0, 0, "(GTK_SCROLLABLE obj) casts obj to GTK_SCROLLABLE");
   XG_DEFINE_PROCEDURE(GTK_SWITCH, gxg_GTK_SWITCH_w, 1, 0, 0, "(GTK_SWITCH obj) casts obj to GTK_SWITCH");
   XG_DEFINE_PROCEDURE(GTK_ACTIVATABLE, gxg_GTK_ACTIVATABLE_w, 1, 0, 0, "(GTK_ACTIVATABLE obj) casts obj to GTK_ACTIVATABLE");
+  XG_DEFINE_PROCEDURE(GTK_ORIENTABLE, gxg_GTK_ORIENTABLE_w, 1, 0, 0, "(GTK_ORIENTABLE obj) casts obj to GTK_ORIENTABLE");
 #endif
 
 #if (!HAVE_GTK_3)
@@ -46371,6 +46577,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_SCROLLABLE, gxg_GTK_IS_SCROLLABLE_w, 1, 0, 0, "(GTK_IS_SCROLLABLE obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLABLE");
   XG_DEFINE_PROCEDURE(GTK_IS_SWITCH, gxg_GTK_IS_SWITCH_w, 1, 0, 0, "(GTK_IS_SWITCH obj): " PROC_TRUE " if obj is a GTK_IS_SWITCH");
   XG_DEFINE_PROCEDURE(GTK_IS_ACTIVATABLE, gxg_GTK_IS_ACTIVATABLE_w, 1, 0, 0, "(GTK_IS_ACTIVATABLE obj): " PROC_TRUE " if obj is a GTK_IS_ACTIVATABLE");
+  XG_DEFINE_PROCEDURE(GTK_IS_ORIENTABLE, gxg_GTK_IS_ORIENTABLE_w, 1, 0, 0, "(GTK_IS_ORIENTABLE obj): " PROC_TRUE " if obj is a GTK_IS_ORIENTABLE");
 #endif
 
 #if (!HAVE_GTK_3)
@@ -47477,6 +47684,13 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_TARGET_SAME_WIDGET);
   DEFINE_INTEGER(GTK_TARGET_OTHER_APP);
   DEFINE_INTEGER(GTK_TARGET_OTHER_WIDGET);
+  DEFINE_INTEGER(GTK_ALIGN_FILL);
+  DEFINE_INTEGER(GTK_ALIGN_START);
+  DEFINE_INTEGER(GTK_ALIGN_END);
+  DEFINE_INTEGER(GTK_ALIGN_CENTER);
+  DEFINE_INTEGER(GTK_ARROW_NONE);
+  DEFINE_INTEGER(GTK_TOOL_PALETTE_DRAG_ITEMS);
+  DEFINE_INTEGER(GTK_TOOL_PALETTE_DRAG_GROUPS);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -48099,6 +48313,15 @@ static void define_strings(void)
   DEFINE_STRING(GTK_STOCK_CAPS_LOCK_WARNING);
 #endif
 
+#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN
+  DEFINE_STRING(GTK_STOCK_DIALOG_AUTHENTICATION);
+  DEFINE_STRING(GTK_STOCK_PAGE_SETUP);
+  DEFINE_STRING(GTK_STOCK_PRINT_ERROR);
+  DEFINE_STRING(GTK_STOCK_PRINT_PAUSED);
+  DEFINE_STRING(GTK_STOCK_PRINT_REPORT);
+  DEFINE_STRING(GTK_STOCK_PRINT_WARNING);
+#endif
+
 #if HAVE_CAIRO_REGION_XOR
   DEFINE_STRING(CAIRO_MIME_TYPE_JPEG);
   DEFINE_STRING(CAIRO_MIME_TYPE_PNG);
@@ -48125,7 +48348,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Dec-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Dec-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

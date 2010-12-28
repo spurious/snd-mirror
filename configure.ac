@@ -519,24 +519,21 @@ AC_SUBST(GMP_LIBS)
 GSL_LIBS=""
 GSL_CFLAGS=""
 if test "$with_gsl" != no; then
-AC_PATH_PROG(GSL_CONFIG, gsl-config, no)
-AC_MSG_CHECKING(for GSL)
-if test "$GSL_CONFIG" = "no" ; then
-  AC_MSG_RESULT(no)
-else
-  GSL_CFLAGS=`$GSL_CONFIG --cflags`
-  GSL_PREFIX=`$GSL_CONFIG --prefix`
-  GSL_LIBS=`$GSL_CONFIG --libs`
-  gsl_version="`$GSL_CONFIG --version`"
-  AC_MSG_RESULT($gsl_version)
-  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
-
-  if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7" || test "`$GSL_CONFIG --version`" = "0.5"; then
-    AC_MSG_WARN([Snd needs GSL 0.8 or later])
+  AC_PATH_PROG(GSL_CONFIG, gsl-config, no)
+  AC_MSG_CHECKING(for GSL)
+  if test "$GSL_CONFIG" = "no" ; then
+    AC_MSG_RESULT(no)
   else
+    GSL_CFLAGS=`$GSL_CONFIG --cflags`
+    GSL_PREFIX=`$GSL_CONFIG --prefix`
+    GSL_LIBS=`$GSL_CONFIG --libs`
+    gsl_version="`$GSL_CONFIG --version`"
+    AC_MSG_RESULT($gsl_version)
+    OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
+  
     AC_DEFINE(HAVE_GSL)
     AC_DEFINE_UNQUOTED(MUS_GSL_VERSION,"${gsl_version}")
-
+  
     SAVELIBS=$LIBS
     LIBS="$LIBS $GSL_LIBS"
     AC_MSG_CHECKING(for gsl_eigen_nonsymmv_workspace)
@@ -544,7 +541,7 @@ else
       [AC_LANG_PROGRAM(
          [#include <gsl/gsl_math.h>
           #include <gsl/gsl_eigen.h>],
-	 [     gsl_eigen_nonsymmv_workspace *w = gsl_eigen_nonsymmv_alloc(4)
+         [     gsl_eigen_nonsymmv_workspace *w = gsl_eigen_nonsymmv_alloc(4)
          ])],
       [
        AC_DEFINE(HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE)
@@ -552,12 +549,11 @@ else
       ],
       [AC_MSG_RESULT(no)])
     LIBS=$SAVELIBS
+    fi
   fi
-
-fi
-fi
 AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_CFLAGS)
+
 
 
 #--------------------------------------------------------------------------------
