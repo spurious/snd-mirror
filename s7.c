@@ -14849,6 +14849,7 @@ If its first argument is a list, the list is copied (despite the '!')."
    *    given NaNs and infs, it seems no numerical sort is completely safe.
    * Could we count the comparisons, and if more than (say) n^2 give up with error?
    *    or have another sort guaranteed not to hang? or optional arg #t=safe?
+   * (sort #(1 2) =) hangs.
    */
 }
 
@@ -16902,7 +16903,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 static s7_pointer g_symbol_get_access(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_access "(symbol-access sym) is a procedure-with-setter that adds or removes controls on how a \
-symbol access its current binding."
+symbol accesses its current binding."
 
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "symbol-access,", 1, car(args), "a symbol"));
@@ -28391,6 +28392,8 @@ static s7_pointer big_logxor(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 {
+  /* currently (rationalize 1/0 1e18) -> 0 */
+
   s7_pointer p0, p1 = NULL;
 
   p0 = car(args);

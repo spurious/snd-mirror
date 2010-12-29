@@ -429,6 +429,11 @@ r1
 		     (set! prev mid)))))))))
 </pre>
 
+<!-- since set-cdr! is so useful, it's too bad we can't do something similar with any sequence:
+    apply a function to a truncated portion of a sequence (a vector for example).  Currently
+    we'd need subvector->list; what about subvector/sublist? subsequence?
+-->
+
 </blockquote>
 </small>
 
@@ -4190,6 +4195,9 @@ evaluated but the key is not:
 to keep it from being evaluated, but
 #(1 2 3) is as unproblematic as "123" or 123.
 </p>
+
+<!-- there's another sense in which '() is a constant: you can't apply it to anything. ('() 0) -> error
+-->
 
 
 
