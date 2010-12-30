@@ -2315,7 +2315,7 @@
 		     (if previous-arg (heyc ", "))
 		     (set! previous-arg #t)
 		     (if (and (ref-arg? arg)
-			      (not (member name (list "gdk_init" "gdk_init_check" "gtk_init" "gtk_init_check"))))
+			      (not (member name (list "gdk_init" "gdk_init_check" "gtk_init" "gtk_init_check" "gtk_parse_args"))))
 			 (hey "XEN ignore_~A" argname)
 			 (hey "XEN ~A" argname))))
 		 args))))

@@ -4926,13 +4926,21 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 	char n[128], d[256];
 
 	x = s7_real(obj);
+
+	if (isnan(x))
+	  return(copy_string("nan.0"));
+	if (isinf(x))
+	  {
+	    if (x < 0.0)
+	      return(copy_string("-inf.0"));    
+	    return(copy_string("inf.0"));    
+	  }
+
 	if (x < 0.0)
 	  {
 	    sign = true;
 	    x = -x;
 	  }
-	if (x < 0.0)
-	  return(copy_string("-inf.0"));
 
 	int_part = (s7_Int)floor(x);
 	frac_part = x - int_part;
@@ -29190,7 +29198,26 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
 	    return(s7_wrong_type_arg_error(sc, "=", i, p, "a number"));
 	  else result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
 	}
-      else result_type |= number_type(p);
+      else 
+	{
+	  switch (number_type(p))
+	    {
+	    case NUM_INT:
+	    case NUM_RATIO:
+	      break;
+
+	    case NUM_REAL:
+	    case NUM_REAL2: 
+	      if (isnan(real(number(p))))  /* (= (bignum "3") 1/0) */
+		return(sc->F);
+
+	    default:
+	      if ((isnan(real_part(number(p)))) ||
+		  (isnan(imag_part(number(p)))))
+		return(sc->F);
+	    }
+	  result_type |= number_type(p);
+	}
     }
 
   if (IS_NUM(result_type))

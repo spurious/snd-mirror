@@ -7153,7 +7153,7 @@ static XEN gxg_gtk_check_version(XEN required_major, XEN required_minor, XEN req
   XEN_ASSERT_TYPE(XEN_guint_P(required_major), required_major, 1, "gtk_check_version", "guint");
   XEN_ASSERT_TYPE(XEN_guint_P(required_minor), required_minor, 2, "gtk_check_version", "guint");
   XEN_ASSERT_TYPE(XEN_guint_P(required_micro), required_micro, 3, "gtk_check_version", "guint");
-  return(C_TO_XEN_gchar_(gtk_check_version(XEN_TO_C_guint(required_major), XEN_TO_C_guint(required_minor), XEN_TO_C_guint(required_micro))));
+    return(C_TO_XEN_gchar_((gchar*)gtk_check_version(XEN_TO_C_guint(required_major), XEN_TO_C_guint(required_minor), XEN_TO_C_guint(required_micro))));
 }
 
 static XEN gxg_gtk_disable_setlocale(void)
@@ -30388,6 +30388,98 @@ static XEN gxg_gtk_orientable_get_orientation(XEN orientable)
   return(C_TO_XEN_GtkOrientation(gtk_orientable_get_orientation(XEN_TO_C_GtkOrientable_(orientable))));
 }
 
+static XEN gxg_gtk_parse_args(XEN argc, XEN argv)
+{
+  #define H_gtk_parse_args "void gtk_parse_args(int* {argc}, char*** |argv|)"
+  int ref_argc;
+  char** ref_argv = NULL;
+  ref_argc = XEN_TO_C_int(argc);
+  ref_argv = (char**)calloc(ref_argc, sizeof(char*));
+  {
+   int i;
+   XEN lst;
+   lst = XEN_COPY_ARG(argv);
+   for (i = 0; i < ref_argc; i++, lst = XEN_CDR(lst)) ref_argv[i] = XEN_TO_C_char_(XEN_CAR(lst));
+  }
+  gtk_parse_args(&ref_argc, &ref_argv);
+  return(XEN_LIST_2(C_TO_XEN_int(ref_argc), C_TO_XEN_char__(ref_argv)));
+}
+
+static XEN gxg_gtk_get_major_version(void)
+{
+  #define H_gtk_get_major_version "guint gtk_get_major_version( void)"
+    return(C_TO_XEN_guint((guint)gtk_get_major_version()));
+}
+
+static XEN gxg_gtk_get_minor_version(void)
+{
+  #define H_gtk_get_minor_version "guint gtk_get_minor_version( void)"
+    return(C_TO_XEN_guint((guint)gtk_get_minor_version()));
+}
+
+static XEN gxg_gtk_get_micro_version(void)
+{
+  #define H_gtk_get_micro_version "guint gtk_get_micro_version( void)"
+    return(C_TO_XEN_guint((guint)gtk_get_micro_version()));
+}
+
+static XEN gxg_gtk_get_binary_age(void)
+{
+  #define H_gtk_get_binary_age "guint gtk_get_binary_age( void)"
+    return(C_TO_XEN_guint((guint)gtk_get_binary_age()));
+}
+
+static XEN gxg_gtk_get_interface_age(void)
+{
+  #define H_gtk_get_interface_age "guint gtk_get_interface_age( void)"
+    return(C_TO_XEN_guint((guint)gtk_get_interface_age()));
+}
+
+static XEN gxg_gtk_image_new_from_gicon(XEN icon, XEN size)
+{
+  #define H_gtk_image_new_from_gicon "GtkWidget* gtk_image_new_from_gicon(GIcon* icon, GtkIconSize size)"
+  XEN_ASSERT_TYPE(XEN_GIcon__P(icon), icon, 1, "gtk_image_new_from_gicon", "GIcon*");
+  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(size), size, 2, "gtk_image_new_from_gicon", "GtkIconSize");
+  return(C_TO_XEN_GtkWidget_(gtk_image_new_from_gicon(XEN_TO_C_GIcon_(icon), XEN_TO_C_GtkIconSize(size))));
+}
+
+static XEN gxg_gtk_image_set_from_gicon(XEN image, XEN icon, XEN size)
+{
+  #define H_gtk_image_set_from_gicon "void gtk_image_set_from_gicon(GtkImage* image, GIcon* icon, GtkIconSize size)"
+  XEN_ASSERT_TYPE(XEN_GtkImage__P(image), image, 1, "gtk_image_set_from_gicon", "GtkImage*");
+  XEN_ASSERT_TYPE(XEN_GIcon__P(icon), icon, 2, "gtk_image_set_from_gicon", "GIcon*");
+  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(size), size, 3, "gtk_image_set_from_gicon", "GtkIconSize");
+  gtk_image_set_from_gicon(XEN_TO_C_GtkImage_(image), XEN_TO_C_GIcon_(icon), XEN_TO_C_GtkIconSize(size));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_image_get_gicon(XEN image, XEN ignore_gicon, XEN ignore_size)
+{
+  #define H_gtk_image_get_gicon "void gtk_image_get_gicon(GtkImage* image, GIcon** [gicon], GtkIconSize* [size])"
+  GIcon* ref_gicon = NULL;
+  GtkIconSize ref_size;
+  XEN_ASSERT_TYPE(XEN_GtkImage__P(image), image, 1, "gtk_image_get_gicon", "GtkImage*");
+  gtk_image_get_gicon(XEN_TO_C_GtkImage_(image), &ref_gicon, &ref_size);
+  return(XEN_LIST_2(C_TO_XEN_GIcon_(ref_gicon), C_TO_XEN_GtkIconSize(ref_size)));
+}
+
+static XEN gxg_gtk_progress_bar_set_show_text(XEN pbar, XEN show_text)
+{
+  #define H_gtk_progress_bar_set_show_text "void gtk_progress_bar_set_show_text(GtkProgressBar* pbar, \
+gboolean show_text)"
+  XEN_ASSERT_TYPE(XEN_GtkProgressBar__P(pbar), pbar, 1, "gtk_progress_bar_set_show_text", "GtkProgressBar*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(show_text), show_text, 2, "gtk_progress_bar_set_show_text", "gboolean");
+  gtk_progress_bar_set_show_text(XEN_TO_C_GtkProgressBar_(pbar), XEN_TO_C_gboolean(show_text));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_progress_bar_get_show_text(XEN pbar)
+{
+  #define H_gtk_progress_bar_get_show_text "gboolean gtk_progress_bar_get_show_text(GtkProgressBar* pbar)"
+  XEN_ASSERT_TYPE(XEN_GtkProgressBar__P(pbar), pbar, 1, "gtk_progress_bar_get_show_text", "GtkProgressBar*");
+  return(C_TO_XEN_gboolean(gtk_progress_bar_get_show_text(XEN_TO_C_GtkProgressBar_(pbar))));
+}
+
 #endif
 
 #if (!HAVE_GTK_3)
@@ -37844,6 +37936,17 @@ XEN_NARGIFY_1(gxg_gtk_tree_view_column_get_button_w, gxg_gtk_tree_view_column_ge
 XEN_NARGIFY_2(gxg_gtk_tree_view_column_focus_cell_w, gxg_gtk_tree_view_column_focus_cell)
 XEN_NARGIFY_2(gxg_gtk_orientable_set_orientation_w, gxg_gtk_orientable_set_orientation)
 XEN_NARGIFY_1(gxg_gtk_orientable_get_orientation_w, gxg_gtk_orientable_get_orientation)
+XEN_ARGIFY_2(gxg_gtk_parse_args_w, gxg_gtk_parse_args)
+XEN_NARGIFY_0(gxg_gtk_get_major_version_w, gxg_gtk_get_major_version)
+XEN_NARGIFY_0(gxg_gtk_get_minor_version_w, gxg_gtk_get_minor_version)
+XEN_NARGIFY_0(gxg_gtk_get_micro_version_w, gxg_gtk_get_micro_version)
+XEN_NARGIFY_0(gxg_gtk_get_binary_age_w, gxg_gtk_get_binary_age)
+XEN_NARGIFY_0(gxg_gtk_get_interface_age_w, gxg_gtk_get_interface_age)
+XEN_NARGIFY_2(gxg_gtk_image_new_from_gicon_w, gxg_gtk_image_new_from_gicon)
+XEN_NARGIFY_3(gxg_gtk_image_set_from_gicon_w, gxg_gtk_image_set_from_gicon)
+XEN_ARGIFY_3(gxg_gtk_image_get_gicon_w, gxg_gtk_image_get_gicon)
+XEN_NARGIFY_2(gxg_gtk_progress_bar_set_show_text_w, gxg_gtk_progress_bar_set_show_text)
+XEN_NARGIFY_1(gxg_gtk_progress_bar_get_show_text_w, gxg_gtk_progress_bar_get_show_text)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -41817,6 +41920,17 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_tree_view_column_focus_cell_w gxg_gtk_tree_view_column_focus_cell
 #define gxg_gtk_orientable_set_orientation_w gxg_gtk_orientable_set_orientation
 #define gxg_gtk_orientable_get_orientation_w gxg_gtk_orientable_get_orientation
+#define gxg_gtk_parse_args_w gxg_gtk_parse_args
+#define gxg_gtk_get_major_version_w gxg_gtk_get_major_version
+#define gxg_gtk_get_minor_version_w gxg_gtk_get_minor_version
+#define gxg_gtk_get_micro_version_w gxg_gtk_get_micro_version
+#define gxg_gtk_get_binary_age_w gxg_gtk_get_binary_age
+#define gxg_gtk_get_interface_age_w gxg_gtk_get_interface_age
+#define gxg_gtk_image_new_from_gicon_w gxg_gtk_image_new_from_gicon
+#define gxg_gtk_image_set_from_gicon_w gxg_gtk_image_set_from_gicon
+#define gxg_gtk_image_get_gicon_w gxg_gtk_image_get_gicon
+#define gxg_gtk_progress_bar_set_show_text_w gxg_gtk_progress_bar_set_show_text
+#define gxg_gtk_progress_bar_get_show_text_w gxg_gtk_progress_bar_get_show_text
 #endif
 
 #if (!HAVE_GTK_3)
@@ -45797,6 +45911,17 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_focus_cell, gxg_gtk_tree_view_column_focus_cell_w, 2, 0, 0, H_gtk_tree_view_column_focus_cell);
   XG_DEFINE_PROCEDURE(gtk_orientable_set_orientation, gxg_gtk_orientable_set_orientation_w, 2, 0, 0, H_gtk_orientable_set_orientation);
   XG_DEFINE_PROCEDURE(gtk_orientable_get_orientation, gxg_gtk_orientable_get_orientation_w, 1, 0, 0, H_gtk_orientable_get_orientation);
+  XG_DEFINE_PROCEDURE(gtk_parse_args, gxg_gtk_parse_args_w, 0, 2, 0, H_gtk_parse_args);
+  XG_DEFINE_PROCEDURE(gtk_get_major_version, gxg_gtk_get_major_version_w, 0, 0, 0, H_gtk_get_major_version);
+  XG_DEFINE_PROCEDURE(gtk_get_minor_version, gxg_gtk_get_minor_version_w, 0, 0, 0, H_gtk_get_minor_version);
+  XG_DEFINE_PROCEDURE(gtk_get_micro_version, gxg_gtk_get_micro_version_w, 0, 0, 0, H_gtk_get_micro_version);
+  XG_DEFINE_PROCEDURE(gtk_get_binary_age, gxg_gtk_get_binary_age_w, 0, 0, 0, H_gtk_get_binary_age);
+  XG_DEFINE_PROCEDURE(gtk_get_interface_age, gxg_gtk_get_interface_age_w, 0, 0, 0, H_gtk_get_interface_age);
+  XG_DEFINE_PROCEDURE(gtk_image_new_from_gicon, gxg_gtk_image_new_from_gicon_w, 2, 0, 0, H_gtk_image_new_from_gicon);
+  XG_DEFINE_PROCEDURE(gtk_image_set_from_gicon, gxg_gtk_image_set_from_gicon_w, 3, 0, 0, H_gtk_image_set_from_gicon);
+  XG_DEFINE_PROCEDURE(gtk_image_get_gicon, gxg_gtk_image_get_gicon_w, 1, 2, 0, H_gtk_image_get_gicon);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_set_show_text, gxg_gtk_progress_bar_set_show_text_w, 2, 0, 0, H_gtk_progress_bar_set_show_text);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_get_show_text, gxg_gtk_progress_bar_get_show_text_w, 1, 0, 0, H_gtk_progress_bar_get_show_text);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -47691,6 +47816,7 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_ARROW_NONE);
   DEFINE_INTEGER(GTK_TOOL_PALETTE_DRAG_ITEMS);
   DEFINE_INTEGER(GTK_TOOL_PALETTE_DRAG_GROUPS);
+  DEFINE_INTEGER(GTK_IMAGE_GICON);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -48348,7 +48474,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Dec-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Dec-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

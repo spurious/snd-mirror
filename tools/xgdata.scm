@@ -2352,7 +2352,7 @@
 (CFNC "void gtk_list_store_append GtkListStore* list_store GtkTreeIter* iter")
 (CFNC "void gtk_list_store_clear GtkListStore* list_store")
 (CINT "GTK_PRIORITY_RESIZE")
-(CFNC "gchar* gtk_check_version guint required_major guint required_minor guint required_micro")
+(CFNC "gchar* gtk_check_version guint required_major guint required_minor guint required_micro" 'const-return)
 
 ;;; (CFNC "void gtk_init int* {argc} char*** |argv|")
 ;;; (CFNC "gboolean gtk_init_check int* {argc} char*** |argv|")
@@ -7980,7 +7980,22 @@
 (CFNC-29x "void gtk_orientable_set_orientation GtkOrientable* orientable GtkOrientation orientation")
 (CFNC-29x "GtkOrientation gtk_orientable_get_orientation GtkOrientable* orientable")
 
+(CFNC-29x "void gtk_parse_args int* {argc} char*** |argv|")
+(CFNC-29x "guint gtk_get_major_version void" 'const-return)
+(CFNC-29x "guint gtk_get_minor_version void" 'const-return)
+(CFNC-29x "guint gtk_get_micro_version void" 'const-return)
+(CFNC-29x "guint gtk_get_binary_age void" 'const-return)
+(CFNC-29x "guint gtk_get_interface_age void" 'const-return)
+;(CFNC-29x "GOptionGroup* gtk_get_option_group gboolean open_default_display")
 
+(CINT-29x "GTK_IMAGE_GICON" "GtkImageType")
+(CFNC-29x "GtkWidget* gtk_image_new_from_gicon GIcon* icon GtkIconSize size")
+(CFNC-29x "void gtk_image_set_from_gicon GtkImage* image GIcon* icon GtkIconSize size")
+(CFNC-29x "void gtk_image_get_gicon GtkImage* image GIcon** [gicon] GtkIconSize* [size]")
+
+(CFNC-29x "void gtk_progress_bar_set_show_text GtkProgressBar* pbar gboolean show_text")
+(CFNC-29x "gboolean gtk_progress_bar_get_show_text GtkProgressBar* pbar")
+ 
 #|
 (CSTR-29x "GTK_STYLE_PROPERTY_BACKGROUND_COLOR")
 (CSTR-29x "GTK_STYLE_PROPERTY_COLOR")
@@ -8457,30 +8472,12 @@ gtkicontheme: gtk_icon_info_load_symbolic_for_context
 gtkicontheme: gtk_icon_info_load_symbolic_for_style
 gtkiconview: gtk_icon_view_set_item_orientation
 gtkiconview: gtk_icon_view_get_item_orientation
-gtkimage: GTK_IMAGE_GICON
-gtkimage: gtk_image_new_from_gicon
-gtkimage: gtk_image_set_from_gicon
-gtkimage: gtk_image_get_gicon
 gtkimcontextsimpleseqs: gtk_compose_seqs_compact
 gtkimmulticontext: gtk_im_multicontext_get_context_id
 gtkimmulticontext: gtk_im_multicontext_set_context_id
 gtkinvisible: gtk_invisible_new_for_screen
 gtkinvisible: gtk_invisible_set_screen
 gtkinvisible: gtk_invisible_get_screen
-gtkmain: gtk_get_major_version
-gtkmain: gtk_get_minor_version
-gtkmain: gtk_get_micro_version
-gtkmain: gtk_get_binary_age
-gtkmain: gtk_get_interface_age
-gtkmain: gtk_major_version
-gtkmain: gtk_minor_version
-gtkmain: gtk_micro_version
-gtkmain: gtk_binary_age
-gtkmain: gtk_interface_age
-gtkmain: gtk_parse_args
-gtkmain: gtk_init_with_args
-gtkmain: gtk_get_option_group
-gtkmodules: gtk_modules_args
 gtkmountoperation: GTK_MOUNT_OPERATION
 gtkmountoperation: GTK_IS_MOUNT_OPERATION
 gtkmountoperation: gtk_mount_operation_new
@@ -8736,9 +8733,6 @@ gtkprintunixdialog: gtk_print_unix_dialog_set_support_selection
 gtkprintunixdialog: gtk_print_unix_dialog_set_has_selection
 gtkprintunixdialog: gtk_print_unix_dialog_set_embed_page_setup
 gtkprintunixdialog: gtk_print_unix_dialog_get_page_setup_set
-gtkprogressbar: gtk_progress_bar_set_show_text
-gtkquery: GTK_QUERY
-gtkquery: GTK_IS_QUERY
 gtkrecentaction: GTK_RECENT_ACTION
 gtkrecentaction: GTK_IS_RECENT_ACTION
 gtkrecentaction: gtk_recent_action_new
@@ -8879,6 +8873,7 @@ gtkwindow: gtk_window_set_application
 
 ;; omit gtkrc.h, gtkcellarea*, gtkstylecontext.h, gtkstyle.h, gtkrbtree.h (internal to gtktreeview), gtktimeline.h
 ;;      gtktextlayout.h (all internal), gtktexttypes.h, gtktrayicon.h, gtkrecentchooserutils.h, gtksearch*.h
+;;      gtkmodules.h, gtkquery.h
 
 (call-with-input-file "names"
   (lambda (p)

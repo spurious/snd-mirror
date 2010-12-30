@@ -8261,6 +8261,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (test (format #f "~f" (/ 1 3)) "1/3") ; hmmm -- should it call exact->inexact?
 (test (format #f "~f" 1) "1")
+(test (format #f "~F" most-positive-fixnum) "9223372036854775807")
 
 (if with-bignums
     (begin
@@ -19085,6 +19086,7 @@ abs     1       2
 (test (constant? abs) #t)
 (test (constant? most-positive-fixnum) #t)
 (test (constant? (/ (log 0))) #t)       ; nan.0 is a constant as a number I guess
+(test (constant? 1/0) #t)
 (test (constant? (log 0)) #t)
 (test (constant?) 'error)
 (test (constant? 1 2) 'error)
@@ -19966,6 +19968,8 @@ abs     1       2
 (test (hook? (copy (make-hook 1))) #t)
 (test (copy not) not)
 (test (copy "a\x00b") "a\x00b")
+(test (infinite? (copy (log 0.0))) #t)
+(test (nan? (copy 1/0)) #t)
 
 
 (test (reverse "hi") "ih")
@@ -51412,17 +51416,33 @@ abs     1       2
 (test (= most-negative-fixnum 1/0) #f)
 (test (= most-positive-fixnum 0/0) #f)
 (test (= most-negative-fixnum 0/0) #f)
+
+(if with-bignums (test (= (bignum "3") 1/0) #f))
+(test (= 1/0 (log 0)) #f)
+(test (= 0 1/0 0/0) #f)
+(test (= 1/0 -1/0) #f)
+(test (= 0/1 -0/1) #t)
+
+; these can go either way I guess -- 1/0 might be NaN?
+;(test (< most-positive-fixnum 1/0) #t)
+;(test (> most-positive-fixnum 1/0) #f)
+
 (test (= most-positive-fixnum 0/0+0/0i) #f)
 (test (= most-negative-fixnum 0/0+0/0i) #f)
 (test (= most-positive-fixnum (/ (log 0) (log 0))) #f)
 (test (= most-negative-fixnum (/ (log 0) (log 0))) #f)
+
+(test (< most-positive-fixnum (- (real-part (log 0.0)))) #t)
+(test (> most-positive-fixnum (- (real-part (log 0.0)))) #f)
+(test (< most-negative-fixnum (real-part (log 0.0))) #f)
+(test (> most-negative-fixnum (real-part (log 0.0))) #t)
 
 (test (= most-positive-fixnum most-positive-fixnum) #t)
 (test (= most-positive-fixnum most-negative-fixnum) #f)
 (test (> most-positive-fixnum most-negative-fixnum) #t)
 
 (test (> 1e18 most-positive-fixnum) #f)
-(test (max 1e18 most-positive-fixnum) most-positive-fixnum)
+(num-test (max 1e18 most-positive-fixnum) most-positive-fixnum) ; in bignum case there's type confusion here I think (hence num-test)
 
 (num-test (+ 1073741824 1073741824 1073741824 1073741824) (* 4 1073741824))
 
@@ -56290,18 +56310,45 @@ abs     1       2
 
 
 (test (number->string 1/0) "nan.0")
-(test (object->string 1/0) "nan.0")
 (test (number->string 1/0 2) "nan.0")
 (test (number->string 1/0 10) "nan.0")
 (test (number->string 1/0 16) "nan.0")
+(test (object->string 1/0) "nan.0")
+(test (format #f "~F" 1/0) "nan.0")
+(test (format #f "~E" 1/0) "nan.0")
+(test (format #f "~G" 1/0) "nan.0")
+(test (format #f "~D" 1/0) "nan.0")
+(test (format #f "~X" 1/0) "nan.0")
+(test (format #f "~B" 1/0) "nan.0")
+(test (format #f "~O" 1/0) "nan.0")
+(test (format #f "~A" 1/0) "nan.0")
+(test (format #f "~S" 1/0) "nan.0")
+(test (format #f "~P" 1/0) "s")
+(test (nan? (string->number "nan.0")) #t)
+(test (nan? (string->number "nan.0" 2)) #t)
+
 (test (number->string (real-part (log 0.0))) "-inf.0")
-(test (number->string (real-part (log 0.0)) 2) "-inf.0") ; this currently starts "--1" !!
-(test (number->string (real-part (log 0.0)) 16) "-inf.0") ; this currently starts "--1" !!
+(test (number->string (real-part (log 0.0)) 2) "-inf.0")
+(test (number->string (real-part (log 0.0)) 16) "-inf.0")
 (test (number->string (- (real-part (log 0.0)))) "inf.0")
 (test (number->string (- (real-part (log 0.0))) 2) "inf.0")
-(test (number->string 0+0/0i) "0-nani")
-(test (number->string 0+0/0i 2) "0-nani") ; this has +- !
+(test (format #f "~G" (real-part (log 0))) "-inf.0")
+(test (format #f "~E" (real-part (log 0))) "-inf.0")
+(test (format #f "~F" (real-part (log 0))) "-inf.0")
+(test (format #f "~D" (real-part (log 0))) "-inf.0")
+(test (format #f "~X" (real-part (log 0))) "-inf.0")
+(test (format #f "~B" (real-part (log 0))) "-inf.0")
+(test (format #f "~O" (real-part (log 0))) "-inf.0")
+(test (format #f "~A" (real-part (log 0))) "-inf.0")
+(test (format #f "~S" (real-part (log 0))) "-inf.0")
+(test (format #f "~P" (real-part (log 0))) "s")
+(test (infinite? (string->number "inf.0")) #t)
+(test (infinite? (string->number "inf.0" 16)) #t)
+(test (infinite? (string->number "-inf.0")) #t)
+(test (infinite? (string->number "-inf.0" 16)) #t)
+(test (negative? (string->number "-inf.0")) #t)
 
+;(test (number->string 0+0/0i 2) "0-nani") ; there are too many possible correct choices
 
 (test (equal? 0.0 0e0) #t)
 (test (equal? 0.0 0e-0) #t)
@@ -60041,6 +60088,9 @@ etc
 (test (integer-decode-float (expt 2.0 31)) (list #x10000000000000 -21 1))
 (test (integer-decode-float (expt 2.0 52)) (list #x10000000000000 0 1))
 (test (integer-decode-float 1e23) '(5960464477539062 24 1))
+
+;(test (integer-decode-float 1/0) '(6755399441055744 972 1))
+;(test (integer-decode-float (real-part (log 0))) '(4503599627370496 972 -1))
 
 (for-each
  (lambda (arg)
