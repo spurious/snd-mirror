@@ -60743,5 +60743,9 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 
 but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ? (would need check for invalid args)
 
+
+in non-gmp, 
+  (+ most-negative-fixnum -1 most-positive-fixnum) is the same as 
+  (+ most-positive-fixnum most-positive-fixnum) -> -2!
 |#
 

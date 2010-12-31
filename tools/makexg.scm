@@ -836,6 +836,7 @@
 	(cons "GtkIconViewDropPosition" "INT")
 	(cons "GtkFileChooserConfirmation" "INT")
 	(cons "GtkFileChooserProp" "INT")
+	(cons "GtkFileChooserError" "INT")
 
 	(cons "GtkWrapAllocationMode" "INT")
 	(cons "GtkWrapBoxSpreading" "INT")
