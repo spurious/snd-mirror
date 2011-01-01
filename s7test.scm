@@ -41944,7 +41944,7 @@ abs     1       2
       
       
       
-      ;; -------- abs and magnitude
+;; -------- abs and magnitude
 ;;; abs
 ;;; magnitude
 (num-test (abs 0) 0)
@@ -56433,7 +56433,7 @@ etc....
       (test (number? (string->number "#e1.0e307")) #t)
       (test (number? (string->number "#e1.0e310")) #t)))
 ;; in the non-gmp case #e1e321 is a read error -- should s7 return NaN silently?
-;; can't use #e1e543 directly here because the reader throws and error even though with-bignums is #f
+;; can't use #e1e543 directly here because the reader throws an error even though with-bignums is #f
 
 (if (not with-bignums)
     (begin
@@ -58497,7 +58497,7 @@ etc....
  (lambda (arg)
    (test (string->number "123" arg) 'error)
    (test (string->number "1" arg) 'error))
- (list -1 0 1 #\a '#(1 2 3) 3.14 3/4 1.5+0.3i 1+i '() "" "12" #() :hi most-positive-fixnum most-negative-fixnum 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+ (list -1 0 1 17 #\a '#(1 2 3) 3.14 3/4 1.5+0.3i 1+i '() "" "12" #() :hi most-positive-fixnum most-negative-fixnum 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
 ;; (string->number "0" 1) ?? why not?
 
@@ -58509,7 +58509,7 @@ etc....
 (for-each
  (lambda (arg)
    (test (number->string 123 arg) 'error))
- (list -1 most-positive-fixnum most-negative-fixnum 0 1 512 #\a '#(1 2 3) 3.14 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+ (list -1 17 most-positive-fixnum most-negative-fixnum 0 1 512 #\a '#(1 2 3) 3.14 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
 (test (string->number "34.1" (+ 5 (expt 2 32))) 'error)
 (test (number->string 34.1 (+ 5 (expt 2 32))) 'error)
@@ -58527,6 +58527,21 @@ etc....
 (test (string->number (substring "hi" 0 0)) #f)
 (test (string->number (string (integer->char 30))) #f)
 (test (string->number "123" 10+0i) 'error) ; a real in s7
+
+(if with-bignums
+    (begin
+      (test (number->string 123 (bignum "10")) "123")
+      (test (number->string 123 (bignum "2")) "1111011")
+      (test (string->number "123" (bignum "10")) 123)
+      (test (string->number "1111011" (bignum "2")) 123)
+      (test (number->string 123 (bignum "17")) 'error)
+      (test (number->string 123 (bignum "-1")) 'error)
+      (test (number->string 123 (bignum "1")) 'error)
+      (test (number->string 123 (bignum "1/2")) 'error)
+      (test (string->number "101" (bignum "17")) 'error)
+      (test (string->number "101" (bignum "1")) 'error)
+      (test (string->number "101" (bignum "-1")) 'error)
+      (test (string->number "101" (bignum "1/2")) 'error)))
 
 (num-test (- (string->number "1188077266484631001.") (string->number "1.188077266484631001E18")) 0.0)
 

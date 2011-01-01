@@ -166,7 +166,7 @@
 	"GtkDirectionType" "GtkExpanderStyle" "GtkIconLookupFlags" ;"GtkMenuPositionFunc" 
 	"GtkPathType" "GtkSpinType"
 	"GtkTextSearchFlags" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc" "GtkUIManagerItemType" "GtkWindowPosition"
-	"GtkWindowType" "PangoGlyph" "PangoUnderline" "gssize" 
+	"PangoGlyph" "PangoUnderline" "gssize" 
 	
 	"GtkMenuBar*" "GtkTranslateFunc" ;"GtkMenuPositionFunc" 
 	"GtkTreeIterCompareFunc" "GtkTreeSelectionFunc"
@@ -830,6 +830,7 @@
 	(cons "GtkUIManagerItemType" "INT")
 	(cons "GtkFileFilterFlags" "INT")
 	(cons "GtkIconLookupFlags" "INT")
+	(cons "GtkIconThemeError" "INT")
 	(cons "GtkScrollStep" "INT")
 	(cons "GLogLevelFlags" "INT")
 	(cons "GtkPackDirection" "INT")
@@ -837,6 +838,7 @@
 	(cons "GtkFileChooserConfirmation" "INT")
 	(cons "GtkFileChooserProp" "INT")
 	(cons "GtkFileChooserError" "INT")
+	(cons "GtkLicense" "INT")
 
 	(cons "GtkWrapAllocationMode" "INT")
 	(cons "GtkWrapBoxSpreading" "INT")

@@ -1356,8 +1356,6 @@
 (CFNC "void gdk_window_set_type_hint GdkWindow* window GdkWindowTypeHint hint")
 (CFNC "void gdk_window_set_modal_hint GdkWindow* window gboolean modal")
 (CFNC "void gdk_window_set_geometry_hints GdkWindow* window GdkGeometry* geometry GdkWindowHints geom_mask")
-;(CFNC "void gtk_window_group_add_window GtkWindowGroup* window_group GtkWindow* window")
-;(CFNC "void gtk_window_group_remove_window GtkWindowGroup* window_group GtkWindow* window")
 (CFNC-gtk2 "void gdk_set_sm_client_id gchar* sm_client_id")
 (CFNC "void gdk_window_begin_paint_rect GdkWindow* window GdkRectangle* rectangle")
 ;;; (CFNC "void gdk_window_begin_paint_region GdkWindow* window GdkRegion* region")
@@ -3812,8 +3810,6 @@
 (CFNC "gboolean gtk_window_has_toplevel_focus GtkWindow* window")
 (CCAST "GTK_WINDOW(obj)" "GtkWindow*")
 (CCHK "GTK_IS_WINDOW(obj)" "GtkWindow*")
-;(CCAST "GTK_WINDOW_GROUP(object)" "GtkWindowGroup*")
-;(CCHK "GTK_IS_WINDOW_GROUP(object)" "GtkWindowGroup*")
 ;;;;(CFNC "GType gtk_window_get_type void")
 (CFNC "GtkWidget* gtk_window_new GtkWindowType type")
 (CFNC "void gtk_window_set_title GtkWindow* window gchar* title")
@@ -3878,8 +3874,6 @@
 (CFNC "void gtk_window_get_position GtkWindow* window gint* [root_x] gint* [root_y]")
 (CFNC "gboolean gtk_window_parse_geometry GtkWindow* window gchar* geometry")
 (CFNC "void gtk_window_reshow_with_initial_size GtkWindow* window")
-;;;;(CFNC "GType gtk_window_group_get_type void")
-;(CFNC "GtkWindowGroup* gtk_window_group_new void")
 
 (CFNC-gtk2 "void gtk_window_remove_embedded_xid GtkWindow* window guint xid")
 (CFNC-gtk2 "void gtk_window_add_embedded_xid GtkWindow* window guint xid")
@@ -5901,7 +5895,6 @@
 ;;; 2.91.0 (CFNC "void gtk_widget_input_shape_combine_mask GtkWidget* widget GdkBitmap* shape_mask gint offset_x gint offset_y")
 (CFNC "void gtk_window_set_deletable GtkWindow* window gboolean setting")
 (CFNC "gboolean gtk_window_get_deletable GtkWindow* window")
-(CFNC "GtkWindowGroup* gtk_window_get_group GtkWindow* window")
 ;;;;(CFNC "GType gtk_assistant_get_type void")
 (CFNC "GtkWidget* gtk_assistant_new void")
 (CFNC "gint gtk_assistant_get_current_page GtkAssistant* assistant")
@@ -6991,7 +6984,6 @@
 ;;out 2.14.1 ;(CFNC-2134 "GtkAllocation gtk_widget_get_allocation GtkWidget* widget")
 (CFNC-2134 "GdkWindow* gtk_widget_get_window GtkWidget* widget")
 ;;; (CFNC-2134 "GtkWidget* gtk_window_get_default GtkWindow* window")
-;(CFNC-2134 "GList* gtk_window_group_list_windows GtkWindowGroup* window_group")
 (CFNC-2134 "GdkModifierType gtk_accel_group_get_modifier_mask GtkAccelGroup* accel_group")
 
 
@@ -7288,10 +7280,6 @@
 (CFNC-2190 "gfloat gtk_tool_item_get_text_alignment GtkToolItem* tool_item")
 (CFNC-2190 "GtkOrientation gtk_tool_item_get_text_orientation GtkToolItem* tool_item")
 (CFNC-2190 "GtkSizeGroup* gtk_tool_item_get_text_size_group GtkToolItem* tool_item")
-(CFNC-2190 "GtkOrientation gtk_tool_shell_get_text_orientation GtkToolShell* shell")
-(CFNC-2190 "gfloat gtk_tool_shell_get_text_alignment GtkToolShell* shell")
-(CFNC-2190 "PangoEllipsizeMode gtk_tool_shell_get_ellipsize_mode GtkToolShell* shell")
-(CFNC-2190 "GtkSizeGroup* gtk_tool_shell_get_text_size_group GtkToolShell* shell")
 ;;; (CFNC-2190 "GtkWindowType gtk_window_get_window_type GtkWindow* window")
 (CFNC-2190 "GtkWidget* gtk_tool_palette_new void")
 (CFNC-2190 "void gtk_tool_palette_set_group_position GtkToolPalette* palette GtkToolItemGroup* group gint position") ; these changed GtkWidget* to GtkToolItemGroup*
@@ -7429,7 +7417,6 @@
 (CFNC-29x "gboolean gtk_widget_get_support_multidevice GtkWidget* widget")
 (CFNC-29x "void gtk_widget_set_support_multidevice GtkWidget* widget gboolean support_multidevice")
 (CFNC-29x "GdkEventMask gtk_widget_get_device_events GtkWidget* widget GdkDevice* device")
-(CFNC-29x "GtkWidget* gtk_window_group_get_current_device_grab GtkWindowGroup* window_group GdkDevice* device")
 
 ;;; 2.91.0 (CINT-29x "GTK_MULTIDEVICE" "GtkWidgetFlags")
 
@@ -7847,10 +7834,6 @@
 (CFNC-29x "void gtk_combo_box_text_insert GtkComboBoxText* combo_box gint position gchar* id gchar* text" 'const)
 (CFNC-29x "void gtk_combo_box_text_append GtkComboBoxText* combo_box gchar* id gchar* text" 'const)
 (CFNC-29x "void gtk_combo_box_text_prepend GtkComboBoxText* combo_box gchar* id gchar* text" 'const)
-;(CFNC-29x "GtkWidgetPath* gtk_container_get_path_for_child GtkContainer* container GtkWidget* child")
-;(CFNC-29x "GtkWidgetPath* gtk_widget_get_path GtkWidget* widget")
-;(CFNC-29x "void gtk_widget_path GtkWidget* widget guint* path_length gchar** [path] gchar** [path_reversed]")
-;(CFNC-29x "void gtk_widget_class_path GtkWidget* widget guint* path_length gchar** [path] gchar** [path_reversed]")
 
 
 
@@ -8041,8 +8024,132 @@
 (CINT-29x "GTK_FILE_CHOOSER_ERROR_ALREADY_EXISTS" "GtkFileChooserError")
 (CINT-29x "GTK_FILE_CHOOSER_ERROR_INCOMPLETE_HOSTNAME" "GtkFileChooserError")
 ;gtkfilechooser: gtk_file_chooser_error_quark
- 
+
+(CFNC-29x "void gtk_about_dialog_set_license_type GtkAboutDialog* about GtkLicense license_type")
+(CFNC-29x "GtkLicense gtk_about_dialog_get_license_type GtkAboutDialog* about")
+;void gtk_show_about_dialog GtkWindow* parent gchar* first_property_name ...)
+(CINT-29x "GTK_LICENSE_UNKNOWN" "GtkLicense")
+(CINT-29x "GTK_LICENSE_CUSTOM" "GtkLicense")
+(CINT-29x "GTK_LICENSE_GPL_2_0" "GtkLicense")
+(CINT-29x "GTK_LICENSE_GPL_3_0" "GtkLicense")
+(CINT-29x "GTK_LICENSE_LGPL_2_1" "GtkLicense")
+(CINT-29x "GTK_LICENSE_LGPL_3_0" "GtkLicense")
+(CINT-29x "GTK_LICENSE_BSD" "GtkLicense")
+(CINT-29x "GTK_LICENSE_MIT_X11" "GtkLicense")
+(CINT-29x "GTK_LICENSE_ARTISTIC" "GtkLicense")
+
+(CFNC-29x "void gtk_window_set_skip_taskbar_hint GtkWindow* window gboolean setting")
+(CFNC-29x "gboolean gtk_window_get_skip_taskbar_hint GtkWindow* window")
+(CFNC-29x "void gtk_window_set_skip_pager_hint GtkWindow* window gboolean setting")
+(CFNC-29x "gboolean gtk_window_get_skip_pager_hint GtkWindow* window")
+(CFNC-29x "void gtk_window_set_screen GtkWindow* window GdkScreen* screen")
+(CFNC-29x "GdkScreen* gtk_window_get_screen GtkWindow* window")
+(CFNC-29x "gboolean gtk_window_set_icon_from_file GtkWindow* window gchar* filename GError** [err]" 'const)
+(CFNC-29x "gboolean gtk_window_set_default_icon_from_file gchar* filename GError** [err]" 'const)
+(CFNC-29x "void gtk_window_fullscreen GtkWindow* window")
+(CFNC-29x "void gtk_window_unfullscreen GtkWindow* window")
+(CFNC-29x "GtkWindowType gtk_window_get_window_type GtkWindow* window")
+;GtkApplication *gtk_window_get_application GtkWindow* window)
+;void gtk_window_set_application GtkWindow* window GtkApplication* application)
+
+(CCAST-29x "GTK_WINDOW_GROUP(object)" "GtkWindowGroup*")
+(CCHK-29x "GTK_IS_WINDOW_GROUP(object)" "GtkWindowGroup*")
+(CFNC-29x "void gtk_window_group_add_window GtkWindowGroup* window_group GtkWindow* window")
+(CFNC-29x "void gtk_window_group_remove_window GtkWindowGroup* window_group GtkWindow* window")
+(CFNC-29x "GtkWindowGroup* gtk_window_group_new void")
+(CFNC-29x "GtkWindowGroup* gtk_window_get_group GtkWindow* window")
+(CFNC-29x "GList* gtk_window_group_list_windows GtkWindowGroup* window_group")
+(CFNC-29x "GtkWidget* gtk_window_group_get_current_device_grab GtkWindowGroup* window_group GdkDevice* device")
+;;;;(CFNC "GType gtk_window_group_get_type void")
+(CFNC-29x "GtkWidget* gtk_window_group_get_current_grab GtkWindowGroup* window_group")
+
+;gtkrecentchooserdialog: gtk_recent_chooser_dialog_new -- these 2 use property lists
+;gtkrecentchooserdialog: gtk_recent_chooser_dialog_new_for_manager
+
+(CFNC-29x "guchar* gtk_selection_data_get_data GtkSelectionData* selection_data" 'const)
+(CFNC-29x "gboolean gtk_selection_owner_set_for_display GdkDisplay* display GtkWidget* widget GdkAtom selection guint32 time")
+
+(CCAST-29x "GTK_TOOL_SHELL" "GtkToolShell*")
+(CCHK-29x "GTK_IS_TOOL_SHELL" "GtkToolShell*")
+(CFNC-29x "GtkOrientation gtk_tool_shell_get_text_orientation GtkToolShell* shell")
+(CFNC-29x "gfloat gtk_tool_shell_get_text_alignment GtkToolShell* shell")
+(CFNC-29x "PangoEllipsizeMode gtk_tool_shell_get_ellipsize_mode GtkToolShell* shell")
+(CFNC-29x "GtkSizeGroup* gtk_tool_shell_get_text_size_group GtkToolShell* shell")
+(CFNC-29x "GtkIconSize gtk_tool_shell_get_icon_size GtkToolShell* shell")
+(CFNC-29x "GtkOrientation gtk_tool_shell_get_orientation GtkToolShell* shell")
+(CFNC-29x "GtkToolbarStyle gtk_tool_shell_get_style GtkToolShell* shell")
+(CFNC-29x "GtkReliefStyle gtk_tool_shell_get_relief_style GtkToolShell* shell")
+(CFNC-29x "void gtk_tool_shell_rebuild_menu GtkToolShell* shell")
+
+(CFNC-29x "GtkStatusIcon* gtk_status_icon_new_from_gicon GIcon* icon")
+(CFNC-29x "void gtk_status_icon_set_from_gicon GtkStatusIcon* status_icon GIcon* icon")
+(CFNC-29x "GIcon* gtk_status_icon_get_gicon GtkStatusIcon* status_icon")
+(CFNC-29x "void gtk_status_icon_set_has_tooltip GtkStatusIcon* status_icon gboolean has_tooltip")
+(CFNC-29x "void gtk_status_icon_set_tooltip_text GtkStatusIcon* status_icon gchar* text" 'const)
+(CFNC-29x "void gtk_status_icon_set_tooltip_markup GtkStatusIcon* status_icon gchar* markup" 'const)
+(CFNC-29x "gboolean gtk_status_icon_get_has_tooltip GtkStatusIcon* status_icon")
+(CFNC-29x "gchar* gtk_status_icon_get_tooltip_text GtkStatusIcon* status_icon")
+(CFNC-29x "gchar* gtk_status_icon_get_tooltip_markup GtkStatusIcon* status_icon")
+
+(CFNC-29x "void gtk_accel_map_lock_path gchar* accel_path" 'const)
+(CFNC-29x "void gtk_accel_map_unlock_path gchar* accel_path" 'const)
+
+;(CFNC-29x "gboolean gtk_icon_size_lookup_for_settings GtkSettings* settings GtkIconSize size gint* [width] gint* [height]")
+; all the GtkSettings funcs have been removed above and docs say this func isn't needed
+
+(CINT-29x "GTK_ICON_LOOKUP_FORCE_SIZE" "GtkIconLookupFlags")
+(CINT-29x "GTK_ICON_THEME_NOT_FOUND" "GtkIconThemeError")
+(CINT-29x "GTK_ICON_THEME_FAILED" "GtkIconThemeError")
+;gtkicontheme: gtk_icon_theme_choose_icon -- ref array?
+;gtkicontheme: gtk_icon_info_load_symbolic
+;gtkicontheme: gtk_icon_info_load_symbolic_for_context
+(CFNC-29x "GtkIconInfo* gtk_icon_theme_lookup_by_gicon GtkIconTheme* icon_theme GIcon* icon gint size GtkIconLookupFlags flags")
+(CFNC-29x "GtkIconInfo* gtk_icon_info_new_for_pixbuf GtkIconTheme* icon_theme GdkPixbuf* pixbuf")
+
+;gtkplug: gtk_plug_construct_for_display -- GdkNativeWindow 
+;gtkplug: gtk_plug_new_for_display
+
+(CFNC-29x "void gtk_icon_view_set_item_orientation GtkIconView* icon_view GtkOrientation orientation")
+(CFNC-29x "GtkOrientation gtk_icon_view_get_item_orientation GtkIconView* icon_view")
+
+(CFNC-29x "gboolean gtk_text_view_im_context_filter_keypress GtkTextView* text_view GdkEventKey* event")
+(CFNC-29x "void gtk_text_view_reset_im_context GtkTextView* text_view")
+
+;(CFNC-29x "void gtk_text_layout_draw GtkTextLayout* layout GtkWidget* widget cairo_t* cr GList** widgets")
+
+(CFNC-29x "gchar* gtk_action_get_accel_path GtkAction* action" 'const-return)
+(CFNC-29x "void gtk_action_block_activate GtkAction* action")
+(CFNC-29x "void gtk_action_unblock_activate GtkAction* action")
+(CFNC-29x "void gtk_action_set_accel_path GtkAction* action gchar* accel_path" 'const)
+(CFNC-29x "void gtk_action_set_accel_group GtkAction* action GtkAccelGroup* accel_group")
+
 #|
+(CCAST-29x "GTK_CSS_PROVIDER" "GtkCssProvider*")
+(CCHK-29x "GTK_IS_CSS_PROVIDER" "GtkCssProvider*")
+(CINT-29x "GTK_CSS_PROVIDER_ERROR_FAILED" "GtkCssProviderError")
+(CFNC-29x "GtkCssProvider* gtk_css_provider_new void")
+(CFNC-29x "gboolean gtk_css_provider_load_from_data GtkCssProvider* css_provider gchar* data gssize length GError** [error]" 'const)
+(CFNC-29x "gboolean gtk_css_provider_load_from_file GtkCssProvider* css_provider GFile* file GError** [error]")
+(CFNC-29x "gboolean gtk_css_provider_load_from_path GtkCssProvider* css_provider gchar* path GError** [error]" 'const)
+(CFNC-29x "GtkCssProvider* gtk_css_provider_get_default void")
+(CFNC-29x "GtkCssProvider* gtk_css_provider_get_named gchar* name gchar* variant" 'const)
+
+(CFNC-29x "GtkWidgetPath* gtk_container_get_path_for_child GtkContainer* container GtkWidget* child")
+(CFNC-29x "GtkWidgetPath* gtk_widget_get_path GtkWidget* widget")
+(CFNC-29x "void gtk_widget_path GtkWidget* widget guint* path_length gchar** [path] gchar** [path_reversed]")
+(CFNC-29x "void gtk_widget_class_path GtkWidget* widget guint* path_length gchar** [path] gchar** [path_reversed]")
+
+(CCAST-29x "GTK_STYLE_PROVIDER" "GtkStyleProvider*")
+(CCHK-29x "GTK_IS_STYLE_PROVIDER" "GtkStyleProvider*")
+(CINT-29x "GTK_STYLE_PROVIDER_PRIORITY_FALLBACK")
+(CINT-29x "GTK_STYLE_PROVIDER_PRIORITY_THEME")
+(CINT-29x "GTK_STYLE_PROVIDER_PRIORITY_SETTINGS")
+(CINT-29x "GTK_STYLE_PROVIDER_PRIORITY_APPLICATION")
+(CINT-29x "GTK_STYLE_PROVIDER_PRIORITY_USER")
+(CFNC-29x "GtkStyleProperties* gtk_style_provider_get_style GtkStyleProvider* provider GtkWidgetPath* path")
+(CFNC-29x "gboolean gtk_style_provider_get_style_property GtkStyleProvider* provider GtkWidgetPath* path GtkStateFlags state GParamSpec* pspec GValue* [value]")
+(CFNC-29x "GtkIconFactory* gtk_style_provider_get_icon_factory GtkStyleProvider* provider GtkWidgetPath* path")
+
 (CSTR-29x "GTK_STYLE_PROPERTY_BACKGROUND_COLOR")
 (CSTR-29x "GTK_STYLE_PROPERTY_COLOR")
 (CSTR-29x "GTK_STYLE_PROPERTY_FONT")
@@ -8329,18 +8436,8 @@
 
 
 
-;;; as of 2.91.7, here are the xg-undefined names from gtk *.h -- many of these have been deprecated or are internal/experimental etc
+;;; as of 2.91.7, here are the xg-undefined names from gtk *.h
 
-gtkaboutdialog: gtk_show_about_dialog
-gtkaboutdialog: gtk_about_dialog_set_license_type
-gtkaboutdialog: gtk_about_dialog_get_license_type
-gtkaccelmap: gtk_accel_map_lock_path
-gtkaccelmap: gtk_accel_map_unlock_path
-gtkaction: gtk_action_get_accel_path
-gtkaction: gtk_action_block_activate
-gtkaction: gtk_action_unblock_activate
-gtkaction: gtk_action_set_accel_path
-gtkaction: gtk_action_set_accel_group
 gtkappchooserbutton: GTK_APP_CHOOSER_BUTTON
 gtkappchooserbutton: GTK_IS_APP_CHOOSER_BUTTON
 gtkappchooserbutton: gtk_app_chooser_button_new
@@ -8359,10 +8456,6 @@ gtkappchooser: GTK_IS_APP_CHOOSER
 gtkappchooser: gtk_app_chooser_get_app_info
 gtkappchooser: gtk_app_chooser_get_content_type
 gtkappchooser: gtk_app_chooser_refresh
-gtkappchooseronline: GTK_APP_CHOOSER_ONLINE
-gtkappchooseronline: GTK_IS_APP_CHOOSER_ONLINE
-gtkappchooseronlinepk: GTK_APP_CHOOSER_ONLINE_PK
-gtkappchooseronlinepk: GTK_IS_APP_CHOOSER_ONLINE_PK
 gtkappchooserwidget: GTK_APP_CHOOSER_WIDGET
 gtkappchooserwidget: GTK_IS_APP_CHOOSER_WIDGET
 gtkappchooserwidget: gtk_app_chooser_widget_new
@@ -8378,56 +8471,6 @@ gtkappchooserwidget: gtk_app_chooser_widget_set_show_all
 gtkappchooserwidget: gtk_app_chooser_widget_get_show_all
 gtkappchooserwidget: gtk_app_chooser_widget_set_default_text
 gtkappchooserwidget: gtk_app_chooser_widget_get_default_text
-gtkcssprovider: GTK_CSS_PROVIDER
-gtkcssprovider: GTK_IS_CSS_PROVIDER
-gtkcssprovider: GTK_CSS_PROVIDER_ERROR
-gtkcssprovider: GTK_CSS_PROVIDER_ERROR_FAILED
-gtkcssprovider: gtk_css_provider_error_quark
-gtkcssprovider: gtk_css_provider_new
-gtkcssprovider: gtk_css_provider_load_from_data
-gtkcssprovider: gtk_css_provider_load_from_file
-gtkcssprovider: gtk_css_provider_load_from_path
-gtkcssprovider: gtk_css_provider_get_default
-gtkcssprovider: gtk_css_provider_get_named
-gtkcustompaperunixdialog: GTK_CUSTOM_PAPER_UNIX_DIALOG
-gtkcustompaperunixdialog: GTK_IS_CUSTOM_PAPER_UNIX_DIALOG
-gtkhsv: GTK_HSV
-gtkhsv: GTK_IS_HSV
-gtkhsv: gtk_hsv_new
-gtkhsv: gtk_hsv_set_color
-gtkhsv: gtk_hsv_get_color
-gtkhsv: gtk_hsv_set_metrics
-gtkhsv: gtk_hsv_get_metrics
-gtkhsv: gtk_hsv_is_adjusting
-gtkhsv: gtk_hsv_to_rgb
-gtkhsv: gtk_rgb_to_hsv
-gtkiconfactory: gtk_icon_size_lookup_for_settings
-gtkicontheme: GTK_ICON_LOOKUP_FORCE_SIZE
-gtkicontheme: GTK_ICON_THEME_ERROR
-gtkicontheme: GTK_ICON_THEME_NOT_FOUND
-gtkicontheme: GTK_ICON_THEME_FAILED
-gtkicontheme: gtk_icon_theme_error_quark
-gtkicontheme: gtk_icon_theme_choose_icon
-gtkicontheme: gtk_icon_theme_lookup_by_gicon
-gtkicontheme: gtk_icon_info_new_for_pixbuf
-gtkicontheme: gtk_icon_info_load_symbolic
-gtkicontheme: gtk_icon_info_load_symbolic_for_context
-gtkicontheme: gtk_icon_info_load_symbolic_for_style
-gtkiconview: gtk_icon_view_set_item_orientation
-gtkiconview: gtk_icon_view_get_item_orientation
-gtkmountoperation: GTK_MOUNT_OPERATION
-gtkmountoperation: GTK_IS_MOUNT_OPERATION
-gtkmountoperation: gtk_mount_operation_new
-gtkmountoperation: gtk_mount_operation_is_showing
-gtkmountoperation: gtk_mount_operation_set_parent
-gtkmountoperation: gtk_mount_operation_get_parent
-gtkmountoperation: gtk_mount_operation_set_screen
-gtkmountoperation: gtk_mount_operation_get_screen
-gtkoffscreenwindow: GTK_OFFSCREEN_WINDOW
-gtkoffscreenwindow: GTK_IS_OFFSCREEN_WINDOW
-gtkoffscreenwindow: gtk_offscreen_window_new
-gtkoffscreenwindow: gtk_offscreen_window_get_surface
-gtkoffscreenwindow: gtk_offscreen_window_get_pixbuf
 gtkpagesetup: GTK_PAGE_SETUP
 gtkpagesetup: GTK_IS_PAGE_SETUP
 gtkpagesetup: gtk_page_setup_new
@@ -8484,10 +8527,6 @@ gtkpapersize: gtk_paper_size_get_default_right_margin
 gtkpapersize: gtk_paper_size_get_default
 gtkpapersize: gtk_paper_size_new_from_key_file
 gtkpapersize: gtk_paper_size_to_key_file
-gtkpathbar: GTK_PATH_BAR
-gtkpathbar: GTK_IS_PATH_BAR
-gtkplug: gtk_plug_construct_for_display
-gtkplug: gtk_plug_new_for_display
 gtkprintbackend: GTK_PRINT_BACKEND_ENABLE_UNSUPPORTED
 gtkprintbackend: GTK_PRINT_BACKEND_ERROR
 gtkprintbackend: GTK_PRINT_BACKEND_ERROR_GENERIC
@@ -8676,130 +8715,11 @@ gtkrecentaction: gtk_recent_action_new
 gtkrecentaction: gtk_recent_action_new_for_manager
 gtkrecentaction: gtk_recent_action_get_show_numbers
 gtkrecentaction: gtk_recent_action_set_show_numbers
-gtkrecentchooserdefault: GTK_RECENT_CHOOSER_DEFAULT
-gtkrecentchooserdefault: GTK_IS_RECENT_CHOOSER_DEFAULT
-;gtkrecentchooserdialog: gtk_recent_chooser_dialog_new
-;gtkrecentchooserdialog: gtk_recent_chooser_dialog_new_for_manager
 gtkrecentchooser: GTK_RECENT_CHOOSER_ERROR
 gtkrecentmanager: GTK_RECENT_MANAGER_ERROR
 gtkrecentmanager: gtk_recent_info_get_application_info
 gtkrecentmanager: gtk_recent_info_create_app_info
 gtkrecentmanager: gtk_recent_info_get_gicon
-gtkselection: gtk_selection_owner_set_for_display
-gtkselection: gtk_selection_data_get_data
-gtksizerequest: gtk_distribute_natural_allocation
-gtkstatusicon: gtk_status_icon_new_from_gicon
-gtkstatusicon: gtk_status_icon_set_from_gicon
-gtkstatusicon: gtk_status_icon_get_gicon
-gtkstatusicon: gtk_status_icon_set_has_tooltip
-gtkstatusicon: gtk_status_icon_set_tooltip_text
-gtkstatusicon: gtk_status_icon_set_tooltip_markup
-gtkstatusicon: gtk_status_icon_get_geometry
-gtkstatusicon: gtk_status_icon_get_has_tooltip
-gtkstatusicon: gtk_status_icon_get_tooltip_text
-gtkstatusicon: gtk_status_icon_get_tooltip_markup
-gtkstatusicon: gtk_status_icon_get_x
-gtkstyleprovider: GTK_STYLE_PROVIDER
-gtkstyleprovider: GTK_IS_STYLE_PROVIDER
-gtkstyleprovider: GTK_STYLE_PROVIDER_PRIORITY_FALLBACK
-gtkstyleprovider: GTK_STYLE_PROVIDER_PRIORITY_THEME
-gtkstyleprovider: GTK_STYLE_PROVIDER_PRIORITY_SETTINGS
-gtkstyleprovider: GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-gtkstyleprovider: GTK_STYLE_PROVIDER_PRIORITY_USER
-gtkstyleprovider: gtk_style_provider_get_style
-gtkstyleprovider: gtk_style_provider_get_style_property
-gtkstyleprovider: gtk_style_provider_get_icon_factory
-gtktextdisplay: gtk_text_layout_draw
-void gtk_text_layout_draw (GtkTextLayout        *layout,
-                           GtkWidget            *widget,
-                           cairo_t              *cr,
-                           GList               **widgets);
-gtktextview: gtk_text_view_im_context_filter_keypress
-gtktextview: gtk_text_view_reset_im_context
-gtkthemes: GTK_THEME_ENGINE
-gtkthemes: GTK_IS_THEME_ENGINE
-gtkthemes: gtk_theme_engine_get
-gtkthemes: gtk_theme_engine_create_rc_style
-gtkthemingengine: GTK_THEMING_ENGINE
-gtkthemingengine: GTK_IS_THEMING_ENGINE
-gtkthemingengine: gtk_theming_engine_register_property
-gtkthemingengine: gtk_theming_engine_get_property
-gtkthemingengine: gtk_theming_engine_get_valist
-gtkthemingengine: gtk_theming_engine_get
-gtkthemingengine: gtk_theming_engine_get_style_property
-gtkthemingengine: gtk_theming_engine_get_style_valist
-gtkthemingengine: gtk_theming_engine_get_style
-gtkthemingengine: gtk_theming_engine_lookup_color
-gtkthemingengine: gtk_theming_engine_get_path
-gtkthemingengine: gtk_theming_engine_has_class
-gtkthemingengine: gtk_theming_engine_has_region
-gtkthemingengine: gtk_theming_engine_get_state
-gtkthemingengine: gtk_theming_engine_state_is_running
-gtkthemingengine: gtk_theming_engine_get_direction
-gtkthemingengine: gtk_theming_engine_get_junction_sides
-gtkthemingengine: gtk_theming_engine_get_color
-gtkthemingengine: gtk_theming_engine_get_background_color
-gtkthemingengine: gtk_theming_engine_get_border_color
-gtkthemingengine: gtk_theming_engine_get_border
-gtkthemingengine: gtk_theming_engine_get_padding
-gtkthemingengine: gtk_theming_engine_get_margin
-gtkthemingengine: gtk_theming_engine_get_font
-gtkthemingengine: gtk_theming_engine_load
-gtkthemingengine: gtk_theming_engine_get_screen
-gtktoolshell: GTK_TOOL_SHELL
-gtktoolshell: GTK_IS_TOOL_SHELL
-gtktoolshell: gtk_tool_shell_get_icon_size
-gtktoolshell: gtk_tool_shell_get_orientation
-gtktoolshell: gtk_tool_shell_get_style
-gtktoolshell: gtk_tool_shell_get_relief_style
-gtktoolshell: gtk_tool_shell_rebuild_menu
-gtkwidgetpath: gtk_widget_path_new
-gtkwidgetpath: gtk_widget_path_copy
-gtkwidgetpath: gtk_widget_path_free
-gtkwidgetpath: gtk_widget_path_length
-gtkwidgetpath: gtk_widget_path_append_type
-gtkwidgetpath: gtk_widget_path_prepend_type
-gtkwidgetpath: gtk_widget_path_iter_get_object_type
-gtkwidgetpath: gtk_widget_path_iter_set_object_type
-gtkwidgetpath: gtk_widget_path_iter_get_name
-gtkwidgetpath: gtk_widget_path_iter_set_name
-gtkwidgetpath: gtk_widget_path_iter_has_name
-gtkwidgetpath: gtk_widget_path_iter_has_qname
-gtkwidgetpath: gtk_widget_path_iter_add_class
-gtkwidgetpath: gtk_widget_path_iter_remove_class
-gtkwidgetpath: gtk_widget_path_iter_clear_classes
-gtkwidgetpath: gtk_widget_path_iter_list_classes
-gtkwidgetpath: gtk_widget_path_iter_has_class
-gtkwidgetpath: gtk_widget_path_iter_has_qclass
-gtkwidgetpath: gtk_widget_path_iter_add_region
-gtkwidgetpath: gtk_widget_path_iter_remove_region
-gtkwidgetpath: gtk_widget_path_iter_clear_regions
-gtkwidgetpath: gtk_widget_path_iter_list_regions
-gtkwidgetpath: gtk_widget_path_iter_has_region
-gtkwidgetpath: gtk_widget_path_iter_has_qregion
-gtkwidgetpath: gtk_widget_path_get_object_type
-gtkwidgetpath: gtk_widget_path_is_type
-gtkwidgetpath: gtk_widget_path_has_parent
-gtkwindow: GTK_WINDOW_GROUP
-gtkwindow: GTK_IS_WINDOW_GROUP
-gtkwindow: gtk_window_set_skip_taskbar_hint
-gtkwindow: gtk_window_get_skip_taskbar_hint
-gtkwindow: gtk_window_set_skip_pager_hint
-gtkwindow: gtk_window_get_skip_pager_hint
-gtkwindow: gtk_window_set_screen
-gtkwindow: gtk_window_get_screen
-gtkwindow: gtk_window_set_icon_from_file
-gtkwindow: gtk_window_set_default_icon_from_file
-gtkwindow: gtk_window_fullscreen
-gtkwindow: gtk_window_unfullscreen
-gtkwindow: gtk_window_get_window_type
-gtkwindow: gtk_window_group_new
-gtkwindow: gtk_window_group_add_window
-gtkwindow: gtk_window_group_remove_window
-gtkwindow: gtk_window_group_list_windows
-gtkwindow: gtk_window_group_get_current_grab
-gtkwindow: gtk_window_get_application
-gtkwindow: gtk_window_set_application
 
 ;; fgrep "gtk_" *.h > names
 ;; fgrep "GTK_" *.h >> names
@@ -8808,6 +8728,8 @@ gtkwindow: gtk_window_set_application
 ;; omit gtkrc.h, gtkcellarea*, gtkstylecontext.h, gtkstyle.h, gtkrbtree.h (internal to gtktreeview), gtktimeline.h
 ;;      gtktextlayout.h (all internal), gtktexttypes.h, gtktrayicon.h, gtkrecentchooserutils.h, gtksearch*.h
 ;;      gtkmodules.h, gtkquery.h, gtktextsegment.h, gtkbuilder.h, gtkbuilable.h, gtkapplication.h, gtkuimanager.h
+;;      gtksizerequest.h, gtkoffscreenwindow.h, gtkthemingengine.h, gtkwidgetpath.h, gtkpathbar.h, gtkmountoperation.h
+;;      gtkhsv.h (not used anywhere?)
 
 (call-with-input-file "names"
   (lambda (p)
