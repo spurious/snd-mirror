@@ -227,8 +227,21 @@ wandered into a bad numerical neighborhood:
 <p>If the error were turned off, you'd get 4611686018427387904 here, and
 4611686018427388928 for (floor (+ (expt 2.0 62) 513))!  But since gmp handles
 integers and ratios automatically, perhaps s7 should try to catch the parallel
-float cases, and automatically increase bignum-precision.
+float cases, and automatically increase bignum-precision.  
 </p>
+
+<p>One other tricky aspect of floats: two floating point numbers are
+guaranteed to be equal (via '=') only if they have the same textual
+representation.  To indulge in spec-speak, <code>(= 0.6 0.60 3/5 60e-2)</code>
+is unspecified.  In s7, as in Guile, sbcl, and Clisp,
+</p>
+
+<pre>
+&gt; (= 0.6 0.60 3/5 60e-2)
+#f
+&gt; (= 0.5 0.50 1/2 50e-2)
+#t
+</pre>
 
 </blockquote>
 </small>
