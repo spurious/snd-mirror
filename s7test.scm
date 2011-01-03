@@ -20515,8 +20515,9 @@ abs     1       2
 (test (* (*)) 1)
 (test (+ (+) (+ (+)) (+ (+ (+)))) 0)
 (test (+(*(+))(*)(+(+)(+)(*))) 2)
-(test (=(+(-(*).(+1))(*(+).(-1))(*(+).(-10))(*(-(+)0)1.)(-(+)(*).01)(*(-(+)).01)(-(+)(*)1.0)(-(*(+))1.0)(*(-(+))1.0)(-(+(*)1).0))-2.01) #t)
-(test (+(-(*).(+1.0))(*(+).(-1.0))(-(+)1.(*)0.)(-(*(+)0.)1.)(-(+(*)1.)0.)(+(-(*)0.)1.))1.0)
+(num-test (+(-(*).(+1))(*(+).(-1))(*(+).(-10))(*(-(+)0)1.)(-(+)(*).01)(*(-(+)).01)(-(+)(*)1.0)(-(*(+))1.0)(*(-(+))1.0)(-(+(*)1).0))-2.01)
+(num-test (+(-(*).(+1.0))(*(+).(-1.0))(-(+)1.(*)0.)(-(*(+)0.)1.)(-(+(*)1.)0.)(+(-(*)0.)1.))1.0)
+;; float comparison so can't use direct '=' here
 
 (test (nan? (asinh (cos (real-part (log 0.0))))) #t)
 (num-test(cos(sin(log(tan(*))))) 0.90951841537482)
@@ -37157,6 +37158,7 @@ abs     1       2
       (num-test (log 100.0 (+ 1.0 (bignum "1e-16"))) 4.605170185988091598294419229104461919985E16)
       (num-test (expt (+ 1.0 (bignum "1e-16")) 4.605170185988091598294419229104461919985E16) 100.0)
       ))
+
 #|
 (do ((i 16 (+ i 1)))
    ((= i 50))
@@ -37257,9 +37259,6 @@ abs     1       2
 	 (lg (log ep 100.0)))
     (format #t "~D: ~A ~A (~A)~%" i ep lg (abs (- lg 1.0 eps)))))
 
-make-polar make-rectangular real|imag-part rationalize exp sinh(etc) sqrt 
-floor ceiling truncate round lcm gcd max min quotient remainder modulo
-< <= > >= = zero? positive? negative? 
 :(integer-decode-float (bignum "3.1"))
 (6980579422424269 -51 1)
 :(integer-decode-float 3.1)
@@ -37272,8 +37271,177 @@ but won't work I think if not a double
 :(integer-decode-float (bignum "1E430"))
 (4503599627370496 972 1)
 
+;; floor/round ok throughout, truncate/ceiling until 39 -> 0, add 0.5 and all are ok throughout
+(do ((i 16 (+ i 1)))
+   ((= i 50))
+  (let* ((eps (expt 10.0 (- i)))
+	 (epf0 (floor eps))
+	 (epf1 (floor (+ 1.0 eps)))
+	 (epf-1 (floor (+ -1.0 eps)))
+	 (epc0 (ceiling eps))
+	 (epc1 (ceiling (+ 1.0 eps)))
+	 (epc-1 (ceiling (+ -1.0 eps)))
+	 (epr0 (round eps))
+	 (epr1 (round (+ 1.0 eps)))
+	 (epr-1 (round (+ -1.0 eps)))
+	 (ept0 (truncate eps))
+	 (ept1 (truncate (+ 1.0 eps)))
+	 (ept-1 (truncate (+ -1.0 eps))))
+
+    (format #t "~D: ~A ~A ~A, ~A ~A ~A, ~A ~A ~A, ~A ~A ~A~%" i
+	    epf0 epf1 epf-1
+	    epr0 epr1 epr-1
+	    epc0 epc1 epc-1
+	    ept0 ept1 ept-1)))
+
+(do ((i 16 (+ i 1)))
+   ((= i 50))
+  (let* ((eps (expt 10.0 (- i)))
+	 (epf0 (floor (+ 0.5 eps)))
+	 (epf1 (floor (+ 1.5 eps)))
+	 (epf-1 (floor (+ -1.5 eps)))
+	 (epc0 (ceiling (+ 0.5 eps)))
+	 (epc1 (ceiling (+ 1.5 eps)))
+	 (epc-1 (ceiling (+ -1.5 eps)))
+	 (epr0 (round (+ 0.5 eps)))
+	 (epr1 (round (+ 1.5 eps)))
+	 (epr-1 (round (+ -1.5 eps)))
+	 (ept0 (truncate (+ 0.5 eps)))
+	 (ept1 (truncate (+ 1.5 eps)))
+	 (ept-1 (truncate (+ -1.5 eps))))
+
+    (format #t "~D: ~A ~A ~A, ~A ~A ~A, ~A ~A ~A, ~A ~A ~A~%" i
+	    epf0 epf1 epf-1
+	    epr0 epr1 epr-1
+	    epc0 epc1 epc-1
+	    ept0 ept1 ept-1)))
+
+make-polar make-rectangular real|imag-part rationalize exp sinh(etc)
+lcm gcd max min quotient remainder modulo
+< <= > >= = zero? positive? negative? 
+
+;; good throughout, add 1 and ok to 39 (still good), same for -1
+(do ((i 16 (+ i 1)))
+   ((= i 50))
+  (let* ((eps (expt 10.0 (- i)))
+	 (sq (sqrt eps))
+	 (ep (* sq sq)))
+    (format #t "~D: ~A ~A (~A)~%" i sq ep (abs (- ep eps)))))
+
+;; good throughout
+(do ((i 16 (+ i 1)))
+   ((= i 50))
+  (let* ((eps (expt 10.0 (- i)))
+	 (sq (rationalize eps (expt 10.0 (- 50)))))
+    (format #t "~D: ~A ~A~%" i sq (abs (- sq eps)))))
+
+;; going from 0 to 30 in non-gmp is ok to 17 then hangs at 19! (err 1e-20)
+:(rationalize 1e-18 1e-20)
+1/99900099900099889
+:(rationalize 1e-18 1e-20)
+1/990099009900990081
+;; 1e-19 here hangs
+
+;; ok to 39
+(do ((i 16 (+ i 1)))
+   ((= i 50))
+  (let* ((eps (expt 10.0 (- i)))
+	 (sq (rationalize (+ 1.0 eps) (expt 10.0 (- 50)))))
+    (format #t "~D: ~A ~A~%" i sq (abs (- sq eps)))))
+
+;; non-gmp -- this does not hang, but fails after 16 (actually 9 -- err ignored?)
+;;  in gmp, if err 1e-50, ok to 20 [same if -1]
+(do ((i 0 (+ i 1)))
+   ((= i 20))
+  (let* ((eps (expt 10.0 (- i)))
+	 (sq (rationalize (+ 1.0 eps) (expt 10.0 (- 20)))))
+    (format #t "~D: ~A ~A~%" i sq (abs (- sq eps)))))
+
+;; ok to 16 (gmp/non-gmp?? independent of bignum-precision?? -- it's ok if (bignum "0.600000000000000000000000")
+
+:(= (bignum "0.6") (bignum "0.60")) ; !!
+#f
+:(= (bignum "0.6") (bignum "0.6"))
+#t
+
+but this is not bignum's fault:
+:(= (string->number "0.6") (string->number "0.60")) ; guile -> #t here
+#f
+:(= (string->number "0.6") (string->number "0.6"))
+#t
+:(= (string->number "0.60") (string->number "0.600"))
+#t
+;; the problem is specific to "0.6" ? also 0.3
+:(- (string->number "0.3") (string->number "0.30"))
+5.5511151231258e-17
+
+(do ((i 0 (+ i 1)))
+    ((= i 10))
+  (let* ((str1 (string #\0 #\. (integer->char (+ (char->integer #\0) i))))
+	 (str2 (string-append str1 "0"))
+	 (str3 (string-append str1 "000")))
+    (let ((val1 (string->number str1))
+	  (val2 (string->number str2))
+	  (val3 (string->number str3)))
+      (if (not (= val1 val2 val3))
+	  (format #t "~A -> ~A ~A~%" str1 (- val1 val2) (- val1 val3))))))
+
+0.3 -> 5.5511151231258e-17 5.5511151231258e-17
+0.6 -> 1.1102230246252e-16 1.1102230246252e-16
+
+or 
+0.03 -> 0.0 -3.4694469519536e-18
+0.06 -> 0.0 -6.9388939039072e-18
+0.09 -> 0.0 -1.3877787807814e-17
+0.11 -> 0.0 -1.3877787807814e-17
+0.12 -> 0.0 -1.3877787807814e-17
+0.15 -> 0.0 -2.7755575615629e-17
+0.18 -> 0.0 -2.7755575615629e-17
+0.96 -> 0.0 -1.1102230246252e-16
+0.97 -> 0.0 -1.1102230246252e-16
+0.98 -> 0.0 -1.1102230246252e-16
+0.99 -> 0.0 -1.1102230246252e-16
+etc
+
+this affects everything:
+:(= 0.6000 (max 0.6 0.6000))
+#f
+:(= 6e-1 60e-2)
+#f
+
+(inexact->exact 1.000000000000000000000+0.0000000000000000000000000000i) -> error
+:(inexact->exact 1.0+0.0000000000000000000000000000i)
+;inexact->exact argument, 1.000E0+0.0i, is <big-complex> but should be a real
+but 1.0+0.0000000000000000000000000001i -> not real
+:(real? 1.0+0.0000000000000000000000000001i)
+#f
+in non-gmp case:
+:(real? 1.0+0.0000000000000000000000000001i)
+#t
+;; check all ops with these and try to find other bogus complex cases
+
+(do ((i 0 (+ i 1)))
+   ((= i 20))
+  (let* ((eps (expt 10.0 (- i)))
+	 (sq (rationalize 0.6 (+ 0.1 eps))))
+    (format #t "~D: ~A~%" i sq)))
+
+:(rationalize 0.6 .1000001)
+1/2
+
+:(rationalize .6 0)
+1351079888211149/2251799813685248
+:(rationalize .5 0)
+1/2
+
+(do ((i 0 (+ i 1)))
+   ((= i 40))
+  (let* ((eps (expt 10.0 (- i)))
+	 (sq (rationalize (bignum "0.600000000000000000000000") (+ 0.1 eps))))
+    (format #t "~D: ~A~%" i sq)))
 |#
 	
+
 (num-test (log 8.0 2) 3.0)
 (num-test (log 9.0 3.0) 2.0)
 (num-test (log 12/8 3/2) 1.0)

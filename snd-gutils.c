@@ -1178,4 +1178,6 @@ char *slist_selection(slist *lst)
  *   very buggy!
  *
  * TODO: try cairo-trace and the new GL surface (1.10.0)
+ *
+ * gtk listener won't let me delete "(" in col 0?
  */

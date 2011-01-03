@@ -3572,6 +3572,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   static s7_pointer big_tan(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_inexact_to_exact(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_exact_to_inexact(s7_scheme *sc, s7_pointer args);
+  static s7_pointer big_is_zero_1(s7_scheme *sc, s7_pointer x);
 #endif
 
 
@@ -5738,6 +5739,19 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	frac_part = dig + (frac_part * radix);
 
       dval += frac_part * ipow(radix, exponent - frac_len);
+
+      /* fprintf(stderr, "frac: %lld, exp: (%d %d) %.20f, val: %.20f\n", frac_part, exponent, frac_len, ipow(radix, exponent - frac_len), dval); 
+       * 0.6:    frac:    6, exp: 0.10000000000000000555, val: 0.60000000000000008882
+       * 0.60:   frac:   60, exp: 0.01000000000000000021, val: 0.59999999999999997780
+       * 0.6000: frac: 6000, exp: 0.00010000000000000000, val: 0.59999999999999997780
+       * :(= 0.6 0.60)
+       * #f
+       * :(= 3/5 0.6) ; guile also says #f
+       * #f
+       * so (string->number (number->string num)) == num only if both num's are the same text (or you get lucky)
+       * :(= 0.6 6e-1) ; but not 60e-2
+       * #t
+       */
     }
   else
     {
@@ -26311,11 +26325,21 @@ static s7_pointer string_to_either_complex(s7_scheme *sc,
   p_rl = string_to_either_complex_1(sc, q, slash1, ex1, has_dec_point1, radix, &d_rl);
   p_im = string_to_either_complex_1(sc, plus, slash2, ex2, has_dec_point2, radix, &d_im);
   
+  /* fprintf(stderr, "%p %f %p %f\n", p_rl, d_rl, p_im, d_im); */
+  if (d_im == 0.0)
+    {
+      /* 1.0+0.0000000000000000000000000000i */
+      if ((!p_im) ||
+	  (big_is_zero_1(sc, p_im) == sc->T))
+	{
+	  if (!p_rl)
+	    return(s7_make_real(sc, d_rl));
+	  return(p_rl);
+	}
+    }
+
   if ((!p_rl) && (!p_im))
     return(s7_make_complex(sc, d_rl, (has_plus_or_minus == -1) ? (-d_im) : d_im));
-
-  if ((p_im == NULL) && (d_im == 0.0))
-    return(p_rl);
 
   if (p_rl)
     mpfr_init_set(m_rl, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p_rl)), GMP_RNDN);
@@ -26795,8 +26819,6 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
   return(result);
 }
 
-
-static s7_pointer big_is_zero_1(s7_scheme *sc, s7_pointer x);
 
 static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 {
