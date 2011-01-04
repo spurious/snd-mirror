@@ -14127,6 +14127,32 @@ this prints:
   (if (positive? 2147483648)
       (test (r5rs-ratify (/ (log 2.0) (log 3.0)) 1/100000000000) 190537/301994)))
 
+#|
+(let ((max-diff 0.0)
+      (max-case 0.0)
+      (err 0.01)
+      (epsilon 1e-16))
+  (do ((i 1 (+ i 1))) 
+      ((= i 100)) 
+    (let ((x (/ i 100.)))
+      (let ((vals (cr x err))) 
+	(if (not (= (car vals) (cadr vals))) 
+	    (let ((r1 (car vals))
+		  (r2 (cadr vals)))
+	      (let ((diff (abs (- r1 r2))))
+		(if (> diff max-diff)
+		    (begin
+		      (set! max-diff diff)
+		      (set! max-case x))))
+	      (if (> (abs (- r1 x)) (+ err epsilon))
+		(format #t "(rationalize ~A ~A) is off: ~A -> ~A~%" x err r1 (abs (- r1 x))))
+	      (if (> (abs (- r2 x)) (+ err epsilon))
+		(format #t "(ratify ~A ~A) is off: ~A -> ~A~%" x err r2 (abs (- r2 x))))
+	      (if (< (denominator r2) (denominator r1))
+		  (format #t "(ratify ~A ~A) is simpler? ~A ~A~%" x err r1 r2)))))))
+  (list max-case max-diff (cr max-case err)))
+|#
+
 (for-each
  (lambda (arg)
    (test (let ((ctr 0)) 
@@ -37210,6 +37236,15 @@ abs     1       2
 	 (ep (exp lg)))
     (format #t "~D: ~A ~A (~A)~%" i lg ep (abs (- ep eps)))))
 
+;; good throughout
+(do ((i 16 (+ i 1)))
+   ((= i 50))
+  (let* ((eps (expt 10.0 i))
+	 (lg (log 100.0 (+ 1.0 eps))) ; 1+eps is basically the same, as is -100.0 (using magnitude, not abs)
+	 (ep (expt (+ 1.0 eps) lg)))
+    (format #t "~D: ~A ~A (~A)~%" i lg ep (abs (- ep 100.0)))))
+
+
 ;; this is exact up to 36
 (do ((i 16 (+ i 1)))
    ((= i 50))
@@ -37217,6 +37252,18 @@ abs     1       2
 	 (add (+ 100.0 eps))
 	 (sub (- add eps)))
     (format #t "~D: ~A ~A (~A)~%" i add sub (abs (- sub 100.0)))))
+
+;; ok to 38 then 4 then 100's -> bignum-precision runs out ca 37
+(do ((i 16 (+ i 1)))
+   ((= i 50))
+  (let* ((eps (expt 10.0 i))
+	 (add (+ 100.0 eps))
+	 (sub (- add eps)))
+    (format #t "~D: ~A ~A (~A)~%" i add sub (abs (- sub 100.0)))))
+
+:(+ 100 (expt 10.0 40) (- (expt 10.0 40))) ; bp=128 ok if 1024
+9.600E1
+
 
 ;; same
 (do ((i 16 (+ i 1)))
@@ -37237,7 +37284,7 @@ abs     1       2
 ;; ok
 (do ((i 16 (+ i 1)))
    ((= i 50))
-  (let* ((eps (expt 10.0 (- i)))
+  (let* ((eps (expt 10.0 (- i))) ; also ok if i
 	 (lg (sin eps))
 	 (ep (asin lg)))
     (format #t "~D: ~A ~A (~A)~%" i lg ep (abs (- ep eps)))))
@@ -37258,18 +37305,6 @@ abs     1       2
 	 (ep (expt 100.0 (+ 1.0 eps)))
 	 (lg (log ep 100.0)))
     (format #t "~D: ~A ~A (~A)~%" i ep lg (abs (- lg 1.0 eps)))))
-
-:(integer-decode-float (bignum "3.1"))
-(6980579422424269 -51 1)
-:(integer-decode-float 3.1)
-(6980579422424269 -51 1)
-:(integer-decode-float pi)
-(7074237752028440 -51 1)
-but won't work I think if not a double
-:(integer-decode-float (bignum "1E330"))
-(4503599627370496 972 1)
-:(integer-decode-float (bignum "1E430"))
-(4503599627370496 972 1)
 
 ;; floor/round ok throughout, truncate/ceiling until 39 -> 0, add 0.5 and all are ok throughout
 (do ((i 16 (+ i 1)))
@@ -37327,118 +37362,173 @@ lcm gcd max min quotient remainder modulo
 	 (sq (sqrt eps))
 	 (ep (* sq sq)))
     (format #t "~D: ~A ~A (~A)~%" i sq ep (abs (- ep eps)))))
+;; +i here is ok but fails badly at 41 and 49
 
-;; good throughout
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 (- i)))
-	 (sq (rationalize eps (expt 10.0 (- 50)))))
-    (format #t "~D: ~A ~A~%" i sq (abs (- sq eps)))))
+:(exp 1/9223372036854775807)
+1.000000000000000000108420217248550443418E0
+:(exp -1/9223372036854775807)
+9.999999999999999998915797827514495565934E-1
+:(sinh 1/9223372036854775807)
+1.084202172485504434125002235952170462235E-19
+:(cosh 1/9223372036854775807)
+1.000000000000000000000000000000000000006E0
 
-;; going from 0 to 30 in non-gmp is ok to 17 then hangs at 19! (err 1e-20)
-:(rationalize 1e-18 1e-20)
-1/99900099900099889
-:(rationalize 1e-18 1e-20)
-1/990099009900990081
-;; 1e-19 here hangs
+:(modulo 1/9223372036854775807 1/2)
+1/9223372036854775807
+-- this is -1 if not gmp
+not gmp :(modulo 1/9223372036854775807 1/3)
+3/9223372036854775805 -- yow! there must be a multiply somewhere
+(modulo 1/9223372036854775807 -1/3)
+-9223372036854775804/9223372036854775805 !!
+:(modulo (/ (expt 2 61)) (/ (expt 3 10)))
+59049/2305843009213693952 -- this is b/a, (expt 3 10)=59049
+:(modulo (/ (expt 2 61)) 1/512)
+;make-ratio: division by zero, (512 0)
+:(modulo 1/2305843009213693952 1/4)
+-1/2305843009213693952
 
-;; ok to 39
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 (- i)))
-	 (sq (rationalize (+ 1.0 eps) (expt 10.0 (- 50)))))
-    (format #t "~D: ~A ~A~%" i sq (abs (- sq eps)))))
+gmp:
+:(modulo 1/9223372036854775807 -1/3)
+-9223372036854775804/27670116110564327421
+:(modulo -1/9223372036854775807 1/3)
+9223372036854775804/27670116110564327421
+:(modulo (/ (expt 2 61)) (/ (expt 3 20)))
+1/2305843009213693952
+:(modulo (/ (expt 2 61)) (/ (expt 3 10)))
+1/2305843009213693952
 
-;; non-gmp -- this does not hang, but fails after 16 (actually 9 -- err ignored?)
-;;  in gmp, if err 1e-50, ok to 20 [same if -1]
-(do ((i 0 (+ i 1)))
-   ((= i 20))
-  (let* ((eps (expt 10.0 (- i)))
-	 (sq (rationalize (+ 1.0 eps) (expt 10.0 (- 20)))))
-    (format #t "~D: ~A ~A~%" i sq (abs (- sq eps)))))
+; these work in gmp case [<> also work -- how could max/min be confused?]
+:(min 1/9223372036854775807 1/9223372036854775806)
+1/9223372036854775806
+:(min 1/9223372036854775807 1/9223372036854775300)
+1/9223372036854775300
+:(max 1/9223372036854775807 1/9223372036854775300)
+1/9223372036854775300
+:(max 1/9223372036854775300 1/9223372036854775807)
+1/9223372036854775807
+:(min 1/4611686018427388416 1/4611686018427387904)
+1/4611686018427387904
+:(min 1/461168601842738841 1/461168601842738790)
+1/461168601842738790
+:(min 1/461168601842738848 1/461168601842738790)
+1/461168601842738790
+:(min 1/46116860184273883 1/46116860184273879)
+1/46116860184273879
 
-;; ok to 16 (gmp/non-gmp?? independent of bignum-precision?? -- it's ok if (bignum "0.600000000000000000000000")
 
-:(= (bignum "0.6") (bignum "0.60")) ; !!
+:(quotient 1/9223372036854775807 1/3)
+0
+:(remainder 1/9223372036854775807 1/3)
+1/9223372036854775807
+:(quotient 1 1/9223372036854775807)
+;quotient argument, 9.2233720368548e+18, is out of range (intermediate (a/b) is too large) -- this is false I think
+gmp:
+:(quotient 1 1/9223372036854775807)
+9223372036854775807
+
+:(> 1/9223372036854775807 1/9223372036854775806)
 #f
-:(= (bignum "0.6") (bignum "0.6"))
+:(< 1/9223372036854775807 1/9223372036854775806)
 #t
-
-but this is not bignum's fault:
-:(= (string->number "0.6") (string->number "0.60")) ; guile -> #t here
-#f
-:(= (string->number "0.6") (string->number "0.6"))
-#t
-:(= (string->number "0.60") (string->number "0.600"))
-#t
-;; the problem is specific to "0.6" ? also 0.3
-:(- (string->number "0.3") (string->number "0.30"))
-5.5511151231258e-17
-
-(do ((i 0 (+ i 1)))
-    ((= i 10))
-  (let* ((str1 (string #\0 #\. (integer->char (+ (char->integer #\0) i))))
-	 (str2 (string-append str1 "0"))
-	 (str3 (string-append str1 "000")))
-    (let ((val1 (string->number str1))
-	  (val2 (string->number str2))
-	  (val3 (string->number str3)))
-      (if (not (= val1 val2 val3))
-	  (format #t "~A -> ~A ~A~%" str1 (- val1 val2) (- val1 val3))))))
-
-0.3 -> 5.5511151231258e-17 5.5511151231258e-17
-0.6 -> 1.1102230246252e-16 1.1102230246252e-16
-
-or 
-0.03 -> 0.0 -3.4694469519536e-18
-0.06 -> 0.0 -6.9388939039072e-18
-0.09 -> 0.0 -1.3877787807814e-17
-0.11 -> 0.0 -1.3877787807814e-17
-0.12 -> 0.0 -1.3877787807814e-17
-0.15 -> 0.0 -2.7755575615629e-17
-0.18 -> 0.0 -2.7755575615629e-17
-0.96 -> 0.0 -1.1102230246252e-16
-0.97 -> 0.0 -1.1102230246252e-16
-0.98 -> 0.0 -1.1102230246252e-16
-0.99 -> 0.0 -1.1102230246252e-16
-etc
-
-this affects everything:
-:(= 0.6000 (max 0.6 0.6000))
-#f
-:(= 6e-1 60e-2)
+:(< -1/9223372036854775807 -1/9223372036854775806)
 #f
 
-(inexact->exact 1.000000000000000000000+0.0000000000000000000000000000i) -> error
-:(inexact->exact 1.0+0.0000000000000000000000000000i)
-;inexact->exact argument, 1.000E0+0.0i, is <big-complex> but should be a real
-but 1.0+0.0000000000000000000000000001i -> not real
-:(real? 1.0+0.0000000000000000000000000001i)
-#f
-in non-gmp case:
-:(real? 1.0+0.0000000000000000000000000001i)
-#t
-;; check all ops with these and try to find other bogus complex cases
+:(- 1/9223372036854775807 1/9223372036854775806)
+-1/85070591730234615838173535747377725442
+:(+ 1/9223372036854775807 1/9223372036854775806)
+18446744073709551613/85070591730234615838173535747377725442
+:(* 1/9223372036854775807 1/9223372036854775806)
+1/85070591730234615838173535747377725442
+:(/ 1/9223372036854775807 1/9223372036854775806)
+9223372036854775806/9223372036854775807
+:(/ 1/9223372036854775807 1/3)
+3/9223372036854775807
 
-(do ((i 0 (+ i 1)))
-   ((= i 20))
-  (let* ((eps (expt 10.0 (- i)))
-	 (sq (rationalize 0.6 (+ 0.1 eps))))
-    (format #t "~D: ~A~%" i sq)))
+or
+:(- 1/9223372036854775807 1/9223372036854775806)
+-1.1754943508223e-38
+:(+ 1/9223372036854775807 1/9223372036854775806)
+2.168404344971e-19
+:(* 1/9223372036854775807 1/9223372036854775806)
+1.1754943508223e-38
+:(/ 1/9223372036854775807 1/9223372036854775806)
+1.0
+:(/ 1/9223372036854775807 1/3)
+3.2526065174565e-19
 
-:(rationalize 0.6 .1000001)
-1/2
 
-:(rationalize .6 0)
-1351079888211149/2251799813685248
-:(rationalize .5 0)
-1/2
+:(sqrt 1/4611686018427387904)
+4.6566128730774e-10
+actually 
+:(* 1/2147483648 1/2147483648)
+2.168404344971e-19 - why isn't this a ratio?
+:(sqrt 1/1152921504606846976)
+9.3132257461548e-10
+:(sqrt 1/1099511627776)
+9.5367431640625e-07
 
-(do ((i 0 (+ i 1)))
-   ((= i 40))
-  (let* ((eps (expt 10.0 (- i)))
-	 (sq (rationalize (bignum "0.600000000000000000000000") (+ 0.1 eps))))
-    (format #t "~D: ~A~%" i sq)))
+:(expt 2 30)
+1073741824
+:(sqrt 1/1073741824)
+1/32768
+:(expt 2 38)
+274877906944
+:(sqrt 1/274877906944)
+1/524288
+break is at 30?
+:(sqrt most-positive-fixnum)
+3037000499.976
+:(* 3037000499 3037000499)
+9223372030926249001
+:(sqrt 9223372030926249001)
+3037000499
+
+in gmp:
+:(sqrt 9223372030926249001)
+3037000499
+:(sqrt 1/9223372030926249001)
+1/3037000499
+:(expt 1/9223372030926249001 1/2)
+1/3037000499
+
+non-gmp
+:(log 1/9223372036854775808 2)
+;(/ most-negative-fixnum), argument 1, -9223372036854775808, is out of range (can't be inverted)
+; -- func is log! -- this comes from s7_make_ratio!
+but (also non-gmp):
+:(log 9223372036854775808 2)
+63+4.5323601418272i -- this should just be 63 but it thinks the sign bit is on
+
+:(log 1/256 2)
+-8
+:(log 1/8192 2)
+-13
+:(log 1/65536 2)
+-16
+:(log 1/16777216 2)
+-24
+:(log 1/1073741824 2)
+-30
+;; nice if int... (why is this the boundary?)
+:(log 1/2147483648 2)
+-3.100000000000000000000000000000000000009E1
+
+:(log 1/9223372036854775807 2) ; this is -1 -- 
+-6.299999999999999999984358269024341222231E1
+:(log 1/9223372036854775808 2)
+-6.300000000000000000000000000000000000019E1
+
+:(log 1/9223372036854775807 8)
+-21.0
+:(log 1/9223372036854775807 512)
+-7.0
+:(log 1e-50 10)
+-5.00E1
+:(log 1e50 10)
+5.000E1
+
+;; none of these is an int if non-gmp
+
 |#
 	
 
@@ -38795,6 +38885,10 @@ in non-gmp case:
 (num-test (rationalize -1/3 1/4) -1/2)
 (num-test (rationalize -1/3 1/3) 0)
 (num-test (rationalize -3/10 1/10) -1/3)
+(num-test (rationalize .0999 .1) 0)
+(num-test (rationalize -.0999 .1) 0)
+(num-test (rationalize 1.0999 .1) 1)
+(num-test (rationalize -1.0999 .1) -1)
 
 (num-test (rationalize .239 .0005) 11/46) ;baseball of course... the average .001 is the hardest to get: 1/667
 (num-test (rationalize .001 .0005) 1/667)
@@ -38833,6 +38927,25 @@ in non-gmp case:
       ))
 
 (num-test (rationalize (/ 1 most-positive-fixnum) 0) (/ 1 most-positive-fixnum))
+(if (not with-bignums)
+    (begin
+      (num-test (rationalize 1e-19 1e-21) 0)
+      (num-test (rationalize 1e-19 1e-30) 0)
+      (num-test (rationalize 1e-19 1e-50) 0)
+      (num-test (rationalize 1e-19 0.0) 0)
+      (num-test (rationalize 1e-19 1e-19) 0)
+      (num-test (rationalize 1e-30 0.0) 0)
+      (num-test (rationalize (+ .1 1e-18) 0) 1/10)
+      (num-test (rationalize (+ .1 1e-18) 1e-20) 1/10)
+      (num-test (rationalize (- .1 1e-18) 1e-20) 1/10)
+      )
+    (begin
+      (num-test (rationalize 1e-19 1e-21) 1/9900990099009900991)
+      (num-test (rationalize 1e-19 1e-30) 1/9999999999900000001)
+      (num-test (rationalize 1e-30 0.0) 1/1000000000000000000000000000000)
+      (num-test (rationalize (+ .1 1e-18) 0) 1894333982346309985/18943339823463098609)
+      (num-test (rationalize (+ .1 1e-18) 1e-20) 1524131159466061/15241311594660609)
+      (num-test (rationalize (- .1 1e-18) 1e-20) 2192446305355891/21924463053558909)))
 
 (let ()
   (define (check-rationalize val n)
@@ -38911,6 +39024,91 @@ in non-gmp case:
 (num-test (rationalize 11/30 .2) 1/2)
 (num-test (rationalize 11/30 .365) 1/2)
 (num-test (rationalize 11/30 .367) 0)
+
+;; these differ from the ratify result
+(num-test (rationalize 0.02 .01) 1/34)
+(num-test (rationalize 0.03 .01) 1/25)
+(num-test (rationalize 0.04 .01) 1/20)
+(num-test (rationalize 0.05 .01) 1/17)
+(num-test (rationalize 0.06 .01) 1/15)
+(num-test (rationalize 0.07 .01) 1/13)
+(num-test (rationalize 0.19 .01) 1/5)
+(num-test (rationalize 0.24 .01) 1/4)
+(num-test (rationalize 0.26 .01) 1/4)
+(num-test (rationalize 0.32 .01) 5/16)
+(num-test (rationalize 0.35 .01) 5/14)
+(num-test (rationalize 0.39 .01) 2/5)
+(num-test (rationalize 0.47 .01) 6/13)
+(num-test (rationalize 0.48 .01) 8/17)
+(num-test (rationalize 0.49 .01) 1/2)
+(num-test (rationalize 0.51 .01) 1/2)
+(num-test (rationalize 0.52 .01) 9/17)
+(num-test (rationalize 0.53 .01) 7/13)
+(num-test (rationalize 0.59 .01) 3/5)
+(num-test (rationalize 0.61 .01) 3/5)
+(num-test (rationalize 0.65 .01) 9/14)
+(num-test (rationalize 0.68 .01) 11/16)
+(num-test (rationalize 0.74 .01) 3/4)
+(num-test (rationalize 0.76 .01) 3/4)
+(num-test (rationalize 0.79 .01) 4/5)
+(num-test (rationalize 0.81 .01) 4/5)
+(num-test (rationalize 0.93 .01) 12/13)
+(num-test (rationalize 0.94 .01) 14/15)
+(num-test (rationalize 0.95 .01) 16/17)
+(num-test (rationalize 0.96 .01) 19/20)
+(num-test (rationalize 0.97 .01) 24/25)
+(num-test (rationalize 0.98 .01) 33/34)
+(num-test (rationalize 0.99 .01) 1)
+(num-test (rationalize 0.01 .001) 1/91)
+(num-test (rationalize 0.02 .001) 1/48)
+(num-test (rationalize 0.06 .001) 2/33)
+(num-test (rationalize 0.11 .001) 6/55)
+(num-test (rationalize 0.14 .001) 6/43)
+(num-test (rationalize 0.17 .001) 7/41)
+(num-test (rationalize 0.18 .001) 7/39)
+(num-test (rationalize 0.33 .001) 26/79)
+(num-test (rationalize 0.34 .001) 15/44)
+(num-test (rationalize 0.43 .001) 28/65)
+(num-test (rationalize 0.46 .001) 17/37)
+(num-test (rationalize 0.49 .001) 23/47)
+(num-test (rationalize 0.51 .001) 24/47)
+(num-test (rationalize 0.57 .001) 37/65)
+(num-test (rationalize 0.58 .001) 18/31)
+(num-test (rationalize 0.66 .001) 29/44)
+(num-test (rationalize 0.67 .001) 53/79)
+(num-test (rationalize 0.83 .001) 34/41)
+(num-test (rationalize 0.86 .001) 37/43)
+(num-test (rationalize 0.89 .001) 49/55)
+(num-test (rationalize 0.94 .001) 31/33)
+(num-test (rationalize 0.98 .001) 47/48)
+(num-test (rationalize 0.99 .001) 90/91)
+
+(num-test (rationalize 0.1001 .1) 1/5)
+(num-test (rationalize 0.101 .1) 1/5)
+(num-test (rationalize 0.885 .01) 7/8)
+(num-test (rationalize 0.451 .001) 9/20)
+(num-test (rationalize 0.9876 .0001) 80/81)
+
+(call-with-exit
+ (lambda (done)
+   (do ((k -6 (- k 1)))
+       ((= k -17))
+     (call-with-exit
+      (lambda (ok)
+	(let ((fraction (rationalize (expt 10.0 k) 1e-18)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 100))
+	    (if (not (zero? (random fraction)))
+		(ok))))
+	(format #t ";random of small ratios is always 0 below ca. ~A~%" (expt 10.0 k))
+	(done))))))
+
+(if with-bignums
+    (begin
+      (num-test (rationalize (/ 3.0 most-positive-fixnum) 1e-50) 3/9223372036854775807)
+      (num-test (rationalize (/ 3.0 most-positive-fixnum) 1e-38) 3/9223372036854775807)
+      (test (zero? (random 1e-30)) #f)))
+
 
 
 
@@ -39760,6 +39958,42 @@ in non-gmp case:
 (test (lcm 0 "hi") 'error)
 (num-test (gcd 0 "hi") 'error)
 (num-test (lcm 0 "hi") 'error)
+(num-test (gcd 1/10 1/1000000000) 1/1000000000)
+(num-test (gcd 1/1024 1/9765625) 1/10000000000)
+(num-test (gcd 1/131072 1/762939453125) 1/100000000000000000)
+(num-test (gcd 1/262144 1/3814697265625) 1/1000000000000000000)
+(num-test (gcd 524288/5 19073486328125/2) 1/10)
+
+#| 
+TODO: gmp and non-gmp:
+:(gcd 1/524288 1/19073486328125)
+-1/8446744073709551616
+
+gmp:
+:(lcm 19073486328125 524288)
+10000000000000000000
+
+:(lcm 524288 19073486328125) -- this is ok now
+161108857607070000000000000000000
+:(* 524288 19073486328125)
+10000000000000000000
+
+non-gmp:
+:(lcm 524288 19073486328125)
+-8446744073709551616
+
+
+:(lcm 1024 9765625)
+10000000000
+:(lcm 131072 762939453125)
+100000000000000000
+:(lcm 262144 3814697265625)
+1000000000000000000
+
+:(lcm 2147483648 4656612873077392578125)
+10000000000000000000000000000000
+
+|#
 
 (test (lcm 1 ' #e1.(logior )) 0) ; (lcm 1 1 0)
 
@@ -45674,6 +45908,14 @@ in non-gmp case:
 (test (real? 1+0/0i) #f)
 (test (real? most-negative-fixnum) #t)
 
+(test (real? 1.0000000000000000000000000000+0.0000000000000000000000000000i) #t)
+(test (real? 1.0+0.0000000000000000000000000000i) #t)
+(test (real? 1.0000000000000000000000000000+0.0i) #t)
+(test (real? 1.0000000000000000000000000000+0e10i) #t)
+(test (real? 1.0+0.0000000000000000000000000000e10i) #t)
+(test (real? 1.0000000000000000000000000000+0.0e10i) #t)
+(test (real? 0+00000000000000000000000000000000/123456789012345678901234567890i) #t)
+
 (test (complex? 1/2) #t)
 (test (complex? 2) #t)
 (test (complex? (sqrt 2)) #t)
@@ -45823,6 +46065,13 @@ in non-gmp case:
 ;(num-test (inexact->exact 9007199254740995.0) 9007199254740995)
 ;this can't work in the non-gmp case -- see s7.c under BIGNUM_PLUS
 ;#e4611686018427388404.0 -> 4611686018427387904
+
+(num-test (inexact->exact 1.0000000000000000000000000000+0.0000000000000000000000000000i) 1)
+(num-test (inexact->exact 1.0+0.0000000000000000000000000000i) 1)
+(num-test (inexact->exact 1.0000000000000000000000000000+0.0i) 1)
+(num-test (inexact->exact 1.0000000000000000000000000000+0e10i) 1)
+(num-test (inexact->exact 1.0+0.0000000000000000000000000000e10i) 1)
+(num-test (inexact->exact 1.0000000000000000000000000000+0.0e10i) 1)
 
 
 
@@ -46701,6 +46950,31 @@ in non-gmp case:
 (test (> 2 2 1) #f)
 (test (<= 2 2 1) #f)
 (test (= 1/2 1/2+0i) #t)
+
+#|
+(do ((i 0 (+ i 1)))
+    ((= i 10))
+  (let* ((str1 (string #\0 #\. (integer->char (+ (char->integer #\0) i))))
+	 (str2 (string-append str1 "0"))
+	 (str3 (string-append str1 "000")))
+    (let ((val1 (string->number str1))
+	  (val2 (string->number str2))
+	  (val3 (string->number str3)))
+      (if (not (= val1 val2 val3))
+	  (format #t "~A -> ~A ~A~%" str1 (- val1 val2) (- val1 val3))))))
+|#
+
+(test (= .6 .6) #t)
+(test (= 0.60 0.60) #t)
+(test (= 60e-2 60e-2) #t)
+(test (= #i3/5 #i3/5) #t)
+(test (= 0.11 0.11) #t)
+(test (= 0.999 0.999) #t)
+(test (= 100.000 100.000) #t)
+(test (= 1e10 1e10) #t)
+(test (= 0.18 0.18) #t)
+(test (= 0.3 0.3) #t)
+(test (= 0.333 0.333) #t)
 
 (test (- - 1) 'error)
 (num-test (+ 0) 0)
@@ -60327,7 +60601,12 @@ etc
 (test (integer-length) 'error)
 (test (integer-length 1 2) 'error)
 
+(if with-bignums
+    (test (integer-length (bignum "100000000000000000000000000000000000")) (ceiling (log (bignum "100000000000000000000000000000000000") 2))))
 
+
+
+;;; integer-decode-float
 (define (idf-test val1 val2)
   (test (cadr val1) (cadr val2))
   (test (caddr val1) (caddr val2))
@@ -60401,6 +60680,14 @@ etc
    (test (integer-decode-float arg) 'error))
  (list -1 0 #\a '#(1 2 3) 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 (test (integer-decode-float 1.0 1.0) 'error)
+
+(if with-bignums
+    (begin
+      (test (integer-decode-float (bignum "3.1")) (integer-decode-float 3.1))
+      (test (integer-decode-float (bignum "1E430")) 'error)
+      (test (integer-decode-float (bignum "1E310")) 'error)
+      (test (integer-decode-float (bignum "-1E310")) 'error)
+      (test (integer-decode-float (bignum "1/0")) 'error)))
 
 (do ((i 0 (+ i 1)))
     ((= i 100))

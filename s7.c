@@ -6412,6 +6412,12 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
   if (isnan(err))
     return(s7_wrong_type_arg_error(sc, "rationalize error limit,", 2, cadr(args), "a normal real"));
 
+  if ((s7_Double_abs(rat) + s7_Double_abs(err)) < 1.0e-18)
+    err = 1.0e-18;
+  /* (/ 1.0 most-positive-fixnum) is 1.0842021e-19, so if we let err be less than that,
+   * (rationalize 1e-19 1e-20) hangs, but this only affects the initial ceiling, I believe.
+   */
+
   if (s7_Double_abs(rat) < s7_Double_abs(err))
     return(small_int(0));
   if ((rat > BIGNUM_PLUS) || (rat < BIGNUM_MINUS))
@@ -7218,16 +7224,24 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
     {
       for (x = args; x != sc->NIL; x = cdr(x)) 
 	{
-	  n = c_lcm(n, s7_integer(car(x)));
 #if WITH_GMP
-	  if ((n > S7_LONG_MAX) || (n < S7_LONG_MIN))
+	  s7_Int car_x, old_n;
+	  old_n = n;
+	  car_x = s7_integer(car(x));
+	  if ((car_x > S7_LONG_MAX) || (car_x < S7_LONG_MIN))   /* (lcm 524288 19073486328125) */
 	    return(big_lcm(sc, s7_cons(sc, s7_Int_to_big_integer(sc, n), x)));
+	  n = c_lcm(n, car_x);
+	  if ((n > S7_LONG_MAX) || (n < S7_LONG_MIN))
+	    return(big_lcm(sc, s7_cons(sc, s7_Int_to_big_integer(sc, old_n), x)));
+#else
+	  n = c_lcm(n, s7_integer(car(x)));
 #endif
 	  if (n == 0)
 	    return(small_int(0));
 	}
       return(s7_make_integer(sc, n));
     }
+
   /* from A Jaffer */
   for (x = args; x != sc->NIL; x = cdr(x)) 
     {
@@ -7268,6 +7282,7 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 	}
       return(s7_make_integer(sc, n));
     }
+
   /* from A Jaffer */
   for (x = args; x != sc->NIL; x = cdr(x)) 
     {
@@ -8960,7 +8975,9 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
   if (is_c_object(arg)) 
     {
       s7_num_t num;
-      real(num) = s7_number_to_real(arg); /* TODO: possible out of range error here */
+      real(num) = s7_number_to_real(arg);             /* need s7_num_t here for the equivalence */
+      if ((isnan(real(num))) || (isinf(real(num))))   /* (integer-decode-float (bignum "1e310")) */
+	return(s7_out_of_range_error(sc, "integer-decode-float", 0, arg, "a real that s7_Double can handle"));
       ix = integer(num);
     }
   else
@@ -9232,8 +9249,24 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 
     case NUM_RATIO:
       {
+	s7_Double x, error;
 	s7_Int numer = 0, denom = 1;
-	c_rationalize(s7_number_to_real(num) * next_random(r), 1e-6, &numer, &denom);
+
+	/* the error here needs to take the size of the fraction into account.  Otherwise, if
+	 *    error is (say) 1e-6 and the fraction is (say) 9000000/9223372036854775807,
+	 *    c_rationalize will always return 0.
+	 */
+	x = (s7_Double)s7_numerator(num) / (s7_Double)s7_denominator(num);
+
+	error = 1e-6 * s7_Double_abs(x);
+	if (error > 1e-6)
+	  error = 1e-6;
+	else
+	  {
+	    if (error < 1e-18)
+	      error = 1e-18;
+	  }
+	c_rationalize(x * next_random(r), error, &numer, &denom);
 	return(s7_make_ratio(sc, numer, denom));
       }
 
@@ -29643,7 +29676,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
       
       if (c_object_type(num) == big_ratio_tag)
 	{
-	  mpfr_t *n;
+	  mpfr_t *n, *e;
 	  mpfr_t rat;
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
 	  mpfr_init_set_ui(*n, 1, GMP_RNDN);
@@ -29656,8 +29689,15 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 #endif
 	  mpfr_init_set_q(rat, S7_BIG_RATIO(num), GMP_RNDN);
 	  mpfr_mul(*n, *n, rat, GMP_RNDN);
+
+	  e = (mpfr_t *)malloc(sizeof(mpfr_t));
+	  mpfr_init_set_str(*e, "0.0000001", 10, GMP_RNDN);
+	  mpfr_mul(*e, *e, rat, GMP_RNDN);
 	  mpfr_clear(rat);
-	  return(big_rationalize(sc, make_list_1(sc, s7_make_object(sc, big_real_tag, (void *)n))));
+	  /* as in g_random, small ratios are a problem because the error term (default_rationalize_error = 1e-12 here)
+	   *   clobbers everything to 0.
+	   */
+	  return(big_rationalize(sc, make_list_2(sc, s7_make_object(sc, big_real_tag, (void *)n), s7_make_object(sc, big_real_tag, (void *)e))));
 	}
       
       if (c_object_type(num) == big_real_tag)
