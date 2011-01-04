@@ -441,6 +441,11 @@ yow!! -- I'm using mpc_cmp
 (test (let* ((x 3.141) (y x)) (eqv? x y)) #t)
 (test (let* ((x 1+i) (y x)) (eqv? x y)) #t)
 (test (let* ((x 3/4) (y x)) (eqv? x y)) #t)
+(test (eqv? 1.0 1.0) #t)
+(test (eqv? 0.6 0.6) #t) ; but not (eqv? 0.6 0.60)??
+(test (eqv? 1+i 1+i) #t)
+(test (eqv? -3.14 -3.14) #t)
+(test (eqv? 1e2 1e2) #t)
 
 (test (eqv? (cons 'a 'b) (cons 'a 'c)) #f)
 (test (eqv? eqv? eqv?) #t)
@@ -37178,134 +37183,31 @@ abs     1       2
 ;(num-test (log 2 1) 'error) ; now returns infinity
 (num-test (log 1 -1) 0.0)
 (num-test (log 1.5 -1) 0-0.12906355241341i)
+
+(num-test (exp (log (expt 10.0 -16))) 1e-16)
+(num-test (exp (log (expt 10.0 -36))) 1e-36)
+(num-test (exp (log (expt 10.0 36))) 1e36)
+(num-test (exp (log (expt 10.0 16))) 1e16)
+(num-test (expt (+ 1 1e-10) (log 100.0 (+ 1 1e-10))) 100.0)
+(num-test (expt (+ 1 1e-15) (log 100.0 (+ 1 1e-15))) 100.0) ; 16 doesn't work if not gmp
+(num-test (+ 100 (expt 10.0 15) (- (expt 10.0 15))) 100.0)
+
 (if (not with-bignums) (num-test (log 1 0) 0)) ; since (expt 0 0) is 1
 (if with-bignums
     (begin
       (num-test (log 100.0 (+ 1.0 (bignum "1e-16"))) 4.605170185988091598294419229104461919985E16)
       (num-test (expt (+ 1.0 (bignum "1e-16")) 4.605170185988091598294419229104461919985E16) 100.0)
+      (num-test (log 100.0 (+ 1.0 (bignum "1e-34"))) 4.60520221864866031976806443342804401709E34)
+      (num-test (expt (+ 1.0 (bignum "1e-34")) 4.60520221864866031976806443342804401709E34) 100.0)
+      (num-test (expt (+ 1 1e-16) (log 100.0 (+ 1 1e-16))) 100.0)
+      (num-test (+ 100 (expt 10.0 35) (- (expt 10.0 35))) 100.0)
       ))
 
 #|
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 (- i)))
-	 (lg (log 100.0 (+ 1.0 eps))) ; 1+eps is basically the same, as is -100.0 (using magnitude, not abs)
-	 (ep (expt (+ 1.0 eps) lg)))
-    (format #t "~D: ~A ~A (~A)~%" i lg ep (abs (- ep 100.0)))))
+;; TODO: is it a bug that (eqv? 0.6 0.60) is #f (and all other such cases: (eqv? 60e-2 6e-1) or (eqv? .6 6000000e-7))
+;;            -- I think it is...
 
-16: 4.605170185988091598294419229104461919985E16 1.000E2 (0.0)
-17: 4.605170185988091391061490192063443946417E17 1.000000000000000000000000000000000000011E2 (1.128474576789396007649987075733355850706E-36)
-18: 4.60517018598809137033010432780972649151E18 1.000E2 (0.0)
-19: 4.605170185988091368311911259497127621139E19 1.000000000000000000000000000000000000004E2 (3.76158192263132002549995691911118616902E-37)
-20: 4.60517018598809136891668133185829718269E20 9.999999999999999999999999999999999999887E1 (1.128474576789396007649987075733355850706E-36)
-21: 4.605170185988091360775930758715014053217E21 1.000000000000000000000000000000000000008E2 (7.523163845262640050999913838222372338039E-37)
-22: 4.60517018598809141490737381417356474187E22 9.999999999999999999999999999999999999925E1 (7.523163845262640050999913838222372338039E-37)
-23: 4.605170185988092226909897312149027945214E23 1.000E2 (0.0)
-24: 4.605170185988097640261414793116059983916E24 1.000000000000000000000000000000000000008E2 (7.523163845262640050999913838222372338039E-37)
-25: 4.605170185988070573503721699752398646774E25 9.999999999999999999999999999999999999925E1 (7.523163845262640050999913838222372338039E-37)
-26: 4.605170185987258570772991009355627540735E26 1.000E2 (0.0)
-27: 4.605170186000791949618536426131968099755E27 1.000000000000000000000000000000000000004E2 (3.76158192263132002549995691911118616902E-37)
-28: 4.605170186000791949618536424059641516069E28 1.000000000000000000000000000000000000011E2 (1.128474576789396007649987075733355850706E-36)
-29: 4.605170184918121642226254307837026509345E29 1.000000000000000000000000000000000000004E2 (3.76158192263132002549995691911118616902E-37)
-30: 4.605170198451500521219124723635189103171E30 9.999999999999999999999999999999999999962E1 (3.76158192263132002549995691911118616902E-37)
-31: 4.605170279651775465559475270498808967638E31 1.000000000000000000000000000000000000015E2 (1.504632769052528010199982767644474467608E-36)
-32: 4.60516973831666325854842026918495512867E32 1.000000000000000000000000000000000000004E2 (3.76158192263132002549995691911118616902E-37)
-33: 4.6051751516735123621310470886114914198E33 1.000000000000000000000000000000000000004E2 (3.76158192263132002549995691911118616902E-37)
-34: 4.60520221864866031976806443342804401709E34 1.000E2 (0.0)
-35: 4.60628515861777229162456486010257127459E35 9.999999999999999999999999999999999999962E1 (3.76158192263132002549995691911118616902E-37)
-36: 4.608994738122841569443167545314396295781E36 1.000E2 (0.0)
-37: 4.6089947381228415694431675453143962937E37 9.999999999999999999999999999999999999887E1 (1.128474576789396007649987075733355850706E-36)
-38: 3.91764552740441533402669241351723684948E38 1.000E2 (0.0)
-39: @.Inf@E-1 1.000E0 (9.900E1)
-40: @.Inf@E-1 1.000E0 (9.900E1)
-41: @.Inf@E-1 1.000E0 (9.900E1)
-42: @.Inf@E-1 1.000E0 (9.900E1)
-43: @.Inf@E-1 1.000E0 (9.900E1)
-44: @.Inf@E-1 1.000E0 (9.900E1)
-45: @.Inf@E-1 1.000E0 (9.900E1)
-46: @.Inf@E-1 1.000E0 (9.900E1)
-47: @.Inf@E-1 1.000E0 (9.900E1)
-48: @.Inf@E-1 1.000E0 (9.900E1)
-49: @.Inf@E-1 1.000E0 (9.900E1)
-
-;; this is very close -- worst case is 1e-54 at 16
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 (- i)))
-	 (lg (log eps))
-	 (ep (exp lg)))
-    (format #t "~D: ~A ~A (~A)~%" i lg ep (abs (- ep eps)))))
-
-;; good throughout
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 i))
-	 (lg (log 100.0 (+ 1.0 eps))) ; 1+eps is basically the same, as is -100.0 (using magnitude, not abs)
-	 (ep (expt (+ 1.0 eps) lg)))
-    (format #t "~D: ~A ~A (~A)~%" i lg ep (abs (- ep 100.0)))))
-
-
-;; this is exact up to 36
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 (- i)))
-	 (add (+ 100.0 eps))
-	 (sub (- add eps)))
-    (format #t "~D: ~A ~A (~A)~%" i add sub (abs (- sub 100.0)))))
-
-;; ok to 38 then 4 then 100's -> bignum-precision runs out ca 37
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 i))
-	 (add (+ 100.0 eps))
-	 (sub (- add eps)))
-    (format #t "~D: ~A ~A (~A)~%" i add sub (abs (- sub 100.0)))))
-
-:(+ 100 (expt 10.0 40) (- (expt 10.0 40))) ; bp=128 ok if 1024
-9.600E1
-
-
-;; same
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 (- i)))
-	 (add (+ 0.0 eps))
-	 (sub (- add eps)))
-    (format #t "~D: ~A ~A (~A)~%" i add sub (abs (- sub 0.0)))))
-
-;; exact throughout
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 (- i)))
-	 (add (/ eps))
-	 (sub (/ add)))
-    (format #t "~D: ~A ~A (~A)~%" i add sub (abs (- sub eps)))))
-
-;; ok
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 (- i))) ; also ok if i
-	 (lg (sin eps))
-	 (ep (asin lg)))
-    (format #t "~D: ~A ~A (~A)~%" i lg ep (abs (- ep eps)))))
-
-;; cos/acos looks less good -- error is eps, acos is 0 after 19 [this is 1 vs 0 as above, I think]
-;; similar is: (also tan/atan etc)
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 (- i)))
-	 (lg (sin (+ 1.0 eps)))
-	 (ep (asin lg)))
-    (format #t "~D: ~A ~A (~A)~%" i lg ep (abs (- ep 1.0 eps)))))
-
-;; e-39 up to 39 then approx
-(do ((i 16 (+ i 1)))
-   ((= i 50))
-  (let* ((eps (expt 10.0 (- i)))
-	 (ep (expt 100.0 (+ 1.0 eps)))
-	 (lg (log ep 100.0)))
-    (format #t "~D: ~A ~A (~A)~%" i ep lg (abs (- lg 1.0 eps)))))
-
+;; TODO: incorporate these
 ;; floor/round ok throughout, truncate/ceiling until 39 -> 0, add 0.5 and all are ok throughout
 (do ((i 16 (+ i 1)))
    ((= i 50))
@@ -37373,6 +37275,7 @@ lcm gcd max min quotient remainder modulo
 :(cosh 1/9223372036854775807)
 1.000000000000000000000000000000000000006E0
 
+;; TODO: mod is broken
 :(modulo 1/9223372036854775807 1/2)
 1/9223372036854775807
 -- this is -1 if not gmp
@@ -37397,6 +37300,23 @@ gmp:
 :(modulo (/ (expt 2 61)) (/ (expt 3 10)))
 1/2305843009213693952
 
+gmp:
+:(modulo 9223372036854775807 1/3)
+0
+non-gmp:
+:(modulo 9223372036854775807 1/3)
+-1
+:(modulo 922337203685477580 1/3)
+-412/3
+:(modulo 92233720368547758 1/3)
+-22/3
+:(modulo 9223372036854775 1/3)
+-1
+:(modulo 922337203685477 1/3)
+0
+
+
+;; TODO: min/max are broken
 ; these work in gmp case [<> also work -- how could max/min be confused?]
 :(min 1/9223372036854775807 1/9223372036854775806)
 1/9223372036854775806
@@ -37415,6 +37335,27 @@ gmp:
 :(min 1/46116860184273883 1/46116860184273879)
 1/46116860184273879
 
+non-gmp:
+:(max 9223372036854775806/9223372036854775807 9223372036854775805/9223372036854775807)
+9223372036854775805/9223372036854775807
+:(max 9223372036854775805/9223372036854775807 9223372036854775806/9223372036854775807)
+9223372036854775806/9223372036854775807
+:(max 92233720368547758/9223372036854775807 92233720368547757/9223372036854775807)
+92233720368547757/9223372036854775807
+:(max 9223372036854776/9223372036854775807 9223372036854775/9223372036854775807)
+9223372036854775/9223372036854775807
+;; <> work here
+
+gmp:
+:(min 2.168404344971008681816600431489558149231E-17 2.168404344971008869895696563055543437233E-17)
+2.168404344971008681816600431489558149231E-17
+:(min 2.168404344971008869895696563055543437233E-17 2.168404344971008681816600431489558149231E-17 )
+2.168404344971008681816600431489558149231E-17
+:(min 2.168404344971008681816600431489558149231E-17 1/46116860184273879)
+2.168404344971008681816600431489558149231E-17
+:(min 1/46116860184273883 2.168404344971008869895696563055543437233E-17)
+2.168404344971008681816600431489558149231E-17
+
 
 :(quotient 1/9223372036854775807 1/3)
 0
@@ -37422,9 +37363,23 @@ gmp:
 1/9223372036854775807
 :(quotient 1 1/9223372036854775807)
 ;quotient argument, 9.2233720368548e+18, is out of range (intermediate (a/b) is too large) -- this is false I think
+:(quotient 9223372036854775 1/3)
+;quotient argument, 2.7670116110564e+16, is out of range (intermediate (a/b) is too large)
+:(remainder 9223372036854775807 1/3)
+;remainder argument, 2.7670116110564e+19, is out of range (intermediate (a/b) is too large)
+:(remainder 9223372036854775 1/3)
+;remainder argument, 2.7670116110564e+16, is out of range (intermediate (a/b) is too large)
+
 gmp:
 :(quotient 1 1/9223372036854775807)
 9223372036854775807
+:(remainder 9223372036854775807 2/3)
+1/3
+:(quotient 9223372036854775807 2/3)
+13835058055282163710
+:(+ 1/3 (* 13835058055282163710 2/3))
+9223372036854775807
+
 
 :(> 1/9223372036854775807 1/9223372036854775806)
 #f
@@ -37455,6 +37410,20 @@ or
 1.0
 :(/ 1/9223372036854775807 1/3)
 3.2526065174565e-19
+
+
+:(* 9223372036854775807 1/9223372036854775807)
+1.0
+:(/ 1/9223372036854775807 1/9223372036854775807)
+1
+:(- 1/9223372036854775807 1/9223372036854775807)
+0
+:(+ 1/9223372036854775807 1/9223372036854775807)
+2/9223372036854775807
+:(abs -1/9223372036854775807)
+1/9223372036854775807
+:(zero? -1/9223372036854775807)
+#f
 
 
 :(sqrt 1/4611686018427387904)
@@ -37528,6 +37497,10 @@ but (also non-gmp):
 5.000E1
 
 ;; none of these is an int if non-gmp
+
+;; try mixed-type cases also
+;; TODO: can test-w cases use eval-string now?
+;; TODO: can the html closure example use s7_eval_c_string instead?
 
 |#
 	
@@ -56871,6 +56844,55 @@ non-gmp:
 (if (not with-bignums) (test (string->number "0-0e40i") 0.0))
 (test (string->number "0e10e100") #f)
 
+;; s7.html claims this '=' is guaranteed...
+(test (= .6 (string->number ".6")) #t)
+(test (= 0.60 (string->number "0.60")) #t)
+(test (= 60e-2 (string->number "60e-2")) #t)
+(test (= #i3/5 (string->number "#i3/5")) #t)
+(test (= 0.11 (string->number "0.11")) #t)
+(test (= 0.999 (string->number "0.999")) #t)
+(test (= 100.000 (string->number "100.000")) #t)
+(test (= 1e10 (string->number "1e10")) #t)
+(test (= 0.18 (string->number "0.18")) #t)
+(test (= 0.3 (string->number "0.3")) #t)
+(test (= 0.333 (string->number "0.333")) #t)
+(test (= -1/10 (string->number "-1/10")) #t)
+(test (= -110 (string->number "-110")) #t)
+(test (= 1+i (string->number "1+i")) #t)
+(test (= 0.6-.1i (string->number "0.6-.1i")) #t)
+
+;; but is this case also guaranteed?? [these work in Guile I think, but 1st 4 seem flakey in s7]
+(let ((val1 0.6)
+      (val2 (string->number (number->string 0.6))))
+  (test (= val1 val2) #t))
+(let ((val1 .6)
+      (val2 (string->number (number->string .6))))
+  (test (= val1 val2) #t))
+(let ((val1 0.60)
+      (val2 (string->number (number->string 0.60))))
+  (test (= val1 val2) #t))
+(let ((val1 60e-2)
+      (val2 (string->number (number->string 60e-2))))
+  (test (= val1 val2) #t))
+(test (= .6 (string->number (number->string .6))) #t)
+(test (= 0.6 (string->number (number->string 0.6))) #t)
+(test (= 0.60 (string->number (number->string 0.60))) #t)
+(test (= 60e-2 (string->number (number->string 60e-2))) #t)
+(test (= #i3/5 (string->number (number->string #i3/5))) #t)
+(test (= 0.11 (string->number (number->string 0.11))) #t)
+(test (= 0.999 (string->number (number->string 0.999))) #t)
+(test (= 100.000 (string->number (number->string 100.000))) #t)
+(test (= 1e10 (string->number (number->string 1e10))) #t)
+(test (= 0.18 (string->number (number->string 0.18))) #t)
+(test (= 0.3 (string->number (number->string 0.3))) #t)
+(test (= 0.333 (string->number (number->string 0.333))) #t)
+(test (= -1/10 (string->number (number->string -1/10))) #t)
+(test (= -110 (string->number (number->string -110))) #t)
+(test (= 1+i (string->number (number->string 1+i))) #t)
+(test (= 0.6-.1i (string->number (number->string 0.6-.1i))) #t)
+
+;; scheme spec says (eqv? (number->string (string->number num radix) radix) num) is always #t
+;;   (also that radix is 10 if num is inexact)
 
 (test (number->string 1/0) "nan.0")
 (test (number->string 1/0 2) "nan.0")
@@ -58080,7 +58102,7 @@ etc....
 	 ((= base 11))
        (let ((val (string->number (string-append "1" exponent "1") base)))
 	 (if (and (number? val)
-		  (not (= val base)))
+		  (> (abs (- val base)) 1e-9))
 	     (format #t ";(string->number ~S ~A) returned ~A?~%" 
 		     (string-append "1" exponent "1") base (string->number (string-append "1" exponent "1") base)))))
      
@@ -58088,7 +58110,7 @@ etc....
 	 ((= base 11))
        (let ((val (string->number (string-append "1.1" exponent "1") base)))
 	 (if (and (number? val)
-		  (not (= val (+ base 1))))
+		  (> (abs (- val (+ base 1))) 1e-9))
 	     (format #t ";(string->number ~S ~A) returned ~A?~%" 
 		     (string-append "1.1" exponent "1") base (string->number (string-append "1.1" exponent "1") base)))))
      
@@ -58096,7 +58118,7 @@ etc....
 	 ((= base 11))
        (let ((val (string->number (string-append "1" exponent "+1") base)))
 	 (if (and (number? val)
-		  (not (= val base)))
+		  (> (abs (- val base)) 1e-9))
 	     (format #t ";(string->number ~S ~A) returned ~A?~%"
 		     (string-append "1" exponent "+1") base (string->number (string-append "1" exponent "+1") base)))))
 					; in base 16 this is still not a number because of the + (or -)
