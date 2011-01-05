@@ -4281,12 +4281,6 @@ closed-over thing is a constant:
 It would be a programmer's nightmare to have to keep track of which piece of a list is
 constant, and an implementor's nightmare to copy every list.  set! in all its forms is
 used for its side-effects, so why should we try to put a fence around them?
-<!--
-(The argument for immutability goes: most programmers are not very bright and they're writing air-traffic
-controllers.  Well, geez, can anything pass the dumb-but-deadly-programmer test?
-Consider if-then: make one small mistake and people start falling out of the sky.
-But dumb arguments aren't interesting...)
--->
 If we flush "immutable constant" because it is a ham-fisted, whack-it-with-a-shovel approach,
 the only real problem I can see is symbol-&gt;string.  In CL, this is explicitly an error:
 </p>
@@ -4317,7 +4311,7 @@ One simple way to ensure immutability is to use copy:
 "hiho"
 </pre>
 
-<p>A serpent lurks beneath this placid surface.  s7 normally tries to optimize garbage collection by
+<p>There is one pitfall here.  s7 normally tries to optimize garbage collection by
 removing some constants from the heap.  If that constant is a list or a vector, and you later
 set some member of it to something that needs GC protection, nobody in the heap points to it, so
 it is GC'd.  Here is an example:

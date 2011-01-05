@@ -5735,8 +5735,16 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
   if (frac_len <= max_len)
     {
       /* splitting out base 10 case saves very little here */
+#if 0
       while ((dig = digits[(int)(*str++)]) < radix)
 	frac_part = dig + (frac_part * radix);
+#else
+      /* this is slightly faster according to callgrind */
+      char *fend;
+      fend = (char *)(str + frac_len);
+      while (str < fend)
+	frac_part = digits[(int)(*str++)] + (frac_part * radix);
+#endif
 
       dval += frac_part * ipow(radix, exponent - frac_len);
 
@@ -5746,11 +5754,13 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
        * 0.6000: frac: 6000, exp: 0.00010000000000000000, val: 0.59999999999999997780
        * :(= 0.6 0.60)
        * #f
-       * :(= 3/5 0.6) ; guile also says #f
+       * :(= #i3/5 0.6)
        * #f
        * so (string->number (number->string num)) == num only if both num's are the same text (or you get lucky)
        * :(= 0.6 6e-1) ; but not 60e-2
        * #t
+       *
+       * to fix the 0.60 case, we need to ignore trailing post-dot zeros.
        */
     }
   else
@@ -7915,21 +7925,71 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
       
 	case NUM_RATIO:
 	  {
-	    s7_Int vala, valb;
-	    vala = num_to_numerator(a) / num_to_denominator(a); 
-	    valb = num_to_numerator(b) / num_to_denominator(b);
+	    s7_Int num_a, num_b, den_a, den_b;
+	    num_a = num_to_numerator(a);
+	    num_b = num_to_numerator(b);
+	    den_a = num_to_denominator(a);
+	    den_b = num_to_denominator(b);
 
-	    if (!((vala > valb) ||
-		  ((vala == valb) && (b.type == NUM_INT))))
+	    /* there are tricky cases here where long ints outrun doubles:
+	     *   (max 92233720368547758/9223372036854775807 92233720368547757/9223372036854775807)
+	     * which should be 92233720368547758/9223372036854775807) but 1st the fraction gets reduced
+	     * to 13176245766935394/1317624576693539401, so we fall into the double comparison, and
+	     * there we should be comparing 
+	     *    9.999999999999999992410584792601468961145E-3 and
+	     *    9.999999999999999883990367544051025548645E-3
+	     * but if using doubles we get 
+	     *    0.010000000000000000208166817117 and
+	     *    0.010000000000000000208166817117
+	     * that is, we can't distinguish these two fractions once they're coerced to doubles.
+	     * So, try to use long doubles.  In gmp, I assume they set the float precision based
+	     *   on the number of digits in the ratios, or something like that.
+	     *
+	     * Another consequence: outside gmp, we can't handle cases like
+	     *    (max 9223372036854776/9223372036854775807 #i9223372036854775/9223372036854775000)
+	     *    (max #i9223372036854776/9223372036854775807 9223372036854775/9223372036854775000)
+	     * I guess if the user is using "inexact" numbers (#i...), he accepts their inexactness.
+	     */
+
+	    if (den_a == den_b)
 	      {
-		if ((valb > vala) ||
-		    ((vala == valb) && (a.type == NUM_INT)) ||
-		    /* sigh -- both are ratios and the int parts are equal */
-		    (((double)(num_to_numerator(a) % num_to_denominator(a)) / (double)num_to_denominator(a)) <=
-		     ((double)(num_to_numerator(b) % num_to_denominator(b)) / (double)num_to_denominator(b))))
+		if (num_a < num_b)
 		  {
 		    a = b;
 		    result = bp;
+		  }
+	      }
+	    else
+	      {
+		if (num_a == num_b)
+		  {
+		    if (((num_a >= 0) &&
+			 (den_a > den_b)) ||
+			((num_a < 0) &&
+			 (den_a < den_b)))
+		      {
+			a = b;
+			result = bp;
+		      }
+		  }
+		else
+		  {
+		    s7_Int vala, valb;
+		    vala = num_a / den_a;
+		    valb = num_b / den_b;
+
+		    if (!((vala > valb) ||
+			  ((vala == valb) && (b.type == NUM_INT))))
+		      {
+			if ((valb > vala) ||
+			    ((vala == valb) && (a.type == NUM_INT)) ||
+			    /* sigh -- both are ratios and the int parts are equal */
+			    (((long double)(num_a % den_a) / (long double)den_a) <= ((long double)(num_b % den_b) / (long double)den_b)))
+			  {
+			    a = b;
+			    result = bp;
+			  }
+		      }
 		  }
 	      }
 	  }
@@ -7994,21 +8054,51 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
       
 	case NUM_RATIO:
 	  {
-	    s7_Int vala, valb;
-	    vala = num_to_numerator(a) / num_to_denominator(a); 
-	    valb = num_to_numerator(b) / num_to_denominator(b);
-
-	    if (!((vala < valb) ||
-		  ((vala == valb) && (a.type == NUM_INT))))
+	    s7_Int num_a, num_b, den_a, den_b;
+	    num_a = num_to_numerator(a);
+	    num_b = num_to_numerator(b);
+	    den_a = num_to_denominator(a);
+	    den_b = num_to_denominator(b);
+	    /* there are tricky cases here where long ints outrun doubles */
+	    if (den_a == den_b)
 	      {
-		if ((valb < vala) ||
-		    ((vala == valb) && (b.type == NUM_INT)) ||
-		    /* sigh -- both are ratios and the int parts are equal */
-		    (((double)(num_to_numerator(a) % num_to_denominator(a)) / (double)num_to_denominator(a)) >=
-		     ((double)(num_to_numerator(b) % num_to_denominator(b)) / (double)num_to_denominator(b))))
+		if (num_a > num_b)
 		  {
 		    a = b;
 		    result = bp;
+		  }
+	      }
+	    else
+	      {
+		if (num_a == num_b)
+		  {
+		    if (((num_a >= 0) &&
+			 (den_a < den_b)) ||
+			((num_a < 0) &&
+			 (den_a > den_b)))
+		      {
+			a = b;
+			result = bp;
+		      }
+		  }
+		else
+		  {
+		    s7_Int vala, valb;
+		    vala = num_a / den_a;
+		    valb = num_b / den_b;
+
+		    if (!((vala < valb) ||
+			  ((vala == valb) && (a.type == NUM_INT))))
+		      {
+			if ((valb < vala) ||
+			    ((vala == valb) && (b.type == NUM_INT)) ||
+			    /* sigh -- both are ratios and the int parts are equal (see comment under g_max above) */
+			    (((long double)(num_a % den_a) / (long double)den_a) >= ((long double)(num_b % den_b) / (long double)den_b)))
+			  {
+			    a = b;
+			    result = bp;
+			  }
+		      }
 		  }
 	      }
 	  }
@@ -8158,6 +8248,8 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
       return(s7_make_integer(sc, c_mod(integer(a), integer(b))));
 
     case NUM_RATIO:                   /* a or b might be integer here, hence the num_to_* */
+      /* there are many tricky cases ... */
+      
       return(s7_make_ratio(sc, 
 			   num_to_numerator(a) * num_to_denominator(b) - 
 			   num_to_numerator(b) * num_to_denominator(a) * (s7_Int)floor(num_to_real(a) / num_to_real(b)),
@@ -24685,6 +24777,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_VECTOR:
+      if (!is_proper_list(sc, sc->value))       /* #(1 . 2) */
+	return(read_error(sc, "vector constant data is not a proper list"));
+
       if (sc->args == small_int(1))
 	sc->value = g_vector(sc, sc->value);
       else sc->value = g_multivector(sc, (int)s7_integer(sc->args), sc->value);
