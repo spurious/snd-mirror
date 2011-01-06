@@ -4288,8 +4288,8 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
       if (a & 1)
 	{
 	  if (a == 1)
-	    return(s7_out_of_range_error(sc, "(/ most-negative-fixnum),", 1, s7_make_integer(sc, b), "can't be inverted"));
-	  /* 1/-9223372036854775808 -> "unbound variable" */
+	    return(s7_make_real(sc, NAN));
+	  /* not an error here because 1/9223372036854775808 might be in a block of unevaluated code */
 	  b = b + 1;
 	}
       else
@@ -4571,10 +4571,33 @@ static s7_pointer quotient(s7_scheme *sc, const char *caller, s7_num_t a, s7_num
 {
   /* (define (quo x1 x2) (truncate (/ x1 x2))) ; slib */
 
-  if ((a.type | b.type) == NUM_INT)
-    return(s7_make_integer(sc, integer(a) / integer(b)));
+  switch (a.type | b.type)
+    {
+    case NUM_INT:
+      return(s7_make_integer(sc, integer(a) / integer(b)));
 
-  return(s7_truncate(sc, caller, num_to_real(a) / num_to_real(b)));
+    case NUM_RATIO:
+      {
+	s7_Int d1, d2, n1, n2;
+	d1 = num_to_denominator(a);
+	n1 = num_to_numerator(a);
+	d2 = num_to_denominator(b);
+	n2 = num_to_numerator(b);
+	if (d1 == d2)
+	  return(s7_make_integer(sc, n1 / n2));              /* (quotient 3/9223372036854775807 1/9223372036854775807) */
+	if (n1 == n2)
+	  return(s7_make_integer(sc, d2 / d1));              /* (quotient 9223372036854775807/2 9223372036854775807/8) */
+
+	if ((integer_length(n1) + integer_length(d2) >= s7_int_bits) ||
+	    (integer_length(n2) + integer_length(d1) >= s7_int_bits))
+	  return(s7_truncate(sc, caller, num_to_real(a) / num_to_real(b)));
+
+	return(s7_make_integer(sc, (n1 * d2) / (n2 * d1)));  /* (quotient 922337203685477580 1/3) */
+      }
+      
+    default:
+      return(s7_truncate(sc, caller, num_to_real(a) / num_to_real(b)));
+    }
 }
 
 
@@ -6498,16 +6521,16 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	  (s7_is_positive(x)) &&
 	  (s7_is_positive(y)))
 	{
-	  if ((s7_is_integer(x)) &&
-	      (s7_is_integer(y)))
+	  if ((s7_is_rational(x)) &&
+	      (s7_is_rational(y)))
 	    {
 	      s7_Double res;
 	      s7_Int ires;
 	      res = log(num_to_real(number(x))) / log(num_to_real(number(y)));
 	      ires = (s7_Int)res;
 	      if (res - ires == 0.0)
-		return(s7_make_integer(sc, ires));                    /* (log i i) -> 1 */
-	      return(s7_make_real(sc, res));
+		return(s7_make_integer(sc, ires));   /* (log 8 2) -> 3 or (log 1/8 2) -> -3 */
+	      return(s7_make_real(sc, res));         /* perhaps use rationalize here? (log 2 8) -> 1/3 */
 	    }
 	  return(s7_make_real(sc, log(num_to_real(number(x))) / log(num_to_real(number(y)))));
 	}
@@ -6861,7 +6884,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 	  if (s7_is_ratio(n))
 	    {
 	      s7_Int nm = 0, dn = 1;
-	      if (c_rationalize(sqx, 1.0e-12, &nm, &dn))
+	      if (c_rationalize(sqx, 1.0e-16, &nm, &dn)) /* 1e-16 so that (sqrt 1/1099511627776) returns 1/1048576 */
 		{
 		  if ((nm * nm == s7_numerator(n)) &&
 		      (dn * dn == s7_denominator(n)))
@@ -8200,14 +8223,39 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
       return(s7_make_integer(sc, integer(a) % integer(b)));
 
     case NUM_RATIO: 
-      return(s7_make_ratio(sc,
-			   num_to_numerator(a) * num_to_denominator(b) - 
-			   num_to_numerator(b) * num_to_denominator(a) * s7_integer(quotient(sc, "remainder", a, b)),
-			   num_to_denominator(a) * num_to_denominator(b)));
+      {
+	/* as usual with ratios, there are lots of tricky cases */
+	s7_Int quo, n1, n2, d1, d2;
+
+	quo = s7_integer(quotient(sc, "remainder", a, b));
+	if (quo == 0)
+	  return(ap);
+
+	d1 = num_to_denominator(a);
+	n1 = num_to_numerator(a);
+	d2 = num_to_denominator(b);
+	n2 = num_to_numerator(b);
+
+	if ((d1 == d2) &&
+	    ((integer_length(n2) + integer_length(quo)) < s7_int_bits))
+	  return(s7_make_ratio(sc, n1 - n2 * quo, d1));
+      
+	if ((integer_length(n1) + integer_length(d2) < s7_int_bits) &&
+	    (integer_length(d1) + integer_length(d2) < s7_int_bits) &&
+	    (integer_length(n2) + integer_length(d1) + integer_length(quo) < s7_int_bits))
+	  return(s7_make_ratio(sc, n1 * d2 - n2 * d1 * quo, d1 * d2));
+
+	return(s7_out_of_range_error(sc, "remainder", 0, ap, "intermediate (a/b) is too large"));
+      }
 
     default:
-      /* if a < b we can just return a */
-      return(s7_make_real(sc, num_to_real(a) - num_to_real(b) * s7_integer(quotient(sc, "remainder", a, b))));
+      {
+	s7_Int quo;
+	quo = s7_integer(quotient(sc, "remainder", a, b));
+	if (quo == 0)
+	  return(ap);
+	
+	return(s7_make_real(sc, num_to_real(a) - num_to_real(b) * quo));
 
       /* see under sin -- this calculation is completely bogus if "a" is large
        * (quotient 1e22 (* 2 pi)) -> -9223372036854775808 -- should this return arithmetic-overflow?
@@ -8217,6 +8265,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
        * Clisp gives 0.0 here, as does sbcl
        * currently s7 throws an error (out-of-range).
        */
+      }
     }
 }
 
@@ -8248,12 +8297,47 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
       return(s7_make_integer(sc, c_mod(integer(a), integer(b))));
 
     case NUM_RATIO:                   /* a or b might be integer here, hence the num_to_* */
-      /* there are many tricky cases ... */
-      
-      return(s7_make_ratio(sc, 
-			   num_to_numerator(a) * num_to_denominator(b) - 
-			   num_to_numerator(b) * num_to_denominator(a) * (s7_Int)floor(num_to_real(a) / num_to_real(b)),
-			   num_to_denominator(a) * num_to_denominator(b)));
+      {
+	s7_Int n1, n2, d1, d2;
+
+	d1 = num_to_denominator(a);
+	n1 = num_to_numerator(a);
+	d2 = num_to_denominator(b);
+	n2 = num_to_numerator(b);
+
+	if (d1 == d2)
+	  return(s7_make_ratio(sc, c_mod(n1, n2), d1));
+
+	if ((n1 == n2) &&
+	    (d1 > d2))
+	  return(ap);                 /* signs match so this should be ok */
+
+	if ((integer_length(n1) + integer_length(d2) < s7_int_bits) &&
+	    (integer_length(n2) + integer_length(d1) < s7_int_bits) &&
+	    (integer_length(d1) + integer_length(d2) < s7_int_bits))
+	  {
+	    s7_Int n1d2, n2d1, fl;
+	    n1d2 = n1 * d2;
+	    n2d1 = n2 * d1;
+
+	    if (n2d1 == 1)
+	      return(small_int(0));
+
+	    /* can't use "floor" here (int->float ruins everything) */
+	    fl = (s7_Int)(n1d2 / n2d1);
+	    if (((n1 < 0) && (n2 > 0)) ||
+		((n1 > 0) && (n2 < 0)))
+	      fl -= 1;
+
+	    if (fl == 0)
+	      return(ap);
+
+	    if (integer_length(n2d1) + integer_length(fl) < s7_int_bits)
+	      return(s7_make_ratio(sc, n1d2 - (n2d1 * fl), d1 * d2));
+	  }
+
+	return(s7_out_of_range_error(sc, "modulo", 0, ap, "intermediate (a/b) is too large"));	
+      }
 
     default:
       {
@@ -29080,9 +29164,9 @@ static s7_pointer big_modulo(s7_scheme *sc, s7_pointer args)
 	       big_multiply(sc, 
                 make_list_2(sc, b, 
 		 big_floor(sc, 
-                  s7_cons(sc, 
+                  make_list_1(sc, 
                    big_divide(sc, 
-                    make_list_2(sc, a, b)), sc->NIL)))))));
+		    make_list_2(sc, a, b)))))))));
     }
   else
     {
