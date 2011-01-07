@@ -7268,6 +7268,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 	    return(big_lcm(sc, s7_cons(sc, s7_Int_to_big_integer(sc, old_n), x)));
 #else
 	  n = c_lcm(n, s7_integer(car(x)));
+	  if (n < 0) return(s7_out_of_range_error(sc, "lcm from", 0, args, "result is too large"));
 #endif
 	  if (n == 0)
 	    return(small_int(0));
@@ -7279,6 +7280,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
   for (x = args; x != sc->NIL; x = cdr(x)) 
     {
       n = c_lcm(n, s7_numerator(car(x)));
+      if (n < 0) return(s7_out_of_range_error(sc, "lcm from", 0, args, "result is too large"));
 #if WITH_GMP
       if ((n > S7_LONG_MAX) || (n < S7_LONG_MIN))
 	return(big_lcm(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, n, d), x)));
@@ -7309,9 +7311,8 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
       for (x = args; x != sc->NIL; x = cdr(x)) 
 	{
 	  n = c_gcd(n, s7_integer(car(x)));
-	  if ((n == 1) ||
-	      (n == -1))                  /* on the Mac, (gcd 9223372036854775807 -9223372036854775808) is -1 ?? */
-	    return(small_int(1));
+	  if (n < 0) return(s7_out_of_range_error(sc, "gcd from", 0, args, "intermediate result is too large"));
+	  if (n == 1) return(small_int(1));
 	}
       return(s7_make_integer(sc, n));
     }
@@ -7320,7 +7321,9 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
   for (x = args; x != sc->NIL; x = cdr(x)) 
     {
       n = c_gcd(n, s7_numerator(car(x)));
+      if (n < 0) return(s7_out_of_range_error(sc, "gcd from", 0, args, "intermediate result is too large"));
       d = c_lcm(d, s7_denominator(car(x)));
+      if (d < 0) return(s7_out_of_range_error(sc, "gcd from", 0, args, "intermediate result is too large"));
     }
   return(s7_make_ratio(sc, n, d));
 }
@@ -7650,10 +7653,32 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	  if ((integer(b) > S7_LONG_MAX) ||
 	      (integer(b) < S7_LONG_MIN))
 	    return(big_multiply(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), old_x)));
+#else
+	  if (((integer(b) > s7_int_max) ||                  /* else (* 524288 19073486328125) -> -8446744073709551616 */
+	       (integer(b) < s7_int_min)) &&                 /*    but the reverse still fails -- we should also check integer_length(a) */
+	      (integer_length(integer(b)) + integer_length(integer(a)) > s7_int_bits))
+	    {
+	      /* try it first and check signs -- this is a hard error to catch! 
+	       *   (* most-negative-fixnum 1) 
+	       */
+	      bool a_signed;
+	      a_signed = (((integer(a) < 0) && (integer(b) > 0)) ||
+			  ((integer(a) > 0) && (integer(b) < 0)));
+	      integer(a) *= integer(b);
+	      if (a_signed != (integer(a) < 0))
+		return(s7_out_of_range_error(sc, "* with ", 0, args, "result is too large"));
+	      if (x == sc->NIL)
+		return(s7_make_integer(sc, integer(a)));
+	    }
+	  else
+	    {
 #endif
 	  if (x == sc->NIL)
 	    return(s7_make_integer(sc, integer(a) * integer(b)));
 	  integer(a) *= integer(b);
+#if (!WITH_GMP)
+	    }
+#endif
 	  break;
       
 	case NUM_RATIO:
@@ -7665,7 +7690,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	    n2 = num_to_numerator(b);
 #if (!WITH_GMP)
 	    if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
-		(n1 > s7_int_max) || (n2 > s7_int_max) ||
+		(n1 > s7_int_max) || (n2 > s7_int_max) ||     /*    (* 1/524288 1/19073486328125) for example */
 		(n1 < s7_int_min) || (n2 < s7_int_min))
 	      {
 		if ((integer_length(d1) + integer_length(d2) > s7_int_bits) ||

@@ -20424,7 +20424,7 @@ abs     1       2
      (if (not (= a 1))
 	 (error 'wrong-type-arg ";for-each arg is ~A" a)))
    (make-list 100 1))
-  (test (< max-stack 10) #t))
+  (test (< max-stack 20) #t)) ; 10 is not snd-test (and below)
 
 (let ((max-stack 0))
   (map
@@ -20434,7 +20434,7 @@ abs     1       2
      (if (not (= a 1))
 	 (error 'wrong-type-arg ";map arg is ~A" a)))
    (make-list 100 1))
-  (test (< max-stack 10) #t))
+  (test (< max-stack 20) #t))
 
 
 ;;; the next 3 are not tail-recursive
@@ -37269,8 +37269,6 @@ lcm gcd max min quotient remainder modulo
 ;; try mixed-type cases also
 ;; TODO: can the html closure example use s7_eval_c_string instead?
 
-:(/ 2/9223372036854775807 2/3)
-3/9223372036854775807
 |#
 	
 
@@ -38658,9 +38656,8 @@ lcm gcd max min quotient remainder modulo
       (num-test (rationalize 1e-19 0.0) 0)
       (num-test (rationalize 1e-19 1e-19) 0)
       (num-test (rationalize 1e-30 0.0) 0)
-      (num-test (rationalize (+ .1 1e-18) 0) 1/10)
-      (num-test (rationalize (+ .1 1e-18) 1e-20) 1/10)
-      (num-test (rationalize (- .1 1e-18) 1e-20) 1/10)
+      (num-test (rationalize (+ .1 1e-18) 1e-17) 1/10)
+      (num-test (rationalize (- .1 1e-18) 1e-17) 1/10)
       )
     (begin
       (num-test (rationalize 1e-19 1e-21) 1/9900990099009900991)
@@ -38767,14 +38764,14 @@ lcm gcd max min quotient remainder modulo
 (num-test (rationalize 0.51 .01) 1/2)
 (num-test (rationalize 0.52 .01) 9/17)
 (num-test (rationalize 0.53 .01) 7/13)
-(num-test (rationalize 0.59 .01) 3/5)
+(num-test (rationalize 0.59 .0100001) 3/5)
 (num-test (rationalize 0.61 .01) 3/5)
 (num-test (rationalize 0.65 .01) 9/14)
 (num-test (rationalize 0.68 .01) 11/16)
 (num-test (rationalize 0.74 .01) 3/4)
 (num-test (rationalize 0.76 .01) 3/4)
 (num-test (rationalize 0.79 .01) 4/5)
-(num-test (rationalize 0.81 .01) 4/5)
+(num-test (rationalize 0.81 .0100001) 4/5)
 (num-test (rationalize 0.93 .01) 12/13)
 (num-test (rationalize 0.94 .01) 14/15)
 (num-test (rationalize 0.95 .01) 16/17)
@@ -38809,7 +38806,7 @@ lcm gcd max min quotient remainder modulo
 (num-test (rationalize 0.1001 .1) 1/5)
 (num-test (rationalize 0.101 .1) 1/5)
 (num-test (rationalize 0.885 .01) 7/8)
-(num-test (rationalize 0.451 .001) 9/20)
+(num-test (rationalize 0.451 .0010001) 9/20)
 (num-test (rationalize 0.9876 .0001) 80/81)
 
 (call-with-exit
@@ -39687,36 +39684,26 @@ lcm gcd max min quotient remainder modulo
 (num-test (gcd 1/262144 1/3814697265625) 1/1000000000000000000)
 (num-test (gcd 524288/5 19073486328125/2) 1/10)
 
-#| 
-TODO: gcd/lcm are broken:
-:(gcd 1/524288 1/19073486328125)
--1/8446744073709551616
+(if with-bignums
+    (begin
+      (num-test (lcm 524288 19073486328125) 10000000000000000000)
+      (num-test (lcm 2147483648 4656612873077392578125) 10000000000000000000000000000000)
+      (num-test (lcm (/ (expt 2 57) 3) (/ 65 11)) 9367487224930631680)
+      ))
+(num-test (lcm 1024 9765625) 10000000000)
+(num-test (lcm 131072 762939453125) 100000000000000000)
+(num-test (lcm 262144 3814697265625) 1000000000000000000)
+(num-test (lcm 524288 17500000000001) 9175040000000524288)
+(num-test (lcm 524288 -17500000000001) 9175040000000524288)
 
-gmp:
-:(lcm 19073486328125 524288)
-10000000000000000000
-
-:(lcm 524288 19073486328125) -- this is ok now
-161108857607070000000000000000000
-:(* 524288 19073486328125)
-10000000000000000000
-
-non-gmp:
-:(lcm 524288 19073486328125)
--8446744073709551616
-
-
-:(lcm 1024 9765625)
-10000000000
-:(lcm 131072 762939453125)
-100000000000000000
-:(lcm 262144 3814697265625)
-1000000000000000000
-
-:(lcm 2147483648 4656612873077392578125)
-10000000000000000000000000000000
-
-|#
+(num-test (lcm (/ (expt 2 10)) (/ (expt 3 10))) 1)
+(num-test (lcm (/ 3 (expt 2 10)) (/ 2 (expt 3 10))) 6)
+(num-test (lcm (/ 3 (expt 2 40)) (/ 2 (expt 3 10))) 6)
+(num-test (lcm (/ 3 (expt 2 60)) (/ 2 (expt 3 30))) 6)
+(num-test (lcm (/ 3 (expt 2 60)) (/ 2 (expt 2 30))) 3/536870912)
+(num-test (lcm 524288/3 1907348632815/7) 1000000000001310720)
+(num-test (lcm 4242884/3 1907348632815/7) 8092658996592638460)
+(num-test (lcm (/ (expt 2 57) 3) (/ 63 11)) 9079256848778919936)
 
 (test (lcm 1 ' #e1.(logior )) 0) ; (lcm 1 1 0)
 
@@ -51820,6 +51807,16 @@ non-gmp:
 (num-test (+ 268435456/129140163 129140163/268435456 7/29 29/19) 4.327416192871913348352681814704887193821E0)
 (num-test (+ 268435456/129140163 129140163/268435456 7/19 29/19) 2933929486555791403/658650172313567232)
 
+(num-test (* 524288 1907348632812) 999999999999737856)
+(num-test (* 524288 14000000000000) 7340032000000000000)
+(num-test (* 524288 17500000000000) 9175040000000000000)
+
+(if with-bignums (num-test (* 524288 17600000000000) 9227468800000000000))
+(if with-bignums (num-test (* 524288 19073486328125) 10000000000000000000))
+
+(num-test (/ 1.0 1/524288 1/19073486328125) 1.000000000000000024754073164739868757037E19)
+
+
 (test (= most-positive-fixnum 1/0) #f)
 (test (= most-negative-fixnum 1/0) #f)
 (test (= most-positive-fixnum 0/0) #f)
@@ -51849,6 +51846,11 @@ non-gmp:
       (num-test (* 1/9223372036854775807 1/9223372036854775806) 1.1754943508223e-38)
       (num-test (/ 1/9223372036854775807 1/9223372036854775806) 1.0)
       (num-test (/ 1/9223372036854775807 1/3) 3.2526065174565e-19)))
+
+(num-test (/ 2/9223372036854775807 2/3) 3/9223372036854775807)
+(num-test (/ 9223372036854775807/123456789 9223372036854775807/123456789) 1)
+(num-test (/ 9223372036854775807/1234567890 9223372036854775807/12345678900) 10)
+(num-test (/ 1234567890/9223372036854775807 123456789/9223372036854775807) 10)
 
 ; these can go either way I guess -- 1/0 might be NaN?
 ;(test (< most-positive-fixnum 1/0) #t)
@@ -55066,8 +55068,8 @@ non-gmp:
 (test (exact? -1.797693134862315699999999999999999999998E308) #f)
 (test (inexact? -1.797693134862315699999999999999999999998E308) #t)
 
-(num-test (lcm -9223372036854775808 -9223372036854775808) 9223372036854775808)
-(num-test (gcd -9223372036854775808 -9223372036854775808) 9223372036854775808)
+(if with-bignums (num-test (lcm -9223372036854775808 -9223372036854775808) 9223372036854775808))
+(if with-bignums (num-test (gcd -9223372036854775808 -9223372036854775808) 9223372036854775808))
 (num-test (max -9223372036854775808 -9223372036854775808) -9223372036854775808)
 (num-test (min -9223372036854775808 -9223372036854775808) -9223372036854775808)
 (num-test (quotient -9223372036854775808 -9223372036854775808) 1)
@@ -55186,7 +55188,7 @@ non-gmp:
 (num-test (/ -9223372036854775808 5.551115123125783999999999999999999999984E-17) -1.661534994731144452653560599947843044136E35)
 
 (if with-bignums (num-test (lcm -9223372036854775808 9223372036854775807 -9223372036854775808) 85070591730234615856620279821087277056))
-(num-test (gcd -9223372036854775808 9223372036854775807 -9223372036854775808) 1)
+(if with-bignums (num-test (gcd -9223372036854775808 9223372036854775807 -9223372036854775808) 1))
 (num-test (max -9223372036854775808 9223372036854775807 -9223372036854775808) 9223372036854775807)
 (num-test (min -9223372036854775808 9223372036854775807 -9223372036854775808) -9223372036854775808)
 (test (= -9223372036854775808 9223372036854775807 -9223372036854775808) #f)

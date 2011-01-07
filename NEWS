@@ -1,36 +1,15 @@
-Snd 11.11
+Snd 11.12
 
-Rene Bastian has written a French version of the cmn manual:
-    manuel-cmn-fr.html in the cmn tarball.
+s7: *gc-stats*
+    member and assoc have an optional 3rd arg, the comparison function
+    added environment?
 
-Mike provided a bunch more script and configuration improvements, and 
-    C/Ruby expertise.
+in the gtk 3 version of Snd, there is no longer a -nogtkrc flag, and
+    Snd.gtkrc is obsolete (Gtk has moved to a css-style system, but I
+    think in gtk 3 I'll leave all the "theme" stuff to the global theme).
+    
+    in gtk2, only versions 2.10 or later are supported.
 
-Michael Edwards added an optional argument to moog-filter in moog.lisp
-  to control saturation.
+checked: gtk 2.91.5|6|7, sbcl 1.0.45
 
-s7: *safety*: an integer, defaults to 0 meaning don't be paranoid.
-            There is one case where you might need to set *safety*
-            to 1 -- see the "bad-idea" function in s7.html.
-          
-    hooks.  s7 had several built-in hooks, but the hook support 
-            was in xen.c and xen.h.  It's now in s7 with backwards
-            compatibility definitions in xen.c.  See s7.h and xen.h
-            for the C API, and s7.html for the scheme side. Also,
-            with much help from Mike, it's now possible to add a
-            C-side function to an extension language hook, so
-            the "watcher" stuff in Snd has been removed and
-            replaced with normal hooks: add-watcher and 
-            delete-watcher have been replaced by effects-hook.
-            In *.scm and *.html I've replaced the old Guile
-            hook functions with shiny new replacements: hook-push,
-            hook-append, hook-remove, and various uses of hook-functions.
-
-            *trace-hook*, *load-hook*, *error-hook*, and *unbound-variable-hook*
-            are now s7 hooks.
-
-    cond-expand (taken originally from MIT Scheme I think).
-
-checked: gtk 2.91.2|3|4, sbcl 1.0.44, Ruby 1.9.3
-
-Thanks!: Rene Bastian, Mike Scholz, Rick Taube, Michael Edwards
+Thanks!: Mike Scholz

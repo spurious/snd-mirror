@@ -489,11 +489,11 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+7-Jan:   Snd 11.12.\n\
 29-Nov:  Snd 11.11.\n\
 5-Nov:   add|delete-watchers removed, replaced by effects-hook.\n\
 25-Oct:  Snd 11.10.\n\
 22-Sep:  def-clm-struct is now just a synonym for defgenerator.\n\
-19-Sep:  removed snd7.scm and snd8.scm.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

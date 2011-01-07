@@ -877,7 +877,7 @@ static XEN xen_proc_call(XEN args, XEN id)
   VALUE rb_proc_new((VALUE (*)(ANYARGS/* VALUE yieldarg[, VALUE procarg] */), VALUE)); 
 #endif
 
-XEN xen_rb_proc_new(const char *name, XEN (*func)(), int arity, const char* doc) 
+static XEN xen_rb_proc_new(const char *name, XEN (*func)(), int arity, const char* doc) 
 { 
   rb_define_module_function(rb_mKernel, name, XEN_PROCEDURE_CAST func, arity); 
   if (doc) C_SET_OBJECT_HELP(name, doc); 
