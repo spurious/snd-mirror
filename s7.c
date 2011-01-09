@@ -5503,7 +5503,11 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
     }
 
 #if WITH_GMP
-  (*overflow) = ((tmp - tmp1) > s7_int_digits_by_radix[radix]); /* possibly an overflow -- we're being conservative here (floor used, not round etc) */
+  (*overflow) = ((lval > S7_LONG_MAX) ||
+		 ((tmp - tmp1) > s7_int_digits_by_radix[radix]));
+  /* this tells the string->number readers to create a bignum.  We need to be very
+   *    conservative here to catch contexts such as (/ 1/524288 19073486328125)
+   */
 #else
   if ((tmp - tmp1 - 2) > s7_int_digits_by_radix[radix])
     {
@@ -5719,13 +5723,28 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 
   if (int_len <= max_len)
     {
-      while ((dig = digits[(int)(*str++)]) < radix)
-	int_part = dig + (int_part * radix);
-      
-      if (exponent != 0)
-	dval = int_part * ipow(radix, exponent);
-      else dval = (s7_Double)int_part;
+      char *iend;
+      int int_exponent;
 
+      /* a better algorithm (since the inaccuracies are in the radix^exponent portion):
+       *   strip off leading zeros and possible sign,
+       *   strip off digits beyond max_len, then remove any trailing zeros.
+       *     (maybe fiddle with the lowest order digit here for rounding, but I doubt it matters)
+       *   read digits until end of number or max_len reached, ignoring the decimal point
+       *   get exponent and use it and decimal point location to position the current result integer
+       * this always combines the same integer and the same exponent no matter how the number is expressed.
+       */
+
+      int_exponent = exponent;
+      iend = (char *)(str + int_len - 1);
+      while ((*iend == '0') && (iend != str)) {iend--; int_exponent++;}
+
+      while (str <= iend)
+	int_part = digits[(int)(*str++)] + (int_part * radix);
+
+      if (int_exponent != 0)
+	dval = int_part * ipow(radix, int_exponent);
+      else dval = (s7_Double)int_part;
     }
   else
     {
@@ -5758,17 +5777,14 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
   if (frac_len <= max_len)
     {
       /* splitting out base 10 case saves very little here */
-#if 0
-      while ((dig = digits[(int)(*str++)]) < radix)
-	frac_part = dig + (frac_part * radix);
-#else
-      /* this is slightly faster according to callgrind */
+      /* this ignores trailing zeros, so that 0.3 equals 0.300 */
       char *fend;
-      fend = (char *)(str + frac_len);
-      while (str < fend)
-	frac_part = digits[(int)(*str++)] + (frac_part * radix);
-#endif
 
+      fend = (char *)(str + frac_len - 1);
+      while ((*fend == '0') && (fend != str)) {fend--; frac_len--;} /* (= .6 0.6000) */
+
+      while (str <= fend)
+	frac_part = digits[(int)(*str++)] + (frac_part * radix);
       dval += frac_part * ipow(radix, exponent - frac_len);
 
       /* fprintf(stderr, "frac: %lld, exp: (%d %d) %.20f, val: %.20f\n", frac_part, exponent, frac_len, ipow(radix, exponent - frac_len), dval); 
@@ -7653,15 +7669,14 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	  if ((integer(b) > S7_LONG_MAX) ||
 	      (integer(b) < S7_LONG_MIN))
 	    return(big_multiply(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), old_x)));
+
+	  if (x == sc->NIL)
+	    return(s7_make_integer(sc, integer(a) * integer(b)));
+	  integer(a) *= integer(b);
 #else
-	  if (((integer(b) > s7_int_max) ||                  /* else (* 524288 19073486328125) -> -8446744073709551616 */
-	       (integer(b) < s7_int_min)) &&                 /*    but the reverse still fails -- we should also check integer_length(a) */
-	      (integer_length(integer(b)) + integer_length(integer(a)) > s7_int_bits))
+	  if (sc->safety != 0)
 	    {
-	      /* try it first and check signs -- this is a hard error to catch! 
-	       *   (* most-negative-fixnum 1) 
-	       */
-	      bool a_signed;
+	      bool a_signed;                                 /* (* 524288 19073486328125) -> -8446744073709551616 */
 	      a_signed = (((integer(a) < 0) && (integer(b) > 0)) ||
 			  ((integer(a) > 0) && (integer(b) < 0)));
 	      integer(a) *= integer(b);
@@ -7672,11 +7687,9 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	    }
 	  else
 	    {
-#endif
-	  if (x == sc->NIL)
-	    return(s7_make_integer(sc, integer(a) * integer(b)));
-	  integer(a) *= integer(b);
-#if (!WITH_GMP)
+	      if (x == sc->NIL)
+		return(s7_make_integer(sc, integer(a) * integer(b)));
+	      integer(a) *= integer(b);
 	    }
 #endif
 	  break;
@@ -7811,11 +7824,9 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
       switch (ret_type)
 	{
 	case NUM_INT: 
+#if (!WITH_GMP)
 	  if (integer(b) == S7_LLONG_MIN)
 	    {
-#if WITH_GMP
-	      return(big_divide(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), old_x)));
-#else
 	      if (integer(a) == integer(b))
 		{
 		  if (x == sc->NIL)
@@ -7837,9 +7848,9 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 		      else a = make_ratio(integer(a) / 2, integer(b) / 2);
 		    }
 		}
-#endif
 	    }
 	  else
+#endif
 	    {
 	      if (x == sc->NIL)
 		return(s7_make_ratio(sc, integer(a), integer(b)));
@@ -15091,12 +15102,17 @@ If its first argument is a list, the list is copied (despite the '!')."
   n = len - 1;
   k = ((int)(n / 2)) + 1;
 
-  sc->x = s7_make_vector(sc, 5);
+  sc->x = s7_make_vector(sc, (sc->safety == 0) ? 5 : 7);
   vector_element(sc->x, 0) = make_mutable_integer(sc, n);
   vector_element(sc->x, 1) = make_mutable_integer(sc, k);
   vector_element(sc->x, 2) = make_mutable_integer(sc, 0);
   vector_element(sc->x, 3) = make_mutable_integer(sc, 0);
   vector_element(sc->x, 4) = make_list_2(sc, sc->F, sc->F);
+  if (sc->safety != 0)
+    {
+      vector_element(sc->x, 5) = make_mutable_integer(sc, 0);
+      vector_element(sc->x, 6) = s7_make_integer(sc, n * n);
+    }
 
   push_stack(sc, opcode(OP_SORT), args, sc->x);
   sc->x = sc->NIL;
@@ -15105,9 +15121,7 @@ If its first argument is a list, the list is copied (despite the '!')."
   /* if the comparison function waffles, sort! can hang: (sort! '(1 2 3) =)
    *    but (sort! '(1 2) =) is ok, as is (sort! (list 1/0 1/0 1/0) =)
    *    given NaNs and infs, it seems no numerical sort is completely safe.
-   * Could we count the comparisons, and if more than (say) n^2 give up with error?
-   *    or have another sort guaranteed not to hang? or optional arg #t=safe?
-   * (sort #(1 2) =) hangs.
+   * set *safety* to 1 to add a check for this loop.
    */
 }
 
@@ -22196,11 +22210,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* -------------------- sort! (heapsort, done directly so that call/cc in the sort function will work correctly) -------------------- */
 
-    #define SORT_N vector_element(sc->code, 0)
-    #define SORT_K vector_element(sc->code, 1)
-    #define SORT_J vector_element(sc->code, 2)
-    #define SORT_K1 vector_element(sc->code, 3)
+    #define SORT_N integer(number(vector_element(sc->code, 0)))
+    #define SORT_K integer(number(vector_element(sc->code, 1)))
+    #define SORT_J integer(number(vector_element(sc->code, 2)))
+    #define SORT_K1 integer(number(vector_element(sc->code, 3)))
     #define SORT_ARGS vector_element(sc->code, 4)
+    #define SORT_CALLS integer(number(vector_element(sc->code, 5)))
+    #define SORT_STOP integer(number(vector_element(sc->code, 6)))
     #define SORT_ARG_1 car(SORT_ARGS)
     #define SORT_ARG_2 cadr(SORT_ARGS)
     #define SORT_DATA(K) vector_element(car(sc->args), K)
@@ -22209,14 +22225,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     HEAPSORT:
       {
 	s7_Int n, j, k;
-	n = s7_integer(SORT_N);
-	k = s7_integer(SORT_K1);
+	n = SORT_N;
+	k = SORT_K1;
 
 	if ((n == k) || (k > ((s7_Int)(n / 2)))) /* k == n == 0 is the first case */
 	  goto START;
 
+	if (sc->safety != 0)
+	  {
+	    SORT_CALLS++;
+	    if (SORT_CALLS > SORT_STOP)
+	      return(eval_error(sc, "sort! is caught in an infinite loop, comparison: ~S", SORT_LESSP));
+	  }
 	j = 2 * k;
-	integer(number(SORT_J)) = j;
+	SORT_J = j;
 	if (j < n)
 	  {
 	    push_stack(sc, opcode(OP_SORT1), sc->args, sc->code);
@@ -22234,12 +22256,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SORT1:
       {
 	s7_Int j, k;
-	k = s7_integer(SORT_K1);
-	j = s7_integer(SORT_J);
+	k = SORT_K1;
+	j = SORT_J;
 	if (is_true(sc, sc->value))
 	  {
 	    j = j + 1;
-	    integer(number(SORT_J)) = j;
+	    SORT_J = j;
 	  }
 	push_stack(sc, opcode(OP_SORT2), sc->args, sc->code);
 	SORT_ARG_1 = SORT_DATA(k);
@@ -22254,8 +22276,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SORT2:
       {
 	s7_Int j, k;
-	k = s7_integer(SORT_K1);
-	j = s7_integer(SORT_J);
+	k = SORT_K1;
+	j = SORT_J;
 	if (is_true(sc, sc->value))
 	  {
 	    sc->x = SORT_DATA(j);
@@ -22263,7 +22285,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    SORT_DATA(k) = sc->x;
 	  }
 	else goto START;
-	integer(number(SORT_K1)) = integer(number(SORT_J));
+	SORT_K1 = SORT_J;
 	goto HEAPSORT;
       }
 
@@ -22274,13 +22296,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       {
 	s7_Int n, k;
-	k = s7_integer(SORT_K);
-	n = s7_integer(SORT_N);
+	k = SORT_K;
+	n = SORT_N;
 	if (k <= 0)
 	  goto SORT3;
 
-	integer(number(SORT_K)) = k - 1;
-	integer(number(SORT_K1)) = k - 1;
+	SORT_K = k - 1;
+	SORT_K1 = k - 1;
 
 	push_stack(sc, opcode(OP_SORT), sc->args, sc->code);
 	goto HEAPSORT;
@@ -22290,7 +22312,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       case OP_SORT3:
 	{
 	  s7_Int n;
-	  n = s7_integer(SORT_N);
+	  n = SORT_N;
 	  if (n <= 0)
 	    {
 	      sc->value = car(sc->args);
@@ -22299,8 +22321,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->x = SORT_DATA(0);
 	  SORT_DATA(0) = SORT_DATA(n);
 	  SORT_DATA(n) = sc->x;
-	  integer(number(SORT_N)) = n - 1;
-	  integer(number(SORT_K1)) = 0;
+	  SORT_N = n - 1;
+	  SORT_K1 = 0;
 	  push_stack(sc, opcode(OP_SORT3), sc->args, sc->code);
 	  goto HEAPSORT;
 	}

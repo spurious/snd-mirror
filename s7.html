@@ -230,23 +230,6 @@ integers and ratios automatically, perhaps s7 should try to catch the parallel
 float cases, and automatically increase bignum-precision.  
 </p>
 
-
-<!--  this may be a bug...
-
-<p>One other tricky aspect of floats: two floating point numbers are
-guaranteed to be equal (via '=') only if they have the same textual
-representation.  To indulge in spec-speak, <code>(= 0.6 0.60 #i3/5 60e-2)</code>
-is unspecified:
-</p>
-
-<pre>
-&gt; (= 0.6 #i3/5 60e-2)
-#f
-&gt; (= 0.5 #i1/2 50e-2)
-#t
-</pre>
--->
-
 </blockquote>
 </small>
 
@@ -4328,7 +4311,7 @@ it is GC'd.  Here is an example:
 
 <p>Put this is a file, load it into the interpreter, then call <code>(bad-idea)</code> a
 few times.  You can turn off the optimization in question by setting the variable <b>*safety*</b>
-to 1.  *safety* defaults to 0.
+to 1.  *safety* defaults to 0.  (Also, if *safety* is not 0, sort! is safe from infinite loops).
 </p>
 
 
