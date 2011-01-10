@@ -498,6 +498,13 @@ yow!! -- I'm using mpc_cmp
 (test (let () (define (hi a) (+ 1 a)) (eqv? hi hi)) #t)
 (test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (eqv? x x)) #t)
 
+(if with-bignums
+    (begin
+      (test (eqv? (bignum "1+i") (bignum "1+i")) #t)
+      (test (eqv? (bignum "1+i") 1+i) #t)
+      (test (eqv? 1+i (bignum "1+i")) #t)
+      ))
+
 
 
 ;;; equal?
@@ -673,6 +680,10 @@ yow!! -- I'm using mpc_cmp
 (test (equal? (make-list 3) (make-list 3)) #t)
 (test (equal? (make-vector 3) (make-vector 3)) #t)
 
+(if with-bignums
+    (begin
+      (test (equal? (/ (* 5 most-positive-fixnum) (* 3 most-negative-fixnum)) -46116860184273879035/27670116110564327424) #t)
+      ))
 
 
 ;;; boolean?
@@ -9940,6 +9951,7 @@ this prints:
 (test (eq? (if #f #f) (if #f #f)) #t) ; I assume there's only one #<unspecified>!
 (test (if . (1 2)) 2)
 (test (if (if #f #f) #f #t) #f)
+(test (if 1/0 0 1) 0)
 
 (test (let ((a #t) (b #f) (c #t) (d #f)) (if (if (if (if d d c) d b) d a) 'a 'd)) 'a)
 (test (let ((a #t) (b #f) (c #t) (d #f)) (if a (if b (if c (if d d c) c) 'b) 'a)) 'b)
@@ -12119,6 +12131,7 @@ this prints:
 (test ((apply values (list + 1 2)) 3) 6)
 (num-test (* 0-2i (acosh (asin 0.0))) pi)
 (test (apply truncate (lognot (min 1)) (list)) -2)
+(num-test (apply /(list 11 11)) 1)
 
 (test (apply dynamic-wind (list (lambda () #f) (lambda () 1) (lambda () #f))) 1)
 (test (apply call-with-exit (list (lambda (exit) 1))) 1)
@@ -30407,6 +30420,421 @@ abs     1       2
 (test (nan?) 'error)
 (test (nan? 1 2) 'error)
 
+#|
+(define digits (vector #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
+
+(do ((i 0 (+ i 1)))
+    ((= i 10000))
+  (let ((int-digits (random 80))
+	(frac-digits (random 80))
+	(exp-digits (+ 1 (random 5)))
+	(signed (> (random 10) 5))
+	(signed-exponent (> (random 10) 5)))
+    (let ((str (make-string (+ 1 int-digits 1 frac-digits 2 exp-digits) #\space))
+	  (j 0))
+
+      (if signed
+	  (begin
+	    (set! (str j) #\-)
+	    (set! j (+ j 1))))
+
+      (do ((k 0 (+ k 1)))
+	  ((= k int-digits))
+	(set! (str j) (digits (random 10)))
+	(set! j (+ j 1)))
+
+      (set! (str j) #\.)
+      (set! j (+ j 1))
+
+       (do ((k 0 (+ k 1)))
+	  ((= k frac-digits))
+	(set! (str j) (digits (random 10)))
+	(set! j (+ j 1)))
+
+      (set! (str j) #\e)
+      (set! j (+ j 1))
+
+      (if signed-exponent
+	  (begin
+	    (set! (str j) #\-)
+	    (set! j (+ j 1))))
+
+      (do ((k 0 (+ k 1)))
+	  ((= k exp-digits))
+	 (if (< k 3)
+	     (set! (str j) (digits (random 10)))
+	     (set! (str j) (digits (random 4))))
+	 (set! j (+ j 1)))
+
+      (let ((num (string->number (substring str 0 j))))
+	(if (or (nan? num)
+		(infinite? num))
+	    (format #t "~A: ~S -> ~A~%" (if (infinite? num) 'inf 'nan) str num)))
+      )))
+|#
+
+;;; these all relate to inf/nan
+
+(if (not with-bignums)
+    (begin
+      (test (* 1e12000 1e12000) inf.0)
+      (test (<= 0 inf.0 nan.0) #f)
+      (test (<= 1 nan.0) #f)
+      (test (<= nan.0 1) #f)
+      (test (<= nan.0 inf.0) #f)
+      (test (<= nan.0 nan.0) #f)
+      (test (>= 1 nan.0) #f)
+      (test (>= nan.0 1) #f)
+      (test (>= nan.0 inf.0) #f)
+      (test (>= nan.0 nan.0) #f)
+      (test (ceiling 1e19) 'error)
+      (test (ceiling inf.0) 'error)
+      (test (floor 1e19) 'error)
+      (test (floor inf.0) 'error)
+      (test (inexact->exact (make-rectangular 1 inf.0)) 'error)
+      (test (nan? (expt 0 nan.0)) #t)
+      (test (nan? (expt 1 nan.0)) #t)
+      (test (nan? (expt nan.0 inf.0)) #t)
+      (test (nan? (expt nan.0 nan.0)) #t)
+      (test (rationalize 1e19) 'error)
+      (test (round 1e19) 'error)
+      (test (round inf.0) 'error)
+      (test (truncate 1e19) 'error)
+      (test (truncate inf.0) 'error)
+      ))
+
+(num-test (/ -1 -inf.0 -9223372036854775808) 0.0)
+(num-test (angle -inf.0) our-pi)
+(num-test (angle inf.0) 0.0)
+(num-test (atan inf.0) 1.5707963267949)
+(num-test (atanh inf.0) 0+1.5707963267949i)
+(num-test (tanh -inf.0) -1.0)
+(num-test (tanh inf.0) 1.0)
+(test (* -inf.0 inf.0) -inf.0)
+(test (* inf.0) inf.0)
+(test (+ 0 inf.0) inf.0)
+(test (+ inf.0) inf.0)
+(test (- -inf.0 inf.0) -inf.0)
+(test (- 0 inf.0) -inf.0)
+(test (- inf.0) -inf.0)
+(test (/ 0 inf.0) 0.0)
+(test (/ inf.0) 0.0)
+(test (/ nan.0 0) 'error)
+(test (< -inf.0 0.0) #t)
+(test (< -inf.0 inf.0) #t)
+(test (< -inf.0 inf.0) #t)
+(test (< 0 inf.0 -inf.0) #f)
+(test (< 0 inf.0) #t)
+(test (< inf.0 -inf.0) #f)
+(test (< nan.0 inf.0) #f)
+(test (< nan.0 nan.0) #f)
+(test (<= -inf.0 0.0 inf.0 inf.0) #t)
+(test (<= -inf.0 inf.0) #t)
+(test (<= 0 inf.0 -inf.0) #f)
+(test (<= 0 inf.0) #t)
+(test (= (* (+ inf.0 inf.0) -inf.0) -inf.0) #t)
+(test (= (* -3.4 -inf.0) inf.0) #t)
+(test (= (* -inf.0 -inf.0) inf.0) #t)
+(test (= (* inf.0 -inf.0) -inf.0) #t)
+(test (= (* inf.0 inf.0) inf.0) #t)
+(test (= (+ 1 inf.0) inf.0) #t)
+(test (= (+ inf.0 inf.0) inf.0) #t)
+(test (= (- -inf.0) inf.0) #t)
+(test (= (- 0.0 inf.0) -inf.0) #t)
+(test (= (- inf.0) -inf.0) #t)
+(test (= (/ 0.0 inf.0) 0.0) #t)
+(test (= (abs -inf.0) inf.0) #t)
+(test (= (abs inf.0) inf.0) #t)
+(test (= (exp -inf.0) 0.0) #t)
+(test (= (exp inf.0) inf.0) #t)
+(test (= (exp most-negative-fixnum) 0.0) #t)
+(test (= (exp most-positive-fixnum) inf.0) #t)
+(test (= (expt -inf.0 0) 1.0) #t)
+(test (= (expt 0.0 inf.0) 0.0) #t)
+(test (= (expt 1 -inf.0) 1.0) #t)
+(test (= (expt 1 inf.0) 1.0) #t)
+(test (= (expt 2 -inf.0) 0.0) #t)
+(test (= (expt inf.0 0) 1.0) #t)
+(test (= (log inf.0) inf.0) #t)
+(test (= (magnitude -inf.0) inf.0) #t)
+(test (= (magnitude inf.0) inf.0) #t)
+(test (= (make-polar inf.0 0) inf.0) #t)
+(test (= (make-rectangular 0 inf.0) (sqrt -inf.0)) #t)   ; (sqrt -inf.0) -> 0+infi !
+(test (= (make-rectangular inf.0 0) inf.0) #t)
+(test (= (max -inf.0 inf.0) inf.0) #t)
+(test (= (min -inf.0 inf.0) -inf.0) #t)
+(test (= (sqrt inf.0) inf.0) #t)
+(test (= -inf.0 -inf.0) #t)
+(test (= -inf.0 inf.0) #f)
+(test (= -inf.0 inf.0) #f)
+(test (= 0 inf.0 -inf.0) #f)
+(test (= 0 inf.0) #f)
+(test (= 0.0 nan.0) #f)
+(test (= inf.0 0.0) #f)
+(test (= inf.0 inf.0) #t)
+(test (= inf.0 most-positive-fixnum) #f)
+(test (= inf.0 nan.0) #f)
+(test (= nan+nani nan+nani) #f)
+(test (= nan.0 (real-part nan+nani)) #f)
+(test (= nan.0 inf.0) #f)
+(test (= nan.0 nan+nani) #f)
+(test (= nan.0 nan.0) #f)
+(test (= nan.0 nan.0) #f)
+(test (> -inf.0 inf.0) #f)
+(test (> 0 inf.0 -inf.0) #f)
+(test (> 0 inf.0) #f)
+(test (> inf.0 0.0) #t)
+(test (> inf.0 1.0e308) #t)
+(test (> inf.0 most-positive-fixnum) #t)
+(test (> nan.0 inf.0) #f)
+(test (> nan.0 nan.0) #f)
+(test (>= -inf.0 inf.0) #f)
+(test (>= 0 inf.0) #f)
+(test (>= inf.0 -inf.0 0.0) #f)
+(test (abs inf.0) inf.0)
+(test (acosh inf.0) inf.0)
+(test (angle inf.0) 0.0)
+(test (ash -inf.0 inf.0) 'error)
+(test (ash nan.0 inf.0) 'error)
+(test (ash nan.0 nan.0) 'error)
+(test (asinh inf.0) inf.0)
+(test (ceiling inf.0) 'error)
+(test (ceiling nan.0) 'error)
+(test (complex? nan+nani) #t)
+(test (cosh inf.0) inf.0)
+(test (even? inf.0) 'error)
+(test (exact? (make-rectangular 1 inf.0)) #f)
+(test (exp inf.0) inf.0)
+(test (expt nan.0) 'error)
+(test (floor inf.0) 'error)
+(test (floor nan.0) 'error)
+(test (gcd -inf.0 inf.0) 'error)
+(test (gcd nan.0 inf.0) 'error)
+(test (gcd nan.0 nan.0) 'error)
+(test (imag-part (make-rectangular 1 inf.0)) inf.0)
+(test (imag-part nan.0) 0.0)
+(test (inexact? (make-rectangular 1 inf.0)) #t)
+(test (infinite? 1 2) 'error)
+(test (infinite?) 'error)
+(test (lcm -inf.0 inf.0) 'error)
+(test (lcm nan.0 inf.0) 'error)
+(test (lcm nan.0 nan.0) 'error)
+(test (lcm nan.0) 'error)
+(test (log 8.0 inf.0) 0.0) 
+(test (log inf.0) inf.0)
+(test (logand -inf.0 inf.0) 'error)
+(test (logand nan.0 inf.0) 'error)
+(test (logand nan.0 nan.0) 'error)
+(test (logior -inf.0 inf.0) 'error)
+(test (logior nan.0 inf.0) 'error)
+(test (logior nan.0 nan.0) 'error)
+(test (lognot -inf.0 inf.0) 'error)
+(test (lognot nan.0 inf.0) 'error)
+(test (lognot nan.0 nan.0) 'error)
+(test (logxor -inf.0 inf.0) 'error)
+(test (logxor nan.0 inf.0) 'error)
+(test (logxor nan.0 nan.0) 'error)
+(test (magnitude inf.0) inf.0)
+(test (make-random-state inf.0) 'error)
+(test (make-random-state nan.0) 'error)
+(test (max -inf.0 inf.0) inf.0)
+(test (max 0 inf.0 -inf.0) inf.0)
+(test (max 0 inf.0) inf.0)
+(test (max inf.0) inf.0)
+(test (min -inf.0 inf.0) -inf.0)
+(test (min 0 inf.0 -inf.0) -inf.0)
+(test (min 0 inf.0) 0)
+(test (min inf.0) inf.0)
+(test (nan? (* 0 nan.0)) #t)
+(test (nan? (+ (values inf.0 -inf.0) inf.0)) #t)
+(test (nan? (- -inf.0 -inf.0)) #t)
+(test (nan? (- inf.0 inf.0)) #t)
+(test (nan? (- nan.0 nan.0)) #t)
+(test (nan? (- nan.0)) #t)
+(test (nan? (/ -1 nan.0 -inf.0)) #t)
+(test (nan? (/ -inf.0 -inf.0)) #t)
+(test (nan? (/ 0 nan.0)) #t)
+(test (nan? (/ inf.0 -inf.0)) #t)
+(test (nan? (/ inf.0 inf.0)) #t)
+(test (nan? (/ inf.0 nan.0)) #t)
+(test (nan? (/ nan.0 inf.0)) #t)
+(test (nan? (/ nan.0 nan.0)) #t)
+(test (nan? (/ nan.0)) #t)
+(test (nan? (abs nan.0)) #t)
+(test (nan? (acos inf.0)) #t)
+(test (nan? (angle nan.0)) #t)
+(test (nan? (asin inf.0)) #t)
+(test (nan? (asin nan.0)) #t)
+(test (nan? (exp nan.0)) #t)
+(test (nan? (imag-part (make-rectangular 0 nan.0))) #t)
+(test (nan? (imag-part nan+nani)) #t)
+(test (nan? (imag-part nan+nani)) #t)
+(test (nan? (log 8.0 nan.0)) #t)
+(test (nan? (log nan.0 nan.0)) #t)
+(test (nan? (magnitude nan+nani)) #t)
+(test (nan? (magnitude nan.0)) #t)
+(test (nan? (make-polar -inf.0 inf.0)) #t)
+(test (nan? (make-polar nan.0 0)) #t)
+(test (nan? (make-rectangular nan.0 0)) #t)
+(test (nan? (max 0 inf.0 nan.0)) #t)
+(test (nan? (max 1 nan.0)) #t)
+(test (nan? (min 0 inf.0 nan.0)) #t)
+(test (nan? (min 1 nan.0)) #t)
+(test (nan? (modulo 1 inf.0)) #t)
+(test (nan? (modulo 1 nan.0)) #t)
+(test (nan? (modulo inf.0 1)) #t)
+(test (nan? (modulo nan.0 1)) #t)
+(test (nan? (random nan.0)) #t)
+(test (nan? (real-part (exp nan+nani))) #t)
+(test (nan? (real-part (log nan+nani))) #t)
+(test (nan? (real-part (log nan.0))) #t)
+(test (nan? (real-part (make-polar 0 -inf.0))) #t)
+(test (nan? (real-part (make-polar 0 nan.0))) #t)
+(test (nan? (real-part (make-rectangular -inf.0 0))) #f)
+(test (nan? (real-part (sqrt nan.0))) #t)
+(test (nan? (real-part nan+nani)) #t)
+(test (nan? (sin -inf.0)) #t)
+(test (nan? (sin inf.0)) #t)
+(test (nan? (sin nan.0)) #t)
+(test (nan? (string->number "nan.0")) #t)
+(test (nan? -inf.0) #f)
+(test (nan? 1 2) 'error)
+(test (nan? inf.0) #f)
+(test (nan? most-negative-fixnum) #f)
+(test (nan? most-positive-fixnum) #f)
+(test (nan?) 'error)
+(test (negative? (/ (real-part (log 0.0)) (real-part (log 0.0)))) #f) ; and yet it prints as -nan.0
+(test (number? nan+nani) #t)
+(test (quotient 1 nan.0) 'error)
+(test (quotient nan.0 1) 'error)
+(test (random nan.0 inf.0) 'error)
+(test (rationalize -inf.0) 'error)
+(test (rationalize 0.5 inf.0) 0)
+(test (rationalize 178978.5 -inf.0) 0)
+(test (rationalize 178987.5 nan.0) 'error)
+(test (rationalize 198797.5 inf.0) 0)
+(test (rationalize inf.0) 'error)
+(test (rationalize inf.0) 'error)
+(test (rationalize nan.0 nan.0) 'error)
+(test (rationalize nan.0) 'error)
+(test (rationalize nan.0) 'error)
+(test (real-part (make-rectangular 1 inf.0)) 1.0)
+(test (real? nan+nani) #f)
+(test (remainder 1 nan.0) 'error)
+(test (remainder nan.0 1) 'error)
+(test (round inf.0) 'error)
+(test (round nan.0)'error)
+(test (sinh inf.0) inf.0)
+(test (sqrt inf.0) inf.0)
+(test (tanh inf.0) 1.0)
+(test (truncate inf.0) 'error)
+(test (truncate nan.0) 'error)
+(test (zero? (* 0 most-positive-fixnum most-positive-fixnum)) #t)
+(test (zero? (* 0.0 most-positive-fixnum most-positive-fixnum)) #t)
+(test (zero? (* most-positive-fixnum most-negative-fixnum 0)) #t)
+(test (zero? (* most-positive-fixnum most-negative-fixnum 0.0)) #t)
+(test (zero? (make-rectangular 1 inf.0)) #f)
+(test (zero? (real-part (make-rectangular 0 -inf.0))) #t)
+(test (zero? 0/0) #f)
+(test (zero? inf.0) #f)
+(test (zero? nan.0) #f)
+;; (test (nan? (angle nan.0)) #t)
+;; but (* 0 (expt 10 310)) -> -nan if not GMP -- is this a bug?
+;;(atanh -inf.0) 0+1.5707963267949i
+;;(test (/ 0 inf.0 -inf.0) 0.0)
+;;(test (= (expt 1 nan+nani) 1) #t) ; or maybe NaN?
+;;(test (= (expt 1 nan.0) 1) #t)
+;;(test (= (expt 2 inf.0) inf.0) #t)
+;;(test (= (expt inf.0 -inf.0) 0.0) #t)
+;;(test (= (expt inf.0 inf.0) inf.0) #t)
+;;(test (= (expt nan.0 0) 1.0) #t) ;hmmm
+;;(test (= (expt nan.0 nan.0) 0) #t)
+;;(test (>= 0 inf.0 -inf.0) #t)
+;;(test (angle (make-rectangular 1 inf.0)) 1.5707963267949)
+;;(test (atanh (make-rectangular 1 inf.0)) -0+1.5707963267949i)
+;;(test (nan? (atan -inf.0 inf.0)) #t) ; ??
+;;(test (nan? (expt 0 inf.0)) #t)
+;;(test (nan? (quotient -inf.0 inf.0)) #t)
+;;(test (nan? (quotient 1 nan.0)) #t)
+;;(test (nan? (quotient nan.0 1)) #t)
+;;(test (nan? (quotient nan.0 inf.0)) #t)
+;;(test (nan? (quotient nan.0 nan.0)) #t)
+;;(test (tan (make-rectangular 1 inf.0)) 0+1i)
+
+(for-each
+ (lambda (x)
+   (test (infinite? x) #f)
+   (test (nan? x) #f))
+ (list #\a "hi" #f #(1 2) '() '(1 . 2) 'hi abs #<eof> #<unspecified>))
+
+(for-each
+ (lambda (n)
+   (test (infinite? n) #f)
+   (test (nan? n) #f))
+ (list 0.0 -0.0 .1 1+i 0-i 1/10))
+
+(for-each
+ (lambda (op)
+   (test (number? (op inf.0)) #t)
+   (test (number? (op -inf.0)) #t)
+   (test (number? (op nan.0)) #t))
+ (list magnitude abs exp angle sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
+       real-part imag-part exact->inexact))
+
+(for-each
+ (lambda (op)
+   (test (op inf.0) 'error)
+   (test (op -inf.0) 'error)
+   (test (op nan.0) 'error))
+ (list floor ceiling truncate round))
+
+(for-each
+ (lambda (op)
+   (test (number? (op inf.0 inf.0)) #t)
+   (test (number? (op nan.0 -inf.0)) #t))
+ (list + - * / expt make-rectangular make-polar))
+
+(for-each
+ (lambda (op)
+   (test (boolean? (op inf.0)) #t)
+   (test (boolean? (op nan.0)) #t)
+   (test (op) 'error))
+ (list number? integer? real? complex? rational? zero? positive? negative? inexact? exact?))
+
+(for-each
+ (lambda (op)
+   (test (boolean? (op inf.0 -inf.0)) #t)
+   (test (boolean? (op nan.0 -inf.0)) #t))
+ (list  = < > <= >=))
+
+(for-each
+ (lambda (op)
+   (test (op inf.0) 'error)
+   (test (op nan.0) 'error))
+ (list even? odd? numerator denominator lcm gcd inexact->exact
+       logior logxor logand lognot ash integer-length))
+
+(let ((d1 1e-312)
+      (d2 1e-316)
+      (d3 1e-320))
+  (if (not (zero? d3))
+      (begin
+	(test (= d1 d2 d3) #f)
+	(test (< d1 d2 d3) #f)
+	(test (> d1 d2 d3) #t)
+	(test (rationalize d1) 0)
+	(test (rationalize d3) 0)
+	(test (rationalize (- d1)) 0)
+	(test (not (= d2 (* 2 d1))) #t)
+	(num-test (string->number (number->string d1)) d1)
+	
+	(test (< (sin d3) (sin d2) (sin d1)) #t)
+	(test (< (log d3) (log d2) (log d1)) #t)
+	(test (< (abs d3) (abs d2) (abs d1)) #t)
+	(test (< (sqrt d3) (sqrt d2) (sqrt d1)) #t)
+	(test (<= (exp d3) (exp d2) (exp d3)) #t) ; all might be 1.0
+	)))
+
 
 
 
@@ -30451,6 +30879,7 @@ abs     1       2
 
 (if with-bignums 
     (begin
+      (test (zero? (- (expt 2.3 54) (floor (expt 2.3 54)))) #f)
       (test (zero? 1e-600) #f)
       (test (zero? 9.92209574402351949043519108941671096176E-1726) #f)
       (test (zero? 12345678901234567890) #f)
@@ -30555,6 +30984,8 @@ abs     1       2
 (test (negative? nan.0) #f)
 (test (negative? 1000000000000000000000000000000000) #f)
 (test (negative? -1000000000000000000000000000000000) #t)
+(test (negative? most-negative-fixnum) #t)
+(test (negative? most-positive-fixnum) #f)
 
 (for-each
  (lambda (n)
@@ -30858,6 +31289,7 @@ abs     1       2
       (num-test #e9007199254740995.0 9007199254740995)
       (num-test #e4611686018427388404.0 4611686018427388404)
       (test (inexact->exact (bignum "0+1.5i")) 'error)
+      (num-test (inexact->exact -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
       ))
 
 (if (not with-bignums)
@@ -30869,7 +31301,7 @@ abs     1       2
       (test (inexact->exact 1e20) 'error)
       ))
 
-(test (inexact->exact inf+) 'error)
+(test (inexact->exact inf.0) 'error)
 (test (inexact->exact nan.0) 'error)
 (test (inexact->exact "hi") 'error)
 (test (inexact->exact 0+1.5i) 'error)
@@ -30980,7 +31412,7 @@ abs     1       2
 (test (numerator 1.23 1.23) 'error)
 (test (numerator 1.23+1.0i) 'error)
 (test (numerator) 'error)
-(test (numerator inf+) 'error)
+(test (numerator inf.0) 'error)
 (test (numerator nan.0) 'error)
 (test (numerator "hi") 'error)
 (test (numerator 1+i) 'error)
@@ -31088,7 +31520,7 @@ abs     1       2
 (test (denominator 1.23 1.23) 'error)
 (test (denominator 1.23+1.0i) 'error)
 (test (denominator) 'error)
-(test (denominator inf+) 'error)
+(test (denominator inf.0) 'error)
 (test (denominator nan.0) 'error)
 (test (denominator "hi") 'error)
 (test (denominator 1+i) 'error)
@@ -32445,6 +32877,7 @@ abs     1       2
 (num-test (abs 9223372036854775807) 9223372036854775807)
 (test (= (abs (+ most-negative-fixnum 1)) most-positive-fixnum) #t)
 (test (abs most-positive-fixnum) most-positive-fixnum)
+(num-test (abs -922337203685477580) 922337203685477580)
 
 (for-each
  (lambda (num-and-val)
@@ -34361,13 +34794,8 @@ abs     1       2
 (num-test (truncate 3/2) 1)
 (num-test (truncate most-negative-fixnum) most-negative-fixnum)
 (num-test (truncate most-positive-fixnum) most-positive-fixnum)
-(if with-bignums
-    (begin
-      (num-test (truncate (exact->inexact most-negative-fixnum)) most-negative-fixnum)
-      (test (truncate (exact->inexact most-positive-fixnum)) most-positive-fixnum)))
 (num-test (truncate (/ (- most-positive-fixnum 1) most-positive-fixnum)) 0)
 (num-test (truncate (/ most-positive-fixnum (- most-positive-fixnum 1))) 1)
-
 (num-test (truncate 0) 0)
 (num-test (truncate -0) 0)
 (num-test (truncate 0.0) 0)
@@ -34385,6 +34813,13 @@ abs     1       2
 (num-test (truncate -9223372036854775808) -9223372036854775808)
 (num-test (truncate 1.110223024625156799999999999999999999997E-16) 0)
 (num-test (truncate 9223372036854775807) 9223372036854775807)
+
+(if with-bignums
+    (begin
+      (num-test (truncate (exact->inexact most-negative-fixnum)) most-negative-fixnum)
+      (test (truncate (exact->inexact most-positive-fixnum)) most-positive-fixnum)
+      (num-test (truncate -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
+      ))
 
 (test (truncate) 'error)
 (test (truncate 1.23+1.0i) 'error)
@@ -34423,12 +34858,12 @@ abs     1       2
 (num-test (floor 3/2) 1)
 (num-test (floor most-negative-fixnum) most-negative-fixnum)
 (num-test (floor most-positive-fixnum) most-positive-fixnum)
-(if with-bignums (num-test (floor (exact->inexact most-negative-fixnum)) most-negative-fixnum))
-(if with-bignums (test (floor (exact->inexact most-positive-fixnum)) most-positive-fixnum))
 (num-test (floor -2.225073858507201399999999999999999999996E-308) -1)
 (num-test (floor -9223372036854775808) -9223372036854775808)
 (num-test (floor 1.110223024625156799999999999999999999997E-16) 0)
 (num-test (floor 9223372036854775807) 9223372036854775807)
+(test (floor most-negative-fixnum) most-negative-fixnum)
+(test (floor most-positive-fixnum) most-positive-fixnum)
 
 (num-test (floor 9007199254740992.95) 9007199254740992)
 ;; but unfortunately (floor 9007199254740993.95) is also 9007199254740992...
@@ -34448,6 +34883,13 @@ abs     1       2
 (num-test (floor 2.5) 2)
 (num-test (floor -1/123400000) -1)
 (num-test (floor 1.0-00.i) 1)
+
+(if with-bignums 
+    (begin
+      (num-test (floor (exact->inexact most-negative-fixnum)) most-negative-fixnum)
+      (test (floor (exact->inexact most-positive-fixnum)) most-positive-fixnum)
+      (num-test (floor -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
+      ))
 
 (test (floor) 'error)
 (test (floor 1.23+1.0i) 'error)
@@ -34485,13 +34927,8 @@ abs     1       2
 (num-test (ceiling 19/10) 2)
 (num-test (ceiling 1/2) 1)
 (num-test (ceiling 3/2) 2)
-
 (num-test (ceiling 2147483646.8) 2147483647)
 (num-test (ceiling -2147483647.8) -2147483647)
-(if with-bignums
-    (begin
-      (num-test (ceiling  9223372036854775806.7)  9223372036854775807)
-      (num-test (ceiling -9223372036854775807.9) -9223372036854775807)))
 (num-test (ceiling -.0001) 0)
 (num-test (ceiling .0001) 1)
 (num-test (ceiling 1.01e-123) 1)
@@ -34500,10 +34937,17 @@ abs     1       2
 (if with-bignums (num-test (ceiling (exact->inexact most-negative-fixnum)) most-negative-fixnum))
 (if with-bignums (test (ceiling (exact->inexact most-positive-fixnum)) most-positive-fixnum))
 
+(let ((val1 (catch #t (lambda () (floor 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (floor -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+
 (if with-bignums
     (begin
       (num-test (ceiling 123456789012345678901234567890.1) 123456789012345678901234567891)
       (num-test (ceiling -123456789012345678901234567890.1) -123456789012345678901234567890)
+      (num-test (ceiling -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
+      (num-test (ceiling  9223372036854775806.7)  9223372036854775807)
+      (num-test (ceiling -9223372036854775807.9) -9223372036854775807)
       ))
 
 (num-test (ceiling 0) 0)
@@ -34526,6 +34970,10 @@ abs     1       2
 (num-test (ceiling -9223372036854775808) -9223372036854775808)
 (num-test (ceiling 1.110223024625156799999999999999999999997E-16) 1)
 (num-test (ceiling 9223372036854775807) 9223372036854775807)
+
+(let ((val1 (catch #t (lambda () (ceiling 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (ceiling -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
 
 (test (ceiling) 'error)
 (test (ceiling 1.23+1.0i) 'error)
@@ -34566,12 +35014,17 @@ abs     1       2
 (num-test (round 3/2) 2)
 (num-test (round most-negative-fixnum) most-negative-fixnum)
 (num-test (round most-positive-fixnum) most-positive-fixnum)
-(if with-bignums (num-test (round (exact->inexact most-negative-fixnum)) most-negative-fixnum))
-(if with-bignums (test (round (exact->inexact most-positive-fixnum)) most-positive-fixnum))
 (num-test (round -2.225073858507201399999999999999999999996E-308) 0)
 (num-test (round -9223372036854775808) -9223372036854775808)
 (num-test (round 1.110223024625156799999999999999999999997E-16) 0)
 (num-test (round 9223372036854775807) 9223372036854775807)
+
+(if with-bignums
+    (begin
+      (num-test (round (exact->inexact most-negative-fixnum)) most-negative-fixnum)
+      (test (round (exact->inexact most-positive-fixnum)) most-positive-fixnum)
+      (num-test (round -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
+      ))
 
 (test (equal? (let ((vals '())) 
 		(do ((k 1/3 (+ k 1/3))) ((> k 2) (reverse vals)) 
@@ -34611,7 +35064,6 @@ abs     1       2
 (test (round) 'error)
 (test (round 1.23+1.0i) 'error)
 (test (round 1.23 1.23) 'error)
-
 
 
 (let ((top-exp 60))
@@ -35202,6 +35654,10 @@ abs     1       2
 
 (if with-bignums
     (begin
+      (num-test (modulo (+ 2 (* 3 499127 495037 490459 468803)) (* 499127 495037 490459 468803)) 2)
+      (num-test (modulo -9223372036854775808 5.551115123125783999999999999999999999984E-17) 3.258027528318940824192395666614174842834E-17)
+      (num-test (modulo 12345678901234567890 12345678901234567) 890)
+      (num-test (modulo 12345678901234567890 3123) 1071)
       (num-test (modulo 460683358924445799142 518) 0)
       (num-test (modulo 113021475230160 74635) 67850)
       (num-test (modulo 74228340534140364 363909) 357201)
@@ -35886,6 +36342,10 @@ abs     1       2
 
 (if with-bignums
     (begin
+      (num-test (quotient -1.797693134862315699999999999999999999998E308 -9223372036854775808) 19490628022799995908501125008172039088075481712089442747863503837260448050616338003410135413043522984719682345909025832711116783129727902847513862872544943321023332545672815506523677443663683097294005030046422806743414556504424564204282517830151319186021046775247332737488676655598816722944)
+      (num-test (quotient -9223372036854775808 5.551115123125783999999999999999999999984E-17) -166153499473114445265356059994784304)
+      (num-test (quotient 295147905149568077200 34359738366) 8589934591)
+      (num-test (quotient 696898287454081973170944403677937368733396 1180591620717411303422) 590295810358705651711)
       (num-test (quotient 1e19 10) 1000000000000000000)
       (num-test (quotient .1e20 10) 1000000000000000000)
       (num-test (quotient 1e20 10) 10000000000000000000)
@@ -36244,6 +36704,9 @@ abs     1       2
 
 (if with-bignums
     (begin
+      (num-test (remainder -9223372036854775808 5.551115123125783999999999999999999999984E-17) -2.295798100238055639010781305842101573944E-17)
+      (num-test (remainder 295147905149568077200 34359738366) 21754858894)
+      (num-test (remainder 696898287454081973170944403677937368733396 1180591620717411303422) 314390899110894278354)
       (num-test (remainder 1e19 10) 0.0)
       (num-test (remainder .1e20 10) 0.0)
       (num-test (remainder 1e20 10) 0.0)
@@ -36786,6 +37249,14 @@ abs     1       2
 
 (if with-bignums 
     (begin
+      (num-test (gcd -9223372036854775808 -9223372036854775808) 9223372036854775808)
+      (num-test (gcd -9223372036854775808 9223372036854775807 -9223372036854775808) 1)
+      (num-test (gcd 12345678901234567890 12345) 15)
+      (num-test (gcd 2155967190204955525121 -12850565775361 93458656690177) 557057)
+      (num-test (gcd 2155967190204955525121 0) 2155967190204955525121)
+      (num-test (gcd 2155967190204955525121 12850565775361 93458656690177) 557057)
+      (num-test (gcd 2346026393680644703525505657 17293822570713318399) 11)
+      (num-test (gcd 974507656412513757857315037382926980395082974811562770185617915360 -1539496810360685510909469177732386446833404488164283) 1)
       (num-test (gcd 460683358924445799142 518) 518)
       (num-test (gcd 113021475230160 74635) 6785)
       (num-test (gcd 74228340534140364 363909) 1677)
@@ -37517,8 +37988,28 @@ abs     1       2
 (num-test (lcm 169216424701305960 17) 2876679219922201320)
 (num-test (lcm 178335507754891305 817) 178335507754891305)
 
+(let ()
+  (define (flcm n) (if (<= n 1) 1 (lcm n (flcm (- n 1)))))
+  (num-test (flcm 9) 2520)
+  (num-test (flcm 40) 5342931457063200)
+  (if with-bignums (num-test (flcm 100) 69720375229712477164533808935312303556800)))
+
 (if with-bignums 
     (begin
+      (num-test (let ((n 1)) (do ((i 2 (+ i 1))) ((= i 100)) (set! n (lcm n i))) n) 69720375229712477164533808935312303556800)
+      (num-test (lcm -9223372036854775808 -9223372036854775808) 9223372036854775808)
+      (num-test (lcm -9223372036854775808 9223372036854775807 -9223372036854775808) 85070591730234615856620279821087277056)
+      (num-test (lcm 1/21 1/2432902008176640001) 1)
+      (num-test (lcm 132120577 33292289 260046847) 1143841133453061178785791)
+      (num-test (lcm 132120577 33292289) 4398596432330753)
+      (num-test (lcm 132120577/12 33292289/6 260046847/4) 1143841133453061178785791/2)
+      (num-test (lcm 2/132120577 3/33292289 4/260046847) 12)
+      (num-test (lcm 21 2432902008176640001) 51090942171709440021)
+      (num-test (lcm 2353913150770005286438421033702874906038383291674012942337 9641628265553941653251772554046975615133217962696757011808257) 22695555569123220026272727097682721551725929819788097280747860983024240452040931523149698041303750665450606153441476609)
+      (num-test (lcm 2432902008176640001 21) 51090942171709440021)
+      (num-test (lcm 2432902008176640001/21 21/2432902008176640001) 51090942171709440021)
+      (num-test (lcm 557057 23068673 167772161) 2155967190204955525121)
+      (num-test (lcm 9223372036854775807 -9223372036854775808) 85070591730234615856620279821087277056)
       (num-test (lcm 524288 19073486328125) 10000000000000000000)
       (num-test (lcm 2147483648 4656612873077392578125) 10000000000000000000000000000000)
       (num-test (lcm (/ (expt 2 57) 3) (/ 65 11)) 9367487224930631680)
@@ -38683,6 +39174,7 @@ abs     1       2
 
 (if with-bignums
     (begin
+      (num-test (min 12345678901234567890 12345678901234567891) 12345678901234567890)
       (num-test (min 2.168404344971008681816600431489558149231E-17 2.168404344971008869895696563055543437233E-17) 2.168404344971008681816600431489558149231E-17)
       (num-test (min 2.168404344971008869895696563055543437233E-17 2.168404344971008681816600431489558149231E-17 ) 2.168404344971008681816600431489558149231E-17)
       (num-test (min 2.168404344971008681816600431489558149231E-17 1/46116860184273879) 2.168404344971008681816600431489558149231E-17)
@@ -39046,9 +39538,11 @@ abs     1       2
 (num-test (max 9223372036854775/9223372036854774806 9223372036854776/9223372036854775807) 9223372036854775/9223372036854774806)
 (num-test (max 9223372036854776/9223372036854775807 9223372036854775/9223372036854775000) 9223372036854776/9223372036854775807)
 ;; mpfr says the 1st fraction is 1.000000000000000020925101928970235578612E-3
+(num-test (max 1e18 most-positive-fixnum) most-positive-fixnum) ; in bignum case there's type confusion here I think (hence num-test)
 
 (if with-bignums
     (begin
+      (num-test (max 12345678901234567890 12345678901234567891) 12345678901234567891)
       (num-test (max 9223372036854776/9223372036854775807 #i9223372036854775/9223372036854775000) 1.000000000000000020925101928970235578612E-3)
       (num-test (max #i9223372036854776/9223372036854775807 9223372036854775/9223372036854775000) 1.000000000000000020925101928970235578612E-3)
       (num-test (max #i92233720368547757/9223372036854775807 92233720368547758/9223372036854775807) 9.999999999999999992410584792601468961145E-3)
@@ -39108,191 +39602,191 @@ abs     1       2
 ;;; <
 ;;; --------------------------------------------------------------------------------
 
-(num-test (< 0 1 1) #f)
-(num-test (< 0 1 1.0) #f)
-(num-test (< 0 1 1/1) #f)
-(num-test (< 0 1 123.4) #t)
-(num-test (< 0 1 1234) #t)
-(num-test (< 0 1 1234/11) #t)
-(num-test (< 0 1) #t)
-(num-test (< 0 1.0 1) #f)
-(num-test (< 0 1.0 1.0) #f)
-(num-test (< 0 1.0 1/1) #f)
-(num-test (< 0 1.0 123.4) #t)
-(num-test (< 0 1.0 1234) #t)
-(num-test (< 0 1.0 1234/11) #t)
-(num-test (< 0 1.0) #t)
-(num-test (< 0 1/1 1) #f)
-(num-test (< 0 1/1 1.0) #f)
-(num-test (< 0 1/1 1/1) #f)
-(num-test (< 0 1/1 123.4) #t)
-(num-test (< 0 1/1 1234) #t)
-(num-test (< 0 1/1 1234/11) #t)
-(num-test (< 0 1/1) #t)
-(num-test (< 0 123.4) #t)
-(num-test (< 0 1234) #t)
-(num-test (< 0 1234/11) #t)
-(num-test (< 0.0 1 1.0) #f)
-(num-test (< 0.0 1 1/1) #f)
-(num-test (< 0.0 1 123.4) #t)
-(num-test (< 0.0 1 1234) #t)
-(num-test (< 0.0 1 1234/11) #t)
-(num-test (< 0.0 1) #t)
-(num-test (< 0.0 1.0 1) #f)
-(num-test (< 0.0 1.0 1.0) #f)
-(num-test (< 0.0 1.0 1/1) #f)
-(num-test (< 0.0 1.0 123.4) #t)
-(num-test (< 0.0 1.0 1234) #t)
-(num-test (< 0.0 1.0 1234/11) #t)
-(num-test (< 0.0 1.0) #t)
-(num-test (< 0.0 1/1 1) #f)
-(num-test (< 0.0 1/1 1.0) #f)
-(num-test (< 0.0 1/1 1/1) #f)
-(num-test (< 0.0 1/1 123.4) #t)
-(num-test (< 0.0 1/1 1234) #t)
-(num-test (< 0.0 1/1 1234/11) #t)
-(num-test (< 0.0 1/1) #t)
-(num-test (< 0.0 123.4 1) #f)
-(num-test (< 0.0 123.4 1.0) #f)
-(num-test (< 0.0 123.4 1/1) #f)
-(num-test (< 0.0 123.4 123.4) #f)
-(num-test (< 0.0 123.4 1234) #t)
-(num-test (< 0.0 123.4 1234/11) #f)
-(num-test (< 0.0 123.4) #t)
-(num-test (< 0.0 1234 1) #f)
-(num-test (< 0.0 1234 1.0) #f)
-(num-test (< 0.0 1234 1/1) #f)
-(num-test (< 0.0 1234 123.4) #f)
-(num-test (< 0.0 1234 1234) #f)
-(num-test (< 0.0 1234 1234/11) #f)
-(num-test (< 0.0 1234) #t)
-(num-test (< 0.0 1234/11 1) #f)
-(num-test (< 0.0 1234/11 1.0) #f)
-(num-test (< 0.0 1234/11 1/1) #f)
-(num-test (< 0.0 1234/11 123.4) #t)
-(num-test (< 0.0 1234/11 1234) #t)
-(num-test (< 0.0 1234/11 1234/11) #f)
-(num-test (< 0.0 1234/11) #t)
-(num-test (< 1 1 1) #f)
-(num-test (< 1 1 1.0) #f)
-(num-test (< 1 1 1/1) #f)
-(num-test (< 1 1 123.4) #f)
-(num-test (< 1 1 1234) #f)
-(num-test (< 1 1 1234/11) #f)
-(num-test (< 1 1) #f)
-(num-test (< 1 1.0 1) #f)
-(num-test (< 1 1.0 1.0) #f)
-(num-test (< 1 1.0 1/1) #f)
-(num-test (< 1 1.0 123.4) #f)
-(num-test (< 1 1.0 1234) #f)
-(num-test (< 1 1.0 1234/11) #f)
-(num-test (< 1 1.0) #f)
-(num-test (< 1 1/1 1) #f)
-(num-test (< 1 1/1 1.0) #f)
-(num-test (< 1 1/1 1/1) #f)
-(num-test (< 1 1/1 123.4) #f)
-(num-test (< 1 1/1 1234) #f)
-(num-test (< 1 1/1 1234/11) #f)
-(num-test (< 1 1/1) #f)
-(num-test (< 1 123.4) #t)
-(num-test (< 1 1234) #t)
-(num-test (< 1 1234/11) #t)
-(num-test (< 1.0 1 1) #f)
-(num-test (< 1.0 1 1.0) #f)
-(num-test (< 1.0 1 1/1) #f)
-(num-test (< 1.0 1 123.4) #f)
-(num-test (< 1.0 1 1234) #f)
-(num-test (< 1.0 1 1234/11) #f)
-(num-test (< 1.0 1) #f)
-(num-test (< 1.0 1.0 1) #f)
-(num-test (< 1.0 1.0 1.0) #f)
-(num-test (< 1.0 1.0 1/1) #f)
-(num-test (< 1.0 1.0 123.4) #f)
-(num-test (< 1.0 1.0 1234) #f)
-(num-test (< 1.0 1.0 1234/11) #f)
-(num-test (< 1.0 1.0) #f)
-(num-test (< 1.0 1/1 1) #f)
-(num-test (< 1.0 1/1 1.0) #f)
-(num-test (< 1.0 1/1 1/1) #f)
-(num-test (< 1.0 1/1 123.4) #f)
-(num-test (< 1.0 1/1 1234) #f)
-(num-test (< 1.0 1/1 1234/11) #f)
-(num-test (< 1.0 1/1) #f)
-(num-test (< 1.0 123.4 1) #f)
-(num-test (< 1.0 123.4 1.0) #f)
-(num-test (< 1.0 123.4 1/1) #f)
-(num-test (< 1.0 123.4 123.4) #f)
-(num-test (< 1.0 123.4 1234) #t)
-(num-test (< 1.0 123.4 1234/11) #f)
-(num-test (< 1.0 123.4) #t)
-(num-test (< 1.0 1234 1) #f)
-(num-test (< 1.0 1234 1.0) #f)
-(num-test (< 1.0 1234 1/1) #f)
-(num-test (< 1.0 1234 123.4) #f)
-(num-test (< 1.0 1234 1234) #f)
-(num-test (< 1.0 1234 1234/11) #f)
-(num-test (< 1.0 1234) #t)
-(num-test (< 1.0 1234/11 1) #f)
-(num-test (< 1.0 1234/11 1.0) #f)
-(num-test (< 1.0 1234/11 1/1) #f)
-(num-test (< 1.0 1234/11 123.4) #t)
-(num-test (< 1.0 1234/11 1234) #t)
-(num-test (< 1.0 1234/11 1234/11) #f)
-(num-test (< 1.0 1234/11) #t)
-(num-test (< 123.4 1 1) #f)
-(num-test (< 123.4 1 1.0) #f)
-(num-test (< 123.4 1 1/1) #f)
-(num-test (< 123.4 1 123.4) #f)
-(num-test (< 123.4 1 1234) #f)
-(num-test (< 123.4 1 1234/11) #f)
-(num-test (< 123.4 1) #f)
-(num-test (< 123.4 1.0 1) #f)
-(num-test (< 123.4 1.0 1.0) #f)
-(num-test (< 123.4 1.0 1/1) #f)
-(num-test (< 123.4 1.0 123.4) #f)
-(num-test (< 123.4 1.0 1234) #f)
-(num-test (< 123.4 1.0 1234/11) #f)
-(num-test (< 123.4 1.0) #f)
-(num-test (< 123.4 1/1 1) #f)
-(num-test (< 123.4 1/1 1.0) #f)
-(num-test (< 123.4 1/1 1/1) #f)
-(num-test (< 123.4 1/1 123.4) #f)
-(num-test (< 123.4 1/1 1234) #f)
-(num-test (< 123.4 1/1 1234/11) #f)
-(num-test (< 123.4 1/1) #f)
-(num-test (< 123.4 123.4 1) #f)
-(num-test (< 123.4 123.4 1.0) #f)
-(num-test (< 123.4 123.4 1/1) #f)
-(num-test (< 123.4 123.4 123.4) #f)
-(num-test (< 123.4 123.4 1234) #f)
-(num-test (< 123.4 123.4 1234/11) #f)
-(num-test (< 123.4 123.4) #f)
-(num-test (< 123.4 1234 1) #f)
-(num-test (< 123.4 1234 1.0) #f)
-(num-test (< 123.4 1234 1/1) #f)
-(num-test (< 123.4 1234 123.4) #f)
-(num-test (< 123.4 1234 1234) #f)
-(num-test (< 123.4 1234 1234/11) #f)
-(num-test (< 123.4 1234) #t)
-(num-test (< 123.4 1234/11 1) #f)
-(num-test (< 123.4 1234/11 1.0) #f)
-(num-test (< 123.4 1234/11 1/1) #f)
-(num-test (< 123.4 1234/11 123.4) #f)
-(num-test (< 123.4 1234/11 1234) #f)
-(num-test (< 123.4 1234/11 1234/11) #f)
-(num-test (< 123.4 1234/11) #f)
-(num-test (< 1234 1) #f)
-(num-test (< 1234 1.0) #f)
-(num-test (< 1234 1/1) #f)
-(num-test (< 1234 123.4) #f)
-(num-test (< 1234 1234) #f)
-(num-test (< 1234 1234/11) #f)
-(num-test (< 1234/11 1) #f)
-(num-test (< 1234/11 1.0) #f)
-(num-test (< 1234/11 1/1) #f)
-(num-test (< 1234/11 123.4) #t)
-(num-test (< 1234/11 1234) #t)
-(num-test (< 1234/11 1234/11) #f)
+(test (< 0 1 1) #f)
+(test (< 0 1 1.0) #f)
+(test (< 0 1 1/1) #f)
+(test (< 0 1 123.4) #t)
+(test (< 0 1 1234) #t)
+(test (< 0 1 1234/11) #t)
+(test (< 0 1) #t)
+(test (< 0 1.0 1) #f)
+(test (< 0 1.0 1.0) #f)
+(test (< 0 1.0 1/1) #f)
+(test (< 0 1.0 123.4) #t)
+(test (< 0 1.0 1234) #t)
+(test (< 0 1.0 1234/11) #t)
+(test (< 0 1.0) #t)
+(test (< 0 1/1 1) #f)
+(test (< 0 1/1 1.0) #f)
+(test (< 0 1/1 1/1) #f)
+(test (< 0 1/1 123.4) #t)
+(test (< 0 1/1 1234) #t)
+(test (< 0 1/1 1234/11) #t)
+(test (< 0 1/1) #t)
+(test (< 0 123.4) #t)
+(test (< 0 1234) #t)
+(test (< 0 1234/11) #t)
+(test (< 0.0 1 1.0) #f)
+(test (< 0.0 1 1/1) #f)
+(test (< 0.0 1 123.4) #t)
+(test (< 0.0 1 1234) #t)
+(test (< 0.0 1 1234/11) #t)
+(test (< 0.0 1) #t)
+(test (< 0.0 1.0 1) #f)
+(test (< 0.0 1.0 1.0) #f)
+(test (< 0.0 1.0 1/1) #f)
+(test (< 0.0 1.0 123.4) #t)
+(test (< 0.0 1.0 1234) #t)
+(test (< 0.0 1.0 1234/11) #t)
+(test (< 0.0 1.0) #t)
+(test (< 0.0 1/1 1) #f)
+(test (< 0.0 1/1 1.0) #f)
+(test (< 0.0 1/1 1/1) #f)
+(test (< 0.0 1/1 123.4) #t)
+(test (< 0.0 1/1 1234) #t)
+(test (< 0.0 1/1 1234/11) #t)
+(test (< 0.0 1/1) #t)
+(test (< 0.0 123.4 1) #f)
+(test (< 0.0 123.4 1.0) #f)
+(test (< 0.0 123.4 1/1) #f)
+(test (< 0.0 123.4 123.4) #f)
+(test (< 0.0 123.4 1234) #t)
+(test (< 0.0 123.4 1234/11) #f)
+(test (< 0.0 123.4) #t)
+(test (< 0.0 1234 1) #f)
+(test (< 0.0 1234 1.0) #f)
+(test (< 0.0 1234 1/1) #f)
+(test (< 0.0 1234 123.4) #f)
+(test (< 0.0 1234 1234) #f)
+(test (< 0.0 1234 1234/11) #f)
+(test (< 0.0 1234) #t)
+(test (< 0.0 1234/11 1) #f)
+(test (< 0.0 1234/11 1.0) #f)
+(test (< 0.0 1234/11 1/1) #f)
+(test (< 0.0 1234/11 123.4) #t)
+(test (< 0.0 1234/11 1234) #t)
+(test (< 0.0 1234/11 1234/11) #f)
+(test (< 0.0 1234/11) #t)
+(test (< 1 1 1) #f)
+(test (< 1 1 1.0) #f)
+(test (< 1 1 1/1) #f)
+(test (< 1 1 123.4) #f)
+(test (< 1 1 1234) #f)
+(test (< 1 1 1234/11) #f)
+(test (< 1 1) #f)
+(test (< 1 1.0 1) #f)
+(test (< 1 1.0 1.0) #f)
+(test (< 1 1.0 1/1) #f)
+(test (< 1 1.0 123.4) #f)
+(test (< 1 1.0 1234) #f)
+(test (< 1 1.0 1234/11) #f)
+(test (< 1 1.0) #f)
+(test (< 1 1/1 1) #f)
+(test (< 1 1/1 1.0) #f)
+(test (< 1 1/1 1/1) #f)
+(test (< 1 1/1 123.4) #f)
+(test (< 1 1/1 1234) #f)
+(test (< 1 1/1 1234/11) #f)
+(test (< 1 1/1) #f)
+(test (< 1 123.4) #t)
+(test (< 1 1234) #t)
+(test (< 1 1234/11) #t)
+(test (< 1.0 1 1) #f)
+(test (< 1.0 1 1.0) #f)
+(test (< 1.0 1 1/1) #f)
+(test (< 1.0 1 123.4) #f)
+(test (< 1.0 1 1234) #f)
+(test (< 1.0 1 1234/11) #f)
+(test (< 1.0 1) #f)
+(test (< 1.0 1.0 1) #f)
+(test (< 1.0 1.0 1.0) #f)
+(test (< 1.0 1.0 1/1) #f)
+(test (< 1.0 1.0 123.4) #f)
+(test (< 1.0 1.0 1234) #f)
+(test (< 1.0 1.0 1234/11) #f)
+(test (< 1.0 1.0) #f)
+(test (< 1.0 1/1 1) #f)
+(test (< 1.0 1/1 1.0) #f)
+(test (< 1.0 1/1 1/1) #f)
+(test (< 1.0 1/1 123.4) #f)
+(test (< 1.0 1/1 1234) #f)
+(test (< 1.0 1/1 1234/11) #f)
+(test (< 1.0 1/1) #f)
+(test (< 1.0 123.4 1) #f)
+(test (< 1.0 123.4 1.0) #f)
+(test (< 1.0 123.4 1/1) #f)
+(test (< 1.0 123.4 123.4) #f)
+(test (< 1.0 123.4 1234) #t)
+(test (< 1.0 123.4 1234/11) #f)
+(test (< 1.0 123.4) #t)
+(test (< 1.0 1234 1) #f)
+(test (< 1.0 1234 1.0) #f)
+(test (< 1.0 1234 1/1) #f)
+(test (< 1.0 1234 123.4) #f)
+(test (< 1.0 1234 1234) #f)
+(test (< 1.0 1234 1234/11) #f)
+(test (< 1.0 1234) #t)
+(test (< 1.0 1234/11 1) #f)
+(test (< 1.0 1234/11 1.0) #f)
+(test (< 1.0 1234/11 1/1) #f)
+(test (< 1.0 1234/11 123.4) #t)
+(test (< 1.0 1234/11 1234) #t)
+(test (< 1.0 1234/11 1234/11) #f)
+(test (< 1.0 1234/11) #t)
+(test (< 123.4 1 1) #f)
+(test (< 123.4 1 1.0) #f)
+(test (< 123.4 1 1/1) #f)
+(test (< 123.4 1 123.4) #f)
+(test (< 123.4 1 1234) #f)
+(test (< 123.4 1 1234/11) #f)
+(test (< 123.4 1) #f)
+(test (< 123.4 1.0 1) #f)
+(test (< 123.4 1.0 1.0) #f)
+(test (< 123.4 1.0 1/1) #f)
+(test (< 123.4 1.0 123.4) #f)
+(test (< 123.4 1.0 1234) #f)
+(test (< 123.4 1.0 1234/11) #f)
+(test (< 123.4 1.0) #f)
+(test (< 123.4 1/1 1) #f)
+(test (< 123.4 1/1 1.0) #f)
+(test (< 123.4 1/1 1/1) #f)
+(test (< 123.4 1/1 123.4) #f)
+(test (< 123.4 1/1 1234) #f)
+(test (< 123.4 1/1 1234/11) #f)
+(test (< 123.4 1/1) #f)
+(test (< 123.4 123.4 1) #f)
+(test (< 123.4 123.4 1.0) #f)
+(test (< 123.4 123.4 1/1) #f)
+(test (< 123.4 123.4 123.4) #f)
+(test (< 123.4 123.4 1234) #f)
+(test (< 123.4 123.4 1234/11) #f)
+(test (< 123.4 123.4) #f)
+(test (< 123.4 1234 1) #f)
+(test (< 123.4 1234 1.0) #f)
+(test (< 123.4 1234 1/1) #f)
+(test (< 123.4 1234 123.4) #f)
+(test (< 123.4 1234 1234) #f)
+(test (< 123.4 1234 1234/11) #f)
+(test (< 123.4 1234) #t)
+(test (< 123.4 1234/11 1) #f)
+(test (< 123.4 1234/11 1.0) #f)
+(test (< 123.4 1234/11 1/1) #f)
+(test (< 123.4 1234/11 123.4) #f)
+(test (< 123.4 1234/11 1234) #f)
+(test (< 123.4 1234/11 1234/11) #f)
+(test (< 123.4 1234/11) #f)
+(test (< 1234 1) #f)
+(test (< 1234 1.0) #f)
+(test (< 1234 1/1) #f)
+(test (< 1234 123.4) #f)
+(test (< 1234 1234) #f)
+(test (< 1234 1234/11) #f)
+(test (< 1234/11 1) #f)
+(test (< 1234/11 1.0) #f)
+(test (< 1234/11 1/1) #f)
+(test (< 1234/11 123.4) #t)
+(test (< 1234/11 1234) #t)
+(test (< 1234/11 1234/11) #f)
 
 (test (< -0 0) #f)
 (test (< -0.0 0.0) #f)
@@ -39311,27 +39805,28 @@ abs     1       2
 (test (< 2 1+0i) #f)
 (test (< 2 1-0i) #f)
 
-(num-test (< -5 -4 -2 0 4 5) #t)
-(num-test (< 0 3 4 4 6) #f)
-(num-test (< 0 3 4 6 7) #t)
-(num-test (< 0) 'error)
-(num-test (< 0.0) 'error)
-(num-test (< 0.0+0.00000001i) 'error)
-(num-test (< 0/1) 'error)
-(num-test (< 1.0) 'error)
-(num-test (< 1.0+1.0i) 'error)
-(num-test (< 10/3) 'error)
-(num-test (< 1234000000.0+2.71828182845905i) 'error)
-(num-test (< 2 1 #\a) 'error)
-(num-test (< 2 1 1.0+1.0i) 'error)
-(num-test (< 2) 'error)
-(num-test (< 2.71828182845905+3.14159265358979i) 'error)
-(num-test (< 3 -5) #f)
-(num-test (< 3 3) #f)
-(num-test (< 3 3.0 3 3.0+1.0i) 'error)
-(num-test (< 3 5) #t)
-(num-test (< 3.0 3) #f)
+(test (< -5 -4 -2 0 4 5) #t)
+(test (< 0 3 4 4 6) #f)
+(test (< 0 3 4 6 7) #t)
+(test (< 0) 'error)
+(test (< 0.0) 'error)
+(test (< 0.0+0.00000001i) 'error)
+(test (< 0/1) 'error)
+(test (< 1.0) 'error)
+(test (< 1.0+1.0i) 'error)
+(test (< 10/3) 'error)
+(test (< 1234000000.0+2.71828182845905i) 'error)
+(test (< 2 1 #\a) 'error)
+(test (< 2 1 1.0+1.0i) 'error)
+(test (< 2) 'error)
+(test (< 2.71828182845905+3.14159265358979i) 'error)
+(test (< 3 -5) #f)
+(test (< 3 3) #f)
+(test (< 3 3.0 3 3.0+1.0i) 'error)
+(test (< 3 5) #t)
+(test (< 3.0 3) #f)
 
+(test (< 1/123400000000 .000000000001) #f)
 (test (< -1/9223372036854775807 -1/9223372036854775806) #f)
 (test (< -10/3147483647 -40/12345678901) #f)
 (test (< -101/3147483647 40/12345678901) #t)
@@ -39407,6 +39902,24 @@ abs     1       2
 (test (< 5.551115123125783999999999999999999999984E-17 1.110223024625156799999999999999999999997E-16) #t)
 (test (< 9223372036854775807 -9223372036854775808) #f)
 (test (< 9223372036854775807 9223372036854775807) #f)
+(test (< (- 1237940039285380274899124223 1237940039285380000000000000) (- 1.2379400392853803e+27 1237940039285380000000000000) (- 1237940039285380274899124225 1237940039285380000000000000)) #f)
+(test (< 0 most-negative-fixnum) #f)
+(test (< 0 most-positive-fixnum) #t)
+(test (< 1 3 . 2) 'error)
+(test (< 1237940039285380274899124223 1.2379400392853803e+27 1237940039285380274899124225) #f)
+(test (< 274899124223 3.0E11 274899124225) #f)
+(test (< most-negative-fixnum (real-part (log 0.0))) #f)
+(test (< most-negative-fixnum 0) #t)
+(test (< most-negative-fixnum most-positive-fixnum) #t)
+(test (< most-positive-fixnum (- (real-part (log 0.0)))) #t)
+(test (< most-positive-fixnum 0) #f)
+(test (< most-positive-fixnum most-negative-fixnum) #f)
+
+(if with-bignums
+    (begin
+      (test (< 12345678901234567890 12345678901234567891) #t)
+      ))
+
 
 
 
@@ -39414,191 +39927,191 @@ abs     1       2
 ;;; <=
 ;;; --------------------------------------------------------------------------------
 
-(num-test (<= 0 1 1) #t)
-(num-test (<= 0 1 1.0) #t)
-(num-test (<= 0 1 1/1) #t)
-(num-test (<= 0 1 123.4) #t)
-(num-test (<= 0 1 1234) #t)
-(num-test (<= 0 1 1234/11) #t)
-(num-test (<= 0 1) #t)
-(num-test (<= 0 1.0 1) #t)
-(num-test (<= 0 1.0 1.0) #t)
-(num-test (<= 0 1.0 1/1) #t)
-(num-test (<= 0 1.0 123.4) #t)
-(num-test (<= 0 1.0 1234) #t)
-(num-test (<= 0 1.0 1234/11) #t)
-(num-test (<= 0 1.0) #t)
-(num-test (<= 0 1/1 1) #t)
-(num-test (<= 0 1/1 1.0) #t)
-(num-test (<= 0 1/1 1/1) #t)
-(num-test (<= 0 1/1 123.4) #t)
-(num-test (<= 0 1/1 1234) #t)
-(num-test (<= 0 1/1 1234/11) #t)
-(num-test (<= 0 1/1) #t)
-(num-test (<= 0 123.4) #t)
-(num-test (<= 0 1234) #t)
-(num-test (<= 0 1234/11) #t)
-(num-test (<= 0.0 1 1.0) #t)
-(num-test (<= 0.0 1 1/1) #t)
-(num-test (<= 0.0 1 123.4) #t)
-(num-test (<= 0.0 1 1234) #t)
-(num-test (<= 0.0 1 1234/11) #t)
-(num-test (<= 0.0 1) #t)
-(num-test (<= 0.0 1.0 1) #t)
-(num-test (<= 0.0 1.0 1.0) #t)
-(num-test (<= 0.0 1.0 1/1) #t)
-(num-test (<= 0.0 1.0 123.4) #t)
-(num-test (<= 0.0 1.0 1234) #t)
-(num-test (<= 0.0 1.0 1234/11) #t)
-(num-test (<= 0.0 1.0) #t)
-(num-test (<= 0.0 1/1 1) #t)
-(num-test (<= 0.0 1/1 1.0) #t)
-(num-test (<= 0.0 1/1 1/1) #t)
-(num-test (<= 0.0 1/1 123.4) #t)
-(num-test (<= 0.0 1/1 1234) #t)
-(num-test (<= 0.0 1/1 1234/11) #t)
-(num-test (<= 0.0 1/1) #t)
-(num-test (<= 0.0 123.4 1) #f)
-(num-test (<= 0.0 123.4 1.0) #f)
-(num-test (<= 0.0 123.4 1/1) #f)
-(num-test (<= 0.0 123.4 123.4) #t)
-(num-test (<= 0.0 123.4 1234) #t)
-(num-test (<= 0.0 123.4 1234/11) #f)
-(num-test (<= 0.0 123.4) #t)
-(num-test (<= 0.0 1234 1) #f)
-(num-test (<= 0.0 1234 1.0) #f)
-(num-test (<= 0.0 1234 1/1) #f)
-(num-test (<= 0.0 1234 123.4) #f)
-(num-test (<= 0.0 1234 1234) #t)
-(num-test (<= 0.0 1234 1234/11) #f)
-(num-test (<= 0.0 1234) #t)
-(num-test (<= 0.0 1234/11 1) #f)
-(num-test (<= 0.0 1234/11 1.0) #f)
-(num-test (<= 0.0 1234/11 1/1) #f)
-(num-test (<= 0.0 1234/11 123.4) #t)
-(num-test (<= 0.0 1234/11 1234) #t)
-(num-test (<= 0.0 1234/11 1234/11) #t)
-(num-test (<= 0.0 1234/11) #t)
-(num-test (<= 1 1 1) #t)
-(num-test (<= 1 1 1.0) #t)
-(num-test (<= 1 1 1/1) #t)
-(num-test (<= 1 1 123.4) #t)
-(num-test (<= 1 1 1234) #t)
-(num-test (<= 1 1 1234/11) #t)
-(num-test (<= 1 1) #t)
-(num-test (<= 1 1.0 1) #t)
-(num-test (<= 1 1.0 1.0) #t)
-(num-test (<= 1 1.0 1/1) #t)
-(num-test (<= 1 1.0 123.4) #t)
-(num-test (<= 1 1.0 1234) #t)
-(num-test (<= 1 1.0 1234/11) #t)
-(num-test (<= 1 1.0) #t)
-(num-test (<= 1 1/1 1) #t)
-(num-test (<= 1 1/1 1.0) #t)
-(num-test (<= 1 1/1 1/1) #t)
-(num-test (<= 1 1/1 123.4) #t)
-(num-test (<= 1 1/1 1234) #t)
-(num-test (<= 1 1/1 1234/11) #t)
-(num-test (<= 1 1/1) #t)
-(num-test (<= 1 123.4) #t)
-(num-test (<= 1 1234) #t)
-(num-test (<= 1 1234/11) #t)
-(num-test (<= 1.0 1 1) #t)
-(num-test (<= 1.0 1 1.0) #t)
-(num-test (<= 1.0 1 1/1) #t)
-(num-test (<= 1.0 1 123.4) #t)
-(num-test (<= 1.0 1 1234) #t)
-(num-test (<= 1.0 1 1234/11) #t)
-(num-test (<= 1.0 1) #t)
-(num-test (<= 1.0 1.0 1) #t)
-(num-test (<= 1.0 1.0 1.0) #t)
-(num-test (<= 1.0 1.0 1/1) #t)
-(num-test (<= 1.0 1.0 123.4) #t)
-(num-test (<= 1.0 1.0 1234) #t)
-(num-test (<= 1.0 1.0 1234/11) #t)
-(num-test (<= 1.0 1.0) #t)
-(num-test (<= 1.0 1/1 1) #t)
-(num-test (<= 1.0 1/1 1.0) #t)
-(num-test (<= 1.0 1/1 1/1) #t)
-(num-test (<= 1.0 1/1 123.4) #t)
-(num-test (<= 1.0 1/1 1234) #t)
-(num-test (<= 1.0 1/1 1234/11) #t)
-(num-test (<= 1.0 1/1) #t)
-(num-test (<= 1.0 123.4 1) #f)
-(num-test (<= 1.0 123.4 1.0) #f)
-(num-test (<= 1.0 123.4 1/1) #f)
-(num-test (<= 1.0 123.4 123.4) #t)
-(num-test (<= 1.0 123.4 1234) #t)
-(num-test (<= 1.0 123.4 1234/11) #f)
-(num-test (<= 1.0 123.4) #t)
-(num-test (<= 1.0 1234 1) #f)
-(num-test (<= 1.0 1234 1.0) #f)
-(num-test (<= 1.0 1234 1/1) #f)
-(num-test (<= 1.0 1234 123.4) #f)
-(num-test (<= 1.0 1234 1234) #t)
-(num-test (<= 1.0 1234 1234/11) #f)
-(num-test (<= 1.0 1234) #t)
-(num-test (<= 1.0 1234/11 1) #f)
-(num-test (<= 1.0 1234/11 1.0) #f)
-(num-test (<= 1.0 1234/11 1/1) #f)
-(num-test (<= 1.0 1234/11 123.4) #t)
-(num-test (<= 1.0 1234/11 1234) #t)
-(num-test (<= 1.0 1234/11 1234/11) #t)
-(num-test (<= 1.0 1234/11) #t)
-(num-test (<= 123.4 1 1) #f)
-(num-test (<= 123.4 1 1.0) #f)
-(num-test (<= 123.4 1 1/1) #f)
-(num-test (<= 123.4 1 123.4) #f)
-(num-test (<= 123.4 1 1234) #f)
-(num-test (<= 123.4 1 1234/11) #f)
-(num-test (<= 123.4 1) #f)
-(num-test (<= 123.4 1.0 1) #f)
-(num-test (<= 123.4 1.0 1.0) #f)
-(num-test (<= 123.4 1.0 1/1) #f)
-(num-test (<= 123.4 1.0 123.4) #f)
-(num-test (<= 123.4 1.0 1234) #f)
-(num-test (<= 123.4 1.0 1234/11) #f)
-(num-test (<= 123.4 1.0) #f)
-(num-test (<= 123.4 1/1 1) #f)
-(num-test (<= 123.4 1/1 1.0) #f)
-(num-test (<= 123.4 1/1 1/1) #f)
-(num-test (<= 123.4 1/1 123.4) #f)
-(num-test (<= 123.4 1/1 1234) #f)
-(num-test (<= 123.4 1/1 1234/11) #f)
-(num-test (<= 123.4 1/1) #f)
-(num-test (<= 123.4 123.4 1) #f)
-(num-test (<= 123.4 123.4 1.0) #f)
-(num-test (<= 123.4 123.4 1/1) #f)
-(num-test (<= 123.4 123.4 123.4) #t)
-(num-test (<= 123.4 123.4 1234) #t)
-(num-test (<= 123.4 123.4 1234/11) #f)
-(num-test (<= 123.4 123.4) #t)
-(num-test (<= 123.4 1234 1) #f)
-(num-test (<= 123.4 1234 1.0) #f)
-(num-test (<= 123.4 1234 1/1) #f)
-(num-test (<= 123.4 1234 123.4) #f)
-(num-test (<= 123.4 1234 1234) #t)
-(num-test (<= 123.4 1234 1234/11) #f)
-(num-test (<= 123.4 1234) #t)
-(num-test (<= 123.4 1234/11 1) #f)
-(num-test (<= 123.4 1234/11 1.0) #f)
-(num-test (<= 123.4 1234/11 1/1) #f)
-(num-test (<= 123.4 1234/11 123.4) #f)
-(num-test (<= 123.4 1234/11 1234) #f)
-(num-test (<= 123.4 1234/11 1234/11) #f)
-(num-test (<= 123.4 1234/11) #f)
-(num-test (<= 1234 1) #f)
-(num-test (<= 1234 1.0) #f)
-(num-test (<= 1234 1/1) #f)
-(num-test (<= 1234 123.4) #f)
-(num-test (<= 1234 1234) #t)
-(num-test (<= 1234 1234/11) #f)
-(num-test (<= 1234/11 1) #f)
-(num-test (<= 1234/11 1.0) #f)
-(num-test (<= 1234/11 1/1) #f)
-(num-test (<= 1234/11 123.4) #t)
-(num-test (<= 1234/11 1234) #t)
-(num-test (<= 1234/11 1234/11) #t)
+(test (<= 0 1 1) #t)
+(test (<= 0 1 1.0) #t)
+(test (<= 0 1 1/1) #t)
+(test (<= 0 1 123.4) #t)
+(test (<= 0 1 1234) #t)
+(test (<= 0 1 1234/11) #t)
+(test (<= 0 1) #t)
+(test (<= 0 1.0 1) #t)
+(test (<= 0 1.0 1.0) #t)
+(test (<= 0 1.0 1/1) #t)
+(test (<= 0 1.0 123.4) #t)
+(test (<= 0 1.0 1234) #t)
+(test (<= 0 1.0 1234/11) #t)
+(test (<= 0 1.0) #t)
+(test (<= 0 1/1 1) #t)
+(test (<= 0 1/1 1.0) #t)
+(test (<= 0 1/1 1/1) #t)
+(test (<= 0 1/1 123.4) #t)
+(test (<= 0 1/1 1234) #t)
+(test (<= 0 1/1 1234/11) #t)
+(test (<= 0 1/1) #t)
+(test (<= 0 123.4) #t)
+(test (<= 0 1234) #t)
+(test (<= 0 1234/11) #t)
+(test (<= 0.0 1 1.0) #t)
+(test (<= 0.0 1 1/1) #t)
+(test (<= 0.0 1 123.4) #t)
+(test (<= 0.0 1 1234) #t)
+(test (<= 0.0 1 1234/11) #t)
+(test (<= 0.0 1) #t)
+(test (<= 0.0 1.0 1) #t)
+(test (<= 0.0 1.0 1.0) #t)
+(test (<= 0.0 1.0 1/1) #t)
+(test (<= 0.0 1.0 123.4) #t)
+(test (<= 0.0 1.0 1234) #t)
+(test (<= 0.0 1.0 1234/11) #t)
+(test (<= 0.0 1.0) #t)
+(test (<= 0.0 1/1 1) #t)
+(test (<= 0.0 1/1 1.0) #t)
+(test (<= 0.0 1/1 1/1) #t)
+(test (<= 0.0 1/1 123.4) #t)
+(test (<= 0.0 1/1 1234) #t)
+(test (<= 0.0 1/1 1234/11) #t)
+(test (<= 0.0 1/1) #t)
+(test (<= 0.0 123.4 1) #f)
+(test (<= 0.0 123.4 1.0) #f)
+(test (<= 0.0 123.4 1/1) #f)
+(test (<= 0.0 123.4 123.4) #t)
+(test (<= 0.0 123.4 1234) #t)
+(test (<= 0.0 123.4 1234/11) #f)
+(test (<= 0.0 123.4) #t)
+(test (<= 0.0 1234 1) #f)
+(test (<= 0.0 1234 1.0) #f)
+(test (<= 0.0 1234 1/1) #f)
+(test (<= 0.0 1234 123.4) #f)
+(test (<= 0.0 1234 1234) #t)
+(test (<= 0.0 1234 1234/11) #f)
+(test (<= 0.0 1234) #t)
+(test (<= 0.0 1234/11 1) #f)
+(test (<= 0.0 1234/11 1.0) #f)
+(test (<= 0.0 1234/11 1/1) #f)
+(test (<= 0.0 1234/11 123.4) #t)
+(test (<= 0.0 1234/11 1234) #t)
+(test (<= 0.0 1234/11 1234/11) #t)
+(test (<= 0.0 1234/11) #t)
+(test (<= 1 1 1) #t)
+(test (<= 1 1 1.0) #t)
+(test (<= 1 1 1/1) #t)
+(test (<= 1 1 123.4) #t)
+(test (<= 1 1 1234) #t)
+(test (<= 1 1 1234/11) #t)
+(test (<= 1 1) #t)
+(test (<= 1 1.0 1) #t)
+(test (<= 1 1.0 1.0) #t)
+(test (<= 1 1.0 1/1) #t)
+(test (<= 1 1.0 123.4) #t)
+(test (<= 1 1.0 1234) #t)
+(test (<= 1 1.0 1234/11) #t)
+(test (<= 1 1.0) #t)
+(test (<= 1 1/1 1) #t)
+(test (<= 1 1/1 1.0) #t)
+(test (<= 1 1/1 1/1) #t)
+(test (<= 1 1/1 123.4) #t)
+(test (<= 1 1/1 1234) #t)
+(test (<= 1 1/1 1234/11) #t)
+(test (<= 1 1/1) #t)
+(test (<= 1 123.4) #t)
+(test (<= 1 1234) #t)
+(test (<= 1 1234/11) #t)
+(test (<= 1.0 1 1) #t)
+(test (<= 1.0 1 1.0) #t)
+(test (<= 1.0 1 1/1) #t)
+(test (<= 1.0 1 123.4) #t)
+(test (<= 1.0 1 1234) #t)
+(test (<= 1.0 1 1234/11) #t)
+(test (<= 1.0 1) #t)
+(test (<= 1.0 1.0 1) #t)
+(test (<= 1.0 1.0 1.0) #t)
+(test (<= 1.0 1.0 1/1) #t)
+(test (<= 1.0 1.0 123.4) #t)
+(test (<= 1.0 1.0 1234) #t)
+(test (<= 1.0 1.0 1234/11) #t)
+(test (<= 1.0 1.0) #t)
+(test (<= 1.0 1/1 1) #t)
+(test (<= 1.0 1/1 1.0) #t)
+(test (<= 1.0 1/1 1/1) #t)
+(test (<= 1.0 1/1 123.4) #t)
+(test (<= 1.0 1/1 1234) #t)
+(test (<= 1.0 1/1 1234/11) #t)
+(test (<= 1.0 1/1) #t)
+(test (<= 1.0 123.4 1) #f)
+(test (<= 1.0 123.4 1.0) #f)
+(test (<= 1.0 123.4 1/1) #f)
+(test (<= 1.0 123.4 123.4) #t)
+(test (<= 1.0 123.4 1234) #t)
+(test (<= 1.0 123.4 1234/11) #f)
+(test (<= 1.0 123.4) #t)
+(test (<= 1.0 1234 1) #f)
+(test (<= 1.0 1234 1.0) #f)
+(test (<= 1.0 1234 1/1) #f)
+(test (<= 1.0 1234 123.4) #f)
+(test (<= 1.0 1234 1234) #t)
+(test (<= 1.0 1234 1234/11) #f)
+(test (<= 1.0 1234) #t)
+(test (<= 1.0 1234/11 1) #f)
+(test (<= 1.0 1234/11 1.0) #f)
+(test (<= 1.0 1234/11 1/1) #f)
+(test (<= 1.0 1234/11 123.4) #t)
+(test (<= 1.0 1234/11 1234) #t)
+(test (<= 1.0 1234/11 1234/11) #t)
+(test (<= 1.0 1234/11) #t)
+(test (<= 123.4 1 1) #f)
+(test (<= 123.4 1 1.0) #f)
+(test (<= 123.4 1 1/1) #f)
+(test (<= 123.4 1 123.4) #f)
+(test (<= 123.4 1 1234) #f)
+(test (<= 123.4 1 1234/11) #f)
+(test (<= 123.4 1) #f)
+(test (<= 123.4 1.0 1) #f)
+(test (<= 123.4 1.0 1.0) #f)
+(test (<= 123.4 1.0 1/1) #f)
+(test (<= 123.4 1.0 123.4) #f)
+(test (<= 123.4 1.0 1234) #f)
+(test (<= 123.4 1.0 1234/11) #f)
+(test (<= 123.4 1.0) #f)
+(test (<= 123.4 1/1 1) #f)
+(test (<= 123.4 1/1 1.0) #f)
+(test (<= 123.4 1/1 1/1) #f)
+(test (<= 123.4 1/1 123.4) #f)
+(test (<= 123.4 1/1 1234) #f)
+(test (<= 123.4 1/1 1234/11) #f)
+(test (<= 123.4 1/1) #f)
+(test (<= 123.4 123.4 1) #f)
+(test (<= 123.4 123.4 1.0) #f)
+(test (<= 123.4 123.4 1/1) #f)
+(test (<= 123.4 123.4 123.4) #t)
+(test (<= 123.4 123.4 1234) #t)
+(test (<= 123.4 123.4 1234/11) #f)
+(test (<= 123.4 123.4) #t)
+(test (<= 123.4 1234 1) #f)
+(test (<= 123.4 1234 1.0) #f)
+(test (<= 123.4 1234 1/1) #f)
+(test (<= 123.4 1234 123.4) #f)
+(test (<= 123.4 1234 1234) #t)
+(test (<= 123.4 1234 1234/11) #f)
+(test (<= 123.4 1234) #t)
+(test (<= 123.4 1234/11 1) #f)
+(test (<= 123.4 1234/11 1.0) #f)
+(test (<= 123.4 1234/11 1/1) #f)
+(test (<= 123.4 1234/11 123.4) #f)
+(test (<= 123.4 1234/11 1234) #f)
+(test (<= 123.4 1234/11 1234/11) #f)
+(test (<= 123.4 1234/11) #f)
+(test (<= 1234 1) #f)
+(test (<= 1234 1.0) #f)
+(test (<= 1234 1/1) #f)
+(test (<= 1234 123.4) #f)
+(test (<= 1234 1234) #t)
+(test (<= 1234 1234/11) #f)
+(test (<= 1234/11 1) #f)
+(test (<= 1234/11 1.0) #f)
+(test (<= 1234/11 1/1) #f)
+(test (<= 1234/11 123.4) #t)
+(test (<= 1234/11 1234) #t)
+(test (<= 1234/11 1234/11) #t)
 
 (test (<= -1 2 3 4 4 5 6 7) #t )
 (test (<= -1 2 3 4 5 6 7 8) #t )
@@ -39612,27 +40125,27 @@ abs     1       2
 (test (<= 2 1-0i) #f)
 (test (<= 2 2 1) #f)
 
-(num-test (<= 0 3 4 4 6) #t)
-(num-test (<= 0 3 4 6 7) #t)
-(num-test (<= 0) 'error)
-(num-test (<= 0.0) 'error)
-(num-test (<= 0.0+0.00000001i) 'error)
-(num-test (<= 0/1) 'error)
-(num-test (<= 1 3 3 2 5) #f)
-(num-test (<= 1.0) 'error)
-(num-test (<= 1.0+1.0i) 'error)
-(num-test (<= 10/3) 'error)
-(num-test (<= 1234000000.0+2.71828182845905i) 'error)
-(num-test (<= 2 1 #\a) 'error)
-(num-test (<= 2 1 1.0+1.0i) 'error)
-(num-test (<= 2) 'error)
-(num-test (<= 2.71828182845905+3.14159265358979i) 'error)
-(num-test (<= 3 -5) #f)
-(num-test (<= 3 3) #t)
-(num-test (<= 3 3) #t)
-(num-test (<= 3 5) #t)
-(num-test (<= 3.0 3) #t)
-(num-test (<= 5/2 2.5) #t)
+(test (<= 0 3 4 4 6) #t)
+(test (<= 0 3 4 6 7) #t)
+(test (<= 0) 'error)
+(test (<= 0.0) 'error)
+(test (<= 0.0+0.00000001i) 'error)
+(test (<= 0/1) 'error)
+(test (<= 1 3 3 2 5) #f)
+(test (<= 1.0) 'error)
+(test (<= 1.0+1.0i) 'error)
+(test (<= 10/3) 'error)
+(test (<= 1234000000.0+2.71828182845905i) 'error)
+(test (<= 2 1 #\a) 'error)
+(test (<= 2 1 1.0+1.0i) 'error)
+(test (<= 2) 'error)
+(test (<= 2.71828182845905+3.14159265358979i) 'error)
+(test (<= 3 -5) #f)
+(test (<= 3 3) #t)
+(test (<= 3 3) #t)
+(test (<= 3 5) #t)
+(test (<= 3.0 3) #t)
+(test (<= 5/2 2.5) #t)
 (test (<= -1.797693134862315699999999999999999999998E308 -9223372036854775808) #t)
 (test (<= -9223372036854775808 -9223372036854775808) #t)
 (test (<= -9223372036854775808 5.551115123125783999999999999999999999984E-17) #t)
@@ -39643,606 +40156,611 @@ abs     1       2
 (test (<= 9223372036854775807 -9223372036854775808) #f)
 (test (<= 9223372036854775807 9223372036854775807) #t)
 
+(if with-bignums
+    (begin
+      (test (<= 12345678901234567890 12345678901234567891) #t)
+      ))
+
 
 
 ;;; --------------------------------------------------------------------------------
 ;;; =
 ;;; --------------------------------------------------------------------------------
 
-(num-test (= -1.0+1.0i -1.0+1.0i) #t)
-(num-test (= -1.0+1.0i 0.0+1.0i) #f)
-(num-test (= -1.0+1.0i 1) #f)
-(num-test (= -1.0+1.0i 1.0) #f)
-(num-test (= -1.0+1.0i 1.0+1.0i) #f)
-(num-test (= -1.0+1.0i 1.234+1.234i) #f)
-(num-test (= -1.0+1.0i 1/1) #f)
-(num-test (= -1.0+1.0i 123.4) #f)
-(num-test (= -1.0+1.0i 1234) #f)
-(num-test (= -1.0+1.0i 1234/11) #f)
-(num-test (= 0 -1.0+1.0i) #f)
-(num-test (= 0 0.0+1.0i) #f)
-(num-test (= 0 1 -1.0+1.0i) #f)
-(num-test (= 0 1 0.0+1.0i) #f)
-(num-test (= 0 1 1) #f)
-(num-test (= 0 1 1.0) #f)
-(num-test (= 0 1 1.0+1.0i) #f)
-(num-test (= 0 1 1.234+1.234i) #f)
-(num-test (= 0 1 1/1) #f)
-(num-test (= 0 1 123.4) #f)
-(num-test (= 0 1 1234) #f)
-(num-test (= 0 1 1234/11) #f)
-(num-test (= 0 1) #f)
-(num-test (= 0 1.0 -1.0+1.0i) #f)
-(num-test (= 0 1.0 0.0+1.0i) #f)
-(num-test (= 0 1.0 1) #f)
-(num-test (= 0 1.0 1.0) #f)
-(num-test (= 0 1.0 1.0+1.0i) #f)
-(num-test (= 0 1.0 1.234+1.234i) #f)
-(num-test (= 0 1.0 1/1) #f)
-(num-test (= 0 1.0 123.4) #f)
-(num-test (= 0 1.0 1234) #f)
-(num-test (= 0 1.0 1234/11) #f)
-(num-test (= 0 1.0) #f)
-(num-test (= 0 1.0+1.0i -1.0+1.0i) #f)
-(num-test (= 0 1.0+1.0i 0.0+1.0i) #f)
-(num-test (= 0 1.0+1.0i 1) #f)
-(num-test (= 0 1.0+1.0i 1.0) #f)
-(num-test (= 0 1.0+1.0i 1.0+1.0i) #f)
-(num-test (= 0 1.0+1.0i 1.234+1.234i) #f)
-(num-test (= 0 1.0+1.0i 1/1) #f)
-(num-test (= 0 1.0+1.0i 123.4) #f)
-(num-test (= 0 1.0+1.0i 1234) #f)
-(num-test (= 0 1.0+1.0i 1234/11) #f)
-(num-test (= 0 1.0+1.0i) #f)
-(num-test (= 0 1.234+1.234i) #f)
-(num-test (= 0 1/1 -1.0+1.0i) #f)
-(num-test (= 0 1/1 0.0+1.0i) #f)
-(num-test (= 0 1/1 1) #f)
-(num-test (= 0 1/1 1.0) #f)
-(num-test (= 0 1/1 1.0+1.0i) #f)
-(num-test (= 0 1/1 1.234+1.234i) #f)
-(num-test (= 0 1/1 1/1) #f)
-(num-test (= 0 1/1 123.4) #f)
-(num-test (= 0 1/1 1234) #f)
-(num-test (= 0 1/1 1234/11) #f)
-(num-test (= 0 1/1) #f)
-(num-test (= 0 123.4) #f)
-(num-test (= 0 1234) #f)
-(num-test (= 0 1234/11) #f)
-(num-test (= 0.0 -1.0+1.0i -1.0+1.0i) #f)
-(num-test (= 0.0 -1.0+1.0i 0.0+1.0i) #f)
-(num-test (= 0.0 -1.0+1.0i 1) #f)
-(num-test (= 0.0 -1.0+1.0i 1.0) #f)
-(num-test (= 0.0 -1.0+1.0i 1.0+1.0i) #f)
-(num-test (= 0.0 -1.0+1.0i 1.234+1.234i) #f)
-(num-test (= 0.0 -1.0+1.0i 1/1) #f)
-(num-test (= 0.0 -1.0+1.0i 123.4) #f)
-(num-test (= 0.0 -1.0+1.0i 1234) #f)
-(num-test (= 0.0 -1.0+1.0i 1234/11) #f)
-(num-test (= 0.0 -1.0+1.0i) #f)
-(num-test (= 0.0 0.0+1.0i -1.0+1.0i) #f)
-(num-test (= 0.0 0.0+1.0i 0.0+1.0i) #f)
-(num-test (= 0.0 0.0+1.0i 1) #f)
-(num-test (= 0.0 0.0+1.0i 1.0) #f)
-(num-test (= 0.0 0.0+1.0i 1.0+1.0i) #f)
-(num-test (= 0.0 0.0+1.0i 1.234+1.234i) #f)
-(num-test (= 0.0 0.0+1.0i 1/1) #f)
-(num-test (= 0.0 0.0+1.0i 123.4) #f)
-(num-test (= 0.0 0.0+1.0i 1234) #f)
-(num-test (= 0.0 0.0+1.0i 1234/11) #f)
-(num-test (= 0.0 0.0+1.0i) #f)
-(num-test (= 0.0 1 -1.0+1.0i) #f)
-(num-test (= 0.0 1 0.0+1.0i) #f)
-(num-test (= 0.0 1 1.0) #f)
-(num-test (= 0.0 1 1.0+1.0i) #f)
-(num-test (= 0.0 1 1.234+1.234i) #f)
-(num-test (= 0.0 1 1/1) #f)
-(num-test (= 0.0 1 123.4) #f)
-(num-test (= 0.0 1 1234) #f)
-(num-test (= 0.0 1 1234/11) #f)
-(num-test (= 0.0 1) #f)
-(num-test (= 0.0 1.0 -1.0+1.0i) #f)
-(num-test (= 0.0 1.0 0.0+1.0i) #f)
-(num-test (= 0.0 1.0 1) #f)
-(num-test (= 0.0 1.0 1.0) #f)
-(num-test (= 0.0 1.0 1.0+1.0i) #f)
-(num-test (= 0.0 1.0 1.234+1.234i) #f)
-(num-test (= 0.0 1.0 1/1) #f)
-(num-test (= 0.0 1.0 123.4) #f)
-(num-test (= 0.0 1.0 1234) #f)
-(num-test (= 0.0 1.0 1234/11) #f)
-(num-test (= 0.0 1.0) #f)
-(num-test (= 0.0 1.0+1.0i -1.0+1.0i) #f)
-(num-test (= 0.0 1.0+1.0i 0.0+1.0i) #f)
-(num-test (= 0.0 1.0+1.0i 1) #f)
-(num-test (= 0.0 1.0+1.0i 1.0) #f)
-(num-test (= 0.0 1.0+1.0i 1.0+1.0i) #f)
-(num-test (= 0.0 1.0+1.0i 1.234+1.234i) #f)
-(num-test (= 0.0 1.0+1.0i 1/1) #f)
-(num-test (= 0.0 1.0+1.0i 123.4) #f)
-(num-test (= 0.0 1.0+1.0i 1234) #f)
-(num-test (= 0.0 1.0+1.0i 1234/11) #f)
-(num-test (= 0.0 1.0+1.0i) #f)
-(num-test (= 0.0 1.234+1.234i -1.0+1.0i) #f)
-(num-test (= 0.0 1.234+1.234i 0.0+1.0i) #f)
-(num-test (= 0.0 1.234+1.234i 1) #f)
-(num-test (= 0.0 1.234+1.234i 1.0) #f)
-(num-test (= 0.0 1.234+1.234i 1.0+1.0i) #f)
-(num-test (= 0.0 1.234+1.234i 1.234+1.234i) #f)
-(num-test (= 0.0 1.234+1.234i 1/1) #f)
-(num-test (= 0.0 1.234+1.234i 123.4) #f)
-(num-test (= 0.0 1.234+1.234i 1234) #f)
-(num-test (= 0.0 1.234+1.234i 1234/11) #f)
-(num-test (= 0.0 1.234+1.234i) #f)
-(num-test (= 0.0 1/1 -1.0+1.0i) #f)
-(num-test (= 0.0 1/1 0.0+1.0i) #f)
-(num-test (= 0.0 1/1 1) #f)
-(num-test (= 0.0 1/1 1.0) #f)
-(num-test (= 0.0 1/1 1.0+1.0i) #f)
-(num-test (= 0.0 1/1 1.234+1.234i) #f)
-(num-test (= 0.0 1/1 1/1) #f)
-(num-test (= 0.0 1/1 123.4) #f)
-(num-test (= 0.0 1/1 1234) #f)
-(num-test (= 0.0 1/1 1234/11) #f)
-(num-test (= 0.0 1/1) #f)
-(num-test (= 0.0 123.4 -1.0+1.0i) #f)
-(num-test (= 0.0 123.4 0.0+1.0i) #f)
-(num-test (= 0.0 123.4 1) #f)
-(num-test (= 0.0 123.4 1.0) #f)
-(num-test (= 0.0 123.4 1.0+1.0i) #f)
-(num-test (= 0.0 123.4 1.234+1.234i) #f)
-(num-test (= 0.0 123.4 1/1) #f)
-(num-test (= 0.0 123.4 123.4) #f)
-(num-test (= 0.0 123.4 1234) #f)
-(num-test (= 0.0 123.4 1234/11) #f)
-(num-test (= 0.0 123.4) #f)
-(num-test (= 0.0 1234 -1.0+1.0i) #f)
-(num-test (= 0.0 1234 0.0+1.0i) #f)
-(num-test (= 0.0 1234 1) #f)
-(num-test (= 0.0 1234 1.0) #f)
-(num-test (= 0.0 1234 1.0+1.0i) #f)
-(num-test (= 0.0 1234 1.234+1.234i) #f)
-(num-test (= 0.0 1234 1/1) #f)
-(num-test (= 0.0 1234 123.4) #f)
-(num-test (= 0.0 1234 1234) #f)
-(num-test (= 0.0 1234 1234/11) #f)
-(num-test (= 0.0 1234) #f)
-(num-test (= 0.0 1234/11 -1.0+1.0i) #f)
-(num-test (= 0.0 1234/11 0.0+1.0i) #f)
-(num-test (= 0.0 1234/11 1) #f)
-(num-test (= 0.0 1234/11 1.0) #f)
-(num-test (= 0.0 1234/11 1.0+1.0i) #f)
-(num-test (= 0.0 1234/11 1.234+1.234i) #f)
-(num-test (= 0.0 1234/11 1/1) #f)
-(num-test (= 0.0 1234/11 123.4) #f)
-(num-test (= 0.0 1234/11 1234) #f)
-(num-test (= 0.0 1234/11 1234/11) #f)
-(num-test (= 0.0 1234/11) #f)
-(num-test (= 0.0+1.0i -1.0+1.0i) #f)
-(num-test (= 0.0+1.0i 0.0+1.0i) #t)
-(num-test (= 0.0+1.0i 1) #f)
-(num-test (= 0.0+1.0i 1.0) #f)
-(num-test (= 0.0+1.0i 1.0+1.0i) #f)
-(num-test (= 0.0+1.0i 1.234+1.234i) #f)
-(num-test (= 0.0+1.0i 1/1) #f)
-(num-test (= 0.0+1.0i 123.4) #f)
-(num-test (= 0.0+1.0i 1234) #f)
-(num-test (= 0.0+1.0i 1234/11) #f)
-(num-test (= 1 -1) #f)
-(num-test (= 1 -1.0+1.0i) #f)
-(num-test (= 1 -2) #f)
-(num-test (= 1 0.0+1.0i) #f)
-(num-test (= 1 1 -1.0+1.0i) #f)
-(num-test (= 1 1 0.0+1.0i) #f)
-(num-test (= 1 1 1) #t)
-(num-test (= 1 1 1.0) #t)
-(num-test (= 1 1 1.0+1.0i) #f)
-(num-test (= 1 1 1.234+1.234i) #f)
-(num-test (= 1 1 1/1) #t)
-(num-test (= 1 1 123.4) #f)
-(num-test (= 1 1 1234) #f)
-(num-test (= 1 1 1234/11) #f)
-(num-test (= 1 1) #t)
-(num-test (= 1 1.0 -1.0+1.0i) #f)
-(num-test (= 1 1.0 0.0+1.0i) #f)
-(num-test (= 1 1.0 1) #t)
-(num-test (= 1 1.0 1.0) #t)
-(num-test (= 1 1.0 1.0+1.0i) #f)
-(num-test (= 1 1.0 1.234+1.234i) #f)
-(num-test (= 1 1.0 1/1) #t)
-(num-test (= 1 1.0 123.4) #f)
-(num-test (= 1 1.0 1234) #f)
-(num-test (= 1 1.0 1234/11) #f)
-(num-test (= 1 1.0) #t)
-(num-test (= 1 1.0+1.0i -1.0+1.0i) #f)
-(num-test (= 1 1.0+1.0i 0.0+1.0i) #f)
-(num-test (= 1 1.0+1.0i 1) #f)
-(num-test (= 1 1.0+1.0i 1.0) #f)
-(num-test (= 1 1.0+1.0i 1.0+1.0i) #f)
-(num-test (= 1 1.0+1.0i 1.234+1.234i) #f)
-(num-test (= 1 1.0+1.0i 1/1) #f)
-(num-test (= 1 1.0+1.0i 123.4) #f)
-(num-test (= 1 1.0+1.0i 1234) #f)
-(num-test (= 1 1.0+1.0i 1234/11) #f)
-(num-test (= 1 1.0+1.0i) #f)
-(num-test (= 1 1.234+1.234i) #f)
-(num-test (= 1 1/1 -1.0+1.0i) #f)
-(num-test (= 1 1/1 0.0+1.0i) #f)
-(num-test (= 1 1/1 1) #t)
-(num-test (= 1 1/1 1.0) #t)
-(num-test (= 1 1/1 1.0+1.0i) #f)
-(num-test (= 1 1/1 1.234+1.234i) #f)
-(num-test (= 1 1/1 1/1) #t)
-(num-test (= 1 1/1 123.4) #f)
-(num-test (= 1 1/1 1234) #f)
-(num-test (= 1 1/1 1234/11) #f)
-(num-test (= 1 1/1) #t)
-(num-test (= 1 123.4) #f)
-(num-test (= 1 1234) #f)
-(num-test (= 1 1234/11) #f)
-(num-test (= 1.0 -1.0) #f)
-(num-test (= 1.0 -1.0+1.0i -1.0+1.0i) #f)
-(num-test (= 1.0 -1.0+1.0i 0.0+1.0i) #f)
-(num-test (= 1.0 -1.0+1.0i 1) #f)
-(num-test (= 1.0 -1.0+1.0i 1.0) #f)
-(num-test (= 1.0 -1.0+1.0i 1.0+1.0i) #f)
-(num-test (= 1.0 -1.0+1.0i 1.234+1.234i) #f)
-(num-test (= 1.0 -1.0+1.0i 1/1) #f)
-(num-test (= 1.0 -1.0+1.0i 123.4) #f)
-(num-test (= 1.0 -1.0+1.0i 1234) #f)
-(num-test (= 1.0 -1.0+1.0i 1234/11) #f)
-(num-test (= 1.0 -1.0+1.0i) #f)
-(num-test (= 1.0 0.0+1.0i -1.0+1.0i) #f)
-(num-test (= 1.0 0.0+1.0i 0.0+1.0i) #f)
-(num-test (= 1.0 0.0+1.0i 1) #f)
-(num-test (= 1.0 0.0+1.0i 1.0) #f)
-(num-test (= 1.0 0.0+1.0i 1.0+1.0i) #f)
-(num-test (= 1.0 0.0+1.0i 1.234+1.234i) #f)
-(num-test (= 1.0 0.0+1.0i 1/1) #f)
-(num-test (= 1.0 0.0+1.0i 123.4) #f)
-(num-test (= 1.0 0.0+1.0i 1234) #f)
-(num-test (= 1.0 0.0+1.0i 1234/11) #f)
-(num-test (= 1.0 0.0+1.0i) #f)
-(num-test (= 1.0 1 -1.0+1.0i) #f)
-(num-test (= 1.0 1 0.0+1.0i) #f)
-(num-test (= 1.0 1 1) #t)
-(num-test (= 1.0 1 1.0) #t)
-(num-test (= 1.0 1 1.0+1.0i) #f)
-(num-test (= 1.0 1 1.234+1.234i) #f)
-(num-test (= 1.0 1 1/1) #t)
-(num-test (= 1.0 1 123.4) #f)
-(num-test (= 1.0 1 1234) #f)
-(num-test (= 1.0 1 1234/11) #f)
-(num-test (= 1.0 1) #t)
-(num-test (= 1.0 1.0 -1.0+1.0i) #f)
-(num-test (= 1.0 1.0 0.0+1.0i) #f)
-(num-test (= 1.0 1.0 1) #t)
-(num-test (= 1.0 1.0 1.0) #t)
-(num-test (= 1.0 1.0 1.0+1.0i) #f)
-(num-test (= 1.0 1.0 1.234+1.234i) #f)
-(num-test (= 1.0 1.0 1/1) #t)
-(num-test (= 1.0 1.0 123.4) #f)
-(num-test (= 1.0 1.0 1234) #f)
-(num-test (= 1.0 1.0 1234/11) #f)
-(num-test (= 1.0 1.0) #t)
-(num-test (= 1.0 1.0+1.0i -1.0+1.0i) #f)
-(num-test (= 1.0 1.0+1.0i 0.0+1.0i) #f)
-(num-test (= 1.0 1.0+1.0i 1) #f)
-(num-test (= 1.0 1.0+1.0i 1.0) #f)
-(num-test (= 1.0 1.0+1.0i 1.0+1.0i) #f)
-(num-test (= 1.0 1.0+1.0i 1.234+1.234i) #f)
-(num-test (= 1.0 1.0+1.0i 1/1) #f)
-(num-test (= 1.0 1.0+1.0i 123.4) #f)
-(num-test (= 1.0 1.0+1.0i 1234) #f)
-(num-test (= 1.0 1.0+1.0i 1234/11) #f)
-(num-test (= 1.0 1.0+1.0i) #f)
-(num-test (= 1.0 1.234+1.234i -1.0+1.0i) #f)
-(num-test (= 1.0 1.234+1.234i 0.0+1.0i) #f)
-(num-test (= 1.0 1.234+1.234i 1) #f)
-(num-test (= 1.0 1.234+1.234i 1.0) #f)
-(num-test (= 1.0 1.234+1.234i 1.0+1.0i) #f)
-(num-test (= 1.0 1.234+1.234i 1.234+1.234i) #f)
-(num-test (= 1.0 1.234+1.234i 1/1) #f)
-(num-test (= 1.0 1.234+1.234i 123.4) #f)
-(num-test (= 1.0 1.234+1.234i 1234) #f)
-(num-test (= 1.0 1.234+1.234i 1234/11) #f)
-(num-test (= 1.0 1.234+1.234i) #f)
-(num-test (= 1.0 1/1 -1.0+1.0i) #f)
-(num-test (= 1.0 1/1 0.0+1.0i) #f)
-(num-test (= 1.0 1/1 1) #t)
-(num-test (= 1.0 1/1 1.0) #t)
-(num-test (= 1.0 1/1 1.0+1.0i) #f)
-(num-test (= 1.0 1/1 1.234+1.234i) #f)
-(num-test (= 1.0 1/1 1/1) #t)
-(num-test (= 1.0 1/1 123.4) #f)
-(num-test (= 1.0 1/1 1234) #f)
-(num-test (= 1.0 1/1 1234/11) #f)
-(num-test (= 1.0 1/1) #t)
-(num-test (= 1.0 123.4 -1.0+1.0i) #f)
-(num-test (= 1.0 123.4 0.0+1.0i) #f)
-(num-test (= 1.0 123.4 1) #f)
-(num-test (= 1.0 123.4 1.0) #f)
-(num-test (= 1.0 123.4 1.0+1.0i) #f)
-(num-test (= 1.0 123.4 1.234+1.234i) #f)
-(num-test (= 1.0 123.4 1/1) #f)
-(num-test (= 1.0 123.4 123.4) #f)
-(num-test (= 1.0 123.4 1234) #f)
-(num-test (= 1.0 123.4 1234/11) #f)
-(num-test (= 1.0 123.4) #f)
-(num-test (= 1.0 1234 -1.0+1.0i) #f)
-(num-test (= 1.0 1234 0.0+1.0i) #f)
-(num-test (= 1.0 1234 1) #f)
-(num-test (= 1.0 1234 1.0) #f)
-(num-test (= 1.0 1234 1.0+1.0i) #f)
-(num-test (= 1.0 1234 1.234+1.234i) #f)
-(num-test (= 1.0 1234 1/1) #f)
-(num-test (= 1.0 1234 123.4) #f)
-(num-test (= 1.0 1234 1234) #f)
-(num-test (= 1.0 1234 1234/11) #f)
-(num-test (= 1.0 1234) #f)
-(num-test (= 1.0 1234/11 -1.0+1.0i) #f)
-(num-test (= 1.0 1234/11 0.0+1.0i) #f)
-(num-test (= 1.0 1234/11 1) #f)
-(num-test (= 1.0 1234/11 1.0) #f)
-(num-test (= 1.0 1234/11 1.0+1.0i) #f)
-(num-test (= 1.0 1234/11 1.234+1.234i) #f)
-(num-test (= 1.0 1234/11 1/1) #f)
-(num-test (= 1.0 1234/11 123.4) #f)
-(num-test (= 1.0 1234/11 1234) #f)
-(num-test (= 1.0 1234/11 1234/11) #f)
-(num-test (= 1.0 1234/11) #f)
-(num-test (= 1.0+1.0i -1.0+1.0i -1.0+1.0i) #f)
-(num-test (= 1.0+1.0i -1.0+1.0i 0.0+1.0i) #f)
-(num-test (= 1.0+1.0i -1.0+1.0i 1) #f)
-(num-test (= 1.0+1.0i -1.0+1.0i 1.0) #f)
-(num-test (= 1.0+1.0i -1.0+1.0i 1.0+1.0i) #f)
-(num-test (= 1.0+1.0i -1.0+1.0i 1.234+1.234i) #f)
-(num-test (= 1.0+1.0i -1.0+1.0i 1/1) #f)
-(num-test (= 1.0+1.0i -1.0+1.0i 123.4) #f)
-(num-test (= 1.0+1.0i -1.0+1.0i 1234) #f)
-(num-test (= 1.0+1.0i -1.0+1.0i 1234/11) #f)
-(num-test (= 1.0+1.0i -1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 0.0+1.0i -1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 0.0+1.0i 0.0+1.0i) #f)
-(num-test (= 1.0+1.0i 0.0+1.0i 1) #f)
-(num-test (= 1.0+1.0i 0.0+1.0i 1.0) #f)
-(num-test (= 1.0+1.0i 0.0+1.0i 1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 0.0+1.0i 1.234+1.234i) #f)
-(num-test (= 1.0+1.0i 0.0+1.0i 1/1) #f)
-(num-test (= 1.0+1.0i 0.0+1.0i 123.4) #f)
-(num-test (= 1.0+1.0i 0.0+1.0i 1234) #f)
-(num-test (= 1.0+1.0i 0.0+1.0i 1234/11) #f)
-(num-test (= 1.0+1.0i 0.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1 -1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1 0.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1 1) #f)
-(num-test (= 1.0+1.0i 1 1.0) #f)
-(num-test (= 1.0+1.0i 1 1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1 1.234+1.234i) #f)
-(num-test (= 1.0+1.0i 1 1/1) #f)
-(num-test (= 1.0+1.0i 1 123.4) #f)
-(num-test (= 1.0+1.0i 1 1234) #f)
-(num-test (= 1.0+1.0i 1 1234/11) #f)
-(num-test (= 1.0+1.0i 1) #f)
-(num-test (= 1.0+1.0i 1.0 -1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1.0 0.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1.0 1) #f)
-(num-test (= 1.0+1.0i 1.0 1.0) #f)
-(num-test (= 1.0+1.0i 1.0 1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1.0 1.234+1.234i) #f)
-(num-test (= 1.0+1.0i 1.0 1/1) #f)
-(num-test (= 1.0+1.0i 1.0 123.4) #f)
-(num-test (= 1.0+1.0i 1.0 1234) #f)
-(num-test (= 1.0+1.0i 1.0 1234/11) #f)
-(num-test (= 1.0+1.0i 1.0) #f)
-(num-test (= 1.0+1.0i 1.0+1.0i -1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1.0+1.0i 0.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1.0+1.0i 1) #f)
-(num-test (= 1.0+1.0i 1.0+1.0i 1.0) #f)
-(num-test (= 1.0+1.0i 1.0+1.0i 1.0+1.0i) #t)
-(num-test (= 1.0+1.0i 1.0+1.0i 1.234+1.234i) #f)
-(num-test (= 1.0+1.0i 1.0+1.0i 1/1) #f)
-(num-test (= 1.0+1.0i 1.0+1.0i 123.4) #f)
-(num-test (= 1.0+1.0i 1.0+1.0i 1234) #f)
-(num-test (= 1.0+1.0i 1.0+1.0i 1234/11) #f)
-(num-test (= 1.0+1.0i 1.0+1.0i) #t)
-(num-test (= 1.0+1.0i 1.234+1.234i -1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1.234+1.234i 0.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1.234+1.234i 1) #f)
-(num-test (= 1.0+1.0i 1.234+1.234i 1.0) #f)
-(num-test (= 1.0+1.0i 1.234+1.234i 1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1.234+1.234i 1.234+1.234i) #f)
-(num-test (= 1.0+1.0i 1.234+1.234i 1/1) #f)
-(num-test (= 1.0+1.0i 1.234+1.234i 123.4) #f)
-(num-test (= 1.0+1.0i 1.234+1.234i 1234) #f)
-(num-test (= 1.0+1.0i 1.234+1.234i 1234/11) #f)
-(num-test (= 1.0+1.0i 1.234+1.234i) #f)
-(num-test (= 1.0+1.0i 1/1 -1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1/1 0.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1/1 1) #f)
-(num-test (= 1.0+1.0i 1/1 1.0) #f)
-(num-test (= 1.0+1.0i 1/1 1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1/1 1.234+1.234i) #f)
-(num-test (= 1.0+1.0i 1/1 1/1) #f)
-(num-test (= 1.0+1.0i 1/1 123.4) #f)
-(num-test (= 1.0+1.0i 1/1 1234) #f)
-(num-test (= 1.0+1.0i 1/1 1234/11) #f)
-(num-test (= 1.0+1.0i 1/1) #f)
-(num-test (= 1.0+1.0i 123.4 -1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 123.4 0.0+1.0i) #f)
-(num-test (= 1.0+1.0i 123.4 1) #f)
-(num-test (= 1.0+1.0i 123.4 1.0) #f)
-(num-test (= 1.0+1.0i 123.4 1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 123.4 1.234+1.234i) #f)
-(num-test (= 1.0+1.0i 123.4 1/1) #f)
-(num-test (= 1.0+1.0i 123.4 123.4) #f)
-(num-test (= 1.0+1.0i 123.4 1234) #f)
-(num-test (= 1.0+1.0i 123.4 1234/11) #f)
-(num-test (= 1.0+1.0i 123.4) #f)
-(num-test (= 1.0+1.0i 1234 -1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1234 0.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1234 1) #f)
-(num-test (= 1.0+1.0i 1234 1.0) #f)
-(num-test (= 1.0+1.0i 1234 1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1234 1.234+1.234i) #f)
-(num-test (= 1.0+1.0i 1234 1/1) #f)
-(num-test (= 1.0+1.0i 1234 123.4) #f)
-(num-test (= 1.0+1.0i 1234 1234) #f)
-(num-test (= 1.0+1.0i 1234 1234/11) #f)
-(num-test (= 1.0+1.0i 1234) #f)
-(num-test (= 1.0+1.0i 1234/11 -1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1234/11 0.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1234/11 1) #f)
-(num-test (= 1.0+1.0i 1234/11 1.0) #f)
-(num-test (= 1.0+1.0i 1234/11 1.0+1.0i) #f)
-(num-test (= 1.0+1.0i 1234/11 1.234+1.234i) #f)
-(num-test (= 1.0+1.0i 1234/11 1/1) #f)
-(num-test (= 1.0+1.0i 1234/11 123.4) #f)
-(num-test (= 1.0+1.0i 1234/11 1234) #f)
-(num-test (= 1.0+1.0i 1234/11 1234/11) #f)
-(num-test (= 1.0+1.0i 1234/11) #f)
-(num-test (= 1.234+1.234i -1.0+1.0i) #f)
-(num-test (= 1.234+1.234i 0.0+1.0i) #f)
-(num-test (= 1.234+1.234i 1) #f)
-(num-test (= 1.234+1.234i 1.0) #f)
-(num-test (= 1.234+1.234i 1.0+1.0i) #f)
-(num-test (= 1.234+1.234i 1.234+1.234i) #t)
-(num-test (= 1.234+1.234i 1/1) #f)
-(num-test (= 1.234+1.234i 123.4) #f)
-(num-test (= 1.234+1.234i 1234) #f)
-(num-test (= 1.234+1.234i 1234/11) #f)
-(num-test (= 123.4 -1.0+1.0i -1.0+1.0i) #f)
-(num-test (= 123.4 -1.0+1.0i 0.0+1.0i) #f)
-(num-test (= 123.4 -1.0+1.0i 1) #f)
-(num-test (= 123.4 -1.0+1.0i 1.0) #f)
-(num-test (= 123.4 -1.0+1.0i 1.0+1.0i) #f)
-(num-test (= 123.4 -1.0+1.0i 1.234+1.234i) #f)
-(num-test (= 123.4 -1.0+1.0i 1/1) #f)
-(num-test (= 123.4 -1.0+1.0i 123.4) #f)
-(num-test (= 123.4 -1.0+1.0i 1234) #f)
-(num-test (= 123.4 -1.0+1.0i 1234/11) #f)
-(num-test (= 123.4 -1.0+1.0i) #f)
-(num-test (= 123.4 0.0+1.0i -1.0+1.0i) #f)
-(num-test (= 123.4 0.0+1.0i 0.0+1.0i) #f)
-(num-test (= 123.4 0.0+1.0i 1) #f)
-(num-test (= 123.4 0.0+1.0i 1.0) #f)
-(num-test (= 123.4 0.0+1.0i 1.0+1.0i) #f)
-(num-test (= 123.4 0.0+1.0i 1.234+1.234i) #f)
-(num-test (= 123.4 0.0+1.0i 1/1) #f)
-(num-test (= 123.4 0.0+1.0i 123.4) #f)
-(num-test (= 123.4 0.0+1.0i 1234) #f)
-(num-test (= 123.4 0.0+1.0i 1234/11) #f)
-(num-test (= 123.4 0.0+1.0i) #f)
-(num-test (= 123.4 1 -1.0+1.0i) #f)
-(num-test (= 123.4 1 0.0+1.0i) #f)
-(num-test (= 123.4 1 1) #f)
-(num-test (= 123.4 1 1.0) #f)
-(num-test (= 123.4 1 1.0+1.0i) #f)
-(num-test (= 123.4 1 1.234+1.234i) #f)
-(num-test (= 123.4 1 1/1) #f)
-(num-test (= 123.4 1 123.4) #f)
-(num-test (= 123.4 1 1234) #f)
-(num-test (= 123.4 1 1234/11) #f)
-(num-test (= 123.4 1) #f)
-(num-test (= 123.4 1.0 -1.0+1.0i) #f)
-(num-test (= 123.4 1.0 0.0+1.0i) #f)
-(num-test (= 123.4 1.0 1) #f)
-(num-test (= 123.4 1.0 1.0) #f)
-(num-test (= 123.4 1.0 1.0+1.0i) #f)
-(num-test (= 123.4 1.0 1.234+1.234i) #f)
-(num-test (= 123.4 1.0 1/1) #f)
-(num-test (= 123.4 1.0 123.4) #f)
-(num-test (= 123.4 1.0 1234) #f)
-(num-test (= 123.4 1.0 1234/11) #f)
-(num-test (= 123.4 1.0) #f)
-(num-test (= 123.4 1.0+1.0i -1.0+1.0i) #f)
-(num-test (= 123.4 1.0+1.0i 0.0+1.0i) #f)
-(num-test (= 123.4 1.0+1.0i 1) #f)
-(num-test (= 123.4 1.0+1.0i 1.0) #f)
-(num-test (= 123.4 1.0+1.0i 1.0+1.0i) #f)
-(num-test (= 123.4 1.0+1.0i 1.234+1.234i) #f)
-(num-test (= 123.4 1.0+1.0i 1/1) #f)
-(num-test (= 123.4 1.0+1.0i 123.4) #f)
-(num-test (= 123.4 1.0+1.0i 1234) #f)
-(num-test (= 123.4 1.0+1.0i 1234/11) #f)
-(num-test (= 123.4 1.0+1.0i) #f)
-(num-test (= 123.4 1.234+1.234i -1.0+1.0i) #f)
-(num-test (= 123.4 1.234+1.234i 0.0+1.0i) #f)
-(num-test (= 123.4 1.234+1.234i 1) #f)
-(num-test (= 123.4 1.234+1.234i 1.0) #f)
-(num-test (= 123.4 1.234+1.234i 1.0+1.0i) #f)
-(num-test (= 123.4 1.234+1.234i 1.234+1.234i) #f)
-(num-test (= 123.4 1.234+1.234i 1/1) #f)
-(num-test (= 123.4 1.234+1.234i 123.4) #f)
-(num-test (= 123.4 1.234+1.234i 1234) #f)
-(num-test (= 123.4 1.234+1.234i 1234/11) #f)
-(num-test (= 123.4 1.234+1.234i) #f)
-(num-test (= 123.4 1/1 -1.0+1.0i) #f)
-(num-test (= 123.4 1/1 0.0+1.0i) #f)
-(num-test (= 123.4 1/1 1) #f)
-(num-test (= 123.4 1/1 1.0) #f)
-(num-test (= 123.4 1/1 1.0+1.0i) #f)
-(num-test (= 123.4 1/1 1.234+1.234i) #f)
-(num-test (= 123.4 1/1 1/1) #f)
-(num-test (= 123.4 1/1 123.4) #f)
-(num-test (= 123.4 1/1 1234) #f)
-(num-test (= 123.4 1/1 1234/11) #f)
-(num-test (= 123.4 1/1) #f)
-(num-test (= 123.4 123.4 -1.0+1.0i) #f)
-(num-test (= 123.4 123.4 0.0+1.0i) #f)
-(num-test (= 123.4 123.4 1) #f)
-(num-test (= 123.4 123.4 1.0) #f)
-(num-test (= 123.4 123.4 1.0+1.0i) #f)
-(num-test (= 123.4 123.4 1.234+1.234i) #f)
-(num-test (= 123.4 123.4 1/1) #f)
-(num-test (= 123.4 123.4 123.4) #t)
-(num-test (= 123.4 123.4 1234) #f)
-(num-test (= 123.4 123.4 1234/11) #f)
-(num-test (= 123.4 123.4) #t)
-(num-test (= 123.4 1234 -1.0+1.0i) #f)
-(num-test (= 123.4 1234 0.0+1.0i) #f)
-(num-test (= 123.4 1234 1) #f)
-(num-test (= 123.4 1234 1.0) #f)
-(num-test (= 123.4 1234 1.0+1.0i) #f)
-(num-test (= 123.4 1234 1.234+1.234i) #f)
-(num-test (= 123.4 1234 1/1) #f)
-(num-test (= 123.4 1234 123.4) #f)
-(num-test (= 123.4 1234 1234) #f)
-(num-test (= 123.4 1234 1234/11) #f)
-(num-test (= 123.4 1234) #f)
-(num-test (= 123.4 1234/11 -1.0+1.0i) #f)
-(num-test (= 123.4 1234/11 0.0+1.0i) #f)
-(num-test (= 123.4 1234/11 1) #f)
-(num-test (= 123.4 1234/11 1.0) #f)
-(num-test (= 123.4 1234/11 1.0+1.0i) #f)
-(num-test (= 123.4 1234/11 1.234+1.234i) #f)
-(num-test (= 123.4 1234/11 1/1) #f)
-(num-test (= 123.4 1234/11 123.4) #f)
-(num-test (= 123.4 1234/11 1234) #f)
-(num-test (= 123.4 1234/11 1234/11) #f)
-(num-test (= 123.4 1234/11) #f)
-(num-test (= 1234 -1.0+1.0i) #f)
-(num-test (= 1234 0.0+1.0i) #f)
-(num-test (= 1234 1) #f)
-(num-test (= 1234 1.0) #f)
-(num-test (= 1234 1.0+1.0i) #f)
-(num-test (= 1234 1.234+1.234i) #f)
-(num-test (= 1234 1/1) #f)
-(num-test (= 1234 123.4) #f)
-(num-test (= 1234 1234) #t)
-(num-test (= 1234 1234/11) #f)
-(num-test (= 1234/11 -1.0+1.0i) #f)
-(num-test (= 1234/11 0.0+1.0i) #f)
-(num-test (= 1234/11 1) #f)
-(num-test (= 1234/11 1.0) #f)
-(num-test (= 1234/11 1.0+1.0i) #f)
-(num-test (= 1234/11 1.234+1.234i) #f)
-(num-test (= 1234/11 1/1) #f)
-(num-test (= 1234/11 123.4) #f)
-(num-test (= 1234/11 1234) #f)
-(num-test (= 1234/11 1234/11) #t)
-(num-test (= 2 -1) #f)
-(num-test (= 2 -2) #f)
+(test (= -1.0+1.0i -1.0+1.0i) #t)
+(test (= -1.0+1.0i 0.0+1.0i) #f)
+(test (= -1.0+1.0i 1) #f)
+(test (= -1.0+1.0i 1.0) #f)
+(test (= -1.0+1.0i 1.0+1.0i) #f)
+(test (= -1.0+1.0i 1.234+1.234i) #f)
+(test (= -1.0+1.0i 1/1) #f)
+(test (= -1.0+1.0i 123.4) #f)
+(test (= -1.0+1.0i 1234) #f)
+(test (= -1.0+1.0i 1234/11) #f)
+(test (= 0 -1.0+1.0i) #f)
+(test (= 0 0.0+1.0i) #f)
+(test (= 0 1 -1.0+1.0i) #f)
+(test (= 0 1 0.0+1.0i) #f)
+(test (= 0 1 1) #f)
+(test (= 0 1 1.0) #f)
+(test (= 0 1 1.0+1.0i) #f)
+(test (= 0 1 1.234+1.234i) #f)
+(test (= 0 1 1/1) #f)
+(test (= 0 1 123.4) #f)
+(test (= 0 1 1234) #f)
+(test (= 0 1 1234/11) #f)
+(test (= 0 1) #f)
+(test (= 0 1.0 -1.0+1.0i) #f)
+(test (= 0 1.0 0.0+1.0i) #f)
+(test (= 0 1.0 1) #f)
+(test (= 0 1.0 1.0) #f)
+(test (= 0 1.0 1.0+1.0i) #f)
+(test (= 0 1.0 1.234+1.234i) #f)
+(test (= 0 1.0 1/1) #f)
+(test (= 0 1.0 123.4) #f)
+(test (= 0 1.0 1234) #f)
+(test (= 0 1.0 1234/11) #f)
+(test (= 0 1.0) #f)
+(test (= 0 1.0+1.0i -1.0+1.0i) #f)
+(test (= 0 1.0+1.0i 0.0+1.0i) #f)
+(test (= 0 1.0+1.0i 1) #f)
+(test (= 0 1.0+1.0i 1.0) #f)
+(test (= 0 1.0+1.0i 1.0+1.0i) #f)
+(test (= 0 1.0+1.0i 1.234+1.234i) #f)
+(test (= 0 1.0+1.0i 1/1) #f)
+(test (= 0 1.0+1.0i 123.4) #f)
+(test (= 0 1.0+1.0i 1234) #f)
+(test (= 0 1.0+1.0i 1234/11) #f)
+(test (= 0 1.0+1.0i) #f)
+(test (= 0 1.234+1.234i) #f)
+(test (= 0 1/1 -1.0+1.0i) #f)
+(test (= 0 1/1 0.0+1.0i) #f)
+(test (= 0 1/1 1) #f)
+(test (= 0 1/1 1.0) #f)
+(test (= 0 1/1 1.0+1.0i) #f)
+(test (= 0 1/1 1.234+1.234i) #f)
+(test (= 0 1/1 1/1) #f)
+(test (= 0 1/1 123.4) #f)
+(test (= 0 1/1 1234) #f)
+(test (= 0 1/1 1234/11) #f)
+(test (= 0 1/1) #f)
+(test (= 0 123.4) #f)
+(test (= 0 1234) #f)
+(test (= 0 1234/11) #f)
+(test (= 0.0 -1.0+1.0i -1.0+1.0i) #f)
+(test (= 0.0 -1.0+1.0i 0.0+1.0i) #f)
+(test (= 0.0 -1.0+1.0i 1) #f)
+(test (= 0.0 -1.0+1.0i 1.0) #f)
+(test (= 0.0 -1.0+1.0i 1.0+1.0i) #f)
+(test (= 0.0 -1.0+1.0i 1.234+1.234i) #f)
+(test (= 0.0 -1.0+1.0i 1/1) #f)
+(test (= 0.0 -1.0+1.0i 123.4) #f)
+(test (= 0.0 -1.0+1.0i 1234) #f)
+(test (= 0.0 -1.0+1.0i 1234/11) #f)
+(test (= 0.0 -1.0+1.0i) #f)
+(test (= 0.0 0.0+1.0i -1.0+1.0i) #f)
+(test (= 0.0 0.0+1.0i 0.0+1.0i) #f)
+(test (= 0.0 0.0+1.0i 1) #f)
+(test (= 0.0 0.0+1.0i 1.0) #f)
+(test (= 0.0 0.0+1.0i 1.0+1.0i) #f)
+(test (= 0.0 0.0+1.0i 1.234+1.234i) #f)
+(test (= 0.0 0.0+1.0i 1/1) #f)
+(test (= 0.0 0.0+1.0i 123.4) #f)
+(test (= 0.0 0.0+1.0i 1234) #f)
+(test (= 0.0 0.0+1.0i 1234/11) #f)
+(test (= 0.0 0.0+1.0i) #f)
+(test (= 0.0 1 -1.0+1.0i) #f)
+(test (= 0.0 1 0.0+1.0i) #f)
+(test (= 0.0 1 1.0) #f)
+(test (= 0.0 1 1.0+1.0i) #f)
+(test (= 0.0 1 1.234+1.234i) #f)
+(test (= 0.0 1 1/1) #f)
+(test (= 0.0 1 123.4) #f)
+(test (= 0.0 1 1234) #f)
+(test (= 0.0 1 1234/11) #f)
+(test (= 0.0 1) #f)
+(test (= 0.0 1.0 -1.0+1.0i) #f)
+(test (= 0.0 1.0 0.0+1.0i) #f)
+(test (= 0.0 1.0 1) #f)
+(test (= 0.0 1.0 1.0) #f)
+(test (= 0.0 1.0 1.0+1.0i) #f)
+(test (= 0.0 1.0 1.234+1.234i) #f)
+(test (= 0.0 1.0 1/1) #f)
+(test (= 0.0 1.0 123.4) #f)
+(test (= 0.0 1.0 1234) #f)
+(test (= 0.0 1.0 1234/11) #f)
+(test (= 0.0 1.0) #f)
+(test (= 0.0 1.0+1.0i -1.0+1.0i) #f)
+(test (= 0.0 1.0+1.0i 0.0+1.0i) #f)
+(test (= 0.0 1.0+1.0i 1) #f)
+(test (= 0.0 1.0+1.0i 1.0) #f)
+(test (= 0.0 1.0+1.0i 1.0+1.0i) #f)
+(test (= 0.0 1.0+1.0i 1.234+1.234i) #f)
+(test (= 0.0 1.0+1.0i 1/1) #f)
+(test (= 0.0 1.0+1.0i 123.4) #f)
+(test (= 0.0 1.0+1.0i 1234) #f)
+(test (= 0.0 1.0+1.0i 1234/11) #f)
+(test (= 0.0 1.0+1.0i) #f)
+(test (= 0.0 1.234+1.234i -1.0+1.0i) #f)
+(test (= 0.0 1.234+1.234i 0.0+1.0i) #f)
+(test (= 0.0 1.234+1.234i 1) #f)
+(test (= 0.0 1.234+1.234i 1.0) #f)
+(test (= 0.0 1.234+1.234i 1.0+1.0i) #f)
+(test (= 0.0 1.234+1.234i 1.234+1.234i) #f)
+(test (= 0.0 1.234+1.234i 1/1) #f)
+(test (= 0.0 1.234+1.234i 123.4) #f)
+(test (= 0.0 1.234+1.234i 1234) #f)
+(test (= 0.0 1.234+1.234i 1234/11) #f)
+(test (= 0.0 1.234+1.234i) #f)
+(test (= 0.0 1/1 -1.0+1.0i) #f)
+(test (= 0.0 1/1 0.0+1.0i) #f)
+(test (= 0.0 1/1 1) #f)
+(test (= 0.0 1/1 1.0) #f)
+(test (= 0.0 1/1 1.0+1.0i) #f)
+(test (= 0.0 1/1 1.234+1.234i) #f)
+(test (= 0.0 1/1 1/1) #f)
+(test (= 0.0 1/1 123.4) #f)
+(test (= 0.0 1/1 1234) #f)
+(test (= 0.0 1/1 1234/11) #f)
+(test (= 0.0 1/1) #f)
+(test (= 0.0 123.4 -1.0+1.0i) #f)
+(test (= 0.0 123.4 0.0+1.0i) #f)
+(test (= 0.0 123.4 1) #f)
+(test (= 0.0 123.4 1.0) #f)
+(test (= 0.0 123.4 1.0+1.0i) #f)
+(test (= 0.0 123.4 1.234+1.234i) #f)
+(test (= 0.0 123.4 1/1) #f)
+(test (= 0.0 123.4 123.4) #f)
+(test (= 0.0 123.4 1234) #f)
+(test (= 0.0 123.4 1234/11) #f)
+(test (= 0.0 123.4) #f)
+(test (= 0.0 1234 -1.0+1.0i) #f)
+(test (= 0.0 1234 0.0+1.0i) #f)
+(test (= 0.0 1234 1) #f)
+(test (= 0.0 1234 1.0) #f)
+(test (= 0.0 1234 1.0+1.0i) #f)
+(test (= 0.0 1234 1.234+1.234i) #f)
+(test (= 0.0 1234 1/1) #f)
+(test (= 0.0 1234 123.4) #f)
+(test (= 0.0 1234 1234) #f)
+(test (= 0.0 1234 1234/11) #f)
+(test (= 0.0 1234) #f)
+(test (= 0.0 1234/11 -1.0+1.0i) #f)
+(test (= 0.0 1234/11 0.0+1.0i) #f)
+(test (= 0.0 1234/11 1) #f)
+(test (= 0.0 1234/11 1.0) #f)
+(test (= 0.0 1234/11 1.0+1.0i) #f)
+(test (= 0.0 1234/11 1.234+1.234i) #f)
+(test (= 0.0 1234/11 1/1) #f)
+(test (= 0.0 1234/11 123.4) #f)
+(test (= 0.0 1234/11 1234) #f)
+(test (= 0.0 1234/11 1234/11) #f)
+(test (= 0.0 1234/11) #f)
+(test (= 0.0+1.0i -1.0+1.0i) #f)
+(test (= 0.0+1.0i 0.0+1.0i) #t)
+(test (= 0.0+1.0i 1) #f)
+(test (= 0.0+1.0i 1.0) #f)
+(test (= 0.0+1.0i 1.0+1.0i) #f)
+(test (= 0.0+1.0i 1.234+1.234i) #f)
+(test (= 0.0+1.0i 1/1) #f)
+(test (= 0.0+1.0i 123.4) #f)
+(test (= 0.0+1.0i 1234) #f)
+(test (= 0.0+1.0i 1234/11) #f)
+(test (= 1 -1) #f)
+(test (= 1 -1.0+1.0i) #f)
+(test (= 1 -2) #f)
+(test (= 1 0.0+1.0i) #f)
+(test (= 1 1 -1.0+1.0i) #f)
+(test (= 1 1 0.0+1.0i) #f)
+(test (= 1 1 1) #t)
+(test (= 1 1 1.0) #t)
+(test (= 1 1 1.0+1.0i) #f)
+(test (= 1 1 1.234+1.234i) #f)
+(test (= 1 1 1/1) #t)
+(test (= 1 1 123.4) #f)
+(test (= 1 1 1234) #f)
+(test (= 1 1 1234/11) #f)
+(test (= 1 1) #t)
+(test (= 1 1.0 -1.0+1.0i) #f)
+(test (= 1 1.0 0.0+1.0i) #f)
+(test (= 1 1.0 1) #t)
+(test (= 1 1.0 1.0) #t)
+(test (= 1 1.0 1.0+1.0i) #f)
+(test (= 1 1.0 1.234+1.234i) #f)
+(test (= 1 1.0 1/1) #t)
+(test (= 1 1.0 123.4) #f)
+(test (= 1 1.0 1234) #f)
+(test (= 1 1.0 1234/11) #f)
+(test (= 1 1.0) #t)
+(test (= 1 1.0+1.0i -1.0+1.0i) #f)
+(test (= 1 1.0+1.0i 0.0+1.0i) #f)
+(test (= 1 1.0+1.0i 1) #f)
+(test (= 1 1.0+1.0i 1.0) #f)
+(test (= 1 1.0+1.0i 1.0+1.0i) #f)
+(test (= 1 1.0+1.0i 1.234+1.234i) #f)
+(test (= 1 1.0+1.0i 1/1) #f)
+(test (= 1 1.0+1.0i 123.4) #f)
+(test (= 1 1.0+1.0i 1234) #f)
+(test (= 1 1.0+1.0i 1234/11) #f)
+(test (= 1 1.0+1.0i) #f)
+(test (= 1 1.234+1.234i) #f)
+(test (= 1 1/1 -1.0+1.0i) #f)
+(test (= 1 1/1 0.0+1.0i) #f)
+(test (= 1 1/1 1) #t)
+(test (= 1 1/1 1.0) #t)
+(test (= 1 1/1 1.0+1.0i) #f)
+(test (= 1 1/1 1.234+1.234i) #f)
+(test (= 1 1/1 1/1) #t)
+(test (= 1 1/1 123.4) #f)
+(test (= 1 1/1 1234) #f)
+(test (= 1 1/1 1234/11) #f)
+(test (= 1 1/1) #t)
+(test (= 1 123.4) #f)
+(test (= 1 1234) #f)
+(test (= 1 1234/11) #f)
+(test (= 1.0 -1.0) #f)
+(test (= 1.0 -1.0+1.0i -1.0+1.0i) #f)
+(test (= 1.0 -1.0+1.0i 0.0+1.0i) #f)
+(test (= 1.0 -1.0+1.0i 1) #f)
+(test (= 1.0 -1.0+1.0i 1.0) #f)
+(test (= 1.0 -1.0+1.0i 1.0+1.0i) #f)
+(test (= 1.0 -1.0+1.0i 1.234+1.234i) #f)
+(test (= 1.0 -1.0+1.0i 1/1) #f)
+(test (= 1.0 -1.0+1.0i 123.4) #f)
+(test (= 1.0 -1.0+1.0i 1234) #f)
+(test (= 1.0 -1.0+1.0i 1234/11) #f)
+(test (= 1.0 -1.0+1.0i) #f)
+(test (= 1.0 0.0+1.0i -1.0+1.0i) #f)
+(test (= 1.0 0.0+1.0i 0.0+1.0i) #f)
+(test (= 1.0 0.0+1.0i 1) #f)
+(test (= 1.0 0.0+1.0i 1.0) #f)
+(test (= 1.0 0.0+1.0i 1.0+1.0i) #f)
+(test (= 1.0 0.0+1.0i 1.234+1.234i) #f)
+(test (= 1.0 0.0+1.0i 1/1) #f)
+(test (= 1.0 0.0+1.0i 123.4) #f)
+(test (= 1.0 0.0+1.0i 1234) #f)
+(test (= 1.0 0.0+1.0i 1234/11) #f)
+(test (= 1.0 0.0+1.0i) #f)
+(test (= 1.0 1 -1.0+1.0i) #f)
+(test (= 1.0 1 0.0+1.0i) #f)
+(test (= 1.0 1 1) #t)
+(test (= 1.0 1 1.0) #t)
+(test (= 1.0 1 1.0+1.0i) #f)
+(test (= 1.0 1 1.234+1.234i) #f)
+(test (= 1.0 1 1/1) #t)
+(test (= 1.0 1 123.4) #f)
+(test (= 1.0 1 1234) #f)
+(test (= 1.0 1 1234/11) #f)
+(test (= 1.0 1) #t)
+(test (= 1.0 1.0 -1.0+1.0i) #f)
+(test (= 1.0 1.0 0.0+1.0i) #f)
+(test (= 1.0 1.0 1) #t)
+(test (= 1.0 1.0 1.0) #t)
+(test (= 1.0 1.0 1.0+1.0i) #f)
+(test (= 1.0 1.0 1.234+1.234i) #f)
+(test (= 1.0 1.0 1/1) #t)
+(test (= 1.0 1.0 123.4) #f)
+(test (= 1.0 1.0 1234) #f)
+(test (= 1.0 1.0 1234/11) #f)
+(test (= 1.0 1.0) #t)
+(test (= 1.0 1.0+1.0i -1.0+1.0i) #f)
+(test (= 1.0 1.0+1.0i 0.0+1.0i) #f)
+(test (= 1.0 1.0+1.0i 1) #f)
+(test (= 1.0 1.0+1.0i 1.0) #f)
+(test (= 1.0 1.0+1.0i 1.0+1.0i) #f)
+(test (= 1.0 1.0+1.0i 1.234+1.234i) #f)
+(test (= 1.0 1.0+1.0i 1/1) #f)
+(test (= 1.0 1.0+1.0i 123.4) #f)
+(test (= 1.0 1.0+1.0i 1234) #f)
+(test (= 1.0 1.0+1.0i 1234/11) #f)
+(test (= 1.0 1.0+1.0i) #f)
+(test (= 1.0 1.234+1.234i -1.0+1.0i) #f)
+(test (= 1.0 1.234+1.234i 0.0+1.0i) #f)
+(test (= 1.0 1.234+1.234i 1) #f)
+(test (= 1.0 1.234+1.234i 1.0) #f)
+(test (= 1.0 1.234+1.234i 1.0+1.0i) #f)
+(test (= 1.0 1.234+1.234i 1.234+1.234i) #f)
+(test (= 1.0 1.234+1.234i 1/1) #f)
+(test (= 1.0 1.234+1.234i 123.4) #f)
+(test (= 1.0 1.234+1.234i 1234) #f)
+(test (= 1.0 1.234+1.234i 1234/11) #f)
+(test (= 1.0 1.234+1.234i) #f)
+(test (= 1.0 1/1 -1.0+1.0i) #f)
+(test (= 1.0 1/1 0.0+1.0i) #f)
+(test (= 1.0 1/1 1) #t)
+(test (= 1.0 1/1 1.0) #t)
+(test (= 1.0 1/1 1.0+1.0i) #f)
+(test (= 1.0 1/1 1.234+1.234i) #f)
+(test (= 1.0 1/1 1/1) #t)
+(test (= 1.0 1/1 123.4) #f)
+(test (= 1.0 1/1 1234) #f)
+(test (= 1.0 1/1 1234/11) #f)
+(test (= 1.0 1/1) #t)
+(test (= 1.0 123.4 -1.0+1.0i) #f)
+(test (= 1.0 123.4 0.0+1.0i) #f)
+(test (= 1.0 123.4 1) #f)
+(test (= 1.0 123.4 1.0) #f)
+(test (= 1.0 123.4 1.0+1.0i) #f)
+(test (= 1.0 123.4 1.234+1.234i) #f)
+(test (= 1.0 123.4 1/1) #f)
+(test (= 1.0 123.4 123.4) #f)
+(test (= 1.0 123.4 1234) #f)
+(test (= 1.0 123.4 1234/11) #f)
+(test (= 1.0 123.4) #f)
+(test (= 1.0 1234 -1.0+1.0i) #f)
+(test (= 1.0 1234 0.0+1.0i) #f)
+(test (= 1.0 1234 1) #f)
+(test (= 1.0 1234 1.0) #f)
+(test (= 1.0 1234 1.0+1.0i) #f)
+(test (= 1.0 1234 1.234+1.234i) #f)
+(test (= 1.0 1234 1/1) #f)
+(test (= 1.0 1234 123.4) #f)
+(test (= 1.0 1234 1234) #f)
+(test (= 1.0 1234 1234/11) #f)
+(test (= 1.0 1234) #f)
+(test (= 1.0 1234/11 -1.0+1.0i) #f)
+(test (= 1.0 1234/11 0.0+1.0i) #f)
+(test (= 1.0 1234/11 1) #f)
+(test (= 1.0 1234/11 1.0) #f)
+(test (= 1.0 1234/11 1.0+1.0i) #f)
+(test (= 1.0 1234/11 1.234+1.234i) #f)
+(test (= 1.0 1234/11 1/1) #f)
+(test (= 1.0 1234/11 123.4) #f)
+(test (= 1.0 1234/11 1234) #f)
+(test (= 1.0 1234/11 1234/11) #f)
+(test (= 1.0 1234/11) #f)
+(test (= 1.0+1.0i -1.0+1.0i -1.0+1.0i) #f)
+(test (= 1.0+1.0i -1.0+1.0i 0.0+1.0i) #f)
+(test (= 1.0+1.0i -1.0+1.0i 1) #f)
+(test (= 1.0+1.0i -1.0+1.0i 1.0) #f)
+(test (= 1.0+1.0i -1.0+1.0i 1.0+1.0i) #f)
+(test (= 1.0+1.0i -1.0+1.0i 1.234+1.234i) #f)
+(test (= 1.0+1.0i -1.0+1.0i 1/1) #f)
+(test (= 1.0+1.0i -1.0+1.0i 123.4) #f)
+(test (= 1.0+1.0i -1.0+1.0i 1234) #f)
+(test (= 1.0+1.0i -1.0+1.0i 1234/11) #f)
+(test (= 1.0+1.0i -1.0+1.0i) #f)
+(test (= 1.0+1.0i 0.0+1.0i -1.0+1.0i) #f)
+(test (= 1.0+1.0i 0.0+1.0i 0.0+1.0i) #f)
+(test (= 1.0+1.0i 0.0+1.0i 1) #f)
+(test (= 1.0+1.0i 0.0+1.0i 1.0) #f)
+(test (= 1.0+1.0i 0.0+1.0i 1.0+1.0i) #f)
+(test (= 1.0+1.0i 0.0+1.0i 1.234+1.234i) #f)
+(test (= 1.0+1.0i 0.0+1.0i 1/1) #f)
+(test (= 1.0+1.0i 0.0+1.0i 123.4) #f)
+(test (= 1.0+1.0i 0.0+1.0i 1234) #f)
+(test (= 1.0+1.0i 0.0+1.0i 1234/11) #f)
+(test (= 1.0+1.0i 0.0+1.0i) #f)
+(test (= 1.0+1.0i 1 -1.0+1.0i) #f)
+(test (= 1.0+1.0i 1 0.0+1.0i) #f)
+(test (= 1.0+1.0i 1 1) #f)
+(test (= 1.0+1.0i 1 1.0) #f)
+(test (= 1.0+1.0i 1 1.0+1.0i) #f)
+(test (= 1.0+1.0i 1 1.234+1.234i) #f)
+(test (= 1.0+1.0i 1 1/1) #f)
+(test (= 1.0+1.0i 1 123.4) #f)
+(test (= 1.0+1.0i 1 1234) #f)
+(test (= 1.0+1.0i 1 1234/11) #f)
+(test (= 1.0+1.0i 1) #f)
+(test (= 1.0+1.0i 1.0 -1.0+1.0i) #f)
+(test (= 1.0+1.0i 1.0 0.0+1.0i) #f)
+(test (= 1.0+1.0i 1.0 1) #f)
+(test (= 1.0+1.0i 1.0 1.0) #f)
+(test (= 1.0+1.0i 1.0 1.0+1.0i) #f)
+(test (= 1.0+1.0i 1.0 1.234+1.234i) #f)
+(test (= 1.0+1.0i 1.0 1/1) #f)
+(test (= 1.0+1.0i 1.0 123.4) #f)
+(test (= 1.0+1.0i 1.0 1234) #f)
+(test (= 1.0+1.0i 1.0 1234/11) #f)
+(test (= 1.0+1.0i 1.0) #f)
+(test (= 1.0+1.0i 1.0+1.0i -1.0+1.0i) #f)
+(test (= 1.0+1.0i 1.0+1.0i 0.0+1.0i) #f)
+(test (= 1.0+1.0i 1.0+1.0i 1) #f)
+(test (= 1.0+1.0i 1.0+1.0i 1.0) #f)
+(test (= 1.0+1.0i 1.0+1.0i 1.0+1.0i) #t)
+(test (= 1.0+1.0i 1.0+1.0i 1.234+1.234i) #f)
+(test (= 1.0+1.0i 1.0+1.0i 1/1) #f)
+(test (= 1.0+1.0i 1.0+1.0i 123.4) #f)
+(test (= 1.0+1.0i 1.0+1.0i 1234) #f)
+(test (= 1.0+1.0i 1.0+1.0i 1234/11) #f)
+(test (= 1.0+1.0i 1.0+1.0i) #t)
+(test (= 1.0+1.0i 1.234+1.234i -1.0+1.0i) #f)
+(test (= 1.0+1.0i 1.234+1.234i 0.0+1.0i) #f)
+(test (= 1.0+1.0i 1.234+1.234i 1) #f)
+(test (= 1.0+1.0i 1.234+1.234i 1.0) #f)
+(test (= 1.0+1.0i 1.234+1.234i 1.0+1.0i) #f)
+(test (= 1.0+1.0i 1.234+1.234i 1.234+1.234i) #f)
+(test (= 1.0+1.0i 1.234+1.234i 1/1) #f)
+(test (= 1.0+1.0i 1.234+1.234i 123.4) #f)
+(test (= 1.0+1.0i 1.234+1.234i 1234) #f)
+(test (= 1.0+1.0i 1.234+1.234i 1234/11) #f)
+(test (= 1.0+1.0i 1.234+1.234i) #f)
+(test (= 1.0+1.0i 1/1 -1.0+1.0i) #f)
+(test (= 1.0+1.0i 1/1 0.0+1.0i) #f)
+(test (= 1.0+1.0i 1/1 1) #f)
+(test (= 1.0+1.0i 1/1 1.0) #f)
+(test (= 1.0+1.0i 1/1 1.0+1.0i) #f)
+(test (= 1.0+1.0i 1/1 1.234+1.234i) #f)
+(test (= 1.0+1.0i 1/1 1/1) #f)
+(test (= 1.0+1.0i 1/1 123.4) #f)
+(test (= 1.0+1.0i 1/1 1234) #f)
+(test (= 1.0+1.0i 1/1 1234/11) #f)
+(test (= 1.0+1.0i 1/1) #f)
+(test (= 1.0+1.0i 123.4 -1.0+1.0i) #f)
+(test (= 1.0+1.0i 123.4 0.0+1.0i) #f)
+(test (= 1.0+1.0i 123.4 1) #f)
+(test (= 1.0+1.0i 123.4 1.0) #f)
+(test (= 1.0+1.0i 123.4 1.0+1.0i) #f)
+(test (= 1.0+1.0i 123.4 1.234+1.234i) #f)
+(test (= 1.0+1.0i 123.4 1/1) #f)
+(test (= 1.0+1.0i 123.4 123.4) #f)
+(test (= 1.0+1.0i 123.4 1234) #f)
+(test (= 1.0+1.0i 123.4 1234/11) #f)
+(test (= 1.0+1.0i 123.4) #f)
+(test (= 1.0+1.0i 1234 -1.0+1.0i) #f)
+(test (= 1.0+1.0i 1234 0.0+1.0i) #f)
+(test (= 1.0+1.0i 1234 1) #f)
+(test (= 1.0+1.0i 1234 1.0) #f)
+(test (= 1.0+1.0i 1234 1.0+1.0i) #f)
+(test (= 1.0+1.0i 1234 1.234+1.234i) #f)
+(test (= 1.0+1.0i 1234 1/1) #f)
+(test (= 1.0+1.0i 1234 123.4) #f)
+(test (= 1.0+1.0i 1234 1234) #f)
+(test (= 1.0+1.0i 1234 1234/11) #f)
+(test (= 1.0+1.0i 1234) #f)
+(test (= 1.0+1.0i 1234/11 -1.0+1.0i) #f)
+(test (= 1.0+1.0i 1234/11 0.0+1.0i) #f)
+(test (= 1.0+1.0i 1234/11 1) #f)
+(test (= 1.0+1.0i 1234/11 1.0) #f)
+(test (= 1.0+1.0i 1234/11 1.0+1.0i) #f)
+(test (= 1.0+1.0i 1234/11 1.234+1.234i) #f)
+(test (= 1.0+1.0i 1234/11 1/1) #f)
+(test (= 1.0+1.0i 1234/11 123.4) #f)
+(test (= 1.0+1.0i 1234/11 1234) #f)
+(test (= 1.0+1.0i 1234/11 1234/11) #f)
+(test (= 1.0+1.0i 1234/11) #f)
+(test (= 1.234+1.234i -1.0+1.0i) #f)
+(test (= 1.234+1.234i 0.0+1.0i) #f)
+(test (= 1.234+1.234i 1) #f)
+(test (= 1.234+1.234i 1.0) #f)
+(test (= 1.234+1.234i 1.0+1.0i) #f)
+(test (= 1.234+1.234i 1.234+1.234i) #t)
+(test (= 1.234+1.234i 1/1) #f)
+(test (= 1.234+1.234i 123.4) #f)
+(test (= 1.234+1.234i 1234) #f)
+(test (= 1.234+1.234i 1234/11) #f)
+(test (= 123.4 -1.0+1.0i -1.0+1.0i) #f)
+(test (= 123.4 -1.0+1.0i 0.0+1.0i) #f)
+(test (= 123.4 -1.0+1.0i 1) #f)
+(test (= 123.4 -1.0+1.0i 1.0) #f)
+(test (= 123.4 -1.0+1.0i 1.0+1.0i) #f)
+(test (= 123.4 -1.0+1.0i 1.234+1.234i) #f)
+(test (= 123.4 -1.0+1.0i 1/1) #f)
+(test (= 123.4 -1.0+1.0i 123.4) #f)
+(test (= 123.4 -1.0+1.0i 1234) #f)
+(test (= 123.4 -1.0+1.0i 1234/11) #f)
+(test (= 123.4 -1.0+1.0i) #f)
+(test (= 123.4 0.0+1.0i -1.0+1.0i) #f)
+(test (= 123.4 0.0+1.0i 0.0+1.0i) #f)
+(test (= 123.4 0.0+1.0i 1) #f)
+(test (= 123.4 0.0+1.0i 1.0) #f)
+(test (= 123.4 0.0+1.0i 1.0+1.0i) #f)
+(test (= 123.4 0.0+1.0i 1.234+1.234i) #f)
+(test (= 123.4 0.0+1.0i 1/1) #f)
+(test (= 123.4 0.0+1.0i 123.4) #f)
+(test (= 123.4 0.0+1.0i 1234) #f)
+(test (= 123.4 0.0+1.0i 1234/11) #f)
+(test (= 123.4 0.0+1.0i) #f)
+(test (= 123.4 1 -1.0+1.0i) #f)
+(test (= 123.4 1 0.0+1.0i) #f)
+(test (= 123.4 1 1) #f)
+(test (= 123.4 1 1.0) #f)
+(test (= 123.4 1 1.0+1.0i) #f)
+(test (= 123.4 1 1.234+1.234i) #f)
+(test (= 123.4 1 1/1) #f)
+(test (= 123.4 1 123.4) #f)
+(test (= 123.4 1 1234) #f)
+(test (= 123.4 1 1234/11) #f)
+(test (= 123.4 1) #f)
+(test (= 123.4 1.0 -1.0+1.0i) #f)
+(test (= 123.4 1.0 0.0+1.0i) #f)
+(test (= 123.4 1.0 1) #f)
+(test (= 123.4 1.0 1.0) #f)
+(test (= 123.4 1.0 1.0+1.0i) #f)
+(test (= 123.4 1.0 1.234+1.234i) #f)
+(test (= 123.4 1.0 1/1) #f)
+(test (= 123.4 1.0 123.4) #f)
+(test (= 123.4 1.0 1234) #f)
+(test (= 123.4 1.0 1234/11) #f)
+(test (= 123.4 1.0) #f)
+(test (= 123.4 1.0+1.0i -1.0+1.0i) #f)
+(test (= 123.4 1.0+1.0i 0.0+1.0i) #f)
+(test (= 123.4 1.0+1.0i 1) #f)
+(test (= 123.4 1.0+1.0i 1.0) #f)
+(test (= 123.4 1.0+1.0i 1.0+1.0i) #f)
+(test (= 123.4 1.0+1.0i 1.234+1.234i) #f)
+(test (= 123.4 1.0+1.0i 1/1) #f)
+(test (= 123.4 1.0+1.0i 123.4) #f)
+(test (= 123.4 1.0+1.0i 1234) #f)
+(test (= 123.4 1.0+1.0i 1234/11) #f)
+(test (= 123.4 1.0+1.0i) #f)
+(test (= 123.4 1.234+1.234i -1.0+1.0i) #f)
+(test (= 123.4 1.234+1.234i 0.0+1.0i) #f)
+(test (= 123.4 1.234+1.234i 1) #f)
+(test (= 123.4 1.234+1.234i 1.0) #f)
+(test (= 123.4 1.234+1.234i 1.0+1.0i) #f)
+(test (= 123.4 1.234+1.234i 1.234+1.234i) #f)
+(test (= 123.4 1.234+1.234i 1/1) #f)
+(test (= 123.4 1.234+1.234i 123.4) #f)
+(test (= 123.4 1.234+1.234i 1234) #f)
+(test (= 123.4 1.234+1.234i 1234/11) #f)
+(test (= 123.4 1.234+1.234i) #f)
+(test (= 123.4 1/1 -1.0+1.0i) #f)
+(test (= 123.4 1/1 0.0+1.0i) #f)
+(test (= 123.4 1/1 1) #f)
+(test (= 123.4 1/1 1.0) #f)
+(test (= 123.4 1/1 1.0+1.0i) #f)
+(test (= 123.4 1/1 1.234+1.234i) #f)
+(test (= 123.4 1/1 1/1) #f)
+(test (= 123.4 1/1 123.4) #f)
+(test (= 123.4 1/1 1234) #f)
+(test (= 123.4 1/1 1234/11) #f)
+(test (= 123.4 1/1) #f)
+(test (= 123.4 123.4 -1.0+1.0i) #f)
+(test (= 123.4 123.4 0.0+1.0i) #f)
+(test (= 123.4 123.4 1) #f)
+(test (= 123.4 123.4 1.0) #f)
+(test (= 123.4 123.4 1.0+1.0i) #f)
+(test (= 123.4 123.4 1.234+1.234i) #f)
+(test (= 123.4 123.4 1/1) #f)
+(test (= 123.4 123.4 123.4) #t)
+(test (= 123.4 123.4 1234) #f)
+(test (= 123.4 123.4 1234/11) #f)
+(test (= 123.4 123.4) #t)
+(test (= 123.4 1234 -1.0+1.0i) #f)
+(test (= 123.4 1234 0.0+1.0i) #f)
+(test (= 123.4 1234 1) #f)
+(test (= 123.4 1234 1.0) #f)
+(test (= 123.4 1234 1.0+1.0i) #f)
+(test (= 123.4 1234 1.234+1.234i) #f)
+(test (= 123.4 1234 1/1) #f)
+(test (= 123.4 1234 123.4) #f)
+(test (= 123.4 1234 1234) #f)
+(test (= 123.4 1234 1234/11) #f)
+(test (= 123.4 1234) #f)
+(test (= 123.4 1234/11 -1.0+1.0i) #f)
+(test (= 123.4 1234/11 0.0+1.0i) #f)
+(test (= 123.4 1234/11 1) #f)
+(test (= 123.4 1234/11 1.0) #f)
+(test (= 123.4 1234/11 1.0+1.0i) #f)
+(test (= 123.4 1234/11 1.234+1.234i) #f)
+(test (= 123.4 1234/11 1/1) #f)
+(test (= 123.4 1234/11 123.4) #f)
+(test (= 123.4 1234/11 1234) #f)
+(test (= 123.4 1234/11 1234/11) #f)
+(test (= 123.4 1234/11) #f)
+(test (= 1234 -1.0+1.0i) #f)
+(test (= 1234 0.0+1.0i) #f)
+(test (= 1234 1) #f)
+(test (= 1234 1.0) #f)
+(test (= 1234 1.0+1.0i) #f)
+(test (= 1234 1.234+1.234i) #f)
+(test (= 1234 1/1) #f)
+(test (= 1234 123.4) #f)
+(test (= 1234 1234) #t)
+(test (= 1234 1234/11) #f)
+(test (= 1234/11 -1.0+1.0i) #f)
+(test (= 1234/11 0.0+1.0i) #f)
+(test (= 1234/11 1) #f)
+(test (= 1234/11 1.0) #f)
+(test (= 1234/11 1.0+1.0i) #f)
+(test (= 1234/11 1.234+1.234i) #f)
+(test (= 1234/11 1/1) #f)
+(test (= 1234/11 123.4) #f)
+(test (= 1234/11 1234) #f)
+(test (= 1234/11 1234/11) #t)
+(test (= 2 -1) #f)
+(test (= 2 -2) #f)
 
 (test (= #i3/5 #i3/5) #t)
 (test (= -0 0) #t)
@@ -40269,35 +40787,35 @@ abs     1       2
 (test (= 34 35) #f )
 (test (= 60e-2 60e-2) #t)
 
-(num-test (= 0 0.0) #t)
-(num-test (= 0 1 "hi") 'error)
-(num-test (= 0) 'error)
-(num-test (= 0.0 0.0) #t)
-(num-test (= 0.0 1.0 "hi") 'error)
-(num-test (= 0.0) 'error)
-(num-test (= 0.0+0.00000001i) 'error)
-(num-test (= 0/1) 'error)
-(num-test (= 1.0) 'error)
-(num-test (= 1.0+1.0i) 'error)
-(num-test (= 10/3) 'error)
-(num-test (= 1234000000.0+2.71828182845905i) 'error)
-(num-test (= 2) 'error)
-(num-test (= 2.5 5/2) #t)
-(num-test (= 2.5+0.0i 5/2) #t)
-(num-test (= 2.5+1.0i 5/2) #f)
-(num-test (= 2.71828182845905+3.14159265358979i) 'error)
-(num-test (= 3 2 3) #f)
-(num-test (= 3 3 3 3) #t)
-(num-test (= 3 3 5 3) #f)
-(num-test (= 3 3) #t)
-(num-test (= 3 3.0) #t)
-(num-test (= 3 5) #f)
-(num-test (= 3 6 5 2) #f)
-(num-test (= 3.0 3.0+0.0i) #t)
-(num-test (= 5/2 2.5) #t)
-(num-test (= 5/2 2.5) #t)
-(num-test (= 5/2 2.5+0.0i) #t)
-(num-test (= 5/2 2.5+1.0i) #f)
+(test (= 0 0.0) #t)
+(test (= 0 1 "hi") 'error)
+(test (= 0) 'error)
+(test (= 0.0 0.0) #t)
+(test (= 0.0 1.0 "hi") 'error)
+(test (= 0.0) 'error)
+(test (= 0.0+0.00000001i) 'error)
+(test (= 0/1) 'error)
+(test (= 1.0) 'error)
+(test (= 1.0+1.0i) 'error)
+(test (= 10/3) 'error)
+(test (= 1234000000.0+2.71828182845905i) 'error)
+(test (= 2) 'error)
+(test (= 2.5 5/2) #t)
+(test (= 2.5+0.0i 5/2) #t)
+(test (= 2.5+1.0i 5/2) #f)
+(test (= 2.71828182845905+3.14159265358979i) 'error)
+(test (= 3 2 3) #f)
+(test (= 3 3 3 3) #t)
+(test (= 3 3 5 3) #f)
+(test (= 3 3) #t)
+(test (= 3 3.0) #t)
+(test (= 3 5) #f)
+(test (= 3 6 5 2) #f)
+(test (= 3.0 3.0+0.0i) #t)
+(test (= 5/2 2.5) #t)
+(test (= 5/2 2.5) #t)
+(test (= 5/2 2.5+0.0i) #t)
+(test (= 5/2 2.5+1.0i) #f)
 
 (test (= +0 -0) #t)
 (test (= +1/2 1/2) #t)
@@ -40317,6 +40835,35 @@ abs     1       2
 (test (= 5.551115123125783999999999999999999999984E-17 1.110223024625156799999999999999999999997E-16) #f)
 (test (= 9223372036854775807 -9223372036854775808) #f)
 (test (= 9223372036854775807 9223372036854775807) #t)
+(test (= (* most-negative-fixnum 1) (- (* -1 most-positive-fixnum) 1)) #t)
+(test (= (* most-positive-fixnum -1) (+ most-negative-fixnum 1)) #t)
+(test (= (+ most-negative-fixnum 1) (- most-positive-fixnum)) #t)
+(test (= (+ most-negative-fixnum most-positive-fixnum) -1) #t)
+(test (= (- most-negative-fixnum (- most-positive-fixnum)) -1) #t)
+(test (= 0 1/0 0/0) #f)
+(test (= 0/1 -0/1) #t)
+(test (= 1/0 (log 0)) #f)
+(test (= 1/0 -1/0) #f)
+(test (= 1e100 1e+100) #t)
+(test (= most-negative-fixnum (/ (log 0) (log 0))) #f)
+(test (= most-negative-fixnum 0/0) #f)
+(test (= most-negative-fixnum 0/0+0/0i) #f)
+(test (= most-negative-fixnum 1/0) #f)
+(test (= most-positive-fixnum (/ (log 0) (log 0))) #f)
+(test (= most-positive-fixnum 0/0) #f)
+(test (= most-positive-fixnum 0/0+0/0i) #f)
+(test (= most-positive-fixnum 1/0) #f)
+(test (= most-positive-fixnum most-negative-fixnum) #f)
+(test (= most-positive-fixnum most-positive-fixnum) #t)
+
+(if with-bignums
+    (begin
+      (test (= #e.1e20 1e19) #t)
+      (test (= (bignum "3") 1/0) #f)
+      (test (= 12345678901234567890 12345678901234567891) #f)
+      (test (= most-positive-fixnum (- (/ most-negative-fixnum -1) 1)) #t)
+      ))
+
 
 
 
@@ -40324,192 +40871,191 @@ abs     1       2
 ;;; >
 ;;; --------------------------------------------------------------------------------
 
-;;; >
-(num-test (> 0 1 1) #f)
-(num-test (> 0 1 1.0) #f)
-(num-test (> 0 1 1/1) #f)
-(num-test (> 0 1 123.4) #f)
-(num-test (> 0 1 1234) #f)
-(num-test (> 0 1 1234/11) #f)
-(num-test (> 0 1) #f)
-(num-test (> 0 1.0 1) #f)
-(num-test (> 0 1.0 1.0) #f)
-(num-test (> 0 1.0 1/1) #f)
-(num-test (> 0 1.0 123.4) #f)
-(num-test (> 0 1.0 1234) #f)
-(num-test (> 0 1.0 1234/11) #f)
-(num-test (> 0 1.0) #f)
-(num-test (> 0 1/1 1) #f)
-(num-test (> 0 1/1 1.0) #f)
-(num-test (> 0 1/1 1/1) #f)
-(num-test (> 0 1/1 123.4) #f)
-(num-test (> 0 1/1 1234) #f)
-(num-test (> 0 1/1 1234/11) #f)
-(num-test (> 0 1/1) #f)
-(num-test (> 0 123.4) #f)
-(num-test (> 0 1234) #f)
-(num-test (> 0 1234/11) #f)
-(num-test (> 0.0 1 1.0) #f)
-(num-test (> 0.0 1 1/1) #f)
-(num-test (> 0.0 1 123.4) #f)
-(num-test (> 0.0 1 1234) #f)
-(num-test (> 0.0 1 1234/11) #f)
-(num-test (> 0.0 1) #f)
-(num-test (> 0.0 1.0 1) #f)
-(num-test (> 0.0 1.0 1.0) #f)
-(num-test (> 0.0 1.0 1/1) #f)
-(num-test (> 0.0 1.0 123.4) #f)
-(num-test (> 0.0 1.0 1234) #f)
-(num-test (> 0.0 1.0 1234/11) #f)
-(num-test (> 0.0 1.0) #f)
-(num-test (> 0.0 1/1 1) #f)
-(num-test (> 0.0 1/1 1.0) #f)
-(num-test (> 0.0 1/1 1/1) #f)
-(num-test (> 0.0 1/1 123.4) #f)
-(num-test (> 0.0 1/1 1234) #f)
-(num-test (> 0.0 1/1 1234/11) #f)
-(num-test (> 0.0 1/1) #f)
-(num-test (> 0.0 123.4 1) #f)
-(num-test (> 0.0 123.4 1.0) #f)
-(num-test (> 0.0 123.4 1/1) #f)
-(num-test (> 0.0 123.4 123.4) #f)
-(num-test (> 0.0 123.4 1234) #f)
-(num-test (> 0.0 123.4 1234/11) #f)
-(num-test (> 0.0 123.4) #f)
-(num-test (> 0.0 1234 1) #f)
-(num-test (> 0.0 1234 1.0) #f)
-(num-test (> 0.0 1234 1/1) #f)
-(num-test (> 0.0 1234 123.4) #f)
-(num-test (> 0.0 1234 1234) #f)
-(num-test (> 0.0 1234 1234/11) #f)
-(num-test (> 0.0 1234) #f)
-(num-test (> 0.0 1234/11 1) #f)
-(num-test (> 0.0 1234/11 1.0) #f)
-(num-test (> 0.0 1234/11 1/1) #f)
-(num-test (> 0.0 1234/11 123.4) #f)
-(num-test (> 0.0 1234/11 1234) #f)
-(num-test (> 0.0 1234/11 1234/11) #f)
-(num-test (> 0.0 1234/11) #f)
-(num-test (> 1 1 1) #f)
-(num-test (> 1 1 1.0) #f)
-(num-test (> 1 1 1/1) #f)
-(num-test (> 1 1 123.4) #f)
-(num-test (> 1 1 1234) #f)
-(num-test (> 1 1 1234/11) #f)
-(num-test (> 1 1) #f)
-(num-test (> 1 1.0 1) #f)
-(num-test (> 1 1.0 1.0) #f)
-(num-test (> 1 1.0 1/1) #f)
-(num-test (> 1 1.0 123.4) #f)
-(num-test (> 1 1.0 1234) #f)
-(num-test (> 1 1.0 1234/11) #f)
-(num-test (> 1 1.0) #f)
-(num-test (> 1 1/1 1) #f)
-(num-test (> 1 1/1 1.0) #f)
-(num-test (> 1 1/1 1/1) #f)
-(num-test (> 1 1/1 123.4) #f)
-(num-test (> 1 1/1 1234) #f)
-(num-test (> 1 1/1 1234/11) #f)
-(num-test (> 1 1/1) #f)
-(num-test (> 1 123.4) #f)
-(num-test (> 1 1234) #f)
-(num-test (> 1 1234/11) #f)
-(num-test (> 1.0 1 1) #f)
-(num-test (> 1.0 1 1.0) #f)
-(num-test (> 1.0 1 1/1) #f)
-(num-test (> 1.0 1 123.4) #f)
-(num-test (> 1.0 1 1234) #f)
-(num-test (> 1.0 1 1234/11) #f)
-(num-test (> 1.0 1) #f)
-(num-test (> 1.0 1.0 1) #f)
-(num-test (> 1.0 1.0 1.0) #f)
-(num-test (> 1.0 1.0 1/1) #f)
-(num-test (> 1.0 1.0 123.4) #f)
-(num-test (> 1.0 1.0 1234) #f)
-(num-test (> 1.0 1.0 1234/11) #f)
-(num-test (> 1.0 1.0) #f)
-(num-test (> 1.0 1/1 1) #f)
-(num-test (> 1.0 1/1 1.0) #f)
-(num-test (> 1.0 1/1 1/1) #f)
-(num-test (> 1.0 1/1 123.4) #f)
-(num-test (> 1.0 1/1 1234) #f)
-(num-test (> 1.0 1/1 1234/11) #f)
-(num-test (> 1.0 1/1) #f)
-(num-test (> 1.0 123.4 1) #f)
-(num-test (> 1.0 123.4 1.0) #f)
-(num-test (> 1.0 123.4 1/1) #f)
-(num-test (> 1.0 123.4 123.4) #f)
-(num-test (> 1.0 123.4 1234) #f)
-(num-test (> 1.0 123.4 1234/11) #f)
-(num-test (> 1.0 123.4) #f)
-(num-test (> 1.0 1234 1) #f)
-(num-test (> 1.0 1234 1.0) #f)
-(num-test (> 1.0 1234 1/1) #f)
-(num-test (> 1.0 1234 123.4) #f)
-(num-test (> 1.0 1234 1234) #f)
-(num-test (> 1.0 1234 1234/11) #f)
-(num-test (> 1.0 1234) #f)
-(num-test (> 1.0 1234/11 1) #f)
-(num-test (> 1.0 1234/11 1.0) #f)
-(num-test (> 1.0 1234/11 1/1) #f)
-(num-test (> 1.0 1234/11 123.4) #f)
-(num-test (> 1.0 1234/11 1234) #f)
-(num-test (> 1.0 1234/11 1234/11) #f)
-(num-test (> 1.0 1234/11) #f)
-(num-test (> 123.4 1 1) #f)
-(num-test (> 123.4 1 1.0) #f)
-(num-test (> 123.4 1 1/1) #f)
-(num-test (> 123.4 1 123.4) #f)
-(num-test (> 123.4 1 1234) #f)
-(num-test (> 123.4 1 1234/11) #f)
-(num-test (> 123.4 1) #t)
-(num-test (> 123.4 1.0 1) #f)
-(num-test (> 123.4 1.0 1.0) #f)
-(num-test (> 123.4 1.0 1/1) #f)
-(num-test (> 123.4 1.0 123.4) #f)
-(num-test (> 123.4 1.0 1234) #f)
-(num-test (> 123.4 1.0 1234/11) #f)
-(num-test (> 123.4 1.0) #t)
-(num-test (> 123.4 1/1 1) #f)
-(num-test (> 123.4 1/1 1.0) #f)
-(num-test (> 123.4 1/1 1/1) #f)
-(num-test (> 123.4 1/1 123.4) #f)
-(num-test (> 123.4 1/1 1234) #f)
-(num-test (> 123.4 1/1 1234/11) #f)
-(num-test (> 123.4 1/1) #t)
-(num-test (> 123.4 123.4 1) #f)
-(num-test (> 123.4 123.4 1.0) #f)
-(num-test (> 123.4 123.4 1/1) #f)
-(num-test (> 123.4 123.4 123.4) #f)
-(num-test (> 123.4 123.4 1234) #f)
-(num-test (> 123.4 123.4 1234/11) #f)
-(num-test (> 123.4 123.4) #f)
-(num-test (> 123.4 1234 1) #f)
-(num-test (> 123.4 1234 1.0) #f)
-(num-test (> 123.4 1234 1/1) #f)
-(num-test (> 123.4 1234 123.4) #f)
-(num-test (> 123.4 1234 1234) #f)
-(num-test (> 123.4 1234 1234/11) #f)
-(num-test (> 123.4 1234) #f)
-(num-test (> 123.4 1234/11 1) #t)
-(num-test (> 123.4 1234/11 1.0) #t)
-(num-test (> 123.4 1234/11 1/1) #t)
-(num-test (> 123.4 1234/11 123.4) #f)
-(num-test (> 123.4 1234/11 1234) #f)
-(num-test (> 123.4 1234/11 1234/11) #f)
-(num-test (> 123.4 1234/11) #t)
-(num-test (> 1234 1) #t)
-(num-test (> 1234 1.0) #t)
-(num-test (> 1234 1/1) #t)
-(num-test (> 1234 123.4) #t)
-(num-test (> 1234 1234) #f)
-(num-test (> 1234 1234/11) #t)
-(num-test (> 1234/11 1) #t)
-(num-test (> 1234/11 1.0) #t)
-(num-test (> 1234/11 1/1) #t)
-(num-test (> 1234/11 123.4) #f)
-(num-test (> 1234/11 1234) #f)
-(num-test (> 1234/11 1234/11) #f)
+(test (> 0 1 1) #f)
+(test (> 0 1 1.0) #f)
+(test (> 0 1 1/1) #f)
+(test (> 0 1 123.4) #f)
+(test (> 0 1 1234) #f)
+(test (> 0 1 1234/11) #f)
+(test (> 0 1) #f)
+(test (> 0 1.0 1) #f)
+(test (> 0 1.0 1.0) #f)
+(test (> 0 1.0 1/1) #f)
+(test (> 0 1.0 123.4) #f)
+(test (> 0 1.0 1234) #f)
+(test (> 0 1.0 1234/11) #f)
+(test (> 0 1.0) #f)
+(test (> 0 1/1 1) #f)
+(test (> 0 1/1 1.0) #f)
+(test (> 0 1/1 1/1) #f)
+(test (> 0 1/1 123.4) #f)
+(test (> 0 1/1 1234) #f)
+(test (> 0 1/1 1234/11) #f)
+(test (> 0 1/1) #f)
+(test (> 0 123.4) #f)
+(test (> 0 1234) #f)
+(test (> 0 1234/11) #f)
+(test (> 0.0 1 1.0) #f)
+(test (> 0.0 1 1/1) #f)
+(test (> 0.0 1 123.4) #f)
+(test (> 0.0 1 1234) #f)
+(test (> 0.0 1 1234/11) #f)
+(test (> 0.0 1) #f)
+(test (> 0.0 1.0 1) #f)
+(test (> 0.0 1.0 1.0) #f)
+(test (> 0.0 1.0 1/1) #f)
+(test (> 0.0 1.0 123.4) #f)
+(test (> 0.0 1.0 1234) #f)
+(test (> 0.0 1.0 1234/11) #f)
+(test (> 0.0 1.0) #f)
+(test (> 0.0 1/1 1) #f)
+(test (> 0.0 1/1 1.0) #f)
+(test (> 0.0 1/1 1/1) #f)
+(test (> 0.0 1/1 123.4) #f)
+(test (> 0.0 1/1 1234) #f)
+(test (> 0.0 1/1 1234/11) #f)
+(test (> 0.0 1/1) #f)
+(test (> 0.0 123.4 1) #f)
+(test (> 0.0 123.4 1.0) #f)
+(test (> 0.0 123.4 1/1) #f)
+(test (> 0.0 123.4 123.4) #f)
+(test (> 0.0 123.4 1234) #f)
+(test (> 0.0 123.4 1234/11) #f)
+(test (> 0.0 123.4) #f)
+(test (> 0.0 1234 1) #f)
+(test (> 0.0 1234 1.0) #f)
+(test (> 0.0 1234 1/1) #f)
+(test (> 0.0 1234 123.4) #f)
+(test (> 0.0 1234 1234) #f)
+(test (> 0.0 1234 1234/11) #f)
+(test (> 0.0 1234) #f)
+(test (> 0.0 1234/11 1) #f)
+(test (> 0.0 1234/11 1.0) #f)
+(test (> 0.0 1234/11 1/1) #f)
+(test (> 0.0 1234/11 123.4) #f)
+(test (> 0.0 1234/11 1234) #f)
+(test (> 0.0 1234/11 1234/11) #f)
+(test (> 0.0 1234/11) #f)
+(test (> 1 1 1) #f)
+(test (> 1 1 1.0) #f)
+(test (> 1 1 1/1) #f)
+(test (> 1 1 123.4) #f)
+(test (> 1 1 1234) #f)
+(test (> 1 1 1234/11) #f)
+(test (> 1 1) #f)
+(test (> 1 1.0 1) #f)
+(test (> 1 1.0 1.0) #f)
+(test (> 1 1.0 1/1) #f)
+(test (> 1 1.0 123.4) #f)
+(test (> 1 1.0 1234) #f)
+(test (> 1 1.0 1234/11) #f)
+(test (> 1 1.0) #f)
+(test (> 1 1/1 1) #f)
+(test (> 1 1/1 1.0) #f)
+(test (> 1 1/1 1/1) #f)
+(test (> 1 1/1 123.4) #f)
+(test (> 1 1/1 1234) #f)
+(test (> 1 1/1 1234/11) #f)
+(test (> 1 1/1) #f)
+(test (> 1 123.4) #f)
+(test (> 1 1234) #f)
+(test (> 1 1234/11) #f)
+(test (> 1.0 1 1) #f)
+(test (> 1.0 1 1.0) #f)
+(test (> 1.0 1 1/1) #f)
+(test (> 1.0 1 123.4) #f)
+(test (> 1.0 1 1234) #f)
+(test (> 1.0 1 1234/11) #f)
+(test (> 1.0 1) #f)
+(test (> 1.0 1.0 1) #f)
+(test (> 1.0 1.0 1.0) #f)
+(test (> 1.0 1.0 1/1) #f)
+(test (> 1.0 1.0 123.4) #f)
+(test (> 1.0 1.0 1234) #f)
+(test (> 1.0 1.0 1234/11) #f)
+(test (> 1.0 1.0) #f)
+(test (> 1.0 1/1 1) #f)
+(test (> 1.0 1/1 1.0) #f)
+(test (> 1.0 1/1 1/1) #f)
+(test (> 1.0 1/1 123.4) #f)
+(test (> 1.0 1/1 1234) #f)
+(test (> 1.0 1/1 1234/11) #f)
+(test (> 1.0 1/1) #f)
+(test (> 1.0 123.4 1) #f)
+(test (> 1.0 123.4 1.0) #f)
+(test (> 1.0 123.4 1/1) #f)
+(test (> 1.0 123.4 123.4) #f)
+(test (> 1.0 123.4 1234) #f)
+(test (> 1.0 123.4 1234/11) #f)
+(test (> 1.0 123.4) #f)
+(test (> 1.0 1234 1) #f)
+(test (> 1.0 1234 1.0) #f)
+(test (> 1.0 1234 1/1) #f)
+(test (> 1.0 1234 123.4) #f)
+(test (> 1.0 1234 1234) #f)
+(test (> 1.0 1234 1234/11) #f)
+(test (> 1.0 1234) #f)
+(test (> 1.0 1234/11 1) #f)
+(test (> 1.0 1234/11 1.0) #f)
+(test (> 1.0 1234/11 1/1) #f)
+(test (> 1.0 1234/11 123.4) #f)
+(test (> 1.0 1234/11 1234) #f)
+(test (> 1.0 1234/11 1234/11) #f)
+(test (> 1.0 1234/11) #f)
+(test (> 123.4 1 1) #f)
+(test (> 123.4 1 1.0) #f)
+(test (> 123.4 1 1/1) #f)
+(test (> 123.4 1 123.4) #f)
+(test (> 123.4 1 1234) #f)
+(test (> 123.4 1 1234/11) #f)
+(test (> 123.4 1) #t)
+(test (> 123.4 1.0 1) #f)
+(test (> 123.4 1.0 1.0) #f)
+(test (> 123.4 1.0 1/1) #f)
+(test (> 123.4 1.0 123.4) #f)
+(test (> 123.4 1.0 1234) #f)
+(test (> 123.4 1.0 1234/11) #f)
+(test (> 123.4 1.0) #t)
+(test (> 123.4 1/1 1) #f)
+(test (> 123.4 1/1 1.0) #f)
+(test (> 123.4 1/1 1/1) #f)
+(test (> 123.4 1/1 123.4) #f)
+(test (> 123.4 1/1 1234) #f)
+(test (> 123.4 1/1 1234/11) #f)
+(test (> 123.4 1/1) #t)
+(test (> 123.4 123.4 1) #f)
+(test (> 123.4 123.4 1.0) #f)
+(test (> 123.4 123.4 1/1) #f)
+(test (> 123.4 123.4 123.4) #f)
+(test (> 123.4 123.4 1234) #f)
+(test (> 123.4 123.4 1234/11) #f)
+(test (> 123.4 123.4) #f)
+(test (> 123.4 1234 1) #f)
+(test (> 123.4 1234 1.0) #f)
+(test (> 123.4 1234 1/1) #f)
+(test (> 123.4 1234 123.4) #f)
+(test (> 123.4 1234 1234) #f)
+(test (> 123.4 1234 1234/11) #f)
+(test (> 123.4 1234) #f)
+(test (> 123.4 1234/11 1) #t)
+(test (> 123.4 1234/11 1.0) #t)
+(test (> 123.4 1234/11 1/1) #t)
+(test (> 123.4 1234/11 123.4) #f)
+(test (> 123.4 1234/11 1234) #f)
+(test (> 123.4 1234/11 1234/11) #f)
+(test (> 123.4 1234/11) #t)
+(test (> 1234 1) #t)
+(test (> 1234 1.0) #t)
+(test (> 1234 1/1) #t)
+(test (> 1234 123.4) #t)
+(test (> 1234 1234) #f)
+(test (> 1234 1234/11) #t)
+(test (> 1234/11 1) #t)
+(test (> 1234/11 1.0) #t)
+(test (> 1234/11 1/1) #t)
+(test (> 1234/11 123.4) #f)
+(test (> 1234/11 1234) #f)
+(test (> 1234/11 1234/11) #f)
 
 (test (> 1 0+i) 'error)
 (test (> 1 0-i) 'error)
@@ -40523,25 +41069,25 @@ abs     1       2
 (test (> 3 -6246) #t )
 (test (> 9 9 -2424) #f )
 
-(num-test (> 0) 'error)
-(num-test (> 0.0 0.0) #f)
-(num-test (> 0.0) 'error)
-(num-test (> 0.0+0.00000001i) 'error)
-(num-test (> 0/1) 'error)
-(num-test (> 1 2 #\a) 'error)
-(num-test (> 1 2 1.0+1.0i) 'error)
-(num-test (> 1.0) 'error)
-(num-test (> 1.0+1.0i) 'error)
-(num-test (> 10/3) 'error)
-(num-test (> 1234000000.0+2.71828182845905i) 'error)
-(num-test (> 2) 'error)
-(num-test (> 2.71828182845905+3.14159265358979i) 'error)
-(num-test (> 3 3.0 3 3.0+1.0i) 'error)
-(num-test (> 4 3 1 2 0) #f)
-(num-test (> 4 3 2 1 0) #t)
-(num-test (> 4 3 3 2 0) #f)
-(num-test (> 4 3) #t)
-(num-test (> 8 7 6 5 4) #t)
+(test (> 0) 'error)
+(test (> 0.0 0.0) #f)
+(test (> 0.0) 'error)
+(test (> 0.0+0.00000001i) 'error)
+(test (> 0/1) 'error)
+(test (> 1 2 #\a) 'error)
+(test (> 1 2 1.0+1.0i) 'error)
+(test (> 1.0) 'error)
+(test (> 1.0+1.0i) 'error)
+(test (> 10/3) 'error)
+(test (> 1234000000.0+2.71828182845905i) 'error)
+(test (> 2) 'error)
+(test (> 2.71828182845905+3.14159265358979i) 'error)
+(test (> 3 3.0 3 3.0+1.0i) 'error)
+(test (> 4 3 1 2 0) #f)
+(test (> 4 3 2 1 0) #t)
+(test (> 4 3 3 2 0) #f)
+(test (> 4 3) #t)
+(test (> 8 7 6 5 4) #t)
 
 (test (> -10/3147483647 -40/12345678901) #t)
 (test (> -101/3147483647 40/12345678901) #f)
@@ -40575,6 +41121,27 @@ abs     1       2
 (test (> 5.551115123125783999999999999999999999984E-17 1.110223024625156799999999999999999999997E-16) #f)
 (test (> 9223372036854775807 -9223372036854775808) #t)
 (test (> 9223372036854775807 9223372036854775807) #f)
+(test (> 0 most-negative-fixnum) #t)
+(test (> 0 most-positive-fixnum) #f)
+(test (> 1e18 most-positive-fixnum) #f)
+(test (> 9007199254740992.0 9007199254740991.0) #t)
+(test (> most-negative-fixnum (real-part (log 0.0))) #t)
+(test (> most-negative-fixnum 0) #f)
+(test (> most-negative-fixnum most-positive-fixnum) #f)
+(test (> most-positive-fixnum (- (real-part (log 0.0)))) #f)
+(test (> most-positive-fixnum 0) #t)
+(test (> most-positive-fixnum most-negative-fixnum) #t)
+(test (> most-positive-fixnum most-negative-fixnum) #t)
+(num-test (> 1/123400000000 .000000000001) #t)
+; these can go either way I guess -- 1/0 might be NaN?
+;(test (< most-positive-fixnum 1/0) #t)
+;(test (> most-positive-fixnum 1/0) #f)
+
+(if with-bignums
+    (begin
+      (test (> 12345678901234567890 12345678901234567891) #f)
+      (test (> 9007199254740993.0 9007199254740992.0) #t)
+      ))
 
 (if (provided? 'dfls-exponents)
     (begin
@@ -40696,193 +41263,192 @@ abs     1       2
 ;;; >=
 ;;; --------------------------------------------------------------------------------
 
-;;; >=
-(num-test (>= 0 1 1) #f)
-(num-test (>= 0 1 1.0) #f)
-(num-test (>= 0 1 1/1) #f)
-(num-test (>= 0 1 123.4) #f)
-(num-test (>= 0 1 1234) #f)
-(num-test (>= 0 1 1234/11) #f)
-(num-test (>= 0 1) #f)
-(num-test (>= 0 1.0 1) #f)
-(num-test (>= 0 1.0 1.0) #f)
-(num-test (>= 0 1.0 1/1) #f)
-(num-test (>= 0 1.0 123.4) #f)
-(num-test (>= 0 1.0 1234) #f)
-(num-test (>= 0 1.0 1234/11) #f)
-(num-test (>= 0 1.0) #f)
-(num-test (>= 0 1/1 1) #f)
-(num-test (>= 0 1/1 1.0) #f)
-(num-test (>= 0 1/1 1/1) #f)
-(num-test (>= 0 1/1 123.4) #f)
-(num-test (>= 0 1/1 1234) #f)
-(num-test (>= 0 1/1 1234/11) #f)
-(num-test (>= 0 1/1) #f)
-(num-test (>= 0 123.4) #f)
-(num-test (>= 0 1234) #f)
-(num-test (>= 0 1234/11) #f)
-(num-test (>= 0.0 1 1) #f)
-(num-test (>= 0.0 1 1.0) #f)
-(num-test (>= 0.0 1 1/1) #f)
-(num-test (>= 0.0 1 123.4) #f)
-(num-test (>= 0.0 1 1234) #f)
-(num-test (>= 0.0 1 1234/11) #f)
-(num-test (>= 0.0 1) #f)
-(num-test (>= 0.0 1.0 1) #f)
-(num-test (>= 0.0 1.0 1.0) #f)
-(num-test (>= 0.0 1.0 1/1) #f)
-(num-test (>= 0.0 1.0 123.4) #f)
-(num-test (>= 0.0 1.0 1234) #f)
-(num-test (>= 0.0 1.0 1234/11) #f)
-(num-test (>= 0.0 1.0) #f)
-(num-test (>= 0.0 1/1 1) #f)
-(num-test (>= 0.0 1/1 1.0) #f)
-(num-test (>= 0.0 1/1 1/1) #f)
-(num-test (>= 0.0 1/1 123.4) #f)
-(num-test (>= 0.0 1/1 1234) #f)
-(num-test (>= 0.0 1/1 1234/11) #f)
-(num-test (>= 0.0 1/1) #f)
-(num-test (>= 0.0 123.4 1) #f)
-(num-test (>= 0.0 123.4 1.0) #f)
-(num-test (>= 0.0 123.4 1/1) #f)
-(num-test (>= 0.0 123.4 123.4) #f)
-(num-test (>= 0.0 123.4 1234) #f)
-(num-test (>= 0.0 123.4 1234/11) #f)
-(num-test (>= 0.0 123.4) #f)
-(num-test (>= 0.0 1234 1) #f)
-(num-test (>= 0.0 1234 1.0) #f)
-(num-test (>= 0.0 1234 1/1) #f)
-(num-test (>= 0.0 1234 123.4) #f)
-(num-test (>= 0.0 1234 1234) #f)
-(num-test (>= 0.0 1234 1234/11) #f)
-(num-test (>= 0.0 1234) #f)
-(num-test (>= 0.0 1234/11 1) #f)
-(num-test (>= 0.0 1234/11 1.0) #f)
-(num-test (>= 0.0 1234/11 1/1) #f)
-(num-test (>= 0.0 1234/11 123.4) #f)
-(num-test (>= 0.0 1234/11 1234) #f)
-(num-test (>= 0.0 1234/11 1234/11) #f)
-(num-test (>= 0.0 1234/11) #f)
-(num-test (>= 1 1 1) #t)
-(num-test (>= 1 1 1.0) #t)
-(num-test (>= 1 1 1/1) #t)
-(num-test (>= 1 1 123.4) #f)
-(num-test (>= 1 1 1234) #f)
-(num-test (>= 1 1 1234/11) #f)
-(num-test (>= 1 1) #t)
-(num-test (>= 1 1.0 1) #t)
-(num-test (>= 1 1.0 1.0) #t)
-(num-test (>= 1 1.0 1/1) #t)
-(num-test (>= 1 1.0 123.4) #f)
-(num-test (>= 1 1.0 1234) #f)
-(num-test (>= 1 1.0 1234/11) #f)
-(num-test (>= 1 1.0) #t)
-(num-test (>= 1 1/1 1) #t)
-(num-test (>= 1 1/1 1.0) #t)
-(num-test (>= 1 1/1 1/1) #t)
-(num-test (>= 1 1/1 123.4) #f)
-(num-test (>= 1 1/1 1234) #f)
-(num-test (>= 1 1/1 1234/11) #f)
-(num-test (>= 1 1/1) #t)
-(num-test (>= 1 123.4) #f)
-(num-test (>= 1 1234) #f)
-(num-test (>= 1 1234/11) #f)
-(num-test (>= 1.0 1 1) #t)
-(num-test (>= 1.0 1 1.0) #t)
-(num-test (>= 1.0 1 1/1) #t)
-(num-test (>= 1.0 1 123.4) #f)
-(num-test (>= 1.0 1 1234) #f)
-(num-test (>= 1.0 1 1234/11) #f)
-(num-test (>= 1.0 1) #t)
-(num-test (>= 1.0 1.0 1) #t)
-(num-test (>= 1.0 1.0 1.0) #t)
-(num-test (>= 1.0 1.0 1/1) #t)
-(num-test (>= 1.0 1.0 123.4) #f)
-(num-test (>= 1.0 1.0 1234) #f)
-(num-test (>= 1.0 1.0 1234/11) #f)
-(num-test (>= 1.0 1.0) #t)
-(num-test (>= 1.0 1/1 1) #t)
-(num-test (>= 1.0 1/1 1.0) #t)
-(num-test (>= 1.0 1/1 1/1) #t)
-(num-test (>= 1.0 1/1 123.4) #f)
-(num-test (>= 1.0 1/1 1234) #f)
-(num-test (>= 1.0 1/1 1234/11) #f)
-(num-test (>= 1.0 1/1) #t)
-(num-test (>= 1.0 123.4 1) #f)
-(num-test (>= 1.0 123.4 1.0) #f)
-(num-test (>= 1.0 123.4 1/1) #f)
-(num-test (>= 1.0 123.4 123.4) #f)
-(num-test (>= 1.0 123.4 1234) #f)
-(num-test (>= 1.0 123.4 1234/11) #f)
-(num-test (>= 1.0 123.4) #f)
-(num-test (>= 1.0 1234 1) #f)
-(num-test (>= 1.0 1234 1.0) #f)
-(num-test (>= 1.0 1234 1/1) #f)
-(num-test (>= 1.0 1234 123.4) #f)
-(num-test (>= 1.0 1234 1234) #f)
-(num-test (>= 1.0 1234 1234/11) #f)
-(num-test (>= 1.0 1234) #f)
-(num-test (>= 1.0 1234/11 1) #f)
-(num-test (>= 1.0 1234/11 1.0) #f)
-(num-test (>= 1.0 1234/11 1/1) #f)
-(num-test (>= 1.0 1234/11 123.4) #f)
-(num-test (>= 1.0 1234/11 1234) #f)
-(num-test (>= 1.0 1234/11 1234/11) #f)
-(num-test (>= 1.0 1234/11) #f)
-(num-test (>= 123.4 1 1) #t)
-(num-test (>= 123.4 1 1.0) #t)
-(num-test (>= 123.4 1 1/1) #t)
-(num-test (>= 123.4 1 123.4) #f)
-(num-test (>= 123.4 1 1234) #f)
-(num-test (>= 123.4 1 1234/11) #f)
-(num-test (>= 123.4 1) #t)
-(num-test (>= 123.4 1.0 1) #t)
-(num-test (>= 123.4 1.0 1.0) #t)
-(num-test (>= 123.4 1.0 1/1) #t)
-(num-test (>= 123.4 1.0 123.4) #f)
-(num-test (>= 123.4 1.0 1234) #f)
-(num-test (>= 123.4 1.0 1234/11) #f)
-(num-test (>= 123.4 1.0) #t)
-(num-test (>= 123.4 1/1 1) #t)
-(num-test (>= 123.4 1/1 1.0) #t)
-(num-test (>= 123.4 1/1 1/1) #t)
-(num-test (>= 123.4 1/1 123.4) #f)
-(num-test (>= 123.4 1/1 1234) #f)
-(num-test (>= 123.4 1/1 1234/11) #f)
-(num-test (>= 123.4 1/1) #t)
-(num-test (>= 123.4 123.4 1) #t)
-(num-test (>= 123.4 123.4 1.0) #t)
-(num-test (>= 123.4 123.4 1/1) #t)
-(num-test (>= 123.4 123.4 123.4) #t)
-(num-test (>= 123.4 123.4 1234) #f)
-(num-test (>= 123.4 123.4 1234/11) #t)
-(num-test (>= 123.4 123.4) #t)
-(num-test (>= 123.4 1234 1) #f)
-(num-test (>= 123.4 1234 1.0) #f)
-(num-test (>= 123.4 1234 1/1) #f)
-(num-test (>= 123.4 1234 123.4) #f)
-(num-test (>= 123.4 1234 1234) #f)
-(num-test (>= 123.4 1234 1234/11) #f)
-(num-test (>= 123.4 1234) #f)
-(num-test (>= 123.4 1234/11 1) #t)
-(num-test (>= 123.4 1234/11 1.0) #t)
-(num-test (>= 123.4 1234/11 1/1) #t)
-(num-test (>= 123.4 1234/11 123.4) #f)
-(num-test (>= 123.4 1234/11 1234) #f)
-(num-test (>= 123.4 1234/11 1234/11) #t)
-(num-test (>= 123.4 1234/11) #t)
-(num-test (>= 1234 1) #t)
-(num-test (>= 1234 1.0) #t)
-(num-test (>= 1234 1/1) #t)
-(num-test (>= 1234 123.4) #t)
-(num-test (>= 1234 1234) #t)
-(num-test (>= 1234 1234/11) #t)
-(num-test (>= 1234/11 1) #t)
-(num-test (>= 1234/11 1.0) #t)
-(num-test (>= 1234/11 1/1) #t)
-(num-test (>= 1234/11 123.4) #f)
-(num-test (>= 1234/11 1234) #f)
-(num-test (>= 1234/11 1234/11) #t)
+(test (>= 0 1 1) #f)
+(test (>= 0 1 1.0) #f)
+(test (>= 0 1 1/1) #f)
+(test (>= 0 1 123.4) #f)
+(test (>= 0 1 1234) #f)
+(test (>= 0 1 1234/11) #f)
+(test (>= 0 1) #f)
+(test (>= 0 1.0 1) #f)
+(test (>= 0 1.0 1.0) #f)
+(test (>= 0 1.0 1/1) #f)
+(test (>= 0 1.0 123.4) #f)
+(test (>= 0 1.0 1234) #f)
+(test (>= 0 1.0 1234/11) #f)
+(test (>= 0 1.0) #f)
+(test (>= 0 1/1 1) #f)
+(test (>= 0 1/1 1.0) #f)
+(test (>= 0 1/1 1/1) #f)
+(test (>= 0 1/1 123.4) #f)
+(test (>= 0 1/1 1234) #f)
+(test (>= 0 1/1 1234/11) #f)
+(test (>= 0 1/1) #f)
+(test (>= 0 123.4) #f)
+(test (>= 0 1234) #f)
+(test (>= 0 1234/11) #f)
+(test (>= 0.0 1 1) #f)
+(test (>= 0.0 1 1.0) #f)
+(test (>= 0.0 1 1/1) #f)
+(test (>= 0.0 1 123.4) #f)
+(test (>= 0.0 1 1234) #f)
+(test (>= 0.0 1 1234/11) #f)
+(test (>= 0.0 1) #f)
+(test (>= 0.0 1.0 1) #f)
+(test (>= 0.0 1.0 1.0) #f)
+(test (>= 0.0 1.0 1/1) #f)
+(test (>= 0.0 1.0 123.4) #f)
+(test (>= 0.0 1.0 1234) #f)
+(test (>= 0.0 1.0 1234/11) #f)
+(test (>= 0.0 1.0) #f)
+(test (>= 0.0 1/1 1) #f)
+(test (>= 0.0 1/1 1.0) #f)
+(test (>= 0.0 1/1 1/1) #f)
+(test (>= 0.0 1/1 123.4) #f)
+(test (>= 0.0 1/1 1234) #f)
+(test (>= 0.0 1/1 1234/11) #f)
+(test (>= 0.0 1/1) #f)
+(test (>= 0.0 123.4 1) #f)
+(test (>= 0.0 123.4 1.0) #f)
+(test (>= 0.0 123.4 1/1) #f)
+(test (>= 0.0 123.4 123.4) #f)
+(test (>= 0.0 123.4 1234) #f)
+(test (>= 0.0 123.4 1234/11) #f)
+(test (>= 0.0 123.4) #f)
+(test (>= 0.0 1234 1) #f)
+(test (>= 0.0 1234 1.0) #f)
+(test (>= 0.0 1234 1/1) #f)
+(test (>= 0.0 1234 123.4) #f)
+(test (>= 0.0 1234 1234) #f)
+(test (>= 0.0 1234 1234/11) #f)
+(test (>= 0.0 1234) #f)
+(test (>= 0.0 1234/11 1) #f)
+(test (>= 0.0 1234/11 1.0) #f)
+(test (>= 0.0 1234/11 1/1) #f)
+(test (>= 0.0 1234/11 123.4) #f)
+(test (>= 0.0 1234/11 1234) #f)
+(test (>= 0.0 1234/11 1234/11) #f)
+(test (>= 0.0 1234/11) #f)
+(test (>= 1 1 1) #t)
+(test (>= 1 1 1.0) #t)
+(test (>= 1 1 1/1) #t)
+(test (>= 1 1 123.4) #f)
+(test (>= 1 1 1234) #f)
+(test (>= 1 1 1234/11) #f)
+(test (>= 1 1) #t)
+(test (>= 1 1.0 1) #t)
+(test (>= 1 1.0 1.0) #t)
+(test (>= 1 1.0 1/1) #t)
+(test (>= 1 1.0 123.4) #f)
+(test (>= 1 1.0 1234) #f)
+(test (>= 1 1.0 1234/11) #f)
+(test (>= 1 1.0) #t)
+(test (>= 1 1/1 1) #t)
+(test (>= 1 1/1 1.0) #t)
+(test (>= 1 1/1 1/1) #t)
+(test (>= 1 1/1 123.4) #f)
+(test (>= 1 1/1 1234) #f)
+(test (>= 1 1/1 1234/11) #f)
+(test (>= 1 1/1) #t)
+(test (>= 1 123.4) #f)
+(test (>= 1 1234) #f)
+(test (>= 1 1234/11) #f)
+(test (>= 1.0 1 1) #t)
+(test (>= 1.0 1 1.0) #t)
+(test (>= 1.0 1 1/1) #t)
+(test (>= 1.0 1 123.4) #f)
+(test (>= 1.0 1 1234) #f)
+(test (>= 1.0 1 1234/11) #f)
+(test (>= 1.0 1) #t)
+(test (>= 1.0 1.0 1) #t)
+(test (>= 1.0 1.0 1.0) #t)
+(test (>= 1.0 1.0 1/1) #t)
+(test (>= 1.0 1.0 123.4) #f)
+(test (>= 1.0 1.0 1234) #f)
+(test (>= 1.0 1.0 1234/11) #f)
+(test (>= 1.0 1.0) #t)
+(test (>= 1.0 1/1 1) #t)
+(test (>= 1.0 1/1 1.0) #t)
+(test (>= 1.0 1/1 1/1) #t)
+(test (>= 1.0 1/1 123.4) #f)
+(test (>= 1.0 1/1 1234) #f)
+(test (>= 1.0 1/1 1234/11) #f)
+(test (>= 1.0 1/1) #t)
+(test (>= 1.0 123.4 1) #f)
+(test (>= 1.0 123.4 1.0) #f)
+(test (>= 1.0 123.4 1/1) #f)
+(test (>= 1.0 123.4 123.4) #f)
+(test (>= 1.0 123.4 1234) #f)
+(test (>= 1.0 123.4 1234/11) #f)
+(test (>= 1.0 123.4) #f)
+(test (>= 1.0 1234 1) #f)
+(test (>= 1.0 1234 1.0) #f)
+(test (>= 1.0 1234 1/1) #f)
+(test (>= 1.0 1234 123.4) #f)
+(test (>= 1.0 1234 1234) #f)
+(test (>= 1.0 1234 1234/11) #f)
+(test (>= 1.0 1234) #f)
+(test (>= 1.0 1234/11 1) #f)
+(test (>= 1.0 1234/11 1.0) #f)
+(test (>= 1.0 1234/11 1/1) #f)
+(test (>= 1.0 1234/11 123.4) #f)
+(test (>= 1.0 1234/11 1234) #f)
+(test (>= 1.0 1234/11 1234/11) #f)
+(test (>= 1.0 1234/11) #f)
+(test (>= 123.4 1 1) #t)
+(test (>= 123.4 1 1.0) #t)
+(test (>= 123.4 1 1/1) #t)
+(test (>= 123.4 1 123.4) #f)
+(test (>= 123.4 1 1234) #f)
+(test (>= 123.4 1 1234/11) #f)
+(test (>= 123.4 1) #t)
+(test (>= 123.4 1.0 1) #t)
+(test (>= 123.4 1.0 1.0) #t)
+(test (>= 123.4 1.0 1/1) #t)
+(test (>= 123.4 1.0 123.4) #f)
+(test (>= 123.4 1.0 1234) #f)
+(test (>= 123.4 1.0 1234/11) #f)
+(test (>= 123.4 1.0) #t)
+(test (>= 123.4 1/1 1) #t)
+(test (>= 123.4 1/1 1.0) #t)
+(test (>= 123.4 1/1 1/1) #t)
+(test (>= 123.4 1/1 123.4) #f)
+(test (>= 123.4 1/1 1234) #f)
+(test (>= 123.4 1/1 1234/11) #f)
+(test (>= 123.4 1/1) #t)
+(test (>= 123.4 123.4 1) #t)
+(test (>= 123.4 123.4 1.0) #t)
+(test (>= 123.4 123.4 1/1) #t)
+(test (>= 123.4 123.4 123.4) #t)
+(test (>= 123.4 123.4 1234) #f)
+(test (>= 123.4 123.4 1234/11) #t)
+(test (>= 123.4 123.4) #t)
+(test (>= 123.4 1234 1) #f)
+(test (>= 123.4 1234 1.0) #f)
+(test (>= 123.4 1234 1/1) #f)
+(test (>= 123.4 1234 123.4) #f)
+(test (>= 123.4 1234 1234) #f)
+(test (>= 123.4 1234 1234/11) #f)
+(test (>= 123.4 1234) #f)
+(test (>= 123.4 1234/11 1) #t)
+(test (>= 123.4 1234/11 1.0) #t)
+(test (>= 123.4 1234/11 1/1) #t)
+(test (>= 123.4 1234/11 123.4) #f)
+(test (>= 123.4 1234/11 1234) #f)
+(test (>= 123.4 1234/11 1234/11) #t)
+(test (>= 123.4 1234/11) #t)
+(test (>= 1234 1) #t)
+(test (>= 1234 1.0) #t)
+(test (>= 1234 1/1) #t)
+(test (>= 1234 123.4) #t)
+(test (>= 1234 1234) #t)
+(test (>= 1234 1234/11) #t)
+(test (>= 1234/11 1) #t)
+(test (>= 1234/11 1.0) #t)
+(test (>= 1234/11 1/1) #t)
+(test (>= 1234/11 123.4) #f)
+(test (>= 1234/11 1234) #f)
+(test (>= 1234/11 1234/11) #t)
 
 (test (>= 1 0+i) 'error)
 (test (>= 1 0-i) 'error)
@@ -40898,23 +41464,23 @@ abs     1       2
 (test (>= 8 9) #f )
 (test (>= 9 9) #t )
 
-(num-test (>= -5 -4 -2 0 4 5) #f)
-(num-test (>= 0) 'error)
-(num-test (>= 0.0) 'error)
-(num-test (>= 0.0+0.00000001i) 'error)
-(num-test (>= 0/1) 'error)
-(num-test (>= 1 2 #\a) 'error)
-(num-test (>= 1 2 1.0+1.0i) 'error)
-(num-test (>= 1.0) 'error)
-(num-test (>= 1.0+1.0i) 'error)
-(num-test (>= 10/3) 'error)
-(num-test (>= 1234000000.0+2.71828182845905i) 'error)
-(num-test (>= 2) 'error)
-(num-test (>= 2.71828182845905+3.14159265358979i) 'error)
-(num-test (>= 4 3 1 2 0) #f)
-(num-test (>= 4 3 2 1 0) #t)
-(num-test (>= 4 3 3 2 0) #t)
-(num-test (>= 4 3) #t)
+(test (>= -5 -4 -2 0 4 5) #f)
+(test (>= 0) 'error)
+(test (>= 0.0) 'error)
+(test (>= 0.0+0.00000001i) 'error)
+(test (>= 0/1) 'error)
+(test (>= 1 2 #\a) 'error)
+(test (>= 1 2 1.0+1.0i) 'error)
+(test (>= 1.0) 'error)
+(test (>= 1.0+1.0i) 'error)
+(test (>= 10/3) 'error)
+(test (>= 1234000000.0+2.71828182845905i) 'error)
+(test (>= 2) 'error)
+(test (>= 2.71828182845905+3.14159265358979i) 'error)
+(test (>= 4 3 1 2 0) #f)
+(test (>= 4 3 2 1 0) #t)
+(test (>= 4 3 3 2 0) #t)
+(test (>= 4 3) #t)
 (test (>= -1.797693134862315699999999999999999999998E308 -9223372036854775808) #f)
 (test (>= -9223372036854775808 -9223372036854775808) #t)
 (test (>= -9223372036854775808 5.551115123125783999999999999999999999984E-17) #f)
@@ -40924,6 +41490,11 @@ abs     1       2
 (test (>= 5.551115123125783999999999999999999999984E-17 1.110223024625156799999999999999999999997E-16) #f)
 (test (>= 9223372036854775807 -9223372036854775808) #t)
 (test (>= 9223372036854775807 9223372036854775807) #t)
+
+(if with-bignums
+    (begin
+      (test (>= 12345678901234567890 12345678901234567891) #f)
+      ))
 
 (test (>= - 1 2) 'error)
 (test (>=- 1 2) 'error)
@@ -41348,6 +41919,12 @@ abs     1       2
 (num-test (sin (/ our-pi 5)) (/ (sqrt (- 10 (* 2 (sqrt 5)))) 4))
 (num-test (sin (/ our-pi 6)) 1/2)
 (num-test (sin (/ our-pi 8)) (/ (sqrt (- 2 (sqrt 2))) 2))
+(num-test (* (sin (/ our-pi 11)) (sin (/ (* 2 our-pi) 11)) (sin (/ (* 3 our-pi) 11)) (sin (/ (* 4 our-pi) 11)) (sin (/ (* 5 our-pi) 11))) (sqrt (/ 11 1024)))
+(num-test (* (sin (/ our-pi 7)) (sin (/ (* 2 our-pi) 7)) (sin (/ (* 3 our-pi) 7))) (/ (sqrt 7) 8))
+(num-test (* (sin (/ our-pi 9)) (sin (/ (* 2 our-pi) 9)) (sin (/ (* 4 our-pi) 9))) (/ (sqrt 3) 8))
+(num-test (* our-pi (+ 1.0 (atan (tan (acos (cos (asin (sin (/ 1.0 (/ 1.0 our-pi)))))))))) our-pi)
+(num-test (+ (* (sin 0.1) (sin 0.1)) (* (cos 0.1) (cos 0.1))) 1.0)
+(num-test (/ (- (sqrt 5) 1) 2) (/ (sin (* our-pi 1/5)) (sin (* our-pi 2/5))))
 
 (let ((val1 (sin (/ our-pi 60)))
       (val2 (* 1/16 (- (* (+ (sqrt 6) (sqrt 2)) (- (sqrt 5) 1)) (* 2 (- (sqrt 3) 1) (sqrt (+ 5 (sqrt 5))))))))
@@ -41640,6 +42217,93 @@ abs     1       2
 	    (set! mxerr err))))
     (if (> mxerr 1e-12) (format #t "sin err: ~A~%" mxerr))))
 	    
+(if with-bignums
+    (let ((old-prec (bignum-precision)))
+      (set! (bignum-precision) 500)
+      (let ((sin-vals (list   ;arprec mathtool table[Sin[k/10], {k, 0, 30}]
+		       "0.00000000000000000000000000000000000000000000000000000000000000000000"
+		       "0.09983341664682815230681419841062202698991538801798225999276686156165"
+		       "0.19866933079506121545941262711838975037020672954020540398639599139797"
+		       "0.29552020666133957510532074568502737367783211174261844850153103617326"
+		       "0.38941834230865049166631175679570526459306018344395889511584896585734"
+		       "0.47942553860420300027328793521557138808180336794060067518861661312553"
+		       "0.56464247339503535720094544565865790710988808499415177102426589426735"
+		       "0.64421768723769105367261435139872018306581384457368964474396308809382"
+		       "0.71735609089952276162717461058138536619278523779142282098968252068287"
+		       "0.78332690962748338846138231571354862314014792572030960356048515256195"
+		       "0.84147098480789650665250232163029899962256306079837106567275170999191"
+		       "0.89120736006143533995180257787170353831890931945282652766035329176720"
+		       "0.93203908596722634967013443549482599541507058820873073536659789445024"
+		       "0.96355818541719296470134863003955481534204849131773911795564922309212"
+		       "0.98544972998846018065947457880609751735626167234736563194021894560084"
+		       "0.99749498660405443094172337114148732270665142592211582194997482405934"
+		       "0.99957360304150516434211382554623417197949791475491995534260751586102"
+		       "0.99166481045246861534613339864787565240681957116712372532710249102330"
+		       "0.97384763087819518653237317884335760670293947136523395566725825917196"
+		       "0.94630008768741448848970961163495776211399866559491176443047155279581"
+		       "0.90929742682568169539601986591174484270225497144789026837897301153096"
+		       "0.86320936664887377068075931326902458492047242489508107697183045949721"
+		       "0.80849640381959018430403691041611906515855960597557707903336060873485"
+		       "0.74570521217672017738540621164349953894264877802047425750762828050000"
+		       "0.67546318055115092656577152534128337425336495789352584226890212866520"
+		       "0.59847214410395649405185470218616227170359717157722357330262703263874"
+		       "0.51550137182146423525772693520936824389387858775426312126259173008382"
+		       "0.42737988023382993455605308585788064749647642266670256499017776070511"
+		       "0.33498815015590491954385375271242210603030652888358671068410107309479"
+		       "0.23924932921398232818425691873957537221555293029961877411621026588071"
+		       "0.14112000805986722210074480280811027984693326425226558415188264123242")))
+	(do ((k 2 (+ k 1)))
+	    ((= k 30))
+	  (let ((sin-val-2 (number->string (sin (/ k (bignum "10"))))))
+	    (if (not (string=? (substring (list-ref sin-vals k) 3 60) (substring sin-val-2 2 59)))
+		(format #t ";(sin (/ ~A 10)) mp: ~A does not match~%~A~%" k (substring (list-ref sin-vals k) 3 60) (substring sin-val-2 2 59))))))
+      
+      (let ((sin-vals (list   ;arprec mathtool table[Sin[k/10], {k, 0, 30}]
+		       0.00000000000000000000000000000000000000000000000000000000000000000000
+		       0.09983341664682815230681419841062202698991538801798225999276686156165
+		       0.19866933079506121545941262711838975037020672954020540398639599139797
+		       0.29552020666133957510532074568502737367783211174261844850153103617326
+		       0.38941834230865049166631175679570526459306018344395889511584896585734
+		       0.47942553860420300027328793521557138808180336794060067518861661312553
+		       0.56464247339503535720094544565865790710988808499415177102426589426735
+		       0.64421768723769105367261435139872018306581384457368964474396308809382
+		       0.71735609089952276162717461058138536619278523779142282098968252068287
+		       0.78332690962748338846138231571354862314014792572030960356048515256195
+		       0.84147098480789650665250232163029899962256306079837106567275170999191
+		       0.89120736006143533995180257787170353831890931945282652766035329176720
+		       0.93203908596722634967013443549482599541507058820873073536659789445024
+		       0.96355818541719296470134863003955481534204849131773911795564922309212
+		       0.98544972998846018065947457880609751735626167234736563194021894560084
+		       0.99749498660405443094172337114148732270665142592211582194997482405934
+		       0.99957360304150516434211382554623417197949791475491995534260751586102
+		       0.99166481045246861534613339864787565240681957116712372532710249102330
+		       0.97384763087819518653237317884335760670293947136523395566725825917196
+		       0.94630008768741448848970961163495776211399866559491176443047155279581
+		       0.90929742682568169539601986591174484270225497144789026837897301153096
+		       0.86320936664887377068075931326902458492047242489508107697183045949721
+		       0.80849640381959018430403691041611906515855960597557707903336060873485
+		       0.74570521217672017738540621164349953894264877802047425750762828050000
+		       0.67546318055115092656577152534128337425336495789352584226890212866520
+		       0.59847214410395649405185470218616227170359717157722357330262703263874
+		       0.51550137182146423525772693520936824389387858775426312126259173008382
+		       0.42737988023382993455605308585788064749647642266670256499017776070511
+		       0.33498815015590491954385375271242210603030652888358671068410107309479
+		       0.23924932921398232818425691873957537221555293029961877411621026588071
+		       0.14112000805986722210074480280811027984693326425226558415188264123242))
+	    (mxerr 0.0))
+	(do ((x 0 (+ x 1)))
+	    ((= x 20))
+	  (let ((phase (* 2 pi (expt 10 x))))
+	    (do ((k 0 (+ k 1)))
+		((= k 30))
+	      (let ((sin-val-2 (sin (+ phase (/ k (bignum "10"))))))
+		(let ((err (magnitude (- sin-val-2 (list-ref sin-vals k)))))
+		  (if (> err mxerr)
+		      (set! mxerr err)))))))
+	(if (> mxerr 1e-35)
+	    (format #t ";(sin big-angle) max error: ~A" mxerr)))
+      (set! (bignum-precision) old-prec)))
+
 
 
 
@@ -42064,6 +42728,8 @@ abs     1       2
 (num-test (* (cos (/ our-pi 7)) (cos (/ (* 2 our-pi) 7)) (cos (/ (* 3 our-pi) 7))) 1/8)
 (num-test (* (cos (/ our-pi 9)) (cos (/ (* 2 our-pi) 9)) (cos (/ (* 4 our-pi) 9))) 1/8)
 (num-test (* (cos (/ our-pi 9)) (cos (/ (* 2 our-pi) 9)) (cos (/ (* 4 our-pi) 9))) 1/8)
+(num-test (do ((i 1 (+ i 1)) (sum 0.0 (+ sum (cos (/ (* 2 our-pi i) 11))))) ((= i 6) sum)) -0.5)
+(num-test (let ((a (/ (* 2 our-pi) 13))) (* 8 (+ (cos a) (cos (* 5 a))) (+ (cos (* 2 a)) (cos (* 3 a))) (+ (cos (* 4 a)) (cos (* 6 a))))) -1.0)
 
 (for-each
  (lambda (num-and-val)
@@ -42112,6 +42778,38 @@ abs     1       2
     ;; 47? calls here so we're at around .812 (oscillating around .8119)
     (test (< (abs (- x result)) .001) #t)))
 
+(let ((dht (lambda (data) 
+					; the Hartley transform of 'data'
+	     (let* ((len (vector-length data)) 
+		    (arr (make-vector len 0.0))
+		    (w (/ (* 2.0 our-pi) len)))
+	       (do ((i 0 (+ 1 i)))
+		   ((= i len))
+		 (do ((j 0 (+ 1 j)))
+		     ((= j len))
+		   (vector-set! arr i (+ (vector-ref arr i) 
+					 (* (vector-ref data j) 
+					    (+ (cos (* i j w)) 
+					       (sin (* i j w))))))))
+	       arr)))
+      (data (list->vector '(0.9196 0.9457 0.0268 0.0839 0.1974 0.1060 0.1463 0.3513 0.0391 0.6310 
+				   0.9556 0.6259 0.9580 0.8848 0.0104 0.1440 0.0542 0.3001 0.1844 0.3781 
+				   0.9641 0.6051 0.3319 0.6143 0.1828 0.2290 0.4026 0.5990 0.7906 0.0403 
+				   0.7882 0.1591)))
+      (saved-data (make-vector 32 0.0)))
+  (do ((i 0 (+ i 1))) 
+      ((= i 32)) 
+    (vector-set! saved-data i (vector-ref data i)))
+  (dht data) 
+  (dht data)
+  (let ((mx 0.0))
+    (do ((i 0 (+ i 1)))
+	((= i 32))
+      (let ((err (abs (- (vector-ref data i) (vector-ref saved-data i)))))
+	(if (> err mx)
+	    (set! mx err))))
+    (if (> mx 1e-6)
+	(format #t "dht error: ~A~%" mx))))
     
 (let ((coss (list 
 	     1.00000000000000000000000000000000000000000000000000000000000000000000
@@ -42156,6 +42854,54 @@ abs     1       2
 	    (set! mxerr err))))
     (if (> mxerr 1e-12) (format #t "cos err: ~A~%" mxerr))))
 
+(if with-bignums
+    (begin
+      (num-test (cos 100000000000000000000000000000000)   -9.207313839241906875982573440296245746235E-1)
+      (num-test (cos 100000000000000000000000000000000.0) -9.207313839241906875982573440296245746235E-1)
+      ))
+
+(if with-bignums
+    (let ((old-prec (bignum-precision)))
+      (set! (bignum-precision) 500)
+      (let ((cos-vals (list ; arprec mathtool table[Cos[k/20], {k, 0, 30}]
+		       "1.00000000000000000000000000000000000000000000000000000000000000000000"
+		       "0.99875026039496624656287081115652109495898026202467575301500996478674"
+		       "0.99500416527802576609556198780387029483857622541508403595935274468526"
+		       "0.98877107793604228673498099865433895791835001710693704356129574806756"
+		       "0.98006657784124163112419651674816887739352436080656799405254829012618"
+		       "0.96891242171064478414459544949418919980413419028744283114812812428894"
+		       "0.95533648912560601964231022756804989824421408263203767451761361222758"
+		       "0.93937271284737892003503235730366558297406104641303414382897205809282"
+		       "0.92106099400288508279852673205180161402585956931985044561508926713514"
+		       "0.90044710235267692166884061148644643975762309272876915613354673932299"
+		       "0.87758256189037271611628158260382965199164519710974405299761086831595"
+		       "0.85252452205950574280498179761777305104031900079223767166865534849083"
+		       "0.82533561490967829724095249895537603887809103918847038136974977367156"
+		       "0.79608379854905582891760457067990587351049589381429244823834230313846"
+		       "0.76484218728448842625585999019186490926821055037370335607293245825206"
+		       "0.73168886887382088631183875300008454384054127605077248250768322022075"
+		       "0.69670670934716542092074998164232492610178601370806078363714489414924"
+		       "0.65998314588498217039541602946146607363862433893076798146474793887138"
+		       "0.62160996827066445648471615140713350872176136659123900757638348453897"
+		       "0.58168308946388349416618097376045571713934034193760200851355170750073"
+		       "0.54030230586813971740093660744297660373231042061792222767009725538110"
+		       "0.49757104789172699029084957281210067725147811164693171708781576506313"
+		       "0.45359612142557738777137005178471612212146729566259504745593805541880"
+		       "0.40848744088415729815257671880991853998462713510786075458328732035938"
+		       "0.36235775447667357763837335562307602033994778557664862648774972093613"
+		       "0.31532236239526866544753855243803801372798570798275680751499914045328"
+		       "0.26749882862458740699798410929287135927592992167912966191725336742182"
+		       "0.21900668709304158142002217301062666089672421266400567061594451723594"
+		       "0.16996714290024093861674803520364980292818392102853430898236521149464"
+		       "0.12050276936736657053286662724801883979155423770384722087315404654227"
+		       "0.07073720166770291008818985143426870908509102756334686942264541719092")))
+	(do ((k 1 (+ k 1)))
+	    ((= k 30))
+	  (let ((cos-val-2 (number->string (cos (/ k (bignum "20"))))))
+	    (if (not (string=? (substring (list-ref cos-vals k) 3 60) (substring cos-val-2 2 59)))
+		(format #t ";(cos (/ ~A 20)) mp: ~A does not match~%~A~%" k (substring (list-ref cos-vals k) 3 60) (substring cos-val-2 2 59))))))
+      (set! (bignum-precision) old-prec)))
+	
 
 
 
@@ -42573,6 +43319,30 @@ abs     1       2
 (num-test (tan (/ our-pi 6)) (/ (sqrt 3) 3))
 (num-test (tan (/ our-pi 6)) (/ (sqrt 3)))
 (num-test (tan (/ our-pi 8)) (- (sqrt 2) 1))
+(num-test (* (tan (/ our-pi 11)) (tan (/ (* 2 our-pi) 11)) (tan (/ (* 3 our-pi) 11)) (tan (/ (* 4 our-pi) 11)) (tan (/ (* 5 our-pi) 11))) (sqrt 11))
+(num-test (* (tan (/ our-pi 9)) (tan (/ (* 2 our-pi) 9)) (tan (/ (* 4 our-pi) 9))) (sqrt 3))
+
+(if with-bignums
+    (begin
+      (letrec ((sum-cot (lambda (n)
+			  (let ((sum 0.0))
+			    (do ((k 1 (+ k 1)))
+				((= k n) sum)
+			      (set! sum (+ sum (sin (/ (* k pi) n)))))))))
+	(let ((mxerr 0.0)
+	      (mxcase 0))
+	  (do ((i 2 (+ i 1)))
+	      ((= i 100))
+	    (let ((val1 (sum-cot i))
+		  (val2 (/ 1.0 (tan (/ pi (* 2 i))))))
+	      (let ((err (magnitude (- val1 val2))))
+		(if (> err mxerr)
+		    (begin
+		      (set! mxerr err)
+		      (set! mxcase i))))))
+	  (if (> mxerr 1e-35)
+	      (format #t "sum-cot max error ~A at ~A~%" mxerr mxcase))))
+      ))
 
 (for-each
  (lambda (num-and-val)
@@ -42588,6 +43358,48 @@ abs     1       2
 	 (list 1-1i 0.27175258531951-1.0839233273387i) (list -1+1i -0.27175258531951+1.0839233273387i) 
 	 (list -1-1i -0.27175258531951-1.0839233273387i) (list 0.1+0.1i 0.099328043521656+0.10066129051146i) 
 	 (list 1e+16+1e+16i 0+1i) (list 1e-16+1e-16i 1e-16+1e-16i) ))
+
+(if with-bignums
+    (let ((old-prec (bignum-precision)))
+      (set! (bignum-precision) 500)
+      (let ((tans (list ; table[Tan[k/10], {k, 0, 30}]
+		   0.00000000000000000000000000000000000000000000000000000000000000000000e0
+		   0.10033467208545054505808004578111153681900480457644204002220806579803
+		   0.20271003550867248332135827164753448262687566965163133004781996689038
+		   0.30933624960962323303530367969829466725781590680046134075142272636569
+		   0.42279321873816176198163542716529033394198977271569358984733094139266
+		   0.54630248984379051325517946578028538329755172017979124616409138593290
+		   0.68413680834169231707092541746333574524265408075678204603738401651742
+		   0.84228838046307944812813500221293771718722125080419899879692251366850
+		   1.02963855705036401274636117282036528416821960677230780766895721581894
+		   1.26015821755033913713457548539574847783362583439629440734976898386523
+		   1.55740772465490223050697480745836017308725077238152003838394660569886
+		   1.96475965724865195093092278177937824371908489378986426895526379547792
+		   2.57215162212631893540999423603336395652940930604338927922563726223880
+		   3.60210244796797815123114551507651373970302582865487479569579648938869
+		   5.79788371548288964370772024360369904599369751893967972517934732424182
+		   14.10141994717171938764608365198775644565954357723586186612326758608969
+		   -34.23253273555741705801487543047619090177569941115323597430813746321248
+		   -7.69660213945915841412819296829866091636528991430764756294574142318097
+		   -4.28626167462806352545188895228026668020736003385824824436108662437549
+		   -2.92709751467777270368689918927087330066328793602580283437505670792996
+		   -2.18503986326151899164330610231368254343201774622766316456295586996677
+		   -1.70984654290450774834778079380390375776090098123394621314534682027235
+		   -1.37382305676879516014003676333346987430263329223370049420804295416122
+		   -1.11921364173413217123235669407622790313829418580200248125375565107236
+		   -0.91601428967341051273086324750810579399364554997699617941685909082222
+		   -0.74702229723866027935535268782527455790411695688301127906659308970027
+		   -0.60159661308975872273608189269127978293417758666969145078057164875561
+		   -0.47272762910303750795198918126389516105797171531608327694222778882857
+		   -0.35552983165117587757735260363543503816953711960914396739605909199266
+		   -0.24640539397196625534356707388530576476208894415934539659747894722272
+		   -0.14254654307427780529563541053391349322609228490180464763323897668885)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 30))
+	  (let ((val (tan (/ i (bignum "10")))))
+	    (if (> (magnitude (- val (list-ref tans i))) 1e-35)
+		(format #t ";(tan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref tans i) (magnitude (- val (list-ref tans i))))))))
+      (set! (bignum-precision) old-prec)))
   
 (test (tan) 'error)
 (test (tan "hi") 'error)
@@ -43068,6 +43880,10 @@ abs     1       2
 (num-test (asin 1+1e17i) 1e-17+39.837093761459i)
 (num-test (asin -2.225073858507201399999999999999999999996E-308) -2.225073858507201399999999999999999999996E-308)
 (num-test (asin 1.110223024625156799999999999999999999997E-16) 1.110223024625156800000000000000002280754E-16)
+(num-test (asin (/ (sqrt 2) 2)) (/ our-pi 4))
+(num-test (asin (/ (sqrt 3) -2)) (/ our-pi -3))
+(num-test (* 10 (asin (/ (- (sqrt 5) 1) 4))) our-pi)
+(num-test (* 2 (asin 1)) our-pi)
 
 (for-each
  (lambda (num-and-val)
@@ -43160,6 +43976,48 @@ abs     1       2
 	(if (> err mxerr)
 	    (set! mxerr err))))
     (if (> mxerr 1e-12) (format #t "asin err: ~A~%" mxerr))))
+
+(if with-bignums
+    (let ((old-prec (bignum-precision)))
+      (set! (bignum-precision) 500)
+      (let ((asins (list ; table[Arcsin[k/30], {k, 0, 30}]
+		    0.00000000000000000000000000000000000000000000000000000000000000000000e0
+		    0.03333950926130208699143488077083860917565937855129663393680393744362
+		    0.06671614841022525954540510327036927409184944434654403274652597117428
+		    0.10016742116155979634552317945269331856867597222962954139102385503640
+		    0.13373158940994152865632332716309743011405498274444165545458875924377
+		    0.16744807921968933055327460604363822091495716231623832046578730373329
+		    0.20135792079033079145512555221762341024003808140222838625725124345560
+		    0.23550423672079979129288448393723556648106234259531297814541683051663
+		    0.26993279583340344442461498978851864365647337427020501782962042633379
+		    0.30469265401539750797200296122752916695456003170677638739297794874647
+		    0.33983690945412193709639251339176406638824469033245807143192396248991
+		    0.37542360798103940368516545708214708494670535320625397496008012654413
+		    0.41151684606748801938473789761733560485570113512702585178394678070009
+		    0.44818813597943128994043756304906477118029918046343080720212217855713
+		    0.48551812229559116327223435902482444763168509494201196125953547218486
+		    0.52359877559829887307710723054658381403286156656251763682915743205130
+		    0.56253624454385561973132565694853319169977493405170278279550382560769
+		    0.60245463338499055124863378781466897272136400811697167837514413874507
+		    0.64350110879328438680280922871732263804151059111531238286560611871351
+		    0.68585296461871075596328071793021108476903703940127104404158318225766
+		    0.72972765622696636345479665981332069539650591404771369070894949146181
+		    0.77539749661075306374035335271498711355578873864116199359771996373272
+		    0.82321197712587582143797706006235798228453830885144107684904792594002
+		    0.87363319315266432351068180914720023973456695459982111043494836254140
+		    0.92729521800161223242851246292242880405707410857224052762186617744039
+		    0.98511078333774565961356415316223367589822363251591140783691296893264
+		    1.04848150498884799670722286578404816608970376214442109090268484725633
+		    1.11976951499863418668667705584539961589516218640330288237568186391443
+		    1.20358830623705947672584877793852613585139977949919656045114461770445
+		    1.31187478478867540346593147633958737932614651512288222488818316043445
+		    1.57079632679489661923132169163975144209858469968755291048747229615390)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 30))
+	  (let ((val (asin (/ i (bignum "30")))))
+	    (if (> (magnitude (- val (list-ref asins i))) 1e-36)
+		(format #t ";(asin ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref asins i) (magnitude (- val (list-ref asins i))))))))
+      (set! (bignum-precision) old-prec)))
 
 
 
@@ -43680,6 +44538,47 @@ abs     1       2
 (test (acos 1.0+23.0i 1.0+23.0i) 'error)
 (test (acos 0 1) 'error)
 
+(if with-bignums
+    (let ((old-prec (bignum-precision)))
+      (set! (bignum-precision) 500)
+      (let ((acoss (list ; table[Arccos[k/30], {k, 0, 30}]
+		    1.57079632679489661923132169163975144209858469968755291048747229615390
+		    1.53745681753359453223988681086891283292292532113625627655066835871028
+		    1.50408017838467135968591658836938216800673525534100887774094632497961
+		    1.47062890563333682288579851218705812352990872745792336909644844111750
+		    1.43706473738495509057499836447665401198452971694311125503288353691013
+		    1.40334824757520728867804708559611322118362753737131459002168499242061
+		    1.36943840600456582777619613942212803185854661828532452423022105269829
+		    1.33529209007409682793843720770251587561752235709223993234205546563727
+		    1.30086353096149317480670670185123279844211132541734789265785186982011
+		    1.26610367277949911125931873041222227514402466798077652309449434740743
+		    1.23095941734077468213492917824798737571034000935509483905554833366399
+		    1.19537271881385721554615623455760435715187934648129893552739216960977
+		    1.15927948072740859984658379402241583724288356456052705870352551545381
+		    1.12260819081546532929088412859068667091828551922412210328535011759677
+		    1.08527820449930545595908733261492699446689960474554094922793682396904
+		    1.04719755119659774615421446109316762806572313312503527365831486410260
+		    1.00826008225104099949999603469121825039880976563585012769196847054621
+		    0.96834169340990606798268790382508246937722069157058123211232815740883
+		    0.92729521800161223242851246292242880405707410857224052762186617744039
+		    0.88494336217618586326804097370954035732954766028628186644588911389624
+		    0.84106867056793025577652503182643074670207878563983921977852280469208
+		    0.79539883018414355549096833892476432854279596104639091688975233242118
+		    0.74758434966902079779334463157739345981404639083611183363842437021388
+		    0.69716313364223229572063988249255120236401774508773180005252393361250
+		    0.64350110879328438680280922871732263804151059111531238286560611871351
+		    0.58568554345715095961775753847751776620036106717164150265055932722126
+		    0.52231482180604862252409882585570327600888093754313181958478744889757
+		    0.45102681179626243254464463579435182620342251328425002811179043223947
+		    0.36720802055783714250547291370122530624718492018835635003632767844945
+		    0.25892154200622121576539021530016406277243818456467068559928913571945
+		    0.00000000000000000000000000000000000000000000000000000000000000000000e0)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 30))
+	  (let ((val (acos (/ i (bignum "30")))))
+	    (if (> (magnitude (- val (list-ref acoss i))) 1e-36)
+		(format #t ";(acos ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref acoss i) (magnitude (- val (list-ref acoss i))))))))
+      (set! (bignum-precision) old-prec)))
 
 
 
@@ -44163,6 +45062,13 @@ abs     1       2
 (num-test (/ our-pi 4) (+ (atan 1/2) (atan 1/3)))
 (num-test (/ our-pi 4) (- (* 2 (atan 1/2)) (atan 1/7)))
 (num-test (/ our-pi 4) (- (* 4 (atan (/ 1 5))) (atan (/ 1 239))))
+(num-test (* 4 (+ (* 3 (atan 1/4)) (atan 1/20) (atan 1/1985))) our-pi)
+(num-test (+ (* 176 (atan (/ 57))) (* 28 (atan (/ 239))) (* -48 (atan (/ 682))) (* 96 (atan (/ 12943)))) our-pi)
+(num-test (+ (* 2 (atan (/ (sqrt 2)))) (atan (/ (sqrt 8)))) (/ our-pi 2))
+(num-test (+ (* 48 (atan (/ 49))) (* 128 (atan (/ 57))) (* -20 (atan (/ 239))) (* 48 (atan (/ 110443)))) our-pi)
+(num-test (/ (+ (atan (/ 239)) (atan (/ 70)) (- (atan (/ 99)))) 2) (+ (atan (/ 408)) (atan (/ 577))))
+(num-test (atan (/ -1 (sqrt 3))) (/ our-pi -6))
+(num-test (atan (sqrt 3)) (/ our-pi 3))
 
 (for-each
  (lambda (num-and-val)
@@ -44464,7 +45370,47 @@ abs     1       2
 	    (set! mxerr err))))
     (if (> mxerr 1e-12) (format #t "atan err: ~A~%" mxerr))))
     
-
+(if with-bignums
+    (let ((old-prec (bignum-precision)))
+      (set! (bignum-precision) 500)
+      (let ((atans (list ; table[Arctan[k/10], {k, 0, 30}]
+		    0.00000000000000000000000000000000000000000000000000000000000000000000e0
+		    0.09966865249116202737844611987802059024327832250431464801550877681002
+		    0.19739555984988075837004976519479029344758510378785210151768894024103
+		    0.29145679447786709199560462143289119350316759901206541927220608308729
+		    0.38050637711236488630358791681043310449740571365810083757630562232420
+		    0.46364760900080611621425623146121440202853705428612026381093308872019
+		    0.54041950027058415544357836460859991013514825146259238811636023340959
+		    0.61072596438920861654375887649023609381850306612882761584286773000023
+		    0.67474094222355266305652097360981361507400625484071242312092170496930
+		    0.73281510178650659164079207273428025198575567935825608631050693192821
+		    0.78539816339744830961566084581987572104929234984377645524373614807695
+		    0.83298126667443170541769356183636123851585134443710842085342312250327
+		    0.87605805059819342311404752112834133907534524616033200346065614838499
+		    0.91510070055336041656680197245527296654755880944161873770852665151657
+		    0.95054684081207514789478913546381917504767901030880427426177057808809
+		    0.98279372324732906798571061101466601449687745363162855676142508831798
+		    1.01219701145133418325981347523809017175213711715353810435383625801215
+		    1.03907225953609102762125033790727884531233378855364699989530509706554
+		    1.06369782240255966094389111605254547856256296541932752568273985366635
+		    1.08631839775787341806397958192567762897580047046812780208748680606431
+		    1.10714871779409050301706546017853704007004764540143264667653920743371
+		    1.12637711689379770989641767275145325372112241040085015241064879177491
+		    1.14416883366802053001158090974633622082626800572469223488413501483165
+		    1.16066898625340562678011092078453217718605394084134102434206195147540
+		    1.17600520709513510249122216125017085520341449211184870745209441567184
+		    1.19028994968253173292773377482931833760117898602945207291116667382970
+		    1.20362249297667741080683267484687578339840429857832439350850411338551
+		    1.21609067478395630285892632134113779481025954203667431449700610948231
+		    1.22777238637419322215779309222594182541102155201281262388880100298534
+		    1.23873685925201114137796025438808735907407693977120210817129118165791
+		    1.24904577239825442582991707728109012307782940412989671905466923679715)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 30))
+	  (let ((val (atan (/ i (bignum "10")))))
+	    (if (> (magnitude (- val (list-ref atans i))) 1e-36)
+		(format #t ";(atan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref atans i) (magnitude (- val (list-ref atans i))))))))
+      (set! (bignum-precision) old-prec)))
 
 
 
@@ -45276,6 +46222,7 @@ abs     1       2
 (num-test (cosh -2.0e+00+9.42512322775237976202e+00i) -3.7621954668392959462e0+1.2522351258999818715e-3i)
 (num-test (cosh -2.0e+00-9.42512322775237976202e+00i) -3.7621954668392959462e0-1.2522351258999818715e-3i)
 (num-test (cosh (log (/ (+ 1 (sqrt 5)) 2))) (/ (sqrt 5) 2))
+(num-test (/ (+ (cos (/ 10)) (cosh (/ 10)) (* 2 (cos (/ (sqrt 2) 20)) (cosh (/ (sqrt 2) 20)))) 4) 1.0000000000002480)
 (num-test (cosh 0) 1.0)
 (num-test (cosh -2.225073858507201399999999999999999999996E-308) 1.000E0)
 (num-test (cosh 1.110223024625156799999999999999999999997E-16) 1.000000000000000000000000000000006162976E0)
@@ -45294,6 +46241,34 @@ abs     1       2
 	 (list 0.1+0.1i 0.9999833333373+0.0099999888888898i) (list 1e-16+1e-16i 1+1e-32i) 
 	 ))
   
+(if with-bignums
+    (begin
+      (let ((max-s-error 0.0)
+	    (max-s-error-case 0)
+	    (max-sh-error 0.0)
+	    (max-sh-error-case 0))
+	(do ((x (bignum "0.0") (+ x 0.1)))
+	    ((> x (* 2 pi)))
+	  (let ((s (sin x))
+		(sh (sinh x))
+		(c (cos x))
+		(ch (cosh x)))
+	    (let ((err (magnitude (- (+ (* s s) (* c c)) 1))))
+	      (if (> err max-s-error)
+		  (begin
+		    (set! max-s-error err)
+		    (set! max-s-error-case x))))
+	    (let ((err (magnitude (+ (- (* sh sh) (* ch ch)) 1))))
+	      (if (> err max-sh-error)
+		  (begin
+		    (set! max-sh-error err)
+		    (set! max-sh-error-case x))))))
+	(if (> max-s-error 1e-35)
+	    (format #t "s^2 + c^2 error: ~A at ~A~%" max-s-error max-s-error-case))
+	(if (> max-sh-error 1e-33)
+	    (format #t "sh^2 + ch^2 error: ~A at ~A~%" max-sh-error max-sh-error-case)))
+      ))
+
 (test (cosh) 'error)
 (test (cosh "hi") 'error)
 (test (cosh 1.0+23.0i 1.0+23.0i) 'error)
@@ -47916,6 +48891,12 @@ abs     1       2
 (num-test (sqrt 1/4611686018427387904) 1/2147483648)
 (num-test (sqrt 1/1152921504606846976) 1/1073741824)
 (num-test (sqrt 1/9223372030926249001) 1/3037000499)
+(num-test (sqrt 0+i) (/ 1+i (sqrt 2)))
+(num-test (+ 0-i(sqrt 00)) 0-i)
+(num-test (sqrt (* 1.2345e-127 1.2345e-127)) 1.2345e-127)
+(num-test (sqrt (* 1.2345e-27 1.2345e-27)) 1.2345e-27)
+(num-test (sqrt 13) (do ((i 1 (+ i 1)) (prod 1.0 (* prod (tan (/ (* i our-pi) 13))))) ((= i 7) prod)))
+(num-test (* 768 (sqrt (- 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 1))))))))))))))))))) 3.1415904632368)
 
 (for-each
  (lambda (num-and-val)
@@ -47982,7 +48963,56 @@ abs     1       2
 	    (set! mxerr err))))
     (if (> mxerr 1e-12) (format #t "sqrt err: ~A~%" mxerr))))
 
+(if with-bignums
+    (begin
+      (num-test (/ (sqrt (* 1.2345e-170 1.2345e-170))) 8.100445524503847216161209708816501953798E169)
+      (num-test (sqrt (expt 2 32)) 65536)
+      (num-test (sqrt -1.797693134862315699999999999999999999998E308) 0.0+1.34078079299425963249160560140156653105E154i)
+      (num-test (exp (* our-pi (sqrt (bignum "163")))) 2.625374126407687439999999999992500725895E17)
+      ))
 
+(if with-bignums
+    (let ((old-prec (bignum-precision)))
+      (set! (bignum-precision) 500)
+      (let ((sqrts (list ; table[Sqrt[k/10], {k, 0, 30}]
+		    0.00000000000000000000000000000000000000000000000000000000000000000000e0
+		    0.31622776601683793319988935444327185337195551393252168268575048527925
+		    0.44721359549995793928183473374625524708812367192230514485417944908210
+		    0.54772255750516611345696978280080213395274469499798325422689444973249
+		    0.63245553203367586639977870888654370674391102786504336537150097055851
+		    0.70710678118654752440084436210484903928483593768847403658833986899536
+		    0.77459666924148337703585307995647992216658434105831816531751475322269
+		    0.83666002653407554797817202578518748939281536929867219981119154308041
+		    0.89442719099991587856366946749251049417624734384461028970835889816420
+		    0.94868329805051379959966806332981556011586654179756504805725145583777
+		    1.00000000000000000000000000000000000000000000000000000000000000000000
+		    1.04880884817015154699145351367993759847527185768150398487575576358000
+		    1.09544511501033222691393956560160426790548938999596650845378889946498
+		    1.14017542509913797913604902556675447907600531091641037529746941724956
+		    1.18321595661992320851346565831232340968310024615886806457594393382856
+		    1.22474487139158904909864203735294569598297374032833506421634628362548
+		    1.26491106406735173279955741777308741348782205573008673074300194111703
+		    1.30384048104052974291659431148583688330561875578201309179007936989676
+		    1.34164078649987381784550420123876574126437101576691543456253834724631
+		    1.37840487520902217679559125529341754271981635583990014790642120179806
+		    1.41421356237309504880168872420969807856967187537694807317667973799073
+		    1.44913767461894385737186641571697717231401328747589730886959248071181
+		    1.48323969741913258974227948816014261219598086381950031974652465286876
+		    1.51657508881031011085136508725641431090992842790349245064524200355844
+		    1.54919333848296675407170615991295984433316868211663633063502950644539
+		    1.58113883008418966599944677221635926685977756966260841342875242639629
+		    1.61245154965970993047332264606075422622687926112171467758731847785277
+		    1.64316767251549834037090934840240640185823408499394976268068334919747
+		    1.67332005306815109595634405157037497878563073859734439962238308616083
+		    1.70293863659264011661333218238773227063897151909784216273026969624657
+		    1.73205080756887729352744634150587236694280525381038062805580697945193)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 30))
+	  (let ((val (sqrt (/ i (bignum "10")))))
+	    (if (> (magnitude (- val (list-ref sqrts i))) 1e-36)
+		(format #t ";(sqrt ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref sqrts i) (magnitude (- val (list-ref sqrts i))))))))
+      (set! (bignum-precision) old-prec)))
+      
 
 
 
@@ -48448,6 +49478,7 @@ abs     1       2
 (num-test (exp (* our-pi (sqrt 22))) 2508951.998257424)
 (num-test (exp (* our-pi (sqrt 6))) 2197.9908695437)
 (num-test (exp (* our-pi (sqrt 719))) 3.8426143735395488914902942778058291929999e+36)
+(num-test (exp (make-rectangular 0.0 our-pi)) -1.0)
 
 (for-each
  (lambda (num-and-val)
@@ -48479,7 +49510,49 @@ abs     1       2
       (num-test (exp 100) 2.688117141816135448412625551580013587359E43)
       (num-test (exp 50.0) 5.184705528587072464087453322933485384827E21)))
 
-
+(if with-bignums
+    (let ((old-prec (bignum-precision)))
+      (set! (bignum-precision) 500)
+      (let ((exps (list  ; table[Exp[k/10], {k, 0, 30}]
+		   1.00000000000000000000000000000000000000000000000000000000000000000000
+		   1.10517091807564762481170782649024666822454719473751871879286328944096
+		   1.22140275816016983392107199463967417030758094152050364127342509859920
+		   1.34985880757600310398374431332800733037829969735936580304991798993961
+		   1.49182469764127031782485295283722228064328277393742528159563315007236
+		   1.64872127070012814684865078781416357165377610071014801157507931164066
+		   1.82211880039050897487536766816286451338223880854643538632054747658881
+		   2.01375270747047652162454938858306527001754239414586731156898930087978
+		   2.22554092849246760457953753139507675705363413504848459611858395555662
+		   2.45960311115694966380012656360247069542177230644008302074854573665746
+		   2.71828182845904523536028747135266249775724709369995957496696762772407
+		   3.00416602394643311205840795358867239328268102601627276212975286052863
+		   3.32011692273654748953076742960164432007363176479282675728202180154077
+		   3.66929666761924422045748991601148625143151888455755146725622649459660
+		   4.05519996684467458722410889522862025216756114168404107165223289450693
+		   4.48168907033806482260205546011927581900574986836966705677265008278593
+		   4.95303242439511480365428635642396425641303112355664964787158190112430
+		   5.47394739172719976079086266300909670070076114490748605875498633804484
+		   6.04964746441294608373102395302772533816116344511729126161486476549696
+		   6.68589444227926941607253072769286145380311864710852264561241990317501
+		   7.38905609893065022723042746057500781318031557055184732408712782252257
+		   8.16616991256765007344972741047863128518315260430523695926385375737882
+		   9.02501349943412092647177716688866402972021659669817926079803719255720
+		   9.97418245481472073995761515690885800147870119368402956369142191697585
+		   11.02317638064160165223793976966780200851716306933940388430829005877357
+		   12.18249396070347343807017595116796618318276779006316131156039834183818
+		   13.46373803500169039775082533258411724479408609657822907153993787261197
+		   14.87973172487283411186899301946839578068879752075547683852481232002013
+		   16.44464677109704987149801601092501556372435769719962288653996273295166
+		   18.17414536944306094267625657412806698753309200930534632364757918918540
+		   20.08553692318766774092852965458171789698790783855415014437893422969884)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 30))
+	  (let ((val (exp (/ i (bignum "10")))))
+	    (if (> (magnitude (- val (list-ref exps i))) 1e-36)
+		(format #t ";(exp ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref exps i) (magnitude (- val (list-ref exps i))))))))
+      (set! (bignum-precision) old-prec)))
+      
+      
 
 
 ;;; --------------------------------------------------------------------------------
@@ -49095,6 +50168,9 @@ abs     1       2
 (num-test (log -9223372036854775808) 4.366827237527655449328562365186512378885E1+3.141592653589793238462643383279502884195E0i)
 (num-test (log 1.110223024625156799999999999999999999997E-16) -3.673680056967710116530769529852882544059E1)
 (num-test (log 9223372036854775807) 4.366827237527655449317720343461657334526E1)
+(test (< (real-part (log 0.0)) (real-part (- (log 0.0)))) #t)
+(num-test (* 2  0+i (log (/ 1-i 1+i))) our-pi)
+(num-test (/ 53453 (log 53453)) 4910.0000012208)
 
 (num-test (log 55510/63095 55510/63095) 1)
 (num-test (log 2921/7914 2921/7914) 1)
@@ -49168,6 +50244,10 @@ abs     1       2
 (num-test (log (expt 2 1022)) 7.083964185322641062244112281302564525734E2)
 (num-test (log (expt 2 125)) 8.664339756999316367715401518227207100938E1)
 
+(let ((val1 (catch #t (lambda () (log 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (log -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+
 (test (log) 'error)
 (test (log "hi") 'error)
 (test (log 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error)
@@ -49233,6 +50313,9 @@ abs     1       2
 (if (not with-bignums) (num-test (log 1 0) 0)) ; since (expt 0 0) is 1
 (if with-bignums
     (begin
+      (num-test (log -1.797693134862315699999999999999999999998E308) 7.097827128933839967276924307167005609752E2+3.141592653589793238462643383279502884195E0i)
+      (num-test (log -2.225073858507201399999999999999999999996E-308) -7.083964185322641062168115849912137186655E2+3.141592653589793238462643383279502884195E0i)
+      (num-test (log 69720375229712477164533808935312303556800) 9.40453112293573922460049312446069272415E1)
       (num-test (log 100.0 (+ 1.0 (bignum "1e-16"))) 4.605170185988091598294419229104461919985E16)
       (num-test (expt (+ 1.0 (bignum "1e-16")) 4.605170185988091598294419229104461919985E16) 100.0)
       (num-test (log 100.0 (+ 1.0 (bignum "1e-34"))) 4.60520221864866031976806443342804401709E34)
@@ -49333,6 +50416,48 @@ abs     1       2
 	    (set! mxerr err))))
     (if (> mxerr 1e-12) (format #t "log err: ~A~%" mxerr))))
 
+(if with-bignums
+    (let ((old-prec (bignum-precision)))
+      (set! (bignum-precision) 500)
+      (let ((logs (list ; table[Log[k/10 + 1.0], {k, 0, 30}]
+		   0.00000000000000000000000000000000000000000000000000000000000000000000e0
+		   0.09531017980432486004395212328076509222060536530864419918523980816300
+		   0.18232155679395462621171802515451463319738933791448698394272645165670
+		   0.26236426446749105203549598688095439720416645613143414038571760969589
+		   0.33647223662121293050459341021699209011148337531334346654674225846340
+		   0.40546510810816438197801311546434913657199042346249419761401432414410
+		   0.47000362924573555365093703114834206470089904881224804044939213700600
+		   0.53062825106217039623154316318876232798710152395697181126390983691471
+		   0.58778666490211900818973114061886376976937976137698118155674077580080
+		   0.64185388617239477599103597720348932963627777267035584250463233544172
+		   0.69314718055994530941723212145817656807550013436025525412068000949339
+		   0.74193734472937731248260652568134122668347379877583766416075658260750
+		   0.78845736036427016946118424473894166029610549966889945330591981765639
+		   0.83290912293510400678876137712583191084127882621166276596530747651542
+		   0.87546873735389993562895014661269120127288947227474223806340646115010
+		   0.91629073187415506518352721176801107145010121990826246779196788198078
+		   0.95551144502743636145272810833913096527966659049168939450639761918928
+		   0.99325177301028339016774425608321290634137018483947537917075509994491
+		   1.02961941718115823992182553167516865818698350967359872066742226795679
+		   1.06471073699242834316528057767754739789341142529397110288834245067520
+		   1.09861228866810969139524523692252570464749055782274945173469433363749
+		   1.13140211149110056191117286985799300284883744185181899572339017150740
+		   1.16315080980568086306816915260651863277639918317250329457007214649939
+		   1.19392246847243455143919736020329079686809592313139365091993414180049
+		   1.22377543162211570564877528464693889606260165831722706538458984640811
+		   1.25276296849536799568812062198500316156158459522160593433871014044418
+		   1.28093384546206431760696326207704033784487989573723643567742078529420
+		   1.30833281965017876035010421634708295629897609853886318761158478022541
+		   1.33500106673234008540826809866166589771177790703061109662531234493511
+		   1.36097655313560074343074122380348010185165701395418359212041194333338
+		   1.38629436111989061883446424291635313615100026872051050824136001898678)))
+	
+	(do ((i 0 (+ i 1)))
+	    ((= i 30))
+	  (let ((val (log (+ (/ i (bignum "10")) (bignum "1.0")))))
+	    (if (> (magnitude (- val (list-ref logs i))) 1e-36)
+		(format #t ";(log ~A) -> ~A ~A~%[~A]~%" (+ 1.0 (/ i 10)) val (list-ref logs i) (magnitude (- val (list-ref logs i))))))))
+      (set! (bignum-precision) old-prec)))
 	
 
 
@@ -49606,9 +50731,31 @@ abs     1       2
 (test (expt 0 -1.0) 'error)
 (test (expt 0 -1.0+i) 'error)
 
+(let ((val1 (catch #t (lambda () (expt 0.0 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (expt 0.0 -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+(let ((val1 (catch #t (lambda () (expt 2.0 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (expt 2.0 -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+
 ;;      (test (expt 0 0-i) 0.0) ; sbcl and clisp say division by 0 here, guile says NaN
 ;;      but (expt 0.0 1e-15-i) is 0.0??
 ;; clisp says (expt 0 1+i) is 0, but (expt 0 0+i) is division by zero??) -- sbcl agrees
+
+#|
+(do ((i 30 (+ i 1))) 
+    ((= i 63)) 
+  (format #t "~D: (- ~A ~A) -> ~A~%" i (+ (expt 2.0 i) 500) (+ (expt 2.0 i) 100) (- (+ (expt 2.0 i) 500) (+ (expt 2.0 i) 100))))
+
+55: (- 3.6028797018964e+16 3.6028797018964e+16) -> 400.0
+56: (- 7.2057594037928e+16 7.2057594037928e+16) -> 400.0
+57: (- 1.4411518807586e+17 1.4411518807586e+17) -> 416.0
+58: (- 2.8823037615171e+17 2.8823037615171e+17) -> 384.0
+59: (- 5.7646075230342e+17 5.7646075230342e+17) -> 384.0
+60: (- 1.1529215046068e+18 1.1529215046068e+18) -> 512.0
+61: (- 2.3058430092137e+18 2.3058430092137e+18) -> 512.0
+62: (- 4.6116860184274e+18 4.6116860184274e+18) -> 0.0
+|#
 
 (num-test (expt 0.0 1e-15+i) 0.0)
 (num-test (expt 0.0 0+i) 0.0) ; why would they be radically different?
@@ -49620,6 +50767,8 @@ abs     1       2
 (num-test (expt 1 0-i) 1)
 (num-test (expt -1 0-i) 2.314069263277926900572908636794854738026610624260021199344504640952434235069032E1)
 (num-test (expt -1 0+i) 4.321391826377224977441773717172801127572810981063308298071968740105076575701806E-2)
+(test (expt 0 (make-rectangular (- (expt 2 60)) 1.0)) 'error)
+(test (expt 0 (- (expt 2.0 60))) 'error)
 
 (num-test (expt 58288/55799 58288/55799) 1.046641989822034585352255152505850793912E0)
 (num-test (expt 14879/18662 14879/18662) 8.347553395975456341642526041524525735791E-1)
@@ -49661,12 +50810,41 @@ abs     1       2
 (test (expt 0 most-negative-fixnum) 'error)
 (test (expt -0.0 most-positive-fixnum) 0.0)
 (test (expt 0.0 most-negative-fixnum) 'error)
-(if with-bignums (test (expt 1/2 9223372036854775807) 'error)) ; gmp overflow
+
+(if with-bignums 
+    (test (expt 1/2 9223372036854775807) 'error) ; gmp overflow
+    (begin
+      (num-test (* (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20))) 4194300.0019569)
+      (num-test (* (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20))) 4398046513152/1048577)
+      ))
 
 (num-test (expt 2 1/3) 1.25992104989487316476721060727822835057E0)
 (num-test (expt 4 1/3) 1.587401051968199474751705639272308260393E0)
 (num-test (expt 1/2 1/3) 7.937005259840997373758528196361541301963E-1)
 (num-test (expt 1/4 1/3) 6.299605249474365823836053036391141752849E-1)
+(num-test (* (/ (expt 2 11) (+ (expt 2 10) 1)) (/ (+ (expt 2 11) 1) (expt 2 10))) 4098/1025)
+(num-test (* (/ (expt 2 21) (+ (expt 2 20) 1)) (/ (+ (expt 2 21) 1) (expt 2 20))) 4194306/1048577)
+(num-test (+ (/ (expt 2 28)) (/ (expt 3 17)) 1/7 1/29) 1247968828249346465/7037157104192323584)
+(num-test (+ (/ (expt 2 28)) (/ (expt 3 17)) 1/7 1/31) 1317300430901043787/7522478283791794176)
+(num-test (+ (/ (expt 2 29)) (/ (expt 3 18)) 1/31) 207994819909949399/6447838528964395008)
+(num-test (+ (/ (expt 2 30)) (/ (expt 3 18)) 1/13) 415989601508942005/5407864572679815168)
+(num-test (+ (/ (expt 2 30)) (/ (expt 3 18)) 1/5) 415989589819643501/2079947912569159680)
+(num-test (+ (/ (expt 2 30)) (/ (expt 3 20))) 4560526225/3743906242624487424)
+(num-test (/ (/ (expt 2 11) (+ (expt 2 10) 1)) (/ (+ (expt 2 11) 1) (expt 2 10))) 2097152/2100225)
+(num-test (/ (/ (expt 2 21) (+ (expt 2 20) 1)) (/ (+ (expt 2 21) 1) (expt 2 20))) 2199023255552/2199026401281)
+(num-test (/ (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20))) 2251799813685248/2251801962217473)
+(num-test (/ (expt 10 -20) (expt 10 -20)) 1)
+(num-test (/ (expt 10 -200) (expt 10 -200)) 1)
+(num-test (/ (sqrt (* 7 (- 2 (expt 2 1/7)))) (expt 2 1/14)) (+ -1 (* 2 (expt 2 1/7)) (expt 2 3/7) (expt 2 5/7) (- (expt 2 6/7))))
+(num-test (* (sqrt 2) (sqrt (- 31 (* 4 (sqrt (sqrt 3)) (sqrt (sqrt 5)))))) (+ (* (expt 3 1/4) (expt 5 3/4)) (- (* 2 (sqrt 5))) (* (expt 3 3/4) (expt 5 1/4)) (* 2 (sqrt 3))))
+(num-test (sqrt (- (expt 4 1/5) (expt 3 1/5))) (/ (+ (* (- (expt 2 3/5)) (expt 3 4/5)) (expt 3 3/5) (* 2 (expt 2 2/5) (expt 3 2/5)) (* (- (expt 2 4/5)) (expt 3 1/5)) (expt 2 1/5)) 5))
+(num-test (sqrt (- (expt 4 2/3) (* (sqrt 3) (expt 5 1/6)))) (+ (/ (expt 5 1/3) (sqrt 6)) (- (/ (expt 5 5/6) (* 3 (sqrt 2)))) (/ (* (expt 2 1/6) (sqrt 5)) 3) (- (/ (* (expt 2 5/6) (expt 5 1/6)) 3)) (/ (expt 2 1/6) (sqrt 3))))
+(num-test (sqrt (- (expt 5 1/3) (expt 4 1/3))) (/ (+ (expt 2 1/3) (expt 20 1/3) (- (expt 25 1/3))) 3))
+(num-test (sqrt (- (expt 5 1/3) (expt 4 1/3))) (/ (+ (expt 2 1/3) (expt 20 1/3) (- (expt 25 1/3))) 3))
+(num-test (sqrt (- 127 (* 4 (sqrt 6) (expt 7 1/4)))) (+ (/ (* (sqrt 3) (expt 7 3/4)) (sqrt 2)) (* 2 (sqrt 7)) (/ (* 3 (sqrt 3) (expt 7 1/4)) (sqrt 2)) -6))
+(num-test (sqrt (- 161 (* 12 (expt 5 1/4)))) (+ (* 2 (expt 5 3/4)) (- (* 3 (sqrt 5))) (* 4 (sqrt (sqrt 5))) 6))
+(num-test (sqrt (- 2 (expt 2 1/7))) (/ (* (expt 2 1/14) (+ (- (expt 2 6/7)) (expt 2 5/7) (expt 2 3/7) (* 2 (expt 2 1/7)) -1)) (sqrt 7)))
+(test (= (+ (expt 2421 3) (expt 19083 3)) (+ (expt 5436 3) (expt 18948 3)) (+ (expt 10200 3) (expt 18072 3)) (+ (expt 13322 3) (expt 16630 3))) #t)
 
 (test (< (abs (- (+ (make-rectangular 1.0 0.0) (make-polar 1.0 0.0) 1.0+0i (* -1.0 -1.0) (/ 1.0) 
 		    (exp 0.0) (abs -1.0) (cos 0.0) (log (exp 1)) (magnitude 1.0+0i) (max 0.0 1.0) (min 1.0 2.0))
@@ -49686,6 +50864,53 @@ abs     1       2
 	)
       ys))
    xs))
+
+(if with-bignums
+    (begin
+      ;; from Knuth IIp245(3rd)
+      (let* ((f (lambda (x) (/ (- 1 (expt x 107)) (- 1 x))))
+	     (g (lambda (y) (f (* (- 1/3 (* y y)) (+ 3 (* 3.45 y y))))))
+	     (gx (lambda (y) (+ 107 (* -10491.35 y y) (* 659749.9625 y y y y) (* 30141386.26625 (expt y 6))))))
+	(do ((i 3 (+ i 1)))
+	    ((> i 10))
+	  (let ((g1 (g (expt 10 (- i))))
+		(g2 (gx (expt 10 (- i)))))
+	    (let ((diff (abs (- g1 g2))))
+	      (if (or (nan? diff) (> diff (expt 10 (- -7 i))))
+		  (format #t ";g(1e-~D) -> ~A ~A, diff: ~A~%" i g1 g2 (abs (- g1 g2))))))))
+      
+      (let ((p (lambda (x y) (+ (* 2 y y) (* 9 x x x x) (* -1 y y y y)))))
+	(num-test (p 408855776 708158977) 1))
+      (let ((p (lambda (x y) (+ (* 2 y y) (* (- (* 3 x x) (* y y)) (+ (* 3 x x) (* y y)))))))
+	(num-test (p 408855776 708158977) 1))
+      
+      ))
+
+(let ((top-exp 60))  
+  (let ((happy #t))
+    (do ((i 2 (+ i 1)))
+	((or (not happy) (> i top-exp)))
+      (let* ((val1 (+ 2 (expt 2 i)))
+	     (val2 (- val1 1)))
+	(if (not (> val1 val2))
+	    (begin (set! happy #f) (display "(> ") (display val1) (display " ") (display val2) (display ") -> ") (display (> val1 val2)) (display "?") (newline)))
+	(if (< val1 val2)
+	    (begin (set! happy #f) (display "(< ") (display val1) (display " ") (display val2) (display ") -> ") (display (< val1 val2)) (display "?") (newline))))))
+  
+  (let ((happy #t))
+    (do ((i 2 (+ i 1)))
+	((or (not happy) (> i top-exp)))
+      (let* ((val1 (/ (expt 2 i) 3))
+	     (val2 (/ (+ 1 (expt 2 i)) 3)))
+	(if (> val1 val2)
+	    (begin (set! happy #f) (display "(> ") (display val1) (display " ") (display val2) (display ") -> ") (display (> val1 val2)) (display "?") (newline)))
+	(if (not (> val2 val1))
+	    (begin (set! happy #f) (display "(> ") (display val1) (display " ") (display val2) (display ") -> ") (display (> val2 val1)) (display "?") (newline)))
+	(if (not (< val1 val2))
+	    (begin (set! happy #f) (display "(< ") (display val1) (display " ") (display val2) (display ") -> ") (display (< val1 val2)) (display "?") (newline)))
+	(if (< val2 val1)
+	    (begin (set! happy #f) (display "(< ") (display val1) (display " ") (display val2) (display ") -> ") (display (< val2 val1)) (display "?") (newline)))
+	))))
 
 (num-test (expt (+ (cos (/ (* 2 our-pi) 20)) (* 0+i (sin (/ (* 2 our-pi) 20)))) 20) 1.0)
 (num-test (expt (+ our-pi 20) 0+i) -0.99999999924368-3.8892669402222e-05i)
@@ -49710,6 +50935,7 @@ abs     1       2
 (num-test (- (/ (expt 2 11) (+ (expt 2 10) 1)) (/ (+ (expt 2 11) 1) (expt 2 10))) -3073/1049600)
 (num-test (- (/ (expt 2 21) (+ (expt 2 20) 1)) (/ (+ (expt 2 21) 1) (expt 2 20))) -3145729/1099512676352)
 (num-test (- (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20))) -2148532225/1099512676352)
+(num-test (do ((i 1 (+ i 1)) (sum 0.0 (+ sum (expt (sin (/ (* our-pi i) (* 2 10))) 4)))) ((= i 11) sum)) 4.25)
 
 (num-test (expt 10 0) 1)
 (num-test (expt -10 0) 1)
@@ -50432,6 +51658,26 @@ abs     1       2
       (num-test (expt -1234000000.0-1234000000.0i -1234.0-0.0i) 0.0)
       )
     (begin
+      (num-test (expt (expt -4722366482869645213696/6561 1/2) 2) -4722366482869645213696/6561)
+      (num-test (expt 324518553658426726783156020576256.0 1/3) 68719476736.0)
+      (num-test (expt 4722366482869645213696 1/2) 68719476736)
+      (num-test (expt 4722366482869645213696.0 1/2) 68719476736.0)
+      (num-test (expt 4722366482869645213696/6561 -1/2) (/ 68719476736/81))
+      (num-test (* (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40)))	4835703278458516700921856/1099511627777)
+      (num-test (+ (- 512 (expt 2.0 62)) (- (expt 2.0 62) 513)) -1.0)
+      (num-test (+ (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40))) 5070602400915223450095538143233/1208925819615728686333952)
+      (num-test (+ (expt 2 61) (expt 2 62) (expt 2 61)) (/ (expt 2 64) 2))
+      (num-test (* 2 (expt 2 62)) (expt 2 63))
+      (num-test (* 8 (expt 2 30) (expt 2 30)) 9223372036854775808)
+      (num-test (- (+ (expt 2.0 62) 500) (+ (expt 2.0 62) 100)) 4.000E2)
+      (num-test (- (+ (expt 2.0 62) 512) (+ (expt 2.0 62) 513)) -1.0)
+      (num-test (- (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40)))	-2305844108725321729/1208925819615728686333952)
+      (num-test (/ (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40)))	2535301200456458802993406410752/2535301200458764647102131732481)
+      (num-test (/ (expt (* 1.2345e-170 1.2345e-170) 1/100)) 2.501325312985302606641508258507698932691E3)
+      (num-test (/ (log (expt 2 32)) (log 2)) 32.0)
+      (num-test 1180591620717411303424/1180591620717411303425 (/ (expt 2 70) (+ (expt 2 70) 1)))
+      (test (< (abs (- (expt (- (exp (* our-pi (sqrt (bignum "163")))) 744) 1/3) 6.4031999999999999999999999999939031735E5)) 1e-32) #t)
+      (test (> (+ (expt 2.0 62) 500) (+ (expt 2.0 62) 100)) #t)
       (num-test (expt -2/10 1234000000/500029) 9.92209574402351949043519108941671096176E-1726-4.788930572030484370393069119625570107346E-1726i)
       (num-test (expt -2/1234000000 362880/1234) 1.116318539471846948140196659021553350719E-2585+2.424343808068083320544106524660635302266E-2586i)
       (num-test (expt -1/1234000000 500029/10) -7.168156874677746632219778149112758764437E-454593+2.32907535423388290492582809530285175961E-454593i)
@@ -50898,6 +52144,97 @@ abs     1       2
 	       (lambda args 
 		 (display "expt not accurate below around 2^") (display (/ (log (expt .1 i)) (log 2))) (newline))))))
   
+(let ((f= (lambda (a b) (< (abs (- a b)) 1.0e-15))))
+  (let ((log2 0.69314718055994530941723212145817656807550013436025525412068000949339362196969471560586332699641868754200148102057068573368552023575813055703267075163507596193072757082837143519030703862389167347112335011536449795523912047517268157493206515552473413952588295045300709532636664265410423915781495204374043038550080194417064167151864471283996817178454695702627163106454615025720740248163777338963855069526066834113727387372292895649354702576265209885969320196505855476470330679365443254763274495125040606943814710468994650622016772042452452961268794654619316517468139267250410380254625965686914419287160829380317271436778265487756648508567407764845146443994046142260319309673540257444607030809608504748663852313818167675143866747664789088143714198549423151997354880375165861275352916610007105355824987941472950929311389715599820565439287170007218085761025236889213244971389320378439353088774825970171559107088236836275898425891853530243634214367061189236789192372314672321720534016492568727477823445353476481149418642386776774406069562657379600867076257199184734022651462837904883062033061144630073719489002743643965002580936519443041191150608094879306786515887090060520346842973619384128965255653968602219412292420757432175748909770675268711581705113700915894266547859596489065305846025866838294002283300538207400567705304678700184162404418833232798386349001563121889560650553151272199398332030751408426091479001265168243443893572472788205486271552741877243002489794540196187233980860831664811490930667519339312890431641370681397776498176974868903887789991296503619270710889264105230924783917373501229842420499568935992206602204654941510613918788574424557751020683703086661948089641218680779020818158858000168811597305618667619918739520076671921459223672060253959543654165531129517598994005600036651356756905124592682574394648316833262490180382424082423145230614096380570070255138770268178516306902551370323405380214501901537402950994226299577964742713815736380172987394070424217997226696297993931270694)
+	
+	(log3 1.09861228866810969139524523692252570464749055782274945173469433363749429321860896687361575481373208878797002906595786574236800422593051982105280187076727741060316276918338136717937369884436095990374257031679591152114559191775067134705494016677558022220317025294689756069010652150564286813803631737329857778236699165479213181814902003010382363012224865274819822599109745249089645805346700884596508574844411901885708764749486707961308582941160216612118400140982551439194876889367984943022557315353296853452952514592138764946859325627944165569415782723103551688661021184698904399430631382552857364668828249881368228006341439107868932514564375102044516275619349739821169415857405353617589009751222337977369696877543547951357129821770175812421223514058101632724655889372495649191852429607966842346470693772372526550820320783339280558928531468730951326064583091843974968222303257654675333118230196492752575991322178513533902374829643395025460742458249346668661218814365265654295427676105054777954229339733234011737431939745798470185595484940594783539438410106029307622922281312074893063445340252777326856271480016818715472439782071878034446780216178158419042820076721243255738014364178876826161041016818724240687908909929874208152183237528942752732534071002835750695062403965462752244308462588450859786253083224774538885068003488324340490083990058080943565282122370388702036804548600776214244088697259413584365999226211739670804950952792714363154640444623089158185367119608370304853520909672629582415040355995121355450332241748474100331981487832452569334704949937301656336660991903957122822844881674312150628569993874038819012744839564791034772885972119850649422796985791669956418551265041502191554719665856929726606523573293736830027830921776605387030462007661584946700226011756797518003934791763277844935142634968360037557857160700498181519184373438290934746660457750659273670121115370582496479847930404205823964753857850960626093389914706120130243108260518262958640076003059494321166880446106134684533980))
+    
+    (if (not (f= log3 (log 3.0)))
+	(begin (display "(- (log 3.0) true-log-3) = ") (display (- log3 (log 3.0))) (newline)))
+    (if (not (f= log2 (log 2.0)))
+	(begin (display "(- (log 2.0) true-log-2) = ") (display (- log2 (log 2.0))) (newline)))
+    (if (not (f= 3.0 (exp log3)))
+	(begin (display "(- 3.0 (exp log3)) = ") (display (- 3.0 (exp log3))) (newline)))
+    (if (not (f= 2.0 (exp log2)))
+	(begin (display "(- 2.0 (exp log2)) = ") (display (- 2.0 (exp log2))) (newline))))
+  
+  (let ((sin1 8.414709848078965066525023216302989996225630607983710656727517099919104043912396689486397435430526959e-1)
+	(cos1 5.403023058681397174009366074429766037323104206179222276700972553811003947744717645179518560871830894e-1)
+	(tan1 1.557407724654902230506974807458360173087250772381520038383946605698861397151727289555099965202242984e0))
+    
+    (if (not (f= sin1 (sin 1)))
+	(begin (display "(- (sin 1) true-sin-1) = ") (display (- sin1 (sin 1))) (newline)))
+    (if (not (f= (asin sin1) 1.0))
+	(begin (display "(- (asin (sin 1)) 1) = ") (display (- (asin sin1) 1)) (newline)))
+    
+    (if (not (f= cos1 (cos 1)))
+	(begin (display "(- (cos 1) true-cos-1) = ") (display (- cos1 (cos 1))) (newline)))
+    (if (not (f= (acos cos1) 1.0))
+	(begin (display "(- (acos (cos 1)) 1) = ") (display (- (acos cos1) 1)) (newline)))
+    
+    (if (not (f= tan1 (tan 1)))
+	(begin (display "(- (tan 1) true-tan-1) = ") (display (- tan1 (tan 1))) (newline)))
+    (if (not (f= (atan tan1) 1.0))
+	(begin (display "(- (atan (tan 1)) 1) = ") (display (- (atan tan1) 1)) (newline)))
+    
+    (set! sin1 -.3056143888882523)
+    (set! cos1 -.9521553682590148)
+    (set! tan1 .3209711346238149)
+    
+    (if (not (f= sin1 (sin 10000)))
+	(begin (display "(- (sin 10000) true-sin-10000) = ") (display (- sin1 (sin 10000))) (newline)))
+    
+    (if (not (f= cos1 (cos 10000)))
+	(begin (display "(- (cos 10000) true-cos-10000) = ") (display (- cos1 (cos 10000))) (newline)))
+    
+    (if (not (f= tan1 (tan 10000)))
+	(begin (display "(- (tan 10000) true-tan-10000) = ") (display (- tan1 (tan 10000))) (newline)))
+    )
+  
+  
+  (let ((sinh1 1.175201193643801456882381850595600815155717981334095870229565413013307567304323895607117452089623392e0)
+	(cosh1 1.543080634815243778477905620757061682601529112365863704737402214710769063049223698964264726435543036e0)
+	(tanh1 7.615941559557648881194582826047935904127685972579365515968105001219532445766384834589475216736767144e-1))
+    
+    (if (not (f= sinh1 (sinh 1)))
+	(begin (display "(- (sinh 1) true-sinh-1) = ") (display (- sinh1 (sinh 1))) (newline)))
+    (if (not (f= (asinh sinh1) 1.0))
+	(begin (display "(- (asinh (sinh 1)) 1) = ") (display (- (asinh sinh1) 1)) (newline)))
+    
+    (if (not (f= cosh1 (cosh 1)))
+	(begin (display "(- (cosh 1) true-cosh-1) = ") (display (- cosh1 (cosh 1))) (newline)))
+    (if (not (f= (acosh cosh1) 1.0))
+	(begin (display "(- (acosh (cosh 1)) 1) = ") (display (- (acosh cosh1) 1)) (newline)))
+    
+    (if (not (f= tanh1 (tanh 1)))
+	(begin (display "(- (tanh 1) true-tanh-1) = ") (display (- tanh1 (tanh 1))) (newline)))
+    (if (not (f= (atanh tanh1) 1.0))
+	(begin (display "(- (atanh (tanh 1)) 1) = ") (display (- (atanh tanh1) 1)) (newline)))
+    ))
+
+(if with-bignums 
+    (begin
+      (let ((old-precision (bignum-precision)))
+					; these checked against arprec (digits = 512)
+	(set! (bignum-precision) 512)  
+	(num-test (sin (bignum "696898287454081973170944403677937368733396.0")) -0.01999904696709900707248379699203543861700131080741493395453090012397)
+	(num-test (cos (bignum "696898287454081973170944403677937368733396.0")) -0.99979999906001588673892554498680272502063995303949755633430660411025)
+	(num-test (tan (bignum "696898287454081973170944403677937368733396.0")) 0.02000304759542063815661565629241173304757896817099118262507840447691)
+	(num-test (log (bignum "696898287454081973170944403677937368733396.0")) 96.34745809783239800899232787971326647885871562509641009125683617504293)
+	(num-test (sqrt (bignum "696898287454081973170944403677937368733396.0")) 8.34804340821298061589146684184612401904558331041225568173326261228620e20)
+	(set! (bignum-precision) old-precision))
+      
+      ;; these can be checked against arprec -- get tables of the others as well
+      ;;	(num-test (sin 31415926535897932384626433832795028841.971693993751058209749445) 6.8290634690588564658126265428876656461078982456442870201741792E-24)
+      ;; this test requires 500 bits of precision
+      (num-test (sin 31415926535897932384626433832795028841) -8.2584214320186030736155068085595298665361290626210864656288000E-1)
+      (num-test (sin 1.0) 0.84147098480789650665250232163029899962256306079837106567275170999191) ; if bignum here
+      
+      ;;	(num-test (cos 31415926535897932384626433832795028841.971693993751058209749445) 9.9999999999999999999999999999999999999999999997668194606778265E-1)
+      ;; 500 bits
+      (num-test (cos 1.0) 5.4030230586813971740093660744297660373231042061792222767009714E-1)
+      ))
+
 
 
 
@@ -51732,6 +53069,7 @@ abs     1       2
 (num-test (* 2/2) 2/2)
 (num-test (* 362880) 362880)
 (num-test (* 362880/1234) 362880/1234)
+(num-test (let ((x 1) (y 2)) (set! x (* 0 (let () (set! y 32) 1))) y) 32)
 
 (num-test (* (+ 1 3 5) (* 1 3 5)) 135)
 (num-test (* -1/2147483648 1/4294967296) -1/9223372036854775808)
@@ -51915,9 +53253,127 @@ abs     1       2
 (num-test (* 6054/59436 53485/47493 65091/13749 59111/51596) 5324119682728535/8557570117787688)
 (num-test (* 26270/51496 62100/14371 9302/6501 11918/55524) 627970006908375/927532016146043)
 (num-test (* 6865/57699 53935/1664 25223/46128 13016/30664) 15194818521234275/16975596844836864)
+(num-test (* 0110/001) 110)
+(num-test (* 14000000000000 524288) 7340032000000000000)
+(num-test (* 17500000000000 524288) 9175040000000000000)
+(num-test (* 1907348632812 524288) 999999999999737856)
+(num-test (* 524288 14000000000000) 7340032000000000000)
+(num-test (* 524288 17500000000000) 9175040000000000000)
+(num-test (* 524288 1907348632812) 999999999999737856)
+(num-test (* 9223372036854775807 1/9223372036854775807) 1.0)
+
+(let ((bes-i0 (lambda (x)			;I0(x)
+		(if (< (abs x) 3.75)
+		    (let* ((y (expt (/ x 3.75) 2)))
+		      (+ 1.0
+			 (* y (+ 3.5156229
+				 (* y (+ 3.0899424
+					 (* y (+ 1.2067492
+						 (* y (+ 0.2659732
+							 (* y (+ 0.360768e-1
+								 (* y 0.45813e-2)))))))))))))
+		    (let* ((ax (abs x))
+			   (y (/ 3.75 ax)))
+		      (* (/ (exp ax) (sqrt ax)) 
+			 (+ 0.39894228
+			    (* y (+ 0.1328592e-1
+				    (* y (+ 0.225319e-2
+					    (* y (+ -0.157565e-2
+						    (* y (+ 0.916281e-2
+							    (* y (+ -0.2057706e-1
+								    (* y (+ 0.2635537e-1
+									    (* y (+ -0.1647633e-1
+										    (* y 0.392377e-2))))))))))))))))))))))
+  (num-test (bes-i0 1.0) 1.266065877752009)
+  (num-test (bes-i0 2.0) 2.279585302336067)
+  (num-test (bes-i0 5.0) 27.23987182360445)
+  (num-test (bes-i0 10.0) 2815.716628466254)
+  (num-test (bes-i0 50.0) 2.93255291463847587034176447517387076592E20) ;2.932553783849336E+20) arprec
+  (num-test (bes-i0 100.0) 1.073751199431789167620943174959211991306E42))
+
+(if (not with-bignums)
+    (begin
+      (num-test (* 1/9223372036854775807 1/9223372036854775806) 1.1754943508223e-38)
+      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 3.9223808052178e-27)
+      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981) 4.3539080668052e-23)
+      (num-test (* 1/98947 2/97499 3/76847 4/61981) 5.2230351951008e-19)
+      (num-test (* 500009/500029 500057/500041 500083/500069) 1.00001999432878)
+      (num-test (* 98947 2/97499 76847 4/61981 5/59981) 304151204360/362470312515139) ;0.00083910652502692
+      ))
 
 (if with-bignums
     (begin
+      (let ((twos (make-vector 30)))
+	(do ((i 0 (+ i 1))
+	     (t2 1 (* t2 8)))
+	    ((= i 30))
+	  (set! (twos i) t2))
+	(do ((i 0 (+ i 1)))
+	    ((= i 29))
+	  (if (not (= (twos (+ i 1)) (* 8 (twos i))))
+	      (format #t "~A * 8 -> ~A (~A)~%" (twos i) (* 8 (twos i)) (twos (+ i 1))))
+	  (if (not (= (+ (twos (+ i 1)) (* 8 (twos i))) (* 2 (twos (+ i 1)))))
+	      (format #t "~A + ~A -> ~A (~A)~%" (* 8 (twos i)) (twos (+ i 1)) (* 2 (twos (+ i 1)))))
+	  (if (not (= (/ (twos (+ i 1)) (twos i)) 8))
+	      (format #t "~A / ~A = ~A (8)~%" (twos (+ i 1)) (twos i) (/ (twos (+ i 1)) (twos i))))
+	  (if (not (= (- (twos (+ i 1)) (* 8 (twos i))) 0))
+	      (format #t "~A - ~A -> ~A (0)~%" (* 8 (twos i)) (twos (+ i 1)) (- (twos (+ i 1)) (* 8 (twos i)))))))
+
+      (letrec ((factorial (lambda (n i) (if (positive? n) (factorial (- n 1) (* i n)) i))))
+	(num-test (/ (factorial 100 1) (factorial 99 1)) 100)
+	(num-test (/ (factorial 1000 1) (factorial 999 1)) 1000)
+	(num-test (factorial 100 1) 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000)
+	(num-test (factorial 200 1) 788657867364790503552363213932185062295135977687173263294742533244359449963403342920304284011984623904177212138919638830257642790242637105061926624952829931113462857270763317237396988943922445621451664240254033291864131227428294853277524242407573903240321257405579568660226031904170324062351700858796178922222789623703897374720000000000000000000000000000000000000000000000000)
+	
+	(num-test (* (factorial 3 1) (factorial 5 1) (factorial 7 1)) (factorial 10 1)))
+
+      (num-test (* -1.797693134862315699999999999999999999998E308 -9223372036854775808) 1.658079259093488393947175407121858559998E327)
+      (num-test (* -1/21 -1/2432902008176640000) 1/51090942171709440000)
+      (num-test (* -1/21 1/2432902008176640000) -1/51090942171709440000)
+      (num-test (* -1/2432902008176640000 -1/21) 1/51090942171709440000)
+      (num-test (* -1/2432902008176640000 1/21) -1/51090942171709440000)
+      (num-test (* -1/2432902008176640000 2432902008176640000) -1)
+      (num-test (* -21 -2432902008176640000) 51090942171709440000)
+      (num-test (* -21 2432902008176640000) -51090942171709440000)
+      (num-test (* -2432902008176640000 -21) 51090942171709440000)
+      (num-test (* -2432902008176640000 21) -51090942171709440000)
+      (num-test (* -524288 -17600000000000) 9227468800000000000)
+      (num-test (* -9223372036854775808 -9223372036854775808) 85070591730234615865843651857942052864)
+      (num-test (* -9223372036854775808 9223372036854775807 -9223372036854775808) 784637716923335095394403086170723686146950778700062261248)
+      (num-test (* 0+1e20i 0+1e20i) -1e40)
+      (num-test (* 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23) 25852016738884976640000)
+      (num-test (* 1.0e70+i 1.0e70-i) 1.0e140)
+      (num-test (* 1/1024 -1/9765625 -1/512 1/1953125) 1/10000000000000000000)
+      (num-test (* 1/1024 1/9765625 1/512 1/1953125) 1/10000000000000000000)
+      (num-test (* 1/21 -1/2432902008176640000) -1/51090942171709440000)
+      (num-test (* 1/21 1/2432902008176640000) 1/51090942171709440000)
+      (num-test (* 1/2432902008176640000 -1/21) -1/51090942171709440000)
+      (num-test (* 1/2432902008176640000 1/21) 1/51090942171709440000)
+      (num-test (* 1/256 1/256 1/256 1/256 1/256 1/256 1/256 -1/128) (/ most-negative-fixnum))
+      (num-test (* 1/9223372036854775807 1/9223372036854775806) 1/85070591730234615838173535747377725442)
+      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 720/183561983334767209753061626751) 
+      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981) 120/2756144552405627689570151)
+      (num-test (* 1000000.0 (+ 1.0 1.2345e-10 -1.0)) 1.2345e-4)
+      (num-test (* 1000000.0 (- 1.0 -1.2345e-10 1.0)) 1.2345e-4)
+      (num-test (* 1000000000 1000000000 1000000000) 1000000000000000000000000000)
+      (num-test (* 1024 -9765625 512 -1953125) 10000000000000000000)
+      (num-test (* 1024 9765625 512 1953125) 10000000000000000000)
+      (num-test (* 132120577/12 33292289/6 260046847/4) 1143841133453061178785791/288)
+      (num-test (* 2 12345678901234567890+12345678901234567890i) 2.469135780246913578E19+2.469135780246913578E19i)
+      (num-test (* 2.0e-170 3.0e-170 4.0e170 5.0e170) 120.0)
+      (num-test (* 21 -2432902008176640000) -51090942171709440000)
+      (num-test (* 21 2432902008176640000) 51090942171709440000)
+      (num-test (* 2432902008176640000 -21) -51090942171709440000)
+      (num-test (* 2432902008176640000 21) 51090942171709440000)
+      (num-test (* 4.0e170 5.0e170 2.0e-170 3.0e-170) 120.0)
+      (num-test (* 4294967296 4294967296) 18446744073709551616)
+      (num-test (* 500009/500029 500057/500041 500083/500069) 125037252995542579/125034753009582041)
+      (num-test (* 524288 -19073486328125) -10000000000000000000)
+      (num-test (* 524288 -19073486328125) -10000000000000000000)
+      (num-test (* 524288 17600000000000) 9227468800000000000)
+      (num-test (* 9223372036854775807 -9223372036854775808) -85070591730234615856620279821087277056)
+      (num-test (* 9223372036854775807 9223372036854775807) 85070591730234615847396907784232501249)
+      (num-test (* 98947 2/97499 76847 4/61981 5/59981) 304151204360/362470312515139)
       (num-test (* 8736/53718 63349/36593 2595/65149 64793/55654 43939/26485) 1390659088083157464/64205855201422018751)
       (num-test (* 54969/62648 20435/1782 23198/40155 17874/3641 36734/7395 36402/62041) 13827254253801875273/166253154009320895)
       (num-test (* 60943/34150 48303/50035 11510/48029 47829/30632 32873/18834 22417/2481 33058/12503 17309/26655) 1265424338804436192426278624740533/72495658400472874898571063803000)
@@ -52175,6 +53631,10 @@ abs     1       2
       (num-test (* 1669833986019218156514274418186396165434871163342486930502417566.0 58528969848472951398118375496887849181512821636583415470809040929690124231959506.0 50098163184827557635697120379841225459445103589988345336880332217224622666020381.0 90445522698871905833766573423181067004916996574451008349087758531794463581708977.0 92366726802191504770638415639612204654473958526592425718659284841373421985393966.0 69096133232785816552402133765198624674167660496399099321713067612475604030259084.0 323971624832697152056406152359288553860210436839331005469891386690556929684663075996719803995137130737141925308417709520389528780839777347463558171582753.0 2635514624483961079560488004237441873979133312246005082134175818331132377114926863102436691793380965631848192666106793612266994709357524826644421074908075389316030912936338175907209987972553710900613011802455058538786723149316934049388525865455871552882282353445228425640452635081303490379594663330152071465360003249884180020993032086861074931796165970076448856988084523672973069824258299029863033098237556417571526135639288006133579174344589248428714474318969988990720790226604664141927030250855550010512291136517209169959021730625428868037074528890516086527430801590050720467893089085308995719513895962750896813152.0) 2413207990093478676325592386500172980330574558867366638913149256222218924700401110600319869300256745035993991818342784487193857053589994816247466074246569162659879368383295411190237107255160498774228460295857931362161062884154872938368166514128474751716517750517217000290486110198899480877593169193610813452614906598055909439037075588626529658637140089909227353944313408987644743661503976835580507054926908821206921014266535160031749397432350114673787218438589065861056449106115395189057409933330355574558853874223262465965933679584884152813357065227868165556818717270584803360466149860292769520737249610469675917864449261901859162854558012721179400237645357401213337423255109839806528503425658270050436129019270883446965562683284298538825840361267548675967778385927410390726055957928634152514415917053614892441910675109517307682075989998558764742821214685548219206933043196677521610851950501225469125512893859254575460130829051324112015464552874242522140166275233893076603452098841950130740353331198999756316969161591691095397245996664755249875720008141774247384884623389430842799829690618405724986702942913150258769060684255363816662231923570491001519802836627028431389746450987110456127797025006251203111629141890634728548553728.0)
 
       ))
+
+(let ((val1 (catch #t (lambda () (* 1.0 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (* 1.0 -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
 
 (num-test (* 0 1 "hi") 'error)
 (num-test (* 0.0 "hi") 'error)
@@ -53005,6 +54465,14 @@ abs     1       2
 (num-test (+ 1.110223024625156799999999999999999999997E-16 5.551115123125783999999999999999999999984E-17 5.42101086242752217060000000000000000001E-20) 1.665876638023977952217059999999999999994E-16)
 (num-test (+ 5.551115123125783999999999999999999999984E-17 1.110223024625156799999999999999999999997E-16) 1.665334536937735199999999999999999999992E-16)
 (num-test (+ 9223372036854775807 -9223372036854775808) -1)
+(num-test (+ 0.(*)) 1.0)
+(num-test (+ 0.(+)) 0.0)
+(num-test (+ 1/9223372036854775807 1/9223372036854775807) 2/9223372036854775807)
+(num-test (+ 10000000/9223372036854775807 1/3) 3.333333333344175355058188377674583355698E-1)
+(num-test (+ 1073741824 1073741824 1073741824 1073741824) (* 4 1073741824))
+(num-test (+ 268435456/129140163 129140163/268435456 7/19 29/19) 2933929486555791403/658650172313567232)
+(num-test (+ 268435456/129140163 129140163/268435456 7/29 29/19) 4.327416192871913348352681814704887193821E0)
+(test (+ -9223372036854775808 9223372036854775807) -1)
 
 (num-test (+ 0.6049332056786565E0 -0.9611373574853808E0) -3.562041518067242999999999999999999999981E-1)
 (num-test (+ -0.4763715667865308E0 0.25936932107685584E0) -2.170022457096749600000000000000000000008E-1)
@@ -53200,8 +54668,160 @@ abs     1       2
 
 (num-test (+ 1 (+ 2 (+ 3 (+ 4 (+ 5 (+ 6 (+ 7 (+ 8 (+ 9 (+ 10 (+ 11 (+ 12 (+ 13 (+ 14 (+ 15 (+ 16 (+ 17 (+ 18 (+ 19 (+ 20 (+ 21 (+ 22 (+ 23 (+ 24 (+ 25 (+ 26 (+ 27 (+ 28 (+ 29 (+ 30 (+ 31 (+ 32 (+ 33 (+ 34 (+ 35 (+ 36 (+ 37 (+ 38 (+ 39 (+ 40 (+ 41 (+ 42 (+ 43 (+ 44 (+ 45 (+ 46 (+ 47 (+ 48 (+ 49 (+ 50 (+ 51 (+ 52 (+ 53 (+ 54 (+ 55 (+ 56 (+ 57 (+ 58 (+ 59 (+ 60 (+ 61 (+ 62 (+ 63 (+ 64 (+ 65 (+ 66 (+ 67 (+ 68 (+ 69 (+ 70 (+ 71 (+ 72 (+ 73 (+ 74 (+ 75 (+ 76 (+ 77 (+ 78 (+ 79 (+ 80 (+ 81 (+ 82 (+ 83 (+ 84 (+ 85 (+ 86 (+ 87 (+ 88 (+ 89 (+ 90 (+ 91 (+ 92 (+ 93 (+ 94 (+ 95 (+ 96 (+ 97 (+ 98 (+ 99 (+ 100 (+ 101 (+ 102 (+ 103 (+ 104 (+ 105 (+ 106 (+ 107 (+ 108 (+ 109 (+ 110 (+ 111 (+ 112 (+ 113 (+ 114 (+ 115 (+ 116 (+ 117 (+ 118 (+ 119 (+ 120 (+ 121 (+ 122 (+ 123 (+ 124 (+ 125 (+ 126 (+ 127 (+ 128 (+ 129 (+ 130 (+ 131 (+ 132 (+ 133 (+ 134 (+ 135 (+ 136 (+ 137 (+ 138 (+ 139 (+ 140 (+ 141 (+ 142 (+ 143 (+ 144 (+ 145 (+ 146 (+ 147 (+ 148 (+ 149 (+ 150 (+ 151 (+ 152 (+ 153 (+ 154 (+ 155 (+ 156 (+ 157 (+ 158 (+ 159 (+ 160 (+ 161 (+ 162 (+ 163 (+ 164 (+ 165 (+ 166 (+ 167 (+ 168 (+ 169 (+ 170 (+ 171 (+ 172 (+ 173 (+ 174 (+ 175 (+ 176 (+ 177 (+ 178 (+ 179 (+ 180 (+ 181 (+ 182 (+ 183 (+ 184 (+ 185 (+ 186 (+ 187 (+ 188 (+ 189 (+ 190 (+ 191 (+ 192 (+ 193 (+ 194 (+ 195 (+ 196 (+ 197 (+ 198 (+ 199 (+ 200 (+ 201 (+ 202 (+ 203 (+ 204 (+ 205 (+ 206 (+ 207 (+ 208 (+ 209 (+ 210 (+ 211 (+ 212 (+ 213 (+ 214 (+ 215 (+ 216 (+ 217 (+ 218 (+ 219 (+ 220 (+ 221 (+ 222 (+ 223 (+ 224 (+ 225 (+ 226 (+ 227 (+ 228 (+ 229 (+ 230 (+ 231 (+ 232 (+ 233 (+ 234 (+ 235 (+ 236 (+ 237 (+ 238 (+ 239 (+ 240 (+ 241 (+ 242 (+ 243 (+ 244 (+ 245 (+ 246 (+ 247 (+ 248 (+ 249 (+ 250 (+ 251 (+ 252 (+ 253 (+ 254 (+ 255 (+ 256 (+ 257 (+ 258 (+ 259 (+ 260 (+ 261 (+ 262 (+ 263 (+ 264 (+ 265 (+ 266 (+ 267 (+ 268 (+ 269 (+ 270 (+ 271 (+ 272 (+ 273 (+ 274 (+ 275 (+ 276 (+ 277 (+ 278 (+ 279 (+ 280 (+ 281 (+ 282 (+ 283 (+ 284 (+ 285 (+ 286 (+ 287 (+ 288 (+ 289 (+ 290 (+ 291 (+ 292 (+ 293 (+ 294 (+ 295 (+ 296 (+ 297 (+ 298 (+ 299 (+ 300 (+ 301 (+ 302 (+ 303 (+ 304 (+ 305 (+ 306 (+ 307 (+ 308 (+ 309 (+ 310 (+ 311 (+ 312 (+ 313 (+ 314 (+ 315 (+ 316 (+ 317 (+ 318 (+ 319 (+ 320 (+ 321 (+ 322 (+ 323 (+ 324 (+ 325 (+ 326 (+ 327 (+ 328 (+ 329 (+ 330 (+ 331 (+ 332 (+ 333 (+ 334 (+ 335 (+ 336 (+ 337 (+ 338 (+ 339 (+ 340 (+ 341 (+ 342 (+ 343 (+ 344 (+ 345 (+ 346 (+ 347 (+ 348 (+ 349 (+ 350 (+ 351 (+ 352 (+ 353 (+ 354 (+ 355 (+ 356 (+ 357 (+ 358 (+ 359 (+ 360 (+ 361 (+ 362 (+ 363 (+ 364 (+ 365 (+ 366 (+ 367 (+ 368 (+ 369 (+ 370 (+ 371 (+ 372 (+ 373 (+ 374 (+ 375 (+ 376 (+ 377 (+ 378 (+ 379 (+ 380 (+ 381 (+ 382 (+ 383 (+ 384 (+ 385 (+ 386 (+ 387 (+ 388 (+ 389 (+ 390 (+ 391 (+ 392 (+ 393 (+ 394 (+ 395 (+ 396 (+ 397 (+ 398 (+ 399 (+ 400 (+ 401 (+ 402 (+ 403 (+ 404 (+ 405 (+ 406 (+ 407 (+ 408 (+ 409 (+ 410 (+ 411 (+ 412 (+ 413 (+ 414 (+ 415 (+ 416 (+ 417 (+ 418 (+ 419 (+ 420 (+ 421 (+ 422 (+ 423 (+ 424 (+ 425 (+ 426 (+ 427 (+ 428 (+ 429 (+ 430 (+ 431 (+ 432 (+ 433 (+ 434 (+ 435 (+ 436 (+ 437 (+ 438 (+ 439 (+ 440 (+ 441 (+ 442 (+ 443 (+ 444 (+ 445 (+ 446 (+ 447 (+ 448 (+ 449 (+ 450 (+ 451 (+ 452 (+ 453 (+ 454 (+ 455 (+ 456 (+ 457 (+ 458 (+ 459 (+ 460 (+ 461 (+ 462 (+ 463 (+ 464 (+ 465 (+ 466 (+ 467 (+ 468 (+ 469 (+ 470 (+ 471 (+ 472 (+ 473 (+ 474 (+ 475 (+ 476 (+ 477 (+ 478 (+ 479 (+ 480 (+ 481 (+ 482 (+ 483 (+ 484 (+ 485 (+ 486 (+ 487 (+ 488 (+ 489 (+ 490 (+ 491 (+ 492 (+ 493 (+ 494 (+ 495 (+ 496 (+ 497 (+ 498 (+ 499 (+ 500 (+ 501 (+ 502 (+ 503 (+ 504 (+ 505 (+ 506 (+ 507 (+ 508 (+ 509 (+ 510 (+ 511 (+ 512 (+ 513 (+ 514 (+ 515 (+ 516 (+ 517 (+ 518 (+ 519 (+ 520 (+ 521 (+ 522 (+ 523 (+ 524 (+ 525 (+ 526 (+ 527 (+ 528 (+ 529 (+ 530 (+ 531 (+ 532 (+ 533 (+ 534 (+ 535 (+ 536 (+ 537 (+ 538 (+ 539 (+ 540 (+ 541 (+ 542 (+ 543 (+ 544 (+ 545 (+ 546 (+ 547 (+ 548 (+ 549 (+ 550 (+ 551 (+ 552 (+ 553 (+ 554 (+ 555 (+ 556 (+ 557 (+ 558 (+ 559 (+ 560 (+ 561 (+ 562 (+ 563 (+ 564 (+ 565 (+ 566 (+ 567 (+ 568 (+ 569 (+ 570 (+ 571 (+ 572 (+ 573 (+ 574 (+ 575 (+ 576 (+ 577 (+ 578 (+ 579 (+ 580 (+ 581 (+ 582 (+ 583 (+ 584 (+ 585 (+ 586 (+ 587 (+ 588 (+ 589 (+ 590 (+ 591 (+ 592 (+ 593 (+ 594 (+ 595 (+ 596 (+ 597 (+ 598 (+ 599 (+ 600 (+ 601 (+ 602 (+ 603 (+ 604 (+ 605 (+ 606 (+ 607 (+ 608 (+ 609 (+ 610 (+ 611 (+ 612 (+ 613 (+ 614 (+ 615 (+ 616 (+ 617 (+ 618 (+ 619 (+ 620 (+ 621 (+ 622 (+ 623 (+ 624 (+ 625 (+ 626 (+ 627 (+ 628 (+ 629 (+ 630 (+ 631 (+ 632 (+ 633 (+ 634 (+ 635 (+ 636 (+ 637 (+ 638 (+ 639 (+ 640 (+ 641 (+ 642 (+ 643 (+ 644 (+ 645 (+ 646 (+ 647 (+ 648 (+ 649 (+ 650 (+ 651 (+ 652 (+ 653 (+ 654 (+ 655 (+ 656 (+ 657 (+ 658 (+ 659 (+ 660 (+ 661 (+ 662 (+ 663 (+ 664 (+ 665 (+ 666 (+ 667 (+ 668 (+ 669 (+ 670 (+ 671 (+ 672 (+ 673 (+ 674 (+ 675 (+ 676 (+ 677 (+ 678 (+ 679 (+ 680 (+ 681 (+ 682 (+ 683 (+ 684 (+ 685 (+ 686 (+ 687 (+ 688 (+ 689 (+ 690 (+ 691 (+ 692 (+ 693 (+ 694 (+ 695 (+ 696 (+ 697 (+ 698 (+ 699 (+ 700 (+ 701 (+ 702 (+ 703 (+ 704 (+ 705 (+ 706 (+ 707 (+ 708 (+ 709 (+ 710 (+ 711 (+ 712 (+ 713 (+ 714 (+ 715 (+ 716 (+ 717 (+ 718 (+ 719 (+ 720 (+ 721 (+ 722 (+ 723 (+ 724 (+ 725 (+ 726 (+ 727 (+ 728 (+ 729 (+ 730 (+ 731 (+ 732 (+ 733 (+ 734 (+ 735 (+ 736 (+ 737 (+ 738 (+ 739 (+ 740 (+ 741 (+ 742 (+ 743 (+ 744 (+ 745 (+ 746 (+ 747 (+ 748 (+ 749 (+ 750 (+ 751 (+ 752 (+ 753 (+ 754 (+ 755 (+ 756 (+ 757 (+ 758 (+ 759 (+ 760 (+ 761 (+ 762 (+ 763 (+ 764 (+ 765 (+ 766 (+ 767 (+ 768 (+ 769 (+ 770 (+ 771 (+ 772 (+ 773 (+ 774 (+ 775 (+ 776 (+ 777 (+ 778 (+ 779 (+ 780 (+ 781 (+ 782 (+ 783 (+ 784 (+ 785 (+ 786 (+ 787 (+ 788 (+ 789 (+ 790 (+ 791 (+ 792 (+ 793 (+ 794 (+ 795 (+ 796 (+ 797 (+ 798 (+ 799 (+ 800 (+ 801 (+ 802 (+ 803 (+ 804 (+ 805 (+ 806 (+ 807 (+ 808 (+ 809 (+ 810 (+ 811 (+ 812 (+ 813 (+ 814 (+ 815 (+ 816 (+ 817 (+ 818 (+ 819 (+ 820 (+ 821 (+ 822 (+ 823 (+ 824 (+ 825 (+ 826 (+ 827 (+ 828 (+ 829 (+ 830 (+ 831 (+ 832 (+ 833 (+ 834 (+ 835 (+ 836 (+ 837 (+ 838 (+ 839 (+ 840 (+ 841 (+ 842 (+ 843 (+ 844 (+ 845 (+ 846 (+ 847 (+ 848 (+ 849 (+ 850 (+ 851 (+ 852 (+ 853 (+ 854 (+ 855 (+ 856 (+ 857 (+ 858 (+ 859 (+ 860 (+ 861 (+ 862 (+ 863 (+ 864 (+ 865 (+ 866 (+ 867 (+ 868 (+ 869 (+ 870 (+ 871 (+ 872 (+ 873 (+ 874 (+ 875 (+ 876 (+ 877 (+ 878 (+ 879 (+ 880 (+ 881 (+ 882 (+ 883 (+ 884 (+ 885 (+ 886 (+ 887 (+ 888 (+ 889 (+ 890 (+ 891 (+ 892 (+ 893 (+ 894 (+ 895 (+ 896 (+ 897 (+ 898 (+ 899 (+ 900 (+ 901 (+ 902 (+ 903 (+ 904 (+ 905 (+ 906 (+ 907 (+ 908 (+ 909 (+ 910 (+ 911 (+ 912 (+ 913 (+ 914 (+ 915 (+ 916 (+ 917 (+ 918 (+ 919 (+ 920 (+ 921 (+ 922 (+ 923 (+ 924 (+ 925 (+ 926 (+ 927 (+ 928 (+ 929 (+ 930 (+ 931 (+ 932 (+ 933 (+ 934 (+ 935 (+ 936 (+ 937 (+ 938 (+ 939 (+ 940 (+ 941 (+ 942 (+ 943 (+ 944 (+ 945 (+ 946 (+ 947 (+ 948 (+ 949 (+ 950 (+ 951 (+ 952 (+ 953 (+ 954 (+ 955 (+ 956 (+ 957 (+ 958 (+ 959 (+ 960 (+ 961 (+ 962 (+ 963 (+ 964 (+ 965 (+ 966 (+ 967 (+ 968 (+ 969 (+ 970 (+ 971 (+ 972 (+ 973 (+ 974 (+ 975 (+ 976 (+ 977 (+ 978 (+ 979 (+ 980 (+ 981 (+ 982 (+ 983 (+ 984 (+ 985 (+ 986 (+ 987 (+ 988 (+ 989 (+ 990 (+ 991 (+ 992 (+ 993 (+ 994 (+ 995 (+ 996 (+ 997 (+ 998 (+ 999))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) 499500)
 
+(let ()
+  (define (fact n) (if (<= n 1) 1 (* n (fact (- n 1)))))
+  (num-test (fact 7) 5040)
+  (num-test (fact 20) 2432902008176640000)
+  (do ((i 2 (+ i 1)))
+      ((= i 21))
+    (num-test (* i (fact (- i 1))) (fact i))
+    (num-test (/ (* i (fact (- i 1)))) (/ (fact i))))
+  (if with-bignums 
+      (begin
+	(num-test (fact 21) 51090942171709440000)
+	(num-test (fact 32) 263130836933693530167218012160000000)
+	(do ((i 20 (+ i 1)))
+	    ((= i 40))
+	  (num-test (* i (fact (- i 1))) (fact i))))))
+
+(num-test (let ((pi2 0.0)
+		(ais (vector 1 -3 -2 -3 1 0)))
+	    (do ((i 1 (+ i 1))
+		 (two 2 (* two 2)))
+		((= i 30) (* 36 pi2))
+	      (set! pi2 (+ pi2 (/ (vector-ref ais (modulo (- i 1) 6))
+				  (* two i i))))))
+	  (* our-pi our-pi))
+
+(num-test (let ((log2 0.0)
+		(ais (vector 2 -10 -7 -10 2 -1)))
+	    (do ((i 1 (+ i 1))
+		 (two 2 (* two 2)))
+		((= i 30) (* 2 log2))
+	      (set! log2 (+ log2 (/ (vector-ref ais (modulo (- i 1) 6))
+				    (* two i i))))))
+	  (* (log 2) (log 2)))
+
+(if (not with-bignums)
+    (begin
+      (num-test (+ 1/9223372036854775807 1/9223372036854775806) 2.168404344971e-19)
+      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 0.00030764243484887)
+      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981) 0.00021755369744252)
+      (num-test (+ 1/98947 2/97499 3/76847 4/61981) 0.00013419396686117)
+      (num-test (+ 500009/500029 500057/500041 500083/500069) 3.00001999583261)
+      (num-test (+ 98947 2/97499 76847 4/61981 5/59981) 175794.00016841)
+      ))
+
+(if with-bignums
+    (test (< (abs (- (do ((x0 11/2) 
+			  (x1 61/11)
+			  (i 0 (+ i 1))) 
+			 ((= i 100) x1)
+		       (let ((tmp x1)) 
+			 (set! x1 (- 111 (/ (- 1130 (/ 3000 x0)) x1)))
+			 (set! x0 tmp)))
+		     6))                  ; (6 - 1/(1+(6/5)^k))
+	     0.00001)
+	  #t))
+
+;; in floats this heads for 100:
+;; (do ((x0 (exact->inexact 11/2)) (x1 (exact->inexact 61/11)) (i 0 (+ i 1))) ((= i 100) x1) (let ((tmp x1)) (set! x1 (- 111 (/ (- 1130 (/ 3000 x0)) x1))) (set! x0 tmp)))
+
 (if with-bignums
     (begin
+      (num-test (+ -1000000000 -1000000000 -1000000000) -3000000000)
+      (num-test (+ -8589934591 -4611686018427387904) -4611686027017322495)
+      (num-test (+ -8589934591 4611686018427387904) 4611686009837453313)
+      (num-test (+ -9223372036854775807 -1) -9223372036854775808)
+      (num-test (+ -9223372036854775807 1) -9223372036854775806)
+      (num-test (+ -9223372036854775808 -9223372036854775808) -18446744073709551616)
+      (num-test (+ 1 1/2 0+9223372036854775808.0i 0-i) 1.5+9.223372036854775807E18i)
+      (num-test (+ 1 1/2 9223372036854775808.0 0+i) 9.2233720368547758095E18+1.0i)
+      (num-test (+ 1 1/2 9223372036854775808.0 0-i) 9.2233720368547758095E18-1.0i)
+      (num-test (+ 1 1/2 9223372036854775808.0) 9.2233720368547758095E18)
+      (num-test (+ 1.0 12345678901234567890) 1.2345678901234567891E19)
+      (num-test (+ 1.0e80+i 1.0e80+i) 2.0e80+2.0i)
+      (num-test (+ 1.0e80+i 1.0e80-i) 2.0e80)
+      (num-test (+ 1.5 9223372036854775808.0) 9.2233720368547758095E18)
+      (num-test (+ 1/1231234567891234567891 1/4) 1231234567891234567895/4924938271564938271564)
+      (num-test (+ 1/2147483648 1/2147483647) 4294967295/4611686016279904256)
+      (num-test (+ 1/3 (* 13835058055282163710 2/3)) 9223372036854775807) ; would be nice if this worked...
+      (num-test (+ 1/65537 -1/65536) -1/4295032832)
+      (num-test (+ 1/65537 -1/65538) 1/4295163906)
+      (num-test (+ 1/65537 1/65536) 131073/4295032832)
+      (num-test (+ 1/65537 1/65538) 131075/4295163906)
+      (num-test (+ 1/9223372036854775807 1/9223372036854775806) 18446744073709551613/85070591730234615838173535747377725442)
+      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 56471455498794722585779775/183561983334767209753061626751) 
+      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981) 599609438061905323469/2756144552405627689570151)
+      (num-test (+ 10 9223372036854775800) 9223372036854775810)
+      (num-test (+ 1000000000 1000000000 1000000000) 3000000000)
+      (num-test (+ 1073741825 1073741825) 2147483650)
+      (num-test (+ 1099511627775 9223372036854775807) 9223373136366403582)
+      (num-test (+ 1180591620717411303424+i 1+1180591620717411303424i) 1.180591620717411303425E21+1.180591620717411303425E21i)
+      (num-test (+ 1180591620717411303424.0+i 1+1180591620717411303424.0i) 1.180591620717411303425E21+1.180591620717411303425E21i)
+      (num-test (+ 12345678901234567890+12345678901234567890i 12345678901234567890-12345678901234567890i) 2.469135780246913578E19)
+      (num-test (+ 132120577/12 33292289/6 260046847/4) 244711424/3)
+      (num-test (+ 18446744082299486212 1) 18446744082299486213)
+      (num-test (+ 1e400 1e399) 1.1e400)
+      (num-test (+ 2147483647 1) 2147483648)
+      (num-test (+ 2147483647 2) 2147483649)
+      (num-test (+ 2147483647 4611686018427387904) 4611686020574871551)
+      (num-test (+ 2147483648 -1) 2147483647)
+      (num-test (+ 2147483648 -2) 2147483646)
+      (num-test (+ 2147483648 1) 2147483649)
+      (num-test (+ 2147483648 4611686018427387904) 4611686020574871552)
+      (num-test (+ 2147483648) 2147483648)
+      (num-test (+ 2147483649 -1) 2147483648)
+      (num-test (+ 2147483649 -4611686018427387904 -2147483649 4611686018427387904) 0)
+      (num-test (+ 2147483649 4611686018427387904 2147483649 4611686018427387904) 9223372041149743106)
+      (num-test (+ 2147483649 4611686018427387904) 4611686020574871553)
+      (num-test (+ 3 9223372036854775807/4) 9223372036854775819/4) 
+      (num-test (+ 3 9223372036854775808/4) 2305843009213693955)
+      (num-test (+ 3/2 9223372036854775808.0) 9.2233720368547758095E18)
+      (num-test (+ 3/4 9223372036854775807/4) 4611686018427387905/2)
+      (num-test (+ 3/4 9223372036854775808) 36893488147419103235/4)
+      (num-test (+ 4611686018427387904 -1) 4611686018427387903)
+      (num-test (+ 4611686018427387904 -4611686018427387904) 0)
+      (num-test (+ 4611686018427387904 1) 4611686018427387905) ; (expt 2 62) + 1 -- should work in both cases
+      (num-test (+ 4611686018427387904 4611686018427387904) 9223372036854775808)
+      (num-test (+ 4611686018427387904 4611686018427387906) 9223372036854775810)
+      (num-test (+ 500009/500029 500057/500041 500083/500069) 375106759202738205/125034753009582041)
+      (num-test (+ 8589934591 -4611686018427387904) -4611686009837453313)
+      (num-test (+ 8589934591 4611686018427387904) 4611686027017322495)
+      (num-test (+ 8589934592 4611686018427387904) 4611686027017322496)
+      (num-test (+ 9223372036854775800 10) 9223372036854775810)
+      (num-test (+ 9223372036854775807 -1) 9223372036854775806)
+      (num-test (+ 9223372036854775807 1) 9223372036854775808)
+      (num-test (+ 9223372036854775807 2) 9223372036854775809)
+      (num-test (+ 9223372036854775807 9223372036854775807) 18446744073709551614)
+      (num-test (+ 9223372036854775807/4 3) 9223372036854775819/4) 
+      (num-test (+ 9223372036854775807/4 3/4 4611686018427387905/2) 4611686018427387905)
+      (num-test (+ 9223372036854775807/4 3/4) 4611686018427387905/2)
+      (num-test (+ 9223372036854775807/4 4611686018427387905/3) 46116860184273879041/12)
+      (num-test (+ 9223372036854775808 -1) 9223372036854775807)
+      (num-test (+ 9223372036854775808 -2) 9223372036854775806)
+      (num-test (+ 9223372036854775808 1) 9223372036854775809)
+      (num-test (+ 9223372036854775808 3/4) 36893488147419103235/4)
+      (num-test (+ 9223372036854775808.0 3.4) 9.2233720368547758114E18)
+      (num-test (+ 9223372036854775808.0+1.5i 3.4) 9.2233720368547758114E18+1.5i)
+      (num-test (+ 9223372036854775808/4 3) 2305843009213693955)
+      (num-test (+ 9223372036854775808/9223372036854775808) 1)
+      (num-test (+ 9223372036854775809 -1) 9223372036854775808)
+      (num-test (+ 9223372041149743106 -9223372041149743106) 0)
+      (num-test (+ 9223372041149743106 9223372041149743106) 18446744082299486212) 
+      (num-test (+ 98947 2/97499 76847 4/61981 5/59981) 63720106179329487759/362470312515139)
+
+      (num-test (+ 576460752303423488 576460752303423488 576460752303423488 576460752303423488 
+		   576460752303423488 576460752303423488 576460752303423488 576460752303423488 
+		   576460752303423488 576460752303423488 576460752303423488 576460752303423488 
+		   576460752303423488 576460752303423488 576460752303423488 576460752303423488)
+		9223372036854775808)
+      (num-test (+ -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488 
+		   -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488 
+		   -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488 
+		   -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488)
+		-9223372036854775808) ; this fits in both cases = -(expt 2 63)
+
       (num-test (+ 12766/44484 39852/43605 31122/19043 51508/63811 36845/41288 28101/14083 56682/37410 47892/22120 39412/22980 60124/55166 42856/59693) 208780620213964670464533749059169842219977/15202497819117370814835285951563379420520)
       (num-test (+ 63216/39382 57676/45091 53354/2630 1048/39076 16116/23210 42095/55806 27474/26658 50811/59328) 191349291372060004326881331664759/7211602793633848370218614932160)
       (num-test (+ 59885/27233 26245/45891 40482/5828 51990/36443 9623/46196) 34799310234648621493801/3065498111736131980788)
@@ -53480,6 +55100,7 @@ abs     1       2
 (test (+ 1 + 2) 'error)
 (test (+ 1 - 2) 'error)
 (test (+ 1 2 . 3) 'error)
+(test (+ 1 . 2) 'error)
 
 
 
@@ -54284,6 +55905,11 @@ abs     1       2
 (num-test (- 1.110223024625156799999999999999999999997E-16 5.551115123125783999999999999999999999984E-17 5.42101086242752217060000000000000000001E-20) 5.545694112263356477829399999999999999977E-17)
 (num-test (- 5.551115123125783999999999999999999999984E-17 1.110223024625156799999999999999999999997E-16) -5.551115123125783999999999999999999999984E-17)
 (num-test (- 9223372036854775807 9223372036854775807) 0)
+(num-test (- .(1.1)) -1.1)
+(num-test (- 1. .()) -1.0)
+(num-test (- 1/9223372036854775807 1/9223372036854775807) 0)
+(num-test (- 1/98947 2/97499 3/76847) -36656755224/741360956847391)
+(num-test (- 500009/500029 500057/500041) -18001284/250035001189)
 
 (num-test (- -0.011326914400453525E0 -0.6668141757661364E0) 6.554872613656828749999999999999999999976E-1)
 (num-test (- -0.46185382764946437E0 0.7488210697846337E0) -1.210674897434098070000000000000000000001E0)
@@ -54438,8 +56064,30 @@ abs     1       2
 
 (num-test (- 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99) -4948)
 
+(if (not with-bignums)
+    (begin
+      (num-test (- 1/9223372036854775807 1/9223372036854775806) -1.1754943508223e-38)
+      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) -0.00028742959363084)
+      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981) -0.00019734085622449)
+      (num-test (- 1/98947 2/97499 3/76847 4/61981) -0.00011398112564314)
+      (num-test (- 500009/500029 500057/500041 500083/500069) -1.00009999119288)
+      (num-test (- 98947 2/97499 76847 4/61981 5/59981) 22099.999831591)
+      (test (< (abs (- (/ 1/98947 2/97499 3/76847 4/61981) 195556288.07955816413500830)) 1e-8) #t)
+      ))
+
 (if with-bignums
     (begin
+      (num-test (- -4611686018427387904 4611686018427387906) -9223372036854775810)
+      (num-test (- -9223372036854775800 10) -9223372036854775810)
+      (num-test (- 1/9223372036854775807 1/9223372036854775806) -1/85070591730234615838173535747377725442)
+      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) -52761146275983172771170709/183561983334767209753061626751)
+      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981) -543899925850203550003/2756144552405627689570151) 
+      (num-test (- 1e40+1e30i 1e40-1e30i) 0+2e30i)
+      (num-test (- 2 12345678901234567890+12345678901234567890i) -12345678901234567890-12345678901234567890i)
+      (num-test (- 500009/500029 500057/500041 500083/500069) -125047255383687283/125034753009582041)
+      (num-test (- 9223372036854775807 -9223372036854775808) 18446744073709551615)
+      (num-test (- 98947 2/97499 76847 4/61981 5/59981) 8010593845541429507/362470312515139)
+      (num-test (- most-negative-fixnum) 9223372036854775808)
       (num-test (- 3872339191937382556 13437882608410293981) -9565543416472911425)
       (num-test (- 12702320881720530101 13823645380834800545) -1121324499114270444)
       (num-test (- 10222969257152373972 -3454292165863475982) 13677261423015849954)
@@ -55288,6 +56936,24 @@ abs     1       2
 (num-test (/ 1/98947 2/97499 3/76847) 7492505653/593682)
 (num-test (/ 123412341234) 1/123412341234)
 (num-test (/ 500009/500029 500057/500041) 250025000369/250043001653)
+(num-test (/ -9223372036854775808 -9223372036854775808 4) 1/4)
+(num-test (/ -9223372036854775808 2) -4611686018427387904)
+(num-test (/ 0 -00-1i) 0.0)
+(num-test (/ 0+i) 0-1i)
+(num-test (/ 1.0 1/524288 1/19073486328125) 1.000000000000000024754073164739868757037E19)
+(num-test (/ 1/10 010) 1/100)
+(num-test (/ 1/9223372036854775807 1/9223372036854775807) 1)
+(num-test (/ 1234567890/9223372036854775807 123456789/9223372036854775807) 10)
+(num-test (/ 2 -9223372036854775808) -1/4611686018427387904)
+(num-test (/ 2 most-negative-fixnum) -1/4611686018427387904)
+(num-test (/ 2/9223372036854775807 2/3) 3/9223372036854775807)
+(num-test (/ 9223372036854775807/123456789 9223372036854775807/123456789) 1)
+(num-test (/ 9223372036854775807/1234567890 9223372036854775807/12345678900) 10)
+(num-test (/ most-negative-fixnum 2) -4611686018427387904)
+(num-test (/ most-negative-fixnum most-negative-fixnum 2) 1/2)
+(num-test (/ most-negative-fixnum most-negative-fixnum) 1)
+(num-test (/(*(/(*)))) 1)
+(num-test (/ 12341234/111 123456789 12341234/111) 1/123456789)
 
 (num-test (/ -0.651381628953465E0 -0.9237050214744277E0) 7.051835962889135018948026610294923703508E-1)
 (num-test (/ 0.5067986732438687E0 0.6260017267692811E0) 8.095803119575965307784422745290898299591E-1)
@@ -55440,6 +57106,17 @@ abs     1       2
 (num-test (/ -4.276770609150315E-21 6.853299965034864E-21) -6.240454424832049912604789277138688124888E-1)
 (num-test (/ -8.847946637724495E-21 6.33827952828724E-21) -1.395953996386055439061738621964402924048E0)
 
+(for-each
+ (lambda (num-and-val)
+   (let ((num (car num-and-val)) (val (cadr num-and-val))) (num-test-1 '/ num (/ num) val)))
+ (vector (list 1 1) (list 2 1/2) (list 3 1/3) (list -1 -1) (list -2 -1/2) (list -3 -1/3) (list 9223372036854775807 1/9223372036854775807) 
+	 (list 1/2 2) (list 1/3 3) (list -1/2 -2) 
+	 (list -1/3 -3) (list 1/9223372036854775807 9223372036854775807) (list 1.0 1.0) (list 2.0 0.5) 
+	 (list -2.0 -0.5) (list 1e+16 1e-16) (list inf.0 0.0) (list -inf.0 0.0) (list 0+1i 0-1i) 
+	 (list 0+2i 0-0.5i) (list 0-1i 0+1i) (list 1+1i 0.5-0.5i) (list 1-1i 0.5+0.5i) (list -1+1i -0.5-0.5i) 
+	 (list -1-1i -0.5+0.5i) (list 0.1+0.1i 5-5i) (list 1e+16+1e+16i 5e-17-5e-17i) (list 1e-16+1e-16i 5e+15-5e+15i) 
+	 ))
+
 (num-test (/ -8) -1/8)
 (num-test (/ 0 1 "hi") 'error)
 (num-test (/ 0 2/3) 0)
@@ -55447,9 +57124,63 @@ abs     1       2
 (num-test (/ 1e-10 1e10) 1e-20)
 (num-test (/ 2/3 0) 'error)
 (num-test (/ 4 2) 2)
+(test (/ -9223372036854775808 -9223372036854775808) 1)
+(test (/ -9223372036854775808 9223372036854775807) -9223372036854775808/9223372036854775807)
+(test (/ most-positive-fixnum most-positive-fixnum) 1)
+
+(if (not with-bignums)
+    (begin
+      (num-test (/ -1024 1/9765625 1/512 1/1953125) -1e19)
+      (num-test (/ 1/19073486328125 -524288) -1e-19)
+      (num-test (/ 1/19073486328125 524288) 1e-19)
+      (num-test (/ 1/524288 -19073486328125) -1e-19)
+      (num-test (/ 1/524288 19073486328125) 1e-19)
+      (num-test (/ 1/9223372036854775807 1/3) 3.2526065174565e-19)
+      (num-test (/ 1/9223372036854775807 1/9223372036854775806) 1.0)
+      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 2.6040239996689e+16)
+      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981) 2345932343059.9)
+      (num-test (/ 1/98947 2/97499 3/76847 4/61981) 464392992878593/2374728) ;195556288.07955 -- seems to fit
+      (num-test (/ 1024 1/9765625 1/512 1/1953125) 1e19)
+      (num-test (/ 500009/500029 500057/500041 500083/500069) 0.999900013909921)
+      (num-test (/ 98947 2/97499 76847 4/61981 5/59981) 11667778186668.0)
+      ))
 
 (if with-bignums
     (begin
+      (num-test (/ (+ 1.2345e-15 1 -1)) 8.1004455245038e+14)
+      (num-test (/ -1.797693134862315699999999999999999999998E308 -9223372036854775808) 1.949062802279999590850112500817203908808E289)
+      (num-test (/ -1/19073486328125 524288) -1/10000000000000000000)
+      (num-test (/ -1/524288 19073486328125) -1/10000000000000000000)
+      (num-test (/ -1024 1/9765625 1/512 1/1953125) -10000000000000000000)
+      (num-test (/ -21 -1/2432902008176640000) 51090942171709440000)
+      (num-test (/ -21 1/2432902008176640000) -51090942171709440000)
+      (num-test (/ -2432902008176640000 -1/21) 51090942171709440000)
+      (num-test (/ -2432902008176640000 1/21) -51090942171709440000)
+      (num-test (/ -9223372036854775808 -9223372036854775808 -9223372036854775808) -1/9223372036854775808)
+      (num-test (/ -9223372036854775808 -9223372036854775808) 1)
+      (num-test (/ -9223372036854775808 9223372036854775807 -9223372036854775808) 1/9223372036854775807)
+      (num-test (/ 0+1e20i 0-1e20i) -1.0)
+      (num-test (/ 1 1000000000 1000000000 1000000000) 1/1000000000000000000000000000)
+      (num-test (/ 1.0e20+i 1.0e20+i) 1.0)
+      (num-test (/ 1/1024 9765625 -512 1953125) -1/10000000000000000000)
+      (num-test (/ 1/1024 9765625 512 1953125) 1/10000000000000000000)
+      (num-test (/ 1/19073486328125 524288) 1/10000000000000000000)
+      (num-test (/ 1/524288 19073486328125) 1/10000000000000000000)
+      (num-test (/ 1/9223372036854775807 1/3) 3/9223372036854775807)
+      (num-test (/ 1/9223372036854775807 1/9223372036854775806) 9223372036854775806/9223372036854775807)
+      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 1855154611405774907304533/71241840)
+      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981) 27854756105850886733/11873640)
+      (num-test (/ 1024 1/9765625 1/512 1/1953125) 10000000000000000000)
+      (num-test (/ 132120577/12 33292289/6 260046847/4) 264241154/8657554783862783)
+      (num-test (/ 1e20 0+i) 0-1e20i)
+      (num-test (/ 21 -1/2432902008176640000) -51090942171709440000)
+      (num-test (/ 21 1/2432902008176640000) 51090942171709440000)
+      (num-test (/ 2432902008176640000 -1/21) -51090942171709440000)
+      (num-test (/ 2432902008176640000 1/21) 51090942171709440000)
+      (num-test (/ 500009/500029 500057/500041 500083/500069) 125029751909525461/125042254395637199)
+      (num-test (/ 9223372036854775807 -9223372036854775808) -9223372036854775807/9223372036854775808)
+      (num-test (/ 98947 2/97499 76847 4/61981 5/59981) 35865350012435458633/3073880)
+      (num-test (/ most-negative-fixnum) -1/9223372036854775808)
       (num-test (/ 10105597264942543888 14352488138967388642) 5052798632471271944/7176244069483694321)
       (num-test (/ -17631701977702695093 3931860028646338313) -17631701977702695093/3931860028646338313)
       (num-test (/ -1606495881715082381 16324360910828438638) -1606495881715082381/16324360910828438638)
@@ -55660,6 +57391,10 @@ abs     1       2
       (num-test (/ 12609622044672092190084693450911157599596799695538449568681964257744962273690941575572590166273187189250007688411096790312605666562908125521094386992971478.0 -8237858212652788898158635047388584411011830102060269605835391741772914864422465141467281143809161251942948659243584296367296559912373856433388249393853968.0) -6304811022336046095042346725455578799798399847769224784340982128872481136845470787786295083136593594625003844205548395156302833281454062760547193496485739/4118929106326394449079317523694292205505915051030134802917695870886457432211232570733640571904580625971474329621792148183648279956186928216694124696926984)
       (num-test (/ -9988492519236282081446302885464711911055350309732728352574982611126604133339499170845224383282665522673248920309221355720665956477799939031063172954469785.0 -1878204914631111607000020160429571305542722711529281855381736226230242796648854769713662269068364131804626863789957256573308715572826753755672493154125086.0) 9988492519236282081446302885464711911055350309732728352574982611126604133339499170845224383282665522673248920309221355720665956477799939031063172954469785/1878204914631111607000020160429571305542722711529281855381736226230242796648854769713662269068364131804626863789957256573308715572826753755672493154125086)
       ))
+
+(let ((val1 (catch #t (lambda () (/ 1.0 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (/ 1.0 -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
 
 (test (/ "hi") 'error)
 (test (/ -0) 'error)
@@ -55895,6 +57630,8 @@ abs     1       2
 
 (test (random 0 #t) 'error)
 (test (random 0.0 #(1 2)) 'error)
+(test (nan? (random 1/0)) #t)
+
 (test (make-random-state 123 432) 'error)
 (test ((object->string (make-random-state 1234)) 1) #\<)
 (test (make-random-state 1.0) 'error)
@@ -58339,6 +60076,7 @@ etc....
 
 (if with-bignums
     (begin
+      (test (number->string -46116860184273879035/27670116110564327424) "-46116860184273879035/27670116110564327424")
       (test (number->string 123 (bignum "10")) "123")
       (test (number->string 123 (bignum "2")) "1111011")
       (test (string->number "123" (bignum "10")) 123)
@@ -58511,7 +60249,186 @@ etc
     (begin
       (test (char=? ((number->string 9.999999999999999) 0) #\9) #t)
       (test (char=? ((number->string 0.999999999999999999) 3) #\9) #t)
+      (num-test -0.1e309 -1e308)
+      (num-test .01e310 1e308)
+      (num-test .1e310 1e309)
+      (num-test 0.0e310 0.0)
       ))
+
+
+;;; --------------------------------------------------------------------------------
+;;; bignum
+;;; --------------------------------------------------------------------------------
+
+(if with-bignums
+    (begin
+      (for-each
+       (lambda (n)
+	 (test (bignum? n) #f))
+       (list 0 1 -1 1/3 1.0 1+i 1073741824 1.0e8 1+1.0e8i))
+      (for-each 
+       (lambda (n)
+	 (test (bignum? n) #t))
+       (list 1.0e30 -1.0e20+i 1.0+1.0e80i 1e100 1267650600228229401496703205376 -1267650600228229401496703205376
+	     1180591620717411303424/3 3/1180591620717411303424 1180591620717411303424/1180591620717411303423
+	     1267650600228229401496703205376.99 -1267650600228229401496703205376.88 0.1231231231231231231231231231))
+      (for-each
+       (lambda (n)
+	 (test (bignum n) 'error)
+	 (test (bignum "1.0" n) 'error))
+       (list "hi" (integer->char 65) #f #t '(1 2) 'a-symbol (cons 1 2) (make-vector 3) 1 3/4 1.5 1+i abs))
+      (num-test (bignum "6/3") 2)
+      (num-test (bignum "+3/6") 1/2)
+      (num-test (bignum "7447415382/3") 2482471794)
+
+      (test (bignum?) 'error)
+      (test (bignum? 1 2) 'error)
+      (test (bignum) 'error)
+      (test (bignum "hi" "ho") 'error)
+      
+      ;; TODO: what about bignum-precision?
+
+      ))
+
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; errors
+;;; --------------------------------------------------------------------------------
+
+(let ((ntype ((cadr (make-type)) "hi")))
+  (for-each
+
+   (lambda (op)
+     (for-each
+
+      (lambda (arg)
+	(let ((val (catch #t (lambda () (op arg)) (lambda args 'error))))
+	  (if (not (eq? val 'error))
+	      (format #t "(~A ~A) -> ~A (expected 'error)~%" op arg val)))
+	(let ((val (catch #t (lambda () (op 0 arg)) (lambda args 'error))))
+	  (if (not (eq? val 'error))
+	      (format #t "(~A 0 ~A) -> ~A (expected 'error)~%" op arg val)))
+	(if with-bignums
+	    (let ((val (catch #t (lambda () (op (expt 2 60) arg)) (lambda args 'error))))
+	      (if (not (eq? val 'error))
+		  (format #t "(~A 2^60 ~A) -> ~A (expected 'error)~%" op arg val)))))
+
+      (list "hi" '() #\a (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs #t (if #f #f) (lambda (a) (+ a 1)) #<undefined> #<unspecified> #<eof> ntype :key)))
+
+   (list exact? inexact? zero? positive? negative? even? odd? quotient remainder modulo truncate floor ceiling round
+	 abs max min gcd lcm expt exact->inexact inexact->exact rationalize numerator denominator imag-part real-part
+	 magnitude angle make-polar make-rectangular sqrt exp log sin cos tan asin acos atan number->string)))
+
+(let ((d 3.14)
+      (i 32)
+      (r 2/3)
+      (c 1.5+0.3i))
+  (let ((check-vals (lambda (name)
+		      (if (or (not (= d 3.14)) ; (> (abs (- d 3.14)) 1e-16) ; (- 3.14 (bignum "3.14")) is around 1e-17!
+			      (not (= i 32))
+			      (not (= r 2/3))
+			      (not (= c 1.5+0.3i))) ; (> (magnitude (- c 1.5+0.3i)) 1e-16))
+			  (begin 
+			    (display name) (display " changed ")
+			    (if (not (= i 32))
+				(begin (display "stored integer to: ") (display i))
+				(if (not (= r 2/3))
+				    (begin (display "stored ratio to: ") (display r))
+				    (if (not (= d 3.14))
+					(begin (display "stored real to: ") (display d))
+					(begin (display "stored complex to: ") (display c)))))
+			    (display "?") (newline))))))
+    (for-each
+     (lambda (op)
+       (let ((x (catch #t (lambda () (op i)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op r)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op d)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op c)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op i d)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op r d)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op d d)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op c d)) (lambda args 'error))))
+	 (check-vals op)))
+     (list
+      number->string string->number make-rectangular magnitude abs exp make-polar angle
+      sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
+      number? integer? real? complex? rational? even? odd? zero? positive? negative? real-part imag-part
+      numerator denominator rationalize exact? inexact? exact->inexact inexact->exact floor ceiling truncate round
+      logior logxor logand lognot ash integer-length
+      + - * / quotient remainder
+      expt = max min modulo < > <= >= lcm gcd 
+      ))))
+
+(if with-bignums
+    (begin
+      
+      (test (bignum "1/3.0") 'error)
+
+      (let ((d (bignum "3.14"))
+	    (i (bignum "32"))
+	    (r (bignum "2/3"))
+	    (c (bignum "1.5+0.3i")))
+	(let ((check-vals (lambda (name)
+			    (if (or (not (= d (bignum "3.14"))) ; see above
+				    (not (= i 32))
+				    (not (= r 2/3))
+				    (not (= c (bignum "1.5+0.3i"))))
+				(begin 
+				  (display name) (display " changed ")
+				  (if (not (= i 32))
+				      (begin (display "stored integer to: ") (display i))
+				      (if (not (= r 2/3))
+					  (begin (display "stored ratio to: ") (display r))
+					  (if (not (= d 3.14))
+					      (begin (display "stored real to: ") (display d))
+					      (begin (display "stored complex to: ") (display c)))))
+				  (display "?") (newline))))))
+	  (for-each
+	   (lambda (op)
+	     (let ((x (catch #t (lambda () (op i)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op r)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op d)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op c)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op i d)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op r d)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op d d)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op c d)) (lambda args 'error))))
+	       (check-vals op)))
+	   (list
+	    number->string string->number make-rectangular magnitude abs exp make-polar angle
+	    sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
+	    number? integer? real? complex? rational? even? odd? zero? positive? negative? real-part imag-part
+	    numerator denominator rationalize exact? inexact? exact->inexact inexact->exact floor ceiling truncate round
+	    logior logxor logand lognot ash integer-length
+	    + - * / quotient remainder
+	    expt = max min modulo < > <= >= lcm gcd 
+	    ))))))
+
+(for-each
+ (lambda (arg)
+   (test (bignum "1.0" arg) 'error))
+ (list -1 0 #\a '#(1 2 3) 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+
+(test (let ((equal? #f)) (member 3 '(1 2 3))) '(3))
+(test (let ((eqv? #f)) (case 1 ((1) 1))) 1) ; scheme wg
+(test (let ((eqv? equal?)) (case "asd" (("asd") 1) (else 2))) 2)
+(test (let ((eq? #f)) (memq 'a '(a b c))) '(a b c))
 
 
 
@@ -58624,2067 +60541,4 @@ in non-gmp,
   (+ most-negative-fixnum -1 most-positive-fixnum) is the same as 
   (+ most-positive-fixnum most-positive-fixnum) -> -2!
 |#
-
-
-
-
-
-
-;;; --------------------------------------------------------------------------------      
-;;; unsorted...
-;;; --------------------------------------------------------------------------------
-
-(if (not with-bignums)
-    (begin
-      (test (floor 1e19) 'error)
-      (test (round 1e19) 'error)
-      (test (truncate 1e19) 'error)
-      (test (ceiling 1e19) 'error)
-      (test (rationalize 1e19) 'error)))
-
-;;; (real-part (log 0)) -> -inf.0
-;;; (- (real-part (log 0))) -> inf.0
-;;; (real-part (/ (log 0))) -> nan.0
-;;;  but (- (real-part (/ (log 0)))) is not -nan.0
-
-(let* ((inf+ (- (real-part (log 0))))
-       (inf- (real-part (log 0)))
-       (nan (real-part (/ (log 0)))) ;; perhaps this should be 0.0 -- 1/inf
-       (complex-nan (make-rectangular nan.0 nan.0))
-       (complex-inf++ (make-rectangular inf+ inf+))
-       (complex-inf+- (make-rectangular inf+ inf-))
-       (complex-inf-- (make-rectangular inf- inf-))
-       (complex-inf-+ (make-rectangular inf- inf+))
-       (complex-inf+-nan (+ complex-inf++ complex-inf+-))
-       (complex-inf--nan (+ complex-inf-- complex-inf-+))
-       ;; and so on!!
-       )
-
-  ;; an easy way to get NaN: 1e10000
-
-  
-  ;; these are from r6rs.html
-  (test (nan? (imag-part complex-nan)) #t)
-  (test (number? complex-nan) #t)
-  (test (complex? complex-nan) #t)
-  (test (real? complex-nan) #f)
-  (test (number? complex-inf--) #t)
-  (test (complex? complex-inf++) #t)
-  (test (real? complex-inf-+) #f)
-
-  (test (< inf+ inf-) #f)
-  (test (< inf- inf+) #t)
-  (test (< inf- 0.0) #t)
-  (test (> inf+ 0.0) #t)
-  (test (= inf+ inf+) #t)
-  (test (= inf- inf+) #f)
-  (test (= inf- inf-) #t)
-  (test (= inf+ 0.0) #f)
-  (test (= inf+ nan) #f)
-  (test (= 0.0 nan) #f)
-  (test (= nan nan) #f)
-  (test (zero? (* 0 most-positive-fixnum most-positive-fixnum)) #t)
-  (test (zero? (* most-positive-fixnum most-negative-fixnum 0)) #t)
-  (test (zero? (* 0.0 most-positive-fixnum most-positive-fixnum)) #t)
-  (test (zero? (* most-positive-fixnum most-negative-fixnum 0.0)) #t)
-
-  ;;; but (* 0 (expt 10 310)) -> -nan if not GMP -- is this a bug?
-
-  (test (= inf+ most-positive-fixnum) #f)
-  (test (> inf+ most-positive-fixnum) #t)
-  (test (> inf+ 1.0e308) #t)
-  (test (nan? (- inf+ inf+)) #t)
-  (test (= (+ inf+ inf+) inf+) #t)
-  (test (= (* inf+ inf+) inf+) #t)
-  (test (nan? (/ inf+ inf+)) #t)
-  (test (= (+ 1 inf+) inf+) #t)
-  (test (nan? (- inf- inf-)) #t)
-  (test (nan? (- nan nan)) #t)
-  (test (nan? (/ inf+ inf-)) #t)
-  (test (nan? (/ inf- inf-)) #t)
-  (test (nan? (/ nan nan)) #t)
-  (test (nan? (/ nan inf+)) #t)
-  (test (nan? (/ inf+ nan)) #t)
-  (test (= (/ 0.0 inf+) 0.0) #t)
-  (test (= (- 0.0 inf+) inf-) #t)
-  (test (= (- inf+) inf-) #t)
-  (test (= (- inf-) inf+) #t)
-  (test (nan? (- nan)) #t)
-  (test (= (* inf+ inf-) inf-) #t)
-  (test (= (* inf- inf-) inf+) #t)
-  (test (<= inf- 0.0 inf+ inf+) #t)
-  (test (>= inf+ inf- 0.0) #f)
-  (test (= (* (+ inf+ inf+) inf-) inf-) #t)
-  (test (= nan complex-nan) #f)
-  (test (= complex-nan complex-nan) #f)
-  (test (= nan (real-part complex-nan)) #f)
-  (test (nan? (real-part complex-nan)) #t)
-  (test (nan? (imag-part complex-nan)) #t)
-
-  (test (nan? (imag-part (+ complex-inf-- complex-inf++))) #t)
-  
-  ;; the following are not specified by IEEE 754
-  (test (= (expt 1 inf+) 1.0) #t)
-  (test (= (expt 1 inf-) 1.0) #t)
-  (test (= (expt 0.0 inf+) 0.0) #t)
-  ;(test (= (expt 2 inf+) inf+) #t)
-  (test (= (expt 2 inf-) 0.0) #t)
-  (test (= (exp inf-) 0.0) #t)
-  (test (= (exp inf+) inf+) #t)
-  (test (nan? (exp nan)) #t)
-  ;(test (= (expt nan 0) 1.0) #t) ;hmmm
-  ;(test (= (expt nan nan) 0) #t)
-  ;(test (= (expt inf+ inf-) 0.0) #t)
-  ;(test (= (expt inf+ inf+) inf+) #t)
-  ;(test (= (expt 1 nan) 1) #t)
-  ;(test (= (expt 1 complex-nan) 1) #t) ; or maybe NaN?
-  (test (= (expt inf+ 0) 1.0) #t)
-  (test (= (expt inf- 0) 1.0) #t)
-  (test (= (log inf+) inf+) #t)
-  (test (nan? (real-part (log nan))) #t)
-  (test (nan? (real-part (log complex-nan))) #t)
-  (test (nan? (real-part (exp complex-nan))) #t)
-  (test (nan? (real-part (sqrt nan))) #t)
-  (test (= (sqrt inf+) inf+) #t)
-
-  (test (= (abs inf+) inf+) #t)
-  (test (= (abs inf-) inf+) #t)
-  (test (nan? (abs nan)) #t)
-  (test (= (magnitude inf+) inf+) #t)
-  (test (= (magnitude inf-) inf+) #t)
-  (test (nan? (magnitude nan)) #t)
-  (test (nan? (magnitude complex-nan)) #t)
-
-  (test (= (make-polar inf+ 0) inf+) #t)
-  (test (nan? (real-part (make-polar 0 inf-))) #t)
-  (test (nan? (real-part (make-rectangular inf- 0))) #f)
-  (test (zero? (real-part (make-rectangular 0 inf-))) #t)
-  (test (nan? (make-polar nan 0)) #t)
-  (test (nan? (real-part (make-polar 0 nan))) #t)
-  (test (= (make-rectangular inf+ 0) inf+) #t)
-  (test (= (make-rectangular 0 inf+) (sqrt inf-)) #t)   ; (sqrt inf-) -> 0+infi !
-  (test (nan? (make-rectangular nan 0)) #t)
-  (test (nan? (imag-part (make-rectangular 0 nan))) #t)
-
-  (test (nan? (sin nan)) #t)
-  (test (nan? (sin inf+)) #t)
-  (test (nan? (sin inf-)) #t)
-  (test (nan? (/ 0 nan)) #t)
-  (test (nan? (* 0 nan)) #t)
-  (test (nan? (/ nan)) #t)
-  
-  (test (= (exp most-positive-fixnum) inf+) #t)
-  (test (= (exp most-negative-fixnum) 0.0) #t)
-  (test (= (* -3.4 inf-) inf+) #t)
-
-  (test (= (max inf- inf+) inf+) #t)
-  (test (= (min inf- inf+) inf-) #t)
-
-  (test (nan? (+ (values inf+ inf-) inf+)) #t)
-  (test (/ nan 0) 'error)
-  (num-test (/ -1 inf- -9223372036854775808) 0.0)
-  (test (nan? (/ -1 nan inf-)) #t)
-
-  (test (rationalize inf+) 'error)
-  (test (rationalize inf-) 'error)
-  (test (rationalize nan) 'error)
-
-  (test (rationalize 198797.5 inf+) 0)
-  (test (rationalize 0.5 inf+) 0)
-  (test (rationalize 178978.5 inf-) 0)
-  (test (rationalize 178978.5 complex-inf-) 'error)
-  (test (rationalize 178987.5 nan) 'error)
-
-  (test (quotient 1 nan) 'error)
-  (test (quotient nan 1) 'error)
-  (test (remainder 1 nan) 'error)
-  (test (remainder nan 1) 'error)
-
-  (for-each
-   (lambda (op)
-     (test (number? (op inf+)) #t)
-     (test (number? (op inf-)) #t)
-     (test (number? (op nan)) #t))
-   (list magnitude abs exp angle sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
-	 real-part imag-part exact->inexact))
-
-  (for-each
-   (lambda (op)
-     (test (op inf+) 'error)
-     (test (op inf-) 'error)
-     (test (op nan) 'error))
-   (list floor ceiling truncate round))
-
-  (num-test (tanh inf-) -1.0)
-  (num-test (tanh inf+) 1.0)
-  (num-test (angle inf+) 0.0)
-  (num-test (angle inf-) our-pi)
-  ;; (test (nan? (angle nan)) #t)
-  ;; this could also be (angle complex-inf) etc -- need to check both sides
-
-  ; (atanh inf-) 0+1.5707963267949i
-
-  (for-each
-   (lambda (op)
-     (test (number? (op inf+ inf+)) #t)
-     (test (number? (op nan inf-)) #t))
-   (list + - * / expt make-rectangular make-polar))
-
-  (for-each
-   (lambda (op)
-     (test (boolean? (op inf+)) #t)
-     (test (boolean? (op nan)) #t)
-     (test (op) 'error))
-   (list number? integer? real? complex? rational? zero? positive? negative? inexact? exact?))
-
-  (for-each
-   (lambda (op)
-     (test (boolean? (op inf+ inf-)) #t)
-     (test (boolean? (op nan inf-)) #t))
-   (list  = < > <= >=))
-
-  (for-each
-   (lambda (op)
-     (test (op inf+) 'error)
-     (test (op nan) 'error))
-   (list even? odd? numerator denominator lcm gcd inexact->exact
-	 logior logxor logand lognot ash integer-length))
-
-  (let ((d1 1e-312)
-	(d2 1e-316)
-	(d3 1e-320))
-    (if (not (zero? d3))
-	(begin
-	  (test (= d1 d2 d3) #f)
-	  (test (< d1 d2 d3) #f)
-	  (test (> d1 d2 d3) #t)
-	  (test (rationalize d1) 0)
-	  (test (rationalize d3) 0)
-	  (test (rationalize (- d1)) 0)
-	  (test (not (= d2 (* 2 d1))) #t)
-	  (num-test (string->number (number->string d1)) d1)
-
-	  (test (< (sin d3) (sin d2) (sin d1)) #t)
-	  (test (< (log d3) (log d2) (log d1)) #t)
-	  (test (< (abs d3) (abs d2) (abs d1)) #t)
-	  (test (< (sqrt d3) (sqrt d2) (sqrt d1)) #t)
-	  (test (<= (exp d3) (exp d2) (exp d3)) #t) ; all might be 1.0
-	  )))
-
-  (test (nan? (modulo nan 1)) #t)
-  (test (nan? (modulo inf+ 1)) #t)
-  (test (nan? (modulo 1 nan)) #t)
-  (test (nan? (modulo 1 inf+)) #t)
-  (test (nan? (string->number "nan.0")) #t)
-  (if (not with-bignums) (test (* 1e12000 1e12000) inf+))
-  (test (zero? nan.0) #f)
-  (test (zero? 0/0) #f)
-  (test (negative? (/ (real-part (log 0.0)) (real-part (log 0.0)))) #f) ; and yet it prints as -nan.0
-  (test (imag-part nan.0) 0.0)
-  (test (nan? (asin nan.0)) #t)
-  (test (nan? (log nan.0 nan.0)) #t)
-  (test (= nan.0 nan.0) #f)
-  (test (< nan.0 nan.0) #f)
-  (test (> nan.0 nan.0) #f)
-  (test (magnitude inf.0) inf.0)
-  (test (angle inf.0) 0.0)
-  (test (abs inf.0) inf.0)
-  (test (exp inf.0) inf.0)
-  (test (log inf.0) inf.0)
-  ;; so (log inf.0 inf.0) should be a nan? inf/inf
-  (test (log 8.0 inf.0) 0.0) 
-  (test (nan? (log 8.0 nan.0)) #t)
-  (test (nan? (asin inf.0)) #t)
-  (test (nan? (acos inf.0)) #t)
-  (num-test (atan inf.0) 1.5707963267949)
-  (test (sinh inf.0) inf.0)
-  (test (cosh inf.0) inf.0)
-  (test (tanh inf.0) 1.0)
-  (test (asinh inf.0) inf.0)
-  (test (acosh inf.0) inf.0)
-  (num-test (atanh inf.0) 0+1.5707963267949i)
-  (test (sqrt inf.0) inf.0)
-  (test (+ inf.0) inf.0)
-  (test (- inf.0) -inf.0)
-  (test (* inf.0) inf.0)
-  (test (/ inf.0) 0.0)
-  (test (max inf.0) inf.0)
-  (test (min inf.0) inf.0)
-  (test (even? inf.0) 'error)
-  (test (zero? inf.0) #f)
-  (test (* -inf.0 inf.0) -inf.0)
-  (test (max -inf.0 inf.0) inf.0)
-  (test (min -inf.0 inf.0) -inf.0)
-  (test (= -inf.0 inf.0) #f)
-  (test (< -inf.0 inf.0) #t)
-  (test (> -inf.0 inf.0) #f)
-  (test (<= -inf.0 inf.0) #t)
-  (test (>= -inf.0 inf.0) #f)
-  (test (- -inf.0 inf.0) -inf.0)
-  (test (= nan.0 inf.0) #f)
-  (test (< nan.0 inf.0) #f)
-  (test (> nan.0 inf.0) #f)
-  (test (+ 0 inf.0) inf.0)
-  (test (- 0 inf.0) -inf.0)
-  (test (/ 0 inf.0) 0.0)
-  (test (max 0 inf.0) inf.0)
-  (test (min 0 inf.0) 0)
-  (test (= 0 inf.0) #f)
-  (test (< 0 inf.0) #t)
-  (test (> 0 inf.0) #f)
-  (test (<= 0 inf.0) #t)
-  (test (>= 0 inf.0) #f)
-  (test (= 0 inf.0 -inf.0) #f)
-  (test (< 0 inf.0 -inf.0) #f)
-  (test (> 0 inf.0 -inf.0) #f)
-  (test (<= 0 inf.0 -inf.0) #f)
-  (test (max 0 inf.0 -inf.0) inf.0)
-  (test (min 0 inf.0 -inf.0) -inf.0)
-  (test (real-part (make-rectangular 1 inf.0)) 1.0)
-  (test (imag-part (make-rectangular 1 inf.0)) inf.0)
-  (test (exact? (make-rectangular 1 inf.0)) #f)
-  (test (inexact? (make-rectangular 1 inf.0)) #t)
-  (test (zero? (make-rectangular 1 inf.0)) #f)
-  (test (nan? (max 0 inf.0 nan.0)) #t)
-  (test (nan? (min 0 inf.0 nan.0)) #t)
-  (test (nan? (max 1 nan.0)) #t)
-  (test (nan? (min 1 nan.0)) #t)
-  (test (expt nan.0) 'error)
-  (test (nan? (random nan.0)) #t)
-  (test (random nan.0 inf.0) 'error)
-  ;; these are errors because the arg is a real
-  (test (lcm nan.0) 'error)
-  (test (lcm nan.0 nan.0) 'error)
-  (test (gcd nan.0 nan.0) 'error)
-  (test (lcm nan.0 inf.0) 'error)
-  (test (gcd nan.0 inf.0) 'error)
-  (test (lcm -inf.0 inf.0) 'error)
-  (test (gcd -inf.0 inf.0) 'error)
-  (test (logior nan.0 nan.0) 'error)
-  (test (logxor nan.0 nan.0) 'error)
-  (test (logand nan.0 nan.0) 'error)
-  (test (lognot nan.0 nan.0) 'error)
-  (test (logior nan.0 inf.0) 'error)
-  (test (logxor nan.0 inf.0) 'error)
-  (test (logand nan.0 inf.0) 'error)
-  (test (lognot nan.0 inf.0) 'error)
-  (test (logior -inf.0 inf.0) 'error)
-  (test (logxor -inf.0 inf.0) 'error)
-  (test (logand -inf.0 inf.0) 'error)
-  (test (lognot -inf.0 inf.0) 'error)
-  (test (ash nan.0 inf.0) 'error)
-  (test (ash -inf.0 inf.0) 'error)
-  (test (ash nan.0 nan.0) 'error)
-  (test (nan? (make-polar -inf.0 inf.0)) #t)
-  (test (floor nan.0) 'error)
-  (test (ceiling nan.0) 'error)
-  (test (truncate nan.0) 'error)
-  (test (round nan.0)'error)
-  (test (floor inf.0) 'error)
-  (test (ceiling inf.0) 'error)
-  (test (truncate inf.0) 'error)
-  (test (round inf.0) 'error)
-  (test (nan? most-positive-fixnum) #f)
-  (test (nan? most-negative-fixnum) #f)
-  (test (nan? -inf.0) #f)
-  (test (nan? inf.0) #f)
-
-
-#|
-(define digits (vector #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
-
-(do ((i 0 (+ i 1)))
-    ((= i 10000))
-  (let ((int-digits (random 80))
-	(frac-digits (random 80))
-	(exp-digits (+ 1 (random 5)))
-	(signed (> (random 10) 5))
-	(signed-exponent (> (random 10) 5)))
-    (let ((str (make-string (+ 1 int-digits 1 frac-digits 2 exp-digits) #\space))
-	  (j 0))
-
-      (if signed
-	  (begin
-	    (set! (str j) #\-)
-	    (set! j (+ j 1))))
-
-      (do ((k 0 (+ k 1)))
-	  ((= k int-digits))
-	(set! (str j) (digits (random 10)))
-	(set! j (+ j 1)))
-
-      (set! (str j) #\.)
-      (set! j (+ j 1))
-
-       (do ((k 0 (+ k 1)))
-	  ((= k frac-digits))
-	(set! (str j) (digits (random 10)))
-	(set! j (+ j 1)))
-
-      (set! (str j) #\e)
-      (set! j (+ j 1))
-
-      (if signed-exponent
-	  (begin
-	    (set! (str j) #\-)
-	    (set! j (+ j 1))))
-
-      (do ((k 0 (+ k 1)))
-	  ((= k exp-digits))
-	 (if (< k 3)
-	     (set! (str j) (digits (random 10)))
-	     (set! (str j) (digits (random 4))))
-	 (set! j (+ j 1)))
-
-      (let ((num (string->number (substring str 0 j))))
-	(if (or (nan? num)
-		(infinite? num))
-	    (format #t "~A: ~S -> ~A~%" (if (infinite? num) 'inf 'nan) str num)))
-      )))
-|#
-
-
-  (test (make-random-state inf.0) 'error)
-  (test (make-random-state nan.0) 'error)
-
-  (for-each
-   (lambda (n)
-     (test (infinite? n) #f)
-     (test (nan? n) #f))
-   (list 0.0 -0.0 .1 1+i 0-i 1/10))
-  (test (infinite?) 'error)
-  (test (infinite? 1 2) 'error)
-  (test (nan?) 'error)
-  (test (nan? 1 2) 'error)
-  (for-each
-   (lambda (x)
-     (test (infinite? x) #f)
-     (test (nan? x) #f))
-   (list #\a "hi" #f #(1 2) '() '(1 . 2) 'hi abs #<eof> #<unspecified>))
-
-  (test (nan? (angle nan.0)) #t)
-  (test (rationalize nan.0) 'error)
-  (test (rationalize inf.0) 'error)
-  (test (rationalize nan.0 nan.0) 'error)
-
-(if (not (provided? 'gmp))
-    (begin
-      (test (nan? (expt 1 nan.0)) #t)
-      (test (nan? (expt nan.0 inf.0)) #t)
-      (test (nan? (expt nan.0 nan.0)) #t)
-      (test (nan? (expt 0 nan.0)) #t)
-      (test (<= 1 nan.0) #f)
-      (test (>= 1 nan.0) #f)
-      (test (<= 0 inf.0 nan.0) #f)
-      (test (<= nan.0 inf.0) #f)
-      (test (>= nan.0 inf.0) #f)
-      (test (<= nan.0 1) #f)
-      (test (>= nan.0 1) #f)
-      (test (<= nan.0 nan.0) #f)
-      (test (>= nan.0 nan.0) #f)))
-
-(if (not with-bignums)
-    (begin
-      (test (floor inf.0) 'error)
-      (test (ceiling inf.0) 'error)
-      (test (truncate inf.0) 'error)
-      (test (round inf.0) 'error)
-      (test (inexact->exact (make-rectangular 1 inf.0)) 'error)))
-
-#|
-;; bad?
-  (test (>= 0 inf.0 -inf.0) #t)
-  (test (/ 0 inf.0 -inf.0) 0.0)
-  (test (nan? (expt 0 inf.0)) #t)
-  (test (nan? (quotient nan.0 nan.0)) #t)
-  (test (nan? (quotient nan.0 1)) #t)
-  (test (nan? (quotient 1 nan.0)) #t)
-  (test (nan? (quotient nan.0 inf.0)) #t)
-  (test (nan? (quotient -inf.0 inf.0)) #t)
-  (test (nan? (atan -inf.0 inf.0)) #t) ; ??
-
-  (test (angle (make-rectangular 1 inf.0)) 1.5707963267949)
-  (test (tan (make-rectangular 1 inf.0)) 0+1i)
-  (test (atanh (make-rectangular 1 inf.0)) -0+1.5707963267949i)
-|#
-
-
-  )
-
-
-(test (if 1/0 0 1) 0)
-(test (nan? (random 1/0)) #t)
-
-
-(if with-bignums
-    (begin
-      (for-each
-       (lambda (n)
-	 (test (bignum? n) #f))
-       (list 0 1 -1 1/3 1.0 1+i 1073741824 1.0e8 1+1.0e8i))
-      (for-each 
-       (lambda (n)
-	 (test (bignum? n) #t))
-       (list 1.0e30 -1.0e20+i 1.0+1.0e80i 1e100 1267650600228229401496703205376 -1267650600228229401496703205376
-	     1180591620717411303424/3 3/1180591620717411303424 1180591620717411303424/1180591620717411303423
-	     1267650600228229401496703205376.99 -1267650600228229401496703205376.88 0.1231231231231231231231231231))
-      (for-each
-       (lambda (n)
-	 (test (bignum n) 'error)
-	 (test (bignum "1.0" n) 'error))
-       (list "hi" (integer->char 65) #f #t '(1 2) 'a-symbol (cons 1 2) (make-vector 3) 1 3/4 1.5 1+i abs))
-      (num-test (bignum "6/3") 2)
-      (num-test (bignum "+3/6") 1/2)
-      (num-test (bignum "7447415382/3") 2482471794)
-      ))
-
-
-
-
-;;; some of these do not follow IEEE 754
-(let ((val1 (catch #t (lambda () (/ 1.0 0.0)) (lambda args 'error)))
-      (val2 (catch #t (lambda () (/ 1.0 -0.0)) (lambda args 'error))))
-  (test (equal? val1 val2) #t))
-(let ((val1 (catch #t (lambda () (log 0.0)) (lambda args 'error)))
-      (val2 (catch #t (lambda () (log -0.0)) (lambda args 'error))))
-  (test (equal? val1 val2) #t))
-(let ((val1 (catch #t (lambda () (* 1.0 0.0)) (lambda args 'error)))
-      (val2 (catch #t (lambda () (* 1.0 -0.0)) (lambda args 'error))))
-  (test (equal? val1 val2) #t))
-(let ((val1 (catch #t (lambda () (expt 0.0 0.0)) (lambda args 'error)))
-      (val2 (catch #t (lambda () (expt 0.0 -0.0)) (lambda args 'error))))
-  (test (equal? val1 val2) #t))
-(let ((val1 (catch #t (lambda () (expt 2.0 0.0)) (lambda args 'error)))
-      (val2 (catch #t (lambda () (expt 2.0 -0.0)) (lambda args 'error))))
-  (test (equal? val1 val2) #t))
-(let ((val1 (catch #t (lambda () (floor 0.0)) (lambda args 'error)))
-      (val2 (catch #t (lambda () (floor -0.0)) (lambda args 'error))))
-  (test (equal? val1 val2) #t))
-(let ((val1 (catch #t (lambda () (ceiling 0.0)) (lambda args 'error)))
-      (val2 (catch #t (lambda () (ceiling -0.0)) (lambda args 'error))))
-  (test (equal? val1 val2) #t))
-(test (< (real-part (log 0.0)) (real-part (- (log 0.0)))) #t)
-
-(test (+ 1 . 2) 'error)
-(test (< 1 3 . 2) 'error)
-(num-test (- .(1.1)) -1.1)
-(num-test (- 1. .()) -1.0)
-(num-test (+ 0.(+)) 0.0)
-(num-test (+ 0.(*)) 1.0)
-(num-test (/(*(/(*)))) 1)
-(num-test (+ 0-i(sqrt 00)) 0-i)
-(num-test (apply /(list 11 11)) 1)
-(num-test (/ 0+i) 0-1i)
-(num-test (/ 1/10 010) 1/100)
-(num-test (/ 0 -00-1i) 0.0)
-(num-test (* 0110/001) 110)
-(test (> 0 most-negative-fixnum) #t)
-(test (> most-negative-fixnum 0) #f)
-(test (> most-positive-fixnum 0) #t)
-(test (> 0 most-positive-fixnum) #f)
-(test (> most-positive-fixnum most-negative-fixnum) #t)
-(test (> most-negative-fixnum most-positive-fixnum) #f)
-(test (< 0 most-negative-fixnum) #f)
-(test (< most-negative-fixnum 0) #t)
-(test (< most-positive-fixnum 0) #f)
-(test (< 0 most-positive-fixnum) #t)
-(test (< most-positive-fixnum most-negative-fixnum) #f)
-(test (< most-negative-fixnum most-positive-fixnum) #t)
-(test (negative? most-negative-fixnum) #t)
-(test (negative? most-positive-fixnum) #f)
-(test (= (+ most-negative-fixnum 1) (- most-positive-fixnum)) #t)
-(test (= (+ most-negative-fixnum most-positive-fixnum) -1) #t)
-(test (= (- most-negative-fixnum (- most-positive-fixnum)) -1) #t)
-(test (= (* most-positive-fixnum -1) (+ most-negative-fixnum 1)) #t)
-(test (= (* most-negative-fixnum 1) (- (* -1 most-positive-fixnum) 1)) #t)
-(test (/ most-positive-fixnum most-positive-fixnum) 1)
-(test (/ -9223372036854775808 -9223372036854775808) 1)
-(test (+ -9223372036854775808 9223372036854775807) -1)
-(test (/ -9223372036854775808 9223372036854775807) -9223372036854775808/9223372036854775807)
-(test (floor most-positive-fixnum) most-positive-fixnum)
-(test (floor most-negative-fixnum) most-negative-fixnum)
-(num-test (/ 2 -9223372036854775808) -1/4611686018427387904)
-(num-test (/ -9223372036854775808 2) -4611686018427387904)
-(num-test (/ 2 most-negative-fixnum) -1/4611686018427387904)
-(num-test (/ most-negative-fixnum 2) -4611686018427387904)
-(if with-bignums (num-test (/ most-negative-fixnum) -1/9223372036854775808))
-(if with-bignums (num-test (- most-negative-fixnum) 9223372036854775808))
-(if with-bignums (num-test (* 1/256 1/256 1/256 1/256 1/256 1/256 1/256 -1/128) (/ most-negative-fixnum)))
-(num-test (/ most-negative-fixnum most-negative-fixnum) 1)
-(num-test (/ most-negative-fixnum most-negative-fixnum 2) 1/2)
-(num-test (/ -9223372036854775808 -9223372036854775808 4) 1/4)
-(if with-bignums (test (= most-positive-fixnum (- (/ most-negative-fixnum -1) 1)) #t))
-(num-test (+ 10000000/9223372036854775807 1/3) 3.333333333344175355058188377674583355698E-1)
-(num-test (+ (/ (expt 2 30)) (/ (expt 3 20))) 4560526225/3743906242624487424)
-(num-test (+ (/ (expt 2 30)) (/ (expt 3 18)) 1/5) 415989589819643501/2079947912569159680)
-(num-test (+ (/ (expt 2 30)) (/ (expt 3 18)) 1/13) 415989601508942005/5407864572679815168)
-(num-test (+ (/ (expt 2 29)) (/ (expt 3 18)) 1/31) 207994819909949399/6447838528964395008)
-(num-test (+ (/ (expt 2 28)) (/ (expt 3 17)) 1/7 1/29) 1247968828249346465/7037157104192323584)
-(num-test (+ (/ (expt 2 28)) (/ (expt 3 17)) 1/7 1/31) 1317300430901043787/7522478283791794176)
-(num-test (+ 268435456/129140163 129140163/268435456 7/29 29/19) 4.327416192871913348352681814704887193821E0)
-(num-test (+ 268435456/129140163 129140163/268435456 7/19 29/19) 2933929486555791403/658650172313567232)
-(num-test (* 524288 1907348632812) 999999999999737856)
-(num-test (* 524288 14000000000000) 7340032000000000000)
-(num-test (* 524288 17500000000000) 9175040000000000000)
-(num-test (* 1907348632812 524288) 999999999999737856)
-(num-test (* 14000000000000 524288) 7340032000000000000)
-(num-test (* 17500000000000 524288) 9175040000000000000)
-(num-test (/ 1.0 1/524288 1/19073486328125) 1.000000000000000024754073164739868757037E19)
-(test (= most-positive-fixnum 1/0) #f)
-(test (= most-negative-fixnum 1/0) #f)
-(test (= most-positive-fixnum 0/0) #f)
-(test (= most-negative-fixnum 0/0) #f)
-(if with-bignums (test (= (bignum "3") 1/0) #f))
-(test (= 1/0 (log 0)) #f)
-(test (= 0 1/0 0/0) #f)
-(test (= 1/0 -1/0) #f)
-(test (= 0/1 -0/1) #t)
-(num-test (* 9223372036854775807 1/9223372036854775807) 1.0)
-(num-test (/ 1/9223372036854775807 1/9223372036854775807) 1)
-(num-test (- 1/9223372036854775807 1/9223372036854775807) 0)
-(num-test (+ 1/9223372036854775807 1/9223372036854775807) 2/9223372036854775807)
-(num-test (/ 2/9223372036854775807 2/3) 3/9223372036854775807)
-(num-test (/ 9223372036854775807/123456789 9223372036854775807/123456789) 1)
-(num-test (/ 9223372036854775807/1234567890 9223372036854775807/12345678900) 10)
-(num-test (/ 1234567890/9223372036854775807 123456789/9223372036854775807) 10)
-(test (= most-positive-fixnum 0/0+0/0i) #f)
-(test (= most-negative-fixnum 0/0+0/0i) #f)
-(test (= most-positive-fixnum (/ (log 0) (log 0))) #f)
-(test (= most-negative-fixnum (/ (log 0) (log 0))) #f)
-(test (< most-positive-fixnum (- (real-part (log 0.0)))) #t)
-(test (> most-positive-fixnum (- (real-part (log 0.0)))) #f)
-(test (< most-negative-fixnum (real-part (log 0.0))) #f)
-(test (> most-negative-fixnum (real-part (log 0.0))) #t)
-(test (= most-positive-fixnum most-positive-fixnum) #t)
-(test (= most-positive-fixnum most-negative-fixnum) #f)
-(test (> most-positive-fixnum most-negative-fixnum) #t)
-(test (> 1e18 most-positive-fixnum) #f)
-(num-test (max 1e18 most-positive-fixnum) most-positive-fixnum) ; in bignum case there's type confusion here I think (hence num-test)
-(num-test (+ 1073741824 1073741824 1073741824 1073741824) (* 4 1073741824))
-(test (< 1237940039285380274899124223 1.2379400392853803e+27 1237940039285380274899124225) #f)
-(test (< (- 1237940039285380274899124223 1237940039285380000000000000) (- 1.2379400392853803e+27 1237940039285380000000000000) (- 1237940039285380274899124225 1237940039285380000000000000)) #f)
-(test (< 274899124223 3.0E11 274899124225) #f)
-
-
-
-(if with-bignums
-    (begin
-      (num-test (/ 1/524288 19073486328125) 1/10000000000000000000)
-      (num-test (/ 1/19073486328125 524288) 1/10000000000000000000)
-      (num-test (* 1024 9765625 512 1953125) 10000000000000000000)
-      (num-test (* 1/1024 1/9765625 1/512 1/1953125) 1/10000000000000000000)
-      (num-test (/ 1/1024 9765625 512 1953125) 1/10000000000000000000)
-      (num-test (/ 1024 1/9765625 1/512 1/1953125) 10000000000000000000)
-      (num-test (* 524288 17600000000000) 9227468800000000000)
-      (num-test (* 524288 -19073486328125) -10000000000000000000)
-      (num-test (/ -1/524288 19073486328125) -1/10000000000000000000)
-      (num-test (/ -1/19073486328125 524288) -1/10000000000000000000)
-      (num-test (* 1024 -9765625 512 -1953125) 10000000000000000000)
-      (num-test (* 1/1024 -1/9765625 -1/512 1/1953125) 1/10000000000000000000)
-      (num-test (/ 1/1024 9765625 -512 1953125) -1/10000000000000000000)
-      (num-test (/ -1024 1/9765625 1/512 1/1953125) -10000000000000000000)
-      (num-test (* -524288 -17600000000000) 9227468800000000000)
-      (num-test (* 524288 -19073486328125) -10000000000000000000)
-      (num-test (- 1/9223372036854775807 1/9223372036854775806) -1/85070591730234615838173535747377725442)
-      (num-test (+ 1/9223372036854775807 1/9223372036854775806) 18446744073709551613/85070591730234615838173535747377725442)
-      (num-test (* 1/9223372036854775807 1/9223372036854775806) 1/85070591730234615838173535747377725442)
-      (num-test (/ 1/9223372036854775807 1/9223372036854775806) 9223372036854775806/9223372036854775807)
-      (num-test (/ 1/9223372036854775807 1/3) 3/9223372036854775807)
-      )
-    (begin
-      (num-test (/ 1024 1/9765625 1/512 1/1953125) 1e19)
-      (num-test (/ 1/524288 19073486328125) 1e-19)
-      (num-test (/ 1/19073486328125 524288) 1e-19)
-      (num-test (/ -1024 1/9765625 1/512 1/1953125) -1e19)
-      (num-test (/ 1/524288 -19073486328125) -1e-19)
-      (num-test (/ 1/19073486328125 -524288) -1e-19)
-      (num-test (- 1/9223372036854775807 1/9223372036854775806) -1.1754943508223e-38)
-      (num-test (+ 1/9223372036854775807 1/9223372036854775806) 2.168404344971e-19)
-      (num-test (* 1/9223372036854775807 1/9223372036854775806) 1.1754943508223e-38)
-      (num-test (/ 1/9223372036854775807 1/9223372036854775806) 1.0)
-      (num-test (/ 1/9223372036854775807 1/3) 3.2526065174565e-19)))
-
-; these can go either way I guess -- 1/0 might be NaN?
-;(test (< most-positive-fixnum 1/0) #t)
-;(test (> most-positive-fixnum 1/0) #f)
-
-
-(let ((top-exp 60))  
-  (let ((happy #t))
-    (do ((i 2 (+ i 1)))
-	((or (not happy) (> i top-exp)))
-      (let* ((val1 (+ 2 (expt 2 i)))
-	     (val2 (- val1 1)))
-	(if (not (> val1 val2))
-	    (begin (set! happy #f) (display "(> ") (display val1) (display " ") (display val2) (display ") -> ") (display (> val1 val2)) (display "?") (newline)))
-	(if (< val1 val2)
-	    (begin (set! happy #f) (display "(< ") (display val1) (display " ") (display val2) (display ") -> ") (display (< val1 val2)) (display "?") (newline))))))
-  
-  (let ((happy #t))
-    (do ((i 2 (+ i 1)))
-	((or (not happy) (> i top-exp)))
-      (let* ((val1 (/ (expt 2 i) 3))
-	     (val2 (/ (+ 1 (expt 2 i)) 3)))
-	(if (> val1 val2)
-	    (begin (set! happy #f) (display "(> ") (display val1) (display " ") (display val2) (display ") -> ") (display (> val1 val2)) (display "?") (newline)))
-	(if (not (> val2 val1))
-	    (begin (set! happy #f) (display "(> ") (display val1) (display " ") (display val2) (display ") -> ") (display (> val2 val1)) (display "?") (newline)))
-	(if (not (< val1 val2))
-	    (begin (set! happy #f) (display "(< ") (display val1) (display " ") (display val2) (display ") -> ") (display (< val1 val2)) (display "?") (newline)))
-	(if (< val2 val1)
-	    (begin (set! happy #f) (display "(< ") (display val1) (display " ") (display val2) (display ") -> ") (display (< val2 val1)) (display "?") (newline)))
-	))))
-
-
-(if with-bignums
-    (begin
-      (num-test (+ 1/3 (* 13835058055282163710 2/3)) 9223372036854775807) ; would be nice if this worked...
-
-      (num-test (expt 4722366482869645213696 1/2) 68719476736)
-;      (num-test (expt 324518553658426726783156020576256 1/3) 68719476736)
-;      (num-test (expt 4722366482869645213696/6561 1/2) 68719476736/81)
-;      (num-test (expt 324518553658426726783156020576256/19683 1/3) 68719476736/27)
-
-      (num-test (- (+ (expt 2.0 62) 512) (+ (expt 2.0 62) 513)) -1.0)
-      (num-test (+ (- 512 (expt 2.0 62)) (- (expt 2.0 62) 513)) -1.0)
-      
-      (num-test (expt 4722366482869645213696/6561 -1/2) (/ 68719476736/81))
-      (num-test (expt (expt -4722366482869645213696/6561 1/2) 2) -4722366482869645213696/6561)
-      
-      (num-test 1180591620717411303424/1180591620717411303425 (/ (expt 2 70) (+ (expt 2 70) 1)))
-
-      (num-test (expt 4722366482869645213696.0 1/2) 68719476736.0)
-      (num-test (expt 324518553658426726783156020576256.0 1/3) 68719476736.0)
-      (num-test (+ 12345678901234567890+12345678901234567890i 12345678901234567890-12345678901234567890i) 2.469135780246913578E19)
-      (num-test (+ 1.0 12345678901234567890) 1.2345678901234567891E19)
-      (num-test (* 2 12345678901234567890+12345678901234567890i) 2.469135780246913578E19+2.469135780246913578E19i)
-      (num-test (- 2 12345678901234567890+12345678901234567890i) -12345678901234567890-12345678901234567890i)
-	    
-      (num-test (+ 1.0e80+i 1.0e80-i) 2.0e80)
-      (num-test (+ 1.0e80+i 1.0e80+i) 2.0e80+2.0i)
-      (num-test (* 1.0e70+i 1.0e70-i) 1.0e140)
-      (num-test (/ 1.0e20+i 1.0e20+i) 1.0)
-      (num-test (* 0+1e20i 0+1e20i) -1e40)
-      (num-test (/ 0+1e20i 0-1e20i) -1.0)
-      (num-test (/ 1e20 0+i) 0-1e20i)
-      (num-test (- 1e40+1e30i 1e40-1e30i) 0+2e30i)
-      (num-test (+ 1180591620717411303424+i 1+1180591620717411303424i) 1.180591620717411303425E21+1.180591620717411303425E21i)
-      (num-test (+ 1180591620717411303424.0+i 1+1180591620717411303424.0i) 1.180591620717411303425E21+1.180591620717411303425E21i)
-
-      (test (= #e.1e20 1e19) #t)
-
-      (num-test .1e310 1e309)
-      (num-test .01e310 1e308)
-      (num-test 0.0e310 0.0)
-      (num-test -0.1e309 -1e308)
-
-      (let ((twos (make-vector 30)))
-	(do ((i 0 (+ i 1))
-	     (t2 1 (* t2 8)))
-	    ((= i 30))
-	  (set! (twos i) t2))
-	(do ((i 0 (+ i 1)))
-	    ((= i 29))
-	  (if (not (= (twos (+ i 1)) (* 8 (twos i))))
-	      (format #t "~A * 8 -> ~A (~A)~%" (twos i) (* 8 (twos i)) (twos (+ i 1))))
-	  (if (not (= (+ (twos (+ i 1)) (* 8 (twos i))) (* 2 (twos (+ i 1)))))
-	      (format #t "~A + ~A -> ~A (~A)~%" (* 8 (twos i)) (twos (+ i 1)) (* 2 (twos (+ i 1)))))
-	  (if (not (= (/ (twos (+ i 1)) (twos i)) 8))
-	      (format #t "~A / ~A = ~A (8)~%" (twos (+ i 1)) (twos i) (/ (twos (+ i 1)) (twos i))))
-	  (if (not (= (- (twos (+ i 1)) (* 8 (twos i))) 0))
-	      (format #t "~A - ~A -> ~A (0)~%" (* 8 (twos i)) (twos (+ i 1)) (- (twos (+ i 1)) (* 8 (twos i)))))))
-
-      ;; --------------------------------
-      ;; these come from Brad Lucier:
-      (num-test (quotient 295147905149568077200 34359738366) 8589934591)
-      (num-test (remainder 295147905149568077200 34359738366) 21754858894)
-      (num-test (quotient 696898287454081973170944403677937368733396 1180591620717411303422) 590295810358705651711)
-      (num-test (remainder 696898287454081973170944403677937368733396 1180591620717411303422) 314390899110894278354)
-      
-      ;; (map (lambda (x) (number->string x 2)) '(696898287454081973170944403677937368733396 1180591620717411303422 295147905149568077200 34359738366)) 
-      ;; ("1111111111111111111111111111111111111111111111111111111111111111111100100 010000101100001100110110010000011011101000100001101001011011010100" 
-      ;; "1111111111111111111111111111111111111111111111111111111111111111111110" 
-      ;; "11111111111111111111111111111111100100010000101100001100110110010000" 
-      ;;  "11111111111111111111111111111111110") 
-      
-      (letrec ((factorial (lambda (n i) (if (positive? n) (factorial (- n 1) (* i n)) i))))
-	(num-test (/ (factorial 100 1) (factorial 99 1)) 100)
-	(num-test (/ (factorial 1000 1) (factorial 999 1)) 1000)
-	(num-test (factorial 100 1) 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000)
-	(num-test (factorial 200 1) 788657867364790503552363213932185062295135977687173263294742533244359449963403342920304284011984623904177212138919638830257642790242637105061926624952829931113462857270763317237396988943922445621451664240254033291864131227428294853277524242407573903240321257405579568660226031904170324062351700858796178922222789623703897374720000000000000000000000000000000000000000000000000)
-	
-	(num-test (* (factorial 3 1) (factorial 5 1) (factorial 7 1)) (factorial 10 1)))
-      
-      (num-test (modulo (+ 2 (* 3 499127 495037 490459 468803)) (* 499127 495037 490459 468803)) 2)
-      (num-test (let ((n 1)) (do ((i 2 (+ i 1))) ((= i 100)) (set! n (lcm n i))) n) 69720375229712477164533808935312303556800)
-      (num-test (log 69720375229712477164533808935312303556800) 9.40453112293573922460049312446069272415E1)
-      (num-test (* 2 (expt 2 62)) (expt 2 63))
-      (num-test (* 8 (expt 2 30) (expt 2 30)) 9223372036854775808)
-      (num-test (+ (expt 2 61) (expt 2 62) (expt 2 61)) (/ (expt 2 64) 2))
-      ))
-
-
-(let ((f= (lambda (a b) (< (abs (- a b)) 1.0e-15))))
-  (let ((log2 0.69314718055994530941723212145817656807550013436025525412068000949339362196969471560586332699641868754200148102057068573368552023575813055703267075163507596193072757082837143519030703862389167347112335011536449795523912047517268157493206515552473413952588295045300709532636664265410423915781495204374043038550080194417064167151864471283996817178454695702627163106454615025720740248163777338963855069526066834113727387372292895649354702576265209885969320196505855476470330679365443254763274495125040606943814710468994650622016772042452452961268794654619316517468139267250410380254625965686914419287160829380317271436778265487756648508567407764845146443994046142260319309673540257444607030809608504748663852313818167675143866747664789088143714198549423151997354880375165861275352916610007105355824987941472950929311389715599820565439287170007218085761025236889213244971389320378439353088774825970171559107088236836275898425891853530243634214367061189236789192372314672321720534016492568727477823445353476481149418642386776774406069562657379600867076257199184734022651462837904883062033061144630073719489002743643965002580936519443041191150608094879306786515887090060520346842973619384128965255653968602219412292420757432175748909770675268711581705113700915894266547859596489065305846025866838294002283300538207400567705304678700184162404418833232798386349001563121889560650553151272199398332030751408426091479001265168243443893572472788205486271552741877243002489794540196187233980860831664811490930667519339312890431641370681397776498176974868903887789991296503619270710889264105230924783917373501229842420499568935992206602204654941510613918788574424557751020683703086661948089641218680779020818158858000168811597305618667619918739520076671921459223672060253959543654165531129517598994005600036651356756905124592682574394648316833262490180382424082423145230614096380570070255138770268178516306902551370323405380214501901537402950994226299577964742713815736380172987394070424217997226696297993931270694)
-	
-	(log3 1.09861228866810969139524523692252570464749055782274945173469433363749429321860896687361575481373208878797002906595786574236800422593051982105280187076727741060316276918338136717937369884436095990374257031679591152114559191775067134705494016677558022220317025294689756069010652150564286813803631737329857778236699165479213181814902003010382363012224865274819822599109745249089645805346700884596508574844411901885708764749486707961308582941160216612118400140982551439194876889367984943022557315353296853452952514592138764946859325627944165569415782723103551688661021184698904399430631382552857364668828249881368228006341439107868932514564375102044516275619349739821169415857405353617589009751222337977369696877543547951357129821770175812421223514058101632724655889372495649191852429607966842346470693772372526550820320783339280558928531468730951326064583091843974968222303257654675333118230196492752575991322178513533902374829643395025460742458249346668661218814365265654295427676105054777954229339733234011737431939745798470185595484940594783539438410106029307622922281312074893063445340252777326856271480016818715472439782071878034446780216178158419042820076721243255738014364178876826161041016818724240687908909929874208152183237528942752732534071002835750695062403965462752244308462588450859786253083224774538885068003488324340490083990058080943565282122370388702036804548600776214244088697259413584365999226211739670804950952792714363154640444623089158185367119608370304853520909672629582415040355995121355450332241748474100331981487832452569334704949937301656336660991903957122822844881674312150628569993874038819012744839564791034772885972119850649422796985791669956418551265041502191554719665856929726606523573293736830027830921776605387030462007661584946700226011756797518003934791763277844935142634968360037557857160700498181519184373438290934746660457750659273670121115370582496479847930404205823964753857850960626093389914706120130243108260518262958640076003059494321166880446106134684533980))
-    
-    (if (not (f= log3 (log 3.0)))
-	(begin (display "(- (log 3.0) true-log-3) = ") (display (- log3 (log 3.0))) (newline)))
-    (if (not (f= log2 (log 2.0)))
-	(begin (display "(- (log 2.0) true-log-2) = ") (display (- log2 (log 2.0))) (newline)))
-    (if (not (f= 3.0 (exp log3)))
-	(begin (display "(- 3.0 (exp log3)) = ") (display (- 3.0 (exp log3))) (newline)))
-    (if (not (f= 2.0 (exp log2)))
-	(begin (display "(- 2.0 (exp log2)) = ") (display (- 2.0 (exp log2))) (newline))))
-  
-  (let ((sin1 8.414709848078965066525023216302989996225630607983710656727517099919104043912396689486397435430526959e-1)
-	(cos1 5.403023058681397174009366074429766037323104206179222276700972553811003947744717645179518560871830894e-1)
-	(tan1 1.557407724654902230506974807458360173087250772381520038383946605698861397151727289555099965202242984e0))
-    
-    (if (not (f= sin1 (sin 1)))
-	(begin (display "(- (sin 1) true-sin-1) = ") (display (- sin1 (sin 1))) (newline)))
-    (if (not (f= (asin sin1) 1.0))
-	(begin (display "(- (asin (sin 1)) 1) = ") (display (- (asin sin1) 1)) (newline)))
-    
-    (if (not (f= cos1 (cos 1)))
-	(begin (display "(- (cos 1) true-cos-1) = ") (display (- cos1 (cos 1))) (newline)))
-    (if (not (f= (acos cos1) 1.0))
-	(begin (display "(- (acos (cos 1)) 1) = ") (display (- (acos cos1) 1)) (newline)))
-    
-    (if (not (f= tan1 (tan 1)))
-	(begin (display "(- (tan 1) true-tan-1) = ") (display (- tan1 (tan 1))) (newline)))
-    (if (not (f= (atan tan1) 1.0))
-	(begin (display "(- (atan (tan 1)) 1) = ") (display (- (atan tan1) 1)) (newline)))
-    
-    (set! sin1 -.3056143888882523)
-    (set! cos1 -.9521553682590148)
-    (set! tan1 .3209711346238149)
-    
-    (if (not (f= sin1 (sin 10000)))
-	(begin (display "(- (sin 10000) true-sin-10000) = ") (display (- sin1 (sin 10000))) (newline)))
-    
-    (if (not (f= cos1 (cos 10000)))
-	(begin (display "(- (cos 10000) true-cos-10000) = ") (display (- cos1 (cos 10000))) (newline)))
-    
-    (if (not (f= tan1 (tan 10000)))
-	(begin (display "(- (tan 10000) true-tan-10000) = ") (display (- tan1 (tan 10000))) (newline)))
-    )
-  
-  
-  (let ((sinh1 1.175201193643801456882381850595600815155717981334095870229565413013307567304323895607117452089623392e0)
-	(cosh1 1.543080634815243778477905620757061682601529112365863704737402214710769063049223698964264726435543036e0)
-	(tanh1 7.615941559557648881194582826047935904127685972579365515968105001219532445766384834589475216736767144e-1))
-    
-    (if (not (f= sinh1 (sinh 1)))
-	(begin (display "(- (sinh 1) true-sinh-1) = ") (display (- sinh1 (sinh 1))) (newline)))
-    (if (not (f= (asinh sinh1) 1.0))
-	(begin (display "(- (asinh (sinh 1)) 1) = ") (display (- (asinh sinh1) 1)) (newline)))
-    
-    (if (not (f= cosh1 (cosh 1)))
-	(begin (display "(- (cosh 1) true-cosh-1) = ") (display (- cosh1 (cosh 1))) (newline)))
-    (if (not (f= (acosh cosh1) 1.0))
-	(begin (display "(- (acosh (cosh 1)) 1) = ") (display (- (acosh cosh1) 1)) (newline)))
-    
-    (if (not (f= tanh1 (tanh 1)))
-	(begin (display "(- (tanh 1) true-tanh-1) = ") (display (- tanh1 (tanh 1))) (newline)))
-    (if (not (f= (atanh tanh1) 1.0))
-	(begin (display "(- (atanh (tanh 1)) 1) = ") (display (- (atanh tanh1) 1)) (newline)))
-    )
-  )
-
-(let ((bes-i0 (lambda (x)			;I0(x)
-		(if (< (abs x) 3.75)
-		    (let* ((y (expt (/ x 3.75) 2)))
-		      (+ 1.0
-			 (* y (+ 3.5156229
-				 (* y (+ 3.0899424
-					 (* y (+ 1.2067492
-						 (* y (+ 0.2659732
-							 (* y (+ 0.360768e-1
-								 (* y 0.45813e-2)))))))))))))
-		    (let* ((ax (abs x))
-			   (y (/ 3.75 ax)))
-		      (* (/ (exp ax) (sqrt ax)) 
-			 (+ 0.39894228
-			    (* y (+ 0.1328592e-1
-				    (* y (+ 0.225319e-2
-					    (* y (+ -0.157565e-2
-						    (* y (+ 0.916281e-2
-							    (* y (+ -0.2057706e-1
-								    (* y (+ 0.2635537e-1
-									    (* y (+ -0.1647633e-1
-										    (* y 0.392377e-2))))))))))))))))))))))
-  (num-test (bes-i0 1.0) 1.266065877752009)
-  (num-test (bes-i0 2.0) 2.279585302336067)
-  (num-test (bes-i0 5.0) 27.23987182360445)
-  (num-test (bes-i0 10.0) 2815.716628466254)
-  (num-test (bes-i0 50.0) 2.93255291463847587034176447517387076592E20) ;2.932553783849336E+20) arprec
-  (num-test (bes-i0 100.0) 1.073751199431789167620943174959211991306E42))
-
-
-(if with-bignums
-    (begin  ;; these will fail in the non-gmp case
-      (test (> 9007199254740993.0 9007199254740992.0) #t)
-      (test (> (+ (expt 2.0 62) 500) (+ (expt 2.0 62) 100)) #t)
-      (num-test (- (+ (expt 2.0 62) 500) (+ (expt 2.0 62) 100)) 4.000E2)
-      (num-test (exp (* our-pi (sqrt (bignum "163")))) 2.625374126407687439999999999992500725895E17)
-      (test (< (abs (- (expt (- (exp (* our-pi (sqrt (bignum "163")))) 744) 1/3) 6.4031999999999999999999999999939031735E5)) 1e-32) #t)
-      ))
-
-#|
-(do ((i 30 (+ i 1))) 
-    ((= i 63)) 
-  (format #t "~D: (- ~A ~A) -> ~A~%" i (+ (expt 2.0 i) 500) (+ (expt 2.0 i) 100) (- (+ (expt 2.0 i) 500) (+ (expt 2.0 i) 100))))
-
-55: (- 3.6028797018964e+16 3.6028797018964e+16) -> 400.0
-56: (- 7.2057594037928e+16 7.2057594037928e+16) -> 400.0
-57: (- 1.4411518807586e+17 1.4411518807586e+17) -> 416.0
-58: (- 2.8823037615171e+17 2.8823037615171e+17) -> 384.0
-59: (- 5.7646075230342e+17 5.7646075230342e+17) -> 384.0
-60: (- 1.1529215046068e+18 1.1529215046068e+18) -> 512.0
-61: (- 2.3058430092137e+18 2.3058430092137e+18) -> 512.0
-62: (- 4.6116860184274e+18 4.6116860184274e+18) -> 0.0
-|#
-
-
-(num-test (* (sin (/ our-pi 11)) (sin (/ (* 2 our-pi) 11)) (sin (/ (* 3 our-pi) 11)) (sin (/ (* 4 our-pi) 11)) (sin (/ (* 5 our-pi) 11))) (sqrt (/ 11 1024)))
-(num-test (* (sin (/ our-pi 7)) (sin (/ (* 2 our-pi) 7)) (sin (/ (* 3 our-pi) 7))) (/ (sqrt 7) 8))
-(num-test (* (sin (/ our-pi 9)) (sin (/ (* 2 our-pi) 9)) (sin (/ (* 4 our-pi) 9))) (/ (sqrt 3) 8))
-(num-test (* our-pi (+ 1.0 (atan (tan (acos (cos (asin (sin (/ 1.0 (/ 1.0 our-pi)))))))))) our-pi)
-(num-test (+ (* (sin 0.1) (sin 0.1)) (* (cos 0.1) (cos 0.1))) 1.0)
-(num-test (/ (- (sqrt 5) 1) 2) (/ (sin (* our-pi 1/5)) (sin (* our-pi 2/5))))
-
-
-;; --------------------------------------------------------------------------------
-;; miscellaneous numeric tests
-
-(if with-bignums (test (zero? (- (expt 2.3 54) (floor (expt 2.3 54)))) #f))
-(num-test (* (/ (expt 2 11) (+ (expt 2 10) 1)) (/ (+ (expt 2 11) 1) (expt 2 10))) 4098/1025)
-(num-test (* (/ (expt 2 21) (+ (expt 2 20) 1)) (/ (+ (expt 2 21) 1) (expt 2 20))) 4194306/1048577)
-(num-test (* (sqrt 2) (sqrt (- 31 (* 4 (sqrt (sqrt 3)) (sqrt (sqrt 5)))))) (+ (* (expt 3 1/4) (expt 5 3/4)) (- (* 2 (sqrt 5))) (* (expt 3 3/4) (expt 5 1/4)) (* 2 (sqrt 3))))
-(num-test (* (tan (/ our-pi 11)) (tan (/ (* 2 our-pi) 11)) (tan (/ (* 3 our-pi) 11)) (tan (/ (* 4 our-pi) 11)) (tan (/ (* 5 our-pi) 11))) (sqrt 11))
-(num-test (* (tan (/ our-pi 9)) (tan (/ (* 2 our-pi) 9)) (tan (/ (* 4 our-pi) 9))) (sqrt 3))
-(num-test (* 2  0+i (log (/ 1-i 1+i))) our-pi)
-(num-test (* 2 (asin 1)) our-pi)
-(num-test (* 4 (+ (* 3 (atan 1/4)) (atan 1/20) (atan 1/1985))) our-pi)
-(num-test (* 10 (asin (/ (- (sqrt 5) 1) 4))) our-pi)
-(num-test (* 768 (sqrt (- 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 1))))))))))))))))))) 3.1415904632368)
-(num-test (+ (* 176 (atan (/ 57))) (* 28 (atan (/ 239))) (* -48 (atan (/ 682))) (* 96 (atan (/ 12943)))) our-pi)
-(num-test (+ (* 2 (atan (/ (sqrt 2)))) (atan (/ (sqrt 8)))) (/ our-pi 2))
-(num-test (+ (* 48 (atan (/ 49))) (* 128 (atan (/ 57))) (* -20 (atan (/ 239))) (* 48 (atan (/ 110443)))) our-pi)
-(num-test (- 1/98947 2/97499 3/76847) -36656755224/741360956847391)
-(num-test (- 500009/500029 500057/500041) -18001284/250035001189)
-(num-test (/ (+ (atan (/ 239)) (atan (/ 70)) (- (atan (/ 99)))) 2) (+ (atan (/ 408)) (atan (/ 577))))
-(num-test (/ (+ (cos (/ 10)) (cosh (/ 10)) (* 2 (cos (/ (sqrt 2) 20)) (cosh (/ (sqrt 2) 20)))) 4) 1.0000000000002480)
-(num-test (/ (/ (expt 2 11) (+ (expt 2 10) 1)) (/ (+ (expt 2 11) 1) (expt 2 10))) 2097152/2100225)
-(num-test (/ (/ (expt 2 21) (+ (expt 2 20) 1)) (/ (+ (expt 2 21) 1) (expt 2 20))) 2199023255552/2199026401281)
-(num-test (/ (expt 10 -20) (expt 10 -20)) 1)
-(num-test (/ (expt 10 -200) (expt 10 -200)) 1)
-(num-test (/ (sqrt (* 7 (- 2 (expt 2 1/7)))) (expt 2 1/14)) (+ -1 (* 2 (expt 2 1/7)) (expt 2 3/7) (expt 2 5/7) (- (expt 2 6/7))))
-(num-test (/ 53453 (log 53453)) 4910.0000012208)
-(num-test (< 1/123400000000 .000000000001) #f)
-(num-test (> 1/123400000000 .000000000001) #t)
-(num-test (asin (/ (sqrt 2) 2)) (/ our-pi 4))
-(num-test (asin (/ (sqrt 3) -2)) (/ our-pi -3))
-(num-test (atan (/ -1 (sqrt 3))) (/ our-pi -6))
-(num-test (atan (sqrt 3)) (/ our-pi 3))
-(num-test (do ((i 1 (+ i 1)) (sum 0.0 (+ sum (cos (/ (* 2 our-pi i) 11))))) ((= i 6) sum)) -0.5)
-(num-test (do ((i 1 (+ i 1)) (sum 0.0 (+ sum (expt (sin (/ (* our-pi i) (* 2 10))) 4)))) ((= i 11) sum)) 4.25)
-(num-test (let ((a (/ (* 2 our-pi) 13))) (* 8 (+ (cos a) (cos (* 5 a))) (+ (cos (* 2 a)) (cos (* 3 a))) (+ (cos (* 4 a)) (cos (* 6 a))))) -1.0)
-(num-test (let ((x 1) (y 2)) (set! x (* 0 (let () (set! y 32) 1))) y) 32)
-(num-test (sqrt (* 1.2345e-127 1.2345e-127)) 1.2345e-127)
-(num-test (sqrt (* 1.2345e-27 1.2345e-27)) 1.2345e-27)
-(num-test (sqrt (- (expt 4 1/5) (expt 3 1/5))) (/ (+ (* (- (expt 2 3/5)) (expt 3 4/5)) (expt 3 3/5) (* 2 (expt 2 2/5) (expt 3 2/5)) (* (- (expt 2 4/5)) (expt 3 1/5)) (expt 2 1/5)) 5))
-(num-test (sqrt (- (expt 4 2/3) (* (sqrt 3) (expt 5 1/6)))) (+ (/ (expt 5 1/3) (sqrt 6)) (- (/ (expt 5 5/6) (* 3 (sqrt 2)))) (/ (* (expt 2 1/6) (sqrt 5)) 3) (- (/ (* (expt 2 5/6) (expt 5 1/6)) 3)) (/ (expt 2 1/6) (sqrt 3))))
-(num-test (sqrt (- (expt 5 1/3) (expt 4 1/3))) (/ (+ (expt 2 1/3) (expt 20 1/3) (- (expt 25 1/3))) 3))
-(num-test (sqrt (- (expt 5 1/3) (expt 4 1/3))) (/ (+ (expt 2 1/3) (expt 20 1/3) (- (expt 25 1/3))) 3))
-(num-test (sqrt (- 127 (* 4 (sqrt 6) (expt 7 1/4)))) (+ (/ (* (sqrt 3) (expt 7 3/4)) (sqrt 2)) (* 2 (sqrt 7)) (/ (* 3 (sqrt 3) (expt 7 1/4)) (sqrt 2)) -6))
-(num-test (sqrt (- 161 (* 12 (expt 5 1/4)))) (+ (* 2 (expt 5 3/4)) (- (* 3 (sqrt 5))) (* 4 (sqrt (sqrt 5))) 6))
-(num-test (sqrt (- 2 (expt 2 1/7))) (/ (* (expt 2 1/14) (+ (- (expt 2 6/7)) (expt 2 5/7) (expt 2 3/7) (* 2 (expt 2 1/7)) -1)) (sqrt 7)))
-(num-test (sqrt 0+i) (/ 1+i (sqrt 2)))
-(num-test (sqrt 13) (do ((i 1 (+ i 1)) (prod 1.0 (* prod (tan (/ (* i our-pi) 13))))) ((= i 7) prod)))
-(test (= (+ (expt 2421 3) (expt 19083 3)) (+ (expt 5436 3) (expt 18948 3)) (+ (expt 10200 3) (expt 18072 3)) (+ (expt 13322 3) (expt 16630 3))) #t)
-(test (= 1e100 1e+100) #t)
-(test (> 9007199254740992.0 9007199254740991.0) #t)
-
-(num-test (let ((pi2 0.0)
-		(ais (vector 1 -3 -2 -3 1 0)))
-	    (do ((i 1 (+ i 1))
-		 (two 2 (* two 2)))
-		((= i 30) (* 36 pi2))
-	      (set! pi2 (+ pi2 (/ (vector-ref ais (modulo (- i 1) 6))
-				  (* two i i))))))
-	  (* our-pi our-pi))
-
-(num-test (let ((log2 0.0)
-		(ais (vector 2 -10 -7 -10 2 -1)))
-	    (do ((i 1 (+ i 1))
-		 (two 2 (* two 2)))
-		((= i 30) (* 2 log2))
-	      (set! log2 (+ log2 (/ (vector-ref ais (modulo (- i 1) 6))
-				    (* two i i))))))
-	  (* (log 2) (log 2)))
-
-(if with-bignums
-    (begin
-      (num-test (* -9223372036854775808 -9223372036854775808) 85070591730234615865843651857942052864)
-      (num-test (* -9223372036854775808 9223372036854775807 -9223372036854775808) 784637716923335095394403086170723686146950778700062261248)
-      (num-test (* 9223372036854775807 -9223372036854775808) -85070591730234615856620279821087277056)
-      (num-test (* 9223372036854775807 9223372036854775807) 85070591730234615847396907784232501249)
-      (num-test (+ -9223372036854775808 -9223372036854775808) -18446744073709551616)
-      (num-test (+ 9223372036854775807 9223372036854775807) 18446744073709551614)
-      (num-test (- 9223372036854775807 -9223372036854775808) 18446744073709551615)
-      (num-test (/ -9223372036854775808 -9223372036854775808) 1)
-      (num-test (/ -9223372036854775808 9223372036854775807 -9223372036854775808) 1/9223372036854775807)
-      (num-test (/ 9223372036854775807 -9223372036854775808) -9223372036854775807/9223372036854775808)
-      (num-test (gcd -9223372036854775808 -9223372036854775808) 9223372036854775808)
-      (num-test (gcd -9223372036854775808 9223372036854775807 -9223372036854775808) 1)
-      (num-test (inexact->exact -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
-      (num-test (lcm -9223372036854775808 -9223372036854775808) 9223372036854775808)
-      (num-test (lcm -9223372036854775808 9223372036854775807 -9223372036854775808) 85070591730234615856620279821087277056)
-      (num-test (lcm 9223372036854775807 -9223372036854775808) 85070591730234615856620279821087277056)
-      (num-test (log -2.225073858507201399999999999999999999996E-308) -7.083964185322641062168115849912137186655E2+3.141592653589793238462643383279502884195E0i)
-      (num-test (quotient -1.797693134862315699999999999999999999998E308 -9223372036854775808) 19490628022799995908501125008172039088075481712089442747863503837260448050616338003410135413043522984719682345909025832711116783129727902847513862872544943321023332545672815506523677443663683097294005030046422806743414556504424564204282517830151319186021046775247332737488676655598816722944)
-
-      (num-test (quotient -9223372036854775808 5.551115123125783999999999999999999999984E-17) -166153499473114445265356059994784304)
-      (num-test (remainder -9223372036854775808 5.551115123125783999999999999999999999984E-17) -2.295798100238055639010781305842101573944E-17)
-      (num-test (modulo -9223372036854775808 5.551115123125783999999999999999999999984E-17) 3.258027528318940824192395666614174842834E-17)
-
-      (num-test (* -1.797693134862315699999999999999999999998E308 -9223372036854775808) 1.658079259093488393947175407121858559998E327)
-      (num-test (/ -1.797693134862315699999999999999999999998E308 -9223372036854775808) 1.949062802279999590850112500817203908808E289)
-
-      (num-test (log -1.797693134862315699999999999999999999998E308) 7.097827128933839967276924307167005609752E2+3.141592653589793238462643383279502884195E0i)
-      (num-test (sqrt -1.797693134862315699999999999999999999998E308) 0.0+1.34078079299425963249160560140156653105E154i)
-      (num-test (floor -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
-      (num-test (ceiling -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
-      (num-test (truncate -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
-      (num-test (round -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
-
-      (num-test (/ -9223372036854775808 -9223372036854775808 -9223372036854775808) -1/9223372036854775808)
-      (test (number->string -46116860184273879035/27670116110564327424) "-46116860184273879035/27670116110564327424")
-      (test (equal? (/ (* 5 most-positive-fixnum) (* 3 most-negative-fixnum)) -46116860184273879035/27670116110564327424) #t)
-      (test (eqv? 1+i (bignum "1+i")) #t)
-      (test (eqv? (bignum "1+i") 1+i) #t)
-      (test (eqv? (bignum "1+i") (bignum "1+i")) #t)
-      ;; (min (bignum "1") 2.0) = 1.000E0 -- but (min 1 2.0) is 1
-      ))
-
-(if with-bignums
-    (begin
-      
-      (num-test (sqrt (expt 2 32)) 65536)
-      (num-test (/ (log (expt 2 32)) (log 2)) 32.0)
-      
-      (num-test (/ (sqrt (* 1.2345e-170 1.2345e-170))) 8.100445524503847216161209708816501953798E169)
-      (num-test (/ (expt (* 1.2345e-170 1.2345e-170) 1/100)) 2.501325312985302606641508258507698932691E3)
-      (num-test (/ (+ 1.2345e-15 1 -1)) 8.1004455245038e+14)
-;      (num-test (/ (+ 1 1.2345e-14 -1)) 81004455245038.0)
-;      (num-test (/ (+ 1 1.2345e-10 -1)) 8100445524.5038)
-;      (num-test (* 1.2345e-15 8.1004455245038e+14) 9.999999999999941444123044301452428384978E-1) ; the inverse is not exact
-;      (num-test (+ 1.23456789 1.0e11 -1.0e11) 1.23456789)
-;      (num-test (- 1.0e11 -1.23456789 1.0e11) 1.23456789)
-      (num-test (* 2.0e-170 3.0e-170 4.0e170 5.0e170) 120.0)
-      (num-test (* 4.0e170 5.0e170 2.0e-170 3.0e-170) 120.0)
-      (num-test (* 1000000.0 (+ 1.0 1.2345e-10 -1.0)) 1.2345e-4)
-      (num-test (* 1000000.0 (- 1.0 -1.2345e-10 1.0)) 1.2345e-4)
-      
-      ;; from Knuth IIp245(3rd)
-      (let* ((f (lambda (x) (/ (- 1 (expt x 107)) (- 1 x))))
-	     (g (lambda (y) (f (* (- 1/3 (* y y)) (+ 3 (* 3.45 y y))))))
-	     (gx (lambda (y) (+ 107 (* -10491.35 y y) (* 659749.9625 y y y y) (* 30141386.26625 (expt y 6))))))
-	(do ((i 3 (+ i 1)))
-	    ((> i 10))
-	  (let ((g1 (g (expt 10 (- i))))
-		(g2 (gx (expt 10 (- i)))))
-	    (let ((diff (abs (- g1 g2))))
-	      (if (or (nan? diff) (> diff (expt 10 (- -7 i))))
-		  (format #t ";g(1e-~D) -> ~A ~A, diff: ~A~%" i g1 g2 (abs (- g1 g2))))))))
-      
-      (let ((p (lambda (x y) (+ (* 2 y y) (* 9 x x x x) (* -1 y y y y)))))
-	(num-test (p 408855776 708158977) 1))
-      (let ((p (lambda (x y) (+ (* 2 y y) (* (- (* 3 x x) (* y y)) (+ (* 3 x x) (* y y)))))))
-	(num-test (p 408855776 708158977) 1))
-      
-      ))
-
-(if with-bignums (num-test (* 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23) 25852016738884976640000))
-(let ()
-  (define (fact n) (if (<= n 1) 1 (* n (fact (- n 1)))))
-  (num-test (fact 7) 5040)
-  (num-test (fact 20) 2432902008176640000)
-  (do ((i 2 (+ i 1)))
-      ((= i 21))
-    (num-test (* i (fact (- i 1))) (fact i))
-    (num-test (/ (* i (fact (- i 1)))) (/ (fact i))))
-  (if with-bignums 
-      (begin
-	(num-test (fact 21) 51090942171709440000)
-	(num-test (fact 32) 263130836933693530167218012160000000)
-	(do ((i 20 (+ i 1)))
-	    ((= i 40))
-	  (num-test (* i (fact (- i 1))) (fact i))))))
-
-(if with-bignums
-    (begin
-      (num-test (* 21 2432902008176640000) 51090942171709440000)
-      (num-test (* -21 2432902008176640000) -51090942171709440000)
-      (num-test (* -21 -2432902008176640000) 51090942171709440000)
-      (num-test (* 21 -2432902008176640000) -51090942171709440000)
-      (num-test (* 2432902008176640000 21) 51090942171709440000)
-      (num-test (* 2432902008176640000 -21) -51090942171709440000)
-      (num-test (* -2432902008176640000 -21) 51090942171709440000)
-      (num-test (* -2432902008176640000 21) -51090942171709440000)
-      (num-test (+ 9223372036854775800 10) 9223372036854775810)
-      (num-test (+ 10 9223372036854775800) 9223372036854775810)
-      (num-test (+ 4611686018427387904 4611686018427387906) 9223372036854775810)
-      (num-test (- -4611686018427387904 4611686018427387906) -9223372036854775810)
-      (num-test (- -9223372036854775800 10) -9223372036854775810)
-
-      (num-test (/ 21 1/2432902008176640000) 51090942171709440000)
-      (num-test (/ -21 1/2432902008176640000) -51090942171709440000)
-      (num-test (/ -21 -1/2432902008176640000) 51090942171709440000)
-      (num-test (/ 21 -1/2432902008176640000) -51090942171709440000)
-      (num-test (/ 2432902008176640000 1/21) 51090942171709440000)
-      (num-test (/ 2432902008176640000 -1/21) -51090942171709440000)
-      (num-test (/ -2432902008176640000 -1/21) 51090942171709440000)
-      (num-test (/ -2432902008176640000 1/21) -51090942171709440000)
-      
-      (num-test (lcm 2432902008176640001 21) 51090942171709440021)
-      (num-test (lcm 21 2432902008176640001) 51090942171709440021)
-      (num-test (lcm 1/21 1/2432902008176640001) 1)
-      (num-test (lcm 2432902008176640001/21 21/2432902008176640001) 51090942171709440021)
-
-      (num-test (* 1/21 1/2432902008176640000) 1/51090942171709440000)
-      (num-test (* -1/21 1/2432902008176640000) -1/51090942171709440000)
-      (num-test (* -1/21 -1/2432902008176640000) 1/51090942171709440000)
-      (num-test (* 1/21 -1/2432902008176640000) -1/51090942171709440000)
-      (num-test (* 1/2432902008176640000 1/21) 1/51090942171709440000)
-      (num-test (* 1/2432902008176640000 -1/21) -1/51090942171709440000)
-      (num-test (* -1/2432902008176640000 -1/21) 1/51090942171709440000)
-      (num-test (* -1/2432902008176640000 1/21) -1/51090942171709440000)
-      (num-test (* -1/2432902008176640000 2432902008176640000) -1)
-
-      (num-test (* 4294967296 4294967296) 18446744073709551616)
-      ))
-
-(let ()
-  (define (flcm n) (if (<= n 1) 1 (lcm n (flcm (- n 1)))))
-  (num-test (flcm 9) 2520)
-  (num-test (flcm 40) 5342931457063200)
-  (if with-bignums (num-test (flcm 100) 69720375229712477164533808935312303556800))
-)
-
-
-(if (not with-bignums)
-    (num-test (* (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20))) 4194300.0019569)
-    (num-test (* (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20))) 4398046513152/1048577))
-(num-test (/ (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20))) 2251799813685248/2251801962217473)
-
-(if with-bignums
-    (begin
-      (num-test (+ (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40))) 5070602400915223450095538143233/1208925819615728686333952)
-      (num-test (- (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40)))	-2305844108725321729/1208925819615728686333952)
-      (num-test (* (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40)))	4835703278458516700921856/1099511627777)
-      (num-test (/ (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40)))	2535301200456458802993406410752/2535301200458764647102131732481)
-      ))
-
-(if (not with-bignums)
-    (begin
-      (num-test (+ 500009/500029 500057/500041 500083/500069) 3.00001999583261)
-      (num-test (- 500009/500029 500057/500041 500083/500069) -1.00009999119288)
-      (num-test (* 500009/500029 500057/500041 500083/500069) 1.00001999432878)
-      (num-test (/ 500009/500029 500057/500041 500083/500069) 0.999900013909921))
-    (begin
-      (num-test (+ 500009/500029 500057/500041 500083/500069) 375106759202738205/125034753009582041)
-      (num-test (- 500009/500029 500057/500041 500083/500069) -125047255383687283/125034753009582041)
-      (num-test (* 500009/500029 500057/500041 500083/500069) 125037252995542579/125034753009582041)
-      (num-test (/ 500009/500029 500057/500041 500083/500069) 125029751909525461/125042254395637199)))
-
-(if (not with-bignums)
-    (begin
-      (num-test (+ 1/98947 2/97499 3/76847 4/61981) 0.00013419396686117)
-      (num-test (- 1/98947 2/97499 3/76847 4/61981) -0.00011398112564314)
-      (num-test (* 1/98947 2/97499 3/76847 4/61981) 5.2230351951008e-19)
-      (num-test (/ 1/98947 2/97499 3/76847 4/61981) 464392992878593/2374728) ;195556288.07955 -- seems to fit
-      (test (< (abs (- (/ 1/98947 2/97499 3/76847 4/61981) 195556288.07955816413500830)) 1e-8) #t)))
-
-(if (not with-bignums)
-    (begin
-      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981) 0.00021755369744252)
-      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981) -0.00019734085622449)
-      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981) 4.3539080668052e-23)
-      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981) 2345932343059.9)
-      )
-    (begin
-      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981) 599609438061905323469/2756144552405627689570151)
-      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981) -543899925850203550003/2756144552405627689570151) 
-      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981) 120/2756144552405627689570151)
-      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981) 27854756105850886733/11873640)
-      ))
-
-(if (not with-bignums)
-    (begin
-      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 0.00030764243484887)
-      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) -0.00028742959363084)
-      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 3.9223808052178e-27)
-      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 2.6040239996689e+16)
-      )
-    (begin
-      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 56471455498794722585779775/183561983334767209753061626751) 
-      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) -52761146275983172771170709/183561983334767209753061626751)
-      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 720/183561983334767209753061626751) 
-      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 1855154611405774907304533/71241840)
-      ))
-
-(if (not with-bignums)
-    (begin
-      (num-test (+ 98947 2/97499 76847 4/61981 5/59981) 175794.00016841)
-      (num-test (- 98947 2/97499 76847 4/61981 5/59981) 22099.999831591)
-      (num-test (* 98947 2/97499 76847 4/61981 5/59981) 304151204360/362470312515139) ;0.00083910652502692
-      (num-test (/ 98947 2/97499 76847 4/61981 5/59981) 11667778186668.0)
-      )
-    (begin
-      (num-test (+ 98947 2/97499 76847 4/61981 5/59981) 63720106179329487759/362470312515139)
-      (num-test (- 98947 2/97499 76847 4/61981 5/59981) 8010593845541429507/362470312515139)
-      (num-test (* 98947 2/97499 76847 4/61981 5/59981) 304151204360/362470312515139)
-      (num-test (/ 98947 2/97499 76847 4/61981 5/59981) 35865350012435458633/3073880)
-      ))
-
-
-
-(num-test (exp (make-rectangular 0.0 our-pi)) -1.0)
-
-(if (positive? 2147483648)
-    (begin
-      (num-test (/ 12341234/111 123456789 12341234/111) 1/123456789)
-      (num-test (abs -922337203685477580) 922337203685477580)))
-
-
-(test (< (abs (- (do ((x0 11/2) 
-		      (x1 61/11)
-		      (i 0 (+ i 1))) 
-		     ((= i 100) x1)
-		   (let ((tmp x1)) 
-		     (set! x1 (- 111 (/ (- 1130 (/ 3000 x0)) x1)))
-		     (set! x0 tmp)))
-		 6))                  ; (6 - 1/(1+(6/5)^k))
-	 0.00001)
-      #t)
-
-;; in floats this heads for 100:
-;; (do ((x0 (exact->inexact 11/2)) (x1 (exact->inexact 61/11)) (i 0 (+ i 1))) ((= i 100) x1) (let ((tmp x1)) (set! x1 (- 111 (/ (- 1130 (/ 3000 x0)) x1))) (set! x0 tmp)))
-
-(let ((dht (lambda (data) 
-					; the Hartley transform of 'data'
-	     (let* ((len (vector-length data)) 
-		    (arr (make-vector len 0.0))
-		    (w (/ (* 2.0 our-pi) len)))
-	       (do ((i 0 (+ 1 i)))
-		   ((= i len))
-		 (do ((j 0 (+ 1 j)))
-		     ((= j len))
-		   (vector-set! arr i (+ (vector-ref arr i) 
-					 (* (vector-ref data j) 
-					    (+ (cos (* i j w)) 
-					       (sin (* i j w))))))))
-	       arr)))
-      (data (list->vector '(0.9196 0.9457 0.0268 0.0839 0.1974 0.1060 0.1463 0.3513 0.0391 0.6310 
-				   0.9556 0.6259 0.9580 0.8848 0.0104 0.1440 0.0542 0.3001 0.1844 0.3781 
-				   0.9641 0.6051 0.3319 0.6143 0.1828 0.2290 0.4026 0.5990 0.7906 0.0403 
-				   0.7882 0.1591)))
-      (saved-data (make-vector 32 0.0)))
-  (do ((i 0 (+ i 1))) 
-      ((= i 32)) 
-    (vector-set! saved-data i (vector-ref data i)))
-  (dht data) 
-  (dht data)
-  (let ((mx 0.0))
-    (do ((i 0 (+ i 1)))
-	((= i 32))
-      (let ((err (abs (- (vector-ref data i) (vector-ref saved-data i)))))
-	(if (> err mx)
-	    (set! mx err))))
-    (if (> mx 1e-6)
-	(format #t "dht error: ~A~%" mx))))
-
-
-
-
-
-(test (expt 0 (make-rectangular (- (expt 2 60)) 1.0)) 'error)
-(test (expt 0 (- (expt 2.0 60))) 'error)
-
-
-(if with-bignums 
-    (letrec ((tb (lambda (n1 n2)
-		   (= n1 (+ (* n2 (quotient n1 n2))
-			    (remainder n1 n2))))))
-      (let ((b3-3 (string->number "33333333333333333333"))
-	    (b3-2 (string->number "33333333333333333332"))
-	    (b3-0 (string->number "33333333333333333330"))
-	    (b2-0 (string->number "2177452800")))
-	
-	(num-test (modulo b3-3 3) 0 )
-	(num-test (modulo b3-3 -3) 0 )
-	(num-test (remainder b3-3 3) 0 )
-	(num-test (remainder b3-3 -3) 0 )
-	(num-test (modulo b3-2 3) 2 )
-	(num-test (modulo b3-2 -3) -1 )
-	(num-test (remainder b3-2 3) 2 )
-	(num-test (remainder b3-2 -3) 2 )
-	(num-test (modulo (- b3-2) 3) 1 )
-	(num-test (modulo (- b3-2) -3) -2 )
-	(num-test (remainder (- b3-2) 3) -2 )
-	(num-test (remainder (- b3-2) -3) -2 )
-	(num-test (modulo 3 b3-3) 3 )
-	(num-test (modulo -3 b3-3) b3-0 )
-	(num-test (remainder 3 b3-3) 3 )
-	(num-test (remainder -3 b3-3) -3 )
-	(num-test (modulo -3 (- b3-3)) -3 )
-	(num-test (remainder 3 (- b3-3)) 3 )
-	(num-test (remainder -3 (- b3-3)) -3 )
-	(num-test (modulo (- b2-0) 86400) 0 )
-	(num-test (modulo b2-0 -86400) 0 )
-	(num-test (modulo b2-0 86400) 0 )
-	(num-test (modulo (- b2-0) -86400) 0 )
-	(num-test (modulo  0 (- b2-0)) 0 ))
-      
-      (num-test (modulo 12345678901234567890 3123) 1071)
-      (num-test (modulo 12345678901234567890 12345678901234567) 890)
-      (test (> 12345678901234567890 12345678901234567891) #f)
-      (test (< 12345678901234567890 12345678901234567891) #t)
-      (test (>= 12345678901234567890 12345678901234567891) #f)
-      (test (<= 12345678901234567890 12345678901234567891) #t)
-      (test (= 12345678901234567890 12345678901234567891) #f)
-      (num-test (max 12345678901234567890 12345678901234567891) 12345678901234567891)
-      (num-test (min 12345678901234567890 12345678901234567891) 12345678901234567890)
-      (num-test (gcd 12345678901234567890 12345) 15)
-      (num-test (gcd 2346026393680644703525505657 17293822570713318399) 11)
-      (num-test (gcd 974507656412513757857315037382926980395082974811562770185617915360 -1539496810360685510909469177732386446833404488164283) 1)
-      (num-test (+ 4611686018427387904 1) 4611686018427387905) ; (expt 2 62) + 1 -- should work in both cases
-      (num-test (+ 4611686018427387904 -1) 4611686018427387903)
-      (num-test (+ 4611686018427387904 4611686018427387904) 9223372036854775808)
-      (num-test (+ 4611686018427387904 -4611686018427387904) 0)
-      (num-test (+ 8589934592 4611686018427387904) 4611686027017322496)
-      (num-test (+ 2147483648 4611686018427387904) 4611686020574871552)
-      (num-test (+ 2147483647 4611686018427387904) 4611686020574871551)
-      (num-test (+ 2147483649 4611686018427387904) 4611686020574871553)
-      (num-test (+ 8589934591 4611686018427387904) 4611686027017322495)
-      (num-test (+ -8589934591 4611686018427387904) 4611686009837453313)
-      (num-test (+ -8589934591 -4611686018427387904) -4611686027017322495)
-      (num-test (+ 8589934591 -4611686018427387904) -4611686009837453313)
-      (num-test (+ 2147483649 4611686018427387904 2147483649 4611686018427387904) 9223372041149743106)
-      (num-test (+ 9223372041149743106 9223372041149743106) 18446744082299486212) 
-      (num-test (+ 9223372041149743106 -9223372041149743106) 0)
-      (num-test (+ 18446744082299486212 1) 18446744082299486213)
-      (num-test (+ 9223372036854775807 -1) 9223372036854775806)
-      (num-test (+ -9223372036854775807 -1) -9223372036854775808)
-      (num-test (+ -9223372036854775807 1) -9223372036854775806)
-      (num-test (+ 1073741825 1073741825) 2147483650)
-      (num-test (+ 2147483649 -4611686018427387904 -2147483649 4611686018427387904) 0)
-      (num-test (+ 1099511627775 9223372036854775807) 9223373136366403582)
-      (num-test (+ 576460752303423488 576460752303423488 576460752303423488 576460752303423488 
-		   576460752303423488 576460752303423488 576460752303423488 576460752303423488 
-		   576460752303423488 576460752303423488 576460752303423488 576460752303423488 
-		   576460752303423488 576460752303423488 576460752303423488 576460752303423488)
-		9223372036854775808)
-      (num-test (+ -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488 
-		   -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488 
-		   -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488 
-		   -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488)
-		-9223372036854775808) ; this fits in both cases = -(expt 2 63)
-      
-      (num-test (+ 1e400 1e399) 1.1e400)
-      
-      (num-test (+ 2147483647 1) 2147483648)
-      (num-test (+ 2147483648 -1) 2147483647)
-      (num-test (+ 2147483647 2) 2147483649)
-      (num-test (+ 2147483648 -2) 2147483646)
-      (num-test (+ 2147483648 1) 2147483649)
-      (num-test (+ 2147483649 -1) 2147483648)
-      (num-test (+ 9223372036854775807 1) 9223372036854775808)
-      (num-test (+ 9223372036854775808 -1) 9223372036854775807)
-      (num-test (+ 9223372036854775807 2) 9223372036854775809)
-      (num-test (+ 9223372036854775808 -2) 9223372036854775806)
-      (num-test (+ 9223372036854775808 1) 9223372036854775809)
-      (num-test (+ 9223372036854775809 -1) 9223372036854775808)
-      (num-test (+ 9223372036854775808/9223372036854775808) 1)
-      
-      (num-test (+ 9223372036854775808 3/4) 36893488147419103235/4)
-      (num-test (+ 3/4 9223372036854775808) 36893488147419103235/4)
-      (num-test (+ 9223372036854775808/4 3) 2305843009213693955)
-      (num-test (+ 3 9223372036854775808/4) 2305843009213693955)
-      (num-test (+ 9223372036854775807/4 3) 9223372036854775819/4) 
-      (num-test (+ 3 9223372036854775807/4) 9223372036854775819/4) 
-      (num-test (+ 9223372036854775807/4 3/4) 4611686018427387905/2)
-      (num-test (+ 3/4 9223372036854775807/4) 4611686018427387905/2)
-      (num-test (+ 9223372036854775807/4 3/4 4611686018427387905/2) 4611686018427387905)
-      (num-test (+ 9223372036854775807/4 4611686018427387905/3) 46116860184273879041/12)
-      (num-test (+ 1/1231234567891234567891 1/4) 1231234567891234567895/4924938271564938271564)
-      (num-test (+ 1/65537 1/65538) 131075/4295163906)
-      (num-test (+ 1/65537 1/65536) 131073/4295032832)
-      (num-test (+ 1/65537 -1/65536) -1/4295032832)
-      (num-test (+ 1/65537 -1/65538) 1/4295163906)
-      (num-test (+ 1/2147483648 1/2147483647) 4294967295/4611686016279904256)
-      (num-test (+ 2147483648) 2147483648)
-      
-      (num-test (lcm 557057 23068673 167772161) 2155967190204955525121)
-      (num-test (lcm 132120577 33292289) 4398596432330753)
-      (num-test (lcm 132120577 33292289 260046847) 1143841133453061178785791)
-      (num-test (lcm 2353913150770005286438421033702874906038383291674012942337 9641628265553941653251772554046975615133217962696757011808257) 22695555569123220026272727097682721551725929819788097280747860983024240452040931523149698041303750665450606153441476609)
-      
-      (num-test (gcd 2155967190204955525121 12850565775361 93458656690177) 557057)
-      (num-test (gcd 2155967190204955525121 -12850565775361 93458656690177) 557057)
-      (num-test (gcd 2155967190204955525121 0) 2155967190204955525121)
-      (num-test (+ 132120577/12 33292289/6 260046847/4) 244711424/3)
-      (num-test (* 132120577/12 33292289/6 260046847/4) 1143841133453061178785791/288)
-      (num-test (/ 132120577/12 33292289/6 260046847/4) 264241154/8657554783862783)
-      (num-test (+ 1000000000 1000000000 1000000000) 3000000000)
-      (num-test (+ -1000000000 -1000000000 -1000000000) -3000000000)
-      (num-test (* 1000000000 1000000000 1000000000) 1000000000000000000000000000)
-      (num-test (/ 1 1000000000 1000000000 1000000000) 1/1000000000000000000000000000)
-      
-      
-      (num-test (lcm 2/132120577 3/33292289 4/260046847) 12)
-      (num-test (lcm 132120577/12 33292289/6 260046847/4) 1143841133453061178785791/2)
-
-      (num-test (+ 9223372036854775808.0 3.4) 9.2233720368547758114E18)
-      (num-test (+ 9223372036854775808.0+1.5i 3.4) 9.2233720368547758114E18+1.5i)
-      
-      (num-test (+ 1.5 9223372036854775808.0) 9.2233720368547758095E18)
-      (num-test (+ 3/2 9223372036854775808.0) 9.2233720368547758095E18)
-      (num-test (+ 1 1/2 9223372036854775808.0) 9.2233720368547758095E18)
-      (num-test (+ 1 1/2 9223372036854775808.0 0+i) 9.2233720368547758095E18+1.0i)
-      (num-test (+ 1 1/2 9223372036854775808.0 0-i) 9.2233720368547758095E18-1.0i)
-      (num-test (+ 1 1/2 0+9223372036854775808.0i 0-i) 1.5+9.223372036854775807E18i)
-      
-      ;; maxima's sqrt(2.0) is not very accurate!  use arprec: 
-      
-      (num-test (cos 100000000000000000000000000000000)   -9.207313839241906875982573440296245746235E-1)
-      (num-test (cos 100000000000000000000000000000000.0) -9.207313839241906875982573440296245746235E-1)
-      
-      (let ((old-precision (bignum-precision)))
-					; these checked against arprec (digits = 512)
-	(set! (bignum-precision) 512)  
-	(num-test (sin (bignum "696898287454081973170944403677937368733396.0")) -0.01999904696709900707248379699203543861700131080741493395453090012397)
-	(num-test (cos (bignum "696898287454081973170944403677937368733396.0")) -0.99979999906001588673892554498680272502063995303949755633430660411025)
-	(num-test (tan (bignum "696898287454081973170944403677937368733396.0")) 0.02000304759542063815661565629241173304757896817099118262507840447691)
-	(num-test (log (bignum "696898287454081973170944403677937368733396.0")) 96.34745809783239800899232787971326647885871562509641009125683617504293)
-	(num-test (sqrt (bignum "696898287454081973170944403677937368733396.0")) 8.34804340821298061589146684184612401904558331041225568173326261228620e20)
-	(set! (bignum-precision) old-precision))
-      
-      ;; these can be checked against arprec -- get tables of the others as well
-      ;;	(num-test (sin 31415926535897932384626433832795028841.971693993751058209749445) 6.8290634690588564658126265428876656461078982456442870201741792E-24)
-      ;; this test requires 500 bits of precision
-      (num-test (sin 31415926535897932384626433832795028841) -8.2584214320186030736155068085595298665361290626210864656288000E-1)
-      (num-test (sin 1.0) 0.84147098480789650665250232163029899962256306079837106567275170999191) ; if bignum here
-      
-      ;;	(num-test (cos 31415926535897932384626433832795028841.971693993751058209749445) 9.9999999999999999999999999999999999999999999997668194606778265E-1)
-      ;; 500 bits
-      (num-test (cos 1.0) 5.4030230586813971740093660744297660373231042061792222767009714E-1)
-      
-      (let ((old-prec (bignum-precision)))
-	(set! (bignum-precision) 500)
-	(let ((sin-vals (list   ;arprec mathtool table[Sin[k/10], {k, 0, 30}]
-			 "0.00000000000000000000000000000000000000000000000000000000000000000000"
-			 "0.09983341664682815230681419841062202698991538801798225999276686156165"
-			 "0.19866933079506121545941262711838975037020672954020540398639599139797"
-			 "0.29552020666133957510532074568502737367783211174261844850153103617326"
-			 "0.38941834230865049166631175679570526459306018344395889511584896585734"
-			 "0.47942553860420300027328793521557138808180336794060067518861661312553"
-			 "0.56464247339503535720094544565865790710988808499415177102426589426735"
-			 "0.64421768723769105367261435139872018306581384457368964474396308809382"
-			 "0.71735609089952276162717461058138536619278523779142282098968252068287"
-			 "0.78332690962748338846138231571354862314014792572030960356048515256195"
-			 "0.84147098480789650665250232163029899962256306079837106567275170999191"
-			 "0.89120736006143533995180257787170353831890931945282652766035329176720"
-			 "0.93203908596722634967013443549482599541507058820873073536659789445024"
-			 "0.96355818541719296470134863003955481534204849131773911795564922309212"
-			 "0.98544972998846018065947457880609751735626167234736563194021894560084"
-			 "0.99749498660405443094172337114148732270665142592211582194997482405934"
-			 "0.99957360304150516434211382554623417197949791475491995534260751586102"
-			 "0.99166481045246861534613339864787565240681957116712372532710249102330"
-			 "0.97384763087819518653237317884335760670293947136523395566725825917196"
-			 "0.94630008768741448848970961163495776211399866559491176443047155279581"
-			 "0.90929742682568169539601986591174484270225497144789026837897301153096"
-			 "0.86320936664887377068075931326902458492047242489508107697183045949721"
-			 "0.80849640381959018430403691041611906515855960597557707903336060873485"
-			 "0.74570521217672017738540621164349953894264877802047425750762828050000"
-			 "0.67546318055115092656577152534128337425336495789352584226890212866520"
-			 "0.59847214410395649405185470218616227170359717157722357330262703263874"
-			 "0.51550137182146423525772693520936824389387858775426312126259173008382"
-			 "0.42737988023382993455605308585788064749647642266670256499017776070511"
-			 "0.33498815015590491954385375271242210603030652888358671068410107309479"
-			 "0.23924932921398232818425691873957537221555293029961877411621026588071"
-			 "0.14112000805986722210074480280811027984693326425226558415188264123242")))
-	  (do ((k 2 (+ k 1)))
-	      ((= k 30))
-	    (let ((sin-val-2 (number->string (sin (/ k (bignum "10"))))))
-	      (if (not (string=? (substring (list-ref sin-vals k) 3 60) (substring sin-val-2 2 59)))
-		  (format #t ";(sin (/ ~A 10)) mp: ~A does not match~%~A~%" k (substring (list-ref sin-vals k) 3 60) (substring sin-val-2 2 59))))))
-	
-	(let ((sin-vals (list   ;arprec mathtool table[Sin[k/10], {k, 0, 30}]
-			 0.00000000000000000000000000000000000000000000000000000000000000000000
-			 0.09983341664682815230681419841062202698991538801798225999276686156165
-			 0.19866933079506121545941262711838975037020672954020540398639599139797
-			 0.29552020666133957510532074568502737367783211174261844850153103617326
-			 0.38941834230865049166631175679570526459306018344395889511584896585734
-			 0.47942553860420300027328793521557138808180336794060067518861661312553
-			 0.56464247339503535720094544565865790710988808499415177102426589426735
-			 0.64421768723769105367261435139872018306581384457368964474396308809382
-			 0.71735609089952276162717461058138536619278523779142282098968252068287
-			 0.78332690962748338846138231571354862314014792572030960356048515256195
-			 0.84147098480789650665250232163029899962256306079837106567275170999191
-			 0.89120736006143533995180257787170353831890931945282652766035329176720
-			 0.93203908596722634967013443549482599541507058820873073536659789445024
-			 0.96355818541719296470134863003955481534204849131773911795564922309212
-			 0.98544972998846018065947457880609751735626167234736563194021894560084
-			 0.99749498660405443094172337114148732270665142592211582194997482405934
-			 0.99957360304150516434211382554623417197949791475491995534260751586102
-			 0.99166481045246861534613339864787565240681957116712372532710249102330
-			 0.97384763087819518653237317884335760670293947136523395566725825917196
-			 0.94630008768741448848970961163495776211399866559491176443047155279581
-			 0.90929742682568169539601986591174484270225497144789026837897301153096
-			 0.86320936664887377068075931326902458492047242489508107697183045949721
-			 0.80849640381959018430403691041611906515855960597557707903336060873485
-			 0.74570521217672017738540621164349953894264877802047425750762828050000
-			 0.67546318055115092656577152534128337425336495789352584226890212866520
-			 0.59847214410395649405185470218616227170359717157722357330262703263874
-			 0.51550137182146423525772693520936824389387858775426312126259173008382
-			 0.42737988023382993455605308585788064749647642266670256499017776070511
-			 0.33498815015590491954385375271242210603030652888358671068410107309479
-			 0.23924932921398232818425691873957537221555293029961877411621026588071
-			 0.14112000805986722210074480280811027984693326425226558415188264123242))
-	      (mxerr 0.0))
-	  (do ((x 0 (+ x 1)))
-	      ((= x 20))
-	    (let ((phase (* 2 pi (expt 10 x))))
-	      (do ((k 0 (+ k 1)))
-		  ((= k 30))
-		(let ((sin-val-2 (sin (+ phase (/ k (bignum "10"))))))
-		  (let ((err (magnitude (- sin-val-2 (list-ref sin-vals k)))))
-		    (if (> err mxerr)
-			(set! mxerr err)))))))
-	  (if (> mxerr 1e-35)
-	      (format #t ";(sin big-angle) max error: ~A" mxerr)))
-	
-	(let ((cos-vals (list ; arprec mathtool table[Cos[k/20], {k, 0, 30}]
-			 "1.00000000000000000000000000000000000000000000000000000000000000000000"
-			 "0.99875026039496624656287081115652109495898026202467575301500996478674"
-			 "0.99500416527802576609556198780387029483857622541508403595935274468526"
-			 "0.98877107793604228673498099865433895791835001710693704356129574806756"
-			 "0.98006657784124163112419651674816887739352436080656799405254829012618"
-			 "0.96891242171064478414459544949418919980413419028744283114812812428894"
-			 "0.95533648912560601964231022756804989824421408263203767451761361222758"
-			 "0.93937271284737892003503235730366558297406104641303414382897205809282"
-			 "0.92106099400288508279852673205180161402585956931985044561508926713514"
-			 "0.90044710235267692166884061148644643975762309272876915613354673932299"
-			 "0.87758256189037271611628158260382965199164519710974405299761086831595"
-			 "0.85252452205950574280498179761777305104031900079223767166865534849083"
-			 "0.82533561490967829724095249895537603887809103918847038136974977367156"
-			 "0.79608379854905582891760457067990587351049589381429244823834230313846"
-			 "0.76484218728448842625585999019186490926821055037370335607293245825206"
-			 "0.73168886887382088631183875300008454384054127605077248250768322022075"
-			 "0.69670670934716542092074998164232492610178601370806078363714489414924"
-			 "0.65998314588498217039541602946146607363862433893076798146474793887138"
-			 "0.62160996827066445648471615140713350872176136659123900757638348453897"
-			 "0.58168308946388349416618097376045571713934034193760200851355170750073"
-			 "0.54030230586813971740093660744297660373231042061792222767009725538110"
-			 "0.49757104789172699029084957281210067725147811164693171708781576506313"
-			 "0.45359612142557738777137005178471612212146729566259504745593805541880"
-			 "0.40848744088415729815257671880991853998462713510786075458328732035938"
-			 "0.36235775447667357763837335562307602033994778557664862648774972093613"
-			 "0.31532236239526866544753855243803801372798570798275680751499914045328"
-			 "0.26749882862458740699798410929287135927592992167912966191725336742182"
-			 "0.21900668709304158142002217301062666089672421266400567061594451723594"
-			 "0.16996714290024093861674803520364980292818392102853430898236521149464"
-			 "0.12050276936736657053286662724801883979155423770384722087315404654227"
-			 "0.07073720166770291008818985143426870908509102756334686942264541719092")))
-	  (do ((k 1 (+ k 1)))
-	      ((= k 30))
-	    (let ((cos-val-2 (number->string (cos (/ k (bignum "20"))))))
-	      (if (not (string=? (substring (list-ref cos-vals k) 3 60) (substring cos-val-2 2 59)))
-		  (format #t ";(cos (/ ~A 20)) mp: ~A does not match~%~A~%" k (substring (list-ref cos-vals k) 3 60) (substring cos-val-2 2 59))))))
-	
-	
-	(let ((exps (list  ; table[Exp[k/10], {k, 0, 30}]
-		     1.00000000000000000000000000000000000000000000000000000000000000000000
-		     1.10517091807564762481170782649024666822454719473751871879286328944096
-		     1.22140275816016983392107199463967417030758094152050364127342509859920
-		     1.34985880757600310398374431332800733037829969735936580304991798993961
-		     1.49182469764127031782485295283722228064328277393742528159563315007236
-		     1.64872127070012814684865078781416357165377610071014801157507931164066
-		     1.82211880039050897487536766816286451338223880854643538632054747658881
-		     2.01375270747047652162454938858306527001754239414586731156898930087978
-		     2.22554092849246760457953753139507675705363413504848459611858395555662
-		     2.45960311115694966380012656360247069542177230644008302074854573665746
-		     2.71828182845904523536028747135266249775724709369995957496696762772407
-		     3.00416602394643311205840795358867239328268102601627276212975286052863
-		     3.32011692273654748953076742960164432007363176479282675728202180154077
-		     3.66929666761924422045748991601148625143151888455755146725622649459660
-		     4.05519996684467458722410889522862025216756114168404107165223289450693
-		     4.48168907033806482260205546011927581900574986836966705677265008278593
-		     4.95303242439511480365428635642396425641303112355664964787158190112430
-		     5.47394739172719976079086266300909670070076114490748605875498633804484
-		     6.04964746441294608373102395302772533816116344511729126161486476549696
-		     6.68589444227926941607253072769286145380311864710852264561241990317501
-		     7.38905609893065022723042746057500781318031557055184732408712782252257
-		     8.16616991256765007344972741047863128518315260430523695926385375737882
-		     9.02501349943412092647177716688866402972021659669817926079803719255720
-		     9.97418245481472073995761515690885800147870119368402956369142191697585
-		     11.02317638064160165223793976966780200851716306933940388430829005877357
-		     12.18249396070347343807017595116796618318276779006316131156039834183818
-		     13.46373803500169039775082533258411724479408609657822907153993787261197
-		     14.87973172487283411186899301946839578068879752075547683852481232002013
-		     16.44464677109704987149801601092501556372435769719962288653996273295166
-		     18.17414536944306094267625657412806698753309200930534632364757918918540
-		     20.08553692318766774092852965458171789698790783855415014437893422969884)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 30))
-	    (let ((val (exp (/ i (bignum "10")))))
-	      (if (> (magnitude (- val (list-ref exps i))) 1e-36)
-		  (format #t ";(exp ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref exps i) (magnitude (- val (list-ref exps i))))))))
-	
-	
-	(let ((logs (list ; table[Log[k/10 + 1.0], {k, 0, 30}]
-		     0.00000000000000000000000000000000000000000000000000000000000000000000e0
-		     0.09531017980432486004395212328076509222060536530864419918523980816300
-		     0.18232155679395462621171802515451463319738933791448698394272645165670
-		     0.26236426446749105203549598688095439720416645613143414038571760969589
-		     0.33647223662121293050459341021699209011148337531334346654674225846340
-		     0.40546510810816438197801311546434913657199042346249419761401432414410
-		     0.47000362924573555365093703114834206470089904881224804044939213700600
-		     0.53062825106217039623154316318876232798710152395697181126390983691471
-		     0.58778666490211900818973114061886376976937976137698118155674077580080
-		     0.64185388617239477599103597720348932963627777267035584250463233544172
-		     0.69314718055994530941723212145817656807550013436025525412068000949339
-		     0.74193734472937731248260652568134122668347379877583766416075658260750
-		     0.78845736036427016946118424473894166029610549966889945330591981765639
-		     0.83290912293510400678876137712583191084127882621166276596530747651542
-		     0.87546873735389993562895014661269120127288947227474223806340646115010
-		     0.91629073187415506518352721176801107145010121990826246779196788198078
-		     0.95551144502743636145272810833913096527966659049168939450639761918928
-		     0.99325177301028339016774425608321290634137018483947537917075509994491
-		     1.02961941718115823992182553167516865818698350967359872066742226795679
-		     1.06471073699242834316528057767754739789341142529397110288834245067520
-		     1.09861228866810969139524523692252570464749055782274945173469433363749
-		     1.13140211149110056191117286985799300284883744185181899572339017150740
-		     1.16315080980568086306816915260651863277639918317250329457007214649939
-		     1.19392246847243455143919736020329079686809592313139365091993414180049
-		     1.22377543162211570564877528464693889606260165831722706538458984640811
-		     1.25276296849536799568812062198500316156158459522160593433871014044418
-		     1.28093384546206431760696326207704033784487989573723643567742078529420
-		     1.30833281965017876035010421634708295629897609853886318761158478022541
-		     1.33500106673234008540826809866166589771177790703061109662531234493511
-		     1.36097655313560074343074122380348010185165701395418359212041194333338
-		     1.38629436111989061883446424291635313615100026872051050824136001898678)))
-	  
-	  (do ((i 0 (+ i 1)))
-	      ((= i 30))
-	    (let ((val (log (+ (/ i (bignum "10")) (bignum "1.0")))))
-	      (if (> (magnitude (- val (list-ref logs i))) 1e-36)
-		  (format #t ";(log ~A) -> ~A ~A~%[~A]~%" (+ 1.0 (/ i 10)) val (list-ref logs i) (magnitude (- val (list-ref logs i))))))))
-	
-	(let ((sqrts (list ; table[Sqrt[k/10], {k, 0, 30}]
-		      0.00000000000000000000000000000000000000000000000000000000000000000000e0
-		      0.31622776601683793319988935444327185337195551393252168268575048527925
-		      0.44721359549995793928183473374625524708812367192230514485417944908210
-		      0.54772255750516611345696978280080213395274469499798325422689444973249
-		      0.63245553203367586639977870888654370674391102786504336537150097055851
-		      0.70710678118654752440084436210484903928483593768847403658833986899536
-		      0.77459666924148337703585307995647992216658434105831816531751475322269
-		      0.83666002653407554797817202578518748939281536929867219981119154308041
-		      0.89442719099991587856366946749251049417624734384461028970835889816420
-		      0.94868329805051379959966806332981556011586654179756504805725145583777
-		      1.00000000000000000000000000000000000000000000000000000000000000000000
-		      1.04880884817015154699145351367993759847527185768150398487575576358000
-		      1.09544511501033222691393956560160426790548938999596650845378889946498
-		      1.14017542509913797913604902556675447907600531091641037529746941724956
-		      1.18321595661992320851346565831232340968310024615886806457594393382856
-		      1.22474487139158904909864203735294569598297374032833506421634628362548
-		      1.26491106406735173279955741777308741348782205573008673074300194111703
-		      1.30384048104052974291659431148583688330561875578201309179007936989676
-		      1.34164078649987381784550420123876574126437101576691543456253834724631
-		      1.37840487520902217679559125529341754271981635583990014790642120179806
-		      1.41421356237309504880168872420969807856967187537694807317667973799073
-		      1.44913767461894385737186641571697717231401328747589730886959248071181
-		      1.48323969741913258974227948816014261219598086381950031974652465286876
-		      1.51657508881031011085136508725641431090992842790349245064524200355844
-		      1.54919333848296675407170615991295984433316868211663633063502950644539
-		      1.58113883008418966599944677221635926685977756966260841342875242639629
-		      1.61245154965970993047332264606075422622687926112171467758731847785277
-		      1.64316767251549834037090934840240640185823408499394976268068334919747
-		      1.67332005306815109595634405157037497878563073859734439962238308616083
-		      1.70293863659264011661333218238773227063897151909784216273026969624657
-		      1.73205080756887729352744634150587236694280525381038062805580697945193)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 30))
-	    (let ((val (sqrt (/ i (bignum "10")))))
-	      (if (> (magnitude (- val (list-ref sqrts i))) 1e-36)
-		  (format #t ";(sqrt ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref sqrts i) (magnitude (- val (list-ref sqrts i))))))))
-	
-	(let ((atans (list ; table[Arctan[k/10], {k, 0, 30}]
-		      0.00000000000000000000000000000000000000000000000000000000000000000000e0
-		      0.09966865249116202737844611987802059024327832250431464801550877681002
-		      0.19739555984988075837004976519479029344758510378785210151768894024103
-		      0.29145679447786709199560462143289119350316759901206541927220608308729
-		      0.38050637711236488630358791681043310449740571365810083757630562232420
-		      0.46364760900080611621425623146121440202853705428612026381093308872019
-		      0.54041950027058415544357836460859991013514825146259238811636023340959
-		      0.61072596438920861654375887649023609381850306612882761584286773000023
-		      0.67474094222355266305652097360981361507400625484071242312092170496930
-		      0.73281510178650659164079207273428025198575567935825608631050693192821
-		      0.78539816339744830961566084581987572104929234984377645524373614807695
-		      0.83298126667443170541769356183636123851585134443710842085342312250327
-		      0.87605805059819342311404752112834133907534524616033200346065614838499
-		      0.91510070055336041656680197245527296654755880944161873770852665151657
-		      0.95054684081207514789478913546381917504767901030880427426177057808809
-		      0.98279372324732906798571061101466601449687745363162855676142508831798
-		      1.01219701145133418325981347523809017175213711715353810435383625801215
-		      1.03907225953609102762125033790727884531233378855364699989530509706554
-		      1.06369782240255966094389111605254547856256296541932752568273985366635
-		      1.08631839775787341806397958192567762897580047046812780208748680606431
-		      1.10714871779409050301706546017853704007004764540143264667653920743371
-		      1.12637711689379770989641767275145325372112241040085015241064879177491
-		      1.14416883366802053001158090974633622082626800572469223488413501483165
-		      1.16066898625340562678011092078453217718605394084134102434206195147540
-		      1.17600520709513510249122216125017085520341449211184870745209441567184
-		      1.19028994968253173292773377482931833760117898602945207291116667382970
-		      1.20362249297667741080683267484687578339840429857832439350850411338551
-		      1.21609067478395630285892632134113779481025954203667431449700610948231
-		      1.22777238637419322215779309222594182541102155201281262388880100298534
-		      1.23873685925201114137796025438808735907407693977120210817129118165791
-		      1.24904577239825442582991707728109012307782940412989671905466923679715)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 30))
-	    (let ((val (atan (/ i (bignum "10")))))
-	      (if (> (magnitude (- val (list-ref atans i))) 1e-36)
-		  (format #t ";(atan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref atans i) (magnitude (- val (list-ref atans i))))))))
-	
-	(let ((asins (list ; table[Arcsin[k/30], {k, 0, 30}]
-		      0.00000000000000000000000000000000000000000000000000000000000000000000e0
-		      0.03333950926130208699143488077083860917565937855129663393680393744362
-		      0.06671614841022525954540510327036927409184944434654403274652597117428
-		      0.10016742116155979634552317945269331856867597222962954139102385503640
-		      0.13373158940994152865632332716309743011405498274444165545458875924377
-		      0.16744807921968933055327460604363822091495716231623832046578730373329
-		      0.20135792079033079145512555221762341024003808140222838625725124345560
-		      0.23550423672079979129288448393723556648106234259531297814541683051663
-		      0.26993279583340344442461498978851864365647337427020501782962042633379
-		      0.30469265401539750797200296122752916695456003170677638739297794874647
-		      0.33983690945412193709639251339176406638824469033245807143192396248991
-		      0.37542360798103940368516545708214708494670535320625397496008012654413
-		      0.41151684606748801938473789761733560485570113512702585178394678070009
-		      0.44818813597943128994043756304906477118029918046343080720212217855713
-		      0.48551812229559116327223435902482444763168509494201196125953547218486
-		      0.52359877559829887307710723054658381403286156656251763682915743205130
-		      0.56253624454385561973132565694853319169977493405170278279550382560769
-		      0.60245463338499055124863378781466897272136400811697167837514413874507
-		      0.64350110879328438680280922871732263804151059111531238286560611871351
-		      0.68585296461871075596328071793021108476903703940127104404158318225766
-		      0.72972765622696636345479665981332069539650591404771369070894949146181
-		      0.77539749661075306374035335271498711355578873864116199359771996373272
-		      0.82321197712587582143797706006235798228453830885144107684904792594002
-		      0.87363319315266432351068180914720023973456695459982111043494836254140
-		      0.92729521800161223242851246292242880405707410857224052762186617744039
-		      0.98511078333774565961356415316223367589822363251591140783691296893264
-		      1.04848150498884799670722286578404816608970376214442109090268484725633
-		      1.11976951499863418668667705584539961589516218640330288237568186391443
-		      1.20358830623705947672584877793852613585139977949919656045114461770445
-		      1.31187478478867540346593147633958737932614651512288222488818316043445
-		      1.57079632679489661923132169163975144209858469968755291048747229615390)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 30))
-	    (let ((val (asin (/ i (bignum "30")))))
-	      (if (> (magnitude (- val (list-ref asins i))) 1e-36)
-		  (format #t ";(asin ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref asins i) (magnitude (- val (list-ref asins i))))))))
-	
-	(let ((acoss (list ; table[Arccos[k/30], {k, 0, 30}]
-		      1.57079632679489661923132169163975144209858469968755291048747229615390
-		      1.53745681753359453223988681086891283292292532113625627655066835871028
-		      1.50408017838467135968591658836938216800673525534100887774094632497961
-		      1.47062890563333682288579851218705812352990872745792336909644844111750
-		      1.43706473738495509057499836447665401198452971694311125503288353691013
-		      1.40334824757520728867804708559611322118362753737131459002168499242061
-		      1.36943840600456582777619613942212803185854661828532452423022105269829
-		      1.33529209007409682793843720770251587561752235709223993234205546563727
-		      1.30086353096149317480670670185123279844211132541734789265785186982011
-		      1.26610367277949911125931873041222227514402466798077652309449434740743
-		      1.23095941734077468213492917824798737571034000935509483905554833366399
-		      1.19537271881385721554615623455760435715187934648129893552739216960977
-		      1.15927948072740859984658379402241583724288356456052705870352551545381
-		      1.12260819081546532929088412859068667091828551922412210328535011759677
-		      1.08527820449930545595908733261492699446689960474554094922793682396904
-		      1.04719755119659774615421446109316762806572313312503527365831486410260
-		      1.00826008225104099949999603469121825039880976563585012769196847054621
-		      0.96834169340990606798268790382508246937722069157058123211232815740883
-		      0.92729521800161223242851246292242880405707410857224052762186617744039
-		      0.88494336217618586326804097370954035732954766028628186644588911389624
-		      0.84106867056793025577652503182643074670207878563983921977852280469208
-		      0.79539883018414355549096833892476432854279596104639091688975233242118
-		      0.74758434966902079779334463157739345981404639083611183363842437021388
-		      0.69716313364223229572063988249255120236401774508773180005252393361250
-		      0.64350110879328438680280922871732263804151059111531238286560611871351
-		      0.58568554345715095961775753847751776620036106717164150265055932722126
-		      0.52231482180604862252409882585570327600888093754313181958478744889757
-		      0.45102681179626243254464463579435182620342251328425002811179043223947
-		      0.36720802055783714250547291370122530624718492018835635003632767844945
-		      0.25892154200622121576539021530016406277243818456467068559928913571945
-		      0.00000000000000000000000000000000000000000000000000000000000000000000e0)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 30))
-	    (let ((val (acos (/ i (bignum "30")))))
-	      (if (> (magnitude (- val (list-ref acoss i))) 1e-36)
-		  (format #t ";(acos ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref acoss i) (magnitude (- val (list-ref acoss i))))))))
-	
-	(let ((tans (list ; table[Tan[k/10], {k, 0, 30}]
-		     0.00000000000000000000000000000000000000000000000000000000000000000000e0
-		     0.10033467208545054505808004578111153681900480457644204002220806579803
-		     0.20271003550867248332135827164753448262687566965163133004781996689038
-		     0.30933624960962323303530367969829466725781590680046134075142272636569
-		     0.42279321873816176198163542716529033394198977271569358984733094139266
-		     0.54630248984379051325517946578028538329755172017979124616409138593290
-		     0.68413680834169231707092541746333574524265408075678204603738401651742
-		     0.84228838046307944812813500221293771718722125080419899879692251366850
-		     1.02963855705036401274636117282036528416821960677230780766895721581894
-		     1.26015821755033913713457548539574847783362583439629440734976898386523
-		     1.55740772465490223050697480745836017308725077238152003838394660569886
-		     1.96475965724865195093092278177937824371908489378986426895526379547792
-		     2.57215162212631893540999423603336395652940930604338927922563726223880
-		     3.60210244796797815123114551507651373970302582865487479569579648938869
-		     5.79788371548288964370772024360369904599369751893967972517934732424182
-		     14.10141994717171938764608365198775644565954357723586186612326758608969
-		     -34.23253273555741705801487543047619090177569941115323597430813746321248
-		     -7.69660213945915841412819296829866091636528991430764756294574142318097
-		     -4.28626167462806352545188895228026668020736003385824824436108662437549
-		     -2.92709751467777270368689918927087330066328793602580283437505670792996
-		     -2.18503986326151899164330610231368254343201774622766316456295586996677
-		     -1.70984654290450774834778079380390375776090098123394621314534682027235
-		     -1.37382305676879516014003676333346987430263329223370049420804295416122
-		     -1.11921364173413217123235669407622790313829418580200248125375565107236
-		     -0.91601428967341051273086324750810579399364554997699617941685909082222
-		     -0.74702229723866027935535268782527455790411695688301127906659308970027
-		     -0.60159661308975872273608189269127978293417758666969145078057164875561
-		     -0.47272762910303750795198918126389516105797171531608327694222778882857
-		     -0.35552983165117587757735260363543503816953711960914396739605909199266
-		     -0.24640539397196625534356707388530576476208894415934539659747894722272
-		     -0.14254654307427780529563541053391349322609228490180464763323897668885)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 30))
-	    (let ((val (tan (/ i (bignum "10")))))
-	      (if (> (magnitude (- val (list-ref tans i))) 1e-35)
-		  (format #t ";(tan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref tans i) (magnitude (- val (list-ref tans i))))))))
-	
-	
-	(let ((max-s-error 0.0)
-	      (max-s-error-case 0)
-	      (max-sh-error 0.0)
-	      (max-sh-error-case 0))
-	  (do ((x (bignum "0.0") (+ x 0.1)))
-	      ((> x (* 2 pi)))
-	    (let ((s (sin x))
-		  (sh (sinh x))
-		  (c (cos x))
-		  (ch (cosh x)))
-	      (let ((err (magnitude (- (+ (* s s) (* c c)) 1))))
-		(if (> err max-s-error)
-		    (begin
-		      (set! max-s-error err)
-		      (set! max-s-error-case x))))
-	      (let ((err (magnitude (+ (- (* sh sh) (* ch ch)) 1))))
-		(if (> err max-sh-error)
-		    (begin
-		      (set! max-sh-error err)
-		      (set! max-sh-error-case x))))))
-	  (if (> max-s-error 1e-35)
-	      (format #t "s^2 + c^2 error: ~A at ~A~%" max-s-error max-s-error-case))
-	  (if (> max-sh-error 1e-33)
-	      (format #t "sh^2 + ch^2 error: ~A at ~A~%" max-sh-error max-sh-error-case)))
-	
-	
-	(set! (bignum-precision) old-prec)
-	)
-      
-      (letrec ((sum-cot (lambda (n)
-			  (let ((sum 0.0))
-			    (do ((k 1 (+ k 1)))
-				((= k n) sum)
-			      (set! sum (+ sum (sin (/ (* k pi) n)))))))))
-	(let ((mxerr 0.0)
-	      (mxcase 0))
-	  (do ((i 2 (+ i 1)))
-	      ((= i 100))
-	    (let ((val1 (sum-cot i))
-		  (val2 (/ 1.0 (tan (/ pi (* 2 i))))))
-	      (let ((err (magnitude (- val1 val2))))
-		(if (> err mxerr)
-		    (begin
-		      (set! mxerr err)
-		      (set! mxcase i))))))
-	  (if (> mxerr 1e-35)
-	      (format #t "sum-cot max error ~A at ~A~%" mxerr mxcase))))
-      ))
-
-
-
-
-
-;;; --------------------------------------------------------------------------------
-
-
-  (for-each
-   (lambda (num-and-val)
-     (let ((num (car num-and-val)) (val (cadr num-and-val))) (num-test-1 '/ num (/ num) val)))
-   (vector (list 1 1) (list 2 1/2) (list 3 1/3) (list -1 -1) (list -2 -1/2) (list -3 -1/3) (list 9223372036854775807 1/9223372036854775807) 
-	   (list 1/2 2) (list 1/3 3) (list -1/2 -2) 
-	   (list -1/3 -3) (list 1/9223372036854775807 9223372036854775807) (list 1.0 1.0) (list 2.0 0.5) 
-	   (list -2.0 -0.5) (list 1e+16 1e-16) (list inf.0 0.0) (list -inf.0 0.0) (list 0+1i 0-1i) 
-	   (list 0+2i 0-0.5i) (list 0-1i 0+1i) (list 1+1i 0.5-0.5i) (list 1-1i 0.5+0.5i) (list -1+1i -0.5-0.5i) 
-	   (list -1-1i -0.5+0.5i) (list 0.1+0.1i 5-5i) (list 1e+16+1e+16i 5e-17-5e-17i) (list 1e-16+1e-16i 5e+15-5e+15i) 
-	   ))
-
-
-
-
-
-;;; --------------------------------------------------------------------------------
-
-
-
-(let ((ntype ((cadr (make-type)) "hi")))
-  (for-each
-
-   (lambda (op)
-     (for-each
-
-      (lambda (arg)
-	(let ((val (catch #t (lambda () (op arg)) (lambda args 'error))))
-	  (if (not (eq? val 'error))
-	      (format #t "(~A ~A) -> ~A (expected 'error)~%" op arg val)))
-	(let ((val (catch #t (lambda () (op 0 arg)) (lambda args 'error))))
-	  (if (not (eq? val 'error))
-	      (format #t "(~A 0 ~A) -> ~A (expected 'error)~%" op arg val)))
-	(if with-bignums
-	    (let ((val (catch #t (lambda () (op (expt 2 60) arg)) (lambda args 'error))))
-	      (if (not (eq? val 'error))
-		  (format #t "(~A 2^60 ~A) -> ~A (expected 'error)~%" op arg val)))))
-
-      (list "hi" '() #\a (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs #t (if #f #f) (lambda (a) (+ a 1)) #<undefined> #<unspecified> #<eof> ntype :key)))
-
-   (list exact? inexact? zero? positive? negative? even? odd? quotient remainder modulo truncate floor ceiling round
-	 abs max min gcd lcm expt exact->inexact inexact->exact rationalize numerator denominator imag-part real-part
-	 magnitude angle make-polar make-rectangular sqrt exp log sin cos tan asin acos atan number->string)))
-
-
-(let ((d 3.14)
-      (i 32)
-      (r 2/3)
-      (c 1.5+0.3i))
-  (let ((check-vals (lambda (name)
-		      (if (or (not (= d 3.14)) ; (> (abs (- d 3.14)) 1e-16) ; (- 3.14 (bignum "3.14")) is around 1e-17!
-			      (not (= i 32))
-			      (not (= r 2/3))
-			      (not (= c 1.5+0.3i))) ; (> (magnitude (- c 1.5+0.3i)) 1e-16))
-			  (begin 
-			    (display name) (display " changed ")
-			    (if (not (= i 32))
-				(begin (display "stored integer to: ") (display i))
-				(if (not (= r 2/3))
-				    (begin (display "stored ratio to: ") (display r))
-				    (if (not (= d 3.14))
-					(begin (display "stored real to: ") (display d))
-					(begin (display "stored complex to: ") (display c)))))
-			    (display "?") (newline))))))
-    (for-each
-     (lambda (op)
-       (let ((x (catch #t (lambda () (op i)) (lambda args 'error))))
-	 (check-vals op))
-       (let ((x (catch #t (lambda () (op r)) (lambda args 'error))))
-	 (check-vals op))
-       (let ((x (catch #t (lambda () (op d)) (lambda args 'error))))
-	 (check-vals op))
-       (let ((x (catch #t (lambda () (op c)) (lambda args 'error))))
-	 (check-vals op))
-       (let ((x (catch #t (lambda () (op i d)) (lambda args 'error))))
-	 (check-vals op))
-       (let ((x (catch #t (lambda () (op r d)) (lambda args 'error))))
-	 (check-vals op))
-       (let ((x (catch #t (lambda () (op d d)) (lambda args 'error))))
-	 (check-vals op))
-       (let ((x (catch #t (lambda () (op c d)) (lambda args 'error))))
-	 (check-vals op)))
-     (list
-      number->string string->number make-rectangular magnitude abs exp make-polar angle
-      sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
-      number? integer? real? complex? rational? even? odd? zero? positive? negative? real-part imag-part
-      numerator denominator rationalize exact? inexact? exact->inexact inexact->exact floor ceiling truncate round
-      logior logxor logand lognot ash integer-length
-      + - * / quotient remainder
-      expt = max min modulo < > <= >= lcm gcd 
-      ))))
-
-(if with-bignums
-    (begin
-      
-      (test (bignum "1/3.0") 'error)
-
-      (let ((d (bignum "3.14"))
-	    (i (bignum "32"))
-	    (r (bignum "2/3"))
-	    (c (bignum "1.5+0.3i")))
-	(let ((check-vals (lambda (name)
-			    (if (or (not (= d (bignum "3.14"))) ; see above
-				    (not (= i 32))
-				    (not (= r 2/3))
-				    (not (= c (bignum "1.5+0.3i"))))
-				(begin 
-				  (display name) (display " changed ")
-				  (if (not (= i 32))
-				      (begin (display "stored integer to: ") (display i))
-				      (if (not (= r 2/3))
-					  (begin (display "stored ratio to: ") (display r))
-					  (if (not (= d 3.14))
-					      (begin (display "stored real to: ") (display d))
-					      (begin (display "stored complex to: ") (display c)))))
-				  (display "?") (newline))))))
-	  (for-each
-	   (lambda (op)
-	     (let ((x (catch #t (lambda () (op i)) (lambda args 'error))))
-	       (check-vals op))
-	     (let ((x (catch #t (lambda () (op r)) (lambda args 'error))))
-	       (check-vals op))
-	     (let ((x (catch #t (lambda () (op d)) (lambda args 'error))))
-	       (check-vals op))
-	     (let ((x (catch #t (lambda () (op c)) (lambda args 'error))))
-	       (check-vals op))
-	     (let ((x (catch #t (lambda () (op i d)) (lambda args 'error))))
-	       (check-vals op))
-	     (let ((x (catch #t (lambda () (op r d)) (lambda args 'error))))
-	       (check-vals op))
-	     (let ((x (catch #t (lambda () (op d d)) (lambda args 'error))))
-	       (check-vals op))
-	     (let ((x (catch #t (lambda () (op c d)) (lambda args 'error))))
-	       (check-vals op)))
-	   (list
-	    number->string string->number make-rectangular magnitude abs exp make-polar angle
-	    sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
-	    number? integer? real? complex? rational? even? odd? zero? positive? negative? real-part imag-part
-	    numerator denominator rationalize exact? inexact? exact->inexact inexact->exact floor ceiling truncate round
-	    logior logxor logand lognot ash integer-length
-	    + - * / quotient remainder
-	    expt = max min modulo < > <= >= lcm gcd 
-	    ))))))
-
-(for-each
- (lambda (arg)
-   (test (bignum "1.0" arg) 'error))
- (list -1 0 #\a '#(1 2 3) 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
-
-(test (let ((equal? #f)) (member 3 '(1 2 3))) '(3))
-(test (let ((eqv? #f)) (case 1 ((1) 1))) 1) ; scheme wg
-(test (let ((eqv? equal?)) (case "asd" (("asd") 1) (else 2))) 2)
-(test (let ((eq? #f)) (memq 'a '(a b c))) '(a b c))
-
-
 

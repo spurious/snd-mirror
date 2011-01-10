@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 11.12, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-11.tar.gz)
+AC_INIT(snd, 11.13, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-11.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
@@ -19,7 +19,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
-VERSION=11.12
+VERSION=11.13
 AC_DEFINE_UNQUOTED(SND_PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(SND_VERSION, "$VERSION")
 AC_SUBST(SND_PACKAGE)
@@ -1044,8 +1044,8 @@ else
 	# for 2.19.n
 	AC_CHECK_LIB(m, gtk_widget_get_mapped, [AC_DEFINE(HAVE_GTK_WIDGET_GET_MAPPED)], ,$GTK_LIBS)
 	# for 2.9n.n
-	AC_CHECK_LIB(m, gtk_combo_box_get_id_column,
-                          [AC_DEFINE(HAVE_GTK_COMBO_BOX_GET_ID_COLUMN)
+	AC_CHECK_LIB(m, gtk_combo_box_new_with_area,
+                          [AC_DEFINE(HAVE_GTK_COMBO_BOX_NEW_WITH_AREA)
                            AC_DEFINE(HAVE_GTK_3)
                           ], ,$GTK_LIBS)
 

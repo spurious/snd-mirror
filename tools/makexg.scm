@@ -1685,7 +1685,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-29x dpy thunk)
-  (dpy "#if HAVE_GTK_COMBO_BOX_GET_ID_COLUMN~%")
+  (dpy "#if HAVE_GTK_COMBO_BOX_NEW_WITH_AREA~%")
   (thunk)
   (dpy "#endif~%~%"))
 

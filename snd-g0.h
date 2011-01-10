@@ -145,6 +145,11 @@ typedef struct {
   typedef GdkWindow Drawable;
   #define DRAWABLE(Widget) GDK_WINDOW(Widget)
   #define IS_DRAWABLE(Widget) GDK_IS_WINDOW(Widget)
+
+  #define gtk_range_get_update_policy(W) 0
+  #define gtk_range_set_update_policy(W, V)
+  #define GTK_UPDATE_CONTINUOUS 0
+/* TODO: gtk3: replace range update policy */
 #else
   typedef GdkDrawable Drawable;
   #define DRAWABLE(Widget) GDK_DRAWABLE(Widget)
