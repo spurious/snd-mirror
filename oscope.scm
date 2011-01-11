@@ -214,7 +214,7 @@
 	    (let* ((adj (gtk_adjustment_new cycle-length 32 max-cycle 1.0 10.0 1.0))
 		   (scale (gtk_hscale_new (GTK_ADJUSTMENT adj)))
 		   (label (gtk_label_new "cycle length")))
-	      (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS)
+	      (if (not (provided? 'gtk3)) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS))
 	      (gtk_scale_set_digits (GTK_SCALE scale) 0)
 	      (gtk_scale_set_value_pos (GTK_SCALE scale) GTK_POS_TOP)
 	      (gtk_scale_set_draw_value (GTK_SCALE scale) #t)

@@ -146,10 +146,10 @@ typedef struct {
   #define DRAWABLE(Widget) GDK_WINDOW(Widget)
   #define IS_DRAWABLE(Widget) GDK_IS_WINDOW(Widget)
 
+  /* as far as I can see, UPDATE_CONTINUOUS is now built-in */
   #define gtk_range_get_update_policy(W) 0
   #define gtk_range_set_update_policy(W, V)
   #define GTK_UPDATE_CONTINUOUS 0
-/* TODO: gtk3: replace range update policy */
 #else
   typedef GdkDrawable Drawable;
   #define DRAWABLE(Widget) GDK_DRAWABLE(Widget)

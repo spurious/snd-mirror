@@ -164,7 +164,7 @@
 			       (logior GTK_FILL GTK_SHRINK)
 			       0 0))
 	 (gtk_widget_show label)
-	 (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS)
+	 (if (not (provided? 'gtk3)) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS))
 	 (gtk_scale_set_digits (GTK_SCALE scale)
 			       (if use-log
 				   0
