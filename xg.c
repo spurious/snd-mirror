@@ -27935,14 +27935,6 @@ static XEN gxg_gtk_paned_get_handle_window(XEN paned)
   return(C_TO_XEN_GdkWindow_(gtk_paned_get_handle_window(XEN_TO_C_GtkPaned_(paned))));
 }
 
-static XEN gxg_gtk_widget_style_attach(XEN style)
-{
-  #define H_gtk_widget_style_attach "void gtk_widget_style_attach(GtkWidget* style)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(style), style, 1, "gtk_widget_style_attach", "GtkWidget*");
-  gtk_widget_style_attach(XEN_TO_C_GtkWidget_(style));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_widget_set_realized(XEN widget, XEN realized)
 {
   #define H_gtk_widget_set_realized "void gtk_widget_set_realized(GtkWidget* widget, gboolean realized)"
@@ -38091,7 +38083,6 @@ XEN_NARGIFY_2(gxg_gtk_range_get_range_rect_w, gxg_gtk_range_get_range_rect)
 XEN_ARGIFY_3(gxg_gtk_range_get_slider_range_w, gxg_gtk_range_get_slider_range)
 XEN_NARGIFY_2(gxg_gtk_status_icon_set_name_w, gxg_gtk_status_icon_set_name)
 XEN_NARGIFY_1(gxg_gtk_paned_get_handle_window_w, gxg_gtk_paned_get_handle_window)
-XEN_NARGIFY_1(gxg_gtk_widget_style_attach_w, gxg_gtk_widget_style_attach)
 XEN_NARGIFY_2(gxg_gtk_widget_set_realized_w, gxg_gtk_widget_set_realized)
 XEN_NARGIFY_1(gxg_gtk_widget_get_realized_w, gxg_gtk_widget_get_realized)
 XEN_NARGIFY_2(gxg_gtk_widget_set_mapped_w, gxg_gtk_widget_set_mapped)
@@ -42133,7 +42124,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_range_get_slider_range_w gxg_gtk_range_get_slider_range
 #define gxg_gtk_status_icon_set_name_w gxg_gtk_status_icon_set_name
 #define gxg_gtk_paned_get_handle_window_w gxg_gtk_paned_get_handle_window
-#define gxg_gtk_widget_style_attach_w gxg_gtk_widget_style_attach
 #define gxg_gtk_widget_set_realized_w gxg_gtk_widget_set_realized
 #define gxg_gtk_widget_get_realized_w gxg_gtk_widget_get_realized
 #define gxg_gtk_widget_set_mapped_w gxg_gtk_widget_set_mapped
@@ -46182,7 +46172,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_range_get_slider_range, gxg_gtk_range_get_slider_range_w, 1, 2, 0, H_gtk_range_get_slider_range);
   XG_DEFINE_PROCEDURE(gtk_status_icon_set_name, gxg_gtk_status_icon_set_name_w, 2, 0, 0, H_gtk_status_icon_set_name);
   XG_DEFINE_PROCEDURE(gtk_paned_get_handle_window, gxg_gtk_paned_get_handle_window_w, 1, 0, 0, H_gtk_paned_get_handle_window);
-  XG_DEFINE_PROCEDURE(gtk_widget_style_attach, gxg_gtk_widget_style_attach_w, 1, 0, 0, H_gtk_widget_style_attach);
   XG_DEFINE_PROCEDURE(gtk_widget_set_realized, gxg_gtk_widget_set_realized_w, 2, 0, 0, H_gtk_widget_set_realized);
   XG_DEFINE_PROCEDURE(gtk_widget_get_realized, gxg_gtk_widget_get_realized_w, 1, 0, 0, H_gtk_widget_get_realized);
   XG_DEFINE_PROCEDURE(gtk_widget_set_mapped, gxg_gtk_widget_set_mapped_w, 2, 0, 0, H_gtk_widget_set_mapped);
@@ -49089,7 +49078,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("10-Jan-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("11-Jan-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

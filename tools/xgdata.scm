@@ -7343,7 +7343,7 @@
 
 ;;; 2.19.5
 (CFNC-2190 "GdkWindow* gtk_paned_get_handle_window GtkPaned* paned")
-(CFNC-2190 "void gtk_widget_style_attach GtkWidget* style")
+;;; 2.99.1 (CFNC-2190 "void gtk_widget_style_attach GtkWidget* style")
 (CFNC-2190 "void gtk_widget_set_realized GtkWidget* widget gboolean realized")
 (CFNC-2190 "gboolean gtk_widget_get_realized GtkWidget* widget")
 (CFNC-2190 "void gtk_widget_set_mapped GtkWidget* widget gboolean mapped")
@@ -8123,8 +8123,6 @@
 (CFNC-29x "void gtk_action_set_accel_path GtkAction* action gchar* accel_path" 'const)
 (CFNC-29x "void gtk_action_set_accel_group GtkAction* action GtkAccelGroup* accel_group")
 
-
-
 ;;; 2.99.0
 
 (CFNC-29x "void gdk_device_get_position GdkDevice* device GdkScreen** screen gint* [x] gint* [y]")
@@ -8147,6 +8145,16 @@
 (CSTR-29x "GTK_STYLE_CLASS_FRAME")
 (CSTR-29x "GTK_STYLE_CLASS_DND")
 
+#|
+;;; 2.99.1
+
+(CSTR-29x "GTK_STYLE_CLASS_HORIZONTAL")
+(CSTR-29x "GTK_STYLE_CLASS_VERTICAL")
+(CFNC-29x "gboolean gtk_tree_view_is_blank_at_pos GtkTreeView* tree_view gint x gint y GtkTreePath** [path] GtkTreeViewColumn** [column] gint* [cell_x] gint* [cell_y]")
+(CFNC-29x "void gtk_widget_set_device_enabled GtkWidget* widget GdkDevice* device gboolean enabled")
+(CFNC-29x "gboolean gtk_widget_get_device_enabled GtkWidget* widget GdkDevice* device")
+(CFNC-29x "void gtk_window_set_has_user_ref_count GtkWindow* window gboolean setting")
+|#
 
 #|
 (CCAST-29x "GTK_CSS_PROVIDER" "GtkCssProvider*")
@@ -8326,6 +8334,10 @@
 (CFNC-29x "void gtk_render_handle GtkStyleContext* context cairo_t* cr gdouble x gdouble y gdouble width gdouble height")
 (CFNC-29x "void gtk_render_activity GtkStyleContext* context cairo_t* cr gdouble x gdouble y gdouble width gdouble height")
 (CFNC-29x "GdkPixbuf* gtk_render_icon_pixbuf GtkStyleContext* context GtkIconSource* source GtkIconSize size" 'const)
+
+(CFNC-29x "void gtk_style_context_cancel_animations GtkStyleContext* context gpointer region_id")
+(CFNC-29x "void gtk_style_context_scroll_animations GtkStyleContext* context GdkWindow* window gint dx gint dy")
+
 (CFNC-29x "void gtk_style_properties_register_property GtkStylePropertyParser parse_func GParamSpec* pspec")
 (CFNC-29x "gboolean gtk_style_properties_lookup_property gchar* property_name GtkStylePropertyParser* parse_func GParamSpec** pspec" 'const)
 (CFNC-29x "GtkStyleProperties* gtk_style_properties_new void")

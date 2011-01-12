@@ -1151,7 +1151,7 @@ char *slist_selection(slist *lst)
  *
  *       lots of things leave an empty graph
  *       do meters work in rec?  in Motif they're drawn incorrectly
- *       Mac native? quartz surface like GL?
+ *       Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
  *         sep chans, syncd marks don't move together
  *       superimposed chans flicker a lot
  *       hide controls + listener doesn't
