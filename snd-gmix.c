@@ -91,7 +91,7 @@ static void reflect_mix_speed(mus_float_t speed)
 }
 
 
-static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean mix_speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   /* label click -- not part of slider stuff */
   speed_pressed = false;
@@ -151,7 +151,7 @@ static gboolean speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer
 }
 
 
-static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data) 
+static gboolean mix_speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data) 
 {
   mus_float_t speed;
 
@@ -208,7 +208,7 @@ static void reflect_mix_amp(mus_float_t val)
 }
 
 
-static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean mix_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   amp_dragged = false;
   amp_pressed = false;
@@ -242,7 +242,7 @@ static gboolean amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer d
 }
 
 
-static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean mix_amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   mus_float_t amp;
   dragging = false;
@@ -828,7 +828,7 @@ GtkWidget *make_mix_dialog(void)
       w_speed_event = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(w_speed_form), w_speed_event, false, false, 4);
       gtk_widget_show(w_speed_event);
-      SG_SIGNAL_CONNECT(w_speed_event, "button_press_event", speed_click_callback, NULL);
+      SG_SIGNAL_CONNECT(w_speed_event, "button_press_event", mix_speed_click_callback, NULL);
       
       w_speed_label = gtk_label_new(_("speed:"));
       gtk_container_add(GTK_CONTAINER(w_speed_event), w_speed_label);
@@ -851,7 +851,7 @@ GtkWidget *make_mix_dialog(void)
       w_speed_adj = (GtkAdjustment *)gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);
       w_speed = gtk_hscrollbar_new(GTK_ADJUSTMENT(w_speed_adj));
       gtk_box_pack_start(GTK_BOX(w_speed_form), w_speed, true, true, 4);
-      SG_SIGNAL_CONNECT(w_speed, "button_release_event", speed_release_callback, NULL);
+      SG_SIGNAL_CONNECT(w_speed, "button_release_event", mix_speed_release_callback, NULL);
       SG_SIGNAL_CONNECT(w_speed, "motion_notify_event", speed_motion_callback, NULL);
       SG_SIGNAL_CONNECT(w_speed, "button_press_event", speed_press_callback, NULL);
       gtk_widget_show(w_speed);
@@ -867,7 +867,7 @@ GtkWidget *make_mix_dialog(void)
       w_amp_event = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(w_amp_form), w_amp_event, false, false, 4);
       gtk_widget_show(w_amp_event);
-      SG_SIGNAL_CONNECT(w_amp_event, "button_press_event", amp_click_callback, NULL);
+      SG_SIGNAL_CONNECT(w_amp_event, "button_press_event", mix_amp_click_callback, NULL);
       
       mus_snprintf(amplab, LABEL_BUFFER_SIZE, "%s", _("amp:"));
       w_amp_label = gtk_label_new(amplab);
@@ -883,7 +883,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(w_amp_form), w_amp, true, true, 4);
 
       SG_SIGNAL_CONNECT(w_amp, "motion_notify_event", amp_motion_callback, NULL);
-      SG_SIGNAL_CONNECT(w_amp, "button_release_event", amp_release_callback, NULL);
+      SG_SIGNAL_CONNECT(w_amp, "button_release_event", mix_amp_release_callback, NULL);
       SG_SIGNAL_CONNECT(w_amp, "button_press_event", amp_press_callback, NULL);
       gtk_widget_show(w_amp);
       

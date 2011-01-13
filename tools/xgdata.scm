@@ -8154,6 +8154,9 @@
 (CFNC-29x "void gtk_widget_set_device_enabled GtkWidget* widget GdkDevice* device gboolean enabled")
 (CFNC-29x "gboolean gtk_widget_get_device_enabled GtkWidget* widget GdkDevice* device")
 (CFNC-29x "void gtk_window_set_has_user_ref_count GtkWindow* window gboolean setting")
+
+;;; 2.99.2 -- no changes for xgdata I think
+
 |#
 
 #|
@@ -8370,7 +8373,7 @@
 (CFNC-29x "GtkStyleContext* gtk_widget_get_style_context GtkWidget* widget")
 
 
-;;; 2.91.7 -- is any of this useful?
+;;; 2.91.7 -- is any of this useful? -- docs say they're for people writing their own widgets
 
 (CCAST-29x "GDK_CURSOR" "GdkCursor*")
 (CCHK-29x "GDK_IS_CURSOR "GdkCursor*")

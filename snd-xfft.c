@@ -558,7 +558,7 @@ void set_fft_log_magnitude(bool val)
 
 /* ---------------- dB ---------------- */
 
-static void db_callback(Widget w, XtPointer context, XtPointer info)
+static void fft_db_callback(Widget w, XtPointer context, XtPointer info)
 {
   bool val;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
@@ -982,21 +982,21 @@ static void help_transform_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void blue_textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
+static void fft_blue_textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 {
   XtVaSetValues(w, XmNbackground, ss->sgx->lighter_blue, NULL);
   XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
 }
 
 
-static void blue_mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+static void fft_blue_mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   XtVaSetValues(w, XmNbackground, ss->sgx->lighter_blue, NULL);
   XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
 }
 
 
-static void white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+static void fft_white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   XtVaSetValues(w, XmNbackground, ss->sgx->text_focus_color, NULL);
   XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
@@ -1628,9 +1628,9 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       peak_txt = make_textfield_widget("max-peaks", display_form, args, n, ACTIVATABLE, NO_COMPLETER);
       XtRemoveCallback(peak_txt, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
-      XtAddCallback(peak_txt, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
-      XtAddEventHandler(peak_txt, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
-      XtAddEventHandler(peak_txt, EnterWindowMask, false, white_mouse_enter_text_callback, NULL);
+      XtAddCallback(peak_txt, XmNlosingFocusCallback, fft_blue_textfield_unfocus_callback, NULL);
+      XtAddEventHandler(peak_txt, LeaveWindowMask, false, fft_blue_mouse_leave_text_callback, NULL);
+      XtAddEventHandler(peak_txt, EnterWindowMask, false, fft_white_mouse_enter_text_callback, NULL);
       widget_int_to_text(peak_txt, max_transform_peaks(ss));
       XtAddCallback(peak_txt, XmNactivateCallback, peaks_activate_callback, NULL);
 
@@ -1647,7 +1647,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       db_button = make_togglebutton_widget("db-button", display_form, args, n);
-      XtAddCallback(db_button, XmNvalueChangedCallback, db_callback, NULL);
+      XtAddCallback(db_button, XmNvalueChangedCallback, fft_db_callback, NULL);
       XmStringFree(bstr);
 
       n = 0;
@@ -1667,9 +1667,9 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       db_txt = make_textfield_widget("db", display_form, args, n, ACTIVATABLE, NO_COMPLETER);
       XtRemoveCallback(db_txt, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
-      XtAddCallback(db_txt, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
-      XtAddEventHandler(db_txt, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
-      XtAddEventHandler(db_txt, EnterWindowMask, false, white_mouse_enter_text_callback, NULL);
+      XtAddCallback(db_txt, XmNlosingFocusCallback, fft_blue_textfield_unfocus_callback, NULL);
+      XtAddEventHandler(db_txt, LeaveWindowMask, false, fft_blue_mouse_leave_text_callback, NULL);
+      XtAddEventHandler(db_txt, EnterWindowMask, false, fft_white_mouse_enter_text_callback, NULL);
       widget_float_to_text(db_txt, min_dB(ss));
       XtAddCallback(db_txt, XmNactivateCallback, min_db_activate_callback, NULL);
 
@@ -1706,9 +1706,9 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       freq_base_txt = make_textfield_widget("lfb", display_form, args, n, ACTIVATABLE, NO_COMPLETER);
       XtRemoveCallback(freq_base_txt, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
-      XtAddCallback(freq_base_txt, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
-      XtAddEventHandler(freq_base_txt, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
-      XtAddEventHandler(freq_base_txt, EnterWindowMask, false, white_mouse_enter_text_callback, NULL);
+      XtAddCallback(freq_base_txt, XmNlosingFocusCallback, fft_blue_textfield_unfocus_callback, NULL);
+      XtAddEventHandler(freq_base_txt, LeaveWindowMask, false, fft_blue_mouse_leave_text_callback, NULL);
+      XtAddEventHandler(freq_base_txt, EnterWindowMask, false, fft_white_mouse_enter_text_callback, NULL);
       widget_float_to_text(freq_base_txt, log_freq_start(ss));
       XtAddCallback(freq_base_txt, XmNactivateCallback, log_freq_start_activate_callback, NULL);
 

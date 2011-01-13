@@ -1180,4 +1180,6 @@ char *slist_selection(slist *lst)
  * TODO: try cairo-trace and the new GL surface (1.10.0)
  *
  * gtk listener won't let me delete "(" in col 0?
+ * if we open the edit-history window, the graph squeezes down to nothing, and if we then
+ *   close the window, the pane does not adjust (the sliders stay short etc) -- is this the "expand" business?
  */

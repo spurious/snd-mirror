@@ -15886,7 +15886,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 	  if ((w->num_arg_types == 1) &&
 	      (w->arg_types[0] < 0))
 	    {
-	      /* check all #:rest args */
+	      /* check all :rest args */
 	      true_type = -(w->arg_types[0]);
 
 	      for (i = 1; i <= num_args; i++)

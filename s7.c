@@ -6494,6 +6494,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_GMP)
 static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 {
   #define H_log "(log z1 (z2 e)) returns log(z1) / log(z2) where z2 (the base) defaults to e: (log 8 2) = 3"
@@ -6562,6 +6563,7 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 
   return(s7_from_c_complex(sc, clog(s7_complex(x))));
 }
+#endif
 
 
 static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
@@ -8561,6 +8563,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_GMP)
 static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 {
   int i, type_a, type_b;
@@ -8864,7 +8867,7 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
   #define H_less_or_equal "(<= x1 ...) returns #t if its arguments are in increasing order"
   return(g_greater_1(sc, true, args));  
 }
-
+#endif
 
 
 
@@ -9030,6 +9033,7 @@ static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_GMP)
 static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_zero "(zero? num) returns #t if the number num is zero"
@@ -9055,6 +9059,7 @@ static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "negative?", 0, car(args), "a real"));
   return(make_boolean(sc, s7_is_negative(car(args))));
 }
+#endif
 
 
 static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
@@ -27570,6 +27575,7 @@ static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 {
+  #define H_log "(log z1 (z2 e)) returns log(z1) / log(z2) where z2 (the base) defaults to e: (log 8 2) = 3"
   /* either arg can be big, 2nd is optional */
   s7_pointer p0, p1 = NULL;
 
@@ -28442,6 +28448,7 @@ static s7_pointer big_is_zero_1(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer big_is_zero(s7_scheme *sc, s7_pointer args)
 {
+  #define H_is_zero "(zero? num) returns #t if the number num is zero"
   return(big_is_zero_1(sc, car(args)));
 }
 
@@ -28472,6 +28479,7 @@ static bool s7_is_positive(s7_pointer obj)
 
 static s7_pointer big_is_positive(s7_scheme *sc, s7_pointer args)
 {
+  #define H_is_positive "(positive? num) returns #t if the real number num is positive (greater than 0)"
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "positive?", 0, car(args), "a real"));
   
@@ -28505,6 +28513,7 @@ static bool s7_is_negative(s7_pointer obj)
 
 static s7_pointer big_is_negative(s7_scheme *sc, s7_pointer args)
 {
+  #define H_is_negative "(negative? num) returns #t if the real number num is negative (less than 0)"
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "negative?", 0, car(args), "a real"));
   
@@ -29345,6 +29354,7 @@ static s7_pointer big_min(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_less(s7_scheme *sc, s7_pointer args)
 {
+  #define H_less "(< x1 ...) returns #t if its arguments are in increasing order"
   int result_type;
   s7_pointer x, previous, current;
   
@@ -29381,6 +29391,7 @@ static s7_pointer big_less(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_less_or_equal(s7_scheme *sc, s7_pointer args)
 {
+  #define H_less_or_equal "(<= x1 ...) returns #t if its arguments are in increasing order"
   int result_type;
   s7_pointer x, previous, current;
   
@@ -29416,6 +29427,7 @@ static s7_pointer big_less_or_equal(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_greater(s7_scheme *sc, s7_pointer args)
 {
+  #define H_greater "(> x1 ...) returns #t if its arguments are in decreasing order"
   int result_type;
   s7_pointer x, previous, current;
 
@@ -29451,6 +29463,7 @@ static s7_pointer big_greater(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_greater_or_equal(s7_scheme *sc, s7_pointer args)
 {
+  #define H_greater_or_equal "(>= x1 ...) returns #t if its arguments are in decreasing order"
   int result_type;
   s7_pointer x, previous, current;
   
@@ -30524,8 +30537,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "with-output-to-file",     g_with_output_to_file,     2, 0, false, H_with_output_to_file);
   
   
-  s7_define_function(sc, "number->string",          g_number_to_string,        1, 1, false, H_number_to_string);
-  s7_define_function(sc, "string->number",          g_string_to_number,        1, 1, false, H_string_to_number);
+#if (!WITH_GMP)
   s7_define_function(sc, "make-polar",              g_make_polar,              2, 0, false, H_make_polar);
   s7_define_function(sc, "make-rectangular",        g_make_rectangular,        2, 0, false, H_make_rectangular);
   s7_define_function(sc, "magnitude",               g_magnitude,               1, 0, false, H_magnitude);
@@ -30572,35 +30584,41 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, ">",                       g_greater,                 2, 0, true,  H_greater);
   s7_define_function(sc, "<=",                      g_less_or_equal,           2, 0, true,  H_less_or_equal);
   s7_define_function(sc, ">=",                      g_greater_or_equal,        2, 0, true,  H_greater_or_equal);
+  s7_define_function(sc, "even?",                   g_is_even,                 1, 0, false, H_is_even);
+  s7_define_function(sc, "odd?",                    g_is_odd,                  1, 0, false, H_is_odd);
+  s7_define_function(sc, "zero?",                   g_is_zero,                 1, 0, false, H_is_zero);
+  s7_define_function(sc, "positive?",               g_is_positive,             1, 0, false, H_is_positive);
+  s7_define_function(sc, "negative?",               g_is_negative,             1, 0, false, H_is_negative);
+  s7_define_function(sc, "infinite?",               g_is_infinite,             1, 0, false, H_is_infinite);
+
+  s7_define_function(sc, "inexact->exact",          g_inexact_to_exact,        1, 0, false, H_inexact_to_exact);
+  s7_define_function(sc, "exact->inexact",          g_exact_to_inexact,        1, 0, false, H_exact_to_inexact);
+
+  s7_define_function(sc, "random",                  g_random,                  1, 1, false, H_random);
+  s7_define_function(sc, "make-random-state",       g_make_random_state,       1, 0, false, H_make_random_state);
+
+  s7_define_function(sc, "integer-length",          g_integer_length,          1, 0, false, H_integer_length);
+  s7_define_function(sc, "logior",                  g_logior,                  0, 0, true,  H_logior);
+  s7_define_function(sc, "logxor",                  g_logxor,                  0, 0, true,  H_logxor);
+  s7_define_function(sc, "logand",                  g_logand,                  0, 0, true,  H_logand);
+  s7_define_function(sc, "lognot",                  g_lognot,                  1, 0, false, H_lognot);
+  s7_define_function(sc, "ash",                     g_ash,                     2, 0, false, H_ash);
+#endif
+  s7_define_function(sc, "integer-decode-float",    g_integer_decode_float,    1, 0, false, H_integer_decode_float);
+  s7_define_function(sc, "exact?",                  g_is_exact,                1, 0, false, H_is_exact);
+  s7_define_function(sc, "inexact?",                g_is_inexact,              1, 0, false, H_is_inexact);
+
+  rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL);
+
   s7_define_function(sc, "number?",                 g_is_number,               1, 0, false, H_is_number);
   s7_define_function(sc, "integer?",                g_is_integer,              1, 0, false, H_is_integer);
   s7_define_function(sc, "real?",                   g_is_real,                 1, 0, false, H_is_real);
   s7_define_function(sc, "complex?",                g_is_complex,              1, 0, false, H_is_complex);
   s7_define_function(sc, "rational?",               g_is_rational,             1, 0, false, H_is_rational);
   s7_define_function(sc, "nan?",                    g_is_nan,                  1, 0, false, H_is_nan);
-  s7_define_function(sc, "infinite?",               g_is_infinite,             1, 0, false, H_is_infinite);
-  s7_define_function(sc, "even?",                   g_is_even,                 1, 0, false, H_is_even);
-  s7_define_function(sc, "odd?",                    g_is_odd,                  1, 0, false, H_is_odd);
-  s7_define_function(sc, "zero?",                   g_is_zero,                 1, 0, false, H_is_zero);
-  s7_define_function(sc, "positive?",               g_is_positive,             1, 0, false, H_is_positive);
-  s7_define_function(sc, "negative?",               g_is_negative,             1, 0, false, H_is_negative);
 
-  s7_define_function(sc, "inexact->exact",          g_inexact_to_exact,        1, 0, false, H_inexact_to_exact);
-  s7_define_function(sc, "exact->inexact",          g_exact_to_inexact,        1, 0, false, H_exact_to_inexact);
-  s7_define_function(sc, "exact?",                  g_is_exact,                1, 0, false, H_is_exact);
-  s7_define_function(sc, "inexact?",                g_is_inexact,              1, 0, false, H_is_inexact);
-
-  s7_define_function(sc, "integer-length",          g_integer_length,          1, 0, false, H_integer_length);
-  s7_define_function(sc, "integer-decode-float",    g_integer_decode_float,    1, 0, false, H_integer_decode_float);
-  s7_define_function(sc, "logior",                  g_logior,                  0, 0, true,  H_logior);
-  s7_define_function(sc, "logxor",                  g_logxor,                  0, 0, true,  H_logxor);
-  s7_define_function(sc, "logand",                  g_logand,                  0, 0, true,  H_logand);
-  s7_define_function(sc, "lognot",                  g_lognot,                  1, 0, false, H_lognot);
-  s7_define_function(sc, "ash",                     g_ash,                     2, 0, false, H_ash);
-  
-  rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL);
-  s7_define_function(sc, "random",                  g_random,                  1, 1, false, H_random);
-  s7_define_function(sc, "make-random-state",       g_make_random_state,       1, 0, false, H_make_random_state);
+  s7_define_function(sc, "number->string",          g_number_to_string,        1, 1, false, H_number_to_string);
+  s7_define_function(sc, "string->number",          g_string_to_number,        1, 1, false, H_string_to_number);
 
   
   s7_define_function(sc, "char-upcase",             g_char_upcase,             1, 0, false, H_char_upcase);

@@ -74,7 +74,7 @@ static mus_float_t set_speed_label(Widget speed_number, int ival)
 }
 
 
-static void speed_click_callback(Widget w, XtPointer context, XtPointer info) 
+static void mix_speed_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char speed_number_buffer[6];
   mus_float_t speed;
@@ -97,7 +97,7 @@ static void speed_click_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void speed_label_click_callback(Widget w, XtPointer context, XtPointer info) 
+static void mix_speed_label_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char speed_number_buffer[6];
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
@@ -118,7 +118,7 @@ static void speed_label_click_callback(Widget w, XtPointer context, XtPointer in
 }
 
 
-static void speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
+static void mix_speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival;
   mus_float_t speed;
@@ -145,7 +145,7 @@ static void speed_drag_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
+static void mix_speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   mus_float_t speed;
@@ -198,7 +198,7 @@ static void change_mix_amp(int mix_id, mus_float_t val)
 }
 
 
-static void amp_click_callback(Widget w, XtPointer context, XtPointer info) 
+static void mix_amp_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (!(mix_is_active(mix_dialog_id))) return;
   change_mix_amp(mix_dialog_id, 1.0);
@@ -207,7 +207,7 @@ static void amp_click_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void amp_drag_callback(Widget w, XtPointer context, XtPointer info) 
+static void mix_amp_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
@@ -221,7 +221,7 @@ static void amp_drag_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
+static void mix_amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival;
   if (!(mix_is_active(mix_dialog_id))) return;
@@ -811,7 +811,7 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
       w_speed_label = make_pushbutton_widget("mix-speed-label", mainform, args, n);
-      XtAddCallback(w_speed_label, XmNactivateCallback, speed_click_callback, NULL);
+      XtAddCallback(w_speed_label, XmNactivateCallback, mix_speed_click_callback, NULL);
       XmStringFree(s1);
 
       n = 0;
@@ -830,7 +830,7 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
       w_speed_number = make_pushbutton_widget("mix-speed-number", mainform, args, n);
-      XtAddCallback(w_speed_number, XmNactivateCallback, speed_label_click_callback, NULL);
+      XtAddCallback(w_speed_number, XmNactivateCallback, mix_speed_label_click_callback, NULL);
       XmStringFree(s1);
 
       n = 0;
@@ -845,8 +845,8 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNvalue, speed_to_scrollbar(speed_control_min(ss), 1.0, speed_control_max(ss))); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
-      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(speed_drag_callback, NULL)); n++;
-      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(speed_valuechanged_callback, NULL)); n++;
+      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(mix_speed_drag_callback, NULL)); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(mix_speed_valuechanged_callback, NULL)); n++;
       w_speed = XtCreateManagedWidget("mix-speed", xmScrollBarWidgetClass, mainform, args, n);
   
       free(n1);
@@ -868,7 +868,7 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
       w_amp_label = make_pushbutton_widget("mix-amp-label", mainform, args, n);
-      XtAddCallback(w_amp_label, XmNactivateCallback, amp_click_callback, NULL);
+      XtAddCallback(w_amp_label, XmNactivateCallback, mix_amp_click_callback, NULL);
       XmStringFree(s1);
 
       n = 0;
@@ -897,8 +897,8 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNvalue, 0); n++; 
-      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(amp_drag_callback, NULL)); n++;
-      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(amp_valuechanged_callback, NULL)); n++;
+      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(mix_amp_drag_callback, NULL)); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(mix_amp_valuechanged_callback, NULL)); n++;
       w_amp = XtCreateManagedWidget("mix-amp", xmScrollBarWidgetClass, mainform, args, n);
       free(n1);
       free(n2);

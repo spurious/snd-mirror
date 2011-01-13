@@ -2033,7 +2033,7 @@ widget_t start_preferences_dialog(void)
 				(include_marks_menu = find_marks_menu()),
 				dpy_box,
 				marks_menu_toggle);
-    remember_pref(prf, reflect_marks_menu, save_marks_menu, help_marks_menu, clear_marks_menu, revert_marks_menu);
+    remember_pref(prf, reflect_marks_menu, save_marks_menu, marks_help_menu, clear_marks_menu, revert_marks_menu);
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("a toolbar", "toolbar.scm",

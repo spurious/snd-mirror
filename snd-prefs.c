@@ -3909,7 +3909,7 @@ static bool find_marks_menu(void)
 }
 
 
-static void help_marks_menu(prefs_info *prf)
+static void marks_help_menu(prefs_info *prf) /* avoid collision with menu name help_marks_menu) */
 {
   snd_help(prf->var_name,
 	   "This option adds a top-level 'Marks' menu that includes such things as play between marks, \

@@ -1711,6 +1711,11 @@ yow!! -- I'm using mpc_cmp
 (test (let ((s1 "1234") (s2 "124")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2)) #f)
 (test "\x3012" "012")
 
+(for-each
+ (lambda (arg)
+   (test (string=? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
 
 ;; this strikes me as highly dubious
 (test (call-with-input-string "1\n2" (lambda (p) (read p))) 1)
@@ -1787,6 +1792,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (test (string<? (string (integer->char #xf0)) (string (integer->char #x70))) #f) 
 
+(for-each
+ (lambda (arg)
+   (test (string<? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
+
 
 ;;; string>?
 (test (string>? "aaab" "aaaa") #t)
@@ -1828,6 +1839,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (test (string>? (string (integer->char #xf0)) (string (integer->char #x70))) #t) ; ??
 
+(for-each
+ (lambda (arg)
+   (test (string>? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
+
 
 ;;; string<=?
 (test (string<=? "aaa" "aaaa") #t)
@@ -1866,6 +1883,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((s1 "1234") (s2 "123")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<=? s1 s2)) #f)
 (test (let ((s1 "123") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<=? s1 s2)) #t)
 (test (let ((s1 "1234") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<=? s1 s2)) #t)
+
+(for-each
+ (lambda (arg)
+   (test (string<=? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 
@@ -1910,6 +1932,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((s1 "123") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string>=? s1 s2)) #f)
 (test (let ((s1 "1234") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string>=? s1 s2)) #t)
 
+(for-each
+ (lambda (arg)
+   (test (string>=? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
 
 
 ;;; string-ci=?
@@ -1938,6 +1965,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((s1 "abcd") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci=? s1 s2)) #t)
 (test (let ((s1 "abcd") (s2 "ABCE")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci=? s1 s2)) #f)
 (test (let ((s1 "abcd") (s2 "ABC")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci=? s1 s2)) #f)
+
+(for-each
+ (lambda (arg)
+   (test (string-ci=? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
 
 #|
 (let ((size 15)
@@ -2003,6 +2036,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((s1 "abcd") (s2 "ABC")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #f)
 (test (let ((s1 "abc") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #t)
 
+(for-each
+ (lambda (arg)
+   (test (string-ci<? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
+
 
 
 ;;; string-ci>?
@@ -2040,6 +2079,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((s1 "abcd") (s2 "ABC")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>? s1 s2)) #t)
 (test (let ((s1 "abc") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>? s1 s2)) #f)
 
+(for-each
+ (lambda (arg)
+   (test (string-ci>? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
 
 
 
@@ -2075,6 +2119,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((s1 "abcd") (s2 "ABCE")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<=? s1 s2)) #t)
 (test (let ((s1 "abcd") (s2 "ABC")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<=? s1 s2)) #f)
 (test (let ((s1 "abc") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<=? s1 s2)) #t)
+
+(for-each
+ (lambda (arg)
+   (test (string-ci<=? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
 
 
 
@@ -2112,54 +2162,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((s1 "abcd") (s2 "ABCE")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>=? s1 s2)) #f)
 (test (let ((s1 "abcd") (s2 "ABC")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>=? s1 s2)) #t)
 (test (let ((s1 "abc") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>=? s1 s2)) #f)
-
-
-
-(for-each
- (lambda (arg)
-   (test (string=? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (string<? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (string>? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (string<=? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (string>=? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (string-ci=? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-
-(for-each
- (lambda (arg)
-   (test (string-ci<? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (string-ci>? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (string-ci<=? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
@@ -4822,7 +4824,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (eval-string "#t1") 'error)  ;   similarly this is #t 1 in guile
 (test (eval-string "'#(1 . 2)") 'error)
 (test (eval-string "#(1 2 . 3)") 'error)
-
+(test (eval-string "'#'") 'error)
+(test (eval-string "#b") 'error)
 
 
 
@@ -9476,7 +9479,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (vector 0. .(.1)) #(0.0 0.1))
 
 ;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
-;(test (keyword? '#:#) #t) ; probably not for long... (Guile compatibility)
 (test (char? #\#) #t)
 (test (car `(,.1e0)) .1)
 (test (car `(,.1E0)) .1)
@@ -13985,11 +13987,9 @@ this prints:
 	    (eval-string "(go + 32 1)")))))
       'error)
 
-(test ((call/cc
-	(lambda (go)
-	  (lambda ()
-	    (eval-string "(go + 32 1)")))))
-      33)
+
+;;; (test ((call/cc (lambda (go) (lambda () (eval-string "(go + 32 1)"))))) 33)
+;;; this is ok in the listener, but exits the load in this context
 
 (test ((call/cc
 	(lambda (go-1)
@@ -15649,7 +15649,7 @@ why are these different (read-time `#() ? )
 (test (cond ((cond (())) ':)) ':)
 (test (keyword? :#t) #t)
 (test (eq? #t :#t) #f)
-;(test (keyword? '#:t) #f)  ; these 2 are fooled by the Guile-related #: business
+;(test (keyword? '#:t) #f)  ; these 2 are fooled by the Guile-related #: business (which is still supported)
 ;(test (keyword? '#:#t) #f)
 (test (keyword? :-1) #t)
 (test (keyword? (symbol ":#(1 #\\a (3))")) #t)
@@ -34871,6 +34871,10 @@ abs     1       2
 (num-test (truncate 19/10) 1)
 (num-test (truncate 1/2) 0)
 (num-test (truncate 3/2) 1)
+(num-test (truncate 100/3) 33)
+(num-test (truncate -100/3) -33)
+(num-test (truncate 200/3) 66)
+(num-test (truncate -200/3) -66)
 (num-test (truncate most-negative-fixnum) most-negative-fixnum)
 (num-test (truncate most-positive-fixnum) most-positive-fixnum)
 (num-test (truncate (/ (- most-positive-fixnum 1) most-positive-fixnum)) 0)
@@ -34898,6 +34902,14 @@ abs     1       2
       (num-test (truncate (exact->inexact most-negative-fixnum)) most-negative-fixnum)
       (test (truncate (exact->inexact most-positive-fixnum)) most-positive-fixnum)
       (num-test (truncate -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
+      (num-test (truncate 1e19) 10000000000000000000)
+      (num-test (truncate 1e32) 100000000000000000000000000000000)
+      (num-test (truncate -1e19) -10000000000000000000)
+      (num-test (truncate -1e32) -100000000000000000000000000000000)
+      (num-test (truncate 100000000000000000000000000000000/3) 33333333333333333333333333333333)
+      (num-test (truncate -100000000000000000000000000000000/3) -33333333333333333333333333333333)
+      (num-test (truncate 200000000000000000000000000000000/3) 66666666666666666666666666666666)
+      (num-test (truncate -200000000000000000000000000000000/3) -66666666666666666666666666666666)
       ))
 
 (test (truncate) 'error)
@@ -34935,6 +34947,10 @@ abs     1       2
 (num-test (floor 19/10) 1)
 (num-test (floor 1/2) 0)
 (num-test (floor 3/2) 1)
+(num-test (floor 100/3) 33)
+(num-test (floor -100/3) -34)
+(num-test (floor 200/3) 66)
+(num-test (floor -200/3) -67)
 (num-test (floor most-negative-fixnum) most-negative-fixnum)
 (num-test (floor most-positive-fixnum) most-positive-fixnum)
 (num-test (floor -2.225073858507201399999999999999999999996E-308) -1)
@@ -34975,6 +34991,12 @@ abs     1       2
       (num-test (floor -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
       (num-test (floor 1e19) 10000000000000000000)
       (num-test (floor 1e32) 100000000000000000000000000000000)
+      (num-test (floor -1e19) -10000000000000000000)
+      (num-test (floor -1e32) -100000000000000000000000000000000)
+      (num-test (floor 100000000000000000000000000000000/3) 33333333333333333333333333333333)
+      (num-test (floor -100000000000000000000000000000000/3) -33333333333333333333333333333334)
+      (num-test (floor 200000000000000000000000000000000/3) 66666666666666666666666666666666)
+      (num-test (floor -200000000000000000000000000000000/3) -66666666666666666666666666666667)
       ))
 
 (test (floor) 'error)
@@ -35013,6 +35035,10 @@ abs     1       2
 (num-test (ceiling 19/10) 2)
 (num-test (ceiling 1/2) 1)
 (num-test (ceiling 3/2) 2)
+(num-test (ceiling 100/3) 34)
+(num-test (ceiling -100/3) -33)
+(num-test (ceiling 200/3) 67)
+(num-test (ceiling -200/3) -66)
 (num-test (ceiling 2147483646.8) 2147483647)
 (num-test (ceiling -2147483647.8) -2147483647)
 (num-test (ceiling -.0001) 0)
@@ -35034,6 +35060,12 @@ abs     1       2
       (num-test (ceiling -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
       (num-test (ceiling  9223372036854775806.7)  9223372036854775807)
       (num-test (ceiling -9223372036854775807.9) -9223372036854775807)
+      (num-test (ceiling -1e19) -10000000000000000000)
+      (num-test (ceiling -1e32) -100000000000000000000000000000000)
+      (num-test (ceiling 100000000000000000000000000000000/3) 33333333333333333333333333333334)
+      (num-test (ceiling -100000000000000000000000000000000/3) -33333333333333333333333333333333)
+      (num-test (ceiling 200000000000000000000000000000000/3) 66666666666666666666666666666667)
+      (num-test (ceiling -200000000000000000000000000000000/3) -66666666666666666666666666666666)
       ))
 
 (num-test (ceiling 0) 0)
@@ -35098,6 +35130,10 @@ abs     1       2
 (num-test (round 19/10) 2)
 (num-test (round 1/2) 0)
 (num-test (round 3/2) 2)
+(num-test (round 100/3) 33)
+(num-test (round -100/3) -33)
+(num-test (round 200/3) 67)
+(num-test (round -200/3) -67)
 (num-test (round most-negative-fixnum) most-negative-fixnum)
 (num-test (round most-positive-fixnum) most-positive-fixnum)
 (num-test (round -2.225073858507201399999999999999999999996E-308) 0)
@@ -35110,6 +35146,12 @@ abs     1       2
       (num-test (round (exact->inexact most-negative-fixnum)) most-negative-fixnum)
       (test (round (exact->inexact most-positive-fixnum)) most-positive-fixnum)
       (num-test (round -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
+      (num-test (round -1e19) -10000000000000000000)
+      (num-test (round -1e32) -100000000000000000000000000000000)
+      (num-test (round 100000000000000000000000000000000/3) 33333333333333333333333333333333)
+      (num-test (round -100000000000000000000000000000000/3) -33333333333333333333333333333333)
+      (num-test (round 200000000000000000000000000000000/3) 66666666666666666666666666666667)
+      (num-test (round -200000000000000000000000000000000/3) -66666666666666666666666666666667)
       ))
 
 (test (equal? (let ((vals '())) 
@@ -59920,7 +59962,7 @@ etc....
 (num-test (- (string->number "11880772664.84631001" 9) (string->number "1.188077266484631001E10" 9)) 0.0)
 (num-test (- (string->number "11880772.66484631001" 9) (string->number "1.188077266484631001E7" 9)) 0.0)
 
-(num-test (- (string->number "1177077266474631001000." 8) (string->number "1.177077266474631001E21" 8)) 0.0)
+;; (num-test (- (string->number "1177077266474631001000." 8) (string->number "1.177077266474631001E21" 8)) 0.0)
 ;; a fake unfortunately
 
 (num-test 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111e-300 1.111111111111111111111111111111111111113E-1)
@@ -60073,10 +60115,18 @@ etc
 
 (if with-bignums
     (begin
+      (test (bignum? (bignum "2")) #t)
+      (test (bignum? (bignum "#e1.5")) #t)
+
+      (num-test (bignum "6/3") 2)
+      (num-test (bignum "+3/6") 1/2)
+      (num-test (bignum "7447415382/3") 2482471794)
+
       (for-each
        (lambda (n)
 	 (test (bignum? n) #f))
        (list 0 1 -1 1/3 1.0 1+i 1073741824 1.0e8 1+1.0e8i))
+
       (for-each 
        (lambda (n)
 	 (test (bignum? n) #t))
@@ -60088,14 +60138,17 @@ etc
 	 (test (bignum n) 'error)
 	 (test (bignum "1.0" n) 'error))
        (list "hi" (integer->char 65) #f #t '(1 2) 'a-symbol (cons 1 2) (make-vector 3) 1 3/4 1.5 1+i abs))
-      (num-test (bignum "6/3") 2)
-      (num-test (bignum "+3/6") 1/2)
-      (num-test (bignum "7447415382/3") 2482471794)
 
       (test (bignum?) 'error)
       (test (bignum? 1 2) 'error)
+
       (test (bignum) 'error)
       (test (bignum "hi" "ho") 'error)
+      (test (bignum "") 'error)
+      (test (bignum " ") 'error)
+      (test (bignum " 1 ") 'error)
+      (test (bignum "abc") 'error)
+      (test (bignum "1/2/3") 'error)
       ))
 
 
