@@ -110,10 +110,12 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define EVENT_BUTTON(Ev)      (Ev)->button
 #define EVENT_TYPE(Ev)        (Ev)->type
 #define EVENT_KEYVAL(Ev)      (Ev)->keyval
-#define EVENT_DIRECTION(Ev)   (Ev)->direction
 #define EVENT_IS_HINT(Ev)     (Ev)->is_hint
+
+#if (!HAVE_GTK_3)
 #define EVENT_AREA_WIDTH(Ev)  (Ev)->area.width
 #define EVENT_AREA_HEIGHT(Ev) (Ev)->area.height
+#endif
 
 #define idle_t guint
 #define idle_func_t gboolean
@@ -214,7 +216,7 @@ typedef struct {
   int page;
   bool mini_active;
   gulong minibuffer_watcher;
-  graphics_context *name_pix_ax, *stop_pix_ax, *speed_arrow_ax;
+  graphics_context *name_pix_ax, *stop_pix_ax, *speed_arrow_ax, *filter_ax;
   graphics_context **clock_pix_ax;
   GtkWidget **clock_widgets;
   int num_clock_widgets;

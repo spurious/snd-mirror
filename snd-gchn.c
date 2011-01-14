@@ -408,9 +408,14 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
   snd_info *sp;
   cp = (chan_info *)data;
   if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES) || (cp->sound == NULL)) return(false);
+
+#if (!HAVE_GTK_3)
   if ((EVENT_AREA_HEIGHT(ev) < MIN_REGRAPH_Y) || 
       (EVENT_AREA_WIDTH(ev) < MIN_REGRAPH_X)) 
     return(false);
+  /* these are 0 in gtk 3 */
+#endif
+
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
     for_each_sound_chan(sp, update_graph_or_warn);
@@ -681,14 +686,6 @@ static gboolean graph_button_release(GtkWidget *w, GdkEventButton *ev, gpointer 
 }
 
 
-static gboolean graph_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
-{
-  /* ev->direction + 4 maps this into mouse-click-hook as button 4 or 5 (!) -- is this a good idea? */
-  graph_button_release_callback((chan_info *)data, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), EVENT_DIRECTION(ev) + 4);
-  return(false);
-}
-
-
 static gboolean graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
   int x, y;
@@ -834,7 +831,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  SG_SIGNAL_CONNECT(cw[W_graph], "enter_notify_event", graph_mouse_enter, NULL);
 	  SG_SIGNAL_CONNECT(cw[W_graph], "leave_notify_event", graph_mouse_leave, NULL);
 	  SG_SIGNAL_CONNECT(cw[W_graph], "key_press_event", real_graph_key_press, cp);
- 	  SG_SIGNAL_CONNECT(cw[W_graph], "scroll_event", graph_scroll, cp);
 	}
 
       cw[W_bottom_scrollers] = gtk_vbox_new(true, 0);
@@ -1090,14 +1086,15 @@ void free_cursor_pix(chan_info *cp)
 
 bool restore_cursor_pix(chan_info *cp, graphics_context *ax)
 {
-  if (cp->cgx->cursor_pix_ready)
+  if ((ax->cr) && (cp->cgx->cursor_pix_ready))
     {
       cairo_t *cr;
-      cr = gdk_cairo_create(ax->wn);
+      /* cr = gdk_cairo_create(ax->wn); */
+      cr = ax->cr;
       gdk_cairo_set_source_pixbuf(cr, cp->cgx->cursor_pix, cp->cgx->cursor_pix_x0, cp->cgx->cursor_pix_y0);
       cairo_paint(cr);
-      cairo_destroy(cr);
-      free_cursor_pix(cp);
+      /* cairo_destroy(cr); */
+      free_cursor_pix(cp); /* probably not needed -- draw_cursor also calls this */
       return(true);
     }
   return(false);

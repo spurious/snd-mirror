@@ -259,6 +259,9 @@ static void env_redisplay_1(printing_t printing)
 
 	  if ((axis) && (gray_ap))
 	    {
+	      if (enved_cr)
+		cairo_destroy(enved_cr);
+
 	      enved_cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));	      
  
  	      /* we have to create a new cairo_t each time, or the envelope is messed
@@ -292,7 +295,6 @@ static void env_redisplay_1(printing_t printing)
 
 	      cairo_pop_group_to_source(enved_cr);
 	      cairo_paint(enved_cr);
-	      cairo_destroy(enved_cr);
 	    }
 	}
     }

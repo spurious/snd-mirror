@@ -141,7 +141,7 @@ static void graph_redisplay(void)
   cairo_pop_group_to_source(ax->cr);
   cairo_paint(ax->cr);
   /* cairo_destroy(ax->cr); */
-  ax->cr = NULL;
+  /* ax->cr = NULL; */
 }
 
 

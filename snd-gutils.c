@@ -1158,10 +1158,11 @@ char *slist_selection(slist *lst)
  *       if combined, initial drag of mix does not reflect drag until button release
  *       mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *       perhaps play triangle for mix
- * now there are no fonts in the drawer? [is this a pango-cairo bug? graph labels are handled by pango]
- * channel graph is unlabelled and has extra space on right? (it's cut off)
+ *
  * freq response curve in controls is broken -- mouse actions are caught but no display update
- * fft window graph is broken
+ * fft window graph is broken [and the entire dialog is flakey]
+ *   adding invalidate rect got the dialog back but hangs the system! 
+ *   Now Xorg is taking up 91% of memory!
  * view files dialog amp env is broken
  * edit env graph is cutoff on right
  * prefs sliders have no color
@@ -1171,15 +1172,13 @@ char *slist_selection(slist *lst)
  * the slist entries look bad
  * segfault in test 20 (same problem as earlier)
  *  (see also goto_window above)
+ * try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
+ * gtk listener won't let me delete "(" in col 0? -- flakey
  *
- * the graph problems are all the same: the drawingarea widget is not updating itself when cairo draws on it.
- *   gdk_window_invalidate_rect does not help, cairo is drawing, but I think I need both cairo_rectangle before
- *   the pop source, and don't call cairo_destroy, and even then it needs an explicit expose event.  This seems
- *   very buggy!
- *
- * TODO: try cairo-trace and the new GL surface (1.10.0)
- *
- * gtk listener won't let me delete "(" in col 0?
  * if we open the edit-history window, the graph squeezes down to nothing, and if we then
  *   close the window, the pane does not adjust (the sliders stay short etc) -- is this the "expand" business?
+ *   no, I think it's another expose problem.  Now the ticks aren't redrawn and there's an undrawn rectangle
+ *   on the right.  gdk_window_invalidate_rect(GDK_WINDOW(WIDGET_TO_WINDOW(channel_graph(cp))), NULL, true);
+ *      in update_graph_1 fixes this, but now I'm getting continuous expose updates!
+ *   Also, someone is setting squelch?  
  */

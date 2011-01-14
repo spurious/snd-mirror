@@ -299,7 +299,9 @@ static Drawable *sound_pix_wn(chan_info *cp)
 
 static void show_happy_face(Drawable *wn, mus_float_t pct)
 {
-  cairo_t *cr;
+  static cairo_t *cr = NULL;
+  if (cr)
+    cairo_destroy(cr);
   cr = gdk_cairo_create(wn);
 
   /* overall background */
@@ -352,18 +354,19 @@ static void show_happy_face(Drawable *wn, mus_float_t pct)
   
   cairo_pop_group_to_source(cr);
   cairo_paint(cr);
-  cairo_destroy(cr);
 }
 
 
 static void hide_happy_face(Drawable *wn)
 {
-  cairo_t *cr;
+  static cairo_t *cr = NULL;
+  if (cr)
+    cairo_destroy(cr);
+    
   cr = gdk_cairo_create(wn);
   cairo_set_source_rgb(cr, ss->sgx->basic_color->red, ss->sgx->basic_color->green, ss->sgx->basic_color->blue); 
   cairo_rectangle(cr, 0, 0, 24, 24);
   cairo_fill(cr);
-  cairo_destroy(cr);
 }
 
 
@@ -1272,10 +1275,21 @@ void display_filter_env(snd_info *sp)
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
   width = widget_width(drawer);
 
-  ax = (graphics_context *)calloc(1, sizeof(graphics_context));
-  ax->gc = ss->sgx->fltenv_basic_gc;
-  ax->wn = WIDGET_TO_WINDOW(drawer);
-  ax->w = drawer;
+  if (sp->sgx->filter_ax == NULL)
+    {
+      ax = (graphics_context *)calloc(1, sizeof(graphics_context));
+      ax->gc = ss->sgx->fltenv_basic_gc;
+      ax->wn = WIDGET_TO_WINDOW(drawer);
+      ax->w = drawer;
+      ax->cr = NULL;
+      sp->sgx->filter_ax = ax;
+    }
+  else 
+    {
+      ax = sp->sgx->filter_ax;
+      if (ax->cr)
+	cairo_destroy(ax->cr);
+    }
   ax->cr = gdk_cairo_create(ax->wn);
   cairo_push_group(ax->cr);
 
@@ -1301,8 +1315,6 @@ void display_filter_env(snd_info *sp)
 
   cairo_pop_group_to_source(ax->cr);
   cairo_paint(ax->cr);
-  cairo_destroy(ax->cr);
-  free(ax);
 }
 
 

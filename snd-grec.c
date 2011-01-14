@@ -95,19 +95,21 @@ static void recorder_help(GtkWidget *w, gpointer context)
 
 static void display_meters(mus_float_t *maxes)
 {
+  static cairo_t *cr = NULL;
+
   int i, x0 = 0;
   /* if maxes is NULL, assume all 0's */
   if (recorder_chans == 0) return;
   {
-    cairo_t *cr;
+    if (cr)
+      cairo_destroy(cr);
+
     cr = gdk_cairo_create(recorder_ax->wn);
     cairo_push_group(cr);
     
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
     cairo_rectangle(cr, 0, 0, meters_width, meter_height);
     cairo_fill(cr);
-    
-
     
     for (i = 0; i < recorder_chans; i++, x0 += meter_width)
       {
@@ -144,7 +146,6 @@ static void display_meters(mus_float_t *maxes)
 
     cairo_pop_group_to_source(cr);
     cairo_paint(cr);
-    cairo_destroy(cr);
   }
 }
 
