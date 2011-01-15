@@ -2365,6 +2365,7 @@ This also affects format and sort!:
 <li>(hash-table-set! ht key value)
 <li>(hash-table? obj)
 <li>(hash-table-size ht)
+<li>(make-hash-table-iterator ht)
 </ul>
 
 <p>
@@ -2383,6 +2384,8 @@ If you pass a table size that is not a power of 2, make-hash-table rounds it up 
 
 <p>hash-table (the function) parallels (the functions) vector, list, and string.  Its arguments are cons's containing key/value pairs.
 The result is a new hash-table with those values preinstalled: <code>(hash-table '("hi" . 32) '("ho" . 1))</code>.
+make-hash-table-iterator returns a function of no arguments (a "thunk").  Each time you call this function, it
+returns the next entry in the hash table.  When it runs out of entries, it returns nil.
 </p>
 
 <small>
@@ -2409,8 +2412,9 @@ make-sparse-array
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>for-each and map accept hash-table arguments. On each iteration, the map or for-each function is passed
-an entry, <code>'(key . value)</code>, in whatever order the entries are encountered in the table.
+<p>map and for-each accept hash-table arguments. On each iteration, the map or for-each function is passed
+an entry, <code>'(key . value)</code>, in whatever order the entries are encountered in the table.  (Both use
+make-hash-table-iterator internally).
 </p>
 
 <pre>
@@ -2419,6 +2423,7 @@ an entry, <code>'(key . value)</code>, in whatever order the entries are encount
 </pre>
 
 <p>reverse of a hash-table returns a new table with the keys and values reversed.
+<code>(fill! table '()) clears out all entries in the hash-table.
 </p>
 
 </blockquote>

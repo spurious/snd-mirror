@@ -583,7 +583,7 @@ struct s7_scheme {
   s7_pointer __FUNC__;
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer FEED_TO;                 /* => */
-  s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
+  s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, HASH_TABLE_ITERATE;
   s7_pointer S_IS_TYPE, S_TYPE_MAKE, S_TYPE_REF, S_TYPE_ARG;
   s7_pointer s_function_args;
 #if WITH_UNQUOTE_SPLICING
@@ -15576,29 +15576,56 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
 }
 
 
-/* (let ((ht (make-hash-table))) (set! (ht 1) 32) (for-each (lambda (x) (format #t "~A~%" x)) ht)) */
-
-static s7_pointer hash_table_entry(s7_scheme *sc, s7_pointer table, s7_Int loc)
+static s7_pointer g_hash_table_iterate(s7_scheme *sc, s7_pointer args)
 {
-  /* SOMEDAY: optimize hash_table_entry */
-  s7_Int entry = 0, vloc, len;
+  /* internal func pointed to by sc->HASH_TABLE_ITERATE */
+  s7_pointer lst, loc, table;
+  s7_Int vloc, len;
   s7_pointer *elements;
 
+  lst = caar(args);
+  if (is_pair(lst))
+    {
+      caar(args) = cdr(lst);
+      return(car(lst));
+    }
+
+  table = cadar(args);
   len = hash_table_length(table);
   elements = hash_table_elements(table);
 
-  for (vloc = 0; vloc < len;  vloc++)
+  loc = caddar(args);
+  for (vloc = integer(number(loc)) + 1; vloc < len;  vloc++)
     {
       s7_pointer x;
-      for (x = elements[vloc]; x != sc->NIL; x = cdr(x))
+      x = elements[vloc];
+      if (x != sc->NIL)
 	{
-	  if (entry == loc) 
-	    return(car(x));
-	  entry++;
+	  integer(number(loc)) = vloc;
+	  caar(args) = cdr(x);
+	  return(car(x));
 	}
     }
 
-  return(sc->F);
+  integer(number(loc)) = len;
+  return(sc->NIL);
+}
+
+
+static s7_pointer g_make_hash_table_iterator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_hash_table_iterator "(make-hash-table-iterator table) returns a function of no arguments that \
+returns the next (key . value) pair in the hash-table each time it is called.  When there are no more pairs, it returns nil."
+
+  if (!s7_is_hash_table(car(args)))
+    return(s7_wrong_type_arg_error(sc, "make-hash-table-iterator", 0, car(args), "a hash-table"));
+
+  return(make_closure(sc, make_list_2(sc, sc->NIL,                             /* no args to the new function */
+				      make_list_2(sc, sc->HASH_TABLE_ITERATE,
+						  make_list_2(sc, sc->QUOTE, 
+							      make_list_3(sc, sc->NIL, car(args), make_mutable_integer(sc, -1))))),
+		      sc->envir,
+		      T_CLOSURE));
 }
 
 
@@ -20198,6 +20225,9 @@ static bool next_for_each(s7_scheme *sc)
   fargs = caddr(sc->args);
   loc = s7_integer(car(sc->args));
 
+  /* for-each func ... -- each trailing arg contributes one arg to the current call on func, 
+   *   so in the next loop, gather one arg from each sequence.
+   */
   for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
     switch (type(car(y)))
       {
@@ -20233,15 +20263,8 @@ static bool next_for_each(s7_scheme *sc)
 	car(x) = vector_element(car(y), loc); 
 	break;
 
-      case T_HASH_TABLE:
-	car(x) = hash_table_entry(sc, car(y), loc);
-	break;
-
-	/* for hash tables to go by entries, we'd need to set the "length" to the number of entries,
-	 *   then find the next entry here.  This would require independent "loc" and current element
-	 *   values.   Or when we initially get the length, also set up a parallel vector pointing
-	 *   to them, and walk down it, freeing it at the end -- perhaps this is simpler.
-	 */
+      case T_CLOSURE: /* hash-table via an iterator */
+	car(x) = g_hash_table_iterate(sc, cdr(cadar(closure_body(car(y)))));  /* cdadadar? I suppose this accessor could be optimized */
 	break;
 
       case T_STRING:
@@ -20304,13 +20327,16 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
   len = applicable_length(sc, obj);
   if (len < 0)
-    return(s7_wrong_type_arg_error(sc, "for-each", 2, obj, "a vector, list, string, or applicable object"));
+    return(s7_wrong_type_arg_error(sc, "for-each", 2, obj, "a vector, list, string, hash-table, or applicable object"));
     if (len == 0) return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
 
   sc->x = make_list_1(sc, sc->NIL);
-  sc->z = make_list_1(sc, obj);
+  if (s7_is_hash_table(obj))
+    sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
+  else sc->z = make_list_1(sc, obj);
   /* we have to copy the args if any of them is a list:
-   * (let* ((x (list (list 1 2 3))) (y (apply for-each abs x))) (list x y))
+   *     (let* ((x (list (list 1 2 3))) (y (apply for-each abs x))) (list x y))
+   *  (is this trying to say that the for-each loop might otherwise change the original list as it cdrs down it?)
    */
 
   if (cddr(args) != sc->NIL)
@@ -20321,12 +20347,15 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
 	  nlen = applicable_length(sc, car(x));
 	  if (nlen < 0)
-	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a vector, list, string, or applicable object"));
+	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a vector, list, string, hash-table, or applicable object"));
 	  if (nlen == 0) return(sc->UNSPECIFIED);
 	  if (nlen < len) len = nlen;
 
 	  sc->x = s7_cons(sc, sc->NIL, sc->x);          /* we're making a list to be filled in later with the individual args */
-	  sc->z = s7_cons(sc, car(x), sc->z);
+
+	  if (s7_is_hash_table(car(x)))
+	    sc->z = s7_cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
+	  else sc->z = s7_cons(sc, car(x), sc->z);
 	}
     }
 
@@ -20401,12 +20430,12 @@ static bool next_map(s7_scheme *sc)
 	  x = vector_element(car(y), loc); 
 	  break;
 
-	case T_HASH_TABLE:
-	  x = hash_table_entry(sc, car(y), loc);
-	  break;
-
 	case T_STRING:
 	  x = s7_make_character(sc, ((unsigned char)(string_value(car(y))[loc])));
+	  break;
+
+	case T_CLOSURE:   /* hash-table via an iterator */
+	  x = g_hash_table_iterate(sc, cdr(cadar(closure_body(car(y)))));
 	  break;
 
 	default: 
@@ -20459,10 +20488,12 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   len = applicable_length(sc, obj);
   if (len < 0)
-    return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, or applicable object"));
+    return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, hash-table, or applicable object"));
   if (len == 0) return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
 
-  sc->z = make_list_1(sc, obj);
+  if (s7_is_hash_table(obj))
+    sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
+  else sc->z = make_list_1(sc, obj);
   /* we have to copy the args if any of them is a list:
    * (let* ((x (list (list 1 2 3))) (y (apply map abs x))) (list x y))
    */
@@ -20475,11 +20506,13 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
 	  nlen = applicable_length(sc, car(x));
 	  if (nlen < 0)
-	    return(s7_wrong_type_arg_error(sc, "map", i, car(x), "a vector, list, string, or applicable object"));
+	    return(s7_wrong_type_arg_error(sc, "map", i, car(x), "a vector, list, string, hash-table, or applicable object"));
 	  if (nlen == 0) return(sc->NIL);
 	  if (nlen < len) len = nlen;
 
-	  sc->z = s7_cons(sc, car(x), sc->z);
+	  if (s7_is_hash_table(car(x)))
+	    sc->z = s7_cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
+	  else sc->z = s7_cons(sc, car(x), sc->z);
 	}
     }
 
@@ -30748,7 +30781,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "hash-table-ref",          g_hash_table_ref,          2, 0, true,  H_hash_table_ref);
   s7_define_function(sc, "hash-table-set!",         g_hash_table_set,          3, 0, false, H_hash_table_set);
   s7_define_function(sc, "hash-table-size",         g_hash_table_size,         1, 0, false, H_hash_table_size);
-  
+  s7_define_function(sc, "make-hash-table-iterator",g_make_hash_table_iterator,1, 0, false, H_make_hash_table_iterator);
+
 
   s7_define_function(sc, "hook?",                   g_is_hook,                 1, 0, false, H_is_hook);
   s7_define_function(sc, "make-hook",               g_make_hook,               0, 2, false, H_make_hook);
@@ -30956,6 +30990,9 @@ the error type and the info passed to the error handler.");
 
   sc->HASH_TABLE_SET = s7_symbol_value(sc, make_symbol(sc, "hash-table-set!"));
   typeflag(sc->HASH_TABLE_SET) |= T_DONT_COPY; 
+
+  sc->HASH_TABLE_ITERATE = s7_make_function(sc, "(hash-table iterate)", g_hash_table_iterate, 1, 0, false, "internal hash-table iteration function");
+  typeflag(sc->HASH_TABLE_ITERATE) |= T_DONT_COPY; 
 
   sc->STRING_SET = s7_symbol_value(sc, make_symbol(sc, "string-set!"));
   typeflag(sc->STRING_SET) |= T_DONT_COPY; 
