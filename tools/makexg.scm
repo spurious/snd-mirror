@@ -214,7 +214,7 @@
 	"time_t" ;"GtkWindowGroup*" 
 	"GtkSettings*" ;"GdkDevice*" 
 	"GtkScaleButton*"
-	"GtkPrintOperationResult" "GtkPrintStatus"
+	"GtkPrintOperationResult" "GtkPrintStatus" "GtkSizeRequestMode"
 	"GdkEventAny*" "GdkDeviceManager*"
 	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t" "cairo_bool_t" "cairo_region_overlap_t"
 	))
@@ -235,7 +235,7 @@
 	"time_t" "GtkSettings*" ;"GdkDevice*" 
 	"GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
-	"GdkDeviceManager*" "GdkEventAny*"
+	"GdkDeviceManager*" "GdkEventAny*" "GtkSizeRequestMode"
 	
 	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t" "cairo_bool_t"
 	"cairo_region_overlap_t" "cairo_device_type_t"

@@ -273,8 +273,6 @@
 	  (write-byte 0))))))
 
 
-;;; TODO: read/write wav, write aifc
-
 (define (read-aif-header file)
   (let ((data-location 0)
 	(data-size 0)

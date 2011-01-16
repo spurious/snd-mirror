@@ -874,8 +874,6 @@ XM_TYPE_PTR(GdkDevice_, GdkDevice*)
 XM_TYPE_PTR_1(GtkMessageDialog_, GtkMessageDialog*)
 XM_TYPE_PTR(cairo_region_t_, cairo_region_t*)
 #define C_TO_XEN_GtkSizeRequestMode(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkSizeRequestMode(Arg) (GtkSizeRequestMode)(XEN_TO_C_INT(Arg))
-#define XEN_GtkSizeRequestMode_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(GtkContainerClass_, GtkContainerClass*)
 XM_TYPE(GtkAlign, GtkAlign)
 XM_TYPE_PTR_1(GtkComboBoxText_, GtkComboBoxText*)
@@ -896,7 +894,6 @@ XM_TYPE_PTR_1(GtkInvisible_, GtkInvisible*)
 XM_TYPE_PTR(GtkWindowGroup_, GtkWindowGroup*)
 XM_TYPE_PTR_1(GtkToolShell_, GtkToolShell*)
 XM_TYPE_PTR_1(GdkScreen__, GdkScreen**)
-XM_TYPE_PTR(GtkCellAreaContext_, GtkCellAreaContext*)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -30726,15 +30723,6 @@ gint* [win_x], gint* [win_y])"
    }
 }
 
-static XEN gxg_gtk_cell_view_new_with_context(XEN area, XEN context)
-{
-  #define H_gtk_cell_view_new_with_context "GtkWidget* gtk_cell_view_new_with_context(GtkCellArea* area, \
-GtkCellAreaContext* context)"
-  XEN_ASSERT_TYPE(XEN_GtkCellArea__P(area), area, 1, "gtk_cell_view_new_with_context", "GtkCellArea*");
-  XEN_ASSERT_TYPE(XEN_GtkCellAreaContext__P(context), context, 2, "gtk_cell_view_new_with_context", "GtkCellAreaContext*");
-  return(C_TO_XEN_GtkWidget_(gtk_cell_view_new_with_context(XEN_TO_C_GtkCellArea_(area), XEN_TO_C_GtkCellAreaContext_(context))));
-}
-
 static XEN gxg_gtk_cell_view_get_draw_sensitive(XEN cell_view)
 {
   #define H_gtk_cell_view_get_draw_sensitive "gboolean gtk_cell_view_get_draw_sensitive(GtkCellView* cell_view)"
@@ -38405,7 +38393,6 @@ XEN_NARGIFY_2(gxg_gtk_action_set_accel_path_w, gxg_gtk_action_set_accel_path)
 XEN_NARGIFY_2(gxg_gtk_action_set_accel_group_w, gxg_gtk_action_set_accel_group)
 XEN_ARGIFY_4(gxg_gdk_device_get_position_w, gxg_gdk_device_get_position)
 XEN_ARGIFY_3(gxg_gdk_device_get_window_at_position_w, gxg_gdk_device_get_window_at_position)
-XEN_NARGIFY_2(gxg_gtk_cell_view_new_with_context_w, gxg_gtk_cell_view_new_with_context)
 XEN_NARGIFY_1(gxg_gtk_cell_view_get_draw_sensitive_w, gxg_gtk_cell_view_get_draw_sensitive)
 XEN_NARGIFY_2(gxg_gtk_cell_view_set_draw_sensitive_w, gxg_gtk_cell_view_set_draw_sensitive)
 XEN_NARGIFY_1(gxg_gtk_cell_view_get_fit_model_w, gxg_gtk_cell_view_get_fit_model)
@@ -42446,7 +42433,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_action_set_accel_group_w gxg_gtk_action_set_accel_group
 #define gxg_gdk_device_get_position_w gxg_gdk_device_get_position
 #define gxg_gdk_device_get_window_at_position_w gxg_gdk_device_get_window_at_position
-#define gxg_gtk_cell_view_new_with_context_w gxg_gtk_cell_view_new_with_context
 #define gxg_gtk_cell_view_get_draw_sensitive_w gxg_gtk_cell_view_get_draw_sensitive
 #define gxg_gtk_cell_view_set_draw_sensitive_w gxg_gtk_cell_view_set_draw_sensitive
 #define gxg_gtk_cell_view_get_fit_model_w gxg_gtk_cell_view_get_fit_model
@@ -46494,7 +46480,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_action_set_accel_group, gxg_gtk_action_set_accel_group_w, 2, 0, 0, H_gtk_action_set_accel_group);
   XG_DEFINE_PROCEDURE(gdk_device_get_position, gxg_gdk_device_get_position_w, 2, 2, 0, H_gdk_device_get_position);
   XG_DEFINE_PROCEDURE(gdk_device_get_window_at_position, gxg_gdk_device_get_window_at_position_w, 1, 2, 0, H_gdk_device_get_window_at_position);
-  XG_DEFINE_PROCEDURE(gtk_cell_view_new_with_context, gxg_gtk_cell_view_new_with_context_w, 2, 0, 0, H_gtk_cell_view_new_with_context);
   XG_DEFINE_PROCEDURE(gtk_cell_view_get_draw_sensitive, gxg_gtk_cell_view_get_draw_sensitive_w, 1, 0, 0, H_gtk_cell_view_get_draw_sensitive);
   XG_DEFINE_PROCEDURE(gtk_cell_view_set_draw_sensitive, gxg_gtk_cell_view_set_draw_sensitive_w, 2, 0, 0, H_gtk_cell_view_set_draw_sensitive);
   XG_DEFINE_PROCEDURE(gtk_cell_view_get_fit_model, gxg_gtk_cell_view_get_fit_model_w, 1, 0, 0, H_gtk_cell_view_get_fit_model);
@@ -49078,7 +49063,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("11-Jan-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("15-Jan-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

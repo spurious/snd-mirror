@@ -8127,7 +8127,6 @@
 
 (CFNC-29x "void gdk_device_get_position GdkDevice* device GdkScreen** screen gint* [x] gint* [y]")
 (CFNC-29x "GdkWindow* gdk_device_get_window_at_position GdkDevice* device gint* [win_x] gint* [win_y]")
-(CFNC-29x "GtkWidget* gtk_cell_view_new_with_context GtkCellArea* area GtkCellAreaContext* context")
 (CFNC-29x "gboolean gtk_cell_view_get_draw_sensitive GtkCellView* cell_view")
 (CFNC-29x "void gtk_cell_view_set_draw_sensitive GtkCellView* cell_view gboolean draw_sensitive")
 (CFNC-29x "gboolean gtk_cell_view_get_fit_model GtkCellView* cell_view")
@@ -8390,6 +8389,8 @@
 
 (CCAST-29x "GTK_CELL_AREA_CONTEXT" "GtkCellAreaContext*")
 (CCHK-29x "GTK_IS_CELL_AREA_CONTEXT" "GtkCellAreaContext*")
+
+(CFNC-29x "GtkWidget* gtk_cell_view_new_with_context GtkCellArea* area GtkCellAreaContext* context")
 
 (CFNC-29x "void gtk_cell_area_add GtkCellArea* area GtkCellRenderer* renderer")
 (CFNC-29x "void gtk_cell_area_remove GtkCellArea* area GtkCellRenderer* renderer")

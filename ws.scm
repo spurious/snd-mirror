@@ -1246,8 +1246,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 ;;; -------- *clm-search-list*
 
-;;; PERHAPS: doc/test *clm-search-list*, and use to choose input/output loc?
-
 (define *clm-search-list* (list "."))
 
 (define (clm-find-file name)

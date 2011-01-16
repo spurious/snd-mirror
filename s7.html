@@ -2388,8 +2388,10 @@ make-hash-table-iterator returns a function of no arguments (a "thunk").  Each t
 returns the next entry in the hash table.  When it runs out of entries, it returns nil.
 </p>
 
+
 <small>
 <blockquote>
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
@@ -2423,7 +2425,7 @@ make-hash-table-iterator internally).
 </pre>
 
 <p>reverse of a hash-table returns a new table with the keys and values reversed.
-<code>(fill! table '()) clears out all entries in the hash-table.
+<code>(fill! table '())</code> removes all entries from the hash-table.
 </p>
 
 </blockquote>
@@ -2665,9 +2667,9 @@ In s7, multiple values are spliced directly into the caller's argument list.
   ;; let*-values is defined as a macro at the end of s7.c (commented out)
 </pre>
 
+
 <small>
 <blockquote>
-
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -2683,8 +2685,7 @@ from map's function application:
 (1 20 3 60)
 </pre>
 
-<p>As this example shows, if the map function returns <code>(values)</code>,
-nothing is added to the map output list.
+<p>As this example shows, if the map function returns <code>(values)</code>, nothing is added to the map output list.
 </p>
 
 <pre>
