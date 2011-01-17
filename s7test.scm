@@ -10385,15 +10385,26 @@ this prints:
 (test (for-each (lambda (a) (+ a 1)) (cons 1 2)) #<unspecified>)
 (test (let ((sum 0)) (for-each (lambda (a b . args) (set! sum (+ sum a b (apply + args)))) '(0 1 2)) sum) 'error)
 (test (for-each (lambda (a) a) '(1 2 . 3)) #<unspecified>)
+(test (for-each #(0 1 2) #(2 1 0)) #<unspecified>)
+(for-each
+ (lambda (arg)
+   (test (for-each arg (list 1)) #<unspecified>))
+ (list (list 1 2 3) #(1 2 3) "hi"))
+
+(for-each
+ (lambda (op)
+   (test (for-each op '()) 'error)
+   (test (for-each op "") 'error)
+   (test (for-each op #() (list) (string)) 'error))
+ (list 0 '() #f #t 'a-symbol :hi #\a #<eof> #<unspecified> #<undefined> 0.0 1+i 1/2 1/0 0/0 *stdout* (current-input-port)))
 (for-each
  (lambda (arg)
    (test (for-each arg (list 1)) 'error))
- (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2)))
+ (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t))
 (for-each
  (lambda (arg)
    (test (for-each (lambda (n m) n) (list 1) arg) 'error))
  (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t))
-
 (for-each
  (lambda (arg)
    (test (for-each (lambda (a) a) arg) 'error))
@@ -10421,7 +10432,18 @@ this prints:
 (test (for-each abs "") #<unspecified>)
 (test (for-each null? () #() "") #<unspecified>)
 (test (for-each null? () #() 0 "") 'error)
-(test (for-each define '(a) '(3)) 'error)
+(test (for-each define '(a) '(3)) #<unspecified>)
+(test (for-each '(()) #()) #<unspecified>)
+(test (for-each '(1 2 . 3) '(1 . 2)) #<unspecified>)
+(test (for-each '(()) '()) #<unspecified>)
+(test (for-each #2D((1 2) (3 4)) '(1)) #<unspecified>)
+(test (for-each "a\x00b" #(1 2)) #<unspecified>)
+(test (for-each #(1 (3)) '(1)) #<unspecified>)
+(test (for-each '((1 (2)) (((3) 4))) '(1)) #<unspecified>)
+(test (for-each "hi" '(1)) #<unspecified>)
+(test (for-each #() #()) #<unspecified>)
+(test (for-each '(1 . 2) #()) #<unspecified>)
+(test (for-each ''2 '(1)) #<unspecified>)
 
 (let ((x 0))
   (let ((p1 (make-procedure-with-setter (lambda (a) (set! x (+ x a))) (lambda (a b) (+ a b)))))
@@ -10555,8 +10577,12 @@ this prints:
 (test (map (lambda a (append a)) '(1 2 3)) '((1) (2) (3)))
 (test (map values '(1 2 3)) '(1 2 3))
 ;(test ((lambda* ('a) quote) 1) 1)
-
-;;; it's not ideal that (apply lambda '() '(1)) -> closure, but (map lambda '(()) '((1))) -> error that lambda is not a procedure
+(test (procedure? (car (map lambda '(()) '((1))))) #t)
+(test (procedure? (car (map lambda '((x)) '(((+ x 1)))))) #t)
+(test (map #(0 1 2) #(2 1 0)) '(2 1 0))
+(test (map quasiquote '((quasiquote 1) (quasiquote 2))) '(1 2))
+(test (map (lambda (a b) (a b)) (map lambda '((x) (y) (z)) '((+ x x) (* y y) (expt z z))) (list 1 2 3)) '(2 4 27))
+(test (map apply (map lambda '((x) (y) (z)) '((+ x x) (* y y) (expt z z))) '((1) (2) (3))) '(2 4 27))
 
 #|
 (let ((val '())) (list (map (lambda a (set! val (cons a val)) a) '(1 2 3)) val))
@@ -10608,16 +10634,17 @@ this prints:
 (test (apply map vector (values (list (vector 1 2)))) '(#(1) #(2)))
 (test (apply map string (list "123")) '("1" "2" "3"))
 (test (map string "123") '("1" "2" "3"))
-
+(test (map "hi" '(0 1)) '(#\h #\i))
+(test (map (list 2 3) '(0 1)) '(2 3))
+(test (map #(2 3) '(1 0)) '(3 2))
 (for-each
  (lambda (arg)
    (test (map arg (list 1)) 'error))
- (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2)))
+ (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t))
 (for-each
  (lambda (arg)
    (test (map (lambda (n m) n) (list 1) arg) 'error))
  (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t))
-
 (for-each
  (lambda (arg)
    (test (map (lambda (a) a) arg) 'error))
@@ -10695,7 +10722,7 @@ this prints:
 ;;   any set! will do:
 (test (let ((x 0)) (map (lambda (y) (set! x (+ x y)) x) '(1 2 3 4))) '(1 3 6 10))
 
-(test (map begin '(1 2 3)) 'error)
+(test (map begin '(1 2 3)) '(1 2 3))
 (let ((funcs (map (lambda (lst) (eval `(lambda ,@lst))) '((() #f) ((arg) (+ arg 1))))))
   (test ((car funcs)) #f)
   (test ((cadr funcs) 2) 3))
@@ -10708,6 +10735,20 @@ this prints:
 (test (map abs "123" "" #f) 'error)
 (test (map null? () #() "") ())
 (test (map null? () #() 0 "") 'error)
+(test (map '(()) #()) '())
+(test (map '(1 2 . 3) '(1 . 2)) '(2))
+(test (map '(()) '()) '())
+(test (map #2D((1 2) (3 4)) '(1)) '(#(3 4)))
+(test (map "a\x00b" #(1 2)) '(#\null #\b))
+(test (map #(1 (3)) '(1)) '((3)))
+(test (map '((1 (2)) (((3) 4))) '(1)) '((((3) 4))))
+(test (map "hi" '(1)) '(#\i))
+(test (map #() #()) '())
+(test (map '(1 . 2) #()) '())
+(test (map ''2 '(1)) '(2))
+(test (((map lambda '((x)) '(1 2 . 3)) 0) 0) 1)
+(test (((map lambda '(()) #(1 2)) 0)) 1)
+(test (((map lambda '((x)) '((+ x 1))) 0) 32) 33)
 
 (test (map abs '(1 2 . 3)) '(1 2)) ;; ?? Guile says wrong type arg here
 (test (map + '(1) '(1 2 . 3)) '(2))
@@ -10715,6 +10756,13 @@ this prints:
 ;; problematic because last thing is completely ignored:
 (test (map abs '(1 . "hi")) '(1))
 (test (map floor '(1 . "hi")) '(1))
+
+(for-each
+ (lambda (op)
+   (test (map op '()) 'error)
+   (test (map op "") 'error)
+   (test (map op #() (list) (string)) 'error))
+ (list 0 '() #f #t 'a-symbol :hi #\a #<eof> #<unspecified> #<undefined> 0.0 1+i 1/2 1/0 0/0 *stdout* (current-input-port)))
 
 (test (map append (make-vector (list 2 0))) '())
 (let ((p1 (make-procedure-with-setter (lambda (a) (+ a 1)) (lambda (a b) (+ a b)))))

@@ -15710,7 +15710,7 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 
 bool s7_is_procedure(s7_pointer x)
 {
-  return(is_procedure(x)); /* this returns "is applicable" so it is true for applicable objects, macros, etc */
+  return(is_procedure(x)); /* this returns "is applicable" so it is true for applicable c|s_objects, macros, etc */
 }
 
 
@@ -19210,7 +19210,7 @@ each a function of no arguments, guaranteeing that finish is called even if body
 
 static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 {
-  #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches tag (#t matches all), the handler is called"
+  #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches the tag (#t matches all), the handler is called"
   s7_pointer p;
 
   /* should this check for a tag that can't possibly be eq? to anything that error might throw? (a string for example)
@@ -19807,7 +19807,10 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 
 static s7_pointer g_error(s7_scheme *sc, s7_pointer args)
 {
-  #define H_error "(error type ...) signals an error"
+  #define H_error "(error type ...) signals an error.  The 'type' can be used with catch to trap \
+particular errors.  If the error is not caught, s7 treats the 2nd argument as a format control string, \
+and applies it to the rest of the arguments."
+
   if (args != sc->NIL)
     {
       if (s7_is_string(car(args)))                    /* CL-style error? -- use tag = 'no-catch */
@@ -20176,6 +20179,7 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 }
 
 
+
 /* ---------------------------------------- map and for-each ---------------------------------------- */
 
 static long int applicable_length(s7_scheme *sc, s7_pointer obj)
@@ -20186,8 +20190,8 @@ static long int applicable_length(s7_scheme *sc, s7_pointer obj)
       {
 	int len;
 	len = s7_list_length(sc, obj);
-	if (len < 0)             /* dotted (does not include the final cdr) */
-	  return(-len);
+	if (len < 0)             /* dotted (does not include the final cdr -- perhaps this is a bug) */
+	  return(-len);          /*         it means that (map abs '(1 . "hi")) returns '(1) */
 	if (len == 0)            /* circular */
 	  return(S7_LONG_MAX);
 	return(len);
@@ -20310,8 +20314,30 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   s7_pointer obj, x;
 
   sc->code = car(args);
+#if 0
   if (!is_procedure(sc->code))
     return(s7_wrong_type_arg_error(sc, "for-each", 1, sc->code, "a procedure"));
+#endif
+
+  /* macro application requires the entire call as the argument to apply, but apply itself fixes this up.
+   *  that is, g_apply checks, then goes to OP_EVAL_MACRO after OP_APPLY with the fixed up list,
+   *  but here we are simply sending it to OP_APPLY, so
+   *
+   *    (define-macro (hi a) `(+ ,a 1))
+   *    (apply hi '(1))                 ; internally rewritten as (apply hi '((hi 1)))
+   *    2                               ; apply adds the evaluation if its 1st arg is a macro
+   *    (map hi '((hi 1) (hi 2)))       ; here we've rewritten the arg lists by hand
+   *    ((+ 1 1) (+ 2 1))               ; but no evaluation
+   *
+   * ideally I think it should be
+   *
+   *    (map hi '(1 2))
+   *    (2 3)
+   *
+   * OP_APPLY knows this is happening (in the 2nd case) and raises an error -- what would break
+   *   if we handle it locally instead?  This actually affects only T_C_MACRO (quasiquote) --
+   *   normal macros/bacros would still be broken.
+   */
 
   /* before checking len=0, we need to check that the arguments are all sequences (this is like our handling of args to + for example)
    *   otherwise (for-each = "" 123) -> #<unspecified> 
@@ -20328,7 +20354,22 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   len = applicable_length(sc, obj);
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "for-each", 2, obj, "a vector, list, string, hash-table, or applicable object"));
-    if (len == 0) return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
+
+  if (len == 0) 
+    {
+      /* here we can't depend on OP_APPLY to do the error check on the 1st arg:
+       *   (map 0 '()) -> '()
+       * so we check by hand before returning #<unspecified>
+       */
+      if (((typeflag(sc->code) & (T_ANY_MACRO | T_SYNTAX | T_PROCEDURE)) != 0) ||
+	  (is_pair(sc->code)) ||
+	  (s7_is_string(sc->code)) ||
+	  (s7_is_vector(sc->code)) ||
+	  (s7_is_hash_table(sc->code)) ||
+	  (is_hook(sc->code)))
+	return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
+      return(s7_wrong_type_arg_error(sc, "for-each", 1, sc->code, "a procedure or something applicable"));
+    }
 
   sc->x = make_list_1(sc, sc->NIL);
   if (s7_is_hash_table(obj))
@@ -20474,10 +20515,10 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   s7_pointer obj, x;
   
   sc->code = car(args);
+#if 0
   if (!is_procedure(sc->code))
     return(s7_wrong_type_arg_error(sc, "map", 1, sc->code, "a procedure"));
-
-  /* an object with a setter is a procedure, but (map "hi" '(1 0)) because (procedure? "hi") is #f */
+#endif
 
   for (i = 2, x = cdr(args); x != sc->NIL; x = cdr(x), i++)
     if (!is_sequence(sc, car(x)))
@@ -20489,7 +20530,17 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   len = applicable_length(sc, obj);
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, hash-table, or applicable object"));
-  if (len == 0) return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
+  if (len == 0)
+    {
+      if (((typeflag(sc->code) & (T_ANY_MACRO | T_SYNTAX | T_PROCEDURE)) != 0) ||
+	  (is_pair(sc->code)) ||
+	  (s7_is_string(sc->code)) ||
+	  (s7_is_vector(sc->code)) ||
+	  (s7_is_hash_table(sc->code)) ||
+	  (is_hook(sc->code)))
+	return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
+      return(s7_wrong_type_arg_error(sc, "map", 1, sc->code, "a procedure or something applicable"));
+    }
 
   if (s7_is_hash_table(obj))
     sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
@@ -23071,7 +23122,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  eval_error(sc, "improper list of arguments: ~A", car(sc->args));
 		sc->args = cdar(sc->args);         
 	      }
-	    else eval_error(sc, "~A called as a function, but it's a macro!", sc->code);
+	    else 
+	      {
+		/* I think this can only be triggered by map/for-each with a (c_)macro [in fact, quasiquote] argument,
+		 *    so perhaps we can fix it here?
+		 */
+		eval_error(sc, "~A called as a function, but it's a macro!", sc->code);
+	      }
 
 	    len = s7_list_length(sc, sc->args);
 	    if (len <= 0)                          /* (quasiquote 0 . 1) */
@@ -31242,15 +31299,6 @@ the error type and the info passed to the error handler.");
   #t
 
  * and copy a function? -- apply lambda[*] to the procedure source + args + local env
- *
- * this seems unfortunate (macros are a similar case):
-
- :(procedure-source (apply lambda '(x) '((+ x 1))))
- (lambda (x) (+ x 1))
-
- :(map lambda '((x)) '(((+ x 1))))
- ;map argument 1, lambda, is symbol but should be a procedure
-
  *
  * things to fix: nonce-symbols need to be garbage collected
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?

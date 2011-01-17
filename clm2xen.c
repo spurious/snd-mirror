@@ -5,7 +5,7 @@
  *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
  */
 
-/* TODO: if s7, use s7_make_function_star (see g_make_oscil below).
+/* SOMEDAY: if s7, use s7_make_function_star (see g_make_oscil below).
  *   The same for cases in snd-dac|region|select|snd
  *   and since it's so easy in s7, are there are others? -- make-sampler but this complicates the documentation
  */
@@ -5694,7 +5694,9 @@ static XEN g_out_any_1(const char *caller, XEN frame, int chn, XEN val, XEN outp
     {
       if (pos < XEN_VECTOR_LENGTH(outp))
 	XEN_VECTOR_SET(outp, pos, C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(XEN_VECTOR_REF(outp, pos)) + inv));
-      /* TODO: doc/test out-any to vector + s7/multidim */
+      /* this doesn't handle multiple channels yet, and can't be used with the run macro.
+       *    if I had written s7 30 years ago, this would do the right thing...
+       */
     }
 
   return(val);

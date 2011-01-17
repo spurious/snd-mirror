@@ -791,6 +791,7 @@ void s7_mark_object(s7_pointer p);
  *        s7 changes
  *
  * 17-Jan-11: make-hash-table-iterator.
+ *            map and for-each accept any applicable object as the first argument.
  * --------
  * 17-Dec:    removed unquote-splicing; replaced by (unquote (apply values ...)).
  * 12-Dec:    environment? 

@@ -18777,6 +18777,16 @@ EDITS: 2
 	(if (not (vequal v1 v2))
 	    (snd-display #__line__ ";fm/pm peak diff (1 1): ~A" (vct-peak (vct-subtract! v1 v2)))))
       
+      (let ((v (with-sound (:output (make-vector 8))
+	         (outa 0 .1)
+		 (outa 2 .2))))
+	(let ((old-fudge (mus-float-equal-fudge-factor)))
+	  (set! (mus-float-equal-fudge-factor) .0001)
+	  (let ((result (equal? (vector->vct v) (vct 0.1 0.0 0.2 0.0 0.0 0.0 0.0 0.0))))
+	    (set! (mus-float-equal-fudge-factor) old-fudge)
+	    (if (not result)
+		(snd-display #__line__ ";outa to vector: ~A" v)))))
+
       (do ((i 0 (+ 1 i)))
 	  ((= i 10))
 	(let ((ratio (+ 1 (random 4)))

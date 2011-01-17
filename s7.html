@@ -2030,8 +2030,10 @@ I like this syntax:  the less noise, the better!
 
 <p>Well, maybe applicable strings look weird: <code>("hi" 1)</code> is #\i, but worse,
 so is <code>(cond (1 =&gt; "hi"))</code>!  Even though a string, list, or vector is "applicable", it is
-not currently considered to be a procedure, so <code>(procedure? "hi")</code> is #f, and
-<code>(map #(0 1) '(1 0))</code> is an error.  
+not currently considered to be a procedure, so <code>(procedure? "hi")</code> is #f.  map and for-each, however,
+accept anything that apply can handle, so
+<code>(map #(0 1) '(1 0))</code> is '(1 0)).  (On the first call to map in this case, you get the result of
+<code>(#(0 1) 1)</code> and so on).
 </p>
 
 
@@ -4161,6 +4163,7 @@ bind it to something else, which is asking for confusion).
 <li>begin returns the value of the last form; it can contain both definitions and other statements.
 <li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are first-class objects.
 <li>for-each and map accept different length arguments; the operation stops when any argument reaches its end.
+<li>for-each and map accept any applicable object as the first argument.
 <li>letrec*, but without conviction.
 <li>set! and *-set! return the new value, not #&lt;unspecified&gt;.
 <li>port-closed?
@@ -4534,9 +4537,8 @@ new function or macro, you need to use either eval or symbol-&gt;value:
 4
 </pre>
 
-<p>You can't currently map a macro over a list because map wants its first
-argument to be a procedure.  Perhaps this is unreasonable.
-You also can't set the syntactic object to some new value:
+<p>
+Currently, you can't set! a built-in syntactic object to some new value:
 <code>(set! if 3)</code>.
 I hope this kind of thing is not actually very useful, but let me
 know if you need it.  The issue is purely one of speed.
