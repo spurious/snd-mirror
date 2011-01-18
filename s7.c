@@ -9021,6 +9021,8 @@ static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
   if (!s7_is_integer(car(args)))
     return(s7_wrong_type_arg_error(sc, "even?", 0, car(args), "an integer"));
   return(make_boolean(sc, (s7_integer(car(args)) & 1) == 0));
+
+  /* extension to gaussian integers: odd if a+b is odd? */
 }
 
 
@@ -16784,14 +16786,14 @@ In each case, the argument is the value of the object, not the object itself."
 		   sc->envir,
 		   T_CLOSURE);
 
-  /* make method: (lambda (arg) (s_type_make tag arg))
-   *   returns an object of the new type with its value specified by arg
+  /* make method: (lambda* (arg) (s_type_make tag arg))
+   *   returns an object of the new type with its value specified by arg (defaults to #f)
    */
   y = make_closure(sc, make_list_2(sc, 
 				   make_list_1(sc, sc->S_TYPE_ARG),
 				   make_list_3(sc, sc->S_TYPE_MAKE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
 		   sc->envir,
-		   T_CLOSURE);
+		   T_CLOSURE_STAR);
 
   /* ref method: (lambda (arg) (s_type_ref arg))
    *   returns the value passed to make above 
@@ -20199,7 +20201,17 @@ static long int applicable_length(s7_scheme *sc, s7_pointer obj)
 
     case T_S_OBJECT:
     case T_C_OBJECT:
-      return(s7_integer(object_length(sc, obj)));
+      {
+	/* both map and for-each assume sc->x|y|z are unchanged across this call */
+	int save_x, save_y, save_z;
+	s7_Int len;
+
+	SAVE_X_Y_Z(save_x, save_y, save_z);
+	len = s7_integer(object_length(sc, obj));
+	RESTORE_X_Y_Z(save_x, save_y, save_z);
+
+	return(len);
+      }
 
     case T_STRING:
       return(string_length(obj));
@@ -20232,6 +20244,7 @@ static bool next_for_each(s7_scheme *sc)
   /* for-each func ... -- each trailing sequence arg contributes one arg to the current call on func, 
    *   so in the next loop, gather one arg from each sequence.
    */
+
   for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
     switch (type(car(y)))
       {
@@ -20245,9 +20258,17 @@ static bool next_for_each(s7_scheme *sc)
 	  int save_x, save_y, save_z;
 	  if (z == sc->NIL) 
 	    {
-	      z = make_list_1(sc, car(sc->args));
+	      z = make_list_1(sc, s7_make_integer(sc, integer(number(car(sc->args)))));
+	      /* we can't use car(sc->args) directly here -- it is a mutable integer, incremented below,
+	       *   but the object application (the getter function) might return the index!
+	       *   Then, we pre-increment, and the for-each application sees the incremented value.
+	       *
+               *    (let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) 4))))) (sum 0))
+               *      (for-each (lambda (a b) (set! sum (+ sum a b))) ctr ctr) sum)
+	       */
 	      zloc = s7_gc_protect(sc, z);
 	    }
+
 	  SAVE_X_Y_Z(save_x, save_y, save_z);
 	  car(x) = apply_object(sc, car(y), z);
 	  RESTORE_X_Y_Z(save_x, save_y, save_z);
@@ -20257,7 +20278,7 @@ static bool next_for_each(s7_scheme *sc)
       case T_C_OBJECT: 
 	if (z == sc->NIL) 
 	  {
-	    z = make_list_1(sc, car(sc->args));
+	    z = make_list_1(sc, s7_make_integer(sc, integer(number(car(sc->args))))); /* see above */
 	    zloc = s7_gc_protect(sc, z);
 	  }
 	car(x) = apply_object(sc, car(y), z);
@@ -20355,22 +20376,6 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "for-each", 2, obj, "a vector, list, string, hash-table, or applicable object"));
 
-  if (len == 0) 
-    {
-      /* here we can't depend on OP_APPLY to do the error check on the 1st arg:
-       *   (map 0 '()) -> '()
-       * so we check by hand before returning #<unspecified>
-       */
-      if (((typeflag(sc->code) & (T_ANY_MACRO | T_SYNTAX | T_PROCEDURE)) != 0) ||
-	  (is_pair(sc->code)) ||
-	  (s7_is_string(sc->code)) ||
-	  (s7_is_vector(sc->code)) ||
-	  (s7_is_hash_table(sc->code)) ||
-	  (is_hook(sc->code)))
-	return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
-      return(s7_wrong_type_arg_error(sc, "for-each", 1, sc->code, "a procedure or something applicable"));
-    }
-
   sc->x = make_list_1(sc, sc->NIL);
   if (s7_is_hash_table(obj))
     sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
@@ -20389,8 +20394,8 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  nlen = applicable_length(sc, car(x));
 	  if (nlen < 0)
 	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a vector, list, string, hash-table, or applicable object"));
-	  if (nlen == 0) return(sc->UNSPECIFIED);
 	  if (nlen < len) len = nlen;
+	  if (len == 0) break;   /* need error check below */
 
 	  sc->x = s7_cons(sc, sc->NIL, sc->x);          /* we're making a list to be filled in later with the individual args */
 
@@ -20400,14 +20405,41 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	}
     }
 
-  /* if at this point len == S7_LONG_MAX, then all args are circular lists, assuming that
-   *    we're not looking at some enormous vector or string -- perhaps -1 would be a
-   *    better marker.  This actually might not be an error (the for-each function could
-   *    have call-with-exit), but it seems better to complain about it.
-   */
+  if (len == 0) 
+    {
+      /* here we can't depend on OP_APPLY to do the error check on the 1st arg:
+       *   (map 0 '()) -> '()
+       * so we check by hand before returning #<unspecified>
+       */
+      if (((typeflag(sc->code) & (T_ANY_MACRO | T_SYNTAX | T_PROCEDURE)) != 0) ||
+	  (is_pair(sc->code)) ||
+	  (s7_is_string(sc->code)) ||
+	  (s7_is_vector(sc->code)) ||
+	  (s7_is_hash_table(sc->code)) ||
+	  (is_hook(sc->code)))
+	return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
+      return(s7_wrong_type_arg_error(sc, "for-each", 1, sc->code, "a procedure or something applicable"));
+    }
+
   if (len == S7_LONG_MAX)
-    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-		    make_list_2(sc, make_protected_string(sc, "for-each's arguments are circular lists! ~A"), cdr(args))));
+    {
+      /* if at this point len == S7_LONG_MAX, then all args are circular lists, assuming that
+       *    we're not looking at some enormous vector or string -- perhaps -1 would be a
+       *    better marker.  This actually might not be an error (the for-each function could
+       *    have call-with-exit), but it seems better to complain about it.
+       * 
+       * this means that a make-type generator's length is tricky:
+       *    (let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) (- (expt 2 31) 1)))))) (sum 0))
+       *      (call-with-exit (lambda (go) (for-each (lambda (a) (set! sum (+ sum a)) (if (> sum 100) (go sum))) ctr))))
+       * returns an error about circular lists, but should return 105.
+       *
+       * I think I'll at least check that the args were in fact lists.
+       */
+      for (x = cdr(args); (is_pair(x)) && (is_pair(car(x))); x = cdr(x)) {}
+      if (!is_pair(x))
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			make_list_2(sc, make_protected_string(sc, "for-each's arguments are circular lists! ~A"), cdr(args))));
+    }
 
   sc->args = s7_cons(sc, make_mutable_integer(sc, 0),   /* '(counter applicable-len func-args-holder . objects) */
                s7_cons(sc, s7_make_integer(sc, len), 
@@ -20449,7 +20481,7 @@ static bool next_map(s7_scheme *sc)
 	    int save_x, save_y, save_z;
 	    if (z == sc->NIL) 
 	      {
-		z = make_list_1(sc, car(sc->args));
+		z = make_list_1(sc, s7_make_integer(sc, integer(number(car(sc->args))))); /* see note in next_for_each */
 		zloc = s7_gc_protect(sc, z);
 	      }
 	    SAVE_X_Y_Z(save_x, save_y, save_z);
@@ -20461,7 +20493,7 @@ static bool next_map(s7_scheme *sc)
 	case T_C_OBJECT: 
 	  if (z == sc->NIL) 
 	    {
-	      z = make_list_1(sc, car(sc->args));
+	      z = make_list_1(sc, s7_make_integer(sc, integer(number(car(sc->args)))));
 	      zloc = s7_gc_protect(sc, z);
 	    }
 	  x = apply_object(sc, car(y), z);
@@ -20530,17 +20562,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   len = applicable_length(sc, obj);
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, hash-table, or applicable object"));
-  if (len == 0)
-    {
-      if (((typeflag(sc->code) & (T_ANY_MACRO | T_SYNTAX | T_PROCEDURE)) != 0) ||
-	  (is_pair(sc->code)) ||
-	  (s7_is_string(sc->code)) ||
-	  (s7_is_vector(sc->code)) ||
-	  (s7_is_hash_table(sc->code)) ||
-	  (is_hook(sc->code)))
-	return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
-      return(s7_wrong_type_arg_error(sc, "map", 1, sc->code, "a procedure or something applicable"));
-    }
 
   if (s7_is_hash_table(obj))
     sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
@@ -20558,8 +20579,8 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  nlen = applicable_length(sc, car(x));
 	  if (nlen < 0)
 	    return(s7_wrong_type_arg_error(sc, "map", i, car(x), "a vector, list, string, hash-table, or applicable object"));
-	  if (nlen == 0) return(sc->NIL);
 	  if (nlen < len) len = nlen;
+	  if (len == 0) break; /* need error check below */
 
 	  if (s7_is_hash_table(car(x)))
 	    sc->z = s7_cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
@@ -20567,10 +20588,26 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	}
     }
 
-  /* if at this point len == S7_LONG_MAX, then all args are circular */
+  if (len == 0)   /* (map 1 "hi" '()) */
+    {
+      if (((typeflag(sc->code) & (T_ANY_MACRO | T_SYNTAX | T_PROCEDURE)) != 0) ||
+	  (is_pair(sc->code)) ||
+	  (s7_is_string(sc->code)) ||
+	  (s7_is_vector(sc->code)) ||
+	  (s7_is_hash_table(sc->code)) ||
+	  (is_hook(sc->code)))
+	return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
+      return(s7_wrong_type_arg_error(sc, "map", 1, sc->code, "a procedure or something applicable"));
+    }
+
   if (len == S7_LONG_MAX)
-    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-		    make_list_2(sc, make_protected_string(sc, "map's arguments are circular lists! ~A"), cdr(args))));
+    {
+      /* if at this point len == S7_LONG_MAX, then all args are circular */
+      for (x = cdr(args); (is_pair(x)) && (is_pair(car(x))); x = cdr(x)) {} /* see comment under for-each */
+      if (!is_pair(x))
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			make_list_2(sc, make_protected_string(sc, "map's arguments are circular lists! ~A"), cdr(args))));
+    }
 
   sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
                s7_cons(sc, s7_make_integer(sc, len), 
@@ -23422,7 +23459,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!s7_is_list(sc, car(sc->code)))
 	{
 	  if (s7_is_constant(car(sc->code)))                       /* (lambda :a ...) */
-	    return(eval_error(sc, "lambda parameter '~A is a constant", car(sc->code)));
+	    return(eval_error(sc, "lambda parameter '~S is a constant", car(sc->code))); /* not ~A here, (lambda #\null do) for example */
 
 	  /* we currently accept (lambda i i . i) (lambda quote i)  (lambda : : . #()) (lambda : 1 . "")
 	   *   at this level, but when the lambda form is evaluated, it will trigger an error.
@@ -23433,9 +23470,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  for (sc->x = car(sc->code); is_pair(sc->x); sc->x = cdr(sc->x))
 	    {
 	      if (s7_is_constant(car(sc->x)))                      /* (lambda (pi) pi) */
-		return(eval_error(sc, "lambda parameter '~A is a constant", car(sc->x)));
+		return(eval_error(sc, "lambda parameter '~S is a constant", car(sc->x)));
 	      if (symbol_is_in_list(car(sc->x), cdr(sc->x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
-		return(eval_error(sc, "lambda parameter '~A is used twice in the parameter list", car(sc->x)));
+		return(eval_error(sc, "lambda parameter '~S is used twice in the parameter list", car(sc->x)));
 	    }
 	  if ((sc->x != sc->NIL) &&
 	      (s7_is_constant(sc->x)))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */

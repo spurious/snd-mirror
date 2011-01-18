@@ -1481,8 +1481,20 @@ So, remembering that (cadr type) is the make function:
 2
 </pre>
 
-<p>The objects created in this way, or via s7_new_type in C, can be passed to for-each
+<p>The objects created in this way, or via s7_new_type in C, can be passed to map and for-each
 if you supply the length and getter functions to make-type.
+
+<pre>
+&gt; (define-macro (enum . args)
+     `(for-each define ',args ((cadr (make-type :getter (lambda (a b) b) 
+                                                :length (lambda (a) ,(length args)))))))
+enum
+&gt; :(enum zero one two three)
+#&lt;unspecified&gt;
+&gt; two
+2
+</pre>
+
 </p>
 
 <small>

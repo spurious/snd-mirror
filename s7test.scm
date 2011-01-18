@@ -10395,6 +10395,7 @@ this prints:
  (lambda (op)
    (test (for-each op '()) 'error)
    (test (for-each op "") 'error)
+   (test (for-each op #(1 2 3) '()) 'error)
    (test (for-each op #() (list) (string)) 'error))
  (list 0 '() #f #t 'a-symbol :hi #\a #<eof> #<unspecified> #<undefined> 0.0 1+i 1/2 1/0 0/0 *stdout* (current-input-port)))
 (for-each
@@ -10444,6 +10445,33 @@ this prints:
 (test (for-each #() #()) #<unspecified>)
 (test (for-each '(1 . 2) #()) #<unspecified>)
 (test (for-each ''2 '(1)) #<unspecified>)
+(let ((lst (list 1 2))) (set! (cdr (cdr lst)) lst) (test (for-each lst lst) 'error))
+(let ((lst (list 1 2))) (set! (cdr (cdr lst)) lst) (test (for-each #() lst) 'error))
+(test (for-each 1 "hi" '()) 'error)
+(test (for-each 0 #() '()) 'error)
+(test (for-each #\a #(1 2) '(3 4) "") 'error)
+
+(let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) (- (expt 2 31) 1)))))) 
+      (sum 0))
+  (test (call-with-exit 
+	 (lambda (go)
+	   (for-each (lambda (a) 
+		       (set! sum (+ sum a)) 
+		       (if (> sum 100) 
+			   (go sum))) 
+		     ctr)))
+	105))
+
+(let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) most-positive-fixnum)))))
+      (sum 0))
+  (test (call-with-exit 
+	 (lambda (go)
+	   (for-each (lambda (a) 
+		       (set! sum (+ sum a)) 
+		       (if (> sum 100) 
+			   (go sum))) 
+		     ctr)))
+	105))
 
 (let ((x 0))
   (let ((p1 (make-procedure-with-setter (lambda (a) (set! x (+ x a))) (lambda (a b) (+ a b)))))
@@ -10561,6 +10589,15 @@ this prints:
 	      (cont))
 	  (list ctr val lst)))
       (list 5 5 (list 4 3 2 1 0)))
+
+(let ()
+  (define (tree-add x lst)
+    (define (tree-add-1 lst-1)
+      (map (lambda (a)
+	     (if (pair? a) (tree-add-1 a) (+ a x)))
+	   lst-1))
+    (tree-add-1 lst))
+  (test (tree-add 12 '((1 2) ((3)) 4 5)) '((13 14) ((15)) 16 17)))
 
 (test (map (lambda (a) a) (map (lambda (b) b) (list 1 2 3))) (list 1 2 3))
 (test (map cons '(a b c) '(() () ())) '((a) (b) (c)))
@@ -10731,7 +10768,7 @@ this prints:
 (test (map ="") '())
 (test (map abs ()) ())
 (test (map abs "") ())
-(test (map abs "123" "") ())
+(test (map abs "123" "") ()) ; should this be an error -- arity is wrong?
 (test (map abs "123" "" #f) 'error)
 (test (map null? () #() "") ())
 (test (map null? () #() 0 "") 'error)
@@ -10749,6 +10786,34 @@ this prints:
 (test (((map lambda '((x)) '(1 2 . 3)) 0) 0) 1)
 (test (((map lambda '(()) #(1 2)) 0)) 1)
 (test (((map lambda '((x)) '((+ x 1))) 0) 32) 33)
+(test (map #() '()) '()) ; hmmm -- (map '() '()) is an error
+(test (map "" "") '())
+(test (map (let ((lst (list 1 2))) (set! (cdr (cdr lst)) lst) lst) '(0)) '(1))
+(let ((lst (list 1 2))) (set! (cdr (cdr lst)) lst) (test (map lst lst) 'error))
+(test (map 1 "hi" '()) 'error)
+(test (map 0 #() '()) 'error)
+(test (map #\a #(1 2) '(3 4) "") 'error)
+(test (map or '(1 2 . 3)) '(1 2))
+(test (map or "a\x00b") '(#\a #\null #\b))
+(test (map cond '((1 2) (3 4))) '(2 4)) ; (cond (1 2)) -> 2
+(test (map begin "hi") '(#\h #\i))
+(test (map quote "hi") '(#\h #\i))
+(test (map (begin #(1 (3))) '(1)) '((3)))
+(test (map (''2 0) ''2) ''2) ; (''2 0) -> quote
+(test (map (apply lambda 'a '(-1)) '((1 2))) '(-1))
+(test (map do '(()) '((1 2))) '(2))
+(test (map case '(1) '(((-1 1) 2) 3)) '(2))
+(test (map let '(()) "a\x00b") '(#\a))
+(test (map "hi" '(0 1) '(0 1)) 'error)
+(test (map '((1 2) (3 4)) '(0 1) '(0 1)) '(1 4))
+(test (map #2d((1 2) (3 4)) '(0 1) '(0 1)) '(1 4))
+(test (map #2d((1 2) (3 4)) '(0 1)) '(#(1 2) #(3 4)))
+(let ((lst (list 1 2))) (set! (cdr (cdr lst)) lst) (test (map (lambda (a) a) lst) 'error))
+(let ((lst (list 1 2))) (set! (cdr (cdr lst)) lst) (test (map (lambda (a) a) lst lst) 'error))
+
+(let ((pws (make-procedure-with-setter (lambda (a) a) (lambda (a b) b))))
+  (test (map append pws) 'error)
+  (test (map pws '(1 2 3)) '(1 2 3)))
 
 (test (map abs '(1 2 . 3)) '(1 2)) ;; ?? Guile says wrong type arg here
 (test (map + '(1) '(1 2 . 3)) '(2))
@@ -10756,6 +10821,18 @@ this prints:
 ;; problematic because last thing is completely ignored:
 (test (map abs '(1 . "hi")) '(1))
 (test (map floor '(1 . "hi")) '(1))
+
+(let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) (- (expt 2 31) 1)))))) 
+      (sum 0))
+  (test (call-with-exit 
+	 (lambda (go)
+	   (map (lambda (a) 
+		  (set! sum (+ sum a)) 
+		  (if (> sum 100) 
+		      (go sum))
+		  sum)
+		ctr)))
+	105))
 
 (for-each
  (lambda (op)
@@ -18908,7 +18985,8 @@ abs     1       2
 	    (make-t (cadr t))
 	    (t-ref (caddr t)))
 	(test (make-t 1 2) 'error)
-	(test (make-t) 'error)
+	(test (t? (make-t)) #t)
+	(test (t-ref (make-t)) #f)
 	(test (t? 1 2) 'error)
 	(test (t?) 'error)
 	(test (t-ref) 'error)
@@ -19209,7 +19287,47 @@ abs     1       2
 					(lambda (x y) (+ 2 (symbol->value x)))))
       (test (begin (set! _x1_ 32) _x1_) 0)
       (test (let ((_x1_ 32)) _x1_) 2))
+
+    (let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) 3)))))
+	  (sum 0))
+      (for-each (lambda (a b) (set! sum (+ sum a b))) ctr ctr)
+      (test sum 6))
+
+    (let ()
+      (define-macro (enum . args)
+	`(for-each define ',args ((cadr (make-type :getter (lambda (a b) b) 
+						   :length (lambda (a) ,(length args)))))))
+      (enum zero one two three)
+      (test (+ zero one two three) 6))
+
+    (let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) 4))))) (sum 0))
+      (test (map (lambda (a b) (+ a b)) ctr ctr) '(0 2 4 6))
+      (test (map (lambda (a b c) (+ a b c)) ctr ctr ctr) '(0 3 6 9))
+      (test (map (lambda (a b) (+ a b)) #(0 1 2 3) ctr) '(0 2 4 6))
+      (test (map (lambda (a b) (+ a b)) ctr #(0 1 2 3)) '(0 2 4 6))
+      (test (map (lambda (a) a) ctr) '(0 1 2 3))
+      (test (map ctr '(1 2 3 4)) '(1 2 3 4))
+      (test (map ctr ctr) '(0 1 2 3))
+      (test (for-each ctr ctr) #<unspecified>)
+      (test (map ctr '()) '())
+      (test (for-each ctr #()) #<unspecified>)
+      )
+
+    (let ((ctr ((cadr (make-type :getter (lambda (a b) (car (map append (list b a)))) :length (lambda (a) (length (map abs '(-1 -2 -3))))))))
+	  (sum 0))
+      (for-each (lambda (a b) (set! sum (+ sum a b))) ctr ctr)
+      (test sum 6))
+
+    (let ((ctr ((cadr (make-type :getter (lambda (a b) (for-each append (list b a)) b) :length (lambda (a) (for-each abs '(-1 -2 -3)) 3)))))
+	  (sum 0))
+      (for-each (lambda (a b) (set! sum (+ sum a b))) ctr ctr)
+      (test sum 6))
+
+    (let ((ctr ((cadr (make-type :getter (lambda (a b) (car (map append (list b a)))) :length (lambda (a) (length (map abs '(-1 -2 -3)))))))))
+      (test (map (lambda (a b) (+ a b)) ctr ctr) '(0 2 4)))
+
     ))
+
    
 #|
 ;;; these tests are problematic -- they might not fail as hoped, or they might generate unwanted troubles
