@@ -4,7 +4,7 @@
     (call-with-input-file 
 	"ladspa.scm"
       (lambda (file)
-	(let loop ((line (read-line file 'concat)))
+	(let loop ((line (read-line file #t)))
 	  (or (eof-object? line)
 	      (let ((len (string-length line)))
 		(do ((i 0 (1+ i)))

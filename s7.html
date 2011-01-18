@@ -1489,7 +1489,7 @@ if you supply the length and getter functions to make-type.
      `(for-each define ',args ((cadr (make-type :getter (lambda (a b) b) 
                                                 :length (lambda (a) ,(length args)))))))
 enum
-&gt; :(enum zero one two three)
+&gt; (enum zero one two three)
 #&lt;unspecified&gt;
 &gt; two
 2
@@ -4702,24 +4702,30 @@ have any number after, for example, #b:
    add a generic position function
    remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!,
      set-car!|cdr!, and set-current-output|input|error-port.  All of these
-     are redundant given generalized set!.  Also string-length and vector-length.
+     are simply officious and nugatory given generalized set!.  Also string-length and vector-length.
 </pre>
 
-<p>Scheme needs a more elegant way to define functions that share a closure.
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>Scheme needs a more elegant way to define functions that share a closure.  The begin+define+let+set! shuffle used
+above is an embarrassment.
+Here's an idle thought:
 </p>
 
-<!--
+<pre>
 (define f1 (let ((x 23))
 	     (lambda (a)
 	       (+ x a))))
 (define f2
-  (with-environment (procedure-environment f1)
+  (with-environment (procedure-environment f1) ; import f1's closure ("x") into f2
    (lambda (b)
      (+ b (* 2 x)))))
 
-(+ (f1 1) (f2 1))
+&gt; (+ (f1 1) (f2 1))
 71
--->
+</pre>
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
