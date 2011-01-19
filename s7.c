@@ -16659,7 +16659,6 @@ one special case: name sets the type name (a string), which only matters if you'
 In each case, the argument is the value of the object, not the object itself."
 
   int tag;
-  s7_pointer x, y, z;
 
   tag = s7_new_type("anonymous-type", s_type_print, s_type_free, s_type_equal, s_type_gc_mark, NULL, NULL);
   object_types[tag].equal_func = sc->F;  /* see call_s_object_equal */
@@ -16671,7 +16670,12 @@ In each case, the argument is the value of the object, not the object itself."
 
       args_loc = s7_gc_protect(sc, args);
 
-      /* if any of the special functions are specified, store them in the type object so we can find them later */
+      /* if any of the special functions are specified, store them in the type object so we can find them later.
+       *    they also need to be GC-protected:
+       *    (let ((ctr ((cadr (make-type :getter (lambda (a b) b))))))
+       *      (gc)
+       *      ;; any reference here to the getter is likely to fail if it hasn't been protected
+       */
       for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
 	{
 	  s7_pointer func, proc_args;
@@ -16689,6 +16693,7 @@ In each case, the argument is the value of the object, not the object itself."
 				    make_list_2(sc, 
 						make_protected_string(sc, "make-type arg, ~A, should be a function"),
 						func)));
+		  s7_gc_protect(sc, func); /* this ought to be faster in the mark phase than checking every function field of every scheme type(?) */
 		  proc_args = s7_procedure_arity(sc, func);
 		  nargs = s7_integer(car(proc_args)) + s7_integer(cadr(proc_args));
 		  rest_arg = (caddr(proc_args) != sc->F);
@@ -16777,34 +16782,41 @@ In each case, the argument is the value of the object, not the object itself."
       s7_gc_unprotect_at(sc, args_loc);
     }
 
-  /* ? method: (lambda (arg) (s_is_type tag arg)) 
-   *     returns #t if arg is of the new type
-   */
-  x = make_closure(sc, make_list_2(sc, 
-				   make_list_1(sc, sc->S_TYPE_ARG),
-				   make_list_3(sc, sc->S_IS_TYPE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
-		   sc->envir,
-		   T_CLOSURE);
+  {
+    s7_pointer result;
+    int result_loc;
+    result = make_list_3(sc, sc->NIL, sc->NIL, sc->NIL);
+    result_loc = s7_gc_protect(sc, result);
 
-  /* make method: (lambda* (arg) (s_type_make tag arg))
-   *   returns an object of the new type with its value specified by arg (defaults to #f)
-   */
-  y = make_closure(sc, make_list_2(sc, 
-				   make_list_1(sc, sc->S_TYPE_ARG),
-				   make_list_3(sc, sc->S_TYPE_MAKE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
-		   sc->envir,
-		   T_CLOSURE_STAR);
+    /* ? method: (lambda (arg) (s_is_type tag arg)) 
+     *     returns #t if arg is of the new type
+     */
+    car(result) = make_closure(sc, make_list_2(sc, 
+					       make_list_1(sc, sc->S_TYPE_ARG),
+					       make_list_3(sc, sc->S_IS_TYPE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
+			       sc->envir,
+			       T_CLOSURE);
 
-  /* ref method: (lambda (arg) (s_type_ref arg))
-   *   returns the value passed to make above 
-   */
-  z = make_closure(sc, make_list_2(sc, 
-				   make_list_1(sc, sc->S_TYPE_ARG),
-				   make_list_3(sc, sc->S_TYPE_REF, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
-		   sc->envir,
-		   T_CLOSURE);
+    /* make method: (lambda* (arg) (s_type_make tag arg))
+     *   returns an object of the new type with its value specified by arg (defaults to #f)
+     */
+    cadr(result) = make_closure(sc, make_list_2(sc, 
+						make_list_1(sc, sc->S_TYPE_ARG),
+						make_list_3(sc, sc->S_TYPE_MAKE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
+				sc->envir,
+				T_CLOSURE_STAR);
 
-  return(make_list_3(sc, x, y, z));
+    /* ref method: (lambda (arg) (s_type_ref arg))
+     *   returns the value passed to make above 
+     */
+    caddr(result) = make_closure(sc, make_list_2(sc, 
+						 make_list_1(sc, sc->S_TYPE_ARG),
+						 make_list_3(sc, sc->S_TYPE_REF, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
+				 sc->envir,
+				 T_CLOSURE);
+    s7_gc_unprotect_at(sc, result_loc);
+    return(result);
+  }
 }
 
 /* here it would be neat if we allowed any keywords, and those not handled explicitly could
@@ -20376,32 +20388,35 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "for-each", 2, obj, "a vector, list, string, hash-table, or applicable object"));
 
-  sc->x = make_list_1(sc, sc->NIL);
-  if (s7_is_hash_table(obj))
-    sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
-  else sc->z = make_list_1(sc, obj);
-  /* we have to copy the args if any of them is a list:
-   *     (let* ((x (list (list 1 2 3))) (y (apply for-each abs x))) (list x y))
-   *  (is this trying to say that the for-each loop might otherwise change the original list as it cdrs down it?)
-   */
-
-  if (cddr(args) != sc->NIL)
+  if (len != 0)
     {
-      for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
+      sc->x = make_list_1(sc, sc->NIL);
+      if (s7_is_hash_table(obj))
+	sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
+      else sc->z = make_list_1(sc, obj);
+      /* we have to copy the args if any of them is a list:
+       *     (let* ((x (list (list 1 2 3))) (y (apply for-each abs x))) (list x y))
+       *  (is this trying to say that the for-each loop might otherwise change the original list as it cdrs down it?)
+       */
+
+      if (cddr(args) != sc->NIL)
 	{
-	  long int nlen;
+	  for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
+	    {
+	      long int nlen;
 
-	  nlen = applicable_length(sc, car(x));
-	  if (nlen < 0)
-	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a vector, list, string, hash-table, or applicable object"));
-	  if (nlen < len) len = nlen;
-	  if (len == 0) break;   /* need error check below */
+	      nlen = applicable_length(sc, car(x));
+	      if (nlen < 0)
+		return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a vector, list, string, hash-table, or applicable object"));
+	      if (nlen < len) len = nlen;
+	      if (len == 0) break;   /* need error check below */
 
-	  sc->x = s7_cons(sc, sc->NIL, sc->x);          /* we're making a list to be filled in later with the individual args */
+	      sc->x = s7_cons(sc, sc->NIL, sc->x);          /* we're making a list to be filled in later with the individual args */
 
-	  if (s7_is_hash_table(car(x)))
-	    sc->z = s7_cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
-	  else sc->z = s7_cons(sc, car(x), sc->z);
+	      if (s7_is_hash_table(car(x)))
+		sc->z = s7_cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
+	      else sc->z = s7_cons(sc, car(x), sc->z);
+	    }
 	}
     }
 
@@ -20563,28 +20578,31 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, hash-table, or applicable object"));
 
-  if (s7_is_hash_table(obj))
-    sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
-  else sc->z = make_list_1(sc, obj);
-  /* we have to copy the args if any of them is a list:
-   * (let* ((x (list (list 1 2 3))) (y (apply map abs x))) (list x y))
-   */
-
-  if (cddr(args) != sc->NIL)
+  if (len != 0)
     {
-      for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
+      if (s7_is_hash_table(obj))
+	sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
+      else sc->z = make_list_1(sc, obj);
+      /* we have to copy the args if any of them is a list:
+       * (let* ((x (list (list 1 2 3))) (y (apply map abs x))) (list x y))
+       */
+      
+      if (cddr(args) != sc->NIL)
 	{
-	  long int nlen;
-
-	  nlen = applicable_length(sc, car(x));
-	  if (nlen < 0)
-	    return(s7_wrong_type_arg_error(sc, "map", i, car(x), "a vector, list, string, hash-table, or applicable object"));
-	  if (nlen < len) len = nlen;
-	  if (len == 0) break; /* need error check below */
-
-	  if (s7_is_hash_table(car(x)))
-	    sc->z = s7_cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
-	  else sc->z = s7_cons(sc, car(x), sc->z);
+	  for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
+	    {
+	      long int nlen;
+	      
+	      nlen = applicable_length(sc, car(x));
+	      if (nlen < 0)
+		return(s7_wrong_type_arg_error(sc, "map", i, car(x), "a vector, list, string, hash-table, or applicable object"));
+	      if (nlen < len) len = nlen;
+	      if (len == 0) break; /* need error check below */
+	      
+	      if (s7_is_hash_table(car(x)))
+		sc->z = s7_cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
+	      else sc->z = s7_cons(sc, car(x), sc->z);
+	    }
 	}
     }
 
@@ -20602,8 +20620,8 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   if (len == S7_LONG_MAX)
     {
-      /* if at this point len == S7_LONG_MAX, then all args are circular */
-      for (x = cdr(args); (is_pair(x)) && (is_pair(car(x))); x = cdr(x)) {} /* see comment under for-each */
+      /* all args are circular lists, or perhaps an odd scheme type (see comment under for-each) */
+      for (x = cdr(args); (is_pair(x)) && (is_pair(car(x))); x = cdr(x)) {}
       if (!is_pair(x))
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			make_list_2(sc, make_protected_string(sc, "map's arguments are circular lists! ~A"), cdr(args))));
@@ -31338,6 +31356,7 @@ the error type and the info passed to the error handler.");
  * and copy a function? -- apply lambda[*] to the procedure source + args + local env
  *
  * things to fix: nonce-symbols need to be garbage collected
+ *                map/for-each mess up when the 1st arg is a macro
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
  *                could the profiler give block counts as well?
  * if user creates an enormous list, it can seem to hang the listener:
