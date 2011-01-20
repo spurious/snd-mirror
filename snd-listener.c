@@ -142,13 +142,20 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 	    return(i);
 	  else 
 	    {
-	      /* skip past ", ignoring \" */
-	      do {
-		i++;
-		if ((i < (end - 1)) && (expr[i] =='\\') && 
-		    ((expr[i + 1] == '\\') || (expr[i + 1] == '\"')))
-		  i += 2;
-	      } while ((i < end) && (expr[i] != '\"'));
+	      /* skip past ", ignoring \", some cases:
+	       *  "\"\"" '("\"\"") "\\" "#\\(" "'(\"#\\\")"
+	       */
+	      while (i < end)
+		{
+		  i++;
+		  if (expr[i] == '\\') 
+		    i++;
+		  else
+		    {
+		      if (expr[i] == '\"')
+			break;
+		    }
+		}
 	      i++;
 	      if (paren_count == 0) 
 		{
@@ -166,7 +173,7 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 	  break;
 
 	case '\\': 
-	  /* this is an error of some sort */
+	  /* this is an error of some sort or an ignored double quote? */
 	  i += 2; 
 	  break;
 

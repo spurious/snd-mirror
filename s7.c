@@ -20271,6 +20271,7 @@ static bool next_for_each(s7_scheme *sc)
 	  if (z == sc->NIL) 
 	    {
 	      z = make_list_1(sc, s7_make_integer(sc, integer(number(car(sc->args)))));
+
 	      /* we can't use car(sc->args) directly here -- it is a mutable integer, incremented below,
 	       *   but the object application (the getter function) might return the index!
 	       *   Then, we pre-increment, and the for-each application sees the incremented value.
@@ -20394,6 +20395,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
       if (s7_is_hash_table(obj))
 	sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
       else sc->z = make_list_1(sc, obj);
+
       /* we have to copy the args if any of them is a list:
        *     (let* ((x (list (list 1 2 3))) (y (apply for-each abs x))) (list x y))
        *  (is this trying to say that the for-each loop might otherwise change the original list as it cdrs down it?)
@@ -20427,7 +20429,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
        * so we check by hand before returning #<unspecified>
        */
       if (((typeflag(sc->code) & (T_ANY_MACRO | T_SYNTAX | T_PROCEDURE)) != 0) ||
-	  (is_pair(sc->code)) ||
+	  (is_pair(sc->code)) ||                   /* if this used is_sequence (above), (map '()...) would not be an error */
 	  (s7_is_string(sc->code)) ||
 	  (s7_is_vector(sc->code)) ||
 	  (s7_is_hash_table(sc->code)) ||
@@ -20583,6 +20585,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       if (s7_is_hash_table(obj))
 	sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
       else sc->z = make_list_1(sc, obj);
+
       /* we have to copy the args if any of them is a list:
        * (let* ((x (list (list 1 2 3))) (y (apply map abs x))) (list x y))
        */
@@ -20807,6 +20810,7 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
 {
   #define H_qq_values "(apply {values} arg) is the quasiquote internal form for \",@arg\""
+
   /* for quasiquote handling: (apply values car(args)) if args not nil, else nil
    *    (values) -> #<unspecified> which is not wanted in this context.
    */
@@ -31363,6 +31367,7 @@ the error type and the info passed to the error handler.");
  *   *list-print-length* ?
  * add pretty-print to format? ~W I think. (current pretty-print.scm doesn't know about lambda* etc)
  * what about trace-output-port? or an arg to trace?
+ * make bignum-precision a variable (not pws) -> *bignum-precision*
  *
  * The help strings use lambda* syntax for optional args, but these are not keyword args.
  *

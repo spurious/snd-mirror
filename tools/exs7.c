@@ -285,9 +285,6 @@ int main(int argc, char **argv)
   xen_initialize();                   /* initialize the xen stuff (hooks and the xen s7 FFI used by sndlib) */
   Init_sndlib();                      /* initialize sndlib with all the functions linked into s7 */  
 
-  XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
-  XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
-  XEN_EVAL_C_STRING("(define (current-module) (current-environment))");
   XEN_EVAL_C_STRING("(define load-from-path load)");
   
   XEN_DEFINE_PROCEDURE("file-exists?", g_file_exists_p_w, 1, 0, 0, H_file_exists_p);

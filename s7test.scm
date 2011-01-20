@@ -800,7 +800,10 @@ yow!! -- I'm using mpc_cmp
 (test (symbol? and) #f)
 (test (symbol? lambda) #f)
 (test (symbol? call/cc) #f)
-;;; but (symbol? 1.2.3) -> error so we're not perfect either
+(test (symbol? '1.2.3) #t)
+(test (symbol? '1.2) #f)
+(test (symbol? ''1.2) #f)
+(test (symbol? '"hi") #f)
 
 (test (let ((sym000000000000000000000 3))
 	(let ((sym000000000000000000001 4))
@@ -9562,6 +9565,59 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (map /""'(123)) '())
 (num-test (+ 1 .()) 1)
 
+;; how is ...#(... parsed?
+(test (eval-string "'(# (1))") 'error)
+(test (let ((lst (eval-string "'(#(1))"))) (and (= (length lst) 1) (vector? (car lst)))) #t)                     ; '(#(1))
+(test (let ((lst (eval-string "'(#\ (1))"))) (and (= (length lst) 1) (vector? (car lst)))) #t)                   ; '(#(1))
+(test (let ((lst (eval-string "'(-#(1))"))) (and (= (length lst) 2) (symbol? (car lst)) (pair? (cadr lst)))) #t) ; '(-# (1))
+(test (let ((lst (eval-string "'(1#(1))"))) (and (= (length lst) 2) (symbol? (car lst)) (pair? (cadr lst)))) #t) ; '(1# (1))
+(test (let ((lst (eval-string "'('#(1))"))) (and (= (length lst) 1) (vector? (cadar lst)))) #t)                  ; '((quote #(1)))
+(test (let ((lst (eval-string "'(()#())"))) (and (= (length lst) 2) (null? (car lst)) (vector? (cadr lst)))) #t) ; '(() #())
+(test (let ((lst (eval-string "'(().())"))) (and (= (length lst) 1) (null? (car lst)))) #t)                      ; '(())
+(test (let ((lst (eval-string "'(()-())"))) (and (= (length lst) 3) (null? (car lst)) (null? (caddr lst)))) #t)  ; '(() - ())
+(test (let ((lst (eval-string "'(().#())"))) (and (= (length lst) 3) (null? (car lst)) (null? (caddr lst)))) #t) ; '(() .# ())
+(test (let ((lst (eval-string "'((). #())"))) (and (= (length lst) -1) (null? (car lst)) (vector? (cdr lst)))) #t) ; '(() . #())
+(test (let ((lst (eval-string "'(\"\"#())"))) (and (= (length lst) 2) (string? (car lst)) (vector? (cadr lst)))) #t) ; '("" #())
+(test (length (car '("#\\("))) 3)
+(test (length (car '("#\\\""))) 3)
+(test (char=? ((car '("#\\\"")) 2) #\") #t)
+(test (length '(()#\(())) 3)
+(test (length (eval-string "'(()#\\(())")) 3)
+(test (char=? ((eval-string "'(()#\\#())") 1) #\#) #t)
+(test (length (list""#t())) 3)
+(test (length (list""#())) 2)
+(test (length (eval-string "'(#xA(1))")) 2)
+(test (length '(#xA""#(1))) 3)
+(test (length (eval-string "'(#xA\"\"#(1))")) 3)
+(test (length (eval-string "'(1#f)")) 1)
+(test (eval-string "'(#f#())") 'error)
+(test (length '(#f())) 2)
+(test (length '(#f"")) 2)
+(test (eval-string "#F") 'error)
+(test (eval-string "'(#<eof>#<eof>)") 'error)
+(test (eval-string "'(#<eof>#())") 'error)
+(test (equal? '('#()) '(#())) #f)
+(test (equal? (list '#()) '(#())) #t)
+(test (equal? '('#()) '('#())) #t)
+(test (equal? '('#()) '(`#())) #f) ; ! [guile agrees]
+(test (equal? '('()) '(`())) #f) ; ! quote != quasiquote [guile agrees]
+(test (equal? '('(1)) '(`(1))) #t) ; !! but lists are different? [guile says #f]
+(test (equal? '('#(1)) '(`#(1))) #f) ; ! [guile agrees]
+(test (equal? '('#()) '(#())) #f)
+(test (equal? '(`#()) '(`#())) #t)
+(test (equal? '#() `#()) #t)
+(test (equal? (list '#()) (list `#())) #t)
+(test (equal? (list '#()) '(`#())) #t)
+(test (equal? '(`#()) '(#())) #t)
+(test (equal? `#() '#()) #t) ; and also (1) () #(1) etc
+(test (equal? `'#() ''#()) #t) ; "
+(test (equal? '`#() ''#()) #f) ; ! it equals '#()
+(test (equal? '`#() ``#()) #t)
+;; gah -- `#(...) should be removed from s7
+;; but there is still the strangeness that `'() is not the same as '`() -- quasiquote returns '() not (), and similarly for #() except...
+;; there are actually 3 cases here, the 3rd is (equal? `''() ``'()) -> #f, but the #() case is #t
+
+
 #|
 (do ((i 0 (+ i 1)))
     ((= i 256))
@@ -10811,6 +10867,8 @@ this prints:
 (test (map #2d((1 2) (3 4)) '(0 1)) '(#(1 2) #(3 4)))
 (let ((lst (list 1 2))) (set! (cdr (cdr lst)) lst) (test (map (lambda (a) a) lst) 'error))
 (let ((lst (list 1 2))) (set! (cdr (cdr lst)) lst) (test (map (lambda (a) a) lst lst) 'error))
+(test (map "hi" ('((1)) 0)) '(#\i))
+(test (map "hi" ('((1 0)) 0)) '(#\i #\h))
 
 (let ((pws (make-procedure-with-setter (lambda (a) a) (lambda (a b) b))))
   (test (map append pws) 'error)
@@ -13166,6 +13224,8 @@ this prints:
 (test (let ((:hi 1)) :hi) 'error)
 (test (let ((:hi: 1)) :hi:) 'error)
 (test (let ((hi: 1)) hi) 'error)
+(let ((1.0+2j (lambda (a) (+ a 1.0+2i))))
+  (num-test (1.0+2j 3+i) 4.0+3i))
 
 (test (let func ((a 1) (b 2)) (set! b a) (if (> b 0) (func (- a 1) b)) b) 1)
 (test (let func ((a 1) (b 2)) (set! b a) (if (> b 0) (func (- a 1) b) b)) 0)
@@ -18578,6 +18638,8 @@ abs     1       2
     (num-test (string->number "#t#i1a") 22.0) ; ??? this is analogous to #x#i1a = 26.0
     (num-test (string->number "#t#t1a") 22.0)
     (num-test (string->number "#t#t#t1a") 22.0)
+    (test (eval-string "#t") #t)
+    (test (eval-string "#T1") 'error)
 
     (set! *#readers*
 	  (cons (cons #\. (lambda (str)
@@ -56409,6 +56471,7 @@ abs     1       2
 (num-test (/ -1.0+1.0i) -0.5-0.5i)
 (num-test (/ -10) -1/10)
 (num-test (/ -10/3) -3/10)
+(num-test (/ -10 3) -10/3)
 (num-test (/ -1234000000) -1/1234000000)
 (num-test (/ -1234000000.0) -0.00000000081037)
 (num-test (/ -1234000000.0+2.71828182845905i) -0.00000000081037-0.0i)
@@ -56824,6 +56887,9 @@ abs     1       2
 (num-test (/ 1.234+1.234i 1234/11) 0.011+0.011i)
 (num-test (/ 10) 1/10)
 (num-test (/ 10/3) 3/10)
+(num-test (/ 10 3) 10/3)
+(num-test (/ 10 -3) -10/3)
+(num-test (/ -10 -3) 10/3)
 (num-test (/ 11) 1/11)
 (num-test (/ 123.4 -1.0+1.0i -1.0+1.0i) -0.0+61.7i)
 (num-test (/ 123.4 -1.0+1.0i 0.0+1.0i) -61.7+61.7i)
@@ -58727,14 +58793,6 @@ etc....
 (test (number? '00-) #f)
 (test (string->number "00-") #f)
 
-(if (provided? 'dfls-exponents)
-    (begin
-      (num-test (string->number "#i1s0") 1.0) ; need the s->n to avoid confusing reader in non-dfls case
-      (num-test -0d-0 0.0)
-      (num-test +1d+1 10.0)
-      (num-test +1s00 1.0)
-      ))
-
 (num-test #e0.1 1/10)
 (num-test #i1/1 1.0)
 (num-test #o-11 -9)
@@ -58763,6 +58821,14 @@ etc....
 (num-test #x.a+i 0.625+1i)
 (num-test #b1.+i 1+1i)
 (num-test 0.e-0 0.0)
+
+(if (provided? 'dfls-exponents)
+    (begin
+      (num-test (string->number "#i1s0") 1.0) ; need the s->n to avoid confusing reader in non-dfls case
+      (num-test -0d-0 0.0)
+      (num-test +1d+1 10.0)
+      (num-test +1s00 1.0)
+      ))
 
 (let ((str (make-string 3)))
    (set! (str 0) #\#)
