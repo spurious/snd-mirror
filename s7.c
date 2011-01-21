@@ -18652,10 +18652,14 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			  {
 			    int j, k, outstr_len;
 			    outstr_len = safe_strlen(fdat->str);
-			    for (k = outstr_len - 1; k > 0; k--)
+			    for (k = outstr_len - 1; k >= 0; k--)
 			      if (fdat->str[k] == '\n')
 				break;
-			    
+
+			    /* (length (substring (format #f "~%~10T.") 1)) == (length (format #f "~10T."))
+			     * (length (substring (format #f "~%-~10T.~%") 1)) == (length (format #f "-~10T.~%"))
+			     */
+
 			    if (precision > 0)
 			      {
 				int mult;
@@ -18663,7 +18667,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 				if (mult < 1) mult = 1;
 				width += (precision * mult);
 			      }
-
+			    
 			    for (j = outstr_len - k; j < width; j++)
 			      format_append_char(fdat, pad);
 			  }
@@ -20371,6 +20375,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
    * OP_APPLY knows this is happening (in the 2nd case) and raises an error -- what would break
    *   if we handle it locally instead?  This actually affects only T_C_MACRO (quasiquote) --
    *   normal macros/bacros would still be broken.
+   * or could we rewrite the args to fit just as in apply? (also need the evaluation)
    */
 
   /* before checking len=0, we need to check that the arguments are all sequences (this is like our handling of args to + for example)

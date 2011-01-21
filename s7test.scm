@@ -8265,32 +8265,46 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 ;; ~nT handling is a mess -- what are the defaults?  which is column 1? do we space up to or up to and including?
 
-(test (format #f "asdh~20Thiho") "asdh                hiho")
+(test (format #f "asdh~20Thiho") "asdh               hiho")
 (test (format #f "asdh~2Thiho") "asdhhiho")
 (test (format #f "a~Tb") "ab")
-(test (format #f "0123456~4,8Tb") "0123456     b")
-(test (format #f "0123456~0,8Tb") "0123456 b")
-(test (format #f "0123456~10,8Tb") "0123456           b")
+(test (format #f "0123456~4,8Tb") "0123456    b")
+(test (format #f "0123456~0,8Tb") "0123456b")
+(test (format #f "0123456~10,8Tb") "0123456          b")
 (test (format #f "0123456~1,0Tb") "0123456b")
 (test (format #f "0123456~1,Tb") "0123456b")
 (test (format #f "0123456~1,Tb") "0123456b")
 (test (format #f "0123456~,Tb") "0123456b")
-(test (format #f "0123456~7,10Tb") "0123456          b")
-(test (format #f "0123456~8,10tb") "0123456           b")
-(test (format #f "0123456~3,12tb") "0123456        b")
+(test (format #f "0123456~7,10Tb") "0123456         b")
+(test (format #f "0123456~8,10tb") "0123456          b")
+(test (format #f "0123456~3,12tb") "0123456       b")
 (test (format #f "~40TX") "                                       X")
-(test (format #f "X~,8TX~,8TX") "X       X       X")
-(test (format #f "X~8,TX~8,TX") "X       XX")
-(test (format #f "X~8,10TX~8,10TX") "X                 X         X")
-(test (format #f "X~8,0TX~8,0TX") "X       XX")
-(test (format #f "X~0,8TX~0,8TX") "X       X       X")
-(test (format #f "X~1,8TX~1,8TX") "X        X       X")
-(test (format #f "X~,8TX~,8TX") "X       X       X") ; ??
-(test (format #f "X~TX~TX") "XXX") ; clisp and sbcl say "X X X" here and similar differences elsewhere (s7 nT, n is from the start or something...)
-(test (format #f "X~2TX~4TX") "X X X")
+(test (format #f "X~,8TX~,8TX") "X      X       X")
+(test (format #f "X~8,TX~8,TX") "X      XX")
+(test (format #f "X~8,10TX~8,10TX") "X                X         X")
+(test (format #f "X~8,0TX~8,0TX") "X      XX")
+(test (format #f "X~0,8TX~0,8TX") "X      X       X")
+(test (format #f "X~1,8TX~1,8TX") "X       X       X")
+(test (format #f "X~,8TX~,8TX") "X      X       X") ; ??
+(test (format #f "X~TX~TX") "XXX") ; clisp and sbcl say "X X X" here and similar differences elsewhere -- is it colnum or colinc as default if no comma?
+(test (format #f "X~2TX~4TX") "XX X")
 (test (format #f "X~0,0TX~0,0TX") "XXX")
 (test (format #f "X~0,TX~0,TX") "XXX")
 (test (format #f "X~,0TX~,0TX") "XXX")
+
+(test (= (length (substring (format #f "~%~10T.") 1)) (length (format #f "~10T."))) #t)
+(test (= (length (substring (format #f "~%-~10T.~%") 1)) (length (format #f "-~10T.~%"))) #t)
+(test (string=? (format #f "~%|0 1 2|~21T|5  8  3  2|~%~
+                              |1 2 3| |0 1 2 3|~21T|8 14  8  6|~%~
+                              |2 3 0| |1 2 3 0| = ~21T|3  8 13  6|~%~
+                              |3 0 1| |2 3 0 1|~21T|2  6  6 10|~%")
+		"
+|0 1 2|             |5  8  3  2|
+|1 2 3| |0 1 2 3|   |8 14  8  6|
+|2 3 0| |1 2 3 0| = |3  8 13  6|
+|3 0 1| |2 3 0 1|   |2  6  6 10|
+") #t)
+
 (test (format #f "~12,''D" 1) "'''''''''''1")
 (test (let ((str "~12,'xD")) (set! (str 5) #\space) (format #f str 1)) "           1")
 (test (format #f "~12,' D" 1) "           1")
@@ -8304,6 +8318,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (string=? (format #f "~%~&" ) (string #\newline)) #t)
 (test (string=? (format #f "~%a~&" ) (string #\newline #\a #\newline)) #t)
 (test (string=? (format #f "~%~%") (string #\newline #\newline)) #t)
+(test (string=? (format #f "~10T~%~&~10T.") (format #f "~10T~&~&~10T.")) #t)
+(test (string=? (format #f "~10T~&~10T.") (format #f "~10T~%~&~&~&~&~10T.")) #t)
 
 (test (format #f "~2,1F" 0.5) "0.5")
 (test (format #f "~:2T") 'error)
@@ -8328,7 +8344,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "~^") "")
 (test (format #f "~D~" 9) "9~") ; error?
 (test (format #f "~&" 9) 'error)
-(test (format #f "~D~100T~D" 1 1) "1                                                                                                   1")
+(test (format #f "~D~100T~D" 1 1) "1                                                                                                  1")
 (test (format #f ".~P." 1) "..")
 (test (format #f ".~P." 1.0) "..")
 (test (format #f ".~P." 1.2) ".s.")
@@ -8484,6 +8500,42 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "asb~{~}asd" '(1 2 3)) 'error)
 (test (format #f "asb~{ ~}asd" '(1 2 3)) 'error)
 (test (format #f "asb~{ hiho~~~}asd" '(1 2 3)) 'error)
+
+#|
+(do ((i 0 (+ i 1))) ((= i 256)) 
+  (let ((chr (integer->char i)))
+    (format #t "~D: ~A ~A ~D~%" i (format #f "~S" (string chr)) (string chr) (length (format #f "~S" (string chr))))))
+|#
+
+(for-each
+ (lambda (arg)
+   (test (format #f "~F" arg) 'error))
+ (list "hi" #\a 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (format #f "~D" arg) 'error))
+ (list "hi" #\a 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (format #f "~P" arg) 'error))
+ (list "hi" #\a 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (format #f "~X" arg) 'error))
+ (list "hi" #\a 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (format #f "~C" arg) 'error))
+ (list "hi" 1 1.0 1+i 2/3 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (format #f arg 123) 'error))
+ (list 1 1.0 1+i 2/3 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (format #f "~{~A ~A ~}" '(1 "hi" 2)) 'error)
 (for-each
@@ -8773,7 +8825,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "~10,'-T") "---------")
 (test (format #f "~10,'\\T") "\\\\\\\\\\\\\\\\\\")
 (test (format #f "~10,'\"T") "\"\"\"\"\"\"\"\"\"")
-(test (format #f "~10,'-T12345~20,'-T") "---------12345------")
+(test (format #f "~10,'-T12345~20,'-T") "---------12345-----")
 (test (format #f "~10,')T") ")))))))))")
 
 (test (format #f "~,0F" 1.4) "1.0")
@@ -8976,42 +9028,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (format #t "format #t: ~D" 1)
 (format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)
-
-#|
-(do ((i 0 (+ i 1))) ((= i 256)) 
-  (let ((chr (integer->char i)))
-    (format #t "~D: ~A ~A ~D~%" i (format #f "~S" (string chr)) (string chr) (length (format #f "~S" (string chr))))))
-|#
-
-(for-each
- (lambda (arg)
-   (test (format #f "~F" arg) 'error))
- (list "hi" #\a 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (format #f "~D" arg) 'error))
- (list "hi" #\a 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (format #f "~P" arg) 'error))
- (list "hi" #\a 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (format #f "~X" arg) 'error))
- (list "hi" #\a 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (format #f "~C" arg) 'error))
- (list "hi" 1 1.0 1+i 2/3 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (format #f arg 123) 'error))
- (list 1 1.0 1+i 2/3 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (call-with-output-file "tmp1.r5rs"
   (lambda (p)
@@ -9500,224 +9516,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (catch #t (lambda () (eval-string (port-filename))) (lambda args #f)) #f)
 (test (symbol? (string->symbol (port-filename))) #t)
 
-
-
-
-;;; -------- poke at the reader --------
-
-(test (cdr '(1 ."a")) "a")
-(test (cadr '(1 .#d2)) '.#d2)
-(test '(1 .(2 3)) '(1 2 3))
-(test '(1 .(2 3)) '(1 . (2 3)))
-(test (+ .(2 .(3))) 5)
-(test (cadr '(1 '0,)) ''0,)
-(test (equal? 3 ' 3) #t)
-(test (equal? '   
-	             3 3) #t)
-(test (equal? '"hi" ' "hi") #t)
-(test (equal? '#\a '    #\a) #t)
-(test (let ((nam()e 1)) 1) 'error)
-(test (let ((nam""e 1)) nam""e) 'error) ; this was 1 originally
-(test (cadr '(1 ']x)) '']x)
-(test `1 1)
-(test (equal? '(1 .(1 .())) '(1 1)) #t)
-(test (equal? '("hi"."ho") ' ("hi" . "ho")) #t)
-(test (equal? '("hi""ho") '("hi" "ho")) #t)
-(test '("""""") '("" "" ""))
-(test '(#|;"();|#) '())
-(test '(#||##\# #!!##b1) '(#\# 1))
-(test '((). '()) '(() quote ()))
-(test '(1. . .2) '(1.0 . 0.2))
-(test (equal? '(().()) '(())) #t)
-(test (equal? '(()()) '(() ())) #t)
-(test (equal? '(()..()) '(() .. ())) #t)
-(test '((().()).()) '((())))
-(test '(((().()).()).()) '(((()))))
-(test '((().(().())).()) '((() ())))
-(test '((()().(().()))) '((() () ())))
-(test '(1 .;
-	  2) '(1 . 2))
-(test (vector .(1 .(2))) #(1 2))
-(test (vector 0. .(.1)) #(0.0 0.1))
-
-;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
-(test (char? #\#) #t)
-(test (car `(,.1e0)) .1)
-(test (car `(,.1E0)) .1)
-(test (let ((x "hi")) (set! x"asdf") x) "asdf")
-(test (let ((x 1)) (set! x(list 1 2)) x) '(1 2))
-(num-test (let ((x 1)) (set!;"
-			x;)
-			12.;(
-			);#|
-	       x) 12.0)
-(test (let ((\x00}< 1) (@:\t{ 2)) (+ \x00}< @:\t{)) 3)
-(test (let ((?#||#\ 1) (\n\r\t 2) (.1e+2+ie 3)) (+ ?#||#\ \n\r\t .1e+2+ie)) 6)
-(test (let ((@,@'[1] 1) (\,| 2)) (+ @,@'[1] \,|)) 3)
-(test (list"0"0()#()#\a"""1"'x(list)+(cons"""")#f) (list "0" 0 () #() #\a "" "1" 'x (list) + '("" . "") #f))
-(test (let ((x, 1)) x,) 1)
-(test (length (eval-string (string #\' #\( #\1 #\space #\. (integer->char 200) #\2 #\)))) 2) ; will be -1 if dot is for improper list, 3 if dot is a symbol
-(test (eval-string "(list \\\x001)") 'error)
-(test (eval-string "(list \\\x00 1)") 'error)
-(test (+ `,0(angle ```,`11)) 0)
-(test (map . (char->integer "123")) '(49 50 51))
-(test (map .(values "0'1")) '(#\0 #\' #\1))
-(test (map /""'(123)) '())
-(num-test (+ 1 .()) 1)
-
-;; how is ...#(... parsed?
-(test (eval-string "'(# (1))") 'error)
-(test (let ((lst (eval-string "'(#(1))"))) (and (= (length lst) 1) (vector? (car lst)))) #t)                     ; '(#(1))
-(test (let ((lst (eval-string "'(#\ (1))"))) (and (= (length lst) 1) (vector? (car lst)))) #t)                   ; '(#(1))
-(test (let ((lst (eval-string "'(-#(1))"))) (and (= (length lst) 2) (symbol? (car lst)) (pair? (cadr lst)))) #t) ; '(-# (1))
-(test (let ((lst (eval-string "'(1#(1))"))) (and (= (length lst) 2) (symbol? (car lst)) (pair? (cadr lst)))) #t) ; '(1# (1))
-(test (let ((lst (eval-string "'('#(1))"))) (and (= (length lst) 1) (vector? (cadar lst)))) #t)                  ; '((quote #(1)))
-(test (let ((lst (eval-string "'(()#())"))) (and (= (length lst) 2) (null? (car lst)) (vector? (cadr lst)))) #t) ; '(() #())
-(test (let ((lst (eval-string "'(().())"))) (and (= (length lst) 1) (null? (car lst)))) #t)                      ; '(())
-(test (let ((lst (eval-string "'(()-())"))) (and (= (length lst) 3) (null? (car lst)) (null? (caddr lst)))) #t)  ; '(() - ())
-(test (let ((lst (eval-string "'(().#())"))) (and (= (length lst) 3) (null? (car lst)) (null? (caddr lst)))) #t) ; '(() .# ())
-(test (let ((lst (eval-string "'((). #())"))) (and (= (length lst) -1) (null? (car lst)) (vector? (cdr lst)))) #t) ; '(() . #())
-(test (let ((lst (eval-string "'(\"\"#())"))) (and (= (length lst) 2) (string? (car lst)) (vector? (cadr lst)))) #t) ; '("" #())
-(test (length (car '("#\\("))) 3)
-(test (length (car '("#\\\""))) 3)
-(test (char=? ((car '("#\\\"")) 2) #\") #t)
-(test (length '(()#\(())) 3)
-(test (length (eval-string "'(()#\\(())")) 3)
-(test (char=? ((eval-string "'(()#\\#())") 1) #\#) #t)
-(test (length (list""#t())) 3)
-(test (length (list""#())) 2)
-(test (length (eval-string "'(#xA(1))")) 2)
-(test (length '(#xA""#(1))) 3)
-(test (length (eval-string "'(#xA\"\"#(1))")) 3)
-(test (length (eval-string "'(1#f)")) 1)
-(test (eval-string "'(#f#())") 'error)
-(test (length '(#f())) 2)
-(test (length '(#f"")) 2)
-(test (eval-string "#F") 'error)
-(test (eval-string "'(#<eof>#<eof>)") 'error)
-(test (eval-string "'(#<eof>#())") 'error)
-(test (equal? '('#()) '(#())) #f)
-(test (equal? (list '#()) '(#())) #t)
-(test (equal? '('#()) '('#())) #t)
-(test (equal? '('#()) '(`#())) #f) ; ! [guile agrees]
-(test (equal? '('()) '(`())) #f) ; ! quote != quasiquote [guile agrees]
-(test (equal? '('(1)) '(`(1))) #t) ; !! but lists are different? [guile says #f]
-(test (equal? '('#(1)) '(`#(1))) #f) ; ! [guile agrees]
-(test (equal? '('#()) '(#())) #f)
-(test (equal? '(`#()) '(`#())) #t)
-(test (equal? '#() `#()) #t)
-(test (equal? (list '#()) (list `#())) #t)
-(test (equal? (list '#()) '(`#())) #t)
-(test (equal? '(`#()) '(#())) #t)
-(test (equal? `#() '#()) #t) ; and also (1) () #(1) etc
-(test (equal? `'#() ''#()) #t) ; "
-(test (equal? '`#() ''#()) #f) ; ! it equals '#()
-(test (equal? '`#() ``#()) #t)
-;; gah -- `#(...) should be removed from s7
-;; but there is still the strangeness that `'() is not the same as '`() -- quasiquote returns '() not (), and similarly for #() except...
-;; there are actually 3 cases here, the 3rd is (equal? `''() ``'()) -> #f, but the #() case is #t
-
-
-#|
-(do ((i 0 (+ i 1)))
-    ((= i 256))
-  (if (and (not (= i (char->integer #\))))
-	   (not (= i (char->integer #\"))))
-      (let ((str (string #\' #\( #\1 #\space #\. (integer->char i) #\2 #\))))
-	(catch #t
-	       (lambda ()
-		 (let ((val (eval-string str)))
-		   (format #t "[~D] ~A -> ~S (~S ~S)~%" i str val (car val) (cdr val))))
-	       (lambda args
-		 (format #t "[~D] ~A -> ~A~%" i str args))))))
-
-(let ((chars (vector (integer->char 0) #\newline #\space #\tab #\. #\, #\@ #\= #\x #\b #\' #\` #\# #\] #\[ #\} #\{ #\( #\) #\1 #\i #\+ #\- #\e #\_ #\\ #\" #\: #\; #\> #\<)))
-  (let ((nchars (vector-length chars)))
-    (do ((len 2 (+ len 1)))
-	((= len 3))
-      (let ((str (make-string len))
-	    (ctrs (make-vector len 0)))
-
-	(do ((i 0 (+ i 1)))
-	    ((= i (expt nchars len)))
-
-	  (let ((carry #t))
-	    (do ((k 0 (+ k 1)))
-		((or (= k len)
-		     (not carry)))
-	      (vector-set! ctrs k (+ 1 (vector-ref ctrs k)))
-	      (if (= (vector-ref ctrs k) nchars)
-		  (vector-set! ctrs k 0)
-		  (set! carry #f)))
-	    (do ((k 0 (+ k 1)))
-		((= k len))
-	      (string-set! str k (vector-ref chars (vector-ref ctrs k)))))
-
-	  (format #t "~A -> " str)
-	  (catch #t
-		 (lambda ()
-		   (let ((val (eval-string str)))
-		     (format #t " ~S (~S ~S)~%" val (car val) (cdr val))))
-		 (lambda args
-		   (format #t " ~A~%" args))))))))
-|#
-
-(let ((äåæéîå define)
-      (ìåîçôè length)
-      (äï do)
-      (ìåô* let*)
-      (éæ if)
-      (áâó abs)
-      (ìïç log)
-      (óåô! set!))
-
-  (äåæéîå (óòã-äõòáôéïî å)
-    (ìåô* ((ìåî (ìåîçôè å))
-           (åø0 (å 0))
-           (åø1 (å (- ìåî 2)))
-           (áìì-ø (- åø1 åø0))
-           (äõò 0.0))
-      (äï ((é 0 (+ é 2)))
-          ((>= é (- ìåî 2)) äõò)
-        (ìåô* ((ø0 (å é))
-               (ø1 (å (+ é 2)))
-               (ù0 (å (+ é 1))) ; 1/ø ø ðïéîôó
-               (ù1 (å (+ é 3)))
-               (áòåá (éæ (< (áâó (- ù0 ù1)) .0001)
-                         (/ (- ø1 ø0) (* ù0 áìì-ø))
-                         (* (/ (- (ìïç ù1) (ìïç ù0)) 
-                               (- ù1 ù0)) 
-                            (/ (- ø1 ø0) áìì-ø)))))
-         (óåô! äõò (+ äõò (áâó áòåá)))))))
-
-  (num-test (óòã-äõòáôéïî (list 0 1 1 2)) 0.69314718055995)
-  (num-test (óòã-äõòáôéïî (vector 0 1 1 2)) 0.69314718055995))
-
-(test (let ((ÿa 1)) ÿa) 1)
-(test (+ (let ((!a 1)) !a) (let (($a 1)) $a) (let ((%a 1)) %a) (let ((&a 1)) &a) (let ((*a 1)) *a) (let ((+a 1)) +a) (let ((-a 1)) -a) (let ((.a 1)) .a) (let ((/a 1)) /a) (let ((0a 1)) 0a) (let ((1a 1)) 1a) (let ((2a 1)) 2a) (let ((3a 1)) 3a) (let ((4a 1)) 4a) (let ((5a 1)) 5a) (let ((6a 1)) 6a) (let ((7a 1)) 7a) (let ((8a 1)) 8a) (let ((9a 1)) 9a) (let ((<a 1)) <a) (let ((=a 1)) =a) (let ((>a 1)) >a) (let ((?a 1)) ?a) (let ((@a 1)) @a) (let ((Aa 1)) Aa) (let ((Ba 1)) Ba) (let ((Ca 1)) Ca) (let ((Da 1)) Da) (let ((Ea 1)) Ea) (let ((Fa 1)) Fa) (let ((Ga 1)) Ga) (let ((Ha 1)) Ha) (let ((Ia 1)) Ia) (let ((Ja 1)) Ja) (let ((Ka 1)) Ka) (let ((La 1)) La) (let ((Ma 1)) Ma) (let ((Na 1)) Na) (let ((Oa 1)) Oa) (let ((Pa 1)) Pa) (let ((Qa 1)) Qa) (let ((Ra 1)) Ra) (let ((Sa 1)) Sa) (let ((Ta 1)) Ta) (let ((Ua 1)) Ua) (let ((Va 1)) Va) (let ((Wa 1)) Wa) (let ((Xa 1)) Xa) (let ((Ya 1)) Ya) (let ((Za 1)) Za) (let (([a 1)) [a) (let ((\a 1)) \a) (let ((]a 1)) ]a) (let ((^a 1)) ^a) (let ((_a 1)) _a) (let ((aa 1)) aa) (let ((ba 1)) ba) (let ((ca 1)) ca) (let ((da 1)) da) (let ((ea 1)) ea) (let ((fa 1)) fa) (let ((ga 1)) ga) (let ((ha 1)) ha) (let ((ia 1)) ia) (let ((ja 1)) ja) (let ((ka 1)) ka) (let ((la 1)) la) (let ((ma 1)) ma) (let ((na 1)) na) (let ((oa 1)) oa) (let ((pa 1)) pa) (let ((qa 1)) qa) (let ((ra 1)) ra) (let ((sa 1)) sa) (let ((ta 1)) ta) (let ((ua 1)) ua) (let ((va 1)) va) (let ((wa 1)) wa) (let ((xa 1)) xa) (let ((ya 1)) ya) (let ((za 1)) za) (let (({a 1)) {a) (let ((|a 1)) |a) (let ((}a 1)) }a) (let ((~a 1)) ~a) (let (( a 1))  a) (let ((¡a 1)) ¡a) (let ((¢a 1)) ¢a) (let ((£a 1)) £a) (let ((¤a 1)) ¤a) (let ((¥a 1)) ¥a) (let ((¦a 1)) ¦a) (let ((§a 1)) §a) (let ((¨a 1)) ¨a) (let ((©a 1)) ©a) (let ((ªa 1)) ªa) (let ((«a 1)) «a) (let ((¬a 1)) ¬a) (let ((­a 1)) ­a) (let ((®a 1)) ®a) (let ((¯a 1)) ¯a) (let ((°a 1)) °a) (let ((±a 1)) ±a) (let ((²a 1)) ²a) (let ((³a 1)) ³a) (let ((´a 1)) ´a) (let ((µa 1)) µa) (let ((¶a 1)) ¶a) (let ((·a 1)) ·a) (let ((¸a 1)) ¸a) (let ((¹a 1)) ¹a) (let ((ºa 1)) ºa) (let ((»a 1)) »a) (let ((¼a 1)) ¼a) (let ((½a 1)) ½a) (let ((¾a 1)) ¾a) (let ((¿a 1)) ¿a) (let ((Àa 1)) Àa) (let ((Áa 1)) Áa) (let ((Âa 1)) Âa) (let ((Ãa 1)) Ãa) (let ((Äa 1)) Äa) (let ((Åa 1)) Åa) (let ((Æa 1)) Æa) (let ((Ça 1)) Ça) (let ((Èa 1)) Èa) (let ((Éa 1)) Éa) (let ((Êa 1)) Êa) (let ((Ëa 1)) Ëa) (let ((Ìa 1)) Ìa) (let ((Ía 1)) Ía) (let ((Îa 1)) Îa) (let ((Ïa 1)) Ïa) (let ((Ða 1)) Ða) (let ((Ña 1)) Ña) (let ((Òa 1)) Òa) (let ((Óa 1)) Óa) (let ((Ôa 1)) Ôa) (let ((Õa 1)) Õa) (let ((Öa 1)) Öa) (let ((×a 1)) ×a) (let ((Øa 1)) Øa) (let ((Ùa 1)) Ùa) (let ((Úa 1)) Úa) (let ((Ûa 1)) Ûa) (let ((Üa 1)) Üa) (let ((Ýa 1)) Ýa) (let ((Þa 1)) Þa) (let ((ßa 1)) ßa) (let ((àa 1)) àa) (let ((áa 1)) áa) (let ((âa 1)) âa) (let ((ãa 1)) ãa) (let ((äa 1)) äa) (let ((åa 1)) åa) (let ((æa 1)) æa) (let ((ça 1)) ça) (let ((èa 1)) èa) (let ((éa 1)) éa) (let ((êa 1)) êa) (let ((ëa 1)) ëa) (let ((ìa 1)) ìa) (let ((ía 1)) ía) (let ((îa 1)) îa) (let ((ïa 1)) ïa) (let ((ða 1)) ða) (let ((ña 1)) ña) (let ((òa 1)) òa) (let ((óa 1)) óa) (let ((ôa 1)) ôa) (let ((õa 1)) õa) (let ((öa 1)) öa) (let ((÷a 1)) ÷a) (let ((øa 1)) øa) (let ((ùa 1)) ùa) (let ((úa 1)) úa) (let ((ûa 1)) ûa) (let ((üa 1)) üa) (let ((ýa 1)) ýa) (let ((þa 1)) þa) (let ((ÿa 1)) ÿa)) 181)
-
-;;; there are about 50 non-printing chars, some of which would probably work as well
-
-
-;; (eval-string "(eval-string ...)") is not what it appears to be -- the outer call
-;;    still sees the full string when it evaluates, not the string that results from
-;;    the inner call.
-
-(test (let ((name '+))
-	(let ((+ *))	
-	  (eval (list name 2 3))))
-      6)
-(test (let ((name +))
-	(let ((+ *))	
-	  (eval (list name 2 3))))
-      5)
-;; why is this considered confusing?  It has nothing to do with eval!
-
-(test (let ((call/cc (lambda (x)
-		       (let ((c (call/cc x))) c))))
-	(call/cc (lambda (r) (r 1))))
-      1)
-
 (for-each
  (lambda (arg)
    (test
@@ -9865,6 +9663,309 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+
+;;; -------- poke at the reader --------
+
+(test (cdr '(1 ."a")) "a")
+(test (cadr '(1 .#d2)) '.#d2)
+(test '(1 .(2 3)) '(1 2 3))
+(test '(1 .(2 3)) '(1 . (2 3)))
+(test (+ .(2 .(3))) 5)
+(test (cadr '(1 '0,)) ''0,)
+(test (equal? 3 ' 3) #t)
+(test (equal? '   
+	             3 3) #t)
+(test (equal? '"hi" ' "hi") #t)
+(test (equal? '#\a '    #\a) #t)
+(test (let ((nam()e 1)) 1) 'error)
+(test (let ((nam""e 1)) nam""e) 'error) ; this was 1 originally
+(test (cadr '(1 ']x)) '']x)
+(test `1 1)
+(test (equal? '(1 .(1 .())) '(1 1)) #t)
+(test (equal? '("hi"."ho") ' ("hi" . "ho")) #t)
+(test (equal? '("hi""ho") '("hi" "ho")) #t)
+(test '("""""") '("" "" ""))
+(test '(#|;"();|#) '())
+(test '(#||##\# #!!##b1) '(#\# 1))
+(test '((). '()) '(() quote ()))
+(test '(1. . .2) '(1.0 . 0.2))
+(test (equal? '(().()) '(())) #t)
+(test (equal? '(()()) '(() ())) #t)
+(test (equal? '(()..()) '(() .. ())) #t)
+(test '((().()).()) '((())))
+(test '(((().()).()).()) '(((()))))
+(test '((().(().())).()) '((() ())))
+(test '((()().(().()))) '((() () ())))
+(test '(1 .;
+	  2) '(1 . 2))
+(test (vector .(1 .(2))) #(1 2))
+(test (vector 0. .(.1)) #(0.0 0.1))
+
+;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
+(test (char? #\#) #t)
+(test (car `(,.1e0)) .1)
+(test (car `(,.1E0)) .1)
+(test (let ((x "hi")) (set! x"asdf") x) "asdf")
+(test (let ((x 1)) (set! x(list 1 2)) x) '(1 2))
+(num-test (let ((x 1)) (set!;"
+			x;)
+			12.;(
+			);#|
+	       x) 12.0)
+(test (let ((\x00}< 1) (@:\t{ 2)) (+ \x00}< @:\t{)) 3)
+(test (let ((?#||#\ 1) (\n\r\t 2) (.1e+2+ie 3)) (+ ?#||#\ \n\r\t .1e+2+ie)) 6)
+(test (let ((@,@'[1] 1) (\,| 2)) (+ @,@'[1] \,|)) 3)
+(test (list"0"0()#()#\a"""1"'x(list)+(cons"""")#f) (list "0" 0 () #() #\a "" "1" 'x (list) + '("" . "") #f))
+(test (let ((x, 1)) x,) 1)
+(test (length (eval-string (string #\' #\( #\1 #\space #\. (integer->char 200) #\2 #\)))) 2) ; will be -1 if dot is for improper list, 3 if dot is a symbol
+(test (eval-string "(list \\\x001)") 'error)
+(test (eval-string "(list \\\x00 1)") 'error)
+(test (+ `,0(angle ```,`11)) 0)
+(test (map . (char->integer "123")) '(49 50 51))
+(test (map .(values "0'1")) '(#\0 #\' #\1))
+(test (map /""'(123)) '())
+(num-test (+ 1 .()) 1)
+
+;; how is ...#(... parsed?
+(test (eval-string "'(# (1))") 'error)
+(test (let ((lst (eval-string "'(#(1))"))) (and (= (length lst) 1) (vector? (car lst)))) #t)                     ; '(#(1))
+(test (let ((lst (eval-string "'(#\ (1))"))) (and (= (length lst) 1) (vector? (car lst)))) #t)                   ; '(#(1))
+(test (let ((lst (eval-string "'(-#(1))"))) (and (= (length lst) 2) (symbol? (car lst)) (pair? (cadr lst)))) #t) ; '(-# (1))
+(test (let ((lst (eval-string "'(1#(1))"))) (and (= (length lst) 2) (symbol? (car lst)) (pair? (cadr lst)))) #t) ; '(1# (1))
+(test (let ((lst (eval-string "'('#(1))"))) (and (= (length lst) 1) (vector? (cadar lst)))) #t)                  ; '((quote #(1)))
+(test (let ((lst (eval-string "'(()#())"))) (and (= (length lst) 2) (null? (car lst)) (vector? (cadr lst)))) #t) ; '(() #())
+(test (let ((lst (eval-string "'(().())"))) (and (= (length lst) 1) (null? (car lst)))) #t)                      ; '(())
+(test (let ((lst (eval-string "'(()-())"))) (and (= (length lst) 3) (null? (car lst)) (null? (caddr lst)))) #t)  ; '(() - ())
+(test (let ((lst (eval-string "'(().#())"))) (and (= (length lst) 3) (null? (car lst)) (null? (caddr lst)))) #t) ; '(() .# ())
+(test (let ((lst (eval-string "'((). #())"))) (and (= (length lst) -1) (null? (car lst)) (vector? (cdr lst)))) #t) ; '(() . #())
+(test (let ((lst (eval-string "'(\"\"#())"))) (and (= (length lst) 2) (string? (car lst)) (vector? (cadr lst)))) #t) ; '("" #())
+(test (length (car '("#\\("))) 3)
+(test (length (car '("#\\\""))) 3)
+(test (char=? ((car '("#\\\"")) 2) #\") #t)
+(test (length '(()#\(())) 3)
+(test (length (eval-string "'(()#\\(())")) 3)
+(test (char=? ((eval-string "'(()#\\#())") 1) #\#) #t)
+(test (length (list""#t())) 3)
+(test (length (list""#())) 2)
+(test (length (eval-string "'(#xA(1))")) 2)
+(test (length '(#xA""#(1))) 3)
+(test (length (eval-string "'(#xA\"\"#(1))")) 3)
+(test (length (eval-string "'(1#f)")) 1)
+(test (eval-string "'(#f#())") 'error)
+(test (length '(#f())) 2)
+(test (length '(#f"")) 2)
+(test (eval-string "#F") 'error)
+(test (eval-string "'(#<eof>#<eof>)") 'error)
+(test (eval-string "'(#<eof>#())") 'error)
+(test (equal? '('#()) '(#())) #f)
+(test (equal? (list '#()) '(#())) #t)
+(test (equal? '('#()) '('#())) #t)
+(test (equal? '('#()) '(`#())) #f) ; ! [guile agrees]
+(test (equal? '('()) '(`())) #f) ; ! quote != quasiquote [guile agrees]
+(test (equal? '('(1)) '(`(1))) #t) ; !! but lists are different? [guile says #f]
+(test (equal? '('#(1)) '(`#(1))) #f) ; ! [guile agrees]
+(test (equal? '('#()) '(#())) #f)
+(test (equal? '(`#()) '(`#())) #t)
+(test (equal? '#() `#()) #t)
+(test (equal? (list '#()) (list `#())) #t)
+(test (equal? (list '#()) '(`#())) #t)
+(test (equal? '(`#()) '(#())) #t)
+(test (equal? `#() '#()) #t) ; and also (1) () #(1) etc
+(test (equal? `'#() ''#()) #t) ; "
+(test (equal? '`#() ''#()) #f) ; ! it equals '#()
+(test (equal? '`#() ``#()) #t)
+;; gah -- `#(...) should be removed from s7
+;; but there is still the strangeness that `'() is not the same as '`() -- quasiquote returns '() not (), and similarly for #() except...
+;; there are actually 3 cases here, the 3rd is (equal? `''() ``'()) -> #f, but the #() case is #t
+
+#|
+"(equal? ''() ``())" -> #f
+"(equal? ''(1) ``(1))" -> #t 
+"(equal? ''#() ``#())" -> #f
+"(equal? ''#(1) ``#(1))" -> #f
+"(equal? ''1 ``1)" -> #f
+"(equal? ''#f ``#f)" -> #f
+
+"(equal? `''() ``'())" -> #f 
+"(equal? `''(1) ``'(1))" -> #t
+"(equal? `''#() ``'#())" -> #t
+"(equal? `''#(1) ``'#(1))" -> #t
+"(equal? `''1 ``'1)" -> #t
+"(equal? `''#f ``'#f)" -> #t
+
+;; see t242.scm
+
+(define (check-strs str1 str2)
+  (let* ((expr (format #f "(equal? ~A ~A)" (string-append str1 "()") (string-append str2 "()")))
+	 (val (catch #t 
+		     (lambda () (eval-string expr))
+		     (lambda args 'error))))
+    (format #t "--------~%~S -> ~S~%" expr val)
+    (set! expr (format #f "(equal? ~A ~A)" (string-append str1 "(1)") (string-append str2 "(1)")))
+    (let ((val (catch #t 
+		      (lambda () (eval-string expr))
+		      (lambda args 'error))))
+      (format #t "~S -> ~S~%" expr val))
+    (set! expr (format #f "(equal? ~A ~A)" (string-append str1 "#()") (string-append str2 "#()")))
+    (let ((val (catch #t 
+		      (lambda () (eval-string expr))
+		      (lambda args 'error))))
+      (format #t "~S -> ~S~%" expr val))
+    (set! expr (format #f "(equal? ~A ~A)" (string-append str1 "#(1)") (string-append str2 "#(1)")))
+    (let ((val (catch #t 
+		      (lambda () (eval-string expr))
+		      (lambda args 'error))))
+      (format #t "~S -> ~S~%" expr val))
+    (set! expr (format #f "(equal? ~A ~A)" (string-append str1 "1") (string-append str2 "1")))
+    (let ((val (catch #t 
+		      (lambda () (eval-string expr))
+		      (lambda args 'error))))
+      (format #t "~S -> ~S~%" expr val))
+    (set! expr (format #f "(equal? ~A ~A)" (string-append str1 "#f") (string-append str2 "#f")))
+    (let ((val (catch #t 
+		      (lambda () (eval-string expr))
+		      (lambda args 'error))))
+      (format #t "~S -> ~S~%" expr val))))
+
+(let ((strs '()))
+  (do ((i 0 (+ i 1)))
+      ((= i 4))
+    (let ((c1 ((vector #\' #\` #\' #\`) i))
+	  (c2 ((vector #\' #\' #\` #\`) i)))
+      (do ((k 0 (+ k 1)))
+	  ((= k 4))
+	(let ((d1 ((vector #\' #\` #\' #\`) k))
+	      (d2 ((vector #\' #\' #\` #\`) k)))
+	  (let ((str1 (string c1 c2))
+		(str2 (string d1 d2)))
+	    (if (not (member (list str1 str2) strs))
+		(begin
+		  (check-strs str1 str2)
+		  (set! strs (cons (list str1 str2) strs))
+		  (set! strs (cons (list str2 str1) strs))))))))))
+
+(let ((strs '()))
+  (do ((i 0 (+ i 1)))
+      ((= i 8))
+    (let ((c1 ((vector #\' #\` #\' #\` #\' #\` #\' #\`) i))
+	  (c2 ((vector #\' #\' #\` #\` #\' #\' #\` #\`) i))
+	  (c3 ((vector #\' #\' #\' #\' #\` #\` #\` #\`) i)))
+      (do ((k 0 (+ k 1)))
+	  ((= k 8))
+	(let ((d1 ((vector #\' #\` #\' #\` #\' #\` #\' #\`) k))
+	      (d2 ((vector #\' #\' #\` #\` #\' #\' #\` #\`) k))
+	      (d3 ((vector #\' #\' #\' #\' #\` #\` #\` #\`) k)))
+	  (let ((str1 (string c1 c2 c3))
+		(str2 (string d1 d2 d3)))
+	    (if (not (member (list str1 str2) strs))
+		(begin
+		  (check-strs str1 str2)
+		  (set! strs (cons (list str1 str2) strs))
+		  (set! strs (cons (list str2 str1) strs))))))))))
+|#
+
+#|
+(do ((i 0 (+ i 1)))
+    ((= i 256))
+  (if (and (not (= i (char->integer #\))))
+	   (not (= i (char->integer #\"))))
+      (let ((str (string #\' #\( #\1 #\space #\. (integer->char i) #\2 #\))))
+	(catch #t
+	       (lambda ()
+		 (let ((val (eval-string str)))
+		   (format #t "[~D] ~A -> ~S (~S ~S)~%" i str val (car val) (cdr val))))
+	       (lambda args
+		 (format #t "[~D] ~A -> ~A~%" i str args))))))
+
+(let ((chars (vector (integer->char 0) #\newline #\space #\tab #\. #\, #\@ #\= #\x #\b #\' #\` #\# #\] #\[ #\} #\{ #\( #\) #\1 #\i #\+ #\- #\e #\_ #\\ #\" #\: #\; #\> #\<)))
+  (let ((nchars (vector-length chars)))
+    (do ((len 2 (+ len 1)))
+	((= len 3))
+      (let ((str (make-string len))
+	    (ctrs (make-vector len 0)))
+
+	(do ((i 0 (+ i 1)))
+	    ((= i (expt nchars len)))
+
+	  (let ((carry #t))
+	    (do ((k 0 (+ k 1)))
+		((or (= k len)
+		     (not carry)))
+	      (vector-set! ctrs k (+ 1 (vector-ref ctrs k)))
+	      (if (= (vector-ref ctrs k) nchars)
+		  (vector-set! ctrs k 0)
+		  (set! carry #f)))
+	    (do ((k 0 (+ k 1)))
+		((= k len))
+	      (string-set! str k (vector-ref chars (vector-ref ctrs k)))))
+
+	  (format #t "~A -> " str)
+	  (catch #t
+		 (lambda ()
+		   (let ((val (eval-string str)))
+		     (format #t " ~S (~S ~S)~%" val (car val) (cdr val))))
+		 (lambda args
+		   (format #t " ~A~%" args))))))))
+|#
+
+(let ((äåæéîå define)
+      (ìåîçôè length)
+      (äï do)
+      (ìåô* let*)
+      (éæ if)
+      (áâó abs)
+      (ìïç log)
+      (óåô! set!))
+
+  (äåæéîå (óòã-äõòáôéïî å)
+    (ìåô* ((ìåî (ìåîçôè å))
+           (åø0 (å 0))
+           (åø1 (å (- ìåî 2)))
+           (áìì-ø (- åø1 åø0))
+           (äõò 0.0))
+      (äï ((é 0 (+ é 2)))
+          ((>= é (- ìåî 2)) äõò)
+        (ìåô* ((ø0 (å é))
+               (ø1 (å (+ é 2)))
+               (ù0 (å (+ é 1))) ; 1/ø ø ðïéîôó
+               (ù1 (å (+ é 3)))
+               (áòåá (éæ (< (áâó (- ù0 ù1)) .0001)
+                         (/ (- ø1 ø0) (* ù0 áìì-ø))
+                         (* (/ (- (ìïç ù1) (ìïç ù0)) 
+                               (- ù1 ù0)) 
+                            (/ (- ø1 ø0) áìì-ø)))))
+         (óåô! äõò (+ äõò (áâó áòåá)))))))
+
+  (num-test (óòã-äõòáôéïî (list 0 1 1 2)) 0.69314718055995)
+  (num-test (óòã-äõòáôéïî (vector 0 1 1 2)) 0.69314718055995))
+
+(test (let ((ÿa 1)) ÿa) 1)
+(test (+ (let ((!a 1)) !a) (let (($a 1)) $a) (let ((%a 1)) %a) (let ((&a 1)) &a) (let ((*a 1)) *a) (let ((+a 1)) +a) (let ((-a 1)) -a) (let ((.a 1)) .a) (let ((/a 1)) /a) (let ((0a 1)) 0a) (let ((1a 1)) 1a) (let ((2a 1)) 2a) (let ((3a 1)) 3a) (let ((4a 1)) 4a) (let ((5a 1)) 5a) (let ((6a 1)) 6a) (let ((7a 1)) 7a) (let ((8a 1)) 8a) (let ((9a 1)) 9a) (let ((<a 1)) <a) (let ((=a 1)) =a) (let ((>a 1)) >a) (let ((?a 1)) ?a) (let ((@a 1)) @a) (let ((Aa 1)) Aa) (let ((Ba 1)) Ba) (let ((Ca 1)) Ca) (let ((Da 1)) Da) (let ((Ea 1)) Ea) (let ((Fa 1)) Fa) (let ((Ga 1)) Ga) (let ((Ha 1)) Ha) (let ((Ia 1)) Ia) (let ((Ja 1)) Ja) (let ((Ka 1)) Ka) (let ((La 1)) La) (let ((Ma 1)) Ma) (let ((Na 1)) Na) (let ((Oa 1)) Oa) (let ((Pa 1)) Pa) (let ((Qa 1)) Qa) (let ((Ra 1)) Ra) (let ((Sa 1)) Sa) (let ((Ta 1)) Ta) (let ((Ua 1)) Ua) (let ((Va 1)) Va) (let ((Wa 1)) Wa) (let ((Xa 1)) Xa) (let ((Ya 1)) Ya) (let ((Za 1)) Za) (let (([a 1)) [a) (let ((\a 1)) \a) (let ((]a 1)) ]a) (let ((^a 1)) ^a) (let ((_a 1)) _a) (let ((aa 1)) aa) (let ((ba 1)) ba) (let ((ca 1)) ca) (let ((da 1)) da) (let ((ea 1)) ea) (let ((fa 1)) fa) (let ((ga 1)) ga) (let ((ha 1)) ha) (let ((ia 1)) ia) (let ((ja 1)) ja) (let ((ka 1)) ka) (let ((la 1)) la) (let ((ma 1)) ma) (let ((na 1)) na) (let ((oa 1)) oa) (let ((pa 1)) pa) (let ((qa 1)) qa) (let ((ra 1)) ra) (let ((sa 1)) sa) (let ((ta 1)) ta) (let ((ua 1)) ua) (let ((va 1)) va) (let ((wa 1)) wa) (let ((xa 1)) xa) (let ((ya 1)) ya) (let ((za 1)) za) (let (({a 1)) {a) (let ((|a 1)) |a) (let ((}a 1)) }a) (let ((~a 1)) ~a) (let (( a 1))  a) (let ((¡a 1)) ¡a) (let ((¢a 1)) ¢a) (let ((£a 1)) £a) (let ((¤a 1)) ¤a) (let ((¥a 1)) ¥a) (let ((¦a 1)) ¦a) (let ((§a 1)) §a) (let ((¨a 1)) ¨a) (let ((©a 1)) ©a) (let ((ªa 1)) ªa) (let ((«a 1)) «a) (let ((¬a 1)) ¬a) (let ((­a 1)) ­a) (let ((®a 1)) ®a) (let ((¯a 1)) ¯a) (let ((°a 1)) °a) (let ((±a 1)) ±a) (let ((²a 1)) ²a) (let ((³a 1)) ³a) (let ((´a 1)) ´a) (let ((µa 1)) µa) (let ((¶a 1)) ¶a) (let ((·a 1)) ·a) (let ((¸a 1)) ¸a) (let ((¹a 1)) ¹a) (let ((ºa 1)) ºa) (let ((»a 1)) »a) (let ((¼a 1)) ¼a) (let ((½a 1)) ½a) (let ((¾a 1)) ¾a) (let ((¿a 1)) ¿a) (let ((Àa 1)) Àa) (let ((Áa 1)) Áa) (let ((Âa 1)) Âa) (let ((Ãa 1)) Ãa) (let ((Äa 1)) Äa) (let ((Åa 1)) Åa) (let ((Æa 1)) Æa) (let ((Ça 1)) Ça) (let ((Èa 1)) Èa) (let ((Éa 1)) Éa) (let ((Êa 1)) Êa) (let ((Ëa 1)) Ëa) (let ((Ìa 1)) Ìa) (let ((Ía 1)) Ía) (let ((Îa 1)) Îa) (let ((Ïa 1)) Ïa) (let ((Ða 1)) Ða) (let ((Ña 1)) Ña) (let ((Òa 1)) Òa) (let ((Óa 1)) Óa) (let ((Ôa 1)) Ôa) (let ((Õa 1)) Õa) (let ((Öa 1)) Öa) (let ((×a 1)) ×a) (let ((Øa 1)) Øa) (let ((Ùa 1)) Ùa) (let ((Úa 1)) Úa) (let ((Ûa 1)) Ûa) (let ((Üa 1)) Üa) (let ((Ýa 1)) Ýa) (let ((Þa 1)) Þa) (let ((ßa 1)) ßa) (let ((àa 1)) àa) (let ((áa 1)) áa) (let ((âa 1)) âa) (let ((ãa 1)) ãa) (let ((äa 1)) äa) (let ((åa 1)) åa) (let ((æa 1)) æa) (let ((ça 1)) ça) (let ((èa 1)) èa) (let ((éa 1)) éa) (let ((êa 1)) êa) (let ((ëa 1)) ëa) (let ((ìa 1)) ìa) (let ((ía 1)) ía) (let ((îa 1)) îa) (let ((ïa 1)) ïa) (let ((ða 1)) ða) (let ((ña 1)) ña) (let ((òa 1)) òa) (let ((óa 1)) óa) (let ((ôa 1)) ôa) (let ((õa 1)) õa) (let ((öa 1)) öa) (let ((÷a 1)) ÷a) (let ((øa 1)) øa) (let ((ùa 1)) ùa) (let ((úa 1)) úa) (let ((ûa 1)) ûa) (let ((üa 1)) üa) (let ((ýa 1)) ýa) (let ((þa 1)) þa) (let ((ÿa 1)) ÿa)) 181)
+
+;;; there are about 50 non-printing chars, some of which would probably work as well
+
+
+;; (eval-string "(eval-string ...)") is not what it appears to be -- the outer call
+;;    still sees the full string when it evaluates, not the string that results from
+;;    the inner call.
+
+(test (let ((name '+))
+	(let ((+ *))	
+	  (eval (list name 2 3))))
+      6)
+(test (let ((name +))
+	(let ((+ *))	
+	  (eval (list name 2 3))))
+      5)
+;; why is this considered confusing?  It has nothing to do with eval!
+
+(test (let ((call/cc (lambda (x)
+		       (let ((c (call/cc x))) c))))
+	(call/cc (lambda (r) (r 1))))
+      1)
+
+
+
 ;;; -------- object->string
 ;;; object->string
 
@@ -9979,7 +10080,7 @@ this prints:
 (test (object->string catch) "catch")
 (test (object->string lambda) "lambda")
 (test (object->string dynamic-wind) "dynamic-wind")
-(test (object->string else) "else") ; this depends on previous code
+;(test (object->string else) "else") ; this depends on previous code
 (test (object->string do) "do")
 
 (for-each
@@ -10048,8 +10149,9 @@ this prints:
 
 
 
-;;; -------- if --------
+;;; --------------------------------------------------------------------------------
 ;;; if
+;;; --------------------------------------------------------------------------------
 
 (test ((if #f + *) 3 4) 12)
 (test (if (> 3 2) 'yes 'no) 'yes)
@@ -10194,8 +10296,9 @@ this prints:
 
 
 
-;;; -------- quote --------
+;;; --------------------------------------------------------------------------------
 ;;; quote
+;;; --------------------------------------------------------------------------------
 
 (test (quote a) 'a)
 (test 'a (quote a))
@@ -10297,8 +10400,9 @@ this prints:
 
 
 
-;;; -------- for-each --------
+;;; --------------------------------------------------------------------------------
 ;;; for-each
+;;; --------------------------------------------------------------------------------
 
 (test (let ((v (make-vector 5))) (for-each (lambda (i) (vector-set! v i (* i i))) '(0 1 2 3 4)) v) '#(0 1 4 9 16))
 (test (let ((ctr 0) (v (make-vector 5))) (for-each (lambda (i) (vector-set! v ctr (* i i)) (set! ctr (+ ctr 1))) '(0 1 2 3 4)) v) '#(0 1 4 9 16))
@@ -10553,8 +10657,9 @@ this prints:
 
 
 
-;;; -------- map --------
+;;; --------------------------------------------------------------------------------
 ;;; map
+;;; --------------------------------------------------------------------------------
 
 (test (map cadr '((a b) (d e) (g h))) '(b e h))
 (test (map (lambda (n) (expt n n)) '(1 2 3 4 5)) '(1 4 27 256 3125))
@@ -10916,8 +11021,9 @@ this prints:
 
 
 
-;;; --------- do --------
+;;; --------------------------------------------------------------------------------
 ;;; do
+;;; --------------------------------------------------------------------------------
 
 (test (do () (#t 1)) 1)
 (for-each
@@ -11314,8 +11420,10 @@ this prints:
 
 
 
-;;; -------- set! --------
+
+;;; --------------------------------------------------------------------------------
 ;;; set!
+;;; --------------------------------------------------------------------------------
 
 (test (let ((a 1)) (set! a 2) a) 2)
 (for-each
@@ -11425,8 +11533,9 @@ this prints:
 
 
 
-;;; -------- or --------
+;;; --------------------------------------------------------------------------------
 ;;; or
+;;; --------------------------------------------------------------------------------
 
 (test (or (= 2 2) (> 2 1)) #t)
 (test (or (= 2 2) (< 2 1)) #t)
@@ -11482,8 +11591,9 @@ this prints:
 
 
 
-;;; -------- and --------
+;;; --------------------------------------------------------------------------------
 ;;; and
+;;; --------------------------------------------------------------------------------
 
 (test (and (= 2 2) (> 2 1)) #t)
 (test (and (= 2 2) (< 2 1)) #f)
@@ -11539,8 +11649,9 @@ this prints:
 
 
 
-;;; -------- cond --------
+;;; --------------------------------------------------------------------------------
 ;;; cond
+;;; --------------------------------------------------------------------------------
 
 (test (cond ('a)) 'a)
 (test (cond (3)) 3)
@@ -11743,8 +11854,9 @@ this prints:
 
 
 
-;;; -------- case --------
+;;; --------------------------------------------------------------------------------
 ;;; case
+;;; --------------------------------------------------------------------------------
 
 (test (case (* 2 3) ((2 3 5 7) 'prime) ((1 4 6 8 9) 'composite))  'composite)
 (test (case (car '(c d)) ((a e i o u) 'vowel) ((w y) 'semivowel) (else 'consonant)) 'consonant)
@@ -11900,8 +12012,9 @@ this prints:
 
 
 
-;;; -------- lambda --------
+;;; --------------------------------------------------------------------------------
 ;;; lambda
+;;; --------------------------------------------------------------------------------
 
 (test (procedure? (lambda (x) x)) #t)
 (test ((lambda (x) (+ x x)) 4) 8)
@@ -12211,8 +12324,9 @@ this prints:
 
 
 
-;;; -------- begin --------
+;;; --------------------------------------------------------------------------------
 ;;; begin
+;;; --------------------------------------------------------------------------------
 
 (test (begin) '()) ; I think Guile returns #<unspecified> here
 (test (begin (begin)) '())
@@ -12288,8 +12402,9 @@ this prints:
 
 
 
-;;; -------- apply --------
+;;; --------------------------------------------------------------------------------
 ;;; apply
+;;; --------------------------------------------------------------------------------
 
 (test (apply (lambda (a b) (+ a b)) (list 3 4)) 7)
 (test (apply + 10 (list 3 4)) 17)
@@ -12422,8 +12537,10 @@ this prints:
 
 
 
-;;; -------- define --------
+;;; --------------------------------------------------------------------------------
 ;;; define
+;;; --------------------------------------------------------------------------------
+
 ;;; trying to avoid top-level definitions here
 
 (let ()
@@ -12615,9 +12732,11 @@ this prints:
 
 
 
-;;; -------- values, call-with-values --------
+;;; --------------------------------------------------------------------------------
 ;;; values
 ;;; call-with-values
+;;; --------------------------------------------------------------------------------
+
 
 (test (call-with-values (lambda () (values 1 2 3)) +) 6)
 (test (call-with-values (lambda () (values 4 5)) (lambda (a b) b))  5)
@@ -12897,10 +13016,11 @@ this prints:
 
 
 
-;;; -------- let, let*, letrec --------
+;;; --------------------------------------------------------------------------------
 ;;; let
 ;;; let*
 ;;; letrec
+;;; --------------------------------------------------------------------------------
 
 (test (let ((x 2) (y 3)) (* x y)) 6)
 (test (let ((x 32)) (let ((x 3) (y x)) y)) 32)
@@ -13640,8 +13760,9 @@ this prints:
 
 
 
-;;; -------- call/cc --------
+;;; --------------------------------------------------------------------------------
 ;;; call/cc
+;;; --------------------------------------------------------------------------------
 ;;; some of these were originally from Al Petrovsky, Scott G Miller, Matthias Radestock, J H Brown, Dorai Sitaram, 
 ;;;   and probably others.
 
@@ -14799,8 +14920,9 @@ who says the continuation has to restart the map from the top?
 
 
 
-;;; -------- dynamic-wind --------
+;;; --------------------------------------------------------------------------------
 ;;; dynamic-wind
+;;; --------------------------------------------------------------------------------
 
 (test (let ((ctr1 0)
 	    (ctr2 0)
@@ -15416,8 +15538,9 @@ who says the continuation has to restart the map from the top?
 
 
 
-;;; -------- quasiquote --------
+;;; --------------------------------------------------------------------------------
 ;;; quasiquote
+;;; --------------------------------------------------------------------------------
 
 (test `(1 2 3) '(1 2 3))
 (test `() '())
@@ -15879,9 +16002,9 @@ why are these different (read-time `#() ? )
 
 
 
-
-;; -------- s7 specific stuff --------
-
+;;; --------------------------------------------------------------------------------
+;;; -------- s7 specific stuff --------
+;;; --------------------------------------------------------------------------------
 
 ;;; keyword?
 ;;; make-keyword
@@ -58297,7 +58420,7 @@ etc....
  (lambda (str)
    (test (string->number str) #f))
  (list "..1" "1.." "1..2" "++1" "+-1" "-+1" "--1" "-..1" "+..1" "1+i+" "1+i."
-       "1++i" "1--i" "1.ee1" "1+1..i" "1+ii" "1+1ee1i" "1e1e1"
+       "1++i" "1--i" "1.ee1" "1+1..i" "1+ii" "1+1ee1i" "1e1e1" "1+2i.i"
        "1//2" "1+.1/2i" "1+1//2i" "1+1/2" "1i" "1ii" "1+.i" "1+..i"))
 
 (test (number->string most-positive-fixnum 2) "111111111111111111111111111111111111111111111111111111111111111")
