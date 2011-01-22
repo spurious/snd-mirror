@@ -7947,7 +7947,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (for-each
     (lambda (arg) ;(format #t ";(~A ~A)~%" op arg)
       (test (op arg) 'error))
-    (list (integer->char 65) 1 0 -1 (list 1) (cons 1 2) #f 'a-symbol (make-vector 3) abs quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
+    (list (integer->char 65) 1 0 -1 (list 1) (cons 1 2) #f 'a-symbol (make-vector 3) abs lambda with-environment
+	  quasiquote macroexpand make-type hook-functions 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
  (list char-ready? set-current-output-port set-current-input-port set-current-error-port
        close-input-port close-output-port open-input-file open-output-file
        read-char peek-char read 
@@ -8499,6 +8500,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "~{~A~}" 1 2 3) 'error)
 (test (format #f "asb~{~}asd" '(1 2 3)) 'error)
 (test (format #f "asb~{ ~}asd" '(1 2 3)) 'error)
+(test (format #f "asb~{ . ~}asd" '(1 2 3)) 'error)
 (test (format #f "asb~{ hiho~~~}asd" '(1 2 3)) 'error)
 
 #|
@@ -8633,6 +8635,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ") "abc") #t)
 (test (string=? (format #f "~{ ~a ~}" '(a b c)) " a  b  c ") #t)
 (test (string=? (format #f "~{ ~a ~}" '()) "") #t)
+(test (string=? (format #f "~{ ~a ~}" "") "") #t)
+(test (string=? (format #f "~{ ~a ~}" #()) "") #t)
 (test (string=? (format #f "~{ ~a,~a ~}" '(a 1 b 2 c 3)) " a,1  b,2  c,3 ") #t)
 (test (string=? (format #f "abc ~^ xyz") "abc ") #t)
 (test (format (values #f "~A ~D" 1 2)) "1 2")
@@ -8822,6 +8826,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "~{~{~C~^ ~}~^ ~}" (list "hiho" "xxx")) "h i h o x x x")
 (test (format #f "~{~{~A~}~}" '((1 . 2) (3 . 4))) 'error)
 (test (format #f "~{~A~^ ~}" '((1 . 2) (3 . 4))) "(1 . 2) (3 . 4)") 
+(test (format #f "~{~A ~}" (hash-table '(a . 1) '(b . 2))) "(b . 2) (a . 1) ")
+(test (format #f "~{~A ~}" (hash-table)) "")
+(let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) 4))))))
+  (test (format #f "~{~A~^ ->~}" ctr) "0 ->1 ->2 ->3"))
+(test (format #f "~{ ~,-tF ~}" '()) "") ; hmm -- it's ignoring the unimplemented format directive -- should we add an error check?
+
 (test (format #f "~10,'-T") "---------")
 (test (format #f "~10,'\\T") "\\\\\\\\\\\\\\\\\\")
 (test (format #f "~10,'\"T") "\"\"\"\"\"\"\"\"\"")

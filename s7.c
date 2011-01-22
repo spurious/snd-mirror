@@ -842,6 +842,7 @@ struct s7_scheme {
 #define caaddr(p)                     car(car(cdr(cdr(p))))
 #define cddddr(p)                     cdr(cdr(cdr(cdr(p))))
 #define caddar(p)                     car(cdr(cdr(car(p))))
+#define cdadar(p)                     cdr(car(cdr(car(p))))
 #define cdaddr(p)                     cdr(car(cdr(cdr(p))))
 #define pair_line_number(p)           (p)->object.cons.line
 #define port_file_number(p)           (p)->object.port->file_number
@@ -15094,6 +15095,9 @@ If its first argument is a list, the list is copied (despite the '!')."
   if (len < 2)
     return(data);
 
+  /* what about other applicable objects? (sort string|s_object etc) -- sort hash-table|hook isn't sensible.
+   *    but if we have copy_object + set/ref/len?
+   */
   if (is_pair(data))
     {
       if (len == 2)
@@ -18238,6 +18242,82 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
+{
+  switch (type(obj))
+    {
+    case T_VECTOR:
+      return(s7_vector_to_list(sc, obj));
+
+    case T_STRING:
+      return(s7_string_to_list(sc, string_value(obj), string_length(obj)));
+
+    case T_HASH_TABLE:
+      {
+	s7_pointer x, iterator, iter_loc;
+	int gc_iter;
+	/* (format #f "~{~A ~}" (hash-table '(a . 1) '(b . 2))) */
+
+	iterator = g_make_hash_table_iterator(sc, make_list_1(sc, obj));
+	gc_iter = s7_gc_protect(sc, iterator);
+	iter_loc = cdadar(closure_body(iterator));
+
+	sc->w = sc->NIL;
+	while (true)
+	  {
+	    x = g_hash_table_iterate(sc, iter_loc);
+	    if (x == sc->NIL) break;
+	    sc->w = s7_cons(sc, x, sc->w);
+	  }
+
+	x = sc->w;
+	sc->w = sc->NIL;
+	s7_gc_unprotect_at(sc, gc_iter);
+	return(x);
+      }
+      
+    case T_HOOK:
+      return(hook_functions(obj));
+
+    case T_C_OBJECT:
+    case T_S_OBJECT:
+      {
+	long int i, len; /* the "long" matters on 64-bit machines */
+	s7_pointer x, z, result;
+	int save_x, save_y, save_z, gc_res, gc_z;
+	/* (format #f "~{~A ~}" (vct 1 2 3)) */
+
+	SAVE_X_Y_Z(save_x, save_y, save_z);
+	len = s7_integer(object_length(sc, obj));
+	RESTORE_X_Y_Z(save_x, save_y, save_z);
+
+	if (len < 0)
+	  return(sc->F);
+	if (len == 0)
+	  return(sc->NIL);
+
+	result = g_make_list(sc, make_list_1(sc, s7_make_integer(sc, len)));
+	gc_res = s7_gc_protect(sc, result);
+	z = make_list_1(sc, sc->F);
+	gc_z = s7_gc_protect(sc, z);
+
+	for (i = 0, x = result; i < len; i++, x = cdr(x))
+	  {
+	    car(z) = s7_make_integer(sc, i);
+	    SAVE_X_Y_Z(save_x, save_y, save_z);
+	    car(x) = apply_object(sc, obj, z);
+	    RESTORE_X_Y_Z(save_x, save_y, save_z);
+	  }
+	
+	s7_gc_unprotect_at(sc, gc_z);
+	s7_gc_unprotect_at(sc, gc_res);
+	return(result);
+      }
+    }
+  return(obj);
+}
+
+
 
 /* -------------------------------- format -------------------------------- */
 
@@ -18383,7 +18463,6 @@ static bool s7_is_one_or_big_one(s7_pointer p);
 #define s7_is_one_or_big_one(Num) s7_is_one(Num)
 #endif
 
-
 static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args, s7_pointer *next_arg)
 {
   #define INITIAL_FORMAT_LENGTH 128
@@ -18510,7 +18589,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  
 		case '{':                           /* -------- iteration -------- */
 		  {
-		    int k, curly_len = -1, curly_nesting = 1, curly_gc = -1;
+		    int k, curly_len = -1, curly_nesting = 1;
 
 		    if (fdat->args == sc->NIL)
 		      return(format_error(sc, "missing argument", str, args, fdat));
@@ -18533,59 +18612,51 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 				curly_nesting++;
 			    }
 			}
+
 		    if (curly_len == -1)
 		      return(format_error(sc, "'{' directive, but no matching '}'", str, args, fdat));
-		    if (curly_len <= 1)
-		      return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
 
- 		    if (car(fdat->args) != sc->NIL)
+		    /* what about cons's here?  I can't see any way in CL either to specify the car or cdr of a cons within the format string 
+		     *   (cons 1 2) is applicable: ((cons 1 2) 0) -> 1
+		     *   also there can be applicable objects that won't work in the map context (arg not integer etc)
+		     */
+ 		    if (car(fdat->args) != sc->NIL)               /* (format #f "~{~A ~}" '()) -> "" */
 		      {
-			char *curly_str = NULL;
 			s7_pointer curly_arg;
 
-			curly_arg = car(fdat->args); 
-
-			if (s7_is_vector(curly_arg))
+			curly_arg = object_to_list(sc, car(fdat->args)); 
+			if (curly_arg != sc->NIL)                 /* (format #f "~{~A ~}" #()) -> "" */
 			  {
-			    curly_arg = s7_vector_to_list(sc, curly_arg);
+			    char *curly_str = NULL;               /* this is the local (nested) format control string */
+			    int curly_gc;
+
+			    if (!is_proper_list(sc, curly_arg))
+			      return(format_error(sc, "'{' directive argument should be a proper list or an applicable object", str, args, fdat));
 			    curly_gc = s7_gc_protect(sc, curly_arg);
-			  }
-			else
-			  {
-			    if (s7_is_string(curly_arg))
+
+			    curly_str = (char *)malloc(curly_len * sizeof(char));
+			    for (k = 0; k < curly_len - 1; k++)
+			      curly_str[k] = str[i + 2 + k];
+			    curly_str[curly_len - 1] = '\0';
+
+			    while (curly_arg != sc->NIL)
 			      {
-				curly_arg = s7_string_to_list(sc, string_value(curly_arg), string_length(curly_arg));
-				curly_gc = s7_gc_protect(sc, curly_arg);
+				s7_pointer new_arg = sc->NIL;
+				tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg);
+				format_append_string(fdat, tmp);
+				if (tmp) free(tmp);
+				if (curly_arg == new_arg)
+				  {
+				    if (curly_str) free(curly_str);
+				    s7_gc_unprotect_at(sc, curly_gc);
+				    return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
+				  }
+				curly_arg = new_arg;
 			      }
-			    /* perhaps extend format {} to any c object that is applicable? */
+
+			    free(curly_str);
+			    s7_gc_unprotect_at(sc, curly_gc);
 			  }
-
-			if (!is_pair(curly_arg))
-			  return(format_error(sc, "'{' directive argument should be a list, string, or vector", str, args, fdat));
-			if (!is_proper_list(sc, curly_arg))
-			  return(format_error(sc, "'{' directive argument should be a proper list", str, args, fdat));
-
-			curly_str = (char *)malloc(curly_len * sizeof(char));
-			for (k = 0; k < curly_len - 1; k++)
-			  curly_str[k] = str[i + 2 + k];
-			curly_str[curly_len - 1] = '\0';
-
-			while (curly_arg != sc->NIL)
-			  {
-			    s7_pointer new_arg = sc->NIL;
-			    tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg);
-			    format_append_string(fdat, tmp);
-			    if (tmp) free(tmp);
-			    if (curly_arg == new_arg)
-			      {
-				if (curly_str) free(curly_str);
-				if (curly_gc != -1) s7_gc_unprotect_at(sc, curly_gc);
-				return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
-			      }
-			    curly_arg = new_arg;
-			  }
-			free(curly_str);
-			if (curly_gc != -1) s7_gc_unprotect_at(sc, curly_gc);
 		      }
 
 		    i += (curly_len + 2); /* jump past the ending '}' too */
@@ -20306,7 +20377,7 @@ static bool next_for_each(s7_scheme *sc)
 	break;
 
       case T_CLOSURE: /* hash-table via an iterator */
-	car(x) = g_hash_table_iterate(sc, cdr(cadar(closure_body(car(y)))));  /* cdadadar? I suppose this accessor could be optimized */
+	car(x) = g_hash_table_iterate(sc, cdadar(closure_body(car(y))));  /* cdadadar? I suppose this accessor could be optimized */
 	break;
 
       case T_STRING:
@@ -20870,7 +20941,10 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
     {
       if (!s7_is_symbol(form))
 	{
-	  /* things that evaluate to themselves don't need to be quoted. */
+	  /* things that evaluate to themselves don't need to be quoted. 
+	   *    but this means `() -> () whereas below `(1) -> '(1) -- should nil here return '()?
+	   *    (this also affects vector constants since they call g_quasiquote at run time in OP_READ_QUASIQUOTE_VECTOR)
+	   */
 	  return(form);
 	}
       return(make_list_2(sc, sc->QUOTE, form));
@@ -31268,114 +31342,63 @@ the error type and the info passed to the error handler.");
 }
 
 
-/* -------------------------------------------------------------------------------- */
-
-/* envs as debugging aids: how to show file/line tags as well
- *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
- * this would be good in ws too -- a way to show which notes are active at a given point in the graph
+/* --------------------------------------------------------------------------------
+ * things to add or fix: 
  *
- * an error handling dialog (gui) in snd?
- * error handling is still not very clean
- * here is a first stab at cerror:
-
-(define-macro (with-cerror . body)
-  `(catch 'cerror
-      (lambda ()
-	(define-macro (cerror . args) ; this could be built-in
-	  `(call/cc 
-	    (lambda (r1) 
-	      (error 'cerror r1 (current-environment) ,@args))))
-	,@body)
-      (lambda args                    ; s7_error could look for this ('cerror continuation...)
-	(let ((continuation (car (cadr args)))
-	      (error-environment (cadr (cadr args)))
-	      (error-info (cddr (cadr args))))
-	  (call-with-exit
-	   (lambda (return)
-	     (do () () ; here we need a tie into Snd's gui or function IO -- 
-	               ;   why couldn't current-input-port (in the Snd listener) be a function port?
-	       (format #t "~%cerror> ")
-	       (let ((str (read-line '())))
-		 (if (> (length str) 0)
-		     (catch #t
-			    (lambda ()
-			      (let ((val (eval-string str error-environment)))
-				(if (eq? val :go)
-				    (return))
-				(if (eq? val :continue)
-				    (continuation))
-				(write val)))
-			    (lambda args
-			      (format #t "error: ~A" args))))))))))))
-
-(begin
-  (with-cerror
-   (let ((x 32))
-     (display "start")
-     (cerror "got an error")
-     (display "continue...")
-     x))
-  (display "done"))
-  
+ *     could vectors maintain element type like hash-tables?  Then "uniform" vectors are
+ *       automatic, and run would not have to check elements, etc.  The obvious problem
+ *       is shared vectors in the multidimensional case (both directions).  (Or maybe
+ *       :element-type but that requires type names)
+ *     function equality? 
+ *     copy a function? -- apply lambda[*] to the procedure source + args + local env
+ *     nonce-symbols need to be garbage collected
+ *     map/for-each mess up when the 1st arg is a macro
+ *     things to add: lint? (can we notice unreachable code, unbound variables, bad args)? 
+ *       could the profiler give block counts as well?
+ *     if user creates an enormous list, it can seem to hang the listener: *list-print-length* ?
+ *     what about trace-output-port? or an arg to trace?
+ *     make bignum-precision a variable (not pws) -> *bignum-precision*
+ *     some way to refer to car/cdr of a cons in format
+ *       what about ~#1|2[A,S, etc] = car|cdr of current arg?
+ *     sort! applied to c|s_object?
+ *     the help strings use lambda* syntax for optional args, but these are not keyword args.
+ *     C-side catch, dynamic-wind
+ *     s7_quit (s7_call_with_exit?) that closes all files etc
+ *     s7_kill to free all memory
  *
- * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
- *   #include <signal.h>
- *   static void s7_sigfpe(int ignored) {}
- * then in init: signal(SIGFPE, s7_sigfpe);
+ *     envs as debugging aids: how to show file/line tags as well
+ *       and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
+ *       this would be good in ws too -- a way to show which notes are active at a given point in the graph
  *
- * method lists for c_objects
- *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
- *   catch 'wrong-type-arg-error in the evaluator,
- *   if 1st arg is v_object, look for method?
- *   this would not slow the rest of s7 down, but would let us handle anything 
- *   but the error handler would need the caller's name, and all the original args unchanged [see below]
- *   this would make map possible if a make method is on the list
+ *     someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
+ *       #include <signal.h>
+ *       static void s7_sigfpe(int ignored) {}
+ *     then in init: signal(SIGFPE, s7_sigfpe);
  *
- * So a standard object would have its own type, notion of fields and so on (like define-record in s7.html),
- *   and the basic things provided directly by make-type, but also a methods function that is expected to
- *   return an alist of (name . function).  Inheritance would mean prepending the current record's
- *   method list on that of its ancestors.  MOP stuff could be had by wrapping inherited functions and so on.
- * This way leaves the actual object structure up to the object definer.  It is very similar to the
- *   namespace business in s7.html, and requires no new names or functions.  For speed, we could
- *   provide immediate dispatch for built-ins, and use macros in Scheme to do the alist search just once.
- *   It's also very close to defgenerator.  Call-next-method would just continue down the alist from 
- *   (cdr current-method) indefinitely.  On C side, we could make our dispatch table available and expandable.
- *   Then if C-side func sees a type it doesn't handle explicitly, it knows (without assoc) what to call.
- * This also makes it possible to specialize down to the level of the object (it prepends its own methods).
- * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
- * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
- * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
+ *     method lists for c_objects
+ *       a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
+ *       catch 'wrong-type-arg-error in the evaluator,
+ *       if 1st arg is v_object, look for method?
+ *       this would not slow the rest of s7 down, but would let us handle anything 
+ *       but the error handler would need the caller's name, and all the original args unchanged [see below]
+ *       this would make map possible if a make method is on the list
  *
- * could vectors maintain element type like hash-tables?  Then "uniform" vectors are
- *   automatic, and run would not have to check elements, etc.  The obvious problem
- *   is shared vectors in the multidimensional case (both directions).  (Or maybe
- *   :element-type but that requires type names)
+ *       So a standard object would have its own type, notion of fields and so on (like define-record in s7.html),
+ *         and the basic things provided directly by make-type, but also a methods function that is expected to
+ *         return an alist of (name . function).  Inheritance would mean prepending the current record's
+ *         method list on that of its ancestors.  MOP stuff could be had by wrapping inherited functions and so on.
+ *       This way leaves the actual object structure up to the object definer.  It is very similar to the
+ *         namespace business in s7.html, and requires no new names or functions.  For speed, we could
+ *         provide immediate dispatch for built-ins, and use macros in Scheme to do the alist search just once.
+ *         It's also very close to defgenerator.  Call-next-method would just continue down the alist from 
+ *         (cdr current-method) indefinitely.  On C side, we could make our dispatch table available and expandable.
+ *         Then if C-side func sees a type it doesn't handle explicitly, it knows (without assoc) what to call.
+ *       This also makes it possible to specialize down to the level of the object (it prepends its own methods).
+ *       A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
+ *       An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
+ *       When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
  *
- * function equality? 
- *
- (or (eq? f g) ; (eq? abs abs)
-     (and (not (null? (procedure-source f)))
-          (equal? (procedure-source f) (procedure-source g)) 
-          ;; modulo respellings?
-          (equal? (procedure-environment f) (procedure-environment g))))
-
- :(functions-equal? (let ((a 1)) (lambda () a)) (let ((a 1)) (lambda () a)))
-  #t
-
- * and copy a function? -- apply lambda[*] to the procedure source + args + local env
- *
- * things to fix: nonce-symbols need to be garbage collected
- *                map/for-each mess up when the 1st arg is a macro
- * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
- *                could the profiler give block counts as well?
- * if user creates an enormous list, it can seem to hang the listener:
- *   *list-print-length* ?
- * add pretty-print to format? ~W I think. (current pretty-print.scm doesn't know about lambda* etc)
- * what about trace-output-port? or an arg to trace?
- * make bignum-precision a variable (not pws) -> *bignum-precision*
- *
- * The help strings use lambda* syntax for optional args, but these are not keyword args.
- *
+ * --------------------------------------------------------------------------------
  * s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10
  *    intel core duo (1.83G):    3162     2690 1.921     2426 1.830
  *    intel E5200 (2.5G):                 1951 1.450     1751 1.28

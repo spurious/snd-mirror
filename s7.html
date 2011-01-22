@@ -2971,7 +2971,7 @@ This is similar to trying to read from a closed input port.
 ~&amp;        insert newline if preceding char was not newline
 ~~        insert tilde
 ~\n       (tilde followed by newline): trim white space
-~{        begin iteration (take arguments from a list, string, or vector)
+~{        begin iteration (take arguments from a list, string, vector, or any other applicable object)
 ~}        end iteration
 ~^        jump out of iteration
 ~*        ignore the current argument
@@ -3042,7 +3042,7 @@ floats in the "~X" case.  So in s7,
 <code>(format #f "~F" 1/3)</code>.  s7 currently returns "1/3", but Clisp returns "0.33333334".
 </p>
 
-<p>The curly bracket directive applies to strings and vectors, as well as lists:
+<p>The curly bracket directive applies to anything you can map over, not just lists:
 </p>
 
 <pre>
@@ -4703,7 +4703,7 @@ have any number after, for example, #b:
    remove string-length, vector-length, and hash-table-size.
    remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!,
      set-car!|cdr!, and set-current-output|input|error-port.  All of these
-     are simply officious and nugatory given implicit indexing and generalized set!.  
+     are simply officious given implicit indexing and generalized set!.  
 </pre>
 
 

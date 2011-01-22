@@ -359,8 +359,6 @@ void set_title(const char *title)
 void goto_window(GtkWidget *text)
 {
 #if (!HAVE_GTK_3)
-  /* TODO: why does this erase the window in gtk 3?
-   */
   gtk_widget_grab_focus(text);
 #endif
 }
@@ -1181,4 +1179,6 @@ char *slist_selection(slist *lst)
  *   on the right.  gdk_window_invalidate_rect(GDK_WINDOW(WIDGET_TO_WINDOW(channel_graph(cp))), NULL, true);
  *      in update_graph_1 fixes this, but now I'm getting continuous expose updates!
  *   Also, someone is setting squelch?  
+ *
+ * why does goto_window erase the window in gtk 3?
  */
