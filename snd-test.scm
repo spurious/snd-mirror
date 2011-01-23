@@ -14311,6 +14311,32 @@ EDITS: 2
 	      (vector->vct vect)
 	      (vector->vct vect)
 	      (set! v1 (vector->vct vect)))))
+
+	;; check s7 stuff with vcts
+	(let ((v (vct 1.0 2.0 3.0)))
+	  (if (not (string=? (format #f "~{~A~^-~}" v) "1.0-2.0-3.0"))
+	      (snd-display #__line__ ";vct in format {}: ~S" (format #f "~{~A~^-~}" v)))
+	  (if (not (= (length v) 3))
+	      (snd-display #__line__ ";vct s7 len: ~A" (length v)))
+	  (if (not (equal? v (copy v)))
+	      (snd-display #__line__ ";vct s7 copy is not equal? ~A ~A" v (copy v)))
+	  (let ((val (map (lambda (x) (floor x)) v)))
+	    (if (not (equal? val '(1 2 3)))
+		(snd-display #__line__ ";vct s7 map: ~A" val)))
+	  (let ((val 0))
+	    (for-each
+	     (lambda (x)
+	       (set! val (+ val (floor x))))
+	     v)
+	    (if (not (equal? val 6))
+		(snd-display #__line__ ";vct s7 for-each: ~A" val)))
+	  (set! v (reverse v))
+	  (if (not (vvequal v (vct 3.0 2.0 1.0)))
+	      (snd-display #__line__ ";vct s7 reverse: ~A" v))
+	  (fill! v 12.0)
+	  (if (not (vvequal v (vct 12.0 12.0 12.0)))
+	      (snd-display #__line__ ";vct s7 fill: ~A" (fill! v 12.0)))
+	  )
 	
 #|
 	;; a test of big vcts (needs 16 Gbytes):
@@ -24270,7 +24296,7 @@ EDITS: 2
 		     (for-each 
 		      (lambda (deg)
 			(let ((gen (make-locsig deg :channels chans :revout revfile :reverb .1)))
-			  (if (not (= (mus-channels gen) chans)) (begin (snd-display #__line__ ";multi locsig ~A: ~A" deg gen) (quit)))
+			  (if (not (= (mus-channels gen) chans)) (begin (snd-display #__line__ ";multi locsig ~A: ~A" deg gen)))
 			  (let ((scalers (locsig-scalers chans deg type))
 				(revs (if revfile (locsig-scalers rev-chans deg type))))
 			    (do ((i 0 (+ 1 i)))
@@ -24299,7 +24325,7 @@ EDITS: 2
 			(for-each
 			 (lambda (deg)
 			   (let ((gen (make-locsig deg :channels chans :type ltype :revout revfile :reverb .1)))
-			     (if (not (= (mus-channels gen) chans)) (begin (snd-display #__line__ ";stereo locsig ~A: ~A" deg gen) (quit)))
+			     (if (not (= (mus-channels gen) chans)) (begin (snd-display #__line__ ";stereo locsig ~A: ~A" deg gen)))
 			     (let ((scalers (locsig-scalers chans deg ltype))
 				   (revs (if revfile (locsig-scalers rev-chans deg ltype))))
 			       (do ((i 0 (+ 1 i)))

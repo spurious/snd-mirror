@@ -8828,9 +8828,17 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "~{~A~^ ~}" '((1 . 2) (3 . 4))) "(1 . 2) (3 . 4)") 
 (test (format #f "~{~A ~}" (hash-table '(a . 1) '(b . 2))) "(b . 2) (a . 1) ")
 (test (format #f "~{~A ~}" (hash-table)) "")
+
 (let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) 4))))))
   (test (format #f "~{~A~^ ->~}" ctr) "0 ->1 ->2 ->3"))
+(let ((ctr ((cadr (make-type :getter (lambda (a b) (+ b 3)) :length (lambda (a) 4))))))
+  (test (format #f "~{~A~^ ->~}" ctr) "3 ->4 ->5 ->6"))
+
 (test (format #f "~{ ~,-tF ~}" '()) "") ; hmm -- it's ignoring the unimplemented format directive -- should we add an error check?
+(let ((ctr ((cadr (make-type :getter (lambda (a b) (car b)) :length (lambda (a) 4))))))
+  (test (format #f "~{~A~^ ->~}" ctr) 'error))
+(let ((ctr ((cadr (make-type :getter (lambda (a b) (+ b 1)) :length (lambda (a) 'hi))))))
+  (test (format #f "~{~A~^ ->~}" ctr) 'error))
 
 (test (format #f "~10,'-T") "---------")
 (test (format #f "~10,'\\T") "\\\\\\\\\\\\\\\\\\")
@@ -10644,6 +10652,14 @@ this prints:
 		     ctr)))
 	105))
 
+(let ((ctr ((cadr (make-type :getter (lambda (a b) (+ b 1))
+			     :length (lambda (a) 'hi))))))
+  (test (for-each (lambda (x) x) ctr) 'error))
+
+(let ((ctr ((cadr (make-type :getter (lambda (a b) (car b))
+			     :length (lambda (a) 4))))))
+  (test (for-each (lambda (x) x) ctr) 'error))
+
 (let ((x 0))
   (let ((p1 (make-procedure-with-setter (lambda (a) (set! x (+ x a))) (lambda (a b) (+ a b)))))
     (for-each p1 '(1 2 3))
@@ -11007,6 +11023,14 @@ this prints:
 		  sum)
 		ctr)))
 	105))
+
+(let ((ctr ((cadr (make-type :getter (lambda (a b) (+ b 1))
+			     :length (lambda (a) 'hi))))))
+  (test (map (lambda (x) x) ctr) 'error))
+
+(let ((ctr ((cadr (make-type :getter (lambda (a b) (car b))
+			     :length (lambda (a) 4))))))
+  (test (map (lambda (x) x) ctr) 'error))
 
 (for-each
  (lambda (op)

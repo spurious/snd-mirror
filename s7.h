@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.78"
-#define S7_DATE "17-Jan-11"
+#define S7_VERSION "1.79"
+#define S7_DATE "23-Jan-11"
 
 
 typedef long long int s7_Int;
@@ -790,6 +790,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 23-Jan:    removed (scheme-level) quit.
  * 17-Jan-11: make-hash-table-iterator.
  *            map and for-each accept any applicable object as the first argument.
  *            format's ~{...~} directive can handle any applicable object.

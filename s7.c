@@ -66,7 +66,7 @@
  *        port-line-number, port-filename
  *        object->string, eval-string
  *        reverse!, list-set!, sort!, make-list
- *        gc, quit, *load-hook*, *error-hook*, *error-info*, *unbound-variable-hook*
+ *        gc, *load-hook*, *error-hook*, *error-info*, *unbound-variable-hook*
  *        *features*, *load-path*, *vector-print-length*, *#readers*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *        symbol-calls if profiling is enabled
@@ -556,13 +556,13 @@ struct s7_scheme {
   s7_pointer F;                       /* #f */
   
   struct s7_cell _EOF_OBJECT;
-  s7_pointer EOF_OBJECT;              /* end-of-file object */
+  s7_pointer EOF_OBJECT;              /* #<eof> */
   
   struct s7_cell _UNDEFINED;  
-  s7_pointer UNDEFINED;               /* unset or undefined object */
+  s7_pointer UNDEFINED;               /* #<undefined> */
   
   struct s7_cell _UNSPECIFIED;
-  s7_pointer UNSPECIFIED;             /* the unspecified value */
+  s7_pointer UNSPECIFIED;             /* #<unspecified> */
   
   struct s7_cell _NO_VALUE;
   s7_pointer NO_VALUE;                /* the (values) value */
@@ -590,10 +590,10 @@ struct s7_scheme {
   s7_pointer UNQUOTE_SPLICING;
 #endif
   
-  s7_pointer input_port;              /* current-input-port (nil = stdin) */
+  s7_pointer input_port;              /* current-input-port */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
-  s7_pointer output_port;             /* current-output-port (nil = stderr) */
-  s7_pointer error_port;              /* current-error-port (nil = stderr) */
+  s7_pointer output_port;             /* current-output-port */
+  s7_pointer error_port;              /* current-error-port */
   s7_pointer error_info;              /* the vector bound to *error-info* */
   bool input_is_file;
   s7_pointer standard_input, standard_output, standard_error;
@@ -1988,7 +1988,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 }
 
 
-/* permanent memory for objects that we know will not be deallocated */
+/* permanent memory for objects that we know will not (normally) be deallocated */
 
 #define PERMANENT_HEAP_SIZE 65536
 static unsigned char *permanent_heap = NULL, *permanent_heap_top = NULL;
@@ -18288,8 +18288,11 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	/* (format #f "~{~A ~}" (vct 1 2 3)) */
 
 	SAVE_X_Y_Z(save_x, save_y, save_z);
-	len = s7_integer(object_length(sc, obj));
+	x = object_length(sc, obj);
 	RESTORE_X_Y_Z(save_x, save_y, save_z);
+	if (s7_is_integer(x))
+	  len = s7_integer(x);
+	else return(sc->F);
 
 	if (len < 0)
 	  return(sc->F);
@@ -18631,7 +18634,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			    int curly_gc;
 
 			    if (!is_proper_list(sc, curly_arg))
-			      return(format_error(sc, "'{' directive argument should be a proper list or an applicable object", str, args, fdat));
+			      return(format_error(sc, "'{' directive argument should be a proper list or something we can turn into a list", str, args, fdat));
 			    curly_gc = s7_gc_protect(sc, curly_arg);
 
 			    curly_str = (char *)malloc(curly_len * sizeof(char));
@@ -20081,17 +20084,17 @@ s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg)
 
 /* -------------------------------- leftovers -------------------------------- */
 
-static s7_pointer g_quit(s7_scheme *sc, s7_pointer args)
-{
-  #define H_quit "(quit) returns from the evaluator"
-
-  push_stack(sc, opcode(OP_EVAL_DONE), sc->NIL, sc->NIL);
-  return(sc->NIL);
-}
-
-
 void s7_quit(s7_scheme *sc)
 {
+  /* if s7 is running in a separate thread, gets hung, and a GUI event tries to interrupt it by calling
+   *    s7_quit, there is no guarantee we'll be in a place in the evaluator where pushing OP_EVAL_DONE
+   *    will actually stop s7.  But the odds are better than zero, and if pthread_setcanceltype is
+   *    asynchronous, and the thread is cancelled before calling s7_quit, there's hope.  Anyway, this
+   *    function assumes you've called s7_eval_c_string from C, and it is currently caught in a loop.
+   */
+  sc->longjmp_ok = false;
+  pop_input_port(sc);
+
   stack_reset(sc);
   push_stack(sc, opcode(OP_EVAL_DONE), sc->NIL, sc->NIL);
 }
@@ -20291,13 +20294,15 @@ static long int applicable_length(s7_scheme *sc, s7_pointer obj)
       {
 	/* both map and for-each assume sc->x|y|z are unchanged across this call */
 	int save_x, save_y, save_z;
-	s7_Int len;
+	s7_pointer result;
 
 	SAVE_X_Y_Z(save_x, save_y, save_z);
-	len = s7_integer(object_length(sc, obj));
+	result = object_length(sc, obj);
 	RESTORE_X_Y_Z(save_x, save_y, save_z);
 
-	return(len);
+	if (s7_is_integer(result))   /* we need to check, else misinterpreting it as an integer can lead to a infinite loop */
+	  return(s7_integer(result));
+	return(-1);
       }
 
     case T_STRING:
@@ -31023,7 +31028,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "trace",                     g_trace,                    0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                   g_untrace,                  0, 0, true,  H_untrace);
   s7_define_function(sc, "gc",                        g_gc,                       0, 1, false, H_gc);
-  s7_define_function(sc, "quit",                      g_quit,                     0, 0, false, H_quit);
 
   s7_define_function(sc, "procedure?",                g_is_procedure,             1, 0, false, H_is_procedure);
   s7_define_function(sc, "procedure-documentation",   g_procedure_documentation,  1, 0, false, H_procedure_documentation);
@@ -31359,12 +31363,18 @@ the error type and the info passed to the error handler.");
  *     what about trace-output-port? or an arg to trace?
  *     make bignum-precision a variable (not pws) -> *bignum-precision*
  *     some way to refer to car/cdr of a cons in format
- *       what about ~#1|2[A,S, etc] = car|cdr of current arg?
+ *       ~^ only acts within {}, so similarly within {} ~<... = car and ~>... = cdr? "~{~<3,1F : ~>A~}" (cons 1.5 2)
  *     sort! applied to c|s_object?
  *     the help strings use lambda* syntax for optional args, but these are not keyword args.
- *     C-side catch, dynamic-wind
+ *     C-side catch, dynamic-wind [what others are currently not exported?]
  *     s7_quit (s7_call_with_exit?) that closes all files etc
- *     s7_kill to free all memory
+ *     s7_kill to free all memory (including "permanent" stuff)
+ *     settable subsequence function [setter for substring or list-tail?], append for sequences? (needs a make func)
+ *     position/posq/posv along the lines of member
+ *     file-exists?, directory?, delete-file, (length file)?
+ *     perhaps object->list (alongside object->string, but more restricted in what it can handle)
+ *     perhaps procedure-name, settable procedure-documentation
+ *     perhaps copy port
  *
  *     envs as debugging aids: how to show file/line tags as well
  *       and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
