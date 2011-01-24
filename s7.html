@@ -98,10 +98,10 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
   <ul>
       <li><a href="#repl">read-eval-print loop (and emacs)</a>
       <li><a href="#defun">define a function with arguments and a returned value, and define a variable </a>
-      <li><a href="#defvar">call a scheme function from C, and get/set scheme variable values in C</a>
+      <li><a href="#defvar">call a Scheme function from C, and get/set Scheme variable values in C</a>
       <li><a href="#juce">C++ and Juce</a>
       <li><a href="#sndlib">load sndlib using the XEN functions and macros</a>
-      <li><a href="#pwstype">add a new scheme type and a procedure-with-setter</a>
+      <li><a href="#pwstype">add a new Scheme type and a procedure-with-setter</a>
       <li><a href="#functionportexample">redirect display output to a C procedure</a>
       <li><a href="#extendop">extend a built-in operator ("+" in this case)</a>
       <li><a href="#definestar1">C-side define* (s7_define_function_star)</a>
@@ -298,6 +298,8 @@ Other math-related differences between s7 and r5rs:
 0.5
 &gt; (rationalize 1.5)
 3/2
+&gt; (make-rectangular 1/2 0)
+1/2
 </pre>
 
 <small>
@@ -1391,7 +1393,7 @@ when passed that object.
 <A NAME="recordexample"></a>
 <pre>
 (define special-value ((cadr (<em class=red>make-type</em>)) 'special))
-;; now special-value's value can't be eq? to any other scheme object
+;; now special-value's value can't be eq? to any other Scheme object
 
 ;; expand, for example, (define-record rec (a 1) (b 2))
 (begin
@@ -2155,7 +2157,7 @@ And of course:
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>By my count, around 20 of the scheme built-in functions are already generic in the sense
+<p>By my count, around 20 of the Scheme built-in functions are already generic in the sense
 that they accept arguments of many types (leaving aside the numeric functions).  s7 extends that list with map, for-each, reverse,
 and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
 newLisp takes a more radical approach than s7: it extends operators such as '&gt;' 
@@ -3012,7 +3014,7 @@ also sends it to *stdout*.  To send the string to *stderr* instead, <code>(forma
 15.75
 </pre>
 
-<p>This also affects format.  In most schemes, <code>(format #f "~X" 1.25)</code> is
+<p>This also affects format.  In most Schemes, <code>(format #f "~X" 1.25)</code> is
 an error.  In CL, it is equivalent to using ~A which is perverse.  But 
 </p>
 
@@ -3294,7 +3296,7 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
   (list (lambda (sym)
           ;; add your own symbol checks here
           (let ((file (autoload-file (symbol-&gt;string sym))))
-            ;; autoload-file is a Snd function that knows where a lot of Snd's scheme functions are
+            ;; autoload-file is a Snd function that knows where a lot of Snd's Scheme functions are
             (if file (load file))
             (symbol-&gt;value sym))))) ; this will return #&lt;undefined&gt; if we didn't find its source file
 </pre>
@@ -3384,7 +3386,7 @@ traced function call (that is, global to the function, not the function's local 
 </dt>
 
 <dd><p><a name="proceduresource">procedure-source</a>, procedure-arity, procedure-documentation, and help provide a look into a
-scheme function.
+Scheme function.
 procedure-documentation returns the documentation string associated with a procedure: the initial string in the
 function's body. procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
 procedure-source returns the source, as a list, of a procedure. procedure-environment returns
@@ -4613,7 +4615,7 @@ And then there's:
 <p>
 When does this matter?  I often need to index into a vector, but the index is a float (a "real" in Scheme-speak: its
 fractional part can be non-zero).
-In one scheme:
+In one Scheme:
 </p>
 
 <pre>
@@ -4892,10 +4894,10 @@ The examples that follow show:
 <ul>
 <li><a href="#repl">read-eval-print loop (and emacs)</a>
 <li><a href="#defun">define a function with arguments and a returned value, and define a variable </a>
-<li><a href="#defvar">call a scheme function from C, and get/set scheme variable values in C</a>
+<li><a href="#defvar">call a Scheme function from C, and get/set Scheme variable values in C</a>
 <li><a href="#juce">C++ and Juce</a>
 <li><a href="#sndlib">load sndlib using the XEN functions and macros</a>
-<li><a href="#pwstype">add a new scheme type and a procedure-with-setter</a>
+<li><a href="#pwstype">add a new Scheme type and a procedure-with-setter</a>
 <li><a href="#functionportexample">redirect display output to a C procedure</a>
 <li><a href="#extendop">extend a built-in operator ("+" in this case)</a>
 <li><a href="#definestar1">C-side define* (s7_define_function_star)</a>
@@ -4988,7 +4990,7 @@ int main(int argc, char **argv)
 </pre>
 </td></tr></table>
 <br>
-<p>Since this reads stdin and writes stdout, it can be run as a scheme subjob of emacs.
+<p>Since this reads stdin and writes stdout, it can be run as a Scheme subjob of emacs.
 One (inconvenient) way to do this is to set the emacs variable scheme-program-name to
 the name of the exectuable created above ("doc7"), then call the emacs function run-scheme:
 M-x eval-expression in emacs, followed by (setq scheme-program-name "doc7"), then
@@ -5095,7 +5097,7 @@ int main(int argc, char **argv)
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <A NAME="defvar"></a>
-<p>Call a scheme-defined function from C, and get/set scheme variable values in C:
+<p>Call a Scheme-defined function from C, and get/set Scheme variable values in C:
 </p>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
@@ -5289,7 +5291,7 @@ int main(int argc, char **argv)
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <A NAME="pwstype"></a>
-<p>Add a new scheme type and procedure-with-setters:
+<p>Add a new Scheme type and procedure-with-setters:
 </p>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
@@ -5780,7 +5782,7 @@ int main(int argc, char **argv)
   s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits");
   s7_define_function(s7, "sleep", our_sleep, 0, 0, false, "(sleep) sleeps");
   s7_define_variable(s7, "*interrupt*", s7_f(s7)); 
-  /* scheme variable *interrupt* holds the continuation at the point of the interrupt */
+  /* Scheme variable *interrupt* holds the continuation at the point of the interrupt */
 
   sigaction(SIGINT, NULL, &amp;old_act);
   if (old_act.sa_handler != SIG_IGN)
@@ -5917,7 +5919,7 @@ int main(int argc, char **argv)
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <A NAME="notify"></a>
-<p>Notification from Scheme that a given scheme variable has been set.
+<p>Notification from Scheme that a given Scheme variable has been set.
 </p>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
@@ -5933,7 +5935,7 @@ static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
 
 static s7_pointer scheme_set_notification(s7_scheme *sc, s7_pointer args)
 {
-  /* this function is called when the scheme variable is set! */
+  /* this function is called when the Scheme variable is set! */
   fprintf(stderr, "%s set to %s\n",
 	  s7_object_to_c_string(sc, s7_car(args)),
 	  s7_object_to_c_string(sc, s7_car(s7_cdr(args))));

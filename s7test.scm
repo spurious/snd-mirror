@@ -449,7 +449,8 @@ yow!! -- I'm using mpc_cmp
 (test (let* ((x 1+i) (y x)) (eqv? x y)) #t)
 (test (let* ((x 3/4) (y x)) (eqv? x y)) #t)
 (test (eqv? 1.0 1.0) #t)
-(test (eqv? 0.6 0.6) #t) ; but not (eqv? 0.6 0.60)??
+(test (eqv? 0.6 0.6) #t)
+(test (eqv? 0.6 0.60) #t)
 (test (eqv? 1+i 1+i) #t)
 (test (eqv? -3.14 -3.14) #t)
 (test (eqv? 1e2 1e2) #t)
@@ -17848,8 +17849,8 @@ abs     1       2
 	#t)
   (test (let ((cont #f)) 
 	  (or (call-with-exit (lambda (x) (set! cont x) (continuation? x)))
-	       (continuation? cont)))
-	#f)  ; ?? 
+	      (continuation? cont)))
+	#f) ; x is not a continuation
 	
   (test (continuation?) 'error)
   (test (continuation? 1 2) 'error)
@@ -30812,7 +30813,9 @@ abs     1       2
 (test (integer? (expt 2.3 54)) #f)
 (test (integer? 10000000000000000.5) #f)
 (test (integer? (expt 2 54)) #t)
+(test (integer? (expt 2.0 54)) #f)
 (test (integer? most-positive-fixnum) #t)
+(test (integer? (/ most-positive-fixnum most-positive-fixnum)) #t)
 (test (integer? +inf.0) #f)
 (test (integer? -inf.0) #f)
 (test (integer? nan.0) #f)
@@ -32660,8 +32663,10 @@ abs     1       2
 (num-test (make-rectangular 500029 3) 500029.0+3.0i)
 (num-test (make-rectangular 500029 362880) 500029.0+362880.0i)
 (num-test (make-rectangular 500029 500029) 500029.0+500029.0i)
+(num-test (make-rectangular 1/2 0) 1/2)
+(num-test (make-rectangular 1/2 1/2) 0.5+0.5i)
+(num-test (make-rectangular 0 1/2) 0+0.5i)
 
-(test (nan? (make-polar nan.0 nan.0)) #t)
 (test (nan? (make-rectangular nan.0 nan.0)) #t)
 (test (nan? (make-rectangular nan.0 inf.0)) #t)
 
@@ -32684,9 +32689,6 @@ abs     1       2
 (test (make-rectangular 1.0 1.0+0.1i) 'error)
 (test (make-rectangular 1.0+0.1i 1.0) 'error)
 
-;;; should these return ratios:
-;;;   (make-rectangular 1/2 0) -> 0.5 ??
-;;;   (make-polar 1/2 0) -> 0.5 ??
 
 
 
@@ -33154,8 +33156,12 @@ abs     1       2
 (num-test (make-polar 500029 362880) 304608.06398126127897+396538.68436583562288i)
 (num-test (make-polar 500029 500029) 427099.29847236932255+260029.21006188896718i)
 (num-test (angle (make-polar 1.0 4.0)) (- 4 (* 2 pi)))
+(num-test (make-polar 1/2 0) 1/2)
+(num-test (make-polar 1/2 pi) -1/2)
+(num-test (make-polar 1 0) 1)
 
 (test (nan? (make-polar 0 0/0)) #t)
+(test (nan? (make-polar nan.0 nan.0)) #t)
 (num-test (make-polar 1.0 (* 200 pi)) 1.0)
 (num-test (make-polar 1.0 (* 2000000 pi)) 1.0)
 (num-test (make-polar 1.0 (* 2000000000 pi)) 1.0)
@@ -34770,7 +34776,7 @@ abs     1       2
 (num-test (logxor 0 1/1) 1)
 (num-test (logxor 1/1 0) 1)
 (num-test (logxor 0 1 -1) -2)
-(num-test (logxor -1 -1 -1) -1) ; hmmm... "the bits that are on in an odd number of the arguments"
+(num-test (logxor -1 -1 -1) -1) 
 ;; to get the bits that are on in just 1 argument? (logxor (logxor a b c) (logand a b c))
 (num-test (logxor 1 2 3 4) 4)
 (num-test (logxor 1 3 5 7) 0)
@@ -47999,7 +48005,7 @@ abs     1       2
 (num-test (acosh 1234000000.0-1234000000.0i) 21.97324753326953-0.78539816339745i)
 (num-test (acosh -1234000000.0-1234000000.0i) 21.97324753326953-2.35619449019234i)
 (num-test (acosh 0) 0+1.570796326794897i)
-(num-test (acosh 1) 0.0) ; or 0??
+(num-test (acosh 1) 0)
 (num-test (acosh -1) 0+3.141592653589793i)
 (num-test (acosh -1.0e+01) 2.9932228461263808979e0+3.1415926535897932385e0i)
 (num-test (acosh -2.0e+00) 1.3169578969248167086e0+3.1415926535897932385e0i)

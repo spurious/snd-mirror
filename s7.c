@@ -6044,6 +6044,8 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	(!has_i))                          /*   but no i for the imaginary part */
       return((want_symbol) ? make_symbol(sc, q) : sc->F);
 
+    /* it would be nice to catch 1+0i and friends and return an integer */
+
     if (has_i)
       {
 #if (!WITH_GMP)
@@ -6323,14 +6325,14 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "make-polar angle,", 2, cadr(args), "a real"));
   
-  mag = num_to_real(number(car(args)));
   ang = num_to_real(number(cadr(args)));
 
   if (ang == 0.0)
-    return(s7_make_real(sc, mag));
+    return(car(args)); /* preserve arg type: (make-polar 1 0) -> 1 */
   if (ang == M_PI)
-    return(s7_make_real(sc, -mag));
+    return(s7_negate(sc, car(args)));
 
+  mag = num_to_real(number(car(args)));
   if ((isnan(mag)) || (isnan(ang)) || (isinf(ang)))
     return(s7_make_real(sc, NAN));
 
@@ -6340,6 +6342,7 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
 {
+  s7_Double imag;
   #define H_make_rectangular "(make-rectangular x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
   
   if (!s7_is_real(car(args)))
@@ -6347,9 +6350,13 @@ static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "make-rectangular imaginary part,", 2, cadr(args), "a real"));
   
+  imag = num_to_real(number(cadr(args)));
+  if (imag == 0.0)
+    return(car(args)); /* this preserves type: (make-rectangular 1 0) -> 1 */
+
   return(s7_make_complex(sc, 
 			 num_to_real(number(car(args))), 
-			 num_to_real(number(cadr(args)))));
+			 imag));
 }
 
 
@@ -14010,14 +14017,13 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 
 
 #if 0
-s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj) 
+s7_pointer s7_remq(s7_scheme *sc, s7_pointer a, s7_pointer obj) 
 {
-  /* used in xen.c */
   s7_pointer p;
 
   sc->w = sc->NIL;
   for ( ; is_pair(a); a = cdr(a))
-    if (car(a) != obj)
+    if (car(a) != obj)  /* use s7_is_eqv here for remv */
       sc->w = s7_cons(sc, car(a), sc->w);
   p = sc->w;
   sc->w = sc->NIL;
@@ -16531,12 +16537,14 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
 static s7_pointer make_s_object(s7_scheme *sc, int type, void *value)
 {
   s7_pointer x;
+
   NEW_CELL(sc, x);
   s_object_type(x) = type;
   s_object_value(x) = value;
   set_type(x, T_S_OBJECT | T_FINALIZABLE | T_DONT_COPY);
   if (object_types[type].apply)
     typeflag(x) |= T_PROCEDURE;
+
   return(x);
 }
 
@@ -16544,7 +16552,6 @@ static s7_pointer make_s_object(s7_scheme *sc, int type, void *value)
 static s7_pointer call_s_object_copy(s7_scheme *sc, s7_pointer a)
 {
   s_type_t *obj, *new_obj;
-  s7_pointer result;
 
   obj = (s_type_t *)s7_object_value(a);
   car(sc->s_function_args) = obj->value;
@@ -16553,9 +16560,7 @@ static s7_pointer call_s_object_copy(s7_scheme *sc, s7_pointer a)
   new_obj->type = obj->type;
 
   new_obj->value = s7_call(sc, object_types[new_obj->type].copy_func, sc->s_function_args);
-  result = make_s_object(sc, new_obj->type, (void *)new_obj);
-
-  return(result);
+  return(make_s_object(sc, new_obj->type, (void *)new_obj));
 }
 
 
@@ -16619,12 +16624,10 @@ static s7_pointer s_is_type(s7_scheme *sc, s7_pointer args)
 static s7_pointer s_type_make(s7_scheme *sc, s7_pointer args)
 {
   s_type_t *obj;
-  s7_pointer result;
   obj = (s_type_t *)calloc(1, sizeof(s_type_t));
   obj->type = s7_integer(car(args));
   obj->value = cadr(args);
-  result = make_s_object(sc, obj->type, (void *)obj);
-  return(result);
+  return(make_s_object(sc, obj->type, (void *)obj));
 }
 
 
@@ -16642,6 +16645,7 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
       if (obj->type == tag)
 	return(obj->value);
     }
+
   return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		  make_list_4(sc, 
 			      make_protected_string(sc, "~A type's 'ref' function argument, ~S, is ~A?"),
@@ -19062,6 +19066,9 @@ static void trace_apply(s7_scheme *sc)
       if (hook_functions(sc->trace_hook) != sc->NIL)
 	{
 	  push_stack(sc, opcode(OP_TRACE_HOOK_QUIT), sc->args, sc->code); /* restore current state after dealing with the trace hook func */
+	  /* we have to turn off tracing while evaluating the trace hook functions
+	   */
+	  (*(sc->tracing)) = false;
 	  s7_hook_apply(sc, sc->trace_hook, make_list_2(sc, sc->code, sc->args));
 
 	  /* it would be nice if *trace-hook* could return #f to turn off trace printout.
@@ -23187,7 +23194,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   extremely deep recursion involving map or for-each can increase the stack size indefinitely:
        *
        * (define (tfe a b)
-       *   (format #t "~A ~A -> ~A~%" a b (s7-stack-size))
+       *   (format #t "~A ~A -> ~A~%" a b (-s7-stack-size))
        *   (for-each
        *     (lambda (c)
        *       (if (< c b)
@@ -24788,6 +24795,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_TRACE_HOOK_QUIT:
+      (*(sc->tracing)) = true;                 /* this was turned off before calling the *trace-hook* functions */
       goto APPLY_WITHOUT_TRACE;
 
       
@@ -31361,7 +31369,7 @@ the error type and the info passed to the error handler.");
  *       could the profiler give block counts as well?
  *     if user creates an enormous list, it can seem to hang the listener: *list-print-length* ?
  *     what about trace-output-port? or an arg to trace?
- *     make bignum-precision a variable (not pws) -> *bignum-precision*
+ *     make bignum-precision a variable (not pws) -> *bignum-precision* [not sure about this...]
  *     some way to refer to car/cdr of a cons in format
  *       ~^ only acts within {}, so similarly within {} ~<... = car and ~>... = cdr? "~{~<3,1F : ~>A~}" (cons 1.5 2)
  *     sort! applied to c|s_object?
@@ -31371,10 +31379,12 @@ the error type and the info passed to the error handler.");
  *     s7_kill to free all memory (including "permanent" stuff)
  *     settable subsequence function [setter for substring or list-tail?], append for sequences? (needs a make func)
  *     position/posq/posv along the lines of member
- *     file-exists?, directory?, delete-file, (length file)?
+ *     file-exists?, directory?, delete-file, (length|copy file)? even wilder: (file position) or (for-each ... file)
  *     perhaps object->list (alongside object->string, but more restricted in what it can handle)
  *     perhaps procedure-name, settable procedure-documentation
  *     perhaps copy port
+ *     perhaps 1+0i -> 1 (not 1.0)
+ *     does interrupt actually work in Snd?  No.  We need to implement this in gtk/motif/no-gui cases. (C-g would be best).
  *
  *     envs as debugging aids: how to show file/line tags as well
  *       and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
