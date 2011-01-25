@@ -334,27 +334,11 @@ void snd_set_global_defaults(bool need_cleanup)
 }
 
 
-#if HAVE_SETJMP_H
-#include <signal.h>
-
-static void snd_sigusr1(int ignored)
-{
-  /* if Snd is in an infinite loop, it should be possible to break out of it and
-   *    return to the listener prompt by getting the Snd process number and
-   *      kill -10 6141
-   *    to send process 6141 (Snd presumably) the SIGUSR1 signal.
-   * SIGQUIT called s7_quit, but did not interrupt a loop (in the no-gui version),
-   *    so we need more drastic measures.  (Should this have used SIGINT instead?)
-   */
-  XEN_ERROR(XEN_ERROR_TYPE("snd-top-level"), XEN_EMPTY_LIST);
-}
-
-#if HAVE_SCHEME
+#if HAVE_SETJMP_H && HAVE_SCHEME
 static void jump_to_top_level(void)
 {
   top_level_catch(1);
 }
-#endif
 #endif
 
 
@@ -473,10 +457,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   mus_print_set_handler(mus_print_to_snd);
 
   initialize_load_path(); /* merge SND_PATH entries into the load-path */
-
-#if HAVE_SETJMP_H
-  signal(SIGUSR1, snd_sigusr1);
-#endif
 
 #ifdef SND_AS_WIDGET
   return(ss); 

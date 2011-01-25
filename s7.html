@@ -7051,8 +7051,10 @@ There are several things that may change once Gtk settles down.
 
 <p>There is one major flaw in the two preceding REPLs; if s7 gets caught in an infinite loop (via
 <code>(do () ())</code> for example), you have to kill the main program to stop it.  We could use
-Unix interrupts as in the <a href="#signal">signal</a> example earlier, but a slightly cleaner
-way is to put the s7 evaluation in its own thread:
+Unix interrupts as in the <a href="#signal">signal</a> example earlier, but surely in a modern
+GUI-based program, we'd like to avoid such brute-force stuff.  In particular, we want our interface
+to keep running while we clean up the s7 problem.  So, in the next example, we use a separate
+thread for the s7 evaluation:
 </p>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
@@ -7223,6 +7225,7 @@ static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
     {
       just_quit = true;
       pthread_cancel(*s7_thread);
+      pthread_detach(*s7_thread);
       s7_is_running = false;
       s7_quit(s7);
       free(s7_thread);
@@ -7282,6 +7285,27 @@ int main(int argc, char **argv)
 }
 </pre>
 </td></tr></table>
+
+
+<p>This code still has a flaw.  If we're using libxm, for example, GUI callbacks can
+call s7_call or s7_eval_c_string directly.  In the code above, if the listener
+starts a long evaluation (or falls into an infinite loop), and we start idly poking around 
+with the mouse, waiting for the evaluation to finish, a mouse or menu callback can trigger
+a call on the same s7 interpreter that is currently running in the listener.
+We are trying to evaluate two different expressions at the same time!  What you
+get depends on where s7 notices that it is lost; if the evaluator senses that it is lost,
+it will raise some confusing error.  Otherwise the s7 stack will cause a segfault.
+We need the GUI to stay active so that we can interrupt computation by typing C-C.
+We can't sort through all the events dispatching only the C-C, because that
+confuses subsequent GUI actions, and the whole idea here is to keep the interface
+alive.  So, currently in Snd, I'm using s7-level threads for the listener
+evaluation.  s7_make_thread creates a thread running a clone of the s7 evaluator
+that can run in parallel with the main s7.  I let the main s7 handle all the
+GUI callbacks, as before, and fire up an s7-thread for each listener evaluation.
+The main change from the preceding code is to use s7_make_thread, and not
+free the thread afterwards (s7's garbage collector handles that).
+</p>
+
 <br><br>
 
 

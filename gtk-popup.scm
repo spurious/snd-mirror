@@ -1,8 +1,4 @@
 ;;; translated from popup.scm
-;;;
-;;; no attempt here to set widget colors, no listener popup menu (gtk predefines
-;;;   a popup for each entry/textview widget and there's no way to get rid of it!
-;;;   perhaps we could find a pointer to its children and hide all of them?)
 
 (define popup-already-loaded (provided? 'snd-gtk-popup.scm))
 (provide 'snd-gtk-popup.scm)

@@ -2037,6 +2037,14 @@ fi
 # error checks, output
 #--------------------------------------------------------------------------------
 
+if test "$ac_snd_have_extension_language" = yes ; then
+  if test "$ac_snd_have_gui" = yes ; then
+    if test "$ac_cv_header_pthread_h" = yes ; then
+      LDFLAGS="$LDFLAGS -lpthread"
+    fi
+  fi
+fi
+
 if test "$ac_snd_have_extension_language" = no ; then
   if test "$ac_snd_have_gui" = no ; then
     if test "$ac_cv_header_dlfcn_h" = yes ; then
@@ -2049,6 +2057,7 @@ fi
 if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_snd_have_gui" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
   LDFLAGS="$LDFLAGS -ldl"
 fi
+
 
 AC_SUBST(CFLAGS)
 AC_SUBST(ORIGINAL_LDFLAGS)

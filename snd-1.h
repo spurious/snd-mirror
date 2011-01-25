@@ -1503,6 +1503,9 @@ void provide_listener_help(const char *source);
 bool listener_is_visible(void);
 void g_init_listener(void);
 
+#if (HAVE_SCHEME) && (HAVE_PTHREADS)
+void stop_s7(void);
+#endif
 
 
 /* -------- snd-mix.c -------- */

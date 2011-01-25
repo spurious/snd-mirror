@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.79"
-#define S7_DATE "23-Jan-11"
+#define S7_VERSION "1.80"
+#define S7_DATE "25-Jan-11"
 
 
 typedef long long int s7_Int;
@@ -721,8 +721,14 @@ void s7_mark_object(s7_pointer p);
 
 
 #if HAVE_PTHREADS
+  bool s7_is_thread(s7_pointer obj);
+  pthread_t *s7_thread(s7_pointer obj);
+  s7_pointer s7_make_thread(s7_scheme *sc, void *(*func)(void *obj), void *func_obj, bool local);
+  bool s7_is_lock(s7_pointer obj);
+  s7_pointer s7_make_lock(s7_scheme *sc);
+  pthread_mutex_t *s7_lock(s7_pointer obj);
   bool s7_is_thread_variable(s7_pointer obj);
-  s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj);
+  s7_pointer s7_thread_variable(s7_scheme *sc, s7_pointer obj);
 #endif
 
 /* Threads in s7 share the heap and symbol table, but have their own local environment, stack,
@@ -790,6 +796,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 25-Jan:    s7_is_thread, s7_thread, s7_make_thread. s7_is_lock, s7_make_lock, s7_lock.
+ *               changed s7_thread_variable_value to s7_thread_variable.
  * 23-Jan:    removed (scheme-level) quit.
  * 17-Jan-11: make-hash-table-iterator.
  *            map and for-each accept any applicable object as the first argument.

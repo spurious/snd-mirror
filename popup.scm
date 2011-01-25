@@ -985,7 +985,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
       listener-popup)))
 
 (add-popups)
-(define listener-menu (add-listener-popup))
+;(define listener-menu (add-listener-popup))
 
 (define (change-listener-popup-color new-color)
   "(change-listener-popup-color new-color) changes the listener popup menu's color"

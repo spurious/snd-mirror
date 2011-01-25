@@ -620,6 +620,9 @@ static void Listener_clear(Widget w, XEvent *event, char **str, Cardinal *num)
 
 static void Listener_g(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
+#if (HAVE_SCHEME) && (HAVE_PTHREADS)
+  stop_s7();
+#endif
   control_g(any_selected_sound());
 }
 
