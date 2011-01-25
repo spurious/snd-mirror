@@ -723,7 +723,9 @@ void s7_mark_object(s7_pointer p);
 #if HAVE_PTHREADS
   bool s7_is_thread(s7_pointer obj);
   pthread_t *s7_thread(s7_pointer obj);
-  s7_pointer s7_make_thread(s7_scheme *sc, void *(*func)(void *obj), void *func_obj, bool local);
+  s7_pointer s7_make_thread(s7_scheme *sc, void *(*func)(void *obj), void *data, bool local);
+  s7_scheme *s7_thread_s7(s7_pointer obj);
+  void *s7_thread_data(s7_pointer obj);
   bool s7_is_lock(s7_pointer obj);
   s7_pointer s7_make_lock(s7_scheme *sc);
   pthread_mutex_t *s7_lock(s7_pointer obj);
@@ -796,7 +798,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 25-Jan:    s7_is_thread, s7_thread, s7_make_thread. s7_is_lock, s7_make_lock, s7_lock.
+ * 25-Jan:    s7_is_thread, s7_thread, s7_make_thread, s7_thread_s7, s7_thread_data. 
+ *               s7_is_lock, s7_make_lock, s7_lock.
  *               changed s7_thread_variable_value to s7_thread_variable.
  * 23-Jan:    removed (scheme-level) quit.
  * 17-Jan-11: make-hash-table-iterator.

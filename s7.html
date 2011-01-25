@@ -7088,6 +7088,7 @@ static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
 static GtkWidget* repl;                        /* the REPL text widget */
 static GtkTextBuffer *repl_buf;                /* its text buffer */
 static GtkTextTag *prompt_not_editable = NULL; /* a tag to make sure the prompt can't be erased */
+<em class=red>static GdkCursor *arrow, *spinner;</em>
 
 static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) {exit(0);}
 
@@ -7129,6 +7130,8 @@ static void evaluate_expression(s7_scheme *sc, char *expression)
 	  s7_thread = (pthread_t *)calloc(1, sizeof(pthread_t));
 	  just_quit = false;
 	  s7_is_running = true;
+	  gdk_window_set_cursor(gtk_text_view_get_window(GTK_TEXT_VIEW(repl), GTK_TEXT_WINDOW_TEXT), spinner);
+
 	  pthread_create(s7_thread, NULL, run_s7_thread, (void *)expression);
 
 	  while (s7_is_running)
@@ -7139,6 +7142,7 @@ static void evaluate_expression(s7_scheme *sc, char *expression)
 	      pthread_join(*s7_thread, NULL);
 	      free(s7_thread);
 	      s7_thread = NULL;
+	      gdk_window_set_cursor(gtk_text_view_get_window(GTK_TEXT_VIEW(repl), GTK_TEXT_WINDOW_TEXT), arrow);
 	      errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
 	    }
 	  else errmsg = "\ngot C-C!";</em>
@@ -7230,6 +7234,7 @@ static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
       s7_quit(s7);
       free(s7_thread);
       s7_thread = NULL;
+      gdk_window_set_cursor(gtk_text_view_get_window(GTK_TEXT_VIEW(repl), GTK_TEXT_WINDOW_TEXT), arrow);
       prompt(w);
     }
 </em>
@@ -7246,6 +7251,10 @@ int main(int argc, char **argv)
 
   /* make a window with a scrolled text widget */
   gtk_init(&argc, &argv);
+  <em class=red>
+  spinner = gdk_cursor_new(GDK_WATCH);
+  arrow = gdk_cursor_new(GDK_LEFT_PTR);
+  </em>
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
 
@@ -7287,23 +7296,21 @@ int main(int argc, char **argv)
 </td></tr></table>
 
 
-<p>This code still has a flaw.  If we're using libxm, for example, GUI callbacks can
+<p>This code still has a flaw.  Any GUI callback can
 call s7_call or s7_eval_c_string directly.  In the code above, if the listener
 starts a long evaluation (or falls into an infinite loop), and we start idly poking around 
 with the mouse, waiting for the evaluation to finish, a mouse or menu callback can trigger
 a call on the same s7 interpreter that is currently running in the listener.
 We are trying to evaluate two different expressions at the same time!  What you
-get depends on where s7 notices that it is lost; if the evaluator senses that it is lost,
+get depends on where s7 notices the problem; if the evaluator senses that it is lost,
 it will raise some confusing error.  Otherwise the s7 stack will cause a segfault.
 We need the GUI to stay active so that we can interrupt computation by typing C-C.
 We can't sort through all the events dispatching only the C-C, because that
 confuses subsequent GUI actions, and the whole idea here is to keep the interface
-alive.  So, currently in Snd, I'm using s7-level threads for the listener
-evaluation.  s7_make_thread creates a thread running a clone of the s7 evaluator
-that can run in parallel with the main s7.  I let the main s7 handle all the
-GUI callbacks, as before, and fire up an s7-thread for each listener evaluation.
-The main change from the preceding code is to use s7_make_thread, and not
-free the thread afterwards (s7's garbage collector handles that).
+alive.  In Snd, I tried using s7-level threads for the listener
+evaluation by calling s7_make_thread which creates a thread running a clone of the s7 evaluator
+that can run in parallel with the main s7.  But unfortunately, as far as I can see,
+neither Gtk/Cairo nor Motif is actually thread-safe.  Rats.
 </p>
 
 <br><br>

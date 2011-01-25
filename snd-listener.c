@@ -417,10 +417,12 @@ void backup_listener_to_previous_expression(void) {}
 #endif
 
 
-#if (HAVE_SCHEME) && (HAVE_PTHREADS)
-static s7_pointer s7_result, s7_alt;
+#if 0 && HAVE_SCHEME && HAVE_PTHREADS && USE_GTK
+
+static s7_pointer s7_result, s7_alt, s7_alt_old_port;
+static s7_scheme *s7_alt_s7;
 static bool just_quit = false, s7_is_running = false;
-static int s7_alt_gc_loc;
+static int s7_alt_gc_loc, s7_alt_port_gc_loc;
 static pthread_t *thread;
 
 static void *run_thread(void *obj)
@@ -429,7 +431,14 @@ static void *run_thread(void *obj)
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-  s7_result = s7_eval_c_string(s7, (const char *)obj);
+  s7_alt = (s7_pointer)obj;
+  s7_alt_gc_loc = s7_gc_protect(s7, s7_alt);
+  s7_alt_s7 = s7_thread_s7(s7_alt);
+
+  s7_alt_old_port = s7_set_current_error_port(s7_alt_s7, s7_open_output_string(s7_alt_s7));
+  s7_alt_port_gc_loc = s7_gc_protect(s7_alt_s7, s7_alt_old_port);
+
+  s7_result = s7_eval_c_string(s7_alt_s7, (const char *)s7_thread_data(s7_alt));
   s7_is_running = false;
   return(NULL);
 }
@@ -443,10 +452,12 @@ void stop_s7(void)
       pthread_cancel(*thread);
       pthread_detach(*thread);
       s7_is_running = false;
-      s7_quit(s7);
+      s7_quit(s7_alt_s7);
+      s7_gc_unprotect_at(s7, s7_alt_port_gc_loc);
       s7_gc_unprotect_at(s7, s7_alt_gc_loc);
     }
 }
+
 #endif
 
 
@@ -464,8 +475,7 @@ void listener_return(widget_t w, int last_prompt)
   int parens;
 #endif
 
-
-#if (HAVE_SCHEME) && (HAVE_PTHREADS)
+#if 0 && HAVE_SCHEME && HAVE_PTHREADS && USE_GTK
   if (s7_is_running) return;
 #endif
 
@@ -660,6 +670,7 @@ void listener_return(widget_t w, int last_prompt)
   if (str)
     {
       bool got_error = false;
+      char *errmsg = NULL;
 
       if (current_position < (last_position - 2))
 	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
@@ -675,9 +686,49 @@ void listener_return(widget_t w, int last_prompt)
 #endif
 
 #if HAVE_SCHEME
+#if 0 && HAVE_PTHREADS && USE_GTK
+      /* not Motif!  it is not thread safe.
+       * not Gtk either!  gad.
+       */
+      /* with pthreads ---------------------------------------- */
       if ((mus_strlen(str) > 1) || (str[0] != '\n'))
 	{
-	  char *errmsg;
+	  just_quit = false;
+	  s7_is_running = true;
+	  s7_alt = s7_make_thread(s7, run_thread, (void *)str, false);
+	  thread = s7_thread(s7_alt);
+
+	  while (s7_is_running)
+	    gtk_main_iteration(); 
+
+	  /* very tricky -- we need the interface running to see C-g, and in ordinary (not-hung, but very slow-to-compute) code
+	   *   we need to let other interface stuff run.  We can't look at each event and flush all but the C-g we're waiting
+	   *   for because that confuses the rest of the GUI, and some such interactions are expected.  But if interface actions
+	   *   are tied to scheme code, the check_for_event lets that code be evaluated, even though we're actually running
+	   *   the evaluator already in a separate thread.  If we block on the thread ID (pthread_self), bad stuff still gets
+	   *   through somehow.  
+	   *
+	   * So, try to use s7 threads here.
+	   */
+	  if (!just_quit)
+	    {
+	      pthread_join(*thread, NULL);
+	      errmsg = mus_strdup(s7_get_output_string(s7_alt_s7, s7_current_error_port(s7_alt_s7)));
+
+	      s7_close_output_port(s7_alt_s7, s7_current_error_port(s7_alt_s7));
+	      s7_set_current_error_port(s7_alt_s7, s7_alt_old_port);
+	      s7_gc_unprotect_at(s7, s7_alt_port_gc_loc);
+	      s7_gc_unprotect_at(s7, s7_alt_gc_loc);
+	      form = s7_result;
+	    }
+	  else errmsg = mus_strdup("\ngot C-g!");
+
+	}
+#else
+      /* not pthreads */
+
+      if ((mus_strlen(str) > 1) || (str[0] != '\n'))
+	{
 	  int gc_loc;
 	  s7_pointer old_port;
 
@@ -688,64 +739,28 @@ void listener_return(widget_t w, int last_prompt)
 	    form = run_or_hook(read_hook, 
 			       XEN_LIST_1(C_TO_XEN_STRING(str)),
 			       S_read_hook);
-
-#if HAVE_PTHREADS
-	  just_quit = false;
-	  s7_is_running = true;
-	  s7_alt = s7_make_thread(s7, run_thread, (void *)str, false);
-	  s7_alt_gc_loc = s7_gc_protect(s7, s7_alt);
-	  thread = s7_thread(s7_alt);
-
-#if USE_GTK
-	  while (s7_is_running)
-	    gtk_main_iteration(); 
-#else
-	  while (s7_is_running)
-	    check_for_event();
-#endif
-	  /* very tricky -- we need the interface running to see C-g, and in ordinary (not-hung, but very slow-to-compute) code
-	   *   we need to let other interface stuff run.  We can't look at each event and flush all but the C-g we're waiting
-	   *   for because that confuses the rest of the GUI, and some such interactions are expected.  But if interface actions
-	   *   are tied to scheme code, the check_for_event lets that code be evaluated, even though we're actually running
-	   *   the evaluator already in a separate thread.  If we block on the thread ID (pthread_self), bad stuff still gets
-	   *   through somehow.  I can't decide if the upside (interruptible loops) outweighs the downside (segfaults if
-	   *   2 threads interleave eval access).  
-	   *
-	   * So, try to use s7 threads here.
-	   */
-	  if (!just_quit)
-	    {
-	      pthread_join(*thread, NULL);
-	      s7_gc_unprotect_at(s7, s7_alt_gc_loc);
-	      errmsg = mus_strdup(s7_get_output_string(s7, s7_current_error_port(s7)));
-	      form = s7_result;
-	    }
-	  else errmsg = mus_strdup("\ngot C-g!");
-#else
 	  else form = XEN_EVAL_C_STRING(str);
 	  errmsg = mus_strdup(s7_get_output_string(s7, s7_current_error_port(s7)));
-#endif
 
 	  s7_close_output_port(s7, s7_current_error_port(s7));
 	  s7_set_current_error_port(s7, old_port);
 	  s7_gc_unprotect_at(s7, gc_loc);
 
-	  if (errmsg)
-	    {
-	      if (*errmsg)
-		snd_display_result(errmsg, NULL);
-	      free(errmsg);
-	      got_error = true;
-	    }
 	}
 #endif
+#endif
+
+      if (errmsg)
+	{
+	  if (*errmsg)
+	    snd_display_result(errmsg, NULL);
+	  free(errmsg);
+	  got_error = true;
+	}
+      else snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby */
 
       free(str);
       str = NULL;
-
-      if (!got_error)
-	snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby */
-      
       GUI_UNSET_CURSOR(w, ss->sgx->arrow_cursor); 
     }
   else

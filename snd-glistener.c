@@ -557,7 +557,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
       if (((key == snd_K_g) || (key == snd_K_G)) && 
 	  (state & snd_ControlMask))
 	{
-#if (HAVE_SCHEME) && (HAVE_PTHREADS)
+#if 0 && HAVE_SCHEME && HAVE_PTHREADS
 	  stop_s7();
 #endif
 	  if (state & snd_MetaMask)

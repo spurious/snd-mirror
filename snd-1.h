@@ -1503,7 +1503,7 @@ void provide_listener_help(const char *source);
 bool listener_is_visible(void);
 void g_init_listener(void);
 
-#if (HAVE_SCHEME) && (HAVE_PTHREADS)
+#if 0 && HAVE_SCHEME && HAVE_PTHREADS && USE_GTK
 void stop_s7(void);
 #endif
 

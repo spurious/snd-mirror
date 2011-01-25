@@ -517,6 +517,7 @@ typedef struct {
   s7_scheme *sc;
   s7_pointer func;
   pthread_t *thread;
+  void *data;
 } thred;
 #endif
 
@@ -5733,12 +5734,14 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
        */
 
       int_exponent = exponent;
-      iend = (char *)(str + int_len - 1);
-      while ((*iend == '0') && (iend != str)) {iend--; int_exponent++;}
+      if (int_len > 0)
+	{
+	  iend = (char *)(str + int_len - 1);
+	  while ((*iend == '0') && (iend != str)) {iend--; int_exponent++;}
 
-      while (str <= iend)
-	int_part = digits[(int)(*str++)] + (int_part * radix);
-
+	  while (str <= iend)
+	    int_part = digits[(int)(*str++)] + (int_part * radix);
+	}
       if (int_exponent != 0)
 	dval = int_part * ipow(radix, int_exponent);
       else dval = (s7_Double)int_part;
@@ -17741,6 +17744,7 @@ static s7_pointer g_error_hook_set(s7_scheme *sc, s7_pointer args)
    *   we also need to support (set! *error-hook* func).
    */
   s7_pointer funcs;
+
   funcs = cadr(args);
   if ((funcs == sc->NIL) ||
       (is_pair(funcs)))
@@ -19026,6 +19030,7 @@ static void trace_apply(s7_scheme *sc)
       push_stack(sc, opcode(OP_TRACE_RETURN), sc->code, sc->NIL);
       tmp1 = s7_object_to_c_string(sc, sc->code);
       tmp2 = s7_object_to_c_string(sc, sc->args);
+
       len = safe_strlen(tmp2);
       tmp2[0] = ' ';
       tmp2[len - 1] = ']';
@@ -19574,6 +19579,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 
 	case OP_ERROR_HOOK_QUIT:
 	  hook_functions(sc->error_hook) = stack_code(sc->stack, i);
+
 	  /* apparently there was an error during *error-hook* evaluation, but Rick wants the hook re-established anyway */
 	  reset_error_hook = true;
 	  /* avoid infinite loop -- don't try to (re-)evaluate (buggy) *error-hook*! */
@@ -25388,12 +25394,29 @@ static bool thread_equal(void *obj1, void *obj2)
 
 static void *run_thread_func(void *obj)
 {
-  thred *f = (thred *)obj;
+  thred *f;
+  f = (thred *)s7_object_value((s7_pointer)obj);
   return((void *)s7_call(f->sc, f->func, f->sc->NIL));
 }
 
+
+s7_scheme *s7_thread_s7(s7_pointer obj)
+{
+  thred *f;
+  f = (thred *)s7_object_value(obj);
+  return(f->sc);
+}
+
+
+void *s7_thread_data(s7_pointer obj)
+{
+  thred *f;
+  f = (thred *)s7_object_value(obj);
+  return(f->data);
+}
+
   
-static s7_pointer s7_make_thread_1(s7_scheme *sc, void *(*func)(void *obj), void *func_obj, s7_pointer scheme_func, bool local, int stack_size)
+static s7_pointer s7_make_thread_1(s7_scheme *sc, void *(*func)(void *obj), void *data, s7_pointer scheme_func, bool local, int stack_size)
 {
   thred *f;
   s7_pointer obj, vect, frame;
@@ -25418,10 +25441,9 @@ static s7_pointer s7_make_thread_1(s7_scheme *sc, void *(*func)(void *obj), void
   f->sc->envir = frame;
   f->sc->y = obj;
   f->thread = (pthread_t *)malloc(sizeof(pthread_t));
+  f->data = data;
 
-  if (!func_obj)
-    pthread_create(f->thread, NULL, func, (void *)f);
-  else pthread_create(f->thread, NULL, func, func_obj);
+  pthread_create(f->thread, NULL, func, (void *)obj);
 
   pthread_mutex_unlock(&alloc_lock);
   s7_gc_unprotect_at(sc, floc);
