@@ -7307,9 +7307,9 @@ it will raise some confusing error.  Otherwise the s7 stack will cause a segfaul
 We need the GUI to stay active so that we can interrupt computation by typing C-C.
 We can't sort through all the events dispatching only the C-C, because that
 confuses subsequent GUI actions, and the whole idea here is to keep the interface
-alive.  In Snd, I tried using s7-level threads for the listener
-evaluation by calling s7_make_thread which creates a thread running a clone of the s7 evaluator
-that can run in parallel with the main s7.  But unfortunately, as far as I can see,
+alive.  In Snd, I tried using s7_make_thread to create an s7 clone for each
+listener evaluation, so the evaluations were no longer stepping on each other.
+But unfortunately, as far as I can see,
 neither Gtk/Cairo nor Motif is actually thread-safe.  Rats.
 </p>
 

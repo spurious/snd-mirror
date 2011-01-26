@@ -31447,6 +31447,7 @@ the error type and the info passed to the error handler.");
  *     perhaps object->list (alongside object->string, but more restricted in what it can handle)
  *     perhaps procedure-name, settable procedure-documentation
  *     perhaps copy port
+ *     doc the s7_make_thread stuff
  *
  *     envs as debugging aids: how to show file/line tags as well
  *       and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
