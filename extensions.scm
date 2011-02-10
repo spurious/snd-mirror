@@ -1026,10 +1026,9 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	  ""
 	  (format #f "~A[~D]" (cadr addr) (caddr addr)))))
 
-
   (if (provided? 'profiling)
       (let ((st (symbol-table))
-	    (calls (make-vector 50000 #f))
+	    (calls (make-vector 50000 '(none (0 #f))))
 	    (call 0))
 	(do ((i 0 (+ i 1))) 
 	    ((= i (length st)))
@@ -1042,19 +1041,14 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		     (set! (calls call) (list sym (symbol-calls sym)))
 		     (set! call (+ call 1)))))
 	     lst)))
-	(let ((new-calls (make-vector call)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i call))
-	    (set! (new-calls i) (calls i)))
-	  (let ((sorted-calls (sort! new-calls 
-				     (lambda (a b) 
-				       (or (> (cadr a) (cadr b))
-					   (and (= (cadr a) (cadr b))
-						(string<? (symbol->string (car a)) 
-							  (symbol->string (car b)))))))))
-	    (with-output-to-file file
-	      (lambda ()
-		(do ((i 0 (+ i 1)))
-		    ((= i call))
-		  (let ((c (sorted-calls i)))
-		    (format #t "~A:~40T~A~60T~A~%" (car c) (cadr c) (where-is (car c))))))))))))
+
+	(set! calls (sort! calls (lambda (a b) (> (caadr a) (caadr b)))))
+	
+	(with-output-to-file file
+	  (lambda ()
+	    (do ((i 0 (+ i 1)))
+		((= i call))
+	      (let ((c (calls i)))
+		(if (not (eq? (car c) 'none))
+		    (format #t "~A:~40T~A~60T~A~%" (car c) (caadr c) (where-is (car c)))))))))))
+

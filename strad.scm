@@ -148,7 +148,6 @@
     (set! posl (modulo (inexact->exact (+ end posl)) bufsize))
     (set! posrt (modulo (inexact->exact (+ end posrt)) bufsize))
     (set! poslt (modulo (inexact->exact (+ end poslt)) bufsize))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))

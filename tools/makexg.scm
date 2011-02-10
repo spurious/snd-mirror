@@ -188,7 +188,7 @@
 	"gdouble*" "GdkFill" "GdkSubwindowMode" "GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
 	"GtkInfoBar*" "GtkSpinner*" "GtkToolShell*" "GtkToolPalette*" "GtkToolPaletteDragTargets"
 	"GdkFunction" "GtkWrapBoxPacking" "GtkLinkButton*" "GtkActivatable*" "GtkOrientable*" "GtkCellArea*"
-
+	"GdkNativeWindow"
 	"GdkRectangle*" "PangoRenderer*" "cairo_glyph_t**" "cairo_text_cluster_t**"
 ;	"cairo_text_cluster_flags_t" 
 ;	"cairo_rectangle_int_t" 

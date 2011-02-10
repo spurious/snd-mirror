@@ -25,7 +25,6 @@
 	 (beg (seconds->samples start))
 	 (len (seconds->samples dur))
 	 (end (+ beg len)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ 1 i)))
 	 ((= i end))
@@ -40,7 +39,6 @@
 	 (len (seconds->samples dur))
 	 (beg (seconds->samples start))
 	 (end (+ beg len)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ 1 i)))
 	 ((= i end))

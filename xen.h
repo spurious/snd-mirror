@@ -1389,8 +1389,8 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 #define XEN_VARGIFY(OutName, InName) static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(InName(args));}
 
 
-#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)     s7_define_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
-#define XEN_DEFINE_PROCEDURE_STAR(Name, Func, Args, Doc)                  s7_define_function_star(s7, Name, Func, Args, Doc)
+#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) s7_define_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
+#define XEN_DEFINE_PROCEDURE_STAR(Name, Func, Args, Doc)              s7_define_function_star(s7, Name, Func, Args, Doc)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Name, Get_Func, Get_Req, Get_Opt, Set_Func, Set_Req, Set_Opt, Get_Help))
@@ -1429,24 +1429,26 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_VARIABLE_REF(Var)                                         s7_symbol_value(s7, Var)
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a)                           s7_make_symbol(s7, a)
 
-#define XEN_MARK_OBJECT_TYPE                                           void
-#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Fill) s7_new_type_x(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Fill)
-#define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) static void Wrapped_Free(void *obj) {Original_Free((Type *)obj);}
-#define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) static char *Wrapped_Print(s7_scheme *sc, void *obj) {return(Original_Print((Type *)obj));}
+#define XEN_MARK_OBJECT_TYPE                                          void
+#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Fill) \
+                                                                      s7_new_type_x(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Fill)
+#define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
+                                                                      static void Wrapped_Free(void *obj) {Original_Free((Type *)obj);}
+#define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
+                                                                      static char *Wrapped_Print(s7_scheme *sc, void *obj) {return(Original_Print((Type *)obj));}
+#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)                return(s7_make_object(s7, Tag, Val))
+#define XEN_OBJECT_REF(Arg)                                           s7_object_value(Arg)
+#define XEN_OBJECT_TYPE                                               int /* tag type */
+#define XEN_OBJECT_TYPE_P(Obj, Tag)                                   (s7_object_type(Obj) == Tag)
 
-#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)   return(s7_make_object(s7, Tag, Val))
-#define XEN_OBJECT_REF(Arg)                              s7_object_value(Arg)
-#define XEN_OBJECT_TYPE                                  int /* tag type */
-#define XEN_OBJECT_TYPE_P(Obj, Tag)                      (s7_object_type(Obj) == Tag)
-
-#define XEN_HOOK_P(Arg)                                  s7_is_hook(Arg)
-#define XEN_DEFINE_HOOK(Name, Arity, Help)               xen_s7_define_hook(Name, s7_make_hook(s7, Arity, 0, false, Help))
+#define XEN_HOOK_P(Arg)                                               s7_is_hook(Arg)
+#define XEN_DEFINE_HOOK(Name, Arity, Help)                            xen_s7_define_hook(Name, s7_make_hook(s7, Arity, 0, false, Help))
 /* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
-#define XEN_DEFINE_SIMPLE_HOOK(Arity)                    s7_make_hook(s7, Arity, 0, false, NULL)
-#define XEN_HOOKED(Hook)                                 s7_is_pair(s7_hook_functions(Hook))
-#define XEN_CLEAR_HOOK(Hook)                             s7_hook_set_functions(Hook, s7_nil(s7))
-#define XEN_HOOK_PROCEDURES(Hook)                        s7_hook_functions(Hook)
-#define XEN_ADD_HOOK(Hook, Func, Name, Doc)              s7_hook_set_functions(Hook, s7_cons(s7, s7_make_function(s7, Name, Func, (int)s7_integer(s7_car(s7_hook_arity(Hook))), 0, false, Doc), s7_hook_functions(Hook)))
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)                                 s7_make_hook(s7, Arity, 0, false, NULL)
+#define XEN_HOOKED(Hook)                                              s7_is_pair(s7_hook_functions(Hook))
+#define XEN_CLEAR_HOOK(Hook)                                          s7_hook_set_functions(Hook, s7_nil(s7))
+#define XEN_HOOK_PROCEDURES(Hook)                                     s7_hook_functions(Hook)
+#define XEN_ADD_HOOK(Hook, Func, Name, Doc)                           s7_hook_set_functions(Hook, s7_cons(s7, s7_make_function(s7, Name, Func, (int)s7_integer(s7_car(s7_hook_arity(Hook))), 0, false, Doc), s7_hook_functions(Hook)))
 
 #ifdef __cplusplus
 extern "C" {

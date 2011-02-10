@@ -620,6 +620,7 @@ static void Listener_clear(Widget w, XEvent *event, char **str, Cardinal *num)
 
 static void Listener_g(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
+  ss->C_g_typed = true;
   control_g(any_selected_sound());
 }
 

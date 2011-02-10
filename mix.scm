@@ -23,12 +23,9 @@
   "(tree-for-each-reversed func tree) applies func to every leaf of 'tree' moving in reverse through all the lists"
   (define (flatten lst)
     ;; there's probably a more elegant way to do this
-    (define (list-p val)
-      (and (list? val)
-	   (not (null? val))))
     (cond ((null? lst) '())
-	  ((list-p lst)
-	   (if (list-p (car lst))
+	  ((pair? lst)
+	   (if (pair? (car lst))
 	       (append (flatten (car lst)) (flatten (cdr lst)))
 	       (cons (car lst) (flatten (cdr lst)))))
 	  (#t lst)))

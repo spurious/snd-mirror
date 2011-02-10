@@ -2,10 +2,7 @@
 
 (provide 'snd-ws.scm)
 
-(defmacro ws-interrupt? ()
-  `(if (c-g?) 
-       (throw 'with-sound-interrupt)))
-
+(define (ws-interrupt?) #f) ; backwards compatibility
 
 
 ;;; -------- with-sound defaults --------

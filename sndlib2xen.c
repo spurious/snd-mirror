@@ -1123,7 +1123,7 @@ static XEN g_mus_audio_close(XEN line)
 
 static XEN g_mus_audio_write(XEN line, XEN sdata, XEN frames, XEN start)
 {
-  #define H_mus_audio_write "(" S_mus_audio_write " line sdata frames): write frames of data (channels * frames = samples) \
+  #define H_mus_audio_write "(" S_mus_audio_write " line sdata frames (start 0)): write frames of data (channels * frames = samples) \
 to the audio line from sound-data sdata."
 
   char *obuf;

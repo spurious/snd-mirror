@@ -417,47 +417,27 @@ void backup_listener_to_previous_expression(void) {}
 #endif
 
 
-#if 0 && HAVE_SCHEME && HAVE_PTHREADS && USE_GTK
 
-static s7_pointer s7_result, s7_alt, s7_alt_old_port;
-static s7_scheme *s7_alt_s7;
-static bool just_quit = false, s7_is_running = false;
-static int s7_alt_gc_loc, s7_alt_port_gc_loc;
-static pthread_t *thread;
-
-static void *run_thread(void *obj)
+#if HAVE_SCHEME && (!USE_NO_GUI)
+static bool begin_hook(s7_scheme *sc)
 {
-  /* make sure we can stop this thread */
-  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+  ss->C_g_typed = false;
 
-  s7_alt = (s7_pointer)obj;
-  s7_alt_gc_loc = s7_gc_protect(s7, s7_alt);
-  s7_alt_s7 = s7_thread_s7(s7_alt);
-
-  s7_alt_old_port = s7_set_current_error_port(s7_alt_s7, s7_open_output_string(s7_alt_s7));
-  s7_alt_port_gc_loc = s7_gc_protect(s7_alt_s7, s7_alt_old_port);
-
-  s7_result = s7_eval_c_string(s7_alt_s7, (const char *)s7_thread_data(s7_alt));
-  s7_is_running = false;
-  return(NULL);
-}
-
-
-void stop_s7(void)
-{
-  if (s7_is_running)
+#if USE_MOTIF
+  if (XtAppPending(MAIN_APP(ss)) & XtIMXEvent)
     {
-      just_quit = true;
-      pthread_cancel(*thread);
-      pthread_detach(*thread);
-      s7_is_running = false;
-      s7_quit(s7_alt_s7);
-      s7_gc_unprotect_at(s7, s7_alt_port_gc_loc);
-      s7_gc_unprotect_at(s7, s7_alt_gc_loc);
+      XEvent event;
+      XtAppNextEvent(MAIN_APP(ss), &event);
+      XtDispatchEvent(&event);
     }
-}
+#endif
 
+#if USE_GTK
+  gtk_main_iteration();
+#endif
+
+  return(ss->C_g_typed);
+}
 #endif
 
 
@@ -473,10 +453,6 @@ void listener_return(widget_t w, int last_prompt)
 
 #if (!HAVE_RUBY && !HAVE_FORTH)
   int parens;
-#endif
-
-#if 0 && HAVE_SCHEME && HAVE_PTHREADS && USE_GTK
-  if (s7_is_running) return;
 #endif
 
   full_str = GUI_TEXT(w);
@@ -686,46 +662,26 @@ void listener_return(widget_t w, int last_prompt)
 #endif
 
 #if HAVE_SCHEME
-#if 0 && HAVE_PTHREADS && USE_GTK
-      /* not Motif!  it is not thread safe.
-       * not Gtk either!  gad.
+      /* very tricky -- we need the interface running to see C-g, and in ordinary (not-hung, but very slow-to-compute) code
+       *   we need to let other interface stuff run.  We can't look at each event and flush all but the C-g we're waiting
+       *   for because that confuses the rest of the GUI, and some such interactions are expected.  But if interface actions
+       *   are tied to scheme code, the check_for_event lets that code be evaluated, even though we're actually running
+       *   the evaluator already in a separate thread.  If we block on the thread ID (pthread_self), bad stuff still gets
+       *   through somehow.  
+       *
+       * s7 threads here only solves the s7 side of the problem.  To make the Gtk calls thread-safe,
+       *   we have to use gdk threads, and that means either wrapping every gtk section thoughout Snd in
+       *   gdk_thread_enter/leave, or expecting the caller to do that in every expression he types in the listener.
+       *
+       * Using clone_s7 code in s7 for CL-like stack-groups is much trickier
+       *   than I thought -- it's basically importing all the pthread GC and alloc stuff into the main s7.
+       *
+       * So... set begin_hook to a func that calls gtk_main_iteration or check_for_event;
+       *   if C-g, the begin_hook func returns true, and s7 calls s7_quit, and C_g_typed is true here.
+       *   Otherwise, I think anything is safe because we're only looking at the block start, and
+       *   we're protected there by a stack barrier.  
        */
-      /* with pthreads ---------------------------------------- */
-      if ((mus_strlen(str) > 1) || (str[0] != '\n'))
-	{
-	  just_quit = false;
-	  s7_is_running = true;
-	  s7_alt = s7_make_thread(s7, run_thread, (void *)str, false);
-	  thread = s7_thread(s7_alt);
-
-	  while (s7_is_running)
-	    gtk_main_iteration(); 
-
-	  /* very tricky -- we need the interface running to see C-g, and in ordinary (not-hung, but very slow-to-compute) code
-	   *   we need to let other interface stuff run.  We can't look at each event and flush all but the C-g we're waiting
-	   *   for because that confuses the rest of the GUI, and some such interactions are expected.  But if interface actions
-	   *   are tied to scheme code, the check_for_event lets that code be evaluated, even though we're actually running
-	   *   the evaluator already in a separate thread.  If we block on the thread ID (pthread_self), bad stuff still gets
-	   *   through somehow.  
-	   *
-	   * So, try to use s7 threads here.
-	   */
-	  if (!just_quit)
-	    {
-	      pthread_join(*thread, NULL);
-	      errmsg = mus_strdup(s7_get_output_string(s7_alt_s7, s7_current_error_port(s7_alt_s7)));
-
-	      s7_close_output_port(s7_alt_s7, s7_current_error_port(s7_alt_s7));
-	      s7_set_current_error_port(s7_alt_s7, s7_alt_old_port);
-	      s7_gc_unprotect_at(s7, s7_alt_port_gc_loc);
-	      s7_gc_unprotect_at(s7, s7_alt_gc_loc);
-	      form = s7_result;
-	    }
-	  else errmsg = mus_strdup("\ngot C-g!");
-
-	}
-#else
-      /* not pthreads */
+      if (s7_begin_hook(s7) != NULL) return;      /* s7 is already running (user typed <cr> during computation) */
 
       if ((mus_strlen(str) > 1) || (str[0] != '\n'))
 	{
@@ -734,20 +690,26 @@ void listener_return(widget_t w, int last_prompt)
 
 	  old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
 	  gc_loc = s7_gc_protect(s7, old_port);
-
+	  s7_set_begin_hook(s7, begin_hook);
+	  
 	  if (XEN_HOOKED(read_hook))
 	    form = run_or_hook(read_hook, 
 			       XEN_LIST_1(C_TO_XEN_STRING(str)),
 			       S_read_hook);
 	  else form = XEN_EVAL_C_STRING(str);
-	  errmsg = mus_strdup(s7_get_output_string(s7, s7_current_error_port(s7)));
+
+	  s7_set_begin_hook(s7, NULL);
+	  if (ss->C_g_typed)
+	    {
+	      errmsg = mus_strdup("\nSnd interrupted!");
+	      ss->C_g_typed = false;
+	    }
+	  else errmsg = mus_strdup(s7_get_output_string(s7, s7_current_error_port(s7)));
 
 	  s7_close_output_port(s7, s7_current_error_port(s7));
 	  s7_set_current_error_port(s7, old_port);
 	  s7_gc_unprotect_at(s7, gc_loc);
-
 	}
-#endif
 #endif
 
       if (errmsg)

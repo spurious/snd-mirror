@@ -112,8 +112,9 @@ static void add_def(char *name, int curfile)
       }
 }
 
-#define MAX_CHARS 1048576
-/* xg.c is 2.7 Mb */
+/* #define MAX_CHARS 1048576 */
+#define MAX_CHARS 8388608
+/* xg.c is 3.2 Mb */
 
 static char *get_call(char *input, int input_loc, int curname_len, char *curname, int chars, char *filename)
 {
@@ -128,7 +129,7 @@ static char *get_call(char *input, int input_loc, int curname_len, char *curname
     {
       if (input[0] == '_')
 	return(NULL);
-      fprintf(stderr, "%s at %d found no begin cr\n", curname, input_loc);
+      /* fprintf(stderr, "%s: %s at %d found no begin cr\n", filename, curname, input_loc); */
     }
   for (i = input_loc; i < chars; i++)
     {

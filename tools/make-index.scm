@@ -157,7 +157,6 @@
 	(list 'with-simple-sound "ws.scm")
 	(list 'sound-let "ws.scm")
 	(list 'def-clm-struct "ws.scm")
-	(list 'ws-interrupt? "ws.scm")
 	(list 'definstrument "ws.scm")
 	(list 'defgenerator "generators.scm")
 	(list 'do? "examp.scm")))

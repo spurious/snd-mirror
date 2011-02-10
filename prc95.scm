@@ -90,7 +90,6 @@
 	((= i len))
       (set! dout (delaya delayline (+ (* 0.99 dout)
 				      (* maxa (- 1.0 (random 2.0)))))))
-    (ws-interrupt?)
     (run
      (do ((i start (+ 1 i)))
 	 ((= i end))
@@ -123,7 +122,6 @@
 	 (neckout 0.0))
     (set-pole filt 0.6)
     (set-gain filt 0.3)
-    (ws-interrupt?)
     (run
      (do ((i st (+ 1 i)))
 	 ((= i end))
@@ -174,7 +172,6 @@
 	 (release (floor (* .8 durlen)))
 	 (ctr 0)
 	 (dout 0.0))
-    (ws-interrupt?)
     (run
      (do ((i st (+ 1 i)))
 	 ((= i end))
@@ -215,7 +212,6 @@
 	 (ctr 0)
 	 (release (floor (* .8 durlen)))
 	 (dlyout 0.0))
-    (ws-interrupt?)
     (run
      (do ((i st (+ 1 i)))
 	 ((= i end))
@@ -266,7 +262,6 @@
 	 (boreout 0.0))
     (set-pole filter 0.8)
     (set-gain filter -1.0)
-    (ws-interrupt?)
     (run
      (do ((i st (+ 1 i)))
 	 ((= i end))

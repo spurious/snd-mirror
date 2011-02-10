@@ -1,17 +1,17 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.80"
-#define S7_DATE "25-Jan-11"
+#define S7_VERSION "1.82"
+#define S7_DATE "10-Feb-11"
 
 
 typedef long long int s7_Int;
-/* This sets the size of integers in scheme and s7.c; s7_Int can be almost any (signed) integer type: 
+/* This sets the size of integers in Scheme and s7.c; s7_Int can be almost any (signed) integer type: 
  *    "int" is ok, but "short" is problematic -- lots of things assume s7_Int is at least 32 bits.
  */
 
 typedef double s7_Double;
-/* similarly for doubles (reals in scheme) -- only "double" works in C++, and
+/* similarly for doubles (reals in Scheme) -- only "double" works in C++, and
  *    integer-decode-float assumes s7_Double is double.
  */
 
@@ -31,14 +31,14 @@ typedef double s7_Double;
    *     which can use sndlib -- see Snd's grfsnd.html or the cmdist archives for details
    *
    *
-   * s7 (scheme) variables:
+   * s7 (Scheme) variables:
    *
    *    *features*              a list of symbols describing what is currently available (initially '(s7)).
    *                               "provide" adds a symbol to the list, 
    *                               "provided?" returns #t if its symbol arg is in the list.
    *    *vector-print-length*   how many elements of a vector are printed (initially 8)
    *    __func__                equivalent to C's __func__.  The symbol of the function currently being defined.
-   *    *load-path*             a list of directory names that "load" searches for scheme input files (initially '())
+   *    *load-path*             a list of directory names that "load" searches for Scheme input files (initially '())
    *    *load-hook*             hook called before a file is loaded; takes a function of one arg, the name of the file.
    *    *error-hook*            hook called upon error; takes a function of two args, 
    *                               the error type (a symbol), and the info about it (a list).
@@ -114,7 +114,7 @@ typedef struct s7_cell *s7_pointer;
 s7_scheme *s7_init(void);
 
   /* s7_scheme is our interpreter (or each thread's interpreter),
-   * s7_pointer is a scheme object of any (scheme) type
+   * s7_pointer is a Scheme object of any (Scheme) type
    *
    * s7_init creates the interpreter.
    */
@@ -129,15 +129,16 @@ s7_pointer s7_undefined(s7_scheme *sc);                              /* #<undefi
 s7_pointer s7_unspecified(s7_scheme *sc);                            /* #<unspecified> */
 bool s7_is_unspecified(s7_scheme *sc, s7_pointer val);               /*     returns true if val is #<unspecified> */
 s7_pointer s7_eof_object(s7_scheme *sc);                             /* #<eof> */
-bool s7_is_valid_pointer(s7_pointer arg);
 
-  /* these are the scheme constants; they do not change in value during a run, and
+  /* these are the Scheme constants; they do not change in value during a run, and
    *   are the same across all threads, so they can be safely assigned to C global variables if desired. 
    */
 
+bool s7_is_valid_pointer(s7_pointer arg);                            /* does 'arg' look like an s7 object? */
 bool s7_is_c_pointer(s7_pointer arg);
 void *s7_c_pointer(s7_pointer p);
 s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr);
+  /* these are for passing uninterpreted C pointers through Scheme */
 
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str);         /* (eval-string str) */
 s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer arg, bool use_write);       
@@ -152,6 +153,14 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir);      /* (set! *l
   /* the load path is a list of directories to search if load can't find the file passed as its argument.
    */
 void s7_quit(s7_scheme *sc);
+  /* this tries to break out of the current evaluation, leaving everything else intact */
+
+bool (*s7_begin_hook(s7_scheme *sc))(s7_scheme *sc);
+void s7_set_begin_hook(s7_scheme *sc, bool (*hook)(s7_scheme *sc));
+  /* call "hook" at the start of any block; use NULL to cancel.
+   *   see s7.html#replrescue and (in the Snd package) snd-listener.c for examples.
+   *   s7_begin_hook returns the current begin_hook function or NULL.
+   */
 
 void s7_provide(s7_scheme *sc, const char *feature);                 /* add feature (as a symbol) to the *features* list */
 
@@ -165,7 +174,7 @@ s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_p
 void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
 s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg);
 
-  /* these are equivalent to (error ...) in scheme
+  /* these are equivalent to (error ...) in Scheme
    *   the first argument to s7_error is a symbol that can be caught (via (catch tag ...))
    *   the rest of the arguments are passed to the error handler (if in catch) 
    *   or printed out (in the default case).  If the first element of the list
@@ -177,7 +186,7 @@ s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg);
    *   s7_wrong_type_arg_error is equivalent to s7_error with a type of 'wrong-type-arg
    *   and similarly s7_out_of_range_error with type 'out-of-range.
    *
-   * catch in scheme is taken from Guile:
+   * catch in Scheme is taken from Guile:
    *
    *  (catch tag thunk handler)
    *
@@ -213,7 +222,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x);
 
   /* any s7_pointer object held in C (as a local variable for example) needs to be
    *   protected from garbage collection if there is any chance the GC may run without
-   *   an existing scheme-level reference to that object.  s7_gc_protect places the
+   *   an existing Scheme-level reference to that object.  s7_gc_protect places the
    *   object in a vector that the GC always checks, returning the object's location
    *   in that table.  s7_gc_unprotect and s7_gc_unprotect_at unprotect the object
    *   (remove it from the vector).  s7_gc_unprotect_at uses the location passed
@@ -238,10 +247,10 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer a, s7_pointer b);                 /* 
 
 
 bool s7_is_boolean(s7_pointer x);                                            /* (boolean? x) */
-bool s7_boolean(s7_scheme *sc, s7_pointer x);                                /* scheme boolean -> C bool */
-s7_pointer s7_make_boolean(s7_scheme *sc, bool x);                           /* C bool -> scheme boolean */
+bool s7_boolean(s7_scheme *sc, s7_pointer x);                                /* Scheme boolean -> C bool */
+s7_pointer s7_make_boolean(s7_scheme *sc, bool x);                           /* C bool -> Scheme boolean */
 
-  /* for each scheme type (boolean, integer, string, etc), there are three
+  /* for each Scheme type (boolean, integer, string, etc), there are three
    *   functions: s7_<type>(...), s7_make_<type>(...), and s7_is_<type>(...):
    *
    *   s7_boolean(s7, obj) returns the C bool corresponding to the value of 'obj' (#f -> false)
@@ -258,7 +267,7 @@ s7_pointer s7_set_car(s7_pointer p, s7_pointer q);                           /* 
 s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q);                           /* (set-cdr! p q) */
 
 
-bool s7_is_list(s7_scheme *sc, s7_pointer p);                                /* (list? p) */
+bool s7_is_list(s7_scheme *sc, s7_pointer p);                                /* (list? p) -> (or (pair? p) (null? p)) */
 int s7_list_length(s7_scheme *sc, s7_pointer a);                             /* (length a) */
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a);                          /* (reverse a) */
 s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b);             /* (append a b) */
@@ -269,14 +278,14 @@ s7_pointer s7_member(s7_scheme *sc, s7_pointer sym, s7_pointer lst);         /* 
 
 
 bool s7_is_string(s7_pointer p);                                             /* (string? p) */
-const char *s7_string(s7_pointer p);                                         /* scheme string -> C string (do not free the string) */
-s7_pointer s7_make_string(s7_scheme *sc, const char *str);                   /* C string -> scheme string (str is copied) */
+const char *s7_string(s7_pointer p);                                         /* Scheme string -> C string (do not free the string) */
+s7_pointer s7_make_string(s7_scheme *sc, const char *str);                   /* C string -> Scheme string (str is copied) */
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len);  /* same as s7_make_string, but provides strlen */
 s7_pointer s7_make_permanent_string(const char *str);                        /* make a string that will never be GC'd */
 
 bool s7_is_character(s7_pointer p);                                          /* (character? p) */
-char s7_character(s7_pointer p);                                             /* scheme character -> C char */
-s7_pointer s7_make_character(s7_scheme *sc, unsigned int c);                 /* C char (as unsigned int) -> scheme character */
+char s7_character(s7_pointer p);                                             /* Scheme character -> C char */
+s7_pointer s7_make_character(s7_scheme *sc, unsigned int c);                 /* C char (as unsigned int) -> Scheme character */
 
 
 bool s7_is_number(s7_pointer p);                                             /* (number? p) */
@@ -284,33 +293,33 @@ bool s7_is_exact(s7_pointer p);                                              /* 
 bool s7_is_inexact(s7_pointer p);                                            /* (inexact? p) */
 
 bool s7_is_integer(s7_pointer p);                                            /* (integer? p) */
-s7_Int s7_integer(s7_pointer p);                                             /* scheme integer -> C int (long long int probably) */
-s7_pointer s7_make_integer(s7_scheme *sc, s7_Int num);                       /* C long long int -> scheme integer */
+s7_Int s7_integer(s7_pointer p);                                             /* Scheme integer -> C int (long long int probably) */
+s7_pointer s7_make_integer(s7_scheme *sc, s7_Int num);                       /* C long long int -> Scheme integer */
 
 bool s7_is_real(s7_pointer p);                                               /* (real? p) */
-s7_Double s7_real(s7_pointer p);                                             /* scheme real -> C double */
-s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* C double -> scheme real */
+s7_Double s7_real(s7_pointer p);                                             /* Scheme real -> C double */
+s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* C double -> Scheme real */
 s7_Double s7_number_to_real(s7_pointer x);                                   /* x can be any kind of number */
 s7_Int s7_number_to_integer(s7_pointer x);
 
 bool s7_is_ulong(s7_pointer arg);                                            /* returns true if arg is an unsigned long */
-unsigned long s7_ulong(s7_pointer p);                                        /* scheme unsigned long -> C */
-s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n);                    /* C unsigned lonog -> scheme */
+unsigned long s7_ulong(s7_pointer p);                                        /* Scheme unsigned long -> C */
+s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n);                    /* C unsigned lonog -> Scheme */
 bool s7_is_ulong_long(s7_pointer arg);                                       /* returns true if arg is an unsigned long long */
-unsigned long long s7_ulong_long(s7_pointer p);                              /* scheme unsigned long long -> C */
-s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n);          /* C unsigned long long -> scheme */
-  /* the ulong stuff is intended for passing uninterpreted C pointers through scheme and back to C */
+unsigned long long s7_ulong_long(s7_pointer p);                              /* Scheme unsigned long long -> C */
+s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n);          /* C unsigned long long -> Scheme */
+  /* the ulong stuff is intended for passing uninterpreted C pointers through Scheme and back to C */
 
 bool s7_is_rational(s7_pointer arg);                                        /* (rational? arg) -- integer or ratio */
 bool s7_is_ratio(s7_pointer arg);                                           /* true if arg is a ratio, not an integer */
-s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b);                /* returns the scheme object a/b */
+s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b);                /* returns the Scheme object a/b */
 s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error);     /* (rationalize x error) */
 s7_Int s7_numerator(s7_pointer x);                                          /* (numerator x) */
 s7_Int s7_denominator(s7_pointer x);                                        /* (denominator x) */
-double s7_random(s7_scheme *sc);
+double s7_random(s7_scheme *sc);                                            /* (random x) */
 
 bool s7_is_complex(s7_pointer arg);                                         /* (complex? arg) */
-s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b);        /* returns the scheme object a+bi */
+s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b);        /* returns the Scheme object a+bi */
 s7_Double s7_real_part(s7_pointer z);                                       /* (real-part z) */
 s7_Double s7_imag_part(s7_pointer z);                                       /* (imag-part z) */
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);        /* (number->string obj radix) */
@@ -328,6 +337,8 @@ s7_pointer *s7_vector_elements(s7_pointer vec);                                 
 int s7_vector_rank(s7_pointer vect);                                                  /* number of dimensions in vect */
 s7_Int *s7_vector_dimensions(s7_pointer vec);                                         /* dimensions */
 s7_Int *s7_vector_offsets(s7_pointer vec);                                            /* precalculated offsets to speed-up addressing */
+s7_Int s7_vector_print_length(s7_scheme *sc);                                         /* value of *vector-print-length* */
+s7_Int s7_set_vector_print_length(s7_scheme *sc, s7_Int new_len);
 
   /* 
    *  (vect i) is the same as (vector-ref vect i)
@@ -368,7 +379,7 @@ s7_pointer s7_hook_apply(s7_scheme *sc, s7_pointer hook, s7_pointer args);  /* (
   /* a hook is a list of functions, each compatible with the hook arity.
    *   when a hook is applied to a list of arguments, each function on its functions list
    *   is applied to those arguments.  In the default case (hook-apply), the value returned
-   *   is unspecified.  The hook-functions list is settable; it is an ordinary scheme list, 
+   *   is unspecified.  The hook-functions list is settable; it is an ordinary Scheme list, 
    *   and hook-functions is a procedure-with-setter.
    * hooks are sometimes called callback-lists, conditions, watchpoints, etc.
    */
@@ -416,7 +427,7 @@ const char *s7_format(s7_scheme *sc, s7_pointer args);                      /* (
 bool s7_is_procedure(s7_pointer x);                                         /* (procedure? x) */
 bool s7_is_macro(s7_scheme *sc, s7_pointer x);                              /* (macro? x) */
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);                /* (procedure-source x) if it can be found */
-s7_pointer s7_procedure_environment(s7_pointer p);
+s7_pointer s7_procedure_environment(s7_pointer p);                          /* (procedure-environment x) */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);                 /* (procedure-arity x) -- returns a list (required optional rest?) */
 
@@ -545,7 +556,7 @@ bool s7_is_constant(s7_pointer p);
    *
    * s7_define_variable is simply s7_define with string->symbol and the global environment.
    * s7_define_constant is s7_define but makes its "definee" immutable.
-   * s7_define is equivalent to define in scheme, but takes place in the global environment.
+   * s7_define is equivalent to define in Scheme, but takes place in the global environment.
    */
 
 bool s7_is_function(s7_pointer p); 
@@ -560,14 +571,14 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
 
 void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 
-  /* s7_make_function creates a scheme function object from the s7_function 'fnc'.
+  /* s7_make_function creates a Scheme function object from the s7_function 'fnc'.
    *   Its name (for s7_describe_object) is 'name', it requires 'required_args' arguments,
    *   can accept 'optional_args' other arguments, and if 'rest_arg' is true, it accepts
    *   a "rest" argument (a list of all the trailing arguments).  The function's documentation
    *   is 'doc'.
    *
    * s7_define_function is the same as s7_make_function, but it also adds 'name' (as a symbol) to the
-   *   global (top-level) environment, with the function as its value.  For example, the scheme
+   *   global (top-level) environment, with the function as its value.  For example, the Scheme
    *   function 'car' is essentially:
    *
    *     s7_pointer g_car(s7_scheme *sc, s7_pointer args) 
@@ -583,8 +594,8 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
    * s7_is_function returns true if its argument is a function defined in this manner.
    * s7_apply_function applies the function (the result of s7_make_function) to the arguments.
    *
-   * s7_define_macro defines a scheme macro; its arguments are not evaluated (unlike a function),
-   *   but its returned value (assumed to be some sort of scheme expression) is evaluated.
+   * s7_define_macro defines a Scheme macro; its arguments are not evaluated (unlike a function),
+   *   but its returned value (assumed to be some sort of Scheme expression) is evaluated.
    *
    * for s7_make_closure, see the "Closure defined in C" example in s7.html.
    */
@@ -620,7 +631,7 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
    *     s7_define_function_star(sc, "a-func", a_func, "arg1 (arg2 32)", "an example of C define*");
    *   Now (a-func :arg1 2) calls the C function a_func(2, 32). See the example program in s7.html.
    *
-   * In s7 scheme, define* can be used just for its optional arguments feature, but that is
+   * In s7 Scheme, define* can be used just for its optional arguments feature, but that is
    *   included in s7_define_function.  s7_define_function_star implements keyword arguments
    *   for C-level functions (as well as optional/rest arguments).
    */
@@ -628,7 +639,7 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
 s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args, const char *caller, const char *file, int line);
   
-  /* s7_call takes a scheme function (e.g. g_car above), and applies it to 'args' (a list of arguments)
+  /* s7_call takes a Scheme function (e.g. g_car above), and applies it to 'args' (a list of arguments)
    *   returning the result.
    *   
    *   s7_integer(s7_call(s7, g_car, s7_cons(s7, s7_make_integer(sc, 123), s7_nil(s7))));
@@ -689,9 +700,9 @@ void *s7_object_value(s7_pointer obj);
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
 void s7_mark_object(s7_pointer p);
   
-  /* These functions create a new scheme object type.  There is a simple example in s7.html.
+  /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
-   * s7_new_type describes the type for scheme:
+   * s7_new_type describes the type for Scheme:
    *   name:    the name used by describe-object
    *   print:   the function called whenever s7 is asked to display a value with this type
    *   free:    the function called when an object of this type is about to be garbage collected
@@ -714,8 +725,8 @@ void s7_mark_object(s7_pointer p);
    * s7_is_object returns true if 'p' holds a value of a type created by s7_new_type.
    * s7_object_type returns the object's type
    * s7_object_value returns the value bound to that object (the void *value of s7_make_object)
-   * s7_make_object creates a new scheme entity of the given type with the given (uninterpreted) value
-   * s7_mark_object marks any scheme object as in-use (use this in the gc_mark function to mark
+   * s7_make_object creates a new Scheme entity of the given type with the given (uninterpreted) value
+   * s7_mark_object marks any Scheme object as in-use (use this in the gc_mark function to mark
    *    any embedded s7_pointer variables).
    */
 
@@ -731,15 +742,31 @@ void s7_mark_object(s7_pointer p);
   pthread_mutex_t *s7_lock(s7_pointer obj);
   bool s7_is_thread_variable(s7_pointer obj);
   s7_pointer s7_thread_variable(s7_scheme *sc, s7_pointer obj);
-#endif
 
 /* Threads in s7 share the heap and symbol table, but have their own local environment, stack,
- *   and evaluator locals.  The two functions above refer to thread-local variables
- *   known as "keys" in pthreads.  s7_is_thread_variable returns true if its argument
- *   is associated with a key, and s7_thread_variable_value returns the current thread's
- *   value for that key (a scheme object).  More of the multithreading functions could
- *   be brought out to C if there's interest.  define HAVE_PTHREADS to get the multithread
- *   support.  In scheme,
+ *   and evaluator locals.  The thread_variable functions above refer to thread-local variables
+ *   known as "keys" in pthreads.  The "lock" functions refer to mutexes. snd-listener.c
+ *   in the Snd package has example code that would work if the GUI functions were thread-safe.
+ *
+ *   s7_make_thread returns a new s7 evaluator (a clone of the main one), running in its own
+ *     thread (see s7_thread).  The function running in that thread is 'func',
+ *     its user-specified data is 'data' (see s7_thread_data), and 'local' determines whether
+ *     the thread's Scheme interpreter is sequestered in its own local environment.  If 'local'
+ *     is true, a top-level 'define' in the Scheme code affects only the current thread.
+ *
+ *   s7_is_thread returns true if its argument is an s7 thread (from s7_make_thread).
+ *   s7_thread returns the pthread_t* value that the s7 thread is running in.
+ *   s7_thread_data returns the void* pointer that s7_make_thread received as its 'data' argument.
+ *   s7_thread_s7 returns the s7 interpreter running in the given s7 thread object.
+ *
+ *   s7_make_lock returns a new lock (a mutex).
+ *   s7_is_lock return true if its argument is an s7 lock.
+ *   s7_lock returns the pthread_mutex_t* value held by the s7 lock.
+ *
+ *   s7_is_thread_variable returns true if its argument is an s7 thread-variable.
+ *   s7_thread_variable_value returns the current thread's value for that key (a Scheme object). 
+ *   
+ *  In Scheme,
  *
  *   (thread? obj)             returns #t if 'obj' is a thread object
  *   (make-thread thunk)       creates a thread that will evaluate 'thunk' (a function with no args)
@@ -757,6 +784,7 @@ void s7_mark_object(s7_pointer p);
  *
  * see with-threaded-sound in ws.scm or sndlib-ws.scm for an example.
  */
+#endif
 
 #if WITH_GMP
   #include <gmp.h>
@@ -792,12 +820,39 @@ void s7_mark_object(s7_pointer p);
 #define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
 #endif
 
-
+/* the following Scheme functions are not currently exported to C:
+ *
+ *    * + - / < <= = > >= abs acos acosh angle ash asin asinh assq assv atan atanh 
+ *    augment-environment! caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr 
+ *    cadar caddar cadddr caddr cadr call-with-exit call-with-input-file call-with-input-string 
+ *    call-with-output-file call-with-output-string catch cdaaar cdaadr cdaar cdadar cdaddr 
+ *    cdadr cdar cddaar cddadr cddar cdddar cddddr cdddr cddr ceiling char->integer char-alphabetic? 
+ *    char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? 
+ *    char-numeric? char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? 
+ *    char=? char>=? char>? copy cos cosh dynamic-wind environment? eof-object? eval even? 
+ *    exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size help 
+ *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
+ *    integer-length keyword->symbol lcm list list->string list->vector list-tail log logand 
+ *    logior lognot logxor magnitude make-hash-table-iterator make-list make-polar make-random-state 
+ *    make-rectangular map max memq memv min modulo nan? negative? not null? odd? port-closed? 
+ *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
+ *    sin sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
+ *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-length string-ref 
+ *    string-set! string<=? string<? string=? string>=? string>? substring symbol symbol->keyword 
+ *    symbol-table tan tanh trace truncate untrace vector vector->list with-input-from-file 
+ *    with-input-from-string with-output-to-file with-output-to-string write-byte zero?  
+ *
+ * and these variables: *safety* *#readers* *error-hook* *unbound-variable-hook* *trace-hook*
+ *
+ * if you need any of these, let me know.
+ */
 
 /* --------------------------------------------------------------------------------
  * 
  *        s7 changes
  *
+ * 10-Feb:    s7_vector_print_length, s7_set_vector_print_length.
+ * 7-Feb:     s7_begin_hook, s7_set_begin_hook.
  * 25-Jan:    s7_is_thread, s7_thread, s7_make_thread, s7_thread_s7, s7_thread_data. 
  *               s7_is_lock, s7_make_lock, s7_lock.
  *               changed s7_thread_variable_value to s7_thread_variable.

@@ -158,7 +158,6 @@
     macro				;R5RS high level macros
 
 ;;;	delay				;has DELAY and FORCE
-;;; "delay" is named "make-promise" in s7
 
     multiarg-apply		     ;APPLY can take more than 2 args.
     char-ready?

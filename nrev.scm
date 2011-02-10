@@ -50,7 +50,6 @@
 	   (allpass6 (if chan2 (make-all-pass -0.700 0.700 (list-ref dly-len 12)) #f))
 	   (allpass7 (if chan4 (make-all-pass -0.700 0.700 (list-ref dly-len 13)) #f))
 	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (list-ref dly-len 14)) #f)))
-      (ws-interrupt?)
       (run
        (do ((i 0 (+ i 1)))
 	   ((= i len))

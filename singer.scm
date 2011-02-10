@@ -227,7 +227,6 @@
       (set! (radii-pole-gains 4) tong-hump-gain)
       (set! (radii-pole-gains 5) tong-tip-gain)
 
-      (ws-interrupt?)
       (run
        (do ((i bg (+ 1 i)))
 	   ((= i nd))

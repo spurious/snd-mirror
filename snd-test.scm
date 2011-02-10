@@ -1,42 +1,43 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                           [613]
-;;;  test 1: defaults                            [1157]
-;;;  test 2: headers                             [1359]
-;;;  test 3: variables                           [1674]
-;;;  test 4: sndlib                              [2296]
-;;;  test 5: simple overall checks               [5023]
-;;;  test 6: vcts                                [14028]
-;;;  test 7: colors                              [14439]
-;;;  test 8: clm                                 [14939]
-;;;  test 9: mix                                 [26809]
-;;;  test 10: marks                              [29038]
-;;;  test 11: dialogs                            [30011]
-;;;  test 12: extensions                         [30222]
-;;;  test 13: menus, edit lists, hooks, etc      [30491]
-;;;  test 14: all together now                   [31993]
-;;;  test 15: chan-local vars                    [32890]
-;;;  test 16: regularized funcs                  [34690]
-;;;  test 17: dialogs and graphics               [39639]
-;;;  test 18: enved                              [39731]
-;;;  test 19: save and restore                   [39750]
-;;;  test 20: transforms                         [41516]
-;;;  test 21: new stuff                          [43703]
-;;;  test 22: run                                [45707]
-;;;  test 23: with-sound                         [52624]
-;;;  test 25: X/Xt/Xm                            [57132]
-;;;  test 26:                                    [60838]
-;;;  test 27: GL                                 [60844]
-;;;  test 28: errors                             [60968]
-;;;  test all done                               [63434]
-;;;  test the end                                [63621]
+;;;  test 0: constants                          [609]
+;;;  test 1: defaults                           [1153]
+;;;  test 2: headers                            [1355]
+;;;  test 3: variables                          [1670]
+;;;  test 4: sndlib                             [2292]
+;;;  test 5: simple overall checks              [5019]
+;;;  test 6: vcts                               [14024]
+;;;  test 7: colors                             [14461]
+;;;  test 8: clm                                [14961]
+;;;  test 9: mix                                [26841]
+;;;  test 10: marks                             [29070]
+;;;  test 11: dialogs                           [30043]
+;;;  test 12: extensions                        [30254]
+;;;  test 13: menus, edit lists, hooks, etc     [30523]
+;;;  test 14: all together now                  [32025]
+;;;  test 15: chan-local vars                   [32922]
+;;;  test 16: regularized funcs                 [34722]
+;;;  test 17: dialogs and graphics              [39671]
+;;;  test 18: enved                             [39763]
+;;;  test 19: save and restore                  [39782]
+;;;  test 20: transforms                        [41548]
+;;;  test 21: new stuff                         [43735]
+;;;  test 22: run                               [45739]
+;;;  test 23: with-sound                        [52656]
+;;;  test 25: X/Xt/Xm                           [57164]
+;;;  test 26:                                   [60870]
+;;;  test 27: GL                                [60876]
+;;;  test 28: errors                            [61000]
+;;;  test 29: s7                                [63398]
+;;;  test all done                              [63469]
+;;;  test the end                               [63656]
 
 (define tests 1)
 (define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 					;(show-ptree 1)
-(define profiling #f)
+;; (define profiling #f)
 
 					;(set! (hook-functions *load-hook*) (list (lambda (name) (format #t "load ~S~%" name))))
 (if (<= tests 0) (set! tests 1))
@@ -155,7 +156,7 @@
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
-(define total-tests 28)
+(define total-tests 29)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
 (define test-number -1)
 
@@ -519,17 +520,12 @@
   (with-local-hook optimization-hook '() reset-all-hooks))
 
 
-(define (list-p val)
-  "list? and not a null list!"
-  (and (list? val)
-       (not (null? val))))
-
 (define (arity-ok func args)
   "func accepts args"
   (let ((arity (procedure-arity func)))
-    (and (list-p arity)
+    (and (pair? arity)
 	 (>= args (car arity))
-	 (or (and (list-p (cddr arity))
+	 (or (and (pair? (cddr arity))
 		  (caddr arity))
 	     (<= args (+ (car arity) (cadr arity)))))))
 
@@ -538,9 +534,9 @@
   (let ((arity (if (procedure-with-setter? func)
 		   (cdddr (procedure-arity func))
 		   (procedure-arity func))))
-    (and (list-p arity)
+    (and (pair? arity)
 	 (>= args (car arity))
-	 (or (and (list-p (cddr arity))
+	 (or (and (pair? (cddr arity))
 		  (caddr arity))
 	     (<= args (+ (car arity) (cadr arity)))))))
 
@@ -30890,7 +30886,7 @@ EDITS: 2
 		 (list 0.0 dur -1.0 1.0 "a label" -4.0 4.0)))
     (set! fd (open-sound "2.snd"))
     (let ((ax (axis-info)))
-      (if (and (list-p ax)
+      (if (and (pair? ax)
 	       (or (fneq (list-ref ax 2) 0.0)
 		   (fneq (list-ref ax 3) -1.0)
 		   (fneq (list-ref ax 4) (mus-sound-duration "2.snd"))
@@ -31009,10 +31005,10 @@ EDITS: 2
 		  (if (not (eq? (car tag) 'plugin-error))
 		      (snd-display #__line__ ";apply-ladspa reader mismatch: ~A" tag)))
 		(let ((vals (list-ladspa)))
-		  (if (not (list-p vals))
+		  (if (not (pair? vals))
 		      (snd-display #__line__ ";ladspa list: ~A" vals))
 		  (let ((descr (analyse-ladspa "delay" "delay_5s")))
-		    (if (or (not (list-p descr))
+		    (if (or (not (pair? descr))
 			    (not (string? (car descr)))
 			    (not (string=? (car descr) "Simple Delay Line")))
 			(snd-display #__line__ ";analyse-ladspa: ~A" descr))))
@@ -32045,8 +32041,8 @@ EDITS: 2
 
 (define (flatten lst)
   (cond ((null? lst) '())
-	((list-p lst)
-	 (if (list-p (car lst))
+	((pair? lst)
+	 (if (pair? (car lst))
 	     (append (flatten (car lst)) (flatten (cdr lst)))
 	     (cons (car lst) (flatten (cdr lst)))))
 	(#t lst)))
@@ -32990,7 +32986,7 @@ EDITS: 2
     (define chan-equal? 
       (lambda (vals new-value)
 	(cond ((null? vals) #t)
-	      ((list-p vals) (and (chan-equal? (car vals) new-value)
+	      ((pair? vals) (and (chan-equal? (car vals) new-value)
 				  (chan-equal? (cdr vals) new-value)))
 	      (else (test-equal vals new-value)))))
     (if (and (not (equal? (flatten (func #t #t)) (apply map func (all-chans))))
@@ -35076,9 +35072,9 @@ EDITS: 2
   
   (define (amp-envs-equal? snd chn pos0 pos1 df)
     (let* ((env0 (channel-amp-envs snd chn pos0))
-	   (len0 (and env0 (list-p env0) (= (length env0) 2) (vct-length (cadr env0))))
+	   (len0 (and env0 (pair? env0) (= (length env0) 2) (vct-length (cadr env0))))
 	   (env1 (channel-amp-envs snd chn pos1))
-	   (len1 (and env1 (list-p env1) (= (length env1) 2) (vct-length (cadr env1))))
+	   (len1 (and env1 (pair? env1) (= (length env1) 2) (vct-length (cadr env1))))
 	   (happy #t))
       (if (and len0 len1)
 	  (let* ((minlen (min len0 len1))
@@ -37803,7 +37799,7 @@ EDITS: 3
 	  (snd-display #__line__ ";1a:   ~{~A ~}" (map (lambda (a) (if (< a .005) "   0.0" (format #f "~6,2F" a))) (car data)))
 	  (snd-display #__line__ ";oboe: ~{~A ~}" (map (lambda (a) (if (< a .005) "   0.0" (format #f "~6,2F" a))) (cdar data)))
 	  (snd-display #__line__ ";storm:~{~A ~}" (map (lambda (a) (if (< a .005) "   0.0" (format #f "~6,2F" a))) (caddr data)))
-	  (if (list-p (cadddr data))
+	  (if (pair? (cadddr data))
 	      (snd-display #__line__ ";away: ~{~A ~}" (map (lambda (a) (if (< a .005) "   0.0" (format #f "~6,2F" a))) (cadddr data))))
 	  )
 	
@@ -39750,8 +39746,8 @@ EDITS: 1
 	  (let* ((ind1 (open-sound "2.snd"))
 		 (wids3 (channel-widgets ind1 0))
 		 (wids4 (channel-widgets ind1 1)))
-	    (if (or (not (list-p wids))
-		    (not (list-p wids3))
+	    (if (or (not (pair? wids))
+		    (not (pair? wids3))
 		    (and (provided? 'snd-motif)
 			 (or (not (= (length wids1) 11))
 			     (not (= (length wids2) 11)))))
@@ -45980,13 +45976,13 @@ EDITS: 1
   
   (define (etst form)
     (let ((tag (catch #t (lambda () (run-eval form)) (lambda args args))))
-      (if (or (not (list-p tag))
+      (if (or (not (pair? tag))
 	      (not (eq? (car tag) 'cannot-parse)))
 	  (snd-display #__line__ ";~A -> ~A?" form tag))))
   
   (define (etsta form arg)
     (let ((tag (catch #t (lambda () (run-eval form arg)) (lambda args args))))
-      (if (or (not (list-p tag))
+      (if (or (not (pair? tag))
 	      (and (not (eq? (car tag) 'cannot-parse))
 		   (not (eq? (car tag) 'wrong-type-arg))))
 	  (snd-display #__line__ ";~A -> ~A?" form tag))))
@@ -59235,7 +59231,7 @@ EDITS: 1
 	      
 	      (let ((vals (XtVaGetValues txt (list XmNrenderTable 0 XmNselectionArray 0))))
 		(if (not (XmRenderTable? (list-ref vals 1))) (snd-display #__line__ ";XmNrenderTable: ~A" (list-ref vals 1)))
-		(if (not (list-p (list-ref vals 3))) (snd-display #__line__ ";XmNselectionArray: ~A" (list-ref vals 3))))
+		(if (not (pair? (list-ref vals 3))) (snd-display #__line__ ";XmNselectionArray: ~A" (list-ref vals 3))))
 	      (if (not (XmTextGetEditable txt)) (snd-display #__line__ ";XmTextGetEditable?"))
 	      (if (not (XmTextFieldGetEditable txtf)) (snd-display #__line__ ";XmTextFieldGetEditable?"))
 	      (XmTextSetEditable txt #f)
@@ -60115,7 +60111,7 @@ EDITS: 1
 		 (set! (.event struct) (XEvent))
 		 (for-each
 		  (lambda (field)
-		    (if (not (list-p field)) (snd-display #__line__ ";~A: ~A" struct field))
+		    (if (not (pair? field)) (snd-display #__line__ ";~A: ~A" struct field))
 		    (set! val ((car field) struct))
 		    (if (< (length field) 4)
 			(case (cadr field)
@@ -61011,7 +61007,7 @@ EDITS: 1
      (- (get-internal-real-time) start)))
 
 
-(define (snd_test_28_1)
+(define (snd_test_28)
   
   (define (traced a) (+ 2 a))
   
@@ -61099,202 +61095,6 @@ EDITS: 1
 		       expected-tag (procedure-source thunk) tag))))
   
   (set! (with-background-processes) #t)
-  
-  (if (and (provided? 'gsl)
-	   (provided? 'gmp))
-      (begin
-	
-	;; from GSL
-	(num-test (bes-j0 0.1) 0.99750156206604003230) 
-	(num-test (bes-j0 2.0) 0.22389077914123566805) 
-	(num-test (bes-j0 100.0) 0.019985850304223122424) 
-	(num-test (bes-j0 1.0e+10) 2.1755917502468917269e-06) 
-	(num-test (bes-j1 0.1) 0.04993752603624199756) 
-	(num-test (bes-j1 2.0) 0.57672480775687338720) 
-	(num-test (bes-j1 100.0) -0.07714535201411215803) 
-	(num-test (bes-j1 1.0e+10) -7.676508175684157103e-06) 
-	(num-test (bes-jn 4 0.1) 2.6028648545684032338e-07) 
-	(num-test (bes-jn 5 2.0) 0.007039629755871685484) 
-	(num-test (bes-jn 10 20.0) 0.18648255802394508321) 
-	(num-test (bes-jn 100 100.0) 0.09636667329586155967) 
-	(num-test (bes-jn 2 900.0) -0.019974345269680646400) 
-	(num-test (bes-jn 2 15000.0) -0.0020455820181216382666) 
-	(num-test (bes-jn 0 1.0e+10) 2.1755917502468917269e-06) 
-	(num-test (bes-jn 1 1.0e+10) -7.676508175684157103e-06) 
-	(num-test (bes-jn 0 20000) 0.00556597490495494615709982972) 
-	
-	(num-test (bes-y0 0.1) -1.5342386513503668441) 
-	(num-test (bes-y0 2)  0.5103756726497451196) 
-	(num-test (bes-y0 256.0) -0.03381290171792454909) 
-	(num-test (bes-y0 4294967296.0) 3.657903190017678681e-06) 
-	(num-test (bes-y1 0.1) -6.45895109470202698800) 
-	(num-test (bes-y1 2) -0.10703243154093754689) 
-	(num-test (bes-y1 100.0) -0.020372312002759793305) 
-	(num-test (bes-y1 4294967296.0) 0.000011612249378370766284) 
-	(num-test (bes-yn 4 0.1)  -305832.29793353160319) 
-	(num-test (bes-yn 5 2)  -9.935989128481974981) 
-	(num-test (bes-yn 100 100.0) -0.16692141141757650654) 
-	(num-test (bes-yn 100 4294967296.0) 3.657889671577715808e-06) 
-	(num-test (bes-yn 1000 4294967296.0) 3.656551321485397501e-06) 
-	(num-test (bes-yn 2 15000.0) -0.006185217273358617849) 
-	
-	(num-test (bes-i0 0.1) 1.0025015629340956014) 
-	(num-test (bes-i0 2.0) 2.2795853023360672674) 
-	(num-test (bes-i0 100.0) 1.0737517071310738235e+42) 
-	(num-test (bes-i1 0.1) 0.05006252604709269211 ) 
-	(num-test (bes-i1 2.0) 1.59063685463732906340 ) 
-	(num-test (bes-i1 100.0) 1.0683693903381624812e+42) 
-	(num-test (bes-in 4 0.1) 2.6054690212996573677e-07) 
-	(num-test (bes-in 5 2.0) 0.009825679323131702321) 
-	(num-test (bes-in 100 100.0) 4.641534941616199114e+21) 
-	
-	(num-test (bes-k0 0.1) 2.4270690247020166125) 
-	(num-test (bes-k0 2.0) 0.11389387274953343565) 
-	(num-test (bes-k0 100.0) 4.656628229175902019e-45) 
-	(num-test (bes-k1 0.1) 9.853844780870606135 ) 
-	(num-test (bes-k1 2.0) 0.13986588181652242728) 
-	(num-test (bes-k1 100.0) 4.679853735636909287e-45) 
-	(num-test (bes-kn 4 0.1) 479600.2497925682849) 
-	(num-test (bes-kn 5 2.0) 9.431049100596467443) 
-	(num-test (bes-kn 100 100.0) 7.617129630494085416e-25) 
-	
-	
-	;; from maxima
-	
-	(num-test (bes-j0 0.0) 1.0)
-	(num-test (bes-j0 0.001) .9999997500000155)
-	(num-test (bes-j0 0.01) .9999750001562496)
-	(num-test (bes-j0 0.1) .9975015620660401)
-	(num-test (bes-j0 1.0) .7651976865579666)
-	(num-test (bes-j0 10.0) -.24593576445134830)
-	(num-test (bes-j0 100.0) .01998585030422355)
-	(num-test (bes-j0 1000.0) .02478668615241997)
-	(num-test (bes-j0 10000.0)  -.007096160353384438)
-	
-	(num-test (bes-j1 0.0) 0.0)
-	(num-test (bes-j1 0.001) 4.9999993750000266E-4)
-	(num-test (bes-j1 0.01) .004999937500260417)
-	(num-test (bes-j1 0.1) 0.049937526036242)
-	(num-test (bes-j1 1.0) .4400505857449335)
-	(num-test (bes-j1 10.0) .04347274616886149)
-	(num-test (bes-j1 100.0) -0.0771453520141124)
-	(num-test (bes-j1 1000.0) .004728311907088393)
-	(num-test (bes-j1 10000.0) .003647450755527218)
-	
-	(num-test (bes-jn 10 0.0) 0.0)
-	(num-test (bes-jn 10 0.001) 2.691144394304978E-40)
-	(num-test (bes-jn 10 0.01) 2.691138339236334E-30)
-	(num-test (bes-jn 10 0.1) 2.690532895434216E-20)
-	(num-test (bes-jn 10 1.0) 2.630615123687444E-10)
-	(num-test (bes-jn 10 10.0) .2074861066333596)
-	(num-test (bes-jn 10 100.0) -.05473217693547214)
-	(num-test (bes-jn 10 1000.0) -.02452062230603636)
-	(num-test (bes-jn 10 10000.0) .007114312383352328)
-	
-	(num-test (bes-jn 100 0.0) 0.0)
-	(num-test (bes-jn 100 0.1) 8.45251653512169E-289)
-	(num-test (bes-jn 100 1.0) 8.43182878962675E-189)
-	(num-test (bes-jn 100 10.0) 6.597316064155484E-89)
-	(num-test (bes-jn 100 100.0) 0.0963666732958616)
-	(num-test (bes-jn 100 1000.0) .01167613500780332)
-	(num-test (bes-jn 100 10000.0) -0.00797651631139348)
-	
-	(num-test (bes-jn 1000 1000.0) .04473067294796409)
-	(num-test (bes-jn 10000 10000.0) .02076216527720082)
-	
-	
-	(num-test (bes-i0 0.0) 1.0)
-	(num-test (bes-i0 0.001) 1.000000250000016)
-	(num-test (bes-i0 0.01) 1.00002500015625)
-	(num-test (bes-i0 0.1) 1.002501562934096)
-	(num-test (bes-i0 1.0) 1.266065877752009)
-	(num-test (bes-i0 10.0) 2815.716628466254)
-	(num-test (bes-i0 100.0) 1.073751707131074E+42)
-	
-	(num-test (bes-i1 0.0) 0.0)
-	(num-test (bes-i1 0.001) 5.000000625000026E-4)
-	(num-test (bes-i1 0.01) .005000062500260419)
-	(num-test (bes-i1 0.1) .05006252604709269)
-	(num-test (bes-i1 1.0) 0.565159103992485)
-	(num-test (bes-i1 10.0) 2670.988303701255)
-	(num-test (bes-i1 100.0) 1.068369390338162E+42)
-	
-	(num-test (bes-in 10 0.0) 0.0)
-	(num-test (bes-in 10 0.001) 2.691144516629725E-40)
-	(num-test (bes-in 10 0.01) 2.691150571711132E-30)
-	(num-test (bes-in 10 0.1) 2.691756142922141E-20)
-	(num-test (bes-in 10 1.0) 2.752948039836866E-10)
-	(num-test (bes-in 10 10.0) 21.89170616372356)
-	(num-test (bes-in 10 100.0) 6.498975524720151E+41)
-	
-	(num-test (bes-in 100 0.0) 0.0)
-	(num-test (bes-in 100 0.1) 8.45293498689195E-289)
-	(num-test (bes-in 100 1.0) 8.47367400813812E-189)
-	(num-test (bes-in 100 10.0) 1.082344201749218E-88)
-	(num-test (bes-in 100 100.0) 4.641534941616278E+21)
-	
-	
-	
-	(num-test (bes-y0 0.001) -4.471416611375923)
-	(num-test (bes-y0 0.01) -3.005455637083646)
-	(num-test (bes-y0 0.1) -1.534238651350367)
-	(num-test (bes-y0 1.0) .08825696421567691)
-	(num-test (bes-y0 10.0) .05567116728359947)
-	(num-test (bes-y0 100.0) -.07724431336508303)
-	(num-test (bes-y0 1000.0) .004715917977623911)
-	
-	(num-test (bes-y1 0.001) -636.6221672311393)
-	(num-test (bes-y1 0.01) -63.67859628206064)
-	(num-test (bes-y1 0.1) -6.458951094702027)
-	(num-test (bes-y1 1.0) -.7812128213002888)
-	(num-test (bes-y1 10.0) .2490154242069539)
-	(num-test (bes-y1 100.0) -.02037231200275883)
-	(num-test (bes-y1 1000.0) -0.024784331292352)
-	
-	(num-test (bes-yn 10 0.001) -1.182804937799041E+38)
-	(num-test (bes-yn 10 0.01) -1.182808190517663E+28)
-	(num-test (bes-yn 10 0.1) -1.18313351320452E+18)
-	(num-test (bes-yn 10 1.0) -1.2161801427868918E+8)
-	(num-test (bes-yn 10 10.0) -.3598141521834028)
-	(num-test (bes-yn 10 100.0) .05833157423641527)
-	(num-test (bes-yn 10 1000.0) -.005949000574163774)
-	
-	(num-test (bes-yn 100 0.1) -3.76586125601925E+285)
-	(num-test (bes-yn 100 1.0) -3.77528781011053E+185)
-	(num-test (bes-yn 100 10.0) -4.849148271180334E+85)
-	(num-test (bes-yn 100 100.0) -.1669214114175733)
-	(num-test (bes-yn 100 1000.0) -.02243868825772313)
-	
-	(num-test (bes-yn 1000 1000.0) -.07747600152069181)
-	
-	
-	(num-test (bes-k0 0.001) 7.023688800562383)
-	(num-test (bes-k0 0.01) 4.721244730161095)
-	(num-test (bes-k0 0.1) 2.427069024702016)
-	(num-test (bes-k0 1.0) .4210244382407085)
-	(num-test (bes-k0 10.0) 1.7780062316167652E-5)
-	(num-test (bes-k0 100.0) 4.656628229175902E-45)
-	
-	(num-test (bes-k1 0.001) 999.9962381560855)
-	(num-test (bes-k1 0.01) 99.97389411829626)
-	(num-test (bes-k1 0.1) 9.853844780870606)
-	(num-test (bes-k1 1.0) .6019072301972346)
-	(num-test (bes-k1 10.0) 1.8648773453825582E-5)
-	(num-test (bes-k1 100.0) 4.67985373563691E-45)
-	
-	(num-test (bes-kn 10 0.001) 1.857945548390401E+38)
-	(num-test (bes-kn 10 0.01) 1.857940439048065E+28)
-	(num-test (bes-kn 10 0.1) 1.857429584630401E+18)
-	(num-test (bes-kn 10 1.0) 1.807132899010295E+8)
-	(num-test (bes-kn 10 10.0) 0.00161425530039067)
-	(num-test (bes-kn 10 100.0) 7.655427977388101E-45)
-	
-	(num-test (bes-kn 100 0.1) 5.91510227809082E+285)
-	(num-test (bes-kn 100 1.0) 5.90033318363862E+185)
-	(num-test (bes-kn 100 10.0) 4.596674084269265E+85)
-	(num-test (bes-kn 100 100.0) 7.617129630494247E-25)
-	(num-test (bes-kn 100 1000.0) 0.0)
-	))
   
   (if with-gui
       
@@ -63398,9 +63198,11 @@ EDITS: 1
 	
 	)))
 
-(define (snd_test_28)   
-  (load "s7test.scm")
-  (snd_test_28_1))
+
+;;; ---------------- test 29: s7 ----------------
+
+(define (snd_test_29)
+  (load "s7test.scm"))
 
 
 					;(tracing #t)
@@ -63435,6 +63237,7 @@ EDITS: 1
 (vector-set! test-funcs 26 snd_test_26)
 (vector-set! test-funcs 27 snd_test_27)
 (vector-set! test-funcs 28 snd_test_28)
+(vector-set! test-funcs 29 snd_test_29)
 
 (if (> test-at-random 0)
     (begin                                       ; run tests in any random order
@@ -63500,7 +63303,7 @@ EDITS: 1
 (set! (print-length) 64)
 (display (format #f "~%;times: ~A~%;total: ~A~%" timings (round (- (real-time) overall-start-time))))
 
-(let ((best-times (vector 59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696))) ; 571
+(let ((best-times (vector 59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696 0))) ; 571
 ;; this runs 4x faster on the i7 930 nogui/no-audio 
 
   (do ((i 0 (+ 1 i)))
@@ -63635,7 +63438,7 @@ EDITS: 1
 
 (if (defined? 'run-report-counts) (run-report-counts))
 
-(if profiling (profile)) ; writes to sort.data
+;; (if profiling (profile)) ; writes to sort.data
 
 #|
 (let ((st (symbol-table)))

@@ -557,9 +557,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
       if (((key == snd_K_g) || (key == snd_K_G)) && 
 	  (state & snd_ControlMask))
 	{
-#if 0 && HAVE_SCHEME && HAVE_PTHREADS
-	  stop_s7();
-#endif
+	  ss->C_g_typed = true; 
 	  if (state & snd_MetaMask)
 	    clear_listener();
 	  else control_g(any_selected_sound());

@@ -297,7 +297,6 @@
 	 ;;strike position comb filter delay length
 	 (agraffe-len (/ (* (mus-srate) strikePosition) freq)))
     
-    (ws-interrupt?)
     
     (do ((i 0 (+ 1 i)))
 	((= i 4))

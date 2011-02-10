@@ -392,7 +392,7 @@
 (CFNC "void gdk_event_handler_set GdkEventFunc func lambda_data func_info GtkDestroyNotify notify")
 (CFNC "void gdk_set_show_events gboolean show_events")
 (CFNC "gboolean gdk_get_show_events void")
-(CFNC "void gdk_add_client_message_filter GdkAtom message_type GdkFilterFunc func lambda_data #func_info")
+;;; 2.99.3 (CFNC "void gdk_add_client_message_filter GdkAtom message_type GdkFilterFunc func lambda_data #func_info")
 ;;; 2.91.1 ;(CFNC "gboolean gdk_setting_get gchar* name GValue* value") 
 ;;; 2.90.6 (CINT "GDK_CAP_NOT_LAST" "GdkCapStyle")
 ;;; 2.90.6 (CINT "GDK_CAP_BUTT" "GdkCapStyle")
@@ -500,8 +500,8 @@
 ;;;;(CFNC "GType gdk_rectangle_get_type void")
 ;;; out 2.3 (CFNC "gchar* gdk_wcstombs GdkWChar* src")
 ;;; out 2.3 (CFNC "gint gdk_mbstowcs GdkWChar* dest gchar* src gint dest_max")
-(CFNC "void gdk_event_send_clientmessage_toall GdkEvent* event")
-(CFNC "gboolean gdk_event_send_client_message GdkEvent* event guint32 xid")
+;;; 2.99.3 (CFNC "void gdk_event_send_clientmessage_toall GdkEvent* event")
+;;; 2.99.3 (CFNC "gboolean gdk_event_send_client_message GdkEvent* event guint32 xid")
 (CFNC "void gdk_threads_enter void")
 (CFNC "void gdk_threads_leave void")
 (CFNC "void gdk_threads_init void") 
@@ -1158,7 +1158,7 @@
 (CFNC "GdkWindow* gdk_selection_owner_get GdkAtom selection")
 (CFNC "void gdk_selection_convert GdkWindow* requestor GdkAtom selection GdkAtom target guint32 time")
 (CFNC "gboolean gdk_selection_property_get GdkWindow* requestor guchar** [data] GdkAtom* [prop_type] gint* [prop_format]")
-(CFNC "void gdk_selection_send_notify guint32 requestor GdkAtom selection GdkAtom target GdkAtom property guint32 time")
+;;; 2.99.3 (CFNC "void gdk_selection_send_notify guint32 requestor GdkAtom selection GdkAtom target GdkAtom property guint32 time")
 (CINT "GDK_CURRENT_TIME")
 (CINT "GDK_PARENT_RELATIVE")
 ;(CCAST2 "GDK_ATOM_TO_POINTER(atom)")
@@ -1560,7 +1560,7 @@
 
 ;;; (CFNC "void gtk_binding_entry_clear GtkBindingSet* binding_set guint keyval GdkModifierType modifiers") ; out 2.11.0
 ;;; (CFNC "void gtk_binding_entry_add_signal GtkBindingSet* binding_set guint keyval GdkModifierType modifiers gchar* signal_name guint n_args ...")
-(CFNC "void gtk_binding_set_add_path GtkBindingSet* binding_set GtkPathType path_type gchar* path_pattern GtkPathPriorityType priority")
+;;; 2.99.3 (CFNC "void gtk_binding_set_add_path GtkBindingSet* binding_set GtkPathType path_type gchar* path_pattern GtkPathPriorityType priority")
 (CFNC "void gtk_binding_entry_remove GtkBindingSet* binding_set guint keyval GdkModifierType modifiers")
 ;;; (CFNC "void gtk_binding_entry_add_signall GtkBindingSet* binding_set guint keyval GdkModifierType modifiers gchar* signal_name GSList* binding_args") ; out 2.11.0
 ;;; (CFNC "guint gtk_binding_parse_binding GScanner* scanner")
@@ -2552,12 +2552,12 @@
 (CFNC "gint gtk_paned_get_position GtkPaned* paned")
 (CFNC "void gtk_paned_set_position GtkPaned* paned gint position")
 ;;; out 2.3 (CFNC "void gtk_paned_compute_position GtkPaned* paned gint allocation gint child1_req gint child2_req")
-(CCAST "GTK_PLUG(obj)" "GtkPlug*")
-(CCHK "GTK_IS_PLUG(obj)" "GtkPlug*")
+;;; 2.99.3 (CCAST "GTK_PLUG(obj)" "GtkPlug*")
+;;; 2.99.3 (CCHK "GTK_IS_PLUG(obj)" "GtkPlug*")
 ;;;;(CFNC "GType gtk_plug_get_type void")
-(CFNC "void gtk_plug_construct GtkPlug* plug GdkNativeWindow socket_id")
-(CFNC "GtkWidget* gtk_plug_new GdkNativeWindow socket_id")
-(CFNC "GdkNativeWindow gtk_plug_get_id GtkPlug* plug")
+;;; 2.99.3 (CFNC "void gtk_plug_construct GtkPlug* plug GdkNativeWindow socket_id")
+;;; 2.99.3 (CFNC "GtkWidget* gtk_plug_new GdkNativeWindow socket_id")
+;;; 2.99.3 (CFNC "GdkNativeWindow gtk_plug_get_id GtkPlug* plug")
 (CCAST "GTK_PROGRESS_BAR(obj)" "GtkProgressBar*")
 (CCHK "GTK_IS_PROGRESS_BAR(obj)" "GtkProgressBar*")
 ;(CINT "GTK_PROGRESS_CONTINUOUS" "GtkProgressBarStyle")
@@ -2797,12 +2797,12 @@
 (CFNC "GtkSizeGroupMode gtk_size_group_get_mode GtkSizeGroup* size_group")
 (CFNC "void gtk_size_group_add_widget GtkSizeGroup* size_group GtkWidget* widget")
 (CFNC "void gtk_size_group_remove_widget GtkSizeGroup* size_group GtkWidget* widget")
-(CCAST "GTK_SOCKET(obj)" "GtkSocket*")
-(CCHK "GTK_IS_SOCKET(obj)" "GtkSocket*")
-(CFNC "GtkWidget* gtk_socket_new void")
-;;;;(CFNC "GType gtk_socket_get_type void")
-(CFNC "void gtk_socket_add_id GtkSocket* socket GdkNativeWindow window_id")
-(CFNC "GdkNativeWindow gtk_socket_get_id GtkSocket* socket")
+;;; 2.99.3 (CCAST "GTK_SOCKET(obj)" "GtkSocket*")
+;;; 2.99.3 (CCHK "GTK_IS_SOCKET(obj)" "GtkSocket*")
+;;; 2.99.3 (CFNC "GtkWidget* gtk_socket_new void")
+;;; 2.99.3 ;;;;(CFNC "GType gtk_socket_get_type void")
+;;; 2.99.3 (CFNC "void gtk_socket_add_id GtkSocket* socket GdkNativeWindow window_id")
+;;; 2.99.3 (CFNC "GdkNativeWindow gtk_socket_get_id GtkSocket* socket")
 (CCAST "GTK_SPIN_BUTTON(obj)" "GtkSpinButton*")
 (CCHK "GTK_IS_SPIN_BUTTON(obj)" "GtkSpinButton*")
 (CINT "GTK_INPUT_ERROR")
@@ -4550,7 +4550,7 @@
 (CFNC "GdkEvent* gdk_display_get_event GdkDisplay* display")
 (CFNC "GdkEvent* gdk_display_peek_event GdkDisplay* display")
 (CFNC "void gdk_display_put_event GdkDisplay* display GdkEvent* event")
-(CFNC "void gdk_display_add_client_message_filter GdkDisplay* display GdkAtom message_type GdkFilterFunc func lambda_data #func_info")
+;;; 2.99.3 (CFNC "void gdk_display_add_client_message_filter GdkDisplay* display GdkAtom message_type GdkFilterFunc func lambda_data #func_info")
 (CFNC "void gdk_display_set_double_click_time GdkDisplay* display guint msec")
 (CFNC "GdkDisplay* gdk_display_get_default void")
 ;;;; (CFNC "GdkDevice* gdk_display_get_core_pointer GdkDisplay* display")
@@ -4578,7 +4578,7 @@
 (CFNC "void gdk_screen_get_monitor_geometry GdkScreen* screen int monitor_num GdkRectangle* dest")
 (CFNC "int gdk_screen_get_monitor_at_point GdkScreen* screen int x int y")
 (CFNC "int gdk_screen_get_monitor_at_window GdkScreen* screen GdkWindow* window")
-(CFNC "void gdk_screen_broadcast_client_message GdkScreen* screen GdkEvent* event")
+;;; 2.99.3 (CFNC "void gdk_screen_broadcast_client_message GdkScreen* screen GdkEvent* event")
 (CFNC "GdkScreen* gdk_screen_get_default void")
 ;(CFNC "gboolean gdk_screen_get_setting GdkScreen* screen gchar* name GValue* value")
 
@@ -6968,8 +6968,8 @@
 (CFNC-2134 "gint gtk_menu_get_monitor GtkMenu* menu")
 (CFNC-2134 "gchar* gtk_menu_item_get_accel_path GtkMenuItem* menu_item" 'const)
 ;(CFNC-2134 "GtkWidget* gtk_message_dialog_get_image GtkMessageDialog* dialog")
-(CFNC-2134 "gboolean gtk_plug_get_embedded GtkPlug* plug")
-(CFNC-2134 "GdkWindow* gtk_plug_get_socket_window GtkPlug* plug")
+;;; 2.99.3 (CFNC-2134 "gboolean gtk_plug_get_embedded GtkPlug* plug")
+;;; 2.99.3 (CFNC-2134 "GdkWindow* gtk_plug_get_socket_window GtkPlug* plug")
 ;;; out 2.15.1 (CFNC-2134 "GtkOrientation gtk_scale_button_get_orientation GtkScaleButton* button")
 ;;; (CFNC-2134 "void gtk_scale_button_set_orientation GtkScaleButton* button GtkOrientation orientation")
 (CFNC-2134 "GtkWidget* gtk_scale_button_get_plus_button GtkScaleButton* button")
@@ -6980,7 +6980,7 @@
 (CFNC-2134 "gint gtk_selection_data_get_format GtkSelectionData* selection_data")
 ;;; changed 2.14.1 (CFNC-2134 "guchar* gtk_selection_data_get_data GtkSelectionData* selection_data guint* length" 'const)
 (CFNC-2134 "GdkDisplay* gtk_selection_data_get_display GtkSelectionData* selection_data")
-(CFNC-2134 "GdkWindow* gtk_socket_get_plug_window GtkSocket* socket_")
+;;; 2.99.3 (CFNC-2134 "GdkWindow* gtk_socket_get_plug_window GtkSocket* socket_")
 ;;out 2.14.1 ;(CFNC-2134 "GtkAllocation gtk_widget_get_allocation GtkWidget* widget")
 (CFNC-2134 "GdkWindow* gtk_widget_get_window GtkWidget* widget")
 ;;; (CFNC-2134 "GtkWidget* gtk_window_get_default GtkWindow* window")
@@ -8106,8 +8106,8 @@
 (CFNC-29x "GtkIconInfo* gtk_icon_theme_lookup_by_gicon GtkIconTheme* icon_theme GIcon* icon gint size GtkIconLookupFlags flags")
 (CFNC-29x "GtkIconInfo* gtk_icon_info_new_for_pixbuf GtkIconTheme* icon_theme GdkPixbuf* pixbuf")
 
-;gtkplug: gtk_plug_construct_for_display -- GdkNativeWindow 
-;gtkplug: gtk_plug_new_for_display
+;;; 2.99.3 ;gtkplug: gtk_plug_construct_for_display -- GdkNativeWindow 
+;;; 2.99.3 ;gtkplug: gtk_plug_new_for_display
 
 (CFNC-29x "void gtk_icon_view_set_item_orientation GtkIconView* icon_view GtkOrientation orientation")
 (CFNC-29x "GtkOrientation gtk_icon_view_get_item_orientation GtkIconView* icon_view")
@@ -8144,7 +8144,7 @@
 (CSTR-29x "GTK_STYLE_CLASS_FRAME")
 (CSTR-29x "GTK_STYLE_CLASS_DND")
 
-#|
+
 ;;; 2.99.1
 
 (CSTR-29x "GTK_STYLE_CLASS_HORIZONTAL")
@@ -8155,8 +8155,12 @@
 (CFNC-29x "void gtk_window_set_has_user_ref_count GtkWindow* window gboolean setting")
 
 ;;; 2.99.2 -- no changes for xgdata I think
+;;; 2.99.3
 
-|#
+(CFNC-29x "void gdk_selection_send_notify GdkWindow* requestor GdkAtom selection GdkAtom target GdkAtom property guint32 time_")
+(CFNC-29x "void gdk_selection_send_notify_for_display GdkDisplay* display GdkWindow* requestor GdkAtom selection GdkAtom target GdkAtom property guint32 time_")
+;(CFNC-29x "void gtk_text_view_get_cursor_locations GtkTextView* text_view GtkTextIter* iter GdkRectangle* [strong] GdkRectangle* [weak]")
+
 
 #|
 (CCAST-29x "GTK_CSS_PROVIDER" "GtkCssProvider*")

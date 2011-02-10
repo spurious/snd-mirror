@@ -66,7 +66,6 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
     (do ((i 0 (+ i 1)))
 	((= i dlen))
       (set! (tab i) (- 1.0 (random 2.0))))
-    (ws-interrupt?)
     (run 
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -205,7 +204,6 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 			       (* a1 (sin (* i frq1)))
 			       (* a2 (sin (* i frq2))))
 			    .5 (- 1.0 (cos (* i win-freq))))))
-      (ws-interrupt?)
       (run
        (do ((i start (+ i 1)))
 	   ((= i end))
@@ -282,7 +280,6 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	 (car2 (make-oscil 0.0))
 	 (car2-f (make-env (stretch-envelope ampenv2 25 ampattpt2 75 ampdecpt2)
 			   :scaler amp2 :duration dur)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -369,7 +366,6 @@ vocal sounds using phase quadrature waveshaping"
 	(set! (cos-coeffs i) (partials->polynomial shape mus-chebyshev-first-kind))
 	(set! (sin-coeffs i) (partials->polynomial shape mus-chebyshev-second-kind))
 	(set! (frmfs i) (make-env (vox-fun phonemes i '()) :duration dur))))
-    (ws-interrupt?)
     (run
      (do ((i start (+ i 1)))
 	 ((= i end))
@@ -467,7 +463,6 @@ is a physical model of a flute:
 	 (bore (make-delay period-samples))
 	 (offset (floor (* period-samples offset-pos)))
 	 (reflection-lowpass-filter (make-one-pole a0 b1)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -518,7 +513,6 @@ is a physical model of a flute:
 	 (ampf (make-env (or amp-env 
 			     (list 0 0 .1 1 10 .6 25 .3 50 .15 90 .1 100 0))
 			 amplitude dur)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -556,7 +550,6 @@ is a physical model of a flute:
 	 (indf (make-env mod-index-env :scaler (hz->radians mod-index) :duration dur))
 	 (modfrqf (make-env mod-freq-env :scaler (hz->radians mod-skew) :duration dur))
 	 (fm2-amp (hz->radians (* fm-index fm-ratio frequency))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -620,7 +613,6 @@ is a physical model of a flute:
 	 (carrier (make-oscil frequency))
 	 (fmosc (make-oscil (* frequency fmrat)))
 	 (cascade (make-oscil (* frequency casrat))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -677,7 +669,6 @@ is a physical model of a flute:
 	 (mod3 (make-oscil mfq3))
 	 (beg (seconds->samples start-time))
 	 (end (+ beg (seconds->samples duration))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -696,7 +687,6 @@ is a physical model of a flute:
 	 (c c-1) (a .2) (b .2) (dt .04)
 	 (scale (/ (* .5 amp) c))
 	 (x -1.0) (y 0.0) (z 0.0))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -730,7 +720,6 @@ is a physical model of a flute:
 	 (rn (make-rand-interp :frequency 12 :amplitude (hz->radians (* .005 spacing-freq))))
 	 (beg (seconds->samples start))
 	 (end (+ beg (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -765,7 +754,6 @@ is a physical model of a flute:
 	 (g3 .144)
 	 (st (seconds->samples beg))
 	 (nd (+ st (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -790,7 +778,6 @@ is a physical model of a flute:
 	 (resenv (make-env (list 0 0 .001 1 .25 0 (max dur .26) 0) :duration dur))
 	 (st (seconds->samples beg))
 	 (nd (+ st (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -815,7 +802,6 @@ is a physical model of a flute:
 	 (g3 .109)
 	 (st (seconds->samples beg))
 	 (nd (+ st (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -837,7 +823,6 @@ is a physical model of a flute:
 	 (g3 (* .5 .75 amp))
 	 (st (seconds->samples beg))
 	 (nd (+ st (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -864,7 +849,6 @@ is a physical model of a flute:
 	 (g3 .116)
 	 (st (seconds->samples beg))
 	 (nd (+ st (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -890,7 +874,6 @@ is a physical model of a flute:
 	 (ran-vib (make-rand :frequency rvibfreq 
 			     :amplitude (* rvibamt freq)))
 	 (loc (make-locsig deg dis amtrev)))
-    (ws-interrupt?)
     (run 
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -942,7 +925,6 @@ is a physical model of a flute:
 	 (gen4 (make-oscil (* pitch harm4)))
 	 (ranvib (make-rand :frequency ranfreq :amplitude (hz->radians (* ranpc pitch))))
 	 (loc (make-locsig deg dis pcrev)))
-    (ws-interrupt?)
     (run
      (do ((i start (+ i 1)))
 	 ((= i end))
@@ -1002,7 +984,6 @@ is a physical model of a flute:
 	   (allpass6 (if chan2 (make-all-pass -0.700 0.700 (list-ref dly-len 12)) #f))
 	   (allpass7 (if chan4 (make-all-pass -0.700 0.700 (list-ref dly-len 13)) #f))
 	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (list-ref dly-len 14)) #f)))
-      (ws-interrupt?)
       (run
        (do ((i 0 (+ i 1)))
 	   ((= i len))
@@ -1071,7 +1052,6 @@ is a physical model of a flute:
 				       :scaler (* rsamp amp (/ rfamp totalamp))))
 	(set! (c-rats i) harm)
 	(set! (carriers i) (make-oscil cfq))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -1122,7 +1102,6 @@ is a physical model of a flute:
 	 (amplenv (make-env (stretch-envelope ampfun 25 ampap 75 ampdp) :scaler amp :duration dur))
 	 (betaenv (make-env (stretch-envelope betafun 25 betap 75 betdp) :duration dur
 			     :scaler (- beta1 beta0) :offset beta0)))
-    (ws-interrupt?)
     (run 
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -1152,7 +1131,6 @@ is a physical model of a flute:
 	 (delB 0.0)
 	 (decay-dur (* decay (mus-srate)))
 	 (len (floor (+ decay-dur (length *reverb*)))))
-    (ws-interrupt?)
     (run
      (do ((i 0 (+ i 1)))
 	 ((= i len))
@@ -1177,7 +1155,6 @@ is a physical model of a flute:
     (do ((i 0 (+ i 1)))
 	((= i grain-size))
       (set! (grain i) (* (env grain-env) (oscil carrier))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -1203,7 +1180,6 @@ is a physical model of a flute:
 			12)))
 	     (frq1 (make-oscil (list-ref touch-tab-1 i)))
 	     (frq2 (make-oscil (list-ref touch-tab-2 i))))
-	(ws-interrupt?)
 	(run
 	 (do ((j beg (+ 1 j)))
 	     ((= j end))
@@ -1233,7 +1209,6 @@ is a physical model of a flute:
 	 (loc (make-locsig degree distance reverb-amount))
 	 (ran-vib (make-rand-interp :frequency (+ vibrato-speed 1.0)
 				    :amplitude (* vibrato-amplitude freq))))
-    (ws-interrupt?)
     (run 
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -1273,7 +1248,6 @@ is a physical model of a flute:
 				      :amplitude (* vibrato-amplitude freq)))
 	 (ran-vib (make-rand-interp :frequency (+ vibrato-speed 1.0)
 				    :amplitude (* vibrato-amplitude freq))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -1747,7 +1721,6 @@ is a physical model of a flute:
 	  ((= i (length partials)))
 	(set! (alist j) (partials (+ i 1)))
 	(set! (oscils j) (make-oscil (* (partials i) frequency))))
-      (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -1806,7 +1779,6 @@ is a physical model of a flute:
 	 (cn (if (not with-noise)
 		 (make-ncos cosfreq0 cosnum)
 		 #f)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -1837,7 +1809,6 @@ is a physical model of a flute:
 	 (forwards (> src-ratio 0.0)))
     (if (and forwards (< turn-sample cur-sample))
 	(set! (mus-increment rd) (- src-ratio)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((>= turn-i turns))
@@ -1931,7 +1902,6 @@ is a physical model of a flute:
       (set! (resynth-oscils i) (make-oscil 0)))
     (set! trigger outhop)
     (vct-scale! window fftscale)
-    (ws-interrupt?)
     (run
      (do ((i start (+ i 1)))
 	 ((= i end))
@@ -2096,7 +2066,6 @@ is a physical model of a flute:
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-comb :size length1 :max-size (+ 1 (max length1 length2)) :scaler feedback))
 	 (zenv (make-env '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -2114,7 +2083,6 @@ is a physical model of a flute:
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-notch :size length1 :max-size (+ 1 (max length1 length2)) :scaler feedforward))
 	 (zenv (make-env '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -2129,7 +2097,6 @@ is a physical model of a flute:
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-all-pass feedback feedforward :size length1 :max-size (+ 1 (max length1 length2))))
 	 (zenv (make-env '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -2209,7 +2176,6 @@ is a physical model of a flute:
 	 (vol (env ampe))
 	 (valA0 (* vol (granulate exA)))
 	 (valA1 (* vol (granulate exA))))
-    (ws-interrupt?)
     (if (or (<= (min-envelope rampdata) 0.0)
 	    (>= (max-envelope rampdata) 0.5))
 	(format #t "ramp argument to expsnd must always be between 0.0 and 0.5: ~A" ramp)
@@ -2269,7 +2235,6 @@ is a physical model of a flute:
 	 (end (+ beg (seconds->samples duration)))
 	 (out1 beg)
 	 (out2 (+ hop beg)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -2432,7 +2397,6 @@ nil doesnt print anything, which will speed up a bit the process.
 	    (set! (gains k) (if (< (+ offset-gain gval) 0) 
 				0
 				(+ offset-gain gval)))))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -2478,7 +2442,6 @@ nil doesnt print anything, which will speed up a bit the process.
     (do ((ctr 0 (+ 1 ctr)))
 	((= ctr freq-inc))
       (set! (fs ctr) (make-formant (* ctr bin) radius)))
-    (ws-interrupt?)
     (run 
      (do ((i beg (+ i 1)))
 	 ((= i end))

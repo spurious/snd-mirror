@@ -1040,6 +1040,11 @@ Depending on how Snd is configured, any of the following symbols may be "provide
     Ruby:    provided? :snd-gtk
     Forth:   "snd-gtk" defined?
 </pre>
+
+<p>Multithreading support is problematic in both Motif and Gtk.  See <a href="s7.html#s7inathread">s7 and threads</a> for
+a brief discussion.  If you use s7 threads, make sure you never call anything that might affect the user interface.
+</p>
+
 <br>
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndenvvars">Environment variables</a></h3></td></tr></table>

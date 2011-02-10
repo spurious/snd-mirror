@@ -49,7 +49,6 @@
 		(floor (* b
 			  (list-ref (list-ref init-array jy) 1)
 			  ))))
-    (ws-interrupt?) ;;does this really belong here?
     (run
      (do ((i beg (+ 1 i)))
 	 ((= i end))

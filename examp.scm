@@ -2139,7 +2139,6 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	 (samps (seconds->samples dur))
 	 (end (+ start samps))
 	 (len (length dsp-chain)))
-    (ws-interrupt?)
     (run
      (do ((k start (+ 1 k)))
 	 ((= k end))

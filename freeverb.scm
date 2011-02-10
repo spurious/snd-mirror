@@ -138,7 +138,6 @@
 	      (set! len (+ len (floor (* srate-scale stereo-spread)))))
 	  (vector-set! allpasses (+ (* c numallpasses) i)
 		       (make-all-pass :size len :feedforward -1 :feedback 0.5)))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ 1 i)))
 	 ((= i end))

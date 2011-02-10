@@ -704,9 +704,4 @@ void snd_doit(int argc, char **argv)
 #endif
 }
 
-/* PERHAPS: can we simply put gtk_main in its own thread to get gtk to run separately?
- *            no, it looks like s7 has to be the separate thread -- the glib/gdk/gtk thread handling is a huge mess.
- * PERHAPS: use gtk_init_check -> no-gui ?
- */
-
  

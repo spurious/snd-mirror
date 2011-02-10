@@ -490,7 +490,7 @@ typedef struct snd_state {
   bool jump_ok, exiting;
   env_editor *enved;
   oclock_t click_time;
-  bool fam_ok, cg_seen;
+  bool fam_ok, cg_seen, C_g_typed;
   FAMConnection *fam_connection;
   void (*snd_error_handler)(const char *error_msg, void *data);
   void *snd_error_data;
@@ -1503,9 +1503,6 @@ void provide_listener_help(const char *source);
 bool listener_is_visible(void);
 void g_init_listener(void);
 
-#if 0 && HAVE_SCHEME && HAVE_PTHREADS && USE_GTK
-void stop_s7(void);
-#endif
 
 
 /* -------- snd-mix.c -------- */

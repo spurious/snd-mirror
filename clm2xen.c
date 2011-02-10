@@ -2237,8 +2237,7 @@ static XEN g_delay(XEN obj, XEN input, XEN pm)
 {
   #define H_delay "(" S_delay " gen :optional (val 0.0) (pm 0.0)): \
 delay val according to the delay line's length and pm ('phase-modulation'). \
-If pm is greater than 0.0, the max-size argument used to create gen should have accommodated its maximum value. (The \
-Scheme function delay is available as %delay or make-promise)"
+If pm is greater than 0.0, the max-size argument used to create gen should have accommodated its maximum value."
 
   mus_float_t in1 = 0.0, pm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_delay_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_delay, "a delay line");
@@ -8706,32 +8705,26 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_apply,   g_mus_apply_w,   0, 0, 1, H_mus_apply);
 
 
-#if HAVE_SCHEME
-  XEN_EVAL_C_STRING("(defmacro %delay (arg) `(make-promise ,arg))"); 
-#endif
   XEN_DEFINE_PROCEDURE(S_make_delay,      g_make_delay_w,      0, 0, 1, H_make_delay);
   XEN_DEFINE_PROCEDURE(S_make_comb,       g_make_comb_w,       0, 0, 1, H_make_comb);
   XEN_DEFINE_PROCEDURE(S_make_filtered_comb, g_make_filtered_comb_w, 0, 0, 1, H_make_filtered_comb);
   XEN_DEFINE_PROCEDURE(S_make_notch,      g_make_notch_w,      0, 0, 1, H_make_notch); 
   XEN_DEFINE_PROCEDURE(S_make_all_pass,   g_make_all_pass_w,   0, 0, 1, H_make_all_pass);
-  XEN_DEFINE_PROCEDURE(S_make_moving_average,    g_make_moving_average_w,    0, 0, 1, H_make_moving_average);
+  XEN_DEFINE_PROCEDURE(S_make_moving_average, g_make_moving_average_w, 0, 0, 1, H_make_moving_average);
   XEN_DEFINE_PROCEDURE(S_delay,           g_delay_w,           1, 2, 0, H_delay); 
-#if HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("clm:" S_delay,    g_delay_w,           1, 2, 0, H_delay);
-#endif
   XEN_DEFINE_PROCEDURE(S_delay_tick,      g_delay_tick_w,      1, 1, 0, H_delay_tick); 
   XEN_DEFINE_PROCEDURE(S_tap,             g_tap_w,             1, 1, 0, H_tap);
   XEN_DEFINE_PROCEDURE(S_notch,           g_notch_w,           1, 2, 0, H_notch);
   XEN_DEFINE_PROCEDURE(S_comb,            g_comb_w,            1, 2, 0, H_comb);
   XEN_DEFINE_PROCEDURE(S_filtered_comb,   g_filtered_comb_w,   1, 2, 0, H_filtered_comb);
   XEN_DEFINE_PROCEDURE(S_all_pass,        g_all_pass_w,        1, 2, 0, H_all_pass);
-  XEN_DEFINE_PROCEDURE(S_moving_average,         g_moving_average_w,         1, 1, 0, H_moving_average);
+  XEN_DEFINE_PROCEDURE(S_moving_average,  g_moving_average_w,  1, 1, 0, H_moving_average);
   XEN_DEFINE_PROCEDURE(S_delay_p,         g_delay_p_w,         1, 0, 0, H_delay_p);
   XEN_DEFINE_PROCEDURE(S_notch_p,         g_notch_p_w,         1, 0, 0, H_notch_p);
   XEN_DEFINE_PROCEDURE(S_comb_p,          g_comb_p_w,          1, 0, 0, H_comb_p);
   XEN_DEFINE_PROCEDURE(S_filtered_comb_p, g_filtered_comb_p_w, 1, 0, 0, H_filtered_comb_p);
   XEN_DEFINE_PROCEDURE(S_all_pass_p,      g_all_pass_p_w,      1, 0, 0, H_all_pass_p);
-  XEN_DEFINE_PROCEDURE(S_moving_average_p,       g_moving_average_p_w,       1, 0, 0, H_moving_average_p);
+  XEN_DEFINE_PROCEDURE(S_moving_average_p, g_moving_average_p_w, 1, 0, 0, H_moving_average_p);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_mus_feedback_w, H_mus_feedback, S_setB S_mus_feedback, g_mus_set_feedback_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_mus_feedforward_w, H_mus_feedforward, S_setB S_mus_feedforward, g_mus_set_feedforward_w,  1, 0, 2, 0);
