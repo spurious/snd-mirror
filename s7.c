@@ -5772,66 +5772,69 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
       else dval = int_part + fpart * ipow(radix, -flen);
     }
 
-  str = fpart;
-  if (frac_len <= max_len)
+  if (frac_len > 0)
     {
-      /* splitting out base 10 case saves very little here */
-      /* this ignores trailing zeros, so that 0.3 equals 0.300 */
-      char *fend;
-
-      fend = (char *)(str + frac_len - 1);
-      while ((*fend == '0') && (fend != str)) {fend--; frac_len--;} /* (= .6 0.6000) */
-
-      while (str <= fend)
-	frac_part = digits[(int)(*str++)] + (frac_part * radix);
-      dval += frac_part * ipow(radix, exponent - frac_len);
-
-      /* fprintf(stderr, "frac: %lld, exp: (%d %d) %.20f, val: %.20f\n", frac_part, exponent, frac_len, ipow(radix, exponent - frac_len), dval); 
-       * 0.6:    frac:    6, exp: 0.10000000000000000555, val: 0.60000000000000008882
-       * 0.60:   frac:   60, exp: 0.01000000000000000021, val: 0.59999999999999997780
-       * 0.6000: frac: 6000, exp: 0.00010000000000000000, val: 0.59999999999999997780
-       * :(= 0.6 0.60)
-       * #f
-       * :(= #i3/5 0.6)
-       * #f
-       * so (string->number (number->string num)) == num only if both num's are the same text (or you get lucky)
-       * :(= 0.6 6e-1) ; but not 60e-2
-       * #t
-       *
-       * to fix the 0.60 case, we need to ignore trailing post-dot zeros.
-       */
-    }
-  else
-    {
-      if (exponent <= 0)
+      str = fpart;
+      if (frac_len <= max_len)
 	{
-	  for (i = 0; i < max_len; i++)
+	  /* splitting out base 10 case saves very little here */
+	  /* this ignores trailing zeros, so that 0.3 equals 0.300 */
+	  char *fend;
+	  
+	  fend = (char *)(str + frac_len - 1);
+	  while ((*fend == '0') && (fend != str)) {fend--; frac_len--;} /* (= .6 0.6000) */
+	  
+	  while (str <= fend)
 	    frac_part = digits[(int)(*str++)] + (frac_part * radix);
-
-	  dval += frac_part * ipow(radix, exponent - max_len);
+	  dval += frac_part * ipow(radix, exponent - frac_len);
+	  
+	  /* fprintf(stderr, "frac: %lld, exp: (%d %d) %.20f, val: %.20f\n", frac_part, exponent, frac_len, ipow(radix, exponent - frac_len), dval); 
+	   * 0.6:    frac:    6, exp: 0.10000000000000000555, val: 0.60000000000000008882
+	   * 0.60:   frac:   60, exp: 0.01000000000000000021, val: 0.59999999999999997780
+	   * 0.6000: frac: 6000, exp: 0.00010000000000000000, val: 0.59999999999999997780
+	   * :(= 0.6 0.60)
+	   * #f
+	   * :(= #i3/5 0.6)
+	   * #f
+	   * so (string->number (number->string num)) == num only if both num's are the same text (or you get lucky)
+	   * :(= 0.6 6e-1) ; but not 60e-2
+	   * #t
+	   *
+	   * to fix the 0.60 case, we need to ignore trailing post-dot zeros.
+	   */
 	}
       else
 	{
-	  /* 1.0123456789876543210e1         10.12345678987654373771  
-	   * 1.0123456789876543210e10        10123456789.87654304504394531250
-	   * 0.000000010000000000000000e10   100.0
-	   * 0.000000010000000000000000000000000000000000000e10 100.0
-	   * 0.000000012222222222222222222222222222222222222e10 122.22222222222222
-	   * 0.000000012222222222222222222222222222222222222e17 1222222222.222222
-	   */
-	  
-	  int_part = 0;
-	  for (i = 0; i < exponent; i++)
-	    int_part = digits[(int)(*str++)] + (int_part * radix);
-
-	  frac_len -= exponent;
-	  if (frac_len > max_len)
-	    frac_len = max_len;
-
-	  for (i = 0; i < frac_len; i++)
-	    frac_part = digits[(int)(*str++)] + (frac_part * radix);
-	  
-	  dval += int_part + frac_part * ipow(radix, -frac_len);
+	  if (exponent <= 0)
+	    {
+	      for (i = 0; i < max_len; i++)
+		frac_part = digits[(int)(*str++)] + (frac_part * radix);
+	      
+	      dval += frac_part * ipow(radix, exponent - max_len);
+	    }
+	  else
+	    {
+	      /* 1.0123456789876543210e1         10.12345678987654373771  
+	       * 1.0123456789876543210e10        10123456789.87654304504394531250
+	       * 0.000000010000000000000000e10   100.0
+	       * 0.000000010000000000000000000000000000000000000e10 100.0
+	       * 0.000000012222222222222222222222222222222222222e10 122.22222222222222
+	       * 0.000000012222222222222222222222222222222222222e17 1222222222.222222
+	       */
+	      
+	      int_part = 0;
+	      for (i = 0; i < exponent; i++)
+		int_part = digits[(int)(*str++)] + (int_part * radix);
+	      
+	      frac_len -= exponent;
+	      if (frac_len > max_len)
+		frac_len = max_len;
+	      
+	      for (i = 0; i < frac_len; i++)
+		frac_part = digits[(int)(*str++)] + (frac_part * radix);
+	      
+	      dval += int_part + frac_part * ipow(radix, -frac_len);
+	    }
 	}
     }
 

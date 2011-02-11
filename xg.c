@@ -24643,12 +24643,12 @@ static XEN gxg_gdk_cairo_set_source_color(XEN cr, XEN color)
 static XEN gxg_gdk_cairo_set_source_pixbuf(XEN cr, XEN pixbuf, XEN pixbuf_x, XEN pixbuf_y)
 {
   #define H_gdk_cairo_set_source_pixbuf "void gdk_cairo_set_source_pixbuf(cairo_t* cr, GdkPixbuf* pixbuf, \
-double pixbuf_x, double pixbuf_y)"
+gdouble pixbuf_x, gdouble pixbuf_y)"
   XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "gdk_cairo_set_source_pixbuf", "cairo_t*");
   XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 2, "gdk_cairo_set_source_pixbuf", "GdkPixbuf*");
-  XEN_ASSERT_TYPE(XEN_double_P(pixbuf_x), pixbuf_x, 3, "gdk_cairo_set_source_pixbuf", "double");
-  XEN_ASSERT_TYPE(XEN_double_P(pixbuf_y), pixbuf_y, 4, "gdk_cairo_set_source_pixbuf", "double");
-  gdk_cairo_set_source_pixbuf(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_double(pixbuf_x), XEN_TO_C_double(pixbuf_y));
+  XEN_ASSERT_TYPE(XEN_gdouble_P(pixbuf_x), pixbuf_x, 3, "gdk_cairo_set_source_pixbuf", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(pixbuf_y), pixbuf_y, 4, "gdk_cairo_set_source_pixbuf", "gdouble");
+  gdk_cairo_set_source_pixbuf(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_gdouble(pixbuf_x), XEN_TO_C_gdouble(pixbuf_y));
   return(XEN_FALSE);
 }
 
@@ -48934,7 +48934,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Feb-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("11-Feb-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

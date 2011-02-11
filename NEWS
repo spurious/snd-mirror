@@ -1,15 +1,21 @@
-Snd 11.12
+Snd 11.13
 
-s7: *gc-stats*
-    member and assoc have an optional 3rd arg, the comparison function
-    added environment?
+s7: make-hash-table-iterator.
 
-in the gtk 3 version of Snd, there is no longer a -nogtkrc flag, and
-    Snd.gtkrc is obsolete (Gtk has moved to a css-style system, but I
-    think in gtk 3 I'll leave all the "theme" stuff to the global theme).
-    
-    in gtk2, only versions 2.10 or later are supported.
+    map and for-each accept any applicable object as the first argument.
 
-checked: gtk 2.91.5|6|7, sbcl 1.0.45
+    format's ~{...~} directive can handle any applicable object.
 
-Thanks!: Mike Scholz
+    the thread stuff has been exported to s7.h.
+
+    s7_set_begin_hook (see s7.html#s7inathread and s7.html#replrescue)
+      The basic problem is that the GUI toolkits are not thread-safe, but we
+      want the GUI to remain responsive even if s7 is caught in an infinite
+      loop in the listener.  This also gives a way to break out of any long
+      computation without relying on Unix signals and weird keystrokes.
+      This is tied to C-g in the listener, so ws-interrupt (ws.scm) is
+      now a deprecated no-op.
+
+checked: gtk 2.99.0|1|2|3, gtk 3.0.0, FC14 (gcc 4.5.1)
+
+Thanks!: Rick Taube, Hartmut Noack
