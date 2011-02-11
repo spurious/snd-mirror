@@ -20410,9 +20410,8 @@ output is sent to the current-output-port."
 
 s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg)
 {
-  if (arg == sc->NIL)
-    return(g_stacktrace(sc, arg));
-  if (is_pair(arg))
+  if ((arg == sc->NIL) ||
+      (is_pair(arg)))
     return(g_stacktrace(sc, arg));
   return(g_stacktrace(sc, make_list_1(sc, arg)));
 }
@@ -20440,7 +20439,7 @@ void s7_quit(s7_scheme *sc)
    *    s7_quit, there is no guarantee we'll be in a place in the evaluator where pushing OP_EVAL_DONE
    *    will actually stop s7.  But the odds are better than zero, and if pthread_setcanceltype is
    *    asynchronous, and the thread is cancelled before calling s7_quit, there's hope.  Anyway, this
-   *    function assumes you've called s7_eval_c_string from C, and it is currently caught in a loop.
+   *    function assumes you've called s7_eval_c_string from C, and you want to interrupt it.
    */
   sc->longjmp_ok = false;
   pop_input_port(sc);

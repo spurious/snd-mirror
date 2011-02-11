@@ -7663,20 +7663,14 @@ int main(int argc, char **argv)
 </pre>
 </td></tr></table>
 
-<p>begin_hook itself checks the user-interface (gtk_main_iteration), so a key_press event
-(or any other) can still get through, even if the s7_eval_c_string call falls into an
+<p>In the Gtk case above, begin_hook itself checks the user-interface (via gtk_main_iteration), so a key_press event
+(or any other) can still get through, even if s7_eval_c_string falls into an
 infinite loop.  If a GUI event triggers a call on s7, that call happens in the current thread
 at a protected point in the s7 evaluation, so the GUI toolkit is happy because there's
 only the current thread, and s7 is happy because it handles the interleaved expression
-at a point where it can't confuse the interrupted evaluation.
-If the begin_hook function returns true,
+at a point where it can't confuse the current evaluation.
+If the begin_hook function returns true (if C-C is typed),
 s7 itself calls s7_quit, interrupting the current evaluation. 
-</p>
-
-<p>In the Gtk example above, we wrap s7_set_begin_hook around the s7_eval_string.
-The begin_hook function calls gtk_main_iteration which lets GUI events through
-during the eval-string computation.  If C-C is typed, the key_press event handler is called,
-and we set a flag that begin_hook notices, causing s7 to quit.
 If return is typed, and s7 is running (begin_hook is not NULL),
 we ignore it.  Otherwise return causes our REPL to send
 the current string to s7_eval_c_string.  Upon returning from s7_eval_c_string,
@@ -7685,7 +7679,7 @@ message to the REPL.  Otherwise we handle everything as in the previous REPLs.
 </p>
 
 <p>If the s7 evaluation can't affect the GUI and the GUI can't call s7 itself,
-or the GUI is thread-safe and you're using s7_threads for the interleaved expressions, 
+or if the GUI is thread-safe and you're using s7_threads for the interleaved expressions, 
 then you don't need to use begin_hook.
 </p>
 
