@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Oct 14 23:02:57 CEST 2009
-# Changed: Mon Nov 22 13:16:31 CET 2010
+# Changed: Thu Dec 16 01:24:10 CET 2010
 
 # Commentary:
 #
@@ -1490,6 +1490,12 @@ end
 
 def sound_data2string(sd)
   sd.to_a.to_s
+end
+
+def sound_data2vector(sd)
+  make_array(sd.chans) do |chn|
+    sound_data2vct(sd, chn).to_a
+  end
 end
 
 class SoundData

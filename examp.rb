@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Mon Nov 22 13:21:43 CET 2010
+# Changed: Sun Dec 19 15:32:48 CET 2010
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -569,6 +569,7 @@ end")
         vct2channel(data, frame, loc, out_snd, 0)
       end
     end
+    out_snd
   end
 
   # make dot size dependent on number of samples being displayed

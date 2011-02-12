@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Wed Oct 27 18:07:38 CEST 2010
+\ Changed: Wed Dec 22 22:54:40 CET 2010
 
 \ Commentary:
 \
@@ -53,8 +53,6 @@
 \ with-offset          ( body-xt secs -- )
 \ with-mix             ( body-str|nil args fname start -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
-
-$" fth 27-Oct-2010" value *clm-version*
 
 [ifundef] flog10
   <'> flog  alias flog10
@@ -221,23 +219,25 @@ set-current
 previous
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-#f 	      value *locsig*
-mus-lshort    value *clm-audio-format*
-#f            value *clm-comment*
-1.0           value *clm-decay-time*
-#f  	      value *clm-delete-reverb*
-"test.snd"    value *clm-file-name*
-#f 	      value *clm-notehook*
-#f  	      value *clm-play*
-#f            value *clm-player*           
-#f 	      value *clm-reverb*
-1     	      value *clm-reverb-channels*
-#()           value *clm-reverb-data*
-"test.reverb" value *clm-reverb-file-name*
-#f  	      value *clm-statistics*
-#f	      value *clm-verbose*
-#f            value *clm-debug*
-#()           value *clm-search-list* \ array of sound directories
+$" fth 22-Dec-2010" value *clm-version*
+#f 	      	    value *locsig*
+mus-lshort    	    value *clm-audio-format*
+#f            	    value *clm-comment*
+1.0           	    value *clm-decay-time*
+#f  	      	    value *clm-delete-reverb*
+"test.snd"    	    value *clm-file-name*
+#f 	      	    value *clm-notehook*
+#f  	      	    value *clm-play*
+#f            	    value *clm-player*           
+#f 	      	    value *clm-reverb*
+1     	      	    value *clm-reverb-channels*
+#()           	    value *clm-reverb-data*
+"test.reverb" 	    value *clm-reverb-file-name*
+#f  	      	    value *clm-statistics*
+#f	      	    value *clm-verbose*
+#f            	    value *clm-debug*
+\ array of directories containing sound files
+"CLM_SEARCH_PATH" getenv "." || ":" string-split value *clm-search-list*
 #()           value *clm-instruments* \ array of arrays #( ins-name start dur local-vars )
 
 'snd provided? [unless]
@@ -1239,8 +1239,8 @@ event: inst-test ( -- )
 
 <'> polyshape  alias waveshape  ( gen :optional index 1.0 fm 0.0 -- val )
 <'> polyshape? alias waveshape? ( obj -- f )
-<'> waveshape   <'> polyshape  help-ref  help-set!
-<'> waveshape?  <'> polyshape? help-ref  help-set!
+<'> waveshape  <'> polyshape  help-ref  help-set!
+<'> waveshape? <'> polyshape? help-ref  help-set!
 
 : partials->waveshape <{ partials :optional size *clm-table-size* -- wave }>
   doc" see partials->polynomial"
@@ -1257,8 +1257,8 @@ event: inst-test ( -- )
 
 <'> nsin  alias sum-of-sines  ( gen :optional fm 0.0 -- val )
 <'> nsin? alias sum-of-sines? ( obj -- f )
-<'> sum-of-sines   <'> nsin  help-ref  help-set!
-<'> sum-of-sines?  <'> nsin? help-ref  help-set!
+<'> sum-of-sines  <'> nsin  help-ref  help-set!
+<'> sum-of-sines? <'> nsin? help-ref  help-set!
 
 : make-sum-of-cosines <{ :key cosines 1 frequency 0.0 initial-phase 0.0 -- gen }>
   doc" see make-ncos"
@@ -1269,8 +1269,8 @@ event: inst-test ( -- )
 
 <'> ncos  alias sum-of-cosines  ( gen :optional fm 0.0 -- val )
 <'> ncos? alias sum-of-cosines? ( obj -- f )
-<'> sum-of-cosines   <'> ncos  help-ref  help-set!
-<'> sum-of-cosines?  <'> ncos? help-ref  help-set!
+<'> sum-of-cosines  <'> ncos  help-ref  help-set!
+<'> sum-of-cosines? <'> ncos? help-ref  help-set!
 
 : make-sine-summation <{ :key frequency 0.0 initial-phase 0.0 n 1 a 0.5 ratio 1.0 -- gen }>
   doc" see make-nrxysin"
@@ -1281,8 +1281,8 @@ event: inst-test ( -- )
 
 <'> nrxysin  alias sine-summation  ( gen :optional fm 0.0 -- val )
 <'> nrxysin? alias sine-summation? ( obj -- f )
-<'> sine-summation   <'> nrxysin  help-ref  help-set!
-<'> sine-summation?  <'> nrxysin? help-ref  help-set!
+<'> sine-summation  <'> nrxysin  help-ref  help-set!
+<'> sine-summation? <'> nrxysin? help-ref  help-set!
 
 'snd provided? [if]
   instrument: arpeggio <{ start dur freq amp :key ampenv #( 0 0 0.5 1 1 0 ) offset 1.0 -- }>

@@ -2,23 +2,23 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Feb 18 10:18:34 CET 2005
-# Changed: Tue Dec 14 23:43:49 CET 2010
+# Changed: Fri Feb 11 23:54:58 CET 2011
 
 # Commentary:
 #
 # Tested with:
-#   Snd version 11.12 of 15-Dec-10
+#   Snd version 11.13 of 27-Jan-11
 #   ruby 1.8.0 (2003-08-04)
 #   ruby 1.8.7 (2010-08-16 patchlevel 302)
 #   ruby 1.9.2p0 (2010-08-18 revision 29036)
-#   ruby 1.9.3dev (2010-12-15 trunk 30211)
+#   ruby 1.9.3dev (2011-01-26 trunk 30659)
 
 #
 # Reads init file ./.sndtest.rb or ~/.sndtest.rb for global variables,
 # hooks, etc.
 #
 # Example:
-# 
+#
 =begin
 % cat ./.sndtest.rb
 # $VERBOSE = true
@@ -144,7 +144,7 @@ if $with_test_nogui
   # FIXME
   # snd-nogui.c defines "in"
   alias call_in in
-  
+
   x_bounds_value = [0.0, 0.1]
   make_proc_with_setter(:x_bounds,
                         Proc.new do |*args| x_bounds_value end,
@@ -155,21 +155,21 @@ if $with_test_nogui
                         Proc.new do |*args| y_bounds_value end,
                         Proc.new do |bounds, *args| y_bounds_value = bounds end)
 
-  # 
+  #
   # FIXME
-  # 
+  #
   # For ruby18 it's important to define Procs with arity 0 in this way:
-  # 
+  #
   #     Proc.new do | | enved_filter_value end
   # or  Proc.new do enved_filter_value end
   # or  lambda do enved_filter_value end
-  #   
+  #
   # but not
-  # 
+  #
   #     lambda do | | enved_filter_value end
   #
   # Otherwise we can't correctly determine the arity in test 28.
-  # 
+  #
   enved_filter_value = true
   make_proc_with_setter(:enved_filter,
                         Proc.new do | | enved_filter_value end,
@@ -179,13 +179,12 @@ if $with_test_nogui
   make_proc_with_setter(:graph_cursor,
                         Proc.new do | | graph_cursor_value end,
                         Proc.new do |val| graph_cursor_value = val end)
-  
 
   enved_envelope_value = nil
   make_proc_with_setter(:enved_envelope,
                         Proc.new do | | enved_envelope_value end,
                         Proc.new do |val| enved_envelope_value = val end)
-  
+
   colormap_value = $hot_colormap
   make_proc_with_setter(:colormap,
                         Proc.new do | | colormap_value end,
@@ -292,16 +291,21 @@ Snd.add_sound_path(Dir.pwd)
 $test_functions = Array.new
 
 def main_test
-  $tests.times do |i|
-    $clmtest = i
-    start_snd_test(i + 1)
-    $test_functions.each do |func|
-      before_test(func)
-      snd_func(func)
-      after_test(func)
-    end
-    finish_snd_test(i + 1)
+  start_snd_test()
+  if false
+    # FIXME
+    # Instead of rand() one can use different command lines:
+    # snd -noinit snd-test.rb 3 2 1
+    # snd -noinit snd-test.rb 1 3 2
+    # etc.
+    $test_functions.rand!
   end
+  $test_functions.each do |func|
+    before_test(func)
+    snd_func(func)
+    after_test(func)
+  end
+  finish_snd_test()
   clear_test_files
   exit(0)
 end
@@ -701,16 +705,16 @@ class Snd_test_time
   def to_s
     format("real: %1.3f, user: %1.3f, system: %1.3f", @real, @utime, @stime)
   end
-  
+
   def inspect
     format("#<%s: %s>", self.class, self.to_s)
   end
-  
+
   def start
     @real_time    = Time.now
     @process_time = process_times
   end
-  
+
   def stop
     @real = Time.now - @real_time
     cur_time = process_times
@@ -730,7 +734,7 @@ def with_time(msg = nil, &body)
   [stt.real, stt.utime, stt.stime]
 end
 
-def start_snd_test(n = 1)
+def start_snd_test()
   # map_chan* procedure
   $init_channel  = lambda do |y| 1.0 end
   $default_srate = 22050.0
@@ -750,14 +754,12 @@ def start_snd_test(n = 1)
   snd_info("===  Snd version: %s (snd_%s)", snd_version, kind)
   snd_info("=== Ruby version: %s (%s) [%s]", RUBY_VERSION, RUBY_RELEASE_DATE, RUBY_PLATFORM)
   snd_info("")
-  snd_info("%s%s",
-           Time.now.localtime.strftime("%a %d-%b-%Y %I:%M %p %Z"),
-           ($tests > 1) ? format(" (%d of %d)", n, $tests) : "")
+  snd_info("%s", Time.now.localtime.strftime("%a %d-%b-%Y %I:%M %p %Z"))
   snd_info("")
   $overall_start_time = Snd_test_time.new
 end
 
-def finish_snd_test(n = 1)
+def finish_snd_test()
   $overall_start_time.stop
   Snd.regions.apply(:forget_region)
   set_view_files_sort(0)
@@ -771,7 +773,7 @@ def finish_snd_test(n = 1)
   end
   snd_info("total   %s\n", $overall_start_time.inspect)
   set_show_listener(true)
-  save_listener(format("test-ruby.%02d.output", n))
+  save_listener("test-ruby.output")
   clear_listener
   set_show_listener(true)
   set_listener_prompt($original_prompt)
@@ -981,7 +983,7 @@ if $with_test_motif
       Rset_count(e, 0)
       RXSendEvent(dpy, window, false, RExposureMask, e)
     end
-    
+
     def click_event(widget, button, state, x, y)
       e = RXEvent(RButtonPress)
       dpy = RXtDisplay(widget)
@@ -1010,7 +1012,7 @@ if $with_test_motif
       end
       err
     end
-    
+
     def drag_event(widget, button, state, x0, y0, x1, y1)
       e = RXEvent(RButtonPress)
       e1 = RXEvent(RMotionNotify)
@@ -1136,7 +1138,7 @@ if $with_test_motif
       RXtManageChild(wid)
       RXtVaSetValues(wid, [RXmNpaneMinimum, 5, RXmNpaneMaximum, 1000])
     end
-    
+
     def force_event
       app = main_widgets.car
       msk = RXtIMXEvent | RXtIMAlternateInput
@@ -1219,12 +1221,12 @@ Tiny_font_string = $with_test_motif ? "6x12" : $with_test_gtk ? "Sans 8" : "9x15
 Tiny_font_set_string = $with_test_motif ? "9x15" : $with_test_gtk ? "Monospace 10" : "6x12"
 
 # FIXME
-# 
+#
 # temp_dir
 # save_dir
 # ladspa_dir
 # peak_env_dir
-# 
+#
 # These variables default to NULL (snd.c/snd-0.h).
 # snd-test.scm checks for #f
 # snd-test.rb  checks for ""
@@ -1346,7 +1348,7 @@ def test_00
    [:Mus_soundfont, 26],
    [:Mus_rf64, 4],
    [:Mus_caff, 60],
-   # 
+   #
    [:Mus_interp_none, 0],
    [:Mus_interp_linear, 1],
    [:Mus_interp_sinusoidal, 2],
@@ -1501,7 +1503,7 @@ def test_00
     snd_test_neq(set_snd_func(sym, snd_func(sym)), req, "set_%s", sym)
   end
   set_temp_dir(old_dir)
-  # 
+  #
   set_max_transform_peaks(-123)
   set_zero_pad(-123)
   [[:max_transform_peaks, 100],
@@ -1549,7 +1551,7 @@ def test_01
       end
     end
   end
-  # 
+  #
   old_dir = temp_dir
   set_temp_dir(false)
   [["amp_control", without_errors do amp_control() end, :no_such_sound],
@@ -1575,7 +1577,7 @@ def test_01
    ["contrast_control?", without_errors do contrast_control?() end, :no_such_sound],
    ["cursor_follows_play", cursor_follows_play(), false],
    ["cursor_location_offset", cursor_location_offset(), 0],
-   ["cursor_size", cursor_size(), 15], 
+   ["cursor_size", cursor_size(), 15],
    ["cursor_style", cursor_style(), Cursor_cross],
    ["cursor_update_interval", cursor_update_interval(), 0.05],
    ["dac_combines_channels", dac_combines_channels(), true],
@@ -2003,7 +2005,7 @@ def test_02
   test_headers("tomf8.aud", 1, 8000, 2.016000, "INRS", "little endian short (16 bits)")
   test_headers("Xhs001x.nsp", 1, 10000, 6.017400, "CSL", "little endian short (16 bits)")
   test_headers("zulu_a4.w11", 1, 33000, 1.21987879276276, "TX-16W", "unknown", 23342, 40042)
-  # 
+  #
   name = "forest.aiff"
   with_file(name) do |file|
     snd_test_neq(mus_sound_mark_info(file),
@@ -2029,7 +2031,7 @@ def test_03
     set_temp_dir(old_val)
   end
   snd_test_neq(sample(1000), 0.0328, "sample 1000")
-  # 
+  #
   [$output_name_hook,
    $output_comment_hook,
    $peak_env_hook,
@@ -2062,7 +2064,7 @@ def test_03
       snd_display("%d: %s?", i, h.inspect)
     end
   end
-  # 
+  #
   if $with_test_gui
     old_ctrl = show_controls
     set_show_controls(true)
@@ -2075,7 +2077,7 @@ def test_03
     snd_test_neq(enved_envelope, req, "set_enved_envelope to self")
     set_show_controls(old_ctrl)
   end
-  # 
+  #
   gui_lst = [[:color_cutoff, 0.003, 0.01],
              [:color_inverted, true, false],
              [:color_scale, 1.0, 0.5],
@@ -2297,7 +2299,7 @@ def test_03
     snd_test_neq(color_scale, 100.0, "color_scale")
     set_color_scale(old_val)
   end
-  # 
+  #
   if proc?(search_procedure)
     snd_display("global search procedure: %s?", search_procedure.inspect)
   end
@@ -2324,7 +2326,7 @@ def test_03
     snd_display("set global search procedure: %s?", search_procedure.inspect)
   end
   set_search_procedure(false)
-  # 
+  #
   if $with_test_gui
     old_val = enved_filter_order
     set_enved_filter_order(5)
@@ -2344,14 +2346,14 @@ def test_03
   kernel_global_variables = Kernel.global_variables
   # FIXME
   # from original snd-test.scm list removed or changed:
-  # 
+  #
   # :add_clm_field (run.c)
   # :run           (macro in run.c)
   # :file2string   (Scheme specific in snd-utils.c)
   # :redo          (Ruby statement)
   #
   # :in replaced by :call_in
-  # 
+  #
   [:snd_opened_sound, :abort, :add_colormap, :add_directory_to_view_files_list,
    :add_file_filter, :add_file_sorter, :add_file_to_view_files_list, :add_mark, :add_player,
    :add_sound_file_extension, :add_source_file_extension, :add_to_main_menu, :add_to_menu,
@@ -2623,20 +2625,6 @@ ensure
   mus_sound_close_input(sound_fd)
 end
 
-class Vct
-  def out_samps(beg, chan)
-    self.each_with_index do |val, i|
-      out_any(beg + i, val, chan)
-    end
-  end
-
-  def out_samps_invert(beg, chan)
-    self.each_with_index do |val, i|
-      out_any(beg + i, -val, chan)
-    end
-  end
-end
-
 def frame2byte(file, frame)
   mus_sound_data_location(file) + mus_sound_chans(file) * mus_sound_datum_size(file) * frame
 end
@@ -2731,13 +2719,13 @@ def test_04_00
   snd_test_neq(frm, Mus_bdouble_unscaled, "mus_header_raw_defaults format")
   set_mus_header_raw_defaults(old_val)
   #
-  snd_test_neq("15-Oct 04:34",
-               Time.at(mus_sound_write_date(oboe_snd)).localtime.strftime("%d-%b %H:%M"),
+  snd_test_neq(Time.at(mus_sound_write_date(oboe_snd)).localtime.strftime("%d-%b %H:%M"),
+               "15-Oct 04:34",
                "mus_sound_write_date oboe.snd")
-  snd_test_neq("01-Jul 13:06",
-               Time.at(mus_sound_write_date("pistol.snd")).localtime.strftime("%d-%b %H:%M"),
+  snd_test_neq(Time.at(mus_sound_write_date("pistol.snd")).localtime.strftime("%d-%b %H:%M"),
+               "01-Jul 13:06",
                "mus_sound_write_date pistol.snd")
-  # 
+  #
   ind = open_sound(oboe_snd)
   lfname = "test" + "-test" * 10 + ".snd"
   if variable_graph?(ind)
@@ -2757,7 +2745,7 @@ def test_04_00
   end
   save_sound_as(lfname, ind)
   close_sound(ind)
-  # 
+  #
   ind = open_sound(lfname)
   unless sound?(ind)
     snd_display("cannot find test...snd")
@@ -2771,32 +2759,38 @@ def test_04_00
   close_sound(ind)
   mus_sound_forget(lfname)
   delete_file(lfname)
-  # 
+  #
+  with_file("forest.aiff") do |fsnd|
+    file_copy("fsnd", "fmv.snd")
+    ind = open_sound("fmv.snd")
+    snd_test_neq(sound_loop_info(ind), mus_sound_loop_info(fsnd), "loop_info")
+    set_sound_loop_info(ind, [12000, 14000, 1, 2, 3, 4])
+    snd_test_neq(sound_loop_info(ind), [12000, 14000, 1, 2, 3, 4, 1, 1], "set_loop_info")
+    save_sound_as("fmv1.snd", ind, Mus_aifc)
+    close_sound(ind)
+    snd_test_neq(mus_sound_loop_info("fmv1.snd"), [12000, 14000, 1, 2, 3, 4, 1, 1], "saved loop_info")
+  end
+  #
   ind = open_sound(oboe_snd)
   save_sound_as("fmv.snd", ind, Mus_aifc)
   close_sound(ind)
   ind = open_sound("fmv.snd")
   snd_test_neq(sound_loop_info(ind), nil, "null loop_info")
   set_sound_loop_info(ind, [1200, 1400, 4, 3, 2, 1])
-  snd_test_neq(sound_loop_info(ind),
-               [1200, 1400, 4, 3, 2, 1, 1, 1],
-               "set null loop_info")
+  snd_test_neq(sound_loop_info(ind), [1200, 1400, 4, 3, 2, 1, 1, 1], "set null loop_info")
   save_sound_as("fmv1.snd", :sound, ind, :header_type, Mus_aifc)
   close_sound(ind)
-  snd_test_neq(mus_sound_loop_info("fmv1.snd"),
-               [1200, 1400, 4, 3, 2, 1, 1, 1],
-               "saved null loop_info")
+  snd_test_neq(mus_sound_loop_info("fmv1.snd"), [1200, 1400, 4, 3, 2, 1, 1, 1], "saved null loop_info")
   ind = open_sound("fmv.snd")
   set_sound_loop_info(ind, [1200, 1400, 4, 3, 2, 1, 1, 0])
-  snd_test_neq(sound_loop_info(ind),
-               [1200, 1400, 0, 0, 2, 1, 1, 0],
-               "set null loop_info (no mode1)")
+  snd_test_neq(sound_loop_info(ind), [1200, 1400, 0, 0, 2, 1, 1, 0], "set null loop_info (no mode1)")
   save_sound_as("fmv1.snd", ind, Mus_aifc)
   close_sound(ind)
-  snd_test_neq(mus_sound_loop_info("fmv1.snd"),
-               [1200, 1400, 0, 0, 2, 1, 1, 0],
-               "saved null loop_info (no mode1)")
-  # 
+  snd_test_neq(mus_sound_loop_info("fmv1.snd"), [1200, 1400, 0, 0, 2, 1, 1, 0], "saved null loop_info (no mode1)")
+  #
+  unless com.empty?
+    snd_display("oboe: mus_sound_comment: %s", com.inspect)
+  end
   [["nasahal8.wav", "ICRD: 1997-02-22\nIENG: Paul R. Roger\nISFT: Sound Forge 4.0\n"],
    ["8svx-8.snd",  "File created by Sound Exchange  "],
    ["sun-16-afsp.snd", "AFspdate:1981/02/11 23:03:34 UTC"],
@@ -2824,39 +2818,39 @@ def test_04_00
   end
   if $clmtest.zero?
     snd_test_neq(mal[1], 0.14724, "oboe: mus_sound_maxamp")
-    snd_test_neq(mal[0], 24971, "oboe: mus_sound_maxamp at")
+    snd_test_neq(mal[0], 24971, "oboe: mus_sound_maxamp at %d", mal[0])
   end
   set_mus_sound_maxamp(oboe_snd, [1234, 0.5])
   mal = mus_sound_maxamp(oboe_snd)
   snd_test_neq(mal[1], 0.5, "oboe: set_mus_sound_maxamp")
-  snd_test_neq(mal[0], 1234, "oboe: set_mus_sound_maxamp at")
+  snd_test_neq(mal[0], 1234, "oboe: set_mus_sound_maxamp at %d", mal[0])
   #
   mal = mus_sound_maxamp("4.aiff")
   if $clmtest.zero?
     snd_test_neq(mal,
-                 [810071, 0.245, 810071, 0.490, 810071, 0.735, 810071, 0.980].to_vct,
+                 vct(810071, 0.245, 810071, 0.490, 810071, 0.735, 810071, 0.980),
                  "mus_sound_maxamp 4.aiff")
   end
   set_mus_sound_maxamp("4.aiff", [12345, 0.5, 54321, 0.2, 0, 0.1, 9999, 0.01])
   snd_test_neq(mus_sound_maxamp("4.aiff"),
-               [12345, 0.5, 54321, 0.2, 0, 0.1, 9999, 0.01].to_vct,
+               vct(12345, 0.5, 54321, 0.2, 0, 0.1, 9999, 0.01),
                "set_mus_sound_maxamp 4.aiff")
-  # 
+  #
   if (res = Snd.catch do set_mus_sound_maxamp(oboe_snd, [1234]) end).first != :wrong_type_arg
     snd_display("set_mus_sound_maxamp bad arg: %s?", res.inspect)
   end
   res = mus_sound_type_specifier(oboe_snd)
   if res != 0x646e732e and # little endian reader
       res != 0x2e736e64    # big endian reader
-    snd_display("oboe: mus_sound_type_specifier: %x?", res)
+    snd_display("oboe: mus_sound_type_specifier: 0x%x?", res)
   end
   #
-  snd_test_neq("15-Oct-2006 04:34",
-               Time.at(file_write_date(oboe_snd)).localtime.strftime("%d-%b-%Y %H:%M"),
+  snd_test_neq(Time.at(file_write_date(oboe_snd)).localtime.strftime("%d-%b-%Y %H:%M"),
+               "15-Oct-2006 04:34",
                "file_write_date oboe.snd")
   play_sound_1(oboe_snd)
   mus_sound_forget(oboe_snd)
-  # 
+  #
   lasth = 1
   until mus_header_type_name(lasth) == "unsupported"
     lasth += 1
@@ -2871,14 +2865,12 @@ def test_04_00
   if lasth < 10
     snd_display("data_format[%d] == %s?", lasth, mus_data_format_name(lasth))
   end
-  if $with_test_gui
-    [:Dont_normalize,
-     :Normalize_globally,
-     :Normalize_by_channel].each do |val_sym|
-      req = Module.const_get(val_sym)
-      set_transform_normalization(req)
-      snd_test_neq(transform_normalization, req, "set_transform_normalization(%s)", val_sym)
-    end
+  [:Dont_normalize,
+   :Normalize_globally,
+   :Normalize_by_channel].each do |val_sym|
+    req = Module.const_get(val_sym)
+    set_transform_normalization(req)
+    snd_test_neq(transform_normalization, req, "set_transform_normalization(%s)", val_sym)
   end
   #
   ind = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 1, "set_samples test", 100)
@@ -2886,7 +2878,7 @@ def test_04_00
   snd_test_neq(channel2vct(0, 20, ind, 0),
                vct(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 0.1, 0.1, 0, 0, 0, 0, 0, 0, 0),
                "1 set samples 0 for 0.1")
-  set_samples(20, 3, Vct.new(3, 0.1))
+  set_samples(20, 3, Vct.new(3, 0.1), ind, 0)
   snd_test_neq(channel2vct(10, 20, ind, 0),
                vct(0.1, 0.1, 0.1, 0, 0, 0, 0, 0, 0, 0, 0.1, 0.1, 0.1, 0, 0, 0, 0, 0, 0, 0),
                "2 set samples 10 for 0.1")
@@ -2937,6 +2929,7 @@ def test_04_00
   snd_test_neq(frames(ind, 0), 10, "11 set samples truncate")
   revert_sound(ind)
   delete_file("fmv1.snd")
+  #
   if (res = Snd.catch do set_samples(0, 10, "fmv1.snd", ind, 0) end).first != :no_such_file
     snd_display("set samples, no such file: %s", res.inspect)
   end
@@ -2947,12 +2940,12 @@ def test_04_00
   if (res = Snd.catch do
         set_samples(0, 10, "fmv1.snd", ind, 0, false, "another name", 1)
       end).first != :no_such_channel
-    snd_display("set samples, no such channel: %s", res.inspect)
+    snd_display("set samples no such channel: %s", res.inspect)
   end
   if (res = Snd.catch do
         set_samples(0, 10, "fmv1.snd", ind, 0, false, "another name", -1)
       end).first != :no_such_channel
-    snd_display("set samples, no such channel (-1): %s", res.inspect)
+    snd_display("set samples no such channel (-1): %s", res.inspect)
   end
   if (res = Snd.catch do set_samples(0, -10, "fmv1.snd") end).first != :wrong_type_arg
     snd_display("set samples (-10): %s", res.inspect)
@@ -2961,7 +2954,7 @@ def test_04_00
     snd_display("set samples (beg -10): %s", res.inspect)
   end
   close_sound(ind)
-  # 
+  #
   len = 100
   [[Mus_bshort,  2 ** -15],
    [Mus_lshort,  2 ** -15],
@@ -3019,13 +3012,13 @@ def test_04_00
     end
     close_sound(ind)
   end
-  # 
+  #
   ob = view_sound(oboe_snd)
   samp = sample(1000, ob)
   old_comment = mus_sound_comment(oboe_snd)
   str = format("written %s", Time.now.localtime.strftime("%a %d-%b-%Y %H:%M %Z"))
   set_comment(ob, str)
-  # 
+  #
   check_it = lambda do |snd, type, fmt|
     snd_test_neq(header_type(snd), type, "save_as %s", mus_header_type_name(type))
     ntyp = mus_sound_header_type("test.snd")
@@ -3043,12 +3036,13 @@ def test_04_00
                  mus_data_format_name(nfmt))
     snd_test_neq(sample(1000, snd), samp, "%s[1000]", mus_header_type_name(type))
   end
-  # 
+  #
   if (tag = Snd.catch do
         save_sound_as("test.snd", ob, Mus_aifc, Mus_bdouble)
       end).first == :cannot_save
     snd_display("save_sound_as test.snd write trouble: %s", tag)
   end
+  #
   set_filter_control_in_hz(true)
   ab = open_sound("test.snd")
   check_it.call(ab, Mus_aifc, Mus_bdouble)
@@ -3058,31 +3052,25 @@ def test_04_00
   snd_test_neq(mus_sound_comment(oboe_snd), old_comment, "set_comment overwrote current")
   set_filter_control_in_hz(false)
   #
-  # FIXME
-  # preserve raw defaults for $clmtest > 0
-  old_val = mus_header_raw_defaults
   save_sound_as("test.snd", ob, Mus_raw)
   ab = open_raw_sound("test.snd", 1, 22050, Mus_bshort)
   check_it.call(ab, Mus_raw, Mus_bshort)
   close_sound(ab)
-  set_mus_header_raw_defaults(old_val)
-  # 
+  #
   save_sound_as("test.snd", ob, Mus_nist, Mus_bint)
   ab = open_sound("test.snd")
   check_it.call(ab, Mus_nist, Mus_bint)
   close_sound(ab)
-  # 
+  #
   $output_comment_hook.reset_hook!
   $output_comment_hook.add_hook!("snd-test-4") do |string|
     string + " [written by me]"
   end
-  save_sound_as("test.snd", ob, Mus_riff, Mus_lfloat)
+  save_sound_as(:file, "test.snd", :sound, ob, :header_type, Mus_riff, :data_format, Mus_lfloat)
   $output_comment_hook.reset_hook!
   ab = open_sound("test.snd")
   check_it.call(ab, Mus_riff, Mus_lfloat)
-  if (res = comment(ab)) != (str + " [written by me]")
-    snd_display("output_comment_hook: %s\n(%s)?", res, mus_sound_comment("test.snd"))
-  end
+  snd_test_neq(comment(ab), str + " [written by me]", "output_comment_hook")
   close_sound(ab)
   [[Mus_aiff,  Mus_b24int],
    [Mus_ircam, Mus_mulaw],
@@ -3106,18 +3094,16 @@ def test_04_00
   frm = data_format(ab)
   snd_test_neq(frm, Mus_lshort, "set_data_format %s", mus_data_format_name(frm))
   snd_test_neq(y_bounds(ab, 0), [-3.0, 3.0], "set data format y_bounds")
-  if $with_test_gui
-    set_y_bounds([2.0], ab, 0)
-    snd_test_neq(y_bounds(ab, 0), [-2.0, 2.0], "set data format y_bounds 2")
-    set_y_bounds([-2.0], ab, 0)
-    snd_test_neq(y_bounds(ab, 0), [-2.0, 2.0], "set data format y_bounds -2")
-  end
+  set_y_bounds([2.0], ab, 0)
+  snd_test_neq(y_bounds(ab, 0), [-2.0, 2.0], "set data format y_bounds 1")
+  set_y_bounds([-2.0], ab, 0)
+  snd_test_neq(y_bounds(ab, 0), [-2.0, 2.0], "set data format y_bounds -2")
   set_header_type(ab, Mus_aifc)
   if find_sound("test.snd") != ab
     ab = find_sound("test.snd")
   end
   type = header_type(ab)
-  snd_test_neq(type, Mus_aifc, "set_header_type %s?", mus_header_type_name(type))
+  snd_test_neq(type, Mus_aifc, "set_header_type %s", mus_header_type_name(type))
   set_channels(ab, 3)
   if find_sound("test.snd") != ab
     ab = find_sound("test.snd")
@@ -3141,12 +3127,12 @@ def test_04_00
   end
   snd_test_neq(srate(ab), 12345, "set_srate")
   close_sound(ab)
-  # 
+  #
   save_sound_as("test.snd", ob, Mus_next, Mus_bfloat)
   ab = open_sound("test.snd")
   check_it.call(ab, Mus_next, Mus_bfloat)
   close_sound(ab)
-  # 
+  #
   save_sound_as("test.snd", ob, Mus_next, Mus_bshort)
   close_sound(ob)
   ab = open_sound("test.snd")
@@ -3211,24 +3197,28 @@ def test_04_00
     close_sound(snd)
   end
   close_sound(ind)
-  # 
+  #
   [["t15.aiff", [[132300, 0.148], [132300, 0.126]]],
    ["M1F1-float64C-AFsp.aif", [[8000, -0.024], [8000, 0.021]]]].each do |f, vals|
     with_file(f) do |fsnd|
       ind = open_sound(fsnd)
       chn = -1
-      if vals.detect do |val| chn += 1; fneq(sample(val[0], ind, chn), val[1]) end
+      if vals.detect do |val|
+          chn += 1
+          fneq(sample(val[0], ind, chn), val[1])
+        end
         snd_display("%s trouble[%s]: %s",
                     fsnd,
                     chn,
-                    vals.map_with_index do |val, i| sample(val[0], ind, i) end)
+                    vals.map_with_index do |val, i|
+                      sample(val[0], ind, i)
+                    end)
       end
       close_sound(ind)
     end
   end
-  # 
-  [
-   ["bad_chans.snd", [0, 22050, 0]],
+  #
+  [["bad_chans.snd", [0, 22050, 0]],
    ["bad_srate.snd", [1, 0, 0]],
    ["bad_data_format.snd", [1, 22050, 4411]],
    ["bad_chans.aifc", [0, 22050, 0]],
@@ -3250,7 +3240,7 @@ def test_04_00
       end
     end
   end
-  # 
+  #
   ind = open_sound("/usr/include/sys/" + Dir.pwd + "/oboe.snd")
   if (not sound?(ind)) or (short_file_name(ind) != "oboe.snd")
     snd_display("open_sound with slashes: %s", ind)
@@ -3281,7 +3271,7 @@ def test_04_00
   end
   close_sound(ind)
   Snd.sounds.apply(:close_sound)
-  # 
+  #
   ob = open_sound(oboe_snd)
   sd = vct2sound_data(channel2vct())
   mx = sound_data_maxamp(sd)
@@ -3290,7 +3280,7 @@ def test_04_00
   snd_test_neq(mx.length, 1, "sound_data_maxamp oboe.snd len")
   snd_test_neq(maxamp(ob, 0), mx[0], "sound_data_maxamp oboe.snd")
   snd_test_neq(sound_data_peak(sd), mx[0], "sound_data_peak oboe.snd")
-  if (res = Snd.catch do set_selected_channel(ob, 1) end).first != :no_such_channel
+  if (res = Snd.catch do set_selected_channel(1) end).first != :no_such_channel
     snd_display("set_selected_channel bad chan: %s?", res)
   end
   if (res = Snd.catch do set_selected_channel(123456, 1) end).first != :no_such_sound
@@ -3315,11 +3305,11 @@ def test_04_00
     snd_display("vct2sound_data set bad chan: %s?", res.inspect)
   end
   close_sound(ob)
-  # 
+  #
   if selected_sound
     snd_display("selected_sound %s %s?", selected_sound, sounds.inspect)
   end
-  # 
+  #
   with_file("a.sf2") do |fsnd|
     fil = open_sound(fsnd)
     loops = soundfont_info(fil)
@@ -3353,7 +3343,7 @@ def test_04_01
   sound_data2vct(sdata, 0, v0)
   snd_test_neq(v0[10], 0.1, "sound_data2vct")
   sound_data2vct(sdata, 0, v1)
-  snd_test_neq(v1[1], 0.01, "sound_data2vct (small)")
+  snd_test_neq(v1[1], 0.01, "sound_data2(small)vct")
   vct2sound_data(v0, sdata, 0)
   snd_test_neq(sound_data_ref(sdata, 0, 10), 0.1, "vct2sound_data")
   snd_test_neq(sdata[0, 10], 0.1, "vct2sound_data applied")
@@ -3363,7 +3353,7 @@ def test_04_01
   if (res = Snd.catch do mus_audio_write(1, make_sound_data(3, 3), 123) end).first != :out_of_range
     snd_display("mus_audio_write bad frames: %s?", res.inspect)
   end
-  # 
+  #
   v0 = make_vct(10)
   vx = make_vct(3)
   sdata2 = SoundData.new(2, 10)
@@ -3373,22 +3363,14 @@ def test_04_01
   end
   sound_data2vct(sdata2, 0, v0)
   sound_data2vct(sdata2, 0, vx)
-  if fneq(v0[1], 0.1)
-    snd_display("sound_data2vct[1]: %s?", v0)
-  end
+  snd_test_neq(v0[1], 0.1, "sound_data2vct[1]")
   sound_data2vct(sdata2, 1, v0)
-  if fneq(v0[1], 0.2)
-    snd_display("sound_data2vct[2]: %s?", v0)
-  end
+  snd_test_neq(v0[1], 0.2, "sound_data2vct[2]")
   vct2sound_data(v0, sdata2, 0)
-  if fneq(res = sdata2[0, 1], 0.2)
-    snd_display("vct2sound_data[2]: %s?", res)
-  end
+  snd_test_neq(sdata2[0, 1], 0.2, "vct2sound_data[2]")
   vct_fill!(v0, 0.3)
   vct2sound_data(v0, sdata2, 1)
-  if fneq(res = sdata2[1, 1], 0.3)
-    snd_display("vct2sound_data[3]: %s?", res)
-  end
+  snd_test_neq(sdata2[1, 1], 0.3, "vct2sound_data[3]")
   vct2sound_data(vx, sdata2, 0)
   mus_sound_write(fd, 0, 99, 1, sdata)
   mus_sound_close_output(fd, 100 * mus_bytes_per_sample(Mus_bshort))
@@ -3396,40 +3378,27 @@ def test_04_01
   mus_sound_close_output(fd, 100 * mus_bytes_per_sample(Mus_bshort))
   fd = mus_sound_open_input(fmv5_snd)
   mus_sound_read(fd, 0, 99, 1, sdata)
-  if fneq(res = sdata[0, 10], 0.1)
-    snd_display("mus_sound_write: %s", res)
-  end
+  snd_test_neq(sdata[0, 10], 0.1, "mus_sound_write")
   pos = mus_sound_seek_frame(fd, 20)
-  f2b_pos = frame2byte(fmv5_snd, 20)
-  if f2b_pos != pos
-    snd_display("2 mus_sound_seek_frame: %s %s?", pos, f2b_pos)
-  end
+  # FIXME
+  # IO.open(fd).pos doesn't work
+  # snd_test_neq(IO.open(fd).pos, pos, "1 mus_sound_seek_frame")
+  snd_test_neq(frame2byte(fmv5_snd, 20), pos, "2 mus_sound_seek_frame")
   mus_sound_read(fd, 0, 10, 1, sdata)
-  if fneq(res = sdata[0, 0], 0.2)
-    snd_display("2 mus_sound_seek: %s?", res)
-  end
+  snd_test_neq(sdata[0, 0], 0.2, "2 mus_sound_seek")
   mus_sound_close_input(fd)
   #
   sd = make_sound_data(2, 10)
   vct2sound_data(Vct.new(10, 0.25), sd, 0)
   vct2sound_data(Vct.new(10, 0.50), sd, 1)
   sound_data_scale!(sd, 2.0)
-  unless vequal(res = sound_data2vct(sd, 0), Vct.new(10, 0.5))
-    snd_display("sound_data_scale! chan 0: %s?", res)
-  end
-  unless vequal(res = sound_data2vct(sd, 1), Vct.new(10, 1.0))
-    snd_display("sound_data_scale! chan 1: %s?", res)
-  end
+  snd_test_neq(sound_data2vct(sd, 0), Vct.new(10, 0.5), "sound_data_scale! chan 0")
+  snd_test_neq(sound_data2vct(sd, 1), Vct.new(10, 1.0), "sound_data_scale! chan 1")
   sd = make_sound_data(2, 10)
   sound_data_fill!(sd, 2.0)
-  unless vequal(res = sound_data2vct(sd, 0), Vct.new(10, 2.0))
-    snd_display("sound_data_fill! chan 0: %s?", res)
-  end
-  unless vequal(res = sound_data2vct(sd, 1), Vct.new(10, 2.0))
-    snd_display("sound_data_fill! chan 1: %s?", res)
-  end
-  # 
-  delete_file(fmv5_snd)
+  snd_test_neq(sound_data2vct(sd, 0), Vct.new(10, 2.0), "sound_data_fill! chan 0")
+  snd_test_neq(sound_data2vct(sd, 1), Vct.new(10, 2.0), "sound_data_fill! chan 1")
+  #
   if (res = Snd.catch do
         mus_sound_open_output("fmv.snd", 22050, -1, Mus_bshort, Mus_aiff, "no comment")
       end).first != :out_of_range
@@ -3460,7 +3429,14 @@ def test_04_01
       end).first != :out_of_range
     snd_display("mus_sound_reopen_output bad type: %s?", res)
   end
-  delete_file("fmv.snd")
+  #
+  sd = SoundData.new(2, 10)
+  sd.fill!(1.0)
+  snd_test_neq(sound_data2vct(sd, 0), Vct.new(10, 1.0), "sd.fill! chan 0")
+  snd_test_neq(sound_data2vct(sd, 1), Vct.new(10, 1.0), "sd.fill! chan 1")
+  sd1 = sd.dup
+  snd_test_neq(sd1, sd, "sd.dup (copy)")
+  #
   ["trunc.snd",
    "trunc.aiff",
    "trunc.wav",
@@ -3468,13 +3444,11 @@ def test_04_01
    "trunc.voc",
    "trunc.nist",
    "bad.wav",
-   "badform.aiff",
-   "trunc1.aiff"].each do |file|
+   "trunc1.aiff",
+   "badform.aiff"].each do |file|
     with_file(file) do |fsnd|
       res = Snd.catch do open_sound(fsnd) end
-      if res.first != :mus_error
-        snd_display("open_sound %s: %s", file, res)
-      end
+      snd_test_neq(res.first, :mus_error, "open_sound %s", file)
     end
   end
   $open_raw_sound_hook.add_hook!("snd-test-044") do |file, choice| [1, 22050, Mus_bshort] end
@@ -3495,26 +3469,69 @@ def test_04_01
     close_sound(ind)
   end
   $open_raw_sound_hook.reset_hook!
+  #
   sd1 = SoundData.new(1, 32)
   sd2 = SoundData.new(2, 64)
-  32.times do |i| sd1[0, i] = i * 0.01 end
+  32.times do |i|
+    sd1[0, i] = i * 0.01
+  end
   64.times do |i|
     sd2[0, i] = i * 0.1
     sd2[1, i] = i * 0.2
   end
   sound_data2sound_data(sd2, sd1, 3, 6, 32)
-  [[0, 0.0], [2, 0.02], [3, 0.0], [6, 0.3], [10, 0.1]].each do |idx, val|
-    if fneq(res = sd1[0, idx], val)
-      snd_display("sound_data2sound_data %s: %s?", idx, res)
-    end
+  [[0, 0.00],
+   [2, 0.02],
+   [3, 0.00],
+   [6, 0.30],
+   [10, 0.1]].each do |idx, val|
+    snd_test_neq(sd1[0, idx], val, "sound_data2sound_data %d", idx)
   end
   sound_data2sound_data(sd1, sd2, 0, 10, 32)
-  if fneq(res = sd2[0, 5], 0.2)
-    snd_display("sound_data2sound_data 2 5: %s?", res)
+  snd_test_neq(sd2[0, 5], 0.2, "sound_data2sound_data 2 5")
+  #
+  sdi = SoundData.new(1, 32)
+  sdo = SoundData.new(1, 32)
+  snd_test_neq(sound_data2sound_data(sdi, sdo, 10, 32, 10),  2, "sound_data2sound_data wrap around")
+  snd_test_neq(sound_data2sound_data(sdi, sdo, 10, 32, 32), 10, "sound_data2sound_data wrap around")
+  if (res = Snd.catch do
+        sound_data2sound_data(sdi, sdo, -1, 10, 10)
+      end).first != :out_of_range
+    snd_display("sound_data2sound_data start: %s", res)
   end
+  if (res = Snd.catch do
+        sound_data2sound_data(sdi, sdo, 0, -1, 10)
+      end).first != :out_of_range
+    snd_display("sound_data2sound_data frames: %s", res)
+  end
+  if (res = Snd.catch do
+        sound_data2sound_data(sdi, sdo, 0, 128, 10)
+      end).first != :out_of_range
+    snd_display("sound_data2sound_data frames: %s", res)
+  end
+  #
+  sd = SoundData.new(1, 1)
+  snd_test_neq(sd[0, 0], 0.0, "sound_data_ref")
+  sd[0, 0] = 1.0
+  snd_test_neq(sd[0, 0], 1.0, "sound_data_set")
+  sd1 = make_sound_data(1, 1)
+  sound_data_set!(sd1, 0, 0, 1.0)
+  snd_test_neq(sd, sd1, "sound_data_set")
+  #
+  sd = SoundData.new(2, 3)
+  snd_test_neq(sd[0, 0], 0.0, "sound_data_ref (1)")
+  sd[1, 0] = 1.0
+  snd_test_neq(sd[1, 0], 1.0, "sound_data_set (1 0)")
+  sd[1, 2] = 2.0
+  snd_test_neq(sd[1, 2], 2.0, "sound_data_set (1 2)")
+  sd1 = make_sound_data(2, 3)
+  sound_data_set!(sd1, 1, 0, 1.0)
+  sound_data_set!(sd1, 1, 2, 2.0)
+  snd_test_neq(sd, sd1, "sound_data_set (3)")
+  #
 end
 
-def test_04_08
+def test_04_02
   [1, 2, 4, 8].each do |chans|
     [[Mus_bshort, Mus_next],
      [Mus_bfloat, Mus_aifc],
@@ -3544,50 +3561,83 @@ def test_04_08
               else
                 1000
               end
+      delete_file("fmv5.snd")
+      fd = mus_sound_open_output("fmv5.snd", 22050, chans, df, ht, "no, comment")
       sdata = SoundData.new(chans, samps)
       ndata = SoundData.new(chans, samps)
       chans.times do |chn|
-        samps.times do |i| sdata[chn, i] = mus_random(1.0) end
+        samps.times do |i|
+          # FIXME
+          # This leads to v0 = 1.0 != v1 = -1.0 at some places:
+          # sdata[chn, i] = random(2.0) - 1.0
+          sdata[chn, i] = random(1.9999) - 1.0
+        end
       end
-      delete_file("fmv5.snd")
-      fd = mus_sound_open_output("fmv5.snd", 22050, chans, df, ht, "no, comment")
       mus_sound_write(fd, 0, samps - 1, chans, sdata)
       mus_sound_close_output(fd, samps * chans * mus_bytes_per_sample(df))
       fd = mus_sound_open_input("fmv5.snd")
       mus_sound_read(fd, 0, samps - 1, chans, ndata)
       pos = mus_sound_seek_frame(fd, 100)
-      f2b_pos = frame2byte("fmv5.snd", 100)
-      if f2b_pos != pos
-        snd_display("mus_sound_seek_frame(100): chans %s %s %s (%s %s)?",
-                    chans, pos, f2b_pos, mus_header_type_name(ht), mus_data_format_name(df))
-      end
+      # FIXME
+      # IO.open(fd).pos doesn't work
+      # snd_test_neq(IO.open(fd).pos,
+      #              pos,
+      #              "mus_sound_seek_frame(%d) chans %d, (%s %s)",
+      #              pos,
+      #              chans,
+      #              mus_header_type_name(ht),
+      #              mus_data_format_name(df))
+      snd_test_neq(frame2byte("fmv5.snd", 100),
+                   pos,
+                   "mus_sound_seek_frame(100) chans %d, (%s %s)",
+                   chans,
+                   mus_header_type_name(ht),
+                   mus_data_format_name(df))
       mus_sound_close_input(fd)
-      delete_file("fmv5.snd")
-      v0 = v1 = 0.0
-      res = Snd.catch(:read_write_error, lambda do |*args|
-                        snd_display("read_write trouble: %s?", args.inspect)
-                      end) do
+      Snd.catch(:read_write_error, lambda do |*args|
+                  snd_display("read_write trouble: %s %s (%s != %s at [%s, %s])?",
+                              *args.first[2..-1])
+                end) do
         chans.times do |chn|
           samps.times do |i|
-            if fneq(v0 = sdata[chn, i], v1 = ndata[chn, i])
+            v0 = sdata[chn, i]
+            v1 = ndata[chn, i]
+            if fneq(v0, v1)
               Snd.throw(:read_write_error,
-                        mus_data_format_name(df),
-                        mus_header_type_name(ht),
-                        v0, v1)
+                        mus_data_format_name(df), mus_header_type_name(ht), v0, v1, chn, i)
             end
           end
         end
       end
-      if string?(res)
-        snd_display(res)
-      end
-      sdata = nil
-      ndata = nil
     end
   end
 end
 
-def test_04_09
+def test_04_03
+  ind = open_sound("oboe.snd")
+  our_short = little_endian? ? Mus_lshort : Mus_bshort
+  our_srate = 22050
+  our_dac_buffer_size_in_bytes = 512
+  our_dac_buffer_size_in_shorts = 256
+  our_chans = 1
+  our_chan = 0
+  in_sys = 0
+  in_port = Snd.catch(:mus_error, -1) do
+    mus_audio_open_input(0, our_srate, our_chans, our_short, our_dac_buffer_size_in_bytes)
+  end.first
+  data = make_sound_data(our_chans, our_dac_buffer_size_in_shorts)
+  vobj = make_vct(our_dac_buffer_size_in_shorts)
+  if in_port == -1
+    snd_display("cannot open audio input port!")
+  else
+    10.times do
+      mus_audio_read(in_port, data, our_dac_buffer_size_in_shorts)
+      graph(sound_data2vct(data, our_chan, vobj))
+    end
+    mus_audio_close(in_port)
+  end
+  close_sound(ind)
+  #
   fmv = "fmv.snd"
   fd = mus_sound_open_output(fmv, 22050, 1, Mus_bshort, Mus_next, "no comment")
   sdata = SoundData.new(1, 10)
@@ -3600,7 +3650,7 @@ def test_04_09
       fneq(sdata[0, 1], 0.1) or
       fneq(sdata[0, 2], 0.0) or
       fneq(sdata[0, 6], 0.0)
-    snd_display("read/write: %s?", sound_data2list(sdata))
+    snd_display("read/write: %s?", sdata.to_a)
   end
   mus_sound_close_input(fd)
   fd = mus_sound_reopen_output(fmv, 1, Mus_bshort, Mus_next, mus_sound_data_location(fmv))
@@ -3610,13 +3660,14 @@ def test_04_09
   mus_sound_write(fd, 0, 9, 1, sdata)
   mus_sound_close_output(fd, 20)
   fd = mus_sound_open_input(fmv)
-  mus_sound_read(fd, 0, 9, 1, sdata)
-  if fneq(sdata[0, 0], 0.0) or
-      fneq(sdata[0, 1], 0.1) or
-      fneq(sdata[0, 2], 0.1) or
-      fneq(sdata[0, 3], 0.1) or
-      fneq(sdata[0, 6], 0.0)
-    snd_display("read/write: %s?", sound_data2list(sdata))
+  sdata1 = SoundData.new(1, 10)
+  mus_sound_read(fd, 0, 9, 1, sdata1)
+  if fneq(sdata1[0, 0], 0.0) or
+      fneq(sdata1[0, 1], 0.1) or
+      fneq(sdata1[0, 2], 0.1) or
+      fneq(sdata1[0, 3], 0.1) or
+      fneq(sdata1[0, 6], 0.0)
+    snd_display(snd_format_neq(sdata1.to_a, sdata.to_a, "re-read/write"))
   end
   mus_sound_close_input(fd)
   #
@@ -3624,30 +3675,26 @@ def test_04_09
   #
   ind = view_sound("oboe.snd")
   set_clipping(false)
-  map_channel(lambda do |y| y * 10.0 end, 0, frames(ind), ind, 0)
+  map_channel(lambda do |y| y * 10.0 end, 0, frames(), ind, 0)
   save_sound_as("test.snd", ind, Mus_next, Mus_bfloat)
   undo_edit(1, ind, 0)
   ind1 = open_sound("test.snd")
-  if fneq(res1 = maxamp(ind1, 0), res2 = 10.0 * maxamp(ind, 0))
-    snd_display("clipping 0: %s %s?", res1, res2)
-  end
+  snd_test_neq(maxamp(ind1, 0), 10.0 * maxamp(ind, 0), "clipping 0")
   close_sound(ind1)
   delete_file("test.snd")
   #
   set_clipping(true)
-  map_channel(lambda do |y| y * 10.0 end, 0, frames(ind), ind, 0)
+  map_channel(lambda do |y| y * 10.0 end, 0, frames(), ind, 0)
   save_sound_as("test.snd", ind, Mus_next, Mus_bfloat)
   undo_edit(1, ind, 0)
   ind1 = open_sound("test.snd")
-  if fneq(res = maxamp(ind1, 0), 1.0)
-    snd_display("clipping 1: %s %s?", res, maxamp(ind, 0))
-  end
+  snd_test_neq(maxamp(ind1, 0), 1.0, "clipping 1")
   close_sound(ind1)
   delete_file("test.snd")
   #
   set_clipping(false)
   mx = maxamp(ind)
-  map_channel(lambda do |y| y + (1.001 - mx) end, 0, frames(ind), ind, 0)
+  map_channel(lambda do |y| y + (1.001 - mx) end, 0, frames(), ind, 0)
   save_sound_as("test.snd", ind, Mus_next, Mus_bshort)
   ind1 = open_sound("test.snd")
   unless res = scan_channel(lambda do |y| y < 0.0 end)
@@ -3664,6 +3711,7 @@ def test_04_09
   end
   close_sound(ind1)
   delete_file("test.snd")
+  #
   set_clipping(false)
   close_sound(ind)
   delete_file(fmv)
@@ -3683,10 +3731,9 @@ def test_04_09
   save_sound(snd)
   close_sound(snd)
   snd = open_sound("test.snd")
-  unless vequal(res = channel2vct(0, 10),
-                vct(0.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0))
-    snd_display("clipping(false): %s?", res)
-  end
+  snd_test_neq(channel2vct(0, 10),
+               vct(0.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0),
+               "unclipped 1")
   close_sound(snd)
   mus_sound_forget("test.snd")
   #
@@ -3705,10 +3752,9 @@ def test_04_09
   save_sound(snd)
   close_sound(snd)
   snd = open_sound("test.snd")
-  unless vequal(res = channel2vct(0, 10),
-                vct(0.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0))
-    snd_display("clipping(true): %s?", res)
-  end
+  snd_test_neq(channel2vct(0, 10),
+               vct(0.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0),
+               "clipped")
   close_sound(snd)
   #
   data = vct(0.0, 1.0, -1.0, 0.9999, 2.0, -2.0, 1.3, -1.3, 1.8, -1.8)
@@ -3718,10 +3764,9 @@ def test_04_09
   mus_sound_write(snd, 0, 9, 1, sdata)
   mus_sound_close_output(snd, 40)
   snd = open_sound("test.snd")
-  unless vequal(res = channel2vct(0, 10),
-                vct(0.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0))
-    snd_display("mus_file_clipping(false): %s?", res)
-  end
+  snd_test_neq(channel2vct(0, 10),
+               vct(0.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0),
+               "unclipped 2")
   close_sound(snd)
   mus_sound_forget("test.snd")
   #
@@ -3733,13 +3778,11 @@ def test_04_09
   set_mus_file_clipping(snd, false)
   mus_sound_close_output(snd, 40)
   snd = open_sound("test.snd")
-  unless vequal(res = channel2vct(0, 10),
-                vct(0.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0))
-    snd_display("mus_file_clipping(true): %s?", res)
-  end
+  snd_test_neq(channel2vct(0, 10),
+               vct(0.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0),
+               "clipped 1")
   close_sound(snd)
-  mus_sound_forget("test.snd")
-  # 
+  #
   set_mus_clipping(false)
   data = vct(0.0, 1.0, -1.0, 0.9999, 2.0, -2.0, 1.3, -1.3, 1.8, -1.8)
   sdata = vct2sound_data(data)
@@ -3747,10 +3790,9 @@ def test_04_09
   mus_sound_write(snd, 0, 9, 1, sdata)
   mus_sound_close_output(snd, 40)
   snd = open_sound("test.snd")
-  unless vequal(res = channel2vct(0, 10),
-                vct(0.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0))
-    snd_display("mus_clipping(false): %s?", res)
-  end
+  snd_test_neq(channel2vct(0, 10),
+               vct(0.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0),
+               "unclipped 3")
   close_sound(snd)
   mus_sound_forget("test.snd")
   #
@@ -3761,23 +3803,19 @@ def test_04_09
   mus_sound_write(snd, 0, 9, 1, sdata)
   mus_sound_close_output(snd, 40)
   snd = open_sound("test.snd")
-  unless vequal(res = channel2vct(0, 10),
-                vct(0.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0))
-    snd_display("mus_clipping(true): %s?", res)
-  end
+  snd_test_neq(channel2vct(0, 10),
+               vct(0.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0),
+               "clipped 2")
   close_sound(snd)
-  mus_sound_forget("test.snd")
   #
   set_mus_clipping(true)
   data = vct(0.0, 1.0, -1.0, 0.9999, 2.0, -2.0, 1.3, -1.3, 1.8, -1.8)
   sdata = vct2sound_data(data)
   snd = mus_sound_open_output("test.snd", 22050, 1, Mus_lshort, Mus_riff, "a comment")
-  res = Snd.catch do mus_sound_write(snd, 0, 10, 1, sdata) end
-  if !list?(res) || res.car != :out_of_range
+  if (res = Snd.catch do mus_sound_write(snd, 0, 10, 1, sdata) end).first != :out_of_range
     snd_display("mus_sound_write too many bytes: %s", res.inspect)
   end
-  res = Snd.catch do mus_sound_read(snd, 0, 10, 1, sdata) end
-  if !list?(res) || res.car != :out_of_range
+  if (res = Snd.catch do mus_sound_read(snd, 0, 10, 1, sdata) end).first != :out_of_range
     snd_display("mus_sound_read too many bytes: %s", res.inspect)
   end
   mus_sound_close_output(snd, 0)
@@ -3787,7 +3825,7 @@ def test_04_09
   set_clipping(false)
   #
   com = "this is a comment which we'll repeat enough times to trigger an internal loop" * 3
-  mus_sound_open_output(fmv, 22050, 4, Mus_lshort, Mus_riff, com)
+  fd = mus_sound_open_output(fmv, 22050, 4, Mus_lshort, Mus_riff, com)
   sdata = SoundData.new(4, 10)
   4.times do |i| sdata[i, 1] = 0.1 end
   mus_sound_write(fd, 0, 9, 4, sdata)
@@ -3799,7 +3837,7 @@ def test_04_09
         fneq(sdata[i, 1], 0.1) or
         fneq(sdata[i, 2], 0.0) or
         fneq(sdata[i, 6], 0.0)
-      snd_display("read/write[%s]: %s?", i, sound_data_channel2list(sdata, i))
+      snd_display("1 read/write[%d]: %s?", i, sdata.to_vct(i).to_a)
     end
   end
   mus_sound_close_input(fd)
@@ -3812,22 +3850,23 @@ def test_04_09
   mus_sound_write(fd, 0, 9, 4, sdata)
   mus_sound_close_output(fd, 80)
   fd = mus_sound_open_input(fmv)
-  mus_sound_read(fd, 0, 9, 4, sdata)
-  if fneq(sdata[0, 0], 0.0) or
-      fneq(sdata[0, 1], 0.1) or
-      fneq(sdata[0, 2], 0.1) or
-      fneq(sdata[0, 3], 0.1) or
-      fneq(sdata[0, 6], 0.0)
-    snd_display("re-read/write[0]: %s?", sound_data_channel2list(sdata, 0))
+  sdata1 = SoundData.new(4, 10)
+  mus_sound_read(fd, 0, 9, 4, sdata1)
+  4.times do |i|
+    if fneq(sdata1[i, 0], 0.0) or
+        fneq(sdata1[i, 1], 0.1) or
+        fneq(sdata1[i, 2], 0.1) or
+        fneq(sdata1[i, 3], 0.1) or
+        fneq(sdata1[i, 6], 0.0)
+      snd_display(snd_format_neq(sdata1.to_vct(i).to_a, sdata.to_vct(i).to_a,
+                                 "2 re-read/write[%d]", i))
+    end
   end
   mus_sound_close_input(fd)
-  delete_file(fmv)
-  # 
+  #
   with_file("32bit.sf") do |fsnd|
     ind = open_sound(fsnd)
-    if fneq(res = maxamp(ind, 0), 0.228)
-      snd_display("32bit max: %s?", res)
-    end
+    snd_test_neq(maxamp(ind, 0), 0.228, "32bit max")
     close_sound(ind)
   end
   [["next-dbl.snd", 10, 10,
@@ -3890,17 +3929,16 @@ def test_04_09
     vct(0.267, 0.278, 0.309, 0.360, 0.383, 0.414, 0.464, 0.475, 0.486, 0.495)]
   ].each do |file, beg, dur, data|
     with_file(file) do |fsnd|
-      ind = open_sound(fsnd)
-      ndata = channel2vct(beg, dur, ind, 0)
-      unless vequal(data, ndata)
-        snd_display("%s: %s != %s", file, data, ndata)
+      Snd.catch do
+        ind = open_sound(fsnd)
+        snd_test_neq(channel2vct(beg, dur, ind, 0), data, "%s", file)
+        close_sound(ind)
       end
-      close_sound(ind)
     end
   end
 end
 
-def test_04_10
+def test_04_04
   ["no error",
    "no frequency method",
    "no phase method",
@@ -3966,10 +4004,7 @@ def test_04_10
    "read error",
    "no safety method",
    "can't translate"].each_with_index do |err, i|
-    if (res = mus_error_type2string(i)) != err
-      snd_display("mus_error_type2string %s: %s %s?", i, err, res)
-      break
-    end
+    snd_test_neq(err, mus_error_type2string(i), "mus_error_type2string %d", i)
   end
   oboe_snd = "oboe.snd"
   cur_srate = mus_sound_srate(oboe_snd)
@@ -3979,29 +4014,17 @@ def test_04_10
   cur_loc = mus_sound_data_location(oboe_snd)
   cur_samps = mus_sound_samples(oboe_snd)
   set_mus_sound_srate(oboe_snd, cur_srate * 2)
-  if (res = mus_sound_srate(oboe_snd)) != (cur_srate * 2)
-    snd_display("set_mus_sound_srate: %s != %s", cur_srate, res)
-  end
+  snd_test_neq(mus_sound_srate(oboe_snd), cur_srate * 2, "set_mus_sound_srate")
   set_mus_sound_samples(oboe_snd, cur_samps * 2)
-  if (res = mus_sound_samples(oboe_snd)) != (cur_samps * 2)
-    snd_display("set_mus_sound_samples: %s != %s", cur_samps, res)
-  end
+  snd_test_neq(mus_sound_samples(oboe_snd), cur_samps * 2, "set_mus_sound_samples")
   set_mus_sound_chans(oboe_snd, cur_chans * 2)
-  if (res = mus_sound_chans(oboe_snd)) != (cur_chans * 2)
-    snd_display("set_mus_sound_chans: %s != %s", cur_chans, res)
-  end
+  snd_test_neq(mus_sound_chans(oboe_snd), cur_chans * 2, "set_mus_sound_chans")
   set_mus_sound_data_location(oboe_snd, cur_loc * 2)
-  if (res = mus_sound_data_location(oboe_snd)) != (cur_loc * 2)
-    snd_display("set_mus_sound_data_location: %s != %s", cur_loc, res)
-  end
+  snd_test_neq(mus_sound_data_location(oboe_snd), cur_loc * 2, "set_mus_sound_data_location")
   set_mus_sound_header_type(oboe_snd, Mus_nist)
-  if (res = mus_sound_header_type(oboe_snd)) != Mus_nist
-    snd_display("set_mus_sound_header_type: %s != %s", cur_type, res)
-  end
+  snd_test_neq(mus_sound_header_type(oboe_snd), Mus_nist, "set_mus_sound_header_type")
   set_mus_sound_data_format(oboe_snd, Mus_lintn)
-  if (res = mus_sound_data_format(oboe_snd)) != Mus_lintn
-    snd_display("set_mus_sound_data_format: %s != %s", cur_format, res)
-  end
+  snd_test_neq(mus_sound_data_format(oboe_snd), Mus_lintn, "set_mus_sound_data_format")
   set_mus_sound_srate(oboe_snd, cur_srate)
   set_mus_sound_samples(oboe_snd, cur_samps)
   set_mus_sound_chans(oboe_snd, cur_chans)
@@ -4014,7 +4037,9 @@ def test_04_10
   save_sound_as("test.rf64", ind, Mus_rf64)
   save_sound_as("test.aifc", ind, Mus_aifc)
   close_sound(ind)
-  ["test.wave", "test.rf64", "test.aifc"].each do |file|
+  ["test.wave",
+   "test.rf64",
+   "test.aifc"].each do |file|
     cur_srate = mus_sound_srate(file)
     cur_chans = mus_sound_chans(file)
     cur_format = mus_sound_data_format(file)
@@ -4022,29 +4047,17 @@ def test_04_10
     cur_loc = mus_sound_data_location(file)
     cur_samps = mus_sound_samples(file)
     set_mus_sound_srate(file, cur_srate * 2)
-    if (res = mus_sound_srate(file)) != (cur_srate * 2)
-      snd_display("set_mus_sound_srate (%s): %s != %s", file, cur_srate, res)
-    end
+    snd_test_neq(mus_sound_srate(file), cur_srate * 2, "%s set_mus_sound_srate", file)
     set_mus_sound_samples(file, cur_samps * 2)
-    if (res = mus_sound_samples(file)) != (cur_samps * 2)
-      snd_display("set_mus_sound_samples (%s): %s != %s", file, cur_samps, res)
-    end
+    snd_test_neq(mus_sound_samples(file), cur_samps * 2, "%s set_mus_sound_samples", file)
     set_mus_sound_chans(file, cur_chans * 2)
-    if (res = mus_sound_chans(file)) != (cur_chans * 2)
-      snd_display("set_mus_sound_chans (%s): %s != %s", file, cur_chans, res)
-    end
+    snd_test_neq(mus_sound_chans(file), cur_chans * 2, "%s set_mus_sound_chans", file)
     set_mus_sound_data_location(file, cur_loc * 2)
-    if (res = mus_sound_data_location(file)) != (cur_loc * 2)
-      snd_display("set_mus_sound_data_location (%s): %s != %s", file, cur_loc, res)
-    end
+    snd_test_neq(mus_sound_data_location(file), cur_loc * 2, "%s set_mus_sound_data_location", file)
     set_mus_sound_header_type(file, Mus_nist)
-    if (res = mus_sound_header_type(file)) != Mus_nist
-      snd_display("set_mus_sound_header_type (%s): %s != %s", file, cur_type, res)
-    end
+    snd_test_neq(mus_sound_header_type(file), Mus_nist, "%s set_mus_sound_header_type", file)
     set_mus_sound_data_format(file, Mus_lintn)
-    if (res = mus_sound_data_format(file)) != Mus_lintn
-      snd_display("set_mus_sound_data_format (%s): %s != %s", file, cur_format, res)
-    end
+    snd_test_neq(mus_sound_data_format(file), Mus_lintn, "%s set_mus_sound_data_format", file)
     set_mus_sound_srate(file, cur_srate)
     set_mus_sound_samples(file, cur_samps)
     set_mus_sound_chans(file, cur_chans)
@@ -4052,7 +4065,9 @@ def test_04_10
     set_mus_sound_header_type(file, cur_type)
     set_mus_sound_data_format(file, cur_format)
   end
-  ["test.wave", "test.rf64", "test.aifc"].each do |file|
+  ["test.wave",
+   "test.rf64",
+   "test.aifc"].each do |file|
     ind = open_sound(file)
     cur_srate = srate(ind)
     cur_chans = chans(ind)
@@ -4061,40 +4076,30 @@ def test_04_10
     cur_loc = data_location(ind)
     cur_samps = frames(ind)
     set_srate(ind, cur_srate * 2)
-    if (res = srate(ind)) != (cur_srate * 2)
-      snd_display("set_srate (%s): %s != %s", file, cur_srate, res)
-    end
+    snd_test_neq(srate(ind), cur_srate * 2, "%s set_srate", file)
     set_frames(cur_samps * 2, ind)
-    if (res = frames(ind)) != (cur_samps * 2)
-      snd_display("set_samples (%s): %s != %s", file, cur_samps, res)
-    end
+    snd_test_neq(frames(ind), cur_samps * 2, "%s set_frames", file)
     set_chans(ind, cur_chans * 2) # this can change the index
-    ind = find_sound(file)
-    if (res = channels(ind)) != (cur_chans * 2)
-      snd_display("set_channels (%s): %s != %s", file, cur_chans, res)
+    xind = find_sound(file)
+    if ind != xind
+      ind = xind
     end
+    snd_test_neq(chans(ind), cur_chans * 2, "%s set_chans", file)
     set_data_location(ind, cur_loc * 2)
-    if (res = data_location(ind)) != (cur_loc * 2)
-      snd_display("set_data_location (%s): %s != %s", file, cur_loc, res)
-    end
+    snd_test_neq(data_location(ind), cur_loc * 2, "%s set_location", file)
     set_header_type(ind, Mus_nist)
-    if (res = header_type(ind)) != Mus_nist
-      snd_display("set_header_type (%s): %s != %s", file, cur_type, res)
-    end
+    snd_test_neq(header_type(ind), Mus_nist, "%s set_header_type", file)
     set_data_format(ind, Mus_lintn)
-    if (res = data_format(ind)) != Mus_lintn
-      snd_display("set_data_format (%s): %s != %s", file, cur_format, res)
-    end
+    snd_test_neq(data_format(ind), Mus_lintn, "%s set_data_format", file)
     set_srate(ind, cur_srate)
     set_frames(cur_samps, ind)
     set_channels(ind, cur_chans)
     set_data_location(ind, cur_loc)
     set_header_type(ind, cur_type)
     set_data_format(ind, cur_format)
+    close_sound(ind)
+    delete_file(file)
   end
-  # FIXME
-  # In case index has changed on set_chans() above.
-  Snd.sounds.apply(:close_sound)
 end
 
 # FIXME
@@ -4106,43 +4111,30 @@ end
 #   end
 # end
 
-def test_04_11
+$big_file_frames = 0
+
+def test_04_05
   if File.exists?($bigger_snd)
-    if (res = mus_sound_samples($bigger_snd)) != 3175160310
-      snd_display("bigger samples: %s?", res)
-    end
-    if (res = mus_sound_frames($bigger_snd)) != 3175160310
-      snd_display("bigger frames: %s?", res)
-    end
-    if (res = mus_sound_length($bigger_snd)) != 6350320648
-      snd_display("bigger bytes: %s?", res)
-    end
-    if fneq(res = mus_sound_duration($bigger_snd), 71999.1015)
-      snd_display("bigger dur: %s?", res)
-    end
+    # ; silence as last .9 secs, so it probably wasn't written
+    probable_frames = (44100 * 71999.1).floor
+    snd_test_neq(mus_sound_samples($bigger_snd), 3175160310, "bigger samples")
+    snd_test_neq(mus_sound_frames($bigger_snd), 3175160310, "bigger frames")
+    snd_test_neq(mus_sound_frames($bigger_snd), probable_frames, "bigger frames (probable)")
+    snd_test_neq(mus_sound_length($bigger_snd), 6350320648, "bigger length")
+    snd_test_neq(mus_sound_duration($bigger_snd), 71999.1015, "bigger dur")
     ind = open_sound($bigger_snd)
-    if (res = frames(ind)) != 3175160310
-      snd_display("bigger frames: %s?", res)
-    end
-    if (res = frames(ind, 0, 0)) != 3175160310
-      snd_display("bigger edpos-frames: %s?", res)
-    end
+    snd_test_neq(frames(ind), 3175160310, "bigger frames")
+    $big_file_frames = frames(ind)
+    snd_test_neq(frames(ind), probable_frames, "bigger frames (probable)")
+    snd_test_neq(frames(ind, 0, 0), $big_file_frames, "bigger edpos-frames")
     m1 = add_mark(44100 * 50000, ind)
-    if (res = mark_sample(m1)) != 44100 * 50000
-      snd_display("bigger mark at: %s?", res)
-    end
+    snd_test_neq(mark_sample(m1), 44100 * 50000, "bigger mark at")
     set_mark_sample(m1, 44100 * 66000)
-    if (res = mark_sample(m1)) != 44100 * 66000
-      snd_display("bigger mark to: %s?", res)
-    end
+    snd_test_neq(mark_sample(m1), 44100 * 66000, "bigger mark to")
     if mix?(mx = mix_sound("oboe.snd", 44100 * 60000).car)
-      if (res = mix_position(mx)) != 44100 * 60000
-        snd_display("bigger mix at: %s?", res)
-      end
+      snd_test_neq(mix_position(mx), 44100 * 60000, "bigger mix at")
       set_mix_position(mx, 44100 * 61000)
-      if (res = mix_position(mx)) != 44100 * 61000
-        snd_display("bigger mix to: %s?", res)
-      end
+      snd_test_neq(mix_position(mx), 44100 * 61000, "bigger mix to")
       undo_edit(2)
     else
       snd_display("no mix tag from mix_sound: %s?", mx)
@@ -4154,49 +4146,34 @@ def test_04_11
     old_select = selection_creates_region
     set_selection_creates_region(false)
     select_all(ind)
-    if (res1 = selection_frames) != (res2 = frames(ind))
-      snd_display("bigger select_all: %s %s?", res1, res2)
-    end
+    snd_test_neq(selection_frames(), frames(ind), "bigger select all")
     set_selection_position(44100 * 50000)
-    if (res = selection_position) != (44100 * 50000)
-      snd_display("bigger selection_position: %s?", res)
-    end
+    snd_test_neq(selection_position(), 44100 * 50000, "bigger select pos")
     set_selection_position(0)
     set_selection_frames(44100 * 65000)
-    if (res = selection_frames) != (44100 * 65000)
-      snd_display("bigger selection_frames: %s?", res)
-    end
+    snd_test_neq(selection_frames(), 44100 * 65000, "bigger select len")
     set_selection_creates_region(old_select)
     set_cursor(44100 * 50000, ind)
-    if (res = cursor(ind)) != (44100 * 50000)
-      snd_display("bigger cursor: %s?", res)
-    end
+    snd_test_neq(cursor(ind), 44100 * 50000, "bigger cursor")
     m1 = add_mark(44123 * 51234, ind)
-    if (res = mark_sample(m1)) != (44123 * 51234)
-      snd_display("bigger mark at: %s", res)
-    end
+    snd_test_neq(mark_sample(m1), 44123 * 51234, "bigger mark at")
     mid = find_mark(44123 * 51234)
-    unless mid.eql?(m1)
-      snd_display("bigger find_mark: %s %s", mid, m1)
-    end
+    snd_test_neq(mid, m1, "bigger find_mark")
     mx = mix_sound("oboe.snd", 44123 * 51234).car
     mxd = find_mix(44123 * 51234)
-    unless mxd.eql?(mx)
-      snd_display("bigger find_mix: %s %s", mxd, mx)
-    end
+    snd_test_neq(mxd, mx, "bigger find_mix")
     set_cursor(44123 * 51234, ind)
-    if (res = cursor(ind)) != (44123 * 51234)
-      snd_display("bigger cursor 123: %s?", res)
-    end
+    snd_test_neq(cursor(ind), 44123 * 51234, "bigger cursor 123")
     close_sound(ind)
   end
 end
 
-def test_04_12
+def test_04_06
   ind = new_sound("tmp.snd", Mus_riff, Mus_l24int, 22050, 1, :size, 100000)
   old_selection_creates_region = selection_creates_region()
+  set_selection_creates_region(true)
   x = -0.5
-  incr = 1.0 / frames
+  incr = 1.0 / frames()
   map_channel(lambda do |n|
                 val = x
                 x += incr
@@ -4207,40 +4184,60 @@ def test_04_12
   ind = open_sound("tmp.snd")
   reg = select_all
   [[:Mus_next, :Mus_l24int],
-   [:Mus_aifc, :Mus_l24int],
-   [:Mus_next, :Mus_l24int],
-   [:Mus_next, :Mus_bfloat]].each do |ht, df|
+   [:Mus_aifc, :Mus_l24int]].each do |ht, df|
     save_selection("tmp1.snd", Module.const_get(ht), Module.const_get(df))
     ind1 = open_sound("tmp1.snd")
     x = -0.5
-    incr = 1.0 / frames
+    incr = 1.0 / frames()
     err = scan_channel(lambda do |n|
                          val = x
                          x += incr
                          fneq(val, n)
                        end, 0, 100000, ind1)
     if err
-      snd_display("%s (%s) region not saved correctly? %s", df, ht, err)
+      snd_display("%s (%s) selection not saved correctly? %s", df, ht, err)
     end
     close_sound(ind1)
   end
+  save_region(reg, "tmp1.snd", Mus_next, Mus_l24int)
+  ind1 = open_sound("tmp1.snd")
+  x = -0.5
+  incr = 1.0 / frames()
+  err = scan_channel(lambda do |n|
+                       val = x
+                       x += incr
+                       fneq(val, n)
+                     end, 0, 100000, ind1)
+  if err
+    snd_display("Mus_l24int (Mus_next) region not saved correctly? %s", err)
+  end
+  close_sound(ind1)
   delete_file("tmp1.snd")
   close_sound(ind)
   delete_file("tmp.snd")
   set_selection_creates_region(old_selection_creates_region)
+  #
   ind = new_sound("tmp.snd", Mus_next, Mus_bfloat, 22050, 1, :size, 10, :comment, false)
   map_channel($init_channel)
   env_channel([0.0, 0.0, 0.1, 0.1, 0.2, 0.2, 0.3, 0.3, 0.4, 0.4,
                0.5, 0.5, 0.6, 0.6, 0.7, 0.7, 0.8, 0.8, 0.9, 0.9])
-  unless vequal((res = channel2vct), vct(0.000, 0.100, 0.200, 0.300, 0.400,
-                                         0.500, 0.600, 0.700, 0.800, 0.900))
-    snd_display("ramp env by 0.1: %s", res)
-  end
+  snd_test_neq(channel2vct(),
+               vct(0.000, 0.100, 0.200, 0.300, 0.400, 0.500, 0.600, 0.700, 0.800, 0.900),
+               "ramp env by 0.1")
   close_sound(ind)
-  delete_file("tmp.snd")
 end
 
-def test_04_13
+def test_04_07
+  $open_raw_sound_hook.reset_hook!
+  $open_raw_sound_hook.add_hook!(get_func_name) do |a, b| true end
+  $bad_header_hook.reset_hook!
+  $bad_header_hook.add_hook!(get_func_name) do |n| true end
+  if $open_raw_sound_hook.empty?
+    snd_display("$open_raw_sound_hook.add_hook! failed??")
+  end
+  if $bad_header_hook.empty?
+    snd_display("$bad_header_hook.add_hook! failed??")
+  end
   magic_words = [".snd", "FORM", "AIFF", "AIFC", "COMM", "COMT", "INFO", "INST", "inst", "MARK",
                  "SSND", "FVER", "NONE", "ULAW", "ulaw", "ima4", "raw ", "sowt", "in32", "in24",
                  "ni23", "fl32", "FL32", "fl64", "twos", "ALAW", "alaw", "APPL", "CLM ", "RIFF",
@@ -4254,23 +4251,20 @@ def test_04_13
                  "file", "=sam", "SU7M", "SU7R", "PVF1", "PVF2", "AUTH", "riff", "TWIN", "IMPS",
                  "SMP1", "Maui", "SDIF", "NVF "]
   len = magic_words.length
-  ctr = 0
-  $open_raw_sound_hook.reset_hook!
-  $open_raw_sound_hook.add_hook!("snd-test-104") do |a, b| true end
-  $bad_header_hook.reset_hook!
-  $bad_header_hook.add_hook!("snd-test-104") do |n| true end
-  if $open_raw_sound_hook.empty?
-    snd_display("$open_raw_sound_hook.add_hook! failed?? (1)")
-  end
-  if $bad_header_hook.empty?
-    snd_display("$bad_header_hook.add_hook! failed?? (1)")
-  end
-  magic_words.each_with_index do |magic, i|
+  magic_words.each_with_index do |magic, ctr|
+    if $open_raw_sound_hook.empty?
+      snd_display("$open_raw_sound_hook.add_hook! cleared??")
+    end
+    if $bad_header_hook.empty?
+      snd_display("$bad_header_hook.add_hook! cleared??")
+    end
     delete_file("test.snd")
     mus_sound_forget("test.snd")
     File.open("test.snd", "w") do |fp|
-      fp.write magic
-      128.times do fp.write(mus_random(1.0)) end
+      fp.write(magic)
+      128.times do
+        fp.write(mus_random(1.0))
+      end
     end
     res = Snd.catch do open_sound("test.snd") end.first
     if number?(res) and sound?(res)
@@ -4282,8 +4276,10 @@ def test_04_13
     delete_file("test.snd")
     mus_sound_forget("test.snd")
     File.open("test.snd", "w") do |fp|
-      fp.write magic
-      128.times do fp.write(mus_random(128)) end
+      fp.write(magic)
+      128.times do
+        fp.write(mus_random(128))
+      end
     end
     res = Snd.catch do open_sound("test.snd") end.first
     if number?(res) and sound?(res)
@@ -4295,7 +4291,7 @@ def test_04_13
     delete_file("test.snd")
     mus_sound_forget("test.snd")
     File.open("test.snd", "w") do |fp|
-      fp.write magic
+      fp.write(magic)
       (1...12).each do |i|
         if (ctr + i) < len
           fp.write(magic_words[ctr + i])
@@ -4311,7 +4307,6 @@ def test_04_13
         close_sound(res)
       end
     end
-    ctr += 1
   end
   delete_file("test.snd")
   mus_sound_forget("test.snd")
@@ -4348,19 +4343,41 @@ def make_aifc_file(frames, auth_lo, bits)
   end
 end
 
-def test_04_14
-  $open_raw_sound_hook.reset_hook!
-  $open_raw_sound_hook.add_hook!("snd-test-114") do |a, b| true end
-  $bad_header_hook.reset_hook!
-  $bad_header_hook.add_hook!("snd-test-114") do |n| true end
-  if $open_raw_sound_hook.empty?
-    snd_display("$open_raw_sound_hook.add_hook! failed?? (2)")
+undef read_ascii
+def read_ascii(in_filename,
+               out_filename = "test.snd",
+               out_type = Mus_next,
+               out_format = Mus_bshort,
+               out_srate = 44100)
+  in_buffer = IO.readlines(in_filename)         # array of strings
+  out_snd = new_sound(out_filename, out_type, out_format, out_srate, 1,
+                      format("created by %s: %s", get_func_name, in_filename))
+  bufsize = 512
+  data = make_vct(bufsize)
+  loc = 0
+  frame = 0
+  short2float = 1.0 / 32768.0
+  as_one_edit_rb do | |
+    in_buffer.each do |line|
+      line.split.each do |str_val|
+        val = eval(str_val)
+        data[loc] = val * short2float
+        loc += 1
+        if loc == bufsize
+          vct2channel(data, frame, bufsize, out_snd, 0)
+          frame += bufsize
+          loc = 0
+        end
+      end
+    end
+    if loc > 0
+      vct2channel(data, frame, loc, out_snd, 0)
+    end
   end
-  if $bad_header_hook.empty?
-    snd_display("$bad_header_hook.add_hook! failed?? (2)")
-  end
-  delete_file("test.snd")
-  mus_sound_forget("test.snd")
+  out_snd
+end
+
+def test_04_08
   File.open("test.snd", "w") do |fp|
     fp.write ".snd"
     fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0034); # location
@@ -4371,9 +4388,7 @@ def test_04_14
     fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0000); # comment
     fp.putc(0000); fp.putc(0001); # samp 1
   end
-  if (res = mus_sound_data_format("test.snd")) != Mus_bshort
-    snd_display("next 18: %s?", res)
-  end
+  snd_test_neq(mus_sound_data_format("test.snd"), Mus_bshort, "next 18")
   delete_file("test.snd")
   mus_sound_forget("test.snd")
   File.open("test.snd", "w") do |fp|
@@ -4412,15 +4427,15 @@ def test_04_14
   mus_sound_forget("test.snd")
   delete_file("test.aif")
   mus_sound_forget("test.aif")
-  # 
-  # correct make_aifc_file(002, 004, 020)
-  # 
+  #
+  # ;;correct (make-aifc-file #o002 #o004 #o020)
+  #
   make_aifc_file(0102, 004, 020)
-  ind = open_sound("test.aif")
-  if (res = frames(ind)) != 2
-    snd_display("bad frames in header: %s", res)
+  Snd.catch do
+    ind = open_sound("test.aif")
+    snd_test_neq(frames(ind), 2, "bad frames in header")
+    close_sound(ind)
   end
-  close_sound(ind)
   delete_file("test.aif")
   mus_sound_forget("test.aif")
   make_aifc_file(002, 150, 020)
@@ -4485,8 +4500,8 @@ def test_04_14
     fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0000); # block size?
     fp.putc(0000); fp.putc(0101); fp.putc(0000); fp.putc(0100); # two samples
   end
-  if (res = mus_sound_comment("test.aif")).length != 15
-    snd_display("aifc 3 aux comments: %s", res)
+  Snd.catch do
+    snd_test_neq(mus_sound_comment("test.aif").length, 15, "aifc 3 aux comments")
   end
   delete_file("test.aif")
   mus_sound_forget("test.aif")
@@ -4518,21 +4533,64 @@ def test_04_14
     fp.write "bil"
     fp.putc(0000);
   end
-  if (res = mus_sound_comment("test.aif"))[0..2] != "bil"
-    snd_display("aifc trailing comt comments: %s", res)
+  Snd.catch do
+    snd_test_neq(mus_sound_comment("test.aif")[0..2], "bil", "aifc trailing comt comments")
   end
-  if (res = mus_sound_frames("test.aif")) != 2
-    snd_display("aifc trailing comt frames: %s", res)
+  snd_test_neq(mus_sound_frames("test.aif"), 2, "aifc trailing comt frames")
+  Snd.catch do
+    ind = open_sound("test.aif")
+    if fneq(sample(0), 0.00198) or
+        fneq(sample(1), 0.00195) or
+        fneq(sample(2), 0.0) or
+        fneq(sample(3), 0.0)
+      snd_display("aifc trailing comt samps: %s %s %s %s",
+                  sample(0), sample(1), sample(2), sample(3))
+    end
+    close_sound(ind)
   end
-  ind = open_sound("test.aif")
-  if fneq(sample(0), 0.00198) or
-      fneq(sample(1), 0.00195) or
-      fneq(sample(2), 0.0) or
-      fneq(sample(3), 0.0)
-    snd_display("aifc trailing comt samps: %s %s %s %s",
-                sample(0),  sample(1), sample(2), sample(3))
+  delete_file("test.aif")
+  mus_sound_forget("test.aif")
+  File.open("test.aif", "w") do |fp|
+    fp.write "FORM"
+    fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0142); # len
+    fp.write "AIFC"
+    fp.write "SSND"
+    fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0014); # SSND chunk size
+    fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0000); # SSND data location
+    fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0000); # block size?
+    fp.putc(0000); fp.putc(0101); fp.putc(0000); fp.putc(0100); # two samples
+    fp.write "COMM"
+    fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0046); # COMM chunk size
+    fp.putc(0000); fp.putc(0001);                 # 1 chan
+    fp.putc(0000); fp.putc(0000); fp.putc(0100); fp.putc(0102); # frames
+    fp.putc(0000); fp.putc(0020);                 # bits
+    fp.putc(0100); fp.putc(0016); fp.putc(0254); fp.putc(0104); fp.putc(0000);
+    fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0000);
+    # srate as 80-bit float (sheesh)
+    fp.write "NONE"                               # compression
+    fp.putc(0016);                                # pascal string len
+    fp.write "not compressed"
+    fp.putc(0000);
+    fp.write "COMT"
+    fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0014);
+    fp.putc(0000); fp.putc(0000); fp.putc(0000); fp.putc(0000);
+    fp.putc(0000); fp.putc(0101); fp.putc(0000); fp.putc(0000);
+    fp.write "bil"
+    fp.putc(0000);
   end
-  close_sound(ind)
+  snd_test_neq(mus_sound_comment("test.aif")[0..2], "bil", "aifc trailing comt comment")
+  snd_test_neq(mus_sound_frames("test.aif"), 2, "aifc trailing comt (bogus) frames")
+  Snd.catch do
+    ind = open_sound("test.aif")
+    if fneq(sample(0), 0.00198) or
+        fneq(sample(1), 0.00195) or
+        fneq(sample(2), 0.0) or
+        fneq(sample(3), 0.0)
+      snd_display("aifc trailing comt samps (bogus frame setting): %s %s %s %s",
+                  sample(0), sample(1), sample(2), sample(3))
+    end
+    close_sound(ind)
+  end
   delete_file("test.aif")
   mus_sound_forget("test.aif")
   File.open("test.aif", "w") do |fp|
@@ -4579,13 +4637,15 @@ def test_04_14
     fp.putc(0000); fp.putc(0101); fp.putc(0000); fp.putc(0100); # two samples
   end
   res = Snd.catch do open_sound("test.aif") end.first
-  if number?(res) and sound?(res)
+  if res != :mus_error
     snd_display("open_sound aifc no comm chunk: %s?", res)
-    close_sound(res)
+    if number?(res) and sound?(res)
+      close_sound(res)
+    end
   end
   delete_file("test.aif")
   mus_sound_forget("test.aif")
-  # 
+  #
   File.open("test.aif", "w") do |fp|
     # write AIFC with trailing chunks to try to confuse file->sample
     fp.write "FORM"
@@ -4623,42 +4683,26 @@ def test_04_14
     fp.write "dog"
     fp.putc(0000);
   end
-  gen = make_file2sample("test.aif")
-  if fneq(gen.call(0), 0.93948)
-    snd_display("file2sample chunked 0: %s?", gen.call(0))
+  Snd.catch do
+    gen = make_file2sample("test.aif")
+    snd_test_neq(gen.call(0), 0.93948, "file2sample chunked 0")
+    snd_test_neq(gen.call(1), 0.50195, "file2sample chunked 1")
+    snd_test_neq(gen.call(2), 0.00000, "file2sample chunked eof")
+    snd_test_neq(gen.call(3), 0.00000, "file2sample chunked eof+1")
+    res = open_sound("test.aif")
+    snd_test_neq(frames(res), 2, "chunked frames")
+    snd_test_neq(sample(0), 0.93948, "file chunked 0")
+    snd_test_neq(sample(1), 0.50195, "file chunked 1")
+    snd_test_neq(sample(2), 0.00000, "file chunked eof")
+    snd_test_neq(sample(3), 0.00000, "file chunked eof+1")
+    close_sound(res)
   end
-  if fneq(gen.call(1), 0.50195)
-    snd_display("file2sample chunked 1: %s?", gen.call(1))
-  end
-  if fneq(gen.call(2), 0.00000)
-    snd_display("file2sample chunked eof: %s?", gen.call(2))
-  end
-  if fneq(gen.call(3), 0.00000)
-    snd_display("file2sample chunked eof+1: %s?", gen.call(3))
-  end
-  res = open_sound("test.aif")
-  if frames(res) != 2
-    snd_display("chunked frames: %s?", frames(res))
-  end
-  if fneq(sample(0), 0.93948)
-    snd_display("file chunked 0: %s?", sample(0))
-  end
-  if fneq(sample(1), 0.50195)
-    snd_display("file chunked 1: %s?", sample(1))
-  end
-  if fneq(sample(2), 0.00000)
-    snd_display("file chunked eof: %s?", sample(2))
-  end
-  if fneq(sample(3), 0.00000)
-    snd_display("file chunked eof+1: %s?", sample(3))
-  end
-  close_sound(res)
-  if (res = mus_sound_frames("test.aif")) != 2
-    snd_display("chunked mus_sound_frames: %s?", res)
+  Snd.catch do
+    snd_test_neq(mus_sound_frames("test.aif"), 2, "chunked mus_sound_frames")
   end
   delete_file("test.aif")
   mus_sound_forget("test.aif")
-  # 
+  #
   File.open("test.aif", "w") do |fp|
     # write AIFC with trailing chunks to try to confuse file->sample
     fp.write "FORM"
@@ -4688,42 +4732,26 @@ def test_04_14
     fp.write "CLM ;Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98"
     fp.putc(0000);
   end
-  gen = make_file2sample("test.aif")
-  if fneq(gen.call(0), 0.93948)
-    snd_display("file2sample chunked 0: %s?", gen.call(0))
+  Snd.catch do
+    gen = make_file2sample("test.aif")
+    snd_test_neq(gen.call(0), 0.93948, "file2sample chunked 0")
+    snd_test_neq(gen.call(1), 0.50195, "file2sample chunked 1")
+    snd_test_neq(gen.call(2), 0.00000, "file2sample chunked eof")
+    snd_test_neq(gen.call(3), 0.00000, "file2sample chunked eof+1")
+    res = open_sound("test.aif")
+    snd_test_neq(frames(res), 2, "chunked frames")
+    snd_test_neq(sample(0), 0.93948, "file chunked 0")
+    snd_test_neq(sample(1), 0.50195, "file chunked 1")
+    snd_test_neq(sample(2), 0.00000, "file chunked eof")
+    snd_test_neq(sample(3), 0.00000, "file chunked eof+1")
+    snd_test_neq(comment(),
+                 ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98",
+                 "chunked appl comment")
+    close_sound(res)
   end
-  if fneq(gen.call(1), 0.50195)
-    snd_display("file2sample chunked 1: %s?", gen.call(1))
-  end
-  if fneq(gen.call(2), 0.00000)
-    snd_display("file2sample chunked eof: %s?", gen.call(2))
-  end
-  if fneq(gen.call(3), 0.00000)
-    snd_display("file2sample chunked eof+1: %s?", gen.call(3))
-  end
-  res = open_sound("test.aif")
-  if frames(res) != 2
-    snd_display("chunked frames: %s?", frames(res))
-  end
-  if fneq(sample(0), 0.93948)
-    snd_display("file chunked 0: %s?", sample(0))
-  end
-  if fneq(sample(1), 0.50195)
-    snd_display("file chunked 1: %s?", sample(1))
-  end
-  if fneq(sample(2), 0.00000)
-    snd_display("file chunked eof: %s?", sample(2))
-  end
-  if fneq(sample(3), 0.00000)
-    snd_display("file chunked eof+1: %s?", sample(3))
-  end
-  if (not string?(com = comment())) or com != ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98"
-    snd_display("chunked appl comment: %s?", com)
-  end
-  close_sound(res)
   delete_file("test.aif")
   mus_sound_forget("test.aif")
-  # 
+  #
   File.open("test.aif", "w") do |fp|
     # write AIFC with trailing chunks to try to confuse file->sample
     fp.write "FORM"
@@ -4753,39 +4781,23 @@ def test_04_14
     fp.write "CLM ;Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98"
     fp.putc(0000);
   end
-  gen = make_file2sample("test.aif")
-  if fneq(gen.call(0, 0), 0.93948)
-    snd_display("file2sample chunked 0 0: %s?", gen.call(0, 0))
+  Snd.catch do
+    gen = make_file2sample("test.aif")
+    snd_test_neq(gen.call(0, 0), 0.93948, "file2sample chunked 0 0")
+    snd_test_neq(gen.call(0, 1), 0.50195, "file2sample chunked 0 1")
+    snd_test_neq(gen.call(1, 0), 0.00000, "file2sample chunked eof (stereo)")
+    snd_test_neq(gen.call(1, 1), 0.00000, "file2sample chunked eof+1 (stereo)")
+    res = open_sound("test.aif")
+    snd_test_neq(frames(res), 1, "chunked frames (1)")
+    snd_test_neq(sample(0, res, 0), 0.93948, "file chunked 0 0")
+    snd_test_neq(sample(0, res, 1), 0.50195, "file chunked 0 1")
+    snd_test_neq(sample(1, res, 0), 0.00000, "file chunked eof (stereo)")
+    snd_test_neq(sample(1, res, 1), 0.00000, "file chunked eof+1 (stereo)")
+    snd_test_neq(comment(),
+                 ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98",
+                 "chunked appl comment (stereo)")
+    close_sound(res)
   end
-  if fneq(gen.call(0, 1), 0.50195)
-    snd_display("file2sample chunked 0 1: %s?", gen.call(0, 1))
-  end
-  if fneq(gen.call(1, 0), 0.00000)
-    snd_display("file2sample chunked eof (stereo): %s?", gen.call(1, 0))
-  end
-  if fneq(gen.call(1, 1), 0.00000)
-    snd_display("file2sample chunked eof+1 (stereo): %s?", gen.call(1, 1))
-  end
-  res = open_sound("test.aif")
-  if frames(res) != 1
-    snd_display("chunked frames (stereo): %s?", frames(res))
-  end
-  if fneq(sample(0, res, 0), 0.93948)
-    snd_display("file chunked 0 0: %s?", sample(0, res, 0))
-  end
-  if fneq(sample(0, res, 1), 0.50195)
-    snd_display("file chunked 0 1: %s?", sample(0, res, 1))
-  end
-  if fneq(sample(1, res, 0), 0.00000)
-    snd_display("file chunked eof (stereo): %s?", sample(1, res, 0))
-  end
-  if fneq(sample(1, res, 1), 0.00000)
-    snd_display("file chunked eof+1 (stereo): %s?", sample(1, res, 1))
-  end
-  if (not string?(com = comment())) or com != ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98"
-    snd_display("chunked appl comment (stereo): %s?", com)
-  end
-  close_sound(res)
   delete_file("test.aif")
   mus_sound_forget("test.aif")
   #
@@ -4793,39 +4805,44 @@ def test_04_14
   if files.empty?
     snd_display("no sound files in %s?", Dir.pwd)
   end
-  files1 = sound_files_in_directory
-  if files != files1
-    snd_display("different sound files in %s and default?", Dir.pwd)
-  end
+  files1 = sound_files_in_directory()
+  snd_test_neq(files1, files, "different sound files in %s and default?", Dir.pwd)
   files2 = sound_files_in_directory(".")
   if files1 != files2 or files != files2
     snd_display("sound_files_in_directory dot: %s but %s?:", files2, files)
   end
   $open_raw_sound_hook.reset_hook!
   $bad_header_hook.reset_hook!
+  Snd.sounds.apply(:close_sound)
   #
   ind = new_sound(:size, 0)
-  if frames(ind).nonzero?
-    snd_display("new_sound :size 0: %s frames?", frames(ind))
-  end
-  if fneq(sample(0), 0.0)
-    snd_display("new_sound :size 0 sample 0: %s?", sample(0))
-  end
+  snd_test_neq(frames(ind), 0, "new_sound :size 0")
+  snd_test_neq(sample(0), 0.0, "new_sound :size 0 sample 0")
   new_file_name = file_name(ind)
   close_sound(ind)
   delete_file(new_file_name)
   ind = new_sound(:size, 1)
-  if frames(ind) != 1
-    snd_display("new_sound :size 1: %s frames?", frames(ind))
-  end
-  if fneq(sample(0), 0.0)
-    snd_display("new_sound :size 1 sample 0: %s?", sample(0))
-  end
+  snd_test_neq(frames(ind), 1, "new_sound :size 1")
+  snd_test_neq(sample(0), 0.0, "new_sound :size 1 sample 0")
   new_file_name = file_name(ind)
   close_sound(ind)
   delete_file(new_file_name)
   if (res = Snd.catch do new_sound(:size, -1) end).first != :out_of_range
     snd_display("new_sound :size -1: %s", res.inspect)
+  end
+  #
+  with_file("caruso.asc") do |file|
+    ind = read_ascii(file)
+    unless sound?(ind)
+      snd_display("read_ascii cannot find %s (%s)?", file, ind.inspect)
+    end
+    snd_test_neq(maxamp(ind, 0), 0.723, "read_ascii maxamp")
+    snd_test_neq(frames(ind, 0), 50000, "read_ascii frames")
+    snd_test_neq(srate(ind), 44100, "read_ascii srate")
+    set_srate(ind, 8000)
+    snd_test_neq(frames(ind, 0), 50000, "set srate clobbered new sound frames")
+    snd_test_neq(maxamp(ind, 0), 0.723, "set srate clobbered new sound maxamp")
+    close_sound(ind)
   end
   #
   ind = open_sound("oboe.snd")
@@ -4847,138 +4864,28 @@ def test_04_14
   close_sound(ind)
   delete_files("test space.snd", "test space.marks")
   #
-  [vct(0.5, 0.25, 0.125, -0.5),
-   vct(0.5, 0.25, 0.125, -0.5, -0.25, -0.125)].each_with_index do |vals, i|
-    result = with_sound() do
-      vals.each_with_index do |val, j|
-        outa(j, val)
-      end
-    end.output
-    snd = find_sound(result)
-    if sound?(snd)
-      snd_test_neq(channel2vct(0, frames(snd), snd, 0), vals, "with_sound 0%c output", "a".sum + i)
-    else
-      snd_display("with_sound 0%c no output: output %s snd %s", "a".sum + i, result, snd)
-    end
-  end
-  result = with_sound() do
-    outa(0,  0.50)
-    outa(1,  0.25)
-    outa(1, -0.50)
-  end.output
-  snd = find_sound(result)
-  if sound?(snd)
-    snd_test_neq(channel2vct(0, frames(snd), snd, 0), vct(0.5, -0.25), "with_sound 0c output")
-  else
-    snd_display("with_sound 0c no output: output %s snd %s", result, snd)
-  end
+  # FIXME
+  # S7 specific tests skipped
   #
-  chans = 2
-  samps = Vct.new(512) do
-    random(2.0) - 1.0
-  end
-  result = with_sound(:channels, chans) do
-    chans.times do |chn|
-      samps.out_samps(0, chn)
-    end
-  end.output
-  snd = find_sound(result)
-  if sound?(snd)
-    chans.times do |chn|
-      snd_test_neq(samps,
-                   channel2vct(0, frames(snd), snd, chn),
-                   "with_sound 1 chan %d output differs", chn)
-    end
-  else
-    snd_display("with_sound 1 no output: output %s snd %s", result, snd)
-  end
-  #
-  old_file_buffer_size = $clm_file_buffer_size
-  [65536, 8192, 1024, 256, 1234].each do |buflen|
-    $clm_file_buffer_size = buflen
-    chans = 2
-    samps = Vct.new(1000000) do
-      random(2.0) - 1.0
-    end
-    result = with_sound(:channels, chans) do
-      chans.times do |chn|
-        samps.out_samps(0, chn)
-      end
-    end.output
-    snd = find_sound(result)
-    if sound?(snd)
-      chans.times do |chn|
-        snd_test_neq(channel2vct(0, frames(snd), snd, chn),
-                     samps,
-                     "with_sound 2 (%d) chan %d output differs", buflen, chn)
-      end
-    else
-      snd_display("with_sound 2 (%d) no output: output %s snd %s", buflen, result, snd)
-    end
-  end
-  $clm_file_buffer_size = old_file_buffer_size
-  set_mus_file_buffer_size(old_file_buffer_size)
-  #
-  chans = 1
-  samps = Vct.new(512) do
-    random(2.0) - 1.0
-  end
-  result = with_sound(:channels, chans) do
-    chans.times do |chn|
-      samps.out_samps(0, chn)
-    end
-  end.output
-  snd = find_sound(result)
-  if sound?(snd)
-    chans.times do |chn|
-      snd_test_neq(channel2vct(0, frames(snd), snd, chn),
-                   samps,
-                   "with_sound 1 chan %d output differs", chn)
-    end
-  else
-    snd_display("with_sound 1 no output: output %s snd %s", result, snd)
-  end
-  #
-  old_file_buffer_size = $clm_file_buffer_size
-  [65536, 8192, 1024, 256, 1234].each do |buflen|
-    $clm_file_buffer_size = buflen
-    chans = 2
-    samps = Vct.new(1000000) do
-      random(2.0) - 1.0
-    end
-    result = with_sound(:channels, chans) do
-      chans.times do |chn|
-        samps.out_samps(0, chn)
-      end
-    end.output
-    snd = find_sound(result)
-    if sound?(snd)
-      chans.times do |chn|
-        snd_test_neq(channel2vct(0, frames(snd), snd, chn),
-                     samps,
-                     "with_sound 2 (%d) chan %d output differs", buflen, chn)
-      end
-    else
-      snd_display("with_sound 2 (%d) no output: output %s snd %s", buflen, result, snd)
-    end
-  end
-  $clm_file_buffer_size = old_file_buffer_size
-  set_mus_file_buffer_size(old_file_buffer_size)
-  Snd.sounds.apply(:close_sound)
 end
 
 def test_04
-  ind = open_sound("oboe.snd")
-  close_sound(ind)
-  test_04_00
-  test_04_01
+  $tests.times do |i|
+    $clmtest = i
+    if $VERBOSE and $tests > 1
+      snd_info("clmtest %d of %d", $clmtest + 1, $tests)
+    end
+    clear_listener()
+    test_04_00
+    test_04_01
+    test_04_02
+    test_04_03
+    test_04_04
+    test_04_05 if $with_big_file
+    test_04_06
+  end
+  test_04_07
   test_04_08
-  test_04_09
-  test_04_10
-  test_04_11 if $with_big_file
-  test_04_12
-  test_04_13
-  test_04_14
 end
 
 # ---------------- test 05: simple overall checks ----------------
@@ -10388,6 +10295,7 @@ def test_05_27
 end
 
 def test_05
+  $clmtest = 0
   test_05_00 if $with_test_gui # no set_x_axis_label
   test_05_01
   test_05_02
@@ -37603,7 +37511,7 @@ end
 # ---------------- test all done
 
 def test_30
-  test_04_01
+  test_04_08
 end
 
 main_test

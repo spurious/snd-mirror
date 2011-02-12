@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sat Oct 30 19:09:23 CEST 2010
+\ Changed: Fri Feb 11 23:41:45 CET 2011
 
 \ Commentary:
 \
@@ -503,6 +503,50 @@ y0 and y1 are ignored."
   then
 ;
 \ "mpeg.mpg" "mpeg.raw" mpg
+
+\ ;;; -------- read ASCII files
+\ ;;;
+\ ;;; these are used by Octave (WaveLab) -- each line has one integer, apparently a signed short.
+
+hide
+: read-ascii-cb { fname snd -- prc; self -- }
+  0 proc-create fname , snd , ( thunk )
+ does> { self -- }
+  self @ ( fname ) readlines { in-buffer }
+  self cell+ @ { snd }
+  512 { bufsize }
+  bufsize 0.0 make-vct { data }
+  0 { loc }
+  0 { frame }
+  32768.0 1/f { short->float }
+  nil { val }
+  in-buffer each ( line ) nil string-split each ( str-val ) string->number ( val ) short->float f*
+      data loc rot vct-set! drop
+      loc 1+ to loc
+      loc bufsize = if
+	data frame bufsize snd 0 vct->channel drop
+	frame bufsize d+ to frame
+	0 to loc
+      then
+    end-each
+  end-each
+  loc d0> if
+    data frame loc snd 0 vct->channel drop
+  then
+;
+set-current
+
+: read-ascii <{ in-filename :optional
+     out-filename "test.snd"
+     out-type     mus-next
+     out-format   mus-bshort
+     out-srate    44100 -- snd }>
+  doc" tries to read an ASCII sound file"
+  out-filename out-type out-format out-srate 1 $" created by read-ascii: " in-filename $+ new-sound { snd }
+  in-filename snd read-ascii-cb as-one-edit drop
+  snd
+;
+previous
 
 \ ;;; -------- make dot size dependent on number of samples being displayed
 \ ;;; 

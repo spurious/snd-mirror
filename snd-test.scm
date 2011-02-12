@@ -1856,7 +1856,7 @@
 	(list 'filter-control-in-hz filter-control-in-hz #f #t)
 	(list 'filter-control-order filter-control-order 20 40)
 	(list 'filter-control? filter-control? #f #t)
-	(list 'graph-cursor graph-cursor 34 33)
+	(list 'graph-cursor graph-cursor 34 32)
 	(list 'graph-style graph-style 0 1)
 	(list 'just-sounds just-sounds #f #t)
 	(list 'listener-prompt listener-prompt ">" ":")

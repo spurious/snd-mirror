@@ -2,13 +2,13 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Tue Dec 14 23:43:18 CET 2010
+\ Changed: Fri Feb 11 23:57:19 CET 2011
 
 \ Commentary:
 \
 \ Tested with:
-\   Snd version 11.12 of 15-Dec-10
-\   FTH 1.2.9 (10-Nov-2010)
+\   Snd version 11.13 of 27-Jan-11
+\   FTH 1.2.9 (02-Jan-2011)
 
 \
 \ Reads init file ./.sndtest.fs or ~/.sndtest.fs for global variables,
@@ -40,6 +40,7 @@
 \ test 01: defaults
 \ test 02: headers
 \ test 03: variables
+\ test 04: sndlib
 \ test 10: marks
 \ test 15: chan-local vars
 \ test 19: save and restore
@@ -109,6 +110,9 @@
 #f value *snd-test-ws-statistics*
 #f value *snd-test-ws-verbose*
 
+\ run snd-test.fs *tests* times
+1 value *tests*
+
 \ You may set them in .sndtest.fs.
 #f value my-snd-error-hook
 #f value my-mus-error-hook
@@ -128,6 +132,18 @@ listener-prompt        		  value original-prompt
 
 \ Global variables may be overridden in `pwd`/.sndtest.fs or ~/.sndtest.fs.
 ".sndtest.fs" load-init-file
+
+\ default 1, can be reset in .sndtest.fs
+*tests* integer? [if]
+  *tests* 0> [if]
+    *tests*
+  [else]
+    1
+  [then]
+[else]
+  1
+[then] to *tests*
+0 value *clmtest*
 
 *with-test-nogui* [if]
   '( 0.0 0.1 ) value x-bounds-value
@@ -240,7 +256,9 @@ reset-all-hooks
   { val0 val1 err }
   val0 any->vct { v0 }
   val1 any->vct { v1 }
-  v0 v1 && if
+  v0
+  v1                    &&
+  v0 length v1 length = && if
     v0 vct-copy v1 vct-subtract! vct-peak err f<=
   else
     #f
@@ -276,6 +294,21 @@ reset-all-hooks
   loop
 ;
 
+: list-equal? { obj1 obj2 -- f }
+  obj1 list?
+  obj2 list? && if
+    #t ( flag )
+    obj1 each ( entry )
+      obj2 i list-ref object-equal? unless
+	not ( toggle flag )
+	leave
+      then
+    end-each
+  else
+    #f
+  then
+;
+
 : arity-ok <{ proc args -- f }>
   proc proc? if
     \ draw-axes 0/0/#t but it means 3/6/#f
@@ -292,14 +325,23 @@ reset-all-hooks
   then
 ;
 
+: set-arity-ok <{ proc args -- f }> proc set-xt args arity-ok ; 
+
 : symbol-defined? ( sym -- f ) $" defined? " swap symbol-name $+ string-eval ;
 
-: object-sequence? ( obj -- f )
-  dup length 0>
-  swap string? not &&
+: vector? { obj -- f }
+  obj array? if
+    \ car doesn't raise an error if length == 0
+    obj car number?
+  else
+    #f
+  then
 ;
 
-<'> object-sequence? alias sequence? ( obj -- f )
+: snd-test-vector? { obj -- f }
+  obj vct?
+  obj vector? ||
+;
 
 : snd-test-format { sndfmt res req fmt args -- str }
   sndfmt #( res req ) string-format { str }
@@ -311,7 +353,7 @@ reset-all-hooks
 ;
 
 : snd-format { res req op fmt args -- str }
-  req sequence? if
+  req snd-test-vector? if
     mus-array-print-length { old-alen }
     print-length { old-vlen }
     *info-array-print-length* set-mus-array-print-length drop
@@ -329,7 +371,7 @@ reset-all-hooks
   res req  req float? if
     fequal?
   else
-    req object-sequence? if
+    req snd-test-vector? if
       vequal?
     else
       equal?
@@ -378,7 +420,9 @@ reset-all-hooks
   postpone *lineno* postpone (snd-test-any-eq)
 ; immediate
 
-: set-arity-ok <{ proc args -- f }> proc set-xt args arity-ok ; 
+: check-file-name { name -- fsnd }
+  name file-exists? if name else sf-dir name $+ then
+;
 
 : make-color-with-catch ( c1 c2 c3 -- color )
   <'> make-color 'no-such-color #t fth-catch if stack-reset 1 0 0 make-color then
@@ -1136,11 +1180,7 @@ black-and-white-colormap constant *better-colormap*
 ;
 
 : (test-headers-with-loop) { name chns sr dur typ frm loop-start loop-end lno -- }
-  name file-exists? if
-    name
-  else
-    sf-dir name $+
-  then { file }
+  name check-file-name { file }
   file file-exists? if
     file mus-sound-chans       { fchns }
     file mus-sound-srate       { fsr }
@@ -1741,7 +1781,7 @@ black-and-white-colormap constant *better-colormap*
     enved-filter-order 6 $" set-enved-filter-order 5" #() snd-test-neq
     old-val set-enved-filter-order drop
     \ FIXME
-    \ It does work with global variables. [ms]
+    \ This works with global variables. [ms]
     'zero-to-one <'> set-enved-envelope #t nil fth-catch stack-reset
     enved-envelope zero-to-one $" set-enved-envelope (symbol)" #() snd-test-neq
     "mod-down"   <'> set-enved-envelope #t nil fth-catch stack-reset
@@ -2005,6 +2045,2268 @@ black-and-white-colormap constant *better-colormap*
   undefined empty? unless
     $" undefined[%d]: %s" #( undefined length undefined ) snd-display
   then
+;
+
+\ ---------------- test 04: sndlib ----------------
+
+: play-sound-1 ( file -- )
+  doc" play test func"
+  { file }
+  file mus-sound-open-input { sound-fd }
+  file mus-sound-chans      { chans }
+  file mus-sound-frames     { frames }
+  file mus-sound-srate      { srate }
+  256                       { bufsize }
+  chans bufsize make-sound-data { data }
+  bufsize chans * 2*        { bytes }
+  0 srate chans mus-lshort bytes mus-audio-open-output { audio-fd }
+  audio-fd -1 = if
+    0 srate chans mus-bshort bytes mus-audio-open-output to audio-fd
+  then
+  audio-fd -1 = if
+    $" can't play %s" #( file ) snd-display
+  else
+    frames 0 ?do
+      sound-fd 0 bufsize 1- chans data mus-sound-read drop
+      audio-fd data bufsize 0 mus-audio-write drop
+    bufsize +loop
+    audio-fd mus-audio-close drop
+  then
+  sound-fd mus-sound-close-input drop
+;
+
+: sndlib-check-it { snd typ fmt samp -- }
+  snd header-type typ $" save-as %s" #( typ mus-header-type-name ) snd-test-neq
+  "test.snd" mus-sound-header-type { ntyp }
+  ntyp
+  typ
+  $" save-as %s -> %s"
+  #( typ  mus-header-type-name
+     ntyp mus-header-type-name ) snd-test-neq
+  snd data-format fmt $" save-as %s" #( fmt mus-data-format-name ) snd-test-neq
+  "test.snd" mus-sound-data-format { nfmt }
+  nfmt
+  fmt
+  $" save-as %s -> %s"
+  #( fmt  mus-data-format-name
+     nfmt mus-data-format-name ) snd-test-neq
+  1000 snd sample samp "%s[1000]" #( typ mus-header-type-name ) snd-test-neq
+;
+
+: sndlib-check-string <{ string -- str }> string $"  [written by me]" $+ ;
+
+: sndlib-true-cb <{ n -- f }> #t ;
+
+: sndlib-raw-hook-cb <{ file choice -- lst }> '( 1 22050 mus-bshort ) ;
+
+: sndlib-check-bad-file <{ n -- }>
+  n open-sound { ind }
+  ind number?
+  ind sound? && if
+    ind close-sound drop
+  then
+;
+
+: frame->byte { file frame -- pos }
+  file mus-sound-chans
+  file mus-sound-datum-size *
+  frame *
+  file mus-sound-data-location +
+;
+
+: sound-data-channel->list { sd chan -- lst }
+  sd chan sd sound-data-length 0.0 make-vct sound-data->vct vct->list
+;
+
+: sound-data->list { sd -- lst }
+  sd sound-data-chans make-list map!
+    sd i sound-data-channel->list
+  end-map
+;
+
+: sndlib-test-map-10-times-cb <{ y -- y' }> y 10.0 f* ;
+
+: sndlib-test-map-add-cb { mx -- prc; y self -- y' }
+  1 proc-create 1.001 mx f- , ( prc )
+ does> { y self -- y' }
+  y self @ ( mx ) f+
+;
+
+0 value big-file-frames
+
+: sndlib-test-map-x-cb { x incr -- prc; n self -- y }
+  1 proc-create x , incr , ( prc )
+ does> { n self -- y }
+  self @ ( x ) { val }
+  val self cell+ @ ( incr ) f+ self ( x ) !
+  val
+;
+
+: sndlib-test-scan-x-cb { x incr -- prc; n self -- f }
+  1 proc-create x , incr , ( prc )
+ does> { n self -- f }
+  self @ ( x ) { val }
+  val self cell+ @ ( incr ) f+ self ( x ) !
+  val n fneq
+;
+
+: sndlib-test-map-set-1.0 <{ n -- n' }> 1.0 ;
+
+: (04-sndlib-01) ( -- )
+  "oboe.snd" { oboe-snd }
+  oboe-snd mus-sound-chans { chns }
+  oboe-snd mus-sound-data-location { dl }
+  oboe-snd mus-sound-frames { fr }
+  oboe-snd mus-sound-samples { smps }
+  oboe-snd mus-sound-length { len }
+  oboe-snd mus-sound-datum-size { size }
+  oboe-snd mus-sound-comment { com }
+  oboe-snd mus-sound-srate { sr }
+  oboe-snd mus-sound-maxamp-exists? { m1 }
+  oboe-snd mus-sound-maxamp { mal }
+  "z.snd" mus-sound-maxamp { mz }
+  oboe-snd mus-sound-data-format mus-bytes-per-sample { bytes }
+  mz car  0   $" mus-sound-maxamp z.snd" #() snd-test-neq
+  mz cadr 0.0 $" mus-sound-maxamp z.snd" #() snd-test-neq
+  \ 
+  #( #( mus-bshort 2 )
+     #( mus-lshort 2 )
+     #( mus-mulaw 1 )
+     #( mus-alaw 1 )
+     #( mus-byte 1 )
+     #( mus-ubyte 1 )
+     #( mus-bfloat 4 )
+     #( mus-lfloat 4 )
+     #( mus-bint 4 )
+     #( mus-lint 4 )
+     #( mus-bintn 4 )
+     #( mus-lintn 4 )
+     #( mus-b24int 3 )
+     #( mus-l24int 3 )
+     #( mus-bdouble 8 )
+     #( mus-ldouble 8 )
+     #( mus-ubshort 2 )
+     #( mus-ulshort 2 )
+     #( mus-bdouble-unscaled 8 )
+     #( mus-ldouble-unscaled 8 )
+     #( mus-bfloat-unscaled 4 )
+     #( mus-lfloat-unscaled 4 ) ) { formats }
+  nil nil nil { vals frm siz }
+  formats each to vals
+    vals 0 array-ref to frm
+    vals 1 array-ref to siz
+    frm mus-bytes-per-sample siz "mus-bytes-per-sample" #() snd-test-neq
+  end-each
+  mus-bshort mus-data-format->string "mus-bshort" "mus-data-format->string" #() snd-test-neq
+  mus-aifc   mus-header-type->string "mus-aifc"   "mus-header-type->string" #() snd-test-neq
+  \
+  "hiho.tmp" { hiho }
+  hiho mus-sound-report-cache drop
+  hiho readlines { res }
+  res 0 array-ref string-chomp $" sound table:" $" print-cache 1" #() snd-test-neq
+  hiho file-delete
+  10 { req }
+  mus-audio-describe to res
+  res string-length { rln }
+  rln req < if
+    rln req "<" $" mus-audio-describe: %s?" #( res ) snd-format #() snd-display
+  then
+  chns  1             $" oboe: mus-sound-chans"         #() snd-test-neq
+  dl    28            $" oboe: mus-sound-data-location" #() snd-test-neq
+  fr    50828         $" oboe: mus-sound-frames"        #() snd-test-neq
+  smps  50828         $" oboe: mus-sound-samples"       #() snd-test-neq
+  len   50828 2* 28 + $" oboe: mus-sound-length"        #() snd-test-neq
+  size  2             $" oboe: mus-sound-datum-size"    #() snd-test-neq
+  bytes 2             $" oboe: mus-sound-bytes"         #() snd-test-neq
+  sr    22050         $" oboe: mus-sound-srate"         #() snd-test-neq
+  m1
+  *clmtest* 0= && if
+    $" oboe: mus-sound-maxamp-exists before maxamp: %s" #( m1 ) snd-display
+  then
+  oboe-snd mus-sound-maxamp-exists? to res
+  res unless
+    $" oboe: not mus-sound-maxamp-exists after maxamp: %s" #( res ) snd-display
+  then
+  *clmtest* 0= if
+    mus-header-raw-defaults to res
+    res length 3 = if
+      res 0 array-ref ( sr )   44100 $" mus-header-raw-defaults srate"  #() snd-test-neq
+      res 1 array-ref ( chns ) 2     $" mus-header-raw-defaults chans"  #() snd-test-neq
+      res 2 array-ref ( frm )  mus-bshort $" mus-header-raw-defaults format" #() snd-test-neq
+    else
+      res object-length 3 $" mus-header-raw-defaults %s" #( res ) snd-test-neq
+    then
+  then
+  '( 12345 3 mus-bdouble-unscaled ) set-mus-header-raw-defaults drop
+  mus-header-raw-defaults to res
+  res length 3 = if
+    res 0 array-ref ( sr )   12345 $" set-mus-header-raw-defaults srate"  #() snd-test-neq
+    res 1 array-ref ( chns ) 3     $" set-mus-header-raw-defaults chans"  #() snd-test-neq
+    res 2 array-ref ( frm )  mus-bdouble-unscaled $" set-mus-header-raw-defaults format" #() snd-test-neq
+  else
+    res object-length 3 $" set-mus-header-raw-defaults %s" #( res ) snd-test-neq
+  then
+  '( 44100 2 mus-bshort ) set-mus-header-raw-defaults drop
+  \
+  $" %d-%b %H:%M" oboe-snd mus-sound-write-date strftime
+  $" 15-Oct 04:34"
+  $" mus-sound-write-date oboe.snd" #() snd-test-neq
+  $" %d-%b %H:%M" "pistol.snd" mus-sound-write-date strftime
+  $" 01-Jul 13:06"
+  $" mus-sound-write-date pistol.snd" #() snd-test-neq
+  \ 
+  oboe-snd open-sound { ind }
+  "test" { long-file-name }
+  10 0 do
+    long-file-name "-test" string-push drop
+  loop
+  long-file-name ".snd" string-push drop
+  ind variable-graph? if
+    $" variable-graph thinks anything is a graph..." #() snd-display
+  then
+  ind player? if
+    $" player? thinks anything is a player..." #() snd-display
+  then
+  ind sound? unless
+    $" %s is not a sound?" #( ind ) snd-display
+  then
+  #f sound? if
+    $" sound? #f -> #t?" #() snd-display
+  then
+  #t sound? if
+    $" sound? #t -> #f?" #() snd-display
+  then
+  long-file-name ind save-sound-as drop
+  ind close-sound drop
+  long-file-name open-sound to ind
+  ind sound? unless
+    $" can't find test...snd" #() snd-display
+  then
+  long-file-name string-length { lfnlen }
+  ind file-name string-length { fnlen }
+  ind short-file-name string-length { sfnlen }
+  fnlen lfnlen <
+  sfnlen lfnlen < || if
+    $" file-name lengths: long-file-name %d, file-name %d, short-file-name %d" #(
+       lfnlen fnlen sfnlen ) snd-display
+  then
+  ind close-sound drop
+  long-file-name mus-sound-forget drop
+  long-file-name file-delete
+  \
+  "forest.aiff" check-file-name { fsnd }
+  fsnd file-exists? if
+    fsnd "fmv.snd" file-copy
+    "fmv.snd" open-sound to ind
+    ind sound-loop-info  fsnd mus-sound-loop-info  "loop-info" #() snd-test-neq
+    ind '( 12000 14000 1 2 3 4 ) set-sound-loop-info drop
+    ind sound-loop-info  '( 12000 14000 1 2 3 4 1 1 )  "set-loop-info" #() snd-test-neq
+    "fmv1.snd" ind mus-aifc save-sound-as drop
+    ind close-sound drop
+    "fmv1.snd" mus-sound-loop-info  '( 12000 14000 1 2 3 4 1 1 )  "saved-loop-info" #() snd-test-neq
+  then
+  \
+  oboe-snd open-sound to ind
+  "fmv.snd" ind mus-aifc save-sound-as drop
+  ind close-sound drop
+  "fmv.snd" open-sound to ind
+  ind sound-loop-info '() $" null loop-info" #() snd-test-neq
+  ind '( 1200 1400 4 3 2 1 ) set-sound-loop-info drop
+  ind sound-loop-info '( 1200 1400 4 3 2 1 1 1 ) $" set null loop-info" #() snd-test-neq
+  "fmv1.snd" :sound ind :header-type mus-aifc save-sound-as drop
+  "fmv1.snd" mus-sound-loop-info '( 1200 1400 4 3 2 1 1 1 ) $" saved null loop-info" #() snd-test-neq
+  ind close-sound drop
+  "fmv.snd" open-sound to ind
+  '( 1200 1400 4 3 2 1 1 0 ) set-sound-loop-info drop
+  ind sound-loop-info '( 1200 1400 0 0 2 1 1 0 ) $" set null loop-info (no mode1)" #() snd-test-neq
+  "fmv1.snd" ind mus-aifc save-sound-as drop
+  ind close-sound drop
+  "fmv1.snd" mus-sound-loop-info '( 1200 1400 0 0 2 1 1 0 ) $" saved null loop-info (no mode1)" #() snd-test-neq
+  \
+  com empty? unless
+    $" oboe: mus-sound-comment %S?" #( com ) snd-display
+  then
+  #( #( "nasahal8.wav" $" ICRD: 1997-02-22\nIENG: Paul R. Roger\nISFT: Sound Forge 4.0\n" )
+     #( "8svx-8.snd" $" File created by Sound Exchange  " )
+     #( "sun-16-afsp.snd" $" AFspdate:1981/02/11 23:03:34 UTC" )
+     #( "smp-16.snd" $" Converted using Sox.                                        " )
+     #( "d40130.au" $" 1994 Jesus Villena" )
+     #( "wood.maud" $" file written by SOX MAUD-export " )
+     #( "addf8.sf_mipseb" $" date=\"Feb 11 18:03:34 1981\" info=\"Original recorded at 20 kHz, 15-bit D/A, digitally filtered and resampled\" speaker=\"AMK female\" text=\"Add the sum to the product of these three.\" " )
+     #( "mary-sun4.sig" $" MARY HAD A LITTLE LAMB\n" )
+     #( "nasahal.pat" $" This patch saved with Sound Forge 3.0." )
+     #( "next-16.snd" $" ;Written on Mon 1-Jul-91 at 12:10 PDT  at localhost (NeXT) using Allegro CL and clm of 25-June-91" )
+     #( "wood16.nsp" $" Created by Snack   " )
+     #( "wood.sdx" $" 1994 Jesus Villena" )
+     #( "clmcom.aif" $" this is a comment" )
+     #( "anno.aif" $" 1994 Jesus Villena\n" )
+     #( "telephone.wav" $" sample_byte_format -s2 01\nchannel_count -i 1\nsample_count -i 36461\nsample_rate -i 16000\nsample_n_bytes -i 2\nsample_sig_bits -i 16\n" ) ) { comms }
+  comms each to vals
+    vals 0 array-ref check-file-name to fsnd
+    fsnd file-exists? if
+      fsnd mus-sound-comment ( res )
+      vals 1 array-ref ( req )
+      $" mus-sound-comment %s" #( fsnd ) snd-test-neq
+    then
+  end-each
+  \
+  "traffic.aiff" check-file-name to fsnd
+  fsnd file-exists? if
+    fsnd mus-sound-comment to res
+    res string? unless
+      $" mus-sound-comment traffic: %s?" #( res ) snd-display
+    then
+  then
+  \
+  *clmtest* 0= if
+    mal cadr 0.14724 $" oboe: mus-sound-maxamp" #() snd-test-neq
+    mal car 24971 $" oboe: mus-sound-maxamp at" #() snd-test-neq
+  then
+  \
+  oboe-snd '( 1234 0.5 ) set-mus-sound-maxamp drop
+  oboe-snd mus-sound-maxamp to mal
+  mal cadr 0.5 $" oboe: set-mus-sound-maxamp" #() snd-test-neq
+  mal car 1234 $" oboe: set-mus-sound-maxamp at" #() snd-test-neq
+  \
+  "4.aiff" mus-sound-maxamp to mal
+  *clmtest* 0= if
+    mal
+    vct( 810071 0.245 810071 0.490 810071 0.735 810071 0.980 )
+    $" mus-sound-maxamp 4.aiff" #() snd-test-neq
+  then
+  "4.aiff" '( 1234 0.5 54321 0.2 0 0.1 9999 0.01 ) set-mus-sound-maxamp drop
+  "4.aiff" mus-sound-maxamp ( mal )
+  vct( 1234 0.5 54321 0.2 0 0.1 9999 0.01 )
+  $" set-mus-sound-maxamp 4.aiff" #() snd-test-neq
+  oboe-snd '( 1234 ) <'> set-mus-sound-maxamp #t nil fth-catch to res
+  stack-reset
+  res car 'wrong-type-arg <> if
+    $" set-mus-sound-maxamp bad arg: %s?" #( res ) snd-display
+  then
+  oboe-snd mus-sound-type-specifier to res
+  \ 0x646e732e little endian reader
+  \ 0x2e736e64 big endian reader
+  res 0x646e732e d<>
+  res 0x2e736e64 d<> && if
+    $" oboe: mus-sound-type-specifier: 0x%x?" #( res ) snd-display
+  then
+  $" %d-%b-%Y %H:%M" oboe-snd file-write-date strftime
+  $" 15-Oct-2006 04:34"
+  $" oboe: file-write-date" #() snd-test-neq
+  oboe-snd play-sound-1
+  oboe-snd mus-sound-forget drop
+  \
+  0 { lasth }
+  begin
+    lasth 1+ to lasth
+    lasth mus-header-type-name "unsupported" string=
+  until
+  lasth 50 < if
+    $" header-type[%d] = %s?" #( lasth dup mus-header-type-name ) snd-display
+  then
+  0 to lasth
+  begin
+    lasth 1+ to lasth
+    lasth mus-data-format-name "unknown" string=
+  until
+  lasth 10 < if
+    $" data-format[%d] = %s?" #( lasth dup mus-data-format-name ) snd-display
+  then
+  nil { name }
+  #( 'dont-normalize
+     'normalize-globally
+     'normalize-by-channel ) each symbol-name to name
+    name string-eval to req
+    req set-transform-normalization drop
+    transform-normalization req $" set-transform-normalization %s" #( name ) snd-test-neq
+  end-each
+  \
+  "fmv.snd" mus-next mus-bshort 22050 1 $" set-samples test" 100 new-sound to ind
+  10 3 3 0.1 make-vct set-samples drop
+  0 20 ind 0 channel->vct
+  vct( 0 0 0 0 0 0 0 0 0 0 0.1 0.1 0.1 0 0 0 0 0 0 0 )
+  $" 1 set samples 0 for 0.1" #() snd-test-neq
+  20 3 3 0.1 make-vct ind 0 set-samples drop
+  10 20 ind 0 channel->vct
+  vct( 0.1 0.1 0.1 0 0 0 0 0 0 0 0.1 0.1 0.1 0 0 0 0 0 0 0 )
+  $" 2 set samples 10 for 0.1" #() snd-test-neq
+  30 3 3 0.1 make-vct ind 0 #f $" a name" set-samples drop
+  20 20 ind 0 channel->vct
+  vct( 0.1 0.1 0.1 0 0 0 0 0 0 0 0.1 0.1 0.1 0 0 0 0 0 0 0 )
+  $" 3 set samples 20 for 0.1" #() snd-test-neq
+  0 3 3 0.2 make-vct ind 0 #f $" a name" 0 1 set-samples drop
+  0 20 ind 0 channel->vct
+  vct( 0.2 0.2 0.2 0 0 0 0 0 0 0 0.1 0.1 0.1 0 0 0 0 0 0 0 )
+  $" 4 set samples 0 at 1 for 0.1" #() snd-test-neq
+  20 20 ind 0 channel->vct
+  20 0.0 make-vct
+  $" 5 set samples 20 at 1 for 0.1" #() snd-test-neq
+  "fmv1.snd" :channels 2 new-sound { nd }
+  10 0.5 make-vct 0 10 nd 0 vct->channel drop
+  10 0.3 make-vct 0 10 nd 1 vct->channel drop
+  "fmv1.snd" nd save-sound-as drop
+  nd close-sound drop
+  "fmv1.snd" file-exists? unless
+    $" fmv1.snd not saved??" #() snd-display
+  then
+  0 10 "fmv1.snd" ind 0 #f $" another name" 1 set-samples drop
+  0 20 ind 0 channel->vct
+  vct( 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.1 0.1 0.1 0 0 0 0 0 0 0 )
+  $" 6 set samples 0 at 1 for 0.1" #() snd-test-neq
+  5 6 "fmv1.snd" ind 0 #f $" another name 7" 0 set-samples drop
+  0 20 ind 0 channel->vct
+  vct( 0.3 0.3 0.3 0.3 0.3 0.5 0.5 0.5 0.5 0.5 0.5 0.1 0.1 0 0 0 0 0 0 0 )
+  $" 7 set samples 0 at 1 for 0.1" #() snd-test-neq
+  0 10 "fmv1.snd" ind 0 #f $" another name 8" 1 0 #f set-samples drop
+  0 20 ind 0 channel->vct
+  vct( 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0 0 0 0 0 0 0 0 0 0 )
+  $" 8 set samples 0 at 1 for 0.1" #() snd-test-neq
+  10 10 "fmv1.snd" ind 0 #f $" another name 9" 0 0 set-samples drop
+  0 20 ind 0 channel->vct
+  vct( 0 0 0 0 0 0 0 0 0 0 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 )
+  $" 9 set samples 0 at 1 for 0.1" #() snd-test-neq
+  20 10 "fmv1.snd" set-samples drop
+  10 20 ind 0 channel->vct
+  20 0.5 make-vct
+  $" 10 set samples 0 at 1 for 0.1" #() snd-test-neq
+  0 10 "fmv1.snd" ind 0 #t $" another name" 1 0 #f set-samples drop
+  ind 0 frames 10 $" 11 set samples truncate" #() snd-test-neq
+  ind revert-sound drop
+  "fmv1.snd" file-delete
+  \ ;; now try to confuse it
+  0 10 "fmv1.snd" ind 0 <'> set-samples #t nil fth-catch to res
+  stack-reset
+  res car 'no-such-file $" set-samples, no such file" #() snd-test-neq
+  "fmv1.snd" :channels 1 new-sound to nd
+  "fmv1.snd" nd save-sound-as drop
+  nd close-sound drop
+  0 10 "fmv1.snd" ind 0 #f $" another name" 1 <'> set-samples #t nil fth-catch to res
+  stack-reset
+  res car 'no-such-channel $" set-samples no such channel" #() snd-test-neq
+  0 10 "fmv1.snd" ind 0 #f $" another name" -1 <'> set-samples #t nil fth-catch to res
+  stack-reset
+  res car 'no-such-channel $" set-samples no such channel (-1)" #() snd-test-neq
+  0 -10 "fmv1.snd" <'> set-samples #t nil fth-catch to res
+  stack-reset
+  res car 'wrong-type-arg $" set-samples (-10)" #() snd-test-neq
+  -10 10 "fmv1.snd" <'> set-samples #t nil fth-catch to res
+  stack-reset
+  res car 'no-such-sample $" set-samples (beg -10)" #() snd-test-neq
+  ind close-sound drop
+  \
+  100 { len }
+  #( #( mus-bshort  2 -15 f** )
+     #( mus-lshort  2 -15 f** )
+     #( mus-mulaw   0.02 )
+     #( mus-alaw    0.02 )
+     #( mus-byte    2 -7 f** )
+     #( mus-lfloat  2 -23 f** )
+     #( mus-bint    2 -23 f** )
+     #( mus-lint    2 -23 f** )
+     #( mus-b24int  2 -23 f** )
+     #( mus-l24int  2 -23 f** )
+     #( mus-ubshort 2 -15 f** )
+     #( mus-ulshort 2 -15 f** )
+     #( mus-ubyte   2 -7 f** )
+     #( mus-bfloat  2 -23 f** )
+     #( mus-bdouble 2 -23 f** )
+     #( mus-ldouble 2 -23 f** ) ) { types }
+  nil nil nil nil nil nil nil nil nil { v v0 v1 diff maxdiff maxpos typ allowed-diff val }
+  types each to vals
+    vals 0 array-ref to typ
+    vals 1 array-ref to allowed-diff
+    "test.snd" mus-next mus-bfloat 22050 1 new-sound to ind
+    len 0.0 make-vct to v
+    0.0 to maxdiff
+    #f to maxpos
+    v 0  0.999 vct-set! drop
+    v 1 -1.000 vct-set! drop
+    v 2  0.100 vct-set! drop
+    v 3 -0.100 vct-set! drop
+    v 4  0.010 vct-set! drop
+    v 5 -0.010 vct-set! drop
+    v 6  0.001 vct-set! drop
+    v 7 -0.001 vct-set! drop
+    v 8  0.000 vct-set! drop
+    len 7 do
+      1.9999 random to val
+      val 2.0 f>
+      val 0.0 f< || if
+	$" random 2.0 -> %s?" #( val ) snd-display
+      then
+      v i 1.0 val f- vct-set! drop
+    loop
+    v 0 len ind 0 vct->channel drop
+    "test1.snd" ind mus-next :data-format typ save-sound-as drop
+    ind close-sound drop
+    "test1.snd" open-sound to ind
+    0 len ind 0 channel->vct to v1
+    len 0 do
+      v i vct-ref v1 i vct-ref f- fabs to diff
+      diff maxdiff f> if
+	diff to maxdiff
+	i to maxpos
+      then
+    loop
+    maxdiff allowed-diff f> if
+      $" %s: %s at %d (%s %s)?" #(
+	 typ mus-data-format-name
+	 maxdiff maxpos
+	 v maxpos vct-ref
+	 v1 maxpos vct-ref ) snd-display
+    then
+    ind close-sound drop
+  end-each
+  \
+  oboe-snd view-sound { ob }
+  1000 ob sample { samp }
+  oboe-snd mus-sound-comment { old-comment }
+  $" written %s" #( $" %a %d-%b-%Y %H:%M %Z" current-time strftime ) string-format { str }
+  ob str set-comment drop
+  "test.snd" ob mus-aifc mus-bdouble <'> save-sound-as #t nil fth-catch to res
+  stack-reset
+  res car 'cannot-save $" save-sound-as test.snd write trouble" #() snd-test-eq
+  #t set-filter-control-in-hz drop
+  "test.snd" open-sound { ab }
+  ab mus-aifc mus-bdouble samp sndlib-check-it
+  "test.snd" mus-sound-comment str $" output-comment" #() snd-test-neq
+  ab comment str $" output-comment (comment)" #() snd-test-neq
+  ab close-sound drop
+  oboe-snd mus-sound-comment old-comment $" set-comment overwrote current" #() snd-test-neq
+  #f set-filter-control-in-hz drop
+  \
+  "test.snd" ob mus-raw save-sound-as drop
+  "test.snd" 1 22050 mus-bshort open-raw-sound to ab
+  ab mus-raw mus-bshort samp sndlib-check-it
+  ab close-sound drop
+  \
+  "test.snd" ob mus-nist mus-bint save-sound-as drop
+  "test.snd" open-sound to ab
+  ab mus-nist mus-bint samp sndlib-check-it
+  ab close-sound drop
+  \
+  output-comment-hook reset-hook!
+  output-comment-hook <'> sndlib-check-string add-hook!
+  :file "test.snd" :sound ob :header-type mus-riff :data-format mus-lfloat save-sound-as drop
+  output-comment-hook reset-hook!
+  "test.snd" open-sound to ab
+  ab mus-riff mus-lfloat samp sndlib-check-it
+  ab comment str $"  [written by me]" $+ "output-comment-hook" #() snd-test-neq
+  ab close-sound drop
+  #( #( mus-aiff  mus-b24int )
+     #( mus-ircam mus-mulaw )
+     #( mus-next  mus-alaw )
+     #( mus-next  mus-bdouble ) ) to types
+  nil { fmt }
+  types each to vals
+    vals 0 array-ref to typ
+    vals 1 array-ref to fmt
+    "test.snd" ob typ fmt save-sound-as drop
+    "test.snd" open-sound to ab
+    ab typ fmt samp sndlib-check-it
+    ab close-sound drop
+  end-each
+  "test.snd" ob mus-next mus-bshort save-sound-as drop
+  "test.snd" open-sound to ab
+  ab mus-next mus-bshort samp sndlib-check-it
+  update-hook reset-hook!
+  '( -3.0 3.0 ) ab 0 set-y-bounds drop
+  ab mus-lshort set-data-format drop
+  \ ; these set!'s can change the index via update-sound
+  "test.snd" find-sound to ab
+  ab data-format to fmt
+  fmt mus-lshort $" set-data-format %s" #( fmt mus-data-format-name ) snd-test-neq
+  ab 0 y-bounds '( -3.0 3.0 ) $" set data format y-bounds" #() snd-test-neq
+  '( 2.0 ) ab 0 set-y-bounds drop
+  ab 0 y-bounds '( -2.0 2.0 ) $" set data format y-bounds 1" #() snd-test-neq
+  '( -2.0 ) ab 0 set-y-bounds drop
+  ab 0 y-bounds '( -2.0 2.0 ) $" set data format y-bounds -2" #() snd-test-neq
+  ab mus-aifc set-header-type drop
+  "test.snd" find-sound to ab
+  ab header-type mus-aifc "set-header-type" #() snd-test-neq
+  ab 3 set-channels drop
+  "test.snd" find-sound to ab
+  ab channels 3 "set-channels" #() snd-test-neq
+  ab 1234 set-data-location drop
+  "test.snd" find-sound to ab
+  ab data-location 1234 "set-data-location" #() snd-test-neq
+  ab data-size { old-size }
+  ab 1234 set-data-size drop
+  "test.snd" find-sound to ab
+  ab data-size 1234 "set-data-size" #() snd-test-neq
+  ab old-size set-data-size drop
+  ab 12345 set-srate drop
+  "test.snd" find-sound to ab
+  ab srate 12345 "set-srate" #() snd-test-neq
+  ab close-sound drop
+  \
+  "test.snd" ob mus-next mus-bfloat save-sound-as drop
+  "test.snd" open-sound to ab
+  ab mus-next mus-bfloat samp sndlib-check-it
+  ab close-sound drop
+  \
+  "test.snd" ob mus-next mus-bshort save-sound-as drop
+  ob close-sound drop
+  "test.snd" open-sound to ab
+  mus-lshort set-data-format drop
+  "test.snd" find-sound to ab
+  data-format mus-lshort "set-data-format" #() snd-test-neq
+  mus-aifc set-header-type drop
+  "test.snd" find-sound to ab
+  header-type mus-aifc "set-header-type" #() snd-test-neq
+  3 set-channels drop
+  "test.snd" find-sound to ab
+  channels 3 "set-channels" #() snd-test-neq
+  1234 set-data-location drop
+  "test.snd" find-sound to ab
+  data-location 1234 "set-data-location" #() snd-test-neq
+  12345 set-srate drop
+  "test.snd" find-sound to ab
+  srate 12345 "set-srate" #() snd-test-neq
+  ab close-sound drop
+  \
+  "2a.snd" open-sound to ind
+  "test.snd" :data-format mus-l24int :header-type mus-riff :channel 0 save-sound-as drop
+  "test.snd" open-sound { ind0 }
+  ind0 channels 1 $" save-sound-as :channel 0 chans" #() snd-test-neq
+  ind0 data-format mus-l24int $" save-sound-as :channel 0 data-format" #() snd-test-neq
+  ind0 header-type mus-riff $" save-sound-as :channel 0 header-type" #() snd-test-neq
+  ind0 srate ind srate $" save-sound-as :channel 0 srates" #() snd-test-neq
+  ind0 frames ind 0 undef frames $" save-sound-as :channel 0 frames" #() snd-test-neq
+  ind0 maxamp ind 0 undef maxamp $" save-sound-as :channel 0 maxamps" #() snd-test-neq
+  ind0 close-sound drop
+  \
+  "test.snd" :data-format mus-bfloat :header-type mus-aifc :channel 1 :srate 12345 save-sound-as drop
+  "test.snd" open-sound to ind0
+  ind0 channels 1 $" save-sound-as :channel 1 chans" #() snd-test-neq
+  ind0 data-format mus-bfloat $" save-sound-as :channel 1 data-format" #() snd-test-neq
+  ind0 header-type mus-aifc $" save-sound-as :channel 1 header-type" #() snd-test-neq
+  ind0 srate 12345 $" save-sound-as :channel 1 srates" #() snd-test-neq
+  ind0 frames ind 1 undef frames $" save-sound-as :channel 1 frames" #() snd-test-neq
+  ind0 maxamp ind 1 undef maxamp $" save-sound-as :channel 1 maxamps" #() snd-test-neq
+  ind0 close-sound drop
+  \
+  "test.snd" :channel 1 :comment $" this is a test" save-sound-as drop
+  "test.snd" open-sound to ind0
+  ind0 channels 1 $" save-sound-as :channel 1 (1) chans" #() snd-test-neq
+  ind0 data-format ind data-format $" save-sound-as :channel 1 (1) data-format" #() snd-test-neq
+  ind0 header-type ind header-type $" save-sound-as :channel 1 (1) header-type" #() snd-test-neq
+  ind0 srate ind srate $" save-sound-as :channel 1 (1) srates" #() snd-test-neq
+  ind0 frames ind 1 undef frames $" save-sound-as :channel 1 (1) frames" #() snd-test-neq
+  ind0 0 maxamp ind 1 undef maxamp $" save-sound-as :channel 1 (1) maxamps" #() snd-test-neq
+  ind0 comment $" this is a test" $" save-sound-as :channel 1 (1) comment" #() snd-test-neq
+  ind0 close-sound drop
+  ind close-sound drop
+  \
+  "t15.aiff" check-file-name to fsnd
+  fsnd file-exists? if
+    fsnd open-sound to ind
+    132300 ind 0 sample 0.148 $" aifc sowt trouble (0)" #() snd-test-neq
+    132300 ind 1 sample 0.126 $" aifc sowt trouble (1)" #() snd-test-neq
+    ind close-sound drop
+  then
+  "M1F1-float64C-AFsp.aif" check-file-name to fsnd
+  fsnd file-exists? if
+    fsnd open-sound to ind
+    8000 ind 0 sample -0.024 $" aifc fl64 trouble (0)" #() snd-test-neq
+    8000 ind 1 sample 0.021 $" aifc fl64 trouble (1)" #() snd-test-neq
+    ind close-sound drop
+  then
+  \
+  #( #( "bad_chans.snd"       0 22050 0 )
+     #( "bad_srate.snd"       1 0 0 )
+     #( "bad_data_format.snd" 1 22050 4411 )
+     #( "bad_chans.aifc"      0 22050 0 )
+     #( "bad_srate.aifc"      1 0 0 )
+     #( "bad_length.aifc"     1 22050 -10 )
+     #( "bad_chans.riff"      0 22050 0 )
+     #( "bad_srate.riff"      1 0 0 )
+     #( "bad_chans.nist"      0 22050 0 )
+     #( "bad_srate.nist"      1 0 0 )
+     #( "bad_length.nist"     1 22050 -10 ) ) { files }
+  nil nil nil { fc fs fr }
+  files each to vals
+    vals 0 array-ref check-file-name to fsnd
+    vals 1 array-ref to fc
+    vals 2 array-ref to fs
+    vals 3 array-ref to fr
+    fsnd file-exists? if
+      fsnd <'> mus-sound-chans #t nil fth-catch ?dup-if
+	car 'mus-error <> if
+	  $" %s: chans %d (%s)" #( fsnd fc res ) snd-display
+	then
+	stack-reset
+      else
+	fc <> if
+	  $" %s: chans %d (%s)" #( fsnd fc res ) snd-display
+	then
+      then
+      \ 
+      fsnd <'> mus-sound-srate #t nil fth-catch ?dup-if
+	car 'mus-error <> if
+	  $" %s: srate %d (%s)" #( fsnd fs res ) snd-display
+	then
+	stack-reset
+      else
+	fs <> if
+	  $" %s: srate %d (%s)" #( fsnd fs res ) snd-display
+	then
+      then
+      \ 
+      fsnd <'> mus-sound-frames #t nil fth-catch ?dup-if
+	car 'mus-error <> if
+	  $" %s: frames %d (%s)" #( fsnd fr res ) snd-display
+	then
+	stack-reset
+      else
+	fr <> if
+	  $" %s: frames %d (%s)" #( fsnd fr res ) snd-display
+	then
+      then
+    then
+  end-each
+  \
+  "/usr/include/sys/" file-pwd $+ "/oboe.snd" $+ <'> open-sound #t nil fth-catch ?dup-if
+    1 >list $" open-sound with slashes: %s" swap snd-display
+    stack-reset
+  else
+    to ind
+    ind sound? if
+      ind short-file-name "oboe.snd" string<> if
+	$" open-sound with slashes: %s" #( ind short-file-name ) snd-display
+      then
+    else
+      $" open-sound with slashes: %s" #( ind ) snd-display
+    then
+    bad-header-hook <'> sndlib-true-cb add-hook!
+    #( "bad_chans.snd"
+       "bad_srate.snd"
+       "bad_chans.aifc"
+       "bad_srate.aifc"
+       "bad_length.aifc"
+       "bad_chans.riff"
+       "bad_srate.riff"
+       "bad_chans.nist"
+       "bad_location.nist"
+       "bad_field.nist"
+       "bad_srate.nist"
+       "bad_length.nist" ) each check-file-name to fsnd
+      fsnd file-exists? if
+	fsnd <'> insert-sound          #t nil fth-catch stack-reset
+	fsnd <'> convolve-with         #t nil fth-catch stack-reset
+	fsnd <'> mix                   #t nil fth-catch stack-reset
+	fsnd <'> sndlib-check-bad-file #t nil fth-catch stack-reset
+      then
+    end-each
+    ind close-sound drop
+  then
+  sounds each ( snd ) close-sound end-each
+  \
+  "oboe.snd" open-sound { ob }
+  channel->vct vct->sound-data { sd }
+  sd sound-data-maxamp { mx }
+  sd sound-data-length 50828 $" oboe->sd: len" #() snd-test-neq
+  sd 0 1000 sound-data-ref 0.0328369 $" oboe->sd[1000]" #() snd-test-neq
+  mx length 1 $" sound-data-maxamp oboe.snd" #() snd-test-neq
+  ob 0 maxamp mx car $" sound-data-maxamp oboe.snd" #() snd-test-neq
+  sd sound-data-peak mx car $" sound-data-peak oboe.snd" #() snd-test-neq
+  1 <'> set-selected-channel #t nil fth-catch to res
+  stack-reset
+  res car 'no-such-channel $" set selected-channel bad chan: %s" #( res ) snd-test-neq
+  123456 1 <'> set-selected-channel #t nil fth-catch to res
+  stack-reset
+  res car 'no-such-sound $" set selected-channel bad snd: %s" #( res ) snd-test-neq
+  sd 2 1000 <'> sound-data-ref #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" sound-data-ref bad chan: %s" #( res ) snd-test-neq
+  sd -1 1000 <'> sound-data-ref #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" sound-data-ref bad chan -1: %s" #( res ) snd-test-neq
+  sd 0 -1 <'> sound-data-ref #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" sound-data-ref bad frame: %s" #( res ) snd-test-neq
+  sd 0 10000000 <'> sound-data-ref #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" sound-data-ref bad frame high: %s" #( res ) snd-test-neq
+  sd 2 1000 1 <'> sound-data-set! #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" sound-data-set! bad chan: %s" #( res ) snd-test-neq
+  sd 0 10000000 1 <'> sound-data-set! #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" sound-data-set! bad frame: %s" #( res ) snd-test-neq
+  3 make-vct to v
+  v sd 2 <'> vct->sound-data #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" vct->sound-data-set! bad chan: %s" #( res ) snd-test-neq
+  ob close-sound drop
+  selected-sound if
+    $" selected-sound %s %s" #( selected-sound sounds ) snd-display
+  then
+  "a.sf2" check-file-name to fsnd
+  fsnd file-exists? if
+    fsnd open-sound { fil }
+    fil soundfont-info { loops }
+    loops nil?
+    loops car caddr 65390 <> ||
+    loops cadr cadr 65490 <> || if
+      $" soundfont-info: %s" #( loops ) snd-display
+    then
+    fil close-sound drop
+  then
+  \
+  "fmv5.snd" file-delete
+  "fmv5.snd" 22050 1 mus-bshort mus-aiff $" no comment" mus-sound-open-output { fd }
+  1 100 make-sound-data { sdata }
+  100 0 do
+    sdata 0 i i 0.01 f* sound-data-set! drop
+  loop
+  12 set-print-length drop
+  sdata object->string { sdata-str }
+  $" #<sound-data[chans=1, length=100]:\n    (0.000 0.010 0.020 0.030 0.040 0.050 0.060 0.070 0.080 0.090 0.100 0.110 ...)>"
+  sdata-str $" print sound-data" #() snd-test-neq
+  sdata { edat }
+  1 100 make-sound-data { edat1 }
+  2 100 make-sound-data { edat2 }
+  sdata edat $" sound-data not equal?" #() snd-test-neq
+  sdata edat1 $" sound-data 1 equal?" #() snd-test-eq
+  edat2 edat1 $" sound-data 2 equal?" #() snd-test-eq
+  100 0 do
+    edat1 0 i  sdata 0 i sound-data-ref  sound-data-set! drop
+  loop
+  sdata edat1 $" sound-data 3 not equal?" #() snd-test-neq
+  100 make-vct to v0
+  3 make-vct to v1
+  sdata 0 v0 sound-data->vct drop
+  v0 10 vct-ref 0.1 $" sound-data->vct" #() snd-test-neq
+  sdata 0 v1 sound-data->vct drop
+  v1 1 vct-ref 0.01 $" sound-data->(small)vct" #() snd-test-neq
+  v0 sdata 0 vct->sound-data drop
+  sdata 0 10 sound-data-ref 0.1 $" vct->sound-data" #() snd-test-neq
+  sdata #( 0 10 ) object-apply 0.1 $" vct->sound-data applied" #() snd-test-neq
+  sdata 2 v0 <'> sound-data->vct #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" sound-data->vct bad chan" #() snd-test-neq
+  1  3 3 make-sound-data   123   <'> mus-audio-write #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" mus-audio-write bad frames" #() snd-test-neq
+  10 make-vct to v0
+  3 make-vct to v
+  2 10 make-sound-data { sdata2 }
+  10 0 do
+    sdata2 0 i 0.1 sound-data-set! drop
+    sdata2 1 i 0.2 sound-data-set! drop
+  loop
+  sdata2 0 v0 sound-data->vct drop
+  sdata2 0 v  sound-data->vct drop
+  v0 1 vct-ref 0.1 $" sound-data->vct[1]" #() snd-test-neq
+  sdata2 1 v0 sound-data->vct drop
+  v0 1 vct-ref 0.2 $" sound-data->vct[2]" #() snd-test-neq
+  v0 sdata2 0 vct->sound-data drop
+  sdata2 0 1 sound-data-ref 0.2 $" vct->sound-data[2]" #() snd-test-neq
+  v0 0.3 vct-fill! drop
+  v0 sdata2 1 vct->sound-data drop
+  sdata2 1 1 sound-data-ref 0.3 $" vct->sound-data[3]" #() snd-test-neq
+  v sdata2 0 vct->sound-data drop
+  fd 0 99 1 sdata mus-sound-write drop
+  fd mus-bshort mus-bytes-per-sample 100 * mus-sound-close-output drop
+  "fmv5.snd" 1 mus-bshort mus-aiff "fmv5.snd" mus-sound-data-location mus-sound-reopen-output to fd
+  fd mus-bshort mus-bytes-per-sample 100 * mus-sound-close-output drop
+  "fmv5.snd" mus-sound-open-input to fd
+  fd 0 99 1 sdata mus-sound-read drop
+  sdata 0 10 sound-data-ref 0.1 $" mus-sound-write" #() snd-test-neq
+  fd 20 mus-sound-seek-frame { pos }
+  \ FIXME
+  \ fd io-fdopen io-tell pos $" 1 mus-sound-seek-frame" #() snd-test-neq
+  "fmv5.snd" 20 frame->byte pos $" 2 mus-sound-seek-frame(2)" #() snd-test-neq
+  fd 0 10 1 sdata mus-sound-read drop
+  sdata 0 0 sound-data-ref 0.2 $" 2 mus-sound-seek" #() snd-test-neq
+  fd mus-sound-close-input drop
+  \
+  2 10 make-sound-data to sd
+  10 0.25 make-vct sd 0 vct->sound-data drop
+  10 0.50 make-vct sd 1 vct->sound-data drop
+  sd 2.0 sound-data-scale! drop
+  sd 0 sound-data->vct 10 0.5 make-vct $" sound-data-scale! chan 0" #() snd-test-neq
+  sd 1 sound-data->vct 10 1.0 make-vct $" sound-data-scale! chan 1" #() snd-test-neq
+  \
+  2 10 make-sound-data to sd
+  sd 2.0 sound-data-fill! drop
+  sd 0 sound-data->vct 10 2.0 make-vct $" sound-data-fill! chan 0" #() snd-test-neq
+  sd 1 sound-data->vct 10 2.0 make-vct $" sound-data-fill! chan 1" #() snd-test-neq
+  \
+  "fmv.snd" 22050 -1 mus-bshort mus-aiff $" no comment" <'> mus-sound-open-output #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" mus-sound-open-output bad chans" #() snd-test-neq
+  "fmv.snd" 22050 1 -1 mus-aiff $" no comment" <'> mus-sound-open-output #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" mus-sound-open-output bad format" #() snd-test-neq
+  "fmv.snd" 22050 1 mus-bshort -1 $" no comment" <'> mus-sound-open-output #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" mus-sound-open-output bad type" #() snd-test-neq
+  \
+  "fmv.snd" -1 mus-bshort mus-aiff #f <'> mus-sound-reopen-output #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" mus-sound-reopen-output bad chans" #() snd-test-neq
+  "fmv.snd" 1 -1 mus-aiff #f <'> mus-sound-reopen-output #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" mus-sound-reopen-output bad format" #() snd-test-neq
+  "fmv.snd" 1 mus-bshort -1 #f <'> mus-sound-reopen-output #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" mus-sound-reopen-output bad type" #() snd-test-neq
+  \
+  2 10 make-sound-data to sd
+  \ FIXME
+  \ S7 fill! tests skipped
+  sd object-copy { sd1 }
+  sd sd1 $" object-copy sd" #() snd-test-neq
+  \
+  #( "trunc.snd"
+     "trunc.aiff"
+     "trunc.wav"
+     "trunc.sf"
+     "trunc.voc"
+     "trunc.nist"
+     "bad.wav"
+     "trunc1.aiff"
+     "badform.aiff" ) each check-file-name to fsnd
+    fsnd file-exists? if
+      fsnd <'> open-sound #t nil fth-catch to res
+      stack-reset
+      res car 'mus-error "open-sound" #() snd-test-neq
+    then
+  end-each
+  open-raw-sound-hook <'> sndlib-raw-hook-cb add-hook!
+  "empty.snd" check-file-name to fsnd
+  fsnd file-exists? if
+    fsnd open-sound to ind
+    ind data-format   mus-bshort $" open raw data-format" #() snd-test-neq
+    ind chans         1          $" open raw chans" #() snd-test-neq
+    ind srate         22050      $" open raw srate" #() snd-test-neq
+    ind data-location 0          $" open raw data-location" #() snd-test-neq
+    ind frames        0          $" open raw frames" #() snd-test-neq
+    ind close-sound drop
+  then
+  open-raw-sound-hook reset-hook!
+  \
+  1 32 make-sound-data to sd1
+  2 64 make-sound-data { sd2 }
+  32 0 do
+    sd1 0 i i 0.01 f* sound-data-set! drop
+  loop
+  64 0 do
+    sd2 0 i i 0.1 f* sound-data-set! drop
+    sd2 1 i i 0.2 f* sound-data-set! drop
+  loop
+  sd2 sd1 3 6 32 sound-data->sound-data drop
+  sd1 0  0 sound-data-ref 0.00 $" sound-data->sound-data 0" #() snd-test-neq
+  sd1 0  2 sound-data-ref 0.02 $" sound-data->sound-data 2" #() snd-test-neq
+  sd1 0  3 sound-data-ref 0.00 $" sound-data->sound-data 3" #() snd-test-neq
+  sd1 0  6 sound-data-ref 0.30 $" sound-data->sound-data 6" #() snd-test-neq
+  sd1 0 10 sound-data-ref 0.10 $" sound-data->sound-data 10" #() snd-test-neq
+  sd1 sd2 0 10 32 sound-data->sound-data drop
+  sd2 0  5 sound-data-ref 0.20 $" sound-data->sound-data 2 5" #() snd-test-neq
+  1 32 make-sound-data { sdi }
+  1 32 make-sound-data { sdo }
+  sdi sdo 10 32 10 sound-data->sound-data to res
+  res  2 $" sound-data->sound-data wrap around" #() snd-test-neq
+  sdi sdo 10 32 32 sound-data->sound-data to res
+  res 10 $" sound-data->sound-data wrap around" #() snd-test-neq
+  \
+  sdi sdo -1 10 10 <'> sound-data->sound-data #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" sound-data->sound-data start" #() snd-test-neq
+  sdi sdo 0 -1 10 <'> sound-data->sound-data #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" sound-data->sound-data frames" #() snd-test-neq
+  sdi sdo 0 128 10 <'> sound-data->sound-data #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" sound-data->sound-data frames" #() snd-test-neq
+  \
+  1 1 make-sound-data to sd
+  sd 0 0 sound-data-ref 0.0 $" sound-data ref" #() snd-test-neq
+  sd 0 0 1.0 sound-data-set! drop
+  sd 0 0 sound-data-ref 1.0 $" sound-data set" #() snd-test-neq
+  1 1 make-sound-data to sd1
+  sd1 0 0 1.0 sound-data-set! drop
+  sd sd1 $" sound-data set not equal" #() snd-test-neq
+  \
+  2 3 make-sound-data to sd
+  sd 0 0 sound-data-ref 0.0 $" sound-data ref (1)" #() snd-test-neq
+  sd 1 0 1.0 sound-data-set! drop
+  sd 1 0 sound-data-ref 1.0 $" sound-data set (1 0)" #() snd-test-neq
+  sd 1 2 2.0 sound-data-set! drop
+  sd 1 2 sound-data-ref 2.0 $" sound-data set (1 2)" #() snd-test-neq
+  2 3 make-sound-data to sd1
+  sd1 1 0 1.0 sound-data-set! drop
+  sd1 1 2 2.0 sound-data-set! drop
+  sd sd1 $" sound-data set (3) not equal" #() snd-test-neq
+  \
+  #( #( mus-bshort mus-next )
+     #( mus-bfloat mus-aifc )
+     #( mus-lshort mus-aifc )
+     #( mus-lfloat mus-riff )
+     #( mus-lshort mus-nist )
+     #( mus-bint mus-aiff )
+     #( mus-lint mus-next )
+     #( mus-bintn mus-next )
+     #( mus-lintn mus-next )
+     #( mus-b24int mus-aifc )
+     #( mus-l24int mus-riff )
+     #( mus-bfloat mus-ircam )
+     #( mus-bfloat-unscaled mus-next )
+     #( mus-lfloat-unscaled mus-next )
+     #( mus-bdouble-unscaled mus-next )
+     #( mus-ldouble-unscaled mus-next )
+     #( mus-bdouble mus-next )
+     #( mus-ldouble mus-next )
+     #( mus-ulshort mus-next )
+     #( mus-ubshort mus-next ) ) to formats
+  nil nil nil nil { df ht samps ndata }
+  #( 1 2 4 8 ) each to chns
+    formats each to vals
+      vals 0 array-ref to df
+      vals 1 array-ref to ht
+      chns 1 = if
+	100000
+      else
+	chns 2 = if
+	  50000
+	else
+	  1000
+	then
+      then to samps
+      "fmv5.snd" file-delete
+      "fmv5.snd" 22050 chns df ht $" no comment" mus-sound-open-output to fd
+      chns samps make-sound-data to sdata
+      chns samps make-sound-data to ndata
+      chns 0 do
+	samps 0 do
+	  sdata j ( chn ) i ( samp ) 2.0 random 1.0 f- sound-data-set! drop
+	loop
+      loop
+      fd 0 samps 1- chns sdata mus-sound-write drop
+      fd samps chns * df mus-bytes-per-sample * mus-sound-close-output drop
+      "fmv5.snd" mus-sound-open-input to fd
+      fd 0 samps 1- chns ndata mus-sound-read drop
+      fd 100 mus-sound-seek-frame to pos
+      \ FIXME
+      \ fd io-fdopen io-tell pos $" mus-sound-seek-frame[%d]: chans %d" #( pos chns ) snd-test-neq
+      "fmv5.snd" 100 frame->byte pos "mus-sound-seek-frame(100)" #() snd-test-neq
+      fd mus-sound-close-input drop
+      #f ( flag )
+      chns 0 do
+	samps 0 do
+	  sdata j ( chn ) i ( samp ) sound-data-ref
+	  ndata j ( chn ) i ( samp ) sound-data-ref fneq if
+	    sdata j ( chn ) i ( samp ) sound-data-ref
+	    ndata j ( chn ) i ( samp ) sound-data-ref
+	    $" read-write trouble: format %s header %s " #(
+	       df mus-data-format-name
+	       ht mus-header-type-name ) snd-test-neq
+	    not ( toggle flag )
+	    leave
+	  then
+	loop
+	dup ( check flag ) ?leave
+      loop
+      ( flag ) drop
+    end-each
+  end-each
+  \
+  "oboe.snd" open-sound to ind
+  0 22050 1 little-endian? if mus-lshort else mus-bshort then 512 mus-audio-open-input to fd
+  1 256 make-sound-data to sdata
+  256 make-vct to v
+  fd -1 = if
+    $" can't open audio input port!" #() snd-display
+  else
+    10 0 do
+      fd sdata 256 mus-audio-read drop
+      sdata 0 v sound-data->vct graph drop
+    loop
+    fd mus-audio-close drop
+  then
+  ind close-sound drop
+  \
+  "fmv.snd" 22050 1 mus-bshort mus-next $" no comment" mus-sound-open-output to fd
+  1 10 make-sound-data to sdata
+  sdata 0 1 0.1 sound-data-set! drop
+  fd 0 9 1 sdata mus-sound-write drop
+  fd 20 mus-sound-close-output drop
+  "fmv.snd" mus-sound-open-input to fd
+  fd 0 9 1 sdata mus-sound-read drop
+  sdata 0 0 sound-data-ref 0.0 fneq
+  sdata 0 1 sound-data-ref 0.1 fneq ||
+  sdata 0 2 sound-data-ref 0.0 fneq ||
+  sdata 0 6 sound-data-ref 0.0 fneq || if
+    $" read/write: %s?" #( sdata sound-data->list ) snd-display
+  then
+  fd mus-sound-close-input drop
+  "fmv.snd" 1 mus-bshort mus-next "fmv.snd" mus-sound-data-location mus-sound-reopen-output to fd
+  fd 0 mus-sound-seek-frame drop
+  sdata 0 2 0.1 sound-data-set! drop
+  sdata 0 3 0.1 sound-data-set! drop
+  fd 0 9 1 sdata mus-sound-write drop
+  fd 20 mus-sound-close-output drop
+  "fmv.snd" mus-sound-open-input to fd
+  1 10 make-sound-data to ndata
+  fd 0 9 1 ndata mus-sound-read drop
+  ndata 0 0 sound-data-ref 0.0 fneq
+  ndata 0 1 sound-data-ref 0.1 fneq ||
+  ndata 0 2 sound-data-ref 0.1 fneq ||
+  ndata 0 3 sound-data-ref 0.1 fneq ||
+  ndata 0 6 sound-data-ref 0.0 fneq || if
+    ndata sound-data->list sdata sound-data->list "!=" "re-read/write" #() snd-format #() snd-display
+  then
+  fd mus-sound-close-input drop
+  \ ;; check clipping choices
+  "oboe.snd" view-sound to ind
+  #f set-clipping drop
+  <'> sndlib-test-map-10-times-cb 0 ind 0 undef frames ind 0 map-channel drop
+  "test.snd" ind mus-next mus-bfloat save-sound-as drop
+  1 ind 0 undo drop
+  "test.snd" open-sound { ind1 }
+  ind1 0 undef maxamp ind 0 undef maxamp 10.0 f* $" clipping 0" #() snd-test-neq
+  ind1 close-sound drop
+  "test.snd" file-delete
+  #t set-clipping drop
+  <'> sndlib-test-map-10-times-cb 0 ind 0 undef frames ind 0 map-channel drop
+  "test.snd" ind mus-next mus-bfloat save-sound-as drop
+  1 ind 0 undo drop
+  "test.snd" open-sound to ind1
+  ind1 0 undef maxamp 1.0 $" clipping 1" #() snd-test-neq
+  ind1 close-sound drop
+  "test.snd" file-delete
+  #f set-clipping drop
+  ind maxamp to mx
+  mx sndlib-test-map-add-cb 0 ind 0 undef frames ind 0 map-channel drop
+  "test.snd" ind mus-next mus-bshort save-sound-as drop
+  "test.snd" open-sound to ind1
+  <'> f0< 1 make-proc scan-channel not #f $" clipping 2" #() snd-test-neq
+  ind1 close-sound drop
+  "test.snd" file-delete
+  #t set-clipping drop
+  "test.snd" ind mus-next mus-bshort save-sound-as drop
+  "test.snd" open-sound to ind1
+  <'> f0< 1 make-proc scan-channel #f $" clipping 3" #() snd-test-neq
+  ind1 close-sound drop
+  "test.snd" file-delete
+  #f set-clipping drop
+  ind close-sound drop
+  "fmv.snd" file-delete
+  \
+  #f set-clipping drop
+  "test.snd" :data-format mus-lshort new-sound { snd }
+  0 10 pad-channel drop
+  1  1.0000 set-sample drop
+  2 -1.0000 set-sample drop
+  3  0.9999 set-sample drop
+  4  2.0000 set-sample drop
+  5 -2.0000 set-sample drop
+  6  1.3000 set-sample drop
+  7 -1.3000 set-sample drop
+  8  1.8000 set-sample drop
+  9 -1.8000 set-sample drop
+  snd save-sound drop
+  snd close-sound drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct
+  vct( 0.000 1.000 -1.000 1.000 -1.000 -1.000 -1.000 -1.000 -1.000 -1.000 )
+  $" unclipped 1" #() snd-test-neq
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \
+  #t set-clipping drop
+  "test.snd" :data-format mus-lshort new-sound to snd
+  0 10 pad-channel drop
+  1  1.0000 set-sample drop
+  2 -1.0000 set-sample drop
+  3  0.9999 set-sample drop
+  4  2.0000 set-sample drop
+  5 -2.0000 set-sample drop
+  6  1.3000 set-sample drop
+  7 -1.3000 set-sample drop
+  8  1.8000 set-sample drop
+  9 -1.8000 set-sample drop
+  snd save-sound drop
+  snd close-sound drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct
+  vct( 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000 )
+  $" clipped" #() snd-test-neq
+  snd close-sound drop
+  \ 
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
+  data vct->sound-data to sdata
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd #f set-mus-file-clipping drop
+  snd 0 9 1 sdata mus-sound-write drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct
+  vct( 0.000 -1.000 -1.000 1.000 -1.000 -1.000 -1.000 -1.000 -1.000 -1.000 )
+  $" unclipped 2" #() snd-test-neq
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \ 
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) to data
+  data vct->sound-data to sdata
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd #t set-mus-file-clipping drop
+  snd 0 9 1 sdata mus-sound-write drop
+  snd #f set-mus-file-clipping drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct
+  vct( 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000 )
+  $" clipped 1" #() snd-test-neq
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \
+  #f set-mus-clipping drop
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) to data
+  data vct->sound-data to sdata
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd 0 9 1 sdata mus-sound-write drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct
+  vct( 0.000 -1.000 -1.000 1.000 -1.000 -1.000 -1.000 -1.000 -1.000 -1.000 )
+  $" unclipped 3" #() snd-test-neq
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \ 
+  #t set-mus-clipping drop
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) to data
+  data vct->sound-data to sdata
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd 0 9 1 sdata mus-sound-write drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct
+  vct( 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000 )
+  $" clipped 2" #() snd-test-neq
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \
+  #t set-mus-clipping drop
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) to data
+  data vct->sound-data to sdata
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd 0 10 1 sdata <'> mus-sound-write #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" mus-sound-write too many bytes" #() snd-test-neq
+  snd 0 10 1 sdata <'> mus-sound-read #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" mus-sound-read too many bytes" #() snd-test-neq
+  snd 0 mus-sound-close-output drop
+  "test.snd" file-delete
+  "test.snd" mus-sound-forget drop
+  #f set-mus-clipping drop 		\ ; this is the default
+  #f set-clipping drop
+  \
+  $" this is a comment which we'll repeat enough times to trigger an internal loop" { com }
+  3 0 do
+    com com $+ to com
+  loop
+  "fmv.snd" 22050 4 mus-lshort mus-riff com mus-sound-open-output to fd
+  4 10 make-sound-data to sdata
+  4 0 do
+    sdata i 1 0.1 sound-data-set! drop
+  loop
+  fd 0 9 4 sdata mus-sound-write drop
+  fd 80 mus-sound-close-output drop
+  "fmv.snd" mus-sound-open-input to fd
+  fd 0 9 4 sdata mus-sound-read drop
+  4 0 do
+    sdata i 0 sound-data-ref 0.0 fneq
+    sdata i 1 sound-data-ref 0.1 fneq ||
+    sdata i 2 sound-data-ref 0.0 fneq ||
+    sdata i 6 sound-data-ref 0.0 fneq || if
+      $" 1 read/write[%d]: %s?" #( i sdata i sound-data-channel->list ) snd-display
+    then
+  loop
+  fd mus-sound-close-input drop
+  "fmv.snd" 4 mus-lshort mus-riff "fmv.snd" mus-sound-data-location mus-sound-reopen-output to fd
+  fd 0 mus-sound-seek-frame drop
+  4 0 do
+    sdata i 2 0.1 sound-data-set! drop
+    sdata i 3 0.1 sound-data-set! drop
+  loop
+  fd 0 9 4 sdata mus-sound-write drop
+  fd 80 mus-sound-close-output drop
+  "fmv.snd" mus-sound-open-input to fd
+  4 10 make-sound-data to ndata
+  fd 0 9 4 ndata mus-sound-read drop
+  4 0 do
+    ndata i 0 sound-data-ref 0.0 fneq
+    ndata i 1 sound-data-ref 0.1 fneq ||
+    ndata i 2 sound-data-ref 0.1 fneq ||
+    ndata i 3 sound-data-ref 0.1 fneq ||
+    ndata i 6 sound-data-ref 0.0 fneq || if
+      ndata i sound-data-channel->list
+      sdata i sound-data-channel->list "!=" $" 2 re-read/write[%d]" #( i ) snd-format #() snd-display
+    then
+  loop
+  fd mus-sound-close-input drop
+  \
+  "32bit.sf" check-file-name to fsnd
+  fsnd file-exists? if
+    fsnd open-sound to ind
+    ind 0 maxamp 0.228 $" 32bit max" #() snd-test-neq
+    ind close-sound drop
+  then
+  \
+  #( #( "next-dbl.snd" 10 10 vct( 0.475 0.491 0.499 0.499 0.492 0.476 0.453 0.423 0.387 0.344 ) )
+     #( "oboe.ldbl" 1000 10 vct( 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004 ) )
+     #( "next-flt.snd" 10 10 vct( 0.475 0.491 0.499 0.499 0.492 0.476 0.453 0.423 0.387 0.344 ) )
+     #( "clbonef.wav" 1000 10 vct( 0.111 0.101 0.070 0.032 -0.014 -0.060 -0.085 -0.108 -0.129 -0.152 ) )
+     #( "next-8.snd" 10 10 vct( 0.898 0.945 0.977 0.992 0.992 0.977 0.945 0.906 0.844 0.773 ) )
+     #( "o2_u8.wave" 1000 10 vct( -0.164 -0.219 -0.258 -0.242 -0.180 -0.102 -0.047 0.000 0.039 0.055 ) )
+     #( "next-16.snd" 1000 10 vct( -0.026 -0.022 -0.024 -0.030 -0.041 -0.048 -0.050 -0.055 -0.048 -0.033 ) )
+     #( "o2.wave" 1000 10 vct( -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059 ) )
+     #( "o2_18bit.aiff" 1000 10 vct( -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059 ) )
+     #( "o2_12bit.aiff" 1000 10 vct( -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059 ) )
+     #( "next24.snd" 1000 10 vct( -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059 ) )
+     #( "mono24.wav" 1000 10 vct( 0.005 0.010 0.016 0.008 -0.007 -0.018 -0.025 -0.021 -0.005 0.001 ) )
+     #( "o2_711u.wave" 1000 10 vct( -0.164 -0.219 -0.254 -0.242 -0.172 -0.103 -0.042 0.005 0.042 0.060 ) )
+     #( "alaw.wav" 1000 10 vct( -0.024 -0.048 -0.024 0.000 0.008 0.008 0.000 -0.040 -0.064 -0.024 ) )
+     \ ;; it is not a bug if these don't match if MUS_SAMPLE_BITS is not 24
+     #( "b32.pvf" 1000 10 vct( -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059 ) )
+     #( "b32.wave" 1000 10 vct( -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059 ) )
+     #( "b32.snd" 1000 10 vct( -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059 ) )
+     #( "32bit.sf" 1000 10 vct( 0.016 0.014 0.013 0.011 0.010 0.010 0.010 0.010 0.012 0.014 ) )
+     #( "nist-shortpack.wav" 10000 10 vct( 0.021 0.018 0.014 0.009 0.004 -0.001 -0.004 -0.006 -0.007 -0.008 ) )
+     #( "wood.sds" 1000 10 vct( -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059 ) )
+     #( "oboe.g721" 1000 10 vct( -0.037 -0.040 -0.040 -0.041 -0.042 -0.038 -0.028 -0.015 -0.005 0.002 ) )
+     #( "oboe.g723_40" 1000 10 vct( -0.037 -0.040 -0.041 -0.041 -0.041 -0.038 -0.028 -0.015 -0.005 0.003 ) )
+     #( "mus10.snd" 10000 10 vct( 0.004 0.001 0.005 0.009 0.017 0.015 0.008 0.011 0.009 0.012 ) )
+     #( "ieee-text-16.snd" 1000 10 vct( -0.052 -0.056 -0.069 -0.077 -0.065 -0.049 -0.054 -0.062 -0.066 -0.074 ) )
+     #( "hcom-16.snd" 10000 10 vct( 0.000 0.000 0.000 0.008 0.000 -0.016 -0.016 -0.016 -0.008 0.000 ) )
+     #( "ce-c3.w02" 1000 10 vct( 0.581 0.598 0.596 0.577 0.552 0.530 0.508 0.479 0.449 0.425 ) )
+     #( "nasahal.avi" 20000 10 vct( 0.390 0.120 -0.399 -0.131 0.464 0.189 -0.458 -0.150 0.593 0.439 ) )
+     #( "oki.wav" 100 10 vct( 0.396 0.564 0.677 0.779 0.761 0.540 0.209 -0.100 -0.301 -0.265 ) )
+     #( "trumps22.adp" 5000 10 vct( 0.267 0.278 0.309 0.360 0.383 0.414 0.464 0.475 0.486 0.495 ) ) ) to files
+  nil nil nil nil { file beg dur data }
+  files each to vals
+    vals 0 array-ref to file
+    vals 1 array-ref to beg
+    vals 2 array-ref to dur
+    vals 3 array-ref to data
+    file check-file-name to fsnd
+    fsnd file-exists? if
+      fsnd open-sound to ind
+      beg dur ind 0 channel->vct data $" %s" #( file ) snd-test-neq
+      ind close-sound drop
+    then
+  end-each
+  \
+  #( $" no error"
+     $" no frequency method"
+     $" no phase method"
+     $" null gen arg to method"
+     $" no length method"
+     $" no free method"
+     $" no describe method"
+     $" no data method"
+     $" no scaler method"
+     $" memory allocation failed"
+     $" unstable two pole error"
+     $" can't open file"
+     $" no sample input"
+     $" no sample output"
+     $" no such channel"
+     $" no file name provided"
+     $" no location method"
+     $" no channel method"
+     $" no such fft window"
+     $" unsupported data format"
+     $" header read failed"
+     $" unsupported header type"
+     $" file descriptors not initialized"
+     $" not a sound file"
+     $" file closed"
+     $" write error"
+     $" header write failed"
+     $" can't open temp file"
+     $" interrupted"
+     $" bad envelope"
+     $" audio channels not available"
+     $" audio srate not available"
+     $" audio format not available"
+     $" no audio input available"
+     $" audio configuration not available" 
+     $" audio write error"
+     $" audio size not available"
+     $" audio device not available"
+     $" can't close audio"
+     $" can't open audio"
+     $" audio read error"
+     $" can't write audio"
+     $" can't read audio"
+     $" no audio read permission" 
+     $" can't close file"
+     $" arg out of range"
+     $" wrong type arg"
+     $" no channels method"
+     $" no hop method"
+     $" no width method"
+     $" no file-name method"
+     $" no ramp method"
+     $" no run method"
+     $" no increment method"
+     $" no offset method"
+     $" no xcoeff method"
+     $" no ycoeff method"
+     $" no xcoeffs method"
+     $" no ycoeffs method"
+     $" no reset"
+     $" bad size"
+     $" can't convert"
+     $" read error"
+     $" no safety method"
+     $" can't translate" ) each
+    ( err ) i mus-error-type->string $" mus-error-type->string[%d]" #( i ) snd-test-neq
+  end-each
+  \
+  "oboe.snd" mus-sound-srate { cur-srate }
+  "oboe.snd" mus-sound-chans { cur-chans }
+  "oboe.snd" mus-sound-data-format { cur-format }
+  "oboe.snd" mus-sound-header-type { cur-type }
+  "oboe.snd" mus-sound-data-location { cur-loc }
+  "oboe.snd" mus-sound-samples { cur-samps }
+  "oboe.snd" cur-srate 2* set-mus-sound-srate drop
+  "oboe.snd" mus-sound-srate cur-srate 2* "set-mus-sound-srate" #() snd-test-neq
+  "oboe.snd" cur-samps 2* set-mus-sound-samples drop
+  "oboe.snd" mus-sound-samples cur-samps 2* "set-mus-sound-samples" #() snd-test-neq
+  "oboe.snd" cur-chans 2* set-mus-sound-chans drop
+  "oboe.snd" mus-sound-chans cur-chans 2* "set-mus-sound-chans" #() snd-test-neq
+  "oboe.snd" cur-loc 2* set-mus-sound-data-location drop
+  "oboe.snd" mus-sound-data-location cur-loc 2* "set-mus-sound-data-location" #() snd-test-neq
+  "oboe.snd" mus-nist set-mus-sound-header-type drop
+  "oboe.snd" mus-sound-header-type mus-nist "set-mus-sound-header-type" #() snd-test-neq
+  "oboe.snd" mus-lintn set-mus-sound-data-format drop
+  "oboe.snd" mus-sound-data-format mus-lintn "set-mus-sound-data-format" #() snd-test-neq
+  "oboe.snd" cur-srate  set-mus-sound-srate drop
+  "oboe.snd" cur-samps  set-mus-sound-samples drop
+  "oboe.snd" cur-chans  set-mus-sound-chans drop
+  "oboe.snd" cur-loc    set-mus-sound-data-location drop
+  "oboe.snd" cur-type   set-mus-sound-header-type drop
+  "oboe.snd" cur-format set-mus-sound-data-format drop
+  \
+  "oboe.snd" open-sound to ind
+  "test.wave" ind mus-riff save-sound-as drop
+  "test.rf64" ind mus-rf64 save-sound-as drop
+  "test.aifc" ind mus-aifc save-sound-as drop
+  ind close-sound drop
+  \
+  #( "test.wave" "test.rf64" "test.aifc" ) each to file
+    file mus-sound-srate to cur-srate
+    file mus-sound-chans to cur-chans
+    file mus-sound-data-format to cur-format
+    file mus-sound-header-type to cur-type
+    file mus-sound-data-location to cur-loc
+    file mus-sound-samples to cur-samps
+    file cur-srate 2* set-mus-sound-srate drop
+    file mus-sound-srate cur-srate 2* $" %s set-mus-sound-srate" #( file ) snd-test-neq
+    file cur-samps 2* set-mus-sound-samples drop
+    file mus-sound-samples cur-samps 2* $" %s set-mus-sound-samples" #( file ) snd-test-neq
+    file cur-chans 2* set-mus-sound-chans drop
+    file mus-sound-chans cur-chans 2* $" %s set-mus-sound-chans" #( file ) snd-test-neq
+    file cur-loc 2* set-mus-sound-data-location drop
+    file mus-sound-data-location cur-loc 2* $" %s set-mus-sound-data-location" #( file ) snd-test-neq
+    file mus-nist set-mus-sound-header-type drop
+    file mus-sound-header-type mus-nist $" %s set-mus-sound-header-type" #( file ) snd-test-neq
+    file mus-lintn set-mus-sound-data-format drop
+    file mus-sound-data-format mus-lintn $" %s set-mus-sound-data-format" #( file ) snd-test-neq
+    file cur-srate  set-mus-sound-srate drop
+    file cur-samps  set-mus-sound-samples drop
+    file cur-chans  set-mus-sound-chans drop
+    file cur-loc    set-mus-sound-data-location drop
+    file cur-type   set-mus-sound-header-type drop
+    file cur-format set-mus-sound-data-format drop
+  end-each
+  #( "test.wave" "test.rf64" "test.aifc" ) each to file
+    file open-sound to ind
+    ind srate to cur-srate
+    ind chans to cur-chans
+    ind data-format to cur-format
+    ind header-type to cur-type
+    ind data-location to cur-loc
+    ind frames to cur-samps
+    ind cur-srate 2* set-srate drop
+    ind srate cur-srate 2* $" %s set-srate" #( ind file-name ) snd-test-neq
+    cur-samps 2* ind set-frames drop
+    ind frames cur-samps 2* $" %s set-frames" #( ind file-name ) snd-test-neq
+    ind cur-chans 2* set-chans drop	\ ; this can change the index
+    file find-sound to ind
+    ind chans cur-chans 2* $" %s set-chans" #( ind file-name ) snd-test-neq
+    ind cur-loc 2* set-data-location drop
+    ind data-location cur-loc 2* $" %s set-data-location" #( ind file-name ) snd-test-neq
+    ind mus-nist set-header-type drop
+    ind header-type mus-nist $" %s set-header-type" #( ind file-name ) snd-test-neq
+    ind mus-lintn set-data-format drop
+    ind data-format mus-lintn $" %s set-data-format" #( ind file-name ) snd-test-neq
+    ind cur-srate  set-srate drop
+    cur-samps ind  set-frames drop
+    ind cur-chans  set-chans drop
+    ind cur-loc    set-data-location drop
+    ind cur-type   set-header-type drop
+    ind cur-format set-data-format drop
+    ind close-sound drop
+    file file-delete
+  end-each
+  with-big-file if
+    bigger-snd file-exists? if
+      \ ; silence as last .9 secs, so it probably wasn't written
+      44100 71999.1 f* floor f>d { probable-frames }
+      3175160310 make-uoff-t { our-frames }
+      \ 6350320648 make-uoff-t { our-length }
+      3175160324 make-uoff-t 2 d* { our-length }
+      bigger-snd mus-sound-samples our-frames $" bigger samples" #() snd-test-neq
+      bigger-snd mus-sound-frames our-frames $" bigger frames" #() snd-test-neq
+      bigger-snd mus-sound-frames probable-frames $" bigger frames (probable)" #() snd-test-neq
+      bigger-snd mus-sound-length our-length $" bigger bytes" #() snd-test-neq
+      bigger-snd mus-sound-duration 71999.1015 $" bigger dur" #() snd-test-neq
+      bigger-snd open-sound to ind
+      ind frames our-frames $" bigger frames" #() snd-test-neq
+      ind frames to big-file-frames
+      ind frames probable-frames $" bigger frames (probable)" #() snd-test-neq
+      ind 0 0 frames big-file-frames $" bigger edpos-frames" #() snd-test-neq
+      44100 50000 d* ind add-mark to m1
+      m1 mark-sample 44100 50000 d* $" bigger mark at" #() snd-test-neq
+      m1 44100 66000 d* set-mark-sample drop
+      m1 mark-sample 44100 66000 d* $" bigger mark to" #() snd-test-neq
+      "oboe.snd" 44100 60000 d* mix-sound car to mx
+      mx mix? if
+	mx mix-position 44100 60000 d* $" bigger mix at" #() snd-test-neq
+	mx 44100 61000 d* set-mix-position drop
+	mx mix-position 44100 61000 d* $" bigger mix to" #() snd-test-neq
+      else
+	$" no mix tag from mix-sound" #() snd-display
+      then
+      2 undo drop
+      <'> f0<> 1 make-proc find-channel to res
+      res false?
+      res 100 > || if
+	$" bigger find not 0.0: %s" #( res ) snd-display
+      then
+      selection-creates-region { old-select }
+      #f set-selection-creates-region drop
+      ind select-all drop
+      selection-frames ind 0 undef frames $" bigger select all" #() snd-test-neq
+      44100 50000 d* set-selection-position drop
+      selection-position 44100 50000 d* $" bigger select pos" #() snd-test-neq
+      0 set-selection-position drop
+      44100 65000 d* set-selection-frames drop
+      selection-frames 44100 65000 d* $" bigger select len" #() snd-test-neq
+      old-select set-selection-creates-region drop
+      44100 50000 d* ind set-cursor drop
+      ind cursor 44100 50000 d* $" bigger cursor" #() snd-test-neq
+      44123 51234 d* ind add-mark to m1
+      m1 mark-sample 44123 51234 d* $" bigger mark at" #() snd-test-neq
+      44123 51234 d* find-mark { mid }
+      mid m1 $" bigger mark seach" #() snd-test-neq
+      "oboe.snd" 44123 61234 d* mix-sound car to mx
+      44123 61234 d* find-mix { mxd }
+      mxd mx $" bigger find-mix" #() snd-test-neq
+      44123 51234 d* ind set-cursor drop
+      ind cursor 44123 51234 d* $" bigger cursor 123" #() snd-test-neq
+      ind close-sound drop
+    else
+      $" no such bigger file %s" #( bigger-snd ) snd-display
+    then
+  then
+  \
+  "tmp.snd" mus-riff mus-l24int 22050 1 :size 100000 new-sound to ind
+  selection-creates-region { old-selection-creates-region }
+  #t set-selection-creates-region drop
+  -0.5 undef undef undef frames 1/f sndlib-test-map-x-cb map-channel drop
+  save-sound drop
+  ind close-sound drop
+  "tmp.snd" open-sound to ind
+  select-all { reg }
+  "tmp1.snd" mus-next mus-l24int save-selection drop
+  "tmp1.snd" open-sound to ind1
+  -0.5 undef undef undef frames 1/f sndlib-test-scan-x-cb 0 100000 ind1 scan-channel to res
+  res #f $" l24 (next) selection not saved correctly" #() snd-test-neq
+  ind1 close-sound drop
+  "tmp1.snd" mus-aifc mus-l24int save-selection drop
+  "tmp1.snd" open-sound to ind1
+  -0.5 undef undef undef frames 1/f sndlib-test-scan-x-cb 0 100000 ind1 scan-channel to res
+  res #f $" l24 (aifc) selection not saved correctly" #() snd-test-neq
+  ind1 close-sound drop
+  reg "tmp1.snd" mus-next mus-l24int save-region drop
+  "tmp1.snd" open-sound to ind1
+  -0.5 undef undef undef frames 1/f sndlib-test-scan-x-cb 0 100000 ind1 scan-channel to res
+  res #f $" l24 (next) region not saved correctly" #() snd-test-neq
+  ind1 close-sound drop
+  "tmp1.snd" file-delete
+  ind close-sound drop
+  "tmp.snd" file-delete
+  old-selection-creates-region set-selection-creates-region drop
+  \
+  "tmp.snd" mus-next mus-bfloat 22050 1 :size 10 :comment #f new-sound to ind
+  <'> sndlib-test-map-set-1.0 map-channel drop
+  '( 0 0 0.1 0.1 0.2 0.2 0.3 0.3 0.4 0.4 0.5 0.5 0.6 0.6 0.7 0.7 0.8 0.8 0.9 0.9 ) env-channel drop
+  channel->vct
+  vct( 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 )
+  $" ramp env by 0.1" #() snd-test-neq
+  ind close-sound drop
+;
+
+: sndlib-hook-2-t#-cb <{ a b -- f }> #t ;
+: sndlib-hook-1-t#-cb <{ a -- f }> #t ;
+
+: make-aifc-file { frms auth-lo bits -- }
+  "test.aif" make-file-output-port { io }
+  io "FORM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o146 port-putc \ len
+  io "AIFCFVER" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ version chunk size
+  io 0o242 port-putc  io 0o200 port-putc  io 0o121 port-putc  io 0o100 port-putc \ version
+  io "COMM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
+  io 0o000 port-putc  io 0o001 port-putc \ 1 chan
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io frms  port-putc \ frames
+  io 0o000 port-putc  io bits  port-putc \ bits
+  io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  \ srate as 80-bit float (sheesh)
+  io "NONE" port-write			\ compression
+  io 0o016 port-putc			\ pascal string len
+  io $" not compressed" port-write
+  io 0o000 port-putc
+  io "AUTH" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io auth-lo port-putc \ AUTH chunk size
+  io "bil" port-write
+  io 0o000 port-putc
+  io "SSND" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc \ SSND chunk size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ SSND data loc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ block size?
+  io 0o000 port-putc  io 0o101 port-putc  io 0o000 port-putc  io 0o100 port-putc \ two samples
+  io port-close
+;
+
+: (04-sndlib-02) ( -- )
+  open-raw-sound-hook reset-hook!
+  open-raw-sound-hook <'> sndlib-hook-2-t#-cb add-hook!
+  bad-header-hook reset-hook!
+  bad-header-hook <'> sndlib-hook-1-t#-cb add-hook!
+  open-raw-sound-hook empty? if
+    $" add-hook open-raw-sound-hook failed??" #() snd-display
+  then
+  bad-header-hook empty? if
+    $" add-hook bad-header-hook failed??" #() snd-display
+  then
+  #( ".snd" "FORM" "AIFF" "AIFC" "COMM" "COMT" "INFO" "INST" "inst" "MARK" "SSND"
+     "FVER" "NONE" "ULAW" "ulaw" "ima4" "raw " "sowt" "in32" "in24" "ni23" "fl32"
+     "FL32" "fl64" "twos" "ALAW" "alaw" "APPL" "CLM " "RIFF" "RIFX" "WAVE" "fmt "
+     "data" "fact" "clm " "NIST" "8SVX" "16SV" "Crea" "tive" "SOUN" "D SA" "MPLE"
+     "BODY" "VHDR" "CHAN" "ANNO" "NAME" "2BIT" "HCOM" "FSSD" "%//\n" "%---" "ALaw"
+     "Soun" "MAUD" "MHDR" "MDAT" "mdat" "MThd" "sfbk" "sdta" "shdr" "pdta"
+     "LIST" "GF1P" "ATCH" "$SIG" "NAL_" "GOLD" " SAM" "SRFS" "Diam" "ondW" "CSRE"
+     "SND " "SNIN" "SNDT" "DDSF" "FSMu" "UWFD" "LM89" "SY80" "SY85" "SCRS" "DSPL"
+     "AVI " "strf" "movi" "PRAM" " paf" "fap " "DS16" "HEDR" "HDR8" "SDA_" "SDAB"
+     "SD_B" "NOTE" "file" "=sam" "SU7M" "SU7R" "PVF1" "PVF2" "AUTH" "riff" "TWIN"
+     "IMPS" "SMP1" "Maui" "SDIF" "NVF " ) { magic-words }
+  magic-words length { len }
+  nil nil nil nil { magic io res ind }
+  magic-words each to magic
+    open-raw-sound-hook empty? if
+      $" open-raw-sound-hook cleared??" #() snd-display
+    then
+    bad-header-hook empty? if
+      $" bad-header-hook cleared??" #() snd-display
+    then
+    "test.snd" file-delete
+    "test.snd" mus-sound-forget drop
+    \ ;; try random garbage
+    "test.snd" make-file-output-port to io
+    io magic port-write
+    128 0 do
+      io "%f" #( 1.0 random ) port-write-format
+    loop
+    io port-close
+    "test.snd" <'> open-sound #t nil fth-catch if
+      stack-reset
+    else
+      to res
+      res number? if
+	res sound? if
+	  $" open-sound garbage: %s %s" #( magic res ) snd-display
+	  res close-sound drop
+	then
+      then
+    then
+    "test.snd" file-delete
+    "test.snd" mus-sound-forget drop
+    \ ;; try plausible garbage
+    "test.snd" make-file-output-port to io
+    io magic port-write
+    128 0 do
+      io "%d" #( 128 random f>s ) port-write-format
+    loop
+    io port-close
+    "test.snd" <'> open-sound #t nil fth-catch if
+      stack-reset
+    else
+      to res
+      res number? if
+	res sound? if
+	  $" open-sound plausible garbage: %s %s" #( magic res ) snd-display
+	  res close-sound drop
+	then
+      then
+    then
+    "test.snd" file-delete
+    "test.snd" mus-sound-forget drop
+    \ ;; write very plausible garbage
+    "test.snd" make-file-output-port to io
+    io magic port-write
+    12 1 do
+      io
+      magic-words
+      j ( ctr ) i + len < if j i + else i then
+      array-ref
+      port-write
+    loop
+    io port-close
+    "test.snd" <'> open-sound #t nil fth-catch if
+      stack-reset
+    else
+      to res
+      res number? if
+	res sound? if
+	  $" open-sound very plausible garbage: %s %s" #( magic res ) snd-display
+	  res close-sound drop
+	then
+      then
+    then
+  end-each
+  "test.snd" file-delete
+  "test.snd" mus-sound-forget drop
+  \
+  "test.snd" make-file-output-port to io
+  io ".snd" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o034 port-putc \ location
+  io 0o000 port-putc  io 0o001 port-putc  io 0o215 port-putc  io 0o030 port-putc \ nominal size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o022 port-putc \ format
+  io 0o000 port-putc  io 0o000 port-putc  io 0o126 port-putc  io 0o042 port-putc \ srate
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o001 port-putc \ chans
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ comment
+  io 0o000 port-putc  io 0o001 port-putc \ samp 1
+  io port-close
+  "test.snd" mus-sound-data-format mus-bshort $" next 18" #() snd-test-neq
+  "test.snd" file-delete
+  "test.snd" mus-sound-forget drop
+  \
+  "test.snd" make-file-output-port to io
+  io ".snd" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ location
+  io 0o000 port-putc  io 0o001 port-putc  io 0o215 port-putc  io 0o030 port-putc \ nominal size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o022 port-putc \ format
+  io 0o000 port-putc  io 0o000 port-putc  io 0o126 port-putc  io 0o042 port-putc \ srate
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o001 port-putc \ chans
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ comment
+  io 0o000 port-putc  io 0o001 port-putc \ samp 1
+  io port-close
+  "test.snd" <'> open-sound #t nil fth-catch if
+    stack-reset
+  else
+    to res
+    res number? if
+      res sound? if
+	$" open-sound next bad location %d: %s" #( res data-location res ) snd-display
+	res close-sound drop
+      then
+    then
+  then
+  "test.snd" file-delete
+  "test.snd" mus-sound-forget drop
+  \
+  "test.snd" make-file-output-port to io
+  io ".snd" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o034 port-putc \ location
+  io 0o000 port-putc  io 0o001 port-putc  io 0o215 port-putc  io 0o030 port-putc \ nominal size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o122 port-putc \ format
+  io 0o000 port-putc  io 0o000 port-putc  io 0o126 port-putc  io 0o042 port-putc \ srate
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o001 port-putc \ chans
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ comment
+  io 0o000 port-putc  io 0o001 port-putc \ samp 1
+  io port-close
+  "test.snd" <'> open-sound #t nil fth-catch if
+    stack-reset
+  else
+    to res
+    res number? if
+      res sound? if
+	$" open-sound next bad format %s: %s" #( res data-format res ) snd-display
+	res close-sound drop
+      then
+    then
+  then
+  "test.snd" file-delete
+  "test.snd" mus-sound-forget drop
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ ;;correct (make-aifc-file #o002 #o004 #o020)
+  0o102 0o004 0o020 make-aifc-file
+  "test.aif" open-sound to ind
+  ind frames 2 $" bad frames in header" #() snd-test-neq
+  ind close-sound drop
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ 
+  0o002 0o150 0o020 make-aifc-file
+  "test.aif" <'> open-sound #t nil fth-catch if
+    stack-reset
+  else
+    to res
+    res number? if
+      res sound? if
+	$" open-sound aifc no ssnd chunk %d: %s" #( res data-location res ) snd-display
+	res close-sound drop
+      then
+    then
+  then
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ 
+  0o002 0o000 0o020 make-aifc-file
+  "test.aif" <'> open-sound #t nil fth-catch if
+    stack-reset
+  else
+    to res
+    res number? if
+      res sound? if
+	$" open-sound aifc 0-len auth chunk %d: %s" #( res data-location res ) snd-display
+	res close-sound drop
+      then
+    then
+  then
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ 
+  0o002 0o150 0o120 make-aifc-file
+  "test.aif" <'> open-sound #t nil fth-catch if
+    stack-reset
+  else
+    to res
+    res number? if
+      res sound? if
+	$" open-sound bits 80 %s: %s" #( res data-format res ) snd-display
+	res close-sound drop
+      then
+    then
+  then
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ 
+  "test.aif" make-file-output-port to io
+  io "FORM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o176 port-putc \ len
+  io "AIFCFVER" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ version chunk size
+  io 0o242 port-putc  io 0o200 port-putc  io 0o121 port-putc  io 0o100 port-putc \ version
+  io "COMM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
+  io 0o000 port-putc  io 0o001 port-putc \ 1 chan
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ frames
+  io 0o000 port-putc  io 0o020 port-putc \ bits
+  io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  \ srate as 80-bit float (sheesh)
+  io "NONE" port-write			\ compression
+  io 0o016 port-putc			\ pascal string len
+  io $" not compressed" port-write
+  io 0o000 port-putc
+  io "AUTH" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ AUTH chunk size
+  io "bil" port-write
+  io 0o000 port-putc
+  io "ANNO" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ AUTH chunk size
+  io "cat" port-write
+  io 0o000 port-putc
+  io "NAME" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ AUTH chunk size
+  io "dog" port-write
+  io 0o000 port-putc
+  io "SSND" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc \ SSND chunk size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ SSND data loc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ block size?
+  io 0o000 port-putc  io 0o101 port-putc  io 0o000 port-putc  io 0o100 port-putc \ two samples
+  io port-close
+  "test.aif" mus-sound-comment length 15 $" aifc 3 aux comments" #() snd-test-neq
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ 
+  "test.aif" make-file-output-port to io
+  io "FORM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o142 port-putc \ len
+  io "AIFC" port-write
+  io "SSND" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc \ SSND chunk size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ SSND data loc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ block size?
+  io 0o000 port-putc  io 0o101 port-putc  io 0o000 port-putc  io 0o100 port-putc \ two samples
+  io "COMM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
+  io 0o000 port-putc  io 0o001 port-putc \ 1 chan
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ frames
+  io 0o000 port-putc  io 0o020 port-putc \ bits
+  io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  \ srate as 80-bit float (sheesh)
+  io "NONE" port-write			\ compression
+  io 0o016 port-putc			\ pascal string len
+  io $" not compressed" port-write
+  io 0o000 port-putc
+  io "COMT" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  io "bil" port-write
+  io 0o000 port-putc
+  io port-close
+  "test.aif" mus-sound-comment 0 3 string-substring "bil" $" aifc trailing comt comments" #() snd-test-neq
+  "test.aif" mus-sound-frames 2 $" aifc trailing comt frames" #() snd-test-neq
+  "test.aif" open-sound to ind
+  0 sample { s0 }
+  1 sample { s1 }
+  2 sample { s2 }
+  3 sample { s3 }
+  vct( s0 s1 s2 s3 ) vct( 0.00198 0.00195 0.0 0.0 ) $" aifc trailing comt samps" #() snd-test-neq
+  ind close-sound drop
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ 
+  "test.aif" make-file-output-port to io
+  io "FORM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o142 port-putc \ len
+  io "AIFC" port-write
+  io "SSND" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc \ SSND chunk size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ SSND data loc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ block size?
+  io 0o000 port-putc  io 0o101 port-putc  io 0o000 port-putc  io 0o100 port-putc \ two samples
+  io "COMM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
+  io 0o000 port-putc  io 0o001 port-putc \ 1 chan
+  io 0o000 port-putc  io 0o000 port-putc  io 0o100 port-putc  io 0o102 port-putc \ frames
+  io 0o000 port-putc  io 0o020 port-putc \ bits
+  io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  \ srate as 80-bit float (sheesh)
+  io "NONE" port-write			\ compression
+  io 0o016 port-putc			\ pascal string len
+  io $" not compressed" port-write
+  io 0o000 port-putc
+  io "COMT" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  io "bil" port-write
+  io 0o000 port-putc
+  io port-close
+  "test.aif" mus-sound-comment 0 3 string-substring "bil" $" aifc trailing comt comments" #() snd-test-neq
+  "test.aif" mus-sound-frames 2 $" aifc trailing comt (bogus) frames" #() snd-test-neq
+  "test.aif" open-sound to ind
+  0 sample to s0
+  1 sample to s1
+  2 sample to s2
+  3 sample to s3
+  vct( s0 s1 s2 s3 ) vct( 0.00198 0.00195 0.0 0.0 ) $" aifc trailing comt samps (bogus frame setting)" #() snd-test-neq
+  ind close-sound drop
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ 
+  "test.aif" make-file-output-port to io
+  io "FORM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o142 port-putc \ len
+  io "AIFC" port-write
+  io "SSND" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc \ SSND chunk size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ SSND data loc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ block size?
+  io 0o000 port-putc  io 0o101 port-putc  io 0o000 port-putc  io 0o100 port-putc \ two samples
+  io "COMM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
+  io 0o000 port-putc  io 0o001 port-putc \ 1 chan
+  io 0o000 port-putc  io 0o000 port-putc  io 0o100 port-putc  io 0o102 port-putc \ frames
+  io 0o000 port-putc  io 0o020 port-putc \ bits
+  io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  \ srate as 80-bit float (sheesh)
+  io "NONE" port-write			\ compression
+  io 0o016 port-putc			\ pascal string len
+  io $" not compressed" port-write
+  io 0o000 port-putc
+  io "SSND" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc \ SSND chunk size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ SSND data loc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ block size?
+  io 0o000 port-putc  io 0o101 port-putc  io 0o000 port-putc  io 0o100 port-putc \ two samples
+  io port-close
+  "test.aif" <'> open-sound #t nil fth-catch if
+    stack-reset
+  else
+    to res
+    res number? if
+      res sound? if
+	$" open-sound aifc 2 ssnd chunks %d: %s" #( res data-location res ) snd-display
+	res close-sound drop
+      then
+    then
+  then
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ 
+  "test.aif" make-file-output-port to io
+  io "FORM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o040 port-putc \ len
+  io "AIFC" port-write
+  io "SSND" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc \ SSND chunk size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ SSND data loc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ block size?
+  io 0o000 port-putc  io 0o101 port-putc  io 0o000 port-putc  io 0o100 port-putc \ two samples
+  io port-close
+  "test.aif" <'> open-sound #t nil fth-catch to res
+  stack-reset
+  res car 'mus-error $" open-sound aifc no comm chunk: %s" #( res ) snd-test-neq
+  sounds each close-sound drop end-each
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ 
+  "test.aif" make-file-output-port to io
+  \ write AIFC with trailing chunks to try to confuse file->sample
+  io "FORM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o176 port-putc \ len
+  io "AIFCFVER" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ version chunk size
+  io 0o242 port-putc  io 0o200 port-putc  io 0o121 port-putc  io 0o100 port-putc \ version
+  io "COMM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
+  io 0o000 port-putc  io 0o001 port-putc \ 1 chan
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ frames
+  io 0o000 port-putc  io 0o020 port-putc \ bits
+  io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  \ srate as 80-bit float (sheesh)
+  io "NONE" port-write			\ compression
+  io 0o016 port-putc			\ pascal string len
+  io $" not compressed" port-write
+  io 0o000 port-putc
+  io "SSND" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc \ SSND chunk size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ SSND data loc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ block size?
+  io 0o170 port-putc  io 0o101 port-putc  io 0o100 port-putc  io 0o100 port-putc \ two samples
+  io "AUTH" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ AUTH chunk size
+  io "bil" port-write
+  io 0o000 port-putc
+  io "ANNO" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ AUTH chunk size
+  io "cat" port-write
+  io 0o000 port-putc
+  io "NAME" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ AUTH chunk size
+  io "dog" port-write
+  io 0o000 port-putc
+  io port-close
+  "test.aif" make-file->sample { gen }
+  gen #( 0 ) object-apply 0.93948 $" file->sample chunked 0" #() snd-test-neq
+  gen #( 1 ) object-apply 0.50195 $" file->sample chunked 1" #() snd-test-neq
+  gen #( 2 ) object-apply 0.0 $" file->sample chunked eof" #() snd-test-neq
+  gen #( 3 ) object-apply 0.0 $" file->sample chunked eof+1" #() snd-test-neq
+  "test.aif" open-sound to ind
+  ind frames 2 $" chunked frames" #() snd-test-neq
+  0 sample 0.93948 $" file chunked 0" #() snd-test-neq
+  1 sample 0.50195 $" file chunked 1" #() snd-test-neq
+  2 sample 0.0 $" file chunked eof" #() snd-test-neq
+  3 sample 0.0 $" file chunked eof+1" #() snd-test-neq
+  ind close-sound drop
+  "test.aif" mus-sound-frames 2 $" chunked mus-sound-frames" #() snd-test-neq
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ 
+  "test.aif" make-file-output-port to io
+  \ write AIFC with trailing chunks to try to confuse file->sample
+  io "FORM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o176 port-putc \ len
+  io "AIFCFVER" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ version chunk size
+  io 0o242 port-putc  io 0o200 port-putc  io 0o121 port-putc  io 0o100 port-putc \ version
+  io "SSND" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc \ SSND chunk size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ SSND data loc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ block size?
+  io 0o170 port-putc  io 0o101 port-putc  io 0o100 port-putc  io 0o100 port-putc \ two samples
+  io "COMM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
+  io 0o000 port-putc  io 0o001 port-putc \ 1 chan
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ frames
+  io 0o000 port-putc  io 0o020 port-putc \ bits
+  io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  \ srate as 80-bit float (sheesh)
+  io "NONE" port-write			\ compression
+  io 0o016 port-putc			\ pascal string len
+  io $" not compressed" port-write
+  io 0o000 port-putc
+  io "APPL" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io <char> h port-putc
+  io $" CLM ;Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98" port-write
+  io 0o000 port-putc
+  io port-close
+  "test.aif" make-file->sample to gen
+  gen #( 0 ) object-apply 0.93948 $" file->sample chunked 0" #() snd-test-neq
+  gen #( 1 ) object-apply 0.50195 $" file->sample chunked 1" #() snd-test-neq
+  gen #( 2 ) object-apply 0.0 $" file->sample chunked eof" #() snd-test-neq
+  gen #( 3 ) object-apply 0.0 $" file->sample chunked eof+1" #() snd-test-neq
+  "test.aif" open-sound to ind
+  ind frames 2 $" chunked frames" #() snd-test-neq
+  0 sample 0.93948 $" file chunked 0" #() snd-test-neq
+  1 sample 0.50195 $" file chunked 1" #() snd-test-neq
+  2 sample 0.0 $" file chunked eof" #() snd-test-neq
+  3 sample 0.0 $" file chunked eof+1" #() snd-test-neq
+  comment $" ;Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98"
+  $" chunked appl comment" #() snd-test-neq
+  ind close-sound drop
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \ 
+  "test.aif" make-file-output-port to io
+  \ write AIFC with trailing chunks to try to confuse file->sample
+  io "FORM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o176 port-putc \ len
+  io "AIFCFVER" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o004 port-putc \ version chunk size
+  io 0o242 port-putc  io 0o200 port-putc  io 0o121 port-putc  io 0o100 port-putc \ version
+  io "SSND" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o014 port-putc \ SSND chunk size
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ SSND data loc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc \ block size?
+  io 0o170 port-putc  io 0o101 port-putc  io 0o100 port-putc  io 0o100 port-putc \ two samples
+  io "COMM" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
+  io 0o000 port-putc  io 0o002 port-putc \ 2 chans
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o001 port-putc \ frames
+  io 0o000 port-putc  io 0o020 port-putc \ bits
+  io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
+  \ srate as 80-bit float (sheesh)
+  io "NONE" port-write			\ compression
+  io 0o016 port-putc			\ pascal string len
+  io $" not compressed" port-write
+  io 0o000 port-putc
+  io "APPL" port-write
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io <char> h port-putc
+  io $" CLM ;Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98" port-write
+  io 0o000 port-putc
+  io port-close
+  "test.aif" make-file->sample to gen
+  gen #( 0 0 ) object-apply 0.93948 $" file->sample chunked 0 0" #() snd-test-neq
+  gen #( 0 1 ) object-apply 0.50195 $" file->sample chunked 0 1" #() snd-test-neq
+  gen #( 1 0 ) object-apply 0.0 $" file->sample chunked eof (stereo)" #() snd-test-neq
+  gen #( 1 1 ) object-apply 0.0 $" file->sample chunked eof+1 (stereo)" #() snd-test-neq
+  "test.aif" open-sound to ind
+  ind frames 1 $" chunked frames (1)" #() snd-test-neq
+  0 ind 0 sample 0.93948 $" file chunked 0 0" #() snd-test-neq
+  0 ind 1 sample 0.50195 $" file chunked 0 1" #() snd-test-neq
+  1 ind 0 sample 0.0 $" file chunked eof (stereo)" #() snd-test-neq
+  1 ind 1 sample 0.0 $" file chunked eof+1 (stereo)" #() snd-test-neq
+  comment $" ;Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98"
+  $" chunked appl comment (stereo)" #() snd-test-neq
+  ind close-sound drop
+  "test.aif" file-delete
+  "test.aif" mus-sound-forget drop
+  \
+  file-pwd sound-files-in-directory { files }
+  files empty? if
+    $" no sound files in %s?" #( file-pwd ) snd-display
+  then
+  sound-files-in-directory { files1 }
+  files files1 $" different sound files in %s and default" #( file-pwd ) snd-test-neq
+  "." sound-files-in-directory { files2 }
+  files1 files2 $" sound-files-in-directory dot" #() snd-test-neq
+  files  files2 $" sound-files-in-directory dot" #() snd-test-neq
+  \
+  bad-header-hook reset-hook!
+  open-raw-sound-hook reset-hook!
+  sounds each ( snd ) close-sound drop end-each
+  \
+  :size 0 new-sound to ind
+  ind frames 0 $" new-sound :size 0 frames" #() snd-test-neq
+  0 sample 0.0 $" new-sound :size 0 sample 0" #() snd-test-neq
+  ind file-name { new-file-name }
+  ind close-sound drop
+  new-file-name file-delete
+  :size 1 new-sound to ind
+  ind frames 1 $" new-sound :size 1 frames" #() snd-test-neq
+  0 sample 0.0 $" new-sound :size 1 sample 0" #() snd-test-neq
+  ind file-name to new-file-name
+  ind close-sound drop
+  new-file-name file-delete
+  :size -1 <'> new-sound #t nil fth-catch to res
+  stack-reset
+  res car 'out-of-range $" new-sound :size -1: %s" #( res ) snd-test-neq
+  \
+  "caruso.asc" check-file-name { fsnd }
+  fsnd file-exists? if
+    fsnd read-ascii to ind
+    ind sound? if
+      ind 0 maxamp 0.723 $" read-ascii maxamp" #() snd-test-neq
+      ind 0 frames 50000 $" read-ascii frames" #() snd-test-neq
+      ind srate    44100 $" read-ascii srate"  #() snd-test-neq
+      ind 8000 set-srate drop
+      ind 0 maxamp 0.723 $" set srate clobbered new sound (maxamp)" #() snd-test-neq
+      ind 0 frames 50000 $" set srate clobbered new sound (frames)" #() snd-test-neq
+      ind close-sound drop
+    else
+      $" read-ascii can't find %s?" #( fsnd ) snd-display
+    then
+  then
+  \
+  "oboe.snd" open-sound to ind
+  $" test space.snd" save-sound-as drop
+  ind close-sound drop
+  $" test space.snd" open-sound to ind
+  ind short-file-name $" test space.snd" $" file name with space" #() snd-test-neq
+  ind frames $" test space.snd" mus-sound-frames $" spaced filename frames" #() snd-test-neq
+  1234 ind 0 add-mark drop
+  ind save-marks drop			\ ; should write "test space.marks"
+  ind close-sound drop
+  $" test space.snd" open-sound to ind
+  file-pwd "/" $+ $" test space.marks" $+ file-eval
+  1234 ind find-mark unless
+    $" space file name save marks?" #() snd-display
+  then
+  :file $" test space.snd" make-readin { rd }
+  rd mus-file-name $" test space.snd" $" file name with space readin" #() snd-test-neq
+  ind close-sound drop
+  $" test space.snd" file-delete
+  $" test space.marks" file-delete
+  \ FIXME
+  \ S7 specific tests skipped
+;
+
+: 04-sndlib ( -- )
+  *tests* 0 ?do
+    i to *clmtest*
+    *snd-test-verbose*
+    *tests* 1 > && if
+      $" clmtest %d of %d" #( *clmtest* 1+ *tests* ) snd-test-message
+    then
+    clear-listener drop
+    (04-sndlib-01)
+  loop
+  (04-sndlib-02)
 ;
 
 \ ---------------- test 10: marks ----------------
@@ -4401,16 +6703,6 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   then
 ;
 
-: map-10-times-cb <{ y -- y' }> y 10.0 f* ;
-
-: map-diff-plus-cb { mx -- proc; y self -- y' }
-  1 proc-create 1.001 mx f- , ( proc )
- does> { y self -- y' }
-  self @ y f+
-;
-
-: scan-less-than-zero-cb <{ y -- y' }> y f0< ;
-
 : 27-sel-from-snd ( -- )
   \ hooks
   open-hook reset-hook!
@@ -4458,169 +6750,6 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     $" 1 set samples 0 for 0.1: %s?" #( res ) snd-display
   then
   ind close-sound drop
-  \ check clipping choices (test004)
-  "oboe.snd" view-sound to ind
-  #f set-clipping drop
-  <'> map-10-times-cb 0 ind undef undef frames ind 0 map-channel drop
-  "test.snd" ind mus-next mus-bfloat save-sound-as drop
-  1 ind 0 undo drop
-  "test.snd" open-sound { ind1 }
-  ind1 0 undef maxamp { res1 }
-  ind  0 undef maxamp { ind-mx }
-  res1 ind-mx 10.0 f*  fneq if $" clipping 0: %s %s?" #( res1 ind-mx ) snd-display then
-  ind1 close-sound drop
-  "test.snd" file-delete
-  \ 
-  #t set-clipping drop
-  <'> map-10-times-cb 0 ind undef undef frames ind 0 map-channel drop
-  "test.snd" ind mus-next mus-bfloat save-sound-as drop
-  1 ind 0 undo drop
-  "test.snd" open-sound to ind1
-  ind1 0 undef maxamp to res1
-  \ ind-mx == ind 0 maxamp from above
-  res1 1.0 fneq if $" clipping 1: %s %s?" #( res1 ind-mx ) snd-display then
-  ind1 close-sound drop
-  "test.snd" file-delete
-  \ 
-  #f set-clipping drop
-  ind-mx map-diff-plus-cb 0 ind undef undef frames ind 0 map-channel drop
-  "test.snd" ind mus-next mus-bshort save-sound-as drop
-  "test.snd" open-sound to ind1
-  <'> scan-less-than-zero-cb scan-channel to res1
-  res1 unless $" clipping 2: %s?" #( res1 ) snd-display then
-  ind1 close-sound drop
-  "test.snd" file-delete
-  \ 
-  #t set-clipping drop
-  "test.snd" ind mus-next mus-bshort save-sound-as drop
-  "test.snd" open-sound to ind1
-  <'> scan-less-than-zero-cb scan-channel to res1
-  res1 if $" clipping 3: %s?" #( res1 ) snd-display then
-  ind1 close-sound drop
-  "test.snd" file-delete
-  #f set-clipping drop
-  ind close-sound drop
-  \
-  #f set-clipping drop
-  "test.snd" :data-format mus-lshort new-sound { snd }
-  0 10 pad-channel drop
-  1  1.0    set-sample drop
-  2 -1.0    set-sample drop
-  3  0.9999 set-sample drop
-  4  2.0    set-sample drop
-  5 -2.0    set-sample drop
-  6  1.3    set-sample drop
-  7 -1.3    set-sample drop
-  8  1.8    set-sample drop
-  9 -1.8    set-sample drop
-  snd save-sound drop
-  snd close-sound drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
-  res vct( 0.0 1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal? unless
-    $" clipping(#f): %s?" #( res ) snd-display
-  then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \ 
-  #t set-clipping drop
-  "test.snd" :data-format mus-lshort new-sound { snd }
-  0 10 pad-channel drop
-  1  1.0    set-sample drop
-  2 -1.0    set-sample drop
-  3  0.9999 set-sample drop
-  4  2.0    set-sample drop
-  5 -2.0    set-sample drop
-  6  1.3    set-sample drop
-  7 -1.3    set-sample drop
-  8  1.8    set-sample drop
-  9 -1.8    set-sample drop
-  snd save-sound drop
-  snd close-sound drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
-  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal? unless
-    $" clipping(#t): %s?" #( res ) snd-display
-  then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \ 
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
-  data vct->sound-data { sdata }
-  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
-  snd #f set-mus-file-clipping drop
-  snd 0 9 1 sdata mus-sound-write drop
-  snd 40 mus-sound-close-output drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
-  res vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal? unless
-    $" mus-file-clipping(#f): %s?" #( res ) snd-display
-  then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \ 
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
-  data vct->sound-data { sdata }
-  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
-  snd #t set-mus-file-clipping drop
-  snd 0 9 1 sdata mus-sound-write drop
-  snd #f set-mus-file-clipping drop
-  snd 40 mus-sound-close-output drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
-  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal? unless
-    $" mus-file-clipping(#t): %s?" #( res ) snd-display
-  then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \
-  #f set-mus-clipping drop
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
-  data vct->sound-data { sdata }
-  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
-  snd 0 9 1 sdata mus-sound-write drop
-  snd 40 mus-sound-close-output drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
-  res vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal? unless
-    $" mus-clipping(#f): %s?" #( res ) snd-display
-  then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \ 
-  #t set-mus-clipping drop
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
-  data vct->sound-data { sdata }
-  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
-  snd 0 9 1 sdata mus-sound-write drop
-  snd 40 mus-sound-close-output drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct to res
-  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal? unless
-    $" mus-clipping(#t): %s?" #( res ) snd-display
-  then
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \
-  #t set-mus-clipping drop
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
-  data vct->sound-data { sdata }
-  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
-  snd 0 10 1 sdata <'> mus-sound-write #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'out-of-range <> if
-    $" mus-sound-write too many bytes: %s" #( res ) snd-display
-  then
-  snd 0 10 1 sdata <'> mus-sound-read #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'out-of-range <> if
-    $" mus-sound-read too many bytes: %s" #( res ) snd-display
-  then
-  snd 0 mus-sound-close-output drop
-  "test.snd" file-delete
-  "test.snd" mus-sound-forget drop
-  #f set-mus-clipping drop 		\ default
-  #f set-clipping drop
   \ x-axis-label (test005)
   *with-test-nogui* unless
     "oboe.snd" open-sound to ind
@@ -6929,6 +9058,7 @@ let: ( -- )
   <'> 01-defaults        run-fth-test
   <'> 02-headers         run-fth-test
   <'> 03-variables       run-fth-test
+  <'> 04-sndlib          run-fth-test
   <'> 10-marks           run-fth-test
   <'> 15-chan-local-vars run-fth-test
   <'> 19-save/restore    run-fth-test

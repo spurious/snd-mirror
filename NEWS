@@ -16,6 +16,8 @@ s7: make-hash-table-iterator.
       This is tied to C-g in the listener, so ws-interrupt (ws.scm) is
       now a deprecated no-op.
 
+lots more forth and ruby stuff thanks to Mike Scholz.
+
 checked: gtk 2.99.0|1|2|3, gtk 3.0.0, FC14 (gcc 4.5.1)
 
-Thanks!: Rick Taube, Hartmut Noack
+Thanks!: Rick Taube, Hartmut Noack, Mike Scholz.
