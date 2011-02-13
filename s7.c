@@ -31875,6 +31875,7 @@ the error type and the info passed to the error handler.");
  *     begin_hook could be coupled with GUI to show variable values during a computation
  *       [but in Snd, that requires keeping track of its current value]
  *     still mixed arith: * + / - < > <= >= = min max, but I haven't found any bugs
+ *     segfault in eval-ptree in vct-ref test 4 with-threaded-sound or in test 29 (s7test) -- infinite recursion in mark
  *
  * --------------------------------------------------------------------------------
  * s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10

@@ -1181,4 +1181,78 @@ char *slist_selection(slist *lst)
  *   Also, someone is setting squelch?  
  *
  * why does goto_window erase the window in gtk 3?
+ * if basic-color is set (white for example), the icon (blank?) after the sound file name is not recolored)
+ */
+
+/*
+
+It is indeed hard to configure. Too hard for even an advanced beginner. 
+So if this could be possible without too much effort I would be very 
+very happy about a distribution of Snd, that allows to switch all menues 
+and modules that Snd can actually handle on in a simple 
+pereferences-dialogue. And that these menues actually pop up and work as 
+expected. 
+
+Examples: I´d like to have that rightklick-menu for regions that allows 
+them to be played looped.
+
+ LADSPA-Modules can be applied in real time and 
+their parameters can be automated in Snd, if this works in any recent 
+distribution without any hassle -- great! 
+
+So simply put: If Snd could handle everything it has to offer in any 
+distribution, that would be great and a vast improvement. 
+
+1.) It would be nice, to have a play-cursor as known from most 
+Wave-Editors like Mhwaveedit or Ardour. 
+
+2.) It would help to have a little switch, that allows to treat all 
+channels in a multi-channel-file as one, so one can work more easily 
+with stereofiles. 
+
+3.) to have a rightklick-menu entry that allows to save a region or a 
+marked section to a new file with the opportunity to render effects etc 
+to that file... 
+
+--------
+
+More options there (fft) might be nice though, like being able to zoom into 
+the spectrum graphic. I can't remember if there's already a 
+dump-to-text-file mode 
+
+--------
+
+Thanks for the suggestions!  I think I'll move the
+context-sensitive popup menus into the main version --
+I assume that's what you mean by right-click menus?
+
+The looped play stuff is broken -- I hadn't noticed
+the problem.  I'll also add some mouse-oriented way
+to play from the cursor.
+
+For multichannel files, you can set the 'unite' and 
+'sync' buttons and all channels will be displayed
+and acted-upon together -- is that what you have in 
+mind?
+
+On the zoomed FFT -- it's been on my TODO list for
+about a decade.  You can drag the frequency (x) axis
+to zoom in on the lower frequencies, and there's a
+complicated way to zoom using the spectro* variables.
+To dump the current spectrum to a text file, you
+can use the peaks function:
+
+    (peaks "fft.data")
+
+for example.
+
+
+play from cursor: perhaps if cursor hovers over the cursor, display a play triangle
+similarly for a mix 
+and perhaps whenever a click=play, change the cursor shape to a > triangle?
+  [mark/mix/selection/??]
+
+add a peaks->text file option for the popup fft menu
+
+C-g for begin_hook might be a bad idea -- there is code that catches c-g and goes on
  */

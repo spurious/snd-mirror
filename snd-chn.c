@@ -55,11 +55,13 @@ chan_info *get_cp(XEN snd, XEN x_chn_n, const char *caller)
 
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_MIX, CLICK_MARK,
-	      CLICK_FFT_MAIN, CLICK_SELECTION_LEFT, CLICK_SELECTION_RIGHT, CLICK_SELECTION_PLAY, CLICK_INSET_GRAPH} click_loc_t;
+	      CLICK_FFT_MAIN, CLICK_SELECTION_LEFT, CLICK_SELECTION_RIGHT, CLICK_SELECTION_PLAY, 
+	      CLICK_INSET_GRAPH, CLICK_MIX_PLAY, CLICK_CURSOR_PLAY} click_loc_t;
 /* for marks, regions, mouse click detection */
 /*
  * static char *click_detection_names[10] = {"no graph", "click wave", "click fft axis", "click lisp", "click mix", "click mark",
- *                                           "click fft graph", "click selection left", "click selection right", "click selection play", "click inset graph"};
+ *                                           "click fft graph", "click selection left", "click selection right", "click selection play", 
+ *                                           "click inset graph", "click mix play", "click cursor play"};
  */
 
 
@@ -4765,6 +4767,8 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
   return(CLICK_NOGRAPH);
 }
 
+/* TODO: if below the mix or current graph cursor, change to -> ? with play triangle?
+ */
 
 void check_cursor_shape(chan_info *cp, int x, int y)
 {

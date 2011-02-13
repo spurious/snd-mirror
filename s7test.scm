@@ -14445,6 +14445,7 @@ this prints:
 (test (call/cc (lambda (a b) (a 1))) 'error)
 (test (+ 1 (call/cc (lambda (k) (k #\a)))) 'error)
 (test (+ 1 (call-with-exit (lambda (k) (k #\a)))) 'error)
+(test ((call/cc (lambda (return) (call/cc (lambda (cont) (return cont))) list)) 1) '(1)) ; from Guile mailing list -- this strikes me as very strange
 
 (let ((p1 (make-procedure-with-setter (lambda (k) (k 3)) (lambda (k a) (k a)))))
   (test (call/cc p1) 3)

@@ -4622,8 +4622,8 @@ ERROR: Wrong type (expecting exact integer): 0.0   ; [why?  "it's probably a pro
 </p>
 
 <pre>
-(not-s7-scheme)&gt; (inexact-&gt;exact 0.1)              ; [why? "floats are ratios"!]
-3602879701896397/36028797018963968
+(not-s7-scheme)&gt; (inexact-&gt;exact 0.1)
+3602879701896397/36028797018963968                  ; [why? "floats are ratios"!]
 </pre>
 
 <p>So I end up using the verbose <code>(floor (inexact-&gt;exact ...))</code> everywhere, and even
