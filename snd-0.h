@@ -927,4 +927,8 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_min_dB(a) ss->Min_dB = a
 #define DEFAULT_MIN_DB -60.0
 
+#define play_arrow_size(ss) ss->Play_Arrow_Size
+#define set_play_arrow_size(a) ss->Play_Arrow_Size = a
+#define DEFAULT_PLAY_ARROW_SIZE 10
+
 #endif

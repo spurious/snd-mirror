@@ -328,7 +328,7 @@ static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
 }
 
 
-#define MARK_PLAY_ARROW_SIZE 10
+#define HIT_SLOP 4
 
 static mark *hit_mark_triangle_1(chan_info *cp, mark *mp, void *m)
 {
@@ -343,11 +343,11 @@ static mark *hit_mark_triangle_1(chan_info *cp, mark *mp, void *m)
   if (mp->samp > ap->hisamp) return(md->all_done); /* grf_x clips so we can be confused by off-screen marks */
 
   mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
-  if (mx > md->x) return(md->all_done);
-  if ((mx + MARK_PLAY_ARROW_SIZE) < md->x) return(NULL);
-  y = md->y - ap->y_axis_y0 - MARK_PLAY_ARROW_SIZE;
+  if (mx > (md->x + HIT_SLOP)) return(md->all_done);
+  if ((mx + play_arrow_size(ss) + HIT_SLOP) < md->x) return(NULL);
+  y = md->y - ap->y_axis_y0 - play_arrow_size(ss);
   if (y < 0) y = -y;
-  if ((mx + MARK_PLAY_ARROW_SIZE - y) >= md->x) return(mp);
+  if ((mx + play_arrow_size(ss) - y + HIT_SLOP) >= md->x) return(mp);
   /* the last is assuming the triangle shape for hit detection */
   return(NULL);
 }
@@ -361,7 +361,7 @@ mark *hit_mark_triangle(chan_info *cp, int x, int y)
       ap = cp->axis;
       /* first check that we're in the bottom portion of the graph where the mark triangles are */
       if ((y >= ap->y_axis_y0) && 
-	  (y <= (ap->y_axis_y0 + 2 * MARK_PLAY_ARROW_SIZE)))
+	  (y <= (ap->y_axis_y0 + 2 * play_arrow_size(ss))))
 	{
 	  mark *mp;
 	  mdata *md;
@@ -478,34 +478,6 @@ static void sort_marks(chan_info *cp)
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
   qsort((void *)(ed->marks), ed->mark_ctr + 1, sizeof(mark *), compare_mark_samps);
-}
-
-
-static void show_mark_triangle(chan_info *cp, int x);
-static int prev_cx = -1;
-
-mus_long_t move_play_mark(chan_info *cp, mus_long_t *mc, int cx)
-{
-  /* mc = mouse loc sampwise return samps updating mc */
-  mus_long_t cur_mc;
-  axis_info *ap;
-  ap = cp->axis;
-  if (prev_cx > 0) show_mark_triangle(cp, prev_cx);
-  prev_cx = cx;
-  show_mark_triangle(cp, cx);
-  cur_mc = (*mc);
-  (*mc) = (mus_long_t)(ungrf_x(ap, cx) * SND_SRATE(cp->sound));
-  return((*mc) - cur_mc);
-}
-
-
-void finish_moving_play_mark(chan_info *cp)
-{
-  snd_info *sp;
-  sp = cp->sound;
-  show_mark_triangle(cp, prev_cx);
-  prev_cx = -1;
-  sp->speed_control = 1.0;
 }
 
 
@@ -1908,33 +1880,22 @@ static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
 		 cx - mark_tag_width(ss), top,
 		 2 * mark_tag_width(ss), mark_tag_height(ss));
   draw_line(ax, cx, top + 4, cx, y0);
-  fill_polygon(ax, 4,
-	       cx, y0,
-	       cx + MARK_PLAY_ARROW_SIZE, y0 + MARK_PLAY_ARROW_SIZE,
-	       cx, y0 + 2 * MARK_PLAY_ARROW_SIZE,
-	       cx, y0);
+
+  if (mp->samp != CURSOR(cp))
+    fill_polygon(ax, 4,
+		 cx, y0,
+		 cx + play_arrow_size(ss), y0 + play_arrow_size(ss),
+		 cx, y0 + 2 * play_arrow_size(ss),
+		 cx, y0);
   mp->visible = show;
 #if USE_GTK
   copy_context(cp);
 #endif
 }
 
-
-static void show_mark_triangle(chan_info *cp, int x)
-{
-  int y0;
-  y0 = ((axis_info *)(cp->axis))->y_axis_y0;
-  draw_polygon(mark_tag_context(cp), 4,
-	       x, y0,
-	       x + MARK_PLAY_ARROW_SIZE, y0 + MARK_PLAY_ARROW_SIZE,
-	       x, y0 + 2 * MARK_PLAY_ARROW_SIZE,
-	       x, y0);
-}
-
 #else
 /* no gui */
 static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show) {}
-static void show_mark_triangle(chan_info *cp, int x) {}
 #endif
 
 
@@ -2109,41 +2070,6 @@ static XEN snd_no_such_mark_error(const char *caller, XEN id)
 		       id));
   return(XEN_FALSE);
 }
-
-
-#if MUS_DEBUGGING && HAVE_SCHEME
-/* too hard to do this via mouse events in snd-test, so do it by hand here */
-static XEN g_test_control_drag_mark(XEN snd, XEN chn, XEN mid)
-{
-  int x, y;
-  mus_long_t cx;
-  chan_info *cp;
-  mark *m = NULL, *m1 = NULL;
-  cp = get_cp(snd, chn, "test-C-mark");
-  if (!cp) return(XEN_FALSE);
-  m = find_mark_from_id(XEN_MARK_TO_C_INT(mid), NULL, AT_CURRENT_EDIT_POSITION);
-  if (m == NULL) 
-    return(snd_no_such_mark_error("test-C-mark", mid));
-  y = cp->axis->y_axis_y1;
-  if (m->name) y += 10;
-  x = grf_x((double)(m->samp) / (double)SND_SRATE(cp->sound), cp->axis);
-  m1 = hit_mark(cp, x, y + 1, snd_ControlMask);
-  if (m != m1)
-    {
-      fprintf(stderr, "ah rats! ");
-      abort();
-    }
-  move_mark(cp, m, x - 50);
-  finish_moving_mark(cp, m);
-  x = grf_x((double)(m->samp) / (double)SND_SRATE(cp->sound), cp->axis);
-  y = cp->axis->y_axis_y0 + 2;
-  hit_mark_triangle(cp, x, y);
-  cx = m->samp + 50;
-  move_play_mark(cp, &cx, x + 50);
-  finish_moving_play_mark(cp);
-  return(mid);
-}
-#endif
 
 
 typedef enum {MARK_SAMPLE, MARK_NAME, MARK_SYNC, MARK_HOME} mark_field_t;
@@ -2908,9 +2834,6 @@ XEN_NARGIFY_1(g_mark_properties_w, g_mark_properties)
 XEN_NARGIFY_2(g_set_mark_properties_w, g_set_mark_properties)
 XEN_NARGIFY_2(g_mark_property_w, g_mark_property)
 XEN_NARGIFY_3(g_set_mark_property_w, g_set_mark_property)
-#if MUS_DEBUGGING && HAVE_SCHEME
-  XEN_NARGIFY_3(g_test_control_drag_mark_w, g_test_control_drag_mark)
-#endif
 #else
 #define g_mark_sample_w g_mark_sample
 #define g_set_mark_sample_w g_set_mark_sample
@@ -2939,9 +2862,6 @@ XEN_NARGIFY_3(g_set_mark_property_w, g_set_mark_property)
 #define g_set_mark_properties_w g_set_mark_properties
 #define g_mark_property_w g_mark_property
 #define g_set_mark_property_w g_set_mark_property
-#if MUS_DEBUGGING && HAVE_SCHEME
-  #define g_test_control_drag_mark_w g_test_control_drag_mark
-#endif
 #endif
 
 void g_init_marks(void)
@@ -2994,9 +2914,5 @@ void g_init_marks(void)
 If the hook returns " PROC_TRUE ", the mark is not drawn."
 
   draw_mark_hook = XEN_DEFINE_HOOK(S_draw_mark_hook, 1, H_draw_mark_hook);  /* arg = mark-id */
-
-#if MUS_DEBUGGING && HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("internal-test-control-drag-mark", g_test_control_drag_mark_w, 3, 0, 0, "internal testing func");
-#endif
 }
 

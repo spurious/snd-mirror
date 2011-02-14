@@ -1697,8 +1697,6 @@
 	(snd-display #__line__ ";help-hook: ~A?" help-hook))
     (if (or (not (hook? mark-drag-hook)) (not (null? (hook-functions mark-drag-hook))))
 	(snd-display #__line__ ";mark-drag-hook: ~A?" mark-drag-hook))
-    (if (or (not (hook? mark-drag-triangle-hook)) (not (null? (hook-functions mark-drag-triangle-hook))))
-	(snd-display #__line__ ";mark-drag-triangle-hook: ~A?" mark-drag-triangle-hook))
     (if (or (not (hook? mix-drag-hook)) (not (null? (hook-functions mix-drag-hook))))
 	(snd-display #__line__ ";mix-drag-hook: ~A?" mix-drag-hook))
     (if (or (not (hook? mouse-drag-hook)) (not (null? (hook-functions mouse-drag-hook))))
@@ -2140,7 +2138,7 @@
 		       'make-triangle-wave 'make-two-pole 'make-two-zero
 		       'make-variable-graph 'make-vct 'make-wave-train 
 		       'map-chan 'map-channel 'mark-click-hook 'mark-color 'mark-context
-		       'mark-drag-hook 'mark-drag-triangle-hook 'mark-home 'mark-hook 'mark-name 'mark-properties 'mark-property
+		       'mark-drag-hook 'mark-home 'mark-hook 'mark-name 'mark-properties 'mark-property
 		       'mark-sample 'mark-sync 'mark-sync-max 'mark-tag-height 'mark-tag-width
 		       'mark? 'marks 'max-regions 'max-transform-peaks 'max-virtual-ptrees 'maxamp
 		       'maxamp-position 'menu-widgets 'min-dB 'minibuffer-history-length 'mix
@@ -29839,12 +29837,6 @@ EDITS: 2
 		  (if (mark? m12) (snd-display #__line__ ";found 12th mark: ~A ~A ~A" m12 (mark-sample m12 2) (mark-name m12 2)))))
 	      (set! (mark-name m1) #f)))
 	  (close-sound ind))
-	(if (provided? 'snd-debug)
-	    (let ((ind (open-sound "oboe.snd")))
-	      (let ((m0 (add-mark 1223 ind 0)))
-		(internal-test-control-drag-mark ind 0 m0)
-		(if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";test C-drag mark failed?")))
-	      (close-sound ind)))
 	(if (string? sf-dir)
 	    (let ((ind (open-sound (string-append sf-dir "forest.aiff"))))
 	      (mark-loops)
@@ -30727,7 +30719,6 @@ EDITS: 2
     (hook-push graph-hook arg4) (carg4 graph-hook)
     (hook-push key-press-hook arg4) (carg4 key-press-hook)
     (hook-push mark-hook arg4) (carg4 mark-hook)
-    (hook-push mark-drag-triangle-hook arg4) (carg4 mark-drag-triangle-hook)
     
     (hook-push mouse-drag-hook arg6) (carg6 mouse-drag-hook)
     (hook-push mouse-press-hook arg6) (carg6 mouse-press-hook)
@@ -30822,11 +30813,6 @@ EDITS: 2
 	(if (not (string=? hi ho))
 	    (snd-display #__line__ ";help-hook #f: ~A ~A" hi ho))
 	(set! (hook-functions help-hook) '())))
-    (set! (hook-functions mark-drag-triangle-hook) '())
-    (if (hook-member mdt-test mark-drag-triangle-hook) (snd-display #__line__ ";hook-member #t? ~A" (hook-functions mark-drag-triangle-hook)))
-    (hook-push mark-drag-triangle-hook mdt-test)
-    (if (not (hook-member mdt-test mark-drag-triangle-hook)) (snd-display #__line__ ";hook-member #f? ~A" (hook-functions mark-drag-triangle-hook)))
-    (set! (hook-functions mark-drag-triangle-hook) '())
     (set! (transform-size fd 0) 256)
     (for-each
      (lambda (dpy-type fft-type)
@@ -62142,7 +62128,6 @@ EDITS: 1
 			  (list before-save-state-hook 'before-save-state-hook)
 			  (list mark-hook 'mark-hook)
 			  (list mark-drag-hook 'mark-drag-hook)
-			  (list mark-drag-triangle-hook 'mark-drag-triangle-hook)
 			  (list mix-drag-hook 'mix-drag-hook)
 			  (list name-click-hook 'name-click-hook)
 			  (list after-apply-controls-hook 'after-apply-controls-hook)

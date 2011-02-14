@@ -66,10 +66,6 @@ typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_MIX, 
  *                                           "click selection loop play"};
  */
 
-/* TODO: if mouse over cursor: triangle for play, also backwards triangle at selection end for loop play, also perhaps tips in minibuffer?
- *       if click play triangle, change to stop? or add stop somewhere to quit early
- */
-
 
 static XEN lisp_graph_hook;
 static XEN mouse_press_hook; 
@@ -4638,6 +4634,31 @@ void goto_graph(chan_info *cp)
 
 /* ---------------- graphics callbacks ---------------- */
 
+#define HIT_SLOP 4
+
+static bool hit_cursor_triangle(chan_info *cp, int x, int y)
+{
+  axis_info *ap;
+  mus_long_t samp;
+  int cx;
+
+  ap = cp->axis;
+  samp = CURSOR(cp);
+
+  if ((samp < ap->losamp) ||
+      (samp > ap->hisamp))
+    return(false);
+
+  cx = grf_x((double)samp / (double)SND_SRATE(cp->sound), ap);
+  if ((cx > (x + HIT_SLOP)) ||
+      ((cx + play_arrow_size(ss) + HIT_SLOP) < x))
+    return(false);
+
+  y = y - ap->y_axis_y0 - play_arrow_size(ss);
+  if (y < 0) y = -y;
+  return((cx + play_arrow_size(ss) - y + HIT_SLOP) >= x);
+}
+
 #define SLOPPY_MOUSE 6
 
 #if USE_NO_GUI
@@ -4752,9 +4773,8 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
       if (play_mark != NULL)
 	return(CLICK_MARK_PLAY);
 
-      /* TODO: look for cursor play possibilities
-       *         reflect in graph (also erase old)
-       */
+      if (hit_cursor_triangle(cp, x, y))
+	return(CLICK_CURSOR_PLAY);
     }
 
   if (((cp->graph_lisp_p) || 
@@ -5207,12 +5227,28 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
       break;
 
       /* TODO: make sure click during play stops current */
-      /* TODO: change color or something to signal stop */
-      /* TODO: c-g to interrupt looped play now clears the selection! -- clear selection only if not stopping */
-      /* TODO: mix triangle needs to red if mix is selected else mix bg color */
+      /* TODO: add unselect to edit menu (popup too?) and unselect function */
+      /* TODO: perhaps stop sign when playing? */
 
     case CLICK_MARK_PLAY:
-      /* play from mark -- see below -- maybe dragging the triangle?  is this a good idea? */
+      {
+	if (sp->playing)
+	  {
+	    stop_playing_sound(sp, PLAY_BUTTON_UNSET);
+	    set_play_button(sp, false);
+	  }
+	else
+	  {
+	    if (mark_sync(play_mark))
+	      play_syncd_mark(cp, play_mark);
+	    else 
+	      {
+		if (key_state & snd_ControlMask)
+		  play_sound(sp, mark_sample(play_mark), NO_END_SPECIFIED);
+		else play_channel(cp, mark_sample(play_mark), NO_END_SPECIFIED);
+	      }
+	  }
+      }
       break;
 
     case CLICK_MIX_PLAY:
@@ -5273,170 +5309,143 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
   dragged_cp = NULL;
   if (!dragged)
     {
-      if (play_mark)
+      click_loc_t actax;
+      actax = within_graph(cp, x, y);
+      
+      if ((XEN_HOOKED(mouse_click_hook)) &&
+	  (XEN_TRUE_P(run_or_hook(mouse_click_hook,
+				  XEN_LIST_7(C_INT_TO_XEN_SOUND(sp->index),
+					     C_TO_XEN_INT(cp->chan),
+					     C_TO_XEN_INT(button),
+					     C_TO_XEN_INT(key_state),
+					     C_TO_XEN_INT(x),
+					     C_TO_XEN_INT(y),
+					     C_TO_XEN_INT((int)(((actax == CLICK_FFT_AXIS) || (actax == CLICK_FFT_MAIN)) ? 
+								TRANSFORM_AXIS_INFO : ((actax == CLICK_LISP) ? 
+										       LISP_AXIS_INFO : TIME_AXIS_INFO)))),
+				  S_mouse_click_hook))))
+	return;
+      
+      switch (actax)
 	{
-	  mark *old_mark;
-	  old_mark = sp->playing_mark; /* needed because stop_playing clobbers sp->playing_mark */
-	  if (sp->playing)
-	    {
-	      stop_playing_sound(sp, PLAY_BUTTON_UNSET);
-	      set_play_button(sp, false);
-	    }
-	  if (play_mark != old_mark)
-	    {
-	      if (mark_sync(play_mark))
-		play_syncd_mark(cp, play_mark);
-	      else 
-		{
-		  if (key_state & snd_ControlMask)
-		    play_sound(sp, mark_sample(play_mark), NO_END_SPECIFIED);
-		  else play_channel(cp, mark_sample(play_mark), NO_END_SPECIFIED);
-		}
-	      sp->playing_mark = play_mark;
-	    }
-	  else sp->playing_mark = NULL;
-	  play_mark = NULL;
-	}
-      else
-	{
-	  click_loc_t actax;
-	  actax = within_graph(cp, x, y);
-
-	  if ((XEN_HOOKED(mouse_click_hook)) &&
-	      (XEN_TRUE_P(run_or_hook(mouse_click_hook,
-				      XEN_LIST_7(C_INT_TO_XEN_SOUND(sp->index),
-						 C_TO_XEN_INT(cp->chan),
-						 C_TO_XEN_INT(button),
-						 C_TO_XEN_INT(key_state),
-						 C_TO_XEN_INT(x),
-						 C_TO_XEN_INT(y),
-						 C_TO_XEN_INT((int)(((actax == CLICK_FFT_AXIS) || (actax == CLICK_FFT_MAIN)) ? 
-								     TRANSFORM_AXIS_INFO : ((actax == CLICK_LISP) ? 
-											    LISP_AXIS_INFO : TIME_AXIS_INFO)))),
-				      S_mouse_click_hook))))
-	    return;
-
-	  switch (actax)
-	    {
-	    case CLICK_INSET_GRAPH:
+	case CLICK_INSET_GRAPH:
+	  {
+	    mus_long_t samp;
+	    samp = snd_round_mus_long_t(CURRENT_SAMPLES(cp) * ((double)(x - cp->inset_graph->x0) / (double)(cp->inset_graph->width)));
+	    cursor_moveto(cp, samp);
+	    if ((samp < cp->axis->losamp) ||
+		(samp > cp->axis->hisamp))
 	      {
-		mus_long_t samp;
-		samp = snd_round_mus_long_t(CURRENT_SAMPLES(cp) * ((double)(x - cp->inset_graph->x0) / (double)(cp->inset_graph->width)));
-		cursor_moveto(cp, samp);
-		if ((samp < cp->axis->losamp) ||
-		    (samp > cp->axis->hisamp))
-		  {
-		    mus_long_t rsamp;
-		    rsamp = samp + snd_round_mus_long_t(0.5 * (cp->axis->hisamp - cp->axis->losamp));
-		    if (rsamp < 0) rsamp = 0;
-		    if (rsamp > CURRENT_SAMPLES(cp)) rsamp = CURRENT_SAMPLES(cp);
-		    set_x_axis_x1(cp, rsamp);
-		    update_graph(cp);
-		  }
+		mus_long_t rsamp;
+		rsamp = samp + snd_round_mus_long_t(0.5 * (cp->axis->hisamp - cp->axis->losamp));
+		if (rsamp < 0) rsamp = 0;
+		if (rsamp > CURRENT_SAMPLES(cp)) rsamp = CURRENT_SAMPLES(cp);
+		set_x_axis_x1(cp, rsamp);
+		update_graph(cp);
 	      }
-	      break;
-
-	    case CLICK_SELECTION_LEFT:
-	    case CLICK_SELECTION_RIGHT:
-	    case CLICK_MIX:
-	    case CLICK_MARK:
-	    case CLICK_WAVE:
-	      if (button == BUTTON_2) /* the middle button */
+	  }
+	  break;
+	  
+	case CLICK_SELECTION_LEFT:
+	case CLICK_SELECTION_RIGHT:
+	case CLICK_MIX:
+	case CLICK_MARK:
+	case CLICK_WAVE:
+	  if (button == BUTTON_2) /* the middle button */
+	    {
+	      cp->cursor_on = true;
+	      cursor_moveto(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)SND_SRATE(sp)));
+	      paste_region(region_list_position_to_id(0), cp);
+	    }
+	  else 
+	    {
+	      if (key_state & (snd_ShiftMask | snd_ControlMask | snd_MetaMask))
+		{
+		  mus_long_t samps;
+		  axis_info *ap;
+		  /* zoom request -> each added key zooms closer, as does each successive click */
+		  ap = cp->axis;
+		  samps = CURRENT_SAMPLES(cp);
+		  if ((samps > 0) && ((ap->zx * (double)samps) > 1.0))
+		    {
+		      if (key_state & snd_ShiftMask) ap->zx *= .5;
+		      if (key_state & snd_ControlMask) ap->zx *= .5;
+		      if (key_state & snd_MetaMask) ap->zx *= .5;
+		      if (ap->x_ambit != 0.0)
+			ap->sx = (((double)(CURSOR(cp)) / (double)SND_SRATE(sp) - 
+				   ap->zx * 0.5 * (ap->xmax - ap->xmin)) - ap->xmin) / ap->x_ambit;
+		      apply_x_axis_change(ap, cp);
+		      resize_sx_and_zx(cp);
+		    }
+		}
+	      else
 		{
 		  cp->cursor_on = true;
 		  cursor_moveto(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)SND_SRATE(sp)));
-		  paste_region(region_list_position_to_id(0), cp);
-		}
-	      else 
-		{
-		  if (key_state & (snd_ShiftMask | snd_ControlMask | snd_MetaMask))
+		  if (mouse_mark)
 		    {
-		      mus_long_t samps;
-		      axis_info *ap;
-		      /* zoom request -> each added key zooms closer, as does each successive click */
-		      ap = cp->axis;
-		      samps = CURRENT_SAMPLES(cp);
-		      if ((samps > 0) && ((ap->zx * (double)samps) > 1.0))
+		      XEN res = XEN_FALSE;
+		      if (XEN_HOOKED(mark_click_hook))
+			res = run_progn_hook(mark_click_hook,
+					     XEN_LIST_1(new_xen_mark(mark_to_int(mouse_mark))),
+					     S_mark_click_hook);
+		      if (!(XEN_TRUE_P(res)))
 			{
-			  if (key_state & snd_ShiftMask) ap->zx *= .5;
-			  if (key_state & snd_ControlMask) ap->zx *= .5;
-			  if (key_state & snd_MetaMask) ap->zx *= .5;
-			  if (ap->x_ambit != 0.0)
-			    ap->sx = (((double)(CURSOR(cp)) / (double)SND_SRATE(sp) - 
-				       ap->zx * 0.5 * (ap->xmax - ap->xmin)) - ap->xmin) / ap->x_ambit;
-			  apply_x_axis_change(ap, cp);
-			  resize_sx_and_zx(cp);
+			  mus_long_t samp;
+			  int sync;
+			  samp = mark_sample(mouse_mark);
+			  sync = mark_sync(mouse_mark);
+			  if (sync == 0)
+			    report_in_minibuffer(sp, _("mark %d at sample " MUS_LD " (%3f secs): %3f"), 
+						 mark_to_int(mouse_mark), 
+						 samp,
+						 (double)samp / (double)(SND_SRATE(sp)),
+						 chn_sample(samp, cp, cp->edit_ctr));
+			  else
+			    report_in_minibuffer(sp, _("mark %d at sample " MUS_LD " (%3f secs): %3f, (sync: %d)"), 
+						 mark_to_int(mouse_mark), 
+						 samp,
+						 (double)samp / (double)(SND_SRATE(sp)),
+						 chn_sample(samp, cp, cp->edit_ctr),
+						 sync);
 			}
 		    }
 		  else
 		    {
-		      cp->cursor_on = true;
-		      cursor_moveto(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)SND_SRATE(sp)));
-		      if (mouse_mark)
+		      if (mix_tag != NO_MIX_TAG)
 			{
 			  XEN res = XEN_FALSE;
-			  if (XEN_HOOKED(mark_click_hook))
-			    res = run_progn_hook(mark_click_hook,
-						 XEN_LIST_1(new_xen_mark(mark_to_int(mouse_mark))),
-						 S_mark_click_hook);
+			  /* the mix has already been selected by hit-mix above (to prepare drag) */
+			  if (XEN_HOOKED(mix_click_hook))
+			    res = run_progn_hook(mix_click_hook,
+						 XEN_LIST_1(new_xen_mix(mix_tag)),
+						 S_mix_click_hook);
 			  if (!(XEN_TRUE_P(res)))
 			    {
-			      mus_long_t samp;
-			      int sync;
-			      samp = mark_sample(mouse_mark);
-			      sync = mark_sync(mouse_mark);
-			      if (sync == 0)
-				report_in_minibuffer(sp, _("mark %d at sample " MUS_LD " (%3f secs): %3f"), 
-						     mark_to_int(mouse_mark), 
-						     samp,
-						     (double)samp / (double)(SND_SRATE(sp)),
-						     chn_sample(samp, cp, cp->edit_ctr));
-			      else
-				report_in_minibuffer(sp, _("mark %d at sample " MUS_LD " (%3f secs): %3f, (sync: %d)"), 
-						     mark_to_int(mouse_mark), 
-						     samp,
-						     (double)samp / (double)(SND_SRATE(sp)),
-						     chn_sample(samp, cp, cp->edit_ctr),
-						     sync);
-			    }
-			}
-		      else
-			{
-			  if (mix_tag != NO_MIX_TAG)
-			    {
-			      XEN res = XEN_FALSE;
-			      /* the mix has already been selected by hit-mix above (to prepare drag) */
-			      if (XEN_HOOKED(mix_click_hook))
-				res = run_progn_hook(mix_click_hook,
-						     XEN_LIST_1(new_xen_mix(mix_tag)),
-						     S_mix_click_hook);
-			      if (!(XEN_TRUE_P(res)))
-				{
-				  make_mix_dialog();
-				  reflect_mix_change(mix_tag);
-				}
+			      make_mix_dialog();
+			      reflect_mix_change(mix_tag);
 			    }
 			}
 		    }
 		}
-	      break;
-	      
-	    case CLICK_FFT_AXIS: /* not dragged, so must have clicked close to axis */
-	    case CLICK_FFT_MAIN:
-	      {
-		char *str;
-		str = describe_fft_point(cp, x, y);
-		string_to_minibuffer(sp, str);
-		if (str) free(str);
-	      }
-	      break;
-
-	    default:
-	      break;
 	    }
+	  break;
+	  
+	case CLICK_FFT_AXIS: /* not dragged, so must have clicked close to axis */
+	case CLICK_FFT_MAIN:
+	  {
+	    char *str;
+	    str = describe_fft_point(cp, x, y);
+	    string_to_minibuffer(sp, str);
+	    if (str) free(str);
+	  }
+	  break;
+	  
+	default:
+	  break;
 	}
     }
-  else
+  else /* dragged */
     {
       if (mouse_mark)
 	{
@@ -5446,39 +5455,29 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	}
       else
 	{
-	  if (play_mark)
+	  if (mix_tag != NO_MIX_TAG)
 	    {
-	      finish_moving_play_mark(cp);
-	      stop_playing_sound(sp, PLAY_BUTTON_UNSET);
-	      play_mark = NULL;
+	      finish_moving_mix_tag(mix_tag, x);
 	      dragged = false;
+	      mix_tag = NO_MIX_TAG;
 	    }
 	  else
 	    {
-	      if (mix_tag != NO_MIX_TAG)
+	      if ((click_within_graph == CLICK_WAVE) ||
+		  (click_within_graph == CLICK_INSET_GRAPH) ||
+		  (click_within_graph == CLICK_SELECTION_LEFT) ||
+		  (click_within_graph == CLICK_SELECTION_RIGHT) ||
+		  (click_within_graph == CLICK_MIX) ||
+		  (click_within_graph == CLICK_MARK))
 		{
-		  finish_moving_mix_tag(mix_tag, x);
+		  cancel_selection_watch();
+		  finish_selection_creation();
 		  dragged = false;
-		  mix_tag = NO_MIX_TAG;
-		}
-	      else
-		{
-		  if ((click_within_graph == CLICK_WAVE) ||
-		      (click_within_graph == CLICK_INSET_GRAPH) ||
-		      (click_within_graph == CLICK_SELECTION_LEFT) ||
-		      (click_within_graph == CLICK_SELECTION_RIGHT) ||
-		      (click_within_graph == CLICK_MIX) ||
-		      (click_within_graph == CLICK_MARK))
+		  if (show_selection_transform(ss)) 
 		    {
-		      cancel_selection_watch();
-		      finish_selection_creation();
-		      dragged = false;
-		      if (show_selection_transform(ss)) 
-			{
-			  if (sp->sync)
-			    for_each_normal_chan_with_int(calculate_syncd_fft, sp->sync);
-			  else calculate_fft(cp);
-			}
+		      if (sp->sync)
+			for_each_normal_chan_with_int(calculate_syncd_fft, sp->sync);
+		      else calculate_fft(cp);
 		    }
 		}
 	    }
@@ -5486,10 +5485,6 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
     }
 }
 
-
-static oclock_t first_time = 0;
-static mus_long_t mouse_cursor = 0;
-static XEN mark_drag_triangle_hook;
 
 void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 {
@@ -5521,154 +5516,112 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
       move_mark(cp, mouse_mark, x);
       report_in_minibuffer(sp, "%.4f", ungrf_x(cp->axis, x));
       dragged = true;
+      return;
     }
-  else
+
+  switch (click_within_graph)
     {
-      if (play_mark)
+    case CLICK_INSET_GRAPH:
+    case CLICK_SELECTION_LEFT:
+    case CLICK_SELECTION_RIGHT:
+    case CLICK_MIX:
+    case CLICK_MARK:
+    case CLICK_WAVE:
+      if (dragged) 
+	report_in_minibuffer(sp, "%.4f", ungrf_x(cp->axis, x));
+      
+      if (mix_tag != NO_MIX_TAG)
 	{
-	  XEN drag_res = XEN_FALSE;
-	  if (XEN_HOOKED(mark_drag_triangle_hook))
-	    drag_res = run_progn_hook(mark_drag_triangle_hook,
-				      XEN_LIST_4(new_xen_mark(mark_to_int(play_mark)),
-						 C_TO_XEN_INT(x),
-						 C_TO_XEN_INT((int)time),
-						 C_TO_XEN_BOOLEAN(dragged)),
-				      S_mark_drag_triangle_hook);
-	  if (!dragged)
-	    {
-	      first_time = mouse_time;
-	      dragged = true;
-	      mouse_cursor = CURSOR(cp);
-	      if (!(XEN_TRUE_P(drag_res)))
-		{
-		  sp->speed_control = 0.0;
-		  play_channel(cp, mark_sample(play_mark), NO_END_SPECIFIED);
-		}
-	    }
-	  else
-	    {
-	      mus_long_t samps;
-	      oclock_t time_interval;
-	      time_interval = mouse_time - first_time;
-	      first_time = mouse_time;
-	      samps = move_play_mark(cp, &mouse_cursor, x);
-	      if (!(XEN_TRUE_P(drag_res)))
-		{
-		  if (time_interval != 0)
-		    sp->speed_control = (mus_float_t)((double)(samps * 1000) / (double)(time_interval * SND_SRATE(sp)));
-		  else sp->speed_control = 0.0;
-		}
-	    }
+	  move_mix_tag(mix_tag, x, y);
+	  dragged = true;
+	  return;
 	}
-      else
+      if (!dragged) 
+	start_selection_creation(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
+      else 
 	{
-	  mus_float_t old_cutoff;
-	  switch (click_within_graph)
-	    {
-	    case CLICK_INSET_GRAPH:
-	    case CLICK_SELECTION_LEFT:
-	    case CLICK_SELECTION_RIGHT:
-	    case CLICK_MIX:
-	    case CLICK_MARK:
-	    case CLICK_WAVE:
-	      if (dragged) 
-		report_in_minibuffer(sp, "%.4f", ungrf_x(cp->axis, x));
-
-	      if (mix_tag != NO_MIX_TAG)
-		{
-		  move_mix_tag(mix_tag, x, y);
-		  dragged = true;
-		  return;
-		}
-	      if (!dragged) 
-		start_selection_creation(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
-	      else 
-		{
-		  update_possible_selection_in_progress(snd_round_mus_long_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
-		  move_selection(cp, x);
-		}
-	      dragged = true;
-	      break;
-
-	    case CLICK_FFT_AXIS:
-	      {
-		/* change spectrum_end(ss) and redisplay fft */
-		/*   changed 25-Oct-07 -- follow sync and separate chan */
-		mus_float_t new_cutoff;
-		old_cutoff = cp->spectrum_end;
-		if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
-		  {
+	  update_possible_selection_in_progress(snd_round_mus_long_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
+	  move_selection(cp, x);
+	}
+      dragged = true;
+      break;
+      
+    case CLICK_FFT_AXIS:
+      {
+	/* change spectrum_end(ss) and redisplay fft */
+	/*   changed 25-Oct-07 -- follow sync and separate chan */
+	mus_float_t new_cutoff;
+	if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
+	  {
 #if HAVE_GL
-		    if ((cp->transform_graph_type == GRAPH_AS_SPECTROGRAM) &&
-			(cp->fft->axis->used_gl))
-		      {
-			mus_float_t ny;
-			ny = unproject_to_y(x, y);
-			new_cutoff = cp->spectrum_end + (fft_faxis_start - ny);
-			fft_faxis_start = ny;
-		      }
-		    else
-#endif 
-		      new_cutoff = cp->spectrum_end + ((mus_float_t)(fft_axis_start - x) / fft_axis_extent(cp));
-		    fft_axis_start = x;
-		  }
-		else 
-		  {
-		    new_cutoff = cp->spectrum_end + ((mus_float_t)(y - fft_axis_start) / fft_axis_extent(cp));
-		    fft_axis_start = y;
-		  }
-		if (new_cutoff > 1.0) new_cutoff = 1.0;
-		if (new_cutoff < 0.001) new_cutoff = 0.001;
-		if (sp->sync != 0)
-		  {
-		    int i;
-		    sync_info *si;
-		    si = snd_sync(sp->sync);
-		    for (i = 0; i < si->chans; i++) 
-		      {
-			si->cps[i]->spectrum_end = new_cutoff;
-			if (cp->transform_graph_type != GRAPH_ONCE)
-			  sono_update(si->cps[i]);
-			else update_graph(si->cps[i]);
-		      }
-		    si = free_sync_info(si);
-		  }
-		else
-		  {
-		    cp->spectrum_end = new_cutoff;
-		    if (cp->transform_graph_type != GRAPH_ONCE)
-		      sono_update(cp);
-		    else update_graph(cp);
-		  }
+	    if ((cp->transform_graph_type == GRAPH_AS_SPECTROGRAM) &&
+		(cp->fft->axis->used_gl))
+	      {
+		mus_float_t ny;
+		ny = unproject_to_y(x, y);
+		new_cutoff = cp->spectrum_end + (fft_faxis_start - ny);
+		fft_faxis_start = ny;
 	      }
-	      break;
-
-	    case CLICK_LISP:
-	      if (XEN_HOOKED(mouse_drag_hook))
-		run_hook(mouse_drag_hook,
-			 XEN_LIST_6(C_INT_TO_XEN_SOUND(cp->sound->index),
-				    C_TO_XEN_INT(cp->chan),
-				    C_TO_XEN_INT(-1),
-				    C_TO_XEN_INT(-1),
-				    C_TO_XEN_DOUBLE(ungrf_x(cp->lisp_info->axis, x)),
-				    C_TO_XEN_DOUBLE(ungrf_y(cp->lisp_info->axis, y))),
-			 S_mouse_drag_hook);
-	      break;
-
-	    case CLICK_FFT_MAIN:
-	      if (cp->verbose_cursor)
-		{
-		  char *str;
-		  str = describe_fft_point(cp, x, y);
-		  string_to_minibuffer(cp->sound, str);
-		  if (str) free(str);
-		}
-	      break;
-
-	    default:
-	      break;
-	    }
+	    else
+#endif 
+	      new_cutoff = cp->spectrum_end + ((mus_float_t)(fft_axis_start - x) / fft_axis_extent(cp));
+	    fft_axis_start = x;
+	  }
+	else 
+	  {
+	    new_cutoff = cp->spectrum_end + ((mus_float_t)(y - fft_axis_start) / fft_axis_extent(cp));
+	    fft_axis_start = y;
+	  }
+	if (new_cutoff > 1.0) new_cutoff = 1.0;
+	if (new_cutoff < 0.001) new_cutoff = 0.001;
+	if (sp->sync != 0)
+	  {
+	    int i;
+	    sync_info *si;
+	    si = snd_sync(sp->sync);
+	    for (i = 0; i < si->chans; i++) 
+	      {
+		si->cps[i]->spectrum_end = new_cutoff;
+		if (cp->transform_graph_type != GRAPH_ONCE)
+		  sono_update(si->cps[i]);
+		else update_graph(si->cps[i]);
+	      }
+	    si = free_sync_info(si);
+	  }
+	else
+	  {
+	    cp->spectrum_end = new_cutoff;
+	    if (cp->transform_graph_type != GRAPH_ONCE)
+	      sono_update(cp);
+	    else update_graph(cp);
+	  }
+      }
+      break;
+      
+    case CLICK_LISP:
+      if (XEN_HOOKED(mouse_drag_hook))
+	run_hook(mouse_drag_hook,
+		 XEN_LIST_6(C_INT_TO_XEN_SOUND(cp->sound->index),
+			    C_TO_XEN_INT(cp->chan),
+			    C_TO_XEN_INT(-1),
+			    C_TO_XEN_INT(-1),
+			    C_TO_XEN_DOUBLE(ungrf_x(cp->lisp_info->axis, x)),
+			    C_TO_XEN_DOUBLE(ungrf_y(cp->lisp_info->axis, y))),
+		 S_mouse_drag_hook);
+      break;
+      
+    case CLICK_FFT_MAIN:
+      if (cp->verbose_cursor)
+	{
+	  char *str;
+	  str = describe_fft_point(cp, x, y);
+	  string_to_minibuffer(cp->sound, str);
+	  if (str) free(str);
 	}
+      break;
+      
+    default:
+      break;
     }
 }
 
@@ -9978,11 +9931,6 @@ is " S_channels_combined ". If it returns a pixel, that color is used to draw th
   #define H_key_press_hook S_key_press_hook " (snd chn key state): called upon a key press if the mouse is in the lisp graph. \
 If it returns " PROC_TRUE ", the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
   #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur): called when a sound is displayed for the first time"
-  #define H_mark_drag_triangle_hook S_mark_drag_triangle_hook " (id x time dragged-before): called when a mark play triangle \
-is dragged.  'dragged-before' is " PROC_FALSE " when the drag starts and " PROC_TRUE " thereafter.  'x' is the mouse x location in the current \
-graph. 'time' is the uninterpreted time at which the drag event was reported. 'id' is the mark id. If the hook returns " PROC_TRUE ", \
-Snd takes no further action.  To set up to play, then interpret the motion yourself, return " PROC_FALSE " on the first call, \
-and " PROC_TRUE " thereafter."
   
   after_transform_hook =  XEN_DEFINE_HOOK(S_after_transform_hook, 3,  H_after_transform_hook); /* args = sound channel scaler */
   graph_hook =            XEN_DEFINE_HOOK(S_graph_hook, 4,            H_graph_hook);           /* args = sound channel y0 y1 */
@@ -9997,7 +9945,6 @@ and " PROC_TRUE " thereafter."
   key_press_hook =        XEN_DEFINE_HOOK(S_key_press_hook, 4,        H_key_press_hook);       /* args = sound channel key state */
   mark_click_hook =       XEN_DEFINE_HOOK(S_mark_click_hook, 1,       H_mark_click_hook);      /* arg = id */
   mix_click_hook =        XEN_DEFINE_HOOK(S_mix_click_hook, 1,        H_mix_click_hook);       /* arg = id */
-  mark_drag_triangle_hook = XEN_DEFINE_HOOK(S_mark_drag_triangle_hook, 4, H_mark_drag_triangle_hook); /* args = id x time dragged-before */
 }
 
 

@@ -647,7 +647,6 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
   sp = dp->sp;
   if ((sp) && (sp->inuse != SOUND_IDLE))
     {
-      sp->playing_mark = NULL;
       if (sp->playing > 0) sp->playing--;
       if (sp->playing == 0) sp_stopping = true;
       if (sp_stopping)

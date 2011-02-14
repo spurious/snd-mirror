@@ -427,7 +427,6 @@ void free_snd_info(snd_info *sp)
     if (sp->chans[i]) 
       sp->chans[i] = free_chan_info(sp->chans[i]);
   sp->inuse = SOUND_IDLE;
-  sp->playing_mark = NULL;
   sp->playing = 0;
   sp->search_count = 0;
   sp->loading = false;

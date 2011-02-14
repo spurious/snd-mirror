@@ -15,7 +15,7 @@
 	graph-hook key-press-hook mouse-drag-hook mouse-press-hook enved-hook read-hook mouse-click-hook new-widget-hook
 	mark-hook view-files-select-hook dac-hook stop-dac-hook stop-playing-selection-hook after-apply-controls-hook draw-mark-hook
 	bad-header-hook save-state-hook new-sound-hook color-hook orientation-hook listener-click-hook mix-click-hook after-save-state-hook
-	mouse-enter-text-hook mouse-leave-text-hook optimization-hook mix-drag-hook mark-drag-triangle-hook
+	mouse-enter-text-hook mouse-leave-text-hook optimization-hook mix-drag-hook 
 	start-playing-selection-hook after-save-as-hook before-save-as-hook peak-env-hook draw-mix-hook
 	before-exit-hook before-close-hook clip-hook time-graph-hook))
 

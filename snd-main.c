@@ -390,6 +390,7 @@ static void save_options(FILE *fd)
   if (trap_segfault(ss) != DEFAULT_TRAP_SEGFAULT) pss_ss(fd, S_trap_segfault, b2s(trap_segfault(ss)));
   if (with_file_monitor(ss) != DEFAULT_WITH_FILE_MONITOR) pss_ss(fd, S_with_file_monitor, b2s(with_file_monitor(ss)));
   if (just_sounds(ss) != DEFAULT_JUST_SOUNDS) pss_ss(fd, S_just_sounds, b2s(just_sounds(ss)));
+  if (play_arrow_size(ss) != DEFAULT_PLAY_ARROW_SIZE) pss_sd(fd, S_play_arrow_size, play_arrow_size(ss));
   if (show_selection_transform(ss) != DEFAULT_SHOW_SELECTION_TRANSFORM) pss_ss(fd, S_show_selection_transform, b2s(show_selection_transform(ss)));
   if (with_gl(ss) != DEFAULT_WITH_GL) pss_ss(fd, S_with_gl, b2s(with_gl(ss)));
   if (with_mix_tags(ss) != DEFAULT_WITH_MIX_TAGS) pss_ss(fd, S_with_mix_tags, b2s(with_mix_tags(ss)));
@@ -1822,6 +1823,22 @@ static XEN g_set_just_sounds(XEN on)
 }
 
 
+static XEN g_play_arrow_size(void)
+{
+  #define H_play_arrow_size "(" S_play_arrow_size "): the size of the play triangles"
+  return(C_TO_XEN_INT(play_arrow_size(ss)));
+}
+
+
+static XEN g_set_play_arrow_size(XEN size) 
+{
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_1, S_setB S_play_arrow_size, "an integer");
+  /* TODO: check bounds, perhaps add to prefs, also test/doc, also perhaps immediate reflection */
+  set_play_arrow_size(XEN_TO_C_INT(size));
+  return(size);
+}
+
+
 static XEN g_with_inset_graph(void)
 {
   #define H_with_inset_graph "(" S_with_inset_graph "): if " PROC_TRUE " (default is " PROC_FALSE "), display the inset graph in the time domain section."
@@ -2205,6 +2222,8 @@ XEN_NARGIFY_0(g_window_height_w, g_window_height)
 XEN_NARGIFY_1(g_set_window_height_w, g_set_window_height)
 XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
 XEN_NARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
+XEN_NARGIFY_0(g_play_arrow_size_w, g_play_arrow_size)
+XEN_NARGIFY_1(g_set_play_arrow_size_w, g_set_play_arrow_size)
 XEN_NARGIFY_0(g_with_inset_graph_w, g_with_inset_graph)
 XEN_NARGIFY_1(g_set_with_inset_graph_w, g_set_with_inset_graph)
 XEN_NARGIFY_0(g_with_pointer_focus_w, g_with_pointer_focus)
@@ -2285,6 +2304,8 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_set_window_height_w g_set_window_height
 #define g_just_sounds_w g_just_sounds
 #define g_set_just_sounds_w g_set_just_sounds
+#define g_play_arrow_size_w g_play_arrow_size
+#define g_set_play_arrow_size_w g_set_play_arrow_size
 #define g_with_inset_graph_w g_with_inset_graph
 #define g_set_with_inset_graph_w g_set_with_inset_graph
 #define g_with_pointer_focus_w g_with_pointer_focus
@@ -2463,6 +2484,9 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, 
 				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_play_arrow_size, g_play_arrow_size_w, H_play_arrow_size, 
+				   S_setB S_play_arrow_size, g_set_play_arrow_size_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_inset_graph, g_with_inset_graph_w, H_with_inset_graph, 
 				   S_setB S_with_inset_graph, g_set_with_inset_graph_w,  0, 0, 1, 0);

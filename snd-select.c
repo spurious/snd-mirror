@@ -803,8 +803,6 @@ void move_selection(chan_info *cp, int x)
 }
 
 
-#define SELECTION_PLAY_ARROW_SIZE 10
-
 static void show_selection_triangle(chan_info *cp, graphics_context *ax, int x0, int x1, mus_long_t beg, mus_long_t end)
 {
   int y0;
@@ -815,8 +813,8 @@ static void show_selection_triangle(chan_info *cp, graphics_context *ax, int x0,
     {
       fill_polygon(ax, 4,
 		   x0, y0,
-		   x0 + SELECTION_PLAY_ARROW_SIZE, y0 + SELECTION_PLAY_ARROW_SIZE,
-		   x0, y0 + 2 * SELECTION_PLAY_ARROW_SIZE,
+		   x0 + play_arrow_size(ss), y0 + play_arrow_size(ss),
+		   x0, y0 + 2 * play_arrow_size(ss),
 		   x0, y0);
     }
 
@@ -825,12 +823,13 @@ static void show_selection_triangle(chan_info *cp, graphics_context *ax, int x0,
     {
       fill_polygon(ax, 4,
 		   x1, y0,
-		   x1 - SELECTION_PLAY_ARROW_SIZE, y0 + SELECTION_PLAY_ARROW_SIZE,
-		   x1, y0 + 2 * SELECTION_PLAY_ARROW_SIZE,
+		   x1 - play_arrow_size(ss), y0 + play_arrow_size(ss),
+		   x1, y0 + 2 * play_arrow_size(ss),
 		   x1, y0);
     }
 }
 
+#define HIT_SLOP 4
 
 bool hit_selection_triangle(chan_info *cp, int x, int y)
 {
@@ -845,15 +844,12 @@ bool hit_selection_triangle(chan_info *cp, int x, int y)
 
   mx = grf_x((double)beg / (double)SND_SRATE(cp->sound), ap);
 
-  if (mx > x) return(false);                                /* click point is to the left of the triangle */
-  if ((mx + SELECTION_PLAY_ARROW_SIZE) < x) return(false);  /* click point is to the right of the triangle */
+  if (mx > (x + HIT_SLOP)) return(false);                                /* click point is to the left of the triangle */
+  if ((mx + play_arrow_size(ss) + HIT_SLOP) < x) return(false);  /* click point is to the right of the triangle */
 
-  y = y - ap->y_axis_y0 - SELECTION_PLAY_ARROW_SIZE;
+  y = y - ap->y_axis_y0 - play_arrow_size(ss);
   if (y < 0) y = -y;
-  if ((mx + SELECTION_PLAY_ARROW_SIZE - y) >= x) return(true);
-  /* the last is assuming the triangle shape for hit detection */
-
-  return(false);
+  return((mx + play_arrow_size(ss) - y + HIT_SLOP) >= x);
 }
 
 
@@ -870,16 +866,13 @@ bool hit_selection_loop_triangle(chan_info *cp, int x, int y)
 
   mx = grf_x((double)end / (double)SND_SRATE(cp->sound), ap);
 
-  if ((mx - SELECTION_PLAY_ARROW_SIZE) > x) return(false); 
-  if (mx < x) return(false);
+  if ((mx - play_arrow_size(ss) - HIT_SLOP) > x) return(false); 
+  if (mx < (x - HIT_SLOP)) return(false);
 
-  y = y - ap->y_axis_y0 - SELECTION_PLAY_ARROW_SIZE;
+  y = y - ap->y_axis_y0 - play_arrow_size(ss);
   if (y < 0) y = -y;
 
-  if ((mx - SELECTION_PLAY_ARROW_SIZE - y) <= x) return(true);
-  /* the last is assuming the triangle shape for hit detection */
-
-  return(false);
+  return((mx - play_arrow_size(ss) - y - HIT_SLOP) <= x);
 }
 
 

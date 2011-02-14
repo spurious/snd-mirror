@@ -1569,7 +1569,7 @@ int hit_mix(chan_info *cp, int x, int y) /* mix tag press in snd-chn.c */
   #define STRING_HEIGHT 12
 #endif
 
-#define MIX_PLAY_ARROW_SIZE 10
+#define HIT_SLOP 4
 
 int hit_mix_triangle(chan_info *cp, int x, int y)
 {
@@ -1591,10 +1591,10 @@ int hit_mix_triangle(chan_info *cp, int x, int y)
 	      if (mx <= 0)
 		mx = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
 	      my = mix_infos[ms->mix_id]->tag_y + MIX_TAG_Y_OFFSET + STRING_HEIGHT + cp->axis->y_offset;
-	      if ((mx < x) &&
-		  ((mx + MIX_PLAY_ARROW_SIZE) >= x) &&
-		  (y > my) &&
-		  (y < (my + 2 * MIX_PLAY_ARROW_SIZE)))
+	      if ((mx < (x + HIT_SLOP)) &&
+		  ((mx + play_arrow_size(ss) + HIT_SLOP) >= x) &&
+		  ((y + HIT_SLOP) > my) &&
+		  (y < (my + 2 * play_arrow_size(ss) + HIT_SLOP)))
 		return(ms->mix_id);
 	    }
 	}
@@ -1672,7 +1672,6 @@ static void draw_mix_tag(mix_info *md, int x, int y)
   md->x = x;
   md->y = y;
 
-
   /* redraw the mix id */
   ax = copy_context(cp);
   set_tiny_numbers_font(cp, ax);
@@ -1693,6 +1692,14 @@ static void draw_mix_tag(mix_info *md, int x, int y)
   ax = mix_waveform_context(cp);
   set_foreground_color(ax, md->color); 
   fill_rectangle(ax, x - width / 2, y - height + STRING_HEIGHT, width, height);
+
+  /* now draw the play triangle below the tag */
+  y += (height - 4);
+  fill_polygon(ax, 4,
+	       x, y,
+	       x + play_arrow_size(ss), y + play_arrow_size(ss),
+	       x, y + 2 * play_arrow_size(ss),
+	       x, y);
 }
 
 

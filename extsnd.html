@@ -2080,28 +2080,6 @@ This hook is called when a mark is dragged.
 </pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
 
 
-<!-- mark-drag-triangle-hook -->
-<tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="markdragtrianglehook">mark-drag-triangle-hook</a> (mark x time dragged-before)</code> [<b>progn</b>]
-</td></tr><tr><td></td><td colspan=2>
-This hook is called when a mark play triangle is dragged.  The smoothness of the response to the drag motion is
-largely determined by <a href="#dacsize">dac-size</a>.
-'dragged-before' is #f when the drag starts and #t thereafter.  'x' is the mouse x location in the current
-graph. 'time' is the uninterpreted (graphics toolkit) time at which the drag event was reported. If the hook function returns #t,
-Snd takes no further action.  To set up to play, then interpret the motion yourself, return #f on the first call,
-and #t thereafter:
-
-<table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(let ((first-x 0))
-  (hook-push <em class=red>mark-drag-triangle-hook</em>
-    (lambda (id x time dragged-before)
-      (if (not dragged-before)
-	  (set! first-x x)
-	  (set! (<a class=quiet href="#speedcontrol" onmouseout="UnTip()" onmouseover="Tip(extsnd_speedcontrol_tip)">speed-control</a>) (/ (- x first-x) 16.0)))
-      dragged-before)))
-</pre></td></tr></table></td></tr><tr><td colspan=3 height=16></td></tr>
-
-
 <!-- mark-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
 <code><a class=def name="markhook">mark-hook</a> (mark snd chn reason)</code>
@@ -7820,7 +7798,7 @@ play the selection: (play (selection)), <a href="snd.html#cxp">C-x p</a><br>
 play a region: (play region-object), <a href="snd.html#cxp">C-x p</a>, play button in Region dialog<br>
 play a mix: (play mix-object), play button in Mix dialog<br>
 play a sequence of mixes: <a href="sndscm.html#playmixes">play-mixes</a><br>
-play from mark: click or drag triangle (control-click for all chans)<br>
+play from mark: click triangle (control-click for all chans)<br>
 play continuously between two marks: <a href="sndscm.html#loopbetweenmarks">loop-it</a><br>
 stop playing: C-g, C-t, <a href="#stopplaying">stop-playing</a>, set <a href="#playing">playing</a> to #f<br>
 pause or resume playback: space, set <a href="#pausing">pausing</a><br>

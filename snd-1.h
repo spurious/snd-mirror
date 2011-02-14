@@ -323,7 +323,6 @@ typedef struct snd_info {
   sound_inuse_t inuse;
   int index;
   int playing;
-  mark *playing_mark;
   int sync, previous_sync;
   bool expand_control_p;
   bool contrast_control_p;
@@ -472,7 +471,7 @@ typedef struct snd_state {
   mus_float_t Contrast_Control_Min, Contrast_Control_Max, Expand_Control_Min, Expand_Control_Max, Speed_Control_Min, Speed_Control_Max;
   mus_float_t Amp_Control_Min, Amp_Control_Max, Reverb_Control_Scale_Min, Reverb_Control_Scale_Max;
   mus_float_t Reverb_Control_Length_Min, Reverb_Control_Length_Max;
-  int Filter_Control_Order, Cursor_Location_Offset;
+  int Filter_Control_Order, Cursor_Location_Offset, Play_Arrow_Size;
   mus_float_t Min_dB;
   bool Show_Controls;
   tracking_cursor_t With_Tracking_Cursor;
@@ -739,8 +738,6 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state);
 mark *hit_mark_triangle(chan_info *cp, int x, int y);
 void move_mark(chan_info *cp, mark *mp, int x);
 void play_syncd_mark(chan_info *cp, mark *mp);
-mus_long_t move_play_mark(chan_info *cp, mus_long_t *mc, int cx);
-void finish_moving_play_mark(chan_info *cp);
 void finish_moving_mark(chan_info *cp, mark *m);
 mark *add_mark(mus_long_t samp, const char *name, chan_info *cp);
 bool delete_mark_samp(mus_long_t samp, chan_info *cp);

@@ -214,6 +214,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Show_Backtrace = DEFAULT_SHOW_BACKTRACE;
   ss->With_Inset_Graph = DEFAULT_WITH_INSET_GRAPH;
   ss->With_Pointer_Focus = DEFAULT_WITH_POINTER_FOCUS;
+  ss->Play_Arrow_Size = DEFAULT_PLAY_ARROW_SIZE;
 
   ss->Listener_Prompt = mus_strdup(DEFAULT_LISTENER_PROMPT);
   ss->listener_prompt_length = mus_strlen(ss->Listener_Prompt);
