@@ -179,7 +179,6 @@ void draw_cursor(chan_info *cp)
 
   if (ax->cr) cairo_destroy(ax->cr);
   ax->cr = gdk_cairo_create(ax->wn); /* this is needed to force the cursor to be displayed! */
-  free_cursor_pix(cp);
 
   if (cp->cx > cp->cursor_size) cx0 = cp->cx - cp->cursor_size;
   if (cp->cy > cp->cursor_size) cy0 = cp->cy - cp->cursor_size;
@@ -195,9 +194,6 @@ void draw_cursor(chan_info *cp)
   switch (cur)
     {
     case CURSOR_CROSS:
-#if USE_GTK
-      save_cursor_pix(cp, ax, csize, csize, cx0, cy0);
-#endif
       draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
       draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
       break;
@@ -206,20 +202,10 @@ void draw_cursor(chan_info *cp)
       if ((with_inset_graph(ss)) &&
 	  (cp->inset_graph))
 	draw_inset_line_cursor(cp, ax);
-      else
-	{
-#if USE_GTK
-	  save_cursor_pix(cp, ax, 2, ap->y_axis_y0 - ap->y_axis_y1, cp->cx, ap->y_axis_y1);
-#endif
-	  draw_line(ax, cp->cx, ap->y_axis_y0 - 1, cp->cx, ap->y_axis_y1);
-	}
+      else draw_line(ax, cp->cx, ap->y_axis_y0 - 1, cp->cx, ap->y_axis_y1);
       break;
 
     case CURSOR_PROC:
-#if USE_GTK
-      /* in the cairo case, we need some info about the cursor shape, but I'll assume cursor_size is meaningful */
-      save_cursor_pix(cp, ax, csize, csize, cx0, cy0);
-#endif
       XEN_CALL_3((XEN_PROCEDURE_P(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
 		 C_INT_TO_XEN_SOUND(cp->sound->index),
 		 C_TO_XEN_INT(cp->chan),
@@ -249,8 +235,7 @@ void draw_cursor(chan_info *cp)
 void erase_cursor(chan_info *cp)
 {
 #if USE_GTK
-  if (cp->cgx->cursor_pix)
-    restore_cursor_pix(cp, cp->axis->ax); /* returns true if old cursor was erased */
+  display_channel_time_data(cp); /* TODO: find a way to avoid redraw here */
 #else
   draw_cursor(cp);
 #endif

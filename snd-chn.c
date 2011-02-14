@@ -2536,6 +2536,7 @@ static void make_sonogram(chan_info *cp)
       bins = (int)(si->target_bins * cp->spectrum_end);
       if (bins == 0) return;
 
+#if USE_MOTIF
       if (cp->cgx->fft_pix)                            /* Motif None = 0 */
 	{
 	  if ((cp->fft_changed == FFT_UNCHANGED) &&
@@ -2555,6 +2556,7 @@ static void make_sonogram(chan_info *cp)
 	    }
 	  cp->cgx->fft_pix_ready = false;
 	}
+#endif
 
       if (sono_js_size != color_map_size(ss))
 	{
@@ -2660,12 +2662,14 @@ static void make_sonogram(chan_info *cp)
 	    }
 	}
 
+#if USE_MOTIF
       /* if size was wrong, we've already released pix above */
       if ((bins >= SAVE_FFT_SIZE) ||      /* transform size of twice that (8192) */
 	  ((enved_dialog_is_active()) &&  /*   or we want to see the sonogram as the enved background */
 	   (enved_target(ss) == ENVED_SPECTRUM) &&
 	   (enved_wave_p(ss))))
 	save_fft_pix(cp, ax, fwidth, fheight, fap->x_axis_x0, fap->y_axis_y1);
+#endif
 
       if (cp->printing) ps_reset_color();
       free(hfdata);
@@ -4306,22 +4310,15 @@ static void draw_sonogram_cursor_1(chan_info *cp)
     draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
 #else
   {
+    color_t old_color;
     fax = cp->cgx->ax; /* fap->ax does not work here?!? */
     if (fax->cr) cairo_destroy(fax->cr);
     fax->cr = gdk_cairo_create(fax->wn);
-    if (cp->fft_cursor_visible)
-      restore_sono_cursor_pix(cp, fax); /* returns true if old cursor was erased */
-    else
-      {
-	color_t old_color;
-	/* y_axis_y0 > y_axis_y1 (upside down coordinates) */
-	free_sono_cursor_pix(cp);
-	save_sono_cursor_pix(cp, fax, 2, fap->y_axis_y0 - fap->y_axis_y1, cp->fft_cx, fap->y_axis_y1);
-	old_color = get_foreground_color(fax);
-	set_foreground_color(fax, ss->sgx->cursor_color);
-	draw_line(fax, cp->fft_cx, fap->y_axis_y0 - 1, cp->fft_cx, fap->y_axis_y1);
-	set_foreground_color(fax, old_color);
-      }
+    /* y_axis_y0 > y_axis_y1 (upside down coordinates) */
+    old_color = get_foreground_color(fax);
+    set_foreground_color(fax, ss->sgx->cursor_color);
+    draw_line(fax, cp->fft_cx, fap->y_axis_y0 - 1, cp->fft_cx, fap->y_axis_y1);
+    set_foreground_color(fax, old_color);
     cp->fft_cursor_visible = (!(cp->fft_cursor_visible));
   }
 #endif
@@ -5226,54 +5223,57 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
       restart_selection_creation(cp, click_within_graph == CLICK_SELECTION_RIGHT);
       break;
 
-      /* TODO: make sure click during play stops current */
-      /* TODO: add unselect to edit menu (popup too?) and unselect function */
-      /* TODO: perhaps stop sign when playing? */
+      /* PERHAPS: space to play? */
 
     case CLICK_MARK_PLAY:
-      {
-	if (sp->playing)
-	  {
-	    stop_playing_sound(sp, PLAY_BUTTON_UNSET);
-	    set_play_button(sp, false);
-	  }
-	else
-	  {
-	    if (mark_sync(play_mark))
-	      play_syncd_mark(cp, play_mark);
-	    else 
-	      {
-		if (key_state & snd_ControlMask)
-		  play_sound(sp, mark_sample(play_mark), NO_END_SPECIFIED);
-		else play_channel(cp, mark_sample(play_mark), NO_END_SPECIFIED);
-	      }
-	  }
-      }
-      break;
-
     case CLICK_MIX_PLAY:
-      play_mix_from_id(mix_play_tag);
-      break;
-
     case CLICK_CURSOR_PLAY:
-      /* TODO: get syncd chans here */
-      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED);
-      break;
-
     case CLICK_SELECTION_LOOP_PLAY:
-      loop_play_selection();
-      break;
-
     case CLICK_SELECTION_PLAY:
-      if (ss->selection_play_stop)
+      if ((sp->playing) ||
+	  (ss->selection_play_stop))
 	{
 	  stop_playing_all_sounds(PLAY_BUTTON_UNSET);
+	  set_play_button(sp, false);
 	  reflect_play_selection_stop(); /* this sets ss->selection_play_stop = false; */
 	}
-      else 
+      else
 	{
-	  ss->selection_play_stop = true;
-	  play_selection(IN_BACKGROUND);
+	  switch (click_within_graph)
+	    {
+	    case CLICK_MARK_PLAY:
+	      if (mark_sync(play_mark))
+		play_syncd_mark(cp, play_mark);
+	      else 
+		{
+		  if (key_state & snd_ControlMask)
+		    play_sound(sp, mark_sample(play_mark), NO_END_SPECIFIED);
+		  else play_channel(cp, mark_sample(play_mark), NO_END_SPECIFIED);
+		}
+	      break;
+
+	    case CLICK_MIX_PLAY:
+	      play_mix_from_id(mix_play_tag);
+	      break;
+	      
+	    case CLICK_CURSOR_PLAY:
+	      /* TODO: get syncd chans here */
+	      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED);
+	      break;
+	      
+	    case CLICK_SELECTION_LOOP_PLAY:
+	      ss->selection_play_stop = true;
+	      loop_play_selection();
+	      break;
+	      
+	    case CLICK_SELECTION_PLAY:
+	      ss->selection_play_stop = true;
+	      play_selection(IN_BACKGROUND);
+	      break;
+
+	    default:
+	      break;
+	    }
 	}
       break;
 
@@ -6078,10 +6078,6 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 void draw_inset_line_cursor(chan_info *cp, graphics_context *ax)
 {
   /* we've checked that with_inset_graph is #t and cp has the pointer */
-#if USE_GTK
-  save_cursor_pix(cp, ax, 2, cp->axis->y_axis_y0 - cp->axis->y_axis_y1, cp->cx, cp->axis->y_axis_y1);
-#endif
-
   if ((cp->inset_graph->graphing) &&
       (cp->cx > cp->inset_graph->x0) &&
       (cp->cx < cp->inset_graph->x1))

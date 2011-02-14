@@ -344,9 +344,8 @@ extension language, that initializes Snd to use whatever items you chose.
 <p><small>If the listener is active, and some sound
 is selected, any characters typed while in the sound
 graph which it can't handle are passed to the
-listener; to exit the listener without using the
-mouse, type C-g.  This is also the way to get back to
-the listener prompt if it appears to be hung; normally
+listener.
+If the listener appears to be hung, try C-g; normally
 in this situation,
 it's actually waiting for a close paren; if you put the
 cursor just past the close paren you're interested in
@@ -1018,6 +1017,13 @@ See also <a href="#maxvirtualptrees">max-virtual-ptrees</a>.
 peak-env-dir is the directory to use for peak env files; if it is #f (the default), the peak-env machinery is turned off.
 If the peak-env-dir is writable, Snd saves an overview of the sound data in that directory to speed up
 the initial graph display the next time you open that sound.
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
+<!-- play-arrow-size -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="playarrowsize">play-arrow-size</a></code></td>
+<td bgcolor="#f2f4ff"><code>10</code></td></tr><tr><td></td><td colspan=2>
+This is the size of the triangular arrow that handles click-to-play duties for the cursor, marks, mixes, and the selection.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1991,6 +1997,7 @@ If its function returns #t, the key press is not passed to the main handler.
 channel-specific envelope editors.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
+<!-- TODO: check c-g in start-enveloping -->
 
 <!-- lisp-graph-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">

@@ -21,7 +21,6 @@ void draw_points(graphics_context *ax, point_t *points, int num, int size);
 void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height);
 void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int width, int height);
 void fill_polygon(graphics_context *ax, int points, ...);
-void draw_polygon(graphics_context *ax, int points, ...);
 void fill_polygons(graphics_context *ax, point_t *points, int num, int y0);
 void fill_two_sided_polygons(graphics_context *ax, point_t *points, point_t *points1, int num);
 void fill_polygon_from_array(graphics_context *ax, point_t *points, int npoints);
@@ -224,17 +223,6 @@ color_t get_foreground_color(graphics_context *ax);
 void set_foreground_color(graphics_context *ax, color_info *color);
 gc_t *copy_GC(chan_info *cp);
 gc_t *erase_GC(chan_info *cp);
-void free_fft_pix(chan_info *cp);
-bool restore_fft_pix(chan_info *cp, graphics_context *ax);
-void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, int x0, int y0);
-
-  void free_cursor_pix(chan_info *cp);
-  bool restore_cursor_pix(chan_info *cp, graphics_context *ax);
-  void save_cursor_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, int x0, int y0);
-  void free_sono_cursor_pix(chan_info *cp);
-  bool restore_sono_cursor_pix(chan_info *cp, graphics_context *ax);
-  void save_sono_cursor_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, int x0, int y0);
-
 void cleanup_cw(chan_info *cp);
 void change_channel_style(snd_info *sp, channel_style_t new_style);
 void color_chan_components(color_t color, slider_choice_t which_component);

@@ -85,16 +85,16 @@ void fill_polygon(graphics_context *ax, int points, ...)
   va_end(ap);
 }
 
-
+#if 0
 void draw_polygon(graphics_context *ax, int points, ...)
-{ /* currently used only in snd-marks.c */
+{ 
   va_list ap;
   if (points == 0) return;
   va_start(ap, points);
   draw_polygon_va(ax, false, points, ap);
   va_end(ap);
 }
-
+#endif
 
 void draw_lines(graphics_context *ax, point_t *points, int num)
 {

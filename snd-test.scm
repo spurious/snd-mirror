@@ -965,6 +965,9 @@
     (set! (print-length) (print-length))
     (if (not (equal? (print-length)  12 )) 
 	(snd-display #__line__ ";print-length set def: ~A" (print-length)))
+    (set! (play-arrow-size) (play-arrow-size))
+    (if (not (equal? (play-arrow-size)  10 )) 
+	(snd-display #__line__ ";play-arrow-size set def: ~A" (play-arrow-size)))
     (set! (save-state-file) (save-state-file))
     (if (not (equal? (save-state-file)  "saved-snd.scm" )) 
 	(snd-display #__line__ ";save-state-file set def: ~A" (save-state-file)))
@@ -1283,6 +1286,7 @@
       'mus-float-equal-fudge-factor (mus-float-equal-fudge-factor) .0000001
       'mus-prescaler (mus-prescaler) 1.0
       'optimization (optimization) 6
+      'play-arrow-size (play-arrow-size) 10
       'print-length (print-length) 12 
       'read-only (without-errors (read-only)) 'no-such-sound
       'region-graph-style (region-graph-style) graph-lines
@@ -1872,6 +1876,7 @@
 	(list 'selection-creates-region selection-creates-region #t #f)
 	(list 'transform-normalization transform-normalization normalize-by-channel dont-normalize)
 	(list 'view-files-sort view-files-sort 0 1)
+	(list 'play-arrow-size play-arrow-size 10 16)
 	(list 'print-length print-length 12 16)
 	(list 'region-graph-style region-graph-style graph-lines graph-lollipops)
 	(list 'reverb-control-decay reverb-control-decay 1.0 2.0)
@@ -2192,7 +2197,7 @@
 		       'override-samples-with-origin 'pad-channel 'partials->polynomial 'partials->wave
 		       'parzen-window 'pausing 'peak-env-hook 'peaks 'peaks-font
 		       'phase-partials->wave 'phase-vocoder 'phase-vocoder-amp-increments 'phase-vocoder-amps 'phase-vocoder-freqs
-		       'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play
+		       'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play 'play-arrow-size
 		       'play-hook 'player-home 'player? 'players
 		       'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape 'polywave
 		       'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
@@ -32830,6 +32835,7 @@ EDITS: 2
 	      (list 'selection-creates-region selection-creates-region #f #f #t)
 	      (list 'transform-normalization transform-normalization #f dont-normalize normalize-globally)
 	      (list 'view-files-sort view-files-sort #f 0 3)
+	      (list 'play-arrow-size play-arrow-size #f 2 32)
 	      (list 'print-length print-length #f 2 32)
 	      (list 'region-graph-style region-graph-style #f graph-lines graph-lollipops)
 	      (list 'reverb-control-decay reverb-control-decay #f 0.0 2.0)
@@ -61135,7 +61141,7 @@ EDITS: 1
 					;new-sound in
 		     read-mix-sample next-sample read-region-sample
 		     transform-normalization open-file-dialog-directory open-raw-sound open-sound previous-sample
-		     peaks player? players
+		     peaks player? players play-arrow-size
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
 		     view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
 		     print-length progress-report prompt-in-minibuffer read-only
@@ -61260,7 +61266,7 @@ EDITS: 1
 			 mix-amp-env mix-color mix-name mix-position mix-sync mix-properties mix-property max-virtual-ptrees
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
 			 mix-waveform-height transform-normalization open-file-dialog-directory
-			 position-color view-files-sort print-length
+			 position-color view-files-sort print-length play-arrow-size
 			 view-files-amp view-files-speed view-files-speed-style view-files-amp-env
 			 view-files-files view-files-selected-files 
 			 region-graph-style reverb-control-decay reverb-control-feedback
@@ -62080,7 +62086,7 @@ EDITS: 1
 			    listener-color listener-font listener-prompt listener-text-color max-regions
 			    minibuffer-history-length mix-waveform-height region-graph-style position-color
 			    time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
-			    view-files-sort print-length sash-color ladspa-dir peak-env-dir save-dir save-state-file
+			    view-files-sort print-length play-arrow-size sash-color ladspa-dir peak-env-dir save-dir save-state-file
 			    selected-channel selected-data-color selected-graph-color 
 			    selected-sound selection-creates-region show-controls show-indices show-listener
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
@@ -62231,6 +62237,7 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (mus-sound-close-input 2)))
 		(check-error-tag 'out-of-range (lambda () (set! (mus-array-print-length) -1)))
 		(check-error-tag 'out-of-range (lambda () (set! (print-length) -1)))
+		(check-error-tag 'out-of-range (lambda () (set! (play-arrow-size) -1)))
 					;		(check-error-tag 'wrong-type-arg (lambda () (vector->vct (make-vector 3 "hio"))))
 		(check-error-tag 'out-of-range (lambda () (set! (enved-style) 12)))
 		(check-error-tag 'out-of-range (lambda () (make-color 1.5 0.0 0.0)))

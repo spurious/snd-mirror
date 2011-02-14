@@ -7,7 +7,7 @@ enum {m_menu,
           f_view_menu, f_print_menu, f_mix_menu, f_insert_menu, f_update_menu, f_record_menu, f_sep_menu,
         e_menu, e_cascade_menu,
           e_cut_menu, e_paste_menu, e_mix_menu, e_play_menu, e_save_as_menu, e_undo_menu,
-          e_redo_menu, e_find_menu, e_env_menu, e_header_menu, e_select_all_menu,
+          e_redo_menu, e_find_menu, e_env_menu, e_header_menu, e_select_all_menu, e_unselect_menu,
           e_select_sep_menu, e_edit_sep_menu,
         h_menu, h_cascade_menu,
           h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_controls_menu,
@@ -72,6 +72,7 @@ enum {m_menu,
 #define edit_env_menu (ss->sgx->mw[e_env_menu])
 #define edit_header_menu (ss->sgx->mw[e_header_menu])
 #define edit_select_all_menu (ss->sgx->mw[e_select_all_menu])
+#define edit_unselect_menu (ss->sgx->mw[e_unselect_menu])
 #define edit_select_sep_menu (ss->sgx->mw[e_select_sep_menu])
 #define edit_edit_sep_menu (ss->sgx->mw[e_edit_sep_menu])
 

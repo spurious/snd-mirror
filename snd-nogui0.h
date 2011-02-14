@@ -61,11 +61,6 @@ typedef struct {
   graphics_context *ax;
   int selected;
   int fft_in_progress;
-  int fft_pix;
-  unsigned int fft_pix_width, fft_pix_height;
-  int fft_pix_x0, fft_pix_y0;
-  bool fft_pix_ready;
-  mus_float_t fft_pix_cutoff;
   int current_cursor;
 } chan_context;
 

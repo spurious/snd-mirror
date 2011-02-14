@@ -188,23 +188,8 @@ typedef struct {
   graphics_context *ax;
   bool selected;
   slist *edhist_list;
-  GdkPixbuf *fft_pix;
-  unsigned int fft_pix_width, fft_pix_height;
-  int fft_pix_x0, fft_pix_y0;
-  bool fft_pix_ready;
-  mus_float_t fft_pix_cutoff;
   int current_hourglass;
-
-  GdkPixbuf *cursor_pix;
-  unsigned int cursor_pix_width, cursor_pix_height;
-  int cursor_pix_x0, cursor_pix_y0;
-  bool cursor_pix_ready;
-  GdkPixbuf *sono_cursor_pix;
-  unsigned int sono_cursor_pix_width, sono_cursor_pix_height;
-  int sono_cursor_pix_x0, sono_cursor_pix_y0;
-  bool sono_cursor_pix_ready;
   mus_float_t progress_pct;
-
   GdkCursor *current_cursor;
 } chan_context;
 

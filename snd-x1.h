@@ -23,7 +23,6 @@ void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int wi
 void fill_polygon(graphics_context *ax, int points, ...);
 void fill_polygons(graphics_context *ax, point_t *points, int num, int y0);
 void fill_two_sided_polygons(graphics_context *ax, point_t *points, point_t *points1, int num);
-void draw_polygon(graphics_context *ax, int points, ...);
 void draw_string(graphics_context *ax, int x0, int y0, const char *str, int len);
 void gtk_style_draw_string(graphics_context *ax, int x0, int y0, const char *str, int len);
 void draw_dot(graphics_context *ax, int x, int y, int size);

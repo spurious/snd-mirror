@@ -131,6 +131,7 @@ static void edit_cut_callback(Widget w, XtPointer info, XtPointer context) {dele
 static void edit_paste_callback(Widget w, XtPointer info, XtPointer context) {insert_selection_from_menu();}
 static void edit_save_as_callback(Widget w, XtPointer info, XtPointer context) {make_selection_save_as_dialog(true);}
 static void edit_select_all_callback(Widget w, XtPointer info, XtPointer context) {select_all(current_channel());}
+static void edit_unselect_callback(Widget w, XtPointer info, XtPointer context) {deactivate_selection();}
 static void edit_undo_callback(Widget w, XtPointer info, XtPointer context) {undo_edit_with_sync(current_channel(), 1);}
 static void edit_redo_callback(Widget w, XtPointer info, XtPointer context) {redo_edit_with_sync(current_channel(), 1);}
 
@@ -599,6 +600,9 @@ Widget add_menu(void)
 
   edit_select_all_menu = XtCreateManagedWidget(_("Select all"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_select_all_menu, XmNactivateCallback, edit_select_all_callback, NULL);
+
+  edit_unselect_menu = XtCreateManagedWidget(_("Unselect"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  XtAddCallback(edit_unselect_menu, XmNactivateCallback, edit_unselect_callback, NULL);
 
   edit_edit_sep_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, edit_menu, sep_args, j);
 

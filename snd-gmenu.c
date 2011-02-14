@@ -117,6 +117,7 @@ static void edit_cut_callback(GtkWidget *w, gpointer info) {delete_selection(UPD
 static void edit_paste_callback(GtkWidget *w, gpointer info) {insert_selection_from_menu();}
 static void edit_save_as_callback(GtkWidget *w, gpointer info) {make_selection_save_as_dialog(true);}
 static void edit_select_all_callback(GtkWidget *w, gpointer info) {select_all(current_channel());}
+static void edit_unselect_callback(GtkWidget *w, gpointer info) {deactivate_selection();}
 static void edit_undo_callback(GtkWidget *w, gpointer info) {undo_edit_with_sync(current_channel(), 1);}
 static void edit_redo_callback(GtkWidget *w, gpointer info) {redo_edit_with_sync(current_channel(), 1);}
 
@@ -625,6 +626,13 @@ GtkWidget *add_menu(void)
   gtk_widget_show(edit_select_all_menu);
   set_sensitive(edit_select_all_menu, false);
   SG_SIGNAL_CONNECT(edit_select_all_menu, "activate", edit_select_all_callback, NULL);
+
+  edit_unselect_menu = gtk_image_menu_item_new_with_label(_("Unselect"));
+  ml[e_unselect_menu] = _("Unselect");
+  gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_unselect_menu);
+  gtk_widget_show(edit_unselect_menu);
+  set_sensitive(edit_unselect_menu, false);
+  SG_SIGNAL_CONNECT(edit_unselect_menu, "activate", edit_unselect_callback, NULL);
 
   edit_edit_sep_menu = gtk_menu_item_new();
   ml[e_edit_sep_menu] = NULL;

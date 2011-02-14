@@ -1053,6 +1053,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
       if (enved_max_fft_size < transform_size(ss)) enved_max_fft_size = transform_size(ss);
       if (enved_max_fft_size < active_channel->transform_size) enved_max_fft_size = active_channel->transform_size;
       
+#if USE_MOTIF
       if ((active_channel->cgx) && 
 	  (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
 	  (active_channel->graph_transform_p))
@@ -1084,6 +1085,10 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	  active_channel->cgx->fft_pix_y0 = old_y0;
 	}
       else display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
+#else
+      /* TODO: test the enved spectrum display */
+      display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
+#endif
     }
   else
     {

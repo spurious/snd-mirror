@@ -1258,7 +1258,7 @@
 												 (begin
 												   (set! warned #t)
 												   (set! commands (remove "tr" commands))
-												   (format #t "~A[~D]: unclosed tr at table ~A ~A~%")))
+												   (format #t "~A[~D]: unclosed tr at table~%" file linectr)))
 											     (if (string-ci-list-position "td" commands)
 												 (begin
 												   (set! warned #t)

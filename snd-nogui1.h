@@ -18,7 +18,6 @@ void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int wi
 void fill_polygon(graphics_context *ax, int points, ...);
 void fill_polygons(graphics_context *ax, point_t *points, int num, int y0);
 void fill_two_sided_polygons(graphics_context *ax, point_t *points, point_t *points1, int num);
-void draw_polygon(graphics_context *ax, int points, ...);
 void draw_string(graphics_context *ax, int x0, int y0, const char *str, int len);
 void draw_dot(graphics_context *ax, int x, int y, int size);
 void setup_graphics_context(chan_info *cp, graphics_context *ax);
@@ -178,9 +177,6 @@ void set_bold_peak_numbers_font(chan_info *cp, graphics_context *ax);
 void set_tiny_numbers_font(chan_info *cp, graphics_context *ax);
 color_t get_foreground_color(graphics_context *ax);
 void set_foreground_color(graphics_context *ax, int color);
-void free_fft_pix(chan_info *cp);
-bool restore_fft_pix(chan_info *cp, graphics_context *ax);
-void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, int x0, int y1);
 void cleanup_cw(chan_info *cp);
 bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void get_current_color(int colormap, int j, rgb_t *r, rgb_t *g, rgb_t *b);

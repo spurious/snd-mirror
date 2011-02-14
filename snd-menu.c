@@ -44,6 +44,7 @@ void edit_menu_update(void)
   set_sensitive(edit_play_menu, selection_p);
   set_sensitive(edit_mix_menu, selection_p);
   set_sensitive(edit_save_as_menu, selection_p);
+  set_sensitive(edit_unselect_menu, selection_p);
 
   /* is there an undoable edit? */
   set_sensitive(edit_undo_menu, undoable_edit_p);
