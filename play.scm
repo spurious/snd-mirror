@@ -58,8 +58,7 @@
 	    (let ((len (frames))
 		  (data (make-sound-data outchans pframes)))  ; the data buffer passed to the function (func above), then to mus-audio-write
 	      (do ((beg 0 (+ beg pframes)))
-		  ((or (c-g?)                   ; C-g to stop in mid-stream
-		       (> beg len)))
+		  ((> beg len))
 		(if (and (> outchans 1) (> filechans 1))
 		    (do ((k 0 (+ 1 k)))
 			((= k (min outchans filechans)))
@@ -92,7 +91,6 @@
   (let ((plays (- n 1)))
     (define (play-once reason)
       (if (and (> plays 0)
-	       (not (c-g?))
 	       (= reason 0))
 	  (begin
 	    (set! plays (- plays 1))
@@ -107,8 +105,7 @@
 (define (play-until-c-g)
   "(play-until-c-g) plays the selected sound until you interrupt it via C-g"
   (define (play-once reason)
-    (if (and (not (c-g?))
-	     (= reason 0))
+    (if (= reason 0)
 	(play (selected-sound) :start 0 :stop play-once)))
   (play (selected-sound) :start 0 :stop play-once))
 
@@ -121,8 +118,7 @@
   (let ((reg (if (integer? reg1) (integer->region reg1) reg1)))
 
     (define (play-region-again reason)
-      (if (and (not (c-g?))  ; be extra careful (probably superfluous)
-	       (= reason 0)) ; 0=play completed normally
+      (if (= reason 0) ; 0=play completed normally
 	  (play reg :wait #f :stop play-region-again)))
 
     (play reg :wait #f :stop play-region-again)))
@@ -144,7 +140,7 @@
 	 (audio-fd (mus-audio-open-output 0 (srate) 1 mus-lshort bytes)))
     (if (not (= audio-fd -1))
 	(do ()
-	    ((c-g?) 
+	    (#t ; TODO: stop hook or something here
 	     (mus-audio-close audio-fd))
 	  (do ((i 0 (+ 1 i)))
 	      ((= i bufsize) 
@@ -258,14 +254,13 @@ read, even if not playing.  'files' is a list of files to be played."
 					      (set! (locs i) (+ (locs i) bufsize)))
 					    (set! (locs current-file) (+ (locs current-file) bufsize)))))
 				  (mus-audio-write out-port data bufsize)
-				  (set! reading (and (not (c-g?))
-						     (letrec ((any-data-left 
-							       (lambda (f)
-								 (if (= f files-len)
-								     #f
-								     (or (< (locs f) (pframes f))
-									 (any-data-left (+ 1 f)))))))
-						       (any-data-left 0)))))))
+				  (set! reading (letrec ((any-data-left 
+							  (lambda (f)
+							    (if (= f files-len)
+								#f
+								(or (< (locs f) (pframes f))
+								    (any-data-left (+ 1 f)))))))
+						  (any-data-left 0))))))
 		       (lambda args (begin (snd-print (format #f "error ~A" args)) (car args))))
 		(mus-audio-close out-port)))))))
 

@@ -4637,7 +4637,7 @@
 	(call-with-exit
 	 (lambda (return)
 	   (do ((p 65539 (+ p 2)))
-	       (#f) ; now dumbly check all odd numbers above 65537 -- perhaps c-g? here to abort loop?
+	       (#f) ; now dumbly check all odd numbers above 65537 
 	     (do ((val (/ num p) (/ num p)))
 		 ((not (integer? val)))
 	       (set! factors (cons p factors))
@@ -4691,7 +4691,7 @@
 !#
 
 #!
-(do ((i 0 (1+ i)))
+(do ((i 0 (+ 1 i)))
     ((= i 10))
   (let ((num (random (* 75000 75000))))
     (display (format #f "~A " num))

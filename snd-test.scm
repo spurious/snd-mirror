@@ -2058,7 +2058,7 @@
 		       'before-close-hook 'before-exit-hook 'before-save-as-hook 'before-save-state-hook 'before-transform-hook
 		       'bind-key 'blackman2-window 'blackman3-window 'blackman4-window 
 		       'blackman5-window 'blackman6-window 'blackman7-window 'blackman8-window 'blackman9-window 'blackman10-window 
-		       'bohman-window 'bold-peaks-font 'bomb 'c-g! 'c-g? 'cauchy-window 'mlt-sine-window
+		       'bohman-window 'bold-peaks-font 'bomb 'cauchy-window 'mlt-sine-window
 		       'cepstrum 'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
 		       'channel-properties 'channel-property 'channel-style 'channel-widgets 'channels 'channels-combined
 		       'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
@@ -14233,7 +14233,7 @@ EDITS: 2
 	  
 	  (hook-push dac-hook (lambda (data) 
 				(set! ctr (+ 1 ctr))
-				(if (>= ctr 3) (c-g!))))
+				(if (>= ctr 3) (set! (playing) #f))))
 	  (play :wait #t)
 	  (if (not (= ctr 3)) (snd-display #__line__ ";ctr after dac-hook: ~A" ctr))
 	  (set! ctr 0)
@@ -15059,8 +15059,7 @@ EDITS: 2
 	  (do ((i 0 (+ 1 i))
 	       (k 0.0)
 	       (kincr (/ 1.0 recompute-samps)))
-	      ((or (c-g?) 
-		   (= i dur)))
+	      ((= i dur))
 	    (if (>= k 1.0)
 		(begin
 		  (set! k 0.0)
@@ -48007,7 +48006,7 @@ EDITS: 1
     (stst '(format #f "hiho: ~D" 43) "hiho: 43")
     (stst '(format #f "~A: ~A" "hiho" '(3 4)) "hiho: (3 4)")
     (stst '(format #f "~A: ~A" (> 2 3) (make-vct 2 .1)) "#f: #<vct[len=2]: 0.100 0.100>")
-    (stst '(format #f "hi~16Tho") "hi              ho")
+;    (stst '(format #f "hi~16Tho") "hi              ho")
     (stst '(format #f "~{~D ~}" '(1 2 3)) "1 2 3 ")
     (stst '(clm-print "hiho: ~D" 43) "hiho: 43")
     
@@ -48479,7 +48478,6 @@ EDITS: 1
 	  (tst2 0.0)
 	  (tst3 0.0))
       (run 
-       (if (not (c-g?)) (set! tst (st3-two svar))) ;2
        (set! tst1 (st3-two svar1)) ;3
        (set! (st3-two svar) (st3-two svar1))
        (set! tst2 (st3-two svar)) ;3
@@ -52792,8 +52790,7 @@ EDITS: 1
 	   (tempfile (with-sound (:output (snd-tempnam) :srate (srate) :to-snd #f :comment "step-src")
 				 (run
 				  (do ((samp 0 (+ 1 samp)))
-				      ((or (c-g?) 
-					   (sampler-at-end? rd)))
+				      ((sampler-at-end? rd))
 				    (out-any samp 
 					     (src s incr (lambda (dir) (read-sample rd)))
 					     0)
@@ -53013,7 +53010,7 @@ EDITS: 1
     ;;   Need a way outside with-sound to see what threads are out there.
     
     (define (bad-ins start)
-      (c-g!))
+      (set! (playing) #f)) ; TODO: test this
     
     (set! *clm-threads* 4)
     
@@ -61115,7 +61112,7 @@ EDITS: 1
 		     add-to-main-menu add-to-menu add-transform amp-control
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device ; add-player
 		     auto-resize auto-update autocorrelate axis-color axis-info axis-label-font axis-numbers-font
-		     basic-color bind-key bomb c-g? apply-controls change-samples-with-origin channel-style
+		     basic-color bind-key bomb apply-controls change-samples-with-origin channel-style
 		     channel-widgets channels chans peaks-font bold-peaks-font close-sound
 		     color-cutoff color-orientation-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name colormap?
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp

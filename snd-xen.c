@@ -823,8 +823,7 @@ void snd_eval_stdin_str(const char *buf)
 
       loc = snd_protect(result);
       if (stdin_str) free(stdin_str);
-
-      /* same as str here; if c-g! evaluated from stdin, clear_listener is called which frees/nullifies stdin_str */
+      /* same as str here */
       stdin_str = NULL;
       str = gl_print(result);
       string_to_stdout(str, NULL);

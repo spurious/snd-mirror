@@ -954,7 +954,6 @@ interested in.  If you leave the help dialog active, it becomes a sort of toolti
 if you linger over some other topic, its help info will be posted in the help dialog.
 </p>
 <img src="pix/prefs.png" alt="preferences dialog">
-<!-- TODO: get an up-to-date picture of the preferences dialog -->
 <br>
 <br>
 <br>
@@ -1908,7 +1907,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-d</td><td>delete sample at cursor</td><td><code>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg))</code></td></tr>
 <tr><td>C-e</td><td>move cursor to window end</td><td><code>(lambda () (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>)))</code></td></tr>
 <tr><td>C-f</td><td>move cursor ahead one pixel</td><td><code>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (min (- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) 1) (+ (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg))))</code></td></tr>
-<tr><td>C-g</td><td>abort current command</td><td><code>c-g!</code></td></tr>
+<tr><td>C-g</td><td>abort current command</td><td></td></tr>
 <tr><td>C-h</td><td>delete previous sample</td><td><code>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> (- (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg) arg))</code></td></tr>
 <tr><td>C-i</td><td>display cursor info</td><td><code>(lambda () (<a class=quiet href="extsnd.html#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "cursor at ~A" (<a class=quiet href="extsnd.html#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))))</code></td></tr>
 <tr><td>C-j</td><td>go to mark</td><td><code>(lambda (arg) (<a class=quiet onmouseout="UnTip()" onmouseover="Tip('forward-mark moves the cursor to the next mark (snd7.scm)')">forward-mark</a> arg)) ;snd7.scm</code></td></tr>
@@ -1984,7 +1983,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-x C-c</td><td>hide ("close") controls</td><td><code>(lambda () (set! (<a class=quiet href="extsnd.html#showcontrols" onmouseout="UnTip()" onmouseover="Tip(extsnd_showcontrols_tip)">show-controls</a>) #f))</code></td></tr>
 <tr><td>C-x C-d</td><td>print</td><td><code>(lambda () (<a class=quiet href="extsnd.html#promptinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_promptinminibuffer_tip)">prompt</a> "eps file:" <a class=quiet href="extsnd.html#graphtops" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphtops_tip)">graph-&gt;ps</a>))</code></td></tr>
 <tr><td>C-x C-f</td><td>open file</td><td><code>(lambda () (<a class=quiet href="extsnd.html#promptinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_promptinminibuffer_tip)">prompt</a> "file:" <a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a>))</code></td></tr>
-<tr><td>C-x C-g</td><td>abort command</td><td><code>c-g!</code></td></tr>
+<tr><td>C-x C-g</td><td>abort command</td><td></td></tr>
 <tr><td>C-x C-i</td><td>insert file</td><td><code>(lambda () (<a class=quiet href="extsnd.html#promptinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_promptinminibuffer_tip)">prompt</a> "insert file:" (lambda (val) (<a class=quiet href="extsnd.html#insertsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_insertsound_tip)">insert-sound</a> val (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))))</code></td></tr>
 <tr><td>C-x C-j</td><td>go to mix </td><td></td></tr>
 <tr><td>C-x <A NAME="cxcl"></a>C-l</td><td>load scm file</td><td><code>(lambda () (<a class=quiet href="extsnd.html#promptinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_promptinminibuffer_tip)">prompt</a> "load:" load))</code></td></tr>

@@ -2182,7 +2182,6 @@ is a physical model of a flute:
 	(run
 	 (do ((i st (+ i 1)))
 	     ((= i nd))
-					; (if (c-g?) (set! i (- nd 1)))
 	   (let* ((expa (env expenv)) ;current expansion amount
 		  (segl (env lenenv)) ;current segment length
 		  (resa (env srenv)) ;current resampling increment

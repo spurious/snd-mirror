@@ -51,7 +51,6 @@
 #define S_bold_peaks_font               "bold-peaks-font"
 #define S_bomb                          "bomb"
 #define S_c_g                           "c-g?"
-#define S_c_g_x                         "c-g!"
 #define S_cepstrum                      "cepstrum"
 #define S_channel_amp_envs              "channel-amp-envs"
 #define S_channel_data                  "channel-data"

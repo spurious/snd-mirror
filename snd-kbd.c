@@ -1373,7 +1373,7 @@ void control_g(snd_info *sp)
   counting = false; 
   dot_seen = false; 
   extended_mode = false;
-  if (selection_is_active()) deactivate_selection();
+  /* if (selection_is_active()) deactivate_selection(); */
   defining_macro = false;
   clear_stdin();
   redirect_everything_to(NULL, NULL);
@@ -2567,14 +2567,6 @@ error message as well)."
 }
 
 
-static XEN g_control_g_x(void)
-{
-  #define H_control_g_x "(" S_c_g_x "): simulate C-g"
-  control_g(any_selected_sound());
-  return(XEN_FALSE);
-}
-
-
 #define S_snd_simulate_keystroke "snd-simulate-keystroke"
 
 static XEN g_snd_simulate_keystroke(XEN snd, XEN chn, XEN key, XEN state)
@@ -2599,7 +2591,6 @@ XEN_ARGIFY_6(g_bind_key_w, g_bind_key)
 XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
 XEN_ARGIFY_4(g_key_w, g_key)
 XEN_NARGIFY_1(g_save_macros_w, g_save_macros)
-XEN_NARGIFY_0(g_control_g_x_w, g_control_g_x)
 XEN_ARGIFY_1(g_clear_minibuffer_w, g_clear_minibuffer)
 XEN_ARGIFY_3(g_report_in_minibuffer_w, g_report_in_minibuffer)
 XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
@@ -2610,7 +2601,6 @@ XEN_NARGIFY_4(g_snd_simulate_keystroke_w, g_snd_simulate_keystroke)
 #define g_unbind_key_w g_unbind_key
 #define g_key_w g_key
 #define g_save_macros_w g_save_macros
-#define g_control_g_x_w g_control_g_x
 #define g_clear_minibuffer_w g_clear_minibuffer
 #define g_report_in_minibuffer_w g_report_in_minibuffer
 #define g_prompt_in_minibuffer_w g_prompt_in_minibuffer
@@ -2636,7 +2626,6 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
   XEN_DEFINE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
   XEN_DEFINE_PROCEDURE(S_save_macros,            g_save_macros_w,            1, 0, 0, H_save_macros);
-  XEN_DEFINE_PROCEDURE(S_c_g_x,                  g_control_g_x_w,            0, 0, 0, H_control_g_x);  
   XEN_DEFINE_PROCEDURE(S_clear_minibuffer,       g_clear_minibuffer_w,       0, 1, 0, H_clear_minibuffer);
   XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,   g_report_in_minibuffer_w,   1, 2, 0, H_report_in_minibuffer);
   XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,   g_prompt_in_minibuffer_w,   1, 3, 0, H_prompt_in_minibuffer);

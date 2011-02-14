@@ -54,8 +54,7 @@
 	(if (not (= oscope-input-port -1))
 	    (begin
 	      (do ()
-		  ((or (not oscope-power) 
-		       (c-g?)))
+		  ((not oscope-power))
 		(mus-audio-read oscope-input-port oscope-input-data oscope-input-frames)
 		(if (not oscope-frozen)
 		    (begin
@@ -64,7 +63,7 @@
 			  (begin
 			    (if (time-graph? oscope-graph 0) (update-time-graph oscope-graph 0))
 			    (if (transform-graph? oscope-graph 0) (update-transform-graph oscope-graph 0)))))))
-	      (if oscope-power ; C-g?
+	      (if oscope-power
 		  (begin
 		    (off-func)
 		    (set! oscope-power #f)))

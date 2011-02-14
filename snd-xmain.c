@@ -347,6 +347,8 @@ static void startup_funcs(void)
   ss->sgx->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
   ss->sgx->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
   ss->sgx->bounds_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_h_double_arrow);
+  ss->sgx->play_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_right_arrow);
+  ss->sgx->loop_play_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_left_arrow);
 
 #if HAVE_EXTENSION_LANGUAGE
   snd_load_init_file(noglob, noinit);

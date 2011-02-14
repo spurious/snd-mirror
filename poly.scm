@@ -454,7 +454,7 @@
 						 (last-dx 1.0) ; guard against infinite loop
 						 (happy #f))
 					    (do ()
-						((or happy (c-g?)))
+						(happy)
 					      (set! dx (/ v (poly-as-vector-eval qp x)))
 					      (if (or (<= (magnitude dx) poly-roots-epsilon)
 						      (= dx last-dx))
@@ -464,7 +464,6 @@
 						    (do ((c 0 (+ 1 c))
 							 (step3 #f))
 							((or (>= c 20)
-							     (c-g?)
 							     step3
 							     (<= (magnitude dx) poly-roots-epsilon)))
 						      (let* ((y (- x dx))

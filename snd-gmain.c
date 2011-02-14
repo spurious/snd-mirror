@@ -327,6 +327,8 @@ static void startup_funcs(void)
   ss->sgx->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
   ss->sgx->wait_cursor = gdk_cursor_new(GDK_WATCH);
   ss->sgx->bounds_cursor = gdk_cursor_new(GDK_SB_H_DOUBLE_ARROW);
+  ss->sgx->play_cursor = gdk_cursor_new(GDK_SB_RIGHT_ARROW);
+  ss->sgx->loop_play_cursor = gdk_cursor_new(GDK_SB_LEFT_ARROW);
   ss->sgx->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
 
 #if HAVE_EXTENSION_LANGUAGE

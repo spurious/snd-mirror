@@ -1255,4 +1255,7 @@ and perhaps whenever a click=play, change the cursor shape to a > triangle?
 add a peaks->text file option for the popup fft menu
 
 C-g for begin_hook might be a bad idea -- there is code that catches c-g and goes on
+  perhaps a stop-hook?  What about Forth/Ruby -- c-g? currently ticks the interface for them
+  (stop-hook could be called whenever a stop sign is clicked or c-g typed)
+
  */

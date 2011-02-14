@@ -1561,6 +1561,48 @@ int hit_mix(chan_info *cp, int x, int y) /* mix tag press in snd-chn.c */
 }
 
 
+#if USE_MOTIF
+  #define STRING_Y_OFFSET 3
+  #define STRING_HEIGHT 12
+#else
+  #define STRING_Y_OFFSET -8
+  #define STRING_HEIGHT 12
+#endif
+
+#define MIX_PLAY_ARROW_SIZE 10
+
+int hit_mix_triangle(chan_info *cp, int x, int y)
+{
+  mix_list *mxl;
+  mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes); /* active mixes in the current edit of this channel */
+  if (mxl)
+    {
+      int i, width, height;
+      width = mix_tag_width(ss);
+      height = mix_tag_height(ss);
+      for (i = 0; i < mxl->size; i++)
+	{
+	  mix_state *ms;
+	  ms = mxl->list[i];
+	  if (ms)
+	    {
+	      int mx, my;
+	      mx = mix_infos[ms->mix_id]->tag_x;
+	      if (mx <= 0)
+		mx = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
+	      my = mix_infos[ms->mix_id]->tag_y + MIX_TAG_Y_OFFSET + STRING_HEIGHT + cp->axis->y_offset;
+	      if ((mx < x) &&
+		  ((mx + MIX_PLAY_ARROW_SIZE) >= x) &&
+		  (y > my) &&
+		  (y < (my + 2 * MIX_PLAY_ARROW_SIZE)))
+		return(ms->mix_id);
+	    }
+	}
+    }
+  return(NO_MIX_TAG);
+}
+
+
 /* mix display */
 
 void channel_set_mix_tags_erased(chan_info *cp)
@@ -1589,14 +1631,6 @@ static void draw_mix_tag(mix_info *md, int x, int y)
   int width, height;
   graphics_context *ax;
   char *lab = NULL;
-
-#if USE_MOTIF
-  #define STRING_Y_OFFSET 3
-  #define STRING_HEIGHT 12
-#else
-  #define STRING_Y_OFFSET -8
-  #define STRING_HEIGHT 12
-#endif
 
   if (XEN_HOOKED(draw_mix_hook))
     {

@@ -992,7 +992,7 @@ end points.  (This is also "just-good-enough" software).
   ;; turn off graphics and fix all the clipped sections
   (set! (<a class=quiet href="extsnd.html#squelchupdate" onmouseout="UnTip()" onmouseover="Tip(extsnd_squelchupdate_tip)">squelch-update</a>) #t)
   (do ((i 0 (+ 1 i)))
-      ((or (= i n) (<a class=quiet href="extsnd.html#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>))) 
+      ((= i n))
       ;; "clips" here is a list form of the earlier vector of clip locations
     (fix-clip (list-ref clips (* i 2)) 
 	      (list-ref clips (+ 1 (* i 2)))))
@@ -3217,7 +3217,7 @@ then
 	(let ((val (sin (/ (* 2 pi i) 12.0))))
 	  (set! (x1 (+ i (- (/ size 4) 6))) val)))
       (do ((i 0 (+ 1 i)))
-	  ((or (<a class=quiet href="extsnd.html#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>) (= i 1024)))
+	  ((= i 1024))
 	(<em class=red>compute-uniform-circular-string</em> size x0 x1 x2 1.0 0.1 0.0)
 	(<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> x0 "string" 0 1.0 -10.0 10.0)))
 </pre>
@@ -4490,17 +4490,6 @@ section in a sound, and adds a menu item ("Show Clipping") under the View menu.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- do? -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="dop">do?</a><br>
-<em class=emdef>do-go-on</em> 
-</td></tr><tr><td></td><td>
-do? provides an interruptable and continuable "do".
-If do? is running and you type C-g, the current continuation is stored in do-go-on-continuation, and do? exits.
-To pick up where you interrupted it, type <code>(do-go-on)</code>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- do-chans -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <em class=emdef>do-chans</em> <code>func origin</code><br>
@@ -4585,7 +4574,7 @@ To disable this choice, call it again with #f as the 'enable' argument.
 <A class=def NAME="zeroplus">zero+</a> 
 </td></tr><tr><td></td><td>
 locate-zero looks for the next sample where adjacent samples together are less than 'limit'
-and moves the cursor to that sample. It can be interrupted by C-g.
+and moves the cursor to that sample.
 The others are
 examples of searching procedures (to be used with <a href="snd.html#menufind">C-s</a> and friends):
 zero+ finds the next

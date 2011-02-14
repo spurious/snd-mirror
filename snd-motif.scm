@@ -757,7 +757,7 @@ Reverb-feedback sets the scaler on the feedback.
 					 (begin
 					   (set! running #t)
 					   (do ()
-					       ((or (c-g?) (not running))
+					       ((not running)
 						(begin
 						  (set! running #f)
 						  (mus-audio-close audio-fd)))
@@ -1109,7 +1109,7 @@ Reverb-feedback sets the scaler on the feedback.
 			     (set! playing #t)
 			     (if (not (= audio-fd -1))
 				 (do ()
-				     ((or (c-g?) (not playing)) ; can also happen if top Stop button pressed
+				     ((not playing) ; can also happen if top Stop button pressed
 				      (begin
 					(set! playing #f)
 					(XmToggleButtonSetValue play-button 0 #f) ; don't send event
@@ -3043,8 +3043,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
     				     (set! reader (make-sampler 0))
 				     (set! running #t)
 				     (do ()
-					 ((or (c-g?) 
-					      (not running)
+					 ((or (not running)
 					      (sampler-at-end? reader))
 					  (begin
 					    (XmToggleButtonSetValue button 0 #f)
@@ -3149,7 +3148,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 					 (begin
 					   (set! running #t)
 					   (do ()
-					       ((or (c-g?) (not running))
+					       ((not running)
 						(begin
 						  (set! running #f)
 						  (mus-audio-close audio-fd)))

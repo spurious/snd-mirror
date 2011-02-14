@@ -434,6 +434,8 @@ mus_float_t *sample_linear_env(env *e, int order)
 
 static void free_dac_info(dac_info *dp, play_stop_t reason)
 {
+  bool looping;
+  looping = (dp->stop_procedure == XEN_TRUE);
   if (dp->stop_procedure_gc_loc != NOT_A_GC_LOC)
     {
       XEN_CALL_1(dp->stop_procedure, 
@@ -458,6 +460,9 @@ static void free_dac_info(dac_info *dp, play_stop_t reason)
   dp->cp = NULL;
   dp->type = DAC_NOTHING;
   free(dp);
+  if ((looping) &&
+      (reason == PLAY_COMPLETE))
+    loop_play_selection();
 }
 
 
@@ -1212,14 +1217,11 @@ bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mi
 /* (play (let ((osc (make-oscil 440.0)) 
                (samp 0)) 
            (lambda () 
-             (if (or (c-g?) 
-                 (> samp 20000)) 
+             (if (> samp 20000)
 		 #f
 		 (begin
              (set! samp (1+ samp)) 
              (* .5 (oscil osc))))))) ; you can use explicit control panel accessors
-
-	     (play (lambda () (if (c-g?) #f 0.0)))
  */
 
 static bool add_zeros_to_play_list(int srate, int chans)
@@ -1417,6 +1419,7 @@ static dac_info *play_selection_1(play_process_t background, XEN stop_proc)
 {
   /* just plays the current selection */
   dac_info *dp = NULL;
+
   if (selection_is_active())
     {
       sync_info *si = NULL;
@@ -1444,6 +1447,12 @@ static dac_info *play_selection_1(play_process_t background, XEN stop_proc)
 void play_selection(play_process_t background)
 {
   play_selection_1(background, XEN_FALSE);
+}
+
+
+void loop_play_selection(void)
+{
+  play_selection_1(IN_BACKGROUND, XEN_TRUE);
 }
 
 
@@ -3455,4 +3464,19 @@ If it returns " PROC_TRUE ", the sound is not played."
   sdobj_loc = NOT_A_GC_LOC;
 
   /* SOMEDAY: extend rest of play args to other cases like play-region */
+
+  
+  /* backwards compatibility for c-g! */
+#if HAVE_SCHEME
+  XEN_EVAL_C_STRING("(define c-g! stop-playing)");
+#endif
+
+#if HAVE_RUBY
+  XEN_EVAL_C_STRING("def c_g! () stop_playing end");
+#endif
+
+#if HAVE_FORTH
+  XEN_EVAL_C_STRING("<'> stop-playing alias c-g!"); 
+#endif
+
 }

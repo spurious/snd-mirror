@@ -150,7 +150,7 @@ typedef struct {
   Widget listener_pane;
   Widget *dialogs;
   int num_dialogs, dialogs_size;
-  Cursor graph_cursor, wait_cursor, bounds_cursor;
+  Cursor graph_cursor, wait_cursor, bounds_cursor, play_cursor, loop_play_cursor;
   Widget requestor_dialog;
 #if HAVE_GL
   GLXContext cx;

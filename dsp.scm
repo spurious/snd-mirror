@@ -145,14 +145,14 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (fr (make-vector out-n 0.0))
 	 (freq (/ (* 2 pi) n)))
     (do ((i 0 (+ i 1)))
-	((or (c-g?) (= i n)))
+	((= i n))
       ;; DFT + split
       (if (< i n2)
 	  (set! (fr i) (edot-product (* freq 0.0-1.0i i) in-data))
 	  (set! (fr (+ i (- out-n n 1))) (edot-product (* freq 0.0-1.0i i) in-data))))
     (set! freq (/ (* 2 pi) out-n))
     (do ((i 0 (+ i 1)))
-	((or (c-g?) (= i out-n)))
+	((= i out-n))
       ;; inverse DFT
       (set! (out-data i) (real-part (/ (edot-product (* freq 0.0+1.0i i) fr) n))))
     (vct->channel out-data 0 out-n snd chn #f (format #f "stretch-sound-via-dft ~A" factor))))
@@ -1194,8 +1194,7 @@ the era when computers were human beings"
 		      (let* ((len (length e))
 			     (x (random (* 1.0 (e (- len 2)))))
 			     (y (random 1.0)))
-			(if (or (<= y (envelope-interp x e))
-				(c-g?))
+			(if (<= y (envelope-interp x e))
 			    x
 			    (next-random))))))
 	    (next-random)))))

@@ -1178,7 +1178,7 @@
 					     (set! looping #f)))
 				(set! already-hooked #t)))
 			  (if looping 
-			      (c-g!)
+			      (stop-playing) ; TODO: test this
 			      (begin
 				(set! looping #t)
 				(XtVaSetValues w (list XmNlabelPixmap loop-stop-pixmap))

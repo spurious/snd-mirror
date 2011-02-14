@@ -3162,7 +3162,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		   (call-with-exit
 		    (lambda (return)
 		      (do ((ctr loc (+ 1 ctr)))
-			  ((or (c-g?) (= ctr len)) #f)
+			  ((= ctr len) #f)
 			(set! samp0 samp1)
 			(set! samp1 samp2)
 			(set! samp2 (next-sample reader))
@@ -3178,7 +3178,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	       
 	       (define (remove-click loc)
 		 (let ((click (find-click loc)))
-		   (if (and click (not (c-g?)))
+		   (if click
 		       (begin
 			 (smooth-sound (- click 2) 4)
 			 (remove-click (+ click 2))))))

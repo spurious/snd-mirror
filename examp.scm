@@ -7,7 +7,6 @@
 ;;; Reopen menu
 ;;; set transform-size based on current time domain window size
 ;;; superimpose spectra of sycn'd sounds
-;;; example of c-g?
 ;;; translate mpeg input to 16-bit linear and read into Snd
 ;;; read and write OGG files
 ;;; make dot size dependent on number of samples being displayed
@@ -321,52 +320,6 @@
 ;(hook-push graph-hook superimpose-ffts)
 
 
-;;; -------- c-g? example (Anders Vinjar)
-
-(define (locate-zero limit)
-  "(locate-zero limit) looks for successive samples that sum to less than 'limit', moving the cursor if successful"
-  (let* ((start (cursor))
-	 (sf (make-sampler start)))
-    (do ((n start (+ 1 n))
-	 (val0 (abs (next-sample sf)) val1)
-	 (val1 (abs (next-sample sf)) (abs (next-sample sf))))
-	((or (sampler-at-end? sf)
-	     (c-g?)
-	     (< (+ val0 val1) limit))
-	 (begin
-	   (free-sampler sf)
-	   (set! (cursor) n)
-	   n)))))
-
-
-;;; -------- do?
-;;; a version of "do" that is interruptible and continuable
-;;;   to continue an interrupted "do?", (do-go-on)
-
-(define do-go-on-continuation #f)
-
-(define (do-go-on)
-  "(do-go-on) tries to continue an interrupted do loop"
-  (if (continuation? do-go-on-continuation)
-      (do-go-on-continuation #f)
-      ";sorry! can't continue"))
-
-(defmacro do? (inits ends . body)
-  `(do ,inits
-       ((or (and ,(car ends)
-		 (begin 
-		   (set! do-go-on-continuation #f)
-		   #t))
-	    (and (c-g?)
-		 (call-with-current-continuation
-		  (lambda (go-on)
-		    (set! do-go-on-continuation go-on)))))
-	,(and (not (null? (cdr ends)))
-	      (cadr ends)))
-     ,@body))
-
-
-
 ;;; -------- translate mpeg input to 16-bit linear and read into Snd
 ;;;
 ;;; mpg123 with the -s switch sends the 16-bit (mono or stereo) representation of
@@ -492,7 +445,6 @@
 
 (define (play-ac3 name)
   "(play-ac3 name) uses a52dec to play an AC3 sound"
-  ;; ideally we'd implement C-g to interrupt this, but you can type C-c to the shell once it has started
   ;;   to turn an AC3 file into something Snd can edit, /usr/local/bin/a52dec test.ac3 -o wav > test.wav
   (system (format #f "a52dec ~A" name)))
 
@@ -1518,6 +1470,22 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 |#
 
 
+;;; -------- locate-zero (Anders Vinjar)
+
+(define (locate-zero limit)
+  "(locate-zero limit) looks for successive samples that sum to less than 'limit', moving the cursor if successful"
+  (let* ((start (cursor))
+	 (sf (make-sampler start)))
+    (do ((n start (+ 1 n))
+	 (val0 (abs (next-sample sf)) val1)
+	 (val1 (abs (next-sample sf)) (abs (next-sample sf))))
+	((or (sampler-at-end? sf)
+	     (< (+ val0 val1) limit))
+	 (begin
+	   (free-sampler sf)
+	   (set! (cursor) n)
+	   n)))))
+
 
 ;;; -------- sound interp
 ;;;
@@ -1832,7 +1800,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
     (call-with-exit
      (lambda (return)
        (do ((ctr loc (+ 1 ctr)))
-	   ((or (c-g?) (= ctr len)) #f)
+	   ((= ctr len) #f)
 	 (set! samp0 samp1)
 	 (set! samp1 samp2)
 	 (set! samp2 (next-sample reader))
@@ -1852,7 +1820,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
   ;; this is very conservative -- the click detection limits above could be set much tighter in many cases
   (define (remove-click loc)
     (let ((click (find-click loc)))
-      (if (and click (not (c-g?)))
+      (if click
 	  (begin
 	    (smooth-sound (- click 2) 4)
 	    (remove-click (+ click 2))))))

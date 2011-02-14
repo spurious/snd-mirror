@@ -56,12 +56,18 @@ chan_info *get_cp(XEN snd, XEN x_chn_n, const char *caller)
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_MIX, CLICK_MARK,
 	      CLICK_FFT_MAIN, CLICK_SELECTION_LEFT, CLICK_SELECTION_RIGHT, CLICK_SELECTION_PLAY, 
-	      CLICK_INSET_GRAPH, CLICK_MIX_PLAY, CLICK_CURSOR_PLAY} click_loc_t;
-/* for marks, regions, mouse click detection */
+	      CLICK_INSET_GRAPH, CLICK_MIX_PLAY, CLICK_CURSOR_PLAY, CLICK_MARK_PLAY,
+              CLICK_SELECTION_LOOP_PLAY} click_loc_t;
+/* for marks, regions, mouse click detection, cursor choice */
 /*
  * static char *click_detection_names[10] = {"no graph", "click wave", "click fft axis", "click lisp", "click mix", "click mark",
  *                                           "click fft graph", "click selection left", "click selection right", "click selection play", 
- *                                           "click inset graph", "click mix play", "click cursor play"};
+ *                                           "click inset graph", "click mix play", "click cursor play", "click mark play",
+ *                                           "click selection loop play"};
+ */
+
+/* TODO: if mouse over cursor: triangle for play, also backwards triangle at selection end for loop play, also perhaps tips in minibuffer?
+ *       if click play triangle, change to stop? or add stop somewhere to quit early
  */
 
 
@@ -4651,6 +4657,10 @@ typedef struct inset_graph_info_t {  /* chan_info field is inset_graph, set to n
   double maxamp;
 } inset_graph_info_t;
 
+static int mix_tag = NO_MIX_TAG, mix_play_tag = NO_MIX_TAG;
+static mark *play_mark = NULL;
+static mark *mouse_mark = NULL;
+
 
 static click_loc_t within_graph(chan_info *cp, int x, int y)
 {
@@ -4670,6 +4680,8 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	{
+	  /* here we are inside the graph (within the axes) */
+
 	  if ((with_inset_graph(ss)) &&
 	      (cp->inset_graph) &&
 	      (cp->inset_graph->graphing) &&
@@ -4711,14 +4723,38 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 		}	      
 	    }
 
-	  if (hit_mix(cp, x, y) != NO_MIX_TAG)
+	  mix_tag = hit_mix(cp, x, y);
+	  if (mix_tag != NO_MIX_TAG)
 	    return(CLICK_MIX);
 
-	  if (hit_mark(cp, x, y, 0) != NULL)
+	  mix_play_tag = hit_mix_triangle(cp, x, y);
+	  if (mix_play_tag != NO_MIX_TAG)
+	    return(CLICK_MIX_PLAY);
+
+	  mouse_mark = hit_mark(cp, x, y, 0);
+	  if (mouse_mark != NULL)
 	    return(CLICK_MARK);
 
 	  return(CLICK_WAVE);
 	}
+
+      /* possibly in time graph but outside axes */
+      if (selection_is_active_in_channel(cp))
+	{
+	 if (hit_selection_triangle(cp, x, y))
+	   return(CLICK_SELECTION_PLAY);
+
+	 if (hit_selection_loop_triangle(cp, x, y))
+	   return(CLICK_SELECTION_LOOP_PLAY);
+	}
+      
+      play_mark = hit_mark_triangle(cp, x, y);
+      if (play_mark != NULL)
+	return(CLICK_MARK_PLAY);
+
+      /* TODO: look for cursor play possibilities
+       *         reflect in graph (also erase old)
+       */
     }
 
   if (((cp->graph_lisp_p) || 
@@ -4767,12 +4803,9 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
   return(CLICK_NOGRAPH);
 }
 
-/* TODO: if below the mix or current graph cursor, change to -> ? with play triangle?
- */
 
 void check_cursor_shape(chan_info *cp, int x, int y)
 {
-  click_loc_t where;
   chan_info *ncp;
   
   if ((!cp) || (!cp->sound) || (cp->active == CHANNEL_INACTIVE) || (cp->squelch_update)) return;
@@ -4781,27 +4814,47 @@ void check_cursor_shape(chan_info *cp, int x, int y)
     ncp = which_channel(cp->sound, y);
   else ncp = cp;
 
-  where = within_graph(ncp, x, y);
-
-  if ((where == CLICK_SELECTION_LEFT) ||
-      (where == CLICK_SELECTION_RIGHT) ||
-      (where == CLICK_MIX) ||
-      (where == CLICK_MARK) ||
-      (where == CLICK_FFT_AXIS))
+  switch (within_graph(ncp, x, y))
     {
+    case CLICK_SELECTION_LEFT:
+    case CLICK_SELECTION_RIGHT:
+    case CLICK_MIX:
+    case CLICK_MARK:
+    case CLICK_FFT_AXIS:
+      /* these all involve a drag if the mouse is pressed */
       if (cp->cgx->current_cursor != ss->sgx->bounds_cursor)
 	{
 	  cp->cgx->current_cursor = ss->sgx->bounds_cursor;
 	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->bounds_cursor);
 	}
-    }
-  else
-    {
+      break;
+
+    case CLICK_MIX_PLAY:
+    case CLICK_SELECTION_PLAY:
+    case CLICK_CURSOR_PLAY:
+    case CLICK_MARK_PLAY:
+      if (cp->cgx->current_cursor != ss->sgx->play_cursor)
+	{
+	  cp->cgx->current_cursor = ss->sgx->play_cursor;
+	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->play_cursor);
+	}
+      break;
+
+    case CLICK_SELECTION_LOOP_PLAY:
+      if (cp->cgx->current_cursor != ss->sgx->loop_play_cursor)
+	{
+	  cp->cgx->current_cursor = ss->sgx->loop_play_cursor;
+	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->loop_play_cursor);
+	}
+      break;
+
+    default:
       if (cp->cgx->current_cursor != ss->sgx->graph_cursor)
 	{
 	  cp->cgx->current_cursor = ss->sgx->graph_cursor;
 	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->graph_cursor);
 	}
+      break;
     }
 }
 
@@ -5081,14 +5134,11 @@ static void calculate_syncd_fft(chan_info *cp, int value)
 
 static bool dragged = false;
 static oclock_t mouse_down_time;
-static mark *mouse_mark = NULL;
-static mark *play_mark = NULL;
 static click_loc_t click_within_graph = CLICK_NOGRAPH;
 static int fft_axis_start = 0;
 #if HAVE_GL
   static mus_float_t fft_faxis_start = 0.0;
 #endif
-static int mix_tag = NO_MIX_TAG;
 static chan_info *dragged_cp;
 
 #if HAVE_OSX
@@ -5115,28 +5165,6 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   dragged_cp = cp;
   dragged = false;
   finish_selection_creation();
-
-  if (cp->graph_time_p)
-    {
-      if ((selection_is_active_in_channel(cp)) &&
-	  (hit_selection_triangle(cp, x, y)))
-	{
-	  if (ss->selection_play_stop)
-	    {
-	      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
-	      reflect_play_selection_stop();
-	    }
-	  else 
-	    {
-	      ss->selection_play_stop = true;
-	      play_selection(IN_BACKGROUND);
-	    }
-	  return;
-	}
-      mouse_mark = hit_mark(cp, x, y, key_state);
-      if (mouse_mark == NULL) 
-	play_mark = hit_mark_triangle(cp, x, y);
-    }
 
   click_within_graph = within_graph(cp, x, y);
 
@@ -5167,12 +5195,9 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 		 S_mouse_press_hook);
       break;
 
-    case CLICK_MIX:
     case CLICK_MARK:
     case CLICK_WAVE:
-      if ((mouse_mark == NULL) && 
-	  (play_mark == NULL))
-	mix_tag = hit_mix(cp, x, y);
+    case CLICK_MIX:
       break;
 
     case CLICK_SELECTION_LEFT:
@@ -5181,8 +5206,39 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
       restart_selection_creation(cp, click_within_graph == CLICK_SELECTION_RIGHT);
       break;
 
+      /* TODO: make sure click during play stops current */
+      /* TODO: change color or something to signal stop */
+      /* TODO: c-g to interrupt looped play now clears the selection! -- clear selection only if not stopping */
+      /* TODO: mix triangle needs to red if mix is selected else mix bg color */
+
+    case CLICK_MARK_PLAY:
+      /* play from mark -- see below -- maybe dragging the triangle?  is this a good idea? */
+      break;
+
+    case CLICK_MIX_PLAY:
+      play_mix_from_id(mix_play_tag);
+      break;
+
+    case CLICK_CURSOR_PLAY:
+      /* TODO: get syncd chans here */
+      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED);
+      break;
+
+    case CLICK_SELECTION_LOOP_PLAY:
+      loop_play_selection();
+      break;
+
     case CLICK_SELECTION_PLAY:
-      play_selection(IN_BACKGROUND); /* snd-dac.c */
+      if (ss->selection_play_stop)
+	{
+	  stop_playing_all_sounds(PLAY_BUTTON_UNSET);
+	  reflect_play_selection_stop(); /* this sets ss->selection_play_stop = false; */
+	}
+      else 
+	{
+	  ss->selection_play_stop = true;
+	  play_selection(IN_BACKGROUND);
+	}
       break;
 
     case CLICK_INSET_GRAPH:

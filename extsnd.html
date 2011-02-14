@@ -7991,10 +7991,9 @@ more like Emacs (it prompts for confirmation first):
     (<em class=red>prompt-in-minibuffer</em>
      (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "close ~S (cr=yes)?" (<a class=quiet href="#shortfilename" onmouseout="UnTip()" onmouseover="Tip(extsnd_shortfilename_tip)">short-file-name</a>))
      (lambda (response)
-       (if (and (not (<a class=quiet href="#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>)) ; C-g =&gt; no
-		(or (not (string? response))
-		    (= (string-length response) 0)
-		    (char=? (string-ref response 0) #\y)))
+       (if (or (not (string? response))
+	       (= (string-length response) 0)
+               (char=? (string-ref response 0) #\y))
 	   (<a class=quiet href="#closesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_closesound_tip)">close-sound</a>)))
      #f   ; selected sound
      #t)) ; treat as string (i.e. don't require double quotes)
@@ -8910,7 +8909,7 @@ it's probably simpler to use <a href="sndscm.html#withsound">with-sound</a> (see
 	 (tempfile (<em class=red>with-sound</em> (:output (<a class=quiet href="#sndtempnam" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndtempnam_tip)">snd-tempnam</a>) :srate (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) :to-snd #f)
 		     (<a class=quiet href="#run">run</a>
 		      (do ((samp 0 (+ 1 samp)))
-			  ((or (c-g?) (<a class=quiet href="#sampleratendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampleratendQ_tip)">sampler-at-end?</a> rd)))
+			  ((<a class=quiet href="#sampleratendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampleratendQ_tip)">sampler-at-end?</a> rd))
 		        (<a class=quiet href="sndclm.html#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_out_any_tip)">out-any</a> samp (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd))) 0)
 		        (if (= (modulo samp 2205) 0)
 			    (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o))))))))
@@ -12248,60 +12247,8 @@ exit back to the top level, (break-exit):
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="cgp">c-g?</a></code>
 </td></tr><tr><td></td><td>
-This checks for C-g to interrupt an on-going computation, and let other UI 
-events through.  c-g? is especially useful in loops; we can define our own safe 'while' loop as follows:
-
-<table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(defmacro safe-while (cond . body)
-  `(letrec ((break (lambda val (apply throw 'break val)))
-	    (continue (lambda () (if (<em class=red>c-g?</em>) 
-				     (break 'interrupted)
-				     (or (not ,cond) 
-					 (begin (begin ,@ body) 
-						(continue)))))))
-     (catch 'break
-	    (lambda () (continue))
-	    (lambda v (cadr v)))))
-</pre></td></tr></table>
-
-Here's a version of "do" that is interruptible and continuable.  c-g? provides
-the interrupt, and call-with-current-continuation provides the continuation.
-To continue running an interrupted do?, <code>(do-go-on)</code>.
-
-<table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(define do-go-on-continuation #f)
-(define (do-go-on)
-  (if (continuation? do-go-on-continuation) ; a Snd function &mdash; should be provided by Scheme!
-      (do-go-on-continuation #f)
-      ";sorry! can't continue"))
-
-(defmacro do? (inits ends . body)
-  `(do ,inits
-       ((or (and ,(car ends)
-		 (begin 
-		   (set! do-go-on-continuation #f) ; clear obsolete continuation
-		   #t))
-	    (and (<em class=red>c-g?</em>)                            ; got C-g &mdash; set continuation
-		 (call-with-current-continuation
-		  (lambda (go-on)
-		    (set! do-go-on-continuation go-on)))))
-	,(and (not (null? (cdr ends)))
-	      (cadr ends)))
-     ,@body))
-</pre></td></tr></table>
-
-See examp.scm and play.scm for other examples.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- c-g! -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="cgx">c-g!</a></code>
-</td></tr><tr><td></td><td>
-This simulates typing C-g.  It is intended for use with <a href="#bindkey">bind-key</a> to remap C-g.
-If you use it in some other situation (a hook for example), there are annoying problems with clearing
-the "I've been interrupted" flags.  Probably the safest thing is to call (c-g?) after the interruption 
-has taken effect.
+This checks for C-g to interrupt an on-going computation, and lets other UI 
+events through.  It is obsolete in s7.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

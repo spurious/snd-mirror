@@ -133,8 +133,7 @@
          (in-position (if (not (eq? in-mark #f)) (mark-sample in-mark) 0))
          (out-position (if (not (eq? out-mark #f)) (mark-sample out-mark) 0)))
   (define (play-next reason)
-    (if (and (not (c-g?))
-             (= reason 0))
+    (if (= reason 0)
         (begin
           (play (selected-sound) in-position (+ in-position preview-length)))))
   (if (and

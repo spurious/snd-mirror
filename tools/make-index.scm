@@ -159,7 +159,7 @@
 	(list 'def-clm-struct "ws.scm")
 	(list 'definstrument "ws.scm")
 	(list 'defgenerator "generators.scm")
-	(list 'do? "examp.scm")))
+	))
       
       ;; and some of the main variables
       (for-each
@@ -1217,7 +1217,7 @@
 								   (set! scripting #f)
 								   (if (not scripting)
 								       (if (not (string-ci-list-position closer commands))
-									   (format #t "~A[~D]: ~A without start? ~A from ~A[~D][~D:~D] (commands: ~A)~%" file linectr closer line (+ start 2) i commands)
+									   (format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" file linectr closer line (+ start 2) i commands)
 									   (if (string-ci-list-position closer
 											  (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote" "center" "p"
 												"a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"

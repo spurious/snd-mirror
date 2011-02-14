@@ -1033,6 +1033,7 @@ void start_selection_creation(chan_info *cp, mus_long_t samp);
 void update_possible_selection_in_progress(mus_long_t samp);
 void restart_selection_creation(chan_info *cp, bool right);
 bool hit_selection_triangle(chan_info *cp, int x, int y);
+bool hit_selection_loop_triangle(chan_info *cp, int x, int y);
 
 int make_region_from_selection(void);
 void display_selection(chan_info *cp);
@@ -1166,6 +1167,7 @@ void play_sound(snd_info *sp, mus_long_t start, mus_long_t end);
 void play_channels(chan_info **cps, int chans, mus_long_t *starts, mus_long_t *ur_ends, 
 		   play_process_t background, XEN edpos, bool selection, const char *caller, int arg_pos);
 void play_selection(play_process_t background);
+void loop_play_selection(void);
 bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mix, bool start_playing);
 void toggle_dac_pausing(void); /* snd-dac.c */
 bool play_in_progress(void);
@@ -1593,6 +1595,7 @@ void color_mixes(color_t color);
 void move_mix_tag(int mix_tag, int x, int y);
 void finish_moving_mix_tag(int mix_tag, int x);
 int hit_mix(chan_info *cp, int x, int y);
+int hit_mix_triangle(chan_info *cp, int x, int y);
 int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided);
 void display_channel_mixes(chan_info *cp);
 

@@ -436,6 +436,8 @@ static bool begin_hook(s7_scheme *sc)
   gtk_main_iteration();
 #endif
 
+  /* if c-g, run stop-hook? */
+
   return(ss->C_g_typed);
 }
 #endif
@@ -680,6 +682,10 @@ void listener_return(widget_t w, int last_prompt)
        *   if C-g, the begin_hook func returns true, and s7 calls s7_quit, and C_g_typed is true here.
        *   Otherwise, I think anything is safe because we're only looking at the block start, and
        *   we're protected there by a stack barrier.  
+       *
+       * TODO: C-g is already meaningful in Snd (c-g? function), so I need to make this backwards compatible,
+       *   or use some other key.  Or change c-g?.  Or make the s7 quit key customizable.  But that's awkward in Motif
+       *   because everything goes through the text translation tables.  Perhaps stop-hook.
        */
       if (s7_begin_hook(s7) != NULL) return;      /* s7 is already running (user typed <cr> during computation) */
 

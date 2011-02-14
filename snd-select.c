@@ -559,7 +559,7 @@ void finish_selection_creation(void)
 }
 
 
-static void show_selection_triangle(chan_info *cp, graphics_context *ax, int x);
+static void show_selection_triangle(chan_info *cp, graphics_context *ax, int x0, int x1, mus_long_t beg, mus_long_t end);
 
 static void cp_redraw_selection(chan_info *cp)
 {
@@ -595,9 +595,7 @@ static void cp_redraw_selection(chan_info *cp)
 		     ap->y_axis_y1,
 		     cp->old_x1 - cp->old_x0,
 		     (int)(ap->y_axis_y0 - ap->y_axis_y1));
-
-      if (ap->losamp < beg)
-	show_selection_triangle(cp, ax, cp->old_x0);
+      show_selection_triangle(cp, ax, cp->old_x0, cp->old_x1, beg, end);
     }
 #endif
 
@@ -606,9 +604,7 @@ static void cp_redraw_selection(chan_info *cp)
 		 ap->y_axis_y1,
 		 x1 - x0,
 		 (int)(ap->y_axis_y0 - ap->y_axis_y1));
-
-  if (ap->losamp < beg)
-    show_selection_triangle(cp, ax, x0);
+  show_selection_triangle(cp, ax, x0, x1, beg, end);
 
   cp->old_x0 = x0;
   cp->old_x1 = x1;
@@ -809,15 +805,30 @@ void move_selection(chan_info *cp, int x)
 
 #define SELECTION_PLAY_ARROW_SIZE 10
 
-static void show_selection_triangle(chan_info *cp, graphics_context *ax, int x)
+static void show_selection_triangle(chan_info *cp, graphics_context *ax, int x0, int x1, mus_long_t beg, mus_long_t end)
 {
   int y0;
+
   y0 = ((axis_info *)(cp->axis))->y_axis_y0;
-  fill_polygon(ax, 4,
-	       x, y0,
-	       x + SELECTION_PLAY_ARROW_SIZE, y0 + SELECTION_PLAY_ARROW_SIZE,
-	       x, y0 + 2 * SELECTION_PLAY_ARROW_SIZE,
-	       x, y0);
+  if ((cp->axis->losamp <= beg) &&
+      (cp->axis->hisamp > beg))
+    {
+      fill_polygon(ax, 4,
+		   x0, y0,
+		   x0 + SELECTION_PLAY_ARROW_SIZE, y0 + SELECTION_PLAY_ARROW_SIZE,
+		   x0, y0 + 2 * SELECTION_PLAY_ARROW_SIZE,
+		   x0, y0);
+    }
+
+  if ((cp->axis->losamp < end) &&
+      (cp->axis->hisamp >= end))
+    {
+      fill_polygon(ax, 4,
+		   x1, y0,
+		   x1 - SELECTION_PLAY_ARROW_SIZE, y0 + SELECTION_PLAY_ARROW_SIZE,
+		   x1, y0 + 2 * SELECTION_PLAY_ARROW_SIZE,
+		   x1, y0);
+    }
 }
 
 
@@ -844,6 +855,33 @@ bool hit_selection_triangle(chan_info *cp, int x, int y)
 
   return(false);
 }
+
+
+bool hit_selection_loop_triangle(chan_info *cp, int x, int y)
+{
+  axis_info *ap;
+  mus_long_t end;
+  int mx;
+
+  end = selection_end(cp);
+  ap = cp->axis;
+  if (end < ap->losamp) return(false);
+  if (end > ap->hisamp) return(false);
+
+  mx = grf_x((double)end / (double)SND_SRATE(cp->sound), ap);
+
+  if ((mx - SELECTION_PLAY_ARROW_SIZE) > x) return(false); 
+  if (mx < x) return(false);
+
+  y = y - ap->y_axis_y0 - SELECTION_PLAY_ARROW_SIZE;
+  if (y < 0) y = -y;
+
+  if ((mx - SELECTION_PLAY_ARROW_SIZE - y) <= x) return(true);
+  /* the last is assuming the triangle shape for hit detection */
+
+  return(false);
+}
+
 
 
 

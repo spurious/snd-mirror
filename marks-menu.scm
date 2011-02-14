@@ -224,7 +224,7 @@
                                           (help-dialog "Loop play between marks"
                                                        "Move the sliders to set the mark numbers. Check a radio button to set the buffer size."))
                                         (lambda (w c i)
-					  (c-g!))))
+					  (stop-playing)))) ; TODO: test this
               (set! sliders
                     (add-sliders 
 		     loop-between-marks-dialog

@@ -306,7 +306,7 @@
 				   (data (make-sound-data outchans frames)))
 			      (if (not (= audio-fd -1))
 				  (do ()
-				      ((or (c-g?) (not (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON play-button))))
+				      ((not (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON play-button)))
 				       (mus-audio-close audio-fd))
 				    (tick-synthesis work-proc)
 				    (do ((k 0 (+ 1 k)))

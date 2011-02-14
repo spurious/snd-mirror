@@ -5195,7 +5195,7 @@ do perfectly well:
 
 (let ((ind (<a class=quiet href="extsnd.html#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "test.snd")))
   (do ((n 1 (+ n 1)))
-      ((or (c-g?) (= n 12)))
+      ((= n 12))
     (let* ((bins (vector-&gt;vct (add-rands n)))
 	   (pk (<a class=quiet href="extsnd.html#vctpeak" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctpeak_tip)">vct-peak</a> bins)))
       (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="extsnd.html#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> bins (/ 1.0 pk)))

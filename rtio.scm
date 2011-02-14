@@ -27,7 +27,7 @@
 	 (data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
     	 (vobj (make-vct our-dac-buffer-size-in-shorts)))
     (do ()
-	((c-g?)) ; run until C-g stops us
+	() ; TODO: stop hook here
       (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
       (graph (sound-data->vct data our-chan vobj)))
     (mus-audio-close in-port)))
@@ -44,7 +44,7 @@
 	 (data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
     	 (vobj (make-vct our-dac-buffer-size-in-shorts)))
     (do ()
-	((c-g?))
+	() ; TODO: hook
       (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
       (sound-data->vct data our-chan vobj)
       (graph (snd-spectrum vobj blackman2-window our-dac-buffer-size-in-shorts #t))) ;probably better to have bounds here
@@ -64,7 +64,7 @@
     (catch #t ; try to make sure we close the audio ports upon an error
 	   (lambda ()
 	     (do ()
-		 ((c-g?))
+		 () ; TODO: hook
 	       (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
 	       ;; now process the sound...
 	       (func data)
@@ -133,7 +133,7 @@
       (hook-push mouse-drag-hook mouse-drag)
       (hook-push mouse-press-hook mouse-press)
       (do ()
-	  ((c-g?))
+	  () ; TODO: hook
 	(mus-audio-read in-port data our-dac-buffer-size-in-shorts)
 	(if (= x1 1.0)
 	    (graph 
