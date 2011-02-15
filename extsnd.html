@@ -1107,6 +1107,17 @@ This is a string giving the current Snd version.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
+<!-- sync-style -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="syncstyle">sync-style</a></code></td>
+<td bgcolor="#f2f4ff"><code>sync-none</code></td></tr><tr><td></td><td colspan=2>
+sync-style determines how sounds and their channels are sync'd together when they are
+opened.  The default, <code>sync-none</code>, means that no sounds, and no channels are tied together;
+<code>sync-all</code> causes everything to be tied together; <code>sync-by-sound</code> causes individual sounds to
+be separate, but if they have more than one channel, all the channels are tied together.
+<code>sync-by-sound</code> is the norm in other editors.
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
 <!-- temp-dir -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="tempdir">temp-dir</a></code></td>
 <td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
@@ -1199,10 +1210,9 @@ the cursor is moved to the clicked point.
 
 
 <!-- with-pointer-focus -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="withpointerfocus">with-pointer-focus</a> <code>()</code>
-</td></tr><tr><td></td><td>
-If with-pointer-focus is #t (default is #f), whatever text or graph widget is underneath the mouse cursor is activated
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="withpointerfocus">with-pointer-focus</a></code></td>
+<td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
+If with-pointer-focus is #t, whatever text or graph widget is underneath the mouse cursor is activated
 (this is sometimes known as "point-to-focus" mode).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

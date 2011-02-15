@@ -218,6 +218,17 @@ static const char *channel_style_name(channel_style_t choice)
 }
 
 
+static const char *sync_style_name(sync_style_t choice)
+{
+  switch (choice)
+    {
+    case SYNC_NONE: return(TO_VAR_NAME(S_sync_none));     break;
+    case SYNC_ALL:  return(TO_VAR_NAME(S_sync_all)); break;
+    default:        return(TO_VAR_NAME(S_sync_by_sound));     break;
+    }
+}
+
+
 static const char *enved_target_name(enved_target_t choice)
 {
   switch (choice)
@@ -382,6 +393,7 @@ static void save_options(FILE *fd)
   if (graph_style(ss) != DEFAULT_GRAPH_STYLE) pss_ss(fd, S_graph_style, graph_style_name(graph_style(ss)));
   if (region_graph_style(ss) != DEFAULT_GRAPH_STYLE) pss_ss(fd, S_region_graph_style, graph_style_name(region_graph_style(ss)));
   if (channel_style(ss) != DEFAULT_CHANNEL_STYLE) pss_ss(fd, S_channel_style, channel_style_name(channel_style(ss)));
+  if (sync_style(ss) != DEFAULT_SYNC_STYLE) pss_ss(fd, S_sync_style, sync_style_name(sync_style(ss)));
   if (enved_target(ss) != DEFAULT_ENVED_TARGET) pss_ss(fd, S_enved_target, enved_target_name(enved_target(ss)));
   if (transform_type(ss) != DEFAULT_TRANSFORM_TYPE) pss_ss(fd, S_transform_type, TO_VAR_NAME(transform_program_name(transform_type(ss))));
   if (zoom_focus_style(ss) != ZOOM_FOCUS_ACTIVE) pss_ss(fd, S_zoom_focus_style, zoom_focus_style_name(zoom_focus_style(ss)));

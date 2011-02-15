@@ -50,7 +50,7 @@
 ;;; scramble-channel -- randomly reorder segments within a sound
 ;;; reverse-by-blocks and reverse-within-blocks -- reorder or reverse blocks within a channel
 ;;; sound segmentation
-;;; sync-all
+;;; sync-everything
 
 (provide 'snd-examp.scm)
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
@@ -2547,10 +2547,10 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 |#
 
 
-;;; -------- sync-all
+;;; -------- sync-everything
 
-(define (sync-all)
-  "(sync-all) sets the sync fields of all currently open sounds to the same, unique value"
+(define (sync-everything)
+  "(sync-everything) sets the sync fields of all currently open sounds to the same, unique value"
   (let ((new-sync (+ 1 (sync-max))))
     (for-each
      (lambda (snd)

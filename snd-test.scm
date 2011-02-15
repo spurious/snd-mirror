@@ -654,6 +654,9 @@
       'dolph-chebyshev-window dolph-chebyshev-window 16
       'exponential-window exponential-window 9 
       'flat-top-window flat-top-window 23
+      'sync-none sync-none 0
+      'sync-all sync-all 1
+      'sync-by-sound sync-by-sound 2
       'zoom-focus-active zoom-focus-active 2
       'zoom-focus-left zoom-focus-left 0
       'zoom-focus-middle zoom-focus-middle 3
@@ -1103,6 +1106,9 @@
     (set! (zoom-focus-style) (zoom-focus-style))
     (if (not (equal? (zoom-focus-style)  2 )) 
 	(snd-display #__line__ ";zoom-focus-style set def: ~A" (zoom-focus-style)))
+    (set! (sync-style) sync-none)
+    (if (not (equal? (sync-style)  0 )) 
+	(snd-display #__line__ ";sync-style set def: ~A" (sync-style)))    
     (set! (mix-waveform-height) (mix-waveform-height))
     (if (not (equal? (mix-waveform-height)  20 )) 
 	(snd-display #__line__ ";mix-waveform-height set def: ~A" (mix-waveform-height)))
@@ -1322,6 +1328,7 @@
       'speed-control (without-errors (speed-control)) 'no-such-sound
       'speed-control-bounds (cadr (speed-control-bounds)) 20.0
       'sync (without-errors (sync)) 'no-such-sound
+      'sync-style (sync-style) 0
       'temp-dir (temp-dir) #f 
       'time-graph-type (time-graph-type) graph-once
       'time-graph? (without-errors (time-graph?)) 'no-such-sound
@@ -1912,6 +1919,7 @@
 	(list 'speed-control-style speed-control-style 0 1)
 	(list 'speed-control-tones speed-control-tones 12 18)
 	(list 'sync sync 0 1)
+	(list 'sync-style sync-style sync-none sync-all)
 	(list 'tiny-font tiny-font (if (provided? 'snd-gtk) "Sans 8" "6x12") (if (provided? 'snd-gtk) "Monospace 10" "9x15"))
 	(list 'transform-type transform-type fourier-transform autocorrelation)
 	(list 'with-verbose-cursor with-verbose-cursor #f #t)
@@ -1992,6 +2000,7 @@
 	(list 'speed-control speed-control 1.0 '(0.0))
 	(list 'speed-control-bounds speed-control-bounds (list 0.05 20.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
 	(list 'speed-control-style speed-control-style 0 '(-1 10))
+	(list 'sync-style sync-style sync-none '(-1 123))
 	(list 'transform-type transform-type fourier-transform (list (integer->transform -1) (integer->transform 123)))
 	(list 'wavelet-type wavelet-type 0 '(-1 123))
 	(list 'wavo-hop wavo-hop 1 '(0 -123))
@@ -1999,6 +2008,8 @@
 	(list 'x-axis-style x-axis-style 0 '(-1 123))
 	(list 'zoom-focus-style zoom-focus-style 2 '(-1 123)))))
     
+    (set! (sync-style) sync-none)
+
     (set! (window-width) 300)
     (set! (window-height) 300)
     (if (not (equal? (window-width) 300))
@@ -2252,7 +2263,7 @@
 		       'src-sound 'src? 'ssb-am 'ssb-am? 'start-hook
 		       'start-playing 'start-playing-hook 'start-playing-selection-hook 'start-progress-report 'stop-dac-hook
 		       'stop-player 'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'ncos
-		       'ncos? 'nsin 'nsin? 'swap-channels 'sync
+		       'ncos? 'nsin 'nsin? 'swap-channels 'sync 'sync-style 'sync-none 'sync-all 'sync-by-sound
 		       'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap
 		       'temp-dir 'text-focus-color 'time-graph 'time-graph-hook 'time-graph-style
 		       'time-graph-type 'time-graph? 'tiny-font 
@@ -32868,6 +32879,7 @@ EDITS: 2
 	      (list 'speed-control-style speed-control-style #f 0 2)
 	      (list 'speed-control-tones speed-control-tones #f 2 100)
 	      (list 'sync sync #t 0 5)
+	      (list 'sync-style sync-style #f 0 3)
 	      (list 'with-verbose-cursor with-verbose-cursor #f #f #t)
 	      (list 'wavelet-type wavelet-type #f 0 10)
 	      (list 'time-graph? time-graph? #t #f #t)
@@ -32883,6 +32895,7 @@ EDITS: 2
 		(set! (transform-size) (min (transform-size) 128))))
 	  )))
     (if open-files (for-each close-sound open-files))
+    (set! (sync-style) sync-none)
     (set! open-files '())
     (set! (mus-rand-seed) 1234)
     (if (not (= (mus-rand-seed) 1234)) (snd-display #__line__ ";mus-rand-seed: ~A (1234)!" (mus-rand-seed)))
@@ -45068,19 +45081,19 @@ EDITS: 1
 	 (lambda (file)
 	   (let ((index (open-sound file)))
 	     (set! (selected-sound) index)
-	     (if (not (= (sync index) 0)) (snd-display #__line__ ";~A sync before sync-all: ~A" file (sync index)))
-	     (sync-all)
+	     (if (not (= (sync index) 0)) (snd-display #__line__ ";~A sync before sync-everything: ~A" file (sync index)))
+	     (sync-everything)
 	     (for-each
 	      (lambda (snd)
 		(if (not (sync snd))
-		    (snd-display #__line__ ";sync-all did not set ~A's sync" file)
+		    (snd-display #__line__ ";sync-everything did not set ~A's sync" file)
 		    (if (member (sync index) previous-syncs)
-			(snd-display #__line__ ";sync-all not new? ~A ~A" (sync index) previous-syncs))))
+			(snd-display #__line__ ";sync-everything not new? ~A ~A" (sync index) previous-syncs))))
 	      (sounds))
 	     (let ((current-syncs (map sync (sounds))))
 	       (if (and (> (length current-syncs) 1)
 			(not (apply = current-syncs)))
-		   (snd-display #__line__ ";sync-all not the same? ~A" current-syncs))
+		   (snd-display #__line__ ";sync-everything not the same? ~A" current-syncs))
 	       (set! previous-syncs (cons (sync index) previous-syncs)))
 	     (set! total-chans (+ total-chans (chans index)))
 	     (let* ((fd (make-sync-frame-reader 10000)))
@@ -45184,15 +45197,15 @@ EDITS: 1
       
       (let ((index0 (open-sound "oboe.snd"))
 	    (index1 (open-sound "2.snd")))
-	(sync-all)
+	(sync-everything)
 	(make-selection 10000 (+ 10000 9))
 	(if (not (selection?))
 	    (snd-display #__line__ ";make-selection failed?")
 	    (begin
 	      (if (not (= (selection-frames) 10)) 
-		  (snd-display #__line__ ";sync-all + make-selection length: ~A" (selection-frames)))
+		  (snd-display #__line__ ";sync-everything + make-selection length: ~A" (selection-frames)))
 	      (if (not (= (selection-chans) 3))
-		  (snd-display #__line__ ";sync-all + make-selection chans: ~A" (selection-chans)))
+		  (snd-display #__line__ ";sync-everything + make-selection chans: ~A" (selection-chans)))
 	      (let ((val0 (selection->sound-data)))
 		(if (not (sound-data? val0))
 		    (snd-display #__line__ ";selection->sound-data 0 result: ~A" val0)
@@ -61173,7 +61186,7 @@ EDITS: 1
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
-		     y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style mus-set-formant-radius-and-frequency
+		     y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style sync-style mus-set-formant-radius-and-frequency
 		     mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
 		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
 		     mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
@@ -61278,7 +61291,7 @@ EDITS: 1
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties sound-property temp-dir text-focus-color tiny-font y-bounds
 			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor with-inset-graph with-pointer-focus wavelet-type x-bounds
-			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
+			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style sync-style
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix beats-per-measure
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
 			 minibuffer-history-length read-only right-sample sample samples selected-channel colormap-size colormap?
@@ -63511,3 +63524,4 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 |#
 
+;;; TODO: explicit sync-style tests

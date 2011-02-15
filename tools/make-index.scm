@@ -495,7 +495,9 @@
 	"enved-amplitude" "enved-spectrum" "enved-srate" "envelope-linear" "envelope-exponential" "enved-add-point"
 	"enved-delete-point" "enved-move-point" "time-graph" "transform-graph" "lisp-graph" "copy-context" "cursor-context"
 	"selection-context" "mark-context" "mus-interp-all-pass" "mus-interp-bezier" "mus-interp-hermite" "mus-interp-lagrange"
-	"mus-interp-linear" "mus-interp-none" "mus-interp-sinusoidal"))	
+	"mus-interp-linear" "mus-interp-none" "mus-interp-sinusoidal"
+	"sync-none" "sync-all" "sync-by-sound"
+	))	
 
 
 (define (scheme->ruby scheme-name)

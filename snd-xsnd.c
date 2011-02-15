@@ -2974,7 +2974,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 		    NULL);
     }
 
-  after_open(sp->index);
+  after_open(sp);
   if (free_filename) free(filename);
   return(sp);
 }

@@ -1803,13 +1803,13 @@ widget_t start_preferences_dialog(void)
 		  clear_with_pointer_focus, revert_with_pointer_focus);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    rts_sync_choice = sync_choice();
+    rts_sync_style = sync_style();
     prf = prefs_row_with_two_toggles("operate on all channels together", S_sync,
-				     "within each sound", rts_sync_choice == SYNC_WITHIN_EACH_SOUND,
-				     "across all sounds", rts_sync_choice == SYNC_ACROSS_ALL_SOUNDS,
+				     "within each sound", rts_sync_style == SYNC_BY_SOUND,
+				     "across all sounds", rts_sync_style == SYNC_ALL,
 				     dpy_box,
 				     sync1_choice, sync2_choice);
-    remember_pref(prf, reflect_sync_choice, save_sync_choice, help_sync_choice, clear_sync_choice, revert_sync_choice);
+    remember_pref(prf, reflect_sync_style, save_sync_style, help_sync_style, clear_sync_style, revert_sync_style);
 
     current_sep = make_inter_variable_separator(dpy_box);
     rts_remember_sound_state_choice = find_remember_sound_state_choice();

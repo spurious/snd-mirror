@@ -25,9 +25,12 @@
 		   (card+device in-sys mus-audio-default) 
 		   our-srate our-chans our-short our-dac-buffer-size-in-bytes))
 	 (data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
-    	 (vobj (make-vct our-dac-buffer-size-in-shorts)))
+    	 (vobj (make-vct our-dac-buffer-size-in-shorts))
+	 (stop #f))
+    (bind-key #\space 0 (lambda () (set! stop #t))) ; type space in the graph to stop this loop
     (do ()
-	() ; TODO: stop hook here
+	(stop
+	 (unbind-key #\space 0))
       (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
       (graph (sound-data->vct data our-chan vobj)))
     (mus-audio-close in-port)))
@@ -42,9 +45,12 @@
 		   (card+device in-sys mus-audio-default) 
 		   our-srate our-chans our-short our-dac-buffer-size-in-bytes))
 	 (data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
-    	 (vobj (make-vct our-dac-buffer-size-in-shorts)))
+    	 (vobj (make-vct our-dac-buffer-size-in-shorts))
+	 (stop #f))
+    (bind-key #\space 0 (lambda () (set! stop #t))) ; type space in the graph to stop this loop
     (do ()
-	() ; TODO: hook
+	(stop
+	 (unbind-key #\space 0))
       (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
       (sound-data->vct data our-chan vobj)
       (graph (snd-spectrum vobj blackman2-window our-dac-buffer-size-in-shorts #t))) ;probably better to have bounds here
@@ -60,17 +66,20 @@
 		  (card+device in-sys mus-audio-default) 
 		  our-srate our-chans our-short our-dac-buffer-size-in-bytes))
 	(data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
-	(vobj (make-vct our-dac-buffer-size-in-shorts)))
+	(vobj (make-vct our-dac-buffer-size-in-shorts))
+	(stop #f))
+    (bind-key #\space 0 (lambda () (set! stop #t))) ; type space in the graph to stop this loop
     (catch #t ; try to make sure we close the audio ports upon an error
 	   (lambda ()
 	     (do ()
-		 () ; TODO: hook
+		 (stop)
 	       (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
 	       ;; now process the sound...
 	       (func data)
 	       (mus-audio-write out-port data our-dac-buffer-size-in-shorts)))
 	   (lambda args
 	     (display (format #f ";in-out error: ~A" args))))
+    (unbind-key #\space 0)
     (mus-audio-close in-port)
     (mus-audio-close out-port)))
 
@@ -129,11 +138,13 @@
 		     (card+device in-sys mus-audio-default) 
 		     our-srate our-chans our-short our-dac-buffer-size-in-bytes))
 	   (data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
-	   (vobj (make-vct our-dac-buffer-size-in-shorts)))
+	   (vobj (make-vct our-dac-buffer-size-in-shorts))
+	   (stop #f))
       (hook-push mouse-drag-hook mouse-drag)
       (hook-push mouse-press-hook mouse-press)
+      (bind-key #\space 0 (lambda () (set! stop #t))) ; type space in the graph to stop this loop
       (do ()
-	  () ; TODO: hook
+	  (stop)
 	(mus-audio-read in-port data our-dac-buffer-size-in-shorts)
 	(if (= x1 1.0)
 	    (graph 
@@ -149,6 +160,7 @@
 		blackman2-window maxpt #t)
 	       "spectrum"
 	       0.0 x1))))
+      (unbind-key #\space 0)
       (hook-remove mouse-drag-hook mouse-drag)
       (hook-remove mouse-press-hook mouse-press)
       (mus-audio-close in-port))))

@@ -419,6 +419,7 @@ typedef struct snd_state {
   with_grid_t Show_Grid;
   bool Fft_Log_Frequency, Fft_Log_Magnitude, Fft_With_Phases;
   channel_style_t Channel_Style;
+  sync_style_t Sync_Style;
   sound_style_t Sound_Style;
   show_axes_t Show_Axes;
   char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir, *Peak_Env_Dir;
@@ -1160,6 +1161,7 @@ void stop_playing_region(int n, play_stop_t reason);
 void play_region(int n, play_process_t background);
 void play_region_1(int region, play_process_t background, XEN stop_proc);
 void play_channel(chan_info *cp, mus_long_t start, mus_long_t end);
+void play_channel_with_sync(chan_info *cp, mus_long_t start, mus_long_t end);
 void play_sound(snd_info *sp, mus_long_t start, mus_long_t end);
 void play_channels(chan_info **cps, int chans, mus_long_t *starts, mus_long_t *ur_ends, 
 		   play_process_t background, XEN edpos, bool selection, const char *caller, int arg_pos);
@@ -1419,7 +1421,7 @@ void set_fallback_format(int fr);
 void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog);
 bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, const char *comment);
 void during_open(int fd, const char *file, open_reason_t reason);
-void after_open(int index);
+void after_open(snd_info *sp);
 char *output_name(const char *current_name);
 void save_view_files_dialogs(FILE *fd);
 widget_t start_view_files_dialog(bool managed, bool make_new);

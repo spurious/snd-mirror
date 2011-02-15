@@ -2161,7 +2161,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
-  after_open(sp->index);
+  after_open(sp);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     {
       sx->page = gtk_notebook_page_num(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), SND_PANE(sp));

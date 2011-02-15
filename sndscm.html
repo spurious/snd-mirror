@@ -4718,11 +4718,11 @@ sort-samples provides a histogram of the samples (by amplitude) in 'bins' bins.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- sync-all -->
+<!-- sync-everything -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="sync-all">sync-all</a> 
+<a class=def name="sync-everything">sync-everything</a> 
 </td></tr><tr><td></td><td>
-sync-all sets the sync fields of all currently open sounds to the same unique value.
+sync-everything sets the sync fields of all currently open sounds to the same unique value.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5059,15 +5059,6 @@ and if that same sound is later re-opened, restores the previous state.
 </td></tr><tr><td width=30></td><td>
 scale-sound multiplies every sample in the sound 'snd' by 'scl'.
 It is the multichannel version of <a href="extsnd.html#scalechannel">scale-channel</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- set-global-sync -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="setglobalsync">set-global-sync</a> <code>choice</code>
-</td></tr><tr><td></td><td>
-set-global-sync sets up a hook function that syncs all of a sound's channels ('choice' == 2),
-or all channels (across all sounds) ('choice' == 1).  'choice' == 0 turns off the syncing.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

@@ -438,37 +438,6 @@ static void prefs_variable_set(const char *name, XEN val)
 }
 
 
-static void prefs_variable_save(FILE *fd, const char *name, const char *file, XEN val)
-{
-#if HAVE_SCHEME
-  char *temp = NULL;
-  if (file)
-    fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load \"%s.scm\"))\n", file, file);
-  fprintf(fd, "(set! %s %s)\n", name, temp = XEN_AS_STRING(val));
-#if HAVE_SCHEME
-  if (temp) free(temp);
-#endif
-#endif
-
-#if HAVE_RUBY
-  char *str;
-  str = no_stars(name);
-  if (file)
-    fprintf(fd, "require \"%s\"\n", file);
-  fprintf(fd, "$%s = %s\n", TO_PROC_NAME(str), XEN_AS_STRING(val));
-  /* fprintf(fd, "set_%s(%s)\n", TO_PROC_NAME(str), XEN_AS_STRING(val)); */
-  free(str);
-#endif
-
-#if HAVE_FORTH
-  if (file)
-    fprintf(fd, "require %s\n", file);
-  fprintf(fd, "%s to %s\n", XEN_AS_STRING(val), name);
-  /* fprintf(fd, "%s set-%s drop\n", XEN_AS_STRING(val), name); */
-#endif
-}
-
-
 static XEN prefs_variable_get(const char *name)
 {
 #if HAVE_SCHEME || HAVE_FORTH
@@ -2032,43 +2001,16 @@ static void grid_density_text_callback(prefs_info *prf)
 
 
 
-/* ---------------- sync choice ---------------- */
+/* ---------------- sync style ---------------- */
 
-#define SYNC_WITHIN_EACH_SOUND 2
-#define SYNC_ACROSS_ALL_SOUNDS 1
-#define SYNC_DISABLED 0
 #define SYNC_UNSET -1
 
-static int prefs_sync_choice = SYNC_UNSET, rts_sync_choice = 0;
+static sync_style_t rts_sync_style = SYNC_NONE;
+static void revert_sync_style(prefs_info *prf) {set_sync_style(rts_sync_style);}
+static void clear_sync_style(prefs_info *prf) {set_sync_style(SYNC_NONE);}
+static void save_sync_style(prefs_info *prf, FILE *ignore) {rts_sync_style = sync_style(ss);}
 
-static int sync_choice(void) 
-{
-  return(XEN_TO_C_INT_OR_ELSE(prefs_variable_get("global-sync-choice"), 
-			      SYNC_DISABLED));
-}
-
-
-static void set_sync_choice(int val, const char *load)
-{
-  if ((load) &&
-      (!XEN_DEFINED_P("global-sync-choice")))
-    load_file_with_path_and_extension(load);
-  if (XEN_DEFINED_P("global-sync-choice")) 
-    {
-      prefs_variable_set("global-sync-choice", 
-			 C_TO_XEN_INT(val));
-      if ((load) && 
-	  (val != SYNC_DISABLED))
-	prefs_function_call_1("set-global-sync", C_TO_XEN_INT(val));
-    }
-}
-
-
-static void revert_sync_choice(prefs_info *prf) {set_sync_choice(rts_sync_choice, NULL);}
-static void clear_sync_choice(prefs_info *prf) {set_sync_choice(SYNC_DISABLED, NULL);}
-
-
-static void help_sync_choice(prefs_info *prf)
+static void help_sync_style(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "Many operations can operate on all channels at once, or only on the currently selected \
@@ -2079,45 +2021,31 @@ to operate only on the selected channel (neither button selected).",
 }
 
 
-static void reflect_sync_choice(prefs_info *prf)
+static void reflect_sync_style(prefs_info *prf)
 {
-  prefs_sync_choice = sync_choice();
-  SET_TOGGLE(prf->toggle, prefs_sync_choice == SYNC_WITHIN_EACH_SOUND);
-  SET_TOGGLE(prf->toggle2, prefs_sync_choice == SYNC_ACROSS_ALL_SOUNDS);
-}
-
-
-static void save_sync_choice(prefs_info *prf, FILE *fd)
-{
-  if (prefs_sync_choice != SYNC_UNSET) 
-    {
-      rts_sync_choice = prefs_sync_choice;
-      if (prefs_sync_choice != SYNC_DISABLED)
-	prefs_variable_save(fd, "global-sync-choice", "extensions", C_TO_XEN_INT(prefs_sync_choice));
-    }
+  rts_sync_style = sync_style(ss);
+  SET_TOGGLE(prf->toggle, rts_sync_style == SYNC_BY_SOUND);
+  SET_TOGGLE(prf->toggle2, rts_sync_style == SYNC_ALL);
 }
 
 
 static void sync1_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->toggle))
-    prefs_sync_choice = SYNC_WITHIN_EACH_SOUND;
-  else prefs_sync_choice = SYNC_DISABLED;
+    rts_sync_style = SYNC_BY_SOUND;
+  else rts_sync_style = SYNC_NONE;
   SET_TOGGLE(prf->toggle2, false);
-  /* if user has not loaded extensions, but sets one of the toggle buttons, load extensions and
-   *    set the global-sync-choice variable
-   */
-  set_sync_choice(prefs_sync_choice, "extensions"); 
+  set_sync_style(rts_sync_style); 
 }
 
 
 static void sync2_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->toggle2))
-    prefs_sync_choice = SYNC_ACROSS_ALL_SOUNDS;
-  else prefs_sync_choice = SYNC_DISABLED;
+    rts_sync_style = SYNC_ALL;
+  else rts_sync_style = SYNC_NONE;
   SET_TOGGLE(prf->toggle, false);
-  set_sync_choice(prefs_sync_choice, "extensions");
+  set_sync_style(rts_sync_style);
 }
 
 

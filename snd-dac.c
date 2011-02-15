@@ -838,7 +838,7 @@ static void stop_playing_all_sounds_1(with_hook_t with_hook, play_stop_t reason)
 	  for (i = 0; i < dac_max_sounds; i++)
 	    {
 	      dp = play_list[i];
-	      play_list[i] = NULL;	  
+	      play_list[i] = NULL;
 	      stop_playing(dp, WITHOUT_HOOK, reason);
 	    }
 	}
@@ -1411,6 +1411,36 @@ void play_channels(chan_info **cps, int chans, mus_long_t *starts, mus_long_t *u
 		   play_process_t background, XEN edpos, bool selection, const char *caller, int arg_pos)
 {
   play_channels_1(cps, chans, starts, ur_ends, background, edpos, selection, XEN_FALSE, caller, arg_pos);
+}
+
+
+void play_channel_with_sync(chan_info *cp, mus_long_t start, mus_long_t end)
+{
+  snd_info *sp;
+  sync_info *si;
+  mus_long_t *ends = NULL;
+  int i;
+
+  sp = cp->sound;
+  if ((sp->sync == 0) ||
+      (IS_PLAYER_SOUND(sp)))
+    {
+      play_channel(cp, start, end);
+      return;
+    }
+
+  si = snd_sync(sp->sync);
+  if (end != NO_END_SPECIFIED)
+    {
+      ends = (mus_long_t *)calloc(si->chans, sizeof(mus_long_t));
+      for (i = 0; i < si->chans; i++) ends[i] = end;
+    }
+  for (i = 0; i < si->chans; i++) si->begs[i] = start;
+
+  play_channels_1(si->cps, si->chans, si->begs, ends, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), false, XEN_FALSE, NULL, 0);
+
+  si = free_sync_info(si);
+  if (ends) free(ends);
 }
 
 

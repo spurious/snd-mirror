@@ -247,6 +247,8 @@ typedef enum {SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_S
 typedef enum {CURSOR_IN_VIEW, CURSOR_ON_LEFT, CURSOR_ON_RIGHT, CURSOR_IN_MIDDLE, KEYBOARD_NO_ACTION} kbd_cursor_t;
 typedef enum {CHANNELS_SEPARATE, CHANNELS_COMBINED, CHANNELS_SUPERIMPOSED, NOT_A_CHANNEL_STYLE} channel_style_t;
 #define NUM_CHANNEL_STYLES 3
+typedef enum {SYNC_NONE, SYNC_ALL, SYNC_BY_SOUND} sync_style_t;
+#define NUM_SYNC_STYLES 3
 typedef enum {FD_CLOSED, FD_OPEN} fd_open_t;
 typedef enum {PRINT_SND, PRINT_ENV} print_choice_t;
 typedef enum {SND_DATA_NO_DATA, SND_DATA_FILE, SND_DATA_BUFFER} snd_data_file_t;
@@ -832,6 +834,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define channel_style(ss) ss->Channel_Style
 #define in_set_channel_style(a) ss->Channel_Style = a
 #define DEFAULT_CHANNEL_STYLE CHANNELS_COMBINED
+
+#define sync_style(ss) ss->Sync_Style
+#define set_sync_style(a) ss->Sync_Style = a
+#define DEFAULT_SYNC_STYLE SYNC_NONE
 
 #define sound_style(ss) ss->Sound_Style
 #define set_sound_style(a) ss->Sound_Style = a

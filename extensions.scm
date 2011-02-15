@@ -958,25 +958,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	(hook-push open-hook check-reopen-menu))))
 
 
-;;; -------- global-sync (for prefs dialog)
-
-(define global-sync-choice 0) ; global var so that we can reflect the current setting in prefs dialog
-;; 0 = no sync, 1 = all synced, 2 = sync within sound
-
-(define (global-sync-func snd)
-  "(global-sync-func snd) is an after-open-hook function used by the preferences dialog"
-  (if (= global-sync-choice 1)
-      (set! (sync snd) 1)
-      (if (= global-sync-choice 2)
-	  (set! (sync snd) (+ 1 (sync-max))))))
-
-(define (set-global-sync choice)
-  "(set-global-sync choice) sets the preferences dialog global-sync choice"
-  (set! global-sync-choice choice)
-  (if (and (not (= choice 0))
-	   (not (member global-sync-func (hook-functions after-open-hook))))
-      (hook-push after-open-hook global-sync-func)))
-
 
 
 ;;; -------- with-threaded-channels

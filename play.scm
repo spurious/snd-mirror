@@ -141,11 +141,11 @@
 	 (stop-looping #f))
     (if (not (= audio-fd -1))
 	(begin
-	  (bind-key "x" 0 (lambda () (set! stop-looping #t))) ; type x in the graph to stop this loop
+	  (bind-key #\space 0 (lambda () (set! stop-looping #t))) ; type space in the graph to stop this loop
 	  (do ()
 	      (stop-looping
 	       (mus-audio-close audio-fd)
-	       (unbind-key "x" 0))
+	       (unbind-key #\space 0))
 	    (do ((i 0 (+ 1 i)))
 		((= i bufsize) 
 		 (begin 

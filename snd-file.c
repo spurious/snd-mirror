@@ -1414,11 +1414,31 @@ void during_open(int fd, const char *file, open_reason_t reason)
 }
 
 
-void after_open(int index)
+void after_open(snd_info *sp)
 {
+  /* the sync-style choice used to be handled via after-open-hook in extensions.*, but 15-Feb-11 has
+   *   been moved into the main Snd.  So here is the code...
+   */
+  switch (sync_style(ss))
+    {
+    case SYNC_NONE:
+      sp->sync = 0;
+      break;
+
+    case SYNC_ALL:
+      sp->sync = 1;
+      break;
+
+    case SYNC_BY_SOUND:
+      ss->sound_sync_max++;
+      sp->sync = ss->sound_sync_max; /* if we had used (set! (sync) ...) this would be set (via syncb) to the new max */
+      break;
+    }
+  syncb(sp, sp->sync);
+
   if (XEN_HOOKED(after_open_hook))
     run_hook(after_open_hook,
-	     XEN_LIST_1(C_INT_TO_XEN_SOUND(index)),
+	     XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
 	     S_after_open_hook);
 
   if (XEN_HOOKED(ss->snd_open_file_hook))

@@ -5225,6 +5225,9 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 
       /* PERHAPS: space to play? */
       /* TODO: doc various cursors */
+      /* TODO: make local sync the default */
+      /* TODO: make tracking cursor easier or perhaps the default */
+      /* TODO: how to handle looped play of entire file (not selection)? */
 
     case CLICK_MARK_PLAY:
     case CLICK_MIX_PLAY:
@@ -5258,8 +5261,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 	      break;
 	      
 	    case CLICK_CURSOR_PLAY:
-	      /* TODO: get syncd chans here */
-	      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED);
+	      play_channel_with_sync(cp, CURSOR(cp), NO_END_SPECIFIED);
 	      break;
 	      
 	    case CLICK_SELECTION_LOOP_PLAY:
@@ -9288,6 +9290,28 @@ static XEN g_set_with_gl(XEN val)
 }
 
 
+static XEN g_sync_style(void) 
+{
+  return(C_TO_XEN_INT((int)sync_style(ss)));
+}
+
+
+static XEN g_set_sync_style(XEN style) 
+{
+  int choice;
+  #define H_sync_style "(" S_sync_style "): one of " S_sync_none ", " S_sync_all ", " \
+", or " S_sync_by_sound ". This determines how channels are grouped when a sound is opened."
+
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ONLY_ARG, S_setB S_sync_style, "a sync choice");
+  choice = XEN_TO_C_INT(style);
+  if ((choice < 0) || (choice >= NUM_SYNC_STYLES))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_sync_style, 0, style, "style should be one of " S_sync_none ", " S_sync_all ", or " S_sync_by_sound);
+  set_sync_style((sync_style_t)choice);
+  return(C_TO_XEN_INT((int)sync_style(ss)));
+}
+
+
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_variable_graph_p_w, g_variable_graph_p)
 XEN_ARGIFY_4(g_make_variable_graph_w, g_make_variable_graph)
@@ -9436,6 +9460,8 @@ XEN_ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
 XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
 XEN_NARGIFY_0(g_zoom_focus_style_w, g_zoom_focus_style)
 XEN_NARGIFY_1(g_set_zoom_focus_style_w, g_set_zoom_focus_style)
+XEN_NARGIFY_0(g_sync_style_w, g_sync_style)
+XEN_NARGIFY_1(g_set_sync_style_w, g_set_sync_style)
 XEN_NARGIFY_0(g_with_gl_w, g_with_gl)
 XEN_NARGIFY_1(g_set_with_gl_w, g_set_with_gl)
 #if HAVE_GL
@@ -9589,6 +9615,8 @@ XEN_NARGIFY_1(g_set_with_gl_w, g_set_with_gl)
 #define g_update_transform_graph_w g_update_transform_graph
 #define g_zoom_focus_style_w g_zoom_focus_style
 #define g_set_zoom_focus_style_w g_set_zoom_focus_style
+#define g_sync_style_w g_sync_style
+#define g_set_sync_style_w g_set_sync_style
 #define g_with_gl_w g_with_gl
 #define g_set_with_gl_w g_set_with_gl
 #if HAVE_GL
@@ -9897,6 +9925,17 @@ void g_init_chn(void)
 				   S_setB S_zoom_focus_style, g_set_zoom_focus_style_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_gl, g_with_gl_w, H_with_gl,
 				   S_setB S_with_gl, g_set_with_gl_w,  0, 0, 1, 0);
+
+  #define H_sync_none     "The " S_sync_style " choice that leaves every sound and channel unsync'd at the start"
+  #define H_sync_all      "The " S_sync_style " choice that syncs together every sound and channel at the start"
+  #define H_sync_by_sound "The " S_sync_style " choice that syncs all channels in a sound, but each sound is separate"
+
+  XEN_DEFINE_CONSTANT(S_sync_none,     SYNC_NONE,     H_sync_none);
+  XEN_DEFINE_CONSTANT(S_sync_all,      SYNC_ALL,      H_sync_all);
+  XEN_DEFINE_CONSTANT(S_sync_by_sound, SYNC_BY_SOUND, H_sync_by_sound);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sync_style, g_sync_style_w, H_sync_style,
+				   S_setB S_sync_style, g_set_sync_style_w,  0, 0, 1, 0);
 
 #if HAVE_GL
   XEN_DEFINE_PROCEDURE(S_glSpectrogram, g_gl_spectrogram_w, 9, 0, 0, H_glSpectrogram);
