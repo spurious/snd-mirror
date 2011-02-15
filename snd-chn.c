@@ -5224,6 +5224,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
       break;
 
       /* PERHAPS: space to play? */
+      /* TODO: doc various cursors */
 
     case CLICK_MARK_PLAY:
     case CLICK_MIX_PLAY:
@@ -5463,22 +5464,14 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    }
 	  else
 	    {
-	      if ((click_within_graph == CLICK_WAVE) ||
-		  (click_within_graph == CLICK_INSET_GRAPH) ||
-		  (click_within_graph == CLICK_SELECTION_LEFT) ||
-		  (click_within_graph == CLICK_SELECTION_RIGHT) ||
-		  (click_within_graph == CLICK_MIX) ||
-		  (click_within_graph == CLICK_MARK))
+	      cancel_selection_watch();
+	      finish_selection_creation();
+	      dragged = false;
+	      if (show_selection_transform(ss)) 
 		{
-		  cancel_selection_watch();
-		  finish_selection_creation();
-		  dragged = false;
-		  if (show_selection_transform(ss)) 
-		    {
-		      if (sp->sync)
-			for_each_normal_chan_with_int(calculate_syncd_fft, sp->sync);
-		      else calculate_fft(cp);
-		    }
+		  if (sp->sync)
+		    for_each_normal_chan_with_int(calculate_syncd_fft, sp->sync);
+		  else calculate_fft(cp);
 		}
 	    }
 	}

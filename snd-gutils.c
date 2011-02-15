@@ -1155,7 +1155,6 @@ char *slist_selection(slist *lst)
  *       hide controls + listener doesn't
  *       if combined, initial drag of mix does not reflect drag until button release
  *       mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
- *       perhaps play triangle for mix
  *
  * freq response curve in controls is broken -- mouse actions are caught but no display update
  * fft window graph is broken [and the entire dialog is flakey]

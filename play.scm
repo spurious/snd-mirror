@@ -129,7 +129,7 @@
 ;;; -------- play while looping continuously between two movable marks
 
 (define (loop-between-marks m1 m2 bufsize)
-  "(loop-between-marks mark1 mark2 buffersize) plays while looping between two marks.  C-g exits the loop."
+  "(loop-between-marks mark1 mark2 buffersize) plays while looping between two marks.  x typed in the graph, or C-g in the listener exits the loop."
   (let* ((pos1 (mark-sample m1))
 	 (pos2 (mark-sample m2))
 	 (beg (min pos1 pos2))
@@ -137,27 +137,31 @@
 	 (all-data (samples->sound-data)) ; for simplicity, just grab all the data
 	 (audio-data (make-sound-data 1 bufsize))
 	 (bytes (* bufsize 2)) ; mus-audio-write handles the translation to short (and takes frames, not bytes as 3rd arg)
-	 (audio-fd (mus-audio-open-output 0 (srate) 1 mus-lshort bytes)))
+	 (audio-fd (mus-audio-open-output 0 (srate) 1 mus-lshort bytes))
+	 (stop-looping #f))
     (if (not (= audio-fd -1))
-	(do ()
-	    (#t ; TODO: stop hook or something here
-	     (mus-audio-close audio-fd))
-	  (do ((i 0 (+ 1 i)))
-	      ((= i bufsize) 
-	       (begin 
-		 (set! i 0) 
-		 (mus-audio-write audio-fd audio-data bufsize)))
-	    (sound-data-set! audio-data 0 i (sound-data-ref all-data 0 beg))
-	    (set! beg (+ 1 beg))
-	    (if (= beg end)
-		(begin
-		  (set! pos1 (mark-sample m1)) ; get current mark positions (can change while looping)
-		  (set! pos2 (mark-sample m2))
-		  (set! beg (min pos1 pos2))
-		  (set! end (max pos1 pos2)))))))))
+	(begin
+	  (bind-key "x" 0 (lambda () (set! stop-looping #t))) ; type x in the graph to stop this loop
+	  (do ()
+	      (stop-looping
+	       (mus-audio-close audio-fd)
+	       (unbind-key "x" 0))
+	    (do ((i 0 (+ 1 i)))
+		((= i bufsize) 
+		 (begin 
+		   (set! i 0) 
+		   (mus-audio-write audio-fd audio-data bufsize)))
+	      (sound-data-set! audio-data 0 i (sound-data-ref all-data 0 beg))
+	      (set! beg (+ 1 beg))
+	      (if (= beg end)
+		  (begin
+		    (set! pos1 (mark-sample m1)) ; get current mark positions (can change while looping)
+		    (set! pos2 (mark-sample m2))
+		    (set! beg (min pos1 pos2))
+		    (set! end (max pos1 pos2))))))))))
 
-;;; m1 and m2 are mark (id) numbers
-;;; (loop-between-marks 0 1 512)
+;;; m1 and m2 are marks
+;;; (loop-between-marks (caaar (marks)) (cadaar (marks)) 512)
 
 
 
