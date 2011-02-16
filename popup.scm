@@ -11,8 +11,6 @@
 ;;;    (change-listener-popup-color new-color) to change its color
 ;;; a popup menu is also added to each edit history pane to display the "spreadsheet" edit-list->function menu
 
-;;; TODO: selection loop play is broken
-
 (provide 'snd-popup.scm)
 
 (if (not (provided? 'xm))
@@ -574,6 +572,9 @@
 
     (let ((color (XtCreateManagedWidget "Color/Orientation" xmPushButtonWidgetClass fft-popup every-menu)))
       (XtAddCallback color XmNactivateCallback (lambda (w c i) (color-orientation-dialog))))
+
+    (let ((file (XtCreateManagedWidget "Save peaks to fft.txt" xmPushButtonWidgetClass fft-popup every-menu)))
+      (XtAddCallback file XmNactivateCallback (lambda (w c i) (peaks "fft.txt"))))
 
     fft-popup))
 

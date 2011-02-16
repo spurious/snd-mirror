@@ -1803,7 +1803,7 @@ widget_t start_preferences_dialog(void)
 		  clear_with_pointer_focus, revert_with_pointer_focus);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    rts_sync_style = sync_style();
+    rts_sync_style = sync_style(ss);
     prf = prefs_row_with_two_toggles("operate on all channels together", S_sync,
 				     "within each sound", rts_sync_style == SYNC_BY_SOUND,
 				     "across all sounds", rts_sync_style == SYNC_ALL,
@@ -2042,13 +2042,6 @@ widget_t start_preferences_dialog(void)
 				icon_box_toggle);
     remember_pref(prf, reflect_icon_box, save_icon_box, help_icon_box, clear_icon_box, revert_icon_box);
 #endif
-
-    current_sep = make_inter_variable_separator(dpy_box);
-    prf = prefs_row_with_toggle("reopen menu", "with-reopen-menu",
-				(include_reopen_menu = find_reopen_menu()),
-				dpy_box,
-				reopen_menu_toggle);
-    remember_pref(prf, reflect_reopen_menu, save_reopen_menu, help_reopen_menu, clear_reopen_menu, revert_reopen_menu);
 
     current_sep = make_inter_variable_separator(dpy_box);
 

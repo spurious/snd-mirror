@@ -909,57 +909,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   (hook-remove initial-graph-hook prefs-initial-bounds))
 
 
-;;; -------- reopen menu
-
-(define including-reopen-menu #f) ; for prefs
-
-(define (with-reopen-menu)
-  (if (not including-reopen-menu)
-      (let ((reopen-menu (add-to-main-menu "Reopen"))
-	    (reopen-names '()))
-
-	(define (add-to-reopen-menu snd)
-	  (let ((brief-name (short-file-name snd))
-		(long-name (file-name snd))
-		(reopen-max-length 16)) ; sets max length of menu
-	    (if (not (member brief-name reopen-names))
-		(begin
-		  (add-to-menu reopen-menu 
-			       brief-name
-			       (lambda () 
-				 (remove-from-menu reopen-menu brief-name)
-				 (open-sound long-name))
-			       0) ; add to top
-		  (set! reopen-names (append reopen-names (list brief-name)))
-		  (if (> (length reopen-names) reopen-max-length)
-		      (let ((goner (car reopen-names)))
-			(set! reopen-names (cdr reopen-names))
-			(remove-from-menu reopen-menu goner)))))))
-	
-	(define (check-reopen-menu filename)
-	  (define (just-filename name)
-	    (let ((last-slash -1)
-		  (len (string-length name)))
-	      (do ((i 0 (+ 1 i)))
-		  ((= i len) (substring name (+ 1 last-slash)))
-		(if (char=? (string-ref name i) #\/)
-		    (set! last-slash i)))))
-	  (let ((brief-name (just-filename filename)))
-	    (if (member brief-name reopen-names)
-		(set! reopen-names (remove-if (lambda (n) 
-						(let ((val (string=? n brief-name)))
-						  (if val (remove-from-menu reopen-menu brief-name))
-						  val))
-					      reopen-names))))
-	  #f)
-	
-	(set! including-reopen-menu #t)
-	(hook-push close-hook add-to-reopen-menu)
-	(hook-push open-hook check-reopen-menu))))
-
-
-
-
 ;;; -------- with-threaded-channels
 ;;;
 ;;; experimental!

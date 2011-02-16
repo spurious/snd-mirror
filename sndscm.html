@@ -5069,18 +5069,6 @@ It is the multichannel version of <a href="extsnd.html#scalechannel">scale-chann
 undo-channel is a "regularized" version of <a href="extsnd.html#undo">undo</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
-
-<!-- with-reopen-menu -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="withreopenmenu">with-reopen-menu</a> 
-</td></tr><tr><td></td><td>
-with-reopen-menu creates a top-level Reopen menu, similar to the Emacs Buffers menu.
-It presents a list of previously
-closed (and not subsequently re-opened) files in the reverse order of closing.
-If you choose one, it is opened.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 </table>
 
 <br><br>
@@ -9291,157 +9279,16 @@ A more complex example is singer's attempt to say "requiem":
 <br>
 
 
-<!-- ---------------------------------------- FILE: snd7|8|9|10|11 ---------------------------------------- -->
+<!-- ---------------------------------------- FILE: snd9|10|11 ---------------------------------------- -->
 
 <table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
-<A NAME="sndolddoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd7|8|9|10|11</h2></td></tr></table>
+<A NAME="sndolddoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd9|10|11</h2></td></tr></table>
 </td></tr></table>
 
-<p>These files contain a number of the procedures
+<p>These files contain several procedures
 that were removed from or renamed in earlier versions of Snd (in Ruby, look in extensions.rb).  
-snd10.scm, for example, has the old generators sine-summation, make-sum-of-cosines, and make-sum-of-sines.
-Some of the other procedures are:
+snd10.scm, for example, has the old sine-summation, make-sum-of-cosines, and make-sum-of-sines generators.
 </p>
-
-<table border=0 cellspacing=4 cellpadding=6 hspace=20>
-
-<!-- backward-graph -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>backward-graph</em> <code>count snd chn</code>
-</td></tr><tr><td></td><td>
-move the selected channel back (up or left) 'count' graphs (C-x C-o), returning a list of the new sound and channel number.
-(snd7.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- backward-mark -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>backward-mark</em> <code>count snd chn</code>
-</td></tr><tr><td></td><td>
-move the cursor back 'count' marks (C-j), returning mark id, or #f if none. (snd7.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- backward-mix -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>backward-mix</em> <code>count snd chn</code>
-</td></tr><tr><td width=50><br></td><td>
-move the cursor back 'count' mix tags (C-x C-j), returning the mix id. (snd7.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- emacs-style-save-as -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><a class=def name="emacsstylesaveas">emacs-style-save-as</a> 
-</td></tr><tr><td></td><td colspan=2>
-After File:Save-as dialog option, should Snd remain with the current file (#f) or go to the new file (#t).
-(snd7.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- forward-graph -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>forward-graph</em> <code>count snd chn</code>
-</td></tr><tr><td></td><td>
-move the selected channel forward (down or right) 'count' graphs (C-x C-o), returning a list of the new sound and channel number.
-(snd7.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- forward-mark -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>forward-mark</em> <code>count snd chn</code>
-</td></tr><tr><td></td><td>
-move the cursor forward 'count' marks (C-j), returning mark id, or #f if none. (snd7.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- forward-mix -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>forward-mix</em> <code>count snd chn</code>
-</td></tr><tr><td></td><td>
-move the cursor forward 'count' mix tags (C-x C-j), returning the mix id. (snd7.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- mfilter -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>make-mfilter</em> <code>(frequency 1000) (decay .99)</code><br>
-<a class=def NAME="mfilter">mfilter</a> <code>gen x-input y-input</code>
-</td></tr><tr><td></td><td>
-This is the old implementation of the firmant generator.
-A slightly different view of the same filter is provided
-by <a href="#maxfdoc">maxf</a>.  
-<pre>
-(<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()    ; filter "now.snd" with default freq/decay
-  (let ((rd (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0 "now.snd")) 
-	(m (<em class=red>make-mfilter</em>))) 
-    (run 
-     (do ((i 0 (+ 1 i))) 
-         ((= i 10000))
-       (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>mfilter</em> m (* .1 (rd))))))))
-
-(<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()    ; sweep center freq from 100Hz to 2000Hz
-  (let ((rd (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0 "oboe.snd")) 
-        (m (<em class=red>make-mfilter</em> :decay .99 :frequency 1000)) 
-        (e (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 100 1 2000) :length 10000))) 
-    (run
-     (do ((i 0 (+ 1 i))) 
-         ((= i 10000))
-       (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>mfilter</em> m (* .1 (rd)))) 
-       (set! (<em class=red>mflt-eps</em> m) (* 2.0 (sin (/ (* pi (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> e)) (<a class=quiet href="sndclm.html#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>)))))))))
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- samples->sound-data -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>samples-&gt;sound-data</em> <code>samp samps snd chn sdobj edpos sdchan</code>
-</td></tr><tr><td></td><td>
-This is similar to <a href="extsnd.html#channeltovct">channel-&gt;vct</a>, but it fills a <a href="extsnd.html#sndsounddata">sound-data</a> object.
-(snd8.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- samples->vct -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>samples-&gt;vct</em> <code>samp samps snd chn v edpos</code>
-</td></tr><tr><td></td><td>
-return vct struct with the data specified.
-Use <a href="extsnd.html#channeltovct">channel-&gt;vct</a> instead. (snd7.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- scale-sound-by -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>scale-sound-by</em> <code>scaler beg num snd chn edpos</code>
-</td></tr><tr><td></td><td>
-scales the samples in the given channel between beg and beg + num by scaler.  If the channel argument is omitted,
-<b>scale-sound-by</b> scales the entire sound.  'beg' defaults to 0; 'num' defaults to the length of the channel.
-'snd' defaults to the selected sound, and 'chn' to the selected channel.  Unlike scale-by, this ignores the <a class=quiet href="extsnd.html#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> setting.
-(snd7.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- scale-sound-to -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>scale-sound-to</em> <code>norm beg num snd chn</code>
-</td></tr><tr><td></td><td>
-normalizes the samples in the given channel between beg and beg + num to norm.  If the channel argument is omitted,
-<b>scale-sound-to</b> normalizes the entire sound.  'beg' defaults to 0; 'num' defaults to the length of the channel.
-'snd' defaults to the selected sound, and 'chn' to the selected channel.  Unlike scale-to, this ignores the <a class=quiet href="extsnd.html#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> setting.
-(snd7.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- vct->samples -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><em class=emdef>vct-&gt;samples</em> <code>samp samps data snd chn</code>
-</td></tr><tr><td></td><td>
-A synonym for <a href="extsnd.html#setsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
-sample and a vct as the second argument.  Use <a href="extsnd.html#vcttochannel">vct-&gt;channel</a> instead.
-(snd7.scm)
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-</table>
 
 <br><br>
 

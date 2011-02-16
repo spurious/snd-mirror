@@ -2317,13 +2317,43 @@ static int h_type_to_pos[MUS_NUM_HEADER_TYPES];
 static int h_type_to_h[MUS_NUM_HEADER_TYPES];
 
 
+static const char *data_format_name(int format)
+{
+  switch (format)
+    {
+    case MUS_BSHORT:           return("16-bit int (be)");      break;
+    case MUS_MULAW:            return("mulaw");                break;
+    case MUS_BYTE:             return("8-bit int");            break;
+    case MUS_BFLOAT:           return("float (be)");           break;
+    case MUS_BFLOAT_UNSCALED:  return("float unscaled (be))"); break;
+    case MUS_BINT:             return("32-bit int (be)");      break;
+    case MUS_ALAW:             return("alaw");                 break;
+    case MUS_UBYTE:            return("unsigned byte");        break;
+    case MUS_B24INT:           return("24-bit int (be)");      break;
+    case MUS_BDOUBLE:          return("double (be)");          break;
+    case MUS_BDOUBLE_UNSCALED: return("double unscaled (be)"); break;
+    case MUS_LSHORT:           return("16-bit int (le)");      break;
+    case MUS_LINT:             return("32-bit int (le)");      break;
+    case MUS_LFLOAT:           return("float (le)");           break;
+    case MUS_LDOUBLE:          return("double (le)");          break;
+    case MUS_LFLOAT_UNSCALED:  return("float unscaled (le)");  break;
+    case MUS_LDOUBLE_UNSCALED: return("double unscaled (le)"); break;
+    case MUS_UBSHORT:          return("unsigned short (be)");  break;
+    case MUS_ULSHORT:          return("unsigned short (le)");  break;
+    case MUS_L24INT:           return("24-bit int (le)");      break;
+    case MUS_BINTN:            return("normalized int (be)");  break;
+    case MUS_LINTN:            return("normalized int (le)");  break;
+    default:                   return("unknown");              break;
+    }
+}
+
 void initialize_format_lists(void)
 {
   int i, h;
 
   for (h = 0; h < H_SIZE; h++)
     for (i = 0; i < h_num_formats[h]; i++)
-      h_df_names[h][i] = mus_data_format_to_string(h_dfs[h][i]);
+      h_df_names[h][i] = data_format_name(h_dfs[h][i]);
   
   for (i = 0; i < MUS_NUM_HEADER_TYPES; i++)
     {

@@ -498,7 +498,10 @@
 				      "burt_adelson" "beylkin" "coif2" "coif4" "coif6" "sym2" "sym3" "sym4" "sym5" "sym6")))
 			 'wavelet-types)))
 		(list "Color/Orientation" every-menu
-		      (lambda (w data) (color-orientation-dialog))))))))
+		      (lambda (w data) (color-orientation-dialog)))
+		(list "Save peaks to fft.txt" every-menu
+		       (lambda (w data) (peaks "fft.txt")))
+		)))))
       (set! fft-types (reverse fft-types))
       (set! fft-windows (reverse fft-windows))
       (set! fft-norms (reverse fft-norms))

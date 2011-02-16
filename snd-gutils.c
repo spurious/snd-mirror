@@ -1205,10 +1205,6 @@ distribution, that would be great and a vast improvement.
 1.) It would be nice, to have a play-cursor as known from most 
 Wave-Editors like Mhwaveedit or Ardour. 
 
-2.) It would help to have a little switch, that allows to treat all 
-channels in a multi-channel-file as one, so one can work more easily 
-with stereofiles. 
-
 3.) to have a rightklick-menu entry that allows to save a region or a 
 marked section to a new file with the opportunity to render effects etc 
 to that file... 
@@ -1224,11 +1220,6 @@ dump-to-text-file mode
 Thanks for the suggestions!  I think I'll move the
 context-sensitive popup menus into the main version --
 I assume that's what you mean by right-click menus?
-
-For multichannel files, you can set the 'unite' and 
-'sync' buttons and all channels will be displayed
-and acted-upon together -- is that what you have in 
-mind?
 
 On the zoomed FFT -- it's been on my TODO list for
 about a decade.  You can drag the frequency (x) axis
@@ -1250,7 +1241,6 @@ C-g for begin_hook might be a bad idea -- there is code that catches c-g and goe
 
 --------
 
-I tried SND-GTK and here are some things that could be improved. 
 1) playback. It's very strange that you need to tick a box to start/stop playback instead of hitting the space bar. 
 2) general lack of keybindings 
 3) In the preferences for example the menu section labels look like buttons, which is confusing. 
@@ -1259,20 +1249,6 @@ I tried SND-GTK and here are some things that could be improved.
 6) Dragging scrollbars during playback makes playback very choppy or 
 stops it altogether, most likely some more general graphics issue, it's 
 just most obvious with those scrollbars 
-7) information/option overload. It's nice to have options, but seeing 
-all those rather cryptic options in a new file dialog is intimidating. 
-I dabble with audio since years, yet all those mus-* tell me nothing. 
-Imagine a musician sitting in front of that dialog. A sane default is 
-crucial and it's probably also a good idea to hide intimidating options 
-like those or make them less intimidating. 
-What I love: 
-1) The "Go Away" label 
-2) The colorful sliders in the preference menu (nice red/green/blue 
-here) 
-I know that I've only scratched the surface of SND, and maybe it's 
-intended to be programmed rather than simply used, I don't know. 
-However, from my perspective simply using it is a rather difficult task. 
-I hope this helps a bit. 
 
 --------
 

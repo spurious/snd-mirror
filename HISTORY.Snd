@@ -1,6 +1,6 @@
 Snd change log
 
- 16-Feb:    sync-style variable: sync-none (the default), sync-all, or sync-by-sound.
+ 16-Feb:    sync-style variable: sync-none, sync-all, or sync-by-sound (the new default).
  12-Feb:    Snd 11.13.
  7-Jan:     Snd 11.12.
 

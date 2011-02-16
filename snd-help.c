@@ -489,7 +489,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-16-Feb:  sync-style variable: sync-none (the default), sync-all, or sync-by-sound.\n\
+16-Feb:  sync-style variable: sync-none (old default), sync-all, or sync-by-sound (new default).\n\
 12-Feb:  Snd 11.13.\n\
 7-Jan:   Snd 11.12.\n\
 29-Nov:  Snd 11.11.\n\
@@ -2493,6 +2493,7 @@ void save_as_dialog_help(void)
 "You can save the current state of a file with File:Save As, or the current selection with Edit:Save as. \
 The output header type, data format, sampling rate, and comment can also be set.  Setting the srate \
 does not affect the data -- it is just a number placed in the sound file header. \
+The notation \"(be)\" in the data format lists stands for big endian; similarly, \"(le)\" is little endian.\
 If a file by the chosen name already exists \
 it is overwritten, unless that file is already open in Snd and has edits.  In that case,  \
 you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
@@ -2659,6 +2660,7 @@ void new_file_dialog_help(void)
 The 'srate:' and 'channels:' labels are actually drop-down menus providing quick access to common choices. \
 The default values for the fields can be set by clicking 'Reset'.  These values \
 are " S_default_output_chans ", " S_default_output_data_format ", " S_default_output_srate ", and " S_default_output_header_type ".  \
+The notation \"(be)\" in the data format lists stands for big endian; similarly, \"(le)\" is little endian.\
 The file name field can be set upon each invocation through " S_output_name_hook ", and the \
 comment field via " S_output_comment_hook ".  Click 'Ok' to open the new sound. The actual new file representing the new sound is not written \
 until you save the new sound.",
@@ -2704,6 +2706,7 @@ void edit_header_dialog_help(void)
   snd_help_with_xrefs("Edit Header",
 
 "This dialog edits the header of a sound file; no change is made to the actual sound data. \
+The notation \"(be)\" in the data format lists stands for big endian; similarly, \"(le)\" is little endian.\
 If you specify 'raw' as the type, any existing header is removed.  This dialog is aimed at adding or removing an entire header,  \
 or editing the header comments; anything else is obviously dangerous.",
 

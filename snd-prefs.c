@@ -1,5 +1,8 @@
 /* this file included as text in snd-g|xprefs.c */
 
+/* TODO: get rid of the rightmost Snd-name */
+/* TODO: the file type "next" no longer makes sense -- "au"? */
+
 static void int_to_textfield(widget_t w, int val)
 {
   char *str;
@@ -539,6 +542,7 @@ static void prefs_function_call_1(const char *func, XEN arg)
 }
 
 
+#if USE_MOTIF
 static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
 {
 #if HAVE_SCHEME
@@ -562,6 +566,7 @@ static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
   fprintf(fd, "%s\n", name);
 #endif
 }
+#endif
 
 
 static void prefs_function_save_1(FILE *fd, const char *name, const char *file, XEN val)
@@ -2005,9 +2010,9 @@ static void grid_density_text_callback(prefs_info *prf)
 
 #define SYNC_UNSET -1
 
-static sync_style_t rts_sync_style = SYNC_NONE;
+static sync_style_t rts_sync_style = DEFAULT_SYNC_STYLE;
 static void revert_sync_style(prefs_info *prf) {set_sync_style(rts_sync_style);}
-static void clear_sync_style(prefs_info *prf) {set_sync_style(SYNC_NONE);}
+static void clear_sync_style(prefs_info *prf) {set_sync_style(DEFAULT_SYNC_STYLE);}
 static void save_sync_style(prefs_info *prf, FILE *ignore) {rts_sync_style = sync_style(ss);}
 
 static void help_sync_style(prefs_info *prf)
@@ -3906,51 +3911,6 @@ static void reflect_icon_box(prefs_info *prf) {}
 static void revert_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_icon_box);}
 static void clear_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 #endif
-
-
-/* ---------------- reopen menu ---------------- */
-
-static bool include_reopen_menu = false;
-
-static void help_reopen_menu(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds a top-level 'Reopen' menu. Previously opened sounds that are not currently open are listed \
-as menu items.",
-	   WITH_WORD_WRAP);
-}
-
-
-static bool find_reopen_menu(void)
-{
-  return((XEN_DEFINED_P("including-reopen-menu")) &&
-	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-reopen-menu")));
-}
-
-
-static void save_reopen_menu(prefs_info *prf, FILE *fd)
-{
-  include_reopen_menu = GET_TOGGLE(prf->toggle);
-  if (include_reopen_menu)
-    prefs_function_save_0(fd, "with-reopen-menu", "extensions");
-}
-
-
-static void reopen_menu_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(find_reopen_menu())))
-    {
-      load_file_with_path_and_extension("extensions");
-      prefs_function_call_0("with-reopen-menu");
-    }
-}
-
-
-static void reflect_reopen_menu(prefs_info *prf) {}
-static void revert_reopen_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_reopen_menu);}
-static void clear_reopen_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
-
 
 
 #if USE_MOTIF

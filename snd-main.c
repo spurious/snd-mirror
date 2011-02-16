@@ -1846,13 +1846,13 @@ static XEN g_set_play_arrow_size(XEN size)
 {
   int arrow_size;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ONLY_ARG, S_setB S_play_arrow_size, "an integer");
-  /* PERHAPS: immediate arrow size reflection */
 
   arrow_size = XEN_TO_C_INT(size);
   if (arrow_size >= 0)
     set_play_arrow_size(arrow_size);
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_play_arrow_size, XEN_ONLY_ARG, size, "must be >= 0");
 
+  for_each_chan(update_graph);
   return(size);
 }
 

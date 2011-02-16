@@ -837,7 +837,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define sync_style(ss) ss->Sync_Style
 #define set_sync_style(a) ss->Sync_Style = a
-#define DEFAULT_SYNC_STYLE SYNC_NONE
+#define DEFAULT_SYNC_STYLE SYNC_BY_SOUND
 
 #define sound_style(ss) ss->Sound_Style
 #define set_sound_style(a) ss->Sound_Style = a
