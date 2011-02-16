@@ -1676,7 +1676,7 @@ void reverb_help(void)
   #if HAVE_SCHEME
     #define reverb_control_length_bounds_example "(set! (reverb-control-length-bounds) (list 0.0 10.0))"
     #define reverb_control_p_example "(set! (reverb-control?) #t)"
-    #define mention_hidden_controls "\nThe lowpass and feedback controls are accessible from the \"Hidden controls\" dialog in snd-motif.scm and snd-gtk.scm."
+    #define mention_hidden_controls "\nThe lowpass and feedback controls are accessible from the \"Option:Controls\" dialog."
   #endif
   #if HAVE_RUBY
     #define reverb_control_length_bounds_example "set_reverb_control_length_bounds([0.0, 10.0])"
@@ -3694,7 +3694,6 @@ and its value is returned."
     if (XEN_PROCEDURE_P(sym))
       {
 	str = (char *)s7_procedure_documentation(s7, sym);
-#if HAVE_SCHEME
 	if ((str == NULL) || (mus_strlen(str) == 0))
 	  {
 	    const char *url = NULL;
@@ -3725,7 +3724,6 @@ and its value is returned."
 		  }
 	      }
 	  }
-#endif	
       }
     else
       {

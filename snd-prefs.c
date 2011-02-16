@@ -1,7 +1,11 @@
 /* this file included as text in snd-g|xprefs.c */
 
-/* TODO: get rid of the rightmost Snd-name */
-/* TODO: the file type "next" no longer makes sense -- "au"? */
+/* TODO: the following need to be built-in:
+ *    unsaved edits, initial bounds, remember sound state, show selection key binding
+ *    effects menu, marks menu, toolbar, edit menu additions, popup menus
+ *    hidden-controls to Options:control panel in gtk
+ */
+
 
 static void int_to_textfield(widget_t w, int val)
 {
@@ -379,7 +383,6 @@ static void prefs_help(prefs_info *prf)
 	  prefs_helping = true;
 	  (*(prf->help_func))(prf);
 	}
-#if (!HAVE_SCHEME)
       else
 	{
 	  XEN sym;
@@ -387,7 +390,11 @@ static void prefs_help(prefs_info *prf)
 	  if (XEN_SYMBOL_P(sym))
 	    {
 	      XEN obj;
+#if HAVE_SCHEME
+	      obj = g_snd_help_with_search(sym, 0, false);
+#else
 	      obj = XEN_OBJECT_HELP(sym);
+#endif
 	      if (XEN_STRING_P(obj))
 		{
 		  prefs_helping = true;
@@ -397,7 +404,6 @@ static void prefs_help(prefs_info *prf)
 		}
 	    }
 	}
-#endif
     }
 }
 
@@ -494,6 +500,7 @@ static void load_file_with_path_and_extension(const char *file)
 }
 
 
+#if USE_MOTIF
 static void prefs_function_call_0(const char *func)
 {
 #if HAVE_EXTENSION_LANGUAGE
@@ -514,6 +521,7 @@ static void prefs_function_call_0(const char *func)
   free(str);
 #endif
 }
+#endif
 
 
 static void prefs_function_call_1(const char *func, XEN arg)
@@ -2462,76 +2470,6 @@ static void reflect_with_pointer_focus(prefs_info *prf)
 
 
 
-#if HAVE_SCHEME
-/* ---------------- optimization ---------------- */
-
-static int rts_optimization = DEFAULT_OPTIMIZATION;
-
-#define MAX_OPTIMIZATION 6
-#define MIN_OPTIMIZATION 0
-
-static void revert_optimization(prefs_info *prf) {set_optimization(rts_optimization);}
-static void save_optimization(prefs_info *prf, FILE *ignore) {rts_optimization = optimization(ss);}
-
-
-static void reflect_optimization(prefs_info *prf)
-{
-  int_to_textfield(prf->text, optimization(ss));
-  SET_SENSITIVE(prf->arrow_up, optimization(ss) < MAX_OPTIMIZATION);
-  SET_SENSITIVE(prf->arrow_down, optimization(ss) > MIN_OPTIMIZATION);
-}
-
-
-static void optimization_up(prefs_info *prf)
-{
-  int val;
-  val = optimization(ss) + 1;
-  if (val >= MAX_OPTIMIZATION) SET_SENSITIVE(prf->arrow_up, false);
-  if (val > MIN_OPTIMIZATION) SET_SENSITIVE(prf->arrow_down, true);
-  set_optimization(val);
-  int_to_textfield(prf->text, optimization(ss));
-}
-
-
-static void optimization_down(prefs_info *prf)
-{
-  int val;
-  val = optimization(ss) - 1;
-  if (val <= MIN_OPTIMIZATION) SET_SENSITIVE(prf->arrow_down, false);
-  if (val < MAX_OPTIMIZATION) SET_SENSITIVE(prf->arrow_up, true);
-  set_optimization(val);
-  int_to_textfield(prf->text, optimization(ss));
-}
-
-
-static void optimization_from_text(prefs_info *prf)
-{
-  int opt;
-  char *str;
-  str = GET_TEXT(prf->text);
-  if ((str) && (*str))
-    {
-      prf->got_error = false;
-
-      redirect_errors_to(redirect_post_prefs_error, (void *)prf);
-      opt = string_to_int(str, MIN_OPTIMIZATION, "optimization"); 
-      redirect_errors_to(NULL, NULL);
-
-      free_TEXT(str);
-      if (!(prf->got_error))
-	{
-	  if (opt <= MAX_OPTIMIZATION)
-	    set_optimization(opt);		 
-	  else va_post_prefs_error("%s > %d?", prf, str, MAX_OPTIMIZATION);
-	}
-      else prf->got_error = false;
-    }
-}
-#endif
-
-
-
-
 /* ---------------- cursor-size ---------------- */
 
 static int rts_cursor_size = DEFAULT_CURSOR_SIZE;
@@ -2819,7 +2757,7 @@ static void cursor_location_text(prefs_info *prf)
 
 static channel_style_t rts_channel_style = DEFAULT_CHANNEL_STYLE;
 
-static const char *channel_styles[NUM_CHANNEL_STYLES] = {"separate", "combined", "superimposed"};
+static const char *channel_styles[NUM_CHANNEL_STYLES] = {"separate ", "combined ", "superimposed"};
 
 
 static void reflect_channel_style(prefs_info *prf) {set_radio_button(prf, (int)channel_style(ss));}
@@ -2839,7 +2777,7 @@ static void channel_style_choice(prefs_info *prf)
 static cursor_style_t rts_cursor_style = DEFAULT_CURSOR_STYLE;
 
 #define NUM_CURSOR_STYLES 2
-static const char *cursor_styles[NUM_CURSOR_STYLES] = {"cross", "line"};
+static const char *cursor_styles[NUM_CURSOR_STYLES] = {"cross ", "line"};
 
 
 static void reflect_cursor_style(prefs_info *prf) {set_radio_button(prf, (int)cursor_style(ss));}
@@ -2876,7 +2814,7 @@ static void tracking_cursor_style_choice(prefs_info *prf)
 static graph_type_t rts_transform_graph_type = DEFAULT_TRANSFORM_GRAPH_TYPE;
 
 #define NUM_TRANSFORM_GRAPH_TYPES 3
-static const char *transform_graph_types[NUM_TRANSFORM_GRAPH_TYPES] = {"normal", "sonogram", "spectrogram"};
+static const char *transform_graph_types[NUM_TRANSFORM_GRAPH_TYPES] = {"normal ", "sonogram ", "spectrogram"};
 
 
 static void reflect_transform_graph_type(prefs_info *prf) {set_radio_button(prf, (int)transform_graph_type(ss));}
@@ -2895,7 +2833,7 @@ static void transform_graph_type_choice(prefs_info *prf)
 
 static fft_normalize_t rts_transform_normalization = DEFAULT_TRANSFORM_NORMALIZATION;
 
-static const char *transform_normalizations[NUM_TRANSFORM_NORMALIZATIONS] = {"none", "by channel", "by sound", "global"};
+static const char *transform_normalizations[NUM_TRANSFORM_NORMALIZATIONS] = {"none ", "by channel ", "by sound ", "global"};
 
 
 static void reflect_transform_normalization(prefs_info *prf) {set_radio_button(prf, (int)transform_normalization(ss));}
@@ -2914,7 +2852,7 @@ static void transform_normalization_choice(prefs_info *prf)
 
 static graph_style_t rts_graph_style = DEFAULT_GRAPH_STYLE;
 
-static const char *graph_styles[NUM_GRAPH_STYLES] = {"line", "dot", "filled", "dot+line", "lollipop"};
+static const char *graph_styles[NUM_GRAPH_STYLES] = {"line ", "dot ", "filled ", "dot+line ", "lollipop"};
 
 
 static void reflect_graph_style(prefs_info *prf) {set_radio_button(prf, (int)graph_style(ss));}
@@ -2935,7 +2873,7 @@ static speed_style_t rts_speed_control_style = DEFAULT_SPEED_CONTROL_STYLE;
 static int rts_speed_control_tones = DEFAULT_SPEED_CONTROL_TONES;
 
 #define MIN_SPEED_CONTROL_SEMITONES 1
-static const char *speed_control_styles[NUM_SPEED_CONTROL_STYLES] = {"float", "ratio", "semitones:"};
+static const char *speed_control_styles[NUM_SPEED_CONTROL_STYLES] = {"float ", "ratio ", "semitones:"};
 
 static void show_speed_control_semitones(prefs_info *prf)
 {
@@ -3018,19 +2956,19 @@ static int rts_default_output_header_type = DEFAULT_OUTPUT_HEADER_TYPE;
 static prefs_info *output_data_format_prf = NULL, *output_header_type_prf = NULL;
 
 #define NUM_OUTPUT_CHAN_CHOICES 4
-static const char *output_chan_choices[NUM_OUTPUT_CHAN_CHOICES] = {"1", "2", "4", "8"};
+static const char *output_chan_choices[NUM_OUTPUT_CHAN_CHOICES] = {"1 ", "2 ", "4 ", "8"};
 static int output_chans[NUM_OUTPUT_CHAN_CHOICES] = {1, 2, 4, 8};
 
 #define NUM_OUTPUT_SRATE_CHOICES 4
-static const char *output_srate_choices[NUM_OUTPUT_SRATE_CHOICES] = {"8000", "22050", "44100", "48000"};
+static const char *output_srate_choices[NUM_OUTPUT_SRATE_CHOICES] = {"8000 ", "22050 ", "44100 ", "48000"};
 static int output_srates[NUM_OUTPUT_SRATE_CHOICES] = {8000, 22050, 44100, 48000};
 
 #define NUM_OUTPUT_TYPE_CHOICES 7
-static const char *output_type_choices[NUM_OUTPUT_TYPE_CHOICES] = {"aifc", "wave", "next/sun", "rf64", "nist", "aiff", "caff"};
+static const char *output_type_choices[NUM_OUTPUT_TYPE_CHOICES] = {"aifc ", "wave ", "au ", "rf64 ", "nist ", "aiff ", "caff"};
 static int output_types[NUM_OUTPUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_RF64, MUS_NIST, MUS_AIFF, MUS_CAFF};
 
 #define NUM_OUTPUT_FORMAT_CHOICES 4
-static const char *output_format_choices[NUM_OUTPUT_FORMAT_CHOICES] = {"short", "int", "float", "double"};
+static const char *output_format_choices[NUM_OUTPUT_FORMAT_CHOICES] = {"short ", "int ", "float ", "double"};
 static int output_formats[NUM_OUTPUT_FORMAT_CHOICES] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
 
 
@@ -3969,60 +3907,6 @@ static void clear_mark_pane(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
 
 
-#if HAVE_SCHEME
-/* ---------------- hidden controls dialog ---------------- */
-
-static bool include_hidden_controls = false;
-
-static void help_hidden_controls(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This adds a 'Hidden Controls' option to the Option menu.  The dialog \
-gives access to all the synthesis variables that aren't reflected in the standard \
-control panel: 'expand-hop' sets the hop size (per grain), 'expand-length' \
-sets the grain length, 'expand-ramp' sets the slope of the grain amplitude envelope, \
-'contrast-amp' sets the prescaler for the contrast effect, 'reverb-feedback' sets the feedback \
-amount in the reverberator (it sets all the comb filter scalers), and 'reverb-lowpass' sets \
-the lowpass filter coefficient in the reverberator.",
-	   WITH_WORD_WRAP);
-}
-
-
-static bool find_hidden_controls(void)
-{
-  return((XEN_DEFINED_P("hidden-controls-dialog")) &&
-	 (XEN_NOT_FALSE_P(XEN_NAME_AS_C_STRING_TO_VALUE("hidden-controls-dialog"))));
-}
-
-
-static void save_hidden_controls(prefs_info *prf, FILE *fd)
-{
-  include_hidden_controls = GET_TOGGLE(prf->toggle);
-  if (include_hidden_controls)
-    {
-      fprintf(fd, "(if (not (provided? 'snd-snd-motif.scm)) (load \"snd-motif.scm\"))\n");
-      fprintf(fd, "(make-hidden-controls-dialog)\n");
-    }
-}
-
-
-static void hidden_controls_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(find_hidden_controls())))
-    {
-      load_file_with_path_and_extension("snd-motif");
-      prefs_function_call_0("make-hidden-controls-dialog");
-    }
-}
-
-
-static void reflect_hidden_controls(prefs_info *prf) {}
-static void revert_hidden_controls(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_hidden_controls);}
-static void clear_hidden_controls(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
-
-#endif
-
 
 
 /* ---------------- smpte ---------------- */
@@ -4173,7 +4057,6 @@ static show_axes_t rts_show_axes = DEFAULT_SHOW_AXES;
 
 static const char *show_axes_choices[NUM_SHOW_AXES] = {"none", "X and Y", "just X", "X and Y unlabelled", "just X unlabelled", "bare X"};
 
-
 static void reflect_show_axes(prefs_info *prf) {SET_TEXT(prf->text, (char *)show_axes_choices[(int)show_axes(ss)]);}
 static void revert_show_axes(prefs_info *prf) {in_set_show_axes(rts_show_axes);}
 static void clear_show_axes(prefs_info *prf) {in_set_show_axes(DEFAULT_SHOW_AXES);}
@@ -4231,7 +4114,6 @@ static void show_axes_from_text(prefs_info *prf)
 static x_axis_style_t rts_x_axis_style = DEFAULT_X_AXIS_STYLE;
 
 static const char *x_axis_styles[NUM_X_AXIS_STYLES] = {"seconds", "samples", "% of total", "beats", "measures", "clock"};
-
 
 static void reflect_x_axis_style(prefs_info *prf) {SET_TEXT(prf->text, (char *)x_axis_styles[(int)x_axis_style(ss)]);}
 static void revert_x_axis_style(prefs_info *prf) {in_set_x_axis_style(rts_x_axis_style);}

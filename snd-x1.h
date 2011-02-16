@@ -356,6 +356,7 @@ void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color);
 void reflect_sound_selection(snd_info *sp);
 void display_minibuffer_error(snd_info *sp, const char *str);
 void clear_minibuffer_error(snd_info *sp);
+void make_controls_dialog(void);
 
 
 /* -------- snd-xfile.c -------- */

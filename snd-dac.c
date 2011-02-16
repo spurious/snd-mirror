@@ -473,7 +473,7 @@ static int play_list_members = 0;
 static int max_active_slot = -1;
 
 
-/* -------------------------------- special "hidden" control panel variables -------------------------------- */
+/* -------------------------------- special control panel variables -------------------------------- */
 
 typedef enum {DAC_EXPAND, DAC_EXPAND_RAMP, DAC_EXPAND_LENGTH, DAC_EXPAND_HOP, DAC_EXPAND_SCALER, 
 	      DAC_CONTRAST_AMP, DAC_REVERB_FEEDBACK, DAC_REVERB_LOWPASS} dac_field_t;

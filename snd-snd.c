@@ -1550,7 +1550,7 @@ static ctrl_state *current_control_settings(snd_info *sp, ctrl_state *cs)
   if (sp->speed_control_direction == 1) 
     cs->reversed = false; 
   else cs->reversed = true;
-  /* "hidden" vars */
+
   cs->contrast_amp = sp->contrast_control_amp;
   cs->expand_ramp = sp->expand_control_ramp;
   cs->expand_hop = sp->expand_control_hop;
@@ -2263,6 +2263,124 @@ void menu_reset_controls(snd_info *sp)
   reset_controls(sp);
 }
 
+
+void expand_control_set_hop(mus_float_t hop)
+{
+  int i;
+  in_set_expand_control_hop(ss, hop);
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && 
+	  (sp->inuse == SOUND_NORMAL))
+	{
+	  sp->expand_control_hop = expand_control_hop(ss);
+	  if (sp->playing) dac_set_expand_hop(sp, expand_control_hop(ss));
+	}
+    }
+}
+
+void expand_control_set_length(mus_float_t hop)
+{
+  int i;
+  in_set_expand_control_length(ss, hop);
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && 
+	  (sp->inuse == SOUND_NORMAL))
+	{
+	  sp->expand_control_length = expand_control_length(ss);
+	  if (sp->playing) dac_set_expand_length(sp, expand_control_length(ss));
+	}
+    }
+}
+
+void expand_control_set_ramp(mus_float_t hop)
+{
+  int i;
+  in_set_expand_control_ramp(ss, hop);
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && 
+	  (sp->inuse == SOUND_NORMAL))
+	{
+	  sp->expand_control_ramp = expand_control_ramp(ss);
+	  if (sp->playing) dac_set_expand_ramp(sp, expand_control_ramp(ss));
+	}
+    }
+}
+
+void expand_control_set_jitter(mus_float_t hop)
+{
+  int i;
+  in_set_expand_control_jitter(ss, hop);
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && 
+	  (sp->inuse == SOUND_NORMAL))
+	{
+	  sp->expand_control_jitter = expand_control_jitter(ss);
+	}
+    }
+}
+
+void contrast_control_set_amp(mus_float_t hop)
+{
+  int i;
+  in_set_contrast_control_amp(ss, hop);
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && 
+	  (sp->inuse == SOUND_NORMAL))
+	{
+	  sp->contrast_control_amp = contrast_control_amp(ss);
+	  if (sp->playing) dac_set_contrast_amp(sp, contrast_control_amp(ss));
+	}
+    }
+}
+
+void reverb_control_set_lowpass(mus_float_t hop)
+{
+  int i;
+  in_set_reverb_control_lowpass(ss, hop);
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && 
+	  (sp->inuse == SOUND_NORMAL))
+	{
+	  sp->reverb_control_lowpass = reverb_control_lowpass(ss);
+	  if (sp->playing) dac_set_reverb_lowpass(sp, reverb_control_lowpass(ss));
+	}
+    }
+}
+
+void reverb_control_set_feedback(mus_float_t hop)
+{
+  int i;
+  in_set_reverb_control_feedback(ss, hop);
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && 
+	  (sp->inuse == SOUND_NORMAL))
+	{
+	  sp->reverb_control_feedback = reverb_control_feedback(ss);
+	  if (sp->playing) dac_set_reverb_feedback(sp, reverb_control_feedback(ss));
+	}
+    }
+}
 
 
 

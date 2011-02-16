@@ -16,7 +16,7 @@ enum {m_menu,
           h_play_menu, h_save_menu, h_resample_menu, h_filter_menu, h_insert_menu, 
           h_delete_menu, h_reverb_menu, h_debug_menu, h_region_menu, h_selection_menu, h_colors_menu,
         o_menu, o_cascade_menu,
-          o_transform_menu,
+          o_transform_menu, o_controls_menu,
           o_save_menu, o_save_state_menu, o_sep_menu, o_preferences_menu,
         v_menu, v_cascade_menu,
           v_graph_style_menu, v_graph_style_cascade_menu,
@@ -110,6 +110,7 @@ enum {m_menu,
 #define options_save_state_menu (ss->sgx->mw[o_save_state_menu])
 #define options_sep_menu (ss->sgx->mw[o_sep_menu])
 #define options_preferences_menu (ss->sgx->mw[o_preferences_menu])
+#define options_controls_menu (ss->sgx->mw[o_controls_menu])
 
 #define view_menu (ss->sgx->mw[v_menu])
 #define view_cascade_menu (ss->sgx->mw[v_cascade_menu])

@@ -343,6 +343,7 @@ static void view_focus_active_callback(Widget w, XtPointer info, XtPointer conte
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
 static void options_transform_callback(Widget w, XtPointer info, XtPointer context) {fire_up_transform_dialog(true);}
+static void options_controls_callback(Widget w, XtPointer info, XtPointer context) {make_controls_dialog();}
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_callback(Widget w, XtPointer info, XtPointer context) {save_options_from_menu();}
 #endif
@@ -795,6 +796,10 @@ Widget add_menu(void)
   options_transform_menu = XtCreateManagedWidget(_("Transform Options"), xmPushButtonWidgetClass, options_menu, main_args, main_n);
   XtAddCallback(options_transform_menu, XmNactivateCallback, options_transform_callback, NULL);
   XtVaSetValues(options_transform_menu, XmNmnemonic, 't', NULL);
+
+  options_controls_menu = XtCreateManagedWidget(_("Controls"), xmPushButtonWidgetClass, options_menu, main_args, main_n);
+  XtAddCallback(options_controls_menu, XmNactivateCallback, options_controls_callback, NULL);
+  XtVaSetValues(options_controls_menu, XmNmnemonic, 'c', NULL);
 
 
 #if HAVE_EXTENSION_LANGUAGE

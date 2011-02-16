@@ -2309,9 +2309,9 @@ static int h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BFLOAT, MUS_BSHORT, MUS
 };
 static const char *h_df_names[H_SIZE][H_DFS_MAX];
 
-static const char *h_names[H_SIZE] = {"next ", "aifc ", "wave ", "rf64", "raw  ", "aiff ", "ircam", "nist ", "caff",
-				      "ogg ", "flac ", "speex", "tta", "wavpack",
-				      "mpeg ", "midi ", "shorten"};
+static const char *h_names[H_SIZE] = {"au/next  ", "aifc   ", "wave   ", "rf64  ", "raw    ", "aiff   ", "ircam ", "nist  ", "caff  ",
+				      "ogg   ", "flac  ", "speex ", "tta   ", "wavpack",
+				      "mpeg  ", "midi  ", "shorten"};
 static int h_pos_to_type[H_SIZE] = {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_RAW, MUS_AIFF, MUS_IRCAM, MUS_NIST, MUS_CAFF, -1, -1, -1, -1, -1, -1, -1, -1};
 static int h_type_to_pos[MUS_NUM_HEADER_TYPES];
 static int h_type_to_h[MUS_NUM_HEADER_TYPES];

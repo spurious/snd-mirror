@@ -4,7 +4,6 @@
 ;;; show-smpte-label
 ;;; zync and unzync
 ;;; disable control panel
-;;; hidden controls panel
 ;;; show-disk-space
 ;;; remove top level menu
 ;;; keep-file-dialog-open-upon-ok
@@ -509,94 +508,6 @@
   (gtk_widget_hide (caddr (sound-widgets snd)))
   (remove-from-menu 2 "Show controls"))
 
-
-
-
-;;; -------- hidden controls panel --------
-
-(define hidden-controls-dialog #f)
-(define hidden-controls '())
-
-(define hidden-controls-help 
-"Expand-hop sets the time in seconds between successive grains.
-Expand-length sets the length of each grain.
-Expand-ramp sets the ramp-time in the grain envelope.
-Expand-jitter sets the grain timing jitter.
-Contrast-amp sets the prescaler for contrast-enhancement.
-Reverb-lowpass sets the feedback lowpass filter coeficient.
-Reverb-feedback sets the scaler on the feedback.
-")
-
-(define (make-hidden-controls-dialog)
-
-  (define (reset-all-sliders)
-    (for-each
-     (lambda (ctl)
-       (set! ((caddr ctl)) (cadr ctl))
-       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car ctl)) (cadr ctl))
-       ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car ctl)))
-       )
-     hidden-controls))
-
-  (if (not hidden-controls-dialog)
-      (let ((dismiss-button (gtk_button_new_with_label "Go Away"))
-	    (help-button (gtk_button_new_with_label "Help"))
-	    (reset-button (gtk_button_new_with_label "Reset")))
-	(gtk_widget_set_name dismiss-button "quit_button")
-	(gtk_widget_set_name help-button "help_button")
-	(gtk_widget_set_name reset-button "reset_button")
-	(set! hidden-controls-dialog (gtk_dialog_new))
-	(gtk_window_set_title (GTK_WINDOW hidden-controls-dialog) "More Controls")
-	(gtk_container_set_border_width (GTK_CONTAINER hidden-controls-dialog) 10)
-	(gtk_window_set_default_size (GTK_WINDOW hidden-controls-dialog) -1 -1)
-	(gtk_window_set_resizable (GTK_WINDOW hidden-controls-dialog) #t)
-	(gtk_widget_realize hidden-controls-dialog)
-	(g_signal_connect hidden-controls-dialog "delete_event" (lambda (w ev data) (gtk_widget_hide hidden-controls-dialog) #t) #f)
-
-	(gtk_box_pack_start (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG hidden-controls-dialog))) dismiss-button #t #t 20)
-	(g_signal_connect dismiss-button "clicked" (lambda (w data) (gtk_widget_hide hidden-controls-dialog)) #f)
-	(gtk_widget_show dismiss-button)
-	(gtk_box_pack_start (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG hidden-controls-dialog))) reset-button #t #t 20)
-	(g_signal_connect reset-button "clicked" (lambda (w data) (reset-all-sliders)) #f)
-	(gtk_widget_show reset-button)
-	(gtk_box_pack_end (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG hidden-controls-dialog))) help-button #t #t 20)
-	(g_signal_connect help-button "clicked" (lambda (w data) (help-dialog "More Controls" hidden-controls-help)) #f)
-	(gtk_widget_show help-button)
-	
-	(let ((mainform (gtk_dialog_get_content_area (GTK_DIALOG hidden-controls-dialog))))
-	  (for-each
-	   (lambda (lst)
-	     (let* ((title (car lst))
-		    (low (cadr lst))
-		    (high (caddr lst))
-		    (initial (list-ref lst 3))
-		    (func (list-ref lst 4))
-		    (adj (gtk_adjustment_new initial low high .001 .001 .1))
-		    (slider (gtk_hscale_new (GTK_ADJUSTMENT adj)))
-		    (label (gtk_label_new title)))
-	       (if (not (provided? 'gtk3)) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE slider)) GTK_UPDATE_CONTINUOUS))
-	       (gtk_scale_set_digits (GTK_SCALE slider) 3)
-	       (gtk_scale_set_value_pos (GTK_SCALE slider) GTK_POS_TOP)
-	       (gtk_scale_set_draw_value (GTK_SCALE slider) #t)
-	       (gtk_box_pack_start (GTK_BOX mainform) slider #t #t 4)
-	       (gtk_box_pack_start (GTK_BOX mainform) label #t #t 4)
-	       (set! hidden-controls (cons (list adj initial func) hidden-controls))	       
-	       (g_signal_connect adj "value_changed" (lambda (adj data) (set! (func) (gtk_adjustment_get_value (GTK_ADJUSTMENT adj)))) #f)
-	       (gtk_widget_show slider)
-	       (gtk_widget_show label)))
-
-	   (list (list "expand-hop" 0.001 0.3 0.05  expand-control-hop)
-		 (list "expand-length" 0.01 .5 0.15 expand-control-length)
-		 (list "expand-ramp" 0.01 .5 0.4 expand-control-ramp)
-		 (list "expand-jitter" 0.0 2.0 1.0 expand-control-jitter)
-		 (list "contrast-amp" 0.0 2.0 1.0 contrast-control-amp)
-		 (list "reverb-lowpass" 0.0 1.0 0.7 reverb-control-lowpass)
-		 (list "reverb-feedback" 0.0 1.25 1.09 reverb-control-feedback))))
-
-	(add-to-menu 3 "Hidden controls" 
-		     (lambda () 
-		       (gtk_widget_show hidden-controls-dialog)))
-	)))
 
 
 ;;; -------- show-disk-space

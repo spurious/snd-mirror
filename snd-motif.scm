@@ -3,7 +3,6 @@
 ;;; (install-searcher proc) -- use proc as File Selection Box filter, also install-searcher-with-colors
 ;;; (zync) and (unzync) -- cause y-zoom sliders to move together
 ;;; (for-each-child w func) -- apply func to w and all its children, similarly find-child and display-widget-tree
-;;; (make-hidden-controls-dialog) -- add Options menu "Hidden controls" item that creates dialog to control these variables
 ;;; (create-fmv-dialog) for "real-time" control of the fm-violin in fmv.scm
 ;;; (make-pixmap strs) turns xpm-style description into pixmap
 ;;; (display-scanned-synthesis) opens a scanned-synthesis viewer
@@ -478,120 +477,6 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 		 (XtIsSubclass parent xmDialogShellWidgetClass))
 	    (XtPopup parent XtGrabNone)))))
 
-
-
-;;; -------- hidden controls panel --------
-
-(define hidden-controls-dialog #f)
-(define hidden-controls '())
-
-(define hidden-controls-help 
-"Expand-hop sets the time in seconds between successive grains.
-Expand-length sets the length of each grain.
-Expand-ramp sets the ramp-time in the grain envelope.
-Expand-jitter sets the grain timing jitter.
-Contrast-amp sets the prescaler for contrast-enhancement.
-Reverb-lowpass sets the feedback lowpass filter coeficient.
-Reverb-feedback sets the scaler on the feedback.
-")
-
-(define (make-hidden-controls-dialog)
-  
-  (define (reset-all-sliders)
-    (for-each
-     (lambda (ctl)
-       (set! ((caddr ctl) #t) (cadr ctl))
-       (XtSetValues (car ctl) 
-		    (list XmNvalue (floor (* (cadr ctl) 100)))))
-     hidden-controls))
-
-  (if (not (Widget? hidden-controls-dialog))
-      (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
-	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-	    (titlestr (XmStringCreate "More Controls" XmFONTLIST_DEFAULT_TAG))
-	    (xreset (XmStringCreate "Reset" XmFONTLIST_DEFAULT_TAG)))
-	(set! hidden-controls-dialog 
-	      (XmCreateTemplateDialog (cadr (main-widgets)) "More Controls"
-                (list XmNcancelLabelString   xreset
-		      XmNokLabelString       xdismiss
-		      XmNhelpLabelString     xhelp
-		      XmNautoUnmanage        #f
-		      XmNdialogTitle         titlestr
-		      XmNresizePolicy        XmRESIZE_GROW
-	              XmNnoResize            #f
-		      XmNtransient           #f
-		      XmNbackground          (basic-color))))
-
-	(for-each
-	 (lambda (button color)
-	   (XtVaSetValues (XmMessageBoxGetChild hidden-controls-dialog button)
-			  (list XmNarmColor   (selection-color)
-				XmNbackground color)))
-	 (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
-	 (list (highlight-color) (highlight-color) (highlight-color)))
-
-	(XtAddCallback hidden-controls-dialog 
-		       XmNokCallback (lambda (w context info)
-				       (XtUnmanageChild hidden-controls-dialog)))
-	(XtAddCallback hidden-controls-dialog 
-		       XmNhelpCallback (lambda (w context info)
-					 (help-dialog "More Controls" hidden-controls-help)))
-	(XtAddCallback hidden-controls-dialog
-		       XmNcancelCallback (lambda (w context info)
-					   (reset-all-sliders)))
-	(XmStringFree xhelp)
-	(XmStringFree xdismiss)
-	(XmStringFree titlestr)
-	(XmStringFree xreset)
-
-	(let* ((mainform 
-		(XtCreateManagedWidget "formd" xmRowColumnWidgetClass hidden-controls-dialog
-                  (list XmNleftAttachment      XmATTACH_FORM
-		        XmNrightAttachment     XmATTACH_FORM
-		        XmNtopAttachment       XmATTACH_FORM
-		        XmNbottomAttachment    XmATTACH_WIDGET
-		        XmNbottomWidget        (XmMessageBoxGetChild hidden-controls-dialog XmDIALOG_SEPARATOR)
-                        XmNorientation         XmVERTICAL))))
-	  (for-each
-	   (lambda (lst)
-	     (let* ((name (car lst))
-		    (low (cadr lst))
-		    (high (caddr lst))
-		    (initial (list-ref lst 3))
-		    (func (list-ref lst 4))
-		    (title (XmStringCreate name XmFONTLIST_DEFAULT_TAG))
-		    (slider (XtCreateManagedWidget name xmScaleWidgetClass mainform
-			       (list XmNorientation   XmHORIZONTAL
-				     XmNshowValue     #t
-				     XmNminimum       (floor (* low 1000))
-				     XmNmaximum       (floor (* high 1000))
-				     XmNvalue         (floor (* initial 1000))
-				     XmNdecimalPoints 3
-				     XmNtitleString   title
-				     XmNborderWidth   1
-				     XmNbackground    (basic-color)))))
-	       (XmStringFree title)
-	       (set! hidden-controls (cons (list slider initial func) hidden-controls))
-	       (XtAddCallback slider
-			      XmNvalueChangedCallback 
-			      (lambda (w context info)
-				(set! (func) (/ (.value info) 1000.0))))
-	       (XtAddCallback slider
-			      XmNdragCallback 
-			      (lambda (w context info)
-				(set! (func) (/ (.value info) 1000.0))))))
-	   (list (list "expand-hop" 0.001 0.3 0.05  expand-control-hop)
-		 (list "expand-length" 0.01 .5 0.15 expand-control-length)
-		 (list "expand-ramp" 0.01 .5 0.4 expand-control-ramp)
-		 (list "expand-jitter" 0.0 2.0 1.0 expand-control-jitter)
-		 (list "contrast-amp" 0.0 2.0 1.0 contrast-control-amp)
-		 (list "reverb-lowpass" 0.0 1.0 0.7 reverb-control-lowpass)
-		 (list "reverb-feedback" 0.0 1.25 1.09 reverb-control-feedback))))
-	(add-to-menu 3 "Hidden controls"
-		     (lambda ()
-		       (if (not (XtIsManaged hidden-controls-dialog))
-			   (XtManageChild hidden-controls-dialog)
-			   (raise-dialog hidden-controls-dialog)))))))
 
 
 ;;; -------- create-fmv-dialog --------

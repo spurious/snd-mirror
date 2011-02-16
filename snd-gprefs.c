@@ -18,7 +18,7 @@ static char *include_load_path = NULL;
   #define Widget_Is_Sensitive(Wid) gtk_widget_is_sensitive(Wid)
 #endif
 
-#define STARTUP_WIDTH 925
+#define STARTUP_WIDTH 850
 #define STARTUP_HEIGHT 800
 
 
@@ -283,15 +283,17 @@ static GtkWidget *make_row_help(prefs_info *prf, const char *label, GtkWidget *b
 {
   GtkWidget *w, *ev;
 
+  w = gtk_hseparator_new();
+  gtk_box_pack_start(GTK_BOX(box), w, false, false, 10);
+  gtk_widget_show(w);
+
   ev = gtk_event_box_new();
-  gtk_box_pack_end(GTK_BOX(box), ev, PACK_1, PACK_2, 0);
+  gtk_box_pack_start(GTK_BOX(box), ev, PACK_1, PACK_1, 0);
   gtk_widget_show(ev);
 
-  w = gtk_label_new(label);
-  gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.0);
+  w = gtk_button_new_with_label("?");
   gtk_container_add(GTK_CONTAINER(ev), w);
   gtk_size_group_add_widget(help_group, w);
-
   gtk_widget_show(w);
 
   SG_SIGNAL_CONNECT(ev, "button_press_event", prefs_help_click_callback, (gpointer)prf);
@@ -2613,15 +2615,6 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_speed_control, save_speed_control, NULL, NULL, revert_speed_control);
     free(str);
 
-#if HAVE_SCHEME
-    current_sep = make_inter_variable_separator(clm_box);
-    prf = prefs_row_with_toggle("include hidden controls dialog", "hidden-controls-dialog",
-				(include_hidden_controls = find_hidden_controls()),
-				clm_box,
-				hidden_controls_toggle);
-    remember_pref(prf, reflect_hidden_controls, save_hidden_controls, help_hidden_controls, clear_hidden_controls, revert_hidden_controls);
-#endif
-
     current_sep = make_inter_variable_separator(clm_box);
     str = mus_format("%d", rts_sinc_width = sinc_width(ss));
     prf = prefs_row_with_text("sinc interpolation width in srate converter", S_sinc_width, str,
@@ -2664,19 +2657,6 @@ widget_t start_preferences_dialog(void)
 				prg_box,
 				show_listener_toggle);
     remember_pref(prf, reflect_show_listener, save_show_listener, NULL, clear_show_listener, revert_show_listener);
-
-#if HAVE_SCHEME
-    current_sep = make_inter_variable_separator(prg_box);
-    str = mus_format("%d", rts_optimization = optimization(ss));
-    prf = prefs_row_with_number("optimization level", S_optimization,
-				str, 3, 
-				prg_box,
-				optimization_up, optimization_down, optimization_from_text);
-    remember_pref(prf, reflect_optimization, save_optimization, NULL, NULL, revert_optimization);
-    free(str);
-    if (optimization(ss) == 6) gtk_widget_set_sensitive(prf->arrow_up, false);
-    if (optimization(ss) == 0) gtk_widget_set_sensitive(prf->arrow_down, false);
-#endif
 
     current_sep = make_inter_variable_separator(prg_box);
     rts_listener_prompt = mus_strdup(listener_prompt(ss));

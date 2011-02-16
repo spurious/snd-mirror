@@ -3248,6 +3248,279 @@ void reflect_sound_selection(snd_info *sp)
 }
 
 
+/* -------- controls dialog -------- */
+
+static Widget controls_dialog = NULL;
+enum {EXPAND_HOP, EXPAND_LENGTH, EXPAND_RAMP, EXPAND_JITTER, CONTRAST_AMP, REVERB_LOWPASS, REVERB_FEEDBACK};
+static Widget controls[7];
+
+static void reset_all_sliders(void)
+{
+  expand_control_set_hop(DEFAULT_EXPAND_CONTROL_HOP);
+  expand_control_set_length(DEFAULT_EXPAND_CONTROL_LENGTH);
+  expand_control_set_ramp(DEFAULT_EXPAND_CONTROL_RAMP);
+  expand_control_set_jitter(DEFAULT_EXPAND_CONTROL_JITTER);
+  contrast_control_set_amp(DEFAULT_CONTRAST_CONTROL_AMP);
+  reverb_control_set_lowpass(DEFAULT_REVERB_CONTROL_LOWPASS);
+  reverb_control_set_feedback(DEFAULT_REVERB_CONTROL_FEEDBACK);
+
+  XtVaSetValues(controls[EXPAND_HOP], XmNvalue, (int)(expand_control_hop(ss) * 1000), NULL);
+  XtVaSetValues(controls[EXPAND_LENGTH], XmNvalue, (int)(expand_control_length(ss) * 1000), NULL);
+  XtVaSetValues(controls[EXPAND_RAMP], XmNvalue, (int)(expand_control_ramp(ss) * 1000), NULL);
+  XtVaSetValues(controls[EXPAND_JITTER], XmNvalue, (int)(expand_control_jitter(ss) * 1000), NULL);
+  XtVaSetValues(controls[CONTRAST_AMP], XmNvalue, (int)(contrast_control_amp(ss) * 1000), NULL);
+  XtVaSetValues(controls[REVERB_LOWPASS], XmNvalue, (int)(reverb_control_lowpass(ss) * 1000), NULL);
+  XtVaSetValues(controls[REVERB_FEEDBACK], XmNvalue, (int)(reverb_control_feedback(ss) * 1000), NULL);
+}
+
+static void controls_reset_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  reset_all_sliders();
+}
+
+static void controls_help_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_help("More controls", 
+"This dialog controls all the otherwise hidden control-panel variables.\n\
+Expand-hop sets the time in seconds between successive grains.\n\
+Expand-length sets the length of each grain.\n\
+Expand-ramp sets the ramp-time in the grain envelope.\n\
+Expand-jitter sets the grain timing jitter.\n\
+Contrast-amp sets the prescaler for contrast-enhancement.\n\
+Reverb-lowpass sets the feedback lowpass filter coeficient.\n\
+Reverb-feedback sets the scaler on the feedback.",
+	   WITHOUT_WORD_WRAP);
+}
+
+static void controls_dismiss_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  XtUnmanageChild(controls_dialog);
+}
+
+static void expand_hop_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  expand_control_set_hop(cbs->value * 0.001);
+}
+
+static void expand_length_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  expand_control_set_length(cbs->value * 0.001);
+}
+
+static void expand_ramp_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  expand_control_set_ramp(cbs->value * 0.001);
+}
+
+static void expand_jitter_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  expand_control_set_jitter(cbs->value * 0.001);
+}
+
+static void contrast_amp_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  contrast_control_set_amp(cbs->value * 0.001);
+}
+
+static void reverb_lowpass_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  reverb_control_set_lowpass(cbs->value * 0.001);
+}
+
+static void reverb_feedback_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  reverb_control_set_feedback(cbs->value * 0.001);
+}
+
+void make_controls_dialog(void)
+{
+  #define MSG_BOX(Dialog, Child) XmMessageBoxGetChild(Dialog, Child)
+  if (!controls_dialog)
+    {
+      int n;
+      Arg args[32];
+      XmString xdismiss, xhelp, titlestr, xreset;
+      Widget mainform, slider;
+
+      xdismiss = XmStringCreateLocalized(_("Go Away"));
+      xhelp = XmStringCreateLocalized(_("Help"));
+      titlestr = XmStringCreateLocalized(_("More controls"));
+      xreset = XmStringCreateLocalized(_("Reset"));
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
+      XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
+      XtSetArg(args[n], XmNcancelLabelString, xreset); n++;
+      XtSetArg(args[n], XmNautoUnmanage, false); n++;
+      XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
+      XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
+      XtSetArg(args[n], XmNnoResize, false); n++;
+      XtSetArg(args[n], XmNtransient, false); n++;
+      XtSetArg(args[n], XmNwidth, 400); n++;
+      controls_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"More controls", args, n);
+
+      XtAddCallback(controls_dialog, XmNhelpCallback,   controls_help_callback,    NULL);
+      XtAddCallback(controls_dialog, XmNokCallback,     controls_dismiss_callback, NULL);
+      XtAddCallback(controls_dialog, XmNcancelCallback, controls_reset_callback,   NULL);
+
+      XmStringFree(xhelp);
+      XmStringFree(xdismiss);
+      XmStringFree(titlestr);
+      XmStringFree(xreset);
+
+      XtVaSetValues(MSG_BOX(controls_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->selection_color, NULL);
+      XtVaSetValues(MSG_BOX(controls_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->selection_color, NULL);
+      XtVaSetValues(MSG_BOX(controls_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->selection_color, NULL);
+      XtVaSetValues(MSG_BOX(controls_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(MSG_BOX(controls_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(MSG_BOX(controls_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+
+      mainform = XtVaCreateManagedWidget("formd", xmRowColumnWidgetClass, controls_dialog,
+					 XmNleftAttachment,   XmATTACH_FORM,
+					 XmNrightAttachment,  XmATTACH_FORM,
+					 XmNtopAttachment,    XmATTACH_FORM,
+					 XmNbottomAttachment, XmATTACH_WIDGET,
+					 XmNbottomWidget,     XmMessageBoxGetChild(controls_dialog, XmDIALOG_SEPARATOR),
+					 XmNorientation,      XmVERTICAL, 
+					 NULL);
+
+      titlestr = XmStringCreateLocalized("expand hop");
+      slider = XtVaCreateManagedWidget("expand-hop", xmScaleWidgetClass, mainform,
+				       XmNorientation,   XmHORIZONTAL,
+				       XmNshowValue,     true,
+				       XmNminimum,       1,
+				       XmNmaximum,       300,
+				       XmNvalue,         (int)(expand_control_hop(ss) * 1000),
+				       XmNdecimalPoints, 3,
+				       XmNtitleString,   titlestr,
+				       XmNborderWidth,   1,
+				       XmNbackground,    ss->sgx->basic_color,
+				       NULL);
+      XmStringFree(titlestr);
+      XtAddCallback(slider, XmNvalueChangedCallback, expand_hop_callback, NULL);
+      XtAddCallback(slider, XmNdragCallback, expand_hop_callback, NULL);
+      controls[EXPAND_HOP] = slider;
+
+      titlestr = XmStringCreateLocalized("expand length");
+      slider = XtVaCreateManagedWidget("expand-length", xmScaleWidgetClass, mainform,
+				       XmNorientation,   XmHORIZONTAL,
+				       XmNshowValue,     true,
+				       XmNminimum,       10,
+				       XmNmaximum,       500,
+				       XmNvalue,         (int)(expand_control_length(ss) * 1000),
+				       XmNdecimalPoints, 3,
+				       XmNtitleString,   titlestr,
+				       XmNborderWidth,   1,
+				       XmNbackground,    ss->sgx->basic_color,
+				       NULL);
+      XmStringFree(titlestr);
+      XtAddCallback(slider, XmNvalueChangedCallback, expand_length_callback, NULL);
+      XtAddCallback(slider, XmNdragCallback, expand_length_callback, NULL);
+      controls[EXPAND_LENGTH] = slider;
+
+      titlestr = XmStringCreateLocalized("expand ramp");
+      slider = XtVaCreateManagedWidget("expand-ramp", xmScaleWidgetClass, mainform,
+				       XmNorientation,   XmHORIZONTAL,
+				       XmNshowValue,     true,
+				       XmNminimum,       10,
+				       XmNmaximum,       500,
+				       XmNvalue,         (int)(expand_control_ramp(ss) * 1000),
+				       XmNdecimalPoints, 3,
+				       XmNtitleString,   titlestr,
+				       XmNborderWidth,   1,
+				       XmNbackground,    ss->sgx->basic_color,
+				       NULL);
+      XmStringFree(titlestr);
+      XtAddCallback(slider, XmNvalueChangedCallback, expand_ramp_callback, NULL);
+      XtAddCallback(slider, XmNdragCallback, expand_ramp_callback, NULL);
+      controls[EXPAND_RAMP] = slider;
+
+      titlestr = XmStringCreateLocalized("expand jitter");
+      slider = XtVaCreateManagedWidget("expand-hop", xmScaleWidgetClass, mainform,
+				       XmNorientation,   XmHORIZONTAL,
+				       XmNshowValue,     true,
+				       XmNminimum,       0,
+				       XmNmaximum,       200,
+				       XmNvalue,         (int)(expand_control_jitter(ss) * 1000),
+				       XmNdecimalPoints, 3,
+				       XmNtitleString,   titlestr,
+				       XmNborderWidth,   1,
+				       XmNbackground,    ss->sgx->basic_color,
+				       NULL);
+      XmStringFree(titlestr);
+      XtAddCallback(slider, XmNvalueChangedCallback, expand_jitter_callback, NULL);
+      XtAddCallback(slider, XmNdragCallback, expand_jitter_callback, NULL);
+      controls[EXPAND_JITTER] = slider;
+
+      titlestr = XmStringCreateLocalized("contrast amp");
+      slider = XtVaCreateManagedWidget("contrast-amp", xmScaleWidgetClass, mainform,
+				       XmNorientation,   XmHORIZONTAL,
+				       XmNshowValue,     true,
+				       XmNminimum,       0,
+				       XmNmaximum,       2000,
+				       XmNvalue,         (int)(contrast_control_amp(ss) * 1000),
+				       XmNdecimalPoints, 3,
+				       XmNtitleString,   titlestr,
+				       XmNborderWidth,   1,
+				       XmNbackground,    ss->sgx->basic_color,
+				       NULL);
+      XmStringFree(titlestr);
+      XtAddCallback(slider, XmNvalueChangedCallback, contrast_amp_callback, NULL);
+      XtAddCallback(slider, XmNdragCallback, contrast_amp_callback, NULL);
+      controls[CONTRAST_AMP] = slider;
+
+      titlestr = XmStringCreateLocalized("reverb lowpass");
+      slider = XtVaCreateManagedWidget("reverb-lowpass", xmScaleWidgetClass, mainform,
+				       XmNorientation,   XmHORIZONTAL,
+				       XmNshowValue,     true,
+				       XmNminimum,       0,
+				       XmNmaximum,       1000,
+				       XmNvalue,         (int)(reverb_control_lowpass(ss) * 1000),
+				       XmNdecimalPoints, 3,
+				       XmNtitleString,   titlestr,
+				       XmNborderWidth,   1,
+				       XmNbackground,    ss->sgx->basic_color,
+				       NULL);
+      XmStringFree(titlestr);
+      XtAddCallback(slider, XmNvalueChangedCallback, reverb_lowpass_callback, NULL);
+      XtAddCallback(slider, XmNdragCallback, reverb_lowpass_callback, NULL);
+      controls[REVERB_LOWPASS] = slider;
+
+      titlestr = XmStringCreateLocalized("reverb feedback");
+      slider = XtVaCreateManagedWidget("reverb-feedback", xmScaleWidgetClass, mainform,
+				       XmNorientation,   XmHORIZONTAL,
+				       XmNshowValue,     true,
+				       XmNminimum,       0,
+				       XmNmaximum,       1250,
+				       XmNvalue,         (int)(reverb_control_feedback(ss) * 1000),
+				       XmNdecimalPoints, 3,
+				       XmNtitleString,   titlestr,
+				       XmNborderWidth,   1,
+				       XmNbackground,    ss->sgx->basic_color,
+				       NULL);
+      XmStringFree(titlestr);
+      XtAddCallback(slider, XmNvalueChangedCallback, reverb_feedback_callback, NULL);
+      XtAddCallback(slider, XmNdragCallback, reverb_feedback_callback, NULL);
+      controls[REVERB_FEEDBACK] = slider;
+
+      set_dialog_widget(CONTROLS_DIALOG, controls_dialog);
+    }
+  
+  if (!XtIsManaged(controls_dialog))
+    XtManageChild(controls_dialog);
+}
+
+
+/* ---------------------------------------- */
+
 static XEN g_sound_widgets(XEN snd)
 {
   #define H_sound_widgets "(" S_sound_widgets " :optional snd): a list of \

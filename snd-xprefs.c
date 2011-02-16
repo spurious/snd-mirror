@@ -10,13 +10,12 @@ static bool prefs_helping = false, prefs_unsaved = false;
 static char *prefs_saved_filename = NULL;
 static char *include_load_path = NULL;
 
-
-#define MID_POSITION 40
-#define COLOR_POSITION 50
+#define MID_POSITION 50
+#define COLOR_POSITION 62
 #define FIRST_COLOR_POSITION 6
 #define SECOND_COLOR_POSITION 30
 #define THIRD_COLOR_POSITION 55
-#define HELP_POSITION 80
+#define HELP_POSITION 96
 
 #define MID_SPACE 16
 #define INTER_TOPIC_SPACE 3
@@ -303,6 +302,7 @@ static Widget make_row_inner_separator(int width, Widget left_widget, Widget box
 
 static Widget make_row_help(prefs_info *prf, const char *label, Widget box, Widget top_widget, Widget left_widget)
 {
+
   Arg args[20];
   int n;
   XmString s1;
@@ -323,24 +323,20 @@ static Widget make_row_help(prefs_info *prf, const char *label, Widget box, Widg
   spacer = XtCreateManagedWidget("spacer", xmSeparatorWidgetClass, box, args, n);
 
   n = 0;
-  s1 = XmStringCreateLocalized((char *)label);
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  s1 = XmStringCreateLocalized("?");
+  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+  XtSetArg(args[n], XmNbottomWidget, spacer); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, spacer); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   XtSetArg(args[n], XmNlabelString, s1); n++;
-  XtSetArg(args[n], XmNshadowThickness, 0); n++;
-  XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-  XtSetArg(args[n], XmNfillOnArm, false); n++;
   helper = XtCreateManagedWidget(label, xmPushButtonWidgetClass, box, args, n);
   XmStringFree(s1);
 
   XtAddCallback(helper, XmNactivateCallback, prefs_help_click_callback, (XtPointer)prf);
-
   XtAddEventHandler(helper, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(helper, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
@@ -358,7 +354,9 @@ static Widget make_row_error(prefs_info *prf, Widget box, Widget left_widget, Wi
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+  XtSetArg(args[n], XmNbottomWidget, left_widget); n++;
+  /* not attach none here!  help widget uses this to get its bottom */
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, left_widget); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
@@ -1864,8 +1862,9 @@ widget_t start_preferences_dialog(void)
       Dimension width, height;
       width = XDisplayWidth(MAIN_DISPLAY(ss), DefaultScreen(MAIN_DISPLAY(ss)));
       height = XDisplayHeight(MAIN_DISPLAY(ss), DefaultScreen(MAIN_DISPLAY(ss)));
-      XtSetArg(args[n], XmNwidth, (STARTUP_WIDTH < width) ? STARTUP_WIDTH : ((Dimension)(width - 50))); n++;
-      XtSetArg(args[n], XmNheight, (STARTUP_HEIGHT < height) ? STARTUP_HEIGHT : ((Dimension)(height - 50))); n++;
+
+      XtSetArg(args[n], XmNwidth, (STARTUP_WIDTH < width) ? (Dimension)STARTUP_WIDTH : ((Dimension)(width - 50))); n++;
+      XtSetArg(args[n], XmNheight, (STARTUP_HEIGHT < height) ? (Dimension)STARTUP_HEIGHT : ((Dimension)(height - 50))); n++;
     }
     preferences_dialog = XmCreateTemplateDialog(MAIN_PANE(ss), (char *)"preferences", args, n);
 
@@ -2808,15 +2807,6 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_speed_control, save_speed_control, NULL, NULL, revert_speed_control);
     free(str);
 
-#if HAVE_SCHEME
-    current_sep = make_inter_variable_separator(clm_box, prf->label);
-    prf = prefs_row_with_toggle("include hidden controls dialog", "hidden-controls-dialog",
-				(include_hidden_controls = find_hidden_controls()),
-				clm_box, current_sep, 
-				hidden_controls_toggle);
-    remember_pref(prf, reflect_hidden_controls, save_hidden_controls, help_hidden_controls, clear_hidden_controls, revert_hidden_controls);
-#endif
-
     current_sep = make_inter_variable_separator(clm_box, prf->label);
     str = mus_format("%d", rts_sinc_width = sinc_width(ss));
     prf = prefs_row_with_text("sinc interpolation width in srate converter", S_sinc_width, str,
@@ -2859,19 +2849,6 @@ widget_t start_preferences_dialog(void)
 				prg_box, prg_label,
 				show_listener_toggle);
     remember_pref(prf, reflect_show_listener, save_show_listener, NULL, clear_show_listener, revert_show_listener);
-
-#if HAVE_SCHEME
-    current_sep = make_inter_variable_separator(prg_box, prf->label);
-    str = mus_format("%d", rts_optimization = optimization(ss));
-    prf = prefs_row_with_number("optimization level", S_optimization,
-				str, 3, 
-				prg_box, current_sep, 
-				optimization_up, optimization_down, optimization_from_text);
-    remember_pref(prf, reflect_optimization, save_optimization, NULL, NULL, revert_optimization);
-    free(str);
-    if (optimization(ss) == 6) XtSetSensitive(prf->arrow_up, false);
-    if (optimization(ss) == 0) XtSetSensitive(prf->arrow_down, false);
-#endif
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     rts_listener_prompt = mus_strdup(listener_prompt(ss));

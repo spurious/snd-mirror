@@ -28,7 +28,6 @@
 (if (not (provided? 'snd-effects-utils.scm)) (load "effects-utils.scm"))
 
 (keep-file-dialog-open-upon-ok)
-(make-hidden-controls-dialog)
 (check-for-unsaved-edits #t)
 (if (not (hook-member show-disk-space after-open-hook))
     (hook-push after-open-hook show-disk-space))

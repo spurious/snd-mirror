@@ -59690,7 +59690,6 @@ EDITS: 1
 					;	       (if (not (XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display #__line__ ";not XmIsMotifWMRunning?"))
 	    (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 	    (zync)
-	    (make-hidden-controls-dialog)
 	    (make-pixmap (cadr (main-widgets)) arrow-strs)
 	    (display-scanned-synthesis)
 	    (add-mark-pane)
