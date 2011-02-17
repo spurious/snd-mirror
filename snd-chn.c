@@ -639,8 +639,8 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
 
   cp->active = CHANNEL_HAS_EDIT_LIST;
 
-  x0 = 0.0;
-  x1 = 0.1;
+  x0 = initial_beg(ss);
+  x1 = initial_beg(ss) + initial_dur(ss);
   y0 = -1.0;
   y1 = 1.0;
 
@@ -654,6 +654,11 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
     }
 
   dur = (double)frames / (double)(srate);
+  if (show_full_duration(ss))
+    {
+      x0 = 0.0;
+      x1 = dur;
+    }
 
   if ((cp->hookable == WITH_HOOK) && 
       (graphed == WITH_GRAPH))
@@ -5225,7 +5230,6 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 
       /* PERHAPS: space to play? */
       /* TODO: doc various cursors */
-      /* TODO: make local sync the default */
       /* TODO: make tracking cursor easier or perhaps the default */
       /* TODO: how to handle looped play of entire file (not selection)? */
 

@@ -4810,17 +4810,6 @@ not used anywhere).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- check-for-unsaved-edits -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="checkforunsavededits">check-for-unsaved-edits</a> <code>(check #t)</code>
-</td></tr><tr><td></td><td>
-check-for-unsaved-edits adds functions to the <a href="extsnd.html#beforeexithook">before-exit-hook</a>
-and the <a href="extsnd.html#beforeclosehook">before-close-hook</a> to check
-for unsaved edits before exiting Snd or closing a file.  If its argument 'check' is #f, it removes
-those hooks.  Normally Snd just closes such a sound, or exits silently, flushing any unsaved edits.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- contrast-channel -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def name="contrastchannel">contrast-channel</a> <code>index beg dur snd chn edpos</code>

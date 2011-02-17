@@ -1593,6 +1593,13 @@ void snd_close_file(snd_info *sp)
 		      S_before_close_hook);
   if (XEN_TRUE_P(res)) return;
 
+  if ((ask_about_unsaved_edits(ss)) &&
+      (has_unsaved_edits(sp)))
+    {
+      save_edits_now(sp);
+      return;
+    }
+
   if (peak_env_dir(ss))
     map_over_sound_chans(sp, write_peak_env_info_file);
 
@@ -5641,6 +5648,56 @@ If " PROC_FALSE ", any existing file of the same name will be overwritten withou
 }
 
 
+static XEN g_ask_about_unsaved_edits(void) {return(C_TO_XEN_BOOLEAN(ask_about_unsaved_edits(ss)));}
+
+static XEN g_set_ask_about_unsaved_edits(XEN val) 
+{
+  #define H_ask_about_unsaved_edits "(" S_ask_about_unsaved_edits "): " PROC_TRUE " if you want Snd to ask whether \
+to save unsaved edits when a sound is closed."
+
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_ask_about_unsaved_edits, "a boolean");
+  set_ask_about_unsaved_edits(XEN_TO_C_BOOLEAN(val)); 
+  return(C_TO_XEN_BOOLEAN(ask_about_unsaved_edits(ss)));
+}
+
+
+static XEN g_show_full_duration(void) {return(C_TO_XEN_BOOLEAN(show_full_duration(ss)));}
+
+static XEN g_set_show_full_duration(XEN val) 
+{
+  #define H_show_full_duration "(" S_show_full_duration "): " PROC_TRUE " if you want the entire sound \
+displayed whn it is opened."
+
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_full_duration, "a boolean");
+  set_show_full_duration(XEN_TO_C_BOOLEAN(val)); 
+  return(C_TO_XEN_BOOLEAN(show_full_duration(ss)));
+}
+
+
+static XEN g_initial_beg(void) {return(C_TO_XEN_DOUBLE(initial_beg(ss)));}
+
+static XEN g_set_initial_beg(XEN val) 
+{
+  #define H_initial_beg "(" S_initial_beg "): the begin point (in seconds) for the initial graph of a sound."
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_initial_beg, "a number");
+  set_initial_beg(XEN_TO_C_DOUBLE(val)); 
+  return(C_TO_XEN_DOUBLE(initial_beg(ss)));
+}
+
+
+static XEN g_initial_dur(void) {return(C_TO_XEN_DOUBLE(initial_dur(ss)));}
+
+static XEN g_set_initial_dur(XEN val) 
+{
+  #define H_initial_dur "(" S_initial_dur "): the duration (in seconds) for the initial graph of a sound."
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_initial_dur, "a number");
+  set_initial_dur(XEN_TO_C_DOUBLE(val)); 
+  return(C_TO_XEN_DOUBLE(initial_dur(ss)));
+}
+
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_view_files_sort_w, g_view_files_sort)
@@ -5698,6 +5755,14 @@ XEN_NARGIFY_0(g_default_output_data_format_w, g_default_output_data_format)
 XEN_NARGIFY_1(g_set_default_output_data_format_w, g_set_default_output_data_format)
 XEN_NARGIFY_0(g_ask_before_overwrite_w, g_ask_before_overwrite)
 XEN_NARGIFY_1(g_set_ask_before_overwrite_w, g_set_ask_before_overwrite)
+XEN_NARGIFY_0(g_ask_about_unsaved_edits_w, g_ask_about_unsaved_edits)
+XEN_NARGIFY_1(g_set_ask_about_unsaved_edits_w, g_set_ask_about_unsaved_edits)
+XEN_NARGIFY_0(g_show_full_duration_w, g_show_full_duration)
+XEN_NARGIFY_1(g_set_show_full_duration_w, g_set_show_full_duration)
+XEN_NARGIFY_0(g_initial_beg_w, g_initial_beg)
+XEN_NARGIFY_1(g_set_initial_beg_w, g_set_initial_beg)
+XEN_NARGIFY_0(g_initial_dur_w, g_initial_dur)
+XEN_NARGIFY_1(g_set_initial_dur_w, g_set_initial_dur)
 XEN_NARGIFY_0(g_clipping_w, g_clipping)
 XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
 #else
@@ -5756,6 +5821,14 @@ XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
 #define g_set_default_output_data_format_w g_set_default_output_data_format
 #define g_ask_before_overwrite_w g_ask_before_overwrite
 #define g_set_ask_before_overwrite_w g_set_ask_before_overwrite
+#define g_ask_about_unsaved_edits_w g_ask_about_unsaved_edits
+#define g_set_ask_about_unsaved_edits_w g_set_ask_about_unsaved_edits
+#define g_show_full_duration_w g_show_full_duration
+#define g_set_show_full_duration_w g_set_show_full_duration
+#define g_initial_beg_w g_initial_beg
+#define g_set_initial_beg_w g_set_initial_beg
+#define g_initial_dur_w g_initial_dur
+#define g_set_initial_dur_w g_set_initial_dur
 #define g_clipping_w g_clipping
 #define g_set_clipping_w g_set_clipping
 #endif
@@ -5940,6 +6013,18 @@ files list of the View Files dialog.  If it returns " PROC_TRUE ", the default a
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ask_before_overwrite, g_ask_before_overwrite_w, H_ask_before_overwrite,
 				   S_setB S_ask_before_overwrite, g_set_ask_before_overwrite_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ask_about_unsaved_edits, g_ask_about_unsaved_edits_w, H_ask_about_unsaved_edits,
+				   S_setB S_ask_about_unsaved_edits, g_set_ask_about_unsaved_edits_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_full_duration, g_show_full_duration_w, H_show_full_duration,
+				   S_setB S_show_full_duration, g_set_show_full_duration_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_initial_beg, g_initial_beg_w, H_initial_beg,
+				   S_setB S_initial_beg, g_set_initial_beg_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_initial_dur, g_initial_dur_w, H_initial_dur,
+				   S_setB S_initial_dur, g_set_initial_dur_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_chans, g_default_output_chans_w, H_default_output_chans,
 				   S_setB S_default_output_chans, g_set_default_output_chans_w,  0, 0, 1, 0);

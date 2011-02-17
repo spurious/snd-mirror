@@ -4,7 +4,6 @@
 ;;; mix then scale result to original peak amp
 ;;; mix with envelope
 ;;; map-sound-files, for-each-sound-file, match-sound-files, directory->list
-;;; check-for-unsaved-edits
 ;;; remember-sound-state
 ;;; mix-channel, insert-channel
 ;;; redo-channel, undo-channel
@@ -127,78 +126,6 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   
 
     
-;;; -------- check-for-unsaved-edits
-;;;
-;;; (check-for-unsaved-edits (on #t)): if 'on', add a function to before-close-hook and before-exit-hook
-;;;    that asks the user for confirmation before closing a sound if there are unsaved
-;;;    edits on that sound.  if 'on' is #f, remove those hooks.
-
-(define checking-for-unsaved-edits #f) ; for prefs
-
-(define* (check-for-unsaved-edits (check #t))
-  "(check-for-unsaved-edits (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed.
-If 'check' is #f, the hooks are removed."
-
-  (define* (yes-or-no? question action-if-yes action-if-no snd)
-    ;; we are replacing the caller's requested action with this prompt, so the action won't take place
-    ;;   until we get a response.
-    (clear-minibuffer snd)
-    (prompt-in-minibuffer question
-			  (lambda (response)
-			    (clear-minibuffer snd)
-			    (if (or (string=? response "yes")
-				    (string=? response "y"))
-				(action-if-yes snd)
-				(action-if-no snd)))
-			  snd #t))
-
-  (define (ignore-unsaved-edits-at-close? ind exiting)
-    (let ((eds 0))
-      (do ((i 0 (+ 1 i)))
-	  ((= i (channels ind)))
-	(set! eds (+ eds (car (edits ind i)))))
-      (if (> eds 0)
-	  (begin
-	    ;; there are unsaved edits; cancel requested action (return #f -> #t) and wait for response
-	    (yes-or-no?
-	     (format #f "~A has unsaved edits.  ~A anyway? " 
-		     (short-file-name ind)
-		     (if exiting "Exit" "Close"))
-	     (lambda (snd)
-	       ;;"Yes close anyway"
-	       (revert-sound ind) ; to make sure this hook doesn't activate
-	       (close-sound ind)
-	       (if exiting (exit)))
-	     (lambda (snd)
-	       ;;"no don't close"
-	       #f) ; this return value is just a placeholder to make Scheme happy
-	     ind)
-	    #f) ; (not #f) -> #t means cancel request pending response
-	  #t))) ; (not #t) -> #f means go ahead, there are no unsaved edits
-  
-  (define (ignore-unsaved-edits-at-exit?)
-    (letrec ((ignore-unsaved-edits-at-exit-1?
-	      (lambda (snds)
-		(or (null? snds)
-		    (and (ignore-unsaved-edits-at-close? (car snds) #t)
-			 (ignore-unsaved-edits-at-exit-1? (cdr snds)))))))
-      (ignore-unsaved-edits-at-exit-1? (sounds))))
-  
-  (define (unsaved-edits-at-exit?) (not (ignore-unsaved-edits-at-exit?)))
-  (define (unsaved-edits-at-close? snd) (not (ignore-unsaved-edits-at-close? snd #f)))
-    
-  (set! checking-for-unsaved-edits check)
-  (if check
-      (begin
-	(if (not (member unsaved-edits-at-exit? (hook-functions before-exit-hook)))
-	    (hook-push before-exit-hook unsaved-edits-at-exit?))
-	(if (not (member unsaved-edits-at-close? (hook-functions before-close-hook)))
-	    (hook-push before-close-hook unsaved-edits-at-close?)))
-      (begin
-	(hook-remove before-exit-hook unsaved-edits-at-exit?)
-	(hook-remove before-close-hook unsaved-edits-at-close?))))
-
-
 ;;; -------- remember-sound-state
 
 (define remembering-sound-state 0) ; for prefs
@@ -879,34 +806,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
     (list chan1 chan2)))
 
 
-
-
-;;; -------- initial bounds 
-
-(define prefs-show-full-duration #f) ; prefs dialog
-(define prefs-initial-beg 0.0)
-(define prefs-initial-dur 0.1)
-
-(define (prefs-initial-bounds snd chn dur)
-  "(prefs-initial-bounds snd chn dur) returns the current preferences dialog initial graph bounds"
-  (list prefs-initial-beg
-	(if prefs-show-full-duration
-	    dur
-	    (min prefs-initial-dur dur))))
-
-(define (prefs-activate-initial-bounds beg dur full)
-  "(prefs-activate-initial-bounds beg dur full) activates the preferences dialog initial graph bounds settings"
-  (set! prefs-initial-beg beg)
-  (set! prefs-initial-dur dur)
-  (set! prefs-show-full-duration full)
-  (hook-push initial-graph-hook prefs-initial-bounds))
-
-(define (prefs-deactivate-initial-bounds)
-  "(prefs-deactivate-initial-bounds) deactivates the preferences dialog initial graph bounds settings"
-  (set! prefs-initial-beg 0.0)
-  (set! prefs-initial-dur 0.1)
-  (set! prefs-show-full-duration #f)
-  (hook-remove initial-graph-hook prefs-initial-bounds))
 
 
 ;;; -------- with-threaded-channels

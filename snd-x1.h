@@ -384,6 +384,8 @@ void save_file_dialog_state(FILE *fd);
 widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
 void reflect_region_in_save_as_dialog(void);
+void save_edits_now(snd_info *sp);
+
 
 
 /* -------- snd-xenv.c -------- */

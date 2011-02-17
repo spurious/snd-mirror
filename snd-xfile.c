@@ -4769,6 +4769,131 @@ void save_post_it_dialog_state(FILE *fd)
 }
 
 
+/* ---------------- unsaved edits dialog ---------------- */
+
+static int num_unsaved_edits_dialogs = 0;
+static Widget *unsaved_edits_dialogs = NULL;
+static snd_info **unsaved_edits_sounds = NULL;
+
+static Widget unsaved_edits_dialog(snd_info *sp)
+{
+  int i;
+  /* are there any such dialogs? */
+  if (num_unsaved_edits_dialogs == 0)
+    return(NULL);
+
+  /* now see if we've already prompted about this sound */
+  for (i = 0; i < num_unsaved_edits_dialogs; i++)
+    if (unsaved_edits_sounds[i] == sp)
+      return(unsaved_edits_dialogs[i]);
+
+  /* try to find a free unmanaged dialog */
+  for (i = 0; i < num_unsaved_edits_dialogs; i++)
+    if ((unsaved_edits_dialogs[i]) &&
+	(!XtIsManaged(unsaved_edits_dialogs[i])))
+      return(unsaved_edits_dialogs[i]);
+
+  return(NULL);
+}
+
+static void save_unsaved_edits_dialog(Widget d, snd_info *sp)
+{
+  if (num_unsaved_edits_dialogs == 0)
+    {
+      unsaved_edits_dialogs = (Widget *)calloc(1, sizeof(Widget));
+      unsaved_edits_sounds = (snd_info **)calloc(1, sizeof(snd_info *));
+    }
+  else
+    {
+      unsaved_edits_dialogs = (Widget *)realloc(unsaved_edits_dialogs, (num_unsaved_edits_dialogs + 1) * sizeof(Widget));
+      unsaved_edits_sounds = (snd_info **)realloc(unsaved_edits_sounds, (num_unsaved_edits_dialogs + 1) * sizeof(snd_info *));
+    }
+
+  unsaved_edits_dialogs[num_unsaved_edits_dialogs] = d;
+  unsaved_edits_sounds[num_unsaved_edits_dialogs] = sp;
+  num_unsaved_edits_dialogs++;
+}
+
+static void zero_edits(chan_info *cp)
+{
+  cp->edit_ctr = 0;
+}
+
+static void unsaved_edits_no_callback(Widget w, XtPointer context, XtPointer info)
+{
+  snd_info *sp = (snd_info *)context;
+  for_each_sound_chan(sp, zero_edits);
+  snd_close_file(sp);
+}
+
+static void unsaved_edits_yes_callback(Widget w, XtPointer context, XtPointer info)
+{
+  snd_info *sp = (snd_info *)context;
+  save_edits(sp);
+  snd_close_file(sp);
+}
+
+static void unsaved_edits_help_callback(Widget w, XtPointer context, XtPointer info)
+{
+  snd_help("save edits?", 
+	   "You have set " S_ask_about_unsaved_edits " to " PROC_TRUE ", so you will be asked whether you want \
+to save edits if you try to close a sound that has unsaved edits.",
+	   WITH_WORD_WRAP);
+}
+
+void save_edits_now(snd_info *sp)
+{
+  char *question;
+  XmString q;
+  Widget dialog;
+
+  question = mus_format("%s has unsaved edits.  Save them?", sp->short_filename);
+  q = XmStringCreateLocalized(question);
+
+  dialog = unsaved_edits_dialog(sp);
+  if (!dialog)
+    {
+      Arg args[20];
+      int n;
+      XmString yes, no;
+
+      yes = XmStringCreateLocalized("yes");
+      no = XmStringCreateLocalized("no");
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNokLabelString, yes); n++;
+      XtSetArg(args[n], XmNcancelLabelString, no); n++;
+      XtSetArg(args[n], XmNmessageString, q); n++;
+      dialog = XmCreateQuestionDialog(MAIN_PANE(ss), sp->filename, args, n);
+      save_unsaved_edits_dialog(dialog, sp);
+
+      XtAddCallback(dialog, XmNhelpCallback,   unsaved_edits_help_callback, (XtPointer)sp);
+      XtAddCallback(dialog, XmNokCallback,     unsaved_edits_yes_callback,  (XtPointer)sp);
+      XtAddCallback(dialog, XmNcancelCallback, unsaved_edits_no_callback,   (XtPointer)sp);
+
+      XmStringFree(yes);
+      XmStringFree(no);
+
+      map_over_children(dialog, set_main_color_of_widget);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+    }
+  else
+    {
+      XtVaSetValues(dialog, XmNmessageString, q, NULL);
+    }
+
+  XmStringFree(q);
+  free(question);
+  XtManageChild(dialog);
+}
+
+
 
 /* ---------------- view files dialog ---------------- */
 

@@ -437,8 +437,8 @@ typedef struct snd_state {
   mus_long_t Transform_Size;
   mus_fft_window_t Fft_Window;
   graph_type_t Transform_Graph_Type, Time_Graph_Type;
-  bool Ask_Before_Overwrite;
-  mus_float_t Fft_Window_Alpha, Fft_Window_Beta, Grid_Density;
+  bool Ask_Before_Overwrite, Ask_About_Unsaved_Edits, Show_Full_Duration;
+  mus_float_t Fft_Window_Alpha, Fft_Window_Beta, Grid_Density, Initial_Beg, Initial_Dur;
   mus_float_t Color_Scale, Color_Cutoff, Beats_Per_Minute;
   bool Color_Inverted, Show_Mix_Waveforms;
   int Mix_Waveform_Height, Beats_Per_Measure;
@@ -879,6 +879,7 @@ io_error_t save_edits_without_asking(snd_info *sp);
 void save_edits_with_prompt(snd_info *sp);
 io_error_t save_edits_and_update_display(snd_info *sp);
 io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int type, int format, int srate, const char *comment, int pos);
+void check_for_unsaved_edits(snd_info *sp);
 void revert_edits(chan_info *cp);
 mus_long_t current_location(snd_fd *sf);
 void g_init_edits(void);

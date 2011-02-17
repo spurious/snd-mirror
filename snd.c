@@ -183,6 +183,10 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Auto_Update =                DEFAULT_AUTO_UPDATE; 
   ss->Auto_Update_Interval =       DEFAULT_AUTO_UPDATE_INTERVAL;
   ss->Ask_Before_Overwrite =       DEFAULT_ASK_BEFORE_OVERWRITE;
+  ss->Ask_About_Unsaved_Edits =    DEFAULT_ASK_ABOUT_UNSAVED_EDITS;
+  ss->Show_Full_Duration =         DEFAULT_SHOW_FULL_DURATION;
+  ss->Initial_Beg =                DEFAULT_INITIAL_BEG;
+  ss->Initial_Dur =                DEFAULT_INITIAL_DUR;
   ss->With_Background_Processes =  DEFAULT_WITH_BACKGROUND_PROCESSES;
   ss->With_File_Monitor =          DEFAULT_WITH_FILE_MONITOR;
   ss->Selection_Creates_Region =   DEFAULT_SELECTION_CREATES_REGION;

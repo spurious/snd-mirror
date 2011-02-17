@@ -642,9 +642,18 @@ function. </p>
 
 <tr><td width=30></td><td width=220></td><td></td></tr>
 
+<!-- ask-about-unsaved-edits -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="askaboutunsavededits">ask-about-unsaved-edits</a></code></td>
+<td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip('in this table, the default value of the given variable is listed after the variable name,<br>so ask-about-unsaved-edits defaults to false')"><code>#f</code></td></tr><tr><td></td><td colspan=2>
+If ask-about-unsaved-edits is #t, Snd worries about unsaved edits when a sound is about to be closed.
+Otherwise Snd just closes the sound, flushing any unsaved edits.
+<code>(set! (ask-about-unsaved-edits) #t)</code>
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
 <!-- ask-before-overwrite -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="askbeforeoverwrite">ask-before-overwrite</a></code></td>
-<td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip('in this table, the default value of the given variable is listed after the variable name,<br>so ask-before-overwrite defaults to false')"><code>#f</code></td></tr><tr><td></td><td colspan=2>
+<td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
 ask-before-overwrite determines whether Snd asks before overwriting an existing file:
 <code>(set! (ask-before-overwrite) #t)</code>
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -898,12 +907,27 @@ See the function html in index.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
+
 <!-- html-program -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="htmlprogram">html-program</a></code></td>
 <td bgcolor="#f2f4ff"><code>"firefox"</code></td></tr><tr><td></td><td colspan=2>
 This is the program to use to read HTML files.
 On the Mac, you need to give the full path to the executable image: "/Applications/Safari.app/Contents/MacOS/Safari".
 See the function html in index.scm.
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
+<!-- initial-beg -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="initialbeg">initial-beg</a></code></td>
+<td bgcolor="#f2f4ff"><code>0.0</code></td></tr><tr><td></td><td colspan=2>
+initial-beg is the start point (in seconds) of the initial graph of a sound.
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
+<!-- initial-dur -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="initialdur">initial-dur</a></code></td>
+<td bgcolor="#f2f4ff"><code>0.1</code></td></tr><tr><td></td><td colspan=2>
+initial-dur is the duration (in seconds) of the initial graph of a sound.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1069,6 +1093,13 @@ This is the <a href="snd.html#savedstate">saved state</a> file name.
 If selection-creates-region is #t, a region is created whenever a selection is made.  If you're editing very large sounds
 and using selections, the region temp files can use up a lot of disk space (and the time to write
 them); if you're not using regions anyway, this switch can turn them off.
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
+<!-- show-full-duration -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="showfullduration">show-full-duration</a></code></td>
+<td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
+If show-full-duration is #t, Snd displays the entire sound when it is first opened.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1655,8 +1686,7 @@ If no header is found, <a href="#openrawsoundhook">open-raw-sound-hook</a> is in
 <tr><td colspan=3 bgcolor="#f2f4ff">
 <code><a class=def name="beforeclosehook">before-close-hook</a> (snd) </code> [<b>or</b>]
 </td></tr><tr><td></td><td colspan=2>
-This hook is called when a file is about to be closed.  If a hook function returns #t, the file is not closed (see
-<a href="sndscm.html#checkforunsavededits">check-for-unsaved-edits</a> in extensions.scm).
+This hook is called when a file is about to be closed.  If a hook function returns #t, the file is not closed.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1665,8 +1695,7 @@ This hook is called when a file is about to be closed.  If a hook function retur
 <code><a class=def name="beforeexithook">before-exit-hook</a> ()</code> [<b>or</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called upon a request to exit Snd.
-If a hook function returns #t, Snd does not exit.  This can be used to check 
-for unsaved edits (see above or extensions.scm: <a href="#unsavededitsp">unsaved-edits?</a>).
+If a hook function returns #t, Snd does not exit. 
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -8587,7 +8616,7 @@ extract one channel from a sound: <a href="#extractchannel">extract-channel</a><
 extract a set of channels from a sound: <a href="#extractchannels">extract-channels</a><br>
 save a sound in a different format or header: <a href="#savesoundas">save-sound-as</a><br>
 backup edits automatically: <a href="sndscm.html#autosave">autosave</a><br>
-check first for unsaved edits: <a href="sndscm.html#checkforunsavededits">check-for-unsaved-edits</a><br>
+check first for unsaved edits: <a href="#askaboutunsavededits">ask-about-unsaved-edits</a><br>
 save Snd's complete state (unsaved edits and all): <a href="#savestate">save-state</a>, <a href="#savedir">save-dir</a>, <a href="#savestatehook">save-state-hook</a>, <a href="#savestatefile">save-state-file</a><br>
 save the selection: <a href="#saveselection">save-selection</a><br>
 save a region: <a href="#saveregion">save-region</a><br>

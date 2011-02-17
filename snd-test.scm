@@ -779,6 +779,18 @@
     (set! (region-graph-style) (region-graph-style))
     (if (not (equal? (region-graph-style) graph-lines))
 	(snd-display #__line__ ";region-graph-style set def: ~A" (region-graph-style)))
+    (set! (ask-about-unsaved-edits) (ask-about-unsaved-edits)) 
+    (if (not (equal? (ask-about-unsaved-edits) #f)) 
+	(snd-display #__line__ ";ask-about-unsaved-edits set def: ~A" (ask-about-unsaved-edits)))
+    (set! (show-full-duration) (show-full-duration)) 
+    (if (not (equal? (show-full-duration) #f)) 
+	(snd-display #__line__ ";show-full-duration set def: ~A" (show-full-duration)))
+    (set! (initial-beg) (initial-beg)) 
+    (if (fneq (initial-beg) 0.0)
+	(snd-display #__line__ ";initial-beg set def: ~A" (initial-beg)))
+    (set! (initial-dur) (initial-dur)) 
+    (if (fneq (initial-dur) 0.1)
+	(snd-display #__line__ ";initial-dur set def: ~A" (initial-dur)))
     (set! (ask-before-overwrite) (ask-before-overwrite)) 
     (if (not (equal? (ask-before-overwrite) #f)) 
 	(snd-display #__line__ ";ask-before-overwrite set def: ~A" (ask-before-overwrite)))
@@ -1155,6 +1167,8 @@
 		 (snd-display #__line__ ";set ~A to bogus value: ~A ~A" name val (func)))))
 	 (list axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font)
 	 (list 'axis-label-font 'axis-numbers-font 'tiny-font 'peaks-font 'bold-peaks-font)))
+
+    (set! (ask-about-unsaved_edits) #f)
     ))
 
 
@@ -1200,6 +1214,7 @@
      (list
       'amp-control (without-errors (amp-control)) 'no-such-sound
       'amp-control-bounds (cadr (amp-control-bounds)) 8.0
+      'ask-about-unsaved-edits (ask-about-unsaved-edits) #f 
       'ask-before-overwrite (ask-before-overwrite) #f 
       'audio-output-device (audio-output-device) 0
       'audio-output-device (audio-output-device) 0 
@@ -1271,6 +1286,8 @@
       'grid-density (grid-density) 1.0
       'html-dir (html-dir) "."
       'html-program (html-program) "firefox"
+      'initial-beg (initial-beg) 0.0
+      'initial-dur (initial-dur) 0.1
       'just-sounds (just-sounds) #t
       'ladspa-dir (ladspa-dir) #f 
       'peak-env-dir (peak-env-dir) #f 
@@ -1307,6 +1324,7 @@
       'selection-creates-region (selection-creates-region) #t 
       'show-axes (show-axes) 1
       'show-controls (show-controls) #f
+      'show-full-duration (show-full-duration) #f 
       'show-grid (show-grid) #f 
       'show-indices (show-indices) #f
       'show-marks (show-marks) #t 
@@ -1355,6 +1373,7 @@
       'zoom-focus-style (zoom-focus-style) 2 
       ))
     (if *snd-opened-sound* (snd-display #__line__ ";*snd-opened-sound*: ~A" *snd-opened-sound*))
+    (set! (ask-about-unsaved_edits) #f)
     ))
 
 
@@ -1801,6 +1820,7 @@
        (list
 	(list 'amp-control amp-control 1.0 0.5)
 	(list 'amp-control-bounds amp-control-bounds (list 0.0 8.0) (list 1.0 5.0))
+	(list 'ask-about-unsaved-edits ask-about-unsaved-edits #f #t)
 	(list 'ask-before-overwrite ask-before-overwrite #f #t)
 	(list 'audio-input-device audio-input-device 0 1)
 	(list 'audio-output-device audio-output-device 0 1)
@@ -1867,6 +1887,8 @@
 	(list 'filter-control? filter-control? #f #t)
 	(list 'graph-cursor graph-cursor 34 32)
 	(list 'graph-style graph-style 0 1)
+	(list 'initial-beg initial-beg 0.0 1.0)
+	(list 'initial-dur initial-dur 0.1 1.0)
 	(list 'just-sounds just-sounds #f #t)
 	(list 'listener-prompt listener-prompt ">" ":")
 	(list 'max-transform-peaks max-transform-peaks 100 10)
@@ -1895,6 +1917,7 @@
 	(list 'reverb-control-scale-bounds reverb-control-scale-bounds (list 0.0 4.0) (list 0.0 0.2))
 	(list 'reverb-control? reverb-control? #f #t)
 	(list 'show-axes show-axes 1 0)
+	(list 'show-full-duration show-full-duration #f #t)
 	(list 'show-transform-peaks show-transform-peaks #f #t)
 	(list 'show-indices show-indices #f #t)
 	(list 'show-marks show-marks #t #f)
@@ -1936,7 +1959,7 @@
 	(list 'beats-per-measure beats-per-measure 1 120)
 	(list 'zero-pad zero-pad 0 1)
 	(list 'zoom-focus-style zoom-focus-style 2 1))))
-    
+    (set! (ask-about-unsaved_edits) #f)    
     (letrec ((test-bad-args
 	      (lambda (lst)
 		(if (not (null? lst))
@@ -2064,7 +2087,7 @@
 		       'add-transform 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook
 		       'after-open-hook 'after-save-as-hook 'after-save-state-hook 'after-transform-hook 'all-pass
 		       'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate 'analyse-ladspa
-		       'apply-controls 'apply-ladspa 'array->file 'array-interp 'as-one-edit
+		       'apply-controls 'apply-ladspa 'array->file 'array-interp 'as-one-edit 'ask-about-unsaved-edits
 		       'ask-before-overwrite 'asymmetric-fm 'asymmetric-fm? 'audio-input-device 'audio-output-device
 		       'auto-resize 'auto-update 'auto-update-interval 'autocorrelate 'autocorrelation
 		       'moving-average 'moving-average? 'axis-color 'axis-info 'axis-label-font 'axis-numbers-font
@@ -2242,7 +2265,7 @@
 		       'selection-frames 'selection-maxamp 'selection-maxamp-position 'selection-member? 'selection-position
 		       'selection-srate 'selection?
 		       'short-file-name 'show-all-axes 'show-all-axes-unlabelled 'show-bare-x-axis
-		       'show-axes 'show-controls 'show-grid 'show-indices
+		       'show-axes 'show-controls 'show-grid 'show-indices 'show-full-duration 'initial-beg 'initial-dur
 		       'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection 'show-selection-transform
 		       'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
 		       'show-y-zero 'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos?
@@ -61113,7 +61136,7 @@ EDITS: 1
 	     
 	     (procs (list 
 		     add-mark add-sound-file-extension add-source-file-extension sound-file-extensions sound-file? 
-		     add-to-main-menu add-to-menu add-transform amp-control
+		     add-to-main-menu add-to-menu add-transform amp-control ask-about-unsaved-edits
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device ; add-player
 		     auto-resize auto-update autocorrelate axis-color axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key bomb apply-controls change-samples-with-origin channel-style
@@ -61151,7 +61174,7 @@ EDITS: 1
 		     mix-region mix-sampler?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound in
-		     read-mix-sample next-sample read-region-sample
+		     read-mix-sample next-sample read-region-sample show-full-duration initial-beg initial-dur
 		     transform-normalization open-file-dialog-directory open-raw-sound open-sound previous-sample
 		     peaks player? players play-arrow-size
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
@@ -61257,9 +61280,9 @@ EDITS: 1
 		     ))
 	     
 	     (set-procs (list 
-			 amp-control ask-before-overwrite audio-input-device audio-output-device auto-resize
-			 auto-update axis-color axis-label-font axis-numbers-font ;basic-color 
-			 channel-style peaks-font bold-peaks-font sound-file-extensions
+			 amp-control ask-about-unsaved-edits ask-before-overwrite audio-input-device audio-output-device auto-resize
+			 auto-update axis-color axis-label-font axis-numbers-font ;basic-color
+			 channel-style peaks-font bold-peaks-font sound-file-extensions show-full-duration initial-beg initial-dur
 			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp 
 			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
@@ -62087,8 +62110,8 @@ EDITS: 1
 				   (not (eq? tag 'error)))
 			      (snd-display #__line__ ";~D: misc procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
-		      (list axis-color enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite
-			    auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
+		      (list axis-color enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite ask-about-unsaved-edits
+			    auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key show-full-duration initial-beg initial-dur
 			    channel-style color-cutoff color-orientation-dialog color-inverted color-scale
 			    cursor-color dac-combines-channels dac-size clipping data-color default-output-chans 
 			    default-output-data-format default-output-srate default-output-header-type enved-envelope enved-base
@@ -62177,7 +62200,8 @@ EDITS: 1
 			  (list mouse-press-hook 'mouse-press-hook)
 			  (list mouse-click-hook 'mouse-click-hook)
 			  (list enved-hook 'enved-hook)))
-	  
+
+	  (set! (ask-about-unsaved_edits) #f)	  
 	  (if (= test-28 0) 
 	      (begin
 		(check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
@@ -63285,7 +63309,7 @@ EDITS: 1
 (mus-oss-set-buffers 4 12)
 
 (reset-almost-all-hooks)
-
+(set! (ask-about-unsaved-edits) #f)
 (close-output-port optimizer-log)
 
 (if (and full-test
@@ -63524,4 +63548,6 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 |#
 
 ;;; TODO: explicit sync-style tests, also show-selection, unselect-all
+;;;          ask-about-unsaved-edits, show-full-duration, initial-beg, initial-dur
+
 

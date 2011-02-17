@@ -39,6 +39,25 @@ bool snd_exit_cleanly(bool force_exit)
 		      S_before_exit_hook);
   if ((XEN_TRUE_P(res)) && (!force_exit)) return(false); /* does it make any sense to call this hook if we're forced to exit anyway? */
 
+  if (ask_about_unsaved_edits(ss))
+    {
+      int i;
+      bool found_saver = false;
+      for (i = 0; i < ss->max_sounds; i++)
+	{
+	  snd_info *sp;
+	  sp = ss->sounds[i];
+	  if ((sp) && 
+	      (sp->inuse == SOUND_NORMAL) &&
+	      (has_unsaved_edits(sp)))
+	    {
+	      found_saver = true;
+	      save_edits_now(sp);
+	    }
+	}
+      if (found_saver) return(false);
+    }
+
   if (peak_env_dir(ss))
     for_each_chan(save_peak_env_info);
 
@@ -424,6 +443,10 @@ static void save_options(FILE *fd)
   if (color_inverted(ss) != DEFAULT_COLOR_INVERTED) pss_ss(fd, S_color_inverted, b2s(color_inverted(ss)));
   if (zero_pad(ss) != DEFAULT_ZERO_PAD) pss_sd(fd, S_zero_pad, zero_pad(ss));
   if (ask_before_overwrite(ss) != DEFAULT_ASK_BEFORE_OVERWRITE) pss_ss(fd, S_ask_before_overwrite, b2s(ask_before_overwrite(ss)));
+  if (ask_about_unsaved_edits(ss) != DEFAULT_ASK_ABOUT_UNSAVED_EDITS) pss_ss(fd, S_ask_about_unsaved_edits, b2s(ask_about_unsaved_edits(ss)));
+  if (show_full_duration(ss) != DEFAULT_SHOW_FULL_DURATION) pss_ss(fd, S_show_full_duration, b2s(show_full_duration(ss)));
+  if (fneq(initial_beg(ss), DEFAULT_INITIAL_BEG)) pss_sf(fd, S_initial_beg, initial_beg(ss));
+  if (fneq(initial_dur(ss), DEFAULT_INITIAL_DUR)) pss_sf(fd, S_initial_dur, initial_dur(ss));
   if (dac_combines_channels(ss) != DEFAULT_DAC_COMBINES_CHANNELS) pss_ss(fd, S_dac_combines_channels, b2s(dac_combines_channels(ss)));
   if (wavo_hop(ss) != DEFAULT_WAVO_HOP) pss_sd(fd, S_wavo_hop, wavo_hop(ss));
   if (wavo_trace(ss) != DEFAULT_WAVO_TRACE) pss_sd(fd, S_wavo_trace, wavo_trace(ss));

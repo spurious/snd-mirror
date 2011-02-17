@@ -532,6 +532,22 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_ask_before_overwrite(a) ss->Ask_Before_Overwrite = a
 #define DEFAULT_ASK_BEFORE_OVERWRITE false
 
+#define ask_about_unsaved_edits(ss) ss->Ask_About_Unsaved_Edits
+#define set_ask_about_unsaved_edits(a) ss->Ask_About_Unsaved_Edits = a
+#define DEFAULT_ASK_ABOUT_UNSAVED_EDITS false
+
+#define show_full_duration(ss) ss->Show_Full_Duration
+#define set_show_full_duration(a) ss->Show_Full_Duration = a
+#define DEFAULT_SHOW_FULL_DURATION false
+
+#define initial_beg(ss) ss->Initial_Beg
+#define set_initial_beg(a) ss->Initial_Beg = a
+#define DEFAULT_INITIAL_BEG 0.0
+
+#define initial_dur(ss) ss->Initial_Dur
+#define set_initial_dur(a) ss->Initial_Dur = a
+#define DEFAULT_INITIAL_DUR 0.1
+
 #define spectrum_end(ss) ss->Spectrum_End
 #define in_set_spectrum_end(a) ss->Spectrum_End = a
 #define DEFAULT_SPECTRUM_END 1.0

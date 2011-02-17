@@ -1,12 +1,12 @@
 /* this file included as text in snd-g|xprefs.c */
 
 /* TODO: the following need to be built-in:
- *    unsaved edits [Ask_About_Unsaved_Edits in state, add as var, if #t do the stuff currently in extensions.scm]
- *    initial bounds [Show_Full_Duration, Initial_Beg, Initial_Dur in state, as var, etc]
  *    remember sound state, 
  *    show selection key binding test
- *    effects menu, marks menu, toolbar, edit menu additions, 
+ *    effects menu, toolbar, edit menu additions, -- with_toolbar, with_popup_menus, 
+ *      just include the edit-menu stuff, omit effects
  *    popup menus [With_Popup_Menus as var, etc]
+ * need gtk side of unsaved edits stuff and no-gui?
  */
 
 
@@ -579,34 +579,6 @@ static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
 }
 #endif
 
-
-static void prefs_function_save_1(FILE *fd, const char *name, const char *file, XEN val)
-{
-#if HAVE_SCHEME
-  char *temp = NULL;
-  if (file)
-    fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load \"%s.scm\"))\n", file, file);
-  fprintf(fd, "(%s %s)\n", name, temp = XEN_AS_STRING(val));
-#if HAVE_SCHEME
-  if (temp) free(temp);
-#endif
-#endif
-
-#if HAVE_RUBY
-  char *str;
-  str = TO_PROC_NAME(name);
-  if (file)
-    fprintf(fd, "require \"%s\"\n", file);
-  fprintf(fd, "%s(%s)\n", str, XEN_AS_STRING(val));
-  free(str);
-#endif
-
-#if HAVE_FORTH
-  if (file)
-    fprintf(fd, "require %s\n", file);
-  fprintf(fd, "%s %s\n", XEN_AS_STRING(val), name); 
-#endif
-}
 
 
 
@@ -2343,43 +2315,12 @@ static void startup_size_text(prefs_info *prf)
 
 /* ---------------- check-for-unsaved-edits ---------------- */
 
-static bool rts_unsaved_edits = false, prefs_unsaved_edits = false;
-
-static bool unsaved_edits(void)
-{
-  return(XEN_TO_C_BOOLEAN(prefs_variable_get("checking-for-unsaved-edits")));
-}
-
-
-static void set_unsaved_edits(bool val, const char *load)
-{
-  prefs_unsaved_edits = val;
-  if ((load) &&
-      (!XEN_DEFINED_P("checking-for-unsaved-edits")))
-    load_file_with_path_and_extension(load);
-  if (XEN_DEFINED_P("checking-for-unsaved-edits")) 
-    prefs_function_call_1("check-for-unsaved-edits", C_TO_XEN_BOOLEAN(val));
-}
-
-
-static void revert_unsaved_edits(prefs_info *prf) {set_unsaved_edits(rts_unsaved_edits, NULL);}
-static void clear_unsaved_edits(prefs_info *prf) {set_unsaved_edits(false, NULL);}
-
-
-static void save_unsaved_edits(prefs_info *prf, FILE *fd)
-{
-  rts_unsaved_edits = GET_TOGGLE(prf->toggle);
-  if (rts_unsaved_edits)
-    prefs_function_save_1(fd, "check-for-unsaved-edits", "extensions", C_TO_XEN_BOOLEAN(prefs_unsaved_edits));
-}
-
-
-static void reflect_unsaved_edits(prefs_info *prf) 
-{
-  prefs_unsaved_edits = unsaved_edits();
-  SET_TOGGLE(prf->toggle, prefs_unsaved_edits);
-}
-
+static bool rts_unsaved_edits = false;
+static void revert_unsaved_edits(prefs_info *prf) {set_ask_about_unsaved_edits(rts_unsaved_edits);}
+static void clear_unsaved_edits(prefs_info *prf) {set_ask_about_unsaved_edits(DEFAULT_ASK_ABOUT_UNSAVED_EDITS);}
+static void save_unsaved_edits(prefs_info *prf, FILE *fd) {rts_unsaved_edits = ask_about_unsaved_edits(ss);}
+static void reflect_unsaved_edits(prefs_info *prf) {SET_TOGGLE(prf->toggle, ask_about_unsaved_edits(ss));}
+static void unsaved_edits_toggle(prefs_info *prf) {set_ask_about_unsaved_edits(GET_TOGGLE(prf->toggle));}
 
 static void help_unsaved_edits(prefs_info *prf)
 {
@@ -2387,12 +2328,6 @@ static void help_unsaved_edits(prefs_info *prf)
 	   "This option looks for unsaved edits when you close a file, or exit Snd.  If it \
 finds any, it asks you whether you want to save them.",
 	   WITH_WORD_WRAP);
-}
-
-
-static void unsaved_edits_toggle(prefs_info *prf)
-{
-  set_unsaved_edits(GET_TOGGLE(prf->toggle), "extensions");
 }
 
 
@@ -3773,47 +3708,6 @@ static void clear_edit_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
 
 
-/* ---------------- marks menu ---------------- */
-
-static bool include_marks_menu = false;
-
-static bool find_marks_menu(void) 
-{
-  return(XEN_DEFINED_P("marks-menu"));
-}
-
-
-static void marks_help_menu(prefs_info *prf) /* avoid collision with menu name help_marks_menu) */
-{
-  snd_help(prf->var_name,
-	   "This option adds a top-level 'Marks' menu that includes such things as play between marks, \
-trim, crop, define selection via marks, etc",
-	   WITH_WORD_WRAP);
-}
-
-
-static void save_marks_menu(prefs_info *prf, FILE *fd)
-{
-  include_marks_menu = GET_TOGGLE(prf->toggle);
-  if (include_marks_menu)
-    fprintf(fd, "(if (not (provided? 'snd-marks-menu.scm)) (load \"marks-menu.scm\"))\n");
-}
-
-
-static void marks_menu_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(find_marks_menu())))
-    load_file_with_path_and_extension("marks-menu");
-}
-
-
-static void reflect_marks_menu(prefs_info *prf) {}
-static void revert_marks_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_marks_menu);}
-static void clear_marks_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
-
-
-
 /* ---------------- icon box ---------------- */
 
 static bool include_icon_box = false;
@@ -4647,24 +4541,6 @@ static mus_float_t rts_initial_beg = 0.0, rts_initial_dur = 0.1;
 static bool rts_full_duration = false;
 static bool include_duration = false;
 
-static bool full_duration(void)
-{
-  return(XEN_TO_C_BOOLEAN(prefs_variable_get("prefs-show-full-duration")));
-}
-
-
-static mus_float_t initial_beg(void)
-{
-  return(XEN_TO_C_DOUBLE_OR_ELSE(prefs_variable_get("prefs-initial-beg"), 0.0));
-}
-
-
-static mus_float_t initial_dur(void)
-{
-  return(XEN_TO_C_DOUBLE_OR_ELSE(prefs_variable_get("prefs-initial-dur"), 0.1));
-}
-
-
 static void help_initial_bounds(prefs_info *prf)
 {
   snd_help(prf->var_name,
@@ -4676,7 +4552,7 @@ sets either new bounds for that display, or directs Snd to display the entire so
 
 static char *initial_bounds_to_string(void)
 {
-  return(mus_format("%.2f : %.2f", initial_beg(), initial_dur()));
+  return(mus_format("%.2f : %.2f", initial_beg(ss), initial_dur(ss)));
 }
 
 
@@ -4701,19 +4577,19 @@ static void save_initial_bounds(prefs_info *prf, FILE *fd)
   if (include_duration)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load \"extensions.scm\"))\n");
-      fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n", rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "#t" : "#f");
+      fprintf(fd, "(set! (initial-beg) %.2f)\n(set! (initial-dur) %.2f)\n(set! (show-full-duration) %s)\n", 
+	      rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "#t" : "#f");
 #endif
 
 #if HAVE_RUBY
-      fprintf(fd, "require \"extensions\"\n");
-      fprintf(fd, "prefs_activate_initial_bounds(%.2f, %.2f, %s)\n", rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "true" : "false");
+      fprintf(fd, "set_initial_beg(%.2f)\nset_initial_dur(%.2f)\nset_show_full_duration(%s)\n", 
+	      rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "true" : "false");
 
 #endif
 
 #if HAVE_FORTH
-      fprintf(fd, "require extensions\n");
-      fprintf(fd, "%.2f %.2f %s prefs-activate-initial-bounds\n", rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "true" : "false");
+      fprintf(fd, "%.2f set-initial-beg\n%.2f set-initial-dur\n%s set-show-full-duration\n", 
+	      rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "true" : "false");
 #endif
     }
 }
@@ -4726,32 +4602,30 @@ static void reflect_initial_bounds(prefs_info *prf)
   str = initial_bounds_to_string();
   SET_TEXT(prf->text, str);
   free(str);
-  SET_TOGGLE(prf->toggle, full_duration());
+  SET_TOGGLE(prf->toggle, show_full_duration(ss));
 }
 
 
 static void revert_initial_bounds(prefs_info *prf)
 {
-  prefs_variable_set("prefs-initial-beg", C_TO_XEN_DOUBLE(rts_initial_beg));
-  prefs_variable_set("prefs-initial-dur", C_TO_XEN_DOUBLE(rts_initial_dur));
-  prefs_variable_set("prefs-show-full-duration", C_TO_XEN_BOOLEAN(rts_full_duration));
+  set_initial_beg(rts_initial_beg);
+  set_initial_dur(rts_initial_dur);
+  set_show_full_duration(rts_full_duration);
 }
 
 
 static void clear_initial_bounds(prefs_info *prf)
 {
-  prefs_variable_set("prefs-initial-beg", C_TO_XEN_DOUBLE(0.0));
-  prefs_variable_set("prefs-initial-dur", C_TO_XEN_DOUBLE(0.1));
-  prefs_variable_set("prefs-show-full-duration", XEN_FALSE);
+  set_initial_beg(DEFAULT_INITIAL_BEG);
+  set_initial_dur(DEFAULT_INITIAL_DUR);
+  set_show_full_duration(DEFAULT_SHOW_FULL_DURATION);
 }
 
 
 static void initial_bounds_toggle(prefs_info *prf)
 {
   include_duration = true;
-  if (!(XEN_DEFINED_P("prefs-show-full-duration")))
-    load_file_with_path_and_extension("extensions");
-  prefs_variable_set("prefs-show-full-duration", C_TO_XEN_BOOLEAN(GET_TOGGLE(prf->toggle)));
+  set_show_full_duration(GET_TOGGLE(prf->toggle));
 }
 
 
@@ -4763,11 +4637,8 @@ static void initial_bounds_text(prefs_info *prf)
 
   str = GET_TEXT(prf->text);
   sscanf(str, "%f : %f", &beg, &dur);
-  if (!(XEN_DEFINED_P("prefs-initial-beg")))
-    load_file_with_path_and_extension("extensions");
-
-  prefs_variable_set("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
-  prefs_variable_set("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
+  set_initial_beg(beg);
+  set_initial_dur(dur);
   free_TEXT(str);
 }
 

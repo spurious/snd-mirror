@@ -4260,6 +4260,13 @@ void save_post_it_dialog_state(FILE *fd)
 }
 
 
+
+void save_edits_now(snd_info *sp)
+{
+}
+
+
+
 /* ---------------- view files dialog ---------------- */
 
 static XEN mouse_enter_label_hook;

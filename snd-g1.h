@@ -473,6 +473,7 @@ void save_post_it_dialog_state(FILE *fd);
 void reflect_region_in_save_as_dialog(void);
 void mouse_enter_label(void *r, int type);
 void mouse_leave_label(void *r, int type);
+void save_edits_now(snd_info *sp);
 
 
 /* -------- snd-gprint.c -------- */

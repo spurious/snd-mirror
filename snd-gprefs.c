@@ -1776,7 +1776,7 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("ask about unsaved edits before exiting", "check-for-unsaved-edits",
-				rts_unsaved_edits = unsaved_edits(), 
+				rts_unsaved_edits = ask_about_unsaved_edits(ss), 
 				dpy_box,
 				unsaved_edits_toggle);
     remember_pref(prf, reflect_unsaved_edits, save_unsaved_edits, help_unsaved_edits, clear_unsaved_edits, revert_unsaved_edits);
@@ -2031,13 +2031,6 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_edit_menu, save_edit_menu, help_edit_menu, clear_edit_menu, revert_edit_menu);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    prf = prefs_row_with_toggle("marks menu", "marks-menu.scm",
-				(include_marks_menu = find_marks_menu()),
-				dpy_box,
-				marks_menu_toggle);
-    remember_pref(prf, reflect_marks_menu, save_marks_menu, marks_help_menu, clear_marks_menu, revert_marks_menu);
-
-    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("a toolbar", "toolbar.scm",
 				(include_icon_box = find_icon_box()),
 				dpy_box,
@@ -2249,11 +2242,11 @@ widget_t start_preferences_dialog(void)
     if (dot_size(ss) <= 0) gtk_widget_set_sensitive(prf->arrow_down, false);
 
     current_sep = make_inter_variable_separator(grf_box);
-    rts_initial_beg = initial_beg();
-    rts_initial_dur = initial_dur();
+    rts_initial_beg = initial_beg(ss);
+    rts_initial_dur = initial_dur(ss);
     str = mus_format("%.2f : %.2f", rts_initial_beg, rts_initial_dur);
     prf = prefs_row_with_text_with_toggle("initial graph x bounds", S_initial_graph_hook, 
-					  (rts_full_duration = full_duration()),
+					  (rts_full_duration = show_full_duration(ss)),
 					  "show full duration", str, 16,
 					  grf_box, 
 					  initial_bounds_toggle,
