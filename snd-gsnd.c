@@ -2365,6 +2365,178 @@ void reflect_sound_selection(snd_info *sp)
 }
 
 
+/* -------- controls dialog -------- */
+
+static GtkWidget *controls_dialog = NULL;
+
+enum {EXPAND_HOP, EXPAND_LENGTH, EXPAND_RAMP, EXPAND_JITTER, CONTRAST_AMP, REVERB_LOWPASS, REVERB_FEEDBACK};
+static GtkAdjustment *controls[7];
+
+static void reset_all_sliders(void)
+{
+  expand_control_set_hop(DEFAULT_EXPAND_CONTROL_HOP);
+  expand_control_set_length(DEFAULT_EXPAND_CONTROL_LENGTH);
+  expand_control_set_ramp(DEFAULT_EXPAND_CONTROL_RAMP);
+  expand_control_set_jitter(DEFAULT_EXPAND_CONTROL_JITTER);
+  contrast_control_set_amp(DEFAULT_CONTRAST_CONTROL_AMP);
+  reverb_control_set_lowpass(DEFAULT_REVERB_CONTROL_LOWPASS);
+  reverb_control_set_feedback(DEFAULT_REVERB_CONTROL_FEEDBACK);
+
+  ADJUSTMENT_SET_VALUE(controls[EXPAND_HOP], expand_control_hop(ss));
+  ADJUSTMENT_SET_VALUE(controls[EXPAND_LENGTH], expand_control_length(ss));
+  ADJUSTMENT_SET_VALUE(controls[EXPAND_RAMP], expand_control_ramp(ss));
+  ADJUSTMENT_SET_VALUE(controls[EXPAND_JITTER], expand_control_jitter(ss));
+  ADJUSTMENT_SET_VALUE(controls[CONTRAST_AMP], contrast_control_amp(ss));
+  ADJUSTMENT_SET_VALUE(controls[REVERB_LOWPASS], reverb_control_lowpass(ss));
+  ADJUSTMENT_SET_VALUE(controls[REVERB_FEEDBACK], reverb_control_feedback(ss));
+}
+
+static void controls_reset_callback(GtkWidget *w, gpointer context)
+{
+  reset_all_sliders();
+}
+
+static void controls_help_callback(GtkWidget *w, gpointer context)
+{
+  snd_help("More controls", 
+"This dialog controls all the otherwise hidden control-panel variables.\n\
+Expand-hop sets the time in seconds between successive grains.\n\
+Expand-length sets the length of each grain.\n\
+Expand-ramp sets the ramp-time in the grain envelope.\n\
+Expand-jitter sets the grain timing jitter.\n\
+Contrast-amp sets the prescaler for contrast-enhancement.\n\
+Reverb-lowpass sets the feedback lowpass filter coeficient.\n\
+Reverb-feedback sets the scaler on the feedback.",
+	   WITHOUT_WORD_WRAP);
+}
+
+static void controls_dismiss_callback(GtkWidget *w, gpointer context)
+{
+  gtk_widget_hide(controls_dialog);
+}
+
+static gint delete_controls_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
+{
+  gtk_widget_hide(controls_dialog);
+  return(true);
+}
+
+static void expand_hop_callback(GtkAdjustment *adj, gpointer context)
+{
+  expand_control_set_hop(ADJUSTMENT_VALUE(adj));
+}
+
+static void expand_length_callback(GtkAdjustment *adj, gpointer context)
+{
+  expand_control_set_length(ADJUSTMENT_VALUE(adj));
+}
+
+static void expand_ramp_callback(GtkAdjustment *adj, gpointer context)
+{
+  expand_control_set_ramp(ADJUSTMENT_VALUE(adj));
+}
+
+static void expand_jitter_callback(GtkAdjustment *adj, gpointer context)
+{
+  expand_control_set_jitter(ADJUSTMENT_VALUE(adj));
+}
+
+static void contrast_amp_callback(GtkAdjustment *adj, gpointer context)
+{
+  contrast_control_set_amp(ADJUSTMENT_VALUE(adj));
+}
+
+static void reverb_lowpass_callback(GtkAdjustment *adj, gpointer context)
+{
+  reverb_control_set_lowpass(ADJUSTMENT_VALUE(adj));
+}
+
+static void reverb_feedback_callback(GtkAdjustment *adj, gpointer context)
+{
+  reverb_control_set_feedback(ADJUSTMENT_VALUE(adj));
+}
+
+static void add_control(GtkWidget *main, const char *name, int loc, 
+			mus_float_t init, mus_float_t low, mus_float_t high, 
+			void (*callback)(GtkAdjustment *adj, gpointer context))
+{
+  GtkWidget *scale, *frame;
+  GtkAdjustment *scale_adj;
+
+  frame = gtk_frame_new(name);
+  gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
+  gtk_box_pack_start(GTK_BOX(main), frame, true, true, 10); 
+  gtk_widget_show(frame);
+
+  scale_adj = (GtkAdjustment *)gtk_adjustment_new(init, low, high, 0.001, 0.001, .1);
+  scale = gtk_hscale_new(GTK_ADJUSTMENT(scale_adj));
+  UNSET_CAN_FOCUS(scale);
+  gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(scale)), GTK_UPDATE_CONTINUOUS);
+  gtk_scale_set_digits(GTK_SCALE(scale), 3);
+  gtk_scale_set_value_pos(GTK_SCALE(scale), GTK_POS_TOP);
+  gtk_scale_set_draw_value(GTK_SCALE(scale), true);
+  gtk_container_add(GTK_CONTAINER(frame), scale);
+  SG_SIGNAL_CONNECT(scale_adj, "value_changed", callback, NULL);
+  gtk_widget_show(scale);
+  controls[loc] = scale_adj;
+}
+
+void make_controls_dialog(void)
+{
+  if (!controls_dialog)
+    {
+      GtkWidget* mainbox, *help_button, *dismiss_button, *reset_button;
+
+      controls_dialog = snd_gtk_dialog_new();
+      SG_SIGNAL_CONNECT(controls_dialog, "delete_event", delete_controls_dialog, NULL);
+      gtk_window_set_title(GTK_WINDOW(controls_dialog), _("Controls"));
+      sg_make_resizable(controls_dialog);
+      gtk_container_set_border_width (GTK_CONTAINER(controls_dialog), 4);
+      gtk_widget_realize(controls_dialog);
+      gtk_window_resize(GTK_WINDOW(controls_dialog), 400, 500);
+
+      help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
+      gtk_widget_set_name(help_button, "dialog_button");
+
+      dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
+      gtk_widget_set_name(dismiss_button, "dialog_button");
+      set_stock_button_label(dismiss_button, _("Go Away"));
+
+      reset_button = gtk_button_new_from_stock(GTK_STOCK_REVERT_TO_SAVED);
+      gtk_widget_set_name(reset_button, "dialog_button");
+
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), dismiss_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), reset_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), help_button, false, true, 10);
+
+      SG_SIGNAL_CONNECT(dismiss_button, "clicked", controls_dismiss_callback, NULL);
+      SG_SIGNAL_CONNECT(help_button, "clicked", controls_help_callback, NULL);
+      SG_SIGNAL_CONNECT(reset_button, "clicked", controls_reset_callback, NULL);
+
+      gtk_widget_show(dismiss_button);
+      gtk_widget_show(reset_button);
+      gtk_widget_show(help_button);
+
+      mainbox = gtk_dialog_get_content_area(GTK_DIALOG(controls_dialog));
+
+      add_control(mainbox, "expand hop", EXPAND_HOP, expand_control_hop(ss), .001, .3, expand_hop_callback);
+      add_control(mainbox, "expand length", EXPAND_LENGTH, expand_control_length(ss), .01, .5, expand_length_callback);
+      add_control(mainbox, "expand ramp", EXPAND_RAMP, expand_control_ramp(ss), .01, .5, expand_ramp_callback);
+      add_control(mainbox, "expand jitter", EXPAND_JITTER, expand_control_jitter(ss), 0.0, 2.0, expand_jitter_callback);
+      add_control(mainbox, "contrast amp", CONTRAST_AMP, contrast_control_amp(ss), 0.0, 2.0, contrast_amp_callback);
+      add_control(mainbox, "reverb lowpass", REVERB_LOWPASS, reverb_control_lowpass(ss), 0.0, 1.0, reverb_lowpass_callback);
+      add_control(mainbox, "reverb feedback", REVERB_FEEDBACK, reverb_control_feedback(ss), 0.0, 1.25, reverb_feedback_callback);
+
+      set_dialog_widget(CONTROLS_DIALOG, controls_dialog);      
+    }
+  else raise_dialog(controls_dialog);
+  gtk_widget_show(controls_dialog);
+}
+
+
+
+/* ---------------------------------------- */
+
 static XEN g_sound_widgets(XEN snd)
 {
   #define H_sound_widgets "(" S_sound_widgets " :optional snd): a list of \

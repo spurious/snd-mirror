@@ -1,9 +1,12 @@
 /* this file included as text in snd-g|xprefs.c */
 
 /* TODO: the following need to be built-in:
- *    unsaved edits, initial bounds, remember sound state, show selection key binding
- *    effects menu, marks menu, toolbar, edit menu additions, popup menus
- *    hidden-controls to Options:control panel in gtk
+ *    unsaved edits [Ask_About_Unsaved_Edits in state, add as var, if #t do the stuff currently in extensions.scm]
+ *    initial bounds [Show_Full_Duration, Initial_Beg, Initial_Dur in state, as var, etc]
+ *    remember sound state, 
+ *    show selection key binding test
+ *    effects menu, marks menu, toolbar, edit menu additions, 
+ *    popup menus [With_Popup_Menus as var, etc]
  */
 
 
@@ -5243,21 +5246,21 @@ static void help_show_selection(prefs_info *prf)
 static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
-  return(mus_format("(if (not (provided? 'snd-selection.scm)) (load \"selection.scm\"))\n\(bind-key %s %d show-selection %s \"show selection\" \"show-selection\")\n", 
+  return(mus_format("(bind-key %s %d show-selection %s \"show selection\" \"show-selection\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
 #endif
 
 #if HAVE_RUBY
-  return(mus_format("require \"extensions\"\nbind_key(%s, %d, lambda do\n  show_selection()\n  end, %s, \"show selection\", \"show-selection\")\n", 
+  return(mus_format("bind_key(%s, %d, lambda do\n  show_selection()\n  end, %s, \"show selection\", \"show-selection\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
 
 #if HAVE_FORTH
-  return(mus_format("require extensions\n%s %d ' show-selection %s \"show selection\" \"show-selection\" bind-key drop\n",
+  return(mus_format("%s %d ' show-selection %s \"show selection\" \"show-selection\" bind-key drop\n",
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));

@@ -5830,6 +5830,14 @@ If some 'obj' is passed, selection? returns #t is obj is a selection object, and
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- show-selection -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="showselection">show-selection</a> <em class=narg>snd chn</em></code>
+</td></tr><tr><td></td><td>
+show-selection finds the bounds of the current selection (in all channels), and 
+sets the time domain view to show it.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- smooth-selection -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="smoothselection">smooth-selection</a></code>
 </td></tr><tr><td></td><td>
@@ -5845,14 +5853,22 @@ then smooth it by typing that key.
 </td></tr><tr><td></td><td>
 src-selection applies sampling rate conversion to the selection;
 this is the same as src-sound but as applied to the selection.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- unselect-all -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="unselectall">unselect-all</a></code>
+</td></tr><tr><td></td><td>
+If there is currently a selection, this deactivates (unselects) it.
 </td></tr>
+
 </table>
 <br>
 
 <!-- INDEX selectionstuff:Selections -->
 <TABLE border=3 bordercolor="tan" hspace=20><tr><td>
 <small><blockquote>
-show the current selection: <a href="sndscm.html#showselection">show-selection</a><br>
+show the current selection: <a href="#showselection">show-selection</a><br>
 color of selected portion: <a href="#selectioncolor">selection-color</a><br>
 set whether creating a selection creates a region: <a href="#selectioncreatesregion">selection-creates-region</a><br>
 fft graph refers to the selection: <a href="#showselectiontransform">show-selection-transform</a><br>
@@ -5875,6 +5891,7 @@ notch filter selection: <a href="sndscm.html#notchselection">notch-selection</a>
 undo select-all.: <a href="sndscm.html#menusdoc">deselect-all</a><br>
 filter the selection: <a href="#filterselection">filter-selection</a>, <a href="sndscm.html#filterselectionandsmooth">filter-selection-and-smooth</a><br>
 turn the selection into a mix: <a href="#selectiontomix">selection-&gt;mix</a><br>
+unselect everything: <a href="#unselectall">unselect-all</a><br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -11235,6 +11252,7 @@ dialog-widgets returns a list of dialog widgets (or lists thereof, or #f if none
     18: File: Recorder dialog 
     19: View: Regions dialog
     20: info dialog (activated by info-dialog function)
+    21: more controls dialog
     22: Edit: Selection Save as dialog
     23: File: Insert file dialog
     24: region save as dialog (from regions dialog save button)

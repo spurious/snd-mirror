@@ -299,6 +299,7 @@ static void view_focus_active_callback(GtkWidget *w, gpointer info, gpointer dat
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
 static void options_transform_callback(GtkWidget *w, gpointer info) {fire_up_transform_dialog(true);}
+static void options_controls_callback(GtkWidget *w, gpointer info) {make_controls_dialog();}
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_callback(GtkWidget *w, gpointer info) {save_options_from_menu();}
 #endif
@@ -965,6 +966,12 @@ GtkWidget *add_menu(void)
   gtk_menu_shell_append(GTK_MENU_SHELL(options_cascade_menu), options_transform_menu);
   gtk_widget_show(options_transform_menu);
   SG_SIGNAL_CONNECT(options_transform_menu, "activate", options_transform_callback, NULL);
+
+  options_controls_menu = gtk_menu_item_new_with_label(_("Controls"));
+  ml[o_controls_menu] = _("Controls");
+  gtk_menu_shell_append(GTK_MENU_SHELL(options_cascade_menu), options_controls_menu);
+  gtk_widget_show(options_controls_menu);
+  SG_SIGNAL_CONNECT(options_controls_menu, "activate", options_controls_callback, NULL);
 
 #if HAVE_EXTENSION_LANGUAGE
   options_save_menu = gtk_menu_item_new_with_label(_("Save options"));

@@ -489,7 +489,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-16-Feb:  sync-style variable: sync-none (old default), sync-all, or sync-by-sound (new default).\n\
+20-Feb:  sync-style variable: sync-none (old default), sync-all, or sync-by-sound (new default).\n\
+         Options:Controls menu item, and Edit:Unselect\n\
+	 show-selection and unselect-all.\n\
 12-Feb:  Snd 11.13.\n\
 7-Jan:   Snd 11.12.\n\
 29-Nov:  Snd 11.11.\n\

@@ -2243,7 +2243,7 @@
 		       'selection-srate 'selection?
 		       'short-file-name 'show-all-axes 'show-all-axes-unlabelled 'show-bare-x-axis
 		       'show-axes 'show-controls 'show-grid 'show-indices
-		       'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection-transform
+		       'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection 'show-selection-transform
 		       'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
 		       'show-y-zero 'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos?
 		       'smooth-channel 'smooth-selection 'smooth-sound 'snd->sample 'snd->sample?
@@ -2272,7 +2272,7 @@
 		       'transform-graph? 'transform-normalization 'transform-sample 'transform-size 'transform-type
 		       'transform? 'trap-segfault 'triangle-wave 'triangle-wave? 'tukey-window
 		       'two-pole 'two-pole? 'two-zero 'two-zero? 'ultraspherical-window
-		       'unbind-key  'undo 'undo-edit 'undo-hook 'update-hook 'update-lisp-graph
+		       'unbind-key  'undo 'undo-edit 'undo-hook 'unselect-all 'update-hook 'update-lisp-graph
 		       'update-sound 'update-time-graph 'update-transform-graph 'variable-graph? 'vct
 		       'vct* 'vct+ 'vct->channel 'vct->list 'vct->sound-data
 		       'vct->string 'vct->vector 'vct-add! 'vct-copy
@@ -61170,7 +61170,7 @@ EDITS: 1
 		     scan-chan search-procedure select-all select-channel select-sound
 		     selected-channel selected-data-color selected-graph-color selected-sound
 		     selection-position selection-color selection-creates-region selection-frames selection-member? selection?
-		     short-file-name show-axes show-controls show-transform-peaks show-indices show-listener
+		     short-file-name show-axes show-controls show-transform-peaks show-indices show-listener show-selection unselect-all
 		     show-marks show-mix-waveforms show-selection-transform show-y-zero sinc-width show-grid show-sonogram-cursor grid-density
 		     smooth-sound smooth-selection snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory
 		     sound-loop-info sound-widgets soundfont-info sound? sounds spectrum-end spectro-hop spectrum-start
@@ -63523,4 +63523,5 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 |#
 
-;;; TODO: explicit sync-style tests
+;;; TODO: explicit sync-style tests, also show-selection, unselect-all
+

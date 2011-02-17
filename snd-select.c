@@ -1769,6 +1769,54 @@ static XEN g_selection_maxamp_position(XEN snd, XEN chn)
 }
 
 
+static double sel_beg, sel_end;
+
+static bool get_selection_bounds(chan_info *cp)
+{
+  if (selection_is_active_in_channel(cp))
+    {
+      mus_long_t samp;
+      double x;
+      samp = selection_beg(cp);
+      x = (double)samp / SND_SRATE(cp->sound);
+      if ((sel_beg < 0.0) || (x < sel_beg))
+	sel_beg = x;
+      samp = selection_end(cp);
+      x = (double)samp / SND_SRATE(cp->sound);
+      if ((sel_end < 0.0) || (x > sel_end))
+	sel_end = x;
+    }
+  return(false);
+}
+
+static bool update_bounds(chan_info *cp)
+{
+  set_x_axis_x0x1(cp, sel_beg, sel_end);
+  return(false);
+}
+
+static XEN g_show_selection(XEN snd, XEN chn)
+{
+  #define H_show_selection "(" S_show_selection " snd chn) adjusts graph bounds to display the current selection in full"
+  if (selection_is_active())
+    {
+      sel_beg = -1.0;
+      sel_end = -1.0;
+      map_over_chans(get_selection_bounds);
+      map_over_chans(update_bounds);
+    }
+  return(XEN_FALSE);
+}
+
+
+static XEN g_unselect_all(void)
+{
+  #define H_unselect_all "(" S_unselect_all ") deactivates (unselects) the current selection."
+  deactivate_selection();
+  return(XEN_FALSE);
+}
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_selection_position_w, g_selection_position)
 XEN_ARGIFY_3(g_set_selection_position_w, g_set_selection_position)
@@ -1788,6 +1836,8 @@ XEN_ARGIFY_4(g_mix_selection_w, g_mix_selection)
 XEN_NARGIFY_0(g_selection_to_mix_w, g_selection_to_mix)
 XEN_ARGIFY_2(g_select_all_w, g_select_all)
 XEN_VARGIFY(g_save_selection_w, g_save_selection)
+XEN_ARGIFY_2(g_show_selection_w, g_show_selection)
+XEN_NARGIFY_0(g_unselect_all_w, g_unselect_all)
 #else
 #define g_selection_position_w g_selection_position
 #define g_set_selection_position_w g_set_selection_position
@@ -1807,6 +1857,8 @@ XEN_VARGIFY(g_save_selection_w, g_save_selection)
 #define g_selection_to_mix_w g_selection_to_mix
 #define g_select_all_w g_select_all
 #define g_save_selection_w g_save_selection
+#define g_show_selection_w g_show_selection
+#define g_unselect_all_w g_unselect_all
 #endif
 
 void g_init_selection(void)
@@ -1838,4 +1890,6 @@ void g_init_selection(void)
   XEN_DEFINE_PROCEDURE(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix);
   XEN_DEFINE_PROCEDURE(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
   XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
+  XEN_DEFINE_PROCEDURE(S_show_selection,   g_show_selection_w,   0, 2, 0, H_show_selection);
+  XEN_DEFINE_PROCEDURE(S_unselect_all,     g_unselect_all_w,     0, 0, 0, H_unselect_all);
 }

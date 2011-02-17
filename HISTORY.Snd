@@ -1,6 +1,8 @@
 Snd change log
 
- 16-Feb:    sync-style variable: sync-none, sync-all, or sync-by-sound (the new default).
+ 20-Feb:    sync-style variable: sync-none, sync-all, or sync-by-sound (the new default).
+            Options:Controls menu item, and Edit:Unselect
+	    show-selection and unselect-all.
  12-Feb:    Snd 11.13.
  7-Jan:     Snd 11.12.
 

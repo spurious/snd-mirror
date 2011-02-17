@@ -397,6 +397,8 @@ void g_init_gxsnd(void);
 void reflect_sound_selection(snd_info *sp);
 void display_minibuffer_error(snd_info *sp, const char *str);
 void clear_minibuffer_error(snd_info *sp);
+void make_controls_dialog(void);
+
 
 
 /* -------- snd-gmix.c -------- */
