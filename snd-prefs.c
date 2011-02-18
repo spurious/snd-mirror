@@ -3,9 +3,11 @@
 /* TODO: the following need to be built-in:
  *    remember sound state, 
  *    show selection key binding test
- *    effects menu, toolbar, edit menu additions, -- with_toolbar, with_popup_menus, 
- *      just include the edit-menu stuff
- *    popup menus [With_Popup_Menus as var, etc]
+ *    effects menu, toolbar -- with_toolbar, with_popup_menus,
+ *      popup menus [With_Popup_Menus as var, etc]
+ *      smpte: [remember superimposed chans case]
+ * doc/test with-toolbar/with-smpte-label/with-popup-menus/remember-sound-state
+ * throughout: defaults, updates
  */
 
 
@@ -500,85 +502,6 @@ static void load_file_with_path_and_extension(const char *file)
   prefs_is_loading = false;
   free(str);
 }
-
-
-#if USE_MOTIF
-static void prefs_function_call_0(const char *func)
-{
-#if HAVE_EXTENSION_LANGUAGE
-  char *str;
-#if HAVE_SCHEME
-  str = mus_format("(%s)\n", func);
-#endif
-
-#if HAVE_RUBY
-  str = mus_format("%s()\n", TO_PROC_NAME(func));
-#endif
-
-#if HAVE_FORTH
-  str = mus_format("%s\n", func);
-#endif
-
-  XEN_EVAL_C_STRING(str);
-  free(str);
-#endif
-}
-#endif
-
-
-static void prefs_function_call_1(const char *func, XEN arg)
-{
-#if HAVE_EXTENSION_LANGUAGE
-  char *str;
-#if HAVE_SCHEME
-  char *temp = NULL;
-  str = mus_format("(%s %s)\n", func, temp = XEN_AS_STRING(arg));
-#if HAVE_SCHEME
-  if (temp) free(temp);
-#endif
-#endif
-
-#if HAVE_RUBY
-  str = mus_format("%s(%s)\n", TO_PROC_NAME(func), XEN_AS_STRING(arg));
-#endif
-
-#if HAVE_FORTH
-  str = mus_format("%s %s\n", XEN_AS_STRING(arg), func); 
-#endif
-
-  XEN_EVAL_C_STRING(str);
-  free(str);
-#endif
-}
-
-
-#if USE_MOTIF
-static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
-{
-#if HAVE_SCHEME
-  if (file)
-    fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load \"%s.scm\"))\n", file, file);
-  fprintf(fd, "(%s)\n", name);
-#endif
-
-#if HAVE_RUBY
-  char *str;
-  str = TO_PROC_NAME(name);
-  if (file)
-    fprintf(fd, "require \"%s\"\n", file);
-  fprintf(fd, "%s()\n", str);
-  free(str);
-#endif
-
-#if HAVE_FORTH
-  if (file)
-    fprintf(fd, "require %s\n", file);
-  fprintf(fd, "%s\n", name);
-#endif
-}
-#endif
-
-
 
 
 /* ---------------- auto-resize ---------------- */
@@ -2314,7 +2237,7 @@ static void startup_size_text(prefs_info *prf)
 
 /* ---------------- check-for-unsaved-edits ---------------- */
 
-static bool rts_unsaved_edits = false;
+static bool rts_unsaved_edits = DEFAULT_ASK_ABOUT_UNSAVED_EDITS;
 static void revert_unsaved_edits(prefs_info *prf) {set_ask_about_unsaved_edits(rts_unsaved_edits);}
 static void clear_unsaved_edits(prefs_info *prf) {set_ask_about_unsaved_edits(DEFAULT_ASK_ABOUT_UNSAVED_EDITS);}
 static void save_unsaved_edits(prefs_info *prf, FILE *fd) {rts_unsaved_edits = ask_about_unsaved_edits(ss);}
@@ -2333,18 +2256,17 @@ finds any, it asks you whether you want to save them.",
 
 /* ---------------- with-inset-graph ---------------- */
 
-static bool rts_with_inset_graph = false, prefs_with_inset_graph = false;
-
+static bool rts_with_inset_graph = DEFAULT_WITH_INSET_GRAPH;
 static void revert_with_inset_graph(prefs_info *prf) {set_with_inset_graph(rts_with_inset_graph);}
-static void clear_with_inset_graph(prefs_info *prf) {set_with_inset_graph(false);}
-
+static void clear_with_inset_graph(prefs_info *prf) {set_with_inset_graph(DEFAULT_WITH_INSET_GRAPH);}
+static void with_inset_graph_toggle(prefs_info *prf) {set_with_inset_graph(GET_TOGGLE(prf->toggle));}
+static void reflect_with_inset_graph(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_inset_graph(ss));}
 
 static void save_with_inset_graph(prefs_info *prf, FILE *fd)
 {
   rts_with_inset_graph = GET_TOGGLE(prf->toggle);
   set_with_inset_graph(rts_with_inset_graph);
 }
-
 
 static void help_inset_graph(prefs_info *prf)
 {
@@ -2356,27 +2278,38 @@ little graph, the cursor and main window are moved to that spot.",
 }
 
 
-static void with_inset_graph_toggle(prefs_info *prf)
+
+/* ---------------- with-smpte-label ---------------- */
+
+static bool rts_with_smpte_label = DEFAULT_WITH_SMPTE_LABEL;
+static void revert_smpte(prefs_info *prf) {set_with_smpte_label(rts_with_smpte_label);}
+static void clear_smpte(prefs_info *prf) {set_with_smpte_label(DEFAULT_WITH_SMPTE_LABEL);}
+static void smpte_toggle(prefs_info *prf) {set_with_smpte_label(GET_TOGGLE(prf->toggle));}
+static void reflect_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_smpte_label(ss));}
+
+static void save_smpte(prefs_info *prf, FILE *fd)
 {
-  set_with_inset_graph(GET_TOGGLE(prf->toggle));
+  rts_with_smpte_label = GET_TOGGLE(prf->toggle);
+  set_with_smpte_label(rts_with_smpte_label);
 }
 
-
-static void reflect_with_inset_graph(prefs_info *prf) 
+static void help_smpte(prefs_info *prf)
 {
-  prefs_with_inset_graph = with_inset_graph(ss);
-  SET_TOGGLE(prf->toggle, prefs_with_inset_graph);
+  snd_help(prf->var_name,
+	   "This option displays the SMPTE data in the time domain graph.",
+	   WITH_WORD_WRAP);
 }
 
 
 
 /* ---------------- with-pointer-focus ---------------- */
 
-static bool rts_with_pointer_focus = false, prefs_with_pointer_focus = false;
+static bool rts_with_pointer_focus = DEFAULT_WITH_POINTER_FOCUS;
 
 static void revert_with_pointer_focus(prefs_info *prf) {set_with_pointer_focus(rts_with_pointer_focus);}
-static void clear_with_pointer_focus(prefs_info *prf) {set_with_pointer_focus(false);}
-
+static void clear_with_pointer_focus(prefs_info *prf) {set_with_pointer_focus(DEFAULT_WITH_POINTER_FOCUS);}
+static void with_pointer_focus_toggle(prefs_info *prf) {set_with_pointer_focus(GET_TOGGLE(prf->toggle));}
+static void reflect_with_pointer_focus(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_pointer_focus(ss));}
 
 static void save_with_pointer_focus(prefs_info *prf, FILE *fd)
 {
@@ -2392,18 +2325,6 @@ static void help_pointer_focus(prefs_info *prf)
 	   WITH_WORD_WRAP);
 }
 
-
-static void with_pointer_focus_toggle(prefs_info *prf)
-{
-  set_with_pointer_focus(GET_TOGGLE(prf->toggle));
-}
-
-
-static void reflect_with_pointer_focus(prefs_info *prf) 
-{
-  prefs_with_pointer_focus = with_pointer_focus(ss);
-  SET_TOGGLE(prf->toggle, prefs_with_pointer_focus);
-}
 
 
 
@@ -3663,50 +3584,7 @@ static void revert_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, includ
 static void clear_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 
 
-
 #if HAVE_SCHEME
-/* ---------------- edit menu ---------------- */
-
-static bool include_edit_menu = false;
-
-
-static void help_edit_menu(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds several options to the top-level Edit menu: selection to file, \
-append selection, mono to stereo, trim, crop, etc.",
-	   WITH_WORD_WRAP);
-}
-
-
-static bool find_edit_menu(void)
-{
-  return(XEN_DEFINED_P("make-stereofile")); /* a kludge... currently this is only defined in edit-menu.scm */
-}
-
-
-static void save_edit_menu(prefs_info *prf, FILE *fd)
-{
-  include_edit_menu = GET_TOGGLE(prf->toggle);
-  if (include_edit_menu)
-    fprintf(fd, "(if (not (provided? 'snd-edit-menu.scm)) (load \"edit-menu.scm\"))\n"); /* ok for either case */
-}
-
-
-static void edit_menu_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(find_edit_menu())))
-    load_file_with_path_and_extension("edit-menu");
-}
-
-
-static void reflect_edit_menu(prefs_info *prf) {}
-static void revert_edit_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_edit_menu);}
-static void clear_edit_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
-
-
-
 /* ---------------- icon box ---------------- */
 
 static bool include_icon_box = false;
@@ -3746,138 +3624,6 @@ static void revert_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_ic
 static void clear_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 #endif
 
-
-#if USE_MOTIF
-/* ---------------- mark-pane ---------------- */
-
-static bool include_mark_pane = false;
-
-static void help_mark_pane(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds a pane to each channel window containing information about that channel's marks.",
-	   WITH_WORD_WRAP);
-}
-
-
-static bool find_mark_pane(void)
-{
-  return((XEN_DEFINED_P("including-mark-pane")) &&
-	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-mark-pane")));
-}
-
-
-#if HAVE_SCHEME
-  #if USE_MOTIF
-    #define MARK_PANE_SOURCE "snd-motif"
-  #else
-    #define MARK_PANE_SOURCE "snd-gtk"
-  #endif
-#else
-    #define MARK_PANE_SOURCE "snd-xm"
-#endif
-
-static void mark_pane_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(find_mark_pane())))
-    {
-      load_file_with_path_and_extension(MARK_PANE_SOURCE);
-      prefs_function_call_0("add-mark-pane");
-    }
-}
-
-
-static void save_mark_pane(prefs_info *prf, FILE *fd)
-{
-  include_mark_pane = GET_TOGGLE(prf->toggle);
-  if (include_mark_pane)
-    prefs_function_save_0(fd, "add-mark-pane", MARK_PANE_SOURCE);
-}
-
-
-static void reflect_mark_pane(prefs_info *prf) {}
-static void revert_mark_pane(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_mark_pane);}
-static void clear_mark_pane(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
-#endif
-
-
-
-
-
-/* ---------------- smpte ---------------- */
-
-static bool include_smpte = false;
-
-static void help_smpte(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds a label to the time domain graph showing the current SMPTE frame of the leftmost sample.",
-	   WITH_WORD_WRAP);
-}
-
-
-static bool find_smpte(void) 
-{
-#if HAVE_SCHEME 
-  return((XEN_DEFINED_P("smpte-is-on")) && 
-	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */ 
-#endif
-
-#if HAVE_RUBY || HAVE_FORTH
-  return((XEN_DEFINED_P("smpte-is-on")) && 
-	 XEN_TO_C_BOOLEAN(XEN_EVAL_C_STRING(TO_PROC_NAME("smpte-is-on")))); /* "member" of hook-list -> true */ 
-#endif 
-  return(false);
-}
-
-
-static void reflect_smpte(prefs_info *prf) {}
-static void revert_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_smpte);}
-static void clear_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
-
-
-#if HAVE_SCHEME
-  #if USE_MOTIF
-    #define SMPTE_SOURCE "snd-motif"
-  #else
-    #define SMPTE_SOURCE "snd-gtk"
-  #endif
-#else
-    #define SMPTE_SOURCE "snd-xm"
-#endif
-
-static void smpte_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(find_smpte())))
-    load_file_with_path_and_extension(SMPTE_SOURCE);
-  if (find_smpte())
-    prefs_function_call_1("show-smpte-label", C_TO_XEN_BOOLEAN(GET_TOGGLE(prf->toggle)));
-}
-
-
-static void save_smpte(prefs_info *prf, FILE *fd)
-{
-  include_smpte = GET_TOGGLE(prf->toggle);
-  if (include_smpte)
-    {
-#if HAVE_SCHEME
-  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load \"snd-gtk.scm\")))\n");
-  fprintf(fd, "(show-smpte-label #t)\n");
-#endif
-
-#if HAVE_RUBY
-  fprintf(fd, "require \"snd-xm\"\n");
-  fprintf(fd, "show_smpte_label(true)\n");
-#endif
-
-#if HAVE_FORTH
-  fprintf(fd, "require snd-xm\n");
-  fprintf(fd, "#t show-smpte-label\n"); 
-#endif
-    }
-}
 
 
 

@@ -183,6 +183,9 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Auto_Update =                DEFAULT_AUTO_UPDATE; 
   ss->Auto_Update_Interval =       DEFAULT_AUTO_UPDATE_INTERVAL;
   ss->Ask_Before_Overwrite =       DEFAULT_ASK_BEFORE_OVERWRITE;
+  ss->With_Toolbar =               DEFAULT_WITH_TOOLBAR;
+  ss->With_Popup_Menus =           DEFAULT_WITH_POPUP_MENUS;
+  ss->Remember_Sound_State =       DEFAULT_REMEMBER_SOUND_STATE;
   ss->Ask_About_Unsaved_Edits =    DEFAULT_ASK_ABOUT_UNSAVED_EDITS;
   ss->Show_Full_Duration =         DEFAULT_SHOW_FULL_DURATION;
   ss->Initial_Beg =                DEFAULT_INITIAL_BEG;
@@ -213,6 +216,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Show_Indices =               DEFAULT_SHOW_INDICES;
   ss->Show_Backtrace =             DEFAULT_SHOW_BACKTRACE;
   ss->With_Inset_Graph =           DEFAULT_WITH_INSET_GRAPH;
+  ss->With_Smpte_Label =           DEFAULT_WITH_SMPTE_LABEL;
   ss->With_Pointer_Focus =         DEFAULT_WITH_POINTER_FOCUS;
   ss->Play_Arrow_Size =            DEFAULT_PLAY_ARROW_SIZE;
   ss->Sync_Style =                 DEFAULT_SYNC_STYLE;

@@ -2024,13 +2024,6 @@ widget_t start_preferences_dialog(void)
 
 #if HAVE_SCHEME
     current_sep = make_inter_variable_separator(dpy_box);
-    prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm",
-				(include_edit_menu = find_edit_menu()),
-				dpy_box, 
-				edit_menu_toggle);
-    remember_pref(prf, reflect_edit_menu, save_edit_menu, help_edit_menu, clear_edit_menu, revert_edit_menu);
-
-    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("a toolbar", "toolbar.scm",
 				(include_icon_box = find_icon_box()),
 				dpy_box,
@@ -2310,13 +2303,13 @@ widget_t start_preferences_dialog(void)
 			      NULL, NULL);
     remember_pref(prf, reflect_x_axis_style, save_x_axis_style, NULL, clear_x_axis_style, revert_x_axis_style);
 
-
     current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_toggle("include smpte info", "show-smpte-label",
-				(include_smpte = find_smpte()),
+				rts_with_smpte_label = with_smpte_label(ss),
 				grf_box,
 				smpte_toggle);
     remember_pref(prf, reflect_smpte, save_smpte, help_smpte, clear_smpte, revert_smpte);
+
 
     /* ---------------- (graph) colors ---------------- */
 

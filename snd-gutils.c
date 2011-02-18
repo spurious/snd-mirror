@@ -951,16 +951,19 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
 {
   GtkWidget *item;
+
   item = gtk_button_new_with_label(label);
   gtk_widget_set_name(item, "white_button");
   slist_set_row(item, row);
   gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_HALF);
-
   gtk_button_set_alignment(GTK_BUTTON(item), 0.05, 1.0);
-
   gtk_box_pack_start(GTK_BOX(lst->topics), item, false, false, 0);
+
+  /* g_object_set(GTK_WIDGET(item), "border-width", 0, NULL); */
+
   SG_SIGNAL_CONNECT(item, "clicked", slist_item_clicked, (gpointer)lst);
   SG_SIGNAL_CONNECT(item, "button_press_event", slist_item_button_pressed, (gpointer)lst);
+
   gtk_widget_show(item);
   return(item);
 }

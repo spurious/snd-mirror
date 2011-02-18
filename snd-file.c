@@ -1593,6 +1593,7 @@ void snd_close_file(snd_info *sp)
 		      S_before_close_hook);
   if (XEN_TRUE_P(res)) return;
 
+#if (!USE_NO_GUI)
   if ((ask_about_unsaved_edits(ss)) &&
       (has_unsaved_edits(sp)))
     {
@@ -1600,6 +1601,7 @@ void snd_close_file(snd_info *sp)
       return;
     }
   unpost_unsaved_edits_if_any(sp);
+#endif
 
   if (peak_env_dir(ss))
     map_over_sound_chans(sp, write_peak_env_info_file);
@@ -5649,6 +5651,40 @@ If " PROC_FALSE ", any existing file of the same name will be overwritten withou
 }
 
 
+static XEN g_with_toolbar(void) {return(C_TO_XEN_BOOLEAN(with_toolbar(ss)));}
+
+static XEN g_set_with_toolbar(XEN val) 
+{
+  #define H_with_toolbar "(" S_with_toolbar "): " PROC_TRUE " if you want a toolbar"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_toolbar, "a boolean");
+  set_with_toolbar(XEN_TO_C_BOOLEAN(val)); 
+  return(C_TO_XEN_BOOLEAN(with_toolbar(ss)));
+}
+
+
+static XEN g_with_popup_menus(void) {return(C_TO_XEN_BOOLEAN(with_popup_menus(ss)));}
+
+static XEN g_set_with_popup_menus(XEN val) 
+{
+  #define H_with_popup_menus "(" S_with_popup_menus "): " PROC_TRUE " if you want a context-sensitive popup menus"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_popup_menus, "a boolean");
+  set_with_popup_menus(XEN_TO_C_BOOLEAN(val)); 
+  return(C_TO_XEN_BOOLEAN(with_popup_menus(ss)));
+}
+
+
+static XEN g_remember_sound_state(void) {return(C_TO_XEN_BOOLEAN(remember_sound_state(ss)));}
+
+static XEN g_set_remember_sound_state(XEN val) 
+{
+  #define H_remember_sound_state "(" S_remember_sound_state "): " PROC_TRUE " if you want a Snd to remember the current \
+state of each sound when it is closed, restoring that state when it is opened again later."
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_remember_sound_state, "a boolean");
+  set_remember_sound_state(XEN_TO_C_BOOLEAN(val)); 
+  return(C_TO_XEN_BOOLEAN(remember_sound_state(ss)));
+}
+
+
 static XEN g_ask_about_unsaved_edits(void) {return(C_TO_XEN_BOOLEAN(ask_about_unsaved_edits(ss)));}
 
 static XEN g_set_ask_about_unsaved_edits(XEN val) 
@@ -5756,6 +5792,12 @@ XEN_NARGIFY_0(g_default_output_data_format_w, g_default_output_data_format)
 XEN_NARGIFY_1(g_set_default_output_data_format_w, g_set_default_output_data_format)
 XEN_NARGIFY_0(g_ask_before_overwrite_w, g_ask_before_overwrite)
 XEN_NARGIFY_1(g_set_ask_before_overwrite_w, g_set_ask_before_overwrite)
+XEN_NARGIFY_0(g_with_toolbar_w, g_with_toolbar)
+XEN_NARGIFY_1(g_set_with_toolbar_w, g_set_with_toolbar)
+XEN_NARGIFY_0(g_with_popup_menus_w, g_with_popup_menus)
+XEN_NARGIFY_1(g_set_with_popup_menus_w, g_set_with_popup_menus)
+XEN_NARGIFY_0(g_remember_sound_state_w, g_remember_sound_state)
+XEN_NARGIFY_1(g_set_remember_sound_state_w, g_set_remember_sound_state)
 XEN_NARGIFY_0(g_ask_about_unsaved_edits_w, g_ask_about_unsaved_edits)
 XEN_NARGIFY_1(g_set_ask_about_unsaved_edits_w, g_set_ask_about_unsaved_edits)
 XEN_NARGIFY_0(g_show_full_duration_w, g_show_full_duration)
@@ -5822,6 +5864,12 @@ XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
 #define g_set_default_output_data_format_w g_set_default_output_data_format
 #define g_ask_before_overwrite_w g_ask_before_overwrite
 #define g_set_ask_before_overwrite_w g_set_ask_before_overwrite
+#define g_with_toolbar_w g_with_toolbar
+#define g_set_with_toolbar_w g_set_with_toolbar
+#define g_with_popup_menus_w g_with_popup_menus
+#define g_set_with_popup_menus_w g_set_with_popup_menus
+#define g_remember_sound_state_w g_remember_sound_state
+#define g_set_remember_sound_state_w g_set_remember_sound_state
 #define g_ask_about_unsaved_edits_w g_ask_about_unsaved_edits
 #define g_set_ask_about_unsaved_edits_w g_set_ask_about_unsaved_edits
 #define g_show_full_duration_w g_show_full_duration
@@ -6014,6 +6062,15 @@ files list of the View Files dialog.  If it returns " PROC_TRUE ", the default a
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ask_before_overwrite, g_ask_before_overwrite_w, H_ask_before_overwrite,
 				   S_setB S_ask_before_overwrite, g_set_ask_before_overwrite_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_toolbar, g_with_toolbar_w, H_with_toolbar,
+				   S_setB S_with_toolbar, g_set_with_toolbar_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_popup_menus, g_with_popup_menus_w, H_with_popup_menus,
+				   S_setB S_with_popup_menus, g_set_with_popup_menus_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_remember_sound_state, g_remember_sound_state_w, H_remember_sound_state,
+				   S_setB S_remember_sound_state, g_set_remember_sound_state_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ask_about_unsaved_edits, g_ask_about_unsaved_edits_w, H_ask_about_unsaved_edits,
 				   S_setB S_ask_about_unsaved_edits, g_set_ask_about_unsaved_edits_w,  0, 0, 1, 0);

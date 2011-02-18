@@ -3788,6 +3788,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 static void draw_sonogram_cursor(chan_info *cp);
 static void draw_graph_cursor(chan_info *cp);
 static void show_inset_graph(chan_info *cp, graphics_context *ax);
+static void show_smpte_label(chan_info *cp, graphics_context *ax);
 
 
 static void display_channel_data_with_size(chan_info *cp, 
@@ -4130,10 +4131,14 @@ static void display_channel_data_with_size(chan_info *cp,
 	display_channel_id(cp, ap->ax, height + offset, sp->nchans);
       if (with_inset_graph(ss))
 	show_inset_graph(cp, copy_context(cp));
+      if (with_smpte_label(ss))
+	show_smpte_label(cp, copy_context(cp));
 #else
 	display_channel_id(cp, cp->cgx->ax, height + offset, sp->nchans);
 	if (with_inset_graph(ss))
 	  show_inset_graph(cp, cp->cgx->ax);
+	if (with_smpte_label(ss))
+	  show_smpte_label(cp, cp->cgx->ax);
 #endif
 
       run_after_graph_hook(cp);
@@ -5757,6 +5762,71 @@ graphics_context *mix_waveform_context(chan_info *cp)    {return(set_context(cp,
 #endif
 
 
+/* ---------------------------------------- smpte label ---------------------------------------- */
+
+static void show_smpte_label(chan_info *cp, graphics_context *cur_ax)
+{
+  #define SMPTE_FRAMES_PER_SECOND 24.0
+  static char label[11] = "00:00:00:00";
+
+#if (!USE_NO_GUI)
+  if (cp->graph_time_p)
+    {
+      int grf_x, grf_y, grf_width, grf_height;
+      /* is there room for a label? */
+
+      grf_x = cp->axis->x_axis_x0;
+      grf_y = cp->axis->y_axis_y1;
+      grf_width = cp->axis->x_axis_x1 - grf_x;
+      grf_height = cp->axis->y_axis_y0 - grf_y;
+
+      if ((grf_width > 100) &&
+	  (grf_height > 20))
+	{
+	  bool try_tiny_font = false;
+	  int width, height, frames, seconds, minutes, hours;
+	  double secs;
+	  char num_buf[3];
+
+	  try_tiny_font = (grf_height < 50);
+	  width = 8 + number_width(label, try_tiny_font);
+	  height = 8 + number_height((try_tiny_font) ? TINY_FONT(ss) : AXIS_NUMBERS_FONT(ss));
+	  
+	  secs = cp->axis->x0;
+	  hours = floor(secs / 3600.0);
+	  secs -= hours * 3600;
+	  minutes = floor(secs / 60.0);
+	  secs -= minutes * 60;
+	  seconds = floor(secs);
+	  frames = (secs - seconds) * SMPTE_FRAMES_PER_SECOND;
+	  
+	  snprintf(num_buf, 3, "%d", hours);
+	  if (hours > 9) {label[0] = num_buf[0]; label[1] = num_buf[1];} else {label[0] = '0'; label[1] = num_buf[0];}
+	  snprintf(num_buf, 3, "%d", minutes);
+	  if (minutes > 9) {label[3] = num_buf[0]; label[4] = num_buf[1];} else {label[3] = '0'; label[4] = num_buf[0];}
+	  snprintf(num_buf, 3, "%d", seconds);
+	  if (seconds > 9) {label[6] = num_buf[0]; label[7] = num_buf[1];} else {label[6] = '0'; label[7] = num_buf[0];}
+	  snprintf(num_buf, 3, "%d", frames);
+	  if (frames > 9) {label[9] = num_buf[0]; label[10] = num_buf[1];} else {label[9] = '0'; label[10] = num_buf[0];}
+
+	  fill_rectangle(cur_ax, grf_x, grf_y, width, 2);
+	  fill_rectangle(cur_ax, grf_x, grf_y + height, width, 2);
+	  fill_rectangle(cur_ax, grf_x, grf_y, 2, height);
+	  fill_rectangle(cur_ax, grf_x + width - 2, grf_y, 2, height);
+	  
+	  set_numbers_font(cur_ax, false, try_tiny_font);
+#if USE_MOTIF
+	  grf_y += number_height((try_tiny_font) ? TINY_FONT(ss) : AXIS_NUMBERS_FONT(ss));
+#else
+	  grf_y++;
+#endif
+	  draw_string(cur_ax, grf_x + 4, grf_y + 4, label, 11);
+	 }
+    }
+#endif
+}
+
+
 /* ---------------------------------------- inset graph ---------------------------------------- */
 
 #define INSET_WIDTH .2
@@ -5803,8 +5873,7 @@ static void make_point_arrays(inset_graph_info_t *info, int size, vct *v1)
 static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 {
 #if (!USE_NO_GUI)
-  if ((with_inset_graph(ss)) &&
-      (cp->graph_time_p))
+  if (cp->graph_time_p)
     {
       int grf_width, width, x_offset, y_offset, grf_height, height, chan_offset, grf_chn = 0;
       bool new_peaks;

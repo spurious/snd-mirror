@@ -493,6 +493,7 @@ void about_snd_help(void)
          Options:Controls menu item, and Edit:Unselect\n\
 	 show-selection and unselect-all.\n\
          show-full-duration, initial-beg, initial-dur, ask-about-unsaved-edits.\n\
+         with-toolbar, with-popup-menus (default is true), remember-sound-state, with-smpte-label.\n\
 12-Feb:  Snd 11.13.\n\
 7-Jan:   Snd 11.12.\n\
 29-Nov:  Snd 11.11.\n\

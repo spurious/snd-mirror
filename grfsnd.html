@@ -506,7 +506,7 @@ output-comment-hook lambda: &lt;{ str -- s }&gt;
     'xm provided? not [if] dl-load libxm Init_libxm [then]
     require snd-xm
     add-mark-pane
-    #t show-smpte-label
+    #t with-smpte-label
     after-open-hook &lt;'&gt; show-disk-space add-hook!
 
     require effects

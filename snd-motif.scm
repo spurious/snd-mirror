@@ -10,7 +10,6 @@
 ;;; (add-mark-pane) adds a pane of mark locations to each channel that has marks
 ;;; (snd-clock-icon snd hour) show an animated clock icon
 ;;; (make-sound-box name parent select-func peak-func sounds args) makes a box of sound icons
-;;; (show-smpte-label on-or-off) shows the current SMPTE frame number
 ;;; (make-level-meter parent width height args), (display-level data), (with-level-meters n) -- VU meters
 ;;; (make-channel-drop-site snd chn) -- add a drop site
 ;;; (set-channel-drop drop snd chn) -- change given graph drop callback to drop
@@ -1494,11 +1493,12 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 
 
     
-
+#|
 ;;; -------- show-smpte-label
 ;;;
 ;;; (show-smpte-label on-or-off)
 ;;;   turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample
+;;; this is now built-in under with-smpte-label
 
 (define smpte-frames-per-second 24.0)
 
@@ -1558,6 +1558,8 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 (define (smpte-is-on) ; for prefs dialog
   "(smpte-is-on) is #t if we are drawing SMPTE time stamps"
   (member draw-smpte-label (hook-functions after-graph-hook)))
+|#
+
 
 
 ;;; -------- with-level-meters, make-level-meter, display-level

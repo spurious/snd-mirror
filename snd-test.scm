@@ -59771,7 +59771,6 @@ EDITS: 1
 		  (let ((func1 (cadr (XtGetValues container (list XmNinsertPosition 0)))))
 		    (if (not (equal? func func1)) (snd-display #__line__ ";XmNinsertPosition: ~A ~A" func func1))))))
 	    
-	    (show-smpte-label)
 	    (with-level-meters 4)
 	    (play)
 	    (close-sound))

@@ -39,6 +39,7 @@ bool snd_exit_cleanly(bool force_exit)
 		      S_before_exit_hook);
   if ((XEN_TRUE_P(res)) && (!force_exit)) return(false); /* does it make any sense to call this hook if we're forced to exit anyway? */
 
+#if (!USE_NO_GUI)
   if (ask_about_unsaved_edits(ss))
     {
       int i;
@@ -57,6 +58,7 @@ bool snd_exit_cleanly(bool force_exit)
 	}
       if (found_saver) return(false);
     }
+#endif
 
   if (peak_env_dir(ss))
     for_each_chan(save_peak_env_info);
@@ -443,6 +445,9 @@ static void save_options(FILE *fd)
   if (color_inverted(ss) != DEFAULT_COLOR_INVERTED) pss_ss(fd, S_color_inverted, b2s(color_inverted(ss)));
   if (zero_pad(ss) != DEFAULT_ZERO_PAD) pss_sd(fd, S_zero_pad, zero_pad(ss));
   if (ask_before_overwrite(ss) != DEFAULT_ASK_BEFORE_OVERWRITE) pss_ss(fd, S_ask_before_overwrite, b2s(ask_before_overwrite(ss)));
+  if (with_toolbar(ss) != DEFAULT_WITH_TOOLBAR) pss_ss(fd, S_with_toolbar, b2s(with_toolbar(ss)));
+  if (with_popup_menus(ss) != DEFAULT_WITH_POPUP_MENUS) pss_ss(fd, S_with_popup_menus, b2s(with_popup_menus(ss)));
+  if (remember_sound_state(ss) != DEFAULT_REMEMBER_SOUND_STATE) pss_ss(fd, S_remember_sound_state, b2s(remember_sound_state(ss)));
   if (ask_about_unsaved_edits(ss) != DEFAULT_ASK_ABOUT_UNSAVED_EDITS) pss_ss(fd, S_ask_about_unsaved_edits, b2s(ask_about_unsaved_edits(ss)));
   if (show_full_duration(ss) != DEFAULT_SHOW_FULL_DURATION) pss_ss(fd, S_show_full_duration, b2s(show_full_duration(ss)));
   if (fneq(initial_beg(ss), DEFAULT_INITIAL_BEG)) pss_sf(fd, S_initial_beg, initial_beg(ss));
@@ -470,6 +475,7 @@ static void save_options(FILE *fd)
   if (cursor_location_offset(ss) != DEFAULT_CURSOR_LOCATION_OFFSET) pss_sd(fd, S_cursor_location_offset, cursor_location_offset(ss));
   if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_with_verbose_cursor, b2s(verbose_cursor(ss)));
   if (with_inset_graph(ss) != DEFAULT_WITH_INSET_GRAPH) pss_ss(fd, S_with_inset_graph, b2s(with_inset_graph(ss)));
+  if (with_smpte_label(ss) != DEFAULT_WITH_SMPTE_LABEL) pss_ss(fd, S_with_smpte_label, b2s(with_smpte_label(ss)));
   if (with_pointer_focus(ss) != DEFAULT_WITH_POINTER_FOCUS) pss_ss(fd, S_with_pointer_focus, b2s(with_pointer_focus(ss)));
   if (show_indices(ss) != DEFAULT_SHOW_INDICES) pss_ss(fd, S_show_indices, b2s(show_indices(ss)));
   if (show_transform_peaks(ss) != DEFAULT_SHOW_TRANSFORM_PEAKS) pss_ss(fd, S_show_transform_peaks, b2s(show_transform_peaks(ss)));
@@ -1896,6 +1902,22 @@ static XEN g_set_with_inset_graph(XEN on)
 }
 
 
+static XEN g_with_smpte_label(void)
+{
+  #define H_with_smpte_label "(" S_with_smpte_label "): if " PROC_TRUE " (default is " PROC_FALSE "), display the SMPTE data in the time domain section."
+  return(C_TO_XEN_BOOLEAN(with_smpte_label(ss)));
+}
+
+
+static XEN g_set_with_smpte_label(XEN on) 
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_with_smpte_label, "a boolean");
+  set_with_smpte_label(XEN_TO_C_BOOLEAN(on));
+  for_each_chan(update_graph);
+  return(C_TO_XEN_BOOLEAN(with_smpte_label(ss)));
+}
+
+
 static XEN g_with_pointer_focus(void)
 {
   #define H_with_pointer_focus "(" S_with_pointer_focus "): if " PROC_TRUE " (default is " PROC_FALSE "), activate the text or graph widget beneath the mouse."
@@ -2267,6 +2289,8 @@ XEN_NARGIFY_0(g_play_arrow_size_w, g_play_arrow_size)
 XEN_NARGIFY_1(g_set_play_arrow_size_w, g_set_play_arrow_size)
 XEN_NARGIFY_0(g_with_inset_graph_w, g_with_inset_graph)
 XEN_NARGIFY_1(g_set_with_inset_graph_w, g_set_with_inset_graph)
+XEN_NARGIFY_0(g_with_smpte_label_w, g_with_smpte_label)
+XEN_NARGIFY_1(g_set_with_smpte_label_w, g_set_with_smpte_label)
 XEN_NARGIFY_0(g_with_pointer_focus_w, g_with_pointer_focus)
 XEN_NARGIFY_1(g_set_with_pointer_focus_w, g_set_with_pointer_focus)
 XEN_NARGIFY_0(g_audio_output_device_w, g_audio_output_device)
@@ -2349,6 +2373,8 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_set_play_arrow_size_w g_set_play_arrow_size
 #define g_with_inset_graph_w g_with_inset_graph
 #define g_set_with_inset_graph_w g_set_with_inset_graph
+#define g_with_smpte_label_w g_with_smpte_label
+#define g_set_with_smpte_label_w g_set_with_smpte_label
 #define g_with_pointer_focus_w g_with_pointer_focus
 #define g_set_with_pointer_focus_w g_set_with_pointer_focus
 #define g_audio_output_device_w g_audio_output_device
@@ -2531,6 +2557,9 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_inset_graph, g_with_inset_graph_w, H_with_inset_graph, 
 				   S_setB S_with_inset_graph, g_set_with_inset_graph_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_smpte_label, g_with_smpte_label_w, H_with_smpte_label, 
+				   S_setB S_with_smpte_label, g_set_with_smpte_label_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_pointer_focus, g_with_pointer_focus_w, H_with_pointer_focus, 
 				   S_setB S_with_pointer_focus, g_set_with_pointer_focus_w,  0, 0, 1, 0);

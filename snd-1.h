@@ -425,7 +425,7 @@ typedef struct snd_state {
   char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir, *Peak_Env_Dir;
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   char *orig_listener_font, *orig_axis_label_font, *orig_axis_numbers_font, *orig_tiny_font, *orig_peaks_font, *orig_bold_peaks_font;
-  bool Verbose_Cursor, Trap_Segfault, With_Inset_Graph, With_Pointer_Focus;
+  bool Verbose_Cursor, Trap_Segfault, With_Inset_Graph, With_Pointer_Focus, With_Smpte_Label;
   int Enved_Filter_Order;
   mus_float_t Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size, Log_Freq_Start;
   mus_float_t Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle;
@@ -437,7 +437,7 @@ typedef struct snd_state {
   mus_long_t Transform_Size;
   mus_fft_window_t Fft_Window;
   graph_type_t Transform_Graph_Type, Time_Graph_Type;
-  bool Ask_Before_Overwrite, Ask_About_Unsaved_Edits, Show_Full_Duration;
+  bool Ask_Before_Overwrite, Ask_About_Unsaved_Edits, Show_Full_Duration, With_Popup_Menus, Remember_Sound_State, With_Toolbar;
   mus_float_t Fft_Window_Alpha, Fft_Window_Beta, Grid_Density, Initial_Beg, Initial_Dur;
   mus_float_t Color_Scale, Color_Cutoff, Beats_Per_Minute;
   bool Color_Inverted, Show_Mix_Waveforms;
@@ -1312,6 +1312,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 axis_info *make_axis_info(chan_info *cp, double xmin, double xmax, mus_float_t ymin, mus_float_t ymax, 
 			  const char *xlabel, double x0, double x1, mus_float_t y0, mus_float_t y1,
 			  axis_info *old_ap);
+void set_numbers_font(graphics_context *ax, printing_t printing, bool use_tiny_font);
 
 #if (!USE_NO_GUI)
   void g_init_axis(void);

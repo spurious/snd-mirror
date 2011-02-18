@@ -563,7 +563,7 @@ static void use_tiny(graphics_context *ax, printing_t printing)
 }
 
 
-static void set_numbers_font(graphics_context *ax, printing_t printing, bool use_tiny_font)
+void set_numbers_font(graphics_context *ax, printing_t printing, bool use_tiny_font)
 {
   if (use_tiny_font)
     use_tiny(ax, printing);

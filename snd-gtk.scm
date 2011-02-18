@@ -1,7 +1,6 @@
 ;;; translations from snd-motif.scm
 ;;;
 ;;; display-scanned-synthesis
-;;; show-smpte-label
 ;;; zync and unzync
 ;;; disable control panel
 ;;; show-disk-space
@@ -364,11 +363,13 @@
   (gtk_widget_hide scanned-synthesis-pane))
 
 
-
+#|
 ;;; -------- show-smpte-label
 ;;;
 ;;; (show-smpte-label on-or-off)
 ;;;   turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample
+;;;
+;;; this is now built-in under with-smpte-label
 
 (define smpte-frames-per-second 24.0)
 
@@ -440,6 +441,7 @@
       (begin
 	(hook-remove after-graph-hook draw-smpte-label)
 	(update-time-graph #t #t)))))
+|#
 
   
   

@@ -2209,13 +2209,6 @@ widget_t start_preferences_dialog(void)
 
 #if HAVE_SCHEME
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm",
-				(include_edit_menu = find_edit_menu()),
-				dpy_box, current_sep, 
-				edit_menu_toggle);
-    remember_pref(prf, reflect_edit_menu, save_edit_menu, help_edit_menu, clear_edit_menu, revert_edit_menu);
-
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("a toolbar", "toolbar.scm",
 				(include_icon_box = find_icon_box()),
 				dpy_box, current_sep, 
@@ -2499,10 +2492,11 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_toggle("include smpte info", "show-smpte-label",
-				(include_smpte = find_smpte()),
+				rts_with_smpte_label = with_smpte_label(ss),
 				grf_box, current_sep,
 				smpte_toggle);
     remember_pref(prf, reflect_smpte, save_smpte, help_smpte, clear_smpte, revert_smpte);
+
 
     /* ---------------- (graph) colors ---------------- */
 
@@ -2761,13 +2755,6 @@ widget_t start_preferences_dialog(void)
 					  show_mix_waveforms_toggle, mix_waveform_height_text);
     remember_pref(prf, reflect_mix_waveforms, save_mix_waveforms, NULL, NULL, revert_mix_waveforms);
     free(str);
-
-    current_sep = make_inter_variable_separator(mmr_box, prf->label);
-    prf = prefs_row_with_toggle("include mark pane", "mark-pane",
-				(include_mark_pane = find_mark_pane()),
-				mmr_box, current_sep,
-				mark_pane_toggle);
-    remember_pref(prf, reflect_mark_pane, save_mark_pane, help_mark_pane, clear_mark_pane, revert_mark_pane);
   }
   
   current_sep = make_inter_topic_separator(topics);

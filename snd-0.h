@@ -532,6 +532,18 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_ask_before_overwrite(a) ss->Ask_Before_Overwrite = a
 #define DEFAULT_ASK_BEFORE_OVERWRITE false
 
+#define with_popup_menus(ss) ss->With_Popup_Menus
+#define set_with_popup_menus(a) ss->With_Popup_Menus = a
+#define DEFAULT_WITH_POPUP_MENUS true
+
+#define with_toolbar(ss) ss->With_Toolbar
+#define set_with_toolbar(a) ss->With_Toolbar = a
+#define DEFAULT_WITH_TOOLBAR false
+
+#define remember_sound_state(ss) ss->Remember_Sound_State
+#define set_remember_sound_state(a) ss->Remember_Sound_State = a
+#define DEFAULT_REMEMBER_SOUND_STATE false
+
 #define ask_about_unsaved_edits(ss) ss->Ask_About_Unsaved_Edits
 #define set_ask_about_unsaved_edits(a) ss->Ask_About_Unsaved_Edits = a
 #define DEFAULT_ASK_ABOUT_UNSAVED_EDITS false
@@ -640,6 +652,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define with_inset_graph(ss) ss->With_Inset_Graph
 #define set_with_inset_graph(a) ss->With_Inset_Graph = a
 #define DEFAULT_WITH_INSET_GRAPH false
+
+#define with_smpte_label(ss) ss->With_Smpte_Label
+#define set_with_smpte_label(a) ss->With_Smpte_Label = a
+#define DEFAULT_WITH_SMPTE_LABEL false
 
 #define with_pointer_focus(ss) ss->With_Pointer_Focus
 #define set_with_pointer_focus(a) ss->With_Pointer_Focus = a

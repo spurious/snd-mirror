@@ -1235,7 +1235,6 @@ the cursor is moved to the clicked point.
 
 <img src="pix/uppergrf.png" alt="with-inset-graph" hspace=20 vspace=10>
 <br>
-
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1244,7 +1243,7 @@ the cursor is moved to the clicked point.
 <td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
 If with-pointer-focus is #t, whatever text or graph widget is underneath the mouse cursor is activated
 (this is sometimes known as "point-to-focus" mode).
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=3 height=16></td></tr>
 
 
 <!-- with-relative-panes -->
@@ -1254,6 +1253,14 @@ If with-relative-panes is #t in the Motif
 version of Snd, a multichannel sound tries to retain the relative channel graph sizes
 when the outer sash (the overall sound size sash) changes.
 Mono sounds and the listener are not affected (perhaps they should be?).
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
+<!-- with-smpte-label -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="withsmptelabel">with-smpte-label</a></code></td>
+<td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
+with-smpte-label shows the current SMPTE frame number in a box
+in the upper left corner of the graph (see the picture above under add-mark-pane).
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1578,8 +1585,7 @@ reset any added amplitude sliders to 1.0.
 <tr><td colspan=3 bgcolor="#f2f4ff">
 <code><a class=def name="aftergraphhook">after-graph-hook</a> (snd chn)</code>
 </td></tr><tr><td></td><td colspan=2>
-This hook is called after a graph is updated or redisplayed; see <a href="#displaysampsinred">display-samps-in-red</a>,
-<a href="sndscm.html#showsmptelabel">draw-smpte-label</a> in snd-motif.scm, or <a href="#addcomment">add-comment</a>.
+This hook is called after a graph is updated or redisplayed; see <a href="#displaysampsinred">display-samps-in-red</a>.
 This is the hook to use when adding your own finishing touches to the display; if added earlier they risk
 being erased by Snd as it redraws graphs.
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -6115,8 +6121,6 @@ then restore that state upon "Page Up":
 					(cddr lst)))))
 			       last-page-state)))))))
 </pre></td></tr></table>
-
-See also draw-smpte-label in snd-motif.scm.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -13628,7 +13632,7 @@ snd-gcs returns a list of Snd's graphics contexts:
    14: bg=basic-color, fg=filter-waveform-color
 </pre>
 These graphics-contexts make it easier to fit in with whatever color scheme is currently in use.  For example,
-in snd-motif.xm's SMPTE time display, we make sure the font color reflects whether we're in the selected channel:
+in to make sure the font color reflects whether we're in the selected channel:
 <pre>
       (XSetFont dpy
 		(if (= chn (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-channel</a> snd))
