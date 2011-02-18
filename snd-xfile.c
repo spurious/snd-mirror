@@ -4814,6 +4814,18 @@ static void save_unsaved_edits_dialog(Widget d, snd_info *sp)
   num_unsaved_edits_dialogs++;
 }
 
+
+void unpost_unsaved_edits_if_any(snd_info *sp)
+{
+  int i;
+  for (i = 0; i < num_unsaved_edits_dialogs; i++)
+    if (((unsaved_edits_sounds[i] == sp) ||
+	 (!snd_ok(unsaved_edits_sounds[i]))) &&
+	(XtIsManaged(unsaved_edits_dialogs[i])))
+      XtUnmanageChild(unsaved_edits_dialogs[i]);
+}
+
+
 static void zero_edits(chan_info *cp)
 {
   cp->edit_ctr = 0;

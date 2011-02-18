@@ -4261,9 +4261,102 @@ void save_post_it_dialog_state(FILE *fd)
 
 
 
+/* ---------------- unsaved edits dialog ---------------- */
+
+static int num_unsaved_edits_dialogs = 0;
+static GtkWidget **unsaved_edits_dialogs = NULL;
+static snd_info **unsaved_edits_sounds = NULL;
+
+static GtkWidget *unsaved_edits_dialog(snd_info *sp)
+{
+  int i;
+  /* are there any such dialogs? */
+  if (num_unsaved_edits_dialogs == 0)
+    return(NULL);
+
+  /* now see if we've already prompted about this sound */
+  for (i = 0; i < num_unsaved_edits_dialogs; i++)
+    if (unsaved_edits_sounds[i] == sp)
+      return(unsaved_edits_dialogs[i]);
+
+  /* try to find a free unmanaged dialog */
+  for (i = 0; i < num_unsaved_edits_dialogs; i++)
+    if ((unsaved_edits_dialogs[i]) &&
+	(!widget_is_active(unsaved_edits_dialogs[i])))
+      return(unsaved_edits_dialogs[i]);
+
+  return(NULL);
+}
+
+static void save_unsaved_edits_dialog(GtkWidget *d, snd_info *sp)
+{
+  if (num_unsaved_edits_dialogs == 0)
+    {
+      unsaved_edits_dialogs = (GtkWidget **)calloc(1, sizeof(GtkWidget *));
+      unsaved_edits_sounds = (snd_info **)calloc(1, sizeof(snd_info *));
+    }
+  else
+    {
+      unsaved_edits_dialogs = (GtkWidget **)realloc(unsaved_edits_dialogs, (num_unsaved_edits_dialogs + 1) * sizeof(GtkWidget *));
+      unsaved_edits_sounds = (snd_info **)realloc(unsaved_edits_sounds, (num_unsaved_edits_dialogs + 1) * sizeof(snd_info *));
+    }
+
+  unsaved_edits_dialogs[num_unsaved_edits_dialogs] = d;
+  unsaved_edits_sounds[num_unsaved_edits_dialogs] = sp;
+  num_unsaved_edits_dialogs++;
+}
+
+
+void unpost_unsaved_edits_if_any(snd_info *sp)
+{
+  int i;
+  for (i = 0; i < num_unsaved_edits_dialogs; i++)
+    if (((unsaved_edits_sounds[i] == sp) ||
+	 (!snd_ok(unsaved_edits_sounds[i]))) &&
+	(widget_is_active(unsaved_edits_dialogs[i])))
+      gtk_widget_hide(unsaved_edits_dialogs[i]);
+}
+
+
+static void zero_edits(chan_info *cp)
+{
+  cp->edit_ctr = 0;
+}
+
+
+static void unsaved_edits_activate(GtkDialog *w, gint id, gpointer context)
+{
+  snd_info *sp = (snd_info *)context;
+  if (id == GTK_RESPONSE_NO)
+    for_each_sound_chan(sp, zero_edits);
+  else save_edits(sp);
+  snd_close_file(sp);
+  gtk_widget_hide(GTK_WIDGET(w));
+}
+
+
 void save_edits_now(snd_info *sp)
 {
+  char *question;
+  GtkWidget *dialog;
+
+  question = mus_format("%s has unsaved edits.  Save them?", sp->short_filename);
+  dialog = unsaved_edits_dialog(sp);
+  if (!dialog)
+    {
+      dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, question);
+      SG_SIGNAL_CONNECT(dialog, "response", unsaved_edits_activate, (gpointer)sp);
+      save_unsaved_edits_dialog(dialog, sp);
+    }
+  else
+    {
+      g_object_set(dialog, "text", question, NULL);
+    }
+
+  free(question);
+  gtk_widget_show(dialog);
 }
+
 
 
 

@@ -4,9 +4,8 @@
  *    remember sound state, 
  *    show selection key binding test
  *    effects menu, toolbar, edit menu additions, -- with_toolbar, with_popup_menus, 
- *      just include the edit-menu stuff, omit effects
+ *      just include the edit-menu stuff
  *    popup menus [With_Popup_Menus as var, etc]
- * need gtk side of unsaved edits stuff and no-gui?
  */
 
 

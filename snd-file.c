@@ -1599,6 +1599,7 @@ void snd_close_file(snd_info *sp)
       save_edits_now(sp);
       return;
     }
+  unpost_unsaved_edits_if_any(sp);
 
   if (peak_env_dir(ss))
     map_over_sound_chans(sp, write_peak_env_info_file);
