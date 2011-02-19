@@ -8820,3 +8820,5 @@ gtkrecentmanager: gtk_recent_info_get_gicon
 		       (not (defined? (string->symbol function))))
 		  (format #t "~A: ~A~%" header function))))))))
 |#
+
+;;; TODO: support g_object_get|set

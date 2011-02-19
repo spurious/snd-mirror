@@ -355,7 +355,7 @@ typedef struct snd_info {
   XEN prompt_callback;
   XEN properties;
   int search_proc_loc, prompt_callback_loc, properties_loc;
-  bool raw_prompt;
+  bool raw_prompt, remembering;
   char *search_expr;
   mus_long_t marking;
   int search_count, amp_count; /* search_count = number of times to search before return, amp_count = amp env samps if not 1 (= full dur) */
@@ -638,6 +638,7 @@ void g_init_menu(void);
 const char *save_options_in_prefs(void);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
 void close_save_sound_block(FILE *fd, bool need_f);
+void save_sound_state(snd_info *sp, void *ptr);
 bool snd_exit_cleanly(bool force_exit);
 void sound_not_current(snd_info *sp);
 void save_state(const char *save_state_name);

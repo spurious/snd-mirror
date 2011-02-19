@@ -1,14 +1,8 @@
 /* this file included as text in snd-g|xprefs.c */
 
-/* TODO: the following need to be built-in:
- *    remember sound state, 
- *    effects menu, toolbar -- with_toolbar, with_popup_menus,
- *    doc/test with-toolbar/with-smpte-label/with-popup-menus/remember-sound-state
- *    check that changed stuff is saved correctly
- *    what about the gtk icon choice g_object_set (gtk_settings_get_default (), "gtk-menu-images", true, NULL);
- *      or double-click-time, theme-name?
- *    fix key binding stuff to not need cr
- *    why not xgdata for g_object_get|set?
+/* TODO: effects menu, toolbar -- with_toolbar, with_popup_menus,
+ * TODO: doc/test with-toolbar/with-smpte-label/with-popup-menus/remember-sound-state
+ * TODO: check that changed stuff is saved correctly
  */
 
 
@@ -412,97 +406,6 @@ static void prefs_help(prefs_info *prf)
     }
 }
 
-
-#if HAVE_RUBY
-static char *no_stars(const char *name)
-{
-  if (name[0] == '*')
-    {
-      char *val;
-      val = (char *)calloc(strlen(name), sizeof(char));
-      strncpy(val, (char *)(name + 1), strlen(name) - 2);
-      return(val);
-    }
-  else return(mus_strdup(name));
-}
-#endif
-
-
-static void prefs_variable_set(const char *name, XEN val)
-{
-#if HAVE_SCHEME
-  if (XEN_DEFINED_P(name))
-    XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE(name), val);
-#endif
-
-#if HAVE_FORTH
-  if (XEN_DEFINED_P(name))
-    XEN_VARIABLE_SET(name, val);
-#endif
-
-#if HAVE_RUBY
-  {
-    char *str;
-    str = no_stars(name);
-    if (XEN_DEFINED_P(str))
-      XEN_VARIABLE_SET(str, val);
-    free(str);
-  }
-#endif
-}
-
-
-static XEN prefs_variable_get(const char *name)
-{
-#if HAVE_SCHEME || HAVE_FORTH
-  if (XEN_DEFINED_P(name))
-    return(XEN_NAME_AS_C_STRING_TO_VALUE(name));
-#endif
-
-#if HAVE_RUBY
-  {
-    char *str;
-    XEN val = XEN_FALSE;
-    str = no_stars(name);
-    if (XEN_DEFINED_P(str))
-      val = XEN_NAME_AS_C_STRING_TO_VALUE(str);
-    free(str);
-    return(val);
-  }
-#endif
-  
-  return(XEN_FALSE);
-}
-
-
-static bool prefs_is_loading = false;
-
-
-static XEN watch_for_snd_error_in_prefs(XEN msg)
-{
-  if ((prefs_is_loading) &&
-      (widget_is_active(preferences_dialog)))
-    post_it("Load error", (const char *)XEN_TO_C_STRING(msg));
-  return(XEN_FALSE);
-}
-
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_1(watch_for_snd_error_in_prefs_w, watch_for_snd_error_in_prefs)
-#else
-  #define watch_for_snd_error_in_prefs_w watch_for_snd_error_in_prefs
-#endif
-
-
-static void load_file_with_path_and_extension(const char *file)
-{
-  /* file is bare (no extension, no directory) file name */
-  char *str;
-  str = mus_format("%s.%s", file, XEN_FILE_EXTENSION);
-  prefs_is_loading = true;
-  XEN_LOAD_FILE_WITH_PATH(str);
-  prefs_is_loading = false;
-  free(str);
-}
 
 
 /* ---------------- auto-resize ---------------- */
@@ -1914,8 +1817,6 @@ static void grid_density_text_callback(prefs_info *prf)
 
 /* ---------------- sync style ---------------- */
 
-#define SYNC_UNSET -1
-
 static sync_style_t rts_sync_style = DEFAULT_SYNC_STYLE;
 static void revert_sync_style(prefs_info *prf) {set_sync_style(rts_sync_style);}
 static void clear_sync_style(prefs_info *prf) {set_sync_style(DEFAULT_SYNC_STYLE);}
@@ -3260,227 +3161,9 @@ static void raw_data_format_from_menu(prefs_info *prf, char *value)
 
 
 
-/* ---------------- with-sound ---------------- */
-
-static bool rts_with_sound = false;
-static char *rts_clm_file_name = NULL;
-static mus_long_t rts_clm_file_buffer_size = 65536;
-static mus_long_t rts_clm_table_size = 512;
-
-
-static bool with_sound_is_loaded(void) {return(XEN_DEFINED_P("with-sound"));}
-static void reflect_with_sound(prefs_info *prf) {}
-static void revert_with_sound(prefs_info *prf) {SET_TOGGLE(prf->toggle, rts_with_sound);}
-static void clear_with_sound(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
-
-
-static void with_sound_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(XEN_DEFINED_P("with-sound"))))
-    load_file_with_path_and_extension("ws");
-}
-
-
-static void save_with_sound(prefs_info *prf, FILE *fd)
-{
-  rts_with_sound = GET_TOGGLE(prf->toggle);
-  if (rts_with_sound)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-ws.scm)) (load \"ws.scm\"))\n");
-      if (rts_clm_file_name)
-	fprintf(fd, "(set! *clm-file-name* \"%s\")\n", rts_clm_file_name);
-      if (rts_clm_file_buffer_size != 65536)
-	fprintf(fd, "(set! *clm-file-buffer-size* " MUS_LD ")\n", rts_clm_file_buffer_size);
-      if (rts_clm_table_size != 512)
-	fprintf(fd, "(set! *clm-table-size* " MUS_LD ")\n", rts_clm_table_size);
-#endif
-
-#if HAVE_RUBY
-      fprintf(fd, "require \"ws\"\n");
-      if (rts_clm_file_name)
-	fprintf(fd, "$clm_file_name = \"%s\"\n", rts_clm_file_name);
-      if (rts_clm_file_buffer_size != 65536)
-	fprintf(fd, "$clm_file_buffer_size = " MUS_LD "\n", rts_clm_file_buffer_size);
-      if (rts_clm_table_size != 512)
-	fprintf(fd, "$clm_table_size = " MUS_LD "\n", rts_clm_table_size);
-#endif
-
-#if HAVE_FORTH
-      fprintf(fd, "require clm\n");
-      if (rts_clm_file_name)
-	fprintf(fd, "\"%s\" to *clm-file-name*\n", rts_clm_file_name);
-      if (rts_clm_file_buffer_size != 65536)
-	fprintf(fd, MUS_LD " to *clm-file-buffer-size*\n", rts_clm_file_buffer_size);
-      if (rts_clm_table_size != 512)
-	fprintf(fd, MUS_LD " to *clm-table-size*\n", rts_clm_table_size);
-#endif
-    }
-}
-
-
-static void help_with_sound(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "with-sound is the main CLM sound-producing macro.  If you want to use CLM functions to create \
-new sounds, then edit them in Snd, include with-sound.",
-	   WITH_WORD_WRAP);
-}
-
-
-
-/* ---------------- clm file name ---------------- */
-
-#define CLM_FILE_NAME "*clm-file-name*"
-
-static void set_clm_file_name(const char *str) {prefs_variable_set(CLM_FILE_NAME, C_TO_XEN_STRING(str));}
-
-static const char *find_clm_file_name(void)
-{
-  XEN val;
-  val = prefs_variable_get(CLM_FILE_NAME);
-  if (XEN_STRING_P(val))
-    return(XEN_TO_C_STRING(val));
-  return(NULL);
-}
-
-
-static void clm_file_name_text(prefs_info *prf)
-{
-  char *str;
-  str = GET_TEXT(prf->text);
-  if ((str) && (*str))
-    {
-      rts_with_sound = true;
-      if (rts_clm_file_name) free(rts_clm_file_name); /* save is done after we're sure with-sound is loaded */
-      rts_clm_file_name = mus_strdup(str);
-      set_clm_file_name(str);
-      free_TEXT(str);
-    }
-}
-
-
-static void reflect_clm_file_name(prefs_info *prf) 
-{
-  SET_TEXT(prf->text, find_clm_file_name());
-}
-
-static void clear_clm_file_name(prefs_info *prf) 
-{
-  prefs_variable_set(CLM_FILE_NAME, C_TO_XEN_STRING("test.snd"));
-}
-
-
-static void revert_clm_file_name(prefs_info *prf) 
-{
-  prefs_variable_set(CLM_FILE_NAME, C_TO_XEN_STRING((char *)((rts_clm_file_name) ? rts_clm_file_name : "test.snd")));
-}
-
-
-static void help_clm_file_name(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option sets the default output file name used by with-sound.",
-	   WITH_WORD_WRAP);
-}
-
-
-static void save_clm_file_name(prefs_info *prf, FILE *ignore)
-{
-  if (rts_clm_file_name) free(rts_clm_file_name);
-  rts_clm_file_name = mus_strdup(find_clm_file_name());
-}
-
-
-/* ---------------- clm sizes ---------------- */
-
-#define CLM_TABLE_SIZE "*clm-table-size*"
-#define CLM_FILE_BUFFER_SIZE "*clm-file-buffer-size*"
-
-static mus_long_t find_clm_table_size(void)
-{
-  return(XEN_TO_C_INT64_T_OR_ELSE(prefs_variable_get(CLM_TABLE_SIZE), 512));
-}
-
-
-static mus_long_t find_clm_file_buffer_size(void)
-{
-  return(XEN_TO_C_INT64_T_OR_ELSE(prefs_variable_get(CLM_FILE_BUFFER_SIZE), 65536));
-}
-
-
-static void reflect_clm_sizes(prefs_info *prf)
-{
-  rts_clm_table_size = find_clm_table_size();
-  mus_long_t_to_textfield(prf->text, rts_clm_table_size);
-  rts_clm_file_buffer_size = find_clm_file_buffer_size();
-  mus_long_t_to_textfield(prf->rtxt, rts_clm_file_buffer_size);
-}
-
-
-static void clm_sizes_text(prefs_info *prf)
-{
-  char *str;
-
-  str = GET_TEXT(prf->text);
-  if ((str) && (*str))
-    {
-      mus_long_t size = 0;
-      rts_with_sound = true;
-      redirect_errors_to(any_error_to_text, (void *)prf);
-      size = string_to_mus_long_t(str, 1, "table size");
-      redirect_errors_to(NULL, NULL);
-      if (!(prf->got_error))
-	rts_clm_table_size = size;
-      free_TEXT(str);
-    }
-
-  str = GET_TEXT(prf->rtxt);
-  if ((str) && (*str))
-    {
-      mus_long_t size = 0;
-      rts_with_sound = true;
-      redirect_errors_to(any_error_to_text, (void *)prf);
-      size = string_to_mus_long_t(str, 1, "file buffer size");
-      redirect_errors_to(NULL, NULL);
-      if (!(prf->got_error))
-	rts_clm_file_buffer_size = size;
-      free_TEXT(str);
-    }
-}
-
-
-static void help_clm_sizes(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option sets the default clm table size and file buffer size.",
-	   WITH_WORD_WRAP);
-}
-
-
-static void revert_clm_sizes(prefs_info *prf)
-{
-  prefs_variable_set(CLM_FILE_BUFFER_SIZE, C_TO_XEN_INT64_T(rts_clm_file_buffer_size));
-  prefs_variable_set(CLM_TABLE_SIZE, C_TO_XEN_INT64_T(rts_clm_table_size));
-}
-
-
-static void clear_clm_sizes(prefs_info *prf)
-{
-  prefs_variable_set(CLM_FILE_BUFFER_SIZE, C_TO_XEN_INT64_T(65536));
-  prefs_variable_set(CLM_TABLE_SIZE, C_TO_XEN_INT64_T(512));
-}
-
-
-static void save_clm_sizes(prefs_info *prf, FILE *ignore)
-{
-  rts_clm_file_buffer_size = find_clm_file_buffer_size();
-  rts_clm_table_size = find_clm_table_size();
-}
-
-
+#if 0
 /* ---------------- context sensitive popup ---------------- */
+
 
 static bool include_context_sensitive_popup = DEFAULT_WITH_POPUP_MENUS;
 
@@ -3634,15 +3317,15 @@ static void reflect_icon_box(prefs_info *prf) {}
 static void revert_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_icon_box);}
 static void clear_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 #endif
-
+#endif
 
 
 
 /* ---------------- remember-sound-state ---------------- */
 
-static int rts_remember_sound_state_choice = 0, remember_sound_state_choice = 0; /* 0=none, 1=local, 2=global+not local, 3=local+global */
+static bool rts_remember_sound_state = DEFAULT_REMEMBER_SOUND_STATE;
 
-static void help_remember_sound_state_choice(prefs_info *prf)
+static void help_remember_sound_state(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option causes Snd to save most of a sound's display state when it is closed, \
@@ -3650,57 +3333,11 @@ and if that same sound is later re-opened, Snd restores the previous state. This
 	   WITH_WORD_WRAP);
 }
 
-
-static int find_remember_sound_state_choice(void) {return(XEN_TO_C_INT_OR_ELSE(prefs_variable_get("remembering-sound-state"), 0));}
-static void revert_remember_sound_state(prefs_info *prf) {remember_sound_state_choice = rts_remember_sound_state_choice;}
-static void clear_remember_sound_state(prefs_info *prf) {remember_sound_state_choice = 0;}
-
-
-static void reflect_remember_sound_state_choice(prefs_info *prf)
-{
-  SET_TOGGLE(prf->toggle, remember_sound_state_choice & 1);
-  SET_TOGGLE(prf->toggle2, remember_sound_state_choice & 2);
-}
-
-static void save_remember_sound_state_choice(prefs_info *prf, FILE *fd)
-{
-  rts_remember_sound_state_choice = remember_sound_state_choice;
-  if (remember_sound_state_choice != 0)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load \"extensions.scm\"))\n");
-      fprintf(fd, "(remember-sound-state %d)\n", remember_sound_state_choice);
-#endif
-
-#if HAVE_RUBY
-      fprintf(fd, "require \"extensions\"\n");
-      if (remember_sound_state_choice & 2)
-	fprintf(fd, "remember_all_sound_properties\n");
-      else fprintf(fd, "remember_sound_state\n");
-#endif
-
-#if HAVE_FORTH
-      fprintf(fd, "require extensions\n");
-      fprintf(fd, "%d remember-sound-state\n", remember_sound_state_choice);
-#endif
-    }
-}
-
-
-static void remember_sound_state_1_choice(prefs_info *prf)
-{
-  if (GET_TOGGLE(prf->toggle))
-    remember_sound_state_choice |= 1;
-  else remember_sound_state_choice &= 2;
-}
-
-
-static void remember_sound_state_2_choice(prefs_info *prf)
-{
-  if (GET_TOGGLE(prf->toggle2))
-    remember_sound_state_choice |= 2;
-  else remember_sound_state_choice &= 1;
-}
+static void revert_remember_sound_state(prefs_info *prf) {set_remember_sound_state(rts_remember_sound_state);}
+static void clear_remember_sound_state(prefs_info *prf) {set_remember_sound_state(DEFAULT_REMEMBER_SOUND_STATE);}
+static void reflect_remember_sound_state(prefs_info *prf) {SET_TOGGLE(prf->toggle, remember_sound_state(ss));}
+static void save_remember_sound_state(prefs_info *prf, FILE *fd) {rts_remember_sound_state = remember_sound_state(ss);}
+static void toggle_remember_sound_state(prefs_info *prf) {set_remember_sound_state(GET_TOGGLE(prf->toggle));}
 
 
 
@@ -4515,7 +4152,7 @@ static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
 #if HAVE_SCHEME
   return(mus_format("(bind-key %s %d (lambda () \
                                        (let ((old-sync (sync))) \
-                                         (set! (sync) (1+ (max-sync))) \
+                                         (set! (sync) (1+ (sync-max))) \
                                          (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) \
                                          (set! (sync) old-sync))) %s \"show entire sound\" \"show-all\")\n",
 		    possibly_quote(key), 
@@ -4586,7 +4223,7 @@ static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
 #if HAVE_SCHEME
   return(mus_format("(bind-key %s %d (lambda () \
                                        (let ((old-sync (sync))) \
-                                         (set! (sync) (1+ (max-sync))) \
+                                         (set! (sync) (1+ (sync-max))) \
                                          (select-all) \
                                          (set! (sync) old-sync))) %s \"select entire sound\" \"select-all\")\n",
 		    possibly_quote(key), 

@@ -1374,23 +1374,77 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 }
 
 
-static char *snd_opened_sound_file_name(snd_info *sp)
+static char *opened_sound_file_name(snd_info *sp)
 {
   char *newname;
   int len;
   len = strlen(sp->filename);
-  newname = (char *)calloc(len + 5, sizeof(char));
-  mus_snprintf(newname, len + 5, "%s.%s", sp->filename, XEN_FILE_EXTENSION);
+  newname = (char *)calloc(len + 32, sizeof(char));
+  mus_snprintf(newname, len + 32, "%s.%s", sp->filename, XEN_FILE_EXTENSION);
   return(newname);
 }
 
 
-static void read_snd_opened_sound_file(snd_info *sp)
+static char *remembered_sound_file_name(snd_info *sp)
 {
   char *newname;
-  newname = snd_opened_sound_file_name(sp);
+  int len;
+  len = strlen(sp->filename);
+  newname = (char *)calloc(len + 32, sizeof(char));
+  mus_snprintf(newname, len + 32, "remembered-%s.%s", sp->short_filename, XEN_FILE_EXTENSION);
+  return(newname);
+}
+
+
+static void load_sound_file_extras(snd_info *sp)
+{
+  char *newname;
+  /* possible sound.scm file */
+  newname = opened_sound_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
       snd_load_file(newname);
+  free(newname);
+
+  /* remembered-sound.scm -- this is written if remember-sound-state which will also overwrite it */
+  if (remember_sound_state(ss))
+    {
+      newname = remembered_sound_file_name(sp);
+      if (file_write_date(newname) >= sp->write_date)
+	snd_load_file(newname);
+      free(newname);
+    }
+}
+
+
+static void remember_sound_file(snd_info *sp)
+{
+  char *locale = NULL, *newname;
+  FILE *fd;
+
+  newname = remembered_sound_file_name(sp);
+  fd = FOPEN(newname, "w");
+
+  if (fd == NULL)
+    {
+      snd_error(_("remember sound state can't write %s: %s"), newname, snd_io_strerror());
+      return;
+    }
+#if HAVE_SETLOCALE
+  locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
+#endif
+
+  sp->remembering = true;
+  save_sound_state(sp, fd);
+  sp->remembering = false;
+
+  if (locale)
+    {
+#if HAVE_SETLOCALE
+      setlocale(LC_NUMERIC, locale);
+#endif
+      free(locale);
+    }
+  snd_fclose(fd, newname);
   free(newname);
 }
 
@@ -1514,7 +1568,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 	  (sp->active) &&
 	  (sp->inuse == SOUND_NORMAL))
 	select_channel(sp, 0);
-      read_snd_opened_sound_file(sp);
+      load_sound_file_extras(sp);
 
       if ((sp->channel_style != CHANNELS_SEPARATE) && 
 	  (sp->nchans > 1)) 
@@ -1610,6 +1664,9 @@ void snd_close_file(snd_info *sp)
     run_hook(close_hook,
 	     XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
 	     S_close_hook);
+
+  if (remember_sound_state(ss))
+    remember_sound_file(sp);
 
   remember_filename(sp->filename, preloaded_files); /* for open dialog(s) previous files list in case dialog doesn't yet exist */
 

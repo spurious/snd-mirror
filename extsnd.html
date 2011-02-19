@@ -1065,6 +1065,14 @@ In S7, this also sets *vector-print-length*.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
+<!-- remember-sound-state -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="remembersoundstate">remember-sound-state</a></code></td>
+<td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
+If remember-sound-state is #t, Snd saves most of a sound's display state when it is closed,
+and if that same sound is later re-opened, restores the previous state.
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
 <!-- save-dir -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="savedir">save-dir</a></code></td>
 <td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
@@ -1625,7 +1633,6 @@ and filled graphs (not line segments or dots, etc):
 </pre></td></tr></table>
 
 See also <a href="sndscm.html#xbopen">C-x b</a> support in examp.scm, 
-<a href="sndscm.html#remembersoundstate">remember-sound-state</a> in extensions.scm, 
 enved.scm, and various examples in snd-motif.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -1643,8 +1650,7 @@ This hook is called after File:Save as.
 <code><a class=def name="aftersavestatehook">after-save-state-hook</a> (filename)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called after Snd has saved its state (<a href="#savestate">save-state</a>).  'filename' is the (otherwise complete) saved state
-program.  See <a href="sndscm.html#wssavestate">ws-save-state</a> in ws.scm 
-or <a href="sndscm.html#remembersoundstate">remember-sound-state</a> in extensions.scm.  Both use this sequence:
+program.  See <a href="sndscm.html#wssavestate">ws-save-state</a> in ws.scm.  It uses this sequence:
 <br>
 <pre>
 (lambda (filename)
@@ -1811,7 +1817,6 @@ end
 </td></tr></table>
 close-hook is used in <a href="sndscm.html#autosavedoc">autosave.scm</a>, 
 the <a href="sndscm.html#xbopen">C-x b</a> support in examp.scm,
-<a href="sndscm.html#remembersoundstate">remember-sound-state</a> in extensions.scm,
 and many other places.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -8634,7 +8639,7 @@ save keyboard macros: <a href="#savemacros">save-macros</a><br>
 save marks: <a href="#savemarks">save-marks</a><br>
 save just the edit history: <a href="#saveedithistory">save-edit-history</a><br>
 take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a><br>
-save the current sound setup for a later reopen: <a href="sndscm.html#remembersoundstate">remember-sound-state</a><br>
+save the current sound setup for a later reopen: <a href="#remembersoundstate">remember-sound-state</a><br>
 save the current fft peak info: <a href="#peaks">peaks</a><br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -12524,7 +12529,6 @@ refer to it directly, not as a procedure call.  Say we have a sound file "now.sn
 and we want it to use the grid-graph whenever it is viewed.  We make "now.snd.scm"
 and put in it: <code>(set! (show-grid *snd-opened-sound*) #t)</code>.  When "now.snd" is
 opened, "now.snd.scm" is loaded automatically with *snd-opened-sound* holding the sound object of "now.snd".
-There are other fancier ways to do this (e.g. <a href="sndscm.html#remembersoundstate">remember-sound-state</a>).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

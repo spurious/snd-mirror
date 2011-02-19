@@ -970,7 +970,7 @@ static bool default_envelope_p(env *e)
 }
 
 
-static void save_sound_state(snd_info *sp, void *ptr) 
+void save_sound_state(snd_info *sp, void *ptr) 
 {
   /* called only after the global settings have been established, so here we can't use the DEFAULT_* macros that are ambiguous */
   int chan;
@@ -1150,7 +1150,8 @@ static void save_sound_state(snd_info *sp, void *ptr)
       }
 
       check_selection(fd, cp);
-      if (selected_channel() == cp)
+      if ((!sp->remembering) &&
+	  (selected_channel() == cp))
 	{
 #if HAVE_SCHEME
 	  fprintf(fd, "%s(set! _saved_snd_selected_sound_ sfile)\n", white_space);

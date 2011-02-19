@@ -492,7 +492,7 @@
 	   (lambda (n)
 	     (clear-save-state-files)
 	     (clear-listener)
-	     
+	     (set! (ask-about-unsaved-edits) #f)
 	     (if (not (null? (sounds)))
 		 (begin
 		   (snd-display #__line__ ";end test ~D: open sounds: ~A" n (map short-file-name (sounds)))
@@ -1168,7 +1168,7 @@
 	 (list axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font)
 	 (list 'axis-label-font 'axis-numbers-font 'tiny-font 'peaks-font 'bold-peaks-font)))
 
-    (set! (ask-about-unsaved_edits) #f)
+    (set! (ask-about-unsaved-edits) #f)
     ))
 
 
@@ -1346,7 +1346,7 @@
       'speed-control (without-errors (speed-control)) 'no-such-sound
       'speed-control-bounds (cadr (speed-control-bounds)) 20.0
       'sync (without-errors (sync)) 'no-such-sound
-      'sync-style (sync-style) 0
+      'sync-style (sync-style) sync-by-sound
       'temp-dir (temp-dir) #f 
       'time-graph-type (time-graph-type) graph-once
       'time-graph? (without-errors (time-graph?)) 'no-such-sound
@@ -1373,7 +1373,7 @@
       'zoom-focus-style (zoom-focus-style) 2 
       ))
     (if *snd-opened-sound* (snd-display #__line__ ";*snd-opened-sound*: ~A" *snd-opened-sound*))
-    (set! (ask-about-unsaved_edits) #f)
+    (set! (ask-about-unsaved-edits) #f)
     ))
 
 
@@ -1959,7 +1959,7 @@
 	(list 'beats-per-measure beats-per-measure 1 120)
 	(list 'zero-pad zero-pad 0 1)
 	(list 'zoom-focus-style zoom-focus-style 2 1))))
-    (set! (ask-about-unsaved_edits) #f)    
+    (set! (ask-about-unsaved-edits) #f)    
     (letrec ((test-bad-args
 	      (lambda (lst)
 		(if (not (null? lst))
@@ -44465,7 +44465,7 @@ EDITS: 1
 		      (set! ind (open-sound "test.snd")))))
 	      (close-sound ind))))
       
-      (remember-sound-state)
+      (set! (remember-sound-state) #t)
       (let ((ind (open-sound "oboe.snd")))
 	(set! (transform-graph? ind 0) #t)
 	(set! (show-transform-peaks ind 0) #t)
@@ -44478,6 +44478,7 @@ EDITS: 1
 	    (snd-display #__line__ ";remember-sound-state: ~A ~A ~A" (transform-graph? ind 0) (show-transform-peaks ind 0) (show-y-zero ind 0)))
 	(close-sound ind))
       (reset-almost-all-hooks)
+      (set! (remember-sound-state) #f)
       
       (map-sound-files (lambda (n) (if (> (mus-sound-duration n) 1000.0) (snd-display #__line__ ";~A is pretty long! ~A" n (mus-sound-duration n)))))
       (if (string? sf-dir)
@@ -62200,7 +62201,7 @@ EDITS: 1
 			  (list mouse-click-hook 'mouse-click-hook)
 			  (list enved-hook 'enved-hook)))
 
-	  (set! (ask-about-unsaved_edits) #f)	  
+	  (set! (ask-about-unsaved-edits) #f)	  
 	  (if (= test-28 0) 
 	      (begin
 		(check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
@@ -63327,6 +63328,7 @@ EDITS: 1
 (set! (print-length) 64)
 (display (format #f "~%;times: ~A~%;total: ~A~%" timings (round (- (real-time) overall-start-time))))
 
+#|
 (let ((best-times (vector 59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696 0))) ; 571
 ;; this runs 4x faster on the i7 930 nogui/no-audio 
 
@@ -63343,6 +63345,7 @@ EDITS: 1
 	(display (format #f "~1,1F " (vector-ref best-times i)))
 	(display (format #f "(test ~D:) ~1,1F " i (vector-ref best-times i)))))
   (display (format #f ")~%~%")))
+|#
 
 ;;; -------- cleanup temp files
 

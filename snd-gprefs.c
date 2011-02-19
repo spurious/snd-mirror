@@ -1814,13 +1814,12 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_sync_style, save_sync_style, help_sync_style, clear_sync_style, revert_sync_style);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    rts_remember_sound_state_choice = find_remember_sound_state_choice();
-    prf = prefs_row_with_two_toggles("restore a sound's state if reopened later", "remember-sound-state",
-				     "within one run", rts_remember_sound_state_choice & 1,
-				     "across runs", rts_remember_sound_state_choice & 2,
-				     dpy_box,
-				     remember_sound_state_1_choice, remember_sound_state_2_choice);
-    remember_pref(prf, reflect_remember_sound_state_choice, save_remember_sound_state_choice, help_remember_sound_state_choice, 
+    rts_remember_sound_state = remember_sound_state(ss);
+    prf = prefs_row_with_toggle("restore a sound's state if reopened later", S_remember_sound_state,
+				rts_remember_sound_state,
+				dpy_box,
+				toggle_remember_sound_state);
+    remember_pref(prf, reflect_remember_sound_state, save_remember_sound_state, help_remember_sound_state, 
 		  clear_remember_sound_state, revert_remember_sound_state);
 
     current_sep = make_inter_variable_separator(dpy_box);
@@ -1995,6 +1994,7 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box);
 
 
+#if 0
   /* ---------------- extra menus ---------------- */
 
 #if HAVE_STATIC_XM
@@ -2032,7 +2032,7 @@ widget_t start_preferences_dialog(void)
 #endif
 
     current_sep = make_inter_variable_separator(dpy_box);
-
+#endif
 
     /* ---------------- additional key bindings ---------------- */
 
@@ -2583,14 +2583,6 @@ widget_t start_preferences_dialog(void)
     clm_box = make_top_level_box(topics);
     clm_label = make_top_level_label("clm", clm_box);
 
-    rts_with_sound = with_sound_is_loaded();
-    prf = prefs_row_with_toggle("include with-sound", "with-sound",
-				rts_with_sound,
-				clm_box,
-				with_sound_toggle);
-    remember_pref(prf, reflect_with_sound, save_with_sound, help_with_sound, clear_with_sound, revert_with_sound);
-
-    current_sep = make_inter_variable_separator(clm_box);
     str = mus_format("%d", rts_speed_control_tones = speed_control_tones(ss));
     rts_speed_control_style = speed_control_style(ss);
     prf = prefs_row_with_radio_box_and_number("speed control choice", S_speed_control_style,
@@ -2608,23 +2600,6 @@ widget_t start_preferences_dialog(void)
 			      sinc_width_text);
     remember_pref(prf, reflect_sinc_width, save_sinc_width, NULL, NULL, revert_sinc_width);
     free(str);
-
-    current_sep = make_inter_variable_separator(clm_box);
-    rts_clm_file_name = mus_strdup(find_clm_file_name());
-    prf = prefs_row_with_text("with-sound default output file name", "*clm-file-name*", rts_clm_file_name,
-			      clm_box,
-			      clm_file_name_text);
-    remember_pref(prf, reflect_clm_file_name, save_clm_file_name, help_clm_file_name, clear_clm_file_name, revert_clm_file_name);
-
-    current_sep = make_inter_variable_separator(clm_box);
-    rts_clm_table_size = find_clm_table_size();
-    rts_clm_file_buffer_size = find_clm_file_buffer_size();
-    prf = prefs_row_with_two_texts("sizes", "*clm-table-size*",
-				   "wave table:", NULL, "file buffer:", NULL, 8,
-				   clm_box,
-				   clm_sizes_text);
-    reflect_clm_sizes(prf);
-    remember_pref(prf, reflect_clm_sizes, save_clm_sizes, help_clm_sizes, clear_clm_sizes, revert_clm_sizes);
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -2713,8 +2688,6 @@ widget_t start_preferences_dialog(void)
   gtk_widget_show(preferences_dialog);
   prefs_unsaved = false;
   prefs_set_dialog_title(NULL);
-
-  XEN_ADD_HOOK(ss->snd_error_hook, watch_for_snd_error_in_prefs_w, "prefs-error-watcher", "prefs dialog's snd-error handler");
 
   return(preferences_dialog);
 }
