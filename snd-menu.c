@@ -196,8 +196,8 @@ void popup_menu_update(void)
   set_sensitive(popup_redo_menu, redoable_edits_p);
   set_sensitive(popup_save_menu, undoable_edits_p);
 
-  set_sensitive(popup_apply_menu, (file_p && (in_show_controls(ss))));
-  set_sensitive(popup_reset_menu, (file_p && (in_show_controls(ss))));
+  set_sensitive(popup_close_menu, file_p);
+  set_sensitive(popup_revert_menu, undoable_edits_p);
 }
 #endif
 

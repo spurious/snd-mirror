@@ -220,7 +220,7 @@ static void chans_show_grid(chan_info *cp, int value)
   update_graph(cp);
 }
 
-static void set_show_grid(with_grid_t val)
+void set_show_grid(with_grid_t val)
 {
   in_set_show_grid(val);
   for_each_chan_with_int(chans_show_grid, (int)val);
@@ -233,7 +233,7 @@ static void chans_grid_density(chan_info *cp, mus_float_t value)
   update_graph(cp);
 }
 
-static void set_grid_density(mus_float_t val)
+void set_grid_density(mus_float_t val)
 {
   in_set_grid_density(val);
   for_each_chan_with_float(chans_grid_density, val);
@@ -273,7 +273,7 @@ static void chans_show_mix_waveforms(chan_info *cp, bool value)
   update_graph(cp); 
 }
 
-static void set_show_mix_waveforms(bool val) 
+void set_show_mix_waveforms(bool val) 
 {
   in_set_show_mix_waveforms(val); 
   for_each_chan_with_bool(chans_show_mix_waveforms, val);
@@ -462,7 +462,7 @@ static void chans_cursor_size(chan_info *cp, int value)
   update_graph(cp);
 }
 
-static void set_cursor_size(int val)
+void set_cursor_size(int val)
 {
   if (val > 0)
     {
@@ -487,7 +487,7 @@ static void chans_cursor_style(chan_info *cp, int value)
   update_graph(cp);
 }
 
-static void set_cursor_style(cursor_style_t val)
+void set_cursor_style(cursor_style_t val)
 {
   in_set_cursor_style(val);
   for_each_chan_with_int(chans_cursor_style, (int)val);

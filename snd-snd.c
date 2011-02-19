@@ -1689,6 +1689,18 @@ static void apply_unset_controls(snd_info *sp)
 }
 
 
+void set_show_controls(bool val)
+{
+  in_set_show_controls(ss, val);
+#if (!USE_NO_GUI)
+  if (in_show_controls(ss))
+    show_all_controls();
+  else hide_all_controls(); 
+#endif
+}
+
+
+
 /* ---------------- minibuffer/filter text history ---------------- */
 
 typedef struct mini_history {

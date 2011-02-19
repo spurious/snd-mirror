@@ -2,12 +2,13 @@
 
 /* TODO: the following need to be built-in:
  *    remember sound state, 
- *    show selection key binding test
  *    effects menu, toolbar -- with_toolbar, with_popup_menus,
- *      popup menus [With_Popup_Menus as var, etc]
- *      smpte: [remember superimposed chans case]
- * doc/test with-toolbar/with-smpte-label/with-popup-menus/remember-sound-state
- * throughout: defaults, updates
+ *    doc/test with-toolbar/with-smpte-label/with-popup-menus/remember-sound-state
+ *    check that changed stuff is saved correctly
+ *    what about the gtk icon choice g_object_set (gtk_settings_get_default (), "gtk-menu-images", true, NULL);
+ *      or double-click-time, theme-name?
+ *    fix key binding stuff to not need cr
+ *    why not xgdata for g_object_get|set?
  */
 
 
@@ -526,8 +527,8 @@ static void save_ask_before_overwrite(prefs_info *prf, FILE *ignore) {rts_ask_be
 
 static bool rts_show_controls = DEFAULT_SHOW_CONTROLS;
 static void reflect_show_controls(prefs_info *prf) {SET_TOGGLE(prf->toggle, in_show_controls(ss));}
-static void controls_toggle(prefs_info *prf) {in_set_show_controls(ss, GET_TOGGLE(prf->toggle));}
-static void revert_show_controls(prefs_info *prf) {in_set_show_controls(ss, rts_show_controls);}
+static void controls_toggle(prefs_info *prf) {set_show_controls(GET_TOGGLE(prf->toggle));}
+static void revert_show_controls(prefs_info *prf) {set_show_controls(rts_show_controls);}
 static void save_show_controls(prefs_info *prf, FILE *ignore) {rts_show_controls = in_show_controls(ss);}
 
 
@@ -544,8 +545,8 @@ static void save_just_sounds(prefs_info *prf, FILE *ignore) {rts_just_sounds = j
 
 static bool rts_verbose_cursor = DEFAULT_VERBOSE_CURSOR;
 static void reflect_verbose_cursor(prefs_info *prf) {SET_TOGGLE(prf->toggle, verbose_cursor(ss));}
-static void verbose_cursor_toggle(prefs_info *prf) {in_set_verbose_cursor(GET_TOGGLE(prf->toggle));}
-static void revert_verbose_cursor(prefs_info *prf) {in_set_verbose_cursor(rts_verbose_cursor);}
+static void verbose_cursor_toggle(prefs_info *prf) {set_verbose_cursor(GET_TOGGLE(prf->toggle));}
+static void revert_verbose_cursor(prefs_info *prf) {set_verbose_cursor(rts_verbose_cursor);}
 static void save_verbose_cursor(prefs_info *prf, FILE *ignore) {rts_verbose_cursor = verbose_cursor(ss);}
 
 
@@ -562,8 +563,8 @@ static void save_graphs_horizontal(prefs_info *prf, FILE *ignore) {rts_graphs_ho
 
 static bool rts_show_y_zero = DEFAULT_SHOW_Y_ZERO;
 static void reflect_show_y_zero(prefs_info *prf) {SET_TOGGLE(prf->toggle, show_y_zero(ss));}
-static void y_zero_toggle(prefs_info *prf) {in_set_show_y_zero(GET_TOGGLE(prf->toggle));}
-static void revert_show_y_zero(prefs_info *prf) {in_set_show_y_zero(rts_show_y_zero);}
+static void y_zero_toggle(prefs_info *prf) {set_show_y_zero(GET_TOGGLE(prf->toggle));}
+static void revert_show_y_zero(prefs_info *prf) {set_show_y_zero(rts_show_y_zero);}
 static void save_show_y_zero(prefs_info *prf, FILE *ignore) {rts_show_y_zero = show_y_zero(ss);}
 
 
@@ -571,8 +572,8 @@ static void save_show_y_zero(prefs_info *prf, FILE *ignore) {rts_show_y_zero = s
 
 static with_grid_t rts_show_grid = DEFAULT_SHOW_GRID;
 static void reflect_show_grid(prefs_info *prf) {SET_TOGGLE(prf->toggle, show_grid(ss) == WITH_GRID);}
-static void grid_toggle(prefs_info *prf) {in_set_show_grid(((GET_TOGGLE(prf->toggle)) ? WITH_GRID : NO_GRID));}
-static void revert_show_grid(prefs_info *prf) {in_set_show_grid(rts_show_grid);}
+static void grid_toggle(prefs_info *prf) {set_show_grid(((GET_TOGGLE(prf->toggle)) ? WITH_GRID : NO_GRID));}
+static void revert_show_grid(prefs_info *prf) {set_show_grid(rts_show_grid);}
 static void save_show_grid(prefs_info *prf, FILE *ignore) {rts_show_grid = show_grid(ss);}
 
 
@@ -580,8 +581,8 @@ static void save_show_grid(prefs_info *prf, FILE *ignore) {rts_show_grid = show_
 
 static bool rts_fft_log_magnitude = DEFAULT_FFT_LOG_MAGNITUDE;
 static void reflect_fft_log_magnitude(prefs_info *prf) {SET_TOGGLE(prf->toggle, fft_log_magnitude(ss));}
-static void log_magnitude_toggle(prefs_info *prf) {in_set_fft_log_magnitude(GET_TOGGLE(prf->toggle));}
-static void revert_fft_log_magnitude(prefs_info *prf) {in_set_fft_log_magnitude(rts_fft_log_magnitude);}
+static void log_magnitude_toggle(prefs_info *prf) {set_fft_log_magnitude(GET_TOGGLE(prf->toggle));}
+static void revert_fft_log_magnitude(prefs_info *prf) {set_fft_log_magnitude(rts_fft_log_magnitude);}
 static void save_fft_log_magnitude(prefs_info *prf, FILE *ignore) {rts_fft_log_magnitude = fft_log_magnitude(ss);}
 
 
@@ -589,8 +590,8 @@ static void save_fft_log_magnitude(prefs_info *prf, FILE *ignore) {rts_fft_log_m
 
 static bool rts_fft_log_frequency = DEFAULT_FFT_LOG_FREQUENCY;
 static void reflect_fft_log_frequency(prefs_info *prf) {SET_TOGGLE(prf->toggle, fft_log_frequency(ss));}
-static void log_frequency_toggle(prefs_info *prf) {in_set_fft_log_frequency(GET_TOGGLE(prf->toggle));}
-static void revert_fft_log_frequency(prefs_info *prf) {in_set_fft_log_frequency(rts_fft_log_frequency);}
+static void log_frequency_toggle(prefs_info *prf) {set_fft_log_frequency(GET_TOGGLE(prf->toggle));}
+static void revert_fft_log_frequency(prefs_info *prf) {set_fft_log_frequency(rts_fft_log_frequency);}
 static void save_fft_log_frequency(prefs_info *prf, FILE *ignore) {rts_fft_log_frequency = fft_log_frequency(ss);}
 
 
@@ -1572,8 +1573,8 @@ static void reflect_transform_peaks(prefs_info *prf)
 
 static void revert_transform_peaks(prefs_info *prf) 
 {
-  in_set_show_transform_peaks(rts_show_transform_peaks);
-  in_set_max_transform_peaks(rts_max_transform_peaks);
+  set_show_transform_peaks(rts_show_transform_peaks);
+  set_max_transform_peaks(rts_max_transform_peaks);
 }
 
 
@@ -1586,7 +1587,7 @@ static void save_transform_peaks(prefs_info *prf, FILE *ignore)
 
 static void transform_peaks_toggle(prefs_info *prf)
 {
-  in_set_show_transform_peaks(GET_TOGGLE(prf->toggle));
+  set_show_transform_peaks(GET_TOGGLE(prf->toggle));
 }
 
 
@@ -1603,7 +1604,7 @@ static void max_peaks_text(prefs_info *prf)
       redirect_errors_to(NULL, NULL);
 
       if (!(prf->got_error))
-	in_set_max_transform_peaks(value);
+	set_max_transform_peaks(value);
       free_TEXT(str);
     }
 }
@@ -1624,8 +1625,8 @@ static void reflect_mix_waveforms(prefs_info *prf)
 
 static void revert_mix_waveforms(prefs_info *prf) 
 {
-  in_set_show_mix_waveforms(rts_show_mix_waveforms);
-  in_set_mix_waveform_height(rts_mix_waveform_height);
+  set_show_mix_waveforms(rts_show_mix_waveforms);
+  set_mix_waveform_height(rts_mix_waveform_height);
 }
 
 
@@ -1638,7 +1639,7 @@ static void save_mix_waveforms(prefs_info *prf, FILE *ignore)
 
 static void show_mix_waveforms_toggle(prefs_info *prf)
 {
-  in_set_show_mix_waveforms(GET_TOGGLE(prf->toggle));
+  set_show_mix_waveforms(GET_TOGGLE(prf->toggle));
 }
 
 
@@ -1655,7 +1656,7 @@ static void mix_waveform_height_text(prefs_info *prf)
       redirect_errors_to(NULL, NULL);
 
       if (!(prf->got_error))
-	in_set_mix_waveform_height(value);
+	set_mix_waveform_height(value);
       free_TEXT(str);
     }
 }
@@ -1845,9 +1846,9 @@ static void reflect_fft_window_beta(prefs_info *prf)
 }
 
 
-static void revert_fft_window_beta(prefs_info *prf) {in_set_fft_window_beta(rts_fft_window_beta);}
+static void revert_fft_window_beta(prefs_info *prf) {set_fft_window_beta(rts_fft_window_beta);}
 static void save_fft_window_beta(prefs_info *prf, FILE *ignore) {rts_fft_window_beta = fft_window_beta(ss);}
-static void fft_window_beta_scale_callback(prefs_info *prf) {in_set_fft_window_beta(GET_SCALE() * prf->scale_max);}
+static void fft_window_beta_scale_callback(prefs_info *prf) {set_fft_window_beta(GET_SCALE() * prf->scale_max);}
 
 
 static void fft_window_beta_text_callback(prefs_info *prf)
@@ -1864,7 +1865,7 @@ static void fft_window_beta_text_callback(prefs_info *prf)
 
       if ((!(prf->got_error)) && (value <= prf->scale_max))
 	{
-	  in_set_fft_window_beta(value);
+	  set_fft_window_beta(value);
 	  SET_SCALE(value / prf->scale_max);
 	}
       free_TEXT(str);
@@ -1883,9 +1884,9 @@ static void reflect_grid_density(prefs_info *prf)
 }
 
 
-static void revert_grid_density(prefs_info *prf) {in_set_grid_density(rts_grid_density);}
+static void revert_grid_density(prefs_info *prf) {set_grid_density(rts_grid_density);}
 static void save_grid_density(prefs_info *prf, FILE *ignore) {rts_grid_density = grid_density(ss);}
-static void grid_density_scale_callback(prefs_info *prf) {in_set_grid_density(GET_SCALE() * prf->scale_max);}
+static void grid_density_scale_callback(prefs_info *prf) {set_grid_density(GET_SCALE() * prf->scale_max);}
 
 
 static void grid_density_text_callback(prefs_info *prf)
@@ -1902,7 +1903,7 @@ static void grid_density_text_callback(prefs_info *prf)
 
       if ((!(prf->got_error)) && (value <= prf->scale_max))
 	{
-	  in_set_grid_density(value);
+	  set_grid_density(value);
 	  SET_SCALE(value / prf->scale_max);
 	}
       free_TEXT(str);
@@ -2259,8 +2260,13 @@ finds any, it asks you whether you want to save them.",
 static bool rts_with_inset_graph = DEFAULT_WITH_INSET_GRAPH;
 static void revert_with_inset_graph(prefs_info *prf) {set_with_inset_graph(rts_with_inset_graph);}
 static void clear_with_inset_graph(prefs_info *prf) {set_with_inset_graph(DEFAULT_WITH_INSET_GRAPH);}
-static void with_inset_graph_toggle(prefs_info *prf) {set_with_inset_graph(GET_TOGGLE(prf->toggle));}
 static void reflect_with_inset_graph(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_inset_graph(ss));}
+
+static void with_inset_graph_toggle(prefs_info *prf) 
+{
+  set_with_inset_graph(GET_TOGGLE(prf->toggle));
+  for_each_chan(update_graph);
+}
 
 static void save_with_inset_graph(prefs_info *prf, FILE *fd)
 {
@@ -2284,8 +2290,13 @@ little graph, the cursor and main window are moved to that spot.",
 static bool rts_with_smpte_label = DEFAULT_WITH_SMPTE_LABEL;
 static void revert_smpte(prefs_info *prf) {set_with_smpte_label(rts_with_smpte_label);}
 static void clear_smpte(prefs_info *prf) {set_with_smpte_label(DEFAULT_WITH_SMPTE_LABEL);}
-static void smpte_toggle(prefs_info *prf) {set_with_smpte_label(GET_TOGGLE(prf->toggle));}
 static void reflect_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_smpte_label(ss));}
+
+static void smpte_toggle(prefs_info *prf) 
+{
+  set_with_smpte_label(GET_TOGGLE(prf->toggle));
+  for_each_chan(update_graph);
+}
 
 static void save_smpte(prefs_info *prf, FILE *fd)
 {
@@ -2335,7 +2346,7 @@ static int rts_cursor_size = DEFAULT_CURSOR_SIZE;
 #define MIN_CURSOR_SIZE 1
 #define MAX_CURSOR_SIZE 500
 
-static void revert_cursor_size(prefs_info *prf) {in_set_cursor_size(rts_cursor_size);}
+static void revert_cursor_size(prefs_info *prf) {set_cursor_size(rts_cursor_size);}
 static void save_cursor_size(prefs_info *prf, FILE *ignore) {rts_cursor_size = cursor_size(ss);}
 
 
@@ -2353,7 +2364,7 @@ static void cursor_size_up(prefs_info *prf)
   size = cursor_size(ss) + 1;
   if (size >= MAX_CURSOR_SIZE) SET_SENSITIVE(prf->arrow_up, false);
   if (size > MIN_CURSOR_SIZE) SET_SENSITIVE(prf->arrow_down, true);
-  in_set_cursor_size(size);
+  set_cursor_size(size);
   int_to_textfield(prf->text, cursor_size(ss));
 }
 
@@ -2364,7 +2375,7 @@ static void cursor_size_down(prefs_info *prf)
   size = cursor_size(ss) - 1;
   if (size <= MIN_CURSOR_SIZE) SET_SENSITIVE(prf->arrow_down, false);
   if (size < MAX_CURSOR_SIZE) SET_SENSITIVE(prf->arrow_up, true);
-  in_set_cursor_size(size);
+  set_cursor_size(size);
   int_to_textfield(prf->text, cursor_size(ss));
 }
 
@@ -2388,7 +2399,7 @@ static void cursor_size_from_text(prefs_info *prf)
 	  if (size >= MIN_CURSOR_SIZE)
 	    {
 	      if (size <= MAX_CURSOR_SIZE)
-		in_set_cursor_size(size);
+		set_cursor_size(size);
 	      else va_post_prefs_error("%s > %d?", prf, str, MAX_CURSOR_SIZE);
 	    }
 	  else va_post_prefs_error("%s < %d?", prf, str, MIN_CURSOR_SIZE);
@@ -2407,7 +2418,7 @@ static int rts_dot_size = DEFAULT_DOT_SIZE;
 #define MIN_DOT_SIZE 0
 #define MAX_DOT_SIZE 100
 
-static void revert_dot_size(prefs_info *prf) {in_set_dot_size(rts_dot_size);}
+static void revert_dot_size(prefs_info *prf) {set_dot_size(rts_dot_size);}
 static void save_dot_size(prefs_info *prf, FILE *ignore) {rts_dot_size = dot_size(ss);}
 
 
@@ -2425,7 +2436,7 @@ static void dot_size_up(prefs_info *prf)
   size = dot_size(ss) + 1;
   if (size >= MAX_DOT_SIZE) SET_SENSITIVE(prf->arrow_up, false);
   if (size > MIN_DOT_SIZE) SET_SENSITIVE(prf->arrow_down, true);
-  in_set_dot_size(size);
+  set_dot_size(size);
   int_to_textfield(prf->text, dot_size(ss));
 }
 
@@ -2436,7 +2447,7 @@ static void dot_size_down(prefs_info *prf)
   size = dot_size(ss) - 1;
   if (size <= MIN_DOT_SIZE) SET_SENSITIVE(prf->arrow_down, false);
   if (size < MAX_DOT_SIZE) SET_SENSITIVE(prf->arrow_up, true);
-  in_set_dot_size(size);
+  set_dot_size(size);
   int_to_textfield(prf->text, dot_size(ss));
 }
 
@@ -2460,7 +2471,7 @@ static void dot_size_from_text(prefs_info *prf)
 	  if (size >= MIN_DOT_SIZE)
 	    {
 	      if (size <= MAX_DOT_SIZE)
-		in_set_dot_size(size);
+		set_dot_size(size);
 	      else va_post_prefs_error("%s > %d?", prf, str, MAX_DOT_SIZE);
 	    }
 	  else va_post_prefs_error("%s < %d?", prf, str, MIN_DOT_SIZE);
@@ -2478,7 +2489,7 @@ static mus_long_t rts_fft_size = DEFAULT_TRANSFORM_SIZE;
 #define MAX_TRANSFORM_SIZE 1073741824
 #define MIN_TRANSFORM_SIZE 2
 
-static void revert_fft_size(prefs_info *prf) {in_set_transform_size(rts_fft_size);}
+static void revert_fft_size(prefs_info *prf) {set_transform_size(rts_fft_size);}
 static void save_fft_size(prefs_info *prf, FILE *ignore) {rts_fft_size = transform_size(ss);}
 
 
@@ -2496,7 +2507,7 @@ static void fft_size_up(prefs_info *prf)
   size = transform_size(ss) * 2;
   if (size >= MAX_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_up, false);
   if (size > MIN_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_down, true);
-  in_set_transform_size(size);
+  set_transform_size(size);
   mus_long_t_to_textfield(prf->text, transform_size(ss));
 }
 
@@ -2507,7 +2518,7 @@ static void fft_size_down(prefs_info *prf)
   size = transform_size(ss) / 2;
   if (size <= MIN_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_down, false);
   if (size < MAX_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_up, true);
-  in_set_transform_size(size);
+  set_transform_size(size);
   mus_long_t_to_textfield(prf->text, transform_size(ss));
 }
 
@@ -2531,7 +2542,7 @@ static void fft_size_from_text(prefs_info *prf)
 	  if (POWER_OF_2_P(size))
 	    {
 	      if (size <= MAX_TRANSFORM_SIZE)
-		in_set_transform_size(size);
+		set_transform_size(size);
 	      else va_post_prefs_error("%s > %d?", prf, str, MAX_TRANSFORM_SIZE);
 	    }
 	  else post_prefs_error("size must be a power of 2", prf);
@@ -2619,14 +2630,14 @@ static const char *channel_styles[NUM_CHANNEL_STYLES] = {"separate ", "combined 
 
 
 static void reflect_channel_style(prefs_info *prf) {set_radio_button(prf, (int)channel_style(ss));}
-static void revert_channel_style(prefs_info *prf) {in_set_channel_style(rts_channel_style);}
+static void revert_channel_style(prefs_info *prf) {set_channel_style(rts_channel_style);}
 static void save_channel_style(prefs_info *prf, FILE *ignore) {rts_channel_style = channel_style(ss);}
 
 
 static void channel_style_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->radio_button))
-    in_set_channel_style((channel_style_t)which_radio_button(prf));
+    set_channel_style((channel_style_t)which_radio_button(prf));
 }
 
 
@@ -2639,14 +2650,14 @@ static const char *cursor_styles[NUM_CURSOR_STYLES] = {"cross ", "line"};
 
 
 static void reflect_cursor_style(prefs_info *prf) {set_radio_button(prf, (int)cursor_style(ss));}
-static void revert_cursor_style(prefs_info *prf) {in_set_cursor_style(rts_cursor_style);}
+static void revert_cursor_style(prefs_info *prf) {set_cursor_style(rts_cursor_style);}
 static void save_cursor_style(prefs_info *prf, FILE *ignore) {rts_cursor_style = cursor_style(ss);}
 
 
 static void cursor_style_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->radio_button))
-    in_set_cursor_style((cursor_style_t)which_radio_button(prf));
+    set_cursor_style((cursor_style_t)which_radio_button(prf));
 }
 
 
@@ -2676,14 +2687,14 @@ static const char *transform_graph_types[NUM_TRANSFORM_GRAPH_TYPES] = {"normal "
 
 
 static void reflect_transform_graph_type(prefs_info *prf) {set_radio_button(prf, (int)transform_graph_type(ss));}
-static void revert_transform_graph_type(prefs_info *prf) {in_set_transform_graph_type(rts_transform_graph_type);}
+static void revert_transform_graph_type(prefs_info *prf) {set_transform_graph_type(rts_transform_graph_type);}
 static void save_transform_graph_type(prefs_info *prf, FILE *ignore) {rts_transform_graph_type = transform_graph_type(ss);}
 
 
 static void transform_graph_type_choice(prefs_info *prf) 
 {
   if (GET_TOGGLE(prf->radio_button))
-    in_set_transform_graph_type((graph_type_t)which_radio_button(prf));
+    set_transform_graph_type((graph_type_t)which_radio_button(prf));
 }
 
 
@@ -2695,14 +2706,14 @@ static const char *transform_normalizations[NUM_TRANSFORM_NORMALIZATIONS] = {"no
 
 
 static void reflect_transform_normalization(prefs_info *prf) {set_radio_button(prf, (int)transform_normalization(ss));}
-static void revert_transform_normalization(prefs_info *prf) {in_set_transform_normalization(rts_transform_normalization);}
+static void revert_transform_normalization(prefs_info *prf) {set_transform_normalization(rts_transform_normalization);}
 static void save_transform_normalization(prefs_info *prf, FILE *ignore) {rts_transform_normalization = transform_normalization(ss);}
 
 
 static void transform_normalization_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->radio_button))
-    in_set_transform_normalization((fft_normalize_t)which_radio_button(prf));
+    set_transform_normalization((fft_normalize_t)which_radio_button(prf));
 }
 
 
@@ -2714,14 +2725,14 @@ static const char *graph_styles[NUM_GRAPH_STYLES] = {"line ", "dot ", "filled ",
 
 
 static void reflect_graph_style(prefs_info *prf) {set_radio_button(prf, (int)graph_style(ss));}
-static void revert_graph_style(prefs_info *prf) {in_set_graph_style(rts_graph_style);}
+static void revert_graph_style(prefs_info *prf) {set_graph_style(rts_graph_style);}
 static void save_graph_style(prefs_info *prf, FILE *ignore) {rts_graph_style = graph_style(ss);}
 
 
 static void graph_style_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->radio_button))
-    in_set_graph_style((graph_style_t)which_radio_button(prf));
+    set_graph_style((graph_style_t)which_radio_button(prf));
 }
 
 
@@ -3471,7 +3482,7 @@ static void save_clm_sizes(prefs_info *prf, FILE *ignore)
 
 /* ---------------- context sensitive popup ---------------- */
 
-static bool include_context_sensitive_popup = false;
+static bool include_context_sensitive_popup = DEFAULT_WITH_POPUP_MENUS;
 
 static void help_context_sensitive_popup(prefs_info *prf)
 {
@@ -3523,7 +3534,7 @@ static void context_sensitive_popup_toggle(prefs_info *prf)
 
 static void reflect_context_sensitive_popup(prefs_info *prf) {}
 static void revert_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_context_sensitive_popup);}
-static void clear_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+static void clear_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, DEFAULT_WITH_POPUP_MENUS);}
 
 
 
@@ -3700,8 +3711,8 @@ static show_axes_t rts_show_axes = DEFAULT_SHOW_AXES;
 static const char *show_axes_choices[NUM_SHOW_AXES] = {"none", "X and Y", "just X", "X and Y unlabelled", "just X unlabelled", "bare X"};
 
 static void reflect_show_axes(prefs_info *prf) {SET_TEXT(prf->text, (char *)show_axes_choices[(int)show_axes(ss)]);}
-static void revert_show_axes(prefs_info *prf) {in_set_show_axes(rts_show_axes);}
-static void clear_show_axes(prefs_info *prf) {in_set_show_axes(DEFAULT_SHOW_AXES);}
+static void revert_show_axes(prefs_info *prf) {set_show_axes(rts_show_axes);}
+static void clear_show_axes(prefs_info *prf) {set_show_axes(DEFAULT_SHOW_AXES);}
 static void save_show_axes(prefs_info *prf, FILE *ignore) {rts_show_axes = show_axes(ss);}
 
 
@@ -3712,7 +3723,7 @@ static void show_axes_from_menu(prefs_info *prf, char *value)
   for (i = 0; i < NUM_SHOW_AXES; i++)
     if (mus_strcmp(value, show_axes_choices[i]))
       {
-	in_set_show_axes((show_axes_t)i);
+	set_show_axes((show_axes_t)i);
 	SET_TEXT(prf->text, value);
 	return;
       }
@@ -3740,7 +3751,7 @@ static void show_axes_from_text(prefs_info *prf)
 		break;
 	      }
 	  if (curpos >= 0)
-	    in_set_show_axes((show_axes_t)curpos);
+	    set_show_axes((show_axes_t)curpos);
 	  else post_prefs_error("unknown axis choice", prf);
 	}
       else post_prefs_error("need an axis choice", prf);
@@ -3758,8 +3769,8 @@ static x_axis_style_t rts_x_axis_style = DEFAULT_X_AXIS_STYLE;
 static const char *x_axis_styles[NUM_X_AXIS_STYLES] = {"seconds", "samples", "% of total", "beats", "measures", "clock"};
 
 static void reflect_x_axis_style(prefs_info *prf) {SET_TEXT(prf->text, (char *)x_axis_styles[(int)x_axis_style(ss)]);}
-static void revert_x_axis_style(prefs_info *prf) {in_set_x_axis_style(rts_x_axis_style);}
-static void clear_x_axis_style(prefs_info *prf) {in_set_x_axis_style(DEFAULT_X_AXIS_STYLE);}
+static void revert_x_axis_style(prefs_info *prf) {set_x_axis_style(rts_x_axis_style);}
+static void clear_x_axis_style(prefs_info *prf) {set_x_axis_style(DEFAULT_X_AXIS_STYLE);}
 static void save_x_axis_style(prefs_info *prf, FILE *ignore) {rts_x_axis_style = x_axis_style(ss);}
 
 
@@ -3770,7 +3781,7 @@ static void x_axis_style_from_menu(prefs_info *prf, char *value)
   for (i = 0; i < NUM_X_AXIS_STYLES; i++)
     if (mus_strcmp(value, x_axis_styles[i]))
       {
-	in_set_x_axis_style((x_axis_style_t)i);
+	set_x_axis_style((x_axis_style_t)i);
 	SET_TEXT(prf->text, value);
 	return;
       }
@@ -3798,7 +3809,7 @@ static void x_axis_style_from_text(prefs_info *prf)
 		break;
 	      }
 	  if (curpos >= 0)
-	    in_set_x_axis_style((x_axis_style_t)curpos);
+	    set_x_axis_style((x_axis_style_t)curpos);
 	  else post_prefs_error("unknown axis style", prf);
 	}
       else post_prefs_error("need an axis style", prf);
@@ -3824,8 +3835,8 @@ static void reflect_transform_type(prefs_info *prf)
 }
 
 
-static void revert_transform_type(prefs_info *prf) {in_set_transform_type(rts_transform_type);}
-static void clear_transform_type(prefs_info *prf) {in_set_transform_type(DEFAULT_TRANSFORM_TYPE);}
+static void revert_transform_type(prefs_info *prf) {set_transform_type(rts_transform_type);}
+static void clear_transform_type(prefs_info *prf) {set_transform_type(DEFAULT_TRANSFORM_TYPE);}
 static void save_transform_type(prefs_info *prf, FILE *ignore) {rts_transform_type = transform_type(ss);}
 
 
@@ -3850,7 +3861,7 @@ static void transform_type_from_menu(prefs_info *prf, char *value)
   for (i = 0; i < NUM_BUILTIN_TRANSFORM_TYPES; i++)
     if (mus_strcmp(value, transform_types[i]))
       {
-	in_set_transform_type(i);
+	set_transform_type(i);
 	SET_TEXT(prf->text, value);
 	return;
       }
@@ -3878,7 +3889,7 @@ static void transform_type_from_text(prefs_info *prf)
 		break;
 	      }
 	  if (curpos >= 0)
-	    in_set_transform_type(curpos);
+	    set_transform_type(curpos);
 	  else post_prefs_error("unknown tranform", prf);
 	}
       else post_prefs_error("no transform?", prf);
@@ -3894,8 +3905,8 @@ static void transform_type_from_text(prefs_info *prf)
 static mus_fft_window_t rts_fft_window = DEFAULT_FFT_WINDOW;
 
 static void reflect_fft_window(prefs_info *prf) {SET_TEXT(prf->text, (char *)mus_fft_window_name(fft_window(ss)));}
-static void revert_fft_window(prefs_info *prf) {in_set_fft_window(rts_fft_window);}
-static void clear_fft_window(prefs_info *prf) {in_set_fft_window(DEFAULT_FFT_WINDOW);}
+static void revert_fft_window(prefs_info *prf) {set_fft_window(rts_fft_window);}
+static void clear_fft_window(prefs_info *prf) {set_fft_window(DEFAULT_FFT_WINDOW);}
 static void save_fft_window(prefs_info *prf, FILE *ignore) {rts_fft_window = fft_window(ss);}
 
 static list_completer_info *fft_window_completer_info = NULL;
@@ -3922,7 +3933,7 @@ static void fft_window_from_menu(prefs_info *prf, char *value)
   for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++)
     if (mus_strcmp(value, mus_fft_window_name((mus_fft_window_t)i)))
       {
-	in_set_fft_window((mus_fft_window_t)i);
+	set_fft_window((mus_fft_window_t)i);
 	SET_TEXT(prf->text, value);
 	return;
       }
@@ -3950,7 +3961,7 @@ static void fft_window_from_text(prefs_info *prf)
 		break;
 	      }
 	  if (curpos >= 0)
-	    in_set_fft_window((mus_fft_window_t)curpos);
+	    set_fft_window((mus_fft_window_t)curpos);
 	  else post_prefs_error("unknown window", prf);
 	}
       else post_prefs_error("no window?", prf);
@@ -3987,14 +3998,14 @@ static char *colormap_completer(widget_t w, const char *text, void *data)
 
 
 static void reflect_colormap(prefs_info *prf) {SET_TEXT(prf->text, colormap_name(color_map(ss)));}
-static void clear_colormap(prefs_info *prf) {in_set_color_map(DEFAULT_COLOR_MAP);}
+static void clear_colormap(prefs_info *prf) {set_color_map(DEFAULT_COLOR_MAP);}
 static void save_colormap(prefs_info *prf, FILE *ignore) {rts_colormap = color_map(ss);}
 
 
 static void revert_colormap(prefs_info *prf) 
 {
   if (!(is_colormap(rts_colormap))) rts_colormap = DEFAULT_COLOR_MAP;
-  in_set_color_map(rts_colormap);
+  set_color_map(rts_colormap);
 }
 
 
@@ -4020,7 +4031,7 @@ static void colormap_from_text(prefs_info *prf)
 		break;
 	      }
 	  if (is_colormap(curpos))
-	    in_set_color_map(curpos);
+	    set_color_map(curpos);
 	  else post_prefs_error("unknown colormap", prf);
 	}
       else post_prefs_error("no colormap?", prf);
@@ -4038,7 +4049,7 @@ static void colormap_from_menu(prefs_info *prf, char *value)
   for (i = 0; i < len; i++)
     if (mus_strcmp(value, colormap_name(i)))
       {
-	in_set_color_map(i);
+	set_color_map(i);
 	SET_TEXT(prf->text, value);
 	return;
       }
@@ -4282,9 +4293,8 @@ static void load_path_text(prefs_info *prf)
 
 /* ---------------- initial bounds ---------------- */
 
-static mus_float_t rts_initial_beg = 0.0, rts_initial_dur = 0.1;
-static bool rts_full_duration = false;
-static bool include_duration = false;
+static mus_float_t rts_initial_beg = DEFAULT_INITIAL_BEG, rts_initial_dur = DEFAULT_INITIAL_DUR;
+static bool rts_full_duration = DEFAULT_SHOW_FULL_DURATION;
 
 static void help_initial_bounds(prefs_info *prf)
 {
@@ -4303,40 +4313,7 @@ static char *initial_bounds_to_string(void)
 
 static void save_initial_bounds(prefs_info *prf, FILE *fd)
 {
-  char *str;
   rts_full_duration = GET_TOGGLE(prf->toggle);
-  str = GET_TEXT(prf->text);
-  if (str)
-    {
-      float a = 0.0, b = 0.0;
-      sscanf(str, "%f : %f", &a, &b);  /* these can be doubles -- need conversion to fit all cases */
-      rts_initial_beg = (mus_float_t)a;
-      rts_initial_dur = (mus_float_t)b;
-      free_TEXT(str);
-    }
-  else
-    {
-      rts_initial_beg = 0.0;
-      rts_initial_dur = 0.1;
-    }
-  if (include_duration)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(set! (initial-beg) %.2f)\n(set! (initial-dur) %.2f)\n(set! (show-full-duration) %s)\n", 
-	      rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "#t" : "#f");
-#endif
-
-#if HAVE_RUBY
-      fprintf(fd, "set_initial_beg(%.2f)\nset_initial_dur(%.2f)\nset_show_full_duration(%s)\n", 
-	      rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "true" : "false");
-
-#endif
-
-#if HAVE_FORTH
-      fprintf(fd, "%.2f set-initial-beg\n%.2f set-initial-dur\n%s set-show-full-duration\n", 
-	      rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "true" : "false");
-#endif
-    }
 }
 
 
@@ -4369,7 +4346,6 @@ static void clear_initial_bounds(prefs_info *prf)
 
 static void initial_bounds_toggle(prefs_info *prf)
 {
-  include_duration = true;
   set_show_full_duration(GET_TOGGLE(prf->toggle));
 }
 
@@ -4378,7 +4354,6 @@ static void initial_bounds_text(prefs_info *prf)
 {
   float beg = 0.0, dur = 0.1;
   char *str;
-  include_duration = true;
 
   str = GET_TEXT(prf->text);
   sscanf(str, "%f : %f", &beg, &dur);

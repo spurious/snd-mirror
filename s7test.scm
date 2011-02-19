@@ -2662,7 +2662,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (recompose 12 (lambda (a) (string-append a "x")) "a") "axxxxxxxxxxxx")
 (test (recompose 12 (lambda (a) (string-append "x" a)) "a") "xxxxxxxxxxxxa")
 
+(test (length (string-append "\\?" "hi")) 4)
 (test (string-append "hi" 1) 'error)
+(test (eval-string "(string-append \"\\?\")") 'error) ; guile mailing list
+(test (eval-string "(string-append \"\\?\" \"hi\")") 'error) ; guile mailing list
 (for-each
  (lambda (arg)
    (test (string-append "hiho" arg) 'error)

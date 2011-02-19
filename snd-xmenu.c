@@ -308,14 +308,7 @@ static void view_inset_callback(Widget w, XtPointer info, XtPointer context)
 }
 #endif
 
-static void view_controls_callback(Widget w, XtPointer info, XtPointer context)
-{
-  in_set_show_controls(ss, !in_show_controls(ss));
-  if (in_show_controls(ss))
-    show_all_controls();
-  else hide_all_controls(); 
-}
-
+static void view_controls_callback(Widget w, XtPointer info, XtPointer context) {set_show_controls(!in_show_controls(ss));}
 static void view_region_callback_1(Widget w, XtPointer info, XtPointer context) {view_region_callback(w, info, context);}
 static void view_color_orientation_callback_1(Widget w, XtPointer info, XtPointer context) {view_color_orientation_callback(w, info, context);}
 
@@ -968,8 +961,8 @@ static void popup_info_callback(Widget w, XtPointer info, XtPointer context)
   if (sp) display_info(sp);
 }
 
-static void popup_apply_callback(Widget w, XtPointer info, XtPointer context) {menu_apply_controls(any_selected_sound());}
-static void popup_reset_callback(Widget w, XtPointer info, XtPointer context) {menu_reset_controls(any_selected_sound());}
+static void popup_close_callback(Widget w, XtPointer info, XtPointer context) {snd_close_file(any_selected_sound());}
+static void popup_revert_callback(Widget w, XtPointer info, XtPointer context) {revert_file_from_menu();}
 
 void post_popup(XButtonPressedEvent *event)
 {
@@ -1018,17 +1011,17 @@ void create_popup_menu(void)
       XtAddCallback(popup_save_menu, XmNactivateCallback, popup_save_callback, NULL);
       XtVaSetValues(popup_save_menu, XmNsensitive, false, NULL);
 
+      popup_revert_menu = XtCreateManagedWidget(_("Revert"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_revert_menu, XmNsensitive, true, NULL);
+      XtAddCallback(popup_revert_menu, XmNactivateCallback, popup_revert_callback, NULL);
+
       popup_info_menu = XtCreateManagedWidget(_("Info"), xmPushButtonWidgetClass, popup_menu, args, n);
       XtVaSetValues(popup_info_menu, XmNsensitive, false, NULL);
       XtAddCallback(popup_info_menu, XmNactivateCallback, popup_info_callback, NULL);
 
-      popup_apply_menu = XtCreateManagedWidget(_("Apply controls"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_apply_menu, XmNsensitive, true, NULL);
-      XtAddCallback(popup_apply_menu, XmNactivateCallback, popup_apply_callback, NULL);
-
-      popup_reset_menu = XtCreateManagedWidget(_("Reset controls"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_reset_menu, XmNsensitive, true, NULL);
-      XtAddCallback(popup_reset_menu, XmNactivateCallback, popup_reset_callback, NULL);
+      popup_close_menu = XtCreateManagedWidget(_("Close"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_close_menu, XmNsensitive, true, NULL);
+      XtAddCallback(popup_close_menu, XmNactivateCallback, popup_close_callback, NULL);
 
       XtAddCallback(popup_menu, XmNmapCallback, popup_menu_update_1, NULL);
     }
