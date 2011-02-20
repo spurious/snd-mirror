@@ -5710,11 +5710,21 @@ If " PROC_FALSE ", any existing file of the same name will be overwritten withou
 
 static XEN g_with_toolbar(void) {return(C_TO_XEN_BOOLEAN(with_toolbar(ss)));}
 
+void set_with_toolbar_and_display(bool val)
+{
+  set_with_toolbar(val);
+#if USE_GTK
+  if (with_toolbar(ss))
+    show_toolbar();
+  else hide_toolbar();
+#endif
+}
+
 static XEN g_set_with_toolbar(XEN val) 
 {
   #define H_with_toolbar "(" S_with_toolbar "): " PROC_TRUE " if you want a toolbar"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_toolbar, "a boolean");
-  set_with_toolbar(XEN_TO_C_BOOLEAN(val)); 
+  set_with_toolbar_and_display(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(with_toolbar(ss)));
 }
 

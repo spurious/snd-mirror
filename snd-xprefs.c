@@ -2050,7 +2050,6 @@ widget_t start_preferences_dialog(void)
 			      dpy_box, file_label,
 			      load_path_text);
     remember_pref(prf, reflect_load_path, NULL, help_load_path, clear_load_path, revert_load_path);
-    if (rts_load_path == NULL) red_text(prf);
     load_path_text_widget = prf->text;
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2180,43 +2179,33 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
 
-#if 0
   /* ---------------- extra menus ---------------- */
 
-#if HAVE_STATIC_XM
     cursor_label = make_inner_label("  extra menus", dpy_box, current_sep);
-#else
-    cursor_label = make_inner_label("  extra menus (these will need the xm module)", dpy_box, current_sep);
-#endif
-
-    prf = prefs_row_with_toggle("context-sensitive popup menu", "add-selection-popup",
-				(include_context_sensitive_popup = find_context_sensitive_popup()),
+    rts_with_popup_menus = with_popup_menus(ss);
+    prf = prefs_row_with_toggle("context-sensitive popup menus", S_with_popup_menus,
+				rts_with_popup_menus,
 				dpy_box, cursor_label, 
-				context_sensitive_popup_toggle);
-    remember_pref(prf, reflect_context_sensitive_popup, save_context_sensitive_popup, help_context_sensitive_popup, 
-		  clear_context_sensitive_popup, revert_context_sensitive_popup);
+				toggle_with_popup_menus);
+    remember_pref(prf, reflect_with_popup_menus, save_with_popup_menus, help_with_popup_menus, clear_with_popup_menus, revert_with_popup_menus);
 
+#if 0
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("effects menu", 
-#if HAVE_SCHEME
-				"new-effects.scm",
-#else
-				"effects." XEN_FILE_EXTENSION,
-#endif
+    prf = prefs_row_with_toggle("effects menu", "with-effects-menu",
 				(include_effects_menu = find_effects_menu()),
 				dpy_box, current_sep, 
 				effects_menu_toggle);
     remember_pref(prf, reflect_effects_menu, save_effects_menu, help_effects_menu, clear_effects_menu, revert_effects_menu);
+#endif
 
-#if HAVE_SCHEME
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("a toolbar", "toolbar.scm",
-				(include_icon_box = find_icon_box()),
+    rts_with_toolbar = with_toolbar(ss);
+    prf = prefs_row_with_toggle("a toolbar", S_with_toolbar,
+				rts_with_toolbar, 
 				dpy_box, current_sep, 
-				icon_box_toggle);
-    remember_pref(prf, reflect_icon_box, save_icon_box, help_icon_box, clear_icon_box, revert_icon_box);
-#endif
-#endif
+				toggle_with_toolbar);
+    remember_pref(prf, reflect_with_toolbar, save_with_toolbar, help_with_toolbar, clear_with_toolbar, revert_with_toolbar);
+
 
     /* ---------------- additional key bindings ---------------- */
 

@@ -279,6 +279,7 @@ but not anymore.
   (hook-remove effects-hook func))
 
 
+#|
 ;;; -------- reopen menu
 
 (define including-reopen-menu #f)
@@ -517,6 +518,7 @@ Reverb-feedback sets the scaler on the feedback.
 			     (gtk_widget_show hidden-controls-dialog)))
 	      )))
       ))
+|#
 
 ;;; --------------------------------------------------------------------------------
 
@@ -524,10 +526,10 @@ Reverb-feedback sets the scaler on the feedback.
 
 
 
+#|
 ;;; --------------------------------------------------------------------------------
 ;;; this is now built-in
 
-#|
 (define remembering-sound-state 0) ; for prefs
 (define remember-sound-filename ".snd-remember-sound") ; should this be in the home directory?
 

@@ -1446,7 +1446,7 @@ char *view_files_find_any_directory(void);
 int view_files_dialog_list_length(void);
 char **view_files_dialog_titles(void);
 void view_files_start_dialog_with_title(const char *title);
-
+void set_with_toolbar_and_display(bool val);
 void g_init_file(void);
 void initialize_format_lists(void);
 

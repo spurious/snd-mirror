@@ -1,8 +1,9 @@
 /* this file included as text in snd-g|xprefs.c */
 
-/* TODO: effects menu, toolbar -- with_toolbar, with_popup_menus,
+/* TODO: effects menu, toolbar -- with_toolbar, with_popup_menus, possibly with-effects-menu
  * TODO: doc/test with-toolbar/with-smpte-label/with-popup-menus/remember-sound-state
  * TODO: check that changed stuff is saved correctly
+ * TODO: finish gtk toolbar, write motif side
  */
 
 
@@ -256,8 +257,7 @@ static void save_prefs(void)
   FILE *fd;
 
   /* save_options_in_prefs passes us the filename after calling save_options which handles all
-   *   the simple cases.  The rest of the special "save" functions called here are for cases
-   *   where we are calling extension code, so we have to make sure the necessary files are loaded.
+   *   the simple cases.  
    */
   
   filename = save_options_in_prefs();
@@ -280,11 +280,8 @@ static void save_prefs(void)
        * load_path_to_string_array can turn the LOAD_PATH into a char** array.
        *
        * load-path needs to be set even if a later init file adds to it; we need a true
-       *   load-path before loading extensions.scm, but this can be called
-       *   repeatedly, and across executions, so we don't want to fill up the list
-       *   with repetitions,
-       *
-       * find_sources below is being used to get the current load-path entry that points to extensions.*
+       *   load-path, but this can be called repeatedly, and across executions, so we 
+       *   don't want to fill up the list with repetitions
        */
 
       current_dirs = load_path_to_string_array(&current_dirs_len);
@@ -3160,164 +3157,41 @@ static void raw_data_format_from_menu(prefs_info *prf, char *value)
 #endif
 
 
+/* ---------------- with-popup-menus ---------------- */
 
-#if 0
-/* ---------------- context sensitive popup ---------------- */
+static bool rts_with_popup_menus = DEFAULT_WITH_POPUP_MENUS;
 
-
-static bool include_context_sensitive_popup = DEFAULT_WITH_POPUP_MENUS;
-
-static void help_context_sensitive_popup(prefs_info *prf)
+static void help_with_popup_menus(prefs_info *prf)
 {
   snd_help(prf->var_name,
-	   "This option creates a context-sensitive popup menu (activated by button 3).  The menu \
-displayed depends on where the mouse is at the time; there are special menus for the waveform and fft \
-portions of the graphs, the listener, the edit history pane, and the current selection.",
+	   "",
 	   WITH_WORD_WRAP);
 }
 
-
-static bool find_context_sensitive_popup(void) 
-{
-  return(XEN_DEFINED_P("edhist-help-edits"));
-}
-
-
-static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
-{
-  include_context_sensitive_popup = GET_TOGGLE(prf->toggle);
-  if (include_context_sensitive_popup)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-popup.scm))\n        (load \"popup.scm\"))\n    (if (not (provided? 'snd-gtk-popup.scm))\n	(load \"gtk-popup.scm\")))\n");
-#endif
-
-#if HAVE_RUBY
-      fprintf(fd, "require \"popup\"\n");
-#endif
-
-#if HAVE_FORTH
-      fprintf(fd, "require popup\n");
-#endif
-    }
-}
-
-
-static void context_sensitive_popup_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(find_context_sensitive_popup())))
-#if USE_MOTIF
-    load_file_with_path_and_extension("popup");
-#else
-    load_file_with_path_and_extension("gtk-popup");
-#endif
-}
-
-
-static void reflect_context_sensitive_popup(prefs_info *prf) {}
-static void revert_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_context_sensitive_popup);}
-static void clear_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, DEFAULT_WITH_POPUP_MENUS);}
+static void revert_with_popup_menus(prefs_info *prf) {set_with_popup_menus(rts_with_popup_menus);}
+static void clear_with_popup_menus(prefs_info *prf) {set_with_popup_menus(DEFAULT_WITH_POPUP_MENUS);}
+static void reflect_with_popup_menus(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_popup_menus(ss));}
+static void save_with_popup_menus(prefs_info *prf, FILE *fd) {rts_with_popup_menus = with_popup_menus(ss);}
+static void toggle_with_popup_menus(prefs_info *prf) {set_with_popup_menus(GET_TOGGLE(prf->toggle));}
 
 
 
-/* ---------------- effects menu ---------------- */
+/* ---------------- with-toolbar ---------------- */
 
-static bool include_effects_menu = false;
+static bool rts_with_toolbar = DEFAULT_WITH_TOOLBAR;
 
-static void help_effects_menu(prefs_info *prf)
+static void help_with_toolbar(prefs_info *prf)
 {
   snd_help(prf->var_name,
-	   "This option creates a top-level menu named 'Effects'.  The effects include such things as \
-reverberation, reversal, normalizations, gains and envelopes, inversion, echos, flanging, companding, \
-filtering, padding, cross synthesis, and so on.",
+	   "",
 	   WITH_WORD_WRAP);
 }
 
-
-static bool find_effects_menu(void) 
-{
-  return(XEN_DEFINED_P("effects-menu"));
-}
-
-
-static void save_effects_menu(prefs_info *prf, FILE *fd)
-{
-  include_effects_menu = GET_TOGGLE(prf->toggle);
-  if (include_effects_menu)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-new-effects.scm))\n        (load \"new-effects.scm\"))\n    (if (not (provided? 'snd-gtk-effects.scm))\n	(load \"gtk-effects.scm\")))\n");
-#endif
-
-#if HAVE_RUBY
-      fprintf(fd, "require \"effects\"\n");
-#endif
-
-#if HAVE_FORTH
-      fprintf(fd, "require effects\n");
-#endif
-    }
-}
-
-
-static void effects_menu_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(find_effects_menu())))
-#if USE_MOTIF
-    load_file_with_path_and_extension("new-effects");
-#else
-    load_file_with_path_and_extension("gtk-effects");
-#endif
-}
-
-
-static void reflect_effects_menu(prefs_info *prf) {}
-static void revert_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_effects_menu);}
-static void clear_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
-
-
-#if HAVE_SCHEME
-/* ---------------- icon box ---------------- */
-
-static bool include_icon_box = false;
-
-static void help_icon_box(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "This option adds a top-level box full of various handy icons.  Not implemented in Gtk yet.",
-	   WITH_WORD_WRAP);
-}
-
-
-static bool find_icon_box(void) 
-{
-  return(XEN_DEFINED_P("add-useful-icons"));
-}
-
-
-static void save_icon_box(prefs_info *prf, FILE *fd)
-{
-  include_icon_box = GET_TOGGLE(prf->toggle);
-  if (include_icon_box)
-    fprintf(fd, "(if (not (provided? 'snd-toolbar.scm)) (load \"toolbar.scm\"))\n");
-}
-
-
-static void icon_box_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(find_icon_box())))
-    load_file_with_path_and_extension("toolbar");
-}
-
-
-static void reflect_icon_box(prefs_info *prf) {}
-static void revert_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_icon_box);}
-static void clear_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
-#endif
-#endif
+static void revert_with_toolbar(prefs_info *prf) {set_with_toolbar_and_display(rts_with_toolbar);}
+static void clear_with_toolbar(prefs_info *prf) {set_with_toolbar_and_display(DEFAULT_WITH_TOOLBAR);}
+static void reflect_with_toolbar(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_toolbar(ss));}
+static void save_with_toolbar(prefs_info *prf, FILE *fd) {rts_with_toolbar = with_toolbar(ss);}
+static void toggle_with_toolbar(prefs_info *prf) {set_with_toolbar_and_display(GET_TOGGLE(prf->toggle));}
 
 
 
@@ -3799,7 +3673,7 @@ find elsewhere.  The current load path list is: \n\n%s\n",
 }
 
 
-static char *find_sources(void) /* returns full filename if found else null */
+static char *find_sources(void) /* returns directory name where it finds extensions.* */
 {
   char *file = NULL;
   #define BASE_FILE "extensions." XEN_FILE_EXTENSION
@@ -3826,7 +3700,6 @@ static char *find_sources(void) /* returns full filename if found else null */
 	      file = fname;
 	      break;
 	    }
-	  free(fname);
 	}
     }
 #endif
@@ -3861,7 +3734,6 @@ static char *find_sources(void) /* returns full filename if found else null */
 	      file = fname;
 	      break;
 	    }
-	  free(fname);
 	}
     }
 #endif

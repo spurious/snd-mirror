@@ -7,47 +7,6 @@
 	  (load "snd-motif.scm"))))
 
 
-(define (back-or-forth-mix count snd chn)
-  "(back-or-forth-mix count snd chn) moves the cursor 'count' mixes"
-  (if (not (= count 0))
-      (let ((mx (mixes snd chn)))
-	(if (not (null? mx))
-	    (let ((len (length mx)))
-	      (if (= len 1)
-		  (begin
-		    (set! (cursor snd chn) (mix-position (car mx)))
-		    (car mx))
-		  (let ((sorted-mx (sort! mx (lambda (a b) (< (mix-position a) (mix-position b)))))
-			(pos (cursor snd chn))
-			(curpos (if (> count 0) -1 0)))
-		    (if (>= pos (mix-position (car sorted-mx)))
-			(call-with-exit
-			 (lambda (break)
-			   (for-each
-			    (lambda (m)
-			      (if (or (and (> count 0)
-					   (< pos (mix-position m)))
-				      (and (< count 0)
-					   (<= pos (mix-position m))))
-				  (break)
-				  (set! curpos (+ 1 curpos))))
-			    sorted-mx))))
-		    (set! curpos (modulo (+ curpos count) len))
-		    (set! (cursor snd chn) (mix-position (list-ref sorted-mx curpos)))
-		    (list-ref sorted-mx curpos))))
-	    #f))
-      #f))
-		
-(define* (forward-mix (count 1) snd chn)
-  "(forward-mix (count 1) snd chn) moves the cursor forward 'count' mixes in the given channel"
-  (back-or-forth-mix count (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
-
-(define* (backward-mix (count 1) snd chn)
-  "(backward-mix (count 1) snd chn) moves the cursor backward 'count' mixes in the given channel"
-  (back-or-forth-mix (- count) (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
-
-
-
 (if (provided? 'snd-motif)
     (let* ((toolscroll (add-main-pane "toolscroll" xmScrolledWindowWidgetClass
 				      (list XmNscrollingPolicy XmAUTOMATIC
@@ -865,70 +824,6 @@
 				   "                                "
 				   "................................"))
 	    
-	    (icon-next-mix-point (list
-				  "32 25 4 1"
-				  "       c lightblue"
-				  "x      c white"
-				  ".      c black"
-				  "X      c black"
-				  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-				  "                                "
-				  "                   XX     XX    "
-				  "                   X X   X X    "
-				  "                   X  X X  X    "
-				  "       .           X   X   X    "
-				  "       ..          X       X    "
-				  "       ...         X       X    "
-				  "       ....        X       X    "
-				  "       .....          XXX       "
-				  "       .......         X        "
-				  "       .........       X        "
-				  "       .......         X        "
-				  "       .....           X        "
-				  "       ....            X        "
-				  "       ...            XXX       "
-				  "       ..          XX     XX    "
-				  "       .             X   X      "
-				  "                      X X       "
-				  "                       X        "
-				  "                      X X       "
-				  "                     X   X      "
-				  "                   XX     XX    "
-				  "                                "
-				  "................................"))
-	    
-	    (icon-last-mix-point (list
-				  "32 25 4 1"
-				  "       c lightblue"
-				  "x      c white"
-				  ".      c black"
-				  "X      c black"
-				  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-				  "                                "
-				  "     XX     XX                  "
-				  "     X X   X X                  "
-				  "     X  X X  X                  "
-				  "     X   X   X           .      "
-				  "     X       X          ..      "
-				  "     X       X         ...      "
-				  "     X       X        ....      "
-				  "        XXX          .....      "
-				  "         X         .......      "
-				  "         X       .........      "
-				  "         X         .......      "
-				  "         X           .....      "
-				  "         X            ....      "
-				  "        XXX            ...      "
-				  "     XX     XX          ..      "
-				  "       X   X             .      "
-				  "        X X                     "
-				  "         X                      "
-				  "        X X                     "
-				  "       X   X                    "
-				  "     XX     XX                  "
-				  "                                "
-				  "................................"))
-	    
 	    (icon-mixer (list
 			 "32 25 5 1"
 			 "       c white"
@@ -1240,16 +1135,6 @@
 		      (set! (cursor) (- (frames) 1))))
 		"Move to end of file")
 	  
-	  (list icon-last-mix-point
-		(lambda (w c i) 
-		  (backward-mix)) 
-		"Previous mix")
-	  
-	  (list icon-next-mix-point
-		(lambda (w c i) 
-		  (forward-mix))
-		"Next mix")
-	  
 	  (list icon-zooming-in
 		(lambda (w c i) 
 		  (if (not (null? (sounds))) 
@@ -1280,6 +1165,23 @@
 
 	
 	
+;;; TODO: these need tooltips
+;;; PERHAPS: cut for delete selection, revert to saved, copy for seleciton -> new?
+;;;            justify = trim?, new, paste?, preferences, refresh?, save, stop if playing?, media play|stop, fullscreen, info, select all
+;;; also the motif version should be at the top like this, and use smaller icons if possible,
+;;;  does that mean redrawing them?
+;;; gtk_widget_set_tooltip_text
+
+;;; gtk_separator_tool_item_new
+;;; gtk_tool_item_set_tooltip_text
+
+;;; also if toolbar is contracted, we need to set the associated text
+
+;;; open close-all save-all save-as revert-all new refresh-all |
+;;; undo redo cut-selection play-selection select-all selection->new trim? |
+;;; play play-from-cursor stop-playing | go first go back for forward go last zoom in zoom out [all] |
+;;; preferences 
+
 (if (provided? 'snd-gtk)
     (let* ((main-pane (caddr (main-widgets)))                       ; MAIN_PANE = top level vbox = (caddr (main-widgets))
 	   (toolbar (gtk_toolbar_new)))
@@ -1290,8 +1192,9 @@
 
       (let ((open-button (gtk_tool_button_new_from_stock GTK_STOCK_OPEN)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) open-button -1) ; -1 => put at end
-;	(gtk_tool_item_set_is_important (GTK_TOOL_ITEM open-button) #f)
+;	(gtk_tool_item_set_is_important (GTK_TOOL_ITEM open-button) #t)
 	(gtk_widget_show (GTK_WIDGET open-button))
+	(gtk_widget_set_tooltip_text (GTK_WIDGET open-button) "open a file")
 	(g_signal_connect open-button "clicked" (lambda (w data) (open-file-dialog))))
 	  
       (let ((close-button (gtk_tool_button_new_from_stock GTK_STOCK_CLOSE)))

@@ -104,6 +104,9 @@ GtkWidget *menu_widget(int which_menu);
 void check_menu_labels(int key, int state, bool extended);
 void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, int chn);
 GtkWidget *get_help_menu_widget(void);
+void show_toolbar(void);
+void hide_toolbar(void);
+
 
 
 /* -------- snd-gfft.c -------- */

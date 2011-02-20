@@ -1353,6 +1353,44 @@ void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, i
 }
 
 
+/* ---------------- toolbar ---------------- */
+
+static void add_to_toolbar(GtkWidget *bar, const gchar *stock, const char *tip, GCallback callback)
+{
+  GtkToolItem *w;
+  w = gtk_tool_button_new_from_stock(stock);
+  gtk_toolbar_insert(GTK_TOOLBAR(bar), w, -1); /* -1 = at end */
+  gtk_widget_set_tooltip_text(GTK_WIDGET(w), tip);
+  gtk_widget_show(GTK_WIDGET(w));
+  g_signal_connect(GTK_WIDGET(w), "clicked", callback, NULL);
+}
+
+
+static GtkWidget *toolbar = NULL;
+
+void show_toolbar(void)
+{
+  if (!toolbar)
+    {
+      toolbar = gtk_toolbar_new();
+      gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), toolbar, false, false, 0); /* MAIN_PANE = top level vbox */
+      gtk_box_reorder_child(GTK_BOX(MAIN_PANE(ss)), toolbar, 1);            /* put toolbar just under the top level menubar */
+
+      add_to_toolbar(toolbar, GTK_STOCK_OPEN, "open file", (GCallback)file_open_callback);
+    }
+
+  gtk_widget_show(toolbar);
+}
+
+
+void hide_toolbar(void)
+{
+  if (toolbar)
+    gtk_widget_hide(toolbar);
+}
+
+
+
 /* ---------------- tie in menu stuff to extlang ---------------- */
 
 static GtkWidget *added_menus[MAX_MAIN_MENUS];

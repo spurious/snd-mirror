@@ -4,7 +4,7 @@
 ;;;   selection fft time-domain lisp-listener edit-history
 ;;;
 ;;; (add-popups) creates popup menus specialized for the fft, selection, and time-domain sections of the graph
-;;;    (change-selection-popup-color new-color) to change selection memu's color
+;;;    (change-selection-popup-color new-color) to change selection menu's color
 ;;;    (change-fft-popup-color new-color) to change fft menu's color
 ;;;    (change-graph-popup-color new-color) to change time-domain menu's color
 ;;; (add-listener-popup) posts a special popup menu if the pointer is in the listener
@@ -370,7 +370,7 @@
       ))))
 
 (define (edit-graph-popup-menu snd chn)
-  "(edit-graph-popup-menu snd chn) hides otiose entries, relabel others to reflect current state of snd and chn"
+  "(edit-graph-popup-menu snd chn) hides otiose entries, relabels others to reflect current state of snd and chn"
   (let ((eds (edits snd chn)))
     (for-each-child
      graph-popup-menu
