@@ -19,7 +19,6 @@
 (if (not (provided? 'snd-special-menu.scm)) (load "special-menu.scm"))
 (if (not (provided? 'snd-new-backgrounds.scm)) (load "new-backgrounds.scm"))
 (if (not (provided? 'snd-marks-menu.scm)) (load "marks-menu.scm"))
-(if (not (provided? 'snd-toolbar.scm)) (load "toolbar.scm"))
 (if (not (provided? 'snd-panic.scm)) (load "panic.scm"))
 (if (and (provided? 'snd-gtk) (not (provided? 'snd-ladspa.scm))) (load "ladspa.scm"))
 (if (and (provided? 'snd-gtk) (not (provided? 'snd-ladspa-help.scm))) (load "ladspa-help.scm"))

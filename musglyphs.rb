@@ -1,8 +1,8 @@
-# musglyphs.rb -- musglyphs.scm and cmn-glyphs.lisp --> musglyphs.rb -*- snd-ruby -*-
+# musglyphs.rb -- musglyphs.scm and cmn-glyphs.lisp --> musglyphs.rb
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Apr 06 00:47:44 CEST 2005
-# Changed: Fri Jul 06 01:53:43 CEST 2007
+# Changed: Sat Feb 19 17:16:34 CET 2011
 
 # Commentary:
 #
@@ -1915,7 +1915,6 @@ include Musglyphs
 
 def musglyphs_test_1
   Musglyphs.public_methods.sort.each do |dr|
-    break if c_g?
     next unless dr =~ /^draw_/
     clm_print("\n%s", dr)
     update_time_graph(0, 0)
@@ -2015,7 +2014,6 @@ def musglyphs_test
    :draw_128th_rest,
    :draw_measure_rest,
    :draw_double_whole_rest].each do |dr|
-    break if c_g?
     clm_print("\n%s", dr)
     update_time_graph(0, 0)
     if dr == :draw_trill_sections or dr == :draw_arpeggios

@@ -1366,6 +1366,140 @@ static void add_to_toolbar(GtkWidget *bar, const gchar *stock, const char *tip, 
 }
 
 
+static void add_separator_to_toolbar(GtkWidget *bar)
+{
+  GtkToolItem *w;
+  w = gtk_separator_tool_item_new();
+  gtk_toolbar_insert(GTK_TOOLBAR(bar), w, -1);
+  gtk_widget_show(GTK_WIDGET(w));
+}
+
+
+static void play_from_start_callback(GtkWidget *w, gpointer info) 
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    play_sound(sp, 0, NO_END_SPECIFIED);
+}
+
+
+static void play_from_cursor_callback(GtkWidget *w, gpointer info)
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      chan_info *cp;
+      cp = any_selected_channel(sp);
+      if (cp)
+	play_sound(sp, CURSOR(cp), NO_END_SPECIFIED);
+    }
+}
+
+
+static void stop_playing_callback(GtkWidget *w, gpointer info) 
+{
+  stop_playing_all_sounds(PLAY_C_G);
+  reflect_play_selection_stop(); /* this sets ss->selection_play_stop = false; */
+}
+
+
+static void full_dur_callback(GtkWidget *w, gpointer info) 
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      int i;
+      for (i = 0; i < sp->nchans; i++)
+	set_x_axis_x0x1(sp->chans[i], 0.0, sp->chans[i]->axis->xmax);
+    }
+}
+
+
+static void zoom_out_callback(GtkWidget *w, gpointer info) 
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      int i;
+      for (i = 0; i < sp->nchans; i++)
+	zx_incremented(sp->chans[i], 2.0);
+    }
+}
+
+
+static void zoom_in_callback(GtkWidget *w, gpointer info) 
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      int i;
+      for (i = 0; i < sp->nchans; i++)
+	zx_incremented(sp->chans[i], 0.5);
+    }
+}    
+
+
+static void goto_start_callback(GtkWidget *w, gpointer info) 
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      int i;
+      for (i = 0; i < sp->nchans; i++)
+	set_x_axis_x0x1(sp->chans[i], 0.0, sp->chans[i]->axis->x1 - sp->chans[i]->axis->x0);
+    }
+}
+
+static void go_back_callback(GtkWidget *w, gpointer info) 
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      int i;
+      for (i = 0; i < sp->nchans; i++)
+	sx_incremented(sp->chans[i], -1.0);
+    }
+}
+
+
+static void go_forward_callback(GtkWidget *w, gpointer info)
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      int i;
+      for (i = 0; i < sp->nchans; i++)
+	sx_incremented(sp->chans[i], 1.0);
+    }
+}
+
+static void goto_end_callback(GtkWidget *w, gpointer info) 
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      int i;
+      for (i = 0; i < sp->nchans; i++)
+	set_x_axis_x0x1(sp->chans[i], sp->chans[i]->axis->xmax - sp->chans[i]->axis->x1 + sp->chans[i]->axis->x0, sp->chans[i]->axis->xmax);
+    }
+}
+
+
+static void stop_everything_callback(GtkWidget *w, gpointer info)
+{
+  control_g(any_selected_sound());
+}
+
+
 static GtkWidget *toolbar = NULL;
 
 void show_toolbar(void)
@@ -1376,7 +1510,38 @@ void show_toolbar(void)
       gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), toolbar, false, false, 0); /* MAIN_PANE = top level vbox */
       gtk_box_reorder_child(GTK_BOX(MAIN_PANE(ss)), toolbar, 1);            /* put toolbar just under the top level menubar */
 
-      add_to_toolbar(toolbar, GTK_STOCK_OPEN, "open file", (GCallback)file_open_callback);
+      add_to_toolbar(toolbar, GTK_STOCK_NEW,             "new sound",                  (GCallback)file_new_callback);
+      add_to_toolbar(toolbar, GTK_STOCK_OPEN,            "open sound",                 (GCallback)file_open_callback);
+      add_to_toolbar(toolbar, GTK_STOCK_SAVE,            "save selected sound",        (GCallback)file_save_callback);
+      add_to_toolbar(toolbar, GTK_STOCK_REVERT_TO_SAVED, "revert to saved",            (GCallback)file_revert_callback);
+      add_to_toolbar(toolbar, GTK_STOCK_UNDO,            "undo edit",                  (GCallback)edit_undo_callback);
+      add_to_toolbar(toolbar, GTK_STOCK_REDO,            "redo last (undone) edit",    (GCallback)edit_redo_callback);
+      add_to_toolbar(toolbar, GTK_STOCK_CLOSE,           "close selected sound",       (GCallback)file_close_callback);
+      add_separator_to_toolbar(toolbar);
+
+      add_to_toolbar(toolbar, GTK_STOCK_MEDIA_PLAY,      "play from the start",        (GCallback)play_from_start_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_MEDIA_FORWARD,   "play from the cursor",       (GCallback)play_from_cursor_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_MEDIA_STOP,      "stop playing",               (GCallback)stop_playing_callback);      
+      add_separator_to_toolbar(toolbar);
+ 
+      add_to_toolbar(toolbar, GTK_STOCK_FULLSCREEN,      "show full sound",            (GCallback)full_dur_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_ZOOM_OUT,        "zoom out",                   (GCallback)zoom_out_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_ZOOM_IN,         "zoom in",                    (GCallback)zoom_in_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_GOTO_FIRST,      "go to start of sound",       (GCallback)goto_start_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_GO_BACK,         "go back a window",           (GCallback)go_back_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_GO_FORWARD,      "go forward a window",        (GCallback)go_forward_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_GOTO_LAST,       "go to end of sound",         (GCallback)goto_end_callback);      
+      add_separator_to_toolbar(toolbar);
+
+      add_to_toolbar(toolbar, GTK_STOCK_SELECT_ALL,      "select all of sound",        (GCallback)edit_select_all_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_CLEAR,           "unselect everything",        (GCallback)edit_unselect_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_CUT,             "delete selection",           (GCallback)edit_cut_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_PASTE,           "insert selection at cursor", (GCallback)edit_paste_callback);      
+      add_separator_to_toolbar(toolbar);
+
+      add_to_toolbar(toolbar, GTK_STOCK_PREFERENCES,     "open preferences dialog",    (GCallback)options_preferences_callback);
+      add_to_toolbar(toolbar, GTK_STOCK_CANCEL,          "stop the current operation", (GCallback)stop_everything_callback);
+      add_to_toolbar(toolbar, GTK_STOCK_QUIT,            "exit Snd",                   (GCallback)file_exit_callback);
     }
 
   gtk_widget_show(toolbar);

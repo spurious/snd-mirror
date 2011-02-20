@@ -1,8 +1,8 @@
-# pvoc.rb -- pvoc.scm -> pvoc.rb -*- snd-ruby -*-
+# pvoc.rb -- pvoc.scm -> pvoc.rb
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Mar 27 00:19:51 CET 2004
-# Changed: Wed Nov 17 21:31:20 CET 2010
+# Changed: Sat Feb 19 17:21:21 CET 2011
 
 # Comment:
 # 
@@ -238,7 +238,6 @@ def pvoc(*rest)
   out_data = make_vct([len, outlen].max)
   out_data.length.times do |i|
     if output >= interp
-      break if c_g?
       output = 0
       buffix = filptr % fftsize
       vct_fill!(lastamp, 0.0)

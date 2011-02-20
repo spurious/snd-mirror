@@ -1,9 +1,8 @@
-\ -*- snd-forth -*-
 \ snd-xm.fs -- snd-motif|gtk.scm|snd-xm.rb --> snd-xm.fs
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Mon Oct 25 23:08:02 CEST 2010
+\ Changed: Sun Feb 20 14:49:49 CET 2011
 
 \ Commentary:
 \
@@ -25,8 +24,6 @@
 \ black-pixel      	   ( -- pix )
 \ raise-dialog             ( dialog -- )
 \ activate-dialog          ( dialog -- )
-\ show-smpte-label         ( on-or-off -- )
-\ smpte-is-on              ( -- flag )
 \ show-disk-space          ( snd -- )
 \
 \ Motif only:
@@ -61,61 +58,6 @@ $" X error" create-exception x-error
 'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
 
 require extensions
-
-\ ;;; -------- show-smpte-label
-\ ;;;
-\ ;;; (show-smpte-label on-or-off)
-\ ;;; turns on/off a label in the time-domain graph showing the
-\ ;;; current smpte frame of the leftmost sample
-
-hide
-24.0 value smpte-frames-per-second
-nil  value draw-smpte-label-cb
-
-: smpte-label { samp sr -- str }
-  samp sr f/                      { secs }
-  secs smpte-frames-per-second f* { frms }
-  secs 60.0 f/ ftrunc             { mins }
-  mins 60.0 f/ ftrunc             { hours }
-  "%02d:%02d:%02d:%02d" #(
-     hours f>s
-     mins hours 60.0 f* f- f>s
-     secs mins  60.0 f* f- ftrunc f>s
-     frms secs ftrunc smpte-frames-per-second f* f- ftrunc f>s ) string-format
-;
-set-current
-
-: draw-smpte-label ( vars -- proc; snd chn self -- )
-  2 proc-create swap , ( proc )
- does> ( snd chn self -- )
-  { snd chn self }
-  self @ { vars }
-  vars 'height array-assoc-ref { height }
-  vars 'width  array-assoc-ref { width }
-  snd chn undef axis-info      { axinf }
-  axinf 10 array-ref           { x }
-  axinf 13 array-ref           { y }
-  axinf 12 array-ref x -       { grf-width }
-  axinf 11 array-ref y -       { grf-height }
-  grf-height height 2*         >
-  grf-width  width  1.5 f* f>s > &&
-  snd chn time-graph?            && if
-    axinf 0 array-ref snd srate smpte-label { smpte }
-    x            y          width 2      snd chn undef undef fill-rectangle drop
-    x            y height + width 2      snd chn undef undef fill-rectangle drop
-    x            y          2     height snd chn undef undef fill-rectangle drop
-    x width 2- + y          2     height snd chn undef undef fill-rectangle drop
-    vars 'fs array-assoc-ref snd chn time-graph set-current-font drop
-    smpte x 4 + y 4 + snd chn undef draw-string drop
-  then
-;
-
-\ for prefs
-: smpte-is-on ( -- flag ) after-graph-hook draw-smpte-label-cb hook-member? ;
-\
-\ call: #t show-smpte-label
-\
-previous
 
 \ ;;; -------- show-disk-space
 \ ;;;
@@ -242,52 +184,6 @@ previous
   ;
 
   <'> raise-dialog alias activate-dialog ( dialog -- )
-  
-  \  --- show-smpte-label, Gtk specific ---
-
-  hide
-  #f value smpte-font-wh
-  "" value smpte-font-name
-  
-  : get-text-width-and-height { text fs -- wh }
-    smpte-font-wh not
-    smpte-font-name axis-numbers-font string<> || if
-      Fgdk_pango_context_get { ctx }
-      ctx Fpango_layout_new { layout }
-      axis-numbers-font to smpte-font-name
-      layout if
-	layout fs Fpango_layout_set_font_description drop
-	layout text -1 Fpango_layout_set_text drop
-	layout #f Fpango_layout_get_pixel_size { wid }
-	layout FGPOINTER Fg_object_unref drop
-	wid to smpte-font-wh
-	ctx FGPOINTER Fg_object_unref drop
-      then
-    then
-    smpte-font-wh
-  ;
-  set-current
-
-  : show-smpte-label ( on-or-off -- )
-    doc" Turns on/off a label in the time-domain graph showing \
-    the current smpte frame of the leftmost sample."
-    ( on-or-off ) if
-      smpte-is-on unless
-	axis-numbers-font Fpango_font_description_from_string { fs }
-	"00:00:00:00" fs get-text-width-and-height { wh }
-	#()      'width   wh 0 array-ref 8 +  array-assoc-set!
-	( vars ) 'height  wh 1 array-ref 8 +  array-assoc-set!
-	( vars ) 'fs      fs  array-assoc-set! { vars }
-	vars draw-smpte-label to draw-smpte-label-cb
-	after-graph-hook draw-smpte-label-cb add-hook!
-	#t #t update-time-graph drop
-      then
-    else
-      after-graph-hook draw-smpte-label-cb remove-hook! drop
-      #t #t update-time-graph drop
-    then
-  ;
-  previous
 
   \ --- show-disk-space, Gtk specific ---
 
@@ -665,27 +561,6 @@ previous
     update-hook     <'> marks-update-cb add-hook!
   ;
   previous
-
-  \  --- show-smpte-label, Motif specific ---
-
-  : show-smpte-label ( on-or-off -- )
-    doc" Turns on/off a label in the time-domain graph showing \
-    the current smpte frame of the leftmost sample."
-    ( on-or-off ) if
-      smpte-is-on unless
-	main-widgets 1 array-ref FXtDisplay axis-numbers-font FXLoadQueryFont { fs }
-	#()      'width  fs "00:00:00:00" dup length FXTextWidth     8 +  array-assoc-set!
-	( vars ) 'height fs "0" dup length FXTextExtents 2 array-ref 8 +  array-assoc-set!
-	( vars ) 'fs     fs Ffid array-assoc-set! { vars }
-	vars draw-smpte-label to draw-smpte-label-cb
-	after-graph-hook draw-smpte-label-cb add-hook!
-	#t #t update-time-graph drop
-      then
-    else
-      after-graph-hook draw-smpte-label-cb remove-hook! drop
-      #t #t update-time-graph drop
-    then
-  ;
 
   \ --- show-disk-space, Motif specific ---
 

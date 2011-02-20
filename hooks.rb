@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Thu Nov 18 23:11:01 CET 2010
+# Changed: Wed Feb 16 23:28:41 CET 2011
 
 # Commentary:
 #
@@ -167,7 +167,6 @@ need a String or Symbol, not %s"
   $listener_click_hook          = Hook.new("$listener_click_hook", 1)
   $mark_click_hook              = Hook.new("$mark_click_hook", 1)
   $mark_drag_hook               = Hook.new("$mark_drag_hook", 1)
-  $mark_drag_triangle_hook      = Hook.new("$mark_drag_triangle_hook", 4)
   $mark_hook                    = Hook.new("$mark_hook", 4)
   $mix_click_hook               = Hook.new("$mix_click_hook", 1)
   $mix_drag_hook                = Hook.new("$mix_drag_hook", 3)
@@ -297,7 +296,6 @@ if defined? $after_graph_hook
                $listener_click_hook,
                $mark_click_hook,
                $mark_drag_hook,
-               $mark_drag_triangle_hook,
                $mark_hook,
                $mix_click_hook,
                $mix_drag_hook,

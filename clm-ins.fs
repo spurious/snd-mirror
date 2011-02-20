@@ -1,8 +1,8 @@
-\ clm-ins.fs -- clm-ins.scm|rb -> clm-ins.fs -*- snd-forth -*-
+\ clm-ins.fs -- clm-ins.scm|rb -> clm-ins.fs
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Wed Oct 27 19:16:43 CEST 2010
+\ Changed: Sat Feb 19 17:27:43 CET 2011
 
 \ Commentary:
 \

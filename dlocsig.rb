@@ -1,7 +1,7 @@
-# dlocsig.rb -- CLM -> Snd/Ruby translation of dlocsig.lisp -*- snd-ruby -*-
+# dlocsig.rb -- CLM -> Snd/Ruby translation of dlocsig.lisp
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Copyright (c) 2003--2010 Michael Scholz <mi-scholz@users.sourceforge.net>
+# Copyright (c) 2003--2011 Michael Scholz <mi-scholz@users.sourceforge.net>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -2375,7 +2375,6 @@ class With_sound
                          :out_channels, @channels,
                          :rev_channels, @reverb_channels,
                          *dlocsig_args)
-    ws_interrupt?
     dl.ws_dlocsig(&body)
   end
 end

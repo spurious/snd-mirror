@@ -1,8 +1,8 @@
-# snd-xm.rb -- snd-motif and snd-gtk classes and functions -*- snd-ruby -*-
+# snd-xm.rb -- snd-motif and snd-gtk classes and functions
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sat Nov 20 00:57:07 CET 2010
+# Changed: Sun Feb 20 15:42:45 CET 2011
 
 # Commentary:
 #
@@ -43,14 +43,6 @@
 #  set_sensitive(widget, flag)
 #  add_main_pane(name, type, *args)
 #  show_disk_space(snd)
-#
-#  class Smpte_draw_label
-#   initialize
-#   smpte_label(smap, sr)
-#   draw_smpte_label(snd, chn)
-#
-#  show_smpte_label(on_or_off = true)
-#  smpte_is_on
 #  
 #  class Level_meter
 #   initialize(parent, width, height, args, resizable)
@@ -450,129 +442,6 @@ returns a widget named 'name', if one can be found in the widget hierarchy benea
         format("space: %10dK", num)
       end
     end
-  end
-
-  # 
-  # show_smpte_label
-  #
-
-  $smpte_is_on = false          # for prefs
-  $smpte_frames_per_second = 24.0
-  Smpte_draw_label_hook_name = "draw-smpte-label"
-
-  class Smpte_draw_label
-    if $with_motif
-      # MOTIF part
-      def initialize
-        @fs = RXLoadQueryFont(RXtDisplay(main_widgets.cadr), axis_numbers_font)
-        @width = 8 + RXTextWidth(@fs, "00:00:00:00", 11)
-        @height = 8 + RXTextExtents(@fs, "0", 1).caddr
-      end
-
-      def set_font(snd, chn)
-        dpy = RXtDisplay(main_widgets.cadr)
-        RXSetFont(dpy, ((selected_channel(snd) == chn) ? snd_gcs.cadr : snd_gcs.car), Rfid(@fs))
-      end
-      
-    elsif $with_gtk
-      # GTK part
-      def initialize
-        @smpte_font_wh = false
-        @smpte_font_name = ""
-        @fs = Rpango_font_description_from_string(axis_numbers_font)
-        wh = get_text_width_and_height("00:00:00:00")
-        @width = 8 + wh.car
-        @height = 8 + wh.cadr
-      end
-
-      def set_font(snd, chn)
-        set_current_font(@fs.cadr, snd, chn)
-      end
-
-      def get_text_width_and_height(text)
-        if (not @smpte_font_wh) or @smpte_font_name != axis_numbers_font
-          ctx = Rgdk_pango_context_get()
-          layout = Rpango_layout_new(ctx)
-          @smpte_font_name = axis_numbers_font
-          if layout
-            Rpango_layout_set_font_description(layout, @fs)
-            Rpango_layout_set_text(layout, text, -1)
-            @smpte_font_wh = Rpango_layout_get_pixel_size(layout, false)
-            Rg_object_unref(RGPOINTER(layout))
-            Rg_object_unref(RGPOINTER(ctx))
-            @smpte_font_wh
-          else
-            false
-          end
-        else
-          @smpte_font_wh
-        end
-      end
-      private :get_text_width_and_height
-    else
-      def initialize
-        Snd.raise(:ruby_error, "module xm or xg needed by %s!", self.class)
-      end
-
-      def set_font(snd, chn)
-        nil
-      end
-    end
-    private :set_font
-
-    def smpte_label(samp, sr)
-      seconds = samp / sr.to_f
-      frames = seconds * $smpte_frames_per_second
-      minutes = (seconds / 60.0).to_i
-      hours = (minutes / 60.0).to_i
-      format("%02d:%02d:%02d:%02d",
-             hours,
-             minutes - hours * 60,
-             (seconds - minutes * 60).to_i,
-             (frames - seconds.to_i * $smpte_frames_per_second).to_i)
-    end
-
-    def draw_smpte_label(snd, chn)
-      axinf = axis_info(snd, chn)
-      x = axinf[10]
-      y = axinf[13]
-      grf_width = axinf[12] - x
-      grf_height = axinf[11] - y
-      if grf_height > 2 * @height and grf_width > 1.5 * @width and time_graph?(snd, chn)
-        smpte = self.smpte_label(axinf.car, srate(snd))
-        fill_rectangle(x, y, @width, 2, snd, chn)
-        fill_rectangle(x, y + @height, @width, 2, snd, chn)
-        fill_rectangle(x, y, 2, @height, snd, chn)
-        fill_rectangle(x + @width - 2, y, 2, @height, snd, chn)
-        set_font(snd, chn)
-        draw_string(smpte, x + 4, y + 4, snd, chn)
-      end
-    end
-  end
-
-  add_help(:show_smpte_label,
-           "show_smpte_label(on_or_off=false)  \
-turns on/off a label in the time-domain graph showing the current smpte frame \
-of the leftmost sample")
-  def show_smpte_label(on_or_off = true)
-    if on_or_off
-      unless $after_graph_hook.member?(Smpte_draw_label_hook_name)
-        smpte = Smpte_draw_label.new
-        $after_graph_hook.add_hook!(Smpte_draw_label_hook_name) do |snd, chn|
-          smpte.draw_smpte_label(snd, chn)
-        end
-        update_time_graph(true, true)
-      end
-      $smpte_is_on = true
-    else
-      $after_graph_hook.remove_hook!(Smpte_draw_label_hook_name)
-      update_time_graph(true, true)
-      $smpte_is_on = false
-    end
-  end
-    
-  def smpte_is_on                 # for prefs
-    $after_graph_hook.member?(Smpte_draw_label_hook_name)
   end
 end
 

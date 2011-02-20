@@ -1,8 +1,8 @@
-# effects.rb -- Guile -> Ruby translation -*- snd-ruby -*-
+# effects.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Wed Nov 17 23:00:23 CET 2010
+# Changed: Sat Feb 19 17:17:19 CET 2011
 
 # Commentary:
 #
@@ -2369,7 +2369,7 @@ else
         samps_ctr = 0
         ret = false
         ctr = loc
-        until c_g? or ctr == len
+        until ctr == len
           samp0, samp1 = samp1, samp2
           samp2 = next_sample(reader)
           samps[samps_ctr] = samp0
@@ -2390,7 +2390,7 @@ else
         ret
       end
       remove_click = lambda do |loc|
-        if click = find_click.call(loc) and (not c_g?)
+        if click = find_click.call(loc)
           smooth_sound(click - 2, 4)
           remove_click.call(click + 2)
         end

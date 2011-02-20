@@ -1,9 +1,8 @@
-\ -*- snd-forth -*-
 \ extensions.fs -- extensions.scm -> extensions.fs
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Sat Feb 06 14:06:16 CET 2010
+\ Changed: Sat Feb 19 17:24:39 CET 2011
 
 \ Commentary:
 \
@@ -51,8 +50,6 @@
 \ eval-over-selection             ( func -- val )
 \
 \ yes-or-no?                      ( question action-if-yes action-if-no snd -- )
-\ check-for-unsaved-edits         ( check -- )
-\ remember-sound-state            ( choice -- )
 \
 \ mix-channel                     ( file-data :optional beg dur snd chn edpos -- val )
 \ insert-channel                  ( file-data :optional beg 0 dur snd chn edpos -- val )
@@ -530,13 +527,6 @@ END defaults to end of channel, BEG defaults to 0, SND defaults to the currently
 ; #t $" eval over selection" $" eval over selection" bind-key
 [then]
 
-\ ;;; -------- check-for-unsaved-edits
-\ ;;;
-\ ;;; (check-for-unsaved-edits :optional (on #t)):
-\ ;;; if 'on', add a function to before-close-hook and before-exit-hook
-\ ;;;    that asks the user for confirmation before closing a sound if there are unsaved
-\ ;;;    edits on that sound.  if 'on' is #f, remove those hooks.
-
 hide
 : response-cb { snd action-if-yes action-if-no -- proc; response self -- val }
   1 proc-create action-if-no , action-if-yes , snd ,
@@ -560,203 +550,6 @@ set-current
   snd
   #t
   prompt-in-minibuffer drop
-;
-previous
-
-hide
-: yes-cb ( exiting -- prc; snd self -- val )
-  1 proc-create swap ,
- does> { snd self -- val }
-  snd revert-sound drop
-  self @ ( exiting ) if 0 snd-exit then
-  #t
-;
-lambda: <{ snd -- val }> #f ; value no-cb
-: ignore-unsaved-edits-at-close? ( snd exiting -- f )
-  { snd exiting }
-  #t
-  snd channels 0 ?do
-    snd i edits 0 array-ref 0> if
-      $" %s[%d] has unsaved edits.  Close (y/n)? " #( snd short-file-name i ) string-format
-      exiting yes-cb no-cb snd yes-or-no?
-      not
-    then
-  loop
-;
-: unsaved-edits-at-close <{ snd -- f }> snd #f ignore-unsaved-edits-at-close? not ;
-: unsaved-edits-at-exit <{ -- f }>
-  #f sounds each #t ignore-unsaved-edits-at-close? unless not leave then end-each
-;
-set-current
-
-#f value checking-for-unsaved-edits
-
-: check-for-unsaved-edits ( check -- )
-  doc" Sets up hooks to check for and ask about unsaved edits when a sound is closed.  \
-If CHECK is #f, the hooks are removed."
-  ( check ) dup to checking-for-unsaved-edits if
-    before-close-hook <'> unsaved-edits-at-close add-hook!
-    before-exit-hook  <'> unsaved-edits-at-exit  add-hook!
-  else
-    before-close-hook <'> unsaved-edits-at-close remove-hook! drop
-    before-exit-hook  <'> unsaved-edits-at-exit  remove-hook! drop
-  then
-;
-previous
-
-\ --- remember-sound-state ---
-
-\ for prefs
-\ 
-\ REMEMBERING-SOUND-STATE
-\ 0 - no remembering
-\ 1 - just within-run remembering
-\ 2 - write state to REMEMBER-SOUND-FILENAME
-0 value remembering-sound-state
-".snd-remember-sound" value remember-sound-filename
-#() value -saved-remember-sound-states-
-
-hide
-#( <'> sync <'> with-tracking-cursor <'> selected-channel <'> show-controls <'> read-only
-   <'> contrast-control? <'> expand-control? <'> reverb-control? <'> filter-control?
-   <'> amp-control <'> amp-control-bounds
-   <'> contrast-control <'> contrast-control-amp <'> contrast-control-bounds
-   <'> expand-control <'> expand-control-bounds <'> expand-control-hop <'> expand-control-jitter
-   <'> expand-control-length <'> expand-control-ramp
-   <'> filter-control-envelope <'> filter-control-in-dB <'> filter-control-in-hz
-   <'> filter-control-order 
-   <'> reverb-control-decay <'> reverb-control-feedback <'> reverb-control-length
-   <'> reverb-control-length-bounds <'> reverb-control-lowpass <'> reverb-control-scale
-   <'> reverb-control-scale-bounds
-   <'> speed-control <'> speed-control-bounds <'> speed-control-style
-   <'> speed-control-tones ) value sound-funcs
-#( <'> time-graph? <'> transform-graph? <'> lisp-graph? <'> x-bounds <'> y-bounds
-   <'> cursor <'> cursor-size
-   <'> cursor-style <'> show-marks <'> show-y-zero <'> show-grid <'> wavo-hop <'> wavo-trace
-   <'> max-transform-peaks
-   <'> show-transform-peaks <'> fft-log-frequency <'> fft-log-magnitude <'> with-verbose-cursor
-   <'> zero-pad
-   <'> wavelet-type <'> min-dB <'> transform-size <'> transform-graph-type <'> time-graph-type
-   <'> fft-window
-   <'> transform-type <'> transform-normalization <'> time-graph-style <'> show-mix-waveforms
-   <'> dot-size
-   <'> x-axis-style <'> show-axes <'> graphs-horizontal <'> lisp-graph-style
-   <'> transform-graph-style
-   <'> grid-density <'> tracking-cursor-style ) value channel-funcs
-\ REMEMBER-STATES
-\ #a( '( filename-symbol . values ) ... )
-\ VALUES
-\ #{ :time     file-time
-\    :sound    sound-value-array
-\    :channels channel-value-array }
-#() value remember-states
-
-: saved-state ( snd -- ary|#f ) file-name remember-states swap array-assoc-ref ;
-: set-saved-state { snd new-state -- }
-  remember-states snd file-name new-state array-assoc-set! drop
-;
-: remember-sound-at-close <{ snd -- #f }>
-  #{ :time snd file-name file-write-date } { new-state }
-  sound-funcs map snd *key* execute end-map new-state :sound rot hash-set!
-  snd channels make-array map!
-    channel-funcs map
-      *key* xt->name "cursor" string= if
-	snd j ( chn ) undef ( edpos ) cursor \ three arguments!
-      else
-	snd j ( chn ) *key* execute
-      then
-      *key* xt->name "transform-type" string= if transform->integer then
-    end-map
-  end-map new-state :channels rot hash-set!
-  snd new-state set-saved-state
-  #f
-;
-: remember-sound-at-open <{ snd -- }>
-  snd saved-state { state }
-  state empty? not
-  remembering-sound-state 2 <> && if
-    snd file-name file-write-date state :time hash-ref d=
-    snd channels state :channels hash-ref length = && if
-      nil nil { val fnc }
-      state :sound hash-ref each to val
-	sound-funcs i array-ref to fnc
-	fnc xt->name "selected-channel" string= if
-	  snd val set-selected-channel drop \ arguments swapped!
-	else
-	  val snd fnc set-execute drop
-	then
-      end-each
-      state :channels hash-ref { chans-state }
-      snd channels 0 ?do
-	#t snd i ( chn ) set-squelch-update drop
-	chans-state i ( chn ) array-ref each to val \ channel-funcs values
-	  channel-funcs i array-ref to fnc
-	  fnc xt->name "transform-type" string= if val integer->transform to val then
-	  fnc xt->name "cursor" string= if
-	    val snd j ( chn ) undef ( edpos ) set-cursor drop \ four arguments!
-	  else
-	    val snd j ( chn ) fnc set-execute drop
-	  then
-	end-each
-	#f snd i ( chn ) set-squelch-update drop
-	snd i ( chn ) time-graph?      if snd i update-time-graph      drop then
-	snd i ( chn ) transform-graph? if snd i update-transform-graph drop then
-      loop
-    then
-  then
-;
-: remember-sound-at-start <{ filename -- #f }>
-  remember-states empty?
-  remember-sound-filename file-exists? && if
-    remember-sound-filename file-eval
-    -saved-remember-sound-states- to remember-states
-  then
-  #f
-;
-: remember-sound-write-cb <{ io -- }>
-  io $" \\ -*- snd-forth -*-\n" port-puts
-  io $" \\ from remember-sound-state in %s\n" '( *filename* ) port-puts-format
-  io $" \\ written: %s\n\n" '( date ) port-puts-format
-  io $" #a( " port-puts
-  remember-states each { en }
-    i 0> if io $" \n   " port-puts then
-    io $" %S " '( en 0 array-ref ) port-puts-format
-    io $" %S " '( en 1 array-ref ) port-puts-format
-  end-each
-  io $" ) to -saved-remember-sound-states-\n\n" port-puts
-  io $" \\ %s ends here\n" '( remember-sound-filename #f file-basename ) port-puts-format
-;
-: remember-sound-at-exit <{ -- #f }>
-  remember-states empty? if
-    remember-sound-filename file-delete
-  else
-    <'> remember-sound-write-cb :filename remember-sound-filename with-output-port
-  then
-  #f
-;
-set-current
-
-: remember-sound-state { choice -- }
-  doc" Remembers the state of a sound when it is closed, \
-and if it is subsquently re-opened, restores that state."
-  choice 2 < if
-    choice 0= if
-      close-hook      <'> remember-sound-at-close remove-hook! drop
-      after-open-hook <'> remember-sound-at-open  remove-hook! drop
-    then
-    open-hook        <'> remember-sound-at-start remove-hook! drop
-    before-exit-hook <'> remember-sound-at-exit  remove-hook! drop
-    remember-sound-filename file-delete
-  then
-  choice 0> if
-    close-hook      <'> remember-sound-at-close add-hook!
-    after-open-hook <'> remember-sound-at-open  add-hook!
-    choice 1 > if
-      open-hook        <'> remember-sound-at-start add-hook!
-      before-exit-hook <'> remember-sound-at-exit  add-hook!
-    then
-  then
-  choice to remembering-sound-state
 ;
 previous
 

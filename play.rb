@@ -1,8 +1,8 @@
-# play.rb -- play.scm -> play.rb -*- snd-ruby -*-
+# play.rb -- play.scm -> play.rb
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Apr 22 23:36:39 CEST 2005
-# Changed: Mon Nov 22 13:26:11 CET 2010
+# Changed: Sat Feb 19 17:20:26 CET 2011
 
 # Commentary:
 #
@@ -11,7 +11,6 @@
 # open_play_output(out_chans, out_srate, out_format, out_bufsize)
 # play_sound(&func)
 # play_often(n)
-# play_until_c_g
 # play_region_forever(reg)
 # loop_between_marks(m1, m2, bufsize)
 # start_dac
@@ -54,7 +53,6 @@ def play_sound
       len = frames
       data = SoundData.new(outchans, pframes)
       0.step(len, pframes) do |beg|
-        break if c_g?
         if outchans > 1 and filechans > 1
           [outchans, filechans].min.times do |chn|
             samples2sound_data(beg, pframes, false, chn, data, Current_edit_position, chn)
@@ -78,7 +76,7 @@ add_help(:play_often,
 def play_often(n)
   plays = n - 1
   play_once = lambda do |reason|
-    if plays > 0 and (not c_g?) and reason == 0
+    if plays > 0 and reason == 0
       plays -= 1
       play(selected_sound, :wait, play_once)
     end
@@ -87,26 +85,13 @@ def play_often(n)
 end
 # bind_key(?p, 0, lambda do |n| play_often([1, n].max) end, false, "play often")
 
-# play sound until c-g
-
-add_help(:play_until_c_g,
-         "play_often(n)  plays the selected sound 'n' times (interruptible via C-g)")
-def play_until_c_g
-  play_once = lambda do |reason|
-    if (not c_g?) and reason == 0
-      play(0, false, false, false, false, false, play_once)
-    end
-  end
-  play(0, false, false, false, false, false, play_once)
-end
-
 # play region over and over until C-g typed
 
 add_help(:play_region_forever,
          "play_region_forever(reg)  plays region 'reg' until you interrupt it via C-g")
 def play_region_forever(reg)
   play_region_again = lambda do |reason|
-    if (not c_g?) and reason == 0
+    if reason == 0
       play(reg, :stop, play_region_again)
     end
   end
@@ -130,7 +115,7 @@ def loop_between_marks(m1, m2, bufsize)
   bytes = 2 * bufsize
   audio_fd = mus_audio_open_output(0, srate, 1, Mus_lshort, bytes)
   if audio_fd != -1
-    until c_g?
+    loop do
       bufsize.times do |i|
         audio_data[0, i] = all_data[0, beg]
         beg += 1
@@ -254,7 +239,7 @@ def vector_synthesis(files, read_even_when_not_playing, &driver)
             end
           end
           mus_audio_write(out_port, data, bufsize)
-          reading = (not c_g?) and (0...files_len).detect do |i| locs[i] < pframes[i] end
+          reading = (0...files_len).detect do |i| locs[i] < pframes[i] end
         end
       end
       mus_audio_close(out_port)
@@ -299,7 +284,6 @@ def play_sine(freq, amp)
     osc = make_oscil(:frequency, freq)
     data = SoundData.new(outchans, pframes)
     0.step(len, pframes) do |beg|
-      break if c_g?
       data.map!(0) do |val| amp * oscil(osc) end
       mus_audio_write(audio_fd, data, pframes)
     end
@@ -319,7 +303,6 @@ def play_sines(freq_and_amps)
     amps = freq_and_amps.map do |freq, amp| amp end
     data = SoundData.new(outchans, pframes)
     0.step(len, pframes) do |beg|
-      break if c_g?
       data.map!(0) do |val|
         val = 0.0
         oscs.zip(amps) do |o, a|

@@ -538,7 +538,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_toolbar(ss) ss->With_Toolbar
 #define set_with_toolbar(a) ss->With_Toolbar = a
+#if USE_GTK
+#define DEFAULT_WITH_TOOLBAR true
+#else
 #define DEFAULT_WITH_TOOLBAR false
+#endif
 
 #define remember_sound_state(ss) ss->Remember_Sound_State
 #define set_remember_sound_state(a) ss->Remember_Sound_State = a

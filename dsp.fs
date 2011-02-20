@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Thu Dec 31 04:38:29 CET 2009
+\ Changed: Sat Feb 19 17:00:03 CET 2011
 
 \ src-duration             ( en -- dur )
 \ src-fit-envelope         ( e1 target-dur -- e2 )
@@ -1397,7 +1397,7 @@ it returns one of the standard smoothing filters from the era when computers wer
       begin
 	x1 random to x
 	1.0 random to y
-	c-g?  y  x en 1.0 envelope-interp f<= ||
+	y  x en 1.0 envelope-interp f<=
       until
       x
     else

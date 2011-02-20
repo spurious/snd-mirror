@@ -2,16 +2,16 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Feb 18 10:18:34 CET 2005
-# Changed: Fri Feb 11 23:54:58 CET 2011
+# Changed: Sat Feb 19 18:38:18 CET 2011
 
 # Commentary:
 #
 # Tested with:
-#   Snd version 11.13 of 27-Jan-11
+#   Snd version 11.14 of 21-Feb-11
 #   ruby 1.8.0 (2003-08-04)
 #   ruby 1.8.7 (2010-08-16 patchlevel 302)
 #   ruby 1.9.2p0 (2010-08-18 revision 29036)
-#   ruby 1.9.3dev (2011-01-26 trunk 30659)
+#   ruby 1.9.3dev (2011-02-18 trunk 30896)
 
 #
 # Reads init file ./.sndtest.rb or ~/.sndtest.rb for global variables,
@@ -766,6 +766,7 @@ def finish_snd_test()
   clear_sincs
   stop_playing
   reset_almost_all_hooks
+  set_ask_about_unsaved_edits(false)
   snd_info("all done!")
   snd_info("")
   unless $timings.empty?
@@ -869,6 +870,7 @@ def after_test(func)
     Snd.sounds.apply(:close_sound)
   end
   Snd.regions.apply(:forget_region)
+  set_ask_about_unsaved_edits(false)
   dismiss_all_dialogs
   snd_info("%s done%s\n#", func, $VERBOSE ? format(" (%s)", $timings.last.last) : "")
 end
@@ -1268,6 +1270,9 @@ def test_00
    [:Dolph_chebyshev_window, 16],
    [:Exponential_window, 9],
    [:Flat_top_window, 23],
+   [:Sync_none, 0],
+   [:Sync_all, 1],
+   [:Sync_by_sound, 2],
    [:Zoom_focus_active, 2],
    [:Zoom_focus_left, 0],
    [:Zoom_focus_middle, 3],
@@ -1389,6 +1394,10 @@ def test_00
   old_dir = temp_dir
   set_temp_dir(false)
   [[:region_graph_style, Graph_lines],
+   [:ask_about_unsaved_edits, false],
+   [:show_full_duration, false],
+   [:initial_beg, 0.0],
+   [:initial_dur, 0.1],
    [:ask_before_overwrite, false],
    [:audio_output_device, 0],
    [:auto_resize, true],
@@ -1450,6 +1459,7 @@ def test_00
    [:transform_normalization, Normalize_by_channel],
    [:view_files_sort, 0],
    [:print_length, 12],
+   [:play_arrow_size, 10],
    [:save_state_file, "saved-snd.rb"],
    [:show_axes, 1],
    [:show_transform_peaks, false],
@@ -1495,6 +1505,7 @@ def test_00
    [:beats_per_measure, 4],
    [:zero_pad, 0],
    [:zoom_focus_style, 2],
+   [:sync_style, Sync_by_sound],
    [:mix_waveform_height, 20],
    [:mix_tag_width, 6],
    [:mix_tag_height, 14],
@@ -1556,6 +1567,7 @@ def test_01
   set_temp_dir(false)
   [["amp_control", without_errors do amp_control() end, :no_such_sound],
    ["amp_control_bounds", amp_control_bounds()[1], 8.0],
+   ["ask_about_unsaved_edits", ask_about_unsaved_edits(), false],
    ["ask_before_overwrite", ask_before_overwrite(), false],
    ["audio_output_device", audio_output_device(), 0],
    ["auto_resize", auto_resize(), true],
@@ -1626,6 +1638,8 @@ def test_01
    ["grid_density", grid_density(), 1.0],
    ["html_dir", html_dir(), "."],
    ["html_program", html_program(), "firefox"],
+   ["initial_beg", initial_beg(), 0.0],
+   ["initial_dur", initial_dur(), 0.1],
    ["just_sounds", just_sounds(), true],
    ["ladspa_dir", ladspa_dir(), ""],
    ["peak_env_dir", peak_env_dir(), ""],
@@ -1647,6 +1661,7 @@ def test_01
    ["mus_float_equal_fudge_factor", mus_float_equal_fudge_factor(), 0.0000001],
    ["mus_prescaler", mus_prescaler(), 1.0],
    ["optimization", optimization(), 0], # Ruby doesn't optimize
+   ["play_arrow_size", play_arrow_size(), 10],
    ["print_length", print_length(), 12],
    ["read_only", without_errors do read_only() end, :no_such_sound],
    ["region_graph_style", region_graph_style(), Graph_lines],
@@ -1661,6 +1676,7 @@ def test_01
    ["selection_creates_region", selection_creates_region(), true],
    ["show_axes", show_axes(), 1],
    ["show_controls", show_controls(), false],
+   ["show_full_duration", show_full_duration(), false],
    ["show_grid", show_grid(), false],
    ["show_indices", show_indices(), false],
    ["show_marks", show_marks(), true],
@@ -1682,6 +1698,7 @@ def test_01
    ["speed_control", without_errors do speed_control() end, :no_such_sound],
    ["speed_control_bounds", speed_control_bounds()[1], 20.0],
    ["sync", without_errors do sync() end, :no_such_sound],
+   ["sync_style", sync_style(), Sync_by_sound],
    ["temp_dir", temp_dir(), ""],
    ["time_graph_type", time_graph_type(), Graph_once],
    ["time_graph?", without_errors do time_graph?() end, :no_such_sound],
@@ -2037,7 +2054,6 @@ def test_03
    $peak_env_hook,
    $help_hook,
    $mark_drag_hook,
-   $mark_drag_triangle_hook,
    $mix_drag_hook,
    $mouse_drag_hook,
    $mouse_click_hook,
@@ -2107,6 +2123,7 @@ def test_03
              [:spectro_z_scale, ($with_test_gl ? 1.0 : 0.1), 0.2]]
   lst = [[:amp_control, 1.0, 0.5],
          [:amp_control_bounds, [0.0, 8.0], [1.0, 5.0]],
+         [:ask_about_unsaved_edits, false, true],
          [:ask_before_overwrite, false, true],
          [:audio_input_device, 0, 1],
          [:audio_output_device, 0, 1],
@@ -2157,8 +2174,10 @@ def test_03
          [:enved_filter, true, false],
          [:filter_control_in_hz, false, true],
          [:filter_control_order, 20, 40],
-         [:graph_cursor, 34, 33],
+         [:graph_cursor, 34, 32],
          [:graph_style, 0, 1],
+         [:initial_beg, 0.0, 1.0],
+         [:initial_dur, 0.1, 1.0],
          [:just_sounds, false, true],
          [:listener_prompt, ">", ":"],
          [:max_transform_peaks, 100, 10],
@@ -2174,6 +2193,7 @@ def test_03
          [:mus_clipping, false, true],
          [:selection_creates_region, true, false],
          [:view_files_sort, 0, 1],
+         [:play_arrow_size, 10, 16],
          [:print_length, 12, 16],
          [:region_graph_style, Graph_lines, Graph_lollipops],
          [:reverb_control_decay, 1.0, 2.0],
@@ -2184,6 +2204,7 @@ def test_03
          [:reverb_control_scale, 0.0, 0.2],
          [:reverb_control_scale_bounds, [0.0, 4.0], [0.0, 0.2]],
          [:show_axes, 1, 0],
+         [:show_full_duration, false, true],
          [:show_indices, false, true],
          [:show_marks, true, false],
          [:show_mix_waveforms, true, false],
@@ -2197,6 +2218,7 @@ def test_03
          [:speed_control_style, 0, 1],
          [:speed_control_tones, 12, 18],
          [:sync, 0, 1],
+         [:sync_style, Sync_by_sound, Sync_all],
          [:tiny_font, Tiny_font_string, Tiny_font_set_string],
          [:transform_type, $fourier_transform, $autocorrelation],
          [:with_verbose_cursor, false, true],
@@ -2270,6 +2292,7 @@ def test_03
    [:speed_control, 1.0, [0.0]],
    [:speed_control_bounds, [0.05, 20.0], [false, [0.0], [1.0, 0.0], 2.0]],
    [:speed_control_style, 0, [-1, 10]],
+   [:sync_style, Sync_by_sound, [-1, 123]],
    [:transform_type, $fourier_transform, [integer2transform(-1), integer2transform(123)]],
    [:wavelet_type, 0, [-1, 123]],
    [:wavo_hop, 1, [0, -123]],
@@ -2285,6 +2308,7 @@ def test_03
   end
   #
   if $with_test_gui
+    set_sync_style(Sync_none)
     set_window_width(300)
     set_window_height(300)
     snd_test_neq(window_width, 300, "window width")
@@ -2354,22 +2378,23 @@ def test_03
   #
   # :in replaced by :call_in
   #
-  [:snd_opened_sound, :abort, :add_colormap, :add_directory_to_view_files_list,
-   :add_file_filter, :add_file_sorter, :add_file_to_view_files_list, :add_mark, :add_player,
+  [:snd_opened_sound, :abort, :add_colormap, :add_directory_to_view_files_list, :add_file_filter,
+   :add_file_sorter, :add_file_to_view_files_list, :add_mark, :add_player,
    :add_sound_file_extension, :add_source_file_extension, :add_to_main_menu, :add_to_menu,
    :add_transform, :after_apply_controls_hook, :after_edit_hook, :after_graph_hook,
    :after_lisp_graph_hook, :after_open_hook, :after_save_as_hook, :after_save_state_hook,
    :after_transform_hook, :all_pass, :all_pass?, :amp_control, :amp_control_bounds,
    :amplitude_modulate, :analyse_ladspa, :apply_controls, :apply_ladspa, :array2file,
-   :array_interp, :as_one_edit, :ask_before_overwrite, :asymmetric_fm, :asymmetric_fm?,
-   :audio_input_device, :audio_output_device, :auto_resize, :auto_update, :auto_update_interval,
-   :autocorrelate, :autocorrelation, :moving_average, :moving_average?, :axis_color, :axis_info,
-   :axis_label_font, :axis_numbers_font, :bad_header_hook, :bartlett_window, :bartlett_hann_window,
-   :basic_color, :beats_per_measure, :beats_per_minute, :before_close_hook, :before_exit_hook,
-   :before_save_as_hook, :before_save_state_hook, :before_transform_hook, :bind_key,
+   :array_interp, :as_one_edit, :ask_about_unsaved_edits, :ask_before_overwrite, :asymmetric_fm,
+   :asymmetric_fm?, :audio_input_device, :audio_output_device, :auto_resize, :auto_update,
+   :auto_update_interval, :autocorrelate, :autocorrelation, :moving_average, :moving_average?,
+   :axis_color, :axis_info, :axis_label_font, :axis_numbers_font, :bad_header_hook,
+   :bartlett_window, :bartlett_hann_window, :basic_color, :beats_per_measure, :beats_per_minute,
+   :before_close_hook, :before_exit_hook, :before_save_as_hook, :before_save_state_hook,
+   :before_transform_hook, :bind_key,
    :blackman2_window, :blackman3_window, :blackman4_window, :blackman5_window, :blackman6_window,
    :blackman7_window, :blackman8_window, :blackman9_window, :blackman10_window, :bohman_window,
-   :bold_peaks_font, :bomb, :c_g!, :c_g?, :call_in, :cauchy_window, :mlt_sine_window, :cepstrum,
+   :bold_peaks_font, :bomb, :call_in, :cauchy_window, :mlt_sine_window, :cepstrum,
    :change_samples_with_origin, :channel2vct, :channel_amp_envs, :channel_data,
    :channel_properties, :channel_property, :channel_style, :channel_widgets, :channels,
    :channels_combined, :channels_separate, :channels_superimposed, :chans, :clear_array,
@@ -2443,7 +2468,7 @@ def test_03
    :make_ssb_am, :make_ncos, :make_nsin, :make_table_lookup, :make_triangle_wave,
    :make_two_pole, :make_two_zero, :make_variable_graph, :make_vct, :make_wave_train,
    :map_chan, :map_channel, :mark_click_hook, :mark_color, :mark_context, :mark_drag_hook,
-   :mark_drag_triangle_hook, :mark_home, :mark_hook, :mark_name, :mark_properties,
+   :mark_home, :mark_hook, :mark_name, :mark_properties,
    :mark_property, :mark_sample, :mark_sync, :mark_sync_max, :mark_tag_height,
    :mark_tag_width, :mark?, :marks, :max_regions, :max_transform_peaks, :max_virtual_ptrees,
    :maxamp, :maxamp_position, :menu_widgets, :min_dB, :minibuffer_history_length, :mix,
@@ -2494,12 +2519,12 @@ def test_03
    :partials2wave, :parzen_window, :pausing, :peak_env_hook, :peaks, :peaks_font,
    :phase_partials2wave, :phase_vocoder, :phase_vocoder_amp_increments, :phase_vocoder_amps,
    :phase_vocoder_freqs, :phase_vocoder_phase_increments, :phase_vocoder_phases, :phase_vocoder?,
-   :play, :play_hook, :player_home, :player?, :players, :playing, :poisson_window,
-   :polar2rectangular, :polynomial, :polyshape, :polywave, :polyshape?, :polywave?, :position2x,
-   :position2y, :position_color, :preferences_dialog, :previous_sample, :print_dialog,
-   :print_hook, :print_length, :progress_report, :prompt_in_minibuffer, :ptree_channel,
-   :pulse_train, :pulse_train?, :radians2degrees, :radians2hz, :ramp_channel, :rand,
-   :rand_interp, :rand_interp?, :rand?, :read_hook, :read_mix_sample, :read_only,
+   :play, :play_arrow_size, :play_hook, :player_home, :player?, :players, :playing,
+   :poisson_window, :polar2rectangular, :polynomial, :polyshape, :polywave, :polyshape?,
+   :polywave?, :position2x, :position2y, :position_color, :preferences_dialog, :previous_sample,
+   :print_dialog, :print_hook, :print_length, :progress_report, :prompt_in_minibuffer,
+   :ptree_channel, :pulse_train, :pulse_train?, :radians2degrees, :radians2hz, :ramp_channel,
+   :rand, :rand_interp, :rand_interp?, :rand?, :read_hook, :read_mix_sample, :read_only,
    :read_region_sample, :read_sample, :readin, :readin?, :rectangular2magnitudes,
    :rectangular2polar, :rectangular_window, :redo_edit, :region2vct, :region_chans,
    :region_home, :region_frames, :region_graph_style, :region_maxamp, :region_maxamp_position,
@@ -2523,8 +2548,9 @@ def test_03
    :selection_color, :selection_context, :selection_creates_region, :selection_frames,
    :selection_maxamp, :selection_maxamp_position, :selection_member?, :selection_position,
    :selection_srate, :selection?, :short_file_name, :show_all_axes, :show_all_axes_unlabelled,
-   :show_bare_x_axis, :show_axes, :show_controls, :show_grid, :show_indices, :show_listener,
-   :show_marks, :show_mix_waveforms, :show_no_axes, :show_selection_transform,
+   :show_bare_x_axis, :show_axes, :show_controls, :show_grid, :show_indices,
+   :show_full_duration, :initial_beg, :initial_dur, :show_listener,
+   :show_marks, :show_mix_waveforms, :show_no_axes, :show_selection, :show_selection_transform,
    :show_sonogram_cursor, :show_transform_peaks, :show_widget, :show_x_axis,
    :show_x_axis_unlabelled, :show_y_zero, :sinc_width, :nrxysin, :nrxysin?, :nrxycos,
    :nrxycos?, :smooth_channel, :smooth_selection, :smooth_sound, :snd2sample, :snd2sample?,
@@ -2544,14 +2570,15 @@ def test_03
    :src_channel, :src_selection, :src_sound, :src?, :ssb_am, :ssb_am?, :start_hook,
    :start_playing, :start_playing_hook, :start_playing_selection_hook, :start_progress_report,
    :stop_dac_hook, :stop_player, :stop_playing, :stop_playing_hook, :stop_playing_selection_hook,
-   :ncos, :ncos?, :nsin, :nsin?, :swap_channels, :sync, :sync_max, :syncd_marks, :table_lookup,
+   :ncos, :ncos?, :nsin, :nsin?, :swap_channels, :sync, :sync_style, :sync_none, :sync_all,
+   :sync_by_sound, :sync_max, :syncd_marks, :table_lookup,
    :table_lookup?, :tap, :temp_dir, :text_focus_color, :time_graph, :time_graph_hook,
    :time_graph_style, :time_graph_type, :time_graph?, :tiny_font, :tracking_cursor_style,
    :transform2vct, :transform_dialog, :transform_frames, :transform_graph,
    :transform_graph_style, :transform_graph_type, :transform_graph?, :transform_normalization,
    :transform_sample, :transform_size, :transform_type, :transform?, :trap_segfault,
    :triangle_wave, :triangle_wave?, :tukey_window, :two_pole, :two_pole?, :two_zero,
-   :two_zero?, :ultraspherical_window, :unbind_key , :undo, :undo_edit, :undo_hook,
+   :two_zero?, :ultraspherical_window, :unbind_key , :undo, :undo_edit, :undo_hook, :unselect_all,
    :update_hook, :update_lisp_graph, :update_sound, :update_time_graph,
    :update_transform_graph, :variable_graph?, :vct, :vct_multiply, :vct_add, :vct2channel,
    :vct2list, :vct2sound_data, :vct2string, :vct2vector, :vct_add!, :vct_copy, :vct_fill!,
@@ -10729,7 +10756,7 @@ def test_06
   $dac_hook.add_hook!("snd-test") do |data|
     ctr += 1
     if ctr >= 3
-      c_g!
+      set_playing(false)
     end
   end
   play(selected_sound, :wait, true)
@@ -23833,15 +23860,6 @@ def test_13_00
     snd_display("$help_hook false: %s %s?", hi, ho)
   end
   $help_hook.reset_hook!
-  $mark_drag_triangle_hook.reset_hook!
-  if $mark_drag_triangle_hook.member?("mdt-test")
-    snd_display("mdt-test is member of %s?", $mark_drag_triangle_hook.inspect)
-  end
-  $mark_drag_triangle_hook.add_hook!("mdt-test") do |a, b, c, d| mdt_test(a, b, c, d) end
-  unless $mark_drag_triangle_hook.member?("mdt-test")
-    snd_display("mdt-test is not member of %s?", $mark_drag_triangle_hook.inspect)
-  end
-  $mark_drag_triangle_hook.reset_hook!
   # 
   fr = frames(fd)
   chn = chans(fd)
@@ -25673,6 +25691,7 @@ def test_14
      [:selection_creates_region, false, false, true],
      [:transform_normalization, false, Dont_normalize, Normalize_globally],
      [:view_files_sort, false, 0, 3],
+     [:play_arrow_size, false, 2, 32],
      [:print_length, false, 2, 32],
      [:region_graph_style, false, Graph_lines, Graph_lollipops],
      [:reverb_control_decay, false, 0.0, 2.0],
@@ -25705,6 +25724,7 @@ def test_14
      [:speed_control_style, false, 0, 2],
      [:speed_control_tones, false, 2, 100],
      [:sync, true, 0, 5],
+     [:sync_style, false, 0, 3],
      [:with_verbose_cursor, false, false, true],
      [:wavelet_type, false, 0, 10],
      [:time_graph?, true, false, true],
@@ -25736,6 +25756,7 @@ def test_14
       set_transform_size([transform_size, 128].min)
     end
     open_files.apply(:close_sound)
+    set_sync_style(Sync_none)
     set_mus_rand_seed(1234)
     if mus_rand_seed != 1234
       snd_display("mus_rand_seed: %s (1234)?", mus_rand_seed)
@@ -31738,8 +31759,10 @@ def test_19_03
 end
 
 def test_19
-  test_19_00 if $with_test_gui # load(save_state_file) -> set_transform_size(0)
-  test_19_01
+  if $with_test_gui # load(save_state_file) -> set_transform_size(0)
+    test_19_00
+    test_19_01
+  end
   test_19_02
   test_19_03
   mus_sound_prune
@@ -34240,7 +34263,7 @@ def test_21_01
 end
 
 def test_21_02
-  remember_sound_state(3)
+  set_remember_sound_state(true)
   ind = open_sound("oboe.snd")
   set_transform_graph?(true, ind, 0)
   set_show_transform_peaks(true, ind, 0)
@@ -34256,8 +34279,8 @@ def test_21_02
     snd_display("remember_sound_state: %s %s %s?", res1.inspect, res2.inspect, res3.inspect)
   end
   close_sound(ind)
-  remember_sound_state(0)
   reset_almost_all_hooks
+  set_remember_sound_state(false)
   #
   map_sound_files do |n|
     if mus_sound_duration(n) > 1000.0
@@ -34652,7 +34675,7 @@ def step_src
                         :srate,   srate,
                         :comment, get_func_name) do
     samp = 0
-    until c_g? or sampler_at_end?(rd)
+    until sampler_at_end?(rd)
       out_any(samp, src(sr, incr, lambda do |dir| read_sample(rd) end), 0, $output)
       if (samp % 2205).zero?
         incr = 2.0 + oscil(os)
@@ -35822,12 +35845,12 @@ def check_error_tag(expected_tag, &thunk)
   end
 end
 
-Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension,
-         :sound_file_extensions, :sound_file?, :add_to_main_menu, :add_to_menu,
-         :add_transform, :amp_control, :as_one_edit, :ask_before_overwrite,
+Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :sound_file_extensions,
+         :sound_file?, :add_to_main_menu, :add_to_menu, :add_transform, :amp_control,
+         :ask_about_unsaved_edits, :as_one_edit, :ask_before_overwrite,
          :audio_input_device, :audio_output_device, :auto_resize, :auto_update,
          :autocorrelate, :axis_color, :axis_info, :axis_label_font, :axis_numbers_font,
-         :basic_color, :bind_key, :bomb, :c_g?, :apply_controls, :change_samples_with_origin,
+         :basic_color, :bind_key, :bomb, :apply_controls, :change_samples_with_origin,
          :channel_style, :channel_widgets, :channels, :chans, :peaks_font, :bold_peaks_font,
          :close_sound, :color_cutoff, :color_orientation_dialog, :colormap_ref, :add_colormap,
          :delete_colormap, :colormap_size, :colormap_name, :color_inverted, :color_scale,
@@ -35876,11 +35899,12 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension,
          :mix_region, :mix_sampler?, :mix_selection, :mix_home, :mix_speed, :mix_tag_height,
          :mix_tag_width, :mark_tag_height, :mark_tag_width, :mix_tag_y, :mix_vct,
          :mix_waveform_height, :time_graph_style, :lisp_graph_style, :transform_graph_style,
-         :read_mix_sample, :next_sample, :read_region_sample, :transform_normalization,
+         :read_mix_sample, :next_sample, :read_region_sample,
+         :show_full_duration, :initial_beg, :initial_dur, :transform_normalization,
          :open_file_dialog_directory, :open_raw_sound, :open_sound, :color_orientation_dialog,
-         :previous_sample, :peaks, :position_color, :position2x, :position2y,
-         :add_directory_to_view_files_list, :add_file_to_view_files_list, :view_files_amp,
-         :view_files_speed, :view_files_files, :view_files_selected_files,
+         :previous_sample, :peaks, :player?, :players, :play_arrow_size, :position_color,
+         :position2x, :position2y, :add_directory_to_view_files_list, :add_file_to_view_files_list,
+         :view_files_amp, :view_files_speed, :view_files_files, :view_files_selected_files,
          :view_files_speed_style, :view_files_amp_env, :view_files_sort,
          :print_length, :progress_report, :prompt_in_minibuffer, :read_only,
          :redo_edit, :region_chans, :view_regions_dialog, :region_home,
@@ -35900,13 +35924,12 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension,
          :selected_data_color, :selected_graph_color, :selected_sound, :selection_position,
          :selection_color, :selection_creates_region, :selection_frames, :selection_member?,
          :selection?, :short_file_name, :show_axes, :show_controls, :show_transform_peaks,
-         :show_indices, :show_listener, :show_marks, :show_mix_waveforms,
-         :show_selection_transform, :show_y_zero, :sinc_width, :show_grid,
-         :show_sonogram_cursor, :grid_density, :smooth_sound, :smooth_selection,
-         :snd_spectrum, :snd_tempnam, :snd_version, :sound_files_in_directory,
-         :sound_loop_info, :sound_widgets, :soundfont_info, :sound?, :sounds,
-         :spectrum_end, :spectro_hop, :spectrum_start, :spectro_x_angle,
-         :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
+         :show_indices, :show_listener, :show_selection, :unselect_all, :show_marks,
+         :show_mix_waveforms, :show_selection_transform, :show_y_zero, :sinc_width, :show_grid,
+         :show_sonogram_cursor, :grid_density, :smooth_sound, :smooth_selection, :snd_spectrum,
+         :snd_tempnam, :snd_version, :sound_files_in_directory, :sound_loop_info, :sound_widgets,
+         :soundfont_info, :sound?, :sounds, :spectrum_end, :spectro_hop, :spectrum_start,
+         :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
          :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
          :squelch_update, :srate, :src_sound, :src_selection, :start_progress_report,
          :stop_player, :stop_playing, :swap_channels, :syncd_marks, :sync, :sync_max,
@@ -35920,12 +35943,12 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension,
          :with_relative_panes, :with_gl, :x_axis_style, :beats_per_measure, :beats_per_minute,
          :x_bounds, :x_position_slider, :x2position, :x_zoom_slider, :mus_header_type2string,
          :mus_data_format2string, :y_bounds, :y_position_slider, :y2position, :y_zoom_slider,
-         :zero_pad, :zoom_color, :zoom_focus_style, :mus_set_formant_radius_and_frequency,
-         :mus_sound_samples, :mus_sound_frames, :mus_sound_duration, :mus_sound_datum_size,
-         :mus_sound_data_location, :data_size, :mus_sound_chans, :mus_sound_srate,
-         :mus_sound_header_type, :mus_sound_data_format, :mus_sound_length,
-         :mus_sound_type_specifier, :mus_header_type_name, :mus_data_format_name,
-         :mus_sound_comment, :mus_sound_write_date, :mus_bytes_per_sample,
+         :zero_pad, :zoom_color, :zoom_focus_style, :sync_style,
+         :mus_set_formant_radius_and_frequency, :mus_sound_samples, :mus_sound_frames,
+         :mus_sound_duration, :mus_sound_datum_size, :mus_sound_data_location, :data_size,
+         :mus_sound_chans, :mus_sound_srate, :mus_sound_header_type, :mus_sound_data_format,
+         :mus_sound_length, :mus_sound_type_specifier, :mus_header_type_name,
+         :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date, :mus_bytes_per_sample,
          :mus_sound_loop_info, :mus_sound_mark_info, :mus_audio_describe,
          :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_file_prescaler,
          :mus_prescaler, :mus_clipping, :mus_file_clipping, :mus_header_raw_defaults,
@@ -35991,7 +36014,8 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension,
 
 Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_output_device,
              :auto_resize, :sound_file_extensions, :auto_update, :axis_color, :axis_label_font,
-             :axis_numbers_font, :channel_style, :peaks_font, :bold_peaks_font, :color_cutoff,
+             :axis_numbers_font, :channel_style, :peaks_font, :bold_peaks_font,
+             :show_full_duration, :initial_beg, :initial_dur, :color_cutoff,
              :color_inverted, :color_scale, :contrast_control, :contrast_control_amp,
              :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
              :contrast_control_bounds, :reverb_control_length_bounds,
@@ -36019,7 +36043,7 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
              :max_virtual_ptrees, :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
              :mark_tag_width, :mark_tag_height, :mix_waveform_height, :transform_normalization,
              :open_file_dialog_directory, :position_color, :view_files_sort, :print_length,
-             :region_graph_style, :reverb_control_decay, :reverb_control_feedback,
+             :play_arrow_size, :region_graph_style, :reverb_control_decay, :reverb_control_feedback,
              :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale,
              :time_graph_style, :lisp_graph_style, :transform_graph_style, :reverb_control?,
              :sash_color, :ladspa_dir, :peak_env_dir, :save_dir, :save_state_file,
@@ -36035,7 +36059,7 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
              :with_file_monitor, :with_verbose_cursor, :wavelet_type, :with_inset_graph,
              :with_pointer_focus, :x_bounds, :time_graph?, :wavo_hop, :wavo_trace,
              :with_gl, :with_mix_tags, :x_axis_style, :beats_per_minute, :zero_pad,
-             :zoom_color, :zoom_focus_style, :with_relative_panes, :window_x, :window_y,
+             :zoom_color, :zoom_focus_style, :sync_style, :with_relative_panes, :window_x, :window_y,
              :window_width, :window_height, :mix_dialog_mix, :beats_per_measure,
              :channels, :chans, :colormap, :comment, :data_format, :data_location,
              :data_size, :edit_position, :frames, :header_type, :maxamp,
@@ -36565,8 +36589,8 @@ def test_28_01
   end
   [:enved_filter_order, :enved_filter, :filter_control_waveform_color,
    :ask_before_overwrite, :auto_resize, :auto_update, :axis_label_font,
-   :axis_numbers_font, :basic_color, :channel_style, :color_cutoff,
-   :color_inverted, :color_scale, :cursor_color,
+   :axis_numbers_font, :basic_color, :show_full_duration, :initial_beg, :initial_dur,
+   :channel_style, :color_cutoff, :color_inverted, :color_scale, :cursor_color,
    :dac_combines_channels, :dac_size, :clipping, :data_color,
    :default_output_chans, :default_output_data_format, :default_output_srate,
    :default_output_header_type, :enved_envelope, :enved_base, :enved_clip?,
@@ -36577,7 +36601,7 @@ def test_28_01
    :listener_prompt, :listener_text_color, :max_regions,
    :minibuffer_history_length, :mix_waveform_height, :region_graph_style,
    :position_color, :time_graph_style, :lisp_graph_style, :transform_graph_style,
-   :peaks_font, :bold_peaks_font, :view_files_sort, :print_length,
+   :peaks_font, :bold_peaks_font, :view_files_sort, :print_length, :play_arrow_size,
    :sash_color, :ladspa_dir, :peak_env_dir, :save_dir, :save_state_file, :selected_channel,
    :selected_data_color, :selected_graph_color, :selected_sound,
    :selection_creates_region, :show_controls, :show_indices,
@@ -36600,7 +36624,7 @@ def test_28_01
     :output_name_hook, :peak_env_hook, :after_open_hook, :close_hook, :draw_mark_hook,
     :draw_mix_hook, :mark_click_hook, :listener_click_hook, :mix_click_hook,
     :after_save_state_hook, :before_save_state_hook, :mark_hook, :mark_drag_hook,
-    :mark_drag_triangle_hook, :mix_drag_hook, :name_click_hook, :after_apply_controls_hook,
+    :mix_drag_hook, :name_click_hook, :after_apply_controls_hook,
     :open_hook, :output_comment_hook, :help_hook, :play_hook, :dac_hook,
     :new_widget_hook, :read_hook, :bad_header_hook, :snd_error_hook,
     :snd_warning_hook, :start_hook, :start_playing_hook, :stop_playing_hook,
@@ -36700,6 +36724,7 @@ def test_28_02
   check_error_tag(:out_of_range) do mus_sound_close_input(2) end
   check_error_tag(:out_of_range) do set_mus_array_print_length(-1) end
   check_error_tag(:out_of_range) do set_print_length(-1) end
+  check_error_tag(:out_of_range) do set_play_arrow_size(-1) end
   check_error_tag(:wrong_type_arg) do vector2vct(make_array(3, "hio")) end
   check_error_tag(:out_of_range) do set_enved_style(12) end
   check_error_tag(:out_of_range) do make_color(1.5, 0.0, 0.0) end

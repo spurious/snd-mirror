@@ -1072,7 +1072,7 @@ void snd_doit(int argc, char **argv)
       free(ss->startup_errors);
       ss->startup_errors = NULL;
     }
-  
+
 #ifndef SND_AS_WIDGET
   XtAppMainLoop(app);
 #endif

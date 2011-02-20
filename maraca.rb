@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Apr 22 23:29:22 CEST 2005
-# Changed: Mon Nov 22 13:36:07 CET 2010
+# Changed: Sat Feb 19 18:27:34 CET 2011
 
 # Commentary:
 #
@@ -29,7 +29,6 @@ def maraca(start, dur,
   sndamp = amp / 16384.0
   srate4 = (mus_srate / 4.0).floor
   gain = ((log(num_beans) / log(4)) * 40.0) / num_beans
-  ws_interrupt?
   coeffs[0] = -2.0 * shell_reso * cos(hz2radians(shell_freq))
   coeffs[1] = shell_reso * shell_reso
   run_instrument(start, dur) do
@@ -83,7 +82,6 @@ def big_maraca(start, dur,
   sndamp = amp / 16384.0
   srate4 = (mus_srate / 4.0).floor
   gain = ((log(num_beans) / log(4)) * 40.0) / num_beans
-  ws_interrupt?
   resn.times do |i|
     basesf[i] = coeffs[i * 2] = -2.0 * shell_resos[i] * cos(hz2radians(shell_freqs[i]))
     coeffs[1 + i * 2] = shell_resos[i] * shell_resos[i]

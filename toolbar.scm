@@ -1,3 +1,5 @@
+;;; this file has been replaced by the built-in variable with-toolbar
+#|
 (provide 'snd-toolbar.scm)
 
 (if (provided? 'snd-motif) 
@@ -1164,23 +1166,6 @@
 
 
 	
-	
-;;; TODO: these need tooltips
-;;; PERHAPS: cut for delete selection, revert to saved, copy for seleciton -> new?
-;;;            justify = trim?, new, paste?, preferences, refresh?, save, stop if playing?, media play|stop, fullscreen, info, select all
-;;; also the motif version should be at the top like this, and use smaller icons if possible,
-;;;  does that mean redrawing them?
-;;; gtk_widget_set_tooltip_text
-
-;;; gtk_separator_tool_item_new
-;;; gtk_tool_item_set_tooltip_text
-
-;;; also if toolbar is contracted, we need to set the associated text
-
-;;; open close-all save-all save-as revert-all new refresh-all |
-;;; undo redo cut-selection play-selection select-all selection->new trim? |
-;;; play play-from-cursor stop-playing | go first go back for forward go last zoom in zoom out [all] |
-;;; preferences 
 
 (if (provided? 'snd-gtk)
     (let* ((main-pane (caddr (main-widgets)))                       ; MAIN_PANE = top level vbox = (caddr (main-widgets))
@@ -1269,3 +1254,4 @@
 	(g_signal_connect exit-button "clicked" (lambda (w data) (exit))))
 
       ))
+|#

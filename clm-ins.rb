@@ -1,8 +1,8 @@
-# clm-ins.rb -- CLM instruments translated to Snd/Ruby -*- snd-ruby -*-
+# clm-ins.rb -- CLM instruments translated to Snd/Ruby
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Mon Nov 22 13:11:19 CET 2010
+# Changed: Sat Feb 19 18:26:25 CET 2011
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -2211,7 +2211,6 @@ def exp_snd(file, start, dur, amp,
     error("ramp argument to expand must always be between 0.0 and 0.5: %1.3f", ramp)
   else
     run_instrument(start, dur) do
-      break if c_g?()
       expa = env(expenv)  # current expansion amount
       segl = env(lenenv)  # current segment length
       resa = env(srenv)   # current resampling increment
@@ -2612,7 +2611,6 @@ class Snd_Instrument
       inframe = make_frame(in_chans)
       outframe = make_frame(@channels)
       srcs = make_array(in_chans) do make_src(:srate, sr) end
-      ws_interrupt?
       samps.times do |i|
         if envs
           in_chans.times do |chn|

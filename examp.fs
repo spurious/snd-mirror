@@ -1,9 +1,8 @@
-\ -*- snd-forth -*-
 \ examp.fs -- examples from examp.scm|rb
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Fri Feb 11 23:41:45 CET 2011
+\ Changed: Sat Feb 19 17:25:03 CET 2011
 
 \ Commentary:
 \
@@ -115,7 +114,7 @@
 \ reverse-by-blocks         ( block-len :optional snd chn -- val )
 \ reverse-within-blocks     ( block-len :optional snd chn -- val )
 \ channel-clipped?          ( :optional snd chn -- val )
-\ sync-all                  ( -- )
+\ sync-everything           ( -- )
 \ 
 \ make-moog-filter    	    ( freq Q -- gen )
 \ moog-frequecy@      	    ( gen -- frq )
@@ -450,8 +449,8 @@ y0 and y1 are ignored."
   sf next-sample fabs { val1 }
   begin
     sf sampler-at-end?
-    c-g?                     ||
-    val0 val1 f+ limit f<    || not
+    \ c-g?                  ||
+    val0 val1 f+ limit f< || not
   while
       start 1+ to start
       val1 to val0
@@ -1466,7 +1465,6 @@ previous
   freq-inc make-array map! i bin * radius make-formant end-map { formants }
   out-len 0.0 make-vct map!
     i freq-inc mod 0= if
-      c-g? ?leave
       inctr fftsize snd chn #f channel->vct to fdr
       fdr vct-peak old-peak-amp fmax to old-peak-amp
       fdr fdi #f 2 spectrum ( fdr ) spectr vct-subtract! ( fdr ) freq-inc 1/f vct-scale! drop
@@ -1494,7 +1492,6 @@ previous
   freq-inc make-array map! i bin * radius make-formant end-map { formants }
   len 0.0 make-vct map!
     i freq-inc mod 0= if
-      c-g? ?leave
       inctr fftsize snd chn #f channel->vct to fdr
       fdr vct-peak old-peak-amp fmax to old-peak-amp
       fdr fdi #f 2 spectrum ( fdr ) spectr vct-subtract! ( fdr ) freq-inc 1/f vct-scale! drop
@@ -1847,7 +1844,6 @@ previous
   10 0.0 make-vct { samps }
   #f 					\ flag
   #f #f #f frames loc ?do
-    c-g? ?leave
     samp1 to samp0
     samp2 to samp1
     rd next-sample to samp2
@@ -1864,7 +1860,7 @@ previous
   -2 { click }
   begin
     click 2+ find-click to click
-    click c-g? not &&
+    click
   while
       click 2- 4 #f #f smooth-sound drop
   repeat
@@ -2462,9 +2458,9 @@ set-current
 ;
 previous
 
-\ ;;; -------- sync-all
+\ ;;; -------- sync-everything
 
-: sync-all ( -- )
+: sync-everything ( -- )
   doc" Sets the sync fields of all currently open sounds to the same, unique value."
   sync-max 1+ { new-sync }
   sounds each ( snd ) new-sync swap set-sync drop end-each

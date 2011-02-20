@@ -1,8 +1,8 @@
-# clm.rb -- Ruby extension -*- snd-ruby -*-
+# clm.rb -- Ruby extension
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Oct 14 23:02:57 CEST 2009
-# Changed: Thu Dec 16 01:24:10 CET 2010
+# Changed: Sat Feb 19 17:17:01 CET 2011
 
 # Commentary:
 #
@@ -2767,11 +2767,6 @@ a Snd error tag looks like :no_such_sound.")
 def snd_raise(tag, *rest)
   Snd.raise(tag, *rest)
 end
-
-# for irb
-def c_g?
-  false
-end unless defined? c_g?
 
 def srate
   mus_srate

@@ -1,9 +1,8 @@
-\ -*- snd-forth -*-
 \ effects.fs -- *effects*.scm -> effects.fs
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sat Nov 06 23:37:30 CET 2010
+\ Changed: Sat Feb 19 17:25:18 CET 2011
 
 \ Commentary:
 \
@@ -615,7 +614,6 @@ hide
   10 0.0 make-vct { samps }
   #f 					\ flag
   snd chn #f frames loc ?do
-    c-g? ?leave
     samp1 to samp0
     samp2 to samp1
     rd next-sample to samp2
@@ -629,7 +627,7 @@ hide
 
 : remove-click { loc snd chn -- }
   loc snd chn find-click { click }
-  click c-g? not && if
+  click if
     click 2 - 4 snd chn smooth-sound drop
     click 2 + snd chn recurse
   then

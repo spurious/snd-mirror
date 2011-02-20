@@ -2,13 +2,13 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Fri Feb 11 23:57:19 CET 2011
+\ Changed: Sat Feb 19 16:37:23 CET 2011
 
 \ Commentary:
 \
 \ Tested with:
-\   Snd version 11.13 of 27-Jan-11
-\   FTH 1.2.9 (02-Jan-2011)
+\   Snd version 11.14 of 21-Feb-11
+\   FTH 1.2.9 (18-Feb-2011)
 
 \
 \ Reads init file ./.sndtest.fs or ~/.sndtest.fs for global variables,
@@ -41,6 +41,7 @@
 \ test 02: headers
 \ test 03: variables
 \ test 04: sndlib
+\ test 05: simple overall checks
 \ test 10: marks
 \ test 15: chan-local vars
 \ test 19: save and restore
@@ -472,6 +473,7 @@ reset-all-hooks
       $" open sounds: %s" #( #t short-file-name ) snd-test-message
       sounds each ( snd ) close-sound drop end-each
     then
+    #f set-ask-about-unsaved-edits drop
     $" %s: %s\n\\ " #( name tm ) snd-test-message
   then
 ;
@@ -519,6 +521,7 @@ reset-all-hooks
   clear-sincs drop
   sounds if stop-playing drop then
   reset-almost-all-hooks
+  #f set-ask-about-unsaved-edits drop
   $" all done!" #f snd-test-message
   "" #f snd-test-message
   $" summary: %s" #( overall-start-time ) snd-test-message
@@ -701,6 +704,9 @@ SIGINT lambda: { sig -- }
      #( <'> dolph-chebyshev-window 16 )
      #( <'> exponential-window 9 )
      #( <'> flat-top-window 23 )
+     #( <'> sync-none 0 )
+     #( <'> sync-all 1 )
+     #( <'> sync-by-sound 2 )
      #( <'> zoom-focus-active 2 )
      #( <'> zoom-focus-left 0 )
      #( <'> zoom-focus-middle 3 )
@@ -826,6 +832,10 @@ SIGINT lambda: { sig -- }
   temp-dir { old-dir }
   #f set-temp-dir drop
   #( #( <'> region-graph-style graph-lines )
+     #( <'> ask-about-unsaved-edits #f )
+     #( <'> show-full-duration #f )
+     #( <'> initial-beg 0.0 )
+     #( <'> initial-dur 0.1 )
      #( <'> ask-before-overwrite #f )
      #( <'> audio-output-device 0 )
      #( <'> auto-resize #t )
@@ -887,6 +897,7 @@ SIGINT lambda: { sig -- }
      #( <'> transform-normalization normalize-by-channel )
      #( <'> view-files-sort 0 )
      #( <'> print-length 12 )
+     #( <'> play-arrow-size 10 )
      #( <'> save-state-file "saved-snd.fs" )
      #( <'> show-axes 1 )
      #( <'> show-transform-peaks #f )
@@ -932,6 +943,7 @@ SIGINT lambda: { sig -- }
      #( <'> beats-per-measure 4 )
      #( <'> zero-pad 0 )
      #( <'> zoom-focus-style 2 )
+     #( <'> sync-style sync-by-sound )
      #( <'> mix-waveform-height 20 )
      #( <'> mix-tag-width 6 )
      #( <'> mix-tag-height 14 )
@@ -994,7 +1006,8 @@ black-and-white-colormap constant *better-colormap*
   \ 
   temp-dir { old-dir }
   #f set-temp-dir drop
-  #( #( <'> ask-before-overwrite #f )
+  #( #( <'> ask-about-unsaved-edits #f )
+     #( <'> ask-before-overwrite #f )
      #( <'> audio-output-device 0 )
      #( <'> auto-resize #t )
      #( <'> auto-update #f )
@@ -1055,6 +1068,8 @@ black-and-white-colormap constant *better-colormap*
      #( <'> grid-density 1.0 )
      #( <'> html-dir "." )
      #( <'> html-program "firefox" )
+     #( <'> initial-beg 0.0 )
+     #( <'> initial-dur 0.1 )
      #( <'> just-sounds #t )
      #( <'> ladspa-dir "" )
      #( <'> peak-env-dir "" )
@@ -1075,6 +1090,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> mus-float-equal-fudge-factor 0.0000001 )
      #( <'> mus-prescaler 1.0 )
      #( <'> optimization 0 ) \ Forth doesn't optimize
+     #( <'> play-arrow-size 10 )
      #( <'> print-length 12 )
      #( <'> region-graph-style graph-lines )
      #( <'> reverb-control-feedback 1.09 )
@@ -1083,6 +1099,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> selection-creates-region #t )
      #( <'> show-axes 1 )
      #( <'> show-controls #f )
+     #( <'> show-full-duration #f )
      #( <'> show-grid #f )
      #( <'> show-indices #f )
      #( <'> show-marks #t )
@@ -1101,6 +1118,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> spectro-y-scale 1.0 )
      #( <'> spectro-z-angle *with-test-gl* if 0.0 else 358.0 then )
      #( <'> spectro-z-scale *with-test-gl* if 1.0 else 0.1 then )
+     #( <'> sync-style sync-by-sound )
      #( <'> temp-dir "" )
      #( <'> time-graph-type graph-once )
      #( <'> tiny-font tiny-font-string )
@@ -1475,7 +1493,6 @@ black-and-white-colormap constant *better-colormap*
      peak-env-hook
      help-hook
      mark-drag-hook
-     mark-drag-triangle-hook
      mix-drag-hook
      mouse-drag-hook
      mouse-click-hook
@@ -1546,6 +1563,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> spectro-z-scale *with-test-gl* if 1.0 else 0.1 then 0.2 ) ) { gui-lst }
   #( #( <'> amp-control 1.0 0.5 )
      #( <'> amp-control-bounds '( 0.0 8.0 ) '( 1.0 5.0 ) )
+     #( <'> ask-about-unsaved-edits #f #t )
      #( <'> ask-before-overwrite #f #t )
      #( <'> audio-input-device 0 1 )
      #( <'> audio-output-device 0 1 )
@@ -1596,8 +1614,10 @@ black-and-white-colormap constant *better-colormap*
      #( <'> enved-filter #t #f )
      #( <'> filter-control-in-hz #f #t )
      #( <'> filter-control-order 20 40 )
-     #( <'> graph-cursor 34 33 )
+     #( <'> graph-cursor 34 32 )
      #( <'> graph-style 0 1 )
+     #( <'> initial-beg 0.0 1.0 )
+     #( <'> initial-dur 0.1 1.0 )
      #( <'> just-sounds #f #t )
      #( <'> listener-prompt ">" ":" )
      #( <'> max-transform-peaks 100 10 )
@@ -1613,6 +1633,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> mus-clipping #f #t )
      #( <'> selection-creates-region #t #f )
      #( <'> view-files-sort 0 1 )
+     #( <'> play-arrow-size 10 16 )
      #( <'> print-length 12 16 )
      #( <'> region-graph-style graph-lines graph-lollipops )
      #( <'> reverb-control-decay 1.0 2.0 )
@@ -1623,6 +1644,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> reverb-control-scale 0.0 0.2 )
      #( <'> reverb-control-scale-bounds '( 0.0 4.0 ) '( 0.0 0.2 ) )
      #( <'> show-axes 1 0 )
+     #( <'> show-full-duration #f #t )
      #( <'> show-indices #f #t )
      #( <'> show-marks #t #f )
      #( <'> show-mix-waveforms #t #f )
@@ -1636,6 +1658,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> speed-control-style 0 1 )
      #( <'> speed-control-tones 12 18 )
      #( <'> sync 0 1 )
+     #( <'> sync-style sync-by-sound sync-all )
      #( <'> tiny-font tiny-font-string tiny-font-set-string )
      #( <'> transform-type fourier-transform autocorrelation )
      #( <'> with-verbose-cursor #f #t )
@@ -1713,6 +1736,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> speed-control 1.0 '( 0.0 ) )
      #( <'> speed-control-bounds '( 0.05 20.0 ) '( #f '( 0.0 ) '( 1.0 0.0 ) 2.0 ) )
      #( <'> speed-control-style 0 '( -1 10 ) )
+     #( <'> sync-style sync-by-sound '( -1 123 ) )
      #( <'> transform-type fourier-transform '( -1 integer->transform 123 integer->transform ) )
      #( <'> wavelet-type 0 '( -1 123 ) )
      #( <'> wavo-hop 1 '( 0 -123 ) )
@@ -1733,6 +1757,7 @@ black-and-white-colormap constant *better-colormap*
   end-each
   \
   *with-test-gui* if
+    sync-none set-sync-style drop
     300 set-window-width drop
     300 set-window-height drop
     window-width  300 "window-width"  #() snd-test-neq
@@ -1803,22 +1828,22 @@ black-and-white-colormap constant *better-colormap*
   \
   \ FIXME
   \ Splitted in two arrays because we have a 1024 stack limit. [ms]
-  #( '*snd-opened-sound* 'abort 'add-colormap 'add-directory-to-view-files-list
-     'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
-     'add-player 'add-sound-file-extension 'add-source-file-extension 'add-to-main-menu 'add-to-menu
-     'add-transform 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook
-     'after-lisp-graph-hook 'after-open-hook 'after-save-as-hook 'after-save-state-hook
-     'after-transform-hook 'all-pass 'all-pass? 'amp-control 'amp-control-bounds
-     'amplitude-modulate 'analyse-ladspa 'apply-controls 'apply-ladspa 'array->file 'array-interp
-     'as-one-edit 'ask-before-overwrite 'asymmetric-fm 'asymmetric-fm? 'audio-input-device
-     'audio-output-device 'auto-resize 'auto-update 'auto-update-interval 'autocorrelate
-     'autocorrelation 'moving-average 'moving-average? 'axis-color 'axis-info 'axis-label-font
-     'axis-numbers-font 'bad-header-hook 'bartlett-window 'bartlett-hann-window 'basic-color
-     'beats-per-measure 'beats-per-minute 'before-close-hook 'before-exit-hook
+  #( '*snd-opened-sound* 'abort 'add-colormap 'add-directory-to-view-files-list 'add-file-filter
+     'add-file-sorter 'add-file-to-view-files-list 'add-mark 'add-player 'add-sound-file-extension
+     'add-source-file-extension 'add-to-main-menu 'add-to-menu 'add-transform
+     'after-apply-controls-hook 'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook
+     'after-open-hook 'after-save-as-hook 'after-save-state-hook 'after-transform-hook 'all-pass
+     'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate 'analyse-ladspa
+     'apply-controls 'apply-ladspa 'array->file 'array-interp 'as-one-edit 'ask-about-unsaved-edits
+     'ask-before-overwrite 'asymmetric-fm 'asymmetric-fm? 'audio-input-device 'audio-output-device
+     'auto-resize 'auto-update 'auto-update-interval 'autocorrelate 'autocorrelation
+     'moving-average 'moving-average? 'axis-color 'axis-info 'axis-label-font 'axis-numbers-font
+     'bad-header-hook 'bartlett-window 'bartlett-hann-window 'basic-color 'beats-per-measure
+     'beats-per-minute 'before-close-hook 'before-exit-hook
      'before-save-as-hook 'before-save-state-hook 'before-transform-hook 'bind-key
      'blackman2-window 'blackman3-window 'blackman4-window 'blackman5-window 'blackman6-window
      'blackman7-window 'blackman8-window 'blackman9-window 'blackman10-window 'bohman-window
-     'bold-peaks-font 'bomb 'c-g! 'c-g? 'cauchy-window 'mlt-sine-window 'cepstrum
+     'bold-peaks-font 'bomb 'cauchy-window 'mlt-sine-window 'cepstrum
      'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
      'channel-properties 'channel-property 'channel-style 'channel-widgets 'channels
      'channels-combined 'channels-separate 'channels-superimposed 'chans 'clear-array
@@ -1898,7 +1923,7 @@ black-and-white-colormap constant *better-colormap*
      'make-nrxycos 'make-snd->sample 'make-sound-data 'make-square-wave 'make-src 'make-ssb-am
      'make-ncos 'make-nsin 'make-table-lookup 'make-triangle-wave 'make-two-pole 'make-two-zero
      'make-variable-graph 'make-vct 'make-wave-train 'map-chan 'map-channel 'mark-click-hook
-     'mark-color 'mark-context 'mark-drag-hook 'mark-drag-triangle-hook 'mark-home 'mark-hook
+     'mark-color 'mark-context 'mark-drag-hook 'mark-home 'mark-hook
      'mark-name 'mark-properties 'mark-property 'mark-sample 'mark-sync 'mark-sync-max
      'mark-tag-height 'mark-tag-width 'mark? 'marks 'max-regions 'max-transform-peaks
      'max-virtual-ptrees 'maxamp 'maxamp-position 'menu-widgets 'min-dB 'minibuffer-history-length
@@ -1950,7 +1975,7 @@ black-and-white-colormap constant *better-colormap*
      'parzen-window 'pausing 'peak-env-hook 'peaks 'peaks-font 'phase-partials->wave
      'phase-vocoder 'phase-vocoder-amp-increments 'phase-vocoder-amps 'phase-vocoder-freqs
      'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play
-     'play-hook 'player-home 'player? 'players
+     'play-arrow-size 'play-hook 'player-home 'player? 'players
      'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape 'polywave
      'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
      'previous-sample 'print-dialog 'print-hook 'print-length 'progress-report
@@ -1981,10 +2006,10 @@ black-and-white-colormap constant *better-colormap*
      'selected-channel 'selected-data-color 'selected-graph-color 'selected-sound 'selection-chans
      'selection-color 'selection-context 'selection-creates-region 'selection-frames
      'selection-maxamp 'selection-maxamp-position 'selection-member? 'selection-position
-     'selection-srate 'selection?
-     'short-file-name 'show-all-axes 'show-all-axes-unlabelled 'show-bare-x-axis
-     'show-axes 'show-controls 'show-grid 'show-indices
-     'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection-transform
+     'selection-srate 'selection? 'short-file-name 'show-all-axes 'show-all-axes-unlabelled
+     'show-bare-x-axis 'show-axes 'show-controls 'show-grid 'show-indices
+     'show-full-duration 'initial-beg 'initial-dur 'show-listener
+     'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection 'show-selection-transform
      'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
      'show-y-zero 'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos? 'smooth-channel
      'smooth-selection 'smooth-sound 'snd->sample 'snd->sample? 'snd-error 'snd-error-hook
@@ -2003,17 +2028,18 @@ black-and-white-colormap constant *better-colormap*
      'src-sound 'src? 'ssb-am 'ssb-am? 'start-hook 'start-playing 'start-playing-hook
      'start-playing-selection-hook 'start-progress-report 'stop-dac-hook 'stop-player
      'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'ncos 'ncos? 'nsin 'nsin?
-     'swap-channels 'sync 'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap 'temp-dir
+     'swap-channels 'sync 'sync-style 'sync-none 'sync-all 'sync-by-sound
+     'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap 'temp-dir
      'text-focus-color 'time-graph 'time-graph-hook 'time-graph-style 'time-graph-type
      'time-graph? 'tiny-font 'tracking-cursor-style 'transform->vct 'transform-dialog
      'transform-frames 'transform-graph 'transform-graph-style 'transform-graph-type
      'transform-graph? 'transform-normalization 'transform-sample 'transform-size
      'transform-type 'transform? 'trap-segfault 'triangle-wave 'triangle-wave? 'tukey-window
      'two-pole 'two-pole? 'two-zero 'two-zero? 'ultraspherical-window 'unbind-key  'undo
-     'undo-edit 'undo-hook 'update-hook 'update-lisp-graph 'update-sound 'update-time-graph
-     'update-transform-graph 'variable-graph? 'vct 'vct* 'vct+ 'vct->channel 'vct->list
-     'vct->sound-data 'vct->string 'vct->vector 'vct-add! 'vct-copy 'vct-fill! 'vct-length
-     'vct-map! 'vct-move! 'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!
+     'undo-edit 'undo-hook 'unselect-all 'update-hook 'update-lisp-graph 'update-sound
+     'update-time-graph 'update-transform-graph 'variable-graph? 'vct 'vct* 'vct+ 'vct->channel
+     'vct->list 'vct->sound-data 'vct->string 'vct->vector 'vct-add! 'vct-copy 'vct-fill!
+     'vct-length 'vct-map! 'vct-move! 'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse!
      'vct-scale! 'vct-set! 'vct-subseq 'vct-subtract! 'vct? 'vector->vct 'view-files-amp
      'view-files-amp-env 'view-files-dialog 'view-files-files 'view-files-select-hook
      'view-files-selected-files 'view-files-sort 'view-files-speed 'view-files-speed-style
@@ -4307,6 +4333,81 @@ black-and-white-colormap constant *better-colormap*
     (04-sndlib-01)
   loop
   (04-sndlib-02)
+;
+
+\ ---------------- test 05: simple overall checks ----------------
+
+: ccvp-01-cb { y data forward -- r }
+  data 0 vct-ref { angle }
+  data 1 vct-ref { incr }
+  angle fcos y f* { val }
+  data 0 angle incr forward if f+ else f- then vct-set! drop
+  val
+;
+
+half-pi fnegate constant -half-pi
+
+: ccvp-02-cb { frag-beg frag-dur -- v }
+  pi frag-dur f/ { incr }
+  -half-pi  frag-beg incr f*  f+
+  incr 2 >vct
+;
+
+: cosine-channel-via-ptree <{ :optional beg 0 dur #f snd #f chn #f edpos #f -- }>
+  <'> ccvp-01-cb
+  beg dur snd chn edpos #t
+  <'> ccvp-02-cb
+  ptree-channel drop
+;
+
+0 value a-ctr
+0 value g-init-val
+
+: append-sound { fname -- }
+  fname undef undef undef frames insert-sound drop
+;
+
+: cc-01-cb { incr -- prc; y self -- r }
+  1 proc-create incr , -half-pi ( angle ) , ( prc )
+ does> { y self -- r }
+  self @ { incr }
+  self cell+ @ { angle }
+  y angle f* { val }
+  angle incr f+ self cell+ ! ( angle += incr )
+  val
+;
+
+: cosine-channel <{ :optional beg 0 dur #f snd #f chn #f edpos #f -- }>
+  pi  dur if dur else snd chn undef frames then  f/ ( incr ) cc-01-cb
+  beg dur snd chn edpos
+  map-channel drop
+;
+
+: (05-simple-check-01) ( -- )
+  playing if
+    $" dac is running??" #() snd-display
+  then
+  "oboe.snd" open-sound { ind }
+  #t ind 0 set-transform-graph? drop
+  graph-as-sonogram ind 0 set-transform-graph-type drop
+  "hiho" ind 0 1 <'> y-axis-label 'no-such-axis nil fth-catch if
+    $" no fft axis?" #() snd-display
+  then
+  stack-reset
+  #t ind 0 set-fft-log-frequency drop
+  ind 0 update-transform-graph drop
+  ind close-sound drop
+;
+
+: 05-simple-check ( -- )
+  *tests* 0 ?do
+    i to *clmtest*
+    *snd-test-verbose*
+    *tests* 1 > && if
+      $" clmtest %d of %d" #( *clmtest* 1+ *tests* ) snd-test-message
+    then
+    (05-simple-check-01)
+  loop
 ;
 
 \ ---------------- test 10: marks ----------------
@@ -7233,9 +7334,10 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
 
 #( <'> add-mark <'> add-sound-file-extension <'> add-source-file-extension
    <'> sound-file-extensions <'> sound-file? <'> add-to-main-menu <'> add-to-menu <'> add-transform
-   <'> amp-control <'> as-one-edit <'> ask-before-overwrite <'> audio-input-device
+   <'> amp-control <'> ask-about-unsaved-edits
+   <'> as-one-edit <'> ask-before-overwrite <'> audio-input-device
    <'> audio-output-device <'> auto-resize <'> auto-update <'> autocorrelate
-   <'> axis-info <'> c-g? <'> apply-controls <'> change-samples-with-origin
+   <'> axis-info <'> apply-controls <'> change-samples-with-origin
    <'> channel-style <'> channels <'> chans <'> close-sound
    <'> comment <'> contrast-control <'> contrast-control-amp <'> contrast-control?
    <'> convolve-selection-with <'> convolve-with <'> channel-properties <'> channel-property
@@ -7282,7 +7384,8 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> mix-tag-height <'> mix-tag-width <'> mark-tag-height <'> mark-tag-width
    <'> mix-tag-y <'> mix-vct <'> mix-waveform-height <'> time-graph-style
    <'> lisp-graph-style <'> transform-graph-style <'> read-mix-sample
-   <'> next-sample <'> transform-normalization <'> open-raw-sound
+   <'> next-sample <'> show-full-duration <'> initial-beg <'> initial-dur
+   <'> transform-normalization <'> open-raw-sound
    <'> open-sound <'> previous-sample <'> peaks <'> player? <'> players
    <'> add-directory-to-view-files-list <'> add-file-to-view-files-list
    <'> view-files-sort <'> view-files-amp <'> view-files-speed <'> view-files-files
@@ -7307,7 +7410,8 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> selected-sound <'> selection-position <'> selection-creates-region
    <'> selection-frames <'> selection-member? <'> selection? <'> short-file-name
    <'> show-axes <'> show-controls <'> show-transform-peaks
-   <'> show-indices <'> show-marks <'> show-mix-waveforms
+   <'> show-indices <'> show-listener <'> show-selection <'> unselect-all
+   <'> show-marks <'> show-mix-waveforms
    <'> show-selection-transform <'> show-y-zero <'> sinc-width <'> show-grid
    <'> show-sonogram-cursor <'> grid-density <'> smooth-sound <'> smooth-selection
    <'> snd-spectrum <'> snd-tempnam <'> snd-version
@@ -7329,7 +7433,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> x-axis-style <'> beats-per-measure <'> beats-per-minute <'> x-bounds
    <'> x-position-slider <'> x-zoom-slider <'> mus-header-type->string
    <'> mus-data-format->string <'> y-bounds <'> y-position-slider
-   <'> y-zoom-slider <'> zero-pad <'> zoom-focus-style
+   <'> y-zoom-slider <'> zero-pad <'> zoom-focus-style <'> sync-style
    <'> mus-sound-samples <'> mus-sound-frames <'> mus-sound-duration <'> mus-sound-datum-size
    <'> mus-sound-data-location <'> data-size <'> mus-sound-chans <'> mus-sound-srate
    <'> mus-sound-header-type <'> mus-sound-data-format <'> mus-sound-length
@@ -7430,6 +7534,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
 
 #( <'> amp-control <'> ask-before-overwrite <'> audio-input-device <'> audio-output-device
    <'> auto-update <'> channel-style <'> sound-file-extensions
+   <'> show-full-duration <'> initial-beg <'> initial-dur
    <'> contrast-control <'> contrast-control-amp
    <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
    <'> contrast-control-bounds
@@ -7457,7 +7562,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> mix-speed <'> mix-tag-height <'> mix-tag-width
    <'> mix-tag-y <'> mark-tag-width <'> mark-tag-height <'> mix-waveform-height
    <'> transform-normalization
-   <'> view-files-sort <'> print-length <'> view-files-amp
+   <'> view-files-sort <'> print-length <'> play-arrow-size <'> view-files-amp
    <'> view-files-speed <'> view-files-speed-style <'> view-files-amp-env <'> view-files-files
    <'> view-files-selected-files <'> region-graph-style <'> reverb-control-decay
    <'> reverb-control-feedback <'> reverb-control-length
@@ -7477,7 +7582,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> wavelet-type <'> x-bounds
    <'> time-graph? <'> wavo-hop <'> wavo-trace <'> with-gl
    <'> with-mix-tags <'> x-axis-style <'> beats-per-minute <'> zero-pad
-   <'> zoom-focus-style <'> with-relative-panes <'>  window-x
+   <'> zoom-focus-style <'> sync-style <'> with-relative-panes <'>  window-x
    <'> window-y <'> window-width <'> window-height
    <'> beats-per-measure <'> channels <'> chans
    <'> comment <'> data-format <'> data-location
@@ -8145,7 +8250,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   #( <'> enved-filter-order <'> enved-filter
-     <'> ask-before-overwrite <'> auto-resize <'> auto-update <'> channel-style
+     <'> ask-before-overwrite <'> auto-resize <'> auto-update
+     <'> show-full-duration <'> initial-beg <'> initial-dur <'> channel-style
      <'> dac-combines-channels <'> dac-size <'> clipping
      <'> default-output-chans <'> default-output-data-format <'> default-output-srate
      <'> default-output-header-type
@@ -8267,6 +8373,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   2                          <'> mus-sound-close-input  'out-of-range     check-error-tag
   -1                         <'> set-mus-array-print-length 'out-of-range check-error-tag
   -1                         <'> set-print-length       'out-of-range     check-error-tag
+  -1                         <'> set-play-arrow-size    'out-of-range     check-error-tag
   12                         <'> set-enved-style        'out-of-range     check-error-tag
   1.5 0.0 0.0                <'> make-color             'out-of-range     check-error-tag
   -0.5 0.0 0.0               <'> make-color             'out-of-range     check-error-tag
@@ -9059,6 +9166,7 @@ let: ( -- )
   <'> 02-headers         run-fth-test
   <'> 03-variables       run-fth-test
   <'> 04-sndlib          run-fth-test
+  <'> 05-simple-check    run-fth-test
   <'> 10-marks           run-fth-test
   <'> 15-chan-local-vars run-fth-test
   <'> 19-save/restore    run-fth-test

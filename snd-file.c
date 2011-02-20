@@ -5713,7 +5713,7 @@ static XEN g_with_toolbar(void) {return(C_TO_XEN_BOOLEAN(with_toolbar(ss)));}
 void set_with_toolbar_and_display(bool val)
 {
   set_with_toolbar(val);
-#if USE_GTK
+#if (!USE_NO_GUI)
   if (with_toolbar(ss))
     show_toolbar();
   else hide_toolbar();

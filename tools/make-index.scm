@@ -94,7 +94,6 @@
 (load "maxf.scm")		   
 (load "strad.scm")
 					; (load "misc.scm")		   
-					; (load "toolbar.scm")
 (load "mixer.scm")		  
 (load "v.scm")
 (load "mix.scm")		   

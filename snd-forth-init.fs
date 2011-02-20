@@ -1,4 +1,4 @@
-\ .snd_forth -- start up file for Snd/Forth -*- snd-forth -*-
+\ .snd_forth -- start up file for Snd/Forth
 
 \ You can install the *.fs scripts with:
 \ 
@@ -150,7 +150,6 @@ output-comment-hook lambda: <{ str -- s }>
     'xm provided? not [if] dl-load libxm Init_libxm [then]
     require snd-xm
     add-mark-pane
-    #t show-smpte-label
     after-open-hook <'> show-disk-space add-hook!
 
     require effects
@@ -168,9 +167,6 @@ output-comment-hook lambda: <{ str -- s }>
 
   require extensions
   #t set-emacs-style-save-as
-  #t check-for-unsaved-edits
-  *snd-home* "/snd-remember-sound.fs" $+ to remember-sound-filename
-  3 remember-sound-state
   0.00 0.10 #t prefs-activate-initial-bounds
   with-reopen-menu
   with-buffers-menu
@@ -230,9 +226,13 @@ output-comment-hook lambda: <{ str -- s }>
   blue                   set-selected-data-color     drop
 
   #t           	         set-show-indices            drop
-  #f		         set-verbose-cursor          drop
   #t                     set-with-inset-graph        drop
   #t                     set-with-pointer-focus      drop
+  #t                     set-ask-about-unsaved-edits drop
+  #f                     set-remember-sound-state    drop
+  #t                     set-with-smpte-label        drop
+  #t                     set-with-popup-menus        drop
+  #t                     set-with-toolbar            drop
   #t  			 set-just-sounds             drop
   #t  			 set-enved-wave?             drop
   #t  			 set-show-y-zero             drop

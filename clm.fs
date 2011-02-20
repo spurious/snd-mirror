@@ -1,8 +1,8 @@
-\ clm.fs -- clm related base words, with-sound and friends -*- snd-forth -*-
+\ clm.fs -- clm related base words, with-sound and friends
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Wed Dec 22 22:54:40 CET 2010
+\ Changed: Sat Feb 19 17:26:08 CET 2011
 
 \ Commentary:
 \
@@ -27,7 +27,6 @@
 \ normalize-partials   ( parts1 -- parts2 )
 \ 
 \ ws-local-variables   ( -- )
-\ ws-interrupt?        ( -- )
 \ ws-info              ( start dur vars -- start dur )
 \ run                  ( start dur -- )
 \ run-instrument       ( start dur locsig-args -- )
@@ -73,7 +72,6 @@
   <'> noop alias maxamp
   <'> noop alias frames
   <'> noop alias scale-channel
-  : c-g? ( -- f ) #f ;
 [then]
 
 [ifundef] clm-print
@@ -219,7 +217,7 @@ set-current
 previous
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-$" fth 22-Dec-2010" value *clm-version*
+$" fth 19-Feb-2011" value *clm-version*
 #f 	      	    value *locsig*
 mus-lshort    	    value *clm-audio-format*
 #f            	    value *clm-comment*
@@ -355,19 +353,12 @@ $" with-sound interrupt" create-exception with-sound-interrupt
   then
 ;
 
-: ws-interrupt? ( -- )
-  c-g? if
-    'with-sound-interrupt #( "interrupted" ) fth-throw
-  then
-;
-
 : ws-info ( start dur vars -- start dur )
   { start dur vars }
   *clm-instruments* #( *clm-current-instrument* start dur vars ) array-push to *clm-instruments*
   *notehook* word? if
     *notehook* #( *clm-current-instrument* start dur ) run-proc drop
   then
-  ws-interrupt?
   start dur
 ;
 

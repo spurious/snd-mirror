@@ -1,6 +1,6 @@
-# ws.rb -- with_sound and friends for Snd/Ruby -*- snd-ruby -*-
+# ws.rb -- with_sound and friends for Snd/Ruby
 
-# Copyright (c) 2003--2010 Michael Scholz <mi-scholz@users.sourceforge.net>
+# Copyright (c) 2003--2011 Michael Scholz <mi-scholz@users.sourceforge.net>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,6 @@
 # Commentary:
 #
 # module WS
-#   ws_interrupt?
 #   ws_break(*rest)
 #   with_reverb(reverb, reverb_amount, snd, *with_sound_args)
 #   with_sound(*args) do ... end
@@ -417,7 +416,7 @@ trace_var(:$clm_table_size)        do |val| set_clm_table_size(val) end
 
 with_silence do
   # warning: undefined variable
-  $clm_version            = "ruby 22-Nov-2010"
+  $clm_version            = "ruby 19-Feb-2011"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -527,12 +526,6 @@ module WS
       Socket.gethostname
     else
       ENV["HOST"] or "localhost"
-    end
-  end
-  
-  def ws_interrupt?
-    if c_g?
-      raise(Interrupt, format("%s interrupted by user (C-g)", get_func_name(3)), caller(1))
     end
   end
 
@@ -1551,7 +1544,6 @@ class With_Snd < Snd_Instrument
                       :revout,   rev,
                       :channels, @channels,
                       :type,     @locsig_type)
-    ws_interrupt?
     out.length.times do |samp|
       locsig(loc, samp, yield(@start_frame + samp))
     end
@@ -1568,7 +1560,6 @@ class With_Snd < Snd_Instrument
   def run_reverb(chan = 0)
     super
     rev_out = SoundData.new(@reverb_channels, @ws_reverb.length)
-    ws_interrupt?
     case chan
     when Integer
       case @ws_reverb
@@ -1775,7 +1766,6 @@ class With_CLM < CLM_Instrument
                       :revout,   @ws_reverb,
                       :channels, @channels,
                       :type,     @locsig_type)
-    ws_interrupt?
     @start_frame.upto((@start_frame + seconds2samples(dur)) - 1) do |samp|
       locsig(loc, samp, yield(samp))
     end
@@ -1783,7 +1773,6 @@ class With_CLM < CLM_Instrument
 
   def run_reverb(chan = 0)
     super
-    ws_interrupt?
     case chan
     when Integer
       (@ws_reverb.length + seconds2samples(@decay_time)).times do |samp|
@@ -1955,9 +1944,7 @@ class With_DAC < Snd_Instrument
                           :type,     @locsig_type)
     beg, ends = times2samples(start, dur)
     @instruments.push([beg, ends, body])
-    ws_interrupt?
     real_run(beg)
-    ws_interrupt?
   end
 
   def real_run(sample)

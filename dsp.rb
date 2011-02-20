@@ -1,8 +1,8 @@
-# dsp.rb -- dsp.scm --> dsp.rb -*- snd-ruby -*-
+# dsp.rb -- dsp.scm --> dsp.rb
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Mon Nov 22 22:17:47 CET 2010
+# Changed: Sat Feb 19 17:17:10 CET 2011
 
 # Commentary:
 #
@@ -341,7 +341,6 @@ then using the inverse DFT to get the time domain result.")
     fr = make_array(out_n, 0.0)
     freq = (PI * 2) / n
     n.times do |i|
-      break if c_g?
       if i < n2
         fr[i] = edot_product(freq * Complex(0.0, 1.0) * i, in_data)
       else
@@ -350,7 +349,6 @@ then using the inverse DFT to get the time domain result.")
     end
     freq = (PI * 2) / out_n
     out_n.times do |i|
-      break if c_g?
       out_data[i] = (edot_product(freq * Complex(0.0, 1.0) * i, fr) / n).real
     end
     vct2channel(out_data, 0, out_n, snd, chn, false, format("%s(%s", get_func_name, factor))
@@ -397,7 +395,6 @@ then using the inverse DFT to get the time domain result.")
     x2 = make_vct(size)
     12.times do |i| x1[i + size / 4 - 6] = sin((TWO_PI * i) / 12.0) end
     1024.times do |i|
-      break if c_g?
       compute_uniform_circular_string(size, x0, x1, x2, mass, xspring, damp)
       graph(x0, "string", 0, 1.0, -10.0, 10.0)
     end
@@ -1580,7 +1577,7 @@ it returns one of the standard smoothing filters from the era when computers wer
           len = e.length
           x = random(e[len - 2].to_f)
           y = random(1.0)
-          if y <= envelope_interp(x, e) or c_g?
+          if y <= envelope_interp(x, e)
             x
           else
             next_random.call

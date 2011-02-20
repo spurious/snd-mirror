@@ -1,8 +1,8 @@
-# examp.rb -- Guile -> Ruby translation -*- snd-ruby -*-
+# examp.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Sun Dec 19 15:32:48 CET 2010
+# Changed: Sat Feb 19 17:17:27 CET 2011
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -395,7 +395,7 @@ looks for successive samples that sum to less than 'limit', moving the cursor if
     val0 = sf.call.abs
     val1 = sf.call.abs
     n = start
-    until sampler_at_end?(sf) or c_g? or val0 + val1 < limit
+    until sampler_at_end?(sf) or val0 + val1 < limit
       val0, val1 = val1, sf.call.abs
       n += 1
     end
@@ -1319,7 +1319,6 @@ turns a vocal sound into whispering: voiced2unvoiced(1.0, 256, 2.0, 2.0)")
     formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
     old_peak_amp = new_peak_amp = 0.0
     outlen.times do |i|
-      break if c_g?
       if ctr == freq_inc
         fdr = channel2vct(inctr, fftsize, snd, chn)
         if (pk = vct_peak(fdr)) > old_peak_amp
@@ -1363,7 +1362,6 @@ uses sum-of-cosines to manipulate speech sounds")
     old_peak_amp = new_peak_amp = 0.0
     formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
     out_data.map do |i|
-      break if c_g?
       outval = 0.0
       if ctr == freq_inc
         fdr = channel2vct(inctr, fftsize, snd, chn)
@@ -1801,7 +1799,6 @@ end")
     len = frames()
     samps_ctr = 0
     (loc...len).each do |ctr|
-      return ctr if c_g?
       samp0, samp1, samp2 = samp1, samp2, next_sample(reader)
       samps[samps_ctr] = samp0
       if samps_ctr < 9
@@ -1822,7 +1819,7 @@ end")
   add_help(:remove_clicks, "remove_clicks() tries to find and smooth-over clicks")
   def remove_clicks
     loc = 0
-    while (click = find_click(loc)) and (not c_g?())
+    while (click = find_click(loc))
       smooth_sound(click - 2, 4)
       loc = click + 2
     end

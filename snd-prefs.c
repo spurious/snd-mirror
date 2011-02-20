@@ -3,7 +3,8 @@
 /* TODO: effects menu, toolbar -- with_toolbar, with_popup_menus, possibly with-effects-menu
  * TODO: doc/test with-toolbar/with-smpte-label/with-popup-menus/remember-sound-state
  * TODO: check that changed stuff is saved correctly
- * TODO: finish gtk toolbar, write motif side
+ * TODO: motif side toolbar [remember to delete pix/newbuttons.png and add pix/toolbar.png]
+ * TODO: check multichannel toolbar ops
  */
 
 

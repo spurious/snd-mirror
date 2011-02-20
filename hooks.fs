@@ -1,9 +1,8 @@
-\ -*- snd-forth -*-
 \ hooks.fs -- hooks.scm -> hooks.fs
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Sat Nov 06 23:40:56 CET 2010
+\ Changed: Sat Feb 19 17:27:17 CET 2011
 
 \ snd-hooks         Array with all Snd hooks.
 \ reset-all-hooks   ( -- )
@@ -44,7 +43,6 @@ require examp
      listener-click-hook
      mark-click-hook
      mark-drag-hook
-     mark-drag-triangle-hook
      mark-hook
      mix-click-hook
      mix-drag-hook

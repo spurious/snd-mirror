@@ -1,8 +1,8 @@
-\ bird.fsm -- clm/bird.clm   -*- snd-forth -*-
+\ bird.fsm -- clm/bird.clm
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 12 03:26:27 CET 2006
-\ Changed: Thu Oct 14 20:24:59 CEST 2010
+\ Changed: Sat Feb 19 17:28:25 CET 2011
 
 \ Usage: <'> bird-test with-sound
 \        or ws-bird-test

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue May 20 08:35:13 CEST 2003
-# Changed: Tue Dec 08 22:31:54 CET 2009
+# Changed: Sat Feb 19 17:21:58 CET 2011
 
 # Commentary:
 #
@@ -180,7 +180,7 @@ HELP
     in_port = audio_open(in_sys)
     data = make_sound_data(@chans, @shorts)
     vobj = make_vct(@shorts)
-    until c_g?()
+    loop do
       mus_audio_read(in_port, data, @shorts)
       @chans.times do |chn|
         begin
@@ -197,7 +197,7 @@ HELP
     in_port = audio_open(in_sys)
     data = make_sound_data(@chans, @shorts)
     vobj = make_vct(@shorts)
-    until c_g?()
+    loop do
       mus_audio_read(in_port, data, @shorts)
       @chans.times do |chn|
         begin
@@ -227,7 +227,7 @@ HELP
       mouse_pos = x / x1.to_f
       mouse_down = x1
     end
-    until c_g?()
+    loop do
       mus_audio_read(in_port, data, @shorts)
       maxpt = (x1 == 1.0 ? @shorts : (x1 * @shorts).round)
       @chans.times do |chn|
@@ -255,7 +255,7 @@ HELP
     in_port = audio_open(in_sys)
     data = make_sound_data(@chans, @shorts)
     f = (func or @func)
-    until c_g?()
+    loop do
       mus_audio_read(in_port, data, @shorts)
       begin
         f.call(data)

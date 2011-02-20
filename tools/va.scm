@@ -288,7 +288,6 @@
       "marks-menu.scm"
       "strad.scm"
       "marks.scm"
-      "toolbar.scm"
       "maxf.scm"
       "v.scm"
       "misc.scm"
