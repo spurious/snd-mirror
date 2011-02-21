@@ -1,9 +1,8 @@
 /* this file included as text in snd-g|xprefs.c */
 
-/* TODO: effects menu, toolbar -- with_toolbar, with_popup_menus, possibly with-effects-menu
+/* TODO: effects menu, with_popup_menus, possibly with-effects-menu
  * TODO: doc/test with-toolbar/with-smpte-label/with-popup-menus/remember-sound-state
  * TODO: check that changed stuff is saved correctly
- * TODO: motif side toolbar tooltips/rest of icons/etc
  */
 
 

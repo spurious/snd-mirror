@@ -1060,27 +1060,31 @@ static char *preferences_xpm[] = {
 "    ...                 ",
 "                        "};
 
-static char *close_xpm[] = {
-"24 24 2 1",
-" 	c None",
-".	c #000000",
+
+static const char * close_xpm[] = {
+"24 24 5 1",
+"       c None s None",
+".	c gray50",
+"X	c black",
+"o	c white",
+"O	c yellow",
 "                        ",
 "                        ",
 "                        ",
 "                        ",
 "                        ",
 "                        ",
-"       .      .         ",
-"        .    ...        ",
-"        ..  ....        ",
-"         .. ...         ",
-"         .....          ",
-"          ...           ",
-"         .....          ",
-"        .......         ",
-"       ...  ....        ",
-"      ...    ....       ",
-"     ...      ..        ",
+"                        ",
+"      XX.      XX.      ",
+"       XX.    XX.       ",
+"        XX.  XX.        ",
+"         XX.XX.         ",
+"          XXX.          ",
+"          XXX.          ",
+"         XX.XX.         ",
+"        XX.  XX.        ",
+"       XX.    XX.       ",
+"      XX.      XX.      ",
 "                        ",
 "                        ",
 "                        ",
@@ -1089,6 +1093,7 @@ static char *close_xpm[] = {
 "                        ",
 "                        "};
 
+    
 static char *redo_xpm[] = {
 "24 24 42 1",
 " 	c None",
@@ -1985,34 +1990,35 @@ static char *exit_xpm[] = {
 "                                                "};
 
 static char *separator_xpm[] = {
-"2 24 3 1",
+"3 24 4 1",
 " 	c None",
 ".	c #DBD3CB",
 "+	c #FCFBFA",
-"  ",
-"  ",
-"  ",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-".+",
-"  ",
-"  ",
-"  "};
+"g      c #777777",
+"   ",
+"   ",
+"   ",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"   ",
+"   ",
+"   "};
 
 static char *up_node2_xpm[] = {
 "24 24 18 1",
@@ -2701,7 +2707,7 @@ void make_icons_transparent(const char *color)
       tmp[1] = bg1;
     }
 #if USE_GTK
-  make_speaker_icons_transparent(bg_line);
+  make_speaker_icons_transparent(bg1);
 #endif
 #if HAVE_XPM && USE_MOTIF
   if (bg4) free(bg4);

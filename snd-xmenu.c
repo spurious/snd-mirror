@@ -916,53 +916,12 @@ static Widget popup_menu = NULL;
 
 static void popup_menu_update_1(Widget w, XtPointer info, XtPointer context) {popup_menu_update();}
 
-
-static bool stopping = false;
-
-static void popup_play_callback(Widget w, XtPointer info, XtPointer context) 
-{
-  snd_info *sp;
-  sp = any_selected_sound();
-  if (stopping)
-    {
-      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
-      stopping = false;
-      set_button_label(w, _("Play"));
-      if (sp) set_play_button(sp, false);
-    }
-  else
-    {
-      if (sp)
-	{
-	  play_sound(sp, 0, NO_END_SPECIFIED);
-	  stopping = true;
-	  set_button_label(w, _("Stop playing"));
-	}
-    }
-}
-
-
-void reflect_play_stop_in_popup_menu(void)
-{
-  stopping = false;
-  if (popup_menu)
-    set_button_label(popup_play_menu, _("Play"));
-}
-
-
-static void popup_save_callback(Widget w, XtPointer info, XtPointer context) {save_edits_with_prompt(any_selected_sound());}
-static void popup_undo_callback(Widget w, XtPointer info, XtPointer context) {undo_edit_with_sync(current_channel(), 1);}
-static void popup_redo_callback(Widget w, XtPointer info, XtPointer context) {redo_edit_with_sync(current_channel(), 1);}
-
 static void popup_info_callback(Widget w, XtPointer info, XtPointer context) 
 {
   snd_info *sp;
   sp = any_selected_sound();
   if (sp) display_info(sp);
 }
-
-static void popup_close_callback(Widget w, XtPointer info, XtPointer context) {snd_close_file(any_selected_sound());}
-static void popup_revert_callback(Widget w, XtPointer info, XtPointer context) {revert_file_from_menu();}
 
 void post_popup(XButtonPressedEvent *event)
 {
@@ -995,25 +954,21 @@ void create_popup_menu(void)
       pop = XtCreateManagedWidget("Snd", xmLabelWidgetClass, popup_menu, args, n);
       sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, popup_menu, args, n);
 
-      popup_play_menu = XtCreateManagedWidget(_("Play"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtAddCallback(popup_play_menu, XmNactivateCallback, popup_play_callback, NULL);
-      XtVaSetValues(popup_play_menu, XmNsensitive, false, NULL);
-
       popup_undo_menu = XtCreateManagedWidget(_("Undo"), xmPushButtonWidgetClass, popup_menu, args, n);
       XtVaSetValues(popup_undo_menu, XmNsensitive, false, NULL);
-      XtAddCallback(popup_undo_menu, XmNactivateCallback, popup_undo_callback, NULL);
+      XtAddCallback(popup_undo_menu, XmNactivateCallback, edit_undo_callback, NULL);
 
       popup_redo_menu = XtCreateManagedWidget(_("Redo"), xmPushButtonWidgetClass, popup_menu, args, n);
       XtVaSetValues(popup_redo_menu, XmNsensitive, false, NULL);
-      XtAddCallback(popup_redo_menu, XmNactivateCallback, popup_redo_callback, NULL);
+      XtAddCallback(popup_redo_menu, XmNactivateCallback, edit_redo_callback, NULL);
 
       popup_save_menu = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtAddCallback(popup_save_menu, XmNactivateCallback, popup_save_callback, NULL);
+      XtAddCallback(popup_save_menu, XmNactivateCallback, file_save_callback, NULL);
       XtVaSetValues(popup_save_menu, XmNsensitive, false, NULL);
 
       popup_revert_menu = XtCreateManagedWidget(_("Revert"), xmPushButtonWidgetClass, popup_menu, args, n);
       XtVaSetValues(popup_revert_menu, XmNsensitive, true, NULL);
-      XtAddCallback(popup_revert_menu, XmNactivateCallback, popup_revert_callback, NULL);
+      XtAddCallback(popup_revert_menu, XmNactivateCallback, file_revert_callback, NULL);
 
       popup_info_menu = XtCreateManagedWidget(_("Info"), xmPushButtonWidgetClass, popup_menu, args, n);
       XtVaSetValues(popup_info_menu, XmNsensitive, false, NULL);
@@ -1021,11 +976,98 @@ void create_popup_menu(void)
 
       popup_close_menu = XtCreateManagedWidget(_("Close"), xmPushButtonWidgetClass, popup_menu, args, n);
       XtVaSetValues(popup_close_menu, XmNsensitive, true, NULL);
-      XtAddCallback(popup_close_menu, XmNactivateCallback, popup_close_callback, NULL);
+      XtAddCallback(popup_close_menu, XmNactivateCallback, file_close_callback, NULL);
 
       XtAddCallback(popup_menu, XmNmapCallback, popup_menu_update_1, NULL);
     }
 }
+
+
+/* ---------------- tooltips ---------------- */
+
+static Widget tooltip_shell = NULL;
+static Widget tooltip_label = NULL;
+static timeout_result_t tool_proc = 0, quit_proc = 0;
+static Time tool_last_time = 0;
+static Position tool_x, tool_y;
+static Widget tool_w;
+
+static void leave_tooltip(XtPointer tooltip, XtIntervalId *id)
+{
+  XtUnmanageChild(tooltip_shell);
+  quit_proc = 0;
+}
+
+
+static void handle_tooltip(XtPointer tooltip, XtIntervalId *id)
+{
+  char *tip = (char *)tooltip;
+  Position rx, ry;
+  if (!tooltip_shell)
+    {
+      tooltip_shell = XtVaCreatePopupShell(tip, overrideShellWidgetClass, MAIN_SHELL(ss), 
+					   XmNallowShellResize, true, 
+					   NULL);
+      tooltip_label = XtVaCreateManagedWidget(tip, xmLabelWidgetClass, tooltip_shell,
+					      XmNrecomputeSize, true,
+					      XmNbackground, ss->sgx->highlight_color,
+					      NULL);
+    }
+  else 
+    {
+      XmString str;
+      str = XmStringCreateLocalized(tip);
+      XtVaSetValues(tooltip_label, XmNlabelString, str, NULL);
+      XmStringFree(str);
+    }
+
+  XtTranslateCoords(tool_w, tool_x, tool_y, &rx, &ry);
+  XtVaSetValues(tooltip_shell, XmNx, rx, XmNy, ry, NULL);
+  XtManageChild(tooltip_shell);
+  quit_proc = XtAppAddTimeOut(MAIN_APP(ss), (unsigned long)2000, (XtTimerCallbackProc)leave_tooltip, NULL);
+}
+
+
+static void tool_starter(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{
+  XEnterWindowEvent *ev = (XEnterWindowEvent *)event;
+  char *tip = (char *)context;
+  if ((ev->time - tool_last_time) > 2)
+    {
+      tool_x = ev->x;
+      tool_y = ev->y;
+      tool_w = w;
+      tool_last_time = ev->time;
+      tool_proc = XtAppAddTimeOut(MAIN_APP(ss), (unsigned long)300, (XtTimerCallbackProc)handle_tooltip, (XtPointer)tip);
+    }
+}
+
+
+static void tool_stopper(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{
+  XLeaveWindowEvent *ev = (XLeaveWindowEvent *)event;
+  tool_last_time = ev->time;
+  if (tool_proc != 0)
+    {
+      XtRemoveTimeOut(tool_proc);
+      tool_proc = 0;
+    }
+  if (quit_proc != 0)
+    {
+      XtRemoveTimeOut(quit_proc);
+      quit_proc = 0;
+    }
+  if ((tooltip_shell) && (XtIsManaged(tooltip_shell)))
+    XtUnmanageChild(tooltip_shell);
+}
+
+
+static void add_tooltip(Widget w, const char *tip)
+{
+  XtAddEventHandler(w, EnterWindowMask, false, tool_starter, (XtPointer)tip);
+  XtAddEventHandler(w, LeaveWindowMask, false, tool_stopper, NULL);
+}
+
 
 
 /* ---------------- toolbar ---------------- */
@@ -1044,6 +1086,7 @@ static void add_to_toolbar(Widget bar, Pixmap icon, const char *tip, void (*call
 			      XmNbackground, ss->sgx->basic_color,
 			      NULL);
   XtAddCallback(w, XmNactivateCallback, callback, NULL);
+  add_tooltip(w, tip);
 }
 
 

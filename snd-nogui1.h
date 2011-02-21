@@ -68,7 +68,6 @@ bool highlight_unbalanced_paren(void);
 /* -------- snd-xmenu.c -------- */
 
 void check_menu_labels(int key, int state, bool extended);
-void reflect_play_stop_in_popup_menu(void);
 void reflect_play_selection_stop(void);
 int menu_widget(int which_menu);
 void set_button_label(int label, const char *str);

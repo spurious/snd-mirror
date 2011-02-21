@@ -1179,7 +1179,6 @@ static void popup_play_callback(GtkWidget *w, gpointer info)
     {
       stop_playing_all_sounds(PLAY_BUTTON_UNSET);
       stopping = false;
-      set_button_label(w, _("Play"));
       if (sp) set_play_button(sp, false);
     }
   else
@@ -1188,18 +1187,9 @@ static void popup_play_callback(GtkWidget *w, gpointer info)
 	{
 	  play_sound(sp, 0, NO_END_SPECIFIED);
 	  stopping = true;
-	  set_button_label(w, _("Stop playing"));
 	}
     }
   gtk_widget_hide(popup_menu);
-}
-
-
-void reflect_play_stop_in_popup_menu(void)
-{
-  stopping = false;
-  if (popup_menu)
-    set_button_label(popup_play_menu, _("Play"));
 }
 
 
@@ -1265,18 +1255,6 @@ static void create_popup_menu(guint button, oclock_t time)
 	}
       popup_menu = gtk_menu_new();
       gtk_widget_show(popup_menu);
-
-      popup_play_menu = gtk_image_menu_item_new_with_label(_("Play"));
-      pl[W_pop_play] = _("Play");
-      gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_play_menu);
-#ifdef GTK_STOCK_MEDIA_PLAY
-      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_play_menu), gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY, GTK_ICON_SIZE_MENU));
-#else
-      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_play_menu), gtk_image_new_from_stock(GTK_STOCK_EXECUTE, GTK_ICON_SIZE_MENU));
-#endif
-      SG_SIGNAL_CONNECT(popup_play_menu, "activate", popup_play_callback, NULL);
-      set_sensitive(popup_play_menu, (ss->active_sounds > 0));
-      gtk_widget_show(popup_play_menu);
 
       popup_undo_menu = gtk_image_menu_item_new_with_label(_("Undo"));
       pl[W_pop_undo] = _("Undo");

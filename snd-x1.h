@@ -93,7 +93,6 @@ void add_menu_drop(void);
 void post_popup(XButtonPressedEvent *event);
 Widget menu_widget(int which_menu);
 void check_menu_labels(int key, int state, bool extended);
-void reflect_play_stop_in_popup_menu(void);
 void reflect_play_selection_stop(void);
 void g_init_gxmenu(void);
 void set_button_label(Widget label, const char *str);

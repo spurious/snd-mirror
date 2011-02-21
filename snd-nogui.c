@@ -68,7 +68,6 @@ void set_button_label(int label, const char *str) {}
 int g_add_to_main_menu(const char *label, int slot) {return(0);}
 widget_t g_add_to_menu(int which_menu, const char *label, int callb, int position) {return(0);}
 int g_remove_from_menu(int which_menu, const char *label) {return(0);}
-void reflect_play_stop_in_popup_menu(void) {}
 void reflect_play_selection_stop(void) {}
 int fire_up_transform_dialog(bool managed) {return(0);}
 bool transform_dialog_is_active(void) {return(false);}

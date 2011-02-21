@@ -97,7 +97,6 @@ void save_colors(FILE *Fp);
 /* -------- snd-gmenu.c -------- */
 
 GtkWidget *add_menu(void);
-void reflect_play_stop_in_popup_menu(void);
 void reflect_play_selection_stop(void);
 void g_init_gxmenu(void);
 GtkWidget *menu_widget(int which_menu);

@@ -630,7 +630,6 @@ static void reflect_play_stop(snd_info *sp)
   set_control_panel_play_button(sp);
 #endif
   set_open_file_play_button(false);
-  reflect_play_stop_in_popup_menu();
   view_files_unplay();
 }
 
