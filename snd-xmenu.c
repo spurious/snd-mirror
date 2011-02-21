@@ -1046,15 +1046,20 @@ static void add_to_toolbar(Widget bar, Pixmap icon, const char *tip, void (*call
   XtAddCallback(w, XmNactivateCallback, callback, NULL);
 }
 
-#if 0
-static void add_separator_to_toolbar(GtkWidget *bar)
+
+static void add_separator_to_toolbar(Widget bar)
 {
-  GtkToolItem *w;
-  w = gtk_separator_tool_item_new();
-  gtk_toolbar_insert(GTK_TOOLBAR(bar), w, -1);
-  gtk_widget_show(GTK_WIDGET(w));
+  XtVaCreateManagedWidget("icon", xmPushButtonWidgetClass, bar,
+			  XmNlabelPixmap, toolbar_icon(SND_XPM_SEPARATOR),
+			  XmNlabelType, XmPIXMAP,
+			  XmNwidth, 8,
+			  XmNheight, 24,
+			  XmNshadowThickness, 0,
+			  XmNhighlightThickness, 0,
+			  XmNbackground, ss->sgx->basic_color,
+			  NULL);
 }
-#endif
+
 
 static void play_from_start_callback(Widget w, XtPointer info, XtPointer context) 
 {
@@ -1206,47 +1211,43 @@ void show_toolbar(void)
       if ((sound_style(ss) == SOUNDS_IN_NOTEBOOK) || (sound_style(ss) == SOUNDS_HORIZONTAL))
 	toolbar = XtCreateManagedWidget("toolbar", xmRowColumnWidgetClass, SOUND_PANE_BOX(ss), args, n);
       else toolbar = XtCreateManagedWidget("toolbar", xmRowColumnWidgetClass, SOUND_PANE(ss), args, n);
+      ss->sgx->toolbar = toolbar;
 
       if (auto_resize(ss))
 	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
 
       make_toolbar_icons(MAIN_SHELL(ss));
 
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_NEW),             "new sound",                  file_new_callback);
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_OPEN),            "open sound",                 file_open_callback);
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_SAVE),            "save selected sound",        file_save_callback);
-      /* add_to_toolbar(toolbar, toolbar_icon(SND_XPM_REVERT_TO_SAVED), "revert to saved",         file_revert_callback); */
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_UNDO),            "undo edit",                  edit_undo_callback);
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_REDO),            "redo last (undone) edit",    edit_redo_callback);
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_CLOSE),           "close selected sound",       file_close_callback);
-      /* add_separator_to_toolbar(toolbar); */
-#if 0
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_MEDIA_PLAY),      "play from the start",        play_from_start_callback);      
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_MEDIA_FORWARD),   "play from the cursor",       play_from_cursor_callback);      
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_MEDIA_STOP),      "stop playing",               stop_playing_callback);      
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_NEW),           "new sound",                  file_new_callback);
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_OPEN),          "open sound",                 file_open_callback);
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_SAVE),          "save selected sound",        file_save_callback);
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_REVERT),        "revert to saved",            file_revert_callback); 
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_UNDO),          "undo edit",                  edit_undo_callback);
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_REDO),          "redo last (undone) edit",    edit_redo_callback);
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_CLOSE),         "close selected sound",       file_close_callback);
+      add_separator_to_toolbar(toolbar); 
+
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_PLAY),          "play from the start",        play_from_start_callback);      
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_CURSOR_PLAY),   "play from the cursor",       play_from_cursor_callback);      
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_STOP_PLAY),     "stop playing",               stop_playing_callback);      
       add_separator_to_toolbar(toolbar);
-#endif
  
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_UP),      "show full sound",            full_dur_callback);      
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_ZOOM_OUT),        "zoom out",                   zoom_out_callback);      
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_ZOOM_IN),         "zoom in",                    zoom_in_callback);      
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_BACK_ARROW),      "go to start of sound",       goto_start_callback);      
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_BACK),         "go back a window",           go_back_callback);      
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_NEXT),      "go forward a window",        go_forward_callback);      
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_FORWARD_ARROW),       "go to end of sound",         goto_end_callback);      
-      /* add_separator_to_toolbar(toolbar); */
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_UP),            "show full sound",            full_dur_callback);      
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_ZOOM_OUT),      "zoom out",                   zoom_out_callback);      
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_ZOOM_IN),       "zoom in",                    zoom_in_callback);      
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_BACK_ARROW),    "go to start of sound",       goto_start_callback);      
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_BACK),          "go back a window",           go_back_callback);      
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_NEXT),          "go forward a window",        go_forward_callback);      
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_FORWARD_ARROW), "go to end of sound",         goto_end_callback);      
+      add_separator_to_toolbar(toolbar);
 
-#if 0
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_SELECT_ALL),      "select all of sound",        edit_select_all_callback);      
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_CLEAR),           "unselect everything",        edit_unselect_callback);   
-#endif   
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_CUT),             "delete selection",           edit_cut_callback);      
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_PASTE),           "insert selection at cursor", edit_paste_callback);      
-      /* add_separator_to_toolbar(toolbar); */
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_CUT),           "delete selection",           edit_cut_callback);      
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_PASTE),         "insert selection at cursor", edit_paste_callback);      
+      add_separator_to_toolbar(toolbar);
 
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_PREFERENCES),     "open preferences dialog",    options_preferences_callback);
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_PREFERENCES),   "open preferences dialog",    options_preferences_callback);
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_STOP),          "stop the current operation", stop_everything_callback);
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_EXIT),            "exit Snd",                   file_exit_callback);
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_EXIT),          "exit Snd",                   file_exit_callback);
 
     }
   else

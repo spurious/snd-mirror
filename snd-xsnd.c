@@ -1969,7 +1969,10 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       if (sound_style(ss) == SOUNDS_VERTICAL)
 	{
-	  XtSetArg(args[n], XmNpositionIndex, snd_slot); n++;
+	  if (ss->sgx->toolbar)
+	    XtSetArg(args[n], XmNpositionIndex, snd_slot + 1);
+	  else XtSetArg(args[n], XmNpositionIndex, snd_slot);
+	  n++;
 	}
       XtSetArg(args[n], XmNuserData, sp->index); n++;
 

@@ -119,6 +119,7 @@ typedef struct {
   Widget mainpane;
   Widget soundpane;
   Widget soundpanebox;
+  Widget toolbar;
   Display *mdpy;
   xm_font_t peaks_fontlist;
   XFontStruct *peaks_fontstruct;

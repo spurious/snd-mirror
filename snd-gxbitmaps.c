@@ -446,134 +446,7 @@ unsigned char *snd_plain_icon_bits(void) {return(snd_plain_bits);}
  *   select-all unselect
  */
 
-static char *back_arrow_xpm[] = {
-"24 24 30 1",
-"  c #000000",
-". c #53692A",
-"X c #59702D",
-"o c #657255",
-"O c #6D7A5B",
-"+ c #6D8839",
-"@ c #7C9B40",
-"# c #748261",
-"$ c #7F8E6B",
-"% c #818F71",
-"& c #879772",
-"* c #8C9A7F",
-"= c #85A24D",
-"- c #8BA859",
-"; c #92AD62",
-": c #95A77E",
-"> c #98AF74",
-", c #9BB572",
-"< c #9BAA87",
-"1 c #9CAF84",
-"2 c #A4B690",
-"3 c #A8BCA6",
-"4 c #ADBDA0",
-"5 c #AFC394",
-"6 c #BAD09D",
-"7 c #B5C3A9",
-"8 c #BED2A3",
-"9 c #D5E1C6",
-"0 c #FFFFFF",
-"q c None",
-"qqqqqqqqqqqqqqqqqqqqqqqq",
-"qqqqqqqqqqqqqqqqqqqqqqqq",
-"qqqqqqqqqqqqqqqqqqqqqqqq",
-"qqqqqqqqqq qqqqqqqqqqqqq",
-"qqqqqqqqq  qqqqqqqqqqqqq",
-"qqqqqqqq 9 qqqqqqqqqqqqq",
-"qqqqqqq 96    qqqqqqqqqq",
-"qqqqqq 968664% qqqqqqqqq",
-"qqqqq 966666663 qqqqqqqq",
-"qqqq <666666666* qqqqqqq",
-"qqqqq X@@@@@@;67  qqqqqq",
-"qqqqqq .@@@@@@=6$ qqqqqq",
-"qqqqqqq .@   X@,2 qqqqqq",
-"qqqqqqqq X q  +-6 qqqqqq",
-"qqqqqqqqq  qq  @6 qqqqqq",
-"qqqqqqqqqq qqq -: qqqqqq",
-"qqqqqqqqqqqqqq >o qqqqqq",
-"qqqqqqqqqqqqqq 5 qqqqqqq",
-"qqqqqqqqqqqqq 1O qqqqqqq",
-"qqqqqqqqqqqq &# qqqqqqqq",
-"qqqqqqqqqqqqq  qqqqqqqqq",
-"qqqqqqqqqqqqqqqqqqqqqqqq",
-"qqqqqqqqqqqqqqqqqqqqqqqq",
-"qqqqqqqqqqqqqqqqqqqqqqqq"};
-
-static char *fwd_arrow_xpm[] = {
-"24 24 43 1",
-"  c #000000",
-". c #53692A",
-"X c #59702D",
-"o c #657255",
-"O c #6D7A5B",
-"+ c #6D8839",
-"@ c #7C9B40",
-"# c #748261",
-"$ c #7F8E6B",
-"% c #818F71",
-"& c #879772",
-"* c #8C9A7F",
-"= c #85A24D",
-"- c #8BA859",
-"; c #92AD62",
-": c #95A77E",
-"> c #98AF74",
-", c #9BB572",
-"< c #919889",
-"1 c #92998C",
-"2 c #939A8D",
-"3 c #99A28F",
-"4 c #9BAA87",
-"5 c #9CAF84",
-"6 c #A4B690",
-"7 c #A8BCA6",
-"8 c #ADBDA0",
-"9 c #AFC394",
-"0 c #BAD09D",
-"q c #B5C3A9",
-"w c #BED2A3",
-"e c #BFD3A6",
-"r c #C2D5AA",
-"t c #C5D7AE",
-"y c #C8D9B2",
-"u c #CDDCBC",
-"i c #D1DFBE",
-"p c #D2E0BF",
-"a c #D3E0C1",
-"s c #D4E0C5",
-"d c #D5E1C6",
-"f c #FFFFFF",
-"g c None",
-"gggggggggggggggggggggggg",
-"gggggggggggggggggggggggg",
-"gggggggggggggggggggggggg",
-"ggggggggggggg gggggggggg",
-"ggggggggggggg  ggggggggg",
-"ggggggggggggg 2 gggggggg",
-"gggggggggg    02 ggggggg",
-"ggggggggg &6riw03 gggggg",
-"gggggggg 7suat000< ggggg",
-"ggggggg *saie000004 gggg",
-"gggggg  qs;@@@@@@X ggggg",
-"gggggg $y=@@@@@@. gggggg",
-"gggggg 6,@X   @. ggggggg",
-"gggggg 0@+  g X gggggggg",
-"gggggg 0@  gg  ggggggggg",
-"gggggg :- ggg gggggggggg",
-"gggggg o> gggggggggggggg",
-"ggggggg 9 gggggggggggggg",
-"ggggggg O5 ggggggggggggg",
-"gggggggg #& gggggggggggg",
-"ggggggggg  ggggggggggggg",
-"gggggggggggggggggggggggg",
-"gggggggggggggggggggggggg",
-"gggggggggggggggggggggggg"};
-
-static char * zoom_in_xpm[] = {
+static char *zoom_in_xpm[] = {
 "24 24 132 2",
 "  	c None",
 ". 	c #343434",
@@ -732,7 +605,7 @@ static char * zoom_in_xpm[] = {
 "                                        >.>.    ",
 "                                                "};
 
-static char * zoom_out_xpm[] = {
+static char *zoom_out_xpm[] = {
 "24 24 131 2",
 "  	c None",
 ". 	c #343434",
@@ -890,7 +763,7 @@ static char * zoom_out_xpm[] = {
 "                                        >.>.    ",
 "                                                "};
 
-static char * cut_xpm[] = {
+static char *cut_xpm[] = {
 "24 24 40 1",
 " 	c None",
 ".	c #000000",
@@ -957,7 +830,7 @@ static char * cut_xpm[] = {
 "                        ",
 "                        "};
 
-static char * paste_xpm[] = {
+static char *paste_xpm[] = {
 "24 24 89 1",
 " 	c None",
 ".	c #000000",
@@ -1073,7 +946,7 @@ static char * paste_xpm[] = {
 "        .............   ",
 "                        "};
 
-static char * preferences_xpm[] = {
+static char *preferences_xpm[] = {
 "24 24 87 1",
 " 	c None",
 ".	c #000000",
@@ -1187,7 +1060,7 @@ static char * preferences_xpm[] = {
 "    ...                 ",
 "                        "};
 
-static char * close_xpm[] = {
+static char *close_xpm[] = {
 "24 24 2 1",
 " 	c None",
 ".	c #000000",
@@ -1216,7 +1089,7 @@ static char * close_xpm[] = {
 "                        ",
 "                        "};
 
-static char * redo_xpm[] = {
+static char *redo_xpm[] = {
 "24 24 42 1",
 " 	c None",
 ".	c #000000",
@@ -1285,7 +1158,7 @@ static char * redo_xpm[] = {
 "                        ",
 "                        "};
 
-static char * undo_xpm[] = {
+static char *undo_xpm[] = {
 "24 24 31 1",
 " 	c None",
 ".	c #000000",
@@ -1343,7 +1216,7 @@ static char * undo_xpm[] = {
 "                        ",
 "                        "};
 
-static char * save_xpm[] = {
+static char *save_xpm[] = {
 "24 24 220 2",
 "  	c None",
 ". 	c #000000",
@@ -1590,7 +1463,7 @@ static char * save_xpm[] = {
 "      . . . . . . . . . . . . . . . . 7+.       ",
 "                                                "};
 
-static char * new_xpm[] = {
+static char *new_xpm[] = {
 "24 24 127 2",
 "  	c None",
 ". 	c #000000",
@@ -1744,7 +1617,7 @@ static char * new_xpm[] = {
 "      . . . . . . . . . . . . . . . . . .       ",
 "                                                "};
 
-static char * open_xpm[] = {
+static char *open_xpm[] = {
 "24 24 173 2",
 "  	c None",
 ". 	c #000000",
@@ -1944,96 +1817,7 @@ static char * open_xpm[] = {
 "                                                ",
 "                                                "};
 
-static char * next_node2_xpm[] = {
-"24 24 18 1",
-" 	c None",
-".	c #000000",
-"+	c #FFFFFF",
-"@	c #DADAD6",
-"#	c #BCBCB8",
-"$	c #506B46",
-"%	c #778E6F",
-"&	c #0F1308",
-"*	c #77A16E",
-"=	c #C2D7BE",
-"-	c #6B9060",
-";	c #A9C7A6",
-">	c #C1D6BD",
-",	c #BDD3B8",
-"'	c #B0CAAD",
-")	c #A4C3A2",
-"!	c #445B2C",
-"~	c #8CA782",
-"  ..................    ",
-"  .+++++++++++++++@#.   ",
-"  .+++++++++++++++#+#.  ",
-"  .+++$#++++++++++#%$&. ",
-"  .+++..#@++++++++@%$&. ",
-"  .+++.*.#@@+@++++++@#. ",
-"  .+@@.=-.#@@++@@@@@@#. ",
-".......=;-.#@@@+@@@@@#. ",
-".=>>>>>,;;-.#@@@@@@@@#. ",
-".=;;;;';;;;-.##@@@@@@#. ",
-".@>,,,>,,,,;-.#@@@@@@#. ",
-".)----------!.%#@@@@@#. ",
-".~---------!.%##@@@@##. ",
-".*--------!.$%##@@@@@#. ",
-".......--!.%####@@@@@#. ",
-"  .##%.-!.$%####@@@@##. ",
-"  .@##.!.%####@####@##. ",
-"  .+##..%%#####@@@@@@#. ",
-"  .+@#.#####@@@####@@#. ",
-"  .+@@#####@@@@####@##. ",
-"  .+##################. ",
-"  ..................... ",
-"                        ",
-"                        "};
-
-static char * prev_node3_xpm[] = {
-"24 24 17 1",
-" 	c None",
-".	c #000000",
-"+	c #0F1308",
-"@	c #FFFFFF",
-"#	c #BCBCB8",
-"$	c #DADAD6",
-"%	c #778E6F",
-"&	c #C2D7BE",
-"*	c #A6BFA0",
-"=	c #A9C7A6",
-"-	c #BDD3B8",
-";	c #B0CAAD",
-">	c #C1D6BD",
-",	c #8CA782",
-"'	c #5B7950",
-")	c #6B9060",
-"!	c #445B2C",
-"    ..................  ",
-"   +@#@@@@@@@@@@@@@@$.  ",
-"  +@@%$@@@@@@@@@@@@@$.  ",
-" .$#%%$@@@@@@@@@$.$$$.  ",
-" .%$##$@@@@@@@@#..$$$.  ",
-" .#@@@@@@@@@$$#.&.#$$.  ",
-" .$@@@@@@@@@@#.$*.##$.  ",
-" .@@@@@@@@$$#.$=*.......",
-" .@@@@@@@$$#.$==-&&&&&*.",
-" .@@@@@@@$#.@====;====%.",
-" .@$@$$$$#.$>>>>>>>>>>,.",
-" .@$@$$$$#.'))))))))))!.",
-" .@$$$$$$##.')))))))))!.",
-" .@$$$$$$##%.')))'!!!!!.",
-" .@$$$$$##$#%.')!.......",
-" .@$$$$$$$###%.'!.%%%.  ",
-" .@$$#####$$##%.!.%##.  ",
-" .@$$$$$$$#####%..###.  ",
-" .@$$#####$$$###%.###.  ",
-" .@$$$$$$$$$$$#######.  ",
-" .@##################.  ",
-" .....................  ",
-"                        ",
-"                        "};
-
-static char * exit_xpm[] = {
+static char *exit_xpm[] = {
 "24 24 140 2",
 "  	c None",
 ". 	c #000000",
@@ -2200,7 +1984,7 @@ static char * exit_xpm[] = {
 "              . . . . . . . . . . . . . . . .   ",
 "                                                "};
 
-static char * separator_xpm[] = {
+static char *separator_xpm[] = {
 "2 24 3 1",
 " 	c None",
 ".	c #DBD3CB",
@@ -2230,7 +2014,7 @@ static char * separator_xpm[] = {
 "  ",
 "  "};
 
-static char * up_node2_xpm[] = {
+static char *up_node2_xpm[] = {
 "24 24 18 1",
 " 	c None",
 ".	c #000000",
@@ -2275,7 +2059,7 @@ static char * up_node2_xpm[] = {
 "        .,,@!~>.        ",
 "        ........        "};
 
-static char * stop_xpm[] = {
+static char *stop_xpm[] = {
 "24 24 3 1",
 " 	c None",
 ".	c #cc0033",
@@ -2305,13 +2089,512 @@ static char * stop_xpm[] = {
 "                        ",
 "                        "};
 
+static char *home_xpm[] = {
+"24 24 101 2",
+"  	c None",
+". 	c #000000",
+"+ 	c #212121",
+"@ 	c #2C2C2C",
+"# 	c #C1665A",
+"$ 	c #924B37",
+"% 	c #2A2A2A",
+"& 	c #333333",
+"* 	c #343434",
+"= 	c #242424",
+"- 	c #944D3A",
+"; 	c #A05443",
+"> 	c #181818",
+", 	c #474747",
+"' 	c #555555",
+") 	c #8D8D8D",
+"! 	c #383838",
+"~ 	c #191919",
+"{ 	c #974F3C",
+"] 	c #222222",
+"^ 	c #313131",
+"/ 	c #A1A1A1",
+"( 	c #676767",
+"_ 	c #ACACAC",
+": 	c #BCBCBC",
+"< 	c #585858",
+"[ 	c #141414",
+"} 	c #1C1C1C",
+"| 	c #464646",
+"1 	c #666666",
+"2 	c #BABABA",
+"3 	c #7E7E7E",
+"4 	c #D2D2D2",
+"5 	c #FFFFFF",
+"6 	c #4F4F4F",
+"7 	c #262626",
+"8 	c #232323",
+"9 	c #505050",
+"0 	c #B2B2B2",
+"a 	c #909090",
+"b 	c #9A9A9A",
+"c 	c #838383",
+"d 	c #171717",
+"e 	c #202020",
+"f 	c #717171",
+"g 	c #A6A6A6",
+"h 	c #616161",
+"i 	c #1D1D1D",
+"j 	c #1F1F1F",
+"k 	c #C4C4C4",
+"l 	c #CACACA",
+"m 	c #AEAEAE",
+"n 	c #D1D1D1",
+"o 	c #7C7C7C",
+"p 	c #BFBFBF",
+"q 	c #6C6C6C",
+"r 	c #EEEEEE",
+"s 	c #949494",
+"t 	c #C7C7C7",
+"u 	c #EBEBEB",
+"v 	c #7D7D7D",
+"w 	c #6E6E6E",
+"x 	c #A9A9A9",
+"y 	c #E99E8F",
+"z 	c #DD806D",
+"A 	c #9B5343",
+"B 	c #CECECE",
+"C 	c #626262",
+"D 	c #858585",
+"E 	c #ECA292",
+"F 	c #D0533A",
+"G 	c #934F3E",
+"H 	c #6D6D6D",
+"I 	c #ECA291",
+"J 	c #CF543C",
+"K 	c #371D16",
+"L 	c #5D5D5D",
+"M 	c #868686",
+"N 	c #787878",
+"O 	c #ECA696",
+"P 	c #C95C49",
+"Q 	c #E17C66",
+"R 	c #924E3D",
+"S 	c #888888",
+"T 	c #A0A0A0",
+"U 	c #3D1208",
+"V 	c #D15137",
+"W 	c #919191",
+"X 	c #879981",
+"Y 	c #82947C",
+"Z 	c #8A9B85",
+"` 	c #6E8467",
+" .	c #5D7555",
+"..	c #4C6042",
+"+.	c #3F4F37",
+"@.	c #303D2A",
+"#.	c #7F8F7A",
+"$.	c #64785E",
+"%.	c #44563E",
+"&.	c #657460",
+"*.	c #40503A",
+"                                                ",
+"                      . .                       ",
+"          . . . .   . + @ .                     ",
+"          . # $ . . % & * = .                   ",
+"          . - ; . > , ' ) ! ~ .                 ",
+"          . { . ] ^ / ( _ : < [ .               ",
+"          . . } | 1 2 3 4 : 5 6 7 .             ",
+"          . 8 9 0 a 4 b 5 : 5 : c d .           ",
+"        . e f g 4 b 5 : 5 : 5 : 5 h i .         ",
+"      . j k k l 5 m 5 2 5 2 5 : 5 n o } .       ",
+"    . 8 m p p p p p p p p . . . . . a q = .     ",
+"  . . . . r 5 5 5 5 5 5 5 . s t u . v . . . .   ",
+"        . 4 5 . . . . . 5 . : 5 5 . w .         ",
+"        . x 5 . y z A . 5 . B 5 5 . C .         ",
+"        . D 5 . E F G . 5 . . . . . H .         ",
+"        . . 5 . I J K . k s L L M N . .         ",
+"        . . r . O P G . 5 5 5 5 5 2 .           ",
+"          . 2 . Q # R . : : : : : S .           ",
+"          . T U V # A . 5 5 5 5 5 W .           ",
+"  . . . . . . . . . . . . . . . . . . . .   .   ",
+"        } X Y Z X `  ...+.@.. Y #.$.%.&.*..     ",
+"    . .   . . . . . . . . .   . . . . . .       ",
+"                . . .                           ",
+"                                                "};
+
+static char *left_arrow_xpm[] = {
+"24 24 43 1",
+" 	c None",
+".	c #000000",
+"+	c #B9D0B9",
+"@	c #CDDECB",
+"#	c #B6C7B6",
+"$	c #B1C9B0",
+"%	c #B3C4B3",
+"&	c #B4CBB2",
+"*	c #B5CEB5",
+"=	c #B7CCB5",
+"-	c #B9CEB7",
+";	c #BAD1BA",
+">	c #BBCFBA",
+",	c #BBD0B9",
+"'	c #B2C9B0",
+")	c #7EAB78",
+"!	c #AAC7A8",
+"~	c #B3CAB1",
+"{	c #B0C9B0",
+"]	c #B0C9AE",
+"^	c #AEC7AC",
+"/	c #AAC5A8",
+"(	c #A9C4A7",
+"_	c #698267",
+":	c #2D2D2D",
+"<	c #CFDFCC",
+"[	c #ADC8AB",
+"}	c #B0C7AE",
+"|	c #ADC6AB",
+"1	c #678C63",
+"2	c #9BAD9A",
+"3	c #85AE81",
+"4	c #87AF84",
+"5	c #87B083",
+"6	c #88AF84",
+"7	c #88B085",
+"8	c #86AF82",
+"9	c #547150",
+"0	c #3C5235",
+"a	c #5B7950",
+"b	c #4A6342",
+"c	c #3B5035",
+"d	c #415639",
+"                        ",
+"                        ",
+"                        ",
+"            .           ",
+"           ..           ",
+"          .+.           ",
+"         .@#.           ",
+"        .@$%........    ",
+"       .@&*=-;->,').    ",
+"      .@!~{]^///^(_.    ",
+"     :<[}||[!^^}^[1.    ",
+"    .23444445645789.    ",
+"     .0aaaaaaaaaaab.    ",
+"      .0aaaaaaaaaab.    ",
+"       .0aabccccccd.    ",
+"        .0ab........    ",
+"         .0b.           ",
+"          .b.           ",
+"           ..           ",
+"            .           ",
+"                        ",
+"                        ",
+"                        ",
+"                        "};
+
+static char *right_arrow_xpm[] = {
+"24 24 41 1",
+" 	c None",
+".	c #000000",
+"+	c #8CA782",
+"@	c #B1CDAE",
+"#	c #77A16E",
+"$	c #B4CEB1",
+"%	c #ACC8A9",
+"&	c #709867",
+"*	c #C1D6BD",
+"=	c #BDD3B8",
+"-	c #BFD4BB",
+";	c #C2D7BE",
+">	c #B0CAAD",
+",	c #B2CBB0",
+"'	c #AAC7A8",
+")	c #0F1308",
+"!	c #AEC5A8",
+"~	c #AEC8AD",
+"{	c #ABC7A8",
+"]	c #AAC6A7",
+"^	c #A8C6A5",
+"/	c #ADC8AD",
+"(	c #A8C7A8",
+"_	c #A5C4A3",
+":	c #7F9F76",
+"<	c #A6BFA0",
+"[	c #ABC7AA",
+"}	c #A7C5A4",
+"|	c #A9C7A6",
+"1	c #AFC8AD",
+"2	c #A4C3A2",
+"3	c #6B9060",
+"4	c #778E6F",
+"5	c #698D60",
+"6	c #6B9063",
+"7	c #445B2C",
+"8	c #6B8661",
+"9	c #5B7950",
+"0	c #6C8562",
+"a	c #65815C",
+"b	c #506B46",
+"                        ",
+"                        ",
+"                        ",
+"           .            ",
+"           ..           ",
+"           .+.          ",
+"           .@#.         ",
+"    ........$%&.        ",
+"    .*=-;;;;>,'&)       ",
+"    .!~{{{]^'/(_:.      ",
+"    .<[^}^|{%'{123.     ",
+"    .45666666666657.    ",
+"    .8999999999997.     ",
+"    .099999999997.      ",
+"    .abbbbbb9997.       ",
+"    ........b97.        ",
+"           .b7.         ",
+"           .7.          ",
+"           ..           ",
+"           .            ",
+"                        ",
+"                        ",
+"                        ",
+"                        "};
+
+static char *back_arrow_xpm[] = {
+"24 24 43 1",
+" 	c None",
+".	c #000000",
+"+	c #B9D0B9",
+"@	c #CDDECB",
+"#	c #B6C7B6",
+"$	c #B1C9B0",
+"%	c #B3C4B3",
+"&	c #B4CBB2",
+"*	c #B5CEB5",
+"=	c #B7CCB5",
+"-	c #B9CEB7",
+";	c #BAD1BA",
+">	c #BBCFBA",
+",	c #BBD0B9",
+"'	c #B2C9B0",
+")	c #7EAB78",
+"!	c #AAC7A8",
+"~	c #B3CAB1",
+"{	c #B0C9B0",
+"]	c #B0C9AE",
+"^	c #AEC7AC",
+"/	c #AAC5A8",
+"(	c #A9C4A7",
+"_	c #698267",
+":	c #2D2D2D",
+"<	c #CFDFCC",
+"[	c #ADC8AB",
+"}	c #B0C7AE",
+"|	c #ADC6AB",
+"1	c #678C63",
+"2	c #9BAD9A",
+"3	c #85AE81",
+"4	c #87AF84",
+"5	c #87B083",
+"6	c #88AF84",
+"7	c #88B085",
+"8	c #86AF82",
+"9	c #547150",
+"0	c #3C5235",
+"a	c #5B7950",
+"b	c #4A6342",
+"c	c #3B5035",
+"d	c #415639",
+"                        ",
+"                        ",
+"  ...                   ",
+"  ...       .           ",
+"  ...      ..           ",
+"  ...     .+.           ",
+"  ...    .@#.           ",
+"  ...   .@$%........    ",
+"  ...  .@&*=-;->,').    ",
+"  ... .@!~{]^///^(_.    ",
+"  ...:<[}||[!^^}^[1.    ",
+"  ...23444445645789.    ",
+"  ....0aaaaaaaaaaab.    ",
+"  ... .0aaaaaaaaaab.    ",
+"  ...  .0aabccccccd.    ",
+"  ...   .0ab........    ",
+"  ...    .0b.           ",
+"  ...     .b.           ",
+"  ...      ..           ",
+"  ...       .           ",
+"  ...                   ",
+"                        ",
+"                        ",
+"                        "};
+
+static char *fwd_arrow_xpm[] = {
+"24 24 41 1",
+" 	c None",
+".	c #000000",
+"+	c #8CA782",
+"@	c #B1CDAE",
+"#	c #77A16E",
+"$	c #B4CEB1",
+"%	c #ACC8A9",
+"&	c #709867",
+"*	c #C1D6BD",
+"=	c #BDD3B8",
+"-	c #BFD4BB",
+";	c #C2D7BE",
+">	c #B0CAAD",
+",	c #B2CBB0",
+"'	c #AAC7A8",
+")	c #0F1308",
+"!	c #AEC5A8",
+"~	c #AEC8AD",
+"{	c #ABC7A8",
+"]	c #AAC6A7",
+"^	c #A8C6A5",
+"/	c #ADC8AD",
+"(	c #A8C7A8",
+"_	c #A5C4A3",
+":	c #7F9F76",
+"<	c #A6BFA0",
+"[	c #ABC7AA",
+"}	c #A7C5A4",
+"|	c #A9C7A6",
+"1	c #AFC8AD",
+"2	c #A4C3A2",
+"3	c #6B9060",
+"4	c #778E6F",
+"5	c #698D60",
+"6	c #6B9063",
+"7	c #445B2C",
+"8	c #6B8661",
+"9	c #5B7950",
+"0	c #6C8562",
+"a	c #65815C",
+"b	c #506B46",
+"                        ",
+"                        ",
+"                   ...  ",
+"           .       ...  ",
+"           ..      ...  ",
+"           .+.     ...  ",
+"           .@#.    ...  ",
+"    ........$%&.   ...  ",
+"    .*=-;;;;>,'&)  ...  ",
+"    .!~{{{]^'/(_:. ...  ",
+"    .<[^}^|{%'{123....  ",
+"    .45666666666657...  ",
+"    .8999999999997....  ",
+"    .099999999997. ...  ",
+"    .abbbbbb9997.  ...  ",
+"    ........b97.   ...  ",
+"           .b7.    ...  ",
+"           .7.     ...  ",
+"           ..      ...  ",
+"           .       ...  ",
+"                   ...  ",
+"                        ",
+"                        ",
+"                        "};
+
+
+/* ---------------- */
+
+static char *cursor_play_xpm[] = {
+"24 24 2 1",
+" 	c None",
+".	c #000000",
+"                        ",
+"                        ",
+"                        ",
+"   .        .           ",
+"   ..       ..          ",
+"   ...      ...         ",
+"   ....     ....        ",
+"   .....    .....       ",
+"   ......   ......      ",
+"   .......  .......     ",
+"   ........ ........    ",
+"   ..................   ",
+"   ..................   ",
+"   ........ ........    ",
+"   .......  .......     ",
+"   ......   ......      ",
+"   .....    .....       ",
+"   ....     ....        ",
+"   ...      ...         ",
+"   ..       ..          ",
+"   .        .           ",
+"                        ",
+"                        ",
+"                        "};
+
+
+static char *play_xpm[] = {
+"    24    24        2            1",
+"  c None",
+"# c #000000",
+"                        ",
+"                        ",
+"                        ",
+"        #               ",
+"        ##              ",
+"        ###             ",
+"        ####            ",
+"        #####           ",
+"        ######          ",
+"        #######         ",
+"        ########        ",
+"        #########       ",
+"        #########       ",
+"        ########        ",
+"        #######         ",
+"        ######          ",
+"        #####           ",
+"        ####            ",
+"        ###             ",
+"        ##              ",
+"        #               ",
+"                        ",
+"                        ",
+"                        "
+};
+
+static char *stop_play_xpm[] = {
+"    24    24        2            1",
+"  c None",
+"# c #000000",
+"                        ",
+"                        ",
+"                        ",
+"                        ",
+"                        ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"      ###########       ",
+"                        ",
+"                        ",
+"                        ",
+"                        ",
+"                        "
+};
+
+
+
 
 
 static Pixmap toolbar_pixmaps[NUM_TOOLBAR_PIXMAPS];
 
 void make_toolbar_icons(Widget w)
 { 
-  Pixmap shape1;
+  Pixmap shape1, shape2;
   XpmAttributes attributes; 
   XpmColorSymbol symbols[1];
   int i, scr;
@@ -2333,25 +2616,29 @@ void make_toolbar_icons(Widget w)
   attributes.numsymbols = 1;
   attributes.valuemask = XpmColorSymbols | XpmDepth | XpmColormap | XpmVisual;
 
-  XpmCreatePixmapFromData(dp, wn, (char **)back_arrow_xpm, &toolbar_pixmaps[SND_XPM_BACK_ARROW], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)fwd_arrow_xpm, &toolbar_pixmaps[SND_XPM_FORWARD_ARROW], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)zoom_in_xpm, &toolbar_pixmaps[SND_XPM_ZOOM_IN], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)zoom_out_xpm, &toolbar_pixmaps[SND_XPM_ZOOM_OUT], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)cut_xpm, &toolbar_pixmaps[SND_XPM_CUT], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)paste_xpm, &toolbar_pixmaps[SND_XPM_PASTE], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)preferences_xpm, &toolbar_pixmaps[SND_XPM_PREFERENCES], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)close_xpm, &toolbar_pixmaps[SND_XPM_CLOSE], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)redo_xpm, &toolbar_pixmaps[SND_XPM_REDO], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)undo_xpm, &toolbar_pixmaps[SND_XPM_UNDO], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)save_xpm, &toolbar_pixmaps[SND_XPM_SAVE], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)new_xpm, &toolbar_pixmaps[SND_XPM_NEW], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)open_xpm, &toolbar_pixmaps[SND_XPM_OPEN], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)next_node2_xpm, &toolbar_pixmaps[SND_XPM_NEXT], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)prev_node3_xpm, &toolbar_pixmaps[SND_XPM_BACK], &shape1, &attributes);
-  XpmCreatePixmapFromData(dp, wn, (char **)exit_xpm, &toolbar_pixmaps[SND_XPM_EXIT], &shape1, &attributes);
-  /* XpmCreatePixmapFromData(dp, wn, (char **)separator_xpm, &toolbar_pixmaps[SND_XPM_SEPARATOR], &shape2, &attributes); */
-  XpmCreatePixmapFromData(dp, wn, (char **)up_node2_xpm, &toolbar_pixmaps[SND_XPM_UP], &shape1, &attributes); 
-  XpmCreatePixmapFromData(dp, wn, (char **)stop_xpm, &toolbar_pixmaps[SND_XPM_STOP], &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)back_arrow_xpm,  &toolbar_pixmaps[SND_XPM_BACK_ARROW],    &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)fwd_arrow_xpm,   &toolbar_pixmaps[SND_XPM_FORWARD_ARROW], &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)zoom_in_xpm,     &toolbar_pixmaps[SND_XPM_ZOOM_IN],       &shape1,  &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)zoom_out_xpm,    &toolbar_pixmaps[SND_XPM_ZOOM_OUT],      &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)cut_xpm,         &toolbar_pixmaps[SND_XPM_CUT],           &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)paste_xpm,       &toolbar_pixmaps[SND_XPM_PASTE],         &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)preferences_xpm, &toolbar_pixmaps[SND_XPM_PREFERENCES],   &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)close_xpm,       &toolbar_pixmaps[SND_XPM_CLOSE],         &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)redo_xpm,        &toolbar_pixmaps[SND_XPM_REDO],          &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)undo_xpm,        &toolbar_pixmaps[SND_XPM_UNDO],          &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)save_xpm,        &toolbar_pixmaps[SND_XPM_SAVE],          &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)new_xpm,         &toolbar_pixmaps[SND_XPM_NEW],           &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)open_xpm,        &toolbar_pixmaps[SND_XPM_OPEN],          &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)right_arrow_xpm, &toolbar_pixmaps[SND_XPM_NEXT],          &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)left_arrow_xpm,  &toolbar_pixmaps[SND_XPM_BACK],          &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)exit_xpm,        &toolbar_pixmaps[SND_XPM_EXIT],          &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)separator_xpm,   &toolbar_pixmaps[SND_XPM_SEPARATOR],     &shape2, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)up_node2_xpm,    &toolbar_pixmaps[SND_XPM_UP],            &shape1, &attributes); 
+  XpmCreatePixmapFromData(dp, wn, (char **)stop_xpm,        &toolbar_pixmaps[SND_XPM_STOP],          &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)home_xpm,        &toolbar_pixmaps[SND_XPM_REVERT],        &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)play_xpm,        &toolbar_pixmaps[SND_XPM_PLAY],          &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)cursor_play_xpm, &toolbar_pixmaps[SND_XPM_CURSOR_PLAY],   &shape1, &attributes);
+  XpmCreatePixmapFromData(dp, wn, (char **)stop_play_xpm,   &toolbar_pixmaps[SND_XPM_STOP_PLAY],     &shape1, &attributes);
 }
 
 
@@ -2378,6 +2665,10 @@ Pixmap toolbar_icon(int which)
     case SND_XPM_SEPARATOR:     return(toolbar_pixmaps[SND_XPM_SEPARATOR]);
     case SND_XPM_UP:            return(toolbar_pixmaps[SND_XPM_UP]);
     case SND_XPM_STOP:          return(toolbar_pixmaps[SND_XPM_STOP]);
+    case SND_XPM_REVERT:        return(toolbar_pixmaps[SND_XPM_REVERT]);
+    case SND_XPM_PLAY:          return(toolbar_pixmaps[SND_XPM_PLAY]);
+    case SND_XPM_CURSOR_PLAY:   return(toolbar_pixmaps[SND_XPM_CURSOR_PLAY]);
+    case SND_XPM_STOP_PLAY:     return(toolbar_pixmaps[SND_XPM_STOP_PLAY]);
     }
   return(None);
 }
@@ -2389,51 +2680,55 @@ Pixmap toolbar_icon(int which)
 void make_icons_transparent(const char *color)
 {
 #if (HAVE_XPM) || (USE_GTK)
-  static char *bg_line = NULL;
+  static char *bg1 = NULL, *bg4 = NULL;
   int i;
   const char **tmp;
-  if (bg_line) free(bg_line);
-  bg_line = mus_format("-      c %s s %s", color, color); /* the background color isn't known at compile time */
-  mini_lock_xpm[1] = bg_line;
-  close_icon_xpm[1] = bg_line;
-  blank_xpm[1] = bg_line;
-  speed_l_xpm[1] = bg_line;
-  speed_r_xpm[1] = bg_line;
+  if (bg1) free(bg1);
+  bg1 = mus_format("-      c %s s %s", color, color); /* the background color isn't known at compile time */
+  mini_lock_xpm[1] = bg1;
+  close_icon_xpm[1] = bg1;
+  blank_xpm[1] = bg1;
+  speed_l_xpm[1] = bg1;
+  speed_r_xpm[1] = bg1;
   for (i = 0; i < NUM_BOMBS; i++)
     {
       tmp = mini_bomb_bits(i);
-      tmp[1] = bg_line;
+      tmp[1] = bg1;
     }
   for (i = 0; i < NUM_HOURGLASSES; i++)
     {
       tmp = mini_glass_bits(i);
-      tmp[1] = bg_line;
+      tmp[1] = bg1;
     }
 #if USE_GTK
   make_speaker_icons_transparent(bg_line);
 #endif
 #if HAVE_XPM && USE_MOTIF
-  free(bg_line);
-  bg_line = mus_format("       c %s", color);
-  back_arrow_xpm[1] = bg_line;
-  fwd_arrow_xpm[1] = bg_line;
-  zoom_in_xpm[1] = bg_line;
-  zoom_out_xpm[1] = bg_line;
-  cut_xpm[1] = bg_line;
-  paste_xpm[1] = bg_line;
-  preferences_xpm[1] = bg_line;
-  close_xpm[1] = bg_line;
-  redo_xpm[1] = bg_line;
-  undo_xpm[1] = bg_line;
-  save_xpm[1] = bg_line;
-  new_xpm[1] = bg_line;
-  open_xpm[1] = bg_line;
-  next_node2_xpm[1] = bg_line;
-  prev_node3_xpm[1] = bg_line;
-  exit_xpm[1] = bg_line;
-  separator_xpm[1] = bg_line;
-  up_node2_xpm[1] = bg_line;
-  stop_xpm[1] = bg_line;
+  if (bg4) free(bg4);
+  bg4 = mus_format("  c %s", color);
+  back_arrow_xpm[1] = bg4;
+  fwd_arrow_xpm[1] = bg4;
+  zoom_in_xpm[1] = bg4;
+  zoom_out_xpm[1] = bg4;
+  cut_xpm[1] = bg4;
+  paste_xpm[1] = bg4;
+  preferences_xpm[1] = bg4;
+  close_xpm[1] = bg4;
+  redo_xpm[1] = bg4;
+  undo_xpm[1] = bg4;
+  save_xpm[1] = bg4;
+  new_xpm[1] = bg4;
+  open_xpm[1] = bg4;
+  right_arrow_xpm[1] = bg4;
+  left_arrow_xpm[1] = bg4;
+  exit_xpm[1] = bg4;
+  separator_xpm[1] = bg4;
+  up_node2_xpm[1] = bg4;
+  stop_xpm[1] = bg4;
+  home_xpm[1] = bg4;
+  play_xpm[1] = bg4;
+  cursor_play_xpm[1] = bg4;
+  stop_play_xpm[1] = bg4;
 #endif
 #endif 
 }

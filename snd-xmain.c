@@ -804,6 +804,7 @@ void snd_doit(int argc, char **argv)
   sx->mainapp = app;
   sx->mainshell = shell;
   sx->mdpy = dpy;
+  sx->toolbar = NULL;
 
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
   sx->white =                   get_color(shell, snd_rs.white_color,             WHITE_COLOR,             NULL, NULL, true);
