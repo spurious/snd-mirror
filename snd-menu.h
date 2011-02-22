@@ -159,9 +159,8 @@ enum {m_menu,
 #define view_focus_middle_menu (ss->sgx->mw[v_focus_middle_menu])
 #define view_focus_active_menu (ss->sgx->mw[v_focus_active_menu])
 
-enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_info, W_pop_close, W_pop_revert, NUM_POPUP_WIDGETS};
+enum {W_pop_undo, W_pop_redo, W_pop_save, W_pop_info, W_pop_close, W_pop_revert, NUM_POPUP_WIDGETS};
 
-#define popup_play_menu (ss->sgx->pw[W_pop_play])
 #define popup_undo_menu (ss->sgx->pw[W_pop_undo])
 #define popup_redo_menu (ss->sgx->pw[W_pop_redo])
 #define popup_save_menu (ss->sgx->pw[W_pop_save])

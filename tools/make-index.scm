@@ -30,7 +30,6 @@
 (load "big-gens.scm")	  
 					;(load "oscope.scm")
 (load "bird.scm")		   
-					; (load "panic.scm")
 (load "clean.scm")	
 (load "peak-phases.scm")
 (load "piano.scm")

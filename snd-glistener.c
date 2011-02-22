@@ -823,7 +823,7 @@ static void make_listener_widget(int height)
 
       {
 	/* sigh... activate Emacs key bindings to some extent */
-	/*   more are handled by the gtkrc mechanism (taken from gtk/gtrc.key.emacs) */
+	/*   TODO: more were once-upon-a-time handled by the gtkrc mechanism (taken from gtk/gtrc.key.emacs) */
 	GtkBindingSet *set;
 	set = gtk_binding_set_by_class(GTK_TEXT_VIEW_GET_CLASS(GTK_TEXT_VIEW(listener_text)));
 

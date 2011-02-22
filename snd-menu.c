@@ -189,9 +189,7 @@ void popup_menu_update(void)
 
   file_p = (bool)any_selected_sound();
 
-  set_sensitive(popup_play_menu, file_p);
   set_sensitive(popup_info_menu, file_p);
-  
   set_sensitive(popup_undo_menu, undoable_edits_p);
   set_sensitive(popup_redo_menu, redoable_edits_p);
   set_sensitive(popup_save_menu, undoable_edits_p);

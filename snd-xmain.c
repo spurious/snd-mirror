@@ -56,92 +56,6 @@
 #define SASH_INDENT -20
 #define AUTO_RESIZE_DEFAULT 1
 
-/* /usr/lib/X11/rgb.txt, /usr/lib/X11/fonts/Type1/fonts.dir, /usr/lib/X11/fonts/misc */
-
-typedef struct {
-  char *highlight_color;
-  char *basic_color;
-  char *position_color;
-  char *zoom_color;
-  char *cursor_color;
-  char *selection_color;
-  char *mix_color;
-  char *text_focus_color;
-  char *graph_color;
-  char *selected_graph_color;
-  char *data_color;
-  char *selected_data_color;
-  char *listener_color;
-  char *listener_text_color;
-  char *mark_color;
-  char *enved_waveform_color;
-  char *filter_control_waveform_color;
-  char *sash_color;
-  char *white_color;
-  char *black_color;
-  char *red_color;
-  char *yellow_color;
-  char *green_color;
-  char *light_blue_color;
-  char *lighter_blue_color;
-  char *peaks_font;
-  char *listener_font;
-  char *bold_peaks_font;
-  char *axis_label_font;
-  char *axis_numbers_font;
-  int auto_resize;
-  int horizontal_panes;
-  int zoom_slider_width;
-  int position_slider_width;
-  int toggle_size;
-  int channel_sash_indent;
-  int channel_sash_size;
-  int sash_size;
-  int sash_indent;
-} sndres;
-
-static XtResource resources[] = {
-  {(char *)"highlightcolor", (char *)"Highlightcolor", XmRString, sizeof(char *), XtOffset(sndres *, highlight_color), XmRString, (XtPointer)HIGHLIGHT_COLOR},
-  {(char *)"basiccolor", (char *)"Basiccolor", XmRString, sizeof(char *), XtOffset(sndres *, basic_color), XmRString, (XtPointer)BASIC_COLOR},
-  {(char *)"positioncolor", (char *)"Positioncolor", XmRString, sizeof(char *), XtOffset(sndres *, position_color), XmRString, (XtPointer)POSITION_COLOR},
-  {(char *)"zoomcolor", (char *)"Zoomcolor", XmRString, sizeof(char *), XtOffset(sndres *, zoom_color), XmRString, (XtPointer)ZOOM_COLOR},
-  {(char *)"listenercolor", (char *)"Listenercolor", XmRString, sizeof(char *), XtOffset(sndres *, listener_color), XmRString, (XtPointer)LISTENER_COLOR},
-  {(char *)"listenertextcolor", (char *)"Listenertextcolor", XmRString, sizeof(char *), XtOffset(sndres *, listener_text_color), XmRString, (XtPointer)LISTENER_TEXT_COLOR},
-  {(char *)"cursorcolor", (char *)"Cursorcolor", XmRString, sizeof(char *), XtOffset(sndres *, cursor_color), XmRString, (XtPointer)CURSOR_COLOR},
-  {(char *)"selectioncolor", (char *)"Selectioncolor", XmRString, sizeof(char *), XtOffset(sndres *, selection_color), XmRString, (XtPointer)SELECTION_COLOR},
-  {(char *)"mixcolor", (char *)"Mixcolor", XmRString, sizeof(char *), XtOffset(sndres *, mix_color), XmRString, (XtPointer)MIX_COLOR},
-  {(char *)"textfocuscolor", (char *)"Textfocuscolor", XmRString, sizeof(char *), XtOffset(sndres *, text_focus_color), XmRString, (XtPointer)TEXT_FOCUS_COLOR},
-  {(char *)"redcolor", (char *)"Redcolor", XmRString, sizeof(char *), XtOffset(sndres *, red_color), XmRString, (XtPointer)RED_COLOR},
-  {(char *)"greencolor", (char *)"Greencolor", XmRString, sizeof(char *), XtOffset(sndres *, green_color), XmRString, (XtPointer)GREEN_COLOR},
-  {(char *)"whitecolor", (char *)"Whitecolor", XmRString, sizeof(char *), XtOffset(sndres *, white_color), XmRString, (XtPointer)WHITE_COLOR},
-  {(char *)"blackcolor", (char *)"Blackcolor", XmRString, sizeof(char *), XtOffset(sndres *, black_color), XmRString, (XtPointer)BLACK_COLOR},
-  {(char *)"lightbluecolor", (char *)"Lightbluecolor", XmRString, sizeof(char *), XtOffset(sndres *, light_blue_color), XmRString, (XtPointer)LIGHT_BLUE_COLOR},
-  {(char *)"lighterbluecolor", (char *)"Ligterbluecolor", XmRString, sizeof(char *), XtOffset(sndres *, lighter_blue_color), XmRString, (XtPointer)LIGHTER_BLUE_COLOR},
-  {(char *)"yellowcolor", (char *)"Yellowcolor", XmRString, sizeof(char *), XtOffset(sndres *, yellow_color), XmRString, (XtPointer)YELLOW_COLOR},
-  {(char *)"envedwaveformcolor", (char *)"Envedwaveformcolor", XmRString, sizeof(char *), XtOffset(sndres *, enved_waveform_color), XmRString, (XtPointer)ENVED_WAVEFORM_COLOR},
-  {(char *)"filterwaveformcolor", (char *)"Filterwaveformcolor", XmRString, sizeof(char *), XtOffset(sndres *, filter_control_waveform_color), XmRString, (XtPointer)FILTER_CONTROL_WAVEFORM_COLOR},
-  {(char *)"graphcolor", (char *)"Graphcolor", XmRString, sizeof(char *), XtOffset(sndres *, graph_color), XmRString, (XtPointer)GRAPH_COLOR},
-  {(char *)"selectedgraphcolor", (char *)"Selectedgraphcolor", XmRString, sizeof(char *), XtOffset(sndres *, selected_graph_color), XmRString, (XtPointer)SELECTED_GRAPH_COLOR},
-  {(char *)"datacolor", (char *)"Datacolor", XmRString, sizeof(char *), XtOffset(sndres *, data_color), XmRString, (XtPointer)DATA_COLOR},
-  {(char *)"selecteddatacolor", (char *)"Selecteddatacolor", XmRString, sizeof(char *), XtOffset(sndres *, selected_data_color), XmRString, (XtPointer)SELECTED_DATA_COLOR},
-  {(char *)"markcolor", (char *)"Markcolor", XmRString, sizeof(char *), XtOffset(sndres *, mark_color), XmRString, (XtPointer)MARK_COLOR},
-  {(char *)"sashcolor", (char *)"Sashcolor", XmRString, sizeof(char *), XtOffset(sndres *, sash_color), XmRString, (XtPointer)SASH_COLOR},
-  {(char *)"peaksFont", (char *)"PeaksFont", XmRString, sizeof(char *), XtOffset(sndres *, peaks_font), XmRString, (XtPointer)DEFAULT_PEAKS_FONT},
-  {(char *)"listenerFont", (char *)"ListenerFont", XmRString, sizeof(char *), XtOffset(sndres *, listener_font), XmRString, (XtPointer)NULL},
-  {(char *)"boldpeaksFont", (char *)"BoldPeaksFont", XmRString, sizeof(char *), XtOffset(sndres *, bold_peaks_font), XmRString, (XtPointer)DEFAULT_BOLD_PEAKS_FONT},
-  {(char *)"axisLabelFont", (char *)"AxisLabelFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_label_font), XmRString, (XtPointer)DEFAULT_AXIS_LABEL_FONT},
-  {(char *)"axisNumbersFont", (char *)"AxisNumbersFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_numbers_font), XmRString, (XtPointer)DEFAULT_AXIS_NUMBERS_FONT},
-  {(char *)"autoResize", (char *)"AutoResize", XmRInt, sizeof(int), XtOffset(sndres *, auto_resize), XmRImmediate, (XtPointer)AUTO_RESIZE_DEFAULT},
-  {(char *)"horizontalPanes", (char *)"HorizontalPanes", XmRInt, sizeof(int), XtOffset(sndres *, horizontal_panes), XmRImmediate, (XtPointer)SOUNDS_VERTICAL},
-  {(char *)"zoomSliderWidth", (char *)"ZoomSliderWidth", XmRInt, sizeof(int), XtOffset(sndres *, zoom_slider_width), XmRImmediate, (XtPointer)ZOOM_SLIDER_WIDTH},
-  {(char *)"positionSliderWidth", (char *)"PositionSliderWidth", XmRInt, sizeof(int), XtOffset(sndres *, position_slider_width), XmRImmediate, (XtPointer)POSITION_SLIDER_WIDTH},
-  {(char *)"toggleSize", (char *)"ToggleSize", XmRInt, sizeof(int), XtOffset(sndres *, toggle_size), XmRImmediate, (XtPointer)TOGGLE_SIZE},
-  {(char *)"channelSashIndent", (char *)"ChannelSashIndent", XmRInt, sizeof(int), XtOffset(sndres *, channel_sash_indent), XmRImmediate, (XtPointer)CHANNEL_SASH_INDENT},
-  {(char *)"channelSashSize", (char *)"ChannelSashSize", XmRInt, sizeof(int), XtOffset(sndres *, channel_sash_size), XmRImmediate, (XtPointer)CHANNEL_SASH_SIZE},
-  {(char *)"sashSize", (char *)"SashSize", XmRInt, sizeof(int), XtOffset(sndres *, sash_size), XmRImmediate, (XtPointer)SASH_SIZE},
-  {(char *)"sashIndent", (char *)"SashIndent", XmRInt, sizeof(int), XtOffset(sndres *, sash_indent), XmRImmediate, (XtPointer)SASH_INDENT},
-};
-
 
 #ifndef SND_AS_WIDGET
 static void window_close(Widget w, XtPointer context, XtPointer info)
@@ -512,19 +426,20 @@ color_t get_in_between_color(color_t fg, color_t bg)
 }
 
 
-static Pixel get_color(Widget shell, const char *rs_color, const char *defined_color, 
+static Pixel get_color(Widget shell, const char *defined_color, 
 		       const char *fallback_color, const char *second_fallback_color, bool use_white)
 {
   Colormap cmap;
   Display *dpy;
   int scr;
   XColor tmp_color, ignore;
+
   dpy = XtDisplay(shell);
   scr = DefaultScreen(dpy);
   cmap = DefaultColormap(dpy, scr);
   /* I suppose we could use XQueryColors and search for the closest available, or try yet again to get XCreateColormap to behave itself */
-  if ((!XAllocNamedColor(dpy, cmap, rs_color, &tmp_color, &ignore)) &&
-      (!XAllocNamedColor(dpy, cmap, defined_color, &tmp_color, &ignore)) &&
+
+  if ((!XAllocNamedColor(dpy, cmap, defined_color, &tmp_color, &ignore)) &&
       ((!fallback_color) || 
        (!XAllocNamedColor(dpy, cmap, fallback_color, &tmp_color, &ignore))) &&
       ((!second_fallback_color) || 
@@ -533,12 +448,12 @@ static Pixel get_color(Widget shell, const char *rs_color, const char *defined_c
       /* snd_error here causes a seg fault (it builds on mainpane which has not yet been created) */
       if (use_white)
 	{
-	  fprintf(stderr, _("can't get color %s -- will use white\n"), rs_color);
+	  fprintf(stderr, _("can't get color %s -- will use white\n"), defined_color);
 	  return(WhitePixel(dpy, scr));
 	}
       else
 	{
-	  fprintf(stderr, _("can't get color %s -- will use black\n"), rs_color);
+	  fprintf(stderr, _("can't get color %s -- will use black\n"), defined_color);
 	  return(BlackPixel(dpy, scr));
 	}
     }
@@ -546,16 +461,13 @@ static Pixel get_color(Widget shell, const char *rs_color, const char *defined_c
 }
 
 
-static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *rs_name, const char *def_name, Pixel pix, const char *ext_name)
+static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *name, Pixel pix, const char *ext_name)
 {
 #if HAVE_EXTENSION_LANGUAGE
   Status lookup_ok;
   XColor default_color, ignore;
 
-  lookup_ok = XLookupColor(dpy, cmap, rs_name, &default_color, &ignore);
-  if (!lookup_ok) 
-    lookup_ok = XLookupColor(dpy, cmap, def_name, &default_color, &ignore);
-
+  lookup_ok = XLookupColor(dpy, cmap, name, &default_color, &ignore);
   if (lookup_ok)
     {
       XColor current_color;
@@ -598,31 +510,29 @@ void save_colors(FILE *Fp)
   Colormap cmap;
   Display *dpy;
   int scr;
-  sndres snd_rs;
 
   dpy = XtDisplay(ss->sgx->mainshell);
   scr = DefaultScreen(dpy);
   cmap = DefaultColormap(dpy, scr);
-  XtGetApplicationResources(ss->sgx->mainshell, &snd_rs, resources, XtNumber(resources), NULL, 0);
 
-  save_a_color(Fp, dpy, cmap, snd_rs.basic_color,             BASIC_COLOR,             ss->sgx->basic_color,             S_basic_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.cursor_color,            CURSOR_COLOR,            ss->sgx->cursor_color,            S_cursor_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.data_color,              DATA_COLOR,              ss->sgx->data_color,              S_data_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.selected_data_color,     SELECTED_DATA_COLOR,     ss->sgx->selected_data_color,     S_selected_data_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.highlight_color,         HIGHLIGHT_COLOR,         ss->sgx->highlight_color,         S_highlight_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.position_color,          POSITION_COLOR,          ss->sgx->position_color,          S_position_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.zoom_color,              ZOOM_COLOR,              ss->sgx->zoom_color,              S_zoom_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.selection_color,         SELECTION_COLOR,         ss->sgx->selection_color,         S_selection_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.mix_color,               MIX_COLOR,               ss->sgx->mix_color,               S_mix_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.enved_waveform_color,    ENVED_WAVEFORM_COLOR,    ss->sgx->enved_waveform_color,    S_enved_waveform_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.listener_color,          LISTENER_COLOR,          ss->sgx->listener_color,          S_listener_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.listener_text_color,     LISTENER_TEXT_COLOR,     ss->sgx->listener_text_color,     S_listener_text_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.graph_color,             GRAPH_COLOR,             ss->sgx->graph_color,             S_graph_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.selected_graph_color,    SELECTED_GRAPH_COLOR,    ss->sgx->selected_graph_color,    S_selected_graph_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.mark_color,              MARK_COLOR,              ss->sgx->mark_color,              S_mark_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.sash_color,              SASH_COLOR,              ss->sgx->sash_color,              S_sash_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.text_focus_color,        TEXT_FOCUS_COLOR,        ss->sgx->text_focus_color,        S_text_focus_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.filter_control_waveform_color, FILTER_CONTROL_WAVEFORM_COLOR, ss->sgx->filter_control_waveform_color, S_filter_control_waveform_color);
+  save_a_color(Fp, dpy, cmap, BASIC_COLOR,             ss->sgx->basic_color,             S_basic_color);
+  save_a_color(Fp, dpy, cmap, CURSOR_COLOR,            ss->sgx->cursor_color,            S_cursor_color);
+  save_a_color(Fp, dpy, cmap, DATA_COLOR,              ss->sgx->data_color,              S_data_color);
+  save_a_color(Fp, dpy, cmap, SELECTED_DATA_COLOR,     ss->sgx->selected_data_color,     S_selected_data_color);
+  save_a_color(Fp, dpy, cmap, HIGHLIGHT_COLOR,         ss->sgx->highlight_color,         S_highlight_color);
+  save_a_color(Fp, dpy, cmap, POSITION_COLOR,          ss->sgx->position_color,          S_position_color);
+  save_a_color(Fp, dpy, cmap, ZOOM_COLOR,              ss->sgx->zoom_color,              S_zoom_color);
+  save_a_color(Fp, dpy, cmap, SELECTION_COLOR,         ss->sgx->selection_color,         S_selection_color);
+  save_a_color(Fp, dpy, cmap, MIX_COLOR,               ss->sgx->mix_color,               S_mix_color);
+  save_a_color(Fp, dpy, cmap, ENVED_WAVEFORM_COLOR,    ss->sgx->enved_waveform_color,    S_enved_waveform_color);
+  save_a_color(Fp, dpy, cmap, LISTENER_COLOR,          ss->sgx->listener_color,          S_listener_color);
+  save_a_color(Fp, dpy, cmap, LISTENER_TEXT_COLOR,     ss->sgx->listener_text_color,     S_listener_text_color);
+  save_a_color(Fp, dpy, cmap, GRAPH_COLOR,             ss->sgx->graph_color,             S_graph_color);
+  save_a_color(Fp, dpy, cmap, SELECTED_GRAPH_COLOR,    ss->sgx->selected_graph_color,    S_selected_graph_color);
+  save_a_color(Fp, dpy, cmap, MARK_COLOR,              ss->sgx->mark_color,              S_mark_color);
+  save_a_color(Fp, dpy, cmap, SASH_COLOR,              ss->sgx->sash_color,              S_sash_color);
+  save_a_color(Fp, dpy, cmap, TEXT_FOCUS_COLOR,        ss->sgx->text_focus_color,        S_text_focus_color);
+  save_a_color(Fp, dpy, cmap, FILTER_CONTROL_WAVEFORM_COLOR, ss->sgx->filter_control_waveform_color, S_filter_control_waveform_color);
 }
 
 
@@ -652,7 +562,6 @@ void snd_doit(int argc, char **argv)
   Drawable wn;
   Arg args[32];
   int i, n, err = 0;
-  sndres snd_rs;
   state_context *sx;
   Widget menu;
   XGCValues gv;
@@ -696,15 +605,10 @@ void snd_doit(int argc, char **argv)
 
   dpy = XtDisplay(shell);
 
-  XtGetApplicationResources(shell, &snd_rs, resources, XtNumber(resources), NULL, 0);
   XtVaGetValues(shell, XmNtitle, &app_title, NULL);  /* perhaps caller included -title arg */
   if (app_title) 
     ss->startup_title = mus_strdup(app_title); 
   else ss->startup_title = mus_strdup("snd");
-
-  if ((snd_rs.horizontal_panes >= (int)SOUNDS_VERTICAL) &&
-      (snd_rs.horizontal_panes <= (int)SOUNDS_IN_SEPARATE_WINDOWS))
-    set_sound_style((sound_style_t)snd_rs.horizontal_panes);
 
   for (i = 1; i < argc; i++)
     if ((strcmp(argv[i], "-h") == 0) || 
@@ -721,7 +625,7 @@ void snd_doit(int argc, char **argv)
 	    (strcmp(argv[i], "--notebook") == 0))
 	  {
 	    set_sound_style(SOUNDS_IN_NOTEBOOK);
-	    snd_rs.auto_resize = 0;
+	    set_auto_resize(false);
 	  }
 	else
 	  if ((strcmp(argv[i], "-separate") == 0) ||
@@ -747,15 +651,14 @@ void snd_doit(int argc, char **argv)
 
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, 0);
-  set_auto_resize(snd_rs.auto_resize);
-  ss->zoom_slider_width = snd_rs.zoom_slider_width;
-  ss->position_slider_width = snd_rs.position_slider_width;
-  ss->channel_sash_indent = snd_rs.channel_sash_indent;
-  ss->channel_sash_size = snd_rs.channel_sash_size;
-  ss->sash_size = snd_rs.sash_size;
-  ss->sash_indent = snd_rs.sash_indent;
-  ss->toggle_size = snd_rs.toggle_size;
 
+  ss->zoom_slider_width = ZOOM_SLIDER_WIDTH;
+  ss->position_slider_width = POSITION_SLIDER_WIDTH;
+  ss->channel_sash_indent = CHANNEL_SASH_INDENT;
+  ss->channel_sash_size = CHANNEL_SASH_SIZE;
+  ss->sash_size = SASH_SIZE;
+  ss->sash_indent = SASH_INDENT;
+  ss->toggle_size = TOGGLE_SIZE;
   ss->click_time = (oclock_t)XtGetMultiClickTime(dpy);
 
   ss->sgx = (state_context *)calloc(1, sizeof(state_context));
@@ -806,32 +709,31 @@ void snd_doit(int argc, char **argv)
   sx->mdpy = dpy;
   sx->toolbar = NULL;
 
-  /* the gray shades are an attempt to get around Netscape which hogs all the colors */
-  sx->white =                   get_color(shell, snd_rs.white_color,             WHITE_COLOR,             NULL, NULL, true);
-  sx->black =                   get_color(shell, snd_rs.black_color,             BLACK_COLOR,             NULL, NULL, false);
-  sx->light_blue =              get_color(shell, snd_rs.light_blue_color,        LIGHT_BLUE_COLOR,        "blue", NULL, true);
-  sx->lighter_blue =            get_color(shell, snd_rs.lighter_blue_color,      LIGHTER_BLUE_COLOR,      "blue", NULL, true);
-  sx->red =                     get_color(shell, snd_rs.red_color,               RED_COLOR,               NULL, NULL, false);
-  sx->green =                   get_color(shell, snd_rs.green_color,             GREEN_COLOR,             NULL, NULL, false);
-  sx->yellow =                  get_color(shell, snd_rs.yellow_color,            YELLOW_COLOR,            NULL, NULL, true);
-  sx->highlight_color =         get_color(shell, snd_rs.highlight_color,         HIGHLIGHT_COLOR,         "gray90", NULL, true);
-  sx->basic_color =             get_color(shell, snd_rs.basic_color,             BASIC_COLOR,             "gray80", "gray", true);
-  sx->position_color =          get_color(shell, snd_rs.position_color,          POSITION_COLOR,          "gray60", "blue", false);
-  sx->zoom_color =              get_color(shell, snd_rs.zoom_color,              ZOOM_COLOR,              "gray20", "gray", false);
-  sx->cursor_color =            get_color(shell, snd_rs.cursor_color,            CURSOR_COLOR,            NULL, NULL, false);
-  sx->selection_color =         get_color(shell, snd_rs.selection_color,         SELECTION_COLOR,         "gray80", NULL, false);
-  sx->mix_color =               get_color(shell, snd_rs.mix_color,               MIX_COLOR,               "red", NULL, false);
-  sx->enved_waveform_color =    get_color(shell, snd_rs.enved_waveform_color,    ENVED_WAVEFORM_COLOR,    "red", NULL, false);
-  sx->filter_control_waveform_color = get_color(shell, snd_rs.filter_control_waveform_color, FILTER_CONTROL_WAVEFORM_COLOR, "blue", NULL, false);
-  sx->listener_color =          get_color(shell, snd_rs.listener_color,          LISTENER_COLOR,          NULL, NULL, true);
-  sx->listener_text_color =     get_color(shell, snd_rs.listener_text_color,     LISTENER_TEXT_COLOR,     NULL, NULL, false);
-  sx->graph_color =             get_color(shell, snd_rs.graph_color,             GRAPH_COLOR,             NULL, NULL, true);
-  sx->selected_graph_color =    get_color(shell, snd_rs.selected_graph_color,    SELECTED_GRAPH_COLOR,    NULL, NULL, true);
-  sx->data_color =              get_color(shell, snd_rs.data_color,              DATA_COLOR,              NULL, NULL, false);
-  sx->selected_data_color =     get_color(shell, snd_rs.selected_data_color,     SELECTED_DATA_COLOR,     NULL, NULL, false);
-  sx->mark_color =              get_color(shell, snd_rs.mark_color,              MARK_COLOR,              "red", NULL, false);
-  sx->sash_color =              get_color(shell, snd_rs.sash_color,              SASH_COLOR,              NULL, NULL, false);
-  sx->text_focus_color =        get_color(shell, snd_rs.text_focus_color,        TEXT_FOCUS_COLOR,        NULL, NULL, true);
+  sx->white =                   get_color(shell, WHITE_COLOR,             NULL, NULL, true);
+  sx->black =                   get_color(shell, BLACK_COLOR,             NULL, NULL, false);
+  sx->light_blue =              get_color(shell, LIGHT_BLUE_COLOR,        "blue", NULL, true);
+  sx->lighter_blue =            get_color(shell, LIGHTER_BLUE_COLOR,      "blue", NULL, true);
+  sx->red =                     get_color(shell, RED_COLOR,               NULL, NULL, false);
+  sx->green =                   get_color(shell, GREEN_COLOR,             NULL, NULL, false);
+  sx->yellow =                  get_color(shell, YELLOW_COLOR,            NULL, NULL, true);
+  sx->highlight_color =         get_color(shell, HIGHLIGHT_COLOR,         "gray90", NULL, true);
+  sx->basic_color =             get_color(shell, BASIC_COLOR,             "gray80", "gray", true);
+  sx->position_color =          get_color(shell, POSITION_COLOR,          "gray60", "blue", false);
+  sx->zoom_color =              get_color(shell, ZOOM_COLOR,              "gray20", "gray", false);
+  sx->cursor_color =            get_color(shell, CURSOR_COLOR,            NULL, NULL, false);
+  sx->selection_color =         get_color(shell, SELECTION_COLOR,         "gray80", NULL, false);
+  sx->mix_color =               get_color(shell, MIX_COLOR,               "red", NULL, false);
+  sx->enved_waveform_color =    get_color(shell, ENVED_WAVEFORM_COLOR,    "red", NULL, false);
+  sx->filter_control_waveform_color = get_color(shell, FILTER_CONTROL_WAVEFORM_COLOR, "blue", NULL, false);
+  sx->listener_color =          get_color(shell, LISTENER_COLOR,          NULL, NULL, true);
+  sx->listener_text_color =     get_color(shell, LISTENER_TEXT_COLOR,     NULL, NULL, false);
+  sx->graph_color =             get_color(shell, GRAPH_COLOR,             NULL, NULL, true);
+  sx->selected_graph_color =    get_color(shell, SELECTED_GRAPH_COLOR,    NULL, NULL, true);
+  sx->data_color =              get_color(shell, DATA_COLOR,              NULL, NULL, false);
+  sx->selected_data_color =     get_color(shell, SELECTED_DATA_COLOR,     NULL, NULL, false);
+  sx->mark_color =              get_color(shell, MARK_COLOR,              "red", NULL, false);
+  sx->sash_color =              get_color(shell, SASH_COLOR,              NULL, NULL, false);
+  sx->text_focus_color =        get_color(shell, TEXT_FOCUS_COLOR,        NULL, NULL, true);
   sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
   sx->selected_grid_color = get_in_between_color(sx->selected_data_color, sx->selected_graph_color);
 
@@ -852,33 +754,25 @@ void snd_doit(int argc, char **argv)
   sx->orig_position_color = sx->position_color;
   sx->orig_highlight_color = sx->highlight_color;
 
-  if ((!(set_peaks_font(snd_rs.peaks_font))) &&
-      (!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&
+  if ((!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&
       (!(set_peaks_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find peaks font %s"), snd_rs.peaks_font);
+    fprintf(stderr, _("can't find peaks font %s"), DEFAULT_PEAKS_FONT);
 
   if ((!(set_tiny_font(DEFAULT_TINY_FONT))) &&
       (!(set_tiny_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find tiny font %s"), DEFAULT_TINY_FONT);
 
-  if ((!(set_bold_peaks_font(snd_rs.bold_peaks_font))) &&
-      (!(set_bold_peaks_font(DEFAULT_BOLD_PEAKS_FONT))) &&
+  if ((!(set_bold_peaks_font(DEFAULT_BOLD_PEAKS_FONT))) &&
       (!(set_bold_peaks_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find bold peaks font %s"), snd_rs.bold_peaks_font);
+    fprintf(stderr, _("can't find bold peaks font %s"), DEFAULT_BOLD_PEAKS_FONT);
 
-  if ((!(set_axis_label_font(snd_rs.axis_label_font))) &&
-      (!(set_axis_label_font(DEFAULT_AXIS_LABEL_FONT))) &&
+  if ((!(set_axis_label_font(DEFAULT_AXIS_LABEL_FONT))) &&
       (!(set_axis_label_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find axis label font %s"), snd_rs.axis_label_font);
+    fprintf(stderr, _("can't find axis label font %s"), DEFAULT_AXIS_LABEL_FONT);
 
-  if ((!(set_axis_numbers_font(snd_rs.axis_numbers_font))) &&
-      (!(set_axis_numbers_font(DEFAULT_AXIS_NUMBERS_FONT))) &&
+  if ((!(set_axis_numbers_font(DEFAULT_AXIS_NUMBERS_FONT))) &&
       (!(set_axis_numbers_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find axis numbers font %s"), snd_rs.axis_numbers_font);
-
-  if ((snd_rs.listener_font) &&
-      (!(set_listener_font(snd_rs.listener_font))))
-    fprintf(stderr, _("can't find listener font %s"), snd_rs.listener_font);
+    fprintf(stderr, _("can't find axis numbers font %s"), DEFAULT_AXIS_NUMBERS_FONT);
 
   ss->orig_axis_label_font = mus_strdup(axis_label_font(ss));
   ss->orig_axis_numbers_font = mus_strdup(axis_numbers_font(ss));
@@ -1037,7 +931,7 @@ void snd_doit(int argc, char **argv)
   sx->fltenv_data_gc = XCreateGC(dpy, wn, GCBackground | GCForeground | GCFunction, &gv);
 
   initialize_colormap(); /* X11 not ours */
-  make_icons_transparent(snd_rs.basic_color);
+  make_icons_transparent(BASIC_COLOR);
 
   startup_funcs();
 

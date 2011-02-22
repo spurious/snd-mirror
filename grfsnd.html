@@ -57,7 +57,6 @@
   <ul>
   <li><a href="#sndswitches" onmouseout="UnTip()" onmouseover="Tip('startup switches such as -l and -p')">Snd invocation flags</a>
   <li><a href="#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_s7, ~/.snd_prefs_s7, etc')">The initialization file</a>
-  <li><a href="#sndresources" onmouseout="UnTip()" onmouseover="Tip('X resources: Xdefaults, gtkrc')">Snd resources</a>
   <li><a href="#sndconfigurationswitches" onmouseout="UnTip()" onmouseover="Tip('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
   <li><a href="#sndenvvars" onmouseout="UnTip()" onmouseover="Tip('mostly related to audio hardware choices')">Environment variables</a>
   </ul>
@@ -133,8 +132,8 @@
 <!-- INDEX sndswitches:Invocation flags -->
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndswitches">Snd invocation flags</a></h3></td></tr></table>
 
-<p>Snd recognizes the following switches in its command line (leaving aside all
-the usual Xt/X-related flags like -xrm).</p>
+<p>Snd recognizes the following switches in its command line:
+</p>
 
 <table border=2 bordercolor="#f2f4ff" cellpadding=6 hspace=10><tr><td>
 <table cellspacing=0 cellpadding=0 hspace=20>
@@ -713,206 +712,6 @@ For more temporary situations, you can use the environment variable SND_PATH.
 It is a colon-separated list of directories that will be added to the load path when Snd starts.
 </p>
 
-
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndresources">Snd resources</a></h3></td></tr></table>
-
-<table width="50%" border=0 vspace=10><tr><td bgcolor="lightgreen" valign="middle"><h4>Motif</h4></td></tr></table>
-
-<p>In the Motif version, there are a few X-style resources (for use in your ~/.Xdefaults file) that Snd looks for (see Snd.ad); each has
-a built-in default value, so you can ignore this entirely, and use the extension language initialization file to choose new values.
-I may remove all this stuff eventually (it was always a bad idea).
-</p>
-
-<table border=2 bordercolor="#f2f4ff" cellpadding=6 hspace=10><tr><td>
-<table cellspacing=0 cellpadding=0 hspace=20>
-<tr><th align=left bgcolor="beige">Resource Name</th><th width=10 bgcolor="beige"></th><th align=left bgcolor="beige">Default Value</th><th width=10 bgcolor="beige"></th><th align=left bgcolor="beige"><center>Purpose</center></th><th width=10 bgcolor="beige"></th><th align=left bgcolor="beige">Scheme Name</th></tr>
-
-<tr><td><br></td><td><br></td><td></td><td></td><td></td><td></td><td></td></tr>
-
-<tr><td>autoResize</td><td></td><td>1</td><td></td><td>should Snd window resize automatically</td><td></td><td><code><a href="extsnd.html#autoresize">auto-resize</a></code></td></tr>
-
-<tr><td bgcolor="#f2f4ff">horizontalPanes</td><td></td><td bgcolor="#f2f4ff">0</td><td></td><td bgcolor="#f2f4ff">basic paned window layout</td><td></td><td bgcolor="#f2f4ff"></td></tr>
-
-<tr><td><br></td><td><br></td><td></td><td></td><td></td><td></td><td></td></tr>
-
-
-
-<tr><td bgcolor="#f2f4ff">peaksFont</td><td></td><td bgcolor="#f2f4ff">times 14</td><td></td><td bgcolor="#f2f4ff">fft peaks font</td><td></td><td bgcolor="#f2f4ff"><code><a href="extsnd.html#peaksfont">peaks-font</a></code></td></tr>
-
-<tr><td>boldpeaksFont</td><td></td><td>times bold 14</td><td></td><td>main fft peaks font</td><td></td><td><code><a href="extsnd.html#boldpeaksfont">bold-peaks-font</a></code></td></tr>
-
-<tr><td bgcolor="#f2f4ff">axisLabelFont</td><td></td><td bgcolor="#f2f4ff">times 20</td><td></td><td bgcolor="#f2f4ff">axis label ("Time")</td><td></td><td bgcolor="#f2f4ff"><code><a href="extsnd.html#axislabelfont">axis-label-font</a></code></td></tr>
-
-<tr><td>axisNumbersFont</td><td></td><td>courier 14</td><td></td><td>axis tick numbers</td><td></td><td><code><a href="extsnd.html#axisnumbersfont">axis-numbers-font</a></code></td></tr>
-
-<tr><td bgcolor="#f2f4ff">listenerFont</td><td></td><td bgcolor="#f2f4ff">fixed 7x13</td><td></td><td bgcolor="#f2f4ff">listener text</td><td></td><td bgcolor="#f2f4ff"><code><a href="extsnd.html#listenerfont">listener-font</a></code></td></tr>
-
-<tr><td><br></td><td><br></td><td></td><td></td><td></td><td></td><td></td></tr>
-
-<tr><td bgcolor="#f2f4ff">basiccolor</td><td></td><td bgcolor="#f2f4ff">ivory2</td><td></td><td bgcolor="#f2f4ff">default background color everywhere</td><td></td><td bgcolor="#f2f4ff"><code><a href="extsnd.html#basiccolor">basic-color</a></code></td></tr>
-
-<tr><td>cursorcolor</td><td></td><td>red</td><td></td>         <td>color of the cursor</td><td></td>                   <td><code><a href="extsnd.html#cursorcolor">cursor-color</a></code></td></tr>
-
-<tr><td bgcolor="#f2f4ff">datacolor</td><td></td><td bgcolor="#f2f4ff">black</td><td></td><td bgcolor="#f2f4ff">unselected data color</td><td></td>                 <td bgcolor="#f2f4ff"><code><a href="extsnd.html#datacolor">data-color</a></code></td></tr>
-
-<tr><td>graphcolor</td><td></td><td>white</td><td></td>          <td>unselected channels' graph background</td><td></td> <td><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
-
-<tr><td bgcolor="#f2f4ff">highlightcolor</td><td></td><td bgcolor="#f2f4ff">ivory1</td><td></td>      <td bgcolor="#f2f4ff">highlighting here and there</td><td></td>           <td bgcolor="#f2f4ff"><code><a href="extsnd.html#highlightcolor">highlight-color</a></code></td></tr>
-
-<tr><td>listenercolor</td><td></td><td>aliceblue</td><td></td>       <td>background color of the listener</td><td></td>      <td><code><a href="extsnd.html#listenercolor">listener-color</a></code></td></tr>
-
-<tr><td bgcolor="#f2f4ff">listenertextcolor</td><td></td><td bgcolor="#f2f4ff">black</td><td></td>   <td bgcolor="#f2f4ff">text color in the listener</td><td></td>            <td bgcolor="#f2f4ff"><code><a href="extsnd.html#listenertextcolor">listener-text-color</a></code></td></tr>
-
-<tr><td>markcolor</td><td></td><td>red</td><td></td>           <td>color of the mark indicator</td><td></td>           <td><code><a href="extsnd.html#markcolor">mark-color</a></code></td></tr>
-
-<tr><td bgcolor="#f2f4ff">mixcolor</td><td></td><td bgcolor="#f2f4ff">darkgray</td><td></td>            <td bgcolor="#f2f4ff">used for mix waveforms</td><td></td>                <td bgcolor="#f2f4ff"><code><a href="extsnd.html#mixcolor">mix-color</a></code></td></tr>
-
-<tr><td>positioncolor</td><td></td><td>ivory3</td><td></td>       <td>color of position sliders</td><td></td>             <td><code><a href="extsnd.html#positioncolor">position-color</a></code></td></tr>
-
-<tr><td bgcolor="#f2f4ff">sashcolor</td><td></td><td bgcolor="#f2f4ff">lightgreen</td><td></td>           <td bgcolor="#f2f4ff">color of paned window sash handles</td><td></td>    <td bgcolor="#f2f4ff"><code><a href="extsnd.html#sashcolor">sash-color</a></code></td></tr>
-
-<tr><td>selecteddatacolor</td><td></td><td>black</td><td></td>   <td>color of the data in selected channel</td><td></td> <td><code><a href="extsnd.html#selecteddatacolor">selected-data-color</a></code></td></tr>
-
-<tr><td bgcolor="#f2f4ff">selectedgraphcolor</td><td></td><td bgcolor="#f2f4ff">white</td><td></td>  <td bgcolor="#f2f4ff">background of selected channel's graph</td><td></td><td bgcolor="#f2f4ff"><code><a href="extsnd.html#selectedgraphcolor">selected-graph-color</a></code></td></tr>
-
-<tr><td>selectioncolor</td><td></td><td>lightsteelblue1</td><td></td>      <td>color of an active selection</td><td></td>          <td><code><a href="extsnd.html#selectioncolor">selection-color</a></code></td></tr>
-
-<tr><td bgcolor="#f2f4ff">textfocuscolor</td><td></td><td bgcolor="#f2f4ff">white</td><td></td>      <td bgcolor="#f2f4ff">color of text field with focus</td><td></td>        <td bgcolor="#f2f4ff"><code><a href="extsnd.html#textfocuscolor">text-focus-color</a></code></td></tr>
-
-<tr><td>zoomcolor</td><td></td><td>ivory4</td><td></td>           <td>color of zoom sliders</td><td></td>                 <td><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
-
-</table>
-</td></tr></table>
-
-<br>
-
-<p><A NAME="aboutcolors"></a>
-In the extension language,
-colors are defined by <a href="extsnd.html#makecolor">make-color</a> with the three red/green/blue values,
-each a float between 0.0 and 1.0.
-</p>
-<pre>
-    (set! (<a class=quiet href="extsnd.html#basiccolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_basiccolor_tip)">basic-color</a>) (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 1.0 0.0 0.0))
-</pre>
-<p>sets
-the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.scm</a> defines all the standard X11 color names.
-</p>
-
-<p>There are several other resources that set widget sizes: zoomSliderWidth,
-positionSliderWidth, toggleSize, sashSize, sashIndent, channelSashSize, and channelSashIndent.
-And several more color resources: whitecolor (list background),
-blackcolor, redcolor (buttons, VU clipping, etc), 
-greencolor (a few buttons),
-yellowcolor (a few envelope editor buttons), lightbluecolor, and lighterbluecolor (the fft option panel).
-</p>
-
-<p>You can experiment with other choices by
-using the -xrm switch:</p>
-
-<pre>
-    snd -xrm '*Highlightcolor: Red' oboe.snd
-    snd -xrm '*AxisNumbersFont: 6x10' oboe.snd
-    snd -xrm '*fontList: 9x15' oboe.snd
-    snd -xrm '*listenerFont: 6x10' oboe.snd
-    snd -xrm '*mixwaveformcolor: red' oboe.snd -notebook
-    snd oboe.snd pistol.snd -xrm '*selectedgraphcolor: black' -xrm '*selecteddatacolor: white'
-    snd -xrm '*fontList: -*-times-medium-r-*-*-14-*-*-*-*-*-*-*'
-    snd -xrm '*fontList: -*-symbol-*-*-*-*-18-*-*-*-*-*-*-*'
-    snd oboe.snd -title hiho -display fatty.hiho:0.0 -xrm '*chn-graph*backgroundPixmap: text.xpm'
-</pre>
-<p>Perhaps this is most useful when your window manager assumes white text for labels (menus);
-since Snd defaults to an off-white background, this makes everything unreadable. You can get
-the black text back with:
-</p>
-<pre>
-    snd -xrm '*foreground: Black'
-</pre>
-<p>or put the equivalent line in your .Xdefaults file.  The listener text color can be set
-via <code>(set! (<a class=quiet href="extsnd.html#listenertextcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_listenertextcolor_tip)">listener-text-color</a>) (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 0))</code> in ~/.snd.
-</p>
-
-<p>
-The last example above sets the window title to "hiho", rather than
-"snd", displays the window on the machine fatty.hiho (presumably accessible over the net),
-and tiles the graph backgrounds with the contents of text.xpm.  To get the -geometry argument
-to work, set the autoResize resource to 0:</p>
-<pre>
-    snd oboe.snd -geometry 800x200 -xrm '*autoResize: 0'
-</pre>
-
-<p>These resources can be set in Snd.ad or in your ~/.Xdefaults file:</p>
-<pre>
-    snd*axisLabelFont:      -*-times-medium-r-normal-*-18-*-*-*-*-*-*-*
-    snd*axisNumbersFont:    9x15
-    snd*fontList:           -*-times-bold-r-*-*-14-*-*-*-*-*-*-*
-</pre>
-
-<p>To find what fonts are available, and what they look like, I use xfontsel.
-I think other toolkits use helvetica where Motif defaults to a small fixed font &mdash;
-it looks like 7x13 on my machine.
-</p>
-
-
-<p>
-The <A class=def NAME="xautoresize">autoResize</a> resource determines how Snd acts when files
-are added to or removed from its overall display.  The default (1)
-causes Snd to expand or contract the main window's size to accommodate
-the sounds; many people find this distracting.  If 'autoResize' is 0, the outer window size remains the
-same, and the sounds try to fit as best they can (to some extent the window manager controls this stuff).  See also
-the variable <a href="extsnd.html#autoresize">auto-resize</a>.
-The <A class=def NAME="horizontalpanes">horizontalPanes</a> resource
-is equivalent to the -h flag; if 1, sounds are layed out
-horizontally rather than vertically;  if 2, you get a notebook
-widget holding the sounds.
-</p>
-
-<table width="50%" border=0 vspace=20><tr><td bgcolor="lightgreen" valign="middle"><h4>Gtk</h4></td></tr></table>
-
-<p>In Gtk, the various default colors and fonts are set via the "gtkrc"
-file(s).  If you are using some global "theme", you probably have ~/.gtkrc-2.0.
-Snd looks for this file first.  If it isn't found, Snd looks on the
-current directory for Snd.gtkrc.  If that isn't found, it looks for
-~/Snd.gtkrc. If that isn't found, it uses a built-in default equivalent
-to the Snd.gtkrc file in the Snd tarball.
-If you want to change the overall appearance of Snd, you can edit any of these rc files.
-Currently, the simplest way to change the menu label fonts
-is to change the "default" or "default_menu" styles in Snd.gtkrc:
-</p>
-<pre>
-    style "default"
-    {
-      font_name = "Sans Serif 11"
-      ....
-    }
-</pre>
-<p>To get the "brushed metal" look, for example, put the line:
-</p>
-<pre>
-pixmap_path "/usr/share/themes/BrushedMetalClean/gtk"
-</pre>
-<p>at the start of Snd.gtkrc, then add these lines:
-</p>
-<pre>
-  bg_pixmap[NORMAL]      = "bc.xpm"
-  bg_pixmap[PRELIGHT]    = "bc-light.xpm"
-  bg_pixmap[ACTIVE]      = "bc-dark.xpm"
-  bg_pixmap[INSENSITIVE] = "bc.xpm"
-</pre>
-<p>to the "default" section (the first style).
-Frank Barknecht made a more elaborate example using the Xfce-b5 theme:
-</p>
-
-<img src="pix/snd-gtkrc.png" alt="Snd with Xfce-b5 theme" hspace=20 vspace=10>
-
-<!--
-<p>And Kjetil Matheussen has put together the "snd-ls" package with many improvements:
-</p>
-<br>
-<img src="pix/snd-ls.png" alt="snd-ls" hspace=20>
--->
-
-<br>
 <br><br>
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconfigurationswitches">Configuration choices</a></h3></td></tr></table>

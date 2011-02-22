@@ -100,7 +100,6 @@
   <ul>
   <li><a href="grfsnd.html#sndswitches" onmouseout="UnTip()" onmouseover="Tip('startup switches such as -l and -p')">Snd invocation flags</a>
   <li><a href="grfsnd.html#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_s7, ~/.snd_prefs_s7, etc')">The initialization file</a>
-  <li><a href="grfsnd.html#sndresources" onmouseout="UnTip()" onmouseover="Tip('X resources: Xdefaults, gtkrc')">Snd resources</a>
   <li><a href="grfsnd.html#sndconfigurationswitches" onmouseout="UnTip()" onmouseover="Tip('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
   <li><a href="grfsnd.html#sndenvvars" onmouseout="UnTip()" onmouseover="Tip('mostly related to audio hardware choices')">Environment variables</a>
   </ul>
@@ -1277,7 +1276,34 @@ in the upper left corner of the graph (see the picture above under add-mark-pane
 <td bgcolor="#f2f4ff"><code>#t (gtk), #f (motif)</code></td></tr><tr><td></td><td colspan=2>
 with-toolbar places a toolbar at the top of the Snd window, just under the main menu.
 
-<img src="pix/toolbar.png" alt="with-toolbar picture" hspace=20 vspace=10>
+<img src="pix/toolbar.png" alt="with-toolbar picture" hspace=20 vspace=10 usemap="#toolbarmap" border=0>
+<map name="toolbarmap"
+     <area shape=rect coords="3, 42, 31, 76" alt="new sound icon" onmouseout="UnTip()" onmouseover="Tip('new sound')">
+     <area shape=rect coords="32, 42, 60, 76" alt="open sound icon" onmouseout="UnTip()" onmouseover="Tip('open sound')">
+     <area shape=rect coords="61, 42, 89, 76" alt="save icon" onmouseout="UnTip()" onmouseover="Tip('save edits')">
+     <area shape=rect coords="90, 42, 118, 76" alt="revert icon" onmouseout="UnTip()" onmouseover="Tip('revert to saved')">
+     <area shape=rect coords="119, 42, 149, 76" alt="undo icon" onmouseout="UnTip()" onmouseover="Tip('undo edit')">
+     <area shape=rect coords="148, 42, 176, 76" alt="redo icon" onmouseout="UnTip()" onmouseover="Tip('redo edit')">
+     <area shape=rect coords="177, 42, 205, 76" alt="close icon" onmouseout="UnTip()" onmouseover="Tip('close sound')">
+     <area shape=rect coords="206, 42, 234, 76" alt="play icon" onmouseout="UnTip()" onmouseover="Tip('play from the start')">
+     <area shape=rect coords="235, 42, 263, 76" alt="play from cursor icon" onmouseout="UnTip()" onmouseover="Tip('play from the cursor')">
+     <area shape=rect coords="264, 42, 292, 76" alt="stop playing icon" onmouseout="UnTip()" onmouseover="Tip('stop playing')">
+     <area shape=rect coords="293, 42, 321, 76" alt="full sound icon" onmouseout="UnTip()" onmouseover="Tip('show full sound')">
+     <area shape=rect coords="322, 42, 350, 76" alt="zoom out icon" onmouseout="UnTip()" onmouseover="Tip('zoom out')">
+     <area shape=rect coords="351, 42, 379, 76" alt="zoom in icon" onmouseout="UnTip()" onmouseover="Tip('zoom in')">
+     <area shape=rect coords="380, 42, 408, 76" alt="start icon" onmouseout="UnTip()" onmouseover="Tip('go to start of sound')">
+     <area shape=rect coords="409, 42, 437, 76" alt="back icon" onmouseout="UnTip()" onmouseover="Tip('go back a window')">
+     <area shape=rect coords="438, 42, 466, 76" alt="next icon" onmouseout="UnTip()" onmouseover="Tip('go forward a window')">
+     <area shape=rect coords="467, 42, 495, 76" alt="end icon" onmouseout="UnTip()" onmouseover="Tip('go to end of sound')">
+     <area shape=rect coords="496, 42, 524, 76" alt="select icon" onmouseout="UnTip()" onmouseover="Tip('select all of sound')">
+     <area shape=rect coords="525, 42, 553, 76" alt="unselect icon" onmouseout="UnTip()" onmouseover="Tip('unselect everything')">
+     <area shape=rect coords="554, 42, 582, 76" alt="cut icon" onmouseout="UnTip()" onmouseover="Tip('delete selection')">
+     <area shape=rect coords="583, 42, 611, 76" alt="paste icon" onmouseout="UnTip()" onmouseover="Tip('insert selection at cursor')">
+     <area shape=rect coords="612, 42, 640, 76" alt="prefs icon" onmouseout="UnTip()" onmouseover="Tip('start preferences dialog')">
+     <area shape=rect coords="641, 42, 669, 76" alt="quit icon" onmouseout="UnTip()" onmouseover="Tip('stop everything')">
+     <area shape=rect coords="670, 42, 700, 76" alt="exit icon" onmouseout="UnTip()" onmouseover="Tip('exit Snd')">
+</map>
+
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -12977,7 +13003,6 @@ are:</p>
 <TABLE border=3 bordercolor="tan" hspace=40 vspace=10><tr><td>
 <blockquote><small><br>
 Other color-related stuff:<br>
-X/Motif color resources: <a href="grfsnd.html#sndresources">Snd Resources</a><br>
 Color names: <a href="sndscm.html#rgbdoc">rgb.scm, rgb.rb</a><br>
 colors in the file dialogs: install-searcher-with-colors in snd-motif.scm<br>
 color-orientation-dialog: <a href="#colororientationdialog">color-orientation-dialog</a><br>

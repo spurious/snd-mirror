@@ -190,7 +190,6 @@ is included in <a href="http://ccrma.stanford.edu/planetccrma/software/">PlanetC
     <ul>
     <li><a href="grfsnd.html#sndswitches" onmouseout="UnTip()" onmouseover="Tip('startup switches such as -l and -p')">Snd invocation flags</a>
     <li><a href="grfsnd.html#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_s7, ~/.snd_prefs_s7, etc')">The initialization file</a>
-    <li><a href="grfsnd.html#sndresources" onmouseout="UnTip()" onmouseover="Tip('X resources: Xdefaults, gtkrc')">Snd resources</a>
     <li><a href="grfsnd.html#sndconfigurationswitches" onmouseout="UnTip()" onmouseover="Tip('this refers to the configure script used to build Snd')">Configuration choices</a>
     <li><a href="grfsnd.html#sndenvvars" onmouseout="UnTip()" onmouseover="Tip('mostly related to audio hardware choices')">Environment variables</a>
     </ul>
@@ -514,26 +513,9 @@ displayed.
 <A NAME="verticalpane"></a>
 To position sounds horizontally (adding on the right), use the "-h" (or "-horizontal") flag,
 or the <a href="grfsnd.html#horizontalpanes">horizontalPanes</a> resource.
-(This only works on systems with Motif 2.0 or later).  Other overall layout
+Other overall layout
 choices include the Notebook widget (-notebook), 
 and separate windows for each sound (-separate).  
-Such special choices need to be set either
-in the resource file, or in the invocation line.
-The default font, for example, is often too small; to get
-something more readable, you can invoke Snd with an
-explicit setting:
-</p>
-<pre>
-    snd -xrm "*fontList: 9x15" oboe.snd
-</pre>
-
-<p>or place the equivalent line in your .Xdefaults file:
-</p>
-<pre>
-    snd*fontList:           9x15
-</pre>
-
-<p>For more on resources and defaults, see <a href="grfsnd.html#startup">Snd Startup</a>.
 </p>
 
 

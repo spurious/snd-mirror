@@ -983,10 +983,11 @@ void create_popup_menu(void)
 }
 
 /* TODO: context sensitive popups everywhere (not this stupid thing)
- * PERHAPS: remove panic.scm, edit123.scm, what is kmenu.scm? -- it's adding accelerators
+ * PERHAPS: remove edit123.scm, what is kmenu.scm? -- it's adding accelerators
  *          perhaps add them -- we're using them above
  * PERHAPS: incorporate the special-menu stuff? 
  * PERHAPS: use the yin/yang icon for looped play of the whole file?
+ * TODO: why was a simple loop so slow in gtk?
  */
 
 
@@ -1258,7 +1259,8 @@ void show_toolbar(void)
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, 0); n++;
 
-      if ((sound_style(ss) == SOUNDS_IN_NOTEBOOK) || (sound_style(ss) == SOUNDS_HORIZONTAL))
+      if ((sound_style(ss) == SOUNDS_IN_NOTEBOOK) || 
+	  (sound_style(ss) == SOUNDS_HORIZONTAL))
 	toolbar = XtCreateManagedWidget("toolbar", xmRowColumnWidgetClass, SOUND_PANE_BOX(ss), args, n);
       else toolbar = XtCreateManagedWidget("toolbar", xmRowColumnWidgetClass, SOUND_PANE(ss), args, n);
       ss->sgx->toolbar = toolbar;

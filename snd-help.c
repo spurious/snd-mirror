@@ -494,7 +494,7 @@ void about_snd_help(void)
 	 show-selection and unselect-all.\n\
          show-full-duration, initial-beg, initial-dur, ask-about-unsaved-edits.\n\
          with-toolbar, remember-sound-state, with-smpte-label.\n\
-         new built-in toolbars, removed toolbar.scm.\n\
+         new built-in toolbars, removed toolbar.scm and panic.scm.\n\
 12-Feb:  Snd 11.13.\n\
 7-Jan:   Snd 11.12.\n\
 ",
@@ -1474,8 +1474,7 @@ you want, then save those choices.  The initialization file is just program text
 
 #else
 "Snd depends heavily on the extension language to provide much of its functionality.  Since none \
-is loaded, there's not much customization you can do.  Check out the X resource stuff in Snd.ad or \
-the gtk resource stuff in Snd.gtkrc.",
+is loaded, there's not much customization you can do."
 #endif
 		      WITH_WORD_WRAP,
 		      init_file_xrefs,

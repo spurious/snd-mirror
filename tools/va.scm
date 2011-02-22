@@ -224,7 +224,6 @@
       "bird.scm"
       "oscope.scm"
       "clean.scm"
-      "panic.scm"
       "clm23.scm"
       "peak-phases.scm"
       "clm-ins.scm"

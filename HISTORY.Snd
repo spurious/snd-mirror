@@ -5,7 +5,10 @@ Snd change log
 	    show-selection and unselect-all.
             show-full-duration, initial-beg, initial-dur, ask-about-unsaved-edits.
             with-toolbar, remember-sound-state, with-smpte-label.
-	    new built-in toolbars, removed toolbar.scm.
+	    new built-in toolbars, removed toolbar.scm and panic.scm.
+            removed Snd.gtkrc.  This won't work anyway in gtk3, and getting rid of it 
+              encourages me to work on its replacement...  Also removed Snd.ad and the
+              totally obsolete X resources stuff.
  12-Feb:    Snd 11.13.
  7-Jan:     Snd 11.12.
 

@@ -145,10 +145,6 @@ static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
 static bool noglob = false, noinit = false, batch = false, nostdin = false;
 
-#if (!HAVE_GTK_3)
-  static bool nogtkrc = false;
-#endif
-
 #if HAVE_EXTENSION_LANGUAGE
 static gint stdin_id = 0;
 
@@ -492,19 +488,14 @@ void snd_doit(int argc, char **argv)
 	      else
 		if (strcmp(argv[i], "-nostdin") == 0)
 		  nostdin = true;
-#if (!HAVE_GTK_3)
 		else
-		  if (strcmp(argv[i], "-nogtkrc") == 0)
-		    nogtkrc = true;
-#endif
+		  if ((strcmp(argv[i], "-b") == 0) || 
+		      (strcmp(argv[i], "-batch") == 0) ||
+		      (strcmp(argv[i], "--batch") == 0))
+		    batch = true;
 		  else
-		    if ((strcmp(argv[i], "-b") == 0) || 
-			(strcmp(argv[i], "-batch") == 0) ||
-			(strcmp(argv[i], "--batch") == 0))
-		      batch = true;
-		    else
-		      if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
-			check_features_list(argv[i + 1]);
+		    if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
+		      check_features_list(argv[i + 1]);
 
   ss->batch_mode = batch;
   set_auto_resize(AUTO_RESIZE_DEFAULT);
@@ -596,29 +587,6 @@ void snd_doit(int argc, char **argv)
   ss->orig_listener_font = mus_strdup(listener_font(ss));
   ss->orig_tiny_font = mus_strdup(tiny_font(ss));
 
-#if (!HAVE_GTK_3)
-  if (!nogtkrc)
-    {
-      char *str = NULL;
-      str = mus_expand_filename("~/.gtkrc-2.0");
-      if (mus_file_probe(str))
-	gtk_rc_parse(str);
-      else
-	{
-	  if (mus_file_probe("Snd.gtkrc"))
-	    gtk_rc_parse("Snd.gtkrc");
-	  else
-	    {
-	      if (str) free(str);
-	      str = mus_expand_filename("~/Snd.gtkrc");
-	      if (mus_file_probe(str))
-		gtk_rc_parse(str);
-	    }
-	}
-      if (str) free(str);
-    } /* not nogtkrc */
-#endif
-  
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
   
 #ifdef SND_AS_WIDGET

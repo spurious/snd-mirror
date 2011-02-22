@@ -1429,9 +1429,6 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 	  (strcmp("--separate", argname) == 0) ||
 	  (strcmp("-nostdin", argname) == 0) ||
 	  (strcmp("-noglob", argname) == 0) ||
-#if USE_GTK && (!HAVE_GTK_3)
-	  (strcmp("-nogtkrc", argname) == 0) ||
-#endif
 	  (strcmp("-noinit", argname) == 0))
 	return(auto_open_ctr + 1);
       else
