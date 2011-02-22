@@ -2686,7 +2686,10 @@ Pixmap toolbar_icon(int which)
 void make_icons_transparent(const char *color)
 {
 #if (HAVE_XPM) || (USE_GTK)
-  static char *bg1 = NULL, *bg4 = NULL;
+  static char *bg1 = NULL;
+#if (!USE_GTK)
+  static char *bg4 = NULL;
+#endif
   int i;
   const char **tmp;
   if (bg1) free(bg1);

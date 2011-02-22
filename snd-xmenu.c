@@ -982,6 +982,13 @@ void create_popup_menu(void)
     }
 }
 
+/* TODO: context sensitive popups everywhere (not this stupid thing)
+ * PERHAPS: remove panic.scm, edit123.scm, what is kmenu.scm? -- it's adding accelerators
+ *          perhaps add them -- we're using them above
+ * PERHAPS: incorporate the special-menu stuff? 
+ * PERHAPS: use the yin/yang icon for looped play of the whole file?
+ */
+
 
 /* ---------------- tooltips ---------------- */
 

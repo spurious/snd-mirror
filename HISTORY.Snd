@@ -4,7 +4,8 @@ Snd change log
             Options:Controls menu item, and Edit:Unselect
 	    show-selection and unselect-all.
             show-full-duration, initial-beg, initial-dur, ask-about-unsaved-edits.
-            with-toolbar, with-popup-menus, remember-sound-state, with-smpte-label.
+            with-toolbar, remember-sound-state, with-smpte-label.
+	    new built-in toolbars, removed toolbar.scm.
  12-Feb:    Snd 11.13.
  7-Jan:     Snd 11.12.
 

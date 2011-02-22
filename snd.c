@@ -184,7 +184,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Auto_Update_Interval =       DEFAULT_AUTO_UPDATE_INTERVAL;
   ss->Ask_Before_Overwrite =       DEFAULT_ASK_BEFORE_OVERWRITE;
   ss->With_Toolbar =               DEFAULT_WITH_TOOLBAR;
-  ss->With_Popup_Menus =           DEFAULT_WITH_POPUP_MENUS;
   ss->Remember_Sound_State =       DEFAULT_REMEMBER_SOUND_STATE;
   ss->Ask_About_Unsaved_Edits =    DEFAULT_ASK_ABOUT_UNSAVED_EDITS;
   ss->Show_Full_Duration =         DEFAULT_SHOW_FULL_DURATION;

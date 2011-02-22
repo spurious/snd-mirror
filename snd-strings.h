@@ -683,7 +683,6 @@
 #define S_with_inset_graph              "with-inset-graph"
 #define S_with_mix_tags                 "with-mix-tags"
 #define S_with_pointer_focus            "with-pointer-focus"
-#define S_with_popup_menus              "with-popup-menus"
 #define S_with_relative_panes           "with-relative-panes"
 #define S_with_smpte_label              "with-smpte-label"
 #define S_with_toolbar                  "with-toolbar"

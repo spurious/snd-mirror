@@ -1188,36 +1188,18 @@ char *slist_selection(slist *lst)
 
 /*
 
-It is indeed hard to configure. Too hard for even an advanced beginner. 
-So if this could be possible without too much effort I would be very 
-very happy about a distribution of Snd, that allows to switch all menues 
-and modules that Snd can actually handle on in a simple 
-pereferences-dialogue. And that these menues actually pop up and work as 
-expected. 
-
 Examples: I´d like to have that rightklick-menu for regions that allows 
 them to be played looped.
 
- LADSPA-Modules can be applied in real time and 
-their parameters can be automated in Snd, if this works in any recent 
-distribution without any hassle -- great! 
-
-So simply put: If Snd could handle everything it has to offer in any 
-distribution, that would be great and a vast improvement. 
-
-1.) It would be nice, to have a play-cursor as known from most 
-Wave-Editors like Mhwaveedit or Ardour. 
+LADSPA-Modules can be applied in real time and their parameters can be automated in Snd,
 
 3.) to have a rightklick-menu entry that allows to save a region or a 
 marked section to a new file with the opportunity to render effects etc 
 to that file... 
-
 --------
 
 More options there (fft) might be nice though, like being able to zoom into 
-the spectrum graphic. I can't remember if there's already a 
-dump-to-text-file mode 
-
+the spectrum graphic.
 --------
 
 Thanks for the suggestions!  I think I'll move the
@@ -1225,23 +1207,7 @@ context-sensitive popup menus into the main version --
 I assume that's what you mean by right-click menus?
 
 On the zoomed FFT -- it's been on my TODO list for
-about a decade.  You can drag the frequency (x) axis
-to zoom in on the lower frequencies, and there's a
-complicated way to zoom using the spectro* variables.
-To dump the current spectrum to a text file, you
-can use the peaks function:
-
-    (peaks "fft.data")
-
-for example.
-
-add a peaks->text file option for the popup fft menu
-
-C-g for begin_hook might be a bad idea -- there is code that catches c-g and goes on
-  perhaps a stop-hook?  What about Forth/Ruby -- c-g? currently ticks the interface for them
-  (stop-hook could be called whenever a stop sign is clicked or c-g typed)
-
-
+about a decade. 
 --------
 
 1) playback. It's very strange that you need to tick a box to start/stop playback instead of hitting the space bar. 
@@ -1252,7 +1218,5 @@ C-g for begin_hook might be a bad idea -- there is code that catches c-g and goe
 6) Dragging scrollbars during playback makes playback very choppy or 
 stops it altogether, most likely some more general graphics issue, it's 
 just most obvious with those scrollbars 
-
---------
 
  */

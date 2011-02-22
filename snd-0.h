@@ -532,10 +532,6 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_ask_before_overwrite(a) ss->Ask_Before_Overwrite = a
 #define DEFAULT_ASK_BEFORE_OVERWRITE false
 
-#define with_popup_menus(ss) ss->With_Popup_Menus
-#define set_with_popup_menus(a) ss->With_Popup_Menus = a
-#define DEFAULT_WITH_POPUP_MENUS true
-
 #define with_toolbar(ss) ss->With_Toolbar
 #define set_with_toolbar(a) ss->With_Toolbar = a
 #if USE_GTK

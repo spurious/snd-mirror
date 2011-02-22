@@ -1,11 +1,5 @@
 /* this file included as text in snd-g|xprefs.c */
 
-/* TODO: effects menu, with_popup_menus, possibly with-effects-menu
- * TODO: doc/test with-toolbar/with-smpte-label/with-popup-menus/remember-sound-state
- * TODO: check that changed stuff is saved correctly
- */
-
-
 static void int_to_textfield(widget_t w, int val)
 {
   char *str;
@@ -3154,25 +3148,6 @@ static void raw_data_format_from_menu(prefs_info *prf, char *value)
       }
 }
 #endif
-
-
-/* ---------------- with-popup-menus ---------------- */
-
-static bool rts_with_popup_menus = DEFAULT_WITH_POPUP_MENUS;
-
-static void help_with_popup_menus(prefs_info *prf)
-{
-  snd_help(prf->var_name,
-	   "",
-	   WITH_WORD_WRAP);
-}
-
-static void revert_with_popup_menus(prefs_info *prf) {set_with_popup_menus(rts_with_popup_menus);}
-static void clear_with_popup_menus(prefs_info *prf) {set_with_popup_menus(DEFAULT_WITH_POPUP_MENUS);}
-static void reflect_with_popup_menus(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_popup_menus(ss));}
-static void save_with_popup_menus(prefs_info *prf, FILE *fd) {rts_with_popup_menus = with_popup_menus(ss);}
-static void toggle_with_popup_menus(prefs_info *prf) {set_with_popup_menus(GET_TOGGLE(prf->toggle));}
-
 
 
 /* ---------------- with-toolbar ---------------- */

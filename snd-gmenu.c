@@ -1168,30 +1168,6 @@ GtkWidget *add_menu(void)
 
 static GtkWidget *popup_menu = NULL;
 static const char *pl[NUM_POPUP_WIDGETS];
-static bool stopping = false;
-
-
-static void popup_play_callback(GtkWidget *w, gpointer info) 
-{
-  snd_info *sp;
-  sp = any_selected_sound();
-  if (stopping)
-    {
-      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
-      stopping = false;
-      if (sp) set_play_button(sp, false);
-    }
-  else
-    {
-      if (sp)
-	{
-	  play_sound(sp, 0, NO_END_SPECIFIED);
-	  stopping = true;
-	}
-    }
-  gtk_widget_hide(popup_menu);
-}
-
 
 static void popup_save_callback(GtkWidget *w, gpointer info) 
 {

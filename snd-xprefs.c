@@ -2039,6 +2039,16 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_selection_creates_region, save_selection_creates_region, NULL, NULL, revert_selection_creates_region);
     free(str);
 
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    rts_with_toolbar = with_toolbar(ss);
+    prf = prefs_row_with_toggle("include a toolbar", S_with_toolbar,
+				rts_with_toolbar, 
+				dpy_box, current_sep, 
+				toggle_with_toolbar);
+    remember_pref(prf, reflect_with_toolbar, save_with_toolbar, help_with_toolbar, clear_with_toolbar, revert_with_toolbar);
+
+
+
     /* ---------------- file options ---------------- */
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2176,35 +2186,6 @@ widget_t start_preferences_dialog(void)
       free(str);
       free(str1);
     }
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
-
-
-  /* ---------------- extra menus ---------------- */
-
-    cursor_label = make_inner_label("  extra menus", dpy_box, current_sep);
-    rts_with_popup_menus = with_popup_menus(ss);
-    prf = prefs_row_with_toggle("context-sensitive popup menus", S_with_popup_menus,
-				rts_with_popup_menus,
-				dpy_box, cursor_label, 
-				toggle_with_popup_menus);
-    remember_pref(prf, reflect_with_popup_menus, save_with_popup_menus, help_with_popup_menus, clear_with_popup_menus, revert_with_popup_menus);
-
-#if 0
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("effects menu", "with-effects-menu",
-				(include_effects_menu = find_effects_menu()),
-				dpy_box, current_sep, 
-				effects_menu_toggle);
-    remember_pref(prf, reflect_effects_menu, save_effects_menu, help_effects_menu, clear_effects_menu, revert_effects_menu);
-#endif
-
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    rts_with_toolbar = with_toolbar(ss);
-    prf = prefs_row_with_toggle("a toolbar", S_with_toolbar,
-				rts_with_toolbar, 
-				dpy_box, current_sep, 
-				toggle_with_toolbar);
-    remember_pref(prf, reflect_with_toolbar, save_with_toolbar, help_with_toolbar, clear_with_toolbar, revert_with_toolbar);
 
 
     /* ---------------- additional key bindings ---------------- */
