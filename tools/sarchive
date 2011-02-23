@@ -10,7 +10,7 @@ date > $curdir/hi
 echo ' ' >> $curdir/hi
 
 chdir snddir
-foreach file (*.h *.c *.cl *.el *.clm *.fsm *.fs *.js *.html makefile.* make.* *.gtkrc *.in *.scm *.lisp *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub NEWS *.tex rt-DotEmacs DotEmacs *.f music5-examples)
+foreach file (*.h *.c *.cl *.el *.clm *.fsm *.fs *.js *.html makefile.* make.* *.in *.scm *.lisp *.Snd snd.1 configure.ac *.rb *.m4 config.guess config.sub NEWS *.tex rt-DotEmacs DotEmacs *.f music5-examples)
   if (-e $curdir/$file) then
     diff -bcw $curdir/$file $snddir/$file >> $curdir/hi
     find $curdir/$file -newer $snddir/$file -exec echo ' updating ' $file \;

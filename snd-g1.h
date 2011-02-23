@@ -343,6 +343,11 @@ void slist_moveto(slist *lst, int row);
 void slist_select(slist *lst, int row);
 char *slist_selection(slist *lst);
 
+#if (!HAVE_GTK2)
+void init_gtk2(void);
+#endif
+
+
 
 /* -------- snd-gsnd.c -------- */
 

@@ -1,9 +1,17 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
+/* TODO: I think gtk wants this to be a tree_store widget of list_store widgets and editable cells for the directory paths? 
+ *   and all the slists would be list_stores
+ *
+ * the update scripts should check for missing or obsolete png files
+ * perhaps remove/update the tutorial?
+ * remove help_func? and put the tooltips at the actual widget level
+ */
+
 static GtkWidget *preferences_dialog = NULL, *load_path_text_widget = NULL;
 
-static bool prefs_helping = false, prefs_unsaved = false;
+static bool prefs_unsaved = false;
 static char *prefs_saved_filename = NULL;
 static char *include_load_path = NULL;
 
@@ -18,7 +26,7 @@ static char *include_load_path = NULL;
   #define Widget_Is_Sensitive(Wid) gtk_widget_is_sensitive(Wid)
 #endif
 
-#define STARTUP_WIDTH 850
+#define STARTUP_WIDTH 750
 #define STARTUP_HEIGHT 800
 
 
@@ -126,48 +134,6 @@ static char *get_text(GtkWidget *w)
 
 /* ---------------- help strings ---------------- */
 
-static gboolean prefs_help_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer context)
-{
-  prefs_help((prefs_info *)context);
-  return(false);
-}
-
-
-static gboolean prefs_tooltip_help(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (help_dialog_is_active())
-    prefs_help(prf);
-  else prefs_helping = false;
-  prf->help_id = 0;
-  return(false);
-}
-
-
-static gboolean mouse_enter_pref_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (prefs_helping)
-    prf->help_id = g_timeout_add_full(0,
-				      HELP_WAIT_TIME,
-				      prefs_tooltip_help,
-				      context, NULL);
-  return(false);
-}
-
-
-static gboolean mouse_leave_pref_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (prf->help_id != 0)
-    {
-      g_source_remove(prf->help_id);
-      prf->help_id = 0;
-    }
-  return(false);
-}
-
-
 static bool prefs_dialog_error_is_posted = false;
 
 static void post_prefs_dialog_error(const char *message, void *data)
@@ -196,7 +162,6 @@ static void prefs_change_callback(GtkWidget *w, gpointer context)
 
 
 static GtkSizeGroup *label_group;
-static GtkSizeGroup *help_group;
 static GtkSizeGroup *widgets_group;
 
 
@@ -208,24 +173,29 @@ static color_info *rscl_color, *gscl_color, *bscl_color;
 
 /* ---------------- row (main) label widget ---------------- */
 
+static const char *get_help(const char *name)
+{
+#if (!HAVE_SCHEME)
+  return(XEN_AS_STRING(XEN_OBJECT_HELP(C_TO_XEN_STRING(name))));
+#else
+  return(s7_procedure_documentation(s7, s7_name_to_value(s7, name)));
+#endif
+}
+
+
 static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *box)
 {
-  GtkWidget *w, *ev;
-
-  ev = gtk_event_box_new();
-  gtk_box_pack_start(GTK_BOX(box), ev, PACK_1, PACK_2, 0);
-  gtk_widget_show(ev);
-
+  GtkWidget *w;
   w = gtk_label_new(label);
   gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.0);
   gtk_size_group_add_widget(label_group, w);
-  gtk_container_add(GTK_CONTAINER(ev), w);
+  gtk_box_pack_start(GTK_BOX(box), w, PACK_1, PACK_2, 0);
+
+  if (prf->var_name)
+    gtk_widget_set_tooltip_text(w, get_help(prf->var_name));
+
   gtk_widget_show(w);
   prf->saved_label = label;
-
-  SG_SIGNAL_CONNECT(ev, "button_press_event", prefs_help_click_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(w);
 }
@@ -235,19 +205,11 @@ static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *
 
 static GtkWidget *make_row_inner_label(prefs_info *prf, const char *label, GtkWidget *box)
 {
-  GtkWidget *w, *ev;
-
-  ev = gtk_event_box_new();
-  gtk_box_pack_start(GTK_BOX(box), ev, false, false, 4);
-  gtk_widget_show(ev);
+  GtkWidget *w;
 
   w = gtk_label_new(label);
-  gtk_container_add(GTK_CONTAINER(ev), w);
+  gtk_box_pack_start(GTK_BOX(box), w, false, false, 4);
   gtk_widget_show(w);
-
-  SG_SIGNAL_CONNECT(ev, "button_press_event", prefs_help_click_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(w);
 }
@@ -277,33 +239,6 @@ static GtkWidget *make_row_inner_separator(int width, GtkWidget *box)
 }
 
 
-/* ---------------- row help widget ---------------- */
-
-static GtkWidget *make_row_help(prefs_info *prf, const char *label, GtkWidget *box)
-{
-  GtkWidget *w, *ev;
-
-  w = gtk_hseparator_new();
-  gtk_box_pack_start(GTK_BOX(box), w, false, false, 10);
-  gtk_widget_show(w);
-
-  ev = gtk_event_box_new();
-  gtk_box_pack_start(GTK_BOX(box), ev, PACK_1, PACK_1, 0);
-  gtk_widget_show(ev);
-
-  w = gtk_button_new_with_label("?");
-  gtk_container_add(GTK_CONTAINER(ev), w);
-  gtk_size_group_add_widget(help_group, w);
-  gtk_widget_show(w);
-
-  SG_SIGNAL_CONNECT(ev, "button_press_event", prefs_help_click_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-
-  return(w);
-}
-
-
 /* ---------------- row toggle widget ---------------- */
 
 static GtkWidget *make_row_toggle_with_label(prefs_info *prf, bool current_value, GtkWidget *box, const char *label)
@@ -316,10 +251,7 @@ static GtkWidget *make_row_toggle_with_label(prefs_info *prf, bool current_value
   gtk_box_pack_start(GTK_BOX(box), w, false, false, 0); /* was 10 */
   gtk_widget_show(w);
 
-  SG_SIGNAL_CONNECT(w, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(w, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(w, "toggled", prefs_change_callback, NULL);
-
   return(w);
 }
 
@@ -339,10 +271,6 @@ static GtkWidget *make_row_error(prefs_info *prf, GtkWidget *box)
   w = gtk_label_new("");
   gtk_box_pack_end(GTK_BOX(box), w, true, false, 0);
   gtk_widget_show(w);
-
-  SG_SIGNAL_CONNECT(w, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(w, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  
   return(w);
 }
 
@@ -460,12 +388,6 @@ static GtkWidget *make_row_arrows(prefs_info *prf, GtkWidget *box)
   SG_SIGNAL_CONNECT(ev_down, "button_release_event", remove_arrow_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev_up, "button_press_event", call_arrow_up_press, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev_up, "button_release_event", remove_arrow_func, (gpointer)prf);
-
-  SG_SIGNAL_CONNECT(ev_up, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev_down, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev_up, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev_down, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-
   SG_SIGNAL_CONNECT(ev_down, "button_press_event", prefs_change_callback, NULL);
   SG_SIGNAL_CONNECT(ev_up, "button_press_event", prefs_change_callback, NULL);
 
@@ -488,7 +410,7 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 					 void (*toggle_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row, *help;
+  GtkWidget *sep, *hb, *row;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -506,7 +428,6 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 
   sep = make_row_middle_separator(hb);
   prf->toggle = make_row_toggle(prf, current_value, hb);
-  help = make_row_help(prf, varname, row);
 
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
 
@@ -532,7 +453,7 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
 					      void (*toggle2_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *help, *sep1, *row, *hb;
+  GtkWidget *sep, *sep1, *row, *hb;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -553,7 +474,6 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
   prf->toggle = make_row_toggle_with_label(prf, value1, hb, label1);
   sep1 = make_row_inner_separator(20, hb);
   prf->toggle2 = make_row_toggle_with_label(prf, value2, hb, label2);
-  help = make_row_help(prf, varname, row);
 
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->toggle2, "toggled", call_toggle2_func, (gpointer)prf);
@@ -645,10 +565,6 @@ static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int col
   gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
   gtk_widget_show(w);
 
-  SG_SIGNAL_CONNECT(w, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(w, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(w, "activate", prefs_change_callback, NULL);
-
   info = (text_info *)calloc(1, sizeof(text_info));
   info->prf = prf;
 
@@ -668,7 +584,7 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
 						   void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sep1, *lab1, *hb, *row, *help;
+  GtkWidget *sep, *sep1, *lab1, *hb, *row;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -690,7 +606,6 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
   sep1 = make_row_inner_separator(16, hb);
   lab1 = make_row_inner_label(prf, text_label, hb);
   prf->text= make_row_text(prf, text_value, cols, hb);
-  help = make_row_help(prf, varname, row);
 
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
@@ -707,7 +622,7 @@ static prefs_info *prefs_row_with_toggle_with_two_texts(const char *label, const
 							void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sep1, *lab1, *lab2, *hb, *row, *help;
+  GtkWidget *sep, *sep1, *lab1, *lab2, *hb, *row;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -730,7 +645,6 @@ static prefs_info *prefs_row_with_toggle_with_two_texts(const char *label, const
   prf->text= make_row_text(prf, text1, cols, hb);
   lab2 = make_row_inner_label(prf, label2, hb);
   prf->rtxt= make_row_text(prf, text2, cols, hb);
-  help = make_row_help(prf, varname, row);
 
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
@@ -750,7 +664,7 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
 						   void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sep1, *lab1, *hb, *row, *help;
+  GtkWidget *sep, *sep1, *lab1, *hb, *row;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -772,7 +686,6 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
   sep1 = make_row_inner_separator(8, hb);
   lab1 = make_row_inner_label(prf, toggle_label, hb);
   prf->toggle = make_row_toggle(prf, current_value, hb);  
-  help = make_row_help(prf, varname, row);
   
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
@@ -792,7 +705,7 @@ static prefs_info *prefs_row_with_text_and_three_toggles(const char *label, cons
 							 void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sep1, *sep2, *sep3, *lab1, *lab2, *lab3, *lab4, *hb, *row, *help;
+  GtkWidget *sep, *sep1, *sep2, *sep3, *lab1, *lab2, *lab3, *lab4, *hb, *row;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -820,7 +733,6 @@ static prefs_info *prefs_row_with_text_and_three_toggles(const char *label, cons
   sep3 = make_row_inner_separator(4, hb);
   lab3 = make_row_inner_label(prf, toggle3_label, hb);
   prf->toggle3 = make_row_toggle(prf, toggle3_value, hb);  
-  help = make_row_help(prf, varname, row);
   
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
   return(prf);
@@ -865,8 +777,6 @@ static GtkWidget *make_row_radio_box(prefs_info *prf,
       gtk_widget_show(current_button);
       SG_SIGNAL_CONNECT(current_button, "clicked", call_radio_func, (gpointer)prf);
       SG_SIGNAL_CONNECT(current_button, "clicked", prefs_change_callback, NULL);
-      SG_SIGNAL_CONNECT(current_button, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-      SG_SIGNAL_CONNECT(current_button, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
     }
 
   if (current_value != -1)
@@ -882,7 +792,7 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
 					    void (*toggle_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row, *help;
+  GtkWidget *sep, *hb, *row;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -900,7 +810,6 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
 
   sep = make_row_middle_separator(hb);
   prf->toggle = make_row_radio_box(prf, labels, num_labels, current_value, hb);
-  help = make_row_help(prf, varname, row);
 
   return(prf);
 }
@@ -915,7 +824,7 @@ static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const 
 						       void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *help, *row, *hb;
+  GtkWidget *sep, *row, *hb;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -938,7 +847,6 @@ static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const 
   prf->toggle = make_row_radio_box(prf, labels, num_labels, current_value, hb);
   prf->text = make_row_text(prf, text_value, text_cols, hb);
   prf->arrow_up = make_row_arrows(prf, hb);
-  help = make_row_help(prf, varname, row);
 
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
 
@@ -979,7 +887,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
 					void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row, *help;
+  GtkWidget *sep, *hb, *row;
   char *str;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
@@ -1010,7 +918,6 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->scale)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->scale), false);
   
-  help = make_row_help(prf, varname, row);
 
   prf->scale_func = scale_func;
   prf->text_func = text_func;
@@ -1019,10 +926,6 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   SG_SIGNAL_CONNECT(prf->scale, "value_changed", prefs_change_callback, NULL);
   SG_SIGNAL_CONNECT(prf->scale, "value_changed", prefs_scale_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_scale_text_func, (gpointer)prf);
-
-  SG_SIGNAL_CONNECT(prf->scale, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->scale, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-
   return(prf);
 }
 
@@ -1034,7 +937,7 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
 				       void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row, *help;
+  GtkWidget *sep, *hb, *row;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -1051,7 +954,6 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
 
   sep = make_row_middle_separator(hb);
   prf->text = make_row_text(prf, value, 0, hb);
-  help = make_row_help(prf, varname, row);
 
   prf->text_func = text_func;
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
@@ -1068,7 +970,7 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
 					    void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *lab1, *lab2, *hb, *row, *help;
+  GtkWidget *sep, *lab1, *lab2, *hb, *row;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
@@ -1087,7 +989,6 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   prf->text = make_row_text(prf, text1, cols, hb);
   lab2 = make_row_inner_label(prf, label2, hb);  
   prf->rtxt = make_row_text(prf, text2, cols, hb);
-  help = make_row_help(prf, varname, row);
 
   prf->text_func = text_func;
 
@@ -1106,7 +1007,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
 					 void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row, *help;
+  GtkWidget *sep, *hb, *row;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -1126,7 +1027,6 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   prf->text = make_row_text(prf, value, cols, hb);
   prf->arrow_up = make_row_arrows(prf, hb);
   prf->error = make_row_error(prf, hb);
-  help = make_row_help(prf, varname, row);
 
   prf->text_func = text_func;
   prf->arrow_up_func = arrow_up_func;
@@ -1148,7 +1048,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
 {
   int i;
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row, *help;
+  GtkWidget *sep, *hb, *row;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -1179,14 +1079,10 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   gtk_widget_show(prf->text);
 
   prf->error = make_row_error(prf, hb);
-  help = make_row_help(prf, varname, row);
 
   prf->text_func = text_func;
   SG_SIGNAL_CONNECT(prf->text, "changed", call_text_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "changed", prefs_change_callback, NULL);
-
-  SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   return(prf);
 }
 
@@ -1330,7 +1226,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 					    void (*color_func)(prefs_info *prf, float r, float g, float b))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sep1, *hb, *row, *row2, *sep2, *sep3, *help;
+  GtkWidget *sep, *sep1, *hb, *row, *row2, *sep2, *sep3;
   float r = 0.0, g = 0.0, b = 0.0;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
@@ -1379,7 +1275,6 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->btxt = make_row_text(prf, NULL, 6, hb);
   gtk_size_group_add_widget(prf->color_texts, prf->btxt);
   float_to_textfield(prf->btxt, b);
-  help = make_row_help(prf, varname, row);
 
   /* second row */
 
@@ -1438,16 +1333,6 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   SG_SIGNAL_CONNECT(prf->radj, "value_changed", prefs_color_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->gadj, "value_changed", prefs_color_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->badj, "value_changed", prefs_color_callback, (gpointer)prf);
-
-  SG_SIGNAL_CONNECT(prf->color, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->color, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->rscl, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->rscl, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->gscl, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->gscl, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->bscl, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->bscl, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-
   prf->color_func = color_func;
 
   return(prf);
@@ -1484,25 +1369,24 @@ static GtkWidget *make_inter_variable_separator(GtkWidget *topics)
 
 static GtkWidget *make_top_level_label(const char *label, GtkWidget *parent)
 {
-  GtkWidget *w, *w1, *w2;
+  GtkWidget *w1, *w2, *w3;
 
   w1 = gtk_vseparator_new();
-  gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 8);
+  gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 6);
   gtk_widget_show(w1);
 
-  w = snd_gtk_highlight_label_new(label);
-  gtk_button_set_alignment(GTK_BUTTON(w), 0.01, 0.5);
-  widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->light_blue);
-  widget_modify_bg(w, GTK_STATE_PRELIGHT, ss->sgx->light_blue);
-
-  gtk_box_pack_start(GTK_BOX(parent), w, false, false, 0);
-  gtk_widget_show(w);
-
-  w2 = gtk_vseparator_new();
-  gtk_box_pack_start(GTK_BOX(parent), w2, false, false, 4);
+  w2 = gtk_label_new(label);
+  gtk_misc_set_alignment(GTK_MISC(w2), 0.01, 0.5);
+  gtk_box_pack_start(GTK_BOX(parent), w2, false, false, 0);
   gtk_widget_show(w2);
 
-  return(w);
+  w3 = gtk_vseparator_new();
+  gtk_box_pack_start(GTK_BOX(parent), w3, false, false, 6);
+  gtk_widget_show(w3);
+
+  make_inter_variable_separator(parent);
+
+  return(w2);
 }
 
 
@@ -1526,18 +1410,19 @@ static GtkWidget *make_inner_label(const char *label, GtkWidget *parent)
   GtkWidget *w, *w1, *w2;
 
   w1 = gtk_vseparator_new();
-  gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 8);
+  gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 4);
   gtk_widget_show(w1);
 
-  w = snd_gtk_highlight_label_new(label);
-  gtk_button_set_alignment(GTK_BUTTON(w), 0.0, 0.5);
-
+  w = gtk_label_new(label);
+  gtk_misc_set_alignment(GTK_MISC(w), 0.0, 0.5);
   gtk_box_pack_start(GTK_BOX(parent), w, false, false, 0);
   gtk_widget_show(w);
 
   w2 = gtk_vseparator_new();
   gtk_box_pack_start(GTK_BOX(parent), w2, false, false, 4);
   gtk_widget_show(w2);
+
+  make_inter_variable_separator(parent);
 
   return(w);
 }
@@ -1547,7 +1432,6 @@ static GtkWidget *make_inner_label(const char *label, GtkWidget *parent)
 
 static gint preferences_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
-  prefs_helping = false;
   clear_prefs_dialog_error();
   gtk_widget_hide(preferences_dialog);
   return(true);
@@ -1556,7 +1440,6 @@ static gint preferences_delete_callback(GtkWidget *w, GdkEvent *event, gpointer 
 
 static void preferences_dismiss_callback(GtkWidget *w, gpointer context) 
 {
-  prefs_helping = false;
   clear_prefs_dialog_error();
   gtk_widget_hide(preferences_dialog);
 }
@@ -1564,7 +1447,6 @@ static void preferences_dismiss_callback(GtkWidget *w, gpointer context)
 
 static void preferences_help_callback(GtkWidget *w, gpointer context) 
 {
-  prefs_helping = true;
   snd_help("preferences",
 	   "This dialog sets various global variables. 'Save' then writes the new values \
 to ~/.snd_prefs_ruby|forth|s7 so that they take effect the next time you start Snd.  'Revert' resets each variable either to \
@@ -1731,7 +1613,6 @@ widget_t start_preferences_dialog(void)
 
   label_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
   widgets_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-  help_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 
 #if 0
   /* these are really garish */
@@ -1775,7 +1656,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_ask_before_overwrite, save_ask_before_overwrite, NULL, NULL, revert_ask_before_overwrite);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    prf = prefs_row_with_toggle("ask about unsaved edits before exiting", "check-for-unsaved-edits",
+    prf = prefs_row_with_toggle("ask about unsaved edits before exiting", S_ask_about_unsaved_edits,
 				rts_unsaved_edits = ask_about_unsaved_edits(ss), 
 				dpy_box,
 				unsaved_edits_toggle);
@@ -1834,7 +1715,7 @@ widget_t start_preferences_dialog(void)
     rts_peak_env_directory = mus_strdup(include_peak_env_directory);
     include_peak_envs = find_peak_envs();
     rts_peak_envs = include_peak_envs;
-    prf = prefs_row_with_toggle_with_text("save peak envs to speed up initial display", "peak-env-dir",
+    prf = prefs_row_with_toggle_with_text("save peak envs to speed up initial display", S_peak_env_dir,
 					  include_peak_envs,
 					  "directory:", include_peak_env_directory, 25,
 					  dpy_box,

@@ -587,6 +587,10 @@ void snd_doit(int argc, char **argv)
   ss->orig_listener_font = mus_strdup(listener_font(ss));
   ss->orig_tiny_font = mus_strdup(tiny_font(ss));
 
+#if (!HAVE_GTK3)
+  init_gtk2();
+#endif
+
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
   
 #ifdef SND_AS_WIDGET
@@ -597,6 +601,7 @@ void snd_doit(int argc, char **argv)
   gtk_container_add(GTK_CONTAINER(MAIN_SHELL(ss)), MAIN_PANE(ss));
 #endif
   add_menu(); /* adds menubar to MAIN_PANE (via box_pack_start) */
+  if (with_toolbar(ss)) show_toolbar();
 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {

@@ -363,6 +363,7 @@ static char *possibly_quote(char *key)
 }
 
 
+#if USE_MOTIF
 static void prefs_help(prefs_info *prf)
 {
   if (prf->var_name)
@@ -395,6 +396,7 @@ static void prefs_help(prefs_info *prf)
 	}
     }
 }
+#endif
 
 
 
@@ -2127,7 +2129,7 @@ static void startup_size_text(prefs_info *prf)
 }
 
 
-/* ---------------- check-for-unsaved-edits ---------------- */
+/* ---------------- ask-about-unsaved-edits ---------------- */
 
 static bool rts_unsaved_edits = DEFAULT_ASK_ABOUT_UNSAVED_EDITS;
 static void revert_unsaved_edits(prefs_info *prf) {set_ask_about_unsaved_edits(rts_unsaved_edits);}

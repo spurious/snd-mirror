@@ -1963,7 +1963,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_ask_before_overwrite, save_ask_before_overwrite, NULL, NULL, revert_ask_before_overwrite);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("ask about unsaved edits before exiting", "check-for-unsaved-edits",
+    prf = prefs_row_with_toggle("ask about unsaved edits before exiting", S_ask_about_unsaved_edits,
 				rts_unsaved_edits = ask_about_unsaved_edits(ss), 
 				dpy_box, current_sep,
 				unsaved_edits_toggle);
@@ -2022,7 +2022,7 @@ widget_t start_preferences_dialog(void)
     rts_peak_env_directory = mus_strdup(include_peak_env_directory);
     include_peak_envs = find_peak_envs();
     rts_peak_envs = include_peak_envs;
-    prf = prefs_row_with_toggle_with_text("save peak envs to speed up initial display", "peak-env-dir",
+    prf = prefs_row_with_toggle_with_text("save peak envs to speed up initial display", S_peak_env_dir,
 					  include_peak_envs,
 					  "directory:", include_peak_env_directory, 25,
 					  dpy_box, current_sep,

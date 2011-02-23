@@ -933,6 +933,7 @@ void snd_doit(int argc, char **argv)
   initialize_colormap(); /* X11 not ours */
   make_icons_transparent(BASIC_COLOR);
 
+  if (with_toolbar(ss)) show_toolbar();
   startup_funcs();
 
 #if HAVE_SETJMP_H
