@@ -630,10 +630,3 @@ void snd_help_back_to_top(void)
 {
   if (help_text) XmTextShowPosition(help_text, 0);
 }
-
-
-bool help_dialog_is_active(void)
-{
-  return((help_dialog) &&
-	 (XtIsManaged(help_dialog)));
-}

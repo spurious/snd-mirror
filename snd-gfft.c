@@ -1002,7 +1002,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	vb = gtk_vbox_new(false, 0);
 	gtk_container_add(GTK_CONTAINER(hb), vb);	
 	
-	pk_lab = snd_gtk_highlight_label_new(_("max peaks:"));
+	pk_lab = snd_gtk_highlight_label_new(_("max peaks"));
 	gtk_box_pack_start(GTK_BOX(vb), pk_lab, false, false, 0);
 	gtk_widget_show(pk_lab);
 	
@@ -1019,7 +1019,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(vb), sep1, false, false, RIGHT_SEP_SIZE);
 	gtk_widget_show(sep1);
 
-	db_lab = snd_gtk_highlight_label_new(_("min dB:"));
+	db_lab = snd_gtk_highlight_label_new(_("min dB"));
 	gtk_box_pack_start(GTK_BOX(vb), db_lab, false, false, 0);
 	gtk_widget_show(db_lab);
       
@@ -1036,7 +1036,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(vb), sep2, false, false, RIGHT_SEP_SIZE);
 	gtk_widget_show(sep2);
 
-	lf_lab = snd_gtk_highlight_label_new(_("log freq start:"));
+	lf_lab = snd_gtk_highlight_label_new(_("log freq start"));
 	gtk_box_pack_start(GTK_BOX(vb), lf_lab, false, false, 0);
 	gtk_widget_show(lf_lab);
       

@@ -960,24 +960,24 @@ else
           ])
       else
 
-        AM_PATH_GTK_2_0(2.10.0,
+        AM_PATH_GTK_2_0(2.12.0,
           [
 	    with_gtk=yes
           ],
           [
-    	    AC_MSG_WARN([trouble with gtk (we need version 2.10.0 or later) -- will try to make Snd without any GUI])
+    	    AC_MSG_WARN([trouble with gtk (we need version 2.12.0 or later) -- will try to make Snd without any GUI])
       	    with_gtk=no
           ])
       fi
 
     else
 
-        AM_PATH_GTK_2_0(2.10.0,
+        AM_PATH_GTK_2_0(2.12.0,
           [
 	    with_gtk=yes
           ],
           [
-    	    AC_MSG_WARN([trouble with gtk (we need version 2.10.0 or later) -- will try to make Snd without any GUI])
+    	    AC_MSG_WARN([trouble with gtk (we need version 2.12.0 or later) -- will try to make Snd without any GUI])
       	    with_gtk=no
           ])
     fi

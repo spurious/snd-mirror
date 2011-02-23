@@ -821,10 +821,7 @@ XM_TYPE(GtkPrintPages, GtkPrintPages)
 XM_TYPE_PTR(GtkPageRange_, GtkPageRange*)
 XM_TYPE(GtkPageSet, GtkPageSet)
 XM_TYPE_PTR_2(GtkSettings_, GtkSettings*)
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 XM_TYPE_PTR_1(GtkTooltip_, GtkTooltip*)
-#endif
-
 #if HAVE_GTK_TEST_WIDGET_CLICK
 XM_TYPE_1(GtkCalendarDetailFunc, GtkCalendarDetailFunc)
 #endif
@@ -19997,6 +19994,23 @@ static XEN gxg_gtk_about_dialog_set_logo(XEN about, XEN logo)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gtk_about_dialog_get_program_name(XEN about)
+{
+  #define H_gtk_about_dialog_get_program_name "gchar* gtk_about_dialog_get_program_name(GtkAboutDialog* about)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_program_name", "GtkAboutDialog*");
+  return(C_TO_XEN_gchar_(gtk_about_dialog_get_program_name(XEN_TO_C_GtkAboutDialog_(about))));
+}
+
+static XEN gxg_gtk_about_dialog_set_program_name(XEN about, XEN name)
+{
+  #define H_gtk_about_dialog_set_program_name "void gtk_about_dialog_set_program_name(GtkAboutDialog* about, \
+gchar* name)"
+  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_program_name", "GtkAboutDialog*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 2, "gtk_about_dialog_set_program_name", "gchar*");
+  gtk_about_dialog_set_program_name(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar_(name));
+  return(XEN_FALSE);
+}
+
 static XEN gxg_gtk_icon_view_new(void)
 {
   #define H_gtk_icon_view_new "GtkWidget* gtk_icon_view_new( void)"
@@ -24661,24 +24675,6 @@ static XEN gxg_gdk_cairo_rectangle(XEN cr, XEN rectangle)
   return(XEN_FALSE);
 }
 
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
-static XEN gxg_gtk_about_dialog_get_program_name(XEN about)
-{
-  #define H_gtk_about_dialog_get_program_name "gchar* gtk_about_dialog_get_program_name(GtkAboutDialog* about)"
-  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_get_program_name", "GtkAboutDialog*");
-  return(C_TO_XEN_gchar_(gtk_about_dialog_get_program_name(XEN_TO_C_GtkAboutDialog_(about))));
-}
-
-static XEN gxg_gtk_about_dialog_set_program_name(XEN about, XEN name)
-{
-  #define H_gtk_about_dialog_set_program_name "void gtk_about_dialog_set_program_name(GtkAboutDialog* about, \
-gchar* name)"
-  XEN_ASSERT_TYPE(XEN_GtkAboutDialog__P(about), about, 1, "gtk_about_dialog_set_program_name", "GtkAboutDialog*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 2, "gtk_about_dialog_set_program_name", "gchar*");
-  gtk_about_dialog_set_program_name(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gchar_(name));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gdk_color_to_string(XEN color)
 {
   #define H_gdk_color_to_string "gchar* gdk_color_to_string(GdkColor* color)"
@@ -25477,8 +25473,6 @@ static XEN gxg_gtk_widget_get_has_tooltip(XEN widget)
   XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_has_tooltip", "GtkWidget*");
   return(C_TO_XEN_gboolean(gtk_widget_get_has_tooltip(XEN_TO_C_GtkWidget_(widget))));
 }
-
-#endif
 
 #if HAVE_GTK_TEST_WIDGET_CLICK
 static XEN gxg_gtk_calendar_set_detail_func(XEN calendar, XEN func, XEN data, XEN destroy)
@@ -34402,10 +34396,7 @@ static XEN gxg_GTK_PRINT_CONTEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_
 static XEN gxg_GTK_PRINT_OPERATION(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkPrintOperation_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_PRINT_OPERATION_PREVIEW(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkPrintOperationPreview_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_PRINT_SETTINGS(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkPrintSettings_"), XEN_CADR(obj)) : XEN_FALSE);}
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 static XEN gxg_GTK_TOOLTIP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTooltip_"), XEN_CADR(obj)) : XEN_FALSE);}
-#endif
-
 #if HAVE_GTK_INFO_BAR_NEW
 static XEN gxg_GTK_INFO_BAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkInfoBar_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
@@ -34597,10 +34588,7 @@ static XEN gxg_GTK_IS_PRINT_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OB
 static XEN gxg_GTK_IS_PRINT_OPERATION(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PRINT_OPERATION((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_PRINT_OPERATION_PREVIEW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PRINT_OPERATION_PREVIEW((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_PRINT_SETTINGS(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_PRINT_SETTINGS((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 static XEN gxg_GTK_IS_TOOLTIP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOOLTIP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-#endif
-
 #if HAVE_GTK_INFO_BAR_NEW
 static XEN gxg_GTK_IS_INFO_BAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_INFO_BAR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
@@ -37085,6 +37073,8 @@ XEN_NARGIFY_1(gxg_gtk_about_dialog_get_translator_credits_w, gxg_gtk_about_dialo
 XEN_NARGIFY_2(gxg_gtk_about_dialog_set_translator_credits_w, gxg_gtk_about_dialog_set_translator_credits)
 XEN_NARGIFY_1(gxg_gtk_about_dialog_get_logo_w, gxg_gtk_about_dialog_get_logo)
 XEN_NARGIFY_2(gxg_gtk_about_dialog_set_logo_w, gxg_gtk_about_dialog_set_logo)
+XEN_NARGIFY_1(gxg_gtk_about_dialog_get_program_name_w, gxg_gtk_about_dialog_get_program_name)
+XEN_NARGIFY_2(gxg_gtk_about_dialog_set_program_name_w, gxg_gtk_about_dialog_set_program_name)
 XEN_NARGIFY_0(gxg_gtk_icon_view_new_w, gxg_gtk_icon_view_new)
 XEN_NARGIFY_1(gxg_gtk_icon_view_new_with_model_w, gxg_gtk_icon_view_new_with_model)
 XEN_NARGIFY_2(gxg_gtk_icon_view_set_model_w, gxg_gtk_icon_view_set_model)
@@ -37599,9 +37589,6 @@ XEN_NARGIFY_5(gxg_pango_cairo_error_underline_path_w, gxg_pango_cairo_error_unde
 XEN_NARGIFY_2(gxg_gdk_cairo_set_source_color_w, gxg_gdk_cairo_set_source_color)
 XEN_NARGIFY_4(gxg_gdk_cairo_set_source_pixbuf_w, gxg_gdk_cairo_set_source_pixbuf)
 XEN_NARGIFY_2(gxg_gdk_cairo_rectangle_w, gxg_gdk_cairo_rectangle)
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
-XEN_NARGIFY_1(gxg_gtk_about_dialog_get_program_name_w, gxg_gtk_about_dialog_get_program_name)
-XEN_NARGIFY_2(gxg_gtk_about_dialog_set_program_name_w, gxg_gtk_about_dialog_set_program_name)
 XEN_NARGIFY_1(gxg_gdk_color_to_string_w, gxg_gdk_color_to_string)
 XEN_NARGIFY_1(gxg_gdk_event_request_motions_w, gxg_gdk_event_request_motions)
 XEN_NARGIFY_1(gxg_gdk_notify_startup_complete_with_id_w, gxg_gdk_notify_startup_complete_with_id)
@@ -37680,8 +37667,6 @@ XEN_NARGIFY_2(gxg_gtk_tree_view_set_tooltip_column_w, gxg_gtk_tree_view_set_tool
 XEN_NARGIFY_1(gxg_gtk_tree_view_get_tooltip_column_w, gxg_gtk_tree_view_get_tooltip_column)
 XEN_NARGIFY_2(gxg_gtk_widget_set_has_tooltip_w, gxg_gtk_widget_set_has_tooltip)
 XEN_NARGIFY_1(gxg_gtk_widget_get_has_tooltip_w, gxg_gtk_widget_get_has_tooltip)
-#endif
-
 #if HAVE_GTK_TEST_WIDGET_CLICK
 XEN_NARGIFY_4(gxg_gtk_calendar_set_detail_func_w, gxg_gtk_calendar_set_detail_func)
 XEN_NARGIFY_2(gxg_gtk_calendar_set_detail_width_chars_w, gxg_gtk_calendar_set_detail_width_chars)
@@ -38869,10 +38854,7 @@ XEN_NARGIFY_1(gxg_GTK_PRINT_CONTEXT_w, gxg_GTK_PRINT_CONTEXT)
 XEN_NARGIFY_1(gxg_GTK_PRINT_OPERATION_w, gxg_GTK_PRINT_OPERATION)
 XEN_NARGIFY_1(gxg_GTK_PRINT_OPERATION_PREVIEW_w, gxg_GTK_PRINT_OPERATION_PREVIEW)
 XEN_NARGIFY_1(gxg_GTK_PRINT_SETTINGS_w, gxg_GTK_PRINT_SETTINGS)
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 XEN_NARGIFY_1(gxg_GTK_TOOLTIP_w, gxg_GTK_TOOLTIP)
-#endif
-
 #if HAVE_GTK_INFO_BAR_NEW
 XEN_NARGIFY_1(gxg_GTK_INFO_BAR_w, gxg_GTK_INFO_BAR)
 #endif
@@ -39064,10 +39046,7 @@ XEN_NARGIFY_1(gxg_GTK_IS_PRINT_CONTEXT_w, gxg_GTK_IS_PRINT_CONTEXT)
 XEN_NARGIFY_1(gxg_GTK_IS_PRINT_OPERATION_w, gxg_GTK_IS_PRINT_OPERATION)
 XEN_NARGIFY_1(gxg_GTK_IS_PRINT_OPERATION_PREVIEW_w, gxg_GTK_IS_PRINT_OPERATION_PREVIEW)
 XEN_NARGIFY_1(gxg_GTK_IS_PRINT_SETTINGS_w, gxg_GTK_IS_PRINT_SETTINGS)
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 XEN_NARGIFY_1(gxg_GTK_IS_TOOLTIP_w, gxg_GTK_IS_TOOLTIP)
-#endif
-
 #if HAVE_GTK_INFO_BAR_NEW
 XEN_NARGIFY_1(gxg_GTK_IS_INFO_BAR_w, gxg_GTK_IS_INFO_BAR)
 #endif
@@ -41111,6 +41090,8 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_about_dialog_set_translator_credits_w gxg_gtk_about_dialog_set_translator_credits
 #define gxg_gtk_about_dialog_get_logo_w gxg_gtk_about_dialog_get_logo
 #define gxg_gtk_about_dialog_set_logo_w gxg_gtk_about_dialog_set_logo
+#define gxg_gtk_about_dialog_get_program_name_w gxg_gtk_about_dialog_get_program_name
+#define gxg_gtk_about_dialog_set_program_name_w gxg_gtk_about_dialog_set_program_name
 #define gxg_gtk_icon_view_new_w gxg_gtk_icon_view_new
 #define gxg_gtk_icon_view_new_with_model_w gxg_gtk_icon_view_new_with_model
 #define gxg_gtk_icon_view_set_model_w gxg_gtk_icon_view_set_model
@@ -41625,9 +41606,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_cairo_set_source_color_w gxg_gdk_cairo_set_source_color
 #define gxg_gdk_cairo_set_source_pixbuf_w gxg_gdk_cairo_set_source_pixbuf
 #define gxg_gdk_cairo_rectangle_w gxg_gdk_cairo_rectangle
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
-#define gxg_gtk_about_dialog_get_program_name_w gxg_gtk_about_dialog_get_program_name
-#define gxg_gtk_about_dialog_set_program_name_w gxg_gtk_about_dialog_set_program_name
 #define gxg_gdk_color_to_string_w gxg_gdk_color_to_string
 #define gxg_gdk_event_request_motions_w gxg_gdk_event_request_motions
 #define gxg_gdk_notify_startup_complete_with_id_w gxg_gdk_notify_startup_complete_with_id
@@ -41706,8 +41684,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_tree_view_get_tooltip_column_w gxg_gtk_tree_view_get_tooltip_column
 #define gxg_gtk_widget_set_has_tooltip_w gxg_gtk_widget_set_has_tooltip
 #define gxg_gtk_widget_get_has_tooltip_w gxg_gtk_widget_get_has_tooltip
-#endif
-
 #if HAVE_GTK_TEST_WIDGET_CLICK
 #define gxg_gtk_calendar_set_detail_func_w gxg_gtk_calendar_set_detail_func
 #define gxg_gtk_calendar_set_detail_width_chars_w gxg_gtk_calendar_set_detail_width_chars
@@ -42895,10 +42871,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_PRINT_OPERATION_w gxg_GTK_PRINT_OPERATION
 #define gxg_GTK_PRINT_OPERATION_PREVIEW_w gxg_GTK_PRINT_OPERATION_PREVIEW
 #define gxg_GTK_PRINT_SETTINGS_w gxg_GTK_PRINT_SETTINGS
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 #define gxg_GTK_TOOLTIP_w gxg_GTK_TOOLTIP
-#endif
-
 #if HAVE_GTK_INFO_BAR_NEW
 #define gxg_GTK_INFO_BAR_w gxg_GTK_INFO_BAR
 #endif
@@ -43090,10 +43063,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_PRINT_OPERATION_w gxg_GTK_IS_PRINT_OPERATION
 #define gxg_GTK_IS_PRINT_OPERATION_PREVIEW_w gxg_GTK_IS_PRINT_OPERATION_PREVIEW
 #define gxg_GTK_IS_PRINT_SETTINGS_w gxg_GTK_IS_PRINT_SETTINGS
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
 #define gxg_GTK_IS_TOOLTIP_w gxg_GTK_IS_TOOLTIP
-#endif
-
 #if HAVE_GTK_INFO_BAR_NEW
 #define gxg_GTK_IS_INFO_BAR_w gxg_GTK_IS_INFO_BAR
 #endif
@@ -45144,6 +45114,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_about_dialog_set_translator_credits, gxg_gtk_about_dialog_set_translator_credits_w, 2, 0, 0, H_gtk_about_dialog_set_translator_credits);
   XG_DEFINE_PROCEDURE(gtk_about_dialog_get_logo, gxg_gtk_about_dialog_get_logo_w, 1, 0, 0, H_gtk_about_dialog_get_logo);
   XG_DEFINE_PROCEDURE(gtk_about_dialog_set_logo, gxg_gtk_about_dialog_set_logo_w, 2, 0, 0, H_gtk_about_dialog_set_logo);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_program_name, gxg_gtk_about_dialog_get_program_name_w, 1, 0, 0, H_gtk_about_dialog_get_program_name);
+  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_program_name, gxg_gtk_about_dialog_set_program_name_w, 2, 0, 0, H_gtk_about_dialog_set_program_name);
   XG_DEFINE_PROCEDURE(gtk_icon_view_new, gxg_gtk_icon_view_new_w, 0, 0, 0, H_gtk_icon_view_new);
   XG_DEFINE_PROCEDURE(gtk_icon_view_new_with_model, gxg_gtk_icon_view_new_with_model_w, 1, 0, 0, H_gtk_icon_view_new_with_model);
   XG_DEFINE_PROCEDURE(gtk_icon_view_set_model, gxg_gtk_icon_view_set_model_w, 2, 0, 0, H_gtk_icon_view_set_model);
@@ -45658,9 +45630,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_cairo_set_source_color, gxg_gdk_cairo_set_source_color_w, 2, 0, 0, H_gdk_cairo_set_source_color);
   XG_DEFINE_PROCEDURE(gdk_cairo_set_source_pixbuf, gxg_gdk_cairo_set_source_pixbuf_w, 4, 0, 0, H_gdk_cairo_set_source_pixbuf);
   XG_DEFINE_PROCEDURE(gdk_cairo_rectangle, gxg_gdk_cairo_rectangle_w, 2, 0, 0, H_gdk_cairo_rectangle);
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
-  XG_DEFINE_PROCEDURE(gtk_about_dialog_get_program_name, gxg_gtk_about_dialog_get_program_name_w, 1, 0, 0, H_gtk_about_dialog_get_program_name);
-  XG_DEFINE_PROCEDURE(gtk_about_dialog_set_program_name, gxg_gtk_about_dialog_set_program_name_w, 2, 0, 0, H_gtk_about_dialog_set_program_name);
   XG_DEFINE_PROCEDURE(gdk_color_to_string, gxg_gdk_color_to_string_w, 1, 0, 0, H_gdk_color_to_string);
   XG_DEFINE_PROCEDURE(gdk_event_request_motions, gxg_gdk_event_request_motions_w, 1, 0, 0, H_gdk_event_request_motions);
   XG_DEFINE_PROCEDURE(gdk_notify_startup_complete_with_id, gxg_gdk_notify_startup_complete_with_id_w, 1, 0, 0, H_gdk_notify_startup_complete_with_id);
@@ -45739,8 +45708,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_view_get_tooltip_column, gxg_gtk_tree_view_get_tooltip_column_w, 1, 0, 0, H_gtk_tree_view_get_tooltip_column);
   XG_DEFINE_PROCEDURE(gtk_widget_set_has_tooltip, gxg_gtk_widget_set_has_tooltip_w, 2, 0, 0, H_gtk_widget_set_has_tooltip);
   XG_DEFINE_PROCEDURE(gtk_widget_get_has_tooltip, gxg_gtk_widget_get_has_tooltip_w, 1, 0, 0, H_gtk_widget_get_has_tooltip);
-#endif
-
 #if HAVE_GTK_TEST_WIDGET_CLICK
   XG_DEFINE_PROCEDURE(gtk_calendar_set_detail_func, gxg_gtk_calendar_set_detail_func_w, 4, 0, 0, H_gtk_calendar_set_detail_func);
   XG_DEFINE_PROCEDURE(gtk_calendar_set_detail_width_chars, gxg_gtk_calendar_set_detail_width_chars_w, 2, 0, 0, H_gtk_calendar_set_detail_width_chars);
@@ -46920,10 +46887,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_PRINT_OPERATION, gxg_GTK_PRINT_OPERATION_w, 1, 0, 0, "(GTK_PRINT_OPERATION obj) casts obj to GTK_PRINT_OPERATION");
   XG_DEFINE_PROCEDURE(GTK_PRINT_OPERATION_PREVIEW, gxg_GTK_PRINT_OPERATION_PREVIEW_w, 1, 0, 0, "(GTK_PRINT_OPERATION_PREVIEW obj) casts obj to GTK_PRINT_OPERATION_PREVIEW");
   XG_DEFINE_PROCEDURE(GTK_PRINT_SETTINGS, gxg_GTK_PRINT_SETTINGS_w, 1, 0, 0, "(GTK_PRINT_SETTINGS obj) casts obj to GTK_PRINT_SETTINGS");
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
   XG_DEFINE_PROCEDURE(GTK_TOOLTIP, gxg_GTK_TOOLTIP_w, 1, 0, 0, "(GTK_TOOLTIP obj) casts obj to GTK_TOOLTIP");
-#endif
-
 #if HAVE_GTK_INFO_BAR_NEW
   XG_DEFINE_PROCEDURE(GTK_INFO_BAR, gxg_GTK_INFO_BAR_w, 1, 0, 0, "(GTK_INFO_BAR obj) casts obj to GTK_INFO_BAR");
 #endif
@@ -47123,10 +47087,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_PRINT_OPERATION, gxg_GTK_IS_PRINT_OPERATION_w, 1, 0, 0, "(GTK_IS_PRINT_OPERATION obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_OPERATION");
   XG_DEFINE_PROCEDURE(GTK_IS_PRINT_OPERATION_PREVIEW, gxg_GTK_IS_PRINT_OPERATION_PREVIEW_w, 1, 0, 0, "(GTK_IS_PRINT_OPERATION_PREVIEW obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_OPERATION_PREVIEW");
   XG_DEFINE_PROCEDURE(GTK_IS_PRINT_SETTINGS, gxg_GTK_IS_PRINT_SETTINGS_w, 1, 0, 0, "(GTK_IS_PRINT_SETTINGS obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_SETTINGS");
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
   XG_DEFINE_PROCEDURE(GTK_IS_TOOLTIP, gxg_GTK_IS_TOOLTIP_w, 1, 0, 0, "(GTK_IS_TOOLTIP obj): " PROC_TRUE " if obj is a GTK_IS_TOOLTIP");
-#endif
-
 #if HAVE_GTK_INFO_BAR_NEW
   XG_DEFINE_PROCEDURE(GTK_IS_INFO_BAR, gxg_GTK_IS_INFO_BAR_w, 1, 0, 0, "(GTK_IS_INFO_BAR obj): " PROC_TRUE " if obj is a GTK_IS_INFO_BAR");
 #endif
@@ -47523,6 +47484,7 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_BUTTONBOX_EDGE);
   DEFINE_INTEGER(GTK_BUTTONBOX_START);
   DEFINE_INTEGER(GTK_BUTTONBOX_END);
+  DEFINE_INTEGER(GTK_BUTTONBOX_CENTER);
   DEFINE_INTEGER(GTK_DELETE_CHARS);
   DEFINE_INTEGER(GTK_DELETE_WORD_ENDS);
   DEFINE_INTEGER(GTK_DELETE_WORDS);
@@ -47774,6 +47736,7 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_ICON_LOOKUP_NO_SVG);
   DEFINE_INTEGER(GTK_ICON_LOOKUP_FORCE_SVG);
   DEFINE_INTEGER(GTK_ICON_LOOKUP_USE_BUILTIN);
+  DEFINE_INTEGER(GTK_ICON_LOOKUP_GENERIC_FALLBACK);
   DEFINE_INTEGER(GTK_FILE_CHOOSER_ACTION_OPEN);
   DEFINE_INTEGER(GTK_FILE_CHOOSER_ACTION_SAVE);
   DEFINE_INTEGER(GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
@@ -47950,9 +47913,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_PRINT_ERROR_GENERAL);
   DEFINE_INTEGER(GTK_PRINT_ERROR_INTERNAL_ERROR);
   DEFINE_INTEGER(GTK_PRINT_ERROR_NOMEM);
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
-  DEFINE_INTEGER(GTK_BUTTONBOX_CENTER);
-  DEFINE_INTEGER(GTK_ICON_LOOKUP_GENERIC_FALLBACK);
   DEFINE_INTEGER(GTK_PRINT_ERROR_INVALID_FILE);
   DEFINE_INTEGER(GTK_DRAG_RESULT_SUCCESS);
   DEFINE_INTEGER(GTK_DRAG_RESULT_NO_TARGET);
@@ -47960,8 +47920,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_DRAG_RESULT_TIMEOUT_EXPIRED);
   DEFINE_INTEGER(GTK_DRAG_RESULT_GRAB_BROKEN);
   DEFINE_INTEGER(GTK_DRAG_RESULT_ERROR);
-#endif
-
 #if HAVE_GTK_TEST_WIDGET_CLICK
   DEFINE_INTEGER(GTK_CALENDAR_SHOW_DETAILS);
 #endif
@@ -48886,10 +48844,7 @@ static void define_strings(void)
   DEFINE_STRING(GTK_PRINT_SETTINGS_OUTPUT_BIN);
   DEFINE_STRING(GTK_PRINT_SETTINGS_OUTPUT_FILE_FORMAT);
   DEFINE_STRING(GTK_PRINT_SETTINGS_OUTPUT_URI);
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
   DEFINE_STRING(GTK_STOCK_DISCARD);
-#endif
-
 #if HAVE_GTK_SCALE_ADD_MARK
   DEFINE_STRING(GTK_STOCK_CAPS_LOCK_WARNING);
 #endif
@@ -48934,7 +48889,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("11-Feb-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("23-Feb-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

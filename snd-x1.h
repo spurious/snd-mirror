@@ -3,6 +3,8 @@
 
 #define SOUND_ENV_EDITOR(Sp) ((env_editor *)(sp->sgx->flt))
 
+
+
 /* -------- snd-xhelp.c -------- */
 
 Widget snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap);
@@ -10,7 +12,7 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
 int help_text_width(const char *txt, int start, int end);
 void snd_help_append(const char *text);
 void snd_help_back_to_top(void);
-bool help_dialog_is_active(void);
+
 
 
 /* -------- snd-xdraw.c -------- */
@@ -96,6 +98,8 @@ void check_menu_labels(int key, int state, bool extended);
 void reflect_play_selection_stop(void);
 void g_init_gxmenu(void);
 void set_button_label(Widget label, const char *str);
+void add_tooltip(Widget w, const char *tip);
+
 
 
 /* -------- snd-xmain.c -------- */

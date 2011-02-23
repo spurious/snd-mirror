@@ -1309,12 +1309,21 @@ void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, i
 
 /* ---------------- toolbar ---------------- */
 
+void add_tooltip(GtkWidget *w, const char *tip)
+{
+  char *str;
+  str = mus_format("<span background=\"white\">%s</span>", tip);
+  gtk_widget_set_tooltip_markup(GTK_WIDGET(w), str);
+  free(str);
+}
+
+
 static void add_to_toolbar(GtkWidget *bar, const gchar *stock, const char *tip, GCallback callback)
 {
   GtkToolItem *w;
   w = gtk_tool_button_new_from_stock(stock);
   gtk_toolbar_insert(GTK_TOOLBAR(bar), w, -1); /* -1 = at end */
-  gtk_widget_set_tooltip_text(GTK_WIDGET(w), tip);
+  add_tooltip(GTK_WIDGET(w), tip);
   gtk_widget_show(GTK_WIDGET(w));
   g_signal_connect(GTK_WIDGET(w), "clicked", callback, NULL);
 }

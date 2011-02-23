@@ -2337,14 +2337,14 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   /* header type */
   if (with_header_type == WITH_HEADER_TYPE_FIELD)
     {
-      fdat->header_list = slist_new_with_title(_("header:"), form, (const char **)headers, nheaders, BOX_PACK); /* BOX_PACK widget_add_t (snd-g0.h) */
+      fdat->header_list = slist_new_with_title(_("header"), form, (const char **)headers, nheaders, BOX_PACK); /* BOX_PACK widget_add_t (snd-g0.h) */
       fdat->header_list->select_callback = update_header_type_list;
       fdat->header_list->select_callback_data = (void *)fdat;
       slist_select(fdat->header_list, fdat->header_pos);
     }
 
   /* data format */
-  fdat->format_list = slist_new_with_title(_("data format:"), form, (const char **)formats, nformats, BOX_PACK);
+  fdat->format_list = slist_new_with_title(_("data format"), form, (const char **)formats, nformats, BOX_PACK);
   fdat->format_list->select_callback = update_data_format_list;
   fdat->format_list->select_callback_data = (void *)fdat;
   slist_select(fdat->format_list, fdat->format_pos);
@@ -2360,7 +2360,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   gtk_widget_show(sbar);
 
   fdat->smenu = gtk_menu_new();
-  sitem = gtk_menu_item_new_with_label(_("            srate:"));
+  sitem = gtk_menu_item_new_with_label(_("            srate"));
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), fdat->smenu);
   gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
   gtk_widget_show(sitem);
@@ -2411,7 +2411,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_widget_show(c3);
       gtk_widget_show(c4);
 
-      citem = gtk_menu_item_new_with_label((gchar *)((with_chan == WITH_CHANNELS_FIELD) ? _("           channels:") : _("    extract channel:")));
+      citem = gtk_menu_item_new_with_label((gchar *)((with_chan == WITH_CHANNELS_FIELD) ? _("           channels") : _("    extract channel")));
       gtk_widget_show(citem);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(citem), cmenu);
       gtk_menu_shell_append(GTK_MENU_SHELL(cbar), citem);
@@ -2426,7 +2426,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       if (with_loc == WITH_DATA_LOCATION_FIELD)
 	{
 	  GtkWidget *loclab;
-	  loclab = snd_gtk_highlight_label_new(_("location:"));
+	  loclab = snd_gtk_highlight_label_new(_("location"));
 	  gtk_box_pack_start(GTK_BOX(scbox), loclab, false, false, 0);
 	  gtk_widget_show(loclab);
 
@@ -2438,7 +2438,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   if (with_samples == WITH_SAMPLES_FIELD)
     {
       GtkWidget *samplab;
-      samplab = snd_gtk_highlight_label_new(_("samples:"));
+      samplab = snd_gtk_highlight_label_new(_("samples"));
       gtk_box_pack_start(GTK_BOX(scbox), samplab, false, false, 0);
       gtk_widget_show(samplab);
 
@@ -2467,7 +2467,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_box_pack_start(GTK_BOX(frame_box), combox, true, true, 4);
       gtk_widget_show(combox);
 
-      comment_label = snd_gtk_highlight_label_new(_("comment:"));
+      comment_label = snd_gtk_highlight_label_new(_("comment"));
       gtk_box_pack_start(GTK_BOX(combox), comment_label, false, false, 0);
       gtk_widget_show(comment_label);
 

@@ -1,5 +1,9 @@
 /* this file included as text in snd-g|xprefs.c */
 
+/* TODO: with-tooltips function
+ * TODO: finish fixing the help strings [and make the current ones less stupid]
+ */
+
 static void int_to_textfield(widget_t w, int val)
 {
   char *str;
@@ -73,7 +77,7 @@ static prefs_info **prefs = NULL;
 static void remember_pref(prefs_info *prf, 
 			  void (*reflect_func)(struct prefs_info *prf),
 			  void (*save_func)(struct prefs_info *prf, FILE *fd),
-			  void (*help_func)(struct prefs_info *prf),
+			  const char *(*help_func)(struct prefs_info *prf),
 			  void (*clear_func)(struct prefs_info *prf),
 			  void (*revert_func)(struct prefs_info *prf))
 {
@@ -99,6 +103,10 @@ static void remember_pref(prefs_info *prf,
   prf->clear_func = clear_func;
   prf->revert_func = revert_func;
   prefs[prefs_top++] = prf;
+
+  if ((help_func) &&
+      (prf->label))
+    add_tooltip(prf->label, (*help_func)(prf));
 }
 
 
@@ -363,43 +371,6 @@ static char *possibly_quote(char *key)
 }
 
 
-#if USE_MOTIF
-static void prefs_help(prefs_info *prf)
-{
-  if (prf->var_name)
-    {
-      if (prf->help_func)
-	{
-	  prefs_helping = true;
-	  (*(prf->help_func))(prf);
-	}
-      else
-	{
-	  XEN sym;
-	  sym = C_STRING_TO_XEN_SYMBOL(TO_PROC_NAME((char *)(prf->var_name)));
-	  if (XEN_SYMBOL_P(sym))
-	    {
-	      XEN obj;
-#if HAVE_SCHEME
-	      obj = g_snd_help_with_search(sym, 0, false);
-#else
-	      obj = XEN_OBJECT_HELP(sym);
-#endif
-	      if (XEN_STRING_P(obj))
-		{
-		  prefs_helping = true;
-		  snd_help(prf->var_name, 
-			   XEN_TO_C_STRING(obj),
-			   WITH_WORD_WRAP);
-		}
-	    }
-	}
-    }
-}
-#endif
-
-
-
 /* ---------------- auto-resize ---------------- */
 
 static bool rts_auto_resize = DEFAULT_AUTO_RESIZE;
@@ -407,6 +378,14 @@ static void reflect_auto_resize(prefs_info *prf) {SET_TOGGLE(prf->toggle, auto_r
 static void resize_toggle(prefs_info *prf) {set_auto_resize(GET_TOGGLE(prf->toggle));}
 static void revert_auto_resize(prefs_info *prf) {set_auto_resize(rts_auto_resize);}
 static void save_auto_resize(prefs_info *prf, FILE *ignore) {rts_auto_resize = auto_resize(ss);}
+
+static const char *help_auto_resize(prefs_info *prf)
+{
+  return("\
+  If this option is set, Snd's main window   \n\
+  changes size as sounds come and go.       ");
+}
+
 
 
 /* ---------------- ask-before-overwrite ---------------- */
@@ -416,6 +395,15 @@ static void reflect_ask_before_overwrite(prefs_info *prf) {SET_TOGGLE(prf->toggl
 static void overwrite_toggle(prefs_info *prf) {set_ask_before_overwrite(GET_TOGGLE(prf->toggle));}
 static void revert_ask_before_overwrite(prefs_info *prf) {set_ask_before_overwrite(rts_ask_before_overwrite);}
 static void save_ask_before_overwrite(prefs_info *prf, FILE *ignore) {rts_ask_before_overwrite = ask_before_overwrite(ss);}
+
+static const char *help_ask_before_overwrite(prefs_info *prf)
+{
+  return("\
+  If this option is set, Snd will ask you before   \n\
+  it overwrites an existing sound.  The associated \n\
+  function is " S_ask_before_overwrite ".          ");
+}
+
 
 
 /* ---------------- show-controls ---------------- */
@@ -1814,14 +1802,10 @@ static void revert_sync_style(prefs_info *prf) {set_sync_style(rts_sync_style);}
 static void clear_sync_style(prefs_info *prf) {set_sync_style(DEFAULT_SYNC_STYLE);}
 static void save_sync_style(prefs_info *prf, FILE *ignore) {rts_sync_style = sync_style(ss);}
 
-static void help_sync_style(prefs_info *prf)
+static const char *help_sync_style(prefs_info *prf)
 {
-  snd_help(prf->var_name,
-	   "Many operations can operate on all channels at once, or only on the currently selected \
-channel.  If either of these buttons is selected, such operations operate either on all channels \
-within each sound (but not across sounds), or on all current channels at once.  The default is \
-to operate only on the selected channel (neither button selected).",
-	   WITH_WORD_WRAP);
+  return("Many operations can operate either on all channels at once,\n\
+or only on the currently selected channel.");
 }
 
 
@@ -2138,12 +2122,10 @@ static void save_unsaved_edits(prefs_info *prf, FILE *fd) {rts_unsaved_edits = a
 static void reflect_unsaved_edits(prefs_info *prf) {SET_TOGGLE(prf->toggle, ask_about_unsaved_edits(ss));}
 static void unsaved_edits_toggle(prefs_info *prf) {set_ask_about_unsaved_edits(GET_TOGGLE(prf->toggle));}
 
-static void help_unsaved_edits(prefs_info *prf)
+static const char *help_unsaved_edits(prefs_info *prf)
 {
-  snd_help(prf->var_name,
-	   "This option looks for unsaved edits when you close a file, or exit Snd.  If it \
-finds any, it asks you whether you want to save them.",
-	   WITH_WORD_WRAP);
+  return("This option looks for unsaved edits when you close a file, or exit Snd.  If it \
+finds any, it asks you whether you want to save them.");
 }
 
 
@@ -2167,13 +2149,11 @@ static void save_with_inset_graph(prefs_info *prf, FILE *fd)
   set_with_inset_graph(rts_with_inset_graph);
 }
 
-static void help_inset_graph(prefs_info *prf)
+static const char *help_inset_graph(prefs_info *prf)
 {
-  snd_help(prf->var_name,
-	   "This option displays a small graph of the entire sound in the upper right corner \
+  return("This option displays a small graph of the entire sound in the upper right corner \
 of the screen with an indication of where the current window is. If you click somewhere in the \
-little graph, the cursor and main window are moved to that spot.",
-	   WITH_WORD_WRAP);
+little graph, the cursor and main window are moved to that spot.");
 }
 
 
@@ -2197,11 +2177,9 @@ static void save_smpte(prefs_info *prf, FILE *fd)
   set_with_smpte_label(rts_with_smpte_label);
 }
 
-static void help_smpte(prefs_info *prf)
+static const char *help_smpte(prefs_info *prf)
 {
-  snd_help(prf->var_name,
-	   "This option displays the SMPTE data in the time domain graph.",
-	   WITH_WORD_WRAP);
+  return("This option displays the SMPTE data in the time domain graph.");
 }
 
 
@@ -2222,11 +2200,9 @@ static void save_with_pointer_focus(prefs_info *prf, FILE *fd)
 }
 
 
-static void help_pointer_focus(prefs_info *prf)
+static const char *help_pointer_focus(prefs_info *prf)
 {
-  snd_help(prf->var_name,
-	   "If this option is set, when the mouse moves over a text or graph widget, the widget is activated.",
-	   WITH_WORD_WRAP);
+  return("If this option is set, when the mouse moves over a text or graph widget, the widget is activated.");
 }
 
 
@@ -3156,11 +3132,9 @@ static void raw_data_format_from_menu(prefs_info *prf, char *value)
 
 static bool rts_with_toolbar = DEFAULT_WITH_TOOLBAR;
 
-static void help_with_toolbar(prefs_info *prf)
+static const char *help_with_toolbar(prefs_info *prf)
 {
-  snd_help(prf->var_name,
-	   "",
-	   WITH_WORD_WRAP);
+  return("TODO: help");
 }
 
 static void revert_with_toolbar(prefs_info *prf) {set_with_toolbar_and_display(rts_with_toolbar);}
@@ -3175,12 +3149,10 @@ static void toggle_with_toolbar(prefs_info *prf) {set_with_toolbar_and_display(G
 
 static bool rts_remember_sound_state = DEFAULT_REMEMBER_SOUND_STATE;
 
-static void help_remember_sound_state(prefs_info *prf)
+static const char *help_remember_sound_state(prefs_info *prf)
 {
-  snd_help(prf->var_name,
-	   "This option causes Snd to save most of a sound's display state when it is closed, \
-and if that same sound is later re-opened, Snd restores the previous state. This only takes effect upon restarting Snd.",
-	   WITH_WORD_WRAP);
+  return("This option causes Snd to save most of a sound's display state when it is closed, \
+and if that same sound is later re-opened, Snd restores the previous state. This only takes effect upon restarting Snd.");
 }
 
 static void revert_remember_sound_state(prefs_info *prf) {set_remember_sound_state(rts_remember_sound_state);}
@@ -3550,14 +3522,12 @@ static void colormap_from_menu(prefs_info *prf, char *value)
 static bool include_peak_envs = false, rts_peak_envs = false;
 static char *include_peak_env_directory = NULL, *rts_peak_env_directory = NULL;
 
-static void help_peak_envs(prefs_info *prf)
+static const char *help_peak_envs(prefs_info *prf)
 {
-  snd_help(prf->var_name,
-	   "When a very large file is first opened, Snd scans all the data to build up an overall \
+  return("When a very large file is first opened, Snd scans all the data to build up an overall \
 representation of the sound.  If you like to view the entire sound upon opening it, you can speed \
 up the process a lot by saving this initial representation.  The data is called a 'peak-env' file \
-and it resides in the 'peak-env-dir'.",
-	   WITH_WORD_WRAP);
+and it resides in the 'peak-env-dir'.");
 }
 
 
@@ -3622,7 +3592,7 @@ static void peak_envs_text(prefs_info *prf)
 
 static char *rts_load_path = NULL;
 
-static void help_load_path(prefs_info *prf)
+static const char *help_load_path(prefs_info *prf)
 {
   char *hlp, *temp = NULL;
   hlp = mus_format("Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth \
@@ -3641,11 +3611,11 @@ find elsewhere.  The current load path list is: \n\n%s\n",
 #endif
 #endif
 		   temp = (char *)XEN_AS_STRING(XEN_LOAD_PATH));
-  snd_help("load paths", hlp, 	   WITH_WORD_WRAP);
 #if HAVE_SCHEME
   if (temp) free(temp);
 #endif
   free(hlp);
+  return("TODO: help");
 }
 
 
@@ -3781,12 +3751,10 @@ static void load_path_text(prefs_info *prf)
 static mus_float_t rts_initial_beg = DEFAULT_INITIAL_BEG, rts_initial_dur = DEFAULT_INITIAL_DUR;
 static bool rts_full_duration = DEFAULT_SHOW_FULL_DURATION;
 
-static void help_initial_bounds(prefs_info *prf)
+static const char *help_initial_bounds(prefs_info *prf)
 {
-  snd_help(prf->var_name,
-	   "Normally Snd displays just the first 0.1 seconds of a sound in its initial graph. This option \
-sets either new bounds for that display, or directs Snd to display the entire sound.",
-	   WITH_WORD_WRAP);
+  return("Normally Snd displays just the first 0.1 seconds of a sound in its initial graph. This option \
+sets either new bounds for that display, or directs Snd to display the entire sound.");
 }
 
 
@@ -3923,13 +3891,11 @@ static void clear_key(prefs_info *prf, const char *name)
 
 /* -------- key: play all chans from cursor -------- */
 
-static void help_play_from_cursor(prefs_info *prf)
+static const char *help_play_from_cursor(prefs_info *prf)
 {
-  snd_help("play from cursor",
-	   "By default, C-q plays the current channel from the cursor, but one often wants to play the entire \
+  return("By default, C-q plays the current channel from the cursor, but one often wants to play the entire \
 sound; this option binds a key for that purpose, and also overrides the pause setting.  The new binding does \
-not take effect until you type return in the text widget.",
-	   WITH_WORD_WRAP);
+not take effect until you type return in the text widget.");
 }
 
 
@@ -3986,12 +3952,10 @@ static void clear_play_from_cursor(prefs_info *prf)
 
 /* -------- key: show all of sound -------- */
 
-static void help_show_all(prefs_info *prf)
+static const char *help_show_all(prefs_info *prf)
 {
-  snd_help("show entire sound",
-	   "This option binds a key to show all of the current sound in the current time domain window, \
-equivalent to moving the 'zoom' slider all the way to the right.",
-	   WITH_WORD_WRAP);
+  return("This option binds a key to show all of the current sound in the current time domain window, \
+equivalent to moving the 'zoom' slider all the way to the right.");
 }
 
 
@@ -4057,12 +4021,10 @@ static void clear_show_all(prefs_info *prf)
 
 /* -------- key: select all of sound -------- */
 
-static void help_select_all(prefs_info *prf)
+static const char *help_select_all(prefs_info *prf)
 {
-  snd_help("select entire sound",
-	   "This option binds a key to select all of the current sound.  The 'Select all' Edit menu item \
-follows the 'sync' buttons when deciding which channels to select.",
-	   WITH_WORD_WRAP);
+  return("This option binds a key to select all of the current sound.  The 'Select all' Edit menu item \
+follows the 'sync' buttons when deciding which channels to select.");
 }
 
 
@@ -4128,11 +4090,9 @@ static void clear_select_all(prefs_info *prf)
 
 /* -------- key: undo all edits -------- */
 
-static void help_revert(prefs_info *prf)
+static const char *help_revert(prefs_info *prf)
 {
-  snd_help("undo all edits (revert)",
-	   "This option binds a key to undo any edits in the current sound, equivalent to the File:Revert menu item.",
-	   WITH_WORD_WRAP);
+  return("This option binds a key to undo any edits in the current sound, equivalent to the File:Revert menu item.");
 }
 
 
@@ -4189,11 +4149,9 @@ static void clear_revert_sound(prefs_info *prf)
 
 /* -------- key: exit -------- */
 
-static void help_exit(prefs_info *prf)
+static const char *help_exit(prefs_info *prf)
 {
-  snd_help("exit from Snd",
-	   "This option binds a key to exit from Snd, equivalent to the File:Exit menu item.",
-	   WITH_WORD_WRAP);
+  return("This option binds a key to exit from Snd, equivalent to the File:Exit menu item.");
 }
 
 
@@ -4250,11 +4208,9 @@ static void clear_exit(prefs_info *prf)
 
 /* -------- key: goto maxamp -------- */
 
-static void help_goto_maxamp(prefs_info *prf)
+static const char *help_goto_maxamp(prefs_info *prf)
 {
-  snd_help("go to maxamp",
-	   "This option binds a key to move the view (and cursor) to the position of the current channel's maximum sample.",
-	   WITH_WORD_WRAP);
+  return("This option binds a key to move the view (and cursor) to the position of the current channel's maximum sample.");
 }
 
 
@@ -4311,11 +4267,9 @@ static void clear_goto_maxamp(prefs_info *prf)
 
 /* -------- key: show selection -------- */
 
-static void help_show_selection(prefs_info *prf)
+static const char *help_show_selection(prefs_info *prf)
 {
-  snd_help("show selection",
-	   "This option binds a key to cause the current selection to fill the time domain graph.",
-	   WITH_WORD_WRAP);
+  return("This option binds a key to cause the current selection to fill the time domain graph.");
 }
 
 
@@ -4367,3 +4321,423 @@ static void clear_show_selection(prefs_info *prf)
 {
   clear_key(prf, "show-selection");
 }
+
+static const char *help_show_controls(prefs_info *prf) 
+{
+  return("\
+  The control panel is the set of playback controls  \n\
+  under the sound graphs.  It is normally hidden.  ");
+}
+
+static const char *help_selection_creates_region(prefs_info *prf) 
+{
+  return("\
+  This determines whether a region is created whenever  \n\
+  you make a selection.  ");
+}
+
+static const char *help_just_sounds(prefs_info *prf) 
+{
+  return("\
+  The various file dialogs can restrict the files  \n\
+   displayed to just sound files.   ");
+}
+
+static const char *help_temp_dir(prefs_info *prf) 
+{
+  return("\
+  Snd sometimes needs a place to write a temporary  \n\
+  file.  This is the directory to use.   ");
+}
+
+static const char *help_save_dir(prefs_info *prf) 
+{
+  return("\
+  When you choose the Options: Save state item,  \n\
+  the saved settings are placed in a file in this directory.   ");
+}
+
+static const char *help_save_state_file(prefs_info *prf) 
+{
+  return("\
+  When you choose Options: Save state, the state  \n\
+  is saved in this file, in the save directory.  ");
+}
+
+static const char *help_html_program(prefs_info *prf) 
+{
+  return("\
+  The help dialog has links to the Snd documentation,  \n\
+  and this option gives the name of the HTML viewer to use.  ");
+}
+
+static const char *help_default_output_chans(prefs_info *prf) 
+{
+  return("\
+  This sets the default number of output channels  \n\
+  when a new sound is started.   ");
+}
+
+static const char *help_default_output_srate(prefs_info *prf) 
+{
+  return("\
+  This sets the default sampling rate when a new  \n\
+  sound is opened.  ");
+}
+
+static const char *help_default_output_header_type(prefs_info *prf) 
+{
+  return("\
+  This sets the default output header type (AIFC, etc)  \n\
+  when a new sound is opened.  ");
+}
+
+static const char *help_default_output_data_format(prefs_info *prf) 
+{
+  return("\
+  This sets the default data format (big-endian float, etc)  \n\
+  when a new sound is opened.  ");
+}
+
+static const char *help_verbose_cursor(prefs_info *prf) 
+{
+  return("\
+  If this is set, the cursor's position and the underlying  \n\
+  sample's value are displayed in the minibuffer as the cursor moves.  ");
+}
+
+static const char *help_with_tracking_cursor(prefs_info *prf) 
+{
+  return("\
+  If this is set, the cursor tries to show where the playback \n\
+  is in the sound as it is played.  It is only an approximation.  ");
+}
+
+static const char *help_cursor_size(prefs_info *prf) 
+{
+  return("  This sets the cursor size in pixels.  ");
+}
+
+static const char *help_cursor_style(prefs_info *prf) 
+{
+  return("  This sets the cursor shape.  ");
+}
+
+static const char *help_tracking_cursor_style(prefs_info *prf) 
+{
+  return("  This sets the tracking cursor shape.  ");
+}
+
+static const char *help_cursor_color(prefs_info *prf) 
+{
+  return("  This is the cursor color.  ");
+}
+
+static const char *help_basic_color(prefs_info *prf) 
+{
+  return("  This is the main background color used throughout Snd.  ");
+}
+
+static const char *help_highlight_color(prefs_info *prf) 
+{
+  return("  This color is used for highlighted items.  ");
+}
+
+static const char *help_position_color(prefs_info *prf) 
+{
+  return("  This is the color of the position-related sliders.  ");
+}
+
+static const char *help_zoom_color(prefs_info *prf) 
+{
+  return("  This is the color of the zoom-related sliders.  ");
+}
+
+static const char *help_graph_style(prefs_info *prf) 
+{
+  return("\
+  This sets how sound data is displayed.  Normally samples  \n\
+  are joined by lines, but you can also display them as isolated \n\
+  dots, or as filled polygons, or as dots-on-stilts, as in the DSP  \n\
+  textbooks.   ");
+}
+
+static const char *help_dot_size(prefs_info *prf) 
+{
+  return("\
+  If the graph style uses dots, this sets the dot size.  ");
+}
+
+static const char *help_channel_style(prefs_info *prf) 
+{
+  return("\
+  When a sound has more than one channel, this chooses how \n\
+  to lay them out: in separate windows, combined in one window  \n\
+  or superimposed on each other in a single graph.  ");
+}
+
+static const char *help_graphs_horizontal(prefs_info *prf) 
+{
+  return("\
+  This chooses whether sounds are layed out horizontally or vertically.  ");
+}
+
+static const char *help_show_y_zero(prefs_info *prf) 
+{
+  return("\
+  If this is set, each channel graph includes a line at y=0.  ");
+}
+
+static const char *help_show_grid(prefs_info *prf) 
+{
+  return("\
+  If this option is set, each channel graph has a grid, sort \n\
+  of like engineering graph paper.  ");
+}
+
+static const char *help_grid_density(prefs_info *prf) 
+{
+  return("\
+  If grids are in use, this sets how close the lines are.  ");
+}
+
+static const char *help_show_axes(prefs_info *prf) 
+{
+  return("  This chooses which axes to display.  ");
+}
+
+static const char *help_x_axis_style(prefs_info *prf) 
+{
+  return("  This sets the x axis labelling.  ");
+}
+
+static const char *help_data_color(prefs_info *prf) 
+{
+  return("  This is the waveform color in unselected graphs.  ");
+}
+
+static const char *help_graph_color(prefs_info *prf) 
+{
+  return("  This is the background color in unselected graphs.  ");
+}
+
+static const char *help_selected_data_color(prefs_info *prf) 
+{
+  return("  This is the waveform color in a selected graph.  ");
+}
+
+static const char *help_selected_graph_color(prefs_info *prf) 
+{
+  return("  This is the background color in a selected graph.  ");
+}
+
+static const char *help_selection_color(prefs_info *prf) 
+{
+  return("  This is the color used to show the current selection.  ");
+}
+
+static const char *help_axis_label_font(prefs_info *prf) 
+{
+  return("  This is a font used to label axes.  ");
+}
+
+static const char *help_axis_numbers_font(prefs_info *prf) 
+{
+  return("  This is the font used for axis numbers.  ");
+}
+
+static const char *help_peaks_font(prefs_info *prf) 
+{
+  return("  This is the font used in the FFT peaks listing.  ");
+}
+
+static const char *help_bold_peaks_font(prefs_info *prf) 
+{
+  return("\
+  This is the font used in the FFT peaks list\n\
+  to show a major peak.  ");
+}
+
+static const char *help_transform_graph_type(prefs_info *prf) 
+{
+  return("\
+  FFT results can be displayed as a waveform, a sonogram, \n\
+  or a spectrogram.  ");
+}
+
+static const char *help_transform_type(prefs_info *prf) 
+{
+  return("\
+  This chooses the kind of transform displayed \n\
+  in the fft graph.  ");
+}
+
+static const char *help_fft_window(prefs_info *prf) 
+{
+  return("  This sets the fft data window.  ");
+}
+
+static const char *help_fft_window_beta(prefs_info *prf) 
+{
+  return("  If the FFT window has an associated parameter, this sets it.  ");
+}
+
+static const char *help_colormap(prefs_info *prf) 
+{
+  return("  If the FFT is being displayed as a sonogram or spectrogram,\n\
+  this sets the colormap to use.  ");
+}
+
+static const char *help_fft_log_magnitude(prefs_info *prf) 
+{
+  return("  If this option is set, the FFTs show the magnitude axis on a log scale. ");
+}
+
+static const char *help_min_dB(prefs_info *prf) 
+{
+  return("\
+  If the FFT graphs are using a dB scale, this sets the\n\
+  minimum dB value displayed.  ");
+}
+
+static const char *help_fft_log_frequency(prefs_info *prf) 
+{
+  return("  If this is set, FFTs show the frequency axis on a log scale. ");
+}
+
+static const char *help_transform_normalization(prefs_info *prf) 
+{
+  return("  This chooses whether FFT data is normalized before display.  ");
+}
+
+static const char *help_mark_color(prefs_info *prf) 
+{
+  return("  This is the mark color.  ");
+}
+
+static const char *help_mix_color(prefs_info *prf) 
+{
+  return("  This is the color of the mix handle.  ");
+}
+
+static const char *help_sinc_width(prefs_info *prf) 
+{
+  return("\
+  If sampling rate conversion is needed, this sets \n\
+  the width of the sinc used for low-pass filtering.  ");
+}
+
+static const char *help_show_listener(prefs_info *prf) 
+{
+  return("  This option chooses whether to include the listener window. ");
+}
+
+static const char *help_listener_prompt(prefs_info *prf) 
+{
+  return("  This is the prompt displayed in the listener window.  ");
+}
+
+static const char *help_print_length(prefs_info *prf) 
+{
+  return("\
+  When a vector is printed in the listener, this sets\n\
+  the maximum number of values displayed.  ");
+}
+
+static const char *help_listener_font(prefs_info *prf) 
+{
+  return("  This is the font used in the listener.  ");
+}
+
+static const char *help_listener_color(prefs_info *prf) 
+{
+  return("  This is the background color of the listener.  ");
+}
+
+static const char *help_dac_size(prefs_info *prf) 
+{
+  return("  This is the DAC buffer size.  ");
+}
+
+static const char *help_dac_combines_channels(prefs_info *prf) 
+{
+  return("\
+  If the DAC has fewer output channels than the sound you\n\
+  want to play, and this option is set, then the extra \n\
+  channels are mixed into the existing ones.  ");
+}
+
+
+static const char *help_view_files_directory(prefs_info *prf) 
+{
+  return("  This directory is added to the View:files dialog's list.  ");
+}
+
+static const char *help_raw_chans(prefs_info *prf) 
+{
+  return("\
+  When a raw (no header) sound is opened, this sets the \n\
+  default number of channels.  ");
+}
+
+static const char *help_raw_srate(prefs_info *prf) 
+{
+  return("\
+  When a raw (no header) sound is opened, this sets the \n\
+  default sampling rate.  ");
+}
+
+static const char *help_raw_data_format(prefs_info *prf) 
+{
+  return("\
+  When a raw (no header) sound is opened, this sets the \n\
+  default data format.  ");
+}
+
+static const char *help_tiny_font(prefs_info *prf) 
+{
+  return("  When space is tight, Snd uses this font.  ");
+}
+
+static const char *help_fft_size(prefs_info *prf) 
+{
+  return("  This is the default FFT size.  ");
+}
+
+static const char *help_transform_peaks(prefs_info *prf) 
+{
+  return("  If this is set, FFTs include peak listings.  ");
+}
+
+static const char *help_mark_tag_size(prefs_info *prf) 
+{
+  return("  This is the size of the upper tag on a mark.  ");
+}
+
+static const char *help_mix_tag_size(prefs_info *prf) 
+{
+  return("  This sets the mix tag size.  ");
+}
+
+static const char *help_mix_waveforms(prefs_info *prf) 
+{
+  return("  If this is set, mixes display their waveforms.  ");
+}
+
+static const char *help_speed_control(prefs_info *prf) 
+{
+  return("\
+  This chooses how the speed control in the control panel\n\
+  divides up the speeds; as a continuous scale, by simple ratios, etc.  ");
+}
+
+static const char *help_listener_text_color(prefs_info *prf) 
+{
+  return("  This is the listener text color.  ");
+}
+
+static const char *help_init_window_size(prefs_info *prf) 
+{
+  return("  This sets Snd's size when it first comes up.  ");
+}
+

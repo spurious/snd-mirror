@@ -25,15 +25,6 @@
 (define struct-fields '())
 (define settable-struct-fields '())
 
-(define funcs-211 '())
-(define strings-211 '())
-(define ints-211 '())
-(define names-211 '())
-(define types-211 '())
-(define casts-211 '())
-(define checks-211 '())
-(define ulongs-211 '())
-
 (define funcs-213 '())
 (define strings-213 '())
 (define ints-213 '())
@@ -426,7 +417,6 @@
 			    (begin
 			      (set! all-types (cons type all-types))
 			      (case extra
-				((211 callback-211)   (set! types-211 (cons type types-211)))
 				((213 callback-213)   (set! types-213 (cons type types-213)))
 				((2134 callback-2134) (set! types-2134 (cons type types-2134)))
 				((2150 callback-2150) (set! types-2150 (cons type types-2150)))
@@ -1031,22 +1021,6 @@
 	    (set! funcs-22 (cons (list name type strs args) funcs-22))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-211 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-211: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-211 (cons type types-211))))
-	  (let ((strs (parse-args args '211)))
-	    (if spec
-		(set! funcs-211 (cons (list name type strs args spec) funcs-211))
-		(set! funcs-211 (cons (list name type strs args) funcs-211)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
 (define* (CFNC-213 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -1305,12 +1279,12 @@
 	(set! strings (cons name strings))
 	(set! names (cons (cons name 'string) names)))))
 
-(define (CSTR-211 name)
-  (if (assoc name names-211)
-      (no-way "~A CSTR-211~%" name)
+(define (CSTR-213 name)
+  (if (assoc name names-213)
+      (no-way "~A CSTR-213~%" name)
       (begin
-	(set! strings-211 (cons name strings-211))
-	(set! names-211 (cons (cons name 'string) names-211)))))
+	(set! strings-213 (cons name strings-213))
+	(set! names-213 (cons (cons name 'string) names-213)))))
 
 (define (CSTR-2150 name)
   (if (assoc name names-2150)
@@ -1348,12 +1322,12 @@
 	(set! ulongs (cons (list name type spec-name) ulongs))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CLNG-211 name type spec-name)
+(define* (CLNG-213 name type spec-name)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CLNG-211~%" name)
+      (no-way "~A CLNG-213~%" name)
       (begin
-	(set! ulongs-211 (cons (list name type spec-name) ulongs-211))
+	(set! ulongs-213 (cons (list name type spec-name) ulongs-213))
 	(set! names (cons (cons name 'ulong) names)))))
 
 (define* (CLNG-2173 name type spec-name)
@@ -1370,14 +1344,6 @@
       (no-way "~A CINT~%" name)
       (begin
 	(set! ints (cons name ints))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-211 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-211~%" name)
-      (begin
-	(set! ints-211 (cons name ints-211))
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-213 name type)
@@ -1485,11 +1451,11 @@
 	(set! casts (cons (list name type) casts))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-211 name type)
+(define (CCAST-213 name type)
   (if (assoc name names)
-      (no-way "~A CCAST-211~%" name)
+      (no-way "~A CCAST-213~%" name)
       (begin
-	(set! casts-211 (cons (list name type) casts-211))
+	(set! casts-213 (cons (list name type) casts-213))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCAST-2172 name type)
@@ -1534,11 +1500,11 @@
 	(set! checks (cons (list name type) checks))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-211 name type)
+(define (CCHK-213 name type)
   (if (assoc name names)
-      (no-way "~A CCHK-211~%" name)
+      (no-way "~A CCHK-213~%" name)
       (begin
-	(set! checks-211 (cons (list name type) checks-211))
+	(set! checks-213 (cons (list name type) checks-213))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCHK-2172 name type)
@@ -1644,11 +1610,6 @@
  types)
 
 
-(define (with-211 dpy thunk)
-  (dpy "#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
 (define (with-213 dpy thunk)
   (dpy "#if HAVE_GTK_TEST_WIDGET_CLICK~%")
   (thunk)
@@ -1715,32 +1676,32 @@
 
 
 
-(define all-types (list types-211 types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-29x types-gtk2
+(define all-types (list types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-29x types-gtk2
 			cairo-types cairo-types-810 cairo-types-912))
-(define all-type-withs (list with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-29x with-gtk2
+(define all-type-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-29x with-gtk2
 			     with-cairo with-cairo-810 with-cairo-912))
 
-(define all-funcs (list funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-29x funcs-gtk2
+(define all-funcs (list funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-29x funcs-gtk2
 			cairo-funcs cairo-png-funcs cairo-funcs-810 cairo-funcs-912))
-(define all-func-withs (list with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-29x with-gtk2
+(define all-func-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-29x with-gtk2
 			     with-cairo with-cairo-png with-cairo-810 with-cairo-912))
 
-(define all-ints (list ints-211 ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-29x ints-gtk2
+(define all-ints (list ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-29x ints-gtk2
 		       cairo-ints cairo-ints-810 cairo-ints-912))
-(define all-int-withs (list with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-29x with-gtk2
+(define all-int-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-29x with-gtk2
 			    with-cairo with-cairo-810 with-cairo-912))
 
-(define all-casts (list casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-29x casts-gtk2))
-(define all-cast-withs (list with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-29x with-gtk2))
+(define all-casts (list casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-29x casts-gtk2))
+(define all-cast-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-29x with-gtk2))
 
-(define all-checks (list checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-29x checks-gtk2))
-(define all-check-withs (list with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-29x with-gtk2))
+(define all-checks (list checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-29x checks-gtk2))
+(define all-check-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-29x with-gtk2))
 
-(define all-strings (list strings-211 strings-213 strings-2134 strings-2150 strings-29x cairo-strings-912))
-(define all-string-withs (list with-211 with-213 with-2134 with-2150 with-29x with-cairo-912))
+(define all-strings (list strings-213 strings-2134 strings-2150 strings-29x cairo-strings-912))
+(define all-string-withs (list with-213 with-2134 with-2150 with-29x with-cairo-912))
 
-(define all-ulongs (list ulongs-211 ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173))
-(define all-ulong-withs (list with-211 with-213 with-2134 with-2150 with-2173))
+(define all-ulongs (list ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173))
+(define all-ulong-withs (list with-213 with-2134 with-2150 with-2173))
 
 
 

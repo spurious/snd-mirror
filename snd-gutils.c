@@ -795,13 +795,24 @@ GtkWidget *snd_gtk_dialog_new(void)
 }
 
 
+/* TODO: some of these labels have a trailing colon
+ * TODO: some might look better with a frame?
+ * TODO: in gfile, some labels that are actually popdown menus need bold text
+ * TODO: check other buttons-as-labels and label-colors
+ */
+
 GtkWidget *snd_gtk_highlight_label_new(const char *label)
 {
-  GtkWidget *rlw;
-  rlw = gtk_button_new_with_label(label);
-  gtk_widget_set_name(rlw, "label_button");
-  gtk_button_set_relief(GTK_BUTTON(rlw), GTK_RELIEF_HALF);
-  return(rlw);
+  char *str;
+  GtkWidget *w;
+
+  w = gtk_label_new(label);
+  str = mus_format("<b>%s</b>", label);
+  gtk_label_set_markup(GTK_LABEL(w), str);
+  gtk_label_set_use_markup(GTK_LABEL(w), true);
+  free(str);
+
+  return(w);
 }
 
 
@@ -1220,7 +1231,7 @@ just most obvious with those scrollbars
  */
 
 
-/* I see no way around this.  Why should Snd look just like every other program on the "desktop"?
+/* I see no way around this.
  */
 
 #if (!HAVE_GTK3)
@@ -1339,6 +1350,12 @@ style \"listener\" = \"default\"\n			\
 }\n							\
 \n							\
 widget \"*.listener_text\" style \"listener\"\n		\
+style \"dialog_button\" = \"default_button\"\n          \
+{\n                                                     \
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n                     \
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n                   \
+}\n                                                     \
+widget \"*.dialog_button\" style \"dialog_button\"\n    \
 widget \"*.the_unpane\" style \"default\"\n		\
 style \"white_button\" = \"default_button\"\n		\
 {\n							\

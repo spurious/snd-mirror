@@ -3,6 +3,8 @@
 
 #define SOUND_ENV_EDITOR(Sp) ((env_editor *)(sp->sgx->flt))
 
+
+
 /* -------- snd-ghelp.c -------- */
 
 GtkWidget *snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap);
@@ -10,7 +12,7 @@ GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_wo
 int help_text_width(const char *txt, int start, int end);
 void snd_help_append(const char *text);
 void snd_help_back_to_top(void);
-bool help_dialog_is_active(void);
+
 
 
 /* -------- snd-gdraw.c -------- */
@@ -105,6 +107,7 @@ void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, i
 GtkWidget *get_help_menu_widget(void);
 void show_toolbar(void);
 void hide_toolbar(void);
+void add_tooltip(GtkWidget *w, const char *tip);
 
 
 

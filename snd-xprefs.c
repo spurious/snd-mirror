@@ -6,7 +6,7 @@
  */
 
 static Widget preferences_dialog = NULL, load_path_text_widget = NULL;
-static bool prefs_helping = false, prefs_unsaved = false;
+static bool prefs_unsaved = false;
 static char *prefs_saved_filename = NULL;
 static char *include_load_path = NULL;
 
@@ -15,15 +15,14 @@ static char *include_load_path = NULL;
 #define FIRST_COLOR_POSITION 6
 #define SECOND_COLOR_POSITION 30
 #define THIRD_COLOR_POSITION 55
-#define HELP_POSITION 96
 
 #define MID_SPACE 16
 #define INTER_TOPIC_SPACE 3
 #define INTER_VARIABLE_SPACE 2
 
-#define HELP_WAIT_TIME 500
 #define POWER_WAIT_TIME 100
 #define POWER_INITIAL_WAIT_TIME 500
+/* "power" is an old-timey name for auto-repeat */
 #define ERROR_WAIT_TIME 5000
 
 #define STARTUP_WIDTH 925
@@ -35,7 +34,7 @@ typedef struct prefs_info {
   Widget color, rscl, gscl, bscl, rtxt, gtxt, btxt, list_menu, radio_button;
   Widget *radio_buttons;
   bool got_error;
-  timeout_result_t help_id, power_id;
+  timeout_result_t power_id;
   const char *var_name, *saved_label;
   int num_buttons;
   mus_float_t scale_max;
@@ -49,7 +48,7 @@ typedef struct prefs_info {
   void (*color_func)(struct prefs_info *prf, float r, float g, float b);
   void (*reflect_func)(struct prefs_info *prf);
   void (*save_func)(struct prefs_info *prf, FILE *fd);
-  void (*help_func)(struct prefs_info *prf);
+  const char *(*help_func)(struct prefs_info *prf);
   void (*clear_func)(struct prefs_info *prf);
   void (*revert_func)(struct prefs_info *prf);
 } prefs_info;
@@ -119,54 +118,6 @@ static int which_radio_button(prefs_info *prf)
 
 #include "snd-prefs.c"
 
-
-
-/* ---------------- help strings ---------------- */
-
-static void prefs_help_click_callback(Widget w, XtPointer context, XtPointer info)
-{
-  prefs_help((prefs_info *)context);
-}
-
-
-static void prefs_tooltip_help(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (help_dialog_is_active())
-    prefs_help(prf);
-  else prefs_helping = false;
-  prf->help_id = 0;
-}
-
-
-static void mouse_enter_pref_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (prefs_helping)
-    prf->help_id = XtAppAddTimeOut(MAIN_APP(ss),
-				   HELP_WAIT_TIME,
-				   prefs_tooltip_help,
-				   (XtPointer)prf);
-}
-
-
-static void mouse_leave_pref_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (prf->help_id != 0)
-    {
-      XtRemoveTimeOut(prf->help_id);
-      prf->help_id = 0;
-    }
-}
-
-
-static void mouse_help_click_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
-{
-  prefs_help((prefs_info *)context);
-}
-
-
 static bool prefs_dialog_error_is_posted = false;
 
 static void post_prefs_dialog_error(const char *message, void *data)
@@ -218,11 +169,6 @@ static Widget make_row_label(prefs_info *prf, const char *label, Widget box, Wid
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
   w = XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n);
   prf->saved_label = label;
-
-  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(w, ButtonPressMask, false, mouse_help_click_callback, (XtPointer)prf);
-
   return(w);
 }
 
@@ -244,11 +190,6 @@ static Widget make_row_inner_label(prefs_info *prf, const char *label, Widget le
   XtSetArg(args[n], XmNleftWidget, left_widget); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   w = XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n);
-
-  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(w, ButtonPressMask, false, mouse_help_click_callback, (XtPointer)prf);
-
   return(w);
 }
 
@@ -298,52 +239,6 @@ static Widget make_row_inner_separator(int width, Widget left_widget, Widget box
 }
 
 
-/* ---------------- row help widget ---------------- */
-
-static Widget make_row_help(prefs_info *prf, const char *label, Widget box, Widget top_widget, Widget left_widget)
-{
-
-  Arg args[20];
-  int n;
-  XmString s1;
-  Widget helper, spacer;
-
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-  XtSetArg(args[n], XmNbottomWidget, left_widget); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, left_widget); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, HELP_POSITION + 1); n++;
-  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-  XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
-  spacer = XtCreateManagedWidget("spacer", xmSeparatorWidgetClass, box, args, n);
-
-  n = 0;
-  s1 = XmStringCreateLocalized("?");
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-  XtSetArg(args[n], XmNbottomWidget, spacer); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, spacer); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNlabelString, s1); n++;
-  helper = XtCreateManagedWidget(label, xmPushButtonWidgetClass, box, args, n);
-  XmStringFree(s1);
-
-  XtAddCallback(helper, XmNactivateCallback, prefs_help_click_callback, (XtPointer)prf);
-  XtAddEventHandler(helper, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(helper, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-
-  return(helper);
-}
-
-
 static Widget make_row_error(prefs_info *prf, Widget box, Widget left_widget, Widget top_widget)
 {
   Arg args[20];
@@ -356,18 +251,11 @@ static Widget make_row_error(prefs_info *prf, Widget box, Widget left_widget, Wi
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
   XtSetArg(args[n], XmNbottomWidget, left_widget); n++;
-  /* not attach none here!  help widget uses this to get its bottom */
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, left_widget); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, HELP_POSITION); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
   w = XtCreateManagedWidget("", xmLabelWidgetClass, box, args, n);
-
-  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(w, ButtonPressMask, false, mouse_help_click_callback, (XtPointer)prf);
-
   return(w);
 }
 
@@ -395,11 +283,6 @@ static Widget make_row_toggle_with_label(prefs_info *prf, bool current_value, Wi
   XtSetArg(args[n], XmNindicatorOn, XmINDICATOR_FILL); n++;
   XtSetArg(args[n], XmNindicatorSize, 14); n++;
   w = XtCreateManagedWidget(label, xmToggleButtonWidgetClass, box, args, n);
-
-  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-  XtAddCallback(w, XmNvalueChangedCallback, prefs_change_callback, NULL);
-
   return(w);
 }
 
@@ -518,11 +401,6 @@ static Widget make_row_arrows(prefs_info *prf, Widget box, Widget left_widget, W
   XtSetArg(args[n], XmNarrowDirection, XmARROW_UP); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   prf->arrow_up = XtCreateManagedWidget("arrow-up", xmArrowButtonWidgetClass, box, args, n);
-  
-  XtAddEventHandler(prf->arrow_up, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->arrow_down, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->arrow_up, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->arrow_down, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   XtAddCallback(prf->arrow_down, XmNarmCallback, call_arrow_down_press, (XtPointer)prf);
   XtAddCallback(prf->arrow_down, XmNdisarmCallback, remove_arrow_func, (XtPointer)prf);
@@ -551,7 +429,7 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 					 void (*toggle_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, help;
+  Widget sep;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -559,7 +437,6 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
   prf->label = make_row_label(prf, label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);
   prf->toggle = make_row_toggle(prf, current_value, sep, box, top_widget);
-  help = make_row_help(prf, varname, box, top_widget, prf->toggle);
   
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
   return(prf);
@@ -584,7 +461,7 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
 					      void (*toggle2_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, help, sep1;
+  Widget sep, sep1;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -595,7 +472,6 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
   prf->toggle = make_row_toggle_with_label(prf, value1, sep, box, top_widget, label1);
   sep1 = make_row_inner_separator(20, prf->toggle, box, top_widget);
   prf->toggle2 = make_row_toggle_with_label(prf, value2, sep1, box, top_widget, label2);
-  help = make_row_help(prf, varname, box, top_widget, prf->toggle2);
 
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
   XtAddCallback(prf->toggle2, XmNvalueChangedCallback, call_toggle2_func, (XtPointer)prf);
@@ -685,8 +561,7 @@ static Widget make_row_text(prefs_info *prf, const char *text_value, int cols, W
     }
   else
     {
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, HELP_POSITION); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
     }
   if (text_value)
     {
@@ -700,8 +575,6 @@ static Widget make_row_text(prefs_info *prf, const char *text_value, int cols, W
   XtSetArg(args[n], XmNtopShadowColor, ss->sgx->white); n++;
   w = make_textfield_widget("text", box, args, n, ACTIVATABLE_BUT_NOT_FOCUSED, NO_COMPLETER);
 
-  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
   XtAddCallback(w, XmNactivateCallback, prefs_change_callback, NULL);
 
   info = (text_info *)calloc(1, sizeof(text_info));
@@ -723,7 +596,7 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
 						   void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, sep1, lab1, help;
+  Widget sep, sep1, lab1;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -735,7 +608,6 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
   sep1 = make_row_inner_separator(16, prf->toggle, box, top_widget);
   lab1 = make_row_inner_label(prf, text_label, sep1, box, top_widget);
   prf->text = make_row_text(prf, text_value, cols, lab1, box, top_widget);
-  help = make_row_help(prf, varname, box, top_widget, prf->text);
   
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
@@ -752,7 +624,7 @@ static prefs_info *prefs_row_with_toggle_with_two_texts(const char *label, const
 							void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, lab1, lab2, help, sep1;
+  Widget sep, lab1, lab2, sep1;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -766,7 +638,6 @@ static prefs_info *prefs_row_with_toggle_with_two_texts(const char *label, const
   prf->text = make_row_text(prf, text1, cols, lab1, box, top_widget);
   lab2 = make_row_inner_label(prf, label2, prf->text, box, top_widget);  
   prf->rtxt = make_row_text(prf, text2, cols, lab2, box, top_widget);
-  help = make_row_help(prf, varname, box, top_widget, prf->rtxt);
 
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
@@ -785,7 +656,7 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
 						   void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, sep1, lab1, help;
+  Widget sep, sep1, lab1;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -797,7 +668,6 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
   sep1 = make_row_inner_separator(8, prf->text, box, top_widget);
   lab1 = make_row_inner_label(prf, toggle_label, sep1, box, top_widget);
   prf->toggle = make_row_toggle(prf, current_value, lab1, box, top_widget);  
-  help = make_row_help(prf, varname, box, top_widget, prf->toggle);
   
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
@@ -817,7 +687,7 @@ static prefs_info *prefs_row_with_text_and_three_toggles(const char *label, cons
 							 void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, sep1, lab1, sep2, lab2, lab3, sep3, lab4, help;
+  Widget sep, sep1, lab1, sep2, lab2, lab3, sep3, lab4;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->text_func = text_func;
@@ -835,7 +705,6 @@ static prefs_info *prefs_row_with_text_and_three_toggles(const char *label, cons
   sep3 = make_row_inner_separator(4, prf->toggle2, box, top_widget);
   lab4 = make_row_inner_label(prf, toggle3_label, sep3, box, top_widget);
   prf->toggle3 = make_row_toggle(prf, toggle3_value, lab4, box, top_widget);
-  help = make_row_help(prf, varname, box, top_widget, prf->toggle3);
   
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
 
@@ -902,8 +771,6 @@ static Widget make_row_radio_box(prefs_info *prf,
 
       XtAddCallback(button, XmNvalueChangedCallback, call_radio_func, (XtPointer)prf);
       XtAddCallback(button, XmNvalueChangedCallback, prefs_change_callback, NULL);
-      XtAddEventHandler(button, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-      XtAddEventHandler(button, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
     }
   return(w);
 }
@@ -915,14 +782,13 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
 					    void (*toggle_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, help;
+  Widget sep;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
   prf->label = make_row_label(prf, label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);
   prf->toggle = make_row_radio_box(prf, labels, num_labels, current_value, box, sep, top_widget);
-  help = make_row_help(prf, varname, box, top_widget, prf->toggle);
   return(prf);
 }
 
@@ -938,7 +804,7 @@ static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const 
 						       void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, help;
+  Widget sep;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -950,7 +816,6 @@ static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const 
   prf->toggle = make_row_radio_box(prf, labels, num_labels, current_value, box, sep, top_widget);
   prf->text = make_row_text(prf, text_value, text_cols, prf->toggle, box, top_widget);
   prf->arrow_up = make_row_arrows(prf, box, prf->text, top_widget);
-  help = make_row_help(prf, varname, box, top_widget, prf->arrow_up);
 
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
   return(prf);
@@ -992,7 +857,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   Arg args[20];
   int n;
   prefs_info *prf = NULL;
-  Widget sep, help;
+  Widget sep;
   XtCallbackList n1, n2;
   char *str;
 
@@ -1015,8 +880,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, prf->text); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, HELP_POSITION); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNborderWidth, 0); n++;
   XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
@@ -1026,7 +890,6 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(prefs_scale_callback, (XtPointer)prf)); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(prefs_scale_callback, (XtPointer)prf)); n++;
   prf->scale = XtCreateManagedWidget("", xmScaleWidgetClass, box, args, n);
-  help = make_row_help(prf, varname, box, top_widget, prf->scale);
 
   prf->scale_func = scale_func;
   prf->text_func = text_func;
@@ -1034,9 +897,6 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   XtAddCallback(prf->scale, XmNvalueChangedCallback, call_scale_func, (XtPointer)prf);
   XtAddCallback(prf->text, XmNactivateCallback, call_scale_text_func, (XtPointer)prf);
   XtAddCallback(prf->scale, XmNvalueChangedCallback, prefs_change_callback, NULL);
-
-  XtAddEventHandler(prf->scale, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->scale, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   free(n1);
   free(n2);
@@ -1052,14 +912,13 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
 				       void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, help;
+  Widget sep;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
   prf->label = make_row_label(prf, label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);
   prf->text = make_row_text(prf, value, 0, sep, box, top_widget);
-  help = make_row_help(prf, varname, box, top_widget, prf->text);
 
   prf->text_func = text_func;
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
@@ -1076,7 +935,7 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
 					    void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, lab1, lab2, help;
+  Widget sep, lab1, lab2;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
@@ -1086,7 +945,6 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   prf->text = make_row_text(prf, text1, cols, lab1, box, top_widget);
   lab2 = make_row_inner_label(prf, label2, prf->text, box, top_widget);  
   prf->rtxt = make_row_text(prf, text2, cols, lab2, box, top_widget);
-  help = make_row_help(prf, varname, box, top_widget, prf->rtxt);
 
   prf->text_func = text_func;
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
@@ -1104,7 +962,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
 					 void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, help;
+  Widget sep;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
@@ -1113,7 +971,6 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   prf->text = make_row_text(prf, value, cols, sep, box, top_widget);
   prf->arrow_up = make_row_arrows(prf, box, prf->text, top_widget);
   prf->error = make_row_error(prf, box, prf->arrow_up, top_widget);
-  help = make_row_help(prf, varname, box, top_widget, prf->error);
 
   prf->text_func = text_func;
   prf->arrow_up_func = arrow_up_func;
@@ -1160,7 +1017,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   Arg args[20];
   int n, i, cols = 0;
   prefs_info *prf = NULL;
-  Widget sep, sbar, help;
+  Widget sep, sbar;
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
@@ -1241,19 +1098,12 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
       }
 
   prf->error = make_row_error(prf, box, prf->arrow_right, top_widget);
-  help = make_row_help(prf, varname, box, top_widget, prf->error);
   prf->text_func = text_func;
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
   XtAddCallback(prf->text, XmNactivateCallback, prefs_change_callback, NULL);
   XtAddCallback(prf->arrow_right, XmNactivateCallback, prefs_change_callback, NULL);
 
   prf->list_func = list_func;
-
-  XtAddEventHandler(prf->text, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->arrow_right, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->text, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->arrow_right, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-
   return(prf);
 }
 
@@ -1463,7 +1313,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   Arg args[20];
   int n;
   prefs_info *prf = NULL;
-  Widget sep, sep1, frame, help;
+  Widget sep, sep1, frame;
   XtCallbackList n1;
   float r = 0.0, g = 0.0, b = 0.0;
 
@@ -1501,8 +1351,6 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 
   prf->btxt = make_row_text(prf, NULL, 6, prf->gtxt, box, top_widget);
   float_to_textfield(prf->btxt, b);
-
-  help = make_row_help(prf, varname, box, top_widget, prf->btxt);
 
   /* 2nd row = 3 scales */
   n1 = make_callback_list(prefs_color_callback, (XtPointer)prf);
@@ -1595,15 +1443,6 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   XtAddCallback(prf->rscl, XmNvalueChangedCallback, prefs_change_callback, NULL);
   XtAddCallback(prf->gscl, XmNvalueChangedCallback, prefs_change_callback, NULL);
   XtAddCallback(prf->bscl, XmNvalueChangedCallback, prefs_change_callback, NULL);
-
-  XtAddEventHandler(prf->color, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->color, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->rscl, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->rscl, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->gscl, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->gscl, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->bscl, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
-  XtAddEventHandler(prf->bscl, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   prf->color_func = color_func;
   free(n1);
@@ -1702,13 +1541,11 @@ static Widget make_inner_label(const char *label, Widget parent, Widget top_widg
 static void wm_delete_callback(Widget w, XtPointer context, XtPointer info) 
 {
   clear_prefs_dialog_error();
-  prefs_helping = false;
 }
 
 
 static void preferences_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  prefs_helping = true;
   snd_help("preferences",
 	   "This dialog sets various global variables. 'Save' then writes the new values \
 to ~/.snd_prefs_ruby|forth|s7 so that they take effect the next time you start Snd.  'Revert' resets each variable either to \
@@ -1722,8 +1559,6 @@ You can also request help on a given topic by clicking the variable name on the 
 
 static void preferences_quit_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  /* if helping, should we unmanage the help dialog as well? */
-  prefs_helping = false;
   clear_prefs_dialog_error();
   if (XmGetFocusWidget(preferences_dialog) == XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON))
     XtUnmanageChild(preferences_dialog);
@@ -1951,7 +1786,7 @@ widget_t start_preferences_dialog(void)
 				   "width:", str1, "height:", str2, 6,
 				   dpy_box, current_sep,
 				   startup_size_text);
-    remember_pref(prf, reflect_init_window_size, save_init_window_size, NULL, clear_init_window_size, revert_init_window_size); 
+    remember_pref(prf, reflect_init_window_size, save_init_window_size, help_init_window_size, clear_init_window_size, revert_init_window_size); 
     free(str2);
     free(str1);
 
@@ -1960,7 +1795,7 @@ widget_t start_preferences_dialog(void)
 				rts_ask_before_overwrite = ask_before_overwrite(ss), 
 				dpy_box, current_sep,
 				overwrite_toggle);
-    remember_pref(prf, reflect_ask_before_overwrite, save_ask_before_overwrite, NULL, NULL, revert_ask_before_overwrite);
+    remember_pref(prf, reflect_ask_before_overwrite, save_ask_before_overwrite, help_ask_before_overwrite, NULL, revert_ask_before_overwrite);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("ask about unsaved edits before exiting", S_ask_about_unsaved_edits,
@@ -1982,7 +1817,7 @@ widget_t start_preferences_dialog(void)
 				rts_auto_resize = auto_resize(ss), 
 				dpy_box, current_sep, 
 				resize_toggle);
-    remember_pref(prf, reflect_auto_resize, save_auto_resize, NULL, NULL, revert_auto_resize);
+    remember_pref(prf, reflect_auto_resize, save_auto_resize, help_auto_resize, NULL, revert_auto_resize);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("pointer focus", S_with_pointer_focus,
@@ -2015,7 +1850,7 @@ widget_t start_preferences_dialog(void)
 				rts_show_controls = in_show_controls(ss), 
 				dpy_box, current_sep, 
 				controls_toggle);
-    remember_pref(prf, reflect_show_controls, save_show_controls, NULL, NULL, revert_show_controls);
+    remember_pref(prf, reflect_show_controls, save_show_controls, help_show_controls, NULL, revert_show_controls);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     include_peak_env_directory = mus_strdup(peak_env_dir(ss));
@@ -2036,7 +1871,7 @@ widget_t start_preferences_dialog(void)
 					  "max regions:", str, 5,
 					  dpy_box, current_sep,
 					  selection_creates_region_toggle, max_regions_text);
-    remember_pref(prf, reflect_selection_creates_region, save_selection_creates_region, NULL, NULL, revert_selection_creates_region);
+    remember_pref(prf, reflect_selection_creates_region, save_selection_creates_region, help_selection_creates_region, NULL, revert_selection_creates_region);
     free(str);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2067,7 +1902,7 @@ widget_t start_preferences_dialog(void)
 				rts_just_sounds = just_sounds(ss), 
 				dpy_box, current_sep, 
 				just_sounds_toggle);
-    remember_pref(prf, prefs_reflect_just_sounds, save_just_sounds, NULL, NULL, revert_just_sounds);
+    remember_pref(prf, prefs_reflect_just_sounds, save_just_sounds, help_just_sounds, NULL, revert_just_sounds);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     rts_temp_dir = mus_strdup(temp_dir(ss));
@@ -2075,7 +1910,7 @@ widget_t start_preferences_dialog(void)
 			      temp_dir(ss), 
 			      dpy_box, current_sep,
 			      temp_dir_text);
-    remember_pref(prf, reflect_temp_dir, save_temp_dir, NULL, NULL, revert_temp_dir);
+    remember_pref(prf, reflect_temp_dir, save_temp_dir, help_temp_dir, NULL, revert_temp_dir);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     rts_save_dir = mus_strdup(save_dir(ss));
@@ -2083,7 +1918,7 @@ widget_t start_preferences_dialog(void)
 			      save_dir(ss), 
 			      dpy_box, current_sep,
 			      save_dir_text);
-    remember_pref(prf, reflect_save_dir, save_save_dir, NULL, NULL, revert_save_dir);
+    remember_pref(prf, reflect_save_dir, save_save_dir, help_save_dir, NULL, revert_save_dir);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     rts_save_state_file = mus_strdup(save_state_file(ss));
@@ -2091,7 +1926,7 @@ widget_t start_preferences_dialog(void)
 			      save_state_file(ss), 
 			      dpy_box, current_sep,
 			      save_state_file_text);
-    remember_pref(prf, reflect_save_state_file, save_save_state_file, NULL, NULL, revert_save_state_file);
+    remember_pref(prf, reflect_save_state_file, save_save_state_file, help_save_state_file, NULL, revert_save_state_file);
 
 #if HAVE_LADSPA
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2100,7 +1935,7 @@ widget_t start_preferences_dialog(void)
 			      ladspa_dir(ss), 
 			      dpy_box, current_sep,
 			      ladspa_dir_text);
-    remember_pref(prf, reflect_ladspa_dir, save_ladspa_dir, NULL, NULL, revert_ladspa_dir);
+    remember_pref(prf, reflect_ladspa_dir, save_ladspa_dir, help_ladspa_dir, NULL, revert_ladspa_dir);
 #endif
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2109,7 +1944,7 @@ widget_t start_preferences_dialog(void)
 			      rts_vf_directory,
 			      dpy_box, current_sep,
 			      view_files_directory_text);
-    remember_pref(prf, reflect_view_files_directory, save_view_files_directory, NULL, NULL, revert_view_files_directory);
+    remember_pref(prf, reflect_view_files_directory, save_view_files_directory, help_view_files_directory, NULL, revert_view_files_directory);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     rts_html_program = mus_strdup(html_program(ss));
@@ -2117,7 +1952,7 @@ widget_t start_preferences_dialog(void)
 			      html_program(ss),
 			      dpy_box, current_sep,
 			      html_program_text);
-    remember_pref(prf, reflect_html_program, save_html_program, NULL, NULL, revert_html_program);
+    remember_pref(prf, reflect_html_program, save_html_program, help_html_program, NULL, revert_html_program);
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
     rts_default_output_chans = default_output_chans(ss);
@@ -2125,7 +1960,7 @@ widget_t start_preferences_dialog(void)
 				   output_chan_choices, NUM_OUTPUT_CHAN_CHOICES, -1,
 				   dpy_box, current_sep,
 				   default_output_chans_choice);
-    remember_pref(prf, reflect_default_output_chans, save_default_output_chans, NULL, NULL, revert_default_output_chans);
+    remember_pref(prf, reflect_default_output_chans, save_default_output_chans, help_default_output_chans, NULL, revert_default_output_chans);
     reflect_default_output_chans(prf);
 
     rts_default_output_srate = default_output_srate(ss);
@@ -2133,7 +1968,7 @@ widget_t start_preferences_dialog(void)
 				   output_srate_choices, NUM_OUTPUT_SRATE_CHOICES, -1,
 				   dpy_box, prf->label,
 				   default_output_srate_choice);
-    remember_pref(prf, reflect_default_output_srate, save_default_output_srate, NULL, NULL, revert_default_output_srate);
+    remember_pref(prf, reflect_default_output_srate, save_default_output_srate, help_default_output_srate, NULL, revert_default_output_srate);
     reflect_default_output_srate(prf);
 
     rts_default_output_header_type = default_output_header_type(ss);
@@ -2142,7 +1977,7 @@ widget_t start_preferences_dialog(void)
 				   dpy_box, prf->label,
 				   default_output_header_type_choice);
     output_header_type_prf = prf;
-    remember_pref(prf, reflect_default_output_header_type, save_default_output_header_type, NULL, NULL, revert_default_output_header_type);
+    remember_pref(prf, reflect_default_output_header_type, save_default_output_header_type, help_default_output_header_type, NULL, revert_default_output_header_type);
 
     rts_default_output_data_format = default_output_data_format(ss);
     prf = prefs_row_with_radio_box("data format", S_default_output_data_format,
@@ -2150,7 +1985,7 @@ widget_t start_preferences_dialog(void)
 				   dpy_box, prf->label,
 				   default_output_data_format_choice);
     output_data_format_prf = prf;
-    remember_pref(prf, reflect_default_output_data_format, save_default_output_data_format, NULL, NULL, revert_default_output_data_format);
+    remember_pref(prf, reflect_default_output_data_format, save_default_output_data_format, help_default_output_data_format, NULL, revert_default_output_data_format);
     reflect_default_output_header_type(output_header_type_prf);
     reflect_default_output_data_format(output_data_format_prf);
 
@@ -2169,12 +2004,12 @@ widget_t start_preferences_dialog(void)
       prf = prefs_row_with_text("default raw sound attributes: chans", S_mus_header_raw_defaults, str,
 				dpy_box, current_sep,
 				raw_chans_choice);
-      remember_pref(prf, reflect_raw_chans, save_raw_chans, NULL, NULL, revert_raw_chans);
+      remember_pref(prf, reflect_raw_chans, save_raw_chans, help_raw_chans, NULL, revert_raw_chans);
 
       prf = prefs_row_with_text("srate", S_mus_header_raw_defaults, str1,
 				dpy_box, prf->label,
 				raw_srate_choice);
-      remember_pref(prf, reflect_raw_srate, save_raw_srate, NULL, NULL, revert_raw_srate);
+      remember_pref(prf, reflect_raw_srate, save_raw_srate, help_raw_srate, NULL, revert_raw_srate);
 
       prf = prefs_row_with_list("data format", S_mus_header_raw_defaults, raw_data_format_choices[format - 1],
 				(const char **)raw_data_format_choices, MUS_NUM_DATA_FORMATS - 1,
@@ -2182,7 +2017,7 @@ widget_t start_preferences_dialog(void)
 				raw_data_format_from_text,
 				NULL, NULL,
 				raw_data_format_from_menu);
-      remember_pref(prf, reflect_raw_data_format, save_raw_data_format, NULL, NULL, revert_raw_data_format);
+      remember_pref(prf, reflect_raw_data_format, save_raw_data_format, help_raw_data_format, NULL, revert_raw_data_format);
       free(str);
       free(str1);
     }
@@ -2277,7 +2112,7 @@ widget_t start_preferences_dialog(void)
 				rts_verbose_cursor = verbose_cursor(ss), 
 				dpy_box, cursor_label, 
 				verbose_cursor_toggle);
-    remember_pref(prf, reflect_verbose_cursor, save_verbose_cursor, NULL, NULL, revert_verbose_cursor);
+    remember_pref(prf, reflect_verbose_cursor, save_verbose_cursor, help_verbose_cursor, NULL, revert_verbose_cursor);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     {
@@ -2291,7 +2126,7 @@ widget_t start_preferences_dialog(void)
 						 dpy_box, current_sep,
 						 with_tracking_cursor_toggle,
 						 cursor_location_text);
-      remember_pref(prf, reflect_with_tracking_cursor, save_with_tracking_cursor, NULL, NULL, revert_with_tracking_cursor);
+      remember_pref(prf, reflect_with_tracking_cursor, save_with_tracking_cursor, help_with_tracking_cursor, NULL, revert_with_tracking_cursor);
       free(str);
       free(str1);
     }
@@ -2302,7 +2137,7 @@ widget_t start_preferences_dialog(void)
 				str, 4, 
 				dpy_box, current_sep,
 				cursor_size_up, cursor_size_down, cursor_size_from_text);
-    remember_pref(prf, reflect_cursor_size, save_cursor_size, NULL, NULL, revert_cursor_size);
+    remember_pref(prf, reflect_cursor_size, save_cursor_size, help_cursor_size, NULL, revert_cursor_size);
     free(str);
     if (cursor_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
 
@@ -2312,7 +2147,7 @@ widget_t start_preferences_dialog(void)
 				   rts_cursor_style = cursor_style(ss),
 				   dpy_box, current_sep, 
 				   cursor_style_choice);
-    remember_pref(prf, reflect_cursor_style, save_cursor_style, NULL, NULL, revert_cursor_style);
+    remember_pref(prf, reflect_cursor_style, save_cursor_style, help_cursor_style, NULL, revert_cursor_style);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_radio_box("tracking cursor shape", S_tracking_cursor_style,
@@ -2320,14 +2155,14 @@ widget_t start_preferences_dialog(void)
 				   rts_tracking_cursor_style = tracking_cursor_style(ss),
 				   dpy_box, current_sep, 
 				   tracking_cursor_style_choice);
-    remember_pref(prf, reflect_tracking_cursor_style, save_tracking_cursor_style, NULL, NULL, revert_tracking_cursor_style);
+    remember_pref(prf, reflect_tracking_cursor_style, save_tracking_cursor_style, help_tracking_cursor_style, NULL, revert_tracking_cursor_style);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     saved_cursor_color = ss->sgx->cursor_color;
     prf = prefs_color_selector_row("color", S_cursor_color, ss->sgx->cursor_color,
 				   dpy_box, current_sep,
 				   cursor_color_func);
-    remember_pref(prf, NULL, save_cursor_color, NULL, clear_cursor_color, revert_cursor_color);
+    remember_pref(prf, NULL, save_cursor_color, help_cursor_color, clear_cursor_color, revert_cursor_color);
 
 
     /* ---------------- (overall) colors ---------------- */
@@ -2339,28 +2174,28 @@ widget_t start_preferences_dialog(void)
     prf = prefs_color_selector_row("main background color", S_basic_color, ss->sgx->basic_color,
 				   dpy_box, cursor_label,
 				   basic_color_func);
-    remember_pref(prf, NULL, save_basic_color, NULL, clear_basic_color, revert_basic_color);
+    remember_pref(prf, NULL, save_basic_color, help_basic_color, clear_basic_color, revert_basic_color);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
     saved_highlight_color = ss->sgx->highlight_color;
     prf = prefs_color_selector_row("main highlight color", S_highlight_color, ss->sgx->highlight_color,
 				   dpy_box, current_sep,
 				   highlight_color_func);
-    remember_pref(prf, NULL, save_highlight_color, NULL, clear_highlight_color, revert_highlight_color);
+    remember_pref(prf, NULL, save_highlight_color, help_highlight_color, clear_highlight_color, revert_highlight_color);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
     saved_position_color = ss->sgx->position_color;
     prf = prefs_color_selector_row("second highlight color", S_position_color, ss->sgx->position_color,
 				   dpy_box, current_sep,
 				   position_color_func);
-    remember_pref(prf, NULL, save_position_color, NULL, clear_position_color, revert_position_color);
+    remember_pref(prf, NULL, save_position_color, help_position_color, clear_position_color, revert_position_color);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
     saved_zoom_color = ss->sgx->zoom_color;
     prf = prefs_color_selector_row("third highlight color", S_zoom_color, ss->sgx->zoom_color,
 				   dpy_box, current_sep,
 				   zoom_color_func);
-    remember_pref(prf, NULL, save_zoom_color, NULL, clear_zoom_color, revert_zoom_color);
+    remember_pref(prf, NULL, save_zoom_color, help_zoom_color, clear_zoom_color, revert_zoom_color);
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -2379,7 +2214,7 @@ widget_t start_preferences_dialog(void)
 				   rts_graph_style = graph_style(ss),
 				   grf_box, grf_label,
 				   graph_style_choice);
-    remember_pref(prf, reflect_graph_style, save_graph_style, NULL, NULL, revert_graph_style);
+    remember_pref(prf, reflect_graph_style, save_graph_style, help_graph_style, NULL, revert_graph_style);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     str = mus_format("%d", rts_dot_size = dot_size(ss));
@@ -2387,7 +2222,7 @@ widget_t start_preferences_dialog(void)
 				str, 4, 
 				grf_box, current_sep,
 				dot_size_up, dot_size_down, dot_size_from_text);
-    remember_pref(prf, reflect_dot_size, save_dot_size, NULL, NULL, revert_dot_size);
+    remember_pref(prf, reflect_dot_size, save_dot_size, help_dot_size, NULL, revert_dot_size);
     free(str);
     if (dot_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
 
@@ -2410,21 +2245,21 @@ widget_t start_preferences_dialog(void)
 				   rts_channel_style = channel_style(ss),
 				   grf_box, current_sep,
 				   channel_style_choice);
-    remember_pref(prf, reflect_channel_style, save_channel_style, NULL, NULL, revert_channel_style);
+    remember_pref(prf, reflect_channel_style, save_channel_style, help_channel_style, NULL, revert_channel_style);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_toggle("layout wave and fft graphs horizontally", S_graphs_horizontal,
 				rts_graphs_horizontal = graphs_horizontal(ss),
 				grf_box, current_sep,
 				graphs_horizontal_toggle);
-    remember_pref(prf, reflect_graphs_horizontal, save_graphs_horizontal, NULL, NULL, revert_graphs_horizontal);
+    remember_pref(prf, reflect_graphs_horizontal, save_graphs_horizontal, help_graphs_horizontal, NULL, revert_graphs_horizontal);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
    prf = prefs_row_with_toggle("include y=0 line in sound graphs", S_show_y_zero,
 				rts_show_y_zero = show_y_zero(ss),
 				grf_box, current_sep,
 				y_zero_toggle);
-    remember_pref(prf, reflect_show_y_zero, save_show_y_zero, NULL, NULL, revert_show_y_zero);
+    remember_pref(prf, reflect_show_y_zero, save_show_y_zero, help_show_y_zero, NULL, revert_show_y_zero);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     rts_show_grid = show_grid(ss);
@@ -2432,14 +2267,14 @@ widget_t start_preferences_dialog(void)
 				rts_show_grid == WITH_GRID,
 				grf_box, current_sep,
 				grid_toggle);
-    remember_pref(prf, reflect_show_grid, save_show_grid, NULL, NULL, revert_show_grid);
+    remember_pref(prf, reflect_show_grid, save_show_grid, help_show_grid, NULL, revert_show_grid);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_scale("grid density", S_grid_density, 
 			       2.0, rts_grid_density = grid_density(ss),
 			       grf_box, current_sep,
 			       grid_density_scale_callback, grid_density_text_callback);
-    remember_pref(prf, reflect_grid_density, save_grid_density, NULL, NULL, revert_grid_density);
+    remember_pref(prf, reflect_grid_density, save_grid_density, help_grid_density, NULL, revert_grid_density);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     rts_show_axes = show_axes(ss);
@@ -2449,7 +2284,7 @@ widget_t start_preferences_dialog(void)
 			      show_axes_from_text,
 			      NULL, NULL,
 			      show_axes_from_menu);
-    remember_pref(prf, reflect_show_axes, save_show_axes, NULL, clear_show_axes, revert_show_axes);
+    remember_pref(prf, reflect_show_axes, save_show_axes, help_show_axes, clear_show_axes, revert_show_axes);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     rts_x_axis_style = x_axis_style(ss);
@@ -2459,7 +2294,7 @@ widget_t start_preferences_dialog(void)
 			      x_axis_style_from_text,
 			      NULL, NULL,
 			      x_axis_style_from_menu);
-    remember_pref(prf, reflect_x_axis_style, save_x_axis_style, NULL, clear_x_axis_style, revert_x_axis_style);
+    remember_pref(prf, reflect_x_axis_style, save_x_axis_style, help_x_axis_style, clear_x_axis_style, revert_x_axis_style);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_toggle("include smpte info", "show-smpte-label",
@@ -2478,35 +2313,35 @@ widget_t start_preferences_dialog(void)
     prf = prefs_color_selector_row("unselected data (waveform) color", S_data_color, ss->sgx->data_color,
 				   grf_box, colgrf_label,
 				   data_color_func);
-    remember_pref(prf, NULL, save_data_color, NULL, clear_data_color, revert_data_color);
+    remember_pref(prf, NULL, save_data_color, help_data_color, clear_data_color, revert_data_color);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
     saved_graph_color = ss->sgx->graph_color;
     prf = prefs_color_selector_row("unselected graph (background) color", S_graph_color, ss->sgx->graph_color,
 				   grf_box, current_sep,
 				   graph_color_func);
-    remember_pref(prf, NULL, save_graph_color, NULL, clear_graph_color, revert_graph_color);
+    remember_pref(prf, NULL, save_graph_color, help_graph_color, clear_graph_color, revert_graph_color);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
     saved_selected_data_color = ss->sgx->selected_data_color;
     prf = prefs_color_selector_row("selected channel data (waveform) color", S_selected_data_color, ss->sgx->selected_data_color,
 				   grf_box, current_sep,
 				   selected_data_color_func);
-    remember_pref(prf, NULL, save_selected_data_color, NULL, clear_selected_data_color, revert_selected_data_color);
+    remember_pref(prf, NULL, save_selected_data_color, help_selected_data_color, clear_selected_data_color, revert_selected_data_color);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
     saved_selected_graph_color = ss->sgx->selected_graph_color;
     prf = prefs_color_selector_row("selected channel graph (background) color", S_selected_graph_color, ss->sgx->selected_graph_color,
 				   grf_box, current_sep,
 				   selected_graph_color_func);
-    remember_pref(prf, NULL, save_selected_graph_color, NULL, clear_selected_graph_color, revert_selected_graph_color);
+    remember_pref(prf, NULL, save_selected_graph_color, help_selected_graph_color, clear_selected_graph_color, revert_selected_graph_color);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
     saved_selection_color = ss->sgx->selection_color;
     prf = prefs_color_selector_row("selection color", S_selection_color, ss->sgx->selection_color,
 				   grf_box, current_sep,
 				   selection_color_func);
-    remember_pref(prf, NULL, save_selection_color, NULL, clear_selection_color, revert_selection_color);
+    remember_pref(prf, NULL, save_selection_color, help_selection_color, clear_selection_color, revert_selection_color);
 
     /* ---------------- (graph) fonts ---------------- */
 
@@ -2518,7 +2353,7 @@ widget_t start_preferences_dialog(void)
 			      axis_label_font(ss), 
 			      grf_box, colgrf_label,
 			      axis_label_font_text);
-    remember_pref(prf, reflect_axis_label_font, save_axis_label_font, NULL, clear_axis_label_font, revert_axis_label_font);
+    remember_pref(prf, reflect_axis_label_font, save_axis_label_font, help_axis_label_font, clear_axis_label_font, revert_axis_label_font);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);     
     rts_axis_numbers_font = mus_strdup(axis_numbers_font(ss));
@@ -2526,7 +2361,7 @@ widget_t start_preferences_dialog(void)
 			      axis_numbers_font(ss), 
 			      grf_box, current_sep,
 			      axis_numbers_font_text);
-    remember_pref(prf, reflect_axis_numbers_font, save_axis_numbers_font, NULL, clear_axis_numbers_font, revert_axis_numbers_font);
+    remember_pref(prf, reflect_axis_numbers_font, save_axis_numbers_font, help_axis_numbers_font, clear_axis_numbers_font, revert_axis_numbers_font);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);     
     rts_peaks_font = mus_strdup(peaks_font(ss));
@@ -2534,7 +2369,7 @@ widget_t start_preferences_dialog(void)
 			      peaks_font(ss), 
 			      grf_box, current_sep,
 			      peaks_font_text);
-    remember_pref(prf, reflect_peaks_font, save_peaks_font, NULL, clear_peaks_font, revert_peaks_font);
+    remember_pref(prf, reflect_peaks_font, save_peaks_font, help_peaks_font, clear_peaks_font, revert_peaks_font);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);     
     rts_bold_peaks_font = mus_strdup(bold_peaks_font(ss));
@@ -2542,7 +2377,7 @@ widget_t start_preferences_dialog(void)
 			      bold_peaks_font(ss), 
 			      grf_box, current_sep,
 			      bold_peaks_font_text);
-    remember_pref(prf, reflect_bold_peaks_font, save_bold_peaks_font, NULL, clear_bold_peaks_font, revert_bold_peaks_font);
+    remember_pref(prf, reflect_bold_peaks_font, save_bold_peaks_font, help_bold_peaks_font, clear_bold_peaks_font, revert_bold_peaks_font);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);     
     rts_tiny_font = mus_strdup(tiny_font(ss));
@@ -2550,7 +2385,7 @@ widget_t start_preferences_dialog(void)
 			      tiny_font(ss), 
 			      grf_box, current_sep,
 			      tiny_font_text);
-    remember_pref(prf, reflect_tiny_font, save_tiny_font, NULL, clear_tiny_font, revert_tiny_font);
+    remember_pref(prf, reflect_tiny_font, save_tiny_font, help_tiny_font, clear_tiny_font, revert_tiny_font);
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -2570,7 +2405,7 @@ widget_t start_preferences_dialog(void)
 				str, 12, 
 				fft_box, fft_label, 
 				fft_size_up, fft_size_down, fft_size_from_text);
-    remember_pref(prf, reflect_fft_size, save_fft_size, NULL, NULL, revert_fft_size);
+    remember_pref(prf, reflect_fft_size, save_fft_size, help_fft_size, NULL, revert_fft_size);
     free(str);
     if (transform_size(ss) <= 2) XtSetSensitive(prf->arrow_down, false);
 
@@ -2580,7 +2415,7 @@ widget_t start_preferences_dialog(void)
 				   rts_transform_graph_type = transform_graph_type(ss),
 				   fft_box, current_sep,
 				   transform_graph_type_choice);
-    remember_pref(prf, reflect_transform_graph_type, save_transform_graph_type, NULL, NULL, revert_transform_graph_type);
+    remember_pref(prf, reflect_transform_graph_type, save_transform_graph_type, help_transform_graph_type, NULL, revert_transform_graph_type);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     rts_transform_type = transform_type(ss);
@@ -2590,7 +2425,7 @@ widget_t start_preferences_dialog(void)
 			      transform_type_from_text,
 			      transform_type_completer, NULL,
 			      transform_type_from_menu);
-    remember_pref(prf, reflect_transform_type, save_transform_type, NULL, clear_transform_type, revert_transform_type);
+    remember_pref(prf, reflect_transform_type, save_transform_type, help_transform_type, clear_transform_type, revert_transform_type);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     rts_fft_window = fft_window(ss);
@@ -2600,14 +2435,14 @@ widget_t start_preferences_dialog(void)
 			      fft_window_from_text,
 			      fft_window_completer, NULL,
 			      fft_window_from_menu);
-    remember_pref(prf, reflect_fft_window, save_fft_window, NULL, clear_fft_window, revert_fft_window);
+    remember_pref(prf, reflect_fft_window, save_fft_window, help_fft_window, clear_fft_window, revert_fft_window);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_scale("data window family parameter", S_fft_window_beta, 
 			       1.0, rts_fft_window_beta = fft_window_beta(ss),
 			       fft_box, current_sep,
 			       fft_window_beta_scale_callback, fft_window_beta_text_callback);
-    remember_pref(prf, reflect_fft_window_beta, save_fft_window_beta, NULL, NULL, revert_fft_window_beta);
+    remember_pref(prf, reflect_fft_window_beta, save_fft_window_beta, help_fft_window_beta, NULL, revert_fft_window_beta);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     str = mus_format("%d", rts_max_transform_peaks = max_transform_peaks(ss));
@@ -2616,7 +2451,7 @@ widget_t start_preferences_dialog(void)
 					  "max peaks:", str, 5,
 					  fft_box, current_sep,
 					  transform_peaks_toggle, max_peaks_text);
-    remember_pref(prf, reflect_transform_peaks, save_transform_peaks, NULL, NULL, revert_transform_peaks);
+    remember_pref(prf, reflect_transform_peaks, save_transform_peaks, help_transform_peaks, NULL, revert_transform_peaks);
     free(str);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
@@ -2634,7 +2469,7 @@ widget_t start_preferences_dialog(void)
 				colormap_from_text,
 				colormap_completer, NULL,
 				colormap_from_menu);
-      remember_pref(prf, reflect_colormap, save_colormap, NULL, clear_colormap, revert_colormap);
+      remember_pref(prf, reflect_colormap, save_colormap, help_colormap, clear_colormap, revert_colormap);
       free(cmaps);
     }
 
@@ -2643,14 +2478,14 @@ widget_t start_preferences_dialog(void)
 				rts_fft_log_magnitude = fft_log_magnitude(ss),
 				fft_box, current_sep,
 				log_magnitude_toggle);
-    remember_pref(prf, reflect_fft_log_magnitude, save_fft_log_magnitude, NULL, NULL, revert_fft_log_magnitude);
+    remember_pref(prf, reflect_fft_log_magnitude, save_fft_log_magnitude, help_fft_log_magnitude, NULL, revert_fft_log_magnitude);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     str = mus_format("%.1f", rts_min_dB = min_dB(ss));
     prf = prefs_row_with_text("minimum y-axis dB value", S_min_dB, str,
 			      fft_box, current_sep,
 			      min_dB_text);
-    remember_pref(prf, reflect_min_dB, save_min_dB, NULL, NULL, revert_min_dB);
+    remember_pref(prf, reflect_min_dB, save_min_dB, help_min_dB, NULL, revert_min_dB);
     free(str);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
@@ -2658,7 +2493,7 @@ widget_t start_preferences_dialog(void)
 				rts_fft_log_frequency = fft_log_frequency(ss),
 				fft_box, current_sep,
 				log_frequency_toggle);
-    remember_pref(prf, reflect_fft_log_frequency, save_fft_log_frequency, NULL, NULL, revert_fft_log_frequency);
+    remember_pref(prf, reflect_fft_log_frequency, save_fft_log_frequency, help_fft_log_frequency, NULL, revert_fft_log_frequency);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_radio_box("normalization", S_transform_normalization,
@@ -2666,7 +2501,7 @@ widget_t start_preferences_dialog(void)
 				   rts_transform_normalization = transform_normalization(ss),
 				   fft_box, current_sep,
 				   transform_normalization_choice);
-    remember_pref(prf, reflect_transform_normalization, save_transform_normalization, NULL, NULL, revert_transform_normalization);
+    remember_pref(prf, reflect_transform_normalization, save_transform_normalization, help_transform_normalization, NULL, revert_transform_normalization);
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -2685,7 +2520,7 @@ widget_t start_preferences_dialog(void)
     prf = prefs_color_selector_row("mark and mix tag color", S_mark_color, ss->sgx->mark_color,
 				   mmr_box, mmr_label,
 				   mark_color_func);
-    remember_pref(prf, NULL, save_mark_color, NULL, clear_mark_color, revert_mark_color);
+    remember_pref(prf, NULL, save_mark_color, help_mark_color, clear_mark_color, revert_mark_color);
 
     current_sep = make_inter_variable_separator(mmr_box, prf->rscl);
 
@@ -2695,7 +2530,7 @@ widget_t start_preferences_dialog(void)
 				   "width:", str1, "height:", str2, 4,
 				   mmr_box, current_sep,
 				   mark_tag_size_text);
-    remember_pref(prf, reflect_mark_tag_size, save_mark_tag_size, NULL, NULL, revert_mark_tag_size);
+    remember_pref(prf, reflect_mark_tag_size, save_mark_tag_size, help_mark_tag_size, NULL, revert_mark_tag_size);
     free(str2);
     free(str1);
 
@@ -2706,7 +2541,7 @@ widget_t start_preferences_dialog(void)
 				   "width:", str1, "height:", str2, 4,
 				   mmr_box, current_sep,
 				   mix_tag_size_text);
-    remember_pref(prf, reflect_mix_tag_size, save_mix_tag_size, NULL, NULL, revert_mix_tag_size);
+    remember_pref(prf, reflect_mix_tag_size, save_mix_tag_size, help_mix_tag_size, NULL, revert_mix_tag_size);
     free(str2);
     free(str1);
 
@@ -2715,7 +2550,7 @@ widget_t start_preferences_dialog(void)
     prf = prefs_color_selector_row("mix waveform color", S_mix_color, ss->sgx->mix_color,
 				   mmr_box, current_sep,
 				   mix_color_func);
-    remember_pref(prf, NULL, save_mix_color, NULL, clear_mix_color, revert_mix_color);
+    remember_pref(prf, NULL, save_mix_color, help_mix_color, clear_mix_color, revert_mix_color);
 
     current_sep = make_inter_variable_separator(mmr_box, prf->rscl);
     str = mus_format("%d", rts_mix_waveform_height = mix_waveform_height(ss));
@@ -2724,7 +2559,7 @@ widget_t start_preferences_dialog(void)
 					  "max waveform height:", str, 5,
 					  mmr_box, current_sep,
 					  show_mix_waveforms_toggle, mix_waveform_height_text);
-    remember_pref(prf, reflect_mix_waveforms, save_mix_waveforms, NULL, NULL, revert_mix_waveforms);
+    remember_pref(prf, reflect_mix_waveforms, save_mix_waveforms, help_mix_waveforms, NULL, revert_mix_waveforms);
     free(str);
   }
   
@@ -2747,7 +2582,7 @@ widget_t start_preferences_dialog(void)
 					      clm_box, clm_label,
 					      speed_control_choice, speed_control_up, speed_control_down, speed_control_text);
     XtSetSensitive(prf->arrow_down, (speed_control_tones(ss) > MIN_SPEED_CONTROL_SEMITONES));
-    remember_pref(prf, reflect_speed_control, save_speed_control, NULL, NULL, revert_speed_control);
+    remember_pref(prf, reflect_speed_control, save_speed_control, help_speed_control, NULL, revert_speed_control);
     free(str);
 
     current_sep = make_inter_variable_separator(clm_box, prf->label);
@@ -2755,7 +2590,7 @@ widget_t start_preferences_dialog(void)
     prf = prefs_row_with_text("sinc interpolation width in srate converter", S_sinc_width, str,
 			      clm_box, current_sep,
 			      sinc_width_text);
-    remember_pref(prf, reflect_sinc_width, save_sinc_width, NULL, NULL, revert_sinc_width);
+    remember_pref(prf, reflect_sinc_width, save_sinc_width, help_sinc_width, NULL, revert_sinc_width);
     free(str);
   }
 
@@ -2774,7 +2609,7 @@ widget_t start_preferences_dialog(void)
 				rts_show_listener = listener_is_visible(),
 				prg_box, prg_label,
 				show_listener_toggle);
-    remember_pref(prf, reflect_show_listener, save_show_listener, NULL, clear_show_listener, revert_show_listener);
+    remember_pref(prf, reflect_show_listener, save_show_listener, help_show_listener, clear_show_listener, revert_show_listener);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     rts_listener_prompt = mus_strdup(listener_prompt(ss));
@@ -2782,14 +2617,14 @@ widget_t start_preferences_dialog(void)
 			      listener_prompt(ss), 
 			      prg_box, current_sep,
 			      listener_prompt_text);
-    remember_pref(prf, reflect_listener_prompt, save_listener_prompt, NULL, NULL, revert_listener_prompt);
+    remember_pref(prf, reflect_listener_prompt, save_listener_prompt, help_listener_prompt, NULL, revert_listener_prompt);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     str = mus_format("%d", rts_print_length = print_length(ss));
     prf = prefs_row_with_text("number of vector elements to display", S_print_length, str,
 			      prg_box, current_sep,
 			      print_length_text);
-    remember_pref(prf, reflect_print_length, save_print_length, NULL, NULL, revert_print_length);
+    remember_pref(prf, reflect_print_length, save_print_length, help_print_length, NULL, revert_print_length);
     free(str);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
@@ -2798,21 +2633,21 @@ widget_t start_preferences_dialog(void)
 			      listener_font(ss), 
 			      prg_box, current_sep,
 			      listener_font_text);
-    remember_pref(prf, reflect_listener_font, save_listener_font, NULL, clear_listener_font, revert_listener_font);
+    remember_pref(prf, reflect_listener_font, save_listener_font, help_listener_font, clear_listener_font, revert_listener_font);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     saved_listener_color = ss->sgx->listener_color;
     prf = prefs_color_selector_row("background color", S_listener_color, ss->sgx->listener_color,
 				   prg_box, current_sep,
 				   listener_color_func);
-    remember_pref(prf, NULL, save_listener_color, NULL, clear_listener_color, revert_listener_color);
+    remember_pref(prf, NULL, save_listener_color, help_listener_color, clear_listener_color, revert_listener_color);
 
     current_sep = make_inter_variable_separator(prg_box, prf->rscl);
     saved_listener_text_color = ss->sgx->listener_text_color;
     prf = prefs_color_selector_row("text color", S_listener_text_color, ss->sgx->listener_text_color,
 				   prg_box, current_sep,
 				   listener_text_color_func);
-    remember_pref(prf, NULL, save_listener_text_color, NULL, clear_listener_text_color, revert_listener_text_color);
+    remember_pref(prf, NULL, save_listener_text_color, help_listener_text_color, clear_listener_text_color, revert_listener_text_color);
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -2831,7 +2666,7 @@ widget_t start_preferences_dialog(void)
 			      str,
 			      aud_box, aud_label,
 			      dac_size_text);
-    remember_pref(prf, reflect_dac_size, save_dac_size, NULL, NULL, revert_dac_size);
+    remember_pref(prf, reflect_dac_size, save_dac_size, help_dac_size, NULL, revert_dac_size);
     free(str);
 
     current_sep = make_inter_variable_separator(aud_box, prf->label);
@@ -2839,7 +2674,7 @@ widget_t start_preferences_dialog(void)
 				rts_dac_combines_channels = dac_combines_channels(ss),
 				aud_box, current_sep,
 				dac_combines_channels_toggle);
-    remember_pref(prf, reflect_dac_combines_channels, save_dac_combines_channels, NULL, NULL, revert_dac_combines_channels);
+    remember_pref(prf, reflect_dac_combines_channels, save_dac_combines_channels, help_dac_combines_channels, NULL, revert_dac_combines_channels);
   }
 
   {

@@ -1011,28 +1011,27 @@ static void handle_tooltip(XtPointer tooltip, XtIntervalId *id)
 {
   char *tip = (char *)tooltip;
   Position rx, ry;
+  XmString str;
+  int lines = 0;
+
   if (!tooltip_shell)
     {
       tooltip_shell = XtVaCreatePopupShell(tip, overrideShellWidgetClass, MAIN_SHELL(ss), 
 					   XmNallowShellResize, true, 
 					   NULL);
-      tooltip_label = XtVaCreateManagedWidget(tip, xmLabelWidgetClass, tooltip_shell,
+      tooltip_label = XtVaCreateManagedWidget("tooltip", xmLabelWidgetClass, tooltip_shell,
 					      XmNrecomputeSize, true,
-					      XmNbackground, ss->sgx->highlight_color,
+					      XmNbackground, ss->sgx->lighter_blue,
 					      NULL);
     }
-  else 
-    {
-      XmString str;
-      str = XmStringCreateLocalized(tip);
-      XtVaSetValues(tooltip_label, XmNlabelString, str, NULL);
-      XmStringFree(str);
-    }
+  str = multi_line_label(tip, &lines);
+  XtVaSetValues(tooltip_label, XmNlabelString, str, NULL);
+  XmStringFree(str);
 
   XtTranslateCoords(tool_w, tool_x, tool_y, &rx, &ry);
   XtVaSetValues(tooltip_shell, XmNx, rx, XmNy, ry, NULL);
   XtManageChild(tooltip_shell);
-  quit_proc = XtAppAddTimeOut(MAIN_APP(ss), (unsigned long)2000, (XtTimerCallbackProc)leave_tooltip, NULL);
+  quit_proc = XtAppAddTimeOut(MAIN_APP(ss), (unsigned long)10000, (XtTimerCallbackProc)leave_tooltip, NULL);
 }
 
 
@@ -1070,7 +1069,7 @@ static void tool_stopper(Widget w, XtPointer context, XEvent *event, Boolean *co
 }
 
 
-static void add_tooltip(Widget w, const char *tip)
+void add_tooltip(Widget w, const char *tip)
 {
   XtAddEventHandler(w, EnterWindowMask, false, tool_starter, (XtPointer)tip);
   XtAddEventHandler(w, LeaveWindowMask, false, tool_stopper, NULL);
