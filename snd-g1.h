@@ -103,11 +103,14 @@ void reflect_play_selection_stop(void);
 void g_init_gxmenu(void);
 GtkWidget *menu_widget(int which_menu);
 void check_menu_labels(int key, int state, bool extended);
-void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, int chn);
 GtkWidget *get_help_menu_widget(void);
 void show_toolbar(void);
 void hide_toolbar(void);
 void add_tooltip(GtkWidget *w, const char *tip);
+void post_basic_popup_menu(void *ev);
+void post_lisp_popup_menu(void *ev);
+void post_fft_popup_menu(void *ev);
+void post_selection_popup_menu(void *ev);
 
 
 

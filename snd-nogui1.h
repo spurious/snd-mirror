@@ -71,6 +71,10 @@ void check_menu_labels(int key, int state, bool extended);
 void reflect_play_selection_stop(void);
 int menu_widget(int which_menu);
 void set_button_label(int label, const char *str);
+void post_basic_popup_menu(void *ev);
+void post_lisp_popup_menu(void *ev);
+void post_fft_popup_menu(void *ev);
+void post_selection_popup_menu(void *ev);
 
 
 

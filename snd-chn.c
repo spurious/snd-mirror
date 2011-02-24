@@ -54,19 +54,6 @@ chan_info *get_cp(XEN snd, XEN x_chn_n, const char *caller)
 }
 
 
-typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_MIX, CLICK_MARK,
-	      CLICK_FFT_MAIN, CLICK_SELECTION_LEFT, CLICK_SELECTION_RIGHT, CLICK_SELECTION_PLAY, 
-	      CLICK_INSET_GRAPH, CLICK_MIX_PLAY, CLICK_CURSOR_PLAY, CLICK_MARK_PLAY,
-              CLICK_SELECTION_LOOP_PLAY} click_loc_t;
-/* for marks, regions, mouse click detection, cursor choice */
-/*
- * static char *click_detection_names[10] = {"no graph", "click wave", "click fft axis", "click lisp", "click mix", "click mark",
- *                                           "click fft graph", "click selection left", "click selection right", "click selection play", 
- *                                           "click inset graph", "click mix play", "click cursor play", "click mark play",
- *                                           "click selection loop play"};
- */
-
-
 static XEN lisp_graph_hook;
 static XEN mouse_press_hook; 
 static XEN mark_click_hook; 
@@ -1217,9 +1204,11 @@ void zx_incremented(chan_info *cp, double amount)
   mus_long_t samps;
   samps = CURRENT_SAMPLES(cp);
   ap = cp->axis;
-  if ((amount >= 1.0) || ((samps > 0) && ((ap->zx * (double)samps) > (amount / 2.0))))
+  if ((amount >= 1.0) || 
+      ((samps > 0) && ((ap->zx * (double)samps) > (amount / 2.0))))
     {
       ap->zx *= amount;
+      if (ap->zx > 1.0) ap->zx = 1.0;
       focus_x_axis_change(ap, cp, zoom_focus_style(ss));
       /* apply_x_axis_change(ap, cp); */
       resize_sx(cp);
@@ -4678,6 +4667,11 @@ static bool hit_cursor_triangle(chan_info *cp, int x, int y)
 #endif
 #endif
 
+typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_MIX, CLICK_MARK,
+	      CLICK_FFT_MAIN, CLICK_SELECTION_LEFT, CLICK_SELECTION_RIGHT, CLICK_SELECTION_PLAY, 
+	      CLICK_INSET_GRAPH, CLICK_MIX_PLAY, CLICK_CURSOR_PLAY, CLICK_MARK_PLAY,
+              CLICK_SELECTION_LOOP_PLAY, CLICK_SELECTION_MAIN, CLICK_FFT_AUX} click_loc_t;
+
 typedef struct inset_graph_info_t {  /* chan_info field is inset_graph, set to null in snd-data, but not cleared or freed */
   int width, height, edpos, y_offset, data_size, x0, x1, y0, y1;
   point_t *data0, *data1;
@@ -4724,31 +4718,37 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	      (selection_is_active_in_channel(cp)))
 	    {
 	      /* look for click at selection boundary */
-	      mus_long_t pos;
+	      mus_long_t bpos, epos, xpos;
 	      double sr;
 	      sr = (double)SND_SRATE(cp->sound);
 
-	      pos = selection_beg(cp);
-	      if ((pos >= ap->losamp) &&
-		  (pos <= ap->hisamp))
+	      bpos = selection_beg(cp);
+	      if ((bpos >= ap->losamp) &&
+		  (bpos <= ap->hisamp))
 		{
 		  mus_long_t x0_pos, x1_pos;
 		  x0_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x0) * sr);
 		  x1_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x1) * sr);
-		  if ((pos > x0_pos) && (pos < x1_pos))
+		  if ((bpos > x0_pos) && (bpos < x1_pos))
 		    return(CLICK_SELECTION_LEFT); /* "click" is a misnomer -- we have moved to the portion where we can grab the selection and resize it */
 		}
 
-	      pos = selection_end(cp);
-	      if ((pos >= ap->losamp) &&
-		  (pos <= ap->hisamp))
+	      epos = selection_end(cp);
+	      if ((epos >= ap->losamp) &&
+		  (epos <= ap->hisamp))
 		{
 		  mus_long_t x0_pos, x1_pos;
 		  x0_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x0) * sr);
 		  x1_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x1) * sr);
-		  if ((pos > x0_pos) && (pos < x1_pos))
+		  if ((epos > x0_pos) && (epos < x1_pos))
 		    return(CLICK_SELECTION_RIGHT);
-		}	      
+		}	 
+
+	      xpos = snd_round_mus_long_t(ungrf_x(cp->axis, x) * sr); /* a sample number */
+
+	      if ((bpos <= xpos) &&
+		  (epos >= xpos))
+		return(CLICK_SELECTION_MAIN);
 	    }
 
 	  mix_tag = hit_mix(cp, x, y);
@@ -4822,9 +4822,12 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	    return(CLICK_FFT_AXIS);
 	}
       /* now check within fft graph */
-      if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
-	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
-	return(CLICK_FFT_MAIN);
+      if ((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0))
+	{
+	  if ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1))
+	    return(CLICK_FFT_MAIN);
+	  return(CLICK_FFT_AUX);
+	}
     }
 
   return(CLICK_NOGRAPH);
@@ -5173,15 +5176,67 @@ static int press_x, press_y;
 #endif
 
 
-void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, oclock_t time)
+void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_state, int button, oclock_t time)
 {
   snd_info *sp;
+
+  /* in Motif and Gtk, we see left (1) and middle (2) buttons, 
+   *   but right (3) button is trapped earlier and starts the popup menu.
+   *   In gtk, that's apparently only because we trap the POPUP_BUTTON in 
+   *   graph_button_press first in snd-gchn.c.  In motif, there's a check
+   *   in snd-xchn (post_popup), but I think that only applies to the
+   *   separate windows case.
+   * presumably in gtk we could remove that check, land here, get our graph context
+   *   from within_graph, the choose the right popup menu if button == POPUP_BUTTON
+   * perhaps in Motif, we couls not enable the popup menu in snd-xmenu, calling it
+   *   explicitly as in gtk?
+   */
 
   sp = cp->sound;
   if ((cp->active < CHANNEL_HAS_AXES) || (sp == NULL)) return; /* autotest silliness */
 
   /* if combining, figure out which virtual channel the mouse is in */
   if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
+
+  click_within_graph = within_graph(cp, x, y);
+
+  if (button == POPUP_BUTTON)
+    {
+      switch (click_within_graph)
+	{
+	case CLICK_NOGRAPH:
+	case CLICK_WAVE:
+	case CLICK_MIX:
+	case CLICK_MARK:
+	case CLICK_INSET_GRAPH:
+	case CLICK_MIX_PLAY:
+	case CLICK_CURSOR_PLAY:
+	case CLICK_MARK_PLAY:
+	  post_basic_popup_menu(ev);
+	  break;
+	  
+	case CLICK_FFT_AXIS:
+	case CLICK_FFT_MAIN:
+	case CLICK_FFT_AUX:
+	  post_fft_popup_menu(ev);
+	  break;
+	  
+	case CLICK_SELECTION_LEFT:
+	case CLICK_SELECTION_RIGHT:
+	case CLICK_SELECTION_PLAY:
+	case CLICK_SELECTION_LOOP_PLAY:
+	case CLICK_SELECTION_MAIN:
+	  post_selection_popup_menu(ev);
+	  break;
+	  
+	case CLICK_LISP:
+	  post_lisp_popup_menu(ev);
+	  break;
+	  
+	}
+
+      return;
+    }
 
   mouse_down_time = time;
 #if HAVE_OSX
@@ -5192,8 +5247,6 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   dragged_cp = cp;
   dragged = false;
   finish_selection_creation();
-
-  click_within_graph = within_graph(cp, x, y);
 
   switch (click_within_graph)
     {
@@ -5224,6 +5277,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 
     case CLICK_MARK:
     case CLICK_WAVE:
+    case CLICK_SELECTION_MAIN:
     case CLICK_MIX:
       break;
 
@@ -5292,6 +5346,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
     case CLICK_INSET_GRAPH:
     case CLICK_NOGRAPH:
     case CLICK_FFT_MAIN:
+    case CLICK_FFT_AUX:
       break;
     }
 }
@@ -5360,6 +5415,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	  
 	case CLICK_SELECTION_LEFT:
 	case CLICK_SELECTION_RIGHT:
+	case CLICK_SELECTION_MAIN:
 	case CLICK_MIX:
 	case CLICK_MARK:
 	case CLICK_WAVE:
@@ -5528,6 +5584,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
     case CLICK_INSET_GRAPH:
     case CLICK_SELECTION_LEFT:
     case CLICK_SELECTION_RIGHT:
+    case CLICK_SELECTION_MAIN:
     case CLICK_MIX:
     case CLICK_MARK:
     case CLICK_WAVE:

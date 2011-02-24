@@ -233,7 +233,10 @@ void set_revscl(snd_info *sp, mus_float_t val) {sp->reverb_control_scale = val;}
 void set_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
 void set_filter_in_dB(snd_info *sp, bool val) {sp->filter_control_in_dB = val;}
 void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
-
+void post_basic_popup_menu(void *ev) {}
+void post_lisp_popup_menu(void *ev) {}
+void post_fft_popup_menu(void *ev) {}
+void post_selection_popup_menu(void *ev) {}
 vf_row *view_files_make_row(view_files_info *vdat, widget_t last_row) {return(NULL);}
 void vf_unhighlight_row(widget_t nm, widget_t rw) {}
 void vf_highlight_row(widget_t nm, widget_t rw) {}

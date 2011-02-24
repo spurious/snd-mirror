@@ -305,11 +305,6 @@ Here's a more elaborate initialization file (~/.snd_s7):
 (set! (with-inset-graph) #t)        ;display an overview of the current window in the upper right
 (set! (with-pointer-focus) #t)      ;automatically focus on (activate) the widget under the mouse
 
-(if (provided? '<a class=quiet href="#sndmotiffeature">snd-motif</a>)          
-    (load "popup.scm")              ;context-sensitive popup menus
-    (if (provided? '<a class=quiet href="#sndgtkfeature">snd-gtk</a>)
-        (load "/home/bil/cl/gtk-popup.scm")))
-
 (hook-push <a class=quiet href="extsnd.html#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a>          ;if sound has many chans, use just one pane for all
   (lambda (snd)
     (if (&gt; (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd) 4)
@@ -322,7 +317,6 @@ Here's a more elaborate initialization file (~/.snd_s7):
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
 require "draw"
-require "popup"
 
 set_window_width 800
 set_window_height 500
@@ -511,7 +505,6 @@ output-comment-hook lambda: &lt;{ str -- s }&gt;
     require effects
     #f to use-combo-box-for-fft-size	\ boolean (default #f)
 
-    require popup
     edhist-save-hook lambda: &lt;{ prc -- }&gt; "%S" #( prc ) clm-message ; add-hook!
   [then]
 
@@ -1424,14 +1417,14 @@ match-sound-files from extensions.scm):
 </pre></td></tr></table>
 
 <p>Now click the 'Filter' button to see only those files that fit the procedure in
-the dialog's files list.  See snd-motif.scm and popup.scm.
+the dialog's files list.  See snd-motif.scm.
 </p>
 <br>
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithgtk">Snd and Gtk+</a></h3></td></tr></table>
 
-<p>There are tons of examples of using the gtk module.  snd-gtk.scm and gtk-popup.scm might be
-places to start.  All of gtk and cairo, and much of pango and glib are accessible from the
+<p>There are tons of examples of using the gtk module.  snd-gtk.scm is one
+place to start.  All of gtk and cairo, and much of pango and glib are accessible from the
 extension language if you loaded the xg module or built Snd with the configuration switch
 --with-static-xg.
 Here's the scale-dialog in xg/gtk:

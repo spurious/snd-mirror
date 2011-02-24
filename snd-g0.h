@@ -260,7 +260,7 @@ typedef struct {
   
   GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor, *bounds_cursor, *play_cursor, *loop_play_cursor;
   gint fam_port;
-  GtkWidget **mw, **pw;
+  GtkWidget **mw;
   bool axis_color_set;
 } state_context;
 

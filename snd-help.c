@@ -496,6 +496,8 @@ void about_snd_help(void)
          with-toolbar, with-tooltips, remember-sound-state, with-smpte-label.\n\
          new built-in toolbars, removed toolbar.scm and panic.scm.\n\
          removed Snd.ad and Snd.gtrc.\n\
+         The built-in popup menu is now context sensitive, and the files popup.scm\n\
+           and gtk-popup.scm have been removed.\n\
 12-Feb:  Snd 11.13.\n\
 7-Jan:   Snd 11.12.\n\
 ",

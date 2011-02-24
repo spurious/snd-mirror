@@ -245,8 +245,6 @@ static void startup_funcs(void)
   shell = ss->sgx->mainshell;
   dpy = MAIN_DISPLAY(ss);
 
-  create_popup_menu();
-
 #ifndef SND_AS_WIDGET
 #ifndef __alpha__
   add_menu_drop();

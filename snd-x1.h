@@ -90,15 +90,17 @@ bool highlight_unbalanced_paren(void);
 /* -------- snd-xmenu.c -------- */
 
 Widget add_menu(void);
-void create_popup_menu(void);
 void add_menu_drop(void);
-void post_popup(XButtonPressedEvent *event);
 Widget menu_widget(int which_menu);
 void check_menu_labels(int key, int state, bool extended);
 void reflect_play_selection_stop(void);
 void g_init_gxmenu(void);
 void set_button_label(Widget label, const char *str);
 void add_tooltip(Widget w, const char *tip);
+void post_basic_popup_menu(void *ev);
+void post_lisp_popup_menu(void *ev);
+void post_fft_popup_menu(void *ev);
+void post_selection_popup_menu(void *ev);
 
 
 

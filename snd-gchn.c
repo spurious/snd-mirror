@@ -657,24 +657,12 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
 
 static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  if ((NO_BUCKY_BITS_P(EVENT_STATE(ev))) && 
-      (EVENT_TYPE(ev) == GDK_BUTTON_PRESS) && 
-      (EVENT_BUTTON(ev) == POPUP_BUTTON))
-    {
-      int pdata;
-      pdata = get_user_int_data(G_OBJECT(w));
-      popup_menu_from(w, ev, data, UNPACK_SOUND(pdata), UNPACK_CHANNEL(pdata));
-      return(true);
-    }
-  else
-    {
-      chan_info *cp = (chan_info *)data;
-      ss->sgx->graph_is_active = true;
-      gtk_widget_grab_focus(w);
-      if ((cp->sound) && (cp->sound->sgx))
-	cp->sound->sgx->mini_active = false;
-      graph_button_press_callback(cp, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), EVENT_BUTTON(ev), EVENT_TIME(ev));
-    }
+  chan_info *cp = (chan_info *)data;
+  ss->sgx->graph_is_active = true;
+  gtk_widget_grab_focus(w);
+  if ((cp->sound) && (cp->sound->sgx))
+    cp->sound->sgx->mini_active = false;
+  graph_button_press_callback(cp, (void *)ev, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), EVENT_BUTTON(ev), EVENT_TIME(ev));
   return(false);
 }
 

@@ -159,20 +159,9 @@ enum {m_menu,
 #define view_focus_middle_menu (ss->sgx->mw[v_focus_middle_menu])
 #define view_focus_active_menu (ss->sgx->mw[v_focus_active_menu])
 
-enum {W_pop_undo, W_pop_redo, W_pop_save, W_pop_info, W_pop_close, W_pop_revert, NUM_POPUP_WIDGETS};
-
-#define popup_undo_menu (ss->sgx->pw[W_pop_undo])
-#define popup_redo_menu (ss->sgx->pw[W_pop_redo])
-#define popup_save_menu (ss->sgx->pw[W_pop_save])
-#define popup_info_menu (ss->sgx->pw[W_pop_info])
-#define popup_close_menu (ss->sgx->pw[W_pop_close])
-#define popup_revert_menu (ss->sgx->pw[W_pop_revert])
-
-
 void edit_menu_update(void);
 void view_menu_update(void);
 void file_menu_update(void);
-void popup_menu_update(void);
 void update_file_from_menu(void);
 void revert_file_from_menu(void);
 void save_options_from_menu(void);

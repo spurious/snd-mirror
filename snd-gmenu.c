@@ -1166,61 +1166,37 @@ GtkWidget *add_menu(void)
 
 /* -------------------------------- POPUP MENU -------------------------------- */
 
-static GtkWidget *popup_menu = NULL;
-static const char *pl[NUM_POPUP_WIDGETS];
+static GtkWidget *basic_popup_menu = NULL;
 
-static void popup_save_callback(GtkWidget *w, gpointer info) 
-{
-  save_edits_with_prompt(any_selected_sound());
-  gtk_widget_hide(popup_menu);
-}
-
-
-static void popup_undo_callback(GtkWidget *w, gpointer info) 
-{
-  undo_edit_with_sync(current_channel(), 1);
-  gtk_widget_hide(popup_menu);
-}
-
-
-static void popup_redo_callback(GtkWidget *w, gpointer info) 
-{
-  redo_edit_with_sync(current_channel(), 1);
-  gtk_widget_hide(popup_menu);
-}
-
+static void popup_save_callback(GtkWidget *w, gpointer info) {save_edits_with_prompt(any_selected_sound());}
+static void popup_undo_callback(GtkWidget *w, gpointer info) {undo_edit_with_sync(current_channel(), 1);}
+static void popup_redo_callback(GtkWidget *w, gpointer info) {redo_edit_with_sync(current_channel(), 1);}
+static void popup_close_callback(GtkWidget *w, gpointer info) {menu_apply_controls(any_selected_sound());}
+static void popup_revert_callback(GtkWidget *w, gpointer info) {menu_reset_controls(any_selected_sound());}
 
 static void popup_info_callback(GtkWidget *w, gpointer info) 
 {
   snd_info *sp;
   sp = any_selected_sound();
   if (sp) display_info(sp);
-  gtk_widget_hide(popup_menu);
 }
 
 
-static void popup_close_callback(GtkWidget *w, gpointer info) 
+static gboolean popup_menu_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  menu_apply_controls(any_selected_sound());
-  gtk_widget_hide(popup_menu);
+  gtk_widget_hide(basic_popup_menu);
+  return(false);
 }
 
 
-static void popup_revert_callback(GtkWidget *w, gpointer info) 
+void post_basic_popup_menu(void *e)
 {
-  menu_reset_controls(any_selected_sound());
-  gtk_widget_hide(popup_menu);
-}
-
-
-static void create_popup_menu(guint button, oclock_t time)
-{
-  if (!popup_menu)
+  GdkEventButton *ev = (GdkEventButton *)e;
+  if (!basic_popup_menu)
     {
+      GtkWidget *w;
       bool undo_possible = false, redo_possible = false;
       chan_info *selcp = NULL;
-
-      ss->sgx->pw = (GtkWidget **)calloc(NUM_POPUP_WIDGETS, sizeof(GtkWidget *));
 
       selcp = selected_channel();
       if (selcp)
@@ -1229,82 +1205,59 @@ static void create_popup_menu(guint button, oclock_t time)
 	  redo_possible = ((selcp->edit_size > (selcp->edit_ctr + 1)) && 
 			   (selcp->edits[selcp->edit_ctr + 1]));
 	}
-      popup_menu = gtk_menu_new();
-      gtk_widget_show(popup_menu);
 
-      popup_undo_menu = gtk_image_menu_item_new_with_label(_("Undo"));
-      pl[W_pop_undo] = _("Undo");
-      gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_undo_menu);
-      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_undo_menu), gtk_image_new_from_stock(GTK_STOCK_UNDO, GTK_ICON_SIZE_MENU));
-      SG_SIGNAL_CONNECT(popup_undo_menu, "activate", popup_undo_callback, NULL);
-      set_sensitive(popup_undo_menu, undo_possible);
-      gtk_widget_show(popup_undo_menu);
+      basic_popup_menu = gtk_menu_new();
+      gtk_widget_set_events(basic_popup_menu, GDK_ALL_EVENTS_MASK);
+      gtk_widget_show(basic_popup_menu);
+
+      SG_SIGNAL_CONNECT(basic_popup_menu, "button_release_event", popup_menu_button_release, NULL);
+
+      w = gtk_image_menu_item_new_with_label(_("Undo"));
+      gtk_menu_shell_append(GTK_MENU_SHELL(basic_popup_menu), w);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(w), gtk_image_new_from_stock(GTK_STOCK_UNDO, GTK_ICON_SIZE_MENU));
+      SG_SIGNAL_CONNECT(w, "activate", popup_undo_callback, NULL);
+      gtk_widget_show(w);
       
-      popup_redo_menu = gtk_image_menu_item_new_with_label(_("Redo"));
-      pl[W_pop_redo] = _("Redo");
-      gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_redo_menu);
-      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_redo_menu), gtk_image_new_from_stock(GTK_STOCK_REDO, GTK_ICON_SIZE_MENU));
-      SG_SIGNAL_CONNECT(popup_redo_menu, "activate", popup_redo_callback, NULL);
-      set_sensitive(popup_redo_menu, redo_possible);
-      gtk_widget_show(popup_redo_menu);
+      w = gtk_image_menu_item_new_with_label(_("Redo"));
+      gtk_menu_shell_append(GTK_MENU_SHELL(basic_popup_menu), w);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(w), gtk_image_new_from_stock(GTK_STOCK_REDO, GTK_ICON_SIZE_MENU));
+      SG_SIGNAL_CONNECT(w, "activate", popup_redo_callback, NULL);
+      gtk_widget_show(w);
       
-      popup_save_menu = gtk_image_menu_item_new_with_label(_("Save"));
-      pl[W_pop_save] = _("Save");
-      gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_save_menu);
-      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_save_menu), gtk_image_new_from_stock(GTK_STOCK_SAVE, GTK_ICON_SIZE_MENU));
-      SG_SIGNAL_CONNECT(popup_save_menu, "activate", popup_save_callback, NULL);
-      set_sensitive(popup_save_menu, (ss->active_sounds > 0));
-      gtk_widget_show(popup_save_menu);
+      w = gtk_image_menu_item_new_with_label(_("Save"));
+      gtk_menu_shell_append(GTK_MENU_SHELL(basic_popup_menu), w);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(w), gtk_image_new_from_stock(GTK_STOCK_SAVE, GTK_ICON_SIZE_MENU));
+      SG_SIGNAL_CONNECT(w, "activate", popup_save_callback, NULL);
+      gtk_widget_show(w);
 
-      popup_revert_menu = gtk_image_menu_item_new_with_label(_("Revert"));
-      pl[W_pop_revert] = _("Reset controls");
-      gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_revert_menu);
-      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_revert_menu), gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
-      SG_SIGNAL_CONNECT(popup_revert_menu, "activate", popup_revert_callback, NULL);
-      set_sensitive(popup_revert_menu, true);
-      gtk_widget_show(popup_revert_menu);
+      w = gtk_image_menu_item_new_with_label(_("Revert"));
+      gtk_menu_shell_append(GTK_MENU_SHELL(basic_popup_menu), w);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(w), gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
+      SG_SIGNAL_CONNECT(w, "activate", popup_revert_callback, NULL);
+      gtk_widget_show(w);
 
-      popup_info_menu = gtk_image_menu_item_new_with_label(_("Info"));
-      pl[W_pop_info] = _("Info");
-      gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_info_menu);
-      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_info_menu), gtk_image_new_from_stock(GTK_STOCK_HELP, GTK_ICON_SIZE_MENU));
-      SG_SIGNAL_CONNECT(popup_info_menu, "activate", popup_info_callback, NULL);
-      set_sensitive(popup_info_menu, (ss->active_sounds > 0));
-      gtk_widget_show(popup_info_menu);
+      w = gtk_image_menu_item_new_with_label(_("Info"));
+      gtk_menu_shell_append(GTK_MENU_SHELL(basic_popup_menu), w);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(w), gtk_image_new_from_stock(GTK_STOCK_HELP, GTK_ICON_SIZE_MENU));
+      SG_SIGNAL_CONNECT(w, "activate", popup_info_callback, NULL);
+      gtk_widget_show(w);
 
-      popup_close_menu = gtk_image_menu_item_new_with_label(_("Close"));
-      pl[W_pop_close] = _("Apply controls");
-      gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_close_menu);
-      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_close_menu), gtk_image_new_from_stock(GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU));
-      SG_SIGNAL_CONNECT(popup_close_menu, "activate", popup_close_callback, NULL);
-      set_sensitive(popup_close_menu, true);
-      gtk_widget_show(popup_close_menu);
+      w = gtk_image_menu_item_new_with_label(_("Close"));
+      gtk_menu_shell_append(GTK_MENU_SHELL(basic_popup_menu), w);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(w), gtk_image_new_from_stock(GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU));
+      SG_SIGNAL_CONNECT(w, "activate", popup_close_callback, NULL);
+      gtk_widget_show(w);
 
     }
-  popup_menu_update();
-  gtk_menu_popup(GTK_MENU(popup_menu), NULL, NULL, NULL, NULL, button, time);
+  /* popup_menu_update(); */
+  gtk_menu_popup(GTK_MENU(basic_popup_menu), NULL, NULL, NULL, NULL, POPUP_BUTTON, EVENT_TIME(ev));
 }
 
 
-static XEN gtk_popup_hook;
+void post_lisp_popup_menu(void *ev) {}
+void post_fft_popup_menu(void *ev) {}
+void post_selection_popup_menu(void *ev) {}
 
-void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, int chn)
-{
-  /* set up in snd-gchn.c (graph_button_press) */
-  if (XEN_HOOKED(gtk_popup_hook))
-    {
-      XEN result;
-      result = run_progn_hook(gtk_popup_hook,
-			      XEN_LIST_5(XEN_WRAP_WIDGET(w),
-					 XEN_WRAP_EVENT((GdkEvent *)ev),
-					 XEN_WRAP_C_POINTER(data),
-					 C_INT_TO_XEN_SOUND(snd),
-					 C_TO_XEN_INT(chn)),
-			      "gtk-popup-hook");
-      if (XEN_TRUE_P(result)) return;
-    }
-  create_popup_menu(EVENT_BUTTON(ev), EVENT_TIME(ev));
-}
 
 
 /* ---------------- toolbar ---------------- */
@@ -1531,7 +1484,7 @@ static int *added_options_menus = NULL;
 static int added_options_size = 0;
 static int added_options_pos = 0;
 static int *added_options_callb = NULL;
-enum {FILE_MENU, EDIT_MENU, VIEW_MENU, OPTIONS_MENU, HELP_MENU, POPUP_MENU};
+enum {FILE_MENU, EDIT_MENU, VIEW_MENU, OPTIONS_MENU, HELP_MENU};
 #define INVALID_MENU -1
 
 static int callb2option(int callb)
@@ -1563,7 +1516,6 @@ GtkWidget *menu_widget(int which_menu)
     case VIEW_MENU:    return(view_menu);           break;
     case OPTIONS_MENU: return(options_menu);        break;
     case HELP_MENU:    return(help_menu);           break;
-    case POPUP_MENU:   return(popup_menu);              break;
     default:           return(added_menus[which_menu]); break;
     }
   return(NULL);
@@ -1627,13 +1579,6 @@ static int remove_option(int which_menu, const char *label)
 	gtk_widget_hide(ss->sgx->mw[i]);
 	return(0);
       }
-  for (i = 0; i < NUM_POPUP_WIDGETS; i++)
-    if ((pl[i]) &&
-	(strcmp(label, pl[i]) == 0))
-      {
-	gtk_widget_hide(ss->sgx->pw[i]);
-	return(0);
-      }
   return(INVALID_MENU);
 }
 
@@ -1675,7 +1620,6 @@ GtkWidget *g_add_to_menu(int which_menu, const char *label, int callb, int posit
     case VIEW_MENU:    menw = view_cascade_menu; break;
     case OPTIONS_MENU: menw = options_cascade_menu; break;
     case HELP_MENU:    menw = help_cascade_menu; break;
-    case POPUP_MENU:   menw = popup_menu; break;
     default: 
       if (which_menu < MAX_MAIN_MENUS)
 	menw = gtk_menu_item_get_submenu(GTK_MENU_ITEM(added_menus[which_menu])); 
@@ -1707,15 +1651,14 @@ int g_remove_from_menu(int which_menu, const char *label)
 
 static XEN g_menu_widgets(void)
 {
-  #define H_menu_widgets "(" S_menu_widgets "): a list of the top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help (6)popup)"
+  #define H_menu_widgets "(" S_menu_widgets "): a list of the top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help)"
   return(XEN_CONS(XEN_WRAP_WIDGET(main_menu),
 	  XEN_CONS(XEN_WRAP_WIDGET(file_menu),
            XEN_CONS(XEN_WRAP_WIDGET(edit_menu),
             XEN_CONS(XEN_WRAP_WIDGET(view_menu),
              XEN_CONS(XEN_WRAP_WIDGET(options_menu),
               XEN_CONS(XEN_WRAP_WIDGET(help_menu),
-	       XEN_CONS(XEN_WRAP_WIDGET(popup_menu),
-	        XEN_EMPTY_LIST))))))));
+	       XEN_EMPTY_LIST)))))));
 }
 
 
@@ -1727,10 +1670,6 @@ XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
 
 void g_init_gxmenu(void)
 {
-  #define H_gtk_popup_hook "gtk-popup-hook (widget event data snd chn): called upon middle button click. \
-If it returns other than " PROC_TRUE ", the normal Snd popup menu is posted."
-
-  gtk_popup_hook = XEN_DEFINE_HOOK("gtk-popup-hook", 5, H_gtk_popup_hook);
   XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
 }
 

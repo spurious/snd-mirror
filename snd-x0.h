@@ -157,7 +157,7 @@ typedef struct {
   GLXContext cx;
 #endif
   XtInputId fam_port;
-  Widget *mw, *pw;
+  Widget *mw;
   bool axis_color_set;
 } state_context;
 

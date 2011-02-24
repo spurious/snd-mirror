@@ -156,47 +156,6 @@ void file_menu_update(void)
     activate_widget(file_close_all_menu);
   else deactivate_widget(file_close_all_menu);
 }
-
-
-void popup_menu_update(void)
-{
-  snd_info *selected_sp = NULL, *any_sp = NULL;
-  chan_info *cp = NULL;
-  bool file_p = false, undoable_edits_p = false, redoable_edits_p = false;
-
-  selected_sp = selected_sound();
-  if (selected_sp) 
-    {
-      file_p = true;
-      cp = any_selected_channel(selected_sp);
-      any_sp = selected_sp;
-    }
-  else 
-    {
-      if (any_sp)
-	{
-	  cp = any_selected_channel(any_sp);
-	  file_p = true;
-	}
-    }
-
-  if ((cp) && (cp->cgx))
-    {
-      undoable_edits_p = (cp->edit_ctr > 0);
-      redoable_edits_p = (!(((cp->edit_ctr + 1) == cp->edit_size) || 
-			   (!(cp->edits[cp->edit_ctr + 1]))));
-    }
-
-  file_p = (bool)any_selected_sound();
-
-  set_sensitive(popup_info_menu, file_p);
-  set_sensitive(popup_undo_menu, undoable_edits_p);
-  set_sensitive(popup_redo_menu, redoable_edits_p);
-  set_sensitive(popup_save_menu, undoable_edits_p);
-
-  set_sensitive(popup_close_menu, file_p);
-  set_sensitive(popup_revert_menu, undoable_edits_p);
-}
 #endif
 
 

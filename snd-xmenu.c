@@ -912,9 +912,7 @@ Widget add_menu(void)
 
 /* -------------------------------- POPUP MENU -------------------------------- */
 
-static Widget popup_menu = NULL;
-
-static void popup_menu_update_1(Widget w, XtPointer info, XtPointer context) {popup_menu_update();}
+static Widget basic_popup_menu = NULL;
 
 static void popup_info_callback(Widget w, XtPointer info, XtPointer context) 
 {
@@ -923,64 +921,58 @@ static void popup_info_callback(Widget w, XtPointer info, XtPointer context)
   if (sp) display_info(sp);
 }
 
-void post_popup(XButtonPressedEvent *event)
+void post_basic_popup_menu(void *e)
 {
-  XmMenuPosition(popup_menu, event);
-  XtManageChild(popup_menu);
-}
-
-
-void create_popup_menu(void)
-{
-  /* make it a child of the main window */
-  if (!popup_menu)
+  XButtonPressedEvent *event = (XButtonPressedEvent *)e;
+  if (!basic_popup_menu)
     {
-      Widget mainp, sep, pop;
+      Widget w;
       Arg args[20];
       int n;
 
-      ss->sgx->pw = (Widget *)calloc(NUM_POPUP_WIDGETS, sizeof(Widget));
-
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      mainp = MAIN_PANE(ss);
-      XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC_RECURSIVE); n++;
-      XtSetArg(args[n], XmNuserData, (XtPointer)5);
-      popup_menu = XmCreatePopupMenu(mainp, (char *)"popup-menu", args, n + 1);
+      XtSetArg(args[n], XmNpopupEnabled, false); n++;      /* this was XmPOPUP_AUTOMATIC_RECURSIVE */
+      basic_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"basic-popup-menu", args, n + 1);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
 
-      pop = XtCreateManagedWidget("Snd", xmLabelWidgetClass, popup_menu, args, n);
-      sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, popup_menu, args, n);
+      w = XtCreateManagedWidget(_("Undo"), xmPushButtonWidgetClass, basic_popup_menu, args, n);
+      XtVaSetValues(w, XmNsensitive, false, NULL);
+      XtAddCallback(w, XmNactivateCallback, edit_undo_callback, NULL);
 
-      popup_undo_menu = XtCreateManagedWidget(_("Undo"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_undo_menu, XmNsensitive, false, NULL);
-      XtAddCallback(popup_undo_menu, XmNactivateCallback, edit_undo_callback, NULL);
+      w = XtCreateManagedWidget(_("Redo"), xmPushButtonWidgetClass, basic_popup_menu, args, n);
+      XtVaSetValues(w, XmNsensitive, false, NULL);
+      XtAddCallback(w, XmNactivateCallback, edit_redo_callback, NULL);
 
-      popup_redo_menu = XtCreateManagedWidget(_("Redo"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_redo_menu, XmNsensitive, false, NULL);
-      XtAddCallback(popup_redo_menu, XmNactivateCallback, edit_redo_callback, NULL);
+      w = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, basic_popup_menu, args, n);
+      XtAddCallback(w, XmNactivateCallback, file_save_callback, NULL);
+      XtVaSetValues(w, XmNsensitive, false, NULL);
 
-      popup_save_menu = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtAddCallback(popup_save_menu, XmNactivateCallback, file_save_callback, NULL);
-      XtVaSetValues(popup_save_menu, XmNsensitive, false, NULL);
+      w = XtCreateManagedWidget(_("Revert"), xmPushButtonWidgetClass, basic_popup_menu, args, n);
+      XtVaSetValues(w, XmNsensitive, true, NULL);
+      XtAddCallback(w, XmNactivateCallback, file_revert_callback, NULL);
 
-      popup_revert_menu = XtCreateManagedWidget(_("Revert"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_revert_menu, XmNsensitive, true, NULL);
-      XtAddCallback(popup_revert_menu, XmNactivateCallback, file_revert_callback, NULL);
+      w = XtCreateManagedWidget(_("Info"), xmPushButtonWidgetClass, basic_popup_menu, args, n);
+      XtVaSetValues(w, XmNsensitive, false, NULL);
+      XtAddCallback(w, XmNactivateCallback, popup_info_callback, NULL);
 
-      popup_info_menu = XtCreateManagedWidget(_("Info"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_info_menu, XmNsensitive, false, NULL);
-      XtAddCallback(popup_info_menu, XmNactivateCallback, popup_info_callback, NULL);
+      w = XtCreateManagedWidget(_("Close"), xmPushButtonWidgetClass, basic_popup_menu, args, n);
+      XtVaSetValues(w, XmNsensitive, true, NULL);
+      XtAddCallback(w, XmNactivateCallback, file_close_callback, NULL);
 
-      popup_close_menu = XtCreateManagedWidget(_("Close"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_close_menu, XmNsensitive, true, NULL);
-      XtAddCallback(popup_close_menu, XmNactivateCallback, file_close_callback, NULL);
-
-      XtAddCallback(popup_menu, XmNmapCallback, popup_menu_update_1, NULL);
+      /* XtAddCallback(popup_menu, XmNmapCallback, popup_menu_update_1, NULL); */
     }
+
+  XmMenuPosition(basic_popup_menu, event);
+  XtManageChild(basic_popup_menu);
 }
+
+void post_lisp_popup_menu(void *ev) {}
+void post_fft_popup_menu(void *ev) {}
+void post_selection_popup_menu(void *ev) {}
+
 
 /* TODO: context sensitive popups everywhere (not this stupid thing)
  * PERHAPS: remove edit123.scm, what is kmenu.scm? -- it's adding accelerators
@@ -988,6 +980,10 @@ void create_popup_menu(void)
  * PERHAPS: incorporate the special-menu stuff? 
  * PERHAPS: use the yin/yang icon for looped play of the whole file?
  * TODO: why was a simple loop so slow in gtk?
+ * TODO: remake the popup pictures
+ *
+ * fft_popup_menu in g|xc fft
+ * selection and basic popup_menu here
  */
 
 
@@ -1361,7 +1357,6 @@ Widget menu_widget(int which_menu)
     case 2: return(view_menu);    break;
     case 3: return(options_menu); break;
     case 4: return(help_menu);    break;
-    case 5: return(popup_menu);   break;
       
     default:
       if (which_menu < main_menus_size)
@@ -1524,15 +1519,14 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
 
 static XEN g_menu_widgets(void)
 {
-  #define H_menu_widgets "(" S_menu_widgets "): a list of top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help (6)popup)"
+  #define H_menu_widgets "(" S_menu_widgets "): a list of top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help)"
   return(XEN_CONS(XEN_WRAP_WIDGET(main_menu),
 	  XEN_CONS(XEN_WRAP_WIDGET(file_cascade_menu),
            XEN_CONS(XEN_WRAP_WIDGET(edit_cascade_menu),
             XEN_CONS(XEN_WRAP_WIDGET(view_cascade_menu),
              XEN_CONS(XEN_WRAP_WIDGET(options_cascade_menu),
               XEN_CONS(XEN_WRAP_WIDGET(help_cascade_menu),
-	       XEN_CONS(XEN_WRAP_WIDGET(popup_menu),
-	        XEN_EMPTY_LIST))))))));
+	       XEN_EMPTY_LIST)))))));
 }
 
 
