@@ -1730,6 +1730,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_selection_creates_region, save_selection_creates_region, help_selection_creates_region, NULL, revert_selection_creates_region);
     free(str);
 
+
     current_sep = make_inter_variable_separator(dpy_box);
     rts_with_toolbar = with_toolbar(ss);
     prf = prefs_row_with_toggle("include a toolbar", S_with_toolbar, 
@@ -1737,6 +1738,14 @@ widget_t start_preferences_dialog(void)
 				dpy_box,
 				toggle_with_toolbar);
     remember_pref(prf, reflect_with_toolbar, save_with_toolbar, help_with_toolbar, clear_with_toolbar, revert_with_toolbar);
+
+    current_sep = make_inter_variable_separator(dpy_box);
+    rts_with_tooltips = with_tooltips(ss);
+    prf = prefs_row_with_toggle("enable tooltips", S_with_tooltips, 
+				rts_with_tooltips,
+				dpy_box,
+				toggle_with_tooltips);
+    remember_pref(prf, reflect_with_tooltips, save_with_tooltips, help_with_tooltips, clear_with_tooltips, revert_with_tooltips);
 
 
 

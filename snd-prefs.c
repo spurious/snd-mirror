@@ -1,7 +1,7 @@
 /* this file included as text in snd-g|xprefs.c */
 
 /* TODO: with-tooltips function
- * TODO: finish fixing the help strings [and make the current ones less stupid]
+ * TODO: make the current help strings less stupid
  */
 
 static void int_to_textfield(widget_t w, int val)
@@ -106,7 +106,15 @@ static void remember_pref(prefs_info *prf,
 
   if ((help_func) &&
       (prf->label))
-    add_tooltip(prf->label, (*help_func)(prf));
+    {
+      if (prf->var_name)
+	{
+	  char *str;
+	  str = mus_format("%s\n  See %s for more info.", (*help_func)(prf), prf->var_name);
+	  add_tooltip(prf->label, str); /* don't free it... */
+	}
+      else add_tooltip(prf->label, (*help_func)(prf));
+    }
 }
 
 
@@ -400,8 +408,7 @@ static const char *help_ask_before_overwrite(prefs_info *prf)
 {
   return("\
   If this option is set, Snd will ask you before   \n\
-  it overwrites an existing sound.  The associated \n\
-  function is " S_ask_before_overwrite ".          ");
+  it overwrites an existing sound.  ");
 }
 
 
@@ -1804,8 +1811,9 @@ static void save_sync_style(prefs_info *prf, FILE *ignore) {rts_sync_style = syn
 
 static const char *help_sync_style(prefs_info *prf)
 {
-  return("Many operations can operate either on all channels at once,\n\
-or only on the currently selected channel.");
+  return("\
+  Many operations can operate either on all channels at once,\n\
+  or only on the currently selected channel.");
 }
 
 
@@ -2124,8 +2132,10 @@ static void unsaved_edits_toggle(prefs_info *prf) {set_ask_about_unsaved_edits(G
 
 static const char *help_unsaved_edits(prefs_info *prf)
 {
-  return("This option looks for unsaved edits when you close a file, or exit Snd.  If it \
-finds any, it asks you whether you want to save them.");
+  return("\
+  This option looks for unsaved edits when you \n\
+  close a file, or exit Snd.  If it finds any, it \n\
+  asks you whether you want to save them.");
 }
 
 
@@ -2151,8 +2161,10 @@ static void save_with_inset_graph(prefs_info *prf, FILE *fd)
 
 static const char *help_inset_graph(prefs_info *prf)
 {
-  return("This option displays a small graph of the entire sound in the upper right corner \
-of the screen with an indication of where the current window is. If you click somewhere in the \
+  return("\
+  This option displays a small graph of the entire sound \n\
+  in the upper right corner of the screen with an indication \n\
+  of where the current window is. If you click somewhere in the \n\
 little graph, the cursor and main window are moved to that spot.");
 }
 
@@ -2179,7 +2191,7 @@ static void save_smpte(prefs_info *prf, FILE *fd)
 
 static const char *help_smpte(prefs_info *prf)
 {
-  return("This option displays the SMPTE data in the time domain graph.");
+  return("  This option displays the SMPTE data in the time domain graph.  ");
 }
 
 
@@ -2202,7 +2214,9 @@ static void save_with_pointer_focus(prefs_info *prf, FILE *fd)
 
 static const char *help_pointer_focus(prefs_info *prf)
 {
-  return("If this option is set, when the mouse moves over a text or graph widget, the widget is activated.");
+  return("\
+  If this option is set, when the mouse moves over a \n\
+  text or graph widget, the widget is activated.  ");
 }
 
 
@@ -3134,7 +3148,7 @@ static bool rts_with_toolbar = DEFAULT_WITH_TOOLBAR;
 
 static const char *help_with_toolbar(prefs_info *prf)
 {
-  return("TODO: help");
+  return("  If this is set, a toolbar is displayed.  ");
 }
 
 static void revert_with_toolbar(prefs_info *prf) {set_with_toolbar_and_display(rts_with_toolbar);}
@@ -3145,14 +3159,33 @@ static void toggle_with_toolbar(prefs_info *prf) {set_with_toolbar_and_display(G
 
 
 
+/* ---------------- with-tooltips ---------------- */
+
+static bool rts_with_tooltips = DEFAULT_WITH_TOOLTIPS;
+
+static const char *help_with_tooltips(prefs_info *prf)
+{
+  return("  If this is set, tooltips may be displayed.  ");
+}
+
+static void revert_with_tooltips(prefs_info *prf) {set_with_tooltips(rts_with_tooltips);}
+static void clear_with_tooltips(prefs_info *prf) {set_with_tooltips(DEFAULT_WITH_TOOLTIPS);}
+static void reflect_with_tooltips(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_tooltips(ss));}
+static void save_with_tooltips(prefs_info *prf, FILE *fd) {rts_with_tooltips = with_tooltips(ss);}
+static void toggle_with_tooltips(prefs_info *prf) {set_with_tooltips(GET_TOGGLE(prf->toggle));}
+
+
+
 /* ---------------- remember-sound-state ---------------- */
 
 static bool rts_remember_sound_state = DEFAULT_REMEMBER_SOUND_STATE;
 
 static const char *help_remember_sound_state(prefs_info *prf)
 {
-  return("This option causes Snd to save most of a sound's display state when it is closed, \
-and if that same sound is later re-opened, Snd restores the previous state. This only takes effect upon restarting Snd.");
+  return("\
+  This option causes Snd to save most of a sound's display \n\
+  state when it is closed, and if that same sound is later re-opened, \n\
+  Snd restores the previous state. This only takes effect upon restarting Snd.");
 }
 
 static void revert_remember_sound_state(prefs_info *prf) {set_remember_sound_state(rts_remember_sound_state);}
@@ -3524,10 +3557,13 @@ static char *include_peak_env_directory = NULL, *rts_peak_env_directory = NULL;
 
 static const char *help_peak_envs(prefs_info *prf)
 {
-  return("When a very large file is first opened, Snd scans all the data to build up an overall \
-representation of the sound.  If you like to view the entire sound upon opening it, you can speed \
-up the process a lot by saving this initial representation.  The data is called a 'peak-env' file \
-and it resides in the 'peak-env-dir'.");
+  return("\
+  When a very large file is first opened, Snd scans \n\
+  all the data to build up an overall representation of \n\
+  the sound.  If you like to view the entire sound upon \n\
+  opening it, you can speed up the process a lot by saving \n\
+  this initial representation.  The data is called a 'peak-env' file \n\
+  and it resides in the 'peak-env-dir'.");
 }
 
 
@@ -3753,8 +3789,10 @@ static bool rts_full_duration = DEFAULT_SHOW_FULL_DURATION;
 
 static const char *help_initial_bounds(prefs_info *prf)
 {
-  return("Normally Snd displays just the first 0.1 seconds of a sound in its initial graph. This option \
-sets either new bounds for that display, or directs Snd to display the entire sound.");
+  return("\
+  Normally Snd displays just the first 0.1 seconds of a \n\
+  sound in its initial graph. This option sets either new \n\
+  bounds for that display, or directs Snd to display the entire sound.");
 }
 
 
@@ -3893,9 +3931,11 @@ static void clear_key(prefs_info *prf, const char *name)
 
 static const char *help_play_from_cursor(prefs_info *prf)
 {
-  return("By default, C-q plays the current channel from the cursor, but one often wants to play the entire \
-sound; this option binds a key for that purpose, and also overrides the pause setting.  The new binding does \
-not take effect until you type return in the text widget.");
+  return("\
+  By default, C-q plays the current channel from the cursor, \n\
+  but one often wants to play the entire sound; this option binds \n\
+  a key for that purpose, and also overrides the pause setting.  \n\
+  The new binding does not take effect until you type return in the text widget.");
 }
 
 
@@ -3954,8 +3994,10 @@ static void clear_play_from_cursor(prefs_info *prf)
 
 static const char *help_show_all(prefs_info *prf)
 {
-  return("This option binds a key to show all of the current sound in the current time domain window, \
-equivalent to moving the 'zoom' slider all the way to the right.");
+  return("\
+  This option binds a key to show all of the current sound \n\
+  in the current time domain window, equivalent to moving the \n\
+  'zoom' slider all the way to the right.");
 }
 
 
@@ -4023,8 +4065,10 @@ static void clear_show_all(prefs_info *prf)
 
 static const char *help_select_all(prefs_info *prf)
 {
-  return("This option binds a key to select all of the current sound.  The 'Select all' Edit menu item \
-follows the 'sync' buttons when deciding which channels to select.");
+  return("\
+  This option binds a key to select all of the current sound.  \n\
+  The 'Select all' Edit menu item follows the 'sync' buttons when \n\
+  deciding which channels to select.");
 }
 
 
@@ -4092,7 +4136,9 @@ static void clear_select_all(prefs_info *prf)
 
 static const char *help_revert(prefs_info *prf)
 {
-  return("This option binds a key to undo any edits in the current sound, equivalent to the File:Revert menu item.");
+  return("\
+  This option binds a key to undo any edits in the current sound, \n\
+  equivalent to the File:Revert menu item.");
 }
 
 
@@ -4151,7 +4197,9 @@ static void clear_revert_sound(prefs_info *prf)
 
 static const char *help_exit(prefs_info *prf)
 {
-  return("This option binds a key to exit from Snd, equivalent to the File:Exit menu item.");
+  return("\
+  This option binds a key to exit from Snd, \n\
+  equivalent to the File:Exit menu item.");
 }
 
 
@@ -4210,7 +4258,9 @@ static void clear_exit(prefs_info *prf)
 
 static const char *help_goto_maxamp(prefs_info *prf)
 {
-  return("This option binds a key to move the view (and cursor) to the position of the current channel's maximum sample.");
+  return("\
+  This option binds a key to move the view (and cursor) to the \n\
+  position of the current channel's maximum sample.");
 }
 
 
@@ -4269,7 +4319,9 @@ static void clear_goto_maxamp(prefs_info *prf)
 
 static const char *help_show_selection(prefs_info *prf)
 {
-  return("This option binds a key to cause the current selection to fill the time domain graph.");
+  return("\
+  This option binds a key to cause the current selection to \n\
+  fill the time domain graph.");
 }
 
 

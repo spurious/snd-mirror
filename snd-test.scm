@@ -63551,7 +63551,7 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 
 ;;; TODO: explicit sync-style tests, also show-selection, unselect-all
 ;;;          ask-about-unsaved-edits, show-full-duration, initial-beg, initial-dur
-;;;          remember-sound-state with-toolbar with-smpte-label
+;;;          remember-sound-state with-toolbar with-smpte-label with-tooltips
 
 
 

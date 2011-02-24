@@ -1309,6 +1309,8 @@ void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, i
 
 /* ---------------- toolbar ---------------- */
 
+/* TODO: how to disable the tooltip if with_tooltips is set false? */
+
 void add_tooltip(GtkWidget *w, const char *tip)
 {
   char *str;

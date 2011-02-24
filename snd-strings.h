@@ -686,6 +686,7 @@
 #define S_with_relative_panes           "with-relative-panes"
 #define S_with_smpte_label              "with-smpte-label"
 #define S_with_toolbar                  "with-toolbar"
+#define S_with_tooltips                 "with-tooltips"
 #define S_with_tracking_cursor          "with-tracking-cursor"
 #define S_with_verbose_cursor           "with-verbose-cursor"
 #define S_x_axis_as_clock               "x-axis-as-clock"

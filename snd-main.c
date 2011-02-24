@@ -446,6 +446,7 @@ static void save_options(FILE *fd)
   if (zero_pad(ss) != DEFAULT_ZERO_PAD) pss_sd(fd, S_zero_pad, zero_pad(ss));
   if (ask_before_overwrite(ss) != DEFAULT_ASK_BEFORE_OVERWRITE) pss_ss(fd, S_ask_before_overwrite, b2s(ask_before_overwrite(ss)));
   if (with_toolbar(ss) != DEFAULT_WITH_TOOLBAR) pss_ss(fd, S_with_toolbar, b2s(with_toolbar(ss)));
+  if (with_tooltips(ss) != DEFAULT_WITH_TOOLTIPS) pss_ss(fd, S_with_tooltips, b2s(with_tooltips(ss)));
   if (remember_sound_state(ss) != DEFAULT_REMEMBER_SOUND_STATE) pss_ss(fd, S_remember_sound_state, b2s(remember_sound_state(ss)));
   if (ask_about_unsaved_edits(ss) != DEFAULT_ASK_ABOUT_UNSAVED_EDITS) pss_ss(fd, S_ask_about_unsaved_edits, b2s(ask_about_unsaved_edits(ss)));
   if (show_full_duration(ss) != DEFAULT_SHOW_FULL_DURATION) pss_ss(fd, S_show_full_duration, b2s(show_full_duration(ss)));

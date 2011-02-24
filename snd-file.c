@@ -5729,6 +5729,17 @@ static XEN g_set_with_toolbar(XEN val)
 }
 
 
+static XEN g_with_tooltips(void) {return(C_TO_XEN_BOOLEAN(with_tooltips(ss)));}
+
+static XEN g_set_with_tooltips(XEN val) 
+{
+  #define H_with_tooltips "(" S_with_tooltips "): " PROC_TRUE " if you want tooltips displayed at all"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_tooltips, "a boolean");
+  set_with_tooltips(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(with_tooltips(ss)));
+}
+
+
 static XEN g_remember_sound_state(void) {return(C_TO_XEN_BOOLEAN(remember_sound_state(ss)));}
 
 static XEN g_set_remember_sound_state(XEN val) 
@@ -5850,6 +5861,8 @@ XEN_NARGIFY_0(g_ask_before_overwrite_w, g_ask_before_overwrite)
 XEN_NARGIFY_1(g_set_ask_before_overwrite_w, g_set_ask_before_overwrite)
 XEN_NARGIFY_0(g_with_toolbar_w, g_with_toolbar)
 XEN_NARGIFY_1(g_set_with_toolbar_w, g_set_with_toolbar)
+XEN_NARGIFY_0(g_with_tooltips_w, g_with_tooltips)
+XEN_NARGIFY_1(g_set_with_tooltips_w, g_set_with_tooltips)
 XEN_NARGIFY_0(g_remember_sound_state_w, g_remember_sound_state)
 XEN_NARGIFY_1(g_set_remember_sound_state_w, g_set_remember_sound_state)
 XEN_NARGIFY_0(g_ask_about_unsaved_edits_w, g_ask_about_unsaved_edits)
@@ -5920,6 +5933,8 @@ XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
 #define g_set_ask_before_overwrite_w g_set_ask_before_overwrite
 #define g_with_toolbar_w g_with_toolbar
 #define g_set_with_toolbar_w g_set_with_toolbar
+#define g_with_tooltips_w g_with_tooltips
+#define g_set_with_tooltips_w g_set_with_tooltips
 #define g_remember_sound_state_w g_remember_sound_state
 #define g_set_remember_sound_state_w g_set_remember_sound_state
 #define g_ask_about_unsaved_edits_w g_ask_about_unsaved_edits
@@ -6117,6 +6132,9 @@ files list of the View Files dialog.  If it returns " PROC_TRUE ", the default a
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_toolbar, g_with_toolbar_w, H_with_toolbar,
 				   S_setB S_with_toolbar, g_set_with_toolbar_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_tooltips, g_with_tooltips_w, H_with_tooltips,
+				   S_setB S_with_tooltips, g_set_with_tooltips_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_remember_sound_state, g_remember_sound_state_w, H_remember_sound_state,
 				   S_setB S_remember_sound_state, g_set_remember_sound_state_w,  0, 0, 1, 0);

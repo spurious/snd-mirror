@@ -493,7 +493,7 @@ void about_snd_help(void)
          Options:Controls menu item, and Edit:Unselect\n\
 	 show-selection and unselect-all.\n\
          show-full-duration, initial-beg, initial-dur, ask-about-unsaved-edits.\n\
-         with-toolbar, remember-sound-state, with-smpte-label.\n\
+         with-toolbar, with-tooltips, remember-sound-state, with-smpte-label.\n\
          new built-in toolbars, removed toolbar.scm and panic.scm.\n\
          removed Snd.ad and Snd.gtrc.\n\
 12-Feb:  Snd 11.13.\n\

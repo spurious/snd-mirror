@@ -1039,7 +1039,8 @@ static void tool_starter(Widget w, XtPointer context, XEvent *event, Boolean *co
 {
   XEnterWindowEvent *ev = (XEnterWindowEvent *)event;
   char *tip = (char *)context;
-  if ((ev->time - tool_last_time) > 2)
+  if ((with_tooltips(ss)) &&
+      ((ev->time - tool_last_time) > 2))
     {
       tool_x = ev->x;
       tool_y = ev->y;

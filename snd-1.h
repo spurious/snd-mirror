@@ -437,7 +437,7 @@ typedef struct snd_state {
   mus_long_t Transform_Size;
   mus_fft_window_t Fft_Window;
   graph_type_t Transform_Graph_Type, Time_Graph_Type;
-  bool Ask_Before_Overwrite, Ask_About_Unsaved_Edits, Show_Full_Duration, Remember_Sound_State, With_Toolbar;
+  bool Ask_Before_Overwrite, Ask_About_Unsaved_Edits, Show_Full_Duration, Remember_Sound_State, With_Toolbar, With_Tooltips;
   mus_float_t Fft_Window_Alpha, Fft_Window_Beta, Grid_Density, Initial_Beg, Initial_Dur;
   mus_float_t Color_Scale, Color_Cutoff, Beats_Per_Minute;
   bool Color_Inverted, Show_Mix_Waveforms;
