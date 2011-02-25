@@ -6141,7 +6141,7 @@ mus_long_t current_location(snd_fd *sf)
 }
 
 
-static snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize)
+snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize)
 {
   snd_fd *sf;
   snd_info *sp;

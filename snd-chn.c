@@ -8719,7 +8719,7 @@ WITH_THREE_SETTER_ARGS(g_set_graphs_horizontal_reversed, g_set_graphs_horizontal
 
 
 
-static void write_transform_peaks(FILE *fd, chan_info *ucp)
+void write_transform_peaks(FILE *fd, chan_info *ucp)
 {
   /* put (sync'd) peak info in (possibly temporary) file */
   int i, chn;

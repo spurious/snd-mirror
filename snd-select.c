@@ -230,7 +230,7 @@ static mus_long_t selection_maxamp_position(chan_info *cp)
 }
 
 
-static void cp_delete_selection(chan_info *cp)
+void cp_delete_selection(chan_info *cp)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];

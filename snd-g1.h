@@ -109,8 +109,8 @@ void hide_toolbar(void);
 void add_tooltip(GtkWidget *w, const char *tip);
 void post_basic_popup_menu(void *ev);
 void post_lisp_popup_menu(void *ev);
-void post_fft_popup_menu(void *ev);
 void post_selection_popup_menu(void *ev);
+GtkWidget *add_menu_item(GtkWidget *menu, const char *label, const char *icon, GCallback callback);
 
 
 
@@ -141,6 +141,8 @@ void reflect_log_freq_start_in_transform_dialog(void);
 void reflect_min_db_in_transform_dialog(void);
 gboolean spin_button_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown);
 gboolean spin_button_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown);
+void post_fft_popup_menu(void *ev);
+
 
 
 /* -------- snd-gdrop.c -------- */

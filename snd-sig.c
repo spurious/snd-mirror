@@ -2144,7 +2144,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
 }
 
 
-static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int arg_pos)
+void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int arg_pos)
 {
   sync_state *sc;
   sync_info *si;
@@ -2860,7 +2860,7 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection)
 
 /* smooth-channel could be a built-in virtual op, but the smoothed section is never long, so it doesn't save anything */
 
-static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int edpos)
+void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int edpos)
 {
   mus_sample_t *data = NULL;
   mus_long_t k;

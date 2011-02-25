@@ -193,6 +193,8 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 
 
 ;;; -------- delete selected portion and smooth the splice
+;;;
+;;; TODO: either fix this or delete it (and smooth of course)
 
 (define (delete-selection-and-smooth)
   "(delete-selection-and-smooth) deletes the current selection and smooths the splice"

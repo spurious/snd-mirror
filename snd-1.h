@@ -860,6 +860,7 @@ bool xramp_channel(chan_info *cp, double start, double incr, double scaler, doub
 void ptree_channel(chan_info *cp, struct ptree *tree, mus_long_t beg, mus_long_t num, int pos, bool env_it, XEN init_func, const char *origin);
 snd_fd *init_sample_read(mus_long_t samp, chan_info *cp, read_direction_t direction);
 snd_fd *init_sample_read_any(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position);
+snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize);
 void read_sample_change_direction(snd_fd *sf, read_direction_t dir);
 bool unrampable(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos, bool is_xramp);
 bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
@@ -1033,6 +1034,7 @@ void update_possible_selection_in_progress(mus_long_t samp);
 void restart_selection_creation(chan_info *cp, bool right);
 bool hit_selection_triangle(chan_info *cp, int x, int y);
 bool hit_selection_loop_triangle(chan_info *cp, int x, int y);
+void cp_delete_selection(chan_info *cp);
 
 int make_region_from_selection(void);
 void display_selection(chan_info *cp);
@@ -1229,6 +1231,7 @@ void stop_fft_in_progress(chan_info *cp);
 void goto_graph(chan_info *cp);
 void start_peak_env(chan_info *cp);
 void stop_peak_env(chan_info *cp);
+void write_transform_peaks(FILE *fd, chan_info *ucp);
 bool chan_fft_in_progress(chan_info *cp);
 void force_fft_clear(chan_info *cp);
 void chan_info_cleanup(chan_info *cp);
@@ -1687,6 +1690,7 @@ void display_frequency_response(env *e, axis_info *ap, graphics_context *gax, in
 void cursor_delete(chan_info *cp, mus_long_t count);
 void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection);
 void cursor_insert(chan_info *cp, mus_long_t beg, mus_long_t count);
+void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int edpos);
 
 void g_init_sig(void);
 int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos);
@@ -1695,6 +1699,7 @@ mus_long_t beg_to_sample(XEN beg, const char *caller);
 mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int argn, const char *caller);
 char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_float_t speed, env *amp_env, bool *err);
 XEN g_scale_selection_by(XEN scalers);
+void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int arg_pos);
 
 
 /* -------- snd-draw.c -------- */

@@ -1,6 +1,6 @@
 /* this file included as text in snd-g|xprefs.c */
 
-/* TODO: with-tooltips function
+/* TODO: with-menu-icons function
  * TODO: make the current help strings less stupid
  */
 

@@ -377,7 +377,7 @@ static void menu_drag_watcher(GtkWidget *w, const char *str, int x, int y, drag_
  *    g_object_set (gtk_settings_get_default (), "gtk-menu-images", true, NULL);
  */
 
-static GtkWidget *add_menu_item(GtkWidget *menu, const char *label, const char *icon, GCallback callback)
+GtkWidget *add_menu_item(GtkWidget *menu, const char *label, const char *icon, GCallback callback)
 {
   GtkWidget *w;
   if (icon)
@@ -423,7 +423,9 @@ GtkWidget *add_menu(void)
   gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), main_menu, false, true, 0);
   gtk_widget_show(main_menu);
 
-  /* FILE MENU */
+
+  /* -------- FILE MENU -------- */
+
   file_menu = gtk_menu_item_new_with_label("File");
   ml[f_menu] = "File";
   gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), file_menu);
@@ -488,7 +490,8 @@ GtkWidget *add_menu(void)
   ml[f_exit_menu] = "Exit";
 
 
-  /* EDIT MENU */
+  /* -------- EDIT MENU -------- */
+
   edit_menu = gtk_menu_item_new_with_label("Edit");
   ml[e_menu] = "Edit";
   gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), edit_menu);
@@ -543,7 +546,8 @@ GtkWidget *add_menu(void)
   ml[e_header_menu] = "Edit Header";
 
 
-  /* VIEW MENU */
+  /* -------- VIEW MENU -------- */
+
   view_menu = gtk_menu_item_new_with_label("View");
   ml[v_menu] = "View";
   gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), view_menu);
@@ -710,7 +714,8 @@ GtkWidget *add_menu(void)
 
 
 
-  /* OPTIONS MENU */
+  /* -------- OPTIONS MENU -------- */
+
   options_menu = gtk_menu_item_new_with_label("Options");
   ml[o_menu] = "Options";
   gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), options_menu);
@@ -742,7 +747,8 @@ GtkWidget *add_menu(void)
 
 
 
-  /* HELP MENU */
+  /* -------- HELP MENU -------- */
+
   help_menu = gtk_menu_item_new_with_label("Help");
   ml[h_menu] = "Help";
   gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), help_menu);
@@ -837,9 +843,14 @@ GtkWidget *add_menu(void)
 }
 
 
-/* -------------------------------- POPUP MENU -------------------------------- */
+/* -------------------------------- POPUP MENUS --------------------------------
+ *   FFT popup is in snd-gfft.c
+ */
 
-static GtkWidget *basic_popup_menu = NULL, *selection_popup_menu = NULL, *lisp_popup_menu = NULL, *fft_popup_menu = NULL;
+static GtkWidget *basic_popup_menu = NULL, *selection_popup_menu = NULL;
+
+
+/* -------- basic popup -------- */
 
 static void popup_info_callback(GtkWidget *w, gpointer info) 
 {
@@ -847,6 +858,70 @@ static void popup_info_callback(GtkWidget *w, gpointer info)
   sp = any_selected_sound();
   if (sp) display_info(sp);
 }
+
+static gboolean popup_menu_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+  gtk_widget_hide(w);
+  return(false);
+}
+
+static void popup_normalize_callback(GtkWidget *w, gpointer info) 
+{
+  mus_float_t scl[1];
+  scl[0] = 1.0;
+  scale_to(any_selected_sound(), current_channel(), scl, 1, OVER_SOUND);
+}
+
+
+static void popup_apply_controls_callback(GtkWidget *w, gpointer info) 
+{
+  menu_apply_controls(any_selected_sound());
+}
+
+
+static void popup_reset_controls_callback(GtkWidget *w, gpointer info) 
+{
+  menu_reset_controls(any_selected_sound());
+}
+
+static void popup_reverse_callback(GtkWidget *w, gpointer info)
+{
+  reverse_sound(current_channel(), OVER_SOUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+}
+
+
+static void stop_everything_callback(GtkWidget *w, gpointer info)
+{
+  control_g(any_selected_sound());
+}
+
+
+
+void post_basic_popup_menu(void *e)
+{
+  GdkEventButton *ev = (GdkEventButton *)e;
+  if (!basic_popup_menu)
+    {
+      basic_popup_menu = gtk_menu_new();
+      gtk_widget_set_events(basic_popup_menu, GDK_ALL_EVENTS_MASK);
+      gtk_widget_show(basic_popup_menu);
+
+      SG_SIGNAL_CONNECT(basic_popup_menu, "button_release_event", popup_menu_button_release, NULL);
+
+      add_menu_item(basic_popup_menu, "Info",           NULL, (GCallback)popup_info_callback);
+      add_menu_item(basic_popup_menu, "Select all",     NULL, (GCallback)edit_select_all_callback);
+      add_menu_item(basic_popup_menu, "Stop!",          NULL, (GCallback)stop_everything_callback);
+      add_menu_item(basic_popup_menu, "-> 1.0",         NULL, (GCallback)popup_normalize_callback);
+      add_menu_item(basic_popup_menu, "Reverse",        NULL, (GCallback)popup_reverse_callback);
+      add_menu_item(basic_popup_menu, "Apply controls", NULL, (GCallback)popup_apply_controls_callback);
+      add_menu_item(basic_popup_menu, "Reset controls", NULL, (GCallback)popup_reset_controls_callback);
+    }
+
+  gtk_menu_popup(GTK_MENU(basic_popup_menu), NULL, NULL, NULL, NULL, POPUP_BUTTON, EVENT_TIME(ev));
+}
+
+
+/* -------- selection popup -------- */
 
 static void popup_show_selection_callback(GtkWidget *w, gpointer info) 
 {
@@ -867,36 +942,144 @@ static void popup_normalize_selection_callback(GtkWidget *w, gpointer info)
   scale_to(NULL, NULL, scl, 1, OVER_SELECTION);
 }
 
-static gboolean popup_menu_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static void popup_error_handler(const char *msg, void *data)
 {
-  gtk_widget_hide(w);
-  return(false);
+  redirect_snd_error_to(NULL, NULL);
+  redirect_snd_warning_to(NULL, NULL);
+  report_in_minibuffer(any_selected_sound(), "%s: %s", (char *)data, msg);
 }
 
-
-void post_basic_popup_menu(void *e)
+static void popup_cut_to_new_callback_1(GtkWidget *w, gpointer info, bool cut) 
 {
-  GdkEventButton *ev = (GdkEventButton *)e;
-  if (!basic_popup_menu)
+  char *temp_file;
+  io_error_t io_err = IO_NO_ERROR;
+
+  temp_file = snd_tempnam();
+  io_err = save_selection(temp_file, default_output_header_type(ss), default_output_data_format(ss), selection_srate(), NULL, SAVE_ALL_CHANS);
+  if (io_err == IO_NO_ERROR)
     {
-      basic_popup_menu = gtk_menu_new();
-      gtk_widget_set_events(basic_popup_menu, GDK_ALL_EVENTS_MASK);
-      gtk_widget_show(basic_popup_menu);
+      if (cut) delete_selection(UPDATE_DISPLAY);
 
-      SG_SIGNAL_CONNECT(basic_popup_menu, "button_release_event", popup_menu_button_release, NULL);
+      ss->open_requestor = FROM_POPUP_CUT_TO_NEW;
+      redirect_snd_error_to(popup_error_handler, "popup cut->new");
+      snd_open_file(temp_file, FILE_READ_WRITE);
+      redirect_snd_error_to(NULL, NULL);
 
-      add_menu_item(basic_popup_menu, "Info", GTK_STOCK_HELP, (GCallback)popup_info_callback);
-      add_menu_item(basic_popup_menu, "Close", GTK_STOCK_CLOSE, (GCallback)file_close_callback);
-
-      /* save-as env scale maxamp normalize reverse revert? */
+      free(temp_file);
     }
-
-  gtk_menu_popup(GTK_MENU(basic_popup_menu), NULL, NULL, NULL, NULL, POPUP_BUTTON, EVENT_TIME(ev));
 }
 
+static void popup_cut_to_new_callback(GtkWidget *w, gpointer info) {popup_cut_to_new_callback_1(w, info, true);}
+static void popup_copy_to_new_callback(GtkWidget *w, gpointer info) {popup_cut_to_new_callback_1(w, info, false);}
 
-void post_lisp_popup_menu(void *e) {}
-void post_fft_popup_menu(void *e) {}
+static void crop(chan_info *cp)
+{
+  if (selection_is_active_in_channel(cp))
+    {
+      mus_long_t beg, end, frames;
+      frames = CURRENT_SAMPLES(cp);
+      beg = selection_beg(cp);
+      end = selection_end(cp);
+      if (beg > 0)
+	delete_samples(0, beg, cp, cp->edit_ctr);
+      if (end < (frames - 1))
+	delete_samples(end + 1, frames - end, cp, cp->edit_ctr);
+    }
+}
+
+static void popup_crop_callback(GtkWidget *w, gpointer info)
+{
+  for_each_chan(crop);
+}
+
+static void cut_and_smooth(chan_info *cp)
+{
+  if (selection_is_active_in_channel(cp))
+    {
+      #define SPLICE_LEN 32
+      mus_long_t beg, end, frames, start;
+      mus_sample_t splice[2 * SPLICE_LEN];
+      double ramp, incr;
+      int i;
+      snd_fd *sf, *sf_end;
+
+      incr = 0.5 / SPLICE_LEN;
+      beg = selection_beg(cp);
+      end = selection_end(cp);
+      frames = CURRENT_SAMPLES(cp);
+
+      if (end < SPLICE_LEN)
+	start = 0;
+      else start = end - SPLICE_LEN;
+
+      sf_end = init_sample_read_any_with_bufsize(start, cp, READ_FORWARD, cp->edit_ctr, 2 * SPLICE_LEN);
+
+      if (beg < SPLICE_LEN)
+	start = 0;
+      else start = beg - SPLICE_LEN;
+
+      sf = init_sample_read_any_with_bufsize(start, cp, READ_FORWARD, cp->edit_ctr, 2 * SPLICE_LEN);
+      for (i = 0, ramp = 1.0; i < 2 * SPLICE_LEN; i++, ramp -= incr)
+	{
+	  mus_float_t x, y;
+	  x = read_sample(sf);
+	  y = read_sample(sf_end);
+	  splice[i] = MUS_DOUBLE_TO_SAMPLE((x * ramp) + (y * (1.0 - ramp)));
+	}
+      free_snd_fd(sf);
+      free_snd_fd(sf_end);
+
+      cp_delete_selection(cp);
+      change_samples(start, 2 * SPLICE_LEN, splice, cp, "popup cut+smooth", cp->edit_ctr);
+    }
+}
+
+static void popup_cut_and_smooth_callback(GtkWidget *w, gpointer info)
+{
+  for_each_chan(cut_and_smooth);
+}
+
+static void mark_selection(chan_info *cp)
+{
+  if (selection_is_active_in_channel(cp))
+    {
+      add_mark(selection_beg(cp), NULL, cp);
+      add_mark(selection_end(cp), NULL, cp);
+    }
+}
+
+static void popup_mark_selection_callback(GtkWidget *w, gpointer info)
+{
+  for_each_chan(mark_selection);
+}
+
+static void popup_reverse_selection_callback(GtkWidget *w, gpointer info)
+{
+  reverse_sound(current_channel(), OVER_SELECTION, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+}
+
+static mus_float_t selection_max = 0.0;
+
+static void selection_info(chan_info *cp)
+{
+  if ((selection_is_active_in_channel(cp)) &&
+      (selection_maxamp(cp) > selection_max))
+    selection_max = selection_maxamp(cp);
+}
+
+static void popup_selection_info_callback(GtkWidget *w, gpointer info)
+{
+  selection_max = 0.0;
+  for_each_chan(selection_info);
+  report_in_minibuffer(any_selected_sound(), "selection max: %f", selection_max);
+}
+
+static void popup_selection_apply_controls_callback(GtkWidget *w, gpointer info)
+{
+  ss->apply_choice = APPLY_TO_SELECTION;
+  menu_apply_controls(any_selected_sound());
+}
+
 
 void post_selection_popup_menu(void *e) 
 {
@@ -909,19 +1092,29 @@ void post_selection_popup_menu(void *e)
 
       SG_SIGNAL_CONNECT(selection_popup_menu, "button_release_event", popup_menu_button_release, NULL);
 
-      add_menu_item(selection_popup_menu, "Fill Window", GTK_STOCK_FULLSCREEN,  (GCallback)popup_show_selection_callback);
-      add_menu_item(selection_popup_menu, "Cut",      GTK_STOCK_CUT,    (GCallback)edit_cut_callback);
-      add_menu_item(selection_popup_menu, "Paste",    GTK_STOCK_PASTE,  (GCallback)edit_paste_callback);
-      add_menu_item(selection_popup_menu, "Unselect", GTK_STOCK_CLEAR,  (GCallback)edit_unselect_callback);
-      add_menu_item(selection_popup_menu, "-> 0.0", GTK_STOCK_GOTO_BOTTOM,  (GCallback)popup_zero_selection_callback);
-      add_menu_item(selection_popup_menu, "-> 1.0", GTK_STOCK_GOTO_TOP,  (GCallback)popup_normalize_selection_callback);
-
-      /* cut+smooth cut->new save-as crop mix copy->new mark reverse env
-       */
+      add_menu_item(selection_popup_menu, "Fill Window",    NULL, (GCallback)popup_show_selection_callback);
+      add_menu_item(selection_popup_menu, "Cut",            NULL, (GCallback)edit_cut_callback);
+      add_menu_item(selection_popup_menu, "Cut and smooth", NULL, (GCallback)popup_cut_and_smooth_callback);
+      add_menu_item(selection_popup_menu, "Cut -> new",     NULL, (GCallback)popup_cut_to_new_callback);
+      add_menu_item(selection_popup_menu, "Copy -> new",    NULL, (GCallback)popup_copy_to_new_callback);
+      add_menu_item(selection_popup_menu, "Crop",           NULL, (GCallback)popup_crop_callback);
+      add_menu_item(selection_popup_menu, "Unselect",       NULL, (GCallback)edit_unselect_callback);
+      add_menu_item(selection_popup_menu, "-> 0.0",         NULL, (GCallback)popup_zero_selection_callback);
+      add_menu_item(selection_popup_menu, "-> 1.0",         NULL, (GCallback)popup_normalize_selection_callback);
+      add_menu_item(selection_popup_menu, "Save as",        NULL, (GCallback)edit_save_as_callback);
+      add_menu_item(selection_popup_menu, "Paste",          NULL, (GCallback)edit_paste_callback);
+      add_menu_item(selection_popup_menu, "Mix",            NULL, (GCallback)edit_mix_callback);
+      add_menu_item(selection_popup_menu, "Mark",           NULL, (GCallback)popup_mark_selection_callback);
+      add_menu_item(selection_popup_menu, "Reverse",        NULL, (GCallback)popup_reverse_selection_callback);
+      add_menu_item(selection_popup_menu, "Apply controls", NULL, (GCallback)popup_selection_apply_controls_callback);
+      add_menu_item(selection_popup_menu, "Info",           NULL, (GCallback)popup_selection_info_callback);
     }
 
   gtk_menu_popup(GTK_MENU(selection_popup_menu), NULL, NULL, NULL, NULL, POPUP_BUTTON, EVENT_TIME(ev));
 }
+
+
+void post_lisp_popup_menu(void *e) {}
 
 
 
@@ -1074,12 +1267,6 @@ static void goto_end_callback(GtkWidget *w, gpointer info)
       for (i = 0; i < sp->nchans; i++)
 	set_x_axis_x0x1(sp->chans[i], sp->chans[i]->axis->xmax - sp->chans[i]->axis->x1 + sp->chans[i]->axis->x0, sp->chans[i]->axis->xmax);
     }
-}
-
-
-static void stop_everything_callback(GtkWidget *w, gpointer info)
-{
-  control_g(any_selected_sound());
 }
 
 
