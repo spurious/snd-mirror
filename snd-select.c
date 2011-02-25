@@ -1795,16 +1795,21 @@ static bool update_bounds(chan_info *cp)
   return(false);
 }
 
-static XEN g_show_selection(XEN snd, XEN chn)
+
+void show_selection(void)
 {
-  #define H_show_selection "(" S_show_selection " snd chn) adjusts graph bounds to display the current selection in full"
+  sel_beg = -1.0;
+  sel_end = -1.0;
+  map_over_chans(get_selection_bounds);
+  map_over_chans(update_bounds);
+}
+
+
+static XEN g_show_selection(void)
+{
+  #define H_show_selection "(" S_show_selection ") adjusts graph bounds to display the current selection in full"
   if (selection_is_active())
-    {
-      sel_beg = -1.0;
-      sel_end = -1.0;
-      map_over_chans(get_selection_bounds);
-      map_over_chans(update_bounds);
-    }
+    show_selection();
   return(XEN_FALSE);
 }
 
@@ -1836,7 +1841,7 @@ XEN_ARGIFY_4(g_mix_selection_w, g_mix_selection)
 XEN_NARGIFY_0(g_selection_to_mix_w, g_selection_to_mix)
 XEN_ARGIFY_2(g_select_all_w, g_select_all)
 XEN_VARGIFY(g_save_selection_w, g_save_selection)
-XEN_ARGIFY_2(g_show_selection_w, g_show_selection)
+XEN_NARGIFY_0(g_show_selection_w, g_show_selection)
 XEN_NARGIFY_0(g_unselect_all_w, g_unselect_all)
 #else
 #define g_selection_position_w g_selection_position
@@ -1890,6 +1895,6 @@ void g_init_selection(void)
   XEN_DEFINE_PROCEDURE(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix);
   XEN_DEFINE_PROCEDURE(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
   XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
-  XEN_DEFINE_PROCEDURE(S_show_selection,   g_show_selection_w,   0, 2, 0, H_show_selection);
+  XEN_DEFINE_PROCEDURE(S_show_selection,   g_show_selection_w,   0, 0, 0, H_show_selection);
   XEN_DEFINE_PROCEDURE(S_unselect_all,     g_unselect_all_w,     0, 0, 0, H_unselect_all);
 }

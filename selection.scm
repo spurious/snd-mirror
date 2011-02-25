@@ -8,7 +8,6 @@
 ;;;   eval-over-selection
 ;;;   delete-selection-and-smooth
 ;;;   filter-selection-and-smooth
-;;;   show-selection
 ;;;   with-temporary-selection
 ;;;
 ;;;
@@ -238,35 +237,6 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 	       (all-chans)))))
 
 ;;; the same idea can be used to apply a function between two marks (see eval-between-marks in marks.scm)
-
-
-;;; -------- show-selection
-
-(define (show-selection)
-  "(show-selection) adjusts graph bounds to display the selected portion"
-  (if (selection?)
-      (let ((beg #f)
-	    (end #f))
-	(for-each
-	 (lambda (snd)
-	   (do ((i 0 (+ 1 i)))
-	       ((= i (channels snd)))
-	     (if (selection-member? snd i)
-		 (let ((pos (/ (selection-position snd i) (srate snd)))
-		       (len (/ (selection-frames snd i) (srate snd))))
-		   (if (or (not beg)
-			   (< pos beg))
-		       (set! beg pos))
-		   (if (or (not end)
-			   (> (+ pos len) end))
-		       (set! end (+ pos len)))))))
-	 (sounds))
-	(for-each
-	 (lambda (snd)
-	   (do ((i 0 (+ 1 i)))
-	       ((= i (channels snd)))
-	     (set! (x-bounds snd i) (list beg end))))
-	 (sounds)))))
 
 
 ;;; -------- filter-selection-and-smooth

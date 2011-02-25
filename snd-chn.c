@@ -4713,39 +4713,41 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	      (y0 < cp->inset_graph->y1))
 	    return(CLICK_INSET_GRAPH);
 
-	  if (((y < (ap->y_offset + SELECTION_DRAG_HEIGHT)) ||
-	       (y > (ap->y_axis_y0 - SELECTION_DRAG_HEIGHT))) &&
-	      (selection_is_active_in_channel(cp)))
+	  if (selection_is_active_in_channel(cp))
 	    {
-	      /* look for click at selection boundary */
 	      mus_long_t bpos, epos, xpos;
 	      double sr;
 	      sr = (double)SND_SRATE(cp->sound);
-
 	      bpos = selection_beg(cp);
-	      if ((bpos >= ap->losamp) &&
-		  (bpos <= ap->hisamp))
-		{
-		  mus_long_t x0_pos, x1_pos;
-		  x0_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x0) * sr);
-		  x1_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x1) * sr);
-		  if ((bpos > x0_pos) && (bpos < x1_pos))
-		    return(CLICK_SELECTION_LEFT); /* "click" is a misnomer -- we have moved to the portion where we can grab the selection and resize it */
-		}
-
 	      epos = selection_end(cp);
-	      if ((epos >= ap->losamp) &&
-		  (epos <= ap->hisamp))
+
+	      if ((y < (ap->y_offset + SELECTION_DRAG_HEIGHT)) ||
+		  (y > (ap->y_axis_y0 - SELECTION_DRAG_HEIGHT)))
 		{
-		  mus_long_t x0_pos, x1_pos;
-		  x0_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x0) * sr);
-		  x1_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x1) * sr);
-		  if ((epos > x0_pos) && (epos < x1_pos))
-		    return(CLICK_SELECTION_RIGHT);
-		}	 
-
+		  /* look for click at selection boundary */
+		  if ((bpos >= ap->losamp) &&
+		      (bpos <= ap->hisamp))
+		    {
+		      mus_long_t x0_pos, x1_pos;
+		      x0_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x0) * sr);
+		      x1_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x1) * sr);
+		      if ((bpos > x0_pos) && (bpos < x1_pos))
+			return(CLICK_SELECTION_LEFT); /* "click" is a misnomer -- we have moved to the portion where we can grab the selection and resize it */
+		    }
+		  
+		  if ((epos >= ap->losamp) &&
+		      (epos <= ap->hisamp))
+		    {
+		      mus_long_t x0_pos, x1_pos;
+		      x0_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x0) * sr);
+		      x1_pos = snd_round_mus_long_t(ungrf_x(cp->axis, x1) * sr);
+		      if ((epos > x0_pos) && (epos < x1_pos))
+			return(CLICK_SELECTION_RIGHT);
+		    }
+		}
+	      
 	      xpos = snd_round_mus_long_t(ungrf_x(cp->axis, x) * sr); /* a sample number */
-
+	      
 	      if ((bpos <= xpos) &&
 		  (epos >= xpos))
 		return(CLICK_SELECTION_MAIN);
