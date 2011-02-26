@@ -213,7 +213,7 @@
 
     (define (style head)
       (case head
-        ((lambda let* letrec define) pp-LAMBDA)
+        ((lambda let* letrec define lambda* define* letrec*) pp-LAMBDA)
         ((if set!)                   pp-IF)
         ((cond)                      pp-COND)
         ((case)                      pp-CASE)

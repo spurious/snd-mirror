@@ -29,6 +29,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
 #define widget_t GtkWidget*
 #if (!HAVE_GTK_WIDGET_GET_VISIBLE)
+  /* 2.17 */
   #define widget_is_active(Wid) GTK_WIDGET_VISIBLE(Wid)
 #else
   #define widget_is_active(Wid) gtk_widget_get_visible(Wid)
@@ -98,6 +99,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #endif
 
 #if HAVE_GTK_STATUS_ICON_GET_TITLE
+  /* 2.17... */
   #define SET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, true)
   #define UNSET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, false)
 #else
