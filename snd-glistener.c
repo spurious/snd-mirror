@@ -49,7 +49,7 @@ static void start_completion_dialog(int num_items, char **items)
       GtkWidget *help_button, *dismiss_button;
       completion_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(completion_dialog, "delete_event", delete_completion_dialog, NULL);
-      gtk_window_set_title(GTK_WINDOW(completion_dialog), _("Completions"));
+      gtk_window_set_title(GTK_WINDOW(completion_dialog), "Completions");
       sg_make_resizable(completion_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(completion_dialog), 4);
       gtk_widget_realize(completion_dialog);
@@ -60,7 +60,7 @@ static void start_completion_dialog(int num_items, char **items)
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "dialog_button");
-      set_stock_button_label(dismiss_button, _("Go Away"));
+      set_stock_button_label(dismiss_button, "Go Away");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(completion_dialog)), dismiss_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(completion_dialog)), help_button, false, true, 10);

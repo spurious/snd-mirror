@@ -446,12 +446,12 @@ static Pixel get_color(Widget shell, const char *defined_color,
       /* snd_error here causes a seg fault (it builds on mainpane which has not yet been created) */
       if (use_white)
 	{
-	  fprintf(stderr, _("can't get color %s -- will use white\n"), defined_color);
+	  fprintf(stderr, "can't get color %s -- will use white\n", defined_color);
 	  return(WhitePixel(dpy, scr));
 	}
       else
 	{
-	  fprintf(stderr, _("can't get color %s -- will use black\n"), defined_color);
+	  fprintf(stderr, "can't get color %s -- will use black\n", defined_color);
 	  return(BlackPixel(dpy, scr));
 	}
     }
@@ -679,13 +679,13 @@ void snd_doit(int argc, char **argv)
 	vi = glXChooseVisual(dpy, DefaultScreen(dpy), snglBuf);
       }
     if (vi == NULL) 
-      fprintf(stderr, "%s", _("no RGB visual with desired depth\n")); /* not snd_error -- shell not ready yet */
+      fprintf(stderr, "%s", "no RGB visual with desired depth\n"); /* not snd_error -- shell not ready yet */
     else
       {
 	/* create an OpenGL rendering context */
 	cx = glXCreateContext(dpy, vi, /* no display list sharing */ None, /* favor direct */ GL_TRUE);
 	if (cx == NULL) 
-	  fprintf(stderr, "%s", _("could not create rendering context\n"));
+	  fprintf(stderr, "%s", "could not create rendering context\n");
 	else
 	  {
 	    /* create an X colormap since probably not using default visual */
@@ -754,23 +754,23 @@ void snd_doit(int argc, char **argv)
 
   if ((!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&
       (!(set_peaks_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find peaks font %s"), DEFAULT_PEAKS_FONT);
+    fprintf(stderr, "can't find peaks font %s", DEFAULT_PEAKS_FONT);
 
   if ((!(set_tiny_font(DEFAULT_TINY_FONT))) &&
       (!(set_tiny_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find tiny font %s"), DEFAULT_TINY_FONT);
+    fprintf(stderr, "can't find tiny font %s", DEFAULT_TINY_FONT);
 
   if ((!(set_bold_peaks_font(DEFAULT_BOLD_PEAKS_FONT))) &&
       (!(set_bold_peaks_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find bold peaks font %s"), DEFAULT_BOLD_PEAKS_FONT);
+    fprintf(stderr, "can't find bold peaks font %s", DEFAULT_BOLD_PEAKS_FONT);
 
   if ((!(set_axis_label_font(DEFAULT_AXIS_LABEL_FONT))) &&
       (!(set_axis_label_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find axis label font %s"), DEFAULT_AXIS_LABEL_FONT);
+    fprintf(stderr, "can't find axis label font %s", DEFAULT_AXIS_LABEL_FONT);
 
   if ((!(set_axis_numbers_font(DEFAULT_AXIS_NUMBERS_FONT))) &&
       (!(set_axis_numbers_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find axis numbers font %s"), DEFAULT_AXIS_NUMBERS_FONT);
+    fprintf(stderr, "can't find axis numbers font %s", DEFAULT_AXIS_NUMBERS_FONT);
 
   ss->orig_axis_label_font = mus_strdup(axis_label_font(ss));
   ss->orig_axis_numbers_font = mus_strdup(axis_numbers_font(ss));
@@ -939,10 +939,10 @@ void snd_doit(int argc, char **argv)
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       if (!(ss->exiting))
-	snd_error_without_format(_("Caught seg fault (will try to continue):\n"));
+	snd_error_without_format("Caught seg fault (will try to continue):\n");
       else
 	{
-	  snd_error_without_format(_("Caught seg fault while trying to exit.\n"));
+	  snd_error_without_format("Caught seg fault while trying to exit.\n");
 	  exit(0);
 	}
     }
@@ -951,7 +951,7 @@ void snd_doit(int argc, char **argv)
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))
-	snd_error_without_format(_("Caught top level error (will try to continue):\n"));
+	snd_error_without_format("Caught top level error (will try to continue):\n");
       else ss->jump_ok = false;
     }
 

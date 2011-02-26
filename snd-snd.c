@@ -34,7 +34,7 @@ snd_info *snd_new_file(const char *newname, int header_type, int data_format, in
       io_error_t err;
       err = snd_write_header(newname, header_type, srate, chans, samples * chans, data_format, new_comment, NULL);
       if (err != IO_NO_ERROR)
-	snd_error(_("%s %s: %s"), 
+	snd_error("%s %s: %s", 
 		  io_error_name(err),
 		  newname, 
 		  snd_io_strerror());
@@ -62,7 +62,7 @@ snd_info *snd_new_file(const char *newname, int header_type, int data_format, in
 	}
     }
   else 
-    snd_error(_("%s: can't write %s header with %s data format"),
+    snd_error("%s: can't write %s header with %s data format",
 	      newname,
 	      mus_header_type_name(header_type),
 	      mus_data_format_name(data_format));
@@ -345,7 +345,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	      es->fd = mus_file_open_read(cp->sound->filename);
 	      if (es->fd == -1)
 		{
-		  snd_warning(_("%s no longer exists!"), cp->sound->filename);
+		  snd_warning("%s no longer exists!", cp->sound->filename);
 		  return(true);
 		}
 	      es->file_open = true;
@@ -1965,7 +1965,7 @@ static bool apply_controls(apply_state *ap)
 
       if (need_scaling)
 	scale_by(cp, scalers, si->chans, false);
-      else snd_warning_without_format(_("apply controls: no changes to apply!"));
+      else snd_warning_without_format("apply controls: no changes to apply!");
 
       sp->sync = old_sync;
       free(scalers);
@@ -2082,7 +2082,7 @@ static bool apply_controls(apply_state *ap)
 
 	  if (ap->ofd == -1)
 	    {
-	      snd_error(_("%s apply temp file %s: %s\n"), 
+	      snd_error("%s apply temp file %s: %s\n", 
 			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			ap->ofile, 
 			snd_open_strerror());
@@ -4243,7 +4243,7 @@ static XEN g_save_sound(XEN index)
     {
       char *msg;
       XEN str;
-      msg = mus_format(_("%s (index %d) is write-protected"), 
+      msg = mus_format("%s (index %d) is write-protected", 
 		       sp->short_filename, 
 		       sp->index);
       str = C_TO_XEN_STRING(msg);

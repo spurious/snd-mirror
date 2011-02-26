@@ -496,7 +496,6 @@ void unpost_unsaved_edits_if_any(snd_info *sp);
 
 void file_print_callback(GtkWidget *w, gpointer info);
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer);
-void save_print_dialog_state(FILE *fd);
 
 
 /* -------- snd-gprefs.c -------- */

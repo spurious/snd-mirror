@@ -43,14 +43,14 @@ static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, cons
   if (kfree < 0) 
     {
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   _("no space left on device: %s"),
+		   "no space left on device: %s",
 		   snd_io_strerror()); 
       return(MUS_ERROR);
     }
   if (kfree < (bytes >> 10))
     { 
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   _("only " MUS_LD " bytes left on device (we need " SSIZE_TD " bytes)"),
+		   "only " MUS_LD " bytes left on device (we need " SSIZE_TD " bytes)",
 		   kfree << 10, bytes);
       return(MUS_ERROR);
     }
@@ -58,7 +58,7 @@ static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, cons
   if (bytes_written != bytes)
     {
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   _("write error (wrote " SSIZE_TD " of requested " SSIZE_TD " bytes): %s"),
+		   "write error (wrote " SSIZE_TD " of requested " SSIZE_TD " bytes): %s",
 		   bytes_written, bytes, snd_io_strerror());
       return(MUS_ERROR);
     }
@@ -436,7 +436,7 @@ static int read_mus10(const char *oldname, const char *newname, char *hdr)
     {
       CLEANUP(oldname, newname);
       return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		       _("read_mus10: can't translate Mus10 file %s:\n  mode = %d\n"),
+		       "read_mus10: can't translate Mus10 file %s:\n  mode = %d\n",
 		       oldname, mode));
     }
   /* 4 = SAM 16-bit packing mode, 0 = 12 bit 3 to a word */
@@ -896,7 +896,7 @@ static int read_dvi_adpcm(const char *oldname, const char *newname, char *hdr, i
   samps = mus_sound_fact_samples(oldname);
   if ((chans != 1) || (mus_sound_bits_per_sample(oldname) != 4))
     return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		     _("read_dvi_adpcm: can't translate DVI ADPCM file %s: chans: %d and bits: %d\n"),
+		     "read_dvi_adpcm: can't translate DVI ADPCM file %s: chans: %d and bits: %d\n",
 		     oldname, chans, mus_sound_bits_per_sample(oldname)));
   srate = mus_sound_srate(oldname);
   mus_bint_to_char((unsigned char *)(hdr + 16), srate);
@@ -978,7 +978,7 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
   chans = mus_sound_chans(oldname);
   if (chans != 1)
     return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		     _("read_oki_adpcm: can't translate Oki ADPCM file %s: chans: %d\n"),
+		     "read_oki_adpcm: can't translate Oki ADPCM file %s: chans: %d\n",
 		     oldname, chans));
   loc = mus_sound_data_location(oldname);
   blksiz = mus_sound_block_align(oldname);
@@ -1367,7 +1367,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
   chans = mus_sound_chans(oldname);
   if (chans != 1)
     return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		     _("read_g72x_adpcm: can't translate G72x file %s: chans: %d\n"),
+		     "read_g72x_adpcm: can't translate G72x file %s: chans: %d\n",
 		     oldname, chans));
   fs = CREAT(newname, 0666);
   if (fs == -1) RETURN_MUS_IO_ERROR("create", newname);
@@ -1572,7 +1572,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
   free(hdr);
   if (err == MUS_CANT_TRANSLATE)
     return(mus_error(MUS_CANT_TRANSLATE,
-		     _("can't translate %s\n  (%s header: %s (0x%x) data format)\n"),
+		     "can't translate %s\n  (%s header: %s (0x%x) data format)\n",
 		     oldname,
 		     mus_header_type_name(type),
 		     any_format_name(oldname),

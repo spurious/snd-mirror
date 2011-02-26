@@ -327,7 +327,7 @@ void make_transform_type_list(void)
 	  }
       if (!transform_list)
 	{
-	  transform_list = slist_new_with_title_and_table_data(_("type"), outer_table, transform_names, j, TABLE_ATTACH, 0, 3, 0, 3);
+	  transform_list = slist_new_with_title_and_table_data("type", outer_table, transform_names, j, TABLE_ATTACH, 0, 3, 0, 3);
 	  transform_list->select_callback = transform_browse_callback;
 	}
       else
@@ -879,7 +879,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       transform_dialog = snd_gtk_dialog_new();
       gtk_widget_set_name(transform_dialog, "fft_dialog");
       SG_SIGNAL_CONNECT(transform_dialog, "delete_event", delete_transform_dialog, NULL);
-      gtk_window_set_title(GTK_WINDOW(transform_dialog), _("Transform Options"));
+      gtk_window_set_title(GTK_WINDOW(transform_dialog), "Transform Options");
       sg_make_resizable(transform_dialog);
       gtk_container_set_border_width(GTK_CONTAINER(transform_dialog), 6);
       gtk_widget_realize(transform_dialog);
@@ -890,9 +890,9 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "dialog_button");
-      set_stock_button_label(dismiss_button, _("Go Away"));
+      set_stock_button_label(dismiss_button, "Go Away");
 
-      color_button = sg_button_new_from_stock_with_label(_("Color/Orientation"), GTK_STOCK_SELECT_COLOR);
+      color_button = sg_button_new_from_stock_with_label("Color/Orientation", GTK_STOCK_SELECT_COLOR);
       gtk_widget_set_name(color_button, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), color_button, false, true, 10);
@@ -924,7 +924,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       make_transform_type_list();
 
       /* SIZE */
-      size_list = slist_new_with_title_and_table_data(_("size"), outer_table, transform_size_names, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 3, 6, 0, 3);
+      size_list = slist_new_with_title_and_table_data("size", outer_table, transform_size_names, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 3, 6, 0, 3);
       size_list->select_callback = size_browse_callback;
 
       /* DISPLAY */
@@ -953,47 +953,47 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	buttons = gtk_vbox_new(false, 0);
 	gtk_container_add(GTK_CONTAINER(hb), buttons);
 	
-	normal_fft_button = gtk_radio_button_new_with_label(NULL, _("single transform"));
+	normal_fft_button = gtk_radio_button_new_with_label(NULL, "single transform");
 	gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, false, false, 2);
 	gtk_widget_show(normal_fft_button);
 	SG_SIGNAL_CONNECT(normal_fft_button, "clicked", normal_fft_callback, NULL);
 	
-	sono_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), _("sonogram"));
+	sono_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), "sonogram");
 	gtk_box_pack_start(GTK_BOX(buttons), sono_button, false, false, 2);
 	gtk_widget_show(sono_button);
 	SG_SIGNAL_CONNECT(sono_button, "clicked", sonogram_callback, NULL);
 	
-	spectro_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), _("spectrogram"));
+	spectro_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), "spectrogram");
 	gtk_box_pack_start(GTK_BOX(buttons), spectro_button, false, false, 2);
 	gtk_widget_show(spectro_button);
 	SG_SIGNAL_CONNECT(spectro_button, "clicked", spectrogram_callback, NULL);
 	
-	peaks_button = gtk_check_button_new_with_label(_("peaks"));
+	peaks_button = gtk_check_button_new_with_label("peaks");
 	gtk_box_pack_start(GTK_BOX(buttons), peaks_button, false, false, 2);
 	gtk_widget_show(peaks_button);
 	SG_SIGNAL_CONNECT(peaks_button, "toggled", peaks_callback, NULL);
 	
-	db_button = gtk_check_button_new_with_label(_("dB"));
+	db_button = gtk_check_button_new_with_label("dB");
 	gtk_box_pack_start(GTK_BOX(buttons), db_button, false, false, 2);
 	gtk_widget_show(db_button);
 	SG_SIGNAL_CONNECT(db_button, "toggled", db_callback, NULL);
 	
-	logfreq_button = gtk_check_button_new_with_label(_("log freq"));
+	logfreq_button = gtk_check_button_new_with_label("log freq");
 	gtk_box_pack_start(GTK_BOX(buttons), logfreq_button, false, false, 2);
 	gtk_widget_show(logfreq_button);
 	SG_SIGNAL_CONNECT(logfreq_button, "toggled", logfreq_callback, NULL);
 	
-	normalize_button = gtk_check_button_new_with_label(_("normalize"));
+	normalize_button = gtk_check_button_new_with_label("normalize");
 	gtk_box_pack_start(GTK_BOX(buttons), normalize_button, false, false, 2);
 	gtk_widget_show(normalize_button);
 	SG_SIGNAL_CONNECT(normalize_button, "toggled", normalize_callback, NULL);
 	
-	selection_button = gtk_check_button_new_with_label(_("selection"));
+	selection_button = gtk_check_button_new_with_label("selection");
 	gtk_box_pack_start(GTK_BOX(buttons), selection_button, false, false, 2);
 	gtk_widget_show(selection_button);
 	SG_SIGNAL_CONNECT(selection_button, "toggled", selection_callback, NULL);
 
-	phases_button = gtk_check_button_new_with_label(_("with phases"));
+	phases_button = gtk_check_button_new_with_label("with phases");
 	gtk_box_pack_end(GTK_BOX(buttons), phases_button, false, false, 2);
 	gtk_widget_show(phases_button);
 	SG_SIGNAL_CONNECT(phases_button, "toggled", phases_callback, NULL);
@@ -1002,7 +1002,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	vb = gtk_vbox_new(false, 0);
 	gtk_container_add(GTK_CONTAINER(hb), vb);	
 	
-	pk_lab = snd_gtk_highlight_label_new(_("max peaks"));
+	pk_lab = snd_gtk_highlight_label_new("max peaks");
 	gtk_box_pack_start(GTK_BOX(vb), pk_lab, false, false, 0);
 	gtk_widget_show(pk_lab);
 	
@@ -1019,7 +1019,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(vb), sep1, false, false, RIGHT_SEP_SIZE);
 	gtk_widget_show(sep1);
 
-	db_lab = snd_gtk_highlight_label_new(_("min dB"));
+	db_lab = snd_gtk_highlight_label_new("min dB");
 	gtk_box_pack_start(GTK_BOX(vb), db_lab, false, false, 0);
 	gtk_widget_show(db_lab);
       
@@ -1036,7 +1036,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(vb), sep2, false, false, RIGHT_SEP_SIZE);
 	gtk_widget_show(sep2);
 
-	lf_lab = snd_gtk_highlight_label_new(_("log freq start"));
+	lf_lab = snd_gtk_highlight_label_new("log freq start");
 	gtk_box_pack_start(GTK_BOX(vb), lf_lab, false, false, 0);
 	gtk_widget_show(lf_lab);
       
@@ -1057,12 +1057,12 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
 
       /* WINDOWS */
-      window_list = slist_new_with_title_and_table_data(_("window"), outer_table, (const char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 3, 3, 6);
+      window_list = slist_new_with_title_and_table_data("window", outer_table, (const char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 3, 3, 6);
       window_list->select_callback = window_browse_callback;
 
       
       /* WAVELETS */
-      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), outer_table, (const char **)wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 3, 6, 3, 6);
+      wavelet_list = slist_new_with_title_and_table_data("wavelet", outer_table, (const char **)wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 3, 6, 3, 6);
       wavelet_list->select_callback = wavelet_browse_callback;
 
       

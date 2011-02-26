@@ -1313,11 +1313,11 @@ env *string_to_env(const char *str)
 	{
 	  if (x_increases(res))
 	    return(xen_to_env(res));
-	  else snd_error(_("x axis points not increasing: %s"), str);
+	  else snd_error("x axis points not increasing: %s", str);
 	}
-      else snd_error(_("odd length envelope? %s"), str);
+      else snd_error("odd length envelope? %s", str);
     }
-  else snd_error(_("%s is not a list"), str);
+  else snd_error("%s is not a list", str);
   return(NULL);
 #else
   char *tok, *tmp;
@@ -1354,7 +1354,7 @@ env *string_to_env(const char *str)
 	  tok = strtok(NULL, env_white_space);
 	}
       if ((i == 0) || (i & 1)) 
-	snd_error(_("odd length envelope? %s"), str);
+	snd_error("odd length envelope? %s", str);
       free(old_tmp);
       return(make_envelope(env_buffer, i));
     }

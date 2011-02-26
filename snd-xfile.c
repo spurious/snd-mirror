@@ -931,11 +931,11 @@ static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_
   n = 0;
   XtSetArg(args[n], XmNset, just_sounds(ss)); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-  fp->just_sounds_button = XtCreateManagedWidget(_("sound files only"), xmToggleButtonWidgetClass, rc, args, n);
+  fp->just_sounds_button = XtCreateManagedWidget("sound files only", xmToggleButtonWidgetClass, rc, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
-  dp->play_button = XtCreateWidget(_("play selected sound"), xmToggleButtonWidgetClass, rc, args, n);
+  dp->play_button = XtCreateWidget("play selected sound", xmToggleButtonWidgetClass, rc, args, n);
 
   XtAddCallback(dp->play_button, XmNvalueChangedCallback, play_selected_callback, (XtPointer)dp);
   XtAddCallback(fp->just_sounds_button, XmNvalueChangedCallback, just_sounds_callback, (XtPointer)fp);
@@ -1264,8 +1264,8 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   s1 = XmStringCreateLocalized(select_title);
   s2 = XmStringCreateLocalized(title);
   ok_label = XmStringCreateLocalized(title);
-  filter_list_label = XmStringCreateLocalized(_("files listed:"));
-  cancel_label = XmStringCreateLocalized(_("Go Away"));
+  filter_list_label = XmStringCreateLocalized("files listed:");
+  cancel_label = XmStringCreateLocalized("Go Away");
 
   n = 0;
   if (open_file_dialog_directory(ss))
@@ -1493,7 +1493,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), fd);
+      file_open_error("no filename given", fd);
       clear_error_if_open_changes(fd->dialog, fd);
     }
   else
@@ -1530,7 +1530,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
       else 
 	{
 	  char *str;
-	  str = mus_format(_("%s is a directory"), filename);
+	  str = mus_format("%s is a directory", filename);
 	  file_open_error(str, fd);
 	  clear_error_if_open_changes(fd->dialog, fd);
 	  free(str);
@@ -1548,7 +1548,7 @@ static void file_mkdir_callback(Widget w, XtPointer context, XtPointer info)
     {
       /* could not make the directory */
       char *str;
-      str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
+      str = mus_format("can't make %s: %s", filename, strerror(errno));
       file_open_error(str, fd);
       clear_error_if_open_changes(fd->dialog, fd);
       free(str);
@@ -1573,13 +1573,13 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
   char *title, *select_title;
   if (read_only == FILE_READ_ONLY)  
     {
-      title = _("View");
-      select_title = _("open read-only:");
+      title = "View";
+      select_title = "open read-only:";
     }
   else
     {
-      title = _("Open");
-      select_title = _("open:");
+      title = "Open";
+      select_title = "open:";
     }
   if (!odat)
     {
@@ -1597,12 +1597,12 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 	n = 0;
 	XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
 	XtSetArg(args[n], XmNarmColor,   ss->sgx->selection_color); n++;
-	odat->mkdirB = XtCreateManagedWidget(_("Mkdir"), xmPushButtonGadgetClass, odat->dialog, args, n);
+	odat->mkdirB = XtCreateManagedWidget("Mkdir", xmPushButtonGadgetClass, odat->dialog, args, n);
 	XtAddCallback(odat->mkdirB, XmNactivateCallback, file_mkdir_callback, (XtPointer)odat);
 	XtSetSensitive(odat->mkdirB, false);
       }
 
-      cancel_label = XmStringCreateLocalized(_("Go Away"));
+      cancel_label = XmStringCreateLocalized("Go Away");
       XtVaSetValues(odat->dialog, XmNcancelLabelString, cancel_label, NULL);
       XmStringFree(cancel_label);
     }
@@ -1648,7 +1648,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), fd);
+      file_open_error("no filename given", fd);
       clear_error_if_open_changes(fd->dialog, fd);
     }
   else
@@ -1678,7 +1678,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    }
 	  else 
 	    {
-	      report_in_minibuffer(sp, _("%s mixed in at cursor"), filename);
+	      report_in_minibuffer(sp, "%s mixed in at cursor", filename);
 	      remember_filename(filename, fd->fpop->file_text_names);
 	    }
 	  if (filename) XtFree(filename);
@@ -1686,7 +1686,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
       else 
 	{
 	  char *str;
-	  str = mus_format(_("%s is a directory"), filename);
+	  str = mus_format("%s is a directory", filename);
 	  file_open_error(str, fd);
 	  clear_error_if_open_changes(fd->dialog, fd);
 	  free(str);
@@ -1724,7 +1724,7 @@ widget_t make_mix_file_dialog(bool managed)
   /* called from the menu */
   if (!mdat)
     {
-      mdat = make_file_dialog(FILE_READ_ONLY, _("Mix Sound"), _("mix in:"), file_mix_ok_callback, mix_file_help_callback);
+      mdat = make_file_dialog(FILE_READ_ONLY, "Mix Sound", "mix in:", file_mix_ok_callback, mix_file_help_callback);
       set_dialog_widget(FILE_MIX_DIALOG, mdat->dialog);
       XEN_ADD_HOOK(ss->snd_open_file_hook, mix_open_file_watcher_w, "mix-dialog-open-file-watcher", "mix dialog's open-file-hook handler");
     }
@@ -1754,7 +1754,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), fd);
+      file_open_error("no filename given", fd);
       clear_error_if_open_changes(fd->dialog, fd);
     }
   else
@@ -1786,7 +1786,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    }
 	  else 
 	    {
-	      report_in_minibuffer(sp, _("%s inserted at cursor"), filename);
+	      report_in_minibuffer(sp, "%s inserted at cursor", filename);
 	      remember_filename(filename, fd->fpop->file_text_names);
 	    }
 	  if (filename) XtFree(filename);
@@ -1794,7 +1794,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
       else 
 	{
 	  char *str;
-	  str = mus_format(_("%s is a directory"), filename);
+	  str = mus_format("%s is a directory", filename);
 	  file_open_error(str, fd);
 	  clear_error_if_open_changes(fd->dialog, fd);
 	  free(str);
@@ -1829,7 +1829,7 @@ widget_t make_insert_file_dialog(bool managed)
 {
   if (!idat)
     {
-      idat = make_file_dialog(FILE_READ_ONLY, _("Insert Sound"), _("insert:"), file_insert_ok_callback, insert_file_help_callback);
+      idat = make_file_dialog(FILE_READ_ONLY, "Insert Sound", "insert:", file_insert_ok_callback, insert_file_help_callback);
       set_dialog_widget(FILE_INSERT_DIALOG, idat->dialog);
       XEN_ADD_HOOK(ss->snd_open_file_hook, insert_open_file_watcher_w, "insert-dialog-open-file-watcher", "insert dialog's open-file-hook handler");
     }
@@ -2346,7 +2346,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, sep1); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      header_label = XtCreateManagedWidget(_("header"), xmLabelWidgetClass, form, args, n);
+      header_label = XtCreateManagedWidget("header", xmLabelWidgetClass, form, args, n);
       
       /* what is selected depends on current type */
       strs = (XmString *)calloc(nheaders, sizeof(XmString)); 
@@ -2400,7 +2400,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
     }
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  data_label = XtCreateManagedWidget(_("data"), xmLabelWidgetClass, form, args, n);
+  data_label = XtCreateManagedWidget("data", xmLabelWidgetClass, form, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2460,7 +2460,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-  fdat->smenu = XmCreatePulldownMenu(srate_label, (char *)_("srate:"), args, n);
+  fdat->smenu = XmCreatePulldownMenu(srate_label, (char *)"srate:", args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -2468,7 +2468,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
   XtSetArg(args[n], XmNmarginHeight, 1); n++;
-  scascade = XtCreateManagedWidget(_("srate:"), xmCascadeButtonWidgetClass, srate_label, args, n);
+  scascade = XtCreateManagedWidget("srate:", xmCascadeButtonWidgetClass, srate_label, args, n);
   XtManageChild(srate_label);
 
   n = 0;
@@ -2500,7 +2500,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      cmenu = XmCreatePulldownMenu(chans_label, (char *)((with_chan == WITH_CHANNELS_FIELD) ? _("channels:") : _("extract channel:")), 
+      cmenu = XmCreatePulldownMenu(chans_label, (char *)((with_chan == WITH_CHANNELS_FIELD) ? "channels:" : "extract channel:"), 
 				   args, n);
 
       n = 0;
@@ -2509,7 +2509,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
-      XtCreateManagedWidget((char *)((with_chan == WITH_CHANNELS_FIELD) ? _("channels:") : _("extract channel:")), 
+      XtCreateManagedWidget((char *)((with_chan == WITH_CHANNELS_FIELD) ? "channels:" : "extract channel:"), 
 			    xmCascadeButtonWidgetClass, chans_label, args, n);
       
       n = 0;
@@ -2551,7 +2551,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
 	  XtSetArg(args[n], XmNleftWidget, sep3); n++;
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-	  location_label = XtCreateManagedWidget(_("data location:"), xmLabelWidgetClass, form, args, n);
+	  location_label = XtCreateManagedWidget("data location:", xmLabelWidgetClass, form, args, n);
 
 	  n = 0;
 	  XtSetArg(args[n], XmNcolumns, 6); n++;
@@ -2577,7 +2577,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, sep3); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      samples_label = XtCreateManagedWidget(_("samples:"), xmLabelWidgetClass, form, args, n);
+      samples_label = XtCreateManagedWidget("samples:", xmLabelWidgetClass, form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNcolumns, 8); n++;
@@ -2633,7 +2633,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      comment_label = XtCreateManagedWidget(_("comment:"), xmLabelWidgetClass, parent, args, n);
+      comment_label = XtCreateManagedWidget("comment:", xmLabelWidgetClass, parent, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2761,7 +2761,7 @@ static void save_as_filename_modify_callback(Widget w, XtPointer context, XtPoin
 static void save_as_undoit(save_as_dialog_info *sd)
 {
   XmString ok_label;
-  ok_label = XmStringCreateLocalized(_("Save"));
+  ok_label = XmStringCreateLocalized("Save");
   XtVaSetValues(sd->dialog,
 		XmNokLabelString, ok_label, 
 		NULL);
@@ -2822,8 +2822,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       (!(selection_is_active())))
     {
       if (saving)
-	msg = _("no selection to save");
-      else msg = _("can't extract: no selection");
+	msg = "no selection to save";
+      else msg = "can't extract: no selection";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       return;
     }
@@ -2831,7 +2831,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if ((sd->type == REGION_SAVE_AS) &&
       (!(region_ok(region_dialog_region()))))
     {
-      post_file_dialog_error(_("no region to save"), sd->panel_data);
+      post_file_dialog_error("no region to save", sd->panel_data);
       return;
     }
 
@@ -2840,8 +2840,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       (sd->type != REGION_SAVE_AS))
     {
       if (saving)
-	msg = _("nothing to save");
-      else msg = _("nothing to extract");
+	msg = "nothing to save";
+      else msg = "nothing to extract";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->dialog, sd->panel_data);
       return;
@@ -2852,8 +2852,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if ((!str) || (!*str))
     {
       if (saving)
-	msg = _("can't save: no file name given");
-      else msg = _("can't extract: no file name given");
+	msg = "can't save: no file name given";
+      else msg = "can't extract: no file name given";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->dialog, sd->panel_data);
       return;
@@ -2918,7 +2918,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   fullname = mus_expand_filename(str);
   if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, type, format, comment))
     {
-      msg = mus_format(_("%s cancelled by %s"), (saving) ? "save" : "extract", S_before_save_as_hook);
+      msg = mus_format("%s cancelled by %s", (saving) ? "save" : "extract", S_before_save_as_hook);
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->dialog, sd->panel_data);      
       free(msg);
@@ -2936,7 +2936,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if ((sp->user_read_only == FILE_READ_ONLY) || 
 	  (sp->file_read_only == FILE_READ_ONLY))
 	{
-	  msg = mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename);
+	  msg = mus_format("can't overwrite %s (it is write-protected)", sp->short_filename);
 	  post_file_dialog_error((const char *)msg, sd->panel_data);
 	  clear_error_if_filename_changes(sd->dialog, sd->panel_data); 
 	  free(msg);
@@ -2958,13 +2958,13 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 		(parlous_sp = file_is_open_elsewhere_and_has_unsaved_edits(sp, fullname)))))	   
 	    {
 	      XmString ok_label;
-	      msg = mus_format(_("%s exists%s. To overwrite it, click 'DoIt'"), 
+	      msg = mus_format("%s exists%s. To overwrite it, click 'DoIt'", 
 			       str,
 			       (parlous_sp) ? ", and has unsaved edits" : "");
 	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
 	      post_file_dialog_error((const char *)msg, sd->panel_data);
 	      clear_error_if_save_as_filename_changes(sd->dialog, sd);
-	      ok_label = XmStringCreateLocalized(_("DoIt"));
+	      ok_label = XmStringCreateLocalized("DoIt");
 	      XtVaSetValues(sd->dialog, 
 			    XmNokLabelString, ok_label, 
 			    NULL);
@@ -3135,19 +3135,19 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
 	{
 #if HAVE_ACCESS
 	  if (access(filename, W_OK) < 0)
-	    s1 = XmStringCreateLocalized(_("save as (file write-protected?):"));
+	    s1 = XmStringCreateLocalized("save as (file write-protected?):");
 	  else
 #endif
-	  s1 = XmStringCreateLocalized(_("save as (overwriting):"));
+	  s1 = XmStringCreateLocalized("save as (overwriting):");
 	}
       else
 	{
 	  if (!(directory_exists(filename)))
-	    s1 = XmStringCreateLocalized(_("save as (no such directory?):"));
-	  else s1 = XmStringCreateLocalized(_("save as:"));
+	    s1 = XmStringCreateLocalized("save as (no such directory?):");
+	  else s1 = XmStringCreateLocalized("save as:");
 	}
     }
-  else s1 = XmStringCreateLocalized(_("save as:"));
+  else s1 = XmStringCreateLocalized("save as:");
   XtVaSetValues(dialog, 
 		XmNselectionLabelString, s1, 
 		NULL);
@@ -3164,7 +3164,7 @@ static void save_as_mkdir_callback(Widget w, XtPointer context, XtPointer info)
     {
       /* could not make the directory */
       char *str;
-      str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
+      str = mus_format("can't make %s: %s", filename, strerror(errno));
       post_file_dialog_error((const char *)str, sd->panel_data);
       clear_error_if_filename_changes(sd->dialog, sd->panel_data); 
       free(str);
@@ -3220,22 +3220,22 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      s1 = XmStringCreateLocalized(_("save as:"));
+      s1 = XmStringCreateLocalized("save as:");
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
 
-      xmstr1 = XmStringCreateLocalized(_("Save"));
+      xmstr1 = XmStringCreateLocalized("Save");
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
 
       file_string = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("save %s"), sound_name);
+      mus_snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sound_name);
 
       xmstr2 = XmStringCreateLocalized(file_string);
       XtSetArg(args[n], XmNdialogTitle, xmstr2); n++;
 
-      filter_list_label = XmStringCreateLocalized(_("files listed:"));
+      filter_list_label = XmStringCreateLocalized("files listed:");
       XtSetArg(args[n], XmNfilterLabelString, filter_list_label); n++;
 
-      cancel_label = XmStringCreateLocalized(_("Go Away"));
+      cancel_label = XmStringCreateLocalized("Go Away");
       XtSetArg(args[n], XmNcancelLabelString, cancel_label); n++;
 
       sd->fp = (file_pattern_info *)calloc(1, sizeof(file_pattern_info));
@@ -3341,7 +3341,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	  n = 0;
 	  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
 	  XtSetArg(args[n], XmNarmColor,   ss->sgx->selection_color); n++;
-	  extractB = XtCreateManagedWidget(_("Extract"), xmPushButtonGadgetClass, sd->dialog, args, n);
+	  extractB = XtCreateManagedWidget("Extract", xmPushButtonGadgetClass, sd->dialog, args, n);
 	  XtAddCallback(extractB, XmNactivateCallback, save_as_extract_callback, (XtPointer)sd);
 	  sd->extractB = extractB;
 
@@ -3353,7 +3353,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor,   ss->sgx->selection_color); n++;
-      sd->mkdirB = XtCreateManagedWidget(_("Mkdir"), xmPushButtonGadgetClass, sd->dialog, args, n);
+      sd->mkdirB = XtCreateManagedWidget("Mkdir", xmPushButtonGadgetClass, sd->dialog, args, n);
       XtAddCallback(sd->mkdirB, XmNactivateCallback, save_as_mkdir_callback, (XtPointer)sd);
       XtSetSensitive(sd->mkdirB, false);
 
@@ -3385,7 +3385,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
     {
       XmString xmstr2;
       file_string = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("save %s"), sound_name);
+      mus_snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sound_name);
       xmstr2 = XmStringCreateLocalized(file_string);
       XtVaSetValues(sd->dialog, 
 		    XmNdialogTitle, xmstr2, 
@@ -3448,7 +3448,7 @@ widget_t make_selection_save_as_dialog(bool managed)
   sd = save_selection_as;
 
   make_save_as_dialog(sd,
-		      _("current selection"),
+		      "current selection",
 		      default_output_header_type(ss),
 		      default_output_data_format(ss));
   set_file_dialog_sound_attributes(sd->panel_data,
@@ -3478,7 +3478,7 @@ widget_t make_region_save_as_dialog(bool managed)
   sd = save_region_as;
 
   make_save_as_dialog(sd,
-		      _("selected region"),
+		      "selected region",
 		      default_output_header_type(ss),
 		      default_output_data_format(ss));
   comment = region_description(region_dialog_region());
@@ -3604,7 +3604,7 @@ static void new_filename_modify_callback(Widget w, XtPointer context, XtPointer 
 static void new_file_undoit(void)
 {
   XmString ok_label;
-  ok_label = XmStringCreateLocalized(_("Ok"));
+  ok_label = XmStringCreateLocalized("Ok");
   XtVaSetValues(new_file_dialog, 
 		XmNokLabelString, ok_label, 
 		NULL);
@@ -3658,7 +3658,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
   newer_name = XmTextGetString(new_file_text);
   if ((!newer_name) || (!(*newer_name)))
     {
-      msg = _("new sound needs a file name ('New file:' field is empty)");
+      msg = "new sound needs a file name ('New file:' field is empty)";
       post_file_dialog_error((const char *)msg, ndat);
       clear_error_if_new_filename_changes(new_file_dialog);
     }
@@ -3682,11 +3682,11 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      (mus_file_probe(new_file_filename)))
 	    {
 	      XmString ok_label;
-	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
+	      msg = mus_format("%s exists. If you want to overwrite it, click 'DoIt'", newer_name);
 	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
 	      post_file_dialog_error((const char *)msg, ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog);
-	      ok_label = XmStringCreateLocalized(_("DoIt"));
+	      ok_label = XmStringCreateLocalized("DoIt");
 	      XtVaSetValues(new_file_dialog, 
 			    XmNokLabelString, ok_label, 
 			    NULL);
@@ -3745,7 +3745,7 @@ static char *new_file_dialog_filename(int header_type)
     case MUS_CAFF: extension = "caf";  break;
     default:       extension = "snd";  break;
     }
-  mus_snprintf(filename, 64, _("new-%d.%s"), new_file_dialog_file_ctr++, extension);
+  mus_snprintf(filename, 64, "new-%d.%s", new_file_dialog_file_ctr++, extension);
   return(filename);
 }
 
@@ -3809,10 +3809,10 @@ widget_t make_new_file_dialog(bool managed)
       XmString titlestr;
       Widget sep, reset_button;
 
-      titlestr = XmStringCreateLocalized(_("New file"));
-      xhelp = XmStringCreateLocalized(_("Help"));
-      xcancel = XmStringCreateLocalized(_("Go Away"));
-      xok = XmStringCreateLocalized(_("Ok"));
+      titlestr = XmStringCreateLocalized("New file");
+      xhelp = XmStringCreateLocalized("Help");
+      xcancel = XmStringCreateLocalized("Go Away");
+      xok = XmStringCreateLocalized("Ok");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -3837,7 +3837,7 @@ widget_t make_new_file_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-      reset_button = XtCreateManagedWidget(_("Reset"), xmPushButtonGadgetClass, new_file_dialog, args, n);
+      reset_button = XtCreateManagedWidget("Reset", xmPushButtonGadgetClass, new_file_dialog, args, n);
       XtAddCallback(reset_button, XmNactivateCallback, new_file_reset_callback, NULL);
 
       n = 0;
@@ -3850,7 +3850,7 @@ widget_t make_new_file_dialog(bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      name_label = XtCreateManagedWidget(_("New file:"), xmLabelWidgetClass, form, args, n);
+      name_label = XtCreateManagedWidget("New file:", xmLabelWidgetClass, form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -4021,16 +4021,16 @@ static XmString make_header_dialog_title(edhead_info *ep, snd_info *sp)
       (sp->file_read_only == FILE_READ_ONLY))
     {
       if (sp->hdr->type == MUS_RAW)
-	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to (write-protected) %s"), sp->short_filename);
-      else mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of (write-protected) %s"), sp->short_filename);
+	mus_snprintf(str, PRINT_BUFFER_SIZE, "Add header to (write-protected) %s", sp->short_filename);
+      else mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of (write-protected) %s", sp->short_filename);
       if (ep->dialog)
 	set_sensitive(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON), (sp->hdr->type == MUS_RAW));
     }
   else 
     {
       if (sp->hdr->type == MUS_RAW)
-	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to %s"), sp->short_filename);
-      else mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of %s"), sp->short_filename);
+	mus_snprintf(str, PRINT_BUFFER_SIZE, "Add header to %s", sp->short_filename);
+      else mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of %s", sp->short_filename);
       if (ep->dialog)
 	set_sensitive(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON), ep->panel_changed);
     }
@@ -4209,10 +4209,10 @@ Widget edit_header(snd_info *sp)
       XmString xstr1, xstr2, xstr3, titlestr;
 
       n = 0;
-      xstr1 = XmStringCreateLocalized(_("Go Away")); /* needed by template dialog */
-      xstr2 = XmStringCreateLocalized(_("Help"));
-      xstr3 = XmStringCreateLocalized(_("Save"));
-      titlestr = XmStringCreateLocalized(_("Edit Header"));
+      xstr1 = XmStringCreateLocalized("Go Away"); /* needed by template dialog */
+      xstr2 = XmStringCreateLocalized("Help");
+      xstr3 = XmStringCreateLocalized("Save");
+      titlestr = XmStringCreateLocalized("Edit Header");
 
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNcancelLabelString, xstr1); n++;
@@ -4535,11 +4535,11 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   Arg args[20];
   Widget reset_button, main_w;
 
-  xstr1 = XmStringCreateLocalized(_("Go Away")); /* needed by template dialog */
-  xstr2 = XmStringCreateLocalized(_("Help"));
-  xstr3 = XmStringCreateLocalized(_("Ok"));
+  xstr1 = XmStringCreateLocalized("Go Away"); /* needed by template dialog */
+  xstr2 = XmStringCreateLocalized("Help");
+  xstr3 = XmStringCreateLocalized("Ok");
   if (!title)
-    titlestr = XmStringCreateLocalized(_("No header on file"));
+    titlestr = XmStringCreateLocalized("No header on file");
   else titlestr = XmStringCreateLocalized((char *)title);
   xstr4 = XmStringCreateLocalized((char *)title);
 
@@ -4569,7 +4569,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
   XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-  reset_button = XtCreateManagedWidget(_("Reset"), xmPushButtonGadgetClass, rp->dialog, args, n);
+  reset_button = XtCreateManagedWidget("Reset", xmPushButtonGadgetClass, rp->dialog, args, n);
   XtAddCallback(reset_button, XmNactivateCallback, raw_data_reset_callback, (XtPointer)rp);
 
   mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */
@@ -5827,7 +5827,7 @@ static void vf_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       clear_window(vdat->env_ax);
     }
   vdat->spf->with_dots = true;
-  env_editor_display_env(vdat->spf, vdat->amp_env, vdat->env_ax, _("amp env"), 
+  env_editor_display_env(vdat->spf, vdat->amp_env, vdat->env_ax, "amp env", 
 			 0, 0,
 			 widget_width(w), widget_height(w), 
 			 NOT_PRINTING);
@@ -5957,13 +5957,13 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       Widget amp_label, speed_label, env_frame;
       Widget bframe, bform;
 
-      xdismiss = XmStringCreateLocalized(_("Go Away"));
-      xhelp = XmStringCreateLocalized(_("Help"));
-      new_viewer_str = XmStringCreateLocalized(_("New Viewer"));
+      xdismiss = XmStringCreateLocalized("Go Away");
+      xhelp = XmStringCreateLocalized("Help");
+      new_viewer_str = XmStringCreateLocalized("New Viewer");
 
       {
 	char *filestr = NULL;
-	filestr = mus_format("%s %d", _("Files"), vdat->index + 1);
+	filestr = mus_format("%s %d", "Files", vdat->index + 1);
 	titlestr = XmStringCreateLocalized(filestr);
 	free(filestr);
       }
@@ -5987,7 +5987,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-      reset_button = XtCreateManagedWidget(_("Reset"), xmPushButtonGadgetClass, vdat->dialog, args, n);
+      reset_button = XtCreateManagedWidget("Reset", xmPushButtonGadgetClass, vdat->dialog, args, n);
       XtAddCallback(reset_button, XmNactivateCallback, view_files_reset_callback, (XtPointer)vdat);
 
       XmStringFree(xhelp);
@@ -6086,7 +6086,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
-      vdat->openB = XtCreateManagedWidget(_("Open"), xmPushButtonGadgetClass, leftform, args, n);
+      vdat->openB = XtCreateManagedWidget("Open", xmPushButtonGadgetClass, leftform, args, n);
       XtAddCallback(vdat->openB, XmNactivateCallback, view_files_open_selected_callback, (XtPointer)vdat);
 
       n = 0;
@@ -6101,7 +6101,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, vdat->openB); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      vdat->removeB = XtCreateManagedWidget(_("Unlist"), xmPushButtonGadgetClass, leftform, args, n);
+      vdat->removeB = XtCreateManagedWidget("Unlist", xmPushButtonGadgetClass, leftform, args, n);
       XtAddCallback(vdat->removeB, XmNactivateCallback, view_files_remove_selected_callback, (XtPointer)vdat);
 
       n = 0;
@@ -6147,7 +6147,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
-      vdat->mixB = XtCreateManagedWidget(_("Mix"), xmPushButtonWidgetClass, bform, args, n);
+      vdat->mixB = XtCreateManagedWidget("Mix", xmPushButtonWidgetClass, bform, args, n);
       XtAddCallback(vdat->mixB, XmNactivateCallback, view_files_mix_selected_callback, (XtPointer)vdat);
 
       n = 0;
@@ -6161,13 +6161,13 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, vdat->mixB); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      vdat->insertB = XtCreateManagedWidget(_("Insert"), xmPushButtonWidgetClass, bform, args, n);
+      vdat->insertB = XtCreateManagedWidget("Insert", xmPushButtonWidgetClass, bform, args, n);
       XtAddCallback(vdat->insertB, XmNactivateCallback, view_files_insert_selected_callback, (XtPointer)vdat);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("at cursor"));
+      bstr = XmStringCreateLocalized("at cursor");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -6184,7 +6184,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("at end"));
+      bstr = XmStringCreateLocalized("at end");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -6200,7 +6200,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("at beginning"));
+      bstr = XmStringCreateLocalized("at beginning");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -6216,7 +6216,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("at sample"));
+      bstr = XmStringCreateLocalized("at sample");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
@@ -6250,7 +6250,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("at mark"));
+      bstr = XmStringCreateLocalized("at mark");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
@@ -6296,7 +6296,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       n = 0;      
       /* AMP */
-      s1 = XmStringCreateLocalized(_("amp:"));
+      s1 = XmStringCreateLocalized("amp:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -6349,7 +6349,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       n = 0;
       /* SPEED */
-      s1 = XmStringCreateLocalized(_("speed:"));
+      s1 = XmStringCreateLocalized("speed:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -6456,7 +6456,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       /* Add dir/file text entry at bottom */
       n = 0;
-      s1 = XmStringCreateLocalized(_("add:"));
+      s1 = XmStringCreateLocalized("add:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
@@ -6504,7 +6504,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
-      vdat->updateB = XtCreateManagedWidget(_("Update"), xmPushButtonGadgetClass, viewform, args, n);
+      vdat->updateB = XtCreateManagedWidget("Update", xmPushButtonGadgetClass, viewform, args, n);
       /* need Gadget if we want a subsequent XmNbackgroundPixmap change to be reflected in the button */
       XtAddCallback(vdat->updateB, XmNactivateCallback, view_files_update_callback, (XtPointer)vdat);
 
@@ -6520,7 +6520,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, vdat->updateB); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      vdat->clearB = XtCreateManagedWidget(_("Clear"), xmPushButtonGadgetClass, viewform, args, n);
+      vdat->clearB = XtCreateManagedWidget("Clear", xmPushButtonGadgetClass, viewform, args, n);
       XtAddCallback(vdat->clearB, XmNactivateCallback, view_files_clear_callback, (XtPointer)vdat);
 #endif
       n = 0;
@@ -6546,7 +6546,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
-      rlw = XtCreateManagedWidget(_("files"), xmLabelWidgetClass, viewform, args, n);
+      rlw = XtCreateManagedWidget("files", xmLabelWidgetClass, viewform, args, n);
       
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
@@ -6567,7 +6567,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, sep1); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      plw = XtCreateManagedWidget(_("play"), xmLabelWidgetClass, viewform, args, n);
+      plw = XtCreateManagedWidget("play", xmLabelWidgetClass, viewform, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -6592,16 +6592,16 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
-      sort_cascade_menu = XtCreateManagedWidget(_("sort"), xmCascadeButtonWidgetClass, sbar, args, n);
+      sort_cascade_menu = XtCreateManagedWidget("sort", xmCascadeButtonWidgetClass, sbar, args, n);
       
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      vdat->a_to_z =        XtCreateManagedWidget(_("a..z"),       xmPushButtonWidgetClass, vdat->smenu, args, n);
-      vdat->z_to_a =        XtCreateManagedWidget(_("z..a"),       xmPushButtonWidgetClass, vdat->smenu, args, n);
-      vdat->new_to_old =    XtCreateManagedWidget(_("new..old"),   xmPushButtonWidgetClass, vdat->smenu, args, n);
-      vdat->old_to_new =    XtCreateManagedWidget(_("old..new"),   xmPushButtonWidgetClass, vdat->smenu, args, n);
-      vdat->small_to_big =  XtCreateManagedWidget(_("small..big"), xmPushButtonWidgetClass, vdat->smenu, args, n);
-      vdat->big_to_small =  XtCreateManagedWidget(_("big..small"), xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->a_to_z =        XtCreateManagedWidget("a..z",       xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->z_to_a =        XtCreateManagedWidget("z..a",       xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->new_to_old =    XtCreateManagedWidget("new..old",   xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->old_to_new =    XtCreateManagedWidget("old..new",   xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->small_to_big =  XtCreateManagedWidget("small..big", xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->big_to_small =  XtCreateManagedWidget("big..small", xmPushButtonWidgetClass, vdat->smenu, args, n);
 
       vdat->sort_items_size = 4;
       vdat->sort_items = (Widget *)calloc(vdat->sort_items_size, sizeof(Widget));

@@ -54,7 +54,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
     {
       free_file_info(ihdr);
       free_file_info(ohdr);
-      snd_error(_("%s mix temp file %s: %s"), 
+      snd_error("%s mix temp file %s: %s", 
 		(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 		ofile, 
 		snd_open_strerror()); 

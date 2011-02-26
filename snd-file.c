@@ -554,7 +554,7 @@ dir_info *find_files_in_dir(const char *name)
       dp = make_dir_info(name);
       load_dir(dpos, dp, not_directory_p);
       if (closedir(dpos) != 0) 
-	snd_error(_("closedir %s failed (%s)!"),
+	snd_error("closedir %s failed (%s)!",
 		  name, snd_io_strerror());
     }
   return(dp);
@@ -587,7 +587,7 @@ dir_info *find_directories_in_dir(const char *name)
 	}
       load_dir(dpos, dp, directory_p);
       if (closedir(dpos) != 0) 
-	snd_error(_("closedir %s failed (%s)!"),
+	snd_error("closedir %s failed (%s)!",
 		  name, snd_io_strerror());
     }
   return(dp);
@@ -635,7 +635,7 @@ dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
       load_dir(dpos, dp, filter);
 
       if (closedir(dpos) != 0) 
-	snd_error(_("closedir %s failed (%s)!"),
+	snd_error("closedir %s failed (%s)!",
 		  name, snd_io_strerror());
     }
   return(dp);
@@ -1019,7 +1019,7 @@ static file_info *translate_file(const char *filename, int type)
 	  if (loops) free(loops);
 	  free(newname);
 	  free(tempname);
-	  snd_error(_("can't write translation temp file! (%s)"), snd_open_strerror());
+	  snd_error("can't write translation temp file! (%s)", snd_open_strerror());
 	  return(NULL);
 	}
       free(newname);
@@ -1145,11 +1145,11 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       {
 	char *str;
 	str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_directory(fullname));
+	mus_snprintf(str, PRINT_BUFFER_SIZE, "No header found for %s", filename_without_directory(fullname));
 	raw_data_dialog_to_file_info(fullname, str, NULL, read_only, selected); /* dialog frees str */
       }
 #else
-      fprintf(stderr, _("No header found for %s"), filename_without_directory(fullname));
+      fprintf(stderr, "No header found for %s", filename_without_directory(fullname));
 #endif
     }
   return(NULL);
@@ -1255,9 +1255,9 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	      return(translate_file(fullname, type));
 	    }
 	}
-      else snd_error(_("%s does not seem to be a sound file?"), fullname); /* no known header */
+      else snd_error("%s does not seem to be a sound file?", fullname); /* no known header */
     }
-  else snd_error(_("can't find file %s: %s"), fullname, snd_io_strerror());
+  else snd_error("can't find file %s: %s", fullname, snd_io_strerror());
   return(hdr);
 }
 
@@ -1318,7 +1318,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	  if (err < 0)
 	    {
 	      char *msg;
-	      msg = mus_format(_("%s is read-protected!"), sp->short_filename);
+	      msg = mus_format("%s is read-protected!", sp->short_filename);
 	      display_minibuffer_error(sp, msg);
 	      free(msg);
 	      sp->file_unreadable = true;
@@ -1346,7 +1346,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
       if (mus_file_probe(sp->filename) == 0)
 	{
 	  /* user deleted file while editing it? */
-	  report_in_minibuffer(sp, _("%s no longer exists!"), sp->short_filename);
+	  report_in_minibuffer(sp, "%s no longer exists!", sp->short_filename);
 	  sp->file_unreadable = true;
 	  start_bomb(sp);
 	  return;
@@ -1426,7 +1426,7 @@ static void remember_sound_file(snd_info *sp)
 
   if (fd == NULL)
     {
-      snd_error(_("remember sound state can't write %s: %s"), newname, snd_io_strerror());
+      snd_error("remember sound state can't write %s: %s", newname, snd_io_strerror());
       return;
     }
 #if HAVE_SETLOCALE
@@ -2104,7 +2104,7 @@ snd_info *snd_update(snd_info *sp)
 
   if (mus_file_probe(sp->filename) == 0)
     {
-      snd_error(_("%s no longer exists!"), sp->short_filename);
+      snd_error("%s no longer exists!", sp->short_filename);
       return(sp);
     }
 
@@ -2885,14 +2885,14 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
   if ((sp->user_read_only == FILE_READ_ONLY) || 
       (sp->file_read_only == FILE_READ_ONLY))
     {
-      snd_error(_("%s is write-protected"), sp->filename);
+      snd_error("%s is write-protected", sp->filename);
       return(false);
     }
 #if HAVE_ACCESS
   if (!(ss->fam_ok))
     if (access(sp->filename, W_OK) < 0)
       {
-	snd_error(_("%s is write-protected"), sp->filename);
+	snd_error("%s is write-protected", sp->filename);
 	return(false);
       }
 #endif
@@ -4286,8 +4286,8 @@ void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
 	{
 	  char *msg;
 	  if (vdat->currently_selected_files == 1)
-	    msg = mus_format(_("%s mixed in at " MUS_LD), vdat->names[vdat->selected_files[0]], vdat->beg);
-	  else msg = mus_format(_("selected files mixed in at " MUS_LD), vdat->beg);
+	    msg = mus_format("%s mixed in at " MUS_LD, vdat->names[vdat->selected_files[0]], vdat->beg);
+	  else msg = mus_format("selected files mixed in at " MUS_LD, vdat->beg);
 	  vf_post_error(msg, vdat);
 	  vdat->error_p = false;
 	  free(msg);
@@ -4370,8 +4370,8 @@ void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 	{
 	  char *msg;
 	  if (vdat->currently_selected_files == 1)
-	    msg = mus_format(_("%s inserted at " MUS_LD), vdat->names[vdat->selected_files[0]], vdat->beg);
-	  else msg = mus_format(_("selected files inserted at " MUS_LD), vdat->beg);
+	    msg = mus_format("%s inserted at " MUS_LD, vdat->names[vdat->selected_files[0]], vdat->beg);
+	  else msg = mus_format("selected files inserted at " MUS_LD, vdat->beg);
 	  vf_post_error(msg, vdat);
 	  vdat->error_p = false;
 	  free(msg);
@@ -5209,7 +5209,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   if ((type != MUS_AIFF) && 
       (type != MUS_AIFC))
     {
-      snd_warning(_("changing %s's header from %s to aifc to accommodate loop info"),
+      snd_warning("changing %s's header from %s to aifc to accommodate loop info",
 		  sp->short_filename,
 		  mus_header_type_name(type));
       type = MUS_AIFC;

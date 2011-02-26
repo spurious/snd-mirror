@@ -339,7 +339,7 @@ void allocate_color_map(int colormap)
 	      if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
 		{
 		  if (!warned_color)
-		    snd_error_without_format(_("can't even allocate black?!?"));
+		    snd_error_without_format("can't even allocate black?!?");
 		  warned_color = true;
 		}
 	    }
@@ -956,10 +956,10 @@ Widget start_color_orientation_dialog(bool managed)
       XmString glstr;
 #endif
 
-      xdismiss = XmStringCreateLocalized(_("Go Away")); /* needed by template dialog */
-      xhelp = XmStringCreateLocalized(_("Help"));
-      xreset = XmStringCreateLocalized(_("Reset"));
-      titlestr = XmStringCreateLocalized(_("Color and Orientation"));
+      xdismiss = XmStringCreateLocalized("Go Away"); /* needed by template dialog */
+      xhelp = XmStringCreateLocalized("Help");
+      xreset = XmStringCreateLocalized("Reset");
+      titlestr = XmStringCreateLocalized("Color and Orientation");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -971,7 +971,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      ccd_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Color and Orientation"), args, n);
+      ccd_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Color and Orientation", args, n);
 
       XtAddCallback(ccd_dialog, XmNcancelCallback, dismiss_color_orientation_callback, NULL);
       XtAddCallback(ccd_dialog, XmNhelpCallback, help_color_orientation_callback, NULL);
@@ -1024,7 +1024,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      color_title = XtCreateManagedWidget(_("colors"), xmLabelWidgetClass, color_form, args, n);
+      color_title = XtCreateManagedWidget("colors", xmLabelWidgetClass, color_form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1111,7 +1111,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, ccd_scale); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      light_label = XtCreateManagedWidget(_("light"), xmLabelWidgetClass, color_form, args, n);
+      light_label = XtCreateManagedWidget("light", xmLabelWidgetClass, color_form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1121,7 +1121,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, ccd_scale); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtCreateManagedWidget(_("dark"), xmLabelWidgetClass, color_form, args, n);
+      XtCreateManagedWidget("dark", xmLabelWidgetClass, color_form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1171,7 +1171,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopWidget, ccd_cutoff); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNset, color_inverted(ss)); n++;
-      xinvert = XmStringCreateLocalized(_("invert"));
+      xinvert = XmStringCreateLocalized("invert");
       XtSetArg(args[n], XmNlabelString, xinvert); n++;
       ccd_invert = make_togglebutton_widget("invert", color_form, args, n);
       XtAddCallback(ccd_invert, XmNvalueChangedCallback, invert_color_callback, NULL);
@@ -1205,7 +1205,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      orientation_title = XtCreateManagedWidget(_("orientation"), xmLabelWidgetClass, orientation_form, args, n);
+      orientation_title = XtCreateManagedWidget("orientation", xmLabelWidgetClass, orientation_form, args, n);
 
       #define SCALE_BORDER_WIDTH 6
 
@@ -1387,7 +1387,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       XtSetArg(args[n], XmNset, with_gl(ss)); n++;
-      glstr = XmStringCreateLocalized(_("use OpenGL"));
+      glstr = XmStringCreateLocalized("use OpenGL");
       XtSetArg(args[n], XmNlabelString, glstr); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;

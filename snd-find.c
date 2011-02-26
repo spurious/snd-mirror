@@ -128,7 +128,7 @@ char *global_search(read_direction_t direction)
   chan_info *cp;
   if (search_in_progress) 
     {
-      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s", _("search in progress"));
+      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s", "search in progress");
       return(search_message);
     }
 
@@ -198,11 +198,11 @@ char *global_search(read_direction_t direction)
 	  if (ss->stopped_explicitly) break;
 	}
       if (ss->stopped_explicitly)
-	mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s", _("search stopped"));
+	mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s", "search stopped");
       else
 	{
 	  if (fd->n == -1)
-	    mus_snprintf(search_message, PRINT_BUFFER_SIZE, _("%s: not found"), ss->search_expr);
+	    mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s: not found", ss->search_expr);
 	  else
 	    {
 	      /* fd->n is winner, fd->inc is how far forward we searched from current cursor loc */
@@ -251,7 +251,7 @@ static mus_long_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   bool progress_displayed = false;
   if (search_in_progress) 
     {
-      display_minibuffer_error(sp, _("search already in progress"));
+      display_minibuffer_error(sp, "search already in progress");
       return(-1);
     }
   search_in_progress = true;
@@ -346,7 +346,7 @@ static mus_long_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   bool progress_displayed = false;
   if (search_in_progress) 
     {
-      display_minibuffer_error(sp, _("search already in progress"));
+      display_minibuffer_error(sp, "search already in progress");
       return(-1);
     }
   search_in_progress = true;
@@ -447,7 +447,7 @@ void cursor_search(chan_info *cp, int count)
   snd_info *sp;
   sp = cp->sound;
   if (search_in_progress) 
-    display_minibuffer_error(sp, _("search already in progress"));
+    display_minibuffer_error(sp, "search already in progress");
   else
     {
       if (sp->search_count != 0)

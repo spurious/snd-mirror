@@ -10,7 +10,7 @@ static Widget nameL, textL, screnvlst, dBB, orderL, deleteB, resetB, firB = NULL
 static Widget expB, linB, baseScale, baseValue, selectionB;
 static GC gc, rgc, ggc;
 
-static const char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
+static const char *env_names[3] = {"amp env:", "flt env:", "src env:"};
 
 static bool showing_all_envs = false; /* edit one env (0), or view all currently defined envs (1) */
 static bool apply_to_selection = false, we_turned_selection_off = false;
@@ -186,7 +186,7 @@ static void apply_enved(void)
 	{
 	  set_sensitive(applyB, false);
 	  set_sensitive(apply2B, false);
-	  set_button_label(cancelB, _("Stop"));
+	  set_button_label(cancelB, "Stop");
 	  cancelling = false;
 	  check_for_event();
 	  switch (enved_target(ss))
@@ -253,7 +253,7 @@ static void apply_enved(void)
 	  if (enved_wave_p(ss)) env_redisplay();
 	  set_sensitive(applyB, true);
 	  set_sensitive(apply2B, true);
-	  set_button_label(cancelB, _("Go Away"));
+	  set_button_label(cancelB, "Go Away");
 	  cancelling = true;
 	}
     }
@@ -271,7 +271,7 @@ static void env_redisplay_1(printing_t printing)
 	{
 	  char *name = NULL;
 	  name = XmTextGetString(textL);
-	  if (!name) name = mus_strdup(_("noname"));
+	  if (!name) name = mus_strdup("noname");
 	  /* active_env can be null here if just showing axes (empty initial graph) */
 	  
 	  if ((enved_wave_p(ss)) &&
@@ -455,7 +455,7 @@ static void save_button_pressed(Widget w, XtPointer context, XtPointer info)
   if (active_env == NULL) return;
   name = XmTextGetString(textL);
   if ((!name) || (!(*name))) 
-    name = mus_strdup(_("unnamed"));
+    name = mus_strdup("unnamed");
   alert_envelope_editor(name, copy_env(active_env));
   add_or_edit_symbol(name, active_env);
   set_sensitive(saveB, false);
@@ -498,7 +498,7 @@ static void select_or_edit_env(int pos)
   if (showing_all_envs)
     {
       showing_all_envs = false;
-      set_button_label(showB, _("view envs"));
+      set_button_label(showB, "view envs");
     }
   if (active_env) active_env = free_env(active_env);
   selected_env = position_to_env(pos);
@@ -620,7 +620,7 @@ static void show_button_pressed(Widget w, XtPointer context, XtPointer info)
 {
   /* if show all (as opposed to show current), loop through loaded LV_LISTs */
   showing_all_envs = (!showing_all_envs);
-  set_button_label(showB, (showing_all_envs) ? _("edit env") : _("view envs"));
+  set_button_label(showB, (showing_all_envs) ? "edit env" : "view envs");
   env_redisplay();
 }
 
@@ -689,7 +689,7 @@ static void redo_button_pressed(Widget w, XtPointer context, XtPointer info)
 
 static void reflect_apply_state(void)
 {
-  set_label(nameL, _(env_names[enved_target(ss)]));
+  set_label(nameL, env_names[enved_target(ss)]);
   XmChangeColor(ampB, (enved_target(ss) == ENVED_AMPLITUDE) ? ((Pixel)ss->sgx->yellow) : ((Pixel)ss->sgx->highlight_color));
   XmChangeColor(fltB, (enved_target(ss) == ENVED_SPECTRUM) ? ((Pixel)ss->sgx->yellow) : ((Pixel)ss->sgx->highlight_color));
   XmChangeColor(srcB, (enved_target(ss) == ENVED_SRATE) ? ((Pixel)ss->sgx->yellow) : ((Pixel)ss->sgx->highlight_color));
@@ -982,11 +982,11 @@ Widget create_envelope_editor(void)
       char str[LABEL_BUFFER_SIZE];
 
       /* -------- DIALOG -------- */
-      xdismiss = XmStringCreateLocalized(_("Go Away"));
-      xhelp = XmStringCreateLocalized(_("Help"));
-      titlestr = XmStringCreateLocalized(_("Edit Envelope"));
-      xapply = XmStringCreateLocalized(_("Apply"));
-      /* xreset = XmStringCreateLocalized(_("Reset")); */
+      xdismiss = XmStringCreateLocalized("Go Away");
+      xhelp = XmStringCreateLocalized("Help");
+      titlestr = XmStringCreateLocalized("Edit Envelope");
+      xapply = XmStringCreateLocalized("Apply");
+      /* xreset = XmStringCreateLocalized("Reset"); */
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -998,7 +998,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("envelope editor"), args, n);
+      enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "envelope editor", args, n);
   
       XtAddCallback(enved_dialog, XmNcancelCallback, dismiss_enved_callback, NULL);
       XtAddCallback(enved_dialog, XmNhelpCallback, help_enved_callback, NULL);
@@ -1019,14 +1019,14 @@ Widget create_envelope_editor(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-      apply2B = XtCreateManagedWidget(_("Undo&Apply"), xmPushButtonGadgetClass, enved_dialog, args, n);
+      apply2B = XtCreateManagedWidget("Undo&Apply", xmPushButtonGadgetClass, enved_dialog, args, n);
       XtAddCallback(apply2B, XmNactivateCallback, undo_and_apply_enved_callback, NULL);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
       XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-      resetB = XtCreateManagedWidget(_("Reset"), xmPushButtonGadgetClass, enved_dialog, args, n);
+      resetB = XtCreateManagedWidget("Reset", xmPushButtonGadgetClass, enved_dialog, args, n);
       XtAddCallback(resetB, XmNactivateCallback, reset_button_callback, NULL);
 
 
@@ -1057,7 +1057,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      baseLabel = make_pushbutton_widget(_("exp:"), mainform, args, n);
+      baseLabel = make_pushbutton_widget("exp:", mainform, args, n);
       XtAddCallback(baseLabel, XmNactivateCallback, base_click_callback, NULL);
 
       n = 0;
@@ -1144,7 +1144,7 @@ Widget create_envelope_editor(void)
 
       /* -------- AMP ENV NAME -------- */
       n = 0;
-      s1 = XmStringCreateLocalized(_("amp env:"));
+      s1 = XmStringCreateLocalized("amp env:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
@@ -1180,7 +1180,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      dBB = make_togglebutton_widget(_("dB"), mainform, args, n);
+      dBB = make_togglebutton_widget("dB", mainform, args, n);
       XtAddCallback(dBB, XmNvalueChangedCallback, dB_button_callback, NULL);
 
       n = 0;
@@ -1193,7 +1193,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, dBB); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      graphB = make_togglebutton_widget(_("wave"), mainform, args, n);
+      graphB = make_togglebutton_widget("wave", mainform, args, n);
       XtAddCallback(graphB, XmNvalueChangedCallback, graph_button_callback, NULL);
 
       n = 0;
@@ -1206,7 +1206,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, graphB); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      clipB = make_togglebutton_widget(_("clip"), mainform, args, n);
+      clipB = make_togglebutton_widget("clip", mainform, args, n);
       XtAddCallback(clipB, XmNvalueChangedCallback, clip_button_callback, NULL);
 
       /* -------- BREAKPOINT DATA DISPLAY LABEL -------- */
@@ -1282,7 +1282,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
-      showB = XtCreateManagedWidget(_("view envs"), xmPushButtonWidgetClass, colB, args, n);
+      showB = XtCreateManagedWidget("view envs", xmPushButtonWidgetClass, colB, args, n);
       XtAddCallback(showB, XmNactivateCallback, show_button_pressed, NULL);
 
       /* SAVE PRINT */
@@ -1296,7 +1296,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
-      saveB = XtCreateManagedWidget(_("save"), xmPushButtonWidgetClass, colB, args, n);
+      saveB = XtCreateManagedWidget("save", xmPushButtonWidgetClass, colB, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -1308,7 +1308,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, saveB); n++;
-      printB = XtCreateManagedWidget(_("print"), xmPushButtonWidgetClass, colB, args, n);
+      printB = XtCreateManagedWidget("print", xmPushButtonWidgetClass, colB, args, n);
 
       XtAddCallback(saveB, XmNactivateCallback, save_button_pressed, NULL);
       XtAddCallback(printB, XmNactivateCallback, print_button_pressed, NULL);
@@ -1324,7 +1324,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
-      undoB = XtCreateManagedWidget(_("undo"), xmPushButtonWidgetClass, colB, args, n);
+      undoB = XtCreateManagedWidget("undo", xmPushButtonWidgetClass, colB, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -1336,7 +1336,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, undoB); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      redoB = XtCreateManagedWidget(_("redo"), xmPushButtonWidgetClass, colB, args, n);
+      redoB = XtCreateManagedWidget("redo", xmPushButtonWidgetClass, colB, args, n);
 
       XtAddCallback(undoB, XmNactivateCallback, undo_button_pressed, NULL);
       XtAddCallback(redoB, XmNactivateCallback, redo_button_pressed, NULL);
@@ -1352,7 +1352,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
-      revertB = XtCreateManagedWidget(_("revert"), xmPushButtonWidgetClass, colB, args, n);
+      revertB = XtCreateManagedWidget("revert", xmPushButtonWidgetClass, colB, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -1364,7 +1364,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, revertB); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      deleteB = XtCreateManagedWidget(_("delete"), xmPushButtonWidgetClass, colB, args, n);
+      deleteB = XtCreateManagedWidget("delete", xmPushButtonWidgetClass, colB, args, n);
 
       XtAddCallback(revertB, XmNactivateCallback, revert_button_pressed, NULL);
       XtAddCallback(deleteB, XmNactivateCallback, delete_button_pressed, NULL);
@@ -1381,7 +1381,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 33); n++;
-      ampB = XtCreateManagedWidget(_("amp"), xmPushButtonWidgetClass, colB, args, n);
+      ampB = XtCreateManagedWidget("amp", xmPushButtonWidgetClass, colB, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -1394,7 +1394,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftWidget, ampB); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 67); n++;
-      fltB = XtCreateManagedWidget(_("flt"), xmPushButtonWidgetClass, colB, args, n);
+      fltB = XtCreateManagedWidget("flt", xmPushButtonWidgetClass, colB, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -1406,7 +1406,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, fltB); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      srcB = XtCreateManagedWidget(_("src"), xmPushButtonWidgetClass, colB, args, n);
+      srcB = XtCreateManagedWidget("src", xmPushButtonWidgetClass, colB, args, n);
 
       XtAddCallback(fltB, XmNactivateCallback, freq_button_callback, NULL);
       XtAddCallback(ampB, XmNactivateCallback, amp_button_callback, NULL);
@@ -1423,7 +1423,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
-      linB = XtCreateManagedWidget(_("lin"), xmPushButtonWidgetClass, colB, args, n);
+      linB = XtCreateManagedWidget("lin", xmPushButtonWidgetClass, colB, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -1436,7 +1436,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNleftWidget, linB); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 100); n++;
-      expB = XtCreateManagedWidget(_("exp"), xmPushButtonWidgetClass, colB, args, n);
+      expB = XtCreateManagedWidget("exp", xmPushButtonWidgetClass, colB, args, n);
 
       XtAddCallback(linB, XmNactivateCallback, lin_button_callback, NULL);
       XtAddCallback(expB, XmNactivateCallback, exp_button_callback, NULL);
@@ -1451,7 +1451,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      selectionB = make_pushbutton_widget(_("selection"), colB, args, n);
+      selectionB = make_pushbutton_widget("selection", colB, args, n);
 
       XtAddCallback(selectionB, XmNactivateCallback, selection_button_pressed, NULL);
 
@@ -1478,7 +1478,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      screnvname = XtCreateManagedWidget(_("envs:"), xmLabelWidgetClass, colD, args, n);
+      screnvname = XtCreateManagedWidget("envs:", xmLabelWidgetClass, colD, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

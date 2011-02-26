@@ -280,7 +280,7 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
 
   cur_env = dialog_env;
   spf->with_dots = true;
-  env_editor_display_env(spf, cur_env, ax, _("mix env"), 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
+  env_editor_display_env(spf, cur_env, ax, "mix env", 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
   if (with_mix_background_wave)
     show_mix_background_wave(mix_dialog_id);
 }
@@ -664,10 +664,10 @@ Widget make_mix_dialog(void)
       xmix_speed_control_style = speed_control_style(ss);
 
       mix_dialog_id = any_mix_id();
-      xdismiss = XmStringCreateLocalized(_("Go Away"));
-      xcopy = XmStringCreateLocalized(_("Copy mix"));
-      xhelp = XmStringCreateLocalized(_("Help"));
-      xtitle = XmStringCreateLocalized(_("Mixes"));
+      xdismiss = XmStringCreateLocalized("Go Away");
+      xcopy = XmStringCreateLocalized("Copy mix");
+      xhelp = XmStringCreateLocalized("Help");
+      xtitle = XmStringCreateLocalized("Mixes");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -679,7 +679,7 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      mix_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Mixes"), args, n);
+      mix_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Mixes", args, n);
 
       XtAddCallback(mix_dialog, XmNokCallback, dismiss_mix_dialog_callback, NULL);
       XtAddCallback(mix_dialog, XmNcancelCallback, copy_mix_dialog_callback, NULL);
@@ -700,7 +700,7 @@ Widget make_mix_dialog(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-      env_button = XtCreateManagedWidget(_("Apply env"), xmPushButtonGadgetClass, mix_dialog, args, n);
+      env_button = XtCreateManagedWidget("Apply env", xmPushButtonGadgetClass, mix_dialog, args, n);
       XtAddCallback(env_button, XmNactivateCallback, apply_mix_dialog_callback, NULL);
 
       n = 0;
@@ -734,7 +734,7 @@ Widget make_mix_dialog(void)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      XtCreateManagedWidget(_("mix:"), xmLabelWidgetClass, mix_row, args, n);
+      XtCreateManagedWidget("mix:", xmLabelWidgetClass, mix_row, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -767,7 +767,7 @@ Widget make_mix_dialog(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-      previousb = XtCreateManagedWidget(_("Previous"), xmPushButtonWidgetClass, mix_row, args, n);
+      previousb = XtCreateManagedWidget("Previous", xmPushButtonWidgetClass, mix_row, args, n);
       if (previous_mix_id(mix_dialog_id) == INVALID_MIX_ID) 
 	set_sensitive(previousb, false);
       XtAddCallback(previousb, XmNactivateCallback, mix_previous_callback, NULL);
@@ -775,7 +775,7 @@ Widget make_mix_dialog(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-      nextb = XtCreateManagedWidget(_("Next"), xmPushButtonWidgetClass, mix_row, args, n);
+      nextb = XtCreateManagedWidget("Next", xmPushButtonWidgetClass, mix_row, args, n);
       if (next_mix_id(mix_dialog_id) == INVALID_MIX_ID) 
 	set_sensitive(nextb, false);
       XtAddCallback(nextb, XmNactivateCallback, mix_next_callback, NULL);
@@ -797,7 +797,7 @@ Widget make_mix_dialog(void)
 
       /* SPEED */
       n = 0;
-      s1 = XmStringCreateLocalized(_("speed:"));
+      s1 = XmStringCreateLocalized("speed:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -853,7 +853,7 @@ Widget make_mix_dialog(void)
       free(n2);
 
       n = 0;
-      mus_snprintf(amplab, LABEL_BUFFER_SIZE, "%s", _("amp:"));
+      mus_snprintf(amplab, LABEL_BUFFER_SIZE, "%s", "amp:");
       s1 = XmStringCreateLocalized(amplab);
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
@@ -941,19 +941,19 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
 
-      w_clip = make_togglebutton_widget(_("clip"), w_dB_row, args, n);
+      w_clip = make_togglebutton_widget("clip", w_dB_row, args, n);
       XtAddCallback(w_clip, XmNvalueChangedCallback, mix_clip_callback, NULL);
       XmToggleButtonSetState(w_clip, true, false);
 
-      w_wave = make_togglebutton_widget(_("wave"), w_dB_row, args, n);
+      w_wave = make_togglebutton_widget("wave", w_dB_row, args, n);
       XtAddCallback(w_wave, XmNvalueChangedCallback, mix_wave_callback, NULL);
 
-      w_dB = make_togglebutton_widget(_("dB"), w_dB_row, args, n);
+      w_dB = make_togglebutton_widget("dB", w_dB_row, args, n);
       XtAddCallback(w_dB, XmNvalueChangedCallback, mix_dB_callback, NULL);
 
       if (mix_sync_from_id(mix_dialog_id) != 0)
 	{XtSetArg(args[n], XmNset, true); n++;}
-      w_sync = make_togglebutton_widget(_("sync"), w_dB_row, args, n);
+      w_sync = make_togglebutton_widget("sync", w_dB_row, args, n);
       XtAddCallback(w_sync, XmNvalueChangedCallback, mix_sync_callback, NULL);
 
 
@@ -1084,7 +1084,7 @@ void reflect_mix_change(int mix_id)
 	  else
 	    {
 	      XmTextSetString(w_id, (char *)"-1");
-	      XmTextSetString(w_beg, (char *)_("no active mixes"));
+	      XmTextSetString(w_beg, (char *)"no active mixes");
 	      set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), false);
 	    }
 	  if (!dragging)

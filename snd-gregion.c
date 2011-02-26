@@ -115,13 +115,13 @@ static void make_region_labels(file_info *hdr)
   char *str;
   if (hdr == NULL) return;
   str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, _("srate: %d"), hdr->srate);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
   set_label(srate_text, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, _("chans: %d"), hdr->chans);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "chans: %d", hdr->chans);
   set_label(chans_text, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, _("length: %.3f"), (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
   set_label(length_text, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, _("maxamp: %.3f"), region_maxamp(region_list_position_to_id(current_region)));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "maxamp: %.3f", region_maxamp(region_list_position_to_id(current_region)));
   set_label(maxamp_text, str);
   free(str);
 }
@@ -445,7 +445,7 @@ static void make_region_dialog(void)
 
   region_dialog = snd_gtk_dialog_new();
   SG_SIGNAL_CONNECT(region_dialog, "delete_event", region_browser_delete_callback, NULL);
-  gtk_window_set_title(GTK_WINDOW(region_dialog), _("Regions"));
+  gtk_window_set_title(GTK_WINDOW(region_dialog), "Regions");
   sg_make_resizable(region_dialog);
   gtk_container_set_border_width(GTK_CONTAINER(region_dialog), 10);
   gtk_window_resize(GTK_WINDOW(region_dialog), 400, 500);
@@ -456,12 +456,12 @@ static void make_region_dialog(void)
 
   dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
   gtk_widget_set_name(dismiss_button, "dialog_button");
-  set_stock_button_label(dismiss_button, _("Go Away"));
+  set_stock_button_label(dismiss_button, "Go Away");
 
-  insert_button = sg_button_new_from_stock_with_label(_("Insert"), GTK_STOCK_PASTE);
+  insert_button = sg_button_new_from_stock_with_label("Insert", GTK_STOCK_PASTE);
   gtk_widget_set_name(insert_button, "dialog_button");
 
-  mix_button = sg_button_new_from_stock_with_label(_("Mix"), GTK_STOCK_ADD);
+  mix_button = sg_button_new_from_stock_with_label("Mix", GTK_STOCK_ADD);
   gtk_widget_set_name(mix_button, "dialog_button");
 
   save_as_button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
@@ -505,7 +505,7 @@ static void make_region_dialog(void)
   gtk_box_pack_start(GTK_BOX(formw), tophbox, false, false, 4);
   gtk_widget_show(tophbox);
 
-  plw = gtk_label_new(_("play")); 
+  plw = gtk_label_new("play"); 
   gtk_box_pack_start(GTK_BOX(tophbox), plw, false, false, 2);
   gtk_widget_show(plw);
 
@@ -557,39 +557,39 @@ static void make_region_dialog(void)
   gtk_widget_show(labbox);
   widget_modify_bg(labbox, GTK_STATE_NORMAL, ss->sgx->highlight_color);
 
-  srate_text = gtk_label_new(_("srate:"));
+  srate_text = gtk_label_new("srate:");
   sg_left_justify_label(srate_text);
   gtk_box_pack_start(GTK_BOX(labbox), srate_text, false, false, 2);
   gtk_widget_show(srate_text);
 
-  chans_text = gtk_label_new(_("chans:"));
+  chans_text = gtk_label_new("chans:");
   sg_left_justify_label(chans_text);
   gtk_box_pack_start(GTK_BOX(labbox), chans_text, false, false, 2);
   gtk_widget_show(chans_text);
 
-  length_text = gtk_label_new(_("length:"));
+  length_text = gtk_label_new("length:");
   sg_left_justify_label(length_text);
   gtk_box_pack_start(GTK_BOX(labbox), length_text, false, false, 2);
   gtk_widget_show(length_text);
 
-  maxamp_text = gtk_label_new(_("maxamp:"));
+  maxamp_text = gtk_label_new("maxamp:");
   sg_left_justify_label(maxamp_text);
   gtk_box_pack_start(GTK_BOX(labbox), maxamp_text, false, false, 2);
   gtk_widget_show(maxamp_text);
 
-  edit_button = gtk_button_new_with_label(_("edit"));
+  edit_button = gtk_button_new_with_label("edit");
   SG_SIGNAL_CONNECT(edit_button, "clicked", region_edit_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), edit_button, true, true, 2);
   gtk_widget_show(edit_button);
   widget_modify_bg(edit_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
 
-  print_button = gtk_button_new_with_label(_("print"));
+  print_button = gtk_button_new_with_label("print");
   SG_SIGNAL_CONNECT(print_button, "clicked", region_print_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), print_button, true, true, 2);
   gtk_widget_show(print_button);
   widget_modify_bg(print_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
 
-  unlist_button = gtk_button_new_with_label(_("unlist"));
+  unlist_button = gtk_button_new_with_label("unlist");
   SG_SIGNAL_CONNECT(unlist_button, "clicked", region_unlist_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), unlist_button, true, true, 2);
   gtk_widget_show(unlist_button);

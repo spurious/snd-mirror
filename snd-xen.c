@@ -461,7 +461,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 #if HAVE_RUBY
       rargs = XEN_TO_C_INT(arity);
       if (!xen_rb_arity_ok(rargs, args))
- 	return(mus_format(_("%s function (%s arg %d) should take %d args, not %d"),
+ 	return(mus_format("%s function (%s arg %d) should take %d args, not %d",
  			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
 #endif
 
@@ -477,16 +477,16 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	snd_unprotect_at(loc);
 
 	if (rargs > args)
-	  return(mus_format(_("%s function (%s arg %d) should take %d argument%s, but instead requires %d"),
+	  return(mus_format("%s function (%s arg %d) should take %d argument%s, but instead requires %d",
 			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
 
 	if ((restargs == 0) && ((rargs + oargs) < args))
-	  return(mus_format(_("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d"),
+	  return(mus_format("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d",
 			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
 
 	if ((args == 0) &&
 	    ((rargs != 0) || (oargs != 0) || (restargs != 0)))
-	  return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
+	  return(mus_format("%s function (%s arg %d) should take no args, not %d", 
 			    arg_name, caller, argn, rargs + oargs + restargs));
       }
 #endif
@@ -494,7 +494,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 #if HAVE_FORTH
       rargs = XEN_TO_C_INT(arity);
       if (rargs != args)
-	return(mus_format(_("%s function (%s arg %d) should take %d args, not %d"),
+	return(mus_format("%s function (%s arg %d) should take %d args, not %d",
 			  arg_name, caller, argn, args, rargs));
 #endif
     }
@@ -986,7 +986,7 @@ void snd_load_file(const char *filename)
     }
   if (!str)
     {
-      snd_error(_("can't load %s: %s"), filename, snd_open_strerror());
+      snd_error("can't load %s: %s", filename, snd_open_strerror());
       return;
     }
 
@@ -1099,21 +1099,21 @@ mus_float_t string_to_mus_float_t(const char *str, mus_float_t lo, const char *f
     {
       f = XEN_TO_C_DOUBLE(res);
       if (f < lo)
-	snd_error(_("%s: %.3f is invalid"), field_name, f);
+	snd_error("%s: %.3f is invalid", field_name, f);
       else return(f);
     }
-  else snd_error(_("%s is not a number"), str);
+  else snd_error("%s is not a number", str);
   return(0.0);
 #else
   mus_float_t res = 0.0;
   if (str) 
     {
       if (!(sscanf(str, "%f", &res)))
-	snd_error(_("%s is not a number"), str);
+	snd_error("%s is not a number", str);
       else
 	{
 	  if (res < lo)
-	    snd_error(_("%s: %.3f is invalid"), field_name, res);
+	    snd_error("%s: %.3f is invalid", field_name, res);
 	}
     }
   return(res);
@@ -1131,21 +1131,21 @@ int string_to_int(const char *str, int lo, const char *field_name)
       int val;
       val = XEN_TO_C_INT(res);
       if (val < lo)
-	snd_error(_("%s: %d is invalid"), field_name, val);
+	snd_error("%s: %d is invalid", field_name, val);
       else return(val);
     }
-  else snd_error(_("%s: %s is not a number"), field_name, str);
+  else snd_error("%s: %s is not a number", field_name, str);
   return(0);
 #else
   int res = 0;
   if (str) 
     {
       if (!(sscanf(str, "%d", &res)))
-	snd_error(_("%s: %s is not a number"), field_name, str);
+	snd_error("%s: %s is not a number", field_name, str);
       else
 	{
 	  if (res < lo)
-	    snd_error(_("%s: %d is invalid"), field_name, res);
+	    snd_error("%s: %d is invalid", field_name, res);
 	}
     }
   return(res);
@@ -1164,21 +1164,21 @@ mus_long_t string_to_mus_long_t(const char *str, mus_long_t lo, const char *fiel
       mus_long_t val;
       val = XEN_TO_C_INT64_T(res);
       if (val < lo)
-	snd_error(_("%s: " MUS_LD " is invalid"), field_name, val);
+	snd_error("%s: " MUS_LD " is invalid", field_name, val);
       else return(val);
     }
-  else snd_error(_("%s: %s is not a number"), field_name, str);
+  else snd_error("%s: %s is not a number", field_name, str);
   return(0);
 #else
   mus_long_t res = 0;
   if (str) 
     {
       if (!(sscanf(str, MUS_LD , &res)))
-	snd_error(_("%s: %s is not a number"), field_name, str);
+	snd_error("%s: %s is not a number", field_name, str);
       else
 	{
 	  if (res < lo)
-	    snd_error(_("%s: " MUS_LD " is invalid"), field_name, res);
+	    snd_error("%s: " MUS_LD " is invalid", field_name, res);
 	}
     }
   return(res);

@@ -131,7 +131,7 @@ static void edit_play_callback(GtkWidget *w, gpointer info)
     }
   else
     {
-      set_menu_label(edit_play_menu, _("Stop"));
+      set_menu_label(edit_play_menu, "Stop");
       ss->selection_play_stop = true;
       play_selection(IN_BACKGROUND);
     }
@@ -140,7 +140,7 @@ static void edit_play_callback(GtkWidget *w, gpointer info)
 
 void reflect_play_selection_stop(void)
 {
-  set_menu_label(edit_play_menu, _("Play Selection"));
+  set_menu_label(edit_play_menu, "Play Selection");
   ss->selection_play_stop = false;
 }
 
@@ -170,7 +170,7 @@ static void view_files_item_callback(GtkWidget *w, gpointer info)
 {
   char *dirname;
   dirname = get_item_label(w);
-  if (mus_strcmp(dirname, _("new viewer")))
+  if (mus_strcmp(dirname, "new viewer"))
     start_view_files_dialog(true, true); /* managed and empty (brand-new) */
   else view_files_start_dialog_with_title(dirname);
 }
@@ -191,7 +191,7 @@ static void view_files_callback(GtkWidget *w, gpointer info)
       char **view_files_names;
 
       view_files_names = view_files_dialog_titles();
-      view_files_names[size++] = mus_strdup(_("new viewer"));
+      view_files_names[size++] = mus_strdup("new viewer");
 
       if (size > view_files_items_size)
 	{
@@ -947,7 +947,7 @@ static void popup_error_handler(const char *msg, void *data)
   report_in_minibuffer(any_selected_sound(), "%s: %s", (char *)data, msg);
 }
 
-static void popup_cut_to_new_callback_1(GtkWidget *w, gpointer info, bool cut) 
+static void popup_cut_to_new_callback_1(bool cut) 
 {
   char *temp_file;
   io_error_t io_err = IO_NO_ERROR;
@@ -967,8 +967,8 @@ static void popup_cut_to_new_callback_1(GtkWidget *w, gpointer info, bool cut)
     }
 }
 
-static void popup_cut_to_new_callback(GtkWidget *w, gpointer info) {popup_cut_to_new_callback_1(w, info, true);}
-static void popup_copy_to_new_callback(GtkWidget *w, gpointer info) {popup_cut_to_new_callback_1(w, info, false);}
+static void popup_cut_to_new_callback(GtkWidget *w, gpointer info) {popup_cut_to_new_callback_1(true);}
+static void popup_copy_to_new_callback(GtkWidget *w, gpointer info) {popup_cut_to_new_callback_1(false);}
 
 static void crop(chan_info *cp)
 {

@@ -326,7 +326,7 @@ static void mix_amp_env_resize(GtkWidget *w)
   cairo_fill(ax->cr);
 
   spf->with_dots = true;
-  env_editor_display_env(spf, dialog_env, ax, _("mix env"), 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
+  env_editor_display_env(spf, dialog_env, ax, "mix env", 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
   if (with_mix_background_wave)
     show_mix_background_wave(mix_dialog_id);
 
@@ -720,7 +720,7 @@ GtkWidget *make_mix_dialog(void)
       mix_dialog_id = any_mix_id();
       mix_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(mix_dialog, "delete_event", delete_mix_dialog, NULL);
-      gtk_window_set_title(GTK_WINDOW(mix_dialog), _("Mixes"));
+      gtk_window_set_title(GTK_WINDOW(mix_dialog), "Mixes");
       sg_make_resizable(mix_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(mix_dialog), 6);
       gtk_window_resize(GTK_WINDOW(mix_dialog), 560, 280);
@@ -731,15 +731,15 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), dismiss_button, false, true, 10);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
       gtk_widget_show(dismiss_button);
-      set_stock_button_label(dismiss_button, _("Go Away"));
+      set_stock_button_label(dismiss_button, "Go Away");
 
-      apply_button = sg_button_new_from_stock_with_label(_("Apply Env"), GTK_STOCK_APPLY);
+      apply_button = sg_button_new_from_stock_with_label("Apply Env", GTK_STOCK_APPLY);
       gtk_widget_set_name(apply_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), apply_button, false, true, 10);
       SG_SIGNAL_CONNECT(apply_button, "clicked", apply_env_callback, NULL);
       gtk_widget_show(apply_button);
 
-      copy_button = sg_button_new_from_stock_with_label(_("Copy mix"), GTK_STOCK_COPY);
+      copy_button = sg_button_new_from_stock_with_label("Copy mix", GTK_STOCK_COPY);
       gtk_widget_set_name(copy_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), copy_button, false, true, 10);
       SG_SIGNAL_CONNECT(copy_button, "clicked", copy_mix_callback, NULL);
@@ -774,7 +774,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_container_add(GTK_CONTAINER(mix_frame), rc);
       gtk_widget_show(rc);
 
-      w_id_label = gtk_label_new(_("mix:"));
+      w_id_label = gtk_label_new("mix:");
       gtk_box_pack_start(GTK_BOX(rc), w_id_label, false, false, 4);
       gtk_widget_show(w_id_label);
 
@@ -814,14 +814,14 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_end(GTK_BOX(rc), nextb, false, true, 6);
       SG_SIGNAL_CONNECT(nextb, "clicked", mix_next_callback, NULL);
       gtk_widget_show(nextb);
-      set_stock_button_label(nextb, _("Next"));
+      set_stock_button_label(nextb, "Next");
 
       previousb = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
       gtk_widget_set_name(previousb, "dialog_button");
       gtk_box_pack_end(GTK_BOX(rc), previousb, false, true, 6);
       SG_SIGNAL_CONNECT(previousb, "clicked", mix_previous_callback, NULL);
       gtk_widget_show(previousb);
-      set_stock_button_label(previousb, _("Previous"));
+      set_stock_button_label(previousb, "Previous");
 
 
       /* SPEED */
@@ -833,7 +833,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_speed_event);
       SG_SIGNAL_CONNECT(w_speed_event, "button_press_event", mix_speed_click_callback, NULL);
       
-      w_speed_label = gtk_label_new(_("speed:"));
+      w_speed_label = gtk_label_new("speed:");
       gtk_container_add(GTK_CONTAINER(w_speed_event), w_speed_label);
       gtk_widget_show(w_speed_label);
 
@@ -872,7 +872,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_amp_event);
       SG_SIGNAL_CONNECT(w_amp_event, "button_press_event", mix_amp_click_callback, NULL);
       
-      mus_snprintf(amplab, LABEL_BUFFER_SIZE, "%s", _("amp:"));
+      mus_snprintf(amplab, LABEL_BUFFER_SIZE, "%s", "amp:");
       w_amp_label = gtk_label_new(amplab);
       gtk_container_add(GTK_CONTAINER(w_amp_event), w_amp_label);
       gtk_widget_show(w_amp_label);
@@ -909,22 +909,22 @@ GtkWidget *make_mix_dialog(void)
       gtk_container_add(GTK_CONTAINER(w_dB_frame), w_dB_row);
       gtk_widget_show(w_dB_row);	
 
-      w_clip = gtk_check_button_new_with_label(_("clip"));
+      w_clip = gtk_check_button_new_with_label("clip");
       SG_SIGNAL_CONNECT(w_clip, "toggled", mix_clip_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_clip, false, false, 0);
       gtk_widget_show(w_clip);
 
-      w_wave = gtk_check_button_new_with_label(_("wave"));
+      w_wave = gtk_check_button_new_with_label("wave");
       SG_SIGNAL_CONNECT(w_wave, "toggled", mix_wave_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_wave, false, false, 0);
       gtk_widget_show(w_wave);
 
-      w_dB = gtk_check_button_new_with_label(_("dB"));
+      w_dB = gtk_check_button_new_with_label("dB");
       SG_SIGNAL_CONNECT(w_dB, "toggled", mix_dB_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_dB, false, false, 0);
       gtk_widget_show(w_dB);
 
-      w_sync = gtk_check_button_new_with_label(_("sync"));
+      w_sync = gtk_check_button_new_with_label("sync");
       SG_SIGNAL_CONNECT(w_sync, "toggled", mix_sync_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_sync, false, false, 0);
       gtk_widget_show(w_sync);

@@ -57,7 +57,7 @@ void edit_menu_update(void)
  
   /* make sure edit-header menu option label correctly reflects current selected sound header type */
   if (any_sp)
-    set_menu_label(edit_header_menu, (any_sp->hdr->type == MUS_RAW) ? _("Add Header") : _("Edit Header"));
+    set_menu_label(edit_header_menu, (any_sp->hdr->type == MUS_RAW) ? "Add Header" : "Edit Header");
 }
 
 
@@ -90,14 +90,14 @@ void view_menu_update(void)
   set_sensitive(view_x_axis_percentage_menu, x_axis_style(ss) != X_AXIS_AS_PERCENTAGE);
 
   /* show y zero label */
-  set_menu_label(view_zero_menu, (show_y_zero(ss)) ? _("Hide Y = 0") : _("Show Y = 0"));
+  set_menu_label(view_zero_menu, (show_y_zero(ss)) ? "Hide Y = 0" : "Show Y = 0");
 
   /* verbose cursor label */
-  set_menu_label(view_cursor_menu, (verbose_cursor(ss)) ? _("Silent cursor") : _("Verbose cursor"));
+  set_menu_label(view_cursor_menu, (verbose_cursor(ss)) ? "Silent cursor" : "Verbose cursor");
 
 #if HAVE_EXTENSION_LANGUAGE
   /* inset graph label */
-  set_menu_label(view_inset_menu, (with_inset_graph(ss)) ? _("Without inset graph") : _("With inset graph"));
+  set_menu_label(view_inset_menu, (with_inset_graph(ss)) ? "Without inset graph" : "With inset graph");
 #endif
 
   /* channel style */
@@ -115,10 +115,10 @@ void view_menu_update(void)
 
 #if HAVE_EXTENSION_LANGUAGE
   /* make sure listener menu option label correctly reflects current listener state */
-  set_menu_label(view_listener_menu, (listener_is_visible()) ? _("Hide listener") : _("Show listener"));
+  set_menu_label(view_listener_menu, (listener_is_visible()) ? "Hide listener" : "Show listener");
 #endif
 
-  set_menu_label(view_controls_menu, (in_show_controls(ss)) ? _("Hide controls") : _("Show controls"));
+  set_menu_label(view_controls_menu, (in_show_controls(ss)) ? "Hide controls" : "Show controls");
 
   /* set_sensitive(view_files_menu, get_view_files_end() >= 0); */
 
@@ -212,7 +212,7 @@ void save_options_from_menu(void)
   if (filename)
     {
       if (any_selected_sound())
-	report_in_minibuffer(any_selected_sound(), _("saved options in %s"), filename);
+	report_in_minibuffer(any_selected_sound(), "saved options in %s", filename);
     }
 }
 
@@ -237,12 +237,12 @@ void save_state_from_menu(void)
       if (!save_state_error_p)
 	{
 	  if (any_selected_sound())
-	    report_in_minibuffer(any_selected_sound(), _("saved state in %s"), save_state_file(ss));
+	    report_in_minibuffer(any_selected_sound(), "saved state in %s", save_state_file(ss));
 	}
     }
   else 
     {
-      snd_warning_without_format(_("can't save state: save-state-file is null"));
+      snd_warning_without_format("can't save state: save-state-file is null");
     }
 }
 

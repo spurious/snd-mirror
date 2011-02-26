@@ -277,7 +277,7 @@ static void create_help_monolog(void)
   help_dialog = snd_gtk_dialog_new();
   SG_SIGNAL_CONNECT(help_dialog, "delete_event", delete_help_dialog, NULL);
 
-  gtk_window_set_title(GTK_WINDOW(help_dialog), _("Help"));
+  gtk_window_set_title(GTK_WINDOW(help_dialog), "Help");
   sg_make_resizable(help_dialog);
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
   gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 40);
@@ -288,7 +288,7 @@ static void create_help_monolog(void)
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(help_dialog)), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);
   gtk_widget_show(ok_button);
-  set_stock_button_label(ok_button, _("Go Away"));
+  set_stock_button_label(ok_button, "Go Away");
 
   help_previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
   gtk_widget_set_name(help_previous_button, "dialog_button");
@@ -311,14 +311,14 @@ static void create_help_monolog(void)
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(help_text), 10);
   SG_SIGNAL_CONNECT(help_text, "button_release_event", text_release_callback, NULL);
 
-  related_items = slist_new_with_title(_("related topics"), DIALOG_CONTENT_AREA(help_dialog), NULL, 0, BOX_PACK);
+  related_items = slist_new_with_title("related topics", DIALOG_CONTENT_AREA(help_dialog), NULL, 0, BOX_PACK);
   related_items->select_callback = help_browse_callback;
 
   hbox = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(help_dialog)), hbox, false, false, 10); 
   gtk_widget_show(hbox);
 
-  label = gtk_label_new(_("help topic:"));
+  label = gtk_label_new("help topic:");
   gtk_box_pack_start(GTK_BOX(hbox), label, false, false, 0); 
   gtk_widget_show(label);
 

@@ -1035,10 +1035,10 @@ Widget fire_up_transform_dialog(bool managed)
 	    size_pos = i + 1;
 	    break;
 	  }
-      xdismiss = XmStringCreateLocalized(_("Go Away")); /* needed by template dialog */
-      xhelp = XmStringCreateLocalized(_("Help"));
-      xtitle = XmStringCreateLocalized(_("Transform Options"));
-      xorient = XmStringCreateLocalized(_("Color/Orientation"));
+      xdismiss = XmStringCreateLocalized("Go Away"); /* needed by template dialog */
+      xhelp = XmStringCreateLocalized("Help");
+      xtitle = XmStringCreateLocalized("Transform Options");
+      xorient = XmStringCreateLocalized("Color/Orientation");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1050,7 +1050,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Transform Options"), args, n);
+      transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Transform Options", args, n);
 
       XtAddCallback(transform_dialog, XmNcancelCallback, color_orientation_callback, NULL);
       XtAddCallback(transform_dialog, XmNokCallback, dismiss_transform_callback, NULL);
@@ -1128,7 +1128,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      se_title = XtCreateManagedWidget(_("spectrum start/end"), xmLabelWidgetClass, se_form, args, n);
+      se_title = XtCreateManagedWidget("spectrum start/end", xmLabelWidgetClass, se_form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1142,7 +1142,7 @@ Widget fire_up_transform_dialog(bool managed)
       se_sep = XtCreateManagedWidget("se_sep", xmSeparatorWidgetClass, se_form, args, n);
 
       n = 0;
-      s1 = XmStringCreateLocalized(_("start:0.0  "));
+      s1 = XmStringCreateLocalized("start:0.0  ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1174,7 +1174,7 @@ Widget fire_up_transform_dialog(bool managed)
       start_scale = XtCreateManagedWidget("start-scale", xmScrollBarWidgetClass, se_form, args, n);
 
       n = 0;
-      s1 = XmStringCreateLocalized(_("end:  1.0  "));
+      s1 = XmStringCreateLocalized("end:  1.0  ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1233,7 +1233,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      ab_title = XtCreateManagedWidget(_("window parameter"), xmLabelWidgetClass, ab_form, args, n);
+      ab_title = XtCreateManagedWidget("window parameter", xmLabelWidgetClass, ab_form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1247,7 +1247,7 @@ Widget fire_up_transform_dialog(bool managed)
       ab_sep = XtCreateManagedWidget("ab_sep", xmSeparatorWidgetClass, ab_form, args, n);
 
       n = 0;
-      s1 = XmStringCreateLocalized(_("alpha:0.0  "));
+      s1 = XmStringCreateLocalized("alpha:0.0  ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1281,7 +1281,7 @@ Widget fire_up_transform_dialog(bool managed)
 
 
       n = 0;
-      s1 = XmStringCreateLocalized(_("beta: 0.0  "));
+      s1 = XmStringCreateLocalized("beta: 0.0  ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1340,7 +1340,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      window_label = XtCreateManagedWidget(_("window"), xmLabelWidgetClass, window_form, args, n);
+      window_label = XtCreateManagedWidget("window", xmLabelWidgetClass, window_form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1396,7 +1396,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      wavelet_label = XtCreateManagedWidget(_("wavelet"), xmLabelWidgetClass, wavelet_form, args, n);
+      wavelet_label = XtCreateManagedWidget("wavelet", xmLabelWidgetClass, wavelet_form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1449,7 +1449,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      type_label = XtCreateManagedWidget(_("type"), xmLabelWidgetClass, type_form, args, n);
+      type_label = XtCreateManagedWidget("type", xmLabelWidgetClass, type_form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1493,7 +1493,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      size_label = XtCreateManagedWidget(_("size"), xmLabelWidgetClass, size_form, args, n);
+      size_label = XtCreateManagedWidget("size", xmLabelWidgetClass, size_form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1545,12 +1545,12 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      display_label = XtCreateManagedWidget(_("display"), xmLabelWidgetClass, display_form, args, n);
+      display_label = XtCreateManagedWidget("display", xmLabelWidgetClass, display_form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("single transform"));
+      bstr = XmStringCreateLocalized("single transform");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1566,7 +1566,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("sonogram"));
+      bstr = XmStringCreateLocalized("sonogram");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1582,7 +1582,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("spectrogram"));
+      bstr = XmStringCreateLocalized("spectrogram");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1598,7 +1598,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("peaks"));
+      bstr = XmStringCreateLocalized("peaks");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 67); n++;
@@ -1637,7 +1637,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("dB"));
+      bstr = XmStringCreateLocalized("dB");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 67); n++;
@@ -1676,7 +1676,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("log freq"));
+      bstr = XmStringCreateLocalized("log freq");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 67); n++;
@@ -1715,7 +1715,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("normalize"));
+      bstr = XmStringCreateLocalized("normalize");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1730,7 +1730,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("selection"));
+      bstr = XmStringCreateLocalized("selection");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1746,7 +1746,7 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized(_("with phases"));
+      bstr = XmStringCreateLocalized("with phases");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1785,7 +1785,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      graph_label = XtCreateManagedWidget(_("window"), xmLabelWidgetClass, graph_form, args, n);
+      graph_label = XtCreateManagedWidget("window", xmLabelWidgetClass, graph_form, args, n);
       /* label should change according to what is being displayed */
 
       n = 0;

@@ -9,10 +9,6 @@
   #undef _
 #endif
 
-#define _(String) ((char *)(String))
-#define N_(String) String
-/* these are leftover from NLS */
-
 #if (!HAVE_FAM)
   #define FAMRequest int
   #define FAMEvent int

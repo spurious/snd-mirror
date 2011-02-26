@@ -1302,7 +1302,7 @@ void display_filter_env(snd_info *sp)
   edp->with_dots = true;
   if (sp->filter_control_envelope == NULL) sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
 
-  env_editor_display_env(edp, sp->filter_control_envelope, ax, _("frequency response"), 0, 0, width, height, NOT_PRINTING);
+  env_editor_display_env(edp, sp->filter_control_envelope, ax, "frequency response", 0, 0, width, height, NOT_PRINTING);
 
   if (edp->edited)
     {
@@ -1811,19 +1811,19 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       /* now fill from other end */
       
-      PLAY_BUTTON(sp) = gtk_check_button_new_with_label(_("play"));
+      PLAY_BUTTON(sp) = gtk_check_button_new_with_label("play");
       gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), PLAY_BUTTON(sp), false, false, BUTTON_SPACE); /* need space here or "play" hits window edge */
       SG_SIGNAL_CONNECT(PLAY_BUTTON(sp), "button_press_event", play_button_callback, sp);
       SG_SIGNAL_CONNECT(PLAY_BUTTON(sp), "toggled", play_button_click_callback, sp);
       gtk_widget_show(PLAY_BUTTON(sp));
       
-      SYNC_BUTTON(sp) = gtk_check_button_new_with_label(_("sync"));
+      SYNC_BUTTON(sp) = gtk_check_button_new_with_label("sync");
       gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), SYNC_BUTTON(sp), false, false, BUTTON_SPACE);
       SG_SIGNAL_CONNECT(SYNC_BUTTON(sp), "button_press_event", sync_button_callback, sp);
       SG_SIGNAL_CONNECT(SYNC_BUTTON(sp), "toggled", sync_button_click, sp);
       gtk_widget_show(SYNC_BUTTON(sp));
       
-      UNITE_BUTTON(sp) = gtk_check_button_new_with_label(_("unite"));
+      UNITE_BUTTON(sp) = gtk_check_button_new_with_label("unite");
       gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), UNITE_BUTTON(sp), false, false, BUTTON_SPACE);
       SG_SIGNAL_CONNECT(UNITE_BUTTON(sp), "button_press_event", unite_button_callback, sp);
       SG_SIGNAL_CONNECT(UNITE_BUTTON(sp), "toggled", unite_button_click, sp);
@@ -1853,7 +1853,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(AMP_EVENT_BOX(sp));
       SG_SIGNAL_CONNECT(AMP_EVENT_BOX(sp), "button_press_event", amp_click_callback, sp);
       
-      AMP_BUTTON(sp) = gtk_label_new(_("amp:"));
+      AMP_BUTTON(sp) = gtk_label_new("amp:");
       gtk_container_add(GTK_CONTAINER(AMP_EVENT_BOX(sp)), AMP_BUTTON(sp));
       gtk_widget_show(AMP_BUTTON(sp));
       
@@ -1881,7 +1881,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(SPEED_EVENT_BOX(sp));
       SG_SIGNAL_CONNECT(SPEED_EVENT_BOX(sp), "button_press_event", speed_click_callback, sp);
       
-      SPEED_BUTTON(sp) = gtk_label_new(_("speed:"));
+      SPEED_BUTTON(sp) = gtk_label_new("speed:");
       gtk_container_add(GTK_CONTAINER(SPEED_EVENT_BOX(sp)), SPEED_BUTTON(sp));
       gtk_widget_show(SPEED_BUTTON(sp));
       
@@ -1930,7 +1930,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(EXPAND_EVENT_BOX(sp));
       SG_SIGNAL_CONNECT(EXPAND_EVENT_BOX(sp), "button_press_event", expand_click_callback, sp);
       
-      EXPAND_LEFT_BUTTON(sp) = gtk_label_new(_("expand:"));
+      EXPAND_LEFT_BUTTON(sp) = gtk_label_new("expand:");
       gtk_container_add(GTK_CONTAINER(EXPAND_EVENT_BOX(sp)), EXPAND_LEFT_BUTTON(sp));
       gtk_widget_show(EXPAND_LEFT_BUTTON(sp));
       
@@ -1963,7 +1963,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(CONTRAST_EVENT_BOX(sp));
       SG_SIGNAL_CONNECT(CONTRAST_EVENT_BOX(sp), "button_press_event", contrast_click_callback, sp);
       
-      CONTRAST_LEFT_BUTTON(sp) = gtk_label_new(_("contrast:"));
+      CONTRAST_LEFT_BUTTON(sp) = gtk_label_new("contrast:");
       gtk_container_add(GTK_CONTAINER(CONTRAST_EVENT_BOX(sp)), CONTRAST_LEFT_BUTTON(sp));
       gtk_widget_show(CONTRAST_LEFT_BUTTON(sp));
       
@@ -1996,7 +1996,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(REVSCL_EVENT_BOX(sp));
       SG_SIGNAL_CONNECT(REVSCL_EVENT_BOX(sp), "button_press_event", revscl_click_callback, sp);
       
-      REVSCL_BUTTON(sp) = gtk_label_new(_("reverb:"));
+      REVSCL_BUTTON(sp) = gtk_label_new("reverb:");
       gtk_container_add(GTK_CONTAINER(REVSCL_EVENT_BOX(sp)), REVSCL_BUTTON(sp));
       gtk_widget_show(REVSCL_BUTTON(sp));
       
@@ -2016,7 +2016,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(REVLEN_EVENT_BOX(sp));
       SG_SIGNAL_CONNECT(REVLEN_EVENT_BOX(sp), "button_press_event", revlen_click_callback, sp);
       
-      REVLEN_BUTTON(sp) = gtk_label_new(_("len:"));
+      REVLEN_BUTTON(sp) = gtk_label_new("len:");
       gtk_container_add(GTK_CONTAINER(REVLEN_EVENT_BOX(sp)), REVLEN_BUTTON(sp));
       gtk_widget_show(REVLEN_BUTTON(sp));
       
@@ -2047,7 +2047,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       FILTER_HBOX(sp) = gtk_hbox_new(false, 2);
       gtk_box_pack_start(GTK_BOX(CONTROL_PANEL(sp)), FILTER_HBOX(sp), false, false, 0);
       
-      FILTER_LEFT_BUTTON(sp) = gtk_label_new(_("filter:"));
+      FILTER_LEFT_BUTTON(sp) = gtk_label_new("filter:");
       gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_LEFT_BUTTON(sp), false, false, 4);
       gtk_widget_show(FILTER_LEFT_BUTTON(sp));
       
@@ -2063,12 +2063,12 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       FILTER_COEFFS_TEXT(sp) = snd_entry_new(FILTER_HBOX(sp), WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(FILTER_COEFFS_TEXT(sp), "activate", filter_activate_callback, sp);
 
-      FILTER_HZ_BUTTON(sp) = gtk_check_button_new_with_label(_("hz"));
+      FILTER_HZ_BUTTON(sp) = gtk_check_button_new_with_label("hz");
       gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_HZ_BUTTON(sp), false, false, 2);
       SG_SIGNAL_CONNECT(FILTER_HZ_BUTTON(sp), "clicked", filter_hz_callback, sp);
       gtk_widget_show(FILTER_HZ_BUTTON(sp));
       
-      FILTER_DB_BUTTON(sp) = gtk_check_button_new_with_label(_("dB"));
+      FILTER_DB_BUTTON(sp) = gtk_check_button_new_with_label("dB");
       gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_DB_BUTTON(sp), false, false, 2);
       SG_SIGNAL_CONNECT(FILTER_DB_BUTTON(sp), "clicked", filter_db_callback, sp);
       gtk_widget_show(FILTER_DB_BUTTON(sp));
@@ -2160,7 +2160,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   else hide_lock(sp);
 
   if (old_name)
-    report_in_minibuffer(sp, _("(translated %s)"), old_name);
+    report_in_minibuffer(sp, "(translated %s)", old_name);
   after_open(sp);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     {
@@ -2489,7 +2489,7 @@ void make_controls_dialog(void)
 
       controls_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(controls_dialog, "delete_event", delete_controls_dialog, NULL);
-      gtk_window_set_title(GTK_WINDOW(controls_dialog), _("Controls"));
+      gtk_window_set_title(GTK_WINDOW(controls_dialog), "Controls");
       sg_make_resizable(controls_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(controls_dialog), 4);
       gtk_widget_realize(controls_dialog);
@@ -2500,7 +2500,7 @@ void make_controls_dialog(void)
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "dialog_button");
-      set_stock_button_label(dismiss_button, _("Go Away"));
+      set_stock_button_label(dismiss_button, "Go Away");
 
       reset_button = gtk_button_new_from_stock(GTK_STOCK_REVERT_TO_SAVED);
       gtk_widget_set_name(reset_button, "dialog_button");

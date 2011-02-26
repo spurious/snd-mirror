@@ -1017,12 +1017,12 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
 	  XtSetArg(args[n], XmNspacing, 1); n++;
 	  XtSetArg(args[n], XmNselectColor, sx->selection_color); n++;
-	  cw[W_f] = make_togglebutton_widget(_("f"), cw[W_wf_buttons], args, n);
+	  cw[W_f] = make_togglebutton_widget("f", cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_f], XmNvalueChangedCallback, f_toggle_callback, cp);
 	  XtAddEventHandler(cw[W_f], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 	  
 	  XtSetArg(args[n], XmNset, true); n++;
-	  cw[W_w] = make_togglebutton_widget(_("w"), cw[W_wf_buttons], args, n);
+	  cw[W_w] = make_togglebutton_widget("w", cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_w], XmNvalueChangedCallback, w_toggle_callback, cp);
 	  XtAddEventHandler(cw[W_w], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 	}

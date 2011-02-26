@@ -852,14 +852,14 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       
       if (button_style == WITH_FW_BUTTONS)
 	{
-	  cw[W_f] = gtk_check_button_new_with_label(_("f"));
+	  cw[W_f] = gtk_check_button_new_with_label("f");
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_f], true, true, 0);
 	  gtk_widget_show(cw[W_f]);
 	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw[W_f]), false);
 	  SG_SIGNAL_CONNECT(cw[W_f], "button_press_event", f_toggle_callback, cp);
 	  SG_SIGNAL_CONNECT(cw[W_f], "toggled", f_toggle_click_callback, cp);
   
-	  cw[W_w] = gtk_check_button_new_with_label(_("w"));
+	  cw[W_w] = gtk_check_button_new_with_label("w");
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_w], true, true, 0);
 	  gtk_widget_show(cw[W_w]);
 	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw[W_w]), true);

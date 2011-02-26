@@ -239,7 +239,7 @@ static void reposition_file_buffers(snd_data *sd, mus_long_t index)
       if (fd == -1) 
 	{
 	  /* our file has disappeared?!? */
-	  snd_error(_("%s is unreadable: %s?"), sd->filename, snd_io_strerror());
+	  snd_error("%s is unreadable: %s?", sd->filename, snd_io_strerror());
 	  return;
 	}
       hdr = sd->hdr;
@@ -835,7 +835,7 @@ void set_up_snd_io(chan_info *cp, int i, int fd, const char *filename, file_info
       sd->open = FD_CLOSED; 
       io->fd = -1;
       if (mus_file_close(fd) != 0)
-	snd_error(_("can't close file %s: %s"), filename, snd_io_strerror());
+	snd_error("can't close file %s: %s", filename, snd_io_strerror());
     }
   /* this is not as crazy as it looks -- we've read in the first 64K (or whatever) samples,
    * and may need this file channel for other opens, so this file can be closed until reposition_file_state_buffers

@@ -410,14 +410,14 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
   fs->cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_widget_set_name(fs->cancel_button, "dialog_button");
-  set_stock_button_label(fs->cancel_button, _("Go Away"));
+  set_stock_button_label(fs->cancel_button, "Go Away");
 
-  fs->mkdir_button = sg_button_new_from_stock_with_label(_("Mkdir"), GTK_STOCK_REFRESH);
+  fs->mkdir_button = sg_button_new_from_stock_with_label("Mkdir", GTK_STOCK_REFRESH);
   gtk_widget_set_name(fs->mkdir_button, "dialog_button");
 
   if (with_extract)
     {
-      fs->extract_button = sg_button_new_from_stock_with_label(_("Extract"), GTK_STOCK_CUT);
+      fs->extract_button = sg_button_new_from_stock_with_label("Extract", GTK_STOCK_CUT);
       gtk_widget_set_name(fs->extract_button, "dialog_button");
     }
 
@@ -1383,13 +1383,13 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
     gtk_box_pack_end(GTK_BOX(fd->vbox), hbox, false, false, 0);
     gtk_widget_show(hbox);
 
-    fs->just_sounds_button = gtk_check_button_new_with_label(_("sound files only"));
+    fs->just_sounds_button = gtk_check_button_new_with_label("sound files only");
     gtk_box_pack_start(GTK_BOX(hbox), fs->just_sounds_button, true, true, 2);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fs->just_sounds_button), just_sounds(ss));
     SG_SIGNAL_CONNECT(fs->just_sounds_button, "toggled", just_sounds_callback, (void *)fs);
     gtk_widget_show(fs->just_sounds_button);
 
-    fd->dp->play_button = gtk_check_button_new_with_label(_("play selected sound"));
+    fd->dp->play_button = gtk_check_button_new_with_label("play selected sound");
     gtk_box_pack_end(GTK_BOX(hbox), fd->dp->play_button, true, true, 2);
     SG_SIGNAL_CONNECT(fd->dp->play_button, "toggled", play_selected_callback, fd->dp);
     gtk_widget_show(fd->dp->play_button);
@@ -1526,7 +1526,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
   filename = fsb_file_text(fd->fs);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), fd);
+      file_open_error("no filename given", fd);
       clear_error_if_open_changes(fd->fs, fd);
     }
   else
@@ -1560,7 +1560,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
       else
 	{
 	  char *str;
-	  str = mus_format(_("%s is a directory"), filename);
+	  str = mus_format("%s is a directory", filename);
 	  file_open_error(str, fd);
 	  clear_error_if_open_changes(fd->fs, fd);
 	  free(str);
@@ -1604,7 +1604,7 @@ static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
     {
       /* could not make the directory */
       char *str;
-      str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
+      str = mus_format("can't make %s: %s", filename, strerror(errno));
       file_open_error(str, fd);
       clear_error_if_open_changes(fs, fd);
       free(str);
@@ -1626,8 +1626,8 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
   if (!odat)
     {
       odat = make_file_dialog(read_only, 
-			      (char *)((read_only == FILE_READ_ONLY) ? _("View") : _("Open")), 
-			      (char *)((read_only == FILE_READ_ONLY) ? _("view:") : _("open:")),
+			      (char *)((read_only == FILE_READ_ONLY) ? "View" : "Open"), 
+			      (char *)((read_only == FILE_READ_ONLY) ? "view:" : "open:"),
 			      NULL,
 			      FILE_OPEN_DIALOG,
 			      (GCallback)file_open_dialog_ok,	
@@ -1642,8 +1642,8 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
     {
       if (read_only != odat->file_dialog_read_only)
 	{
-	  set_stock_button_label(odat->fs->ok_button, (char *)((read_only == FILE_READ_ONLY) ? _("View") : _("Open")));
-	  gtk_window_set_title(GTK_WINDOW(odat->fs->dialog), (char *)((read_only == FILE_READ_ONLY) ? _("View") : _("Open")));
+	  set_stock_button_label(odat->fs->ok_button, (char *)((read_only == FILE_READ_ONLY) ? "View" : "Open"));
+	  gtk_window_set_title(GTK_WINDOW(odat->fs->dialog), (char *)((read_only == FILE_READ_ONLY) ? "View" : "Open"));
 	  odat->file_dialog_read_only = read_only;
 	}
       if (odat->fs->reread_directory) 
@@ -1686,7 +1686,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
   filename = fsb_file_text(mdat->fs);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), mdat);
+      file_open_error("no filename given", mdat);
       clear_error_if_open_changes(mdat->fs, mdat);
     }
   else
@@ -1713,14 +1713,14 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 	    }
 	  else 
 	    {
-	      report_in_minibuffer(sp, _("%s mixed in at cursor"), filename);
+	      report_in_minibuffer(sp, "%s mixed in at cursor", filename);
 	      remember_filename(filename, mdat->fs->file_text_names);
 	    }
 	}
       else 
 	{
 	  char *str;
-	  str = mus_format(_("%s is a directory"), filename);
+	  str = mus_format("%s is a directory", filename);
 	  file_open_error(str, mdat);
 	  clear_error_if_open_changes(mdat->fs, mdat);
 	  free(str);
@@ -1733,7 +1733,7 @@ widget_t make_mix_file_dialog(bool managed)
 {
   if (mdat == NULL)
     {
-      mdat = make_file_dialog(FILE_READ_ONLY, _("Mix"), _("mix:"), _("Mix"), FILE_MIX_DIALOG,
+      mdat = make_file_dialog(FILE_READ_ONLY, "Mix", "mix:", "Mix", FILE_MIX_DIALOG,
 			      (GCallback)file_mix_ok_callback,
 			      NULL, /* no mkdir */
 			      (GCallback)file_mix_delete_callback,
@@ -1784,7 +1784,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
   filename = fsb_file_text(fd->fs);
   if ((!filename) || (!(*filename)))
     {
-      file_open_error(_("no filename given"), fd);
+      file_open_error("no filename given", fd);
       clear_error_if_open_changes(fd->fs, fd);
     }
   else
@@ -1814,14 +1814,14 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 	    }
 	  else 
 	    {
-	      report_in_minibuffer(sp, _("%s inserted at cursor"), filename);
+	      report_in_minibuffer(sp, "%s inserted at cursor", filename);
 	      remember_filename(filename, fd->fs->file_text_names);
 	    }
 	}
       else 
 	{
 	  char *str;
-	  str = mus_format(_("%s is a directory"), filename);
+	  str = mus_format("%s is a directory", filename);
 	  file_open_error(str, fd);
 	  clear_error_if_open_changes(fd->fs, fd);
 	  free(str);
@@ -1833,7 +1833,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 widget_t make_insert_file_dialog(bool managed)
 {
   if (idat == NULL)
-    idat = make_file_dialog(FILE_READ_ONLY, _("Insert"), _("insert:"), _("Insert"), FILE_INSERT_DIALOG,
+    idat = make_file_dialog(FILE_READ_ONLY, "Insert", "insert:", "Insert", FILE_INSERT_DIALOG,
 			    (GCallback)file_insert_ok_callback,
 			    NULL, /* no mkdir */
 			    (GCallback)file_insert_delete_callback,
@@ -2337,14 +2337,14 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   /* header type */
   if (with_header_type == WITH_HEADER_TYPE_FIELD)
     {
-      fdat->header_list = slist_new_with_title(_("header"), form, (const char **)headers, nheaders, BOX_PACK); /* BOX_PACK widget_add_t (snd-g0.h) */
+      fdat->header_list = slist_new_with_title("header", form, (const char **)headers, nheaders, BOX_PACK); /* BOX_PACK widget_add_t (snd-g0.h) */
       fdat->header_list->select_callback = update_header_type_list;
       fdat->header_list->select_callback_data = (void *)fdat;
       slist_select(fdat->header_list, fdat->header_pos);
     }
 
   /* data format */
-  fdat->format_list = slist_new_with_title(_("data format"), form, (const char **)formats, nformats, BOX_PACK);
+  fdat->format_list = slist_new_with_title("data format", form, (const char **)formats, nformats, BOX_PACK);
   fdat->format_list->select_callback = update_data_format_list;
   fdat->format_list->select_callback_data = (void *)fdat;
   slist_select(fdat->format_list, fdat->format_pos);
@@ -2360,7 +2360,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   gtk_widget_show(sbar);
 
   fdat->smenu = gtk_menu_new();
-  sitem = gtk_menu_item_new_with_label(_("            srate"));
+  sitem = gtk_menu_item_new_with_label("            srate");
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), fdat->smenu);
   gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
   gtk_widget_show(sitem);
@@ -2411,7 +2411,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_widget_show(c3);
       gtk_widget_show(c4);
 
-      citem = gtk_menu_item_new_with_label((gchar *)((with_chan == WITH_CHANNELS_FIELD) ? _("           channels") : _("    extract channel")));
+      citem = gtk_menu_item_new_with_label((gchar *)((with_chan == WITH_CHANNELS_FIELD) ? "           channels" : "    extract channel"));
       gtk_widget_show(citem);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(citem), cmenu);
       gtk_menu_shell_append(GTK_MENU_SHELL(cbar), citem);
@@ -2426,7 +2426,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       if (with_loc == WITH_DATA_LOCATION_FIELD)
 	{
 	  GtkWidget *loclab;
-	  loclab = snd_gtk_highlight_label_new(_("location"));
+	  loclab = snd_gtk_highlight_label_new("location");
 	  gtk_box_pack_start(GTK_BOX(scbox), loclab, false, false, 0);
 	  gtk_widget_show(loclab);
 
@@ -2438,7 +2438,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   if (with_samples == WITH_SAMPLES_FIELD)
     {
       GtkWidget *samplab;
-      samplab = snd_gtk_highlight_label_new(_("samples"));
+      samplab = snd_gtk_highlight_label_new("samples");
       gtk_box_pack_start(GTK_BOX(scbox), samplab, false, false, 0);
       gtk_widget_show(samplab);
 
@@ -2467,7 +2467,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_box_pack_start(GTK_BOX(frame_box), combox, true, true, 4);
       gtk_widget_show(combox);
 
-      comment_label = snd_gtk_highlight_label_new(_("comment"));
+      comment_label = snd_gtk_highlight_label_new("comment");
       gtk_box_pack_start(GTK_BOX(combox), comment_label, false, false, 0);
       gtk_widget_show(comment_label);
 
@@ -2565,7 +2565,7 @@ void reflect_region_in_save_as_dialog(void)
 
 static void save_as_undoit(save_as_dialog_info *sd)
 {
-  set_stock_button_label(sd->fs->ok_button, _("Save"));
+  set_stock_button_label(sd->fs->ok_button, "Save");
   if ((sd->filename_watcher_id > 0) && (sd->fs->file_text))
     {
       g_signal_handler_disconnect(sd->fs->file_text, sd->filename_watcher_id);
@@ -2627,8 +2627,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       (!(selection_is_active())))
     {
       if (saving)
-	msg = _("no selection to save");
-      else msg = _("can't extract: no selection");
+	msg = "no selection to save";
+      else msg = "can't extract: no selection";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       return;
     }
@@ -2636,7 +2636,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if ((sd->type == REGION_SAVE_AS) &&
       (!(region_ok(region_dialog_region()))))
     {
-      post_file_dialog_error(_("no region to save"), sd->panel_data);
+      post_file_dialog_error("no region to save", sd->panel_data);
       return;
     }
 
@@ -2645,8 +2645,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       (sd->type != REGION_SAVE_AS))
     {
       if (saving)
-	msg = _("nothing to save");
-      else msg = _("nothing to extract");
+	msg = "nothing to save";
+      else msg = "nothing to extract";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->fs, sd);
       return;
@@ -2657,8 +2657,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if ((!str) || (!*str))
     {
       if (saving)
-	msg = _("can't save: no file name given");
-      else msg = _("can't extract: no file name given");
+	msg = "can't save: no file name given";
+      else msg = "can't extract: no file name given";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->fs, sd);
       return;
@@ -2719,7 +2719,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   fullname = mus_expand_filename(str);
   if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, type, format, comment))
     {
-      msg = mus_format(_("%s cancelled by %s"), (saving) ? "save" : "extract", S_before_save_as_hook);
+      msg = mus_format("%s cancelled by %s", (saving) ? "save" : "extract", S_before_save_as_hook);
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->fs, sd);      
       free(msg);
@@ -2736,7 +2736,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if ((sp->user_read_only == FILE_READ_ONLY) || 
 	  (sp->file_read_only == FILE_READ_ONLY))
 	{
-	  msg = mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename);
+	  msg = mus_format("can't overwrite %s (it is write-protected)", sp->short_filename);
 	  post_file_dialog_error((const char *)msg, sd->panel_data);
 	  clear_error_if_filename_changes(sd->fs, sd); 
 	  free(msg);
@@ -2756,7 +2756,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	       ((sd->type == SOUND_SAVE_AS) &&
 		(parlous_sp = file_is_open_elsewhere_and_has_unsaved_edits(sp, fullname)))))	   
 	    {
-	      msg = mus_format(_("%s exists%s. To overwrite it, click '%s'"), 
+	      msg = mus_format("%s exists%s. To overwrite it, click '%s'", 
 			       str,
 			       (parlous_sp) ? ", and has unsaved edits" : "",
 			       "DoIt"
@@ -2764,7 +2764,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
 	      post_file_dialog_error((const char *)msg, sd->panel_data);
 	      clear_error_if_save_as_filename_changes(sd->fs->dialog, (void *)sd);
-	      set_stock_button_label(sd->fs->ok_button, _("DoIt"));
+	      set_stock_button_label(sd->fs->ok_button, "DoIt");
 	      free(msg);
 	      free(fullname);
 	      if (comment) free(comment);
@@ -2925,7 +2925,7 @@ static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
   if (snd_mkdir(filename) < 0)
     {
       /* could not make the directory */
-      str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
+      str = mus_format("can't make %s: %s", filename, strerror(errno));
       post_file_dialog_error((const char *)str, sd->panel_data);
       clear_error_if_filename_changes(fs, sd);
       free(str);
@@ -2937,7 +2937,7 @@ static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
       fsb_filter_set_text_with_directory(fs, "*");
       fsb_update_lists(fs);
       set_sensitive(w, false);
-      str = _("save as:");
+      str = "save as:";
       gtk_label_set_text(GTK_LABEL(sd->fs->file_label), str);
     }
 }
@@ -2956,19 +2956,19 @@ static void save_as_file_exists_check(GtkWidget *w, gpointer context)
 	{
 #if HAVE_ACCESS
 	  if (access(filename, W_OK) < 0)
-	    msg = _("save as (file write-protected?):");
+	    msg = "save as (file write-protected?):";
 	  else
 #endif
-	    msg = _("save as (overwriting):");
+	    msg = "save as (overwriting):";
 	}
       else
 	{
 	  if (!(directory_exists(filename)))
-	    msg = _("save as (no such directory?):");
-	  else msg = _("save as:");
+	    msg = "save as (no such directory?):";
+	  else msg = "save as:";
 	}
     }
-  else msg = _("save as:");
+  else msg = "save as:";
   gtk_label_set_text(GTK_LABEL(sd->fs->file_label), msg);
 }
 
@@ -3008,13 +3008,13 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 {
   char *file_string;
 
-  file_string = mus_format(_("save %s"), sound_name);
+  file_string = mus_format("save %s", sound_name);
   if (!(sd->fs))
     {
       fsb *fs;
       sd->header_type = header_type;
       sd->format_type = format_type;
-      sd->fs = make_fsb(file_string, _("save as:"), _("Save as"), save_innards, (void *)sd, GTK_STOCK_SAVE_AS, (sd->type != REGION_SAVE_AS));
+      sd->fs = make_fsb(file_string, "save as:", "Save as", save_innards, (void *)sd, GTK_STOCK_SAVE_AS, (sd->type != REGION_SAVE_AS));
       fs = sd->fs;
 
       if (sd->type != REGION_SAVE_AS)
@@ -3116,7 +3116,7 @@ widget_t make_selection_save_as_dialog(bool managed)
   sd = save_selection_as;
 
   make_save_as_dialog(sd,
-		      _("current selection"),
+		      "current selection",
 		      default_output_header_type(ss),
 		      default_output_data_format(ss));
   set_file_dialog_sound_attributes(sd->panel_data,
@@ -3145,7 +3145,7 @@ widget_t make_region_save_as_dialog(bool managed)
   sd = save_region_as;
 
   make_save_as_dialog(sd,
-		      _("current region"),
+		      "current region",
 		      default_output_header_type(ss),
 		      default_output_data_format(ss));
   comment = region_description(region_dialog_region());
@@ -3441,7 +3441,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
  
   rp->dialog = snd_gtk_dialog_new();
   if (!title)
-    gtk_window_set_title(GTK_WINDOW(rp->dialog), _("No header on file"));
+    gtk_window_set_title(GTK_WINDOW(rp->dialog), "No header on file");
   else gtk_window_set_title(GTK_WINDOW(rp->dialog), title);
   sg_make_resizable(rp->dialog);
   gtk_container_set_border_width(GTK_CONTAINER(rp->dialog), 10);
@@ -3453,9 +3453,9 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 
   cancelB = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_widget_set_name(cancelB, "dialog_button");
-  set_stock_button_label(cancelB, _("Go Away"));
+  set_stock_button_label(cancelB, "Go Away");
 
-  resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
+  resetB = sg_button_new_from_stock_with_label("Reset", GTK_STOCK_REFRESH);
   gtk_widget_set_name(resetB, "dialog_button");
 
   okB = gtk_button_new_from_stock(GTK_STOCK_OK);
@@ -3560,7 +3560,7 @@ static void new_file_undoit(void)
 	  new_file_handler_id = 0;
 	}
     }
-  set_stock_button_label(new_file_ok_button, _("Ok"));
+  set_stock_button_label(new_file_ok_button, "Ok");
   new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
 }
 
@@ -3608,7 +3608,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
   newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_text));
   if ((!newer_name) || (!(*newer_name)))
     {
-      msg = _("new sound needs a file name ('New file:' field is empty)");
+      msg = "new sound needs a file name ('New file:' field is empty)";
       post_file_dialog_error((const char *)msg, ndat);
       clear_error_if_new_filename_changes(new_file_dialog);
     }
@@ -3631,9 +3631,9 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	      (ask_before_overwrite(ss)) && 
 	      (mus_file_probe(new_file_filename)))
 	    {
-	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
+	      msg = mus_format("%s exists. If you want to overwrite it, click 'DoIt'", newer_name);
 	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
-	      set_stock_button_label(new_file_ok_button, _("DoIt"));
+	      set_stock_button_label(new_file_ok_button, "DoIt");
 	      post_file_dialog_error((const char *)msg, ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog);
 	      free(msg);
@@ -3681,7 +3681,7 @@ static char *new_file_dialog_filename(int header_type)
     case MUS_CAFF: extension = 4;  break;
     default:       extension = 5;  break;
     }
-  mus_snprintf(filename, 64, _("new-%d.%s"), new_file_dialog_file_ctr++, extensions[extension]);
+  mus_snprintf(filename, 64, "new-%d.%s", new_file_dialog_file_ctr++, extensions[extension]);
 
   return(filename);
 }
@@ -3748,7 +3748,7 @@ widget_t make_new_file_dialog(bool managed)
     {
       GtkWidget *name_label, *hform, *help_button, *cancel_button, *reset_button;
       new_file_dialog = snd_gtk_dialog_new();
-      gtk_window_set_title(GTK_WINDOW(new_file_dialog), _("New file"));
+      gtk_window_set_title(GTK_WINDOW(new_file_dialog), "New file");
       sg_make_resizable(new_file_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(new_file_dialog), 10);
       gtk_window_resize(GTK_WINDOW(new_file_dialog), 400, 250);
@@ -3759,12 +3759,12 @@ widget_t make_new_file_dialog(bool managed)
 
       cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
       gtk_widget_set_name(cancel_button, "dialog_button");
-      set_stock_button_label(cancel_button, _("Go Away"));
+      set_stock_button_label(cancel_button, "Go Away");
 
-      new_file_ok_button = sg_button_new_from_stock_with_label(_("Ok"), GTK_STOCK_NEW);
+      new_file_ok_button = sg_button_new_from_stock_with_label("Ok", GTK_STOCK_NEW);
       gtk_widget_set_name(new_file_ok_button, "dialog_button");
 
-      reset_button = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
+      reset_button = sg_button_new_from_stock_with_label("Reset", GTK_STOCK_REFRESH);
       gtk_widget_set_name(reset_button, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), new_file_ok_button, true, true, 10);
@@ -3776,7 +3776,7 @@ widget_t make_new_file_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(new_file_dialog)), hform, false, false, 4);
       gtk_widget_show(hform);
 
-      name_label = gtk_label_new(_("New file:"));
+      name_label = gtk_label_new("New file:");
       gtk_box_pack_start(GTK_BOX(hform), name_label, false, false, 2);
       gtk_widget_show(name_label);
 
@@ -3923,16 +3923,16 @@ static char *make_header_dialog_title(edhead_info *ep, snd_info *sp)
       (sp->file_read_only == FILE_READ_ONLY))
     {
       if (sp->hdr->type == MUS_RAW)
-	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to (write-protected) %s"), sp->short_filename);
-      else mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of (write-protected) %s"), sp->short_filename);
+	mus_snprintf(str, PRINT_BUFFER_SIZE, "Add header to (write-protected) %s", sp->short_filename);
+      else mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of (write-protected) %s", sp->short_filename);
       if (ep->dialog)
 	set_sensitive(ep->save_button, (sp->hdr->type == MUS_RAW));
     }
   else 
     {
       if (sp->hdr->type == MUS_RAW)
-	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to %s"), sp->short_filename);
-      else mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of %s"), sp->short_filename);
+	mus_snprintf(str, PRINT_BUFFER_SIZE, "Add header to %s", sp->short_filename);
+      else mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of %s", sp->short_filename);
       if (ep->dialog)
 	set_sensitive(ep->save_button, ep->panel_changed);
     }
@@ -4090,7 +4090,7 @@ GtkWidget *edit_header(snd_info *sp)
     {
       GtkWidget *help_button, *cancel_button;
       ep->dialog = snd_gtk_dialog_new();
-      /* gtk_window_set_title(GTK_WINDOW(ep->dialog), _("Edit Header")); */
+      /* gtk_window_set_title(GTK_WINDOW(ep->dialog), "Edit Header"); */
       sg_make_resizable(ep->dialog);
       gtk_container_set_border_width (GTK_CONTAINER(ep->dialog), 10);
       gtk_window_resize(GTK_WINDOW(ep->dialog), 400, 250);
@@ -4101,7 +4101,7 @@ GtkWidget *edit_header(snd_info *sp)
 
       cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
       gtk_widget_set_name(cancel_button, "dialog_button");
-      set_stock_button_label(cancel_button, _("Go Away"));
+      set_stock_button_label(cancel_button, "Go Away");
 
       ep->save_button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
       gtk_widget_set_name(ep->save_button, "dialog_button");
@@ -4110,7 +4110,7 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), cancel_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), help_button, true, true, 10);
 
-      ep->edat = make_file_data_panel(DIALOG_CONTENT_AREA(ep->dialog), _("Edit Header"), 
+      ep->edat = make_file_data_panel(DIALOG_CONTENT_AREA(ep->dialog), "Edit Header", 
 				      WITH_CHANNELS_FIELD, 
 				      hdr->type, 
 				      hdr->format, 
@@ -4206,7 +4206,7 @@ static void create_post_it_monolog(void)
   post_it_dialog = gtk_dialog_new();
   SG_SIGNAL_CONNECT(post_it_dialog, "delete_event", delete_post_it, NULL);
 
-  gtk_window_set_title(GTK_WINDOW(post_it_dialog), _("Info"));
+  gtk_window_set_title(GTK_WINDOW(post_it_dialog), "Info");
   sg_make_resizable(post_it_dialog);
   gtk_container_set_border_width(GTK_CONTAINER(post_it_dialog), 10);
   gtk_window_resize(GTK_WINDOW(post_it_dialog), POST_IT_COLUMNS * 9, POST_IT_ROWS * 20);
@@ -5324,7 +5324,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       {
 	char *filestr = NULL;
-	filestr = mus_format("%s %d", _("Files"), vdat->index + 1);
+	filestr = mus_format("%s %d", "Files", vdat->index + 1);
 	gtk_window_set_title(GTK_WINDOW(vdat->dialog), filestr);
 	free(filestr);
       }
@@ -5337,14 +5337,14 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(helpB, "dialog_button");
 
-      newB = sg_button_new_from_stock_with_label(_("New Viewer"), GTK_STOCK_NEW);
+      newB = sg_button_new_from_stock_with_label("New Viewer", GTK_STOCK_NEW);
       gtk_widget_set_name(newB, "dialog_button");
 
       dismissB = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismissB, "dialog_button");
-      set_stock_button_label(dismissB, _("Go Away"));
+      set_stock_button_label(dismissB, "Go Away");
 
-      resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
+      resetB = sg_button_new_from_stock_with_label("Reset", GTK_STOCK_REFRESH);
       gtk_widget_set_name(resetB, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), newB, true, true, 10);
@@ -5391,7 +5391,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       /* files section: play files | files */
 
-      rlw = snd_gtk_highlight_label_new(_("files"));
+      rlw = snd_gtk_highlight_label_new("files");
       gtk_box_pack_start(GTK_BOX(fileform), rlw, false, false, 0);
       gtk_widget_show(rlw);
 
@@ -5404,7 +5404,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_box_pack_start(GTK_BOX(fileform), tophbox, false, false, 4);
       gtk_widget_show(tophbox);
 
-      plw = gtk_label_new(_("play")); 
+      plw = gtk_label_new("play"); 
       gtk_box_pack_start(GTK_BOX(tophbox), plw, false, false, 5);
       gtk_widget_show(plw);
 
@@ -5413,12 +5413,12 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_show(sbar);
 
       vdat->smenu = gtk_menu_new();
-      vdat->a_to_z = gtk_menu_item_new_with_label(_("a..z"));
-      vdat->z_to_a = gtk_menu_item_new_with_label(_("z..a"));
-      vdat->new_to_old = gtk_menu_item_new_with_label(_("new..old"));
-      vdat->old_to_new = gtk_menu_item_new_with_label(_("old..new"));
-      vdat->small_to_big = gtk_menu_item_new_with_label(_("small..big"));
-      vdat->big_to_small = gtk_menu_item_new_with_label(_("big..small"));
+      vdat->a_to_z = gtk_menu_item_new_with_label("a..z");
+      vdat->z_to_a = gtk_menu_item_new_with_label("z..a");
+      vdat->new_to_old = gtk_menu_item_new_with_label("new..old");
+      vdat->old_to_new = gtk_menu_item_new_with_label("old..new");
+      vdat->small_to_big = gtk_menu_item_new_with_label("small..big");
+      vdat->big_to_small = gtk_menu_item_new_with_label("big..small");
 
       gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->a_to_z);
       gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->z_to_a);
@@ -5442,7 +5442,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_show(vdat->small_to_big);
       gtk_widget_show(vdat->big_to_small);
 
-      sitem = gtk_menu_item_new_with_label(_("sort"));
+      sitem = gtk_menu_item_new_with_label("sort");
       gtk_widget_show(sitem);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), vdat->smenu);
       gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
@@ -5496,7 +5496,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_box_pack_end(GTK_BOX(fileform), addbox, false, false, 0);
       gtk_widget_show(addbox);
 
-      add_label = gtk_label_new(_("add:"));
+      add_label = gtk_label_new("add:");
       gtk_box_pack_start(GTK_BOX(addbox), add_label, false, false, 4);
       gtk_widget_show(add_label);
 
@@ -5509,7 +5509,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	GtkWidget *ltop_sep, *lbox, *frame;
 	GtkWidget *lbox1, *lbox2, *lbox3, *lbox4, *lbox5;
 
-	vdat->left_title = snd_gtk_entry_label_new(_("(no files selected)"), ss->sgx->highlight_color);
+	vdat->left_title = snd_gtk_entry_label_new("(no files selected)", ss->sgx->highlight_color);
 	gtk_box_pack_start(GTK_BOX(leftform), vdat->left_title, false, false, 0);
 
 	gtk_entry_set_alignment(GTK_ENTRY(vdat->left_title), 0.5);
@@ -5543,7 +5543,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(lbox);
 
 	vdat->openB = gtk_button_new_from_stock(GTK_STOCK_OPEN);
-	vdat->removeB = sg_button_new_from_stock_with_label(_("Unlist"), GTK_STOCK_REMOVE);
+	vdat->removeB = sg_button_new_from_stock_with_label("Unlist", GTK_STOCK_REMOVE);
 
 	gtk_box_pack_start(GTK_BOX(lbox), vdat->openB, true, true, 1);
 	gtk_box_pack_end(GTK_BOX(lbox), vdat->removeB, true, true, 1);
@@ -5580,8 +5580,8 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_start(GTK_BOX(lbox2), lbox1, false, false, 0);
 	gtk_widget_show(lbox1);
 
-	vdat->mixB = sg_button_new_from_stock_with_label(_("Mix"), GTK_STOCK_ADD);
-	vdat->insertB = sg_button_new_from_stock_with_label(_("Insert"), GTK_STOCK_PASTE);
+	vdat->mixB = sg_button_new_from_stock_with_label("Mix", GTK_STOCK_ADD);
+	vdat->insertB = sg_button_new_from_stock_with_label("Insert", GTK_STOCK_PASTE);
 
 	gtk_box_pack_start(GTK_BOX(lbox1), vdat->mixB, true, true, 1);
 	gtk_box_pack_end(GTK_BOX(lbox1), vdat->insertB, true, true, 1);
@@ -5595,19 +5595,19 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(vdat->mixB);
 	gtk_widget_show(vdat->insertB);
 
-	vdat->at_cursor_button = gtk_radio_button_new_with_label(NULL, _("at cursor"));
+	vdat->at_cursor_button = gtk_radio_button_new_with_label(NULL, "at cursor");
 	widget_modify_bg(vdat->at_cursor_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_cursor_button, false, false, 0);
 	gtk_widget_show(vdat->at_cursor_button);
 	SG_SIGNAL_CONNECT(vdat->at_cursor_button, "clicked", view_files_at_cursor_callback, (gpointer)vdat);
 
-	vdat->at_end_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at end"));
+	vdat->at_end_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), "at end");
 	widget_modify_bg(vdat->at_end_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_end_button, false, false, 0);
 	gtk_widget_show(vdat->at_end_button);
 	SG_SIGNAL_CONNECT(vdat->at_end_button, "clicked", view_files_at_end_callback, (gpointer)vdat);
 
-	vdat->at_beginning_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at beginning"));
+	vdat->at_beginning_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), "at beginning");
 	widget_modify_bg(vdat->at_beginning_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_beginning_button, false, false, 0);
 	gtk_widget_show(vdat->at_beginning_button);
@@ -5625,7 +5625,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_start(GTK_BOX(lbox5), lbox4, true, true, 10);
 	gtk_widget_show(lbox4);
 
-	vdat->at_sample_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at sample"));
+	vdat->at_sample_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), "at sample");
 	widget_modify_bg(vdat->at_sample_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox3), vdat->at_sample_button, false, false, 0);
 	gtk_widget_show(vdat->at_sample_button);
@@ -5634,7 +5634,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	vdat->at_sample_text = snd_entry_new(lbox4, WITH_WHITE_BACKGROUND);
 	gtk_widget_show(vdat->at_sample_text);
 
-	vdat->at_mark_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at mark"));
+	vdat->at_mark_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), "at mark");
 	widget_modify_bg(vdat->at_mark_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_end(GTK_BOX(lbox3), vdat->at_mark_button, false, false, 0);
 	gtk_widget_show(vdat->at_mark_button);
@@ -5655,7 +5655,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  gtk_widget_show(vdat->amp_event);
 	  SG_SIGNAL_CONNECT(vdat->amp_event, "button_press_event", vf_amp_click_callback, (gpointer)vdat);
       
-	  ampL = gtk_label_new(_("amp:"));
+	  ampL = gtk_label_new("amp:");
 	  gtk_container_add(GTK_CONTAINER(vdat->amp_event), ampL);
 	  gtk_widget_show(ampL);
 
@@ -5683,7 +5683,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  gtk_widget_show(vdat->speed_event);
 	  SG_SIGNAL_CONNECT(vdat->speed_event, "button_press_event", vf_speed_click_callback, (gpointer)vdat);
       
-	  speedL = gtk_label_new(_("speed:"));
+	  speedL = gtk_label_new("speed:");
 	  gtk_container_add(GTK_CONTAINER(vdat->speed_event), speedL);
 	  gtk_widget_show(speedL);
 

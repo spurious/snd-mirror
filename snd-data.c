@@ -1067,7 +1067,7 @@ static char *display_maxamps(const char *filename, int chans)
   ampstr = (char *)calloc(len, sizeof(char));
   vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
   times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
-  mus_snprintf(ampstr, len, "%s", _("\nmax amp: "));
+  mus_snprintf(ampstr, len, "%s", "\nmax amp: ");
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
     {
@@ -1104,17 +1104,17 @@ void display_info(snd_info *sp)
 	    ampstr = display_maxamps(sp->filename, sp->nchans);
 	  buffer = (char *)calloc(INFO_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buffer, INFO_BUFFER_SIZE, 
-		       _("srate: %d\nchans: %d\nlength: %.3f (" MUS_LD " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n"),
+		       "srate: %d\nchans: %d\nlength: %.3f ("MUS_LD " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n",
 		       hdr->srate,
 		       hdr->chans,
 		       (mus_float_t)((double)(hdr->samples) / (mus_float_t)(hdr->chans * hdr->srate)),
 		       (mus_long_t)((hdr->samples) / (hdr->chans)),
-		       (hdr->chans == 1) ? _("samples") : _("frames"),
+		       (hdr->chans == 1) ? "samples" : "frames",
 		       mus_header_type_name(hdr->type),
 		       mus_data_format_name(hdr->format),
 		       snd_strftime(STRFTIME_FORMAT, sp->write_date),
 		       (ampstr) ? ampstr : "",
-		       (quoted_comment) ? _("\ncomment: ") : "",
+		       (quoted_comment) ? "\ncomment: " : "",
 		       (quoted_comment) ? quoted_comment : "");
 	  post_it(sp->short_filename, buffer);
 	  if (ampstr) free(ampstr);

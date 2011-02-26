@@ -3,7 +3,7 @@
 #define FALLBACK_FONT "Sans 14"
 
   #define HIGHLIGHT_COLOR      rgb_to_color(1.00, 1.00, 0.94) /* "ivory1" */
-  #define BASIC_COLOR          rgb_to_color(0.93, 0.93, 0.87) /* "ivory2" */
+  #define BASIC_COLOR          rgb_to_color(0.96, 0.96, 0.90) /* "ivory2" lightened */
   #define POSITION_COLOR       rgb_to_color(0.80, 0.80, 0.75) /* "ivory3" */
   #define ZOOM_COLOR           rgb_to_color(0.54, 0.54, 0.51) /* "ivory4" */
   #define CURSOR_COLOR         rgb_to_color(1.0, 0.0, 0.0)    /* "red" */
@@ -559,26 +559,26 @@ void snd_doit(int argc, char **argv)
 
   if ((!(set_tiny_font(DEFAULT_TINY_FONT))) &&
       (!(set_tiny_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find tiny font: %s"), DEFAULT_TINY_FONT);
+    fprintf(stderr, "can't find tiny font: %s", DEFAULT_TINY_FONT);
 
   if ((!(set_axis_label_font(DEFAULT_AXIS_LABEL_FONT))) &&
       (!(set_axis_label_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find axis label font: %s"), DEFAULT_AXIS_LABEL_FONT);
+    fprintf(stderr, "can't find axis label font: %s", DEFAULT_AXIS_LABEL_FONT);
 
   if ((!(set_axis_numbers_font(DEFAULT_AXIS_NUMBERS_FONT))) &&
       (!(set_axis_numbers_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find axis numbers font: %s"), DEFAULT_AXIS_NUMBERS_FONT);
+    fprintf(stderr, "can't find axis numbers font: %s", DEFAULT_AXIS_NUMBERS_FONT);
 
   if ((!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&
       (!(set_peaks_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find peaks font: %s"), DEFAULT_PEAKS_FONT);
+    fprintf(stderr, "can't find peaks font: %s", DEFAULT_PEAKS_FONT);
 
   if ((!(set_bold_peaks_font(DEFAULT_BOLD_PEAKS_FONT))) &&
       (!(set_bold_peaks_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find bold peaks font: %s"), DEFAULT_BOLD_PEAKS_FONT);
+    fprintf(stderr, "can't find bold peaks font: %s", DEFAULT_BOLD_PEAKS_FONT);
 
   if (!(set_listener_font(FALLBACK_FONT)))
-    fprintf(stderr, _("can't find listener font: %s"), FALLBACK_FONT);
+    fprintf(stderr, "can't find listener font: %s", FALLBACK_FONT);
 
   ss->orig_axis_label_font = mus_strdup(axis_label_font(ss));
   ss->orig_axis_numbers_font = mus_strdup(axis_numbers_font(ss));
@@ -648,10 +648,10 @@ void snd_doit(int argc, char **argv)
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       if (!(ss->exiting))
-	snd_error_without_format(_("Caught seg fault (will try to continue):\n"));
+	snd_error_without_format("Caught seg fault (will try to continue):\n");
       else
 	{
-	  snd_error_without_format(_("Caught seg fault while trying to exit.\n"));
+	  snd_error_without_format("Caught seg fault while trying to exit.\n");
 	  exit(0);
 	}
     }
@@ -659,7 +659,7 @@ void snd_doit(int argc, char **argv)
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))
-	snd_error_without_format(_("Caught top level error (will try to continue):\n"));
+	snd_error_without_format("Caught top level error (will try to continue):\n");
       else ss->jump_ok = false;
     }
 #endif

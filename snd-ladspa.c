@@ -271,7 +271,7 @@ static void loadLADSPA(void) {
     {
       pcLADSPAPath = getenv("LADSPA_PATH");
       if (pcLADSPAPath == NULL) {
-       snd_warning(_("Warning: You have not set " S_ladspa_dir " or the environment variable LADSPA_PATH.\n" 
+       snd_warning("Warning: You have not set "S_ladspa_dir " or the environment variable LADSPA_PATH.\n" 
                       "Using /usr/lib/ladspa instead.")); 
         pcLADSPAPath = "/usr/lib/ladspa"; 
       }
@@ -390,7 +390,7 @@ it can be useful when the plugins on the system have changed."
     int n = 0;
     help_menu = menu_widget(4);
     XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-    m = XtCreateManagedWidget(_("Plugins"), xmPushButtonWidgetClass, help_menu, args, n);
+    m = XtCreateManagedWidget("Plugins", xmPushButtonWidgetClass, help_menu, args, n);
     XtAddCallback(m, XmNactivateCallback, ladspa_help_callback, NULL);
   }
 #endif
@@ -398,7 +398,7 @@ it can be useful when the plugins on the system have changed."
   {
     GtkWidget *m, *help_menu;
     help_menu = get_help_menu_widget(); /* this is the cascade menu */
-    m = gtk_menu_item_new_with_label(_("Plugins"));
+    m = gtk_menu_item_new_with_label("Plugins");
     gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), m);
     gtk_widget_show(m);
     SG_SIGNAL_CONNECT(m, "activate", ladspa_help_callback, NULL);
@@ -642,7 +642,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 
   if (inchans != readers)
     {
-      msg = mus_format(_("Ladspa %s required inputs (%d) != samplers (%d)"), pcLabel, inchans, readers);
+      msg = mus_format("Ladspa %s required inputs (%d) != samplers (%d)", pcLabel, inchans, readers);
       errmsg = C_TO_XEN_STRING(msg);
       free(msg);
       XEN_ERROR(XEN_ERROR_TYPE("plugin-error"),
@@ -881,7 +881,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
     }
   else 
     {
-      report_in_minibuffer(sp, _(S_apply_ladspa " interrupted"));
+      report_in_minibuffer(sp, S_apply_ladspa " interrupted");
       ss->stopped_explicitly = false;
     }
   if (ofile) free(ofile);

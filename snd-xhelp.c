@@ -350,9 +350,9 @@ static void create_help_monolog(void)
   Widget holder, xref_label; /* documentation says this isn't needed, but it is */
   Widget frame, label, inner_holder, sep, parent;
   XmRenderTable rs = NULL;
-  titlestr = XmStringCreateLocalized(_("Help"));
-  forward = XmStringCreateLocalized(_("Forward"));
-  dismiss = XmStringCreateLocalized(_("Go Away"));
+  titlestr = XmStringCreateLocalized("Help");
+  forward = XmStringCreateLocalized("Forward");
+  dismiss = XmStringCreateLocalized("Go Away");
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -379,7 +379,7 @@ static void create_help_monolog(void)
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
   XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-  help_previous_button = XtCreateManagedWidget(_("Back"), xmPushButtonGadgetClass, help_dialog, args, n);
+  help_previous_button = XtCreateManagedWidget("Back", xmPushButtonGadgetClass, help_dialog, args, n);
   XtAddCallback(help_previous_button, XmNactivateCallback, help_previous_callback, NULL);
   XtSetSensitive(help_next_button, false);
   XtSetSensitive(help_previous_button, false);
@@ -450,7 +450,7 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNheight, 24); n++;
   /* XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++; */
-  label = XtCreateManagedWidget(_("help topic:"), xmLabelWidgetClass, holder, args, n);
+  label = XtCreateManagedWidget("help topic:", xmLabelWidgetClass, holder, args, n);
   
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
@@ -479,7 +479,7 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-  xref_label = XtCreateManagedWidget(_("related topics:"), xmLabelWidgetClass, inner_holder, args, n);
+  xref_label = XtCreateManagedWidget("related topics:", xmLabelWidgetClass, inner_holder, args, n);
   
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;

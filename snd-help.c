@@ -333,7 +333,7 @@ char *version_info(void)
   xversion = xen_version();
   consistent = sndlib_consistency_check();
   result = vstrcat(
-	  _("This is Snd version "),
+	  "This is Snd version ",
 	  SND_VERSION,
 	  " of ",
 	  SND_DATE,
@@ -346,7 +346,7 @@ char *version_info(void)
 #if SNDLIB_USE_FLOATS
 	  ", ", (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double", " samples",
 #else
-	  ", int", snd_itoa(MUS_SAMPLE_BITS), _(" samples"),
+	  ", int", snd_itoa(MUS_SAMPLE_BITS), " samples",
 #endif
 #if HAVE_PTHREADS
 	  ", with threads",
@@ -399,7 +399,7 @@ char *version_info(void)
   #endif
 #endif
 #if (!USE_MOTIF) && (!USE_GTK)
-	  _("\n    without any graphics system"),
+	  "\n    without any graphics system",
 #endif
 #if HAVE_XPM && USE_MOTIF
 	  "\n    Xpm ", snd_itoa(XpmFormat), ".", 
@@ -427,7 +427,7 @@ char *version_info(void)
 	      ", mpc: ",  mpc_get_version(),
 #endif
 #if SND_AS_WIDGET
-	  _("\n    compiled as a widget"),
+	  "\n    compiled as a widget",
 #endif
 #ifdef __DATE__
 	  "\n    Compiled ", __DATE__, " ", __TIME__,
@@ -496,7 +496,7 @@ void about_snd_help(void)
          with-toolbar, with-tooltips, remember-sound-state, with-smpte-label.\n\
          new built-in toolbars, removed toolbar.scm and panic.scm.\n\
          removed Snd.ad and Snd.gtrc.\n\
-         The built-in popup menu is now context sensitive, and the files popup.scm\n\
+         The built-in popup menus are now context sensitive, and the files popup.scm\n\
            and gtk-popup.scm have been removed.\n\
 12-Feb:  Snd 11.13.\n\
 7-Jan:   Snd 11.12.\n\

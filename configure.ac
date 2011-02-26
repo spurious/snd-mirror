@@ -1026,8 +1026,6 @@ else
           AC_DEFINE_UNQUOTED(MUS_CAIRO_VERSION,"${cairo_version}")
           fi
 
-	AC_CHECK_LIB(m, gtk_print_operation_new, [AC_DEFINE(HAVE_GTK_PRINT_OPERATION_NEW)], ,$GTK_LIBS)
-	# for 2.11.0..6
 	AC_CHECK_LIB(m, gtk_widget_get_has_tooltip, [AC_DEFINE(HAVE_GTK_WIDGET_GET_HAS_TOOLTIP)], ,$GTK_LIBS)
 	# for 2.13.0
 	AC_CHECK_LIB(m, gtk_test_widget_click, [AC_DEFINE(HAVE_GTK_TEST_WIDGET_CLICK)], ,$GTK_LIBS)

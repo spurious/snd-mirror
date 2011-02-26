@@ -112,13 +112,13 @@ static void make_region_labels(file_info *hdr)
   char *str;
   if (hdr == NULL) return;
   str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, _("srate: %d"), hdr->srate);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
   set_label(reg_srtxt, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, _("chans: %d"), hdr->chans);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "chans: %d", hdr->chans);
   set_label(reg_chntxt, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, _("length: %.3f"), (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
   set_label(reg_lentxt, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, _("maxamp: %.3f"), region_maxamp(region_list_position_to_id(current_region)));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "maxamp: %.3f", region_maxamp(region_list_position_to_id(current_region)));
   set_label(reg_maxtxt, str);
   free(str);
 }
@@ -322,7 +322,7 @@ static void region_play_callback(Widget w, XtPointer context, XtPointer info)
 static void region_print_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (current_region != -1)
-    region_print(eps_file(ss), _("region"), rsp->chans[0]);
+    region_print(eps_file(ss), "region", rsp->chans[0]);
 }
 
 
@@ -448,10 +448,10 @@ static void make_region_dialog(void)
   regrow *r;
   chan_info *cp;
 
-  xok = XmStringCreateLocalized(_("Go Away"));
-  xhelp = XmStringCreateLocalized(_("Help"));
-  xinsert = XmStringCreateLocalized(_("Insert"));
-  titlestr = XmStringCreateLocalized(_("Regions"));
+  xok = XmStringCreateLocalized("Go Away");
+  xhelp = XmStringCreateLocalized("Help");
+  xinsert = XmStringCreateLocalized("Insert");
+  titlestr = XmStringCreateLocalized("Regions");
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -463,17 +463,17 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNtransient, false); n++;
-  region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Regions"), args, n);
+  region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Regions", args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
   XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-  save_as_button = XtCreateManagedWidget(_("Save as"), xmPushButtonGadgetClass, region_dialog, args, n);
+  save_as_button = XtCreateManagedWidget("Save as", xmPushButtonGadgetClass, region_dialog, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
   XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-  mix_button = XtCreateManagedWidget(_("Mix"), xmPushButtonGadgetClass, region_dialog, args, n);
+  mix_button = XtCreateManagedWidget("Mix", xmPushButtonGadgetClass, region_dialog, args, n);
 
   XtAddCallback(region_dialog,  XmNokCallback,       region_ok_callback,     NULL);
   XtAddCallback(region_dialog,  XmNcancelCallback,   region_insert_callback, NULL);
@@ -527,7 +527,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  plw = XtCreateManagedWidget(_("play"), xmLabelWidgetClass, toppane, args, n);
+  plw = XtCreateManagedWidget("play", xmLabelWidgetClass, toppane, args, n);
   
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -581,7 +581,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-  reg_srtxt = XtCreateManagedWidget(_("srate:"), xmLabelWidgetClass, toppane, args, n);
+  reg_srtxt = XtCreateManagedWidget("srate:", xmLabelWidgetClass, toppane, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -592,7 +592,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopWidget, reg_srtxt); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-  reg_chntxt = XtCreateManagedWidget(_("chans:"), xmLabelWidgetClass, toppane, args, n);
+  reg_chntxt = XtCreateManagedWidget("chans:", xmLabelWidgetClass, toppane, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -603,7 +603,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopWidget, reg_chntxt); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-  reg_lentxt = XtCreateManagedWidget(_("length:"), xmLabelWidgetClass, toppane, args, n);
+  reg_lentxt = XtCreateManagedWidget("length:", xmLabelWidgetClass, toppane, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -614,7 +614,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopWidget, reg_lentxt); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-  reg_maxtxt = XtCreateManagedWidget(_("maxamp:"), xmLabelWidgetClass, toppane, args, n);
+  reg_maxtxt = XtCreateManagedWidget("maxamp:", xmLabelWidgetClass, toppane, args, n);
 
 
   n = 0;
@@ -641,19 +641,19 @@ static void make_region_dialog(void)
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
   XtSetArg(args[n], XmNarmColor, ss->sgx->red); n++;
-  editb = XtCreateManagedWidget(_("edit"), xmPushButtonWidgetClass, rw, args, n);
+  editb = XtCreateManagedWidget("edit", xmPushButtonWidgetClass, rw, args, n);
   XtAddCallback(editb, XmNactivateCallback, region_edit_callback, NULL);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
   XtSetArg(args[n], XmNarmColor, ss->sgx->red); n++;
-  prtb = XtCreateManagedWidget(_("print"), xmPushButtonWidgetClass, rw, args, n);
+  prtb = XtCreateManagedWidget("print", xmPushButtonWidgetClass, rw, args, n);
   XtAddCallback(prtb, XmNactivateCallback, region_print_callback, NULL);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
   XtSetArg(args[n], XmNarmColor, ss->sgx->red); n++;
-  unlistb = XtCreateManagedWidget(_("unlist"), xmPushButtonWidgetClass, rw, args, n);
+  unlistb = XtCreateManagedWidget("unlist", xmPushButtonWidgetClass, rw, args, n);
   XtAddCallback(unlistb, XmNactivateCallback, region_unlist_callback, NULL);
 
   n = 0;

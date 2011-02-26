@@ -859,7 +859,7 @@ static void deferred_region_to_temp_file(region *r)
       err = mus_write_header(r->filename, MUS_NEXT, r->srate, r->chans, drp->len * r->chans, sp0->hdr->format, "region deferred temp");
 
       if (err != MUS_NO_ERROR)
-	snd_error(_("can't write region temp file %s: %s"), r->filename, snd_io_strerror());
+	snd_error("can't write region temp file %s: %s", r->filename, snd_io_strerror());
       else
 	{
 	  mus_long_t oloc;
@@ -868,7 +868,7 @@ static void deferred_region_to_temp_file(region *r)
 	  lseek(fdo, oloc, SEEK_SET);
 	  fdi = mus_file_open_read(sp0->filename);
 	  if (fdi == -1)
-	    snd_error(_("can't read region's original sound? %s: %s"), sp0->filename, snd_io_strerror());
+	    snd_error("can't read region's original sound? %s: %s", sp0->filename, snd_io_strerror());
 	  else
 	    {
 	      mus_long_t data_size;
@@ -918,7 +918,7 @@ static void deferred_region_to_temp_file(region *r)
       hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)c__FUNCTION__);
       ofd = open_temp_file(r->filename, r->chans, hdr, &io_err);
       if (ofd == -1)
-	snd_error(_("%s region temp file %s: %s"), 
+	snd_error("%s region temp file %s: %s", 
 		  (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 		  r->filename, 
 		  snd_open_strerror());
@@ -991,7 +991,7 @@ void sequester_deferred_regions(chan_info *cp, int edit_top)
 		(drp->edpos[j] > edit_top))
 	      {
 		if (r->lens[j] > 1000000)
-		  report_in_minibuffer(cp->sound, _("sequestering region %d..."), r->id);
+		  report_in_minibuffer(cp->sound, "sequestering region %d...", r->id);
 		deferred_region_to_temp_file(r);
 		if (r->lens[j] > 1000000)
 		  clear_minibuffer(cp->sound);
@@ -1133,7 +1133,7 @@ void region_edit(int pos)
   if (r) 
     {
       if (r->editor_copy)
-	snd_error(_("region %d already being edited"), r->id);
+	snd_error("region %d already being edited", r->id);
       else
 	{
 	  io_error_t io_err;
@@ -1155,16 +1155,16 @@ void region_edit(int pos)
 		  /* save backpointer so subsequent save affects region if still legit */
 		  /* also, since it's a temp file, if closed, delete temp */
 		}
-	      else snd_error(_("edit region: can't open region %d temp sound %s: %s!"),
+	      else snd_error("edit region: can't open region %d temp sound %s: %s!",
 			     r->id, temp_region_name, snd_io_strerror());
 	    }
 	  else 
-	    snd_error(_("edit region: can't save region %d in temp file (%s: %s)"),
+	    snd_error("edit region: can't save region %d in temp file (%s: %s)",
 		      r->id, temp_region_name, snd_io_strerror());
 	  free(temp_region_name);
 	}
     }
-  else snd_error(_("edit region: no region at position %d!"), pos);
+  else snd_error("edit region: no region at position %d!", pos);
 }
 
 
@@ -1217,8 +1217,8 @@ void save_region_backpointer(snd_info *sp)
   if (io_err != IO_NO_ERROR)
     {
       if (io_err == IO_CANT_OPEN_FILE)
-	snd_error(_("can't find edited region temp file (%s: %s)"), r->editor_name, snd_io_strerror());
-      else snd_error(_("can't make region temp file (%s: %s)"), r->filename, snd_io_strerror());
+	snd_error("can't find edited region temp file (%s: %s)", r->editor_name, snd_io_strerror());
+      else snd_error("can't make region temp file (%s: %s)", r->filename, snd_io_strerror());
     }
   else
     {
@@ -1277,7 +1277,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 	      for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
 
 	      if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(name))
-		snd_warning(_("not enough space to save region? -- need " MUS_LD " bytes"),
+		snd_warning("not enough space to save region? -- need " MUS_LD " bytes",
 			    frames * chans * mus_sound_datum_size(r->filename));
 	      err = 0;
 

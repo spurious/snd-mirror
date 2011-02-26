@@ -177,7 +177,6 @@ widget_t make_selection_save_as_dialog(bool managed) {return(0);}
 widget_t make_region_save_as_dialog(bool managed) {return(0);}
 widget_t make_sound_save_as_dialog(bool managed) {return(0);}
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer) {return(0);}
-void save_print_dialog_state(FILE *fd) {}
 axis_info *enved_make_axis(const char *name, graphics_context *ax, int ex0, int ey0, int width, int height, 
 			   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax, printing_t printing) {return(NULL);}
 void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing) {}
@@ -284,11 +283,11 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     {
       /* either a screwed up header, or Snd was built with wrong endianess */
       /* this kind of error is trapped by raw_data_explanation in make_file_info in the motif/gtk cases */
-      fprintf(stderr, _("%s has %d channels? "), filename, nchans);
+      fprintf(stderr, "%s has %d channels? ", filename, nchans);
       if (mus_char_to_bint((unsigned char *)&nchans) < 8)
-	fprintf(stderr, _("byte swap problem: chans should be %d"), mus_char_to_bint((unsigned char *)&nchans));
+	fprintf(stderr, "byte swap problem: chans should be %d", mus_char_to_bint((unsigned char *)&nchans));
       if (mus_char_to_lint((unsigned char *)&nchans) < 8)
-	fprintf(stderr, _("byte swap problem: chans should be %d"), mus_char_to_lint((unsigned char *)&nchans));
+	fprintf(stderr, "byte swap problem: chans should be %d", mus_char_to_lint((unsigned char *)&nchans));
       nchans = 1; /* ?? */
     }
 
@@ -723,10 +722,10 @@ void snd_doit(int argc, char **argv)
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       if (!(ss->exiting))
-	snd_error_without_format(_("Caught seg fault (will try to continue):\n"));
+	snd_error_without_format("Caught seg fault (will try to continue):\n");
       else
 	{
-	  snd_error_without_format(_("Caught seg fault while trying to exit.\n"));
+	  snd_error_without_format("Caught seg fault while trying to exit.\n");
 	  exit(0);
 	}
     }
@@ -734,7 +733,7 @@ void snd_doit(int argc, char **argv)
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))
-	snd_error_without_format(_("Caught top level error (will try to continue):\n"));
+	snd_error_without_format("Caught top level error (will try to continue):\n");
       else ss->jump_ok = false;
     }
 #endif

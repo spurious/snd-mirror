@@ -1225,22 +1225,22 @@ void g_init_gxcolormaps(void)
   
   init_xen_colormap();
 
-  cmaps[BLACK_AND_WHITE_COLORMAP] = make_builtin_cmap(1, _("black-and-white"), make_black_and_white_colormap, black_and_white_rgb); 
-  cmaps[GRAY_COLORMAP] =    make_builtin_cmap(1, _("gray"),    make_gray_colormap,    gray_rgb); 
-  cmaps[AUTUMN_COLORMAP] =  make_builtin_cmap(1, _("autumn"),  make_autumn_colormap,  autumn_rgb); 
-  cmaps[SPRING_COLORMAP] =  make_builtin_cmap(1, _("spring"),  make_spring_colormap,  spring_rgb); 
-  cmaps[WINTER_COLORMAP] =  make_builtin_cmap(1, _("winter"),  make_winter_colormap,  winter_rgb); 
-  cmaps[SUMMER_COLORMAP] =  make_builtin_cmap(1, _("summer"),  make_summer_colormap,  summer_rgb); 
-  cmaps[COOL_COLORMAP] =    make_builtin_cmap(1, _("cool"),    make_cool_colormap,    cool_rgb); 
-  cmaps[COPPER_COLORMAP] =  make_builtin_cmap(1, _("copper"),  make_copper_colormap,  copper_rgb); 
-  cmaps[FLAG_COLORMAP] =    make_builtin_cmap(1, _("flag"),    make_flag_colormap,    flag_rgb); 
-  cmaps[PRISM_COLORMAP] =   make_builtin_cmap(1, _("prism"),   make_prism_colormap,   prism_rgb); 
-  cmaps[BONE_COLORMAP] =    make_builtin_cmap(1, _("bone"),    make_bone_colormap,    bone_rgb); 
-  cmaps[HOT_COLORMAP] =     make_builtin_cmap(1, _("hot"),     make_hot_colormap,     hot_rgb); 
-  cmaps[JET_COLORMAP] =     make_builtin_cmap(1, _("jet"),     make_jet_colormap,     jet_rgb); 
-  cmaps[PINK_COLORMAP] =    make_builtin_cmap(1, _("pink"),    make_pink_colormap,    pink_rgb); 
-  cmaps[RAINBOW_COLORMAP] = make_builtin_cmap(1, _("rainbow"), make_rainbow_colormap, rainbow_rgb); 
-  cmaps[PHASES_COLORMAP] =  make_builtin_cmap(1, _("phases"),  make_phases_colormap,  phases_rgb); 
+  cmaps[BLACK_AND_WHITE_COLORMAP] = make_builtin_cmap(1, "black-and-white", make_black_and_white_colormap, black_and_white_rgb); 
+  cmaps[GRAY_COLORMAP] =    make_builtin_cmap(1, "gray",    make_gray_colormap,    gray_rgb); 
+  cmaps[AUTUMN_COLORMAP] =  make_builtin_cmap(1, "autumn",  make_autumn_colormap,  autumn_rgb); 
+  cmaps[SPRING_COLORMAP] =  make_builtin_cmap(1, "spring",  make_spring_colormap,  spring_rgb); 
+  cmaps[WINTER_COLORMAP] =  make_builtin_cmap(1, "winter",  make_winter_colormap,  winter_rgb); 
+  cmaps[SUMMER_COLORMAP] =  make_builtin_cmap(1, "summer",  make_summer_colormap,  summer_rgb); 
+  cmaps[COOL_COLORMAP] =    make_builtin_cmap(1, "cool",    make_cool_colormap,    cool_rgb); 
+  cmaps[COPPER_COLORMAP] =  make_builtin_cmap(1, "copper",  make_copper_colormap,  copper_rgb); 
+  cmaps[FLAG_COLORMAP] =    make_builtin_cmap(1, "flag",    make_flag_colormap,    flag_rgb); 
+  cmaps[PRISM_COLORMAP] =   make_builtin_cmap(1, "prism",   make_prism_colormap,   prism_rgb); 
+  cmaps[BONE_COLORMAP] =    make_builtin_cmap(1, "bone",    make_bone_colormap,    bone_rgb); 
+  cmaps[HOT_COLORMAP] =     make_builtin_cmap(1, "hot",     make_hot_colormap,     hot_rgb); 
+  cmaps[JET_COLORMAP] =     make_builtin_cmap(1, "jet",     make_jet_colormap,     jet_rgb); 
+  cmaps[PINK_COLORMAP] =    make_builtin_cmap(1, "pink",    make_pink_colormap,    pink_rgb); 
+  cmaps[RAINBOW_COLORMAP] = make_builtin_cmap(1, "rainbow", make_rainbow_colormap, rainbow_rgb); 
+  cmaps[PHASES_COLORMAP] =  make_builtin_cmap(1, "phases",  make_phases_colormap,  phases_rgb); 
 
 #if HAVE_SCHEME
   s7_define_constant(s7, "black-and-white-colormap", C_INT_TO_XEN_COLORMAP(0));

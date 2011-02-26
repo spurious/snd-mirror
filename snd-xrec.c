@@ -70,7 +70,7 @@ static void stop_recording(void)
   mus_sound_close_output(recorder_fd, recorder_total_bytes);
   recorder_fd = -1;
   recorder_total_bytes = 0;
-  s2 = XmStringCreateLocalized(_("Record"));
+  s2 = XmStringCreateLocalized("Record");
   XtVaSetValues(record_button, XmNlabelString, s2, NULL);
   XmStringFree(s2);
 }
@@ -173,7 +173,7 @@ static void start_recording(void)
     {
       XmString s2;
       recording = true;
-      s2 = XmStringCreateLocalized(_("Done"));
+      s2 = XmStringCreateLocalized("Done");
       XtVaSetValues(record_button, XmNlabelString, s2, NULL);
       XmStringFree(s2);
     }
@@ -300,10 +300,10 @@ widget_t record_file(void)
       XmString xquit, xhelp, xrecord, xtitle;
       Atom wm_delete;
 
-      xquit = XmStringCreateLocalized(_("Go Away"));
-      xhelp = XmStringCreateLocalized(_("Help"));
-      xrecord = XmStringCreateLocalized(_("Record"));
-      xtitle = XmStringCreateLocalized(_("Record"));
+      xquit = XmStringCreateLocalized("Go Away");
+      xhelp = XmStringCreateLocalized("Help");
+      xrecord = XmStringCreateLocalized("Record");
+      xtitle = XmStringCreateLocalized("Record");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -317,7 +317,7 @@ widget_t record_file(void)
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
       XtSetArg(args[n], XmNheight, RECORDER_HEIGHT); n++;
-      recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Record"), args, n);
+      recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), "Record", args, n);
 
       record_button = XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON);
 
@@ -389,7 +389,7 @@ widget_t record_file(void)
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 	XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
 	XtSetArg(args[n], XmNmarginWidth, 8); n++;
-	db_button = make_togglebutton_widget(_("dB"), form, args, n);
+	db_button = make_togglebutton_widget("dB", form, args, n);
 
 	n = 0;
 	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -398,7 +398,7 @@ widget_t record_file(void)
 	XtSetArg(args[n], XmNbottomWidget, sep1); n++;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-	file_label = XtCreateManagedWidget(_("file:"), xmLabelWidgetClass, form, args, n);
+	file_label = XtCreateManagedWidget("file:", xmLabelWidgetClass, form, args, n);
 
 	n = 0;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;

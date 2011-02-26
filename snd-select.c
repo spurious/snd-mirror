@@ -1169,7 +1169,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	      si = free_sync_info(si);
 	      return(IO_CANT_READ_SELECTION_FILE);
 	    }
-	  /* snd_error(_("can't read selection's original sound? %s: %s"), sp->filename, snd_io_strerror()); */
+	  /* snd_error("can't read selection's original sound? %s: %s", sp->filename, snd_io_strerror()); */
 	  else
 	    {
 	      iloc = mus_sound_data_location(sp->filename);
@@ -1244,7 +1244,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	  if (ss->stopped_explicitly)
 	    {
 	      ss->stopped_explicitly = false;
-	      snd_warning_without_format(_("save selection stopped"));
+	      snd_warning_without_format("save selection stopped");
 	      io_err = IO_INTERRUPTED;
 	      break;
 	    }

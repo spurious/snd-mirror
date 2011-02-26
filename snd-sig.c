@@ -175,7 +175,7 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, mus_long_t beg,
 	    }
 	  else 
 	    {
-	      snd_warning_without_format(_("no selection"));
+	      snd_warning_without_format("no selection");
 	      return(NULL);
 	    }
 	}
@@ -233,7 +233,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_info *sp, chan_info *cp, m
 	    }
 	  else
 	    {
-	      snd_warning_without_format(_("no selection"));
+	      snd_warning_without_format("no selection");
 	      return(NULL);
 	    }
 	}
@@ -275,11 +275,11 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
 
   filter_chans = mus_sound_chans(filename);
   if (filter_chans <= 0)
-    return(mus_format(_("convolve: impulse response file %s chans: %d"), filename, filter_chans));
+    return(mus_format("convolve: impulse response file %s chans: %d", filename, filter_chans));
 
   filtersize = mus_sound_samples(filename) / filter_chans;
   if (filtersize <= 0) 
-    return(mus_format(_("convolve: impulse response file %s is empty"), filename));
+    return(mus_format("convolve: impulse response file %s is empty", filename));
   /* if impulse response is stereo, we need to use both its channels */
 
   dataloc = mus_sound_data_location(filename);
@@ -321,7 +321,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
 	    {
 	      if (ofile) free(ofile);
 	      free_sync_state(sc);
-	      return(mus_format(_("convolve: save chan (%s[%d]) in %s hit error: %s\n"),
+	      return(mus_format("convolve: save chan (%s[%d]) in %s hit error: %s\n",
 				sp->short_filename, ucp->chan, 
 				saved_chan_file, snd_open_strerror()));
 	    }
@@ -333,7 +333,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
 		{
 		  if (ofile) free(ofile);
 		  free_sync_state(sc);
-		  return(mus_format(_("convolve: open saved chan (%s[%d]) file %s hit error: %s\n"),
+		  return(mus_format("convolve: open saved chan (%s[%d]) file %s hit error: %s\n",
 				    sp->short_filename, ucp->chan, 
 				    saved_chan_file, snd_open_strerror()));
 		}
@@ -352,7 +352,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
 		    {
 		      if (ofile) free(ofile);
 		      free_sync_state(sc);
-		      return(mus_format(_("convolve: open filter file %s hit error: %s\n"), 
+		      return(mus_format("convolve: open filter file %s hit error: %s\n", 
 					filename, snd_open_strerror()));
 		    }
 		  else
@@ -385,7 +385,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
 			{
 			  if (ofile) free(ofile);
 			  free_sync_state(sc);
-			  return(mus_format(_("convolve: close filter file %s hit error: %s\n"), 
+			  return(mus_format("convolve: close filter file %s hit error: %s\n", 
 					    filename, snd_io_strerror()));
 			}
 		    }
@@ -394,7 +394,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
 		{
 		  if (ofile) free(ofile);
 		  free_sync_state(sc);
-		  return(mus_format(_("convolve: close saved chan (%s[%d]) file %s hit error: %s\n"),
+		  return(mus_format("convolve: close saved chan (%s[%d]) file %s hit error: %s\n",
 				    sp->short_filename, ucp->chan, 
 				    saved_chan_file, snd_io_strerror()));
 		}
@@ -647,7 +647,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
       if (ofd0 == -1)
 	{
 	  free_file_info(hdr0);
-	  snd_error(_("%s " S_swap_channels " temp file %s: %s\n"), 
+	  snd_error("%s " S_swap_channels " temp file %s: %s\n", 
 		    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 		    ofile0, 
 		    snd_open_strerror());
@@ -663,7 +663,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 	  free_file_info(hdr0);
 	  free_file_info(hdr1);
 	  if (ofile0) free(ofile0);
-	  snd_error(_("%s " S_swap_channels " temp file %s: %s\n"), 
+	  snd_error("%s " S_swap_channels " temp file %s: %s\n", 
 		    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 		    ofile1, 
 		    snd_open_strerror());
@@ -729,7 +729,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 	}
       else
 	{
-	  string_to_minibuffer(sp0, _("swap interrupted"));
+	  string_to_minibuffer(sp0, "swap interrupted");
 	  ss->stopped_explicitly = false;
 	}
       if (ofile0) {free(ofile0); ofile0 = NULL;}
@@ -872,7 +872,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
   ofd = open_temp_file(ofile, 1, hdr, &io_err);
   if (ofd == -1)
     {
-      return(mus_format(_("%s %s temp file %s: %s\n"), 
+      return(mus_format("%s %s temp file %s: %s\n", 
 			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			origin, ofile, 
 			snd_open_strerror()));
@@ -1144,7 +1144,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
     }
   else
     {
-      string_to_minibuffer(sp, _("src interrupted"));
+      string_to_minibuffer(sp, "src interrupted");
       /* should we remove the temp file here? */
       ss->stopped_explicitly = false;
     }
@@ -1343,7 +1343,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
 
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL)
-    return(mus_format(_("%s can't read %s[%d] channel data!"), S_clm_channel, sp->short_filename, cp->chan));
+    return(mus_format("%s can't read %s[%d] channel data!", S_clm_channel, sp->short_filename, cp->chan));
 
   if ((dur + overlap) > MAX_BUFFER_SIZE)
     {
@@ -1355,7 +1355,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
       if (ofd == -1)
 	{
 	  free_snd_fd(sf); 
-	  return(mus_format(_("%s %s temp file %s: %s\n"), 
+	  return(mus_format("%s %s temp file %s: %s\n", 
 			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			    S_clm_channel, ofile, 
 			    snd_open_strerror()));
@@ -1465,7 +1465,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
   ofd = open_temp_file(ofile, 1, hdr, &io_err);
   if (ofd == -1)
     {
-      return(mus_format(_("%s %s temp file %s: %s\n"), 
+      return(mus_format("%s %s temp file %s: %s\n", 
 			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			origin, ofile, 
 			snd_open_strerror()));
@@ -1531,7 +1531,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 	file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, origin, sf->edit_ctr);
       else 
 	{
-	  string_to_minibuffer(sp, _("filter interrupted"));
+	  string_to_minibuffer(sp, "filter interrupted");
 	  ss->stopped_explicitly = false;
 	}
       mus_free(gen);
@@ -1572,7 +1572,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 	  close_temp_file(ofile, ofd, hdr->type, fsize * sizeof(mus_float_t));
 	  if (bytes != 0)
 	    file_change_samples(beg, dur + order, ofile, cp, 0, DELETE_ME, origin, sf->edit_ctr);
-	  else string_to_minibuffer(sp, _("can't write data?"));
+	  else string_to_minibuffer(sp, "can't write data?");
 
 	  free(sndrdat);
 	  free(sndidat);
@@ -1626,7 +1626,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
       ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
-	  return(mus_format(_("%s %s temp file %s: %s\n"), 
+	  return(mus_format("%s %s temp file %s: %s\n", 
 			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			    origin, ofile, 
 			    snd_open_strerror()));
@@ -1896,7 +1896,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e,
   if ((gen) && (!(MUS_RUN_P(gen))))
     {
       (*clm_error) = true;
-      return(mus_format(_("%s: can't handle %s generators"),
+      return(mus_format("%s: can't handle %s generators",
 			caller,
 			mus_name(gen)));
     }
@@ -1995,7 +1995,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e,
   if (ss->stopped_explicitly)
     {
       /* clean up and undo all edits up to stop_point */
-      string_to_minibuffer(sp, _("filter stopped"));
+      string_to_minibuffer(sp, "filter stopped");
       ss->stopped_explicitly = false;
       for (i = 0; i <= stop_point; i++)
 	{
@@ -2055,7 +2055,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
       if (ofd == -1)
 	{
 	  if (ofile) free(ofile);
-	  return(mus_format(_("%s %s temp file %s: %s\n"), 
+	  return(mus_format("%s %s temp file %s: %s\n", 
 			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			    caller, ofile, 
 			    snd_open_strerror()));
@@ -2197,7 +2197,7 @@ void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int arg_pos)
 
   if (ss->stopped_explicitly)
     {
-      string_to_minibuffer(sp, _("reverse stopped"));
+      string_to_minibuffer(sp, "reverse stopped");
       ss->stopped_explicitly = false;
       for (i = 0; i <= stop_point; i++)
 	{
@@ -2439,7 +2439,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 		sfs[i] = free_snd_fd(sfs[i]);
 	      free_sync_state(sc);
 	      if (e) mus_free(egen);
-	      snd_error(_("%s %s temp file %s: %s\n"), 
+	      snd_error("%s %s temp file %s: %s\n", 
 			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			origin, ofile, 
 			snd_open_strerror());
@@ -2935,7 +2935,7 @@ static char *run_channel(chan_info *cp, struct ptree *pt, mus_long_t beg, mus_lo
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL) 
     {
-      return(mus_format(_("%s: can't read %s[%d] channel data!"), caller, sp->short_filename, cp->chan));
+      return(mus_format("%s: can't read %s[%d] channel data!", caller, sp->short_filename, cp->chan));
     }
 
   if (dur > MAX_BUFFER_SIZE)
@@ -2948,7 +2948,7 @@ static char *run_channel(chan_info *cp, struct ptree *pt, mus_long_t beg, mus_lo
       if (ofd == -1)
 	{
 	  free_snd_fd(sf); 
-	  return(mus_format(_("%s %s temp file %s: %s\n"), 
+	  return(mus_format("%s %s temp file %s: %s\n", 
 			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			    caller, ofile, 
 			    snd_open_strerror()));
@@ -3066,7 +3066,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
       (*temp_file_err) = true;
       free_file_info(hdr);
       free(tempfile);
-      return(mus_format(_("%s temp file %s: %s\n"), 
+      return(mus_format("%s temp file %s: %s\n", 
 			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			tempfile, 
 			snd_open_strerror()));
@@ -3296,7 +3296,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  hdr = make_temp_header(filename, SND_SRATE(cp->sound), 1, 0, S_map_channel);
 	  ofd = open_temp_file(filename, 1, hdr, &io_err);
 	  if (ofd == -1)
-	    snd_error(_("%s: %s (temp file) %s: %s"), 
+	    snd_error("%s: %s (temp file) %s: %s", 
 		      S_map_channel,
 		      (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 		      filename, 
@@ -3937,7 +3937,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (ss->stopped_explicitly)
 	{
 	  ss->stopped_explicitly = false;
-	  report_in_minibuffer(sp, _("%s stopped at sample " MUS_LD), caller, kp + beg);
+	  report_in_minibuffer(sp, "%s stopped at sample " MUS_LD, caller, kp + beg);
 	  break;
 	}
     }

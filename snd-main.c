@@ -625,7 +625,7 @@ static void save_options(FILE *fd)
       }
   }
   
-  fprintf(fd, _("%s end of snd options\n"), XEN_COMMENT_STRING);
+  fprintf(fd, "%s end of snd options\n", XEN_COMMENT_STRING);
   if (locale)
     {
 #if HAVE_SETLOCALE
@@ -1199,7 +1199,7 @@ void save_state(const char *save_state_name)
   if (fullname) {free(fullname); fullname = NULL;}
   if (save_fd == NULL)
     {
-      snd_error(_("can't write %s: %s"), save_state_name, snd_io_strerror());
+      snd_error("can't write %s: %s", save_state_name, snd_io_strerror());
       return;
     }
 
@@ -1262,7 +1262,9 @@ void save_state(const char *save_state_name)
   save_post_it_dialog_state(save_fd);
   save_find_dialog_state(save_fd);
   save_edit_header_dialog_state(save_fd);
+#if USE_MOTIF
   save_print_dialog_state(save_fd);
+#endif
   save_file_dialog_state(save_fd);
   save_view_files_dialogs(save_fd);
   
@@ -1338,7 +1340,7 @@ const char *save_options_in_prefs(void)
   fd = FOPEN(fullname, "w");
   if (!fd)
     {
-      snd_error(_("can't write %s: %s"), SND_PREFS, snd_io_strerror());
+      snd_error("can't write %s: %s", SND_PREFS, snd_io_strerror());
       return(NULL);
     }
   save_options(fd);
@@ -1446,7 +1448,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		  auto_open_ctr++;
 		  if ((auto_open_ctr >= args) ||
 		      (auto_open_file_names[auto_open_ctr] == NULL))
-		    snd_error(_("%s but no directory to add?"), argname);
+		    snd_error("%s but no directory to add?", argname);
 		  else view_files_add_directory(NULL_WIDGET, auto_open_file_names[auto_open_ctr]);
 		}
 	      else
@@ -1468,7 +1470,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			auto_open_ctr++;
 		      if ((auto_open_ctr >= args) ||
 			  (auto_open_file_names[auto_open_ctr] == NULL))
-			snd_error(_("%s but no file to load?"), argname);
+			snd_error("%s but no file to load?", argname);
 		      else 
 			{
 			  script_arg = auto_open_ctr;
@@ -1491,7 +1493,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			  auto_open_ctr++;
 			  if ((auto_open_ctr >= args) ||
 			      (auto_open_file_names[auto_open_ctr] == NULL))
-			    snd_error(_("%s but no form to evaluate?"), argname);
+			    snd_error("%s but no form to evaluate?", argname);
 			  else 
 			    {
 			      char *buf;
@@ -1509,7 +1511,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			      auto_open_ctr++;
 			      if ((auto_open_ctr >= args) ||
 				  (auto_open_file_names[auto_open_ctr] == NULL))
-				snd_error_without_format(_("-title but no title?")); /* for gtk -- Xt handles the Motif case */
+				snd_error_without_format("-title but no title?"); /* for gtk -- Xt handles the Motif case */
 			      else ss->startup_title = mus_strdup(auto_open_file_names[auto_open_ctr]);
 			    }
 			  else
@@ -1520,7 +1522,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				  auto_open_ctr++;
 				  if ((auto_open_ctr >= args) ||
 				      (auto_open_file_names[auto_open_ctr] == NULL))
-				    snd_error_without_format(_("-I but no path?"));
+				    snd_error_without_format("-I but no path?");
 				  else 
 				    {
 				      XEN_ADD_TO_LOAD_PATH(auto_open_file_names[auto_open_ctr]);
@@ -1613,7 +1615,7 @@ static int snd_access(const char *dir, const char *caller)
     {
       XEN res;
       free(temp);
-      temp = mus_format(_("%s: directory %s is not writable: %s"), caller, dir, snd_open_strerror());
+      temp = mus_format("%s: directory %s is not writable: %s", caller, dir, snd_open_strerror());
       res = C_TO_XEN_STRING(temp);
       free(temp);
       XEN_ERROR(NO_SUCH_FILE,

@@ -89,7 +89,7 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
 	    ss->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
 #endif
 	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), str);
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", str);
 	  set_label(edit_find_label, buf);
 	  /* gtk_entry_set_text(GTK_ENTRY(edit_find_text), ""); */
 	  free(buf);
@@ -102,7 +102,7 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
 	  char *temp = NULL;
 	  /* using global search_proc set by user */
 	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), temp = (char *)XEN_AS_STRING(ss->search_proc));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", temp = (char *)XEN_AS_STRING(ss->search_proc));
 #if HAVE_SCHEME
 	  if (temp) free(temp);
 #endif
@@ -113,11 +113,11 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
     }
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {
-      set_stock_button_label(cancelB, _("Stop"));
+      set_stock_button_label(cancelB, "Stop");
       redirect_xen_error_to(stop_search_if_error, NULL);
       str = global_search(direction);
       redirect_xen_error_to(NULL, NULL);
-      set_stock_button_label(cancelB, _("Go Away"));
+      set_stock_button_label(cancelB, "Go Away");
       if ((str) && (*str)) set_label(edit_find_label, str);
     }
 } 
@@ -150,7 +150,7 @@ static void make_edit_find_dialog(bool managed)
       GtkWidget *help_button;
       edit_find_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(edit_find_dialog, "delete_event", edit_find_delete, NULL);
-      gtk_window_set_title(GTK_WINDOW(edit_find_dialog), _("Find"));
+      gtk_window_set_title(GTK_WINDOW(edit_find_dialog), "Find");
       sg_make_resizable(edit_find_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(edit_find_dialog), 10);
       gtk_window_resize(GTK_WINDOW(edit_find_dialog), 350, 120);
@@ -159,7 +159,7 @@ static void make_edit_find_dialog(bool managed)
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "dialog_button");
 
-      cancelB = sg_button_new_from_stock_with_label(_("Go Away"), GTK_STOCK_QUIT);
+      cancelB = sg_button_new_from_stock_with_label("Go Away", GTK_STOCK_QUIT);
       gtk_widget_set_name(cancelB, "dialog_button");
 
       previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
@@ -186,14 +186,14 @@ static void make_edit_find_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(edit_find_dialog)), rc, true, true, 4);
       gtk_widget_show(rc);
 
-      dl = gtk_label_new(_("find:"));
+      dl = gtk_label_new("find:");
       gtk_box_pack_start(GTK_BOX(rc), dl, false, false, 4);
       gtk_widget_show(dl);
 
       edit_find_text = snd_entry_new(rc, WITH_WHITE_BACKGROUND);
       SG_SIGNAL_CONNECT(edit_find_text, "activate", edit_find_next, NULL);
       
-      edit_find_label = gtk_label_new(_("global search"));
+      edit_find_label = gtk_label_new("global search");
       gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(edit_find_dialog)), edit_find_label, false, false, 4);
       gtk_widget_show(edit_find_label);
 

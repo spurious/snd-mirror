@@ -860,7 +860,7 @@ void display_filter_env(snd_info *sp)
   if (sp->filter_control_envelope == NULL) 
     sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
 
-  env_editor_display_env(edp, sp->filter_control_envelope, ax, _("frequency response"), 0, 0, width, height, NOT_PRINTING);
+  env_editor_display_env(edp, sp->filter_control_envelope, ax, "frequency response", 0, 0, width, height, NOT_PRINTING);
   if (edp->edited)
     {
       ax->gc = ss->sgx->fltenv_data_gc;
@@ -1821,7 +1821,7 @@ static bool hourglasses[NUM_HOURGLASSES] = {false};
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color) {}
 void show_lock(snd_info *sp) {}
 void hide_lock(snd_info *sp) {}
-void start_bomb(snd_info *sp) {report_in_minibuffer(sp, _("%s has changed since we last read it!"), sp->short_filename);}
+void start_bomb(snd_info *sp) {report_in_minibuffer(sp, "%s has changed since we last read it!", sp->short_filename);}
 void stop_bomb(snd_info *sp) {}
 void show_bomb(snd_info *sp) {}
 void hide_bomb(snd_info *sp) {}
@@ -2175,7 +2175,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	XtSetArg(args[n], XmNtoolTipString, XmStringCreateLocalized("play this sound")); n++;
       */
       XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
-      PLAY_BUTTON(sp) = make_togglebutton_widget(_("play"), NAME_BOX(sp), args, n);
+      PLAY_BUTTON(sp) = make_togglebutton_widget("play", NAME_BOX(sp), args, n);
       XtAddCallback(PLAY_BUTTON(sp), XmNvalueChangedCallback, play_button_callback, (XtPointer)sp);
 
       n = 0;
@@ -2190,7 +2190,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, PLAY_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
-      SYNC_BUTTON(sp) = make_togglebutton_widget(_("sync"), NAME_BOX(sp), args, n);
+      SYNC_BUTTON(sp) = make_togglebutton_widget("sync", NAME_BOX(sp), args, n);
       XtAddEventHandler(SYNC_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(SYNC_BUTTON(sp), XmNvalueChangedCallback, sync_button_callback, (XtPointer)sp);
 
@@ -2207,7 +2207,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, SYNC_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
-      UNITE_BUTTON(sp) = make_togglebutton_widget(_("unite"), NAME_BOX(sp), args, n);
+      UNITE_BUTTON(sp) = make_togglebutton_widget("unite", NAME_BOX(sp), args, n);
       XtAddEventHandler(UNITE_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(UNITE_BUTTON(sp), XmNvalueChangedCallback, unite_button_callback, (XtPointer)sp);
 
@@ -2245,7 +2245,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       n = 0;      
       /* AMP */
-      s1 = XmStringCreateLocalized(_("amp:"));
+      s1 = XmStringCreateLocalized("amp:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -2299,7 +2299,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       n = 0;
       /* SPEED */
-      s1 = XmStringCreateLocalized(_("speed:"));
+      s1 = XmStringCreateLocalized("speed:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2392,7 +2392,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       n = 0;
       /* EXPAND */
-      s1 = XmStringCreateLocalized(_("expand:"));
+      s1 = XmStringCreateLocalized("expand:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2471,7 +2471,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       /* CONTRAST */
       n = 0;
-      s1 = XmStringCreateLocalized(_("contrast:"));
+      s1 = XmStringCreateLocalized("contrast:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2550,7 +2550,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       /* REVERB */
       /* REVSCL */
       n = 0;
-      s1 = XmStringCreateLocalized(_("reverb:"));
+      s1 = XmStringCreateLocalized("reverb:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2631,7 +2631,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       /* REVLEN */
       n = 0;
-      s1 = XmStringCreateLocalized(_("len:"));
+      s1 = XmStringCreateLocalized("len:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2690,7 +2690,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       /* FILTER */
       n = 0;
-      s1 = XmStringCreateLocalized(_("filter:"));
+      s1 = XmStringCreateLocalized("filter:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2782,7 +2782,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreateLocalized(_("hz"));
+      s1 = XmStringCreateLocalized("hz");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, FILTER_BUTTON(sp)); n++;
@@ -2800,7 +2800,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreateLocalized(_("dB"));
+      s1 = XmStringCreateLocalized("dB");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, FILTER_HZ_BUTTON(sp)); n++;
@@ -2957,7 +2957,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   else hide_lock(sp);
 
   if (old_name)
-    report_in_minibuffer(sp, _("(translated %s)"), old_name);
+    report_in_minibuffer(sp, "(translated %s)", old_name);
 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
@@ -3002,7 +3002,7 @@ void snd_info_cleanup(snd_info *sp)
 	  sp->channel_style = CHANNELS_SEPARATE;
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	    {
-	      set_label(sp->sgx->tab, _("none"));
+	      set_label(sp->sgx->tab, "none");
 	      XmChangeColor(sp->sgx->tab, ss->sgx->graph_color);
 	    }
 	  XtUnmanageChild(SND_PANE(sp));
@@ -3352,10 +3352,10 @@ void make_controls_dialog(void)
       XmString xdismiss, xhelp, titlestr, xreset;
       Widget mainform, slider;
 
-      xdismiss = XmStringCreateLocalized(_("Go Away"));
-      xhelp = XmStringCreateLocalized(_("Help"));
-      titlestr = XmStringCreateLocalized(_("More controls"));
-      xreset = XmStringCreateLocalized(_("Reset"));
+      xdismiss = XmStringCreateLocalized("Go Away");
+      xhelp = XmStringCreateLocalized("Help");
+      titlestr = XmStringCreateLocalized("More controls");
+      xreset = XmStringCreateLocalized("Reset");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

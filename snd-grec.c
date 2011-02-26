@@ -62,7 +62,7 @@ static void stop_recording(void)
   mus_sound_close_output(recorder_fd, recorder_total_bytes);
   recorder_fd = -1;
   recorder_total_bytes = 0;
-  set_stock_button_label(record_button, _("Record"));
+  set_stock_button_label(record_button, "Record");
 }
 
 
@@ -167,7 +167,7 @@ static void start_recording(void)
   else 
     {
       recording = true;
-      set_stock_button_label(record_button, _("Done"));
+      set_stock_button_label(record_button, "Done");
     }
 }
 
@@ -292,7 +292,7 @@ widget_t record_file(void)
 
       recorder = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(recorder, "delete_event", close_recorder, NULL);
-      gtk_window_set_title(GTK_WINDOW(recorder), _("Record"));
+      gtk_window_set_title(GTK_WINDOW(recorder), "Record");
       sg_make_resizable(recorder);
       gtk_widget_realize(recorder);
       gtk_window_resize(GTK_WINDOW(recorder), RECORDER_WIDTH, RECORDER_HEIGHT);
@@ -302,12 +302,12 @@ widget_t record_file(void)
 
       quit_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(quit_button, "dialog_button");
-      set_stock_button_label(quit_button, _("Go Away"));
+      set_stock_button_label(quit_button, "Go Away");
 
 #ifdef GTK_STOCK_MEDIA_RECORD
-      record_button = sg_button_new_from_stock_with_label(_("Record"), GTK_STOCK_MEDIA_RECORD);
+      record_button = sg_button_new_from_stock_with_label("Record", GTK_STOCK_MEDIA_RECORD);
 #else
-      record_button = sg_button_new_from_stock_with_label(_("Record"), GTK_STOCK_EXECUTE);
+      record_button = sg_button_new_from_stock_with_label("Record", GTK_STOCK_EXECUTE);
 #endif
       gtk_widget_set_name(record_button, "dialog_button");
 
@@ -331,7 +331,7 @@ widget_t record_file(void)
       gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(recorder)), hbox, false, false, 6);
       gtk_widget_show(hbox);
 
-      output_label = gtk_label_new(_("file:"));
+      output_label = gtk_label_new("file:");
       gtk_box_pack_start(GTK_BOX(hbox), output_label, false, false, 2);
       gtk_widget_show(output_label);
       
@@ -339,7 +339,7 @@ widget_t record_file(void)
       if (!recorder_filename) recorder_filename = mus_strdup("test.snd");
       gtk_entry_set_text(GTK_ENTRY(recorder_output), recorder_filename);
 
-      db_button = gtk_check_button_new_with_label(_("dB"));
+      db_button = gtk_check_button_new_with_label("dB");
       gtk_box_pack_end(GTK_BOX(hbox), db_button, false, false, 10);
       gtk_widget_show(db_button);
       SG_SIGNAL_CONNECT(db_button, "toggled", db_callback, NULL);

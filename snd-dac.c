@@ -1962,7 +1962,7 @@ static void dac_error(void)
   if ((!last_print) &&
       (mus_audio_systems() == 0))
     snd_error_without_format("can't play: no audio support");
-  else snd_error(_("can't play %s: %s"),
+  else snd_error("can't play %s: %s",
 		 describe_dac(),
 		 (last_print) ? last_print : "reason not known");
 }
@@ -2194,7 +2194,7 @@ static bool start_audio_output_1(void)
       if (alloc_chans < snd_dacp->channels) 
 	{
 	  if (dac_combines_channels(ss)) 
-	    snd_warning(_("folding %d chans into %d "), 
+	    snd_warning("folding %d chans into %d ", 
 			snd_dacp->channels, alloc_chans);
 	  snd_dacp->channels = alloc_chans;
 	}
@@ -2292,7 +2292,7 @@ static bool start_audio_output_1(void)
           (oss_available_chans > 0))
  	{
 	  if (dac_combines_channels(ss)) 
-	    snd_warning(_("folding %d chans into %d "), 
+	    snd_warning("folding %d chans into %d ", 
 			snd_dacp->channels, oss_available_chans);
 	  snd_dacp->channels = oss_available_chans;
 	}
@@ -2335,7 +2335,7 @@ static bool start_audio_output_1(void)
   if (available_chans < snd_dacp->channels) 
     {
       if (dac_combines_channels(ss)) 
-	snd_warning(_("folding %d chans into %d "), 
+	snd_warning("folding %d chans into %d ", 
 		    snd_dacp->channels, 
 		    available_chans);
       snd_dacp->channels = available_chans;

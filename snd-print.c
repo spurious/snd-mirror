@@ -99,7 +99,7 @@ static void end_ps_graph(void)
 	       (int)(bby + 10 + eps_bottom_margin(ss)));
   ps_write(pbuf);
   ps_flush(ps_fd);
-  snd_close(ps_fd, _("eps file"));
+  snd_close(ps_fd, "eps file");
   if (previous_locale)
     {
 #if HAVE_SETLOCALE
@@ -537,7 +537,7 @@ static char *snd_print_or_error(const char *output)
       char *errstr = NULL;
       ccp = current_channel();
       if (ccp == NULL) 
-	return(mus_strdup(_("nothing to print?")));
+	return(mus_strdup("nothing to print?"));
       si = sync_to_chan(ccp);
       offsets = (int *)calloc(si->chans, sizeof(int));
       for (j = 0, i = (si->chans - 1); i >= 0; i--)
@@ -566,12 +566,12 @@ static char *snd_print_or_error(const char *output)
 	    ps_graph(si->cps[i], 0, offsets[i]);
 	  end_ps_graph();
 	}
-      else errstr = mus_format(_("print %s failed: %s"), output, snd_io_strerror());
+      else errstr = mus_format("print %s failed: %s", output, snd_io_strerror());
       if (si) si = free_sync_info(si);
       if (offsets) free(offsets);
       return(errstr);
     }
-  else return(mus_strdup(_("print sound: eps file name needed")));
+  else return(mus_strdup("print sound: eps file name needed"));
 }
 
 
@@ -600,9 +600,9 @@ void region_print(const char *output, const char *title, chan_info *cp)
 	  ps_graph(cp, 0, 0);
 	  end_ps_graph();
 	}
-      else snd_error(_("print region %s failed: %s"), output, snd_io_strerror());
+      else snd_error("print region %s failed: %s", output, snd_io_strerror());
     }
-  else snd_error_without_format(_("print region: eps file name needed"));
+  else snd_error_without_format("print region: eps file name needed");
 }
 
 
@@ -619,9 +619,9 @@ void print_enved(const char *output, int y0)
 	  env_redisplay_with_print();
 	  end_ps_graph();
 	}
-      else snd_error(_("print env %s failed: %s"), output, snd_io_strerror());
+      else snd_error("print env %s failed: %s", output, snd_io_strerror());
     }
-  else snd_error_without_format(_("print envelope: eps file name needed"));
+  else snd_error_without_format("print envelope: eps file name needed");
 }
 
 

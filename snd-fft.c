@@ -621,13 +621,13 @@ static const char *spectro_xlabel(chan_info *cp)
     case FOURIER: 
       if (cp->fft_log_frequency)
 	return("log freq");
-      else return(_("frequency"));
+      else return("frequency");
       break;
     case WAVELET:         return(wavelet_names_1[cp->wavelet_type]);          break;
-    case HAAR:            return(_("Haar spectrum"));                         break;
+    case HAAR:            return("Haar spectrum");                         break;
     case CEPSTRUM:        return("cepstrum");                                 break; /* "quefrency" is the jokey name */
     case WALSH:           return("Sequency");                                 break;
-    case AUTOCORRELATION: return(_("Lag time"));                              break;
+    case AUTOCORRELATION: return("Lag time");                              break;
     default:              return(added_transform_xlabel(cp->transform_type)); break;
     }
   return(NULL);
@@ -670,11 +670,11 @@ static void make_sonogram_axes(chan_info *cp)
 	{
 	  if (cp->transform_type == FOURIER)
 	    {
-	      if (yang < 45.0) xlabel = _("frequency");
-	      else if (yang < 135.0) xlabel = _("time");
-	      else if (yang < 225.0) xlabel = _("wavelength?");
-	      else if (yang < 315.0) xlabel = _("reversed time?");
-	      else xlabel = _("frequency");
+	      if (yang < 45.0) xlabel = "frequency";
+	      else if (yang < 135.0) xlabel = "time";
+	      else if (yang < 225.0) xlabel = "wavelength?";
+	      else if (yang < 315.0) xlabel = "reversed time?";
+	      else xlabel = "frequency";
 	    }
 	  else xlabel = spectro_xlabel(cp);
 	  fp->axis = make_axis_info(cp,
@@ -688,7 +688,7 @@ static void make_sonogram_axes(chan_info *cp)
       else 
 	{
 	  if (fp->xlabel == NULL)
-	    fp->xlabel = mus_strdup(_("time"));
+	    fp->xlabel = mus_strdup("time");
 	  fp->axis = make_axis_info(cp,
 				    ap->x0, ap->x1,
 				    min_freq, max_freq,
@@ -1769,7 +1769,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
   /* need file to hold convolution output */
   err = mus_write_header(fname, MUS_NEXT, DEFAULT_OUTPUT_SRATE, 1, data_size * mus_bytes_per_sample(MUS_OUT_FORMAT), MUS_OUT_FORMAT, "c_convolve temp");
   if (err != MUS_NO_ERROR)
-    snd_error(_("can't open convolution temp file %s: %s"), fname, snd_io_strerror());
+    snd_error("can't open convolution temp file %s: %s", fname, snd_io_strerror());
   else
     {
       mus_float_t *rl0 = NULL, *rl1 = NULL, *rl2 = NULL;
@@ -1792,7 +1792,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 	  (pbuffer == NULL) || (pbuffer[0] == NULL) ||
 	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL))
 	{
-	  snd_error(_("not enough memory for convolve of %s (filter size: " MUS_LD ", fft size: " MUS_LD ")"), 
+	  snd_error("not enough memory for convolve of %s (filter size: "MUS_LD ", fft size: " MUS_LD ")", 
 		    fname, filtersize, fftsize);
 	}
       else
@@ -1859,7 +1859,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 	  finish_progress_report(gcp);
 
 	  if (mus_file_close(tempfile) != 0)
-	    snd_error(_("convolve: can't close temp file %s!"), fname);
+	    snd_error("convolve: can't close temp file %s!", fname);
 	}
       if (rl0) free(rl0);
       if (rl1) free(rl1);

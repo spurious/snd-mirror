@@ -109,9 +109,9 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
       clear_print_error();
       if (ss->print_choice == PRINT_SND)
 	{
-	  plab = XmStringCreateLocalized(_("Stop"));
+	  plab = XmStringCreateLocalized("Stop");
 	  nsp = any_selected_sound();
-	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("printing %s"), nsp->short_filename);
+	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "printing %s", nsp->short_filename);
 	  slab = XmStringCreateLocalized(print_string);
 	  XtVaSetValues(print_dialog, 
 			XmNokLabelString, plab, 
@@ -144,7 +144,7 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      err = lpr(name); /* lpr apparently insists on printing to stderr? */
 	      if (err != 0)
-		report_in_error_info(_("can't print!"), NULL);
+		report_in_error_info("can't print!", NULL);
 	      snd_remove(name, IGNORE_CACHE);
 	    }
 	  free(name);
@@ -170,8 +170,8 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
   printing = NOT_PRINTING;
   if (ss->print_choice == PRINT_SND)
     {
-      plab = XmStringCreateLocalized(_("Print"));
-      mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("print %s"), nsp->short_filename);
+      plab = XmStringCreateLocalized("Print");
+      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
       slab = XmStringCreateLocalized(print_string);
       XtVaSetValues(print_dialog, 
 		    XmNokLabelString, plab, 
@@ -197,10 +197,10 @@ static void start_print_dialog(XmString xmstr4, bool managed)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      xmstr1 = XmStringCreateLocalized(_("Print"));  /* "ok" here is confusing -- might mean, ok I'm done */
-      xmstr2 = XmStringCreateLocalized(_("Help"));
-      xmstr3 = XmStringCreateLocalized(_("Go Away"));
-      titlestr = XmStringCreateLocalized(_("Print"));
+      xmstr1 = XmStringCreateLocalized("Print");  /* "ok" here is confusing -- might mean, ok I'm done */
+      xmstr2 = XmStringCreateLocalized("Help");
+      xmstr3 = XmStringCreateLocalized("Go Away");
+      titlestr = XmStringCreateLocalized("Print");
 
       XtSetArg(args[n], XmNmessageString, xmstr4); n++;
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
@@ -212,7 +212,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       XtSetArg(args[n], XmNallowResize, true); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++; /* this gives us the resize handles */
-      print_dialog = XmCreateMessageDialog(MAIN_PANE(ss), _("eps file:"), args, n);
+      print_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "eps file:", args, n);
 
       XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->sgx->basic_color, NULL);
 
@@ -235,7 +235,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      dl = XtCreateManagedWidget(_("eps file:"), xmLabelWidgetClass, rc, args, n);
+      dl = XtCreateManagedWidget("eps file:", xmLabelWidgetClass, rc, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -252,7 +252,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, print_name); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      print_eps_or_lpr = make_togglebutton_widget(_("direct to printer"), rc, args, n);
+      print_eps_or_lpr = make_togglebutton_widget("direct to printer", rc, args, n);
 
       /* error display */
 
@@ -324,10 +324,10 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       snd_info *nsp;
       nsp = any_selected_sound();
       if (!nsp) return;
-      mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("print %s"), nsp->short_filename);
+      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
       xmstr4 = XmStringCreateLocalized(print_string);
     }
-  else xmstr4 = XmStringCreateLocalized(_("print env"));
+  else xmstr4 = XmStringCreateLocalized("print env");
   start_print_dialog(xmstr4, true);
   XmStringFree(xmstr4);
 }

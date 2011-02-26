@@ -1671,14 +1671,14 @@ widget_t start_preferences_dialog(void)
     XmString title, help, revert, clear, save, dismiss;
     Widget revert_button, clear_button;
 
-    title = XmStringCreateLocalized(_("Preferences"));
-    help = XmStringCreateLocalized(_("Help"));
-    revert = XmStringCreateLocalized(_("Revert"));
-    clear = XmStringCreateLocalized(_("Clear"));
+    title = XmStringCreateLocalized("Preferences");
+    help = XmStringCreateLocalized("Help");
+    revert = XmStringCreateLocalized("Revert");
+    clear = XmStringCreateLocalized("Clear");
 #if HAVE_EXTENSION_LANGUAGE
-    save = XmStringCreateLocalized(_("Save"));
+    save = XmStringCreateLocalized("Save");
 #endif
-    dismiss = XmStringCreateLocalized(_("Go Away"));
+    dismiss = XmStringCreateLocalized("Go Away");
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1706,12 +1706,12 @@ widget_t start_preferences_dialog(void)
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
     XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-    revert_button = XtCreateManagedWidget(_("Revert"), xmPushButtonGadgetClass, preferences_dialog, args, n);
+    revert_button = XtCreateManagedWidget("Revert", xmPushButtonGadgetClass, preferences_dialog, args, n);
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
     XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
-    clear_button = XtCreateManagedWidget(_("Clear"), xmPushButtonGadgetClass, preferences_dialog, args, n);
+    clear_button = XtCreateManagedWidget("Clear", xmPushButtonGadgetClass, preferences_dialog, args, n);
 
 #if HAVE_EXTENSION_LANGUAGE
     XtAddCallback(preferences_dialog, XmNcancelCallback, preferences_save_callback, NULL);

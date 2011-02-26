@@ -257,12 +257,12 @@ static void reflect_sample_change_in_axis(chan_info *cp)
 	  ap->no_data = (samps == 0);
 	  if (ap->xlabel) free(ap->xlabel);
 	  if (samps == 0) 
-	    ap->xlabel = mus_strdup(_("(no data)")); 
+	    ap->xlabel = mus_strdup("(no data)"); 
 	  else 
 	    {
 	      if (ap->default_xlabel)
 		ap->xlabel = mus_strdup(ap->default_xlabel);
-	      else ap->xlabel = mus_strdup(_("time"));
+	      else ap->xlabel = mus_strdup("time");
 	    }
 	}
       set_x_bounds(ap);
@@ -2873,7 +2873,7 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
   if (sf[0] == NULL)
     {
       free(sf);
-      snd_error(_("no such edit: %s[%d]: %d (this channel has %d edit%s"),
+      snd_error("no such edit: %s[%d]: %d (this channel has %d edit%s",
 		cp->sound->short_filename,
 		cp->chan,
 		edpos,
@@ -2926,7 +2926,7 @@ io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, in
       ((sp->user_read_only == FILE_READ_ONLY) || 
        (sp->file_read_only == FILE_READ_ONLY)))
     {
-      snd_error(_("can't save channel %d as %s (%s is write-protected)"), cp->chan, new_name, sp->short_filename);
+      snd_error("can't save channel %d as %s (%s is write-protected)", cp->chan, new_name, sp->short_filename);
       return(IO_WRITE_PROTECTED);
     }
 
@@ -4789,7 +4789,7 @@ bool insert_complete_file(snd_info *sp, const char *str, mus_long_t chan_beg, fi
       mus_long_t len;
       len = mus_sound_frames(filename);
       if (len == 0)
-	snd_warning(_("%s has no data"), str);
+	snd_warning("%s has no data", str);
       else
 	{
 	  int i, j, first_chan = 0;
@@ -4816,7 +4816,7 @@ bool insert_complete_file(snd_info *sp, const char *str, mus_long_t chan_beg, fi
 	    }
 	}
     }
-  else snd_warning(_("can't read %s"), str);
+  else snd_warning("can't read %s", str);
   free(filename);
   return(ok);
 }
@@ -6164,7 +6164,7 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
     {
       if (mus_file_probe(sp->filename) == 0)
 	{
-	  snd_warning(_("%s no longer exists!"), sp->short_filename);
+	  snd_warning("%s no longer exists!", sp->short_filename);
 	  return(NULL);
 	}
       else
@@ -6173,7 +6173,7 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
 	  write_date = file_write_date(sp->filename);
 	  if (sp->update_warning_write_date != write_date)
 	    {
-	      snd_warning(_("%s has changed since we last read it!"), sp->short_filename);
+	      snd_warning("%s has changed since we last read it!", sp->short_filename);
 	      sp->update_warning_write_date = write_date;
 	      /* without this write-date check, there are cases where this can get into a loop sending warnings */
 	    }
@@ -6784,7 +6784,7 @@ io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
       if ((sp->user_read_only == FILE_READ_ONLY) || 
 	  (sp->file_read_only == FILE_READ_ONLY))
 	{
-	  snd_error(_("can't save channel as %s (%s is write-protected)"), ofile, sp->short_filename);
+	  snd_error("can't save channel as %s (%s is write-protected)", ofile, sp->short_filename);
 	  return(IO_WRITE_PROTECTED);
 	}
       nfile = snd_tempnam();
@@ -6842,7 +6842,7 @@ static io_error_t save_edits_1(snd_info *sp, bool ask)
   /* returns -1 if file does not exist (stat -> -1) */
   if (current_write_date < 0)
     {
-      snd_error(_("can't save edits; %s has disappeared!"), sp->filename); 
+      snd_error("can't save edits; %s has disappeared!", sp->filename); 
       /* unless by chance it fits in one in-core buffer, there's nothing we can do now */
       return(IO_CANT_OPEN_FILE);
     }
@@ -8713,7 +8713,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	      if ((ss->stopped_explicitly) || (cp->active < CHANNEL_HAS_EDIT_LIST))
 		{
 		  ss->stopped_explicitly = false;
-		  string_to_minibuffer(cp->sound, _("maxamp check interrupted..."));
+		  string_to_minibuffer(cp->sound, "maxamp check interrupted...");
 		  break;
 		}
 	      j = 0;
