@@ -2,6 +2,7 @@
 
 /* TODO: with-menu-icons function
  * TODO: make the current help strings less stupid
+ * TODO: C level delete-sample-and-smooth and delete-selection-and-smooth
  */
 
 static void int_to_textfield(widget_t w, int val)

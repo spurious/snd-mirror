@@ -982,7 +982,7 @@ void post_selection_popup_menu(void *ev) {}
  * TODO: why was a simple loop so slow in gtk?
  * TODO: remake the popup pictures
  *
- * fft_popup_menu in g|xc fft
+ * fft_popup_menu in xfft
  * selection and basic popup_menu here
  */
 

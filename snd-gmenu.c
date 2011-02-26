@@ -843,9 +843,7 @@ GtkWidget *add_menu(void)
 }
 
 
-/* -------------------------------- POPUP MENUS --------------------------------
- *   FFT popup is in snd-gfft.c
- */
+/* -------------------------------- POPUP MENUS -------------------------------- */
 
 static GtkWidget *basic_popup_menu = NULL, *selection_popup_menu = NULL;
 
@@ -1112,6 +1110,183 @@ void post_selection_popup_menu(void *e)
 
   gtk_menu_popup(GTK_MENU(selection_popup_menu), NULL, NULL, NULL, NULL, POPUP_BUTTON, EVENT_TIME(ev));
 }
+
+
+/* -------- fft popup -------- */
+
+static GtkWidget *fft_popup_menu = NULL;
+
+static void popup_peaks_callback(GtkWidget *w, gpointer info) 
+{
+  FILE *peaks_fd;
+  peaks_fd = FOPEN("fft.txt", "w");
+  if (peaks_fd)
+    {
+      write_transform_peaks(peaks_fd, current_channel()); /* follows sync */
+      fclose(peaks_fd);
+    }
+}
+
+static void fft_size_16_callback(GtkWidget *w, gpointer info) {set_transform_size(16);}
+static void fft_size_64_callback(GtkWidget *w, gpointer info) {set_transform_size(64);}
+static void fft_size_256_callback(GtkWidget *w, gpointer info) {set_transform_size(256);}
+static void fft_size_1024_callback(GtkWidget *w, gpointer info) {set_transform_size(1024);}
+static void fft_size_4096_callback(GtkWidget *w, gpointer info) {set_transform_size(4096);}
+static void fft_size_16384_callback(GtkWidget *w, gpointer info) {set_transform_size(16384);}
+static void fft_size_65536_callback(GtkWidget *w, gpointer info) {set_transform_size(65536);}
+static void fft_size_262144_callback(GtkWidget *w, gpointer info) {set_transform_size(262144);}
+static void fft_size_1048576_callback(GtkWidget *w, gpointer info) {set_transform_size(1048576);}
+
+
+static void fft_window_rectangular_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_RECTANGULAR_WINDOW);}
+static void fft_window_hann_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_HANN_WINDOW);}
+static void fft_window_welch_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_WELCH_WINDOW);}
+static void fft_window_parzen_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_PARZEN_WINDOW);}
+static void fft_window_bartlett_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_BARTLETT_WINDOW);}
+static void fft_window_blackman2_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_BLACKMAN2_WINDOW);}
+static void fft_window_blackman3_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_BLACKMAN3_WINDOW);}
+static void fft_window_blackman4_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_BLACKMAN4_WINDOW);}
+static void fft_window_hamming_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_HAMMING_WINDOW);}
+static void fft_window_exponential_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_EXPONENTIAL_WINDOW);}
+static void fft_window_riemann_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_RIEMANN_WINDOW);}
+static void fft_window_kaiser_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_KAISER_WINDOW);}
+static void fft_window_cauchy_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_CAUCHY_WINDOW);}
+static void fft_window_poisson_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_POISSON_WINDOW);}
+static void fft_window_gaussian_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_GAUSSIAN_WINDOW);}
+static void fft_window_tukey_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_TUKEY_WINDOW);}
+static void fft_window_dolph_chebyshev_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_DOLPH_CHEBYSHEV_WINDOW);}
+static void fft_window_blackman6_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_BLACKMAN6_WINDOW);}
+static void fft_window_blackman8_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_BLACKMAN8_WINDOW);}
+static void fft_window_blackman10_callback(GtkWidget *w, gpointer info) {set_fft_window(MUS_BLACKMAN10_WINDOW);}
+
+static void fft_type_fourier_callback(GtkWidget *w, gpointer info) {set_transform_type(FOURIER);}
+static void fft_type_wavelet_callback(GtkWidget *w, gpointer info) {set_transform_type(WAVELET);}
+static void fft_type_autocorrelation_callback(GtkWidget *w, gpointer info) {set_transform_type(AUTOCORRELATION);}
+static void fft_type_cepstrum_callback(GtkWidget *w, gpointer info) {set_transform_type(CEPSTRUM);}
+
+
+static void fft_graph_once_callback(GtkWidget *w, gpointer info) {set_transform_graph_type(GRAPH_ONCE);}
+static void fft_graph_sonogram_callback(GtkWidget *w, gpointer info) {set_transform_graph_type(GRAPH_AS_SONOGRAM);}
+static void fft_graph_spectrogram_callback(GtkWidget *w, gpointer info) {set_transform_graph_type(GRAPH_AS_SPECTROGRAM);}
+
+
+static void fft_gray_callback(GtkWidget *w, gpointer info) {set_color_map(GRAY_COLORMAP);}
+static void fft_hot_callback(GtkWidget *w, gpointer info) {set_color_map(HOT_COLORMAP);}
+static void fft_cool_callback(GtkWidget *w, gpointer info) {set_color_map(COOL_COLORMAP);}
+static void fft_bone_callback(GtkWidget *w, gpointer info) {set_color_map(BONE_COLORMAP);}
+static void fft_copper_callback(GtkWidget *w, gpointer info) {set_color_map(COPPER_COLORMAP);}
+static void fft_pink_callback(GtkWidget *w, gpointer info) {set_color_map(PINK_COLORMAP);}
+static void fft_jet_callback(GtkWidget *w, gpointer info) {set_color_map(JET_COLORMAP);}
+static void fft_prism_callback(GtkWidget *w, gpointer info) {set_color_map(PRISM_COLORMAP);}
+static void fft_autumn_callback(GtkWidget *w, gpointer info) {set_color_map(AUTUMN_COLORMAP);}
+static void fft_winter_callback(GtkWidget *w, gpointer info) {set_color_map(WINTER_COLORMAP);}
+static void fft_spring_callback(GtkWidget *w, gpointer info) {set_color_map(SPRING_COLORMAP);}
+static void fft_summer_callback(GtkWidget *w, gpointer info) {set_color_map(SUMMER_COLORMAP);}
+static void fft_rainbow_callback(GtkWidget *w, gpointer info) {set_color_map(RAINBOW_COLORMAP);}
+static void fft_flag_callback(GtkWidget *w, gpointer info) {set_color_map(FLAG_COLORMAP);}
+static void fft_phases_callback(GtkWidget *w, gpointer info) {set_color_map(PHASES_COLORMAP);}
+static void fft_black_and_white_callback(GtkWidget *w, gpointer info) {set_color_map(BLACK_AND_WHITE_COLORMAP);}
+
+
+void post_fft_popup_menu(void *e)
+{
+  GdkEventButton *ev = (GdkEventButton *)e;
+  if (!fft_popup_menu)
+    {
+      GtkWidget *outer_menu, *cascade_menu;
+      fft_popup_menu = gtk_menu_new();
+      gtk_widget_set_events(fft_popup_menu, GDK_ALL_EVENTS_MASK);
+      gtk_widget_show(fft_popup_menu);
+
+      SG_SIGNAL_CONNECT(fft_popup_menu, "button_release_event", popup_menu_button_release, NULL);
+
+      outer_menu = add_menu_item(fft_popup_menu, "Size", NULL, NULL);
+      cascade_menu = gtk_menu_new();
+      gtk_menu_item_set_submenu(GTK_MENU_ITEM(outer_menu), cascade_menu);
+
+      add_menu_item(cascade_menu, "16",      NULL, (GCallback)fft_size_16_callback);
+      add_menu_item(cascade_menu, "64",      NULL, (GCallback)fft_size_64_callback);
+      add_menu_item(cascade_menu, "256",     NULL, (GCallback)fft_size_256_callback);
+      add_menu_item(cascade_menu, "1024",    NULL, (GCallback)fft_size_1024_callback);
+      add_menu_item(cascade_menu, "4096",    NULL, (GCallback)fft_size_4096_callback);
+      add_menu_item(cascade_menu, "16384",   NULL, (GCallback)fft_size_16384_callback);
+      add_menu_item(cascade_menu, "65536",   NULL, (GCallback)fft_size_65536_callback);
+      add_menu_item(cascade_menu, "262144",  NULL, (GCallback)fft_size_262144_callback);
+      add_menu_item(cascade_menu, "1048576", NULL, (GCallback)fft_size_1048576_callback);
+
+
+      outer_menu = add_menu_item(fft_popup_menu, "Window", NULL, NULL);
+      cascade_menu = gtk_menu_new();
+      gtk_menu_item_set_submenu(GTK_MENU_ITEM(outer_menu), cascade_menu);
+
+      add_menu_item(cascade_menu, "rectangular",     NULL, (GCallback)fft_window_rectangular_callback);
+      add_menu_item(cascade_menu, "hann",            NULL, (GCallback)fft_window_hann_callback);
+      add_menu_item(cascade_menu, "welch",           NULL, (GCallback)fft_window_welch_callback);
+      add_menu_item(cascade_menu, "parzen",          NULL, (GCallback)fft_window_parzen_callback);
+      add_menu_item(cascade_menu, "bartlett",        NULL, (GCallback)fft_window_bartlett_callback);
+      add_menu_item(cascade_menu, "hamming",         NULL, (GCallback)fft_window_hamming_callback);
+      add_menu_item(cascade_menu, "blackman2",       NULL, (GCallback)fft_window_blackman2_callback);
+      add_menu_item(cascade_menu, "blackman3",       NULL, (GCallback)fft_window_blackman3_callback);
+      add_menu_item(cascade_menu, "blackman4",       NULL, (GCallback)fft_window_blackman4_callback);
+      add_menu_item(cascade_menu, "exponential",     NULL, (GCallback)fft_window_exponential_callback);
+      add_menu_item(cascade_menu, "riemann",         NULL, (GCallback)fft_window_riemann_callback);
+      add_menu_item(cascade_menu, "kaiser",          NULL, (GCallback)fft_window_kaiser_callback);
+      add_menu_item(cascade_menu, "cauchy",          NULL, (GCallback)fft_window_cauchy_callback);
+      add_menu_item(cascade_menu, "poisson",         NULL, (GCallback)fft_window_poisson_callback);
+      add_menu_item(cascade_menu, "gaussian",        NULL, (GCallback)fft_window_gaussian_callback);
+      add_menu_item(cascade_menu, "tukey",           NULL, (GCallback)fft_window_tukey_callback);
+      add_menu_item(cascade_menu, "dolph-chebyshev", NULL, (GCallback)fft_window_dolph_chebyshev_callback);
+      add_menu_item(cascade_menu, "blackman6",       NULL, (GCallback)fft_window_blackman6_callback);
+      add_menu_item(cascade_menu, "blackman8",       NULL, (GCallback)fft_window_blackman8_callback);
+      add_menu_item(cascade_menu, "blackman10" ,     NULL, (GCallback)fft_window_blackman10_callback);
+
+
+      outer_menu = add_menu_item(fft_popup_menu, "Graph type", NULL, NULL);
+      cascade_menu = gtk_menu_new();
+      gtk_menu_item_set_submenu(GTK_MENU_ITEM(outer_menu), cascade_menu);
+
+      add_menu_item(cascade_menu, "one fft",     NULL, (GCallback)fft_graph_once_callback);
+      add_menu_item(cascade_menu, "sonogram",    NULL, (GCallback)fft_graph_sonogram_callback);
+      add_menu_item(cascade_menu, "spectrogram", NULL, (GCallback)fft_graph_spectrogram_callback);
+
+
+      outer_menu = add_menu_item(fft_popup_menu, "Transform type", NULL, NULL);
+      cascade_menu = gtk_menu_new();
+      gtk_menu_item_set_submenu(GTK_MENU_ITEM(outer_menu), cascade_menu);
+
+      add_menu_item(cascade_menu, "fourier",         NULL, (GCallback)fft_type_fourier_callback);
+      add_menu_item(cascade_menu, "wavelet",         NULL, (GCallback)fft_type_wavelet_callback);
+      add_menu_item(cascade_menu, "autocorrelation", NULL, (GCallback)fft_type_autocorrelation_callback);
+      add_menu_item(cascade_menu, "cepstrum",        NULL, (GCallback)fft_type_cepstrum_callback);
+
+
+      outer_menu = add_menu_item(fft_popup_menu, "Colormap", NULL, NULL);
+      cascade_menu = gtk_menu_new();
+      gtk_menu_item_set_submenu(GTK_MENU_ITEM(outer_menu), cascade_menu);
+
+      add_menu_item(cascade_menu, "gray",    NULL, (GCallback)fft_gray_callback);
+      add_menu_item(cascade_menu, "autumn",  NULL, (GCallback)fft_autumn_callback);
+      add_menu_item(cascade_menu, "spring",  NULL, (GCallback)fft_spring_callback);
+      add_menu_item(cascade_menu, "winter",  NULL, (GCallback)fft_winter_callback);
+      add_menu_item(cascade_menu, "summer",  NULL, (GCallback)fft_summer_callback);
+      add_menu_item(cascade_menu, "cool",    NULL, (GCallback)fft_cool_callback);
+      add_menu_item(cascade_menu, "copper",  NULL, (GCallback)fft_copper_callback);
+      add_menu_item(cascade_menu, "flag",    NULL, (GCallback)fft_flag_callback);
+      add_menu_item(cascade_menu, "prism",   NULL, (GCallback)fft_prism_callback);
+      add_menu_item(cascade_menu, "bone",    NULL, (GCallback)fft_bone_callback);
+      add_menu_item(cascade_menu, "hot",     NULL, (GCallback)fft_hot_callback);
+      add_menu_item(cascade_menu, "jet",     NULL, (GCallback)fft_jet_callback);
+      add_menu_item(cascade_menu, "pink",    NULL, (GCallback)fft_pink_callback);
+      add_menu_item(cascade_menu, "rainbow", NULL, (GCallback)fft_rainbow_callback);
+      add_menu_item(cascade_menu, "phases",  NULL, (GCallback)fft_phases_callback);
+      add_menu_item(cascade_menu, "black and white", NULL, (GCallback)fft_black_and_white_callback);
+
+      add_menu_item(fft_popup_menu, "Peaks->fft.txt", NULL, (GCallback)popup_peaks_callback);
+    }
+
+  gtk_menu_popup(GTK_MENU(fft_popup_menu), NULL, NULL, NULL, NULL, POPUP_BUTTON, EVENT_TIME(ev));
+}
+
 
 
 void post_lisp_popup_menu(void *e) {}
