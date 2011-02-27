@@ -6,7 +6,6 @@
 ;;;   clear-selection
 ;;;   make-selection
 ;;;   eval-over-selection
-;;;   delete-selection-and-smooth
 ;;;   filter-selection-and-smooth
 ;;;   with-temporary-selection
 ;;;
@@ -190,23 +189,6 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
       result)))
 
 
-
-
-;;; -------- delete selected portion and smooth the splice
-;;;
-;;; TODO: either fix this or delete it (and smooth of course)
-
-(define (delete-selection-and-smooth)
-  "(delete-selection-and-smooth) deletes the current selection and smooths the splice"
-  (if (selection?)
-      (let ((beg (selection-position))
-	    (len (selection-frames)))
-	(apply map (lambda (snd chn)
-		     (if (selection-member? snd chn)
-			 (let ((smooth-beg (max 0 (- beg 16))))
-			   (delete-samples beg len snd chn)
-			   (smooth-sound smooth-beg 32 snd chn))))
-	       (all-chans)))))
 
 
 ;;; -------- eval over selection, replacing current samples, mapped to "C-x x" key using prompt-in-minibuffer

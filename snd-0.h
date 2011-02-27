@@ -540,6 +540,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_with_tooltips(a) ss->With_Tooltips = a
 #define DEFAULT_WITH_TOOLTIPS true
 
+#define with_menu_icons(ss) ss->With_Menu_Icons
+#define in_set_with_menu_icons(a) ss->With_Menu_Icons = a
+#define DEFAULT_WITH_MENU_ICONS false
+
 #define remember_sound_state(ss) ss->Remember_Sound_State
 #define set_remember_sound_state(a) ss->Remember_Sound_State = a
 #define DEFAULT_REMEMBER_SOUND_STATE false

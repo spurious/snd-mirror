@@ -683,6 +683,7 @@
 #define S_with_file_monitor             "with-file-monitor"
 #define S_with_gl                       "with-gl"
 #define S_with_inset_graph              "with-inset-graph"
+#define S_with_menu_icons               "with-menu-icons"
 #define S_with_mix_tags                 "with-mix-tags"
 #define S_with_pointer_focus            "with-pointer-focus"
 #define S_with_relative_panes           "with-relative-panes"

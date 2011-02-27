@@ -437,7 +437,7 @@ typedef struct snd_state {
   mus_long_t Transform_Size;
   mus_fft_window_t Fft_Window;
   graph_type_t Transform_Graph_Type, Time_Graph_Type;
-  bool Ask_Before_Overwrite, Ask_About_Unsaved_Edits, Show_Full_Duration, Remember_Sound_State, With_Toolbar, With_Tooltips;
+  bool Ask_Before_Overwrite, Ask_About_Unsaved_Edits, Show_Full_Duration, Remember_Sound_State, With_Toolbar, With_Tooltips, With_Menu_Icons;
   mus_float_t Fft_Window_Alpha, Fft_Window_Beta, Grid_Density, Initial_Beg, Initial_Dur;
   mus_float_t Color_Scale, Color_Cutoff, Beats_Per_Minute;
   bool Color_Inverted, Show_Mix_Waveforms;
@@ -1451,6 +1451,7 @@ void view_files_start_dialog_with_title(const char *title);
 void set_with_toolbar_and_display(bool val);
 void g_init_file(void);
 void initialize_format_lists(void);
+void set_with_menu_icons(bool val);
 
 
 
@@ -1691,6 +1692,7 @@ void cursor_delete(chan_info *cp, mus_long_t count);
 void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection);
 void cursor_insert(chan_info *cp, mus_long_t beg, mus_long_t count);
 void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int edpos);
+void cut_and_smooth(chan_info *cp);
 
 void g_init_sig(void);
 int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos);

@@ -1,8 +1,6 @@
 /* this file included as text in snd-g|xprefs.c */
 
-/* TODO: with-menu-icons function
- * TODO: make the current help strings less stupid
- * TODO: C level delete-sample-and-smooth and delete-selection-and-smooth
+/* TODO: make the current help strings less stupid
  */
 
 static void int_to_textfield(widget_t w, int val)
@@ -3174,6 +3172,24 @@ static void clear_with_tooltips(prefs_info *prf) {set_with_tooltips(DEFAULT_WITH
 static void reflect_with_tooltips(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_tooltips(ss));}
 static void save_with_tooltips(prefs_info *prf, FILE *fd) {rts_with_tooltips = with_tooltips(ss);}
 static void toggle_with_tooltips(prefs_info *prf) {set_with_tooltips(GET_TOGGLE(prf->toggle));}
+
+
+#if USE_GTK
+/* ---------------- with-menu-icons ---------------- */
+
+static bool rts_with_menu_icons = DEFAULT_WITH_MENU_ICONS;
+
+static const char *help_with_menu_icons(prefs_info *prf)
+{
+  return("  If this is set, some menus include icons.  ");
+}
+
+static void revert_with_menu_icons(prefs_info *prf) {set_with_menu_icons(rts_with_menu_icons);}
+static void clear_with_menu_icons(prefs_info *prf) {set_with_menu_icons(DEFAULT_WITH_MENU_ICONS);}
+static void reflect_with_menu_icons(prefs_info *prf) {SET_TOGGLE(prf->toggle, with_menu_icons(ss));}
+static void save_with_menu_icons(prefs_info *prf, FILE *fd) {rts_with_menu_icons = with_menu_icons(ss);}
+static void toggle_with_menu_icons(prefs_info *prf) {set_with_menu_icons(GET_TOGGLE(prf->toggle));}
+#endif
 
 
 

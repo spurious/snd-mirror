@@ -4141,6 +4141,61 @@ static XEN g_smooth_selection(void)
 }
 
 
+void cut_and_smooth(chan_info *cp)
+{
+  if (selection_is_active_in_channel(cp))
+    {
+      #define SPLICE_LEN 32
+      mus_long_t beg, end, frames, start;
+      mus_sample_t splice[2 * SPLICE_LEN];
+      double ramp, incr;
+      int i;
+      snd_fd *sf, *sf_end;
+
+      incr = 0.5 / SPLICE_LEN;
+      beg = selection_beg(cp);
+      end = selection_end(cp);
+      frames = CURRENT_SAMPLES(cp);
+
+      if (end < SPLICE_LEN)
+	start = 0;
+      else start = end - SPLICE_LEN;
+
+      sf_end = init_sample_read_any_with_bufsize(start, cp, READ_FORWARD, cp->edit_ctr, 2 * SPLICE_LEN);
+
+      if (beg < SPLICE_LEN)
+	start = 0;
+      else start = beg - SPLICE_LEN;
+
+      sf = init_sample_read_any_with_bufsize(start, cp, READ_FORWARD, cp->edit_ctr, 2 * SPLICE_LEN);
+      for (i = 0, ramp = 1.0; i < 2 * SPLICE_LEN; i++, ramp -= incr)
+	{
+	  mus_float_t x, y;
+	  x = read_sample(sf);
+	  y = read_sample(sf_end);
+	  splice[i] = MUS_DOUBLE_TO_SAMPLE((x * ramp) + (y * (1.0 - ramp)));
+	}
+      free_snd_fd(sf);
+      free_snd_fd(sf_end);
+
+      cp_delete_selection(cp);
+      change_samples(start, 2 * SPLICE_LEN, splice, cp, "popup cut+smooth", cp->edit_ctr);
+    }
+}
+
+
+static XEN g_delete_selection_and_smooth(void)
+{
+  #define H_delete_selection_and_smooth "(" S_delete_selection_and_smooth ") deletes the current selection, and tries to \
+make the splice-point smooth."
+
+  if (!(selection_is_active())) 
+    return(snd_no_active_selection_error(S_delete_selection_and_smooth));
+  for_each_chan(cut_and_smooth);
+  return(XEN_FALSE);
+}
+
+
 static XEN g_reverse_sound(XEN snd, XEN chn_n, XEN edpos)
 {
   #define H_reverse_sound "(" S_reverse_sound " :optional snd chn edpos): reverse snd's channel chn"
@@ -5764,9 +5819,9 @@ that give a minimum peak amplitude when the signals are added together."
      17827, 17837, 17839, 17851, 17863};
 #endif
 
-  static mus_float_t all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6394, 2.7947, 2.9618, 3.1027, 3.2184, 3.3891, 3.5249, 3.6131, 3.7690, 3.8751, 3.9815, 4.1454, 4.2237, 4.2901, 4.4844, 4.5881, 4.6077, 4.7308, 4.8556, 5.0083, 5.0665, 5.1610, 5.2447, 5.3667, 5.4835, 5.5298, 5.6351, 5.7213, 5.7695, 5.9314, 5.9340, 6.1129, 6.1310, 6.2990, 6.3364, 6.4649, 6.4824, 6.5525, 6.6395, 6.6997, 6.8394, 6.8711, 6.9216, 7.0120, 7.0727, 7.1459, 7.2091, 7.2660, 7.3406, 7.3610, 7.5091, 7.6053, 7.6560, 7.6103, 7.7751, 7.8116, 7.9156, 7.9789, 8.0499, 8.0795, 8.1638, 8.1884, 8.2338, 8.1968, 8.3426, 8.4850, 8.4463, 8.5225, 8.6321, 8.6432, 8.7160, 8.7442, 8.8668, 8.8540, 8.9808, 9.0950, 8.9618, 9.0446, 9.1551, 9.2307, 9.3607, 9.3434, 9.3772, 9.4308, 9.4958, 9.5482, 9.6935, 9.6443, 9.6193, 9.7318, 9.8398, 9.7998, 9.8862, 9.9650, 10.0950, 10.1111, 10.1018, 10.1518, 10.1994, 10.2676, 10.3088, 10.3414, 10.4792, 10.5631, 10.5284, 10.4941, 10.6286, 10.6666, 10.7297, 10.7015, 10.8830, 10.8415, 10.9349, 10.9160, 10.9630, 11.0069, 11.1287, 11.1133, 11.2040, 11.1842, 11.2172, 11.3533};
+  static mus_float_t all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6394, 2.7947, 2.9618, 3.1027, 3.2184, 3.3891, 3.5249, 3.6131, 3.7690, 3.8751, 3.9815, 4.1454, 4.2237, 4.2901, 4.4844, 4.5881, 4.6077, 4.7308, 4.8556, 5.0083, 5.0665, 5.1610, 5.2447, 5.3667, 5.4835, 5.5298, 5.6351, 5.7213, 5.7695, 5.9314, 5.9340, 6.1129, 6.1310, 6.2990, 6.3364, 6.4649, 6.4824, 6.5525, 6.6395, 6.6997, 6.8394, 6.8711, 6.9216, 7.0120, 7.0727, 7.1459, 7.2091, 7.2660, 7.3406, 7.3610, 7.5091, 7.6053, 7.6560, 7.6103, 7.7751, 7.8116, 7.9156, 7.9789, 8.0499, 8.0795, 8.1638, 8.1884, 8.2338, 8.1968, 8.3426, 8.4850, 8.4463, 8.5225, 8.6321, 8.6432, 8.7160, 8.7442, 8.8668, 8.8540, 8.9808, 9.0923, 8.9618, 9.0446, 9.1551, 9.2307, 9.3580, 9.3434, 9.3772, 9.4308, 9.4958, 9.5482, 9.6927, 9.6443, 9.6193, 9.7318, 9.8398, 9.7998, 9.8862, 9.9650, 10.0932, 10.1064, 10.1018, 10.1518, 10.1994, 10.2676, 10.3088, 10.3414, 10.4777, 10.5568, 10.5284, 10.4941, 10.6286, 10.6666, 10.7175, 10.7015, 10.8677, 10.8401, 10.9330, 10.9160, 10.9630, 10.9942, 11.1270, 11.1133, 11.1979, 11.1842, 11.2172, 11.3515};
 
-  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6184, 2.7908, 2.8865, 3.0538, 3.1771, 3.3627, 3.4755, 3.5994, 3.7398, 3.8582, 3.9278, 4.0712, 4.1739, 4.3601, 4.4504, 4.5828, 4.6639, 4.7891, 4.8892, 5.0085, 5.0916, 5.0926, 5.2674, 5.3569, 5.4235, 5.5676, 5.6070, 5.7451, 5.8382, 5.9833, 6.0249, 6.1502, 6.1875, 6.2779, 6.3276, 6.4085, 6.4809, 6.6048, 6.6310, 6.7167, 6.7934, 6.8352, 6.9979, 6.9553, 7.0965, 7.0875, 7.2627, 7.3396, 7.3763, 7.4309, 7.4982, 7.5987, 7.6284, 7.7097, 7.7859, 7.8273, 7.9170, 7.9692, 8.0569, 8.1525, 8.1401, 8.2378, 8.2868, 8.3442, 8.4944, 8.3782, 8.5744, 8.4993, 8.6683, 8.6675, 8.7208, 8.7294, 8.9281, 8.9668, 8.9383, 8.9097, 9.0744, 9.2193, 9.2186, 9.2297, 9.3897, 9.3399, 9.3470, 9.4367, 9.4725, 9.5687, 9.6801, 9.7289, 9.7370, 9.7826, 9.8580, 9.9469, 10.0061, 10.0066, 9.9851, 10.0649, 10.1295, 10.1977, 10.1319, 10.2199, 10.3400, 10.3443, 10.4542, 10.4287, 10.6555, 10.6156, 10.6556, 10.6395, 10.7108, 10.7650, 10.8341, 10.8329, 10.9533, 10.9573, 11.0764, 11.1059, 11.1744, 11.2790, 11.1434, 11.3538, 11.3282, 11.3027};
+  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6184, 2.7908, 2.8865, 3.0538, 3.1771, 3.3627, 3.4755, 3.5994, 3.7398, 3.8582, 3.9278, 4.0712, 4.1739, 4.3601, 4.4504, 4.5828, 4.6639, 4.7891, 4.8892, 5.0085, 5.0916, 5.0926, 5.2674, 5.3569, 5.4235, 5.5676, 5.6070, 5.7451, 5.8382, 5.9833, 6.0249, 6.1502, 6.1875, 6.2779, 6.3276, 6.4085, 6.4809, 6.6048, 6.6310, 6.7167, 6.7934, 6.8352, 6.9979, 6.9553, 7.0965, 7.0875, 7.2627, 7.3396, 7.3763, 7.4309, 7.4982, 7.5987, 7.6284, 7.7097, 7.7859, 7.8273, 7.9170, 7.9692, 8.0569, 8.1525, 8.1401, 8.2378, 8.2868, 8.3442, 8.4944, 8.3782, 8.5744, 8.4993, 8.6683, 8.6675, 8.7208, 8.7294, 8.9281, 8.9668, 8.9383, 8.9097, 9.0744, 9.2193, 9.2158, 9.2297, 9.3897, 9.3399, 9.3470, 9.4367, 9.4725, 9.5687, 9.6801, 9.7101, 9.7370, 9.7826, 9.8580, 9.9469, 10.0061, 10.0066, 9.9851, 10.0649, 10.1295, 10.1977, 10.1319, 10.2199, 10.3306, 10.3443, 10.4542, 10.4287, 10.6555, 10.6156, 10.6556, 10.6395, 10.7108, 10.7650, 10.8330, 10.8329, 10.9533, 10.9573, 11.0739, 11.1024, 11.1744, 11.2730, 11.1434, 11.3538, 11.3282, 11.3027};
 
   static mus_float_t prime_mins[128] = {1.0000, 1.7600, 1.9798, 2.1921, 2.4768, 2.8055, 3.0619, 3.2630, 3.3824, 3.6023, 3.7790, 3.9366, 4.1551, 4.3254, 4.4680, 4.6025, 4.7203, 4.8567, 5.0167, 5.1901, 5.3299, 5.4469, 5.5660, 5.6488, 5.8136, 6.0631, 6.1376, 6.1943, 6.3688, 6.4551, 6.7060, 6.8464, 6.8528, 6.9975, 7.1698, 7.2801, 7.2978, 7.4026, 7.4626, 7.7094, 7.8733, 7.9766, 8.0526, 8.1864, 8.1655, 8.2722, 8.4314, 8.4781, 8.6466, 8.6842, 8.6633, 8.8300, 8.9627, 9.1228, 9.1564, 9.4166, 9.5807, 9.5057, 9.4611, 9.6680, 9.8578, 9.8036, 9.7298, 9.9287, 10.2856, 10.2311, 10.3407, 10.4127, 10.4243, 10.4572, 10.5887, 10.6032, 10.7745, 10.7224, 11.0321, 11.0824, 10.8967, 11.1438, 11.2405, 11.4673, 11.5138, 11.4929, 11.5309, 11.5744, 11.6582, 11.5382, 11.9413, 12.0060, 12.2362, 12.0567, 12.1409, 12.1419, 12.3374, 12.3904, 12.5299, 12.6858, 12.6639, 12.9200, 13.1127, 13.1352, 13.0875, 13.4199, 13.4492, 13.2143, 13.1622, 13.2404, 13.5786, 13.6931, 13.7139, 13.8060, 13.7890, 13.8862, 14.0573, 14.2366, 14.1959, 14.4907, 14.6271, 14.5700, 14.4088, 14.5250, 14.5755, 14.8995, 14.6292, 14.9056, 14.7970, 14.9417, 14.9909, 14.6673};
 
@@ -7046,6 +7101,7 @@ XEN_ARGIFY_5(g_count_matches_w, g_count_matches)
 XEN_ARGIFY_4(g_smooth_sound_w, g_smooth_sound)
 XEN_ARGIFY_5(g_smooth_channel_w, g_smooth_channel)
 XEN_NARGIFY_0(g_smooth_selection_w, g_smooth_selection)
+XEN_NARGIFY_0(g_delete_selection_and_smooth_w, g_delete_selection_and_smooth)
 XEN_ARGIFY_3(g_reverse_sound_w, g_reverse_sound)
 XEN_ARGIFY_5(g_reverse_channel_w, g_reverse_channel)
 XEN_NARGIFY_0(g_reverse_selection_w, g_reverse_selection)
@@ -7094,6 +7150,7 @@ XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
 #define g_smooth_sound_w g_smooth_sound
 #define g_smooth_channel_w g_smooth_channel
 #define g_smooth_selection_w g_smooth_selection
+#define g_delete_selection_and_smooth_w g_delete_selection_and_smooth
 #define g_reverse_sound_w g_reverse_sound
 #define g_reverse_channel_w g_reverse_channel
 #define g_reverse_selection_w g_reverse_selection
@@ -7136,46 +7193,47 @@ XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
 
 void g_init_sig(void)
 {
-  XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w,            1, 5, 0, H_scan_channel);
-  XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w,               1, 5, 0, H_scan_chan);
-  XEN_DEFINE_PROCEDURE(S_find_channel,            g_find_channel_w,            1, 4, 0, H_find_channel);
-  XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w,           1, 4, 0, H_count_matches);
-  XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w,                1, 6, 0, H_map_chan);
-  XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w,             1, 6, 0, H_map_channel);
-  XEN_DEFINE_PROCEDURE(S_ptree_channel,           g_ptree_channel_w,           1, 8, 0, H_ptree_channel);
+  XEN_DEFINE_PROCEDURE(S_scan_channel,                g_scan_channel_w,                1, 5, 0, H_scan_channel);
+  XEN_DEFINE_PROCEDURE(S_scan_chan,                   g_scan_chan_w,                   1, 5, 0, H_scan_chan);
+  XEN_DEFINE_PROCEDURE(S_find_channel,                g_find_channel_w,                1, 4, 0, H_find_channel);
+  XEN_DEFINE_PROCEDURE(S_count_matches,               g_count_matches_w,               1, 4, 0, H_count_matches);
+  XEN_DEFINE_PROCEDURE(S_map_chan,                    g_map_chan_w,                    1, 6, 0, H_map_chan);
+  XEN_DEFINE_PROCEDURE(S_map_channel,                 g_map_channel_w,                 1, 6, 0, H_map_channel);
+  XEN_DEFINE_PROCEDURE(S_ptree_channel,               g_ptree_channel_w,               1, 8, 0, H_ptree_channel);
 
-  XEN_DEFINE_PROCEDURE(S_smooth_sound,            g_smooth_sound_w,            0, 4, 0, H_smooth_sound);
-  XEN_DEFINE_PROCEDURE(S_smooth_selection,        g_smooth_selection_w,        0, 0, 0, H_smooth_selection);
-  XEN_DEFINE_PROCEDURE(S_reverse_sound,           g_reverse_sound_w,           0, 3, 0, H_reverse_sound);
-  XEN_DEFINE_PROCEDURE(S_reverse_selection,       g_reverse_selection_w,       0, 0, 0, H_reverse_selection);
-  XEN_DEFINE_PROCEDURE(S_swap_channels,           g_swap_channels_w,           0, 8, 0, H_swap_channels);
-  XEN_DEFINE_PROCEDURE(S_insert_silence,          g_insert_silence_w,          2, 2, 0, H_insert_silence);
+  XEN_DEFINE_PROCEDURE(S_smooth_sound,                g_smooth_sound_w,                0, 4, 0, H_smooth_sound);
+  XEN_DEFINE_PROCEDURE(S_smooth_selection,            g_smooth_selection_w,            0, 0, 0, H_smooth_selection);
+  XEN_DEFINE_PROCEDURE(S_delete_selection_and_smooth, g_delete_selection_and_smooth_w, 0, 0, 0, H_delete_selection_and_smooth);
+  XEN_DEFINE_PROCEDURE(S_reverse_sound,               g_reverse_sound_w,               0, 3, 0, H_reverse_sound);
+  XEN_DEFINE_PROCEDURE(S_reverse_selection,           g_reverse_selection_w,           0, 0, 0, H_reverse_selection);
+  XEN_DEFINE_PROCEDURE(S_swap_channels,               g_swap_channels_w,               0, 8, 0, H_swap_channels);
+  XEN_DEFINE_PROCEDURE(S_insert_silence,              g_insert_silence_w,              2, 2, 0, H_insert_silence);
 
-  XEN_DEFINE_PROCEDURE(S_scale_selection_to,      g_scale_selection_to_w,      0, 1, 0, H_scale_selection_to);
-  XEN_DEFINE_PROCEDURE(S_scale_selection_by,      g_scale_selection_by_w,      1, 0, 0, H_scale_selection_by);
-  XEN_DEFINE_PROCEDURE(S_scale_to,                g_scale_to_w,                0, 3, 0, H_scale_to);
-  XEN_DEFINE_PROCEDURE(S_scale_by,                g_scale_by_w,                1, 2, 0, H_scale_by);
-  XEN_DEFINE_PROCEDURE(S_env_selection,           g_env_selection_w,           1, 1, 0, H_env_selection);
-  XEN_DEFINE_PROCEDURE(S_env_sound,               g_env_sound_w,               1, 6, 0, H_env_sound);
-  XEN_DEFINE_PROCEDURE(S_fft,                     g_fft_w,                     2, 1, 0, H_fft);
-  XEN_DEFINE_PROCEDURE(S_snd_spectrum,            g_snd_spectrum_w,            1, 6, 0, H_snd_spectrum);
-  XEN_DEFINE_PROCEDURE(S_convolve_with,           g_convolve_with_w,           1, 4, 0, H_convolve_with);
-  XEN_DEFINE_PROCEDURE(S_convolve_selection_with, g_convolve_selection_with_w, 1, 1, 0, H_convolve_selection_with);
-  XEN_DEFINE_PROCEDURE(S_src_sound,               g_src_sound_w,               1, 4, 0, H_src_sound);
-  XEN_DEFINE_PROCEDURE(S_src_selection,           g_src_selection_w,           1, 1, 0, H_src_selection);
-  XEN_DEFINE_PROCEDURE(S_filter_channel,          g_filter_channel_w,          1, 8, 0, H_filter_channel);
-  XEN_DEFINE_PROCEDURE(S_filter_sound,            g_filter_sound_w,            1, 5, 0, H_filter_sound);
-  XEN_DEFINE_PROCEDURE(S_filter_selection,        g_filter_selection_w,        1, 2, 0, H_filter_selection);
+  XEN_DEFINE_PROCEDURE(S_scale_selection_to,          g_scale_selection_to_w,          0, 1, 0, H_scale_selection_to);
+  XEN_DEFINE_PROCEDURE(S_scale_selection_by,          g_scale_selection_by_w,          1, 0, 0, H_scale_selection_by);
+  XEN_DEFINE_PROCEDURE(S_scale_to,                    g_scale_to_w,                    0, 3, 0, H_scale_to);
+  XEN_DEFINE_PROCEDURE(S_scale_by,                    g_scale_by_w,                    1, 2, 0, H_scale_by);
+  XEN_DEFINE_PROCEDURE(S_env_selection,               g_env_selection_w,               1, 1, 0, H_env_selection);
+  XEN_DEFINE_PROCEDURE(S_env_sound,                   g_env_sound_w,                   1, 6, 0, H_env_sound);
+  XEN_DEFINE_PROCEDURE(S_fft,                         g_fft_w,                         2, 1, 0, H_fft);
+  XEN_DEFINE_PROCEDURE(S_snd_spectrum,                g_snd_spectrum_w,                1, 6, 0, H_snd_spectrum);
+  XEN_DEFINE_PROCEDURE(S_convolve_with,               g_convolve_with_w,               1, 4, 0, H_convolve_with);
+  XEN_DEFINE_PROCEDURE(S_convolve_selection_with,     g_convolve_selection_with_w,     1, 1, 0, H_convolve_selection_with);
+  XEN_DEFINE_PROCEDURE(S_src_sound,                   g_src_sound_w,                   1, 4, 0, H_src_sound);
+  XEN_DEFINE_PROCEDURE(S_src_selection,               g_src_selection_w,               1, 1, 0, H_src_selection);
+  XEN_DEFINE_PROCEDURE(S_filter_channel,              g_filter_channel_w,              1, 8, 0, H_filter_channel);
+  XEN_DEFINE_PROCEDURE(S_filter_sound,                g_filter_sound_w,                1, 5, 0, H_filter_sound);
+  XEN_DEFINE_PROCEDURE(S_filter_selection,            g_filter_selection_w,            1, 2, 0, H_filter_selection);
 
-  XEN_DEFINE_PROCEDURE(S_reverse_channel,         g_reverse_channel_w,         0, 5, 0, H_reverse_channel);
-  XEN_DEFINE_PROCEDURE(S_clm_channel,             g_clm_channel_w,             1, 7, 0, H_clm_channel);
-  XEN_DEFINE_PROCEDURE(S_env_channel,             g_env_channel_w,             1, 5, 0, H_env_channel);
-  XEN_DEFINE_PROCEDURE(S_env_channel_with_base,   g_env_channel_with_base_w,   1, 6, 0, H_env_channel_with_base);
-  XEN_DEFINE_PROCEDURE(S_ramp_channel,            g_ramp_channel_w,            2, 5, 0, H_ramp_channel);
-  XEN_DEFINE_PROCEDURE(S_xramp_channel,           g_xramp_channel_w,           2, 6, 0, H_xramp_channel);
-  XEN_DEFINE_PROCEDURE(S_smooth_channel,          g_smooth_channel_w,          0, 5, 0, H_smooth_channel);
-  XEN_DEFINE_PROCEDURE(S_src_channel,             g_src_channel_w,             1, 5, 0, H_src_channel);
-  XEN_DEFINE_PROCEDURE(S_pad_channel,             g_pad_channel_w,             2, 3, 0, H_pad_channel);
+  XEN_DEFINE_PROCEDURE(S_reverse_channel,             g_reverse_channel_w,             0, 5, 0, H_reverse_channel);
+  XEN_DEFINE_PROCEDURE(S_clm_channel,                 g_clm_channel_w,                 1, 7, 0, H_clm_channel);
+  XEN_DEFINE_PROCEDURE(S_env_channel,                 g_env_channel_w,                 1, 5, 0, H_env_channel);
+  XEN_DEFINE_PROCEDURE(S_env_channel_with_base,       g_env_channel_with_base_w,       1, 6, 0, H_env_channel_with_base);
+  XEN_DEFINE_PROCEDURE(S_ramp_channel,                g_ramp_channel_w,                2, 5, 0, H_ramp_channel);
+  XEN_DEFINE_PROCEDURE(S_xramp_channel,               g_xramp_channel_w,               2, 6, 0, H_xramp_channel);
+  XEN_DEFINE_PROCEDURE(S_smooth_channel,              g_smooth_channel_w,              0, 5, 0, H_smooth_channel);
+  XEN_DEFINE_PROCEDURE(S_src_channel,                 g_src_channel_w,                 1, 5, 0, H_src_channel);
+  XEN_DEFINE_PROCEDURE(S_pad_channel,                 g_pad_channel_w,                 2, 3, 0, H_pad_channel);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sinc_width, g_sinc_width_w, H_sinc_width,
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);

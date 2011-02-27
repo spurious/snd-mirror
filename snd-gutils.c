@@ -1211,10 +1211,6 @@ More options there (fft) might be nice though, like being able to zoom into
 the spectrum graphic.
 --------
 
-Thanks for the suggestions!  I think I'll move the
-context-sensitive popup menus into the main version --
-I assume that's what you mean by right-click menus?
-
 On the zoomed FFT -- it's been on my TODO list for
 about a decade. 
 --------
@@ -1234,7 +1230,7 @@ just most obvious with those scrollbars
 /* I see no way around this.
  */
 
-#if (!HAVE_GTK3)
+#if (!HAVE_GTK_3)
 
 void init_gtk2(void)
 {
@@ -1434,4 +1430,5 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
 #endif
 
 /* TODO: in gtk3 we need the css inline silliness, and how to get the emacs key bindings?
+*   also none of the prefs colors are working
  */

@@ -1242,6 +1242,14 @@ the cursor is moved to the clicked point.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
+<!-- with-menu-icons -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="withmenuicons">with-menu-icons</a></code></td>
+<td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
+with-menu-icons determines whether some menus display icons beside the item labels (in Gtk only).
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
+
 <!-- with-pointer-focus -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="withpointerfocus">with-pointer-focus</a></code></td>
 <td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
@@ -5657,6 +5665,14 @@ delete-selection deletes the selection, equivalent to the Edit:Delete selection 
 <tr><td colspan=2 height=16></td></tr>
 
 
+<!-- delete-selection-and-smooth -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="deleteselectionandsmooth">delete-selection-and-smooth</a></code>
+</td></tr><tr><td></td><td>
+delete-selection-and-smooth deletes the selection, then tries to make the splice smooth.
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 <!-- env-selection -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="envselection">env-selection</a> envelope <em class=narg>env-base</em></code>
 </td></tr><tr><td></td><td>
@@ -5957,7 +5973,7 @@ select portion via function: <a href="sndscm.html#makeselection">make-selection<
 evaluate func on each sample of selection: <a href="sndscm.html#evaloverselection">eval-over-selection</a> (map-selection in effect)<br>
 selection members as list of lists of sounds and channels: <a href="sndscm.html#selectionmembers">selection-members</a><br>
 rms of selection data: <a href="sndscm.html#selectionrms">selection-rms</a><br>
-delete selection and smooth the splice: <a href="sndscm.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
+delete selection and smooth the splice: <a href="#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
 select portion between two marks: <a href="sndscm.html#defineselectionviamarks">define-selection-via-marks</a><br>
 place marks at selection start and end: <a href="sndscm.html#snapmarks">snap-marks</a><br>
 squeeze selection between marks: <a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a><br>
@@ -6658,7 +6674,7 @@ This deletes sample 'samp' in the given channel.
 delete a file: use the Scheme function delete-file, Ruby's File.delete, or Forth's file-delete<br>
 delete a region: <a href="#forgetregion">forget-region</a><br>
 delete the currently selected samples: <a href="#deleteselection">delete-selection</a><br>
-delete the selection and smooth the splice: <a href="sndscm.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
+delete the selection and smooth the splice: <a href="#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
 delete a mark or all marks: <a href="#deletemark">delete-mark</a><br>
 delete a colormap: <a href="#deletecolormap">delete-colormap</a><br>
 delete samples: <a href="#deletesamples">delete-samples</a><br>
@@ -9110,7 +9126,7 @@ smooth-channel-via-ptree in examp.scm is the virtual form.
 <small><blockquote>
 smooth all channels: <a href="#smoothsound">smooth-sound</a><br>
 smooth selection: <a href="#smoothselection">smooth-selection</a><br>
-delete the selection and smooth the splice: <a href="sndscm.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
+delete the selection and smooth the splice: <a href="#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
 smoothing as virtual op: smooth-channel-via-ptree in examp.scm<br>
 smoothing via fft: <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
 smooth via low-pass <a href="#filtersinsnd">filter</a><br>

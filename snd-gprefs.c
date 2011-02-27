@@ -1748,6 +1748,15 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_with_tooltips, save_with_tooltips, help_with_tooltips, clear_with_tooltips, revert_with_tooltips);
 
 
+    current_sep = make_inter_variable_separator(dpy_box);
+    rts_with_menu_icons = with_menu_icons(ss);
+    prf = prefs_row_with_toggle("enable menu icons (gtk only)", S_with_menu_icons, 
+				rts_with_menu_icons,
+				dpy_box,
+				toggle_with_menu_icons);
+    remember_pref(prf, reflect_with_menu_icons, save_with_menu_icons, help_with_menu_icons, clear_with_menu_icons, revert_with_menu_icons);
+
+
 
     /* ---------------- file options ---------------- */
 

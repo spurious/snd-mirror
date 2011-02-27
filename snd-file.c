@@ -5740,6 +5740,27 @@ static XEN g_set_with_tooltips(XEN val)
 }
 
 
+void set_with_menu_icons(bool val)
+{
+  in_set_with_menu_icons(val);
+#if USE_GTK
+  g_object_set(gtk_settings_get_default(), "gtk-menu-images", with_menu_icons(ss), NULL);
+#endif
+}
+
+/* TODO: test with-menu-icons */
+
+static XEN g_with_menu_icons(void) {return(C_TO_XEN_BOOLEAN(with_menu_icons(ss)));}
+
+static XEN g_set_with_menu_icons(XEN val) 
+{
+  #define H_with_menu_icons "(" S_with_menu_icons "): " PROC_TRUE " if you want icons in the menus (gtk only)"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_menu_icons, "a boolean");
+  set_with_menu_icons(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(with_menu_icons(ss)));
+}
+
+
 static XEN g_remember_sound_state(void) {return(C_TO_XEN_BOOLEAN(remember_sound_state(ss)));}
 
 static XEN g_set_remember_sound_state(XEN val) 
@@ -5863,6 +5884,8 @@ XEN_NARGIFY_0(g_with_toolbar_w, g_with_toolbar)
 XEN_NARGIFY_1(g_set_with_toolbar_w, g_set_with_toolbar)
 XEN_NARGIFY_0(g_with_tooltips_w, g_with_tooltips)
 XEN_NARGIFY_1(g_set_with_tooltips_w, g_set_with_tooltips)
+XEN_NARGIFY_0(g_with_menu_icons_w, g_with_menu_icons)
+XEN_NARGIFY_1(g_set_with_menu_icons_w, g_set_with_menu_icons)
 XEN_NARGIFY_0(g_remember_sound_state_w, g_remember_sound_state)
 XEN_NARGIFY_1(g_set_remember_sound_state_w, g_set_remember_sound_state)
 XEN_NARGIFY_0(g_ask_about_unsaved_edits_w, g_ask_about_unsaved_edits)
@@ -5935,6 +5958,8 @@ XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
 #define g_set_with_toolbar_w g_set_with_toolbar
 #define g_with_tooltips_w g_with_tooltips
 #define g_set_with_tooltips_w g_set_with_tooltips
+#define g_with_menu_icons_w g_with_menu_icons
+#define g_set_with_menu_icons_w g_set_with_menu_icons
 #define g_remember_sound_state_w g_remember_sound_state
 #define g_set_remember_sound_state_w g_set_remember_sound_state
 #define g_ask_about_unsaved_edits_w g_ask_about_unsaved_edits
@@ -6135,6 +6160,9 @@ files list of the View Files dialog.  If it returns " PROC_TRUE ", the default a
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_tooltips, g_with_tooltips_w, H_with_tooltips,
 				   S_setB S_with_tooltips, g_set_with_tooltips_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_menu_icons, g_with_menu_icons_w, H_with_menu_icons,
+				   S_setB S_with_menu_icons, g_set_with_menu_icons_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_remember_sound_state, g_remember_sound_state_w, H_remember_sound_state,
 				   S_setB S_remember_sound_state, g_set_remember_sound_state_w,  0, 0, 1, 0);

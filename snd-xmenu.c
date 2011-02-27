@@ -1063,47 +1063,6 @@ static void popup_crop_callback(Widget w, XtPointer info, XtPointer context)
   for_each_chan(crop);
 }
 
-static void cut_and_smooth(chan_info *cp)
-{
-  if (selection_is_active_in_channel(cp))
-    {
-      #define SPLICE_LEN 32
-      mus_long_t beg, end, frames, start;
-      mus_sample_t splice[2 * SPLICE_LEN];
-      double ramp, incr;
-      int i;
-      snd_fd *sf, *sf_end;
-
-      incr = 0.5 / SPLICE_LEN;
-      beg = selection_beg(cp);
-      end = selection_end(cp);
-      frames = CURRENT_SAMPLES(cp);
-
-      if (end < SPLICE_LEN)
-	start = 0;
-      else start = end - SPLICE_LEN;
-
-      sf_end = init_sample_read_any_with_bufsize(start, cp, READ_FORWARD, cp->edit_ctr, 2 * SPLICE_LEN);
-
-      if (beg < SPLICE_LEN)
-	start = 0;
-      else start = beg - SPLICE_LEN;
-
-      sf = init_sample_read_any_with_bufsize(start, cp, READ_FORWARD, cp->edit_ctr, 2 * SPLICE_LEN);
-      for (i = 0, ramp = 1.0; i < 2 * SPLICE_LEN; i++, ramp -= incr)
-	{
-	  mus_float_t x, y;
-	  x = read_sample(sf);
-	  y = read_sample(sf_end);
-	  splice[i] = MUS_DOUBLE_TO_SAMPLE((x * ramp) + (y * (1.0 - ramp)));
-	}
-      free_snd_fd(sf);
-      free_snd_fd(sf_end);
-
-      cp_delete_selection(cp);
-      change_samples(start, 2 * SPLICE_LEN, splice, cp, "popup cut+smooth", cp->edit_ctr);
-    }
-}
 
 static void popup_cut_and_smooth_callback(Widget w, XtPointer info, XtPointer context)
 {

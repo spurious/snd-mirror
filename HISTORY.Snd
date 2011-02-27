@@ -1,5 +1,6 @@
 Snd change log
 
+ 1-Mar:     delete-selection-and-smooth.
  23-Feb:    sync-style variable: sync-none, sync-all, or sync-by-sound (the new default).
             Options:Controls menu item, and Edit:Unselect
 	    show-selection and unselect-all.
@@ -11,6 +12,7 @@ Snd change log
               totally obsolete X resources stuff.
             The built-in popup menus are now context sensitive, and the files popup.scm
               and gtk-popup.scm have been removed.
+            with-menu-icons (Gtk only).
  12-Feb:    Snd 11.13.
  7-Jan:     Snd 11.12.
 
