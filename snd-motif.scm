@@ -2251,7 +2251,6 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 ;;;
 ;;; (add-tooltip (cadr (channel-widgets)) "the w button")
 
-(define with-tooltips #t) ; set to #f to turn these off
 (define tooltip-shell #f)
 (define tooltip-label #f)
 
@@ -2276,7 +2275,7 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 	  (XtUnmanageChild tooltip-shell)))
 
     (define (start-tooltip ev)
-      (if (and with-tooltips 
+      (if (and (with-tooltips)
 	       (not tool-proc))
 	  (set! tool-proc (XtAppAddTimeOut 
 			    (car (main-widgets))

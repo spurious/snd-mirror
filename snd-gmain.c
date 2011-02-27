@@ -397,6 +397,7 @@ color_t get_in_between_color(color_t fg, color_t bg)
   new_color->red = (rgb_t)((fg->red + (2 * bg->red)) / 3);
   new_color->green = (rgb_t)((fg->green + (2 * bg->green)) / 3);
   new_color->blue = (rgb_t)((fg->blue + (2 * bg->blue)) / 3);
+  new_color->alpha = 1.0;
   return(new_color);
 }
 
@@ -588,10 +589,14 @@ void snd_doit(int argc, char **argv)
   ss->orig_tiny_font = mus_strdup(tiny_font(ss));
 
 #if (!HAVE_GTK_3)
-  init_gtk2();
+  init_gtk();
 #endif
 
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
+
+#if (HAVE_GTK_3)
+  init_gtk();
+#endif
   
 #ifdef SND_AS_WIDGET
   MAIN_SHELL(ss) = parent;

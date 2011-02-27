@@ -749,9 +749,7 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 {
   if (with_pointer_focus(ss))
     goto_window(w);
-#if (!HAVE_GTK_3)
   widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->white);
-#endif
   if (XEN_HOOKED(mouse_enter_text_hook))
     run_hook(mouse_enter_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
@@ -763,9 +761,7 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 
 static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
-#if (!HAVE_GTK_3)
   widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
-#endif
   if (XEN_HOOKED(mouse_leave_text_hook))
     run_hook(mouse_leave_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
@@ -782,6 +778,121 @@ void connect_mouse_to_text(GtkWidget *text)
 }
 
 
+static void make_bindings(gpointer cls)
+{
+  /* sigh... activate Emacs key bindings to some extent */
+  GtkBindingSet *set;
+  set = gtk_binding_set_by_class(cls);
+  
+  /* C-b back char */
+  gtk_binding_entry_remove(set, snd_K_b, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_b, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
+			       G_TYPE_INT, -1,
+			       G_TYPE_BOOLEAN, false);
+  /* M-b back word */
+  gtk_binding_entry_remove(set, snd_K_b, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_b, GDK_MOD1_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
+			       G_TYPE_INT, -1,
+			       G_TYPE_BOOLEAN, false);
+  /* C-f forward char */
+  gtk_binding_entry_remove(set, snd_K_f, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_f, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* OVERRIDDEN: M-f forward word */
+  gtk_binding_entry_remove(set, snd_K_f, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_f, GDK_MOD1_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* C-e end of line */
+  gtk_binding_entry_remove(set, snd_K_e, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_e, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* C-a start of line */
+  gtk_binding_entry_remove(set, snd_K_a, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_a, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
+			       G_TYPE_INT, -1,
+			       G_TYPE_BOOLEAN, false);
+  /* M-< start of file */
+  gtk_binding_entry_remove(set, snd_K_less, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_less, GDK_MOD1_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
+			       G_TYPE_INT, -1,
+			       G_TYPE_BOOLEAN, false);
+  /* M-> end of file */
+  gtk_binding_entry_remove(set, snd_K_greater, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_greater, GDK_MOD1_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* C-n down line */
+  gtk_binding_entry_remove(set, snd_K_n, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_n, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* C-p up line */
+  gtk_binding_entry_remove(set, snd_K_p, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_p, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
+			       G_TYPE_INT, -1,
+			       G_TYPE_BOOLEAN, false);
+  /* C-v down window */
+  gtk_binding_entry_remove(set, snd_K_v, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_v, GDK_CONTROL_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
+			       G_TYPE_INT, 1,
+			       G_TYPE_BOOLEAN, false);
+  /* OVERRIDEN: M-v up window */
+  gtk_binding_entry_remove(set, snd_K_v, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_v, GDK_MOD1_MASK, "move_cursor", 3,
+			       G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
+			       G_TYPE_INT, -1,
+			       G_TYPE_BOOLEAN, false);
+  /* C-d delete at cursor */
+  gtk_binding_entry_remove(set, snd_K_d, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_d, GDK_CONTROL_MASK,
+			       "delete_from_cursor", 2,
+			       G_TYPE_ENUM, GTK_DELETE_CHARS,
+			       G_TYPE_INT, -1);
+  /* M-d delete word at cursor */
+  gtk_binding_entry_remove(set, snd_K_d, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_d, GDK_MOD1_MASK,
+			       "delete_from_cursor", 2,
+			       G_TYPE_ENUM, GTK_DELETE_WORD_ENDS,
+			       G_TYPE_INT, 1);
+  
+  /* C-k delete to end of line -- see explicit handling above */
+  gtk_binding_entry_remove(set, snd_K_k, GDK_CONTROL_MASK);
+  
+  /* M-delete delete to start of line */
+  gtk_binding_entry_remove(set, snd_K_Delete, GDK_MOD1_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_Delete, GDK_MOD1_MASK,
+			       "delete_from_cursor", 2,
+			       G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,
+			       G_TYPE_INT, -1);
+  
+  /* C-w delete region -> clipboard */
+  gtk_binding_entry_remove(set, snd_K_w, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_w, GDK_CONTROL_MASK,
+			       "cut_clipboard", 0);
+  
+  /* C-y yank <- clipboard */
+  gtk_binding_entry_remove(set, snd_K_y, GDK_CONTROL_MASK);
+  gtk_binding_entry_add_signal(set, snd_K_y, GDK_CONTROL_MASK,
+			       "paste_clipboard", 0);
+}
+
+
+static bool bindings_ok = false;
+
 GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_background)
 {
   GtkWidget *text;
@@ -791,14 +902,19 @@ GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_backgro
   settings = gtk_widget_get_settings(text);
   g_object_set(settings, "gtk-entry-select-on-focus", false, NULL);
   gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
+
+  if (!bindings_ok)
+    {
+      bindings_ok = true;
+      make_bindings(GTK_ENTRY_GET_CLASS(GTK_ENTRY(text)));
+    }
+
   gtk_widget_show(text);
-#if (!HAVE_GTK_3)
   if (with_white_background == WITH_WHITE_BACKGROUND) 
     {
       widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
       widget_modify_base(text, GTK_STATE_SELECTED, ss->sgx->white); 
     }
-#endif
   connect_mouse_to_text(text);
   return(text);
 }
@@ -821,117 +937,7 @@ static void make_listener_widget(int height)
       listener_text = make_scrolled_text(frame, true, 0, false); 
       gtk_widget_set_name(listener_text, "listener_text");
 
-      {
-	/* sigh... activate Emacs key bindings to some extent */
-	/*   TODO: more were once-upon-a-time handled by the gtkrc mechanism (taken from gtk/gtrc.key.emacs) */
-	GtkBindingSet *set;
-	set = gtk_binding_set_by_class(GTK_TEXT_VIEW_GET_CLASS(GTK_TEXT_VIEW(listener_text)));
-
-	/* C-b back char */
-	gtk_binding_entry_remove(set, snd_K_b, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_b, GDK_CONTROL_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
-				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, false);
-	/* M-b back word */
-	gtk_binding_entry_remove(set, snd_K_b, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_b, GDK_MOD1_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
-				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, false);
-	/* C-f forward char */
-	gtk_binding_entry_remove(set, snd_K_f, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_f, GDK_CONTROL_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
-				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, false);
-	/* OVERRIDDEN: M-f forward word */
-	gtk_binding_entry_remove(set, snd_K_f, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_f, GDK_MOD1_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
-				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, false);
-	/* C-e end of line */
-	gtk_binding_entry_remove(set, snd_K_e, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_e, GDK_CONTROL_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
-				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, false);
-	/* C-a start of line */
-	gtk_binding_entry_remove(set, snd_K_a, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_a, GDK_CONTROL_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
-				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, false);
-	/* M-< start of file */
-	gtk_binding_entry_remove(set, snd_K_less, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_less, GDK_MOD1_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
-				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, false);
-	/* M-> end of file */
-	gtk_binding_entry_remove(set, snd_K_greater, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_greater, GDK_MOD1_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
-				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, false);
-	/* C-n down line */
-	gtk_binding_entry_remove(set, snd_K_n, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_n, GDK_CONTROL_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
-				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, false);
-	/* C-p up line */
-	gtk_binding_entry_remove(set, snd_K_p, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_p, GDK_CONTROL_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
-				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, false);
-	/* C-v down window */
-	gtk_binding_entry_remove(set, snd_K_v, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_v, GDK_CONTROL_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
-				     G_TYPE_INT, 1,
-				     G_TYPE_BOOLEAN, false);
-	/* OVERRIDEN: M-v up window */
-	gtk_binding_entry_remove(set, snd_K_v, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_v, GDK_MOD1_MASK, "move_cursor", 3,
-				     G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
-				     G_TYPE_INT, -1,
-				     G_TYPE_BOOLEAN, false);
-	/* C-d delete at cursor */
-	gtk_binding_entry_remove(set, snd_K_d, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_d, GDK_CONTROL_MASK,
-				     "delete_from_cursor", 2,
-				     G_TYPE_ENUM, GTK_DELETE_CHARS,
-				     G_TYPE_INT, -1);
-	/* M-d delete word at cursor */
-	gtk_binding_entry_remove(set, snd_K_d, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_d, GDK_MOD1_MASK,
-				     "delete_from_cursor", 2,
-				     G_TYPE_ENUM, GTK_DELETE_WORD_ENDS,
-				     G_TYPE_INT, 1);
-
-	/* C-k delete to end of line -- see explicit handling above */
-	gtk_binding_entry_remove(set, snd_K_k, GDK_CONTROL_MASK);
-
-	/* M-delete delete to start of line */
-	gtk_binding_entry_remove(set, snd_K_Delete, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_Delete, GDK_MOD1_MASK,
-				     "delete_from_cursor", 2,
-				     G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,
-				     G_TYPE_INT, -1);
-
-	/* C-w delete region -> clipboard */
-	gtk_binding_entry_remove(set, snd_K_w, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_w, GDK_CONTROL_MASK,
-				     "cut_clipboard", 0);
-
-	/* C-y yank <- clipboard */
-	gtk_binding_entry_remove(set, snd_K_y, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, snd_K_y, GDK_CONTROL_MASK,
-				     "paste_clipboard", 0);
-      }
+      make_bindings(GTK_TEXT_VIEW_GET_CLASS(GTK_TEXT_VIEW(listener_text)));
 
       SG_SIGNAL_CONNECT(listener_text, "key_press_event", listener_key_press, NULL);
       SG_SIGNAL_CONNECT(listener_text, "key_release_event", listener_key_release, NULL);
@@ -969,10 +975,8 @@ void goto_listener(void)
 void color_listener(color_info *pix)
 {
   ss->sgx->listener_color = pix;
-#if (!HAVE_GTK_3)
   if (listener_text) 
     widget_modify_base(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_color);
-#endif
 }
 
 
@@ -982,6 +986,9 @@ void color_listener_text(color_info *pix)
 #if (!HAVE_GTK_3)
   if (listener_text) 
     gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, rgb_to_gdk_color(ss->sgx->listener_text_color));
+#else
+  if (listener_text) 
+    gtk_widget_override_color(listener_text, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->listener_text_color));
 #endif
 }
 
@@ -989,7 +996,12 @@ void color_listener_text(color_info *pix)
 void handle_listener(bool open)
 {
   if ((open) && (!listener_text))
-    make_listener_widget(100);
+    {
+      make_listener_widget(100);
+
+      color_listener(ss->sgx->listener_color);
+      color_listener_text(ss->sgx->listener_text_color);
+    }
 
   if ((SOUND_PANE(ss)) && /* might be run -separate with no sound open */
       (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS))
@@ -1057,6 +1069,9 @@ void set_listener_text_font(void)
 #if (!HAVE_GTK_3)
   if (listener_text)
     gtk_widget_modify_font(GTK_WIDGET(listener_text), LISTENER_FONT(ss));
+#else
+  if (listener_text)
+    gtk_widget_override_font(GTK_WIDGET(listener_text), LISTENER_FONT(ss));
 #endif
 }
 

@@ -4179,7 +4179,7 @@ void cut_and_smooth(chan_info *cp)
       free_snd_fd(sf_end);
 
       cp_delete_selection(cp);
-      change_samples(start, 2 * SPLICE_LEN, splice, cp, "popup cut+smooth", cp->edit_ctr);
+      change_samples(start, 2 * SPLICE_LEN, splice, cp, S_delete_selection_and_smooth, cp->edit_ctr);
     }
 }
 

@@ -128,13 +128,13 @@ typedef struct {
   int x, y;
 } point_t;
 
-#define rgb_t double
+#define rgb_t gdouble
 #define RGB_MAX 1.0
 #define FLOAT_TO_RGB(Val) (rgb_t)(Val)
 #define RGB_TO_FLOAT(Val) Val
 
 typedef struct {
-  rgb_t red, green, blue;
+  rgb_t red, green, blue, alpha;
 } color_info;
 
 typedef color_info* color_t;

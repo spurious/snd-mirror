@@ -13535,7 +13535,7 @@ This function returns the colormap corresponding to a given integer.
 
 <!--  make-color -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="makecolor">make-color</a> red green blue</code>
+<code><a class=def name="makecolor">make-color</a> red green blue (alpha 1.0)</code>
 </td></tr><tr><td></td><td>
 make-color returns a color object using the rgb values 'red', 'green', and 'blue'.  Each argument
 is a float between 0.0 (none of that color) and 1.0 (full value for that color).  So,
@@ -13544,6 +13544,7 @@ is a float between 0.0 (none of that color) and 1.0 (full value for that color).
 </pre>
 returns a red color object.
 Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
+The 'alpha' argument only matters in Gtk.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

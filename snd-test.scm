@@ -1081,8 +1081,20 @@
     (if (not (equal? (with-verbose-cursor)  #f)) 
 	(snd-display #__line__ ";with-verbose-cursor set def: ~A" (with-verbose-cursor)))
     (set! (with-inset-graph) (with-inset-graph))
-    (if (not (equal? (with-inset-graph)  #f)) 
+    (if (not (equal? (with-inset-graph)  #f))
 	(snd-display #__line__ ";with-inset-graph set def: ~A" (with-inset-graph)))
+    (set! (with-smpte-label) (with-smpte-label))
+    (if (not (equal? (with-smpte-label)  #f)) 
+	(snd-display #__line__ ";with-smpte-label set def: ~A" (with-smpte-label)))
+    (set! (with-toolbar) (with-toolbar))
+    (if (not (equal? (with-toolbar) (if (provided? 'snd-gtk) #t #f)))
+	(snd-display #__line__ ";with-toolbar set def: ~A" (with-toolbar)))
+    (set! (with-tooltips) (with-tooltips))
+    (if (not (equal? (with-tooltips) #t))
+	(snd-display #__line__ ";with-tooltips set def: ~A" (with-tooltips)))
+    (set! (with-menu-icons) (with-menu-icons))
+    (if (not (equal? (with-menu-icons) #f))
+	(snd-display #__line__ ";with-menu-icons set def: ~A" (with-menu-icons)))
     (set! (with-pointer-focus) (with-pointer-focus))
     (if (not (equal? (with-pointer-focus)  #f)) 
 	(snd-display #__line__ ";with-pointer-focus set def: ~A" (with-pointer-focus)))
@@ -1367,6 +1379,10 @@
       'with-tracking-cursor (with-tracking-cursor) #f
       'with-verbose-cursor (with-verbose-cursor) #f
       'with-inset-graph (with-inset-graph) #f
+      'with-smpte-label (with-smpte-label) #f
+      'with-toolbar (with-toolbar) #f
+      'with-tooltips (with-tooltips) #f
+      'with-menu-icons (with-menu-icons) #f
       'with-pointer-focus (with-pointer-focus) #f
       'x-axis-style (x-axis-style) 0 
       'zero-pad (zero-pad) 0
@@ -2310,7 +2326,8 @@
 		       'wavo-hop 'wavo-trace 'welch-window 'widget-position
 		       'widget-size 'widget-text 'window-height
 		       'window-width 'window-x 'window-y 'with-background-processes 'with-file-monitor 'with-gl
-		       'with-mix-tags 'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 'with-inset-graph 'with-pointer-focus
+		       'with-mix-tags 'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 
+		       'with-inset-graph 'with-pointer-focus 'with-smpte-label 'with-toolbar 'with-tooltips 'with-menu-icons
 		       'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats 'x-axis-in-measures
 		       'x-axis-in-samples 'x-axis-in-seconds 'x-axis-label 'x-axis-style 'x-bounds
 		       'x-position-slider 'x-zoom-slider 'xramp-channel 'y->position 'y-axis-label
@@ -9628,6 +9645,8 @@ EDITS: 5
 	      (if (not (selection-member? index 0)) (snd-display #__line__ ";with-temporary-selection not member?"))
 	      (if (not (= (selection-position index 0) old-start)) (snd-display #__line__ ";with-temporary-selection start: ~A" (selection-position index 0)))
 	      (if (not (= (selection-frames index 0) old-len)) (snd-display #__line__ ";with-temporary-selection len: ~A" (selection-frames index 0))))
+	    (unselect-all)
+	    (if (selection-member? index 0) (snd-display #__line__ ";unselect all ~D 0?" index))
 	    (revert-sound index)
 	    (select-all index) 
 	    (let ((rread (make-region-sampler (car (regions)) 0))
@@ -9822,6 +9841,9 @@ EDITS: 5
 	  (set! v0 (channel->vct 0 128 index 0))
 	  (if (or (fneq (sample 20) .5) (fneq (sample 30) 0.0) (fneq (sample 17) -.1057) )
 	      (snd-display #__line__ ";src-selection: ~A?" v0))
+	  (unselect-all)
+	  (if (selection-member?) (snd-display #__line__ ";unselect-all but still a selection?"))
+	  (unselect-all)
 	  (revert-sound index)
 	  (vct-fill! v0 0.0)
 	  (vct-set! v0 10 .5)
@@ -13925,6 +13947,7 @@ EDITS: 2
       (close-sound s1))
     
     (for-each close-sound (sounds))
+    (unselect-all)
     (let ((snd (open-sound "oboe.snd")))
       (make-selection 1000 2000 snd 0)
       (if (not (selection?)) (snd-display #__line__ ";make-selection for copy failed?"))
@@ -33196,7 +33219,7 @@ EDITS: 2
 		  (snd-display #__line__ ";edit-fragment(0): ~S?" (edit-fragment 0 obi 0)))
 	      (if (not (equal? (edit-fragment 1 obi 0) '("delete-samples 1000 1001" "delete" 1000 1001))) 
 		  (snd-display #__line__ ";edit-fragment(1): ~S?" (edit-fragment 1 obi 0)))
-	      (if (not (equal? (edit-fragment 2 obi 0) '("smooth-channel 984 32" "set" 984 32))) 
+	      (if (not (equal? (edit-fragment 2 obi 0) '("delete-selection-and-smooth" "set" 984 64))) 
 		  (snd-display #__line__ ";edit-fragment(2): ~S?" (edit-fragment 2 obi 0)))
 	      
 	      (let ((samp100 (sample 1100 obi 0)))
@@ -61204,7 +61227,8 @@ EDITS: 1
 		     text-focus-color tiny-font region-sampler? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault with-file-monitor optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
-		     with-verbose-cursor view-sound wavelet-type with-inset-graph with-pointer-focus
+		     with-verbose-cursor view-sound wavelet-type with-inset-graph with-pointer-focus with-smpte-label
+		     with-toolbar with-tooltips with-menu-icons
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
@@ -61312,7 +61336,9 @@ EDITS: 1
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectrum-end spectro-hop spectrum-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties sound-property temp-dir text-focus-color tiny-font y-bounds
-			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor with-inset-graph with-pointer-focus wavelet-type x-bounds
+			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor 
+			 with-inset-graph with-pointer-focus wavelet-type x-bounds with-smpte-label
+			 with-toolbar with-tooltips with-menu-icons
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style sync-style
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix beats-per-measure
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
@@ -62125,7 +62151,9 @@ EDITS: 1
 			    selected-channel selected-data-color selected-graph-color 
 			    selected-sound selection-creates-region show-controls show-indices show-listener
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
-			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor with-inset-graph with-pointer-focus window-height beats-per-measure
+			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor 
+			    with-inset-graph with-pointer-focus window-height beats-per-measure with-smpte-label
+			    with-toolbar with-tooltips with-menu-icons
 			    window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			    mix-tag-width with-relative-panes clm-table-size clm-default-frequency mark-tag-width mark-tag-height
 			    ))
@@ -62533,6 +62561,13 @@ EDITS: 1
 		
 		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) 1234)))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) (list 44100 2.123 "hi"))))
+		
+		(check-error-tag 'wrong-type-arg (lambda () (set! (with-toolbar) 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! (with-tooltips) 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! (with-menu-icons) 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! (with-smpte-label) 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! (ask-about-unsaved-edits) 123)))
+
 		(check-error-tag 'no-such-mix (lambda () (mix-properties (integer->mix (+ 1 (mix-sync-max))))))
 		(check-error-tag 'no-such-mix (lambda () (set! (mix-properties (integer->mix (+ 1 (mix-sync-max)))) 1)))
 		))
@@ -63549,7 +63584,4 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 |#
 
-;;; TODO: explicit sync-style tests, also show-selection, unselect-all
-;;;          ask-about-unsaved-edits, show-full-duration, initial-beg, initial-dur
-;;;          remember-sound-state with-toolbar with-smpte-label with-tooltips with-menu-icons
-;;;          delete-selection-and-smooth
+;;; TODO: sync-style show-selection show-full-duration initial-beg initial-dur remember-sound-state delete-selection-and-smooth

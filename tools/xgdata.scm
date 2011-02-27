@@ -7751,7 +7751,7 @@
 (CFNC-29x "gchar* gtk_combo_box_text_get_active_text GtkComboBoxText* combo_box")
 
 
-;;; gdkrgba.h and gtkapplication.h 
+;;; gtkapplication.h 
 ;;; 2.91.2
 
 (CCAST-29x "GTK_GRID(obj)" "GtkGrid*")
@@ -8160,6 +8160,15 @@
 (CFNC-29x "void gdk_selection_send_notify GdkWindow* requestor GdkAtom selection GdkAtom target GdkAtom property guint32 time_")
 (CFNC-29x "void gdk_selection_send_notify_for_display GdkDisplay* display GdkWindow* requestor GdkAtom selection GdkAtom target GdkAtom property guint32 time_")
 ;(CFNC-29x "void gtk_text_view_get_cursor_locations GtkTextView* text_view GtkTextIter* iter GdkRectangle* [strong] GdkRectangle* [weak]")
+
+
+(CFNC-29x "GdkRGBA* gdk_rgba_copy GdkRGBA* rgba" 'const)
+(CFNC-29x "void gdk_rgba_free GdkRGBA* rgba")
+(CFNC-29x "gboolean gdk_rgba_parse GdkRGBA* rgba gchar* spec" 'const)
+(CFNC-29x "gchar* gdk_rgba_to_string GdkRGBA* rgba" 'const)
+
+;(STRUCT-29x-make "GdkRGBA")
+;TODO: struct-29x
 
 
 #|

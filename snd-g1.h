@@ -294,8 +294,9 @@ void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color);
 void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color);
 color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b);
 
-GdkColor *rgb_to_gdk_color(color_t col);
-
+#if (!HAVE_GTK_3)
+  GdkColor *rgb_to_gdk_color(color_t col);
+#endif
 
 void recolor_graph(chan_info *cp, bool selected);
 void set_sensitive(GtkWidget *wid, bool val);
@@ -351,9 +352,7 @@ void slist_moveto(slist *lst, int row);
 void slist_select(slist *lst, int row);
 char *slist_selection(slist *lst);
 
-#if (!HAVE_GTK2)
-void init_gtk2(void);
-#endif
+void init_gtk(void);
 
 
 

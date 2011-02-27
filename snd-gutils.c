@@ -484,6 +484,7 @@ color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b)
   ccolor->red = r;
   ccolor->green = g;
   ccolor->blue = b;
+  ccolor->alpha = 1.0;
   return(ccolor);
 }
 
@@ -507,6 +508,8 @@ void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
   /* another stop-gap: allocate a color each time... */
 #if (!HAVE_GTK_3)
   gtk_widget_modify_bg(w, type, rgb_to_gdk_color(color));
+#else
+  gtk_widget_override_background_color(w, type, (GdkRGBA *)color);
 #endif
 }
 
@@ -515,6 +518,8 @@ void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
 {
 #if (!HAVE_GTK_3)
   gtk_widget_modify_fg(w, type, rgb_to_gdk_color(color));
+#else
+  gtk_widget_override_color(w, type, (GdkRGBA *)color);
 #endif
 }
 
@@ -523,6 +528,8 @@ void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 {
 #if (!HAVE_GTK_3)
   gtk_widget_modify_base(w, type, rgb_to_gdk_color(color));
+#else
+  gtk_widget_override_background_color(w, type, (GdkRGBA *)color);
 #endif
 }
 
@@ -959,6 +966,10 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 }
 
 
+#if HAVE_GTK_3
+static GtkCssProvider *wb;
+#endif
+
 static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
 {
   GtkWidget *item;
@@ -970,6 +981,20 @@ static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
   gtk_button_set_alignment(GTK_BUTTON(item), 0.05, 1.0);
   gtk_box_pack_start(GTK_BOX(lst->topics), item, false, false, 0);
 
+  widget_modify_bg(item, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_bg(item, GTK_STATE_PRELIGHT, ss->sgx->light_blue);
+#if (HAVE_GTK_3)
+  gtk_widget_override_color(item, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
+  gtk_widget_override_color(item, GTK_STATE_PRELIGHT, (GdkRGBA *)(ss->sgx->red));
+  gtk_widget_override_color(item, GTK_STATE_SELECTED, (GdkRGBA *)(ss->sgx->black));
+
+  {
+    GtkStyleContext *c;
+    c = gtk_widget_get_style_context(item);
+    gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(wb), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  }
+#endif
+    
   SG_SIGNAL_CONNECT(item, "clicked", slist_item_clicked, (gpointer)lst);
   SG_SIGNAL_CONNECT(item, "button_press_event", slist_item_button_pressed, (gpointer)lst);
 
@@ -1168,29 +1193,15 @@ char *slist_selection(slist *lst)
  *       if combined, initial drag of mix does not reflect drag until button release
  *       mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *
- * freq response curve in controls is broken -- mouse actions are caught but no display update
- * fft window graph is broken [and the entire dialog is flakey]
  *   adding invalidate rect got the dialog back but hangs the system! 
  *   Now Xorg is taking up 91% of memory!
- * view files dialog amp env is broken
- * edit env graph is cutoff on right
- * prefs sliders have no color
  * hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
- *  and then there are no horizontal sliders??
- *  for num-dot (dots graph) only every other one is noticed, or perhaps graphed
- * the slist entries look bad
+ *   dot key is ignored (dot-size)?
  * segfault in test 20 (same problem as earlier)
  *  (see also goto_window above)
  * try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
  * gtk listener won't let me delete "(" in col 0? -- flakey
- *
- * if we open the edit-history window, the graph squeezes down to nothing, and if we then
- *   close the window, the pane does not adjust (the sliders stay short etc) -- is this the "expand" business?
- *   no, I think it's another expose problem.  Now the ticks aren't redrawn and there's an undrawn rectangle
- *   on the right.  gdk_window_invalidate_rect(GDK_WINDOW(WIDGET_TO_WINDOW(channel_graph(cp))), NULL, true);
- *      in update_graph_1 fixes this, but now I'm getting continuous expose updates!
  *   Also, someone is setting squelch?  
- *
  * why does goto_window erase the window in gtk 3?
  * if basic-color is set (white for example), the icon (blank?) after the sound file name is not recolored)
  */
@@ -1211,10 +1222,6 @@ More options there (fft) might be nice though, like being able to zoom into
 the spectrum graphic.
 --------
 
-On the zoomed FFT -- it's been on my TODO list for
-about a decade. 
---------
-
 1) playback. It's very strange that you need to tick a box to start/stop playback instead of hitting the space bar. 
 2) general lack of keybindings 
 3) In the preferences for example the menu section labels look like buttons, which is confusing. 
@@ -1232,7 +1239,7 @@ just most obvious with those scrollbars
 
 #if (!HAVE_GTK_3)
 
-void init_gtk2(void)
+void init_gtk(void)
 {
   gtk_rc_parse_string("\n\
 \n					 \
@@ -1339,13 +1346,6 @@ widget \"*.zy_slider\" style \"zoom_slider\"\n		\
 widget \"*.gzy_slider\" style \"zoom_slider\"\n		\
 widget \"*.panel_button\" style \"zoom_slider\"\n	\
 \n							\
-style \"listener\" = \"default\"\n			\
-{\n							\
-  base[NORMAL] = { 0.94, 0.97, 1.0 }\n			\
-  text[NORMAL] = { 0.0, 0.0, 0.0 }\n			\
-}\n							\
-\n							\
-widget \"*.listener_text\" style \"listener\"\n		\
 style \"dialog_button\" = \"default_button\"\n          \
 {\n                                                     \
   bg[NORMAL] = { 1.0, 1.0, 0.94 }\n                     \
@@ -1366,69 +1366,22 @@ style \"white_button\" = \"default_button\"\n		\
   xthickness = 0\n					\
   ythickness = 0\n					\
 }\n							\
-\n							\
-widget \"*.white_button\" style \"white_button\"\n	\
-style \"label_button\" = \"default_button\"\n		\
-{\n							\
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n			\
-  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n			\
-  fg[PRELIGHT] = { 0.0,  0.0,  0.0}\n			\
-\n							\
-  GtkButton::default_border = { 0, 0, 0, 0 }\n		\
-  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n	\
-  GtkButton::inner_border = { 0, 0, 0, 0 }\n		\
-  GtkButton::focus_line_width = 0\n			\
-  GtkButton::focus_padding = 0\n			\
-  xthickness = 0\n					\
-  ythickness = 0\n					\
-}\n							\
-widget \"*.label_button\" style \"label_button\"\n	\
-binding \"gtk-emacs-text-entry\"\n			\
-{\n									\
-  bind \"<ctrl>b\" { \"move-cursor\" (logical-positions, -1, 0) }\n	\
-  bind \"<shift><ctrl>b\" { \"move-cursor\" (logical-positions, -1, 1) }\n \
-  bind \"<ctrl>f\" { \"move-cursor\" (logical-positions, 1, 0) }\n	\
-  bind \"<shift><ctrl>f\" { \"move-cursor\" (logical-positions, 1, 1) }\n \
-  bind \"<alt>b\" { \"move-cursor\" (words, -1, 0) }\n			\
-  bind \"<shift><alt>b\" { \"move-cursor\" (words, -1, 1) }\n		\
-  bind \"<alt>f\" { \"move-cursor\" (words, 1, 0) }\n			\
-  bind \"<shift><alt>f\" { \"move-cursor\" (words, 1, 1) }\n		\
-  bind \"<ctrl>a\" { \"move-cursor\" (paragraph-ends, -1, 0) }\n	\
-  bind \"<shift><ctrl>a\" { \"move-cursor\" (paragraph-ends, -1, 1) }\n	\
-  bind \"<ctrl>e\" { \"move-cursor\" (paragraph-ends, 1, 0) }\n		\
-  bind \"<shift><ctrl>e\" { \"move-cursor\" (paragraph-ends, 1, 1) }\n	\
-  bind \"<ctrl>w\" { \"cut-clipboard\" () }\n				\
-  bind \"<ctrl>y\" { \"paste-clipboard\" () }\n				\
-  bind \"<ctrl>d\" { \"delete-from-cursor\" (chars, 1) }\n		\
-  bind \"<alt>d\" { \"delete-from-cursor\" (word-ends, 1) }\n		\
-  bind \"<ctrl>k\" { \"delete-from-cursor\" (paragraph-ends, 1) }\n	\
-  bind \"<alt>backslash\" { \"delete-from-cursor\" (whitespace, 1) }\n	\
-  bind \"<alt>space\" { \"delete-from-cursor\" (whitespace, 1)\n	\
-                      \"insert-at-cursor\" (\" \") }\n			\
-  bind \"<alt>KP_Space\" { \"delete-from-cursor\" (whitespace, 1)\n	\
-                         \"insert-at-cursor\" (\" \")  }\n		\
-  bind \"<ctrl>u\" {\n							\
-     \"move-cursor\" (paragraph-ends, -1, 0)\n				\
-     \"delete-from-cursor\" (paragraph-ends, 1)\n			\
-  }\n									\
-  bind \"<ctrl>h\" { \"delete-from-cursor\" (chars, -1) }\n		\
-  bind \"<ctrl>w\" { \"delete-from-cursor\" (word-ends, -1) }\n		\
-}\n									\
-binding \"gtk-emacs-text-view\"\n					\
-{\n									\
-  bind \"<ctrl>p\" { \"move-cursor\" (display-lines, -1, 0) }\n		\
-  bind \"<shift><ctrl>p\" { \"move-cursor\" (display-lines, -1, 1) }\n	\
-  bind \"<ctrl>n\" { \"move-cursor\" (display-lines, 1, 0) }\n		\
-  bind \"<shift><ctrl>n\" { \"move-cursor\" (display-lines, 1, 1) }\n	\
-  bind \"<ctrl>space\" { \"set-anchor\" () }\n				\
-  bind \"<ctrl>KP_Space\" { \"set-anchor\" () }\n			\
-}\n									\
-class \"GtkEntry\" binding \"gtk-emacs-text-entry\"\n			\
-class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
-");
+widget \"*.white_button\" style \"white_button\"\n");
 }
+
+#else
+
+void init_gtk(void)
+{
+  GError *error = NULL;
+  wb = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(wb),
+    "#white_button { \n"
+    "  padding: 0 0;\n"
+    "  border-width: 0\n"
+    "}\n",
+    -1, &error);
+}
+
 #endif
 
-/* TODO: in gtk3 we need the css inline silliness, and how to get the emacs key bindings?
-*   also none of the prefs colors are working
- */

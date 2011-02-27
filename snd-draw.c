@@ -1607,6 +1607,10 @@ static void recolor_everything_1(widget_t w, gpointer color)
       gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)color);
       if (GTK_IS_CONTAINER(w))
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything_1, color);
+#else
+      gtk_widget_override_background_color(w, GTK_STATE_NORMAL, (GdkRGBA *)color);
+      if (GTK_IS_CONTAINER(w))
+	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything_1, color);
 #endif
     }
 }
@@ -1614,8 +1618,13 @@ static void recolor_everything_1(widget_t w, gpointer color)
 
 static void recolor_everything(widget_t w, gpointer color)
 {
+#if (!HAVE_GTK_3)
   GdkColor *nc;
   nc = rgb_to_gdk_color((color_t)color);
+#else
+  GdkRGBA *nc;
+  nc = (GdkRGBA *)color;
+#endif
   recolor_everything_1(w, (gpointer)nc);
 }
 
@@ -1632,9 +1641,9 @@ static XEN g_color_to_list(XEN obj)
 }
 
 
-static XEN g_make_color(XEN r, XEN g, XEN b)
+static XEN g_make_color(XEN r, XEN g, XEN b, XEN alpha)
 {
-  #define H_make_color "(" S_make_color " r g b): return a color object with the indicated rgb values"
+  #define H_make_color "(" S_make_color " r g b alpha): return a color object with the indicated rgb values"
   color_info *ccolor;
   mus_float_t rf, gf, bf;
 
@@ -1646,10 +1655,15 @@ static XEN g_make_color(XEN r, XEN g, XEN b)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
-  ccolor = (color_info *)calloc(1, sizeof(color_info)); /* memleak here -- need color smob + free to deal with this */
+  ccolor = (color_info *)calloc(1, sizeof(color_info)); /* memleak here */
   ccolor->red = rf;
   ccolor->green = gf;
   ccolor->blue = bf;
+
+  if (XEN_NUMBER_P(alpha))
+    ccolor->alpha = check_color_range(S_make_color, alpha);
+  else ccolor->alpha = 1.0;
+
   return(XEN_WRAP_PIXEL(ccolor));
 }
 #endif
@@ -1688,8 +1702,9 @@ static XEN g_color_to_list(XEN obj)
 }
 
 
-static XEN g_make_color(XEN r, XEN g, XEN b)
+static XEN g_make_color(XEN r, XEN g, XEN b, XEN alpha)
 {
+  /* alpha is ignored in Motif */
   #define H_make_color "(" S_make_color " r g b): return a color object with the indicated rgb values"
   Colormap cmap;
   XColor tmp_color;
@@ -1848,7 +1863,7 @@ XEN_NARGIFY_1(g_set_axis_color_w, g_set_axis_color)
 XEN_NARGIFY_0(g_basic_color_w, g_basic_color)
 XEN_NARGIFY_1(g_set_basic_color_w, g_set_basic_color)
 XEN_NARGIFY_1(g_color_p_w, g_color_p)
-XEN_NARGIFY_3(g_make_color_w, g_make_color)
+XEN_ARGIFY_4(g_make_color_w, g_make_color)
 XEN_NARGIFY_1(g_color_to_list_w, g_color_to_list)
 XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
 XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
@@ -2027,7 +2042,7 @@ void g_init_draw(void)
 					    S_setB S_mix_color, g_set_mix_color_w, g_set_mix_color_reversed, 0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE(S_color_p,       g_color_p_w,        1, 0, 0, H_color_p);
-  XEN_DEFINE_PROCEDURE(S_make_color,    g_make_color_w,     3, 0, 0, H_make_color);
+  XEN_DEFINE_PROCEDURE(S_make_color,    g_make_color_w,     3, 1, 0, H_make_color);
   XEN_DEFINE_PROCEDURE(S_color_to_list, g_color_to_list_w,  1, 0, 0, H_color_to_list);
 
 
