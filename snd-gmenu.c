@@ -408,8 +408,21 @@ static GtkWidget *add_menu_separator(GtkWidget *menu)
 }
 
 
+#define WITH_MENU_ACCELERATORS false
+
 GtkWidget *add_menu(void)
 {
+#if WITH_MENU_ACCELERATORS
+  /* these take precedence over everything, even in the listener? 
+   *   also what are MOD1...5? MOD1->meta MOD2->?? SUPER->"windoze key" and HYPER also
+   * but these look stupid -- maybe add with-menu-accelerators but then add_menu has to be smarter (not at startup)
+   *   and we need a way to unaccellerate if set to #f
+   */
+  GtkAccelGroup *accel_group;
+  accel_group = gtk_accel_group_new();
+  gtk_window_add_accel_group(GTK_WINDOW(MAIN_SHELL(ss)), accel_group);
+#endif
+
   ss->sgx->mw = (GtkWidget **)calloc(NUM_MENU_WIDGETS, sizeof(GtkWidget *));
 
   main_menu = gtk_menu_bar_new();
@@ -432,6 +445,9 @@ GtkWidget *add_menu(void)
 
   file_open_menu = add_menu_item(file_cascade_menu, "Open", GTK_STOCK_OPEN, (GCallback)file_open_callback);
   ml[f_open_menu] = "Open";
+#if WITH_MENU_ACCELERATORS
+  gtk_widget_add_accelerator (file_open_menu, "activate", accel_group, GDK_O, GDK_HYPER_MASK | GDK_SHIFT_MASK, GTK_ACCEL_VISIBLE);
+#endif
 
   file_open_recent_menu = add_menu_item(file_cascade_menu, "Open recent", GTK_STOCK_OPEN, (GCallback)file_open_recent_callback);
   ml[f_open_recent_menu] = "Open recent";

@@ -5748,7 +5748,6 @@ void set_with_menu_icons(bool val)
 #endif
 }
 
-/* TODO: test with-menu-icons */
 
 static XEN g_with_menu_icons(void) {return(C_TO_XEN_BOOLEAN(with_menu_icons(ss)));}
 

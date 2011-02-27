@@ -1,14 +1,6 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
-/* TODO: I think gtk wants this to be a tree_store widget of list_store widgets and editable cells for the directory paths? 
- *   and all the slists would be list_stores
- *
- * the update scripts should check for missing or obsolete png files
- * perhaps remove/update the tutorial?
- * remove help_func? and put the tooltips at the actual widget level
- */
-
 static GtkWidget *preferences_dialog = NULL, *load_path_text_widget = NULL;
 
 static bool prefs_unsaved = false;

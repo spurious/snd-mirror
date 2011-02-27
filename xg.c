@@ -882,6 +882,7 @@ XM_TYPE_PTR_1(GtkInvisible_, GtkInvisible*)
 XM_TYPE_PTR(GtkWindowGroup_, GtkWindowGroup*)
 XM_TYPE_PTR_1(GtkToolShell_, GtkToolShell*)
 XM_TYPE_PTR_1(GdkScreen__, GdkScreen**)
+XM_TYPE_PTR(GdkRGBA_, GdkRGBA*)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -30739,6 +30740,36 @@ GdkWindow* requestor, GdkAtom selection, GdkAtom target, GdkAtom property, guint
   return(XEN_FALSE);
 }
 
+static XEN gxg_gdk_rgba_copy(XEN rgba)
+{
+  #define H_gdk_rgba_copy "GdkRGBA* gdk_rgba_copy(GdkRGBA* rgba)"
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(rgba), rgba, 1, "gdk_rgba_copy", "GdkRGBA*");
+  return(C_TO_XEN_GdkRGBA_(gdk_rgba_copy(XEN_TO_C_GdkRGBA_(rgba))));
+}
+
+static XEN gxg_gdk_rgba_free(XEN rgba)
+{
+  #define H_gdk_rgba_free "void gdk_rgba_free(GdkRGBA* rgba)"
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(rgba), rgba, 1, "gdk_rgba_free", "GdkRGBA*");
+  gdk_rgba_free(XEN_TO_C_GdkRGBA_(rgba));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_rgba_parse(XEN rgba, XEN spec)
+{
+  #define H_gdk_rgba_parse "gboolean gdk_rgba_parse(GdkRGBA* rgba, gchar* spec)"
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(rgba), rgba, 1, "gdk_rgba_parse", "GdkRGBA*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(spec), spec, 2, "gdk_rgba_parse", "gchar*");
+  return(C_TO_XEN_gboolean(gdk_rgba_parse(XEN_TO_C_GdkRGBA_(rgba), (const gchar*)XEN_TO_C_gchar_(spec))));
+}
+
+static XEN gxg_gdk_rgba_to_string(XEN rgba)
+{
+  #define H_gdk_rgba_to_string "gchar* gdk_rgba_to_string(GdkRGBA* rgba)"
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(rgba), rgba, 1, "gdk_rgba_to_string", "GdkRGBA*");
+  return(C_TO_XEN_gchar_(gdk_rgba_to_string(XEN_TO_C_GdkRGBA_(rgba))));
+}
+
 #endif
 
 #if (!HAVE_GTK_3)
@@ -38292,6 +38323,10 @@ XEN_NARGIFY_2(gxg_gtk_widget_get_device_enabled_w, gxg_gtk_widget_get_device_ena
 XEN_NARGIFY_2(gxg_gtk_window_set_has_user_ref_count_w, gxg_gtk_window_set_has_user_ref_count)
 XEN_NARGIFY_5(gxg_gdk_selection_send_notify_w, gxg_gdk_selection_send_notify)
 XEN_NARGIFY_6(gxg_gdk_selection_send_notify_for_display_w, gxg_gdk_selection_send_notify_for_display)
+XEN_NARGIFY_1(gxg_gdk_rgba_copy_w, gxg_gdk_rgba_copy)
+XEN_NARGIFY_1(gxg_gdk_rgba_free_w, gxg_gdk_rgba_free)
+XEN_NARGIFY_2(gxg_gdk_rgba_parse_w, gxg_gdk_rgba_parse)
+XEN_NARGIFY_1(gxg_gdk_rgba_to_string_w, gxg_gdk_rgba_to_string)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -42309,6 +42344,10 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_window_set_has_user_ref_count_w gxg_gtk_window_set_has_user_ref_count
 #define gxg_gdk_selection_send_notify_w gxg_gdk_selection_send_notify
 #define gxg_gdk_selection_send_notify_for_display_w gxg_gdk_selection_send_notify_for_display
+#define gxg_gdk_rgba_copy_w gxg_gdk_rgba_copy
+#define gxg_gdk_rgba_free_w gxg_gdk_rgba_free
+#define gxg_gdk_rgba_parse_w gxg_gdk_rgba_parse
+#define gxg_gdk_rgba_to_string_w gxg_gdk_rgba_to_string
 #endif
 
 #if (!HAVE_GTK_3)
@@ -46333,6 +46372,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_window_set_has_user_ref_count, gxg_gtk_window_set_has_user_ref_count_w, 2, 0, 0, H_gtk_window_set_has_user_ref_count);
   XG_DEFINE_PROCEDURE(gdk_selection_send_notify, gxg_gdk_selection_send_notify_w, 5, 0, 0, H_gdk_selection_send_notify);
   XG_DEFINE_PROCEDURE(gdk_selection_send_notify_for_display, gxg_gdk_selection_send_notify_for_display_w, 6, 0, 0, H_gdk_selection_send_notify_for_display);
+  XG_DEFINE_PROCEDURE(gdk_rgba_copy, gxg_gdk_rgba_copy_w, 1, 0, 0, H_gdk_rgba_copy);
+  XG_DEFINE_PROCEDURE(gdk_rgba_free, gxg_gdk_rgba_free_w, 1, 0, 0, H_gdk_rgba_free);
+  XG_DEFINE_PROCEDURE(gdk_rgba_parse, gxg_gdk_rgba_parse_w, 2, 0, 0, H_gdk_rgba_parse);
+  XG_DEFINE_PROCEDURE(gdk_rgba_to_string, gxg_gdk_rgba_to_string_w, 1, 0, 0, H_gdk_rgba_to_string);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -48889,7 +48932,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("23-Feb-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Feb-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

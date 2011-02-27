@@ -1550,10 +1550,7 @@ void set_selected_graph_color(color_t color)
 #if USE_MOTIF
       XtVaSetValues(channel_graph(cp), XmNbackground, ss->sgx->selected_graph_color, NULL);
 #else
-#if (!HAVE_GTK_3)
-      /* TODO: how to mark selected channel in gtk3? */
       widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, ss->sgx->selected_graph_color);
-#endif
 #endif
     }
 }

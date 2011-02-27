@@ -2132,7 +2132,7 @@
 		       'default-output-header-type 'default-output-srate 'define-envelope 'degrees->radians 'delay
 		       'delay-tick 'delay? 'delete-colormap 'delete-file-filter 'delete-file-sorter
 		       'delete-mark 'delete-marks 'delete-sample 'delete-samples
-		       'delete-selection 'delete-transform 'dialog-widgets 'disk-kspace
+		       'delete-selection 'delete-selection-and-smooth 'delete-transform 'dialog-widgets 'disk-kspace
 		       'display-edits 'dolph-chebyshev-window 'dont-normalize
 		       'dot-product 'dot-size 'draw-axes 'draw-dot 'draw-dots
 		       'draw-line 'draw-lines 'draw-mark-hook 'draw-mix-hook 'draw-string 'drop-hook
@@ -2260,7 +2260,7 @@
 		       'rectangular->magnitudes 'rectangular->polar 'rectangular-window 'redo 'redo-edit
 		       'region->vct 'region-chans 'region-home 'region-frames 'region-graph-style 'region-maxamp
 		       'region-maxamp-position 'region-position 'region-sample 'region-sampler? 'region-srate
-		       'region? 'regions 'remove-from-menu 'report-in-minibuffer
+		       'region? 'regions 'remember-sound-state 'remove-from-menu 'report-in-minibuffer
 		       'reset-controls 'reset-listener-cursor 'restore-controls 'restore-region
 		       'reverb-control-decay 'reverb-control-feedback 'reverb-control-length 'reverb-control-length-bounds 'reverb-control-lowpass
 		       'reverb-control-scale 'reverb-control-scale-bounds 'reverb-control? 'reverse-channel 'reverse-selection
@@ -11707,7 +11707,42 @@ EDITS: 5
 		    (snd-display #__line__ ";C-u 6 C-x c: ~A?" str))))
 	  (close-sound ind))
 	
-	(let ((ind (view-sound "obtest.snd")))
+	(let ((ns (new-sound))
+	      (v (make-vct 1000)))
+	  (unselect-all)
+	  (do ((i 0 (+ i 1)))
+	      ((= i 1000))
+	    (set! (v i) (* .001 i)))
+	  (vct->channel v 0 1000 ns 0)
+	  (set! (selection-member? ns 0) #t)
+	  (set! (selection-position ns 0) 200)
+	  (set! (selection-frames ns 0) 300)
+	  (delete-selection-and-smooth)
+	  (if (not (= (frames ns 0) 700))
+	      (snd-display #__line__ ";delete-selection-and-smooth frames: ~A" (frames ns 0)))
+	  (if (fneq (sample 167 ns 0) 0.167) 
+	      (snd-display #__line__ ";delete-selection-and-smooth 167: ~A" (sample 167 ns 0)))
+	  (if (fneq (sample 234 ns 0) 0.534) 
+	      (snd-display #__line__ ";delete-selection-and-smooth 234: ~A" (sample 234 ns 0)))
+	  (if (fneq (sample 210 ns 0) 0.406) 
+	      (snd-display #__line__ ";delete-selection-and-smooth 210: ~A" (sample 210 ns 0)))
+	  (let* ((v1 (channel->vct))
+		 (maxdiff 0.0)
+		 (mindiff 10.0)
+		 (ls (v1 0)))
+	    (do ((i 1 (+ i 1)))
+		((= i 700))
+	      (let ((diff (- (v1 i) ls)))
+		(set! ls (v1 i))
+		(if (> diff maxdiff) (set! maxdiff diff))
+		(if (< diff mindiff) (set! mindiff diff))))
+	    (if (< mindiff .0009)
+		(snd-display #__line__ ";delete-selection-and-smooth min diff: ~A" mindiff))
+	    (if (> maxdiff .007)
+		(snd-display #__line__ ";delete-selection-and-smooth max diff: ~A" maxdiff)))
+	  (close-sound ns))
+
+  	(let ((ind (view-sound "obtest.snd")))
 	  (delete-samples 0 1000 ind 0)
 	  (let ((tag (catch #t
 			    (lambda () (save-sound ind))
@@ -61173,7 +61208,7 @@ EDITS: 1
 		     cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color data-format data-location data-size
 		     default-output-chans default-output-data-format default-output-srate default-output-header-type define-envelope
 		     delete-mark delete-marks forget-region delete-sample delete-samples
-		     delete-selection dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
+		     delete-selection delete-selection-and-smooth dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
 		     draw-lines draw-string edit-header-dialog edit-fragment edit-list->function edit-position edit-tree edits env-selection
 		     env-sound enved-envelope enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power
 		     enved-target enved-waveform-color enved-wave? eps-file eps-left-margin 
@@ -61679,7 +61714,7 @@ EDITS: 1
 			(if (not (eq? tag 'no-active-selection))
 			    (snd-display #__line__ ";selection ~A: ~A" n tag))))
 		    (list reverse-selection selection-position selection-frames smooth-selection
-			  scale-selection-to insert-selection delete-selection mix-selection))
+			  scale-selection-to insert-selection delete-selection delete-selection-and-smooth mix-selection))
 	  
 	  (for-each (lambda (n)
 		      (let ((tag
@@ -63584,4 +63619,4 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 |#
 
-;;; TODO: sync-style show-selection show-full-duration initial-beg initial-dur remember-sound-state delete-selection-and-smooth
+;;; TODO: sync-style show-selection show-full-duration initial-beg initial-dur remember-sound-state
