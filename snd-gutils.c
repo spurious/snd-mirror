@@ -1224,7 +1224,6 @@ the spectrum graphic.
 
 1) playback. It's very strange that you need to tick a box to start/stop playback instead of hitting the space bar. 
 2) general lack of keybindings 
-3) In the preferences for example the menu section labels look like buttons, which is confusing. 
 4) An error I just got when clicking somewhere in the preference menu: snd: cairo-surface.c:385: _cairo_surface_begin_modification: Assertion `! surface->finished' failed. 
 5) sometimes the meaning of checkboxes is less than obvious (sync, unite) 
 6) Dragging scrollbars during playback makes playback very choppy or 
@@ -1245,8 +1244,6 @@ void init_gtk(void)
 \n					 \
 style \"default\"\n			 \
 {\n					 \
-#  font_name = \"Serif 11\"\n		 \
-\n						\
   fg[NORMAL]      = { 0.0,  0.00, 0.0 }\n	\
   text[NORMAL]    = { 0.0,  0.0,  0.0 }\n	\
   bg[NORMAL]      = { 0.93, 0.93, 0.87 }\n	\
@@ -1255,12 +1252,10 @@ style \"default\"\n			 \
   base[NORMAL]    = { 1.00, 1.00, 1.00 }\n	\
   bg[PRELIGHT]    = { 0.70, 0.70, 0.64 }\n	\
   fg[PRELIGHT]    = { 1.0,  0.0,  0.0}\n	\
-\n						\
   GtkPaned::handle_size = 6\n			\
   xthickness = 1\n				\
   ythickness = 1\n				\
 }\n						\
-\n						\
 style \"default_button\" = \"default\"\n	\
 {\n						\
   GtkButton::default_border = { 1, 0, 1, 0 }\n		\
@@ -1269,18 +1264,15 @@ style \"default_button\" = \"default\"\n	\
   GtkButton::focus_line_width = 0\n			\
   GtkButton::focus_padding = 0\n			\
 }\n							\
-\n							\
 style \"default_menu\" = \"default\"\n			\
 {\n							\
   bg[NORMAL] = { 1.0, 1.0, 0.94 }\n			\
 }\n							\
-\n							\
 style \"default_pane\" = \"default\"\n			\
 {\n							\
   bg[NORMAL] = { 0.56, 0.93, 0.56 }\n			\
   bg[PRELIGHT] = { 0.26, 0.8, 0.26}\n			\
 }\n							\
-\n							\
 style \"default_entry\" = \"default\"\n			\
 {\n							\
   base[ACTIVE]      = { 0.96, 0.96, 0.90 }\n		\
@@ -1295,18 +1287,15 @@ style \"default_entry\" = \"default\"\n			\
   text[SELECTED]    = { 0.0, 0.0, 0.0 }\n		\
   text[PRELIGHT]    = { 0.0, 0.0, 0.0 }\n		\
 }\n							\
-\n							\
 style \"default_text\" = \"default_entry\"\n		\
 {\n							\
   base[NORMAL] = { 1.0, 1.0, 1.0 }\n			\
 }\n							\
-\n							\
 style \"default_slider\" = \"default\"\n		\
 {\n							\
   bg[NORMAL] = { 0.90, 0.90, 0.85 }\n			\
   bg[ACTIVE] = { 0.70, 0.70, 0.64 }\n			\
   bg[PRELIGHT] = { 0.90, 0.90, 0.85 }\n			\
-\n							\
   GtkRange::slider_width = 13\n				\
   GtkRange::stepper_size = 10\n				\
 }\n							\
@@ -1314,7 +1303,6 @@ style \"prefs_scale\" = \"default_slider\"\n            \
 {\n                                                     \
   GtkScale::slider-length = 24\n                        \
 }\n                                                     \
-\n                                                      \
 widget \"*.prefs_color_scale\" style \"prefs_scale\"\n  \
 style \"default_frame\" = \"default\"\n			\
 {\n							\
@@ -1340,7 +1328,6 @@ style \"zoom_slider\" = \"default_slider\"\n		\
   GtkRange::slider_width = 12\n				\
   GtkRange::stepper_size = 12\n				\
 }\n							\
-\n							\
 widget \"*.zx_slider\" style \"zoom_slider\"\n		\
 widget \"*.zy_slider\" style \"zoom_slider\"\n		\
 widget \"*.gzy_slider\" style \"zoom_slider\"\n		\
@@ -1352,7 +1339,6 @@ style \"dialog_button\" = \"default_button\"\n          \
   bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n                   \
 }\n                                                     \
 widget \"*.dialog_button\" style \"dialog_button\"\n    \
-widget \"*.the_unpane\" style \"default\"\n		\
 style \"white_button\" = \"default_button\"\n		\
 {\n							\
   bg[NORMAL] = { 1.0, 1.0, 1.0 }\n			\
@@ -1382,6 +1368,8 @@ void init_gtk(void)
     "}\n",
     -1, &error);
 }
+
+/* TODO: sash colors should be green */
 
 #endif
 

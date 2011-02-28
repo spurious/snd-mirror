@@ -7,9 +7,7 @@ Snd change log
             show-full-duration, initial-beg, initial-dur, ask-about-unsaved-edits.
             with-toolbar, with-tooltips, remember-sound-state, with-smpte-label.
 	    new built-in toolbars, removed toolbar.scm and panic.scm.
-            removed Snd.gtkrc.  This won't work anyway in gtk3, and getting rid of it 
-              encourages me to work on its replacement.  Also removed Snd.ad and the
-              totally obsolete X resources stuff.
+            removed Snd.gtkrc, Snd.ad, and the totally obsolete X resources stuff.
             The built-in popup menus are now context sensitive, and the files popup.scm
               and gtk-popup.scm have been removed.
             with-menu-icons (Gtk only).

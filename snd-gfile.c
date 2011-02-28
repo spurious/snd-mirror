@@ -484,7 +484,6 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
   /* -------- directory and file lists -------- */
   fs->panes = gtk_hpaned_new();
-  gtk_widget_set_name(fs->panes, "the_unpane"); /* normal color sash */
   gtk_container_set_border_width(GTK_CONTAINER(fs->panes), 2);
   gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fs->dialog)), fs->panes, true, true, 10);
   gtk_widget_show(fs->panes);

@@ -614,7 +614,7 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
   double xmax, x0, x1, dur;
   const char *label = NULL;
   char *hook_label = NULL;
-  bool ymin_set = false, ymax_set = false, x_set = false;
+  bool ymin_set = false, ymax_set = false;
 
   cp->edit_size = INITIAL_EDIT_SIZE;
   cp->edits = (ed_list **)calloc(cp->edit_size, sizeof(ed_list *));
@@ -681,7 +681,6 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
 
 	  if (XEN_LIST_P_WITH_LENGTH(res, len))
 	    {
-	      x_set = true;
 	      if (len > 0) x0 = XEN_TO_C_DOUBLE(XEN_CAR(res));
 	      if (len > 1) x1 = XEN_TO_C_DOUBLE(XEN_CADR(res));
 	      if (len > 2) y0 = XEN_TO_C_DOUBLE(XEN_CADDR(res));
@@ -710,7 +709,6 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
       ymax = peak_env_maxamp(cp, 0);
       if (ymax < 1.0) ymax = 1.0;
       ymin = -ymax;
-      if (!x_set) x1 = 0.0; /* show full sound if peak env is available */
     }
   else
     {
@@ -728,10 +726,6 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
     }
 
   if (dur == 0.0) xmax = .001; else xmax = dur;
-  if ((x1 == 0.0) ||
-      ((!x_set) && (dur < 10.0)))
-    x1 = xmax;
-
   if (dur <= 0.0)
     {
       /* empty sound */
