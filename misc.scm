@@ -12,7 +12,6 @@
 (if (not (provided? 'snd-mix.scm)) (load "mix.scm"))
 (if (not (provided? 'snd-moog.scm)) (load "moog.scm"))
 (if (not (provided? 'snd-play.scm)) (load "play.scm"))
-(if (not (provided? 'snd-popup.scm)) (load "popup.scm"))
 (if (not (provided? 'snd-rubber.scm)) (load "rubber.scm"))
 (if (not (provided? 'snd-zip.scm)) (load "zip.scm"))
 (if (not (provided? 'snd-new-effects.scm)) (load "new-effects.scm"))
@@ -219,59 +218,7 @@
 (add-delete-option)
 (add-rename-option)
 
-;;;
-;;; poup menu stuff
-;;;
 
-(change-graph-popup-color "pink")
-
-;;;(add-selection-popup)
-
-
-(define (change-selection-popup-color new-color)
-  ;; new-color can be the color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-color)
-  (let ((color-pixel
-         (if (string? new-color) ; assuming X11 color names here
-             (let* ((shell (cadr (main-widgets)))
-                    (dpy (XtDisplay shell))
-                    (scr (DefaultScreen dpy))
-                    (cmap (DefaultColormap dpy scr))
-                    (col (XColor)))
-               (if (= (XAllocNamedColor dpy cmap new-color col col) 0)
-                   (snd-error (format #f "can't allocate ~S" new-color))
-                   (.pixel col)))
-             (if (color? new-color)
-                     new-color
-                     ;; assume a list of rgb vals?
-                     (apply make-color new-color)))))
-    (for-each-child
-     selection-popup-menu
-     (lambda (n)
-       (XmChangeColor n color-pixel)))))
-(change-selection-popup-color "coral")
-
-(define (change-fft-popup-color new-color)
-  (let ((color-pixel
-         (if (string? new-color) ; assuming X11 color names here
-             (let* ((shell (cadr (main-widgets)))
-                    (dpy (XtDisplay shell))
-                    (scr (DefaultScreen dpy))
-                    (cmap (DefaultColormap dpy scr))
-                    (col (XColor)))
-               (if (= (XAllocNamedColor dpy cmap new-color col col) 0)
-                   (snd-error (format #f "can't allocate ~S" new-color))
-                   (.pixel col)))
-             (if (color? new-color)
-                     new-color
-                     ;; assume a list of rgb vals?
-                     (apply make-color new-color)))))
-    (for-each-child
-     fft-popup-menu
-     (lambda (n)
-       (XmChangeColor n color-pixel)))))
-(change-fft-popup-color "orange")
-
-;(change-listener-popup-color "red")
 
 (add-to-menu 1 #f #f) ; separator
 
@@ -372,7 +319,5 @@
 ;;; Deselect function
 ;;;
 
-(define (deselect-all)
-  (if (selection?)
-      (set! (selection-member? #t) #f)))
+(define deselect-all unselect-all)
 

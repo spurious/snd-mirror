@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [609]
-;;;  test 1: defaults                           [1153]
-;;;  test 2: headers                            [1355]
-;;;  test 3: variables                          [1670]
-;;;  test 4: sndlib                             [2292]
-;;;  test 5: simple overall checks              [5019]
-;;;  test 6: vcts                               [14024]
-;;;  test 7: colors                             [14461]
-;;;  test 8: clm                                [14961]
-;;;  test 9: mix                                [26841]
-;;;  test 10: marks                             [29070]
-;;;  test 11: dialogs                           [30043]
-;;;  test 12: extensions                        [30254]
-;;;  test 13: menus, edit lists, hooks, etc     [30523]
-;;;  test 14: all together now                  [32025]
-;;;  test 15: chan-local vars                   [32922]
-;;;  test 16: regularized funcs                 [34722]
-;;;  test 17: dialogs and graphics              [39671]
-;;;  test 18: enved                             [39763]
-;;;  test 19: save and restore                  [39782]
-;;;  test 20: transforms                        [41548]
-;;;  test 21: new stuff                         [43735]
-;;;  test 22: run                               [45739]
-;;;  test 23: with-sound                        [52656]
-;;;  test 25: X/Xt/Xm                           [57164]
-;;;  test 26:                                   [60870]
-;;;  test 27: GL                                [60876]
-;;;  test 28: errors                            [61000]
-;;;  test 29: s7                                [63398]
-;;;  test all done                              [63469]
-;;;  test the end                               [63656]
+;;;  test 0: constants                          [607]
+;;;  test 1: defaults                           [1186]
+;;;  test 2: headers                            [1399]
+;;;  test 3: variables                          [1714]
+;;;  test 4: sndlib                             [2344]
+;;;  test 5: simple overall checks              [5071]
+;;;  test 6: vcts                               [14194]
+;;;  test 7: colors                             [14631]
+;;;  test 8: clm                                [15149]
+;;;  test 9: mix                                [27028]
+;;;  test 10: marks                             [29257]
+;;;  test 11: dialogs                           [30224]
+;;;  test 12: extensions                        [30435]
+;;;  test 13: menus, edit lists, hooks, etc     [30704]
+;;;  test 14: all together now                  [32200]
+;;;  test 15: chan-local vars                   [33100]
+;;;  test 16: regularized funcs                 [34900]
+;;;  test 17: dialogs and graphics              [39849]
+;;;  test 18: enved                             [39941]
+;;;  test 19: save and restore                  [39960]
+;;;  test 20: transforms                        [41726]
+;;;  test 21: new stuff                         [43913]
+;;;  test 22: run                               [45950]
+;;;  test 23: with-sound                        [52866]
+;;;  test 25: X/Xt/Xm                           [57373]
+;;;  test 26:                                   [61076]
+;;;  test 27: GL                                [61082]
+;;;  test 28: errors                            [61206]
+;;;  test 29: s7                                [63421]
+;;;  test all done                              [63492]
+;;;  test the end                               [63681]
 
 (define tests 1)
 (define keep-going #f)
@@ -586,13 +586,11 @@
 (if (and (provided? 'snd-motif)
 	 (provided? 'xm))
     (begin
-      (if (not (provided? 'snd-snd-motif.scm)) (load "snd-motif.scm"))
-      (if (not (provided? 'snd-popup.scm)) (load "popup.scm")))
+      (if (not (provided? 'snd-snd-motif.scm)) (load "snd-motif.scm")))
     (if (and (provided? 'snd-gtk)
 	     (provided? 'xg))
 	(begin
-	  (if (not (provided? 'snd-snd-gtk.scm)) (load "snd-gtk.scm"))
-	  (if (not (provided? 'snd-gtk-popup.scm)) (load "gtk-popup.scm")))))
+	  (if (not (provided? 'snd-snd-gtk.scm)) (load "snd-gtk.scm")))))
 
 
 (if (not (provided? 'snd-snd9.scm)) (load "snd9.scm")) ; make-ppolar|zpolar, various generators later moved to generators.scm
@@ -1083,6 +1081,9 @@
     (set! (with-inset-graph) (with-inset-graph))
     (if (not (equal? (with-inset-graph)  #f))
 	(snd-display #__line__ ";with-inset-graph set def: ~A" (with-inset-graph)))
+    (set! (remember-sound-state) (remember-sound-state))
+    (if (not (equal? (remember-sound-state)  #f))
+	(snd-display #__line__ ";remember-sound-state set def: ~A" (remember-sound-state)))
     (set! (with-smpte-label) (with-smpte-label))
     (if (not (equal? (with-smpte-label)  #f)) 
 	(snd-display #__line__ ";with-smpte-label set def: ~A" (with-smpte-label)))
@@ -1181,6 +1182,7 @@
 	 (list 'axis-label-font 'axis-numbers-font 'tiny-font 'peaks-font 'bold-peaks-font)))
 
     (set! (ask-about-unsaved-edits) #f)
+    (set! (remember-sound-state) #f)
     ))
 
 
@@ -1325,6 +1327,7 @@
       'print-length (print-length) 12 
       'read-only (without-errors (read-only)) 'no-such-sound
       'region-graph-style (region-graph-style) graph-lines
+      'remember-sound-state (remember-sound-state) #f
       'reverb-control-feedback (reverb-control-feedback) 1.09
       'reverb-control-length (without-errors (reverb-control-length)) 'no-such-sound
       'reverb-control-length-bounds (cadr (reverb-control-length-bounds)) 5.0
@@ -1390,6 +1393,7 @@
       ))
     (if *snd-opened-sound* (snd-display #__line__ ";*snd-opened-sound*: ~A" *snd-opened-sound*))
     (set! (ask-about-unsaved-edits) #f)
+    (set! (remember-sound-state) #f)
     ))
 
 
@@ -11789,6 +11793,36 @@ EDITS: 5
 	  (set! (show-full-duration) old-show)
 	  (set! (hook-functions initial-graph-hook) old-hook))
 
+	(let ((old-sync (sync-style)))
+	  (set! (sync-style) sync-none)
+	  (let ((ns (open-sound "2.snd")))
+	    (if (not (= (sync ns) 0))
+		(snd-display #__line__ ";sync-none open: ~A" (sync ns)))
+	    (set! (sync ns) 1)
+	    (set! (sync-style) sync-by-sound)
+	    (let ((ns1 (open-sound "1a.snd")))
+	      (if (or (= (sync ns1) 0)
+		      (= (sync ns1) 1)
+		      (not (= (sync ns) 1)))
+		  (snd-display #__line__ ";sync-by-sound open: ~A" (list (sync ns) (sync ns1))))
+	      (close-sound ns1))
+	    (close-sound ns))
+	  (set! (sync-style) sync-all)
+	  (let ((ns (open-sound "2.snd"))
+		(ns1 (open-sound "1a.snd")))
+	    (if (or (not (= (sync ns) (sync ns1)))
+		    (= (sync ns) 0))
+		(snd-display #__line__ ";sync-all open: ~A" (list (sync ns) (sync ns1))))
+	    (set! (sync-style) sync-none)
+	    (let ((ns2 (open-sound "oboe.snd")))
+	      (if (or (not (= (sync ns) (sync ns1)))
+		      (not (= (sync ns2) 0)))
+		  (snd-display #__line__ ";back to sync-none open: ~A" (list (sync ns) (sync ns1) (sync ns2))))
+	      (close-sound ns2))
+	    (close-sound ns1)
+	    (close-sound ns))
+	  (set! (sync-style) old-sync))
+
   	(let ((ind (view-sound "obtest.snd")))
 	  (delete-samples 0 1000 ind 0)
 	  (let ((tag (catch #t
@@ -14635,12 +14669,30 @@ EDITS: 2
 	       (c3 (catch 'no-such-color
 			  (lambda () (make-color 0 0 1))
 			  (lambda args #f))))
-	  (if (not (equal? c1 c2)) (snd-display #__line__ ";color equal? ~A ~A?" c1 c2))
-	  (if (not (eq? c1 c2)) (snd-display #__line__ ";color eq? ~A ~A?" c1 c2))
-	  (if (provided? 'snd-motif) (if (not (equal? c1 c3)) (snd-display #__line__ ";diff color equal? ~A ~A?" c1 c3)))
+	  (if (not (equal? c1 c2)) (snd-display #__line__ ";color not equal? ~A ~A?" c1 c2))
+	  (if (not (eq? c1 c2)) (snd-display #__line__ ";color not eq? ~A ~A?" c1 c2))
+	  ;(if (not (equal? c1 c3)) (snd-display #__line__ ";diff color not equal? ~A ~A?" c1 c3))
 	  (if (eq? c1 c3) (snd-display #__line__ ";diff color eq? ~A ~A?" c1 c3))
 	  (if (not (equal? (color->list c1) (list 0.0 0.0 1.0)))
 	      (snd-display #__line__ ";color->list: ~A ~A?" c1 (color->list c1))))
+
+	(if (not (provided? 'snd-motif))
+	    (let* ((c1 (catch 'no-such-color
+			      (lambda () (make-color 0 0 1 0.5))
+			      (lambda args #f)))
+		   (c2 c1)
+		   (c3 (catch 'no-such-color
+			      (lambda () (make-color 0 0 1 0.5))
+			      (lambda args #f))))
+	      (if (not (equal? c1 c2)) (snd-display #__line__ ";alpha color not equal? ~A ~A?" c1 c2))
+	      (if (not (eq? c1 c2)) (snd-display #__line__ ";alpha color not eq? ~A ~A?" c1 c2))
+	      ;(if (not (equal? c1 c3)) (snd-display #__line__ ";alpha diff color not equal? ~A ~A?" c1 c3))
+	      (if (eq? c1 c3) (snd-display #__line__ ";alpha diff color eq? ~A ~A?" c1 c3))
+	      (let ((c4 (catch 'no-such-color
+			       (lambda () (make-color 0 0 1 0.0))
+			       (lambda args #f))))
+		(if (equal? c1 c4) (snd-display #__line__ ";alpha color equal? ~A ~A?" c1 c2)))))
+
 	(do ((i 0 (+ 1 i))) 
 	    ((not (colormap? (integer->colormap i))))
 	  (let ((val (colormap-ref (integer->colormap i) 0))
@@ -33301,7 +33353,7 @@ EDITS: 2
 		  (snd-display #__line__ ";edit-fragment(0): ~S?" (edit-fragment 0 obi 0)))
 	      (if (not (equal? (edit-fragment 1 obi 0) '("delete-samples 1000 1001" "delete" 1000 1001))) 
 		  (snd-display #__line__ ";edit-fragment(1): ~S?" (edit-fragment 1 obi 0)))
-	      (if (not (equal? (edit-fragment 2 obi 0) '("delete-selection-and-smooth" "set" 984 64))) 
+	      (if (not (equal? (edit-fragment 2 obi 0) '("delete-selection-and-smooth" "set" 968 64))) 
 		  (snd-display #__line__ ";edit-fragment(2): ~S?" (edit-fragment 2 obi 0)))
 	      
 	      (let ((samp100 (sample 1100 obi 0)))
@@ -44615,6 +44667,8 @@ EDITS: 1
 	(close-sound ind))
       (reset-almost-all-hooks)
       (set! (remember-sound-state) #f)
+      (if (file-exists? "remembered-oboe.snd.scm")
+	  (delete-file "remembered-oboe.snd.scm"))
       
       (map-sound-files (lambda (n) (if (> (mus-sound-duration n) 1000.0) (snd-display #__line__ ";~A is pretty long! ~A" n (mus-sound-duration n)))))
       (if (string? sf-dir)
@@ -59873,7 +59927,6 @@ EDITS: 1
 		    (snd-display #__line__ ";no drop site?"))))
 	    
 	    (add-mark 123)
-	    (add-popups)
 	    (let ((container
 		   (make-sound-box "sounds"
 				   (list-ref (main-widgets) 3)
@@ -61256,6 +61309,7 @@ EDITS: 1
 		       expected-tag (procedure-source thunk) tag))))
   
   (set! (with-background-processes) #t)
+  (set! (remember-sound-state) #f)
   
   (if with-gui
       
@@ -61318,7 +61372,7 @@ EDITS: 1
 		     view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
 		     print-length progress-report prompt-in-minibuffer read-only
 		     redo region-chans view-regions-dialog region-home 
-		     region-graph-style region-frames region-position region-maxamp region-maxamp-position 
+		     region-graph-style region-frames region-position region-maxamp region-maxamp-position remember-sound-state
 		     selection-maxamp selection-maxamp-position region-sample region->vct clear-minibuffer
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
 		     restore-region reverb-control-decay reverb-control-feedback 
@@ -61441,7 +61495,7 @@ EDITS: 1
 			 mix-waveform-height transform-normalization open-file-dialog-directory
 			 position-color view-files-sort print-length play-arrow-size
 			 view-files-amp view-files-speed view-files-speed-style view-files-amp-env
-			 view-files-files view-files-selected-files 
+			 view-files-files view-files-selected-files ; remember-sound-state
 			 region-graph-style reverb-control-decay reverb-control-feedback
 			 reverb-control-length reverb-control-lowpass reverb-control-scale time-graph-style lisp-graph-style transform-graph-style
 			 reverb-control? sash-color ladspa-dir peak-env-dir save-dir save-state-file selected-data-color selected-graph-color
@@ -62267,7 +62321,7 @@ EDITS: 1
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor 
 			    with-inset-graph with-pointer-focus window-height beats-per-measure with-smpte-label
-			    with-toolbar with-tooltips with-menu-icons
+			    with-toolbar with-tooltips with-menu-icons remember-sound-state
 			    window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			    mix-tag-width with-relative-panes clm-table-size clm-default-frequency mark-tag-width mark-tag-height
 			    ))
@@ -62343,7 +62397,8 @@ EDITS: 1
 			  (list mouse-click-hook 'mouse-click-hook)
 			  (list enved-hook 'enved-hook)))
 
-	  (set! (ask-about-unsaved-edits) #f)	  
+	  (set! (ask-about-unsaved-edits) #f)
+	  (set! (remember-sound-state) #f)
 	  (if (= test-28 0) 
 	      (begin
 		(check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
@@ -63459,6 +63514,7 @@ EDITS: 1
 
 (reset-almost-all-hooks)
 (set! (ask-about-unsaved-edits) #f)
+(set! (remember-sound-state) #f)
 (close-output-port optimizer-log)
 
 (if (and full-test
@@ -63698,5 +63754,5 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 |#
 
-;;; TODO: sync-style remember-sound-state
-;;; TODO: what is the effect of the "alpha" setting for chan-graph? (also test make-color alpha arg)
+;;; TODO: what is the effect of the "alpha" setting for chan-graph?
+

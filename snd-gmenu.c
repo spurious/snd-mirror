@@ -585,7 +585,7 @@ GtkWidget *add_menu(void)
   view_region_menu = add_insensitive_menu_item(view_cascade_menu, "Regions", NULL, (GCallback)view_region_callback_1);
   ml[v_region_menu] = "Regions";
 
-  view_color_orientation_menu = add_insensitive_menu_item(view_cascade_menu, "Color/Orientation", NULL, (GCallback)view_color_orientation_callback_1);
+  view_color_orientation_menu = add_menu_item(view_cascade_menu, "Color/Orientation", NULL, (GCallback)view_color_orientation_callback_1);
   ml[v_color_orientation_menu] = "Color/Orientation";
 
   view_sep2_menu = add_menu_separator(view_cascade_menu);

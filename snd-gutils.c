@@ -358,9 +358,7 @@ void set_title(const char *title)
 
 void goto_window(GtkWidget *text)
 {
-#if (!HAVE_GTK_3)
   gtk_widget_grab_focus(text);
-#endif
 }
 
 
@@ -489,6 +487,7 @@ color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b)
 }
 
 
+#if (!HAVE_GTK_3)
 GdkColor *rgb_to_gdk_color(color_t col)
 {
   GdkColor gcolor;
@@ -500,6 +499,7 @@ GdkColor *rgb_to_gdk_color(color_t col)
   /* gdk_rgb_find_color(gdk_colormap_get_system(), ccolor); */
   return(ccolor);
 }
+#endif
 
 
 void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
@@ -802,9 +802,7 @@ GtkWidget *snd_gtk_dialog_new(void)
 }
 
 
-/* TODO: some of these labels have a trailing colon
- * TODO: some might look better with a frame?
- * TODO: in gfile, some labels that are actually popdown menus need bold text
+/* TODO: in gfile, some labels that are actually popdown menus need bold text [srate, channels]
  * TODO: check other buttons-as-labels and label-colors
  */
 
@@ -967,7 +965,7 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 
 
 #if HAVE_GTK_3
-static GtkCssProvider *wb;
+static GtkCssProvider *wb_provider;
 #endif
 
 static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
@@ -991,7 +989,7 @@ static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
   {
     GtkStyleContext *c;
     c = gtk_widget_get_style_context(item);
-    gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(wb), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(wb_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   }
 #endif
     
@@ -1183,27 +1181,24 @@ char *slist_selection(slist *lst)
 }
 
 /* TODO: gtk3 cairo troubles:
- *
- *       lots of things leave an empty graph
- *       do meters work in rec?  in Motif they're drawn incorrectly
- *       Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
- *         sep chans, syncd marks don't move together
- *       superimposed chans flicker a lot
- *       hide controls + listener doesn't
- *       if combined, initial drag of mix does not reflect drag until button release
- *       mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
- *
+ *   toolbar is spread out
+ *   lots of things leave an empty graph
+ *   do meters work in rec?  in Motif they're drawn incorrectly
+ *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
+ *     sep chans, syncd marks don't move together
+ *   superimposed chans flicker a lot
+ *   hide controls + listener doesn't
+ *   if combined, initial drag of mix does not reflect drag until button release
+ *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *   adding invalidate rect got the dialog back but hangs the system! 
  *   Now Xorg is taking up 91% of memory!
- * hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
- *   dot key is ignored (dot-size)?
- * segfault in test 20 (same problem as earlier)
- *  (see also goto_window above)
- * try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
- * gtk listener won't let me delete "(" in col 0? -- flakey
+ *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
+ *   segfault in test 20 (same problem as earlier)
+ *   (see also goto_window above)
+ *   try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
+ *   gtk listener won't let me delete "(" in col 0? -- flakey
  *   Also, someone is setting squelch?  
- * why does goto_window erase the window in gtk 3?
- * if basic-color is set (white for example), the icon (blank?) after the sound file name is not recolored)
+ *   if basic-color is set (white for example), the icon (blank?) after the sound file name is not recolored)
  */
 
 /*
@@ -1360,8 +1355,8 @@ widget \"*.white_button\" style \"white_button\"\n");
 void init_gtk(void)
 {
   GError *error = NULL;
-  wb = gtk_css_provider_new();
-  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(wb),
+  wb_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(wb_provider),
     "#white_button { \n"
     "  padding: 0 0;\n"
     "  border-width: 0\n"

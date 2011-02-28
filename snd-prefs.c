@@ -3647,13 +3647,17 @@ static char *rts_load_path = NULL;
 
 static const char *help_load_path(prefs_info *prf)
 {
-  char *hlp, *temp = NULL;
-  hlp = mus_format("Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth \
-files found in the Snd tarball.  You can run Snd without \
-these files, but there's no reason to!  Just add the directory containing \
-them to the load path variable%s.  " XEN_LANGUAGE_NAME " searches these \
-directories for any *." XEN_FILE_EXTENSION " files that it can't \
-find elsewhere.  The current load path list is: \n\n%s\n",
+  static char *hlp = NULL;
+  char *temp = NULL;
+  if (hlp) free(hlp);
+
+  hlp = mus_format("Much of Snd's functionality is loaded as needed \n\
+from the Scheme, Ruby, or Forth files found in the Snd tarball.  \n\
+You can run Snd without these files, but there's no reason to!  \n\
+Just add the directory containing them to the load path \n\
+variable %s.  " XEN_LANGUAGE_NAME " searches these directories \n\
+for any *." XEN_FILE_EXTENSION " files that it can't find elsewhere.  \n\
+The current load path list is: \n\n%s\n",
 #if HAVE_RUBY
 		   ", $LOAD_PATH",
 #else
@@ -3667,8 +3671,7 @@ find elsewhere.  The current load path list is: \n\n%s\n",
 #if HAVE_SCHEME
   if (temp) free(temp);
 #endif
-  free(hlp);
-  return("TODO: help");
+  return(hlp);
 }
 
 

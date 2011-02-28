@@ -1404,6 +1404,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   /* we can't use the meta bit in some cases because this is trapped at a higher level for the Menu mnemonics */
   /* state here is the kbd bucky-bit state -- it might have bogus junk like NumLock */
   /* keysym has Shift taken into account already (see snd-xchn.c XKeycodeToKeysym, and same snd-xsnd.c) */
+
   static bool u_count = false;
   static char number_buffer[NUMBER_BUFFER_SIZE];
   static mus_long_t count = 1;
@@ -1418,7 +1419,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   snd_info *sp;
   axis_info *ap;
 
-  /* fprintf(stderr, "(%s %d%s) ", KEY_TO_NAME(keysym), unmasked_state, (extended_mode) ? " (c-x)" : ""); */
+  /* fprintf(stderr, "%d (%s %d%s) ", keysym, KEY_TO_NAME(keysym), unmasked_state, (extended_mode) ? " (c-x)" : ""); */
 
   if ((!cp) || (!(cp->sound)) || (cp->active < CHANNEL_HAS_EDIT_LIST)) return;
   sp = cp->sound;

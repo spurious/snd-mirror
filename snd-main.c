@@ -1056,12 +1056,16 @@ void save_sound_state(snd_info *sp, void *ptr)
   for (chan = 0; chan < sp->nchans; chan++)
     {
       cp = sp->chans[chan];
+      if ((!cp) || (!cp->edits) || (!cp->sounds)) break;
       ap = cp->axis;
       if (!(cp->graph_time_p)) pcp_ss(fd, S_time_graph_p, b2s(cp->graph_time_p), chan);
       if (cp->graph_transform_p) pcp_ss(fd, S_transform_graph_p, b2s(cp->graph_transform_p), chan);
       if (cp->graph_lisp_p) pcp_ss(fd, S_lisp_graph_p, b2s(cp->graph_lisp_p), chan);
-      if (((ap->x0 != 0.0) || (ap->x1 != 0.1)) && (ap->x1 > .0005)) pcp_sl(fd, S_x_bounds, ap->x0, ap->x1, chan);
-      if ((ap->y0 != -1.0) || (ap->y1 != 1.0)) pcp_sl(fd, S_y_bounds, ap->y0, ap->y1, chan);
+      if (ap)
+	{
+	  if (((ap->x0 != 0.0) || (ap->x1 != 0.1)) && (ap->x1 > .0005)) pcp_sl(fd, S_x_bounds, ap->x0, ap->x1, chan);
+	  if ((ap->y0 != -1.0) || (ap->y1 != 1.0)) pcp_sl(fd, S_y_bounds, ap->y0, ap->y1, chan);
+	}
       if (CURSOR(cp) != 0) pcp_sod(fd, S_cursor, CURSOR(cp), chan);
       if (cp->cursor_size != DEFAULT_CURSOR_SIZE) pcp_sd(fd, S_cursor_size, cp->cursor_size, chan);
       if (cp->cursor_style != DEFAULT_CURSOR_STYLE) pcp_ss(fd, S_cursor_style, cursor_style_name(cp->cursor_style), chan);

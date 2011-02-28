@@ -38,7 +38,7 @@
 (load "dlocsig.scm")		   
 (load "poly.scm")
 (load "draw.scm")		  
-(load "popup.scm")
+					;(load "popup.scm")
 (load "dsp.scm")		   
 (load "prc95.scm")
 (load "pretty-print.scm")
