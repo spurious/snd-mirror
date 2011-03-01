@@ -53230,7 +53230,7 @@ EDITS: 1
     ;;   Need a way outside with-sound to see what threads are out there.
     
     (define (bad-ins start)
-      (set! (playing) #f)) ; TODO: test this
+      (set! (playing) #f))
     
     (set! *clm-threads* 4)
     

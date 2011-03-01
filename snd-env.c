@@ -1,8 +1,14 @@
 #include "snd.h"
 
-#define BIG_DOT_SIZE 10
-#define MEDIUM_DOT_SIZE 7
-#define LITTLE_DOT_SIZE 4
+#if USE_MOTIF
+  #define BIG_DOT_SIZE 10
+  #define MEDIUM_DOT_SIZE 7
+  #define LITTLE_DOT_SIZE 4
+#else
+  #define BIG_DOT_SIZE 5
+  #define MEDIUM_DOT_SIZE 3
+  #define LITTLE_DOT_SIZE 2
+#endif
 
 static int current_dot_size = BIG_DOT_SIZE;
 

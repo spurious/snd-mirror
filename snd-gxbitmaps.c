@@ -1995,9 +1995,6 @@ static char *separator_xpm[] = {
 ".	c #DBD3CB",
 "+	c #FCFBFA",
 "g      c #777777",
-"   ",
-"   ",
-"   ",
 "g.+",
 "g.+",
 "g.+",
@@ -2016,9 +2013,12 @@ static char *separator_xpm[] = {
 "g.+",
 "g.+",
 "g.+",
-"   ",
-"   ",
-"   "};
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+",
+"g.+"};
 
 static char *up_node2_xpm[] = {
 "24 24 18 1",

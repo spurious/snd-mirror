@@ -537,7 +537,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #endif
 
 #define with_tooltips(ss) ss->With_Tooltips
-#define set_with_tooltips(a) ss->With_Tooltips = a
+#define in_set_with_tooltips(a) ss->With_Tooltips = a
 #define DEFAULT_WITH_TOOLTIPS true
 
 #define with_menu_icons(ss) ss->With_Menu_Icons

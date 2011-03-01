@@ -3174,6 +3174,7 @@ static void save_with_tooltips(prefs_info *prf, FILE *fd) {rts_with_tooltips = w
 static void toggle_with_tooltips(prefs_info *prf) {set_with_tooltips(GET_TOGGLE(prf->toggle));}
 
 
+
 #if USE_GTK
 /* ---------------- with-menu-icons ---------------- */
 
@@ -3951,11 +3952,7 @@ static void clear_key(prefs_info *prf, const char *name)
 
 static const char *help_play_from_cursor(prefs_info *prf)
 {
-  return("\
-  By default, C-q plays the current channel from the cursor, \n\
-  but one often wants to play the entire sound; this option binds \n\
-  a key for that purpose, and also overrides the pause setting.  \n\
-  The new binding does not take effect until you type return in the text widget.");
+  return("  This option binds a key to play the entire sound. ");
 }
 
 

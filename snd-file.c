@@ -5731,6 +5731,15 @@ static XEN g_set_with_toolbar(XEN val)
 
 static XEN g_with_tooltips(void) {return(C_TO_XEN_BOOLEAN(with_tooltips(ss)));}
 
+void set_with_tooltips(bool val)
+{
+  in_set_with_tooltips(val);
+#if HAVE_GTK
+  g_object_set(gtk_settings_get_default(), "gtk-enable-tooltips", val, NULL);
+  /* TODO: this doesn't seem to work (disable tooltips) */
+#endif
+}
+
 static XEN g_set_with_tooltips(XEN val) 
 {
   #define H_with_tooltips "(" S_with_tooltips "): " PROC_TRUE " if you want tooltips displayed at all"

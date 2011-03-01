@@ -35112,6 +35112,16 @@ static XEN gxg_make_cairo_matrix_t(void)
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("cairo_matrix_t_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
+#if HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
+static XEN gxg_make_GdkRGBA(void)
+{
+  GdkRGBA* result;
+  result = (GdkRGBA*)calloc(1, sizeof(GdkRGBA));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkRGBA_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
+}
+
+#endif
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(gxg_g_type_name_w, gxg_g_type_name)
@@ -39131,6 +39141,11 @@ XEN_NARGIFY_0(gxg_make_GtkTreeIter_w, gxg_make_GtkTreeIter)
 XEN_NARGIFY_0(gxg_make_PangoRectangle_w, gxg_make_PangoRectangle)
 
 XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
+
+#if HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
+XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
+
+#endif
 
 
 #else
@@ -43152,6 +43167,11 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_make_PangoRectangle_w gxg_make_PangoRectangle
 
 #define gxg_make_cairo_matrix_t_w gxg_make_cairo_matrix_t
+
+#if HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
+#define gxg_make_GdkRGBA_w gxg_make_GdkRGBA
+
+#endif
 
 
 #endif
@@ -47179,6 +47199,10 @@ static void define_structs(void)
   XG_DEFINE_PROCEDURE(GtkTreeIter, gxg_make_GtkTreeIter_w, 0, 0, 0, "(GtkTreeIter): a new GtkTreeIter struct");
   XG_DEFINE_PROCEDURE(PangoRectangle, gxg_make_PangoRectangle_w, 0, 0, 0, "(PangoRectangle): a new PangoRectangle struct");
   XG_DEFINE_PROCEDURE(cairo_matrix_t, gxg_make_cairo_matrix_t_w, 0, 0, 0, "(cairo_matrix_t): a new cairo_matrix_t struct");
+#if HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
+  XG_DEFINE_PROCEDURE(GdkRGBA, gxg_make_GdkRGBA_w, 0, 0, 0, "(GdkRGBA): a new GdkRGBA struct");
+#endif
+
 }
 
 /* ---------------------------------------- constants ---------------------------------------- */
@@ -48932,7 +48956,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Feb-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("28-Feb-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

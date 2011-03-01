@@ -78,13 +78,14 @@
 (define names-2190 '())
 (define types-2190 '())
 
-(define funcs-29x '())
-(define casts-29x '())
-(define checks-29x '())
-(define names-29x '())
-(define types-29x '())
-(define ints-29x '())
-(define strings-29x '())
+(define funcs-300 '())
+(define casts-300 '())
+(define checks-300 '())
+(define names-300 '())
+(define types-300 '())
+(define ints-300 '())
+(define strings-300 '())
+(define make-structs-300 '()) ; these have a xg-specific make function
 
 (define funcs-gtk2 '())
 (define casts-gtk2 '())
@@ -424,7 +425,7 @@
 				((2173 callback-2173) (set! types-2173 (cons type types-2173)))
 				((2177 callback-2177) (set! types-2177 (cons type types-2177)))
 				((2190)               (set! types-2190 (cons type types-2190)))
-				((29x)                (set! types-29x (cons type types-29x)))
+				((300)                (set! types-300 (cons type types-300)))
 				((gtk2)               (set! types-gtk2 (cons type types-gtk2)))
 				((cairo)              (set! cairo-types (cons type cairo-types)))
 				((cairo-810)          (set! cairo-types-810 (cons type cairo-types-810)))
@@ -1133,21 +1134,21 @@
 		(set! funcs-2190 (cons (list name type strs args) funcs-2190)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-29x data spec)
+(define* (CFNC-300 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
 					;    (if (assoc name names)
-					;	(no-way "CFNC-29x: ~A~%" (list name data))
+					;	(no-way "CFNC-300: ~A~%" (list name data))
 					; this does not apply because gtk2-only funcs may be on the list
     (let ((type (car-str data)))
       (if (not (member type all-types))
 	  (begin
 	    (set! all-types (cons type all-types))
-	    (set! types-29x (cons type types-29x))))
-      (let ((strs (parse-args args '29x)))
+	    (set! types-300 (cons type types-300))))
+      (let ((strs (parse-args args '300)))
 	(if spec
-	    (set! funcs-29x (cons (list name type strs args spec) funcs-29x))
-	    (set! funcs-29x (cons (list name type strs args) funcs-29x)))
+	    (set! funcs-300 (cons (list name type strs args spec) funcs-300))
+	    (set! funcs-300 (cons (list name type strs args) funcs-300)))
 	(set! names (cons (cons name (func-type strs)) names))))))
 
 (define* (CFNC-gtk2 data spec)
@@ -1293,12 +1294,12 @@
 	(set! strings-2150 (cons name strings-2150))
 	(set! names-2150 (cons (cons name 'string) names-2150)))))
 
-(define (CSTR-29x name)
-  (if (assoc name names-29x)
-      (no-way "~A CSTR-29x~%" name)
+(define (CSTR-300 name)
+  (if (assoc name names-300)
+      (no-way "~A CSTR-300~%" name)
       (begin
-	(set! strings-29x (cons name strings-29x))
-	(set! names-29x (cons (cons name 'string) names-29x)))))
+	(set! strings-300 (cons name strings-300))
+	(set! names-300 (cons (cons name 'string) names-300)))))
 
 
 (define (CDBL name)
@@ -1394,12 +1395,12 @@
 	(set! ints-2177 (cons name ints-2177))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CINT-29x name type)
+(define* (CINT-300 name type)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CINT-29x~%" name)
+      (no-way "~A CINT-300~%" name)
       (begin
-	(set! ints-29x (cons name ints-29x))
+	(set! ints-300 (cons name ints-300))
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-gtk2 name type)
@@ -1479,11 +1480,11 @@
 	(set! casts-2190 (cons (list name type) casts-2190))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-29x name type)
+(define (CCAST-300 name type)
   (if (assoc name names)
-      (no-way "~A CCAST-29x~%" name)
+      (no-way "~A CCAST-300~%" name)
       (begin
-	(set! casts-29x (cons (list name type) casts-29x))
+	(set! casts-300 (cons (list name type) casts-300))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCAST-gtk2 name type)
@@ -1528,11 +1529,11 @@
 	(set! checks-2190 (cons (list name type) checks-2190))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCHK-29x name type)
+(define (CCHK-300 name type)
   (if (assoc name names)
-      (no-way "~A CCHK-29x~%" name)
+      (no-way "~A CCHK-300~%" name)
       (begin
-	(set! checks-29x (cons (list name type) checks-29x))
+	(set! checks-300 (cons (list name type) checks-300))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCHK-gtk2 name type)
@@ -1566,6 +1567,10 @@
 (define (STRUCT-make data)
   (STRUCT data)
   (set! make-structs (cons (car-str data) make-structs)))
+
+(define (STRUCT-300-make data)
+  (STRUCT data)
+  (set! make-structs-300 (cons (car-str data) make-structs-300)))
 
 (define (CAIRO-STRUCT-make data)
   (STRUCT data) ; fields not needed currently
@@ -1645,7 +1650,7 @@
   (thunk)
   (dpy "#endif~%~%"))
 
-(define (with-29x dpy thunk)
+(define (with-300 dpy thunk)
   (dpy "#if HAVE_GTK_COMBO_BOX_NEW_WITH_AREA~%")
   (thunk)
   (dpy "#endif~%~%"))
@@ -1676,29 +1681,29 @@
 
 
 
-(define all-types (list types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-29x types-gtk2
+(define all-types (list types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-300 types-gtk2
 			cairo-types cairo-types-810 cairo-types-912))
-(define all-type-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-29x with-gtk2
+(define all-type-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-300 with-gtk2
 			     with-cairo with-cairo-810 with-cairo-912))
 
-(define all-funcs (list funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-29x funcs-gtk2
+(define all-funcs (list funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-300 funcs-gtk2
 			cairo-funcs cairo-png-funcs cairo-funcs-810 cairo-funcs-912))
-(define all-func-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-29x with-gtk2
+(define all-func-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-300 with-gtk2
 			     with-cairo with-cairo-png with-cairo-810 with-cairo-912))
 
-(define all-ints (list ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-29x ints-gtk2
+(define all-ints (list ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-300 ints-gtk2
 		       cairo-ints cairo-ints-810 cairo-ints-912))
-(define all-int-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-29x with-gtk2
+(define all-int-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-300 with-gtk2
 			    with-cairo with-cairo-810 with-cairo-912))
 
-(define all-casts (list casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-29x casts-gtk2))
-(define all-cast-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-29x with-gtk2))
+(define all-casts (list casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-300 casts-gtk2))
+(define all-cast-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-300 with-gtk2))
 
-(define all-checks (list checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-29x checks-gtk2))
-(define all-check-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-29x with-gtk2))
+(define all-checks (list checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-300 checks-gtk2))
+(define all-check-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-300 with-gtk2))
 
-(define all-strings (list strings-213 strings-2134 strings-2150 strings-29x cairo-strings-912))
-(define all-string-withs (list with-213 with-2134 with-2150 with-29x with-cairo-912))
+(define all-strings (list strings-213 strings-2134 strings-2150 strings-300 cairo-strings-912))
+(define all-string-withs (list with-213 with-2134 with-2150 with-300 with-cairo-912))
 
 (define all-ulongs (list ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173))
 (define all-ulong-withs (list with-213 with-2134 with-2150 with-2173))
@@ -2984,6 +2989,10 @@
 		(lambda () 
 		  (for-each define-struct (reverse cairo-make-structs)))))
 
+(with-300 hey (lambda ()
+		(for-each define-struct (reverse make-structs-300))))
+
+
 
 ;;; ---------------- argify ----------------
 
@@ -3069,6 +3078,15 @@
 	       (reverse cairo-make-structs))))
 (hey "~%")
 
+(with-300 hey (lambda ()
+		(for-each (lambda (struct) 
+			    (let* ((s (find-struct struct)))
+			      (if (> (length (cadr s)) 0)
+				  (hey "XEN_VARGIFY(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
+				  (hey "XEN_NARGIFY_0(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
+			  (reverse make-structs-300))
+		(hey "~%")))
+
 
 (hey "~%#else~%")
 (hey "/* not XEN_ARGIFY_1 */~%")
@@ -3135,6 +3153,16 @@
 			   (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))))
 		   (reverse cairo-make-structs)))))
 (hey "~%")
+
+(with-300 hey (lambda ()
+		(for-each (lambda (struct) 
+			    (let* ((s (find-struct struct)))
+			      (if (> (length (cadr s)) 0)
+				  (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct)
+				  (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))))
+			  (reverse make-structs-300))
+		(hey "~%")))
+
 
 
 (hey "~%#endif~%")
@@ -3248,6 +3276,17 @@
 			    (if (> (length (cadr s)) 0) " ..." "")
 			    struct)))
 		   (reverse cairo-make-structs)))))
+(with-300 hey (lambda ()
+		(for-each (lambda (struct)
+			    (let* ((s (find-struct struct)))
+			      (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A): a new ~A struct\");~%" 
+				   struct 
+				   struct 
+				   (if (> (length (cadr s)) 0) 1 0)
+				   struct
+				   (if (> (length (cadr s)) 0) " ..." "")
+				   struct)))
+			  (reverse make-structs-300))))
 
 (hey "}~%~%")
 

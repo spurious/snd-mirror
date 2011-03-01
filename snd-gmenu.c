@@ -1265,8 +1265,6 @@ void post_lisp_popup_menu(void *e) {}
 
 /* ---------------- toolbar ---------------- */
 
-/* TODO: how to disable the tooltip if with_tooltips is set false? */
-
 void add_tooltip(GtkWidget *w, const char *tip)
 {
   char *str;

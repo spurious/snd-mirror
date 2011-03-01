@@ -1355,11 +1355,8 @@ void post_lisp_popup_menu(void *e) {}
 
 
 /* 
- * PERHAPS: remove edit123.scm, what is kmenu.scm? -- it's adding accelerators
- *          perhaps add them -- we're using them above
- * PERHAPS: incorporate the special-menu stuff? 
+ * PERHAPS: add accelerators to gtk menus -- they look kinda dumb.
  * PERHAPS: use the yin/yang icon for looped play of the whole file?
- * TODO: why was a simple loop so slow in gtk?
  */
 
 
@@ -1661,8 +1658,6 @@ void show_toolbar(void)
 
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_CUT),           "delete selection",           edit_cut_callback);      
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_PASTE),         "insert selection at cursor", edit_paste_callback);      
-      add_separator_to_toolbar(toolbar);
-
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_PREFERENCES),   "open preferences dialog",    options_preferences_callback);
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_STOP),          "stop the current operation", stop_everything_callback);
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_EXIT),          "exit Snd",                   file_exit_callback);

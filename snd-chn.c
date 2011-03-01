@@ -5284,8 +5284,6 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
       break;
 
       /* PERHAPS: space to play? */
-      /* TODO: doc various cursors */
-      /* TODO: make tracking cursor easier or perhaps the default */
       /* TODO: how to handle looped play of entire file (not selection)? */
 
     case CLICK_MARK_PLAY:

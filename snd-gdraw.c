@@ -32,7 +32,7 @@ void draw_lines(graphics_context *ax, point_t *points, int num)
 void draw_dot(graphics_context *ax, int x, int y, int size)
 {
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
-  cairo_arc(ax->cr, x, y, size, 0.0, 2 * M_PI);
+  cairo_arc(ax->cr, x, y, size, 0.0, 2 * M_PI);  /* docs say size is radius.  This used to be size / 2 to try to match X */
   cairo_fill(ax->cr);
 }
 

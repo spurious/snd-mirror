@@ -1182,7 +1182,6 @@ char *slist_selection(slist *lst)
 
 /* TODO: gtk3 cairo troubles:
  *   toolbar is spread out
- *   lots of things leave an empty graph
  *   do meters work in rec?  in Motif they're drawn incorrectly
  *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
  *     sep chans, syncd marks don't move together
@@ -1193,8 +1192,9 @@ char *slist_selection(slist *lst)
  *   adding invalidate rect got the dialog back but hangs the system! 
  *   Now Xorg is taking up 91% of memory!
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
+ *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.
+ *     show controls for example, does not open the pane.
  *   segfault in test 20 (same problem as earlier)
- *   (see also goto_window above)
  *   try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
  *   gtk listener won't let me delete "(" in col 0? -- flakey
  *   Also, someone is setting squelch?  
