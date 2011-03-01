@@ -1,6 +1,6 @@
 Snd change log
 
- 1-Mar:     delete-selection-and-smooth.
+ 1-Mar:     delete-selection-and-smooth, delete-samples-and-smooth.
  23-Feb:    sync-style variable: sync-none, sync-all, or sync-by-sound (the new default).
             Options:Controls menu item, and Edit:Unselect
 	    show-selection and unselect-all.

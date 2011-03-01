@@ -155,7 +155,6 @@ void display_minibuffer_error(snd_info *sp, const char *str)
 }
 
 
-/* -------- PIXBUFS -------- */
 
 static bool mini_lock_allocated = false;
 static picture_t *mini_lock = NULL, *speed_r = NULL, *speed_l = NULL, *blank = NULL, *stop_sign = NULL;
@@ -375,14 +374,13 @@ static void make_pixmaps(void)
   if (!mini_lock_allocated)
     { 
       int k;
-      mini_lock = gdk_pixbuf_new_from_xpm_data(mini_lock_bits());
-      stop_sign = gdk_pixbuf_new_from_xpm_data(stop_sign_bits());
-      blank = gdk_pixbuf_new_from_xpm_data(blank_bits());
-      speed_r = gdk_pixbuf_new_from_xpm_data(speed_r_bits());
-      speed_l = gdk_pixbuf_new_from_xpm_data(speed_l_bits());
+      mini_lock = snd_icon(SND_PNG_LOCK);
+      stop_sign = snd_icon(SND_PNG_STOP);
+      blank = snd_icon(SND_PNG_BLANK);
+      speed_r = snd_icon(SND_PNG_RIGHT_ARROW);
+      speed_l = snd_icon(SND_PNG_LEFT_ARROW);
       for (k = 0; k < NUM_BOMBS; k++) 
-	bombs[k] = gdk_pixbuf_new_from_xpm_data(mini_bomb_bits(k));
-
+	bombs[k] = snd_icon(SND_PNG_BOMB);
       mini_lock_allocated = true;
     }
 }

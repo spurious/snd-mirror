@@ -9555,19 +9555,25 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp'"
   chan_info *cp;
   int pos;
   mus_long_t samp, len;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_delete_samples, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, S_delete_samples, "a number");
+
   ASSERT_CHANNEL(S_delete_samples, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_delete_samples);
   if (!cp) return(XEN_FALSE);
+
   pos = to_c_edit_position(cp, edpos, S_delete_samples, 6);
   samp = beg_to_sample(samp_n, S_delete_samples);
   len = XEN_TO_C_INT64_T_OR_ELSE(samps, 0);
   if (len <= 0) return(XEN_FALSE);
+
   if (delete_samples(samp, len, cp, pos))
     update_graph(cp);
+
   return(samp_n);
 }
+
 
 
 /* -------- re-direct CLM input (ina etc) to use samplers -------- */

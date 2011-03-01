@@ -1745,7 +1745,7 @@ void set_basic_color(color_t color)
   recolor_everything(MAIN_SHELL(ss), color);
 #endif
 
-#if HAVE_XPM && USE_MOTIF
+#if USE_MOTIF
   make_sound_icons_transparent_again(old_color, ss->sgx->basic_color);
   make_mixer_icons_transparent_again(old_color, ss->sgx->basic_color);
 #endif

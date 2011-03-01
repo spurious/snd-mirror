@@ -385,7 +385,10 @@ static void startup_funcs(void)
 #ifndef SND_AS_WIDGET
 static void set_up_icon(void)
 {
+  /* TODO: snd icon */
+  /*
   gtk_window_set_icon(GTK_WINDOW(MAIN_SHELL(ss)), gdk_pixbuf_new_from_xpm_data(snd_icon_bits()));
+  */
 }
 #endif
 
@@ -643,8 +646,6 @@ void snd_doit(int argc, char **argv)
 #endif
   
   setup_gcs();
-  make_icons_transparent("ivory2");
-
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
   startup_funcs();
   

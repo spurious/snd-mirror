@@ -143,7 +143,7 @@ typedef struct {
   color_t fg_color, bg_color;
 } gc_t;
 
-#define picture_t GdkPixbuf
+#define picture_t cairo_surface_t
 
 #if HAVE_GTK_3
   typedef GdkWindow Drawable;

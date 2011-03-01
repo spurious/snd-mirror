@@ -6677,6 +6677,7 @@ delete the selection and smooth the splice: <a href="#deleteselectionandsmooth">
 delete a mark or all marks: <a href="#deletemark">delete-mark</a><br>
 delete a colormap: <a href="#deletecolormap">delete-colormap</a><br>
 delete samples: <a href="#deletesamples">delete-samples</a><br>
+delete samples and smooth over the splice: <a href="#deletesamplesandsmooth">delete-samples-and-smooth</a><br>
 remove a file from the sound cache: <a href="#mussoundforget">mus-sound-forget</a><br>
 remove a menu item: <a href="#removefrommenu">remove-from-menu</a> or remove-main-menu in snd-motif.scm<br>
 delete a mix or all mixes: <a href="sndscm.html#silenceallmixes">silence-mixes</a><br>
@@ -6693,7 +6694,14 @@ Scheme delete funcs: remove-if assoc-remove! hash-remove! delete-if! delete! str
 <code><a class=def name="deletesamples">delete-samples</a> samp samps <em class=narg>snd chn edpos</em></code>
 </td></tr><tr><td></td><td>
 This deletes a block of samples.  The deleted portion starts at sample 'samp' and runs for 'samps' samples.
-See delete-selection-and-smooth in extensions.scm.
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+<!-- delete-samples-and-smooth -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def name="deletesamplesandsmooth">delete-samples-and-smooth</a> samp samps <em class=narg>snd chn edpos</em></code>
+</td></tr><tr><td></td><td>
+This deletes a block of samples, then tries to smooth over the splice.  The deleted portion starts at sample 'samp' and runs for 'samps' samples.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 

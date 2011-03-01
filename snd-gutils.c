@@ -802,10 +802,6 @@ GtkWidget *snd_gtk_dialog_new(void)
 }
 
 
-/* TODO: in gfile, some labels that are actually popdown menus need bold text [srate, channels]
- * TODO: check other buttons-as-labels and label-colors
- */
-
 GtkWidget *snd_gtk_highlight_label_new(const char *label)
 {
   char *str;
@@ -1180,6 +1176,11 @@ char *slist_selection(slist *lst)
   return(NULL);
 }
 
+/* TODO: in gfile, some labels that are actually popdown menus need bold text [srate, channels]
+ *           but I can't see any way to fix this
+ * TODO: check other buttons-as-labels and label-colors
+ */
+
 /* TODO: gtk3 cairo troubles:
  *   toolbar is spread out
  *   do meters work in rec?  in Motif they're drawn incorrectly
@@ -1197,9 +1198,26 @@ char *slist_selection(slist *lst)
  *   segfault in test 20 (same problem as earlier)
  *   try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
  *   gtk listener won't let me delete "(" in col 0? -- flakey
+ * TODO: sash colors should be green 
  *   Also, someone is setting squelch?  
- *   if basic-color is set (white for example), the icon (blank?) after the sound file name is not recolored)
+ *
+ * in the SND_PNG_ICONS, mix_speaker is drawn unnecessarily
+ *     the lock is not erased fully,
+ *     not sure the stop sign works at all
+ *     there is no snd icon currently
+ *     in gtk3, the speaker is too low? and there's still the wrong-color rectangle off to the right
  */
+
+#if 0
+static void display_png(cairo_t *cr) /* cr here can be drawing area as in chan grf */
+{
+  cairo_surface_t *image;
+  image = png_to_surface(lock_data);
+  cairo_set_source_surface (cr, image, 0, 0);
+  cairo_paint (cr);
+}
+#endif
+
 
 /*
 
@@ -1363,8 +1381,5 @@ void init_gtk(void)
     "}\n",
     -1, &error);
 }
-
-/* TODO: sash colors should be green */
-
 #endif
 

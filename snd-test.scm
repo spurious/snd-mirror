@@ -2135,7 +2135,7 @@
 		       'data-location 'data-size 'db->linear 'default-output-chans 'default-output-data-format
 		       'default-output-header-type 'default-output-srate 'define-envelope 'degrees->radians 'delay
 		       'delay-tick 'delay? 'delete-colormap 'delete-file-filter 'delete-file-sorter
-		       'delete-mark 'delete-marks 'delete-sample 'delete-samples
+		       'delete-mark 'delete-marks 'delete-sample 'delete-samples 'delete-samples-and-smooth
 		       'delete-selection 'delete-selection-and-smooth 'delete-transform 'dialog-widgets 'disk-kspace
 		       'display-edits 'dolph-chebyshev-window 'dont-normalize
 		       'dot-product 'dot-size 'draw-axes 'draw-dot 'draw-dots
@@ -11744,6 +11744,37 @@ EDITS: 5
 		(snd-display #__line__ ";delete-selection-and-smooth min diff: ~A" mindiff))
 	    (if (> maxdiff .007)
 		(snd-display #__line__ ";delete-selection-and-smooth max diff: ~A" maxdiff)))
+	  (close-sound ns))
+
+	(let ((ns (new-sound))
+	      (v (make-vct 1000)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 1000))
+	    (set! (v i) (* .001 i)))
+	  (vct->channel v 0 1000 ns 0)
+	  (delete-samples-and-smooth 200 300 ns 0)
+	  (if (not (= (frames ns 0) 700))
+	      (snd-display #__line__ ";delete-samples-and-smooth frames: ~A" (frames ns 0)))
+	  (if (fneq (sample 167 ns 0) 0.167) 
+	      (snd-display #__line__ ";delete-samples-and-smooth 167: ~A" (sample 167 ns 0)))
+	  (if (fneq (sample 234 ns 0) 0.534) 
+	      (snd-display #__line__ ";delete-samples-and-smooth 234: ~A" (sample 234 ns 0)))
+	  (if (fneq (sample 210 ns 0) 0.406) 
+	      (snd-display #__line__ ";delete-samples-and-smooth 210: ~A" (sample 210 ns 0)))
+	  (let* ((v1 (channel->vct))
+		 (maxdiff 0.0)
+		 (mindiff 10.0)
+		 (ls (v1 0)))
+	    (do ((i 1 (+ i 1)))
+		((= i 700))
+	      (let ((diff (- (v1 i) ls)))
+		(set! ls (v1 i))
+		(if (> diff maxdiff) (set! maxdiff diff))
+		(if (< diff mindiff) (set! mindiff diff))))
+	    (if (< mindiff .0009)
+		(snd-display #__line__ ";delete-samples-and-smooth min diff: ~A" mindiff))
+	    (if (> maxdiff .007)
+		(snd-display #__line__ ";delete-samples-and-smooth max diff: ~A" maxdiff)))
 	  (close-sound ns))
 
 	(let ((old-beg (initial-beg))
@@ -61340,7 +61371,7 @@ EDITS: 1
 		     auto-update-interval count-matches current-font cursor cursor-color with-tracking-cursor cursor-size
 		     cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color data-format data-location data-size
 		     default-output-chans default-output-data-format default-output-srate default-output-header-type define-envelope
-		     delete-mark delete-marks forget-region delete-sample delete-samples
+		     delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-and-smooth
 		     delete-selection delete-selection-and-smooth dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
 		     draw-lines draw-string edit-header-dialog edit-fragment edit-list->function edit-position edit-tree edits env-selection
 		     env-sound enved-envelope enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power

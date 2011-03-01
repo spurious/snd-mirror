@@ -392,7 +392,7 @@ static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev,
 
 
 static GtkWidget *w_id = NULL, *w_beg = NULL, *mix_play = NULL, *w_id_label = NULL;
-static picture_t *speaker_off_pix, *speaker_on_pix, *mix_speaker_pix;
+static picture_t *mix_speaker_pix;
 
 static bool id_changed = false;
 
@@ -511,7 +511,6 @@ static bool mix_playing = false;
 void reflect_mix_play_stop(void)
 {
   mix_playing = false;
-  mix_speaker_pix = speaker_off_pix;
   if (mix_play_ax)
     draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
 }
@@ -526,7 +525,6 @@ static void mix_play_callback(GtkWidget *w, gpointer context)
       if (!(mix_exists(mix_dialog_id))) return;
       if (mix_play_ax)
 	{
-	  mix_speaker_pix = speaker_on_pix;
 	  draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
 	}
       syncd_mix_play(mix_dialog_id);
@@ -662,49 +660,6 @@ static void mix_dialog_help_callback(GtkWidget *w, gpointer context)
 }
 
 
-static const char *speaker_xpm[] = {
-"12 12 2 1",
-"-      c None s None",
-"X	c black",
-"--------XXX-",
-"------XX--X-",
-"----XX----X-",
-"-XXX------X-",
-"-XX-------X-",
-"-XX-------X-",
-"-XX-------X-",
-"-XX-------X-",
-"-XXX------X-",
-"----XX----X-",
-"------XX--X-",
-"--------XXX-"};
-
-
-static const char *blue_speaker_xpm[] = {
-"12 12 3 1",
-"-      c None s None",
-"o      c red",
-"X	c black",
-"--------XXX-",
-"------XXooX-",
-"----XXooooX-",
-"-XXXooooooX-",
-"-XXoooooooX-",
-"-XXoooooooX-",
-"-XXoooooooX-",
-"-XXoooooooX-",
-"-XXXooooooX-",
-"----XXooooX-",
-"------XXooX-",
-"--------XXX-"};
-
-
-void make_speaker_icons_transparent(const char *bg_line)
-{
-  speaker_xpm[1] = bg_line;
-  blue_speaker_xpm[1] = bg_line;
-}
-
 static GtkWidget *w_sync;
 
 GtkWidget *make_mix_dialog(void)
@@ -793,13 +748,7 @@ GtkWidget *make_mix_dialog(void)
       widget_modify_bg(mix_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
       widget_modify_bg(mix_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
       
-      if (!speaker_off_pix)
-	{
-	  speaker_off_pix = gdk_pixbuf_new_from_xpm_data(speaker_xpm);
-	  speaker_on_pix = gdk_pixbuf_new_from_xpm_data(blue_speaker_xpm);
-	}
-
-      mix_speaker_pix = speaker_off_pix;
+      mix_speaker_pix = snd_icon(SND_PNG_SPEAKER);
 
       mix_play_pix = gtk_drawing_area_new();
       gtk_widget_set_events(mix_play_pix, GDK_EXPOSURE_MASK);

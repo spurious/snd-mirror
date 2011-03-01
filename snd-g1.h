@@ -178,17 +178,9 @@ void g_init_gxregion(void);
 
 /* -------- snd-gxbitmaps.c -------- */
 
-const char **mini_bomb_bits(int n);
-const char **mini_glass_bits(int n);
-const char **mini_lock_bits(void);
-const char **close_icon_bits(void);
-const char **blank_bits(void);
-const char **snd_icon_bits(void);
-const char **speed_l_bits(void);
-const char **speed_r_bits(void);
-const char **stop_sign_bits(void);
+enum {SND_PNG_LOCK, SND_PNG_STOP, SND_PNG_BOMB, SND_PNG_RIGHT_ARROW, SND_PNG_LEFT_ARROW, SND_PNG_BLANK, SND_PNG_SPEAKER};
+cairo_surface_t *snd_icon(int which);
 
-void make_icons_transparent(const char *basic_color);
 
 
 /* -------- snd-gxcolormaps.c -------- */
@@ -422,7 +414,7 @@ GtkWidget *make_mix_dialog(void);
 void reflect_mix_play_stop(void);
 int mix_dialog_mix(void);
 void mix_dialog_set_mix(int id);
-void make_speaker_icons_transparent(const char *bg_line);
+
 
 
 /* -------- snd-genv.c -------- */

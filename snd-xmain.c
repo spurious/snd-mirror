@@ -34,12 +34,6 @@
 #define CHANNEL_SASH_SIZE 0
 /* 0 means: use Motif default size */
 
-#ifndef SND_AS_WIDGET
-  #define PLAIN_ICON 1
-  #define XPM_ICON 2
-  #define ICON_TYPE XPM_ICON
-#endif
-
 #define POSITION_SLIDER_WIDTH 13
 #define ZOOM_SLIDER_WIDTH 10
 #if (!HAVE_LINUX)
@@ -319,20 +313,6 @@ static void startup_funcs(void)
 
 
 #ifndef SND_AS_WIDGET
-#if (ICON_TYPE == PLAIN_ICON) || ((ICON_TYPE == XPM_ICON) && (!HAVE_XPM))
-static void SetupIcon(Widget shell)
-{
-  Display *dpy;
-  Window root;
-  Pixmap bitmap;
-  dpy = XtDisplay(shell);
-  root = DefaultRootWindow(dpy);
-  bitmap = XCreateBitmapFromData(dpy, root, (const char *)snd_plain_icon_bits(), 48, 48);
-  XtVaSetValues(shell, XmNiconPixmap, bitmap, NULL);
-}
-#endif
-
-#if (ICON_TYPE == XPM_ICON) && (HAVE_XPM)
 #include <X11/xpm.h>
 
 static void SetupIcon(Widget shell)
@@ -352,7 +332,6 @@ static void SetupIcon(Widget shell)
   if (mask) XFreePixmap(dpy, mask);
   XtVaSetValues(shell, XmNiconPixmap, pix, NULL);
 }
-#endif
 #endif
 
 
@@ -853,9 +832,7 @@ void snd_doit(int argc, char **argv)
     }
 
 #ifndef SND_AS_WIDGET
-  #if ICON_TYPE
-    SetupIcon(shell);
-  #endif
+  SetupIcon(shell);
   XtRealizeWidget(shell);
   if (auto_resize(ss) != AUTO_RESIZE_DEFAULT) 
     XtVaSetValues(shell, XmNallowShellResize, auto_resize(ss), NULL);

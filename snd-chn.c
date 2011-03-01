@@ -1612,6 +1612,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool not_enved_bg_graph
       show_cursor_info(cp); 
       sp->minibuffer_on = MINI_CURSOR;
     } 
+
   return(j);
 }
 

@@ -4974,6 +4974,27 @@
 			      neven-min-peak-phases
 			      primoid-min-peak-phases)))))
 
+(define (showall len)
+  (let* ((phs-data (get-best :all len))
+	 (phs (cadr phs-data))
+	 (mx (car phs-data))
+	 (v (make-vct (ceiling (+ (* 2 pi 1000) 2))))
+	 (incr 0.001))
+    (do ((x 0.0 (+ x incr))
+	 (i 0 (+ i 1)))
+	((> x (* 2 pi)))
+      (let ((val 0.0))
+	(do ((k 0 (+ k 1))
+	     (j 1 (+ j 1)))
+	    ((= k len))
+	  (set! val (+ val (sin (+ (* j x) (* pi (phs k)))))))
+	(set! (v i) val)))
+    (let ((ns (new-sound)))
+      (vct->channel v)
+      (set! (y-bounds) (list (- mx) mx)))))
+      
+
+
 (define (get-worst-overall choice choices)
   (let ((diffs (make-vector 116))
 	(total 0.0)
@@ -5123,21 +5144,24 @@
 :(load "test-phases.scm")
 test-all-phases
 :(test-all-phases #f)
-;all peaks... Mon 07-Feb-2011 02:41
-;all 128: peak-phases value: 11.362656, current: 11.364934480139, diff: 0.0022784801392177
+;all peaks... Tue 01-Mar-2011 03:16
 ;all 512: peak-phases value: 31.391244, current: 31.393507890848, diff: 0.0022638908477184
-;all 1024: peak-phases value: 49.867216, current: 49.863543040531, diff: -0.0036729594690925 (0.0036729594690925 1024)
-;odd peaks... Mon 07-Feb-2011 03:11
-;odd 2048: peak-phases value: 78.937441, current: 78.931916185936, diff: -0.0055248140642448 (0.0055248140642448 2048)
-;even peaks... Mon 07-Feb-2011 03:41
+;all 1024: peak-phases value: 49.867216, current: 49.863543040531, diff: -0.0036729594690925
+(0.0036729594690925 1024)
+;odd peaks... Tue 01-Mar-2011 03:46
+;odd 2048: peak-phases value: 78.937441, current: 78.931916185936, diff: -0.0055248140642448
+(0.0055248140642448 2048)
+;even peaks... Tue 01-Mar-2011 04:15
 ;even 256: peak-phases value: 21.147051, current: 21.149844044205, diff: 0.0027930442051805
 ;even 512: peak-phases value: 31.628149, current: 31.625265493922, diff: -0.0028835060781311
 ;even 1024: peak-phases value: 51.627202, current: 51.61731817532, diff: -0.0098838246798678
-;even 2048: peak-phases value: 78.079325, current: 78.055349684919, diff: -0.023975315080577 (0.023975315080577 2048)
-;prime peaks... Mon 07-Feb-2011 04:18
+;even 2048: peak-phases value: 78.079325, current: 78.055349684919, diff: -0.023975315080577
+(0.023975315080577 2048)
+;prime peaks... Tue 01-Mar-2011 04:52
 ;prime 124: peak-phases value: 14.905565, current: 14.903183245254, diff: -0.0023817547457075
-;prime 256: peak-phases value: 25.419292, current: 25.416395401039, diff: -0.0028965989614846 (0.0028965989614846 256)
-;all done! Mon 07-Feb-2011 04:43
+;prime 256: peak-phases value: 25.419292, current: 25.416395401039, diff: -0.0028965989614846
+(0.0028965989614846 256)
+;all done! Tue 01-Mar-2011 05:16
 |#
 
 ;;; gad161: clean-up-evens
