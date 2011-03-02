@@ -166,7 +166,8 @@ void show_lock(snd_info *sp)
     {
       if (mini_lock)
 	{
-	  draw_picture(sp->sgx->name_pix_ax, mini_lock, 0, 0, 0, 4, 18, 16);
+	  draw_picture(sp->sgx->name_pix_ax, mini_lock, 0, 0, 0, 0, 16, 16);
+	  gtk_widget_show(NAME_PIX(sp));
 	}
       MUS_UNLOCK(sp->stop_sign_lock);
     }
@@ -179,7 +180,10 @@ void hide_lock(snd_info *sp)
     {
       if (mini_lock)
 	{
-	  draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 4, 18, 16);
+#if 0
+	  draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 0, 16, 16);
+#endif
+	  gtk_widget_hide(NAME_PIX(sp));
 	}
       MUS_UNLOCK(sp->stop_sign_lock);
     }
@@ -192,7 +196,8 @@ static void show_stop_sign(snd_info *sp)
     {
       if ((sp->sgx) && 
 	  (stop_sign))
-	draw_picture(sp->sgx->stop_pix_ax, stop_sign, 0, 0, 0, 4, 18, 16);
+	draw_picture(sp->sgx->stop_pix_ax, stop_sign, 0, 0, 0, 0, 16, 16);
+      gtk_widget_show(STOP_PIX(sp));
       MUS_UNLOCK(sp->stop_sign_lock);
     }
 }
@@ -202,9 +207,12 @@ static void hide_stop_sign(snd_info *sp)
 {
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
+#if 0
       if ((sp->sgx) && 
 	  (blank))
-	draw_picture(sp->sgx->stop_pix_ax, blank, 0, 0, 0, 4, 18, 16);
+	draw_picture(sp->sgx->stop_pix_ax, blank, 0, 0, 0, 0, 16, 16);
+#endif
+      gtk_widget_hide(STOP_PIX(sp));
       MUS_UNLOCK(sp->stop_sign_lock);
     }
 }
@@ -218,7 +226,8 @@ void show_bomb(snd_info *sp)
 	sp->bomb_ctr = 0;
       if (sp->sgx)
 	{
-	  draw_picture(sp->sgx->name_pix_ax, bombs[sp->bomb_ctr], 0, 0, 0, 4, 18, 16);
+	  draw_picture(sp->sgx->name_pix_ax, bombs[sp->bomb_ctr], 0, 0, 0, 0, 16, 16);
+	  gtk_widget_show(NAME_PIX(sp));
 	}
       sp->bomb_ctr++; 
       MUS_UNLOCK(sp->stop_sign_lock);
@@ -232,7 +241,10 @@ void hide_bomb(snd_info *sp)
     {
       if (sp->sgx)
 	{
-	  draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 4, 18, 16);
+#if 0
+	  draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 0, 16, 16);
+#endif
+	  gtk_widget_hide(NAME_PIX(sp));
 	}
       sp->bomb_ctr = 0;
       MUS_UNLOCK(sp->stop_sign_lock);
@@ -304,7 +316,7 @@ static void show_happy_face(Drawable *wn, mus_float_t pct)
   cr = gdk_cairo_create(wn);
 
   /* overall background */
-  cairo_translate(cr, 0, 4);
+  cairo_translate(cr, 0, 0);
 
   cairo_push_group(cr);  
 
@@ -396,8 +408,8 @@ static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
     {
       if ((sp->user_read_only == FILE_READ_ONLY) || 
 	  (sp->file_read_only == FILE_READ_ONLY))
-	draw_picture(sp->sgx->name_pix_ax, mini_lock, 0, 0, 0, 4, 16, 16);
-      else draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 4, 16, 16);
+	draw_picture(sp->sgx->name_pix_ax, mini_lock, 0, 0, 0, 0, 16, 16);
+      else draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 0, 16, 16);
     }
   return(false);
 }
@@ -900,8 +912,8 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
 static void draw_speed_arrow(snd_info *sp)
 {
   if (sp->speed_control_direction == 1)
-    draw_picture(sp->sgx->speed_arrow_ax, speed_r, 0, 0, 0, 4, 18, 16);
-  else draw_picture(sp->sgx->speed_arrow_ax, speed_l, 0, 0, 0, 4, 18, 16);
+    draw_picture(sp->sgx->speed_arrow_ax, speed_r, 0, 0, 0, 0, 16, 16);
+  else draw_picture(sp->sgx->speed_arrow_ax, speed_l, 0, 0, 0, 0, 16, 16);
 }
 
 
@@ -1769,7 +1781,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       STOP_PIX(sp) = gtk_drawing_area_new();
       gtk_widget_set_events(STOP_PIX(sp), GDK_BUTTON_PRESS_MASK);
-      gtk_widget_set_size_request(STOP_PIX(sp), 18, 16);
+      gtk_widget_set_size_request(STOP_PIX(sp), 16, 16);
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), STOP_PIX(sp), false, false, 2);
       gtk_widget_show(STOP_PIX(sp));
       sp->sgx->stop_pix_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
@@ -1907,7 +1919,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       SPEED_ARROW(sp) = gtk_drawing_area_new();
       gtk_widget_set_events(SPEED_ARROW(sp), GDK_ALL_EVENTS_MASK);
       gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_ARROW(sp), false, false, 2);
-      gtk_widget_set_size_request(SPEED_ARROW(sp), 18, 16);
+      gtk_widget_set_size_request(SPEED_ARROW(sp), 16, 16);
       gtk_widget_show(SPEED_ARROW(sp));
       sp->sgx->speed_arrow_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       sp->sgx->speed_arrow_ax->wn = WIDGET_TO_WINDOW(SPEED_ARROW(sp));

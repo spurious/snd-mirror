@@ -93,6 +93,7 @@
 (define names-gtk2 '())
 (define types-gtk2 '())
 (define ints-gtk2 '())
+(define ulongs-gtk2 '())
 
 (define cairo-funcs '())
 (define cairo-png-funcs '())
@@ -1323,6 +1324,14 @@
 	(set! ulongs (cons (list name type spec-name) ulongs))
 	(set! names (cons (cons name 'ulong) names)))))
 
+(define* (CLNG-gtk2 name type spec-name)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CLNG-gtk2~%" name)
+      (begin
+	(set! ulongs-gtk2 (cons (list name type spec-name) ulongs-gtk2))
+	(set! names (cons (cons name 'ulong) names)))))
+
 (define* (CLNG-213 name type spec-name)
   (save-declared-type type)
   (if (assoc name names)
@@ -1705,8 +1714,8 @@
 (define all-strings (list strings-213 strings-2134 strings-2150 strings-300 cairo-strings-912))
 (define all-string-withs (list with-213 with-2134 with-2150 with-300 with-cairo-912))
 
-(define all-ulongs (list ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173))
-(define all-ulong-withs (list with-213 with-2134 with-2150 with-2173))
+(define all-ulongs (list ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173 ulongs-gtk2))
+(define all-ulong-withs (list with-213 with-2134 with-2150 with-2173 with-gtk2))
 
 
 

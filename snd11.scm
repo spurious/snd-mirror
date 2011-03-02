@@ -701,3 +701,10 @@ Reverb-feedback sets the scaler on the feedback.
     (set! remembering-sound-state choice)
     'remembering!))
 |#
+
+
+;;; -------- clear-selection
+
+(define clear-selection unselect-all)
+
+

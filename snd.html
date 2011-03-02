@@ -384,7 +384,7 @@ boundary, the cursor changes to a double-arrow, and you can drag the
 boundary.  There's a triangular area beneath the x axis at the 
 start and end of the selection.  Click the left one to play (or stop playing)
 the selected portion; the right one starts a looping play.  The cursor,
-marks, and mixes also have associated play arrows.
+marks, and mixes also have associated play arrows (triangles).  
 </p>
 
 <p>You'll
@@ -1013,7 +1013,14 @@ also move between windows with <A NAME="cxo"></a>C-x o.</p>
 
 <A NAME="movecursor"></a>
 <p>Any mouse click on the waveform causes the cursor to move to that point.
-To move the cursor from the keyboard, use:</p>
+"The cursor" here refers to the sample cursor, normally a big "+".  There is also the
+cursor associated with the mouse which is a slanting arrow outside the graph, but
+changes to a small "+" inside the graph.  When the mouse
+is hovering over something that can be dragged (a selection edge, a mark, a mix, etc),
+it changes to a double arrow.  When a mouse click will start sound playing,
+it becomes a right arrow.  And when it's over the selection
+loop-play triangle, it's a left arrow.  But the main cursor in Snd is the big "+" that marks a particular sample.
+To move it from the keyboard, use:</p>
 <pre>
   &lt;      move cursor to sample 0
   &gt;      move cursor to last sample

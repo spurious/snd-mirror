@@ -1,6 +1,5 @@
 ;;; various generally useful Snd extensions
 
-;;; delete selected portion and smooth the splice
 ;;; mix then scale result to original peak amp
 ;;; mix with envelope
 ;;; map-sound-files, for-each-sound-file, match-sound-files, directory->list

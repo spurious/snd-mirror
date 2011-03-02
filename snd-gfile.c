@@ -2213,86 +2213,6 @@ static void update_data_format_list(const char *name, int row, void *data)
 }
 
 
-static void c1_callback(GtkWidget *w, gpointer context) 
-{
-  file_data *fd = (file_data *)context;
-  if (fd->chans_text)
-    gtk_entry_set_text(GTK_ENTRY(fd->chans_text), "1");
-}
-
-
-static void c2_callback(GtkWidget *w, gpointer context) 
-{
-  file_data *fd = (file_data *)context;
-  if (fd->chans_text)
-    gtk_entry_set_text(GTK_ENTRY(fd->chans_text), "2");
-}
-
-
-static void c3_callback(GtkWidget *w, gpointer context) 
-{
-  file_data *fd = (file_data *)context;
-  if (fd->chans_text)
-    gtk_entry_set_text(GTK_ENTRY(fd->chans_text), (fd->extracting) ? "3" : "4");
-}
-
-
-static void c4_callback(GtkWidget *w, gpointer context) 
-{
-  file_data *fd = (file_data *)context;
-  if (fd->chans_text)
-    gtk_entry_set_text(GTK_ENTRY(fd->chans_text), (fd->extracting) ? "4" : "8");
-}
-
-
-static void srate_drop(GtkWidget *w, gpointer context) 
-{
-  file_data *fd = (file_data *)context;
-  if (fd->srate_text)
-    gtk_entry_set_text(GTK_ENTRY(fd->srate_text), srate_list_to_string(get_user_int_data(G_OBJECT(w))));
-}
-
-
-static void add_srate_menu(file_data *fd, char *srate_name)
-{
-  GtkWidget *sr;
-  if (fd->srates_size == 0)
-    {
-      fd->srates_size = 8;
-      fd->srates = (GtkWidget **)calloc(fd->srates_size, sizeof(GtkWidget *));
-    }
-  else
-    {
-      if (fd->srates_size == fd->num_srates)
-	{
-	  fd->srates_size += 8;
-	  fd->srates = (GtkWidget **)realloc(fd->srates, fd->srates_size * sizeof(GtkWidget *));
-	}
-    }
-  sr = gtk_menu_item_new_with_label(srate_name);
-  gtk_menu_shell_append(GTK_MENU_SHELL(fd->smenu), sr);
-  widget_modify_bg(sr, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  set_user_int_data(G_OBJECT(sr), fd->num_srates);
-  gtk_widget_show(sr);
-  SG_SIGNAL_CONNECT(sr, "activate", srate_drop, (gpointer)fd);
-  fd->srates[fd->num_srates++] = sr;
-}
-
-
-static void make_srate_menu(GtkWidget *w, gpointer context) 
-{
-  file_data *fd = (file_data *)context;
-  list_completer_info *cur_srates;
-  cur_srates = srate_list();
-  if (fd->num_srates < cur_srates->num_values)
-    {
-      int i;
-      for (i = fd->num_srates; i < cur_srates->num_values; i++)
-	add_srate_menu(fd, cur_srates->values[i]);
-    }
-}
-
-
 static file_data *make_file_data_panel(GtkWidget *parent, const char *name, 
 				       dialog_channels_t with_chan, 
 				       int header_type, int data_format,
@@ -2306,7 +2226,6 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   file_data *fdat;
   int nformats = 0, nheaders = 0;
   const char **formats = NULL, **headers = NULL;
-  GtkWidget *sbar, *sitem;
 
   switch (header_choice)
     {
@@ -2329,98 +2248,48 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   gtk_container_add(GTK_CONTAINER(frame), frame_box);
   gtk_widget_show(frame_box);
 
-  form = gtk_hbox_new(false, 8);
+  form = gtk_hbox_new(true, 8);
   gtk_box_pack_start(GTK_BOX(frame_box), form, false, false, 4);
   gtk_widget_show(form);
 
   /* header type */
   if (with_header_type == WITH_HEADER_TYPE_FIELD)
     {
-      fdat->header_list = slist_new_with_title("header", form, (const char **)headers, nheaders, BOX_PACK); /* BOX_PACK widget_add_t (snd-g0.h) */
+      fdat->header_list = slist_new_with_title("header type", form, (const char **)headers, nheaders, BOX_PACK); /* BOX_PACK widget_add_t (snd-g0.h) */
       fdat->header_list->select_callback = update_header_type_list;
       fdat->header_list->select_callback_data = (void *)fdat;
       slist_select(fdat->header_list, fdat->header_pos);
     }
 
   /* data format */
-  fdat->format_list = slist_new_with_title("data format", form, (const char **)formats, nformats, BOX_PACK);
+  fdat->format_list = slist_new_with_title("data type", form, (const char **)formats, nformats, BOX_PACK);
   fdat->format_list->select_callback = update_data_format_list;
   fdat->format_list->select_callback_data = (void *)fdat;
   slist_select(fdat->format_list, fdat->format_pos);
 
-  /* srate */
   scbox = gtk_vbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(form), scbox, false, false, 4);
   gtk_widget_show(scbox);
 
-  /* srate label is drop-down menu, but (sigh) you have to click in the label text, not the empty portion */
-  sbar = gtk_menu_bar_new();
-  gtk_box_pack_start(GTK_BOX(scbox), sbar, false, false, 0);
-  gtk_widget_show(sbar);
-
-  fdat->smenu = gtk_menu_new();
-  sitem = gtk_menu_item_new_with_label("            srate");
-  gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), fdat->smenu);
-  gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
-  gtk_widget_show(sitem);
-
+  /* srate */
+  {
+    GtkWidget *srate_label;
+    srate_label = snd_gtk_highlight_label_new("srate");
+    gtk_box_pack_start(GTK_BOX(scbox), srate_label, false, false, 0);
+    gtk_widget_show(srate_label);
+  }
   fdat->srate_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
   SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL); /* srate completer */
-  SG_SIGNAL_CONNECT(sitem, "activate", make_srate_menu, (gpointer)fdat);
 
   /* chans */
-  /* chan also a drop-down menu */
   if (with_chan != WITHOUT_CHANNELS_FIELD)
     {
-      GtkWidget *c1, *c2, *c3, *c4;
-      GtkWidget *cbar, *citem, *cmenu;
-
-      cbar = gtk_menu_bar_new();
-      gtk_box_pack_start(GTK_BOX(scbox), cbar, false, false, 0);
-      gtk_widget_show(cbar);
-
-      cmenu = gtk_menu_new();
-      c1 = gtk_menu_item_new_with_label("1");
-      c2 = gtk_menu_item_new_with_label("2");
-      if (with_chan == WITH_CHANNELS_FIELD)
-	{
-	  c3 = gtk_menu_item_new_with_label("4");
-	  c4 = gtk_menu_item_new_with_label("8");
-	  fdat->extracting = false;
-	}
-      else
-	{
-	  c3 = gtk_menu_item_new_with_label("3");
-	  c4 = gtk_menu_item_new_with_label("4");
-	  fdat->extracting = true;
-	}
-
-      gtk_menu_shell_append(GTK_MENU_SHELL(cmenu), c1);
-      gtk_menu_shell_append(GTK_MENU_SHELL(cmenu), c2);
-      gtk_menu_shell_append(GTK_MENU_SHELL(cmenu), c3);
-      gtk_menu_shell_append(GTK_MENU_SHELL(cmenu), c4);
-
-      widget_modify_bg(c1, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      widget_modify_bg(c2, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      widget_modify_bg(c3, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      widget_modify_bg(c4, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-
-      gtk_widget_show(c1);
-      gtk_widget_show(c2);
-      gtk_widget_show(c3);
-      gtk_widget_show(c4);
-
-      citem = gtk_menu_item_new_with_label((gchar *)((with_chan == WITH_CHANNELS_FIELD) ? "           channels" : "    extract channel"));
-      gtk_widget_show(citem);
-      gtk_menu_item_set_submenu(GTK_MENU_ITEM(citem), cmenu);
-      gtk_menu_shell_append(GTK_MENU_SHELL(cbar), citem);
+      GtkWidget *chans_label;
+      chans_label = snd_gtk_highlight_label_new((with_chan == WITH_CHANNELS_FIELD) ? "channels" : "extract channel");
+      gtk_box_pack_start(GTK_BOX(scbox), chans_label, false, false, 0);
+      gtk_widget_show(chans_label);
 
       fdat->chans_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
-
-      SG_SIGNAL_CONNECT(c1,  "activate", c1_callback, (gpointer)fdat);
-      SG_SIGNAL_CONNECT(c2,  "activate", c2_callback, (gpointer)fdat);
-      SG_SIGNAL_CONNECT(c3,  "activate", c3_callback, (gpointer)fdat);
-      SG_SIGNAL_CONNECT(c4,  "activate", c4_callback, (gpointer)fdat);
       
       if (with_loc == WITH_DATA_LOCATION_FIELD)
 	{

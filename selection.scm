@@ -3,7 +3,6 @@
 ;;;   swap-selection-channels
 ;;;   replace-with-selection
 ;;;   selection-members
-;;;   clear-selection
 ;;;   make-selection
 ;;;   eval-over-selection
 ;;;   filter-selection-and-smooth
@@ -115,21 +114,6 @@
     sndlist))
 
 
-;;; -------- clear-selection
-
-(define (clear-selection)
-  "(clear-selection) unselects any currently selected samples."
-  (if (selection?)
-      (for-each
-       (lambda (s)
-	 (do ((i 0 (+ 1 i)))
-	     ((= i (channels s)))
-	   (let ((need-update (selection-member? s i)))
-	     (set! (selection-member? s i) #f)
-	     (if need-update (update-time-graph s i)))))
-       (sounds))))
-
-
 ;;; -------- make-selection
 
 ;;; the regularized form of this would use dur not end
@@ -150,7 +134,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 	(error 'no-such-sound "make-selection can't find sound"))
 
     (let ((current-sync (sync current-sound)))
-      (clear-selection)
+      (unselect-all)
       (if (number? chn)
 	  (add-chan-to-selection beg end snd chn)
 	  (for-each
@@ -185,7 +169,7 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 			  (- (+ (caddr seldata) (cadddr seldata)) 1)
 			  (car seldata)
 			  (cadr seldata))
-	  (clear-selection))
+	  (unselect-all))
       result)))
 
 

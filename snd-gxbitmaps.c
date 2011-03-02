@@ -3049,7 +3049,7 @@ cairo_surface_t *snd_icon(int which)
     case SND_PNG_STOP:
       if (!stop_icon)
 	stop_icon = png_to_surface(stop_data);
-      return(lock_icon);
+      return(stop_icon);
       break;
 
     case SND_PNG_BLANK:

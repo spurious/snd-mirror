@@ -1176,9 +1176,7 @@ char *slist_selection(slist *lst)
   return(NULL);
 }
 
-/* TODO: in gfile, some labels that are actually popdown menus need bold text [srate, channels]
- *           but I can't see any way to fix this
- * TODO: check other buttons-as-labels and label-colors
+/* TODO: check other buttons-as-labels and label-colors
  */
 
 /* TODO: gtk3 cairo troubles:
@@ -1202,10 +1200,15 @@ char *slist_selection(slist *lst)
  *   Also, someone is setting squelch?  
  *
  * in the SND_PNG_ICONS, mix_speaker is drawn unnecessarily
- *     the lock is not erased fully,
- *     not sure the stop sign works at all
  *     there is no snd icon currently
- *     in gtk3, the speaker is too low? and there's still the wrong-color rectangle off to the right
+ *     in gtk3, the speaker is too low? and there's still the wrong-color rectangle off to the right [clock_pix(sp)]
+ *   can't we use labels now, not drawing area widgets?
+ *
+ * the menu background blends into the Snd background -- it should stand out more
+ * PERHAPS: remove the gdk-pixbuf stuff from xgdata -- this causes lots of type problems
+ * could insert-selection-and-smooth be done sensibly -> insert at cursor in currently selected chan,
+ *   then follow the sync chains until one runs out?
+ *   also there are 0..2 splices to smooth here with selection/original swapping roles
  */
 
 #if 0

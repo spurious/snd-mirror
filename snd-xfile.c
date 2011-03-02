@@ -2234,61 +2234,6 @@ static void file_data_format_callback(Widget w, XtPointer context, XtPointer inf
 
 /* ---------------- File Data Panel ---------------- */
 
-static void srate_drop(Widget w, XtPointer context, XtPointer info) 
-{
-  file_data *fd = (file_data *)context;
-  char *sr;
-  sr = XtName(w);
-  XmTextSetString(fd->srate_text, sr);
-}
-
-
-static void add_srate_menu(file_data *fd, const char *srate_name)
-{
-  int n;
-  Arg args[12];
-  if (fd->srates_size == 0)
-    {
-      fd->srates_size = 8;
-      fd->srates = (Widget *)calloc(fd->srates_size, sizeof(Widget));
-    }
-  else
-    {
-      if (fd->srates_size == fd->num_srates)
-	{
-	  fd->srates_size += 8;
-	  fd->srates = (Widget *)realloc(fd->srates, fd->srates_size * sizeof(Widget));
-	}
-    }
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-  fd->srates[fd->num_srates] = XtCreateManagedWidget(srate_name, xmPushButtonWidgetClass, fd->smenu, args, n);
-  XtAddCallback(fd->srates[fd->num_srates++], XmNactivateCallback, srate_drop, (XtPointer)fd);
-}
-
-
-static void make_srate_menu(Widget w, XtPointer context, XtPointer info) 
-{
-  file_data *fd = (file_data *)context;
-  list_completer_info *cur_srates;
-  cur_srates = srate_list();
-  if (fd->num_srates < cur_srates->num_values)
-    {
-      int i;
-      for (i = fd->num_srates; i < cur_srates->num_values; i++)
-	add_srate_menu(fd, cur_srates->values[i]);
-    }
-}
-
-
-static void chans_drop(Widget w, XtPointer context, XtPointer info) 
-{
-  file_data *fd = (file_data *)context;
-  char *sr;
-  sr = XtName(w);
-  XmTextSetString(fd->chans_text, sr);
-}
-
 
 #define PANEL_COMMENT_SPACE 8
 
@@ -2303,7 +2248,6 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 {
   Widget form, header_label, data_label, srate_label, chans_label, sep1, sep2 = NULL, sep3, sep4;
   Widget comment_label = NULL, location_label, samples_label;
-  Widget scascade, cmenu, c1 = NULL, c2 = NULL, c4 = NULL, c8 = NULL;
   file_data *fdat;
   Arg args[32];
   int i, n;
@@ -2445,7 +2389,8 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
   sep3 = XtCreateManagedWidget("sep3", xmSeparatorWidgetClass, form, args, n);
 
-  /* srate: text field, label is actually a drop-down menu that sets text */
+
+  /* srate */
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -2453,23 +2398,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, sep3); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNshadowThickness, 0); n++;
-  XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-  XtSetArg(args[n], XmNmarginHeight, 0); n++;
-  srate_label = XmCreateMenuBar(form, (char *)"menuBar", args, n);
-
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-  fdat->smenu = XmCreatePulldownMenu(srate_label, (char *)"srate:", args, n);
-
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-  XtSetArg(args[n], XmNsubMenuId, fdat->smenu); n++;
-  XtSetArg(args[n], XmNshadowThickness, 0); n++;
-  XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-  XtSetArg(args[n], XmNmarginHeight, 1); n++;
-  scascade = XtCreateManagedWidget("srate:", xmCascadeButtonWidgetClass, srate_label, args, n);
-  XtManageChild(srate_label);
+  srate_label = XtCreateManagedWidget("srate", xmLabelWidgetClass, form, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNcolumns, 6); n++;
@@ -2484,7 +2413,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 
   if (with_chan != WITHOUT_CHANNELS_FIELD)
     {
-      /* chans: text field, label is actually a drop-down menu that sets text */
+      /* chans */
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2493,41 +2422,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, sep3); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNshadowThickness, 0); n++;
-      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-      XtSetArg(args[n], XmNmarginHeight, 0); n++;
-      chans_label = XmCreateMenuBar(form, (char *)"menuBar1", args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      cmenu = XmCreatePulldownMenu(chans_label, (char *)((with_chan == WITH_CHANNELS_FIELD) ? "channels:" : "extract channel:"), 
-				   args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      XtSetArg(args[n], XmNsubMenuId, cmenu); n++;
-      XtSetArg(args[n], XmNshadowThickness, 0); n++;
-      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-      XtSetArg(args[n], XmNmarginHeight, 1); n++;
-      XtCreateManagedWidget((char *)((with_chan == WITH_CHANNELS_FIELD) ? "channels:" : "extract channel:"), 
-			    xmCascadeButtonWidgetClass, chans_label, args, n);
-      
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      c1 = XtCreateManagedWidget("1",  xmPushButtonWidgetClass, cmenu, args, n);
-      c2 = XtCreateManagedWidget("2",  xmPushButtonWidgetClass, cmenu, args, n);
-      if (with_chan == WITH_CHANNELS_FIELD)
-	{
-	  c4 = XtCreateManagedWidget("4",  xmPushButtonWidgetClass, cmenu, args, n);
-	  c8 = XtCreateManagedWidget("8", xmPushButtonWidgetClass, cmenu, args, n);
-	}
-      else
-	{
-	  /* extract case */
-	  c4 = XtCreateManagedWidget("3",  xmPushButtonWidgetClass, cmenu, args, n);
-	  c8 = XtCreateManagedWidget("4", xmPushButtonWidgetClass, cmenu, args, n);
-	}
-      XtManageChild(chans_label);
+      chans_label = XtCreateManagedWidget((char *)((with_chan == WITH_CHANNELS_FIELD) ? "channels" : "extract channel"), xmLabelWidgetClass, form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNcolumns, 6); n++;
@@ -2551,7 +2446,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
 	  XtSetArg(args[n], XmNleftWidget, sep3); n++;
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-	  location_label = XtCreateManagedWidget("data location:", xmLabelWidgetClass, form, args, n);
+	  location_label = XtCreateManagedWidget("data location", xmLabelWidgetClass, form, args, n);
 
 	  n = 0;
 	  XtSetArg(args[n], XmNcolumns, 6); n++;
@@ -2577,7 +2472,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, sep3); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      samples_label = XtCreateManagedWidget("samples:", xmLabelWidgetClass, form, args, n);
+      samples_label = XtCreateManagedWidget("samples", xmLabelWidgetClass, form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNcolumns, 8); n++;
@@ -2633,7 +2528,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      comment_label = XtCreateManagedWidget("comment:", xmLabelWidgetClass, parent, args, n);
+      comment_label = XtCreateManagedWidget("comment", xmLabelWidgetClass, parent, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2647,15 +2542,6 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
     }
   else fdat->comment_text = NULL;
 
-  XtAddCallback(scascade, XmNcascadingCallback, make_srate_menu, (XtPointer)fdat);
-
-  if (with_chan != WITHOUT_CHANNELS_FIELD)
-    {
-      XtAddCallback(c1, XmNactivateCallback, chans_drop, (XtPointer)fdat);
-      XtAddCallback(c2, XmNactivateCallback, chans_drop, (XtPointer)fdat);
-      XtAddCallback(c4, XmNactivateCallback, chans_drop, (XtPointer)fdat);
-      XtAddCallback(c8, XmNactivateCallback, chans_drop, (XtPointer)fdat);
-    }
   return(fdat);
 }
 

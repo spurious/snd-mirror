@@ -218,8 +218,6 @@ typedef struct {
   bool extracting;
   gulong *reflection_ids;
   slist *header_list, *format_list;
-  GtkWidget **srates;
-  int num_srates, srates_size;
 } file_data;
 
 typedef struct {

@@ -194,9 +194,8 @@ void draw_picture(graphics_context *ax, picture_t *src, gint xsrc, gint ysrc, gi
       else cr = ax->cr;
       cairo_set_source_surface(cr, src, xsrc + xdest, ysrc + ydest);
       cairo_paint(cr);
-      /* 
       cairo_destroy(cr);
-      */
+      ax->cr = NULL;
     }
 }
 
