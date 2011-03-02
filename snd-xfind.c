@@ -230,7 +230,8 @@ static void make_edit_find_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, edit_find_text); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      edit_find_label = XtCreateManagedWidget("global search", xmLabelWidgetClass, rc, args, n);
+      XtSetArg(args[n], XmNmarginHeight, 10); n++;
+      edit_find_label = XtCreateManagedWidget("    ", xmLabelWidgetClass, rc, args, n);
       
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

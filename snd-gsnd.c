@@ -911,9 +911,11 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
 
 static void draw_speed_arrow(snd_info *sp)
 {
+  gtk_widget_hide(SPEED_ARROW(sp));
   if (sp->speed_control_direction == 1)
     draw_picture(sp->sgx->speed_arrow_ax, speed_r, 0, 0, 0, 0, 16, 16);
   else draw_picture(sp->sgx->speed_arrow_ax, speed_l, 0, 0, 0, 0, 16, 16);
+  gtk_widget_show(SPEED_ARROW(sp));
 }
 
 

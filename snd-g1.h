@@ -178,6 +178,7 @@ void g_init_gxregion(void);
 
 /* -------- snd-gxbitmaps.c -------- */
 
+const char **snd_icon_bits(void);
 enum {SND_PNG_LOCK, SND_PNG_STOP, SND_PNG_BOMB, SND_PNG_RIGHT_ARROW, SND_PNG_LEFT_ARROW, SND_PNG_BLANK, SND_PNG_SPEAKER};
 cairo_surface_t *snd_icon(int which);
 

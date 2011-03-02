@@ -91,7 +91,6 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
 	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", str);
 	  set_label(edit_find_label, buf);
-	  /* gtk_entry_set_text(GTK_ENTRY(edit_find_text), ""); */
 	  free(buf);
 	}
     }
@@ -107,7 +106,6 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
 	  if (temp) free(temp);
 #endif
 	  set_label(edit_find_label, buf);
-	  /* gtk_entry_set_text(GTK_ENTRY(edit_find_text), ""); */
 	  free(buf);
 	}
     }
@@ -193,7 +191,7 @@ static void make_edit_find_dialog(bool managed)
       edit_find_text = snd_entry_new(rc, WITH_WHITE_BACKGROUND);
       SG_SIGNAL_CONNECT(edit_find_text, "activate", edit_find_next, NULL);
       
-      edit_find_label = gtk_label_new("global search");
+      edit_find_label = gtk_label_new("");
       gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(edit_find_dialog)), edit_find_label, false, false, 4);
       gtk_widget_show(edit_find_label);
 

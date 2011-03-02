@@ -392,7 +392,6 @@ static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev,
 
 
 static GtkWidget *w_id = NULL, *w_beg = NULL, *mix_play = NULL, *w_id_label = NULL;
-static picture_t *mix_speaker_pix;
 
 static bool id_changed = false;
 
@@ -510,23 +509,18 @@ static bool mix_playing = false;
 
 void reflect_mix_play_stop(void)
 {
+  /* called in snd-dac.c */
   mix_playing = false;
-  if (mix_play_ax)
-    draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
 }
 
 
 static void mix_play_callback(GtkWidget *w, gpointer context) 
 {
   if (mix_playing)
-    reflect_mix_play_stop();
+    mix_playing = false;
   else
     {
       if (!(mix_exists(mix_dialog_id))) return;
-      if (mix_play_ax)
-	{
-	  draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
-	}
       syncd_mix_play(mix_dialog_id);
       mix_playing = true;
       play_mix_from_id(mix_dialog_id);
@@ -536,7 +530,7 @@ static void mix_play_callback(GtkWidget *w, gpointer context)
 
 static gboolean mix_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
+  draw_picture(mix_play_ax, snd_icon(SND_PNG_SPEAKER), 0, 0, 0, 0, 16, 16); /* in gtk2 this looks better if y-dest is 2 */
   return(false);
 }
 
@@ -748,8 +742,6 @@ GtkWidget *make_mix_dialog(void)
       widget_modify_bg(mix_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
       widget_modify_bg(mix_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
       
-      mix_speaker_pix = snd_icon(SND_PNG_SPEAKER);
-
       mix_play_pix = gtk_drawing_area_new();
       gtk_widget_set_events(mix_play_pix, GDK_EXPOSURE_MASK);
       gtk_widget_set_size_request(mix_play_pix, 16, 16);

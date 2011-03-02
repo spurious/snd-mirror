@@ -1,5 +1,71 @@
 #include "snd.h"
 
+
+/* -------------------------------- PROGRAM ICON -------------------------------- 
+ *
+ * apparently only a GdkPixbuf can be a program icon in Gtk?
+ */
+
+static const char *snd_icon_xpm[] = {
+"48 48 5 1",
+". c white m white",
+"B c black m black",
+"a c white m white s basiccolor",
+"r c red m black s cursorcolor",
+"g c lightblue m black s listenercolor",
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+"aaBBBB.........................................a",
+"aaBBBB.........................................a",
+"aaBBBB.........................................a",
+"aaBBBB.........................................a",
+"aaBBBB.........................................a",
+"aaBBBB.........................................a",
+"aaBBBB............BBBB.........................a",
+"aaBBBB..........BB....BB.......................a",
+"aaBBBB........BB.......BB......................a",
+"aaBBBB......BB..........BB.....................a",
+"aaBBBB.....BB............BB....................a",
+"aaBBBB....BB.............BB....................a",
+"aaBBBB...BB..............BB....................a",
+"aaBBBB..BB................BB...................a",
+"aaBBBBBB..................BB...................a",
+"aaBBBB.....................BB..................a",
+"aaBBBB.....................BB.................Ba",
+"aaBBBB......................BB...............BBa",
+"aaBBBB.......................BB.............BB.a",
+"aaBBBB.........................BB..........BB..a",
+"aaBBBB..........................BB.......BB....a",
+"aaBBBB...........................BB....BB......a",
+"aaBBBB.............................BBB.........a",
+"aaBBBB.........................................a",
+"aaBBBB.........................................a",
+"aaBBBB.........................................a",
+"aaBBBB.........................................a",
+"aaBBBB.........................................a",
+"aaBBBB.........................................a",
+"aaBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBaa",
+"aaBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBaa",
+"aaaaaa.........................................a",
+"aaaaaa.........................................a",
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+"agggggggggggggggggggggggggggggggggggggggggggggga",
+"agggggggggggggggggggggggggggggggggggggggggggggga",
+"agggggggggggggggggggggggggggggggggggggggggggggga",
+"agggggggggggggggggggggggggggggggggggggggggggggga",
+"agggggggggggggggggggggggggggggggggggggggggggggga",
+"aggggggggggggggggggggggggggggggggggggggggggggggg",
+"aggggggggggggggggggggggggggggggggggggggggggggggg",
+"aggggggggggggggggggggggggggggggggggggggggggggggg",
+"agggggggggggggggggggggggggggggggggggggggggggggga",
+"agggggggggggggggggggggggggggggggggggggggggggggga",
+"agggggggggggggggggggggggggggggggggggggggggggggga",
+"agggggggggggggggggggggggggggggggggggggggggggggga",
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"};
+
+const char **snd_icon_bits(void) {return(snd_icon_xpm);}
+
+
+
 #if USE_MOTIF
 
 #include <X11/xpm.h>
@@ -339,67 +405,6 @@ static const char *stop_sign_xpm[] = {
 
 const char **stop_sign_bits(void) {return(stop_sign_xpm);}
 
-
-
-/* -------------------------------- PROGRAM ICON -------------------------------- */
-
-static const char *snd_icon_xpm[] = {
-"48 48 5 1",
-". c white m white",
-"B c black m black",
-"a c white m white s basiccolor",
-"r c red m black s cursorcolor",
-"g c lightblue m black s listenercolor",
-"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-"aaBBBB.........................................a",
-"aaBBBB.........................................a",
-"aaBBBB.........................................a",
-"aaBBBB.........................................a",
-"aaBBBB.........................................a",
-"aaBBBB.........................................a",
-"aaBBBB............BBBB.........................a",
-"aaBBBB..........BB....BB.......................a",
-"aaBBBB........BB.......BB......................a",
-"aaBBBB......BB..........BB.....................a",
-"aaBBBB.....BB............BB....................a",
-"aaBBBB....BB.............BB....................a",
-"aaBBBB...BB..............BB....................a",
-"aaBBBB..BB................BB...................a",
-"aaBBBBBB..................BB...................a",
-"aaBBBB.....................BB..................a",
-"aaBBBB.....................BB.................Ba",
-"aaBBBB......................BB...............BBa",
-"aaBBBB.......................BB.............BB.a",
-"aaBBBB.........................BB..........BB..a",
-"aaBBBB..........................BB.......BB....a",
-"aaBBBB...........................BB....BB......a",
-"aaBBBB.............................BBB.........a",
-"aaBBBB.........................................a",
-"aaBBBB.........................................a",
-"aaBBBB.........................................a",
-"aaBBBB.........................................a",
-"aaBBBB.........................................a",
-"aaBBBB.........................................a",
-"aaBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBaa",
-"aaBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBaa",
-"aaaaaa.........................................a",
-"aaaaaa.........................................a",
-"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-"agggggggggggggggggggggggggggggggggggggggggggggga",
-"agggggggggggggggggggggggggggggggggggggggggggggga",
-"agggggggggggggggggggggggggggggggggggggggggggggga",
-"agggggggggggggggggggggggggggggggggggggggggggggga",
-"agggggggggggggggggggggggggggggggggggggggggggggga",
-"aggggggggggggggggggggggggggggggggggggggggggggggg",
-"aggggggggggggggggggggggggggggggggggggggggggggggg",
-"aggggggggggggggggggggggggggggggggggggggggggggggg",
-"agggggggggggggggggggggggggggggggggggggggggggggga",
-"agggggggggggggggggggggggggggggggggggggggggggggga",
-"agggggggggggggggggggggggggggggggggggggggggggggga",
-"agggggggggggggggggggggggggggggggggggggggggggggga",
-"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"};
-
-const char **snd_icon_bits(void) {return(snd_icon_xpm);}
 
 
 /* these are taken mainly from emacs */

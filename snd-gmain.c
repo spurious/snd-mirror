@@ -385,10 +385,7 @@ static void startup_funcs(void)
 #ifndef SND_AS_WIDGET
 static void set_up_icon(void)
 {
-  /* TODO: snd icon */
-  /*
   gtk_window_set_icon(GTK_WINDOW(MAIN_SHELL(ss)), gdk_pixbuf_new_from_xpm_data(snd_icon_bits()));
-  */
 }
 #endif
 

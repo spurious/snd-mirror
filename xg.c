@@ -865,6 +865,7 @@ XM_TYPE_PTR(cairo_region_t_, cairo_region_t*)
 XM_TYPE_PTR_1(GtkContainerClass_, GtkContainerClass*)
 XM_TYPE(GtkAlign, GtkAlign)
 XM_TYPE_PTR_1(GtkComboBoxText_, GtkComboBoxText*)
+XM_TYPE_PTR(GdkRGBA_, GdkRGBA*)
 XM_TYPE_PTR_1(GtkGrid_, GtkGrid*)
 XM_TYPE_PTR_1(GtkScrollable_, GtkScrollable*)
 #define C_TO_XEN_GtkScrollablePolicy(Arg) C_TO_XEN_INT(Arg)
@@ -882,7 +883,6 @@ XM_TYPE_PTR_1(GtkInvisible_, GtkInvisible*)
 XM_TYPE_PTR(GtkWindowGroup_, GtkWindowGroup*)
 XM_TYPE_PTR_1(GtkToolShell_, GtkToolShell*)
 XM_TYPE_PTR_1(GdkScreen__, GdkScreen**)
-XM_TYPE_PTR(GdkRGBA_, GdkRGBA*)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -29203,6 +29203,70 @@ static XEN gxg_gtk_combo_box_text_get_active_text(XEN combo_box)
   return(C_TO_XEN_gchar_(gtk_combo_box_text_get_active_text(XEN_TO_C_GtkComboBoxText_(combo_box))));
 }
 
+static XEN gxg_gdk_cairo_set_source_rgba(XEN cr, XEN rgba)
+{
+  #define H_gdk_cairo_set_source_rgba "void gdk_cairo_set_source_rgba(cairo_t* cr, GdkRGBA* rgba)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "gdk_cairo_set_source_rgba", "cairo_t*");
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(rgba), rgba, 2, "gdk_cairo_set_source_rgba", "GdkRGBA*");
+  gdk_cairo_set_source_rgba(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkRGBA_(rgba));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_set_background_rgba(XEN window, XEN rgba)
+{
+  #define H_gdk_window_set_background_rgba "void gdk_window_set_background_rgba(GdkWindow* window, GdkRGBA* rgba)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_background_rgba", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(rgba), rgba, 2, "gdk_window_set_background_rgba", "GdkRGBA*");
+  gdk_window_set_background_rgba(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRGBA_(rgba));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_cell_view_set_background_rgba(XEN cell_view, XEN rgba)
+{
+  #define H_gtk_cell_view_set_background_rgba "void gtk_cell_view_set_background_rgba(GtkCellView* cell_view, \
+GdkRGBA* rgba)"
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_set_background_rgba", "GtkCellView*");
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(rgba), rgba, 2, "gtk_cell_view_set_background_rgba", "GdkRGBA*");
+  gtk_cell_view_set_background_rgba(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GdkRGBA_(rgba));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_color_button_new_with_rgba(XEN rgba)
+{
+  #define H_gtk_color_button_new_with_rgba "GtkWidget* gtk_color_button_new_with_rgba(GdkRGBA* rgba)"
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(rgba), rgba, 1, "gtk_color_button_new_with_rgba", "GdkRGBA*");
+  return(C_TO_XEN_GtkWidget_(gtk_color_button_new_with_rgba(XEN_TO_C_GdkRGBA_(rgba))));
+}
+
+static XEN gxg_gtk_color_button_set_rgba(XEN color_button, XEN rgba)
+{
+  #define H_gtk_color_button_set_rgba "void gtk_color_button_set_rgba(GtkColorButton* color_button, GdkRGBA* rgba)"
+  XEN_ASSERT_TYPE(XEN_GtkColorButton__P(color_button), color_button, 1, "gtk_color_button_set_rgba", "GtkColorButton*");
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(rgba), rgba, 2, "gtk_color_button_set_rgba", "GdkRGBA*");
+  gtk_color_button_set_rgba(XEN_TO_C_GtkColorButton_(color_button), XEN_TO_C_GdkRGBA_(rgba));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_color_selection_set_current_rgba(XEN colorsel, XEN rgba)
+{
+  #define H_gtk_color_selection_set_current_rgba "void gtk_color_selection_set_current_rgba(GtkColorSelection* colorsel, \
+GdkRGBA* rgba)"
+  XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_set_current_rgba", "GtkColorSelection*");
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(rgba), rgba, 2, "gtk_color_selection_set_current_rgba", "GdkRGBA*");
+  gtk_color_selection_set_current_rgba(XEN_TO_C_GtkColorSelection_(colorsel), XEN_TO_C_GdkRGBA_(rgba));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_color_selection_set_previous_rgba(XEN colorsel, XEN rgba)
+{
+  #define H_gtk_color_selection_set_previous_rgba "void gtk_color_selection_set_previous_rgba(GtkColorSelection* colorsel, \
+GdkRGBA* rgba)"
+  XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_set_previous_rgba", "GtkColorSelection*");
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(rgba), rgba, 2, "gtk_color_selection_set_previous_rgba", "GdkRGBA*");
+  gtk_color_selection_set_previous_rgba(XEN_TO_C_GtkColorSelection_(colorsel), XEN_TO_C_GdkRGBA_(rgba));
+  return(XEN_FALSE);
+}
+
 static XEN gxg_gtk_combo_box_text_remove_all(XEN combo_box)
 {
   #define H_gtk_combo_box_text_remove_all "void gtk_combo_box_text_remove_all(GtkComboBoxText* combo_box)"
@@ -38157,6 +38221,13 @@ XEN_NARGIFY_3(gxg_gtk_combo_box_text_insert_text_w, gxg_gtk_combo_box_text_inser
 XEN_NARGIFY_2(gxg_gtk_combo_box_text_prepend_text_w, gxg_gtk_combo_box_text_prepend_text)
 XEN_NARGIFY_2(gxg_gtk_combo_box_text_remove_w, gxg_gtk_combo_box_text_remove)
 XEN_NARGIFY_1(gxg_gtk_combo_box_text_get_active_text_w, gxg_gtk_combo_box_text_get_active_text)
+XEN_NARGIFY_2(gxg_gdk_cairo_set_source_rgba_w, gxg_gdk_cairo_set_source_rgba)
+XEN_NARGIFY_2(gxg_gdk_window_set_background_rgba_w, gxg_gdk_window_set_background_rgba)
+XEN_NARGIFY_2(gxg_gtk_cell_view_set_background_rgba_w, gxg_gtk_cell_view_set_background_rgba)
+XEN_NARGIFY_1(gxg_gtk_color_button_new_with_rgba_w, gxg_gtk_color_button_new_with_rgba)
+XEN_NARGIFY_2(gxg_gtk_color_button_set_rgba_w, gxg_gtk_color_button_set_rgba)
+XEN_NARGIFY_2(gxg_gtk_color_selection_set_current_rgba_w, gxg_gtk_color_selection_set_current_rgba)
+XEN_NARGIFY_2(gxg_gtk_color_selection_set_previous_rgba_w, gxg_gtk_color_selection_set_previous_rgba)
 XEN_NARGIFY_1(gxg_gtk_combo_box_text_remove_all_w, gxg_gtk_combo_box_text_remove_all)
 XEN_NARGIFY_2(gxg_gtk_combo_box_set_popup_fixed_width_w, gxg_gtk_combo_box_set_popup_fixed_width)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_popup_fixed_width_w, gxg_gtk_combo_box_get_popup_fixed_width)
@@ -42183,6 +42254,13 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_combo_box_text_prepend_text_w gxg_gtk_combo_box_text_prepend_text
 #define gxg_gtk_combo_box_text_remove_w gxg_gtk_combo_box_text_remove
 #define gxg_gtk_combo_box_text_get_active_text_w gxg_gtk_combo_box_text_get_active_text
+#define gxg_gdk_cairo_set_source_rgba_w gxg_gdk_cairo_set_source_rgba
+#define gxg_gdk_window_set_background_rgba_w gxg_gdk_window_set_background_rgba
+#define gxg_gtk_cell_view_set_background_rgba_w gxg_gtk_cell_view_set_background_rgba
+#define gxg_gtk_color_button_new_with_rgba_w gxg_gtk_color_button_new_with_rgba
+#define gxg_gtk_color_button_set_rgba_w gxg_gtk_color_button_set_rgba
+#define gxg_gtk_color_selection_set_current_rgba_w gxg_gtk_color_selection_set_current_rgba
+#define gxg_gtk_color_selection_set_previous_rgba_w gxg_gtk_color_selection_set_previous_rgba
 #define gxg_gtk_combo_box_text_remove_all_w gxg_gtk_combo_box_text_remove_all
 #define gxg_gtk_combo_box_set_popup_fixed_width_w gxg_gtk_combo_box_set_popup_fixed_width
 #define gxg_gtk_combo_box_get_popup_fixed_width_w gxg_gtk_combo_box_get_popup_fixed_width
@@ -46216,6 +46294,13 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_combo_box_text_prepend_text, gxg_gtk_combo_box_text_prepend_text_w, 2, 0, 0, H_gtk_combo_box_text_prepend_text);
   XG_DEFINE_PROCEDURE(gtk_combo_box_text_remove, gxg_gtk_combo_box_text_remove_w, 2, 0, 0, H_gtk_combo_box_text_remove);
   XG_DEFINE_PROCEDURE(gtk_combo_box_text_get_active_text, gxg_gtk_combo_box_text_get_active_text_w, 1, 0, 0, H_gtk_combo_box_text_get_active_text);
+  XG_DEFINE_PROCEDURE(gdk_cairo_set_source_rgba, gxg_gdk_cairo_set_source_rgba_w, 2, 0, 0, H_gdk_cairo_set_source_rgba);
+  XG_DEFINE_PROCEDURE(gdk_window_set_background_rgba, gxg_gdk_window_set_background_rgba_w, 2, 0, 0, H_gdk_window_set_background_rgba);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_set_background_rgba, gxg_gtk_cell_view_set_background_rgba_w, 2, 0, 0, H_gtk_cell_view_set_background_rgba);
+  XG_DEFINE_PROCEDURE(gtk_color_button_new_with_rgba, gxg_gtk_color_button_new_with_rgba_w, 1, 0, 0, H_gtk_color_button_new_with_rgba);
+  XG_DEFINE_PROCEDURE(gtk_color_button_set_rgba, gxg_gtk_color_button_set_rgba_w, 2, 0, 0, H_gtk_color_button_set_rgba);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_set_current_rgba, gxg_gtk_color_selection_set_current_rgba_w, 2, 0, 0, H_gtk_color_selection_set_current_rgba);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_set_previous_rgba, gxg_gtk_color_selection_set_previous_rgba_w, 2, 0, 0, H_gtk_color_selection_set_previous_rgba);
   XG_DEFINE_PROCEDURE(gtk_combo_box_text_remove_all, gxg_gtk_combo_box_text_remove_all_w, 1, 0, 0, H_gtk_combo_box_text_remove_all);
   XG_DEFINE_PROCEDURE(gtk_combo_box_set_popup_fixed_width, gxg_gtk_combo_box_set_popup_fixed_width_w, 2, 0, 0, H_gtk_combo_box_set_popup_fixed_width);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_popup_fixed_width, gxg_gtk_combo_box_get_popup_fixed_width_w, 1, 0, 0, H_gtk_combo_box_get_popup_fixed_width);
@@ -48956,7 +49041,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("28-Feb-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-Mar-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

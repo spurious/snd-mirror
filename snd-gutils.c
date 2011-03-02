@@ -1176,77 +1176,49 @@ char *slist_selection(slist *lst)
   return(NULL);
 }
 
-/* TODO: check other buttons-as-labels and label-colors
- */
 
-/* TODO: gtk3 cairo troubles:
+/* TODO: gtk troubles:
  *   toolbar is spread out
  *   do meters work in rec?  in Motif they're drawn incorrectly
+ *
  *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
- *     sep chans, syncd marks don't move together
+ *     try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
+ *
+ *   sep chans, syncd marks don't move together
  *   superimposed chans flicker a lot
  *   hide controls + listener doesn't
  *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *   adding invalidate rect got the dialog back but hangs the system! 
  *   Now Xorg is taking up 91% of memory!
+ *   need some way to offer src if save-as and srates differ
+ *   the menu background blends into the Snd background -- it should stand out more
+ *   sash colors should be green but I can't find any way to set this in gtk3!
+ *   Also, someone is setting squelch?  
+ *   if pointer focus, movement out of dialog and into graph does not raise graph
+ *
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
  *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.
  *     show controls for example, does not open the pane.
+ *
  *   segfault in test 20 (same problem as earlier)
- *   try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
- *   gtk listener won't let me delete "(" in col 0? -- flakey
- * TODO: sash colors should be green 
- *   Also, someone is setting squelch?  
+ *     this happens during the graphics draw at snd-print.c:56 -- cairo_t is probably not setup right
+ *     this is in graph->ps
+ *     perhaps all of snd-print.c is now motif-specific, and we should use
+ *     snd-gprint with GTK_PRINT_OPERATION_ACTION_PRINT and it says only pdf? gtk_print_operation_set_export_filename ()
  *
- * in the SND_PNG_ICONS, mix_speaker is drawn unnecessarily
- *     there is no snd icon currently
- *     in gtk3, the speaker is too low? and there's still the wrong-color rectangle off to the right [clock_pix(sp)]
- *   can't we use labels now, not drawing area widgets?
+ *  in the SND_PNG_ICONS
+ *     in gtk3, there's still the wrong-color rectangle off to the right [clock_pix(sp)]
+ *       actually the problem here is that every other widget has the wrong color
  *
- * the menu background blends into the Snd background -- it should stand out more
- * PERHAPS: remove the gdk-pixbuf stuff from xgdata -- this causes lots of type problems
- * could insert-selection-and-smooth be done sensibly -> insert at cursor in currently selected chan,
- *   then follow the sync chains until one runs out?
- *   also there are 0..2 splices to smooth here with selection/original swapping roles
+ *  could insert-selection-and-smooth be done sensibly -> insert at cursor in currently selected chan,
+ *    then follow the sync chains until one runs out?
+ *    also there are 0..2 splices to smooth here with selection/original swapping roles
+ *
+ * requested: popup entry for looped-play, better ladspa stuff, zoomed fft, space=play
+ * bugs: play choppy if graphics
  */
 
-#if 0
-static void display_png(cairo_t *cr) /* cr here can be drawing area as in chan grf */
-{
-  cairo_surface_t *image;
-  image = png_to_surface(lock_data);
-  cairo_set_source_surface (cr, image, 0, 0);
-  cairo_paint (cr);
-}
-#endif
-
-
-/*
-
-Examples: I´d like to have that rightklick-menu for regions that allows 
-them to be played looped.
-
-LADSPA-Modules can be applied in real time and their parameters can be automated in Snd,
-
-3.) to have a rightklick-menu entry that allows to save a region or a 
-marked section to a new file with the opportunity to render effects etc 
-to that file... 
---------
-
-More options there (fft) might be nice though, like being able to zoom into 
-the spectrum graphic.
---------
-
-1) playback. It's very strange that you need to tick a box to start/stop playback instead of hitting the space bar. 
-2) general lack of keybindings 
-4) An error I just got when clicking somewhere in the preference menu: snd: cairo-surface.c:385: _cairo_surface_begin_modification: Assertion `! surface->finished' failed. 
-5) sometimes the meaning of checkboxes is less than obvious (sync, unite) 
-6) Dragging scrollbars during playback makes playback very choppy or 
-stops it altogether, most likely some more general graphics issue, it's 
-just most obvious with those scrollbars 
-
- */
 
 
 /* I see no way around this.
@@ -1262,9 +1234,9 @@ style \"default\"\n			 \
 {\n					 \
   fg[NORMAL]      = { 0.0,  0.00, 0.0 }\n	\
   text[NORMAL]    = { 0.0,  0.0,  0.0 }\n	\
-  bg[NORMAL]      = { 0.93, 0.93, 0.87 }\n	\
+  bg[NORMAL]      = { 0.96, 0.96, 0.90 }\n	\
   bg[ACTIVE]      = { 0.80, 0.80, 0.75 }\n	\
-  bg[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n	\
+  bg[INSENSITIVE] = { 0.96, 0.96, 0.90 }\n	\
   base[NORMAL]    = { 1.00, 1.00, 1.00 }\n	\
   bg[PRELIGHT]    = { 0.70, 0.70, 0.64 }\n	\
   fg[PRELIGHT]    = { 1.0,  0.0,  0.0}\n	\
@@ -1279,10 +1251,6 @@ style \"default_button\" = \"default\"\n	\
   GtkButton::inner_border = { 1, 0, 1, 0 }\n		\
   GtkButton::focus_line_width = 0\n			\
   GtkButton::focus_padding = 0\n			\
-}\n							\
-style \"default_menu\" = \"default\"\n			\
-{\n							\
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n			\
 }\n							\
 style \"default_pane\" = \"default\"\n			\
 {\n							\
@@ -1327,8 +1295,6 @@ style \"default_frame\" = \"default\"\n			\
 }\n							\
 class \"GtkWidget\" style \"default\"\n			\
 class \"GtkButton\" style \"default_button\"\n		\
-class \"GtkMenu\" style \"default_menu\"\n		\
-class \"GtkMenuBar\" style \"default_menu\"\n		\
 class \"GtkEntry\" style \"default_entry\"\n		\
 class \"GtkTextView\" style \"default_text\"\n		\
 class \"GtkPaned\" style \"default_pane\"\n		\
@@ -1347,8 +1313,6 @@ style \"zoom_slider\" = \"default_slider\"\n		\
 widget \"*.zx_slider\" style \"zoom_slider\"\n		\
 widget \"*.zy_slider\" style \"zoom_slider\"\n		\
 widget \"*.gzy_slider\" style \"zoom_slider\"\n		\
-widget \"*.panel_button\" style \"zoom_slider\"\n	\
-\n							\
 style \"dialog_button\" = \"default_button\"\n          \
 {\n                                                     \
   bg[NORMAL] = { 1.0, 1.0, 0.94 }\n                     \

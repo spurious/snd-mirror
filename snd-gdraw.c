@@ -189,13 +189,10 @@ void draw_picture(graphics_context *ax, picture_t *src, gint xsrc, gint ysrc, gi
   if ((ax) && (IS_DRAWABLE(ax->wn)))
     {
       cairo_t *cr;
-      if (!ax->cr)
-	cr = gdk_cairo_create(ax->wn);
-      else cr = ax->cr;
+      cr = gdk_cairo_create(ax->wn);
       cairo_set_source_surface(cr, src, xsrc + xdest, ysrc + ydest);
       cairo_paint(cr);
       cairo_destroy(cr);
-      ax->cr = NULL;
     }
 }
 
