@@ -23,7 +23,6 @@ static void color_file_selection_box(Widget w)
 {
   /* overwrite most Motif-default colors */
   Widget wtmp;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
   
   map_over_children(w, set_main_color_of_widget);
   XtVaSetValues(FSB_BOX(w, XmDIALOG_DIR_LIST), 
@@ -70,7 +69,6 @@ static void force_directory_reread(Widget dialog)
   XmString dirmask;
   Widget name_field;
   char *filename = NULL;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
   name_field = FSB_BOX(dialog, XmDIALOG_TEXT);
   filename = XmTextGetString(name_field);
   XtVaGetValues(dialog, XmNdirMask, &dirmask, NULL);
@@ -88,7 +86,6 @@ static void force_directory_reread(Widget dialog)
 static void force_directory_reread_and_let_filename_change(Widget dialog)
 {
   XmString dirmask;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
   XtVaGetValues(dialog, XmNdirMask, &dirmask, NULL);
   XmFileSelectionDoSearch(dialog, dirmask);
   XmStringFree(dirmask);
@@ -697,6 +694,7 @@ static void watch_current_directory_contents(struct fam_info *famp, FAMEvent *fe
       /* we could simply edit the current_files list here, rather than requesting a full directory read,
        *   but I doubt it matters -- directory reads are apparently very fast, and the simplicity is a blessing.
        */
+
     case FAMCreated:
     case FAMMoved:
       if ((!(just_sounds(ss))) ||
@@ -712,6 +710,7 @@ static void watch_current_directory_contents(struct fam_info *famp, FAMEvent *fe
 	    }
 	}
       break;
+
     default:
       /* ignore the rest */
       break;
@@ -794,7 +793,6 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
   file_pattern_info *fp;
   dir_info *cur_dir = NULL;
   char *pattern = NULL, *our_dir = NULL;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
 
   XtVaGetValues(dialog, XmNuserData, &fp, NULL);
   if (!(fp->dialog)) fp->dialog = dialog; /* can be null at initialization */
@@ -852,8 +850,6 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   file_pattern_info *fp = (file_pattern_info *)context;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(fp->dialog), fp->dialog);
   if (cb->set)
     fp->filter_choice = JUST_SOUNDS_FILTER;
   else fp->filter_choice = NO_FILE_FILTER;
@@ -892,7 +888,6 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   dialog_play_info *dp = (dialog_play_info *)context;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   if (cb->set)
     {
       Widget wtmp;
@@ -1029,6 +1024,7 @@ static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
     case FAMMoved:
       repost_sound_info((file_dialog_info *)(fp->data));
       break;
+
     default:
       /* ignore the rest */
       break;
@@ -1080,7 +1076,6 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
   file_dialog_info *fd = (file_dialog_info *)context;
   XmString *strs;
   char *filename = NULL;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNselectedItems, &strs, NULL);
   filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if (filename)
@@ -1458,6 +1453,7 @@ static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
 	  (mus_strcmp(fe->filename, fd->unsound_filename)))
 	unpost_open_modify_error(fd);
       break;
+
     default:
       /* ignore the rest */
       break;
@@ -1487,7 +1483,6 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
   file_dialog_info *fd = (file_dialog_info *)context;
   XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *)info;
   char *filename = NULL;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
   if (XmGetFocusWidget(fd->dialog) == FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT)) return;
 
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
@@ -1643,7 +1638,6 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
   XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *)info;
   file_dialog_info *fd = (file_dialog_info *)context;
   char *filename = NULL;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
   
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
@@ -1749,7 +1743,6 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
   XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *)info;
   file_dialog_info *fd = (file_dialog_info *)context;
   char *filename = NULL;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
   
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
@@ -2136,7 +2129,6 @@ static void filename_modify_callback(Widget w, XtPointer context, XtPointer info
   file_data *fd = (file_data *)context;
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
   Widget dialog_filename_text;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(fd->dialog), fd->dialog);
   clear_dialog_error(fd);
   dialog_filename_text = FSB_BOX(fd->dialog, XmDIALOG_TEXT);
   if (dialog_filename_text) XtRemoveCallback(dialog_filename_text, XmNmodifyVerifyCallback, filename_modify_callback, context);
@@ -2147,7 +2139,6 @@ static void filename_modify_callback(Widget w, XtPointer context, XtPointer info
 static void clear_error_if_filename_changes(Widget dialog, file_data *data)
 {
   Widget dialog_filename_text;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
   dialog_filename_text = FSB_BOX(dialog, XmDIALOG_TEXT);
   if (dialog_filename_text) 
     XtAddCallback(dialog_filename_text, XmNmodifyVerifyCallback, filename_modify_callback, (XtPointer)data);
@@ -2207,7 +2198,7 @@ static void file_data_type_callback(Widget w, XtPointer context, XtPointer info)
   int pos;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
+
   XtVaGetValues(w, XmNuserData, &fd, NULL);
   pos = cbs->item_position - 1;
   if (position_to_type(pos) != fd->current_type)
@@ -2226,16 +2217,32 @@ static void file_data_format_callback(Widget w, XtPointer context, XtPointer inf
 {
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNuserData, &fd, NULL);
   fd->current_format = position_to_format(fd->current_type, cbs->item_position - 1);
 }
 
 
+static void file_data_src_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_data *fd = (file_data *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  fd->src = cb->set;
+}
+
+
+static void file_data_auto_comment_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_data *fd = (file_data *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  fd->auto_comment = cb->set;
+}
+
+
+
 /* ---------------- File Data Panel ---------------- */
 
 
-#define PANEL_COMMENT_SPACE 8
+#define PANEL_COMMENT_SPACE 16
 
 static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, int in_n, 
 				       dialog_channels_t with_chan, 
@@ -2247,7 +2254,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 				       header_choice_t header_choice)
 {
   Widget form, header_label, data_label, srate_label, chans_label, sep1, sep2 = NULL, sep3, sep4;
-  Widget comment_label = NULL, location_label, samples_label;
+  Widget comment_label = NULL, location_label, samples_label, src_button, auto_comment_button;
   file_data *fdat;
   Arg args[32];
   int i, n;
@@ -2263,6 +2270,8 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
     }
 
   fdat = (file_data *)calloc(1, sizeof(file_data));
+  fdat->src = false;
+  fdat->auto_comment = false;
   fdat->current_type = header_type;
   fdat->current_format = data_format;
   formats = type_and_format_to_position(fdat, header_type, data_format);
@@ -2401,16 +2410,28 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   srate_label = XtCreateManagedWidget("srate", xmLabelWidgetClass, form, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNcolumns, 6); n++;
+  XtSetArg(args[n], XmNcolumns, 8); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, srate_label); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, sep3); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
   fdat->srate_text = make_textfield_widget("srate-text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer, NULL));
 
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, srate_label); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, fdat->srate_text); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
+  src_button = make_togglebutton_widget("src", form, args, n);
+  XtAddCallback(src_button, XmNvalueChangedCallback, file_data_src_callback, (XtPointer)fdat);
+  
   if (with_chan != WITHOUT_CHANNELS_FIELD)
     {
       /* chans */
@@ -2526,13 +2547,24 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, sep4); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       comment_label = XtCreateManagedWidget("comment", xmLabelWidgetClass, parent, args, n);
 
       n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, comment_label); n++;
+      XtSetArg(args[n], XmNtopWidget, sep4); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
+      auto_comment_button = make_togglebutton_widget("auto", parent, args, n);
+      XtAddCallback(auto_comment_button, XmNvalueChangedCallback, file_data_auto_comment_callback, (XtPointer)fdat);
+  
+      n = 0;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, auto_comment_button); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -2693,6 +2725,42 @@ static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
 }
 
 
+static bool srates_differ(int srate, save_as_dialog_info *sd)
+{
+  switch (sd->type)
+    {
+    case SOUND_SAVE_AS:
+      return(SND_SRATE(any_selected_sound()) != srate);
+      
+    case SELECTION_SAVE_AS:
+      return(selection_srate() != srate);
+      
+    case REGION_SAVE_AS:
+      return(region_srate(region_dialog_region()) != srate);
+    }
+
+  return(false);
+}
+
+
+static double srate_ratio(int srate, save_as_dialog_info *sd)
+{
+  switch (sd->type)
+    {
+    case SOUND_SAVE_AS:
+      return((double)(SND_SRATE(any_selected_sound())) / (double)srate);
+      
+    case SELECTION_SAVE_AS:
+      return((double)selection_srate() / (double)srate);
+      
+    case REGION_SAVE_AS:
+      return((double)region_srate(region_dialog_region()) / (double)srate);
+    }
+
+  return(1.0);
+}
+
+
 static void save_or_extract(save_as_dialog_info *sd, bool saving)
 {
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
@@ -2771,10 +2839,12 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if (!saving)
 	extractable_chans = sp->nchans;
       break;
+
     case SELECTION_SAVE_AS:
       if (!saving)
 	extractable_chans = selection_chans();
       break;
+
     default:
       break;
     }
@@ -2882,6 +2952,15 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       tmpfile = fullname;
     }
 
+  /* check for auto comment request */
+  if (sd->panel_data->auto_comment)
+    {
+      /* TODO: if auto_comment, prepend data about the source of the new file
+       */
+      /* comment = make_save_as_comment();
+       */
+    }
+
   redirect_snd_error_to(redirect_post_file_dialog_error, (void *)(sd->panel_data));
   switch (sd->type)
     {
@@ -2890,6 +2969,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	io_err = save_edits_without_display(sp, tmpfile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
       else io_err = save_channel_edits(sp->chans[chan], tmpfile, AT_CURRENT_EDIT_POSITION); /* protects if same name */
       break;
+
     case SELECTION_SAVE_AS:
       {
 	char *ofile;
@@ -2900,8 +2980,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	if (io_err == IO_NO_ERROR)
 	  io_err = move_file(ofile, fullname);
 	free(ofile);
-	break;
       }
+      break;
+
     case REGION_SAVE_AS:
       {
 	char *ofile;
@@ -2915,13 +2996,22 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	      io_err = move_file(ofile, fullname);
 	    free(ofile);
 	  }
-	break;
-      default:
-	snd_error("internal screw up");
-	break;
       }
+      break;
     }
   redirect_snd_error_to(NULL, NULL);
+
+  /* check for possible srate conversion */
+  if ((sd->panel_data->src) &&
+      (srates_differ(srate, sd)))
+    {
+      /* if src, and srates differ, do the sampling rate conversion.
+       *    this needs to happen before the snd_encode (->OGG etc) below
+       *    if we do it before the save-as above, then undo it later, it messes up the user's edit history list
+       *    so do it here to tmpfile (tmpfile is fullname unless we're doing a translation to something like OGG)
+       */
+      src_file(tmpfile, srate_ratio(srate, sd));
+    }
 
   if (io_err == IO_NO_ERROR)
     {
@@ -2981,7 +3071,6 @@ static void save_as_dialog_select_callback(Widget w, XtPointer context, XtPointe
   dialog_play_info *dp = (dialog_play_info *)context;
   char *filename = NULL;
   XmString *strs;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNselectedItems, &strs, NULL);
   filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((filename) && (sound_file_p(filename)))
@@ -3999,6 +4088,7 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
       }
 #endif
       /* else fall through */
+
     case FAMDeleted:
     case FAMCreated:
     case FAMMoved:
@@ -4322,10 +4412,12 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      redirect_snd_error_to(redirect_file_open_error, (void *)mdat);
 	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename);
 	      break;
+
 	    case FROM_INSERT_DIALOG:
 	      redirect_snd_error_to(redirect_file_open_error, (void *)idat);
 	      insert_complete_file_at_cursor(any_selected_sound(), rp->filename);
 	      break;
+
 	    case FROM_VIEW_FILES_MIX_DIALOG:
 	      {
 		int err;
@@ -4334,6 +4426,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 		err = vf_mix(vdat);
 	      }
 	      break;
+
 	    case FROM_VIEW_FILES_INSERT_DIALOG:
 	      {
 		int err;
@@ -4342,6 +4435,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 		err = vf_insert(vdat);
 	      }
 	      break;
+
 	    default:
 	      snd_error("wrong requestor type in raw data dialog? %d\n", (int)(rp->requestor));
 	      break;
@@ -5056,7 +5150,6 @@ static void view_files_select_callback(Widget w, XtPointer context, XtPointer in
   static oclock_t mouse_down_time = 0;
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   XButtonEvent *ev;
-  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   ev = (XButtonEvent *)(cb->event);
 
   /* cb->click_count is always 1 so we can't detect a double-click that way
@@ -5083,7 +5176,6 @@ static void view_files_play_callback(Widget w, XtPointer context, XtPointer info
   vf_row *r = (vf_row *)context;
   view_files_info *vdat;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   vdat = (view_files_info *)(r->vdat);
   if (view_files_play(vdat, r->pos, cb->set))
     XmToggleButtonSetState(w, false, false);
@@ -5261,9 +5353,11 @@ static void view_files_drag_watcher(Widget w, const char *str, Position x, Posit
     case DRAG_ENTER:
       XmChangeColor(vdat->file_list, ss->sgx->selection_color);
       break;
+
     case DRAG_LEAVE:
       XmChangeColor(vdat->file_list, ss->sgx->basic_color);
       break;
+
     default:
       break;
     }
@@ -5299,6 +5393,7 @@ mus_long_t vf_location(view_files_info *vdat)
 	  return(CURSOR(cp));
 	}
       break;
+
     case VF_AT_END:
       sp = any_selected_sound();
       if (sp)
@@ -5307,9 +5402,11 @@ mus_long_t vf_location(view_files_info *vdat)
 	  return(CURRENT_SAMPLES(cp));
 	}
       break;
+
     case VF_AT_BEGINNING:
       return(0);
       break;
+
     case VF_AT_MARK:
       str = XmTextGetString(vdat->at_mark_text);
       if ((str) && (*str))
@@ -5321,6 +5418,7 @@ mus_long_t vf_location(view_files_info *vdat)
 	}
       else snd_error_without_format("no mark?");
       break;
+
     case VF_AT_SAMPLE:
       str = XmTextGetString(vdat->at_sample_text);
       if ((str) && (*str))
@@ -5594,7 +5692,7 @@ static void speed_label_click_callback(Widget w, XtPointer context, XtPointer in
 {
   char speed_number_buffer[6];
   view_files_info *vdat = (view_files_info *)context;
-  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
+
   switch (vdat->speed_style)
     {
     default:

@@ -489,6 +489,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+4-Mar:   'src' button in Save-as dialogs to do automatic sampling rate conversion.\n\
 1-Mar:   delete-selection-and-smooth, delete-samples-and-smooth.\n\
 23-Feb:  sync-style variable: sync-none (old default), sync-all, or sync-by-sound (new default).\n\
          Options:Controls menu item, and Edit:Unselect\n\

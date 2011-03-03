@@ -1620,7 +1620,6 @@ static void preferences_save_callback(Widget w, XtPointer context, XtPointer inf
 static void clear_prefs_error(Widget w, XtPointer context, XtPointer info) 
 {
   prefs_info *prf = (prefs_info *)context;
-  ASSERT_WIDGET_TYPE(XmIsLabel(prf->error), prf->error);
   XtRemoveCallback(prf->text, XmNvalueChangedCallback, clear_prefs_error, context);
   set_label(prf->error, "");
 }
@@ -1628,7 +1627,6 @@ static void clear_prefs_error(Widget w, XtPointer context, XtPointer info)
 
 static void post_prefs_error(const char *msg, prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsLabel(prf->error), prf->error);
   prf->got_error = true;
   set_label(prf->error, msg);
   XtAddCallback(prf->text, XmNvalueChangedCallback, clear_prefs_error, (XtPointer)prf);

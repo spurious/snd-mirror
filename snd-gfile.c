@@ -2212,6 +2212,19 @@ static void update_data_format_list(const char *name, int row, void *data)
   fd->current_format = position_to_format(fd->current_type, row);
 }
 
+static void file_data_src_callback(GtkWidget *w, gpointer context)
+{
+  file_data *fd = (file_data *)context;
+  fd->src = (bool)(TOGGLE_BUTTON_ACTIVE(w));
+}
+
+
+static void file_data_auto_comment_callback(GtkWidget *w, gpointer context)
+{
+  file_data *fd = (file_data *)context;
+  fd->auto_comment = (bool)(TOGGLE_BUTTON_ACTIVE(w));
+}
+
 
 static file_data *make_file_data_panel(GtkWidget *parent, const char *name, 
 				       dialog_channels_t with_chan, 
@@ -2235,6 +2248,8 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
     }
 
   fdat = (file_data *)calloc(1, sizeof(file_data));
+  fdat->src = false;
+  fdat->auto_comment = false;
   fdat->current_type = header_type;
   fdat->current_format = data_format;
   formats = type_and_format_to_position(fdat, header_type, data_format);
@@ -2273,13 +2288,24 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 
   /* srate */
   {
-    GtkWidget *srate_label;
+    GtkWidget *srate_label, *src, *src_box;
     srate_label = snd_gtk_highlight_label_new("srate");
     gtk_box_pack_start(GTK_BOX(scbox), srate_label, false, false, 0);
     gtk_widget_show(srate_label);
+
+    src_box = gtk_hbox_new(false, 0);
+    gtk_box_pack_start(GTK_BOX(scbox), src_box, false, false, 0);
+    gtk_widget_show(src_box);
+  
+    fdat->srate_text = snd_entry_new(src_box, WITH_WHITE_BACKGROUND);
+    gtk_entry_set_width_chars(GTK_ENTRY(fdat->srate_text), 8);
+    SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL); /* srate completer */
+
+    src = gtk_check_button_new_with_label("src");
+    gtk_box_pack_end(GTK_BOX(src_box), src, false, false, 4);
+    SG_SIGNAL_CONNECT(src, "toggled", file_data_src_callback, fdat);
+    gtk_widget_show(src);
   }
-  fdat->srate_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
-  SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL); /* srate completer */
 
   /* chans */
   if (with_chan != WITHOUT_CHANNELS_FIELD)
@@ -2325,7 +2351,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   if (with_comment != WITHOUT_COMMENT_FIELD)
     {
       GtkWidget *frame, *comment_label;
-      GtkWidget *w1;
+      GtkWidget *w1, *auto_comment, *cbox;
 
       w1 = gtk_vseparator_new();
       gtk_box_pack_start(GTK_BOX(frame_box), w1, false, false, 4);
@@ -2335,9 +2361,18 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_box_pack_start(GTK_BOX(frame_box), combox, true, true, 4);
       gtk_widget_show(combox);
 
+      cbox = gtk_vbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(combox), cbox, false, false, 0);
+      gtk_widget_show(cbox);
+
       comment_label = snd_gtk_highlight_label_new("comment");
-      gtk_box_pack_start(GTK_BOX(combox), comment_label, false, false, 0);
+      gtk_box_pack_start(GTK_BOX(cbox), comment_label, false, false, 0);
       gtk_widget_show(comment_label);
+
+      auto_comment = gtk_check_button_new_with_label("auto");
+      gtk_box_pack_end(GTK_BOX(cbox), auto_comment, false, false, 4);
+      SG_SIGNAL_CONNECT(auto_comment, "toggled", file_data_auto_comment_callback, fdat);
+      gtk_widget_show(auto_comment);
 
       frame = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(combox), frame, true, true, 4);  
@@ -2476,6 +2511,42 @@ static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
       break;
     }
 #endif
+}
+
+
+static bool srates_differ(int srate, save_as_dialog_info *sd)
+{
+  switch (sd->type)
+    {
+    case SOUND_SAVE_AS:
+      return(SND_SRATE(any_selected_sound()) != srate);
+      
+    case SELECTION_SAVE_AS:
+      return(selection_srate() != srate);
+      
+    case REGION_SAVE_AS:
+      return(region_srate(region_dialog_region()) != srate);
+    }
+
+  return(false);
+}
+
+
+static double srate_ratio(int srate, save_as_dialog_info *sd)
+{
+  switch (sd->type)
+    {
+    case SOUND_SAVE_AS:
+      return((double)(SND_SRATE(any_selected_sound())) / (double)srate);
+      
+    case SELECTION_SAVE_AS:
+      return((double)selection_srate() / (double)srate);
+      
+    case REGION_SAVE_AS:
+      return((double)region_srate(region_dialog_region()) / (double)srate);
+    }
+
+  return(1.0);
 }
 
 
@@ -2658,6 +2729,15 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       tmpfile = fullname;
     }
 
+  /* check for auto comment request */
+  if (sd->panel_data->auto_comment)
+    {
+      /* TODO: if auto_comment, prepend data about the source of the new file
+       */
+      /* comment = make_save_as_comment();
+       */
+    }
+
   redirect_snd_error_to(redirect_post_file_dialog_error, (void *)(sd->panel_data));
   switch (sd->type)
     {
@@ -2693,14 +2773,22 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	      io_err = move_file(ofile, fullname);
 	    free(ofile);
 	  }
-	break;
-
-      default:
-	snd_error("internal screw up");
-	break;
       }
+	break;
     }
   redirect_snd_error_to(NULL, NULL);
+
+  /* check for possible srate conversion */
+  if ((sd->panel_data->src) &&
+      (srates_differ(srate, sd)))
+    {
+      /* if src, and srates differ, do the sampling rate conversion.
+       *    this needs to happen before the snd_encode (->OGG etc) below
+       *    if we do it before the save-as above, then undo it later, it messes up the user's edit history list
+       *    so do it here to tmpfile (tmpfile is fullname unless we're doing a translation to something like OGG)
+       */
+      src_file(tmpfile, srate_ratio(srate, sd));
+    }
 
   if (io_err == IO_NO_ERROR)
     {

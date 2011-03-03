@@ -474,6 +474,8 @@
 #define S_sampler_position              "sampler-position"
 #define S_samples                       "samples"
 #define S_sash_color                    "sash-color"
+#define S_save_as_dialog_src            "save-as-dialog-src"
+#define S_save_as_dialog_auto_comment   "save-as-dialog-auto-comment"
 #define S_save_controls                 "save-controls"
 #define S_save_dir                      "save-dir"
 #define S_save_edit_history             "save-edit-history"

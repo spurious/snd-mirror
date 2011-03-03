@@ -236,7 +236,6 @@ void set_transform_size(mus_long_t val)
 static void size_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   for_each_chan(force_fft_clear);
   in_set_transform_size(transform_sizes[cbs->item_position - 1]);
   for_each_chan_with_mus_long_t(chans_transform_size, transform_size(ss));
@@ -268,7 +267,6 @@ static void wavelet_browse_callback(Widget w, XtPointer context, XtPointer info)
 {
   int val;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   in_set_wavelet_type(val = (cbs->item_position - 1)); /* make these numbers 0-based as in mus.lisp */
   for_each_chan_with_int(chans_wavelet_type, val);
   if (transform_type(ss) == WAVELET)
@@ -325,7 +323,6 @@ static void window_browse_callback(Widget w, XtPointer context, XtPointer info)
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   mus_fft_window_t fft_window_choice;
 
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   fft_window_choice = (mus_fft_window_t)(cbs->item_position - 1); /* make these numbers 0-based as in mus.lisp */
 
   in_set_fft_window(fft_window_choice);
@@ -364,7 +361,6 @@ static void transform_type_browse_callback(Widget w, XtPointer context, XtPointe
 {
   int type;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   type = transform_position_to_type(cbs->item_position - 1);
   for_each_chan(force_fft_clear);
   in_set_transform_type(type);
@@ -435,7 +431,6 @@ void set_transform_graph_type(graph_type_t val)
 static void graph_transform_once_callback(Widget w, XtPointer context, XtPointer info)
 {
   graph_type_t old_type;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   old_type = transform_graph_type(ss);
   XmToggleButtonSetState(normo_button, true, false);
   XmToggleButtonSetState(sono_button, false, false);
@@ -449,7 +444,6 @@ static void graph_transform_once_callback(Widget w, XtPointer context, XtPointer
 static void sonogram_callback(Widget w, XtPointer context, XtPointer info)
 {
   graph_type_t old_type;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   old_type = transform_graph_type(ss);
   XmToggleButtonSetState(sono_button, true, false);
   XmToggleButtonSetState(normo_button, false, false);
@@ -463,7 +457,6 @@ static void sonogram_callback(Widget w, XtPointer context, XtPointer info)
 static void spectrogram_callback(Widget w, XtPointer context, XtPointer info)
 {
   graph_type_t old_type;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   old_type = transform_graph_type(ss);
   XmToggleButtonSetState(spectro_button, true, false);
   XmToggleButtonSetState(normo_button, false, false);
@@ -487,7 +480,6 @@ static void peaks_callback(Widget w, XtPointer context, XtPointer info)
 {
   bool val;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   val = (cb->set);
   in_set_show_transform_peaks(val);
   for_each_chan_with_bool(map_show_transform_peaks, val);
@@ -562,7 +554,6 @@ static void fft_db_callback(Widget w, XtPointer context, XtPointer info)
 {
   bool val;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   val = cb->set;
   in_set_fft_log_magnitude(val);
   graph_redisplay();
@@ -610,7 +601,6 @@ static void logfreq_callback(Widget w, XtPointer context, XtPointer info)
 {
   bool val;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   val = cb->set;
   in_set_fft_log_frequency(val);
   for_each_chan_with_bool(chans_fft_log_frequency, val);
@@ -669,7 +659,6 @@ static void normalize_callback(Widget w, XtPointer context, XtPointer info)
 {
   fft_normalize_t choice;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   choice = (cb->set) ? NORMALIZE_BY_CHANNEL : DONT_NORMALIZE;
   in_set_transform_normalization(choice);
   for_each_chan_with_int(chans_transform_normalization, (int)choice);
@@ -694,7 +683,6 @@ void set_transform_normalization(fft_normalize_t val)
 static void selection_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   in_set_show_selection_transform(cb->set);
   for_each_chan(calculate_fft);
 }
@@ -724,7 +712,6 @@ static void phases_callback(Widget w, XtPointer context, XtPointer info)
 {
   bool val;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   val = cb->set;
   in_set_fft_with_phases(val);
   graph_redisplay();
@@ -749,7 +736,6 @@ static void alpha_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   char alpha_number_buffer[11];
   mus_float_t alpha;
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   
   alpha = (((XmScrollBarCallbackStruct *)info)->value) / 90.0;
   in_set_fft_window_alpha(alpha);
@@ -799,7 +785,6 @@ static void beta_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   char beta_number_buffer[11];
   mus_float_t beta;
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   
   beta = (((XmScrollBarCallbackStruct *)info)->value) / 90.0;
   in_set_fft_window_beta(beta);
@@ -890,7 +875,6 @@ static void start_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   char start_number_buffer[11];
   mus_float_t start;
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   
   start = (((XmScrollBarCallbackStruct *)info)->value) / 90.0;
   mus_snprintf(start_number_buffer, 11, "start:%.3f", start);
@@ -939,7 +923,6 @@ static void end_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   char end_number_buffer[11];
   mus_float_t end;
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
 
   end = (((XmScrollBarCallbackStruct *)info)->value) / 90.0;
   mus_snprintf(end_number_buffer, 11, "end:  %.3f", end);

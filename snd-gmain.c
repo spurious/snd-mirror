@@ -510,7 +510,7 @@ void snd_doit(int argc, char **argv)
   ss->sgx = (state_context *)calloc(1, sizeof(state_context));
   sx = ss->sgx;
   sx->graph_is_active = false;
-  sx->bg_gradient = 0.07;
+  sx->bg_gradient = 0.05;
 
   sx->white =                         WHITE_COLOR;
   sx->black =                         BLACK_COLOR;

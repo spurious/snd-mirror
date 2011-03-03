@@ -440,7 +440,6 @@ static void update_graph_setting_fft_changed(chan_info *cp)
 static void invert_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   in_set_color_inverted(cb->set);
   check_color_hook();
   for_each_chan(update_graph_setting_fft_changed);
@@ -463,7 +462,6 @@ static void scale_color_callback(Widget w, XtPointer context, XtPointer info)
   mus_float_t val;
   int scale_val;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_val = cbs->value;
   if (scale_val <= 50) 
     val = (mus_float_t)(scale_val + 1) / 51.0;
@@ -500,7 +498,6 @@ void set_color_scale(mus_float_t val)
 static void list_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   if (is_colormap(cbs->item_position - 1))
     {
       in_set_color_map(cbs->item_position - 1);
@@ -548,7 +545,6 @@ static void cutoff_color_callback(Widget w, XtPointer context, XtPointer info) /
 {
   /* cutoff point for color chooser */
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   in_set_color_cutoff((mus_float_t)(cbs->value) / 1000.0);
   fscale_set_label("data cutoff", w, color_cutoff(ss));
   check_color_hook();
@@ -654,7 +650,6 @@ static void scale_set_label(const char *orig_label, Widget w, int value, bool de
 static void ax_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("x angle", w, cbs->value, false);
   in_set_spectro_x_angle((mus_float_t)(cbs->value));
   chans_field(FCP_X_ANGLE, (mus_float_t)(cbs->value));
@@ -682,7 +677,6 @@ void set_spectro_x_angle(mus_float_t val)
 static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("y angle", w, cbs->value, false);
   in_set_spectro_y_angle((mus_float_t)(cbs->value));
   chans_field(FCP_Y_ANGLE, (mus_float_t)(cbs->value));
@@ -710,7 +704,6 @@ void set_spectro_y_angle(mus_float_t val)
 static void az_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("z angle", w, cbs->value, false);
   in_set_spectro_z_angle((mus_float_t)(cbs->value));
   chans_field(FCP_Z_ANGLE, (mus_float_t)(cbs->value));
@@ -738,7 +731,6 @@ void set_spectro_z_angle(mus_float_t val)
 static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("x scale", w, cbs->value, true);
   in_set_spectro_x_scale((mus_float_t)(cbs->value) * 0.01);
   chans_field(FCP_X_SCALE, (mus_float_t)(cbs->value) * 0.01);
@@ -767,7 +759,6 @@ void set_spectro_x_scale(mus_float_t val)
 static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("y scale", w, cbs->value, true);
   in_set_spectro_y_scale((mus_float_t)(cbs->value) * 0.01);
   chans_field(FCP_Y_SCALE, (mus_float_t)(cbs->value) * 0.01);
@@ -796,7 +787,6 @@ void set_spectro_y_scale(mus_float_t val)
 static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("z scale", w, cbs->value, true);
   in_set_spectro_z_scale((mus_float_t)(cbs->value) * 0.01);
   chans_field(FCP_Z_SCALE, (mus_float_t)(cbs->value) * 0.01);
@@ -832,7 +822,6 @@ static void hop_orientation_callback(Widget w, XtPointer context, XtPointer info
 {
   int val;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("hop", w, cbs->value, false);
   val = mus_iclamp(1, cbs->value, HOP_MAX);
   in_set_spectro_hop(val);
@@ -911,7 +900,6 @@ void set_with_gl(bool val, bool with_dialogs)
 static void with_gl_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   sgl_save_currents();
   in_set_with_gl(cb->set);
   sgl_set_currents(true);

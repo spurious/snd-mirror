@@ -2810,7 +2810,8 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 		      progress_report(cp, (mus_float_t)((double)total / (double)length));
 		    }
 		  /* this is a dangerous time to check for an event -- if in lock_affected_mixes,
-		   *   the current edit is in progress, so any attempt to display will segfault
+		   *   the current edit is in progress, so any attempt to display will segfault.
+		   * is this still the case?  I think in s7 it is ok.
 		   */
 		}
 	    }

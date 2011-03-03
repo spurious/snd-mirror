@@ -1693,6 +1693,7 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection);
 void cursor_insert(chan_info *cp, mus_long_t beg, mus_long_t count);
 void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int edpos);
 void cut_and_smooth(chan_info *cp);
+void src_file(const char *file, double ratio);
 
 void g_init_sig(void);
 int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos);

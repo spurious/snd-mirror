@@ -42,14 +42,7 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, NOT_ACTIVATABLE_OR_FOCUSED, ACTIVATA
 #define timeout_result_t               XtIntervalId
 #define TIMEOUT_REMOVE(Id)             XtRemoveTimeOut(Id)
 
-#if MUS_DEBUGGING
-  #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr, "%s:[%s %d] %s is wrong type", c__FUNCTION__, __FILE__, __LINE__, XtName(Wid))
-#else
-  #define ASSERT_WIDGET_TYPE(Cond, Wid)
-#endif
-
 #define widget_t Widget
-
 #define widget_is_active(Wid) XtIsManaged(Wid)
 #define activate_widget(Wid) XtManageChild(Wid)
 #define deactivate_widget(Wid) XtUnmanageChild(Wid)
@@ -106,9 +99,10 @@ typedef struct {
 typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDGET, SAMPLES_WIDGET} scanf_widget_t;
 
 typedef struct {
-  Widget header_list, format_list, srate_text, chans_text, comment_text, location_text, samples_text, error_text, dialog, smenu;
+  Widget header_list, format_list, srate_text, chans_text, comment_text, location_text, samples_text, error_text, dialog;
   int current_type, current_format, formats, header_pos, format_pos;
   scanf_widget_t scanf_widget, error_widget;
+  bool src, auto_comment;
 } file_data;
 
 typedef struct {

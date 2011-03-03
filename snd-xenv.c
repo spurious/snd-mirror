@@ -748,7 +748,6 @@ static void print_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void env_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmListCallbackStruct *cb = (XmListCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   select_or_edit_env(cb->item_position - 1);
 }
 
@@ -756,7 +755,6 @@ static void env_browse_callback(Widget w, XtPointer context, XtPointer info)
 static void graph_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   in_set_enved_wave_p(cb->set);
   env_redisplay();
 }
@@ -773,7 +771,6 @@ static void dB_button_callback(Widget w, XtPointer context, XtPointer info)
 static void clip_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   in_set_enved_clip_p(cb->set);
 }
 
@@ -884,7 +881,6 @@ static void reflect_changed_base(mus_float_t val)
 static void base_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScrollBarCallbackStruct *sb = (XmScrollBarCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   base_changed(sb->value);
 }
 
@@ -894,7 +890,6 @@ static int base_last_value = BASE_MID;
 static void base_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScrollBarCallbackStruct *sb = (XmScrollBarCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   base_last_value = sb->value;
   base_changed(sb->value);
 }
@@ -905,7 +900,6 @@ static void base_click_callback(Widget w, XtPointer context, XtPointer info)
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   XButtonEvent *ev;
   int val;
-  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = base_last_value; 
@@ -917,7 +911,6 @@ static void base_click_callback(Widget w, XtPointer context, XtPointer info)
 
 static void FIR_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   FIR_p = (!FIR_p);
   set_label(w, (FIR_p) ? "fir" : "fft");
   if (enved_wave_p(ss)) env_redisplay();

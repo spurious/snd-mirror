@@ -137,7 +137,6 @@ void update_region_browser(bool grf_too)
     {
       regrow *r;
       r = region_row(i);
-      ASSERT_WIDGET_TYPE(XmIsToggleButton(r->pl), r->pl);
       set_button_label(r->nm, rs->name[i]);
       XmToggleButtonSetState(r->pl, false, false);
       XtManageChild(r->rw);

@@ -243,7 +243,6 @@ static void help_browse_callback(Widget w, XtPointer context, XtPointer info)
   /* single-click to select item in "related items" list */
   char *red_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   if ((help_urls) && (help_urls[cbs->item_position - 1]))
     url_to_html_viewer(help_urls[cbs->item_position - 1]);
   else
@@ -272,7 +271,6 @@ static void help_double_click_callback(Widget w, XtPointer context, XtPointer in
   /* double-click item in "related items" list */
   char *red_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   if ((help_urls) && (help_urls[cbs->item_position - 1]))
     url_to_html_viewer(help_urls[cbs->item_position - 1]);
   else

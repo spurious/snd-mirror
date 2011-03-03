@@ -100,7 +100,6 @@ static void mix_speed_click_callback(Widget w, XtPointer context, XtPointer info
 static void mix_speed_label_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char speed_number_buffer[6];
-  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   if (!(mix_is_active(mix_dialog_id))) return;
   switch (xmix_speed_control_style)
     {
@@ -124,7 +123,6 @@ static void mix_speed_drag_callback(Widget w, XtPointer context, XtPointer info)
   mus_float_t speed;
   mus_long_t beg, end;
 
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (!(mix_is_active(mix_dialog_id))) return;
 
   ival = ((XmScrollBarCallbackStruct *)info)->value;
@@ -150,7 +148,6 @@ static void mix_speed_valuechanged_callback(Widget w, XtPointer context, XtPoint
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   mus_float_t speed;
 
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (!(mix_is_active(mix_dialog_id))) return;
   if (dragging)
     stop_dragging(mix_dialog_id);
@@ -210,7 +207,6 @@ static void mix_amp_click_callback(Widget w, XtPointer context, XtPointer info)
 static void mix_amp_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival;
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (!(mix_is_active(mix_dialog_id))) return;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   if (!dragging) 
@@ -226,7 +222,6 @@ static void mix_amp_valuechanged_callback(Widget w, XtPointer context, XtPointer
   int ival;
   if (!(mix_is_active(mix_dialog_id))) return;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (dragging)
     stop_dragging(mix_dialog_id);
   change_mix_amp(mix_dialog_id, scrollbar_to_amp(ival));

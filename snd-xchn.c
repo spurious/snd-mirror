@@ -316,7 +316,6 @@ static void channel_lock_pane(chan_info *cp, int val)
 static void sy_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active == CHANNEL_HAS_AXES)
     sy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
@@ -325,7 +324,6 @@ static void sy_drag_callback(Widget w, XtPointer context, XtPointer info)
 static void sy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active == CHANNEL_HAS_AXES)
     sy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
@@ -334,7 +332,6 @@ static void sy_valuechanged_callback(Widget w, XtPointer context, XtPointer info
 static void sx_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active == CHANNEL_HAS_AXES)
     sx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
@@ -343,7 +340,6 @@ static void sx_drag_callback(Widget w, XtPointer context, XtPointer info)
 static void sx_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active == CHANNEL_HAS_AXES)
     sx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
@@ -370,7 +366,6 @@ static void sx_decrement_callback(Widget w, XtPointer context, XtPointer info)
 static void zy_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active == CHANNEL_HAS_AXES)
     zy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
@@ -379,7 +374,6 @@ static void zy_drag_callback(Widget w, XtPointer context, XtPointer info)
 static void zy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active == CHANNEL_HAS_AXES)
     zy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
@@ -388,7 +382,6 @@ static void zy_valuechanged_callback(Widget w, XtPointer context, XtPointer info
 static void zx_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active == CHANNEL_HAS_AXES)
     zx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
@@ -404,7 +397,6 @@ static void zx_drag_callback(Widget w, XtPointer context, XtPointer info)
 static void gzy_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active == CHANNEL_HAS_AXES)
     gzy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
@@ -413,7 +405,6 @@ static void gzy_drag_callback(Widget w, XtPointer context, XtPointer info)
 static void gsy_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active == CHANNEL_HAS_AXES)
     gsy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
@@ -422,7 +413,6 @@ static void gsy_drag_callback(Widget w, XtPointer context, XtPointer info)
 static void gsy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
-  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active == CHANNEL_HAS_AXES)
     gsy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
@@ -434,7 +424,6 @@ static void f_toggle_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   XButtonEvent *ev;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ev = (XButtonEvent *)(cb->event);
   f_button_callback((chan_info *)context, cb->set, (ev->state & snd_ControlMask));
 }
@@ -444,7 +433,6 @@ static void w_toggle_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   XButtonEvent *ev;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ev = (XButtonEvent *)(cb->event);
   w_button_callback((chan_info *)context, cb->set, (ev->state & snd_ControlMask));
 }
@@ -460,7 +448,6 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   XExposeEvent *ev;
   oclock_t curtime;
 
-  ASSERT_WIDGET_TYPE(XmIsDrawingArea(w), w);
   if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES) || (cp->sound == NULL)) return;
 
   ev = (XExposeEvent *)(cb->event);
@@ -610,7 +597,6 @@ static void history_select_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* undo/redo to reach selected position */
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   edit_history_select((chan_info *)context, cbs->item_position - 1);
 }
 
