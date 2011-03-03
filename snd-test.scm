@@ -612,7 +612,7 @@
 	      (if (not (null? lst))
 		  (begin
 		    (if (not (= (cadr lst) (caddr lst)))
-			(snd-display #__line__ ";~A /= ~A (~A)~%"
+			(snd-display #__line__ ";~A is not ~A (~A)~%"
 				     (car lst) (cadr lst) (caddr lst)))
 		    (test-constants (cdddr lst)))))))
     
@@ -1219,8 +1219,8 @@
 			(if (and (number? (caddr lst))
 				 (not (rational? (caddr lst))))
 			    (if (fneq (cadr lst) (caddr lst))
-				(snd-display #__line__ ";~A /= ~A (~A)" (car lst) (caddr lst) (cadr lst)))
-			    (snd-display #__line__ ";~A /= ~A (~A)" (car lst) (caddr lst) (cadr lst))))
+				(snd-display #__line__ ";~A is not ~A (~A)" (car lst) (caddr lst) (cadr lst)))
+			    (snd-display #__line__ ";~A is not ~A (~A)" (car lst) (caddr lst) (cadr lst))))
 		    (test-defaults (cdddr lst)))))))
     
     (for-each close-sound (sounds)) ; in case others opened elsewhere
@@ -1413,17 +1413,17 @@
 			  (if (file-exists? file)
 			      (begin
 				(if (not (equal? (mus-sound-chans file) (list-ref testf 1)))
-				    (snd-display #__line__ ";~A: chans ~A /= ~A" 
+				    (snd-display #__line__ ";~A: chans ~A is not ~A" 
 						 (list-ref testf 0) 
 						 (mus-sound-chans file) 
 						 (list-ref testf 1)))
 				(if (not (equal? (mus-sound-srate file) (list-ref testf 2)))
-				    (snd-display #__line__ ";~A: srate ~A /= ~A" 
+				    (snd-display #__line__ ";~A: srate ~A is not ~A" 
 						 (list-ref testf 0) 
 						 (mus-sound-srate file) 
 						 (list-ref testf 2)))
 				(if (fneq (mus-sound-duration file) (list-ref testf 3))
-				    (snd-display #__line__ ";~A: duration ~A /= ~A" 
+				    (snd-display #__line__ ";~A: duration ~A is not ~A" 
 						 (list-ref testf 0)
 						 (mus-sound-duration file) 
 						 (list-ref testf 3)))
@@ -1446,12 +1446,12 @@
 						 (mus-sound-samples file)
 						 (* (mus-sound-frames file) (mus-sound-chans file))))
 				(if (not (equal? (mus-header-type-name (mus-sound-header-type file)) (list-ref testf 4)))
-				    (snd-display #__line__ ";~A: type ~A /= ~A" 
+				    (snd-display #__line__ ";~A: type ~A is not ~A" 
 						 (list-ref testf 0) 
 						 (mus-header-type-name (mus-sound-header-type file))
 						 (list-ref testf 4)))
 				(if (not (equal? (mus-data-format-name (mus-sound-data-format file)) (list-ref testf 5)))
-				    (snd-display #__line__ ";~A: type ~A /= ~A"
+				    (snd-display #__line__ ";~A: type ~A is not ~A"
 						 (list-ref testf 0) 
 						 (mus-data-format-name (mus-sound-data-format file)) 
 						 (list-ref testf 5)))
@@ -1822,8 +1822,8 @@
 				     (not (feql newval nowval))))
 			    (if (and (number? newval) (not (rational? newval)))
 				(if (> (abs (- newval nowval)) .01)
-				    (snd-display #__line__ ";~A /= ~A (~A)" name newval nowval))
-				(snd-display #__line__ ";~A /= ~A (~A)" name newval nowval)))
+				    (snd-display #__line__ ";~A is not ~A (~A)" name newval nowval))
+				(snd-display #__line__ ";~A is not ~A (~A)" name newval nowval)))
 			(setfnc initval)
 			(set! (getfnc) newval)
 			(let ((nowval (getfnc)))
@@ -1832,8 +1832,8 @@
 				       (not (feql newval nowval))))
 			      (if (and (number? newval) (not (rational? newval)))
 				  (if (> (abs (- newval nowval)) .01)
-				      (snd-display #__line__ ";set! ~A /= ~A (~A)" name newval nowval))
-				  (snd-display #__line__ ";set! ~A /= ~A (~A)" name newval nowval)))
+				      (snd-display #__line__ ";set! ~A is not ~A (~A)" name newval nowval))
+				  (snd-display #__line__ ";set! ~A is not ~A (~A)" name newval nowval)))
 			  (setfnc initval))
 			(test-vars (cdr lst))))))))
       (test-vars 
@@ -2056,16 +2056,16 @@
     (set! (window-width) 300)
     (set! (window-height) 300)
     (if (not (equal? (window-width) 300))
-	(snd-display #__line__ ";window width: ~A /= 300?" (window-width)))
+	(snd-display #__line__ ";window width: ~A is not 300?" (window-width)))
     (if (not (equal? (window-height) 300))
-	(snd-display #__line__ ";window height: ~A /= 300?" (window-height)))
-    (set! (window-x) 123)
-    (set! (window-y) 321)
-    (if (not (equal? (window-x) 123))
-	(snd-display #__line__ ";window x: ~A /= 123?" (window-x)))
-    (if (not (equal? (window-y) 321))
-	(snd-display #__line__ ";window y: ~A /= 321?" (window-y)))
-    (set! (window-y) 10) ; get it back out of harm's way
+	(snd-display #__line__ ";window height: ~A is not 300?" (window-height)))
+;    (set! (window-x) 123)
+;    (set! (window-y) 321)
+;    (if (not (equal? (window-x) 123))
+;	(snd-display #__line__ ";window x: ~A is not 123?" (window-x)))
+;    (if (not (equal? (window-y) 321))
+;	(snd-display #__line__ ";window y: ~A is not 321?" (window-y)))
+;    (set! (window-y) 10) ; get it back out of harm's way
     (set! (color-scale) 100.0)
     (if (fneq (color-scale) 100.0) (snd-display #__line__ ";color-scale to 100: ~A" (color-scale)))
     
@@ -9237,30 +9237,39 @@ EDITS: 5
 	
 	(catch #t
 	       (lambda ()
-		 (if (not (string=? (x-axis-label) "time")) (snd-display #__line__ ";def time x-axis-label: ~A" (x-axis-label)))
+		 (if (not (string=? (x-axis-label) "time")) 
+		     (snd-display #__line__ ";def time x-axis-label: ~A" (x-axis-label)))
 		 (set! (x-axis-label index 0 time-graph) "no time")
-		 (if (not (string=? (x-axis-label) "no time")) (snd-display #__line__ ";time x-axis-label: ~A" (x-axis-label index 0 time-graph)))
+		 (if (not (string=? (x-axis-label) "no time")) 
+		     (snd-display #__line__ ";time x-axis-label: ~A" (x-axis-label index 0 time-graph)))
 		 
 		 (update-transform-graph)
-		 (if (not (string=? (x-axis-label index 0 transform-graph) "frequency")) (snd-display #__line__ ";get fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+		 (if (not (string=? (x-axis-label index 0 transform-graph) "frequency")) 
+		     (snd-display #__line__ ";get fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
 		 (set! (x-axis-label index 0 transform-graph) "hiho")
 		 (update-transform-graph)
-		 (if (not (string=? (x-axis-label index 0 transform-graph) "hiho")) (snd-display #__line__ ";set set fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+		 (if (not (string=? (x-axis-label index 0 transform-graph) "hiho")) 
+		     (snd-display #__line__ ";set set fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
 		 (set! (x-axis-label index 0 transform-graph) "frequency") ; for later test
 		 
 		 (graph '(0 0 1 1 2 0) "lisp")
 		 (update-lisp-graph)
-		 (if (not (string=? (x-axis-label index 0 lisp-graph) "lisp")) (snd-display #__line__ ";def lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
+		 (if (not (string=? (x-axis-label index 0 lisp-graph) "lisp")) 
+		     (snd-display #__line__ ";def lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
 		 (set! (x-axis-label index 0 lisp-graph) "no lisp")
-		 (if (not (string=? (x-axis-label index 0 lisp-graph) "no lisp")) (snd-display #__line__ ";lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
+		 (if (not (string=? (x-axis-label index 0 lisp-graph) "no lisp")) 
+		     (snd-display #__line__ ";lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
 		 
 		 (set! (y-axis-label index 0 time-graph) "no amp")
-		 (if (not (string=? (y-axis-label) "no amp")) (snd-display #__line__ ";time y-axis-label: ~A" (y-axis-label index 0 time-graph)))
+		 (if (not (string=? (y-axis-label) "no amp"))
+		     (snd-display #__line__ ";time y-axis-label: ~A" (y-axis-label index 0 time-graph)))
 		 (set! (y-axis-label index 0 lisp-graph) "no lamp")
-		 (if (not (string=? (y-axis-label index 0 lisp-graph) "no lamp")) (snd-display #__line__ ";lisp y-axis-label: ~A" (y-axis-label index 0 lisp-graph)))
+		 (if (not (string=? (y-axis-label index 0 lisp-graph) "no lamp")) 
+		     (snd-display #__line__ ";lisp y-axis-label: ~A" (y-axis-label index 0 lisp-graph)))
 		 (set! (y-axis-label) #f)
 		 (set! (y-axis-label index 0) "no amp")
-		 (if (not (string=? (y-axis-label) "no amp")) (snd-display #__line__ ";time y-axis-label (time): ~A" (y-axis-label index 0 time-graph)))
+		 (if (not (string=? (y-axis-label) "no amp")) 
+		     (snd-display #__line__ ";time y-axis-label (time): ~A" (y-axis-label index 0 time-graph)))
 		 (set! (y-axis-label index) #f))
 	       (lambda args (snd-display #__line__ ";axis label error: ~A" args)))
 	
@@ -9412,7 +9421,7 @@ EDITS: 5
 	(if (and (or (fneq (car bnds) 0.0) (fneq (cadr bnds) 0.1)) 
 		 (or (fneq (car bnds) 0.0) (fneq (cadr bnds) 2.305))) ; open-hook from ~/.snd*
 	    (snd-display #__line__ ";x-bounds: ~A?" bnds))
-	(if (not (equal? (find-sound "oboe.snd") index)) (snd-display #__line__ ";oboe: index ~D /= ~D?" (find-sound "oboe.snd") index))
+	(if (not (equal? (find-sound "oboe.snd") index)) (snd-display #__line__ ";oboe: index ~D is not ~D?" (find-sound "oboe.snd") index))
 	(if (not (sound? index)) (snd-display #__line__ ";oboe: ~D not ok?" index))
 	(if (not (= (chans index) 1)) (snd-display #__line__ ";oboe: chans ~D?" (chans index)))
 	(if (not (= (channels index) 1)) (snd-display #__line__ ";oboe: channels ~D?" (channels index)))
@@ -14686,10 +14695,10 @@ EDITS: 2
 			(if (not (color? initval)) (snd-display #__line__ ";~A not color?" initval))
 			;; we'll get warnings here if the cell chosen didn't exactly match the one requested -- not a bug
 			;; (if (not (equal? (getfnc) initval))
-			;;	  (snd-display #__line__ ";~A /= ~A (~A)?" name initval (getfnc)))
+			;;	  (snd-display #__line__ ";~A is not ~A (~A)?" name initval (getfnc)))
 			(setfnc beige)
 			(if (not (equal? (getfnc) beige))
-			    (snd-display #__line__ ";set-~A /= beige (~A)?" name (getfnc)))
+			    (snd-display #__line__ ";set-~A is not beige (~A)?" name (getfnc)))
 			(setfnc initval)
 			(test-color (cdr lst)))))))
 	
@@ -20435,7 +20444,7 @@ EDITS: 2
 	(if (not (equal? (frame->list fr1) (list 1.0 1.25))) (snd-display #__line__ ";frame->list: ~A?" (frame->list fr1)))
 	(if (or (fneq (mixer-ref mx2 0 1) .25) (fneq (mixer-ref mx2 1 0) .125)) (snd-display #__line__ ";mixer*: ~A?" mx2))
 	(if (not (equal? mx2 gen)) (snd-display #__line__ ";mixer=? ~A ~A?" gen mx2))
-	(if (equal? mx2 mx1) (snd-display #__line__ ";mixer/=? ~A ~A?" mx1 mx2))
+	(if (equal? mx2 mx1) (snd-display #__line__ ";mixeris not? ~A ~A?" mx1 mx2))
 	;; mus-data doesn't apply from scheme level here
 					;(if (not (vct? (mus-data fr4))) (snd-display #__line__ ";mus-data frame: ~A" (mus-data fr4)))
 					;(if (not (vct? (mus-data mx1))) (snd-display #__line__ ";mus-data mixer: ~A" (mus-data mx1)))
@@ -22201,7 +22210,7 @@ EDITS: 2
 	  ((= i 10))
 	(let ((val0 (polyshape gen0 1.0 0.0))
 	      (val (polyshape gen 1.0 0.0)))
-	  (if (fneq val val0) (snd-display #__line__ ";polyshape: ~A /= ~F?" val val0))
+	  (if (fneq val val0) (snd-display #__line__ ";polyshape: ~A is not ~F?" val val0))
 	  (vct-set! v0 i val)))
       (vct-map! v1 (lambda () (if (polyshape? gen1) (polyshape gen1 1.0 0.0) -1.0)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map polyshape: ~A ~A" v0 v1))
@@ -22405,7 +22414,7 @@ EDITS: 2
 	  ((= i 10))
 	(let ((val0 (polywave gen0 0.0))
 	      (val (polywave gen 0.0)))
-	  (if (fneq val val0) (snd-display #__line__ ";polywave: ~A /= ~F?" val val0))
+	  (if (fneq val val0) (snd-display #__line__ ";polywave: ~A is not ~F?" val val0))
 	  (vct-set! v0 i val)))
       (vct-map! v1 (lambda () (if (polywave? gen1) (polywave gen1 0.0) -1.0)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map polywave: ~A ~A" v0 v1))
@@ -25813,7 +25822,7 @@ EDITS: 2
       
       (convolve-files "oboe.snd" "fyow.snd" .5 "fmv.snd")
       (if (fneq (cadr (mus-sound-maxamp "fmv.snd")) .5) 
-	  (snd-display #__line__ ";convolve-files: ~A /= .5?" (cadr (mus-sound-maxamp "fmv.snd"))))
+	  (snd-display #__line__ ";convolve-files: ~A is not .5?" (cadr (mus-sound-maxamp "fmv.snd"))))
       (play-sound-1 "fmv.snd"))
     
     (let* ((fd (mus-sound-open-input "oboe.snd"))
@@ -32431,14 +32440,14 @@ EDITS: 2
 	      (if (and (not (= cl curloc))
 		       (> (frames curfd 0) curloc))
 		  (begin
-		    (snd-display #__line__ ";cursor ~A /= ~A (frames: ~A)?" cl curloc (frames curfd 0))
+		    (snd-display #__line__ ";cursor ~A is not ~A (frames: ~A)?" cl curloc (frames curfd 0))
 		    (set! curloc (cursor curfd 0)))))
 	    (if (>= curloc (frames curfd 0)) (set! curloc 0))
 	    (let* ((id (catch #t (lambda () (add-mark curloc curfd)) (lambda args -1))))
 	      (if (and (number? id) (not (= id -1)))
 		  (let* ((cl (mark-sample id))
 			 (new-marks (length (marks curfd 0))))
-		    (if (not (= cl curloc)) (snd-display #__line__ ";mark ~A /= ~A?" cl curloc))
+		    (if (not (= cl curloc)) (snd-display #__line__ ";mark ~A is not ~A?" cl curloc))
 		    (if (not (= new-marks (+ 1 old-marks))) (snd-display #__line__ ";marks ~A ~A?" new-marks old-marks))
 		    (let ((new-id (find-mark curloc curfd)))
 		      (if (or (not (mark? new-id))
@@ -32453,7 +32462,7 @@ EDITS: 2
 		    (if (not (string=? (mark-name id) "hiho")) (snd-display #__line__ ";mark name: ~A?" (mark-name id)))
 		    (set! (mark-sample id) (max 0 (- curloc 100)))
 		    (set! cl (mark-sample id))
-		    (if (not (= cl (max 0 (- curloc 100)))) (snd-display #__line__ ";set mark ~A /= ~A?" cl curloc))
+		    (if (not (= cl (max 0 (- curloc 100)))) (snd-display #__line__ ";set mark ~A is not ~A?" cl curloc))
 		    (delete-mark id)))
 	      (if (> (duration curfd) 1.2) (set! (x-bounds curfd) '(1.0 1.1)))
 	      (if (> (frames curfd) 25)

@@ -429,7 +429,7 @@ static gboolean clock_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data
     {
       if (cp->cgx->progress_pct >= 0.0)
 	show_happy_face(sound_pix_wn(cp), cp->cgx->progress_pct);
-      else hide_happy_face(sound_pix_wn(cp));
+      else draw_picture(sp->sgx->clock_pix_ax[cp->chan], blank, 0, 0, 0, 0, 16, 16);
     }
   return(false);
 }

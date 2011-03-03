@@ -4144,6 +4144,7 @@ static XEN g_smooth_selection(void)
 static void cut_and_smooth_1(chan_info *cp, mus_long_t beg, mus_long_t end, bool over_selection)
 {
   #define SPLICE_LEN 32
+  /* making this 128 is not a big improvement */
   mus_long_t frames, start;
   mus_sample_t splice[2 * SPLICE_LEN];
   double ramp, incr;

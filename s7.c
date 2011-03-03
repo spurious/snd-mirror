@@ -973,6 +973,8 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define hook_functions(p)             (p)->object.hook.functions
 #define hook_documentation(p)         (p)->object.hook.documentation
 
+#define raw_pointer(p)                (p)->object.c_pointer
+
 
 #define NUM_INT      0
 #define NUM_RATIO    1
@@ -3209,7 +3211,7 @@ void *s7_c_pointer(s7_pointer p)
       return(NULL);
     }
 
-  return(p->object.c_pointer);
+  return(raw_pointer(p));
 }
 
 
@@ -3218,7 +3220,7 @@ s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
   s7_pointer x;
   NEW_CELL(sc, x);
   set_type(x, T_C_POINTER | T_SIMPLE | T_DONT_COPY);
-  x->object.c_pointer = ptr;
+  raw_pointer(x) = ptr;
   return(x);
 }
 
@@ -12292,7 +12294,12 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       return(copy_string(c_macro_name(obj)));
   
     case T_C_POINTER:
-      return(copy_string("#<c_pointer>"));
+      {
+	char *str;
+	str = calloc(32, sizeof(char));
+	snprintf(str, 32, "#<c_pointer %p>", raw_pointer(obj));
+	return(str);
+      }
   
     case T_CONTINUATION:
       return(copy_string("#<continuation>"));
@@ -18155,6 +18162,9 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
 
     case T_HOOK:
       return(hooks_are_equal(sc, x, y));
+
+    case T_C_POINTER:       /* might have a list of these for example */
+      return(raw_pointer(x) == raw_pointer(y));
     }
 
   return(false); /* we already checked that x != y (port etc) */
@@ -18270,6 +18280,9 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 
     case T_HOOK:
       return(hooks_are_equal(sc, x, y));
+
+    case T_C_POINTER:
+      return(raw_pointer(x) == raw_pointer(y));
     }
 
   return(false); /* we already checked that x != y (port etc) */

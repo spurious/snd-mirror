@@ -1178,21 +1178,16 @@ char *slist_selection(slist *lst)
 
 
 /* TODO: gtk troubles:
- *   toolbar is spread out
+ *   gtk3 toolbar is spread out
  *   do meters work in rec?  in Motif they're drawn incorrectly
- *
- *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
- *     try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
- *
  *   sep chans, syncd marks don't move together
  *   superimposed chans flicker a lot
  *   hide controls + listener doesn't
  *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
- *   adding invalidate rect got the dialog back but hangs the system! 
- *   Now Xorg is taking up 91% of memory!
  *   need some way to offer src if save-as and srates differ
- *   the menu background blends into the Snd background -- it should stand out more
+ *     also save-as should make a comment as an edit-blog if requested 
+ *     in boh g/m the comment field does not expand -- this could be a bother
  *   sash colors should be green but I can't find any way to set this in gtk3!
  *   Also, someone is setting squelch?  
  *   if pointer focus, movement out of dialog and into graph does not raise graph
@@ -1206,14 +1201,14 @@ char *slist_selection(slist *lst)
  *     this is in graph->ps
  *     perhaps all of snd-print.c is now motif-specific, and we should use
  *     snd-gprint with GTK_PRINT_OPERATION_ACTION_PRINT and it says only pdf? gtk_print_operation_set_export_filename ()
- *
- *  in the SND_PNG_ICONS
- *     in gtk3, there's still the wrong-color rectangle off to the right [clock_pix(sp)]
- *       actually the problem here is that every other widget has the wrong color
+ *     [this is currently disabled in gtk3]
  *
  *  could insert-selection-and-smooth be done sensibly -> insert at cursor in currently selected chan,
  *    then follow the sync chains until one runs out?
  *    also there are 0..2 splices to smooth here with selection/original swapping roles
+ *
+ *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
+ *     try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
  *
  * requested: popup entry for looped-play, better ladspa stuff, zoomed fft, space=play
  * bugs: play choppy if graphics
