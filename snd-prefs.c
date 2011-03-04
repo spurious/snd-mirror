@@ -1314,6 +1314,11 @@ static void ladspa_dir_text(prefs_info *prf)
     }
   else set_ladspa_dir(mus_strdup(DEFAULT_LADSPA_DIR));
 }
+
+static const char *help_ladspa_dir(prefs_info *prf)
+{
+  return("This sets the location of the ladspa libraries");
+}
 #endif
 
 

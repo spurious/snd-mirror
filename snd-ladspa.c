@@ -271,8 +271,7 @@ static void loadLADSPA(void) {
     {
       pcLADSPAPath = getenv("LADSPA_PATH");
       if (pcLADSPAPath == NULL) {
-       snd_warning("Warning: You have not set "S_ladspa_dir " or the environment variable LADSPA_PATH.\n" 
-                      "Using /usr/lib/ladspa instead.")); 
+	snd_warning("Warning: You have not set " S_ladspa_dir " or the environment variable LADSPA_PATH.\nUsing /usr/lib/ladspa instead."); 
         pcLADSPAPath = "/usr/lib/ladspa"; 
       }
     }

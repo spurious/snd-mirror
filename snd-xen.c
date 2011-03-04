@@ -2784,7 +2784,7 @@ void g_xen_initialize(void)
 
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
-  (add-hook! "S_print_hook "\n\
+  (add-hook! " S_print_hook "\n\
     (lambda (msg) \n\
       (" S_snd_print "\n\
         (format #f \"~A~%[~A]~%~A\" \n\
