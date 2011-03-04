@@ -1186,10 +1186,7 @@ char *slist_selection(slist *lst)
  *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *
- *   finish save-as-dialog-src (need test/reflection)
- *     also save-as should make a comment as an edit-blog if requested: save-as-dialog-auto-comment
- *     in both g/m the comment field does not expand -- this could be a bother
- *     in Motif, why doesn't the select color work?
+ *   save-as-dialog-auto-comment
  *
  *   icons in file dialog previous files lists
  *   update the dialog help strings, add tooltips?
@@ -1218,6 +1215,9 @@ char *slist_selection(slist *lst)
  *
  * requested: popup entry for looped-play, better ladspa stuff, zoomed fft, space=play
  * bugs: play choppy if graphics
+ *
+ * :(snd-help print-hook)
+ * ;help argument, #<hook>, is hook but should be a procedure -- need to override s7's help
  */
 
 

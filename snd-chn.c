@@ -8905,7 +8905,8 @@ WITH_THREE_SETTER_ARGS(g_set_channel_properties_reversed, g_set_channel_properti
 
 static XEN g_channel_property(XEN key, XEN snd, XEN chn) 
 {
-  #define H_channel_property "(" S_channel_property " key snd chn) returns the value associated with 'key' in the given channel's property list, or #f"
+  #define H_channel_property "(" S_channel_property " key snd chn) returns the value associated with 'key' in \
+the given channel's property list, or " PROC_FALSE "."
   return(XEN_ASSOC_REF(key, g_channel_properties(snd, chn)));
 }
 
@@ -8971,7 +8972,8 @@ WITH_FOUR_SETTER_ARGS(g_set_edit_properties_reversed, g_set_edit_properties)
 
 static XEN g_edit_property(XEN key, XEN snd, XEN chn, XEN pos) 
 {
-  #define H_edit_property "(" S_edit_property " key snd chn pos) returns the value associated with 'key' in the given edit's property list, or #f"
+  #define H_edit_property "(" S_edit_property " key snd chn pos) returns the value associated with 'key' in the \
+given edit's property list, or " PROC_FALSE "."
   return(XEN_ASSOC_REF(key, g_edit_properties(snd, chn, pos)));
 }
 

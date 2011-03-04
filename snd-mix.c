@@ -3306,7 +3306,7 @@ static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, X
 {
   #define H_mix "(" S_mix " file :optional (beg 0) (in-chan 0) snd chn (with-tag " S_with_mix_tags ") auto-delete): \
 mix channel in-chan of file into snd's channel chn starting at beg (in the output), returning a list of the new mixes.  \
-If in-chan is #t, all input channels are mixed into successive channels of snd, starting at chn. \
+If in-chan is " PROC_TRUE ", all input channels are mixed into successive channels of snd, starting at chn. \
 if with-tag is " PROC_FALSE ", no draggable tag is created.  If \
 auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer needed."
 
@@ -3333,7 +3333,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(file_chn), file_chn, XEN_ARG_3, S_mix, "an integer or #t");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(file_chn), file_chn, XEN_ARG_3, S_mix, "an integer or " PROC_TRUE);
   ASSERT_CHANNEL(S_mix, snd_n, chn_n, 4);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(tag), tag, XEN_ARG_6, S_mix, "a boolean");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_mix, "a boolean or an integer");

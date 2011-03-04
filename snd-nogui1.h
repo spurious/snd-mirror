@@ -255,6 +255,9 @@ widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
 void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
+void reflect_save_as_src(bool val);
+void reflect_save_as_auto_comment(bool val);
+
 
 
 /* -------- snd-xenv.c -------- */

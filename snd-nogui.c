@@ -17,6 +17,8 @@ int help_text_width(const char *txt, int start, int end) {return(0);}
 widget_t post_it(const char *subject, const char *str) {fprintf(stdout, "%s", str); return(0);}
 void save_post_it_dialog_state(FILE *fd) {}
 void reflect_just_sounds(void) {}
+void reflect_save_as_src(bool val) {}
+void reflect_save_as_auto_comment(bool val) {}
 void save_file_dialog_state(FILE *fd) {}
 void draw_line(graphics_context *ax, int x0, int y0, int x1, int y1) {}
 void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height) {}

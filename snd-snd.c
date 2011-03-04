@@ -3813,7 +3813,8 @@ WITH_TWO_SETTER_ARGS(g_set_sound_properties_reversed, g_set_sound_properties)
 
 static XEN g_sound_property(XEN key, XEN snd) 
 {
-  #define H_sound_property "(" S_sound_property " key snd) returns the value associated with 'key' in the given sound's property list, or #f"
+  #define H_sound_property "(" S_sound_property " key snd) returns the value associated with 'key' in the given sound's\
+property list, or " PROC_FALSE "."
   return(XEN_ASSOC_REF(key, g_sound_properties(snd)));
 }
 

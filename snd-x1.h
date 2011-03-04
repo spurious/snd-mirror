@@ -399,6 +399,8 @@ void save_post_it_dialog_state(FILE *fd);
 void reflect_region_in_save_as_dialog(void);
 void save_edits_now(snd_info *sp);
 void unpost_unsaved_edits_if_any(snd_info *sp);
+void reflect_save_as_src(bool val);
+void reflect_save_as_auto_comment(bool val);
 
 
 

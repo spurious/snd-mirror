@@ -2111,6 +2111,7 @@ static void post_file_dialog_error(const char *error_msg, file_data *fd)
   XmString msg;
   msg = XmStringCreateLocalized((char *)error_msg);
   XtVaSetValues(fd->error_text, 
+		XmNbackground, ss->sgx->yellow,
 		XmNlabelString, msg, 
 		NULL);
   XmStringFree(msg);
@@ -2251,10 +2252,11 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 				       dialog_samples_t with_samples,
 				       dialog_header_type_t with_header_type,
 				       dialog_comment_t with_comment,
-				       header_choice_t header_choice)
+				       header_choice_t header_choice,
+				       bool with_src_and_auto_comment)
 {
   Widget form, header_label, data_label, srate_label, chans_label, sep1, sep2 = NULL, sep3, sep4;
-  Widget comment_label = NULL, location_label, samples_label, src_button, auto_comment_button;
+  Widget comment_label = NULL, location_label, samples_label;
   file_data *fdat;
   Arg args[32];
   int i, n;
@@ -2416,22 +2418,32 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, sep3); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+  if (with_src_and_auto_comment)
+    {
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+    }
+  else
+    {
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+    }
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
   fdat->srate_text = make_textfield_widget("srate-text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer, NULL));
 
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, srate_label); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, fdat->srate_text); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
-  src_button = make_togglebutton_widget("src", form, args, n);
-  XtAddCallback(src_button, XmNvalueChangedCallback, file_data_src_callback, (XtPointer)fdat);
-  XmToggleButtonSetState(src_button, fdat->src, false);
+  if (with_src_and_auto_comment)
+    {
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, srate_label); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, fdat->srate_text); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++; /* this is probably clobbered by color_file_selection_box */
+      fdat->src_button = make_togglebutton_widget("src", form, args, n);
+      XtAddCallback(fdat->src_button, XmNvalueChangedCallback, file_data_src_callback, (XtPointer)fdat);
+      XmToggleButtonSetState(fdat->src_button, fdat->src, false);
+    }
 
   if (with_chan != WITHOUT_CHANNELS_FIELD)
     {
@@ -2531,7 +2543,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
     }
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++; /* overridden later -> yellow */
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNborderColor, ss->sgx->black); n++;
@@ -2549,28 +2561,45 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNtopWidget, sep4); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      if (with_src_and_auto_comment)
+	{
+	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+	}
+      else
+	{
+	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+	}
       comment_label = XtCreateManagedWidget("comment", xmLabelWidgetClass, parent, args, n);
 
+      if (with_src_and_auto_comment)
+	{
+	  n = 0;
+	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+	  XtSetArg(args[n], XmNtopWidget, sep4); n++;
+	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
+	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+	  XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
+	  fdat->auto_comment_button = make_togglebutton_widget("auto", parent, args, n);
+	  XtAddCallback(fdat->auto_comment_button, XmNvalueChangedCallback, file_data_auto_comment_callback, (XtPointer)fdat);
+	  XmToggleButtonSetState(fdat->auto_comment_button, fdat->auto_comment, false);
+	}
+
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sep4); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
-      auto_comment_button = make_togglebutton_widget("auto", parent, args, n);
-      XtAddCallback(auto_comment_button, XmNvalueChangedCallback, file_data_auto_comment_callback, (XtPointer)fdat);
-      XmToggleButtonSetState(auto_comment_button, fdat->auto_comment, false);
-  
-      n = 0;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, auto_comment_button); n++;
+      if (with_src_and_auto_comment)
+	{
+	  XtSetArg(args[n], XmNtopWidget, fdat->auto_comment_button); n++;
+	}
+      else
+	{
+	  XtSetArg(args[n], XmNtopWidget, comment_label); n++;
+	}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrows, 2); n++;
+      XtSetArg(args[n], XmNrows, 4); n++;
       /* XtSetArg(args[n], XmNcolumns, 16); n++; */ /* this sets the lower size, so we don't want it too big */
       fdat->comment_text = make_text_widget("comment-text", parent, args, n);
     }
@@ -2623,12 +2652,14 @@ static void unreflect_file_data_panel_change(file_data *fd, void *data, void (*c
 typedef struct {
   file_data *panel_data;
   Widget dialog, filename_widget, extractB, mkdirB;
-  char *filename;
+  char *filename; /* output name (?) */
   save_dialog_t type;
   file_pattern_info *fp;
   dialog_play_info *dp;
   fam_info *file_watcher;
   file_popup_info *fpop;
+  const char *original_filename;
+  bool comment_edited;
 } save_as_dialog_info;
 
 static save_as_dialog_info *save_sound_as = NULL, *save_selection_as = NULL, *save_region_as = NULL;
@@ -2640,6 +2671,91 @@ static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
   sd = (save_as_dialog_info *)calloc(1, sizeof(save_as_dialog_info));
   sd->type = type;
   return(sd);
+}
+
+
+static void make_auto_comment(save_as_dialog_info *sd)
+{
+  if (sd->comment_edited) 
+    {
+      fprintf(stderr, "already edited\n");
+    return;
+    }
+
+    {
+      /* get current comment, prepend new-name and date,
+       *    if header info changes, mention that,
+       *    any edit info if not selection/region
+       *    from: previous comment
+       * also if auto_comment, reflect that in the comment text 
+       */
+#if 0
+      switch (sd->type)
+	{
+	}
+#endif
+    }
+
+#if 0
+  /* sd->panel_data->comment_text */
+
+  if (fdat->comment_text) 
+    {
+      comment = XmTextGetString(fdat->comment_text);
+      if (comment)
+	{
+	  str = mus_strdup(comment);
+	  XtFree(comment);
+	  return(str);
+	}
+    }
+
+  if (fdat->comment_text) 
+    XmTextSetString(fdat->comment_text, comment);
+
+
+#endif
+}
+
+
+static void auto_comment_modify_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
+  save_as_dialog_info *sd = (save_as_dialog_info *)context;
+  cbs->doit = true;
+  sd->comment_edited = true;
+  fprintf(stderr, "edited comment");
+}
+
+
+static void auto_comment_callback(Widget w, XtPointer context, XtPointer info)
+{
+  save_as_dialog_info *sd = (save_as_dialog_info *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  sd->panel_data->auto_comment = (cb->set);
+  make_auto_comment(sd);
+}
+
+
+void reflect_save_as_src(bool val)
+{
+  if (save_sound_as)
+    XmToggleButtonSetState(save_sound_as->panel_data->src_button, val, true);
+  if (save_selection_as)
+    XmToggleButtonSetState(save_selection_as->panel_data->src_button, val, true);
+  if (save_region_as)
+    XmToggleButtonSetState(save_region_as->panel_data->src_button, val, true);
+}
+
+
+void reflect_save_as_auto_comment(bool val)
+{
+  if (save_sound_as)
+    XmToggleButtonSetState(save_sound_as->panel_data->auto_comment_button, val, true);
+  if (save_selection_as)
+    XmToggleButtonSetState(save_sound_as->panel_data->auto_comment_button, val, true);
+  if (save_region_as)
+    XmToggleButtonSetState(save_sound_as->panel_data->auto_comment_button, val, true);
 }
 
 
@@ -2791,6 +2907,10 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       return;
     }
 
+  /* TODO: either change the save-as title when a new sound is selected, or
+   *   save the original sound pointer. [same for other dialogs] [reflect_sound_selection in snd-g|xsnd]
+   * (check error text in gtk)
+   */
   sp = any_selected_sound();
   if ((!sp) && 
       (sd->type != REGION_SAVE_AS))
@@ -2826,6 +2946,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   }
   output_type = type;
   redirect_snd_error_to(NULL, NULL);
+
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
     {
       clear_error_if_panel_changes(sd->dialog, sd->panel_data);
@@ -2952,15 +3073,6 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   else
     {
       tmpfile = fullname;
-    }
-
-  /* check for auto comment request */
-  if (sd->panel_data->auto_comment)
-    {
-      /* TODO: if auto_comment, prepend data about the source of the new file
-       */
-      /* comment = make_save_as_comment();
-       */
     }
 
   redirect_snd_error_to(redirect_post_file_dialog_error, (void *)(sd->panel_data));
@@ -3187,6 +3299,8 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 {
   char *file_string;
 
+  sd->original_filename = sound_name;
+  sd->comment_edited = false;
   if (!(sd->dialog))
     {
       Arg args[32];
@@ -3288,15 +3402,22 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 					    WITHOUT_SAMPLES_FIELD,
 					    WITH_HEADER_TYPE_FIELD, 
 					    WITH_COMMENT_FIELD,
-					    WITH_WRITABLE_HEADERS);
+					    WITH_WRITABLE_HEADERS,
+					    true);
 
       sd->panel_data->dialog = sd->dialog;
 
       color_file_selection_box(sd->dialog);
+
       XtVaSetValues(sd->panel_data->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       XtVaSetValues(sd->panel_data->header_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       XtVaSetValues(sd->fp->just_sounds_button, XmNselectColor, ss->sgx->selection_color, NULL);
       XtVaSetValues(sd->dp->play_button, XmNselectColor, ss->sgx->selection_color, NULL);
+
+      XtVaSetValues(sd->panel_data->src_button, XmNselectColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(sd->panel_data->auto_comment_button, XmNselectColor, ss->sgx->selection_color, NULL);
+      XtAddCallback(sd->panel_data->auto_comment_button, XmNvalueChangedCallback, auto_comment_callback, (XtPointer)sd);
+      XtAddCallback(sd->panel_data->comment_text, XmNmodifyVerifyCallback, auto_comment_modify_callback, (XtPointer)sd);
 
       XtAddCallback(FSB_BOX(sd->dialog, XmDIALOG_LIST),
 		    XmNbrowseSelectionCallback, save_as_dialog_select_callback, (XtPointer)(sd->dp));
@@ -3370,6 +3491,8 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XmStringFree(xmstr2);
       free(file_string);
     }
+
+  make_auto_comment(sd);
 }
 
 
@@ -3862,7 +3985,8 @@ widget_t make_new_file_dialog(bool managed)
 				  WITH_SAMPLES_FIELD,
 				  WITH_HEADER_TYPE_FIELD, 
 				  WITH_COMMENT_FIELD,
-				  WITH_BUILTIN_HEADERS);
+				  WITH_BUILTIN_HEADERS,
+				  false);
       ndat->dialog = new_file_dialog;
       XtManageChild(ndat->error_text);
       XtManageChild(new_file_dialog);
@@ -4229,7 +4353,8 @@ Widget edit_header(snd_info *sp)
 				      WITH_SAMPLES_FIELD,
 				      WITH_HEADER_TYPE_FIELD, 
 				      WITH_COMMENT_FIELD,
-				      WITH_BUILTIN_HEADERS);
+				      WITH_BUILTIN_HEADERS,
+				      false);
       ep->edat->dialog = ep->dialog;
 
       if (hdr->type == MUS_RAW)
@@ -4573,7 +4698,8 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
 				  WITHOUT_SAMPLES_FIELD,
 				  WITHOUT_HEADER_TYPE_FIELD, 
 				  WITHOUT_COMMENT_FIELD,
-				  WITH_READABLE_HEADERS);
+				  WITH_READABLE_HEADERS,
+				  false);
   rp->rdat->dialog = rp->dialog;
 
   set_file_dialog_sound_attributes(rp->rdat, 

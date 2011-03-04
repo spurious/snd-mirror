@@ -5772,6 +5772,7 @@ static XEN g_set_with_menu_icons(XEN val)
 void set_save_as_dialog_src(bool val)
 {
   in_set_save_as_dialog_src(val);
+  reflect_save_as_src(val);
 }
 
 static XEN g_save_as_dialog_src(void) {return(C_TO_XEN_BOOLEAN(save_as_dialog_src(ss)));}
@@ -5788,6 +5789,7 @@ static XEN g_set_save_as_dialog_src(XEN val)
 void set_save_as_dialog_auto_comment(bool val)
 {
   in_set_save_as_dialog_auto_comment(val);
+  reflect_save_as_auto_comment(val);
 }
 
 static XEN g_save_as_dialog_auto_comment(void) {return(C_TO_XEN_BOOLEAN(save_as_dialog_auto_comment(ss)));}

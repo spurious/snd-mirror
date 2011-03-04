@@ -1721,7 +1721,7 @@ reverbs mentioned in the related topics list.  The control panel reverb function
     reverb low pass filter coefficient. (filter in feedback loop).\n\
 \n\
   " S_reverb_control_p " (:optional snd):\n\
-    #t if the reverb button is set (i.e. the reverberator is active).\n\
+    " PROC_TRUE " if the reverb button is set (i.e. the reverberator is active).\n\
       " reverb_control_p_example "\n\
 \n\
   " S_reverb_control_scale " (:optional snd):\n\

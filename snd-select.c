@@ -957,7 +957,7 @@ static xen_selection *xen_selection_make(int n)
 
 static XEN g_selection(void)
 {
-  #define H_selection "(" S_selection" ) returns an object representing the current selection, or #f if there is no active selection"
+  #define H_selection "(" S_selection" ) returns an object representing the current selection, or " PROC_FALSE " if there is no active selection"
   if (selection_is_active())
     {
       xen_selection *mx;
@@ -1329,7 +1329,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
-      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(sel_chan), sel_chan, XEN_ARG_4, S_mix_selection, "an integer or #t");
+      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(sel_chan), sel_chan, XEN_ARG_4, S_mix_selection, "an integer or " PROC_TRUE);
 
       cp = get_cp(snd, chn, S_mix_selection);
       if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
@@ -1425,7 +1425,7 @@ static XEN g_selection_to_mix(void)
 static XEN g_selection_p(XEN sel)
 {
   #define H_selection_p "(" S_selection_p " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
-If 'obj' is passed, " S_selection_p " returns #t if obj is a selection object and there is a current selection."
+If 'obj' is passed, " S_selection_p " returns " PROC_TRUE " if obj is a selection object and there is a current selection."
 
   if ((XEN_BOUND_P(sel)) &&
       (!(xen_selection_p(sel))))

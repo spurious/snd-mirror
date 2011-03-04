@@ -482,6 +482,9 @@ void mouse_enter_label(void *r, int type);
 void mouse_leave_label(void *r, int type);
 void save_edits_now(snd_info *sp);
 void unpost_unsaved_edits_if_any(snd_info *sp);
+void reflect_save_as_src(bool val);
+void reflect_save_as_auto_comment(bool val);
+
 
 
 /* -------- snd-gprint.c -------- */

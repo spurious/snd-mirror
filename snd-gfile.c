@@ -2212,6 +2212,7 @@ static void update_data_format_list(const char *name, int row, void *data)
   fd->current_format = position_to_format(fd->current_type, row);
 }
 
+
 static void file_data_src_callback(GtkWidget *w, gpointer context)
 {
   file_data *fd = (file_data *)context;
@@ -2233,7 +2234,8 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 				       dialog_samples_t with_samples,
 				       dialog_header_type_t with_header_type,
 				       dialog_comment_t with_comment, 
-				       header_choice_t header_choice)
+				       header_choice_t header_choice,
+				       bool with_src_and_auto_comment)
 {
   GtkWidget *form, *scbox, *combox = NULL, *frame, *frame_box;
   file_data *fdat;
@@ -2288,24 +2290,33 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 
   /* srate */
   {
-    GtkWidget *srate_label, *src, *src_box;
+    GtkWidget *srate_label;
     srate_label = snd_gtk_highlight_label_new("srate");
     gtk_box_pack_start(GTK_BOX(scbox), srate_label, false, false, 0);
     gtk_widget_show(srate_label);
 
-    src_box = gtk_hbox_new(false, 0);
-    gtk_box_pack_start(GTK_BOX(scbox), src_box, false, false, 0);
-    gtk_widget_show(src_box);
-  
-    fdat->srate_text = snd_entry_new(src_box, WITH_WHITE_BACKGROUND);
-    gtk_entry_set_width_chars(GTK_ENTRY(fdat->srate_text), 8);
-    SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL); /* srate completer */
-
-    src = gtk_check_button_new_with_label("src");
-    gtk_box_pack_end(GTK_BOX(src_box), src, false, false, 4);
-    SG_SIGNAL_CONNECT(src, "toggled", file_data_src_callback, fdat);
-    gtk_widget_show(src);
-    set_toggle_button(src, fdat->src, false, NULL);
+    if (with_src_and_auto_comment)
+      {
+	GtkWidget *src_box;
+	src_box = gtk_hbox_new(false, 0);
+	gtk_box_pack_start(GTK_BOX(scbox), src_box, false, false, 0);
+	gtk_widget_show(src_box);
+	
+	fdat->srate_text = snd_entry_new(src_box, WITH_WHITE_BACKGROUND);
+	gtk_entry_set_width_chars(GTK_ENTRY(fdat->srate_text), 8);
+	SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL); /* srate completer */
+	
+	fdat->src_button = gtk_check_button_new_with_label("src");
+	gtk_box_pack_end(GTK_BOX(src_box), fdat->src_button, false, false, 4);
+	SG_SIGNAL_CONNECT(fdat->src_button, "toggled", file_data_src_callback, fdat);
+	gtk_widget_show(fdat->src_button);
+	set_toggle_button(fdat->src_button, fdat->src, false, (void *)fdat);
+      }
+    else
+      {
+	fdat->srate_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
+	SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL); /* srate completer */
+      }
   }
 
   /* chans */
@@ -2352,7 +2363,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   if (with_comment != WITHOUT_COMMENT_FIELD)
     {
       GtkWidget *frame, *comment_label;
-      GtkWidget *w1, *auto_comment, *cbox;
+      GtkWidget *w1;
 
       w1 = gtk_vseparator_new();
       gtk_box_pack_start(GTK_BOX(frame_box), w1, false, false, 4);
@@ -2362,19 +2373,29 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_box_pack_start(GTK_BOX(frame_box), combox, true, true, 4);
       gtk_widget_show(combox);
 
-      cbox = gtk_vbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(combox), cbox, false, false, 0);
-      gtk_widget_show(cbox);
-
-      comment_label = snd_gtk_highlight_label_new("comment");
-      gtk_box_pack_start(GTK_BOX(cbox), comment_label, false, false, 0);
-      gtk_widget_show(comment_label);
-
-      auto_comment = gtk_check_button_new_with_label("auto");
-      gtk_box_pack_end(GTK_BOX(cbox), auto_comment, false, false, 4);
-      SG_SIGNAL_CONNECT(auto_comment, "toggled", file_data_auto_comment_callback, fdat);
-      gtk_widget_show(auto_comment);
-      set_toggle_button(auto_comment, fdat->auto_comment, false, NULL);
+      if (with_src_and_auto_comment)
+	{
+	  GtkWidget *cbox;
+	  cbox = gtk_vbox_new(false, 0);
+	  gtk_box_pack_start(GTK_BOX(combox), cbox, false, false, 0);
+	  gtk_widget_show(cbox);
+	  
+	  comment_label = snd_gtk_highlight_label_new("comment");
+	  gtk_box_pack_start(GTK_BOX(cbox), comment_label, false, false, 0);
+	  gtk_widget_show(comment_label);
+	  
+	  fdat->auto_comment_button = gtk_check_button_new_with_label("auto");
+	  gtk_box_pack_end(GTK_BOX(cbox), fdat->auto_comment_button, false, false, 4);
+	  SG_SIGNAL_CONNECT(fdat->auto_comment_button, "toggled", file_data_auto_comment_callback, fdat);
+	  gtk_widget_show(fdat->auto_comment_button);
+	  set_toggle_button(fdat->auto_comment_button, fdat->auto_comment, false, (void *)fdat);
+	}
+      else
+	{
+	  comment_label = snd_gtk_highlight_label_new("comment");
+	  gtk_box_pack_start(GTK_BOX(combox), comment_label, false, false, 0);
+	  gtk_widget_show(comment_label);
+	}
 
       frame = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(combox), frame, true, true, 4);  
@@ -2414,6 +2435,46 @@ static gboolean filename_modify_key_press(GtkWidget *w, GdkEventKey *event, gpoi
   clear_dialog_error(sd->panel_data);
   clear_filename_handlers(sd->fs);
   return(false);
+}
+
+
+void reflect_save_as_src(bool val)
+{
+  if (save_sound_as)
+    {
+      set_toggle_button(save_sound_as->panel_data->src_button, val, false, (void *)save_sound_as);
+      save_sound_as->panel_data->src = val;
+    }
+  if (save_selection_as)
+    {
+      set_toggle_button(save_selection_as->panel_data->src_button, val, false, (void *)save_selection_as);
+      save_selection_as->panel_data->src = val;
+    }
+  if (save_region_as)
+    {
+      set_toggle_button(save_region_as->panel_data->src_button, val, false, (void *)save_region_as);
+      save_region_as->panel_data->src = val;
+    }
+}
+
+
+void reflect_save_as_auto_comment(bool val)
+{
+  if (save_sound_as)
+    {
+      set_toggle_button(save_sound_as->panel_data->auto_comment_button, val, false, (void *)save_sound_as);
+      save_sound_as->panel_data->auto_comment = val;
+    }
+  if (save_selection_as)
+    {
+      set_toggle_button(save_selection_as->panel_data->auto_comment_button, val, false, (void *)save_selection_as);
+      save_selection_as->panel_data->auto_comment = val;
+    }
+  if (save_region_as)
+    {
+      set_toggle_button(save_region_as->panel_data->auto_comment_button, val, false, (void *)save_region_as);
+      save_region_as->panel_data->auto_comment = val;
+    }
 }
 
 
@@ -2934,14 +2995,15 @@ static void save_as_file_exists_check(GtkWidget *w, gpointer context)
 static void save_innards(GtkWidget *vbox, void *data)
 {
   save_as_dialog_info *sd = (save_as_dialog_info *)data;
-      sd->panel_data = make_file_data_panel(vbox, "data-form", 
-					    (sd->type == REGION_SAVE_AS) ? WITHOUT_CHANNELS_FIELD : WITH_EXTRACT_CHANNELS_FIELD, 
-					    sd->header_type, sd->format_type, 
-					    WITHOUT_DATA_LOCATION_FIELD, 
-					    WITHOUT_SAMPLES_FIELD,
-					    WITH_HEADER_TYPE_FIELD, 
-					    WITH_COMMENT_FIELD,
-					    WITH_WRITABLE_HEADERS);
+  sd->panel_data = make_file_data_panel(vbox, "data-form", 
+					(sd->type == REGION_SAVE_AS) ? WITHOUT_CHANNELS_FIELD : WITH_EXTRACT_CHANNELS_FIELD, 
+					sd->header_type, sd->format_type, 
+					WITHOUT_DATA_LOCATION_FIELD, 
+					WITHOUT_SAMPLES_FIELD,
+					WITH_HEADER_TYPE_FIELD, 
+					WITH_COMMENT_FIELD,
+					WITH_WRITABLE_HEADERS,
+					true);
 }
 
 
@@ -3433,7 +3495,8 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 				  WITHOUT_SAMPLES_FIELD,
 				  WITHOUT_HEADER_TYPE_FIELD, 
 				  WITHOUT_COMMENT_FIELD,
-				  WITH_READABLE_HEADERS);
+				  WITH_READABLE_HEADERS,
+				  false);
   rp->rdat->dialog = rp->dialog;
   set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
@@ -3752,7 +3815,8 @@ widget_t make_new_file_dialog(bool managed)
 				  WITH_SAMPLES_FIELD,
 				  WITH_HEADER_TYPE_FIELD, 
 				  WITH_COMMENT_FIELD,
-				  WITH_BUILTIN_HEADERS);
+				  WITH_BUILTIN_HEADERS,
+				  false);
       ndat->dialog = new_file_dialog;
 
       SG_SIGNAL_CONNECT(new_file_dialog, "delete_event", new_file_delete_callback, ndat);
@@ -4076,7 +4140,8 @@ GtkWidget *edit_header(snd_info *sp)
 				      WITH_SAMPLES_FIELD,
 				      WITH_HEADER_TYPE_FIELD, 
 				      WITH_COMMENT_FIELD,
-				      WITH_BUILTIN_HEADERS);
+				      WITH_BUILTIN_HEADERS,
+				      false);
       ep->edat->dialog = ep->dialog;
 
       SG_SIGNAL_CONNECT(ep->dialog, "delete_event", edit_header_delete_callback, ep);

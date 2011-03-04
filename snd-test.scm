@@ -1096,6 +1096,12 @@
     (set! (with-menu-icons) (with-menu-icons))
     (if (not (equal? (with-menu-icons) #f))
 	(snd-display #__line__ ";with-menu-icons set def: ~A" (with-menu-icons)))
+    (set! (save-as-dialog-src) (save-as-dialog-src))
+    (if (not (equal? (save-as-dialog-src) #f))
+	(snd-display #__line__ ";save-as-dialog-src set def: ~A" (save-as-dialog-src)))
+    (set! (save-as-dialog-auto-comment) (save-as-dialog-auto-comment))
+    (if (not (equal? (save-as-dialog-auto-comment) #f))
+	(snd-display #__line__ ";save-as-dialog-auto-comment set def: ~A" (save-as-dialog-auto-comment)))
     (set! (with-pointer-focus) (with-pointer-focus))
     (if (not (equal? (with-pointer-focus)  #f)) 
 	(snd-display #__line__ ";with-pointer-focus set def: ~A" (with-pointer-focus)))
@@ -1335,6 +1341,8 @@
       'reverb-control-scale (without-errors (reverb-control-scale)) 'no-such-sound
       'reverb-control-scale-bounds (cadr (reverb-control-scale-bounds)) 4.0
       'reverb-control? (without-errors (reverb-control?)) 'no-such-sound
+      'save-as-dialog-auto-comment (save-as-dialog-auto-comment) #f
+      'save-as-dialog-src (save-as-dialog-src) #f
       'save-state-file (save-state-file) "saved-snd.scm" 
       'selection-creates-region (selection-creates-region) #t 
       'show-axes (show-axes) 1
@@ -2332,6 +2340,7 @@
 		       'window-width 'window-x 'window-y 'with-background-processes 'with-file-monitor 'with-gl
 		       'with-mix-tags 'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 
 		       'with-inset-graph 'with-pointer-focus 'with-smpte-label 'with-toolbar 'with-tooltips 'with-menu-icons
+		       'save-as-dialog-src 'save-as-dialog-auto-comment
 		       'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats 'x-axis-in-measures
 		       'x-axis-in-samples 'x-axis-in-seconds 'x-axis-label 'x-axis-style 'x-bounds
 		       'x-position-slider 'x-zoom-slider 'xramp-channel 'y->position 'y-axis-label
@@ -61436,7 +61445,7 @@ EDITS: 1
 		     transform->vct transform-frames transform-type trap-segfault with-file-monitor optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
 		     with-verbose-cursor view-sound wavelet-type with-inset-graph with-pointer-focus with-smpte-label
-		     with-toolbar with-tooltips with-menu-icons
+		     with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
@@ -61546,7 +61555,7 @@ EDITS: 1
 			 speed-control-style speed-control-tones squelch-update sync sound-properties sound-property temp-dir text-focus-color tiny-font y-bounds
 			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor 
 			 with-inset-graph with-pointer-focus wavelet-type x-bounds with-smpte-label
-			 with-toolbar with-tooltips with-menu-icons
+			 with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style sync-style
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix beats-per-measure
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
@@ -62361,7 +62370,7 @@ EDITS: 1
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor 
 			    with-inset-graph with-pointer-focus window-height beats-per-measure with-smpte-label
-			    with-toolbar with-tooltips with-menu-icons remember-sound-state
+			    with-toolbar with-tooltips with-menu-icons remember-sound-state save-as-dialog-src save-as-dialog-auto-comment
 			    window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			    mix-tag-width with-relative-panes clm-table-size clm-default-frequency mark-tag-width mark-tag-height
 			    ))
@@ -62774,6 +62783,8 @@ EDITS: 1
 		(check-error-tag 'wrong-type-arg (lambda () (set! (with-toolbar) 123)))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (with-tooltips) 123)))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (with-menu-icons) 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! (save-as-dialog-src) 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! (save-as-dialog-auto-comment) 123)))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (with-smpte-label) 123)))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (ask-about-unsaved-edits) 123)))
 

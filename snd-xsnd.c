@@ -782,8 +782,6 @@ static void filter_button_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-
-
   sp->filter_control_p = cb->set;
 }
 
@@ -3192,13 +3190,19 @@ void start_progress_report(chan_info *cp)
 void reflect_sound_selection(snd_info *sp)
 {
   snd_info *osp = NULL;
-  if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
-  if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
+
+  if (ss->selected_sound != NO_SELECTION) 
+    osp = ss->sounds[ss->selected_sound];
+
+  if ((osp) && 
+      (sp != osp) && 
+      (osp->inuse == SOUND_NORMAL)) 
     {
       XmChangeColor(SND_NAME(osp), ss->sgx->highlight_color);
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	XmChangeColor((osp->sgx)->tab, ss->sgx->graph_color);
     }
+
   if (sp->selected_channel != NO_SELECTION) 
     {
       XmChangeColor(SND_NAME(sp), ss->sgx->white);

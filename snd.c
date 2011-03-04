@@ -470,7 +470,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 void g_init_base(void)
 {
   #define H_mus_error_hook S_mus_error_hook " (error-type error-message):  called upon mus_error. \
-If it returns #t, Snd ignores the error (it assumes you've handled it via the hook)."
+If it returns " PROC_TRUE ", Snd ignores the error (it assumes you've handled it via the hook)."
 
   ss->mus_error_hook = XEN_DEFINE_HOOK(S_mus_error_hook, 2, H_mus_error_hook);       /* arg = error-type error-message */
 }
