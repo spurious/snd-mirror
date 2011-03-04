@@ -19,6 +19,7 @@ typedef struct {
 static bool compare_names(const char *symbol_name, void *data)
 {
   match_info *m = (match_info *)data;
+
   if (strncmp(m->text, symbol_name, m->len) == 0)
     {
       m->matches++;
@@ -44,6 +45,7 @@ static int completions(const char *text)
 {
   match_info *m;
   int matches;
+
   m = (match_info *)calloc(1, sizeof(match_info));
   m->text = text;
   m->len = strlen(text);
@@ -72,15 +74,19 @@ static int completions(const char *text)
 {
   XEN tab;
   int i, n, len, matches = 0;
+
   tab = snd_rb_methods();
   n = XEN_VECTOR_LENGTH(tab);
   len = strlen(text);
+
   for (i = 0; i < n; ++i)
     {
       char *sym;
       XEN handle;
+
       handle = XEN_VECTOR_REF(tab, i);
       sym = XEN_AS_STRING(handle);
+
       if (strncmp(text, sym, len) == 0)
 	{
 	  matches++;
@@ -113,6 +119,7 @@ static int completions(const char *text)
 {
   XEN tab = fth_find_in_wordlist(text);
   int i, matches = XEN_VECTOR_LENGTH(tab);
+
   for (i = 0; i < matches; i++)
     {
       char *sym = XEN_TO_C_STRING(XEN_VECTOR_REF(tab, i));
@@ -183,14 +190,17 @@ char *expression_completer(widget_t w, const char *original_text, void *data)
 
   current_match = NULL;
   set_completion_matches(0);
+
   if ((original_text) && (*original_text))
     {
       const char *text;
+
       len = strlen(original_text);
       for (i = len - 1; i >= 0; i--)
 	if (separator_char_p(original_text[i]))
 	  break;
       beg = i + 1;
+
       if (beg == len) 
 	{
 	  /* returning original = no-op response to <tab> which seems useless;
@@ -201,6 +211,7 @@ char *expression_completer(widget_t w, const char *original_text, void *data)
 	   */
 	  return(mus_strdup(original_text));
 	}
+
       if (beg > 0) 
 	text = (const char *)(original_text + beg);
       else text = original_text;
@@ -267,6 +278,7 @@ void save_completion_choice(const char *selection)
 {
   int i;
   char *cur = NULL, *old = NULL;
+
   cur = mus_strdup(selection);
   for (i = 0; i < BEST_COMPLETIONS; i++)
     {
@@ -331,6 +343,7 @@ int add_completer_func(char *(*func)(widget_t w, const char *text, void *context
   completer_funcs_end++;
   return(completer_funcs_end - 1);
 }
+
 
 int add_completer_func_with_multicompleter(char *(*func)(widget_t w, const char *text, void *context), void *data, void (*multi_func)(widget_t w, void *data))
 {
@@ -443,41 +456,29 @@ static void init_srate_list(void)
 }
 
 
-char *srate_list_to_string(int row)
-{
-  if ((srate_info) &&
-      (srate_info->num_values > row))
-    return(srate_info->values[row]);
-  return(NULL);
-}
-
-
-list_completer_info *srate_list(void)
-{
-  init_srate_list();
-  return(srate_info);
-}
-
-
 void add_srate_to_completion_list(int srate)
 {
   char *str;
   int i;
+
   init_srate_list();
   str = (char *)calloc(16, sizeof(char));
   mus_snprintf(str, 16, "%d", srate);
+
   for (i = 0; i < srate_info->num_values; i++)
     if (mus_strcmp(srate_info->values[i], str))
       {
 	free(str);
 	return;
       }
+
   if (srate_info->num_values >= srate_info->values_size)
     {
       srate_info->values_size += 16;
       srate_info->values = (char **)realloc(srate_info->values, srate_info->values_size * sizeof(char *));
       for (i = srate_info->num_values; i < srate_info->values_size; i++) srate_info->values[i] = NULL;
     }
+
   srate_info->values[srate_info->num_values++] = str;
 }
 
@@ -508,22 +509,27 @@ static char *filename_completer_1(widget_t w, const char *text, int file_type)
   int i, j, k, len, curlen, matches = 0;
   struct dirent *dirp;
   DIR *dpos;
+
   if (mus_strlen(text) == 0) return(NULL);
   full_name = mus_expand_filename(text);
   len = mus_strlen(full_name);
   for (i = len - 1; i > 0; i--)
     if (full_name[i] == '/')
       break;
+
   dir_name = (char *)calloc(i + 1, sizeof(char));
   strncpy(dir_name, full_name, i);
+
   file_name = (char *)calloc(len - i + 2, sizeof(char));
   for (j = 0, k = i + 1; k < len; j++, k++) 
     file_name[j] = full_name[k];
+
   if (full_name) 
     {
       free(full_name); 
       full_name = NULL;
     }
+
   len = mus_strlen(file_name);
   if ((dpos = opendir(dir_name)) != NULL)
     {
@@ -554,9 +560,12 @@ static char *filename_completer_1(widget_t w, const char *text, int file_type)
       if (closedir(dpos) != 0) 
 	snd_error("closedir %s failed (%s)!", dir_name, snd_io_strerror());
     }
+
   if (dir_name) free(dir_name);
   if (file_name) free(file_name);
+
   set_completion_matches(matches);
+
   if ((current_match) && 
       (*current_match))
     {
@@ -676,6 +685,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 {
   int len, i, k, spaces, text_pos = 0, cr_pos = 0;
   char *new_text = NULL, *file_text = NULL, *new_file = NULL;
+
   len = strlen(old_text);
   for (i = len - 1; i > 0; i--)
     {
@@ -697,6 +707,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	  (*try_completion) = false;
 	  return(NULL);
 	}
+
       if (old_text[i] == ';')
 	{
 	  /* this isn't quite right, but how much effort should we put in it? */
@@ -728,6 +739,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	  (*try_completion) = false;
 	  return(NULL);
 	}
+
       if (old_text[i] == '\"')
 	{
 	  file_text = mus_strdup((char *)(old_text + i + 1));
@@ -745,6 +757,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	}
       if (isspace((int)(old_text[i]))) break;
     }
+
   if (new_text == NULL) new_text = expression_completer(NULL_WIDGET, old_text, NULL);
   (*try_completion) = true;
   (*to_file_text) = file_text;
@@ -757,20 +770,24 @@ char *list_completer(widget_t w, const char *text, void *data)
   list_completer_info *info = (list_completer_info *)data;
   int i, j = 0, len, matches = 0, current_match = -1;
   char *trimmed_text;
+
   set_completion_matches(0);
   /* check for null text */
   len = mus_strlen(text);
   if (len == 0) return(mus_strdup(text));
+
   /* strip away leading and trailing white space */
   trimmed_text = (char *)calloc(len + 1, sizeof(char));
   for (i = 0; i < len; i++)
     if (!(isspace(text[i])))
       trimmed_text[j++] = text[i];
+
   if (j == 0)
     {
       free(trimmed_text);
       return(mus_strdup(text));
     }
+
   /* check for match(es) against values */
   if (info->exact_match)
     {
@@ -796,5 +813,6 @@ char *list_completer(widget_t w, const char *text, void *data)
   if (matches != 1)
     return(mus_strdup(text));
   set_completion_matches(1);
+
   return(mus_strdup(info->values[current_match]));
 }

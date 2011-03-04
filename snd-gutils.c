@@ -1186,13 +1186,13 @@ char *slist_selection(slist *lst)
  *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *
- *   finish save-as-dialog-src (need doc/test/reflection/var itself)
+ *   finish save-as-dialog-src (need test/reflection)
  *     also save-as should make a comment as an edit-blog if requested: save-as-dialog-auto-comment
  *     in both g/m the comment field does not expand -- this could be a bother
  *     in Motif, why doesn't the select color work?
  *
  *   icons in file dialog previous files lists
- *   update the doc dialog pix and help strings, add tooltips?
+ *   update the dialog help strings, add tooltips?
  *   sash colors should be green but I can't find any way to set this in gtk3!
  *   Also, someone is setting squelch?  
  *   if pointer focus, movement out of dialog and into graph does not raise graph

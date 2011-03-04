@@ -544,6 +544,14 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define in_set_with_menu_icons(a) ss->With_Menu_Icons = a
 #define DEFAULT_WITH_MENU_ICONS false
 
+#define save_as_dialog_src(ss) ss->Save_As_Dialog_Src
+#define in_set_save_as_dialog_src(a) ss->Save_As_Dialog_Src = a
+#define DEFAULT_SAVE_AS_DIALOG_SRC false
+
+#define save_as_dialog_auto_comment(ss) ss->Save_As_Dialog_Auto_Comment
+#define in_set_save_as_dialog_auto_comment(a) ss->Save_As_Dialog_Auto_Comment = a
+#define DEFAULT_SAVE_AS_DIALOG_AUTO_COMMENT false
+
 #define remember_sound_state(ss) ss->Remember_Sound_State
 #define set_remember_sound_state(a) ss->Remember_Sound_State = a
 #define DEFAULT_REMEMBER_SOUND_STATE false

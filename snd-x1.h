@@ -180,8 +180,6 @@ const char **mini_lock_bits(void);
 const char **close_icon_bits(void);
 const char **snd_icon_bits(void);
 const char **blank_bits(void);
-const char **speed_l_bits(void);
-const char **speed_r_bits(void);
 void make_icons_transparent(const char *basic_color);
 const char **stop_sign_bits(void);
 

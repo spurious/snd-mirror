@@ -450,6 +450,8 @@ static void save_options(FILE *fd)
   if (with_menu_icons(ss) != DEFAULT_WITH_MENU_ICONS) pss_ss(fd, S_with_menu_icons, b2s(with_menu_icons(ss)));
   if (remember_sound_state(ss) != DEFAULT_REMEMBER_SOUND_STATE) pss_ss(fd, S_remember_sound_state, b2s(remember_sound_state(ss)));
   if (ask_about_unsaved_edits(ss) != DEFAULT_ASK_ABOUT_UNSAVED_EDITS) pss_ss(fd, S_ask_about_unsaved_edits, b2s(ask_about_unsaved_edits(ss)));
+  if (save_as_dialog_src(ss) != DEFAULT_SAVE_AS_DIALOG_SRC) pss_ss(fd, S_save_as_dialog_src, b2s(save_as_dialog_src(ss)));
+  if (save_as_dialog_auto_comment(ss) != DEFAULT_SAVE_AS_DIALOG_AUTO_COMMENT) pss_ss(fd, S_save_as_dialog_auto_comment, b2s(save_as_dialog_auto_comment(ss)));
   if (show_full_duration(ss) != DEFAULT_SHOW_FULL_DURATION) pss_ss(fd, S_show_full_duration, b2s(show_full_duration(ss)));
   if (fneq(initial_beg(ss), DEFAULT_INITIAL_BEG)) pss_sf(fd, S_initial_beg, initial_beg(ss));
   if (fneq(initial_dur(ss), DEFAULT_INITIAL_DUR)) pss_sf(fd, S_initial_dur, initial_dur(ss));

@@ -215,7 +215,7 @@ typedef struct {
   GtkWidget *srate_text, *chans_text, *comment_text, *location_text, *samples_text, *error_text, *dialog;
   int current_type, current_format, formats, header_pos, format_pos;
   scanf_widget_t scanf_widget, error_widget;
-  bool extracting, src, auto_comment;
+  bool src, auto_comment;
   gulong *reflection_ids;
   slist *header_list, *format_list;
 } file_data;

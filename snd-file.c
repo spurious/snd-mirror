@@ -5769,6 +5769,38 @@ static XEN g_set_with_menu_icons(XEN val)
 }
 
 
+void set_save_as_dialog_src(bool val)
+{
+  in_set_save_as_dialog_src(val);
+}
+
+static XEN g_save_as_dialog_src(void) {return(C_TO_XEN_BOOLEAN(save_as_dialog_src(ss)));}
+
+static XEN g_set_save_as_dialog_src(XEN val) 
+{
+  #define H_save_as_dialog_src "(" S_save_as_dialog_src "): " PROC_TRUE " if you the 'src' button set by default in the various Save-as dialogs"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_save_as_dialog_src, "a boolean");
+  set_save_as_dialog_src(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(save_as_dialog_src(ss)));
+}
+
+
+void set_save_as_dialog_auto_comment(bool val)
+{
+  in_set_save_as_dialog_auto_comment(val);
+}
+
+static XEN g_save_as_dialog_auto_comment(void) {return(C_TO_XEN_BOOLEAN(save_as_dialog_auto_comment(ss)));}
+
+static XEN g_set_save_as_dialog_auto_comment(XEN val) 
+{
+  #define H_save_as_dialog_auto_comment "(" S_save_as_dialog_auto_comment "): " PROC_TRUE " if you the 'auto' button set by default in the various Save-as dialogs"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_save_as_dialog_auto_comment, "a boolean");
+  set_save_as_dialog_auto_comment(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(save_as_dialog_auto_comment(ss)));
+}
+
+
 static XEN g_remember_sound_state(void) {return(C_TO_XEN_BOOLEAN(remember_sound_state(ss)));}
 
 static XEN g_set_remember_sound_state(XEN val) 
@@ -5894,6 +5926,10 @@ XEN_NARGIFY_0(g_with_tooltips_w, g_with_tooltips)
 XEN_NARGIFY_1(g_set_with_tooltips_w, g_set_with_tooltips)
 XEN_NARGIFY_0(g_with_menu_icons_w, g_with_menu_icons)
 XEN_NARGIFY_1(g_set_with_menu_icons_w, g_set_with_menu_icons)
+XEN_NARGIFY_0(g_save_as_dialog_src_w, g_save_as_dialog_src)
+XEN_NARGIFY_1(g_set_save_as_dialog_src_w, g_set_save_as_dialog_src)
+XEN_NARGIFY_0(g_save_as_dialog_auto_comment_w, g_save_as_dialog_auto_comment)
+XEN_NARGIFY_1(g_set_save_as_dialog_auto_comment_w, g_set_save_as_dialog_auto_comment)
 XEN_NARGIFY_0(g_remember_sound_state_w, g_remember_sound_state)
 XEN_NARGIFY_1(g_set_remember_sound_state_w, g_set_remember_sound_state)
 XEN_NARGIFY_0(g_ask_about_unsaved_edits_w, g_ask_about_unsaved_edits)
@@ -5968,6 +6004,10 @@ XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
 #define g_set_with_tooltips_w g_set_with_tooltips
 #define g_with_menu_icons_w g_with_menu_icons
 #define g_set_with_menu_icons_w g_set_with_menu_icons
+#define g_save_as_dialog_src_w g_save_as_dialog_src
+#define g_set_save_as_dialog_src_w g_set_save_as_dialog_src
+#define g_save_as_dialog_auto_comment_w g_save_as_dialog_auto_comment
+#define g_set_save_as_dialog_auto_comment_w g_set_save_as_dialog_auto_comment
 #define g_remember_sound_state_w g_remember_sound_state
 #define g_set_remember_sound_state_w g_set_remember_sound_state
 #define g_ask_about_unsaved_edits_w g_ask_about_unsaved_edits
@@ -6171,6 +6211,12 @@ files list of the View Files dialog.  If it returns " PROC_TRUE ", the default a
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_menu_icons, g_with_menu_icons_w, H_with_menu_icons,
 				   S_setB S_with_menu_icons, g_set_with_menu_icons_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_as_dialog_src, g_save_as_dialog_src_w, H_save_as_dialog_src,
+				   S_setB S_save_as_dialog_src, g_set_save_as_dialog_src_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_as_dialog_auto_comment, g_save_as_dialog_auto_comment_w, H_save_as_dialog_auto_comment,
+				   S_setB S_save_as_dialog_auto_comment, g_set_save_as_dialog_auto_comment_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_remember_sound_state, g_remember_sound_state_w, H_remember_sound_state,
 				   S_setB S_remember_sound_state, g_set_remember_sound_state_w,  0, 0, 1, 0);

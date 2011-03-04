@@ -149,52 +149,6 @@ static const char *blank_xpm[] = {
 const char **blank_bits(void) {return(blank_xpm);}
 
 
-static const char *speed_l_xpm[] = {
-"16 12 5 1",
-"-      c None s None",
-".	c gray50",
-"X	c black",
-"o	c white",
-"O	c yellow",
-"-----X------------",
-"----X----X--------",
-"---X--------------",
-"--X--------X------",
-"-X----------------",
-"XXXXXXXXXX-X-X----",
-"-X----------------",
-"--X--------X------",
-"---X--------------",
-"----X----X--------",
-"-----X------------",
-"------X-----------"};
-
-const char **speed_l_bits(void) {return(speed_l_xpm);}
-
-
-static const char * speed_r_xpm[] = {
-"16 12 5 1",
-"-      c None s None",
-".	c gray50",
-"X	c black",
-"o	c white",
-"O	c yellow",
-"--------X---------",
-"----X----X--------",
-"----------X-------",
-"--X--------X------",
-"------------X-----",
-"X-X-XXXXXXXXXX----",
-"------------X-----",
-"--X--------X------",
-"----------X-------",
-"----X----X--------",
-"--------X---------",
-"-------X----------"};
-
-const char **speed_r_bits(void) {return(speed_r_xpm);}
-
-
 /* bomb for out-of-date in-core data fuse shortens with sparks flying off; */
 
 static const char * mini_bomb0_xpm[] = {
@@ -2651,8 +2605,6 @@ void make_icons_transparent(const char *color)
   mini_lock_xpm[1] = bg1;
   close_icon_xpm[1] = bg1;
   blank_xpm[1] = bg1;
-  speed_l_xpm[1] = bg1;
-  speed_r_xpm[1] = bg1;
   for (i = 0; i < NUM_BOMBS; i++)
     {
       tmp = mini_bomb_bits(i);

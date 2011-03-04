@@ -437,7 +437,8 @@ typedef struct snd_state {
   mus_long_t Transform_Size;
   mus_fft_window_t Fft_Window;
   graph_type_t Transform_Graph_Type, Time_Graph_Type;
-  bool Ask_Before_Overwrite, Ask_About_Unsaved_Edits, Show_Full_Duration, Remember_Sound_State, With_Toolbar, With_Tooltips, With_Menu_Icons;
+  bool Ask_Before_Overwrite, Ask_About_Unsaved_Edits, Show_Full_Duration, Remember_Sound_State;
+  bool Save_As_Dialog_Src, Save_As_Dialog_Auto_Comment, With_Toolbar, With_Tooltips, With_Menu_Icons;
   mus_float_t Fft_Window_Alpha, Fft_Window_Beta, Grid_Density, Initial_Beg, Initial_Dur;
   mus_float_t Color_Scale, Color_Cutoff, Beats_Per_Minute;
   bool Color_Inverted, Show_Mix_Waveforms;
@@ -697,8 +698,7 @@ char *info_completer(widget_t w, const char *text, void *data);
 char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text);
 bool separator_char_p(char c);
 void add_srate_to_completion_list(int srate);
-list_completer_info *srate_list(void);
-char *srate_list_to_string(int row);
+
 
 
 /* -------- snd-print.c -------- */
@@ -1452,6 +1452,8 @@ void set_with_toolbar_and_display(bool val);
 void g_init_file(void);
 void initialize_format_lists(void);
 void set_with_menu_icons(bool val);
+void set_save_as_dialog_src(bool val);
+void set_save_as_dialog_auto_comment(bool val);
 
 
 

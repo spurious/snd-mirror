@@ -2248,8 +2248,8 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
     }
 
   fdat = (file_data *)calloc(1, sizeof(file_data));
-  fdat->src = false;
-  fdat->auto_comment = false;
+  fdat->src = save_as_dialog_src(ss);
+  fdat->auto_comment = save_as_dialog_auto_comment(ss);
   fdat->current_type = header_type;
   fdat->current_format = data_format;
   formats = type_and_format_to_position(fdat, header_type, data_format);
@@ -2305,6 +2305,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
     gtk_box_pack_end(GTK_BOX(src_box), src, false, false, 4);
     SG_SIGNAL_CONNECT(src, "toggled", file_data_src_callback, fdat);
     gtk_widget_show(src);
+    set_toggle_button(src, fdat->src, false, NULL);
   }
 
   /* chans */
@@ -2373,6 +2374,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_box_pack_end(GTK_BOX(cbox), auto_comment, false, false, 4);
       SG_SIGNAL_CONNECT(auto_comment, "toggled", file_data_auto_comment_callback, fdat);
       gtk_widget_show(auto_comment);
+      set_toggle_button(auto_comment, fdat->auto_comment, false, NULL);
 
       frame = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(combox), frame, true, true, 4);  

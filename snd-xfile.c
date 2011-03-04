@@ -2270,8 +2270,8 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
     }
 
   fdat = (file_data *)calloc(1, sizeof(file_data));
-  fdat->src = false;
-  fdat->auto_comment = false;
+  fdat->src = save_as_dialog_src(ss);
+  fdat->auto_comment = save_as_dialog_auto_comment(ss);
   fdat->current_type = header_type;
   fdat->current_format = data_format;
   formats = type_and_format_to_position(fdat, header_type, data_format);
@@ -2431,7 +2431,8 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
   src_button = make_togglebutton_widget("src", form, args, n);
   XtAddCallback(src_button, XmNvalueChangedCallback, file_data_src_callback, (XtPointer)fdat);
-  
+  XmToggleButtonSetState(src_button, fdat->src, false);
+
   if (with_chan != WITHOUT_CHANNELS_FIELD)
     {
       /* chans */
@@ -2561,6 +2562,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       auto_comment_button = make_togglebutton_widget("auto", parent, args, n);
       XtAddCallback(auto_comment_button, XmNvalueChangedCallback, file_data_auto_comment_callback, (XtPointer)fdat);
+      XmToggleButtonSetState(auto_comment_button, fdat->auto_comment, false);
   
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
