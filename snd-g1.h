@@ -484,6 +484,7 @@ void save_edits_now(snd_info *sp);
 void unpost_unsaved_edits_if_any(snd_info *sp);
 void reflect_save_as_src(bool val);
 void reflect_save_as_auto_comment(bool val);
+void reflect_save_as_sound_selection(const char *sound_name);
 
 
 

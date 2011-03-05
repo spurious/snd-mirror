@@ -19,6 +19,7 @@ void save_post_it_dialog_state(FILE *fd) {}
 void reflect_just_sounds(void) {}
 void reflect_save_as_src(bool val) {}
 void reflect_save_as_auto_comment(bool val) {}
+void reflect_save_as_sound_selection(const char *sound_name) {}
 void save_file_dialog_state(FILE *fd) {}
 void draw_line(graphics_context *ax, int x0, int y0, int x1, int y1) {}
 void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height) {}

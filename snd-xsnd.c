@@ -3189,6 +3189,7 @@ void start_progress_report(chan_info *cp)
 
 void reflect_sound_selection(snd_info *sp)
 {
+  /* sp is the newly selected sound, ss->selected_sound is the previous one */
   snd_info *osp = NULL;
 
   if (ss->selected_sound != NO_SELECTION) 

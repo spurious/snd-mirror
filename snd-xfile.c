@@ -2659,7 +2659,6 @@ typedef struct {
   fam_info *file_watcher;
   file_popup_info *fpop;
   const char *original_filename;
-  bool comment_edited;
 } save_as_dialog_info;
 
 static save_as_dialog_info *save_sound_as = NULL, *save_selection_as = NULL, *save_region_as = NULL;
@@ -2676,55 +2675,61 @@ static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
 
 static void make_auto_comment(save_as_dialog_info *sd)
 {
-  if (sd->comment_edited) 
+  if ((sd == save_sound_as) &&
+      (XtIsManaged(sd->dialog)))
     {
-      fprintf(stderr, "already edited\n");
-    return;
-    }
+      
+      /* TODO: if not auto_comment, set string to NULL (or original?) */
 
-    {
-      /* get current comment, prepend new-name and date,
-       *    if header info changes, mention that,
-       *    any edit info if not selection/region
-       *    from: previous comment
-       * also if auto_comment, reflect that in the comment text 
+      snd_info *sp;
+      bool edits = false;
+      int i;
+      char *original_comment, *comment;
+      sp = any_selected_sound();
+      original_comment = mus_sound_comment(sp->filename);
+
+      for (i = 0; i < sp->nchans; i++)
+	if (sp->chans[i]->edit_ctr != 0)
+	  {
+	    edits = true;
+	    break;
+	  }
+
+      /* PERHAPS: if current comment save it, also remember original comment and append it 
+       *   the function string needs crs and indent and (if >1 chans, chan number)
        */
-#if 0
-      switch (sd->type)
+
+      if (!edits)
+	comment = mus_format("from %s %s (no edits)\n", sp->filename, snd_local_time());
+      else 
 	{
+	  int len;
+	  char **edit_strs;
+	  char *time;
+	  
+	  time = snd_local_time();
+	  len = strlen(sp->filename) + strlen(time) + 32 * sp->nchans;
+	  edit_strs = (char **)malloc(sp->nchans * sizeof(char *));
+
+	  for (i = 0; i < sp->nchans; i++)
+	    {
+	      edit_strs[i] = edit_list_to_function(sp->chans[i], 1, sp->chans[i]->edit_ctr);
+	      len += strlen(edit_strs[i]);
+	    }
+
+	  comment = (char *)calloc(len, sizeof(char));
+	  snprintf(comment, len, "from %s %s with edits:\n", sp->filename, snd_local_time());
+	  for (i = 0; i < sp->nchans; i++)
+	    {
+	      strcat(comment, edit_strs[i]);
+	      if (i < sp->nchans - 1) strcat(comment, "\n----------------\n");
+	    }
 	}
-#endif
+
+      XmTextSetString(sd->panel_data->comment_text, comment);
+      free(original_comment);
+      free(comment);
     }
-
-#if 0
-  /* sd->panel_data->comment_text */
-
-  if (fdat->comment_text) 
-    {
-      comment = XmTextGetString(fdat->comment_text);
-      if (comment)
-	{
-	  str = mus_strdup(comment);
-	  XtFree(comment);
-	  return(str);
-	}
-    }
-
-  if (fdat->comment_text) 
-    XmTextSetString(fdat->comment_text, comment);
-
-
-#endif
-}
-
-
-static void auto_comment_modify_callback(Widget w, XtPointer context, XtPointer info)
-{
-  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  save_as_dialog_info *sd = (save_as_dialog_info *)context;
-  cbs->doit = true;
-  sd->comment_edited = true;
-  fprintf(stderr, "edited comment");
 }
 
 
@@ -2756,6 +2761,32 @@ void reflect_save_as_auto_comment(bool val)
     XmToggleButtonSetState(save_sound_as->panel_data->auto_comment_button, val, true);
   if (save_region_as)
     XmToggleButtonSetState(save_sound_as->panel_data->auto_comment_button, val, true);
+}
+
+
+void reflect_save_as_sound_selection(const char *sound_name)
+{
+  if ((save_sound_as) &&
+      (XtIsManaged(save_sound_as->dialog)))
+    {
+      XmString xmstr2;
+      char *file_string;
+      file_string = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
+      if (sound_name)
+	mus_snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sound_name);
+      else 
+	{
+	  snd_info *sp;
+	  sp = any_selected_sound();
+	  if (sp)
+	    mus_snprintf(file_string, PRINT_BUFFER_SIZE, "save %s", sp->short_filename);
+	  else mus_snprintf(file_string, PRINT_BUFFER_SIZE, "nothing to save!");
+	}
+      xmstr2 = XmStringCreateLocalized(file_string);
+      XtVaSetValues(save_sound_as->dialog, XmNdialogTitle, xmstr2, NULL);
+      XmStringFree(xmstr2);
+      free(file_string);
+    }
 }
 
 
@@ -2907,10 +2938,6 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       return;
     }
 
-  /* TODO: either change the save-as title when a new sound is selected, or
-   *   save the original sound pointer. [same for other dialogs] [reflect_sound_selection in snd-g|xsnd]
-   * (check error text in gtk)
-   */
   sp = any_selected_sound();
   if ((!sp) && 
       (sd->type != REGION_SAVE_AS))
@@ -3300,7 +3327,6 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
   char *file_string;
 
   sd->original_filename = sound_name;
-  sd->comment_edited = false;
   if (!(sd->dialog))
     {
       Arg args[32];
@@ -3417,7 +3443,6 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtVaSetValues(sd->panel_data->src_button, XmNselectColor, ss->sgx->selection_color, NULL);
       XtVaSetValues(sd->panel_data->auto_comment_button, XmNselectColor, ss->sgx->selection_color, NULL);
       XtAddCallback(sd->panel_data->auto_comment_button, XmNvalueChangedCallback, auto_comment_callback, (XtPointer)sd);
-      XtAddCallback(sd->panel_data->comment_text, XmNmodifyVerifyCallback, auto_comment_modify_callback, (XtPointer)sd);
 
       XtAddCallback(FSB_BOX(sd->dialog, XmDIALOG_LIST),
 		    XmNbrowseSelectionCallback, save_as_dialog_select_callback, (XtPointer)(sd->dp));

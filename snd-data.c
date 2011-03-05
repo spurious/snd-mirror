@@ -891,6 +891,7 @@ static void select_sound(snd_info *sp)
       reflect_sound_selection(sp);
       ss->selected_sound = sp->index;
       new_active_channel_alert();
+      reflect_save_as_sound_selection(sp->short_filename);
     }
   sp->selectpos = current_selectpos++;
 

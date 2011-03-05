@@ -1187,9 +1187,10 @@ char *slist_selection(slist *lst)
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *
  *   save-as-dialog-auto-comment
+ *   wherever the dialog title reflects the selected sound, check for changes while running.
  *
  *   icons in file dialog previous files lists
- *   update the dialog help strings, add tooltips?
+ *   update the dialog help strings
  *   sash colors should be green but I can't find any way to set this in gtk3!
  *   Also, someone is setting squelch?  
  *   if pointer focus, movement out of dialog and into graph does not raise graph
@@ -1215,9 +1216,6 @@ char *slist_selection(slist *lst)
  *
  * requested: popup entry for looped-play, better ladspa stuff, zoomed fft, space=play
  * bugs: play choppy if graphics
- *
- * :(snd-help print-hook)
- * ;help argument, #<hook>, is hook but should be a procedure -- need to override s7's help
  */
 
 

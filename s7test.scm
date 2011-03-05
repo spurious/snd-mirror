@@ -18248,11 +18248,12 @@ abs     1       2
   (test (procedure-arity (call/cc (lambda (c) c))) '(0 0 #t))
   
   
-  (for-each
-   (lambda (arg)
-     (test (procedure-documentation arg) 'error)
-     (test (help arg) 'error))
-   (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+  (if (not (provided? 'snd))
+      (for-each
+       (lambda (arg)
+	 (test (procedure-documentation arg) 'error)
+	 (test (help arg) 'error))
+       (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi")))
   
   (test (let ((hi (lambda (x) (+ x 1)))) (procedure-source hi)) '(lambda (x) (+ x 1)))
   (test (procedure-with-setter? symbol-access) #t)

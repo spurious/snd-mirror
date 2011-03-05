@@ -4001,6 +4001,9 @@ XEN_NARGIFY_1(g_autoload_file_w, g_autoload_file)
 void g_init_help(void)
 {
   XEN_DEFINE_PROCEDURE(S_snd_help,    g_listener_help_w,  0, 2, 0, H_snd_help);
+#if HAVE_SCHEME
+  XEN_DEFINE_PROCEDURE("help",        g_listener_help_w,  0, 2, 0, H_snd_help); /* override s7's help */
+#endif
   XEN_DEFINE_PROCEDURE(S_snd_url,     g_snd_url_w,        1, 0, 0, H_snd_url);
   XEN_DEFINE_PROCEDURE(S_snd_urls,    g_snd_urls_w,       0, 0, 0, H_snd_urls);
   XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog);

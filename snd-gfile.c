@@ -2438,6 +2438,27 @@ static gboolean filename_modify_key_press(GtkWidget *w, GdkEventKey *event, gpoi
 }
 
 
+void reflect_save_as_sound_selection(const char *sound_name)
+{
+  if (save_sound_as)
+    {
+      char *file_string;
+      if (sound_name)
+	file_string = mus_format("save %s", sound_name);
+      else
+	{
+	  snd_info *sp;
+	  sp = any_selected_sound();
+	  if (sp)
+	    file_string = mus_format("save %s", sp->short_filename);
+	  else file_string = mus_strdup("nothing to save!");
+	}
+      gtk_window_set_title(GTK_WINDOW(save_sound_as->fs->dialog), file_string);
+      free(file_string);
+    }
+}
+
+
 void reflect_save_as_src(bool val)
 {
   if (save_sound_as)
@@ -3004,6 +3025,8 @@ static void save_innards(GtkWidget *vbox, void *data)
 					WITH_COMMENT_FIELD,
 					WITH_WRITABLE_HEADERS,
 					true);
+  widget_modify_base(sd->panel_data->error_text, GTK_STATE_NORMAL, ss->sgx->yellow);
+  widget_modify_base(sd->panel_data->error_text, GTK_STATE_ACTIVE, ss->sgx->yellow);
 }
 
 

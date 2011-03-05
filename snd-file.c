@@ -1757,6 +1757,8 @@ void snd_close_file(snd_info *sp)
 	  (any_selected_sound() == NULL)) /* I hope this can't be fooled... */
 	reset_mix_ctr();
     }
+  
+  reflect_save_as_sound_selection(NULL);
 }
 
 
