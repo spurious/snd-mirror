@@ -219,6 +219,7 @@ typedef struct {
   bool src, auto_comment;
   gulong *reflection_ids;
   slist *header_list, *format_list;
+  char *saved_comment;
 } file_data;
 
 typedef struct {

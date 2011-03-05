@@ -2220,13 +2220,6 @@ static void file_data_src_callback(GtkWidget *w, gpointer context)
 }
 
 
-static void file_data_auto_comment_callback(GtkWidget *w, gpointer context)
-{
-  file_data *fd = (file_data *)context;
-  fd->auto_comment = (bool)(TOGGLE_BUTTON_ACTIVE(w));
-}
-
-
 static file_data *make_file_data_panel(GtkWidget *parent, const char *name, 
 				       dialog_channels_t with_chan, 
 				       int header_type, int data_format,
@@ -2235,7 +2228,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 				       dialog_header_type_t with_header_type,
 				       dialog_comment_t with_comment, 
 				       header_choice_t header_choice,
-				       bool with_src_and_auto_comment)
+				       bool with_src, bool with_auto_comment)
 {
   GtkWidget *form, *scbox, *combox = NULL, *frame, *frame_box;
   file_data *fdat;
@@ -2252,6 +2245,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   fdat = (file_data *)calloc(1, sizeof(file_data));
   fdat->src = save_as_dialog_src(ss);
   fdat->auto_comment = save_as_dialog_auto_comment(ss);
+  fdat->saved_comment = NULL;
   fdat->current_type = header_type;
   fdat->current_format = data_format;
   formats = type_and_format_to_position(fdat, header_type, data_format);
@@ -2295,7 +2289,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
     gtk_box_pack_start(GTK_BOX(scbox), srate_label, false, false, 0);
     gtk_widget_show(srate_label);
 
-    if (with_src_and_auto_comment)
+    if (with_src)
       {
 	GtkWidget *src_box;
 	src_box = gtk_hbox_new(false, 0);
@@ -2373,7 +2367,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_box_pack_start(GTK_BOX(frame_box), combox, true, true, 4);
       gtk_widget_show(combox);
 
-      if (with_src_and_auto_comment)
+      if (with_auto_comment)
 	{
 	  GtkWidget *cbox;
 	  cbox = gtk_vbox_new(false, 0);
@@ -2386,7 +2380,6 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 	  
 	  fdat->auto_comment_button = gtk_check_button_new_with_label("auto");
 	  gtk_box_pack_end(GTK_BOX(cbox), fdat->auto_comment_button, false, false, 4);
-	  SG_SIGNAL_CONNECT(fdat->auto_comment_button, "toggled", file_data_auto_comment_callback, fdat);
 	  gtk_widget_show(fdat->auto_comment_button);
 	  set_toggle_button(fdat->auto_comment_button, fdat->auto_comment, false, (void *)fdat);
 	}
@@ -2401,7 +2394,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_box_pack_start(GTK_BOX(combox), frame, true, true, 4);  
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
       gtk_widget_show(frame);
-      fdat->comment_text = make_scrolled_text(frame, true, 0, false);
+      fdat->comment_text = make_scrolled_text(frame, true, 0, false); /* this returns a text_view widget */
       connect_mouse_to_text(fdat->comment_text);
     }
 
@@ -2486,16 +2479,112 @@ void reflect_save_as_auto_comment(bool val)
       set_toggle_button(save_sound_as->panel_data->auto_comment_button, val, false, (void *)save_sound_as);
       save_sound_as->panel_data->auto_comment = val;
     }
-  if (save_selection_as)
+}
+
+
+static void make_auto_comment(save_as_dialog_info *sd)
+{
+  if ((sd == save_sound_as) &&
+      (widget_is_active(sd->fs->dialog)))
     {
-      set_toggle_button(save_selection_as->panel_data->auto_comment_button, val, false, (void *)save_selection_as);
-      save_selection_as->panel_data->auto_comment = val;
+      file_data *fd;
+      fd = sd->panel_data;
+
+      if (!(fd->auto_comment))
+	{
+	  /* don't erase typed-in comment, if any */
+	  sg_text_insert(fd->comment_text, fd->saved_comment);
+	}
+      else
+	{
+	  snd_info *sp;
+	  bool edits = false;
+	  int i;
+	  char *original_sound_comment, *comment, *orig_comment = NULL;
+
+	  sp = any_selected_sound();
+
+	  original_sound_comment = mus_sound_comment(sp->filename);
+	  if (original_sound_comment)
+	    {
+	      if (*original_sound_comment)
+		orig_comment = mus_format("\n%s comment:\n%s\n", sp->short_filename, original_sound_comment);
+	      free(original_sound_comment);
+	      original_sound_comment = NULL;
+	    }
+
+	  fd->saved_comment = sg_get_text(fd->comment_text, 0, -1);
+	  if ((fd->saved_comment) &&
+	      (!(*(fd->saved_comment))))
+	    fd->saved_comment = NULL;
+
+	  for (i = 0; i < sp->nchans; i++)
+	    if (sp->chans[i]->edit_ctr != 0)
+	      {
+		edits = true;
+		break;
+	      }
+
+	  if (!edits)
+	    comment = mus_format("%ssaved %s from %s (no edits)\n%s", 
+				 (fd->saved_comment) ? "\n" : "",
+				 snd_local_time(),
+				 sp->filename,
+				 (orig_comment) ? orig_comment : "");
+	  else 
+	    {
+	      int len;
+	      char **edit_strs;
+	      char *time;
+	  
+	      time = snd_local_time();
+	      len = 2 * mus_strlen(sp->filename) + 
+		    mus_strlen(time) + 
+		    32 * sp->nchans + 
+		    mus_strlen(fd->saved_comment) + 
+		    mus_strlen(original_sound_comment);
+
+	      edit_strs = (char **)malloc(sp->nchans * sizeof(char *));
+	      for (i = 0; i < sp->nchans; i++)
+		{
+		  edit_strs[i] = edit_list_to_function(sp->chans[i], 1, sp->chans[i]->edit_ctr);
+		  len += mus_strlen(edit_strs[i]);
+		}
+
+	      comment = (char *)calloc(len, sizeof(char));
+	      mus_snprintf(comment, len, "%ssaved %s from %s with edits:\n", 
+			   (fd->saved_comment) ? "\n" : "",
+			   snd_local_time(),
+			   sp->filename);
+	      
+	      for (i = 0; i < sp->nchans; i++)
+		{
+		  if (sp->nchans > 1)
+		    {
+		      char buf[32];
+		      snprintf(buf, 32, "\n-------- channel %d --------\n", i);
+		      strcat(comment, buf);
+		    }
+		  strcat(comment, edit_strs[i]);
+		}
+
+	      if (orig_comment)
+		strcat(comment, orig_comment);
+	    }
+
+	  sg_text_insert(fd->comment_text, comment);
+	  if (comment) free(comment);
+	  if (orig_comment) free(orig_comment);
+	}
     }
-  if (save_region_as)
-    {
-      set_toggle_button(save_region_as->panel_data->auto_comment_button, val, false, (void *)save_region_as);
-      save_region_as->panel_data->auto_comment = val;
-    }
+}
+
+
+static void file_data_auto_comment_callback(GtkWidget *w, gpointer context)
+{
+  save_as_dialog_info *sd = (save_as_dialog_info *)context;
+  sd->panel_data->auto_comment = (bool)(TOGGLE_BUTTON_ACTIVE(w));
+  make_auto_comment(sd);
 }
 
 
@@ -2813,15 +2902,6 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       tmpfile = fullname;
     }
 
-  /* check for auto comment request */
-  if (sd->panel_data->auto_comment)
-    {
-      /* TODO: if auto_comment, prepend data about the source of the new file
-       */
-      /* comment = make_save_as_comment();
-       */
-    }
-
   redirect_snd_error_to(redirect_post_file_dialog_error, (void *)(sd->panel_data));
   switch (sd->type)
     {
@@ -3024,7 +3104,8 @@ static void save_innards(GtkWidget *vbox, void *data)
 					WITH_HEADER_TYPE_FIELD, 
 					WITH_COMMENT_FIELD,
 					WITH_WRITABLE_HEADERS,
-					true);
+					true,
+					sd->type == SOUND_SAVE_AS);
   widget_modify_base(sd->panel_data->error_text, GTK_STATE_NORMAL, ss->sgx->yellow);
   widget_modify_base(sd->panel_data->error_text, GTK_STATE_ACTIVE, ss->sgx->yellow);
 }
@@ -3104,6 +3185,8 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	{
 	  set_sensitive(fs->extract_button, (!(file_is_directory(fs))));
 	  SG_SIGNAL_CONNECT(fs->file_text, "key_release_event", reflect_text_in_extract_button, (gpointer)fs);
+	  if (sd->type == SOUND_SAVE_AS)
+	    SG_SIGNAL_CONNECT(sd->panel_data->auto_comment_button, "toggled", file_data_auto_comment_callback, sd);
 	}
     }
   else
@@ -3146,6 +3229,7 @@ widget_t make_sound_save_as_dialog(bool managed)
       sd->fs->reread_directory = false;
     }
   if (managed) gtk_widget_show(sd->fs->dialog);
+  make_auto_comment(sd);
   return(sd->fs->dialog);
 }
 
@@ -3519,7 +3603,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 				  WITHOUT_HEADER_TYPE_FIELD, 
 				  WITHOUT_COMMENT_FIELD,
 				  WITH_READABLE_HEADERS,
-				  false);
+				  false, false);
   rp->rdat->dialog = rp->dialog;
   set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
@@ -3839,7 +3923,7 @@ widget_t make_new_file_dialog(bool managed)
 				  WITH_HEADER_TYPE_FIELD, 
 				  WITH_COMMENT_FIELD,
 				  WITH_BUILTIN_HEADERS,
-				  false);
+				  false, false);
       ndat->dialog = new_file_dialog;
 
       SG_SIGNAL_CONNECT(new_file_dialog, "delete_event", new_file_delete_callback, ndat);
@@ -4164,7 +4248,7 @@ GtkWidget *edit_header(snd_info *sp)
 				      WITH_HEADER_TYPE_FIELD, 
 				      WITH_COMMENT_FIELD,
 				      WITH_BUILTIN_HEADERS,
-				      false);
+				      false, false);
       ep->edat->dialog = ep->dialog;
 
       SG_SIGNAL_CONNECT(ep->dialog, "delete_event", edit_header_delete_callback, ep);

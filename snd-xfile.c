@@ -2253,7 +2253,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 				       dialog_header_type_t with_header_type,
 				       dialog_comment_t with_comment,
 				       header_choice_t header_choice,
-				       bool with_src_and_auto_comment)
+				       bool with_src, bool with_auto_comment)
 {
   Widget form, header_label, data_label, srate_label, chans_label, sep1, sep2 = NULL, sep3, sep4;
   Widget comment_label = NULL, location_label, samples_label;
@@ -2274,6 +2274,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   fdat = (file_data *)calloc(1, sizeof(file_data));
   fdat->src = save_as_dialog_src(ss);
   fdat->auto_comment = save_as_dialog_auto_comment(ss);
+  fdat->saved_comment = NULL;
   fdat->current_type = header_type;
   fdat->current_format = data_format;
   formats = type_and_format_to_position(fdat, header_type, data_format);
@@ -2418,7 +2419,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, sep3); n++;
-  if (with_src_and_auto_comment)
+  if (with_src)
     {
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
     }
@@ -2429,7 +2430,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
   fdat->srate_text = make_textfield_widget("srate-text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer, NULL));
 
-  if (with_src_and_auto_comment)
+  if (with_src)
     {
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -2560,18 +2561,11 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, sep4); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
-      if (with_src_and_auto_comment)
-	{
-	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-	}
-      else
-	{
-	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-	}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       comment_label = XtCreateManagedWidget("comment", xmLabelWidgetClass, parent, args, n);
 
-      if (with_src_and_auto_comment)
+      if (with_auto_comment)
 	{
 	  n = 0;
 	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -2588,7 +2582,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      if (with_src_and_auto_comment)
+      if (with_auto_comment)
 	{
 	  XtSetArg(args[n], XmNtopWidget, fdat->auto_comment_button); n++;
 	}
@@ -2678,57 +2672,102 @@ static void make_auto_comment(save_as_dialog_info *sd)
   if ((sd == save_sound_as) &&
       (XtIsManaged(sd->dialog)))
     {
-      
-      /* TODO: if not auto_comment, set string to NULL (or original?) */
+      file_data *fd;
+      fd = sd->panel_data;
 
-      snd_info *sp;
-      bool edits = false;
-      int i;
-      char *original_comment, *comment;
-      sp = any_selected_sound();
-      original_comment = mus_sound_comment(sp->filename);
-
-      for (i = 0; i < sp->nchans; i++)
-	if (sp->chans[i]->edit_ctr != 0)
-	  {
-	    edits = true;
-	    break;
-	  }
-
-      /* PERHAPS: if current comment save it, also remember original comment and append it 
-       *   the function string needs crs and indent and (if >1 chans, chan number)
-       */
-
-      if (!edits)
-	comment = mus_format("from %s %s (no edits)\n", sp->filename, snd_local_time());
-      else 
+      if (!(fd->auto_comment))
 	{
-	  int len;
-	  char **edit_strs;
-	  char *time;
-	  
-	  time = snd_local_time();
-	  len = strlen(sp->filename) + strlen(time) + 32 * sp->nchans;
-	  edit_strs = (char **)malloc(sp->nchans * sizeof(char *));
-
-	  for (i = 0; i < sp->nchans; i++)
-	    {
-	      edit_strs[i] = edit_list_to_function(sp->chans[i], 1, sp->chans[i]->edit_ctr);
-	      len += strlen(edit_strs[i]);
-	    }
-
-	  comment = (char *)calloc(len, sizeof(char));
-	  snprintf(comment, len, "from %s %s with edits:\n", sp->filename, snd_local_time());
-	  for (i = 0; i < sp->nchans; i++)
-	    {
-	      strcat(comment, edit_strs[i]);
-	      if (i < sp->nchans - 1) strcat(comment, "\n----------------\n");
-	    }
+	  /* don't erase typed-in comment, if any */
+	  XmTextSetString(fd->comment_text, fd->saved_comment);
 	}
+      else
+	{
+	  snd_info *sp;
+	  bool edits = false;
+	  int i;
+	  char *original_sound_comment, *comment, *orig_comment = NULL;
 
-      XmTextSetString(sd->panel_data->comment_text, comment);
-      free(original_comment);
-      free(comment);
+	  sp = any_selected_sound();
+
+	  original_sound_comment = mus_sound_comment(sp->filename);
+	  if (original_sound_comment)
+	    {
+	      if (*original_sound_comment)
+		orig_comment = mus_format("\n%s comment:\n%s\n", sp->short_filename, original_sound_comment);
+	      free(original_sound_comment);
+	      original_sound_comment = NULL;
+	    }
+
+	  if (fd->saved_comment) XtFree(fd->saved_comment);
+	  fd->saved_comment = XmTextGetString(fd->comment_text);
+	  if ((fd->saved_comment) &&
+	      (!(*(fd->saved_comment))))
+	    {
+	      /* this is the norm in Motif */
+	      XtFree(fd->saved_comment);
+	      fd->saved_comment = NULL;
+	    }
+
+	  for (i = 0; i < sp->nchans; i++)
+	    if (sp->chans[i]->edit_ctr != 0)
+	      {
+		edits = true;
+		break;
+	      }
+
+	  if (!edits)
+	    comment = mus_format("%s%ssaved %s from %s (no edits)\n%s", 
+				 (fd->saved_comment) ? fd->saved_comment : "",
+				 (fd->saved_comment) ? "\n" : "",
+				 snd_local_time(),
+				 sp->filename,
+				 (orig_comment) ? orig_comment : "");
+	  else 
+	    {
+	      int len;
+	      char **edit_strs;
+	      char *time;
+	  
+	      time = snd_local_time();
+	      len = 2 * mus_strlen(sp->filename) + 
+		    mus_strlen(time) + 
+		    32 * sp->nchans + 
+		    mus_strlen(fd->saved_comment) + 
+		    mus_strlen(original_sound_comment);
+
+	      edit_strs = (char **)malloc(sp->nchans * sizeof(char *));
+	      for (i = 0; i < sp->nchans; i++)
+		{
+		  edit_strs[i] = edit_list_to_function(sp->chans[i], 1, sp->chans[i]->edit_ctr);
+		  len += mus_strlen(edit_strs[i]);
+		}
+
+	      comment = (char *)calloc(len, sizeof(char));
+	      mus_snprintf(comment, len, "%s%ssaved %s from %s with edits:\n", 
+			   (fd->saved_comment) ? fd->saved_comment : "",
+			   (fd->saved_comment) ? "\n" : "",
+			   snd_local_time(),
+			   sp->filename);
+	      
+	      for (i = 0; i < sp->nchans; i++)
+		{
+		  if (sp->nchans > 1)
+		    {
+		      char buf[32];
+		      snprintf(buf, 32, "\n-------- channel %d --------\n", i);
+		      strcat(comment, buf);
+		    }
+		  strcat(comment, edit_strs[i]);
+		}
+
+	      if (orig_comment)
+		strcat(comment, orig_comment);
+	    }
+
+	  XmTextSetString(fd->comment_text, comment);
+	  if (comment) free(comment);
+	  if (orig_comment) free(orig_comment);
+	}
     }
 }
 
@@ -2756,10 +2795,6 @@ void reflect_save_as_src(bool val)
 void reflect_save_as_auto_comment(bool val)
 {
   if (save_sound_as)
-    XmToggleButtonSetState(save_sound_as->panel_data->auto_comment_button, val, true);
-  if (save_selection_as)
-    XmToggleButtonSetState(save_sound_as->panel_data->auto_comment_button, val, true);
-  if (save_region_as)
     XmToggleButtonSetState(save_sound_as->panel_data->auto_comment_button, val, true);
 }
 
@@ -3429,7 +3464,8 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 					    WITH_HEADER_TYPE_FIELD, 
 					    WITH_COMMENT_FIELD,
 					    WITH_WRITABLE_HEADERS,
-					    true);
+					    true,
+					    sd->type == SOUND_SAVE_AS);
 
       sd->panel_data->dialog = sd->dialog;
 
@@ -3441,9 +3477,11 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtVaSetValues(sd->dp->play_button, XmNselectColor, ss->sgx->selection_color, NULL);
 
       XtVaSetValues(sd->panel_data->src_button, XmNselectColor, ss->sgx->selection_color, NULL);
-      XtVaSetValues(sd->panel_data->auto_comment_button, XmNselectColor, ss->sgx->selection_color, NULL);
-      XtAddCallback(sd->panel_data->auto_comment_button, XmNvalueChangedCallback, auto_comment_callback, (XtPointer)sd);
-
+      if (sd->type == SOUND_SAVE_AS)
+	{
+	  XtVaSetValues(sd->panel_data->auto_comment_button, XmNselectColor, ss->sgx->selection_color, NULL);
+	  XtAddCallback(sd->panel_data->auto_comment_button, XmNvalueChangedCallback, auto_comment_callback, (XtPointer)sd);
+	}
       XtAddCallback(FSB_BOX(sd->dialog, XmDIALOG_LIST),
 		    XmNbrowseSelectionCallback, save_as_dialog_select_callback, (XtPointer)(sd->dp));
       XtAddCallback(sd->filename_widget, XmNvalueChangedCallback, save_as_file_exists_check, (XtPointer)(sd->dialog));
@@ -3516,8 +3554,6 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XmStringFree(xmstr2);
       free(file_string);
     }
-
-  make_auto_comment(sd);
 }
 
 
@@ -3560,6 +3596,7 @@ widget_t make_sound_save_as_dialog(bool managed)
   if ((managed) && (!XtIsManaged(sd->dialog))) 
     XtManageChild(sd->dialog);
 
+  make_auto_comment(sd);
   return(sd->dialog);
 }
 
@@ -4011,7 +4048,7 @@ widget_t make_new_file_dialog(bool managed)
 				  WITH_HEADER_TYPE_FIELD, 
 				  WITH_COMMENT_FIELD,
 				  WITH_BUILTIN_HEADERS,
-				  false);
+				  false, false);
       ndat->dialog = new_file_dialog;
       XtManageChild(ndat->error_text);
       XtManageChild(new_file_dialog);
@@ -4379,7 +4416,7 @@ Widget edit_header(snd_info *sp)
 				      WITH_HEADER_TYPE_FIELD, 
 				      WITH_COMMENT_FIELD,
 				      WITH_BUILTIN_HEADERS,
-				      false);
+				      false, false);
       ep->edat->dialog = ep->dialog;
 
       if (hdr->type == MUS_RAW)
@@ -4724,7 +4761,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
 				  WITHOUT_HEADER_TYPE_FIELD, 
 				  WITHOUT_COMMENT_FIELD,
 				  WITH_READABLE_HEADERS,
-				  false);
+				  false, false);
   rp->rdat->dialog = rp->dialog;
 
   set_file_dialog_sound_attributes(rp->rdat, 

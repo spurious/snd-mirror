@@ -104,6 +104,7 @@ typedef struct {
   int current_type, current_format, formats, header_pos, format_pos;
   scanf_widget_t scanf_widget, error_widget;
   bool src, auto_comment;
+  char *saved_comment;
 } file_data;
 
 typedef struct {

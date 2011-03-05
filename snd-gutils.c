@@ -1185,10 +1185,6 @@ char *slist_selection(slist *lst)
  *   hide controls + listener doesn't
  *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
- *
- *   save-as-dialog-auto-comment
- *   wherever the dialog title reflects the selected sound, check for changes while running.
- *
  *   icons in file dialog previous files lists
  *   update the dialog help strings
  *   sash colors should be green but I can't find any way to set this in gtk3!
