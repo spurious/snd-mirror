@@ -2,13 +2,13 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sat Feb 19 16:37:23 CET 2011
+\ Changed: Sun Mar 06 18:16:26 CET 2011
 
 \ Commentary:
 \
 \ Tested with:
-\   Snd version 11.14 of 21-Feb-11
-\   FTH 1.2.9 (18-Feb-2011)
+\   Snd version 11.14 of 7-Mar-11
+\   FTH 1.2.9 (03-Mar-2011)
 
 \
 \ Reads init file ./.sndtest.fs or ~/.sndtest.fs for global variables,
@@ -474,6 +474,7 @@ reset-all-hooks
       sounds each ( snd ) close-sound drop end-each
     then
     #f set-ask-about-unsaved-edits drop
+    #f set-remember-sound-state drop
     $" %s: %s\n\\ " #( name tm ) snd-test-message
   then
 ;
@@ -522,6 +523,7 @@ reset-all-hooks
   sounds if stop-playing drop then
   reset-almost-all-hooks
   #f set-ask-about-unsaved-edits drop
+  #f set-remember-sound-state drop
   $" all done!" #f snd-test-message
   "" #f snd-test-message
   $" summary: %s" #( overall-start-time ) snd-test-message
@@ -559,6 +561,7 @@ reset-all-hooks
      "new.snd"
      "oboe.marks"
      "obtest.snd.stereo"
+     "remembered-oboe.snd.fs"
      "saved-snd.fs"
      "snd.eps"
      "test-1.snd"
@@ -933,6 +936,13 @@ SIGINT lambda: { sig -- }
      #( <'> clm-default-frequency 0.0 )
      #( <'> with-verbose-cursor #f )
      #( <'> with-inset-graph #f )
+     #( <'> remember-sound-state #f )
+     #( <'> with-smpte-label #f )
+     #( <'> with-toolbar *with-test-gtk* if #t else #f then )
+     #( <'> with-tooltips #t )
+     #( <'> with-menu-icons #f )
+     #( <'> save-as-dialog-src #f )
+     #( <'> save-as-dialog-auto-comment #f )
      #( <'> with-pointer-focus #f )
      #( <'> wavelet-type 0 )
      #( <'> time-graph-type graph-once )
@@ -972,6 +982,8 @@ SIGINT lambda: { sig -- }
       "8x123" sym set-execute ( res ) req $" set-%s to bogus value" #( sym ) snd-test-neq
     end-each
   then
+  #f set-ask-about-unsaved-edits drop
+  #f set-remember-sound-state drop
 ;
 
 \ ---------------- test 01: defaults ----------------
@@ -1093,8 +1105,11 @@ black-and-white-colormap constant *better-colormap*
      #( <'> play-arrow-size 10 )
      #( <'> print-length 12 )
      #( <'> region-graph-style graph-lines )
+     #( <'> remember-sound-state #f )
      #( <'> reverb-control-feedback 1.09 )
      #( <'> reverb-control-lowpass 0.7 )
+     #( <'> save-as-dialog-auto-comment #f )
+     #( <'> save-as-dialog-src #f )
      #( <'> save-state-file "saved-snd.fs" )
      #( <'> selection-creates-region #t )
      #( <'> show-axes 1 )
@@ -1136,6 +1151,10 @@ black-and-white-colormap constant *better-colormap*
      #( <'> with-tracking-cursor #f )
      #( <'> with-verbose-cursor #f )
      #( <'> with-inset-graph #f )
+     #( <'> with-smpte-label #f )
+     #( <'> with-toolbar *with-test-gtk* if #t else #f then )
+     #( <'> with-tooltips #t )
+     #( <'> with-menu-icons #f )
      #( <'> with-pointer-focus #f )
      #( <'> x-axis-style 0 )
      #( <'> zero-pad 0 )
@@ -1185,10 +1204,8 @@ black-and-white-colormap constant *better-colormap*
   *snd-opened-sound* if
     $" *snd-opened-sound*: %S" #( *snd-opened-sound* ) snd-display
   then
-  default-output-data-format mus-bfloat <>
-  default-output-data-format mus-lfloat <> && if
-    mus-lfloat set-default-output-data-format drop
-  then
+  #f set-ask-about-unsaved-edits drop
+  #f set-remember-sound-state drop
 ;
 
 \ ---------------- test 02: headers ----------------
@@ -1762,11 +1779,6 @@ black-and-white-colormap constant *better-colormap*
     300 set-window-height drop
     window-width  300 "window-width"  #() snd-test-neq
     window-height 300 "window-height" #() snd-test-neq
-    123 set-window-x drop
-    321 set-window-y drop
-    window-x 123 "window-x" #() snd-test-neq
-    window-y 321 "window-y" #() snd-test-neq
-    10 set-window-y drop
     color-scale { old-val }
     100.0 set-color-scale drop
     color-scale 100.0 "color-scale" #() snd-test-neq
@@ -1863,8 +1875,8 @@ black-and-white-colormap constant *better-colormap*
      'data-location 'data-size 'db->linear 'default-output-chans 'default-output-data-format
      'default-output-header-type 'default-output-srate 'define-envelope 'degrees->radians 'delay
      'delay-tick 'delay? 'delete-colormap 'delete-file-filter 'delete-file-sorter
-     'delete-mark 'delete-marks 'delete-sample 'delete-samples
-     'delete-selection 'delete-transform 'dialog-widgets 'disk-kspace
+     'delete-mark 'delete-marks 'delete-sample 'delete-samples 'delete-samples-and-smooth
+     'delete-selection 'delete-selection-and-smooth 'delete-transform 'dialog-widgets 'disk-kspace
      'display-edits 'dolph-chebyshev-window 'dont-normalize
      'dot-product 'dot-size 'draw-axes 'draw-dot 'draw-dots
      'draw-line 'draw-lines 'draw-mark-hook 'draw-mix-hook 'draw-string 'drop-hook
@@ -1987,7 +1999,7 @@ black-and-white-colormap constant *better-colormap*
      'rectangular->magnitudes 'rectangular->polar 'rectangular-window 'redo 'redo-edit
      'region->vct 'region-chans 'region-home 'region-frames 'region-graph-style 'region-maxamp
      'region-maxamp-position 'region-position 'region-sample 'region-sampler? 'region-srate
-     'region? 'regions 'remove-from-menu 'report-in-minibuffer 'reset-controls
+     'region? 'regions 'remember-sound-state 'remove-from-menu 'report-in-minibuffer 'reset-controls
      'reset-listener-cursor 'restore-controls 'restore-region 'reverb-control-decay
      'reverb-control-feedback 'reverb-control-length 'reverb-control-length-bounds
      'reverb-control-lowpass 'reverb-control-scale 'reverb-control-scale-bounds 'reverb-control?
@@ -2048,7 +2060,9 @@ black-and-white-colormap constant *better-colormap*
      'widget-position 'widget-size 'widget-text 'window-height 'window-width 'window-x
      'window-y 'with-background-processes 'with-file-monitor 'with-gl 'with-mix-tags
      'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 'with-inset-graph
-     'with-pointer-focus 'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats
+     'with-pointer-focus 'with-smpte-label 'with-toolbar 'with-tooltips 'with-menu-icons
+     'save-as-dialog-src 'save-as-dialog-auto-comment
+     'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats
      'x-axis-in-measures 'x-axis-in-samples 'x-axis-in-seconds 'x-axis-label 'x-axis-style
      'x-bounds 'x-position-slider 'x-zoom-slider 'xramp-channel 'y->position 'y-axis-label
      'y-bounds 'y-position-slider 'y-zoom-slider 'zero-pad 'zoom-color 'zoom-focus-active
@@ -7351,7 +7365,8 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> data-format <'> data-location <'> data-size <'> default-output-chans
    <'> default-output-data-format <'> default-output-srate <'> default-output-header-type
    <'> define-envelope <'> delete-mark <'> delete-marks <'> forget-region <'> delete-sample
-   <'> delete-samples <'> delete-selection <'> display-edits
+   <'> delete-samples <'> delete-samples-and-smooth <'> delete-selection
+   <'> delete-selection-and-smooth <'> display-edits
    <'> edit-fragment <'> edit-position <'> edit-tree <'> edits <'> env-selection
    <'> env-sound <'> enved-envelope <'> enved-base <'> enved-clip?
    <'> enved-in-dB <'> enved-style <'> enved-power <'> enved-target <'> enved-wave? <'> eps-file
@@ -7393,7 +7408,8 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> print-length <'> progress-report <'> prompt-in-minibuffer <'> read-only
    <'> redo <'> region-chans <'> region-home
    <'> region-graph-style <'> region-frames <'> region-position <'> region-maxamp
-   <'> region-maxamp-position <'> selection-maxamp <'> selection-maxamp-position
+   <'> region-maxamp-position <'> remember-sound-state
+   <'> selection-maxamp <'> selection-maxamp-position
    <'> region-sample <'> region->vct <'> clear-minibuffer <'> region-srate <'> regions
    <'> region? <'>  remove-from-menu <'> report-in-minibuffer <'> reset-controls
    <'> restore-controls <'> restore-region <'> reverb-control-decay <'> reverb-control-feedback
@@ -7427,6 +7443,9 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> trap-segfault <'> with-file-monitor <'> optimization
    <'> undo <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
    <'> update-sound <'> clm-table-size <'> with-verbose-cursor <'> view-sound <'> wavelet-type
+   <'> with-inset-graph <'> with-pointer-focus <'> with-smpte-label
+   <'> with-toolbar <'> with-tooltips <'> with-menu-icons
+   <'> save-as-dialog-src <'> save-as-dialog-auto-comment
    <'> time-graph? <'>  time-graph-type <'> wavo-hop <'> wavo-trace
    <'> window-height <'> window-width <'> window-x <'> window-y
    <'> with-mix-tags <'> with-relative-panes <'> with-gl
@@ -7533,76 +7552,63 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> phase-vocoder <'> player-home <'> redo-edit <'> undo-edit ) constant procs
 
 #( <'> amp-control <'> ask-before-overwrite <'> audio-input-device <'> audio-output-device
-   <'> auto-update <'> channel-style <'> sound-file-extensions
-   <'> show-full-duration <'> initial-beg <'> initial-dur
-   <'> contrast-control <'> contrast-control-amp
+   <'> auto-update <'> channel-style <'> sound-file-extensions <'> show-full-duration
+   <'> initial-beg <'> initial-dur <'> contrast-control <'> contrast-control-amp
    <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
-   <'> contrast-control-bounds
-   <'> reverb-control-length-bounds <'> reverb-control-scale-bounds <'> cursor-update-interval
-   <'> cursor-location-offset
-   <'> contrast-control? <'> auto-update-interval <'> cursor
-   <'> channel-properties <'> channel-property <'> with-tracking-cursor <'> cursor-size
-   <'> cursor-style <'> tracking-cursor-style <'> dac-combines-channels <'> dac-size
-   <'> clipping <'> default-output-chans <'> default-output-data-format
-   <'> default-output-srate <'> default-output-header-type <'> dot-size <'> enved-envelope
-   <'> enved-base <'> enved-clip? <'> enved-in-dB <'> enved-style
-   <'> enved-power <'> enved-target <'> enved-wave?
-   <'> eps-file <'> eps-left-margin <'> eps-bottom-margin <'> eps-size
-   <'> expand-control <'> expand-control-hop <'> expand-control-jitter <'> expand-control-length
+   <'> contrast-control-bounds <'> reverb-control-length-bounds <'> reverb-control-scale-bounds
+   <'> cursor-update-interval <'> cursor-location-offset <'> contrast-control?
+   <'> auto-update-interval <'> cursor <'> channel-properties <'> channel-property
+   <'> with-tracking-cursor <'> cursor-size <'> cursor-style <'> tracking-cursor-style
+   <'> dac-combines-channels <'> dac-size <'> clipping <'> default-output-chans
+   <'> default-output-data-format <'> default-output-srate <'> default-output-header-type
+   <'> dot-size <'> enved-envelope <'> enved-base <'> enved-clip? <'> enved-in-dB
+   <'> enved-style <'> enved-power <'> enved-target <'> enved-wave? <'> eps-file
+   <'> eps-left-margin <'> eps-bottom-margin <'> eps-size <'> expand-control
+   <'> expand-control-hop <'> expand-control-jitter <'> expand-control-length
    <'> expand-control-ramp <'> expand-control? <'> fft-window-alpha <'> fft-window-beta
    <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size <'> transform-graph-type
    <'> fft-window <'> transform-graph? <'> filter-control-in-dB <'> filter-control-envelope
    <'> enved-filter-order <'> enved-filter <'> filter-control-in-hz <'> filter-control-order
    <'> filter-control? <'> graph-cursor <'> graph-style <'> lisp-graph? <'> graphs-horizontal
-   <'> just-sounds <'> left-sample <'> listener-prompt
-   <'> mark-name <'> mark-properties <'> mark-property
-   <'> mark-sample <'> mark-sync <'> max-transform-peaks
-   <'> min-dB <'> log-freq-start <'> mix-amp
-   <'> mix-amp-env <'> mix-name <'> mix-position <'> mix-properties <'> mix-property
-   <'> mix-speed <'> mix-tag-height <'> mix-tag-width
+   <'> just-sounds <'> left-sample <'> listener-prompt <'> mark-name <'> mark-properties
+   <'> mark-property <'> mark-sample <'> mark-sync <'> max-transform-peaks <'> min-dB
+   <'> log-freq-start <'> mix-amp <'> mix-amp-env <'> mix-name <'> mix-position
+   <'> mix-properties <'> mix-property <'> mix-speed <'> mix-tag-height <'> mix-tag-width
    <'> mix-tag-y <'> mark-tag-width <'> mark-tag-height <'> mix-waveform-height
-   <'> transform-normalization
-   <'> view-files-sort <'> print-length <'> play-arrow-size <'> view-files-amp
-   <'> view-files-speed <'> view-files-speed-style <'> view-files-amp-env <'> view-files-files
-   <'> view-files-selected-files <'> region-graph-style <'> reverb-control-decay
-   <'> reverb-control-feedback <'> reverb-control-length
-   <'> reverb-control-lowpass <'> reverb-control-scale <'> time-graph-style <'> lisp-graph-style
-   <'> transform-graph-style <'> reverb-control? <'> ladspa-dir <'> peak-env-dir
-   <'> save-dir <'> save-state-file
-   <'> selection-creates-region <'> show-axes
-   <'> show-controls <'> show-transform-peaks <'> show-indices <'> show-marks
-   <'> show-mix-waveforms <'> show-selection-transform <'> show-y-zero
-   <'> show-grid <'> show-sonogram-cursor <'> sinc-width <'> spectrum-end
-   <'> spectro-hop <'> spectrum-start <'> spectro-x-angle <'>  grid-density
-   <'> spectro-x-scale <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle
-   <'> spectro-z-scale <'> speed-control <'> speed-control-style <'> speed-control-tones
-   <'> squelch-update <'> sync <'> sound-properties <'> sound-property <'> temp-dir
-   <'> y-bounds <'> transform-type
-   <'> trap-segfault <'> with-file-monitor <'> optimization <'> with-verbose-cursor
-   <'> wavelet-type <'> x-bounds
-   <'> time-graph? <'> wavo-hop <'> wavo-trace <'> with-gl
-   <'> with-mix-tags <'> x-axis-style <'> beats-per-minute <'> zero-pad
-   <'> zoom-focus-style <'> sync-style <'> with-relative-panes <'>  window-x
-   <'> window-y <'> window-width <'> window-height
-   <'> beats-per-measure <'> channels <'> chans
-   <'> comment <'> data-format <'> data-location
-   <'> data-size <'> edit-position <'> frames <'> header-type
-   <'> maxamp <'> minibuffer-history-length <'> read-only <'> right-sample
-   <'> sample <'> samples <'> selected-channel
-   <'> selected-sound <'> selection-position <'> selection-frames
-   <'> selection-member? <'> sound-loop-info <'> srate <'> time-graph-type
-   <'> x-position-slider <'> x-zoom-slider <'> y-position-slider
+   <'> transform-normalization <'> view-files-sort <'> print-length <'> play-arrow-size
+   <'> view-files-amp <'> view-files-speed <'> view-files-speed-style <'> view-files-amp-env
+   <'> view-files-files <'> view-files-selected-files <'> region-graph-style
+   <'> reverb-control-decay <'> reverb-control-feedback <'> reverb-control-length
+   <'> reverb-control-lowpass <'> reverb-control-scale <'> time-graph-style
+   <'> lisp-graph-style <'> transform-graph-style <'> reverb-control? <'> ladspa-dir
+   <'> peak-env-dir <'> save-dir <'> save-state-file <'> selection-creates-region
+   <'> show-axes <'> show-controls <'> show-transform-peaks <'> show-indices
+   <'> show-marks <'> show-mix-waveforms <'> show-selection-transform <'> show-y-zero
+   <'> show-grid <'> show-sonogram-cursor <'> sinc-width <'> spectrum-end <'> spectro-hop
+   <'> spectrum-start <'> spectro-x-angle <'>  grid-density <'> spectro-x-scale
+   <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale
+   <'> speed-control <'> speed-control-style <'> speed-control-tones <'> squelch-update
+   <'> sync <'> sound-properties <'> sound-property <'> temp-dir <'> y-bounds
+   <'> transform-type <'> trap-segfault <'> with-file-monitor <'> optimization
+   <'> with-verbose-cursor <'> with-inset-graph <'> with-pointer-focus <'> wavelet-type
+   <'> x-bounds <'> with-smpte-label <'> with-toolbar <'> with-tooltips <'> with-menu-icons
+   <'> save-as-dialog-src <'> save-as-dialog-auto-comment <'> time-graph? <'> wavo-hop
+   <'> wavo-trace <'> with-gl <'> with-mix-tags <'> x-axis-style <'> beats-per-minute
+   <'> zero-pad <'> zoom-focus-style <'> sync-style <'> with-relative-panes <'>  window-x
+   <'> window-y <'> window-width <'> window-height <'> beats-per-measure <'> channels
+   <'> chans <'> comment <'> data-format <'> data-location <'> data-size <'> edit-position
+   <'> frames <'> header-type <'> maxamp <'> minibuffer-history-length <'> read-only
+   <'> right-sample <'> sample <'> samples <'> selected-channel <'> selected-sound
+   <'> selection-position <'> selection-frames <'> selection-member? <'> sound-loop-info
+   <'> srate <'> time-graph-type <'> x-position-slider <'> x-zoom-slider <'> y-position-slider
    <'> y-zoom-slider <'> sound-data-ref <'> mus-array-print-length <'> mus-float-equal-fudge-factor
-   <'> mus-data <'> mus-feedback <'> mus-feedforward
-   <'> mus-frequency <'> mus-hop <'> mus-increment
-   <'> mus-length <'> mus-location <'> mus-phase <'> mus-ramp
-   <'> mus-scaler <'> vct-ref <'> x-axis-label <'> filter-control-coeffs
-   <'> locsig-type <'> mus-file-buffer-size <'> mus-rand-seed <'> mus-width
-   <'> clm-table-size <'> mus-offset <'> mus-reset
+   <'> mus-data <'> mus-feedback <'> mus-feedforward <'> mus-frequency <'> mus-hop
+   <'> mus-increment <'> mus-length <'> mus-location <'> mus-phase <'> mus-ramp <'> mus-scaler
+   <'> vct-ref <'> x-axis-label <'> filter-control-coeffs <'> locsig-type <'> mus-file-buffer-size
+   <'> mus-rand-seed <'> mus-width <'> clm-table-size <'> mus-offset <'> mus-reset
    <'> phase-vocoder-amp-increments <'> phase-vocoder-amps <'> phase-vocoder-freqs
-   <'> phase-vocoder-phase-increments <'> phase-vocoder-phases
-   <'> html-dir <'> html-program <'> mus-interp-type
-   <'> mixer-ref <'> frame-ref <'> locsig-ref <'> locsig-reverb-ref
+   <'> phase-vocoder-phase-increments <'> phase-vocoder-phases <'> html-dir <'> html-program
+   <'> mus-interp-type <'> mixer-ref <'> frame-ref <'> locsig-ref <'> locsig-reverb-ref
    <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
    <'> mus-header-raw-defaults ) constant set-procs
 
@@ -7876,7 +7882,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   #( <'> reverse-selection <'> selection-position <'> selection-frames <'> smooth-selection
-     <'> scale-selection-to <'> insert-selection <'> delete-selection
+     <'> scale-selection-to <'> insert-selection <'> delete-selection <'> delete-selection-and-smooth
      <'> mix-selection ) each to prc
     prc #t nil fth-catch to tag
     stack-reset
@@ -8269,7 +8275,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> show-indices <'> show-selection-transform <'> sinc-width
      <'> temp-dir <'> trap-segfault
      <'> with-file-monitor <'> optimization <'> with-verbose-cursor
-     <'> window-height <'> beats-per-measure
+     <'> with-inset-graph <'> with-pointer-focus <'> window-height <'> beats-per-measure
+     <'> with-smpte-label <'> with-toolbar <'> with-tooltips <'> with-menu-icons
+     <'> remember-sound-state <'> save-as-dialog-src <'> save-as-dialog-auto-comment
      <'> window-width <'> window-x <'> window-y <'> with-gl
      <'> with-mix-tags <'> x-axis-style <'> beats-per-minute
      <'> mix-tag-height <'> mix-tag-width <'> with-relative-panes
@@ -8587,6 +8595,15 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   :partials #( 1 1 ) :kind 3 <'> make-polyshape         'out-of-range     check-error-tag
   1234                       <'> set-mus-header-raw-defaults 'wrong-type-arg check-error-tag
   #( 44100 2.123 "hi" )      <'> set-mus-header-raw-defaults 'wrong-type-arg check-error-tag
+  123                        <'> set-with-toolbar       'wrong-type-arg   check-error-tag
+  123                        <'> set-with-tooltips      'wrong-type-arg   check-error-tag
+  123                        <'> set-with-menu-icons    'wrong-type-arg   check-error-tag
+  123                        <'> set-save-as-dialog-src 'wrong-type-arg   check-error-tag
+  123                        <'> set-save-as-dialog-auto-comment 'wrong-type-arg check-error-tag
+  123                        <'> set-with-smpte-label   'wrong-type-arg   check-error-tag
+  123                        <'> set-ask-about-unsaved-edits 'wrong-type-arg check-error-tag
+  mix-sync-max 1+ integer->mix <'> mix-properties       'no-such-mix      check-error-tag
+  mix-sync-max 1+ 1          <'> set-mix-properties     'no-such-mix      check-error-tag
   mus-audio-reinitialize drop
   10 set-window-y drop
   dismiss-all-dialogs

@@ -145,32 +145,25 @@ output-comment-hook lambda: <{ str -- s }>
 ; add-hook!
 
 'snd-nogui provided? [unless]
+  require snd-xm
+  after-open-hook <'> show-disk-space add-hook!
+
+  require effects
+  #f to use-combo-box-for-fft-size	\ boolean (default #f)
+
   'snd-motif provided? [if]
-    \ if not configured --with-static-xm
-    'xm provided? not [if] dl-load libxm Init_libxm [then]
-    require snd-xm
+    \ snd-xm.fs
     add-mark-pane
-    after-open-hook <'> show-disk-space add-hook!
-
-    require effects
-    #f to use-combo-box-for-fft-size	\ boolean (default #f)
-
-    require popup
-    edhist-save-hook lambda: <{ prc -- }> "%S" #( prc ) clm-message ; add-hook!
   [then]
 
   'snd-gtk provided? [if]
-    \ if not configured --with-static-xg
-    'xg provided? not [if] dl-load libxg Init_libxg [then]
     $" Serif 10" set-axis-label-font drop
   [then]
 
   require extensions
   #t set-emacs-style-save-as
-  0.00 0.10 #t prefs-activate-initial-bounds
   with-reopen-menu
   with-buffers-menu
-  2 set-global-sync
 
   require examp
   *init-graph-extra-hooks* [if]
@@ -231,8 +224,8 @@ output-comment-hook lambda: <{ str -- s }>
   #t                     set-ask-about-unsaved-edits drop
   #f                     set-remember-sound-state    drop
   #t                     set-with-smpte-label        drop
-  #t                     set-with-popup-menus        drop
   #t                     set-with-toolbar            drop
+  #t                     set-show-full-duration      drop
   #t  			 set-just-sounds             drop
   #t  			 set-enved-wave?             drop
   #t  			 set-show-y-zero             drop

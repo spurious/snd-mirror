@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Wed Feb 16 23:28:41 CET 2011
+# Changed: Fri Feb 25 17:04:50 CET 2011
 
 # Commentary:
 #
@@ -213,8 +213,6 @@ need a String or Symbol, not %s"
   $view_files_select_hook       = Hook.new("$view_files_select_hook", 2)
   # unless --with-no-gui
   $color_hook                   = Hook.new("$color_hook", 0)
-  # if --with-gtk
-  $gtk_popup_hook               = Hook.new("$gtk_popup_hook", 5)
 end
 
 class Hook
@@ -343,9 +341,6 @@ if defined? $after_graph_hook
 
   unless provided? :snd_nogui
     Snd_hooks.push($color_hook)
-  end
-  if provided? :snd_gtk
-    Snd_hooks.push($gtk_popup_hook)
   end
   
   def reset_all_hooks

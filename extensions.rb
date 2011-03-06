@@ -1,8 +1,8 @@
-# extensions.rb -- various generally useful Snd extensions (see extensions.scm) -*- snd-ruby -*-
+# extensions.rb -- various generally useful Snd extensions (see extensions.scm)
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Mon Nov 22 13:22:55 CET 2010
+# Changed: Thu Mar 03 15:41:18 CET 2011
 
 # Commentary:
 # 
@@ -106,8 +106,6 @@
 #  eval_over_selection(&func)
 #
 #  yes_or_no?(question, action_if_yes, action_if_no, snd)
-#  check_for_unsaved_edits(check)
-#  remember_sound_state(choice)
 #  
 #  mix_channel(fdata, beg, dur, snd, chn, edpos)
 #  insert_channel(fdata, beg, dur, snd, chn, edpos)
@@ -132,13 +130,8 @@
 #  mono_files2stereo(new_name, chan1_name, chan2_name)
 #  stereo2mono(orig_snd, chan1_name, chan2_name)
 #
-#  prefs_activate_initial_bounds(beg, dur, full)
-#  prefs_deactivate_initial_bounds
 #  with_reopen_menu
 #  with_buffers_menu
-#  set_global_sync(choice)
-#
-#  show_selection
 
 # Comments are mostly taken from extensions.scm.
 
@@ -1358,146 +1351,6 @@ snd defaults to the currently selected sound.")
                          snd,
                          true)
   end
-
-  # check_for_unsaved_edits(check)
-
-  $checking_for_unsaved_edits = false # for prefs
-  
-  add_help(:check_for_unsaved_edits,
-           "check_for_unsaved_edits([check=true])  \
-sets up hooks to check for and ask about unsaved edits when a sound is closed.
-If CHECK is false, the hooks are removed.")
-  def check_for_unsaved_edits(check = true)
-    ignore_unsaved_edits_at_close_p = lambda do |snd, exiting|
-      flag = true
-      channels(snd).times do |chn|
-        eds = edits(snd, chn)
-        if eds.car > 0
-          yes_or_no?(format("%s[%d] has unsaved edits.  Close anyway? ", short_file_name(snd), chn),
-                     lambda do |s| revert_sound(s); (exiting and exit(0)) end,
-                     lambda do |s| false end,
-                     snd)
-          flag = false
-        end
-      end
-      flag
-    end
-    unsaved_edits_at_close_name = "unsaved-edits-at-close?"
-    unsaved_edits_at_exit_name = "unsaved-edits-at-exit?"
-    if $checking_for_unsaved_edits = check
-      unless $before_close_hook.member?(unsaved_edits_at_close_name)
-        $before_close_hook.add_hook!(unsaved_edits_at_close_name) do |snd|
-          (not ignore_unsaved_edits_at_close_p.call(snd, false))
-        end
-      end
-      unless $before_exit_hook.member?(unsaved_edits_at_exit_name)
-        $before_exit_hook.add_hook!(unsaved_edits_at_exit_name) do | |
-          Snd.sounds.map do |snd| ignore_unsaved_edits_at_close_p.call(snd, true) end.detect do |f|
-            f.kind_of?(FalseClass)
-          end
-        end
-      end
-    else
-      $before_close_hook.remove_hook!(unsaved_edits_at_close_name)
-      $before_exit_hook.remove_hook!(unsaved_edits_at_exit_name)
-    end
-  end
-
-  # ;;; -------- remember-sound-state
-  $remembering_sound_state = 0  # for prefs
-  $remember_sound_filename = ".snd-remember-sound"
-
-  add_help(:remember_sound_state,
-           "remember_sound_state(choice=3) \
-remembers the state of a sound when it is closed, \
-and if it is subsequently re-opened, restores that state.\n\
-choice == 0: no remembering\n\
-choice == 1: just within-run remembering\n\
-choice == 2: don't read saved values\n\
-choice == 3: across runs remembering")
-  def remember_sound_state(choice = 3)
-    # states = {file_name => {:time => number, :sound => [], channels => []}, ...}
-    $remembering_sound_state = choice
-    states        = {}
-    sound_funcs   = $sound_funcs
-    channel_funcs = $channel_funcs
-    hook_name     = get_func_name
-    if choice == 0 or choice == 1
-      if choice == 0
-        $close_hook.remove_hook!(hook_name)
-        if choice != 2
-          $after_open_hook.remove_hook!(hook_name)
-        end
-      end
-      $open_hook.remove_hook!(hook_name)
-      $before_exit_hook.remove_hook!(hook_name)
-      if File.exists?($remember_sound_filename)
-        File.unlink($remember_sound_filename)
-      end
-    end
-    if choice != 0
-      $close_hook.add_hook!(hook_name) do |snd|
-        states[file_name(snd)] = {
-          :time     => file_write_date(file_name(snd)),
-          :sound    => sound_funcs.map do |f| snd_func(f, snd) end,
-          :channels => (0...channels(snd)).map do |chn|
-            channel_funcs.map do |f|
-              if f == :transform_type
-                transform2integer(snd_func(f, snd, chn))
-              else
-                snd_func(f, snd, chn)
-              end
-            end
-          end}
-        false
-      end
-      if choice != 2
-        $after_open_hook.add_hook!(hook_name) do |snd|
-          if hash?(state = states[file_name(snd)]) and (not state.empty?)
-            if file_write_date(file_name(snd)) == state[:time] and
-                channels(snd) == state[:channels].length
-              sound_funcs.zip(state[:sound]) do |f, val|
-                if f == :selected_channel # arguments swapped!
-                  Kernel.set_snd_func(f, snd, val)
-                else
-                  Kernel.set_snd_func(f, val, snd)
-                end
-              end
-              channels(snd).times do |chn|
-                set_squelch_update(true, snd, chn)
-                channel_funcs.zip(state[:channels][chn]) do |f, val|
-                  if f == :transform_type
-                    Kernel.set_snd_func(f, integer2transform(val), snd, chn)
-                  else
-                    Kernel.set_snd_func(f, val, snd, chn)
-                  end
-                end
-                set_squelch_update(false, snd, chn)
-              end
-            end
-          end
-        end
-      end
-      if choice != 1
-        $open_hook.add_hook!(hook_name) do |fname|
-          if states.empty? and File.exists?($remember_sound_filename)
-            load($remember_sound_filename)
-            states = $_saved_remember_sound_states_states_
-          end
-          false
-        end
-        $after_save_state_hook.add_hook!(hook_name) do |fname|
-          File.open($remember_sound_filename, "w") do |f|
-            f.printf("# -*- snd-ruby -*-\n")
-            f.printf("# from remember-sound-state in %s\n", __FILE__)
-            f.printf("# written: %s\n\n", Time.new.strftime("%a %b %d %H:%M:%S %Z %Y"))
-            f.printf("$_saved_remember_sound_states_states_ = %s\n\n", states.inspect)
-            f.printf("# %s ends here\n", File.basename($remember_sound_filename))
-          end
-        end
-      end
-    end
-  end
   
   add_help(:mix_channel,
            "mix_channel(file, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \
@@ -1883,28 +1736,6 @@ applies contrast enhancement to the sound" )
   # 
   # === PREFERENCES-DIALOG ===
   # 
-  # initial bounds
-
-  $prefs_show_full_duration = false # for prefs
-  $prefs_initial_beg = 0.0
-  $prefs_initial_dur = 0.1
-  Prefs_initial_bounds_hook_name = "prefs-initial-bounds"
-
-  def prefs_activate_initial_bounds(beg, dur, full)
-    $prefs_initial_beg = beg
-    $prefs_initial_dur = dur
-    $prefs_show_full_duration = full
-    $initial_graph_hook.add_hook!(Prefs_initial_bounds_hook_name) do |snd, chn, dr|
-      [$prefs_initial_beg, $prefs_show_full_duration ? dur : [$prefs_initial_dur, dr].min]
-    end
-  end
-
-  def prefs_deactivate_initial_bounds
-    $prefs_initial_beg = 0.0
-    $prefs_initial_dur = 0.1
-    $prefs_show_full_duration = false
-    $initial_graph_hook.remove_hook!(Prefs_initial_bounds_hook_name)
-  end
 
   # reopen menu
 
@@ -2007,45 +1838,6 @@ applies contrast enhancement to the sound" )
         @buffer_names.push(@buffer_empty)
       end
       false
-    end
-  end
-
-  # global sync (for prefs dialog)
-
-  # ;; 0 = no sync, 1 = all synced, 2 = sync within sound
-  $global_sync_choice = 0       # global var so that we can reflect
-                                # the current setting in prefs dialog
-  
-  def set_global_sync(choice)
-    $global_sync_choice = choice
-    if choice.nonzero? and (not $after_open_hook.member?("global-sync"))
-      $after_open_hook.add_hook!("global-sync") do |snd|
-        case $global_sync_choice
-        when 1
-          set_sync(1, snd)
-        when 2
-          set_sync(sync_max + 1, snd)
-        end
-      end
-    end
-  end
-
-  def show_selection
-    if selection?
-      beg = fin = false
-      Snd.sounds.each do |snd|
-        channels(snd).times do |chn|
-          if selection_member?(snd, chn)
-            pos = selection_position(snd, chn) / srate(snd)
-            len = selection_frames(snd, chn) / srate(snd)
-            if (not beg) or pos < beg then beg = pos end
-            if (not fin) or pos + len > fin then fin = pos + len end
-          end
-        end
-      end
-      Snd.sounds.each do |snd|
-        channels(snd).times do |chn| set_x_bounds([beg, fin], snd, chn) end
-      end
     end
   end
 end

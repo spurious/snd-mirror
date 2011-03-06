@@ -2,16 +2,16 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Feb 18 10:18:34 CET 2005
-# Changed: Sat Feb 19 18:38:18 CET 2011
+# Changed: Sun Mar 06 18:15:59 CET 2011
 
 # Commentary:
 #
 # Tested with:
-#   Snd version 11.14 of 21-Feb-11
+#   Snd version 11.14 of 7-Mar-11
 #   ruby 1.8.0 (2003-08-04)
 #   ruby 1.8.7 (2010-08-16 patchlevel 302)
 #   ruby 1.9.2p0 (2010-08-18 revision 29036)
-#   ruby 1.9.3dev (2011-02-18 trunk 30896)
+#   ruby 1.9.3dev (2011-03-06 trunk 31031)
 
 #
 # Reads init file ./.sndtest.rb or ~/.sndtest.rb for global variables,
@@ -767,6 +767,7 @@ def finish_snd_test()
   stop_playing
   reset_almost_all_hooks
   set_ask_about_unsaved_edits(false)
+  set_remember_sound_state(false)
   snd_info("all done!")
   snd_info("")
   unless $timings.empty?
@@ -814,6 +815,7 @@ def clear_test_files
    "new.snd",
    "oboe.marks",
    "obtest.snd.stereo",
+   "remembered-oboe.snd.rb",
    "saved-snd.rb",
    "snd.eps",
    "test-1.snd",
@@ -871,6 +873,7 @@ def after_test(func)
   end
   Snd.regions.apply(:forget_region)
   set_ask_about_unsaved_edits(false)
+  set_remember_sound_state(false)
   dismiss_all_dialogs
   snd_info("%s done%s\n#", func, $VERBOSE ? format(" (%s)", $timings.last.last) : "")
 end
@@ -1495,6 +1498,13 @@ def test_00
    [:clm_default_frequency, 0.0],
    [:with_verbose_cursor, false],
    [:with_inset_graph, false],
+   [:remember_sound_state, false],
+   [:with_smpte_label, false],
+   [:with_toolbar, ($with_test_gtk ? true : false)],
+   [:with_tooltips, true],
+   [:with_menu_icons, false],
+   [:save_as_dialog_src, false],
+   [:save_as_dialog_auto_comment, false],
    [:with_pointer_focus, false],
    [:wavelet_type, 0],
    [:time_graph_type, Graph_once],
@@ -1532,6 +1542,8 @@ def test_00
       snd_test_neq(set_snd_func(sym, "8x123"), req, "set_%s to bogus value", sym)
     end
   end
+  set_ask_about_unsaved_edits(false)
+  set_remember_sound_state(false)
 end
 
 # ---------------- test 01: defaults ----------------
@@ -1665,6 +1677,7 @@ def test_01
    ["print_length", print_length(), 12],
    ["read_only", without_errors do read_only() end, :no_such_sound],
    ["region_graph_style", region_graph_style(), Graph_lines],
+   ["remember_sound_state", remember_sound_state(), false],
    ["reverb_control_feedback", reverb_control_feedback(), 1.09],
    ["reverb_control_length", without_errors do reverb_control_length() end, :no_such_sound],
    ["reverb_control_length_bounds", reverb_control_length_bounds()[1], 5.0],
@@ -1672,6 +1685,8 @@ def test_01
    ["reverb_control_scale", without_errors do reverb_control_scale() end, :no_such_sound],
    ["reverb_control_scale_bounds", reverb_control_scale_bounds()[1], 4.0],
    ["reverb_control?", without_errors do reverb_control?() end, :no_such_sound],
+   ["save_as_dialog_auto_comment", save_as_dialog_auto_comment, false],
+   ["save_as_dialog_src", save_as_dialog_src, false],
    ["save_state_file", save_state_file(), "saved-snd.rb"],
    ["selection_creates_region", selection_creates_region(), true],
    ["show_axes", show_axes(), 1],
@@ -1718,6 +1733,10 @@ def test_01
    ["with_tracking_cursor", with_tracking_cursor(), false],
    ["with_verbose_cursor", with_verbose_cursor(), false],
    ["with_inset_graph", with_inset_graph(), false],
+   ["with_smpte_label", with_smpte_label, false],
+   ["with_toolbar", with_toolbar,  ($with_test_gtk ? true : false)],
+   ["with_tooltips", with_tooltips, true],
+   ["with_menu_icons", with_menu_icons, false],
    ["with_pointer_focus", with_pointer_focus(), false],
    ["x_axis_style", x_axis_style(), 0],
    ["zero_pad", zero_pad(), 0],
@@ -1726,13 +1745,8 @@ def test_01
   end
   set_temp_dir(old_dir)
   snd_test_neq($snd_opened_sound, false, "$snd_opened_sound")
-  if default_output_data_format() != Mus_bfloat and
-      default_output_data_format() != Mus_lfloat
-    set_default_output_data_format(Mus_lfloat)
-  end
-  # FIXME
-  # to stay in sync
-  $clm_data_format = default_output_data_format()
+  set_ask_about_unsaved_edits(false)
+  set_remember_sound_state(false)
 end
 
 # ---------------- test 02: headers ----------------
@@ -2224,7 +2238,8 @@ def test_03
          [:with_verbose_cursor, false, true],
          [:wavelet_type, 0, 1],
          [:time_graph?, false, true],
-         [:time_graph_type, Graph_once, Graph_as_wavogram],
+         # FIXME see below
+         # [:time_graph_type, Graph_once, Graph_as_wavogram],
          [:wavo_hop, 3, 6],
          [:wavo_trace, 64, 128],
          [:with_mix_tags, true, false],
@@ -2237,6 +2252,12 @@ def test_03
          [:zoom_focus_style, 2, 1]]
   if $with_test_gui
     lst += gui_lst
+  end
+  if $with_test_motif
+    # FIXME
+    # doesn't work with GTK
+    # set_time_graph_type(Graph_as_wavogram) ==> segfault
+    lst += [[:time_graph_type, Graph_once, Graph_as_wavogram]]
   end
   lst.each do |sym, initval, newval|
     next unless symbol?(sym)
@@ -2255,7 +2276,10 @@ def test_03
    [:colormap, $good_colormap, [321, -123]],
    [:color_cutoff, 0.003, [-1.0, 123.123]],
    [:color_scale, 1.0, [-32.0, 2000.0]],
-   if $with_test_gui
+   if $with_test_motif
+     # FIXME
+     # doesn't work with GTK and ruby 1.9.2
+     # set_contrast_control(xxx) ==> segfault
      [:contrast_control, 0.0, [-123.123, 123.123]]
    end,
    [:contrast_control_bounds, [0.0, 10.0], [false, [0.0], [1.0, 0.0], 2.0]],
@@ -2313,11 +2337,6 @@ def test_03
     set_window_height(300)
     snd_test_neq(window_width, 300, "window width")
     snd_test_neq(window_height, 300, "window height")
-    set_window_x(123)
-    set_window_y(321)
-    snd_test_neq(window_x, 123, "window x")
-    snd_test_neq(window_y, 321, "window y")
-    set_window_y(10)
     old_val = color_scale
     set_color_scale(100.0)
     snd_test_neq(color_scale, 100.0, "color_scale")
@@ -2414,7 +2433,8 @@ def test_03
    :default_output_data_format, :default_output_header_type, :default_output_srate,
    :define_envelope, :degrees2radians, :delay, :delay_tick, :delay?, :delete_colormap,
    :delete_file_filter, :delete_file_sorter, :delete_mark, :delete_marks, :delete_sample,
-   :delete_samples, :delete_selection, :delete_transform, :dialog_widgets, :disk_kspace,
+   :delete_samples, :delete_samples_and_smooth, :delete_selection, :delete_selection_and_smooth,
+   :delete_transform, :dialog_widgets, :disk_kspace,
    :display_edits, :dolph_chebyshev_window, :dont_normalize, :dot_product, :dot_size,
    :draw_axes, :draw_dot, :draw_dots, :draw_line, :draw_lines, :draw_mark_hook, :draw_mix_hook,
    :draw_string, :drop_hook, :during_open_hook, :edit_fragment, :edit_header_dialog,
@@ -2529,13 +2549,13 @@ def test_03
    :rectangular2polar, :rectangular_window, :redo_edit, :region2vct, :region_chans,
    :region_home, :region_frames, :region_graph_style, :region_maxamp, :region_maxamp_position,
    :region_position, :region_sample, :region_sampler?, :region_srate, :region?, :regions,
-   :remove_from_menu, :report_in_minibuffer, :reset_controls, :reset_listener_cursor,
-   :restore_controls, :restore_region, :reverb_control_decay, :reverb_control_feedback,
-   :reverb_control_length, :reverb_control_length_bounds, :reverb_control_lowpass,
-   :reverb_control_scale, :reverb_control_scale_bounds, :reverb_control?, :reverse_channel,
-   :reverse_selection, :reverse_sound, :revert_sound, :riemann_window, :right_sample,
-   :ring_modulate, :rv2_window, :rv3_window, :rv4_window, :samaraki_window, :sample,
-   :sample2file, :sample2file?, :sample2frame, :sampler_at_end?, :sampler_home,
+   :remember_sound_state, :remove_from_menu, :report_in_minibuffer, :reset_controls,
+   :reset_listener_cursor, :restore_controls, :restore_region, :reverb_control_decay,
+   :reverb_control_feedback, :reverb_control_length, :reverb_control_length_bounds,
+   :reverb_control_lowpass, :reverb_control_scale, :reverb_control_scale_bounds, :reverb_control?,
+   :reverse_channel, :reverse_selection, :reverse_sound, :revert_sound, :riemann_window,
+   :right_sample, :ring_modulate, :rv2_window, :rv3_window, :rv4_window, :samaraki_window,
+   :sample, :sample2file, :sample2file?, :sample2frame, :sampler_at_end?, :sampler_home,
    :sampler_position, :sampler?, :samples, :samples2seconds, :sash_color, :save_controls,
    :save_dir, :save_edit_history, :save_envelopes, :save_hook, :save_listener, :save_macros,
    :save_marks, :save_region, :save_region_dialog, :save_selection, :save_selection_dialog,
@@ -2591,7 +2611,9 @@ def test_03
    :wavo_hop, :wavo_trace, :welch_window, :widget_position, :widget_size, :widget_text,
    :window_height, :window_width, :window_x, :window_y, :with_background_processes,
    :with_file_monitor, :with_gl, :with_mix_tags, :with_relative_panes, :with_tracking_cursor,
-   :with_verbose_cursor, :with_inset_graph, :with_pointer_focus, :x2position,
+   :with_verbose_cursor, :with_inset_graph, :with_pointer_focus,
+   :with_smpte_label, :with_toolbar, :with_tooltips, :with_menu_icons,
+   :save_as_dialog_src, :save_as_dialog_auto_comment, :x2position,
    :x_axis_as_clock, :x_axis_as_percentage, :x_axis_in_beats, :x_axis_in_measures,
    :x_axis_in_samples, :x_axis_in_seconds, :x_axis_label, :x_axis_style, :x_bounds,
    :x_position_slider, :x_zoom_slider, :xramp_channel, :y2position, :y_axis_label,
@@ -7236,28 +7258,26 @@ def test_05_10
     snd_test_neq(x_axis_label(), "time", "def time x_axis_label")
     set_x_axis_label("no time", ind, 0, Time_graph)
     snd_test_neq(x_axis_label(), "no time", "set time x_axis_label")
-    # FIXME
-    #set_x_axis_label("time", ind, 0, Time_graph) # reset for later
     update_transform_graph
     snd_test_neq(x_axis_label(ind, 0, Transform_graph), "frequency", "get fft x_axis_label")
     set_x_axis_label("hiho", ind, 0, Transform_graph)
     update_transform_graph
     snd_test_neq(x_axis_label(ind, 0, Transform_graph), "hiho", "set fft x_axis_label")
-    set_x_axis_label("frequency", ind, 0, Transform_graph) # reset for later
+    set_x_axis_label("frequency", ind, 0, Transform_graph) # for later test
     # 
     graph([0, 0, 1, 1, 2, 0], "lisp")
     update_lisp_graph
-    snd_test_neq(x_axis_label(ind, 0, Lisp_graph), "lisp", "get lisp x_axis_label")
+    snd_test_neq(x_axis_label(ind, 0, Lisp_graph), "lisp", "def lisp x_axis_label")
     set_x_axis_label("no lisp", ind, 0, Lisp_graph)
-    snd_test_neq(x_axis_label(ind, 0, Lisp_graph), "no lisp", "set lisp x_axis_label")
+    snd_test_neq(x_axis_label(ind, 0, Lisp_graph), "no lisp", "lisp x_axis_label")
     # 
     set_y_axis_label("no amp", ind, 0, Time_graph)
-    snd_test_neq(y_axis_label(), "no amp", "set time y_axis_label")
+    snd_test_neq(y_axis_label(), "no amp", "time y_axis_label")
     set_y_axis_label("no lamp", ind, 0, Lisp_graph)
-    snd_test_neq(y_axis_label(ind, 0, Lisp_graph), "no lamp", "set lisp y_axis_label")
+    snd_test_neq(y_axis_label(ind, 0, Lisp_graph), "no lamp", "lisp y_axis_label")
     set_y_axis_label(false)
     set_y_axis_label("no amp", ind, 0)
-    snd_test_neq(y_axis_label(), "no amp", "set time y_axis_label")
+    snd_test_neq(y_axis_label(), "no amp", "time y_axis_label")
     set_y_axis_label(false, ind)
   end
   # 
@@ -7838,6 +7858,11 @@ def test_05_11
   if fneq(sample(20), 0.5) or fneq(sample(30), 0.0) or fneq(sample(17), -0.1057)
     snd_display("src_selection: %s?", v0)
   end
+  unselect_all
+  if selection_member?
+    snd_display("unselect_all but still a selection?")
+  end
+  unselect_all
   revert_sound(ind)
   set_sinc_width(old_sw)
   vct_fill!(v0, 0.0)
@@ -9727,6 +9752,143 @@ def test_05_25
     end
   end
   close_sound(ind)
+  #
+  ns = new_sound
+  v = make_vct(1000)
+  unselect_all
+  1000.times do |i|
+    v[i] = 0.001 * i
+  end
+  vct2channel(v, 0, 1000, ns, 0)
+  set_selection_member?(true, ns, 0)
+  set_selection_position(200, ns, 0)
+  set_selection_frames(300, ns, 0)
+  delete_selection_and_smooth
+  snd_test_neq(frames(ns, 0), 700, "delete_selection_and_smooth frames")
+  snd_test_neq(sample(167, ns, 0), 0.167, "delete_selection_and_smooth 167")
+  snd_test_neq(sample(234, ns, 0), 0.534, "delete_selection_and_smooth 234")
+  snd_test_neq(sample(210, ns, 0), 0.406, "delete_selection_and_smooth 210")
+  v1 = channel2vct
+  maxdiff = 0.0
+  mindiff = 10.0
+  ls = v1[0]
+  (1...700).each do |i|
+    diff = v1[i] - ls
+    ls = v1[i]
+    if diff > maxdiff
+      maxdiff = diff
+    end
+    if diff < mindiff
+      mindiff = diff
+    end
+  end
+  if mindiff < 0.0009
+    snd_display(snd_format(mindiff, 0.0009, "<", "delete_selection_and_smooth min diff"))
+  end
+  if maxdiff > 0.007
+    snd_display(snd_format(maxdiff, 0.007, ">", "delete_selection_and_smooth max diff"))
+  end
+  close_sound(ns)
+  #
+  ns = new_sound
+  v = make_vct(1000)
+  unselect_all
+  1000.times do |i|
+    v[i] = 0.001 * i
+  end
+  vct2channel(v, 0, 1000, ns, 0)
+  delete_samples_and_smooth(200, 300, ns, 0)
+  snd_test_neq(frames(ns, 0), 700, "delete_samples_and_smooth frames")
+  snd_test_neq(sample(167, ns, 0), 0.167, "delete_samples_and_smooth 167")
+  snd_test_neq(sample(234, ns, 0), 0.534, "delete_samples_and_smooth 234")
+  snd_test_neq(sample(210, ns, 0), 0.406, "delete_samples_and_smooth 210")
+  v1 = channel2vct
+  maxdiff = 0.0
+  mindiff = 10.0
+  ls = v1[0]
+  (1...700).each do |i|
+    diff = v1[i] - ls
+    ls = v1[i]
+    if diff > maxdiff
+      maxdiff = diff
+    end
+    if diff < mindiff
+      mindiff = diff
+    end
+  end
+  if mindiff < 0.0009
+    snd_display(snd_format(mindiff, 0.0009, "<", "delete_samples_and_smooth min diff"))
+  end
+  if maxdiff > 0.007
+    snd_display(snd_format(maxdiff, 0.007, ">", "delete_samples_and_smooth max diff"))
+  end
+  close_sound(ns)
+  #
+  old_beg = initial_beg
+  old_dur = initial_dur
+  old_show = show_full_duration
+  $initial_graph_hook.reset_hook!
+  set_show_full_duration(true)
+  ns = open_sound("1.snd")
+  ls = left_sample(ns, 0)
+  rs = right_sample(ns, 0)
+  fr = frames(ns, 0)
+  snd_test_neq([fr, ls, rs], [220501, 0, 220501], "show_full_duration 1")
+  close_sound(ns)
+  set_show_full_duration(true)
+  set_initial_beg(0.0)
+  set_initial_dur(0.2)
+  ns = open_sound("1.snd")
+  ls = left_sample(ns, 0)
+  rs = right_sample(ns, 0)
+  fr = frames(ns, 0)
+  snd_test_neq([fr, ls, rs], [220501, 0, 220501], "show_full_duration 2")
+  close_sound(ns)
+  set_show_full_duration(false)
+  set_initial_beg(0.0)
+  set_initial_dur(0.2)
+  ns = open_sound("1.snd")
+  ls = left_sample(ns, 0)
+  rs = right_sample(ns, 0)
+  fr = frames(ns, 0)
+  snd_test_neq([fr, ls, rs], [220501, 0, 4410], "show_full_duration 3")
+  close_sound(ns)
+  set_initial_beg(2.0)
+  set_initial_dur(1.0)
+  ns = open_sound("1.snd")
+  ls = left_sample(ns, 0)
+  rs = right_sample(ns, 0)
+  fr = frames(ns, 0)
+  snd_test_neq([fr, ls, rs], [220501, 44100, 66150], "show_full_duration 4")
+  close_sound(ns)
+  set_initial_beg(old_beg)
+  set_initial_dur(old_dur)
+  set_show_full_duration(old_show)
+  old_sync = sync_style
+  set_sync_style(Sync_none)
+  ns = open_sound("2.snd")
+  snd_test_neq(sync(ns), 0, "Sync_none open")
+  set_sync(1, ns)
+  set_sync_style(Sync_by_sound)
+  ns1 = open_sound("1a.snd")
+  snd_test_eq(sync(ns1), 0, "Sync_by_sound open")
+  snd_test_eq(sync(ns1), 1, "Sync_by_sound open")
+  snd_test_neq(sync(ns), 1, "Sync_by_sound open")
+  close_sound(ns1)
+  close_sound(ns)
+  set_sync_style(Sync_all)
+  ns = open_sound("2.snd") 
+  ns1 = open_sound("1a.snd")
+  snd_test_neq(sync(ns), sync(ns1), "Sync_all open")
+  snd_test_eq(sync(ns), 0, "Sync_all open")
+  set_sync_style(Sync_none)
+  ns2 = open_sound("oboe.snd")
+  snd_test_neq(sync(ns), sync(ns1), "back to Sync_none open")
+  snd_test_neq(sync(ns2), 0, "back to Sync_none open")
+  close_sound(ns2)
+  close_sound(ns1)
+  close_sound(ns)
+  set_sync_style(old_sync)
   #
   view_sound("obtest.snd")
   delete_samples(0, 1000, ind, 0)
@@ -26025,7 +26187,7 @@ def test_15_00
   if (res = edit_fragment(1, obi, 0)) != ["delete_samples(1000, 1001", "delete", 1000, 1001]
     snd_display("edit_fragment (1): %s?", res)
   end
-  if (res = edit_fragment(2, obi, 0)) != ["smooth_channel(984, 32", "set", 984, 32]
+  if (res = edit_fragment(2, obi, 0)) != ["delete_selection_and_smooth(", "set", 968, 64]
     snd_display("edit_fragment (2): %s?", res)
   end
   samp100 = sample(1100, obi, 0)
@@ -30365,7 +30527,12 @@ def test_19_00
   set_transform_normalization(Dont_normalize, ind, 0)
   set_graph_style(Graph_filled, ind, 0)
   set_transform_graph_type(Graph_as_spectrogram, ind, 0)
-  set_time_graph_type(Graph_as_wavogram, ind, 0)
+  unless $with_test_gtk
+    # FIXME
+    # doesn't work with GTK
+    # snd-ruby-xg -noinit snd-test.rb 19 ==> hangs on load("s61.rb") below
+    set_time_graph_type(Graph_as_wavogram, ind, 0)
+  end
   set_x_axis_style(X_axis_as_percentage, ind, 0)
   set_speed_control_style(Speed_control_as_semitone, ind, 0)
   set_cursor(1234, ind, 0)
@@ -30375,10 +30542,8 @@ def test_19_00
   set_reverb_control_scale_bounds([0.0, 2.5], ind)
   set_reverb_control_length_bounds([0.0, 2.5], ind)
   set_contrast_control_bounds([0.0, 2.5], ind)
-  if defined? set_x_axis_label
-    set_x_axis_label("time-x", ind, 0, Time_graph)
-    set_y_axis_label("amp-y", ind, 0, Time_graph)
-  end
+  set_x_axis_label("time-x", ind, 0, Time_graph)
+  set_y_axis_label("amp-y", ind, 0, Time_graph)
   old_srate = mus_srate
   old_file_buffer_size = mus_file_buffer_size
   old_array_print_length = mus_array_print_length
@@ -33333,7 +33498,13 @@ def test_20_01
   set_transform_graph_type(Graph_as_sonogram, ind, 0)
   set_fft_log_magnitude(false, ind, 0)
   update_transform_graph
-  graph2ps("aaa.eps")
+  unless $with_test_gtk
+    # FIXME
+    # doens't work with GTK
+    # Assertion failed: (! surface->finished), function _cairo_surface_begin_modification, file cairo-surface.c, line 385.
+    # Abort (core dumped)
+    graph2ps("aaa.eps")
+  end
   set_with_gl(false)
   set_spectrum_end(0.2, ind, 0)
   set_transform_graph_type(Graph_as_spectrogram, ind, 0)
@@ -34086,54 +34257,61 @@ def test_21_00
   set_sample(1, 0.1, ind_1, 0)
   set_sample(2, 0.2, ind_2, 0)
   set_sample(3, 0.3, ind_2, 1)
-  [[:min_dB,                  -100.0,            :ffequal?,  :vequal?, true, true],
-   [:x_position_slider,       0.1,               :ffequal?,  :vequal?, true, false],
-   [:y_position_slider,       0.5,               :ffequal?,  :vequal?, true, false],
-   [:x_zoom_slider,           0.2,               :ffequal?,  :vequal?, true, false],
-   [:y_zoom_slider,           0.2,               :ffequal?,  :vequal?, true, false],
-   [:fft_window_alpha,        0.5,               :ffequal?,  :vequal?, true, true],
-   [:fft_window_beta,         0.5,               :ffequal?,  :vequal?, true, true],
-   [:spectrum_end,            0.2,               :ffequal?,  :vequal?, true, true],
-   [:spectrum_start,          0.1,               :ffequal?,  :vequal?, true, true],
-   [:spectro_x_angle,         10.0,              :ffequal?,  :vequal?, true, true],
-   [:spectro_x_scale,         0.2,               :ffequal?,  :vequal?, true, true],
-   [:spectro_y_angle,         10.0,              :ffequal?,  :vequal?, true, true],
-   [:spectro_y_scale,         0.1,               :ffequal?,  :vequal?, true, true],
-   [:spectro_z_angle,         10.0,              :ffequal?,  :vequal?, true, true],
-   [:spectro_z_scale,         0.3,               :ffequal?,  :vequal?, true, true],
-   [:beats_per_minute,        100.0,             :ffequal?,  :vequal?, true, true],
-   [:spectro_hop,             10,                :st_equal?, :st_eql?, true, true],
-   [:cursor,                  50,                :st_equal?, :st_eql?, true, false],
-   [:cursor_style,            1,                 :st_equal?, :st_eql?, true, true],
-   [:cursor_size,             10,                :st_equal?, :st_eql?, true, true],
-   [:frames,                  50,                :st_equal?, :st_eql?, true, false],
-   [:zero_pad,                1,                 :st_equal?, :st_eql?, true, true],
-   [:wavelet_type,            1,                 :st_equal?, :st_eql?, true, true],
-   [:time_graph_type,         Graph_as_wavogram, :st_equal?, :st_eql?, true, true],
-   [:wavo_hop,                10,                :st_equal?, :st_eql?, true, true],
-   [:wavo_trace,              10,                :st_equal?, :st_eql?, true, true],
-   [:transform_size,          64,                :st_equal?, :st_eql?, true, true],
-   [:transform_graph_type,    1,                 :st_equal?, :st_eql?, true, true],
-   [:fft_window,              1,                 :st_equal?, :st_eql?, true, true],
-   [:transform_normalization, 2,                 :st_equal?, :st_eql?, true, true],
-   [:max_transform_peaks,     10,                :st_equal?, :st_eql?, true, true],
-   [:dot_size,                10,                :st_equal?, :st_eql?, true, true],
-   [:show_axes,               2,                 :st_equal?, :st_eql?, true, true],
-   [:transform_graph?,        true,              :st_equal?, :st_eql?, true, false],
-   [:time_graph?,             false,             :st_equal?, :st_eql?, true, false],
-   [:lisp_graph?,             true,              :st_equal?, :st_eql?, true, false],
-   [:squelch_update,          true,              :st_equal?, :st_eql?, true, false],
-   [:show_y_zero,             true,              :st_equal?, :st_eql?, true, true],
-   [:show_grid,               true,              :st_equal?, :st_eql?, true, true],
-   [:grid_density,            0.5,               :ffequal?,  :vequal?, true, true],
-   [:show_sonogram_cursor,    true,              :st_equal?, :st_eql?, true, true],
-   [:show_marks,              false,             :st_equal?, :st_eql?, true, true],
-   [:show_transform_peaks,    true,              :st_equal?, :st_eql?, true, true],
-   [:fft_log_frequency,       true,              :st_equal?, :st_eql?, true, true],
-   [:fft_log_magnitude,       true,              :st_equal?, :st_eql?, true, true],
-   [:show_mix_waveforms,      false,             :st_equal?, :st_eql?, true, true],
-   [:with_verbose_cursor,     true,              :st_equal?, :st_eql?, true, true]
-  ].each do |func, new_val, eq_func, leq_func, settable, global|
+  vals = [[:min_dB,                  -100.0,            :ffequal?,  :vequal?, true, true],
+          [:x_position_slider,       0.1,               :ffequal?,  :vequal?, true, false],
+          [:y_position_slider,       0.5,               :ffequal?,  :vequal?, true, false],
+          [:x_zoom_slider,           0.2,               :ffequal?,  :vequal?, true, false],
+          [:y_zoom_slider,           0.2,               :ffequal?,  :vequal?, true, false],
+          [:fft_window_alpha,        0.5,               :ffequal?,  :vequal?, true, true],
+          [:fft_window_beta,         0.5,               :ffequal?,  :vequal?, true, true],
+          [:spectrum_end,            0.2,               :ffequal?,  :vequal?, true, true],
+          [:spectrum_start,          0.1,               :ffequal?,  :vequal?, true, true],
+          [:spectro_x_angle,         10.0,              :ffequal?,  :vequal?, true, true],
+          [:spectro_x_scale,         0.2,               :ffequal?,  :vequal?, true, true],
+          [:spectro_y_angle,         10.0,              :ffequal?,  :vequal?, true, true],
+          [:spectro_y_scale,         0.1,               :ffequal?,  :vequal?, true, true],
+          [:spectro_z_angle,         10.0,              :ffequal?,  :vequal?, true, true],
+          [:spectro_z_scale,         0.3,               :ffequal?,  :vequal?, true, true],
+          [:beats_per_minute,        100.0,             :ffequal?,  :vequal?, true, true],
+          [:spectro_hop,             10,                :st_equal?, :st_eql?, true, true],
+          [:cursor,                  50,                :st_equal?, :st_eql?, true, false],
+          [:cursor_style,            1,                 :st_equal?, :st_eql?, true, true],
+          [:cursor_size,             10,                :st_equal?, :st_eql?, true, true],
+          [:frames,                  50,                :st_equal?, :st_eql?, true, false],
+          [:zero_pad,                1,                 :st_equal?, :st_eql?, true, true],
+          [:wavelet_type,            1,                 :st_equal?, :st_eql?, true, true],
+          # FIXME see below
+          # [:time_graph_type,         Graph_as_wavogram, :st_equal?, :st_eql?, true, true],
+          [:wavo_hop,                10,                :st_equal?, :st_eql?, true, true],
+          [:wavo_trace,              10,                :st_equal?, :st_eql?, true, true],
+          [:transform_size,          64,                :st_equal?, :st_eql?, true, true],
+          [:transform_graph_type,    1,                 :st_equal?, :st_eql?, true, true],
+          [:fft_window,              1,                 :st_equal?, :st_eql?, true, true],
+          [:transform_normalization, 2,                 :st_equal?, :st_eql?, true, true],
+          [:max_transform_peaks,     10,                :st_equal?, :st_eql?, true, true],
+          [:dot_size,                10,                :st_equal?, :st_eql?, true, true],
+          [:show_axes,               2,                 :st_equal?, :st_eql?, true, true],
+          [:transform_graph?,        true,              :st_equal?, :st_eql?, true, false],
+          [:time_graph?,             false,             :st_equal?, :st_eql?, true, false],
+          [:lisp_graph?,             true,              :st_equal?, :st_eql?, true, false],
+          [:squelch_update,          true,              :st_equal?, :st_eql?, true, false],
+          [:show_y_zero,             true,              :st_equal?, :st_eql?, true, true],
+          [:show_grid,               true,              :st_equal?, :st_eql?, true, true],
+          [:grid_density,            0.5,               :ffequal?,  :vequal?, true, true],
+          [:show_sonogram_cursor,    true,              :st_equal?, :st_eql?, true, true],
+          [:show_marks,              false,             :st_equal?, :st_eql?, true, true],
+          [:show_transform_peaks,    true,              :st_equal?, :st_eql?, true, true],
+          [:fft_log_frequency,       true,              :st_equal?, :st_eql?, true, true],
+          [:fft_log_magnitude,       true,              :st_equal?, :st_eql?, true, true],
+          [:show_mix_waveforms,      false,             :st_equal?, :st_eql?, true, true],
+          [:with_verbose_cursor,     true,              :st_equal?, :st_eql?, true, true]]
+  unless $with_test_gtk
+    # FIXME
+    # doesn't work with GTK
+    # set_time_graph_type(Graph_as_wavogram) ==> hangs or even segfaults
+    vals += [[:time_graph_type, Graph_as_wavogram, :st_equal?, :st_eql?, true, true]]
+  end
+  vals.each do |func, new_val, eq_func, leq_func, settable, global|
     test_sound_func_1(func, ind_1, ind_2, new_val, eq_func, leq_func, settable, true, global)
     test_channel_func_1(func, ind_1, ind_2, new_val, eq_func, leq_func, settable, global)
   end
@@ -35865,7 +36043,8 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :default_output_chans, :default_output_data_format, :default_output_srate,
          :default_output_header_type, :insert_file_dialog, :file_write_date, :define_envelope,
          :delete_mark, :delete_marks, :forget_region, :delete_sample, :delete_samples,
-         :delete_selection, :dialog_widgets, :display_edits, :dot_size, :draw_dot,
+         :delete_samples_and_smooth, :delete_selection, :delete_selection_and_smooth,
+         :dialog_widgets, :display_edits, :dot_size, :draw_dot,
          :draw_dots, :draw_line, :draw_lines, :draw_string, :edit_header_dialog,
          :edit_fragment, :edit_list2function, :edit_position, :edit_tree, :edits,
          :env_selection, :env_sound, :enved_envelope, :enved_base, :enved_clip?,
@@ -35909,8 +36088,8 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :print_length, :progress_report, :prompt_in_minibuffer, :read_only,
          :redo_edit, :region_chans, :view_regions_dialog, :region_home,
          :region_graph_style, :region_frames, :region_position, :region_maxamp,
-         :region_maxamp_position, :selection_maxamp, :selection_maxamp_position,
-         :region_sample, :region2vct, :region_srate, :regions, :region?,
+         :region_maxamp_position, :remember_sound_state, :selection_maxamp,
+         :selection_maxamp_position, :region_sample, :region2vct, :region_srate, :regions, :region?,
          :remove_from_menu, :report_in_minibuffer, :reset_controls, :restore_controls,
          :restore_region, :reverb_control_decay, :reverb_control_feedback,
          :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale,
@@ -35938,7 +36117,9 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :transform_frames, :transform_type, :trap_segfault, :with_file_monitor,
          :unbind_key, :update_transform_graph, :update_time_graph, :update_lisp_graph,
          :update_sound, :clm_table_size, :with_verbose_cursor, :view_sound, :wavelet_type,
-         :with_inset_graph, :with_pointer_focus, :time_graph?, :time_graph_type, :wavo_hop,
+         :with_inset_graph, :with_pointer_focus, :with_smpte_label, :with_toolbar, :with_tooltips,
+         :with_menu_icons, :save_as_dialog_src, :save_as_dialog_auto_comment,
+         :time_graph?, :time_graph_type, :wavo_hop,
          :wavo_trace, :window_height, :window_width, :window_x, :window_y, :with_mix_tags,
          :with_relative_panes, :with_gl, :x_axis_style, :beats_per_measure, :beats_per_minute,
          :x_bounds, :x_position_slider, :x2position, :x_zoom_slider, :mus_header_type2string,
@@ -36056,10 +36237,12 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
              :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
              :squelch_update, :sync, :sound_properties, :sound_property, :temp_dir,
              :text_focus_color, :tiny_font, :y_bounds, :transform_type, :trap_segfault,
-             :with_file_monitor, :with_verbose_cursor, :wavelet_type, :with_inset_graph,
-             :with_pointer_focus, :x_bounds, :time_graph?, :wavo_hop, :wavo_trace,
-             :with_gl, :with_mix_tags, :x_axis_style, :beats_per_minute, :zero_pad,
-             :zoom_color, :zoom_focus_style, :sync_style, :with_relative_panes, :window_x, :window_y,
+             :with_file_monitor, :with_verbose_cursor, :with_inset_graph, :with_pointer_focus,
+             :wavelet_type, :x_bounds, :with_smpte_label, :with_toolbar, :with_tooltips,
+             :with_menu_icons, :save_as_dialog_src, :save_as_dialog_auto_comment,
+             :time_graph?, :wavo_hop, :wavo_trace, :with_gl, :with_mix_tags,
+             :x_axis_style, :beats_per_minute, :zero_pad, :zoom_color, :zoom_focus_style,
+             :sync_style, :with_relative_panes, :window_x, :window_y,
              :window_width, :window_height, :mix_dialog_mix, :beats_per_measure,
              :channels, :chans, :colormap, :comment, :data_format, :data_location,
              :data_size, :edit_position, :frames, :header_type, :maxamp,
@@ -36280,16 +36463,9 @@ def test_28_00
     end
   end
   [:reverse_selection, :selection_position, :selection_frames, :smooth_selection,
-   :scale_selection_to, :insert_selection, :delete_selection, :mix_selection,
-   :src_selection, :filter_selection, :env_selection].each do |n|
-    if (tag = Snd.catch do
-          case n
-          when :src_selection, :filter_selection, :env_selection
-            snd_func(n, 0.0)
-          else
-            snd_func(n)
-          end
-        end).first != :no_active_selection
+   :scale_selection_to, :insert_selection, :delete_selection, :delete_selection_and_smooth,
+   :mix_selection].each do |n|
+    if (tag = Snd.catch do snd_func(n) end).first != :no_active_selection
       snd_display("selection %s: %s", n, tag)
     end
   end
@@ -36607,8 +36783,10 @@ def test_28_01
    :selection_creates_region, :show_controls, :show_indices,
    :show_listener, :show_selection_transform, :sinc_width, :temp_dir,
    :text_focus_color, :tiny_font, :trap_segfault, :with_file_monitor,
-   :with_verbose_cursor, :with_inset_graph, :with_pointer_focus, :window_height,
-   :beats_per_measure, :window_width, :window_x, :window_y, :with_gl,
+   :with_verbose_cursor,
+   :with_inset_graph, :with_pointer_focus, :window_height, :beats_per_measure, :with_smpte_label,
+   :with_toolbar, :with_tooltips, :with_menu_icons, :remember_sound_state,
+   :save_as_dialog_src, :save_as_dialog_auto_comment, :window_width, :window_x, :window_y, :with_gl,
    :with_mix_tags, :x_axis_style, :beats_per_minute, :zoom_color, :mix_tag_height,
    :mix_tag_width, :with_relative_panes, :clm_table_size,
    :mark_tag_width, :mark_tag_height].each do |n|
@@ -37011,8 +37189,13 @@ def test_28_02
   check_error_tag(:out_of_range) do make_polyshape(440.0, :partials, [1, 1], :kind, 3) end
   check_error_tag(:wrong_type_arg) do set_mus_header_raw_defaults(1234) end
   check_error_tag(:wrong_type_arg) do set_mus_header_raw_defaults([44100, 2.123, "hi"]) end
-  check_error_tag(:no_such_mix) do mix_sync(integer2mix(mix_sync_max + 1)) end
-  check_error_tag(:no_such_mix) do set_mix_sync(integer2mix(mix_sync_max + 1), 1) end
+  check_error_tag(:wrong_type_arg) do set_with_toolbar(123) end
+  check_error_tag(:wrong_type_arg) do set_with_tooltips(123) end
+  check_error_tag(:wrong_type_arg) do set_with_menu_icons(123) end
+  check_error_tag(:wrong_type_arg) do set_save_as_dialog_src(123) end
+  check_error_tag(:wrong_type_arg) do set_save_as_dialog_auto_comment(123) end
+  check_error_tag(:wrong_type_arg) do set_with_smpte_label(123) end
+  check_error_tag(:wrong_type_arg) do set_ask_about_unsaved_edits(123) end
   check_error_tag(:no_such_mix) do mix_properties(integer2mix(mix_sync_max + 1)) end
   check_error_tag(:no_such_mix) do set_mix_properties(integer2mix(mix_sync_max + 1), 1) end
   # 
@@ -37497,6 +37680,7 @@ end
 
 def test_28
   set_with_background_processes(true)
+  set_remember_sound_state(false)
   if $VERBOSE
     snd_info("procs  prcs/set-prcs")
     snd_info("====================")

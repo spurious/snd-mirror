@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Sat Feb 19 17:24:39 CET 2011
+\ Changed: Thu Mar 03 15:29:03 CET 2011
 
 \ Commentary:
 \
@@ -80,12 +80,8 @@
 \ mono-files->stereo              ( new-name chan1-name chan2-name -- snd )
 \ stereo->mono                    ( orig-snd chan1-name chan2-name -- snd0 snd1 )
 \
-\ prefs-activate-initial-bounds   ( beg dur full -- )
-\ prefs-deactivate-initial-bounds ( -- )
 \ with-reopen-menu     		  ( -- )
 \ with-buffers-menu    		  ( -- )
-\ set-global-sync                 ( choice -- )
-\ show-selection                  ( -- )
 \ 
 \ if-cursor-follows-play-it-stays-where-play-stopped ( :optional enable -- )
 
@@ -129,6 +125,7 @@ require examp
     nil
   then
 ;
+
 : forward-graph  ( count -- lst )        back-or-forth-graph ;
 : backward-graph ( count -- lst ) negate back-or-forth-graph ;
 
@@ -147,6 +144,7 @@ hide
   then
 ;
 set-current
+
 : back-or-forth-mix <{ count :optional snd #f chn #f -- mx|#f }>
   snd chn mixes { mx }
   count 0<> mx nil? not && if
@@ -179,9 +177,11 @@ set-current
   then
 ;
 previous
+
 : forward-mix  <{ count :optional snd #f chn #f -- mx|#f }>
   count        snd snd-snd chn snd-chn back-or-forth-mix
 ;
+
 : backward-mix <{ count :optional snd #f chn #f -- mx|#f }>
   count negate snd snd-snd chn snd-chn back-or-forth-mix
 ;
@@ -201,6 +201,7 @@ hide
   then
 ;
 set-current
+
 : back-or-forth-mark <{ count :optional snd #f chn #f -- mk|#f }>
   snd chn #f marks { mk }
   count 0<>
@@ -234,9 +235,11 @@ set-current
   then
 ;
 previous
+
 : forward-mark  <{ count :optional snd #f chn #f -- mk|#f }>
   count        snd snd-snd chn snd-chn back-or-forth-mark
 ;
+
 : backward-mark <{ count :optional snd #f chn #f -- mk|#f }>
   count negate snd snd-snd chn snd-chn back-or-forth-mark
 ;
@@ -246,6 +249,7 @@ previous
   0.0					\ sum
   gens each ( gen ) in1 i object-ref in2 i object-ref mus-run amps i vct-ref f* ( sum ) f+ end-each
 ;
+
 : oscil-bank ( amps gens in1 in2 -- sum )
   { amps gens in1 in2 }
   0.0					\ sum
@@ -260,9 +264,11 @@ previous
     fname open-sound drop
   then
 ;
+
 : emacs-style-save-as ( -- f )
   after-save-as-hook <'> after-save-as-hook-replace-sound hook-member?
 ;
+
 : set-emacs-style-save-as ( f -- )
   if
     emacs-style-save-as unless
@@ -272,9 +278,8 @@ previous
     after-save-as-hook <'> after-save-as-hook-replace-sound remove-hook! drop
   then
 ;
-\ #t set-emacs-style-save-as installs
-\ #f set-emacs-style-save-as deinstalls
-
+\ #t set-emacs-style-save-as ==> installs
+\ #f set-emacs-style-save-as ==> deinstalls
 
 \ === Snd-8 compatibility stuff (snd8.scm) ===
 
@@ -294,6 +299,7 @@ previous
   sd-chan
   vct->sound-data
 ;
+
 : open-sound-file <{ :key
      file        "test.snd"
      channels    1
@@ -302,7 +308,9 @@ previous
      header-type mus-next -- fd }>
   file srate channels mus-lfloat header-type comment mus-sound-open-output
 ;
+
 <'> mus-sound-close-output alias close-sound-file ( fd bytes -- n )
+
 : vct->sound-file <{ fd v samps -- n }>
   fd 0 samps 1- 1 v vct->sound-data mus-sound-write
 ;
@@ -310,6 +318,7 @@ previous
 \ === End of compatibility stuff ===
 
 \ ;;; -------- sound-property
+
 : remove-sound-property <{ key :optional snd #f -- alist }>
   doc" Removes key-value pair in the given sound's property list.  \
 Returns altered list."
@@ -324,6 +333,7 @@ Returns altered list."
 ;
 
 \ ;;; -------- channel-property
+
 : remove-channel-property <{ key :optional snd #f chn #f -- alist }>
   doc" Removes key-value pair in the given channel's property list.  \
 Returns altered list."
@@ -542,6 +552,7 @@ hide
   then
 ;
 set-current
+
 : yes-or-no? ( question action-if-yes action-if-no snd -- )
   { question action-if-yes action-if-no snd }
   snd clear-minibuffer drop
@@ -562,6 +573,7 @@ hide
   self @ ( rd ) next-sample y f+
 ;
 set-current
+
 : mix-channel <{ file-data :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Mixes in FILE-DATA.  \
 FILE-DATA can be the file name or a list #( file-name [beg [channel]] )"
@@ -661,6 +673,7 @@ hide
   2 +loop
 ;
 set-current
+
 : any-env-channel <{ en func :optional beg 0 dur #f snd #f chn #f edpos #f origin #f -- val }>
   en nil? if
     #f
@@ -685,6 +698,7 @@ hide
   data 0  forward angle incr if f+ else f- then  vct-set! drop
   ( val )
 ;
+
 : sr2-cb { rmp0 rmp1 -- prc; frag-beg frag-dur self -- vct }
   2 proc-create rmp0 , rmp1 ,
  does> { frag-beg frag-dur self -- vct }
@@ -697,6 +711,7 @@ hide
      rmp1 rmp0 f- )
 ;
 set-current
+
 : sine-ramp <{ rmp0 rmp1 :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Produces a sinsusoidal connection from RMP0 to RMP1."
   \ ;; vct: angle incr off scl
@@ -727,6 +742,7 @@ hide
   data 0  forward angle incr if f+ else f- then  vct-set! drop
   ( val )
 ;
+
 : b4r2-cb { rmp0 rmp1 -- prc; frag-beg frag-dur self -- vct }
   2 proc-create rmp0 , rmp1 , ( prc )
  does> { frag-beg frag-dur self -- vct }
@@ -739,6 +755,7 @@ hide
      rmp1 rmp0 f- )
 ;
 set-current
+
 : blackman4-ramp <{ rmp0 rmp1 :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   $" %s %s %s %s %s" #( rmp0 rmp1 beg dur get-func-name ) string-format { origin }
   <'> b4r3-cb beg dur snd chn edpos #f rmp0 rmp1 b4r2-cb origin ptree-channel
@@ -765,6 +782,7 @@ hide
   data 0  forward angle incr if f+ else f- then  vct-set! drop
   ( val )
 ;
+
 : rsq2-cb { rmp0 rmp1 symmetric -- prc; frag-beg frag-dur self -- vct }
   2 proc-create rmp0 , rmp1 , symmetric , ( prc )
  does> { frag-beg frag-dur self -- vct }
@@ -779,6 +797,7 @@ hide
   then
 ;
 set-current
+
 : ramp-squared <{ rmp0 rmp1 :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Connects RMP0 and RMP1 with an x^2 curve."
   $" %s %s %s %s %s %s" #( rmp0 rmp1 symmetric beg dur get-func-name ) string-format { origin }
@@ -793,6 +812,7 @@ hide
   r0 r1 self @ ( symmetric ) b d s c e ramp-squared
 ;
 set-current
+
 : env-squared-channel <{ en :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Connects ENV's dots with x^2 curves."
   $" %s %s %s %s %s" #( en symmetric beg dur get-func-name ) string-format { origin }
@@ -803,7 +823,6 @@ previous
 
 \ ;;; -------- ramp-expt, env-expt-channel
 
-
 hide
 : rex3-cb <{ y data forward -- val }>
   data 0 vct-ref { angle }
@@ -812,6 +831,7 @@ hide
   data 0  forward angle incr if f+ else f- then  vct-set! drop
   ( val )
 ;
+
 : rex2-cb { rmp0 rmp1 symmetric exponent -- prc; frag-beg frag-dur self -- vct }
   2 proc-create rmp0 , rmp1 , symmetric , exponent , ( prc )
  does> { frag-beg frag-dur self -- vct }
@@ -827,6 +847,7 @@ hide
   then
 ;
 set-current
+
 : ramp-expt <{ rmp0 rmp1 exponent
      :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Connects RMP0 and RMP1 with an x^exponent curve."
@@ -845,6 +866,7 @@ hide
   r0 r1 self cell+ @ ( exponent ) self @ ( symmetric ) b d s c e ramp-expt
 ;
 set-current
+
 : env-expt-channel <{ en exponent
      :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Connects ENV's dots with x^exponent curves."
@@ -862,6 +884,7 @@ hide
   self @ ( dc ) y f+
 ;
 set-current
+
 : offset-channel <{ amount :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Adds AMOUNT to each sample."
   $" %s %s %s %s" #( amount beg dur get-func-name ) string-format { origin }
@@ -900,6 +923,7 @@ hide
   self @ ( dither ) dup mus-random swap mus-random f+ y f+
 ;
 set-current
+
 : dither-channel <{ :optional amount 0.00006 beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Adds AMOUNT dither to each sample."
   $" %s %s %s %s" #( amount beg dur get-func-name ) string-format { origin }
@@ -925,6 +949,7 @@ hide
   y two-pi f* fsin self @ ( index ) f*  y half-pi f*  f+ fsin
 ;
 set-current
+
 : contrast-channel <{ index :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Applies contrast enhancement to the sound."
   $" %s %s %s %s" #( index beg dur get-func-name ) string-format { origin }
@@ -975,6 +1000,7 @@ hide
   self @ ( rd ) read-sample y f- fabs self cell+ @ ( diff ) f>
 ;
 set-current
+
 : channels= <{ snd1 chn1 snd2 chn2 :optional allowable-difference 0.0 -- f }>
   doc" Returns #t if the two channels are the same (within diff) modulo trailing 0's."
   snd1 snd2 =
@@ -1066,33 +1092,6 @@ previous
 
 \ === PREFERENCES DIALOG ===
 
-\ --- initial bounds ---
-
-#f  value prefs-show-full-duration	\ for prefs
-0.0 value prefs-initial-beg
-0.1 value prefs-initial-dur
-
-hide
-: bounds-cb <{ snd chn dur -- lst }>
-  #( prefs-initial-beg prefs-show-full-duration if dur else prefs-initial-dur dur fmin then )
-;
-set-current
-: prefs-activate-initial-bounds ( beg dur full -- )
-  { beg dur full }
-  beg to prefs-initial-beg
-  dur to prefs-initial-dur
-  full to prefs-show-full-duration
-  initial-graph-hook <'> bounds-cb add-hook!
-;
-
-: prefs-deactivate-initial-bounds ( -- )
-  0.0 to prefs-initial-beg
-  0.1 to prefs-initial-dur
-  #f  to prefs-show-full-duration
-  initial-graph-hook <'> bounds-cb remove-hook! drop
-;
-previous
-
 \ --- reopen menu ---
 
 hide
@@ -1100,7 +1099,9 @@ hide
 #() value reopen-names
 #f  value reopen-menu
 16  value reopen-max-length
+
 <'> noop 0 make-proc constant extensions-noop
+
 : reopen-select-cb { brief-name long-name -- proc; self -- }
   0 proc-create long-name , brief-name ,
  does> ( self -- )
@@ -1110,6 +1111,7 @@ hide
   reopen-menu brief-name remove-from-menu drop
   long-name file-exists? if long-name open-sound drop then
 ;
+
 : add-to-reopen-menu <{ snd -- #f }>
   snd short-file-name { brief-name }
   snd file-name { long-name }
@@ -1126,6 +1128,7 @@ hide
   then
   #f
 ;
+
 : check-reopen-menu <{ file -- }>
   file #f file-basename { brief-name }
   reopen-names brief-name array-member? if
@@ -1168,6 +1171,7 @@ hide
   { self }
   self @ ( file ) 0 find-sound dup sound? if select-sound then drop
 ;
+
 : open-buffer <{ file -- }>
   buffer-names buffer-empty array-member? if
     buffer-menu buffer-empty remove-from-menu drop
@@ -1176,6 +1180,7 @@ hide
   buffer-menu file file buffer-select-cb -1 add-to-menu drop
   buffer-names file array-push to buffer-names
 ;
+
 : close-buffer <{ snd -- #f }>
   buffer-menu snd file-name remove-from-menu drop
   buffer-names snd file-name array-index { idx }
@@ -1203,57 +1208,6 @@ set-current
 ;
 previous
 
-\ ;;; -------- global-sync (for prefs dialog)
-
-\ ;; 0 = no sync, 1 = all synced, 2 = sync within sound
-0 value global-sync-choice		\ global var so that we can reflect
-					\ the current setting in prefs dialog
-
-hide
-: global-sync-cb <{ snd -- }>
-  global-sync-choice 1 = if
-    1 snd set-sync
-  else
-    global-sync-choice 2 = if
-      sync-max 1+ snd set-sync drop
-    then
-  then
-;
-set-current
-: set-global-sync ( choice -- )
-  { choice }
-  choice to global-sync-choice
-  choice 0<> if
-    after-open-hook <'> global-sync-cb hook-member? unless
-      after-open-hook <'> global-sync-cb add-hook!
-    then
-  then
-;
-previous
-
-\ ;;; -------- show-selection
-
-: show-selection <{ -- }>
-  undef selection? if
-    #f #f { beg end }
-    sounds each { snd }
-      snd channels 0 ?do
-	snd i ( chn ) selection-member? if
-	  snd i selection-position snd srate f/ { pos }
-	  snd i selection-frames   snd srate f/ { len }
-	  beg not  pos        beg f< || if pos        to beg then
-	  end not  pos len f+ end f> || if pos len f+ to end then
-	then
-      loop
-    end-each
-    sounds each { snd }
-      snd channels 0 ?do
-	#( beg end ) snd i set-x-bounds drop
-      loop
-    end-each
-  then
-;
-
 \ ;;; -------- cursor-follows-play and stays where it was when the play ended
 \ moved from examp.fs to extensions.fs [ms]
 
@@ -1262,6 +1216,7 @@ hide
 : set-current-cursor  { snd chn val -- } 'cursor val snd chn set-channel-property ;
 : original-cursor     { snd chn -- cur } 'original-cursor snd chn channel-property ;
 : set-original-cursor { snd chn val -- } 'original-cursor val snd chn set-channel-property ;
+
 : local-dac-func <{ data -- val }>
   sounds each { snd }
     snd channels 0 ?do
@@ -1272,6 +1227,7 @@ hide
   end-each
   #f
 ;
+
 : local-start-playing-func <{ snd -- val }>
   snd channels 0 ?do
     snd i #f cursor { cur }
@@ -1280,10 +1236,12 @@ hide
   loop
   #f
 ;
+
 : local-stop-playing-func <{ snd -- val }>
   snd 0 current-cursor snd #t #f set-cursor
 ;
 set-current
+
 : if-cursor-follows-play-it-stays-where-play-stopped <{ :optional enable #t -- }>
   enable if
     dac-hook           <'> local-dac-func           add-hook!
