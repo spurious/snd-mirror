@@ -735,6 +735,10 @@ void sync_help(void)
 "The sync button causes certain operations to apply to all channels or multiple sounds simultaneously. \
 For example, to get a multichannel selection, set the sync button, then define the selection (by dragging \
 the mouse) in one channel, and the parallel portions of the other channels are also selected. \
+The default sync setting is set by " S_sync_style ", which defaults to " S_sync_by_sound ". \
+This ties together all the channels in a sound, but keeps sounds separate.  The other sync styles \
+are " S_sync_none ", and " S_sync_all ".  " S_sync_none " means each channel is separate, and " S_sync_all " means \
+everything is handled together.  You can set the sync style via " S_sync ". \
 Marks and mixes can also be sync'd together.\n\
 \n\
 Similarly, the unite button combines channels of a \
@@ -1092,6 +1096,7 @@ envelope and filter order in the text windows provided. \
 The envelope X axis goes from 0 to half the sampling rate. The actual frequency response (given the current filter order) \
 is displayed in blue.  The filter is on only if the filter button is set. \
 \n\n\
+See the Options:controls menu item for even more controls.\
 The keyboard commands associated with the control panel are: \
 \n\n\
   C-x C-o   show control panel\n\
@@ -1188,8 +1193,7 @@ a position. \
 \n\n\
 Once set, a mark can be moved by dragging the horizontal tab at the top.  Control-click of the tab followed by mouse \
 drag will drag the underlying data too, either inserting zeros or deleting data. \
-Click on the triangle at the bottom to play (or stop playing) from the mark; drag the \
-triangle to play following the mouse. \
+Click on the triangle at the bottom to play (or stop playing) from the mark. \
 \n\n\
 A mark can be named or unnamed.  It it has a name, it is displayed above the horizontal tab at the top of the window. As with \
 sounds and mixes, marks can be grouped together through the sync field; marks sharing the same sync value (other \
@@ -1226,8 +1230,7 @@ returns its associated mark.\
 \n\n\
 Once set, a mark can be moved by dragging the horizontal tab at the top.  Control-click of the tab followed by mouse \
 drag will drag the underlying data too, either inserting zeros or deleting data. \
-Click on the triangle at the bottom to play (or stop playing) from the mark; drag the \
-triangle to play following the mouse. \
+Click on the triangle at the bottom to play (or stop playing) from the mark. \
 The following keyboard commands relate to marks: \
 \n\n\
   C-m       place (or remove if argument negative) mark at cursor\n\
@@ -1636,7 +1639,8 @@ void play_help(void)
 #if HAVE_EXTENSION_LANGUAGE
 "To play a sound, click the 'play' button.  If the sound has more channels than your DAC(s), Snd will (normally) try to mix the extra channels \
 into the available DAC outputs.  While it is playing, you can click the button again to stop it, or click some other \
-file's 'play' button to mix it into the current set of sounds being played. To play from a particular point, set a mark \
+file's 'play' button to mix it into the current set of sounds being played. To play from a particular point, set the cursor \
+or a mark \
 there, then click its 'play triangle' (the triangular portion below the x axis).  (Use control-click here to play all channels \
 from the mark point). To play simultaneously from an arbitrary group of start points (possibly spread among many sounds), \
 set syncd marks at the start points, then click the play triangle of one of them. \
@@ -2498,8 +2502,9 @@ void save_as_dialog_help(void)
   snd_help_with_xrefs("Save As",
 
 "You can save the current state of a file with File:Save As, or the current selection with Edit:Save as. \
-The output header type, data format, sampling rate, and comment can also be set.  Setting the srate \
-does not affect the data -- it is just a number placed in the sound file header. \
+The output header type, data format, sampling rate, and comment can also be set.  If the 'src' button \
+is not set, setting the srate does not affect the data -- it is just a number placed in the sound file header. \
+Otherwise, if the output sampling rate differs from the current one, the data is converted to the new rate automatically. \
 The notation \"(be)\" in the data format lists stands for big endian; similarly, \"(le)\" is little endian.\
 If a file by the chosen name already exists \
 it is overwritten, unless that file is already open in Snd and has edits.  In that case,  \
@@ -2535,10 +2540,9 @@ void open_file_dialog_help(void)
 
 "The file selection dialog is slightly different from the Gtk or Motif default.  If you single click \
 in the directory list, that directory is immediately opened and displayed.  Also there are \
-a variety of context-sensitive popup menus to handle special chores such as setting the \
-current sort routine (right click over the file list), jump to any higher level directory (right click \
-in the directory list), or choose a recently opened file (click in the filename text widget), or \
-return to a previous list of files (click in the filter text widget). \
+two popup menus to set the \
+current sort routine (right click over the file list), and jump to a higher level directory (right click \
+in the directory list). \
 The 'sound files only' button filters out all non-sound files from the files list (using the \
 extension -- you can add to the list of sound file extensions via " S_add_sound_file_extension ". \
 When a sound file is selected, information about it is posted under the lists, and a 'play' \

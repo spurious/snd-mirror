@@ -4756,7 +4756,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	  if (mix_play_tag != NO_MIX_TAG)
 	    return(CLICK_MIX_PLAY);
 
-	  mouse_mark = hit_mark(cp, x, y, 0);
+	  mouse_mark = hit_mark(cp, x, y);
 	  if (mouse_mark != NULL)
 	    return(CLICK_MARK);
 
@@ -5273,6 +5273,9 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
       break;
 
     case CLICK_MARK:
+      set_mark_control(cp, mouse_mark, key_state);
+      break;
+
     case CLICK_WAVE:
     case CLICK_SELECTION_MAIN:
     case CLICK_MIX:
@@ -5283,9 +5286,6 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
       dragged = true;
       restart_selection_creation(cp, click_within_graph == CLICK_SELECTION_RIGHT);
       break;
-
-      /* PERHAPS: space to play? */
-      /* TODO: how to handle looped play of entire file (not selection)? */
 
     case CLICK_MARK_PLAY:
     case CLICK_MIX_PLAY:

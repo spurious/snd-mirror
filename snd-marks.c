@@ -1303,7 +1303,45 @@ static void finalize_md_context(int size)
 }
 
 
-mark *hit_mark(chan_info *cp, int x, int y, int key_state)
+void set_mark_control(chan_info *cp, mark *mp, int key_state)
+{
+  mark_control_clicked = (key_state & snd_ControlMask);
+  
+  if (mark_control_clicked)
+    {
+      mark_initial_sample = mp->samp;
+      if (mark_sd) 
+	{
+	  if ((mark_sd->mark_ctr > 1) &&
+	      (mark_sd->marks[0] != mp))
+	    {
+	      mark *tm;
+	      int loc = 1;
+	      mus_long_t ts;
+	      chan_info *tc;
+	      for (loc = 1; loc < mark_sd->mark_ctr; loc++)
+		if (mark_sd->marks[loc] == mp) break;
+	      if (loc < mark_sd->mark_ctr)
+		{
+		  tm = mark_sd->marks[0];
+		  ts = mark_sd->initial_samples[0];
+		  tc = mark_sd->chans[0];
+		  mark_sd->marks[0] = mark_sd->marks[loc];
+		  mark_sd->initial_samples[0] = mark_sd->initial_samples[loc];
+		  mark_sd->chans[0] = mark_sd->chans[loc];
+		  mark_sd->marks[loc] = tm;
+		  mark_sd->initial_samples[loc] = ts;
+		  mark_sd->chans[loc] = tc;
+		}
+	    }
+	  initialize_md_context(mark_sd->mark_ctr, mark_sd->chans);
+	}
+      else initialize_md_context(1, &cp);
+    }
+}
+
+
+mark *hit_mark(chan_info *cp, int x, int y)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
@@ -1311,12 +1349,14 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
     {
       axis_info *ap;
       ap = cp->axis;
+
       /* first check that we're in the top portion of the graph where the mark tabs are */
       if ((y >= ap->y_axis_y1) && 
 	  (y <= (ap->y_axis_y1 + mark_tag_height(ss) + 10)))               /*  + 10 for named marks -- checked again later */
 	{
 	  mark *mp;
 	  mdata *md;
+
 	  md = (mdata *)calloc(1, sizeof(mdata));
 	  md->x = x;
 	  md->y = y;
@@ -1324,44 +1364,13 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 	  mp = map_over_marks(cp, hit_mark_1, (void *)md, READ_FORWARD);
 	  if (mp == (mark *)1) mp = NULL;
 	  free(md);
+
 	  if (mp)
 	    {
-	      mark_control_clicked = (key_state & snd_ControlMask);
 	      if (mp->sync != 0) 
 		{
 		  if (mark_sd) mark_sd = free_syncdata(mark_sd);
 		  mark_sd = gather_syncd_marks(mp->sync);
-		}
-	      if (mark_control_clicked)
-		{
-		  mark_initial_sample = mp->samp;
-		  if (mark_sd) 
-		    {
-		      if ((mark_sd->mark_ctr > 1) &&
-			  (mark_sd->marks[0] != mp))
-			{
-			  mark *tm;
-			  int loc = 1;
-			  mus_long_t ts;
-			  chan_info *tc;
-			  for (loc = 1; loc < mark_sd->mark_ctr; loc++)
-			    if (mark_sd->marks[loc] == mp) break;
-			  if (loc < mark_sd->mark_ctr)
-			    {
-			      tm = mark_sd->marks[0];
-			      ts = mark_sd->initial_samples[0];
-			      tc = mark_sd->chans[0];
-			      mark_sd->marks[0] = mark_sd->marks[loc];
-			      mark_sd->initial_samples[0] = mark_sd->initial_samples[loc];
-			      mark_sd->chans[0] = mark_sd->chans[loc];
-			      mark_sd->marks[loc] = tm;
-			      mark_sd->initial_samples[loc] = ts;
-			      mark_sd->chans[loc] = tc;
-			    }
-			}
-		      initialize_md_context(mark_sd->mark_ctr, mark_sd->chans);
-		    }
-		  else initialize_md_context(1, &cp);
 		}
 	    }
 	  return(mp);

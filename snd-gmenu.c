@@ -1049,6 +1049,22 @@ static void popup_selection_apply_controls_callback(GtkWidget *w, gpointer info)
 }
 
 
+static void popup_loop_play_callback(GtkWidget *w, gpointer info) 
+{
+  if (ss->selection_play_stop)
+    {
+      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
+      reflect_play_selection_stop();
+    }
+  else
+    {
+      set_menu_label(edit_play_menu, "Stop");
+      ss->selection_play_stop = true;
+      loop_play_selection();
+    }
+}
+
+
 void post_selection_popup_menu(void *e) 
 {
   GdkEventButton *ev = (GdkEventButton *)e;
@@ -1064,12 +1080,14 @@ void post_selection_popup_menu(void *e)
       add_menu_item(selection_popup_menu, "Cut",            NULL, (GCallback)edit_cut_callback);
       add_menu_item(selection_popup_menu, "Cut and smooth", NULL, (GCallback)popup_cut_and_smooth_callback);
       add_menu_item(selection_popup_menu, "Cut -> new",     NULL, (GCallback)popup_cut_to_new_callback);
-      add_menu_item(selection_popup_menu, "Copy -> new",    NULL, (GCallback)popup_copy_to_new_callback);
+      add_menu_item(selection_popup_menu, "Save as",        NULL, (GCallback)edit_save_as_callback);
+      add_menu_item(selection_popup_menu, "Play",           NULL, (GCallback)edit_play_callback);
+      add_menu_item(selection_popup_menu, "Play looping",   NULL, (GCallback)popup_loop_play_callback);
       add_menu_item(selection_popup_menu, "Crop",           NULL, (GCallback)popup_crop_callback);
       add_menu_item(selection_popup_menu, "Unselect",       NULL, (GCallback)edit_unselect_callback);
+      add_menu_item(selection_popup_menu, "Copy -> new",    NULL, (GCallback)popup_copy_to_new_callback);
       add_menu_item(selection_popup_menu, "-> 0.0",         NULL, (GCallback)popup_zero_selection_callback);
       add_menu_item(selection_popup_menu, "-> 1.0",         NULL, (GCallback)popup_normalize_selection_callback);
-      add_menu_item(selection_popup_menu, "Save as",        NULL, (GCallback)edit_save_as_callback);
       add_menu_item(selection_popup_menu, "Paste",          NULL, (GCallback)edit_paste_callback);
       add_menu_item(selection_popup_menu, "Mix",            NULL, (GCallback)edit_mix_callback);
       add_menu_item(selection_popup_menu, "Mark",           NULL, (GCallback)popup_mark_selection_callback);
@@ -1425,7 +1443,7 @@ void show_toolbar(void)
 
       add_to_toolbar(toolbar, GTK_STOCK_NEW,             "new sound",                  (GCallback)file_new_callback);
       add_to_toolbar(toolbar, GTK_STOCK_OPEN,            "open sound",                 (GCallback)file_open_callback);
-      add_to_toolbar(toolbar, GTK_STOCK_SAVE,            "save selected sound",        (GCallback)file_save_callback);
+      add_to_toolbar(toolbar, GTK_STOCK_SAVE_AS,         "save selected sound",        (GCallback)file_save_as_callback);
       add_to_toolbar(toolbar, GTK_STOCK_REVERT_TO_SAVED, "revert to saved",            (GCallback)file_revert_callback);
       add_to_toolbar(toolbar, GTK_STOCK_UNDO,            "undo edit",                  (GCallback)edit_undo_callback);
       add_to_toolbar(toolbar, GTK_STOCK_REDO,            "redo last (undone) edit",    (GCallback)edit_redo_callback);

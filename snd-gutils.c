@@ -1177,19 +1177,26 @@ char *slist_selection(slist *lst)
 
 /* TODO: gtk troubles:
  *   gtk3 toolbar is spread out
+ *   gtk3 basic-color is ignored
  *   do meters work in rec?  in Motif they're drawn incorrectly
  *   sep chans, syncd marks don't move together
  *   superimposed chans flicker a lot
  *   hide controls + listener doesn't
  *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
- *   update the dialog help strings
  *   sash colors should be green but I can't find any way to set this in gtk3!
  *   Also, someone is setting squelch?  
  *   if pointer focus, movement out of dialog and into graph does not raise graph
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators
- *   perhaps the "save" toolbar icon should be "save as"
+ *
+ *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
+ *     also locate here, rather than being directory-based
+ *
+ *   color printout should give the rgba values (not "(color_t #<c_pointer 0x1413000>)")
+ *     set_source_rgb -> set_source_rgba? Is there a speed penalty?
+ *     what about basic-color etc? the prefs color controls? -- do these matter since they're mostly bg colors?
+ *     shouldn't colors be objects?
  *
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
  *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.
@@ -1205,7 +1212,7 @@ char *slist_selection(slist *lst)
  *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
  *     try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
  *
- * requested: popup entry for looped-play, better ladspa stuff, zoomed fft, space=play
+ * requested: zoomed fft, space=play
  * bugs: play choppy if graphics
  */
 

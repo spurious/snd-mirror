@@ -1111,6 +1111,22 @@ static void popup_selection_apply_controls_callback(Widget w, XtPointer info, Xt
 }
 
 
+static void popup_loop_play_callback(Widget w, XtPointer info, XtPointer context) 
+{
+  if (ss->selection_play_stop)
+    {
+      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
+      reflect_play_selection_stop();
+    }
+  else
+    {
+      set_menu_label(edit_play_menu, "Stop");
+      ss->selection_play_stop = true;
+      loop_play_selection();
+    }
+}
+
+
 void post_selection_popup_menu(void *e) 
 {
   XButtonPressedEvent *event = (XButtonPressedEvent *)e;
@@ -1128,12 +1144,14 @@ void post_selection_popup_menu(void *e)
       add_menu_item(selection_popup_menu, "Cut",            edit_cut_callback);
       add_menu_item(selection_popup_menu, "Cut and smooth", popup_cut_and_smooth_callback);
       add_menu_item(selection_popup_menu, "Cut -> new",     popup_cut_to_new_callback);
-      add_menu_item(selection_popup_menu, "Copy -> new",    popup_copy_to_new_callback);
+      add_menu_item(selection_popup_menu, "Save as",        edit_save_as_callback);
+      add_menu_item(selection_popup_menu, "Play",           edit_play_callback);
+      add_menu_item(selection_popup_menu, "Play looping",   popup_loop_play_callback);
       add_menu_item(selection_popup_menu, "Crop",           popup_crop_callback);
       add_menu_item(selection_popup_menu, "Unselect",       edit_unselect_callback);
       add_menu_item(selection_popup_menu, "-> 0.0",         popup_zero_selection_callback);
       add_menu_item(selection_popup_menu, "-> 1.0",         popup_normalize_selection_callback);
-      add_menu_item(selection_popup_menu, "Save as",        edit_save_as_callback);
+      add_menu_item(selection_popup_menu, "Copy -> new",    popup_copy_to_new_callback);
       add_menu_item(selection_popup_menu, "Paste",          edit_paste_callback);
       add_menu_item(selection_popup_menu, "Mix",            edit_mix_callback);
       add_menu_item(selection_popup_menu, "Mark",           popup_mark_selection_callback);
@@ -1630,7 +1648,7 @@ void show_toolbar(void)
 
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_NEW),           "new sound",                  file_new_callback);
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_OPEN),          "open sound",                 file_open_callback);
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_SAVE),          "save selected sound",        file_save_callback);
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_SAVE),          "save selected sound",        file_save_as_callback);
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_REVERT),        "revert to saved",            file_revert_callback); 
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_UNDO),          "undo edit",                  edit_undo_callback);
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_REDO),          "redo last (undone) edit",    edit_redo_callback);

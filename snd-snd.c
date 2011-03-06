@@ -2455,10 +2455,7 @@ void reverb_control_set_feedback(mus_float_t hop)
  *   (hash-table makes more sense as a property list than a list in large cases) -- currently it's actually a vector
  *   or a global data base for all properties? -- easy to search or display in various ways
  *
- * all current "work procs" could be handled as separate threads
- * all multichannel parallel ops also threaded, and graphics updates, and playing
  * TODO: make-sampler with mix etc -- let 1st arg be object, also add selection sampler
- *   Also "close"? min max close save buttons on the left before the sound name?
  */
 
 

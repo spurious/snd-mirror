@@ -1,5 +1,7 @@
 (provide 'snd-misc.scm)
 
+(if (not (provided? 'snd-motif)) (snd-error "misc.scm only works in the Motif version of Snd."))
+
 (if (not (provided? 'snd-snd-motif.scm)) (load "snd-motif.scm"))
 (if (not (provided? 'snd-examp.scm)) (load "examp.scm"))
 (if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
@@ -18,8 +20,6 @@
 (if (not (provided? 'snd-special-menu.scm)) (load "special-menu.scm"))
 (if (not (provided? 'snd-new-backgrounds.scm)) (load "new-backgrounds.scm"))
 (if (not (provided? 'snd-marks-menu.scm)) (load "marks-menu.scm"))
-(if (and (provided? 'snd-gtk) (not (provided? 'snd-ladspa.scm))) (load "ladspa.scm"))
-(if (and (provided? 'snd-gtk) (not (provided? 'snd-ladspa-help.scm))) (load "ladspa-help.scm"))
 (if (not (provided? 'snd-fft-menu.scm)) (load "fft-menu.scm"))
 (if (not (provided? 'snd-edit123.scm)) (load "edit123.scm"))
 (if (not (provided? 'snd-effects-utils.scm)) (load "effects-utils.scm"))
