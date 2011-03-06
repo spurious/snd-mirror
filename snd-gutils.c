@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* for label color add containing eventbox */
-
 bool set_tiny_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -1185,12 +1183,13 @@ char *slist_selection(slist *lst)
  *   hide controls + listener doesn't
  *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
- *   icons in file dialog previous files lists
  *   update the dialog help strings
  *   sash colors should be green but I can't find any way to set this in gtk3!
  *   Also, someone is setting squelch?  
  *   if pointer focus, movement out of dialog and into graph does not raise graph
  *   perhaps tooltips in places like the data list of the save-as dialog
+ *   perhaps menu accelerators
+ *   perhaps the "save" toolbar icon should be "save as"
  *
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
  *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.
@@ -1202,10 +1201,6 @@ char *slist_selection(slist *lst)
  *     perhaps all of snd-print.c is now motif-specific, and we should use
  *     snd-gprint with GTK_PRINT_OPERATION_ACTION_PRINT and it says only pdf? gtk_print_operation_set_export_filename ()
  *     [this is currently disabled in gtk3]
- *
- *  could insert-selection-and-smooth be done sensibly -> insert at cursor in currently selected chan,
- *    then follow the sync chains until one runs out?
- *    also there are 0..2 splices to smooth here with selection/original swapping roles
  *
  *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
  *     try cairo-trace and the new GL surface (1.10.0), and the OSX backend?

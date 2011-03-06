@@ -21,8 +21,7 @@ typedef struct fsb {
   /* base dialog */
   GtkWidget *dialog, *filter_text, *filter_label, *just_sounds_button;
   GtkWidget *file_label, *file_text, *ok_button, *mkdir_button, *cancel_button, *help_button, *extract_button;
-  GtkWidget *panes, *dirs_menu, *sorters_menu;
-  GtkWidget *files_mbar, *files_mitem, *files_menu, *filters_mbar, *filters_mitem, *filters_menu;
+  GtkWidget *panes, *dirs_menu, *files_menu;
 
   char *directory_name, *file_name;
   slist *directory_list, *file_list;
@@ -39,13 +38,10 @@ typedef struct fsb {
   int filter_choice, sorter_choice;
 
   /* popup info */
-  char **file_text_names, **file_filter_names;
-  GtkWidget **file_text_items, **file_filter_items, **file_dir_items, **file_list_items;  /* menu items */
+  GtkWidget **file_dir_items, **file_list_items;
   int file_list_items_size;
 
   dirpos_list *dir_list;
-
-  /* in Motif these are in separate structs, mainly for historical reasons */
 } fsb;
 
 
@@ -54,12 +50,6 @@ typedef struct fsb {
 static char *fsb_filter_text(fsb *fs)
 {
   return((char *)gtk_entry_get_text(GTK_ENTRY(fs->filter_text)));
-}
-
-
-static void fsb_filter_set_text(fsb *fs, const char *filter)
-{
-  gtk_entry_set_text(GTK_ENTRY(fs->filter_text), filter);
 }
 
 
@@ -332,7 +322,6 @@ static void fsb_filter_activate(GtkWidget *w, gpointer context)
       if (fs->directory_name) free(fs->directory_name);
       fs->directory_name = just_directory(filter); /* this allocates */
       fsb_update_lists(fs);
-      remember_filename(filter, fs->file_filter_names);
     }
 }
 
@@ -351,20 +340,6 @@ static void fsb_file_activate(GtkWidget *w, gpointer context)
 }
 
 
-static void reflect_file_in_popup(fsb *fs);
-
-static void fsb_files_popup_activate_callback(GtkWidget *w, gpointer context)
-{
-  reflect_file_in_popup((fsb *)context);
-}
-
-
-static void reflect_filter_in_popup(fsb *fs);
-
-static void fsb_filters_popup_activate_callback(GtkWidget *w, gpointer context)
-{
-  reflect_filter_in_popup((fsb *)context);
-}
 
 
 static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data);
@@ -445,12 +420,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
   /* -------- filter -------- */
   {
-    GtkWidget *row, *image;
-    /* we can't mimic Motif here (and in the file entry below) because Gtk predefines a popup for every
-     *   entry widget, and I don't see any way to get rid of it.  So, we put a dumb "go back" button off
-     *   to the right.
-     */
-
+    GtkWidget *row;
     row = gtk_hbox_new(false, 10);
     gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fs->dialog)), row, false, false, 2);
     gtk_widget_show(row);
@@ -460,25 +430,10 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     gtk_box_pack_start(GTK_BOX(row), fs->filter_label, false, false, 0);
     sg_left_justify_label(fs->filter_label);
     gtk_widget_show(fs->filter_label);
+
     fs->filter_text = snd_entry_new(row, WITH_WHITE_BACKGROUND);
     fsb_filter_set_text_with_directory(fs, "*");
     SG_SIGNAL_CONNECT(fs->filter_text, "activate", fsb_filter_activate, (gpointer)fs);
-
-    /* filter popup menu */
-    fs->filters_mbar = gtk_menu_bar_new();
-    gtk_box_pack_end(GTK_BOX(row), fs->filters_mbar, false, false, 0);
-    widget_modify_bg(fs->filters_mbar, GTK_STATE_NORMAL, ss->sgx->basic_color);
-    gtk_widget_show(fs->filters_mbar);
-
-    fs->filters_menu = gtk_menu_new();
-    image = (GtkWidget *)g_object_ref(gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
-    fs->filters_mitem = gtk_image_menu_item_new();
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(fs->filters_mitem), image);
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(fs->filters_mitem), fs->filters_menu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(fs->filters_mbar), fs->filters_mitem);
-    SG_SIGNAL_CONNECT(fs->filters_mitem, "activate", fsb_filters_popup_activate_callback, (gpointer)fs);
-    gtk_widget_show(image);
-    gtk_widget_show(fs->filters_mitem);
   }
 
 
@@ -510,7 +465,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
   /* -------- file -------- */
   {
-    GtkWidget *row, *image;
+    GtkWidget *row;
 
     row = gtk_hbox_new(false, 10);
     gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fs->dialog)), row, false, false, 10);
@@ -525,29 +480,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     fs->file_text = snd_entry_new(row, WITH_WHITE_BACKGROUND);
     gtk_entry_set_text(GTK_ENTRY(fs->file_text), fs->directory_name);
     SG_SIGNAL_CONNECT(fs->file_text, "activate", fsb_file_activate, (gpointer)fs);
-
-    /* file popup menu */
-    fs->files_mbar = gtk_menu_bar_new();
-    widget_modify_bg(fs->files_mbar, GTK_STATE_NORMAL, ss->sgx->basic_color);
-    gtk_box_pack_end(GTK_BOX(row), fs->files_mbar, false, false, 0);
-    gtk_widget_show(fs->files_mbar);
-
-    fs->files_menu = gtk_menu_new();
-    image = (GtkWidget *)g_object_ref(gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
-    fs->files_mitem = gtk_image_menu_item_new();
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(fs->files_mitem), image);
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(fs->files_mitem), fs->files_menu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(fs->files_mbar), fs->files_mitem);
-    SG_SIGNAL_CONNECT(fs->files_mitem, "activate", fsb_files_popup_activate_callback, (gpointer)fs);
-    gtk_widget_show(image);
-    gtk_widget_show(fs->files_mitem);
-
   }
-
-  /* -------- special popups */
-  fs->file_text_names = make_filename_list();
-  fs->file_filter_names = make_filename_list();
-  remember_filename(fsb_filter_text(fs), fs->file_filter_names);
 
   gtk_widget_show(fs->dialog);
   gtk_paned_set_position(GTK_PANED(fs->panes), 120);
@@ -586,134 +519,6 @@ static void force_directory_reread(fsb *fs)
 
 
 /* ---------------- popups ---------------- */
-
-/* file popup */
-static void file_text_item_activate_callback(GtkWidget *w, gpointer context)
-{
-  int i;
-  fsb *fs = (fsb *)context;
-  char *current_directory, *current_filename;
-
-  current_filename = mus_strdup((char *)(fs->file_text_names[get_user_int_data(G_OBJECT(w))]));
-  current_directory = just_directory(current_filename);
-
-  if ((!(fs->directory_name)) || 
-      (strcmp(current_directory, fs->directory_name) != 0))
-    {
-      if (fs->directory_name) free(fs->directory_name);
-      fs->directory_name = current_directory;
-      fsb_filter_set_text_with_directory(fs, "*");
-      fsb_update_lists(fs);
-    }
-
-  for (i = 0; i < fs->current_files->len; i++)
-    if (mus_strcmp(current_filename, fs->current_files->files[i]->full_filename))
-      {
-	snd_info *sp;
-	slist_select(fs->file_list, i);        /* doesn't call select callback, but I think we want it in this case */
-	if (fs->file_list->select_callback)
-	  (*(fs->file_list->select_callback))((const char *)(fs->current_files->files[i]->filename),
-					      i,
-					      fs->file_list->select_callback_data);
-	sp = snd_open_file(current_filename, FILE_READ_WRITE);
-	if (sp) select_channel(sp, 0);
-	break;
-      }
-  free(current_filename);
-}
-
-
-static void reflect_file_in_popup(fsb *fs)
-{
-  char *current_filename;
-  int i, filenames_to_display = 0;
-  
-  if (fs->file_text_items == NULL)
-    {
-      fs->file_text_items = (GtkWidget **)calloc(FILENAME_LIST_SIZE, sizeof(GtkWidget *));
-      for (i = 0; i < FILENAME_LIST_SIZE; i++)
-	{
-	  fs->file_text_items[i] = gtk_menu_item_new_with_label("oops");
-	  set_user_int_data(G_OBJECT(fs->file_text_items[i]), i);
-	  gtk_menu_shell_append(GTK_MENU_SHELL(fs->files_menu), fs->file_text_items[i]);
-	  gtk_widget_show(fs->file_text_items[i]);
-	  SG_SIGNAL_CONNECT(fs->file_text_items[i], "activate", file_text_item_activate_callback, (gpointer)fs);	      
-	}
-    }
-  
-  current_filename = fsb_file_text(fs);
-
-  for (i = 0; i < FILENAME_LIST_SIZE; i++)
-    if ((fs->file_text_names[i]) &&
-	(mus_file_probe(fs->file_text_names[i])) &&
-	((current_filename == NULL) || 
-	 (strcmp(fs->file_text_names[i], current_filename) != 0)))
-      {
-	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(fs->file_text_items[filenames_to_display]))), 
-			   fs->file_text_names[i]);
-	reset_user_int_data(G_OBJECT(fs->file_text_items[filenames_to_display]), i);
-	gtk_widget_show(fs->file_text_items[filenames_to_display]);
-	filenames_to_display++;
-      }
-  
-  for (i = filenames_to_display; i < FILENAME_LIST_SIZE; i++)
-    if ((fs->file_text_items[i]) &&
-	(widget_is_active(fs->file_text_items[i])))
-      gtk_widget_hide(fs->file_text_items[i]);
-}
-
-/* filter popup */
-
-static void file_filter_item_activate_callback(GtkWidget *w, gpointer context)
-{
-  fsb *fs = (fsb *)context;
-  char *filter;
-  filter = fs->file_filter_names[get_user_int_data(G_OBJECT(w))];
-  fsb_filter_set_text(fs, (const char *)filter);
-  if (fs->directory_name) free(fs->directory_name);
-  fs->directory_name = just_directory(filter); /* this allocates */
-  fsb_file_set_text(fs, fs->directory_name);
-  fsb_update_lists(fs);
-  remember_filename(filter, fs->file_filter_names);
-}
-
-static void reflect_filter_in_popup(fsb *fs)
-{
-  char *current_filtername;
-  int i, filternames_to_display = 0;
-
-  if (fs->file_filter_items == NULL)
-    {
-      fs->file_filter_items = (GtkWidget **)calloc(FILENAME_LIST_SIZE, sizeof(GtkWidget *));
-      for (i = 0; i < FILENAME_LIST_SIZE; i++)
-	{
-	  fs->file_filter_items[i] = gtk_menu_item_new_with_label("oops");
-	  set_user_int_data(G_OBJECT(fs->file_filter_items[i]), i);
-	  gtk_menu_shell_append(GTK_MENU_SHELL(fs->filters_menu), fs->file_filter_items[i]);
-	  gtk_widget_show(fs->file_filter_items[i]);
-	  SG_SIGNAL_CONNECT(fs->file_filter_items[i], "activate", file_filter_item_activate_callback, (gpointer)fs);	      
-	}
-    }
-
-  current_filtername = fsb_filter_text(fs);
-
-  for (i = 0; i < FILENAME_LIST_SIZE; i++)
-    if ((fs->file_filter_names[i]) &&
-	(!(mus_strcmp(fs->file_filter_names[i], current_filtername))))
-      {
-	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(fs->file_filter_items[filternames_to_display]))), 
-			   fs->file_filter_names[i]);
-	reset_user_int_data(G_OBJECT(fs->file_filter_items[filternames_to_display]), i);
-	gtk_widget_show(fs->file_filter_items[filternames_to_display]);
-	filternames_to_display++;
-      }
-
-  for (i = filternames_to_display; i < FILENAME_LIST_SIZE; i++)
-    if ((fs->file_filter_items[i]) &&
-	(widget_is_active(fs->file_filter_items[i])))
-      gtk_widget_hide(fs->file_filter_items[i]);
-}
-
 
 /* dir list popup */
 
@@ -1545,7 +1350,6 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 	      if (hide_me == 0)
 		gtk_widget_hide(fd->fs->dialog);
 	      select_channel(sp, 0); /* add_sound_window (snd-xsnd.c) -> make_file_info (snd-file) will report reason for error, if any */
-	      remember_filename(filename, fd->fs->file_text_names);
 	    }
 	  else
 	    {
@@ -1635,7 +1439,9 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 			      (GCallback)file_open_dialog_dismiss,
 			      (GCallback)file_open_dialog_help,
 			      GTK_STOCK_OPEN);
+#if 0
       preload_filenames(odat->fs->file_text_names);
+#endif
     }
   else
     {
@@ -1713,7 +1519,6 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 	  else 
 	    {
 	      report_in_minibuffer(sp, "%s mixed in at cursor", filename);
-	      remember_filename(filename, mdat->fs->file_text_names);
 	    }
 	}
       else 
@@ -1814,7 +1619,6 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 	  else 
 	    {
 	      report_in_minibuffer(sp, "%s inserted at cursor", filename);
-	      remember_filename(filename, fd->fs->file_text_names);
 	    }
 	}
       else 
@@ -2962,8 +2766,6 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	  snd_remove(tmpfile, REMOVE_FROM_CACHE);
 	  free(tmpfile);
 	}
-
-      remember_filename(fullname, sd->fs->file_text_names);
 
       if (saving)
 	{

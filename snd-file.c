@@ -166,9 +166,6 @@ const char *short_data_format_name(int sndlib_format, const char *filename)
 }
 
 
-
-/* -------- popup filename lists -------- */
-
 static void forget_filename(const char *filename, char **names)
 {
   int i, j = 0;
@@ -1668,7 +1665,7 @@ void snd_close_file(snd_info *sp)
   if (remember_sound_state(ss))
     remember_sound_file(sp);
 
-  remember_filename(sp->filename, preloaded_files); /* for open dialog(s) previous files list in case dialog doesn't yet exist */
+  remember_filename(sp->filename, preloaded_files); /* for open dialog(s) previous files list and File:open recent files menu */
 
   /* an experiment -- event queue seems to be glomming up when lots of fast open/close,
    * but squelch updates just in case a redisplay event is in the queue.  But check_for_event

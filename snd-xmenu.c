@@ -1354,11 +1354,6 @@ void post_lisp_popup_menu(void *e) {}
 
 
 
-/* 
- * PERHAPS: add accelerators to gtk menus -- they look kinda dumb.
- * PERHAPS: use the yin/yang icon for looped play of the whole file?
- */
-
 
 /* ---------------- tooltips ---------------- */
 
