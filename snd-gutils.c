@@ -1189,19 +1189,22 @@ char *slist_selection(slist *lst)
  *   if pointer focus, movement out of dialog and into graph does not raise graph
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators
+ *   check out snd-ls changes and the tutorial
+ *   the listener completion stuff is not handy in Motif or Gtk -- maybe just post the choices? or choose one and gray-scale it?
  *
  *   the build drawing stuff (draw-dot etc) segfault in cairo
  *    need to add cr arg to draw-line draw-dot fill-rectangle draw-string draw-lines draw-dots fil-polygon
  *    what about draw-axes [and the various "contexts"] 
  *    snd-test.scm draw.scm dsp.scm muglyphs.scm snd-gtk.scm snd-motif.scm xm-enved.scm t26|139 + doc examples
+ *    so these now work only in the chan drawing area context in gtk [and not always then -- snd-test.scm test 20/21]
  *
- *   if just cr in listener, prompt is not boldface
+ *   if with-tracking-cursor and cursor-style is cursor-line, I still get a "+" following the DAC
  *
  *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
  *     also locate here, rather than being directory-based
  *
  *   color printout should give the rgba values (not "(color_t #<c_pointer 0x1413000>)")
- *     set_source_rgb -> set_source_rgba? Is there a speed penalty?
+ *     set_source_rgb -> set_source_rgba? Is there a speed penalty? [snd-gdraw.c, genv gsnd grec gprint gfft gfile]
  *     what about basic-color etc? the prefs color controls? -- do these matter since they're mostly bg colors?
  *     shouldn't colors be objects?
  *
@@ -1219,8 +1222,9 @@ char *slist_selection(slist *lst)
  *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
  *     try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
  *
- * requested: zoomed fft, space=play
- * bugs: play choppy if graphics
+ * requested: zoomed fft -- this is available in the transform dialog, but where to put chan-local controls?
+ *            space=play
+ * bugs: play choppy if graphics -- seems ok?
  */
 
 

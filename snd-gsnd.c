@@ -2529,13 +2529,7 @@ void make_controls_dialog(void)
       gtk_widget_show(reset_button);
       gtk_widget_show(help_button);
 
-#if HAVE_GTK_TEST_WIDGET_CLICK
-      /* from Gtk 2.13.4 */
-      mainbox = gtk_dialog_get_content_area(GTK_DIALOG(controls_dialog));
-#else
-      mainbox = GTK_DIALOG(controls_dialog)->vbox;
-#endif
-
+      mainbox = DIALOG_CONTENT_AREA(GTK_DIALOG(controls_dialog));
       add_control(mainbox, "expand hop", EXPAND_HOP, expand_control_hop(ss), .001, .3, expand_hop_callback);
       add_control(mainbox, "expand length", EXPAND_LENGTH, expand_control_length(ss), .01, .5, expand_length_callback);
       add_control(mainbox, "expand ramp", EXPAND_RAMP, expand_control_ramp(ss), .01, .5, expand_ramp_callback);

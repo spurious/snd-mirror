@@ -43997,45 +43997,53 @@ EDITS: 1
 		    (> rs samp))
 	       (let ((xpos (x->position (/ samp (srate))))
 		     (ypos (y->position (sample samp))))
-		 (draw-line xpos 20 xpos (- ypos 4))
-		 (draw-string text (- xpos (/ text-width 2)) 18)))))
+		 (catch #t
+			(lambda ()
+			  (draw-line xpos 20 xpos (- ypos 4))
+			  (draw-string text (- xpos (/ text-width 2)) 18))
+			(lambda args
+			  (snd-display #__line__ ";draw error: ~A" args)))))))
        comments)))
   
   (define (display-samps-in-red snd chn)
     "display samples 1000 to 2000 in red whenever they're in the current view"
-    (let ((left (left-sample snd chn))
-	  (right (right-sample snd chn))
-	  (old-color (foreground-color snd chn))
-	  (red (make-color-with-catch 1 0 0)))
-      (if (and (< left 2000)
-	       (> right 1000))
-	  (let* ((data (make-graph-data snd chn)))
-	    (if data
-		(if (vct? data)                      ;the simple, one-sided graph case
-		    (let* ((samps (- (min right 2000)
-				     (max left 1000)))
-			   (offset (max 0 (- 1000 left)))
-			   (new-data (vct-subseq data offset (+ offset samps))))
-		      (set! (foreground-color snd chn) red)
-		      (graph-data new-data snd chn copy-context (max 1000 left) (min 2000 right))
-		      (set! (foreground-color snd chn) old-color))
-		    (let* ((low-data (car data))     ;the two-sided envelope graph case
-			   (high-data (cadr data))
-			   ;; we need to place the red portion correctly in the current graph
-			   ;; so the following is getting the "bin" numbers associated with 
-			   ;; samples 1000 and 2000
-			   (size (vct-length low-data))
-			   (samps (- right left))
-			   (left-offset (max 0 (- 1000 left)))
-			   (left-bin (round (/ (* size left-offset) samps)))
-			   (right-offset (- (min 2000 right) left))
-			   (right-bin (round (/ (* size right-offset) samps)))
-			   (new-low-data (vct-subseq low-data left-bin right-bin))
-			   (new-high-data (vct-subseq high-data left-bin right-bin)))
-		      (set! (foreground-color snd chn) red)
-		      (graph-data 
-		       (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
-		      (set! (foreground-color snd chn) old-color))))))))
+    (catch #t
+	   (lambda ()
+	     (let ((left (left-sample snd chn))
+		   (right (right-sample snd chn))
+		   (old-color (foreground-color snd chn))
+		   (red (make-color-with-catch 1 0 0)))
+	       (if (and (< left 2000)
+			(> right 1000))
+		   (let* ((data (make-graph-data snd chn)))
+		     (if data
+			 (if (vct? data)                      ;the simple, one-sided graph case
+			     (let* ((samps (- (min right 2000)
+					      (max left 1000)))
+				    (offset (max 0 (- 1000 left)))
+				    (new-data (vct-subseq data offset (+ offset samps))))
+			       (set! (foreground-color snd chn) red)
+			       (graph-data new-data snd chn copy-context (max 1000 left) (min 2000 right))
+			       (set! (foreground-color snd chn) old-color))
+			     (let* ((low-data (car data))     ;the two-sided envelope graph case
+				    (high-data (cadr data))
+				    ;; we need to place the red portion correctly in the current graph
+				    ;; so the following is getting the "bin" numbers associated with 
+				    ;; samples 1000 and 2000
+				    (size (vct-length low-data))
+				    (samps (- right left))
+				    (left-offset (max 0 (- 1000 left)))
+				    (left-bin (round (/ (* size left-offset) samps)))
+				    (right-offset (- (min 2000 right) left))
+				    (right-bin (round (/ (* size right-offset) samps)))
+				    (new-low-data (vct-subseq low-data left-bin right-bin))
+				    (new-high-data (vct-subseq high-data left-bin right-bin)))
+			       (set! (foreground-color snd chn) red)
+			       (graph-data 
+				(list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
+			       (set! (foreground-color snd chn) old-color))))))))
+	   (lambda args
+	     (snd-display #__line__ ";draw error: ~A" args))))
   
   (define show-hiho
     ;; show a red "hiho" in the helvetica bold font on a gray background
@@ -44044,13 +44052,17 @@ EDITS: 1
 	    (rs (right-sample snd chn)))
 	(if (and (< ls 1000)
 		 (> rs 1000))
-	    (let ((pos (x->position (/ 1000.0 (srate))))
-		  (old-color (foreground-color)))
-	      (set! (foreground-color) (make-color-with-catch .75 .75 .75))
-	      (fill-rectangle pos 10 50 20)
-	      (set! (foreground-color) (make-color-with-catch 1 0 0))
-	      (draw-string "hiho" (+ pos 5) 24)
-	      (set! (foreground-color) old-color))))))
+	    (catch #t
+		   (lambda ()
+		     (let ((pos (x->position (/ 1000.0 (srate))))
+			   (old-color (foreground-color)))
+		       (set! (foreground-color) (make-color-with-catch .75 .75 .75))
+		       (fill-rectangle pos 10 50 20)
+		       (set! (foreground-color) (make-color-with-catch 1 0 0))
+		       (draw-string "hiho" (+ pos 5) 24)
+		       (set! (foreground-color) old-color)))
+		   (lambda args
+		     (snd-display #__line__ ";draw error: ~A" args)))))))
   
   (begin
     

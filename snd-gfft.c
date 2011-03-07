@@ -176,8 +176,7 @@ static void size_browse_callback(const char *name, int row, void *data)
   for_each_chan_with_mus_long_t(chans_transform_size, transform_size(ss));
   for_each_chan(calculate_fft);
   if (fft_window_label) 
-    gtk_button_set_label(GTK_BUTTON(fft_window_label), 
-			 mus_fft_window_name(fft_window(ss)));
+    gtk_label_set_text(GTK_LABEL(fft_window_label), mus_fft_window_name(fft_window(ss)));
 }
 
 
@@ -265,8 +264,7 @@ static void window_browse_callback(const char *name, int row, void *data)
   in_set_fft_window((mus_fft_window_t)row);
   for_each_chan(calculate_fft);
   if (fft_window_label) 
-    gtk_button_set_label(GTK_BUTTON(fft_window_label), 
-			 mus_fft_window_name(fft_window(ss)));
+    gtk_label_set_text(GTK_LABEL(fft_window_label), mus_fft_window_name(fft_window(ss)));
   get_fft_window_data();
   graph_redisplay();
   highlight_alpha_beta_scales(fft_window(ss));
@@ -282,8 +280,7 @@ void set_fft_window(mus_fft_window_t val)
       slist_select(window_list, (int)val);
       slist_moveto(window_list, (int)val);
       if (fft_window_label) 
-	gtk_button_set_label(GTK_BUTTON(fft_window_label),
-			     mus_fft_window_name(val));
+	gtk_label_set_text(GTK_LABEL(fft_window_label), mus_fft_window_name(val));
       get_fft_window_data();
       graph_redisplay();
       highlight_alpha_beta_scales(val);

@@ -232,15 +232,6 @@ void draw_cursor(chan_info *cp)
 }
 
 
-void erase_cursor(chan_info *cp)
-{
-#if USE_GTK
-  display_channel_time_data(cp); /* TODO: find a way to avoid redraw here */
-#else
-  draw_cursor(cp);
-#endif
-}
-
 
 /* -------------------------------------------------------------------------------- */
 
@@ -267,7 +258,8 @@ static graphics_context *get_ax(chan_info *cp, int ax_id, const char *caller)
       ax = set_context(cp, (chan_gc_t)ax_id);
       if (!(ax->cr))
 	XEN_ERROR(XEN_ERROR_TYPE("no-graphics-context"),
-		  XEN_LIST_1(C_TO_XEN_STRING(caller)));
+		  XEN_LIST_2(C_TO_XEN_STRING("cairo_t is null"),
+			     C_TO_XEN_STRING(caller)));
       return(ax);
     }
   XEN_ERROR(XEN_ERROR_TYPE("no-such-graphics-context"),

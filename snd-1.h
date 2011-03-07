@@ -1714,7 +1714,6 @@ void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int arg_pos);
 point_t *get_grf_points(void);
 point_t *get_grf_points1(void);
 void draw_cursor(chan_info *cp);
-void erase_cursor(chan_info *cp);
 void set_grf_points(int xi, int j, int ymin, int ymax);
 void set_grf_point(int xi, int j, int yi);
 void draw_grf_points(int dot_size, graphics_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style);

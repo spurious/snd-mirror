@@ -4268,6 +4268,32 @@ void display_channel_data_for_print(chan_info *cp)
 
 /* ---------------- CHANNEL CURSOR ---------------- */
 
+static void erase_cursor(chan_info *cp)
+{
+#if USE_MOTIF
+  draw_cursor(cp);
+#endif
+#if USE_GTK
+  {
+    color_t old_cursor_color;
+    int ccy;
+    old_cursor_color = ss->sgx->cursor_color;
+    cp->cursor_size++;
+    ss->sgx->cursor_color = cp->cgx->ax->gc->bg_color;
+    draw_cursor(cp);
+    ss->sgx->cursor_color = old_cursor_color;
+    cp->cursor_size--;
+    /* we draw at (cp->cx, cp->cy), so presumably... */
+    if (cp->just_zero)
+      ccy = local_grf_y(chn_sample(CURSOR(cp), cp, cp->edit_ctr), cp->axis); /* TODO: off because CURSOR(cp) is the new cursor */
+    else ccy = cp->cy;
+    draw_dot(cp->cgx->ax, cp->cx + 0.5, ccy + 0.5, 1);
+    /* this isn't perfect (it slightly erases any lines it contacts), but it's ok */
+  }
+#endif
+}
+
+
 static void draw_graph_cursor(chan_info *cp)
 {
   axis_info *ap;

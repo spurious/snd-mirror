@@ -433,7 +433,7 @@ static bool begin_hook(s7_scheme *sc)
 #endif
 
 #if USE_GTK
-  if (gdk_events_pending())
+  if (gdk_events_pending()) /* necessary -- otherwise Snd hangs in gtk_main_iteration */
     gtk_main_iteration();
 #endif
 
@@ -610,10 +610,13 @@ void listener_return(widget_t w, int last_prompt)
 		{
 		  free(str);
 		  str = NULL;
-		  new_eot = GUI_TEXT_END(w);
 		  if (end_of_text < 0)
-		    GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr());
-		  else GUI_LISTENER_TEXT_INSERT(w, new_eot, (char *)"\n");
+		    listener_append_and_prompt(NULL);
+		  else 
+		    {
+		      new_eot = GUI_TEXT_END(w);
+		      GUI_LISTENER_TEXT_INSERT(w, new_eot, (char *)"\n");
+		    }
 		  if (full_str) GUI_FREE(full_str);
 		  return;
 		}
@@ -730,8 +733,7 @@ void listener_return(widget_t w, int last_prompt)
     }
   else
     {
-      new_eot = GUI_TEXT_END(w);
-      GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr());
+      listener_append_and_prompt(NULL);
     }
 
   cmd_eot = GUI_TEXT_END(w);
