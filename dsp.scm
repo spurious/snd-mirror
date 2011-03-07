@@ -1857,13 +1857,13 @@ and replaces it with the spectrum given in coeffs"
 		    (linear #t))                               ; can't currently show lisp graph in dB 
 		;; snd-axis make_axes: WITH_LOG_Y_AXIS, but LINEAR currently in snd-chn.c 3250
 		(if (vct? data)
-		    (let ((fft (snd-spectrum data              ; returns fftlen / 2 data points
-					     (fft-window snd chn) fftlen linear 
-					     (fft-window-beta snd chn) #f normalized)))
-		      (if (vct? fft)
+		    (let ((fftdata (snd-spectrum data              ; returns fftlen / 2 data points
+						 (fft-window snd chn) fftlen linear 
+						 (fft-window-beta snd chn) #f normalized)))
+		      (if (vct? fftdata)
 			  (let* ((sr (srate snd))
-				 (mx (vct-peak fft))
-				 (data-len (length fft))
+				 (mx (vct-peak fftdata))
+				 (data-len (length fftdata))
 				 
 				 ;; bark settings
 				 (bark-low (floor (bark 20.0)))
@@ -1888,7 +1888,7 @@ and replaces it with the spectrum given in coeffs"
 			    (run 
 			     (do ((i 0 (+ i 1)))
 				 ((= i data-len))
-			       (let* ((val (fft i))
+			       (let* ((val (fftdata i))
 				      (frq (* sr (/ i fftlen)))
 				      (bark-bin (round (* bark-frqscl (- (bark frq) bark-low))))
 				      (mel-bin (round (* mel-frqscl (- (mel frq) mel-low))))

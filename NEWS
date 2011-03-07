@@ -45,7 +45,7 @@ Snd 11.14
    removed Snd.gtkrc, Snd.ad, and the obsolete X resources stuff.
    added with-menu-icons (gtk only).
    added optional "alpha" arg to make-color.
-   moved delete-selection-and-smooth selection.scm into C.
+   moved delete-selection-and-smooth from selection.scm to C.
    added delete-samples-and-smooth.
 
 

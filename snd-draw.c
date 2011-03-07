@@ -245,10 +245,11 @@ void erase_cursor(chan_info *cp)
 /* -------------------------------------------------------------------------------- */
 
 #define AXIS_CONTEXT_ID_OK(Id) ((Id >= CHAN_GC) && (Id <= CHAN_TMPGC))
-#define NO_SUCH_WIDGET         XEN_ERROR_TYPE("no-such-widget")
+#define NO_SUCH_WIDGET XEN_ERROR_TYPE("no-such-widget")
 
 static graphics_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 {
+#if USE_MOTIF
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
     return(set_context(cp, (chan_gc_t)ax_id));
   XEN_ERROR(XEN_ERROR_TYPE("no-such-graphics-context"),
@@ -258,6 +259,25 @@ static graphics_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 		       C_INT_TO_XEN_SOUND(cp->sound->index),
 		       C_TO_XEN_STRING(cp->sound->short_filename),
 		       C_TO_XEN_INT(cp->chan)));
+#endif
+#if USE_GTK
+  if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
+    {
+      graphics_context *ax;
+      ax = set_context(cp, (chan_gc_t)ax_id);
+      if (!(ax->cr))
+	XEN_ERROR(XEN_ERROR_TYPE("no-graphics-context"),
+		  XEN_LIST_1(C_TO_XEN_STRING(caller)));
+      return(ax);
+    }
+  XEN_ERROR(XEN_ERROR_TYPE("no-such-graphics-context"),
+	    XEN_LIST_6(C_TO_XEN_STRING("~A: no such graphics context: ~A, sound index: ~A (~A), chan: ~A"),
+		       C_TO_XEN_STRING(caller),
+		       C_TO_XEN_INT(ax_id),
+		       C_INT_TO_XEN_SOUND(cp->sound->index),
+		       C_TO_XEN_STRING(cp->sound->short_filename),
+		       C_TO_XEN_INT(cp->chan)));
+#endif
   return(NULL);
 }
 
@@ -278,16 +298,6 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y1), y1, XEN_ARG_4, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_7, S_draw_line, "an integer such as " S_time_graph);
 
-#if USE_GTK
-  {
-    graphics_context *axc;
-    axc = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line);
-    if (!(axc->cr))
-      axc->cr = gdk_cairo_create(axc->wn);
-    /* PERHAPS: if we create the context, I suppose we should destroy it after draw_line
-     */
-  }
-#endif
   draw_line(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line),
 	    XEN_TO_C_INT(x0),
 	    XEN_TO_C_INT(y0),
@@ -307,14 +317,6 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_3, S_draw_dot, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_6, S_draw_dot, "an integer such as " S_time_graph);
 
-#if USE_GTK
-  {
-    graphics_context *axc;
-    axc = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line);
-    if (!(axc->cr))
-      axc->cr = gdk_cairo_create(axc->wn);
-  }
-#endif
   draw_dot(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dot),
 	   XEN_TO_C_INT(x0),
 	   XEN_TO_C_INT(y0),
@@ -335,14 +337,6 @@ static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_7, S_fill_rectangle, "an integer such as " S_time_graph);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(erase), erase, XEN_ARG_8, S_fill_rectangle, "a boolean");
 
-#if USE_GTK
-  {
-    graphics_context *axc;
-    axc = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line);
-    if (!(axc->cr))
-      axc->cr = gdk_cairo_create(axc->wn);
-  }
-#endif
   if ((XEN_BOOLEAN_P(erase)) &&
       (XEN_TRUE_P(erase)))
     erase_rectangle(get_cp(snd, chn, S_fill_rectangle),
@@ -371,14 +365,6 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_3, S_draw_string, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_6, S_draw_string, "an integer such as " S_time_graph);
 
-#if USE_GTK
-  {
-    graphics_context *axc;
-    axc = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line);
-    if (!(axc->cr))
-      axc->cr = gdk_cairo_create(axc->wn);
-  }
-#endif
   tmp = XEN_TO_C_STRING(text);
 #if USE_MOTIF
   /* snd-xdraw to make motif draw-string act in the same way (coordinate-wise) as gtk */
@@ -439,11 +425,6 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
 
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines);
 
-#if USE_GTK
-  if (!(ax1->cr))
-    ax1->cr = gdk_cairo_create(ax1->wn);
-#endif
-
   pack_pts = vector_to_points(pts, S_draw_lines, &vlen);
   draw_lines(ax1, pack_pts, vlen);
 
@@ -467,11 +448,6 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_5, S_draw_dots, "an integer such as " S_time_graph);
 
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots);
-
-#if USE_GTK
-  if (!(ax1->cr))
-    ax1->cr = gdk_cairo_create(ax1->wn);
-#endif
 
   pack_pts = vector_to_points(pts, S_draw_dots, &vlen);
   draw_points(ax1,
@@ -497,11 +473,6 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_fill_polygon, "an integer such as " S_time_graph);
 
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon);
-
-#if USE_GTK
-  if (!(ax->cr))
-    ax->cr = gdk_cairo_create(ax->wn);
-#endif
 
   pack_pts = vector_to_points(pts, S_fill_polygon, &vlen);
 #if USE_MOTIF

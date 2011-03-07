@@ -1190,6 +1190,13 @@ char *slist_selection(slist *lst)
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators
  *
+ *   the build drawing stuff (draw-dot etc) segfault in cairo
+ *    need to add cr arg to draw-line draw-dot fill-rectangle draw-string draw-lines draw-dots fil-polygon
+ *    what about draw-axes [and the various "contexts"] 
+ *    snd-test.scm draw.scm dsp.scm muglyphs.scm snd-gtk.scm snd-motif.scm xm-enved.scm t26|139 + doc examples
+ *
+ *   if just cr in listener, prompt is not boldface
+ *
  *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
  *     also locate here, rather than being directory-based
  *

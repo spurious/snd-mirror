@@ -433,7 +433,8 @@ static bool begin_hook(s7_scheme *sc)
 #endif
 
 #if USE_GTK
-  gtk_main_iteration();
+  if (gdk_events_pending())
+    gtk_main_iteration();
 #endif
 
   /* if c-g, run stop-hook? */
