@@ -1046,8 +1046,6 @@ void save_sound_state(snd_info *sp, void *ptr)
       psp_ss(fd, S_filter_control_envelope, tmpstr = env_to_string(sp->filter_control_envelope));
       if (tmpstr) free(tmpstr);
     }
-  if (sp->with_tracking_cursor != DONT_TRACK) 
-    psp_ss(fd, S_with_tracking_cursor, b2s((bool)(sp->with_tracking_cursor))); /* a boolean from the user's point of view */
 
   if ((XEN_VECTOR_P(sp->properties)) &&
       (XEN_LIST_P(XEN_VECTOR_REF(sp->properties, 0))) &&

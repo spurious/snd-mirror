@@ -2817,7 +2817,7 @@ static XEN g_bomb(XEN snd, XEN on)
 
 typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
 	      SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_SAVE_CONTROLS, SP_RESTORE_CONTROLS, SP_SELECTED_CHANNEL,
-	      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_WITH_TRACKING_CURSOR, SP_SHOW_CONTROLS,
+	      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_SHOW_CONTROLS,
 	      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS,
 	      SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
 	      SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
@@ -2885,7 +2885,6 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
     case SP_FILE_NAME:           return(C_TO_XEN_STRING(sp->filename));                                             break;
     case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));                                       break;
     case SP_CLOSE:               if (!(IS_PLAYER_SOUND(sp))) snd_close_file(sp);                                    break;
-    case SP_WITH_TRACKING_CURSOR: return(C_TO_XEN_BOOLEAN(sp->with_tracking_cursor));                               break;
     case SP_SHOW_CONTROLS:       if (!(IS_PLAYER_SOUND(sp))) return(C_TO_XEN_BOOLEAN(showing_controls(sp)));        break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));                                     break;
     case SP_SPEED_STYLE:         return(C_TO_XEN_INT((int)(sp->speed_control_style)));                              break;
@@ -3001,7 +3000,6 @@ static XEN sound_get_global(XEN snd, sp_field_t fld, const char *caller)
       case SP_FILTER_DBING:         return(C_TO_XEN_BOOLEAN(filter_control_in_dB(ss)));    break;
       case SP_FILTER_HZING:         return(C_TO_XEN_BOOLEAN(filter_control_in_hz(ss)));    break;
       case SP_FILTER_ORDER:         return(C_TO_XEN_INT(filter_control_order(ss)));        break;
-      case SP_WITH_TRACKING_CURSOR: return(C_TO_XEN_BOOLEAN(with_tracking_cursor(ss)));    break;
       case SP_SHOW_CONTROLS:        return(C_TO_XEN_BOOLEAN(in_show_controls(ss)));        break;
       case SP_SPEED_TONES:          return(C_TO_XEN_INT(speed_control_tones(ss)));         break;
       case SP_SPEED_STYLE:          return(C_TO_XEN_INT((int)(speed_control_style(ss))));  break;
@@ -3125,12 +3123,6 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 
     case SP_FILTER_ORDER:
       set_filter_order(sp, XEN_TO_C_INT(val));
-      break;
-
-    case SP_WITH_TRACKING_CURSOR:
-      if (XEN_TO_C_BOOLEAN(val))
-	sp->with_tracking_cursor = ALWAYS_TRACK; /* ??? */
-      else sp->with_tracking_cursor = DONT_TRACK;
       break;
 
     case SP_SHOW_CONTROLS:
@@ -3494,13 +3486,6 @@ static XEN sound_set_global(XEN snd, XEN val, sp_field_t fld, const char *caller
       case SP_FILTER_ORDER:
 	if (XEN_TO_C_INT(val) > 0)
 	  in_set_filter_control_order(ss, XEN_TO_C_INT(val));
-	return(sound_set(XEN_TRUE, val, fld, caller));
-	break;
-
-      case SP_WITH_TRACKING_CURSOR:
-	if (XEN_TO_C_BOOLEAN(val))
-	  in_set_with_tracking_cursor(ss, ALWAYS_TRACK); /* ??? */
-	else in_set_with_tracking_cursor(ss, DONT_TRACK);
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
 
@@ -4039,22 +4024,6 @@ static XEN g_set_filter_control_order(XEN on, XEN snd)
 }
 
 WITH_TWO_SETTER_ARGS(g_set_filter_control_order_reversed, g_set_filter_control_order)
-
-
-static XEN g_with_tracking_cursor(XEN snd) 
-{
-  #define H_with_tracking_cursor "("  S_with_tracking_cursor " :optional snd): " PROC_TRUE " if cursor moves along in waveform display as sound is played"
-  return(sound_get_global(snd, SP_WITH_TRACKING_CURSOR, S_with_tracking_cursor));
-}
-
-
-static XEN g_set_with_tracking_cursor(XEN on, XEN snd) 
-{
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_with_tracking_cursor, "a boolean");
-  return(sound_set_global(snd, on, SP_WITH_TRACKING_CURSOR, S_setB S_with_tracking_cursor));
-}
-
-WITH_TWO_SETTER_ARGS(g_set_with_tracking_cursor_reversed, g_set_with_tracking_cursor)
 
 
 static XEN g_show_controls(XEN snd) 
@@ -6082,8 +6051,6 @@ XEN_ARGIFY_4(g_apply_controls_w, g_apply_controls)
 XEN_ARGIFY_6(g_controls_to_channel_w, g_controls_to_channel)
 XEN_ARGIFY_1(g_filter_control_envelope_w, g_filter_control_envelope)
 XEN_ARGIFY_2(g_set_filter_control_envelope_w, g_set_filter_control_envelope)
-XEN_ARGIFY_1(g_with_tracking_cursor_w, g_with_tracking_cursor)
-XEN_ARGIFY_2(g_set_with_tracking_cursor_w, g_set_with_tracking_cursor)
 XEN_ARGIFY_1(g_show_controls_w, g_show_controls)
 XEN_ARGIFY_2(g_set_show_controls_w, g_set_show_controls)
 XEN_ARGIFY_1(g_sync_w, g_sync)
@@ -6206,8 +6173,6 @@ XEN_NARGIFY_1(g_sound_to_integer_w, g_sound_to_integer)
 #define g_controls_to_channel_w g_controls_to_channel
 #define g_filter_control_envelope_w g_filter_control_envelope
 #define g_set_filter_control_envelope_w g_set_filter_control_envelope
-#define g_with_tracking_cursor_w g_with_tracking_cursor
-#define g_set_with_tracking_cursor_w g_set_with_tracking_cursor
 #define g_show_controls_w g_show_controls
 #define g_set_show_controls_w g_set_show_controls
 #define g_sync_w g_sync
@@ -6359,13 +6324,6 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_envelope, g_filter_control_envelope_w, H_filter_control_envelope,
 					    S_setB S_filter_control_envelope, g_set_filter_control_envelope_w, g_set_filter_control_envelope_reversed, 
 					    0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER("cursor-follows-play", g_with_tracking_cursor_w, H_with_tracking_cursor,
-					    S_setB "cursor-follows-play", g_set_with_tracking_cursor_w, g_set_with_tracking_cursor_reversed, 0, 1, 1, 1);
-
-  /* a synonym for now */
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_with_tracking_cursor, g_with_tracking_cursor_w, H_with_tracking_cursor,
-					    S_setB S_with_tracking_cursor, g_set_with_tracking_cursor_w, g_set_with_tracking_cursor_reversed, 0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_controls, g_show_controls_w, H_show_controls,
 					    S_setB S_show_controls, g_set_show_controls_w, g_set_show_controls_reversed, 0, 1, 1, 1);

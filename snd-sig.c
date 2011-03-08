@@ -2938,7 +2938,7 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection)
 
 /* smooth-channel could be a built-in virtual op, but the smoothed section is never long, so it doesn't save anything */
 
-void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int edpos)
+static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int edpos)
 {
   mus_sample_t *data = NULL;
   mus_long_t k;

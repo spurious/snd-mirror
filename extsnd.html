@@ -671,7 +671,7 @@ This is the audio output device for the play button.
 
 <!-- auto-resize -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="autoresize">auto-resize</a></code></td>
-<td bgcolor="#f2f4ff"><code>#t</code></td></tr><tr><td></td><td colspan=2>
+<td bgcolor="#f2f4ff"><code>#t in Motif, #f in Gtk</code></td></tr><tr><td></td><td colspan=2>
 auto-resize determines whether the Snd window should be resized
 when a sound is opened or closed.
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -1316,6 +1316,42 @@ with-toolbar places a toolbar at the top of the Snd window, just under the main 
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="withtooltips">with-tooltips</a></code></td>
 <td bgcolor="#f2f4ff"><code>#t</code></td></tr><tr><td></td><td colspan=2>
 Set with-tooltips to #f to turn off tooltips.
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
+
+<!-- with-tracking-cursor -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def name="withtrackingcursor">with-tracking-cursor</a></code></td>
+<td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
+<p>This is #t if the cursor always follows along in the sound during playback.  If it is #f, 
+you get the tracking cursor displayed only when you ask for it (via control-click of the
+play button, for example).
+</p>
+<p>
+The interval (in seconds) between cursor updates is set by <a href="#cursorupdateinterval">cursor-update-interval</a>
+which defaults to 0.05.  The accuracy of the cursor in reflecting the sound coming out the speakers
+depends on the amount of buffering in your audio system.  If Snd's displayed location is off,
+set <a href="#cursorlocationoffset">cursor-location-offset</a> to reflect the number of samples
+of buffering you think you probably have.  A positive cursor-location-offset delays the cursor's 
+apparent progress (if playing forwards). 
+</p>
+
+<!-- INDEX trackingcursors:Tracking cursors -->
+<A NAME="trackingcursors"></a>
+
+<TABLE border=3 bordercolor="tan" hspace=20 vspace=10><tr><td>
+<blockquote><small>
+<br>
+play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a><br>
+display tracking cursor as a full height vertical line: <a href="#trackingcursorstyle">tracking-cursor-style</a><br>
+track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m)<br>
+leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm<br>
+tracking cursor accuracy: <a href="#cursorlocationoffset">cursor-location-offset</a><br>
+tracking cursor updating: <a href="#cursorupdateinterval">cursor-update-interval</a><br>
+<br>
+</small></blockquote>
+</td></tr></TABLE>
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -9668,7 +9704,7 @@ The default is <code>graph-once</code>.  See also <a href="#wavohop">wavo-hop</a
 <code><a class=def name="trackingcursorstyle">tracking-cursor-style</a> <em class=narg>snd chn</em></code>
 </td></tr><tr><td></td><td>
 This is the <a href="#cursorstyle">cursor-style</a> in effect when the cursor is tracking playback (<a href="#withtrackingcursor">with-tracking-cursor</a>).
-tracking-cursor-style can be <code>cursor-cross</code> or <code>cursor-line</code>.  If you want some other shape, 
+tracking-cursor-style can be <code>cursor-cross</code> or <code>cursor-line</code> (the default).  If you want some other shape, 
 use the function choice for cursor-style (that function's third argument can tell you when you're tracking).
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -9904,42 +9940,6 @@ the smaller this number, the more traces can be displayed (the default is 3).  S
 <code><a class=def name="wavotrace">wavo-trace</a> <em class=narg>snd chn</em></code>
 </td></tr><tr><td></td><td>
 This sets the length (in samples) of each wavogram trace (the default is 64).  See <a href="#timegraphtype">time-graph-type</a>.
-</td></tr><tr><td colspan=2 height=18></td></tr>
-
-
-<!-- with-tracking-cursor -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="withtrackingcursor">with-tracking-cursor</a> <em class=narg>snd</em></code>
-</td></tr><tr><td></td><td>
-This is #t if the cursor is following along in the sound during playback.  To make this the default:
-<pre>
-    (set! (with-tracking-cursor) #t)
-</pre>
-The interval (in seconds) between cursor updates is set by <a href="#cursorupdateinterval">cursor-update-interval</a>
-which defaults to 0.05.  The accuracy of the cursor in reflecting the sound coming out the speakers
-depends on the amount of buffering in your audio system.  If Snd's displayed location is off,
-set <a href="#cursorlocationoffset">cursor-location-offset</a> to reflect the number of samples
-of buffering you think you probably have.  A positive cursor-location-offset delays the cursor's 
-apparent progress (if playing forwards).  In OSS, you can make a pretty good guess by setting
-it to the number of fragments times half the size of the fragments (since these are bytes, and
-cursor-location-offset is in terms of samples).  If you have <code>(mus-oss-set-buffers 4 12)</code>,
-try <code>(set! (cursor-location-offset) (* 4 (expt 2 11)))</code>.
-
-<!-- INDEX trackingcursors:Tracking cursors -->
-<A NAME="trackingcursors"></a>
-
-<TABLE border=3 bordercolor="tan" hspace=20 vspace=10><tr><td>
-<blockquote><small>
-<br>
-play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a><br>
-display tracking cursor as a full height vertical line: <a href="#trackingcursorstyle">tracking-cursor-style</a><br>
-track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m)<br>
-leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm<br>
-tracking cursor accuracy: <a href="#cursorlocationoffset">cursor-location-offset</a><br>
-tracking cursor updating: <a href="#cursorupdateinterval">cursor-update-interval</a><br>
-<br>
-</small></blockquote>
-</td></tr></TABLE>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 

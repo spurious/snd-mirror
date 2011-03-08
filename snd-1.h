@@ -248,7 +248,7 @@ typedef struct chan_info {
   bool cursor_visible, fft_cursor_visible;     /* for XOR decisions */
   int cursor_size;
   cursor_style_t cursor_style, tracking_cursor_style;
-  int cx, cy, fft_cx;      /* graph-relative cursor loc (for XOR) */
+  int cx, cy, fft_cx, old_cy; /* graph-relative cursor loc (for XOR in Motif, erase-via-overwrite in cairo) */
   int edit_ctr;            /* channel's edit history */
   int edit_size;           /* current edit list size */
   ed_list **edits;         /* the edit list */
@@ -309,7 +309,7 @@ typedef struct chan_info {
   int old_x0, old_x1;
   mus_float_t *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   search_result_t last_search_result;
-  bool just_zero, new_peaks, editable, tracking, updating;
+  bool just_zero, new_peaks, editable, updating;
   struct inset_graph_info_t *inset_graph; /* defined in snd-chn.c */
 #if HAVE_GL
   int gl_fft_list, gl_wavo_list;
@@ -374,7 +374,6 @@ typedef struct snd_info {
   bool need_update, file_unreadable; /* current in-core data does not match actual file (someone wrote it behind our back) */
   channel_style_t channel_style;
   int allocated_chans, selectpos; 
-  tracking_cursor_t with_tracking_cursor;
   struct region *edited_region;
   struct dialog_play_info *delete_me;
   chan_info *lacp;
@@ -477,6 +476,7 @@ typedef struct snd_state {
   mus_float_t Min_dB;
   bool Show_Controls;
   tracking_cursor_t With_Tracking_Cursor;
+  bool tracking;
   XEN cursor_proc;
   int cursor_proc_loc, listener_prompt_length;
   XEN zoom_focus_proc;
@@ -1454,8 +1454,6 @@ void set_with_toolbar_and_display(bool val);
 void g_init_file(void);
 void initialize_format_lists(void);
 void set_with_menu_icons(bool val);
-void set_save_as_dialog_src(bool val);
-void set_save_as_dialog_auto_comment(bool val);
 
 
 
@@ -1695,7 +1693,6 @@ void display_frequency_response(env *e, axis_info *ap, graphics_context *gax, in
 void cursor_delete(chan_info *cp, mus_long_t count);
 void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection);
 void cursor_insert(chan_info *cp, mus_long_t beg, mus_long_t count);
-void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int edpos);
 void cut_and_smooth(chan_info *cp);
 void src_file(const char *file, double ratio);
 

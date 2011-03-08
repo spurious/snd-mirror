@@ -48,7 +48,7 @@
 						  (not (and (string=? (substring str-name 0 5) "make-")
 							    (= args (* 2 counted-args ))))))
 					 (display (format #f "~%;~A: ~A doc but ~A help" name args counted-args)))
-				     (if (and (not (member str-name (list "undo-edit" "redo-edit" "cursor-follows-play" "chans" "read-region-sample")))
+				     (if (and (not (member str-name (list "undo-edit" "redo-edit" "chans" "read-region-sample")))
 					      (or (not (string? got-name))
 						  (not (string=? str-name got-name))))
 					 (display (format #f "~%;~A: help name: ~A" name got-name))))

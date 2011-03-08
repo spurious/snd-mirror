@@ -631,6 +631,7 @@ static void reflect_play_stop(snd_info *sp)
 #endif
   set_open_file_play_button(false);
   view_files_unplay();
+  ss->tracking = false;
 }
 
 
@@ -650,7 +651,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
       if (sp->playing == 0) sp_stopping = true;
       if (sp_stopping)
 	{
-	  if ((sp->inuse == SOUND_NORMAL) && (sp->with_tracking_cursor != DONT_TRACK) && (sp->index >= 0))
+	  if ((sp->inuse == SOUND_NORMAL) && (ss->tracking) && (sp->index >= 0))
 	    {
 	      int i;
 	      for (i = 0; i < sp->nchans; i++)
@@ -659,9 +660,6 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 					  sp->chans[i]->original_left_sample, 
 					  sp->chans[i]->original_window_size);
 	    }
-	  /* this is needed to get the original window/cursor location displayed after playing */
-	  if (sp->with_tracking_cursor == TRACK_ONCE)
-	    sp->with_tracking_cursor = DONT_TRACK;
 	}
       /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */
     }
@@ -1016,6 +1014,10 @@ static void start_dac(int srate, int channels, play_process_t background, mus_fl
   int i;
   /* look for channel folding cases etc */
   /* channels = how many output audio chans we have; dac_combines_channels sets whether to wrap or muffle chans outside this limit */
+
+  if (with_tracking_cursor(ss))
+    ss->tracking = true;
+
   for (i = 0; i <= max_active_slot; i++)
     {
       dac_info *dp;
@@ -1113,7 +1115,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_
       if (sp) 
 	{
 	  sp->playing++;
-	  if ((sp->with_tracking_cursor != DONT_TRACK) && (!(IS_PLAYER_SOUND(sp))))
+	  if ((ss->tracking) && (!(IS_PLAYER_SOUND(sp))))
 	    {
 	      cp->original_cursor = CURSOR(cp);
 	      if (cp->axis)
@@ -1613,8 +1615,8 @@ static int fill_dac_buffers(int write_ok)
 	      /* check for moving cursor */
 	      sp = dp->sp; /* can be nil if region playing */
 	      if ((sp) && 
+		  (ss->tracking) &&
 		  (cursor_change) && 
-		  (sp->with_tracking_cursor != DONT_TRACK) &&
 		  (dp->chn_fd) &&
 		  (!(dp->chn_fd->at_eof)) &&
 		  (dp->chn_fd->cb))
@@ -1625,9 +1627,7 @@ static int fill_dac_buffers(int write_ok)
 		  dp->cp->just_zero = true;
 		  loc = current_location(dp->chn_fd);
 		  loc -= (int)(cursor_location_offset(ss) * dp->cur_srate); /* should work in either direction */
-		  dp->cp->tracking = true;
 		  cursor_moveto_without_verbosity(dp->cp, loc);
-		  dp->cp->tracking = false;
 		  dp->cp->just_zero = old_just_zero;
 		}
 
@@ -3391,7 +3391,26 @@ static XEN g_set_cursor_location_offset(XEN val)
 }
 
 
+static XEN g_with_tracking_cursor(void) 
+{
+  #define H_with_tracking_cursor "("  S_with_tracking_cursor "): " PROC_TRUE " if cursor always moves along in waveform display as sound is played"
+  return(C_TO_XEN_BOOLEAN(with_tracking_cursor(ss)));
+}
+
+static XEN g_set_with_tracking_cursor(XEN on) 
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ONLY_ARG, S_setB S_with_tracking_cursor, "a boolean");
+  set_with_tracking_cursor(ss, XEN_TO_C_BOOLEAN(on)); /* TRACK_IF_ASKED = false */
+  return(C_TO_XEN_BOOLEAN(with_tracking_cursor(ss)));
+}
+
+
+
+
+
 #ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_with_tracking_cursor_w, g_with_tracking_cursor)
+XEN_NARGIFY_1(g_set_with_tracking_cursor_w, g_set_with_tracking_cursor)
 XEN_VARGIFY(g_play_w, g_play)
 XEN_ARGIFY_1(g_stop_playing_w, g_stop_playing)
 XEN_ARGIFY_2(g_make_player_w, g_make_player)
@@ -3415,6 +3434,8 @@ XEN_NARGIFY_1(g_set_cursor_update_interval_w, g_set_cursor_update_interval)
 XEN_NARGIFY_0(g_cursor_location_offset_w, g_cursor_location_offset)
 XEN_NARGIFY_1(g_set_cursor_location_offset_w, g_set_cursor_location_offset)
 #else
+#define g_with_tracking_cursor_w g_with_tracking_cursor
+#define g_set_with_tracking_cursor_w g_set_with_tracking_cursor
 #define g_play_w g_play
 #define g_stop_playing_w g_stop_playing
 #define g_make_player_w g_make_player
@@ -3458,6 +3479,9 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE(S_free_player,    g_free_player_w,    1, 0, 0, H_free_player);
   XEN_DEFINE_PROCEDURE(S_players,        g_players_w,        0, 0, 0, H_players);
   XEN_DEFINE_PROCEDURE(S_player_p,       g_player_p_w,       1, 0, 0, H_player_p);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_tracking_cursor, g_with_tracking_cursor_w, H_with_tracking_cursor,
+				   S_setB S_with_tracking_cursor, g_set_with_tracking_cursor_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_size, g_dac_size_w, H_dac_size,
 				   S_setB S_dac_size, g_set_dac_size_w,  0, 0, 1, 0);

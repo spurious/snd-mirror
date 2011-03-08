@@ -2013,7 +2013,6 @@ static void copy_snd_info(snd_info *nsp, snd_info *osp)
   nsp->reverb_control_decay = osp->reverb_control_decay;
   nsp->channel_style = osp->channel_style;
   nsp->sync = osp->sync;
-  nsp->with_tracking_cursor = osp->with_tracking_cursor;
   nsp->search_tree = osp->search_tree;
   osp->search_tree = NULL;
   nsp->search_expr = osp->search_expr;
@@ -5768,7 +5767,7 @@ static XEN g_set_with_menu_icons(XEN val)
 }
 
 
-void set_save_as_dialog_src(bool val)
+static void set_save_as_dialog_src(bool val)
 {
   in_set_save_as_dialog_src(val);
   reflect_save_as_src(val);
@@ -5785,7 +5784,7 @@ static XEN g_set_save_as_dialog_src(XEN val)
 }
 
 
-void set_save_as_dialog_auto_comment(bool val)
+static void set_save_as_dialog_auto_comment(bool val)
 {
   in_set_save_as_dialog_auto_comment(val);
   reflect_save_as_auto_comment(val);

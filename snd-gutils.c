@@ -1177,9 +1177,14 @@ char *slist_selection(slist *lst)
 
 /* TODO: gtk troubles:
  *
- *   gtk3 toolbar is spread out [check out the "principal toolbar style"]
+ *   gtk3 toolbar is spread out
  *   the name_pix icon backgrounds are still gray, also dialog buttons and menu items
  *   do meters work in rec?  in Motif they're drawn incorrectly
+ *   enved spectrum never updates
+ *
+ *   region print and enved print in gtk should go through the gtk print stuff --
+ *     snd-print.c could be folded into snd-xprint.c except that the ps_* funcs are everywhere.
+ *     Does the direct-to-printer business make any sense? (it's an arg to print-dialog!)
  *
  *   superimposed chans flicker a lot
  *     the cairo_t's are not shared in this case, so each chan is a separate display
@@ -1189,9 +1194,12 @@ char *slist_selection(slist *lst)
  *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *   sash colors should be green but I can't find any way to set this in gtk3!
- *   if pointer focus, movement out of dialog and into graph does not raise graph
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators, but they still look dumb
+ *   prefs entries should be white, not gray!
+ *
+ *   if pointer focus, movement out of dialog and into graph does not raise graph (it does activate it)
+ *     setting "transient_for" does not change this
  *
  *   check out snd-ls changes and the tutorial
  *     [see snd_conffile.scm for more key bindings] -- I think the key bindings list in snd-kbd.c is out-of-date (need automatic way to generate this)
@@ -1202,13 +1210,12 @@ char *slist_selection(slist *lst)
  *    so these now work only in the chan drawing area context in gtk [and not always then -- snd-test.scm test 20/21]
  *    and they can segfault randomly -- I need to follow each cairo_t path in detail
  *
- *   cursor redisplay needs work -- save the actual points?
+ *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
  *
  *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
  *     also locate here, rather than being directory-based
  *
- *   if basic-color set, listener is also set, and if black, labels are not visible
- *     this is partly the case also in Motif
+ *   if basic-color set to black, labels are not visible, this is partly the case also in Motif
  *
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
  *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.

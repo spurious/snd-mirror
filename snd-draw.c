@@ -179,7 +179,7 @@ void draw_cursor(chan_info *cp)
   ax = cursor_context(cp);
 #endif
 
-  if ((cp->tracking) && (with_tracking_cursor(ss) != DONT_TRACK))
+  if (ss->tracking)
     cur = cp->tracking_cursor_style;
   else cur = cp->cursor_style;
 
@@ -202,8 +202,7 @@ void draw_cursor(chan_info *cp)
 		 C_INT_TO_XEN_SOUND(cp->sound->index),
 		 C_TO_XEN_INT(cp->chan),
 		 /* this was time-graph, which was useless. It's now #t if we're in tracking-cursor mode */
-		 /*   this will be called only it with_tracking_cursor is #f -> we want to draw it ourselves */
-		 C_TO_XEN_BOOLEAN(cp->tracking),
+		 C_TO_XEN_BOOLEAN(ss->tracking),
 		 S_cursor_style " procedure");
       break;
     }

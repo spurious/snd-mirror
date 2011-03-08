@@ -284,11 +284,11 @@
   (select-channel 0)
 					;(if (eq? status 1)(set! status 2))
 					;(if (eq? status 3)(set! status 0))
-  (let ((old-tracking (cursor-follows-play)))
-    (set! (cursor-follows-play) #t)
+  (let ((old-tracking (with-tracking-cursor)))
+    (set! (with-tracking-cursor) #t)
     (hook-push stop-playing-hook 
                (lambda (snd)
-                 (set! (cursor-follows-play) old-tracking))))
+                 (set! (with-tracking-cursor) old-tracking))))
   
   (let ((old-channel-style(channel-style (selected-sound))))
     (lambda (snd)

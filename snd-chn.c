@@ -4285,7 +4285,7 @@ static void erase_cursor(chan_info *cp)
     cp->cursor_size--;
     /* we draw at (cp->cx, cp->cy), so presumably... */
     if (cp->just_zero)
-      ccy = local_grf_y(chn_sample(CURSOR(cp), cp, cp->edit_ctr), cp->axis); /* TODO: off because CURSOR(cp) is the new cursor */
+      ccy = cp->old_cy;
     else ccy = cp->cy;
     draw_dot(cp->cgx->ax, cp->cx + 0.5, ccy + 0.5, 1);
     /* this isn't perfect (it slightly erases any lines it contacts), but it's ok */
@@ -4310,7 +4310,10 @@ static void draw_graph_cursor(chan_info *cp)
 
   cp->cx = local_grf_x((double)(CURSOR(cp)) / (double)SND_SRATE(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
   if (cp->just_zero)
-    cp->cy = local_grf_y(0.0, ap);
+    {
+      cp->cy = local_grf_y(0.0, ap);
+      cp->old_cy = local_grf_y(chn_sample(CURSOR(cp), cp, cp->edit_ctr), ap);
+    }
   else cp->cy = local_grf_y(chn_sample(CURSOR(cp), cp, cp->edit_ctr), ap);
   draw_cursor(cp);
   cp->cursor_visible = true;

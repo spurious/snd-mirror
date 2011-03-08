@@ -708,3 +708,8 @@ Reverb-feedback sets the scaler on the feedback.
 (define clear-selection unselect-all)
 
 
+(define cursor-follows-play (make-procedure-with-setter
+			     (lambda (snd)
+			       (with-tracking-cursor))
+			     (lambda (snd val)
+			       (set! (with-tracking-cursor) val))))

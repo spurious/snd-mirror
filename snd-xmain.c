@@ -1,9 +1,7 @@
 #include "snd.h"
 
-#define FALLBACK_FONT "fixed"
-#define DEFAULT_FONTLIST "9x15"
-
-/* our default basic colors (resource file can override these): */
+#define FALLBACK_FONT        "fixed"
+#define DEFAULT_FONTLIST     "9x15"
 #define HIGHLIGHT_COLOR      "ivory1"
 #define BASIC_COLOR          "ivory2"
 #define POSITION_COLOR       "ivory3"
@@ -29,9 +27,8 @@
 #define TEXT_FOCUS_COLOR     "white"
 #define FILTER_CONTROL_WAVEFORM_COLOR "blue"
 #define SASH_COLOR           "lightgreen"
-
-#define CHANNEL_SASH_INDENT -10
-#define CHANNEL_SASH_SIZE 0
+#define CHANNEL_SASH_INDENT  -10
+#define CHANNEL_SASH_SIZE    0
 /* 0 means: use Motif default size */
 
 #define POSITION_SLIDER_WIDTH 13

@@ -218,7 +218,7 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
 #define NO_LIST -1
 
 typedef enum {READ_FORWARD, READ_BACKWARD} read_direction_t;
-typedef enum {DONT_TRACK, ALWAYS_TRACK, TRACK_ONCE} tracking_cursor_t;
+typedef enum {TRACK_IF_ASKED, ALWAYS_TRACK} tracking_cursor_t;
 typedef enum {DONT_UPDATE_DISPLAY, UPDATE_DISPLAY} cut_selection_regraph_t;
 typedef enum {SEARCH_OK, SEARCH_FAILED} search_result_t;
 typedef enum {IGNORE_CACHE, REMOVE_FROM_CACHE} cache_remove_t;
@@ -384,8 +384,8 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define DEFAULT_SHOW_CONTROLS false
 
 #define with_tracking_cursor(ss) ss->With_Tracking_Cursor
-#define in_set_with_tracking_cursor(ss, val) ss->With_Tracking_Cursor = val
-#define DEFAULT_WITH_TRACKING_CURSOR DONT_TRACK
+#define set_with_tracking_cursor(ss, val) ss->With_Tracking_Cursor = val
+#define DEFAULT_WITH_TRACKING_CURSOR TRACK_IF_ASKED
 
 #define just_sounds(ss) ss->Just_Sounds
 #define set_just_sounds(val) ss->Just_Sounds = val
@@ -440,7 +440,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define auto_resize(ss) ss->Auto_Resize
 #define set_auto_resize(a) ss->Auto_Resize = a
-#define DEFAULT_AUTO_RESIZE true
+#if HAVE_GTK
+  #define DEFAULT_AUTO_RESIZE false
+#else
+  #define DEFAULT_AUTO_RESIZE true
+#endif
 
 #define auto_update(ss) ss->Auto_Update
 #define set_auto_update(a) ss->Auto_Update = a
@@ -869,7 +873,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define tracking_cursor_style(ss) ss->Tracking_Cursor_Style
 #define in_set_tracking_cursor_style(a) ss->Tracking_Cursor_Style = a
-#define DEFAULT_TRACKING_CURSOR_STYLE CURSOR_CROSS
+#define DEFAULT_TRACKING_CURSOR_STYLE CURSOR_LINE
 
 #define cursor_size(ss) ss->Cursor_Size
 #define in_set_cursor_size(a) ss->Cursor_Size = a

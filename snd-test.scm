@@ -857,7 +857,7 @@
     (if (not (equal? (cursor-style)  cursor-cross )) 
 	(snd-display #__line__ ";cursor-style set def: ~A" (cursor-style)))
     (set! (tracking-cursor-style) (tracking-cursor-style))
-    (if (not (equal? (tracking-cursor-style)  cursor-cross )) 
+    (if (not (equal? (tracking-cursor-style)  cursor-line )) 
 	(snd-display #__line__ ";tracking-cursor-style set def: ~A" (tracking-cursor-style)))
     (set! (enved-base) (enved-base))
     (if (fneq (enved-base)  1.0 )
@@ -1255,7 +1255,7 @@
       'contrast-control-amp (contrast-control-amp) 1.0
       'contrast-control-bounds (cadr (contrast-control-bounds)) 10.0
       'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
-      'cursor-follows-play (cursor-follows-play) #f
+      'with-tracking-cursor (with-tracking-cursor) #f
       'cursor-location-offset (cursor-location-offset) 0
       'cursor-size (cursor-size) 15
       'cursor-style (cursor-style) cursor-cross
@@ -1374,7 +1374,7 @@
       'time-graph-type (time-graph-type) graph-once
       'time-graph? (without-errors (time-graph?)) 'no-such-sound
       'tiny-font (tiny-font) (if (provided? 'snd-motif) "6x12" "Sans 8")
-      'tracking-cursor-style (tracking-cursor-style) cursor-cross
+      'tracking-cursor-style (tracking-cursor-style) cursor-line
       'transform-graph-type (transform-graph-type) graph-once
       'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
       'transform-normalization (transform-normalization) normalize-by-channel
@@ -1869,7 +1869,7 @@
 	(list 'with-tracking-cursor with-tracking-cursor #f #t)
 	(list 'cursor-size cursor-size 15 30)
 	(list 'cursor-style cursor-style cursor-cross cursor-line)
-	(list 'tracking-cursor-style tracking-cursor-style cursor-cross cursor-line)
+	(list 'tracking-cursor-style tracking-cursor-style cursor-line cursor-cross)
 	(list 'dac-combines-channels dac-combines-channels #t #f)
 	(list 'dac-size dac-size 256 512)
 	(list 'minibuffer-history-length minibuffer-history-length 8 16)
@@ -2033,7 +2033,7 @@
 	(list 'zero-pad zero-pad 0 '(-1 -123))
 	(list 'cursor-style cursor-style cursor-cross '(-1))
 	(list 'cursor-style cursor-style cursor-line '(2 123))
-	(list 'tracking-cursor-style tracking-cursor-style cursor-cross '(-1))
+	(list 'tracking-cursor-style tracking-cursor-style cursor-line '(-1))
 	(list 'tracking-cursor-style tracking-cursor-style cursor-line '(2 123))
 	(list 'transform-graph-type transform-graph-type graph-once '(-1 123))
 	(list 'fft-window fft-window 6 '(-1 123))
@@ -10813,8 +10813,8 @@ EDITS: 5
 	    (if (> (maxamp) .02) (snd-display #__line__ ";filter-sound maxamp 3: ~A" (maxamp)))
 	    
 	    (set! (show-sonogram-cursor) #t) 
-	    (set! (cursor-follows-play) #t) 
-	    (if (not (cursor-follows-play)) (snd-display #__line__ ";cursor-follows-play set to #t: ~A" (cursor-follows-play)))
+	    (set! (with-tracking-cursor) #t) 
+	    (if (not (with-tracking-cursor)) (snd-display #__line__ ";with-tracking-cursor set to #t: ~A" (with-tracking-cursor)))
 	    
 	    (set! (transform-graph-type) graph-as-sonogram) 
 	    (play :wait #t)
@@ -33030,7 +33030,7 @@ EDITS: 2
 	      (list 'with-tracking-cursor with-tracking-cursor #f #f #t)
 	      (list 'cursor-size cursor-size #f 15 25)
 	      (list 'cursor-style cursor-style #f cursor-cross cursor-line)
-	      (list 'tracking-cursor-style tracking-cursor-style #f cursor-cross cursor-line)
+	      (list 'tracking-cursor-style tracking-cursor-style #f cursor-line cursor-cross)
 	      (list 'clipping clipping #f #f #t)
 					;(list 'default-output-chans default-output-chans #f 1 8)
 					;(list 'default-output-data-format default-output-data-format #f 1 12)
@@ -44654,7 +44654,6 @@ EDITS: 1
 	    (list filter-control-in-dB 'filter-control-in-dB ind-1 ind-2 #t eq? equal?)
 	    (list filter-control-in-hz 'filter-control-in-hz ind-1 ind-2 #t eq? equal?)
 	    (list show-controls 'show-controls ind-1 ind-2 #t eq? equal?)
-	    (list with-tracking-cursor 'with-tracking-cursor ind-1 ind-2 #t eq? equal?)
 	    
 	    (list speed-control-tones 'speed-control-tones ind-1 ind-2 14 = equal?)
 	    (list speed-control-style 'speed-control-style ind-1 ind-2 speed-control-as-semitone = equal?)
@@ -62056,7 +62055,7 @@ EDITS: 1
 			      (snd-display #__line__ ";~D: chn (no snd) procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
 		      (list channel-widgets count-matches cursor channel-properties channel-property 
-			    with-tracking-cursor cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size
+			    cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size
 			    draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency
 			    fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window transform-graph? find-channel
 			    graph graph-style lisp-graph? (lambda (a) (insert-region 0 a)) insert-sound
@@ -62110,7 +62109,7 @@ EDITS: 1
 			  (if (not (eq? tag 'no-such-sound))
 			      (snd-display #__line__ ";~D: chn procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
-		      (list channel-widgets cursor with-tracking-cursor channel-properties
+		      (list channel-widgets cursor channel-properties
 			    cursor-position cursor-size cursor-style tracking-cursor-style 
 			    (lambda (snd) (delete-sample 0 snd)) display-edits dot-size 
 			    (lambda (snd) (edit-fragment 0 snd))
@@ -63817,5 +63816,4 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 |#
 
-;;; TODO: what is the effect of the "alpha" setting for chan-graph?
 

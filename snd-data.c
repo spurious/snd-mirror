@@ -41,7 +41,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->ptree_size = 0;
   cp->ptree_ctr = -1;
   cp->edit_size = 0;
-  cp->tracking = false;
   cp->cursor_on = false;
   cp->cursor_visible = false;
   cp->fft_cursor_visible = false;
@@ -385,7 +384,6 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->delete_me = NULL;
   sp->name_string = NULL;
   sp->active = true;
-  sp->with_tracking_cursor = with_tracking_cursor(ss);
   return(sp);
 }
 

@@ -1094,20 +1094,21 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
   chan_info *cp;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   XButtonEvent *ev;
+
   ev = (XButtonEvent *)(cb->event);
+
   if (sp->playing) 
     stop_playing_sound(sp, PLAY_BUTTON_UNSET);
-  if (sp->with_tracking_cursor != ALWAYS_TRACK)         /* can be set in init file */
-    {
-      if ((cb->set) && (ev->state & (snd_ControlMask | snd_MetaMask)))
-	sp->with_tracking_cursor = TRACK_ONCE;
-      else sp->with_tracking_cursor = DONT_TRACK;
-    }
+
+  ss->tracking = ((with_tracking_cursor(ss)) ||
+		  ((cb->set) && 
+		   (ev->state & (snd_ControlMask | snd_MetaMask))));
+
   cp = any_selected_channel(sp);
   goto_graph(cp);
   if (cb->set) 
     {
-      XtVaSetValues(w, XmNselectColor, ((sp->with_tracking_cursor != DONT_TRACK) ? (ss->sgx->green) : (ss->sgx->selection_color)), NULL);
+      XtVaSetValues(w, XmNselectColor, (ss->tracking) ? ss->sgx->green : ss->sgx->selection_color, NULL);
       play_sound(sp, 0, NO_END_SPECIFIED);
     }
 }
@@ -1124,7 +1125,7 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
       w = PLAY_BUTTON(sp);
       if (pd->pausing)
 	XtVaSetValues(w, XmNselectColor, ss->sgx->red, NULL);
-      else XtVaSetValues(w, XmNselectColor, ((sp->with_tracking_cursor != DONT_TRACK) ? (ss->sgx->green) : (ss->sgx->selection_color)), NULL);
+      else XtVaSetValues(w, XmNselectColor, (ss->tracking) ? ss->sgx->green : ss->sgx->selection_color, NULL);
     }
 }
 
