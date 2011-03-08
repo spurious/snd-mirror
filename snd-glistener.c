@@ -1,89 +1,9 @@
 #include "snd.h"
 
-/* where to post the completions list? 
- *   I'd like a drop-down scrolled list as in Motif, but I can't figure out any way to do it
- */
-
 static GtkWidget *listener_text = NULL;
-
-static GtkWidget *completion_pane = NULL;
-static bool completion_list_active = false;
-
 static int printout_end = 0;
 
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
-
-#if 0
-static slist *completion_list = NULL;
-
-static void list_completions_callback(const char *name, int row, void *data)
-{
-  int beg, end, i, j, old_len, new_len;
-  char *old_text;
-  beg = printout_end + 1;
-  end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
-  old_text = sg_get_text(listener_text, beg, end);
-  old_len = mus_strlen(old_text);
-  new_len = mus_strlen(name);
-  for (i = old_len - 1, j = new_len - 1; j >= 0; j--)
-    {
-      if (old_text[i] != name[j])
-	{
-	  i = old_len - 1;
-	  if (old_text[i] == name[j]) i--;
-	}
-      else i--;
-    }
-  completion_list_active = false;
-  append_listener_text(0, (char *)(name - 1 + old_len - i));
-  if (old_text) g_free(old_text);
-  gtk_widget_hide(completion_pane);
-}
-#endif
-
-#if 0
-static void start_completion_dialog(int num_items, char **items)
-{
-  if (!completion_dialog)
-    {
-      GtkWidget *help_button, *dismiss_button;
-      completion_dialog = snd_gtk_dialog_new();
-      SG_SIGNAL_CONNECT(completion_dialog, "delete_event", delete_completion_dialog, NULL);
-      gtk_window_set_title(GTK_WINDOW(completion_dialog), "Completions");
-      sg_make_resizable(completion_dialog);
-      gtk_container_set_border_width (GTK_CONTAINER(completion_dialog), 4);
-      gtk_widget_realize(completion_dialog);
-      gtk_window_resize(GTK_WINDOW(completion_dialog), 260, 200);
-
-      help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-      gtk_widget_set_name(help_button, "dialog_button");
-
-      dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-      gtk_widget_set_name(dismiss_button, "dialog_button");
-      set_stock_button_label(dismiss_button, "Go Away");
-
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(completion_dialog)), dismiss_button, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(completion_dialog)), help_button, false, true, 10);
-      SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_completion_callback, NULL);
-      SG_SIGNAL_CONNECT(help_button, "clicked", help_completion_callback, NULL);
-      gtk_widget_show(dismiss_button);
-      gtk_widget_show(help_button);
-  
-      completion_list = slist_new(DIALOG_CONTENT_AREA(completion_dialog), items, num_items, CONTAINER_ADD);
-      completion_list->select_callback = list_completions_callback;
-      set_dialog_widget(COMPLETION_DIALOG, completion_dialog);
-    }
-  else 
-    {
-      int i;
-      slist_clear(completion_list);
-      for (i = 0; i < num_items; i++) 
-	slist_append(completion_list, items[i]);
-      raise_dialog(completion_dialog);
-    }
-  gtk_widget_show(completion_dialog);
-}
-#endif
 
 
 int save_listener_text(FILE *fp)
@@ -150,54 +70,35 @@ static void sg_text_delete(GtkWidget *w, int start, int end)
 static void listener_completion(int end)
 {
   int beg;
-  char *old_text;
+  char *old_text = NULL;
+
   beg = printout_end + 1;
   if (end <= beg) return;
+
   old_text = sg_get_text(listener_text, beg, end);
   /* now old_text is the stuff typed since the last prompt */
+
   if (old_text)
     {
       char *new_text = NULL, *file_text = NULL;
-      int matches = 0;
       bool try_completion = true;
-      new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
-      if (!try_completion)
-	{
-	  g_free(old_text);
-	  return;
-	}
-      if (mus_strcmp(old_text, new_text))
-	matches = get_completion_matches();
-      sg_text_delete(listener_text, beg, end);
-      append_listener_text(0, new_text);
-      goto_window(listener_text);
-      if (new_text) 
-	{
-	  free(new_text); 
-	  new_text = NULL;
-	}
-#if 0
-      if (matches > 1)
-	{
-	  clear_possible_completions();
-	  set_save_completions(true);
-	  if (file_text) 
-	    new_text = filename_completer(NULL, file_text, NULL); 
-	  else new_text = expression_completer(NULL, old_text, NULL);
-	  if (new_text) 
-	    {
-	      free(new_text); 
-	      new_text = NULL;
-	    }
 
-	  /* display_completions(); */
-	  completion_list_active = true;
-	  set_save_completions(false);
+      new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
+      if (try_completion)
+	{
+	  int matches = 0;
+	  if (mus_strcmp(old_text, new_text))
+	    matches = get_completion_matches();
+	  sg_text_delete(listener_text, beg, end);
+	  append_listener_text(0, new_text);
+	  goto_window(listener_text);
 	}
-#endif
+
+      if (new_text) free(new_text); 
       if (file_text) free(file_text);
-      if (old_text) g_free(old_text);
+      g_free(old_text);
     }
+  
 }
 
 
@@ -525,13 +426,6 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 {
   guint key;
   GdkModifierType state;
-
-  if ((completion_pane) &&
-      (completion_list_active))
-    {
-      gtk_widget_hide(completion_pane);
-      completion_list_active = false;
-    }
 
   if (ss->sgx->graph_is_active) 
     {
@@ -961,7 +855,6 @@ static void make_listener_widget(int height)
       gtk_widget_show(listener_text);
 
       /* an attempt to add the completions list here as the end of an hbox failed */
-
     }
 }
 

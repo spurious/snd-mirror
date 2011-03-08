@@ -1549,13 +1549,14 @@ My initialization file uses <code>(mus-oss-set-buffers 2 12)</code>.
 
 <A NAME="cq"></a><p>The keyboard commands for playing are:</p>
 <pre>
-  C-q    play current channel starting at the cursor
-  C-t    stop playing
-  <A NAME="cxp"></a>C-x p  play region (numeric arg selects region)
+  C-q or space   play current channel starting at the cursor
+  C-t            stop playing
+  <A NAME="cxp"></a>C-x p          play region (numeric arg selects region)
 </pre>
 
 <p>In a multichannel file, C-q plays all channels from the current channel's
 cursor if the sync button is on, and otherwise plays only the current channel.
+While playing, space pauses playback or resumes it.
 Except in the browsers, what is actually
 played depends on the <a href="#controls">control panel</a>.
 Both C-q and C-x p allow overlapped plays; that is, if you
@@ -1894,7 +1895,7 @@ all the samples between the cursor and the next mark.</p>
 </pre></td></tr>
 <tr><td>[Right]</td><td>move window right</td><td onmouseout="UnTip()" onmouseover="Tip('we set the new window left edge to its current midpoint')"><code>(lambda () (set! (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (* 0.5 (+ (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>)))))</code></td></tr>
 <tr><td>[Home]</td><td>update current file from disk</td><td><code><a class=quiet href="extsnd.html#updatesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatesound_tip)">update-sound</a></code></td></tr>
-<tr><td>[Space]</td><td colspan=2>cancel selection; if playing, pause or continue playback</td></tr>
+<tr><td>[Space]</td><td colspan=2>play from cursor; if playing, pause or continue playback</td></tr>
 <tr><td>&lt;</td><td>move cursor to sample 0</td><td><code>(lambda () (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) 0))</code></td></tr>
 <tr><td>&gt;</td><td>move cursor to last sample</td><td><code>(lambda () (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) 1)))</code></td></tr>
 <tr><td>C-&lt;</td><td>move cursor to sample 0</td><td><code>(lambda () (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) 0))</code></td></tr>

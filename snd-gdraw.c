@@ -993,7 +993,6 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       set_dialog_widget(COLOR_ORIENTATION_DIALOG, ccd_dialog);
       if (color_map(ss) != BLACK_AND_WHITE_COLORMAP) slist_select(ccd_list, color_map(ss));
 
-
       /* orientation section */
 
       orient_frame = gtk_frame_new(NULL);

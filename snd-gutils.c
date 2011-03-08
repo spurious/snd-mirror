@@ -1176,14 +1176,15 @@ char *slist_selection(slist *lst)
 
 
 /* TODO: gtk troubles:
- *   gtk3 toolbar is spread out
- *   now each dialog in gtk3 needs explicit coloring, and the name_pix icon backgrounds are still gray
- *      equivalent to the Motif trope map_over_children(preferences_dialog, set_main_color_of_widget);
- *      recolor_everything should skip the listener (prefs for example)
  *
+ *   gtk3 toolbar is spread out [check out the "principal toolbar style"]
+ *   the name_pix icon backgrounds are still gray, also dialog buttons and menu items
  *   do meters work in rec?  in Motif they're drawn incorrectly
+ *
  *   superimposed chans flicker a lot
  *     the cairo_t's are not shared in this case, so each chan is a separate display
+ *     and they're all black
+ *
  *   hide controls + listener doesn't
  *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
@@ -1191,15 +1192,17 @@ char *slist_selection(slist *lst)
  *   if pointer focus, movement out of dialog and into graph does not raise graph
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators, but they still look dumb
+ *
  *   check out snd-ls changes and the tutorial
- *     800 init window width, space=play and stop play [see snd_conffile.scm for more ket bindings]
- *   the listener completion stuff is not handy in Motif or Gtk -- maybe just post the choices? or choose one and gray-scale it?
+ *     [see snd_conffile.scm for more key bindings] -- I think the key bindings list in snd-kbd.c is out-of-date (need automatic way to generate this)
  *
  *   the build drawing stuff (draw-dot etc) segfault in cairo
  *    what about draw-axes [and the various "contexts"] 
  *    snd-test.scm draw.scm dsp.scm muglyphs.scm snd-gtk.scm snd-motif.scm xm-enved.scm t26|139 + doc examples
  *    so these now work only in the chan drawing area context in gtk [and not always then -- snd-test.scm test 20/21]
  *    and they can segfault randomly -- I need to follow each cairo_t path in detail
+ *
+ *   cursor redisplay needs work -- save the actual points?
  *
  *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
  *     also locate here, rather than being directory-based
@@ -1222,7 +1225,6 @@ char *slist_selection(slist *lst)
  *     try cairo-trace and the new GL surface (1.10.0) [gl_surface?], and the OSX backend?
  *
  * requested: zoomed fft -- this is available in the transform dialog, but where to put chan-local controls?
- *            space=play
  * bugs: play choppy if graphics -- seems ok?
  */
 

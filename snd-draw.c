@@ -783,6 +783,10 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
   sx->dialogs[sx->num_dialogs++] = wid;
   check_dialog_widget_table();
 
+#if USE_GTK && HAVE_GTK_3
+  gtk_widget_override_background_color(wid, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->basic_color));
+#endif
+
   if (XEN_FALSE_P(XEN_VECTOR_REF(dialog_widgets, (int)which)))
     XEN_VECTOR_SET(dialog_widgets, (int)which, 
 		   XEN_WRAP_WIDGET(wid));
@@ -1553,7 +1557,8 @@ static XEN g_basic_color(void)
 #if USE_GTK
 static void recolor_everything_1(widget_t w, gpointer color)
 {
-  if (GTK_IS_WIDGET(w)) 
+  if ((GTK_IS_WIDGET(w)) &&
+      (w != ss->sgx->listener_pane))
     {
 #if (!HAVE_GTK_3)
       gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)color);
@@ -1561,6 +1566,9 @@ static void recolor_everything_1(widget_t w, gpointer color)
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything_1, color);
 #else
       gtk_widget_override_background_color(w, GTK_STATE_NORMAL, (GdkRGBA *)color);
+      if (GTK_IS_LABEL(w))
+	gtk_widget_override_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
+	
       if (GTK_IS_CONTAINER(w))
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything_1, color);
 #endif
@@ -1568,7 +1576,7 @@ static void recolor_everything_1(widget_t w, gpointer color)
 }
 
 
-static void recolor_everything(widget_t w, gpointer color)
+void recolor_everything(widget_t w, gpointer color)
 {
 #if (!HAVE_GTK_3)
   GdkColor *nc;

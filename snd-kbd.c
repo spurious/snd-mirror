@@ -275,7 +275,7 @@ int in_user_keymap(int key, int state, bool cx_extended)
   #define kbd_false XEN_FALSE
 #endif
 
-#define NUM_BUILT_IN_KEY_BINDINGS 76
+#define NUM_BUILT_IN_KEY_BINDINGS 77
 
 static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_Down,    0, 0, kbd_false, false, "zoom out",                                                    NULL, -1},
@@ -284,6 +284,7 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_Right,   0, 0, kbd_false, false, "move window right",                                           NULL, -1},
   {snd_K_less,    0, 0, kbd_false, false, "move cursor to sample 0",                                     NULL, -1},
   {snd_K_greater, 0, 0, kbd_false, false, "move cursor to last sample",                                  NULL, -1},
+  {snd_K_space,   0, 0, kbd_false, false, "play from cursor or stop playing",                            NULL, -1},
 
   {snd_K_less,       snd_ControlMask, 0, kbd_false, false, "move cursor to sample 0",                    NULL, -1},
   {snd_K_greater,    snd_ControlMask, 0, kbd_false, false, "move cursor to last sample",                 NULL, -1},
@@ -1985,7 +1986,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_space: 
 	      if (play_in_progress())
 		toggle_dac_pausing(); 
-	      else deactivate_selection();
+	      else play_sound(sp, CURSOR(cp), NO_END_SPECIFIED); /* was deactivate_selection */
 	      break;
 
 	    case snd_keypad_Add:

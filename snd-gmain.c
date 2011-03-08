@@ -2,31 +2,31 @@
 
 #define FALLBACK_FONT "Sans 14"
 
-  #define HIGHLIGHT_COLOR      rgb_to_color(1.00, 1.00, 0.94) /* "ivory1" */
-  #define BASIC_COLOR          rgb_to_color(0.96, 0.96, 0.90) /* "ivory2" lightened */
-  #define POSITION_COLOR       rgb_to_color(0.80, 0.80, 0.75) /* "ivory3" */
-  #define ZOOM_COLOR           rgb_to_color(0.54, 0.54, 0.51) /* "ivory4" */
-  #define CURSOR_COLOR         rgb_to_color(1.0, 0.0, 0.0)    /* "red" */
-  #define SELECTION_COLOR      rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
-  #define MIX_COLOR            rgb_to_color(0.66, 0.66, 0.66) /* "darkgray" */
-  #define ENVED_WAVEFORM_COLOR rgb_to_color(0.0, 0.0, 1.0)    /* "blue" */
-  #define GRAPH_COLOR          rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
-  #define SELECTED_GRAPH_COLOR rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
-  #define DATA_COLOR           rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
-  #define SELECTED_DATA_COLOR  rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
-  #define MARK_COLOR           rgb_to_color(1.0, 0.0, 0.0)    /* "red" */
-  #define LISTENER_COLOR       rgb_to_color(0.94, 0.97, 1.00) /* "AliceBlue" */
-  #define LISTENER_TEXT_COLOR  rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
-  #define LIGHT_BLUE_COLOR     rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
-  #define LIGHTER_BLUE_COLOR   rgb_to_color(0.94, 0.97, 1.00) /* "AliceBlue" */
-  #define WHITE_COLOR          rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
-  #define BLACK_COLOR          rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
-  #define GREEN_COLOR          rgb_to_color(0.00, 0.93, 0.00) /* "green2" */
-  #define RED_COLOR            rgb_to_color(1.0, 0.0, 0.0)    /* "red" */
-  #define YELLOW_COLOR         rgb_to_color(1.00, 1.00, 0.00) /* "yellow" */
-  #define TEXT_FOCUS_COLOR     rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
-  #define FILTER_CONTROL_WAVEFORM_COLOR rgb_to_color(0.0, 0.0, 1.0) /* "blue" */
-  #define SASH_COLOR           rgb_to_color(0.56, 0.93, 0.56) /* "lightgreen" */
+#define HIGHLIGHT_COLOR      rgb_to_color(1.00, 1.00, 0.94) /* "ivory1" */
+#define BASIC_COLOR          rgb_to_color(0.96, 0.96, 0.90) /* "ivory2" lightened */
+#define POSITION_COLOR       rgb_to_color(0.80, 0.80, 0.75) /* "ivory3" */
+#define ZOOM_COLOR           rgb_to_color(0.54, 0.54, 0.51) /* "ivory4" */
+#define CURSOR_COLOR         rgb_to_color(1.0, 0.0, 0.0)    /* "red" */
+#define SELECTION_COLOR      rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
+#define MIX_COLOR            rgb_to_color(0.66, 0.66, 0.66) /* "darkgray" */
+#define ENVED_WAVEFORM_COLOR rgb_to_color(0.0, 0.0, 1.0)    /* "blue" */
+#define GRAPH_COLOR          rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
+#define SELECTED_GRAPH_COLOR rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
+#define DATA_COLOR           rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
+#define SELECTED_DATA_COLOR  rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
+#define MARK_COLOR           rgb_to_color(1.0, 0.0, 0.0)    /* "red" */
+#define LISTENER_COLOR       rgb_to_color(0.94, 0.97, 1.00) /* "AliceBlue" */
+#define LISTENER_TEXT_COLOR  rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
+#define LIGHT_BLUE_COLOR     rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
+#define LIGHTER_BLUE_COLOR   rgb_to_color(0.94, 0.97, 1.00) /* "AliceBlue" */
+#define WHITE_COLOR          rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
+#define BLACK_COLOR          rgb_to_color(0.0, 0.0, 0.0)    /* "black" */
+#define GREEN_COLOR          rgb_to_color(0.00, 0.93, 0.00) /* "green2" */
+#define RED_COLOR            rgb_to_color(1.0, 0.0, 0.0)    /* "red" */
+#define YELLOW_COLOR         rgb_to_color(1.00, 1.00, 0.00) /* "yellow" */
+#define TEXT_FOCUS_COLOR     rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
+#define FILTER_CONTROL_WAVEFORM_COLOR rgb_to_color(0.0, 0.0, 1.0) /* "blue" */
+#define SASH_COLOR           rgb_to_color(0.56, 0.93, 0.56) /* "lightgreen" */
 
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 10
@@ -38,6 +38,9 @@
 #define SASH_SIZE 14
 #define SASH_INDENT -6
 #define AUTO_RESIZE_DEFAULT true
+
+#define INITIAL_WINDOW_WIDTH 600
+#define INITIAL_WINDOW_HEIGHT 400
 
 
 #ifndef SND_AS_WIDGET
@@ -644,6 +647,7 @@ void snd_doit(int argc, char **argv)
   
   setup_gcs();
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
+  else gdk_window_resize(WIDGET_TO_WINDOW(MAIN_SHELL(ss)), INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT);
   startup_funcs();
   
 #if HAVE_SETJMP_H
@@ -675,8 +679,8 @@ void snd_doit(int argc, char **argv)
     }
 
 #if HAVE_GTK_3
-   set_basic_color(ss->sgx->basic_color);
-   color_listener(ss->sgx->listener_color);
+  set_basic_color(ss->sgx->basic_color);
+  color_listener(ss->sgx->listener_color);
 #endif
 
 #ifndef SND_AS_WIDGET

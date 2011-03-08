@@ -47,11 +47,12 @@ Snd 11.14
    added optional "alpha" arg to make-color.
    moved delete-selection-and-smooth from selection.scm to C.
    added delete-samples-and-smooth.
-
+   typing space in a graph plays from the cursor, space while playing = pause/continue
+   startup window size is 600x400
 
    The Gtk Snd now needs Gtk 2.12 or later.
 
-checked: sbcl 1.0.46, gtk 3.0.1, mpc 0.9
+checked: sbcl 1.0.46, gtk 3.0.1|2, mpc 0.9
 
 
 Thanks!: Louis Gorenfeld, Hartmut Noack, Philipp Uberbacher, Fernando Lopez-Lezcano,

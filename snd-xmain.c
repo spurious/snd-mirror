@@ -50,6 +50,9 @@
 #define SASH_INDENT -20
 #define AUTO_RESIZE_DEFAULT 1
 
+#define INITIAL_WINDOW_WIDTH 600
+#define INITIAL_WINDOW_HEIGHT 400
+
 
 #ifndef SND_AS_WIDGET
 static void window_close(Widget w, XtPointer context, XtPointer info)
@@ -555,8 +558,8 @@ void snd_doit(int argc, char **argv)
 
 #ifndef SND_AS_WIDGET
 #ifndef __alpha__
-  XtSetArg(args[0], XtNwidth, 640);
-  XtSetArg(args[1], XtNheight, 256);
+  XtSetArg(args[0], XtNwidth, INITIAL_WINDOW_WIDTH);
+  XtSetArg(args[1], XtNheight, INITIAL_WINDOW_HEIGHT);
   shell = XtAppInitialize(&app, "Snd", NULL, 0, &argc, argv, fallbacks, args, 2);
 #else
   shell = XtVaOpenApplication(&app, "Snd", NULL, 0, &argc, argv, fallbacks, applicationShellWidgetClass,

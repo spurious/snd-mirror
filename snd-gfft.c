@@ -238,25 +238,21 @@ void set_wavelet_type(int val)
 
 /* ---------------- window choice ---------------- */
 
-static void set_label_color(GtkWidget *w, color_info *color)
-{
-  widget_modify_bg(w, GTK_STATE_NORMAL, color);
-  widget_modify_bg(w, GTK_STATE_ACTIVE, color);
-  widget_modify_fg(w, GTK_STATE_NORMAL, color);
-  widget_modify_fg(w, GTK_STATE_ACTIVE, color);
-}
+#if HAVE_GTK_3
+/* this won't work in gtk2 because it requires the alpha field (GdkRGBA not defined) */
+static color_t not_so_black;
 
-
-static void highlight_alpha_beta_scales(mus_fft_window_t val)
+static void alpha_beta_alpha(mus_fft_window_t val)
 {
   if (fft_window_beta_in_use(val))
-    set_label_color(beta_label, ss->sgx->black);
-  else set_label_color(beta_label, ss->sgx->basic_color);
-
+    gtk_widget_override_color(beta_label, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
+  else gtk_widget_override_color(beta_label, GTK_STATE_NORMAL, (GdkRGBA *)not_so_black);
+ 
   if (fft_window_alpha_in_use(val))
-    set_label_color(alpha_label, ss->sgx->black);
-  else set_label_color(alpha_label, ss->sgx->basic_color);
+    gtk_widget_override_color(alpha_label, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
+  else gtk_widget_override_color(alpha_label, GTK_STATE_NORMAL, (GdkRGBA *)not_so_black);
 }
+#endif
 
 
 static void window_browse_callback(const char *name, int row, void *data)
@@ -267,7 +263,9 @@ static void window_browse_callback(const char *name, int row, void *data)
     gtk_label_set_text(GTK_LABEL(fft_window_label), mus_fft_window_name(fft_window(ss)));
   get_fft_window_data();
   graph_redisplay();
-  highlight_alpha_beta_scales(fft_window(ss));
+#if HAVE_GTK_3
+  alpha_beta_alpha(fft_window(ss));
+#endif
 }
 
 
@@ -283,7 +281,9 @@ void set_fft_window(mus_fft_window_t val)
 	gtk_label_set_text(GTK_LABEL(fft_window_label), mus_fft_window_name(val));
       get_fft_window_data();
       graph_redisplay();
-      highlight_alpha_beta_scales(val);
+#if HAVE_GTK_3
+      alpha_beta_alpha(val);
+#endif
     }
 }
   
@@ -873,6 +873,11 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       GtkWidget *alpha_box, *beta_box;
       GtkWidget *end_box, *end_label, *start_box, *start_label;
 
+#if HAVE_GTK_3
+      not_so_black = rgb_to_color(0.0, 0.0, 0.0);
+      not_so_black->alpha = 0.5;
+#endif
+
       transform_dialog = snd_gtk_dialog_new();
       gtk_widget_set_name(transform_dialog, "fft_dialog");
       SG_SIGNAL_CONNECT(transform_dialog, "delete_event", delete_transform_dialog, NULL);
@@ -1236,7 +1241,9 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       if (fft_window_alpha(ss) != 0.0) ADJUSTMENT_SET_VALUE(alpha_adj, fft_window_alpha(ss));
       if (fft_window_beta(ss) != 0.0) ADJUSTMENT_SET_VALUE(beta_adj, fft_window_beta(ss));
 
-      /* highlight_alpha_beta_scales(fft_window(ss)); */
+#if HAVE_GTK_3
+      alpha_beta_alpha(fft_window(ss));
+#endif
       need_callback = true;
       gtk_widget_show(outer_table);
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
@@ -1250,7 +1257,6 @@ GtkWidget *fire_up_transform_dialog(bool managed)
   if (managed) 
     {
       gtk_widget_show(transform_dialog);
-      highlight_alpha_beta_scales(fft_window(ss));
       if (need_moveto)
 	{
 	  int i;
