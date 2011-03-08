@@ -321,7 +321,7 @@ static void mix_amp_env_resize(GtkWidget *w)
   cairo_push_group(ax->cr);
 
   /* erase previous */
-  cairo_set_source_rgb(ax->cr, cur_gc->bg_color->red, cur_gc->bg_color->green, cur_gc->bg_color->blue);
+  cairo_set_source_rgba(ax->cr, cur_gc->bg_color->red, cur_gc->bg_color->green, cur_gc->bg_color->blue, cur_gc->bg_color->alpha);
   cairo_rectangle(ax->cr, 0, 0, widget_width(w), widget_height(w));
   cairo_fill(ax->cr);
 

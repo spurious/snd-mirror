@@ -320,7 +320,7 @@ static void show_happy_face(Drawable *wn, mus_float_t pct)
 
   cairo_push_group(cr);  
 
-  cairo_set_source_rgb(cr, ss->sgx->basic_color->red, ss->sgx->basic_color->green, ss->sgx->basic_color->blue); 
+  cairo_set_source_rgba(cr, ss->sgx->basic_color->red, ss->sgx->basic_color->green, ss->sgx->basic_color->blue, ss->sgx->basic_color->alpha); 
   cairo_rectangle(cr, 0, 0, 16, 16);
   cairo_fill(cr);
   
@@ -375,7 +375,7 @@ static void hide_happy_face(Drawable *wn)
     cairo_destroy(cr);
     
   cr = gdk_cairo_create(wn);
-  cairo_set_source_rgb(cr, ss->sgx->basic_color->red, ss->sgx->basic_color->green, ss->sgx->basic_color->blue); 
+  cairo_set_source_rgba(cr, ss->sgx->basic_color->red, ss->sgx->basic_color->green, ss->sgx->basic_color->blue, ss->sgx->basic_color->alpha); 
   cairo_rectangle(cr, 0, 0, 24, 24);
   cairo_fill(cr);
 }
@@ -1306,7 +1306,7 @@ void display_filter_env(snd_info *sp)
   cairo_push_group(ax->cr);
 
   /* erase previous */
-  cairo_set_source_rgb(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue);
+  cairo_set_source_rgba(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue, ax->gc->bg_color->alpha);
   cairo_rectangle(ax->cr, 0, 0, width, height);
   cairo_fill(ax->cr);
 

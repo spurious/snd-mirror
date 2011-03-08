@@ -5148,7 +5148,7 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
   cairo_push_group(vdat->env_ax->cr);
 
   /* erase previous */
-  cairo_set_source_rgb(vdat->env_ax->cr, vdat->env_gc->bg_color->red, vdat->env_gc->bg_color->green, vdat->env_gc->bg_color->blue);
+  cairo_set_source_rgba(vdat->env_ax->cr, vdat->env_gc->bg_color->red, vdat->env_gc->bg_color->green, vdat->env_gc->bg_color->blue, vdat->env_gc->bg_color->alpha);
   cairo_rectangle(vdat->env_ax->cr, 0, 0, widget_width(w), widget_height(w));
   cairo_fill(vdat->env_ax->cr);
 

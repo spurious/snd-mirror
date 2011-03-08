@@ -18,14 +18,6 @@
                                     (strcmp("color_t", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #endif
 
-#if USE_NO_GUI
-  #define XEN_PIXEL_P(Value) (XEN_LIST_P(Value) && \
-                           (XEN_LIST_LENGTH(Value) >= 2) && \
-                           (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                           (strcmp("Pixel", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
-#endif
-
-
 /* unfortunately, we can't just make PIXEL into a C type here -- it is called
  *   XM_PIXEL in xm.c and in that context, it assumes the layout given above.
  */

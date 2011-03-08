@@ -1177,36 +1177,35 @@ char *slist_selection(slist *lst)
 
 /* TODO: gtk troubles:
  *   gtk3 toolbar is spread out
- *   gtk3 basic-color is ignored
+ *   now each dialog in gtk3 needs explicit coloring, and the name_pix icon backgrounds are still gray
+ *      equivalent to the Motif trope map_over_children(preferences_dialog, set_main_color_of_widget);
+ *      recolor_everything should skip the listener (prefs for example)
+ *
  *   do meters work in rec?  in Motif they're drawn incorrectly
- *   sep chans, syncd marks don't move together
  *   superimposed chans flicker a lot
+ *     the cairo_t's are not shared in this case, so each chan is a separate display
  *   hide controls + listener doesn't
  *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *   sash colors should be green but I can't find any way to set this in gtk3!
- *   Also, someone is setting squelch?  
  *   if pointer focus, movement out of dialog and into graph does not raise graph
  *   perhaps tooltips in places like the data list of the save-as dialog
- *   perhaps menu accelerators
+ *   perhaps menu accelerators, but they still look dumb
  *   check out snd-ls changes and the tutorial
+ *     800 init window width, space=play and stop play [see snd_conffile.scm for more ket bindings]
  *   the listener completion stuff is not handy in Motif or Gtk -- maybe just post the choices? or choose one and gray-scale it?
  *
  *   the build drawing stuff (draw-dot etc) segfault in cairo
- *    need to add cr arg to draw-line draw-dot fill-rectangle draw-string draw-lines draw-dots fil-polygon
  *    what about draw-axes [and the various "contexts"] 
  *    snd-test.scm draw.scm dsp.scm muglyphs.scm snd-gtk.scm snd-motif.scm xm-enved.scm t26|139 + doc examples
  *    so these now work only in the chan drawing area context in gtk [and not always then -- snd-test.scm test 20/21]
- *
- *   if with-tracking-cursor and cursor-style is cursor-line, I still get a "+" following the DAC
+ *    and they can segfault randomly -- I need to follow each cairo_t path in detail
  *
  *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
  *     also locate here, rather than being directory-based
  *
- *   color printout should give the rgba values (not "(color_t #<c_pointer 0x1413000>)")
- *     set_source_rgb -> set_source_rgba? Is there a speed penalty? [snd-gdraw.c, genv gsnd grec gprint gfft gfile]
- *     what about basic-color etc? the prefs color controls? -- do these matter since they're mostly bg colors?
- *     shouldn't colors be objects?
+ *   if basic-color set, listener is also set, and if black, labels are not visible
+ *     this is partly the case also in Motif
  *
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
  *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.
@@ -1220,7 +1219,7 @@ char *slist_selection(slist *lst)
  *     [this is currently disabled in gtk3]
  *
  *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
- *     try cairo-trace and the new GL surface (1.10.0), and the OSX backend?
+ *     try cairo-trace and the new GL surface (1.10.0) [gl_surface?], and the OSX backend?
  *
  * requested: zoomed fft -- this is available in the transform dialog, but where to put chan-local controls?
  *            space=play

@@ -277,7 +277,7 @@ static void env_redisplay_1(printing_t printing)
 	      cairo_push_group(enved_cr);
 
 	      /* erase previous */
-	      cairo_set_source_rgb(enved_cr, gc->bg_color->red, gc->bg_color->green, gc->bg_color->blue);
+	      cairo_set_source_rgba(enved_cr, gc->bg_color->red, gc->bg_color->green, gc->bg_color->blue, gc->bg_color->alpha);
 	      cairo_rectangle(enved_cr, axis->graph_x0, axis->y_offset, axis->width, axis->height);
 	      cairo_fill(enved_cr);
 

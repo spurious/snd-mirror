@@ -674,6 +674,11 @@ void snd_doit(int argc, char **argv)
       ss->startup_errors = NULL;
     }
 
+#if HAVE_GTK_3
+   set_basic_color(ss->sgx->basic_color);
+   color_listener(ss->sgx->listener_color);
+#endif
+
 #ifndef SND_AS_WIDGET
   set_up_icon();
   gtk_main();

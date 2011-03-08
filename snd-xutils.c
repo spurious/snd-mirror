@@ -32,6 +32,9 @@ static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, const ch
 }
 
 
+/* to see all fonts: (format #f "~{~A~%~}" (XListFonts (XtDisplay (cadr (main-widgets))) "*" 10000))
+ */
+
 bool set_tiny_font(const char *font)
 {
   XFontStruct *fs = NULL;

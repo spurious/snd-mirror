@@ -44059,7 +44059,7 @@ EDITS: 1
 		       (set! (foreground-color) (make-color-with-catch .75 .75 .75))
 		       (fill-rectangle pos 10 50 20)
 		       (set! (foreground-color) (make-color-with-catch 1 0 0))
-		       (draw-string "hiho" (+ pos 5) 24)
+		       (draw-string "hiho" (+ pos 5) 12)
 		       (set! (foreground-color) old-color)))
 		   (lambda args
 		     (snd-display #__line__ ";draw error: ~A" args)))))))

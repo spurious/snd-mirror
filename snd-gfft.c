@@ -76,7 +76,7 @@ static void graph_redisplay(void)
   cairo_push_group(ax->cr);
 
   /* erase previous */
-  cairo_set_source_rgb(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue);
+  cairo_set_source_rgba(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue, ax->gc->bg_color->alpha);
   cairo_rectangle(ax->cr, 0, 0, widget_width(graph_drawer), widget_height(graph_drawer));
   cairo_fill(ax->cr);
 
