@@ -179,12 +179,7 @@ void hide_lock(snd_info *sp)
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
       if (mini_lock)
-	{
-#if 0
-	  draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 0, 16, 16);
-#endif
-	  gtk_widget_hide(NAME_PIX(sp));
-	}
+	gtk_widget_hide(NAME_PIX(sp));
       MUS_UNLOCK(sp->stop_sign_lock);
     }
 }
@@ -207,11 +202,6 @@ static void hide_stop_sign(snd_info *sp)
 {
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-#if 0
-      if ((sp->sgx) && 
-	  (blank))
-	draw_picture(sp->sgx->stop_pix_ax, blank, 0, 0, 0, 0, 16, 16);
-#endif
       gtk_widget_hide(STOP_PIX(sp));
       MUS_UNLOCK(sp->stop_sign_lock);
     }
@@ -240,12 +230,7 @@ void hide_bomb(snd_info *sp)
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
       if (sp->sgx)
-	{
-#if 0
-	  draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 0, 16, 16);
-#endif
-	  gtk_widget_hide(NAME_PIX(sp));
-	}
+	gtk_widget_hide(NAME_PIX(sp));
       sp->bomb_ctr = 0;
       MUS_UNLOCK(sp->stop_sign_lock);
     }
@@ -310,9 +295,7 @@ static Drawable *sound_pix_wn(chan_info *cp)
 
 static void show_happy_face(Drawable *wn, mus_float_t pct)
 {
-  static cairo_t *cr = NULL;
-  if (cr)
-    cairo_destroy(cr);
+  cairo_t *cr;
   cr = gdk_cairo_create(wn);
 
   /* overall background */
@@ -365,19 +348,18 @@ static void show_happy_face(Drawable *wn, mus_float_t pct)
   
   cairo_pop_group_to_source(cr);
   cairo_paint(cr);
+  cairo_destroy(cr);
 }
 
 
 static void hide_happy_face(Drawable *wn)
 {
-  static cairo_t *cr = NULL;
-  if (cr)
-    cairo_destroy(cr);
-    
+  cairo_t *cr;
   cr = gdk_cairo_create(wn);
   cairo_set_source_rgba(cr, ss->sgx->basic_color->red, ss->sgx->basic_color->green, ss->sgx->basic_color->blue, ss->sgx->basic_color->alpha); 
   cairo_rectangle(cr, 0, 0, 24, 24);
   cairo_fill(cr);
+  cairo_destroy(cr);
 }
 
 
@@ -1289,18 +1271,16 @@ void display_filter_env(snd_info *sp)
   if (sp->sgx->filter_ax == NULL)
     {
       ax = (graphics_context *)calloc(1, sizeof(graphics_context));
-      ax->gc = ss->sgx->fltenv_basic_gc;
       ax->wn = WIDGET_TO_WINDOW(drawer);
       ax->w = drawer;
-      ax->cr = NULL;
       sp->sgx->filter_ax = ax;
     }
   else 
     {
       ax = sp->sgx->filter_ax;
-      if (ax->cr)
-	cairo_destroy(ax->cr);
     }
+
+  ax->gc = ss->sgx->fltenv_basic_gc;
   ax->cr = gdk_cairo_create(ax->wn);
   cairo_push_group(ax->cr);
 
@@ -1311,8 +1291,10 @@ void display_filter_env(snd_info *sp)
 
   edp->in_dB = sp->filter_control_in_dB;
   edp->with_dots = true;
-  if (sp->filter_control_envelope == NULL) sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
+  if (sp->filter_control_envelope == NULL) 
+    sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
 
+  
   env_editor_display_env(edp, sp->filter_control_envelope, ax, "frequency response", 0, 0, width, height, NOT_PRINTING);
 
   if (edp->edited)
@@ -1326,6 +1308,8 @@ void display_filter_env(snd_info *sp)
 
   cairo_pop_group_to_source(ax->cr);
   cairo_paint(ax->cr);
+  cairo_destroy(ax->cr);
+  ax->cr = NULL;
 }
 
 

@@ -1,10 +1,11 @@
 Snd 11.14
 
    selection has a loop play triangle
-   mix and cursor have play triangles
-   if mouse click = play, the cursor is a right or left arrow.
-   removed draggable mark play triangle and mark-drag-triangle-hook.
-   added variable play-arrow-size (default: 10)
+     mix and cursor have play triangles
+     if mouse click = play, the cursor is a right or left arrow.
+     removed draggable mark play triangle and mark-drag-triangle-hook.
+     added variable play-arrow-size (default: 10)
+
    added Edit:Unselect menu option
    removed Snd.gtkrc, Snd.ad, and the obsolete X resources stuff.
    added with-menu-icons (gtk only).
@@ -51,8 +52,7 @@ Snd 11.14
      and panic.scm.  Also with-tooltips to turn tooltips on or off.
 
    The built-in popup menus are now context sensitive, and the files popup.scm
-     and gtk-popup.scm have been removed.  Also removed the misc.scm popup menu
-     references.
+     and gtk-popup.scm have been removed. 
 
    The Gtk Snd now needs Gtk 2.12 or later.
 

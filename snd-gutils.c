@@ -1180,7 +1180,7 @@ char *slist_selection(slist *lst)
  *   gtk3 toolbar is spread out
  *   the name_pix icon backgrounds are still gray, also dialog buttons and menu items
  *   do meters work in rec?  in Motif they're drawn incorrectly
- *   enved spectrum never updates
+ *   gfft font for fft label is not the tiny font? (axis font choice?)
  *
  *   region print and enved print in gtk should go through the gtk print stuff --
  *     snd-print.c could be folded into snd-xprint.c except that the ps_* funcs are everywhere.
@@ -1209,12 +1209,11 @@ char *slist_selection(slist *lst)
  *    snd-test.scm draw.scm dsp.scm muglyphs.scm snd-gtk.scm snd-motif.scm xm-enved.scm t26|139 + doc examples
  *    so these now work only in the chan drawing area context in gtk [and not always then -- snd-test.scm test 20/21]
  *    and they can segfault randomly -- I need to follow each cairo_t path in detail
+ *    checked: enved and draw_picture, gsnd and gfft, grec
+ *    unchecked: chn|axis|draw?|gdraw?|gfile|gmix|gprint?? [remember to null out ax->cr!]
  *
  *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
- *
  *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
- *     also locate here, rather than being directory-based
- *
  *   if basic-color set to black, labels are not visible, this is partly the case also in Motif
  *
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
@@ -1232,13 +1231,11 @@ char *slist_selection(slist *lst)
  *     try cairo-trace and the new GL surface (1.10.0) [gl_surface?], and the OSX backend?
  *
  * requested: zoomed fft -- this is available in the transform dialog, but where to put chan-local controls?
+ *              maybe add key bindings -- the numpad arrows?
  * bugs: play choppy if graphics -- seems ok?
  */
 
 
-
-/* I see no way around this.
- */
 
 #if (!HAVE_GTK_3)
 

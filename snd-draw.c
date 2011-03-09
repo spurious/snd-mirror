@@ -214,9 +214,6 @@ void draw_cursor(chan_info *cp)
 	       cp->cx, ap->y_axis_y0 + 2 * play_arrow_size(ss),
 	       cp->cx, ap->y_axis_y0);
 
-  /* in gtk this does not erase the previous -- dragging a mark redraws the entire graph!
-   *    perhaps redraw the axes?
-   */
 #if USE_GTK
   set_foreground_color(ax, old_color);
 #endif

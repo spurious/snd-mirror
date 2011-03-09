@@ -345,6 +345,11 @@ void slist_moveto(slist *lst, int row);
 void slist_select(slist *lst, int row);
 char *slist_selection(slist *lst);
 
+#if 0
+#define MAKE_CAIRO(Ax) make_cairo(Ax, __func__, __FILE__, __line__)
+#define FREE_CAIRO(Ax) free_cairo(Ax, __func__, __FILE__, __line__)
+#endif
+
 void init_gtk(void);
 
 

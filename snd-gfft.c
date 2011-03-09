@@ -71,7 +71,6 @@ static void graph_redisplay(void)
   axis_ap->x0 = 0.0;
   axis_ap->x1 = 1.0;
 
-  if (ax->cr) cairo_destroy(ax->cr);
   ax->cr = gdk_cairo_create(ax->wn);
   cairo_push_group(ax->cr);
 
@@ -140,8 +139,8 @@ static void graph_redisplay(void)
 
   cairo_pop_group_to_source(ax->cr);
   cairo_paint(ax->cr);
-  /* cairo_destroy(ax->cr); */
-  /* ax->cr = NULL; */
+  cairo_destroy(ax->cr);
+  ax->cr = NULL;
 }
 
 

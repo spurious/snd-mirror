@@ -797,6 +797,7 @@ static void lin_button_callback(Widget w, XtPointer context, XtPointer info)
       (!(showing_all_envs)))
     {
       active_env->base = 1.0;
+      set_enved_base(1.0);
       set_sensitive(saveB, true);
     }
   reflect_segment_state();

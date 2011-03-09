@@ -489,6 +489,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+10-Mar:  space=play or pause, tracking-cursor stuff changed.\n\
 4-Mar:   'src' button in Save-as dialogs to do automatic sampling rate conversion.\n\
 1-Mar:   delete-selection-and-smooth, delete-samples-and-smooth.\n\
 23-Feb:  sync-style variable: sync-none (old default), sync-all, or sync-by-sound (new default).\n\
@@ -500,8 +501,8 @@ void about_snd_help(void)
          removed Snd.ad and Snd.gtrc.\n\
          The built-in popup menus are now context sensitive, and the files popup.scm\n\
            and gtk-popup.scm have been removed.\n\
+         play-arrow-size\n\
 12-Feb:  Snd 11.13.\n\
-7-Jan:   Snd 11.12.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

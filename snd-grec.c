@@ -95,58 +95,56 @@ static void recorder_help(GtkWidget *w, gpointer context)
 
 static void display_meters(mus_float_t *maxes)
 {
-  static cairo_t *cr = NULL;
-
-  int i, x0 = 0;
-  /* if maxes is NULL, assume all 0's */
-  if (recorder_chans == 0) return;
-  {
-    if (cr)
+  if (recorder_chans > 0)
+    {
+      cairo_t *cr = NULL;
+      int i, x0 = 0;
+      /* if maxes is NULL, assume all 0's */
+      
+      cr = gdk_cairo_create(recorder_ax->wn);
+      cairo_push_group(cr);
+      
+      cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+      cairo_rectangle(cr, 0, 0, meters_width, meter_height);
+      cairo_fill(cr);
+      
+      for (i = 0; i < recorder_chans; i++, x0 += meter_width)
+	{
+	  mus_float_t cur_max = 0.0;
+	  if (maxes) 
+	    {
+	      if (!meters_in_db)
+		cur_max = maxes[i];
+	      else
+		{
+		  mus_float_t dv;
+		  dv = in_dB(min_dB(ss), ss->lin_dB, maxes[i]);
+		  cur_max = 1.0 +  ((dv < -30.0) ? -30.0 : dv) / 30.0;
+		}
+	    }
+	  cairo_save(cr);
+	  
+	  /* put our origin at the meter pivot point scaled (as a square so the dial remains circular) to 0..1 */
+	  cairo_translate(cr, x0 + (0.5 * meter_width), 0.5 * meter_width + 0.2 * meter_height);
+	  cairo_scale(cr, meter_width, meter_width);
+	  
+	  cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+	  cairo_set_line_width(cr, 2.0 / (float)meter_width);
+	  cairo_arc(cr, 0, 0, 0.5, -0.75 * M_PI, -0.25 * M_PI);
+	  cairo_stroke(cr);
+	  
+	  cairo_rotate(cr, 1.2 * M_PI + cur_max * M_PI * 0.5);
+	  cairo_move_to(cr, 0, 0);
+	  cairo_rel_line_to(cr, 0.55, 0.0);
+	  cairo_stroke(cr);
+	  
+	  cairo_restore(cr);
+	}
+      
+      cairo_pop_group_to_source(cr);
+      cairo_paint(cr);
       cairo_destroy(cr);
-
-    cr = gdk_cairo_create(recorder_ax->wn);
-    cairo_push_group(cr);
-    
-    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-    cairo_rectangle(cr, 0, 0, meters_width, meter_height);
-    cairo_fill(cr);
-    
-    for (i = 0; i < recorder_chans; i++, x0 += meter_width)
-      {
-	mus_float_t cur_max = 0.0;
-	if (maxes) 
-	  {
-	    if (!meters_in_db)
-	      cur_max = maxes[i];
-	    else
-	      {
-		mus_float_t dv;
-		dv = in_dB(min_dB(ss), ss->lin_dB, maxes[i]);
-		cur_max = 1.0 +  ((dv < -30.0) ? -30.0 : dv) / 30.0;
-	      }
-	  }
-	cairo_save(cr);
-
-	/* put our origin at the meter pivot point scaled (as a square so the dial remains circular) to 0..1 */
-	cairo_translate(cr, x0 + (0.5 * meter_width), 0.5 * meter_width + 0.2 * meter_height);
-	cairo_scale(cr, meter_width, meter_width);
-	
-	cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
-	cairo_set_line_width(cr, 2.0 / (float)meter_width);
-	cairo_arc(cr, 0, 0, 0.5, -0.75 * M_PI, -0.25 * M_PI);
-	cairo_stroke(cr);
-	
-	cairo_rotate(cr, 1.2 * M_PI + cur_max * M_PI * 0.5);
-	cairo_move_to(cr, 0, 0);
-	cairo_rel_line_to(cr, 0.55, 0.0);
-	cairo_stroke(cr);
-	
-	cairo_restore(cr);
-      }
-
-    cairo_pop_group_to_source(cr);
-    cairo_paint(cr);
-  }
+    }
 }
 
 
