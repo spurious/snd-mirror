@@ -3598,6 +3598,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
   if ((!uap) || (!uap->graph_active) || (up->len == NULL) || (up->len[0] <= 0)) return;
 
   if (cp->printing) ps_allocate_grf_points();
+
 #if (!USE_GTK)
   if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     ax = combined_context(cp); 
@@ -3607,6 +3608,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
     ax = cp->cgx->ax;
   else ax = uap->ax;
 #endif
+
   if (cp->printing) ps_fg(cp, ax);
 
   if (up->env_data)
@@ -3777,8 +3779,7 @@ static void show_smpte_label(chan_info *cp, graphics_context *ax);
 
 static void display_channel_data_with_size(chan_info *cp, 
 					   int width, int height, int offset, 
-					   bool just_fft, bool just_lisp, bool just_time,
-					   bool save_cr)
+					   bool just_fft, bool just_lisp, bool just_time)
 {
   /* this procedure is unnecessarily confusing! */
   snd_info *sp;
@@ -3868,17 +3869,6 @@ static void display_channel_data_with_size(chan_info *cp,
 	    }
 	}
     }
-
-#if USE_GTK
-  if ((!save_cr) && (cp->cgx) && (cp->cgx->ax))
-    {
-
-      if (cp->cgx->ax->cr)
-	cairo_destroy(cp->cgx->ax->cr); /* if this is done below instead, the only problem I see is that marks aren't immediately drawn */
-
-      cp->cgx->ax->cr = gdk_cairo_create(cp->cgx->ax->wn);
-    }
-#endif
 
   if (displays == 0)
     {
@@ -4141,13 +4131,11 @@ static void display_channel_data_with_size(chan_info *cp,
 	  draw_sonogram_cursor(cp);
 	}
     }
-
-  /* cairo_destroy(cp->cgx->ax->cr); */
 #endif
 }
 
 
-static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp, bool just_time, bool save_cr)
+static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp, bool just_time)
 {
   snd_info *sp;
   int width, height;
@@ -4165,7 +4153,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
       width = widget_width(channel_graph(cp));
       height = widget_height(channel_graph(cp));
       if ((height > 5) && (width > 5))
-	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time, save_cr);
+	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time);
     }
   else
     {
@@ -4182,7 +4170,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
       height = widget_height(channel_graph(sp->chans[0]));
       cp->height = height;
       if (sp->channel_style == CHANNELS_SUPERIMPOSED)
-	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time, save_cr);
+	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time);
       else
 	{
 	  int offset, full_height, y0, y1, bottom, top;
@@ -4220,7 +4208,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 	    chan_height = height - offset;
 	  if (((y0 < top) && (y0 >= bottom)) || 
 	      ((y1 > bottom) && (y1 <= top)))
-	    display_channel_data_with_size(cp, width, (int)chan_height, offset, just_fft, just_lisp, just_time, save_cr);
+	    display_channel_data_with_size(cp, width, (int)chan_height, offset, just_fft, just_lisp, just_time);
 	  else 
 	    {
 	      ap = cp->axis;
@@ -4231,37 +4219,60 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 }
 
 
+#if USE_GTK
+static void display_channel_data_with_new_cairo(chan_info *cp, bool just_fft, bool just_lisp, bool just_time)
+{
+  cp->cgx->ax->cr = gdk_cairo_create(cp->cgx->ax->wn);
+  display_channel_data_1(cp, just_fft, just_lisp, just_time);
+  cairo_destroy(cp->cgx->ax->cr);
+  cp->cgx->ax->cr = NULL;
+}
+#endif
+
+
 void display_channel_fft_data(chan_info *cp)
 {
 #if (!USE_GTK)
-  display_channel_data_1(cp, true, false, false, false);
+  display_channel_data_1(cp, true, false, false);
 #else
-  display_channel_data_1(cp, false, false, false, false);
+  display_channel_data_with_new_cairo(cp, true, false, false);
 #endif
 }
 
 
 static void display_channel_lisp_data(chan_info *cp)
 {
-  display_channel_data_1(cp, false, true, false, false);
+#if (!USE_GTK)
+  display_channel_data_1(cp, false, true, false);
+#else
+  display_channel_data_with_new_cairo(cp, false, true, false);
+#endif
 }
 
 
 void display_channel_time_data(chan_info *cp)
 {
-  display_channel_data_1(cp, false, false, true, false);
+#if (!USE_GTK)
+  display_channel_data_1(cp, false, false, true);
+#else
+  display_channel_data_with_new_cairo(cp, false, false, true);
+#endif
 }
 
 
 void display_channel_data(chan_info *cp)
 {
-  display_channel_data_1(cp, false, false, false, false);
+#if (!USE_GTK)
+  display_channel_data_1(cp, false, false, false);
+#else
+  display_channel_data_with_new_cairo(cp, false, false, false);
+#endif
 }
 
 
 void display_channel_data_for_print(chan_info *cp)
 {
-  display_channel_data_1(cp, false, false, false, true);
+  display_channel_data_1(cp, false, false, false);
 }
 
 
@@ -4287,6 +4298,9 @@ static void erase_cursor(chan_info *cp)
     if (cp->just_zero)
       ccy = cp->old_cy;
     else ccy = cp->cy;
+    /* make_partial_graph doesn't quite do the right thing here.  We may have to
+     *    save the actual points around the cursor and redraw them by hand.
+     */
     draw_dot(cp->cgx->ax, cp->cx + 0.5, ccy + 0.5, 1);
     /* this isn't perfect (it slightly erases any lines it contacts), but it's ok */
   }
@@ -4297,6 +4311,7 @@ static void erase_cursor(chan_info *cp)
 static void draw_graph_cursor(chan_info *cp)
 {
   axis_info *ap;
+
   ap = cp->axis;
   if ((CURSOR(cp) < ap->losamp) || 
       (CURSOR(cp) > ap->hisamp)) 
@@ -4306,7 +4321,12 @@ static void draw_graph_cursor(chan_info *cp)
       (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)) 
     return;
 
-  if (cp->cursor_visible) erase_cursor(cp);
+#if USE_GTK
+  ap->ax->cr = gdk_cairo_create(ap->ax->wn);
+#endif
+
+  if (cp->cursor_visible) 
+    erase_cursor(cp);
 
   cp->cx = local_grf_x((double)(CURSOR(cp)) / (double)SND_SRATE(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
   if (cp->just_zero)
@@ -4315,8 +4335,14 @@ static void draw_graph_cursor(chan_info *cp)
       cp->old_cy = local_grf_y(chn_sample(CURSOR(cp), cp, cp->edit_ctr), ap);
     }
   else cp->cy = local_grf_y(chn_sample(CURSOR(cp), cp, cp->edit_ctr), ap);
+  
   draw_cursor(cp);
   cp->cursor_visible = true;
+
+#if USE_GTK
+  cairo_destroy(ap->ax->cr);
+  ap->ax->cr = NULL;
+#endif
 }
 
 
@@ -4335,7 +4361,6 @@ static void draw_sonogram_cursor_1(chan_info *cp)
   {
     color_t old_color;
     fax = cp->cgx->ax; /* fap->ax does not work here?!? */
-    if (fax->cr) cairo_destroy(fax->cr);
     fax->cr = gdk_cairo_create(fax->wn);
     /* y_axis_y0 > y_axis_y1 (upside down coordinates) */
     old_color = get_foreground_color(fax);
@@ -4343,6 +4368,8 @@ static void draw_sonogram_cursor_1(chan_info *cp)
     draw_line(fax, cp->fft_cx, fap->y_axis_y0 - 1, cp->fft_cx, fap->y_axis_y1);
     set_foreground_color(fax, old_color);
     cp->fft_cursor_visible = (!(cp->fft_cursor_visible));
+    cairo_destroy(fax->cr);
+    fax->cr = NULL;
   }
 #endif
 }
@@ -4528,7 +4555,17 @@ void cursor_moveto_with_window(chan_info *cp, mus_long_t samp, mus_long_t left_s
   ap = cp->axis;
   if (cp->cursor_visible)
     {
-      if (cp->graph_time_p) erase_cursor(cp);
+      if (cp->graph_time_p) 
+	{
+#if USE_GTK
+	  ap->ax->cr = gdk_cairo_create(ap->ax->wn);
+#endif
+	  erase_cursor(cp);
+#if USE_GTK
+	  cairo_destroy(ap->ax->cr);
+	  ap->ax->cr = NULL;
+#endif
+	}
       cp->cursor_visible = false; /* don't redraw at old location */
     }
   if (cp->fft_cursor_visible)
@@ -6549,13 +6586,6 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
       break;
 
     case CP_CURSOR:
-#if USE_GTK
-      if (cp->cgx->ax->cr == NULL)
-	{
-	  if (cp->cgx->ax->wn)
-	    cp->cgx->ax->cr = gdk_cairo_create(cp->cgx->ax->wn);
-	}
-#endif
       cp->cursor_on = true; 
       cursor_moveto(cp, beg_to_sample(on, caller));
       return(C_TO_XEN_INT64_T(CURSOR(cp)));

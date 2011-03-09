@@ -1180,11 +1180,11 @@ char *slist_selection(slist *lst)
  *   gtk3 toolbar is spread out
  *   the name_pix icon backgrounds are still gray, also dialog buttons and menu items
  *   do meters work in rec?  in Motif they're drawn incorrectly
- *   gfft font for fft label is not the tiny font? (axis font choice?)
+ *   snd-test 23 minibuffer says update squelched but fft is being updated -- this msg is not cleared?
  *
  *   region print and enved print in gtk should go through the gtk print stuff --
- *     snd-print.c could be folded into snd-xprint.c except that the ps_* funcs are everywhere.
  *     Does the direct-to-printer business make any sense? (it's an arg to print-dialog!)
+ *     doc that eps-* [file size left-margin bottom-margin] and [gl-]graph->ps are Motif only [make this explicit in snd-print.c]
  *
  *   superimposed chans flicker a lot
  *     the cairo_t's are not shared in this case, so each chan is a separate display
@@ -1205,14 +1205,18 @@ char *slist_selection(slist *lst)
  *     [see snd_conffile.scm for more key bindings] -- I think the key bindings list in snd-kbd.c is out-of-date (need automatic way to generate this)
  *
  *   the build drawing stuff (draw-dot etc) segfault in cairo
- *    what about draw-axes [and the various "contexts"] 
  *    snd-test.scm draw.scm dsp.scm muglyphs.scm snd-gtk.scm snd-motif.scm xm-enved.scm t26|139 + doc examples
+ *       need snd11 replacements + comments on how to update code
  *    so these now work only in the chan drawing area context in gtk [and not always then -- snd-test.scm test 20/21]
- *    and they can segfault randomly -- I need to follow each cairo_t path in detail
- *    checked: enved and draw_picture, gsnd and gfft, grec
- *    unchecked: chn|axis|draw?|gdraw?|gfile|gmix|gprint?? [remember to null out ax->cr!]
+ *       and they can segfault randomly -- I need to follow each cairo_t path in detail
+ *       axis is local for draw-axes, but can it always be local? [scanned synth--ok now, xm-enved]
+ *         change draw-axes to take cr in gtk-case, ignored in motif [it's currently arg9 -- make it non-optional?]
+ *       gprint is trying to redirect normal snd-chn graph display to the printer's cairo_t
+ *    could do the same for draw-* -- insist on cr arg in gtk
  *
  *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
+ *     make_partial_graph here can segfault
+ *
  *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
  *   if basic-color set to black, labels are not visible, this is partly the case also in Motif
  *

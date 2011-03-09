@@ -1711,16 +1711,19 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ap = (axis_info *)calloc(1, sizeof(axis_info));
   ax = (graphics_context *)calloc(1, sizeof(graphics_context));
   ap->ax = ax;
+
 #if USE_MOTIF
   ax->dp = XtDisplay(w);
   ax->wn = XtWindow(w);
 #endif
+
 #if USE_GTK
   ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
-  if (cr)
-    ax->cr = cr;
-  else ax->cr = gdk_cairo_create(ax->wn);
+  if (!cr)
+    XEN_ERROR(XEN_ERROR_TYPE("no-cairo-t"),
+	      XEN_LIST_1(C_TO_XEN_STRING(S_draw_axes ": in Gtk, the trailing cairo_t argument is not optional")));
+  ax->cr = cr;
 #endif
 
   ap->xmin = x0;
@@ -1751,11 +1754,10 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 	   XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
 	    XEN_EMPTY_LIST))));
 
-#if USE_GTK
-  if (!cr) cairo_destroy(ax->cr);
-#endif
   free_axis_info(ap);
-
+#if USE_GTK
+  ax->cr = NULL;
+#endif
   return(val);
 }
 

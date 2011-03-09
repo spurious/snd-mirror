@@ -311,12 +311,7 @@ static void mix_amp_env_resize(GtkWidget *w)
       ax->wn = WIDGET_TO_WINDOW(w_env);
       ax->w = w_env;
       ax->gc = cur_gc;
-      ax->cr = NULL;
     }
-
-  if (ax->cr)
-    cairo_destroy(ax->cr);
-    
   ax->cr = gdk_cairo_create(ax->wn);
   cairo_push_group(ax->cr);
 
@@ -332,6 +327,8 @@ static void mix_amp_env_resize(GtkWidget *w)
 
   cairo_pop_group_to_source(ax->cr);
   cairo_paint(ax->cr);
+  cairo_destroy(ax->cr);
+  ax->cr = NULL;
 }
 
 

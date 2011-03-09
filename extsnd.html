@@ -13343,12 +13343,13 @@ delete-colormap deletes the memory associated with the given colormap.
 
 <!-- draw-axes -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="drawaxes">draw-axes</a> <em class=narg>wid gc label x0 x1 y0 y1 style axes</em></code>
+<code><a class=def name="drawaxes">draw-axes</a> <em class=narg>wid gc label x0 x1 y0 y1 style axes cr</em></code>
 </td></tr><tr><td width=30></td><td>
 This draws axes in the widget 'wid', using the graphics context 'gc', with the x-axis label 'label'
 going from 'x0' to 'x1' (floats) along the x axis, 'y0' to 'y1' along the y axis, with x-axis-style
 'style' (<code>x-axis-in-seconds</code> etc).  Whether axes are actually displayed or just implied
-depends on 'axes', which defaults to <code>show-all-axes</code>. 
+depends on 'axes', which defaults to <code>show-all-axes</code>. In Gtk, the cairo_t 'cr' argument is not optional;
+it is ignored in Motif.
 draw-axes returns a list of the actual (pixel) axis bounds.  
 See the scanned-synthesis display code in snd-motif.scm,
 or the local envelope editor code in xm-enved.scm.

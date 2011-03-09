@@ -15,6 +15,7 @@ Snd 11.14
    typing space in a graph plays from the cursor, space while playing = pause/continue
    startup window size is 600x400
    auto-resize defaults to false in Gtk, true in Motif.
+   in gtk, the trailing cr argument to draw-axes in not optional.
 
    tracking-cursor-style defaults to cursor-line.
      cursor-follows-play moved to snd11.scm.

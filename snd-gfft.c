@@ -64,7 +64,7 @@ static void graph_redisplay(void)
   ax->wn = WIDGET_TO_WINDOW(graph_drawer);
   ax->w = graph_drawer;
   ax->gc = gc;
-  ax->current_font = AXIS_NUMBERS_FONT(ss);
+  ax->current_font = TINY_FONT(ss);  /* we're right on the edge; this changes if user makes dialog bigger */
   axis_ap->xmin = 0.0;
   axis_ap->xmax = 1.0;
   axis_ap->x_ambit = 1.0;
