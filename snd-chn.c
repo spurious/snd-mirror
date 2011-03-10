@@ -1396,7 +1396,9 @@ snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t
 static int make_wavogram(chan_info *cp);
 
 
-static int make_graph_1(chan_info *cp, double cur_srate, bool not_enved_bg_graph, bool *two_sided)
+typedef enum {NORMAL_GRAPH, ENVED_GRAPH, MARKS_GRAPH} graph_choice_t;
+
+static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_choice, bool *two_sided)
 {
   snd_info *sp;
   int j = 0;
@@ -1446,7 +1448,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool not_enved_bg_graph
   if (cp->time_graph_type == GRAPH_AS_WAVOGRAM) 
     return(make_wavogram(cp)); 
 
-  if (not_enved_bg_graph)
+  if (graph_choice != ENVED_GRAPH)
     {
       ap->losamp = snd_round_mus_long_t(ap->x0 * cur_srate); /* was ceil??? */
       if (ap->losamp < 0) ap->losamp = 0;
@@ -1467,7 +1469,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool not_enved_bg_graph
 
   if (cp->printing) ps_allocate_grf_points();
 
-  if (not_enved_bg_graph)
+  if (graph_choice == NORMAL_GRAPH)
     {
 #if (!USE_GTK)
       if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
@@ -1511,19 +1513,23 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool not_enved_bg_graph
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
 	    set_grf_point(local_grf_x(x, ap), j, local_grf_y(read_sample(sf), ap));
 	}
-      if (not_enved_bg_graph)
+      if (graph_choice == NORMAL_GRAPH)
 	{
 	  draw_grf_points(cp->dot_size, ax, j, ap, 0.0, cp->time_graph_style);
 	  if (cp->printing) 
 	    ps_draw_grf_points(ap, j, 0.0, cp->time_graph_style, cp->dot_size);
 	}
-      else (*two_sided) = false;
+      else 
+	{
+	  if (graph_choice == ENVED_GRAPH)
+	    (*two_sided) = false;
+	}
     }
   else
     {
       /* take min, max */
       if (peak_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false)) /* true = start new background amp env process if needed */
-	j = peak_env_graph(cp, ap, samples_per_pixel, (not_enved_bg_graph) ? ((int)SND_SRATE(sp)) : 1);
+	j = peak_env_graph(cp, ap, samples_per_pixel, (graph_choice != ENVED_GRAPH) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{
 	  mus_float_t ymin, ymax;
@@ -1590,28 +1596,36 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool not_enved_bg_graph
 		}
 	    }
 	}
-      if (not_enved_bg_graph)
+      if (graph_choice == NORMAL_GRAPH)
 	{
 	  draw_both_grf_points(cp->dot_size, ax, j, cp->time_graph_style);
 	  if (cp->printing) 
 	    ps_draw_both_grf_points(ap, j, cp->time_graph_style, cp->dot_size);
 	}
-      else (*two_sided) = true;
+      else 
+	{
+	  if (graph_choice == ENVED_GRAPH)
+	    (*two_sided) = true;
+	}
     }
   sf = free_snd_fd(sf);
-  if ((not_enved_bg_graph) && (sp->channel_style == CHANNELS_SUPERIMPOSED))
+
+  if (graph_choice == NORMAL_GRAPH)
     {
-      copy_context(cp); /* reset for axes etc */
-      if (cp->printing)
-	ps_reset_color();
+      if (sp->channel_style == CHANNELS_SUPERIMPOSED)
+	{
+	  copy_context(cp); /* reset for axes etc */
+	  if (cp->printing)
+	    ps_reset_color();
+	}
+      if ((cp->verbose_cursor) && (cp->cursor_on) &&
+	  (CURSOR(cp) >= ap->losamp) && (CURSOR(cp) <= ap->hisamp) && 
+	  ((sp->minibuffer_on == MINI_OFF) || (sp->minibuffer_on == MINI_CURSOR)))
+	{
+	  show_cursor_info(cp); 
+	  sp->minibuffer_on = MINI_CURSOR;
+	} 
     }
-  if ((cp->verbose_cursor) && (cp->cursor_on) && (not_enved_bg_graph) && 
-      (CURSOR(cp) >= ap->losamp) && (CURSOR(cp) <= ap->hisamp) && 
-      ((sp->minibuffer_on == MINI_OFF) || (sp->minibuffer_on == MINI_CURSOR)))
-    {
-      show_cursor_info(cp); 
-      sp->minibuffer_on = MINI_CURSOR;
-    } 
 
   return(j);
 }
@@ -1619,13 +1633,19 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool not_enved_bg_graph
 
 int make_graph(chan_info *cp) 
 {
-  return(make_graph_1(cp, (double)(SND_SRATE(cp->sound)), true, NULL));
+  return(make_graph_1(cp, (double)(SND_SRATE(cp->sound)), NORMAL_GRAPH, NULL));
+}
+
+
+int make_dragged_marks_graph(chan_info *cp) 
+{
+  return(make_graph_1(cp, (double)(SND_SRATE(cp->sound)), MARKS_GRAPH, NULL));
 }
 
 
 int make_background_graph(chan_info *cp, int srate, bool *two_sided) /* (for envelope editor) */
 {
-  return(make_graph_1(cp, (double)srate, false, two_sided));
+  return(make_graph_1(cp, (double)srate, ENVED_GRAPH, two_sided));
 }
 
 
@@ -1713,6 +1733,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 		      cp->waiting_to_make_graph = true;
 #if USE_GTK
 		      cairo_pop_group_to_source(cp->cgx->ax->cr);
+		      /* TODO: destroy it */
 #endif
 		      return;               /* so don't run two enormous data readers in parallel */
 		    }
@@ -1753,7 +1774,6 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 #if (!USE_GTK)
   display_selection(cp);
 #endif
-  display_channel_marks(cp);
   if (cp->show_y_zero) display_y_zero(cp);
       
   if ((cp->verbose_cursor) && (cp->cursor_on) &&
@@ -1767,6 +1787,8 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
   cairo_pop_group_to_source(cp->cgx->ax->cr);
   cairo_paint(cp->cgx->ax->cr);
 #endif
+
+  display_channel_marks(cp);
 }
 
 
@@ -3779,7 +3801,8 @@ static void show_smpte_label(chan_info *cp, graphics_context *ax);
 
 static void display_channel_data_with_size(chan_info *cp, 
 					   int width, int height, int offset, 
-					   bool just_fft, bool just_lisp, bool just_time)
+					   bool just_fft, bool just_lisp, bool just_time,
+					   bool use_incoming_cr)
 {
   /* this procedure is unnecessarily confusing! */
   snd_info *sp;
@@ -3915,11 +3938,6 @@ static void display_channel_data_with_size(chan_info *cp,
 
   /* -------- time domain graph -------- */
 
-#if USE_GTK
-  cairo_push_group(cp->cgx->ax->cr);
-  /* this eliminates the flashing, but can segfault if we try to draw a cursor before popping the group */
-#endif
-
   if ((!just_fft) && (!just_lisp))
     {
       marks_off(cp);
@@ -3928,6 +3946,17 @@ static void display_channel_data_with_size(chan_info *cp,
       if (with_time)
 	{
 	  int points;
+	  graphics_context *our_ax;
+
+#if USE_GTK
+	  our_ax = cp->cgx->ax;
+	  if (!use_incoming_cr)
+	    our_ax->cr = gdk_cairo_create(our_ax->wn);
+	  cairo_push_group(our_ax->cr);
+#else	  
+	  our_ax = ap->ax;
+#endif
+
 	  if (cp->time_graph_type == GRAPH_AS_WAVOGRAM)
 	    {
 	      if (ap->y_axis_y0 == ap->y_axis_y1) 
@@ -3948,26 +3977,60 @@ static void display_channel_data_with_size(chan_info *cp,
 	      cp->cursor_visible = false;
 	      cp->selection_visible = false;
 
-#if USE_GTK
-	      if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
+#if (!USE_GTK)
+	      points = make_graph(cp);
+#endif
+
+	      if ((cp->chan == 0) || 
+		  (sp->channel_style != CHANNELS_SUPERIMPOSED))
 		{
 		  display_selection(cp);
 		  copy_context(cp);
 		}
+
+#if USE_GTK
+	      points = make_graph(cp);
 #endif
 
-	      points = make_graph(cp);
-	    }
-	  if (points == 0)
-	    {
+	      if (cp->show_y_zero) 
+		display_y_zero(cp);
+	      if ((channel_has_active_mixes(cp))) 
+		display_channel_mixes(cp);
 #if USE_GTK
-	      cairo_pop_group_to_source(cp->cgx->ax->cr);
+	      copy_context(cp);
+#else
+	      our_ax = copy_context(cp);
 #endif
-	      return;
+	      if (with_inset_graph(ss))
+		show_inset_graph(cp, our_ax);
+	      if (with_smpte_label(ss))
+		show_smpte_label(cp, our_ax);
 	    }
-#if (!USE_GTK)
-	  if (cp->cursor_on) draw_graph_cursor(cp);
+
+	  if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
+	    display_channel_id(cp, our_ax, height + offset, sp->nchans);
+
+#if USE_GTK
+	  cairo_pop_group_to_source(our_ax->cr);
+	  cairo_paint(our_ax->cr);	  
+	  if (!use_incoming_cr)
+	    {
+	      cairo_destroy(our_ax->cr);
+	      our_ax->cr = NULL;
+	      our_ax->cr = NULL;
+	    }
 #endif
+	  if (points == 0)
+	    return;
+
+	  /* the next two can be called outside this context, so they handle the cairo_t business themselves */
+
+	  if ((cp->chan == 0) || 
+	      (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
+	    display_channel_marks(cp);
+
+	  if (cp->cursor_on) 
+	    draw_graph_cursor(cp);
 	}
     }
 
@@ -3975,11 +4038,18 @@ static void display_channel_data_with_size(chan_info *cp,
   if ((with_fft) && 
       (!just_lisp) && (!just_time))
     {
+#if USE_GTK
+      if (!use_incoming_cr)
+	cp->cgx->ax->cr = gdk_cairo_create(cp->cgx->ax->wn);
+      cairo_push_group(cp->cgx->ax->cr);
+#endif
+
       if ((!(with_gl(ss))) || 
 	  (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM) ||
 	  (color_map(ss) == BLACK_AND_WHITE_COLORMAP) ||
 	  ((sp->nchans > 1) && 
 	   (sp->channel_style != CHANNELS_SEPARATE)))
+
 	make_axes(cp, fap, X_AXIS_IN_SECONDS, /* x-axis-style only affects the time domain graph */
 		  (((cp->chan == 0) ||
 		    (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
@@ -4030,8 +4100,23 @@ static void display_channel_data_with_size(chan_info *cp,
 	  cp->fft_cursor_visible = false; 
 	  draw_sonogram_cursor(cp);
 	}
+#else
+      cairo_pop_group_to_source(cp->cgx->ax->cr);
+      cairo_paint(cp->cgx->ax->cr);	  
+      if (!use_incoming_cr)
+	{
+	  cairo_destroy(cp->cgx->ax->cr);
+	  cp->cgx->ax->cr = NULL;
+	}
+
+      if (cp->cursor_on) 
+	{
+	  cp->fft_cursor_visible = false; 
+	  draw_sonogram_cursor(cp);
+	}
 #endif
     }
+
 
   /* -------- "lisp" (extlang) graph -------- */
   if ((with_lisp) && 
@@ -4063,6 +4148,13 @@ static void display_channel_data_with_size(chan_info *cp,
       if (uap != up->axis)
 	uap = up->axis;
       /* if these were changed in the hook function, the old fields should have been saved across the change (g_graph below) */
+
+#if USE_GTK
+      if (!use_incoming_cr)
+	uap->ax->cr = gdk_cairo_create(uap->ax->wn);
+      else uap->ax->cr = cp->cgx->ax->cr;
+      cairo_push_group(uap->ax->cr);
+#endif
       make_axes(cp, uap, /* defined in this file l 2293 */
 		X_AXIS_IN_SECONDS,
 		(((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
@@ -4075,6 +4167,16 @@ static void display_channel_data_with_size(chan_info *cp,
       else make_lisp_graph(cp, pixel_list);
       if (!(XEN_FALSE_P(pixel_list))) snd_unprotect_at(pixel_loc);
 
+#if USE_GTK
+      cairo_pop_group_to_source(uap->ax->cr);
+      cairo_paint(uap->ax->cr);	  
+      if (!use_incoming_cr)
+	{
+	  cairo_destroy(uap->ax->cr);
+	  uap->ax->cr = NULL;
+	}
+#endif
+
       if ((cp->hookable == WITH_HOOK) &&
 	  (XEN_HOOKED(after_lisp_graph_hook)))
 	run_hook(after_lisp_graph_hook,
@@ -4083,59 +4185,12 @@ static void display_channel_data_with_size(chan_info *cp,
 		 S_after_lisp_graph_hook);
     }
   
-  /* -------- time domain extras -------- */
   if ((!just_lisp) && (!just_fft))
-    {
-      if (with_time)
-	{
-	  if ((cp->chan == 0) || 
-	      (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
-	    {
-#if (!USE_GTK)
-	      display_selection(cp);
-#endif
-	      display_channel_marks(cp);
-	    }
-	  if (cp->show_y_zero) display_y_zero(cp);
-	  if ((channel_has_active_mixes(cp))) display_channel_mixes(cp);
-	}
-
-      if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
-#if (!USE_GTK)
-	display_channel_id(cp, ap->ax, height + offset, sp->nchans);
-      if (with_inset_graph(ss))
-	show_inset_graph(cp, copy_context(cp));
-      if (with_smpte_label(ss))
-	show_smpte_label(cp, copy_context(cp));
-#else
-	display_channel_id(cp, cp->cgx->ax, height + offset, sp->nchans);
-	if (with_inset_graph(ss))
-	  show_inset_graph(cp, cp->cgx->ax);
-	if (with_smpte_label(ss))
-	  show_smpte_label(cp, cp->cgx->ax);
-#endif
-
-      run_after_graph_hook(cp);
-    } 
-
-#if USE_GTK  
-  cairo_pop_group_to_source(cp->cgx->ax->cr);
-  cairo_paint(cp->cgx->ax->cr);
-  if (cp->cursor_on) 
-    {
-      if (with_time)
-	draw_graph_cursor(cp);
-      if (with_fft)
-	{
-	  cp->fft_cursor_visible = false; 
-	  draw_sonogram_cursor(cp);
-	}
-    }
-#endif
+    run_after_graph_hook(cp);
 }
 
 
-static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp, bool just_time)
+static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp, bool just_time, bool use_incoming_cr)
 {
   snd_info *sp;
   int width, height;
@@ -4153,7 +4208,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
       width = widget_width(channel_graph(cp));
       height = widget_height(channel_graph(cp));
       if ((height > 5) && (width > 5))
-	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time);
+	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time, use_incoming_cr);
     }
   else
     {
@@ -4170,7 +4225,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
       height = widget_height(channel_graph(sp->chans[0]));
       cp->height = height;
       if (sp->channel_style == CHANNELS_SUPERIMPOSED)
-	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time);
+	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time, use_incoming_cr);
       else
 	{
 	  int offset, full_height, y0, y1, bottom, top;
@@ -4208,7 +4263,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 	    chan_height = height - offset;
 	  if (((y0 < top) && (y0 >= bottom)) || 
 	      ((y1 > bottom) && (y1 <= top)))
-	    display_channel_data_with_size(cp, width, (int)chan_height, offset, just_fft, just_lisp, just_time);
+	    display_channel_data_with_size(cp, width, (int)chan_height, offset, just_fft, just_lisp, just_time, use_incoming_cr);
 	  else 
 	    {
 	      ap = cp->axis;
@@ -4219,60 +4274,33 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 }
 
 
-#if USE_GTK
-static void display_channel_data_with_new_cairo(chan_info *cp, bool just_fft, bool just_lisp, bool just_time)
-{
-  cp->cgx->ax->cr = gdk_cairo_create(cp->cgx->ax->wn);
-  display_channel_data_1(cp, just_fft, just_lisp, just_time);
-  cairo_destroy(cp->cgx->ax->cr);
-  cp->cgx->ax->cr = NULL;
-}
-#endif
-
-
 void display_channel_fft_data(chan_info *cp)
 {
-#if (!USE_GTK)
-  display_channel_data_1(cp, true, false, false);
-#else
-  display_channel_data_with_new_cairo(cp, true, false, false);
-#endif
+  display_channel_data_1(cp, true, false, false, false);
 }
 
 
 static void display_channel_lisp_data(chan_info *cp)
 {
-#if (!USE_GTK)
-  display_channel_data_1(cp, false, true, false);
-#else
-  display_channel_data_with_new_cairo(cp, false, true, false);
-#endif
+  display_channel_data_1(cp, false, true, false, false);
 }
 
 
 void display_channel_time_data(chan_info *cp)
 {
-#if (!USE_GTK)
-  display_channel_data_1(cp, false, false, true);
-#else
-  display_channel_data_with_new_cairo(cp, false, false, true);
-#endif
+  display_channel_data_1(cp, false, false, true, false);
 }
 
 
 void display_channel_data(chan_info *cp)
 {
-#if (!USE_GTK)
-  display_channel_data_1(cp, false, false, false);
-#else
-  display_channel_data_with_new_cairo(cp, false, false, false);
-#endif
+  display_channel_data_1(cp, false, false, false, false);
 }
 
 
 void display_channel_data_for_print(chan_info *cp)
 {
-  display_channel_data_1(cp, false, false, false);
+  display_channel_data_1(cp, false, false, false, true);
 }
 
 

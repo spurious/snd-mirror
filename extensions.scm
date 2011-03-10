@@ -704,4 +704,3 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	      (let ((c (calls i)))
 		(if (not (eq? (car c) 'none))
 		    (format #t "~A:~40T~A~60T~A~%" (car c) (caadr c) (where-is (car c)))))))))))
-

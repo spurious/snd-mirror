@@ -16,6 +16,7 @@ Snd 11.14
    startup window size is 600x400
    auto-resize defaults to false in Gtk, true in Motif.
    in gtk, the trailing cr argument to draw-axes in not optional.
+   removed click-for-listener-help.
 
    tracking-cursor-style defaults to cursor-line.
      cursor-follows-play moved to snd11.scm.
@@ -54,6 +55,17 @@ Snd 11.14
 
    The built-in popup menus are now context sensitive, and the files popup.scm
      and gtk-popup.scm have been removed. 
+
+   In the beginning, before the libxm library, I thought it made sense to include
+     functions like draw-line which would draw a line, no matter what graphics
+     environment Snd was built with.  Unfortunately, cairo needs an explicitly
+     handled cairo_t structure.  So, draw-line, draw-lines, draw-dot, draw-dots,
+     draw-string, fill-rectangle, and fill-polygon now have a required trailing 
+     cairo_t argument (it's ignored in Motif).  Also two new kludges to get and
+     free this structure: make-cairo and free-cairo.  There aren't that many
+     uses of these functions (most the fancy graphic stuff uses direct cairo
+     or Motif calls from libxm), so perhaps eventually, they'll be removed.
+
 
    The Gtk Snd now needs Gtk 2.12 or later.
 

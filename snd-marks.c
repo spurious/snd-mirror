@@ -261,11 +261,11 @@ void marks_off(chan_info *cp)
 }
 
 
-static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show);
+static void show_mark(chan_info *cp, mark *mp, bool show);
 
 static XEN draw_mark_hook;
 
-static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
+static void draw_mark_1(chan_info *cp, mark *mp, bool show)
 {
   /* fields are samp and name */
   if (!(cp->graph_time_p)) return;
@@ -281,20 +281,20 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	  return;
 	}
     }
-  show_mark(cp, ap, mp, show);
+  show_mark(cp, mp, show);
 }
 
 
-static void draw_mark(chan_info *cp, axis_info *ap, mark *mp)
+static void draw_mark(chan_info *cp, mark *mp)
 {
-  if (!(mp->visible)) draw_mark_1(cp, ap, mp, true);
+  if (!(mp->visible)) draw_mark_1(cp, mp, true);
 }
 
 
-static void erase_mark(chan_info *cp, axis_info *ap, mark *mp)
+static void erase_mark(chan_info *cp, mark *mp)
 {
 #if (!USE_GTK)
-  if (mp->visible) draw_mark_1(cp, ap, mp, false);
+  if (mp->visible) draw_mark_1(cp, mp, false);
 #endif
 }
 
@@ -442,7 +442,7 @@ static bool move_mark_1(chan_info *cp, mark *mp, int x)
     }
   else 
     {
-      erase_mark(cp, ap, mp);
+      erase_mark(cp, mp);
       nx = x;
       if (watching_mouse) 
 	{
@@ -583,7 +583,7 @@ bool delete_mark_samp(mus_long_t samp, chan_info *cp)
 		      axis_info *ap;
 		      int id = -1;
 		      ap = cp->axis;
-		      if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
+		      if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, mp); 
 		      id = mp->id;
 		      free_mark(mp);
 		      mps[i] = NULL;
@@ -627,7 +627,7 @@ static bool delete_mark_id(int id, chan_info *cp)
 		    {
 		      axis_info *ap;
 		      ap = cp->axis;
-		      if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
+		      if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, mp); 
 		      free_mark(mp);
 		      mps[i] = NULL;
 		      if (i < edm)
@@ -669,7 +669,7 @@ static void delete_marks(chan_info *cp)
 		    {
 		      axis_info *ap;
 		      ap = cp->axis;
-		      if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
+		      if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, mp); 
 		      free_mark(mp);
 		      mps[i] = NULL;
 		    }
@@ -862,7 +862,7 @@ static mark *display_channel_marks_1(chan_info *cp, mark *mp, void *m)
   if ((mp->samp >= ap->losamp) && 
       (mp->samp <= ap->hisamp) && 
       (mp != moving_mark))
-    draw_mark(cp, ap, mp);
+    draw_mark(cp, mp);
   return(NULL);
 }
 
@@ -1283,7 +1283,7 @@ static void initialize_md_context(int size, chan_info **cps)
       mark_context *ms;
       mark_movers[i] = make_mark_context(cps[i]);
       ms = mark_movers[i];
-      ms->lastpj = make_graph(cps[i]); 
+      ms->lastpj = make_dragged_marks_graph(cps[i]);
       mark_save_graph(ms, ms->lastpj);
     }
 }
@@ -1417,10 +1417,16 @@ static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
 #else
   gc_t *draw_gc, *undraw_gc;
 #endif
+
   points = get_grf_points();
   cx = cp->tcgx;
   if (!cx) cx = cp->cgx;
   ax = cx->ax;
+
+#if USE_GTK
+  ax->cr = gdk_cairo_create(ax->wn);
+#endif
+
   undraw_gc = erase_GC(cp);
   draw_gc = copy_GC(cp);
   if (cp->time_graph_style == GRAPH_LINES)
@@ -1439,6 +1445,11 @@ static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
     }
   backup_erase_grf_points(ms, nj);
   ax->gc = draw_gc;
+
+#if USE_GTK
+  cairo_destroy(ax->cr);
+  ax->cr = NULL;
+#endif
 }
 
 
@@ -1452,11 +1463,17 @@ static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int 
 #else
   gc_t *draw_gc, *undraw_gc;
 #endif
+
   points = get_grf_points();
   points1 = get_grf_points1();
   cx = cp->tcgx;
   if (!cx) cx = cp->cgx;
   ax = cx->ax;
+
+#if USE_GTK
+  ax->cr = gdk_cairo_create(ax->wn);
+#endif
+
   undraw_gc = erase_GC(cp);
   draw_gc = copy_GC(cp);
   if (cp->time_graph_style == GRAPH_LINES)
@@ -1479,6 +1496,11 @@ static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int 
     }
   backup_erase_grf_points(ms, nj);
   ax->gc = draw_gc;
+
+#if USE_GTK
+  cairo_destroy(ax->cr);
+  ax->cr = NULL;
+#endif
 }
 #else
 static void mark_save_graph(mark_context *ms, int j) {}
@@ -1510,7 +1532,7 @@ static bool move_syncd_mark(chan_info *cp, mark *m, int x)
 		  ap = ncp->axis;
 		  if ((mp->samp >= ap->losamp) && 
 		      (mp->samp <= ap->hisamp)) 
-		    erase_mark(ncp, ap, mp);
+		    erase_mark(ncp, mp);
 		  mp->samp += diff;
 		  if (mp->samp < 0) mp->samp = 0;
 		  samps = CURRENT_SAMPLES(ncp);
@@ -1519,7 +1541,7 @@ static bool move_syncd_mark(chan_info *cp, mark *m, int x)
 		    make_mark_graph(ncp, mark_sd->initial_samples[i], mp->samp, i);
 		  if ((mp->samp >= ap->losamp) && 
 		      (mp->samp <= ap->hisamp)) 
-		    draw_mark(ncp, ap, mp);
+		    draw_mark(ncp, mp);
 		}
 	    }
 	}
@@ -1537,7 +1559,7 @@ static void move_axis_to_track_mark(chan_info *cp)
       if (moving_mark->sync)
 	redraw = move_syncd_mark(cp, moving_mark, last_mouse_x);
       else redraw = move_mark_1(cp, moving_mark, last_mouse_x);
-      if (redraw) draw_mark(cp, cp->axis, moving_mark);
+      if (redraw) draw_mark(cp, moving_mark);
     }
 }
 #endif
@@ -1547,15 +1569,19 @@ void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in sn
 {
   bool redraw;
   last_mouse_x = x;
+
   if (mp->sync)
     redraw = move_syncd_mark(cp, mp, x);
   else redraw = move_mark_1(cp, mp, x);
+
   if (mark_control_clicked)
     make_mark_graph(cp, mark_initial_sample, mp->samp, 0);
+      
  #if (!USE_GTK)
-  if (redraw) draw_mark(cp, cp->axis, mp);
+  if (redraw) draw_mark(cp, mp);
  #else
-  if (redraw) display_channel_time_data(cp);
+  if ((redraw) && (!mark_control_clicked))
+    display_channel_time_data(cp);
  #endif
 }
 
@@ -1855,9 +1881,10 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 
 /* -------------------------------- display mark -------------------------------- */
 
-static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
+static void show_mark(chan_info *cp, mark *mp, bool show)
 {
   int len, top, cx, y0, y1;
+  axis_info *ap;
   graphics_context *ax;
 
 #if USE_MOTIF
@@ -1866,6 +1893,7 @@ static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
   #define STRING_Y_OFFSET -6
 #endif
 
+  ap = cp->axis;
   top = ap->y_axis_y1;
   y1 = top;
   y0 = ap->y_axis_y0;
@@ -1873,6 +1901,10 @@ static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
   cx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), ap);
 
   ax = mark_tag_context(cp);
+#if USE_GTK
+  ax->cr = gdk_cairo_create(ax->wn);
+#endif
+
   if (mp->name)
     {
 #if USE_MOTIF
@@ -1898,13 +1930,15 @@ static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
 		 cx, y0);
   mp->visible = show;
 #if USE_GTK
+  cairo_destroy(ax->cr);
+  ax->cr = NULL;
   copy_context(cp);
 #endif
 }
 
 #else
 /* no gui */
-static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show) {}
+static void show_mark(chan_info *cp, mark *mp, bool show) {}
 #endif
 
 

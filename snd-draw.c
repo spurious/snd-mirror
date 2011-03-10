@@ -1178,6 +1178,47 @@ static XEN g_snd_font(XEN choice)
 }
 
 
+static XEN g_make_cairo(XEN drawer)
+{
+  #define H_make_cairo "(" S_make_cairo " widget) in gtk, this returns a new cairo_t to draw on the widget."
+
+#if USE_GTK
+  #define C_TO_XEN_cairo_t(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("cairo_t_"), XEN_WRAP_C_POINTER(Value))
+  cairo_t *cr;
+
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(drawer), drawer, XEN_ONLY_ARG, S_make_cairo, "a widget");
+
+#if (!HAVE_GTK_3)
+  cr = gdk_cairo_create(GDK_DRAWABLE(gtk_widget_get_window(XEN_UNWRAP_WIDGET(drawer))));
+#else
+  cr = gdk_cairo_create(GDK_WINDOW(gtk_widget_get_window(XEN_UNWRAP_WIDGET(drawer))));
+#endif
+
+  return(C_TO_XEN_cairo_t(cr));
+#endif
+
+  return(XEN_FALSE);
+}
+
+
+static XEN g_free_cairo(XEN xcr)
+{
+  #define H_free_cairo "(" S_free_cairo " cr) in gtk, this frees (destroys) the cairo_t 'cr'."
+
+#if USE_GTK
+  if ((XEN_LIST_P(xcr)) &&
+      (XEN_LIST_LENGTH(xcr) == 2) &&
+      (XEN_SYMBOL_P(XEN_CAR(xcr))) &&
+      (strcmp("cairo_t_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(xcr))) == 0))
+    cairo_destroy((cairo_t *)XEN_UNWRAP_C_POINTER(XEN_CADR(xcr)));
+  else 
+    XEN_ERROR(XEN_ERROR_TYPE("not-a-graphics-context"),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_free_cairo ": cairo_t argument is not a cairo_t pointer: ~A"), xcr));
+#endif
+  return(XEN_FALSE);
+}
+
+
 #if HAVE_GL
 static mus_float_t gl_currents[6] = {DEFAULT_SPECTRO_X_ANGLE, DEFAULT_SPECTRO_Y_ANGLE, DEFAULT_SPECTRO_Z_ANGLE, 
 			       DEFAULT_SPECTRO_X_SCALE, DEFAULT_SPECTRO_Y_SCALE, DEFAULT_SPECTRO_Z_SCALE};
@@ -1821,6 +1862,8 @@ XEN_VARGIFY(g_make_bezier_w, g_make_bezier)
 XEN_NARGIFY_0(g_snd_gcs_w, g_snd_gcs)
 XEN_NARGIFY_1(g_snd_color_w, g_snd_color)
 XEN_NARGIFY_1(g_snd_font_w, g_snd_font)
+XEN_NARGIFY_1(g_make_cairo_w, g_make_cairo)
+XEN_NARGIFY_1(g_free_cairo_w, g_free_cairo)
 
 XEN_NARGIFY_0(g_selection_color_w, g_selection_color)
 XEN_NARGIFY_1(g_set_selection_color_w, g_set_selection_color)
@@ -1894,6 +1937,8 @@ XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 #define g_snd_gcs_w g_snd_gcs
 #define g_snd_color_w g_snd_color
 #define g_snd_font_w g_snd_font
+#define g_make_cairo_w g_make_cairo
+#define g_free_cairo_w g_free_cairo
 
 #define g_selection_color_w g_selection_color
 #define g_set_selection_color_w g_set_selection_color
@@ -2041,13 +2086,13 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE(S_make_color,    g_make_color_w,     3, 1, 0, H_make_color);
   XEN_DEFINE_PROCEDURE(S_color_to_list, g_color_to_list_w,  1, 0, 0, H_color_to_list);
 
-
-  /* ---------------- unstable ---------------- */
-
   XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);
   XEN_DEFINE_PROCEDURE(S_snd_gcs,         g_snd_gcs_w,     0, 0, 0,     H_snd_gcs);
   XEN_DEFINE_PROCEDURE(S_snd_color,       g_snd_color_w,   1, 0, 0,     H_snd_color);
   XEN_DEFINE_PROCEDURE(S_snd_font,        g_snd_font_w,    1, 0, 0,     H_snd_font);
+
+  XEN_DEFINE_PROCEDURE(S_make_cairo,      g_make_cairo_w,  1, 0, 0,     H_make_cairo);
+  XEN_DEFINE_PROCEDURE(S_free_cairo,      g_free_cairo_w,  1, 0, 0,     H_free_cairo);
 
   #define H_new_widget_hook S_new_widget_hook " (widget): called each time a dialog or \
 a new set of channel or sound widgets is created."
@@ -2069,5 +2114,6 @@ bool foreground_color_ok(XEN color, graphics_context *ax) {return(true);}
 #endif
 
 
-/* TODO: if gtk add gdk_cairo_create and cairo_destroy
+/* TODO: if gtk add gdk_cairo_create and cairo_destroy: make-cairo and free-cairo
+ *         doc/test/translate all uses
  */

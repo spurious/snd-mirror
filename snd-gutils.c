@@ -1204,15 +1204,11 @@ char *slist_selection(slist *lst)
  *   check out snd-ls changes and the tutorial
  *     [see snd_conffile.scm for more key bindings] -- I think the key bindings list in snd-kbd.c is out-of-date (need automatic way to generate this)
  *
- *   the build drawing stuff (draw-dot etc) segfault in cairo
- *    snd-test.scm draw.scm dsp.scm muglyphs.scm snd-gtk.scm snd-motif.scm xm-enved.scm t26|139 + doc examples
+ *   the build drawing stuff (draw-dot etc) translated to use explicit cairo_t
+ *    snd-test.scm dsp.scm muglyphs.scm snd-gtk.scm snd-motif.scm xm-enved.scm t26|139 + doc examples
  *       need snd11 replacements + comments on how to update code
- *    so these now work only in the chan drawing area context in gtk [and not always then -- snd-test.scm test 20/21]
- *       and they can segfault randomly -- I need to follow each cairo_t path in detail
- *       axis is local for draw-axes, but can it always be local? [scanned synth--ok now, xm-enved]
- *         change draw-axes to take cr in gtk-case, ignored in motif [it's currently arg9 -- make it non-optional?]
- *       gprint is trying to redirect normal snd-chn graph display to the printer's cairo_t
- *    could do the same for draw-* -- insist on cr arg in gtk
+ *
+ *   check gprint -- it is trying to redirect normal snd-chn graph display to the printer's cairo_t
  *
  *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
  *     make_partial_graph here can segfault
@@ -1233,6 +1229,12 @@ char *slist_selection(slist *lst)
  *
  *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
  *     try cairo-trace and the new GL surface (1.10.0) [gl_surface?], and the OSX backend?
+ *
+ *   popup in listener: help if selected text (selection goes away if clicked!)
+ *   apropos output goes to the shell in gtk?
+ *   there's no way to drag a mark in the selection?
+ *   if chans are syncd, shouldn't multichan mix/mark also?
+ *   drag marks as edit is messy looking in gtk
  *
  * requested: zoomed fft -- this is available in the transform dialog, but where to put chan-local controls?
  *              maybe add key bindings -- the numpad arrows?

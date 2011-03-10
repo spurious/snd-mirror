@@ -44045,25 +44045,21 @@ EDITS: 1
 	   (lambda args
 	     (snd-display #__line__ ";draw error: ~A" args))))
   
-  (define show-hiho
-    ;; show a red "hiho" in the helvetica bold font on a gray background
-    (lambda (snd chn)
-      (let ((ls (left-sample snd chn))
-	    (rs (right-sample snd chn)))
-	(if (and (< ls 1000)
-		 (> rs 1000))
-	    (catch #t
-		   (lambda ()
-		     (let ((pos (x->position (/ 1000.0 (srate))))
-			   (old-color (foreground-color)))
-		       (set! (foreground-color) (make-color-with-catch .75 .75 .75))
-		       (fill-rectangle pos 10 50 20)
-		       (set! (foreground-color) (make-color-with-catch 1 0 0))
-		       (draw-string "hiho" (+ pos 5) 12)
-		       (set! (foreground-color) old-color)))
-		   (lambda args
-		     (snd-display #__line__ ";draw error: ~A" args)))))))
-  
+  (define* (show-greeting (snd 0) (chn 0))
+    (let ((ls (left-sample snd chn))
+	  (rs (right-sample snd chn)))
+      (if (and (< ls 1000)
+	       (> rs 1000))
+	  (let ((pos (x->position (/ 1000.0 (srate))))
+		(old-color (foreground-color))
+		(cr (make-cairo (car (channel-widgets snd chn)))))
+	    (set! (foreground-color) (make-color .75 .75 .75))
+	    (fill-rectangle pos 10 50 20 snd chn time-graph #f cr)
+	    (set! (foreground-color) (make-color 1 0 0))
+	    (draw-string "hi!" (+ pos 5) 12 snd chn time-graph cr)
+	    (set! (foreground-color) old-color)
+	    (free-cairo cr)))))
+
   (begin
     
     (do ((test-ctr 0 (+ 1 test-ctr))) ((= test-ctr tests)) 
@@ -44101,7 +44097,7 @@ EDITS: 1
 		(display-db ind1 0)
 		(display-samps-in-red ind1 0)
 		(update-time-graph)
-		(catch #t (lambda () (show-hiho ind1 0)) (lambda args args))
+		(catch #t (lambda () (show-greeting ind1 0)) (lambda args args))
 		(update-time-graph)
 		(color-samples (highlight-color) 0 100 ind1 0)
 		(update-time-graph)))

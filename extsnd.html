@@ -2159,7 +2159,6 @@ For a fancy example, see <a href="sndscm.html#displaybarkfft">display-bark-fft</
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a click occurs in the listener; the 'textpos' argument is the position in the text 
 (a character number) where the click occurred.
-See <a href="sndscm.html#clickforlistenerhelp">click-for-listener-help</a> in draw.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -11604,9 +11603,6 @@ starts the help dialog with help related to the selection if "h" is typed in the
 	(if subject
             (<a class=quiet href="#helpdialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_helpdialog_tip)">help-dialog</a> subject (<a class=quiet href="#sndhelp" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndhelp_tip)">snd-help</a> subject))))))
 </pre>
-<p>But it's probably more convenient to use the <a href="#listenerclickhook">listener-click-hook</a>
-and click-for-listener-help (draw.scm).
-</p>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -12583,9 +12579,7 @@ To go to the
 HTML documentation for a given object, load <a href="sndscm.html#indexdoc">index.scm</a> and use the html function.
 <br><br>
 Normally snd-help adds carriage-returns to fit the current size of the listener; to
-get the raw string instead, set the argument 'formatted' to #f (or use s7's help function).  click-for-listener-help
-in draw.scm uses this to put off formatting the help string until the help dialog (rather than
-the listener) gets it.
+get the raw string instead, set the argument 'formatted' to #f (or use s7's help function).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

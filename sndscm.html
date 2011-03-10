@@ -2294,18 +2294,6 @@ An instrument that uses dlocsig is:
 
 <table border=0 hspace=20 cellspacing=4 cellpadding=6>
 
-<!-- click-for-listener-help -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<A class=def NAME="clickforlistenerhelp">click-for-listener-help</a> <code>pos</code>
-</td></tr><tr><td width=30></td><td>
-click-for-listener-help is intended as a <a href="extsnd.html#listenerclickhook">listener-click-hook</a> function.  It posts help about
-the closest entity it can find whenever you double click in the listener.  Unfortunately, the help
-dialog is a bit clunky for a use like this, but the minibuffer has only one line, and
-tooltips are irritating in their own way; perhaps it should post the help at the bottom of
-the listener?
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- color-samples -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <em class=emdef>color-samples</em> <code>color beg dur snd chn</code><br>
@@ -9558,23 +9546,24 @@ keep-file-dialog-open-upon-ok changes File:Open so that clicking "ok" does not u
 load-font loads a font and returns a handle for it.
 
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
-(define new-font (<em class=red>load-font</em> "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
+  (define new-font (<em class=red>load-font</em> "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
 
-(define show-hiho
-  ;; show a red "hiho" in the helvetica bold font on a gray background
-  (lambda (snd chn)
-    (let ((ls (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn))
-          (rs (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn)))
+  (define* (show-greeting (snd 0) (chn 0))
+  ;; show a red "hi!" in the helvetica bold font on a gray background
+    (let ((ls (left-sample snd chn))
+	  (rs (right-sample snd chn)))
       (if (and (&lt; ls 1000)
-               (&gt; rs 1000))
-	  (let ((pos (<a class=quiet href="extsnd.html#xtoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_xtoposition_tip)">x-&gt;position</a> (/ 1000.0 (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))
-		(old-color (<a class=quiet href="extsnd.html#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a>)))
-	    (set! (<a class=quiet href="extsnd.html#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a>) (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> .75 .75 .75))
-            (<a class=quiet href="extsnd.html#fillrectangle" onmouseout="UnTip()" onmouseover="Tip(extsnd_fillrectangle_tip)">fill-rectangle</a> pos 10 50 20)
-	    (set! (<a class=quiet href="extsnd.html#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a>) (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 1 0 0))
-	    (if new-font (set! (<a class=quiet href="extsnd.html#currentfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_currentfont_tip)">current-font</a>) new-font))
-            (<a class=quiet href="extsnd.html#drawstring" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawstring_tip)">draw-string</a> <em class=red>"hiho"</em> (+ pos 5) 24)
-	    (set! (<a class=quiet href="extsnd.html#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a>) old-color))))))
+	       (&gt; rs 1000))
+	  (let ((pos (x-&gt;position (/ 1000.0 (srate))))
+		(old-color (foreground-color))
+		(cr (make-cairo (car (channel-widgets snd chn))))) ; make-cairo needed in Gtk, returns #f otherwise
+	    (set! (foreground-color) (make-color .75 .75 .75))
+	    (fill-rectangle pos 10 50 20 snd chn time-graph #f cr)
+	    (set! (foreground-color) (make-color 1 0 0))
+            (if new-font (set! (<em class=red>current-font</em>) new-font))
+	    (draw-string "hi!" (+ pos 5) 12 snd chn time-graph cr)
+	    (set! (foreground-color) old-color)
+	    (free-cairo cr)))))
 </pre></td></tr></table>
 
 </td></tr><tr><td colspan=2 height=16></td></tr>

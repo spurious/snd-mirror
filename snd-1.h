@@ -1263,6 +1263,7 @@ void channel_resize(chan_info *cp);
 void edit_history_select(chan_info *cp, int row);
 int make_graph(chan_info *cp);
 int make_background_graph(chan_info *cp, int srate, bool *two_sided);
+int make_dragged_marks_graph(chan_info *cp);
 void reset_spectro(void);
 void cursor_moveto(chan_info *cp, mus_long_t samp);
 chan_info *which_channel(snd_info *sp, int y);

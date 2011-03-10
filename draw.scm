@@ -11,7 +11,8 @@
 	 (sr (/ 1.0 (srate snd)))
 	 (old-color (foreground-color snd chn))
 	 (axinf (axis-info snd chn))
-	 (old-axinf (channel-property 'rms-axis-info snd chn)))
+	 (old-axinf (channel-property 'rms-axis-info snd chn))
+	 (cr (make-cairo (car (channel-widgets snd chn)))))
 
     ;; these functions are an optimization to speed up calculating the rms env graph.
     ;; ideally we'd use something like:
@@ -27,7 +28,7 @@
     ;; Also, draw-lines takes a vector for some reason, so we need to tell "run" that it is an
     ;; integer vector (and preload it with 0).  We save the vector in the channel property 'rms-lines,
     ;; and the associated axis info in 'rms-axis-info.  Since redisplay is common in Snd, it reduces
-    ;; "flashing" a lot to have this data instantly available.
+    ;; flicker a lot to have this data instantly available.
 
     (define (pack-x-info axinf)
       (vct (list-ref axinf 2) ;  x0
@@ -62,7 +63,7 @@
     (if (equal? axinf old-axinf)                    ; the previously calculated lines can be re-used
 	(begin
 	  (set! (foreground-color snd chn) red)
-	  (draw-lines (channel-property 'rms-lines snd chn))
+	  (draw-lines (channel-property 'rms-lines snd chn) snd chn time-graph cr)
 	  (set! (foreground-color snd chn) old-color))
 	(let* ((xdata (pack-x-info axinf))
 	       (ydata (pack-y-info axinf))
@@ -103,11 +104,12 @@
 			((>= j (length lines)))
 		      (set! (lines j) x0)
 		      (set! (lines (+ j 1)) y0)))
-		(draw-lines lines snd chn)
+		(draw-lines lines snd chn time-graph cr)
 		(set! (channel-property 'rms-lines snd chn) lines)  ; save current data for possible redisplay
 		(set! (channel-property 'rms-axis-info snd chn) axinf))
 	      (lambda ()
-		(set! (foreground-color snd chn) old-color)))))))
+		(set! (foreground-color snd chn) old-color)))))
+    (free-cairo cr)))
 
 ;(hook-push after-graph-hook overlay-rms-env)
 
@@ -118,7 +120,8 @@ whenever they're in the current view."
   (let ((left (left-sample snd chn))
 	(right (right-sample snd chn))
 	(end (+ beg dur))
-	(old-color (foreground-color snd chn)))
+	(old-color (foreground-color snd chn))
+	(cr (make-cairo (car (channel-widgets snd chn)))))
     (if (and (< left end)
 	     (> right beg))
 	(let* ((data (make-graph-data snd chn)))
@@ -127,7 +130,7 @@ whenever they're in the current view."
 		     (offset (max 0 (- beg left)))
 		     (new-data (vct-subseq data offset (+ offset samps))))
 		(set! (foreground-color snd chn) color)
-		(graph-data new-data snd chn copy-context (max beg left) (min end right))
+		(graph-data new-data snd chn copy-context (max beg left) (min end right) (time-graph-style snd chn) cr)
 		(set! (foreground-color snd chn) old-color))
 	      (let* ((low-data (car data))
 		     (high-data (cadr data))
@@ -140,8 +143,10 @@ whenever they're in the current view."
 		     (new-low-data (vct-subseq low-data left-bin right-bin))
 		     (new-high-data (vct-subseq high-data left-bin right-bin)))
 		(set! (foreground-color snd chn) color)
-		(graph-data (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
-		(set! (foreground-color snd chn) old-color)))))))
+		(graph-data (list new-low-data new-high-data) snd chn copy-context left-bin right-bin (time-graph-style snd chn) cr)
+		(set! (foreground-color snd chn) old-color)))))
+    (free-cairo cr)))
+
 
 (define (display-samples-in-color snd chn)
   ;; intended as after-graph-hook member 
@@ -152,6 +157,7 @@ whenever they're in the current view."
 	 (lambda (vals)
 	   (apply display-colored-samples (append vals (list snd chn))))
 	 colors))))
+
 
 (define* (color-samples color ubeg udur usnd uchn)
   "(color-samples color beg dur snd chn) causes samples from beg to beg+dur to be displayed in color"
@@ -165,6 +171,7 @@ whenever they're in the current view."
     (set! (channel-property 'colored-samples snd chn) (cons (list color beg dur) old-colors))
     (update-time-graph snd chn)))
 
+
 (define* (uncolor-samples usnd uchn)
   "(uncolor-samples snd chn) cancels sample coloring in the given channel"
   (let*	((snd (or usnd (selected-sound) (car (sounds))))
@@ -176,17 +183,17 @@ whenever they're in the current view."
 
 (define (display-previous-edits snd chn)
   "(display-previous-edits snd chn) displays all edits of the current sound, with older versions gradually fading away"
-  (let* ((edits (edit-position snd chn))
-	 (old-color (foreground-color snd chn))
-	 (clist (color->list old-color))
-	 (r (car clist))
-	 (g (cadr clist))
-	 (b (caddr clist))
-	 (rinc (/ (- 1.0 r) (+ edits 1)))
-	 (ginc (/ (- 1.0 g) (+ edits 1)))
-	 (binc (/ (- 1.0 b) (+ edits 1))))
+  (let ((edits (edit-position snd chn)))
     (if (> edits 0)
-	(begin
+	(let* ((old-color (foreground-color snd chn))
+	       (clist (color->list old-color))
+	       (r (car clist))
+	       (g (cadr clist))
+	       (b (caddr clist))
+	       (rinc (/ (- 1.0 r) (+ edits 1)))
+	       (ginc (/ (- 1.0 g) (+ edits 1)))
+	       (binc (/ (- 1.0 b) (+ edits 1)))
+	       (cr (make-cairo (car (channel-widgets snd chn))))) 
 	  (do ((pos 0 (+ 1 pos))
 	       (re (- 1.0 rinc) (- re rinc))
 	       (ge (- 1.0 ginc) (- ge ginc))
@@ -194,35 +201,34 @@ whenever they're in the current view."
 	      ((> pos edits))
 	    (let ((data (make-graph-data snd chn pos)))
 	      (set! (foreground-color snd chn) (make-color re ge be))
-	      (graph-data data snd chn)))
-	  (set! (foreground-color snd chn) old-color)))))
+	      (graph-data data snd chn copy-context #f #f (time-graph-style snd chn) cr)))
+	  (set! (foreground-color snd chn) old-color)
+	  (free-cairo cr)))))
 
 
 (define (overlay-sounds . args)
   "(overlay-sounds . args) overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3)"
-  (let ((base (car args)))
+  (let ((base (if (integer? (car args)) 
+		  (integer->sound (car args)) 
+		  (car args))))
     (hook-push after-graph-hook
 	       (lambda (snd chn)
-		 (if (and (sound? base)
-			  (equal? snd base))
-		     (for-each 
-		      (lambda (snd)
-			;; perhaps this should also set sync
-			(if (and (sound? snd)
-				 (> (channels snd) chn)
-				 (> (channels base) chn))
-			    (graph-data 
-			     (make-graph-data snd chn) 
-			     base chn copy-context 
-			     #f #f graph-dots)))
-		      (cdr args)))))))
+		 (if (equal? snd base)
+		     (let ((cr (make-cairo (car (channel-widgets snd chn)))))
+		       (for-each 
+			(lambda (snd)
+			  (graph-data (make-graph-data snd chn) base chn copy-context #f #f graph-dots cr))
+			(cdr args))
+		       (free-cairo cr)))))))
+
 
 (define (samples-via-colormap snd chn)
   "(samples-via-colormap snd chn) displays time domain graph using current colormap (just an example of colormap-ref)"
   (let* ((left (left-sample snd chn))
 	 (right (right-sample snd chn))
 	 (old-color (foreground-color snd chn))
-	 (data (make-graph-data snd chn)))
+	 (data (make-graph-data snd chn))
+	 (cr (make-cairo (car (channel-widgets snd chn)))))
 
     (define (samples-1 cur-data)
       (let* ((x0 (x->position (/ left (srate snd))))
@@ -243,7 +249,7 @@ whenever they're in the current view."
 			      (set! (colors ref) new-color)
 			      new-color))))
 	    (set! (foreground-color snd chn) color)
-	    (draw-line x0 y0 x1 y1)
+	    (draw-line x0 y0 x1 y1 snd chn time-graph cr)
 	    (set! x0 x1)
 	    (set! y0 y1)))
 	(set! (foreground-color snd chn) old-color)))
@@ -253,92 +259,7 @@ whenever they're in the current view."
 	    (samples-1 data)
 	    (begin
 	      (samples-1 (car data))
-	      (samples-1 (cadr data)))))))
+	      (samples-1 (cadr data)))))
+    (free-cairo cr)))
 
 
-
-;;; -------- click-for-listener-help
-
-(define click-for-listener-help
-  (let ((help-moved #f)
-	(last-click-time 0))
-    (lambda (pos)
-  
-      (define (char-quit? ch)
-	(or (char-whitespace? ch)
-	    (char=? ch #\()
-	    (char=? ch #\))
-	    (char=? ch #\')
-	    (char=? ch #\")))
-
-      ;; find nearest name
-      ;; scan back and forth for non-alphanumeric
-      ;; call snd-help on name and post in help-dialog
-      
-      (let* ((time (get-internal-real-time)) ; look for double-click
-	     (click-time (- time last-click-time)))
-	(set! last-click-time time)
-	(if (< click-time 25) ; .25 secs -- could use XtGetMultiClickTime if xm loaded
-	    (let* ((text (widget-text (list-ref (main-widgets) 4)))
-		   (len (and (string? text) (string-length text)))
-		   (happy #f))
-	      (if (and len (>= pos len)) (set! pos (- len 1))) ;click at very bottom of listener is beyond current string end
-	      (if (and len (>= pos 1))                        ;not click in empty listener, etc
-		  (begin
-		    (if (char-quit? (string-ref text pos))
-			(begin                      ;not currently in a name
-			  ;; go looking for plausible name (look left first)
-			  (do ((i (- pos 1) (- i 1)))
-			      ((or happy (= i 0)))
-			    (if (char-alphabetic? (string-ref text i))
-				(begin
-				  (set! pos i)
-				  (set! happy #t))))
-			  (if (not happy)           ;nothing to the left -- try to the right
-			      (do ((i (+ 1 pos) (+ 1 i)))
-				  ((or happy (= i len)))
-				(if (char-alphabetic? (string-ref text i))
-				    (begin
-				      (set! pos i)
-				      (set! happy #t))))))
-			(set! happy #t))
-		    (if happy
-			;; found some portion of a name -- try to get the full thing
-			(let ((start pos)
-			      (end pos))
-			  (set! happy #f)
-			  (do ((i (- pos 1) (- i 1)))  ;look for start of name
-			      ((or happy (= i 0)))
-			    (if (char-quit? (string-ref text i))
-				(begin
-				  (set! start (+ i 1))
-				  (set! happy #t))))
-			  (set! happy #f)
-			  (do ((i (+ 1 pos) (+ 1 i)))  ;look for end of name
-			      ((or happy (and (= i len)
-					      (let () 
-						(set! end i) 
-						(set! happy #t) 
-						#t))))
-			    (if (char-quit? (string-ref text i))
-				(begin
-				  (set! end i)
-				  (set! happy #t))))
-			  (if (and happy
-				   (> end start))
-			      ;; got a name -- look for snd-help, if any
-			      (let* ((name (substring text start end))
-				     (help (snd-help name #f)))
-				(if (string=? name help)
-				    (set! help (snd-help (string->symbol name))))
-				(if (not (string=? name help))
-				    (let ((dialog (help-dialog name help)))
-				      (if (not help-moved)
-					  ;; if this is the first call, try to position help dialog out of the way
-					  ;;   this is clunky -- perhaps better would be a tooltip window at the bottom of the listener?
-					  (let ((main-xy (widget-position (cadr (main-widgets))))
-						(main-size (widget-size (cadr (main-widgets)))))
-					    (set! (widget-position (list-ref (dialog-widgets) 14))
-						  (list (+ (car main-xy) (car main-size))
-							(cadr main-xy)))
-					    (set! help-moved #t)))))))))))))))))
