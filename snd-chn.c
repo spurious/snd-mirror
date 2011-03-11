@@ -4324,7 +4324,8 @@ static void draw_graph_cursor(chan_info *cp)
 
   ap = cp->axis;
   if ((CURSOR(cp) < ap->losamp) || 
-      (CURSOR(cp) > ap->hisamp)) 
+      (CURSOR(cp) > ap->hisamp) ||
+      (!(ap->ax)))
     return;
 
   if ((cp->chan > 0) && 
@@ -4332,6 +4333,7 @@ static void draw_graph_cursor(chan_info *cp)
     return;
 
 #if USE_GTK
+  if (!(ap->ax->wn)) return;
   ap->ax->cr = MAKE_CAIRO(ap->ax->wn);
 #endif
 

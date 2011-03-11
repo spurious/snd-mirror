@@ -2041,7 +2041,7 @@ int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided)
 }
 
 
-static void erase_mix_tag_and_waveform(mix_state *ms, chan_info *cp, axis_info *ap, int x, int y)
+static void erase_mix_tag_and_waveform(mix_state *ms, chan_info *cp, axis_info *ap, graphics_context *ax, int x, int y)
 {
   int wave_width, wave_height, old_x;
   wave_width = (int)(ms->len * ((double)(ap->x_axis_x1 - ap->x_axis_x0) / (double)(ap->hisamp - ap->losamp)));
@@ -2049,7 +2049,7 @@ static void erase_mix_tag_and_waveform(mix_state *ms, chan_info *cp, axis_info *
   old_x = x + mix_tag_width(ss) - 2;
   if ((old_x + wave_width) > ap->x_axis_x1)
     wave_width = ap->x_axis_x1 - old_x;
-  fill_rectangle(erase_context(cp), old_x, y - wave_height + 6, wave_width + 2, wave_height + 12);
+  fill_rectangle(ax, old_x, y - wave_height + 6, wave_width + 2, wave_height + 12);
 }
 
 
@@ -2940,11 +2940,22 @@ static XEN g_set_mix_tag_y(XEN n, XEN val)
       cp = md->cp;
       if ((cp) &&
 	  (!(cp->squelch_update)))
-	erase_mix_tag_and_waveform(ms, cp, cp->axis, md->x, cp->axis->y_offset + md->tag_y + MIX_TAG_Y_OFFSET);
-      md->tag_y = XEN_TO_C_INT(val);
-      if ((cp) &&
-	  (!(cp->squelch_update)))
-	display_one_mix(ms, cp);
+	{
+	  graphics_context *ax;
+	  ax = erase_context(cp);
+#if USE_GTK
+	  ax->cr = MAKE_CAIRO(ax->wn);
+#endif
+	  erase_mix_tag_and_waveform(ms, cp, cp->axis, ax, md->x, cp->axis->y_offset + md->tag_y + MIX_TAG_Y_OFFSET);
+	  md->tag_y = XEN_TO_C_INT(val);
+	  display_one_mix(ms, cp);
+#if USE_GTK
+	  FREE_CAIRO(ax->cr);
+	  ax->cr = NULL;
+	  copy_context(cp);
+#endif
+	}
+      else md->tag_y = XEN_TO_C_INT(val);
     }
   else return(snd_no_such_mix_error(S_setB S_mix_tag_y, n));
 

@@ -2783,7 +2783,7 @@ void g_xen_initialize(void)
   s7_define_function(s7, "string-ci-list-position", g_string_ci_list_position, 2, 1, false, H_string_ci_list_position);
 
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
-If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
+If it returns some non-" PROC_FALSE " result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
   (add-hook! " S_print_hook "\n\
     (lambda (msg) \n\
       (" S_snd_print "\n\
@@ -2890,7 +2890,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   /* needed in snd-test.scm and hooks.scm */
 
   XEN_EVAL_C_STRING("\
-        (define (apropos name)\
+        (define* (apropos name port)\
           (define (substring? subs s)\
             (let* ((start 0)\
 	           (ls (string-length s))\
@@ -2908,11 +2908,14 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
             (for-each\
              (lambda (binding)\
                (if (substring? name (symbol->string (car binding)))\
-	           (format (current-output-port) \"~A: ~A~%\" \
-	        	   (car binding) \
-	        	   (if (procedure? (cdr binding))\
-	        	       (procedure-documentation (cdr binding))\
-	        	       (cdr binding)))))\
+                   (let ((str (format #f \"~%~A: ~A\" \
+	        	              (car binding) \
+	        	              (if (procedure? (cdr binding))\
+	        	                  (procedure-documentation (cdr binding))\
+	        	                  (cdr binding)))))\
+                     (if (not port)\
+                         (snd-print str)\
+	                 (display str port)))))\
              alist))\
           (if (or (not (string? name))\
                   (= (length name) 0))\

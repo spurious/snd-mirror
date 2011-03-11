@@ -4384,6 +4384,7 @@ static vf_row *make_vf_row(view_files_info *vdat, GCallback play_callback, GCall
   gtk_widget_show(r->pl);
 
   r->nm = gtk_button_new_with_label("");
+  gtk_button_set_relief(GTK_BUTTON(r->nm), GTK_RELIEF_HALF);
   widget_modify_bg(r->nm, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
   sg_left_justify_button(r->nm);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);

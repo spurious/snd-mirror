@@ -216,8 +216,10 @@ whenever they're in the current view."
 		 (if (equal? snd base)
 		     (let ((cr (make-cairo (car (channel-widgets snd chn)))))
 		       (for-each 
-			(lambda (snd)
-			  (graph-data (make-graph-data snd chn) base chn copy-context #f #f graph-dots cr))
+			(lambda (nsnd)
+			  (if (and (sound? nsnd)
+				   (> (chans nsnd) chn))
+			      (graph-data (make-graph-data nsnd chn) base chn copy-context #f #f graph-dots cr)))
 			(cdr args))
 		       (free-cairo cr)))))))
 

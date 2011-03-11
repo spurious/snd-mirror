@@ -628,9 +628,8 @@ void print_enved(const char *output, int y0)
 static XEN g_graph_to_ps(XEN filename)
 {
   #define H_graph_to_ps "(" S_graph_to_ps " :optional (filename eps-file)): write the current Snd displays to an EPS file"
-#if (!HAVE_GTK_3)
+
   char *error;
-#endif
   const char *file;
 
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ONLY_ARG, S_graph_to_ps, "a string (filename)");
@@ -639,8 +638,6 @@ static XEN g_graph_to_ps(XEN filename)
     file = XEN_TO_C_STRING(filename);
   else file = eps_file(ss);
 
-#if (!HAVE_GTK_3)
-  /* in gtk 3 this segfaults due to some problem with the cairo_t context */
   error = snd_print_or_error(file);
   if (error)
     {
@@ -652,7 +649,6 @@ static XEN g_graph_to_ps(XEN filename)
 			   C_TO_XEN_STRING(file),
 			   result));
     }
-#endif
   return(C_TO_XEN_STRING(file));
 }
 

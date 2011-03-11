@@ -6586,9 +6586,11 @@ replaces the normal "+" cursor with an "x":
   (let* ((point (<em class=red>cursor-position</em>))
          (x (car point))
          (y (cadr point))
-         (size (floor (/ (<em class=red>cursor-size</em>) 2))))
-    (<a class=quiet href="#drawline" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawline_tip)">draw-line</a> (- x size) (- y size) (+ x size) (+ y size) snd chn <em class=red>cursor-context</em>)    
-    (<a class=quiet href="#drawline" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawline_tip)">draw-line</a> (- x size) (+ y size) (+ x size) (- y size) snd chn <em class=red>cursor-context</em>)))
+         (size (<em class=red>cursor-size</em>))
+         (cr (make-cairo (car (channel-widgets snd chn))))) ; needed in Gtk, ignored in Motif
+    (<a class=quiet href="#drawline" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawline_tip)">draw-line</a> (- x size) (- y size) (+ x size) (+ y size) snd chn <em class=red>cursor-context</em> cr)    
+    (<a class=quiet href="#drawline" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawline_tip)">draw-line</a> (- x size) (+ y size) (+ x size) (- y size) snd chn <em class=red>cursor-context</em> cr)
+    (free-cairo cr)))
 
 (set! (<em class=red>cursor-style</em>) x-cursor)
 </pre></td></tr></table>
@@ -10774,45 +10776,20 @@ no redo-able edits, <code>(edits)</code> returns <code>(list 2 0)</code>.
 </td></tr><tr><td></td><td>
 This returns a list of lists completely describing current edit list.
 Each inner list has the form 
+
 <pre>
     (list global-position data-number local-position local-end scaler ramp0 ramp1 type)
 </pre>
+
 If 'data-number' is -2, it marks the end of the list.  In our example above (the scale-channel/pad-channel sequence):
+
 <pre>
     :<em class=typing>(edit-tree)</em>
     <em class=listener>((0 0 0 99 2.0 0.0 0.0 0) (100 -1 0 199 0.0 0.0 0.0 1) 
         (300 0 100 50827 2.0 0.0 0.0 0) (51028 -2 0 0 0.0 0.0 0.0 0))</em>
 </pre>
 
-The following function uses
-this information to highlight the changed portions of a given sound.
-
-<table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(define (<A NAME="showoriginal">show-original</a> snd chn)
-  ;; draw a bar above unchanged portions of a sound
-  (define (check-fragment tree ls rs)
-    (let* ((fragment (car tree))       ; current edit list fragment
-           (pos (car fragment))        ; its position in sound
-           (dat (cadr fragment))
-           (scl (list-ref fragment 4)))
-      (if (and (= dat 0)               ; original sound
-               (= scl 1.0))            ; unscaled
-          (let ((nxtpos (car (cadr tree))))
-            (if (and (&lt;= pos rs)
-                     (&gt;= nxtpos ls))   ; fragment is at least partially visible
-                (let ((x0pos (<a class=quiet href="#xtoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_xtoposition_tip)">x-&gt;position</a> (/ (max ls pos) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))
-                      (x1pos (<a class=quiet href="#xtoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_xtoposition_tip)">x-&gt;position</a> (/ (min rs nxtpos) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))))
-                  (<a class=quiet href="#fillrectangle" onmouseout="UnTip()" onmouseover="Tip(extsnd_fillrectangle_tip)">fill-rectangle</a> x0pos 2 (- x1pos x0pos) 5)))))
-      (if (and (cdr tree)              ; go to next fragment
-               (not (= (cadr (car tree)) -2)))
-          (check-fragment (cdr tree) ls rs))))
-   (check-fragment (<em class=red>edit-tree</em> snd chn)
-                   (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn)
-                   (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn)))
-
-(hook-push <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> show-original)
-</pre>
-</td></tr></table></td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- save-edit-history -->
@@ -13337,7 +13314,7 @@ delete-colormap deletes the memory associated with the given colormap.
 
 <!-- draw-axes -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="drawaxes">draw-axes</a> <em class=narg>wid gc label x0 x1 y0 y1 style axes cr</em></code>
+<code><a class=def name="drawaxes">draw-axes</a> wid gc label x0 x1 y0 y1 style axes cr</code>
 </td></tr><tr><td width=30></td><td>
 This draws axes in the widget 'wid', using the graphics context 'gc', with the x-axis label 'label'
 going from 'x0' to 'x1' (floats) along the x axis, 'y0' to 'y1' along the y axis, with x-axis-style
@@ -13352,7 +13329,7 @@ or the local envelope editor code in xm-enved.scm.
 
 <!-- draw-dot -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="drawdot">draw-dot</a> x0 y0 <em class=narg>dot-size snd chn context</em></code>
+<code><a class=def name="drawdot">draw-dot</a> x0 y0 dot-size snd chn context cr</code>
 </td></tr><tr><td width=30></td><td>
 This draws a dot at ('x0 y0') of diameter 'dot-size' pixels in the specified context.  See musglyphs.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -13360,7 +13337,7 @@ This draws a dot at ('x0 y0') of diameter 'dot-size' pixels in the specified con
 
 <!-- draw-dots -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="drawdots">draw-dots</a> positions <em class=narg>dot-size snd chn context</em></code>
+<code><a class=def name="drawdots">draw-dots</a> positions dot-size snd chn context cr</code>
 </td></tr><tr><td></td><td>
 This draws dots of size 'dot-size' from the (x y) pairs in the vector 'positions' in the specified context.
 draw-dots, draw-lines, and fill-polygon take vectors, rather than vcts (which would be more consistent
@@ -13370,7 +13347,7 @@ with the rest of Snd) because the values passed are supposed to be short ints.
 
 <!-- draw-line -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="drawline">draw-line</a> x0 y0 x1 y1 <em class=narg>snd chn context</em></code>
+<code><a class=def name="drawline">draw-line</a> x0 y0 x1 y1 snd chn context cr</code>
 </td></tr><tr><td></td><td>
 This draws a line from ('x0 y0') to ('x1 y1') in the specified context.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -13378,7 +13355,7 @@ This draws a line from ('x0 y0') to ('x1 y1') in the specified context.
 
 <!-- draw-lines -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="drawlines">draw-lines</a> lines <em class=narg>snd chn context</em></code>
+<code><a class=def name="drawlines">draw-lines</a> lines snd chn context cr</code>
 </td></tr><tr><td></td><td>
 This draws lines following the (x y) pairs in the vector 'lines' in the specified context.
 make-bezier-1 in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used to draw Bezier curves.
@@ -13387,7 +13364,7 @@ make-bezier-1 in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used t
 
 <!-- draw-string -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="drawstring">draw-string</a> text x0 y0 <em class=narg>snd chn context</em></code>
+<code><a class=def name="drawstring">draw-string</a> text x0 y0 snd chn context cr</code>
 </td></tr><tr><td></td><td>
 This draws a string ('text') in the current font and foreground color starting at ('x0 y0') in the specified context.
 The next procedures use the channel-property list to maintain a list
@@ -13415,9 +13392,11 @@ currently in the time-domain graph:
 	 (if (and (&lt; ls samp)
 		  (&gt; rs samp))
 	     (let ((xpos (<a class=quiet href="#xtoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_xtoposition_tip)">x-&gt;position</a> (/ samp (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))
-		   (ypos (<a class=quiet href="#ytoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_ytoposition_tip)">y-&gt;position</a> (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> samp))))
-	       (<a class=quiet href="#drawline" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawline_tip)">draw-line</a> xpos 20 xpos (- ypos 4))
-	       (<em class=red>draw-string</em> text (- xpos (/ text-width 2)) 18)))))
+		   (ypos (<a class=quiet href="#ytoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_ytoposition_tip)">y-&gt;position</a> (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> samp)))
+                   (cr (make-cairo (car (channel-widgets snd chn)))))
+	       (<a class=quiet href="#drawline" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawline_tip)">draw-line</a> xpos 20 xpos (- ypos 4) snd chn time-graph cr)
+	       (<em class=red>draw-string</em> text (- xpos (/ text-width 2)) 18 snd chn time-graph cr)
+               (free-cairo cr)))))
      comments)))
 
 (hook-push <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> show-comments)
@@ -13427,7 +13406,7 @@ currently in the time-domain graph:
 
 <!-- fill-rectangle -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="fillrectangle">fill-rectangle</a> x0 y0 width height <em class=narg>snd chn context erase</em></code>
+<code><a class=def name="fillrectangle">fill-rectangle</a> x0 y0 width height snd chn context erase cr</code>
 </td></tr><tr><td></td><td>
 This draws a filled rectangle in the current foreground color from ('x0 y0') of size ('width height').
 If 'erase' is #t, this function erases the rectangular area.
@@ -13437,12 +13416,12 @@ See draw.scm, snd-motif.scm, or <a href="#showoriginal">show-original</a>.
 
 <!-- fill-polygon -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="fillpolygon">fill-polygon</a> points <em class=narg>snd chn context</em></code>
+<code><a class=def name="fillpolygon">fill-polygon</a> points snd chn context cr</code>
 </td></tr><tr><td></td><td>
 This draws a filled polygon whose vertices are in the vector 'points'.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(define (-&gt; x0 y0 size snd chn)
+(define (-&gt; x0 y0 size snd chn cr)
   "draw an arrow pointing (from the left) at the point (x0 y0)"
   (let ((points (make-vector 8)))
     (define (point i x y)
@@ -13453,13 +13432,13 @@ This draws a filled polygon whose vertices are in the vector 'points'.
       (point 1 (- x (* 2 size)) (- y size))
       (point 2 (- x (* 2 size)) (+ y size))
       (point 3 x y)
-      (<em class=red>fill-polygon</em> points snd chn))
+      (<em class=red>fill-polygon</em> points snd chn time-graph cr))
     (arrow-head x0 y0)
     (<a class=quiet href="#fillrectangle" onmouseout="UnTip()" onmouseover="Tip(extsnd_fillrectangle_tip)">fill-rectangle</a> (- x0 (* 4 size)) 
 		    (floor (- y0 (* .4 size)))
 		    (* 2 size)
 		    (floor (* .8 size))
-                    snd chn)))	
+                    snd chn time-graph #f cr)))	
 </pre></td></tr></table>
 
 musglyphs.scm has some elaborate examples that use fill-polygon to draw music notation symbols.
@@ -13489,7 +13468,7 @@ The <a href="sndscm.html#startwaterfall">waterfall</a> function in snd-gl.scm us
 
 <!-- graph-data -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="graphdata">graph-data</a> data <em class=narg>snd chn context low high graphics-style</em></code>
+<code><a class=def name="graphdata">graph-data</a> data snd chn context low high graphics-style cr</code>
 </td></tr><tr><td></td><td>
 graph-data displays 'data' in the time domain graph of the sound's channel
 'chn' using the graphics context 'context' (normally <code>copy-context</code>), placing the
@@ -13497,46 +13476,7 @@ data in the recipient's graph between points 'low' and 'high'
 in the drawing mode 'graphics-style'.
 With this function and make-graph-data, we can overlay sounds,
 overlay different versions of the same sound, place a portion of a
-sound over another at an arbitrary point, and so on (see draw.scm):
-
-<table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(define (<A NAME="displaysampsinred">display-samps-in-red</A> snd chn)
-  "display samples 1000 to 2000 in red whenever they're in the current view"
-  (let ((left (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn))
-	(right (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn))
-	(old-color (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn))
-	(red (<a class=quiet href="#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 1 0 0)))
-    (if (and (&lt; left 2000)
-	     (&gt; right 1000))
-	(let* ((data (<em class=red>make-graph-data</em> snd chn)))
-	  (if (<a class=quiet href="#vctp" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctp_tip)">vct?</a> data)                      ;the simple, one-sided graph case
-	      (let* ((samps (- (min right 2000)
-			       (max left 1000)))
-		     (offset (max 0 (- 1000 left)))
-		     (new-data (<a class=quiet href="#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> data offset (+ offset samps))))
-		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) red)
-		(<em class=red>graph-data</em> new-data snd chn <a class=quiet href="#copycontext" onmouseout="UnTip()" onmouseover="Tip(extsnd_copycontext_tip)">copy-context</a> (max 1000 left) (min 2000 right))
-		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) old-color))
-	      (let* ((low-data (car data))     ;the two-sided envelope graph case
-		     (high-data (cadr data))
-                     ;; we need to place the red portion correctly in the current graph
-                     ;; so the following is getting the "bin" numbers associated with 
-                     ;; samples 1000 and 2000
-		     (size (length low-data))
-		     (samps (- right left))
-		     (left-offset (max 0 (- 1000 left)))
-		     (left-bin (round (/ (* size left-offset) samps)))
-		     (right-offset (- (min 2000 right) left))
-		     (right-bin (round (/ (* size right-offset) samps)))
-		     (new-low-data (<a class=quiet href="#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> low-data left-bin right-bin))
-		     (new-high-data (<a class=quiet href="#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> high-data left-bin right-bin)))
-		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) red)
-		(<em class=red>graph-data</em> 
-                  (list new-low-data new-high-data) snd chn <a class=quiet href="#copycontext" onmouseout="UnTip()" onmouseover="Tip(extsnd_copycontext_tip)">copy-context</a> left-bin right-bin)
-		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) old-color)))))))
-
-(hook-push <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> display-samps-in-red)
-</pre></td></tr></table></td></tr>
+sound over another at an arbitrary point, and so on (see draw.scm).
 <tr><td></td><td>
 
 <img src="pix/redsamps.png" alt="red samples" hspace=20>

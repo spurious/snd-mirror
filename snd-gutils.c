@@ -1,6 +1,7 @@
 #include "snd.h"
 
 static int cairo_depth = 0;
+#define MUS_DEBUGGING 1
 #if HAVE_GTK_3
 cairo_t *make_cairo(GdkWindow *win, const char *func, const char *file, int line)
 #else
@@ -8,9 +9,12 @@ cairo_t *make_cairo(GdkDrawable *win, const char *func, const char *file, int li
 #endif
 {
 #if MUS_DEBUGGING
-  fprintf(stderr, "make_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth++);
+  /* fprintf(stderr, "make_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth++); */
   if (cairo_depth > 1)
-    abort();
+    {
+      fprintf(stderr, "make_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth++);
+      /* abort(); */
+    }
 #endif
   return(gdk_cairo_create(win));
 }
@@ -18,7 +22,7 @@ cairo_t *make_cairo(GdkDrawable *win, const char *func, const char *file, int li
 void free_cairo(cairo_t *cr, const char *func, const char *file, int line)
 {
 #if MUS_DEBUGGING
-  fprintf(stderr, "free_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth--);
+  /* fprintf(stderr, "free_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth--); */
 #endif
   cairo_destroy(cr);
 }
@@ -1205,15 +1209,7 @@ char *slist_selection(slist *lst)
  *   the name_pix icon backgrounds are still gray, also dialog buttons and menu items
  *   do meters work in rec?  in Motif they're drawn incorrectly
  *   snd-test 23 minibuffer says update squelched but fft is being updated -- this msg is not cleared?
- *
- *   region print and enved print in gtk should go through the gtk print stuff --
- *     Does the direct-to-printer business make any sense? (it's an arg to print-dialog!)
- *     doc that eps-* [file size left-margin bottom-margin] and [gl-]graph->ps are Motif only [make this explicit in snd-print.c]
- *
- *   superimposed chans flicker a lot
- *     the cairo_t's are not shared in this case, so each chan is a separate display
- *     and they're all black
- *
+ *   region print and enved print in gtk should go through the gtk print stuff 
  *   hide controls + listener doesn't
  *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
@@ -1221,6 +1217,15 @@ char *slist_selection(slist *lst)
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators, but they still look dumb
  *   prefs entries should be white, not gray!
+ *   popup in listener: help if selected text (selection goes away if clicked!)
+ *   there's no way to drag a mark in the selection?
+ *   if chans are syncd, shouldn't multichan mix/mark also?
+ *   drag marks as edit is messy looking in gtk
+ *   gtk3: slist if hover needs black text
+ *
+ *   superimposed chans flicker a lot
+ *     the cairo_t's are not shared in this case, so each chan is a separate display
+ *     and they're all black
  *
  *   if pointer focus, movement out of dialog and into graph does not raise graph (it does activate it)
  *     setting "transient_for" does not change this
@@ -1228,13 +1233,9 @@ char *slist_selection(slist *lst)
  *   check out snd-ls changes and the tutorial
  *     [see snd_conffile.scm for more key bindings] -- I think the key bindings list in snd-kbd.c is out-of-date (need automatic way to generate this)
  *
- *   the build drawing stuff (draw-dot etc) translated to use explicit cairo_t
- *    snd-test.scm muglyphs.scm tmp26 tmp139 + doc examples
- *
- *   check gprint -- it is trying to redirect normal snd-chn graph display to the printer's cairo_t
- *
  *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
  *     make_partial_graph here can segfault
+ *     if proc cursor, foreground color is not set back to old
  *
  *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
  *   if basic-color set to black, labels are not visible, this is partly the case also in Motif
@@ -1243,25 +1244,13 @@ char *slist_selection(slist *lst)
  *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.
  *     show controls for example, does not open the pane.
  *
- *   segfault in test 20 (same problem as earlier)
- *     this happens during the graphics draw at snd-print.c:56 -- cairo_t is probably not setup right
- *     this is in graph->ps
- *     perhaps all of snd-print.c is now motif-specific, and we should use
- *     snd-gprint with GTK_PRINT_OPERATION_ACTION_PRINT and it says only pdf? gtk_print_operation_set_export_filename ()
- *     [this is currently disabled in gtk3]
- *
  *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
  *     try cairo-trace and the new GL surface (1.10.0) [gl_surface?], and the OSX backend?
- *
- *   popup in listener: help if selected text (selection goes away if clicked!)
- *   apropos output goes to the shell in gtk?
- *   there's no way to drag a mark in the selection?
- *   if chans are syncd, shouldn't multichan mix/mark also?
- *   drag marks as edit is messy looking in gtk
  *
  * requested: zoomed fft -- this is available in the transform dialog, but where to put chan-local controls?
  *              maybe add key bindings -- the numpad arrows?
  * bugs: play choppy if graphics -- seems ok?
+ *       mus-audio-write called from play.scm sometimes hangs
  */
 
 
@@ -1379,6 +1368,8 @@ widget \"*.white_button\" style \"white_button\"\n");
 
 #else
 
+/* see gtkcssprovider.c toward the end */
+
 void init_gtk(void)
 {
   GError *error = NULL;
@@ -1386,7 +1377,7 @@ void init_gtk(void)
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(wb_provider),
     "#white_button { \n"
     "  padding: 0 0;\n"
-    "  border-width: 0\n"
+    "  border-width: 0;\n"
     "}\n",
     -1, &error);
 }

@@ -113,26 +113,32 @@
 
 (define* (fill-in score :rest args)
   (if (not (null? pathlist))
-      (fill-polygon
-       (make-polygon
-	(reverse pathlist))
-	ps-snd ps-chn ps-ax))
+      (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
+	(fill-polygon
+	 (make-polygon
+	  (reverse pathlist))
+	 ps-snd ps-chn ps-ax cr)
+	(free-cairo cr)))
   (set! pathlist '())
   #f)
 
 (define (draw score arg)
   (if (not (null? pathlist))
-      (draw-lines
-       (make-polygon
-	(reverse pathlist))
-	ps-snd ps-chn ps-ax))
+      (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
+	(draw-lines
+	 (make-polygon
+	  (reverse pathlist))
+	 ps-snd ps-chn ps-ax cr)
+	(free-cairo cr)))
   (set! pathlist '())
   #f)
 
 (define (circle score x0 y0 rad . rest)
-  (draw-dot (->x x0) (->y y0) 
-	    (floor (* ps-size rad 2))
-	    ps-snd ps-chn ps-ax))
+  (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
+    (draw-dot (->x x0) (->y y0) 
+	      (floor (* ps-size rad 2))
+	      ps-snd ps-chn ps-ax cr)
+    (free-cairo cr)))
 
 (define old-defvar defvar)
 (defmacro defvar (name value) `(define ,name ,value))
@@ -228,11 +234,13 @@
 
 
 (define (draw-staff x0 y0 width line-sep)
-  (do ((line 0 (+ 1 line))
-       (x x0) 
-       (y y0 (+ y line-sep)))
-      ((= line 5))
-    (draw-line x y (+ x width) y)))
+  (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
+    (do ((line 0 (+ 1 line))
+	 (x x0) 
+	 (y y0 (+ y line-sep)))
+	((= line 5))
+      (draw-line x y (+ x width) y ps-snd ps-chn time-graph cr))
+    (free-cairo cr)))
 
 
 (define treble-tag-y 30)

@@ -6930,11 +6930,13 @@ the clef instead.
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (fm-violin 0 1 440 .1))
 
 (define (draw-staff x0 y0 width line-sep)
-  (do ((line 0 (+ 1 line))
-       (x x0) 
-       (y y0 (+ y line-sep)))
-      ((= line 5))
-    (<a class=quiet href="extsnd.html#drawline" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawline_tip)">draw-line</a> x y (+ x width) y)))
+  (let ((cr (make-cairo (car (channel-widgets 0 0)))))
+    (do ((line 0 (+ 1 line))
+         (x x0) 
+         (y y0 (+ y line-sep)))
+        ((= line 5))
+      (<a class=quiet href="extsnd.html#drawline" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawline_tip)">draw-line</a> x y (+ x width) y 0 0 time-graph cr))
+    (free-cairo cr)))
 
 (define (draw-a-440 x0 y0 size)
   (let ((width (* size 100))
@@ -6943,7 +6945,9 @@ the clef instead.
     (draw-staff (+ x0 (* size 5)) y0 width line-sep)	
     (draw-treble-clef x0 (+ y0 (* size 61)) qsize)
     (draw-quarter-note (+ x0 (* 70 size)) (+ y0 (* size 52)) qsize)
-    (<a class=quiet href="extsnd.html#fillrectangle" onmouseout="UnTip()" onmouseover="Tip(extsnd_fillrectangle_tip)">fill-rectangle</a> (+ x0 (* 90 size)) (- y0 (* size 10)) (* size 3) (* size 60))))
+    (let ((cr (make-cairo (car (channel-widgets 0 0)))))
+      (<a class=quiet href="extsnd.html#fillrectangle" onmouseout="UnTip()" onmouseover="Tip(extsnd_fillrectangle_tip)">fill-rectangle</a> (+ x0 (* 90 size)) (- y0 (* size 10)) (* size 3) (* size 60) 0 0 time-graph #f cr)
+      (free-cairo cr))))
 
 (draw-a-440 50 80 1.0)
 </pre></td></tr></table>
