@@ -2660,17 +2660,6 @@ static void make_sonogram(chan_info *cp)
 	  for (i = 0; i < color_map_size(ss); i++)
 	    if (sono_js[i] > 0) 
 	      draw_sono_rectangles(ax, i, sono_js[i]);
-
-	  if (cp->printing)
-	    {
-	      check_for_event();
-	      if ((ss->stopped_explicitly) || (cp->active < CHANNEL_HAS_EDIT_LIST)) /* user closed file while trying to print */
-		{
-		  ss->stopped_explicitly = false;
-		  string_to_minibuffer(cp->sound, "stopped");
-		  break;
-		}
-	    }
 	}
 
 #if USE_MOTIF
@@ -3111,6 +3100,7 @@ static bool make_spectrogram(chan_info *cp)
     }
 
   ax = copy_context(cp);
+
   if (color_map(ss) != BLACK_AND_WHITE_COLORMAP)
     allocate_color_map(color_map(ss));
   ss->stopped_explicitly = false;
@@ -3185,19 +3175,10 @@ static bool make_spectrogram(chan_info *cp)
       if (color_map(ss) == BLACK_AND_WHITE_COLORMAP)
 	draw_grf_points(cp->dot_size, ax, bins, fap, 0.0, cp->transform_graph_style);
       
-      if (cp->printing) 
-	{
-	  if (color_map(ss) == BLACK_AND_WHITE_COLORMAP)
-	    ps_draw_grf_points(fap, bins, 0.0, cp->transform_graph_style, cp->dot_size);
-	  check_for_event();
-	  if ((ss->stopped_explicitly) || (cp->active < CHANNEL_HAS_EDIT_LIST))
-	    {
-	      ss->stopped_explicitly = false;
-	      string_to_minibuffer(sp, "stopped");
-	      break;
-	    }
-	}
+      if ((cp->printing) && (color_map(ss) == BLACK_AND_WHITE_COLORMAP))
+	ps_draw_grf_points(fap, bins, 0.0, cp->transform_graph_style, cp->dot_size);
     }
+
   if ((cp->printing) && (color_map(ss) != BLACK_AND_WHITE_COLORMAP)) ps_reset_color();
   if (cp->hookable == WITH_HOOK) after_transform(cp, 1.0 / scl);
   if (old_with_gl) set_with_gl(true, false);
@@ -3951,7 +3932,7 @@ static void display_channel_data_with_size(chan_info *cp,
 #if USE_GTK
 	  our_ax = cp->cgx->ax;
 	  if (!use_incoming_cr)
-	    our_ax->cr = gdk_cairo_create(our_ax->wn);
+	    our_ax->cr = MAKE_CAIRO(our_ax->wn);
 	  cairo_push_group(our_ax->cr);
 #else	  
 	  our_ax = ap->ax;
@@ -4015,7 +3996,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	  cairo_paint(our_ax->cr);	  
 	  if (!use_incoming_cr)
 	    {
-	      cairo_destroy(our_ax->cr);
+	      FREE_CAIRO(our_ax->cr);
 	      our_ax->cr = NULL;
 	      our_ax->cr = NULL;
 	    }
@@ -4040,7 +4021,7 @@ static void display_channel_data_with_size(chan_info *cp,
     {
 #if USE_GTK
       if (!use_incoming_cr)
-	cp->cgx->ax->cr = gdk_cairo_create(cp->cgx->ax->wn);
+	cp->cgx->ax->cr = MAKE_CAIRO(cp->cgx->ax->wn);
       cairo_push_group(cp->cgx->ax->cr);
 #endif
 
@@ -4058,7 +4039,7 @@ static void display_channel_data_with_size(chan_info *cp,
 		  (!(cp->fft_log_frequency)) ? WITH_LINEAR_AXES :
 		   ((cp->transform_graph_type == GRAPH_AS_SONOGRAM) ? WITH_LOG_Y_AXIS : WITH_LOG_X_AXIS),
 		  cp->show_axes);
-	  
+
       if ((!with_time) || (just_fft))
 	{ /* make_graph does this -- sets losamp needed by fft to find its starting point */
 	  ap->losamp = (mus_long_t)(ap->x0 * (double)SND_SRATE(sp));
@@ -4094,27 +4075,26 @@ static void display_channel_data_with_size(chan_info *cp,
 #endif
 	  break;
 	}
-#if (!USE_GTK)
-      if (cp->cursor_on) 
-	{
-	  cp->fft_cursor_visible = false; 
-	  draw_sonogram_cursor(cp);
-	}
-#else
+
+#if USE_GTK
       cairo_pop_group_to_source(cp->cgx->ax->cr);
       cairo_paint(cp->cgx->ax->cr);	  
       if (!use_incoming_cr)
 	{
-	  cairo_destroy(cp->cgx->ax->cr);
+	  FREE_CAIRO(cp->cgx->ax->cr);
 	  cp->cgx->ax->cr = NULL;
 	}
-
+#endif
+      /* this cairo_t can't be maintained across the fft functions -- they can be
+       *   work procs that return (displaying) at any time in the future, and
+       *   call check_for_event so that they can be interrupted. 
+       */
+	  
       if (cp->cursor_on) 
 	{
 	  cp->fft_cursor_visible = false; 
 	  draw_sonogram_cursor(cp);
 	}
-#endif
     }
 
 
@@ -4150,8 +4130,10 @@ static void display_channel_data_with_size(chan_info *cp,
       /* if these were changed in the hook function, the old fields should have been saved across the change (g_graph below) */
 
 #if USE_GTK
+      if (!(uap->ax))
+	uap->ax = cp->cgx->ax;
       if (!use_incoming_cr)
-	uap->ax->cr = gdk_cairo_create(uap->ax->wn);
+	uap->ax->cr = MAKE_CAIRO(uap->ax->wn);
       else uap->ax->cr = cp->cgx->ax->cr;
       cairo_push_group(uap->ax->cr);
 #endif
@@ -4172,7 +4154,7 @@ static void display_channel_data_with_size(chan_info *cp,
       cairo_paint(uap->ax->cr);	  
       if (!use_incoming_cr)
 	{
-	  cairo_destroy(uap->ax->cr);
+	  FREE_CAIRO(uap->ax->cr);
 	  uap->ax->cr = NULL;
 	}
 #endif
@@ -4350,7 +4332,7 @@ static void draw_graph_cursor(chan_info *cp)
     return;
 
 #if USE_GTK
-  ap->ax->cr = gdk_cairo_create(ap->ax->wn);
+  ap->ax->cr = MAKE_CAIRO(ap->ax->wn);
 #endif
 
   if (cp->cursor_visible) 
@@ -4368,7 +4350,7 @@ static void draw_graph_cursor(chan_info *cp)
   cp->cursor_visible = true;
 
 #if USE_GTK
-  cairo_destroy(ap->ax->cr);
+  FREE_CAIRO(ap->ax->cr);
   ap->ax->cr = NULL;
 #endif
 }
@@ -4389,14 +4371,14 @@ static void draw_sonogram_cursor_1(chan_info *cp)
   {
     color_t old_color;
     fax = cp->cgx->ax; /* fap->ax does not work here?!? */
-    fax->cr = gdk_cairo_create(fax->wn);
+    fax->cr = MAKE_CAIRO(fax->wn);
     /* y_axis_y0 > y_axis_y1 (upside down coordinates) */
     old_color = get_foreground_color(fax);
     set_foreground_color(fax, ss->sgx->cursor_color);
     draw_line(fax, cp->fft_cx, fap->y_axis_y0 - 1, cp->fft_cx, fap->y_axis_y1);
     set_foreground_color(fax, old_color);
     cp->fft_cursor_visible = (!(cp->fft_cursor_visible));
-    cairo_destroy(fax->cr);
+    FREE_CAIRO(fax->cr);
     fax->cr = NULL;
   }
 #endif
@@ -4586,11 +4568,11 @@ void cursor_moveto_with_window(chan_info *cp, mus_long_t samp, mus_long_t left_s
       if (cp->graph_time_p) 
 	{
 #if USE_GTK
-	  ap->ax->cr = gdk_cairo_create(ap->ax->wn);
+	  ap->ax->cr = MAKE_CAIRO(ap->ax->wn);
 #endif
 	  erase_cursor(cp);
 #if USE_GTK
-	  cairo_destroy(ap->ax->cr);
+	  FREE_CAIRO(ap->ax->cr);
 	  ap->ax->cr = NULL;
 #endif
 	}
@@ -5844,7 +5826,8 @@ graphics_context *set_context(chan_info *cp, chan_gc_t gc)
 
 #if (!USE_GTK)
   cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
+  if (!cx) 
+    cx = cp->cgx;
 #else
   cx = cp->cgx;
 #endif

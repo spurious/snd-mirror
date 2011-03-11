@@ -1,5 +1,29 @@
 #include "snd.h"
 
+static int cairo_depth = 0;
+#if HAVE_GTK_3
+cairo_t *make_cairo(GdkWindow *win, const char *func, const char *file, int line)
+#else
+cairo_t *make_cairo(GdkDrawable *win, const char *func, const char *file, int line)
+#endif
+{
+#if MUS_DEBUGGING
+  fprintf(stderr, "make_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth++);
+  if (cairo_depth > 1)
+    abort();
+#endif
+  return(gdk_cairo_create(win));
+}
+
+void free_cairo(cairo_t *cr, const char *func, const char *file, int line)
+{
+#if MUS_DEBUGGING
+  fprintf(stderr, "free_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth--);
+#endif
+  cairo_destroy(cr);
+}
+
+
 bool set_tiny_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -1205,8 +1229,7 @@ char *slist_selection(slist *lst)
  *     [see snd_conffile.scm for more key bindings] -- I think the key bindings list in snd-kbd.c is out-of-date (need automatic way to generate this)
  *
  *   the build drawing stuff (draw-dot etc) translated to use explicit cairo_t
- *    snd-test.scm dsp.scm muglyphs.scm snd-gtk.scm snd-motif.scm xm-enved.scm t26|139 + doc examples
- *       need snd11 replacements + comments on how to update code
+ *    snd-test.scm muglyphs.scm tmp26 tmp139 + doc examples
  *
  *   check gprint -- it is trying to redirect normal snd-chn graph display to the printer's cairo_t
  *

@@ -234,7 +234,7 @@ static void env_redisplay_1(printing_t printing)
     {
       cairo_t *enved_cr = NULL;
 
-      enved_cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));	      
+      enved_cr = MAKE_CAIRO(WIDGET_TO_WINDOW(drawer));	      
       axis->ax->cr = enved_cr;
       gray_ap->ax->cr = enved_cr;
       
@@ -275,7 +275,7 @@ static void env_redisplay_1(printing_t printing)
 
       cairo_pop_group_to_source(enved_cr);
       cairo_paint(enved_cr);
-      cairo_destroy(enved_cr);
+      FREE_CAIRO(enved_cr);
       enved_cr = NULL;
     }
 }

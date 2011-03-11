@@ -101,7 +101,7 @@ static void display_meters(mus_float_t *maxes)
       int i, x0 = 0;
       /* if maxes is NULL, assume all 0's */
       
-      cr = gdk_cairo_create(recorder_ax->wn);
+      cr = MAKE_CAIRO(recorder_ax->wn);
       cairo_push_group(cr);
       
       cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
@@ -143,7 +143,7 @@ static void display_meters(mus_float_t *maxes)
       
       cairo_pop_group_to_source(cr);
       cairo_paint(cr);
-      cairo_destroy(cr);
+      FREE_CAIRO(cr);
     }
 }
 

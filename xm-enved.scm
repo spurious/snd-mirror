@@ -212,6 +212,7 @@
 			     (lambda (w context ev flag)
 			       (XUndefineCursor (XtDisplay w) (XtWindow w))))
 	  editor))
+
       (let* ((drawer (gtk_drawing_area_new))
 	     (gc (car (snd-gcs)))
 	     (x0 (car axis-bounds))
@@ -228,6 +229,14 @@
 			   name))
 	     (dragging #f))
 
+	;; (xe-create-enved "hi" (list-ref (sound-widgets 0) 9) '() '(0.0 1.0 0.0 1.0))
+
+	(define (local-draw-axes wid gc label x0 x1 y0 y1)
+	  (let ((cr (make-cairo wid)))
+	    (let ((val (draw-axes wid gc label x0 x1 y0 y1 x-axis-in-seconds show-all-axes cr)))
+	      (free-cairo cr)
+	      val)))
+
 	(gtk_widget_set_events drawer GDK_ALL_EVENTS_MASK)
 	(gtk_box_pack_start (GTK_BOX parent) drawer #t #t 10)
 	(gtk_widget_show drawer)
@@ -237,7 +246,7 @@
 					(g_signal_lookup (if with-gtk3 "draw" "expose_event")
 							 (G_OBJECT_TYPE (G_OBJECT drawer)))
 					0 (g_cclosure_new (lambda (w e d)
-							    (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
+							    (list-set! editor 2 (apply local-draw-axes drawer gc name axis-bounds))
 							    (xe-redraw editor)
 							    #f)
 							  #f #f)
@@ -245,7 +254,7 @@
 	(g_signal_connect_closure_by_id (GPOINTER drawer)
 					(g_signal_lookup "configure_event" (G_OBJECT_TYPE (G_OBJECT drawer)))
 					0 (g_cclosure_new (lambda (w e d)
-							    (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
+							    (list-set! editor 2 (apply local-draw-axes drawer gc name axis-bounds))
 							    (xe-redraw editor)
 							    #f)
 							  #f #f) 

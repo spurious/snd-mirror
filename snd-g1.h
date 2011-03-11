@@ -345,11 +345,14 @@ void slist_moveto(slist *lst, int row);
 void slist_select(slist *lst, int row);
 char *slist_selection(slist *lst);
 
-#if 0
-#define MAKE_CAIRO(Ax) make_cairo(Ax, __func__, __FILE__, __line__)
-#define FREE_CAIRO(Ax) free_cairo(Ax, __func__, __FILE__, __line__)
+#if HAVE_GTK_3
+cairo_t *make_cairo(GdkWindow *win, const char *func, const char *file, int line);
+#else
+cairo_t *make_cairo(GdkDrawable *win, const char *func, const char *file, int line);
 #endif
-
+void free_cairo(cairo_t *cr, const char *func, const char *file, int line);
+#define MAKE_CAIRO(Win) make_cairo(Win, __func__, __FILE__, __LINE__)
+#define FREE_CAIRO(Cr)  free_cairo(Cr, __func__, __FILE__, __LINE__)
 void init_gtk(void);
 
 

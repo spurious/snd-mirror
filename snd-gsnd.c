@@ -296,7 +296,7 @@ static Drawable *sound_pix_wn(chan_info *cp)
 static void show_happy_face(Drawable *wn, mus_float_t pct)
 {
   cairo_t *cr;
-  cr = gdk_cairo_create(wn);
+  cr = MAKE_CAIRO(wn);
 
   /* overall background */
   cairo_translate(cr, 0, 0);
@@ -348,18 +348,18 @@ static void show_happy_face(Drawable *wn, mus_float_t pct)
   
   cairo_pop_group_to_source(cr);
   cairo_paint(cr);
-  cairo_destroy(cr);
+  FREE_CAIRO(cr);
 }
 
 
 static void hide_happy_face(Drawable *wn)
 {
   cairo_t *cr;
-  cr = gdk_cairo_create(wn);
+  cr = MAKE_CAIRO(wn);
   cairo_set_source_rgba(cr, ss->sgx->basic_color->red, ss->sgx->basic_color->green, ss->sgx->basic_color->blue, ss->sgx->basic_color->alpha); 
   cairo_rectangle(cr, 0, 0, 24, 24);
   cairo_fill(cr);
-  cairo_destroy(cr);
+  FREE_CAIRO(cr);
 }
 
 
@@ -1281,7 +1281,7 @@ void display_filter_env(snd_info *sp)
     }
 
   ax->gc = ss->sgx->fltenv_basic_gc;
-  ax->cr = gdk_cairo_create(ax->wn);
+  ax->cr = MAKE_CAIRO(ax->wn);
   cairo_push_group(ax->cr);
 
   /* erase previous */
@@ -1308,7 +1308,7 @@ void display_filter_env(snd_info *sp)
 
   cairo_pop_group_to_source(ax->cr);
   cairo_paint(ax->cr);
-  cairo_destroy(ax->cr);
+  FREE_CAIRO(ax->cr);
   ax->cr = NULL;
 }
 
