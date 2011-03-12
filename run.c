@@ -99,6 +99,9 @@
  * TODO: we miss shadowed funcs: (spectrum k) where spectrum is a vct complains about args to func spectrum
  *   can this be fixed by checking symbol-value before using the built-in walker?
  * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings (if default types are used in s7)
+ *
+ * TODO: is clm-print supposed to work anymore?
+ *    (define (r) (run (do ((i 0 (+ i 1))) ((= i 100)) (clm-print "~F " (random 1.0)))) (newline))
  */
 
 
@@ -7964,10 +7967,10 @@ static xen_value *mus_random_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-static void random_f(int *args, ptree *pt) {FLOAT_RESULT = s7_random(s7) * FLOAT_ARG_1;}
-static void random_f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 + s7_random(s7) * FLOAT_ARG_1;}
-static void random_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * s7_random(s7) * FLOAT_ARG_1;}
-static void random_i(int *args, ptree *pt) {INT_RESULT = (Int)(s7_random(s7) * INT_ARG_1);}
+static void random_f(int *args, ptree *pt) {FLOAT_RESULT = s7_random(s7, NULL) * FLOAT_ARG_1;}
+static void random_f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 + s7_random(s7, NULL) * FLOAT_ARG_1;}
+static void random_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * s7_random(s7, NULL) * FLOAT_ARG_1;}
+static void random_i(int *args, ptree *pt) {INT_RESULT = (Int)(s7_random(s7, NULL) * INT_ARG_1);}
 
 static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
 {

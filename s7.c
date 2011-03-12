@@ -9564,6 +9564,16 @@ static bool equal_rng(void *val1, void *val2)
   return(val1 == val2);
 }
 
+
+s7_pointer s7_make_random_state(s7_scheme *sc, s7_Int seed)
+{
+  s7_rng_t *r;
+  r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
+  r->ran_seed = seed;
+  r->ran_carry = 1675393560;  /* should this be dependent on the seed? */
+  return(s7_make_object(sc, rng_tag, (void *)r));
+}
+
   
 static s7_pointer g_make_random_state(s7_scheme *sc, s7_pointer args)
 {
@@ -9571,15 +9581,10 @@ static s7_pointer g_make_random_state(s7_scheme *sc, s7_pointer args)
 Pass this as the second argument to 'random' to get a repeatable random number sequence:\n\
     (let ((seed (make-random-state 1234))) (random 1.0 seed))"
 
-  s7_rng_t *r;
-
   if (!s7_is_integer(car(args)))
     return(s7_wrong_type_arg_error(sc, "make-random-state,", 0, car(args), "an integer"));
 
-  r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
-  r->ran_seed = s7_integer(car(args));
-  r->ran_carry = 1675393560;  /* should this be dependent on the seed? */
-  return(s7_make_object(sc, rng_tag, (void *)r));
+  return(s7_make_random_state(sc, s7_integer(car(args))));
 }
 
 
@@ -9654,10 +9659,11 @@ static s7_rng_t *s7_default_rng(s7_scheme *sc)
 }
 
 
-double s7_random(s7_scheme *sc)
+double s7_random(s7_scheme *sc, s7_pointer state)
 {
-  /* an experiment -- for run.c */
-  return(next_random(s7_default_rng(sc)));
+  if (!state)
+    return(next_random(s7_default_rng(sc)));
+  return(next_random((s7_rng_t *)s7_object_value(state)));
 }
 
 

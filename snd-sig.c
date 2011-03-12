@@ -5954,7 +5954,7 @@ static mus_float_t local_random(mus_float_t val)
 #if USE_CLM_RANDOM
   return(mus_random(val));
 #else
-  return(val * (1.0  - (s7_random(s7) * 2.0)));
+  return(val * (1.0  - (s7_random(s7, NULL) * 2.0)));
 #endif
 }
 
@@ -5964,7 +5964,7 @@ static mus_float_t local_frandom(mus_float_t val)
 #if USE_CLM_RANDOM
   return(mus_frandom(val));
 #else
-  return(val * s7_random(s7));
+  return(val * s7_random(s7, NULL));
 #endif
 }
 

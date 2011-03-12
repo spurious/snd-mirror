@@ -1207,20 +1207,18 @@ char *slist_selection(slist *lst)
 
 /* TODO: gtk troubles:
  *
- *   gtk3 toolbar is spread out
- *   the name_pix icon backgrounds are still gray, also dialog buttons and menu items
+ *   gtk3: toolbar is spread out
+ *   gtk3: the name_pix icon backgrounds are still gray, also dialog buttons and menu items
  *   do meters work in rec?  in Motif they're drawn incorrectly
  *   snd-test 23 minibuffer says update squelched but fft is being updated -- this msg is not cleared?
  *   region print and enved print in gtk should go through the gtk print stuff 
  *   hide controls + listener doesn't
- *   if combined, initial drag of mix does not reflect drag until button release
  *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *   sash colors should be green but I can't find any way to set this in gtk3!
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators, but they still look dumb
  *   prefs entries should be white, not gray!
  *   popup in listener: help if selected text (selection goes away if clicked!)
- *   there's no way to drag a mark in the selection?
  *   if chans are syncd, shouldn't multichan mix/mark also?
  *   drag marks as edit is messy looking in gtk
  *   gtk3: view files list if hover needs black text
@@ -1235,7 +1233,7 @@ char *slist_selection(slist *lst)
  *     setting "transient_for" does not change this
  *
  *   check out snd-ls changes and the tutorial
- *     [see snd_conffile.scm for more key bindings] -- I think the key bindings list in snd-kbd.c is out-of-date (need automatic way to generate this)
+ *     [see snd_conffile.scm for more key bindings]
  *
  *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
  *     make_partial_graph here can segfault
@@ -1248,8 +1246,6 @@ char *slist_selection(slist *lst)
  *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
  *     try cairo-trace and the new GL surface (1.10.0) [gl_surface?], and the OSX backend?
  *
- * requested: zoomed fft -- this is available in the transform dialog, but where to put chan-local controls?
- *              maybe add key bindings -- the numpad arrows?
  * bugs: play choppy if graphics -- seems ok?
  */
 

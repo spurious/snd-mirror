@@ -270,20 +270,25 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define snd_K_x XK_x 
 #define snd_K_y XK_y 
 #define snd_K_z XK_z 
-#define snd_K_Home XK_Home		 
-#define snd_K_Left XK_Left		 
-#define snd_K_Up XK_Up		 
-#define snd_K_Right XK_Right	 
-#define snd_K_Down XK_Down		 
 
-#define snd_keypad_Insert XK_KP_Insert
-#define snd_keypad_Delete XK_KP_Delete
+#define snd_K_Home  XK_Home		 
+#define snd_K_Left  XK_Left		 
+#define snd_K_Up    XK_Up		 
+#define snd_K_Right XK_Right	 
+#define snd_K_Down  XK_Down		 
+
+#define snd_keypad_Insert   XK_KP_Insert
+#define snd_keypad_Delete   XK_KP_Delete
 #define snd_keypad_Multiply XK_KP_Multiply
-#define snd_keypad_Add XK_KP_Add
+#define snd_keypad_Add      XK_KP_Add
 #define snd_keypad_Subtract XK_KP_Subtract
-#define snd_keypad_Divide XK_KP_Divide
-#define snd_keypad_Decimal XK_KP_Decimal
-#define snd_keypad_Enter XK_KP_Enter
+#define snd_keypad_Divide   XK_KP_Divide
+#define snd_keypad_Decimal  XK_KP_Decimal
+#define snd_keypad_Enter    XK_KP_Enter
+#define snd_keypad_Up       XK_KP_Up
+#define snd_keypad_Down     XK_KP_Down
+#define snd_keypad_Left     XK_KP_Left
+#define snd_keypad_Right    XK_KP_Right
 
 #define snd_keypad_0 XK_KP_0
 #define snd_keypad_1 XK_KP_1

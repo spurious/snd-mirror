@@ -4777,7 +4777,10 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	{
-	  /* here we are inside the graph (within the axes) */
+	  /* here we are inside the graph (within the axes)
+	   *   we need to check for marks and whatnot before the selection, else there's no way
+	   *   to drag a mark that's within the selection.
+	   */
 
 	  if ((with_inset_graph(ss)) &&
 	      (cp->inset_graph) &&
@@ -4787,6 +4790,18 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	      (y1 > cp->inset_graph->y0) &&
 	      (y0 < cp->inset_graph->y1))
 	    return(CLICK_INSET_GRAPH);
+
+	  mix_tag = hit_mix(cp, x, y);
+	  if (mix_tag != NO_MIX_TAG)
+	    return(CLICK_MIX);
+
+	  mix_play_tag = hit_mix_triangle(cp, x, y);
+	  if (mix_play_tag != NO_MIX_TAG)
+	    return(CLICK_MIX_PLAY);
+
+	  mouse_mark = hit_mark(cp, x, y);
+	  if (mouse_mark != NULL)
+	    return(CLICK_MARK);
 
 	  if (selection_is_active_in_channel(cp))
 	    {
@@ -4827,18 +4842,6 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 		  (epos >= xpos))
 		return(CLICK_SELECTION_MAIN);
 	    }
-
-	  mix_tag = hit_mix(cp, x, y);
-	  if (mix_tag != NO_MIX_TAG)
-	    return(CLICK_MIX);
-
-	  mix_play_tag = hit_mix_triangle(cp, x, y);
-	  if (mix_play_tag != NO_MIX_TAG)
-	    return(CLICK_MIX_PLAY);
-
-	  mouse_mark = hit_mark(cp, x, y);
-	  if (mouse_mark != NULL)
-	    return(CLICK_MARK);
 
 	  return(CLICK_WAVE);
 	}

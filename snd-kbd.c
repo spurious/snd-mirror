@@ -275,16 +275,20 @@ int in_user_keymap(int key, int state, bool cx_extended)
   #define kbd_false XEN_FALSE
 #endif
 
-#define NUM_BUILT_IN_KEY_BINDINGS 77
+#define NUM_BUILT_IN_KEY_BINDINGS 81
 
 static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
-  {snd_K_Down,    0, 0, kbd_false, false, "zoom out",                                                    NULL, -1},
-  {snd_K_Up,      0, 0, kbd_false, false, "zoom in",                                                     NULL, -1},
-  {snd_K_Left,    0, 0, kbd_false, false, "move window left",                                            NULL, -1},
-  {snd_K_Right,   0, 0, kbd_false, false, "move window right",                                           NULL, -1},
-  {snd_K_less,    0, 0, kbd_false, false, "move cursor to sample 0",                                     NULL, -1},
-  {snd_K_greater, 0, 0, kbd_false, false, "move cursor to last sample",                                  NULL, -1},
-  {snd_K_space,   0, 0, kbd_false, false, "play from cursor or stop playing",                            NULL, -1},
+  {snd_K_Down,       0, 0, kbd_false, false, "zoom out",                                                 NULL, -1},
+  {snd_K_Up,         0, 0, kbd_false, false, "zoom in",                                                  NULL, -1},
+  {snd_K_Left,       0, 0, kbd_false, false, "move window left",                                         NULL, -1},
+  {snd_K_Right,      0, 0, kbd_false, false, "move window right",                                        NULL, -1},
+  {snd_keypad_Down,  0, 0, kbd_false, false, "zoom fft out",                                             NULL, -1},
+  {snd_keypad_Up,    0, 0, kbd_false, false, "zoom fft in",                                              NULL, -1},
+  {snd_keypad_Left,  0, 0, kbd_false, false, "move fft left",                                            NULL, -1},
+  {snd_keypad_Right, 0, 0, kbd_false, false, "move fft right",                                           NULL, -1},
+  {snd_K_less,       0, 0, kbd_false, false, "move cursor to sample 0",                                  NULL, -1},
+  {snd_K_greater,    0, 0, kbd_false, false, "move cursor to last sample",                               NULL, -1},
+  {snd_K_space,      0, 0, kbd_false, false, "play from cursor or stop playing",                         NULL, -1},
 
   {snd_K_less,       snd_ControlMask, 0, kbd_false, false, "move cursor to sample 0",                    NULL, -1},
   {snd_K_greater,    snd_ControlMask, 0, kbd_false, false, "move cursor to last sample",                 NULL, -1},
@@ -1340,6 +1344,35 @@ static mus_float_t state_amount(int state)
 }
 
 
+static void zoom_fft(mus_float_t amount)
+{
+  mus_float_t zx, mx;
+  zx = spectrum_end(ss) - spectrum_start(ss);
+  mx = (spectrum_end(ss) + spectrum_start(ss)) * 0.5;
+  zx *= amount;
+  mx -= (zx * 0.5);
+  if (mx < 0.0) mx = 0.0;
+  set_spectrum_start(mx);
+  if ((mx + zx) <= 1.0)
+    set_spectrum_end(mx + zx);
+  else set_spectrum_end(1.0);
+}
+
+
+static void move_fft(mus_float_t amount)
+{
+  mus_float_t mx, zx;
+  zx = spectrum_end(ss) - spectrum_start(ss);
+  mx = spectrum_start(ss) + zx * amount;
+  if (mx < 0.0) mx = 0.0;
+  if (mx >= 1.0) mx = 1.0 - zx;
+  set_spectrum_start(mx);
+  if ((mx + zx) <= 1.0)
+    set_spectrum_end(mx + zx);
+  else set_spectrum_end(1.0);
+}
+
+
 static bool stop_selecting(int keysym, int state)
 {
   return(((state & snd_ControlMask) == 0) ||
@@ -1999,12 +2032,12 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_keypad_Subtract: 
 	      if (time_graph_type(ss) == GRAPH_AS_WAVOGRAM) 
 		{
-		  if (wavo_trace(ss)>1) 
+		  if (wavo_trace(ss) > 1) 
 		    set_wavo_trace(wavo_trace(ss) - 1);
 		} 
 	      else 
 		{
-		  if (spectro_hop(ss)>1) 
+		  if (spectro_hop(ss) > 1) 
 		    set_spectro_hop(spectro_hop(ss) - 1);
 		}
 	      reflect_spectro(); 
@@ -2031,6 +2064,22 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_keypad_Enter: 
 	      reset_spectro(); 
 	      reflect_spectro(); 
+	      break;
+
+	    case snd_keypad_Up:
+	      zoom_fft(1.0 + state_amount(state | shift));
+	      break;
+
+	    case snd_keypad_Down:
+	      zoom_fft(1.0 / (1.0 + state_amount(state | shift))); 
+	      break;
+
+	    case snd_keypad_Left:
+	      move_fft(-state_amount(state | shift)); 
+	      break;
+
+	    case snd_keypad_Right:
+	      move_fft(state_amount(state | shift)); 
 	      break;
 
 	    default:

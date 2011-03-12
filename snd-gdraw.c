@@ -427,7 +427,7 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
       b = default_color->blue; 
     }
   else phases_rgb((mus_float_t)prev / (mus_float_t)color_map_size(ss), &r, &g, &b);
-  cairo_set_source_rgb(ax->cr, r, g, b); /* TODO: here and line 460 valgrind complaint coming from make_fft_graph (snd-chn.c:2441) -- no cr? */
+  cairo_set_source_rgb(ax->cr, r, g, b);
 
   for (i = 1; i < num; i++)
     {

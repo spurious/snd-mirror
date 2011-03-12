@@ -66,6 +66,10 @@ Snd 12.0
      uses of these functions (most the fancy graphic stuff uses direct cairo
      or Motif calls from libxm), so perhaps eventually, they'll be removed.
 
+   To make it easier to zoom in on the FFT, the keypad arrow keys are bound
+     to zoom and move the FFT bounds, analogous to the normal arrow keys which
+     affect the time domain graph.  (There isn't any place to put sliders for
+     this, and the Options:Transform sliders aren't always handy).
 
    The Gtk Snd now needs Gtk 2.12 or later.
 
