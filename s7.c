@@ -9612,11 +9612,13 @@ static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer obj)
 }
 
 
-static s7_pointer g_random_state_to_list(s7_scheme *sc, s7_pointer obj)
+static s7_pointer g_random_state_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_random_state_to_list "(random-state->list r) returns the random state object as a list.\
 You can later apply make-random-state to this list to continue a random number sequence from any point."
 
+  s7_pointer obj;
+  obj = car(args);
   if (c_object_type(obj) == rng_tag)
     {
       s7_rng_t *r;
