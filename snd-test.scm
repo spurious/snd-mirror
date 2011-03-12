@@ -30468,10 +30468,10 @@ EDITS: 2
 	    (let ((vf-files (view-files-files dialog)))
 	      (if (or (and (not (member "1a.snd" vf-files))
 			   (not (member (string-append home-dir "/cl/1a.snd") vf-files))
-			   (not (member (string-append home-dir "/snd-11/1a.snd") vf-files)))
+			   (not (member (string-append home-dir "/snd-12/1a.snd") vf-files)))
 		      (and (not (member "pistol.snd" vf-files))
 			   (not (member (string-append home-dir "/cl/pistol.snd") vf-files))
-			   (not (member (string-append home-dir "/snd-11/pistol.snd") vf-files)))
+			   (not (member (string-append home-dir "/snd-12/pistol.snd") vf-files)))
 		      (not (= (length vf-files) 4)))
 		  (snd-display #__line__ ";vf files set: ~A (~A, ~A)" vf-files (string-append home-dir "/cl/1a.snd") (length vf-files))))
 	    (set! (hook-functions view-files-select-hook) '())
@@ -30484,11 +30484,11 @@ EDITS: 2
 	    (if (or (not (string? selected-file))
 		    (and (not (equal? selected-file "1a.snd"))
 			 (not (equal? selected-file (string-append home-dir "/cl/1a.snd")))
-			 (not (equal? selected-file (string-append home-dir "/snd-11/1a.snd")))))
+			 (not (equal? selected-file (string-append home-dir "/snd-12/1a.snd")))))
 		(snd-display #__line__ ";vf set selected select hook arg: ~A" selected-file))
 	    (if (and (not (equal? (view-files-selected-files dialog) (list "1a.snd")))
 		     (not (equal? (view-files-selected-files dialog) (list (string-append home-dir "/cl/1a.snd"))))
-		     (not (equal? (view-files-selected-files dialog) (list (string-append home-dir "/snd-11/1a.snd")))))
+		     (not (equal? (view-files-selected-files dialog) (list (string-append home-dir "/snd-12/1a.snd")))))
 		(snd-display #__line__ ";vf selected files set: ~A" (view-files-selected-files dialog)))
 	    (hide-widget dialog)
 	    ))
@@ -31436,7 +31436,7 @@ EDITS: 2
 	(if save-as-dialog (snd-display #__line__ ";after-save-as-hook dialog: ~A" save-as-dialog))
 	(if (not (equal? ind save-as-index)) (snd-display #__line__ ";after-save-as-hook index: ~A ~A" ind save-as-index))
 	(if (and (not (string=? (string-append home-dir "/cl/test.snd") save-as-name)) 
-		 (not (string=? (string-append home-dir "/snd-11/test.snd") save-as-name)))
+		 (not (string=? (string-append home-dir "/snd-12/test.snd") save-as-name)))
 	    (snd-display #__line__ ";after-save-as-hook name: ~A (~A)" save-as-name (string-append home-dir "/cl/test.snd")))
 	(hook-push open-raw-sound-hook 
 		   (lambda (file choice)
@@ -40995,7 +40995,7 @@ EDITS: 1
 	    (if (and (not (string=? (object->string (procedure-source func)) 
 				    "(lambda (snd chn) (insert-sound \"/home/bil/cl/pistol.snd\" 1000 0 snd chn))"))
 		     (not (string=? (object->string (procedure-source func)) 
-				    "(lambda (snd chn) (insert-sound \"/home/bil/snd-11/pistol.snd\" 1000 0 snd chn))")))
+				    "(lambda (snd chn) (insert-sound \"/home/bil/snd-12/pistol.snd\" 1000 0 snd chn))")))
 		(snd-display #__line__ ";edit-list->function 10a: ~A" (object->string (procedure-source func))))
 	    (revert-sound ind)
 	    (func ind 0)
@@ -41011,7 +41011,7 @@ EDITS: 1
 	    (if (and (not (string=? (object->string (procedure-source func)) 
 				    "(lambda (snd chn) (insert-samples 1000 41623 \"/home/bil/cl/pistol.snd\" snd chn))"))
 		     (not (string=? (object->string (procedure-source func)) 
-				    "(lambda (snd chn) (insert-samples 1000 41623 \"/home/bil/snd-11/pistol.snd\" snd chn))")))
+				    "(lambda (snd chn) (insert-samples 1000 41623 \"/home/bil/snd-12/pistol.snd\" snd chn))")))
 		(snd-display #__line__ ";edit-list->function 11: ~A" (object->string (procedure-source func))))
 	    (revert-sound ind)
 	    (func ind 0)
@@ -54183,7 +54183,7 @@ EDITS: 1
       (play ind :wait #t)
       (close-sound ind))
     
-    (with-sound (:srate 22050) 
+    (with-sound (:srate 22050 :play #f) 
 		(fm-violin 0 .01 440 .1 :noise-amount 0.0)
 		(pluck 0.05 .01 330 .1 .95 .95)
 		(maraca .1 .1)
@@ -54409,6 +54409,8 @@ EDITS: 1
 	(notch-selection (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f)
 					;	  (if (ffneq (maxamp) .066)
 					;	      (snd-display #__line__ ";notch-selection 60 hz 2: ~A" (maxamp)))
+#|
+	;; this can cause mus-audio-write to hang
 	(play-sound
 	 (lambda (data)
 	   (let ((len (sound-data-length data)))
@@ -54417,7 +54419,7 @@ EDITS: 1
 		(do ((i 0 (+ 1 i)))
 		    ((= i len))
 		  (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))))
-	
+|#
 	(close-sound ind)))
     
     (with-sound (:srate 44100 :play #f) (bigbird 0 60 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
@@ -54657,7 +54659,7 @@ EDITS: 1
   
   (for-each close-sound (sounds))
   
-  (with-sound ()
+  (with-sound (:play #f)
 	      (simple-ssb 0 .2 440 .1)
 	      (simple-nsin .6 .2 .1)
 	      (simple-ncos 0.7 .2 440 .1)
@@ -54736,9 +54738,9 @@ EDITS: 1
 	      (simple-multiarr 23.5 .5 440 .1))
   
   
-  (with-sound (:channels 4) (simple-dloc-4 0 2 440 .5))
+  (with-sound (:channels 4 :play #f) (simple-dloc-4 0 2 440 .5))
   
-  (with-sound ()
+  (with-sound (:play #f)
 	      (or1) (or2) (or3) (or4)
 	      (sample-desc 0 .2 440 .1)
 	      (sample-mdat .25 .2 440 .1)

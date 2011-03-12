@@ -1,7 +1,7 @@
 #include "snd.h"
 
 static int cairo_depth = 0;
-#define MUS_DEBUGGING 1
+
 #if HAVE_GTK_3
 cairo_t *make_cairo(GdkWindow *win, const char *func, const char *file, int line)
 #else
@@ -9,10 +9,11 @@ cairo_t *make_cairo(GdkDrawable *win, const char *func, const char *file, int li
 #endif
 {
 #if MUS_DEBUGGING
-  /* fprintf(stderr, "make_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth++); */
+  cairo_depth++;
+  /* fprintf(stderr, "make_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth); */
   if (cairo_depth > 1)
     {
-      fprintf(stderr, "make_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth++);
+      fprintf(stderr, "make_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth);
       /* abort(); */
     }
 #endif
@@ -22,7 +23,8 @@ cairo_t *make_cairo(GdkDrawable *win, const char *func, const char *file, int li
 void free_cairo(cairo_t *cr, const char *func, const char *file, int line)
 {
 #if MUS_DEBUGGING
-  /* fprintf(stderr, "free_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth--); */
+  cairo_depth--;
+  /* fprintf(stderr, "free_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth); */
 #endif
   cairo_destroy(cr);
 }
@@ -1221,7 +1223,9 @@ char *slist_selection(slist *lst)
  *   there's no way to drag a mark in the selection?
  *   if chans are syncd, shouldn't multichan mix/mark also?
  *   drag marks as edit is messy looking in gtk
- *   gtk3: slist if hover needs black text
+ *   gtk3: view files list if hover needs black text
+ *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
+ *   if basic-color set to black, labels are not visible, this is partly the case also in Motif
  *
  *   superimposed chans flicker a lot
  *     the cairo_t's are not shared in this case, so each chan is a separate display
@@ -1237,9 +1241,6 @@ char *slist_selection(slist *lst)
  *     make_partial_graph here can segfault
  *     if proc cursor, foreground color is not set back to old
  *
- *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
- *   if basic-color set to black, labels are not visible, this is partly the case also in Motif
- *
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
  *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.
  *     show controls for example, does not open the pane.
@@ -1250,7 +1251,6 @@ char *slist_selection(slist *lst)
  * requested: zoomed fft -- this is available in the transform dialog, but where to put chan-local controls?
  *              maybe add key bindings -- the numpad arrows?
  * bugs: play choppy if graphics -- seems ok?
- *       mus-audio-write called from play.scm sometimes hangs
  */
 
 
@@ -1368,18 +1368,19 @@ widget \"*.white_button\" style \"white_button\"\n");
 
 #else
 
-/* see gtkcssprovider.c toward the end */
+/* see gtkcssprovider.c toward the end 
+ *    why does this code (apparently) work, whereas the same code in snd-gmenu.c has no effect?
+ */
 
 void init_gtk(void)
 {
-  GError *error = NULL;
   wb_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(wb_provider),
     "#white_button { \n"
     "  padding: 0 0;\n"
     "  border-width: 0;\n"
     "}\n",
-    -1, &error);
+    -1, NULL);
 }
 #endif
 

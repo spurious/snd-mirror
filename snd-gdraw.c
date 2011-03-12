@@ -398,13 +398,17 @@ void allocate_color_map(int colormap)
 }
 
 
-void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b);
-
 void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
 {
+  /* only used for the fft-with-phases option, this is showing the phase via a colormap 
+   *   colors are 0..colormap_size: colors[k] = (int)((fft_phases[k] * color_map_size(ss)) / (2.0 * M_PI))
+   */
+  
   int i, x0, y0, x1, y1, cur, prev;
   color_t old_color;
   rgb_t r, g, b;
+
+  if (num <= 0) return;
 
   old_color = get_foreground_color(ax);
   cairo_save(ax->cr);
@@ -422,7 +426,7 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
       g = default_color->green; 
       b = default_color->blue; 
     }
-  else phases_rgb((mus_float_t)(colors[prev]) / (mus_float_t)color_map_size(ss), &r, &g, &b);
+  else phases_rgb((mus_float_t)prev / (mus_float_t)color_map_size(ss), &r, &g, &b);
   cairo_set_source_rgb(ax->cr, r, g, b); /* TODO: here and line 460 valgrind complaint coming from make_fft_graph (snd-chn.c:2441) -- no cr? */
 
   for (i = 1; i < num; i++)
@@ -447,7 +451,7 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
 	      g = default_color->green; 
 	      b = default_color->blue; 
 	    }
-	  else phases_rgb((mus_float_t)(colors[cur]) / (mus_float_t)color_map_size(ss), &r, &g, &b);
+	  else phases_rgb((mus_float_t)cur / (mus_float_t)color_map_size(ss), &r, &g, &b);
 	  cairo_set_source_rgb(ax->cr, r, g, b);
 	  prev = cur;
 	}

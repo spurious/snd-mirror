@@ -49,7 +49,7 @@ top_srcdir = @top_srcdir@
 
 datarootdir = ${prefix}/share
 pkgdatadir = ${datarootdir}/snd
-# snd-help.c looks for the documentation in /usr/local/share/doc/snd-11 -- perhaps it should be pkgdatadir? or passed at compile time
+# snd-help.c looks for the documentation in /usr/local/share/doc/snd-12 -- perhaps it should be pkgdatadir? or passed at compile time
 DEFS = -DSCRIPTS_DIR=\"$(pkgdatadir)\" @DEFS@
 
 SNDLIB_FILES = $(@SNDLIB_FILES@)

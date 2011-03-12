@@ -1,8 +1,8 @@
-Snd 11.14
+Snd 12.0
 
    selection has a loop play triangle
      mix and cursor have play triangles
-     if mouse click = play, the cursor is a right or left arrow.
+     if mouse click would trigger play, the cursor is a right or left arrow.
      removed draggable mark play triangle and mark-drag-triangle-hook.
      added variable play-arrow-size (default: 10)
 
@@ -33,7 +33,7 @@ Snd 11.14
      this used to be handled in extensions.* under names like global-sync-choice.
      sync-none was the previous default. examp.scm sync-all function renamed sync-everything.
 
-   moved with-reopen-menu to snd11.scm, and removed it from the preferences dialog
+   moved with-reopen-menu to snd11.scm, and removed it from the preferences dialog.
      This menu is almost the same as the built-in File:Open recent menu.
 
    moved make-hidden-controls-dialog from snd-motif|gtk.scm to snd11.scm, and removed it 

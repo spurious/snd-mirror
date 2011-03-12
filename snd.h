@@ -73,9 +73,9 @@
 
 #define SND_DATE "14-Mar-11"
 #ifndef SND_VERSION
-#define SND_VERSION "11.14"
+#define SND_VERSION "12.0"
 #endif
-#define SND_MAJOR_VERSION "11"
-#define SND_MINOR_VERSION "14"
+#define SND_MAJOR_VERSION "12"
+#define SND_MINOR_VERSION "0"
 
 #endif

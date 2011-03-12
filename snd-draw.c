@@ -2119,8 +2119,3 @@ point_t *get_grf_points(void) {return(NULL);}
 point_t *get_grf_points1(void) {return(NULL);}
 bool foreground_color_ok(XEN color, graphics_context *ax) {return(true);}
 #endif
-
-
-/* TODO: if gtk add gdk_cairo_create and cairo_destroy: make-cairo and free-cairo
- *         doc/test/translate all uses
- */

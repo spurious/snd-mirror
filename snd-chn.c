@@ -1733,7 +1733,6 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 		      cp->waiting_to_make_graph = true;
 #if USE_GTK
 		      cairo_pop_group_to_source(cp->cgx->ax->cr);
-		      /* TODO: destroy it */
 #endif
 		      return;               /* so don't run two enormous data readers in parallel */
 		    }
@@ -4144,10 +4143,8 @@ static void display_channel_data_with_size(chan_info *cp,
 		WITH_LINEAR_AXES,
 		up->show_axes);
 
-      if (XEN_PROCEDURE_P(pixel_list))
-	XEN_CALL_0(pixel_list, S_lisp_graph);
-      else make_lisp_graph(cp, pixel_list);
-      if (!(XEN_FALSE_P(pixel_list))) snd_unprotect_at(pixel_loc);
+      if (!(XEN_PROCEDURE_P(pixel_list)))
+	make_lisp_graph(cp, pixel_list); /* this uses the cairo_t set up above, but possible pixel_list proc does not */
 
 #if USE_GTK
       cairo_pop_group_to_source(uap->ax->cr);
@@ -4158,6 +4155,11 @@ static void display_channel_data_with_size(chan_info *cp,
 	  uap->ax->cr = NULL;
 	}
 #endif
+
+      if (XEN_PROCEDURE_P(pixel_list))
+	XEN_CALL_0(pixel_list, S_lisp_graph);
+
+      if (!(XEN_FALSE_P(pixel_list))) snd_unprotect_at(pixel_loc);
 
       if ((cp->hookable == WITH_HOOK) &&
 	  (XEN_HOOKED(after_lisp_graph_hook)))

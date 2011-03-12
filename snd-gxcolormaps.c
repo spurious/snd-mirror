@@ -832,7 +832,6 @@ static mus_float_t **make_phases_colormap(int size, XEN ignored)
 
 
 #if USE_GTK
-void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b);
 void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   x *= (2.0 * M_PI); /* match code above */

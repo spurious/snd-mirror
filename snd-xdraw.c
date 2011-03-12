@@ -355,6 +355,8 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
   int i, x0, y0, x1, y1, y2 = 0, y00 = -1, cur, prev;
   color_t old_color;
 
+  if (num <= 0) return;
+
   old_color = get_foreground_color(ax);
 
   x0 = points[0].x;

@@ -1092,8 +1092,6 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	}
       else display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
 #else
-      /* TODO: test the enved spectrum display -- in gtk, it never updates? 
-       */
       display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
 #endif
     }

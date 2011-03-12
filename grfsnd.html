@@ -1228,7 +1228,7 @@ It's also possible to load sndlib into cm.  Here's a note from Rick:
     Type 'q' to quit. 
     cm&gt; (list 1 2 3) 
     (1 2 3) 
-    cm&gt; (load "/Users/hkt/Software/snd-11/v.scm") 
+    cm&gt; (load "/Users/hkt/Software/snd-12/v.scm") 
     fm-violin 
     cm&gt; (with-sound () (fm-violin 0 1 440 .1)) 
     "test.aiff" 
@@ -1265,7 +1265,7 @@ included with Snd.  'make xm' should create
 a shared library named xm.so; you can load this at any time into Snd:
 </p>
 <pre>
-    &gt; <em class=typing>(define hxm (dlopen "/home/bil/snd-11/xm.so"))</em>
+    &gt; <em class=typing>(define hxm (dlopen "/home/bil/snd-12/xm.so"))</em>
     <em class=listener>#&lt;unspecified&gt;</em>
     &gt; <em class=typing>(dlinit hxm "Init_libxm")</em>
     <em class=listener>#t</em>
@@ -1582,7 +1582,7 @@ if you have an executable file with:
 
 <table border=0 cellpadding=5 hspace=20><tr><td>
 <pre>
-#!/home/bil/test/snd-11/snd -l
+#!/home/bil/test/snd-12/snd -l
 !#
 (define a-test 32)
 (display "hiho")
@@ -1592,12 +1592,12 @@ if you have an executable file with:
 <p>it can be executed just like any such script.
 </p>
 <pre>
-    /home/bil/test/snd-11/ script
+    /home/bil/test/snd-12/ script
     hiho
     :a-test
     32
     :(<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
-    /home/bil/test/snd-11/ 
+    /home/bil/test/snd-12/ 
 </pre>
 <p>
 As noted above, you can use the -e switch to use Snd as a pure
@@ -1612,7 +1612,7 @@ writes the result as "test.snd":
 
 <tr>
 <td bgcolor="#fbfbff"><pre>
-#!/home/bil/snd-11/snd -l
+#!/home/bil/snd-12/snd -l
 !#
 (open-sound "oboe.snd")
 (scale-by 2.0)
@@ -1621,7 +1621,7 @@ writes the result as "test.snd":
 </pre></td><td width=60></td>
 
 <td bgcolor="#FdFdf2"><pre>
-#!/home/bil/snd-11/snd -batch
+#!/home/bil/snd-12/snd -batch
 open_sound "oboe.snd"
 scale_by 2.0
 save_sound_as "test.snd"
@@ -1649,7 +1649,7 @@ as it scans the startup arguments (see snd-test.scm).
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
-#!/home/bil/test/snd-11/snd -l
+#!/home/bil/test/snd-12/snd -l
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...")
