@@ -317,7 +317,7 @@ s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error);     /* (
 s7_Int s7_numerator(s7_pointer x);                                          /* (numerator x) */
 s7_Int s7_denominator(s7_pointer x);                                        /* (denominator x) */
 double s7_random(s7_scheme *sc, s7_pointer state);                          /* (random x) */
-s7_pointer s7_make_random_state(s7_scheme *sc, s7_Int seed);                /* (make-random-state seed) */
+s7_pointer s7_make_random_state(s7_scheme *sc, s7_pointer seed);            /* (make-random-state seed) */
 
 bool s7_is_complex(s7_pointer arg);                                         /* (complex? arg) */
 s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b);        /* returns the Scheme object a+bi */
@@ -852,7 +852,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 14-Mar:    s7_make_random_state, and optional state argument to s7_random.
+ * 14-Mar:    s7_make_random_state, optional state argument to s7_random, random-state->list.
  * 10-Feb:    s7_vector_print_length, s7_set_vector_print_length.
  * 7-Feb:     s7_begin_hook, s7_set_begin_hook.
  * 25-Jan:    s7_is_thread, s7_thread, s7_make_thread, s7_thread_s7, s7_thread_data. 

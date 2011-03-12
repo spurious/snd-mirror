@@ -9531,6 +9531,8 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
  *     (random num state) -> same but use this state
  *     (make-random-state seed) -> make a new state
  *     (make-random-state seed type) ??
+ *   to save the current seed, use copy
+ *   to save it across load, random-state->list and list->random-state.
  */
 
 typedef struct {
@@ -9565,35 +9567,40 @@ static bool equal_rng(void *val1, void *val2)
 }
 
 
-s7_pointer s7_make_random_state(s7_scheme *sc, s7_Int seed)
-{
-  s7_rng_t *r;
-  r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
-  r->ran_seed = seed;
-  r->ran_carry = 1675393560;  /* should this be dependent on the seed? */
-  return(s7_make_object(sc, rng_tag, (void *)r));
-}
-
-  
-static s7_pointer g_make_random_state(s7_scheme *sc, s7_pointer args)
+s7_pointer s7_make_random_state(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'. \
 Pass this as the second argument to 'random' to get a repeatable random number sequence:\n\
     (let ((seed (make-random-state 1234))) (random 1.0 seed))"
 
-  if (!s7_is_integer(car(args)))
-    return(s7_wrong_type_arg_error(sc, "make-random-state,", 0, car(args), "an integer"));
+  s7_rng_t *r;
 
-  return(s7_make_random_state(sc, s7_integer(car(args))));
+  if (!(s7_is_integer(car(args))))
+    return(s7_wrong_type_arg_error(sc, "make-random-state,", 1, car(args), "an integer"));
+
+  if (cdr(args) == sc->NIL)
+    {
+      r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
+      r->ran_seed = s7_integer(car(args));
+      r->ran_carry = 1675393560;  /* should this be dependent on the seed? */
+      return(s7_make_object(sc, rng_tag, (void *)r));
+    }
+
+  if (!(s7_is_integer(cadr(args))))
+    return(s7_wrong_type_arg_error(sc, "make-random-state,", 2, cadr(args), "an integer"));
+  
+  r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
+  r->ran_seed = s7_integer(car(args));
+  r->ran_carry = s7_integer(cadr(args));
+  return(s7_make_object(sc, rng_tag, (void *)r));
 }
 
 
 static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer obj)
 {
-  s7_rng_t *r;
   if (c_object_type(obj) == rng_tag)
     {
-      s7_rng_t *new_r;
+      s7_rng_t *r, *new_r;
       r = (s7_rng_t *)s7_object_value(obj);
       new_r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
       new_r->ran_seed = r->ran_seed;
@@ -9601,6 +9608,23 @@ static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer obj)
       return(s7_make_object(sc, rng_tag, (void *)new_r));
     }
   /* I can't find a way to copy a gmp random generator */
+  return(sc->F);
+}
+
+
+static s7_pointer g_random_state_to_list(s7_scheme *sc, s7_pointer obj)
+{
+  #define H_random_state_to_list "(random-state->list r) returns the random state object as a list.\
+You can later apply make-random-state to this list to continue a random number sequence from any point."
+
+  if (c_object_type(obj) == rng_tag)
+    {
+      s7_rng_t *r;
+      r = (s7_rng_t *)s7_object_value(obj);
+      return(make_list_2(sc, 
+			 s7_make_integer(sc, r->ran_seed), 
+			 s7_make_integer(sc, r->ran_carry)));
+    }
   return(sc->F);
 }
 
@@ -30785,7 +30809,7 @@ static void s7_gmp_init(s7_scheme *sc)
 
   big_rng_tag = s7_new_type("<big-random-number-generator>", print_big_rng, free_big_rng, equal_big_rng, NULL, NULL, NULL);
   s7_define_function(sc, "random",              big_random,           1, 1, false, H_random);
-  s7_define_function(sc, "make-random-state",   make_big_random_state,1, 0, false, H_make_random_state);
+  s7_define_function(sc, "make-random-state",   make_big_random_state,1, 1, false, H_make_random_state);
 
   s7_define_function(sc, "bignum",              g_bignum,             1, 1, false, H_bignum);
   s7_define_function(sc, "bignum?",             g_is_bignum,          1, 0, false, H_is_bignum);
@@ -31327,7 +31351,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "exact->inexact",            g_exact_to_inexact,         1, 0, false, H_exact_to_inexact);
 
   s7_define_function(sc, "random",                    g_random,                   1, 1, false, H_random);
-  s7_define_function(sc, "make-random-state",         g_make_random_state,        1, 0, false, H_make_random_state);
+  s7_define_function(sc, "make-random-state",         s7_make_random_state,       1, 1, false, H_make_random_state);
+  s7_define_function(sc, "random-state->list",        g_random_state_to_list,     1, 0, false, H_random_state_to_list);
 
   s7_define_function(sc, "integer-length",            g_integer_length,           1, 0, false, H_integer_length);
   s7_define_function(sc, "logior",                    g_logior,                   0, 0, true,  H_logior);
