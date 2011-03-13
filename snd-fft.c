@@ -1688,7 +1688,6 @@ static void finish_sonogram(sonogram_state *sg)
 	    {
 	      finish_progress_report(cp);
 	      sg->minibuffer_needs_to_be_cleared = false;
-	      /* TODO: valgrind says this can be invalid */
 	    }
 	}
     }

@@ -1541,20 +1541,24 @@ static XEN g_save_envelopes(XEN filename)
   if (XEN_STRING_P(filename)) 
     name = mus_expand_filename(XEN_TO_C_STRING(filename));
   else name = mus_strdup("envs.save");
+  
+  if (name)
+    {
+      fd = FOPEN(name, "w");
+      if (fd) 
+	{
+	  save_envelope_editor_state(fd);
+	  snd_fclose(fd, name);
+	}
+      free(name);
 
-  fd = FOPEN(name, "w");
-  if (fd) 
-    {
-      save_envelope_editor_state(fd);
-      snd_fclose(fd, name);
-    }
-  if (name) free(name);
-  if (!fd)
-    {
-      XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_save_envelopes ": can't save ~S, ~A"),
-			   filename,
-			   C_TO_XEN_STRING(snd_open_strerror())));
+      if (!fd)
+	{
+	  XEN_ERROR(CANNOT_SAVE,
+		    XEN_LIST_3(C_TO_XEN_STRING(S_save_envelopes ": can't save ~S, ~A"),
+			       filename,
+			       C_TO_XEN_STRING(snd_open_strerror())));
+	}
     }
   return(filename);
 }

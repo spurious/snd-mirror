@@ -419,7 +419,7 @@ void backup_listener_to_previous_expression(void) {}
 
 
 #if HAVE_SCHEME && (!USE_NO_GUI)
-static bool begin_hook(s7_scheme *sc)
+static bool listener_begin_hook(s7_scheme *sc)
 {
   ss->C_g_typed = false;
 
@@ -696,7 +696,7 @@ void listener_return(widget_t w, int last_prompt)
 
 	  old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
 	  gc_loc = s7_gc_protect(s7, old_port);
-	  s7_set_begin_hook(s7, begin_hook);
+	  s7_set_begin_hook(s7, listener_begin_hook);
 	  
 	  if (XEN_HOOKED(read_hook))
 	    form = run_or_hook(read_hook, 

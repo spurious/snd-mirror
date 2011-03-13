@@ -814,6 +814,115 @@ GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_backgro
 }
 
 
+/* TODO: need cursor/pointer text check and probably trim off '(' etc 
+ */
+
+static void listener_help_callback(GtkWidget *w, gpointer info)
+{
+  /* for selected text or text near cursor or text near pointer, get help or completion,
+   *    or at least apropos, show in help dialog
+   */
+  GtkTextIter start, end;
+  if (gtk_text_buffer_get_selection_bounds(LISTENER_BUFFER, &start, &end))
+    {
+      char *txt;
+      txt = gtk_text_buffer_get_text(LISTENER_BUFFER, &start, &end, true);
+      if (txt) 
+	{
+	  snd_help(txt, XEN_TO_C_STRING(g_snd_help(C_TO_XEN_STRING(txt), 0)), WITH_WORD_WRAP);
+	  g_free(txt);
+	}
+    }
+}
+
+
+static void listener_save_callback(GtkWidget *w, gpointer info)
+{
+  FILE *fp = NULL;
+  fp = FOPEN("listener.txt", "w");
+  if (fp) 
+    {
+      save_listener_text(fp);
+      snd_fclose(fp, "listener.txt");
+    }
+}
+
+
+static void listener_clear_callback(GtkWidget *w, gpointer info)
+{
+  clear_listener();
+}
+
+
+static void listener_stop_callback(GtkWidget *w, gpointer info)
+{
+  control_g(any_selected_sound());
+}
+
+
+#if HAVE_SCHEME
+static bool (*current_begin_hook)(s7_scheme *sc);
+
+static bool stacktrace_begin_hook(s7_scheme *sc)
+{
+  s7_stacktrace(sc, s7_name_to_value(sc, "*stderr*"));
+  s7_set_begin_hook(s7, current_begin_hook);
+  return(false);
+}
+
+/* TODO: this doesn't drop down during computation? */
+
+static void listener_stacktrace_callback(GtkWidget *w, gpointer info)
+{
+  /* if we're running, replace the current begin_hook with one that grabs a stacktrace and 
+   *    replaces itself with the previous one
+   */
+  current_begin_hook = s7_begin_hook(s7);
+  if (current_begin_hook == NULL) return;      /* s7 is not running */
+  s7_set_begin_hook(s7, stacktrace_begin_hook);
+}
+#endif
+
+
+static void listener_popup_populate_callback(GtkTextView *view, GtkMenu *menu, gpointer ignored)
+{
+  /* this apparently only happens once */
+  GtkWidget *w;
+  
+  /* prepending, so do everything backwards */
+  w = gtk_separator_menu_item_new(); 
+  gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
+  gtk_widget_show(w); 
+
+  w = gtk_menu_item_new_with_label("Clear"); 
+  gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
+  g_signal_connect(w, "activate", G_CALLBACK(listener_clear_callback), NULL);
+  gtk_widget_show(w); 
+
+  w = gtk_menu_item_new_with_label("Save"); 
+  gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
+  g_signal_connect(w, "activate", G_CALLBACK(listener_save_callback), NULL);
+  gtk_widget_show(w); 
+
+#if HAVE_SCHEME
+  w = gtk_menu_item_new_with_label("Stacktrace"); 
+  gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
+  g_signal_connect(w, "activate", G_CALLBACK(listener_stacktrace_callback), NULL);
+  gtk_widget_show(w); 
+#endif
+
+  w = gtk_menu_item_new_with_label("Stop"); 
+  gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
+  g_signal_connect(w, "activate", G_CALLBACK(listener_stop_callback), NULL);
+  gtk_widget_show(w); 
+
+  w = gtk_menu_item_new_with_label("Help"); 
+  gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
+  g_signal_connect(w, "activate", G_CALLBACK(listener_help_callback), NULL);
+  gtk_widget_show(w); 
+}
+
+
 static void make_listener_widget(int height)
 {
   if (!listener_text)
@@ -839,6 +948,7 @@ static void make_listener_widget(int height)
       SG_SIGNAL_CONNECT(listener_text, "button_release_event", listener_button_release, NULL);
       SG_SIGNAL_CONNECT(listener_text, "enter_notify_event", listener_focus_callback, NULL);
       SG_SIGNAL_CONNECT(listener_text, "leave_notify_event", listener_unfocus_callback, NULL);
+      SG_SIGNAL_CONNECT(listener_text, "populate-popup", listener_popup_populate_callback, NULL);
       ss->sgx->listener_pane = listener_text;
 
       if (!prompt_not_editable) 

@@ -1169,12 +1169,86 @@ static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event
 }
 
 
+/* ---------------- popup callbacks ---------------- */
+
+static Widget listener_popup = NULL;
+
+static void listener_help_callback(Widget w, XtPointer context, XtPointer info)
+{
+  char *txt;
+  txt = XmTextGetSelection(listener_text);
+  if (txt)
+    {
+      snd_help(txt, XEN_TO_C_STRING(g_snd_help(C_TO_XEN_STRING(txt), 0)), WITH_WORD_WRAP);
+      XtFree(txt);
+    }
+}
+
+static void listener_save_callback(Widget w, XtPointer context, XtPointer info)
+{
+  FILE *fp = NULL;
+  fp = FOPEN("listener.txt", "w");
+  if (fp) 
+    {
+      save_listener_text(fp);
+      snd_fclose(fp, "listener.txt");
+    }
+}
+
+
+static void listener_clear_callback(Widget w, XtPointer context, XtPointer info)
+{
+  clear_listener();
+}
+
+
+#if HAVE_SCHEME
+static bool (*current_begin_hook)(s7_scheme *sc);
+
+static bool stacktrace_begin_hook(s7_scheme *sc)
+{
+  s7_stacktrace(sc, s7_name_to_value(sc, "*stderr*"));
+  s7_set_begin_hook(s7, current_begin_hook);
+  return(false);
+}
+
+
+static void listener_stacktrace_callback(Widget w, XtPointer context, XtPointer info)
+{
+  /* if we're running, replace the current begin_hook with one that grabs a stacktrace and 
+   *    replaces itself with the previous one
+   */
+  current_begin_hook = s7_begin_hook(s7);
+  if (current_begin_hook == NULL) return;      /* s7 is not running */
+  s7_set_begin_hook(s7, stacktrace_begin_hook);
+}
+#endif
+
+
+static void listener_stop_callback(Widget w, XtPointer context, XtPointer info)
+{
+  control_g(any_selected_sound());
+}
+
+
+static void listener_popup_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmPopupHandlerCallbackStruct *cb = (XmPopupHandlerCallbackStruct *)info;
+  XEvent *e;
+  e = cb->event;
+  if (e->type == ButtonPress)
+    {
+      cb->menuToPost = listener_popup;
+    }
+}
+
+
 static void make_listener_widget(int height)
 {
   if (!listener_text)
     {
       Arg args[32];
-      Widget wv, wh;
+      Widget wv, wh, w;
       int n;
 
       if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = true;}
@@ -1202,6 +1276,28 @@ static void make_listener_widget(int height)
       listener_text = XmCreateScrolledText(listener_pane, (char *)"lisp-listener", args, n);
       ss->sgx->listener_pane = listener_text;
 
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC); n++;
+      listener_popup = XmCreatePopupMenu(listener_text, (char *)"listener-popup", args, n);
+
+      w = XtCreateManagedWidget("Help", xmPushButtonWidgetClass, listener_popup, args, n);
+      XtAddCallback(w, XmNactivateCallback, listener_help_callback, NULL);
+
+      w = XtCreateManagedWidget("Stop", xmPushButtonWidgetClass, listener_popup, args, n);
+      XtAddCallback(w, XmNactivateCallback, listener_stop_callback, NULL);
+
+#if HAVE_SCHEME
+      w = XtCreateManagedWidget("Stacktrace", xmPushButtonWidgetClass, listener_popup, args, n);
+      XtAddCallback(w, XmNactivateCallback, listener_stacktrace_callback, NULL);
+#endif
+
+      w = XtCreateManagedWidget("Save", xmPushButtonWidgetClass, listener_popup, args, n);
+      XtAddCallback(w, XmNactivateCallback, listener_save_callback, NULL);
+
+      w = XtCreateManagedWidget("Clear", xmPushButtonWidgetClass, listener_popup, args, n);
+      XtAddCallback(w, XmNactivateCallback, listener_clear_callback, NULL);
+
       XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
 
       XtManageChild(listener_text);
@@ -1216,6 +1312,8 @@ static void make_listener_widget(int height)
       lisp_window = XtParent(listener_text);
       XtAddEventHandler(lisp_window, EnterWindowMask, false, listener_focus_callback, NULL);
       XtAddEventHandler(lisp_window, LeaveWindowMask, false, listener_unfocus_callback, NULL);
+
+      XtAddCallback(listener_text, XmNpopupHandlerCallback, listener_popup_callback, NULL);
 
       XmChangeColor(lisp_window, ss->sgx->basic_color);
       XtVaGetValues(lisp_window, XmNverticalScrollBar, &wv, 

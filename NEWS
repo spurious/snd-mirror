@@ -71,10 +71,12 @@ Snd 12.0
      affect the time domain graph.  (There isn't any place to put sliders for
      this, and the Options:Transform sliders aren't always handy).
 
+   in s7, random-state->list.
+
    The Gtk Snd now needs Gtk 2.12 or later.
 
 checked: sbcl 1.0.46, gtk 3.0.1|2, mpc 0.9
 
 
 Thanks!: Louis Gorenfeld, Hartmut Noack, Philipp Uberbacher, Fernando Lopez-Lezcano,
-         Mike Scholz.
+         Mike Scholz, Rick Taube.

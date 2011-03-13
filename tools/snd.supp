@@ -809,6 +809,171 @@
 }
 
 {
+   gtk-3111
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:*
+}
+
+{
+   gtk-3112
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   fun:*
+}
+
+{
+   gtk-315
+   Memcheck:Leak
+   fun:malloc
+   fun:cairo_font_options_copy
+   fun:*
+}
+
+{
+   gtk-317
+   Memcheck:Leak
+   fun:malloc
+   fun:cairo_font_options_create
+   fun:*
+}
+
+{
+   gtk-320
+   Memcheck:Leak
+   fun:malloc
+   fun:FT_New_Memory
+   fun:*
+}
+
+{
+   gtk-321
+   Memcheck:Leak
+   fun:malloc
+   fun:ft_mem_qalloc
+   fun:*
+}
+
+{
+   gtk-322
+   Memcheck:Leak
+   fun:calloc
+   fun:XkbGetMap
+   fun:*
+}
+
+{
+   gtk-329
+   Memcheck:Leak
+   fun:calloc
+   fun:XkbGetNames
+   fun:*
+}
+
+{
+   gtk-323
+   Memcheck:Leak
+   fun:calloc
+   fun:XkbAllocServerMap
+   fun:*
+}
+
+{
+   gtk-324
+   Memcheck:Leak
+   fun:malloc
+   fun:XOpenDevice
+   fun:*
+}
+
+{
+   gtk-325
+   Memcheck:Leak
+   fun:calloc
+   fun:_XkbReadGetMapReply
+   fun:*
+}
+
+{
+   gtk-326
+   Memcheck:Leak
+   fun:memalign
+   fun:posix_memalign
+   fun:*
+}
+
+{
+   gtk-327
+   Memcheck:Leak
+   fun:calloc
+   fun:XkbAllocClientMap
+   fun:*
+}
+
+
+{
+   gtk-319
+   Memcheck:Leak
+   fun:realloc
+   fun:g_realloc
+   fun:*
+}
+
+{
+   gtk-318
+   Memcheck:Leak
+   fun:malloc
+   fun:FcPatternCreate
+   fun:*
+}
+
+{
+   gtk-316
+   Memcheck:Leak
+   fun:realloc
+   fun:g_realloc
+   fun:*
+}
+
+{
+   gtk-311
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:g_strdup
+   fun:*
+}
+
+{
+   gtk-312
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:g_pattern_spec_new
+   fun:*
+}
+
+{
+   gtk-313
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:g_strjoinv
+   fun:*
+}
+
+{
+   gtk-314
+   Memcheck:Leak
+   fun:malloc
+   fun:realloc
+   fun:g_realloc
+   fun:*
+}
+
+{
    gtk-4
    Memcheck:Cond
    fun:g_utf8_validate

@@ -20335,17 +20335,40 @@ static void display_frame(s7_scheme *sc, s7_pointer envir, s7_pointer port)
       (is_pair(cdr(envir))))
     {
       s7_pointer args, op;
+      
       args = car(envir);
       op = cadr(envir);
+
       if ((is_pair(op)) &&
-	  (is_pair(car(op))) &&
-	  (caar(op) == sc->__FUNC__))
+	  (is_pair(car(op))))
 	{
 	  s7_pointer lst, sym, proc;
+	  
+	  /* there can be locals (of 'do' for example) preceding a function call here:
+	   *    (((i . 1)) 
+	   *     ((n . 2)) 
+	   *     ((__func__ idle "t257.scm" 40)) ...)
+	   */
+	  if (caar(op) != sc->__FUNC__)
+	    {
+	      format_to_output(sc, port, "~A ", make_list_1(sc, args));
+	      args = op;
+	      if (is_pair(cddr(envir)))
+		{
+		  op = caddr(envir);
+		  if ((!is_pair(op)) ||
+		      (!is_pair(car(op))) ||
+		      (caar(op) != sc->__FUNC__))
+		    return;
+		}
+	      else return;
+	    }
+
 	  lst = car(op);
 	  if (s7_is_symbol(cdr(lst)))
 	    sym = cdr(lst);
 	  else sym = cadr(lst);
+
 	  proc = s7_symbol_local_value(sc, sym, envir);
 	  if (is_procedure(proc))
 	    {
@@ -31922,6 +31945,8 @@ the error type and the info passed to the error handler.");
  *       [but in Snd, that requires keeping track of its current value]
  *     still mixed arith: * + / - < > <= >= = min max, but I haven't found any bugs
  *     segfault in eval-ptree in vct-ref test 4 with-threaded-sound or in test 29 (s7test) -- infinite recursion in mark
+ *
+ * TODO: doc/test new random stuff
  *
  * --------------------------------------------------------------------------------
  * s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10
