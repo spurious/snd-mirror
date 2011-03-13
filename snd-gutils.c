@@ -1218,12 +1218,12 @@ char *slist_selection(slist *lst)
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators, but they still look dumb
  *   prefs entries should be white, not gray!
- *   popup in listener: help if selected text (selection goes away if clicked!)
  *   if chans are syncd, shouldn't multichan mix/mark also?
  *   drag marks as edit is messy looking in gtk
  *   gtk3: view files list if hover needs black text
  *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
  *   if basic-color set to black, labels are not visible, this is partly the case also in Motif
+ *   trim text for listener popup help [would trace be interesting enough for s7.html?]
  *
  *   superimposed chans flicker a lot
  *     the cairo_t's are not shared in this case, so each chan is a separate display
@@ -1236,7 +1236,6 @@ char *slist_selection(slist *lst)
  *     [see snd_conffile.scm for more key bindings]
  *
  *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
- *     make_partial_graph here can segfault
  *     if proc cursor, foreground color is not set back to old
  *
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"

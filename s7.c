@@ -12328,7 +12328,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_C_POINTER:
       {
 	char *str;
-	str = calloc(32, sizeof(char));
+	str = (char *)calloc(32, sizeof(char));
 	snprintf(str, 32, "#<c_pointer %p>", raw_pointer(obj));
 	return(str);
       }
@@ -30570,7 +30570,7 @@ Pass this as the second argument to 'random' to get a repeatable random number s
       return(s7_make_object(sc, big_rng_tag, (void *)r));
     }
 
-  return(g_make_random_state(sc, args));
+  return(s7_make_random_state(sc, args));
 }
 
 
