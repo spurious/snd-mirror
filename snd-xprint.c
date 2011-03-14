@@ -145,9 +145,6 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    case PRINT_ENV: 
 	      enved_print(name); 
 	      break;
-
-	    case PRINT_REGION:
-	      break;
 	    }
 	  redirect_snd_error_to(NULL, NULL);
 	  if (!print_error)
@@ -172,9 +169,6 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 
 	    case PRINT_ENV: 
 	      enved_print(str); 
-	      break;
-
-	    case PRINT_REGION:
 	      break;
 	    }
 	  redirect_snd_error_to(NULL, NULL);

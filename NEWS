@@ -73,6 +73,7 @@ Snd 12.0
      this, and the Options:Transform sliders aren't always handy).
 
    in Motif, libXpm is no longer optional.
+   the Region browser print option has been removed.
 
    in s7, random-state->list.
 

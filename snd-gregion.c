@@ -332,13 +332,6 @@ static void region_play_callback(GtkWidget *w, gpointer context)
 }
 
 
-static void region_print_callback(GtkWidget *w, gpointer context)
-{
-  if (current_region != -1)
-    region_print(eps_file(ss), "region", rsp->chans[0]);
-}
-
-
 static void region_edit_callback(GtkWidget *w, gpointer context)
 {
   if (current_region != -1) 
@@ -432,7 +425,7 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
 }
 
 
-static GtkWidget *print_button, *edit_button, *unlist_button;
+static GtkWidget *edit_button, *unlist_button;
 static GtkWidget *dismiss_button, *help_button;
 
 static void make_region_dialog(void)
@@ -583,23 +576,11 @@ static void make_region_dialog(void)
   gtk_widget_show(edit_button);
   widget_modify_bg(edit_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
 
-  print_button = gtk_button_new_with_label("print");
-  SG_SIGNAL_CONNECT(print_button, "clicked", region_print_callback, NULL);
-  gtk_box_pack_start(GTK_BOX(infobox), print_button, true, true, 2);
-  gtk_widget_show(print_button);
-  widget_modify_bg(print_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
-
   unlist_button = gtk_button_new_with_label("unlist");
   SG_SIGNAL_CONNECT(unlist_button, "clicked", region_unlist_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), unlist_button, true, true, 2);
   gtk_widget_show(unlist_button);
   widget_modify_bg(unlist_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
-
-  /* these no longer work right
-  widget_modify_bg(edit_button, GTK_STATE_ACTIVE, ss->sgx->red);
-  widget_modify_bg(print_button, GTK_STATE_ACTIVE, ss->sgx->red);
-  widget_modify_bg(unlist_button, GTK_STATE_ACTIVE, ss->sgx->red);
-  */
 
   gtk_widget_show(region_dialog);
 

@@ -589,23 +589,6 @@ bool snd_print(const char *output)
 }
 
 
-void region_print(const char *output, const char *title, chan_info *cp)
-{
-  if ((output) && (*output))
-    {
-      int err;
-      err = start_ps_graph(output, title);
-      if (err == 0)
-	{
-	  ps_graph(cp, 0, 0);
-	  end_ps_graph();
-	}
-      else snd_error("print region %s failed: %s", output, snd_io_strerror());
-    }
-  else snd_error_without_format("print region: eps file name needed");
-}
-
-
 void print_enved(const char *output, int y0)
 {
   if ((output) && (*output))

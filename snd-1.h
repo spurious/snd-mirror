@@ -722,7 +722,6 @@ void ps_set_bold_peak_numbers_font(void);
 void ps_set_peak_numbers_font(void);
 void ps_set_tiny_numbers_font(void);
 bool snd_print(const char *output);
-void region_print(const char *output, const char *title, chan_info *cp);
 void print_enved(const char *output, int y0);
 void g_init_print(void);
 

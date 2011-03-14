@@ -26,9 +26,6 @@ static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gi
 
     case PRINT_ENV:
       break;
-
-    case PRINT_REGION:
-      break;
     }
 }
 

@@ -318,13 +318,6 @@ static void region_play_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void region_print_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  if (current_region != -1)
-    region_print(eps_file(ss), "region", rsp->chans[0]);
-}
-
-
 static void region_edit_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (current_region != -1) 
@@ -442,7 +435,7 @@ static void make_region_dialog(void)
   int n, i, id;
   Arg args[32];
   Widget formw, last_row, infosep, fr ,rw;
-  Widget prtb, editb, unlistb, plw, panes, toppane, sep1 = NULL;
+  Widget editb, unlistb, plw, panes, toppane, sep1 = NULL;
   XmString xok, xinsert, xhelp, titlestr;
   regrow *r;
   chan_info *cp;
@@ -642,12 +635,6 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNarmColor, ss->sgx->red); n++;
   editb = XtCreateManagedWidget("edit", xmPushButtonWidgetClass, rw, args, n);
   XtAddCallback(editb, XmNactivateCallback, region_edit_callback, NULL);
-
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
-  XtSetArg(args[n], XmNarmColor, ss->sgx->red); n++;
-  prtb = XtCreateManagedWidget("print", xmPushButtonWidgetClass, rw, args, n);
-  XtAddCallback(prtb, XmNactivateCallback, region_print_callback, NULL);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
