@@ -7401,6 +7401,9 @@ if test "x$ac_cv_lib_m_XmCreateForm" = xyes; then :
 	  with_motif=yes
 	  ac_snd_have_gui=yes
 
+  	  XLIBS="$XLIBS -lXpm"
+	  TEST_LIBS="$TEST_LIBS -lXpm"
+
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"
 	    $as_echo "#define HAVE_STATIC_XM 1" >>confdefs.h

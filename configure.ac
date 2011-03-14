@@ -724,6 +724,9 @@ else
 	  with_motif=yes
 	  ac_snd_have_gui=yes
 
+  	  XLIBS="$XLIBS -lXpm"
+	  TEST_LIBS="$TEST_LIBS -lXpm"
+
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"
 	    AC_DEFINE(HAVE_STATIC_XM)
