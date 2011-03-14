@@ -13,7 +13,7 @@ Snd 12.0
    moved delete-selection-and-smooth from selection.scm to C.
    added delete-samples-and-smooth.
    typing space in a graph plays from the cursor, space while playing = pause/continue
-   startup window size is 600x400
+   startup window size is 700x300
    auto-resize defaults to false in Gtk, true in Motif.
    in gtk, the trailing cr argument to draw-axes in not optional.
    removed click-for-listener-help.
@@ -54,7 +54,8 @@ Snd 12.0
      and panic.scm.  Also with-tooltips to turn tooltips on or off.
 
    The built-in popup menus are now context sensitive, and the files popup.scm
-     and gtk-popup.scm have been removed. 
+     and gtk-popup.scm have been removed. In s7/Motif, the listener popup can
+     show a stacktrace of code as it is running!
 
    In the beginning, before the libxm library, I thought it made sense to include
      functions like draw-line which would draw a line, no matter what graphics
@@ -73,7 +74,7 @@ Snd 12.0
 
    in s7, random-state->list.
 
-   The Gtk Snd now needs Gtk 2.12 or later.
+   Snd now needs Gtk 2.12 or later.
 
 checked: sbcl 1.0.46, gtk 3.0.1|2, mpc 0.9
 

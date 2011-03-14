@@ -96,12 +96,10 @@
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * SOMEDAY: generics like length
+ * SOMEDAY: *stderr* in run format
  * TODO: we miss shadowed funcs: (spectrum k) where spectrum is a vct complains about args to func spectrum
  *   can this be fixed by checking symbol-value before using the built-in walker?
  * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings (if default types are used in s7)
- *
- * TODO: is clm-print supposed to work anymore?
- *    (define (r) (run (do ((i 0 (+ i 1))) ((= i 100)) (clm-print "~F " (random 1.0)))) (newline))
  */
 
 
@@ -8347,7 +8345,7 @@ static xen_value *symbol2string_1(ptree *pt, xen_value **args, int num_args)
 }
 
 #if USE_SND
-static void snd_print_s(int *args, ptree *pt) {listener_append(STRING_ARG_1);}
+static void snd_print_s(int *args, ptree *pt) {fprintf(stderr, STRING_ARG_1);}
 
 
 static xen_value *snd_print_1(ptree *pt, xen_value **args, int num_args) {return(package(pt, R_BOOL, snd_print_s, "snd_print_s", args, 1));}
@@ -14977,6 +14975,14 @@ static void format_s(int *args, ptree *pt)
 }
 
 
+static void clm_print_s(int *args, ptree *pt) 
+{
+  if (STRING_RESULT) free(STRING_RESULT);
+  STRING_RESULT = mus_strdup(s7_format(s7, xen_values_to_list(pt, args)));
+  fprintf(stderr, "%s", STRING_RESULT);
+}
+
+
 static void s7_version_s(int *args, ptree *pt)
 {
   if (STRING_RESULT) free(STRING_RESULT);
@@ -15119,6 +15125,12 @@ static xen_value *getpid_1(ptree *prog, xen_value **args, int num_args)
 static xen_value *format_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package_n_xen_args(prog, R_STRING, format_s, "format_s", args, num_args));
+}
+
+
+static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package_n_xen_args(prog, R_STRING, clm_print_s, "clm_print_s", args, num_args));
 }
 
 
@@ -16671,7 +16683,7 @@ static void init_walkers(void)
   INIT_WALKER("quote",     make_walker(NULL, quote_form, NULL, 1, 1, R_ANY, false, 0));
 
   INIT_WALKER("format",    make_walker(format_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN));
-  INIT_WALKER("clm-print", make_walker(format_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN));
+  INIT_WALKER("clm-print", make_walker(clm_print_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN));
 
   INIT_WALKER("open-output-file", make_walker(open_output_file_1, NULL, NULL, 1, 2, R_XEN, false, 1, -R_STRING));
   INIT_WALKER("close-output-port", make_walker(close_output_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));

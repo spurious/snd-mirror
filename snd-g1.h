@@ -57,6 +57,8 @@ void initialize_colormap(void);
 void reflect_color_list(bool setup_time);
 void set_with_gl(bool val, bool with_dialogs);
 void g_init_gxdraw(void);
+gchar* scale_int_format_callback(GtkScale *w, gdouble val, gpointer data);
+gchar* scale_double_format_callback(GtkScale *w, gdouble val, gpointer data);
 
 
 

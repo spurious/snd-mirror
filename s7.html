@@ -399,6 +399,10 @@ r1
 19
 </pre>
 
+<p>copy the random-state to save a spot in a random number sequence, or save the random-state as a list via
+random-state->list, then to restart from that point, apply make-random-state to that list.
+</p>
+
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -7680,6 +7684,35 @@ message to the REPL.  Otherwise we handle everything as in the previous REPLs.
 or if the GUI is thread-safe and you're using s7_threads for the interleaved expressions, 
 then you don't need to use begin_hook.
 </p>
+
+<p>begin_hook provides a way to call arbitrary C or Scheme code at any time;
+the mind boggles!  In the Snd listener, for example, you can ask for a stack trace
+to see if your long computation is making progress.  Since the normal
+begin_hook function keeps the interface alive, a callback can save the current
+begin_hook function, insert its own function to do something useful, then that function can
+replace itself with the original:
+</p>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<tr><td bgcolor="#fbfbf0">
+<pre>
+static bool (*current_begin_hook)(s7_scheme *sc);       /* this will be the saved original function */
+
+static bool stacktrace_begin_hook(s7_scheme *sc)        /* this is our one-shot replacement */
+{
+  s7_stacktrace(sc, s7_name_to_value(sc, "*stderr*"));  /* it prints a stacktrace */
+  s7_set_begin_hook(s7, current_begin_hook);            /*   then replaces itself with the original */
+  return(false);
+}
+
+static void listener_stacktrace_callback(...)           /* the usual callback boilerplate here */
+{
+  current_begin_hook = s7_begin_hook(s7);               /* save current begin_hook function */
+  if (current_begin_hook)                               /* s7 is running, so... */
+    s7_set_begin_hook(s7, stacktrace_begin_hook);       /*   insert our stacktrace function in its place */
+}
+</pre>
+</td></tr></table>
 
 <br><br>
 

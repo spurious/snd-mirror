@@ -814,9 +814,6 @@ GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_backgro
 }
 
 
-/* TODO: need cursor/pointer text check and probably trim off '(' etc 
- */
-
 static void listener_help_callback(GtkWidget *w, gpointer info)
 {
   /* for selected text or text near cursor or text near pointer, get help or completion,
@@ -829,7 +826,13 @@ static void listener_help_callback(GtkWidget *w, gpointer info)
       txt = gtk_text_buffer_get_text(LISTENER_BUFFER, &start, &end, true);
       if (txt) 
 	{
-	  snd_help(txt, XEN_TO_C_STRING(g_snd_help(C_TO_XEN_STRING(txt), 0)), WITH_WORD_WRAP);
+	  char *trim_txt;
+	  trim_txt = trim(txt);
+	  if (trim_txt)
+	    {
+	      snd_help(trim_txt, XEN_TO_C_STRING(g_snd_help(C_TO_XEN_STRING(trim_txt), 0)), WITH_WORD_WRAP);
+	      free(trim_txt);
+	    }
 	  g_free(txt);
 	}
     }
@@ -878,8 +881,8 @@ static void listener_stacktrace_callback(GtkWidget *w, gpointer info)
    *    replaces itself with the previous one
    */
   current_begin_hook = s7_begin_hook(s7);
-  if (current_begin_hook == NULL) return;      /* s7 is not running */
-  s7_set_begin_hook(s7, stacktrace_begin_hook);
+  if (current_begin_hook)
+    s7_set_begin_hook(s7, stacktrace_begin_hook);
 }
 #endif
 

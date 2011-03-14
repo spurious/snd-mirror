@@ -766,6 +766,20 @@ static void hop_callback(GtkAdjustment *adj, gpointer context)
 }
 
 
+gchar* scale_int_format_callback(GtkScale *w, gdouble val, gpointer data)
+{
+  /* gtk_scale_get_digits(w) here will be 0 (set below), so we want ints
+   *    this is needed since the value-spacing style property apparently does not put space between the value and the scale
+   */
+  return(g_strdup_printf(" %d ", (int)val));
+}
+
+gchar* scale_double_format_callback(GtkScale *w, gdouble val, gpointer data)
+{
+  return(g_strdup_printf(" %.*f ", gtk_scale_get_digits(w), val));   /* not %g! */
+}
+
+
 void set_spectro_hop(int val)
 {
   if (val > 0)
@@ -922,6 +936,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_draw_value(GTK_SCALE(ccd_scale), true);
       gtk_box_pack_start(GTK_BOX(scale_box), ccd_scale, true, true, 0);
       SG_SIGNAL_CONNECT(ccd_scale_adj, "value_changed", scale_color_callback, NULL);
+      SG_SIGNAL_CONNECT(ccd_scale, "format-value", scale_int_format_callback, NULL);
       gtk_widget_show(ccd_scale);
 
       shbox = gtk_hbox_new(false, 0);
@@ -980,6 +995,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(ccd_cutoff), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(ccd_cutoff), true);
       SG_SIGNAL_CONNECT(ccd_cutoff_adj, "value_changed", cutoff_color_callback, NULL);
+      SG_SIGNAL_CONNECT(ccd_cutoff, "format-value", scale_double_format_callback, NULL);
       gtk_box_pack_start(GTK_BOX(cutoff_box), ccd_cutoff, true, true, 0);
       gtk_widget_show(ccd_cutoff);
 
@@ -1036,6 +1052,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(oid_ax), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_ax), true);
       SG_SIGNAL_CONNECT(oid_ax_adj, "value_changed", ax_orientation_callback, NULL);
+      SG_SIGNAL_CONNECT(oid_ax, "format-value", scale_int_format_callback, NULL);
       gtk_box_pack_start(GTK_BOX(ax_box), oid_ax, true, true, 0);
       gtk_widget_show(oid_ax);
 
@@ -1057,6 +1074,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(oid_ay), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_ay), true);
       SG_SIGNAL_CONNECT(oid_ay_adj, "value_changed", ay_orientation_callback, NULL);
+      SG_SIGNAL_CONNECT(oid_ay, "format-value", scale_int_format_callback, NULL);
       gtk_box_pack_start(GTK_BOX(ay_box), oid_ay, true, true, 0);
       gtk_widget_show(oid_ay);
 
@@ -1078,6 +1096,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(oid_az), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_az), true);
       SG_SIGNAL_CONNECT(oid_az_adj, "value_changed", az_orientation_callback, NULL);
+      SG_SIGNAL_CONNECT(oid_az, "format-value", scale_int_format_callback, NULL);
       gtk_box_pack_start(GTK_BOX(az_box), oid_az, true, true, 0);
       gtk_widget_show(oid_az);
 
@@ -1105,6 +1124,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(oid_sx), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_sx), true);
       SG_SIGNAL_CONNECT(oid_sx_adj, "value_changed", sx_orientation_callback, NULL);
+      SG_SIGNAL_CONNECT(oid_sx, "format-value", scale_double_format_callback, NULL);
       gtk_box_pack_start(GTK_BOX(sx_box), oid_sx, true, true, 0);
       gtk_widget_show(oid_sx);
 
@@ -1126,6 +1146,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(oid_sy), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_sy), true);
       SG_SIGNAL_CONNECT(oid_sy_adj, "value_changed", sy_orientation_callback, NULL);
+      SG_SIGNAL_CONNECT(oid_sy, "format-value", scale_double_format_callback, NULL);
       gtk_box_pack_start(GTK_BOX(sy_box), oid_sy, true, true, 0);
       gtk_widget_show(oid_sy);
 
@@ -1148,6 +1169,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(oid_sz), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_sz), true);
       SG_SIGNAL_CONNECT(oid_sz_adj, "value_changed", sz_orientation_callback, NULL);
+      SG_SIGNAL_CONNECT(oid_sz, "format-value", scale_double_format_callback, NULL);
       gtk_box_pack_start(GTK_BOX(sz_box), oid_sz, true, true, 0);
       gtk_widget_show(oid_sz);
 
@@ -1168,13 +1190,16 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_widget_show(hop_label);
 
       oid_hop_adj = (GtkAdjustment *)gtk_adjustment_new((spectro_hop(ss) > 20) ? 20 : (spectro_hop(ss)), 0.0, 21.0, 0.1, 1.0, 1.0);
+
       oid_hop = gtk_hscale_new(GTK_ADJUSTMENT(oid_hop_adj));
       UNSET_CAN_FOCUS(oid_hop);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid_hop)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid_hop), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid_hop), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_hop), true);
+
       SG_SIGNAL_CONNECT(oid_hop_adj, "value_changed", hop_callback, NULL);
+      SG_SIGNAL_CONNECT(oid_hop, "format-value", scale_int_format_callback, NULL);
       gtk_box_pack_start(GTK_BOX(hop_box), oid_hop, true, true, 0);
       gtk_widget_show(oid_hop);
 

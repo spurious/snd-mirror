@@ -1099,6 +1099,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_scale_set_value_pos(GTK_SCALE(alpha_scale), GTK_POS_LEFT);
 	gtk_scale_set_draw_value(GTK_SCALE(alpha_scale), true);
 	SG_SIGNAL_CONNECT(alpha_adj, "value_changed", alpha_callback, NULL);
+	SG_SIGNAL_CONNECT(alpha_scale, "format-value", scale_double_format_callback, NULL);
 	
 	gtk_box_pack_start(GTK_BOX(alpha_box), alpha_scale, true, true, 1);      
 	
@@ -1120,6 +1121,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_scale_set_value_pos(GTK_SCALE(beta_scale), GTK_POS_LEFT);
 	gtk_scale_set_draw_value(GTK_SCALE(beta_scale), true);
 	SG_SIGNAL_CONNECT(beta_adj, "value_changed", beta_callback, NULL);
+	SG_SIGNAL_CONNECT(beta_scale, "format-value", scale_double_format_callback, NULL);
 	
 	gtk_box_pack_start(GTK_BOX(beta_box), beta_scale, true, true, 1);      
 	
@@ -1159,6 +1161,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(spectrum_start_scale), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(spectrum_start_scale), true);
       SG_SIGNAL_CONNECT(spectrum_start_adj, "value_changed", spectrum_start_callback, NULL);
+      SG_SIGNAL_CONNECT(spectrum_start_scale, "format-value", scale_double_format_callback, NULL);
 
       gtk_box_pack_start(GTK_BOX(start_box), spectrum_start_scale, true, true, 1);      
 
@@ -1179,6 +1182,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(spectrum_end_scale), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(spectrum_end_scale), true);
       SG_SIGNAL_CONNECT(spectrum_end_adj, "value_changed", spectrum_end_callback, NULL);
+      SG_SIGNAL_CONNECT(spectrum_end_scale, "format-value", scale_double_format_callback, NULL);
 
       gtk_box_pack_start(GTK_BOX(end_box), spectrum_end_scale, true, true, 1);      
 

@@ -33,6 +33,35 @@ bool within_prompt(const char *str, int beg, int end)
 }
 
 
+char *trim(char *orig)
+{
+  int i, j, start = -1, end = -1, len;
+  char *str;
+
+  len = mus_strlen(orig);
+  if (len == 0) return(NULL);
+
+  for (start = 0; start < len; start++)
+    if ((!isspace(orig[start])) &&
+	(orig[start] != '(') &&
+	(orig[start] != ')'))
+      break;
+  if (start >= len) return(NULL);
+  for (end = len - 1; end > start; end--)
+    if ((!isspace(orig[end])) &&
+	(orig[end] != '(') &&
+	(orig[end] != ')'))
+      break;
+  if (start == end) return(NULL);
+  
+  len = end - start + 1;
+  str = (char *)calloc(len + 1, sizeof(char));
+  for (i = start, j = 0; i <= end; i++, j++)
+    str[j] = orig[i];
+  return(str);
+}
+
+
 int find_matching_paren(const char *str, int parens, int pos, int *highlight_pos)
 {
   int i, j;

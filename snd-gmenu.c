@@ -1283,11 +1283,6 @@ void post_lisp_popup_menu(void *e) {}
 
 /* ---------------- toolbar ---------------- */
 
-#if HAVE_GTK_3
-static GtkCssProvider *tb_provider;
-/* this does not work */
-#endif
-
 void add_tooltip(GtkWidget *w, const char *tip)
 {
   char *str;
@@ -1301,16 +1296,8 @@ static void add_to_toolbar(GtkWidget *bar, const gchar *stock, const char *tip, 
 {
   GtkToolItem *w;
   w = gtk_tool_button_new_from_stock(stock);
-  gtk_widget_set_name(GTK_WIDGET(w), "toolbar_button");
   gtk_toolbar_insert(GTK_TOOLBAR(bar), w, -1); /* -1 = at end */
   add_tooltip(GTK_WIDGET(w), tip);
-#if HAVE_GTK_3
-  {
-    GtkStyleContext *c;
-    c = gtk_widget_get_style_context(GTK_WIDGET(w));
-    gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(tb_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-  }
-#endif
   gtk_widget_show(GTK_WIDGET(w));
   g_signal_connect(GTK_WIDGET(w), "clicked", callback, NULL);
 }
@@ -1477,11 +1464,15 @@ void show_toolbar(void)
       add_to_toolbar(toolbar, GTK_STOCK_GOTO_LAST,       "go to end of sound",         (GCallback)goto_end_callback);      
       add_separator_to_toolbar(toolbar);
 
+#if 0
       add_to_toolbar(toolbar, GTK_STOCK_SELECT_ALL,      "select all of sound",        (GCallback)edit_select_all_callback);      
-      add_to_toolbar(toolbar, GTK_STOCK_CLEAR,           "unselect everything",        (GCallback)edit_unselect_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_CLEAR,           "unselect everything",        (GCallback)edit_unselect_callback);  
+#endif    
       add_to_toolbar(toolbar, GTK_STOCK_CUT,             "delete selection",           (GCallback)edit_cut_callback);      
       add_to_toolbar(toolbar, GTK_STOCK_PASTE,           "insert selection at cursor", (GCallback)edit_paste_callback);      
+#if 0
       add_separator_to_toolbar(toolbar);
+#endif
 
       add_to_toolbar(toolbar, GTK_STOCK_PREFERENCES,     "open preferences dialog",    (GCallback)options_preferences_callback);
       add_to_toolbar(toolbar, GTK_STOCK_CANCEL,          "stop the current operation", (GCallback)stop_everything_callback);
@@ -1696,17 +1687,6 @@ XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
 
 void g_init_gxmenu(void)
 {
-#if HAVE_GTK_3
-  GError *error = NULL;
-  tb_provider = gtk_css_provider_new();
-  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(tb_provider),
-    "#toolbar_button { \n"
-    "  padding: 0 0;\n"
-    "  border-width: 0;\n"
-    "}\n",
-    -1, &error);
-#endif
-
   XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
 }
 

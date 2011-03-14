@@ -982,6 +982,21 @@
 }
 
 {
+   gtk-000
+   Memcheck:Leak
+   fun:malloc
+   fun:XInitExtension
+   fun:*
+}
+
+{
+   snd-000
+   Memcheck:Leak
+   fun:malloc
+   fun:new_xen_transform
+}
+
+{
    gtk-5
    Memcheck:Value4
    fun:g_strdup

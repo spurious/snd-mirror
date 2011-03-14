@@ -1524,6 +1524,7 @@ int find_matching_paren(const char *str, int parens, int pos, int *highlight_pos
 void provide_listener_help(const char *source);
 bool listener_is_visible(void);
 void g_init_listener(void);
+char *trim(char *orig);
 
 
 

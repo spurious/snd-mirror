@@ -15,8 +15,6 @@ static void Tab_completion(Widget w, XEvent *event, char **str, Cardinal *num)
   XtVaGetValues(w, XmNuserData, &data, NULL);
   completer = (int)data;
 
-  /* fprintf(stderr,"tab in %s: %d\n", XtName(w), completer); */
-
   if (completer >= 0)
     {
       int matches;
@@ -1179,7 +1177,13 @@ static void listener_help_callback(Widget w, XtPointer context, XtPointer info)
   txt = XmTextGetSelection(listener_text);
   if (txt)
     {
-      snd_help(txt, XEN_TO_C_STRING(g_snd_help(C_TO_XEN_STRING(txt), 0)), WITH_WORD_WRAP);
+      char *trim_txt;
+      trim_txt = trim(txt);
+      if (trim_txt)
+	{
+	  snd_help(trim_txt, XEN_TO_C_STRING(g_snd_help(C_TO_XEN_STRING(trim_txt), 0)), WITH_WORD_WRAP);
+	  free(trim_txt);
+	}
       XtFree(txt);
     }
 }
@@ -1219,8 +1223,8 @@ static void listener_stacktrace_callback(Widget w, XtPointer context, XtPointer 
    *    replaces itself with the previous one
    */
   current_begin_hook = s7_begin_hook(s7);
-  if (current_begin_hook == NULL) return;      /* s7 is not running */
-  s7_set_begin_hook(s7, stacktrace_begin_hook);
+  if (current_begin_hook) 
+    s7_set_begin_hook(s7, stacktrace_begin_hook);
 }
 #endif
 

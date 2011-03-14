@@ -1207,23 +1207,18 @@ char *slist_selection(slist *lst)
 
 /* TODO: gtk troubles:
  *
- *   gtk3: toolbar is spread out
  *   gtk3: the name_pix icon backgrounds are still gray, also dialog buttons and menu items
+ *   gtk3: view files list if hover needs black text
  *   do meters work in rec?  in Motif they're drawn incorrectly
- *   snd-test 23 minibuffer says update squelched but fft is being updated -- this msg is not cleared?
  *   region print and enved print in gtk should go through the gtk print stuff 
  *   hide controls + listener doesn't
- *   mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
- *   sash colors should be green but I can't find any way to set this in gtk3!
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators, but they still look dumb
  *   prefs entries should be white, not gray!
  *   if chans are syncd, shouldn't multichan mix/mark also?
  *   drag marks as edit is messy looking in gtk
- *   gtk3: view files list if hover needs black text
- *   the previous paths in the file dialogs should use "bookmarks" I think, not popdown menus
  *   if basic-color set to black, labels are not visible, this is partly the case also in Motif
- *   trim text for listener popup help [would trace be interesting enough for s7.html?]
+ *   need cursor/pointer check for text in listener help
  *
  *   superimposed chans flicker a lot
  *     the cairo_t's are not shared in this case, so each chan is a separate display
@@ -1231,9 +1226,6 @@ char *slist_selection(slist *lst)
  *
  *   if pointer focus, movement out of dialog and into graph does not raise graph (it does activate it)
  *     setting "transient_for" does not change this
- *
- *   check out snd-ls changes and the tutorial
- *     [see snd_conffile.scm for more key bindings]
  *
  *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
  *     if proc cursor, foreground color is not set back to old
@@ -1364,7 +1356,6 @@ widget \"*.white_button\" style \"white_button\"\n");
 #else
 
 /* see gtkcssprovider.c toward the end 
- *    why does this code (apparently) work, whereas the same code in snd-gmenu.c has no effect?
  */
 
 void init_gtk(void)
