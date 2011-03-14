@@ -260,7 +260,7 @@ static void env_redisplay_1(printing_t printing)
 	{
 	  char *name = NULL;
 	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
-	  if (!name) name = "noname";
+	  if (!name) name = (char *)"noname";
 
 	  if ((enved_wave_p(ss)) &&
 	      (active_channel) &&
@@ -389,7 +389,7 @@ static void save_button_pressed(GtkWidget *w, gpointer context)
   if (active_env == NULL) return;
   name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
   if ((!name) || (!(*name))) 
-    name = "unnamed";
+    name = (char *)"unnamed";
   alert_envelope_editor(name, copy_env(active_env));
   add_or_edit_symbol(name, active_env);
   set_sensitive(saveB, false);

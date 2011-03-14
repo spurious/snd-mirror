@@ -674,7 +674,7 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      mix_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Mixes", args, n);
+      mix_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Mixes", args, n);
 
       XtAddCallback(mix_dialog, XmNokCallback, dismiss_mix_dialog_callback, NULL);
       XtAddCallback(mix_dialog, XmNcancelCallback, copy_mix_dialog_callback, NULL);

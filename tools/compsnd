@@ -367,9 +367,9 @@ rm -f mus-config.h
 rm -f sndinfo
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                  --without-float-samples --without-ladspa --with-gl --with-gl2ps --without-gsl --without-xpm '
+echo ' ----                  --without-float-samples --without-ladspa --with-gl --with-gl2ps --without-gsl '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples --without-ladspa --with-gl --with-gl2ps --without-gsl --without-xpm
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples --without-ladspa --with-gl --with-gl2ps --without-gsl
 make
 echo ' '
 echo ' '
@@ -533,19 +533,6 @@ echo ' -------------------------------------------------------------------------
 make
 
 make allclean
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-static-xm --without-xpm                         ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm --without-xpm
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-motif 'xm"
-
-echo ' '
-echo ' '
-make allclean
 rm -f snd
 rm -f config.cache
 
@@ -663,9 +650,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl --without-xpm '
+echo ' ----                 --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl --without-xpm --without-xp
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl
 make
 echo ' '
 echo ' '

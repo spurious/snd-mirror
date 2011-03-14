@@ -961,7 +961,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      ccd_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Color and Orientation", args, n);
+      ccd_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Color and Orientation", args, n);
 
       XtAddCallback(ccd_dialog, XmNcancelCallback, dismiss_color_orientation_callback, NULL);
       XtAddCallback(ccd_dialog, XmNhelpCallback, help_color_orientation_callback, NULL);

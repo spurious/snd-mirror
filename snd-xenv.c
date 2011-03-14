@@ -992,7 +992,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "envelope editor", args, n);
+      enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"envelope editor", args, n);
   
       XtAddCallback(enved_dialog, XmNcancelCallback, dismiss_enved_callback, NULL);
       XtAddCallback(enved_dialog, XmNhelpCallback, help_enved_callback, NULL);

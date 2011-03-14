@@ -188,7 +188,7 @@ static void make_edit_find_dialog(bool managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), "find", args, n);
+      edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), (char *)"find", args, n);
       
       XmStringFree(xmstr1);
       XmStringFree(xmstr3);

@@ -2472,7 +2472,7 @@ static void reflect_with_tracking_cursor(prefs_info *prf)
 
 static void with_tracking_cursor_toggle(prefs_info *prf)
 {
-  set_with_tracking_cursor(ss, GET_TOGGLE(prf->toggle));
+  set_with_tracking_cursor(ss, (GET_TOGGLE(prf->toggle)) ? ALWAYS_TRACK : TRACK_IF_ASKED);
 }
 
 

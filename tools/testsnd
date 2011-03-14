@@ -127,8 +127,8 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --without-ladspa --with-gl --without-gsl --without-xpm '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --without-ladspa --with-gl --without-gsl --without-xpm LDFLAGS="-L/usr/X11R6/lib"
+echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --without-ladspa --with-gl --without-gsl '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --without-ladspa --with-gl --without-gsl LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 echo ' '
@@ -264,8 +264,8 @@ make xm
 ./snd -l snd-test 12
 
 make allclean
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm --without-xpm --without-xp '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm --without-xpm --without-xp LDFLAGS="-L/usr/X11R6/lib"
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm LDFLAGS="-L/usr/X11R6/lib"
 make
 ./snd --version
 ./snd -l snd-test 8
@@ -349,8 +349,8 @@ make xg
 echo ' '
 echo ' '
 make allclean
-echo ' CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl --without-xpm --without-xp '
-./configure --quiet CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl --without-xpm --without-xp
+echo ' CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl '
+./configure --quiet CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl
 make
 echo ' '
 echo ' '

@@ -1568,13 +1568,13 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
   char *title, *select_title;
   if (read_only == FILE_READ_ONLY)  
     {
-      title = "View";
-      select_title = "open read-only:";
+      title = (char *)"View";
+      select_title = (char *)"open read-only:";
     }
   else
     {
-      title = "Open";
-      select_title = "open:";
+      title = (char *)"Open";
+      select_title = (char *)"open:";
     }
   if (!odat)
     {
@@ -1718,7 +1718,7 @@ widget_t make_mix_file_dialog(bool managed)
   /* called from the menu */
   if (!mdat)
     {
-      mdat = make_file_dialog(FILE_READ_ONLY, "Mix Sound", "mix in:", file_mix_ok_callback, mix_file_help_callback);
+      mdat = make_file_dialog(FILE_READ_ONLY, (char *)"Mix Sound", (char *)"mix in:", file_mix_ok_callback, mix_file_help_callback);
       set_dialog_widget(FILE_MIX_DIALOG, mdat->dialog);
       XEN_ADD_HOOK(ss->snd_open_file_hook, mix_open_file_watcher_w, "mix-dialog-open-file-watcher", "mix dialog's open-file-hook handler");
     }
@@ -1822,7 +1822,7 @@ widget_t make_insert_file_dialog(bool managed)
 {
   if (!idat)
     {
-      idat = make_file_dialog(FILE_READ_ONLY, "Insert Sound", "insert:", file_insert_ok_callback, insert_file_help_callback);
+      idat = make_file_dialog(FILE_READ_ONLY, (char *)"Insert Sound", (char *)"insert:", file_insert_ok_callback, insert_file_help_callback);
       set_dialog_widget(FILE_INSERT_DIALOG, idat->dialog);
       XEN_ADD_HOOK(ss->snd_open_file_hook, insert_open_file_watcher_w, "insert-dialog-open-file-watcher", "insert dialog's open-file-hook handler");
     }
@@ -2960,8 +2960,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       (!(selection_is_active())))
     {
       if (saving)
-	msg = "no selection to save";
-      else msg = "can't extract: no selection";
+	msg = (char *)"no selection to save";
+      else msg = (char *)"can't extract: no selection";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       return;
     }
@@ -2978,8 +2978,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       (sd->type != REGION_SAVE_AS))
     {
       if (saving)
-	msg = "nothing to save";
-      else msg = "nothing to extract";
+	msg = (char *)"nothing to save";
+      else msg = (char *)"nothing to extract";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->dialog, sd->panel_data);
       return;
@@ -2990,8 +2990,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if ((!str) || (!*str))
     {
       if (saving)
-	msg = "can't save: no file name given";
-      else msg = "can't extract: no file name given";
+	msg = (char *)"can't save: no file name given";
+      else msg = (char *)"can't extract: no file name given";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->dialog, sd->panel_data);
       return;
@@ -3610,7 +3610,7 @@ widget_t make_selection_save_as_dialog(bool managed)
   sd = save_selection_as;
 
   make_save_as_dialog(sd,
-		      "current selection",
+		      (char *)"current selection",
 		      default_output_header_type(ss),
 		      default_output_data_format(ss));
   set_file_dialog_sound_attributes(sd->panel_data,
@@ -3640,7 +3640,7 @@ widget_t make_region_save_as_dialog(bool managed)
   sd = save_region_as;
 
   make_save_as_dialog(sd,
-		      "selected region",
+		      (char *)"selected region",
 		      default_output_header_type(ss),
 		      default_output_data_format(ss));
   comment = region_description(region_dialog_region());
@@ -3820,7 +3820,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
   newer_name = XmTextGetString(new_file_text);
   if ((!newer_name) || (!(*newer_name)))
     {
-      msg = "new sound needs a file name ('New file:' field is empty)";
+      msg = (char *)"new sound needs a file name ('New file:' field is empty)";
       post_file_dialog_error((const char *)msg, ndat);
       clear_error_if_new_filename_changes(new_file_dialog);
     }

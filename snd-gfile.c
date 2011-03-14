@@ -2543,8 +2543,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       (!(selection_is_active())))
     {
       if (saving)
-	msg = "no selection to save";
-      else msg = "can't extract: no selection";
+	msg = (char *)"no selection to save";
+      else msg = (char *)"can't extract: no selection";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       return;
     }
@@ -2561,8 +2561,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       (sd->type != REGION_SAVE_AS))
     {
       if (saving)
-	msg = "nothing to save";
-      else msg = "nothing to extract";
+	msg = (char *)"nothing to save";
+      else msg = (char *)"nothing to extract";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->fs, sd);
       return;
@@ -2573,8 +2573,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if ((!str) || (!*str))
     {
       if (saving)
-	msg = "can't save: no file name given";
-      else msg = "can't extract: no file name given";
+	msg = (char *)"can't save: no file name given";
+      else msg = (char *)"can't extract: no file name given";
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->fs, sd);
       return;
@@ -2859,7 +2859,7 @@ static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
       fsb_filter_set_text_with_directory(fs, "*");
       fsb_update_lists(fs);
       set_sensitive(w, false);
-      str = "save as:";
+      str = (char *)"save as:";
       gtk_label_set_text(GTK_LABEL(sd->fs->file_label), str);
     }
 }
@@ -2878,19 +2878,19 @@ static void save_as_file_exists_check(GtkWidget *w, gpointer context)
 	{
 #if HAVE_ACCESS
 	  if (access(filename, W_OK) < 0)
-	    msg = "save as (file write-protected?):";
+	    msg = (char *)"save as (file write-protected?):";
 	  else
 #endif
-	    msg = "save as (overwriting):";
+	    msg = (char *)"save as (overwriting):";
 	}
       else
 	{
 	  if (!(directory_exists(filename)))
-	    msg = "save as (no such directory?):";
-	  else msg = "save as:";
+	    msg = (char *)"save as (no such directory?):";
+	  else msg = (char *)"save as:";
 	}
     }
-  else msg = "save as:";
+  else msg = (char *)"save as:";
   gtk_label_set_text(GTK_LABEL(sd->fs->file_label), msg);
 }
 
@@ -2930,7 +2930,7 @@ static gboolean reflect_text_in_extract_button(GtkWidget *w, GdkEventKey *event,
 }
 
 
-static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int header_type, int format_type)
+static void make_save_as_dialog(save_as_dialog_info *sd, const char *sound_name, int header_type, int format_type)
 {
   char *file_string;
 
@@ -3538,7 +3538,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
   newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_text));
   if ((!newer_name) || (!(*newer_name)))
     {
-      msg = "new sound needs a file name ('New file:' field is empty)";
+      msg = (char *)"new sound needs a file name ('New file:' field is empty)";
       post_file_dialog_error((const char *)msg, ndat);
       clear_error_if_new_filename_changes(new_file_dialog);
     }
@@ -4276,7 +4276,7 @@ void save_edits_now(snd_info *sp)
   dialog = unsaved_edits_dialog(sp);
   if (!dialog)
     {
-      dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, question);
+      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, question);
       SG_SIGNAL_CONNECT(dialog, "response", unsaved_edits_activate, (gpointer)sp);
       save_unsaved_edits_dialog(dialog, sp);
     }

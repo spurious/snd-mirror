@@ -1033,7 +1033,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Transform Options", args, n);
+      transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Transform Options", args, n);
 
       XtAddCallback(transform_dialog, XmNcancelCallback, color_orientation_callback, NULL);
       XtAddCallback(transform_dialog, XmNokCallback, dismiss_transform_callback, NULL);

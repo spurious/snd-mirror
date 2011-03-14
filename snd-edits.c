@@ -2624,7 +2624,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		    fprintf(outp, ", code: %s", temp1 = (char *)XEN_AS_STRING(code));
 		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j, 0)];
 		  if (XEN_PROCEDURE_P(code))
-		    fprintf(outp, ", init: %s", temp2 = XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code))); /* ptree_code = car */
+		    fprintf(outp, ", init: %s", temp2 = (char *)XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code))); /* ptree_code = car */
 		  if (temp1) free(temp1);
 		  if (temp2) free(temp2);
 		}

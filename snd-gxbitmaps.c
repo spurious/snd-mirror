@@ -363,7 +363,7 @@ const char **stop_sign_bits(void) {return(stop_sign_xpm);}
 
 /* these are taken mainly from emacs */
 
-static char *zoom_in_xpm[] = {
+static const char *zoom_in_xpm[] = {
 "24 24 132 2",
 "  	c None",
 ". 	c #343434",
@@ -522,7 +522,7 @@ static char *zoom_in_xpm[] = {
 "                                        >.>.    ",
 "                                                "};
 
-static char *zoom_out_xpm[] = {
+static const char *zoom_out_xpm[] = {
 "24 24 131 2",
 "  	c None",
 ". 	c #343434",
@@ -680,7 +680,7 @@ static char *zoom_out_xpm[] = {
 "                                        >.>.    ",
 "                                                "};
 
-static char *cut_xpm[] = {
+static const char *cut_xpm[] = {
 "24 24 40 1",
 " 	c None",
 ".	c #000000",
@@ -747,7 +747,7 @@ static char *cut_xpm[] = {
 "                        ",
 "                        "};
 
-static char *paste_xpm[] = {
+static const char *paste_xpm[] = {
 "24 24 89 1",
 " 	c None",
 ".	c #000000",
@@ -863,7 +863,7 @@ static char *paste_xpm[] = {
 "        .............   ",
 "                        "};
 
-static char *preferences_xpm[] = {
+static const char *preferences_xpm[] = {
 "24 24 87 1",
 " 	c None",
 ".	c #000000",
@@ -1011,7 +1011,7 @@ static const char * close_xpm[] = {
 "                        "};
 
     
-static char *redo_xpm[] = {
+static const char *redo_xpm[] = {
 "24 24 42 1",
 " 	c None",
 ".	c #000000",
@@ -1080,7 +1080,7 @@ static char *redo_xpm[] = {
 "                        ",
 "                        "};
 
-static char *undo_xpm[] = {
+static const char *undo_xpm[] = {
 "24 24 31 1",
 " 	c None",
 ".	c #000000",
@@ -1138,7 +1138,7 @@ static char *undo_xpm[] = {
 "                        ",
 "                        "};
 
-static char *save_xpm[] = {
+static const char *save_xpm[] = {
 "24 24 220 2",
 "  	c None",
 ". 	c #000000",
@@ -1385,7 +1385,7 @@ static char *save_xpm[] = {
 "      . . . . . . . . . . . . . . . . 7+.       ",
 "                                                "};
 
-static char *new_xpm[] = {
+static const char *new_xpm[] = {
 "24 24 127 2",
 "  	c None",
 ". 	c #000000",
@@ -1539,7 +1539,7 @@ static char *new_xpm[] = {
 "      . . . . . . . . . . . . . . . . . .       ",
 "                                                "};
 
-static char *open_xpm[] = {
+static const char *open_xpm[] = {
 "24 24 173 2",
 "  	c None",
 ". 	c #000000",
@@ -1739,7 +1739,7 @@ static char *open_xpm[] = {
 "                                                ",
 "                                                "};
 
-static char *exit_xpm[] = {
+static const char *exit_xpm[] = {
 "24 24 140 2",
 "  	c None",
 ". 	c #000000",
@@ -1906,7 +1906,7 @@ static char *exit_xpm[] = {
 "              . . . . . . . . . . . . . . . .   ",
 "                                                "};
 
-static char *separator_xpm[] = {
+static const char *separator_xpm[] = {
 "3 24 4 1",
 " 	c None",
 ".	c #DBD3CB",
@@ -1937,7 +1937,7 @@ static char *separator_xpm[] = {
 "g.+",
 "g.+"};
 
-static char *up_node2_xpm[] = {
+static const char *up_node2_xpm[] = {
 "24 24 18 1",
 " 	c None",
 ".	c #000000",
@@ -1982,7 +1982,7 @@ static char *up_node2_xpm[] = {
 "        .,,@!~>.        ",
 "        ........        "};
 
-static char *stop_xpm[] = {
+static const char *stop_xpm[] = {
 "24 24 3 1",
 " 	c None",
 ".	c #cc0033",
@@ -2012,7 +2012,7 @@ static char *stop_xpm[] = {
 "                        ",
 "                        "};
 
-static char *home_xpm[] = {
+static const char *home_xpm[] = {
 "24 24 101 2",
 "  	c None",
 ". 	c #000000",
@@ -2140,7 +2140,7 @@ static char *home_xpm[] = {
 "                . . .                           ",
 "                                                "};
 
-static char *left_arrow_xpm[] = {
+static const char *left_arrow_xpm[] = {
 "24 24 43 1",
 " 	c None",
 ".	c #000000",
@@ -2210,7 +2210,7 @@ static char *left_arrow_xpm[] = {
 "                        ",
 "                        "};
 
-static char *right_arrow_xpm[] = {
+static const char *right_arrow_xpm[] = {
 "24 24 41 1",
 " 	c None",
 ".	c #000000",
@@ -2278,7 +2278,7 @@ static char *right_arrow_xpm[] = {
 "                        ",
 "                        "};
 
-static char *back_arrow_xpm[] = {
+static const char *back_arrow_xpm[] = {
 "24 24 43 1",
 " 	c None",
 ".	c #000000",
@@ -2348,7 +2348,7 @@ static char *back_arrow_xpm[] = {
 "                        ",
 "                        "};
 
-static char *fwd_arrow_xpm[] = {
+static const char *fwd_arrow_xpm[] = {
 "24 24 41 1",
 " 	c None",
 ".	c #000000",
@@ -2419,7 +2419,7 @@ static char *fwd_arrow_xpm[] = {
 
 /* ---------------- */
 
-static char *cursor_play_xpm[] = {
+static const char *cursor_play_xpm[] = {
 "24 24 2 1",
 " 	c None",
 ".	c #000000",
@@ -2449,7 +2449,7 @@ static char *cursor_play_xpm[] = {
 "                        "};
 
 
-static char *play_xpm[] = {
+static const char *play_xpm[] = {
 "    24    24        2            1",
 "  c None",
 "# c #000000",
@@ -2479,7 +2479,7 @@ static char *play_xpm[] = {
 "                        "
 };
 
-static char *stop_play_xpm[] = {
+static const char *stop_play_xpm[] = {
 "    24    24        2            1",
 "  c None",
 "# c #000000",

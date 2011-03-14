@@ -249,7 +249,7 @@ static graphics_context *get_ax(chan_info *cp, int ax_id, const char *caller, XE
 
 static graphics_context *get_ax_no_cr(chan_info *cp, int ax_id, const char *caller)
 {
-  return(get_ax(cp,ax_id, caller, NULL));
+  return(get_ax(cp,ax_id, caller, XEN_FALSE));
 }
 #endif
 

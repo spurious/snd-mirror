@@ -80,7 +80,7 @@ static char *sndlib_consistency_check(void)
 }
 
 
-static char *vstrcat(char *arg1, ...)
+static char *vstrcat(const char *arg1, ...)
 {
   char *buf;
   va_list ap;

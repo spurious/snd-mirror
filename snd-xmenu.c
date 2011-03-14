@@ -1032,7 +1032,7 @@ static void popup_cut_to_new_callback_1(bool cut)
       if (cut) delete_selection(UPDATE_DISPLAY);
 
       ss->open_requestor = FROM_POPUP_CUT_TO_NEW;
-      redirect_snd_error_to(popup_error_handler, "popup cut->new");
+      redirect_snd_error_to(popup_error_handler, (void *)"popup cut->new");
       snd_open_file(temp_file, FILE_READ_WRITE);
       redirect_snd_error_to(NULL, NULL);
 
@@ -1254,7 +1254,7 @@ void post_fft_popup_menu(void *e)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      outer_menu = XmCreatePulldownMenu(fft_popup_menu, "Size", args, n);
+      outer_menu = XmCreatePulldownMenu(fft_popup_menu, (char *)"Size", args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -1274,7 +1274,7 @@ void post_fft_popup_menu(void *e)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      outer_menu = XmCreatePulldownMenu(fft_popup_menu, "Window", args, n);
+      outer_menu = XmCreatePulldownMenu(fft_popup_menu, (char *)"Window", args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -1305,7 +1305,7 @@ void post_fft_popup_menu(void *e)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      outer_menu = XmCreatePulldownMenu(fft_popup_menu, "Graph type", args, n);
+      outer_menu = XmCreatePulldownMenu(fft_popup_menu, (char *)"Graph type", args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -1319,7 +1319,7 @@ void post_fft_popup_menu(void *e)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      outer_menu = XmCreatePulldownMenu(fft_popup_menu, "Transform type", args, n);
+      outer_menu = XmCreatePulldownMenu(fft_popup_menu, (char *)"Transform type", args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -1334,7 +1334,7 @@ void post_fft_popup_menu(void *e)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      outer_menu = XmCreatePulldownMenu(fft_popup_menu, "Colormap", args, n);
+      outer_menu = XmCreatePulldownMenu(fft_popup_menu, (char *)"Colormap", args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;

@@ -462,7 +462,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNtransient, false); n++;
-  region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Regions", args, n);
+  region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Regions", args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;

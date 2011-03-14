@@ -317,7 +317,7 @@ widget_t record_file(void)
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
       XtSetArg(args[n], XmNheight, RECORDER_HEIGHT); n++;
-      recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), "Record", args, n);
+      recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Record", args, n);
 
       record_button = XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON);
 
