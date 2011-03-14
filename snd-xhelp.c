@@ -348,9 +348,9 @@ static void create_help_monolog(void)
   Widget holder, xref_label; /* documentation says this isn't needed, but it is */
   Widget frame, label, inner_holder, sep, parent;
   XmRenderTable rs = NULL;
-  titlestr = XmStringCreateLocalized("Help");
-  forward = XmStringCreateLocalized("Forward");
-  dismiss = XmStringCreateLocalized("Go Away");
+  titlestr = XmStringCreateLocalized((char *)"Help");
+  forward = XmStringCreateLocalized((char *)"Forward");
+  dismiss = XmStringCreateLocalized((char *)"Go Away");
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

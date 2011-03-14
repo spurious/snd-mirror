@@ -741,7 +741,7 @@ void enved_print(char *name)
 static void print_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
   ss->print_choice = PRINT_ENV;
-  file_print_callback(w, context, info); /* eventually calls enved_print -> print_enved -> env_redisplay_with_print */
+  file_print_callback(w, context, info); 
 }
 
 
@@ -976,11 +976,11 @@ Widget create_envelope_editor(void)
       char str[LABEL_BUFFER_SIZE];
 
       /* -------- DIALOG -------- */
-      xdismiss = XmStringCreateLocalized("Go Away");
-      xhelp = XmStringCreateLocalized("Help");
-      titlestr = XmStringCreateLocalized("Edit Envelope");
-      xapply = XmStringCreateLocalized("Apply");
-      /* xreset = XmStringCreateLocalized("Reset"); */
+      xdismiss = XmStringCreateLocalized((char *)"Go Away");
+      xhelp = XmStringCreateLocalized((char *)"Help");
+      titlestr = XmStringCreateLocalized((char *)"Edit Envelope");
+      xapply = XmStringCreateLocalized((char *)"Apply");
+      /* xreset = XmStringCreateLocalized((char *)"Reset"); */
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1138,7 +1138,7 @@ Widget create_envelope_editor(void)
 
       /* -------- AMP ENV NAME -------- */
       n = 0;
-      s1 = XmStringCreateLocalized("amp env:");
+      s1 = XmStringCreateLocalized((char *)"amp env:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;

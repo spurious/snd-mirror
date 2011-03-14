@@ -1669,14 +1669,14 @@ widget_t start_preferences_dialog(void)
     XmString title, help, revert, clear, save, dismiss;
     Widget revert_button, clear_button;
 
-    title = XmStringCreateLocalized("Preferences");
-    help = XmStringCreateLocalized("Help");
-    revert = XmStringCreateLocalized("Revert");
-    clear = XmStringCreateLocalized("Clear");
+    title = XmStringCreateLocalized((char *)"Preferences");
+    help = XmStringCreateLocalized((char *)"Help");
+    revert = XmStringCreateLocalized((char *)"Revert");
+    clear = XmStringCreateLocalized((char *)"Clear");
 #if HAVE_EXTENSION_LANGUAGE
-    save = XmStringCreateLocalized("Save");
+    save = XmStringCreateLocalized((char *)"Save");
 #endif
-    dismiss = XmStringCreateLocalized("Go Away");
+    dismiss = XmStringCreateLocalized((char *)"Go Away");
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

@@ -754,7 +754,6 @@ with_portaudio
 with_profiling
 with_gsl
 with_fftw
-with_xpm
 with_fam
 with_gmp
 with_s7
@@ -1442,7 +1441,6 @@ Optional Packages:
   --with-profiling		  add code to keep profiling stats (s7 only)
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
-  --with-xpm		  use xpm, default=yes
   --with-fam		  use libfam (Gamin), default=yes
   --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no
   --with-s7  	          use S7, default=yes
@@ -4044,7 +4042,6 @@ _ACEOF
 #   --with-shared-sndlib  load sndlib.so if possible
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
-#   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
@@ -4191,12 +4188,6 @@ fi
 # Check whether --with-fftw was given.
 if test "${with_fftw+set}" = set; then :
   withval=$with_fftw;
-fi
-
-
-# Check whether --with-xpm was given.
-if test "${with_xpm+set}" = set; then :
-  withval=$with_xpm;
 fi
 
 
@@ -7409,136 +7400,6 @@ if test "x$ac_cv_lib_m_XmCreateForm" = xyes; then :
 
 	  with_motif=yes
 	  ac_snd_have_gui=yes
-
-	  if test "$with_xpm" != no; then
-  	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XpmReadFileToPixmap in -lXpm" >&5
-$as_echo_n "checking for XpmReadFileToPixmap in -lXpm... " >&6; }
-if ${ac_cv_lib_Xpm_XpmReadFileToPixmap+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXpm $TEST_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XpmReadFileToPixmap ();
-int
-main ()
-{
-return XpmReadFileToPixmap ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_Xpm_XpmReadFileToPixmap=yes
-else
-  ac_cv_lib_Xpm_XpmReadFileToPixmap=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xpm_XpmReadFileToPixmap" >&5
-$as_echo "$ac_cv_lib_Xpm_XpmReadFileToPixmap" >&6; }
-if test "x$ac_cv_lib_Xpm_XpmReadFileToPixmap" = xyes; then :
-
-  	       XLIBS="$XLIBS -lXpm"
-	       TEST_LIBS="$TEST_LIBS -lXpm"
-   	       $as_echo "#define HAVE_XPM 1" >>confdefs.h
-
-
-fi
-
-   	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XpmGetErrorString in -lXpm" >&5
-$as_echo_n "checking for XpmGetErrorString in -lXpm... " >&6; }
-if ${ac_cv_lib_Xpm_XpmGetErrorString+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXpm $TEST_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XpmGetErrorString ();
-int
-main ()
-{
-return XpmGetErrorString ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_Xpm_XpmGetErrorString=yes
-else
-  ac_cv_lib_Xpm_XpmGetErrorString=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xpm_XpmGetErrorString" >&5
-$as_echo "$ac_cv_lib_Xpm_XpmGetErrorString" >&6; }
-if test "x$ac_cv_lib_Xpm_XpmGetErrorString" = xyes; then :
-  $as_echo "#define HAVE_XPM_GET_ERROR_STRING 1" >>confdefs.h
-
-fi
-
-   	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XpmCreateXpmImageFromPixmap in -lXpm" >&5
-$as_echo_n "checking for XpmCreateXpmImageFromPixmap in -lXpm... " >&6; }
-if ${ac_cv_lib_Xpm_XpmCreateXpmImageFromPixmap+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXpm $TEST_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XpmCreateXpmImageFromPixmap ();
-int
-main ()
-{
-return XpmCreateXpmImageFromPixmap ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_Xpm_XpmCreateXpmImageFromPixmap=yes
-else
-  ac_cv_lib_Xpm_XpmCreateXpmImageFromPixmap=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xpm_XpmCreateXpmImageFromPixmap" >&5
-$as_echo "$ac_cv_lib_Xpm_XpmCreateXpmImageFromPixmap" >&6; }
-if test "x$ac_cv_lib_Xpm_XpmCreateXpmImageFromPixmap" = xyes; then :
-  $as_echo "#define HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP 1" >>confdefs.h
-
-fi
-
-	  fi
 
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"

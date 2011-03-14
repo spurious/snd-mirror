@@ -464,12 +464,6 @@ void set_mix_color(Pixel color)
 }
 
 
-#if (!(HAVE_XPM_GET_ERROR_STRING))
-char *XpmGetErrorString(int err);
-char *XpmGetErrorString(int err) {return("");}
-#endif
-
-
 void set_sensitive(Widget wid, bool val) 
 {
   if (wid) XtSetSensitive(wid, val);

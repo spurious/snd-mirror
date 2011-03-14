@@ -65,7 +65,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-shared-sndlib  load sndlib.so if possible
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
-#   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
@@ -99,7 +98,6 @@ AC_ARG_WITH(profiling,   [  --with-profiling		  add code to keep profiling stats
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
 AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
-AC_ARG_WITH(xpm,         [  --with-xpm		  use xpm, default=yes])
 AC_ARG_WITH(fam,         [  --with-fam		  use libfam (Gamin), default=yes])
 AC_ARG_WITH(gmp,         [  --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no])
 
@@ -725,17 +723,6 @@ else
 	[
 	  with_motif=yes
 	  ac_snd_have_gui=yes
-
-	  if test "$with_xpm" != no; then
-  	    AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
-              [
-  	       XLIBS="$XLIBS -lXpm"
-	       TEST_LIBS="$TEST_LIBS -lXpm"
-   	       AC_DEFINE(HAVE_XPM)
-   	      ], , $TEST_LIBS)
-   	    AC_CHECK_LIB(Xpm, XpmGetErrorString,           [AC_DEFINE(HAVE_XPM_GET_ERROR_STRING)], ,             $TEST_LIBS)
-   	    AC_CHECK_LIB(Xpm, XpmCreateXpmImageFromPixmap, [AC_DEFINE(HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP)], , $TEST_LIBS)
-	  fi
 
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"

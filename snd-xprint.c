@@ -72,10 +72,12 @@ static void report_in_error_info(const char *msg, void *ignore)
     {
       Dimension text_wid = 0, dialog_wid = 0;
       XmFontList fonts;
+
       XtVaGetValues(error_info, XmNfontList, &fonts, NULL);
       XtVaGetValues(print_dialog, XmNwidth, &dialog_wid, NULL);
       text_wid = XmStringWidth(fonts, s1);
       XtUnmanageChild(rc);
+
       XtVaSetValues(print_eps_or_lpr, XmNbottomAttachment, XmATTACH_NONE, NULL);
       if (text_wid > dialog_wid)
 	{
@@ -100,16 +102,18 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
   bool quit = false;
   XmString plab, slab;
   snd_info *nsp = NULL;
+
   if (printing) 
     ss->stopped_explicitly = true;
   else
     {
       bool print_it;
       char *str = NULL;
+
       clear_print_error();
       if (ss->print_choice == PRINT_SND)
 	{
-	  plab = XmStringCreateLocalized("Stop");
+	  plab = XmStringCreateLocalized((char *)"Stop");
 	  nsp = any_selected_sound();
 	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "printing %s", nsp->short_filename);
 	  slab = XmStringCreateLocalized(print_string);
@@ -120,9 +124,11 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  XmStringFree(plab);
 	  XmStringFree(slab);
 	}
+
       printing = PRINTING;
       print_it = (bool)XmToggleButtonGetState(print_eps_or_lpr);
       quit = (ss->print_choice == PRINT_ENV);
+
       if (print_it)
 	{
 	  int err = 0;
@@ -135,8 +141,12 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    case PRINT_SND: 
 	      snd_print(name);
 	      break;
+
 	    case PRINT_ENV: 
 	      enved_print(name); 
+	      break;
+
+	    case PRINT_REGION:
 	      break;
 	    }
 	  redirect_snd_error_to(NULL, NULL);
@@ -159,18 +169,23 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      if (snd_print(str))
 		report_in_minibuffer(nsp, "printed current view to %s", str);
 	      break;
+
 	    case PRINT_ENV: 
 	      enved_print(str); 
+	      break;
+
+	    case PRINT_REGION:
 	      break;
 	    }
 	  redirect_snd_error_to(NULL, NULL);
 	  if (str) XtFree(str);
 	}
     }
+
   printing = NOT_PRINTING;
   if (ss->print_choice == PRINT_SND)
     {
-      plab = XmStringCreateLocalized("Print");
+      plab = XmStringCreateLocalized((char *)"Print");
       mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
       slab = XmStringCreateLocalized(print_string);
       XtVaSetValues(print_dialog, 
@@ -197,10 +212,10 @@ static void start_print_dialog(XmString xmstr4, bool managed)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      xmstr1 = XmStringCreateLocalized("Print");  /* "ok" here is confusing -- might mean, ok I'm done */
-      xmstr2 = XmStringCreateLocalized("Help");
-      xmstr3 = XmStringCreateLocalized("Go Away");
-      titlestr = XmStringCreateLocalized("Print");
+      xmstr1 = XmStringCreateLocalized((char *)"Print");  /* "ok" here is confusing -- might mean, ok I'm done */
+      xmstr2 = XmStringCreateLocalized((char *)"Help");
+      xmstr3 = XmStringCreateLocalized((char *)"Go Away");
+      titlestr = XmStringCreateLocalized((char *)"Print");
 
       XtSetArg(args[n], XmNmessageString, xmstr4); n++;
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
@@ -327,7 +342,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->short_filename);
       xmstr4 = XmStringCreateLocalized(print_string);
     }
-  else xmstr4 = XmStringCreateLocalized("print env");
+  else xmstr4 = XmStringCreateLocalized((char *)"print env");
   start_print_dialog(xmstr4, true);
   XmStringFree(xmstr4);
 }

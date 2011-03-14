@@ -231,7 +231,7 @@ void draw_cursor(chan_info *cp)
 #define NO_SUCH_WIDGET XEN_ERROR_TYPE("no-such-widget")
 
 #if USE_MOTIF
-static graphics_context *get_ax(chan_info *cp, int ax_id, const char *caller, void *ignored)
+static graphics_context *get_ax(chan_info *cp, int ax_id, const char *caller, XEN ignored)
 {
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
     return(set_context(cp, (chan_gc_t)ax_id));
@@ -1638,6 +1638,14 @@ static XEN g_basic_color(void)
 
 
 #if USE_GTK
+
+#if HAVE_GTK_3
+static bool is_dark(color_info *color)
+{
+  return(color->red + color->green + color->blue < 0.75);
+}
+#endif
+
 static void recolor_everything_1(widget_t w, gpointer color)
 {
   if ((GTK_IS_WIDGET(w)) &&
@@ -1650,7 +1658,11 @@ static void recolor_everything_1(widget_t w, gpointer color)
 #else
       gtk_widget_override_background_color(w, GTK_STATE_NORMAL, (GdkRGBA *)color);
       if (GTK_IS_LABEL(w))
-	gtk_widget_override_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
+	{
+	  if (is_dark(color))
+	    gtk_widget_override_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->white));
+	  else gtk_widget_override_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
+	}
 	
       if (GTK_IS_CONTAINER(w))
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything_1, color);
@@ -2114,7 +2126,6 @@ void set_grf_point(int xi, int j, int yi) {}
 void draw_grf_points(int dot_size, graphics_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style) {}
 void draw_both_grf_points(int dot_size, graphics_context *ax, int j, graph_style_t graph_style) {}
 void draw_cursor(chan_info *cp) {}
-void erase_cursor(chan_info *cp) {}
 point_t *get_grf_points(void) {return(NULL);} 
 point_t *get_grf_points1(void) {return(NULL);}
 bool foreground_color_ok(XEN color, graphics_context *ax) {return(true);}

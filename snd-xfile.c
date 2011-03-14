@@ -1259,8 +1259,8 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   s1 = XmStringCreateLocalized(select_title);
   s2 = XmStringCreateLocalized(title);
   ok_label = XmStringCreateLocalized(title);
-  filter_list_label = XmStringCreateLocalized("files listed:");
-  cancel_label = XmStringCreateLocalized("Go Away");
+  filter_list_label = XmStringCreateLocalized((char *)"files listed:");
+  cancel_label = XmStringCreateLocalized((char *)"Go Away");
 
   n = 0;
   if (open_file_dialog_directory(ss))
@@ -1597,7 +1597,7 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 	XtSetSensitive(odat->mkdirB, false);
       }
 
-      cancel_label = XmStringCreateLocalized("Go Away");
+      cancel_label = XmStringCreateLocalized((char *)"Go Away");
       XtVaSetValues(odat->dialog, XmNcancelLabelString, cancel_label, NULL);
       XmStringFree(cancel_label);
     }
@@ -2863,7 +2863,7 @@ static void save_as_filename_modify_callback(Widget w, XtPointer context, XtPoin
 static void save_as_undoit(save_as_dialog_info *sd)
 {
   XmString ok_label;
-  ok_label = XmStringCreateLocalized("Save");
+  ok_label = XmStringCreateLocalized((char *)"Save");
   XtVaSetValues(sd->dialog,
 		XmNokLabelString, ok_label, 
 		NULL);
@@ -3105,7 +3105,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
 	      post_file_dialog_error((const char *)msg, sd->panel_data);
 	      clear_error_if_save_as_filename_changes(sd->dialog, sd);
-	      ok_label = XmStringCreateLocalized("DoIt");
+	      ok_label = XmStringCreateLocalized((char *)"DoIt");
 	      XtVaSetValues(sd->dialog, 
 			    XmNokLabelString, ok_label, 
 			    NULL);
@@ -3286,19 +3286,19 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
 	{
 #if HAVE_ACCESS
 	  if (access(filename, W_OK) < 0)
-	    s1 = XmStringCreateLocalized("save as (file write-protected?):");
+	    s1 = XmStringCreateLocalized((char *)"save as (file write-protected?):");
 	  else
 #endif
-	  s1 = XmStringCreateLocalized("save as (overwriting):");
+	    s1 = XmStringCreateLocalized((char *)"save as (overwriting):");
 	}
       else
 	{
 	  if (!(directory_exists(filename)))
-	    s1 = XmStringCreateLocalized("save as (no such directory?):");
-	  else s1 = XmStringCreateLocalized("save as:");
+	    s1 = XmStringCreateLocalized((char *)"save as (no such directory?):");
+	  else s1 = XmStringCreateLocalized((char *)"save as:");
 	}
     }
-  else s1 = XmStringCreateLocalized("save as:");
+  else s1 = XmStringCreateLocalized((char *)"save as:");
   XtVaSetValues(dialog, 
 		XmNselectionLabelString, s1, 
 		NULL);
@@ -3372,10 +3372,10 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      s1 = XmStringCreateLocalized("save as:");
+      s1 = XmStringCreateLocalized((char *)"save as:");
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
 
-      xmstr1 = XmStringCreateLocalized("Save");
+      xmstr1 = XmStringCreateLocalized((char *)"Save");
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
 
       file_string = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
@@ -3384,10 +3384,10 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       xmstr2 = XmStringCreateLocalized(file_string);
       XtSetArg(args[n], XmNdialogTitle, xmstr2); n++;
 
-      filter_list_label = XmStringCreateLocalized("files listed:");
+      filter_list_label = XmStringCreateLocalized((char *)"files listed:");
       XtSetArg(args[n], XmNfilterLabelString, filter_list_label); n++;
 
-      cancel_label = XmStringCreateLocalized("Go Away");
+      cancel_label = XmStringCreateLocalized((char *)"Go Away");
       XtSetArg(args[n], XmNcancelLabelString, cancel_label); n++;
 
       sd->fp = (file_pattern_info *)calloc(1, sizeof(file_pattern_info));
@@ -3766,7 +3766,7 @@ static void new_filename_modify_callback(Widget w, XtPointer context, XtPointer 
 static void new_file_undoit(void)
 {
   XmString ok_label;
-  ok_label = XmStringCreateLocalized("Ok");
+  ok_label = XmStringCreateLocalized((char *)"Ok");
   XtVaSetValues(new_file_dialog, 
 		XmNokLabelString, ok_label, 
 		NULL);
@@ -3848,7 +3848,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
 	      post_file_dialog_error((const char *)msg, ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog);
-	      ok_label = XmStringCreateLocalized("DoIt");
+	      ok_label = XmStringCreateLocalized((char *)"DoIt");
 	      XtVaSetValues(new_file_dialog, 
 			    XmNokLabelString, ok_label, 
 			    NULL);
@@ -3971,10 +3971,10 @@ widget_t make_new_file_dialog(bool managed)
       XmString titlestr;
       Widget sep, reset_button;
 
-      titlestr = XmStringCreateLocalized("New file");
-      xhelp = XmStringCreateLocalized("Help");
-      xcancel = XmStringCreateLocalized("Go Away");
-      xok = XmStringCreateLocalized("Ok");
+      titlestr = XmStringCreateLocalized((char *)"New file");
+      xhelp = XmStringCreateLocalized((char *)"Help");
+      xcancel = XmStringCreateLocalized((char *)"Go Away");
+      xok = XmStringCreateLocalized((char *)"Ok");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -4373,10 +4373,10 @@ Widget edit_header(snd_info *sp)
       XmString xstr1, xstr2, xstr3, titlestr;
 
       n = 0;
-      xstr1 = XmStringCreateLocalized("Go Away"); /* needed by template dialog */
-      xstr2 = XmStringCreateLocalized("Help");
-      xstr3 = XmStringCreateLocalized("Save");
-      titlestr = XmStringCreateLocalized("Edit Header");
+      xstr1 = XmStringCreateLocalized((char *)"Go Away"); /* needed by template dialog */
+      xstr2 = XmStringCreateLocalized((char *)"Help");
+      xstr3 = XmStringCreateLocalized((char *)"Save");
+      titlestr = XmStringCreateLocalized((char *)"Edit Header");
 
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNcancelLabelString, xstr1); n++;
@@ -4704,11 +4704,11 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   Arg args[20];
   Widget reset_button, main_w;
 
-  xstr1 = XmStringCreateLocalized("Go Away"); /* needed by template dialog */
-  xstr2 = XmStringCreateLocalized("Help");
-  xstr3 = XmStringCreateLocalized("Ok");
+  xstr1 = XmStringCreateLocalized((char *)"Go Away"); /* needed by template dialog */
+  xstr2 = XmStringCreateLocalized((char *)"Help");
+  xstr3 = XmStringCreateLocalized((char *)"Ok");
   if (!title)
-    titlestr = XmStringCreateLocalized("No header on file");
+    titlestr = XmStringCreateLocalized((char *)"No header on file");
   else titlestr = XmStringCreateLocalized((char *)title);
   xstr4 = XmStringCreateLocalized((char *)title);
 
@@ -5039,8 +5039,8 @@ void save_edits_now(snd_info *sp)
       int n;
       XmString yes, no;
 
-      yes = XmStringCreateLocalized("yes");
-      no = XmStringCreateLocalized("no");
+      yes = XmStringCreateLocalized((char *)"yes");
+      no = XmStringCreateLocalized((char *)"no");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -6131,9 +6131,9 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       Widget amp_label, speed_label, env_frame;
       Widget bframe, bform;
 
-      xdismiss = XmStringCreateLocalized("Go Away");
-      xhelp = XmStringCreateLocalized("Help");
-      new_viewer_str = XmStringCreateLocalized("New Viewer");
+      xdismiss = XmStringCreateLocalized((char *)"Go Away");
+      xhelp = XmStringCreateLocalized((char *)"Help");
+      new_viewer_str = XmStringCreateLocalized((char *)"New Viewer");
 
       {
 	char *filestr = NULL;
@@ -6341,7 +6341,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized("at cursor");
+      bstr = XmStringCreateLocalized((char *)"at cursor");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -6358,7 +6358,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized("at end");
+      bstr = XmStringCreateLocalized((char *)"at end");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -6374,7 +6374,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized("at beginning");
+      bstr = XmStringCreateLocalized((char *)"at beginning");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -6390,7 +6390,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized("at sample");
+      bstr = XmStringCreateLocalized((char *)"at sample");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
@@ -6424,7 +6424,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
-      bstr = XmStringCreateLocalized("at mark");
+      bstr = XmStringCreateLocalized((char *)"at mark");
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
@@ -6470,7 +6470,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       n = 0;      
       /* AMP */
-      s1 = XmStringCreateLocalized("amp:");
+      s1 = XmStringCreateLocalized((char *)"amp:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -6523,7 +6523,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       n = 0;
       /* SPEED */
-      s1 = XmStringCreateLocalized("speed:");
+      s1 = XmStringCreateLocalized((char *)"speed:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -6630,7 +6630,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       /* Add dir/file text entry at bottom */
       n = 0;
-      s1 = XmStringCreateLocalized("add:");
+      s1 = XmStringCreateLocalized((char *)"add:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;

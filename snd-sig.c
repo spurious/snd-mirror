@@ -1280,7 +1280,7 @@ void src_file(const char *file, double ratio)
 
   srcs = (mus_any **)malloc(chans * sizeof(mus_any *));
   rds = (mus_any **)malloc(chans * sizeof(mus_any *));
-  obufs = (mus_sample_t **)malloc(chans * sizeof(mus_sample_t));
+  obufs = (mus_sample_t **)malloc(chans * sizeof(mus_sample_t *));
 
   for (chan = 0; chan < chans; chan++)
     {

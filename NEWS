@@ -72,6 +72,8 @@ Snd 12.0
      affect the time domain graph.  (There isn't any place to put sliders for
      this, and the Options:Transform sliders aren't always handy).
 
+   in Motif, libXpm is no longer optional.
+
    in s7, random-state->list.
 
    Snd now needs Gtk 2.12 or later.

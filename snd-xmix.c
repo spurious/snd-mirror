@@ -659,10 +659,10 @@ Widget make_mix_dialog(void)
       xmix_speed_control_style = speed_control_style(ss);
 
       mix_dialog_id = any_mix_id();
-      xdismiss = XmStringCreateLocalized("Go Away");
-      xcopy = XmStringCreateLocalized("Copy mix");
-      xhelp = XmStringCreateLocalized("Help");
-      xtitle = XmStringCreateLocalized("Mixes");
+      xdismiss = XmStringCreateLocalized((char *)"Go Away");
+      xcopy = XmStringCreateLocalized((char *)"Copy mix");
+      xhelp = XmStringCreateLocalized((char *)"Help");
+      xtitle = XmStringCreateLocalized((char *)"Mixes");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -792,7 +792,7 @@ Widget make_mix_dialog(void)
 
       /* SPEED */
       n = 0;
-      s1 = XmStringCreateLocalized("speed:");
+      s1 = XmStringCreateLocalized((char *)"speed:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;

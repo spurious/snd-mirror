@@ -87,8 +87,6 @@ var extsnd_bindkey_tip = "<code>(bind-key key modifiers func extended origin pre
 
 var extsnd_boldpeaksfont_tip = "<code>(bold-peaks-font)</code>: bold font used by fft peak display";
 
-var extsnd_cgp_tip = "<code>(c-g?)</code>: allow pending user interface events to occur, returning #t if C-g was typed";
-
 var extsnd_channels_tip = "<code>(channels snd)</code>: how many channels snd has";
 
 var extsnd_channelstyle_tip = "<code>(channel-style snd)</code>: how multichannel sounds lay out the channels.<br>" +
@@ -100,8 +98,6 @@ var extsnd_channeltovct_tip = "<code>(channel-&gt;vct beg dur snd chn edpos)</co
 var extsnd_channelwidgets_tip = "<code>(channel-widgets snd chn)</code>: a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)";
 
 var extsnd_chans_tip = "<code>(channels snd)</code>: how many channels snd has";
-
-var extsnd_clearlistener_tip = "<code>(clear-listener)</code> removes listener text from the beginning to the cursor.";
 
 var extsnd_clearminibuffer_tip = "<code>(clear-minibuffer snd)</code>: clears snd's minibuffer (erasing any error message as well).";
 
@@ -119,16 +115,10 @@ var extsnd_closesound_tip = "<code>(close-sound snd)</code>: close snd";
 
 var extsnd_comment_tip = "<code>(comment snd)</code>: snd's comment (in its header)";
 
-var extsnd_copycontext_tip = "<code>copy-context</code> is the graphics context used in Snd<br>" +
-                             "when you want the newly drawn stuff to replace whatever is already there.<br>" +
-                             "the other common choice is <code>cursor-context</code> which uses XOR";
-
 var extsnd_countmatches_tip = "<code>(count-matches func (start-samp 0) snd chn edpos)</code>:<br>" +
                               " return how many samples satisfy func (a function of one argument,<br>" +
                               " the current sample, returning #t upon match):<br>" +
                               " <code>(count-matches (lambda (y) (> y .1)))</code>";
-
-var extsnd_currentfont_tip = "<code>(current-font snd chn (ax time-graph))</code>: current font id";
 
 var extsnd_cursor_tip = "<code>(cursor snd chn edpos)</code>: current cursor location in snd's channel chn";
 
@@ -163,8 +153,6 @@ var extsnd_defvar_tip = "<code>(defvar name data)</code>: define 'name' to have 
 
 var extsnd_deletesamples_tip = "<code>(delete-samples start-samp samps snd chn edpos)</code>:<br>" +
                                " delete 'samps' samples from snd's channel chn starting at 'start-samp'";
-
-var extsnd_deleteselection_tip = "<code>(delete-selection)</code> deletes the currently selected portion";
 
 var extsnd_dialogwidgets_tip = "<code>(dialog-widgets)</code>: dialog widgets (each #f if not yet created)</code>:<br>" +
                                " <code>(list  (0 color-dialog) (1 orientation-dialog) (2 enved-dialog)<br>" +
@@ -253,14 +241,7 @@ var extsnd_findchannel_tip = "<code>(find-channel func (start-samp 0) snd chn ed
                              " until func returns something other than #f: <br>" +
                              " <code>  (find-channel (lambda (y) (> y .1)))</code>";
 
-var extsnd_findmark_tip = "<code>(find-mark samp-or-name snd chn edpos)</code>:<br>" +
-                          " find the mark in snd's channel chn at samp (if a number)<br>" +
-                          " or with the given name (if a string);<br>" +
-                          " return the mark id or #f if no mark found.";
-
 var extsnd_focuswidget_tip = "<code>(focus-widget widget)</code>: cause widget to receive input focus";
-
-var extsnd_foregroundcolor_tip = "<code>(foreground-color snd chn (ax time-graph))</code>: current drawing color";
 
 var extsnd_frames_tip = "<code>(frames snd chn edpos)</code>: number of frames of data in snd's channel chn";
 
@@ -283,9 +264,6 @@ var extsnd_graphshorizontal_tip = "<code>(graphs-horizontal snd chn)</code>:<br>
 var extsnd_graphstyle_tip = "<code>(graph-style snd chn)</code>: graph style, <br>" +
                             " one of <code>graph-lines graph-dots graph-dots-and-lines graph-lollipops graph-filled</code>";
 
-var extsnd_graphtops_tip = "<code>(graph-&gt;ps (filename eps-file)):</code><br>" +
-                           "this writes the current Snd displays to an EPS file";
-
 var extsnd_headertype_tip = "<code>(header-type snd)</code>: snd's header type (e.g. <code>mus-aiff</code>)";
 
 var extsnd_helpdialog_tip = "<code>(help-dialog subject message xrefs urls)</code>: start the Help window with subject and message";
@@ -298,16 +276,6 @@ var extsnd_infodialog_tip = "<code>(info-dialog subject message)</code>: start t
 
 var extsnd_initialgraphhook_tip = "<code>initial-graph-hook (snd chn dur)</code>:<br>" +
                                   " called when a sound is displayed for the first time";
-
-var extsnd_insertregion_tip = "<code>(insert-region (start-samp 0) (region-id 0) snd chn)</code>:<br>" +
-                              " insert region data into snd's channel chn starting at start-samp";
-
-var extsnd_insertsamples_tip = "<code>(insert-samples start-samp samps data snd chn edpos auto-delete origin)</code>:<br>" +
-                               " insert data (either a vct, a list of samples, or a filename) into snd's channel chn <br>" +
-                               " starting at 'start-samp' for 'samps' samples";
-
-var extsnd_insertselection_tip = "<code>(insert-selection (beg 0) snd chn)</code>:<br>" +
-                                 " insert the currently selected portion starting at beg";
 
 var extsnd_insertsound_tip = "<code>(insert-sound file (beg 0) (file-chan 0) snd chn edpos auto-delete)</code>:<br>" +
                              " insert channel file-chan of file (or all chans if file-chan is not given)<br>" +
@@ -333,8 +301,6 @@ var extsnd_lispgraphhook_tip = "<code>lisp-graph-hook (snd chn)</code>: called j
 var extsnd_listenerfont_tip = "<code>(listener-font)</code>: font used by the lisp listener";
 
 var extsnd_listenerprompt_tip = "<code>(listener-prompt)</code>: the current lisp listener prompt character ('&gt;') ";
-
-var extsnd_listenertextcolor_tip = "<code>(listener-text-color)</code>: text color in the lisp listener";
 
 var extsnd_listtovct_tip = "<code>(list-&gt;vct lst)</code>: returns a new vct filled with elements of list lst";
 
@@ -401,10 +367,6 @@ var extsnd_mixcolor_tip = "<code>(mix-color mix-id)</code>: color of all mix tag
                           " (if mix-id is omitted), or of mix-id's tag";
 
 var extsnd_mixposition_tip = "<code>(mix-position id)</code>: mix's begin time in the output in samples";
-
-var extsnd_mixregion_tip = "<code>(mix-region (chn-samp 0) (region 0) snd chn (region-chan #t))</code>:<br>" +
-                           " mix region's channel region-chan (or all chans if region-chan is #t)<br>" +
-                           " into snd's channel chn starting at chn-samp; return new mix id, if any.";
 
 var extsnd_mixreleasehook_tip = "<code>mix-release-hook (mix-id samps)</code>:<br>" +
                                 " called after the mouse has dragged a mix to some new position.<br>" +
@@ -568,8 +530,6 @@ var extsnd_readonly_tip = "<code>(read-only snd)</code>: whether snd is write-pr
 
 var extsnd_readsample_tip = "<code>(read-sample reader)</code>: get the next sample from the sampler";
 
-var extsnd_redo_tip = "<code>(redo (count 1) snd chn)</code>: redo 'count' edits in snd's channel chn";
-
 var extsnd_regionframes_tip = "<code>(region-frames (reg 0) (chan 0))</code>: region length in frames";
 
 var extsnd_regionok_tip = "<code>(region? reg)</code>: #t if region is active";
@@ -610,10 +570,6 @@ var extsnd_savedir_tip = "<code>(save-dir)</code>: name of directory for saved s
 var extsnd_savehook_tip = "<code>save-hook (snd name)</code>: called each time a file is about to be saved.<br>" +
                           " If it returns #t, the file is not saved.<br>" +
                           " 'name' is #f unless the file is being saved under a new name (as in sound-save-as).";
-
-var extsnd_saveselection_tip = "<code>(save-selection :file :header-type :data-format :srate :comment :channel)</code><br>" +
-                               "saves the current selection in 'file' using the indicated file attributes.<br>" +
-                               "If 'channel' is given, save only that channel.";
 
 var extsnd_savesound_tip = "<code>(save-sound snd)</code>: save snd<br>" +
                            " (update the on-disk data to match Snd's current version)";
@@ -688,14 +644,10 @@ var extsnd_setsamples_tip = "<code>(set-samples start-samp samps data snd chn tr
 
 var extsnd_shortfilename_tip = "<code>(short-file-name snd)</code>: short form of snd's file name (no directory)";
 
-var extsnd_showcontrols_tip = "<code>(show-controls snd)</code>: #t if snd's control panel is known to be open";
-
 var extsnd_showlistener_tip = "<code>(show-listener (open #t))</code>: if 'open' opens the lisp listener;<br>" +
                               " returns whether the listener is visible.";
 
 var extsnd_showtransformpeaks_tip = "<code>(show-transform-peaks snd chn)</code>: #t if fft display should include peak list";
-
-var extsnd_smoothsound_tip = "<code>(smooth-sound (start-samp 0) (samps len) snd chn)</code>: smooth data from start-samp for samps in snd's channel chn";
 
 var extsnd_sndhelp_tip = "<code>(snd-help (arg 'snd-help) (formatted #t))</code>: return the documentation associated with its argument.<br>" +
                          "<code> (snd-help 'make-vct)</code> for example, prints out a brief description of make-vct.<br>" +
@@ -735,8 +687,6 @@ var extsnd_soundwidgets_tip = "<code>(sound-widgets snd)</code>: returns a list 
                               "(0)pane (1)name (2)control-panel<br>" +
                               "(3)minibuffer (4)play-button (5)filter-env<br>" +
                               "(6)unite-button (7)name-label (8)name-icon (9)sync-button";
-
-var extsnd_speedcontrol_tip = "<code>(speed-control snd)</code>: current speed (srate) slider setting";
 
 var extsnd_squelchupdate_tip = "<code>(squelch-update snd chn)</code>: #t if updates (redisplays) are turned off in snd's channel chn";
 
@@ -1225,8 +1175,6 @@ var sndscm_matchsoundfiles_tip = "<code>(match-sound-files func dir)</code>: app
 
 var sndscm_maxenvelope_tip = "<code>(max-envelope env)</code>: return the maximum y value in 'env'";
 
-var sndscm_mixsound_tip = "<code>(mix-sound file start)</code>: mix 'file' (all chans) into the currently selected sound at 'start'.";
-
 var sndscm_moogfilter_tip = "<code>(moog-filter gen input)</code>: return Moog-style 4-pole lowpass filtering of 'input'";
 
 var sndscm_mpg_tip = "<code>(mpg mpgfile rawfile)</code>: call mpg123 to translate an MPEG format sound file<br>" +
@@ -1457,9 +1405,6 @@ var piano_doc_tip = "Scott van Duyne's piano model that includes multiple couple
 var play_doc_tip = "play between marks, play continuously, play a set of sines, etc";
 
 var poly_doc_tip = "polynomial addition, multiplication, division, gcd, roots, and discriminant";
-
-var popup_doc_tip = "context-sensitive popup menus.  You get a different popup<br>" +
-                    " menu over the main graph, the fft, the selection, the listener, etc";
 
 var prc95_doc_tip = "The basic physical models: pluck, bow, clarinet, brass, flute";
 

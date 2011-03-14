@@ -1,6 +1,8 @@
 #include "snd.h"
 
+#if MUS_DEBUGGING
 static int cairo_depth = 0;
+#endif
 
 #if HAVE_GTK_3
 cairo_t *make_cairo(GdkWindow *win, const char *func, const char *file, int line)
@@ -1214,10 +1216,9 @@ char *slist_selection(slist *lst)
  *   hide controls + listener doesn't
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators, but they still look dumb
- *   prefs entries should be white, not gray!
+ *   gtk3: prefs tooltips look terrible
  *   if chans are syncd, shouldn't multichan mix/mark also?
  *   drag marks as edit is messy looking in gtk
- *   if basic-color set to black, labels are not visible, this is partly the case also in Motif
  *   need cursor/pointer check for text in listener help
  *
  *   superimposed chans flicker a lot

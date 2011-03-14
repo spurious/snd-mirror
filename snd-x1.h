@@ -183,7 +183,6 @@ const char **blank_bits(void);
 void make_icons_transparent(const char *basic_color);
 const char **stop_sign_bits(void);
 
-#if HAVE_XPM
 void make_toolbar_icons(Widget w);
 enum {SND_XPM_BACK_ARROW, SND_XPM_FORWARD_ARROW, SND_XPM_ZOOM_IN, SND_XPM_ZOOM_OUT, SND_XPM_CUT, SND_XPM_PASTE, SND_XPM_PREFERENCES, SND_XPM_CLOSE,
       SND_XPM_REDO, SND_XPM_UNDO, SND_XPM_SAVE, SND_XPM_NEW, SND_XPM_OPEN, SND_XPM_NEXT, SND_XPM_BACK, SND_XPM_EXIT, SND_XPM_SEPARATOR, SND_XPM_UP, 
@@ -192,7 +191,7 @@ enum {SND_XPM_BACK_ARROW, SND_XPM_FORWARD_ARROW, SND_XPM_ZOOM_IN, SND_XPM_ZOOM_O
 Pixmap toolbar_icon(int which);
 void show_toolbar(void);
 void hide_toolbar(void);
-#endif
+
 
 
 /* -------- snd-gxcolormaps.c -------- */

@@ -56,7 +56,7 @@
 #define REPORTING_SIZE (MAX_BUFFER_SIZE * 8)
 
 /* progress bar (hourglass icon) is displayed if more than this many samples are being processed */
-#if HAVE_XPM || USE_GTK
+#if (!USE_NO_GUI)
   #define NUM_HOURGLASSES 15
 #else
   #define NUM_HOURGLASSES 1
@@ -246,7 +246,7 @@ typedef enum {CHANNELS_SEPARATE, CHANNELS_COMBINED, CHANNELS_SUPERIMPOSED, NOT_A
 typedef enum {SYNC_NONE, SYNC_ALL, SYNC_BY_SOUND} sync_style_t;
 #define NUM_SYNC_STYLES 3
 typedef enum {FD_CLOSED, FD_OPEN} fd_open_t;
-typedef enum {PRINT_SND, PRINT_ENV} print_choice_t;
+typedef enum {PRINT_SND, PRINT_ENV, PRINT_REGION} print_choice_t;
 typedef enum {SND_DATA_NO_DATA, SND_DATA_FILE, SND_DATA_BUFFER} snd_data_file_t;
 typedef enum {SOUNDS_VERTICAL, SOUNDS_HORIZONTAL, SOUNDS_IN_NOTEBOOK, SOUNDS_IN_SEPARATE_WINDOWS} sound_style_t;
 enum {FOURIER, WAVELET, WALSH, AUTOCORRELATION, CEPSTRUM, HAAR, NUM_BUILTIN_TRANSFORM_TYPES}; /* not typedef'd -- grows as new ones are added */

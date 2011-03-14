@@ -477,7 +477,7 @@ void listener_return(widget_t w, int last_prompt)
 {
 #if (!USE_NO_GUI)
   /* try to find complete form either enclosing current cursor, or just before it */
-  GUI_TEXT_POSITION_TYPE new_eot = 0, cmd_eot = 0;
+  GUI_TEXT_POSITION_TYPE cmd_eot = 0;
   char *str = NULL, *full_str = NULL, *prompt;
   int i, j;
   XEN form = XEN_UNDEFINED;
@@ -485,6 +485,7 @@ void listener_return(widget_t w, int last_prompt)
 
 #if (!HAVE_RUBY && !HAVE_FORTH)
   int parens;
+  GUI_TEXT_POSITION_TYPE new_eot = 0;
 #endif
 
   full_str = GUI_TEXT(w);

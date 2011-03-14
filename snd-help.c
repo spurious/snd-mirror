@@ -152,9 +152,7 @@ static void main_snd_help(const char *subject, ...)
 
 #if USE_MOTIF
   #include <X11/IntrinsicP.h>
-  #if HAVE_XPM
-    #include <X11/xpm.h>
-  #endif
+  #include <X11/xpm.h>
 #endif
 
 #if HAVE_GNU_LIBC_VERSION_H
@@ -401,7 +399,7 @@ char *version_info(void)
 #if (!USE_MOTIF) && (!USE_GTK)
 	  "\n    without any graphics system",
 #endif
-#if HAVE_XPM && USE_MOTIF
+#if USE_MOTIF
 	  "\n    Xpm ", snd_itoa(XpmFormat), ".", 
                         snd_itoa(XpmVersion), ".", 
                         snd_itoa(XpmRevision),
@@ -1483,7 +1481,7 @@ you want, then save those choices.  The initialization file is just program text
 
 #else
 "Snd depends heavily on the extension language to provide much of its functionality.  Since none \
-is loaded, there's not much customization you can do."
+is loaded, there's not much customization you can do.",
 #endif
 		      WITH_WORD_WRAP,
 		      init_file_xrefs,

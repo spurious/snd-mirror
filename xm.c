@@ -168,7 +168,7 @@
 #include <X11/extensions/shape.h>
 #endif
 
-/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_RUBY MUS_WITH_EDITRES */
+/* compile-time flags are HAVE_MOTIF HAVE_RUBY MUS_WITH_EDITRES */
 
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 
@@ -203,9 +203,7 @@
   #define realloc(a, b) realloc(a, (size_t)(b))
 #endif
 
-#if HAVE_XPM
-  #include <X11/xpm.h>
-#endif
+#include <X11/xpm.h>
 #if HAVE_XmCreateDataField
   #include <Xm/DataF.h>
 #endif
@@ -16808,13 +16806,11 @@ static XEN gxm_XtSetArg(XEN arg1, XEN arg2, XEN arg3)
 
 
 /* ---------------------------------------------------------------------------------------------------- */
-#if HAVE_XPM
 
 XM_TYPE_PTR_NO_C2X(XpmImage, XpmImage *)
 XM_TYPE_PTR_NO_C2X(XpmAttributes, XpmAttributes *) /* _OBJ?? */
 XM_TYPE_PTR_NO_C2X(XpmColorSymbol, XpmColorSymbol *)
 
-#if HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP
 static XEN gxm_XpmCreateXpmImageFromPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg5)
 {
   XpmImage *image;
@@ -16854,7 +16850,6 @@ static XEN gxm_XpmCreatePixmapFromXpmImage(XEN arg1, XEN arg2, XEN arg3, XEN arg
 		    C_TO_XEN_Pixmap(p1),
 		    C_TO_XEN_Pixmap(p2)));
 }
-#endif
 
 static XEN gxm_XpmReadFileToPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
 {
@@ -16950,14 +16945,12 @@ static XEN gxm_XpmCreateDataFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
 		    XEN_WRAP_C_POINTER(buf)));
 }
 
-#if HAVE_XPM_GET_ERROR_STRING
 static XEN gxm_XpmGetErrorString(XEN err)
 {
   #define H_XpmGetErrorString "(XpmGetErrorString err): string describing error"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(err), err, XEN_ONLY_ARG, "XpmGetErrorString", "an Xpm status code");
   return(C_TO_XEN_STRING(XpmGetErrorString(XEN_TO_C_INT(err))));
 }
-#endif
 
 static XEN gxm_XpmColorSymbol(XEN name, XEN value, XEN pixel)
 {
@@ -17148,8 +17141,6 @@ static XEN gxm_set_npixels(XEN ptr, XEN val)
   return(val);
 }
 
-#endif
-/* HAVE_XPM */
 
 #if MUS_WITH_EDITRES
 static XEN gxm_XEditResCheckMessages(XEN widget, XEN data, XEN event, XEN cont)
@@ -17552,20 +17543,16 @@ static XEN gxm_map_installed(XEN ptr)
 
 static XEN gxm_set_visual(XEN ptr, XEN val)
 {
-#if HAVE_XPM
   XM_SET_FIELD_ASSERT_TYPE(XEN_Visual_P(val), val, XEN_ARG_2, "visual", "Visual");
   XM_SET_FIELD_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "visual", "Visual");
   (XEN_TO_C_XpmAttributes(ptr))->visual = (Visual *)XEN_TO_C_Visual(val);
-#endif
   return(val);
 }
 
 static XEN gxm_visual(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_Visual((Visual *)((XEN_TO_C_XWindowAttributes(ptr))->visual)));
-#if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_Visual((Visual *)((XEN_TO_C_XpmAttributes(ptr))->visual)));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "visual", "a struct with a visual field");
   return(XEN_FALSE);
 }
@@ -17739,10 +17726,8 @@ static XEN gxm_nvisuals(XEN ptr)
 
 static XEN gxm_set_depth(XEN ptr, XEN val)
 {
-#if HAVE_XPM
   XM_SET_FIELD_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "depth", "XpmAttributes");
   (XEN_TO_C_XpmAttributes(ptr))->depth = XEN_TO_C_ULONG(val);
-#endif
   return(val);
 }
 
@@ -17752,9 +17737,7 @@ static XEN gxm_depth(XEN ptr)
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->depth)));
   if (XEN_Depth_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Depth(ptr))->depth)));
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->depth)));
-#if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->depth)));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "depth", "a struct with a depth field");
   return(XEN_FALSE);
 }
@@ -17831,9 +17814,7 @@ static XEN gxm_set_pixel(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(XEN_Pixel_P(val), val, XEN_ARG_2, "pixel", "a Pixel");  
   if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->pixel = XEN_TO_C_Pixel(val);
-#if HAVE_XPM
   else if (XEN_XpmColorSymbol_P(ptr)) (XEN_TO_C_XpmColorSymbol(ptr))->pixel = XEN_TO_C_Pixel(val);
-#endif
   return(val);
 }
 
@@ -17843,9 +17824,7 @@ static XEN gxm_pixel(XEN ptr)
 #if HAVE_MOTIF
   if (XEN_XmScrollBarCallbackStruct_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmScrollBarCallbackStruct(ptr))->pixel)));
 #endif
-#if HAVE_XPM
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XpmColorSymbol(ptr))->pixel)));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "pixel", "a struct with a pixel field");
   return(XEN_FALSE);
 }
@@ -18025,20 +18004,16 @@ static XEN gxm_card32(XEN ptr)
 
 static XEN gxm_set_name(XEN ptr, XEN val)
 {
-#if HAVE_XPM
   XM_SET_FIELD_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, "name", "a string");
   XM_SET_FIELD_ASSERT_TYPE(XEN_XpmColorSymbol_P(ptr), ptr, XEN_ARG_1, "name", "XpmColorSymbol");
   (XEN_TO_C_XpmColorSymbol(ptr))->name = xen_strdup(XEN_TO_C_STRING(val));
-#endif
   return(val);
 }
 
 static XEN gxm_name(XEN ptr)
 {
   if (XEN_XFontProp_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XFontProp(ptr))->name)));
-#if HAVE_XPM
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XpmColorSymbol(ptr))->name)));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "name", "a struct with a name field");
   return(XEN_FALSE);
 }
@@ -18210,9 +18185,7 @@ static XEN gxm_colormap(XEN ptr)
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_XSetWindowAttributes(ptr))->colormap)));
   if (XEN_XColormapEvent_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_XColormapEvent(ptr))->colormap)));
   if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_XStandardColormap(ptr))->colormap)));
-#if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_XpmAttributes(ptr))->colormap)));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "colormap", "a struct with a colormap field");
   return(XEN_FALSE);
 }
@@ -18220,12 +18193,12 @@ static XEN gxm_colormap(XEN ptr)
 static XEN gxm_set_colormap(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(XEN_Colormap_P(val), val, XEN_ARG_2, "colormap", "a Colormap");
-#if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) (XEN_TO_C_XpmAttributes(ptr))->colormap = XEN_TO_C_Colormap(val);
   else 
-#endif
-    if (XEN_XColormapEvent_P(ptr)) (XEN_TO_C_XColormapEvent(ptr))->colormap = XEN_TO_C_Colormap(val);
-  else XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "colormap", "XpmAttributes or XColormapEvent");
+    {
+      if (XEN_XColormapEvent_P(ptr)) (XEN_TO_C_XColormapEvent(ptr))->colormap = XEN_TO_C_Colormap(val);
+      else XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "colormap", "XpmAttributes or XColormapEvent");
+    }
   return(val);
 }
 
@@ -19140,10 +19113,8 @@ static XEN gxm_set_height(XEN ptr, XEN val)
 {
   if (XEN_XRectangle_P(ptr)) (XEN_TO_C_XRectangle(ptr))->height = XEN_TO_C_INT(val);
   else if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->height = XEN_TO_C_INT(val);
-#if HAVE_XPM
   else if (XEN_XpmImage_P(ptr)) (XEN_TO_C_XpmImage(ptr))->height = XEN_TO_C_ULONG(val);
   else if (XEN_XpmAttributes_P(ptr)) (XEN_TO_C_XpmAttributes(ptr))->height = XEN_TO_C_ULONG(val);
-#endif
   else if (XEN_XConfigureRequestEvent_P(ptr)) (XEN_TO_C_XConfigureRequestEvent(ptr))->height = XEN_TO_C_INT(val);
   else if (XEN_XResizeRequestEvent_P(ptr)) (XEN_TO_C_XResizeRequestEvent(ptr))->height = XEN_TO_C_INT(val);
   else if (XEN_XConfigureEvent_P(ptr)) (XEN_TO_C_XConfigureEvent(ptr))->height = XEN_TO_C_INT(val);
@@ -19158,10 +19129,8 @@ static XEN gxm_set_width(XEN ptr, XEN val)
 {
   if (XEN_XRectangle_P(ptr)) (XEN_TO_C_XRectangle(ptr))->width = XEN_TO_C_INT(val);
   else if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->width = XEN_TO_C_INT(val);
-#if HAVE_XPM
   else if (XEN_XpmImage_P(ptr)) (XEN_TO_C_XpmImage(ptr))->width = XEN_TO_C_ULONG(val);
   else if (XEN_XpmAttributes_P(ptr)) (XEN_TO_C_XpmAttributes(ptr))->width = XEN_TO_C_ULONG(val);
-#endif
   else if (XEN_XConfigureRequestEvent_P(ptr)) (XEN_TO_C_XConfigureRequestEvent(ptr))->width = XEN_TO_C_INT(val);
   else if (XEN_XResizeRequestEvent_P(ptr)) (XEN_TO_C_XResizeRequestEvent(ptr))->width = XEN_TO_C_INT(val);
   else if (XEN_XConfigureEvent_P(ptr)) (XEN_TO_C_XConfigureEvent(ptr))->width = XEN_TO_C_INT(val);
@@ -19186,10 +19155,8 @@ static XEN gxm_height(XEN ptr)
   if (XEN_XGraphicsExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGraphicsExposeEvent(ptr))->height)));
   if (XEN_XExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XExposeEvent(ptr))->height)));
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Screen(ptr))->height)));
-#if HAVE_XPM
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->height)));
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->height)));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "height", "a struct with a height field");
   return(XEN_FALSE);
 }
@@ -19209,10 +19176,8 @@ static XEN gxm_width(XEN ptr)
   if (XEN_XGraphicsExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGraphicsExposeEvent(ptr))->width)));
   if (XEN_XExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XExposeEvent(ptr))->width)));
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Screen(ptr))->width)));
-#if HAVE_XPM
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->width)));
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->width)));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "width", "a struct with a width field");
   return(XEN_FALSE);
 }
@@ -19712,9 +19677,7 @@ static XEN gxm_data(XEN ptr)
 #if HAVE_MOTIF
   if (XEN_XmRowColumnCallbackStruct_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XmRowColumnCallbackStruct(ptr))->data)));
 #endif
-#if HAVE_XPM
   if (XEN_XpmImage_P(ptr)) return(XEN_WRAP_C_POINTER((XEN_TO_C_XpmImage(ptr))->data));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "data", "XpmImage");
   return(XEN_FALSE);
 }
@@ -20142,9 +20105,7 @@ static XEN gxm_value(XEN ptr)
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->value)));
   if (XEN_XmCommandCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmCommandCallbackStruct(ptr))->value)));
   if (XEN_XmScrollBarCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmScrollBarCallbackStruct(ptr))->value)));
-#if HAVE_XPM
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XpmColorSymbol(ptr))->value)));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "value", "a struct with a value field");
   return(XEN_FALSE);
 }
@@ -20161,9 +20122,7 @@ static XEN gxm_set_value(XEN ptr, XEN val)
   if (XEN_XmSelectionBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionBoxCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
   if (XEN_XmSelectionCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionCallbackStruct(ptr))->value = (XtPointer)XEN_UNWRAP_C_POINTER(val); else
 #endif    
-#if HAVE_XPM
   if (XEN_XpmColorSymbol_P(ptr)) (XEN_TO_C_XpmColorSymbol(ptr))->value = xen_strdup(XEN_TO_C_STRING(val)); else
-#endif
   XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "value", "a struct with a value field");
   return(val);
 }
@@ -21525,7 +21484,6 @@ static XEN gxm_page_number(XEN ptr)
 
 #endif
 
-#if HAVE_XPM
   XEN_NARGIFY_4(gxm_XpmCreatePixmapFromData_w, gxm_XpmCreatePixmapFromData)
   XEN_NARGIFY_4(gxm_XpmCreateDataFromPixmap_w, gxm_XpmCreateDataFromPixmap)
   XEN_NARGIFY_4(gxm_XpmReadFileToPixmap_w, gxm_XpmReadFileToPixmap)
@@ -21533,10 +21491,8 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_5(gxm_XpmWriteFileFromPixmap_w, gxm_XpmWriteFileFromPixmap)
   XEN_NARGIFY_4(gxm_XpmCreatePixmapFromXpmImage_w, gxm_XpmCreatePixmapFromXpmImage)
   XEN_NARGIFY_4(gxm_XpmCreateXpmImageFromPixmap_w, gxm_XpmCreateXpmImageFromPixmap)
-#if HAVE_XPM_GET_ERROR_STRING
   XEN_NARGIFY_1(gxm_XpmGetErrorString_w, gxm_XpmGetErrorString)
-#endif
-#endif
+
   XEN_NARGIFY_3(gxm_XGetPixel_w, gxm_XGetPixel)
   XEN_NARGIFY_1(gxm_XDestroyImage_w, gxm_XDestroyImage)
   XEN_NARGIFY_4(gxm_XPutPixel_w, gxm_XPutPixel)
@@ -21600,11 +21556,11 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(XEN_XmParseMapping_p_w, XEN_XmParseMapping_p)
   XEN_NARGIFY_1(XEN_XmTextSource_p_w, XEN_XmTextSource_p)
 #endif
-#if HAVE_XPM
+
   XEN_NARGIFY_1(XEN_XpmAttributes_p_w, XEN_XpmAttributes_p)
   XEN_NARGIFY_1(XEN_XpmImage_p_w, XEN_XpmImage_p)
   XEN_NARGIFY_1(XEN_XpmColorSymbol_p_w, XEN_XpmColorSymbol_p)
-#endif
+
 #if MUS_WITH_EDITRES
   XEN_NARGIFY_4(gxm_XEditResCheckMessages_w, gxm_XEditResCheckMessages)
 #endif
@@ -22002,7 +21958,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(gxm_selected_child_w, gxm_selected_child)
 #endif
 
-#if HAVE_XPM
   XEN_NARGIFY_1(gxm_valuemask_w, gxm_valuemask)
   XEN_NARGIFY_2(gxm_set_valuemask_w, gxm_set_valuemask)
   XEN_NARGIFY_1(gxm_ncolors_w, gxm_ncolors)
@@ -22023,7 +21978,7 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_5(gxm_XpmImage_w, gxm_XpmImage)
   XEN_NARGIFY_3(gxm_XpmColorSymbol_w, gxm_XpmColorSymbol)
   XEN_NARGIFY_0(gxm_XpmAttributes_w, gxm_XpmAttributes)
-#endif
+
 #if HAVE_SCHEME
   XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)
   XEN_NARGIFY_2(c_to_xen_strings_w, c_to_xen_strings)
@@ -23151,7 +23106,6 @@ static XEN gxm_page_number(XEN ptr)
 
 #endif
 
-#if HAVE_XPM
   #define gxm_XpmCreatePixmapFromData_w gxm_XpmCreatePixmapFromData
   #define gxm_XpmCreateDataFromPixmap_w gxm_XpmCreateDataFromPixmap
   #define gxm_XpmReadFileToPixmap_w gxm_XpmReadFileToPixmap
@@ -23159,10 +23113,8 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XpmWriteFileFromPixmap_w gxm_XpmWriteFileFromPixmap
   #define gxm_XpmCreatePixmapFromXpmImage_w gxm_XpmCreatePixmapFromXpmImage
   #define gxm_XpmCreateXpmImageFromPixmap_w gxm_XpmCreateXpmImageFromPixmap
-#if HAVE_XPM_GET_ERROR_STRING
   #define gxm_XpmGetErrorString_w gxm_XpmGetErrorString
-#endif
-#endif
+
   #define gxm_XGetPixel_w gxm_XGetPixel
   #define gxm_XDestroyImage_w gxm_XDestroyImage
   #define gxm_XPutPixel_w gxm_XPutPixel
@@ -23226,11 +23178,11 @@ static XEN gxm_page_number(XEN ptr)
   #define XEN_XmParseMapping_p_w XEN_XmParseMapping_p
   #define XEN_XmTextSource_p_w XEN_XmTextSource_p
 #endif
-#if HAVE_XPM
+
   #define XEN_XpmAttributes_p_w XEN_XpmAttributes_p
   #define XEN_XpmImage_p_w XEN_XpmImage_p
   #define XEN_XpmColorSymbol_p_w XEN_XpmColorSymbol_p
-#endif
+
 #if MUS_WITH_EDITRES
   #define gxm_XEditResCheckMessages_w gxm_XEditResCheckMessages
 #endif
@@ -23628,7 +23580,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_selected_child_w gxm_selected_child
 #endif
 
-#if HAVE_XPM
   #define gxm_valuemask_w gxm_valuemask
   #define gxm_set_valuemask_w gxm_set_valuemask
   #define gxm_ncolors_w gxm_ncolors
@@ -23649,8 +23600,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XpmImage_w gxm_XpmImage
   #define gxm_XpmColorSymbol_w gxm_XpmColorSymbol
   #define gxm_XpmAttributes_w gxm_XpmAttributes
-#endif
-    /* HAVE_XPM */
 
 #if HAVE_SCHEME
   #define c_to_xen_string_w c_to_xen_string
@@ -24806,20 +24755,17 @@ static void define_procedures(void)
 #if HAVE_MOTIF
 #endif
 
-#if HAVE_XPM
   XM_DEFINE_PROCEDURE(XpmCreatePixmapFromData, gxm_XpmCreatePixmapFromData_w, 4, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmCreateDataFromPixmap, gxm_XpmCreateDataFromPixmap_w, 4, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmReadFileToPixmap, gxm_XpmReadFileToPixmap_w, 4, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmReadFileToXpmImage, gxm_XpmReadFileToXpmImage_w, 1, 0, 0, NULL);
-#if HAVE_XPM_GET_ERROR_STRING
   XM_DEFINE_PROCEDURE(XpmGetErrorString, gxm_XpmGetErrorString_w, 1, 0, 0, H_XpmGetErrorString);
-#endif
   XM_DEFINE_PROCEDURE(XpmReadPixmapFile, gxm_XpmReadFileToPixmap_w, 4, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmWriteFileFromPixmap, gxm_XpmWriteFileFromPixmap_w, 5, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmWritePixmapFile, gxm_XpmWriteFileFromPixmap_w, 5, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmCreatePixmapFromXpmImage, gxm_XpmCreatePixmapFromXpmImage_w, 4, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmCreateXpmImageFromPixmap, gxm_XpmCreateXpmImageFromPixmap_w, 4, 0, 0, NULL);
-#endif
+
   XM_DEFINE_PROCEDURE(XGetPixel, gxm_XGetPixel_w, 3, 0, 0, H_XGetPixel);
   XM_DEFINE_PROCEDURE(XDestroyImage, gxm_XDestroyImage_w, 1, 0, 0, H_XDestroyImage);
   XM_DEFINE_PROCEDURE(XPutPixel, gxm_XPutPixel_w, 4, 0, 0, H_XPutPixel);
@@ -24932,11 +24878,10 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmTextSource?, XEN_XmTextSource_p_w, 1, 0, 0, PROC_TRUE " if arg is a TextSource");
 #endif
 
-#if HAVE_XPM
   XM_DEFINE_PROCEDURE(XpmAttributes?, XEN_XpmAttributes_p_w, 1, 0, 0, PROC_TRUE " if arg is a XpmAttributes");
   XM_DEFINE_PROCEDURE(XpmImage?, XEN_XpmImage_p_w, 1, 0, 0, PROC_TRUE " if arg is a XpmImage");
   XM_DEFINE_PROCEDURE(XpmColorSymbol?, XEN_XpmColorSymbol_p_w, 1, 0, 0, PROC_TRUE " if arg is a XpmColorSymbol");
-#endif
+
 #if HAVE_SCHEME && HAVE_MOTIF
   XEN_DEFINE_PROCEDURE("->string", c_to_xen_string_w, 1, 0, 0, H_to_string);
   XEN_DEFINE_PROCEDURE("->strings", c_to_xen_strings_w, 2, 0, 0, H_to_strings);
@@ -25188,7 +25133,7 @@ static void define_structs(void)
 #if HAVE_XmCreateTabStack
   XM_DEFINE_READER(selected_child, gxm_selected_child_w, 1, 0, 0);
 #endif
-#if HAVE_XPM
+
   XM_DEFINE_ACCESSOR(valuemask, gxm_valuemask_w, set_valuemask, gxm_set_valuemask_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(ncolors, gxm_ncolors_w, set_ncolors, gxm_set_ncolors_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(cpp, gxm_cpp_w, set_cpp, gxm_set_cpp_w, 1, 0, 2, 0);
@@ -25200,7 +25145,6 @@ static void define_structs(void)
   XM_DEFINE_ACCESSOR(x_hotspot, gxm_x_hotspot_w, set_x_hotspot, gxm_set_x_hotspot_w, 1, 0, 2, 0);
   XM_DEFINE_PROCEDURE(XpmColorSymbol, gxm_XpmColorSymbol_w, 3, 0, 0, H_XpmColorSymbol);
   XM_DEFINE_PROCEDURE(XpmAttributes, gxm_XpmAttributes_w, 0, 0, 0, H_XpmAttributes);
-#endif
 #endif
 
   XM_DEFINE_ACCESSOR(request_code, gxm_request_code_w, set_request_code, gxm_set_request_code_w, 1, 0, 2, 0); 
@@ -27013,7 +26957,7 @@ static void define_integers(void)
   DEFINE_INTEGER(XK_yacute);
   DEFINE_INTEGER(XK_thorn);
   DEFINE_INTEGER(XK_ydiaeresis);
-#if HAVE_XPM
+
   DEFINE_INTEGER(XpmFormat);
   DEFINE_INTEGER(XpmVersion);
   DEFINE_INTEGER(XpmRevision);
@@ -27054,7 +26998,7 @@ static void define_integers(void)
   DEFINE_INTEGER(XpmComments);
   DEFINE_INTEGER(XpmReturnComments);
   DEFINE_INTEGER(XpmUndefPixel);
-#endif
+
   DEFINE_INTEGER(NoValue);
   DEFINE_INTEGER(XValue);
   DEFINE_INTEGER(YValue);

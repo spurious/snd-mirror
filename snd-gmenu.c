@@ -970,7 +970,7 @@ static void popup_cut_to_new_callback_1(bool cut)
       if (cut) delete_selection(UPDATE_DISPLAY);
 
       ss->open_requestor = FROM_POPUP_CUT_TO_NEW;
-      redirect_snd_error_to(popup_error_handler, "popup cut->new");
+      redirect_snd_error_to(popup_error_handler, (void *)"popup cut->new");
       snd_open_file(temp_file, FILE_READ_WRITE);
       redirect_snd_error_to(NULL, NULL);
 
@@ -1287,7 +1287,12 @@ void add_tooltip(GtkWidget *w, const char *tip)
 {
   char *str;
   str = mus_format("<span background=\"white\">%s</span>", tip);
-  gtk_widget_set_tooltip_markup(GTK_WIDGET(w), str);
+  gtk_widget_set_tooltip_markup(w, str);
+#if (!HAVE_GTK_3)
+  gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)(ss->sgx->white));
+#else
+  gtk_widget_override_background_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->white));
+#endif
   free(str);
 }
 

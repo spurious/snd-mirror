@@ -1,9 +1,5 @@
 #include "snd.h"
-
-#if HAVE_XPM
-  #include <X11/xpm.h>
-#endif
-
+#include <X11/xpm.h>
 
 #define TOGGLE_MARGIN 0
 
@@ -1531,8 +1527,6 @@ static unsigned char speed_l_bits1[] = {
    0x20, 0x00, 0x10, 0x08, 0x08, 0x00, 0x04, 0x20, 0x02, 0x00, 0xfd, 0xa5,
    0x02, 0x00, 0x04, 0x20, 0x08, 0x00, 0x10, 0x08, 0x20, 0x00, 0x00, 0x00};
 
-#if HAVE_XPM
-
 static Pixmap mini_lock = 0;
 static Pixmap close_icon = 0;
 static Pixmap blank_pixmap = 0;
@@ -1787,17 +1781,6 @@ void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color)
     change_pixmap_background(MAIN_SHELL(ss), hourglasses[i], old_color, new_color, 16, 14);
 }
 
-#else
-static bool hourglasses[NUM_HOURGLASSES] = {false};
-void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color) {}
-void show_lock(snd_info *sp) {}
-void hide_lock(snd_info *sp) {}
-void start_bomb(snd_info *sp) {report_in_minibuffer(sp, "%s has changed since we last read it!", sp->short_filename);}
-void stop_bomb(snd_info *sp) {}
-void show_bomb(snd_info *sp) {}
-void hide_bomb(snd_info *sp) {}
-#endif
-
 
 static Pixmap spd_r, spd_l;
 static bool spd_ok = false;
@@ -1991,17 +1974,13 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       NAME_BOX(sp) = XtCreateManagedWidget("snd-name-form", xmFormWidgetClass, SND_PANE(sp), args, n);
       XtAddEventHandler(NAME_BOX(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
-#if HAVE_XPM
       if (!mini_lock_allocated) 
 	allocate_icons(NAME_BOX(sp));
-#endif
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-#if HAVE_XPM
       XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
       XtSetArg(args[n], XmNlabelPixmap, close_icon); n++;
-#endif
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -2041,14 +2020,14 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, NAME_LABEL(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-#if HAVE_XPM
+
       if (blank_pixmap)
 	{
 	  /* if xpm failed (blank_pixmap == 0), this can cause X to kill Snd! */
 	  XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
 	  XtSetArg(args[n], XmNlabelPixmap, blank_pixmap); n++;
 	}
-#endif
+
       LOCK_OR_BOMB(sp) = XtCreateManagedWidget("", xmLabelWidgetClass, NAME_BOX(sp), args, n);
 
       {
@@ -2072,14 +2051,14 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	    XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
 	    XtSetArg(args[n], XmNleftWidget, left_widget); n++;
 	    XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-#if HAVE_XPM
+
 	    if (blank_pixmap)
 	      {
 		/* if xpm failed (blank_pixmap == 0), this can cause X to kill Snd! */
 		XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
 		XtSetArg(args[n], XmNlabelPixmap, blank_pixmap); n++;
 	      }
-#endif
+
 	    sp->sgx->progress_widgets[i] = XtCreateManagedWidget("", xmLabelWidgetClass, NAME_BOX(sp), args, n);
 	    left_widget = sp->sgx->progress_widgets[i];
 	  }
@@ -2091,13 +2070,13 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
 	XtSetArg(args[n], XmNleftWidget, left_widget); n++;
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-#if HAVE_XPM
+
 	if (blank_pixmap)
 	  {
 	    XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
 	    XtSetArg(args[n], XmNlabelPixmap, blank_pixmap); n++;
 	  }
-#endif
+
 	XtSetArg(args[n], XmNshadowThickness, 0); n++;
 	XtSetArg(args[n], XmNhighlightThickness, 0); n++;
 	XtSetArg(args[n], XmNfillOnArm, false); n++;
@@ -2143,7 +2122,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       /* in Motif 2.2 this sets up a tooltip:
-	XtSetArg(args[n], XmNtoolTipString, XmStringCreateLocalized("play this sound")); n++;
+	XtSetArg(args[n], XmNtoolTipString, XmStringCreateLocalized((char *)"play this sound")); n++;
       */
       XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       PLAY_BUTTON(sp) = make_togglebutton_widget("play", NAME_BOX(sp), args, n);
@@ -2216,7 +2195,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       n = 0;      
       /* AMP */
-      s1 = XmStringCreateLocalized("amp:");
+      s1 = XmStringCreateLocalized((char *)"amp:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -2270,7 +2249,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       n = 0;
       /* SPEED */
-      s1 = XmStringCreateLocalized("speed:");
+      s1 = XmStringCreateLocalized((char *)"speed:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2363,7 +2342,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       n = 0;
       /* EXPAND */
-      s1 = XmStringCreateLocalized("expand:");
+      s1 = XmStringCreateLocalized((char *)"expand:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2442,7 +2421,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       /* CONTRAST */
       n = 0;
-      s1 = XmStringCreateLocalized("contrast:");
+      s1 = XmStringCreateLocalized((char *)"contrast:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2521,7 +2500,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       /* REVERB */
       /* REVSCL */
       n = 0;
-      s1 = XmStringCreateLocalized("reverb:");
+      s1 = XmStringCreateLocalized((char *)"reverb:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2602,7 +2581,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       /* REVLEN */
       n = 0;
-      s1 = XmStringCreateLocalized("len:");
+      s1 = XmStringCreateLocalized((char *)"len:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2661,7 +2640,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       /* FILTER */
       n = 0;
-      s1 = XmStringCreateLocalized("filter:");
+      s1 = XmStringCreateLocalized((char *)"filter:");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2753,7 +2732,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreateLocalized("hz");
+      s1 = XmStringCreateLocalized((char *)"hz");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, FILTER_BUTTON(sp)); n++;
@@ -2771,7 +2750,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreateLocalized("dB");
+      s1 = XmStringCreateLocalized((char *)"dB");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, FILTER_HZ_BUTTON(sp)); n++;
@@ -3105,10 +3084,6 @@ int control_panel_height(snd_info *sp)
 
 
 /* -------- PROGRESS REPORT -------- */
-/*
- * if no xpm, send a string, else post an hourglass (and a stop sign?)
- */
-
 
 /* since threads can be acting on all chans at once, it's probably useful to show a progress bar for each */
 
@@ -3151,15 +3126,12 @@ void finish_progress_report(chan_info *cp)
       ((cp->chan == 0) ||
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
-#if HAVE_XPM
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, blank_pixmap, NULL);
-#endif
+
 #if (!HAVE_PTHREADS)
       XmUpdateDisplay(PROGRESS_ICON(cp));
 #endif
-#if HAVE_XPM
       hide_stop_sign(sp);
-#endif
     }
 }
 
@@ -3180,9 +3152,7 @@ void start_progress_report(chan_info *cp)
 #if (!HAVE_PTHREADS)
       XmUpdateDisplay(PROGRESS_ICON(cp));
 #endif
-#if HAVE_XPM
       show_stop_sign(sp);
-#endif
     }
 }
 
@@ -3330,10 +3300,10 @@ void make_controls_dialog(void)
       XmString xdismiss, xhelp, titlestr, xreset;
       Widget mainform, slider;
 
-      xdismiss = XmStringCreateLocalized("Go Away");
-      xhelp = XmStringCreateLocalized("Help");
-      titlestr = XmStringCreateLocalized("More controls");
-      xreset = XmStringCreateLocalized("Reset");
+      xdismiss = XmStringCreateLocalized((char *)"Go Away");
+      xhelp = XmStringCreateLocalized((char *)"Help");
+      titlestr = XmStringCreateLocalized((char *)"More controls");
+      xreset = XmStringCreateLocalized((char *)"Reset");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -3373,7 +3343,7 @@ void make_controls_dialog(void)
 					 XmNorientation,      XmVERTICAL, 
 					 NULL);
 
-      titlestr = XmStringCreateLocalized("expand hop");
+      titlestr = XmStringCreateLocalized((char *)"expand hop");
       slider = XtVaCreateManagedWidget("expand-hop", xmScaleWidgetClass, mainform,
 				       XmNorientation,   XmHORIZONTAL,
 				       XmNshowValue,     true,
@@ -3390,7 +3360,7 @@ void make_controls_dialog(void)
       XtAddCallback(slider, XmNdragCallback, expand_hop_callback, NULL);
       controls[EXPAND_HOP] = slider;
 
-      titlestr = XmStringCreateLocalized("expand length");
+      titlestr = XmStringCreateLocalized((char *)"expand length");
       slider = XtVaCreateManagedWidget("expand-length", xmScaleWidgetClass, mainform,
 				       XmNorientation,   XmHORIZONTAL,
 				       XmNshowValue,     true,
@@ -3407,7 +3377,7 @@ void make_controls_dialog(void)
       XtAddCallback(slider, XmNdragCallback, expand_length_callback, NULL);
       controls[EXPAND_LENGTH] = slider;
 
-      titlestr = XmStringCreateLocalized("expand ramp");
+      titlestr = XmStringCreateLocalized((char *)"expand ramp");
       slider = XtVaCreateManagedWidget("expand-ramp", xmScaleWidgetClass, mainform,
 				       XmNorientation,   XmHORIZONTAL,
 				       XmNshowValue,     true,
@@ -3424,7 +3394,7 @@ void make_controls_dialog(void)
       XtAddCallback(slider, XmNdragCallback, expand_ramp_callback, NULL);
       controls[EXPAND_RAMP] = slider;
 
-      titlestr = XmStringCreateLocalized("expand jitter");
+      titlestr = XmStringCreateLocalized((char *)"expand jitter");
       slider = XtVaCreateManagedWidget("expand-hop", xmScaleWidgetClass, mainform,
 				       XmNorientation,   XmHORIZONTAL,
 				       XmNshowValue,     true,
@@ -3441,7 +3411,7 @@ void make_controls_dialog(void)
       XtAddCallback(slider, XmNdragCallback, expand_jitter_callback, NULL);
       controls[EXPAND_JITTER] = slider;
 
-      titlestr = XmStringCreateLocalized("contrast amp");
+      titlestr = XmStringCreateLocalized((char *)"contrast amp");
       slider = XtVaCreateManagedWidget("contrast-amp", xmScaleWidgetClass, mainform,
 				       XmNorientation,   XmHORIZONTAL,
 				       XmNshowValue,     true,
@@ -3458,7 +3428,7 @@ void make_controls_dialog(void)
       XtAddCallback(slider, XmNdragCallback, contrast_amp_callback, NULL);
       controls[CONTRAST_AMP] = slider;
 
-      titlestr = XmStringCreateLocalized("reverb lowpass");
+      titlestr = XmStringCreateLocalized((char *)"reverb lowpass");
       slider = XtVaCreateManagedWidget("reverb-lowpass", xmScaleWidgetClass, mainform,
 				       XmNorientation,   XmHORIZONTAL,
 				       XmNshowValue,     true,
@@ -3475,7 +3445,7 @@ void make_controls_dialog(void)
       XtAddCallback(slider, XmNdragCallback, reverb_lowpass_callback, NULL);
       controls[REVERB_LOWPASS] = slider;
 
-      titlestr = XmStringCreateLocalized("reverb feedback");
+      titlestr = XmStringCreateLocalized((char *)"reverb feedback");
       slider = XtVaCreateManagedWidget("reverb-feedback", xmScaleWidgetClass, mainform,
 				       XmNorientation,   XmHORIZONTAL,
 				       XmNshowValue,     true,

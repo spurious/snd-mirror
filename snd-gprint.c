@@ -11,49 +11,25 @@ static void begin_print(GtkPrintOperation *operation, GtkPrintContext *context,	
 static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gint page_num, gpointer data)
 {
   cairo_t *cr;
-  PangoLayout *layout;
-  gdouble width, text_height;
-  gint layout_height;
-  PangoFontDescription *desc;
+  chan_info *cp;
 
-  /* this is just example code */
   cr = gtk_print_context_get_cairo_context(context);
-  width = gtk_print_context_get_width(context);
 
-  cairo_rectangle(cr, 0, 0, width, 10);
-  
-  cairo_set_source_rgb(cr, 0.8, 0.8, 0.8);
-  cairo_fill_preserve(cr);
-  
-  cairo_set_source_rgb(cr, 0, 0, 0);
-  cairo_set_line_width(cr, 1);
-  cairo_stroke(cr);
+  switch (ss->print_choice)
+    {
+    case PRINT_SND:
+      cp = selected_channel();
+      cp->cgx->ax->cr = cr;
+      display_channel_data_for_print(cp);
+      cp->cgx->ax->cr = NULL;
+      break;
 
-  layout = gtk_print_context_create_pango_layout(context);
+    case PRINT_ENV:
+      break;
 
-  desc = pango_font_description_from_string("sans 14");
-  pango_layout_set_font_description(layout, desc);
-  pango_font_description_free(desc);
-
-  pango_layout_set_text(layout, "nope", -1);
-  pango_layout_set_width(layout, (int)width);
-  pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
-			      
-  pango_layout_get_size(layout, NULL, &layout_height);
-  text_height = (gdouble)layout_height / PANGO_SCALE;
-
-  cairo_move_to(cr, width / 2,  5);
-  pango_cairo_show_layout(cr, layout);
-
-  g_object_unref(layout);
-
-  {
-    chan_info *cp;
-    cp = selected_channel();
-    cp->cgx->ax->cr = cr;
-    display_channel_data_for_print(cp); /* update_graph recalculates the spectrum which is unnecessary here */
-    cp->cgx->ax->cr = NULL;
-  }
+    case PRINT_REGION:
+      break;
+    }
 }
 
 

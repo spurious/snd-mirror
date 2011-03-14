@@ -70,7 +70,7 @@ static void stop_recording(void)
   mus_sound_close_output(recorder_fd, recorder_total_bytes);
   recorder_fd = -1;
   recorder_total_bytes = 0;
-  s2 = XmStringCreateLocalized("Record");
+  s2 = XmStringCreateLocalized((char *)"Record");
   XtVaSetValues(record_button, XmNlabelString, s2, NULL);
   XmStringFree(s2);
 }
@@ -173,7 +173,7 @@ static void start_recording(void)
     {
       XmString s2;
       recording = true;
-      s2 = XmStringCreateLocalized("Done");
+      s2 = XmStringCreateLocalized((char *)"Done");
       XtVaSetValues(record_button, XmNlabelString, s2, NULL);
       XmStringFree(s2);
     }
@@ -300,10 +300,10 @@ widget_t record_file(void)
       XmString xquit, xhelp, xrecord, xtitle;
       Atom wm_delete;
 
-      xquit = XmStringCreateLocalized("Go Away");
-      xhelp = XmStringCreateLocalized("Help");
-      xrecord = XmStringCreateLocalized("Record");
-      xtitle = XmStringCreateLocalized("Record");
+      xquit = XmStringCreateLocalized((char *)"Go Away");
+      xhelp = XmStringCreateLocalized((char *)"Help");
+      xrecord = XmStringCreateLocalized((char *)"Record");
+      xtitle = XmStringCreateLocalized((char *)"Record");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

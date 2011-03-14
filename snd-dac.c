@@ -3394,14 +3394,14 @@ static XEN g_set_cursor_location_offset(XEN val)
 static XEN g_with_tracking_cursor(void) 
 {
   #define H_with_tracking_cursor "("  S_with_tracking_cursor "): " PROC_TRUE " if cursor always moves along in waveform display as sound is played"
-  return(C_TO_XEN_BOOLEAN(with_tracking_cursor(ss)));
+  return(C_TO_XEN_BOOLEAN(with_tracking_cursor(ss) == ALWAYS_TRACK));
 }
 
 static XEN g_set_with_tracking_cursor(XEN on) 
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ONLY_ARG, S_setB S_with_tracking_cursor, "a boolean");
-  set_with_tracking_cursor(ss, XEN_TO_C_BOOLEAN(on)); /* TRACK_IF_ASKED = false */
-  return(C_TO_XEN_BOOLEAN(with_tracking_cursor(ss)));
+  set_with_tracking_cursor(ss, (XEN_TO_C_BOOLEAN(on)) ? ALWAYS_TRACK : TRACK_IF_ASKED);
+  return(C_TO_XEN_BOOLEAN(with_tracking_cursor(ss) == ALWAYS_TRACK));
 }
 
 

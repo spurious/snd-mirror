@@ -447,10 +447,10 @@ static void make_region_dialog(void)
   regrow *r;
   chan_info *cp;
 
-  xok = XmStringCreateLocalized("Go Away");
-  xhelp = XmStringCreateLocalized("Help");
-  xinsert = XmStringCreateLocalized("Insert");
-  titlestr = XmStringCreateLocalized("Regions");
+  xok = XmStringCreateLocalized((char *)"Go Away");
+  xhelp = XmStringCreateLocalized((char *)"Help");
+  xinsert = XmStringCreateLocalized((char *)"Insert");
+  titlestr = XmStringCreateLocalized((char *)"Regions");
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

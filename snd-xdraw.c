@@ -946,10 +946,10 @@ Widget start_color_orientation_dialog(bool managed)
       XmString glstr;
 #endif
 
-      xdismiss = XmStringCreateLocalized("Go Away"); /* needed by template dialog */
-      xhelp = XmStringCreateLocalized("Help");
-      xreset = XmStringCreateLocalized("Reset");
-      titlestr = XmStringCreateLocalized("Color and Orientation");
+      xdismiss = XmStringCreateLocalized((char *)"Go Away"); /* needed by template dialog */
+      xhelp = XmStringCreateLocalized((char *)"Help");
+      xreset = XmStringCreateLocalized((char *)"Reset");
+      titlestr = XmStringCreateLocalized((char *)"Color and Orientation");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1161,7 +1161,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopWidget, ccd_cutoff); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNset, color_inverted(ss)); n++;
-      xinvert = XmStringCreateLocalized("invert");
+      xinvert = XmStringCreateLocalized((char *)"invert");
       XtSetArg(args[n], XmNlabelString, xinvert); n++;
       ccd_invert = make_togglebutton_widget("invert", color_form, args, n);
       XtAddCallback(ccd_invert, XmNvalueChangedCallback, invert_color_callback, NULL);
@@ -1377,7 +1377,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       XtSetArg(args[n], XmNset, with_gl(ss)); n++;
-      glstr = XmStringCreateLocalized("use OpenGL");
+      glstr = XmStringCreateLocalized((char *)"use OpenGL");
       XtSetArg(args[n], XmNlabelString, glstr); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;

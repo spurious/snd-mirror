@@ -5902,10 +5902,10 @@ graphics_context *mix_waveform_context(chan_info *cp)    {return(set_context(cp,
 
 static void show_smpte_label(chan_info *cp, graphics_context *cur_ax)
 {
-  #define SMPTE_FRAMES_PER_SECOND 24.0
-  static char label[11] = "00:00:00:00";
-
 #if (!USE_NO_GUI)
+  #define SMPTE_FRAMES_PER_SECOND 24.0
+  static char label[12] = "00:00:00:00";
+
   if (cp->graph_time_p)
     {
       int grf_x, grf_y, grf_width, grf_height;
@@ -5950,7 +5950,7 @@ static void show_smpte_label(chan_info *cp, graphics_context *cur_ax)
 	  fill_rectangle(cur_ax, grf_x, grf_y, 2, height);
 	  fill_rectangle(cur_ax, grf_x + width - 2, grf_y, 2, height);
 	  
-	  set_numbers_font(cur_ax, false, try_tiny_font);
+	  set_numbers_font(cur_ax, NOT_PRINTING, try_tiny_font);
 #if USE_MOTIF
 	  grf_y += number_height((try_tiny_font) ? TINY_FONT(ss) : AXIS_NUMBERS_FONT(ss));
 #else
