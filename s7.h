@@ -316,8 +316,10 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b);                /* r
 s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error);     /* (rationalize x error) */
 s7_Int s7_numerator(s7_pointer x);                                          /* (numerator x) */
 s7_Int s7_denominator(s7_pointer x);                                        /* (denominator x) */
-double s7_random(s7_scheme *sc, s7_pointer state);                          /* (random x) */
+s7_Double s7_random(s7_scheme *sc, s7_pointer state);                       /* (random x) */
 s7_pointer s7_make_random_state(s7_scheme *sc, s7_pointer seed);            /* (make-random-state seed) */
+s7_pointer s7_random_state_to_list(s7_scheme *sc, s7_pointer args);         /* (random-state->list r) */
+void s7_set_default_random_state(s7_scheme *sc, s7_Int seed, s7_Int carry);
 
 bool s7_is_complex(s7_pointer arg);                                         /* (complex? arg) */
 s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b);        /* returns the Scheme object a+bi */

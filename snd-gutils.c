@@ -712,13 +712,13 @@ void reset_user_int_data(GObject *obj, int data)
 }
 
 
-char *sg_get_text(GtkWidget *w, int start, int end)
+char *sg_get_text(GtkWidget *w, int start, int end) /* g_free result */
 {
   GtkTextIter s, e;
   GtkTextBuffer *buf;
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
   gtk_text_buffer_get_iter_at_offset(buf, &s, start);
-  gtk_text_buffer_get_iter_at_offset(buf, &e, end);  /* this is utterly idiotic!!! */
+  gtk_text_buffer_get_iter_at_offset(buf, &e, end);
   return(gtk_text_buffer_get_text(buf, &s, &e, true));
 }
 
@@ -1219,7 +1219,6 @@ char *slist_selection(slist *lst)
  *   gtk3: prefs tooltips look terrible
  *   if chans are syncd, shouldn't multichan mix/mark also?
  *   drag marks as edit is messy looking in gtk
- *   need cursor/pointer check for text in listener help
  *
  *   gtk3: snd-test 13 segfault
  *     snd: cairo-surface.c:385: _cairo_surface_begin_modification: Assertion `! surface->finished' failed.

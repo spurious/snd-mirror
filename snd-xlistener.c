@@ -5,8 +5,6 @@
 /* Motif 2.0 defines control-button1 to be "take focus" -- this is not a good idea!! */
 
 
-/* non-listener completions */
-
 static void Tab_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   int completer;
@@ -117,7 +115,7 @@ static int alphabetize(const void *a, const void *b)
 static int find_prompt(Widget w, XmTextPosition start)
 {
   Boolean found_prompt;
-  XmTextPosition loc;
+  XmTextPosition loc = 0;
 
   found_prompt = XmTextFindString(w, start, listener_prompt(ss), XmTEXT_BACKWARD, &loc);
   if (!found_prompt) 
@@ -483,6 +481,49 @@ static void Complain(Widget w, XEvent *event, char **str, Cardinal *num)
 }
 
 
+static void text_at_cursor(Widget w)
+{
+  XmTextPosition curpos, endpos, start, end;
+  int len, prompt_pos;
+  char *buf;
+
+  curpos = XmTextGetCursorPosition(w);
+  if (curpos <= 1)
+    curpos = XmTextGetInsertionPosition(w);
+  if (curpos <= 1)
+    {
+      snd_help("Listener", "This is the 'listener', a text widget in which you can interact with Snd's extension language.  See extsnd.html.", WITH_WORD_WRAP);
+      return;
+    }
+
+  prompt_pos = find_prompt(w, curpos);
+
+  if (curpos > 40)
+    start = curpos - 40;
+  else start = 0;
+  if (start < prompt_pos)
+    start = prompt_pos;
+
+  endpos = XmTextGetLastPosition(w);
+  if ((endpos - curpos) > 40)
+    end = curpos + 40;
+  else end = endpos;
+
+  len = end - start + 1;
+  buf = (char *)calloc(len + 1, sizeof(char));
+  XmTextGetSubstring(w, start, len, len + 1, buf);
+
+  listener_help_at_cursor(buf, curpos - start - 1, len, prompt_pos);
+  free(buf);
+}
+
+
+static void Help_At_Cursor(Widget w, XEvent *ev, char **str, Cardinal *num) 
+{
+  text_at_cursor(w);
+}
+
+
 static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   bool up, cap;
@@ -594,22 +635,6 @@ int save_listener_text(FILE *fp)
 }
 
 
-static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num) 
-{
-  char *source = NULL;
-  int end = 0, beg, len;
-  end = XmTextGetLastPosition(w); /* cursor perhaps? */
-  beg = end - 1024;
-  if (beg < 0) beg = 0;
-  if (beg >= end) return;
-  len = end - beg + 1;
-  source = (char *)calloc(len + 1, sizeof(char));
-  XmTextGetSubstring(w, beg, len, len + 1, source);
-  provide_listener_help(source);
-  free(source);
-}
-
-
 static void Listener_clear(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   clear_listener();
@@ -676,7 +701,7 @@ static void Listener_Return(Widget w, XEvent *event, char **str, Cardinal *num)
 }
 
 
-#define NUM_ACTS 23
+#define NUM_ACTS 24
 static XtActionsRec acts[NUM_ACTS] = {
   {(char *)"no-op", No_op},
   {(char *)"activate-keyboard", Activate_keyboard},
@@ -693,7 +718,6 @@ static XtActionsRec acts[NUM_ACTS] = {
   {(char *)"listener-completion", Listener_completion},
   {(char *)"listener-clear", Listener_clear},
   {(char *)"listener-g", Listener_g},
-  {(char *)"listener-help", Listener_help},
   {(char *)"listener-meta-p", Listener_Meta_P},
   {(char *)"listener-meta-n", Listener_Meta_N},
   {(char *)"listener-next-line", Listener_Arrow_Down},
@@ -701,6 +725,7 @@ static XtActionsRec acts[NUM_ACTS] = {
   {(char *)"listener-return", Listener_Return},
   {(char *)"delete-to-previous-command", Listener_Backup},
   {(char *)"complain", Complain},
+  {(char *)"help-at-cursor", Help_At_Cursor},
 };
 
 
@@ -853,6 +878,7 @@ static char TextTrans4[] =
 	Ctrl <Key>x:	    activate-keyboard(x)\n\
 	Ctrl <Key>y:	    yank()\n\
 	Ctrl <Key>z:	    activate()\n\
+        Ctrl <Key>?:        help-at-cursor()\n\
 	Mod1 <Key>[:	    backward-paragraph()\n\
 	Mod1 <Key>]:	    forward-paragraph()\n\
 	Mod1 <Key><:	    beginning-of-file()\n\
@@ -871,7 +897,6 @@ static char TextTrans4[] =
 	<Btn1Up>:	    b1-release()\n\
 	<Btn1Motion>:	    b1-move()\n\
 	<Key>Tab:	    listener-completion()\n\
-        Ctrl <Key>?:        listener-help()\n\
 	<Key>Return:	    listener-return()\n";
 static XtTranslations transTable4 = NULL;
 
@@ -1186,6 +1211,7 @@ static void listener_help_callback(Widget w, XtPointer context, XtPointer info)
 	}
       XtFree(txt);
     }
+  else text_at_cursor(listener_text);
 }
 
 static void listener_save_callback(Widget w, XtPointer context, XtPointer info)

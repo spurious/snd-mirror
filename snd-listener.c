@@ -13,6 +13,83 @@ bool is_prompt(const char *str, int beg)
 }
 
 
+void listener_help_at_cursor(char *buf, int name_curpos, int len, int prompt_pos)
+{
+  int i, name_start, name_end;
+
+  if (isspace(buf[name_curpos]))
+    {
+      for (i = name_curpos - 1; i >= 0; i--)
+	if ((!isspace(buf[i])) &&
+	    (buf[i] != '(') &&
+	    (buf[i] != ')'))
+	  break;
+      if (i > 0)
+	name_curpos = i;
+    }
+
+  for (i = name_curpos; i >= 0; i--)
+    if ((isspace(buf[i])) ||
+	(buf[i] == '(') ||
+	(buf[i] == ')'))
+      break;
+  name_start = i + 1;
+
+  for (i = name_curpos + 1; i < len; i++)
+    if ((isspace(buf[i])) ||
+	(buf[i] == '(') ||
+	(buf[i] == ')'))
+      break;
+  name_end = i - 1;
+
+  if (name_end > name_start)
+    {
+      XEN help;
+      char *new_text;
+
+      buf[name_end + 1] = '\0';
+      new_text = direct_completions((char *)(buf + name_start));
+
+      if (new_text)
+	{
+	  int matches;
+	  matches = get_possible_completions_size();
+
+	  if (matches == 1)
+	    {
+	      help = g_snd_help(C_TO_XEN_STRING(new_text), 0);
+	      if (XEN_STRING_P(help))
+		snd_help((char *)(buf + name_start), XEN_TO_C_STRING(help), WITH_WORD_WRAP);
+	    }
+	  else
+	    {
+	      if (matches > 1)
+		{
+		  char **buffer;
+		  char *help_str;
+		  int match_len = 0;
+
+		  buffer = get_possible_completions();
+		  for (i = 0; i < matches; i++)
+		    match_len += mus_strlen(buffer[i]);
+		  
+		  help_str = (char *)calloc(match_len + matches * 8, sizeof(char));
+		  for (i = 0; i < matches; i++)
+		    {
+		      strcat(help_str, buffer[i]);
+		      strcat(help_str, "\n");
+		    }
+		  snd_help((char *)(buf + name_start), help_str, WITHOUT_WORD_WRAP);
+		  free(help_str);
+		}
+	    }
+
+	  free(new_text);
+	}
+    }
+}
+
+
 bool within_prompt(const char *str, int beg, int end)
 {
   /* search backwards up to prompt length for cr (or 0), check for prompt */
@@ -309,53 +386,6 @@ char *listener_prompt_with_cr(void)
 {
   mus_snprintf(listener_prompt_buffer, LABEL_BUFFER_SIZE, "\n%s", listener_prompt(ss));
   return(listener_prompt_buffer);
-}
-
-
-static void provide_listener_help_1(const char *source, int start, int end)
-{
-  XEN result = XEN_FALSE;
-  char *name;
-  name = (char *)calloc(end - start + 1, sizeof(char));
-  strncpy(name, (char *)(source + start), end - start);
-  result = g_snd_help(C_TO_XEN_STRING(name), listener_width());
-  free(name);
-  if (XEN_STRING_P(result))
-    {
-      listener_append("\n;");
-      listener_append_and_prompt(XEN_TO_C_STRING(result));
-    }
-}
-
-
-void provide_listener_help(const char *source)
-{
-  if (source)
-    {
-      int i, len;
-      char *prompt;
-      len = mus_strlen(source);
-      /* look for "(name...)" or "\n>name" */
-      prompt = listener_prompt(ss);
-      for (i = len - 1; i >= 0; i--)
-	{
-	  if ((source[i] == '(') || 
-	      (is_prompt(source, i)))
-	    {
-	      int j, start_of_name = -1;
-	      start_of_name = i + 1;
-	      /* look forward for a name */
-	      for (j = i + 2; j < len; j++)
-		if (separator_char_p(source[j]))
-		  {
-		    provide_listener_help_1(source, start_of_name, j);
-		    return;
-		  }
-	      provide_listener_help_1(source, start_of_name, len); /* ran off end with no separator (cursor is at end) */
-	      return;
-	    }
-	}
-    }
 }
 
 

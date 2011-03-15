@@ -102,6 +102,61 @@ static void listener_completion(int end)
 }
 
 
+static int back_to_start(bool move_cursor)
+{
+  char *full_str = NULL, *prompt;
+  int start_of_text;
+  full_str = sg_get_text(listener_text, 0, -1);
+  start_of_text = sg_cursor_position(listener_text);
+  prompt = listener_prompt(ss);
+  if (start_of_text > 0)
+    {
+      int i;
+      for (i = start_of_text; i >= 0; i--)
+	if (is_prompt(full_str, i))
+	  {
+	    start_of_text = i + 1;
+	    break;
+	  }
+    }
+  if (move_cursor) 
+    sg_set_cursor(listener_text, start_of_text + 1);
+  if (full_str) g_free(full_str);
+  return(start_of_text + 1);
+}
+
+
+static void text_at_cursor(GtkWidget *w)
+{
+  int curpos, endpos, start, end, len, prompt_pos;
+  char *buf;
+
+  curpos = sg_cursor_position(w);
+  if (curpos <= 1)
+    {
+      snd_help("Listener", "This is the 'listener', a text widget in which you can interact with Snd's extension language.  See extsnd.html.", WITH_WORD_WRAP);
+      return;
+    }
+
+  prompt_pos = back_to_start(false);
+
+  if (curpos > 40)
+    start = curpos - 40;
+  else start = 0;
+  if (start < prompt_pos)
+    start = prompt_pos;
+
+  endpos = gtk_text_buffer_get_char_count(LISTENER_BUFFER) - 1;
+  if ((endpos - curpos) > 40)
+    end = curpos + 40;
+  else end = endpos;
+
+  len = end - start + 1;
+  buf = sg_get_text(w, start, end + 1);
+  listener_help_at_cursor(buf, curpos - start - 1, len, prompt_pos);
+  g_free(buf);
+}
+
 
 
 /* ---------------- listener widget ---------------- */
@@ -138,28 +193,6 @@ static void listener_return_callback(void)
 }
 
 
-static void back_to_start(void)
-{
-  char *full_str = NULL, *prompt;
-  int start_of_text;
-  full_str = sg_get_text(listener_text, 0, -1);
-  start_of_text = sg_cursor_position(listener_text);
-  prompt = listener_prompt(ss);
-  if (start_of_text > 0)
-    {
-      int i;
-      for (i = start_of_text; i >= 0; i--)
-	if (is_prompt(full_str, i))
-	  {
-	    start_of_text = i + 1;
-	    break;
-	  }
-    }
-  sg_set_cursor(listener_text, start_of_text + 1);
-  if (full_str) g_free(full_str);
-}
-
-
 void listener_delete_text(int new_end)
 {
   int old_end;
@@ -173,7 +206,7 @@ static void clear_back_to_prompt(GtkWidget *w)
 {
   int beg, end;
   end = sg_cursor_position(w);
-  back_to_start();
+  back_to_start(true);
   beg = sg_cursor_position(w);
   if (end <= beg) return;
   sg_text_delete(w, beg, end);
@@ -272,18 +305,6 @@ static void word_upper(GtkWidget *w, int cap, int up)
 	}
       sg_set_cursor(w, curpos + wend + 1);
       if (buf) g_free(buf);
-    }
-}
-
-
-static void listener_help(void)
-{
-  char *source = NULL;
-  source = sg_get_text(listener_text, 0, -1);
-  if (source)
-    {
-      provide_listener_help(source);
-      g_free(source);
     }
 }
 
@@ -461,7 +482,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 	  if (((key == snd_K_a) || (key == snd_K_A)) && 
 	      (state & snd_ControlMask))
 	    {
-	      back_to_start();
+	      back_to_start(true);
 	    }
 	  else
 	    {
@@ -514,7 +535,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 				{
 				  if ((key == snd_K_question) && (state & snd_ControlMask))
 				    {
-				      listener_help();
+				      text_at_cursor(listener_text);
 				    }
 				  else
 				    {
@@ -836,6 +857,7 @@ static void listener_help_callback(GtkWidget *w, gpointer info)
 	  g_free(txt);
 	}
     }
+  else text_at_cursor(listener_text);
 }
 
 

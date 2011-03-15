@@ -183,6 +183,20 @@ bool separator_char_p(char c)
 #endif
 
 
+char *direct_completions(const char *str)
+{
+  int matches = 0;
+  current_match = NULL;
+  clear_possible_completions();
+  set_completion_matches(0);
+  set_save_completions(true);
+  matches = completions(str);
+  set_completion_matches(matches);
+  set_save_completions(false);
+  return(current_match);
+}
+
+
 char *expression_completer(widget_t w, const char *original_text, void *data)
 {
   int i, len, beg, matches = 0;

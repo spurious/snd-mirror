@@ -627,6 +627,7 @@ bool snd_topic_help(const char *topic);
 const char **help_name_to_xrefs(const char *name);
 
 
+
 /* -------- snd-menu.c -------- */
 
 void reflect_file_revert_in_label(snd_info *sp);
@@ -698,6 +699,7 @@ char *info_completer(widget_t w, const char *text, void *data);
 char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text);
 bool separator_char_p(char c);
 void add_srate_to_completion_list(int srate);
+char *direct_completions(const char *str);
 
 
 
@@ -1520,10 +1522,10 @@ char *listener_prompt_with_cr(void);
 void set_listener_prompt(const char *new_prompt);
 int check_balance(const char *expr, int start, int end, bool in_listener);
 int find_matching_paren(const char *str, int parens, int pos, int *highlight_pos);
-void provide_listener_help(const char *source);
 bool listener_is_visible(void);
 void g_init_listener(void);
 char *trim(char *orig);
+void listener_help_at_cursor(char *buf, int name_curpos, int len, int prompt_pos);
 
 
 

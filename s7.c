@@ -9612,25 +9612,6 @@ static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer obj)
 }
 
 
-static s7_pointer g_random_state_to_list(s7_scheme *sc, s7_pointer args)
-{
-  #define H_random_state_to_list "(random-state->list r) returns the random state object as a list.\
-You can later apply make-random-state to this list to continue a random number sequence from any point."
-
-  s7_pointer obj;
-  obj = car(args);
-  if (c_object_type(obj) == rng_tag)
-    {
-      s7_rng_t *r;
-      r = (s7_rng_t *)s7_object_value(obj);
-      return(make_list_2(sc, 
-			 s7_make_integer(sc, r->ran_seed), 
-			 s7_make_integer(sc, r->ran_carry)));
-    }
-  return(sc->F);
-}
-
-
 #if HAVE_PTHREADS
 static pthread_mutex_t rng_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
@@ -9685,7 +9666,39 @@ static s7_rng_t *s7_default_rng(s7_scheme *sc)
 }
 
 
-double s7_random(s7_scheme *sc, s7_pointer state)
+s7_pointer s7_random_state_to_list(s7_scheme *sc, s7_pointer args)
+{
+  #define H_random_state_to_list "(random-state->list r) returns the random state object as a list.\
+You can later apply make-random-state to this list to continue a random number sequence from any point."
+
+  s7_rng_t *r = NULL;
+  s7_pointer obj;
+  if (args == sc->NIL)
+    r = s7_default_rng(sc);
+  else
+    {
+      obj = car(args);
+      if (c_object_type(obj) == rng_tag)
+	r = (s7_rng_t *)s7_object_value(obj);
+    }
+  
+  if (r)
+    return(make_list_2(sc, 
+		       s7_make_integer(sc, r->ran_seed), 
+		       s7_make_integer(sc, r->ran_carry)));
+  return(sc->F);
+}
+
+
+void s7_set_default_random_state(s7_scheme *sc, s7_Int seed, s7_Int carry)
+{
+  sc->default_rng = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
+  ((s7_rng_t *)(sc->default_rng))->ran_seed = (unsigned long long)seed;
+  ((s7_rng_t *)(sc->default_rng))->ran_carry = (unsigned long long)carry;
+}
+
+
+s7_Double s7_random(s7_scheme *sc, s7_pointer state)
 {
   if (!state)
     return(next_random(s7_default_rng(sc)));
@@ -31377,7 +31390,7 @@ s7_scheme *s7_init(void)
 
   s7_define_function(sc, "random",                    g_random,                   1, 1, false, H_random);
   s7_define_function(sc, "make-random-state",         s7_make_random_state,       1, 1, false, H_make_random_state);
-  s7_define_function(sc, "random-state->list",        g_random_state_to_list,     1, 0, false, H_random_state_to_list);
+  s7_define_function(sc, "random-state->list",        s7_random_state_to_list,    0, 1, false, H_random_state_to_list);
 
   s7_define_function(sc, "integer-length",            g_integer_length,           1, 0, false, H_integer_length);
   s7_define_function(sc, "logior",                    g_logior,                   0, 0, true,  H_logior);
