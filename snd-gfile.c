@@ -4378,16 +4378,28 @@ static vf_row *make_vf_row(view_files_info *vdat, GCallback play_callback, GCall
   gtk_widget_show(r->rw);
 
   r->pl = gtk_check_button_new();
-  widget_modify_bg(r->pl, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
   gtk_box_pack_start(GTK_BOX(r->rw), r->pl, false, false, 2);
+  widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->sgx->white);
   SG_SIGNAL_CONNECT(r->pl, "toggled", play_callback, r);
   gtk_widget_show(r->pl);
 
   r->nm = gtk_button_new_with_label("");
-  gtk_button_set_relief(GTK_BUTTON(r->nm), GTK_RELIEF_HALF);
-  widget_modify_bg(r->nm, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
+  /* gtk_button_set_relief(GTK_BUTTON(r->nm), GTK_RELIEF_HALF); */
+  widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->white);
   sg_left_justify_button(r->nm);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);
+
+#if HAVE_GTK_3
+  {
+    GtkWidget *child;
+    child = gtk_bin_get_child(GTK_BIN(r->nm));
+    gtk_widget_override_color(child, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
+    gtk_widget_override_color(child, GTK_STATE_PRELIGHT, (GdkRGBA *)(ss->sgx->black));
+    gtk_widget_override_color(child, GTK_STATE_SELECTED, (GdkRGBA *)(ss->sgx->black));
+  }
+#endif
 
   SG_SIGNAL_CONNECT(r->nm, "clicked", name_callback, r);
   SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", vf_mouse_enter_label, r);
@@ -4404,19 +4416,19 @@ static vf_row *make_vf_row(view_files_info *vdat, GCallback play_callback, GCall
 
 void vf_unhighlight_row(GtkWidget *nm, GtkWidget *rw)
 {
-  widget_modify_bg(nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  widget_modify_base(nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  widget_modify_bg(rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(nm, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_base(nm, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_bg(rw, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->white);
 }
 
 
 void vf_highlight_row(GtkWidget *nm, GtkWidget *rw)
 {
-  widget_modify_bg(nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-  widget_modify_base(nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-  widget_modify_bg(rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-  widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+  widget_modify_bg(nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
+  widget_modify_base(nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
+  widget_modify_bg(rw, GTK_STATE_NORMAL, ss->sgx->light_blue);
+  widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->light_blue);
 }
 
 

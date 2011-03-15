@@ -7,7 +7,6 @@ Snd 12.0
      added variable play-arrow-size (default: 10)
 
    added Edit:Unselect menu option
-   removed Snd.gtkrc, Snd.ad, and the obsolete X resources stuff.
    added with-menu-icons (gtk only).
    added optional "alpha" arg to make-color.
    moved delete-selection-and-smooth from selection.scm to C.
@@ -16,7 +15,10 @@ Snd 12.0
    startup window size is 700x300
    auto-resize defaults to false in Gtk, true in Motif.
    in gtk, the trailing cr argument to draw-axes in not optional.
+   in Motif, libXpm is no longer optional.
    removed click-for-listener-help.
+   the Region browser print option has been removed.
+   removed Snd.gtkrc, Snd.ad, and the obsolete X resources stuff.
 
    tracking-cursor-style defaults to cursor-line.
      cursor-follows-play moved to snd11.scm.
@@ -71,9 +73,6 @@ Snd 12.0
      to zoom and move the FFT bounds, analogous to the normal arrow keys which
      affect the time domain graph.  (There isn't any place to put sliders for
      this, and the Options:Transform sliders aren't always handy).
-
-   in Motif, libXpm is no longer optional.
-   the Region browser print option has been removed.
 
    in s7, random-state->list.
 

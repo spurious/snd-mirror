@@ -1298,7 +1298,7 @@ static XEN g_set_graph_cursor(XEN curs)
   int val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(curs), curs, XEN_ONLY_ARG, S_setB S_graph_cursor, "an integer");
   val = XEN_TO_C_INT(curs);
-  if ((val >= 0) && (val <= GDK_XTERM))
+  if ((val >= 0) && ((val & 1) == 0) && (val <= GDK_XTERM)) /* these are even numbers up to about 152 (gdkcursor.h) */
     {
       ss->Graph_Cursor = val;
       ss->sgx->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));

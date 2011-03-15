@@ -5818,8 +5818,7 @@ static bool run_time_graph_hook(chan_info *cp, graphics_context *ax)
 					 C_TO_XEN_INT(cp->chan)),
 			      S_time_graph_hook);
 
-      if (foreground_color_ok(result, ax))
-	return(true);
+      return(foreground_color_ok(result, ax));
     }
   return(false);
 }
@@ -5869,7 +5868,7 @@ graphics_context *set_context(chan_info *cp, chan_gc_t gc)
 	case CHAN_MGC: ax->gc = sx->mark_gc;             break;
 	case CHAN_MXGC: ax->gc = sx->mix_gc;             break;
 	case CHAN_TMPGC: 
-	  if (!(run_time_graph_hook(cp,ax)))
+	  if (!(run_time_graph_hook(cp, ax)))
 	    {
 	      ax->gc = sx->combined_basic_gc;
 	      switch (cp->chan % 4)

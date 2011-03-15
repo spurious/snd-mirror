@@ -33071,7 +33071,7 @@ EDITS: 2
 	      (list 'filter-control-in-hz filter-control-in-hz #t #f #t)
 	      (list 'filter-control-order filter-control-order #t 2 (if (<= tests 10) 400 40))
 	      (list 'filter-control? filter-control? #t #f #t)
-	      (list 'graph-cursor graph-cursor #f 0 35)
+;	      (list 'graph-cursor graph-cursor #f 0 35)
 	      (list 'time-graph-style time-graph-style #f 0 4)
 	      (list 'lisp-graph-style lisp-graph-style #f 0 4)
 	      (list 'transform-graph-style transform-graph-style #f 0 4)

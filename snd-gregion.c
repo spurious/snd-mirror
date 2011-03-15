@@ -88,10 +88,10 @@ static void unhighlight_region(void)
     {
       regrow *oldr;
       oldr = region_row(current_region);
-      widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->white);
+      widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->white);
+      widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->white);
+      widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->white);
     }
 }
 
@@ -102,10 +102,10 @@ static void highlight_region(void)
     {
       regrow *oldr;
       oldr = region_row(current_region);
-      widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-      widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-      widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-      widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
+      widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
+      widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->light_blue);
+      widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->light_blue);
     }
 }
 
@@ -131,8 +131,10 @@ void update_region_browser(bool grf_too)
 {
   int i, len;
   region_state *rs;
+
   rs = region_report();
   len = rs->len;
+
   for (i = 0; i < len; i++) 
     {
       regrow *r;
@@ -141,19 +143,24 @@ void update_region_browser(bool grf_too)
       set_toggle_button(r->pl, false, false, (void *)r);
       gtk_widget_show(r->rw);
     }
+
   for (i = len; i < max_regions(ss); i++) 
     if (region_rows[i])
       gtk_widget_hide(region_rows[i]->rw);
+
   free_region_state(rs);
   if (len == 0) return;
+
   gtk_widget_show(region_list);
   if (grf_too)
     {
       chan_info *cp;
+
       unhighlight_region();
       set_current_region(0);
       highlight_region();
       goto_window(region_rows[0]->nm);
+
       cp = rsp->chans[0];
       if (cp) 
 	{
@@ -401,8 +408,8 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
   /* assume "ww" is a vbox widget in this case */
   r->rw = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(ww), r->rw, false, false, 0);
-  widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->sgx->white);
   gtk_widget_show(r->rw);
 
   r->pl = gtk_check_button_new();
@@ -417,8 +424,19 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
   SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", regrow_mouse_enter_label, r);
   SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", regrow_mouse_leave_label, r);
   set_user_data(G_OBJECT(r->nm), (gpointer)r);
-  widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->white);
+  
+#if HAVE_GTK_3
+  {
+    GtkWidget *child;
+    child = gtk_bin_get_child(GTK_BIN(r->nm));
+    gtk_widget_override_color(child, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
+    gtk_widget_override_color(child, GTK_STATE_PRELIGHT, (GdkRGBA *)(ss->sgx->black));
+    gtk_widget_override_color(child, GTK_STATE_SELECTED, (GdkRGBA *)(ss->sgx->black));
+  }
+#endif
+
   gtk_widget_show(r->nm);
 
   return(r);
