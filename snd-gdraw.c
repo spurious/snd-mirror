@@ -66,7 +66,7 @@ void draw_points(graphics_context *ax, point_t *points, int num, int size)
 
 void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height)
 {
-  if (ss->sgx->bg_gradient < .01)
+  if (ss->bg_gradient < .01)
     {
       cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
       cairo_rectangle(ss->cr, x0, y0, width, height);
@@ -75,7 +75,7 @@ void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height)
   else
     {
       mus_float_t grad;
-      grad = ss->sgx->bg_gradient;
+      grad = ss->bg_gradient;
       /* try gradient background: looks ok, but display is slow */
       cairo_pattern_t *pat;
       /* this is shaded toward the right
@@ -105,7 +105,7 @@ void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height)
 void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int width, int height)
 {
   /* used only to clear the overall graph window in snd-chn.c */
-  if (ss->sgx->bg_gradient < .01)
+  if (ss->bg_gradient < .01)
     {
       cairo_set_source_rgba(ss->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue, ax->gc->fg_color->alpha);
       cairo_rectangle(ss->cr, x0, y0, width, height);
@@ -114,7 +114,7 @@ void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int wi
   else
     {
       mus_float_t grad;
-      grad = ss->sgx->bg_gradient;
+      grad = ss->bg_gradient;
       /* try gradient background: looks ok, but display is slow */
       cairo_pattern_t *pat;
       /* this is shaded toward the right
@@ -959,7 +959,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 	frame = gtk_frame_new(NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(frame), 0);
 	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
-	widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+	widget_modify_bg(frame, GTK_STATE_NORMAL, ss->zoom_color);
 	gtk_table_attach(GTK_TABLE(outer_table), frame, 3, 5, 0, 3,
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
@@ -1029,7 +1029,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       sep3 = gtk_vseparator_new();
       gtk_box_pack_start(GTK_BOX(orientbox), sep3, false, false, 3);
-      widget_modify_bg(sep3, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      widget_modify_bg(sep3, GTK_STATE_NORMAL, ss->basic_color);
       gtk_widget_show(sep3);
 
 
@@ -1101,7 +1101,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       sep1 = gtk_vseparator_new(); /* not hseparator! */
       gtk_box_pack_start(GTK_BOX(orientbox), sep1, false, false, 6);
-      widget_modify_bg(sep1, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      widget_modify_bg(sep1, GTK_STATE_NORMAL, ss->basic_color);
       gtk_widget_show(sep1);
 
 
@@ -1174,7 +1174,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       sep2 = gtk_vseparator_new();
       gtk_box_pack_start(GTK_BOX(orientbox), sep2, false, false, 6);
-      widget_modify_bg(sep2, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      widget_modify_bg(sep2, GTK_STATE_NORMAL, ss->basic_color);
       gtk_widget_show(sep2);
 
 
@@ -1203,7 +1203,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       sep5 = gtk_vseparator_new();
       gtk_box_pack_start(GTK_BOX(orientbox), sep5, false, false, 3);
-      widget_modify_bg(sep5, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      widget_modify_bg(sep5, GTK_STATE_NORMAL, ss->basic_color);
       gtk_widget_show(sep5);
     }
   else raise_dialog(ccd_dialog);
@@ -1213,14 +1213,14 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 }
 
 
-static XEN g_background_gradient(void) {return(C_TO_XEN_DOUBLE(ss->sgx->bg_gradient));}
+static XEN g_background_gradient(void) {return(C_TO_XEN_DOUBLE(ss->bg_gradient));}
 
 static XEN g_set_background_gradient(XEN val) 
 {
   #define H_background_gradient "(" S_background_gradient "): channel graph background color gradient"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_background_gradient, "a number between 0 (none) and 1");
 
-  ss->sgx->bg_gradient = XEN_TO_C_DOUBLE(val);
+  ss->bg_gradient = XEN_TO_C_DOUBLE(val);
   for_each_chan(update_graph);
 
   return(val);

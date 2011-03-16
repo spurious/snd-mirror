@@ -3657,7 +3657,7 @@ void view_files_reflect_sort_items(void)
 		    int n = 0, k, old_size;
 		    Arg args[20];
 		    old_size = vdat->sort_items_size;
-		    XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+		    XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 		    vdat->sort_items_size += 4;
 		    vdat->sort_items = (Widget *)realloc(vdat->sort_items, vdat->sort_items_size * sizeof(Widget));
 		    for (k = old_size; k < vdat->sort_items_size; k++)
@@ -4268,7 +4268,7 @@ void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
       int id_or_error = 0;
 
       redirect_snd_error_to(redirect_vf_post_error, (void *)vdat);
-      ss->sgx->requestor_dialog = w;
+      ss->requestor_dialog = w;
       ss->open_requestor_data = (void *)vdat;
       ss->open_requestor = FROM_VIEW_FILES_MIX_DIALOG;
       id_or_error = vf_mix(vdat);
@@ -4354,7 +4354,7 @@ void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 
       redirect_snd_error_to(redirect_vf_post_error, (void *)vdat);
       redirect_snd_warning_to(redirect_vf_post_error, (void *)vdat);
-      ss->sgx->requestor_dialog = w;
+      ss->requestor_dialog = w;
       ss->open_requestor = FROM_VIEW_FILES_INSERT_DIALOG;
       ss->open_requestor_data = (void *)vdat;
       ok = vf_insert(vdat);

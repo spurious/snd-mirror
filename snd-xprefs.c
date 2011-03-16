@@ -76,8 +76,8 @@ static void post_prefs_error(const char *msg, prefs_info *data);
 #define free_TEXT(Val)            XtFree(Val)
 #define SET_SCALE(Value)          XmScaleSetValue(prf->scale, (int)(100 * Value))
 #define SET_SENSITIVE(Wid, Val)   XtSetSensitive(Wid, Val)
-#define black_text(Prf)           XtVaSetValues(Prf->label, XmNforeground, ss->sgx->black, NULL)
-#define red_text(Prf)             XtVaSetValues(Prf->label, XmNforeground, ss->sgx->red, NULL)
+#define black_text(Prf)           XtVaSetValues(Prf->label, XmNforeground, ss->black, NULL)
+#define red_text(Prf)             XtVaSetValues(Prf->label, XmNforeground, ss->red, NULL)
 
 #define TIMEOUT(Func)             XtAppAddTimeOut(MAIN_APP(ss), ERROR_WAIT_TIME, Func, (XtPointer)prf)
 
@@ -159,7 +159,7 @@ static Widget make_row_label(prefs_info *prf, const char *label, Widget box, Wid
   int n;
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -182,7 +182,7 @@ static Widget make_row_inner_label(prefs_info *prf, const char *label, Widget le
   int n;
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -202,7 +202,7 @@ static Widget make_row_middle_separator(Widget label, Widget box, Widget top_wid
   int n;
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -225,7 +225,7 @@ static Widget make_row_inner_separator(int width, Widget left_widget, Widget box
   int n;
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -246,7 +246,7 @@ static Widget make_row_error(prefs_info *prf, Widget box, Widget left_widget, Wi
   Widget w;
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -269,7 +269,7 @@ static Widget make_row_toggle_with_label(prefs_info *prf, bool current_value, Wi
   int n;
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -278,7 +278,7 @@ static Widget make_row_toggle_with_label(prefs_info *prf, bool current_value, Wi
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNset, (current_value) ? XmSET : XmUNSET); n++;
   XtSetArg(args[n], XmNborderWidth, 0); n++;
-  XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNborderColor, ss->white); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
   XtSetArg(args[n], XmNindicatorOn, XmINDICATOR_FILL); n++;
   XtSetArg(args[n], XmNindicatorSize, 14); n++;
@@ -381,7 +381,7 @@ static Widget make_row_arrows(prefs_info *prf, Widget box, Widget left_widget, W
   int n;
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -392,7 +392,7 @@ static Widget make_row_arrows(prefs_info *prf, Widget box, Widget left_widget, W
   prf->arrow_down = XtCreateManagedWidget("arrow-down", xmArrowButtonWidgetClass, box, args, n);
   
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -548,7 +548,7 @@ static Widget make_row_text(prefs_info *prf, const char *text_value, int cols, W
   text_info *info;
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -569,10 +569,10 @@ static Widget make_row_text(prefs_info *prf, const char *text_value, int cols, W
     }
   XtSetArg(args[n], XmNmarginHeight, 1); n++;
   XtSetArg(args[n], XmNborderWidth, 0); n++;
-  XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNbottomShadowColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNborderColor, ss->white); n++;
+  XtSetArg(args[n], XmNbottomShadowColor, ss->white); n++;
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
-  XtSetArg(args[n], XmNtopShadowColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopShadowColor, ss->white); n++;
   w = make_textfield_widget("text", box, args, n, ACTIVATABLE_BUT_NOT_FOCUSED, NO_COMPLETER);
 
   XtAddCallback(w, XmNactivateCallback, prefs_change_callback, NULL);
@@ -737,7 +737,7 @@ static Widget make_row_radio_box(prefs_info *prf,
   prf->num_buttons = num_labels;
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -745,7 +745,7 @@ static Widget make_row_radio_box(prefs_info *prf,
   XtSetArg(args[n], XmNleftWidget, left_widget); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNborderWidth, 0); n++;
-  XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNborderColor, ss->white); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
   XtSetArg(args[n], XmNpacking, XmPACK_TIGHT); n++;
@@ -757,14 +757,14 @@ static Widget make_row_radio_box(prefs_info *prf,
       Widget button;
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+      XtSetArg(args[n], XmNbackground, ss->white); n++;
       XtSetArg(args[n], XmNset, (i == current_value) ? XmSET : XmUNSET); n++;
       XtSetArg(args[n], XmNborderWidth, 0); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
+      XtSetArg(args[n], XmNborderColor, ss->white); n++;
       XtSetArg(args[n], XmNmarginHeight, 0); n++;
       XtSetArg(args[n], XmNindicatorOn, XmINDICATOR_FILL); n++;
       XtSetArg(args[n], XmNindicatorSize, 14); n++;
-      XtSetArg(args[n], XmNselectColor, ss->sgx->green); n++;
+      XtSetArg(args[n], XmNselectColor, ss->green); n++;
       XtSetArg(args[n], XmNuserData, i); n++;
       button = XtCreateManagedWidget(labels[i], xmToggleButtonWidgetClass, w, args, n);
       prf->radio_buttons[i] = button;
@@ -874,7 +874,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   free(str);
   
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -882,7 +882,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   XtSetArg(args[n], XmNleftWidget, prf->text); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNborderWidth, 0); n++;
-  XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNborderColor, ss->white); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
   XtSetArg(args[n], XmNshowValue, XmNONE); n++;
@@ -1034,7 +1034,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
       }
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1045,16 +1045,16 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   XtSetArg(args[n], XmNvalue, value); n++;
   XtSetArg(args[n], XmNmarginHeight, 1); n++;
   XtSetArg(args[n], XmNborderWidth, 0); n++;
-  XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNbottomShadowColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNborderColor, ss->white); n++;
+  XtSetArg(args[n], XmNbottomShadowColor, ss->white); n++;
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
-  XtSetArg(args[n], XmNtopShadowColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopShadowColor, ss->white); n++;
   if (completion_func)
     prf->text = make_textfield_widget("text", box, args, n, ACTIVATABLE_BUT_NOT_FOCUSED, add_completer_func(completion_func, completion_context));
   else prf->text = make_textfield_widget("text", box, args, n, ACTIVATABLE_BUT_NOT_FOCUSED, NO_COMPLETER);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, prf->text); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -1068,16 +1068,16 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   XtManageChild(sbar);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   prf->list_menu = XmCreatePulldownMenu(sbar, (char *)"sort-menu", args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNsubMenuId, prf->list_menu); n++;
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
   XtSetArg(args[n], XmNmarginHeight, 1); n++;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1087,7 +1087,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   prf->arrow_right = XtCreateManagedWidget(">", xmCascadeButtonWidgetClass, sbar, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   for (i = 0; i < num_values; i++)
     if (values[i])
       {
@@ -1356,7 +1356,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   n1 = make_callback_list(prefs_color_callback, (XtPointer)prf);
   
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNforeground, red); n++;
   XtSetArg(args[n], XmNsliderVisual, XmFOREGROUND_COLOR); n++;
   XtSetArg(args[n], XmNsliderMark, XmTHUMB_MARK); n++;
@@ -1389,7 +1389,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNforeground, green); n++;
   XtSetArg(args[n], XmNsliderVisual, XmFOREGROUND_COLOR); n++;
   XtSetArg(args[n], XmNsliderMark, XmTHUMB_MARK); n++;
@@ -1411,7 +1411,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->gscl = XtCreateManagedWidget("", xmScrollBarWidgetClass, box, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNforeground, blue); n++;
   XtSetArg(args[n], XmNsliderVisual, XmFOREGROUND_COLOR); n++;
   XtSetArg(args[n], XmNsliderMark, XmTHUMB_MARK); n++;
@@ -1492,7 +1492,7 @@ static Widget make_top_level_label(const char *label, Widget parent)
   int n;
   Arg args[20];
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->light_blue); n++;
+  XtSetArg(args[n], XmNbackground, ss->light_blue); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -1509,13 +1509,13 @@ static Widget make_top_level_box(Widget topics)
   int n;
   Arg args[20];
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   frame = XtCreateManagedWidget("pref-frame", xmFrameWidgetClass, topics, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   return(XtCreateManagedWidget("pref-box", xmFormWidgetClass, frame, args, n));
 }
 
@@ -1524,7 +1524,7 @@ static Widget make_inner_label(const char *label, Widget parent, Widget top_widg
   int n;
   Arg args[20];
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1679,7 +1679,7 @@ widget_t start_preferences_dialog(void)
     dismiss = XmStringCreateLocalized((char *)"Go Away");
 
     n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+    XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
     XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
     XtSetArg(args[n], XmNnoResize, false); n++;
     XtSetArg(args[n], XmNtransient, false); n++;
@@ -1702,13 +1702,13 @@ widget_t start_preferences_dialog(void)
     preferences_dialog = XmCreateTemplateDialog(MAIN_PANE(ss), (char *)"preferences", args, n);
 
     n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-    XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
+    XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
+    XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
     revert_button = XtCreateManagedWidget("Revert", xmPushButtonGadgetClass, preferences_dialog, args, n);
 
     n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-    XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
+    XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
+    XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
     clear_button = XtCreateManagedWidget("Clear", xmPushButtonGadgetClass, preferences_dialog, args, n);
 
 #if HAVE_EXTENSION_LANGUAGE
@@ -1730,16 +1730,16 @@ widget_t start_preferences_dialog(void)
     
     map_over_children(preferences_dialog, set_main_color_of_widget);
 #if HAVE_EXTENSION_LANGUAGE
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->selection_color, NULL);
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color,   NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->selection_color, NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->highlight_color,   NULL);
 #endif
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->selection_color, NULL);
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->selection_color, NULL);
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->highlight_color,   NULL);
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->highlight_color,   NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->selection_color, NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->selection_color, NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->highlight_color,   NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->highlight_color,   NULL);
     
     n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+    XtSetArg(args[n], XmNbackground, ss->white); n++;
     XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
     XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
     XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1750,7 +1750,7 @@ widget_t start_preferences_dialog(void)
     scroller = XmCreateScrolledWindow(preferences_dialog, (char *)"pref-scroller", args, n);
     XtManageChild(scroller);
     
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+    XtSetArg(args[n], XmNbackground, ss->white); n++;
     n = attach_all_sides(args, 0);
     XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
     topics = XtCreateManagedWidget("pref-topics", xmRowColumnWidgetClass, scroller, args, n);
@@ -2164,8 +2164,8 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_tracking_cursor_style, save_tracking_cursor_style, help_tracking_cursor_style, NULL, revert_tracking_cursor_style);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    saved_cursor_color = ss->sgx->cursor_color;
-    prf = prefs_color_selector_row("color", S_cursor_color, ss->sgx->cursor_color,
+    saved_cursor_color = ss->cursor_color;
+    prf = prefs_color_selector_row("color", S_cursor_color, ss->cursor_color,
 				   dpy_box, current_sep,
 				   cursor_color_func);
     remember_pref(prf, NULL, save_cursor_color, help_cursor_color, clear_cursor_color, revert_cursor_color);
@@ -2176,29 +2176,29 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
     cursor_label = make_inner_label("  colors", dpy_box, current_sep);
     
-    saved_basic_color = ss->sgx->basic_color;
-    prf = prefs_color_selector_row("main background color", S_basic_color, ss->sgx->basic_color,
+    saved_basic_color = ss->basic_color;
+    prf = prefs_color_selector_row("main background color", S_basic_color, ss->basic_color,
 				   dpy_box, cursor_label,
 				   basic_color_func);
     remember_pref(prf, NULL, save_basic_color, help_basic_color, clear_basic_color, revert_basic_color);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
-    saved_highlight_color = ss->sgx->highlight_color;
-    prf = prefs_color_selector_row("main highlight color", S_highlight_color, ss->sgx->highlight_color,
+    saved_highlight_color = ss->highlight_color;
+    prf = prefs_color_selector_row("main highlight color", S_highlight_color, ss->highlight_color,
 				   dpy_box, current_sep,
 				   highlight_color_func);
     remember_pref(prf, NULL, save_highlight_color, help_highlight_color, clear_highlight_color, revert_highlight_color);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
-    saved_position_color = ss->sgx->position_color;
-    prf = prefs_color_selector_row("second highlight color", S_position_color, ss->sgx->position_color,
+    saved_position_color = ss->position_color;
+    prf = prefs_color_selector_row("second highlight color", S_position_color, ss->position_color,
 				   dpy_box, current_sep,
 				   position_color_func);
     remember_pref(prf, NULL, save_position_color, help_position_color, clear_position_color, revert_position_color);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
-    saved_zoom_color = ss->sgx->zoom_color;
-    prf = prefs_color_selector_row("third highlight color", S_zoom_color, ss->sgx->zoom_color,
+    saved_zoom_color = ss->zoom_color;
+    prf = prefs_color_selector_row("third highlight color", S_zoom_color, ss->zoom_color,
 				   dpy_box, current_sep,
 				   zoom_color_func);
     remember_pref(prf, NULL, save_zoom_color, help_zoom_color, clear_zoom_color, revert_zoom_color);
@@ -2315,36 +2315,36 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(grf_box, prf->label); 
     colgrf_label = make_inner_label("  colors", grf_box, current_sep);
 
-    saved_data_color = ss->sgx->data_color;    
-    prf = prefs_color_selector_row("unselected data (waveform) color", S_data_color, ss->sgx->data_color,
+    saved_data_color = ss->data_color;    
+    prf = prefs_color_selector_row("unselected data (waveform) color", S_data_color, ss->data_color,
 				   grf_box, colgrf_label,
 				   data_color_func);
     remember_pref(prf, NULL, save_data_color, help_data_color, clear_data_color, revert_data_color);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
-    saved_graph_color = ss->sgx->graph_color;
-    prf = prefs_color_selector_row("unselected graph (background) color", S_graph_color, ss->sgx->graph_color,
+    saved_graph_color = ss->graph_color;
+    prf = prefs_color_selector_row("unselected graph (background) color", S_graph_color, ss->graph_color,
 				   grf_box, current_sep,
 				   graph_color_func);
     remember_pref(prf, NULL, save_graph_color, help_graph_color, clear_graph_color, revert_graph_color);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
-    saved_selected_data_color = ss->sgx->selected_data_color;
-    prf = prefs_color_selector_row("selected channel data (waveform) color", S_selected_data_color, ss->sgx->selected_data_color,
+    saved_selected_data_color = ss->selected_data_color;
+    prf = prefs_color_selector_row("selected channel data (waveform) color", S_selected_data_color, ss->selected_data_color,
 				   grf_box, current_sep,
 				   selected_data_color_func);
     remember_pref(prf, NULL, save_selected_data_color, help_selected_data_color, clear_selected_data_color, revert_selected_data_color);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
-    saved_selected_graph_color = ss->sgx->selected_graph_color;
-    prf = prefs_color_selector_row("selected channel graph (background) color", S_selected_graph_color, ss->sgx->selected_graph_color,
+    saved_selected_graph_color = ss->selected_graph_color;
+    prf = prefs_color_selector_row("selected channel graph (background) color", S_selected_graph_color, ss->selected_graph_color,
 				   grf_box, current_sep,
 				   selected_graph_color_func);
     remember_pref(prf, NULL, save_selected_graph_color, help_selected_graph_color, clear_selected_graph_color, revert_selected_graph_color);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
-    saved_selection_color = ss->sgx->selection_color;
-    prf = prefs_color_selector_row("selection color", S_selection_color, ss->sgx->selection_color,
+    saved_selection_color = ss->selection_color;
+    prf = prefs_color_selector_row("selection color", S_selection_color, ss->selection_color,
 				   grf_box, current_sep,
 				   selection_color_func);
     remember_pref(prf, NULL, save_selection_color, help_selection_color, clear_selection_color, revert_selection_color);
@@ -2522,8 +2522,8 @@ widget_t start_preferences_dialog(void)
     mmr_box = make_top_level_box(topics);
     mmr_label = make_top_level_label("marks and mixes", mmr_box);
 
-    saved_mark_color = ss->sgx->mark_color;
-    prf = prefs_color_selector_row("mark and mix tag color", S_mark_color, ss->sgx->mark_color,
+    saved_mark_color = ss->mark_color;
+    prf = prefs_color_selector_row("mark and mix tag color", S_mark_color, ss->mark_color,
 				   mmr_box, mmr_label,
 				   mark_color_func);
     remember_pref(prf, NULL, save_mark_color, help_mark_color, clear_mark_color, revert_mark_color);
@@ -2552,8 +2552,8 @@ widget_t start_preferences_dialog(void)
     free(str1);
 
     current_sep = make_inter_variable_separator(mmr_box, prf->label);
-    saved_mix_color = ss->sgx->mix_color;
-    prf = prefs_color_selector_row("mix waveform color", S_mix_color, ss->sgx->mix_color,
+    saved_mix_color = ss->mix_color;
+    prf = prefs_color_selector_row("mix waveform color", S_mix_color, ss->mix_color,
 				   mmr_box, current_sep,
 				   mix_color_func);
     remember_pref(prf, NULL, save_mix_color, help_mix_color, clear_mix_color, revert_mix_color);
@@ -2642,15 +2642,15 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_listener_font, save_listener_font, help_listener_font, clear_listener_font, revert_listener_font);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
-    saved_listener_color = ss->sgx->listener_color;
-    prf = prefs_color_selector_row("background color", S_listener_color, ss->sgx->listener_color,
+    saved_listener_color = ss->listener_color;
+    prf = prefs_color_selector_row("background color", S_listener_color, ss->listener_color,
 				   prg_box, current_sep,
 				   listener_color_func);
     remember_pref(prf, NULL, save_listener_color, help_listener_color, clear_listener_color, revert_listener_color);
 
     current_sep = make_inter_variable_separator(prg_box, prf->rscl);
-    saved_listener_text_color = ss->sgx->listener_text_color;
-    prf = prefs_color_selector_row("text color", S_listener_text_color, ss->sgx->listener_text_color,
+    saved_listener_text_color = ss->listener_text_color;
+    prf = prefs_color_selector_row("text color", S_listener_text_color, ss->listener_text_color,
 				   prg_box, current_sep,
 				   listener_text_color_func);
     remember_pref(prf, NULL, save_listener_text_color, help_listener_text_color, clear_listener_text_color, revert_listener_text_color);

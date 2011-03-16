@@ -98,11 +98,10 @@ static Widget *iconify_active_dialogs = NULL;
 static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XMapEvent *ev = (XMapEvent *)event;
-  state_context *sx;
   int i;
-  if ((!ss) || (!(ss->sgx)) || (!(ss->sgx->dialogs)))
+  if ((!ss) || (!(ss->dialogs)))
     return;
-  sx = ss->sgx;
+
   /* ev->type can be several things, but the ones we care about here are
    * MapNotify and UnmapNotify.  Snd dialogs are "windows" in X-jargon, so
    * when the main window is minimized (iconified), other active dialogs
@@ -128,14 +127,14 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
   if (ev->type == UnmapNotify) 
     {
       if (iconify_active_dialogs) free(iconify_active_dialogs);
-      iconify_active_dialogs = (Widget *)calloc(ss->sgx->num_dialogs, sizeof(Widget));
+      iconify_active_dialogs = (Widget *)calloc(ss->num_dialogs, sizeof(Widget));
 
-      for (i = 0; i < ss->sgx->num_dialogs; i++)
-	if (ss->sgx->dialogs[i])
+      for (i = 0; i < ss->num_dialogs; i++)
+	if (ss->dialogs[i])
 	  {
-	    if (XtIsManaged(ss->sgx->dialogs[i]))
-	      iconify_active_dialogs[i] = ss->sgx->dialogs[i];
-	    XtUnmanageChild(ss->sgx->dialogs[i]);
+	    if (XtIsManaged(ss->dialogs[i]))
+	      iconify_active_dialogs[i] = ss->dialogs[i];
+	    XtUnmanageChild(ss->dialogs[i]);
 	  }
     }
   else
@@ -144,7 +143,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 	{
 	  if (iconify_active_dialogs) 
 	    {
-	      for (i = 0; i < ss->sgx->num_dialogs; i++)
+	      for (i = 0; i < ss->num_dialogs; i++)
 		if (iconify_active_dialogs[i])
 		  XtManageChild(iconify_active_dialogs[i]);
 
@@ -236,7 +235,7 @@ static void startup_funcs(void)
   static int auto_open_ctr = 0;
   Widget shell;
   Display *dpy;
-  shell = ss->sgx->mainshell;
+  shell = ss->mainshell;
   dpy = MAIN_DISPLAY(ss);
 
 #ifndef SND_AS_WIDGET
@@ -250,11 +249,11 @@ static void startup_funcs(void)
   XtAddEventHandler(shell, StructureNotifyMask, false, minify_maxify_window, NULL);
 #endif
 
-  ss->sgx->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
-  ss->sgx->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
-  ss->sgx->bounds_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_h_double_arrow);
-  ss->sgx->play_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_right_arrow);
-  ss->sgx->loop_play_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_left_arrow);
+  ss->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
+  ss->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
+  ss->bounds_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_h_double_arrow);
+  ss->play_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_right_arrow);
+  ss->loop_play_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_left_arrow);
 
 #if HAVE_EXTENSION_LANGUAGE
   snd_load_init_file(noglob, noinit);
@@ -488,28 +487,28 @@ void save_colors(FILE *Fp)
   Display *dpy;
   int scr;
 
-  dpy = XtDisplay(ss->sgx->mainshell);
+  dpy = XtDisplay(ss->mainshell);
   scr = DefaultScreen(dpy);
   cmap = DefaultColormap(dpy, scr);
 
-  save_a_color(Fp, dpy, cmap, BASIC_COLOR,             ss->sgx->basic_color,             S_basic_color);
-  save_a_color(Fp, dpy, cmap, CURSOR_COLOR,            ss->sgx->cursor_color,            S_cursor_color);
-  save_a_color(Fp, dpy, cmap, DATA_COLOR,              ss->sgx->data_color,              S_data_color);
-  save_a_color(Fp, dpy, cmap, SELECTED_DATA_COLOR,     ss->sgx->selected_data_color,     S_selected_data_color);
-  save_a_color(Fp, dpy, cmap, HIGHLIGHT_COLOR,         ss->sgx->highlight_color,         S_highlight_color);
-  save_a_color(Fp, dpy, cmap, POSITION_COLOR,          ss->sgx->position_color,          S_position_color);
-  save_a_color(Fp, dpy, cmap, ZOOM_COLOR,              ss->sgx->zoom_color,              S_zoom_color);
-  save_a_color(Fp, dpy, cmap, SELECTION_COLOR,         ss->sgx->selection_color,         S_selection_color);
-  save_a_color(Fp, dpy, cmap, MIX_COLOR,               ss->sgx->mix_color,               S_mix_color);
-  save_a_color(Fp, dpy, cmap, ENVED_WAVEFORM_COLOR,    ss->sgx->enved_waveform_color,    S_enved_waveform_color);
-  save_a_color(Fp, dpy, cmap, LISTENER_COLOR,          ss->sgx->listener_color,          S_listener_color);
-  save_a_color(Fp, dpy, cmap, LISTENER_TEXT_COLOR,     ss->sgx->listener_text_color,     S_listener_text_color);
-  save_a_color(Fp, dpy, cmap, GRAPH_COLOR,             ss->sgx->graph_color,             S_graph_color);
-  save_a_color(Fp, dpy, cmap, SELECTED_GRAPH_COLOR,    ss->sgx->selected_graph_color,    S_selected_graph_color);
-  save_a_color(Fp, dpy, cmap, MARK_COLOR,              ss->sgx->mark_color,              S_mark_color);
-  save_a_color(Fp, dpy, cmap, SASH_COLOR,              ss->sgx->sash_color,              S_sash_color);
-  save_a_color(Fp, dpy, cmap, TEXT_FOCUS_COLOR,        ss->sgx->text_focus_color,        S_text_focus_color);
-  save_a_color(Fp, dpy, cmap, FILTER_CONTROL_WAVEFORM_COLOR, ss->sgx->filter_control_waveform_color, S_filter_control_waveform_color);
+  save_a_color(Fp, dpy, cmap, BASIC_COLOR,             ss->basic_color,             S_basic_color);
+  save_a_color(Fp, dpy, cmap, CURSOR_COLOR,            ss->cursor_color,            S_cursor_color);
+  save_a_color(Fp, dpy, cmap, DATA_COLOR,              ss->data_color,              S_data_color);
+  save_a_color(Fp, dpy, cmap, SELECTED_DATA_COLOR,     ss->selected_data_color,     S_selected_data_color);
+  save_a_color(Fp, dpy, cmap, HIGHLIGHT_COLOR,         ss->highlight_color,         S_highlight_color);
+  save_a_color(Fp, dpy, cmap, POSITION_COLOR,          ss->position_color,          S_position_color);
+  save_a_color(Fp, dpy, cmap, ZOOM_COLOR,              ss->zoom_color,              S_zoom_color);
+  save_a_color(Fp, dpy, cmap, SELECTION_COLOR,         ss->selection_color,         S_selection_color);
+  save_a_color(Fp, dpy, cmap, MIX_COLOR,               ss->mix_color,               S_mix_color);
+  save_a_color(Fp, dpy, cmap, ENVED_WAVEFORM_COLOR,    ss->enved_waveform_color,    S_enved_waveform_color);
+  save_a_color(Fp, dpy, cmap, LISTENER_COLOR,          ss->listener_color,          S_listener_color);
+  save_a_color(Fp, dpy, cmap, LISTENER_TEXT_COLOR,     ss->listener_text_color,     S_listener_text_color);
+  save_a_color(Fp, dpy, cmap, GRAPH_COLOR,             ss->graph_color,             S_graph_color);
+  save_a_color(Fp, dpy, cmap, SELECTED_GRAPH_COLOR,    ss->selected_graph_color,    S_selected_graph_color);
+  save_a_color(Fp, dpy, cmap, MARK_COLOR,              ss->mark_color,              S_mark_color);
+  save_a_color(Fp, dpy, cmap, SASH_COLOR,              ss->sash_color,              S_sash_color);
+  save_a_color(Fp, dpy, cmap, TEXT_FOCUS_COLOR,        ss->text_focus_color,        S_text_focus_color);
+  save_a_color(Fp, dpy, cmap, FILTER_CONTROL_WAVEFORM_COLOR, ss->filter_control_waveform_color, S_filter_control_waveform_color);
 }
 
 
@@ -539,7 +538,6 @@ void snd_doit(int argc, char **argv)
   Drawable wn;
   Arg args[32];
   int i, n, err = 0;
-  state_context *sx;
   Widget menu;
   XGCValues gv;
   char *app_title = NULL;
@@ -638,9 +636,6 @@ void snd_doit(int argc, char **argv)
   ss->toggle_size = TOGGLE_SIZE;
   ss->click_time = (oclock_t)XtGetMultiClickTime(dpy);
 
-  ss->sgx = (state_context *)calloc(1, sizeof(state_context));
-  sx = ss->sgx;
-
 #if (HAVE_GL) && (!SND_AS_WIDGET)
   {
     /* this taken from glxmotif.c from xjournal/sgi */
@@ -670,7 +665,7 @@ void snd_doit(int argc, char **argv)
 	    /* create an X colormap since probably not using default visual */
 	    cmap = XCreateColormap(dpy, RootWindow(dpy, vi->screen), vi->visual, AllocNone);
 	    XtVaSetValues(shell, XtNvisual, vi->visual, XtNdepth, vi->depth, XtNcolormap, cmap, NULL);
-	    ss->sgx->cx = cx;
+	    ss->cx = cx;
 	  }
 	XFree(vi);
       }
@@ -681,55 +676,55 @@ void snd_doit(int argc, char **argv)
   XtAppSetWarningMsgHandler(app, muffle_warning);
 #endif
 
-  sx->mainapp = app;
-  sx->mainshell = shell;
-  sx->mdpy = dpy;
-  sx->toolbar = NULL;
+  ss->mainapp = app;
+  ss->mainshell = shell;
+  ss->mdpy = dpy;
+  ss->toolbar = NULL;
 
-  sx->white =                   get_color(shell, WHITE_COLOR,             NULL, NULL, true);
-  sx->black =                   get_color(shell, BLACK_COLOR,             NULL, NULL, false);
-  sx->light_blue =              get_color(shell, LIGHT_BLUE_COLOR,        "blue", NULL, true);
-  sx->lighter_blue =            get_color(shell, LIGHTER_BLUE_COLOR,      "blue", NULL, true);
-  sx->red =                     get_color(shell, RED_COLOR,               NULL, NULL, false);
-  sx->green =                   get_color(shell, GREEN_COLOR,             NULL, NULL, false);
-  sx->yellow =                  get_color(shell, YELLOW_COLOR,            NULL, NULL, true);
-  sx->highlight_color =         get_color(shell, HIGHLIGHT_COLOR,         "gray90", NULL, true);
-  sx->basic_color =             get_color(shell, BASIC_COLOR,             "gray80", "gray", true);
-  sx->position_color =          get_color(shell, POSITION_COLOR,          "gray60", "blue", false);
-  sx->zoom_color =              get_color(shell, ZOOM_COLOR,              "gray20", "gray", false);
-  sx->cursor_color =            get_color(shell, CURSOR_COLOR,            NULL, NULL, false);
-  sx->selection_color =         get_color(shell, SELECTION_COLOR,         "gray80", NULL, false);
-  sx->mix_color =               get_color(shell, MIX_COLOR,               "red", NULL, false);
-  sx->enved_waveform_color =    get_color(shell, ENVED_WAVEFORM_COLOR,    "red", NULL, false);
-  sx->filter_control_waveform_color = get_color(shell, FILTER_CONTROL_WAVEFORM_COLOR, "blue", NULL, false);
-  sx->listener_color =          get_color(shell, LISTENER_COLOR,          NULL, NULL, true);
-  sx->listener_text_color =     get_color(shell, LISTENER_TEXT_COLOR,     NULL, NULL, false);
-  sx->graph_color =             get_color(shell, GRAPH_COLOR,             NULL, NULL, true);
-  sx->selected_graph_color =    get_color(shell, SELECTED_GRAPH_COLOR,    NULL, NULL, true);
-  sx->data_color =              get_color(shell, DATA_COLOR,              NULL, NULL, false);
-  sx->selected_data_color =     get_color(shell, SELECTED_DATA_COLOR,     NULL, NULL, false);
-  sx->mark_color =              get_color(shell, MARK_COLOR,              "red", NULL, false);
-  sx->sash_color =              get_color(shell, SASH_COLOR,              NULL, NULL, false);
-  sx->text_focus_color =        get_color(shell, TEXT_FOCUS_COLOR,        NULL, NULL, true);
-  sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
-  sx->selected_grid_color = get_in_between_color(sx->selected_data_color, sx->selected_graph_color);
+  ss->white =                   get_color(shell, WHITE_COLOR,             NULL, NULL, true);
+  ss->black =                   get_color(shell, BLACK_COLOR,             NULL, NULL, false);
+  ss->light_blue =              get_color(shell, LIGHT_BLUE_COLOR,        "blue", NULL, true);
+  ss->lighter_blue =            get_color(shell, LIGHTER_BLUE_COLOR,      "blue", NULL, true);
+  ss->red =                     get_color(shell, RED_COLOR,               NULL, NULL, false);
+  ss->green =                   get_color(shell, GREEN_COLOR,             NULL, NULL, false);
+  ss->yellow =                  get_color(shell, YELLOW_COLOR,            NULL, NULL, true);
+  ss->highlight_color =         get_color(shell, HIGHLIGHT_COLOR,         "gray90", NULL, true);
+  ss->basic_color =             get_color(shell, BASIC_COLOR,             "gray80", "gray", true);
+  ss->position_color =          get_color(shell, POSITION_COLOR,          "gray60", "blue", false);
+  ss->zoom_color =              get_color(shell, ZOOM_COLOR,              "gray20", "gray", false);
+  ss->cursor_color =            get_color(shell, CURSOR_COLOR,            NULL, NULL, false);
+  ss->selection_color =         get_color(shell, SELECTION_COLOR,         "gray80", NULL, false);
+  ss->mix_color =               get_color(shell, MIX_COLOR,               "red", NULL, false);
+  ss->enved_waveform_color =    get_color(shell, ENVED_WAVEFORM_COLOR,    "red", NULL, false);
+  ss->filter_control_waveform_color = get_color(shell, FILTER_CONTROL_WAVEFORM_COLOR, "blue", NULL, false);
+  ss->listener_color =          get_color(shell, LISTENER_COLOR,          NULL, NULL, true);
+  ss->listener_text_color =     get_color(shell, LISTENER_TEXT_COLOR,     NULL, NULL, false);
+  ss->graph_color =             get_color(shell, GRAPH_COLOR,             NULL, NULL, true);
+  ss->selected_graph_color =    get_color(shell, SELECTED_GRAPH_COLOR,    NULL, NULL, true);
+  ss->data_color =              get_color(shell, DATA_COLOR,              NULL, NULL, false);
+  ss->selected_data_color =     get_color(shell, SELECTED_DATA_COLOR,     NULL, NULL, false);
+  ss->mark_color =              get_color(shell, MARK_COLOR,              "red", NULL, false);
+  ss->sash_color =              get_color(shell, SASH_COLOR,              NULL, NULL, false);
+  ss->text_focus_color =        get_color(shell, TEXT_FOCUS_COLOR,        NULL, NULL, true);
+  ss->grid_color = get_in_between_color(ss->data_color, ss->graph_color);
+  ss->selected_grid_color = get_in_between_color(ss->selected_data_color, ss->selected_graph_color);
 
-  sx->axis_color_set = false;
+  ss->axis_color_set = false;
 
-  sx->orig_data_color = sx->data_color;
-  sx->orig_selected_data_color = sx->selected_data_color;
-  sx->orig_mark_color = sx->mark_color;
-  sx->orig_mix_color = sx->mix_color;
-  sx->orig_graph_color = sx->graph_color;
-  sx->orig_selected_graph_color = sx->selected_graph_color;
-  sx->orig_listener_color = sx->listener_color;
-  sx->orig_listener_text_color = sx->listener_text_color;
-  sx->orig_cursor_color = sx->cursor_color;
-  sx->orig_basic_color = sx->basic_color;
-  sx->orig_selection_color = sx->selection_color;
-  sx->orig_zoom_color = sx->zoom_color;
-  sx->orig_position_color = sx->position_color;
-  sx->orig_highlight_color = sx->highlight_color;
+  ss->orig_data_color = ss->data_color;
+  ss->orig_selected_data_color = ss->selected_data_color;
+  ss->orig_mark_color = ss->mark_color;
+  ss->orig_mix_color = ss->mix_color;
+  ss->orig_graph_color = ss->graph_color;
+  ss->orig_selected_graph_color = ss->selected_graph_color;
+  ss->orig_listener_color = ss->listener_color;
+  ss->orig_listener_text_color = ss->listener_text_color;
+  ss->orig_cursor_color = ss->cursor_color;
+  ss->orig_basic_color = ss->basic_color;
+  ss->orig_selection_color = ss->selection_color;
+  ss->orig_zoom_color = ss->zoom_color;
+  ss->orig_position_color = ss->position_color;
+  ss->orig_highlight_color = ss->highlight_color;
 
   if ((!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&
       (!(set_peaks_font(FALLBACK_FONT))))
@@ -758,21 +753,21 @@ void snd_doit(int argc, char **argv)
   ss->orig_listener_font = mus_strdup(listener_font(ss));
   ss->orig_tiny_font = mus_strdup(tiny_font(ss));
 
-  XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
+  XtVaSetValues(shell, XmNbackground, ss->basic_color, NULL);
 
 #ifndef SND_AS_WIDGET
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNallowResize, true); n++;
-  sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, shell, args, n);
+  ss->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, shell, args, n);
 #else
-  sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, parent, caller_args, caller_argn);
+  ss->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, parent, caller_args, caller_argn);
 #endif
   menu = add_menu();
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, menu); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -783,51 +778,51 @@ void snd_doit(int argc, char **argv)
   switch (sound_style(ss))
     {
     case SOUNDS_IN_SEPARATE_WINDOWS:
-      sx->soundpane = XtCreateManagedWidget("soundpane", xmFormWidgetClass, sx->mainpane, args, n);
+      ss->soundpane = XtCreateManagedWidget("soundpane", xmFormWidgetClass, ss->mainpane, args, n);
       break;
 
     case SOUNDS_HORIZONTAL:
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-      sx->soundpanebox = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
+      ss->soundpanebox = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, ss->mainpane, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNsashHeight, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashWidth, ss->sash_size); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNsashIndent, ss->sash_indent); n++;
-      sx->soundpane = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->soundpanebox, args, n);
+      ss->soundpane = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, ss->soundpanebox, args, n);
       break;
 
     case SOUNDS_VERTICAL:
       XtSetArg(args[n], XmNsashHeight, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashWidth, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashIndent, ss->sash_indent); n++;
-      sx->soundpane = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
+      ss->soundpane = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, ss->mainpane, args, n);
       break;
 
     case SOUNDS_IN_NOTEBOOK:
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-      sx->soundpanebox = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
+      ss->soundpanebox = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, ss->mainpane, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNframeBackground, sx->zoom_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
+      XtSetArg(args[n], XmNframeBackground, ss->zoom_color); n++;
       XtSetArg(args[n], XmNbindingType, XmNONE); n++;
       XtSetArg(args[n], XmNbackPagePlacement, XmTOP_RIGHT); n++;
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-      sx->soundpane = XtCreateWidget("nb", xmNotebookWidgetClass, sx->soundpanebox, args, n);
+      ss->soundpane = XtCreateWidget("nb", xmNotebookWidgetClass, ss->soundpanebox, args, n);
 
       {
 	/* get rid of the useless spinbox */
 	Widget scroll;
 	n = 0;
 	XtSetArg(args[n], XmNnotebookChildType, XmPAGE_SCROLLER); n++;
-	scroll = XtCreateWidget("scroller", xmScrollBarWidgetClass, sx->soundpane, NULL, 0);
+	scroll = XtCreateWidget("scroller", xmScrollBarWidgetClass, ss->soundpane, NULL, 0);
       }
-      XtManageChild(sx->soundpane);
-      XtAddCallback(sx->soundpane, XmNpageChangedCallback, notebook_page_changed_callback, NULL);
-      map_over_children(sx->soundpane, set_main_color_of_widget); /* appears to be a no-op */
+      XtManageChild(ss->soundpane);
+      XtAddCallback(ss->soundpane, XmNpageChangedCallback, notebook_page_changed_callback, NULL);
+      map_over_children(ss->soundpane, set_main_color_of_widget); /* appears to be a no-op */
       break;
     }
 
@@ -839,71 +834,71 @@ void snd_doit(int argc, char **argv)
 #endif
 
   wn = XtWindow(shell);
-  gv.background = sx->graph_color;
-  gv.foreground = sx->data_color;
-  sx->basic_gc = XCreateGC(dpy, wn, GCForeground | GCBackground, &gv);
+  gv.background = ss->graph_color;
+  gv.foreground = ss->data_color;
+  ss->basic_gc = XCreateGC(dpy, wn, GCForeground | GCBackground, &gv);
 
-  gv.background = sx->graph_color;
-  gv.foreground = sx->data_color;
-  sx->combined_basic_gc = XCreateGC(dpy, wn, GCForeground | GCBackground, &gv);
+  gv.background = ss->graph_color;
+  gv.foreground = ss->data_color;
+  ss->combined_basic_gc = XCreateGC(dpy, wn, GCForeground | GCBackground, &gv);
 
-  gv.background = sx->graph_color;
-  gv.foreground = sx->mix_color;
-  sx->mix_gc = XCreateGC(dpy, wn, GCForeground | GCBackground, &gv);
-
-  gv.function = GXxor;
-  gv.background = sx->graph_color;
-  gv.foreground = (Pixel)(XOR(sx->cursor_color, gv.background));
-  sx->cursor_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
+  gv.background = ss->graph_color;
+  gv.foreground = ss->mix_color;
+  ss->mix_gc = XCreateGC(dpy, wn, GCForeground | GCBackground, &gv);
 
   gv.function = GXxor;
-  gv.background = sx->graph_color;
-  gv.foreground = (Pixel)(XOR(sx->selection_color, gv.background));
-  sx->selection_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
+  gv.background = ss->graph_color;
+  gv.foreground = (Pixel)(XOR(ss->cursor_color, gv.background));
+  ss->cursor_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
 
   gv.function = GXxor;
-  gv.background = sx->graph_color;
-  gv.foreground = (Pixel)(XOR(sx->mark_color, gv.background));
-  sx->mark_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
+  gv.background = ss->graph_color;
+  gv.foreground = (Pixel)(XOR(ss->selection_color, gv.background));
+  ss->selection_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
+
+  gv.function = GXxor;
+  gv.background = ss->graph_color;
+  gv.foreground = (Pixel)(XOR(ss->mark_color, gv.background));
+  ss->mark_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
 
   gv.function = GXcopy;
-  gv.background = sx->data_color;
-  gv.foreground = sx->graph_color;
-  sx->erase_gc = XCreateGC(dpy, wn, GCForeground | GCBackground | GCFunction, &gv);
+  gv.background = ss->data_color;
+  gv.foreground = ss->graph_color;
+  ss->erase_gc = XCreateGC(dpy, wn, GCForeground | GCBackground | GCFunction, &gv);
 
-  gv.background = sx->selected_graph_color;
-  gv.foreground = sx->selected_data_color;
-  sx->selected_basic_gc = XCreateGC(dpy, wn, GCForeground | GCBackground, &gv);
-
-  gv.function = GXxor;
-  gv.background = sx->selected_graph_color;
-  gv.foreground = (Pixel)(XOR(sx->cursor_color, gv.background));
-  sx->selected_cursor_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
+  gv.background = ss->selected_graph_color;
+  gv.foreground = ss->selected_data_color;
+  ss->selected_basic_gc = XCreateGC(dpy, wn, GCForeground | GCBackground, &gv);
 
   gv.function = GXxor;
-  gv.background = sx->selected_graph_color;
-  gv.foreground = (Pixel)(XOR(sx->selection_color, gv.background));
-  sx->selected_selection_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
+  gv.background = ss->selected_graph_color;
+  gv.foreground = (Pixel)(XOR(ss->cursor_color, gv.background));
+  ss->selected_cursor_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
 
   gv.function = GXxor;
-  gv.background = sx->selected_graph_color;
-  gv.foreground = (Pixel)(XOR(sx->mark_color, gv.background));
-  sx->selected_mark_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
+  gv.background = ss->selected_graph_color;
+  gv.foreground = (Pixel)(XOR(ss->selection_color, gv.background));
+  ss->selected_selection_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
+
+  gv.function = GXxor;
+  gv.background = ss->selected_graph_color;
+  gv.foreground = (Pixel)(XOR(ss->mark_color, gv.background));
+  ss->selected_mark_gc = XCreateGC(dpy, wn, GCForeground | GCFunction, &gv);
 
   gv.function = GXcopy;
-  gv.background = sx->selected_data_color;
-  gv.foreground = sx->selected_graph_color;
-  sx->selected_erase_gc = XCreateGC(dpy, wn, GCForeground | GCBackground | GCFunction, &gv);
+  gv.background = ss->selected_data_color;
+  gv.foreground = ss->selected_graph_color;
+  ss->selected_erase_gc = XCreateGC(dpy, wn, GCForeground | GCBackground | GCFunction, &gv);
 
   gv.function = GXcopy;
-  gv.background = sx->basic_color;
-  gv.foreground = sx->black;
-  sx->fltenv_basic_gc = XCreateGC(dpy, wn, GCBackground | GCForeground | GCFunction, &gv);
+  gv.background = ss->basic_color;
+  gv.foreground = ss->black;
+  ss->fltenv_basic_gc = XCreateGC(dpy, wn, GCBackground | GCForeground | GCFunction, &gv);
 
   gv.function = GXcopy;
-  gv.background = sx->basic_color;
-  gv.foreground = sx->filter_control_waveform_color;
-  sx->fltenv_data_gc = XCreateGC(dpy, wn, GCBackground | GCForeground | GCFunction, &gv);
+  gv.background = ss->basic_color;
+  gv.foreground = ss->filter_control_waveform_color;
+  ss->fltenv_data_gc = XCreateGC(dpy, wn, GCBackground | GCForeground | GCFunction, &gv);
 
   initialize_colormap(); /* X11 not ours */
   make_icons_transparent(BASIC_COLOR);

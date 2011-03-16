@@ -53,7 +53,7 @@ static void file_open_recent_callback(Widget w, XtPointer info, XtPointer contex
 	    {
 	      int n = 0;
 	      Arg args[6];
-	      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 
 	      recent_file_items[i] = XtCreateManagedWidget(recent_file_names[i], xmPushButtonWidgetClass, file_open_recent_menu, args, n);
 	      XtAddCallback(recent_file_items[i], XmNactivateCallback, open_recent_file_callback, NULL); 
@@ -77,7 +77,7 @@ static void make_open_recent_menu(void)
 {
   int n = 0;
   Arg args[6];
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNpositionIndex, 1); n++;  /* just after "Open" menu */
   
   file_open_recent_menu = XmCreatePulldownMenu(file_menu, (char *)"open-recent", args, n);
@@ -235,7 +235,7 @@ static void view_files_callback(Widget w, XtPointer info, XtPointer context)
 	    {
 	      int n = 0;
 	      Arg args[6];
-	      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 
 	      view_files_items[i] = XtCreateManagedWidget(view_files_names[i], xmPushButtonWidgetClass, view_files_menu, args, n);
 	      XtAddCallback(view_files_items[i], XmNactivateCallback, view_files_item_callback, NULL); 
@@ -263,7 +263,7 @@ static void make_view_files_list_menu(void)
       XtVaGetValues(view_files_menu, XmNpositionIndex, &pos, NULL);
       XtUnmanageChild(view_files_menu);
     }
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNpositionIndex, pos); n++;
   
   view_files_menu = XmCreatePulldownMenu(view_menu, (char *)"view-files", args, n);
@@ -417,13 +417,13 @@ static void menu_drag_watcher(Widget w, const char *str, Position x, Position y,
     case DRAG_ENTER:
       new_title = mus_format("%s: drop to open file", ss->startup_title);
       XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char *)new_title, NULL);
-      XmChangeColor(w, ss->sgx->selection_color);
+      XmChangeColor(w, ss->selection_color);
       free(new_title);
       break;
 
     case DRAG_LEAVE:
       reflect_file_change_in_title();
-      XmChangeColor(w, ss->sgx->highlight_color);
+      XmChangeColor(w, ss->highlight_color);
       break;
 
     default:
@@ -455,11 +455,11 @@ Widget add_menu(void)
   Arg sep_args[12];
   int in_n = 0, n, high_n = 0, main_n = 0, start_high_n, k, j;
 
-  ss->sgx->mw = (Widget *)calloc(NUM_MENU_WIDGETS, sizeof(Widget));
+  ss->mw = (Widget *)calloc(NUM_MENU_WIDGETS, sizeof(Widget));
 
-  XtSetArg(main_args[main_n], XmNbackground, ss->sgx->basic_color); main_n++;
-  XtSetArg(high_args[high_n], XmNbackground, ss->sgx->highlight_color); high_n++;
-  XtSetArg(in_args[in_n], XmNbackground, ss->sgx->basic_color); in_n++;
+  XtSetArg(main_args[main_n], XmNbackground, ss->basic_color); main_n++;
+  XtSetArg(high_args[high_n], XmNbackground, ss->highlight_color); high_n++;
+  XtSetArg(in_args[in_n], XmNbackground, ss->basic_color); in_n++;
 
   start_high_n = high_n;
   XtSetArg(in_args[in_n], XmNsensitive, false); in_n++;
@@ -537,7 +537,7 @@ Widget add_menu(void)
   XtVaSetValues(file_print_menu, XmNmnemonic, 'P', NULL);
 
   j = 0;
-  XtSetArg(sep_args[j], XmNbackground, ss->sgx->basic_color); j++;
+  XtSetArg(sep_args[j], XmNbackground, ss->basic_color); j++;
   XtSetArg(sep_args[j], XmNseparatorType, XmSHADOW_ETCHED_IN); j++;
   file_sep_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, file_menu, sep_args, j);
 
@@ -921,7 +921,7 @@ static Widget add_menu_item(Widget menu, const char *label, void (*callback)(Wid
   Widget w;
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   w = XtCreateManagedWidget(label, xmPushButtonWidgetClass, menu, args, n);
   XtAddCallback(w, XmNactivateCallback, callback, NULL);
   return(w);
@@ -974,7 +974,7 @@ void post_basic_popup_menu(void *e)
       int n;
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNpopupEnabled, false); n++;      /* this was XmPOPUP_AUTOMATIC_RECURSIVE */
       basic_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"basic-popup-menu", args, n + 1);
 
@@ -1136,7 +1136,7 @@ void post_selection_popup_menu(void *e)
       int n;
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNpopupEnabled, false); n++;      /* this was XmPOPUP_AUTOMATIC_RECURSIVE */
       selection_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"selection-popup-menu", args, n + 1);
 
@@ -1248,16 +1248,16 @@ void post_fft_popup_menu(void *e)
       int n;
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNpopupEnabled, false); n++;      /* this was XmPOPUP_AUTOMATIC_RECURSIVE */
       fft_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"fft-popup-menu", args, n + 1);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       outer_menu = XmCreatePulldownMenu(fft_popup_menu, (char *)"Size", args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNsubMenuId, outer_menu); n++;
       cascade_menu = XtCreateManagedWidget("Size", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
 
@@ -1273,11 +1273,11 @@ void post_fft_popup_menu(void *e)
 
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       outer_menu = XmCreatePulldownMenu(fft_popup_menu, (char *)"Window", args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNsubMenuId, outer_menu); n++;
       cascade_menu = XtCreateManagedWidget("Window", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
 
@@ -1304,11 +1304,11 @@ void post_fft_popup_menu(void *e)
 
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       outer_menu = XmCreatePulldownMenu(fft_popup_menu, (char *)"Graph type", args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNsubMenuId, outer_menu); n++;
       cascade_menu = XtCreateManagedWidget("Graph type", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
 
@@ -1318,11 +1318,11 @@ void post_fft_popup_menu(void *e)
 
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       outer_menu = XmCreatePulldownMenu(fft_popup_menu, (char *)"Transform type", args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNsubMenuId, outer_menu); n++;
       cascade_menu = XtCreateManagedWidget("Transform type", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
 
@@ -1333,11 +1333,11 @@ void post_fft_popup_menu(void *e)
 
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       outer_menu = XmCreatePulldownMenu(fft_popup_menu, (char *)"Colormap", args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNsubMenuId, outer_menu); n++;
       cascade_menu = XtCreateManagedWidget("Colormap", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
 
@@ -1403,7 +1403,7 @@ static void handle_tooltip(XtPointer tooltip, XtIntervalId *id)
 					   NULL);
       tooltip_label = XtVaCreateManagedWidget("tooltip", xmLabelWidgetClass, tooltip_shell,
 					      XmNrecomputeSize, true,
-					      XmNbackground, ss->sgx->lighter_blue,
+					      XmNbackground, ss->lighter_blue,
 					      NULL);
     }
   str = multi_line_label(tip, &lines);
@@ -1473,7 +1473,7 @@ static void add_to_toolbar(Widget bar, Pixmap icon, const char *tip, void (*call
 			      XmNshadowThickness, 0,
 			      XmNhighlightThickness, 0,
 			      /* XmNmarginHeight, 0, */
-			      XmNbackground, ss->sgx->basic_color,
+			      XmNbackground, ss->basic_color,
 			      NULL);
   XtAddCallback(w, XmNactivateCallback, callback, NULL);
   add_tooltip(w, tip);
@@ -1489,7 +1489,7 @@ static void add_separator_to_toolbar(Widget bar)
 			  XmNheight, 24,
 			  XmNshadowThickness, 0,
 			  XmNhighlightThickness, 0,
-			  XmNbackground, ss->sgx->basic_color,
+			  XmNbackground, ss->basic_color,
 			  NULL);
 }
 
@@ -1627,7 +1627,7 @@ void show_toolbar(void)
       XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
 
       n = attach_all_sides(args, 0);
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNheight, ICON_HEIGHT); n++;
       XtSetArg(args[n], XmNpaneMaximum, ICON_HEIGHT); n++; /* Xm/Paned initializes each pane max to 1000 apparently! */
       XtSetArg(args[n], XmNpositionIndex, 0); n++;
@@ -1639,7 +1639,7 @@ void show_toolbar(void)
 	  (sound_style(ss) == SOUNDS_HORIZONTAL))
 	toolbar = XtCreateManagedWidget("toolbar", xmRowColumnWidgetClass, SOUND_PANE_BOX(ss), args, n);
       else toolbar = XtCreateManagedWidget("toolbar", xmRowColumnWidgetClass, SOUND_PANE(ss), args, n);
-      ss->sgx->toolbar = toolbar;
+      ss->toolbar = toolbar;
 
       if (auto_resize(ss))
 	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
@@ -1815,12 +1815,12 @@ int g_add_to_main_menu(const char *label, int slot)
   new_menu++;
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(slot, new_menu)); n++;
   m = XmCreatePulldownMenu(main_menu, (char *)label, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNsubMenuId, m); n++;
   XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(slot, new_menu)); n++;
   cas = XtCreateManagedWidget(label, xmCascadeButtonWidgetClass, main_menu, args, n);
@@ -1879,7 +1879,7 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
 	      return(m);
 	    }
 	}
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
       XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(callb, which_menu)); n++;
       m = XtCreateManagedWidget(label, xmPushButtonWidgetClass, menw, args, n);
@@ -1887,7 +1887,7 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
     }
   else
     {
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
       m = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, menw, args, n);
     }

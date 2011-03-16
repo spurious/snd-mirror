@@ -303,7 +303,6 @@ void cleanup_cw(chan_info *cp);
 void free_fft_pix(chan_info *cp);
 bool restore_fft_pix(chan_info *cp, graphics_context *ax);
 void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, int x0, int y1);
-bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void change_channel_style(snd_info *sp, channel_style_t new_style);
 void color_chan_components(color_t color, slider_choice_t which_component);
 void color_unselected_graphs(color_t color);

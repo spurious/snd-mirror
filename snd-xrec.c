@@ -36,7 +36,7 @@ static void clear_record_error(void)
 {
   XmString s1; 
   char *bmsg;
-  XtVaSetValues(error_info, XmNbackground, ss->sgx->basic_color, NULL);
+  XtVaSetValues(error_info, XmNbackground, ss->basic_color, NULL);
   bmsg = base_message();
   s1 = XmStringCreateLocalized(bmsg);
   free(bmsg);
@@ -54,7 +54,7 @@ static void report_in_error_info(const char *msg, void *ignore)
 {
   XmString s1;
   if ((!msg) || (!(*msg))) return;
-  XtVaSetValues(error_info, XmNbackground, ss->sgx->highlight_color, NULL);
+  XtVaSetValues(error_info, XmNbackground, ss->highlight_color, NULL);
   s1 = XmStringCreateLocalized((char *)msg);
   XtVaSetValues(error_info, XmNlabelString, s1, NULL);
   record_error_watching = true;
@@ -110,12 +110,12 @@ static void display_meters(mus_float_t *maxes)
   if (recorder_chans == 0) return;
   if (!(recorder_ax->wn)) recorder_ax->wn = XtWindow(meters);
 
-  XSetForeground(recorder_ax->dp, recorder_ax->gc, ss->sgx->white);
-  XSetBackground(recorder_ax->dp, recorder_ax->gc, ss->sgx->white);
+  XSetForeground(recorder_ax->dp, recorder_ax->gc, ss->white);
+  XSetBackground(recorder_ax->dp, recorder_ax->gc, ss->white);
   XFillRectangle(recorder_ax->dp, recorder_ax->wn, recorder_ax->gc, 0, 0, meters_width, meter_height);
 
   XSetLineAttributes(recorder_ax->dp, recorder_ax->gc, 2, LineSolid, CapRound, JoinRound);
-  XSetForeground(recorder_ax->dp, recorder_ax->gc, ss->sgx->black);
+  XSetForeground(recorder_ax->dp, recorder_ax->gc, ss->black);
 
   yc = (int)(0.5 * meter_width + 0.2 * meter_height);
 
@@ -306,7 +306,7 @@ widget_t record_file(void)
       xtitle = XmStringCreateLocalized((char *)"Record");
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNcancelLabelString, xquit); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNokLabelString, xrecord); n++;
@@ -330,12 +330,12 @@ widget_t record_file(void)
       XmStringFree(xrecord);
       XmStringFree(xtitle);
 
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->highlight_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON),     XmNbackground, ss->highlight_color, NULL);
 
       recorder_filename = mus_strdup("test.snd");
 
@@ -347,7 +347,7 @@ widget_t record_file(void)
 
 	/* error/info display */
 	n = 0;
-	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
 	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -357,17 +357,17 @@ widget_t record_file(void)
 	error_info_box = XtCreateManagedWidget("error-box", xmRowColumnWidgetClass, form, args, n);
 	
 	n = 0;
-	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	XtSetArg(args[n], XmNmarginHeight, 4); n++;
 	error_info_frame = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, error_info_box, args, n);
 	
 	n = 0;
-	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
 	error_info = XtCreateManagedWidget("error-info", xmLabelWidgetClass, error_info_frame, args, n);
 
 	n = 0;
-	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
 	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
 	XtSetArg(args[n], XmNbottomWidget, error_info_box); n++;
@@ -381,18 +381,18 @@ widget_t record_file(void)
 
 	/* dB button, filename */
 	n = 0;
-	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
 	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
 	XtSetArg(args[n], XmNbottomWidget, sep1); n++;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-	XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
+	XtSetArg(args[n], XmNselectColor, ss->selection_color); n++;
 	XtSetArg(args[n], XmNmarginWidth, 8); n++;
 	db_button = make_togglebutton_widget("dB", form, args, n);
 
 	n = 0;
-	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
 	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
 	XtSetArg(args[n], XmNbottomWidget, sep1); n++;
@@ -412,7 +412,7 @@ widget_t record_file(void)
 	recorder_output = make_textfield_widget("text", form, args, n, ACTIVATABLE, NO_COMPLETER);
 
 	n = 0;
-	XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
 	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
 	XtSetArg(args[n], XmNbottomWidget, recorder_output); n++;

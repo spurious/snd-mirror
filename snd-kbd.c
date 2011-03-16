@@ -782,7 +782,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		    {
 		      ss->open_requestor = FROM_KEYBOARD;
 #if (!USE_NO_GUI)
-		      ss->sgx->requestor_dialog = NULL;
+		      ss->requestor_dialog = NULL;
 #endif
 		      ss->open_requestor_data = (void *)sp;
 		      nsp = snd_open_file(str, FILE_READ_WRITE);

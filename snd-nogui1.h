@@ -181,7 +181,6 @@ void set_tiny_numbers_font(chan_info *cp, graphics_context *ax);
 color_t get_foreground_color(graphics_context *ax);
 void set_foreground_color(graphics_context *ax, int color);
 void cleanup_cw(chan_info *cp);
-bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void get_current_color(int colormap, int j, rgb_t *r, rgb_t *g, rgb_t *b);
 void change_channel_style(snd_info *sp, channel_style_t new_style);
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, widget_t main, fw_button_t arrows, bool with_events);

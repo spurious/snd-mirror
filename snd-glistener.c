@@ -166,8 +166,8 @@ void listener_append(const char *msg)
   append_listener_text(0, msg); /* do this in any case to make sure print-hook gets to run (listener_print_p in append_listener_text) */
   if (listener_text)
     {
-      if (ss->sgx->graph_is_active)
-	ss->sgx->graph_is_active = false;
+      if (ss->graph_is_active)
+	ss->graph_is_active = false;
       printout_end = gtk_text_buffer_get_char_count(LISTENER_BUFFER) - 1;
     }
 }
@@ -448,7 +448,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   guint key;
   GdkModifierType state;
 
-  if (ss->sgx->graph_is_active) 
+  if (ss->graph_is_active) 
     {
       chan_info *cp;
       cp = current_channel();
@@ -587,7 +587,7 @@ static XEN listener_click_hook;
 
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  ss->sgx->graph_is_active = false;
+  ss->graph_is_active = false;
   return(false);
 }
 
@@ -664,7 +664,7 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 {
   if (with_pointer_focus(ss))
     goto_window(w);
-  widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_base(w, GTK_STATE_NORMAL, ss->white);
   if (XEN_HOOKED(mouse_enter_text_hook))
     run_hook(mouse_enter_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
@@ -676,7 +676,7 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 
 static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
-  widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
+  widget_modify_base(w, GTK_STATE_NORMAL, ss->basic_color);
   if (XEN_HOOKED(mouse_leave_text_hook))
     run_hook(mouse_leave_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
@@ -827,8 +827,8 @@ GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_backgro
   gtk_widget_show(text);
   if (with_white_background == WITH_WHITE_BACKGROUND) 
     {
-      widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
-      widget_modify_base(text, GTK_STATE_SELECTED, ss->sgx->white); 
+      widget_modify_bg(text, GTK_STATE_NORMAL, ss->white);
+      widget_modify_base(text, GTK_STATE_SELECTED, ss->white); 
     }
   connect_mouse_to_text(text);
   return(text);
@@ -974,7 +974,7 @@ static void make_listener_widget(int height)
       SG_SIGNAL_CONNECT(listener_text, "enter_notify_event", listener_focus_callback, NULL);
       SG_SIGNAL_CONNECT(listener_text, "leave_notify_event", listener_unfocus_callback, NULL);
       SG_SIGNAL_CONNECT(listener_text, "populate-popup", listener_popup_populate_callback, NULL);
-      ss->sgx->listener_pane = listener_text;
+      ss->listener_pane = listener_text;
 
       if (!prompt_not_editable) 
 	prompt_not_editable = gtk_text_buffer_create_tag(LISTENER_BUFFER, "prompt_not_editable", 
@@ -1002,21 +1002,21 @@ void goto_listener(void)
 
 void color_listener(color_info *pix)
 {
-  ss->sgx->listener_color = pix;
+  ss->listener_color = pix;
   if (listener_text) 
-    widget_modify_base(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_color);
+    widget_modify_base(listener_text, GTK_STATE_NORMAL, ss->listener_color);
 }
 
 
 void color_listener_text(color_info *pix)
 {
-  ss->sgx->listener_text_color = pix;
+  ss->listener_text_color = pix;
 #if (!HAVE_GTK_3)
   if (listener_text) 
-    gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, rgb_to_gdk_color(ss->sgx->listener_text_color));
+    gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, rgb_to_gdk_color(ss->listener_text_color));
 #else
   if (listener_text) 
-    gtk_widget_override_color(listener_text, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->listener_text_color));
+    gtk_widget_override_color(listener_text, GTK_STATE_NORMAL, (GdkRGBA *)(ss->listener_text_color));
 #endif
 }
 
@@ -1027,8 +1027,8 @@ void handle_listener(bool open)
     {
       make_listener_widget(100);
 
-      color_listener(ss->sgx->listener_color);
-      color_listener_text(ss->sgx->listener_text_color);
+      color_listener(ss->listener_color);
+      color_listener_text(ss->listener_text_color);
     }
 
   if ((SOUND_PANE(ss)) && /* might be run -separate with no sound open */
@@ -1108,7 +1108,7 @@ static XEN g_reset_listener_cursor(void)
 {
   #define H_reset_listener_cursor "(" S_reset_listener_cursor "): reset listener cursor to the default pointer"
   if (listener_text)
-    gdk_window_set_cursor(WIDGET_TO_WINDOW(listener_text), ss->sgx->arrow_cursor);
+    gdk_window_set_cursor(WIDGET_TO_WINDOW(listener_text), ss->arrow_cursor);
   return(XEN_FALSE);
 }
 

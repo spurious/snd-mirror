@@ -88,10 +88,10 @@ static void unhighlight_region(void)
     {
       regrow *oldr;
       oldr = region_row(current_region);
-      widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->white);
-      widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->white);
-      widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->white);
-      widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->white);
+      widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->white);
+      widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->white);
+      widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->white);
+      widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->white);
     }
 }
 
@@ -102,10 +102,10 @@ static void highlight_region(void)
     {
       regrow *oldr;
       oldr = region_row(current_region);
-      widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
-      widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
-      widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->light_blue);
-      widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->light_blue);
+      widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->light_blue);
+      widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->light_blue);
+      widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->light_blue);
+      widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->light_blue);
     }
 }
 
@@ -408,8 +408,8 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
   /* assume "ww" is a vbox widget in this case */
   r->rw = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(ww), r->rw, false, false, 0);
-  widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->sgx->white);
-  widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->white);
+  widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->white);
   gtk_widget_show(r->rw);
 
   r->pl = gtk_check_button_new();
@@ -424,16 +424,16 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
   SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", regrow_mouse_enter_label, r);
   SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", regrow_mouse_leave_label, r);
   set_user_data(G_OBJECT(r->nm), (gpointer)r);
-  widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->white);
-  widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->white);
+  widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->white);
   
 #if HAVE_GTK_3
   {
     GtkWidget *child;
     child = gtk_bin_get_child(GTK_BIN(r->nm));
-    gtk_widget_override_color(child, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
-    gtk_widget_override_color(child, GTK_STATE_PRELIGHT, (GdkRGBA *)(ss->sgx->black));
-    gtk_widget_override_color(child, GTK_STATE_SELECTED, (GdkRGBA *)(ss->sgx->black));
+    gtk_widget_override_color(child, GTK_STATE_NORMAL, (GdkRGBA *)(ss->black));
+    gtk_widget_override_color(child, GTK_STATE_PRELIGHT, (GdkRGBA *)(ss->black));
+    gtk_widget_override_color(child, GTK_STATE_SELECTED, (GdkRGBA *)(ss->black));
   }
 #endif
 
@@ -560,13 +560,13 @@ static void make_region_dialog(void)
   labels = gtk_button_new();
   gtk_box_pack_start(GTK_BOX(infobox), labels, true, true, 2);
   gtk_widget_show(labels);
-  widget_modify_bg(labels, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(labels, GTK_STATE_NORMAL, ss->highlight_color);
   SG_SIGNAL_CONNECT(labels, "enter_notify_event", region_labels_mouse_enter, NULL);
 
   labbox = gtk_vbox_new(true, 0);
   gtk_container_add(GTK_CONTAINER(labels), labbox);
   gtk_widget_show(labbox);
-  widget_modify_bg(labbox, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  widget_modify_bg(labbox, GTK_STATE_NORMAL, ss->highlight_color);
 
   srate_text = gtk_label_new("srate:");
   sg_left_justify_label(srate_text);
@@ -592,13 +592,13 @@ static void make_region_dialog(void)
   SG_SIGNAL_CONNECT(edit_button, "clicked", region_edit_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), edit_button, true, true, 2);
   gtk_widget_show(edit_button);
-  widget_modify_bg(edit_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
+  widget_modify_bg(edit_button, GTK_STATE_NORMAL, ss->lighter_blue);
 
   unlist_button = gtk_button_new_with_label("unlist");
   SG_SIGNAL_CONNECT(unlist_button, "clicked", region_unlist_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), unlist_button, true, true, 2);
   gtk_widget_show(unlist_button);
-  widget_modify_bg(unlist_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
+  widget_modify_bg(unlist_button, GTK_STATE_NORMAL, ss->lighter_blue);
 
   gtk_widget_show(region_dialog);
 

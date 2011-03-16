@@ -46,8 +46,8 @@ bool set_tiny_font(const char *font)
       if (tiny_font(ss)) free(tiny_font(ss));
       in_set_tiny_font(mus_strdup(font));
       TINY_FONT(ss) = fs;
-      if (ss->sgx->tiny_fontlist) XM_FONT_FREE(ss->sgx->tiny_fontlist);
-      ss->sgx->tiny_fontlist = get_xm_font(TINY_FONT(ss), font, "tiny_font");
+      if (ss->tiny_fontlist) XM_FONT_FREE(ss->tiny_fontlist);
+      ss->tiny_fontlist = get_xm_font(TINY_FONT(ss), font, "tiny_font");
       return(true);
     }
   return(false);
@@ -64,8 +64,8 @@ bool set_listener_font(const char *font)
       if (listener_font(ss)) free(listener_font(ss));
       in_set_listener_font(mus_strdup(font));
       LISTENER_FONT(ss) = fs;
-      if (ss->sgx->listener_fontlist) XM_FONT_FREE(ss->sgx->listener_fontlist);
-      ss->sgx->listener_fontlist = get_xm_font(LISTENER_FONT(ss), font, "listener_font");
+      if (ss->listener_fontlist) XM_FONT_FREE(ss->listener_fontlist);
+      ss->listener_fontlist = get_xm_font(LISTENER_FONT(ss), font, "listener_font");
       set_listener_text_font();
       return(true);
     }
@@ -83,8 +83,8 @@ bool set_peaks_font(const char *font)
       if (peaks_font(ss)) free(peaks_font(ss));
       in_set_peaks_font(mus_strdup(font));
       PEAKS_FONT(ss) = fs;
-      if (ss->sgx->peaks_fontlist) XM_FONT_FREE(ss->sgx->peaks_fontlist);
-      ss->sgx->peaks_fontlist = get_xm_font(PEAKS_FONT(ss), font, "peaks_font");
+      if (ss->peaks_fontlist) XM_FONT_FREE(ss->peaks_fontlist);
+      ss->peaks_fontlist = get_xm_font(PEAKS_FONT(ss), font, "peaks_font");
       return(true);
     }
   return(false);
@@ -101,8 +101,8 @@ bool set_bold_peaks_font(const char *font)
       if (bold_peaks_font(ss)) free(bold_peaks_font(ss));
       in_set_bold_peaks_font(mus_strdup(font));
       BOLD_PEAKS_FONT(ss) = fs;
-      if (ss->sgx->bold_peaks_fontlist) XM_FONT_FREE(ss->sgx->bold_peaks_fontlist);
-      ss->sgx->bold_peaks_fontlist = get_xm_font(BOLD_PEAKS_FONT(ss), font, "bold_peaks_font");
+      if (ss->bold_peaks_fontlist) XM_FONT_FREE(ss->bold_peaks_fontlist);
+      ss->bold_peaks_fontlist = get_xm_font(BOLD_PEAKS_FONT(ss), font, "bold_peaks_font");
       return(true);
     }
   return(false);
@@ -259,14 +259,14 @@ void set_main_color_of_widget(Widget w)
   if (XtIsWidget(w))
     {
       if (XmIsScrollBar(w)) 
-	XmChangeColor(w, (Pixel)ss->sgx->position_color);
+	XmChangeColor(w, (Pixel)ss->position_color);
       else 
 	{
 	  Pixel cur_color;
 	  XtVaGetValues(w, XmNbackground, &cur_color, NULL);
-	  if ((cur_color != ss->sgx->highlight_color) &&
-	      (cur_color != ss->sgx->white))
-	    XmChangeColor(w, (Pixel)ss->sgx->basic_color);
+	  if ((cur_color != ss->highlight_color) &&
+	      (cur_color != ss->white))
+	    XmChangeColor(w, (Pixel)ss->basic_color);
 	}
     }
 }
@@ -329,7 +329,7 @@ void color_sashes(Widget w)
 {
   if ((XtIsWidget(w)) && 
       (XtIsSubclass(w, xmSashWidgetClass)))
-    XmChangeColor(w, (Pixel)ss->sgx->sash_color);
+    XmChangeColor(w, (Pixel)ss->sash_color);
 }
 
 
@@ -363,91 +363,77 @@ void check_for_event(void)
 
 void color_cursor(Pixel color)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  sx->cursor_color = color;
-  XSetForeground(MAIN_DISPLAY(ss), sx->cursor_gc, (Pixel)(XOR(color, sx->graph_color)));
-  XSetForeground(MAIN_DISPLAY(ss), sx->selected_cursor_gc, (Pixel)(XOR(color, sx->selected_graph_color)));
+  ss->cursor_color = color;
+  XSetForeground(MAIN_DISPLAY(ss), ss->cursor_gc, (Pixel)(XOR(color, ss->graph_color)));
+  XSetForeground(MAIN_DISPLAY(ss), ss->selected_cursor_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
 }
 
 
 void color_marks(Pixel color)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  sx->mark_color = color;
-  XSetForeground(MAIN_DISPLAY(ss), sx->mark_gc, (Pixel)(XOR(color, sx->graph_color)));
-  XSetForeground(MAIN_DISPLAY(ss), sx->selected_mark_gc, (Pixel)(XOR(color, sx->selected_graph_color)));
+  ss->mark_color = color;
+  XSetForeground(MAIN_DISPLAY(ss), ss->mark_gc, (Pixel)(XOR(color, ss->graph_color)));
+  XSetForeground(MAIN_DISPLAY(ss), ss->selected_mark_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
 }
 
 
 void color_selection(Pixel color)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  sx->selection_color = color;
-  XSetForeground(MAIN_DISPLAY(ss), sx->selection_gc, (Pixel)(XOR(color, sx->graph_color)));
-  XSetForeground(MAIN_DISPLAY(ss), sx->selected_selection_gc, (Pixel)(XOR(color, sx->selected_graph_color)));
+  ss->selection_color = color;
+  XSetForeground(MAIN_DISPLAY(ss), ss->selection_gc, (Pixel)(XOR(color, ss->graph_color)));
+  XSetForeground(MAIN_DISPLAY(ss), ss->selected_selection_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
 }
 
 
 void color_graph(Pixel color)
 {
   Display *dpy;
-  state_context *sx;
   dpy = MAIN_DISPLAY(ss);
-  sx = ss->sgx;
-  sx->graph_color = color;
-  XSetBackground(dpy, sx->basic_gc, color);
-  XSetForeground(dpy, sx->erase_gc, color);
-  XSetForeground(dpy, sx->selection_gc, (Pixel)(XOR(sx->selection_color, color)));
-  XSetForeground(dpy, sx->cursor_gc, (Pixel)(XOR(sx->cursor_color, color)));
-  XSetForeground(dpy, sx->mark_gc, (Pixel)(XOR(sx->mark_color, color)));
+  ss->graph_color = color;
+  XSetBackground(dpy, ss->basic_gc, color);
+  XSetForeground(dpy, ss->erase_gc, color);
+  XSetForeground(dpy, ss->selection_gc, (Pixel)(XOR(ss->selection_color, color)));
+  XSetForeground(dpy, ss->cursor_gc, (Pixel)(XOR(ss->cursor_color, color)));
+  XSetForeground(dpy, ss->mark_gc, (Pixel)(XOR(ss->mark_color, color)));
 }
 
 
 void color_selected_graph(Pixel color)
 {
   Display *dpy;
-  state_context *sx;
   dpy = MAIN_DISPLAY(ss);
-  sx = ss->sgx;
-  sx->selected_graph_color = color;
-  XSetBackground(dpy, sx->selected_basic_gc, color);
-  XSetForeground(dpy, sx->selected_erase_gc, color);
-  XSetForeground(dpy, sx->selected_selection_gc, (Pixel)(XOR(sx->selection_color, color)));
-  XSetForeground(dpy, sx->selected_cursor_gc, (Pixel)(XOR(sx->cursor_color, color)));
-  XSetForeground(dpy, sx->selected_mark_gc, (Pixel)(XOR(sx->mark_color, color)));
+  ss->selected_graph_color = color;
+  XSetBackground(dpy, ss->selected_basic_gc, color);
+  XSetForeground(dpy, ss->selected_erase_gc, color);
+  XSetForeground(dpy, ss->selected_selection_gc, (Pixel)(XOR(ss->selection_color, color)));
+  XSetForeground(dpy, ss->selected_cursor_gc, (Pixel)(XOR(ss->cursor_color, color)));
+  XSetForeground(dpy, ss->selected_mark_gc, (Pixel)(XOR(ss->mark_color, color)));
 }
 
 
 void color_data(Pixel color)
 {
   Display *dpy;
-  state_context *sx;
   dpy = MAIN_DISPLAY(ss);
-  sx = ss->sgx;
-  sx->data_color = color;
-  XSetForeground(dpy, sx->basic_gc, color);
-  XSetBackground(dpy, sx->erase_gc, color);
+  ss->data_color = color;
+  XSetForeground(dpy, ss->basic_gc, color);
+  XSetBackground(dpy, ss->erase_gc, color);
 }
 
 
 void color_selected_data(Pixel color)
 {
   Display *dpy;
-  state_context *sx;
   dpy = MAIN_DISPLAY(ss);
-  sx = ss->sgx;
-  sx->selected_data_color = color;
-  XSetForeground(dpy, sx->selected_basic_gc, color);
-  XSetBackground(dpy, sx->selected_erase_gc, color);
+  ss->selected_data_color = color;
+  XSetForeground(dpy, ss->selected_basic_gc, color);
+  XSetBackground(dpy, ss->selected_erase_gc, color);
 }
 
 
 void recolor_graph(chan_info *cp, bool selected)
 {
-  XtVaSetValues(channel_graph(cp), XmNbackground, (selected) ? ss->sgx->selected_graph_color : ss->sgx->graph_color, NULL);
+  XtVaSetValues(channel_graph(cp), XmNbackground, (selected) ? ss->selected_graph_color : ss->graph_color, NULL);
 }
 
 
@@ -455,11 +441,9 @@ void set_mix_color(Pixel color)
 {
   /* called only from g_set_mix_color -- docs imply it changes existing colors */
   Display *dpy;
-  state_context *sx;
   dpy = MAIN_DISPLAY(ss);
-  sx = ss->sgx;
-  sx->mix_color = color;
-  XSetForeground(dpy, sx->mix_gc, color);
+  ss->mix_color = color;
+  XSetForeground(dpy, ss->mix_gc, color);
   
 }
 

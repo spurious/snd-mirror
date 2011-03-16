@@ -566,6 +566,7 @@ static void update_graph_1(chan_info *cp, bool warn)
       ap->hisamp = (mus_long_t)(ap->x1 * cur_srate);
     }
 
+#if USE_GTK
   if (!(cp->ax->wn)) 
     if (!(fixup_cp_cgx_ax_wn(cp))) 
       {
@@ -573,6 +574,7 @@ static void update_graph_1(chan_info *cp, bool warn)
 	cp->updating = false;
 	return;
       }
+#endif
 
   if ((cp->graph_transform_p) && 
       (!(chan_fft_in_progress(cp)))) 
@@ -1305,7 +1307,7 @@ static void display_channel_id(chan_info *cp, graphics_context *ax, int height, 
       if (cp == selected_channel())
 	{
 	  old_color = get_foreground_color(copy_context(cp));
-	  set_foreground_color(copy_context(cp), ss->sgx->red);
+	  set_foreground_color(copy_context(cp), ss->red);
 	}
       draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
       if (cp->printing) 
@@ -1377,9 +1379,8 @@ snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t
   return(sp);
 }
 
-#if (!USE_GTK)
-  static graphics_context *combined_context(chan_info *cp);
-#endif
+static graphics_context *combined_context(chan_info *cp);
+
 static int make_wavogram(chan_info *cp);
 
 
@@ -1458,15 +1459,10 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 
   if (graph_choice == NORMAL_GRAPH)
     {
-#if (!USE_GTK)
       if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
 	ax = combined_context(cp); 
       else ax = copy_context(cp);
-#else
-      if (!(ap->ax))
-	ax = cp->ax;
-      else ax = ap->ax;
-#endif
+
       if (cp->printing) ps_fg(cp, ax);
     }
 
@@ -2049,15 +2045,9 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
 	}
     }
 
-#if (!USE_GTK)
   if (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)
     ax = combined_context(cp);
   else ax = copy_context(cp);
-#else
-  if (!(fap->ax))
-    ax = cp->ax;
-  else ax = fap->ax;
-#endif
 
   if (num_peaks > 6)
     {
@@ -2422,8 +2412,8 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, graphics_context *ax, 
       color_t default_color;
       
       if (cp == selected_channel())
-	default_color = ss->sgx->selected_data_color;
-      else default_color = ss->sgx->data_color;
+	default_color = ss->selected_data_color;
+      else default_color = ss->data_color;
       
       /* if value is close to 0, use [selected-]data-color, else use fft_phases[i] */
       allocate_color_map(PHASES_COLORMAP);
@@ -2787,7 +2777,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 #if HAVE_GL
 static void set_up_for_gl(chan_info *cp)
 {
-  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
+  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->cx);
 }
 
 
@@ -2962,8 +2952,8 @@ static bool make_gl_spectrogram(chan_info *cp)
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   if (cp == selected_channel())
-    tmp_color.pixel = ss->sgx->selected_graph_color;
-  else tmp_color.pixel = ss->sgx->graph_color;
+    tmp_color.pixel = ss->selected_graph_color;
+  else tmp_color.pixel = ss->graph_color;
   XQueryColor(dpy, cmap, &tmp_color);
   br = tmp_color.red;
   bg = tmp_color.green;
@@ -3584,15 +3574,9 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 
   if (cp->printing) ps_allocate_grf_points();
 
-#if (!USE_GTK)
   if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     ax = combined_context(cp); 
   else ax = copy_context(cp);
-#else
-  if (!(uap->ax))
-    ax = cp->ax;
-  else ax = uap->ax;
-#endif
 
   if (cp->printing) ps_fg(cp, ax);
 
@@ -3635,11 +3619,11 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 	      switch (graph)
 		{
 		case 0:  break;
-		case 1:  set_foreground_color(ax, ss->sgx->red);        break;
-		case 2:  set_foreground_color(ax, ss->sgx->green);      break;
-		case 3:  set_foreground_color(ax, ss->sgx->light_blue); break;
-		case 4:  set_foreground_color(ax, ss->sgx->yellow);     break;
-		default: set_foreground_color(ax, ss->sgx->black);      break;
+		case 1:  set_foreground_color(ax, ss->red);        break;
+		case 2:  set_foreground_color(ax, ss->green);      break;
+		case 3:  set_foreground_color(ax, ss->light_blue); break;
+		case 4:  set_foreground_color(ax, ss->yellow);     break;
+		default: set_foreground_color(ax, ss->black);      break;
 		}
 	    }
 	  /* check for up->len[graph] > pixels available and use ymin ymax if needed */
@@ -3730,11 +3714,11 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
   if (erase_first == CLEAR_GRAPH)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
 
-  if (ss->sgx->axis_color_set)
+  if (ss->axis_color_set)
     {
       old_color = get_foreground_color(ap->ax);
       /* if axis color has been set, use it, else use data color from preceding make_graph call */
-      set_foreground_color(ap->ax, ss->sgx->axis_color);
+      set_foreground_color(ap->ax, ss->axis_color);
     }
 
   make_axes_1(ap, 
@@ -3751,7 +3735,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 	      log_axes,
 	      cp->grid_density);
 
-  if (ss->sgx->axis_color_set)
+  if (ss->axis_color_set)
     set_foreground_color(ap->ax, old_color);
 }
 
@@ -4034,11 +4018,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	case GRAPH_ONCE:
 	  make_fft_graph(cp,
 			 cp->fft->axis,
-#if (!USE_GTK)
 			 (sp->channel_style == CHANNELS_SUPERIMPOSED) ? combined_context(cp) : copy_context(cp),
-#else
-			 (ap->ax) ? ap->ax : cp->ax,
-#endif
 			 cp->hookable);
 	  break;
 
@@ -4283,11 +4263,11 @@ static void erase_cursor(chan_info *cp)
   {
     color_t old_cursor_color;
     int ccy;
-    old_cursor_color = ss->sgx->cursor_color;
+    old_cursor_color = ss->cursor_color;
     cp->cursor_size++;
-    ss->sgx->cursor_color = cp->ax->gc->bg_color;
+    ss->cursor_color = cp->ax->gc->bg_color;
     draw_cursor(cp);
-    ss->sgx->cursor_color = old_cursor_color;
+    ss->cursor_color = old_cursor_color;
     cp->cursor_size--;
     /* we draw at (cp->cx, cp->cy), so presumably... */
     if (cp->just_zero)
@@ -4361,7 +4341,7 @@ static void draw_sonogram_cursor_1(chan_info *cp)
     ss->cr = MAKE_CAIRO(fax->wn);
     /* y_axis_y0 > y_axis_y1 (upside down coordinates) */
     old_color = get_foreground_color(fax);
-    set_foreground_color(fax, ss->sgx->cursor_color);
+    set_foreground_color(fax, ss->cursor_color);
     draw_line(fax, cp->fft_cx, fap->y_axis_y0 - 1, cp->fft_cx, fap->y_axis_y1);
     set_foreground_color(fax, old_color);
     cp->fft_cursor_visible = (!(cp->fft_cursor_visible));
@@ -4915,10 +4895,10 @@ void check_cursor_shape(chan_info *cp, int x, int y)
     case CLICK_MARK:
     case CLICK_FFT_AXIS:
       /* these all involve a drag if the mouse is pressed */
-      if (cp->current_cursor != ss->sgx->bounds_cursor)
+      if (cp->current_cursor != ss->bounds_cursor)
 	{
-	  cp->current_cursor = ss->sgx->bounds_cursor;
-	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->bounds_cursor);
+	  cp->current_cursor = ss->bounds_cursor;
+	  GUI_SET_CURSOR(channel_graph(cp), ss->bounds_cursor);
 	}
       break;
 
@@ -4926,26 +4906,26 @@ void check_cursor_shape(chan_info *cp, int x, int y)
     case CLICK_SELECTION_PLAY:
     case CLICK_CURSOR_PLAY:
     case CLICK_MARK_PLAY:
-      if (cp->current_cursor != ss->sgx->play_cursor)
+      if (cp->current_cursor != ss->play_cursor)
 	{
-	  cp->current_cursor = ss->sgx->play_cursor;
-	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->play_cursor);
+	  cp->current_cursor = ss->play_cursor;
+	  GUI_SET_CURSOR(channel_graph(cp), ss->play_cursor);
 	}
       break;
 
     case CLICK_SELECTION_LOOP_PLAY:
-      if (cp->current_cursor != ss->sgx->loop_play_cursor)
+      if (cp->current_cursor != ss->loop_play_cursor)
 	{
-	  cp->current_cursor = ss->sgx->loop_play_cursor;
-	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->loop_play_cursor);
+	  cp->current_cursor = ss->loop_play_cursor;
+	  GUI_SET_CURSOR(channel_graph(cp), ss->loop_play_cursor);
 	}
       break;
 
     default:
-      if (cp->current_cursor != ss->sgx->graph_cursor)
+      if (cp->current_cursor != ss->graph_cursor)
 	{
-	  cp->current_cursor = ss->sgx->graph_cursor;
-	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->graph_cursor);
+	  cp->current_cursor = ss->graph_cursor;
+	  GUI_SET_CURSOR(channel_graph(cp), ss->graph_cursor);
 	}
       break;
     }
@@ -5801,7 +5781,7 @@ static bool run_time_graph_hook(chan_info *cp, graphics_context *ax)
 					 C_TO_XEN_INT(cp->chan)),
 			      S_time_graph_hook);
 
-      return(foreground_color_ok(result, ax));
+      return(foreground_color_ok(result, ax)); /* snd-draw.c checks for pixel, then sets foreground */
     }
   return(false);
 }
@@ -5828,26 +5808,24 @@ chan_info *channel_to_chan(chan_info *cp)
 graphics_context *set_context(chan_info *cp, chan_gc_t gc)
 {
   graphics_context *ax;
-  state_context *sx;
   chan_info *draw_cp;
 
   draw_cp = channel_to_chan(cp);
   ax = draw_cp->ax;
-  sx = ss->sgx;
 
   if (cp->selected)
     {
       switch (gc)
 	{
-	case CHAN_GC: ax->gc = sx->selected_basic_gc;        break;
-	case CHAN_IGC: ax->gc = sx->selected_erase_gc;       break;
-	case CHAN_SELGC: ax->gc = sx->selected_selection_gc; break;
-	case CHAN_CGC: ax->gc = sx->selected_cursor_gc;      break;
-	case CHAN_MGC: ax->gc = sx->selected_mark_gc;        break;
-	case CHAN_MXGC: ax->gc = sx->mix_gc;                 break;
+	case CHAN_GC: ax->gc = ss->selected_basic_gc;        break;
+	case CHAN_IGC: ax->gc = ss->selected_erase_gc;       break;
+	case CHAN_SELGC: ax->gc = ss->selected_selection_gc; break;
+	case CHAN_CGC: ax->gc = ss->selected_cursor_gc;      break;
+	case CHAN_MGC: ax->gc = ss->selected_mark_gc;        break;
+	case CHAN_MXGC: ax->gc = ss->mix_gc;                 break;
 	case CHAN_TMPGC: 
 	  if (!(run_time_graph_hook(cp, ax)))
-	    ax->gc = sx->selected_basic_gc;     
+	    ax->gc = ss->selected_basic_gc;     
 	  break;
 	}
     }
@@ -5855,22 +5833,22 @@ graphics_context *set_context(chan_info *cp, chan_gc_t gc)
     {
       switch (gc)
 	{
-	case CHAN_GC: ax->gc = sx->basic_gc;             break;
-	case CHAN_IGC: ax->gc = sx->erase_gc;            break;
-	case CHAN_SELGC: ax->gc = sx->selection_gc;      break;
-	case CHAN_CGC: ax->gc = sx->cursor_gc;           break;
-	case CHAN_MGC: ax->gc = sx->mark_gc;             break;
-	case CHAN_MXGC: ax->gc = sx->mix_gc;             break;
+	case CHAN_GC: ax->gc = ss->basic_gc;             break;
+	case CHAN_IGC: ax->gc = ss->erase_gc;            break;
+	case CHAN_SELGC: ax->gc = ss->selection_gc;      break;
+	case CHAN_CGC: ax->gc = ss->cursor_gc;           break;
+	case CHAN_MGC: ax->gc = ss->mark_gc;             break;
+	case CHAN_MXGC: ax->gc = ss->mix_gc;             break;
 	case CHAN_TMPGC: 
 	  if (!(run_time_graph_hook(cp, ax)))
 	    {
-	      ax->gc = sx->combined_basic_gc;
+	      ax->gc = ss->combined_basic_gc;
 	      switch (cp->chan % 4)
 		{
-		case 0: set_foreground_color(ax, sx->black);      break;
-		case 1: set_foreground_color(ax, sx->red);        break;
-		case 2: set_foreground_color(ax, sx->green);      break;
-		case 3: set_foreground_color(ax, sx->light_blue); break;
+		case 0: set_foreground_color(ax, ss->black);      break;
+		case 1: set_foreground_color(ax, ss->red);        break;
+		case 2: set_foreground_color(ax, ss->green);      break;
+		case 3: set_foreground_color(ax, ss->light_blue); break;
 		}
 	    }
 	  break;
@@ -5886,9 +5864,8 @@ graphics_context *selection_context(chan_info *cp)       {return(set_context(cp,
 graphics_context *cursor_context(chan_info *cp)          {return(set_context(cp, CHAN_CGC));}
 graphics_context *mark_tag_context(chan_info *cp)        {return(set_context(cp, CHAN_MGC));}
 graphics_context *mix_waveform_context(chan_info *cp)    {return(set_context(cp, CHAN_MXGC));}
-#if (!USE_GTK)
-  static graphics_context *combined_context(chan_info *cp) {return(set_context(cp, CHAN_TMPGC));}
-#endif
+static graphics_context *combined_context(chan_info *cp) {return(set_context(cp, CHAN_TMPGC));}
+
 
 
 /* ---------------------------------------- smpte label ---------------------------------------- */
@@ -6099,15 +6076,15 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 
 	    if (cp->selected)
 	      {
-		cur_ax->gc = ss->sgx->selected_selection_gc;
+		cur_ax->gc = ss->selected_selection_gc;
 		fill_rectangle(cur_ax, x_offset + lx, chan_offset, wx, height);
-		cur_ax->gc = ss->sgx->selected_basic_gc;
+		cur_ax->gc = ss->selected_basic_gc;
 	      }
 	    else
 	      {
-		cur_ax->gc = ss->sgx->selection_gc;
+		cur_ax->gc = ss->selection_gc;
 		fill_rectangle(cur_ax, x_offset + lx, chan_offset, wx, height);
-		cur_ax->gc = ss->sgx->basic_gc;
+		cur_ax->gc = ss->basic_gc;
 	      }
 	  }
 
@@ -10144,7 +10121,7 @@ void g_init_chn(void)
 of pixels, these are used in order by the list of graphs (if any), rather than Snd's default set; \
 this makes it possible to use different colors for the various graphs. \
 If it returns a function (of no arguments), that function is called rather than the standard graph routine."
-  #define H_time_graph_hook S_time_graph_hook " (snd chn): called just before the time graph is updated when " S_channel_style " \
+  #define H_time_graph_hook S_time_graph_hook " (snd chn): called before the time graph is updated when " S_channel_style " \
 is " S_channels_combined ". If it returns a pixel, that color is used to draw the data, rather than Snd's default choice."
   #define H_after_lisp_graph_hook S_after_lisp_graph_hook " (snd chn): called after a lisp graph is updated."
   #define H_mouse_press_hook S_mouse_press_hook " (snd chn button state x y): called upon mouse button press within the lisp graph."

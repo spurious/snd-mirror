@@ -2666,7 +2666,7 @@ static char *legalize_path(const char *in_str)
 static XEN g_snd_glx_context(void)
 {
   return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GLXContext"), 
-		    XEN_WRAP_C_POINTER(ss->sgx->cx)));
+		    XEN_WRAP_C_POINTER(ss->cx)));
 } 
 
 

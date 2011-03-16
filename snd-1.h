@@ -455,7 +455,6 @@ typedef struct snd_state {
   int file_sorters_size, file_filters_size;
   XEN file_sorters, file_filters;
   int search_proc_loc, local_errno, local_open_errno;
-  state_context *sgx;
   int position_slider_width, zoom_slider_width, toggle_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
   int max_sounds, sound_sync_max;
   char *translated_filename;
@@ -564,9 +563,116 @@ typedef struct snd_state {
   XEN snd_open_file_hook;
   XEN snd_selection_hook;
   XEN effects_hook;
+
+#if USE_MOTIF
+  XtAppContext mainapp;     
+  Widget mainshell;
+  Widget mainpane;
+  Widget soundpane;
+  Widget soundpanebox;
+  Widget toolbar;
+  Display *mdpy;
+  xm_font_t peaks_fontlist;
+  XFontStruct *peaks_fontstruct;
+  xm_font_t bold_peaks_fontlist;
+  XFontStruct *bold_peaks_fontstruct; 
+  xm_font_t listener_fontlist;
+  XFontStruct *listener_fontstruct;
+  XFontStruct *axis_label_fontstruct;
+  XFontStruct *axis_numbers_fontstruct;
+  xm_font_t tiny_fontlist;
+  XFontStruct *tiny_fontstruct;
+
+  Pixel white, black, red, yellow, green, light_blue, lighter_blue;
+  Pixel data_color, selected_data_color, mark_color, graph_color, selected_graph_color, listener_color, listener_text_color;
+  Pixel basic_color, selection_color, zoom_color, position_color, highlight_color, enved_waveform_color, cursor_color;
+  Pixel text_focus_color, filter_control_waveform_color, mix_color, sash_color;
+  Pixel selected_grid_color, grid_color, axis_color;
+  Pixel orig_data_color, orig_selected_data_color, orig_mark_color, orig_mix_color;
+  Pixel orig_graph_color, orig_selected_graph_color, orig_listener_color, orig_listener_text_color, orig_cursor_color;
+  Pixel orig_basic_color, orig_selection_color, orig_zoom_color, orig_position_color, orig_highlight_color;
+
+  GC basic_gc, selected_basic_gc, combined_basic_gc;        
+  GC cursor_gc, selected_cursor_gc;      
+  GC selection_gc, selected_selection_gc;
+  GC erase_gc, selected_erase_gc;        
+  GC mark_gc, selected_mark_gc;          
+  GC mix_gc;
+  GC fltenv_basic_gc, fltenv_data_gc;
+  Widget listener_pane;
+  Widget *dialogs;
+  int num_dialogs, dialogs_size;
+  Cursor graph_cursor, wait_cursor, bounds_cursor, play_cursor, loop_play_cursor;
+  Widget requestor_dialog;
+#if HAVE_GL
+  GLXContext cx;
+#endif
+  XtInputId fam_port;
+  Widget *mw;
+  bool axis_color_set;
+#endif
+
 #if USE_GTK
   cairo_t *cr;
+  GtkWidget *mainshell;
+  GtkWidget *mainpane;
+  GtkWidget *soundpane;
+  GtkWidget *soundpanebox;
+  GtkWidget *listener_pane;
+  GdkWindow *mainwindow;
+
+  PangoFontDescription *listener_fnt;
+  PangoFontDescription *axis_label_fnt;
+  PangoFontDescription *axis_numbers_fnt;
+  PangoFontDescription *tiny_fnt;
+  PangoFontDescription *peaks_fnt;
+  PangoFontDescription *bold_peaks_fnt; 
+
+  color_info *white, *black, *red, *yellow, *green, *light_blue, *lighter_blue;
+  color_info *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *listener_text_color, *cursor_color;
+  color_info *basic_color, *selection_color, *zoom_color, *position_color, *highlight_color, *enved_waveform_color;
+  color_info *text_focus_color, *filter_control_waveform_color, *mix_color, *sash_color;
+  color_info *selected_grid_color, *grid_color, *axis_color;
+  color_info *orig_data_color, *orig_selected_data_color, *orig_mark_color, *orig_mix_color;
+  color_info *orig_graph_color, *orig_selected_graph_color, *orig_listener_color, *orig_listener_text_color, *orig_cursor_color;
+  color_info *orig_basic_color, *orig_selection_color, *orig_zoom_color, *orig_position_color, *orig_highlight_color;
+
+  gc_t *basic_gc, *selected_basic_gc, *combined_basic_gc;        
+  gc_t *cursor_gc, *selected_cursor_gc;      
+  gc_t *selection_gc, *selected_selection_gc;
+  gc_t *erase_gc, *selected_erase_gc;        
+  gc_t *mark_gc, *selected_mark_gc;          
+  gc_t *mix_gc;
+  gc_t *fltenv_basic_gc, *fltenv_data_gc;
+
+  GtkWidget **dialogs;
+  int num_dialogs, dialogs_size;
+  bool graph_is_active;
+  GtkWidget *requestor_dialog;
+  mus_float_t bg_gradient;
+  
+  GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor, *bounds_cursor, *play_cursor, *loop_play_cursor;
+  gint fam_port;
+  GtkWidget **mw;
+  bool axis_color_set;
 #endif
+
+#if USE_NO_GUI
+  int data_color, selected_data_color, mix_color, basic_color, grid_color, selected_grid_color, mark_color, axis_color;
+  int white, black, red, yellow, green, light_blue;
+  int fltenv_basic_gc, fltenv_data_gc;
+  int basic_gc, selected_basic_gc, combined_basic_gc;        
+  int cursor_gc, selected_cursor_gc;      
+  int selection_gc, selected_selection_gc;
+  int erase_gc, selected_erase_gc;        
+  int mark_gc, selected_mark_gc;          
+  int mix_gc;           
+  struct dialog_play_info *ignore_me; /* for the compiler's benefit */
+  int requestor_dialog;
+  bool axis_color_set;
+  int bounds_cursor, graph_cursor, play_cursor, loop_play_cursor;
+#endif
+
 } snd_state;
 
 extern snd_state *ss;

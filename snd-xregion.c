@@ -89,8 +89,8 @@ static void unhighlight_region(void)
     {
       regrow *oldr;
       oldr = region_row(current_region);
-      XtVaSetValues(oldr->rw, XmNbackground, ss->sgx->highlight_color, NULL);
-      XtVaSetValues(oldr->nm, XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(oldr->rw, XmNbackground, ss->highlight_color, NULL);
+      XtVaSetValues(oldr->nm, XmNbackground, ss->highlight_color, NULL);
     }
 }
 
@@ -101,8 +101,8 @@ static void highlight_region(void)
     {
       regrow *oldr;
       oldr = region_row(current_region);
-      XtVaSetValues(oldr->rw, XmNbackground, ss->sgx->zoom_color, NULL);
-      XtVaSetValues(oldr->nm, XmNbackground, ss->sgx->zoom_color, NULL);
+      XtVaSetValues(oldr->rw, XmNbackground, ss->zoom_color, NULL);
+      XtVaSetValues(oldr->nm, XmNbackground, ss->zoom_color, NULL);
     }
 }
 
@@ -382,7 +382,7 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   r = (regrow *)calloc(1, sizeof(regrow));
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNtopAttachment, (last_row) ? XmATTACH_WIDGET : XmATTACH_FORM); n++;
@@ -392,12 +392,12 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   r->rw = XtCreateWidget("rw", xmFormWidgetClass, ww, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
+  XtSetArg(args[n], XmNselectColor, ss->selection_color); n++;
   XtSetArg(args[n], XmNlabelString, s1); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n1 = make_callback_list(play_callback, (XtPointer)r)); n++;
   if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
@@ -405,7 +405,7 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   r->pl = make_togglebutton_widget("pl", r->rw, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, r->pl); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -446,7 +446,7 @@ static void make_region_dialog(void)
   titlestr = XmStringCreateLocalized((char *)"Regions");
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNcancelLabelString, xinsert); n++;
   XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
   XtSetArg(args[n], XmNokLabelString, xok); n++;
@@ -458,13 +458,13 @@ static void make_region_dialog(void)
   region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Regions", args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-  XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
+  XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
   save_as_button = XtCreateManagedWidget("Save as", xmPushButtonGadgetClass, region_dialog, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-  XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
+  XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
   mix_button = XtCreateManagedWidget("Mix", xmPushButtonGadgetClass, region_dialog, args, n);
 
   XtAddCallback(region_dialog,  XmNokCallback,       region_ok_callback,     NULL);
@@ -478,17 +478,17 @@ static void make_region_dialog(void)
   XmStringFree(xinsert);
   XmStringFree(titlestr);
 
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->selection_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->selection_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->selection_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->highlight_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->highlight_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->highlight_color, NULL);
 
   insert_button = XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -497,7 +497,7 @@ static void make_region_dialog(void)
   formw = XtCreateManagedWidget("formw", xmFormWidgetClass, region_dialog, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -508,13 +508,13 @@ static void make_region_dialog(void)
   panes = XtCreateManagedWidget("panes", xmPanedWindowWidgetClass, formw, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNpaneMinimum, 40); n++;
   toppane = XtCreateManagedWidget("toppane", xmFormWidgetClass, panes, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -554,7 +554,7 @@ static void make_region_dialog(void)
   update_region_browser(0);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, region_list); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -566,7 +566,7 @@ static void make_region_dialog(void)
   infosep = XtCreateManagedWidget("infosep", xmSeparatorWidgetClass, toppane, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, infosep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -576,7 +576,7 @@ static void make_region_dialog(void)
   reg_srtxt = XtCreateManagedWidget("srate:", xmLabelWidgetClass, toppane, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, infosep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -587,7 +587,7 @@ static void make_region_dialog(void)
   reg_chntxt = XtCreateManagedWidget("chans:", xmLabelWidgetClass, toppane, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, infosep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -598,7 +598,7 @@ static void make_region_dialog(void)
   reg_lentxt = XtCreateManagedWidget("length:", xmLabelWidgetClass, toppane, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, infosep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -610,7 +610,7 @@ static void make_region_dialog(void)
 
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->zoom_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->zoom_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, reg_maxtxt); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -622,7 +622,7 @@ static void make_region_dialog(void)
   fr = XtCreateManagedWidget("reg-fr", xmFrameWidgetClass, toppane, args, n);
   
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -631,19 +631,19 @@ static void make_region_dialog(void)
   rw = XtCreateManagedWidget("reg-rw", xmRowColumnWidgetClass, fr, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
-  XtSetArg(args[n], XmNarmColor, ss->sgx->red); n++;
+  XtSetArg(args[n], XmNbackground, ss->lighter_blue); n++;
+  XtSetArg(args[n], XmNarmColor, ss->red); n++;
   editb = XtCreateManagedWidget("edit", xmPushButtonWidgetClass, rw, args, n);
   XtAddCallback(editb, XmNactivateCallback, region_edit_callback, NULL);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
-  XtSetArg(args[n], XmNarmColor, ss->sgx->red); n++;
+  XtSetArg(args[n], XmNbackground, ss->lighter_blue); n++;
+  XtSetArg(args[n], XmNarmColor, ss->red); n++;
   unlistb = XtCreateManagedWidget("unlist", xmPushButtonWidgetClass, rw, args, n);
   XtAddCallback(unlistb, XmNactivateCallback, region_unlist_callback, NULL);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNpaneMinimum, 150); n++;
   region_grf = XtCreateManagedWidget("grf", xmFormWidgetClass, panes, args, n);
@@ -656,7 +656,7 @@ static void make_region_dialog(void)
   rsp->inuse = SOUND_REGION;
   set_current_region(0);
   cp = rsp->chans[0];
-  XtVaSetValues(region_rows[0]->nm, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+  XtVaSetValues(region_rows[0]->nm, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
   map_over_children(panes, color_sashes);
   XtVaSetValues(toppane, XmNpaneMinimum, 1, NULL);
   XtVaSetValues(region_grf, XmNpaneMinimum, 1, NULL);

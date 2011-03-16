@@ -139,7 +139,6 @@ void set_foreground_color(graphics_context *ax, int color) {}
 void change_channel_style(snd_info *sp, channel_style_t new_style) {}
 void cleanup_cw(chan_info *cp) {}
 void clear_deleted_snd_info(struct dialog_play_info *dp) {}
-bool fixup_cp_cgx_ax_wn(chan_info *cp) {return(false);}
 void make_minibuffer_label(snd_info *sp, const char *str) {}
 void goto_minibuffer(snd_info *sp) {}
 void set_minibuffer_string(snd_info *sp, const char *str, bool update) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
@@ -343,8 +342,7 @@ void snd_doit(int argc, char **argv)
 {
   static int auto_open_ctr = 0;
   int i;
-  ss->sgx = (state_context *)calloc(1, sizeof(state_context));
-  ss->sgx->axis_color_set = false;
+  ss->axis_color_set = false;
 
 #if HAVE_SCHEME
   xen_s7_set_repl_prompt("snd>");

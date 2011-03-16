@@ -275,7 +275,7 @@ static char *glx_version(void)
   int major = 0, minor = 0;
   char *version;
   version = (char *)calloc(VERSION_SIZE, sizeof(char));
-  if (ss->sgx == NULL) /* snd --help for example */
+  if (ss->dialogs == NULL) /* snd --help for example */
     {
 #if HAVE_X
       /* Mesa has version.h with all the info we want at compile time, but insists on hiding it! */
@@ -304,9 +304,9 @@ static char *glx_version(void)
 
   if (MAIN_DISPLAY(ss) != NULL)
     {
-      if (ss->sgx->cx)
+      if (ss->cx)
 	{
-	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->sgx->mainshell), ss->sgx->cx);
+	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->mainshell), ss->cx);
 	  mus_snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
 	}
       else 

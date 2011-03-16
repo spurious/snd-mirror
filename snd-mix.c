@@ -699,7 +699,7 @@ static mix_info *make_mix_info(chan_info *cp)
   md->id = mix_infos_ctr++;
   md->cp = cp;
   md->temporary = DONT_DELETE_ME;
-  md->color = ss->sgx->mix_color;
+  md->color = ss->mix_color;
   md->original_color = md->color;
   md->tag_y = 0;
   md->tag_x = 0;
@@ -1041,7 +1041,7 @@ color_t mix_color_from_id(int mix_id)
   md = md_from_id(mix_id);
   if (md)
     return(md->color);
-  return(ss->sgx->mix_color);
+  return(ss->mix_color);
 }
 
 
@@ -1079,7 +1079,7 @@ void syncd_mix_unset_color(int id)
 static void syncd_mix_set_color_1(mix_info *md, void *ignore)
 {
   /* assume red (this is from the mix dialog) */
-  md->color = ss->sgx->red;
+  md->color = ss->red;
 }
 
 

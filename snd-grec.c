@@ -27,8 +27,8 @@ static void clear_error(void)
   msg = base_message();
   info_widget_display(info, msg);
   free(msg);
-  widget_modify_base(info, GTK_STATE_NORMAL, ss->sgx->basic_color);
-  widget_modify_base(info, GTK_STATE_ACTIVE, ss->sgx->basic_color);
+  widget_modify_base(info, GTK_STATE_NORMAL, ss->basic_color);
+  widget_modify_base(info, GTK_STATE_ACTIVE, ss->basic_color);
   if (recorder_watching)
     {
       recorder_watching = false;
@@ -47,8 +47,8 @@ static void watch_info(GtkWidget *w, gpointer context)
 static void report_in_error_info(const char *msg, void *ignore)
 {
   info_widget_display(info, msg);
-  widget_modify_base(info, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  widget_modify_base(info, GTK_STATE_ACTIVE, ss->sgx->highlight_color);
+  widget_modify_base(info, GTK_STATE_NORMAL, ss->highlight_color);
+  widget_modify_base(info, GTK_STATE_ACTIVE, ss->highlight_color);
   /*   info_widget_set_size(info, 1 + mus_strlen(msg)); */
   recorder_watching = true;
   recorder_text_id = SG_SIGNAL_CONNECT(recorder_output, "changed", watch_info, NULL);
@@ -351,17 +351,17 @@ widget_t record_file(void)
 
 	fsep = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(hbox), fsep, false, false, 20);
-	widget_modify_bg(fsep, GTK_STATE_NORMAL, ss->sgx->basic_color);
+	widget_modify_bg(fsep, GTK_STATE_NORMAL, ss->basic_color);
 	gtk_widget_show(fsep);
 
 	frame = gtk_frame_new(NULL);
 	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
 	/* gtk_container_set_border_width(GTK_CONTAINER(frame), 1); */
-	/* widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->zoom_color); */
+	/* widget_modify_bg(frame, GTK_STATE_NORMAL, ss->zoom_color); */
 	gtk_box_pack_start(GTK_BOX(hbox), frame, true, true, 0);
 	gtk_widget_show(frame);
 
-	info = snd_gtk_entry_label_new(NULL, ss->sgx->basic_color);
+	info = snd_gtk_entry_label_new(NULL, ss->basic_color);
 	gtk_container_add(GTK_CONTAINER(frame), info);
 	gtk_widget_show(info);
       }

@@ -83,7 +83,7 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
 #if (USE_NO_GUI) || (MUS_DEBUGGING)
   fprintf(stderr, "%s", msg);
 #else
-  if ((ss) && (ss->sgx))
+  if (ss)
     {
       if (ss->batch_mode)
 	fprintf(stderr, "%s", msg);

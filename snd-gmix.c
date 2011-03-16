@@ -288,11 +288,11 @@ static void show_mix_background_wave(int mix_id)
   pts = prepare_mix_dialog_waveform(mix_id, e->axis, &two_sided);
   if (pts > 0)
     {
-      gc_set_foreground(ax->gc, ss->sgx->enved_waveform_color);
+      gc_set_foreground(ax->gc, ss->enved_waveform_color);
       if (two_sided)
 	draw_both_grf_points(1, ax, pts, GRAPH_LINES);
       else draw_grf_points(1, ax, pts, e->axis, ungrf_y(e->axis, 0.0), GRAPH_LINES);
-      gc_set_foreground(ax->gc, ss->sgx->black);
+      gc_set_foreground(ax->gc, ss->black);
     }
 }
 
@@ -305,8 +305,8 @@ static void mix_amp_env_resize(GtkWidget *w)
       GdkWindow *wn;
       wn = MAIN_WINDOW(ss);
       cur_gc = gc_new();
-      gc_set_background(cur_gc, ss->sgx->graph_color);
-      gc_set_foreground(cur_gc, ss->sgx->data_color);
+      gc_set_background(cur_gc, ss->graph_color);
+      gc_set_foreground(cur_gc, ss->data_color);
       ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       ax->wn = WIDGET_TO_WINDOW(w_env);
       ax->w = w_env;
@@ -548,7 +548,7 @@ static void mix_sync_callback(GtkWidget *w, gpointer context)
     {
       mix_set_sync_from_id(mix_dialog_id, GET_ORIGINAL_SYNC);  /* choose a new sync val or return to previous */
       /* check for resync */
-      syncd_mix_set_color(mix_dialog_id, ss->sgx->red);
+      syncd_mix_set_color(mix_dialog_id, ss->red);
     }
   else
     {
@@ -736,8 +736,8 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(rc), mix_play, false, false, 2);
       SG_SIGNAL_CONNECT(mix_play, "clicked", mix_play_callback, NULL);
       gtk_widget_show(mix_play);
-      widget_modify_bg(mix_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
-      widget_modify_bg(mix_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
+      widget_modify_bg(mix_play, GTK_STATE_ACTIVE, ss->basic_color);
+      widget_modify_bg(mix_play, GTK_STATE_SELECTED, ss->basic_color);
       
       mix_play_pix = gtk_drawing_area_new();
       gtk_widget_set_events(mix_play_pix, GDK_EXPOSURE_MASK);
@@ -871,7 +871,7 @@ GtkWidget *make_mix_dialog(void)
       w_env = gtk_drawing_area_new();
       gtk_widget_set_events(w_env, GDK_ALL_EVENTS_MASK);
       gtk_container_add(GTK_CONTAINER(w_env_frame), w_env);
-      widget_modify_bg(w_env, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      widget_modify_bg(w_env, GTK_STATE_NORMAL, ss->highlight_color);
       gtk_widget_show(w_env);
       SG_SIGNAL_CONNECT(w_env, DRAW_SIGNAL, mix_amp_env_expose_callback, NULL);
       SG_SIGNAL_CONNECT(w_env, "configure_event", mix_amp_env_resize_callback, NULL);
@@ -889,7 +889,7 @@ GtkWidget *make_mix_dialog(void)
 
       mix_play_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       mix_play_ax->wn = WIDGET_TO_WINDOW(mix_play_pix);
-      mix_play_ax->gc = ss->sgx->basic_gc;
+      mix_play_ax->gc = ss->basic_gc;
 
       gtk_widget_hide(error_frame);
     }
@@ -935,8 +935,8 @@ void reflect_mix_change(int mix_id)
 		  syncd_mix_unset_color(old_mix_dialog_id);
 		}
 	      old_mix_dialog_id = mix_dialog_id;
-	      mix_set_color_from_id(mix_dialog_id, ss->sgx->red);
-	      syncd_mix_set_color(mix_dialog_id, ss->sgx->red);
+	      mix_set_color_from_id(mix_dialog_id, ss->red);
+	      syncd_mix_set_color(mix_dialog_id, ss->red);
 
 	      for_each_normal_chan(display_channel_data);
 

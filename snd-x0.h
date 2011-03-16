@@ -80,54 +80,6 @@ typedef struct {
   char *saved_comment;
 } file_data;
 
-typedef struct {
-  XtAppContext mainapp;     
-  Widget mainshell;
-  Widget mainpane;
-  Widget soundpane;
-  Widget soundpanebox;
-  Widget toolbar;
-  Display *mdpy;
-  xm_font_t peaks_fontlist;
-  XFontStruct *peaks_fontstruct;
-  xm_font_t bold_peaks_fontlist;
-  XFontStruct *bold_peaks_fontstruct; 
-  xm_font_t listener_fontlist;
-  XFontStruct *listener_fontstruct;
-  XFontStruct *axis_label_fontstruct;
-  XFontStruct *axis_numbers_fontstruct;
-  xm_font_t tiny_fontlist;
-  XFontStruct *tiny_fontstruct;
-
-  Pixel white, black, red, yellow, green, light_blue, lighter_blue;
-  Pixel data_color, selected_data_color, mark_color, graph_color, selected_graph_color, listener_color, listener_text_color;
-  Pixel basic_color, selection_color, zoom_color, position_color, highlight_color, enved_waveform_color, cursor_color;
-  Pixel text_focus_color, filter_control_waveform_color, mix_color, sash_color;
-  Pixel selected_grid_color, grid_color, axis_color;
-  Pixel orig_data_color, orig_selected_data_color, orig_mark_color, orig_mix_color;
-  Pixel orig_graph_color, orig_selected_graph_color, orig_listener_color, orig_listener_text_color, orig_cursor_color;
-  Pixel orig_basic_color, orig_selection_color, orig_zoom_color, orig_position_color, orig_highlight_color;
-
-  GC basic_gc, selected_basic_gc, combined_basic_gc;        
-  GC cursor_gc, selected_cursor_gc;      
-  GC selection_gc, selected_selection_gc;
-  GC erase_gc, selected_erase_gc;        
-  GC mark_gc, selected_mark_gc;          
-  GC mix_gc;
-  GC fltenv_basic_gc, fltenv_data_gc;
-  Widget listener_pane;
-  Widget *dialogs;
-  int num_dialogs, dialogs_size;
-  Cursor graph_cursor, wait_cursor, bounds_cursor, play_cursor, loop_play_cursor;
-  Widget requestor_dialog;
-#if HAVE_GL
-  GLXContext cx;
-#endif
-  XtInputId fam_port;
-  Widget *mw;
-  bool axis_color_set;
-} state_context;
-
 typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;
 typedef enum {WITHOUT_SAMPLES_FIELD, WITH_SAMPLES_FIELD} dialog_samples_t;
 typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data_location_t;
@@ -142,18 +94,18 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
   #define snd_MetaMask (Mod1Mask | Mod4Mask)
 #endif
 
-#define MAIN_SHELL(a) (a->sgx)->mainshell
-#define MAIN_PANE(a) (a->sgx)->mainpane
-#define SOUND_PANE(a) (a->sgx)->soundpane
-#define SOUND_PANE_BOX(a) (a->sgx)->soundpanebox
-#define MAIN_APP(a) (a->sgx)->mainapp
-#define MAIN_DISPLAY(a) (a->sgx)->mdpy
-#define PEAKS_FONT(a) (a->sgx)->peaks_fontstruct
-#define BOLD_PEAKS_FONT(a) (a->sgx)->bold_peaks_fontstruct
-#define AXIS_NUMBERS_FONT(a) (a->sgx)->axis_numbers_fontstruct
-#define AXIS_LABEL_FONT(a) (a->sgx)->axis_label_fontstruct
-#define TINY_FONT(a) (a->sgx)->tiny_fontstruct
-#define LISTENER_FONT(a) (a->sgx)->listener_fontstruct
+#define MAIN_SHELL(a) (a)->mainshell
+#define MAIN_PANE(a) (a)->mainpane
+#define SOUND_PANE(a) (a)->soundpane
+#define SOUND_PANE_BOX(a) (a)->soundpanebox
+#define MAIN_APP(a) (a)->mainapp
+#define MAIN_DISPLAY(a) (a)->mdpy
+#define PEAKS_FONT(a) (a)->peaks_fontstruct
+#define BOLD_PEAKS_FONT(a) (a)->bold_peaks_fontstruct
+#define AXIS_NUMBERS_FONT(a) (a)->axis_numbers_fontstruct
+#define AXIS_LABEL_FONT(a) (a)->axis_label_fontstruct
+#define TINY_FONT(a) (a)->tiny_fontstruct
+#define LISTENER_FONT(a) (a)->listener_fontstruct
 
 #define DEFAULT_GRAPH_CURSOR XC_crosshair
 

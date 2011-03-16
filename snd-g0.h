@@ -192,50 +192,6 @@ typedef struct {
   char *saved_comment;
 } file_data;
 
-typedef struct {
-  GtkWidget *mainshell;
-  GtkWidget *mainpane;
-  GtkWidget *soundpane;
-  GtkWidget *soundpanebox;
-  GtkWidget *listener_pane;
-  GdkWindow *mainwindow;
-
-  PangoFontDescription *listener_fnt;
-  PangoFontDescription *axis_label_fnt;
-  PangoFontDescription *axis_numbers_fnt;
-  PangoFontDescription *tiny_fnt;
-  PangoFontDescription *peaks_fnt;
-  PangoFontDescription *bold_peaks_fnt; 
-
-  color_info *white, *black, *red, *yellow, *green, *light_blue, *lighter_blue;
-  color_info *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *listener_text_color, *cursor_color;
-  color_info *basic_color, *selection_color, *zoom_color, *position_color, *highlight_color, *enved_waveform_color;
-  color_info *text_focus_color, *filter_control_waveform_color, *mix_color, *sash_color;
-  color_info *selected_grid_color, *grid_color, *axis_color;
-  color_info *orig_data_color, *orig_selected_data_color, *orig_mark_color, *orig_mix_color;
-  color_info *orig_graph_color, *orig_selected_graph_color, *orig_listener_color, *orig_listener_text_color, *orig_cursor_color;
-  color_info *orig_basic_color, *orig_selection_color, *orig_zoom_color, *orig_position_color, *orig_highlight_color;
-
-  gc_t *basic_gc, *selected_basic_gc, *combined_basic_gc;        
-  gc_t *cursor_gc, *selected_cursor_gc;      
-  gc_t *selection_gc, *selected_selection_gc;
-  gc_t *erase_gc, *selected_erase_gc;        
-  gc_t *mark_gc, *selected_mark_gc;          
-  gc_t *mix_gc;
-  gc_t *fltenv_basic_gc, *fltenv_data_gc;
-
-  GtkWidget **dialogs;
-  int num_dialogs, dialogs_size;
-  bool graph_is_active;
-  GtkWidget *requestor_dialog;
-  mus_float_t bg_gradient;
-  
-  GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor, *bounds_cursor, *play_cursor, *loop_play_cursor;
-  gint fam_port;
-  GtkWidget **mw;
-  bool axis_color_set;
-} state_context;
-
 #define DEFAULT_TINY_FONT "Sans 8"
 #define DEFAULT_PEAKS_FONT "Times Medium 10"
 #define DEFAULT_BOLD_PEAKS_FONT "Times Bold 10"
@@ -250,17 +206,17 @@ typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data
 typedef enum {WITHOUT_HEADER_TYPE_FIELD, WITH_HEADER_TYPE_FIELD} dialog_header_type_t;
 typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 
-#define MAIN_SHELL(a) (a->sgx)->mainshell
-#define MAIN_WINDOW(a) (a->sgx)->mainwindow
-#define MAIN_PANE(a) (a->sgx)->mainpane
-#define SOUND_PANE(a) (a->sgx)->soundpane
-#define SOUND_PANE_BOX(a) (a->sgx)->soundpanebox
-#define AXIS_NUMBERS_FONT(a) (a->sgx)->axis_numbers_fnt
-#define AXIS_LABEL_FONT(a) (a->sgx)->axis_label_fnt
-#define LISTENER_FONT(a) (a->sgx)->listener_fnt
-#define TINY_FONT(a) (a->sgx)->tiny_fnt
-#define PEAKS_FONT(a) (a->sgx)->peaks_fnt
-#define BOLD_PEAKS_FONT(a) (a->sgx)->bold_peaks_fnt
+#define MAIN_SHELL(a) (a)->mainshell
+#define MAIN_WINDOW(a) (a)->mainwindow
+#define MAIN_PANE(a) (a)->mainpane
+#define SOUND_PANE(a) (a)->soundpane
+#define SOUND_PANE_BOX(a) (a)->soundpanebox
+#define AXIS_NUMBERS_FONT(a) (a)->axis_numbers_fnt
+#define AXIS_LABEL_FONT(a) (a)->axis_label_fnt
+#define LISTENER_FONT(a) (a)->listener_fnt
+#define TINY_FONT(a) (a)->tiny_fnt
+#define PEAKS_FONT(a) (a)->peaks_fnt
+#define BOLD_PEAKS_FONT(a) (a)->bold_peaks_fnt
 #define KEY_TO_NAME(key) gdk_keyval_name(key)
 
 #define DEFAULT_GRAPH_CURSOR GDK_CROSSHAIR

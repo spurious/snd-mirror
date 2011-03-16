@@ -1257,7 +1257,7 @@ static mark_context *make_mark_context(chan_info *cp)
   mark_context *g;
   g = (mark_context *)calloc(1, sizeof(mark_context));
   g->graph = channel_graph(cp);
-  g->color = ss->sgx->mark_color;
+  g->color = ss->mark_color;
   return(g);
 }
 
@@ -1907,8 +1907,8 @@ static void show_mark(chan_info *cp, mark *mp, bool show)
   if (mp->name)
     {
 #if USE_MOTIF
-      ax->current_font = ss->sgx->peaks_fontstruct->fid;
-      XSetFont(ax->dp, ax->gc, ss->sgx->peaks_fontstruct->fid);
+      ax->current_font = ss->peaks_fontstruct->fid;
+      XSetFont(ax->dp, ax->gc, ss->peaks_fontstruct->fid);
 #else
       ax->current_font = PEAKS_FONT(ss);
 #endif

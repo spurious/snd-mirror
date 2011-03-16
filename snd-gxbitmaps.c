@@ -2531,7 +2531,7 @@ void make_toolbar_icons(Widget w)
   attributes.visual = DefaultVisual(dp, scr);
   symbols[0].name = (char *)"basiccolor";
   symbols[0].value = NULL;
-  symbols[0].pixel = ss->sgx->basic_color;
+  symbols[0].pixel = ss->basic_color;
   attributes.colorsymbols = symbols;
   attributes.numsymbols = 1;
   attributes.valuemask = XpmColorSymbols | XpmDepth | XpmColormap | XpmVisual;

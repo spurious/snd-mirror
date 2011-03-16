@@ -1,6 +1,5 @@
 #include "snd.h"
 
-
 bool x_axis_style_p(int n)
 {
   switch (n)
@@ -453,8 +452,8 @@ static void draw_horizontal_grid_line(int y, axis_info *ap, graphics_context *ax
   color_t old_color;
   old_color = get_foreground_color(ax);
   if (ap->cp->selected)
-    set_foreground_color(ax, ss->sgx->selected_grid_color);
-  else set_foreground_color(ax, ss->sgx->grid_color);
+    set_foreground_color(ax, ss->selected_grid_color);
+  else set_foreground_color(ax, ss->grid_color);
   draw_line(ax, ap->y_axis_x0, y, ap->x_axis_x1, y);
   set_foreground_color(ax, old_color);
 }
@@ -465,8 +464,8 @@ static void draw_vertical_grid_line(int x, axis_info *ap, graphics_context *ax)
   color_t old_color;
   old_color = get_foreground_color(ax);
   if (ap->cp->selected)
-    set_foreground_color(ax, ss->sgx->selected_grid_color);
-  else set_foreground_color(ax, ss->sgx->grid_color);
+    set_foreground_color(ax, ss->selected_grid_color);
+  else set_foreground_color(ax, ss->grid_color);
   draw_line(ax, x, ap->x_axis_y0, x, ap->y_axis_y1);
   set_foreground_color(ax, old_color);
 }

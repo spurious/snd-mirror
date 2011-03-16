@@ -205,7 +205,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       int n;
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       xmstr1 = XmStringCreateLocalized((char *)"Print");  /* "ok" here is confusing -- might mean, ok I'm done */
       xmstr2 = XmStringCreateLocalized((char *)"Help");
       xmstr3 = XmStringCreateLocalized((char *)"Go Away");
@@ -223,7 +223,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       XtSetArg(args[n], XmNtransient, false); n++; /* this gives us the resize handles */
       print_dialog = XmCreateMessageDialog(MAIN_PANE(ss), (char *)"eps file:", args, n);
 
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->basic_color, NULL);
 
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
@@ -266,7 +266,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       /* error display */
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, print_eps_or_lpr); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -277,12 +277,12 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       error_info_box = XtCreateWidget("error-box", xmRowColumnWidgetClass, rc, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNmarginHeight, 4); n++;
       error_info_frame = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, error_info_box, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       error_info = XtCreateManagedWidget("error-info", xmLabelWidgetClass, error_info_frame, args, n);
 
@@ -291,13 +291,13 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       if (managed) XtManageChild(print_dialog);
 
       map_over_children(print_dialog, set_main_color_of_widget);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->highlight_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->highlight_color, NULL);
-      XtVaSetValues(print_eps_or_lpr, XmNselectColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->highlight_color, NULL);
+      XtVaSetValues(print_eps_or_lpr, XmNselectColor, ss->selection_color, NULL);
 
       set_dialog_widget(PRINT_DIALOG, print_dialog);
     }

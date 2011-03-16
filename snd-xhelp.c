@@ -353,7 +353,7 @@ static void create_help_monolog(void)
   dismiss = XmStringCreateLocalized((char *)"Go Away");
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   /* this window should be resizable by the user (i.e. have the resize bars), but not resize itself */
   XtSetArg(args[n], XmNautoUnmanage, false); n++;
@@ -372,11 +372,11 @@ static void create_help_monolog(void)
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_HELP_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_SYMBOL_LABEL));
 
-  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->sgx->highlight_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->highlight_color, NULL);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-  XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
+  XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
   help_previous_button = XtCreateManagedWidget("Back", xmPushButtonGadgetClass, help_dialog, args, n);
   XtAddCallback(help_previous_button, XmNactivateCallback, help_previous_callback, NULL);
   XtSetSensitive(help_next_button, false);
@@ -395,8 +395,8 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNeditable, false); n++;
   XtSetArg(args[n], XmNcolumns, HELP_COLUMNS); n++;
   XtSetArg(args[n], XmNrows, HELP_ROWS); n++;
-  XtSetArg(args[n], XmNforeground, ss->sgx->black); n++; /* needed if color allocation fails completely */
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNforeground, ss->black); n++; /* needed if color allocation fails completely */
+  XtSetArg(args[n], XmNbackground, ss->white); n++;
   help_text = XmCreateScrolledText(holder, (char *)"help-text", args, n);
   XtAddEventHandler(help_text, ButtonReleaseMask, false, text_release_callback, NULL);
   XtManageChild(help_text);
@@ -417,10 +417,10 @@ static void create_help_monolog(void)
       XtSetArg(args[n], XmNfontType, XmFONT_IS_FONT); n++; 
       XtSetArg(args[n], XmNloadModel, XmLOAD_IMMEDIATE); n++;
     }
-  XtSetArg(args[n], XmNrenditionBackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNrenditionForeground, ss->sgx->red); n++;
+  XtSetArg(args[n], XmNrenditionBackground, ss->white); n++;
+  XtSetArg(args[n], XmNrenditionForeground, ss->red); n++;
   texts[0] = XmRenditionCreate(help_text, (char *)"url_text", args, n);
-  XtSetArg(args[n - 1], XmNrenditionForeground, ss->sgx->black); 
+  XtSetArg(args[n - 1], XmNrenditionForeground, ss->black); 
   texts[1] = XmRenditionCreate(help_text, (char *)"normal_text", args, n);
   rs = XmRenderTableCopy(XmRenderTableAddRenditions(rs, texts, 2, XmMERGE_NEW), NULL, 0);
   /*
@@ -441,7 +441,7 @@ static void create_help_monolog(void)
   sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, holder, args, n);
   
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -508,13 +508,13 @@ static void create_help_monolog(void)
   XtManageChild(help_dialog);
   
   map_over_children(help_dialog, set_main_color_of_widget);
-  XtVaSetValues(help_text, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-  XtVaSetValues(related_items, XmNbackground, ss->sgx->highlight_color, XmNforeground, ss->sgx->black, NULL);
-  XtVaSetValues(xref_label, XmNbackground, ss->sgx->highlight_color, XmNforeground, ss->sgx->black, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+  XtVaSetValues(help_text, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
+  XtVaSetValues(related_items, XmNbackground, ss->highlight_color, XmNforeground, ss->black, NULL);
+  XtVaSetValues(xref_label, XmNbackground, ss->highlight_color, XmNforeground, ss->black, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->selection_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->highlight_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->selection_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->highlight_color, NULL);
 
   set_dialog_widget(HELP_DIALOG, help_dialog);
 }

@@ -717,7 +717,7 @@ void listener_return(widget_t w, int last_prompt)
       if (current_position < (last_position - 2))
 	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
 
-      GUI_SET_CURSOR(w, ss->sgx->wait_cursor);
+      GUI_SET_CURSOR(w, ss->wait_cursor);
       GUI_UPDATE(w); /* not sure about this... */
 
       if ((mus_strlen(str) > 1) || (str[0] != '\n'))
@@ -789,7 +789,7 @@ void listener_return(widget_t w, int last_prompt)
 
       free(str);
       str = NULL;
-      GUI_UNSET_CURSOR(w, ss->sgx->arrow_cursor); 
+      GUI_UNSET_CURSOR(w, ss->arrow_cursor); 
     }
   else
     {

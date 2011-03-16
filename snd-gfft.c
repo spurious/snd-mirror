@@ -244,11 +244,11 @@ static color_t not_so_black;
 static void alpha_beta_alpha(mus_fft_window_t val)
 {
   if (fft_window_beta_in_use(val))
-    gtk_widget_override_color(beta_label, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
+    gtk_widget_override_color(beta_label, GTK_STATE_NORMAL, (GdkRGBA *)(ss->black));
   else gtk_widget_override_color(beta_label, GTK_STATE_NORMAL, (GdkRGBA *)not_so_black);
  
   if (fft_window_alpha_in_use(val))
-    gtk_widget_override_color(alpha_label, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
+    gtk_widget_override_color(alpha_label, GTK_STATE_NORMAL, (GdkRGBA *)(ss->black));
   else gtk_widget_override_color(alpha_label, GTK_STATE_NORMAL, (GdkRGBA *)not_so_black);
 }
 #endif
@@ -845,14 +845,14 @@ static void help_transform_callback(GtkWidget *w, gpointer context)
 
 gboolean spin_button_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
-  widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->white);
+  widget_modify_base(w, GTK_STATE_NORMAL, ss->white);
   return(false);
 }
 
 
 gboolean spin_button_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
-  widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
+  widget_modify_base(w, GTK_STATE_NORMAL, ss->basic_color);
   return(false);
 }
 
@@ -1211,16 +1211,16 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
 	graph_drawer = gtk_drawing_area_new();
 	gtk_box_pack_end(GTK_BOX(g_vbox), graph_drawer, true, true, 0);
-	widget_modify_bg(graph_drawer, GTK_STATE_NORMAL, ss->sgx->white);
+	widget_modify_bg(graph_drawer, GTK_STATE_NORMAL, ss->white);
 	gtk_widget_show(g_vbox);
 
 	fgc = gc_new();
-	gc_set_background(fgc, ss->sgx->white);
-	gc_set_foreground(fgc, ss->sgx->enved_waveform_color);
+	gc_set_background(fgc, ss->white);
+	gc_set_foreground(fgc, ss->enved_waveform_color);
 
 	gc = gc_new();
-	gc_set_background(gc, ss->sgx->white);
-	gc_set_foreground(gc, ss->sgx->black);
+	gc_set_background(gc, ss->white);
+	gc_set_foreground(gc, ss->black);
 
 	gtk_widget_show(graph_drawer);
 	gtk_widget_show(graph_frame);

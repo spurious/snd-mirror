@@ -252,11 +252,9 @@ void check_colormap_sizes(int colors)
 
 void initialize_colormap(void)
 {
-  state_context *sx;
   XGCValues gv;
-  sx = ss->sgx;
-  gv.background = sx->white;
-  gv.foreground = sx->data_color;
+  gv.background = ss->white;
+  gv.foreground = ss->data_color;
   colormap_GC = XCreateGC(MAIN_DISPLAY(ss), XtWindow(MAIN_SHELL(ss)), GCForeground | GCBackground, &gv);
   sono_colors = color_map_size(ss);
   sono_data = (XRectangle **)calloc(sono_colors, sizeof(XRectangle *));
@@ -950,7 +948,7 @@ Widget start_color_orientation_dialog(bool managed)
       titlestr = XmStringCreateLocalized((char *)"Color and Orientation");
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNokLabelString, xreset); n++;
@@ -970,15 +968,15 @@ Widget start_color_orientation_dialog(bool managed)
       XmStringFree(titlestr);
       XmStringFree(xreset);
 
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->highlight_color, NULL);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -988,17 +986,17 @@ Widget start_color_orientation_dialog(bool managed)
 
       /* color section */
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNborderWidth, 10); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNborderColor, ss->basic_color); n++;
       color_frame = XtCreateManagedWidget("color", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1006,7 +1004,7 @@ Widget start_color_orientation_dialog(bool managed)
       color_form = XtCreateManagedWidget("cform", xmFormWidgetClass, color_frame, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1015,7 +1013,7 @@ Widget start_color_orientation_dialog(bool managed)
       color_title = XtCreateManagedWidget("colors", xmLabelWidgetClass, color_form, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNleftPosition, 60); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1026,8 +1024,8 @@ Widget start_color_orientation_dialog(bool managed)
       ccd_list = XmCreateScrolledList(color_form, (char *)"colormap-list", args, n);
 
       XtVaSetValues(ccd_list, 
-		    XmNbackground, ss->sgx->white, 
-		    XmNforeground, ss->sgx->black, 
+		    XmNbackground, ss->white, 
+		    XmNforeground, ss->black, 
 		    NULL);
       reflect_color_list(true);
       XtAddCallback(ccd_list, XmNbrowseSelectionCallback, list_color_callback, NULL);
@@ -1035,7 +1033,7 @@ Widget start_color_orientation_dialog(bool managed)
       XmListSelectPos(ccd_list, color_map(ss) + 1, false);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1047,7 +1045,7 @@ Widget start_color_orientation_dialog(bool managed)
       lsep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, color_form, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, ccd_list); n++;
@@ -1061,7 +1059,7 @@ Widget start_color_orientation_dialog(bool managed)
 
       /* this horizontal separator exists solely to keep the "light" label from clobbering the "dark" label! */
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, lsep); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
@@ -1076,7 +1074,7 @@ Widget start_color_orientation_dialog(bool managed)
       sep1 = XtCreateManagedWidget("sep1", xmSeparatorWidgetClass, color_form, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, lsep); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
@@ -1092,7 +1090,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtAddCallback(ccd_scale, XmNdragCallback, scale_color_callback, NULL);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, lsep); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -1102,7 +1100,7 @@ Widget start_color_orientation_dialog(bool managed)
       light_label = XtCreateManagedWidget("light", xmLabelWidgetClass, color_form, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, rsep); n++;
@@ -1112,7 +1110,7 @@ Widget start_color_orientation_dialog(bool managed)
       XtCreateManagedWidget("dark", xmLabelWidgetClass, color_form, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, lsep); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
@@ -1128,7 +1126,7 @@ Widget start_color_orientation_dialog(bool managed)
 
       n = 0;
       xstr = fscale_label("data cutoff", color_cutoff(ss));
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, lsep); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
@@ -1147,11 +1145,11 @@ Widget start_color_orientation_dialog(bool managed)
       XtAddCallback(ccd_cutoff, XmNdragCallback, cutoff_color_callback, NULL);
       XmStringFree(xstr);
 
-      XtVaSetValues(((XmScaleWidget)ccd_cutoff)->composite.children[0], XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(((XmScaleWidget)ccd_cutoff)->composite.children[0], XmNbackground, ss->basic_color, NULL);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->selection_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, lsep); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -1168,18 +1166,18 @@ Widget start_color_orientation_dialog(bool managed)
 
       /* orientation section */
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, color_frame); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNborderWidth, 10); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNborderColor, ss->basic_color); n++;
       orientation_frame = XtCreateManagedWidget("color", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1187,7 +1185,7 @@ Widget start_color_orientation_dialog(bool managed)
       orientation_form = XtCreateManagedWidget("oform", xmFormWidgetClass, orientation_frame, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1200,7 +1198,7 @@ Widget start_color_orientation_dialog(bool managed)
       n = 0;
       initial_value = fixup_angle(spectro_x_angle(ss));
       xstr = scale_label("x angle", initial_value, false);
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, XmNONE); n++;
       XtSetArg(args[n], XmNvalue, initial_value); n++;
@@ -1213,18 +1211,18 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopWidget, orientation_title); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNborderWidth, SCALE_BORDER_WIDTH); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNborderColor, ss->basic_color); n++;
       oid_ax = XtCreateManagedWidget("ax", xmScaleWidgetClass, orientation_form, args, n);
       XtAddCallback(oid_ax, XmNvalueChangedCallback, ax_orientation_callback, NULL);
       XtAddCallback(oid_ax, XmNdragCallback, ax_orientation_callback, NULL);
       XmStringFree(xstr);
 
-      XtVaSetValues(((XmScaleWidget)oid_ax)->composite.children[0], XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(((XmScaleWidget)oid_ax)->composite.children[0], XmNbackground, ss->basic_color, NULL);
 
       n = 0;
       initial_value = mus_iclamp(0, (int)(spectro_x_scale(ss) * 100), (int)(100 * SPECTRO_X_SCALE_MAX));
       xstr = scale_label("x scale", initial_value, true);
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, XmNONE); n++;
       XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_X_SCALE_MAX)); n++;
@@ -1238,18 +1236,18 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopWidget, oid_ax); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNborderWidth, SCALE_BORDER_WIDTH); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNborderColor, ss->basic_color); n++;
       oid_sx = XtCreateManagedWidget("xs", xmScaleWidgetClass, orientation_form, args, n);
       XtAddCallback(oid_sx, XmNvalueChangedCallback, sx_orientation_callback, NULL);
       XtAddCallback(oid_sx, XmNdragCallback, sx_orientation_callback, NULL);
       XmStringFree(xstr);
 
-      XtVaSetValues(((XmScaleWidget)oid_sx)->composite.children[0], XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(((XmScaleWidget)oid_sx)->composite.children[0], XmNbackground, ss->basic_color, NULL);
 
       n = 0;
       initial_value = fixup_angle(spectro_y_angle(ss));
       xstr = scale_label("y angle", initial_value, false);
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, XmNONE); n++;
       XtSetArg(args[n], XmNvalue, initial_value); n++;
@@ -1262,18 +1260,18 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopWidget, oid_ax); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNborderWidth, SCALE_BORDER_WIDTH); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNborderColor, ss->basic_color); n++;
       oid_ay = XtCreateManagedWidget("ay", xmScaleWidgetClass, orientation_form, args, n);
       XtAddCallback(oid_ay, XmNvalueChangedCallback, ay_orientation_callback, NULL);
       XtAddCallback(oid_ay, XmNdragCallback, ay_orientation_callback, NULL);
       XmStringFree(xstr);
 
-      XtVaSetValues(((XmScaleWidget)oid_ay)->composite.children[0], XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(((XmScaleWidget)oid_ay)->composite.children[0], XmNbackground, ss->basic_color, NULL);
 
       n = 0;
       initial_value = mus_iclamp(0, (int)(spectro_y_scale(ss) * 100), (int)(100 * SPECTRO_Y_SCALE_MAX));
       xstr = scale_label("y scale", initial_value, true);
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, XmNONE); n++;
       XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_Y_SCALE_MAX)); n++;
@@ -1287,18 +1285,18 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopWidget, oid_sx); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNborderWidth, SCALE_BORDER_WIDTH); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNborderColor, ss->basic_color); n++;
       oid_sy = XtCreateManagedWidget("ys", xmScaleWidgetClass, orientation_form, args, n);
       XtAddCallback(oid_sy, XmNvalueChangedCallback, sy_orientation_callback, NULL);
       XtAddCallback(oid_sy, XmNdragCallback, sy_orientation_callback, NULL);
       XmStringFree(xstr);
 
-      XtVaSetValues(((XmScaleWidget)oid_sy)->composite.children[0], XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(((XmScaleWidget)oid_sy)->composite.children[0], XmNbackground, ss->basic_color, NULL);
 
       n = 0;
       initial_value = fixup_angle(spectro_z_angle(ss));
       xstr = scale_label("z angle", initial_value, false);
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       XtSetArg(args[n], XmNshowValue, XmNONE); n++;
@@ -1310,18 +1308,18 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, oid_ay); n++;
       XtSetArg(args[n], XmNborderWidth, SCALE_BORDER_WIDTH); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNborderColor, ss->basic_color); n++;
       oid_az = XtCreateManagedWidget("az", xmScaleWidgetClass, orientation_form, args, n);
       XtAddCallback(oid_az, XmNvalueChangedCallback, az_orientation_callback, NULL);
       XtAddCallback(oid_az, XmNdragCallback, az_orientation_callback, NULL);
       XmStringFree(xstr);
 
-      XtVaSetValues(((XmScaleWidget)oid_az)->composite.children[0], XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(((XmScaleWidget)oid_az)->composite.children[0], XmNbackground, ss->basic_color, NULL);
 
       n = 0;
       initial_value = mus_iclamp(0, (int)(spectro_z_scale(ss) * 100), (int)(100 * SPECTRO_Z_SCALE_MAX));
       xstr = scale_label("z scale", initial_value, true);
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, XmNONE); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
@@ -1334,18 +1332,18 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, oid_sy); n++;
       XtSetArg(args[n], XmNborderWidth, SCALE_BORDER_WIDTH); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNborderColor, ss->basic_color); n++;
       oid_sz = XtCreateManagedWidget("zs", xmScaleWidgetClass, orientation_form, args, n);
       XtAddCallback(oid_sz, XmNvalueChangedCallback, sz_orientation_callback, NULL);
       XtAddCallback(oid_sz, XmNdragCallback, sz_orientation_callback, NULL);
       XmStringFree(xstr);
 
-      XtVaSetValues(((XmScaleWidget)oid_sz)->composite.children[0], XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(((XmScaleWidget)oid_sz)->composite.children[0], XmNbackground, ss->basic_color, NULL);
 
       n = 0;
       initial_value = mus_iclamp(1, spectro_hop(ss), HOP_MAX);
       xstr = scale_label("hop", initial_value, false);
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, XmNONE); n++;
       XtSetArg(args[n], XmNvalue, initial_value); n++;
@@ -1362,18 +1360,18 @@ Widget start_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
 #endif
       XtSetArg(args[n], XmNborderWidth, SCALE_BORDER_WIDTH); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNborderColor, ss->basic_color); n++;
       oid_hop = XtCreateManagedWidget("hop", xmScaleWidgetClass, orientation_form, args, n);
       XtAddCallback(oid_hop, XmNvalueChangedCallback, hop_orientation_callback, NULL);
       XtAddCallback(oid_hop, XmNdragCallback, hop_orientation_callback, NULL);
       XmStringFree(xstr);
 
-      XtVaSetValues(((XmScaleWidget)oid_hop)->composite.children[0], XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(((XmScaleWidget)oid_hop)->composite.children[0], XmNbackground, ss->basic_color, NULL);
 
 #if HAVE_GL
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->selection_color); n++;
       XtSetArg(args[n], XmNset, with_gl(ss)); n++;
       glstr = XmStringCreateLocalized((char *)"use OpenGL");
       XtSetArg(args[n], XmNlabelString, glstr); n++;

@@ -57,21 +57,21 @@ static GtkWidget **iconify_active_dialogs = NULL;
 static gint window_iconify(GtkWidget *w, GdkEventWindowState *event, gpointer context)
 {
   int i;
-  if ((!ss) || (!(ss->sgx)) || (!(ss->sgx->dialogs)))
+  if ((!ss) || (!(ss->dialogs)))
     return(false);
   if (event->new_window_state & GDK_WINDOW_STATE_ICONIFIED)
     {
       /* presumably we are now iconified */
 
       if (iconify_active_dialogs) free(iconify_active_dialogs);
-      iconify_active_dialogs = (GtkWidget **)calloc(ss->sgx->num_dialogs, sizeof(GtkWidget *));
+      iconify_active_dialogs = (GtkWidget **)calloc(ss->num_dialogs, sizeof(GtkWidget *));
 
-      for (i = 0; i < ss->sgx->num_dialogs; i++)
-	if (ss->sgx->dialogs[i])
+      for (i = 0; i < ss->num_dialogs; i++)
+	if (ss->dialogs[i])
 	  {
-	    if (widget_is_active(ss->sgx->dialogs[i]))
-	      iconify_active_dialogs[i] = ss->sgx->dialogs[i];
-	    gtk_widget_hide(ss->sgx->dialogs[i]);
+	    if (widget_is_active(ss->dialogs[i]))
+	      iconify_active_dialogs[i] = ss->dialogs[i];
+	    gtk_widget_hide(ss->dialogs[i]);
 	  }
     }
   else
@@ -81,7 +81,7 @@ static gint window_iconify(GtkWidget *w, GdkEventWindowState *event, gpointer co
 	  /* this is confusing -- can I assume I've been deiconified or not?  if not, how to tell? */
 	  if (iconify_active_dialogs) 
 	    {
-	      for (i = 0; i < ss->sgx->num_dialogs; i++)
+	      for (i = 0; i < ss->num_dialogs; i++)
 		if (iconify_active_dialogs[i])
 		  gtk_widget_show(iconify_active_dialogs[i]);
 
@@ -182,66 +182,63 @@ static void get_stdin_string(gpointer context, gint fd, int condition)
 static void setup_gcs(void)
 {
   GdkWindow *wn;	
-  state_context *sx;
-
-  sx = ss->sgx;
   wn = MAIN_WINDOW(ss);
 
-  sx->basic_gc = gc_new();
-  gc_set_background(sx->basic_gc, sx->graph_color);
-  gc_set_foreground(sx->basic_gc, sx->data_color);
+  ss->basic_gc = gc_new();
+  gc_set_background(ss->basic_gc, ss->graph_color);
+  gc_set_foreground(ss->basic_gc, ss->data_color);
 
-  sx->combined_basic_gc = gc_new();
-  gc_set_background(sx->combined_basic_gc, sx->graph_color);
-  gc_set_foreground(sx->combined_basic_gc, sx->data_color);
+  ss->combined_basic_gc = gc_new();
+  gc_set_background(ss->combined_basic_gc, ss->graph_color);
+  gc_set_foreground(ss->combined_basic_gc, ss->data_color);
 
-  sx->mix_gc = gc_new();
-  gc_set_background(sx->mix_gc, sx->graph_color);
-  gc_set_foreground(sx->mix_gc, sx->mix_color);
+  ss->mix_gc = gc_new();
+  gc_set_background(ss->mix_gc, ss->graph_color);
+  gc_set_foreground(ss->mix_gc, ss->mix_color);
 
-  sx->cursor_gc = gc_new();
-  gc_set_background(sx->cursor_gc, sx->graph_color);
-  gc_set_colors(sx->cursor_gc, sx->cursor_color, sx->graph_color);
+  ss->cursor_gc = gc_new();
+  gc_set_background(ss->cursor_gc, ss->graph_color);
+  gc_set_colors(ss->cursor_gc, ss->cursor_color, ss->graph_color);
 
-  sx->selection_gc = gc_new();
-  gc_set_background(sx->selection_gc, sx->graph_color);
-  gc_set_colors(sx->selection_gc, sx->selection_color, sx->graph_color);
+  ss->selection_gc = gc_new();
+  gc_set_background(ss->selection_gc, ss->graph_color);
+  gc_set_colors(ss->selection_gc, ss->selection_color, ss->graph_color);
 
-  sx->mark_gc = gc_new();
-  gc_set_background(sx->mark_gc, sx->graph_color);
-  gc_set_colors(sx->mark_gc, sx->mark_color, sx->graph_color);
+  ss->mark_gc = gc_new();
+  gc_set_background(ss->mark_gc, ss->graph_color);
+  gc_set_colors(ss->mark_gc, ss->mark_color, ss->graph_color);
 
-  sx->erase_gc = gc_new();
-  gc_set_background(sx->erase_gc, sx->data_color);
-  gc_set_foreground(sx->erase_gc, sx->graph_color);
+  ss->erase_gc = gc_new();
+  gc_set_background(ss->erase_gc, ss->data_color);
+  gc_set_foreground(ss->erase_gc, ss->graph_color);
 
-  sx->selected_basic_gc = gc_new();
-  gc_set_background(sx->selected_basic_gc, sx->selected_graph_color);
-  gc_set_foreground(sx->selected_basic_gc, sx->selected_data_color);
+  ss->selected_basic_gc = gc_new();
+  gc_set_background(ss->selected_basic_gc, ss->selected_graph_color);
+  gc_set_foreground(ss->selected_basic_gc, ss->selected_data_color);
 
-  sx->selected_cursor_gc = gc_new();
-  gc_set_background(sx->selected_cursor_gc, sx->graph_color);
-  gc_set_colors(sx->selected_cursor_gc, sx->cursor_color, sx->graph_color);
+  ss->selected_cursor_gc = gc_new();
+  gc_set_background(ss->selected_cursor_gc, ss->graph_color);
+  gc_set_colors(ss->selected_cursor_gc, ss->cursor_color, ss->graph_color);
 
-  sx->selected_selection_gc = gc_new();
-  gc_set_background(sx->selected_selection_gc, sx->graph_color);
-  gc_set_colors(sx->selected_selection_gc, sx->selection_color, sx->graph_color);
+  ss->selected_selection_gc = gc_new();
+  gc_set_background(ss->selected_selection_gc, ss->graph_color);
+  gc_set_colors(ss->selected_selection_gc, ss->selection_color, ss->graph_color);
 
-  sx->selected_mark_gc = gc_new();
-  gc_set_background(sx->selected_mark_gc, sx->selected_graph_color);
-  gc_set_colors(sx->selected_mark_gc, sx->mark_color, sx->selected_graph_color);
+  ss->selected_mark_gc = gc_new();
+  gc_set_background(ss->selected_mark_gc, ss->selected_graph_color);
+  gc_set_colors(ss->selected_mark_gc, ss->mark_color, ss->selected_graph_color);
 
-  sx->selected_erase_gc = gc_new();
-  gc_set_background(sx->selected_erase_gc, sx->selected_data_color);
-  gc_set_foreground(sx->selected_erase_gc, sx->selected_graph_color);
+  ss->selected_erase_gc = gc_new();
+  gc_set_background(ss->selected_erase_gc, ss->selected_data_color);
+  gc_set_foreground(ss->selected_erase_gc, ss->selected_graph_color);
 
-  sx->fltenv_basic_gc = gc_new();
-  gc_set_background(sx->fltenv_basic_gc, sx->basic_color);
-  gc_set_foreground(sx->fltenv_basic_gc, sx->black);
+  ss->fltenv_basic_gc = gc_new();
+  gc_set_background(ss->fltenv_basic_gc, ss->basic_color);
+  gc_set_foreground(ss->fltenv_basic_gc, ss->black);
 
-  sx->fltenv_data_gc = gc_new();
-  gc_set_background(sx->fltenv_data_gc, sx->basic_color);
-  gc_set_foreground(sx->fltenv_data_gc, sx->filter_control_waveform_color);
+  ss->fltenv_data_gc = gc_new();
+  gc_set_background(ss->fltenv_data_gc, ss->basic_color);
+  gc_set_foreground(ss->fltenv_data_gc, ss->filter_control_waveform_color);
 
   initialize_colormap();
 }
@@ -282,24 +279,24 @@ static void save_a_color(FILE *Fp, color_info *default_color, color_info *curren
 
 void save_colors(FILE *Fp)
 {
-  save_a_color(Fp, BASIC_COLOR, ss->sgx->basic_color, S_basic_color);
-  save_a_color(Fp, CURSOR_COLOR, ss->sgx->cursor_color, S_cursor_color);
-  save_a_color(Fp, DATA_COLOR, ss->sgx->data_color, S_data_color);
-  save_a_color(Fp, SELECTED_DATA_COLOR, ss->sgx->selected_data_color, S_selected_data_color);
-  save_a_color(Fp, HIGHLIGHT_COLOR, ss->sgx->highlight_color, S_highlight_color);
-  save_a_color(Fp, POSITION_COLOR, ss->sgx->position_color, S_position_color);
-  save_a_color(Fp, ZOOM_COLOR, ss->sgx->zoom_color, S_zoom_color);
-  save_a_color(Fp, SELECTION_COLOR, ss->sgx->selection_color, S_selection_color);
-  save_a_color(Fp, MIX_COLOR, ss->sgx->mix_color, S_mix_color);
-  save_a_color(Fp, ENVED_WAVEFORM_COLOR, ss->sgx->enved_waveform_color, S_enved_waveform_color);
-  save_a_color(Fp, FILTER_CONTROL_WAVEFORM_COLOR, ss->sgx->filter_control_waveform_color, S_filter_control_waveform_color);
-  save_a_color(Fp, LISTENER_COLOR, ss->sgx->listener_color, S_listener_color);
-  save_a_color(Fp, LISTENER_TEXT_COLOR, ss->sgx->listener_text_color, S_listener_text_color);
-  save_a_color(Fp, GRAPH_COLOR, ss->sgx->graph_color, S_graph_color);
-  save_a_color(Fp, SELECTED_GRAPH_COLOR, ss->sgx->selected_graph_color, S_selected_graph_color);
-  save_a_color(Fp, MARK_COLOR, ss->sgx->mark_color, S_mark_color);
-  save_a_color(Fp, SASH_COLOR, ss->sgx->sash_color, S_sash_color);
-  save_a_color(Fp, TEXT_FOCUS_COLOR, ss->sgx->text_focus_color, S_text_focus_color);
+  save_a_color(Fp, BASIC_COLOR, ss->basic_color, S_basic_color);
+  save_a_color(Fp, CURSOR_COLOR, ss->cursor_color, S_cursor_color);
+  save_a_color(Fp, DATA_COLOR, ss->data_color, S_data_color);
+  save_a_color(Fp, SELECTED_DATA_COLOR, ss->selected_data_color, S_selected_data_color);
+  save_a_color(Fp, HIGHLIGHT_COLOR, ss->highlight_color, S_highlight_color);
+  save_a_color(Fp, POSITION_COLOR, ss->position_color, S_position_color);
+  save_a_color(Fp, ZOOM_COLOR, ss->zoom_color, S_zoom_color);
+  save_a_color(Fp, SELECTION_COLOR, ss->selection_color, S_selection_color);
+  save_a_color(Fp, MIX_COLOR, ss->mix_color, S_mix_color);
+  save_a_color(Fp, ENVED_WAVEFORM_COLOR, ss->enved_waveform_color, S_enved_waveform_color);
+  save_a_color(Fp, FILTER_CONTROL_WAVEFORM_COLOR, ss->filter_control_waveform_color, S_filter_control_waveform_color);
+  save_a_color(Fp, LISTENER_COLOR, ss->listener_color, S_listener_color);
+  save_a_color(Fp, LISTENER_TEXT_COLOR, ss->listener_text_color, S_listener_text_color);
+  save_a_color(Fp, GRAPH_COLOR, ss->graph_color, S_graph_color);
+  save_a_color(Fp, SELECTED_GRAPH_COLOR, ss->selected_graph_color, S_selected_graph_color);
+  save_a_color(Fp, MARK_COLOR, ss->mark_color, S_mark_color);
+  save_a_color(Fp, SASH_COLOR, ss->sash_color, S_sash_color);
+  save_a_color(Fp, TEXT_FOCUS_COLOR, ss->text_focus_color, S_text_focus_color);
 }
 
 
@@ -323,12 +320,12 @@ static void startup_funcs(void)
   SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "window_state_event", window_iconify, NULL);
 #endif
 
-  ss->sgx->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
-  ss->sgx->wait_cursor = gdk_cursor_new(GDK_WATCH);
-  ss->sgx->bounds_cursor = gdk_cursor_new(GDK_SB_H_DOUBLE_ARROW);
-  ss->sgx->play_cursor = gdk_cursor_new(GDK_SB_RIGHT_ARROW);
-  ss->sgx->loop_play_cursor = gdk_cursor_new(GDK_SB_LEFT_ARROW);
-  ss->sgx->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
+  ss->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
+  ss->wait_cursor = gdk_cursor_new(GDK_WATCH);
+  ss->bounds_cursor = gdk_cursor_new(GDK_SB_H_DOUBLE_ARROW);
+  ss->play_cursor = gdk_cursor_new(GDK_SB_RIGHT_ARROW);
+  ss->loop_play_cursor = gdk_cursor_new(GDK_SB_LEFT_ARROW);
+  ss->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
 
 #if HAVE_EXTENSION_LANGUAGE
   snd_load_init_file(noglob, noinit);
@@ -437,7 +434,6 @@ void snd_doit(int argc, char **argv)
 #endif
   GtkWidget *shell;
   int i;
-  state_context *sx;
 
 #ifdef SND_AS_WIDGET
   set_error_display(error_func);
@@ -510,56 +506,54 @@ void snd_doit(int argc, char **argv)
   ss->sash_size = SASH_SIZE;
   ss->sash_indent = SASH_INDENT;
   ss->toggle_size = TOGGLE_SIZE;
-  ss->sgx = (state_context *)calloc(1, sizeof(state_context));
-  sx = ss->sgx;
-  sx->graph_is_active = false;
-  sx->bg_gradient = 0.05;
+  ss->graph_is_active = false;
+  ss->bg_gradient = 0.05;
 
-  sx->white =                         WHITE_COLOR;
-  sx->black =                         BLACK_COLOR;
-  sx->light_blue =                    LIGHT_BLUE_COLOR;
-  sx->lighter_blue =                  LIGHTER_BLUE_COLOR;
-  sx->red =                           RED_COLOR;
-  sx->green =                         GREEN_COLOR;
-  sx->yellow =                        YELLOW_COLOR;
-  sx->highlight_color =               HIGHLIGHT_COLOR;
-  sx->basic_color =                   BASIC_COLOR;
-  sx->position_color =                POSITION_COLOR;
-  sx->zoom_color =                    ZOOM_COLOR;
-  sx->cursor_color =                  CURSOR_COLOR;
-  sx->selection_color =               SELECTION_COLOR;
-  sx->mix_color =                     MIX_COLOR;
-  sx->enved_waveform_color =          ENVED_WAVEFORM_COLOR;
-  sx->filter_control_waveform_color = FILTER_CONTROL_WAVEFORM_COLOR;
-  sx->listener_color =                LISTENER_COLOR;
-  sx->listener_text_color =           LISTENER_TEXT_COLOR;
-  sx->graph_color =                   GRAPH_COLOR;
-  sx->selected_graph_color =          SELECTED_GRAPH_COLOR;
-  sx->data_color =                    DATA_COLOR;
-  sx->selected_data_color =           SELECTED_DATA_COLOR;
-  sx->mark_color =                    MARK_COLOR;
-  sx->sash_color =                    SASH_COLOR;
-  sx->text_focus_color =              TEXT_FOCUS_COLOR;
+  ss->white =                         WHITE_COLOR;
+  ss->black =                         BLACK_COLOR;
+  ss->light_blue =                    LIGHT_BLUE_COLOR;
+  ss->lighter_blue =                  LIGHTER_BLUE_COLOR;
+  ss->red =                           RED_COLOR;
+  ss->green =                         GREEN_COLOR;
+  ss->yellow =                        YELLOW_COLOR;
+  ss->highlight_color =               HIGHLIGHT_COLOR;
+  ss->basic_color =                   BASIC_COLOR;
+  ss->position_color =                POSITION_COLOR;
+  ss->zoom_color =                    ZOOM_COLOR;
+  ss->cursor_color =                  CURSOR_COLOR;
+  ss->selection_color =               SELECTION_COLOR;
+  ss->mix_color =                     MIX_COLOR;
+  ss->enved_waveform_color =          ENVED_WAVEFORM_COLOR;
+  ss->filter_control_waveform_color = FILTER_CONTROL_WAVEFORM_COLOR;
+  ss->listener_color =                LISTENER_COLOR;
+  ss->listener_text_color =           LISTENER_TEXT_COLOR;
+  ss->graph_color =                   GRAPH_COLOR;
+  ss->selected_graph_color =          SELECTED_GRAPH_COLOR;
+  ss->data_color =                    DATA_COLOR;
+  ss->selected_data_color =           SELECTED_DATA_COLOR;
+  ss->mark_color =                    MARK_COLOR;
+  ss->sash_color =                    SASH_COLOR;
+  ss->text_focus_color =              TEXT_FOCUS_COLOR;
 
-  sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
-  sx->selected_grid_color = get_in_between_color(sx->selected_data_color, sx->selected_graph_color);
+  ss->grid_color = get_in_between_color(ss->data_color, ss->graph_color);
+  ss->selected_grid_color = get_in_between_color(ss->selected_data_color, ss->selected_graph_color);
 
-  sx->axis_color_set = false;
+  ss->axis_color_set = false;
 
-  sx->orig_data_color = sx->data_color;
-  sx->orig_selected_data_color = sx->selected_data_color;
-  sx->orig_mark_color = sx->mark_color;
-  sx->orig_mix_color = sx->mix_color;
-  sx->orig_graph_color = sx->graph_color;
-  sx->orig_selected_graph_color = sx->selected_graph_color;
-  sx->orig_listener_color = sx->listener_color;
-  sx->orig_listener_text_color = sx->listener_text_color;
-  sx->orig_cursor_color = sx->cursor_color;
-  sx->orig_basic_color = sx->basic_color;
-  sx->orig_selection_color = sx->selection_color;
-  sx->orig_zoom_color = sx->zoom_color;
-  sx->orig_position_color = sx->position_color;
-  sx->orig_highlight_color = sx->highlight_color;
+  ss->orig_data_color = ss->data_color;
+  ss->orig_selected_data_color = ss->selected_data_color;
+  ss->orig_mark_color = ss->mark_color;
+  ss->orig_mix_color = ss->mix_color;
+  ss->orig_graph_color = ss->graph_color;
+  ss->orig_selected_graph_color = ss->selected_graph_color;
+  ss->orig_listener_color = ss->listener_color;
+  ss->orig_listener_text_color = ss->listener_text_color;
+  ss->orig_cursor_color = ss->cursor_color;
+  ss->orig_basic_color = ss->basic_color;
+  ss->orig_selection_color = ss->selection_color;
+  ss->orig_zoom_color = ss->zoom_color;
+  ss->orig_position_color = ss->position_color;
+  ss->orig_highlight_color = ss->highlight_color;
 
   if ((!(set_tiny_font(DEFAULT_TINY_FONT))) &&
       (!(set_tiny_font(FALLBACK_FONT))))
@@ -679,8 +673,8 @@ void snd_doit(int argc, char **argv)
     }
 
 #if HAVE_GTK_3
-  set_basic_color(ss->sgx->basic_color);
-  color_listener(ss->sgx->listener_color);
+  set_basic_color(ss->basic_color);
+  color_listener(ss->listener_color);
 #endif
 
 #ifndef SND_AS_WIDGET

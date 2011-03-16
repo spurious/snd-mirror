@@ -167,7 +167,7 @@ void draw_cursor(chan_info *cp)
       ax = ap->ax;
     }
   old_color = get_foreground_color(ax);
-  set_foreground_color(ax, ss->sgx->cursor_color);
+  set_foreground_color(ax, ss->cursor_color);
 
   if (cp->cx > cp->cursor_size) cx0 = cp->cx - cp->cursor_size;
   if (cp->cy > cp->cursor_size) cy0 = cp->cy - cp->cursor_size;
@@ -758,7 +758,7 @@ widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-p
 	   XEN_CONS(XEN_WRAP_WIDGET(MAIN_SHELL(ss)),
              XEN_CONS(XEN_WRAP_WIDGET(MAIN_PANE(ss)),
                XEN_CONS(XEN_WRAP_WIDGET(SOUND_PANE(ss)),
-		 XEN_CONS(XEN_WRAP_WIDGET(ss->sgx->listener_pane),
+		 XEN_CONS(XEN_WRAP_WIDGET(ss->listener_pane),
 		   XEN_CONS(XEN_WRAP_WIDGET(SOUND_PANE_BOX(ss)),
 		     XEN_EMPTY_LIST))))));
   snd_unprotect_at(loc);
@@ -804,29 +804,27 @@ static XEN g_dialog_widgets(void)
 
 void set_dialog_widget(snd_dialog_t which, widget_t wid)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  if (sx->dialogs == NULL)
+  if (ss->dialogs == NULL)
     {
-      sx->dialogs_size = 8;
-      sx->num_dialogs = 0;
-      sx->dialogs = (widget_t *)calloc(sx->dialogs_size, sizeof(widget_t));
+      ss->dialogs_size = 8;
+      ss->num_dialogs = 0;
+      ss->dialogs = (widget_t *)calloc(ss->dialogs_size, sizeof(widget_t));
     }
   else
     {
-      if (sx->num_dialogs == sx->dialogs_size)
+      if (ss->num_dialogs == ss->dialogs_size)
 	{
 	  int i;
-	  sx->dialogs_size += 8;
-	  sx->dialogs = (widget_t *)realloc(sx->dialogs, sx->dialogs_size * sizeof(widget_t));
-	  for (i = sx->num_dialogs; i < sx->dialogs_size; i++) sx->dialogs[i] = NULL;
+	  ss->dialogs_size += 8;
+	  ss->dialogs = (widget_t *)realloc(ss->dialogs, ss->dialogs_size * sizeof(widget_t));
+	  for (i = ss->num_dialogs; i < ss->dialogs_size; i++) ss->dialogs[i] = NULL;
 	}
     }
-  sx->dialogs[sx->num_dialogs++] = wid;
+  ss->dialogs[ss->num_dialogs++] = wid;
   check_dialog_widget_table();
 
 #if USE_GTK && HAVE_GTK_3
-  gtk_widget_override_background_color(wid, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->basic_color));
+  gtk_widget_override_background_color(wid, GTK_STATE_NORMAL, (GdkRGBA *)(ss->basic_color));
 #endif
 
   if (XEN_FALSE_P(XEN_VECTOR_REF(dialog_widgets, (int)which)))
@@ -1078,25 +1076,25 @@ fltenv_basic) (13 fltenv_data))."
   #endif
 #endif
 
-  state_context *sx;
-  sx = ss->sgx;
-  if (sx)
-    return(XEN_CONS(XEN_WRAP_SND_GC(sx->basic_gc),
-	    XEN_CONS(XEN_WRAP_SND_GC(sx->selected_basic_gc), 
-	     XEN_CONS(XEN_WRAP_SND_GC(sx->combined_basic_gc), 
-	      XEN_CONS(XEN_WRAP_SND_GC(sx->cursor_gc), 
-               XEN_CONS(XEN_WRAP_SND_GC(sx->selected_cursor_gc), 
-                XEN_CONS(XEN_WRAP_SND_GC(sx->selection_gc), 
-                 XEN_CONS(XEN_WRAP_SND_GC(sx->selected_selection_gc), 
-                  XEN_CONS(XEN_WRAP_SND_GC(sx->erase_gc), 
-                   XEN_CONS(XEN_WRAP_SND_GC(sx->selected_erase_gc), 
-                    XEN_CONS(XEN_WRAP_SND_GC(sx->mark_gc), 
-                     XEN_CONS(XEN_WRAP_SND_GC(sx->selected_mark_gc), 
-                      XEN_CONS(XEN_WRAP_SND_GC(sx->mix_gc), 
-                       XEN_CONS(XEN_WRAP_SND_GC(sx->fltenv_basic_gc), 
-                        XEN_CONS(XEN_WRAP_SND_GC(sx->fltenv_data_gc), 
+#if (!USE_NO_GUI)
+    return(XEN_CONS(XEN_WRAP_SND_GC(ss->basic_gc),
+	    XEN_CONS(XEN_WRAP_SND_GC(ss->selected_basic_gc), 
+	     XEN_CONS(XEN_WRAP_SND_GC(ss->combined_basic_gc), 
+	      XEN_CONS(XEN_WRAP_SND_GC(ss->cursor_gc), 
+               XEN_CONS(XEN_WRAP_SND_GC(ss->selected_cursor_gc), 
+                XEN_CONS(XEN_WRAP_SND_GC(ss->selection_gc), 
+                 XEN_CONS(XEN_WRAP_SND_GC(ss->selected_selection_gc), 
+                  XEN_CONS(XEN_WRAP_SND_GC(ss->erase_gc), 
+                   XEN_CONS(XEN_WRAP_SND_GC(ss->selected_erase_gc), 
+                    XEN_CONS(XEN_WRAP_SND_GC(ss->mark_gc), 
+                     XEN_CONS(XEN_WRAP_SND_GC(ss->selected_mark_gc), 
+                      XEN_CONS(XEN_WRAP_SND_GC(ss->mix_gc), 
+                       XEN_CONS(XEN_WRAP_SND_GC(ss->fltenv_basic_gc), 
+                        XEN_CONS(XEN_WRAP_SND_GC(ss->fltenv_data_gc), 
 			 XEN_EMPTY_LIST)))))))))))))));
+#else
   return(XEN_EMPTY_LIST);
+#endif
 }
 
 
@@ -1108,43 +1106,43 @@ static XEN g_snd_color(XEN choice)
 
   switch (XEN_TO_C_INT(choice))
     {
-    case 0: col = ss->sgx->white;                          break;
-    case 1: col = ss->sgx->black;                          break;
-    case 2: col = ss->sgx->red;                            break;
-    case 3: col = ss->sgx->yellow;                         break;
-    case 4: col = ss->sgx->green;                          break;
-    case 5: col = ss->sgx->light_blue;                     break;
-    case 6: col = ss->sgx->lighter_blue;                   break;
+    case 0: col = ss->white;                          break;
+    case 1: col = ss->black;                          break;
+    case 2: col = ss->red;                            break;
+    case 3: col = ss->yellow;                         break;
+    case 4: col = ss->green;                          break;
+    case 5: col = ss->light_blue;                     break;
+    case 6: col = ss->lighter_blue;                   break;
 
-    case 7: col = ss->sgx->data_color;                     break;
-    case 8: col = ss->sgx->selected_data_color;            break;
-    case 9: col = ss->sgx->mark_color;                     break;
-    case 10: col = ss->sgx->graph_color;                   break;
-    case 11: col = ss->sgx->selected_graph_color;          break;
-    case 12: col = ss->sgx->listener_color;                break;
-    case 13: col = ss->sgx->listener_text_color;           break;
+    case 7: col = ss->data_color;                     break;
+    case 8: col = ss->selected_data_color;            break;
+    case 9: col = ss->mark_color;                     break;
+    case 10: col = ss->graph_color;                   break;
+    case 11: col = ss->selected_graph_color;          break;
+    case 12: col = ss->listener_color;                break;
+    case 13: col = ss->listener_text_color;           break;
 
-    case 14: col = ss->sgx->basic_color;                   break;
-    case 15: col = ss->sgx->selection_color;               break;
-    case 16: col = ss->sgx->zoom_color;                    break;
-    case 17: col = ss->sgx->position_color;                break;
-    case 18: col = ss->sgx->highlight_color;               break;
-    case 19: col = ss->sgx->enved_waveform_color;          break;
-    case 20: col = ss->sgx->cursor_color;                  break;
+    case 14: col = ss->basic_color;                   break;
+    case 15: col = ss->selection_color;               break;
+    case 16: col = ss->zoom_color;                    break;
+    case 17: col = ss->position_color;                break;
+    case 18: col = ss->highlight_color;               break;
+    case 19: col = ss->enved_waveform_color;          break;
+    case 20: col = ss->cursor_color;                  break;
 
-    case 21: col = ss->sgx->text_focus_color;              break;
-    case 22: col = ss->sgx->filter_control_waveform_color; break;
-    case 23: col = ss->sgx->mix_color;                     break;
-    case 25: col = ss->sgx->sash_color;                    break;
+    case 21: col = ss->text_focus_color;              break;
+    case 22: col = ss->filter_control_waveform_color; break;
+    case 23: col = ss->mix_color;                     break;
+    case 25: col = ss->sash_color;                    break;
 
-    case 31: col = ss->sgx->grid_color;                    break;
-    case 32: col = ss->sgx->selected_grid_color;           break;
+    case 31: col = ss->grid_color;                    break;
+    case 32: col = ss->selected_grid_color;           break;
     case 33: 
-      if (ss->sgx->axis_color_set)
-	col = ss->sgx->axis_color;
-      else col = ss->sgx->black;
+      if (ss->axis_color_set)
+	col = ss->axis_color;
+      else col = ss->black;
       break;
-    default: col = ss->sgx->black;                         break;
+    default: col = ss->black;                         break;
     }
   return(XEN_WRAP_PIXEL(col));
 }
@@ -1164,20 +1162,20 @@ static XEN g_snd_font(XEN choice)
   switch (XEN_TO_C_INT(choice))
     {
 #if USE_MOTIF
-    case 0: return(WRAP_FONT(ss->sgx->peaks_fontstruct->fid));        break;
-    case 1: return(WRAP_FONT(ss->sgx->bold_peaks_fontstruct->fid));   break;
-    case 2: return(WRAP_FONT(ss->sgx->tiny_fontstruct->fid));         break;
-    case 3: return(WRAP_FONT(ss->sgx->axis_label_fontstruct->fid));   break;
-    case 4: return(WRAP_FONT(ss->sgx->axis_numbers_fontstruct->fid)); break;
-    case 5: return(WRAP_FONT(ss->sgx->listener_fontstruct->fid));     break;
+    case 0: return(WRAP_FONT(ss->peaks_fontstruct->fid));        break;
+    case 1: return(WRAP_FONT(ss->bold_peaks_fontstruct->fid));   break;
+    case 2: return(WRAP_FONT(ss->tiny_fontstruct->fid));         break;
+    case 3: return(WRAP_FONT(ss->axis_label_fontstruct->fid));   break;
+    case 4: return(WRAP_FONT(ss->axis_numbers_fontstruct->fid)); break;
+    case 5: return(WRAP_FONT(ss->listener_fontstruct->fid));     break;
 #endif
 #if USE_GTK
-    case 0: return(WRAP_FONT(ss->sgx->peaks_fnt));                    break;
-    case 1: return(WRAP_FONT(ss->sgx->bold_peaks_fnt));               break;
-    case 2: return(WRAP_FONT(ss->sgx->tiny_fnt));                     break;
-    case 3: return(WRAP_FONT(ss->sgx->axis_label_fnt));               break;
-    case 4: return(WRAP_FONT(ss->sgx->axis_numbers_fnt));             break;
-    case 5: return(WRAP_FONT(ss->sgx->listener_fnt));                 break;
+    case 0: return(WRAP_FONT(ss->peaks_fnt));                    break;
+    case 1: return(WRAP_FONT(ss->bold_peaks_fnt));               break;
+    case 2: return(WRAP_FONT(ss->tiny_fnt));                     break;
+    case 3: return(WRAP_FONT(ss->axis_label_fnt));               break;
+    case 4: return(WRAP_FONT(ss->axis_numbers_fnt));             break;
+    case 5: return(WRAP_FONT(ss->listener_fnt));                 break;
 #endif
     default: return(XEN_FALSE);                                       break;
     }
@@ -1297,7 +1295,7 @@ static XEN g_set_cursor_color(XEN color)
 static XEN g_cursor_color(void) 
 {
   #define H_cursor_color "(" S_cursor_color "): cursor color"
-  return(XEN_WRAP_PIXEL(ss->sgx->cursor_color));
+  return(XEN_WRAP_PIXEL(ss->cursor_color));
 }
 
 
@@ -1309,7 +1307,7 @@ static void highlight_recolor_everything(widget_t w, color_t color)
     {
       XtVaGetValues(w, XmNbackground, &curcol, NULL);
       if (curcol == color)
-	XmChangeColor(w, ss->sgx->highlight_color);
+	XmChangeColor(w, ss->highlight_color);
     }
   /* to handle the gtk side correctly here, we'd need a list of widgets to modify --
    *    currently basic-color hits every background, so the whole thing is messed up.
@@ -1321,8 +1319,8 @@ static void highlight_recolor_everything(widget_t w, color_t color)
 void set_highlight_color(color_t color)
 {
   color_t old_color;
-  old_color = ss->sgx->highlight_color;
-  ss->sgx->highlight_color = color; 
+  old_color = ss->highlight_color;
+  ss->highlight_color = color; 
 #if USE_MOTIF
   map_over_children_with_color(MAIN_SHELL(ss), highlight_recolor_everything, old_color);
 #endif
@@ -1340,7 +1338,7 @@ static XEN g_set_highlight_color(XEN color)
 static XEN g_highlight_color(void) 
 {
   #define H_highlight_color "(" S_highlight_color "): color of highlighted text or buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->highlight_color));
+  return(XEN_WRAP_PIXEL(ss->highlight_color));
 }
 
 
@@ -1356,14 +1354,14 @@ static XEN g_set_mark_color(XEN color)
 static XEN g_mark_color(void) 
 {
   #define H_mark_color "(" S_mark_color "): mark color"
-  return(XEN_WRAP_PIXEL(ss->sgx->mark_color));
+  return(XEN_WRAP_PIXEL(ss->mark_color));
 }
 
 
 void set_zoom_color(color_t color)
 {
-  ss->sgx->zoom_color = color; 
-  color_chan_components(ss->sgx->zoom_color, COLOR_ZOOM);
+  ss->zoom_color = color; 
+  color_chan_components(ss->zoom_color, COLOR_ZOOM);
 }
 
 
@@ -1378,14 +1376,14 @@ static XEN g_set_zoom_color(XEN color)
 static XEN g_zoom_color(void) 
 {
   #define H_zoom_color "(" S_zoom_color "): color of zoom sliders"
-  return(XEN_WRAP_PIXEL(ss->sgx->zoom_color));
+  return(XEN_WRAP_PIXEL(ss->zoom_color));
 }
 
 
 void set_position_color(color_t color)
 {
-  ss->sgx->position_color = color; 
-  color_chan_components(ss->sgx->position_color, COLOR_POSITION);
+  ss->position_color = color; 
+  color_chan_components(ss->position_color, COLOR_POSITION);
 }
 
 
@@ -1400,7 +1398,7 @@ static XEN g_set_position_color(XEN color)
 static XEN g_position_color(void) 
 {
   #define H_position_color "(" S_position_color "): color of position sliders"
-  return(XEN_WRAP_PIXEL(ss->sgx->position_color));
+  return(XEN_WRAP_PIXEL(ss->position_color));
 }
 
 
@@ -1415,7 +1413,7 @@ static XEN g_set_listener_color(XEN color)
 static XEN g_listener_color(void) 
 {
   #define H_listener_color "(" S_listener_color "): background color of the lisp listener"
-  return(XEN_WRAP_PIXEL(ss->sgx->listener_color));
+  return(XEN_WRAP_PIXEL(ss->listener_color));
 }
 
 
@@ -1430,7 +1428,7 @@ static XEN g_set_listener_text_color(XEN color)
 static XEN g_listener_text_color(void) 
 {
   #define H_listener_text_color "(" S_listener_text_color "): text color in the lisp listener"
-  return(XEN_WRAP_PIXEL(ss->sgx->listener_text_color));
+  return(XEN_WRAP_PIXEL(ss->listener_text_color));
 }
 
 
@@ -1445,7 +1443,7 @@ static XEN g_set_enved_waveform_color(XEN color)
 static XEN g_enved_waveform_color(void) 
 {
   #define H_enved_waveform_color "(" S_enved_waveform_color "): color of the envelope editor wave display"
-  return(XEN_WRAP_PIXEL(ss->sgx->enved_waveform_color));
+  return(XEN_WRAP_PIXEL(ss->enved_waveform_color));
 }
 
 
@@ -1460,7 +1458,7 @@ static XEN g_set_filter_control_waveform_color(XEN color)
 static XEN g_filter_control_waveform_color(void) 
 {
   #define H_filter_control_waveform_color "(" S_filter_control_waveform_color "): color of the filter waveform"
-  return(XEN_WRAP_PIXEL(ss->sgx->filter_control_waveform_color));
+  return(XEN_WRAP_PIXEL(ss->filter_control_waveform_color));
 }
 
 
@@ -1476,14 +1474,14 @@ static XEN g_set_selection_color(XEN color)
 static XEN g_selection_color(void) 
 {
   #define H_selection_color "(" S_selection_color "): selection color"
-  return(XEN_WRAP_PIXEL(ss->sgx->selection_color));
+  return(XEN_WRAP_PIXEL(ss->selection_color));
 }
 
 
 static XEN g_set_text_focus_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_text_focus_color, "a color"); 
-  ss->sgx->text_focus_color = XEN_UNWRAP_PIXEL(color);
+  ss->text_focus_color = XEN_UNWRAP_PIXEL(color);
   return(color);
 }
 
@@ -1491,14 +1489,14 @@ static XEN g_set_text_focus_color(XEN color)
 static XEN g_text_focus_color(void) 
 {
   #define H_text_focus_color "(" S_text_focus_color "): color used to show a text field has focus"
-  return(XEN_WRAP_PIXEL(ss->sgx->text_focus_color));
+  return(XEN_WRAP_PIXEL(ss->text_focus_color));
 }
 
 
 static XEN g_set_sash_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_sash_color, "a color"); 
-  ss->sgx->sash_color = XEN_UNWRAP_PIXEL(color);
+  ss->sash_color = XEN_UNWRAP_PIXEL(color);
   return(color);
 }
 
@@ -1506,21 +1504,21 @@ static XEN g_set_sash_color(XEN color)
 static XEN g_sash_color(void) 
 {
   #define H_sash_color "(" S_sash_color "): color used to draw paned window sashes"
-  return(XEN_WRAP_PIXEL(ss->sgx->sash_color));
+  return(XEN_WRAP_PIXEL(ss->sash_color));
 }
 
 
 static XEN g_data_color(void) 
 {
   #define H_data_color "(" S_data_color "): color used to draw unselected data"
-  return(XEN_WRAP_PIXEL(ss->sgx->data_color));
+  return(XEN_WRAP_PIXEL(ss->data_color));
 }
 
 
 void set_data_color(color_t color)
 {
   color_data(color);
-  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
+  ss->grid_color = get_in_between_color(ss->data_color, ss->graph_color);
   for_each_chan(update_graph);
 }
 
@@ -1537,7 +1535,7 @@ void set_selected_data_color(color_t color)
 {
   chan_info *cp;
   color_selected_data(color);
-  ss->sgx->selected_grid_color = get_in_between_color(ss->sgx->selected_data_color, ss->sgx->selected_graph_color);
+  ss->selected_grid_color = get_in_between_color(ss->selected_data_color, ss->selected_graph_color);
   cp = selected_channel();
   if (cp) update_graph(cp);
 }
@@ -1554,7 +1552,7 @@ static XEN g_set_selected_data_color(XEN color)
 static XEN g_selected_data_color(void) 
 {
   #define H_selected_data_color "(" S_selected_data_color "): color used for selected data"
-  return(XEN_WRAP_PIXEL(ss->sgx->selected_data_color));
+  return(XEN_WRAP_PIXEL(ss->selected_data_color));
 }
 
 
@@ -1562,7 +1560,7 @@ void set_graph_color(color_t color)
 {
   color_graph(color);
   color_unselected_graphs(color);
-  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
+  ss->grid_color = get_in_between_color(ss->data_color, ss->graph_color);
 }
 
 
@@ -1577,7 +1575,7 @@ static XEN g_set_graph_color(XEN color)
 static XEN g_graph_color(void) 
 {
   #define H_graph_color "(" S_graph_color "): background color used for unselected data"
-  return(XEN_WRAP_PIXEL(ss->sgx->graph_color));
+  return(XEN_WRAP_PIXEL(ss->graph_color));
 }
 
 
@@ -1585,14 +1583,14 @@ void set_selected_graph_color(color_t color)
 {
   chan_info *cp;
   color_selected_graph(color);
-  ss->sgx->selected_grid_color = get_in_between_color(ss->sgx->selected_data_color, ss->sgx->selected_graph_color);
+  ss->selected_grid_color = get_in_between_color(ss->selected_data_color, ss->selected_graph_color);
   cp = selected_channel();
   if (cp) 
     {
 #if USE_MOTIF
-      XtVaSetValues(channel_graph(cp), XmNbackground, ss->sgx->selected_graph_color, NULL);
+      XtVaSetValues(channel_graph(cp), XmNbackground, ss->selected_graph_color, NULL);
 #else
-      widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, ss->sgx->selected_graph_color);
+      widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, ss->selected_graph_color);
 #endif
     }
 }
@@ -1609,15 +1607,15 @@ static XEN g_set_selected_graph_color(XEN color)
 static XEN g_selected_graph_color(void) 
 {
   #define H_selected_graph_color "(" S_selected_graph_color "): background color of selected data"
-  return(XEN_WRAP_PIXEL(ss->sgx->selected_graph_color));
+  return(XEN_WRAP_PIXEL(ss->selected_graph_color));
 }
 
 
 static XEN g_set_axis_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_axis_color, "a color");
-  ss->sgx->axis_color = XEN_UNWRAP_PIXEL(color);
-  ss->sgx->axis_color_set = true;
+  ss->axis_color = XEN_UNWRAP_PIXEL(color);
+  ss->axis_color_set = true;
   for_each_chan(update_graph);
   return(color);
 }
@@ -1626,14 +1624,14 @@ static XEN g_set_axis_color(XEN color)
 static XEN g_axis_color(void) 
 {
   #define H_axis_color "(" S_axis_color "): color of axis (defaults to current data color)"
-  return(XEN_WRAP_PIXEL(ss->sgx->axis_color));
+  return(XEN_WRAP_PIXEL(ss->axis_color));
 }
 
 
 static XEN g_basic_color(void) 
 {
   #define H_basic_color "(" S_basic_color "): Snd's basic color"
-  return(XEN_WRAP_PIXEL(ss->sgx->basic_color));
+  return(XEN_WRAP_PIXEL(ss->basic_color));
 }
 
 
@@ -1649,7 +1647,7 @@ static bool is_dark(color_info *color)
 static void recolor_everything_1(widget_t w, gpointer color)
 {
   if ((GTK_IS_WIDGET(w)) &&
-      (w != ss->sgx->listener_pane))
+      (w != ss->listener_pane))
     {
 #if (!HAVE_GTK_3)
       gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)color);
@@ -1660,8 +1658,8 @@ static void recolor_everything_1(widget_t w, gpointer color)
       if (GTK_IS_LABEL(w))
 	{
 	  if (is_dark(color))
-	    gtk_widget_override_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->white));
-	  else gtk_widget_override_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
+	    gtk_widget_override_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->white));
+	  else gtk_widget_override_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->black));
 	}
 	
       if (GTK_IS_CONTAINER(w))
@@ -1734,7 +1732,7 @@ static void recolor_everything(widget_t w, color_t color)
     {
       XtVaGetValues(w, XmNbackground, &curcol, NULL);
       if (curcol == color)
-	XmChangeColor(w, ss->sgx->basic_color);
+	XmChangeColor(w, ss->basic_color);
     }
 }
 
@@ -1795,8 +1793,8 @@ static XEN g_make_color(XEN r, XEN g, XEN b, XEN alpha)
 void set_basic_color(color_t color)
 {
   color_t old_color;
-  old_color = ss->sgx->basic_color;
-  ss->sgx->basic_color = color; 
+  old_color = ss->basic_color;
+  ss->basic_color = color; 
 #if USE_MOTIF
   map_over_children_with_color(MAIN_SHELL(ss), recolor_everything, old_color);
 #endif
@@ -1805,8 +1803,8 @@ void set_basic_color(color_t color)
 #endif
 
 #if USE_MOTIF
-  make_sound_icons_transparent_again(old_color, ss->sgx->basic_color);
-  make_mixer_icons_transparent_again(old_color, ss->sgx->basic_color);
+  make_sound_icons_transparent_again(old_color, ss->basic_color);
+  make_mixer_icons_transparent_again(old_color, ss->basic_color);
 #endif
 }
 
@@ -1824,7 +1822,7 @@ static XEN g_mix_color(XEN mix_id)
   #define H_mix_color "(" S_mix_color " :optional mix-id): color of all mix tags (if mix-id is omitted), or of mix-id's tag"
   if (XEN_MIX_P(mix_id))
     return(XEN_WRAP_PIXEL(mix_color_from_id(XEN_MIX_TO_C_INT(mix_id))));
-  return(XEN_WRAP_PIXEL(ss->sgx->mix_color));
+  return(XEN_WRAP_PIXEL(ss->mix_color));
 }
 
 

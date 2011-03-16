@@ -301,7 +301,7 @@ static void show_happy_face(Drawable *wn, mus_float_t pct)
 
   cairo_push_group(cr);  
 
-  cairo_set_source_rgba(cr, ss->sgx->basic_color->red, ss->sgx->basic_color->green, ss->sgx->basic_color->blue, ss->sgx->basic_color->alpha); 
+  cairo_set_source_rgba(cr, ss->basic_color->red, ss->basic_color->green, ss->basic_color->blue, ss->basic_color->alpha); 
   cairo_rectangle(cr, 0, 0, 16, 16);
   cairo_fill(cr);
   
@@ -354,7 +354,7 @@ static void hide_happy_face(Drawable *wn)
 {
   cairo_t *cr;
   cr = MAKE_CAIRO(wn);
-  cairo_set_source_rgba(cr, ss->sgx->basic_color->red, ss->sgx->basic_color->green, ss->sgx->basic_color->blue, ss->sgx->basic_color->alpha); 
+  cairo_set_source_rgba(cr, ss->basic_color->red, ss->basic_color->green, ss->basic_color->blue, ss->basic_color->alpha); 
   cairo_rectangle(cr, 0, 0, 24, 24);
   cairo_fill(cr);
   FREE_CAIRO(cr);
@@ -535,7 +535,7 @@ void set_control_panel_play_button(snd_info *sp)
   if (HAS_WIDGETS(sp))
     {
       set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
-      set_button_base(PLAY_BUTTON(sp), ss->sgx->white);
+      set_button_base(PLAY_BUTTON(sp), ss->white);
     }
 }
 
@@ -570,11 +570,11 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   if (on) 
     {
       if (ss->tracking) 
-	set_button_base(w, ss->sgx->green);
-      else set_button_base(w, ss->sgx->white);
+	set_button_base(w, ss->green);
+      else set_button_base(w, ss->white);
       play_sound(sp, 0, NO_END_SPECIFIED);
     }
-  else set_button_base(w, ss->sgx->white);
+  else set_button_base(w, ss->white);
 }
 
 
@@ -588,11 +588,11 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
       GtkWidget *w;
       w = PLAY_BUTTON(sp);
       if (pd->pausing)
-	set_button_base(w, ss->sgx->red);
+	set_button_base(w, ss->red);
       else 
 	if (ss->tracking)
-	  set_button_base(w, ss->sgx->green); 
-	else set_button_base(w, ss->sgx->white);
+	  set_button_base(w, ss->green); 
+	else set_button_base(w, ss->white);
     }
 }
 
@@ -613,12 +613,12 @@ static void set_sync_color(snd_info *sp)
   syb = SYNC_BUTTON(sp);
   switch (sp->sync)
     {
-    case 0:  set_button_base(syb, ss->sgx->white);               break;
-    case 1:  set_button_base(syb, ss->sgx->selection_color);     break;
-    case 2:  set_button_base(syb, ss->sgx->green);               break;
-    case 3:  set_button_base(syb, ss->sgx->yellow);              break;
-    case 4:  set_button_base(syb, ss->sgx->red);                 break;
-    default: set_button_base(syb, ss->sgx->black);               break;
+    case 0:  set_button_base(syb, ss->white);               break;
+    case 1:  set_button_base(syb, ss->selection_color);     break;
+    case 2:  set_button_base(syb, ss->green);               break;
+    case 3:  set_button_base(syb, ss->yellow);              break;
+    case 4:  set_button_base(syb, ss->red);                 break;
+    default: set_button_base(syb, ss->black);               break;
     }
 }
 
@@ -1267,7 +1267,7 @@ void display_filter_env(snd_info *sp)
       ax = sp->filter_ax;
     }
 
-  ax->gc = ss->sgx->fltenv_basic_gc;
+  ax->gc = ss->fltenv_basic_gc;
   ss->cr = MAKE_CAIRO(ax->wn);
   cairo_push_group(ss->cr);
 
@@ -1286,7 +1286,7 @@ void display_filter_env(snd_info *sp)
 
   if (edp->edited)
     {
-      ax->gc = ss->sgx->fltenv_data_gc;
+      ax->gc = ss->fltenv_data_gc;
       display_frequency_response(sp->filter_control_envelope, 
 				 (SOUND_ENV_EDITOR(sp))->axis, ax, 
 				 sp->filter_control_order, 
@@ -1513,8 +1513,8 @@ void filter_env_changed(snd_info *sp, env *e)
 void color_filter_waveform(color_info *color)
 {
   int i;
-  gc_set_foreground(ss->sgx->fltenv_data_gc, color);
-  ss->sgx->filter_control_waveform_color = color;
+  gc_set_foreground(ss->fltenv_data_gc, color);
+  ss->filter_control_waveform_color = color;
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;
@@ -1747,7 +1747,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(NAME_PIX(sp));
       sp->name_pix_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       sp->name_pix_ax->wn = WIDGET_TO_WINDOW(NAME_PIX(sp));
-      sp->name_pix_ax->gc = ss->sgx->basic_gc;
+      sp->name_pix_ax->gc = ss->basic_gc;
       SG_SIGNAL_CONNECT(NAME_PIX(sp), DRAW_SIGNAL, name_pix_expose, sp);
 
       STOP_PIX(sp) = gtk_drawing_area_new();
@@ -1757,7 +1757,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(STOP_PIX(sp));
       sp->stop_pix_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       sp->stop_pix_ax->wn = WIDGET_TO_WINDOW(STOP_PIX(sp));
-      sp->stop_pix_ax->gc = ss->sgx->basic_gc;
+      sp->stop_pix_ax->gc = ss->basic_gc;
       SG_SIGNAL_CONNECT(STOP_PIX(sp), "button_press_event", stop_sign_press, sp);
 
       {
@@ -1775,7 +1775,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	    gtk_widget_show(CLOCK_PIX(sp, i));
 	    sp->clock_pix_ax[i] = (graphics_context *)calloc(1, sizeof(graphics_context));
 	    sp->clock_pix_ax[i]->wn = WIDGET_TO_WINDOW(CLOCK_PIX(sp, i));
-	    sp->clock_pix_ax[i]->gc = ss->sgx->basic_gc;
+	    sp->clock_pix_ax[i]->gc = ss->basic_gc;
 	    SG_SIGNAL_CONNECT(CLOCK_PIX(sp, i), DRAW_SIGNAL, clock_pix_expose, sp->chans[i]);
 	  }
       }
@@ -1894,7 +1894,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(SPEED_ARROW(sp));
       sp->speed_arrow_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       sp->speed_arrow_ax->wn = WIDGET_TO_WINDOW(SPEED_ARROW(sp));
-      sp->speed_arrow_ax->gc = ss->sgx->basic_gc;
+      sp->speed_arrow_ax->gc = ss->basic_gc;
       SG_SIGNAL_CONNECT(SPEED_ARROW(sp), DRAW_SIGNAL, speed_arrow_expose, sp);
       SG_SIGNAL_CONNECT(SPEED_ARROW(sp), "button_press_event", speed_arrow_press, sp);
 
@@ -2074,7 +2074,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       
 	FILTER_ENV(sp) = gtk_drawing_area_new();
 	gtk_widget_set_events(FILTER_ENV(sp), GDK_ALL_EVENTS_MASK);
-	widget_modify_bg(FILTER_ENV(sp), GTK_STATE_NORMAL, ss->sgx->highlight_color);
+	widget_modify_bg(FILTER_ENV(sp), GTK_STATE_NORMAL, ss->highlight_color);
 	gtk_container_add(GTK_CONTAINER(FILTER_FRAME(sp)), FILTER_ENV(sp));
 	gtk_widget_show(FILTER_ENV(sp));
 	SG_SIGNAL_CONNECT(FILTER_ENV(sp), DRAW_SIGNAL, filter_drawer_expose, sp);
@@ -2327,9 +2327,9 @@ void reflect_sound_selection(snd_info *sp)
   snd_info *osp = NULL;
   if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
   if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
-    widget_modify_fg(NAME_BUTTON(osp), GTK_STATE_NORMAL, ss->sgx->black);
+    widget_modify_fg(NAME_BUTTON(osp), GTK_STATE_NORMAL, ss->black);
   if ((NAME_BUTTON(sp)) && (sp->selected_channel != NO_SELECTION))
-    widget_modify_fg(NAME_BUTTON(sp), GTK_STATE_NORMAL, ss->sgx->red);
+    widget_modify_fg(NAME_BUTTON(sp), GTK_STATE_NORMAL, ss->red);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     {
       int page, current_page;

@@ -34,10 +34,10 @@ static void Tab_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	  Pixel old_color;
 	  XtVaGetValues(w, XmNforeground, &old_color, NULL);
 	  if (matches > 1)
-	    XtVaSetValues(w, XmNforeground, ss->sgx->green, NULL);
+	    XtVaSetValues(w, XmNforeground, ss->green, NULL);
 	  else 
 	    if (matches == 0) 
-	      XtVaSetValues(w, XmNforeground, ss->sgx->red, NULL);
+	      XtVaSetValues(w, XmNforeground, ss->red, NULL);
 	  if (matches != 1)
 	    {
 	      XmUpdateDisplay(w);
@@ -214,9 +214,9 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 		  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
 		  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
 		  XtSetArg(args[n], XmNscrollBarPlacement, XmBOTTOM_LEFT); n++;
-		  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-		  XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
-		  XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
+		  XtSetArg(args[n], XmNbackground, ss->white); n++;
+		  XtSetArg(args[n], XmNforeground, ss->black); n++;
+		  XtSetArg(args[n], XmNselectColor, ss->selection_color); n++;
 
 		  completions_list = XmCreateScrolledList(listener_pane, (char *)"completion-help-text", args, n);
 		  completions_pane = XtParent(completions_list);
@@ -270,14 +270,14 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 
 void textfield_focus_callback(Widget w, XtPointer context, XtPointer info)
 {
-  XtVaSetValues(w, XmNbackground, ss->sgx->text_focus_color, NULL);
+  XtVaSetValues(w, XmNbackground, ss->text_focus_color, NULL);
   XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
 }
 
 
 void textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 {
-  XtVaSetValues(w, XmNbackground, ss->sgx->basic_color, NULL);
+  XtVaSetValues(w, XmNbackground, ss->basic_color, NULL);
   XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
 }
 
@@ -394,7 +394,7 @@ static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num)
   XmProcessTraversal(w, XmTRAVERSE_CURRENT);
   /* we're replacing the built-in take_focus action here, so do it by hand, but leave listener blue, so to speak */
   if (w != listener_text)
-    XtVaSetValues(w, XmNbackground, ss->sgx->white, NULL);
+    XtVaSetValues(w, XmNbackground, ss->white, NULL);
   else XmTextClearSelection(listener_text, CurrentTime); /* should this happen in other windows as well? */
   pos = XmTextXYToPos(w, (Position)(ev->x), (Position)(ev->y));
   XmTextSetCursorPosition(w, pos);
@@ -1293,9 +1293,9 @@ static void make_listener_widget(int height)
       /* this widget is not redundant at least in Metroworks Motif */
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->listener_color); n++;
-      XtSetArg(args[n], XmNforeground, ss->sgx->listener_text_color); n++;
-      if (ss->sgx->listener_fontlist) {XtSetArg(args[n], XM_FONT_RESOURCE, ss->sgx->listener_fontlist); n++;}
+      XtSetArg(args[n], XmNbackground, ss->listener_color); n++;
+      XtSetArg(args[n], XmNforeground, ss->listener_text_color); n++;
+      if (ss->listener_fontlist) {XtSetArg(args[n], XM_FONT_RESOURCE, ss->listener_fontlist); n++;}
       n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
       XtSetArg(args[n], XmNskipAdjust, true); n++;
@@ -1304,10 +1304,10 @@ static void make_listener_widget(int height)
       XtSetArg(args[n], XmNpositionIndex, XmLAST_POSITION); n++;
       XtSetArg(args[n], XmNhighlightThickness, 1); n++;
       listener_text = XmCreateScrolledText(listener_pane, (char *)"lisp-listener", args, n);
-      ss->sgx->listener_pane = listener_text;
+      ss->listener_pane = listener_text;
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC); n++;
       listener_popup = XmCreatePopupMenu(listener_text, (char *)"listener-popup", args, n);
 
@@ -1345,12 +1345,12 @@ static void make_listener_widget(int height)
 
       XtAddCallback(listener_text, XmNpopupHandlerCallback, listener_popup_callback, NULL);
 
-      XmChangeColor(lisp_window, ss->sgx->basic_color);
+      XmChangeColor(lisp_window, ss->basic_color);
       XtVaGetValues(lisp_window, XmNverticalScrollBar, &wv, 
 		                 XmNhorizontalScrollBar, &wh, 
 		                 NULL);
-      XmChangeColor(wv, ss->sgx->basic_color);
-      XmChangeColor(wh, ss->sgx->basic_color);
+      XmChangeColor(wv, ss->basic_color);
+      XmChangeColor(wh, ss->basic_color);
       map_over_children(SOUND_PANE(ss), color_sashes);
 
       if (auto_resize(ss))
@@ -1369,7 +1369,7 @@ void goto_listener(void)
 
 void color_listener(Pixel pix)
 {
-  ss->sgx->listener_color = pix;
+  ss->listener_color = pix;
   if (listener_text)
     XmChangeColor(listener_text, pix);
 }
@@ -1377,7 +1377,7 @@ void color_listener(Pixel pix)
 
 void color_listener_text(Pixel pix)
 {
-  ss->sgx->listener_text_color = pix;
+  ss->listener_text_color = pix;
   if (listener_text)
     XtVaSetValues(listener_text, XmNforeground, pix, NULL);
 }
@@ -1506,7 +1506,7 @@ void clear_listener(void)
 void set_listener_text_font(void)
 {
   if (listener_text)
-    XtVaSetValues(listener_text, XM_FONT_RESOURCE, ss->sgx->listener_fontlist, NULL);
+    XtVaSetValues(listener_text, XM_FONT_RESOURCE, ss->listener_fontlist, NULL);
 }
 
 

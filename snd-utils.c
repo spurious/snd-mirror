@@ -491,7 +491,7 @@ static FAMRequest *fam_monitor(void)
 	      ss->fam_ok = true;
 	      fd = FAMCONNECTION_GETFD(ss->fam_connection);
 #if USE_MOTIF
-	      ss->sgx->fam_port = XtAppAddInput(MAIN_APP(ss),
+	      ss->fam_port = XtAppAddInput(MAIN_APP(ss),
 						fd,
 						(XtPointer)XtInputReadMask,
 						fam_reader,
@@ -501,7 +501,7 @@ static FAMRequest *fam_monitor(void)
 	      {
 		GIOChannel *channel;
 		channel = g_io_channel_unix_new(fd);
-		ss->sgx->fam_port = g_io_add_watch_full(channel, 
+		ss->fam_port = g_io_add_watch_full(channel, 
 							G_PRIORITY_DEFAULT, 
 							(GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 
 							fam_reader, NULL, NULL);

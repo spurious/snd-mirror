@@ -449,7 +449,7 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 	       S_mouse_enter_graph_hook);
     }
 
-  gdk_window_set_cursor(WIDGET_TO_WINDOW(w), ss->sgx->graph_cursor);
+  gdk_window_set_cursor(WIDGET_TO_WINDOW(w), ss->graph_cursor);
   return(false);
 }
 
@@ -466,7 +466,7 @@ static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 	       S_mouse_leave_graph_hook);
     }
 
-  gdk_window_set_cursor(WIDGET_TO_WINDOW(w), ss->sgx->arrow_cursor);
+  gdk_window_set_cursor(WIDGET_TO_WINDOW(w), ss->arrow_cursor);
   return(false);
 }
 
@@ -627,7 +627,7 @@ static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer dat
   key_state = (GdkModifierType)(EVENT_STATE(ev));
   keysym = EVENT_KEYVAL(ev);
   theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
-  if (theirs) ss->sgx->graph_is_active = false;
+  if (theirs) ss->graph_is_active = false;
   g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
 
   return(true);
@@ -646,7 +646,7 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   key_state = (GdkModifierType)(EVENT_STATE(ev));
   keysym = EVENT_KEYVAL(ev);
   theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
-  if (theirs) ss->sgx->graph_is_active = true;
+  if (theirs) ss->graph_is_active = true;
 
   return(true);
 }
@@ -655,7 +655,7 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
 static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp = (chan_info *)data;
-  ss->sgx->graph_is_active = true;
+  ss->graph_is_active = true;
   gtk_widget_grab_focus(w);
   if (cp->sound)
     cp->sound->mini_active = false;
@@ -740,7 +740,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   GtkAdjustment **adjs;
   chan_info *cp;
   graphics_context *cax;
-  state_context *sx;
   bool make_widgets, need_extra_scrollbars;
 
   make_widgets = ((sp->chans[channel]) == NULL);
@@ -760,7 +759,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       cw = cp->chan_widgets;
       adjs = cp->chan_adjs;
     }
-  sx = ss->sgx;
+
   need_extra_scrollbars = ((!main) && (channel == 0));
   if (make_widgets)
     {
@@ -949,8 +948,16 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   reflect_edit_history_change(cp);
 
   cax = cp->ax;
-  cax->gc = sx->basic_gc;
+  cax->gc = ss->basic_gc;
   /* cax->wn has to wait until update_graph */
+
+  {
+    GtkWidget *w; 
+    w = channel_to_widget(cp);
+    cax->wn = WIDGET_TO_WINDOW(w);
+    cax->w = w;
+  }
+
   return(0);
 }
 
@@ -982,23 +989,19 @@ void set_foreground_color(graphics_context *ax, color_info *color)
 
 gc_t *copy_GC(chan_info *cp)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  if (cp->selected) return(sx->selected_basic_gc);
-  return(sx->basic_gc);
+  if (cp->selected) return(ss->selected_basic_gc);
+  return(ss->basic_gc);
 }
 
 
 gc_t *erase_GC(chan_info *cp)
 {
-  state_context *sx;
   snd_info *sp;
   sp = cp->sound;
-  sx = ss->sgx;
   if ((cp->selected) ||
       ((sp) && (sp->channel_style == CHANNELS_SUPERIMPOSED) && (sp->index == ss->selected_sound)))
-    return(sx->selected_erase_gc);
-  return(sx->erase_gc);
+    return(ss->selected_erase_gc);
+  return(ss->erase_gc);
 }
 
 
@@ -1140,6 +1143,19 @@ bool fixup_cp_cgx_ax_wn(chan_info *cp)
   graphics_context *ax; 
   ax = cp->ax;
   w = channel_to_widget(cp);
+  
+#if 0
+  if ((!(ax->w)) || (!(ax->wn)))
+    fprintf(stderr, "set fixup\n");
+  else
+    {
+      if ((ax->wn != WIDGET_TO_WINDOW(w)) ||
+	  (ax->w != w))
+	fprintf(stderr, "reset fixup %p %p, %p %p\n", ax->w, w, ax->wn, WIDGET_TO_WINDOW(w));
+      else fprintf(stderr, "redundant fixup\n");
+    }
+#endif
+
   ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
   return(ax->wn != NULL);
@@ -1285,7 +1301,7 @@ static XEN g_set_graph_cursor(XEN curs)
   if ((val >= 0) && ((val & 1) == 0) && (val <= GDK_XTERM)) /* these are even numbers up to about 152 (gdkcursor.h) */
     {
       ss->Graph_Cursor = val;
-      ss->sgx->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
+      ss->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
       /* the gtk examples ignore g_object_ref|unref in this regard, so I will also */
     }
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_cursor, 1, curs, "~A: invalid cursor");

@@ -396,7 +396,7 @@ it can be useful when the plugins on the system have changed."
     Arg args[12];
     int n = 0;
     help_menu = menu_widget(4);
-    XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+    XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
     m = XtCreateManagedWidget("Plugins", xmPushButtonWidgetClass, help_menu, args, n);
     XtAddCallback(m, XmNactivateCallback, ladspa_help_callback, NULL);
   }

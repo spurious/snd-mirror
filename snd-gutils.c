@@ -422,86 +422,70 @@ gc_t *gc_new(void)
 
 void color_cursor(color_info *color)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  sx->cursor_color = color;
-  gc_set_colors(sx->cursor_gc, color, sx->graph_color);
-  gc_set_colors(sx->selected_cursor_gc, color, sx->selected_graph_color);
+  ss->cursor_color = color;
+  gc_set_colors(ss->cursor_gc, color, ss->graph_color);
+  gc_set_colors(ss->selected_cursor_gc, color, ss->selected_graph_color);
 }
 
 
 void color_marks(color_info *color)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  sx->mark_color = color;
-  gc_set_colors(sx->mark_gc, color, sx->graph_color);
-  gc_set_colors(sx->selected_mark_gc, color, sx->selected_graph_color);
+  ss->mark_color = color;
+  gc_set_colors(ss->mark_gc, color, ss->graph_color);
+  gc_set_colors(ss->selected_mark_gc, color, ss->selected_graph_color);
 }
 
 
 void color_selection(color_info *color)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  sx->selection_color = color;
-  gc_set_colors(sx->selection_gc, color, sx->graph_color);
-  gc_set_colors(sx->selected_selection_gc, color, sx->selected_graph_color);
+  ss->selection_color = color;
+  gc_set_colors(ss->selection_gc, color, ss->graph_color);
+  gc_set_colors(ss->selected_selection_gc, color, ss->selected_graph_color);
 }
 
 
 void color_graph(color_info *color)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  sx->graph_color = color;
-  gc_set_background(sx->basic_gc, color);
-  gc_set_foreground(sx->erase_gc, color);
-  gc_set_colors(sx->selection_gc, sx->selection_color, color);
-  gc_set_colors(sx->cursor_gc, sx->cursor_color, color);
-  gc_set_colors(sx->mark_gc, sx->mark_color, color);
+  ss->graph_color = color;
+  gc_set_background(ss->basic_gc, color);
+  gc_set_foreground(ss->erase_gc, color);
+  gc_set_colors(ss->selection_gc, ss->selection_color, color);
+  gc_set_colors(ss->cursor_gc, ss->cursor_color, color);
+  gc_set_colors(ss->mark_gc, ss->mark_color, color);
 }
 
 
 void color_selected_graph(color_info *color)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  sx->selected_graph_color = color;
-  gc_set_background(sx->selected_basic_gc, color);
-  gc_set_foreground(sx->selected_erase_gc, color);
-  gc_set_colors(sx->selected_selection_gc, sx->selection_color, color);
-  gc_set_colors(sx->selected_cursor_gc, sx->cursor_color, color);
-  gc_set_colors(sx->selected_mark_gc, sx->mark_color, color);
+  ss->selected_graph_color = color;
+  gc_set_background(ss->selected_basic_gc, color);
+  gc_set_foreground(ss->selected_erase_gc, color);
+  gc_set_colors(ss->selected_selection_gc, ss->selection_color, color);
+  gc_set_colors(ss->selected_cursor_gc, ss->cursor_color, color);
+  gc_set_colors(ss->selected_mark_gc, ss->mark_color, color);
 }
 
 
 void color_data(color_info *color)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  sx->data_color = color;
-  gc_set_foreground(sx->basic_gc, color);
-  gc_set_background(sx->erase_gc, color);
+  ss->data_color = color;
+  gc_set_foreground(ss->basic_gc, color);
+  gc_set_background(ss->erase_gc, color);
 }
 
 
 void color_selected_data(color_info *color)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  sx->selected_data_color = color;
-  gc_set_foreground(sx->selected_basic_gc, color);
-  gc_set_background(sx->selected_erase_gc, color);
+  ss->selected_data_color = color;
+  gc_set_foreground(ss->selected_basic_gc, color);
+  gc_set_background(ss->selected_erase_gc, color);
 }
 
 
 void set_mix_color(color_info *color)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  sx->mix_color = color;
-  gc_set_foreground(sx->mix_gc, color);
+  ss->mix_color = color;
+  gc_set_foreground(ss->mix_gc, color);
 }
 
 
@@ -566,9 +550,7 @@ void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 
 void recolor_graph(chan_info *cp, bool selected)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, (selected) ? sx->selected_graph_color : sx->graph_color);
+  widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, (selected) ? ss->selected_graph_color : ss->graph_color);
 }
 
 
@@ -863,7 +845,7 @@ GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color)
 
 GtkWidget *make_info_widget(void)
 {
-  return(snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color));
+  return(snd_gtk_entry_label_new(NULL, ss->highlight_color));
 }
 
 
@@ -1005,12 +987,12 @@ static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
   gtk_button_set_alignment(GTK_BUTTON(item), 0.05, 1.0);
   gtk_box_pack_start(GTK_BOX(lst->topics), item, false, false, 0);
 
-  widget_modify_bg(item, GTK_STATE_NORMAL, ss->sgx->white);
-  widget_modify_bg(item, GTK_STATE_PRELIGHT, ss->sgx->light_blue);
+  widget_modify_bg(item, GTK_STATE_NORMAL, ss->white);
+  widget_modify_bg(item, GTK_STATE_PRELIGHT, ss->light_blue);
 #if (HAVE_GTK_3)
-  gtk_widget_override_color(item, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->black));
-  gtk_widget_override_color(item, GTK_STATE_PRELIGHT, (GdkRGBA *)(ss->sgx->red));
-  gtk_widget_override_color(item, GTK_STATE_SELECTED, (GdkRGBA *)(ss->sgx->black));
+  gtk_widget_override_color(item, GTK_STATE_NORMAL, (GdkRGBA *)(ss->black));
+  gtk_widget_override_color(item, GTK_STATE_PRELIGHT, (GdkRGBA *)(ss->red));
+  gtk_widget_override_color(item, GTK_STATE_SELECTED, (GdkRGBA *)(ss->black));
 
   {
     GtkStyleContext *c;
@@ -1132,7 +1114,7 @@ void slist_clear(slist *lst)
       }
   lst->num_items = 0;
   if (lst->selected_item != SLIST_NO_ITEM_SELECTED)
-    widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->sgx->white);
+    widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->white);
   lst->selected_item = SLIST_NO_ITEM_SELECTED;
 }
 
@@ -1192,9 +1174,9 @@ void slist_moveto(slist *lst, int row)
 void slist_select(slist *lst, int row)
 {
   if (lst->selected_item != SLIST_NO_ITEM_SELECTED)
-    widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->sgx->white);
+    widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->white);
   if (row != SLIST_NO_ITEM_SELECTED)
-    widget_modify_bg(lst->items[row], GTK_STATE_NORMAL, ss->sgx->light_blue);
+    widget_modify_bg(lst->items[row], GTK_STATE_NORMAL, ss->light_blue);
   lst->selected_item = row;
 }
 
@@ -1230,10 +1212,8 @@ char *slist_selection(slist *lst)
  *
  *   superimposed chans flicker a lot
  *     the cairo_t's are not shared in this case, so each chan is a separate display
- *     and they're all black
- *     we need to re-implement the combined chans stuff (in Motif it uses tmp_gc and tcgx)
- *       and re-connect time-graph-hook -- I think it is never called in the gtk case
- *         and make sure it doesn't run in set_context!
+ *     call time-graph-hook only when set to superimposed, delete lisp-graph-hook?
+ *     ^ save the color somewhere and use it in combined_context
  *
  *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
  *     if proc cursor, foreground color is not set back to old
@@ -1241,6 +1221,9 @@ char *slist_selection(slist *lst)
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
  *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.
  *     show controls for example, does not open the pane.
+ *
+ * why does Motif stop sign have dark corners?
+ * is fixup_cp_ax_wn needed?
  *
  * bugs: play choppy if graphics -- seems ok?
  */

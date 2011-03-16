@@ -403,7 +403,7 @@ static GtkWidget *add_menu_separator(GtkWidget *menu)
   w = gtk_menu_item_new();
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), w);
   gtk_widget_show(w);
-  widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->black);
+  widget_modify_bg(w, GTK_STATE_NORMAL, ss->black);
   return(w);
 }
 
@@ -423,7 +423,7 @@ GtkWidget *add_menu(void)
   gtk_window_add_accel_group(GTK_WINDOW(MAIN_SHELL(ss)), accel_group);
 #endif
 
-  ss->sgx->mw = (GtkWidget **)calloc(NUM_MENU_WIDGETS, sizeof(GtkWidget *));
+  ss->mw = (GtkWidget **)calloc(NUM_MENU_WIDGETS, sizeof(GtkWidget *));
 
   main_menu = gtk_menu_bar_new();
   ml[m_menu] = NULL;
@@ -1605,7 +1605,7 @@ static int remove_option(int which_menu, const char *label)
     if ((ml[i]) &&
 	(strcmp(label, ml[i]) == 0))
       {
-	gtk_widget_hide(ss->sgx->mw[i]);
+	gtk_widget_hide(ss->mw[i]);
 	return(0);
       }
   return(INVALID_MENU);

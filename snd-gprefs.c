@@ -76,7 +76,7 @@ static void post_prefs_error(const char *msg, prefs_info *data);
 #define SET_SENSITIVE(Wid, Val)   gtk_widget_set_sensitive(Wid, Val)
 #define black_text(Prf)
 #define red_text(Prf)
-/* gdk_gc_set_foreground(Prf->label->style->black_gc, ss->sgx->red) no effect? */
+/* gdk_gc_set_foreground(Prf->label->style->black_gc, ss->red) no effect? */
 
 
 static void set_radio_button(prefs_info *prf, int which)
@@ -2025,8 +2025,8 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_tracking_cursor_style, save_tracking_cursor_style, help_tracking_cursor_style, NULL, revert_tracking_cursor_style);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    saved_cursor_color = ss->sgx->cursor_color;
-    prf = prefs_color_selector_row("color", S_cursor_color, ss->sgx->cursor_color,
+    saved_cursor_color = ss->cursor_color;
+    prf = prefs_color_selector_row("color", S_cursor_color, ss->cursor_color,
 				   dpy_box,
 				   cursor_color_func);
     remember_pref(prf, NULL, save_cursor_color, help_cursor_color, clear_cursor_color, revert_cursor_color);
@@ -2036,29 +2036,29 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box);
     cursor_label = make_inner_label("  colors", dpy_box);
     
-    saved_basic_color = ss->sgx->basic_color;
-    prf = prefs_color_selector_row("main background color", S_basic_color, ss->sgx->basic_color,
+    saved_basic_color = ss->basic_color;
+    prf = prefs_color_selector_row("main background color", S_basic_color, ss->basic_color,
 				   dpy_box,
 				   basic_color_func);
     remember_pref(prf, NULL, save_basic_color, help_basic_color, clear_basic_color, revert_basic_color);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    saved_highlight_color = ss->sgx->highlight_color;
-    prf = prefs_color_selector_row("main highlight color", S_highlight_color, ss->sgx->highlight_color,
+    saved_highlight_color = ss->highlight_color;
+    prf = prefs_color_selector_row("main highlight color", S_highlight_color, ss->highlight_color,
 				   dpy_box,
 				   highlight_color_func);
     remember_pref(prf, NULL, save_highlight_color, help_highlight_color, clear_highlight_color, revert_highlight_color);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    saved_position_color = ss->sgx->position_color;
-    prf = prefs_color_selector_row("second highlight color", S_position_color, ss->sgx->position_color,
+    saved_position_color = ss->position_color;
+    prf = prefs_color_selector_row("second highlight color", S_position_color, ss->position_color,
 				   dpy_box,
 				   position_color_func);
     remember_pref(prf, NULL, save_position_color, help_position_color, clear_position_color, revert_position_color);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    saved_zoom_color = ss->sgx->zoom_color;
-    prf = prefs_color_selector_row("third highlight color", S_zoom_color, ss->sgx->zoom_color,
+    saved_zoom_color = ss->zoom_color;
+    prf = prefs_color_selector_row("third highlight color", S_zoom_color, ss->zoom_color,
 				   dpy_box,
 				   zoom_color_func);
     remember_pref(prf, NULL, save_zoom_color, help_zoom_color, clear_zoom_color, revert_zoom_color);
@@ -2174,36 +2174,36 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(grf_box); 
     colgrf_label = make_inner_label("  colors", grf_box);
 
-    saved_data_color = ss->sgx->data_color;    
-    prf = prefs_color_selector_row("unselected data (waveform) color", S_data_color, ss->sgx->data_color,
+    saved_data_color = ss->data_color;    
+    prf = prefs_color_selector_row("unselected data (waveform) color", S_data_color, ss->data_color,
 				   grf_box, 
 				   data_color_func);
     remember_pref(prf, NULL, save_data_color, help_data_color, clear_data_color, revert_data_color);
 
     current_sep = make_inter_variable_separator(grf_box);
-    saved_graph_color = ss->sgx->graph_color;
-    prf = prefs_color_selector_row("unselected graph (background) color", S_graph_color, ss->sgx->graph_color,
+    saved_graph_color = ss->graph_color;
+    prf = prefs_color_selector_row("unselected graph (background) color", S_graph_color, ss->graph_color,
 				   grf_box,
 				   graph_color_func);
     remember_pref(prf, NULL, save_graph_color, help_graph_color, clear_graph_color, revert_graph_color);
 
     current_sep = make_inter_variable_separator(grf_box);
-    saved_selected_data_color = ss->sgx->selected_data_color;
-    prf = prefs_color_selector_row("selected channel data (waveform) color", S_selected_data_color, ss->sgx->selected_data_color,
+    saved_selected_data_color = ss->selected_data_color;
+    prf = prefs_color_selector_row("selected channel data (waveform) color", S_selected_data_color, ss->selected_data_color,
 				   grf_box,
 				   selected_data_color_func);
     remember_pref(prf, NULL, save_selected_data_color, help_selected_data_color, clear_selected_data_color, revert_selected_data_color);
 
     current_sep = make_inter_variable_separator(grf_box);
-    saved_selected_graph_color = ss->sgx->selected_graph_color;
-    prf = prefs_color_selector_row("selected channel graph (background) color", S_selected_graph_color, ss->sgx->selected_graph_color,
+    saved_selected_graph_color = ss->selected_graph_color;
+    prf = prefs_color_selector_row("selected channel graph (background) color", S_selected_graph_color, ss->selected_graph_color,
 				   grf_box,
 				   selected_graph_color_func);
     remember_pref(prf, NULL, save_selected_graph_color, help_selected_graph_color, clear_selected_graph_color, revert_selected_graph_color);
 
     current_sep = make_inter_variable_separator(grf_box);
-    saved_selection_color = ss->sgx->selection_color;
-    prf = prefs_color_selector_row("selection color", S_selection_color, ss->sgx->selection_color,
+    saved_selection_color = ss->selection_color;
+    prf = prefs_color_selector_row("selection color", S_selection_color, ss->selection_color,
 				   grf_box,
 				   selection_color_func);
     remember_pref(prf, NULL, save_selection_color, help_selection_color, clear_selection_color, revert_selection_color);
@@ -2382,8 +2382,8 @@ widget_t start_preferences_dialog(void)
     mmr_box = make_top_level_box(topics);
     mmr_label = make_top_level_label("marks and mixes", mmr_box);
 
-    saved_mark_color = ss->sgx->mark_color;
-    prf = prefs_color_selector_row("mark and mix tag color", S_mark_color, ss->sgx->mark_color,
+    saved_mark_color = ss->mark_color;
+    prf = prefs_color_selector_row("mark and mix tag color", S_mark_color, ss->mark_color,
 				   mmr_box,
 				   mark_color_func);
     remember_pref(prf, NULL, save_mark_color, help_mark_color, clear_mark_color, revert_mark_color);
@@ -2412,8 +2412,8 @@ widget_t start_preferences_dialog(void)
     free(str1);
 
     current_sep = make_inter_variable_separator(mmr_box);
-    saved_mix_color = ss->sgx->mix_color;
-    prf = prefs_color_selector_row("mix waveform color", S_mix_color, ss->sgx->mix_color,
+    saved_mix_color = ss->mix_color;
+    prf = prefs_color_selector_row("mix waveform color", S_mix_color, ss->mix_color,
 				   mmr_box,
 				   mix_color_func);
     remember_pref(prf, NULL, save_mix_color, help_mix_color, clear_mix_color, revert_mix_color);
@@ -2502,15 +2502,15 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_listener_font, save_listener_font, help_listener_font, clear_listener_font, revert_listener_font);
 
     current_sep = make_inter_variable_separator(prg_box);
-    saved_listener_color = ss->sgx->listener_color;
-    prf = prefs_color_selector_row("background color", S_listener_color, ss->sgx->listener_color,
+    saved_listener_color = ss->listener_color;
+    prf = prefs_color_selector_row("background color", S_listener_color, ss->listener_color,
 				   prg_box,
 				   listener_color_func);
     remember_pref(prf, NULL, save_listener_color, help_listener_color, clear_listener_color, revert_listener_color);
 
     current_sep = make_inter_variable_separator(prg_box);
-    saved_listener_text_color = ss->sgx->listener_text_color;
-    prf = prefs_color_selector_row("text color", S_listener_text_color, ss->sgx->listener_text_color,
+    saved_listener_text_color = ss->listener_text_color;
+    prf = prefs_color_selector_row("text color", S_listener_text_color, ss->listener_text_color,
 				   prg_box,
 				   listener_text_color_func);
     remember_pref(prf, NULL, save_listener_text_color, help_listener_text_color, clear_listener_text_color, revert_listener_text_color);

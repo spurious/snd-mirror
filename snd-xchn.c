@@ -898,7 +898,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   Widget *cw;
   chan_info *cp;
   graphics_context *cax;
-  state_context *sx;
   bool make_widgets;
 
   /* if ((main) && ((!(XmIsForm(main))) || (!(XtWindow(main))))) return(-1); */ /* new gcc complains about the XmIsForm for some reason */
@@ -911,7 +910,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   if (cp->chan_widgets == NULL) 
     cp->chan_widgets = (Widget *)calloc(NUM_CHAN_WIDGETS, sizeof(Widget));
   cw = cp->chan_widgets;
-  sx = ss->sgx;
   need_extra_scrollbars = ((!main) && (channel == 0));
 
   if (make_widgets)
@@ -925,7 +923,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       if (!main)
 	{
 	  n = 0;
-	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	  if (insertion) {XtSetArg(args[n], XmNpositionIndex, (short)channel); n++;}
 	  XtSetArg(args[n], XmNpaneMinimum, chan_y); n++;
 
@@ -933,7 +931,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  if ((sp->channel_style == CHANNELS_COMBINED) && (channel > 0)) XtUnmanageChild(cw[W_form]);
 
 	  n = 0;
-	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	  /* n = no_padding(args, n); */
 	  n = attach_all_sides(args, n);
 	  XtSetArg(args[n], XmNsashIndent, 2); n++;
@@ -943,7 +941,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  XtAddEventHandler(cw[W_top], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
 	  n = 0;
-	  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+	  XtSetArg(args[n], XmNbackground, ss->white); n++;
 	  XtSetArg(args[n], XmNpaneMaximum, DEFAULT_EDIT_HISTORY_WIDTH); n++;
 	  XtSetArg(args[n], XmNlistSizePolicy, XmCONSTANT); n++;
 	  cw[W_edhist] = XmCreateScrolledList(cw[W_top], (char *)"chn-edhist", args, n);
@@ -954,7 +952,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  XtAddEventHandler(XtParent(cw[W_edhist]), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
 	  n = 0;
-	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	  XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++;
 	  cw[W_main_window] = XtCreateManagedWidget("chn-main-window", xmFormWidgetClass, cw[W_top], args, n);
 	  XtAddEventHandler(cw[W_main_window], KeyPressMask, false, graph_key_press, (XtPointer)sp);
@@ -980,7 +978,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       else cw[W_main_window] = main;
 
       n = 0;  
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -994,9 +992,9 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       if (button_style == WITH_FW_BUTTONS)
 	{
 	  n = 0;
-	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	  XtSetArg(args[n], XmNspacing, 1); n++;
-	  XtSetArg(args[n], XmNselectColor, sx->selection_color); n++;
+	  XtSetArg(args[n], XmNselectColor, ss->selection_color); n++;
 	  cw[W_f] = make_togglebutton_widget("f", cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_f], XmNvalueChangedCallback, f_toggle_callback, cp);
 	  XtAddEventHandler(cw[W_f], KeyPressMask, false, graph_key_press, (XtPointer)sp);
@@ -1009,20 +1007,20 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       else
 	{
 	  n = 0;
-	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	  XtSetArg(args[n], XmNarrowDirection, XmARROW_UP); n++;
 	  XtSetArg(args[n], XmNsensitive, false); n++;
 	  cw[W_f] = XtCreateManagedWidget("up", xmArrowButtonWidgetClass, cw[W_wf_buttons], args, n);
 
 	  n = 0;
-	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	  XtSetArg(args[n], XmNarrowDirection, XmARROW_DOWN); n++;
 	  XtSetArg(args[n], XmNsensitive, false); n++;
 	  cw[W_w] = XtCreateManagedWidget("down", xmArrowButtonWidgetClass, cw[W_wf_buttons], args, n);
 	}
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
@@ -1034,7 +1032,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtAddEventHandler(cw[W_left_scrollers], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->zoom_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->zoom_color); n++;
       XtSetArg(args[n], XmNwidth, ss->position_slider_width); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1050,7 +1048,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtAddEventHandler(cw[W_zy], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->position_color); n++;
       XtSetArg(args[n], XmNwidth, ss->zoom_slider_width); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1067,7 +1065,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtAddEventHandler(cw[W_sy], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1079,7 +1077,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtAddEventHandler(cw[W_bottom_scrollers], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->position_color); n++;
       XtSetArg(args[n], XmNheight, ss->position_slider_width); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1096,7 +1094,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtAddEventHandler(cw[W_sx], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->zoom_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->zoom_color); n++;
       XtSetArg(args[n], XmNheight, ss->zoom_slider_width + 2); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1118,8 +1116,8 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtAddEventHandler(cw[W_zx], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, sx->graph_color); n++;
-      XtSetArg(args[n], XmNforeground, sx->data_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->graph_color); n++;
+      XtSetArg(args[n], XmNforeground, ss->data_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, cw[W_bottom_scrollers]); n++;
@@ -1174,7 +1172,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  /* that is: not region browser chan, might need combined graph, channel 0 is the controller in that case */
 	  /* this is independent of sp->nchans because these structs are re-used and added to as needed */
 	  n = 0;
-	  XtSetArg(args[n], XmNbackground, ss->sgx->zoom_color); n++;
+	  XtSetArg(args[n], XmNbackground, ss->zoom_color); n++;
 	  XtSetArg(args[n], XmNwidth, ss->position_slider_width); n++;
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
 	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
@@ -1199,7 +1197,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 
 
 	  n = 0;
-	  XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;
+	  XtSetArg(args[n], XmNbackground, ss->position_color); n++;
 	  XtSetArg(args[n], XmNwidth, ss->position_slider_width); n++;
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
 	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
@@ -1262,7 +1260,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   cax = cp->ax;
   cax->wn = XtWindow(cw[W_graph]);
   cax->dp = XtDisplay(cw[W_graph]);
-  cax->gc = sx->basic_gc;
+  cax->gc = ss->basic_gc;
   return(0);
 }
 
@@ -1297,26 +1295,22 @@ void set_foreground_color(graphics_context *ax, Pixel color)
 
 GC copy_GC(chan_info *cp)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  if (cp->selected) return(sx->selected_basic_gc);
-  return(sx->basic_gc);
+  if (cp->selected) return(ss->selected_basic_gc);
+  return(ss->basic_gc);
 }
 
 
 GC erase_GC(chan_info *cp)
 {
   /* used only to clear partial bgs in chan graphs */
-  state_context *sx;
   snd_info *sp;
   sp = cp->sound;
-  sx = ss->sgx;
   if ((cp->selected) ||
       ((sp) && 
        (sp->channel_style == CHANNELS_SUPERIMPOSED) && 
        (sp->index == ss->selected_sound)))
-    return(sx->selected_erase_gc);
-  return(sx->erase_gc);
+    return(ss->selected_erase_gc);
+  return(ss->erase_gc);
 }
 
 
@@ -1436,7 +1430,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	  if (old_style == CHANNELS_SUPERIMPOSED)
 	    {
 	      syncb(sp, sp->previous_sync);
-	      XtVaSetValues(unite_button(sp), XmNselectColor, ss->sgx->selection_color, NULL);
+	      XtVaSetValues(unite_button(sp), XmNselectColor, ss->selection_color, NULL);
 	    }
 	  else
 	    {
@@ -1444,7 +1438,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		{
 		  sp->previous_sync = sp->sync;
 		  if (sp->sync == 0) syncb(sp, 1);
-		  XtVaSetValues(unite_button(sp), XmNselectColor, ss->sgx->green, NULL);
+		  XtVaSetValues(unite_button(sp), XmNselectColor, ss->green, NULL);
 		  apply_y_axis_change((sp->chans[0])->axis, sp->chans[0]);
 		  apply_x_axis_change((sp->chans[0])->axis, sp->chans[0]);
 		  for (i = 1; i < sp->nchans; i++) 
@@ -1510,13 +1504,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	    color_selected_channel(sp);
 	}
     }
-}
-
-
-bool fixup_cp_cgx_ax_wn(chan_info *cp) 
-{
-  (cp->ax)->wn = XtWindow(cp->chan_widgets[W_graph]); 
-  return(true);
 }
 
 
@@ -1658,7 +1645,7 @@ static XEN g_set_graph_cursor(XEN curs)
   if ((val >= 0) && (val <= XC_xterm))
     {
       ss->Graph_Cursor = val;
-      ss->sgx->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
+      ss->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
     }
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_cursor, 1, curs, "~A: invalid cursor");
   return(curs);

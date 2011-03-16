@@ -390,11 +390,9 @@ void ps_bg(axis_info *ap, graphics_context *ax)
 #else
 #if USE_GTK
   {
-    state_context *sx;
-    sx = ss->sgx;
     if (cp->selected) 
-      ps_set_color(sx->selected_graph_color);
-    else ps_set_color(sx->graph_color);
+      ps_set_color(ss->selected_graph_color);
+    else ps_set_color(ss->graph_color);
   }
 #endif
 #endif
@@ -413,11 +411,9 @@ void ps_fg(chan_info *cp, graphics_context *ax)
 #else
 #if USE_GTK
   {
-    state_context *sx;
-    sx = ss->sgx;
     if (cp->selected) 
-      ps_set_color(sx->selected_data_color);
-    else ps_set_color(sx->data_color);
+      ps_set_color(ss->selected_data_color);
+    else ps_set_color(ss->data_color);
   }
 #endif
 #endif
