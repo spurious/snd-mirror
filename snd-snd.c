@@ -133,8 +133,8 @@ peak_env_info *free_peak_env(chan_info *cp, int pos)
 }
 
 
-/* during processing, cgx->peak_env_state -> env_state for that channel
- *  cgx->peak_env_in_progress is the associated X work proc
+/* during processing, cp->peak_env_state -> env_state for that channel
+ *  cp->peak_env_in_progress is the associated X work proc
  */
 
 void free_peak_env_state(chan_info *cp)
@@ -143,13 +143,8 @@ void free_peak_env_state(chan_info *cp)
   /* this function just cleans up the current work proc stuff (amp_env in this case can be incomplete) */
   if (cp)
     {
-      chan_context *cgx;
-      cgx = cp->cgx;
-      if (cgx)
-	{
-	  cgx->peak_env_state = free_env_state(cgx->peak_env_state);
-	  cgx->peak_env_in_progress = 0;
-	}
+      cp->peak_env_state = free_env_state(cp->peak_env_state);
+      cp->peak_env_in_progress = 0;
     }
 }
 
@@ -286,7 +281,7 @@ static env_state *make_env_state(chan_info *cp, mus_long_t samples)
 
 void start_peak_env_state(chan_info *cp)
 {
-  cp->cgx->peak_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
+  cp->peak_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
 }
 
 
@@ -470,12 +465,10 @@ static void run_peak_env_hook(chan_info *cp)
 
 void finish_peak_env(chan_info *cp)
 {
-  chan_context *cgx;
-  cgx = cp->cgx;
-  if ((cgx->peak_env_in_progress) && 
-      (cgx->peak_env_state))
+  if ((cp->peak_env_in_progress) && 
+      (cp->peak_env_state))
     {
-      while (!(tick_peak_env(cp, cgx->peak_env_state))) ; /* finish peak-env scan */
+      while (!(tick_peak_env(cp, cp->peak_env_state))) ; /* finish peak-env scan */
       enved_reflect_peak_env_completion(cp->sound);
       free_peak_env_state(cp);
     }
@@ -488,10 +481,8 @@ idle_func_t get_peak_env(any_pointer_t ptr)
   chan_info *cp = (chan_info *)ptr;
   env_state *es;
   int pos;
-  chan_context *cgx;
 
-  if ((!cp) || (!(cp->cgx))) return(BACKGROUND_QUIT);
-  cgx = cp->cgx;
+  if (!cp) return(BACKGROUND_QUIT);
 
   pos = cp->edit_ctr;
   if ((pos == -1) || 
@@ -501,10 +492,10 @@ idle_func_t get_peak_env(any_pointer_t ptr)
       return(BACKGROUND_QUIT);
     }
 
-  if (!(cgx->peak_env_state)) 
-    cgx->peak_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
+  if (!(cp->peak_env_state)) 
+    cp->peak_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
 
-  es = cgx->peak_env_state;
+  es = cp->peak_env_state;
   if (es)
     {
       if (tick_peak_env(cp, es))
@@ -554,15 +545,12 @@ mus_float_t peak_env_maxamp(chan_info *cp, int edpos)
 bool peak_env_usable(chan_info *cp, mus_float_t samples_per_pixel, mus_long_t hisamp, bool start_new, int edit_pos, bool finish_env) 
 {
   peak_env_info *ep;
-  chan_context *cgx;
 
 #if USE_NO_GUI
   return(false);
 #endif
 
-  cgx = cp->cgx;
-  if ((!cgx) || (!(cp->edits)))
-    return(false);
+  if (!(cp->edits)) return(false);
 
   ep = cp->edits[edit_pos]->peak_env;
   if (ep)
@@ -575,7 +563,7 @@ bool peak_env_usable(chan_info *cp, mus_float_t samples_per_pixel, mus_long_t hi
 	return(samples_per_pixel >= (mus_float_t)(ep->samps_per_bin));
     }
 
-  if ((finish_env) && (cgx->peak_env_in_progress) && (cgx->peak_env_state))
+  if ((finish_env) && (cp->peak_env_in_progress) && (cp->peak_env_state))
     {
       /* caller wants data, but a read is in progress -- finish it as quickly as possible */
       finish_peak_env(cp);
@@ -589,7 +577,7 @@ bool peak_env_usable(chan_info *cp, mus_float_t samples_per_pixel, mus_long_t hi
     }
 
   if ((start_new) &&
-      (!(cgx->peak_env_in_progress)) && 
+      (!(cp->peak_env_in_progress)) && 
       (CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
       (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
     start_peak_env(cp);
@@ -2803,8 +2791,7 @@ static XEN g_bomb(XEN snd, XEN on)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_2, S_bomb, "a boolean");
 
   sp = get_sp(snd); /* could also be a variable display handler here */
-  if ((sp == NULL) || 
-      (sp->sgx == NULL))
+  if (sp == NULL)
     return(snd_no_such_sound_error(S_bomb, snd));
 
   if (XEN_FALSE_P(on))
@@ -2879,13 +2866,13 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
     case SP_HEADER_TYPE:         return(C_TO_XEN_INT(sp->hdr->type));                                               break;
     case SP_DATA_LOCATION:       return(C_TO_XEN_INT64_T(sp->hdr->data_location));                                  break;
     case SP_DATA_SIZE:           return(C_TO_XEN_INT64_T(mus_samples_to_bytes(sp->hdr->format, sp->hdr->samples))); break;
-    case SP_SAVE_CONTROLS:       if (!(IS_PLAYER_SOUND(sp))) save_controls(sp);                                     break;
-    case SP_RESTORE_CONTROLS:    if (!(IS_PLAYER_SOUND(sp))) restore_controls(sp);                                  break;
-    case SP_RESET_CONTROLS:      if (!(IS_PLAYER_SOUND(sp))) reset_controls(sp);                                    break;
+    case SP_SAVE_CONTROLS:       if (HAS_WIDGETS(sp)) save_controls(sp);                                            break;
+    case SP_RESTORE_CONTROLS:    if (HAS_WIDGETS(sp)) restore_controls(sp);                                         break;
+    case SP_RESET_CONTROLS:      if (HAS_WIDGETS(sp)) reset_controls(sp);                                           break;
     case SP_FILE_NAME:           return(C_TO_XEN_STRING(sp->filename));                                             break;
     case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));                                       break;
     case SP_CLOSE:               if (!(IS_PLAYER_SOUND(sp))) snd_close_file(sp);                                    break;
-    case SP_SHOW_CONTROLS:       if (!(IS_PLAYER_SOUND(sp))) return(C_TO_XEN_BOOLEAN(showing_controls(sp)));        break;
+    case SP_SHOW_CONTROLS:       if (HAS_WIDGETS(sp)) return(C_TO_XEN_BOOLEAN(showing_controls(sp)));               break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));                                     break;
     case SP_SPEED_STYLE:         return(C_TO_XEN_INT((int)(sp->speed_control_style)));                              break;
     case SP_COMMENT:             return(C_TO_XEN_STRING(sp->hdr->comment));                                         break;
@@ -2934,7 +2921,7 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
       break;
 
     case SP_UPDATE:              
-      if (!(IS_PLAYER_SOUND(sp))) 
+      if (!(IS_PLAYER_SOUND(sp)))
 	{
 	  mus_sound_forget(sp->filename); /* old record must be out-of-date, so flush it (write date can be troublesome) */
 	  sp = snd_update_within_xen(sp, caller); 
@@ -2944,7 +2931,7 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
       break;
 
     case SP_PROPERTIES:
-      if (!(IS_PLAYER_SOUND(sp))) 
+      if (!(IS_PLAYER_SOUND(sp)))
 	{
 	  if (!(XEN_VECTOR_P(sp->properties)))
 	    {
@@ -3087,7 +3074,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_READ_ONLY:
-      if (!(IS_PLAYER_SOUND(sp)))
+      if (HAS_WIDGETS(sp))
 	{
 	  sp->user_read_only = (XEN_TO_C_BOOLEAN(val) ? FILE_READ_ONLY : FILE_READ_WRITE);
 	  if ((sp->user_read_only == FILE_READ_ONLY) || 
@@ -3126,7 +3113,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_SHOW_CONTROLS:
-      if (!(IS_PLAYER_SOUND(sp))) 
+      if (HAS_WIDGETS(sp)) 
 	{
 	  if (XEN_TO_C_BOOLEAN(val))
 	    show_controls(sp); 

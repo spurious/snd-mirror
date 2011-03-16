@@ -15,26 +15,25 @@ enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scr
 
 Widget channel_main_pane(chan_info *cp)
 {
-  if ((cp) && (cp->cgx)) return(cp->cgx->chan_widgets[W_form]);
+  if (cp) return(cp->chan_widgets[W_form]);
   return(NULL);
 }
 
 
-Widget channel_graph(chan_info *cp)      {return(cp->cgx->chan_widgets[W_graph]);}
-static Widget channel_sx(chan_info *cp)  {return(cp->cgx->chan_widgets[W_sx]);}
-static Widget channel_sy(chan_info *cp)  {return(cp->cgx->chan_widgets[W_sy]);}
-static Widget channel_zx(chan_info *cp)  {return(cp->cgx->chan_widgets[W_zx]);}
-static Widget channel_zy(chan_info *cp)  {return(cp->cgx->chan_widgets[W_zy]);}
-static Widget channel_gsy(chan_info *cp) {return(cp->cgx->chan_widgets[W_gsy]);}
-static Widget channel_gzy(chan_info *cp) {return(cp->cgx->chan_widgets[W_gzy]);}
-Widget channel_w(chan_info *cp)          {return(cp->cgx->chan_widgets[W_w]);}
-Widget channel_f(chan_info *cp)          {return(cp->cgx->chan_widgets[W_f]);}
+Widget channel_graph(chan_info *cp)      {return(cp->chan_widgets[W_graph]);}
+static Widget channel_sx(chan_info *cp)  {return(cp->chan_widgets[W_sx]);}
+static Widget channel_sy(chan_info *cp)  {return(cp->chan_widgets[W_sy]);}
+static Widget channel_zx(chan_info *cp)  {return(cp->chan_widgets[W_zx]);}
+static Widget channel_zy(chan_info *cp)  {return(cp->chan_widgets[W_zy]);}
+static Widget channel_gsy(chan_info *cp) {return(cp->chan_widgets[W_gsy]);}
+static Widget channel_gzy(chan_info *cp) {return(cp->chan_widgets[W_gzy]);}
+Widget channel_w(chan_info *cp)          {return(cp->chan_widgets[W_w]);}
+Widget channel_f(chan_info *cp)          {return(cp->chan_widgets[W_f]);}
 
 
 bool channel_graph_is_visible(chan_info *cp)
 {
   return((cp) &&
-	 (cp->cgx) &&
 	 (channel_graph(cp)) &&
 	 (XtIsManaged(channel_graph(cp))) &&
 	 (cp->sound) &&
@@ -42,13 +41,12 @@ bool channel_graph_is_visible(chan_info *cp)
 	 (((cp->sound->inuse == SOUND_WRAPPER) || (cp->sound->inuse == SOUND_REGION)) ||
 	  ((cp->sound->inuse == SOUND_NORMAL) &&
 	   /* other choice: SOUND_IDLE -> no display */
-	   (cp->sound->sgx) &&
 	   (w_snd_pane(cp->sound)) &&
 	   (XtIsManaged(w_snd_pane(cp->sound))))));
 }
 
 
-#define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->chan_widgets[W_edhist]
+#define EDIT_HISTORY_LIST(Cp) (Cp)->chan_widgets[W_edhist]
 
 
 static mus_float_t sqr(mus_float_t a) {return(a * a);}
@@ -502,9 +500,6 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
 			C_TO_XEN_INT(UNPACK_CHANNEL(data))),
 	     S_mouse_enter_graph_hook);
 
-  /*
-  XDefineCursor(XtDisplay(w), XtWindow(w), ss->sgx->graph_cursor);
-  */
   check_cursor_shape((chan_info *)context, ev->x, ev->y);
 }
 
@@ -702,7 +697,7 @@ static void watch_edit_history_sash(Widget w, XtPointer closure, XtPointer info)
     {
       chan_info *cp = (chan_info *)closure;
       Widget edhist;
-      if ((cp) && (cp->cgx) && (cp->cgx->chan_widgets))
+      if ((cp) && (cp->chan_widgets))
 	{
 	  edhist = EDIT_HISTORY_LIST(cp);
 	  if (edhist)
@@ -720,7 +715,7 @@ void reflect_edit_history_change(chan_info *cp)
   Widget lst;
 
   if (cp->squelch_update) return;
-  if ((cp->in_as_one_edit > 0) || (cp->cgx == NULL)) return;
+  if (cp->in_as_one_edit > 0) return;
   sp = cp->sound;
   lst = EDIT_HISTORY_LIST(cp);
 #if WITH_RELATIVE_PANES
@@ -796,8 +791,8 @@ void reflect_edit_counter_change(chan_info *cp)
 {
   /* undo/redo/revert -- change which line is highlighted */
   Widget lst;
+
   if (cp->squelch_update) return;
-  if (cp->cgx == NULL) return;
   lst = EDIT_HISTORY_LIST(cp);
   if ((lst) && (widget_width(lst) > 1))
     {
@@ -902,7 +897,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   bool need_extra_scrollbars;
   Widget *cw;
   chan_info *cp;
-  chan_context *cx;
   graphics_context *cax;
   state_context *sx;
   bool make_widgets;
@@ -913,10 +907,10 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp);
   cp = sp->chans[channel];
-  cx = cp->cgx;
-  if (cx->chan_widgets == NULL) 
-    cx->chan_widgets = (Widget *)calloc(NUM_CHAN_WIDGETS, sizeof(Widget));
-  cw = cx->chan_widgets;
+
+  if (cp->chan_widgets == NULL) 
+    cp->chan_widgets = (Widget *)calloc(NUM_CHAN_WIDGETS, sizeof(Widget));
+  cw = cp->chan_widgets;
   sx = ss->sgx;
   need_extra_scrollbars = ((!main) && (channel == 0));
 
@@ -1265,7 +1259,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       (sp->channel_style != CHANNELS_COMBINED)) 
     hide_gz_scrollbars(sp); /* default is on in this case */  
 
-  cax = cx->ax;
+  cax = cp->ax;
   cax->wn = XtWindow(cw[W_graph]);
   cax->dp = XtDisplay(cw[W_graph]);
   cax->gc = sx->basic_gc;
@@ -1275,11 +1269,8 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 
 static void set_graph_font(chan_info *cp, graphics_context *ax, XFontStruct *bf)
 {
-  chan_context *cx;
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
   ax->current_font = bf->fid;  
-  XSetFont(XtDisplay(cx->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
+  XSetFont(XtDisplay(cp->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
 }
 
 
@@ -1308,7 +1299,7 @@ GC copy_GC(chan_info *cp)
 {
   state_context *sx;
   sx = ss->sgx;
-  if (cp->cgx->selected) return(sx->selected_basic_gc);
+  if (cp->selected) return(sx->selected_basic_gc);
   return(sx->basic_gc);
 }
 
@@ -1320,7 +1311,7 @@ GC erase_GC(chan_info *cp)
   snd_info *sp;
   sp = cp->sound;
   sx = ss->sgx;
-  if ((cp->cgx->selected) ||
+  if ((cp->selected) ||
       ((sp) && 
        (sp->channel_style == CHANNELS_SUPERIMPOSED) && 
        (sp->index == ss->selected_sound)))
@@ -1331,24 +1322,24 @@ GC erase_GC(chan_info *cp)
 
 void free_fft_pix(chan_info *cp)
 {
-  if ((cp->cgx->fft_pix != None) &&
+  if ((cp->fft_pix != None) &&
       (channel_graph(cp)))
     XFreePixmap(XtDisplay(channel_graph(cp)),
-		cp->cgx->fft_pix);
-  cp->cgx->fft_pix = None;
-  cp->cgx->fft_pix_ready = false;
+		cp->fft_pix);
+  cp->fft_pix = None;
+  cp->fft_pix_ready = false;
 }
 
 
 bool restore_fft_pix(chan_info *cp, graphics_context *ax)
 {
   XCopyArea(ax->dp,
-	    cp->cgx->fft_pix, 
+	    cp->fft_pix, 
 	    ax->wn,
 	    copy_GC(cp),
 	    0, 0,                          /* source x y */
-	    cp->cgx->fft_pix_width, cp->cgx->fft_pix_height,
-	    cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0);
+	    cp->fft_pix_width, cp->fft_pix_height,
+	    cp->fft_pix_x0, cp->fft_pix_y0);
   return(true);
 }
 
@@ -1356,40 +1347,39 @@ bool restore_fft_pix(chan_info *cp, graphics_context *ax)
 void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, int x0, int y1)
 {
   if ((fwidth == 0) || (fheight == 0)) return;
-  if (cp->cgx->fft_pix == None)
+  if (cp->fft_pix == None)
     {
       /* make new pixmap */
-      cp->cgx->fft_pix_width = fwidth;
-      cp->cgx->fft_pix_height = fheight;
-      cp->cgx->fft_pix_x0 = x0;
-      cp->cgx->fft_pix_y0 = y1;
-      cp->cgx->fft_pix_cutoff = cp->spectrum_end;
-      cp->cgx->fft_pix = XCreatePixmap(ax->dp,
+      cp->fft_pix_width = fwidth;
+      cp->fft_pix_height = fheight;
+      cp->fft_pix_x0 = x0;
+      cp->fft_pix_y0 = y1;
+      cp->fft_pix_cutoff = cp->spectrum_end;
+      cp->fft_pix = XCreatePixmap(ax->dp,
 				       RootWindowOfScreen(XtScreen(channel_graph(cp))),
 				       fwidth, fheight,
 				       DefaultDepthOfScreen(XtScreen(channel_graph(cp))));
     }
   XCopyArea(ax->dp,
 	    ax->wn,
-	    cp->cgx->fft_pix, 
+	    cp->fft_pix, 
 	    copy_GC(cp),
-	    cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0,
-	    cp->cgx->fft_pix_width, cp->cgx->fft_pix_height,
+	    cp->fft_pix_x0, cp->fft_pix_y0,
+	    cp->fft_pix_width, cp->fft_pix_height,
 	    0, 0);
-  cp->cgx->fft_pix_ready = true;
+  cp->fft_pix_ready = true;
 }
 
 
 void cleanup_cw(chan_info *cp)
 {
-  if ((cp) && (cp->cgx))
+  if (cp)
     {
-      chan_context *cx;
       Widget *cw;
       free_fft_pix(cp);
-      cx = cp->cgx;
-      cx->selected = false;
-      cw = cx->chan_widgets;
+
+      cp->selected = false;
+      cw = cp->chan_widgets;
       if (cw)
 	{
 	  if (cw[W_w])
@@ -1465,20 +1455,12 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	  height = widget_height(w_snd_pane(sp)) - control_panel_height(sp);
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
-	      chan_context *mcgx;
 	      chan_info *ncp;
-
 	      ncp = sp->chans[0];
 	      channel_lock_pane(ncp, height);
-	      mcgx = ncp->cgx;
 
 	      for (i = 1; i < sp->nchans; i++) 
-		{
-		  ncp = sp->chans[i];
-		  cleanup_cw(ncp);
-		  ncp->tcgx = mcgx;
-		  /* reset_mix_graph_parent(ncp); */
-		}
+		cleanup_cw(sp->chans[i]);
 
 	      channel_open_pane(sp->chans[0]);
 	      channel_unlock_pane(sp->chans[0]);
@@ -1502,14 +1484,11 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  for (i = 1; i < sp->nchans; i++)
 		    {
 		      Widget *cw;
-		      chan_context *cx;
 		      chan_info *cp;
 		      int j;
 
 		      cp = sp->chans[i];
-		      cp->tcgx = NULL;
-		      cx = cp->cgx;
-		      cw = cx->chan_widgets;
+		      cw = cp->chan_widgets;
 
 		      for (j = 0; j < NUM_CHAN_WIDGETS - 1; j++)
 			if ((cw[j]) && (!XtIsManaged(cw[j]))) 
@@ -1536,7 +1515,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
 bool fixup_cp_cgx_ax_wn(chan_info *cp) 
 {
-  (cp->cgx->ax)->wn = XtWindow(cp->cgx->chan_widgets[W_graph]); 
+  (cp->ax)->wn = XtWindow(cp->chan_widgets[W_graph]); 
   return(true);
 }
 

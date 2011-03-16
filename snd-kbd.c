@@ -550,14 +550,16 @@ void string_to_minibuffer(snd_info *sp, const char *buf)
 
 void report_in_minibuffer(snd_info *sp, const char *format, ...)
 {
+#if (!USE_NO_GUI)
   char *buf;
   va_list ap;
-  if ((!sp) || (!(sp->active)) || (!(sp->sgx)) || (sp->inuse != SOUND_NORMAL)) return;
+  if ((!sp) || (!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return;
   va_start(ap, format);
   buf = vstr(format, ap);
   va_end(ap);
   string_to_minibuffer(sp, buf);
   free(buf);
+#endif
 }
 
 

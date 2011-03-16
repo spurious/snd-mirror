@@ -1216,9 +1216,10 @@ char *slist_selection(slist *lst)
  *   hide controls + listener doesn't
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators, but they still look dumb
- *   gtk3: prefs tooltips look terrible
- *   if chans are syncd, shouldn't multichan mix/mark also?
  *   drag marks as edit is messy looking in gtk
+ *
+ *   if chans are syncd, shouldn't multichan mix/mark also?
+ *     syncd but mark drag doesn't edit both?
  *
  *   gtk3: snd-test 13 segfault
  *     snd: cairo-surface.c:385: _cairo_surface_begin_modification: Assertion `! surface->finished' failed.
@@ -1232,6 +1233,7 @@ char *slist_selection(slist *lst)
  *     and they're all black
  *     we need to re-implement the combined chans stuff (in Motif it uses tmp_gc and tcgx)
  *       and re-connect time-graph-hook -- I think it is never called in the gtk case
+ *         and make sure it doesn't run in set_context!
  *
  *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
  *     if proc cursor, foreground color is not set back to old
@@ -1239,8 +1241,6 @@ char *slist_selection(slist *lst)
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
  *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.
  *     show controls for example, does not open the pane.
- *
- *   Mac native? quartz surface like GL? [2.99.0 says it is implemented now, I think]
  *
  * bugs: play choppy if graphics -- seems ok?
  */

@@ -7,10 +7,9 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   if (!cip)
     {
       cp = (chan_info *)calloc(1, sizeof(chan_info)); 
-      cp->cgx = (chan_context *)calloc(1, sizeof(chan_context));
-      cp->cgx->ax = (graphics_context *)calloc(1, sizeof(graphics_context));
+      cp->ax = (graphics_context *)calloc(1, sizeof(graphics_context));
 #if USE_GTK
-      cp->cgx->progress_pct = -1.0;
+      cp->progress_pct = -1.0;
 #endif
       cp->last_sonogram = NULL;
       cp->last_wavogram = NULL;
@@ -31,7 +30,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       cp->active = CHANNEL_INACTIVE;
     }
   else cp = cip;
-  cp->tcgx = NULL;
   cp->chan = chan;
   cp->sound = sound;
   cp->sound_ctr = NOT_A_SOUND;
@@ -142,7 +140,6 @@ static chan_info *free_chan_info(chan_info *cp)
    */
   chan_info_cleanup(cp);
   cp->squelch_update = true;
-  cp->tcgx = NULL;
   cp->axis = free_axis_info(cp->axis);
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
   cp_free_fft_state(cp);
@@ -245,6 +242,9 @@ snd_info *make_basic_snd_info(int chans)
   sp->allocated_chans = chans;
   sp->properties = XEN_FALSE; /* will be a vector of 1 element if it's ever used */
   sp->properties_loc = NOT_A_GC_LOC;
+#if USE_NO_GUI
+  sp->snd_widgets = false;
+#endif
 #if HAVE_PTHREADS
   /* multichannel cases can all try to change the "*" in the file name */
   sp->starred_name_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
@@ -330,7 +330,6 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   if (!sip)
     {
       sp = make_basic_snd_info(chans);
-      sp->sgx = (snd_context *)calloc(1, sizeof(snd_context));
     }
   else 
     {
@@ -392,32 +391,31 @@ void free_snd_info(snd_info *sp)
 {
   int i;
 
-  if (sp->sgx)
+#if (!USE_NO_GUI)
+  env_editor *edp;
+
+  /* make sure trough colors are ok upon reuse */
+  if (sp->reverb_control_p != DEFAULT_REVERB_CONTROL_P)
+    toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
+  if (sp->expand_control_p != DEFAULT_EXPAND_CONTROL_P)
+    toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_P);
+  if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P)
+    toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
+
+  edp = sp->flt;
+  if (edp)
     {
-      /* make sure trough colors are ok upon reuse */
-      if (sp->reverb_control_p != DEFAULT_REVERB_CONTROL_P)
-	toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
-      if (sp->expand_control_p != DEFAULT_EXPAND_CONTROL_P)
-	toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_P);
-      if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P)
-	toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
+      edp->edited = false;
+      edp->env_dragged = false;
+      edp->env_pos = 0;
+      edp->click_to_delete = false;
     }
+  set_filter_text(sp, "");
+#endif
+
   /* leave most for reuse as in free_chan_info */
   sp->active = false;
   sp->selectpos = -1;
-  if (sp->sgx)
-    {
-      env_editor *edp;
-      edp = sp->sgx->flt;
-      if (edp)
-	{
-	  edp->edited = false;
-	  edp->env_dragged = false;
-	  edp->env_pos = 0;
-	  edp->click_to_delete = false;
-	}
-      set_filter_text(sp, "");
-    }
   sp->sync = 0;
   snd_info_cleanup(sp);
   sp->previous_sync = sp->sync;
@@ -473,19 +471,14 @@ snd_info *completely_free_snd_info(snd_info *sp)
 {
   int i;
   chan_info *cp;
+
   free_snd_info(sp);
-  if (sp->sgx) free(sp->sgx);
+
   for (i = 0; i < sp->allocated_chans; i++) 
     {
       cp = sp->chans[i];
       if (cp)
 	{
-	  if (cp->cgx) 
-	    {
-	      if (cp->cgx->ax) 
-		free(cp->cgx->ax);
-	      free(cp->cgx);
-	    }
 	  if (XEN_VECTOR_P(cp->properties))
 	    {
 	      snd_unprotect_at(cp->properties_loc);
@@ -903,7 +896,7 @@ chan_info *color_selected_channel(snd_info *sp)
   chan_info *ncp;
   ncp = sp->chans[sp->selected_channel];
   recolor_graph(ncp, true);
-  (ncp->cgx)->selected = true;
+  ncp->selected = true;
   update_graph(ncp); /* update any indication of change in selected channel (channel id for example) */
   return(ncp);
 }
@@ -922,7 +915,7 @@ void select_channel(snd_info *sp, int chan)
       if (cp) 
 	{
 	  recolor_graph(cp, false);
-	  cp->cgx->selected = false;
+	  cp->selected = false;
 	  if (sp != cp->sound) cp->sound->selected_channel = NO_SELECTION;
 	  update_graph(cp);
 	}

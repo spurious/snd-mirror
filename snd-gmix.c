@@ -312,23 +312,23 @@ static void mix_amp_env_resize(GtkWidget *w)
       ax->w = w_env;
       ax->gc = cur_gc;
     }
-  ax->cr = MAKE_CAIRO(ax->wn);
-  cairo_push_group(ax->cr);
+  ss->cr = MAKE_CAIRO(ax->wn);
+  cairo_push_group(ss->cr);
 
   /* erase previous */
-  cairo_set_source_rgba(ax->cr, cur_gc->bg_color->red, cur_gc->bg_color->green, cur_gc->bg_color->blue, cur_gc->bg_color->alpha);
-  cairo_rectangle(ax->cr, 0, 0, widget_width(w), widget_height(w));
-  cairo_fill(ax->cr);
+  cairo_set_source_rgba(ss->cr, cur_gc->bg_color->red, cur_gc->bg_color->green, cur_gc->bg_color->blue, cur_gc->bg_color->alpha);
+  cairo_rectangle(ss->cr, 0, 0, widget_width(w), widget_height(w));
+  cairo_fill(ss->cr);
 
   spf->with_dots = true;
   env_editor_display_env(spf, dialog_env, ax, "mix env", 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
   if (with_mix_background_wave)
     show_mix_background_wave(mix_dialog_id);
 
-  cairo_pop_group_to_source(ax->cr);
-  cairo_paint(ax->cr);
-  FREE_CAIRO(ax->cr);
-  ax->cr = NULL;
+  cairo_pop_group_to_source(ss->cr);
+  cairo_paint(ss->cr);
+  FREE_CAIRO(ss->cr);
+  ss->cr = NULL;
 }
 
 

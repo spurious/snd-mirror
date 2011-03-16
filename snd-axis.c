@@ -286,7 +286,7 @@ axis_info *free_axis_info(axis_info *ap)
   if (!ap) return(NULL);
   if (ap->x_ticks) ap->x_ticks = free_tick_descriptor(ap->x_ticks);
   if (ap->y_ticks) ap->y_ticks = free_tick_descriptor(ap->y_ticks);
-  /* leave ap->ax alone -- it actually belongs to cp->cgx */
+  /* leave ap->ax alone -- it actually belongs to cp */
   if (ap->xlabel) 
     {
       free(ap->xlabel); 
@@ -452,7 +452,7 @@ static void draw_horizontal_grid_line(int y, axis_info *ap, graphics_context *ax
 {
   color_t old_color;
   old_color = get_foreground_color(ax);
-  if (ap->cp->cgx->selected)
+  if (ap->cp->selected)
     set_foreground_color(ax, ss->sgx->selected_grid_color);
   else set_foreground_color(ax, ss->sgx->grid_color);
   draw_line(ax, ap->y_axis_x0, y, ap->x_axis_x1, y);
@@ -464,7 +464,7 @@ static void draw_vertical_grid_line(int x, axis_info *ap, graphics_context *ax)
 {
   color_t old_color;
   old_color = get_foreground_color(ax);
-  if (ap->cp->cgx->selected)
+  if (ap->cp->selected)
     set_foreground_color(ax, ss->sgx->selected_grid_color);
   else set_foreground_color(ax, ss->sgx->grid_color);
   draw_line(ax, x, ap->x_axis_y0, x, ap->y_axis_y1);
@@ -1630,7 +1630,6 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 #if USE_GTK
   GtkWidget *w; 
   gc_t *gc;
-  cairo_t *cr = NULL;
 #endif
 
   XEN val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes, label_ref;
@@ -1704,7 +1703,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 			  axes = (show_axes_t)XEN_TO_C_INT(xaxes);
 #if USE_GTK
 			  if (len > 9)
-			    cr = (cairo_t *)XEN_UNWRAP_C_POINTER(XEN_CADR(XEN_LIST_REF(args, 9)));
+			    ss->cr = (cairo_t *)XEN_UNWRAP_C_POINTER(XEN_CADR(XEN_LIST_REF(args, 9)));
 #endif
 			}}}}}}
 
@@ -1720,10 +1719,9 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 #if USE_GTK
   ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
-  if (!cr)
+  if (!ss->cr)
     XEN_ERROR(XEN_ERROR_TYPE("no-cairo-t"),
 	      XEN_LIST_1(C_TO_XEN_STRING(S_draw_axes ": in Gtk, the trailing cairo_t argument is not optional")));
-  ax->cr = cr;
 #endif
 
   ap->xmin = x0;
@@ -1755,9 +1753,6 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 	    XEN_EMPTY_LIST))));
 
   free_axis_info(ap);
-#if USE_GTK
-  ax->cr = NULL;
-#endif
   return(val);
 }
 

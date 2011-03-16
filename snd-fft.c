@@ -1882,7 +1882,6 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 static void update_log_freq_fft_graph(chan_info *cp)
 {
   if ((cp->active < CHANNEL_HAS_AXES) ||
-      (cp->cgx == NULL) || 
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL) ||
       (!(cp->graph_transform_p)) ||

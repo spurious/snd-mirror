@@ -54,19 +54,6 @@ typedef struct {
 } graphics_context;
 
 typedef struct {
-  struct env_state *peak_env_state;
-  int peak_env_in_progress;
-  graphics_context *ax;
-  int selected;
-  int fft_in_progress;
-  int current_cursor;
-} chan_context;
-
-typedef struct {
-  struct env_editor *flt;
-} snd_context;
-
-typedef struct {
   int current_type, current_format, formats, header_pos, format_pos, scanf_widget, error_widget;
 } file_data;
 

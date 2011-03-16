@@ -854,7 +854,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 14-Mar:    s7_make_random_state, optional state argument to s7_random, random-state->list.
+ * 14-Mar:    s7_make_random_state, optional state argument to s7_random, random-state->list, s7_random_state_to_list.
  * 10-Feb:    s7_vector_print_length, s7_set_vector_print_length.
  * 7-Feb:     s7_begin_hook, s7_set_begin_hook.
  * 25-Jan:    s7_is_thread, s7_thread, s7_make_thread, s7_thread_s7, s7_thread_data. 

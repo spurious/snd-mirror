@@ -3,14 +3,14 @@
 
 void draw_line(graphics_context *ax, int x0, int y0, int x1, int y1) 
 {
-  cairo_set_source_rgba(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-  cairo_set_line_width(ax->cr, 1.0); 
+  cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
+  cairo_set_line_width(ss->cr, 1.0); 
   /* to get a thin line in cairo -- hooboy! you have to offset everything -- this is not pretty
    *    if line_width < 1.0, you get a smudgy mess in gray-scale!!  
    */
-  cairo_move_to(ax->cr, x0 + 0.5, y0 + 0.5);
-  cairo_line_to(ax->cr, x1 + 0.5, y1 + 0.5);
-  cairo_stroke(ax->cr);
+  cairo_move_to(ss->cr, x0 + 0.5, y0 + 0.5);
+  cairo_line_to(ss->cr, x1 + 0.5, y1 + 0.5);
+  cairo_stroke(ss->cr);
 }
 
 
@@ -19,30 +19,30 @@ void draw_lines(graphics_context *ax, point_t *points, int num)
   if (num == 0) return;
   {
     int i;
-    cairo_set_source_rgba(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-    cairo_set_line_width(ax->cr, 1.0); 
-    cairo_move_to(ax->cr, points[0].x + 0.5, points[0].y + 0.5);
+    cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
+    cairo_set_line_width(ss->cr, 1.0); 
+    cairo_move_to(ss->cr, points[0].x + 0.5, points[0].y + 0.5);
     for (i = 1; i < num; i++)
-      cairo_line_to(ax->cr, points[i].x + 0.5, points[i].y + 0.5);
-    cairo_stroke(ax->cr);
+      cairo_line_to(ss->cr, points[i].x + 0.5, points[i].y + 0.5);
+    cairo_stroke(ss->cr);
   }
 }
 
 
 void draw_dot(graphics_context *ax, int x, int y, int size)
 {
-  cairo_set_source_rgba(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-  cairo_arc(ax->cr, x, y, size, 0.0, 2 * M_PI);  /* docs say size is radius.  This used to be size / 2 to try to match X */
-  cairo_fill(ax->cr);
+  cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
+  cairo_arc(ss->cr, x, y, size, 0.0, 2 * M_PI);  /* docs say size is radius.  This used to be size / 2 to try to match X */
+  cairo_fill(ss->cr);
 }
 
 
 #if 0
 void draw_arc(graphics_context *ax, int x, int y, int size, int angle0, int angle1)
 {
-  cairo_set_source_rgba(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-  cairo_arc(ax->cr, x, y, size / 2, mus_degrees_to_radians(angle0), mus_degrees_to_radians(angle1));
-  cairo_stroke(ax->cr);
+  cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
+  cairo_arc(ss->cr, x, y, size / 2, mus_degrees_to_radians(angle0), mus_degrees_to_radians(angle1));
+  cairo_stroke(ss->cr);
 }
 
 
@@ -68,9 +68,9 @@ void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height)
 {
   if (ss->sgx->bg_gradient < .01)
     {
-      cairo_set_source_rgba(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-      cairo_rectangle(ax->cr, x0, y0, width, height);
-      cairo_fill(ax->cr);
+      cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
+      cairo_rectangle(ss->cr, x0, y0, width, height);
+      cairo_fill(ss->cr);
     }
   else
     {
@@ -94,9 +94,9 @@ void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height)
 					mus_fclamp(0.0, ax->gc->fg_color->green + grad, 1.0), 
 					mus_fclamp(0.0, ax->gc->fg_color->blue + grad, 1.0),
 					ax->gc->fg_color->alpha);
-      cairo_rectangle(ax->cr, x0, y0, width, height);
-      cairo_set_source(ax->cr, pat);
-      cairo_fill(ax->cr);
+      cairo_rectangle(ss->cr, x0, y0, width, height);
+      cairo_set_source(ss->cr, pat);
+      cairo_fill(ss->cr);
       cairo_pattern_destroy(pat);
     }
 }
@@ -107,9 +107,9 @@ void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int wi
   /* used only to clear the overall graph window in snd-chn.c */
   if (ss->sgx->bg_gradient < .01)
     {
-      cairo_set_source_rgba(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue, ax->gc->fg_color->alpha);
-      cairo_rectangle(ax->cr, x0, y0, width, height);
-      cairo_fill(ax->cr);
+      cairo_set_source_rgba(ss->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue, ax->gc->fg_color->alpha);
+      cairo_rectangle(ss->cr, x0, y0, width, height);
+      cairo_fill(ss->cr);
     }
   else
     {
@@ -133,9 +133,9 @@ void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int wi
 					mus_fclamp(0.0, ax->gc->bg_color->green + grad, 1.0), 
 					mus_fclamp(0.0, ax->gc->bg_color->blue + grad, 1.0),
 					ax->gc->bg_color->alpha);
-      cairo_rectangle(ax->cr, x0, y0, width, height);
-      cairo_set_source(ax->cr, pat);
-      cairo_fill(ax->cr);
+      cairo_rectangle(ss->cr, x0, y0, width, height);
+      cairo_set_source(ss->cr, pat);
+      cairo_fill(ss->cr);
       cairo_pattern_destroy(pat);
     }
 }
@@ -143,22 +143,22 @@ void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int wi
 
 void draw_string(graphics_context *ax, int x0, int y0, const char *str, int len)
 {
-  if ((ax->wn == NULL) || (ax->current_font == NULL)) return;
+  if (ax->current_font == NULL) return;
   if ((!str) || (!(*str))) return;
   if (!(g_utf8_validate(str, -1, NULL)))
     return;
 
   {
     PangoLayout *layout = NULL;
-    cairo_save(ax->cr);
-    layout = pango_cairo_create_layout(ax->cr);
+    cairo_save(ss->cr);
+    layout = pango_cairo_create_layout(ss->cr);
     pango_layout_set_font_description(layout, ax->current_font);
     pango_layout_set_text(layout, str, -1);
-    cairo_set_source_rgba(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);	
-    cairo_move_to(ax->cr, x0, y0);
-    pango_cairo_show_layout(ax->cr, layout);
+    cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);	
+    cairo_move_to(ss->cr, x0, y0);
+    pango_cairo_show_layout(ss->cr, layout);
     g_object_unref(G_OBJECT(layout));
-    cairo_restore(ax->cr);
+    cairo_restore(ss->cr);
   }
 }
 
@@ -167,18 +167,18 @@ static void rotate_text(graphics_context *ax, PangoFontDescription *font, const 
 {
   int width, height;
   PangoLayout *layout = NULL;
-  cairo_save(ax->cr);
-  layout = pango_cairo_create_layout(ax->cr);
+  cairo_save(ss->cr);
+  layout = pango_cairo_create_layout(ss->cr);
   pango_layout_set_font_description(layout, font);
   pango_layout_set_text(layout, text, -1);
   pango_layout_get_size(layout, &width, &height);
-  cairo_set_source_rgba(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-  cairo_move_to(ax->cr, x0 + (double)height / (2 * PANGO_SCALE), y0 + (double)width / PANGO_SCALE);
-  cairo_rotate(ax->cr, mus_degrees_to_radians(-angle));
-  pango_cairo_update_layout(ax->cr, layout);
-  pango_cairo_show_layout(ax->cr, layout);
+  cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
+  cairo_move_to(ss->cr, x0 + (double)height / (2 * PANGO_SCALE), y0 + (double)width / PANGO_SCALE);
+  cairo_rotate(ss->cr, mus_degrees_to_radians(-angle));
+  pango_cairo_update_layout(ss->cr, layout);
+  pango_cairo_show_layout(ss->cr, layout);
   g_object_unref(layout);
-  cairo_restore(ax->cr);
+  cairo_restore(ss->cr);
 }
 
 
@@ -208,23 +208,23 @@ static void draw_polygon_va(graphics_context *ax, bool filled, int points, va_li
     int x, y;
     x = va_arg(ap, int);
     y = va_arg(ap, int);
-    cairo_set_source_rgba(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-    /* cairo_set_line_width(ax->cr, 1.0); */
-    cairo_move_to(ax->cr, x, y);
+    cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
+    /* cairo_set_line_width(ss->cr, 1.0); */
+    cairo_move_to(ss->cr, x, y);
     for (i = 1; i < points; i++)
       {
 	x = va_arg(ap, int);
 	y = va_arg(ap, int);
-	cairo_line_to(ax->cr, x, y);
+	cairo_line_to(ss->cr, x, y);
       }
     if (filled)
       {
-	cairo_close_path(ax->cr);
-	cairo_fill(ax->cr);
+	cairo_close_path(ss->cr);
+	cairo_fill(ss->cr);
       }
     else
       {
-	cairo_stroke(ax->cr);
+	cairo_stroke(ss->cr);
       }
   }
 }
@@ -243,13 +243,13 @@ void fill_polygon(graphics_context *ax, int points, ...)
 void fill_polygon_from_array(graphics_context *ax, point_t *points, int npoints)
 {
   int i;
-  cairo_set_source_rgba(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-  /* cairo_set_line_width(ax->cr, 1.0); */
-  cairo_move_to(ax->cr, points[0].x, points[0].y);
+  cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
+  /* cairo_set_line_width(ss->cr, 1.0); */
+  cairo_move_to(ss->cr, points[0].x, points[0].y);
   for (i = 1; i < npoints; i++)
-    cairo_line_to(ax->cr, points[i].x, points[i].y);
-  cairo_close_path(ax->cr);
-  cairo_fill(ax->cr);
+    cairo_line_to(ss->cr, points[i].x, points[i].y);
+  cairo_close_path(ss->cr);
+  cairo_fill(ss->cr);
 }
 
 
@@ -296,9 +296,7 @@ void setup_graphics_context(chan_info *cp, graphics_context *ax)
   GtkWidget *w;
   snd_info *sp;
   sp = cp->sound;
-  if (cp->tcgx) 
-    w = channel_graph(sp->chans[0]);
-  else w = channel_graph(cp);
+  w = channel_to_widget(cp);
   ax->gc = copy_GC(cp);
   ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
@@ -339,18 +337,18 @@ void draw_sono_rectangles(graphics_context *ax, int color, int jmax)
   int i;
   rgb_t r, g, b;
   get_current_color(color_map(ss), color, &r, &g, &b);
-  cairo_save(ax->cr);
-  cairo_set_source_rgb(ax->cr, r, g, b);
+  cairo_save(ss->cr);
+  cairo_set_source_rgb(ss->cr, r, g, b);
   for (i = 0; i < jmax; i++)
     {
-      cairo_rectangle(ax->cr, 
+      cairo_rectangle(ss->cr, 
 		      sono_data[color][i].x, 
 		      sono_data[color][i].y, 
 		      sono_data[color][i].width, 
 		      sono_data[color][i].height);
-      cairo_fill(ax->cr);
+      cairo_fill(ss->cr);
     }
-  cairo_restore(ax->cr);
+  cairo_restore(ss->cr);
 }
 
 
@@ -358,11 +356,11 @@ void draw_spectro_line(graphics_context *ax, int color, int x0, int y0, int x1, 
 {
   rgb_t r, g,b;
   get_current_color(color_map(ss), color, &r, &g, &b);
-  cairo_set_source_rgb(ax->cr, r, g, b);
-  cairo_set_line_width(ax->cr, 1.0); 
-  cairo_move_to(ax->cr, x0 + 0.5, y0 + 0.5);
-  cairo_line_to(ax->cr, x1 + 0.5, y1 + 0.5);
-  cairo_stroke(ax->cr);
+  cairo_set_source_rgb(ss->cr, r, g, b);
+  cairo_set_line_width(ss->cr, 1.0); 
+  cairo_move_to(ss->cr, x0 + 0.5, y0 + 0.5);
+  cairo_line_to(ss->cr, x1 + 0.5, y1 + 0.5);
+  cairo_stroke(ss->cr);
 }
 
 
@@ -411,7 +409,7 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
   if (num <= 0) return;
 
   old_color = get_foreground_color(ax);
-  cairo_save(ax->cr);
+  cairo_save(ss->cr);
 
   x0 = points[0].x;
   y0 = points[0].y;
@@ -427,7 +425,7 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
       b = default_color->blue; 
     }
   else phases_rgb((mus_float_t)prev / (mus_float_t)color_map_size(ss), &r, &g, &b);
-  cairo_set_source_rgb(ax->cr, r, g, b);
+  cairo_set_source_rgb(ss->cr, r, g, b);
 
   for (i = 1; i < num; i++)
     {
@@ -452,30 +450,30 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
 	      b = default_color->blue; 
 	    }
 	  else phases_rgb((mus_float_t)cur / (mus_float_t)color_map_size(ss), &r, &g, &b);
-	  cairo_set_source_rgb(ax->cr, r, g, b);
+	  cairo_set_source_rgb(ss->cr, r, g, b);
 	  prev = cur;
 	}
 
       if (cp->transform_graph_style == GRAPH_DOTS)
 	{
-	  cairo_arc(ax->cr, x0, y0, cp->dot_size / 2, 0.0, 2 * M_PI);
-	  cairo_fill(ax->cr);
+	  cairo_arc(ss->cr, x0, y0, cp->dot_size / 2, 0.0, 2 * M_PI);
+	  cairo_fill(ss->cr);
 	}
       else 
 	{
-	  cairo_set_line_width(ax->cr, 1.0); 
-	  cairo_move_to(ax->cr, x0 + 0.5, y0 + 0.5);
-	  cairo_line_to(ax->cr, x1 + 0.5, y1 + 0.5);
-	  cairo_stroke(ax->cr);
+	  cairo_set_line_width(ss->cr, 1.0); 
+	  cairo_move_to(ss->cr, x0 + 0.5, y0 + 0.5);
+	  cairo_line_to(ss->cr, x1 + 0.5, y1 + 0.5);
+	  cairo_stroke(ss->cr);
 	}
 
       x0 = x1;
       y0 = y1;
     }
 
-  cairo_set_source_rgba(ax->cr, old_color->red, old_color->green, old_color->blue, old_color->alpha);
+  cairo_set_source_rgba(ss->cr, old_color->red, old_color->green, old_color->blue, old_color->alpha);
 
-  cairo_restore(ax->cr);
+  cairo_restore(ss->cr);
 }
 
 

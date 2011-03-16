@@ -20,67 +20,67 @@ enum {W_pane,
 };
 
 
-Widget unite_button(snd_info *sp) {return(sp->sgx->snd_widgets[W_unite]);}
-Widget w_snd_pane(snd_info *sp)   {return(sp->sgx->snd_widgets[W_pane]);}
+Widget unite_button(snd_info *sp) {return(sp->snd_widgets[W_unite]);}
+Widget w_snd_pane(snd_info *sp)   {return(sp->snd_widgets[W_pane]);}
 
-#define ERROR_INFO(Sp)           Sp->sgx->snd_widgets[W_error_info_label]
-#define ERROR_INFO_FRAME(Sp)     Sp->sgx->snd_widgets[W_error_info_frame]
-#define ERROR_INFO_BOX(Sp)       Sp->sgx->snd_widgets[W_error_info_box]
+#define ERROR_INFO(Sp)           Sp->snd_widgets[W_error_info_label]
+#define ERROR_INFO_FRAME(Sp)     Sp->snd_widgets[W_error_info_frame]
+#define ERROR_INFO_BOX(Sp)       Sp->snd_widgets[W_error_info_box]
 
-#define SND_PANE(Sp)             Sp->sgx->snd_widgets[W_pane]
-#define SND_NAME(Sp)             Sp->sgx->snd_widgets[W_name]
+#define SND_PANE(Sp)             Sp->snd_widgets[W_pane]
+#define SND_NAME(Sp)             Sp->snd_widgets[W_name]
 
-#define NAME_BOX(Sp)             Sp->sgx->snd_widgets[W_name_form]
-#define LOCK_OR_BOMB(Sp)         Sp->sgx->snd_widgets[W_lock_or_bomb]
-#define STOP_ICON(Sp)            Sp->sgx->snd_widgets[W_stop_icon]
-#define NAME_LABEL(Sp)           Sp->sgx->snd_widgets[W_name]
-#define MINIBUFFER_LABEL(Sp)     Sp->sgx->snd_widgets[W_info_label]
-#define MINIBUFFER_TEXT(Sp)      Sp->sgx->snd_widgets[W_info]
-#define SYNC_BUTTON(Sp)          Sp->sgx->snd_widgets[W_sync]
-#define PLAY_BUTTON(Sp)          Sp->sgx->snd_widgets[W_play]
-#define UNITE_BUTTON(Sp)         Sp->sgx->snd_widgets[W_unite]
-#define CLOSE_BUTTON(Sp)         Sp->sgx->snd_widgets[W_close]
+#define NAME_BOX(Sp)             Sp->snd_widgets[W_name_form]
+#define LOCK_OR_BOMB(Sp)         Sp->snd_widgets[W_lock_or_bomb]
+#define STOP_ICON(Sp)            Sp->snd_widgets[W_stop_icon]
+#define NAME_LABEL(Sp)           Sp->snd_widgets[W_name]
+#define MINIBUFFER_LABEL(Sp)     Sp->snd_widgets[W_info_label]
+#define MINIBUFFER_TEXT(Sp)      Sp->snd_widgets[W_info]
+#define SYNC_BUTTON(Sp)          Sp->snd_widgets[W_sync]
+#define PLAY_BUTTON(Sp)          Sp->snd_widgets[W_play]
+#define UNITE_BUTTON(Sp)         Sp->snd_widgets[W_unite]
+#define CLOSE_BUTTON(Sp)         Sp->snd_widgets[W_close]
 
-#define CONTROLS(Sp)             Sp->sgx->snd_widgets[W_amp_form]
-#define AMP_SCROLLBAR(Sp)        Sp->sgx->snd_widgets[W_amp]
-#define AMP_LABEL(Sp)            Sp->sgx->snd_widgets[W_amp_number]
-#define AMP_BUTTON(Sp)           Sp->sgx->snd_widgets[W_amp_label]
+#define CONTROLS(Sp)             Sp->snd_widgets[W_amp_form]
+#define AMP_SCROLLBAR(Sp)        Sp->snd_widgets[W_amp]
+#define AMP_LABEL(Sp)            Sp->snd_widgets[W_amp_number]
+#define AMP_BUTTON(Sp)           Sp->snd_widgets[W_amp_label]
 
-#define SPEED_SCROLLBAR(Sp)      Sp->sgx->snd_widgets[W_speed]
-#define SPEED_ARROW(Sp)          Sp->sgx->snd_widgets[W_speed_arrow]
-#define SPEED_LABEL(Sp)          Sp->sgx->snd_widgets[W_speed_number]
-#define SPEED_BUTTON(Sp)         Sp->sgx->snd_widgets[W_speed_label]
+#define SPEED_SCROLLBAR(Sp)      Sp->snd_widgets[W_speed]
+#define SPEED_ARROW(Sp)          Sp->snd_widgets[W_speed_arrow]
+#define SPEED_LABEL(Sp)          Sp->snd_widgets[W_speed_number]
+#define SPEED_BUTTON(Sp)         Sp->snd_widgets[W_speed_label]
 
-#define EXPAND_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_expand]
-#define EXPAND_LABEL(Sp)         Sp->sgx->snd_widgets[W_expand_number]
-#define EXPAND_RIGHT_BUTTON(Sp)  Sp->sgx->snd_widgets[W_expand_button]
-#define EXPAND_LEFT_BUTTON(Sp)   Sp->sgx->snd_widgets[W_expand_label]
+#define EXPAND_SCROLLBAR(Sp)     Sp->snd_widgets[W_expand]
+#define EXPAND_LABEL(Sp)         Sp->snd_widgets[W_expand_number]
+#define EXPAND_RIGHT_BUTTON(Sp)  Sp->snd_widgets[W_expand_button]
+#define EXPAND_LEFT_BUTTON(Sp)   Sp->snd_widgets[W_expand_label]
 
-#define CONTRAST_SCROLLBAR(Sp)   Sp->sgx->snd_widgets[W_contrast]
-#define CONTRAST_LABEL(Sp)       Sp->sgx->snd_widgets[W_contrast_number]
-#define CONTRAST_RIGHT_BUTTON(Sp) Sp->sgx->snd_widgets[W_contrast_button]
-#define CONTRAST_LEFT_BUTTON(Sp) Sp->sgx->snd_widgets[W_contrast_label]
+#define CONTRAST_SCROLLBAR(Sp)   Sp->snd_widgets[W_contrast]
+#define CONTRAST_LABEL(Sp)       Sp->snd_widgets[W_contrast_number]
+#define CONTRAST_RIGHT_BUTTON(Sp) Sp->snd_widgets[W_contrast_button]
+#define CONTRAST_LEFT_BUTTON(Sp) Sp->snd_widgets[W_contrast_label]
 
-#define REVSCL_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_revscl]
-#define REVLEN_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_revlen]
-#define REVSCL_LABEL(Sp)         Sp->sgx->snd_widgets[W_revscl_number]
-#define REVLEN_LABEL(Sp)         Sp->sgx->snd_widgets[W_revlen_number]
-#define REVSCL_BUTTON(Sp)        Sp->sgx->snd_widgets[W_revscl_label]
-#define REVLEN_BUTTON(Sp)        Sp->sgx->snd_widgets[W_revlen_label]
-#define REVERB_BUTTON(Sp)        Sp->sgx->snd_widgets[W_reverb_button]
+#define REVSCL_SCROLLBAR(Sp)     Sp->snd_widgets[W_revscl]
+#define REVLEN_SCROLLBAR(Sp)     Sp->snd_widgets[W_revlen]
+#define REVSCL_LABEL(Sp)         Sp->snd_widgets[W_revscl_number]
+#define REVLEN_LABEL(Sp)         Sp->snd_widgets[W_revlen_number]
+#define REVSCL_BUTTON(Sp)        Sp->snd_widgets[W_revscl_label]
+#define REVLEN_BUTTON(Sp)        Sp->snd_widgets[W_revlen_label]
+#define REVERB_BUTTON(Sp)        Sp->snd_widgets[W_reverb_button]
 
-#define FILTER_ORDER_TEXT(Sp)    Sp->sgx->snd_widgets[W_filter_order]
-#define FILTER_COEFFS_TEXT(Sp)   Sp->sgx->snd_widgets[W_filter]
-#define FILTER_BUTTON(Sp)        Sp->sgx->snd_widgets[W_filter_button]
-#define FILTER_DB_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_dB]
-#define FILTER_HZ_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_hz]
-#define FILTER_LABEL(Sp)         Sp->sgx->snd_widgets[W_filter_label]
-#define FILTER_GRAPH(Sp)         Sp->sgx->snd_widgets[W_filter_env]
-#define FILTER_ORDER_UP(Sp)      Sp->sgx->snd_widgets[W_filter_order_up]
-#define FILTER_ORDER_DOWN(Sp)    Sp->sgx->snd_widgets[W_filter_order_down]
-#define FILTER_FRAME(Sp)         Sp->sgx->snd_widgets[W_filter_frame]
+#define FILTER_ORDER_TEXT(Sp)    Sp->snd_widgets[W_filter_order]
+#define FILTER_COEFFS_TEXT(Sp)   Sp->snd_widgets[W_filter]
+#define FILTER_BUTTON(Sp)        Sp->snd_widgets[W_filter_button]
+#define FILTER_DB_BUTTON(Sp)     Sp->snd_widgets[W_filter_dB]
+#define FILTER_HZ_BUTTON(Sp)     Sp->snd_widgets[W_filter_hz]
+#define FILTER_LABEL(Sp)         Sp->snd_widgets[W_filter_label]
+#define FILTER_GRAPH(Sp)         Sp->snd_widgets[W_filter_env]
+#define FILTER_ORDER_UP(Sp)      Sp->snd_widgets[W_filter_order_up]
+#define FILTER_ORDER_DOWN(Sp)    Sp->snd_widgets[W_filter_order_down]
+#define FILTER_FRAME(Sp)         Sp->snd_widgets[W_filter_frame]
 
-#define PROGRESS_ICON(Cp)        (Cp)->sound->sgx->progress_widgets[(Cp)->chan]
+#define PROGRESS_ICON(Cp)        (Cp)->sound->progress_widgets[(Cp)->chan]
 
 
 int snd_pane_height(snd_info *sp)
@@ -100,12 +100,12 @@ static void watch_minibuffer(Widget w, XtPointer context, XtPointer info)
 void clear_minibuffer_error(snd_info *sp)
 {
   Dimension height = 20;
-  if (sp->sgx->minibuffer_height > 5) 
-    height = sp->sgx->minibuffer_height;
+  if (sp->minibuffer_height > 5) 
+    height = sp->minibuffer_height;
   XtUnmanageChild(ERROR_INFO_BOX(sp));
-  if (sp->sgx->minibuffer_watcher)
+  if (sp->minibuffer_watcher)
     {
-      sp->sgx->minibuffer_watcher = false;
+      sp->minibuffer_watcher = false;
       XtRemoveCallback(MINIBUFFER_TEXT(sp), XmNvalueChangedCallback, watch_minibuffer, (XtPointer)sp);
     }
   XtUnmanageChild(NAME_BOX(sp));
@@ -126,10 +126,10 @@ void display_minibuffer_error(snd_info *sp, const char *str)
   if ((!str) || (!(*str)))
     return; /* this is causing a segfault in _XmStringEntryCopy? */
 
-  if (sp->sgx->minibuffer_height == 0)
+  if (sp->minibuffer_height == 0)
     {
       XtVaGetValues(NAME_BOX(sp), XmNheight, &y, NULL);
-      sp->sgx->minibuffer_height = y;
+      sp->minibuffer_height = y;
     }
   s1 = multi_line_label(str, &lines);
 
@@ -159,9 +159,9 @@ void display_minibuffer_error(snd_info *sp, const char *str)
 		    XmNpaneMaximum, y + 24,
 		    NULL);
 
-      if (!(sp->sgx->minibuffer_watcher))
+      if (!(sp->minibuffer_watcher))
 	{
-	  sp->sgx->minibuffer_watcher = true;
+	  sp->minibuffer_watcher = true;
 	  XtAddCallback(MINIBUFFER_TEXT(sp), XmNvalueChangedCallback, watch_minibuffer, (XtPointer)sp);
 	}
     }
@@ -176,7 +176,7 @@ void goto_minibuffer(snd_info *sp)
 
 void set_minibuffer_string(snd_info *sp, const char *str, bool update) 
 {
-  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
+  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
   XmTextSetString(MINIBUFFER_TEXT(sp), (char *)str);
   /* updating clears the entire graph widget and triggers an expose event -- this is evil if we're currently displaying! */
   /* there's also a bug in libxcb (fixed, but not propagated yet) that causes a segfault here if more than
@@ -190,21 +190,21 @@ void set_minibuffer_string(snd_info *sp, const char *str, bool update)
 
 void set_minibuffer_cursor_position(snd_info *sp, int pos)
 {
-  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
+  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
   XmTextSetCursorPosition(MINIBUFFER_TEXT(sp), pos);
 }
 
 
 char *get_minibuffer_string(snd_info *sp) 
 {
-  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return(NULL);
+  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return(NULL);
   return(XmTextGetString(MINIBUFFER_TEXT(sp)));
 }
 
 
 void make_minibuffer_label(snd_info *sp , const char *str)
 {
-  if ((sp->sgx) && (MINIBUFFER_LABEL(sp)))
+  if (HAS_WIDGETS(sp))
     {
       XmString s1;
       /* there seems to be no way to get this label to reflect its string width -- 
@@ -274,7 +274,7 @@ static int scroll_to_amp(snd_info *sp, int val)
 
 void set_amp(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->amp_control = val;
   else XtVaSetValues(AMP_SCROLLBAR(sp),
 		     XmNvalue,
@@ -351,7 +351,7 @@ static int scroll_to_speed(snd_info *sp, int ival)
 
 void set_speed(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->speed_control = val;
   else XtVaSetValues(SPEED_SCROLLBAR(sp),
 		     XmNvalue,
@@ -430,7 +430,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
 
 void toggle_direction_arrow(snd_info *sp, bool state)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->speed_control_direction = ((state) ? -1 : 1);
   else XmToggleButtonSetState(SPEED_ARROW(sp), (Boolean)state, true);
 }
@@ -468,7 +468,7 @@ static int scroll_to_expand(snd_info *sp, int val)
 
 void set_expand(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->expand_control = val;
   else XtVaSetValues(EXPAND_SCROLLBAR(sp),
 		     XmNvalue,
@@ -522,7 +522,7 @@ static void expand_button_callback(Widget w, XtPointer context, XtPointer info)
 
 void toggle_expand_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->expand_control_p = state;
   else XmToggleButtonSetState(EXPAND_RIGHT_BUTTON(sp), (Boolean)state, true);
 }
@@ -550,7 +550,7 @@ static int scroll_to_contrast(snd_info *sp, int val)
 
 void set_contrast(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->contrast_control = val;
   else XtVaSetValues(CONTRAST_SCROLLBAR(sp),
 		     XmNvalue,
@@ -604,7 +604,7 @@ static void contrast_button_callback(Widget w, XtPointer context, XtPointer info
 
 void toggle_contrast_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->contrast_control_p = state;
   else XmToggleButtonSetState(CONTRAST_RIGHT_BUTTON(sp), (Boolean)state, true);
 }
@@ -646,7 +646,7 @@ static int scroll_to_revscl(snd_info *sp, int val)
 
 void set_revscl(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->reverb_control_scale = val;
   else XtVaSetValues(REVSCL_SCROLLBAR(sp),
 		     XmNvalue,
@@ -711,7 +711,7 @@ static int scroll_to_revlen(snd_info *sp, int val)
 
 void set_revlen(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->reverb_control_length = val;
   else XtVaSetValues(REVLEN_SCROLLBAR(sp),
 		     XmNvalue,
@@ -766,7 +766,7 @@ static void reverb_button_callback(Widget w, XtPointer context, XtPointer info)
 
 void toggle_reverb_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->reverb_control_p = state;
   else XmToggleButtonSetState(REVERB_BUTTON(sp), (Boolean)state, true);
 }
@@ -784,7 +784,7 @@ static void filter_button_callback(Widget w, XtPointer context, XtPointer info)
 
 void toggle_filter_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->filter_control_p = state;
   else XmToggleButtonSetState(FILTER_BUTTON(sp), (Boolean)state, true);
 }
@@ -810,7 +810,7 @@ void display_filter_env(snd_info *sp)
 
   if (!(snd_ok(sp))) return; /* autotest close + lagging X updates */
 
-  edp = sp->sgx->flt;
+  edp = sp->flt;
   drawer = FILTER_GRAPH(sp);
   height = widget_height(drawer);
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
@@ -847,7 +847,7 @@ void display_filter_env(snd_info *sp)
 
 void set_filter_text(snd_info *sp, const char *str)
 {
-  if (!(IS_PLAYER_SOUND(sp)))
+  if (HAS_WIDGETS(sp))
     XmTextSetString(FILTER_COEFFS_TEXT(sp), (char *)str);
 }
 
@@ -864,7 +864,7 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
 #if HAVE_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
-  edp = sp->sgx->flt;
+  edp = sp->flt;
   edp->in_dB = sp->filter_control_in_dB;
   env_editor_button_motion(edp, ev->x, ev->y, ev->time, sp->filter_control_envelope);
   display_filter_env(sp);
@@ -882,7 +882,7 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
   press_x = ev->x;
   press_y = ev->y;
 #endif
-  edp = sp->sgx->flt;
+  edp = sp->flt;
   edp->in_dB = sp->filter_control_in_dB;
   if (env_editor_button_press(edp, ev->x, ev->y, ev->time, sp->filter_control_envelope))
     display_filter_env(sp);
@@ -920,7 +920,7 @@ static void filter_dB_callback(Widget w, XtPointer context, XtPointer info)
 void set_filter_in_dB(snd_info *sp, bool val)
 {
   sp->filter_control_in_dB = val;
-  if (!(IS_PLAYER_SOUND(sp)))
+  if (HAS_WIDGETS(sp))
     {
       XmToggleButtonSetState(FILTER_DB_BUTTON(sp), (Boolean)val, false);
       display_filter_env(sp);
@@ -951,7 +951,7 @@ static void filter_hz_callback(Widget w, XtPointer context, XtPointer info)
 void set_filter_in_hz(snd_info *sp, bool val)
 {
   new_in_hz(sp, val);
-  if (!(IS_PLAYER_SOUND(sp)))
+  if (HAS_WIDGETS(sp))
     {
       XmToggleButtonSetState(FILTER_HZ_BUTTON(sp), (Boolean)val, false);
       display_filter_env(sp);
@@ -964,7 +964,7 @@ void set_filter_order(snd_info *sp, int order)
   if (order & 1) order++;
   if (order <= 0) order = 2;
   sp->filter_control_order = order;
-  if (!(IS_PLAYER_SOUND(sp)))
+  if (HAS_WIDGETS(sp))
     {
       widget_int_to_text(FILTER_ORDER_TEXT(sp), order);
       display_filter_env(sp);
@@ -1060,7 +1060,7 @@ static void filter_order_activate_callback(Widget w, XtPointer context, XtPointe
 void filter_env_changed(snd_info *sp, env *e)
 {
   /* turn e back into a string for textfield widget */
-  if (!(IS_PLAYER_SOUND(sp)))
+  if (HAS_WIDGETS(sp))
     {
       char *tmpstr = NULL;
       XmTextSetString(FILTER_COEFFS_TEXT(sp), tmpstr = env_to_string(e));
@@ -1076,11 +1076,9 @@ void filter_env_changed(snd_info *sp, env *e)
 
 void set_play_button(snd_info *sp, bool val)
 {
-  if ((sp->sgx) && (!(IS_PLAYER_SOUND(sp))))
-    {
-      XmToggleButtonSetState(PLAY_BUTTON(sp), (Boolean)val, false);
-      set_open_file_play_button(val);
-    }
+  if (HAS_WIDGETS(sp))
+    XmToggleButtonSetState(PLAY_BUTTON(sp), (Boolean)val, false);
+  set_open_file_play_button(val);
 }
 
 
@@ -1114,7 +1112,7 @@ typedef struct {bool pausing; } pause_data;
 
 static void set_play_button_pause(snd_info *sp, void *ptr)
 {
-  if ((sp->playing) && (!(IS_PLAYER_SOUND(sp))))
+  if ((sp->playing) && (HAS_WIDGETS(sp)))
     {
       pause_data *pd = (pause_data *)ptr;
       Widget w;
@@ -1138,7 +1136,7 @@ void play_button_pause(bool pausing)
 
 void set_control_panel_play_button(snd_info *sp)
 {
-  if ((sp) && (sp->sgx) && (PLAY_BUTTON(sp)))
+  if (HAS_WIDGETS(sp))
     {
       set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
       XtVaSetValues(PLAY_BUTTON(sp), XmNselectColor, ss->sgx->selection_color, NULL);
@@ -1177,7 +1175,7 @@ void syncb(snd_info *sp, int on)
 {
   sp->sync = on;
   if (on > ss->sound_sync_max) ss->sound_sync_max = on;
-  if (!(IS_PLAYER_SOUND(sp)))
+  if (HAS_WIDGETS(sp))
     {
       set_sync_color(sp);
       XmToggleButtonSetState(SYNC_BUTTON(sp), (on != 0), false); /* need actual bool here, not a cast! */
@@ -1537,10 +1535,10 @@ static Pixmap stop_sign = 0;
 
 void show_lock(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      if ((sp->sgx) && 
-	  (mini_lock))
+      if (mini_lock)
 	{
 	  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, mini_lock, NULL);
 	}
@@ -1551,10 +1549,10 @@ void show_lock(snd_info *sp)
 
 void hide_lock(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      if ((sp->sgx) && 
-	  (mini_lock))
+      if (mini_lock)
 	{
 	  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
 	}
@@ -1566,10 +1564,10 @@ void hide_lock(snd_info *sp)
 
 static void show_stop_sign(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      if ((sp->sgx) && 
-	  (stop_sign))
+      if (stop_sign)
 	XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, stop_sign, NULL);
       MUS_UNLOCK(sp->stop_sign_lock);
     }
@@ -1578,10 +1576,10 @@ static void show_stop_sign(snd_info *sp)
 
 static void hide_stop_sign(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      if ((sp->sgx) && 
-	  (blank_pixmap))
+      if (blank_pixmap)
 	XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, blank_pixmap, NULL);
       MUS_UNLOCK(sp->stop_sign_lock);
     }
@@ -1590,12 +1588,12 @@ static void hide_stop_sign(snd_info *sp)
 
 void show_bomb(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
       if (sp->bomb_ctr >= NUM_BOMBS) 
 	sp->bomb_ctr = 0;
-      if ((sp->sgx) && 
-	  (bombs[sp->bomb_ctr]))
+      if (bombs[sp->bomb_ctr])
 	{
 	  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, bombs[sp->bomb_ctr], NULL);
 	}
@@ -1607,12 +1605,10 @@ void show_bomb(snd_info *sp)
 
 void hide_bomb(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      if (sp->sgx)
-	{
-	  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
-	}
+      XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
       sp->bomb_ctr = 0;
       MUS_UNLOCK(sp->stop_sign_lock);
     }
@@ -1624,6 +1620,7 @@ void hide_bomb(snd_info *sp)
 static void tick_bomb(XtPointer context, XtIntervalId *id)
 {
   snd_info *sp = (snd_info *)context;
+  if (!HAS_WIDGETS(sp)) return;
   if ((sp->need_update) || (sp->file_unreadable))
     {
       show_bomb(sp);
@@ -1642,6 +1639,7 @@ static void tick_bomb(XtPointer context, XtIntervalId *id)
 
 void start_bomb(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   sp->bomb_ctr = 0;
   if (!(sp->bomb_in_progress))
     {
@@ -1656,6 +1654,7 @@ void start_bomb(snd_info *sp)
 
 void stop_bomb(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   hide_bomb(sp);
   sp->bomb_in_progress = false;
 }
@@ -1826,7 +1825,6 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   bool free_filename = false;
   Widget form;
   XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12;
-  snd_context *sx;
   Atom sound_delete;
 
   if (ss->translated_filename) 
@@ -1864,13 +1862,12 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
   sp->inuse = SOUND_NORMAL;
-  sx = sp->sgx;
   sp->bomb_ctr = 0;
   sp->write_date = file_write_date(filename); /* needed early in this process by the peak-env handlers */
 
-  if (sx->snd_widgets == NULL) 
-    sx->snd_widgets = (Widget *)calloc(NUM_SND_WIDGETS, sizeof(Widget));
-  sw = sx->snd_widgets;
+  if (sp->snd_widgets == NULL) 
+    sp->snd_widgets = (Widget *)calloc(NUM_SND_WIDGETS, sizeof(Widget));
+  sw = sp->snd_widgets;
 
   if ((!make_widgets) && (old_chans < nchans))
     {
@@ -1884,7 +1881,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	{
 	  title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
-	  if (sx->dialog == NULL)
+	  if (sp->dialog == NULL)
 	    {
 	      n = 0;
 	      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1892,17 +1889,17 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	      XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
 	      XtSetArg(args[n], XmNnoResize, false); n++;
 	      XtSetArg(args[n], XmNtransient, false); n++;
-	      sx->dialog = XtCreatePopupShell(title, xmDialogShellWidgetClass, MAIN_SHELL(ss), args, n);
+	      sp->dialog = XtCreatePopupShell(title, xmDialogShellWidgetClass, MAIN_SHELL(ss), args, n);
 	      /* using popup shell here gets around the problem that the shell passes resize requests to all its children
 	       * -- as a popup, it's not considered a child, but that means we don't inherit things like popup menus from 
 	       * the main shell.
 	       */
-	      sound_delete = XmInternAtom(XtDisplay(sx->dialog), (char *)"WM_DELETE_WINDOW", false);
-	      XmAddWMProtocolCallback(sx->dialog, sound_delete, close_sound_dialog, (XtPointer)sp);
+	      sound_delete = XmInternAtom(XtDisplay(sp->dialog), (char *)"WM_DELETE_WINDOW", false);
+	      XmAddWMProtocolCallback(sp->dialog, sound_delete, close_sound_dialog, (XtPointer)sp);
 	    }
-	  else XtVaSetValues(sx->dialog, XmNtitle, title, NULL);
+	  else XtVaSetValues(sp->dialog, XmNtitle, title, NULL);
 	  free(title);
-	  if (!XtIsManaged(sx->dialog)) XtManageChild(sx->dialog);
+	  if (!XtIsManaged(sp->dialog)) XtManageChild(sp->dialog);
 	}
 
       n = 0;      
@@ -1931,7 +1928,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNuserData, sp->index); n++;
 
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
-	SND_PANE(sp) = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, sx->dialog, args, n);
+	SND_PANE(sp) = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, sp->dialog, args, n);
       else 
 	{
 	  unsigned int i;
@@ -2035,8 +2032,8 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	Widget left_widget;
 
 	left_widget = LOCK_OR_BOMB(sp);
-	sp->sgx->progress_widgets = (Widget *)calloc(sp->nchans, sizeof(Widget));
-	sp->sgx->num_progress_widgets = sp->nchans;
+	sp->progress_widgets = (Widget *)calloc(sp->nchans, sizeof(Widget));
+	sp->num_progress_widgets = sp->nchans;
 	/* when an unused sound is reopened in snd-data.c, it's possible for its channel number
 	 *   to be increased.  If we then try to draw the clock icon in the new channel, its
 	 *   widget will be unallocated -> segfault, so to keep things simple, we check this number.
@@ -2059,8 +2056,8 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 		XtSetArg(args[n], XmNlabelPixmap, blank_pixmap); n++;
 	      }
 
-	    sp->sgx->progress_widgets[i] = XtCreateManagedWidget("", xmLabelWidgetClass, NAME_BOX(sp), args, n);
-	    left_widget = sp->sgx->progress_widgets[i];
+	    sp->progress_widgets[i] = XtCreateManagedWidget("", xmLabelWidgetClass, NAME_BOX(sp), args, n);
+	    left_widget = sp->progress_widgets[i];
 	  }
 
 	n = 0;      
@@ -2804,7 +2801,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtAddCallback(FILTER_GRAPH(sp), XmNresizeCallback, filter_drawer_resize, (XtPointer)sp);
       XtAddCallback(FILTER_GRAPH(sp), XmNexposeCallback, filter_drawer_resize, (XtPointer)sp);
 
-      sp->sgx->flt = new_env_editor();
+      sp->flt = new_env_editor();
 
       XtAddEventHandler(FILTER_GRAPH(sp), ButtonPressMask, false, filter_drawer_button_press, sp);
       XtAddEventHandler(FILTER_GRAPH(sp), ButtonMotionMask, false, filter_drawer_button_motion, sp);
@@ -2823,14 +2820,14 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	  XtSetArg(args[n], XmNbackground, ss->sgx->graph_color); n++;
 	  XtSetArg(args[n], XmNnotebookChildType, XmMAJOR_TAB); n++;
 	  XtSetArg(args[n], XmNuserData, sp->index); n++;
-	  sx->tab = XtCreateManagedWidget(name, xmPushButtonWidgetClass, SOUND_PANE(ss), args, n);
+	  sp->tab = XtCreateManagedWidget(name, xmPushButtonWidgetClass, SOUND_PANE(ss), args, n);
 	  free(name);
 	}
 
 
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	run_new_widget_hook(SND_PANE(sp));
-      else run_new_widget_hook(sx->dialog);
+      else run_new_widget_hook(sp->dialog);
 
 #if WITH_RELATIVE_PANES
       if (sound_style(ss) == SOUNDS_VERTICAL)
@@ -2844,9 +2841,9 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	{
 	  title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
-	  XtVaSetValues(sx->dialog, XmNtitle, title, NULL);
+	  XtVaSetValues(sp->dialog, XmNtitle, title, NULL);
 	  free(title);
-	  if (!XtIsManaged(sx->dialog)) XtManageChild(sx->dialog);
+	  if (!XtIsManaged(sp->dialog)) XtManageChild(sp->dialog);
 	}
 
       for (i = 0; i < NUM_SND_WIDGETS - 1; i++)
@@ -2866,7 +2863,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	{
 	  char *name;
 	  name = just_filename(sp->short_filename);
-	  set_label(sx->tab, name);
+	  set_label(sp->tab, name);
 	  free(name);
 	}
     }
@@ -2915,13 +2912,13 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     }
   else 
     {
-      XtVaSetValues(sx->dialog,
+      XtVaSetValues(sp->dialog,
 		    XmNwidth, 100,
 		    XmNheight, 100,
 		    NULL);
       /* this is not redundant -- apparently they're trying to ignore size resets to the "current" */
       /* value, but forgot that unmanage/remanage does not return to the previous size */
-      XtVaSetValues(sx->dialog,
+      XtVaSetValues(sp->dialog,
 		    XmNwidth, (Dimension)(widget_width(MAIN_SHELL(ss))),
 		    XmNheight, (Dimension)(chan_min_y * nchans), /* bugfix thanks to Paul @pobox */
 		    NULL);
@@ -2935,10 +2932,8 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
 void snd_info_cleanup(snd_info *sp)
 {
-  if ((sp) && (sp->sgx))
+  if (HAS_WIDGETS(sp))
     {
-      snd_context *sx;
-      sx = sp->sgx;
       clear_minibuffer_error(sp);
       if (SYNC_BUTTON(sp))
 	{
@@ -2952,14 +2947,14 @@ void snd_info_cleanup(snd_info *sp)
 	  sp->channel_style = CHANNELS_SEPARATE;
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	    {
-	      set_label(sp->sgx->tab, "none");
-	      XmChangeColor(sp->sgx->tab, ss->sgx->graph_color);
+	      set_label(sp->tab, "none");
+	      XmChangeColor(sp->tab, ss->sgx->graph_color);
 	    }
 	  XtUnmanageChild(SND_PANE(sp));
 	}
-      if ((sx->dialog) && 
-	  (XtIsManaged(sx->dialog))) 
-	XtUnmanageChild(sx->dialog);
+      if ((sp->dialog) && 
+	  (XtIsManaged(sp->dialog))) 
+	XtUnmanageChild(sp->dialog);
     }
 }
 
@@ -3093,15 +3088,14 @@ void progress_report(chan_info *cp, mus_float_t pct)
   snd_info *sp;
   sp = cp->sound;
 
-  if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
+  if ((!HAS_WIDGETS(sp)) || (sp->inuse != SOUND_NORMAL)) return;
 
   which = (int)(pct * NUM_HOURGLASSES);
   if (which >= NUM_HOURGLASSES) which = NUM_HOURGLASSES - 1;
   if (which < 0) which = 0;
 
-  if ((sp->sgx) && 
-      (hourglasses[which]) &&
-      (cp->chan < sp->sgx->num_progress_widgets) &&
+  if ((hourglasses[which]) &&
+      (cp->chan < sp->num_progress_widgets) &&
       ((cp->chan == 0) ||
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
@@ -3119,10 +3113,9 @@ void finish_progress_report(chan_info *cp)
   snd_info *sp;
   sp = cp->sound;
 
-  if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
+  if ((!HAS_WIDGETS(sp)) || (sp->inuse != SOUND_NORMAL)) return;
 
-  if ((sp->sgx) &&
-      (cp->chan < sp->sgx->num_progress_widgets) &&
+  if ((cp->chan < sp->num_progress_widgets) &&
       ((cp->chan == 0) ||
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
@@ -3141,10 +3134,9 @@ void start_progress_report(chan_info *cp)
   snd_info *sp;
   sp = cp->sound;
 
-  if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
+  if ((!HAS_WIDGETS(sp)) || (sp->inuse != SOUND_NORMAL)) return;
 
-  if ((sp->sgx) &&
-      (cp->chan < sp->sgx->num_progress_widgets) &&
+  if ((cp->chan < sp->num_progress_widgets) &&
       ((cp->chan == 0) ||
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
@@ -3172,7 +3164,7 @@ void reflect_sound_selection(snd_info *sp)
     {
       XmChangeColor(SND_NAME(osp), ss->sgx->highlight_color);
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
-	XmChangeColor((osp->sgx)->tab, ss->sgx->graph_color);
+	XmChangeColor(osp->tab, ss->sgx->graph_color);
     }
 
   if (sp->selected_channel != NO_SELECTION) 
@@ -3183,9 +3175,9 @@ void reflect_sound_selection(snd_info *sp)
 	  int page, current_page;
 	  XmNotebookPageStatus status;
 	  XmNotebookPageInfo info;
-	  XmChangeColor(sp->sgx->tab, ss->sgx->selected_graph_color);
+	  XmChangeColor(sp->tab, ss->sgx->selected_graph_color);
 	  XtVaGetValues(SOUND_PANE(ss), XmNcurrentPageNumber, &current_page, NULL);
-	  XtVaGetValues(sp->sgx->tab, XmNpageNumber, &page, NULL);
+	  XtVaGetValues(sp->tab, XmNpageNumber, &page, NULL);
 	  if (page != current_page)
 	    {
 	      status = XmNotebookGetPageInfo(SOUND_PANE(ss), page, &info);
@@ -3484,7 +3476,7 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
-  if (sp->sgx == NULL)
+  if (!HAS_WIDGETS(sp))
     return(XEN_EMPTY_LIST);
 
   return(XEN_CONS(XEN_WRAP_WIDGET(SND_PANE(sp)),

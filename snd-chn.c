@@ -357,27 +357,25 @@ void set_sound_channel_style(snd_info *sp, channel_style_t val)
 bool chan_fft_in_progress(chan_info *cp)
 {
   /* fft_in_progress is a background process only if sonogram/spectrogram */
-  return((bool)(cp->cgx->fft_in_progress));
+  return((bool)(cp->fft_in_progress));
 }
 
 
 void set_chan_fft_in_progress(chan_info *cp, idle_t fp) 
 {
-  cp->cgx->fft_in_progress = fp;
+  cp->fft_in_progress = fp;
 }
 
 
 void stop_fft_in_progress(chan_info *cp)
 {
-  if ((cp) && (cp->cgx))
+  if (cp)
     {
-      chan_context *cx;
-      cx = cp->cgx;
-      if (cx->fft_in_progress) 
+      if (cp->fft_in_progress) 
 	{
-	  BACKGROUND_REMOVE(cx->fft_in_progress);
+	  BACKGROUND_REMOVE(cp->fft_in_progress);
 	  finish_progress_report(cp);
-	  cx->fft_in_progress = 0;
+	  cp->fft_in_progress = 0;
 	}
     }
 }
@@ -385,24 +383,22 @@ void stop_fft_in_progress(chan_info *cp)
 
 void stop_peak_env(chan_info *cp)
 {
-  chan_context *cgx;
-  cgx = cp->cgx;
-  if ((cgx) && (cgx->peak_env_in_progress))
+  if (cp->peak_env_in_progress)
     {
-      BACKGROUND_REMOVE(cgx->peak_env_in_progress);
+      BACKGROUND_REMOVE(cp->peak_env_in_progress);
       free_peak_env_state(cp);
-      cgx->peak_env_in_progress = 0; 
+      cp->peak_env_in_progress = 0; 
     }
 }
 
 
 void force_fft_clear(chan_info *cp)
 {
-  if ((cp->cgx) && (cp->cgx->fft_in_progress))
+  if (cp->fft_in_progress)
     {
-      BACKGROUND_REMOVE(cp->cgx->fft_in_progress);
+      BACKGROUND_REMOVE(cp->fft_in_progress);
       finish_progress_report(cp);
-      cp->cgx->fft_in_progress = 0;
+      cp->fft_in_progress = 0;
     }
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
   cp_free_fft_state(cp);
@@ -411,15 +407,13 @@ void force_fft_clear(chan_info *cp)
 
 void chan_info_cleanup(chan_info *cp)
 {
-  if ((cp) && (cp->cgx))
+  if (cp)
     {
-      chan_context *cx;
-      cx = cp->cgx;
-      cx->selected = false;
-      if (cx->fft_in_progress) 
+      cp->selected = false;
+      if (cp->fft_in_progress) 
 	{
-	  BACKGROUND_REMOVE(cx->fft_in_progress);
-	  cx->fft_in_progress = 0;
+	  BACKGROUND_REMOVE(cp->fft_in_progress);
+	  cp->fft_in_progress = 0;
 	}
       stop_peak_env(cp);
       cleanup_cw(cp);
@@ -539,14 +533,12 @@ static void update_graph_1(chan_info *cp, bool warn)
   fprintf(stderr, "update %d %d %d %d %d\n",
 	  (cp->updating),
 	  (cp->active != CHANNEL_HAS_AXES),
-	  (cp->cgx == NULL),
 	  (cp->sounds == NULL),
 	  (cp->sounds[cp->sound_ctr] == NULL));
 #endif
 
   if ((cp->updating) || 
       (cp->active != CHANNEL_HAS_AXES) ||
-      (cp->cgx == NULL) || 
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL)) 
     return;
@@ -574,7 +566,7 @@ static void update_graph_1(chan_info *cp, bool warn)
       ap->hisamp = (mus_long_t)(ap->x1 * cur_srate);
     }
 
-  if (!(cp->cgx->ax->wn)) 
+  if (!(cp->ax->wn)) 
     if (!(fixup_cp_cgx_ax_wn(cp))) 
       {
 	/* window not active yet (gtk) */
@@ -778,14 +770,9 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
 
 void start_peak_env(chan_info *cp)
 {
-  chan_context *cgx;
-  cgx = cp->cgx;
-  if (cgx)
-    {
-      if (cgx->peak_env_in_progress) stop_peak_env(cp);
-      start_peak_env_state(cp);
-      cgx->peak_env_in_progress = BACKGROUND_ADD(get_peak_env, (any_pointer_t)cp);
-    }
+  if (cp->peak_env_in_progress) stop_peak_env(cp);
+  start_peak_env_state(cp);
+  cp->peak_env_in_progress = BACKGROUND_ADD(get_peak_env, (any_pointer_t)cp);
 }
 
 
@@ -1477,7 +1464,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
       else ax = copy_context(cp);
 #else
       if (!(ap->ax))
-	ax = cp->cgx->ax;
+	ax = cp->ax;
       else ax = ap->ax;
 #endif
       if (cp->printing) ps_fg(cp, ax);
@@ -1537,9 +1524,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 	  if ((ap->hisamp - ap->losamp) > (CURRENT_SAMPLES(cp) / 4))
 	    {    
                                              /* we're trying to view a large portion of the (large) sound */
-	      chan_context *cgx;
-	      cgx = cp->cgx;
-	      if (cgx->peak_env_in_progress)
+	      if (cp->peak_env_in_progress)
 		{                            /* is peak-env background process is still working on it */
 		  peak_env_info *ep;
 		  ep = cp->edits[cp->edit_ctr]->peak_env;
@@ -1669,7 +1654,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
   ap = cp->axis;
   ax = copy_context(cp);
   if (!(ap->ax))
-    ap->ax = cp->cgx->ax;
+    ap->ax = cp->ax;
   if (beg > 0) beg--;
 
   /* get samps / pixel */
@@ -1688,7 +1673,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
   end_in_seconds = (double)end / cur_srate;
 
 #if USE_GTK
-  cairo_push_group(cp->cgx->ax->cr);
+  cairo_push_group(ss->cr);
 #endif
 
   erase_rectangle(cp, ap->ax, 
@@ -1722,9 +1707,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 	  if ((end - beg) > (CURRENT_SAMPLES(cp) / 4))
 	    {    
                                              /* we're trying to view a large portion of the (large) sound */
-	      chan_context *cgx;
-	      cgx = cp->cgx;
-	      if (cgx->peak_env_in_progress)
+	      if (cp->peak_env_in_progress)
 		{                            /* is peak-env background process is still working on it */
 		  peak_env_info *ep;
 		  ep = cp->edits[cp->edit_ctr]->peak_env;
@@ -1732,7 +1715,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 		    {                        /* and it will be useful when it finishes */
 		      cp->waiting_to_make_graph = true;
 #if USE_GTK
-		      cairo_pop_group_to_source(cp->cgx->ax->cr);
+		      cairo_pop_group_to_source(ss->cr);
 #endif
 		      return;               /* so don't run two enormous data readers in parallel */
 		    }
@@ -1783,8 +1766,8 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
       sp->minibuffer_on = MINI_CURSOR;
     }
 #if USE_GTK
-  cairo_pop_group_to_source(cp->cgx->ax->cr);
-  cairo_paint(cp->cgx->ax->cr);
+  cairo_pop_group_to_source(ss->cr);
+  cairo_paint(ss->cr);
 #endif
 
   display_channel_marks(cp);
@@ -2072,7 +2055,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
   else ax = copy_context(cp);
 #else
   if (!(fap->ax))
-    ax = cp->cgx->ax;
+    ax = cp->ax;
   else ax = fap->ax;
 #endif
 
@@ -2547,15 +2530,15 @@ static void make_sonogram(chan_info *cp)
       if (bins == 0) return;
 
 #if USE_MOTIF
-      if (cp->cgx->fft_pix)                            /* Motif None = 0 */
+      if (cp->fft_pix)                            /* Motif None = 0 */
 	{
 	  if ((cp->fft_changed == FFT_UNCHANGED) &&
-	      (cp->cgx->fft_pix_ready) &&
-	      (cp->cgx->fft_pix_cutoff == cp->spectrum_end) &&
-	      ((int)(cp->cgx->fft_pix_width) == fwidth) &&
-	      ((int)(cp->cgx->fft_pix_height) == fheight) &&
-	      (cp->cgx->fft_pix_x0 == fap->x_axis_x0) &&
-	      (cp->cgx->fft_pix_y0 == fap->y_axis_y1)) /* X is upside down */
+	      (cp->fft_pix_ready) &&
+	      (cp->fft_pix_cutoff == cp->spectrum_end) &&
+	      ((int)(cp->fft_pix_width) == fwidth) &&
+	      ((int)(cp->fft_pix_height) == fheight) &&
+	      (cp->fft_pix_x0 == fap->x_axis_x0) &&
+	      (cp->fft_pix_y0 == fap->y_axis_y1)) /* X is upside down */
 	    {
 	      if (restore_fft_pix(cp, ax))             /* copy pix into drawing area and return */
 		return;
@@ -2564,7 +2547,7 @@ static void make_sonogram(chan_info *cp)
 	    {
 	      free_fft_pix(cp);
 	    }
-	  cp->cgx->fft_pix_ready = false;
+	  cp->fft_pix_ready = false;
 	}
 #endif
 
@@ -3607,7 +3590,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
   else ax = copy_context(cp);
 #else
   if (!(uap->ax))
-    ax = cp->cgx->ax;
+    ax = cp->ax;
   else ax = uap->ax;
 #endif
 
@@ -3739,7 +3722,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
   color_t old_color = 0; /* make the compiler happy */
 
   if (!(ap->ax))
-    ap->ax = cp->cgx->ax;
+    ap->ax = cp->ax;
   sp = cp->sound;
   setup_graphics_context(cp, ap->ax);
 
@@ -3929,10 +3912,11 @@ static void display_channel_data_with_size(chan_info *cp,
 	  graphics_context *our_ax;
 
 #if USE_GTK
-	  our_ax = cp->cgx->ax;
+	  /* our_ax = cp->ax; */
+	  our_ax = copy_context(cp);
 	  if (!use_incoming_cr)
-	    our_ax->cr = MAKE_CAIRO(our_ax->wn);
-	  cairo_push_group(our_ax->cr);
+	    ss->cr = MAKE_CAIRO(our_ax->wn);
+	  cairo_push_group(ss->cr);
 #else	  
 	  our_ax = ap->ax;
 #endif
@@ -3987,17 +3971,17 @@ static void display_channel_data_with_size(chan_info *cp,
 		show_smpte_label(cp, our_ax);
 	    }
 
-	  if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
+	  if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && 
+	      (height > 10))
 	    display_channel_id(cp, our_ax, height + offset, sp->nchans);
 
 #if USE_GTK
-	  cairo_pop_group_to_source(our_ax->cr);
-	  cairo_paint(our_ax->cr);	  
+	  cairo_pop_group_to_source(ss->cr);
+	  cairo_paint(ss->cr);	  
 	  if (!use_incoming_cr)
 	    {
-	      FREE_CAIRO(our_ax->cr);
-	      our_ax->cr = NULL;
-	      our_ax->cr = NULL;
+	      FREE_CAIRO(ss->cr);
+	      ss->cr = NULL;
 	    }
 #endif
 	  if (points == 0)
@@ -4020,8 +4004,8 @@ static void display_channel_data_with_size(chan_info *cp,
     {
 #if USE_GTK
       if (!use_incoming_cr)
-	cp->cgx->ax->cr = MAKE_CAIRO(cp->cgx->ax->wn);
-      cairo_push_group(cp->cgx->ax->cr);
+	ss->cr = MAKE_CAIRO(cp->ax->wn);
+      cairo_push_group(ss->cr);
 #endif
 
       if ((!(with_gl(ss))) || 
@@ -4053,7 +4037,7 @@ static void display_channel_data_with_size(chan_info *cp,
 #if (!USE_GTK)
 			 (sp->channel_style == CHANNELS_SUPERIMPOSED) ? combined_context(cp) : copy_context(cp),
 #else
-			 (ap->ax) ? ap->ax : cp->cgx->ax,
+			 (ap->ax) ? ap->ax : cp->ax,
 #endif
 			 cp->hookable);
 	  break;
@@ -4076,12 +4060,12 @@ static void display_channel_data_with_size(chan_info *cp,
 	}
 
 #if USE_GTK
-      cairo_pop_group_to_source(cp->cgx->ax->cr);
-      cairo_paint(cp->cgx->ax->cr);	  
+      cairo_pop_group_to_source(ss->cr);
+      cairo_paint(ss->cr);	  
       if (!use_incoming_cr)
 	{
-	  FREE_CAIRO(cp->cgx->ax->cr);
-	  cp->cgx->ax->cr = NULL;
+	  FREE_CAIRO(ss->cr);
+	  ss->cr = NULL;
 	}
 #endif
       /* this cairo_t can't be maintained across the fft functions -- they can be
@@ -4130,11 +4114,10 @@ static void display_channel_data_with_size(chan_info *cp,
 
 #if USE_GTK
       if (!(uap->ax))
-	uap->ax = cp->cgx->ax;
+	uap->ax = cp->ax;
       if (!use_incoming_cr)
-	uap->ax->cr = MAKE_CAIRO(uap->ax->wn);
-      else uap->ax->cr = cp->cgx->ax->cr;
-      cairo_push_group(uap->ax->cr);
+	ss->cr = MAKE_CAIRO(uap->ax->wn);
+      cairo_push_group(ss->cr);
 #endif
       make_axes(cp, uap, /* defined in this file l 2293 */
 		X_AXIS_IN_SECONDS,
@@ -4147,12 +4130,12 @@ static void display_channel_data_with_size(chan_info *cp,
 	make_lisp_graph(cp, pixel_list); /* this uses the cairo_t set up above, but possible pixel_list proc does not */
 
 #if USE_GTK
-      cairo_pop_group_to_source(uap->ax->cr);
-      cairo_paint(uap->ax->cr);	  
+      cairo_pop_group_to_source(ss->cr);
+      cairo_paint(ss->cr);	  
       if (!use_incoming_cr)
 	{
-	  FREE_CAIRO(uap->ax->cr);
-	  uap->ax->cr = NULL;
+	  FREE_CAIRO(ss->cr);
+	  ss->cr = NULL;
 	}
 #endif
 
@@ -4302,7 +4285,7 @@ static void erase_cursor(chan_info *cp)
     int ccy;
     old_cursor_color = ss->sgx->cursor_color;
     cp->cursor_size++;
-    ss->sgx->cursor_color = cp->cgx->ax->gc->bg_color;
+    ss->sgx->cursor_color = cp->ax->gc->bg_color;
     draw_cursor(cp);
     ss->sgx->cursor_color = old_cursor_color;
     cp->cursor_size--;
@@ -4313,7 +4296,7 @@ static void erase_cursor(chan_info *cp)
     /* make_partial_graph doesn't quite do the right thing here.  We may have to
      *    save the actual points around the cursor and redraw them by hand.
      */
-    draw_dot(cp->cgx->ax, cp->cx + 0.5, ccy + 0.5, 1);
+    draw_dot(cp->ax, cp->cx + 0.5, ccy + 0.5, 1);
     /* this isn't perfect (it slightly erases any lines it contacts), but it's ok */
   }
 #endif
@@ -4336,7 +4319,7 @@ static void draw_graph_cursor(chan_info *cp)
 
 #if USE_GTK
   if (!(ap->ax->wn)) return;
-  ap->ax->cr = MAKE_CAIRO(ap->ax->wn);
+  ss->cr = MAKE_CAIRO(ap->ax->wn);
 #endif
 
   if (cp->cursor_visible) 
@@ -4354,8 +4337,8 @@ static void draw_graph_cursor(chan_info *cp)
   cp->cursor_visible = true;
 
 #if USE_GTK
-  FREE_CAIRO(ap->ax->cr);
-  ap->ax->cr = NULL;
+  FREE_CAIRO(ss->cr);
+  ss->cr = NULL;
 #endif
 }
 
@@ -4374,16 +4357,16 @@ static void draw_sonogram_cursor_1(chan_info *cp)
 #else
   {
     color_t old_color;
-    fax = cp->cgx->ax; /* fap->ax does not work here?!? */
-    fax->cr = MAKE_CAIRO(fax->wn);
+    fax = cp->ax; /* fap->ax does not work here?!? */
+    ss->cr = MAKE_CAIRO(fax->wn);
     /* y_axis_y0 > y_axis_y1 (upside down coordinates) */
     old_color = get_foreground_color(fax);
     set_foreground_color(fax, ss->sgx->cursor_color);
     draw_line(fax, cp->fft_cx, fap->y_axis_y0 - 1, cp->fft_cx, fap->y_axis_y1);
     set_foreground_color(fax, old_color);
     cp->fft_cursor_visible = (!(cp->fft_cursor_visible));
-    FREE_CAIRO(fax->cr);
-    fax->cr = NULL;
+    FREE_CAIRO(ss->cr);
+    ss->cr = NULL;
   }
 #endif
 }
@@ -4572,12 +4555,12 @@ void cursor_moveto_with_window(chan_info *cp, mus_long_t samp, mus_long_t left_s
       if (cp->graph_time_p) 
 	{
 #if USE_GTK
-	  ap->ax->cr = MAKE_CAIRO(ap->ax->wn);
+	  ss->cr = MAKE_CAIRO(ap->ax->wn);
 #endif
 	  erase_cursor(cp);
 #if USE_GTK
-	  FREE_CAIRO(ap->ax->cr);
-	  ap->ax->cr = NULL;
+	  FREE_CAIRO(ss->cr);
+	  ss->cr = NULL;
 #endif
 	}
       cp->cursor_visible = false; /* don't redraw at old location */
@@ -4932,9 +4915,9 @@ void check_cursor_shape(chan_info *cp, int x, int y)
     case CLICK_MARK:
     case CLICK_FFT_AXIS:
       /* these all involve a drag if the mouse is pressed */
-      if (cp->cgx->current_cursor != ss->sgx->bounds_cursor)
+      if (cp->current_cursor != ss->sgx->bounds_cursor)
 	{
-	  cp->cgx->current_cursor = ss->sgx->bounds_cursor;
+	  cp->current_cursor = ss->sgx->bounds_cursor;
 	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->bounds_cursor);
 	}
       break;
@@ -4943,25 +4926,25 @@ void check_cursor_shape(chan_info *cp, int x, int y)
     case CLICK_SELECTION_PLAY:
     case CLICK_CURSOR_PLAY:
     case CLICK_MARK_PLAY:
-      if (cp->cgx->current_cursor != ss->sgx->play_cursor)
+      if (cp->current_cursor != ss->sgx->play_cursor)
 	{
-	  cp->cgx->current_cursor = ss->sgx->play_cursor;
+	  cp->current_cursor = ss->sgx->play_cursor;
 	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->play_cursor);
 	}
       break;
 
     case CLICK_SELECTION_LOOP_PLAY:
-      if (cp->cgx->current_cursor != ss->sgx->loop_play_cursor)
+      if (cp->current_cursor != ss->sgx->loop_play_cursor)
 	{
-	  cp->cgx->current_cursor = ss->sgx->loop_play_cursor;
+	  cp->current_cursor = ss->sgx->loop_play_cursor;
 	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->loop_play_cursor);
 	}
       break;
 
     default:
-      if (cp->cgx->current_cursor != ss->sgx->graph_cursor)
+      if (cp->current_cursor != ss->sgx->graph_cursor)
 	{
-	  cp->cgx->current_cursor = ss->sgx->graph_cursor;
+	  cp->current_cursor = ss->sgx->graph_cursor;
 	  GUI_SET_CURSOR(channel_graph(cp), ss->sgx->graph_cursor);
 	}
       break;
@@ -5824,24 +5807,35 @@ static bool run_time_graph_hook(chan_info *cp, graphics_context *ax)
 }
 
 
+widget_t channel_to_widget(chan_info *cp)
+{
+  if ((cp->chan > 0) && 
+      (cp->sound->channel_style != CHANNELS_SEPARATE))
+    return(channel_graph(cp->sound->chans[0]));
+  return(channel_graph(cp));
+}
+
+
+chan_info *channel_to_chan(chan_info *cp)
+{
+  if ((cp->chan > 0) && 
+      (cp->sound->channel_style != CHANNELS_SEPARATE))
+    return(cp->sound->chans[0]);
+  return(cp);
+}
+
+
 graphics_context *set_context(chan_info *cp, chan_gc_t gc)
 {
   graphics_context *ax;
   state_context *sx;
-  chan_context *cx;
+  chan_info *draw_cp;
 
-#if (!USE_GTK)
-  cx = cp->tcgx;
-  if (!cx) 
-    cx = cp->cgx;
-#else
-  cx = cp->cgx;
-#endif
-
-  ax = cx->ax;
+  draw_cp = channel_to_chan(cp);
+  ax = draw_cp->ax;
   sx = ss->sgx;
 
-  if (cp->cgx->selected)
+  if (cp->selected)
     {
       switch (gc)
 	{
@@ -6103,7 +6097,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	    wx = rx - lx;
 	    if (wx <= 0) wx = 1;
 
-	    if (cp->cgx->selected)
+	    if (cp->selected)
 	      {
 		cur_ax->gc = ss->sgx->selected_selection_gc;
 		fill_rectangle(cur_ax, x_offset + lx, chan_offset, wx, height);
@@ -6433,7 +6427,7 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 
 	    case CP_UPDATE_TIME:
 #if USE_GTK
-	      if (!(cp->cgx->ax->wn)) fixup_cp_cgx_ax_wn(cp);
+	      if (!(cp->ax->wn)) fixup_cp_cgx_ax_wn(cp);
 #endif
 	      /* any display-oriented background process must 1st be run to completion
 	       *       display checks for waiting process and does not update display if one found!
@@ -7706,7 +7700,6 @@ static void update_db_graph(chan_info *cp, mus_float_t new_db)
   cp->min_dB = new_db;
   cp->lin_dB = pow(10.0, cp->min_dB * 0.05); 
   if ((cp->active < CHANNEL_HAS_AXES) ||
-      (cp->cgx == NULL) || 
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL) ||
       (!(cp->graph_transform_p)) ||

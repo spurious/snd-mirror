@@ -27,7 +27,7 @@ void edit_menu_update(void)
     }
   selection_p = selection_is_active();
   region_p = region_ok(region_list_position_to_id(0));
-  if ((cp) && (cp->cgx))
+  if (cp)
     {
       undoable_edit_p = (cp->edit_ctr > 0);
       redoable_edit_p = (!(((cp->edit_ctr + 1) == cp->edit_size) || 
@@ -161,13 +161,12 @@ void file_menu_update(void)
 
 void reflect_file_revert_in_label(snd_info *sp)
 {
-  if (sp->sgx)
-    {
-      bool editing;
-      editing = has_unsaved_edits(sp);
-      if (!editing)
-	set_sound_pane_file_label(sp, shortname_indexed(sp));
-    }
+#if (!USE_NO_GUI)
+  bool editing;
+  editing = has_unsaved_edits(sp);
+  if (!editing)
+    set_sound_pane_file_label(sp, shortname_indexed(sp));
+#endif
 }
 
 

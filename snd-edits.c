@@ -272,17 +272,21 @@ static void reflect_sample_change_in_axis(chan_info *cp)
 
 void reflect_file_change_in_label(chan_info *cp)
 {
+#if (!USE_NO_GUI)
   snd_info *sp;
+
   if (cp->edit_ctr == 0) return;
   sp = cp->sound;
-  if (sp->sgx == NULL) return;
+
   if (!(cp->squelch_update))
     {
       char *starred_name;
       int len;
+
       len = strlen(shortname(sp)) + 16;
       starred_name = (char *)calloc(len, sizeof(char));
       strcpy(starred_name, shortname_indexed(sp));
+
       if ((sp->user_read_only == FILE_READ_ONLY) || 
 	  (sp->file_read_only == FILE_READ_ONLY))
 	strcat(starred_name, "(*)");
@@ -290,15 +294,14 @@ void reflect_file_change_in_label(chan_info *cp)
       set_sound_pane_file_label(sp, starred_name);
       free(starred_name);
     }
+#endif
 }
 
 
 static void check_for_first_edit(chan_info *cp)
 {
-  if ((cp->cgx) && (cp->edit_ctr == 1)) /* first edit on this file (?) */
-    {
-      reflect_file_change_in_label(cp);
-    }
+  if (cp->edit_ctr == 1) /* first edit on this file (?) */
+    reflect_file_change_in_label(cp);
 }
 
 

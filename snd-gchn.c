@@ -17,20 +17,20 @@ enum {
 enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj, NUM_CHAN_ADJS};
 
 
-GtkWidget *channel_graph(chan_info *cp)      {return(cp->cgx->chan_widgets[W_graph]);}
-static GtkWidget *channel_sx(chan_info *cp)  {return(cp->cgx->chan_widgets[W_sx]);}
-static GtkWidget *channel_sy(chan_info *cp)  {return(cp->cgx->chan_widgets[W_sy]);}
-static GtkWidget *channel_zx(chan_info *cp)  {return(cp->cgx->chan_widgets[W_zx]);}
-static GtkWidget *channel_zy(chan_info *cp)  {return(cp->cgx->chan_widgets[W_zy]);}
-static GtkWidget *channel_gsy(chan_info *cp) {return(cp->cgx->chan_widgets[W_gsy]);}
-static GtkWidget *channel_gzy(chan_info *cp) {return(cp->cgx->chan_widgets[W_gzy]);}
-GtkWidget *channel_w(chan_info *cp)          {return(cp->cgx->chan_widgets[W_w]);}
-GtkWidget *channel_f(chan_info *cp)          {return(cp->cgx->chan_widgets[W_f]);}
-GtkWidget *channel_up_arrow(chan_info *cp)   {return(cp->cgx->chan_widgets[W_up_ev]);}
-GtkWidget *channel_down_arrow(chan_info *cp) {return(cp->cgx->chan_widgets[W_down_ev]);}
+GtkWidget *channel_graph(chan_info *cp)      {return(cp->chan_widgets[W_graph]);}
+static GtkWidget *channel_sx(chan_info *cp)  {return(cp->chan_widgets[W_sx]);}
+static GtkWidget *channel_sy(chan_info *cp)  {return(cp->chan_widgets[W_sy]);}
+static GtkWidget *channel_zx(chan_info *cp)  {return(cp->chan_widgets[W_zx]);}
+static GtkWidget *channel_zy(chan_info *cp)  {return(cp->chan_widgets[W_zy]);}
+static GtkWidget *channel_gsy(chan_info *cp) {return(cp->chan_widgets[W_gsy]);}
+static GtkWidget *channel_gzy(chan_info *cp) {return(cp->chan_widgets[W_gzy]);}
+GtkWidget *channel_w(chan_info *cp)          {return(cp->chan_widgets[W_w]);}
+GtkWidget *channel_f(chan_info *cp)          {return(cp->chan_widgets[W_f]);}
+GtkWidget *channel_up_arrow(chan_info *cp)   {return(cp->chan_widgets[W_up_ev]);}
+GtkWidget *channel_down_arrow(chan_info *cp) {return(cp->chan_widgets[W_down_ev]);}
 
 
-#define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->edhist_list
+#define EDIT_HISTORY_LIST(Cp) (Cp)->edhist_list
 #if HAVE_GTK_3
   #define EDIT_HISTORY_CLOSED 2
 #else
@@ -44,13 +44,13 @@ GtkWidget *channel_down_arrow(chan_info *cp) {return(cp->cgx->chan_widgets[W_dow
  * So, in gtk3 the scrolled window does not display a horizontal scrollbar
  */
 
-static GtkWidget *channel_main_pane(chan_info *cp) {return(cp->cgx->chan_widgets[W_main_window]);}
-static GtkAdjustment *gsy_adj(chan_info *cp)           {return(cp->cgx->chan_adjs[W_gsy_adj]);}
-static GtkAdjustment *gzy_adj(chan_info *cp)           {return(cp->cgx->chan_adjs[W_gzy_adj]);}
-static GtkAdjustment *sy_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_sy_adj]);}
-static GtkAdjustment *sx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_sx_adj]);}
-static GtkAdjustment *zy_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zy_adj]);}
-static GtkAdjustment *zx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zx_adj]);}
+static GtkWidget *channel_main_pane(chan_info *cp) {return(cp->chan_widgets[W_main_window]);}
+static GtkAdjustment *gsy_adj(chan_info *cp)           {return(cp->chan_adjs[W_gsy_adj]);}
+static GtkAdjustment *gzy_adj(chan_info *cp)           {return(cp->chan_adjs[W_gzy_adj]);}
+static GtkAdjustment *sy_adj(chan_info *cp)            {return(cp->chan_adjs[W_sy_adj]);}
+static GtkAdjustment *sx_adj(chan_info *cp)            {return(cp->chan_adjs[W_sx_adj]);}
+static GtkAdjustment *zy_adj(chan_info *cp)            {return(cp->chan_adjs[W_zy_adj]);}
+static GtkAdjustment *zx_adj(chan_info *cp)            {return(cp->chan_adjs[W_zx_adj]);}
 
 
 static mus_float_t sqr(mus_float_t a) {return(a * a);}
@@ -61,7 +61,6 @@ static mus_float_t cube(mus_float_t a) {return(a * a * a);}
 bool channel_graph_is_visible(chan_info *cp)
 {
   return((cp) &&
-	 (cp->cgx) &&
 	 (channel_graph(cp)) &&
 	 (widget_is_active(channel_graph(cp))) &&
 	 (cp->sound) &&
@@ -69,7 +68,6 @@ bool channel_graph_is_visible(chan_info *cp)
 	 (((cp->sound->inuse == SOUND_WRAPPER) || (cp->sound->inuse == SOUND_REGION)) ||
 	  ((cp->sound->inuse == SOUND_NORMAL) &&
 	   /* other choice: SOUND_IDLE -> no display */
-	   (cp->sound->sgx) &&
 	   (w_snd_pane(cp->sound)) &&
 	   (widget_is_active(w_snd_pane(cp->sound))))));
 }
@@ -510,7 +508,7 @@ static void remake_edit_history(chan_info *cp)
   snd_info *sp;
   int i, eds;
   slist *lst;
-  if ((!cp) || (!(cp->cgx)) || (cp->active < CHANNEL_HAS_AXES)) return;
+  if ((!cp) || (cp->active < CHANNEL_HAS_AXES)) return;
   if (cp->squelch_update) return;
   lst = EDIT_HISTORY_LIST(cp);
   if (!lst) return;
@@ -578,7 +576,7 @@ void reflect_edit_history_change(chan_info *cp)
   /* new edit so it is added, and any trailing lines removed */
   snd_info *sp;
   if (cp->squelch_update) return;
-  if ((cp->in_as_one_edit > 0) || (cp->cgx == NULL)) return;
+  if (cp->in_as_one_edit > 0) return;
   sp = cp->sound;
   if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
     {
@@ -596,7 +594,6 @@ void reflect_edit_counter_change(chan_info *cp)
   /* undo/redo/revert -- change which line is highlighted */
   snd_info *sp;
   if (cp->squelch_update) return;
-  if (cp->cgx == NULL) return;
   sp = cp->sound;
   if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
     {
@@ -660,8 +657,8 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
   chan_info *cp = (chan_info *)data;
   ss->sgx->graph_is_active = true;
   gtk_widget_grab_focus(w);
-  if ((cp->sound) && (cp->sound->sgx))
-    cp->sound->sgx->mini_active = false;
+  if (cp->sound)
+    cp->sound->mini_active = false;
   graph_button_press_callback(cp, (void *)ev, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), EVENT_BUTTON(ev), EVENT_TIME(ev));
   return(false);
 }
@@ -742,7 +739,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   GtkWidget **cw;
   GtkAdjustment **adjs;
   chan_info *cp;
-  chan_context *cx;
   graphics_context *cax;
   state_context *sx;
   bool make_widgets, need_extra_scrollbars;
@@ -750,20 +746,19 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp);
   cp = sp->chans[channel];
-  cx = cp->cgx;
-  cx->current_hourglass = -1;
 
-  if (cx->chan_widgets == NULL) 
+  cp->current_hourglass = -1;
+  if (cp->chan_widgets == NULL) 
     {
       cw = (GtkWidget **)calloc(NUM_CHAN_WIDGETS, sizeof(GtkWidget *));
       adjs = (GtkAdjustment **)calloc(NUM_CHAN_ADJS, sizeof(GtkAdjustment *));
-      cp->cgx->chan_widgets = cw;
-      cp->cgx->chan_adjs = adjs;
+      cp->chan_widgets = cw;
+      cp->chan_adjs = adjs;
     }
   else
     {
-      cw = cx->chan_widgets;
-      adjs = cx->chan_adjs;
+      cw = cp->chan_widgets;
+      adjs = cp->chan_adjs;
     }
   sx = ss->sgx;
   need_extra_scrollbars = ((!main) && (channel == 0));
@@ -774,14 +769,14 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  cw[W_main_window] = gtk_hpaned_new();
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]), 2);
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], true, true, 0);
-	  cp->cgx->edhist_list = slist_new(cw[W_main_window], NULL, 0, PANED_ADD1);
+	  cp->edhist_list = slist_new(cw[W_main_window], NULL, 0, PANED_ADD1);
 #if HAVE_GTK_3
-	  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cp->cgx->edhist_list->scroller), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cp->edhist_list->scroller), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 #else
-	  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cp->cgx->edhist_list->scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cp->edhist_list->scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 #endif
-	  cp->cgx->edhist_list->select_callback = history_select_callback;
-	  cp->cgx->edhist_list->select_callback_data = (void *)cp;
+	  cp->edhist_list->select_callback = history_select_callback;
+	  cp->edhist_list->select_callback_data = (void *)cp;
 	}
       else cw[W_main_window] = main;
 
@@ -953,7 +948,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 
   reflect_edit_history_change(cp);
 
-  cax = cx->ax;
+  cax = cp->ax;
   cax->gc = sx->basic_gc;
   /* cax->wn has to wait until update_graph */
   return(0);
@@ -989,7 +984,7 @@ gc_t *copy_GC(chan_info *cp)
 {
   state_context *sx;
   sx = ss->sgx;
-  if (cp->cgx->selected) return(sx->selected_basic_gc);
+  if (cp->selected) return(sx->selected_basic_gc);
   return(sx->basic_gc);
 }
 
@@ -1000,7 +995,7 @@ gc_t *erase_GC(chan_info *cp)
   snd_info *sp;
   sp = cp->sound;
   sx = ss->sgx;
-  if ((cp->cgx->selected) ||
+  if ((cp->selected) ||
       ((sp) && (sp->channel_style == CHANNELS_SUPERIMPOSED) && (sp->index == ss->selected_sound)))
     return(sx->selected_erase_gc);
   return(sx->erase_gc);
@@ -1009,22 +1004,19 @@ gc_t *erase_GC(chan_info *cp)
 
 void cleanup_cw(chan_info *cp)
 {
-  if ((cp) && (cp->cgx))
+  if (cp)
     {
-      chan_context *cx;
       GtkWidget **cw;
-
-      cx = cp->cgx;
-      cx->progress_pct = -1.0;
+      cp->progress_pct = -1.0;
 
       if (EDIT_HISTORY_LIST(cp)) 
 	{
 	  slist_clear(EDIT_HISTORY_LIST(cp));
-	  gtk_paned_set_position(GTK_PANED(cx->chan_widgets[W_main_window]), EDIT_HISTORY_CLOSED);
+	  gtk_paned_set_position(GTK_PANED(cp->chan_widgets[W_main_window]), EDIT_HISTORY_CLOSED);
 	}
 
-      cx->selected = false;
-      cw = cx->chan_widgets;
+      cp->selected = false;
+      cw = cp->chan_widgets;
 
       if (cw)
 	{
@@ -1091,17 +1083,14 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	  height[0] = widget_height(w_snd_pane(sp)) - control_panel_height(sp);
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
-	      chan_context *mcgx;
 	      chan_info *ncp;
 	      ncp = sp->chans[0];
-	      mcgx = ncp->cgx;
+
 	      for (i = 1; i < sp->nchans; i++) 
 		{
 		  ncp = sp->chans[i];
 		  cleanup_cw(ncp);
-		  ncp->tcgx = mcgx;
 		  fixup_cp_cgx_ax_wn(ncp);
-		  /* reset_mix_graph_parent(ncp); */
 		}
 	      channel_open_pane(sp->chans[0]);
 	      set_toggle_button(unite_button(sp), true, false, (void *)sp);
@@ -1113,7 +1102,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  axis_info *ap;
 		  chan_info* pcp;
 		  GtkWidget **cw;
-		  chan_context *cx;
 		  /* height[0] = total space available */
 		  height[0] /= sp->nchans;
 
@@ -1125,10 +1113,8 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		    {
 		      chan_info *cp;
 		      cp = sp->chans[i];
-		      cp->tcgx = NULL;
 		      fixup_cp_cgx_ax_wn(cp);
-		      cx = cp->cgx;
-		      cw = cx->chan_widgets;
+		      cw = cp->chan_widgets;
 		      gtk_widget_show_all(cw[W_main_window]);
 		      set_toggle_button(cw[W_f], cp->graph_transform_p, false, (void *)cp);
 		      set_toggle_button(cw[W_w], cp->graph_time_p, false, (void *)cp);
@@ -1152,10 +1138,8 @@ bool fixup_cp_cgx_ax_wn(chan_info *cp)
 {
   GtkWidget *w; 
   graphics_context *ax; 
-  ax = cp->cgx->ax;
-  if (cp->tcgx) 
-    w = channel_graph(cp->sound->chans[0]);
-  else w = channel_graph(cp);
+  ax = cp->ax;
+  w = channel_to_widget(cp);
   ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
   return(ax->wn != NULL);

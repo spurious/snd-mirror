@@ -69,33 +69,6 @@ typedef struct {
   Font current_font;
 } graphics_context;
 
-typedef struct {
-  /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
-  Widget *chan_widgets;
-  idle_t fft_in_progress;
-  idle_t peak_env_in_progress;
-  struct env_state *peak_env_state;
-  graphics_context *ax;
-  bool selected;
-  Pixmap fft_pix;
-  unsigned int fft_pix_width, fft_pix_height;
-  int fft_pix_x0, fft_pix_y0;
-  bool fft_pix_ready;
-  mus_float_t fft_pix_cutoff;
-  Cursor current_cursor;
-} chan_context;
-
-typedef struct {
-  Widget *snd_widgets;
-  Widget *progress_widgets;
-  int num_progress_widgets;
-  Widget tab;
-  struct env_editor *flt;
-  Widget dialog;
-  Dimension minibuffer_height;
-  bool minibuffer_watcher;
-} snd_context;
-
 typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDGET, SAMPLES_WIDGET} scanf_widget_t;
 
 typedef struct {

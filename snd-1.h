@@ -263,8 +263,34 @@ typedef struct chan_info {
   fft_info *fft;           /* possibly null fft data */
   struct snd_info *sound;  /* containing sound */
   axis_info *axis;         /* time domain axis */
-  chan_context *cgx;       /* graphics/window context */
-  chan_context *tcgx;      /* when combining chans, all should use chan[0]'s context */
+
+  idle_t fft_in_progress;
+  idle_t peak_env_in_progress;
+  struct env_state *peak_env_state;
+  graphics_context *ax;
+  bool selected;
+  int current_hourglass;
+  mus_float_t progress_pct;
+
+#if USE_GTK
+  GtkWidget **chan_widgets;
+  GtkAdjustment **chan_adjs;
+  GdkCursor *current_cursor;
+  slist *edhist_list;
+#endif
+#if USE_MOTIF
+  Widget *chan_widgets;
+  Pixmap fft_pix;
+  unsigned int fft_pix_width, fft_pix_height;
+  int fft_pix_x0, fft_pix_y0;
+  bool fft_pix_ready;
+  mus_float_t fft_pix_cutoff;
+  Cursor current_cursor;
+#endif
+#if USE_NO_GUI
+  int current_cursor;
+#endif
+
   sono_info *sonogram_data;
   struct sonogram_state *last_sonogram, *temp_sonogram; /* defined in snd-fft.c */
   struct wavogram_state *last_wavogram;                 /* defined in snd-chn.c */
@@ -367,7 +393,33 @@ typedef struct snd_info {
   minibuffer_choice_t minibuffer_on;
   read_only_t user_read_only, file_read_only;
   chan_info **chans;
-  snd_context *sgx;
+
+  struct env_editor *flt;
+#if USE_MOTIF
+  Widget *snd_widgets;
+  Widget *progress_widgets;
+  int num_progress_widgets;
+  Widget tab;
+  Widget dialog;
+  Dimension minibuffer_height;
+  bool minibuffer_watcher;
+#endif
+#if USE_GTK
+  GtkWidget **snd_widgets;
+  GtkAdjustment **snd_adjs;
+  GtkWidget *dialog;
+  int page;
+  bool mini_active;
+  gulong minibuffer_watcher;
+  graphics_context *name_pix_ax, *stop_pix_ax, *speed_arrow_ax, *filter_ax;
+  graphics_context **clock_pix_ax;
+  GtkWidget **clock_widgets;
+  int num_clock_widgets;
+#endif
+#if USE_NO_GUI
+  bool snd_widgets;
+#endif
+
   file_info *hdr;             /* header of file that would be affected if we were to save current edits */
   int bomb_ctr;
   time_t write_date, update_warning_write_date;   /* check for change behind back while editing */
@@ -389,7 +441,8 @@ typedef struct snd_info {
 #endif
 } snd_info;
 
-#define SND_SRATE(sp) (((sp)->hdr)->srate)
+#define SND_SRATE(Sp) (((Sp)->hdr)->srate)
+#define HAS_WIDGETS(Sp) ((Sp) && ((Sp)->snd_widgets))
 
 typedef struct snd_state {
   int selected_sound;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
@@ -511,6 +564,9 @@ typedef struct snd_state {
   XEN snd_open_file_hook;
   XEN snd_selection_hook;
   XEN effects_hook;
+#if USE_GTK
+  cairo_t *cr;
+#endif
 } snd_state;
 
 extern snd_state *ss;
@@ -1302,6 +1358,8 @@ void set_show_y_zero(bool val);
 
 XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos);
 void check_cursor_shape(chan_info *cp, int x, int y);
+widget_t channel_to_widget(chan_info *cp);
+chan_info *channel_to_chan(chan_info *cp);
 
 
 

@@ -165,7 +165,6 @@ typedef struct {
   Drawable *wn;
   PangoFontDescription *current_font;
   GtkWidget *w;
-  cairo_t *cr;
 } graphics_context;
 
 typedef struct slist {
@@ -179,35 +178,6 @@ typedef struct slist {
 } slist;
 
 #define SLIST_NO_ITEM_SELECTED -1
-
-typedef struct {
-  /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
-  GtkWidget **chan_widgets;
-  GtkAdjustment **chan_adjs;
-  idle_t fft_in_progress;
-  idle_t peak_env_in_progress;
-  struct env_state *peak_env_state;
-  graphics_context *ax;
-  bool selected;
-  slist *edhist_list;
-  int current_hourglass;
-  mus_float_t progress_pct;
-  GdkCursor *current_cursor;
-} chan_context;
-
-typedef struct {
-  GtkWidget **snd_widgets;
-  GtkAdjustment **snd_adjs;
-  struct env_editor *flt;
-  GtkWidget *dialog;
-  int page;
-  bool mini_active;
-  gulong minibuffer_watcher;
-  graphics_context *name_pix_ax, *stop_pix_ax, *speed_arrow_ax, *filter_ax;
-  graphics_context **clock_pix_ax;
-  GtkWidget **clock_widgets;
-  int num_clock_widgets;
-} snd_context;
 
 typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDGET, SAMPLES_WIDGET} scanf_widget_t;
 

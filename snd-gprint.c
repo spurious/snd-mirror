@@ -10,18 +10,15 @@ static void begin_print(GtkPrintOperation *operation, GtkPrintContext *context,	
 
 static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gint page_num, gpointer data)
 {
-  cairo_t *cr;
   chan_info *cp;
 
-  cr = gtk_print_context_get_cairo_context(context);
+  ss->cr = gtk_print_context_get_cairo_context(context);
 
   switch (ss->print_choice)
     {
     case PRINT_SND:
       cp = selected_channel();
-      cp->cgx->ax->cr = cr;
       display_channel_data_for_print(cp);
-      cp->cgx->ax->cr = NULL;
       break;
 
     case PRINT_ENV:
@@ -32,6 +29,7 @@ static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gi
 
 static void end_print(GtkPrintOperation *operation, GtkPrintContext *context, gpointer data)
 {
+  ss->cr = NULL;
 }
 
 

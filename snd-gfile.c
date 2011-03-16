@@ -5152,21 +5152,21 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
       vdat->env_ax->w = w;
       vdat->env_ax->gc = vdat->env_gc;
     }
-  vdat->env_ax->cr = MAKE_CAIRO(WIDGET_TO_WINDOW(w));
-  cairo_push_group(vdat->env_ax->cr);
+  ss->cr = MAKE_CAIRO(WIDGET_TO_WINDOW(w));
+  cairo_push_group(ss->cr);
 
   /* erase previous */
-  cairo_set_source_rgba(vdat->env_ax->cr, vdat->env_gc->bg_color->red, vdat->env_gc->bg_color->green, vdat->env_gc->bg_color->blue, vdat->env_gc->bg_color->alpha);
-  cairo_rectangle(vdat->env_ax->cr, 0, 0, widget_width(w), widget_height(w));
-  cairo_fill(vdat->env_ax->cr);
+  cairo_set_source_rgba(ss->cr, vdat->env_gc->bg_color->red, vdat->env_gc->bg_color->green, vdat->env_gc->bg_color->blue, vdat->env_gc->bg_color->alpha);
+  cairo_rectangle(ss->cr, 0, 0, widget_width(w), widget_height(w));
+  cairo_fill(ss->cr);
 
   vdat->spf->with_dots = true;
   env_editor_display_env(vdat->spf, vdat->amp_env, vdat->env_ax, NULL, 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
 
-  cairo_pop_group_to_source(vdat->env_ax->cr);
-  cairo_paint(vdat->env_ax->cr);
-  FREE_CAIRO(vdat->env_ax->cr);
-  vdat->env_ax->cr = NULL;
+  cairo_pop_group_to_source(ss->cr);
+  cairo_paint(ss->cr);
+  FREE_CAIRO(ss->cr);
+  ss->cr = NULL;
 }
 
 

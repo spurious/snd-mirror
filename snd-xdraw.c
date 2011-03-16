@@ -198,9 +198,7 @@ void setup_graphics_context(chan_info *cp, graphics_context *ax)
   Widget w;
   snd_info *sp;
   sp = cp->sound;
-  if (cp->tcgx) 
-    w = channel_graph(sp->chans[0]);
-  else w = channel_graph(cp);
+  w = channel_to_widget(cp);
   ax->dp = XtDisplay(w);
   ax->gc = copy_GC(cp);
   ax->wn = XtWindow(w);

@@ -1692,12 +1692,11 @@ void snd_close_file(snd_info *sp)
   if (sp->playing) 
     stop_playing_sound(sp, PLAY_CLOSE);
 
-  if (sp->sgx) 
-    {
-      sp->inuse = SOUND_NORMAL;               /* needed to make sure minibuffer is actually cleared in set_minibuffer_string */
-      set_minibuffer_string(sp, NULL, false); /* false = don't try to update graphs! */
-      sp->inuse = SOUND_IDLE;
-    }
+#if (!USE_NO_GUI)
+  sp->inuse = SOUND_NORMAL;               /* needed to make sure minibuffer is actually cleared in set_minibuffer_string */
+  set_minibuffer_string(sp, NULL, false); /* false = don't try to update graphs! */
+  sp->inuse = SOUND_IDLE;
+#endif
 
   if ((sp == selected_sound()) &&
       (!(ss->exiting)))
@@ -1783,16 +1782,14 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
   sp->search_proc = XEN_UNDEFINED;
   sp->prompt_callback = XEN_UNDEFINED;
   sp->index = TEMP_SOUND_INDEX;
-  sp->sgx = NULL;
   len = (hdr->samples) / (hdr->chans);
 
   for (i = 0; i < sp->nchans; i++)
     {
       cp = make_chan_info(NULL, i, sp);
       cp->editable = false;
-      free(cp->cgx->ax);
-      free(cp->cgx);
-      cp->cgx = NULL;
+      free(cp->ax);
+      cp->ax = NULL;
       sp->chans[i] = cp;
       add_channel_data_1(cp, hdr->srate, len, WITHOUT_GRAPH);
 

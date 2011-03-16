@@ -25,93 +25,93 @@ enum {W_amp_adj, W_speed_adj, W_contrast_adj, W_expand_adj, W_revscl_adj,
 };
 
 
-GtkWidget *unite_button(snd_info *sp)   {return(sp->sgx->snd_widgets[W_unite]);}
+GtkWidget *unite_button(snd_info *sp)   {return(sp->snd_widgets[W_unite]);}
 
-GtkWidget *w_snd_pane(snd_info *sp)     {return(sp->sgx->snd_widgets[W_pane]);}
-GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->sgx->snd_widgets[W_pane_box]);}
+GtkWidget *w_snd_pane(snd_info *sp)     {return(sp->snd_widgets[W_pane]);}
+GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->snd_widgets[W_pane_box]);}
 
-#define SND_PANE(Sp)             Sp->sgx->snd_widgets[W_pane]
-#define PANE_BOX(Sp)             Sp->sgx->snd_widgets[W_pane_box]
+#define SND_PANE(Sp)             Sp->snd_widgets[W_pane]
+#define PANE_BOX(Sp)             Sp->snd_widgets[W_pane_box]
 
-#define NAME_HBOX(Sp)            Sp->sgx->snd_widgets[W_name_form]
-#define NAME_BUTTON(Sp)          Sp->sgx->snd_widgets[W_name]
-#define NAME_EVENT_BOX(Sp)       Sp->sgx->snd_widgets[W_name_event]
-#define NAME_SEPARATOR(Sp)       Sp->sgx->snd_widgets[W_amp_sep]
+#define NAME_HBOX(Sp)            Sp->snd_widgets[W_name_form]
+#define NAME_BUTTON(Sp)          Sp->snd_widgets[W_name]
+#define NAME_EVENT_BOX(Sp)       Sp->snd_widgets[W_name_event]
+#define NAME_SEPARATOR(Sp)       Sp->snd_widgets[W_amp_sep]
 
-#define CLOSE_BUTTON(Sp)         Sp->sgx->snd_widgets[W_close]
+#define CLOSE_BUTTON(Sp)         Sp->snd_widgets[W_close]
 
-#define MINIBUFFER_LABEL(Sp)     Sp->sgx->snd_widgets[W_info_label]
-#define MINIBUFFER_TEXT(Sp)      Sp->sgx->snd_widgets[W_info]
-#define NAME_PIX(Sp)             Sp->sgx->snd_widgets[W_name_pix]
-#define STOP_PIX(Sp)             Sp->sgx->snd_widgets[W_stop_pix]
-#define SYNC_BUTTON(Sp)          Sp->sgx->snd_widgets[W_sync]
-#define PLAY_BUTTON(Sp)          Sp->sgx->snd_widgets[W_play]
-#define UNITE_BUTTON(Sp)         Sp->sgx->snd_widgets[W_unite]
-#define CLOCK_PIX(Sp, Chan)      Sp->sgx->clock_widgets[Chan]
+#define MINIBUFFER_LABEL(Sp)     Sp->snd_widgets[W_info_label]
+#define MINIBUFFER_TEXT(Sp)      Sp->snd_widgets[W_info]
+#define NAME_PIX(Sp)             Sp->snd_widgets[W_name_pix]
+#define STOP_PIX(Sp)             Sp->snd_widgets[W_stop_pix]
+#define SYNC_BUTTON(Sp)          Sp->snd_widgets[W_sync]
+#define PLAY_BUTTON(Sp)          Sp->snd_widgets[W_play]
+#define UNITE_BUTTON(Sp)         Sp->snd_widgets[W_unite]
+#define CLOCK_PIX(Sp, Chan)      Sp->clock_widgets[Chan]
 
-#define ERROR_INFO(Sp)           Sp->sgx->snd_widgets[W_error_info_label]
-#define ERROR_INFO_FRAME(Sp)     Sp->sgx->snd_widgets[W_error_info_frame]
+#define ERROR_INFO(Sp)           Sp->snd_widgets[W_error_info_label]
+#define ERROR_INFO_FRAME(Sp)     Sp->snd_widgets[W_error_info_frame]
 
-#define CONTROL_PANEL(Sp)        Sp->sgx->snd_widgets[W_control_panel]
+#define CONTROL_PANEL(Sp)        Sp->snd_widgets[W_control_panel]
 
-#define AMP_HBOX(Sp)             Sp->sgx->snd_widgets[W_amp_form]
-#define AMP_LABEL(Sp)            Sp->sgx->snd_widgets[W_amp_number]
-#define AMP_BUTTON(Sp)           Sp->sgx->snd_widgets[W_amp_label]
-#define AMP_EVENT_BOX(Sp)        Sp->sgx->snd_widgets[W_amp_event]
-#define AMP_SCROLLBAR(Sp)        Sp->sgx->snd_widgets[W_amp]
+#define AMP_HBOX(Sp)             Sp->snd_widgets[W_amp_form]
+#define AMP_LABEL(Sp)            Sp->snd_widgets[W_amp_number]
+#define AMP_BUTTON(Sp)           Sp->snd_widgets[W_amp_label]
+#define AMP_EVENT_BOX(Sp)        Sp->snd_widgets[W_amp_event]
+#define AMP_SCROLLBAR(Sp)        Sp->snd_widgets[W_amp]
 
-#define SPEED_HBOX(Sp)           Sp->sgx->snd_widgets[W_speed_form]
-#define SPEED_ARROW(Sp)          Sp->sgx->snd_widgets[W_speed_pix]
-#define SPEED_LABEL(Sp)          Sp->sgx->snd_widgets[W_speed_number]
-#define SPEED_EVENT_BOX(Sp)      Sp->sgx->snd_widgets[W_speed_event]
-#define SPEED_LABEL_EVENT_BOX(Sp) Sp->sgx->snd_widgets[W_speed_label_event]
-#define SPEED_BUTTON(Sp)         Sp->sgx->snd_widgets[W_speed_label]
-#define SPEED_SCROLLBAR(Sp)      Sp->sgx->snd_widgets[W_speed]
+#define SPEED_HBOX(Sp)           Sp->snd_widgets[W_speed_form]
+#define SPEED_ARROW(Sp)          Sp->snd_widgets[W_speed_pix]
+#define SPEED_LABEL(Sp)          Sp->snd_widgets[W_speed_number]
+#define SPEED_EVENT_BOX(Sp)      Sp->snd_widgets[W_speed_event]
+#define SPEED_LABEL_EVENT_BOX(Sp) Sp->snd_widgets[W_speed_label_event]
+#define SPEED_BUTTON(Sp)         Sp->snd_widgets[W_speed_label]
+#define SPEED_SCROLLBAR(Sp)      Sp->snd_widgets[W_speed]
 
-#define EXPAND_HBOX(Sp)          Sp->sgx->snd_widgets[W_expand_form]
-#define EXPAND_LEFT_BUTTON(Sp)   Sp->sgx->snd_widgets[W_expand_label]
-#define EXPAND_EVENT_BOX(Sp)     Sp->sgx->snd_widgets[W_expand_event]
-#define EXPAND_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_expand]
-#define EXPAND_LABEL(Sp)         Sp->sgx->snd_widgets[W_expand_number]
-#define EXPAND_RIGHT_BUTTON(Sp)  Sp->sgx->snd_widgets[W_expand_button]
+#define EXPAND_HBOX(Sp)          Sp->snd_widgets[W_expand_form]
+#define EXPAND_LEFT_BUTTON(Sp)   Sp->snd_widgets[W_expand_label]
+#define EXPAND_EVENT_BOX(Sp)     Sp->snd_widgets[W_expand_event]
+#define EXPAND_SCROLLBAR(Sp)     Sp->snd_widgets[W_expand]
+#define EXPAND_LABEL(Sp)         Sp->snd_widgets[W_expand_number]
+#define EXPAND_RIGHT_BUTTON(Sp)  Sp->snd_widgets[W_expand_button]
 
-#define CONTRAST_HBOX(Sp)        Sp->sgx->snd_widgets[W_contrast_form]
-#define CONTRAST_LEFT_BUTTON(Sp) Sp->sgx->snd_widgets[W_contrast_label]
-#define CONTRAST_EVENT_BOX(Sp)   Sp->sgx->snd_widgets[W_contrast_event]
-#define CONTRAST_SCROLLBAR(Sp)   Sp->sgx->snd_widgets[W_contrast]
-#define CONTRAST_LABEL(Sp)       Sp->sgx->snd_widgets[W_contrast_number]
-#define CONTRAST_RIGHT_BUTTON(Sp) Sp->sgx->snd_widgets[W_contrast_button]
+#define CONTRAST_HBOX(Sp)        Sp->snd_widgets[W_contrast_form]
+#define CONTRAST_LEFT_BUTTON(Sp) Sp->snd_widgets[W_contrast_label]
+#define CONTRAST_EVENT_BOX(Sp)   Sp->snd_widgets[W_contrast_event]
+#define CONTRAST_SCROLLBAR(Sp)   Sp->snd_widgets[W_contrast]
+#define CONTRAST_LABEL(Sp)       Sp->snd_widgets[W_contrast_number]
+#define CONTRAST_RIGHT_BUTTON(Sp) Sp->snd_widgets[W_contrast_button]
 
-#define REVSCL_EVENT_BOX(Sp)     Sp->sgx->snd_widgets[W_revscl_event]
-#define REVSCL_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_revscl]
-#define REVSCL_BUTTON(Sp)        Sp->sgx->snd_widgets[W_revscl_label]
-#define REVSCL_LABEL(Sp)         Sp->sgx->snd_widgets[W_revscl_number]
+#define REVSCL_EVENT_BOX(Sp)     Sp->snd_widgets[W_revscl_event]
+#define REVSCL_SCROLLBAR(Sp)     Sp->snd_widgets[W_revscl]
+#define REVSCL_BUTTON(Sp)        Sp->snd_widgets[W_revscl_label]
+#define REVSCL_LABEL(Sp)         Sp->snd_widgets[W_revscl_number]
 
-#define REVLEN_EVENT_BOX(Sp)     Sp->sgx->snd_widgets[W_revlen_event]
-#define REVLEN_BUTTON(Sp)        Sp->sgx->snd_widgets[W_revlen_label]
-#define REVLEN_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_revlen]
-#define REVLEN_LABEL(Sp)         Sp->sgx->snd_widgets[W_revlen_number]
+#define REVLEN_EVENT_BOX(Sp)     Sp->snd_widgets[W_revlen_event]
+#define REVLEN_BUTTON(Sp)        Sp->snd_widgets[W_revlen_label]
+#define REVLEN_SCROLLBAR(Sp)     Sp->snd_widgets[W_revlen]
+#define REVLEN_LABEL(Sp)         Sp->snd_widgets[W_revlen_number]
 
-#define REVERB_RIGHT_BUTTON(Sp)  Sp->sgx->snd_widgets[W_reverb_button]
-#define REVERB_HBOX(Sp)          Sp->sgx->snd_widgets[W_reverb_form]
+#define REVERB_RIGHT_BUTTON(Sp)  Sp->snd_widgets[W_reverb_button]
+#define REVERB_HBOX(Sp)          Sp->snd_widgets[W_reverb_form]
 
-#define FILTER_HBOX(Sp)          Sp->sgx->snd_widgets[W_filter_form]
-#define FILTER_LEFT_BUTTON(Sp)   Sp->sgx->snd_widgets[W_filter_label]
-#define FILTER_ORDER_TEXT(Sp)    Sp->sgx->snd_widgets[W_filter_order]
-#define FILTER_COEFFS_TEXT(Sp)   Sp->sgx->snd_widgets[W_filter]
-#define FILTER_RIGHT_BUTTON(Sp)  Sp->sgx->snd_widgets[W_filter_button]
-#define FILTER_DB_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_dB]
-#define FILTER_HZ_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_hz]
-#define FILTER_FRAME(Sp)         Sp->sgx->snd_widgets[W_filter_frame]
-#define FILTER_ENV(Sp)           Sp->sgx->snd_widgets[W_filter_env]
+#define FILTER_HBOX(Sp)          Sp->snd_widgets[W_filter_form]
+#define FILTER_LEFT_BUTTON(Sp)   Sp->snd_widgets[W_filter_label]
+#define FILTER_ORDER_TEXT(Sp)    Sp->snd_widgets[W_filter_order]
+#define FILTER_COEFFS_TEXT(Sp)   Sp->snd_widgets[W_filter]
+#define FILTER_RIGHT_BUTTON(Sp)  Sp->snd_widgets[W_filter_button]
+#define FILTER_DB_BUTTON(Sp)     Sp->snd_widgets[W_filter_dB]
+#define FILTER_HZ_BUTTON(Sp)     Sp->snd_widgets[W_filter_hz]
+#define FILTER_FRAME(Sp)         Sp->snd_widgets[W_filter_frame]
+#define FILTER_ENV(Sp)           Sp->snd_widgets[W_filter_env]
 
-#define AMP_ADJUSTMENT(Sp)       Sp->sgx->snd_adjs[W_amp_adj]
-#define SPEED_ADJUSTMENT(Sp)     Sp->sgx->snd_adjs[W_speed_adj]
-#define EXPAND_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_expand_adj]
-#define CONTRAST_ADJUSTMENT(Sp)  Sp->sgx->snd_adjs[W_contrast_adj]
-#define REVSCL_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_revscl_adj]
-#define REVLEN_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_revlen_adj]
-#define FILTER_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_filter_adj]
+#define AMP_ADJUSTMENT(Sp)       Sp->snd_adjs[W_amp_adj]
+#define SPEED_ADJUSTMENT(Sp)     Sp->snd_adjs[W_speed_adj]
+#define EXPAND_ADJUSTMENT(Sp)    Sp->snd_adjs[W_expand_adj]
+#define CONTRAST_ADJUSTMENT(Sp)  Sp->snd_adjs[W_contrast_adj]
+#define REVSCL_ADJUSTMENT(Sp)    Sp->snd_adjs[W_revscl_adj]
+#define REVLEN_ADJUSTMENT(Sp)    Sp->snd_adjs[W_revlen_adj]
+#define FILTER_ADJUSTMENT(Sp)    Sp->snd_adjs[W_filter_adj]
 
 
 /* -------- minibuffer error -------- */
@@ -126,10 +126,10 @@ void clear_minibuffer_error(snd_info *sp)
 {
   gtk_widget_hide(ERROR_INFO_FRAME(sp));
   gtk_widget_hide(ERROR_INFO(sp));
-  if (sp->sgx->minibuffer_watcher)
+  if (sp->minibuffer_watcher)
     {
-      g_signal_handler_disconnect(MINIBUFFER_TEXT(sp), sp->sgx->minibuffer_watcher);
-      sp->sgx->minibuffer_watcher = 0;
+      g_signal_handler_disconnect(MINIBUFFER_TEXT(sp), sp->minibuffer_watcher);
+      sp->minibuffer_watcher = 0;
     }
 }
 
@@ -149,8 +149,8 @@ void display_minibuffer_error(snd_info *sp, const char *str)
   info_widget_display(ERROR_INFO(sp), s1);
   gtk_widget_show(ERROR_INFO(sp));
   gtk_widget_show(ERROR_INFO_FRAME(sp));
-  if (!(sp->sgx->minibuffer_watcher))
-    sp->sgx->minibuffer_watcher = SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "changed", watch_minibuffer, (gpointer)sp);
+  if (!(sp->minibuffer_watcher))
+    sp->minibuffer_watcher = SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "changed", watch_minibuffer, (gpointer)sp);
   if (s1) free(s1);
 }
 
@@ -166,7 +166,7 @@ void show_lock(snd_info *sp)
     {
       if (mini_lock)
 	{
-	  draw_picture(sp->sgx->name_pix_ax, mini_lock, 0, 0, 0, 0, 16, 16);
+	  draw_picture(sp->name_pix_ax, mini_lock, 0, 0, 0, 0, 16, 16);
 	  gtk_widget_show(NAME_PIX(sp));
 	}
       MUS_UNLOCK(sp->stop_sign_lock);
@@ -187,11 +187,11 @@ void hide_lock(snd_info *sp)
 
 static void show_stop_sign(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      if ((sp->sgx) && 
-	  (stop_sign))
-	draw_picture(sp->sgx->stop_pix_ax, stop_sign, 0, 0, 0, 0, 16, 16);
+      if (stop_sign)
+	draw_picture(sp->stop_pix_ax, stop_sign, 0, 0, 0, 0, 16, 16);
       gtk_widget_show(STOP_PIX(sp));
       MUS_UNLOCK(sp->stop_sign_lock);
     }
@@ -200,6 +200,7 @@ static void show_stop_sign(snd_info *sp)
 
 static void hide_stop_sign(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
       gtk_widget_hide(STOP_PIX(sp));
@@ -210,15 +211,13 @@ static void hide_stop_sign(snd_info *sp)
 
 void show_bomb(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
       if (sp->bomb_ctr >= NUM_BOMBS) 
 	sp->bomb_ctr = 0;
-      if (sp->sgx)
-	{
-	  draw_picture(sp->sgx->name_pix_ax, bombs[sp->bomb_ctr], 0, 0, 0, 0, 16, 16);
-	  gtk_widget_show(NAME_PIX(sp));
-	}
+      draw_picture(sp->name_pix_ax, bombs[sp->bomb_ctr], 0, 0, 0, 0, 16, 16);
+      gtk_widget_show(NAME_PIX(sp));
       sp->bomb_ctr++; 
       MUS_UNLOCK(sp->stop_sign_lock);
     }
@@ -227,10 +226,10 @@ void show_bomb(snd_info *sp)
 
 void hide_bomb(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      if (sp->sgx)
-	gtk_widget_hide(NAME_PIX(sp));
+      gtk_widget_hide(NAME_PIX(sp));
       sp->bomb_ctr = 0;
       MUS_UNLOCK(sp->stop_sign_lock);
     }
@@ -242,6 +241,7 @@ void hide_bomb(snd_info *sp)
 static gint tick_bomb(gpointer data)
 {
   snd_info *sp = (snd_info *)data;
+  if (!HAS_WIDGETS(sp)) return(0);
   if (sp->need_update || sp->file_unreadable)
     {
       show_bomb(sp);
@@ -258,6 +258,7 @@ static gint tick_bomb(gpointer data)
 
 void start_bomb(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   sp->bomb_ctr = 0;
   if (!(sp->bomb_in_progress))
     {
@@ -269,6 +270,7 @@ void start_bomb(snd_info *sp)
 
 void stop_bomb(snd_info *sp)
 {
+  if (!HAS_WIDGETS(sp)) return;
   hide_bomb(sp);
   sp->bomb_in_progress = false;
 }
@@ -279,17 +281,13 @@ static Drawable *sound_pix_wn(chan_info *cp)
 {
   snd_info *sp = NULL;
   if (cp) sp = cp->sound;
+  if (!HAS_WIDGETS(sp)) return(NULL);
 
-  if ((sp) &&
-      (sp->sgx))
-    {
-      if ((cp->chan < sp->sgx->num_clock_widgets) &&
-	  (CLOCK_PIX(sp, cp->chan)) &&
-	  (sp->sgx->clock_pix_ax[cp->chan]))
-	return(DRAWABLE(WIDGET_TO_WINDOW(CLOCK_PIX(sp, cp->chan))));
-      return(DRAWABLE(WIDGET_TO_WINDOW(CLOCK_PIX(sp, 0))));
-    }
-  return(NULL);
+  if ((cp->chan < sp->num_clock_widgets) &&
+      (CLOCK_PIX(sp, cp->chan)) &&
+      (sp->clock_pix_ax[cp->chan]))
+    return(DRAWABLE(WIDGET_TO_WINDOW(CLOCK_PIX(sp, cp->chan))));
+  return(DRAWABLE(WIDGET_TO_WINDOW(CLOCK_PIX(sp, 0))));
 }
 
 
@@ -383,15 +381,14 @@ static void make_pixmaps(void)
 static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  if ((sp) &&
-      (sp->sgx) &&
+  if ((HAS_WIDGETS(sp)) &&
       (NAME_PIX(sp)) &&
-      (sp->sgx->name_pix_ax))
+      (sp->name_pix_ax))
     {
       if ((sp->user_read_only == FILE_READ_ONLY) || 
 	  (sp->file_read_only == FILE_READ_ONLY))
-	draw_picture(sp->sgx->name_pix_ax, mini_lock, 0, 0, 0, 0, 16, 16);
-      else draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 0, 16, 16);
+	draw_picture(sp->name_pix_ax, mini_lock, 0, 0, 0, 0, 16, 16);
+      else draw_picture(sp->name_pix_ax, blank, 0, 0, 0, 0, 16, 16);
     }
   return(false);
 }
@@ -403,15 +400,14 @@ static gboolean clock_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data
   snd_info *sp = NULL;
   if (cp) sp = cp->sound;
 
-  if ((sp) &&
-      (sp->sgx) &&
-      (cp->chan < sp->sgx->num_clock_widgets) &&
+  if ((HAS_WIDGETS(sp)) &&
+      (cp->chan < sp->num_clock_widgets) &&
       (CLOCK_PIX(sp, cp->chan)) &&
-      (sp->sgx->clock_pix_ax[cp->chan]))
+      (sp->clock_pix_ax[cp->chan]))
     {
-      if (cp->cgx->progress_pct >= 0.0)
-	show_happy_face(sound_pix_wn(cp), cp->cgx->progress_pct);
-      else draw_picture(sp->sgx->clock_pix_ax[cp->chan], blank, 0, 0, 0, 0, 16, 16);
+      if (cp->progress_pct >= 0.0)
+	show_happy_face(sound_pix_wn(cp), cp->progress_pct);
+      else draw_picture(sp->clock_pix_ax[cp->chan], blank, 0, 0, 0, 0, 16, 16);
     }
   return(false);
 }
@@ -423,7 +419,7 @@ void goto_minibuffer(snd_info *sp)
 {
   if (sp) 
     {
-      sp->sgx->mini_active = true;
+      sp->mini_active = true;
       goto_window(MINIBUFFER_TEXT(sp));
     }
 }
@@ -431,14 +427,14 @@ void goto_minibuffer(snd_info *sp)
 
 void set_minibuffer_cursor_position(snd_info *sp, int pos)
 {
-  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
+  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
   gtk_editable_set_position(GTK_EDITABLE(MINIBUFFER_TEXT(sp)), pos);
 }
 
 
 char *get_minibuffer_string(snd_info *sp) 
 {
-  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return(NULL);
+  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return(NULL);
   return(mus_strdup((char *)gtk_entry_get_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)))));
 } 
 
@@ -447,7 +443,7 @@ static char stupid[1] = {'\0'};
 
 void set_minibuffer_string(snd_info *sp, const char *str, bool update) 
 {
-  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
+  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
   if (str)
     gtk_entry_set_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)), str);
   else gtk_entry_set_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)), stupid);
@@ -456,7 +452,7 @@ void set_minibuffer_string(snd_info *sp, const char *str, bool update)
 
 void make_minibuffer_label(snd_info *sp, const char *str)
 {
-  if (sp->inuse != SOUND_NORMAL) return;
+  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
   gtk_label_set_text(GTK_LABEL(MINIBUFFER_LABEL(sp)), str);
 }
 
@@ -465,7 +461,7 @@ static void minibuffer_activate_callback(GtkWidget *w, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
   snd_minibuffer_activate(sp, 0, false);
-  sp->sgx->mini_active = true;
+  sp->mini_active = true;
 }
 
 
@@ -473,7 +469,7 @@ static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpoint
 {
   /* can't use M-p in gtk version because it's trapped by a menu accelerator (File:Print) -- M-n is File:New */
   snd_info *sp = (snd_info *)data;
-  if (((!sp->sgx->mini_active)) || 
+  if (((!sp->mini_active)) || 
       (((EVENT_KEYVAL(event) == snd_K_s) || 
 	(EVENT_KEYVAL(event) == snd_K_r)) && 
        (EVENT_STATE(event) & snd_ControlMask)))
@@ -504,7 +500,7 @@ static gboolean minibuffer_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoin
 {
   snd_info *sp = (snd_info *)data;
   if ((sp) && (sp->inuse == SOUND_NORMAL))
-    sp->sgx->mini_active = true;
+    sp->mini_active = true;
   return(false);
 }
 
@@ -513,7 +509,7 @@ static gboolean minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpoin
 {
   snd_info *sp = (snd_info *)data;
   if ((sp) && (sp->inuse == SOUND_NORMAL))
-    sp->sgx->mini_active = false;
+    sp->mini_active = false;
   return(false);
 }
 
@@ -529,16 +525,14 @@ static void set_button_base(GtkWidget *w, color_info *col)
 
 void set_play_button(snd_info *sp, bool val)
 {
-  if ((sp->sgx) && (!(IS_PLAYER_SOUND(sp))))
-    {
-      set_toggle_button(PLAY_BUTTON(sp), val, false, (void *)sp);
-    }
+  if (HAS_WIDGETS(sp))
+    set_toggle_button(PLAY_BUTTON(sp), val, false, (void *)sp);
 }
 
 
 void set_control_panel_play_button(snd_info *sp)
 {
-  if ((sp) && (sp->sgx) && (PLAY_BUTTON(sp)))
+  if (HAS_WIDGETS(sp))
     {
       set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
       set_button_base(PLAY_BUTTON(sp), ss->sgx->white);
@@ -633,7 +627,7 @@ void syncb(snd_info *sp, int on)
 {
   sp->sync = on;
   if (on > ss->sound_sync_max) ss->sound_sync_max = on;
-  if (!(IS_PLAYER_SOUND(sp)))
+  if (HAS_WIDGETS(sp))
     {
       set_sync_color(sp);
       set_toggle_button(SYNC_BUTTON(sp), (on != 0), false, (void *)sp);
@@ -753,7 +747,7 @@ static mus_float_t scroll_to_amp(snd_info *sp, mus_float_t val)
 
 void set_amp(snd_info *sp, mus_float_t amp) 
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->amp_control = amp;
   else 
     {
@@ -770,8 +764,7 @@ void set_amp(snd_info *sp, mus_float_t amp)
 static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  snd_context *sx;
-  sx = sp->sgx;
+
   if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_amp(sp, sp->last_amp_control);
   else set_amp(sp, 1.0);
@@ -821,7 +814,7 @@ static bool ignore_callback = false;
 
 void set_speed(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->speed_control = val;
   else
     {
@@ -838,9 +831,7 @@ void set_speed(snd_info *sp, mus_float_t val)
 static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  snd_context *sx;
 
-  sx = sp->sgx;
   if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_speed(sp, sp->last_speed_control);
   else set_speed(sp, 1.0);
@@ -894,8 +885,8 @@ static void draw_speed_arrow(snd_info *sp)
 {
   gtk_widget_hide(SPEED_ARROW(sp));
   if (sp->speed_control_direction == 1)
-    draw_picture(sp->sgx->speed_arrow_ax, speed_r, 0, 0, 0, 0, 16, 16);
-  else draw_picture(sp->sgx->speed_arrow_ax, speed_l, 0, 0, 0, 0, 16, 16);
+    draw_picture(sp->speed_arrow_ax, speed_r, 0, 0, 0, 0, 16, 16);
+  else draw_picture(sp->speed_arrow_ax, speed_l, 0, 0, 0, 0, 16, 16);
   gtk_widget_show(SPEED_ARROW(sp));
 }
 
@@ -923,7 +914,7 @@ void toggle_direction_arrow(snd_info *sp, bool state)
   int dir = 1;
   if (state) dir = -1;
   sp->speed_control_direction = dir;
-  if (!(IS_PLAYER_SOUND(sp))) draw_speed_arrow(sp);
+  if (HAS_WIDGETS(sp)) draw_speed_arrow(sp);
 }
 
 
@@ -957,7 +948,7 @@ static mus_float_t scroll_to_expand(snd_info *sp, mus_float_t val)
 
 void set_expand(snd_info *sp, mus_float_t val) 
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->expand_control = val;
   else
     {
@@ -990,8 +981,7 @@ static gboolean expand_release_callback(GtkWidget *w, GdkEventButton *ev, gpoint
 static gboolean expand_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  snd_context *sx;
-  sx = sp->sgx;
+
   if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_expand(sp, sp->last_expand_control);
   else set_expand(sp, 1.0);
@@ -1010,7 +1000,7 @@ static void expand_button_callback(GtkWidget *w, gpointer context)
 
 void toggle_expand_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->expand_control_p = state;
   else set_toggle_button(EXPAND_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
@@ -1038,7 +1028,7 @@ static mus_float_t scroll_to_contrast(snd_info *sp, mus_float_t val)
 
 void set_contrast(snd_info *sp, mus_float_t val) 
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->contrast_control = val;
   else
     {
@@ -1055,8 +1045,7 @@ void set_contrast(snd_info *sp, mus_float_t val)
 static gboolean contrast_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  snd_context *sx;
-  sx = sp->sgx;
+
   if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_contrast(sp, sp->last_contrast_control);
   else set_contrast(sp, 0.0);
@@ -1090,7 +1079,7 @@ static void contrast_button_callback(GtkWidget *w, gpointer context)
 
 void toggle_contrast_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->contrast_control_p = state;
   else set_toggle_button(CONTRAST_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
@@ -1129,7 +1118,7 @@ static mus_float_t scroll_to_revscl(snd_info *sp, mus_float_t val)
 
 void set_revscl(snd_info *sp, mus_float_t val) 
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->reverb_control_scale = val;
   else
     {
@@ -1146,8 +1135,7 @@ void set_revscl(snd_info *sp, mus_float_t val)
 static gboolean revscl_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  snd_context *sx;
-  sx = sp->sgx;
+
   if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_revscl(sp, sp->last_reverb_control_scale);
   else set_revscl(sp, 0.0);
@@ -1192,7 +1180,7 @@ static mus_float_t scroll_to_revlen(snd_info *sp, mus_float_t val)
 
 void set_revlen(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->reverb_control_length = val;
   else
     {
@@ -1209,8 +1197,7 @@ void set_revlen(snd_info *sp, mus_float_t val)
 static gboolean revlen_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  snd_context *sx;
-  sx = sp->sgx;
+
   if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_revlen(sp, sp->last_reverb_control_length);
   else set_revlen(sp, 1.0);
@@ -1243,7 +1230,7 @@ static void reverb_button_callback(GtkWidget *w, gpointer context)
 
 void toggle_reverb_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->reverb_control_p = state;
   else set_toggle_button(REVERB_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
@@ -1260,34 +1247,34 @@ void display_filter_env(snd_info *sp)
   GtkWidget *drawer;
   env_editor *edp;
 
-  if (IS_PLAYER_SOUND(sp)) return;
+  if (!HAS_WIDGETS(sp)) return;
 
-  edp = sp->sgx->flt;
+  edp = sp->flt;
   drawer = FILTER_ENV(sp);
   height = widget_height(drawer);
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
   width = widget_width(drawer);
 
-  if (sp->sgx->filter_ax == NULL)
+  if (sp->filter_ax == NULL)
     {
       ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       ax->wn = WIDGET_TO_WINDOW(drawer);
       ax->w = drawer;
-      sp->sgx->filter_ax = ax;
+      sp->filter_ax = ax;
     }
   else 
     {
-      ax = sp->sgx->filter_ax;
+      ax = sp->filter_ax;
     }
 
   ax->gc = ss->sgx->fltenv_basic_gc;
-  ax->cr = MAKE_CAIRO(ax->wn);
-  cairo_push_group(ax->cr);
+  ss->cr = MAKE_CAIRO(ax->wn);
+  cairo_push_group(ss->cr);
 
   /* erase previous */
-  cairo_set_source_rgba(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue, ax->gc->bg_color->alpha);
-  cairo_rectangle(ax->cr, 0, 0, width, height);
-  cairo_fill(ax->cr);
+  cairo_set_source_rgba(ss->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue, ax->gc->bg_color->alpha);
+  cairo_rectangle(ss->cr, 0, 0, width, height);
+  cairo_fill(ss->cr);
 
   edp->in_dB = sp->filter_control_in_dB;
   edp->with_dots = true;
@@ -1306,10 +1293,10 @@ void display_filter_env(snd_info *sp)
 				 sp->filter_control_in_dB);
     }
 
-  cairo_pop_group_to_source(ax->cr);
-  cairo_paint(ax->cr);
-  FREE_CAIRO(ax->cr);
-  ax->cr = NULL;
+  cairo_pop_group_to_source(ss->cr);
+  cairo_paint(ss->cr);
+  FREE_CAIRO(ss->cr);
+  ss->cr = NULL;
 }
 
 
@@ -1328,7 +1315,7 @@ static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gp
 	  evx = (int)(EVENT_X(ev));
 	  evy = (int)(EVENT_Y(ev));
 	}
-      edp = sp->sgx->flt;
+      edp = sp->flt;
       edp->in_dB = sp->filter_control_in_dB;
       env_editor_button_motion(edp, evx, evy, EVENT_TIME(ev), sp->filter_control_envelope);
       display_filter_env(sp);
@@ -1342,7 +1329,7 @@ static gboolean filter_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpo
 {
   snd_info *sp = (snd_info *)data;
   env_editor *edp;
-  edp = sp->sgx->flt;
+  edp = sp->flt;
   edp->in_dB = sp->filter_control_in_dB;
   if (env_editor_button_press(edp, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_TIME(ev), sp->filter_control_envelope))
     display_filter_env(sp);
@@ -1365,7 +1352,7 @@ static gboolean filter_drawer_button_release(GtkWidget *w, GdkEventButton *ev, g
 
 void set_filter_text(snd_info *sp, const char *str)
 {
-  if (!(IS_PLAYER_SOUND(sp)))
+  if (HAS_WIDGETS(sp))
     {
       if (str)
 	gtk_entry_set_text(GTK_ENTRY(FILTER_COEFFS_TEXT(sp)), str);
@@ -1399,7 +1386,7 @@ static void filter_button_callback(GtkWidget *w, gpointer context)
 
 void toggle_filter_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->filter_control_p = state;
   else set_toggle_button(FILTER_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
@@ -1416,7 +1403,7 @@ static void filter_db_callback(GtkWidget *w, gpointer context)
 void set_filter_in_dB(snd_info *sp, bool val)
 {
   sp->filter_control_in_dB = val;
-  if (!(IS_PLAYER_SOUND(sp)))
+  if (HAS_WIDGETS(sp))
     {
       set_toggle_button(FILTER_DB_BUTTON(sp), val, false, (void *)sp);
       display_filter_env(sp);
@@ -1446,7 +1433,7 @@ static void filter_hz_callback(GtkWidget *w, gpointer context)
 void set_filter_in_hz(snd_info *sp, bool val)
 {
   new_in_hz(sp, val);
-  if (!(IS_PLAYER_SOUND(sp)))
+  if (HAS_WIDGETS(sp))
     {
       set_toggle_button(FILTER_HZ_BUTTON(sp), val, false, (void *)sp);
       display_filter_env(sp);
@@ -1466,7 +1453,7 @@ static void set_filter_order_1(snd_info *sp, int order, bool setadj)
 
 void set_filter_order(snd_info *sp, int order) 
 {
-  if (IS_PLAYER_SOUND(sp))
+  if (!HAS_WIDGETS(sp))
     sp->filter_control_order = order;
   else set_filter_order_1(sp, order, true);
 }
@@ -1505,7 +1492,7 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
 void filter_env_changed(snd_info *sp, env *e)
 {
   /* turn e back into a string for textfield widget */
-  if (!(IS_PLAYER_SOUND(sp)))
+  if (HAS_WIDGETS(sp))
     {
       char *tmpstr;
       tmpstr = env_to_string(e);
@@ -1554,7 +1541,7 @@ static gint close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
   if (sp) snd_close_file(sp);
-  gtk_widget_hide(sp->sgx->dialog); 
+  gtk_widget_hide(sp->dialog); 
   return(true);
 } 
 
@@ -1621,7 +1608,6 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   char *old_name = NULL, *title;
   int app_y, app_dy, screen_y, chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
-  snd_context *sx;
 
   if (ss->translated_filename) 
     {
@@ -1663,22 +1649,22 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
   sp->inuse = SOUND_NORMAL;
-  sx = sp->sgx;
+
   sp->bomb_ctr = 0;
   sp->write_date = file_write_date(filename); /* needed early in this process by the peak-env handlers */
   make_pixmaps();
 
-  if (sx->snd_widgets == NULL)
+  if (sp->snd_widgets == NULL)
     {
       sw = (GtkWidget **)calloc(NUM_SND_WIDGETS, sizeof(GtkWidget *));
       adjs = (GtkAdjustment **)calloc(NUM_SND_ADJS, sizeof(GtkAdjustment *));
-      sx->snd_widgets = sw; 
-      sx->snd_adjs = adjs;
+      sp->snd_widgets = sw; 
+      sp->snd_adjs = adjs;
     }
   else
     {
-      sw = sx->snd_widgets;
-      adjs = sx->snd_adjs;
+      sw = sp->snd_widgets;
+      adjs = sp->snd_adjs;
     }
 
   if (!(auto_resize(ss))) gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), false);
@@ -1697,11 +1683,11 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
-	  sx->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	  sg_make_resizable(sx->dialog);
-	  gtk_container_add(GTK_CONTAINER(sx->dialog), SND_PANE(sp));
-	  gtk_widget_show(sx->dialog);
-	  SG_SIGNAL_CONNECT(sx->dialog, "delete_event", close_sound_dialog, sp);
+	  sp->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	  sg_make_resizable(sp->dialog);
+	  gtk_container_add(GTK_CONTAINER(sp->dialog), SND_PANE(sp));
+	  gtk_widget_show(sp->dialog);
+	  SG_SIGNAL_CONNECT(sp->dialog, "delete_event", close_sound_dialog, sp);
 	}
       else
 	{
@@ -1759,9 +1745,9 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_set_size_request(NAME_PIX(sp), 16, 16);
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_PIX(sp), false, false, 2);
       gtk_widget_show(NAME_PIX(sp));
-      sp->sgx->name_pix_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
-      sp->sgx->name_pix_ax->wn = WIDGET_TO_WINDOW(NAME_PIX(sp));
-      sp->sgx->name_pix_ax->gc = ss->sgx->basic_gc;
+      sp->name_pix_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
+      sp->name_pix_ax->wn = WIDGET_TO_WINDOW(NAME_PIX(sp));
+      sp->name_pix_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(NAME_PIX(sp), DRAW_SIGNAL, name_pix_expose, sp);
 
       STOP_PIX(sp) = gtk_drawing_area_new();
@@ -1769,17 +1755,17 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_set_size_request(STOP_PIX(sp), 16, 16);
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), STOP_PIX(sp), false, false, 2);
       gtk_widget_show(STOP_PIX(sp));
-      sp->sgx->stop_pix_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
-      sp->sgx->stop_pix_ax->wn = WIDGET_TO_WINDOW(STOP_PIX(sp));
-      sp->sgx->stop_pix_ax->gc = ss->sgx->basic_gc;
+      sp->stop_pix_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
+      sp->stop_pix_ax->wn = WIDGET_TO_WINDOW(STOP_PIX(sp));
+      sp->stop_pix_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(STOP_PIX(sp), "button_press_event", stop_sign_press, sp);
 
       {
 	int i;
 
-	sp->sgx->clock_widgets = (GtkWidget **)calloc(sp->nchans, sizeof(GtkWidget *));
-	sp->sgx->clock_pix_ax = (graphics_context **)calloc(sp->nchans, sizeof(graphics_context *));
-	sp->sgx->num_clock_widgets = sp->nchans;
+	sp->clock_widgets = (GtkWidget **)calloc(sp->nchans, sizeof(GtkWidget *));
+	sp->clock_pix_ax = (graphics_context **)calloc(sp->nchans, sizeof(graphics_context *));
+	sp->num_clock_widgets = sp->nchans;
 
 	for (i = 0; i < sp->nchans; i++)
 	  {
@@ -1787,9 +1773,9 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	    gtk_widget_set_size_request(CLOCK_PIX(sp, i), 16, 16);
 	    gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), CLOCK_PIX(sp, i), false, false, 2);
 	    gtk_widget_show(CLOCK_PIX(sp, i));
-	    sp->sgx->clock_pix_ax[i] = (graphics_context *)calloc(1, sizeof(graphics_context));
-	    sp->sgx->clock_pix_ax[i]->wn = WIDGET_TO_WINDOW(CLOCK_PIX(sp, i));
-	    sp->sgx->clock_pix_ax[i]->gc = ss->sgx->basic_gc;
+	    sp->clock_pix_ax[i] = (graphics_context *)calloc(1, sizeof(graphics_context));
+	    sp->clock_pix_ax[i]->wn = WIDGET_TO_WINDOW(CLOCK_PIX(sp, i));
+	    sp->clock_pix_ax[i]->gc = ss->sgx->basic_gc;
 	    SG_SIGNAL_CONNECT(CLOCK_PIX(sp, i), DRAW_SIGNAL, clock_pix_expose, sp->chans[i]);
 	  }
       }
@@ -1906,9 +1892,9 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_ARROW(sp), false, false, 2);
       gtk_widget_set_size_request(SPEED_ARROW(sp), 16, 16);
       gtk_widget_show(SPEED_ARROW(sp));
-      sp->sgx->speed_arrow_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
-      sp->sgx->speed_arrow_ax->wn = WIDGET_TO_WINDOW(SPEED_ARROW(sp));
-      sp->sgx->speed_arrow_ax->gc = ss->sgx->basic_gc;
+      sp->speed_arrow_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
+      sp->speed_arrow_ax->wn = WIDGET_TO_WINDOW(SPEED_ARROW(sp));
+      sp->speed_arrow_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(SPEED_ARROW(sp), DRAW_SIGNAL, speed_arrow_expose, sp);
       SG_SIGNAL_CONNECT(SPEED_ARROW(sp), "button_press_event", speed_arrow_press, sp);
 
@@ -2098,7 +2084,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	SG_SIGNAL_CONNECT(FILTER_ENV(sp), "motion_notify_event", filter_drawer_button_motion, sp);
 	
 	gtk_widget_show(FILTER_FRAME(sp));
-	sp->sgx->flt = new_env_editor();
+	sp->flt = new_env_editor();
       }
       
       /* end if control-panel */
@@ -2109,7 +2095,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     { 
       /* re-manage currently inactive chan */
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS) 
-	raise_dialog(sx->dialog);
+	raise_dialog(sp->dialog);
       gtk_widget_show(UNITE_BUTTON(sp));
       gtk_widget_show(SND_PANE(sp));
       for (k = 0; k < nchans; k++) 
@@ -2127,7 +2113,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     {
       title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
-      gtk_window_set_title(GTK_WINDOW(sx->dialog), title);
+      gtk_window_set_title(GTK_WINDOW(sp->dialog), title);
       free(title);
     }
 
@@ -2159,7 +2145,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   after_open(sp);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     {
-      sx->page = gtk_notebook_page_num(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), SND_PANE(sp));
+      sp->page = gtk_notebook_page_num(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), SND_PANE(sp));
       reset_controls(sp);
     }
   if (free_filename) free(filename);
@@ -2185,10 +2171,8 @@ void set_sound_pane_file_label(snd_info *sp, const char *str)
 
 void snd_info_cleanup(snd_info *sp)
 {
-  if ((sp) && (sp->sgx))
+  if (HAS_WIDGETS(sp))
     {
-      snd_context *sx;
-      sx = sp->sgx;
       clear_minibuffer_error(sp);
       if (SYNC_BUTTON(sp))
 	{
@@ -2200,10 +2184,10 @@ void snd_info_cleanup(snd_info *sp)
 	  set_toggle_button(REVERB_RIGHT_BUTTON(sp), false, false, (void *)sp);
 	  set_toggle_button(UNITE_BUTTON(sp), false, false, (void *)sp);
 	}
-      if ((sx->dialog) && (widget_is_active(sx->dialog)))
-	gtk_widget_hide(sx->dialog);
+      if ((sp->dialog) && (widget_is_active(sp->dialog)))
+	gtk_widget_hide(sp->dialog);
 
-      if ((sx->snd_widgets) && (SND_PANE(sp))) gtk_widget_hide(SND_PANE(sp));
+      if ((sp->snd_widgets) && (SND_PANE(sp))) gtk_widget_hide(SND_PANE(sp));
       sp->channel_style = CHANNELS_SEPARATE; 
     }
 }
@@ -2291,7 +2275,7 @@ void progress_report(chan_info *cp, mus_float_t pct)
     return;
 
   {
-    cp->cgx->progress_pct = pct;
+    cp->progress_pct = pct;
     show_happy_face(sound_pix_wn(cp), pct);
   }
 
@@ -2311,7 +2295,7 @@ void finish_progress_report(chan_info *cp)
     return;
 
   {
-    cp->cgx->progress_pct = -1.0;
+    cp->progress_pct = -1.0;
     hide_happy_face(sound_pix_wn(cp));
   }
   hide_stop_sign(sp);
@@ -2330,7 +2314,7 @@ void start_progress_report(chan_info *cp)
     return;
 
   {
-    cp->cgx->progress_pct = 0.0;
+    cp->progress_pct = 0.0;
     show_happy_face(sound_pix_wn(cp), 0.0);
   }
 
@@ -2350,7 +2334,7 @@ void reflect_sound_selection(snd_info *sp)
     {
       int page, current_page;
       current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)));
-      page = sp->sgx->page;
+      page = sp->page;
       if ((page != current_page) && (current_page >= 0))
 	{
 	  ss->selected_sound = sp->index; /* break infinite recursion here */
@@ -2543,7 +2527,7 @@ pane-box (10)name-form"
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
-  if (sp->sgx == NULL)
+  if (!HAS_WIDGETS(sp))
     return(XEN_EMPTY_LIST);
 
   return(XEN_CONS(XEN_WRAP_WIDGET(SND_PANE(sp)),

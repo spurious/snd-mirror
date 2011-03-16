@@ -1,7 +1,7 @@
 #ifndef SND_X1_H
 #define SND_X1_H
 
-#define SOUND_ENV_EDITOR(Sp) ((env_editor *)(sp->sgx->flt))
+#define SOUND_ENV_EDITOR(Sp) ((env_editor *)(sp->flt))
 
 
 

@@ -392,7 +392,7 @@ void ps_bg(axis_info *ap, graphics_context *ax)
   {
     state_context *sx;
     sx = ss->sgx;
-    if (cp->cgx->selected) 
+    if (cp->selected) 
       ps_set_color(sx->selected_graph_color);
     else ps_set_color(sx->graph_color);
   }
@@ -415,7 +415,7 @@ void ps_fg(chan_info *cp, graphics_context *ax)
   {
     state_context *sx;
     sx = ss->sgx;
-    if (cp->cgx->selected) 
+    if (cp->selected) 
       ps_set_color(sx->selected_data_color);
     else ps_set_color(sx->data_color);
   }

@@ -1285,15 +1285,22 @@ void post_lisp_popup_menu(void *e) {}
 
 void add_tooltip(GtkWidget *w, const char *tip)
 {
-  char *str;
-  str = mus_format("<span background=\"white\">%s</span>", tip);
-  gtk_widget_set_tooltip_markup(w, str);
 #if (!HAVE_GTK_3)
-  gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)(ss->sgx->white));
+  gtk_widget_set_tooltip_text(w, tip);
 #else
-  gtk_widget_override_background_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->sgx->white));
-#endif
+  char *str;
+  int i, len;
+  len = mus_strlen(tip);
+  str = (char *)calloc(len, sizeof(char));
+  for (i = 0; i < len; i++)
+    {
+      if (tip[i] == '\n') 
+	str[i] = ' ';
+      else str[i] = tip[i];
+    }
+  gtk_widget_set_tooltip_text(w, str);
   free(str);
+#endif
 }
 
 

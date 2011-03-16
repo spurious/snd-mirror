@@ -232,16 +232,12 @@ static void env_redisplay_1(printing_t printing)
 {
   if (enved_dialog_is_active())
     {
-      cairo_t *enved_cr = NULL;
-
-      enved_cr = MAKE_CAIRO(WIDGET_TO_WINDOW(drawer));	      
-      axis->ax->cr = enved_cr;
-      gray_ap->ax->cr = enved_cr;
+      ss->cr = MAKE_CAIRO(WIDGET_TO_WINDOW(drawer));	      
       
-      cairo_push_group(enved_cr);
-      cairo_set_source_rgba(enved_cr, gc->bg_color->red, gc->bg_color->green, gc->bg_color->blue, gc->bg_color->alpha);
-      cairo_rectangle(enved_cr, 0, 0, env_window_width, env_window_height);
-      cairo_fill(enved_cr);
+      cairo_push_group(ss->cr);
+      cairo_set_source_rgba(ss->cr, gc->bg_color->red, gc->bg_color->green, gc->bg_color->blue, gc->bg_color->alpha);
+      cairo_rectangle(ss->cr, 0, 0, env_window_width, env_window_height);
+      cairo_fill(ss->cr);
 
       if (showing_all_envs) 
 	{
@@ -273,10 +269,10 @@ static void env_redisplay_1(printing_t printing)
 	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
 	}
 
-      cairo_pop_group_to_source(enved_cr);
-      cairo_paint(enved_cr);
-      FREE_CAIRO(enved_cr);
-      enved_cr = NULL;
+      cairo_pop_group_to_source(ss->cr);
+      cairo_paint(ss->cr);
+      FREE_CAIRO(ss->cr);
+      ss->cr = NULL;
     }
 }
 
@@ -1182,7 +1178,6 @@ GtkWidget *create_envelope_editor(void)
       axis->ax->wn = WIDGET_TO_WINDOW(drawer);
       axis->ax->w = drawer;
       axis->ax->gc = gc;
-      axis->ax->cr = NULL;
       axis->ax->current_font = AXIS_NUMBERS_FONT(ss);
 
       gray_ap = (axis_info *)calloc(1, sizeof(axis_info));
@@ -1191,7 +1186,6 @@ GtkWidget *create_envelope_editor(void)
       gray_ap->ax->wn = WIDGET_TO_WINDOW(drawer);
       gray_ap->ax->w = drawer;
       gray_ap->ax->gc = ggc;
-      gray_ap->ax->cr = NULL;
       gray_ap->ax->current_font = AXIS_NUMBERS_FONT(ss);
 
       SG_SIGNAL_CONNECT(drawer, DRAW_SIGNAL, drawer_expose, NULL);

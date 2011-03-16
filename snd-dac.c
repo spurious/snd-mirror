@@ -3110,9 +3110,6 @@ to be played (via " S_start_playing ")."
 
   cp = get_cp(snd, chn, S_make_player);
   new_sp = make_snd_info(NULL, "make_player:wrapper", true_sp->hdr, new_player_index(), FILE_READ_ONLY);
-
-  free(new_sp->sgx); /* no built-in GUI */
-  new_sp->sgx = NULL;
   new_sp->chans[cp->chan] = cp;
 
   return(C_INT_TO_XEN_PLAYER(make_player(new_sp, cp)));

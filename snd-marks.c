@@ -1409,9 +1409,9 @@ static void mark_save_graph(mark_context *ms, int j)
 
 static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
 {
-  chan_context *cx;
   graphics_context *ax;
   point_t *points;
+  chan_info *draw_cp;
 #if USE_MOTIF
   GC draw_gc, undraw_gc;
 #else
@@ -1419,17 +1419,16 @@ static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
 #endif
 
   points = get_grf_points();
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  ax = cx->ax;
+  draw_cp = channel_to_chan(cp);
+  ax = draw_cp->ax;
 
 #if USE_GTK
-  ax->cr = MAKE_CAIRO(ax->wn);
+  ss->cr = MAKE_CAIRO(ax->wn);
 #endif
 
-  undraw_gc = erase_GC(cp);
-  draw_gc = copy_GC(cp);
-  if (cp->time_graph_style == GRAPH_LINES)
+  undraw_gc = erase_GC(draw_cp);
+  draw_gc = copy_GC(draw_cp);
+  if (draw_cp->time_graph_style == GRAPH_LINES)
     {
       ax->gc = undraw_gc;
       draw_lines(ax, ms->p0, ms->lastpj);
@@ -1439,25 +1438,25 @@ static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
   else 
     {
       ax->gc = undraw_gc;
-      draw_points(ax, ms->p0, ms->lastpj, cp->dot_size);
+      draw_points(ax, ms->p0, ms->lastpj, draw_cp->dot_size);
       ax->gc = draw_gc;
-      draw_points(ax, points, nj, cp->dot_size);
+      draw_points(ax, points, nj, draw_cp->dot_size);
     }
   backup_erase_grf_points(ms, nj);
   ax->gc = draw_gc;
 
 #if USE_GTK
-  FREE_CAIRO(ax->cr);
-  ax->cr = NULL;
+  FREE_CAIRO(ss->cr);
+  ss->cr = NULL;
 #endif
 }
 
 
 static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int nj)
 {
-  chan_context *cx;
   graphics_context *ax;
   point_t *points, *points1;
+  chan_info *draw_cp;
 #if USE_MOTIF
   GC draw_gc, undraw_gc;
 #else
@@ -1466,17 +1465,17 @@ static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int 
 
   points = get_grf_points();
   points1 = get_grf_points1();
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  ax = cx->ax;
+
+  draw_cp = channel_to_chan(cp);
+  ax = draw_cp->ax;
 
 #if USE_GTK
-  ax->cr = MAKE_CAIRO(ax->wn);
+  ss->cr = MAKE_CAIRO(ax->wn);
 #endif
 
-  undraw_gc = erase_GC(cp);
-  draw_gc = copy_GC(cp);
-  if (cp->time_graph_style == GRAPH_LINES)
+  undraw_gc = erase_GC(draw_cp);
+  draw_gc = copy_GC(draw_cp);
+  if (draw_cp->time_graph_style == GRAPH_LINES)
     {
       ax->gc = undraw_gc;
       draw_lines(ax, ms->p0, ms->lastpj);
@@ -1488,18 +1487,18 @@ static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int 
   else 
     {
       ax->gc = undraw_gc;
-      draw_points(ax, ms->p0, ms->lastpj, cp->dot_size);
-      draw_points(ax, ms->p1, ms->lastpj, cp->dot_size);
+      draw_points(ax, ms->p0, ms->lastpj, draw_cp->dot_size);
+      draw_points(ax, ms->p1, ms->lastpj, draw_cp->dot_size);
       ax->gc = draw_gc;
-      draw_points(ax, points, nj, cp->dot_size);
-      draw_points(ax, points1, nj, cp->dot_size);
+      draw_points(ax, points, nj, draw_cp->dot_size);
+      draw_points(ax, points1, nj, draw_cp->dot_size);
     }
   backup_erase_grf_points(ms, nj);
   ax->gc = draw_gc;
 
 #if USE_GTK
-  FREE_CAIRO(ax->cr);
-  ax->cr = NULL;
+  FREE_CAIRO(ss->cr);
+  ss->cr = NULL;
 #endif
 }
 #else
@@ -1902,7 +1901,7 @@ static void show_mark(chan_info *cp, mark *mp, bool show)
 
   ax = mark_tag_context(cp);
 #if USE_GTK
-  ax->cr = MAKE_CAIRO(ax->wn);
+  ss->cr = MAKE_CAIRO(ax->wn);
 #endif
 
   if (mp->name)
@@ -1930,8 +1929,8 @@ static void show_mark(chan_info *cp, mark *mp, bool show)
 		 cx, y0);
   mp->visible = show;
 #if USE_GTK
-  FREE_CAIRO(ax->cr);
-  ax->cr = NULL;
+  FREE_CAIRO(ss->cr);
+  ss->cr = NULL;
   copy_context(cp);
 #endif
 }

@@ -71,13 +71,13 @@ static void graph_redisplay(void)
   axis_ap->x0 = 0.0;
   axis_ap->x1 = 1.0;
 
-  ax->cr = MAKE_CAIRO(ax->wn);
-  cairo_push_group(ax->cr);
+  ss->cr = MAKE_CAIRO(ax->wn);
+  cairo_push_group(ss->cr);
 
   /* erase previous */
-  cairo_set_source_rgba(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue, ax->gc->bg_color->alpha);
-  cairo_rectangle(ax->cr, 0, 0, widget_width(graph_drawer), widget_height(graph_drawer));
-  cairo_fill(ax->cr);
+  cairo_set_source_rgba(ss->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue, ax->gc->bg_color->alpha);
+  cairo_rectangle(ss->cr, 0, 0, widget_width(graph_drawer), widget_height(graph_drawer));
+  cairo_fill(ss->cr);
 
   if (axis_ap->xlabel) free(axis_ap->xlabel);
   if (fft_beta_max(fft_window(ss)) != 1.0)
@@ -137,10 +137,10 @@ static void graph_redisplay(void)
       draw_line(ax, ix0, iy0, ix1, iy1);
     }
 
-  cairo_pop_group_to_source(ax->cr);
-  cairo_paint(ax->cr);
-  FREE_CAIRO(ax->cr);
-  ax->cr = NULL;
+  cairo_pop_group_to_source(ss->cr);
+  cairo_paint(ss->cr);
+  FREE_CAIRO(ss->cr);
+  ss->cr = NULL;
 }
 
 

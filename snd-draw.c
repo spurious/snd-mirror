@@ -163,7 +163,7 @@ void draw_cursor(chan_info *cp)
   if (!ax)
     {
       fprintf(stderr,"axis->ax is null...");
-      ap->ax = cp->cgx->ax;
+      ap->ax = cp->ax;
       ax = ap->ax;
     }
   old_color = get_foreground_color(ax);
@@ -196,8 +196,8 @@ void draw_cursor(chan_info *cp)
 
     case CURSOR_PROC:
 #if USE_GTK
-      FREE_CAIRO(ap->ax->cr);
-      ap->ax->cr = NULL;
+      FREE_CAIRO(ss->cr);
+      ss->cr = NULL;
 #endif
       XEN_CALL_3((XEN_PROCEDURE_P(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
 		 C_INT_TO_XEN_SOUND(cp->sound->index),
@@ -206,7 +206,7 @@ void draw_cursor(chan_info *cp)
 		 C_TO_XEN_BOOLEAN(ss->tracking),
 		 S_cursor_style " procedure");
 #if USE_GTK
-      ap->ax->cr = MAKE_CAIRO(ap->ax->wn);
+      ss->cr = MAKE_CAIRO(ap->ax->wn);
 #endif
       break;
     }
@@ -267,7 +267,7 @@ static graphics_context *get_ax(chan_info *cp, int ax_id, const char *caller, XE
 	  (XEN_LIST_LENGTH(xcr) == 2) &&
 	  (XEN_SYMBOL_P(XEN_CAR(xcr))) &&
 	  (strcmp("cairo_t_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(xcr))) == 0))
-	ax->cr = (cairo_t *)XEN_UNWRAP_C_POINTER(XEN_CADR(xcr));
+	ss->cr = (cairo_t *)XEN_UNWRAP_C_POINTER(XEN_CADR(xcr));
       else 
 	XEN_ERROR(XEN_ERROR_TYPE("not-a-graphics-context"),
 		  XEN_LIST_2(C_TO_XEN_STRING("~A: cairo_t argument is not a cairo_t pointer"),
