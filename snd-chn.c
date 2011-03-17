@@ -65,7 +65,6 @@ static XEN after_transform_hook;
 static XEN graph_hook;
 static XEN after_graph_hook;
 static XEN after_lisp_graph_hook;
-static XEN time_graph_hook;
 
 
 static void after_transform(chan_info *cp, mus_float_t scaler)
@@ -5770,23 +5769,6 @@ void edit_history_select(chan_info *cp, int row)
 }
 
 
-static bool run_time_graph_hook(chan_info *cp, graphics_context *ax)
-{
-  XEN result = XEN_FALSE;
-  if ((cp->hookable == WITH_HOOK) &&
-      (XEN_HOOKED(time_graph_hook)))
-    {
-      result = run_progn_hook(time_graph_hook,
-			      XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index),
-					 C_TO_XEN_INT(cp->chan)),
-			      S_time_graph_hook);
-
-      return(foreground_color_ok(result, ax)); /* snd-draw.c checks for pixel, then sets foreground */
-    }
-  return(false);
-}
-
-
 widget_t channel_to_widget(chan_info *cp)
 {
   if ((cp->chan > 0) && 
@@ -5824,8 +5806,8 @@ graphics_context *set_context(chan_info *cp, chan_gc_t gc)
 	case CHAN_MGC: ax->gc = ss->selected_mark_gc;        break;
 	case CHAN_MXGC: ax->gc = ss->mix_gc;                 break;
 	case CHAN_TMPGC: 
-	  if (!(run_time_graph_hook(cp, ax)))
-	    ax->gc = ss->selected_basic_gc;     
+	  ax->gc = ss->selected_basic_gc;   
+	  set_foreground_color(ax, cp->combined_data_color);  
 	  break;
 	}
     }
@@ -5840,17 +5822,8 @@ graphics_context *set_context(chan_info *cp, chan_gc_t gc)
 	case CHAN_MGC: ax->gc = ss->mark_gc;             break;
 	case CHAN_MXGC: ax->gc = ss->mix_gc;             break;
 	case CHAN_TMPGC: 
-	  if (!(run_time_graph_hook(cp, ax)))
-	    {
-	      ax->gc = ss->combined_basic_gc;
-	      switch (cp->chan % 4)
-		{
-		case 0: set_foreground_color(ax, ss->black);      break;
-		case 1: set_foreground_color(ax, ss->red);        break;
-		case 2: set_foreground_color(ax, ss->green);      break;
-		case 3: set_foreground_color(ax, ss->light_blue); break;
-		}
-	    }
+	  ax->gc = ss->combined_basic_gc;
+	  set_foreground_color(ax, cp->combined_data_color);
 	  break;
 	}
     }
@@ -10121,8 +10094,6 @@ void g_init_chn(void)
 of pixels, these are used in order by the list of graphs (if any), rather than Snd's default set; \
 this makes it possible to use different colors for the various graphs. \
 If it returns a function (of no arguments), that function is called rather than the standard graph routine."
-  #define H_time_graph_hook S_time_graph_hook " (snd chn): called before the time graph is updated when " S_channel_style " \
-is " S_channels_combined ". If it returns a pixel, that color is used to draw the data, rather than Snd's default choice."
   #define H_after_lisp_graph_hook S_after_lisp_graph_hook " (snd chn): called after a lisp graph is updated."
   #define H_mouse_press_hook S_mouse_press_hook " (snd chn button state x y): called upon mouse button press within the lisp graph."
   #define H_mouse_click_hook S_mouse_click_hook " (snd chn button state x y axis): called upon button click."
@@ -10139,7 +10110,6 @@ If it returns " PROC_TRUE ", the key press is not passed to the main handler. 's
   after_lisp_graph_hook = XEN_DEFINE_HOOK(S_after_lisp_graph_hook, 2, H_after_lisp_graph_hook);  /* args = sound channel */
   initial_graph_hook =    XEN_DEFINE_HOOK(S_initial_graph_hook, 3,    H_initial_graph_hook);   /* args = sound channel duration */
   lisp_graph_hook =       XEN_DEFINE_HOOK(S_lisp_graph_hook, 2,       H_lisp_graph_hook);      /* args = sound channel */
-  time_graph_hook =       XEN_DEFINE_HOOK(S_time_graph_hook, 2,       H_time_graph_hook);      /* args = sound channel */
   mouse_press_hook =      XEN_DEFINE_HOOK(S_mouse_press_hook, 6,      H_mouse_press_hook);     /* args = sound channel button state x y */
   mouse_click_hook =      XEN_DEFINE_HOOK(S_mouse_click_hook, 7,      H_mouse_click_hook);     /* args = sound channel button state x y axis */
   mouse_drag_hook =       XEN_DEFINE_HOOK(S_mouse_drag_hook, 6,       H_mouse_drag_hook);      /* args = sound channel button state x y */

@@ -2316,7 +2316,7 @@
 		       'stop-player 'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'ncos
 		       'ncos? 'nsin 'nsin? 'swap-channels 'sync 'sync-style 'sync-none 'sync-all 'sync-by-sound
 		       'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap
-		       'temp-dir 'text-focus-color 'time-graph 'time-graph-hook 'time-graph-style
+		       'temp-dir 'text-focus-color 'time-graph 'time-graph-style
 		       'time-graph-type 'time-graph? 'tiny-font 
 		       'tracking-cursor-style 'transform->vct
 		       'transform-dialog 'transform-frames 'transform-graph 'transform-graph-style 'transform-graph-type
@@ -30905,7 +30905,6 @@ EDITS: 2
     (hook-push after-graph-hook arg2) (carg2 after-graph-hook)
     (hook-push after-lisp-graph-hook arg2) (carg2 after-lisp-graph-hook)
     (hook-push lisp-graph-hook arg2) (carg2 lisp-graph-hook)
-    (hook-push time-graph-hook arg2) (carg2 time-graph-hook)
     (hook-push before-transform-hook arg2) (carg2 before-transform-hook)
     (hook-push mix-release-hook arg2) (carg2 mix-release-hook)
     (hook-push save-hook arg2) (carg2 save-hook)
@@ -62418,7 +62417,6 @@ EDITS: 1
 		    (list (list after-graph-hook 'after-graph-hook)
 			  (list after-lisp-graph-hook 'after-lisp-graph-hook)
 			  (list lisp-graph-hook 'lisp-graph-hook)
-			  (list time-graph-hook 'time-graph-hook)
 			  (list before-transform-hook 'before-transform-hook)
 			  (list mix-release-hook 'mix-release-hook)
 			  (list save-hook 'save-hook)

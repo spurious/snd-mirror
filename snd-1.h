@@ -277,6 +277,7 @@ typedef struct chan_info {
   GtkAdjustment **chan_adjs;
   GdkCursor *current_cursor;
   slist *edhist_list;
+  color_info *combined_data_color;
 #endif
 #if USE_MOTIF
   Widget *chan_widgets;
@@ -286,9 +287,10 @@ typedef struct chan_info {
   bool fft_pix_ready;
   mus_float_t fft_pix_cutoff;
   Cursor current_cursor;
+  Pixel combined_data_color;
 #endif
 #if USE_NO_GUI
-  int current_cursor;
+  int current_cursor, combined_data_color;
 #endif
 
   sono_info *sonogram_data;

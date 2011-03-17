@@ -1677,8 +1677,8 @@ reset any added amplitude sliders to 1.0.
 <tr><td colspan=3 bgcolor="#f2f4ff">
 <code><a class=def name="aftergraphhook">after-graph-hook</a> (snd chn)</code>
 </td></tr><tr><td></td><td colspan=2>
-This hook is called after a graph is updated or redisplayed; see <a href="#displaysampsinred">display-samps-in-red</a>.
-This is the hook to use when adding your own finishing touches to the display; if added earlier they risk
+This hook is called after a graph is updated or redisplayed.
+Use it to add your own finishing touches to the display; if added earlier they risk
 being erased by Snd as it redraws graphs.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -2850,24 +2850,6 @@ This hook is called when a sound finishes playing.  stop-playing-hook may be cal
 <code><a class=def name="stopplayingselectionhook">stop-playing-selection-hook</a> ()</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when the selection finishes playing.
-</td></tr><tr><td colspan=3 height=16></td></tr>
-
-
-<!-- time-graph-hook -->
-<tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="timegraphhook">time-graph-hook</a> (snd chn)</code> [<b>progn</b>]
-</td></tr><tr><td></td><td colspan=2>
-This hook is called before each channel's time domain graph is drawn if <a href="#channelstyle">channel-style</a> is
-<code>channels-combined</code> (that is, when all the channels are superimposed in one graph).
-If it returns a pixel, that color is used to draw the channel's data.
-
-<table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(hook-push <em class=red>time-graph-hook</em>
-	   (lambda (snd chn)
-	     (lambda ()
-	       (apply <a class=quiet href="#makecolor">make-color</a> (<a class=quiet href="#colormapref">colormap-ref</a> (<a class=quiet href="#colormap">colormap</a>) (/ chn (<a class=quiet href="#channels">channels</a> snd)))))))
-</pre></td></tr></table>
-
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -12926,63 +12908,87 @@ are:</p>
 
 <table border=2 bordercolor="#f2f4ff" cellpadding=6 hspace=10><tr><td>
 <table border=0 cellpadding=0 cellspacing=0 hspace=20>
-<tr><td><code><a class=def name="axiscolor">axis-color</a></code></td><td width=20></td>
-    <td><code>defaults to current data color</code></td><td width=20></td>
-    <td>color of axes</td></tr>
-<tr><td><code><a class=def name="basiccolor">basic-color</a></code></td><td width=20></td>
-    <td><code>ivory2</code></td><td width=20></td>
+
+<tr><td bgcolor="#f2f4ff"><code><a class=def name="axiscolor">axis-color</a></code></td><td width=20 bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff"><code>defaults to current data color</code></td><td width=20 bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff">color of axes</td></tr>
+
+<tr><td><code><a class=def name="basiccolor">basic-color</a></code></td><td></td>
+    <td><code>ivory2</code></td><td></td>
     <td>main Snd color.</td></tr>
-<tr><td bgcolor="#f2f4ff"><code><a class=def name="cursorcolor">cursor-color</a></code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff"><code>red</code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff">graph cursor color.</td></tr>
-<tr><td><code><a class=def name="datacolor">data-color</a></code></td><td></td>
-    <td><code>black</code></td><td></td>
-    <td>color of data in unselected graph.</td></tr>
-<tr><td bgcolor="#f2f4ff"><code><em class=emdef>enved-waveform-color</em></code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff"><code>blue</code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff">color of waveform displayed in envelope editor.</td></tr>
-<tr><td><code><em class=emdef>filter-control-waveform-color</em></code></td><td></td>
+
+<tr><td bgcolor="#f2f4ff"><code><a class=def name="combineddatacolor">combined-data-color</a></code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff"><code>depends on channel number</code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff">color of channel data if channels-combined</td></tr>
+
+<tr><td><code><a class=def name="cursorcolor">cursor-color</a></code></td><td></td>
+    <td><code>red</code></td><td></td>
+    <td>graph cursor color.</td></tr>
+
+<tr><td bgcolor="#f2f4ff"><code><a class=def name="datacolor">data-color</a></code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff"><code>black</code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff">color of data in unselected graph.</td></tr>
+
+<tr><td><code><em class=emdef>enved-waveform-color</em></code></td><td></td>
     <td><code>blue</code></td><td></td>
-    <td>color of control panel filter waveform.</td></tr>
-<tr><td bgcolor="#f2f4ff"><code><a class=def name="graphcolor">graph-color</a></code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff"><code>white</code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff">background color of unselected graph.</td></tr>
+    <td>color of waveform displayed in envelope editor.</td></tr>
+
+<tr><td bgcolor="#f2f4ff"><code><em class=emdef>filter-control-waveform-color</em></code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff"><code>blue</code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff">color of control panel filter waveform.</td></tr>
+
+<tr><td><code><a class=def name="graphcolor">graph-color</a></code></td><td></td>
+    <td><code>white</code></td><td></td>
+    <td>background color of unselected graph.</td></tr>
+
 <tr><td bgcolor="#f2f4ff"><code><a class=def name="highlightcolor">highlight-color</a></code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff"><code>ivory1</code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff">highlighting color.</td></tr>
+
 <tr><td><code><em class=emdef>listener-color</em></code></td><td></td>
     <td><code>aliceblue</code></td><td></td>
     <td>background color of listener.</td></tr>
+
 <tr><td bgcolor="#f2f4ff"><code><em class=emdef>listener-text-color</em></code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff"><code>black</code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff">text color in listener.</td></tr>
+
 <tr><td><code><a class=def name="markcolor">mark-color</a></code></td><td></td>
     <td><code>red</code></td><td></td>
     <td>color of mark indicator.</td></tr>
+
 <tr><td bgcolor="#f2f4ff"><code><em class=emdef>mix-color</em></code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff"><code>darkgray</code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff">color of mix waveforms.</td></tr>
+
 <tr><td><code><a class=def name="positioncolor">position-color</a></code></td><td></td>
     <td><code>ivory3</code></td><td></td>
     <td>position slider color</td></tr>
-<tr><td><code><a class=def name="sashcolor">sash-color</a></code></td><td></td>
-    <td><code>lightgreen</code></td><td></td>
-    <td>color of paned window sashes.</td></tr>
-<tr><td bgcolor="#f2f4ff"><code><a class=def name="selecteddatacolor">selected-data-color</a></code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff"><code>black</code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff">color of data in currently selected graph.</td></tr>
-<tr><td><code><a class=def name="selectedgraphcolor">selected-graph-color</a></code></td><td></td>
-    <td><code>white</code></td><td></td>
-    <td>background color of currently selected graph.</td></tr>
-<tr><td bgcolor="#f2f4ff"><code><a class=def name="selectioncolor">selection-color</a></code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff"><code>lightsteelblue1</code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff">color of selected portion of graph.</td></tr>
-<tr><td><code><a class=def name="textfocuscolor">text-focus-color</a></code></td><td></td>
-    <td><code>white</code></td><td></td>
-    <td>color of text field when it has focus.</td></tr>
-<tr><td bgcolor="#f2f4ff"><code><a class=def name="zoomcolor">zoom-color</a></code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff"><code>ivory4</code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff">zoom slider color.</td></tr>
+
+<tr><td bgcolor="#f2f4ff"><code><a class=def name="sashcolor">sash-color</a></code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff"><code>lightgreen</code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff">color of paned window sashes.</td></tr>
+
+<tr><td><code><a class=def name="selecteddatacolor">selected-data-color</a></code></td><td></td>
+    <td><code>black</code></td><td></td>
+    <td>color of data in currently selected graph.</td></tr>
+
+<tr><td bgcolor="#f2f4ff"><code><a class=def name="selectedgraphcolor">selected-graph-color</a></code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff"><code>white</code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff">background color of currently selected graph.</td></tr>
+
+<tr><td><code><a class=def name="selectioncolor">selection-color</a></code></td><td></td>
+    <td><code>lightsteelblue1</code></td><td></td>
+    <td>color of selected portion of graph.</td></tr>
+
+<tr><td bgcolor="#f2f4ff"><code><a class=def name="textfocuscolor">text-focus-color</a></code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff"><code>white</code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff">color of text field when it has focus.</td></tr>
+
+<tr><td><code><a class=def name="zoomcolor">zoom-color</a></code></td><td></td>
+    <td><code>ivory4</code></td><td></td>
+    <td>zoom slider color.</td></tr>
+
 </table>
 </td></tr></table>
 
@@ -13008,6 +13014,11 @@ are:</p>
     set_selected_graph_color beige
     set_selected_data_color blue
 </pre>
+
+<p>combined-data-color is slightly special.  It takes two arguments, the sound and channel number, and applies to the
+channel's data only if the graphs are superimposed, when <a href="#channelstyle">channel-style</a> is <code>channels-combined</code>.
+</p>
+
 
 <!-- INDEX colors:Colors -->
 <TABLE border=3 bordercolor="tan" hspace=40 vspace=10><tr><td>
@@ -13069,11 +13080,6 @@ If the requested font can't be loaded, the set! statement returns the old (uncha
 
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="graphics">Graphics</a></h4></td></tr></table>
-
-<p>It is possible to draw directly on any of the channel graphs.  Examples include the
-<a href="#showoriginal">show-original</a> after-graph-hook function, and the
-<a href="#xcursor">x-cursor</a> function that draws an "x" shaped cursor.
-</p>
 
 <!-- -------------------------------- GRAPHICS -------------------------------- -->
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
@@ -13191,25 +13197,6 @@ If the colormap is inverted, the order of colors is reversed.
 color-scale reflects the darkness setting in the View:<a href="snd.html#colorbrowser">Color/Orientation</a> dialog.
 The mapping between the slider in the dialog and the color-scale value is not linear, and is
 currently different in Gtk and Motif.  
-The color chooser function in <a href="#timegraphhook">time-graph-hook</a> can use
-<a href="#colorinverted">color-inverted</a>
-and color-scale to drive colormap choices:
-
-<pre>
-  (hook-push <a class=quiet href="#timegraphhook">time-graph-hook</a>
-	     (lambda (snd chn)
-               (apply <a class=quiet href="#makecolor">make-color</a> (<a class=quiet href="#colormapref">colormap-ref</a>
-		                   (<a class=quiet href="#colormap">colormap</a>) 
-		                   (let ((x (if (<em class=red>color-inverted</em>) 
-				                (/ chn n) ; n = total chans in this case
-				                (/ (- n chn) n)))
-			                 (base (<em class=red>color-scale</em>)))
-			             (if (= base 1.0)
-			                 x
-			                 (/ (- (expt base x) 1.0) 
-                                            (- base 1.0))))))))
-</pre>
-
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13281,7 +13268,6 @@ This is the graphics mode (an integer in Snd, not a function) to use to draw ove
 The "contexts" refer to graphics contexts used throughout Snd; the <code>copy-context</code>
 copies into the current graph, whereas the <code>cursor-context</code> uses XOR.
 The error thrown for an unimplemented context is 'no-such-graphics-context.
-See draw.scm or <a href="#displaysampsinred">display-samps-in-red</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13409,7 +13395,7 @@ currently in the time-domain graph:
 </td></tr><tr><td></td><td>
 This draws a filled rectangle in the current foreground color from ('x0 y0') of size ('width height').
 If 'erase' is #t, this function erases the rectangular area.
-See draw.scm, snd-motif.scm, or <a href="#showoriginal">show-original</a>.
+See draw.scm and snd-motif.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13469,6 +13455,7 @@ The <a href="sndscm.html#startwaterfall">waterfall</a> function in snd-gl.scm us
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="graphdata">graph-data</a> data snd chn context low high graphics-style cr</code>
 </td></tr><tr><td></td><td>
+<p>
 graph-data displays 'data' in the time domain graph of the sound's channel
 'chn' using the graphics context 'context' (normally <code>copy-context</code>), placing the
 data in the recipient's graph between points 'low' and 'high'
@@ -13476,7 +13463,7 @@ in the drawing mode 'graphics-style'.
 With this function and make-graph-data, we can overlay sounds,
 overlay different versions of the same sound, place a portion of a
 sound over another at an arbitrary point, and so on (see draw.scm).
-<tr><td></td><td>
+</p>
 
 <img src="pix/redsamps.png" alt="red samples" hspace=20>
 

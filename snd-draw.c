@@ -1850,6 +1850,37 @@ bool foreground_color_ok(XEN color, graphics_context *ax)
 }
 
 
+
+static XEN g_combined_data_color(XEN snd, XEN chn)
+{
+  #define H_combined_data_color "(" S_combined_data_color " snd chn): color of this channel's data if graphed with channels-combined"
+  chan_info *cp;
+
+  ASSERT_CHANNEL(S_combined_data_color, snd, chn, 1);
+  cp = get_cp(snd, chn, S_combined_data_color);
+  if (!cp) return(XEN_FALSE);
+
+  return(XEN_WRAP_PIXEL(cp->combined_data_color));
+}
+
+
+static XEN g_set_combined_data_color(XEN color, XEN snd, XEN chn)
+{
+  chan_info *cp;
+
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_1, S_setB S_combined_data_color, "a color"); 
+  ASSERT_CHANNEL(S_combined_data_color, snd, chn, 1);
+  cp = get_cp(snd, chn, S_combined_data_color);
+  if (!cp) return(XEN_FALSE);
+
+  cp->combined_data_color = XEN_UNWRAP_PIXEL(color);
+  return(color);
+}
+
+WITH_THREE_SETTER_ARGS(g_set_combined_data_color_reversed, g_set_combined_data_color)
+
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_8(g_draw_line_w, g_draw_line)
 XEN_ARGIFY_7(g_draw_dot_w, g_draw_dot)
@@ -1923,6 +1954,8 @@ XEN_ARGIFY_4(g_make_color_w, g_make_color)
 XEN_NARGIFY_1(g_color_to_list_w, g_color_to_list)
 XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
 XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
+XEN_NARGIFY_2(g_combined_data_color_w, g_combined_data_color)
+XEN_NARGIFY_3(g_set_combined_data_color_w, g_set_combined_data_color)
 
 #else
 
@@ -1998,6 +2031,8 @@ XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 #define g_color_to_list_w g_color_to_list
 #define g_mix_color_w g_mix_color
 #define g_set_mix_color_w g_set_mix_color
+#define g_combined_data_color_w g_combined_data_color
+#define g_set_combined_data_color_w g_set_combined_data_color
 
 #endif
 
@@ -2099,6 +2134,9 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
 					    S_setB S_mix_color, g_set_mix_color_w, g_set_mix_color_reversed, 0, 1, 1, 1);
 
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_combined_data_color, g_combined_data_color_w, H_combined_data_color,
+					    S_setB S_combined_data_color, g_set_combined_data_color_w, g_set_combined_data_color_reversed, 2, 0, 3, 0);
+
   XEN_DEFINE_PROCEDURE(S_color_p,       g_color_p_w,        1, 0, 0, H_color_p);
   XEN_DEFINE_PROCEDURE(S_make_color,    g_make_color_w,     3, 1, 0, H_make_color);
   XEN_DEFINE_PROCEDURE(S_color_to_list, g_color_to_list_w,  1, 0, 0, H_color_to_list);
@@ -2118,7 +2156,7 @@ a new set of channel or sound widgets is created."
 }
 
 #else
-/* no gui */
+/* no gui -- extension lang tie-ins are in snd-nogui.c */
 void set_grf_points(int xi, int j, int ymin, int ymax) {}
 void set_grf_point(int xi, int j, int yi) {}
 void draw_grf_points(int dot_size, graphics_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style) {}

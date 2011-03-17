@@ -1212,8 +1212,7 @@ char *slist_selection(slist *lst)
  *
  *   superimposed chans flicker a lot
  *     the cairo_t's are not shared in this case, so each chan is a separate display
- *     call time-graph-hook only when set to superimposed, delete lisp-graph-hook?
- *     ^ save the color somewhere and use it in combined_context
+ *     snd-test combined-data-color
  *
  *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
  *     if proc cursor, foreground color is not set back to old

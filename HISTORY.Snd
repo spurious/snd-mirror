@@ -1,5 +1,7 @@
 Snd change log
 
+ 18-Mar:    removed time-graph-hook; replaced by combined-data-color.
+ 10-Mar:    space=play or pause, tracking-cursor stuff changed.
  4-Mar:     'src' button in Save-as dialogs to do automatic sampling rate conversion.
  1-Mar:     delete-selection-and-smooth, delete-samples-and-smooth.
  23-Feb:    sync-style variable: sync-none, sync-all, or sync-by-sound (the new default).
@@ -12,6 +14,7 @@ Snd change log
             The built-in popup menus are now context sensitive, and the files popup.scm
               and gtk-popup.scm have been removed.
             with-menu-icons (Gtk only).
+            play-arrow-size
  12-Feb:    Snd 11.13.
  7-Jan:     Snd 11.12.
 

@@ -8,6 +8,14 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
     {
       cp = (chan_info *)calloc(1, sizeof(chan_info)); 
       cp->ax = (graphics_context *)calloc(1, sizeof(graphics_context));
+
+      switch (chan % 4)
+	{
+	case 0: cp->combined_data_color = ss->black;      break;
+	case 1: cp->combined_data_color = ss->red;        break;
+	case 2: cp->combined_data_color = ss->green;      break;
+	case 3: cp->combined_data_color = ss->light_blue; break;
+	}
 #if USE_GTK
       cp->progress_pct = -1.0;
 #endif

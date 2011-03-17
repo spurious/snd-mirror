@@ -19,6 +19,7 @@ Snd 12.0
    removed click-for-listener-help.
    the Region browser print option has been removed.
    removed Snd.gtkrc, Snd.ad, and the obsolete X resources stuff.
+   removed time-graph-hook; replaced by combined-data-color.
 
    tracking-cursor-style defaults to cursor-line.
      cursor-follows-play moved to snd11.scm.

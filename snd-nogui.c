@@ -402,7 +402,9 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define " S_listener_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_listener_text_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_axis_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_mark_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
+  XEN_EVAL_C_STRING("(define " S_mark_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
+  XEN_EVAL_C_STRING("(define " S_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
+  XEN_EVAL_C_STRING("(define " S_combined_data_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
   XEN_EVAL_C_STRING("(define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_foreground_color " (make-procedure-with-setter (lambda args #f) (lambda args (car args))))");
   XEN_EVAL_C_STRING("(define " S_sash_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
@@ -507,8 +509,12 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def set_listener_color (a) false end");
   XEN_EVAL_C_STRING("def listener_text_color () false end");
   XEN_EVAL_C_STRING("def set_listener_text_color (a) false end");
-  XEN_EVAL_C_STRING("def mark_color () false end");
-  XEN_EVAL_C_STRING("def set_mark_color (a) false end");
+  XEN_EVAL_C_STRING("def mark_color (a) false end");
+  XEN_EVAL_C_STRING("def set_mark_color (a m) false end");
+  XEN_EVAL_C_STRING("def mix_color (a) false end");
+  XEN_EVAL_C_STRING("def set_mix_color (a m) false end");
+  XEN_EVAL_C_STRING("def combined_data_color (a b) false end");
+  XEN_EVAL_C_STRING("def set_combined_data_color (a b c) false end");
   XEN_EVAL_C_STRING("def position_color () false end");
   XEN_EVAL_C_STRING("def set_position_color (a) false end");
   XEN_EVAL_C_STRING("def foreground_color () false end");
@@ -637,6 +643,10 @@ void snd_doit(int argc, char **argv)
 : set-" S_listener_text_color " { a } #f ;\n\
 : " S_mark_color " #f ;\n\
 : set-" S_mark_color " { a } #f ;\n\
+: " S_mix_color " #f ;\n\
+: set-" S_mix_color " { a } #f ;\n\
+: " S_combined_data_color " #f ;\n\
+: set-" S_combined_data_color " { a } #f ;\n\
 : " S_position_color " #f ;\n\
 : set-" S_position_color " { a } #f ;\n\
 : " S_sash_color " #f ;\n\

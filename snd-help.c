@@ -487,6 +487,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+18-Mar:  removed time-graph-hook; replaced by combined-data-color.\n\
 10-Mar:  space=play or pause, tracking-cursor stuff changed.\n\
 4-Mar:   'src' button in Save-as dialogs to do automatic sampling rate conversion.\n\
 1-Mar:   delete-selection-and-smooth, delete-samples-and-smooth.\n\
