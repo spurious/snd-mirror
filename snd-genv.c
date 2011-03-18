@@ -232,7 +232,8 @@ static void env_redisplay_1(printing_t printing)
 {
   if (enved_dialog_is_active())
     {
-      ss->cr = MAKE_CAIRO(WIDGET_TO_WINDOW(drawer));	      
+      if (printing == NOT_PRINTING)
+	ss->cr = MAKE_CAIRO(WIDGET_TO_WINDOW(drawer));	      
       
       cairo_push_group(ss->cr);
       cairo_set_source_rgba(ss->cr, gc->bg_color->red, gc->bg_color->green, gc->bg_color->blue, gc->bg_color->alpha);
@@ -246,7 +247,7 @@ static void env_redisplay_1(printing_t printing)
 	  x1 = axis->x_axis_x1;
 	  y0 = axis->y_axis_y0;
 	  y1 = axis->y_axis_y1;
-	  view_envs(env_window_width, env_window_height, printing);
+	  view_envs(env_window_width, env_window_height, NOT_PRINTING); /* NOT_PRINTING because we're not using the eps stuff here */
 	  axis->x_axis_x0 = x0;
 	  axis->x_axis_x1 = x1;
 	  axis->y_axis_y0 = y0;
@@ -264,15 +265,18 @@ static void env_redisplay_1(printing_t printing)
 	    {
 	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (printing == NOT_PRINTING))
 		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
-	      enved_show_background_waveform(axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), printing);
+	      enved_show_background_waveform(axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), NOT_PRINTING);
 	    }
-	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
+	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, NOT_PRINTING);
 	}
 
       cairo_pop_group_to_source(ss->cr);
       cairo_paint(ss->cr);
-      FREE_CAIRO(ss->cr);
-      ss->cr = NULL;
+      if (printing == NOT_PRINTING)
+	{
+	  FREE_CAIRO(ss->cr);
+	  ss->cr = NULL;
+	}
     }
 }
 
@@ -711,12 +715,6 @@ static void enved_reset(void)
 static void reset_button_pressed(GtkWidget *w, gpointer context)
 {
   enved_reset();
-}
-
-
-void enved_print(char *name)
-{
-  print_enved(name, env_window_height);
 }
 
 

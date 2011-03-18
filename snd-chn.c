@@ -3895,7 +3895,6 @@ static void display_channel_data_with_size(chan_info *cp,
 	  graphics_context *our_ax;
 
 #if USE_GTK
-	  /* our_ax = cp->ax; */
 	  our_ax = copy_context(cp);
 	  if (!use_incoming_cr)
 	    ss->cr = MAKE_CAIRO(our_ax->wn);

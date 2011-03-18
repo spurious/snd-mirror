@@ -1267,6 +1267,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 
 static void set_graph_font(chan_info *cp, graphics_context *ax, XFontStruct *bf)
 {
+  if (!ax) return;
   ax->current_font = bf->fid;  
   XSetFont(XtDisplay(cp->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
 }

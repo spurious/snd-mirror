@@ -2042,7 +2042,7 @@ black-and-white-colormap constant *better-colormap*
      'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'ncos 'ncos? 'nsin 'nsin?
      'swap-channels 'sync 'sync-style 'sync-none 'sync-all 'sync-by-sound
      'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap 'temp-dir
-     'text-focus-color 'time-graph 'time-graph-hook 'time-graph-style 'time-graph-type
+     'text-focus-color 'time-graph 'time-graph-style 'time-graph-type
      'time-graph? 'tiny-font 'tracking-cursor-style 'transform->vct 'transform-dialog
      'transform-frames 'transform-graph 'transform-graph-style 'transform-graph-type
      'transform-graph? 'transform-normalization 'transform-sample 'transform-size

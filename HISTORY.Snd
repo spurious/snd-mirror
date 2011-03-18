@@ -1,5 +1,6 @@
 Snd change log
 
+ 18-Mar:    Snd 12.0.
  18-Mar:    removed time-graph-hook; replaced by combined-data-color.
  10-Mar:    space=play or pause, tracking-cursor stuff changed.
  4-Mar:     'src' button in Save-as dialogs to do automatic sampling rate conversion.

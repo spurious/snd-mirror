@@ -22,6 +22,7 @@ static void draw_page(GtkPrintOperation *operation, GtkPrintContext *context, gi
       break;
 
     case PRINT_ENV:
+      env_redisplay_with_print();
       break;
     }
 }

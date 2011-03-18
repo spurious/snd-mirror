@@ -7947,19 +7947,7 @@ In code:
 
 (define* (make-sqrt-png (xp 0.59))
   (set! (with-inset-graph) #f)
-  (reset-hook! time-graph-hook)
-  (hook-push time-graph-hook
-	     (lambda (snd chn)
-	       (if (= chn 0)
-		   black
-		   (if (= chn 1)
-		       red
-		       (if (= chn 2)
-			   blue
-			   (if (= chn 3)
-			       green
-			       chocolate))))))
-
+  ;; see tmp26...
   (with-sound (:channels 5 :clipped #f)
 
     (do ((i 1 (1+ i)))

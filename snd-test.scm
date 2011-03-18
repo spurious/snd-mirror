@@ -2131,7 +2131,7 @@
 		       'clm-table-size 'clm-default-frequency 'close-hook 'close-sound 'color->list
 		       'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted 'color-scale
 		       'color? 'colormap 'colormap-name 'colormap-ref 'colormap-size
-		       'colormap? 'comb 'comb? 'comment 'connes-window
+		       'colormap? 'comb 'comb? 'combined-data-color 'comment 'connes-window
 		       'continue-frame->file 'continue-sample->file 'contrast-control 'contrast-control-amp 'contrast-control-bounds
 		       'contrast-control? 'contrast-enhancement 'controls->channel 'convolution 'convolve
 		       'convolve-files 'convolve-selection-with 'convolve-with 'convolve? 'copy-context
@@ -61409,7 +61409,7 @@ EDITS: 1
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device ; add-player
 		     auto-resize auto-update autocorrelate axis-color axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key bomb apply-controls change-samples-with-origin channel-style
-		     channel-widgets channels chans peaks-font bold-peaks-font close-sound
+		     channel-widgets channels chans peaks-font bold-peaks-font close-sound combined-data-color
 		     color-cutoff color-orientation-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name colormap?
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
 		     contrast-control? convolve-selection-with convolve-with channel-properties channel-property controls->channel
@@ -61553,7 +61553,7 @@ EDITS: 1
 			 amp-control ask-about-unsaved-edits ask-before-overwrite audio-input-device audio-output-device auto-resize
 			 auto-update axis-color axis-label-font axis-numbers-font ;basic-color
 			 channel-style peaks-font bold-peaks-font sound-file-extensions show-full-duration initial-beg initial-dur
-			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp 
+			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp combined-data-color
 			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties channel-property 
@@ -62100,7 +62100,7 @@ EDITS: 1
 			  (if (not (eq? tag 'wrong-type-arg))
 			      (snd-display #__line__ ";~D: chn (no chn) procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
-		      (list channel-widgets count-matches cursor channel-properties channel-property 
+		      (list channel-widgets count-matches cursor channel-properties channel-property combined-data-color
 			    cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size draw-dots draw-lines
 			    edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
 			    transform-size transform-graph-type fft-window transform-graph? find-channel
@@ -62201,7 +62201,7 @@ EDITS: 1
 		      (list channel-widgets cursor cursor-position cursor-size cursor-style tracking-cursor-style display-edits
 			    dot-size edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
 			    transform-size transform-graph-type fft-window transform-graph? graph-style lisp-graph? left-sample
-			    time-graph-style lisp-graph-style transform-graph-style
+			    time-graph-style lisp-graph-style transform-graph-style combined-data-color
 			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization
 			    reverse-sound right-sample show-axes show-transform-peaks show-marks 
 			    show-mix-waveforms show-y-zero show-grid show-sonogram-cursor  grid-density
@@ -62228,7 +62228,7 @@ EDITS: 1
 		      (list channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
 			    fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window
 			    transform-graph? graph-style lisp-graph? left-sample make-graph-data max-transform-peaks maxamp maxamp-position
-			    time-graph-style lisp-graph-style transform-graph-style
+			    time-graph-style lisp-graph-style transform-graph-style combined-data-color
 			    min-dB transform-normalization reverse-sound right-sample show-axes  grid-density
 			    show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectrum-end spectro-hop
 			    spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle

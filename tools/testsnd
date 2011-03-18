@@ -278,7 +278,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-snd-as-widget '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-snd-as-widget --without-fam --without-gsl --disable-nls LDFLAGS="-L/usr/X11R6/lib"
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-snd-as-widget --without-fam --without-gsl LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 gcc -c saw.c -I. -g -O2 -I/usr/local/include -I/usr/X11R6/include -o saw.o
@@ -328,8 +328,6 @@ echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --with-static-xm --with-g
 make
 echo ' '
 echo ' '
-./snd -noinit -l snd-test.rb 1
-date
 echo ' -------------------------------- ruby test (Gtk) -------------------------------- '
 make allclean
 rm -f snd
@@ -359,10 +357,7 @@ make allclean
 echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-ruby --with-static-xm --with-gtk '
 ./configure --quiet --disable-deprecated CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk
 make
-./snd -noinit -l snd-test.rb 2
 echo ' '
-echo ' '
-date
 echo ' -------------------------------- ruby test (no gui) -------------------------------- '
 make allclean
 rm -f snd
@@ -453,51 +448,6 @@ make
 echo ' '
 echo ' '
 date
-
-echo ' -------------------------------- configure --disable-nls in various forms -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-rm -f makefile
-rm -f mus-config.h
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" --disable-nls '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --disable-nls LDFLAGS="-L/usr/X11R6/lib"
-make
-make xm
-./snd --version
-./snd -l snd-test 19
-make allclean
-echo ' '
-echo ' '
-echo ' CC=g++ --with-gtk --disable-nls  '
-./configure --quiet CC=g++ --with-gtk --disable-nls
-make
-make xg
-./snd --version
-./snd -l snd-test 20
-make allclean
-echo ' '
-echo ' '
-echo ' CC=g++ --with-no-gui --disable-nls '
-./configure --quiet CC=g++ --with-no-gui --disable-nls
-make
-./snd --version
-make allclean
-echo ' '
-echo ' '
-echo ' CC=g++ --with-static-xm --disable-nls '
-./configure --quiet CC=g++ --with-static-xm --disable-nls CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
-make
-./snd --version
-./snd -e "(begin (display (+ 1 2 3)) (exit))"
-make allclean
-echo ' '
-echo ' '
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --disable-nls '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --disable-nls LDFLAGS="-L/usr/X11R6/lib"
-make
-make xm
-./snd --version
 make allclean
 echo ' --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall -I/usr/X11R6/include" '
 ./configure --quiet --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"

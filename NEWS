@@ -1,10 +1,10 @@
 Snd 12.0
 
    selection has a loop play triangle
-     mix and cursor have play triangles
-     if mouse click would trigger play, the cursor is a right or left arrow.
-     removed draggable mark play triangle and mark-drag-triangle-hook.
-     added variable play-arrow-size (default: 10)
+   mix and cursor have play triangles
+   if mouse click would trigger play, the cursor is a right or left arrow.
+   removed draggable mark play triangle and mark-drag-triangle-hook.
+   added variable play-arrow-size (default: 10)
 
    added Edit:Unselect menu option
    added with-menu-icons (gtk only).
@@ -16,8 +16,8 @@ Snd 12.0
    auto-resize defaults to false in Gtk, true in Motif.
    in gtk, the trailing cr argument to draw-axes in not optional.
    in Motif, libXpm is no longer optional.
-   removed click-for-listener-help.
    the Region browser print option has been removed.
+   removed click-for-listener-help.
    removed Snd.gtkrc, Snd.ad, and the obsolete X resources stuff.
    removed time-graph-hook; replaced by combined-data-color.
 
@@ -26,7 +26,7 @@ Snd 12.0
      with-tracking-cursor is now a global (not sound-local).
 
    removed c-g! function; it can be replaced by stop-playing.
-     removed c-g? in scheme -- it is superfluous.
+     removed c-g? in Scheme -- it is superfluous.
 
    added 'src' and 'auto' buttons to the Save-as dialogs for automatic srate conversion
     and a blog-style commentary.  In the extension language, these are
@@ -75,7 +75,7 @@ Snd 12.0
      affect the time domain graph.  (There isn't any place to put sliders for
      this, and the Options:Transform sliders aren't always handy).
 
-   in s7, random-state->list.
+   in s7, random-state->list and a C tie-in for the random number functions.
 
    Snd now needs Gtk 2.12 or later.
 

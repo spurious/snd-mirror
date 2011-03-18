@@ -31390,7 +31390,6 @@ s7_scheme *s7_init(void)
 
   s7_define_function(sc, "random",                    g_random,                   1, 1, false, H_random);
   s7_define_function(sc, "make-random-state",         s7_make_random_state,       1, 1, false, H_make_random_state);
-  s7_define_function(sc, "random-state->list",        s7_random_state_to_list,    0, 1, false, H_random_state_to_list);
 
   s7_define_function(sc, "integer-length",            g_integer_length,           1, 0, false, H_integer_length);
   s7_define_function(sc, "logior",                    g_logior,                   0, 0, true,  H_logior);
@@ -31399,6 +31398,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "lognot",                    g_lognot,                   1, 0, false, H_lognot);
   s7_define_function(sc, "ash",                       g_ash,                      2, 0, false, H_ash);
 #endif
+  s7_define_function(sc, "random-state->list",        s7_random_state_to_list,    0, 1, false, H_random_state_to_list);
   s7_define_function(sc, "integer-decode-float",      g_integer_decode_float,     1, 0, false, H_integer_decode_float);
   s7_define_function(sc, "exact?",                    g_is_exact,                 1, 0, false, H_is_exact);
   s7_define_function(sc, "inexact?",                  g_is_inexact,               1, 0, false, H_is_inexact);

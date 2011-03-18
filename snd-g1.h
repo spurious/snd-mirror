@@ -446,7 +446,6 @@ void new_active_channel_alert(void);
 void env_redisplay(void);
 void env_redisplay_with_print(void);
 void update_enved_background_waveform(chan_info *cp);
-void enved_print(char *name);
 GtkWidget *create_envelope_editor(void);
 void set_enved_clip_p(bool val);
 void reflect_enved_style(void);
