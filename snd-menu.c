@@ -395,7 +395,7 @@ func (a function of no args) when the new menu is activated. Returns the new men
 }
 
 
-void g_snd_callback(int callb)
+void g_menu_callback(int callb)
 {
   if ((callb >= 0) && (XEN_BOUND_P(menu_functions[callb])))
     XEN_CALL_0(menu_functions[callb], "menu callback func");

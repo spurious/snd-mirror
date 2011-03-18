@@ -1,8 +1,5 @@
 /* this file included as text in snd-g|xprefs.c */
 
-/* TODO: make the current help strings less stupid
- */
-
 static void int_to_textfield(widget_t w, int val)
 {
   char *str;
@@ -1817,7 +1814,9 @@ static const char *help_sync_style(prefs_info *prf)
 {
   return("\
   Many operations can operate either on all channels at once,\n\
-  or only on the currently selected channel.");
+  or only on the currently selected channel.  If 'within each sound'\n\
+  is set, the channels within a sound are tied together, but not\n\
+  across sounds.");
 }
 
 
@@ -4414,7 +4413,8 @@ static const char *help_just_sounds(prefs_info *prf)
 {
   return("\
   The various file dialogs can restrict the files  \n\
-   displayed to just sound files.   ");
+  displayed to just sound files.  This sets the default\n\
+  value of the 'just sounds' button in those dialogs. ");
 }
 
 static const char *help_temp_dir(prefs_info *prf) 
@@ -4499,7 +4499,8 @@ static const char *help_cursor_style(prefs_info *prf)
 
 static const char *help_tracking_cursor_style(prefs_info *prf) 
 {
-  return("  This sets the tracking cursor shape.  ");
+  return("  This sets the tracking cursor shape (the 'tracking cursor'\n\
+  tries to show where you are in the sound while it is begin played).  ");
 }
 
 static const char *help_cursor_color(prefs_info *prf) 
@@ -4664,7 +4665,7 @@ static const char *help_colormap(prefs_info *prf)
 
 static const char *help_fft_log_magnitude(prefs_info *prf) 
 {
-  return("  If this option is set, the FFTs show the magnitude axis on a log scale. ");
+  return("  If this option is set, the FFTs show the magnitude axis using a log scale. ");
 }
 
 static const char *help_min_dB(prefs_info *prf) 
@@ -4676,7 +4677,7 @@ static const char *help_min_dB(prefs_info *prf)
 
 static const char *help_fft_log_frequency(prefs_info *prf) 
 {
-  return("  If this is set, FFTs show the frequency axis on a log scale. ");
+  return("  If this is set, FFTs show the frequency axis using a log scale. ");
 }
 
 static const char *help_transform_normalization(prefs_info *prf) 
@@ -4703,7 +4704,7 @@ static const char *help_sinc_width(prefs_info *prf)
 
 static const char *help_show_listener(prefs_info *prf) 
 {
-  return("  This option chooses whether to include the listener window. ");
+  return("  This option chooses whether to open the listener window. ");
 }
 
 static const char *help_listener_prompt(prefs_info *prf) 
@@ -4770,7 +4771,7 @@ static const char *help_raw_data_format(prefs_info *prf)
 
 static const char *help_tiny_font(prefs_info *prf) 
 {
-  return("  When space is tight, Snd uses this font.  ");
+  return("  When graph space is tight, Snd uses this font.  ");
 }
 
 static const char *help_fft_size(prefs_info *prf) 

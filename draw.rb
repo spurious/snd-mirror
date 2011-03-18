@@ -1,8 +1,8 @@
-# draw.rb -- draw.scm --> draw.rb -*- snd-ruby -*-
+# draw.rb -- draw.scm --> draw.rb
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Apr 05 00:17:04 CEST 2005
-# Changed: Wed Nov 17 21:38:19 CET 2010
+# Changed: Sat Mar 12 01:41:32 CET 2011
 
 # Commentary:
 #
@@ -36,12 +36,14 @@ displays samples from beg for dur in color whenever they\'re in the current view
     len = beg + dur
     old_color = foreground_color(snd, chn)
     if left < len and right > beg
+      cr = make_cairo(channel_widgets(snd, chn)[0])
       if vct?(data = make_graph_data(snd, chn))
         samps = [right, len].min - [left, beg].max
         offset = [0, beg - left].max
         new_data = data.subseq(offset, offset + samps)
         set_foreground_color(color, snd, chn)
-        graph_data(new_data, snd, chn, Copy_context, [beg, left].max, [len, right].min)
+        graph_data(new_data,
+                   snd, chn, Copy_context, [beg, left].max, [len, right].min, Graph_lines, cr)
         set_foreground_color(old_color, snd, chn)
       else
         low_data, high_data = data[0, 2]
@@ -54,9 +56,11 @@ displays samples from beg for dur in color whenever they\'re in the current view
         new_low_data = low_data.subseq(left_bin, right_bin)
         new_high_data = high_data.subseq(left_bin, right_bin)
         set_foreground_color(color, snd, chn)
-        graph_data([new_low_data, new_high_data], snd, chn, Copy_context, left_bin, right_bin)
+        graph_data([new_low_data, new_high_data],
+                   snd, chn, Copy_context, left_bin, right_bin, Graph_lines, cr)
         set_foreground_color(old_color, snd, chn)
       end
+      free_cairo(cr)
     end
   end
 
@@ -91,27 +95,29 @@ causes samples from beg to beg+dur to be displayed in color")
 displays all edits of the current sound, with older versions gradually fading away")
   def display_previous_edits(snd, chn)
     edits = edit_position(snd, chn)
-    old_color = foreground_color(snd, chn)
-    clist = color2list(old_color)
-    r = clist[0]
-    g = clist[1]
-    b = clist[2]
-    rinc = (1.0 - r) / (edits + 1)
-    ginc = (1.0 - g) / (edits + 1)
-    binc = (1.0 - b) / (edits + 1)
     if edits > 0
+      old_color = foreground_color(snd, chn)
+      clist = color2list(old_color)
+      r = clist[0]
+      g = clist[1]
+      b = clist[2]
+      rinc = (1.0 - r) / (edits + 1)
+      ginc = (1.0 - g) / (edits + 1)
+      binc = (1.0 - b) / (edits + 1)
+      cr = make_cairo(channel_widgets(snd, chn)[0])
       re = 1.0 - rinc
       ge = 1.0 - ginc
       be = 1.0 - binc
       0.upto(edits) do |pos|
         data = make_graph_data(snd, chn, pos)
         set_foreground_color(make_color(re, ge, be), snd, chn)
-        graph_data(data, snd, chn)
+        graph_data(data, snd, chn, Copy_context, false, false, time_graph_style(snd, chn), cr)
         re -= rinc
         ge -= ginc
         be -= binc
       end
       set_foreground_color(old_color, snd, chn)
+      free_cairo(cr)
     end
   end
 
@@ -120,42 +126,54 @@ displays all edits of the current sound, with older versions gradually fading aw
 overlays onto its first argument all subsequent arguments: overlay_sounds(1, 0, 3)")
   def overlay_sounds(*rest)
     base = rest.shift
+    if integer?(base)
+      base = integer2sound(base)
+    end
     $after_graph_hook.add_hook!(get_func_name) do |snd, chn|
-      if sound?(base) and snd == base
+      if snd == base
+        cr = make_cairo(channel_widgets(snd, chn)[0])
         rest.each do |s|
-          if sound?(s) and channels(s) > chn and channels(base) > chn
-            graph_data(make_graph_data(s, chn), base, chn, Copy_context, -1, -1, Graph_dots)
-          end
+          graph_data(make_graph_data(s, chn), base, chn, Copy_context, false, false, Graph_dots, cr)
         end
+        free_cairo(cr)
       end
     end
   end
 
   add_help(:samples_via_colormap,
            "samples_via_colormap(snd, chn)  \
-displays time domain graph using current colormap (just an example of colormap-ref)")
+displays time domain graph using current colormap (just an example of colormap_ref)")
   def samples_via_colormap(snd, chn)
     left = left_sample(snd, chn)
+    right = right_sample(snd, chn)
     old_color = foreground_color(snd, chn)
-    data = make_graph_data(snd, chn)[0]
-    x0 = x2position(left / srate())
-    y0 = y2position(data[0])
-    colors = make_array(colormap_size)
-    j = 1
-    (left + 1).upto(left + data.length - 1) do |i|
-      x1 = x2position(i / srate)
-      y1 = y2position(data[j])
-      x = data[j].abs
-      ref = (colormap_size * x).floor
-      unless colors[ref]
-        colors[ref] = make_color(*colormap_ref(colormap, x))
+    if data = make_graph_data(snd, chn)
+      cr = make_cairo(channel_widgets(snd, chn)[0])
+      if vct?(data)
+        data = [data]
       end
-      set_foreground_color(colors[ref], snd, chn)
-      draw_line(x0, y0, x1, y1)
-      x0, y0 = x1, y1
-      j += 1
+      data.each do |cur_data|
+        x0 = x2position(left / srate(snd))
+        y0 = y2position(cur_data[0])
+        colors = make_array(colormap_size)
+        j = 1
+        (left + 1).upto(left + cur_data.length - 1) do |i|
+          x1 = x2position(i / srate(snd))
+          y1 = y2position(cur_data[j])
+          x = cur_data[j].abs
+          ref = (colormap_size * x).floor
+          unless colors[ref]
+            colors[ref] = make_color(*colormap_ref(colormap, x))
+          end
+          set_foreground_color(colors[ref], snd, chn)
+          draw_line(x0, y0, x1, y1, snd, chn, Time_graph, cr)
+          x0, y0 = x1, y1
+          j += 1
+        end
+      end
+      free_cairo(cr)
+      set_foreground_color(old_color, snd, chn)
     end
-    set_foreground_color(old_color, snd, chn)
   end
 
   # click-for-listener-help

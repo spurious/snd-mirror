@@ -1706,11 +1706,11 @@ void hide_toolbar(void)
 #define CALL_INDEX(Data) (Data >> 16)
 #define PACK_MENU_DATA(Slot, Menu) ((Slot << 16) | (Menu))
 
-static void SND_callback(Widget w, XtPointer info, XtPointer context) 
+static void menu_callback(Widget w, XtPointer info, XtPointer context) 
 {
   pointer_or_int_t callb;
   XtVaGetValues(w, XmNuserData, &callb, NULL);
-  g_snd_callback(CALL_INDEX(callb)); /* menu option activate callback */
+  g_menu_callback(CALL_INDEX(callb)); /* menu option activate callback */
 }
 
 
@@ -1718,7 +1718,7 @@ static void GHC_callback(Widget w, XtPointer info, XtPointer context)
 {
   pointer_or_int_t slot;
   XtVaGetValues(w, XmNuserData, &slot, NULL);
-  g_snd_callback(CALL_INDEX(slot)); /* main menu cascading callback */
+  g_menu_callback(CALL_INDEX(slot)); /* main menu cascading callback */
 }
 
 
@@ -1883,7 +1883,7 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
       if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
       XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(callb, which_menu)); n++;
       m = XtCreateManagedWidget(label, xmPushButtonWidgetClass, menw, args, n);
-      XtAddCallback(m, XmNactivateCallback, SND_callback, NULL);
+      XtAddCallback(m, XmNactivateCallback, menu_callback, NULL);
     }
   else
     {

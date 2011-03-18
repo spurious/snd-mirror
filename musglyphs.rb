@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Apr 06 00:47:44 CEST 2005
-# Changed: Sat Feb 19 17:16:34 CET 2011
+# Changed: Sat Mar 12 01:47:25 CET 2011
 
 # Commentary:
 #
@@ -178,7 +178,9 @@ module Musglyphs
 
     def draw
       unless @pathlist.empty?
-        draw_lines(@pathlist.flatten.compact, @snd, @chn, @ax)
+        cr = make_cairo(channel_widgets(@snd, @chn)[0])
+        draw_lines(@pathlist.flatten.compact, @snd, @chn, @ax, cr)
+        free_cairo(cr)
       end
       @pathlist.clear
       self
@@ -186,7 +188,9 @@ module Musglyphs
 
     def fill_in
       unless @pathlist.empty?
-        fill_polygon(@pathlist.flatten.compact, @snd, @chn, @ax)
+        cr = make_cairo(channel_widgets(@snd, @chn)[0])
+        fill_polygon(@pathlist.flatten.compact, @snd, @chn, @ax, cr)
+        free_cairo(cr)
       end
       @pathlist.clear
       self
@@ -201,7 +205,9 @@ module Musglyphs
     end
     
     def circle(x0, y0, rad)
-      draw_dot(to_x(x0), to_y(y0), (@size * rad * 2.0).floor, @snd, @chn, @ax)
+      cr = make_cairo(channel_widgets(@snd, @chn)[0])
+      draw_dot(to_x(x0), to_y(y0), (@size * rad * 2.0).floor, @snd, @chn, @ax, cr)
+      free_cairo(cr)
       self
     end
 

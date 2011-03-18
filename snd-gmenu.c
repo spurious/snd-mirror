@@ -1526,13 +1526,13 @@ static int callb2option(int callb)
 }
 
 
-static void SND_callback(GtkWidget *w, gpointer info) 
+static void menu_callback(GtkWidget *w, gpointer info) 
 {
   int callb, opt;
   callb = get_user_int_data(G_OBJECT(w));
   opt = callb2option(callb);
   if (opt != -1)
-    g_snd_callback(callb);
+    g_menu_callback(callb);
 }
 
 
@@ -1622,7 +1622,7 @@ int g_add_to_main_menu(const char *label, int slot)
   set_user_int_data(G_OBJECT(m), slot);
   if (slot >= 0) 
     {
-      SG_SIGNAL_CONNECT(m, "activate", SND_callback, NULL);
+      SG_SIGNAL_CONNECT(m, "activate", menu_callback, NULL);
       add_option(m, new_menu + 1, label, slot);
     }
   mc = gtk_menu_new();
@@ -1665,7 +1665,7 @@ GtkWidget *g_add_to_menu(int which_menu, const char *label, int callb, int posit
    if (label)
      {
        set_user_int_data(G_OBJECT(m), callb);
-       SG_SIGNAL_CONNECT(m, "activate", SND_callback, NULL);
+       SG_SIGNAL_CONNECT(m, "activate", menu_callback, NULL);
        add_option(m, which_menu, label, callb);
      }
   return(m);

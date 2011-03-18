@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Sat Feb 19 17:17:10 CET 2011
+# Changed: Fri Mar 11 16:44:02 CET 2011
 
 # Commentary:
 #
@@ -2473,9 +2473,10 @@ performs sampling rate conversion using linear interpolation.")
       tick_y0 = axis_y1
       minor_y0 = axis_y1 + minor_tick_len
       major_y0 = axis_y1 + major_tick_len
-      label_pos = (axis_x0 + 0.45 * (axis_x1 - axis_x0)).to_i
       bark_label_font = snd_font(3)
       bark_numbers_font = snd_font(2)
+      label_pos = (axis_x0 + 0.45 * (axis_x1 - axis_x0)).to_i
+      cr = make_cairo(channel_widgets(snd, chn)[0])
       scale_position = lambda do |scale, f|
         b20 = scale.call(20.0)
         (axis_x0 +
@@ -2487,22 +2488,22 @@ performs sampling rate conversion using linear interpolation.")
       erb_position  = lambda do |f| scale_position.call(method(:erb).to_proc, f)  end
       draw_bark_ticks = lambda do |bark_function|
         if bark_numbers_font then set_current_font(bark_numbers_font, snd, chn, Copy_context) end
-        draw_line(axis_x0, tick_y0, axis_x0, major_y0, snd, chn, Copy_context)
+        draw_line(axis_x0, tick_y0, axis_x0, major_y0, snd, chn, Copy_context, cr)
         i1000  = scale_position.call(bark_function,  1000.0)
         i10000 = scale_position.call(bark_function, 10000.0)
-        draw_line( i1000, tick_y0,  i1000, major_y0, snd, chn, Copy_context)
-        draw_line(i10000, tick_y0, i10000, major_y0, snd, chn, Copy_context)
-        draw_string(   "20",        axis_x0, major_y0, snd, chn, Copy_context)
-        draw_string( "1000",  i1000 - 3 * 4, major_y0, snd, chn, Copy_context)
-        draw_string("10000", i10000 - 6 * 4, major_y0, snd, chn, Copy_context)
-        draw_string("fft size: #{@bark_fft_size}", axis_x0 + 10, axis_y0, snd, chn, Copy_context)
+        draw_line( i1000, tick_y0,  i1000, major_y0, snd, chn, Copy_context, cr)
+        draw_line(i10000, tick_y0, i10000, major_y0, snd, chn, Copy_context, cr)
+        draw_string(   "20",        axis_x0, major_y0, snd, chn, Copy_context, cr)
+        draw_string( "1000",  i1000 - 3 * 4, major_y0, snd, chn, Copy_context, cr)
+        draw_string("10000", i10000 - 6 * 4, major_y0, snd, chn, Copy_context, cr)
+        draw_string("fft size: #{@bark_fft_size}", axis_x0 + 10, axis_y0, snd, chn, Copy_context, cr)
         100.step(1000, 100) do |i|
           i100 = scale_position.call(bark_function, i)
-          draw_line(i100, tick_y0, i100, minor_y0, snd, chn, Copy_context)
+          draw_line(i100, tick_y0, i100, minor_y0, snd, chn, Copy_context, cr)
         end
         2000.step(10000, 1000) do |i|
           i1000 = scale_position.call(bark_function, i)
-          draw_line(i1000, tick_y0, i1000, minor_y0, snd, chn, Copy_context)
+          draw_line(i1000, tick_y0, i1000, minor_y0, snd, chn, Copy_context, cr)
         end
       end
 
@@ -2511,7 +2512,7 @@ performs sampling rate conversion using linear interpolation.")
         draw_bark_ticks.call(bark_position)
       end
       if bark_label_font then set_current_font(bark_label_font, snd, chn, Copy_context) end
-      draw_string("bark,", label_pos, axis_y1 + label_height, snd, chn, Copy_context)
+      draw_string("bark,", label_pos, axis_y1 + label_height, snd, chn, Copy_context, cr)
 
       # mel label/ticks
       set_foreground_color(snd_color(2), snd, chn, Copy_context)
@@ -2520,7 +2521,7 @@ performs sampling rate conversion using linear interpolation.")
       end
       if bark_label_font then set_current_font(bark_label_font, snd, chn, Copy_context) end
       draw_string("mel,", char_width * 6 + label_pos, axis_y1 + label_height,
-                  snd, chn, Copy_context)
+                  snd, chn, Copy_context, cr)
 
       # erb label/ticks
       set_foreground_color(snd_color(4), snd, chn, Copy_context)
@@ -2529,9 +2530,10 @@ performs sampling rate conversion using linear interpolation.")
       end
       if bark_label_font then set_current_font(bark_label_font, snd, chn, Copy_context) end
       draw_string("erb", char_width * (6 + 5) + label_pos, axis_y1 + label_height,
-                  snd, chn, Copy_context)
+                  snd, chn, Copy_context, cr)
 
       set_foreground_color(old_foreground_color, snd, chn, Copy_context)
+      free_cairo(cr)
     end
     
     # mouse click = move to next scale's ticks

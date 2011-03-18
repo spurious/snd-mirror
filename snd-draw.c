@@ -207,6 +207,7 @@ void draw_cursor(chan_info *cp)
 		 S_cursor_style " procedure");
 #if USE_GTK
       ss->cr = MAKE_CAIRO(ap->ax->wn);
+      copy_context(cp);
 #endif
       break;
     }

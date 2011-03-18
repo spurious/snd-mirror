@@ -334,28 +334,32 @@ const char **mini_glass_bits(int n)
 }
 
 /* from HView */
+/* there are at least 3 stop signs in Snd.  This one for the Motif name-box,
+ *    the big one for the toolbar (below), and the gtk built-in stop sign
+ *    for the gtk name-box.
+ */
 static const char *stop_sign_xpm[] = {
 "17 17 3 1",
-" 	c None s None",
-".	c red",
-"X	c white",
-"    XXXXXXXXX    ", 
-"   X.........X   ", 
-"  X...........X  ", 
-" X.............X ", 
-"X...............X", 
-"X...............X", 
-"X.XX.XXX.XX..XX.X", 
-"X.X...X.X..X.X.XX", 
-"X..X..X.X..X.XX.X", 
-"X.XX..X..XX..X..X", 
-"X...............X", 
-"X...............X", 
-"X...............X", 
-" X.............X ", 
-"  X...........X  ", 
-"   X.........X   ", 
-"    XXXXXXXXX    "};
+"-      c None s None",
+".      c red",
+"X      c white",
+"----XXXXXXXXX----",
+"---X.........X---",
+"--X...........X--",
+"-X.............X-",
+"X...............X",
+"X...............X",
+"X.XX.XXX.XX..XX.X",
+"X.X...X.X..X.X.XX",
+"X..X..X.X..X.XX.X",
+"X.XX..X..XX..X..X",
+"X...............X",
+"X...............X",
+"X...............X",
+"-X.............X-",
+"--X...........X--",
+"---X.........X---",
+"----XXXXXXXXX----"};
 
 const char **stop_sign_bits(void) {return(stop_sign_xpm);}
 
@@ -2604,6 +2608,7 @@ void make_icons_transparent(const char *color)
   bg1 = mus_format("-      c %s s %s", color, color); /* the background color isn't known at compile time */
   mini_lock_xpm[1] = bg1;
   close_icon_xpm[1] = bg1;
+  stop_sign_xpm[1] = bg1;
   blank_xpm[1] = bg1;
   for (i = 0; i < NUM_BOMBS; i++)
     {

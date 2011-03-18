@@ -1198,30 +1198,21 @@ char *slist_selection(slist *lst)
  *   hide controls + listener doesn't
  *   perhaps tooltips in places like the data list of the save-as dialog
  *   perhaps menu accelerators, but they still look dumb
- *   drag marks as edit is messy looking in gtk
+ *   control-drag mark as edit is messy looking in gtk
  *   are the printed graphs truncated because the "printer" assumes some paper size?
- *
- *   if chans are syncd, shouldn't multichan mix/mark also?
- *     syncd but mark drag doesn't edit both?
+ *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
+ *   is fixup_cp_ax_wn needed?
+ *   play choppy if graphics -- seems ok?
+ *   superimposed chans flicker a lot
+ *   if chans are syncd, shouldn't multichan mix/mark also?  syncd but mark drag doesn't edit both?
  *
  *   gtk3: snd-test 13 segfault
  *     snd: cairo-surface.c:385: _cairo_surface_begin_modification: Assertion `! surface->finished' failed.
  *     it's ok out of context?
  *
- *   superimposed chans flicker a lot
- *     the cairo_t's are not shared in this case, so each chan is a separate display
- *
- *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
- *     if proc cursor, foreground color is not set back to old
- *
  *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
  *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.
  *     show controls for example, does not open the pane.
- *
- * why does Motif stop sign have dark corners?
- * what is the ;or3 1 problem?
- * is fixup_cp_ax_wn needed?
- * play choppy if graphics -- seems ok?
  */
 
 

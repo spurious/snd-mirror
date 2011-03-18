@@ -2592,7 +2592,7 @@ def test_03
    :stop_dac_hook, :stop_player, :stop_playing, :stop_playing_hook, :stop_playing_selection_hook,
    :ncos, :ncos?, :nsin, :nsin?, :swap_channels, :sync, :sync_style, :sync_none, :sync_all,
    :sync_by_sound, :sync_max, :syncd_marks, :table_lookup,
-   :table_lookup?, :tap, :temp_dir, :text_focus_color, :time_graph,
+   :table_lookup?, :tap, :temp_dir, :text_focus_color, :time_graph, :time_graph_hook,
    :time_graph_style, :time_graph_type, :time_graph?, :tiny_font, :tracking_cursor_style,
    :transform2vct, :transform_dialog, :transform_frames, :transform_graph,
    :transform_graph_style, :transform_graph_type, :transform_graph?, :transform_normalization,

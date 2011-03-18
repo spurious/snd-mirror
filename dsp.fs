@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Sat Feb 19 17:00:03 CET 2011
+\ Changed: Fri Mar 11 17:02:33 CET 2011
 
 \ src-duration             ( en -- dur )
 \ src-fit-envelope         ( e1 target-dur -- e2 )
@@ -166,6 +166,7 @@ for time-varying sampling-rate conversion."
   2 +loop
   ( dur )
 ;
+
 : src-fit-envelope { e1 target-dur -- e2 } e1 e1 src-duration target-dur f/ scale-envelope ;
 
 'complex provided? [if]
@@ -335,6 +336,7 @@ hide
   self 2 cells + @ ( curval )
 ;
 set-current
+
 : freqdiv   <{ n :optional snd #f chn #f -- val }>
   doc" Repeats each nth sample N times (clobbering the intermediate samples): 8 freqdiv"
   0 n 0.0 freqdiv-cb 0 #f snd chn #f $" %s %s" #( n get-func-name ) format map-channel
@@ -369,6 +371,7 @@ hide
   then
 ;
 set-current
+
 : adsat <{ size :optional beg 0 dur #f snd #f chn #f -- val }>
   doc" An 'adaptive saturation' sound effect."
   $" %s %s %s %s" #( size beg dur get-func-name ) string-format { origin }
@@ -396,6 +399,7 @@ hide
   res
 ;
 set-current
+
 : spike <{ :optional snd #f chn #f -- val }>
   doc" Multiplies successive samples together to make a sound more spikey."
   snd chn spike-cb 0 #f snd chn #f get-func-name map-channel
@@ -457,11 +461,13 @@ hide
   len :max-size len chorus-amount f>s + 1+ make-delay { gen }
   #( gen ri )
 ;
+
 : flanger ( dly inval -- val )
   { dly inval }
   dly 0 array-ref  inval  dly 1 array-ref  0.0 rand-interp  delay inval f+
 ;
 set-current
+
 : chorus ( -- proc; inval self -- val )
   doc" Tries to produce the chorus sound effect."
   chorus-size make-array map! make-flanger end-map { dlys }
@@ -555,6 +561,7 @@ Global variable CHORDALIZE-CHORD is an array of members of chord such as #( 1 5/
      :r     r
      :index index }
 ;
+
 : asyfm-freq-ref   ( gen -- val ) :freq  hash-ref radians->hz ;
 : asyfm-freq-set!  ( gen val -- ) :freq  swap hz->radians hash-set! drop ;
 : asyfm-phase-ref  ( gen -- val ) :phase hash-ref ; 
@@ -565,6 +572,7 @@ Global variable CHORDALIZE-CHORD is an array of members of chord such as #( 1 5/
 : asyfm-r-set!     ( gen val -- ) :r     swap hash-set! drop ;
 : asyfm-index-ref  ( gen -- val ) :index hash-ref ; 
 : asyfm-index-set! ( gen val -- ) :index swap hash-set! drop ;
+
 : asyfm-J ( gen input -- val )
   doc" ;; this is the same as the CLM asymmetric-fm generator, \
 set r != 1.0 to get the asymmetric spectra.\n\
@@ -584,6 +592,7 @@ lambda: <{ n }> gen 0.0 asyfm-J ; map-channel."
 ;
 \ :frequency 2000 :ratio 0.1 value gen
 \ lambda: <{ n -- val }> gen 0.0 asyfm-J ; map-channel
+
 : asyfm-I ( gen input -- val )
   { gen input }
   gen :freq  hash-ref { freq }
@@ -686,12 +695,14 @@ K controls how many sinusoids are produced."
   angle n f* fsin dup { na2 }
   den f0= if 0.0 else na2 den f/ then
 ;
+
 : sum-of-n-odd-cosines ( angle n -- val )
   doc" Produces the sum of N odd-numbered cosines."
   { angle n }
   angle fsin f2* { den }
   den f0= if n else angle n f* f2*  den f/ then
 ;
+
 : band-limited-sawtooth ( x a N fi -- val )
   doc" Produces a band-limited sawtooth; \
 X is the current phase, \
@@ -730,6 +741,7 @@ hide
   brt y f* fsin mx f*
 ;
 set-current
+
 : brighten-slightly <{ amount :optional snd #f chn #f -- val }>
   doc" It's a form of contrast-enhancement (AMOUNT between ca 0.1 and 1)."
   snd chn #f maxamp { mx }
@@ -747,6 +759,7 @@ hide
   pcoeffs y mx f/ polynomial mx f*
 ;
 set-current
+
 : brighten-slightly-1 <{ coeffs :optional snd #f chn #f -- }>
   doc" It's a form of contrast-enhancement (AMOUNT between ca 0.1 and 1)."
   snd chn #f maxamp { mx }
@@ -778,6 +791,7 @@ previous
   loop
   coeffs
 ;
+
 : fltit-1 ( order spectr -- proc;  y self -- val )
   doc" Creates an FIR filter from spectrum and order and returns a closure that calls it:\n\
 10 vct( 0 1.0 0 0 0 0 0 0 1.0 0 ) fltit-1 map-channel"
@@ -959,6 +973,7 @@ The generator corresponding to make-differentiator." help-set!
   1.0 2.0 fsqrt r f* f- r2 f+ c1 f* { c5 }
   3 vct( c1 c2 c3 ) vct( 0.0 c4 c5 ) make-filter
 ;
+
 : make-butter-low-pass ( freq -- flt )
   doc" Makes a Butterworth filter with low pass cutoff at FREQ.  \
 The result can be used directly: 500.0 make-butter-low-pass filter-sound, \
@@ -973,6 +988,7 @@ or via the 'butter' generator."
   1.0 2.0 fsqrt r f* f- r2 f+ c1 f* { c5 }
   3 vct( c1 c2 c3 ) vct( 0.0 c4 c5 ) make-filter
 ;
+
 : make-butter-band-pass ( freq bw -- flt )
   doc" Makes a bandpass Butterworth filter with low edge at FREQ and width BAND."
   { freq bw }
@@ -986,6 +1002,7 @@ or via the 'butter' generator."
   c 1.0 f- c1 f* { c5 }
   3 vct( c1 c2 c3 ) vct( 0.0 c4 c5 ) make-filter
 ;
+
 : make-butter-band-reject ( freq bw -- flt )
   doc" Makes a band-reject Butterworth filter with low edge at FREQ and width BAND."
   { freq bw }
@@ -1016,6 +1033,7 @@ The generator side for the various make-butter procedures." help-set!
   { a0 a1 a2 b1 b2 }
   3 vct( a0 a1 a2 ) vct( 0.0 b1 b2 ) make-filter
 ;
+
 : make-iir-low-pass-2 ( fc :optional d -- gen )
   #( 2.0 fsqrt ) 1 get-optargs { fc d }
   two-pi fc f* mus-srate f/ { theta }
@@ -1024,6 +1042,7 @@ The generator side for the various make-butter procedures." help-set!
   beta 0.5 f+ gamma fnegate f+ f2/ { alpha }
   3 vct( alpha  alpha f2*  alpha ) vct( 0.0  gamma -2.0 f*  beta f2* ) make-filter
 ;
+
 : make-iir-high-pass-2 ( fc :optional d -- gen )
   #( 2.0 fsqrt ) 1 get-optargs { fc d }
   two-pi fc f* mus-srate f/ { theta }
@@ -1032,6 +1051,7 @@ The generator side for the various make-butter procedures." help-set!
   beta 0.5 f+ gamma f+ f2/ { alpha }
   3 vct( alpha  alpha -2.0 f*  alpha ) vct( 0.0  gamma -2.0 f*  beta f2* ) make-filter
 ;
+
 : make-iir-band-pass-2 ( f1 f2 -- gen )
   { f1 f2 }
   two-pi f1 f2 f* fsqrt mus-srate f/ { theta }
@@ -1042,6 +1062,7 @@ The generator side for the various make-butter procedures." help-set!
   0.5 beta f- { alpha }
   3 vct( alpha  0.0  alpha fnegate ) vct( 0.0  gamma -2.0 f*  beta f2* ) make-filter
 ;
+
 : make-iir-band-stop-2 ( f1 f2 -- gen )
   { f1 f2 }
   two-pi f1 f2 f* fsqrt mus-srate f/ { theta }
@@ -1052,6 +1073,7 @@ The generator side for the various make-butter procedures." help-set!
   0.5 beta f+ { alpha }
   3 vct( alpha  gamma -2.0 f*  alpha fnegate ) vct( 0.0  gamma -2.0 f*  beta f2* ) make-filter
 ;
+
 : make-eliminate-hum <{ :optional hum-freq 60.0 hum-harmonics 5 bandwith 10 -- }>
   hum-harmonics make-array map!
     hum-freq i 1.0 f+ f* { center }
@@ -1059,6 +1081,7 @@ The generator side for the various make-butter procedures." help-set!
     center b2 f- center b2 f+ make-iir-band-stop-2
   end-map ( gen )
 ;
+
 : eliminate-hum ( gens x0 -- val )
   { gens x0 }
   gens each ( gen ) x0 filter to x0 end-each
@@ -1363,6 +1386,7 @@ if angle=1.0, you get a normal Fourier transform."
     #f
   ;
   set-current
+
   : goertzel <{ freq :optional beg 0 dur #f -- amp }>
     doc" Returns the amplitude of the FREQ spectral component."
     #f srate { sr }
@@ -1405,6 +1429,7 @@ it returns one of the standard smoothing filters from the era when computers wer
     then
   then
 ;
+
 : gaussian-distribution ( s -- en )
   { s }
   #() { en }
@@ -1418,6 +1443,7 @@ it returns one of the standard smoothing filters from the era when computers wer
   loop
   en
 ;
+
 : pareto-distribution ( a -- en )
   { a }
   #() { en }
@@ -1459,6 +1485,7 @@ it returns one of the standard smoothing filters from the era when computers wer
     x incr f+ to x
   end-map ( data )
 ;
+
 : gaussian-envelope ( s -- en )
   { s }
   #() { en }
@@ -1486,6 +1513,7 @@ hide
   #f
 ;
 set-current
+
 : channel-mean <{ :optional snd #f chn #f -- val }>   \ <f, 1> / n
   doc" Returns the average of the samples in the given channel: <f,1>/n."
   0.0 { sum }
@@ -1503,6 +1531,7 @@ hide
   #f
 ;
 set-current
+
 : channel-total-energy <{ :optional snd #f chn #f -- val }>   \ <f, f>
   doc" Returns the sum of the squares of all the samples in the given channel: <f,f>."
   0.0 { sum }
@@ -1516,10 +1545,12 @@ previous
   doc" Returns the average power in the given channel: <f,f>/n."
   snd chn channel-total-energy snd chn #f frames f/
 ;
+
 : channel-rms <{ :optional snd #f chn #f -- val }> \ sqrt(<f, f> / n)
   doc" Returns the RMS value of the samples in the given channel: sqrt(<f,f>/n)."
   snd chn channel-average-power fsqrt
 ;
+
 : channel-variance <{ :optional snd #f chn #f -- val }> \ <f, f> - (<f, 1> / n) ^ 2 with quibbles
   doc" Returns the sample variance in the given channel: <f,f>-((<f,1>/ n)^2."
   snd chn #f frames { len }
@@ -1527,6 +1558,7 @@ previous
   snd chn channel-total-energy { P }
   P mu mu f* f-
 ;
+
 : channel-norm <{ :optional snd #f chn #f -- val }> \ sqrt(<f, f>)
   doc" Returns the norm of the samples in the given channel: sqrt(<f,f>)."
   snd chn channel-total-energy fsqrt
@@ -1539,6 +1571,7 @@ hide
   y fabs self cell+ @ ( p ) f** self +! ( sum += y ** p )
 ;
 set-current
+
 : channel-lp <{ p :optional snd #f chn #f -- val }>
   doc" Returns the Lp norm of the samples in the given channel."
   0.0 { sum }
@@ -1555,6 +1588,7 @@ hide
   y fabs self @ fmax self !
 ;
 set-current
+
 : channel-lp-inf <{ :optional snd #f chn #f -- val }>
   doc" Returns the maxamp in the given channel (the name is just math jargon for maxamp)."
   0.0 { mx }
@@ -1574,6 +1608,7 @@ previous
   s1 c1 #f frames 0 ?do r1 next-sample r2 next-sample f* f+ ( sum += ... ) loop
   ( sum )
 ;
+
 : channel2-angle ( s1 c1 s2 c2 -- val )	  \ acos(<f, g> / (sqrt(<f, f>) * sqrt(<g, g>)))
   doc" Treats the two channels as vectors, \
 returning the 'angle' between them: acos(<f,g>/(sqrt(<f,f>)*sqrt(<g,g>)))"
@@ -1583,11 +1618,13 @@ returning the 'angle' between them: acos(<f,g>/(sqrt(<f,f>)*sqrt(<g,g>)))"
   s2 c2 channel-norm { norm2 }
   inprod norm1 norm2 f* f/ facos
 ;
+
 : channel2-orthogonal? ( s1 c1 s2 c2 -- f )	  \ <f, g> == 0
   doc" Returns #t if the two channels' inner-product is 0: <f,g>==0."
   { s1 c1 s2 c2 }
   s1 c1 s2 c2 channel2-inner-product fzero?
 ;
+
 : channel2-coefficient-of-projection ( s1 c1 s2 c2 -- val ) \ s1,c1 = x, s2,c2 = y, <f, g> / <f, f>
   doc" Returns <f,g>/<f,f>."
   { s1 c1 s2 c2 }
@@ -1634,6 +1671,7 @@ hide
   self @ y 0.0 ssb-am
 ;
 set-current
+
 : shift-channel-pitch <{ freq :optional order 40 beg 0 dur #f snd #f chn #f edpos #f -- val }>
   :frequency freq :order order make-ssb-am { gen }
   $" %s %s %s %s %s" #( freq order beg dur get-func-name ) string-format { origin }
@@ -1653,6 +1691,7 @@ hide
   0.0 ssbs each ( gen )  bands i array-ref y bandpass  0.0 ssb-am f+ ( sum+=... ) end-each
   ( sum ) dup fabs nmx fmax self ! ( to nmx )
 ;
+
 : ssbaoe-cb { mx ssbs bands beg dur snd chn edpos -- prc; self -- val }
   0.0 { nmx }
   nmx ssbs bands ssbmc-cb { proc }
@@ -1670,6 +1709,7 @@ hide
   mx nmx f/ beg dur snd chn #f scale-channel
 ;
 set-current
+
 : ssb-bank <{ old-freq new-freq pairs
      :optional order 40 bw 50.0 beg 0 dur #f snd #f chn #f edpos #f -- val }>
   pairs make-array { ssbs }
@@ -1702,6 +1742,7 @@ hide
   end-each
   ( sum ) dup fabs nmx fmax self ! ( to nmx )
 ;
+
 : ssbeaoe-cb { mx ssbs bands frenvs beg dur snd chn edpos -- prc; self -- val }
   0.0 { nmx }
   nmx ssbs bands frenvs ssbemc-cb { proc }
@@ -1719,6 +1760,7 @@ hide
   mx nmx f/ beg dur snd chn #f scale-channel
 ;
 set-current
+
 : ssb-bank-env <{ old-freq new-freq freq-env pairs
      :optional order 40 bw 50.0 beg 0 dur #f snd #f chn #f edpos #f -- val }>
   pairs make-array { ssbs }
@@ -1755,6 +1797,7 @@ previous
   end-map { bands }
   #( ssbs bands )
 ;
+
 : transpose ( gen input -- val )
   { gen input }
   gen 0 array-ref { ssbs }
@@ -1777,10 +1820,12 @@ previous
   self 2 cells + @ { scaler }
   dly  ssb  dly 0.0 tap  transpose scaler f* y f+  0.0 delay
 ;
+
 : fdelay ( gen input -- val )
   { gen input }
   gen #( input ) run-proc
 ;
+
 : transposed-echo ( pitch scaler secs -- val )
   { pitch scaler secs }
   #f srate secs f* fround->s pitch scaler make-fdelay 0 #f #f #f #f #f map-channel
@@ -1796,6 +1841,7 @@ previous
   -1 +loop
   new-v
 ;
+
 : channel-polynomial <{ coeffs :optional snd #f chn #f -- vct }>
   snd chn #f frames { len }
   $" %S %s" #( coeffs get-func-name ) string-format { origin }
@@ -1964,6 +2010,7 @@ producing one of the standard non-linear filters."
      bcoeffs
      acoeffs length bcoeffs length max 0.0 make-vct )
 ;
+
 : volterra-filter ( flt x -- val )
   doc" Takes FLT, an array returned by make-volterra-filter, \
 and an input X, and returns the (non-linear filtered) result."
@@ -2000,6 +2047,7 @@ The generator keeps a running window of the last SIZE inputs, returning the maxa
   gen 0.0 set-mus-scaler drop
   gen
 ;
+
 : moving-max ( gen y -- scl )
   doc" Returns the maxamp in a moving window over the last few inputs."
   { gen y }
@@ -2028,6 +2076,7 @@ returning the sum of the absolute values of the samples in that window."
   gen 1.0 set-mus-increment drop
   gen
 ;
+
 : moving-sum ( gen y -- val )
   doc" Returns the sum of the absolute values in a moving window over the last few inputs."
   ( gen y ) fabs moving-average
@@ -2043,6 +2092,7 @@ The generator keeps a running window of the last SIZE inputs, \
 returning the rms of the samples in that window."
   size make-moving-average
 ;
+
 : moving-rms ( gen y -- val )
   doc" Returns the rms of the values in a window over the last few inputs."
   ( gen y ) dup f* moving-average fsqrt
@@ -2060,6 +2110,7 @@ returning the euclidean length of the vector in that window."
   gen 1.0 set-mus-increment drop
   gen
 ;
+
 : moving-length ( gen y -- val )
   doc" Returns the length of the values in a window over the last few inputs."
   ( gen y ) dup f* moving-average fsqrt
@@ -2145,6 +2196,7 @@ hide
     0.0
   then
 ;
+
 : harm-aoe-cb { bands avgs peaks pcoeffs flt old-mx beg dur snd chn edpos -- prc; self -- val }
   0 proc-create
   0.0 ( new-mx ) ,
@@ -2170,6 +2222,7 @@ hide
   then
 ;
 set-current
+
 : harmonicizer <{ freq coeffs pairs
      :optional order 40 bw 50.0 beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Splits out each harmonic and replaces it with the spectrum given in coeffs."
@@ -2220,6 +2273,7 @@ hide
   #f
 ;
 set-current
+
 : linear-src-channel <{ sr :optional snd #f chn #f -- file }>
   doc" Performs sampling rate conversion using linear interpolation."
   0 snd chn 1 #f make-sampler { rd }
@@ -2238,6 +2292,7 @@ previous
      :xn 0.0
      :yn 0.0 }
 ;
+
 : mfilter <{ m :optional x-input 0.0 y-input 0.0 -- val }>
   m :xn hash-ref
   m :eps hash-ref
@@ -2280,14 +2335,17 @@ previous
     f 7500.0 f/ { f2 }
     f2 f2 f* fatan 3.5 f*  0.00076 f f* fatan 13.5 f*  f+
   ;
+
   : mel ( r1 -- r2 )
     { f }
     f 700.0 f/ 1.0 f+ flog 1127.0 f*
   ;
+
   : erb ( r1 -- r2 )
     { f }
     f 312.0 f+ f 14675.0 f+ f/ flog 11.17 f* 43.0 f+
   ;
+
   : display-bark-fft-cb <{ snd chn -- f }>
     snd chn left-sample  { ls }
     snd chn right-sample { rs }
@@ -2351,32 +2409,35 @@ previous
     then
     #f
   ;
+
   : scale-pos { axis-x0 axis-x1 sr2 f scale -- n }
     20.0 scale execute { b20 }
     axis-x1 axis-x0 f-  f scale execute b20 f- f*
     sr2 scale execute b20 f-  f/ axis-x0 f+ fround->s
   ;
-  : draw-bark-ticks { axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 bark-function snd chn }
+
+  : draw-bark-ticks { axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 bark-function cro snd chn }
     2 snd-font ?dup-if snd chn copy-context set-current-font drop then
-    axis-x0 tick-y0 axis-x0 major-y0 snd chn copy-context draw-line drop
+    axis-x0 tick-y0 axis-x0 major-y0 snd chn copy-context cro draw-line drop
     axis-x0 axis-x1 sr2 1000.0  bark-function scale-pos { i1000 }
     axis-x0 axis-x1 sr2 10000.0 bark-function scale-pos { i10000 }
-    i1000  tick-y0 i1000  major-y0 snd chn copy-context draw-line drop
-    i10000 tick-y0 i10000 major-y0 snd chn copy-context draw-line drop
-    "20"    axis-x0     major-y0 snd chn copy-context draw-string drop
-    "1000"  i1000  12 - major-y0 snd chn copy-context draw-string drop
-    "10000" i10000 24 - major-y0 snd chn copy-context draw-string drop
+    i1000  tick-y0 i1000  major-y0 snd chn copy-context cro draw-line drop
+    i10000 tick-y0 i10000 major-y0 snd chn copy-context cro draw-line drop
+    "20"    axis-x0     major-y0 snd chn copy-context cro draw-string drop
+    "1000"  i1000  12 - major-y0 snd chn copy-context cro draw-string drop
+    "10000" i10000 24 - major-y0 snd chn copy-context cro draw-string drop
     $" fft size: %d" #( bark-fft-size ) string-format
-    axis-x0 10 + axis-y0 snd chn copy-context draw-string drop
+    axis-x0 10 + axis-y0 snd chn copy-context cro draw-string drop
     1000 100 do
       axis-x0 axis-x1 sr2 i bark-function scale-pos { i100 }
-      i100 tick-y0 i100 minor-y0 snd chn copy-context draw-line drop
+      i100 tick-y0 i100 minor-y0 snd chn copy-context cro draw-line drop
     100 +loop
     10000 2000 do
       axis-x0 axis-x1 sr2 i bark-function scale-pos { i1000 }
-      i1000 tick-y0 i1000 minor-y0 snd chn copy-context draw-line drop
+      i1000 tick-y0 i1000 minor-y0 snd chn copy-context cro draw-line drop
     1000 +loop
   ;
+
   : make-bark-labels <{ snd chn -- f }>
     snd chn copy-context foreground-color { old-foreground-color }
     snd chn lisp-graph axis-info { axinfo }
@@ -2394,32 +2455,35 @@ previous
     axis-y1 major-tick-len + { major-y0 }
     3 snd-font { bark-label-font }
     axis-x1 axis-x0 f- 0.45 f* axis-x0 f+ fround->s { label-pos }
+    snd chn channel-widgets car make-cairo { cro }
 
     \ bark label/ticks
     bark-tick-function 0= if
-      axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 <'> bark snd chn draw-bark-ticks
+      axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 <'> bark cro snd chn draw-bark-ticks
     then
     bark-label-font ?dup-if snd chn copy-context set-current-font drop then
-    "bark," label-pos axis-y1 label-height + snd chn copy-context draw-string drop
+    "bark," label-pos axis-y1 label-height + snd chn copy-context cro draw-string drop
 
     \ mel label/ticks
     2 snd-color snd chn copy-context set-foreground-color drop
     bark-tick-function 1 = if
-      axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 <'> mel snd chn draw-bark-ticks
+      axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 <'> mel cro snd chn draw-bark-ticks
     then
     bark-label-font ?dup-if snd chn copy-context set-current-font drop then
-    "mel," label-pos char-width 6 * + axis-y1 label-height + snd chn copy-context draw-string drop
+    "mel," label-pos char-width 6 * + axis-y1 label-height + snd chn copy-context cro draw-string drop
 
     \ erb label/ticks
     4 snd-color snd chn copy-context set-foreground-color drop
     bark-tick-function 2 = if
-      axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 <'> erb snd chn draw-bark-ticks
+      axis-x0 axis-x1 axis-y0 major-y0 minor-y0 tick-y0 sr2 <'> erb cro snd chn draw-bark-ticks
     then
     bark-label-font ?dup-if snd chn copy-context set-current-font drop then
-    "erb" label-pos char-width 11 * + axis-y1 label-height + snd chn copy-context draw-string drop
+    "erb" label-pos char-width 11 * + axis-y1 label-height + snd chn copy-context cro draw-string drop
 
     old-foreground-color snd chn copy-context set-foreground-color
+    cro free-cairo drop
   ;
+
   : choose-bark-ticks <{ snd chn button state x y axis -- f }>
     axis lisp-graph = if
       bark-tick-function 1+ to bark-tick-function
@@ -2430,6 +2494,7 @@ previous
     then
   ;
   set-current
+
   : display-bark-fft <{ :optional off #f -- }>
     off unless
       lisp-graph-hook       <'> display-bark-fft-cb add-hook!
@@ -2448,6 +2513,7 @@ previous
     then
   ;
   previous
+
   : undisplay-bark-fft ( -- ) #t display-bark-fft ;
 [then]
 
@@ -2484,6 +2550,7 @@ previous
   loop
   d
 ;
+
 : lpc-predict <{ data n coeffs m nf :optional clipped #f -- val }>
   doc" Takes the output of lpc-coeffs (COEFFS, a vector) and the length thereof (M), \
 N data points of DATA (a vct), and produces NF new data points (in a vct) as its prediction.  \
@@ -2537,6 +2604,7 @@ hide
   1 self 3 cells + +! ( samp++ )
   #f
 ;
+
 : uncchn-aoe-cb { clip-data max-len snd chn len -- prc; self -- val }
   0 proc-create clip-data , max-len , snd , chn , ( prc )
  does> { self -- val }
@@ -2587,6 +2655,7 @@ hide
   #f
 ;
 set-current
+
 : unclip-channel <{ :optional snd #f chn #f -- assoc }>
   doc" Looks for clipped portions and tries to reconstruct the original using LPC."
   #() { clip-data }			\ #( #( beg end ) #( ... ) ... )
@@ -2604,6 +2673,7 @@ set-current
   then
 ;
 previous
+
 : unclip-sound <{ :optional snd #f -- assoc }>
   doc" Applies unclip-channel to each channel of SND."
   snd snd-snd to snd

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Thu Mar 03 15:41:18 CET 2011
+# Changed: Sat Mar 12 01:31:13 CET 2011
 
 # Commentary:
 # 
@@ -1101,8 +1101,10 @@ module Extensions
       if samp.between?(left_sample(snd, chn), right_sample(snd, chn))
         xpos = x2position(samp / srate(snd).to_f, snd, chn)
         ypos = y2position(sample(samp), snd, chn)
-        draw_line(xpos, 35, xpos, ypos - 4, snd, chn)
-        draw_string(text, xpos - width / 2, 18, snd, chn)
+        cr = make_cairo(channel_widgets(snd, chn)[0])
+        draw_line(xpos, 35, xpos, ypos - 4, snd, chn, Copy_context, cr)
+        draw_string(text, xpos - width / 2, 18, snd, chn, Copy_context, cr)
+        free_cairo(cr)
       end
     end
   end

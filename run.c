@@ -96,7 +96,6 @@
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * SOMEDAY: generics like length
- * SOMEDAY: *stderr* in run format
  * TODO: we miss shadowed funcs: (spectrum k) where spectrum is a vct complains about args to func spectrum
  *   can this be fixed by checking symbol-value before using the built-in walker?
  * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings (if default types are used in s7)
@@ -2472,6 +2471,9 @@ int mus_run_xen_to_run_type(s7_pointer val)
       if (s7_is_list(s7, val0)) return(R_LIST_VECTOR);
     }
 
+  if ((s7_is_output_port(s7, val)) || (s7_is_input_port(s7, val))) /* format arg? */
+    return(R_XEN);
+
 #if USE_SND
   if (sampler_p(val)) return(R_SAMPLER); 
   if (xen_sound_p(val)) return(R_SOUND);
@@ -4109,10 +4111,11 @@ static int if_jump_opt(ptree *prog, xen_value *jump_to_false, xen_value *if_valu
 	    }
 	}
     }
-  
+
   if (!jumped)
     {
       current_pc = prog->triple_ctr;
+
       if (jump_choice == JUMP_IF_FALSE)
 	add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, jump_to_false, if_value));
       else add_triple_to_ptree(prog, va_make_triple(jump_if, "jump_if", 2, jump_to_false, if_value));
@@ -4308,6 +4311,19 @@ static xen_value *cond_form(ptree *prog, s7_pointer form, walk_result_t need_res
       local_len = s7_list_length(s7, local_clauses);
       if (local_len > 0)
 	{
+	  /* this coercion added 18-Mar-11 for (from clm23.scm or3 test):
+           *   (let ((e1 0))
+           *     (run
+           *       (do ((i 0 (+ i 1)))
+           *   	       ((= i 1))
+           *         (cond (e1 (clm-print ";ok~%"))
+           *   	           (#t (clm-print ";or3 1~%"))))))
+	   *
+	   * if_jump_opt assumes the test_value is a bool -- it does not coerce 
+	   */
+	  if (test_value->type != R_BOOL)
+	    test_value = coerce_to_boolean(prog, test_value);
+
 	  jump_to_next_clause = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
 	  current_pc = if_jump_opt(prog, jump_to_next_clause, test_value, JUMP_IF_FALSE);
 
@@ -16033,17 +16049,18 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 
       switch (type)
 	{
-	case R_INT:     return(make_xen_value(R_INT,     add_int_to_ptree(prog, s7_number_to_integer(form)), R_CONSTANT));                 break;
-	case R_FLOAT:   return(make_xen_value(R_FLOAT,   add_dbl_to_ptree(prog, s7_number_to_real(form)), R_CONSTANT));                break;
-	case R_STRING:  return(make_xen_value(R_STRING,  add_string_to_ptree(prog, mus_strdup(s7_string(form))), R_CONSTANT)); break;
-	case R_CHAR:    return(make_xen_value(R_CHAR,    add_int_to_ptree(prog, (Int)(s7_character(form))), R_CONSTANT));           break;
-	case R_BOOL:    return(make_xen_value(R_BOOL,    add_int_to_ptree(prog, (form == scheme_false) ? 0 : 1), R_CONSTANT));          break;
-	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT));                                 break;
+	case R_INT:     return(make_xen_value(R_INT,     add_int_to_ptree(prog, s7_number_to_integer(form)), R_CONSTANT));        break;
+	case R_FLOAT:   return(make_xen_value(R_FLOAT,   add_dbl_to_ptree(prog, s7_number_to_real(form)), R_CONSTANT));           break;
+	case R_STRING:  return(make_xen_value(R_STRING,  add_string_to_ptree(prog, mus_strdup(s7_string(form))), R_CONSTANT));    break;
+	case R_CHAR:    return(make_xen_value(R_CHAR,    add_int_to_ptree(prog, (Int)(s7_character(form))), R_CONSTANT));         break;
+	case R_BOOL:    return(make_xen_value(R_BOOL,    add_int_to_ptree(prog, (form == scheme_false) ? 0 : 1), R_CONSTANT));    break;
+	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT));                              break;
+	case R_XEN:     return(make_xen_value(R_XEN,     add_xen_to_ptree(prog, form), R_CONSTANT));                              break;
 #if USE_SND
-	case R_SOUND:   return(make_xen_value(R_SOUND,   add_int_to_ptree(prog, XEN_SOUND_TO_C_INT(form)), R_CONSTANT));             break;
-	case R_MIX:     return(make_xen_value(R_MIX,     add_int_to_ptree(prog, XEN_MIX_TO_C_INT(form)), R_CONSTANT));               break;
-	case R_MARK:    return(make_xen_value(R_MARK,    add_int_to_ptree(prog, XEN_MARK_TO_C_INT(form)), R_CONSTANT));              break;
-	case R_REGION:  return(make_xen_value(R_REGION,  add_int_to_ptree(prog, XEN_REGION_TO_C_INT(form)), R_CONSTANT));            break;
+	case R_SOUND:   return(make_xen_value(R_SOUND,   add_int_to_ptree(prog, XEN_SOUND_TO_C_INT(form)), R_CONSTANT));          break;
+	case R_MIX:     return(make_xen_value(R_MIX,     add_int_to_ptree(prog, XEN_MIX_TO_C_INT(form)), R_CONSTANT));            break;
+	case R_MARK:    return(make_xen_value(R_MARK,    add_int_to_ptree(prog, XEN_MARK_TO_C_INT(form)), R_CONSTANT));           break;
+	case R_REGION:  return(make_xen_value(R_REGION,  add_int_to_ptree(prog, XEN_REGION_TO_C_INT(form)), R_CONSTANT));         break;
 #endif
 	}
 
@@ -16685,17 +16702,17 @@ static void init_walkers(void)
   INIT_WALKER("format",    make_walker(format_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN));
   INIT_WALKER("clm-print", make_walker(clm_print_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN));
 
-  INIT_WALKER("open-output-file", make_walker(open_output_file_1, NULL, NULL, 1, 2, R_XEN, false, 1, -R_STRING));
+  INIT_WALKER("open-output-file",  make_walker(open_output_file_1, NULL, NULL, 1, 2, R_XEN, false, 1, -R_STRING));
   INIT_WALKER("close-output-port", make_walker(close_output_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
-  INIT_WALKER("close-input-port", make_walker(close_input_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
-  INIT_WALKER("output-port?", make_walker(is_output_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
-  INIT_WALKER("input-port?", make_walker(is_input_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
-  INIT_WALKER("file-exists?", make_walker(file_exists_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
-  INIT_WALKER("getpid", make_walker(getpid_1, NULL, NULL, 0, 0, R_INT, false, 0));
+  INIT_WALKER("close-input-port",  make_walker(close_input_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
+  INIT_WALKER("output-port?",      make_walker(is_output_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
+  INIT_WALKER("input-port?",       make_walker(is_input_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
+  INIT_WALKER("file-exists?",      make_walker(file_exists_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
+  INIT_WALKER("getpid",            make_walker(getpid_1, NULL, NULL, 0, 0, R_INT, false, 0));
 
   INIT_WALKER("current-output-port", make_walker(current_output_port_1, NULL, NULL, 0, 0, R_XEN, false, 0));
-  INIT_WALKER("current-input-port", make_walker(current_input_port_1, NULL, NULL, 0, 0, R_XEN, false, 0));
-  INIT_WALKER("current-error-port", make_walker(current_error_port_1, NULL, NULL, 0, 0, R_XEN, false, 0));
+  INIT_WALKER("current-input-port",  make_walker(current_input_port_1, NULL, NULL, 0, 0, R_XEN, false, 0));
+  INIT_WALKER("current-error-port",  make_walker(current_error_port_1, NULL, NULL, 0, 0, R_XEN, false, 0));
 
   INIT_WALKER("s7-version", make_walker(s7_version_1, NULL, NULL, 0, 0, R_STRING, false, 0));
 

@@ -491,23 +491,23 @@ void save_colors(FILE *Fp)
   scr = DefaultScreen(dpy);
   cmap = DefaultColormap(dpy, scr);
 
-  save_a_color(Fp, dpy, cmap, BASIC_COLOR,             ss->basic_color,             S_basic_color);
-  save_a_color(Fp, dpy, cmap, CURSOR_COLOR,            ss->cursor_color,            S_cursor_color);
-  save_a_color(Fp, dpy, cmap, DATA_COLOR,              ss->data_color,              S_data_color);
-  save_a_color(Fp, dpy, cmap, SELECTED_DATA_COLOR,     ss->selected_data_color,     S_selected_data_color);
-  save_a_color(Fp, dpy, cmap, HIGHLIGHT_COLOR,         ss->highlight_color,         S_highlight_color);
-  save_a_color(Fp, dpy, cmap, POSITION_COLOR,          ss->position_color,          S_position_color);
-  save_a_color(Fp, dpy, cmap, ZOOM_COLOR,              ss->zoom_color,              S_zoom_color);
-  save_a_color(Fp, dpy, cmap, SELECTION_COLOR,         ss->selection_color,         S_selection_color);
-  save_a_color(Fp, dpy, cmap, MIX_COLOR,               ss->mix_color,               S_mix_color);
-  save_a_color(Fp, dpy, cmap, ENVED_WAVEFORM_COLOR,    ss->enved_waveform_color,    S_enved_waveform_color);
-  save_a_color(Fp, dpy, cmap, LISTENER_COLOR,          ss->listener_color,          S_listener_color);
-  save_a_color(Fp, dpy, cmap, LISTENER_TEXT_COLOR,     ss->listener_text_color,     S_listener_text_color);
-  save_a_color(Fp, dpy, cmap, GRAPH_COLOR,             ss->graph_color,             S_graph_color);
-  save_a_color(Fp, dpy, cmap, SELECTED_GRAPH_COLOR,    ss->selected_graph_color,    S_selected_graph_color);
-  save_a_color(Fp, dpy, cmap, MARK_COLOR,              ss->mark_color,              S_mark_color);
-  save_a_color(Fp, dpy, cmap, SASH_COLOR,              ss->sash_color,              S_sash_color);
-  save_a_color(Fp, dpy, cmap, TEXT_FOCUS_COLOR,        ss->text_focus_color,        S_text_focus_color);
+  save_a_color(Fp, dpy, cmap, BASIC_COLOR,          ss->basic_color,          S_basic_color);
+  save_a_color(Fp, dpy, cmap, CURSOR_COLOR,         ss->cursor_color,         S_cursor_color);
+  save_a_color(Fp, dpy, cmap, DATA_COLOR,           ss->data_color,           S_data_color);
+  save_a_color(Fp, dpy, cmap, SELECTED_DATA_COLOR,  ss->selected_data_color,  S_selected_data_color);
+  save_a_color(Fp, dpy, cmap, HIGHLIGHT_COLOR,      ss->highlight_color,      S_highlight_color);
+  save_a_color(Fp, dpy, cmap, POSITION_COLOR,       ss->position_color,       S_position_color);
+  save_a_color(Fp, dpy, cmap, ZOOM_COLOR,           ss->zoom_color,           S_zoom_color);
+  save_a_color(Fp, dpy, cmap, SELECTION_COLOR,      ss->selection_color,      S_selection_color);
+  save_a_color(Fp, dpy, cmap, MIX_COLOR,            ss->mix_color,            S_mix_color);
+  save_a_color(Fp, dpy, cmap, ENVED_WAVEFORM_COLOR, ss->enved_waveform_color, S_enved_waveform_color);
+  save_a_color(Fp, dpy, cmap, LISTENER_COLOR,       ss->listener_color,       S_listener_color);
+  save_a_color(Fp, dpy, cmap, LISTENER_TEXT_COLOR,  ss->listener_text_color,  S_listener_text_color);
+  save_a_color(Fp, dpy, cmap, GRAPH_COLOR,          ss->graph_color,          S_graph_color);
+  save_a_color(Fp, dpy, cmap, SELECTED_GRAPH_COLOR, ss->selected_graph_color, S_selected_graph_color);
+  save_a_color(Fp, dpy, cmap, MARK_COLOR,           ss->mark_color,           S_mark_color);
+  save_a_color(Fp, dpy, cmap, SASH_COLOR,           ss->sash_color,           S_sash_color);
+  save_a_color(Fp, dpy, cmap, TEXT_FOCUS_COLOR,     ss->text_focus_color,     S_text_focus_color);
   save_a_color(Fp, dpy, cmap, FILTER_CONTROL_WAVEFORM_COLOR, ss->filter_control_waveform_color, S_filter_control_waveform_color);
 }
 
