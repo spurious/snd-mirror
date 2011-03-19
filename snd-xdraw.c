@@ -919,8 +919,15 @@ static void with_gl_callback(Widget w, XtPointer context, XtPointer info)
 
 static void reset_color_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  /* put everything back the way it was at the start */
-  reset_spectro();
+  /* put everything back the way it was at the start.
+   *     this sets everything to the startup defaults -- should they be the dialog startup values instead? 
+   */
+  set_color_cutoff(DEFAULT_COLOR_CUTOFF);
+  set_color_inverted(DEFAULT_COLOR_INVERTED);
+  set_color_scale(DEFAULT_COLOR_SCALE);
+  set_color_map(DEFAULT_COLOR_MAP);
+
+  reset_spectro(); 
   reflect_spectro();
   for_each_chan(update_graph);
 }

@@ -31933,7 +31933,7 @@ the error type and the info passed to the error handler.");
  *       but we have to change the symbol access to make sure Snd's print_length is set if ours is, or
  *       make the shadowing complete in the scheme case (but then how to set vct-print-length etc in parallel)?
  *     what about trace-output-port? or an arg to trace? [it currently goes to current-output-port]
- *     make bignum-precision a variable (not pws) -> *bignum-precision* [not sure about this -- there's alot happening upon set]
+ *     make bignum-precision a variable (not pws) -> *bignum-precision* [not sure about this -- there's a lot happening upon set]
  *       if the gmp support is fully separated, the bignum function is not needed
  *     some way to refer to car/cdr of a cons in format
  *       ~^ only acts within {}, so similarly within {} ~<... = car and ~>... = cdr? "~{~<3,1F : ~>A~}" (cons 1.5 2)

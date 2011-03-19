@@ -2705,10 +2705,10 @@ void reset_spectro(void)
   set_spectro_z_scale((with_gl(ss)) ? DEFAULT_SPECTRO_Z_SCALE : 0.1);
 }
 
-#if HAVE_GL
-  #include <GL/glu.h>
-#endif
 
+#if HAVE_GLU
+#include <GL/glu.h>
+#endif
 
 static GLdouble unproject_to_x(int x, int y)
 {

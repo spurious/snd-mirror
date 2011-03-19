@@ -630,7 +630,7 @@ static void check_orientation_hook(void)
 }
 
 
-static GtkWidget *oid_dialog = NULL, *oid_ax, *oid_ay, *oid_az, *oid_sx, *oid_sy, *oid_sz, *oid_hop; 
+static GtkWidget *oid_ax, *oid_ay, *oid_az, *oid_sx, *oid_sy, *oid_sz, *oid_hop; 
 static GtkAdjustment *oid_ax_adj, *oid_az_adj, *oid_ay_adj, *oid_sx_adj, *oid_sz_adj, *oid_sy_adj, *oid_hop_adj;
 
 static void ax_orientation_callback(GtkAdjustment *adj, gpointer context) 
@@ -645,7 +645,7 @@ static void ax_orientation_callback(GtkAdjustment *adj, gpointer context)
 void set_spectro_x_angle(mus_float_t val)
 {
   in_set_spectro_x_angle(val);
-  if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_ax_adj, val);
+  if (ccd_dialog) ADJUSTMENT_SET_VALUE(oid_ax_adj, val);
   chans_field(FCP_X_ANGLE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(update_graph);
@@ -664,7 +664,7 @@ static void ay_orientation_callback(GtkAdjustment *adj, gpointer context)
 void set_spectro_y_angle(mus_float_t val)
 {
   in_set_spectro_y_angle(val);
-  if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_ay_adj, val);
+  if (ccd_dialog) ADJUSTMENT_SET_VALUE(oid_ay_adj, val);
   chans_field(FCP_Y_ANGLE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(update_graph);
@@ -683,7 +683,7 @@ static void az_orientation_callback(GtkAdjustment *adj, gpointer context)
 void set_spectro_z_angle(mus_float_t val)
 {
   in_set_spectro_z_angle(val);
-  if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_az_adj, val);
+  if (ccd_dialog) ADJUSTMENT_SET_VALUE(oid_az_adj, val);
   chans_field(FCP_Z_ANGLE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(update_graph);
@@ -702,7 +702,7 @@ static void sx_orientation_callback(GtkAdjustment *adj, gpointer context)
 void set_spectro_x_scale(mus_float_t val)
 {
   in_set_spectro_x_scale(val);
-  if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_sx_adj, val);
+  if (ccd_dialog) ADJUSTMENT_SET_VALUE(oid_sx_adj, val);
   chans_field(FCP_X_SCALE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(update_graph);
@@ -721,7 +721,7 @@ static void sy_orientation_callback(GtkAdjustment *adj, gpointer context)
 void set_spectro_y_scale(mus_float_t val)
 {
   in_set_spectro_y_scale(val);
-  if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_sy_adj, val);
+  if (ccd_dialog) ADJUSTMENT_SET_VALUE(oid_sy_adj, val);
   chans_field(FCP_Y_SCALE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(update_graph);
@@ -740,7 +740,7 @@ static void sz_orientation_callback(GtkAdjustment *adj, gpointer context)
 void set_spectro_z_scale(mus_float_t val)
 {
   in_set_spectro_z_scale(val);
-  if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_sz_adj, val);
+  if (ccd_dialog) ADJUSTMENT_SET_VALUE(oid_sz_adj, val);
   chans_field(FCP_Z_SCALE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(update_graph);
@@ -783,7 +783,7 @@ void set_spectro_hop(int val)
   if (val > 0)
     {
       in_set_spectro_hop(val);
-      if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_hop_adj, val);
+      if (ccd_dialog) ADJUSTMENT_SET_VALUE(oid_hop_adj, val);
       for_each_chan_with_int(chans_spectro_hop, val);
       check_orientation_hook();
       if (!(ss->graph_hook_active)) for_each_chan(update_graph);
@@ -809,9 +809,7 @@ void reflect_spectro(void)
       set_toggle_button(ccd_invert, color_inverted(ss), false, NULL);
       ADJUSTMENT_SET_VALUE(ccd_cutoff_adj, color_cutoff(ss));
       reflect_color_scale(color_scale(ss));
-    }
-  if (oid_dialog) 
-    {
+
       ADJUSTMENT_SET_VALUE(oid_ax_adj, fixup_angle(spectro_x_angle(ss)));
       ADJUSTMENT_SET_VALUE(oid_ay_adj, fixup_angle(spectro_y_angle(ss)));
       ADJUSTMENT_SET_VALUE(oid_az_adj, fixup_angle(spectro_z_angle(ss)));
@@ -827,6 +825,11 @@ void reflect_spectro(void)
 static void reset_color_orientation_callback(GtkWidget *w, gpointer context)
 {
   /* put everything back the way it was at the start */
+  set_color_cutoff(DEFAULT_COLOR_CUTOFF);
+  set_color_inverted(DEFAULT_COLOR_INVERTED);
+  set_color_scale(DEFAULT_COLOR_SCALE);
+  set_color_map(DEFAULT_COLOR_MAP);
+
   reset_spectro();
   reflect_spectro();
   for_each_chan(update_graph);
