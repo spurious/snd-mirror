@@ -1321,7 +1321,6 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
       (* amp (formant-bank spectr formants inval)))))
 
 
-;;; TODO: all the make-formants probably need mus-srate fixups
 
 ;;; similar ideas can be used for spectral cross-fades, etc -- for example:
 

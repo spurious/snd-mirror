@@ -88,7 +88,7 @@
  *
  * would it simplify variable handling to store everything as xen_value?
  *
- * TODO: this doesn't get optimized yet: (set! ((mus-data gen) 123) .1)
+ * this doesn't get optimized yet: (set! ((mus-data gen) 123) .1)
  *   but the ref side does work: (let ((fr (frame .1 .2 .3))) (run (lambda () ((mus-data fr) 0))))
  *   set! needs to look down a level if caar is a list
  *   an example is sample-pvoc3 in clm23.scm: (vct-set! (phase-vocoder-amps sr) k ...)
@@ -96,9 +96,9 @@
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * SOMEDAY: generics like length
- * TODO: we miss shadowed funcs: (spectrum k) where spectrum is a vct complains about args to func spectrum
- *   can this be fixed by checking symbol-value before using the built-in walker?
+ *
  * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings (if default types are used in s7)
+ *   but does this work in multithread cases?
  */
 
 
@@ -246,8 +246,10 @@ static int safe_strcasecmp(const char *s1, const char *s2)
 }
 
 
-#define MAX_OPTIMIZATION 6
-static int current_optimization = MAX_OPTIMIZATION;
+static bool optimizing = true;
+static s7_pointer optimization_hook;
+#define S_optimization_hook "optimization-hook"
+
 
 static s7_pointer scheme_false, scheme_true, scheme_nil, scheme_undefined, scheme_zero;
 
@@ -268,17 +270,8 @@ static s7_pointer scheme_make_string(const char *str)
   return((str) ? s7_make_string(s7, str) : scheme_false);
 }
 
-static s7_pointer optimization_hook;
-#define S_optimization_hook "optimization-hook"
-
 #define Int mus_long_t
 #define Double double
-
-#define DONT_OPTIMIZE 0
-#define COMPLEX_OK 2     /* this currently actually means "complex ignored" */
-#define GLOBAL_OK 3
-#define GLOBAL_SET_OK 5
-#define SOURCE_OK 6
 
 #define INTEGER_TO_STRING(a)                s7_number_to_string(s7, s7_make_integer(s7, a), 10)
 #define INTEGER_TO_STRING_WITH_RADIX(a, b)  s7_number_to_string(s7, s7_make_integer(s7, a), b)
@@ -306,11 +299,8 @@ static void xen_symbol_name_set_value(const char *a, s7_pointer b)
  * (run (lambda () (+ (ho 1) 2)))
  */
 
-static s7_pointer symbol_to_value(s7_pointer code, s7_pointer sym, bool *local)
+static s7_pointer symbol_to_value(s7_pointer code, s7_pointer sym)
 {
-  /* local_var here is a check against GLOBAL_SET_OK -- not a big deal! */
-  (*local) = false; /* just a guess... */
-
   return(s7_symbol_local_value(s7, sym, s7_cdr(code)));
 }
 
@@ -1464,36 +1454,36 @@ static void vct_into_vector(vct *v, s7_pointer vectr)
 static xen_var *free_xen_var(ptree *prog, xen_var *var)
 {
   s7_pointer val;
-  bool local_var;
+
   if (var)
     {
-      /* fprintf(stderr, "free var %s %s (global: %d, unclean: %d, opt: %d)\n", var->name, type_name(var->v->type), var->global, var->unclean, current_optimization); */
+      /* fprintf(stderr, "free var %s %s (global: %d, unclean: %d, opt: %d)\n", var->name, type_name(var->v->type), var->global, var->unclean, optimizing); */
 
       /* if var->global, reflect new value into outer level version of the variable upon quit */
       if ((var->global) &&
 	  (var->unclean))
 	{
-	  if (current_optimization < GLOBAL_SET_OK)
+	  if (!optimizing)
 	    {
 	      switch (var->v->type)
 		{
-		case R_FLOAT:  xen_symbol_name_set_value(var->name, s7_make_real(s7, prog->dbls[var->v->addr]));       break;
-		case R_INT:    xen_symbol_name_set_value(var->name, s7_make_integer(s7, prog->ints[var->v->addr]));        break;
-		case R_BOOL:   xen_symbol_name_set_value(var->name, s7_make_boolean(s7, prog->ints[var->v->addr]));      break;
-		case R_STRING: xen_symbol_name_set_value(var->name, scheme_make_string(prog->strs[var->v->addr]));       break;
+		case R_FLOAT:  xen_symbol_name_set_value(var->name, s7_make_real(s7, prog->dbls[var->v->addr]));              break;
+		case R_INT:    xen_symbol_name_set_value(var->name, s7_make_integer(s7, prog->ints[var->v->addr]));           break;
+		case R_BOOL:   xen_symbol_name_set_value(var->name, s7_make_boolean(s7, prog->ints[var->v->addr]));           break;
+		case R_STRING: xen_symbol_name_set_value(var->name, scheme_make_string(prog->strs[var->v->addr]));            break;
 		case R_CHAR:   xen_symbol_name_set_value(var->name, s7_make_character(s7, (char)(prog->ints[var->v->addr]))); break;
 
 		case R_KEYWORD:
-		case R_SYMBOL: xen_symbol_name_set_value(var->name, prog->xens[var->v->addr]);                        break;
+		case R_SYMBOL: xen_symbol_name_set_value(var->name, prog->xens[var->v->addr]);                                break;
 		  
 		case R_FLOAT_VECTOR:
-		  val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name), &local_var);
+		  val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name));
 		  if (s7_is_vector(val))
 		    vct_into_vector(prog->vcts[var->v->addr], val);
 		  break;
 		  
 		case R_INT_VECTOR:
-		  val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name), &local_var);
+		  val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name));
 		  if (s7_is_vector(val))
 		    int_vect_into_vector(prog->vects[var->v->addr], val);
 		  break;
@@ -1507,23 +1497,23 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 	    {
 	      switch (var->v->type)
 		{
-		case R_FLOAT:  symbol_set_value(prog->code, s7_make_symbol(s7, var->name), s7_make_real(s7, prog->dbls[var->v->addr]));       break;
-		case R_INT:    symbol_set_value(prog->code, s7_make_symbol(s7, var->name), s7_make_integer(s7, prog->ints[var->v->addr]));        break;
-		case R_BOOL:   symbol_set_value(prog->code, s7_make_symbol(s7, var->name), s7_make_boolean(s7, prog->ints[var->v->addr]));      break;
-		case R_STRING: symbol_set_value(prog->code, s7_make_symbol(s7, var->name), scheme_make_string(prog->strs[var->v->addr]));       break;
+		case R_FLOAT:  symbol_set_value(prog->code, s7_make_symbol(s7, var->name), s7_make_real(s7, prog->dbls[var->v->addr]));              break;
+		case R_INT:    symbol_set_value(prog->code, s7_make_symbol(s7, var->name), s7_make_integer(s7, prog->ints[var->v->addr]));           break;
+		case R_BOOL:   symbol_set_value(prog->code, s7_make_symbol(s7, var->name), s7_make_boolean(s7, prog->ints[var->v->addr]));           break;
+		case R_STRING: symbol_set_value(prog->code, s7_make_symbol(s7, var->name), scheme_make_string(prog->strs[var->v->addr]));            break;
 		case R_CHAR:   symbol_set_value(prog->code, s7_make_symbol(s7, var->name), s7_make_character(s7, (char)(prog->ints[var->v->addr]))); break;
 
 		case R_KEYWORD:
-		case R_SYMBOL: symbol_set_value(prog->code, s7_make_symbol(s7, var->name), prog->xens[var->v->addr]);                        break;
+		case R_SYMBOL: symbol_set_value(prog->code, s7_make_symbol(s7, var->name), prog->xens[var->v->addr]);                                break;
 		  
 		case R_FLOAT_VECTOR:
-		  val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name), &local_var);
+		  val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name));
 		  if (s7_is_vector(val))
 		    vct_into_vector(prog->vcts[var->v->addr], val);
 		  break;
 		  
 		case R_INT_VECTOR:
-		  val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name), &local_var);
+		  val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name));
 		  if (s7_is_vector(val))
 		    int_vect_into_vector(prog->vects[var->v->addr], val);
 		  break;
@@ -1532,7 +1522,7 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 
 		case R_LIST_VECTOR:
 		  /* not yet functional because the unclean flag is not set (we're setting elements of lists within the vector) */
-		  val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name), &local_var);
+		  val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name));
 		  if (s7_is_vector(val))
 		    list_vect_into_vector(prog, prog->vects[var->v->addr], val);
 		  break;
@@ -1541,7 +1531,7 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		  if ((var->v->type == R_LIST) ||
 		      (CLM_STRUCT_P(var->v->type)))
 		    {
-		      val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name), &local_var);
+		      val = symbol_to_value(prog->code, s7_make_symbol(s7, var->name));
 		      if (s7_is_list(s7, val))
 			list_into_list(prog, prog->lists[var->v->addr], val);
 		    }
@@ -2572,7 +2562,6 @@ static xen_value *add_global_var_to_ptree(ptree *prog, s7_pointer form, s7_point
   s7_pointer val = scheme_undefined;
   xen_var *var;
   int type;
-  bool local_var = false;
   xen_value *v = NULL;
   const char *varname;
 
@@ -2581,9 +2570,9 @@ static xen_value *add_global_var_to_ptree(ptree *prog, s7_pointer form, s7_point
   if (var) 
     return(copy_xen_value(var->v));
 
-  if (current_optimization < GLOBAL_OK) return(NULL);
+  if (!optimizing) return(NULL);
 
-  val = symbol_to_value(prog->code, form, &local_var);
+  val = symbol_to_value(prog->code, form);
   (*rtn) = val;
   if (val == scheme_undefined)
     {
@@ -2592,7 +2581,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, s7_pointer form, s7_point
       while ((val == scheme_undefined) && (upper->outer_tree))
 	{
 	  upper = upper->outer_tree;
-	  val = symbol_to_value(upper->code, form, &local_var);
+	  val = symbol_to_value(upper->code, form);
 	}
       if (val == scheme_undefined)	
 	return(run_warn("can't find %s", varname));
@@ -2609,8 +2598,8 @@ static xen_value *add_global_var_to_ptree(ptree *prog, s7_pointer form, s7_point
     {
       int var_loc;
       var_loc = add_outer_var_to_ptree(prog, varname, v);
-      if (current_optimization < GLOBAL_SET_OK)
-	prog->global_vars[var_loc]->unsettable = local_var;
+      if (!optimizing)
+	prog->global_vars[var_loc]->unsettable = true;
     }
   return(v);
 }
@@ -7888,7 +7877,7 @@ static void expt_i_i(int *args, ptree *pt) {FLOAT_RESULT = pow((double)(INT_ARG_
 
 static xen_value *expt_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (current_optimization < COMPLEX_OK) return(NULL);
+  if (!optimizing) return(NULL);
   if (prog->constants == 2)
     {
       Double f1, f2;
@@ -9436,27 +9425,6 @@ static xen_value *file_name_1(ptree *pt, xen_value **args, int num_args)
   return(rtn);
 }
 
-
-
-/* ---------------- c-g? ---------------- */
-
-static void c_g_p(int *args, ptree *pt) 
-{
-  check_for_event();
-  if ((ss->cg_seen) || (ss->stopped_explicitly))
-    {
-      ss->stopped_explicitly = false;
-      ss->cg_seen = false;
-      BOOL_RESULT = (Int)true;
-    }
-  else BOOL_RESULT = (Int)false;
-}
-
-
-static xen_value *c_g_p_1(ptree *pt, xen_value **args, int num_args)
-{
-  return(package(pt, R_BOOL, c_g_p, "c_g_p", args, 0));
-}
 
 
 /* ---------------- exit ---------------- */
@@ -15659,7 +15627,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 
   /* fprintf(stderr, "walk %s\n", s7_object_to_c_string(s7, form)); */
 
-  if (current_optimization == DONT_OPTIMIZE) return(NULL);
+  if (!optimizing) return(NULL);
 
   if (s7_is_list(s7, form))
     {
@@ -16014,7 +15982,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 
       /* check for function defined elsewhere, get source, splice in if possible */
       if ((v == NULL) && 
-	  (current_optimization >= SOURCE_OK) &&
+	  (optimizing) &&
 	  (s7_is_procedure(rtnval)) &&
 	  (!(s7_is_procedure_with_setter(rtnval)))
 	  )
@@ -16217,9 +16185,9 @@ static struct ptree *form_to_ptree_1(s7_pointer code, int decls, int *types)
   run_warned = false;
 
 #if USE_SND
-  current_optimization = optimization(ss);
+  optimizing = (optimization(ss) > 0);
 #endif
-  if (current_optimization == DONT_OPTIMIZE) return(NULL);
+  if (!optimizing) return(NULL);
   if (code == scheme_nil) return(NULL);
 
   form = s7_car(code);
@@ -16497,11 +16465,11 @@ static s7_pointer eval_ptree_to_xen(ptree *pt)
   last_error_ptree = NULL;
   saw_mus_error = 1;
 #if USE_SND
-  ss->cg_seen = false;
+  ss->C_g_typed = false;
 #endif
   eval_ptree(pt);
 #if USE_SND
-  ss->cg_seen = false;
+  ss->C_g_typed = false;
 #endif
   result = xen_value_to_xen(pt, pt->result);
   gc_loc = s7_gc_protect(s7, result);
@@ -17062,7 +17030,6 @@ static void init_walkers(void)
   INIT_WALKER(S_srate,                  make_walker(srate_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_channels,               make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_file_name,              make_walker(file_name_1, NULL, NULL, 0, 1, R_STRING, false, 0));
-  INIT_WALKER(S_c_g,                    make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
   INIT_WALKER(S_vct_to_channel,         make_walker(vct_to_channel_1, NULL, NULL, 3, 5, R_BOOL, false, 3, R_VCT, R_INT, R_INT));
   INIT_WALKER(S_exit,                   make_walker(exit_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
 
@@ -17086,7 +17053,7 @@ static s7_pointer g_run_eval(s7_pointer code, s7_pointer arg, s7_pointer arg1, s
   int gc_loc;
 
 #if USE_SND
-  current_optimization = SOURCE_OK;
+  optimizing = true;
 #endif
 
   cl = s7_make_closure(s7, code, xen_nil);
@@ -17215,22 +17182,25 @@ static s7_pointer g_set_optimization(s7_pointer val)
 {
   #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 6 is the max, 0 = no optimization)"
   XEN_ASSERT_TYPE(s7_is_integer(val), val, 1, S_setB S_optimization, "an integer");
-  set_optimization(mus_iclamp(0, (int)s7_number_to_integer(val), MAX_OPTIMIZATION));
-  return(s7_make_integer(s7, optimization(ss)));
+  set_optimization(mus_iclamp(0, (int)s7_number_to_integer(val), 6));
+  optimizing = (optimization(ss) > 0);
+  return(val);
 }
 
 #else
 
 #define S_optimization "optimization"
 
-static s7_pointer g_optimization(void) {return(s7_make_integer(s7, current_optimization));}
+static s7_pointer g_optimization(void) {return(s7_make_integer(s7, (optimizing) ? 6 : 0));} /* 6 here for backwards compatibility */
 
 static s7_pointer g_set_optimization(s7_pointer val) 
 {
+  int ival;
   #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 6 is the max, 0 = no optimization)"
   XEN_ASSERT_TYPE(s7_is_integer(val), val, 1, S_setB S_optimization, "an integer");
-  current_optimization = mus_iclamp(0, (int)s7_number_to_integer(val), MAX_OPTIMIZATION);
-  return(s7_make_integer(s7, current_optimization));
+  ival = mus_iclamp(0, (int)s7_number_to_integer(val), 6);
+  optimizing = (ival > 0);
+  return(val);
 }
 
 #endif
@@ -17325,7 +17295,7 @@ You can often slightly rewrite the form to make run happy."
   optimization_hook = XEN_DEFINE_HOOK(S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 
 #if (!USE_SND)
-  current_optimization = MAX_OPTIMIZATION;
+  optimizing = true;
 #endif
 
   init_walkers();

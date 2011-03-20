@@ -9,6 +9,9 @@
   #include <gdk/gdkkeysyms.h>
 #endif
 
+#define HAVE_GTK true
+/* I keep using this form (not USE_GTK) by mistake */
+
 #include <cairo/cairo.h>
 
 #define LOTSA_PIXELS 10000

@@ -3751,7 +3751,7 @@
 (CFNC "GtkWidget* gtk_widget_get_ancestor GtkWidget* widget GType widget_type")
 (CFNC-gtk2 "GdkColormap* gtk_widget_get_colormap GtkWidget* widget")
 (CFNC "GdkVisual* gtk_widget_get_visual GtkWidget* widget")
-;(CFNC "GtkSettings* gtk_widget_get_settings GtkWidget* widget")
+(CFNC "GtkSettings* gtk_widget_get_settings GtkWidget* widget")
 (CFNC "AtkObject* gtk_widget_get_accessible GtkWidget* widget")
 (CFNC-gtk2 "void gtk_widget_set_colormap GtkWidget* widget GdkColormap* colormap")
 (CFNC "gint gtk_widget_get_events GtkWidget* widget")
@@ -8095,7 +8095,7 @@
 (CFNC-300 "void gtk_accel_map_unlock_path gchar* accel_path" 'const)
 
 ;(CFNC-300 "gboolean gtk_icon_size_lookup_for_settings GtkSettings* settings GtkIconSize size gint* [width] gint* [height]")
-; all the GtkSettings funcs have been removed above and docs say this func isn't needed
+; most of the GtkSettings funcs have been removed above and docs say this func isn't needed
 
 (CINT-300 "GTK_ICON_LOOKUP_FORCE_SIZE" "GtkIconLookupFlags")
 (CINT-300 "GTK_ICON_THEME_NOT_FOUND" "GtkIconThemeError")

@@ -375,7 +375,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
   ss = (snd_state *)calloc(1, sizeof(snd_state)); /* not calloc! */
   ss->fam_ok = false;
-  ss->cg_seen = false;
   ss->startup_errors = NULL;
 
 #if HAVE_GTK_3

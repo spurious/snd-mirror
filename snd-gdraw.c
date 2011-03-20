@@ -4,7 +4,11 @@
 void draw_line(graphics_context *ax, int x0, int y0, int x1, int y1) 
 {
   cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-  cairo_set_line_width(ss->cr, 1.0); 
+  if (ss->line_width != 1.0)
+    {
+      cairo_set_line_width(ss->cr, 1.0); 
+      ss->line_width = 1.0;
+    }
   /* to get a thin line in cairo -- hooboy! you have to offset everything -- this is not pretty
    *    if line_width < 1.0, you get a smudgy mess in gray-scale!!  
    */
@@ -20,7 +24,11 @@ void draw_lines(graphics_context *ax, point_t *points, int num)
   {
     int i;
     cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-    cairo_set_line_width(ss->cr, 1.0); 
+    if (ss->line_width != 1.0)
+      {
+	cairo_set_line_width(ss->cr, 1.0); 
+	ss->line_width = 1.0;
+      }
     cairo_move_to(ss->cr, points[0].x + 0.5, points[0].y + 0.5);
     for (i = 1; i < num; i++)
       cairo_line_to(ss->cr, points[i].x + 0.5, points[i].y + 0.5);
@@ -209,7 +217,6 @@ static void draw_polygon_va(graphics_context *ax, bool filled, int points, va_li
     x = va_arg(ap, int);
     y = va_arg(ap, int);
     cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-    /* cairo_set_line_width(ss->cr, 1.0); */
     cairo_move_to(ss->cr, x, y);
     for (i = 1; i < points; i++)
       {
@@ -244,7 +251,6 @@ void fill_polygon_from_array(graphics_context *ax, point_t *points, int npoints)
 {
   int i;
   cairo_set_source_rgba(ss->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue, ax->gc->fg_color->alpha);
-  /* cairo_set_line_width(ss->cr, 1.0); */
   cairo_move_to(ss->cr, points[0].x, points[0].y);
   for (i = 1; i < npoints; i++)
     cairo_line_to(ss->cr, points[i].x, points[i].y);
@@ -357,7 +363,11 @@ void draw_spectro_line(graphics_context *ax, int color, int x0, int y0, int x1, 
   rgb_t r, g,b;
   get_current_color(color_map(ss), color, &r, &g, &b);
   cairo_set_source_rgb(ss->cr, r, g, b);
-  cairo_set_line_width(ss->cr, 1.0); 
+  if (ss->line_width != 1.0)
+    {
+      cairo_set_line_width(ss->cr, 1.0); 
+      ss->line_width = 1.0;
+    }
   cairo_move_to(ss->cr, x0 + 0.5, y0 + 0.5);
   cairo_line_to(ss->cr, x1 + 0.5, y1 + 0.5);
   cairo_stroke(ss->cr);
@@ -461,7 +471,11 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
 	}
       else 
 	{
-	  cairo_set_line_width(ss->cr, 1.0); 
+	  if (ss->line_width != 1.0)
+	    {
+	      cairo_set_line_width(ss->cr, 1.0); 
+	      ss->line_width = 1.0;
+	    }
 	  cairo_move_to(ss->cr, x0 + 0.5, y0 + 0.5);
 	  cairo_line_to(ss->cr, x1 + 0.5, y1 + 0.5);
 	  cairo_stroke(ss->cr);

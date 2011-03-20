@@ -895,7 +895,6 @@ static bool stacktrace_begin_hook(s7_scheme *sc)
   return(false);
 }
 
-/* TODO: this doesn't drop down during computation? */
 
 static void listener_stacktrace_callback(GtkWidget *w, gpointer info)
 {

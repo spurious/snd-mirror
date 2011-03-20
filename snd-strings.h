@@ -51,7 +51,9 @@
 #define S_bind_key                      "bind-key"  
 #define S_bold_peaks_font               "bold-peaks-font"
 #define S_bomb                          "bomb"
+#if (!HAVE_SCHEME)
 #define S_c_g                           "c-g?"
+#endif
 #define S_cepstrum                      "cepstrum"
 #define S_channel_amp_envs              "channel-amp-envs"
 #define S_channel_data                  "channel-data"

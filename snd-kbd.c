@@ -1403,7 +1403,7 @@ static bool extended_mode = false;
 
 void control_g(snd_info *sp)
 {
-  ss->cg_seen = true;
+  ss->C_g_typed = true;
 
   number_ctr = 0; 
   counting = false; 

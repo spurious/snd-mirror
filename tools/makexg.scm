@@ -2833,6 +2833,8 @@
 (hey "  else {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &str, NULL); return(C_TO_XEN_STRING(str));}~%")
 (hey "}~%~%")
 
+;;; (g_object_get (GPOINTER (gtk_settings_get_default)) "gtk-enable-tooltips" #f)
+
 (hey "static XEN xg_object_set(XEN val, XEN name, XEN new_val)~%")
 (hey "{~%")
 (hey "  XEN_ASSERT_TYPE(XEN_gpointer_P(val), val, 1, \"g_object_set\", \"gpointer\");~%")

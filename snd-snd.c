@@ -2442,8 +2442,6 @@ void reverb_control_set_feedback(mus_float_t hop)
  * sound-file properties?  a data base saving all such info (rather than kludges involving headers)
  *   (hash-table makes more sense as a property list than a list in large cases) -- currently it's actually a vector
  *   or a global data base for all properties? -- easy to search or display in various ways
- *
- * TODO: make-sampler with mix etc -- let 1st arg be object, also add selection sampler
  */
 
 

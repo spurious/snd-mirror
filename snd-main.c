@@ -2247,19 +2247,21 @@ static XEN g_abort(void)
 }
 
 
+#if (!HAVE_SCHEME)
 static XEN g_abortq(void)
 {
   #define H_abortQ "(" S_c_g "): allow pending user interface events to occur, returning " PROC_TRUE " if C-g was typed"
   check_for_event();
-  if ((ss->cg_seen) || (ss->stopped_explicitly))
-
+  if ((ss->C_g_typed) || 
+      (ss->stopped_explicitly))
     {
       ss->stopped_explicitly = false;
-      ss->cg_seen = false;
+      ss->C_g_typed = false;
       return(XEN_TRUE);
     }
   return(XEN_FALSE);
 }
+#endif
 
 
 #ifdef XEN_ARGIFY_1
@@ -2345,7 +2347,9 @@ XEN_ARGIFY_2(g_print_dialog_w, g_print_dialog)
 XEN_NARGIFY_0(g_preferences_dialog_w, g_preferences_dialog)
 XEN_NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
 XEN_NARGIFY_0(g_abort_w, g_abort)
+#if (!HAVE_SCHEME)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
+#endif
 #else
 #define g_save_state_file_w g_save_state_file
 #define g_set_save_state_file_w g_set_save_state_file
@@ -2429,7 +2433,9 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_preferences_dialog_w g_preferences_dialog
 #define g_recorder_dialog_w g_recorder_dialog
 #define g_abort_w g_abort
+#if (!HAVE_SCHEME)
 #define g_abortq_w g_abortq
+#endif
 #endif
 
 void g_init_main(void)
@@ -2576,5 +2582,7 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
   XEN_DEFINE_PROCEDURE(S_preferences_dialog,       g_preferences_dialog_w,       0, 0, 0, H_preferences_dialog);
   XEN_DEFINE_PROCEDURE(S_recorder_dialog,          g_recorder_dialog_w,          0, 0, 0, H_recorder_dialog);
   XEN_DEFINE_PROCEDURE(S_abort,                    g_abort_w,                    0, 0, 0, H_abort);
+#if (!HAVE_SCHEME)
   XEN_DEFINE_PROCEDURE(S_c_g,                      g_abortq_w,                   0, 0, 0, H_abortQ);
+#endif
 }

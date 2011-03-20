@@ -13727,6 +13727,13 @@ static XEN gxg_gtk_widget_get_visual(XEN widget)
   return(C_TO_XEN_GdkVisual_(gtk_widget_get_visual(XEN_TO_C_GtkWidget_(widget))));
 }
 
+static XEN gxg_gtk_widget_get_settings(XEN widget)
+{
+  #define H_gtk_widget_get_settings "GtkSettings* gtk_widget_get_settings(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_settings", "GtkWidget*");
+  return(C_TO_XEN_GtkSettings_(gtk_widget_get_settings(XEN_TO_C_GtkWidget_(widget))));
+}
+
 static XEN gxg_gtk_widget_get_accessible(XEN widget)
 {
   #define H_gtk_widget_get_accessible "AtkObject* gtk_widget_get_accessible(GtkWidget* widget)"
@@ -36490,6 +36497,7 @@ XEN_NARGIFY_2(gxg_gtk_widget_add_events_w, gxg_gtk_widget_add_events)
 XEN_NARGIFY_1(gxg_gtk_widget_get_toplevel_w, gxg_gtk_widget_get_toplevel)
 XEN_NARGIFY_2(gxg_gtk_widget_get_ancestor_w, gxg_gtk_widget_get_ancestor)
 XEN_NARGIFY_1(gxg_gtk_widget_get_visual_w, gxg_gtk_widget_get_visual)
+XEN_NARGIFY_1(gxg_gtk_widget_get_settings_w, gxg_gtk_widget_get_settings)
 XEN_NARGIFY_1(gxg_gtk_widget_get_accessible_w, gxg_gtk_widget_get_accessible)
 XEN_NARGIFY_1(gxg_gtk_widget_get_events_w, gxg_gtk_widget_get_events)
 XEN_ARGIFY_3(gxg_gtk_widget_get_pointer_w, gxg_gtk_widget_get_pointer)
@@ -40527,6 +40535,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_widget_get_toplevel_w gxg_gtk_widget_get_toplevel
 #define gxg_gtk_widget_get_ancestor_w gxg_gtk_widget_get_ancestor
 #define gxg_gtk_widget_get_visual_w gxg_gtk_widget_get_visual
+#define gxg_gtk_widget_get_settings_w gxg_gtk_widget_get_settings
 #define gxg_gtk_widget_get_accessible_w gxg_gtk_widget_get_accessible
 #define gxg_gtk_widget_get_events_w gxg_gtk_widget_get_events
 #define gxg_gtk_widget_get_pointer_w gxg_gtk_widget_get_pointer
@@ -44571,6 +44580,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_get_toplevel, gxg_gtk_widget_get_toplevel_w, 1, 0, 0, H_gtk_widget_get_toplevel);
   XG_DEFINE_PROCEDURE(gtk_widget_get_ancestor, gxg_gtk_widget_get_ancestor_w, 2, 0, 0, H_gtk_widget_get_ancestor);
   XG_DEFINE_PROCEDURE(gtk_widget_get_visual, gxg_gtk_widget_get_visual_w, 1, 0, 0, H_gtk_widget_get_visual);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_settings, gxg_gtk_widget_get_settings_w, 1, 0, 0, H_gtk_widget_get_settings);
   XG_DEFINE_PROCEDURE(gtk_widget_get_accessible, gxg_gtk_widget_get_accessible_w, 1, 0, 0, H_gtk_widget_get_accessible);
   XG_DEFINE_PROCEDURE(gtk_widget_get_events, gxg_gtk_widget_get_events_w, 1, 0, 0, H_gtk_widget_get_events);
   XG_DEFINE_PROCEDURE(gtk_widget_get_pointer, gxg_gtk_widget_get_pointer_w, 1, 2, 0, H_gtk_widget_get_pointer);
@@ -49069,7 +49079,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Mar-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("20-Mar-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -545,7 +545,7 @@ typedef struct snd_state {
   bool jump_ok, exiting;
   env_editor *enved;
   oclock_t click_time;
-  bool fam_ok, cg_seen, C_g_typed;
+  bool fam_ok, C_g_typed;
   FAMConnection *fam_connection;
   void (*snd_error_handler)(const char *error_msg, void *data);
   void *snd_error_data;
@@ -616,6 +616,7 @@ typedef struct snd_state {
 
 #if USE_GTK
   cairo_t *cr;
+  double line_width;
   GtkWidget *mainshell;
   GtkWidget *mainpane;
   GtkWidget *soundpane;

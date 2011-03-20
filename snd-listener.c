@@ -492,11 +492,23 @@ static bool listener_begin_hook(s7_scheme *sc)
 #endif
 
 #if USE_GTK
+#if 0
   if (gdk_events_pending()) /* necessary -- otherwise Snd hangs in gtk_main_iteration */
     gtk_main_iteration();
+#else
+  {
+    int i = 50;
+    /* we need to let more than 1 event through at a time, else (for example) the listener popup
+     *   menu never actually pops up.
+     */
+    while ((gtk_events_pending()) && (i != 0))
+      {
+	gtk_main_iteration();
+	i--; 
+      }
+  }
 #endif
-
-  /* if c-g, run stop-hook? */
+#endif
 
   return(ss->C_g_typed);
 }
@@ -943,21 +955,8 @@ void g_init_listener(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
 				   S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
 
-#if HAVE_SCHEME
-  #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
-If it returns " PROC_TRUE ", Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\
-(define (read-listener-line prompt) \n\
-  (let ((res #f)) \n\
-    (add-hook! " S_read_hook " (lambda (str) (set! res str) #t)) \n\
-    (" S_snd_print " prompt) \n\
-    (do () ((or (" S_c_g ") res))) \n\
-    (reset-hook! " S_read_hook ") \n\
-    res))"
-#endif
-#if HAVE_RUBY || HAVE_FORTH
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns true, Snd assumes you've dealt the text yourself, and does not try to evaluate it."
-#endif
   
   read_hook = XEN_DEFINE_HOOK(S_read_hook, 1, H_read_hook);
 
