@@ -218,7 +218,6 @@ void set_z_scrollbars(chan_info *cp, axis_info *ap);
 void change_gzy(mus_float_t val, chan_info *cp);
 mus_float_t gsy_value(chan_info *cp);
 mus_float_t gsy_size(chan_info *cp);
-bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
 gboolean graph_key_press(GtkWidget *w, GdkEventKey *event, gpointer data);

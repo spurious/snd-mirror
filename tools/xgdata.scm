@@ -2770,10 +2770,10 @@
 (CCHK "GTK_IS_SEPARATOR_MENU_ITEM(obj)" "GtkSeparatorMenuItem*")
 ;;;;(CFNC "GType gtk_separator_menu_item_get_type void")
 (CFNC "GtkWidget* gtk_separator_menu_item_new void")
-;(CCAST "GTK_SETTINGS(obj)" "GtkSettings*")
-;(CCHK "GTK_IS_SETTINGS(obj)" "GtkSettings*")
+(CCAST "GTK_SETTINGS(obj)" "GtkSettings*")
+(CCHK "GTK_IS_SETTINGS(obj)" "GtkSettings*")
 ;;;;;(CFNC "GType gtk_settings_get_type void")
-;(CFNC "GtkSettings* gtk_settings_get_default void")
+(CFNC "GtkSettings* gtk_settings_get_default void")
 ;(CFNC "void gtk_settings_install_property GParamSpec* pspec")
 ;(CFNC "void gtk_settings_install_property_parser GParamSpec* pspec GtkRcPropertyParser parser")
 ;(CFNC "gboolean gtk_rc_property_parse_color GParamSpec* pspec GString* gstring GValue* property_value")
@@ -8828,5 +8828,3 @@ gtkrecentmanager: gtk_recent_info_get_gicon
 		       (not (defined? (string->symbol function))))
 		  (format #t "~A: ~A~%" header function))))))))
 |#
-
-;;; TODO: support g_object_get|set

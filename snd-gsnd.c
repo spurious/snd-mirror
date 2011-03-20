@@ -2090,6 +2090,10 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       /* end if control-panel */
       gtk_widget_show(CONTROL_PANEL(sp));
       gtk_widget_show(SND_PANE(sp));
+
+#if HAVE_GTK_3
+      set_basic_color(ss->basic_color);
+#endif
     } /* new sound ss */
   else
     { 

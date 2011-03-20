@@ -2833,6 +2833,14 @@
 (hey "  else {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &str, NULL); return(C_TO_XEN_STRING(str));}~%")
 (hey "}~%~%")
 
+(hey "static XEN xg_object_set(XEN val, XEN name, XEN new_val)~%")
+(hey "{~%")
+(hey "  XEN_ASSERT_TYPE(XEN_gpointer_P(val), val, 1, \"g_object_set\", \"gpointer\");~%")
+(hey "  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 2, \"g_object_set\", \"string\");~%")
+(hey "  g_object_set(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), (XEN_BOOLEAN_P(new_val)) ? XEN_TO_C_BOOLEAN(new_val) : XEN_TO_C_INT(new_val), NULL);~%")
+(hey "  return(new_val);~%")
+(hey "}~%~%")
+
 (hey "static XEN xg_gtk_event_keyval(XEN event)~%")
 (hey "{~%")
 (hey " GdkEventKey *e;~%")
@@ -3040,6 +3048,7 @@
 (hey "XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)~%")
 (hey "XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)~%")
 (hey "XEN_NARGIFY_3(xg_object_get_w, xg_object_get)~%")
+(hey "XEN_NARGIFY_3(xg_object_set_w, xg_object_set)~%")
 (hey "XEN_NARGIFY_1(xg_gtk_event_keyval_w, xg_gtk_event_keyval)~%")
 
 (hey "XEN_ARGIFY_2(gxg_gtk_init_w, gxg_gtk_init)~%")
@@ -3115,6 +3124,7 @@
 (hey "#define gxg_make_target_entry_w gxg_make_target_entry~%")
 (hey "#define c_to_xen_string_w c_to_xen_string~%")
 (hey "#define xg_object_get_w xg_object_get~%")
+(hey "#define xg_object_set_w xg_object_set~%")
 (hey "#define xg_gtk_event_keyval_w xg_gtk_event_keyval~%")
 
 (hey "#define gxg_gtk_init_w gxg_gtk_init~%")
@@ -3231,6 +3241,7 @@
 (hey "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);~%")
 (hey "  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);~%")
 (hey "  XG_DEFINE_PROCEDURE(g_object_get, xg_object_get_w, 3, 0, 0, NULL);~%")
+(hey "  XG_DEFINE_PROCEDURE(g_object_set, xg_object_set_w, 3, 0, 0, NULL);~%")
 (hey "  XG_DEFINE_PROCEDURE(gtk_event_keyval, xg_gtk_event_keyval_w, 1, 0, 0, NULL);~%")
 
 (hey "  XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init);~%")

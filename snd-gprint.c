@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* are the printed graphs truncated because the "printer" assumes some paper size? 
+ */
+
 static GtkPrintSettings *settings = NULL;
 
 static void begin_print(GtkPrintOperation *operation, GtkPrintContext *context,	gpointer data)

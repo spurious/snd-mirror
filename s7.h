@@ -24,7 +24,7 @@ typedef double s7_Double;
    *
    *   Snd: ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-12.tar.gz (a sound editor)
    *     which includes:
-   *       libxm: libxm.tar.gz (X, Motif, Gtk, and openGL bindings)
+   *       libxm: libxm.tar.gz (X, Motif, Gtk, Cairo, and openGL bindings)
    *       sndlib: sndlib.tar.gz (sound file, audio port, and CLM bindings plus an optimizer (run))
    *
    *   Common Music by Rick Taube: http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz (composition)
@@ -748,8 +748,7 @@ void s7_mark_object(s7_pointer p);
 
 /* Threads in s7 share the heap and symbol table, but have their own local environment, stack,
  *   and evaluator locals.  The thread_variable functions above refer to thread-local variables
- *   known as "keys" in pthreads.  The "lock" functions refer to mutexes. snd-listener.c
- *   in the Snd package has example code that would work if the GUI functions were thread-safe.
+ *   known as "keys" in pthreads.  The "lock" functions refer to mutexes.
  *
  *   s7_make_thread returns a new s7 evaluator (a clone of the main one), running in its own
  *     thread (see s7_thread).  The function running in that thread is 'func',
@@ -836,7 +835,7 @@ void s7_mark_object(s7_pointer p);
  *    exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size help 
  *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
  *    integer-length keyword->symbol lcm list list->string list->vector list-tail log logand 
- *    logior lognot logxor magnitude make-hash-table-iterator make-list make-polar make-random-state 
+ *    logior lognot logxor magnitude make-hash-table-iterator make-list make-polar
  *    make-rectangular map max memq memv min modulo nan? negative? not null? odd? port-closed? 
  *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
  *    sin sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 

@@ -16838,9 +16838,10 @@ static s7_pointer call_s_object_setter(s7_scheme *sc, s7_pointer a, s7_pointer a
 }
 
 
-/* generalized set! calls g_object_set which then calls the object's set function */
+/* generalized set! calls g_internal_object_set which then calls the object's set function 
+ */
 
-static s7_pointer g_object_set(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_internal_object_set(s7_scheme *sc, s7_pointer args)
 {
   int tag;
   s_type_t *obj;
@@ -24358,7 +24359,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  switch (type(sc->x))
 	    {
 	    case T_S_OBJECT:
-	      /* it's tricky to split out this case because we haven't evaluated the args yet, so we check in g_object_set.
+	      /* it's tricky to split out this case because we haven't evaluated the args yet, so we check in g_internal_object_set.
 	       */
 	    case T_C_OBJECT:
 	      if (object_set_function(sc->x))
@@ -31606,7 +31607,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "s7-version",                g_s7_version,               0, 0, false, H_s7_version);
 
   #define object_set_name "(generalized set!)"
-  s7_define_function(sc, object_set_name,             g_object_set,               1, 0, true,  "internal object setter redirection");
+  s7_define_function(sc, object_set_name,             g_internal_object_set,      1, 0, true,  "internal object setter redirection");
   sc->OBJECT_SET = s7_symbol_value(sc, make_symbol(sc, object_set_name));
   typeflag(sc->OBJECT_SET) |= T_DONT_COPY; 
 
@@ -31946,7 +31947,6 @@ the error type and the info passed to the error handler.");
  *     position/posq/posv along the lines of member
  *       for strings this could recognize upcase?
  *     file-exists?, directory?, delete-file, (length|copy file)? even wilder: (file position) or (for-each ... file)
- *     perhaps object->list (alongside object->string, but more restricted in what it can handle)
  *     perhaps procedure-name, settable procedure-documentation
  *     perhaps copy port
  *     help should be more general than procedure-documentation (hook strings etc)
@@ -31961,6 +31961,7 @@ the error type and the info passed to the error handler.");
  *
  * --------------------------------------------------------------------------------
  * s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10
+ *
  *    intel core duo (1.83G):    3162     2690 1.921     2426 1.830
  *    intel E5200 (2.5G):                 1951 1.450     1751 1.28
  *    amd opteron 2218 (2.5G):            1859 1.335     1667 1.33

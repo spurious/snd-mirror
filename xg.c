@@ -587,6 +587,7 @@ XM_TYPE_PTR_1(GtkScrolledWindow_, GtkScrolledWindow*)
 #define C_TO_XEN_GtkCornerType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCornerType(Arg) (GtkCornerType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkCornerType_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR_2(GtkSettings_, GtkSettings*)
 XM_TYPE_PTR(GtkSizeGroup_, GtkSizeGroup*)
 #define C_TO_XEN_GtkSizeGroupMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkSizeGroupMode(Arg) (GtkSizeGroupMode)(XEN_TO_C_INT(Arg))
@@ -820,7 +821,6 @@ XM_TYPE(GtkPrintQuality, GtkPrintQuality)
 XM_TYPE(GtkPrintPages, GtkPrintPages)
 XM_TYPE_PTR(GtkPageRange_, GtkPageRange*)
 XM_TYPE(GtkPageSet, GtkPageSet)
-XM_TYPE_PTR_2(GtkSettings_, GtkSettings*)
 XM_TYPE_PTR_1(GtkTooltip_, GtkTooltip*)
 #if HAVE_GTK_TEST_WIDGET_CLICK
 XM_TYPE_1(GtkCalendarDetailFunc, GtkCalendarDetailFunc)
@@ -8529,6 +8529,12 @@ static XEN gxg_gtk_separator_menu_item_new(void)
 {
   #define H_gtk_separator_menu_item_new "GtkWidget* gtk_separator_menu_item_new( void)"
   return(C_TO_XEN_GtkWidget_(gtk_separator_menu_item_new()));
+}
+
+static XEN gxg_gtk_settings_get_default(void)
+{
+  #define H_gtk_settings_get_default "GtkSettings* gtk_settings_get_default( void)"
+  return(C_TO_XEN_GtkSettings_(gtk_settings_get_default()));
 }
 
 static XEN gxg_gtk_size_group_new(XEN mode)
@@ -34389,6 +34395,7 @@ static XEN gxg_GTK_SCROLLBAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST
 static XEN gxg_GTK_SCROLLED_WINDOW(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkScrolledWindow_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SEPARATOR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSeparator_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SEPARATOR_MENU_ITEM(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSeparatorMenuItem_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GTK_SETTINGS(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSettings_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SIZE_GROUP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSizeGroup_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SPIN_BUTTON(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSpinButton_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_STATUSBAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkStatusbar_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34599,6 +34606,7 @@ static XEN gxg_GTK_IS_SCROLLBAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT
 static XEN gxg_GTK_IS_SCROLLED_WINDOW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SCROLLED_WINDOW((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SEPARATOR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SEPARATOR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SEPARATOR_MENU_ITEM(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SEPARATOR_MENU_ITEM((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_SETTINGS(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SETTINGS((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SIZE_GROUP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SIZE_GROUP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_SPIN_BUTTON(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SPIN_BUTTON((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_STATUSBAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_STATUSBAR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -34953,6 +34961,14 @@ static XEN xg_object_get(XEN val, XEN name, XEN string_type)
   if (XEN_FALSE_P(string_type))
     {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &temp, NULL); return(C_TO_XEN_INT(temp));}
   else {g_object_get(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), &str, NULL); return(C_TO_XEN_STRING(str));}
+}
+
+static XEN xg_object_set(XEN val, XEN name, XEN new_val)
+{
+  XEN_ASSERT_TYPE(XEN_gpointer_P(val), val, 1, "g_object_set", "gpointer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 2, "g_object_set", "string");
+  g_object_set(XEN_TO_C_gpointer(val), (const gchar *)(XEN_TO_C_STRING(name)), (XEN_BOOLEAN_P(new_val)) ? XEN_TO_C_BOOLEAN(new_val) : XEN_TO_C_INT(new_val), NULL);
+  return(new_val);
 }
 
 static XEN xg_gtk_event_keyval(XEN event)
@@ -35938,6 +35954,7 @@ XEN_NARGIFY_1(gxg_gtk_selection_remove_all_w, gxg_gtk_selection_remove_all)
 XEN_NARGIFY_1(gxg_gtk_selection_data_copy_w, gxg_gtk_selection_data_copy)
 XEN_NARGIFY_1(gxg_gtk_selection_data_free_w, gxg_gtk_selection_data_free)
 XEN_NARGIFY_0(gxg_gtk_separator_menu_item_new_w, gxg_gtk_separator_menu_item_new)
+XEN_NARGIFY_0(gxg_gtk_settings_get_default_w, gxg_gtk_settings_get_default)
 XEN_NARGIFY_1(gxg_gtk_size_group_new_w, gxg_gtk_size_group_new)
 XEN_NARGIFY_2(gxg_gtk_size_group_set_mode_w, gxg_gtk_size_group_set_mode)
 XEN_NARGIFY_1(gxg_gtk_size_group_get_mode_w, gxg_gtk_size_group_get_mode)
@@ -38792,6 +38809,7 @@ XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)
 XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)
 XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)
 XEN_NARGIFY_3(xg_object_get_w, xg_object_get)
+XEN_NARGIFY_3(xg_object_set_w, xg_object_set)
 XEN_NARGIFY_1(xg_gtk_event_keyval_w, xg_gtk_event_keyval)
 XEN_ARGIFY_2(gxg_gtk_init_w, gxg_gtk_init)
 XEN_ARGIFY_2(gxg_gtk_init_check_w, gxg_gtk_init_check)
@@ -38868,6 +38886,7 @@ XEN_NARGIFY_1(gxg_GTK_SCROLLBAR_w, gxg_GTK_SCROLLBAR)
 XEN_NARGIFY_1(gxg_GTK_SCROLLED_WINDOW_w, gxg_GTK_SCROLLED_WINDOW)
 XEN_NARGIFY_1(gxg_GTK_SEPARATOR_w, gxg_GTK_SEPARATOR)
 XEN_NARGIFY_1(gxg_GTK_SEPARATOR_MENU_ITEM_w, gxg_GTK_SEPARATOR_MENU_ITEM)
+XEN_NARGIFY_1(gxg_GTK_SETTINGS_w, gxg_GTK_SETTINGS)
 XEN_NARGIFY_1(gxg_GTK_SIZE_GROUP_w, gxg_GTK_SIZE_GROUP)
 XEN_NARGIFY_1(gxg_GTK_SPIN_BUTTON_w, gxg_GTK_SPIN_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_STATUSBAR_w, gxg_GTK_STATUSBAR)
@@ -39078,6 +39097,7 @@ XEN_NARGIFY_1(gxg_GTK_IS_SCROLLBAR_w, gxg_GTK_IS_SCROLLBAR)
 XEN_NARGIFY_1(gxg_GTK_IS_SCROLLED_WINDOW_w, gxg_GTK_IS_SCROLLED_WINDOW)
 XEN_NARGIFY_1(gxg_GTK_IS_SEPARATOR_w, gxg_GTK_IS_SEPARATOR)
 XEN_NARGIFY_1(gxg_GTK_IS_SEPARATOR_MENU_ITEM_w, gxg_GTK_IS_SEPARATOR_MENU_ITEM)
+XEN_NARGIFY_1(gxg_GTK_IS_SETTINGS_w, gxg_GTK_IS_SETTINGS)
 XEN_NARGIFY_1(gxg_GTK_IS_SIZE_GROUP_w, gxg_GTK_IS_SIZE_GROUP)
 XEN_NARGIFY_1(gxg_GTK_IS_SPIN_BUTTON_w, gxg_GTK_IS_SPIN_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_IS_STATUSBAR_w, gxg_GTK_IS_STATUSBAR)
@@ -39971,6 +39991,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_selection_data_copy_w gxg_gtk_selection_data_copy
 #define gxg_gtk_selection_data_free_w gxg_gtk_selection_data_free
 #define gxg_gtk_separator_menu_item_new_w gxg_gtk_separator_menu_item_new
+#define gxg_gtk_settings_get_default_w gxg_gtk_settings_get_default
 #define gxg_gtk_size_group_new_w gxg_gtk_size_group_new
 #define gxg_gtk_size_group_set_mode_w gxg_gtk_size_group_set_mode
 #define gxg_gtk_size_group_get_mode_w gxg_gtk_size_group_get_mode
@@ -42825,6 +42846,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_make_target_entry_w gxg_make_target_entry
 #define c_to_xen_string_w c_to_xen_string
 #define xg_object_get_w xg_object_get
+#define xg_object_set_w xg_object_set
 #define xg_gtk_event_keyval_w xg_gtk_event_keyval
 #define gxg_gtk_init_w gxg_gtk_init
 #define gxg_gtk_init_check_w gxg_gtk_init_check
@@ -42901,6 +42923,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_SCROLLED_WINDOW_w gxg_GTK_SCROLLED_WINDOW
 #define gxg_GTK_SEPARATOR_w gxg_GTK_SEPARATOR
 #define gxg_GTK_SEPARATOR_MENU_ITEM_w gxg_GTK_SEPARATOR_MENU_ITEM
+#define gxg_GTK_SETTINGS_w gxg_GTK_SETTINGS
 #define gxg_GTK_SIZE_GROUP_w gxg_GTK_SIZE_GROUP
 #define gxg_GTK_SPIN_BUTTON_w gxg_GTK_SPIN_BUTTON
 #define gxg_GTK_STATUSBAR_w gxg_GTK_STATUSBAR
@@ -43111,6 +43134,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_IS_SCROLLED_WINDOW_w gxg_GTK_IS_SCROLLED_WINDOW
 #define gxg_GTK_IS_SEPARATOR_w gxg_GTK_IS_SEPARATOR
 #define gxg_GTK_IS_SEPARATOR_MENU_ITEM_w gxg_GTK_IS_SEPARATOR_MENU_ITEM
+#define gxg_GTK_IS_SETTINGS_w gxg_GTK_IS_SETTINGS
 #define gxg_GTK_IS_SIZE_GROUP_w gxg_GTK_IS_SIZE_GROUP
 #define gxg_GTK_IS_SPIN_BUTTON_w gxg_GTK_IS_SPIN_BUTTON
 #define gxg_GTK_IS_STATUSBAR_w gxg_GTK_IS_STATUSBAR
@@ -44011,6 +44035,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_selection_data_copy, gxg_gtk_selection_data_copy_w, 1, 0, 0, H_gtk_selection_data_copy);
   XG_DEFINE_PROCEDURE(gtk_selection_data_free, gxg_gtk_selection_data_free_w, 1, 0, 0, H_gtk_selection_data_free);
   XG_DEFINE_PROCEDURE(gtk_separator_menu_item_new, gxg_gtk_separator_menu_item_new_w, 0, 0, 0, H_gtk_separator_menu_item_new);
+  XG_DEFINE_PROCEDURE(gtk_settings_get_default, gxg_gtk_settings_get_default_w, 0, 0, 0, H_gtk_settings_get_default);
   XG_DEFINE_PROCEDURE(gtk_size_group_new, gxg_gtk_size_group_new_w, 1, 0, 0, H_gtk_size_group_new);
   XG_DEFINE_PROCEDURE(gtk_size_group_set_mode, gxg_gtk_size_group_set_mode_w, 2, 0, 0, H_gtk_size_group_set_mode);
   XG_DEFINE_PROCEDURE(gtk_size_group_get_mode, gxg_gtk_size_group_get_mode_w, 1, 0, 0, H_gtk_size_group_get_mode);
@@ -46933,6 +46958,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_SCROLLED_WINDOW, gxg_GTK_SCROLLED_WINDOW_w, 1, 0, 0, "(GTK_SCROLLED_WINDOW obj) casts obj to GTK_SCROLLED_WINDOW");
   XG_DEFINE_PROCEDURE(GTK_SEPARATOR, gxg_GTK_SEPARATOR_w, 1, 0, 0, "(GTK_SEPARATOR obj) casts obj to GTK_SEPARATOR");
   XG_DEFINE_PROCEDURE(GTK_SEPARATOR_MENU_ITEM, gxg_GTK_SEPARATOR_MENU_ITEM_w, 1, 0, 0, "(GTK_SEPARATOR_MENU_ITEM obj) casts obj to GTK_SEPARATOR_MENU_ITEM");
+  XG_DEFINE_PROCEDURE(GTK_SETTINGS, gxg_GTK_SETTINGS_w, 1, 0, 0, "(GTK_SETTINGS obj) casts obj to GTK_SETTINGS");
   XG_DEFINE_PROCEDURE(GTK_SIZE_GROUP, gxg_GTK_SIZE_GROUP_w, 1, 0, 0, "(GTK_SIZE_GROUP obj) casts obj to GTK_SIZE_GROUP");
   XG_DEFINE_PROCEDURE(GTK_SPIN_BUTTON, gxg_GTK_SPIN_BUTTON_w, 1, 0, 0, "(GTK_SPIN_BUTTON obj) casts obj to GTK_SPIN_BUTTON");
   XG_DEFINE_PROCEDURE(GTK_STATUSBAR, gxg_GTK_STATUSBAR_w, 1, 0, 0, "(GTK_STATUSBAR obj) casts obj to GTK_STATUSBAR");
@@ -47075,6 +47101,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);
   XG_DEFINE_PROCEDURE(g_object_get, xg_object_get_w, 3, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(g_object_set, xg_object_set_w, 3, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(gtk_event_keyval, xg_gtk_event_keyval_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init);
   XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check);
@@ -47151,6 +47178,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_SCROLLED_WINDOW, gxg_GTK_IS_SCROLLED_WINDOW_w, 1, 0, 0, "(GTK_IS_SCROLLED_WINDOW obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLED_WINDOW");
   XG_DEFINE_PROCEDURE(GTK_IS_SEPARATOR, gxg_GTK_IS_SEPARATOR_w, 1, 0, 0, "(GTK_IS_SEPARATOR obj): " PROC_TRUE " if obj is a GTK_IS_SEPARATOR");
   XG_DEFINE_PROCEDURE(GTK_IS_SEPARATOR_MENU_ITEM, gxg_GTK_IS_SEPARATOR_MENU_ITEM_w, 1, 0, 0, "(GTK_IS_SEPARATOR_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_SEPARATOR_MENU_ITEM");
+  XG_DEFINE_PROCEDURE(GTK_IS_SETTINGS, gxg_GTK_IS_SETTINGS_w, 1, 0, 0, "(GTK_IS_SETTINGS obj): " PROC_TRUE " if obj is a GTK_IS_SETTINGS");
   XG_DEFINE_PROCEDURE(GTK_IS_SIZE_GROUP, gxg_GTK_IS_SIZE_GROUP_w, 1, 0, 0, "(GTK_IS_SIZE_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_SIZE_GROUP");
   XG_DEFINE_PROCEDURE(GTK_IS_SPIN_BUTTON, gxg_GTK_IS_SPIN_BUTTON_w, 1, 0, 0, "(GTK_IS_SPIN_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_SPIN_BUTTON");
   XG_DEFINE_PROCEDURE(GTK_IS_STATUSBAR, gxg_GTK_IS_STATUSBAR_w, 1, 0, 0, "(GTK_IS_STATUSBAR obj): " PROC_TRUE " if obj is a GTK_IS_STATUSBAR");
@@ -49041,7 +49069,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-Mar-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Mar-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

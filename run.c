@@ -2942,7 +2942,6 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define MIX_ARG_1 pt->ints[args[1]]
 #define MARK_RESULT pt->ints[args[0]]
 #define MARK_ARG_1 pt->ints[args[1]]
-#define REGION_RESULT pt->ints[args[0]]
 #define REGION_ARG_1 pt->ints[args[1]]
 #endif
 

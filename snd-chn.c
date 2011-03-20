@@ -2,7 +2,9 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: the per-chan attributes (y-bounds, graph-type etc) are a mess when update, unite, sync etc happen */
+/* TODO: the per-chan attributes (y-bounds, graph-type etc) are a mess when update, unite, sync etc happen
+ * PERHAPS: if chans are syncd, shouldn't multichan mix/mark also?  syncd but mark drag doesn't edit both?
+ */
 
 bool graph_style_p(int grf)
 {
@@ -564,16 +566,6 @@ static void update_graph_1(chan_info *cp, bool warn)
       if (ap->losamp < 0) ap->losamp = 0;
       ap->hisamp = (mus_long_t)(ap->x1 * cur_srate);
     }
-
-#if USE_GTK
-  if (!(cp->ax->wn)) 
-    if (!(fixup_cp_cgx_ax_wn(cp))) 
-      {
-	/* window not active yet (gtk) */
-	cp->updating = false;
-	return;
-      }
-#endif
 
   if ((cp->graph_transform_p) && 
       (!(chan_fft_in_progress(cp)))) 
@@ -3896,6 +3888,12 @@ static void display_channel_data_with_size(chan_info *cp,
 
 #if USE_GTK
 	  our_ax = copy_context(cp);
+	  if ((!our_ax->w) || (!our_ax->wn))
+	    {
+	      /* how can this happen? */
+	      our_ax->w = channel_to_widget(cp);
+	      our_ax->wn = WIDGET_TO_WINDOW(our_ax->w);
+	    }
 	  if (!use_incoming_cr)
 	    ss->cr = MAKE_CAIRO(our_ax->wn);
 	  cairo_push_group(ss->cr);
@@ -3958,6 +3956,23 @@ static void display_channel_data_with_size(chan_info *cp,
 	    display_channel_id(cp, our_ax, height + offset, sp->nchans);
 
 #if USE_GTK
+	  /* here in gtk3 we can get:
+	   *    cairo-surface.c:385: _cairo_surface_begin_modification: Assertion `! surface->finished' failed.
+	   * followed by a segfault.  
+	   *
+	   * But I've followed this thing in detail, and nothing unusual is happening.
+	   * If I check the surface status via 
+	   *  {
+	   *     cairo_surface_t *surface;
+	   *     surface = cairo_get_target(ss->cr);
+	   *     fprintf(stderr, "status: %d ", cairo_surface_status(surface));
+	   *  }
+	   * if prints 0 (success), and then dies!  I can't trace it in gdb because the goddamn gtk idle
+	   *   mechanism gets confused.  I can't ask cairo if the surface is finished.  valgrind is happy. 
+	   *   cairo-trace shows nothing unusual.  cairo 1.8.0 is happy.
+	   * I am stuck.
+	   */
+
 	  cairo_pop_group_to_source(ss->cr);
 	  cairo_paint(ss->cr);	  
 	  if (!use_incoming_cr)
@@ -4259,18 +4274,25 @@ static void erase_cursor(chan_info *cp)
 #endif
 #if USE_GTK
   {
+    /* SOMEDAY: in gtk, cursor redisplay needs work -- save the actual points? (it's ok if dots)
+     */
     color_t old_cursor_color;
     int ccy;
+
     old_cursor_color = ss->cursor_color;
     cp->cursor_size++;
     ss->cursor_color = cp->ax->gc->bg_color;
+
     draw_cursor(cp);
+
     ss->cursor_color = old_cursor_color;
     cp->cursor_size--;
+
     /* we draw at (cp->cx, cp->cy), so presumably... */
     if (cp->just_zero)
       ccy = cp->old_cy;
     else ccy = cp->cy;
+
     /* make_partial_graph doesn't quite do the right thing here.  We may have to
      *    save the actual points around the cursor and redraw them by hand.
      */
@@ -6375,9 +6397,6 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_EDPOS_FRAMES:            return(C_TO_XEN_INT64_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
 
 	    case CP_UPDATE_TIME:
-#if USE_GTK
-	      if (!(cp->ax->wn)) fixup_cp_cgx_ax_wn(cp);
-#endif
 	      /* any display-oriented background process must 1st be run to completion
 	       *       display checks for waiting process and does not update display if one found!
 	       */

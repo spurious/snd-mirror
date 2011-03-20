@@ -1191,28 +1191,8 @@ char *slist_selection(slist *lst)
 /* (any place labels are erased see gtk_bin_get_child and snd-gregion.c) */
 
 
-/* TODO: gtk troubles:
- *
- *   gtk3: the name_pix icon backgrounds are still gray, also dialog buttons and menu items
- *   do meters work in rec?  in Motif they're drawn incorrectly
- *   hide controls + listener doesn't
- *   perhaps tooltips in places like the data list of the save-as dialog
- *   perhaps menu accelerators, but they still look dumb
- *   control-drag mark as edit is messy looking in gtk
- *   are the printed graphs truncated because the "printer" assumes some paper size?
- *   cursor redisplay needs work -- save the actual points? (it's ok if dots)
- *   is fixup_cp_ax_wn needed?
- *   play choppy if graphics -- seems ok?
- *   superimposed chans flicker a lot
- *   if chans are syncd, shouldn't multichan mix/mark also?  syncd but mark drag doesn't edit both?
- *
- *   gtk3: snd-test 13 segfault
- *     snd: cairo-surface.c:385: _cairo_surface_begin_modification: Assertion `! surface->finished' failed.
+/* TODO:  gtk3: snd-test 13 segfault, snd: cairo-surface.c:385: _cairo_surface_begin_modification: Assertion `! surface->finished' failed.
  *     it's ok out of context?
- *
- *   hide listener says: "gtk_widget_size_allocate(): attempt to allocate widget with width 1024 and height -3"
- *     there are many bugs in gtk3's paned windows!  You can get this error simply by dragging a pane closed.
- *     show controls for example, does not open the pane.
  */
 
 
@@ -1345,3 +1325,6 @@ void init_gtk(void)
 }
 #endif
 
+/* check for redundant set color/line width calls
+*    also is sonogram 1-at-a-time?
+*/

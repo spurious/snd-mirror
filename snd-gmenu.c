@@ -1291,7 +1291,7 @@ void add_tooltip(GtkWidget *w, const char *tip)
   char *str;
   int i, len;
   len = mus_strlen(tip);
-  str = (char *)calloc(len, sizeof(char));
+  str = (char *)calloc(len + 1, sizeof(char));
   for (i = 0; i < len; i++)
     {
       if (tip[i] == '\n') 

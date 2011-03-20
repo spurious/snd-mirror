@@ -1093,7 +1093,8 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		{
 		  ncp = sp->chans[i];
 		  cleanup_cw(ncp);
-		  fixup_cp_cgx_ax_wn(ncp);
+		  ncp->ax->w = channel_to_widget(ncp);
+		  ncp->ax->wn = WIDGET_TO_WINDOW(ncp->ax->w);
 		}
 	      channel_open_pane(sp->chans[0]);
 	      set_toggle_button(unite_button(sp), true, false, (void *)sp);
@@ -1116,7 +1117,8 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		    {
 		      chan_info *cp;
 		      cp = sp->chans[i];
-		      fixup_cp_cgx_ax_wn(cp);
+		      cp->ax->w = channel_to_widget(cp);
+		      cp->ax->wn = WIDGET_TO_WINDOW(cp->ax->w);
 		      cw = cp->chan_widgets;
 		      gtk_widget_show_all(cw[W_main_window]);
 		      set_toggle_button(cw[W_f], cp->graph_transform_p, false, (void *)cp);
@@ -1136,30 +1138,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
     }
 }
 
-
-bool fixup_cp_cgx_ax_wn(chan_info *cp)
-{
-  GtkWidget *w; 
-  graphics_context *ax; 
-  ax = cp->ax;
-  w = channel_to_widget(cp);
-  
-#if 0
-  if ((!(ax->w)) || (!(ax->wn)))
-    fprintf(stderr, "set fixup\n");
-  else
-    {
-      if ((ax->wn != WIDGET_TO_WINDOW(w)) ||
-	  (ax->w != w))
-	fprintf(stderr, "reset fixup %p %p, %p %p\n", ax->w, w, ax->wn, WIDGET_TO_WINDOW(w));
-      else fprintf(stderr, "redundant fixup\n");
-    }
-#endif
-
-  ax->wn = WIDGET_TO_WINDOW(w);
-  ax->w = w;
-  return(ax->wn != NULL);
-}
 
 
 static XEN g_channel_widgets(XEN snd, XEN chn)
