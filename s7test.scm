@@ -12578,10 +12578,7 @@ this prints:
 (test ((lambda . ((x) . (x))) 1) 1)
 (test ((lambda . (x . (x))) 1) '(1))
 (test ((lambda . ((x . ()) x)) 1) 1)
-
-;;; TODO: fix this error message:
-; ((lambda . (x 1 . 3)) 1)
-;barrier: unexpected dot or '() at end of body? 3 [23420]
+(test (eval-string "((lambda . (x 1 . 3)) 1)") 'error)
 
 (test (lambda 1) 'error)
 (test (lambda (x 1) x) 'error)

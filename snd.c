@@ -218,6 +218,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Show_Indices =                DEFAULT_SHOW_INDICES;
   ss->Show_Backtrace =              DEFAULT_SHOW_BACKTRACE;
   ss->With_Inset_Graph =            DEFAULT_WITH_INSET_GRAPH;
+  ss->With_Interrupts =             DEFAULT_WITH_INTERRUPTS;
   ss->With_Menu_Icons =             DEFAULT_WITH_MENU_ICONS;
   ss->With_Smpte_Label =            DEFAULT_WITH_SMPTE_LABEL;
   ss->With_Pointer_Focus =          DEFAULT_WITH_POINTER_FOCUS;

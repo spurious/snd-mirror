@@ -759,6 +759,7 @@
 	(cons "GtkPositionType" "INT")
 	(cons "GtkTextDirection" "INT")
 	(cons "GtkStateType" "INT")
+	(cons "GtkStateFlags" "INT")
 	(cons "GtkImageType" "INT")
 	(cons "GtkIconSize" "INT")
 	(cons "GtkJustification" "INT")

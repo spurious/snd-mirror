@@ -1242,6 +1242,16 @@ the cursor is moved to the clicked point.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
+<!-- with-interrupts -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="withinterrupts">with-interrupts</a></code></td>
+<td bgcolor="#f2f4ff"><code>#t</code></td></tr><tr><td></td><td colspan=2>
+If with-interrupts is true, the Snd listener (in Gtk/Motif) adds a check for GUI activity to each
+computation called from the listener.  This makes it possible to stop an infinite loop, or use the
+user interface while some long computation is running, but it also slows down that computation.
+To get the maximum performance, set this flag to false (#f).
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
 <!-- with-menu-icons -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="withmenuicons">with-menu-icons</a></code></td>
 <td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>

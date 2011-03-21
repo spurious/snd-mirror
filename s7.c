@@ -20200,7 +20200,7 @@ static s7_pointer eval_error_with_name(s7_scheme *sc, const char *errmsg, s7_poi
 {
   return(s7_error(sc, sc->SYNTAX_ERROR, 
 		  make_list_3(sc, 
-			      make_protected_string(sc, errmsg), 
+			      make_protected_string(sc, errmsg),
 			      make_protected_string(sc, op_names[(int)(sc->op)]),
 			      obj)));
 }
@@ -23414,6 +23414,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_BEGIN:
       if (sc->begin_hook)
 	{
+	  opcode_t op;
+	  /* begin_hook can cause a substantial slow-down.  In Snd it calls either gtk_events_pending or
+	   *   XtAppPending, and the overall computation time doubles.  The call overhead here is 
+	   *   insignificant.  Even in optimized with-sound calls, the gtk_events_pending calls are
+	   *   a noticeable load (62 of them represent 1/3 of the total computation!)
+	   */
+	  op = sc->op;
 	  push_stack(sc, opcode(OP_BARRIER), sc->args, sc->code);
 	  if ((*(sc->begin_hook))(sc))
 	    {
@@ -23421,6 +23428,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(sc->F);
 	    }
 	  pop_stack(sc);
+	  sc->op = op; /* for better error handling.  otherwise we get "barrier" as the offending function name in eval_error_with_name */
 	}
 
       sc->args = sc->NIL;
@@ -23428,9 +23436,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (sc->code != sc->NIL)            /* (begin . 1), (cond (#t . 1)) */
 	    return(eval_error_with_name(sc, "~A: unexpected dot or '() at end of body? ~A", sc->code));
-
-	  /* TODO: in all cases this gives the operator name as "barrier"! (we pushed it above) [put in error handler] */
-
 	  sc->value = sc->code;
 	  goto START;
 	}

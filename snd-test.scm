@@ -1081,6 +1081,9 @@
     (set! (with-inset-graph) (with-inset-graph))
     (if (not (equal? (with-inset-graph)  #f))
 	(snd-display #__line__ ";with-inset-graph set def: ~A" (with-inset-graph)))
+    (set! (with-interrupts) (with-interrupts))
+    (if (not (equal? (with-interrupts)  #t))
+	(snd-display #__line__ ";with-interrupts set def: ~A" (with-interrupts)))
     (set! (remember-sound-state) (remember-sound-state))
     (if (not (equal? (remember-sound-state)  #f))
 	(snd-display #__line__ ";remember-sound-state set def: ~A" (remember-sound-state)))
@@ -1390,6 +1393,7 @@
       'with-tracking-cursor (with-tracking-cursor) #f
       'with-verbose-cursor (with-verbose-cursor) #f
       'with-inset-graph (with-inset-graph) #f
+      'with-interrupts (with-interrupts) #t
       'with-smpte-label (with-smpte-label) #f
       'with-toolbar (with-toolbar) #f
       'with-tooltips (with-tooltips) #f
@@ -2339,7 +2343,7 @@
 		       'widget-size 'widget-text 'window-height
 		       'window-width 'window-x 'window-y 'with-background-processes 'with-file-monitor 'with-gl
 		       'with-mix-tags 'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 
-		       'with-inset-graph 'with-pointer-focus 'with-smpte-label 'with-toolbar 'with-tooltips 'with-menu-icons
+		       'with-inset-graph 'with-interrupts 'with-pointer-focus 'with-smpte-label 'with-toolbar 'with-tooltips 'with-menu-icons
 		       'save-as-dialog-src 'save-as-dialog-auto-comment
 		       'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats 'x-axis-in-measures
 		       'x-axis-in-samples 'x-axis-in-seconds 'x-axis-label 'x-axis-style 'x-bounds
@@ -61473,7 +61477,7 @@ EDITS: 1
 		     text-focus-color tiny-font region-sampler? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault with-file-monitor optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
-		     with-verbose-cursor view-sound wavelet-type with-inset-graph with-pointer-focus with-smpte-label
+		     with-verbose-cursor view-sound wavelet-type with-inset-graph with-interrupts with-pointer-focus with-smpte-label
 		     with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl x-axis-style beats-per-measure
@@ -61583,7 +61587,7 @@ EDITS: 1
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties sound-property temp-dir text-focus-color tiny-font y-bounds
 			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor 
-			 with-inset-graph with-pointer-focus wavelet-type x-bounds with-smpte-label
+			 with-inset-graph with-interrupts with-pointer-focus wavelet-type x-bounds with-smpte-label
 			 with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style sync-style
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix beats-per-measure
@@ -62398,7 +62402,7 @@ EDITS: 1
 			    selected-sound selection-creates-region show-controls show-indices show-listener
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor 
-			    with-inset-graph with-pointer-focus window-height beats-per-measure with-smpte-label
+			    with-inset-graph with-interrupts with-pointer-focus window-height beats-per-measure with-smpte-label
 			    with-toolbar with-tooltips with-menu-icons remember-sound-state save-as-dialog-src save-as-dialog-auto-comment
 			    window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			    mix-tag-width with-relative-panes clm-table-size clm-default-frequency mark-tag-width mark-tag-height

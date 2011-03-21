@@ -7759,6 +7759,8 @@
 (CCAST-300 "GTK_SCROLLABLE(obj)" "GtkScrollable*")
 (CCHK-300 "GTK_IS_SCROLLABLE(obj)" "GtkScrollable*")
 
+(CCAST-300 "GDK_RGBA(object)" "GdkRGBA*")
+
 (CFNC-300 "void gdk_cairo_set_source_rgba cairo_t* cr GdkRGBA* rgba" 'const) 
 (CFNC-300 "void gdk_window_set_background_rgba GdkWindow* window GdkRGBA* rgba") 
 (CFNC-300 "void gtk_cell_view_set_background_rgba GtkCellView* cell_view GdkRGBA* rgba" 'const) 
@@ -7924,14 +7926,6 @@
 ;(CINT-300 "GTK_UNIT_POINTS" "GtkUnit")
 ;(CINT-300 "GTK_UNIT_INCH" "GtkUnit")
 ;(CINT-300 "GTK_UNIT_MM" "GtkUnit")
-
-;; these are still undeprecated?
-;(CINT-300 "GTK_STATE_FLAG_ACTIVE" "GtkStateFlags")
-;(CINT-300 "GTK_STATE_FLAG_PRELIGHT" "GtkStateFlags")
-;(CINT-300 "GTK_STATE_FLAG_SELECTED" "GtkStateFlags")
-;(CINT-300 "GTK_STATE_FLAG_INSENSITIVE" "GtkStateFlags")
-;(CINT-300 "GTK_STATE_FLAG_INCONSISTENT" "GtkStateFlags")
-;(CINT-300 "GTK_STATE_FLAG_FOCUSED" "GtkStateFlags")
 
 (CINT-300 "GTK_TOOL_PALETTE_DRAG_ITEMS" "GtkToolPaletteDragTargets")
 (CINT-300 "GTK_TOOL_PALETTE_DRAG_GROUPS" "GtkToolPaletteDragTargets")
@@ -8169,6 +8163,22 @@
 
 (STRUCT-300-make "GdkRGBA")
 
+(CINT-300 "GTK_STATE_FLAG_ACTIVE" "GtkStateFlags")
+(CINT-300 "GTK_STATE_FLAG_PRELIGHT" "GtkStateFlags")
+(CINT-300 "GTK_STATE_FLAG_SELECTED" "GtkStateFlags")
+(CINT-300 "GTK_STATE_FLAG_INSENSITIVE" "GtkStateFlags")
+(CINT-300 "GTK_STATE_FLAG_INCONSISTENT" "GtkStateFlags")
+(CINT-300 "GTK_STATE_FLAG_FOCUSED" "GtkStateFlags")
+
+(CFNC-300 "void gtk_widget_set_state_flags GtkWidget* widget GtkStateFlags flags gboolean clear")
+(CFNC-300 "void gtk_widget_unset_state_flags GtkWidget* widget GtkStateFlags flags")
+(CFNC-300 "GtkStateFlags gtk_widget_get_state_flags GtkWidget* widget")
+(CFNC-300 "void gtk_widget_override_color GtkWidget* widget GtkStateFlags state GdkRGBA* color" 'const)
+(CFNC-300 "void gtk_widget_override_background_color GtkWidget* widget GtkStateFlags state GdkRGBA* color" 'const)
+(CFNC-300 "void gtk_widget_override_font GtkWidget* widget PangoFontDescription* font_desc" 'const)
+(CFNC-300 "void gtk_widget_override_symbolic_color GtkWidget* widget gchar* name GdkRGBA* color" 'const)
+(CFNC-300 "void gtk_widget_override_cursor GtkWidget* widget GdkRGBA* cursor GdkRGBA* secondary_cursor" 'const)
+
 
 #|
 (CCAST-300 "GTK_CSS_PROVIDER" "GtkCssProvider*")
@@ -8373,14 +8383,7 @@
 (CFNC-300 "GtkSymbolicColor* gtk_symbolic_color_ref GtkSymbolicColor* color")
 (CFNC-300 "void gtk_symbolic_color_unref GtkSymbolicColor* color")
 (CFNC-300 "gboolean gtk_symbolic_color_resolve GtkSymbolicColor* color GtkStyleProperties* props GdkRGBA* resolved_color")
-(CFNC-300 "void gtk_widget_set_state_flags GtkWidget* widget GtkStateFlags flags gboolean clear")
-(CFNC-300 "void gtk_widget_unset_state_flags GtkWidget* widget GtkStateFlags flags")
-(CFNC-300 "GtkStateFlags gtk_widget_get_state_flags GtkWidget* widget")
-(CFNC-300 "void gtk_widget_override_color GtkWidget* widget GtkStateFlags state GdkRGBA* color" 'const)
-(CFNC-300 "void gtk_widget_override_background_color GtkWidget* widget GtkStateFlags state GdkRGBA* color" 'const)
-(CFNC-300 "void gtk_widget_override_font GtkWidget* widget PangoFontDescription* font_desc" 'const)
-(CFNC-300 "void gtk_widget_override_symbolic_color GtkWidget* widget gchar* name GdkRGBA* color" 'const)
-(CFNC-300 "void gtk_widget_override_cursor GtkWidget* widget GdkRGBA* cursor GdkRGBA* secondary_cursor" 'const)
+
 (CFNC-300 "GtkStyleContext* gtk_widget_get_style_context GtkWidget* widget")
 
 

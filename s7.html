@@ -7498,7 +7498,8 @@ static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) {exit(0);
 static bool begin_hook(s7_scheme *sc)
 {
   C_c_typed = false;
-  gtk_main_iteration();
+  if (gtk_events_pending()) /* this is very slow -- see snd-listener.c for a work-around */
+    gtk_main_iteration();
   return(C_c_typed);
 }</em>
 

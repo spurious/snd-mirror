@@ -487,6 +487,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+21-Mar:  with-interrupts.\n\
 18-Mar:  Snd 12.0.\n\
 17-Mar:  removed time-graph-hook; replaced by combined-data-color.\n\
 10-Mar:  space=play or pause, tracking-cursor stuff changed.\n\
@@ -502,7 +503,6 @@ void about_snd_help(void)
          The built-in popup menus are now context sensitive, and the files popup.scm\n\
            and gtk-popup.scm have been removed.\n\
          play-arrow-size\n\
-12-Feb:  Snd 11.13.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

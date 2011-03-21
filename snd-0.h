@@ -669,6 +669,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_with_inset_graph(a) ss->With_Inset_Graph = a
 #define DEFAULT_WITH_INSET_GRAPH false
 
+#define with_interrupts(ss) ss->With_Interrupts
+#define set_with_interrupts(a) ss->With_Interrupts = a
+#define DEFAULT_WITH_INTERRUPTS true
+
 #define with_smpte_label(ss) ss->With_Smpte_Label
 #define set_with_smpte_label(a) ss->With_Smpte_Label = a
 #define DEFAULT_WITH_SMPTE_LABEL false

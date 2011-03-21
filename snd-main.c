@@ -478,6 +478,7 @@ static void save_options(FILE *fd)
   if (cursor_location_offset(ss) != DEFAULT_CURSOR_LOCATION_OFFSET) pss_sd(fd, S_cursor_location_offset, cursor_location_offset(ss));
   if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_with_verbose_cursor, b2s(verbose_cursor(ss)));
   if (with_inset_graph(ss) != DEFAULT_WITH_INSET_GRAPH) pss_ss(fd, S_with_inset_graph, b2s(with_inset_graph(ss)));
+  if (with_interrupts(ss) != DEFAULT_WITH_INTERRUPTS) pss_ss(fd, S_with_interrupts, b2s(with_interrupts(ss)));
   if (with_smpte_label(ss) != DEFAULT_WITH_SMPTE_LABEL) pss_ss(fd, S_with_smpte_label, b2s(with_smpte_label(ss)));
   if (with_pointer_focus(ss) != DEFAULT_WITH_POINTER_FOCUS) pss_ss(fd, S_with_pointer_focus, b2s(with_pointer_focus(ss)));
   if (show_indices(ss) != DEFAULT_SHOW_INDICES) pss_ss(fd, S_show_indices, b2s(show_indices(ss)));
@@ -1907,6 +1908,21 @@ static XEN g_set_with_inset_graph(XEN on)
 }
 
 
+static XEN g_with_interrupts(void)
+{
+  #define H_with_interrupts "(" S_with_interrupts "): if " PROC_TRUE ", check for GUI events during computations."
+  return(C_TO_XEN_BOOLEAN(with_interrupts(ss)));
+}
+
+
+static XEN g_set_with_interrupts(XEN on) 
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_with_interrupts, "a boolean");
+  set_with_interrupts(XEN_TO_C_BOOLEAN(on));
+  return(C_TO_XEN_BOOLEAN(with_interrupts(ss)));
+}
+
+
 static XEN g_with_smpte_label(void)
 {
   #define H_with_smpte_label "(" S_with_smpte_label "): if " PROC_TRUE " (default is " PROC_FALSE "), display the SMPTE data in the time domain section."
@@ -2296,6 +2312,8 @@ XEN_NARGIFY_0(g_play_arrow_size_w, g_play_arrow_size)
 XEN_NARGIFY_1(g_set_play_arrow_size_w, g_set_play_arrow_size)
 XEN_NARGIFY_0(g_with_inset_graph_w, g_with_inset_graph)
 XEN_NARGIFY_1(g_set_with_inset_graph_w, g_set_with_inset_graph)
+XEN_NARGIFY_0(g_with_interrupts_w, g_with_interrupts)
+XEN_NARGIFY_1(g_set_with_interrupts_w, g_set_with_interrupts)
 XEN_NARGIFY_0(g_with_smpte_label_w, g_with_smpte_label)
 XEN_NARGIFY_1(g_set_with_smpte_label_w, g_set_with_smpte_label)
 XEN_NARGIFY_0(g_with_pointer_focus_w, g_with_pointer_focus)
@@ -2382,6 +2400,8 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_set_play_arrow_size_w g_set_play_arrow_size
 #define g_with_inset_graph_w g_with_inset_graph
 #define g_set_with_inset_graph_w g_set_with_inset_graph
+#define g_with_interrupts_w g_with_interrupts
+#define g_set_with_interrupts_w g_set_with_interrupts
 #define g_with_smpte_label_w g_with_smpte_label
 #define g_set_with_smpte_label_w g_set_with_smpte_label
 #define g_with_pointer_focus_w g_with_pointer_focus
@@ -2568,6 +2588,9 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_inset_graph, g_with_inset_graph_w, H_with_inset_graph, 
 				   S_setB S_with_inset_graph, g_set_with_inset_graph_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_interrupts, g_with_interrupts_w, H_with_interrupts, 
+				   S_setB S_with_interrupts, g_set_with_interrupts_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_smpte_label, g_with_smpte_label_w, H_with_smpte_label, 
 				   S_setB S_with_smpte_label, g_set_with_smpte_label_w,  0, 0, 1, 0);

@@ -883,6 +883,9 @@ XM_TYPE_PTR_1(GtkInvisible_, GtkInvisible*)
 XM_TYPE_PTR(GtkWindowGroup_, GtkWindowGroup*)
 XM_TYPE_PTR_1(GtkToolShell_, GtkToolShell*)
 XM_TYPE_PTR_1(GdkScreen__, GdkScreen**)
+#define C_TO_XEN_GtkStateFlags(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkStateFlags(Arg) (GtkStateFlags)(XEN_TO_C_INT(Arg))
+#define XEN_GtkStateFlags_P(Arg) XEN_INTEGER_P(Arg)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -30847,6 +30850,86 @@ static XEN gxg_gdk_rgba_to_string(XEN rgba)
   return(C_TO_XEN_gchar_(gdk_rgba_to_string(XEN_TO_C_GdkRGBA_(rgba))));
 }
 
+static XEN gxg_gtk_widget_set_state_flags(XEN widget, XEN flags, XEN clear)
+{
+  #define H_gtk_widget_set_state_flags "void gtk_widget_set_state_flags(GtkWidget* widget, GtkStateFlags flags, \
+gboolean clear)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_state_flags", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkStateFlags_P(flags), flags, 2, "gtk_widget_set_state_flags", "GtkStateFlags");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(clear), clear, 3, "gtk_widget_set_state_flags", "gboolean");
+  gtk_widget_set_state_flags(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateFlags(flags), XEN_TO_C_gboolean(clear));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_unset_state_flags(XEN widget, XEN flags)
+{
+  #define H_gtk_widget_unset_state_flags "void gtk_widget_unset_state_flags(GtkWidget* widget, GtkStateFlags flags)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_unset_state_flags", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkStateFlags_P(flags), flags, 2, "gtk_widget_unset_state_flags", "GtkStateFlags");
+  gtk_widget_unset_state_flags(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateFlags(flags));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_state_flags(XEN widget)
+{
+  #define H_gtk_widget_get_state_flags "GtkStateFlags gtk_widget_get_state_flags(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_state_flags", "GtkWidget*");
+  return(C_TO_XEN_GtkStateFlags(gtk_widget_get_state_flags(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_override_color(XEN widget, XEN state, XEN color)
+{
+  #define H_gtk_widget_override_color "void gtk_widget_override_color(GtkWidget* widget, GtkStateFlags state, \
+GdkRGBA* color)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_override_color", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkStateFlags_P(state), state, 2, "gtk_widget_override_color", "GtkStateFlags");
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(color), color, 3, "gtk_widget_override_color", "GdkRGBA*");
+  gtk_widget_override_color(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateFlags(state), XEN_TO_C_GdkRGBA_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_override_background_color(XEN widget, XEN state, XEN color)
+{
+  #define H_gtk_widget_override_background_color "void gtk_widget_override_background_color(GtkWidget* widget, \
+GtkStateFlags state, GdkRGBA* color)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_override_background_color", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkStateFlags_P(state), state, 2, "gtk_widget_override_background_color", "GtkStateFlags");
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(color), color, 3, "gtk_widget_override_background_color", "GdkRGBA*");
+  gtk_widget_override_background_color(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkStateFlags(state), XEN_TO_C_GdkRGBA_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_override_font(XEN widget, XEN font_desc)
+{
+  #define H_gtk_widget_override_font "void gtk_widget_override_font(GtkWidget* widget, PangoFontDescription* font_desc)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_override_font", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_PangoFontDescription__P(font_desc), font_desc, 2, "gtk_widget_override_font", "PangoFontDescription*");
+  gtk_widget_override_font(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_PangoFontDescription_(font_desc));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_override_symbolic_color(XEN widget, XEN name, XEN color)
+{
+  #define H_gtk_widget_override_symbolic_color "void gtk_widget_override_symbolic_color(GtkWidget* widget, \
+gchar* name, GdkRGBA* color)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_override_symbolic_color", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 2, "gtk_widget_override_symbolic_color", "gchar*");
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(color), color, 3, "gtk_widget_override_symbolic_color", "GdkRGBA*");
+  gtk_widget_override_symbolic_color(XEN_TO_C_GtkWidget_(widget), (const gchar*)XEN_TO_C_gchar_(name), XEN_TO_C_GdkRGBA_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_override_cursor(XEN widget, XEN cursor, XEN secondary_cursor)
+{
+  #define H_gtk_widget_override_cursor "void gtk_widget_override_cursor(GtkWidget* widget, GdkRGBA* cursor, \
+GdkRGBA* secondary_cursor)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_override_cursor", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(cursor), cursor, 2, "gtk_widget_override_cursor", "GdkRGBA*");
+  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(secondary_cursor), secondary_cursor, 3, "gtk_widget_override_cursor", "GdkRGBA*");
+  gtk_widget_override_cursor(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GdkRGBA_(cursor), XEN_TO_C_GdkRGBA_(secondary_cursor));
+  return(XEN_FALSE);
+}
+
 #endif
 
 #if (!HAVE_GTK_3)
@@ -34525,6 +34608,7 @@ static XEN gxg_GTK_TOOL_ITEM_GROUP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XE
 static XEN gxg_GTK_COMBO_BOX_TEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkComboBoxText_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_GRID(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkGrid_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SCROLLABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkScrollable_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GDK_RGBA(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkRGBA_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_SWITCH(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSwitch_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_ACTIVATABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkActivatable_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_ORIENTABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkOrientable_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -38433,6 +38517,14 @@ XEN_NARGIFY_1(gxg_gdk_rgba_copy_w, gxg_gdk_rgba_copy)
 XEN_NARGIFY_1(gxg_gdk_rgba_free_w, gxg_gdk_rgba_free)
 XEN_NARGIFY_2(gxg_gdk_rgba_parse_w, gxg_gdk_rgba_parse)
 XEN_NARGIFY_1(gxg_gdk_rgba_to_string_w, gxg_gdk_rgba_to_string)
+XEN_NARGIFY_3(gxg_gtk_widget_set_state_flags_w, gxg_gtk_widget_set_state_flags)
+XEN_NARGIFY_2(gxg_gtk_widget_unset_state_flags_w, gxg_gtk_widget_unset_state_flags)
+XEN_NARGIFY_1(gxg_gtk_widget_get_state_flags_w, gxg_gtk_widget_get_state_flags)
+XEN_NARGIFY_3(gxg_gtk_widget_override_color_w, gxg_gtk_widget_override_color)
+XEN_NARGIFY_3(gxg_gtk_widget_override_background_color_w, gxg_gtk_widget_override_background_color)
+XEN_NARGIFY_2(gxg_gtk_widget_override_font_w, gxg_gtk_widget_override_font)
+XEN_NARGIFY_3(gxg_gtk_widget_override_symbolic_color_w, gxg_gtk_widget_override_symbolic_color)
+XEN_NARGIFY_3(gxg_gtk_widget_override_cursor_w, gxg_gtk_widget_override_cursor)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -39017,6 +39109,7 @@ XEN_NARGIFY_1(gxg_GTK_TOOL_ITEM_GROUP_w, gxg_GTK_TOOL_ITEM_GROUP)
 XEN_NARGIFY_1(gxg_GTK_COMBO_BOX_TEXT_w, gxg_GTK_COMBO_BOX_TEXT)
 XEN_NARGIFY_1(gxg_GTK_GRID_w, gxg_GTK_GRID)
 XEN_NARGIFY_1(gxg_GTK_SCROLLABLE_w, gxg_GTK_SCROLLABLE)
+XEN_NARGIFY_1(gxg_GDK_RGBA_w, gxg_GDK_RGBA)
 XEN_NARGIFY_1(gxg_GTK_SWITCH_w, gxg_GTK_SWITCH)
 XEN_NARGIFY_1(gxg_GTK_ACTIVATABLE_w, gxg_GTK_ACTIVATABLE)
 XEN_NARGIFY_1(gxg_GTK_ORIENTABLE_w, gxg_GTK_ORIENTABLE)
@@ -42471,6 +42564,14 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gdk_rgba_free_w gxg_gdk_rgba_free
 #define gxg_gdk_rgba_parse_w gxg_gdk_rgba_parse
 #define gxg_gdk_rgba_to_string_w gxg_gdk_rgba_to_string
+#define gxg_gtk_widget_set_state_flags_w gxg_gtk_widget_set_state_flags
+#define gxg_gtk_widget_unset_state_flags_w gxg_gtk_widget_unset_state_flags
+#define gxg_gtk_widget_get_state_flags_w gxg_gtk_widget_get_state_flags
+#define gxg_gtk_widget_override_color_w gxg_gtk_widget_override_color
+#define gxg_gtk_widget_override_background_color_w gxg_gtk_widget_override_background_color
+#define gxg_gtk_widget_override_font_w gxg_gtk_widget_override_font
+#define gxg_gtk_widget_override_symbolic_color_w gxg_gtk_widget_override_symbolic_color
+#define gxg_gtk_widget_override_cursor_w gxg_gtk_widget_override_cursor
 #endif
 
 #if (!HAVE_GTK_3)
@@ -43055,6 +43156,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_COMBO_BOX_TEXT_w gxg_GTK_COMBO_BOX_TEXT
 #define gxg_GTK_GRID_w gxg_GTK_GRID
 #define gxg_GTK_SCROLLABLE_w gxg_GTK_SCROLLABLE
+#define gxg_GDK_RGBA_w gxg_GDK_RGBA
 #define gxg_GTK_SWITCH_w gxg_GTK_SWITCH
 #define gxg_GTK_ACTIVATABLE_w gxg_GTK_ACTIVATABLE
 #define gxg_GTK_ORIENTABLE_w gxg_GTK_ORIENTABLE
@@ -46516,6 +46618,14 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_rgba_free, gxg_gdk_rgba_free_w, 1, 0, 0, H_gdk_rgba_free);
   XG_DEFINE_PROCEDURE(gdk_rgba_parse, gxg_gdk_rgba_parse_w, 2, 0, 0, H_gdk_rgba_parse);
   XG_DEFINE_PROCEDURE(gdk_rgba_to_string, gxg_gdk_rgba_to_string_w, 1, 0, 0, H_gdk_rgba_to_string);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_state_flags, gxg_gtk_widget_set_state_flags_w, 3, 0, 0, H_gtk_widget_set_state_flags);
+  XG_DEFINE_PROCEDURE(gtk_widget_unset_state_flags, gxg_gtk_widget_unset_state_flags_w, 2, 0, 0, H_gtk_widget_unset_state_flags);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_state_flags, gxg_gtk_widget_get_state_flags_w, 1, 0, 0, H_gtk_widget_get_state_flags);
+  XG_DEFINE_PROCEDURE(gtk_widget_override_color, gxg_gtk_widget_override_color_w, 3, 0, 0, H_gtk_widget_override_color);
+  XG_DEFINE_PROCEDURE(gtk_widget_override_background_color, gxg_gtk_widget_override_background_color_w, 3, 0, 0, H_gtk_widget_override_background_color);
+  XG_DEFINE_PROCEDURE(gtk_widget_override_font, gxg_gtk_widget_override_font_w, 2, 0, 0, H_gtk_widget_override_font);
+  XG_DEFINE_PROCEDURE(gtk_widget_override_symbolic_color, gxg_gtk_widget_override_symbolic_color_w, 3, 0, 0, H_gtk_widget_override_symbolic_color);
+  XG_DEFINE_PROCEDURE(gtk_widget_override_cursor, gxg_gtk_widget_override_cursor_w, 3, 0, 0, H_gtk_widget_override_cursor);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -47091,6 +47201,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_COMBO_BOX_TEXT, gxg_GTK_COMBO_BOX_TEXT_w, 1, 0, 0, "(GTK_COMBO_BOX_TEXT obj) casts obj to GTK_COMBO_BOX_TEXT");
   XG_DEFINE_PROCEDURE(GTK_GRID, gxg_GTK_GRID_w, 1, 0, 0, "(GTK_GRID obj) casts obj to GTK_GRID");
   XG_DEFINE_PROCEDURE(GTK_SCROLLABLE, gxg_GTK_SCROLLABLE_w, 1, 0, 0, "(GTK_SCROLLABLE obj) casts obj to GTK_SCROLLABLE");
+  XG_DEFINE_PROCEDURE(GDK_RGBA, gxg_GDK_RGBA_w, 1, 0, 0, "(GDK_RGBA obj) casts obj to GDK_RGBA");
   XG_DEFINE_PROCEDURE(GTK_SWITCH, gxg_GTK_SWITCH_w, 1, 0, 0, "(GTK_SWITCH obj) casts obj to GTK_SWITCH");
   XG_DEFINE_PROCEDURE(GTK_ACTIVATABLE, gxg_GTK_ACTIVATABLE_w, 1, 0, 0, "(GTK_ACTIVATABLE obj) casts obj to GTK_ACTIVATABLE");
   XG_DEFINE_PROCEDURE(GTK_ORIENTABLE, gxg_GTK_ORIENTABLE_w, 1, 0, 0, "(GTK_ORIENTABLE obj) casts obj to GTK_ORIENTABLE");
@@ -48417,6 +48528,12 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_ICON_LOOKUP_FORCE_SIZE);
   DEFINE_INTEGER(GTK_ICON_THEME_NOT_FOUND);
   DEFINE_INTEGER(GTK_ICON_THEME_FAILED);
+  DEFINE_INTEGER(GTK_STATE_FLAG_ACTIVE);
+  DEFINE_INTEGER(GTK_STATE_FLAG_PRELIGHT);
+  DEFINE_INTEGER(GTK_STATE_FLAG_SELECTED);
+  DEFINE_INTEGER(GTK_STATE_FLAG_INSENSITIVE);
+  DEFINE_INTEGER(GTK_STATE_FLAG_INCONSISTENT);
+  DEFINE_INTEGER(GTK_STATE_FLAG_FOCUSED);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -49079,7 +49196,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("20-Mar-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Mar-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

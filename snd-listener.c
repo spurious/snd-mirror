@@ -478,8 +478,18 @@ void backup_listener_to_previous_expression(void) {}
 
 
 #if HAVE_SCHEME && (!USE_NO_GUI)
+
+static int skipped_calls = 0;
+#define SKIPPING 10
+
 static bool listener_begin_hook(s7_scheme *sc)
 {
+  if (skipped_calls < SKIPPING)
+    {
+      skipped_calls++;
+      return(false);
+    }
+  skipped_calls = 0;
   ss->C_g_typed = false;
 
 #if USE_MOTIF
@@ -500,7 +510,15 @@ static bool listener_begin_hook(s7_scheme *sc)
     int i = 50;
     /* we need to let more than 1 event through at a time, else (for example) the listener popup
      *   menu never actually pops up.
+     *
+     * if no threads (as here) this is just g_main_context_pending(NULL)
+     *   then gtk_main_iteration calls g_main_context_iteration(NULL, true), 
+     *   so g_main_context_iteration(NULL, false) might combine the two.
+     *   But the overhead of gtk_events_pending is insignificant.  This code
+     *   is extremely slow -- it more than doubles the compute time of s7test
+     *   for example, and spends 10% of its time fiddling with useless locks.
      */
+
     while ((gtk_events_pending()) && (i != 0))
       {
 	gtk_main_iteration();
@@ -758,7 +776,11 @@ void listener_return(widget_t w, int last_prompt)
        *   if C-g, the begin_hook func returns true, and s7 calls s7_quit, and C_g_typed is true here.
        *   Otherwise, I think anything is safe because we're only looking at the block start, and
        *   we're protected there by a stack barrier.  
+       *
+       * But this polling at block starts is expensive, mainly because XtAppPending and gtk_events_pending
+       *   are very slow.  So with_interrupts can turn off this check.
        */
+
       if (s7_begin_hook(s7) != NULL) return;      /* s7 is already running (user typed <cr> during computation) */
 
       if ((mus_strlen(str) > 1) || (str[0] != '\n'))
@@ -768,7 +790,9 @@ void listener_return(widget_t w, int last_prompt)
 
 	  old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
 	  gc_loc = s7_gc_protect(s7, old_port);
-	  s7_set_begin_hook(s7, listener_begin_hook);
+	  
+	  if (with_interrupts(ss))
+	    s7_set_begin_hook(s7, listener_begin_hook);
 	  
 	  if (XEN_HOOKED(read_hook))
 	    form = run_or_hook(read_hook, 
