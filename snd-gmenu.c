@@ -372,7 +372,7 @@ static void menu_drag_watcher(GtkWidget *w, const char *str, int x, int y, drag_
 
 /* -------------------------------- MAIN MENU -------------------------------- */
 
-GtkWidget *add_menu_item(GtkWidget *menu, const char *label, const char *icon, GCallback callback)
+static GtkWidget *add_menu_item(GtkWidget *menu, const char *label, const char *icon, GCallback callback)
 {
   GtkWidget *w;
   if (icon)

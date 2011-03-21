@@ -6,10 +6,11 @@
 #include <mus-config.h>
 #include <stdlib.h>
 
-#define XM_DATE "23-Dec-09"
+#define XM_DATE "20-Mar-11"
 
 /* HISTORY: 
  *
+ *   20-Mar-11: X/Xpm/Motif are assumed now.
  *   --------
  *   23-Dec:    removed XmPrint/libXp support.
  *   16-Dec:    removed Guile support.
@@ -151,24 +152,16 @@
 
 #if HAVE_EXTENSION_LANGUAGE
 
-#if HAVE_MOTIF
   #include <Xm/XmAll.h>
-#else
-  #include <X11/Xlib.h>
-  #include <X11/Intrinsic.h>
-  #include <X11/Shell.h>
-  #include <X11/Xatom.h>
-#endif
-
-#include <X11/keysym.h>
-#include <X11/cursorfont.h>
-#include <stdio.h>
+  #include <X11/keysym.h>
+  #include <X11/cursorfont.h>
+  #include <stdio.h>
 
 #if HAVE_XSHAPEQUERYEXTENSION
 #include <X11/extensions/shape.h>
 #endif
 
-/* compile-time flags are HAVE_MOTIF HAVE_RUBY MUS_WITH_EDITRES */
+/* compile-time flags are HAVE_RUBY|SCHEME MUS_WITH_EDITRES */
 
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 
@@ -567,7 +560,6 @@ XM_TYPE_INT(KeyCode, KeyCode)
 XM_TYPE_INT(XContext, XContext)
 XM_TYPE_PTR(XIconSize, XIconSize *)
 
-#if HAVE_MOTIF
 XM_TYPE_PTR(Widget, Widget)
 XM_TYPE(WidgetClass, WidgetClass)
 XM_TYPE(XtAppContext, XtAppContext)
@@ -637,7 +629,6 @@ static int XEN_XmFontList_or_XmRenderTable_P(XEN arg)
 {
   return(XEN_XmRenderTable_P(arg));
 }
-#endif
 
 static XEN type_to_event_symbol(int utype)
 {
@@ -730,8 +721,6 @@ static XEN gxm_XGCValues(void)
   e = (XGCValues *)calloc(1, sizeof(XGCValues));
   return(WRAP_FOR_XEN_OBJ("XGCValues", e));
 }
-
-#if HAVE_MOTIF
 
 #ifdef XEN_ARGIFY_1
   #define XM_Make(Name) \
@@ -873,12 +862,10 @@ static int its_a_callbackstruct(const char *name)
                                        (XEN_LIST_LENGTH(Value) >= 2) && \
                                        (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                                        (its_a_callbackstruct(XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value)))))
-#endif
 
 static int xm_protect(XEN obj);
 static void xm_unprotect_at(int ind);
 
-#if HAVE_MOTIF
 
 /* in XtGetValues we need to return tagged-types (etc) for arbitrarily named resources,
  *   and in XtSetValues we need to do type checks, so resources are hashed by
@@ -1012,8 +999,6 @@ static XmStringTable XEN_TO_C_XmStringTable(XEN v_1, int len)
       }
   return(str);
 }
-
-#endif
 
 static XEN C_TO_XEN_Ints(int *array, int len)
 {
@@ -1159,7 +1144,6 @@ static Window *XEN_TO_C_Windows(XEN lst_1, int n)
   return(ws);
 }
 
-#if HAVE_MOTIF
 static XmRendition *XEN_TO_C_XmRenditions(XEN lst_1, int n)
 {
   XEN lst;
@@ -1201,7 +1185,6 @@ static XmTab *XEN_TO_C_XmTabs(XEN v_1, int len)
       }
   return(str);
 }
-#endif
 
 static Atom *XEN_TO_C_Atoms(XEN v_1, int len)
 {
@@ -1357,7 +1340,6 @@ static XRectangle *XEN_TO_C_XRectangles(XEN v_1, int len)
 }
 
 
-#if HAVE_MOTIF
 
 /* -------- arglists -------- */
 
@@ -2438,7 +2420,6 @@ static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
   return(val);
 }
 
-#endif
 
 
 /* -------------------------------- gc protection -------------------------------- */
@@ -2534,7 +2515,6 @@ static XEN xm_protected_element(int loc)
  */
 
 /* Motif */
-#if HAVE_MOTIF
 
 /* weird order of procedures here and throughout caused by the C-header scripts --
  *   basically I forgot to reverse the main lists before pouring out the code,
@@ -7850,8 +7830,8 @@ static XEN gxm_XmIsMenuShell(XEN arg)
 }
 
 
-#endif
-/* end HAVE_MOTIF */
+
+
 
 /* ----------------------------------------------------------------------------------------------------
  *
@@ -13480,7 +13460,6 @@ static XEN gxm_XShapeCombineRectangles(XEN dpy, XEN win, XEN kind, XEN x, XEN y,
  * ----------------------------------------------------------------------------------------------------
  */
 
-#if HAVE_MOTIF
 
 typedef enum {CANCEL_CONVERT, CONVERT, LOSE, DONE, CONVERT_INCR, LOSE_INCR, DONE_INCR} xm_selmap_t;
 /* need a way to map from widget to selection proc */
@@ -16800,9 +16779,6 @@ static XEN gxm_XtSetArg(XEN arg1, XEN arg2, XEN arg3)
 }
 
 
-#endif
-/* end HAVE_MOTIF */
-
 
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -17508,10 +17484,8 @@ static XEN gxm_xoffset(XEN ptr)
 static XEN gxm_screen(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_Screen((Screen *)((XEN_TO_C_XWindowAttributes(ptr))->screen)));
-#if HAVE_MOTIF
   if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_Screen((Screen *)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->screen)));
   if (XEN_XmTopLevelLeaveCallbackStruct_P(ptr)) return(C_TO_XEN_Screen((Screen *)((XEN_TO_C_XmTopLevelLeaveCallbackStruct(ptr))->screen)));
-#endif
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->screen)));
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "screen", "a struct with a screen field");
   return(XEN_FALSE);
@@ -17821,9 +17795,7 @@ static XEN gxm_set_pixel(XEN ptr, XEN val)
 static XEN gxm_pixel(XEN ptr)
 {
   if (XEN_XColor_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XColor(ptr))->pixel)));
-#if HAVE_MOTIF
   if (XEN_XmScrollBarCallbackStruct_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmScrollBarCallbackStruct(ptr))->pixel)));
-#endif
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XpmColorSymbol(ptr))->pixel)));
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "pixel", "a struct with a pixel field");
   return(XEN_FALSE);
@@ -17896,11 +17868,9 @@ static XEN gxm_set_input(XEN ptr, XEN val)
 static XEN gxm_flags(XEN ptr)
 {
   if (XEN_XColor_P(ptr)) return(C_TO_XEN_char((char)((XEN_TO_C_XColor(ptr))->flags)));
-#if HAVE_MOTIF
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->flags)));
   if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDestinationCallbackStruct(ptr))->flags)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmConvertCallbackStruct(ptr))->flags)));
-#endif
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XWMHints(ptr))->flags)));
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "flags", "a struct with a flags field");
   return(XEN_FALSE);
@@ -18125,11 +18095,9 @@ static XEN gxm_set_request(XEN ptr, XEN val)
 static XEN gxm_format(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->format)));
-#if HAVE_MOTIF
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->format)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmConvertCallbackStruct(ptr))->format)));
   if (XEN_XmTextBlock_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmTextBlock(ptr))->format)));
-#endif
   if (XEN_XClientMessageEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XClientMessageEvent(ptr))->format)));
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "format", "XClientMessageEvent");
   return(XEN_FALSE);
@@ -18139,9 +18107,7 @@ static XEN gxm_set_format(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "format", "an integer");
   if (XEN_XClientMessageEvent_P(ptr)) (XEN_TO_C_XClientMessageEvent(ptr))->format = XEN_TO_C_INT(val);
-#if HAVE_MOTIF
   else if (XEN_XmTextBlock_P(ptr)) (XEN_TO_C_XmTextBlock(ptr))->format = XEN_TO_C_INT(val);
-#endif
   else XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "format", "XClientMessageEvent or XmTextBlock");
   return(val);
 }
@@ -18221,11 +18187,9 @@ static XEN gxm_set_property(XEN ptr, XEN val)
 
 static XEN gxm_target(XEN ptr)
 {
-#if HAVE_MOTIF
   if (XEN_XmPopupHandlerCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmPopupHandlerCallbackStruct(ptr))->target)));
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->target)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmConvertCallbackStruct(ptr))->target)));
-#endif
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionEvent(ptr))->target)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionRequestEvent(ptr))->target)));
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "target", "a struct with a target field");
@@ -18274,12 +18238,10 @@ static XEN gxm_set_owner(XEN ptr, XEN val)
 
 static XEN gxm_selection(XEN ptr)
 {
-#if HAVE_MOTIF
   if (XEN_XmTransferDoneCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmTransferDoneCallbackStruct(ptr))->selection)));
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->selection)));
   if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmDestinationCallbackStruct(ptr))->selection)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmConvertCallbackStruct(ptr))->selection)));
-#endif
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionEvent(ptr))->selection)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionRequestEvent(ptr))->selection)));
   if (XEN_XSelectionClearEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionClearEvent(ptr))->selection)));
@@ -18383,9 +18345,7 @@ static XEN gxm_event(XEN ptr)
   if (XEN_XMapEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XMapEvent(ptr))->event)));
   if (XEN_XUnmapEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XUnmapEvent(ptr))->event)));
   if (XEN_XDestroyWindowEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XDestroyWindowEvent(ptr))->event)));
-#if HAVE_MOTIF
   if (XEN_AnyCallbackStruct_P(ptr)) return(C_TO_XEN_XEvent((XEvent *)((XEN_TO_C_XmAnyCallbackStruct(ptr))->event)));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "event", "a struct with an event field");
   return(XEN_FALSE);
 }
@@ -18399,9 +18359,7 @@ static XEN gxm_set_event(XEN ptr, XEN val)
   if (XEN_XMapEvent_P(ptr)) (XEN_TO_C_XMapEvent(ptr))->event = XEN_TO_C_Window(val); else
   if (XEN_XUnmapEvent_P(ptr)) (XEN_TO_C_XUnmapEvent(ptr))->event = XEN_TO_C_Window(val); else
   if (XEN_XDestroyWindowEvent_P(ptr)) (XEN_TO_C_XDestroyWindowEvent(ptr))->event = XEN_TO_C_Window(val); else
-#if HAVE_MOTIF
   if (XEN_AnyCallbackStruct_P(ptr)) (XEN_TO_C_XmAnyCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
-#endif
   XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "event", "a struct with an event field");
   return(val);
 }
@@ -18812,14 +18770,12 @@ static XEN gxm_y(XEN ptr)
   if (XEN_XArc_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XArc(ptr))->y)));
   if (XEN_XWindowChanges_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowChanges(ptr))->y)));
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->y)));
-#if HAVE_MOTIF
   if (XEN_XmDropProcCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropProcCallbackStruct(ptr))->y)));
   if (XEN_XmDragProcCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragProcCallbackStruct(ptr))->y)));
   if (XEN_XmDropStartCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropStartCallbackStruct(ptr))->y)));
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragMotionCallbackStruct(ptr))->y)));
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->y)));
   if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_Position((Position)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->y)));
-#endif
   if (XEN_XConfigureRequestEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureRequestEvent(ptr))->y)));
   if (XEN_XGravityEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGravityEvent(ptr))->y)));
   if (XEN_XConfigureEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureEvent(ptr))->y)));
@@ -18842,14 +18798,12 @@ static XEN gxm_x(XEN ptr)
   if (XEN_XArc_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XArc(ptr))->x)));
   if (XEN_XWindowChanges_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowChanges(ptr))->x)));
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->x)));
-#if HAVE_MOTIF
   if (XEN_XmDropProcCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropProcCallbackStruct(ptr))->x)));
   if (XEN_XmDragProcCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragProcCallbackStruct(ptr))->x)));
   if (XEN_XmDropStartCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropStartCallbackStruct(ptr))->x)));
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragMotionCallbackStruct(ptr))->x)));
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->x)));
   if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_Position((Position)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->x)));
-#endif
   if (XEN_XConfigureRequestEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureRequestEvent(ptr))->x)));
   if (XEN_XGravityEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGravityEvent(ptr))->x)));
   if (XEN_XConfigureEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureEvent(ptr))->x)));
@@ -18867,9 +18821,7 @@ static XEN gxm_x(XEN ptr)
 
 static XEN gxm_time(XEN ptr)
 {
-#if HAVE_MOTIF
   if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XmDestinationCallbackStruct(ptr))->time)));
-#endif
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XSelectionEvent(ptr))->time)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XSelectionRequestEvent(ptr))->time)));
   if (XEN_XSelectionClearEvent_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XSelectionClearEvent(ptr))->time)));
@@ -18922,13 +18874,11 @@ static XEN gxm_set_subwindow(XEN ptr, XEN val)
 
 static XEN gxm_window(XEN ptr)
 {
-#if HAVE_MOTIF
   if (XEN_XmDrawnButtonCallbackStruct_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XmDrawnButtonCallbackStruct(ptr))->window)));
   if (XEN_XmDrawingAreaCallbackStruct_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XmDrawingAreaCallbackStruct(ptr))->window)));
   if (XEN_XmDropStartCallbackStruct_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XmDropStartCallbackStruct(ptr))->window)));
   if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->window)));
   if (XEN_XmTopLevelLeaveCallbackStruct_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XmTopLevelLeaveCallbackStruct(ptr))->window)));
-#endif
   if (XEN_XEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XAnyEvent(ptr))->window)));
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "window", "a struct with a window field");
   return(XEN_FALSE);
@@ -18972,10 +18922,8 @@ static XEN gxm_set_serial(XEN ptr, XEN val)
 
 static XEN gxm_type(XEN ptr)
 {
-#if HAVE_MOTIF
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->type)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmConvertCallbackStruct(ptr))->type)));
-#endif
   if (XEN_XEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XAnyEvent(ptr))->type)));
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "type", "a struct with a type field");
   return(XEN_FALSE);
@@ -19674,9 +19622,7 @@ static XEN gxm_data(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XImage(ptr))->data)));
   if (XEN_XClientMessageEvent_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XClientMessageEvent(ptr))->data.b)));
-#if HAVE_MOTIF
   if (XEN_XmRowColumnCallbackStruct_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XmRowColumnCallbackStruct(ptr))->data)));
-#endif
   if (XEN_XpmImage_P(ptr)) return(XEN_WRAP_C_POINTER((XEN_TO_C_XpmImage(ptr))->data));
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "data", "XpmImage");
   return(XEN_FALSE);
@@ -19711,7 +19657,7 @@ static XEN gxm_set_data(XEN ptr, XEN val)
 
 
 /* -------------------------------------------------------------------------------- */
-#if HAVE_MOTIF
+
 static XEN gxm_text(XEN ptr)
 {
   /* DIFF: TextVerifyCallbackStruct text field returns list (string format)
@@ -19744,6 +19690,7 @@ static XEN gxm_accept(XEN ptr)
   return(XEN_FALSE);
 }
 #endif
+
 #if HAVE_XmCreateTabStack
 static XEN gxm_selected_child(XEN ptr)
 {
@@ -20112,7 +20059,6 @@ static XEN gxm_value(XEN ptr)
 
 static XEN gxm_set_value(XEN ptr, XEN val)
 {
-#if HAVE_MOTIF
   if (XEN_XmScaleCallbackStruct_P(ptr)) (XEN_TO_C_XmScaleCallbackStruct(ptr))->value = XEN_TO_C_INT(val); else
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
   if (XEN_XmCommandCallbackStruct_P(ptr)) (XEN_TO_C_XmCommandCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
@@ -20121,7 +20067,6 @@ static XEN gxm_set_value(XEN ptr, XEN val)
   if (XEN_XmSpinBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
   if (XEN_XmSelectionBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionBoxCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
   if (XEN_XmSelectionCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionCallbackStruct(ptr))->value = (XtPointer)XEN_UNWRAP_C_POINTER(val); else
-#endif    
   if (XEN_XpmColorSymbol_P(ptr)) (XEN_TO_C_XpmColorSymbol(ptr))->value = xen_strdup(XEN_TO_C_STRING(val)); else
   XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "value", "a struct with a value field");
   return(val);
@@ -20364,12 +20309,9 @@ static XEN gxm_page_number(XEN ptr)
   if (XEN_XmNotebookCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmNotebookCallbackStruct(ptr))->page_number)));
   return(C_TO_XEN_INT((int)((XEN_TO_C_XmNotebookPageInfo(ptr))->page_number)));
 }
-#endif
-/* HAVE_MOTIF */
 
 
 #ifdef XEN_ARGIFY_1
-#if HAVE_MOTIF
   XEN_NARGIFY_3(gxm_XtSetArg_w, gxm_XtSetArg)
   XEN_ARGIFY_2(gxm_XtManageChildren_w, gxm_XtManageChildren)
   XEN_NARGIFY_1(gxm_XtManageChild_w, gxm_XtManageChild)
@@ -20549,7 +20491,7 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(gxm_XtIsSessionShell_w, gxm_XtIsSessionShell)
   XEN_NARGIFY_1(gxm_XtMapWidget_w, gxm_XtMapWidget)
   XEN_NARGIFY_1(gxm_XtUnmapWidget_w, gxm_XtUnmapWidget)
-#endif
+
   XEN_NARGIFY_2(gxm_XLoadQueryFont_w, gxm_XLoadQueryFont)
   XEN_NARGIFY_2(gxm_XQueryFont_w, gxm_XQueryFont)
   XEN_NARGIFY_4(gxm_XGetMotionEvents_w, gxm_XGetMotionEvents)
@@ -20999,7 +20941,7 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(XEN_XVisibilityEvent_p_w, XEN_XVisibilityEvent_p)
   XEN_NARGIFY_1(XEN_XIconSize_p_w, XEN_XIconSize_p)
 
-#if HAVE_MOTIF
+#if USE_MOTIF
   XEN_ARGIFY_4(gxm_XmCreateMessageBox_w, gxm_XmCreateMessageBox)
   XEN_ARGIFY_4(gxm_XmCreateMessageDialog_w, gxm_XmCreateMessageDialog)
   XEN_ARGIFY_4(gxm_XmCreateErrorDialog_w, gxm_XmCreateErrorDialog)
@@ -21499,13 +21441,12 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_5(gxm_XSubImage_w, gxm_XSubImage)
   XEN_NARGIFY_2(gxm_XAddPixel_w, gxm_XAddPixel)
 
-#if HAVE_MOTIF
   XEN_NARGIFY_1(XEN_XtAppContext_p_w, XEN_XtAppContext_p)
   XEN_NARGIFY_1(XEN_XtRequestId_p_w, XEN_XtRequestId_p)
   XEN_NARGIFY_1(XEN_XtWorkProcId_p_w, XEN_XtWorkProcId_p)
   XEN_NARGIFY_1(XEN_XtInputId_p_w, XEN_XtInputId_p)
   XEN_NARGIFY_1(XEN_XtIntervalId_p_w, XEN_XtIntervalId_p)
-#endif
+
   XEN_NARGIFY_1(XEN_Screen_p_w, XEN_Screen_p)
   XEN_NARGIFY_1(XEN_XEvent_p_w, XEN_XEvent_p)
   XEN_NARGIFY_1(XEN_XRectangle_p_w, XEN_XRectangle_p)
@@ -21527,10 +21468,8 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(XEN_Time_p_w, XEN_Time_p)
   XEN_NARGIFY_1(XEN_Visual_p_w, XEN_Visual_p)
   XEN_NARGIFY_1(XEN_Window_p_w, XEN_Window_p)
-#if HAVE_MOTIF
   XEN_NARGIFY_1(XEN_Widget_p_w, XEN_Widget_p)
   XEN_NARGIFY_1(XEN_XmStringContext_p_w, XEN_XmStringContext_p)
-#endif
   XEN_NARGIFY_1(XEN_XFontProp_p_w, XEN_XFontProp_p)
   XEN_NARGIFY_1(XEN_XFontSet_p_w, XEN_XFontSet_p)
   XEN_NARGIFY_1(XEN_XFontStruct_p_w, XEN_XFontStruct_p)
@@ -21546,7 +21485,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(XEN_XTextItem_p_w, XEN_XTextItem_p)
   XEN_NARGIFY_1(XEN_XStandardColormap_p_w, XEN_XStandardColormap_p)
   XEN_NARGIFY_1(XEN_Cursor_p_w, XEN_Cursor_p)
-#if HAVE_MOTIF
   XEN_NARGIFY_1(XEN_WidgetClass_p_w, XEN_WidgetClass_p)
   XEN_NARGIFY_1(XEN_XmString_p_w, XEN_XmString_p)
   XEN_NARGIFY_1(XEN_XmTab_p_w, XEN_XmTab_p)
@@ -21555,7 +21493,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(XEN_XmTabList_p_w, XEN_XmTabList_p)
   XEN_NARGIFY_1(XEN_XmParseMapping_p_w, XEN_XmParseMapping_p)
   XEN_NARGIFY_1(XEN_XmTextSource_p_w, XEN_XmTextSource_p)
-#endif
 
   XEN_NARGIFY_1(XEN_XpmAttributes_p_w, XEN_XpmAttributes_p)
   XEN_NARGIFY_1(XEN_XpmImage_p_w, XEN_XpmImage_p)
@@ -21870,7 +21807,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_2(gxm_set_event_mask_w, gxm_set_event_mask)
   XEN_NARGIFY_2(gxm_set_cursor_w, gxm_set_cursor)
 
-#if HAVE_MOTIF
   XEN_NARGIFY_2(gxm_set_set_w, gxm_set_set)
   XEN_NARGIFY_2(gxm_set_click_count_w, gxm_set_click_count)
   XEN_NARGIFY_2(gxm_set_length_w, gxm_set_length)
@@ -21986,12 +21922,10 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_2(c_to_xen_atoms_w, c_to_xen_atoms)
   XEN_NARGIFY_2(c_to_xen_xrectangles_w, c_to_xen_xrectangles)
 #endif
-#endif
 
 #else
 
 /* no argify */
-#if HAVE_MOTIF
   #define gxm_XtSetArg_w gxm_XtSetArg
   #define gxm_XtManageChildren_w gxm_XtManageChildren
   #define gxm_XtManageChild_w gxm_XtManageChild
@@ -22171,7 +22105,7 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XtIsSessionShell_w gxm_XtIsSessionShell
   #define gxm_XtMapWidget_w gxm_XtMapWidget
   #define gxm_XtUnmapWidget_w gxm_XtUnmapWidget
-#endif
+
   #define gxm_XLoadQueryFont_w gxm_XLoadQueryFont
   #define gxm_XQueryFont_w gxm_XQueryFont
   #define gxm_XGetMotionEvents_w gxm_XGetMotionEvents
@@ -22621,7 +22555,6 @@ static XEN gxm_page_number(XEN ptr)
   #define XEN_XVisibilityEvent_p_w XEN_XVisibilityEvent_p
   #define XEN_XIconSize_p_w XEN_XIconSize_p
 
-#if HAVE_MOTIF
   #define gxm_XmCreateMessageBox_w gxm_XmCreateMessageBox
   #define gxm_XmCreateMessageDialog_w gxm_XmCreateMessageDialog
   #define gxm_XmCreateErrorDialog_w gxm_XmCreateErrorDialog
@@ -23104,8 +23037,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XmCreateDropDown_w gxm_XmCreateDropDown
 #endif
 
-#endif
-
   #define gxm_XpmCreatePixmapFromData_w gxm_XpmCreatePixmapFromData
   #define gxm_XpmCreateDataFromPixmap_w gxm_XpmCreateDataFromPixmap
   #define gxm_XpmReadFileToPixmap_w gxm_XpmReadFileToPixmap
@@ -23121,13 +23052,11 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XSubImage_w gxm_XSubImage
   #define gxm_XAddPixel_w gxm_XAddPixel
 
-#if HAVE_MOTIF
   #define XEN_XtAppContext_p_w XEN_XtAppContext_p
   #define XEN_XtRequestId_p_w XEN_XtRequestId_p
   #define XEN_XtWorkProcId_p_w XEN_XtWorkProcId_p
   #define XEN_XtInputId_p_w XEN_XtInputId_p
   #define XEN_XtIntervalId_p_w XEN_XtIntervalId_p
-#endif
   #define XEN_Screen_p_w XEN_Screen_p
   #define XEN_XEvent_p_w XEN_XEvent_p
   #define XEN_XRectangle_p_w XEN_XRectangle_p
@@ -23149,10 +23078,8 @@ static XEN gxm_page_number(XEN ptr)
   #define XEN_Time_p_w XEN_Time_p
   #define XEN_Visual_p_w XEN_Visual_p
   #define XEN_Window_p_w XEN_Window_p
-#if HAVE_MOTIF
   #define XEN_Widget_p_w XEN_Widget_p
   #define XEN_XmStringContext_p_w XEN_XmStringContext_p
-#endif
   #define XEN_XFontProp_p_w XEN_XFontProp_p
   #define XEN_XFontSet_p_w XEN_XFontSet_p
   #define XEN_XFontStruct_p_w XEN_XFontStruct_p
@@ -23168,7 +23095,6 @@ static XEN gxm_page_number(XEN ptr)
   #define XEN_XTextItem_p_w XEN_XTextItem_p
   #define XEN_XStandardColormap_p_w XEN_XStandardColormap_p
   #define XEN_Cursor_p_w XEN_Cursor_p
-#if HAVE_MOTIF
   #define XEN_WidgetClass_p_w XEN_WidgetClass_p
   #define XEN_XmString_p_w XEN_XmString_p
   #define XEN_XmTab_p_w XEN_XmTab_p
@@ -23177,7 +23103,6 @@ static XEN gxm_page_number(XEN ptr)
   #define XEN_XmTabList_p_w XEN_XmTabList_p
   #define XEN_XmParseMapping_p_w XEN_XmParseMapping_p
   #define XEN_XmTextSource_p_w XEN_XmTextSource_p
-#endif
 
   #define XEN_XpmAttributes_p_w XEN_XpmAttributes_p
   #define XEN_XpmImage_p_w XEN_XpmImage_p
@@ -23492,7 +23417,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_set_event_mask_w gxm_set_event_mask
   #define gxm_set_cursor_w gxm_set_cursor
 
-#if HAVE_MOTIF
   #define gxm_set_set_w gxm_set_set
   #define gxm_set_click_count_w gxm_set_click_count
   #define gxm_set_length_w gxm_set_length
@@ -23610,8 +23534,6 @@ static XEN gxm_page_number(XEN ptr)
 #endif
 
 #endif
-/* HAVE_MOTIF */
-#endif
 /* argify */
 
 
@@ -23625,7 +23547,6 @@ static void define_procedures(void)
   xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);
   XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);
 
-#if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(XtSetArg, gxm_XtSetArg_w, 3, 0, 0, H_XtSetArg);
   XM_DEFINE_PROCEDURE(XtManageChildren, gxm_XtManageChildren_w, 1, 1, 0, H_XtManageChildren);
   XM_DEFINE_PROCEDURE(XtManageChild, gxm_XtManageChild_w, 1, 0, 0, H_XtManageChild);
@@ -23805,7 +23726,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtIsSessionShell, gxm_XtIsSessionShell_w, 1, 0, 0, H_XtIsSessionShell);
   XM_DEFINE_PROCEDURE(XtMapWidget, gxm_XtMapWidget_w, 1, 0, 0, H_XtMapWidget);
   XM_DEFINE_PROCEDURE(XtUnmapWidget, gxm_XtUnmapWidget_w, 1, 0, 0, H_XtUnmapWidget);
-#endif
+
   XM_DEFINE_PROCEDURE(XUniqueContext, gxm_XUniqueContext_w, 0, 0, 0, H_XUniqueContext);
   XM_DEFINE_PROCEDURE(XLoadQueryFont, gxm_XLoadQueryFont_w, 2, 0, 0, H_XLoadQueryFont);
   XM_DEFINE_PROCEDURE(XQueryFont, gxm_XQueryFont_w, 2, 0, 0, H_XQueryFont);
@@ -24255,7 +24176,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XVisibilityEvent?, XEN_XVisibilityEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XVisibilityEvent");
   XM_DEFINE_PROCEDURE(XIconSize?, XEN_XIconSize_p_w, 1, 0, 0, PROC_TRUE " if arg is a XIconSize object");
 
-#if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(XmCreateMessageBox, gxm_XmCreateMessageBox_w, 3, 1, 0, H_XmCreateMessageBox);
   XM_DEFINE_PROCEDURE(XmCreateMessageDialog, gxm_XmCreateMessageDialog_w, 3, 1, 0, H_XmCreateMessageDialog);
   XM_DEFINE_PROCEDURE(XmCreateErrorDialog, gxm_XmCreateErrorDialog_w, 3, 1, 0, H_XmCreateErrorDialog);
@@ -24687,7 +24607,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsManager, gxm_XmIsManager_w, 1, 0, 0, H_XmIsManager);
   XM_DEFINE_PROCEDURE(XmIsMenuShell, gxm_XmIsMenuShell_w, 1, 0, 0, H_XmIsMenuShell);
   XM_DEFINE_PROCEDURE(XmListGetSelectedPos, gxm_XmListGetSelectedPos_w, 1, 0, 0, H_XmListGetSelectedPos);
-#endif
+
 #if HAVE_XmCreateButtonBox
   XM_DEFINE_PROCEDURE(XmIsButtonBox, gxm_XmIsButtonBox_w, 1, 0, 0, H_XmIsButtonBox);
   XM_DEFINE_PROCEDURE(XmCreateButtonBox, gxm_XmCreateButtonBox_w, 3, 1, 0, H_XmCreateButtonBox);
@@ -24752,9 +24672,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmColumn?, gxm_XmIsColumn_w, 1, 0, 0, H_XmIsColumn);
 #endif
 
-#if HAVE_MOTIF
-#endif
-
   XM_DEFINE_PROCEDURE(XpmCreatePixmapFromData, gxm_XpmCreatePixmapFromData_w, 4, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmCreateDataFromPixmap, gxm_XpmCreateDataFromPixmap_w, 4, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmReadFileToPixmap, gxm_XpmReadFileToPixmap_w, 4, 0, 0, NULL);
@@ -24772,13 +24689,11 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XSubImage, gxm_XSubImage_w, 5, 0, 0, H_XSubImage);
   XM_DEFINE_PROCEDURE(XAddPixel, gxm_XAddPixel_w, 2, 0, 0, H_XAddPixel);
 
-#if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(XtAppContext?, XEN_XtAppContext_p_w, 1, 0, 0, PROC_TRUE " if arg is a XtAppContext");
   XM_DEFINE_PROCEDURE(XtRequestId?, XEN_XtRequestId_p_w, 1, 0, 0, PROC_TRUE " if arg is a XtRequestId");
   XM_DEFINE_PROCEDURE(XtWorkProcId?, XEN_XtWorkProcId_p_w, 1, 0, 0, PROC_TRUE " if arg is a XtWorkProcId");
   XM_DEFINE_PROCEDURE(XtInputId?, XEN_XtInputId_p_w, 1, 0, 0, PROC_TRUE " if arg is a XtInputId");
   XM_DEFINE_PROCEDURE(XtIntervalId?, XEN_XtIntervalId_p_w, 1, 0, 0, PROC_TRUE " if arg is a XtIntervalId");
-#endif
   XM_DEFINE_PROCEDURE(Screen?, XEN_Screen_p_w, 1, 0, 0, PROC_TRUE " if arg is a Screen");
   XM_DEFINE_PROCEDURE(XEvent?, XEN_XEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XEvent");
   XM_DEFINE_PROCEDURE(XRectangle?, XEN_XRectangle_p_w, 1, 0, 0, PROC_TRUE " if arg is a XRectangle");
@@ -24801,10 +24716,8 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(Time?, XEN_Time_p_w, 1, 0, 0, PROC_TRUE " if arg is a Time");
   XM_DEFINE_PROCEDURE(Visual?, XEN_Visual_p_w, 1, 0, 0, PROC_TRUE " if arg is a Visual");
   XM_DEFINE_PROCEDURE(Window?, XEN_Window_p_w, 1, 0, 0, PROC_TRUE " if arg is a Window");
-#if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(Widget?, XEN_Widget_p_w, 1, 0, 0, PROC_TRUE " if arg is a Widget");
   XM_DEFINE_PROCEDURE(XmStringContext?, XEN_XmStringContext_p_w, 1, 0, 0, PROC_TRUE " if arg is a XmStringContext");
-#endif
   XM_DEFINE_PROCEDURE(XFontProp?, XEN_XFontProp_p_w, 1, 0, 0, PROC_TRUE " if arg is a XFontProp");
   XM_DEFINE_PROCEDURE(XFontSet?, XEN_XFontSet_p_w, 1, 0, 0, PROC_TRUE " if arg is a XFontSet");
   XM_DEFINE_PROCEDURE(XFontStruct?, XEN_XFontStruct_p_w, 1, 0, 0, PROC_TRUE " if arg is a XFontStruct");
@@ -24820,7 +24733,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XTextItem?, XEN_XTextItem_p_w, 1, 0, 0, PROC_TRUE " if arg is a XTextItem");
   XM_DEFINE_PROCEDURE(XStandardColormap?, XEN_XStandardColormap_p_w, 1, 0, 0, PROC_TRUE " if arg is a XStandardColormap");
   XM_DEFINE_PROCEDURE(Cursor?, XEN_Cursor_p_w, 1, 0, 0, PROC_TRUE " if arg is a Cursor");
-#if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(WidgetClass?, XEN_WidgetClass_p_w, 1, 0, 0, PROC_TRUE " if arg is a WidgetClass");
   XM_DEFINE_PROCEDURE(XmString?, XEN_XmString_p_w, 1, 0, 0, PROC_TRUE " if arg is a XmString");
   XM_DEFINE_PROCEDURE(XmToggleButton?, gxm_XmIsToggleButton_w, 1, 0, 0, H_XmIsToggleButton);
@@ -24876,13 +24788,12 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmDrawnButton?, gxm_XmIsDrawnButton_w, 1, 0, 0, H_XmIsDrawnButton);
   XM_DEFINE_PROCEDURE(XmPrimitive?, gxm_XmIsPrimitive_w, 1, 0, 0, H_XmIsPrimitive);
   XM_DEFINE_PROCEDURE(XmTextSource?, XEN_XmTextSource_p_w, 1, 0, 0, PROC_TRUE " if arg is a TextSource");
-#endif
 
   XM_DEFINE_PROCEDURE(XpmAttributes?, XEN_XpmAttributes_p_w, 1, 0, 0, PROC_TRUE " if arg is a XpmAttributes");
   XM_DEFINE_PROCEDURE(XpmImage?, XEN_XpmImage_p_w, 1, 0, 0, PROC_TRUE " if arg is a XpmImage");
   XM_DEFINE_PROCEDURE(XpmColorSymbol?, XEN_XpmColorSymbol_p_w, 1, 0, 0, PROC_TRUE " if arg is a XpmColorSymbol");
 
-#if HAVE_SCHEME && HAVE_MOTIF
+#if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("->string", c_to_xen_string_w, 1, 0, 0, H_to_string);
   XEN_DEFINE_PROCEDURE("->strings", c_to_xen_strings_w, 2, 0, 0, H_to_strings);
   XEN_DEFINE_PROCEDURE("->ints", c_to_xen_ints_w, 2, 0, 0, H_to_ints);
@@ -25057,7 +24968,6 @@ static void define_structs(void)
   XM_DEFINE_READER(height_inc, gxm_height_inc_w, 1, 0, 0);
   XM_DEFINE_READER(width_inc, gxm_width_inc_w, 1, 0, 0);
 
-#if HAVE_MOTIF
   XM_DEFINE_READER(page_number, gxm_page_number_w, 1, 0, 0);
   XM_DEFINE_READER(page_widget, gxm_page_widget_w, 1, 0, 0);
   XM_DEFINE_READER(status_area_widget, gxm_status_area_widget_w, 1, 0, 0);
@@ -25145,7 +25055,6 @@ static void define_structs(void)
   XM_DEFINE_ACCESSOR(x_hotspot, gxm_x_hotspot_w, set_x_hotspot, gxm_set_x_hotspot_w, 1, 0, 2, 0);
   XM_DEFINE_PROCEDURE(XpmColorSymbol, gxm_XpmColorSymbol_w, 3, 0, 0, H_XpmColorSymbol);
   XM_DEFINE_PROCEDURE(XpmAttributes, gxm_XpmAttributes_w, 0, 0, 0, H_XpmAttributes);
-#endif
 
   XM_DEFINE_ACCESSOR(request_code, gxm_request_code_w, set_request_code, gxm_set_request_code_w, 1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(error_code, gxm_error_code_w, set_error_code, gxm_set_error_code_w, 1, 0, 2, 0); 
@@ -25197,7 +25106,6 @@ static void define_structs(void)
 }
 
 
-#if HAVE_MOTIF
 /* -------------------------------- string constants -------------------------------- */
 
 /* can't get hcreate in glibc to work so... */
@@ -26127,9 +26035,8 @@ static void define_strings(void)
       }
   }
 }
-#endif
 
-#if HAVE_MOTIF
+
 #define S_add_resource "add-resource"
 
 static XEN g_add_resource(XEN nam, XEN typ)
@@ -26148,7 +26055,6 @@ The types are defined in xm.c around line 679.  To add XmNhiho as an integer: \n
   XEN_NARGIFY_2(g_add_resource_w, g_add_resource)
 #else
   #define g_add_resource_w g_add_resource
-#endif
 #endif
 
 
@@ -26580,7 +26486,6 @@ static void define_integers(void)
   DEFINE_INTEGER(TrueColor);
   DEFINE_INTEGER(DirectColor);
 
-#if HAVE_MOTIF
   DEFINE_INTEGER(XtInputNoneMask);
   DEFINE_INTEGER(XtInputReadMask);
   DEFINE_INTEGER(XtInputWriteMask);
@@ -26605,7 +26510,7 @@ static void define_integers(void)
   DEFINE_INTEGER(XtUnspecifiedWindow);
   DEFINE_INTEGER(XtUnspecifiedWindowGroup);
   DEFINE_INTEGER(XT_CONVERT_FAIL);
-#endif
+
   DEFINE_INTEGER(XlibSpecificationRelease);
   DEFINE_INTEGER(QueuedAlready);
   DEFINE_INTEGER(QueuedAfterReading);
@@ -27044,7 +26949,7 @@ static void define_integers(void)
   DEFINE_INTEGER(BitmapOpenFailed);
   DEFINE_INTEGER(BitmapFileInvalid);
   DEFINE_INTEGER(BitmapNoMemory);
-#if HAVE_MOTIF
+
   DEFINE_INTEGER(MWM_HINTS_FUNCTIONS);
   DEFINE_INTEGER(MWM_HINTS_DECORATIONS);
   DEFINE_INTEGER(MWM_HINTS_INPUT_MODE);
@@ -27132,10 +27037,7 @@ static void define_integers(void)
   DEFINE_INTEGER(XmFILE_REGULAR);
   DEFINE_INTEGER(XmFILE_ANY_TYPE);
   DEFINE_INTEGER(XmCHECKBUTTON);
-#endif  
-  /* enums */
 
-#if HAVE_MOTIF  
   DEFINE_INTEGER(XtCallbackNoList);
   DEFINE_INTEGER(XtCallbackHasNone);
   DEFINE_INTEGER(XtCallbackHasSome);
@@ -27148,12 +27050,10 @@ static void define_integers(void)
   DEFINE_INTEGER(XtGrabExclusive);
   DEFINE_INTEGER(XtListHead);
   DEFINE_INTEGER(XtListTail);
-#endif
   DEFINE_INTEGER(XStringStyle);
   DEFINE_INTEGER(XCompoundTextStyle);
   DEFINE_INTEGER(XTextStyle);
   DEFINE_INTEGER(XStdICCTextStyle);
-#if HAVE_MOTIF
   DEFINE_INTEGER(XmClipboardFail);
   DEFINE_INTEGER(XmClipboardSuccess);
   DEFINE_INTEGER(XmClipboardTruncate);
@@ -27713,7 +27613,7 @@ static void define_integers(void)
   DEFINE_INTEGER(XmScaleMode);
   DEFINE_INTEGER(XmListMode);
 #endif
-#endif
+
 #if HAVE_XSHAPEQUERYEXTENSION
   DEFINE_INTEGER(ShapeSet);
   DEFINE_INTEGER(ShapeUnion);
@@ -27794,8 +27694,6 @@ static void define_integers(void)
 
 static void define_pointers(void)
 {
-#if HAVE_MOTIF
-
 #if HAVE_SCHEME
   #define DEFINE_POINTER(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_WidgetClass(Name))
 #else
@@ -27884,7 +27782,6 @@ static void define_pointers(void)
 #endif
   DEFINE_POINTER(xmSpinBoxWidgetClass);
   DEFINE_POINTER(xmSimpleSpinBoxWidgetClass);
-#endif
 }
 
 
@@ -27980,13 +27877,11 @@ void Init_libxm(void)
   /* perhaps nicer here to check the features list for 'xm */
   if (!xm_already_inited)
     {
-#if HAVE_MOTIF
       xm_XmColorAllocationProc = XEN_FALSE;
       xm_XmColorCalculationProc = XEN_FALSE;
       xm_XmColorProc = XEN_FALSE;
       xm_XmCutPasteProc = XEN_FALSE;
       xm_XmVoidProc = XEN_FALSE;
-#endif
       xm_XtSelectionCallback_Descr = XEN_FALSE;
       xm_XtConvertSelectionIncr_Descr = XEN_FALSE;
       xm_protected = XEN_FALSE;
@@ -28005,16 +27900,13 @@ void Init_libxm(void)
       register_proc = XEN_FALSE;
 
       define_xm_obj();
-#if HAVE_MOTIF  
       define_makes();
       define_strings();
-#endif
       define_Atoms();
       define_integers();
       define_pointers();
       define_procedures();
       define_structs();
-#if HAVE_MOTIF
 #if HAVE_SCHEME
       XEN_EVAL_C_STRING("(define (XmAddWMProtocols s p n) \
                            (XmAddProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))");
@@ -28075,7 +27967,7 @@ void Init_libxm(void)
 ;\n");
 #endif
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
-#endif
+
       XEN_YES_WE_HAVE("xm");
       XEN_DEFINE("xm-version", C_TO_XEN_STRING(XM_DATE));
       xm_already_inited = true;

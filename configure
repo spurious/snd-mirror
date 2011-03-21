@@ -7799,9 +7799,7 @@ fi
 
   if test "$with_motif" = yes ; then
     $as_echo "#define USE_MOTIF 1" >>confdefs.h
-  # for Snd
-    $as_echo "#define HAVE_MOTIF 1" >>confdefs.h
- # for xm
+
     GRAPHICS_TOOLKIT="Motif"
   fi
 
@@ -9422,8 +9420,6 @@ $as_echo "$as_me: WARNING: You asked for both s7 and $LOCAL_LANGUAGE -- $LOCAL_L
 fi
 
 if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
-    $as_echo "#define HAVE_S7 1" >>confdefs.h
-
     $as_echo "#define HAVE_SCHEME 1" >>confdefs.h
 
     ac_snd_have_extension_language=yes

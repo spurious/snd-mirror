@@ -269,7 +269,6 @@ typedef struct chan_info {
   struct env_state *peak_env_state;
   graphics_context *ax;
   bool selected;
-  int current_hourglass;
   mus_float_t progress_pct;
 
 #if USE_GTK
@@ -862,7 +861,6 @@ char *srate_completer(widget_t w, const char *text, void *data);
 char *list_completer(widget_t w, const char *text, void *data);
 char *info_completer(widget_t w, const char *text, void *data);
 char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text);
-bool separator_char_p(char c);
 void add_srate_to_completion_list(int srate);
 char *direct_completions(const char *str);
 
@@ -1427,7 +1425,6 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time);
 void channel_resize(chan_info *cp);
 void edit_history_select(chan_info *cp, int row);
-int make_graph(chan_info *cp);
 int make_background_graph(chan_info *cp, int srate, bool *two_sided);
 int make_dragged_marks_graph(chan_info *cp);
 void reset_spectro(void);

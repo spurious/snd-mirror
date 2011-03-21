@@ -57,7 +57,6 @@ void initialize_colormap(void);
 void reflect_color_list(bool setup_time);
 void set_with_gl(bool val, bool with_dialogs);
 void g_init_gxdraw(void);
-gchar* scale_int_format_callback(GtkScale *w, gdouble val, gpointer data);
 gchar* scale_double_format_callback(GtkScale *w, gdouble val, gpointer data);
 
 
@@ -112,7 +111,6 @@ void add_tooltip(GtkWidget *w, const char *tip);
 void post_basic_popup_menu(void *ev);
 void post_lisp_popup_menu(void *ev);
 void post_selection_popup_menu(void *ev);
-GtkWidget *add_menu_item(GtkWidget *menu, const char *label, const char *icon, GCallback callback);
 
 
 

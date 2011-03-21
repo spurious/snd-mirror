@@ -853,6 +853,7 @@ int main(int argc, char **argv)
 	      if ((x_case) &&
 		  (x_count > 0) &&
 		  (qs[i]->def) &&
+		  (strcmp(qs[i]->hname, "snd-1.h") == 0) &&
 		  (strcmp(qs[i]->def, "snd-xen.c") != 0) &&
 		  ((strncmp(qs[i]->def, "snd-x", 5) == 0) || 
 		   (strncmp(qs[i]->def, "snd-g", 5) == 0)))

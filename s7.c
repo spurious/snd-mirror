@@ -1126,7 +1126,8 @@ static s7_pointer file_error(s7_scheme *sc, const char *caller, const char *desc
 static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
 static s7_pointer immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void free_object(s7_pointer a);
-static char *describe_object(s7_scheme *sc, s7_pointer a);
+static char *describe_c_object(s7_scheme *sc, s7_pointer a);
+static char *describe_s_object(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol);
 static bool object_is_applicable(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
@@ -12359,8 +12360,10 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       return(copy_string("#<dynamic-wind>"));
   
     case T_S_OBJECT:
+      return(describe_s_object(sc, obj)); /* this allocates already */
+
     case T_C_OBJECT:
-      return(describe_object(sc, obj)); /* this allocates already */
+      return(describe_c_object(sc, obj)); /* this allocates already */
 
 #if DEBUGGING
     case T_VECTOR: 
@@ -16564,7 +16567,7 @@ int s7_new_type_x(const char *name,
 }
 
 
-static char *describe_object(s7_scheme *sc, s7_pointer a)
+static char *describe_c_object(s7_scheme *sc, s7_pointer a)
 {
   int tag;
   tag = c_object_type(a);
@@ -16801,6 +16804,16 @@ static char *call_s_object_print(s7_scheme *sc, void *value)
   return(copy_string((char *)s7_string(s7_call(sc, object_types[obj->type].print_func, sc->s_function_args))));
 
   /* describe_object assumes the value returned here can be freed */
+}
+
+
+static char *describe_s_object(s7_scheme *sc, s7_pointer a)
+{
+  int tag;
+  tag = s_object_type(a);
+  if (object_types[tag].print)
+    return((*(object_types[tag].print))(sc, s_object_value(a)));
+  return(copy_string(object_types[tag].name));
 }
 
 
@@ -23415,6 +23428,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (sc->code != sc->NIL)            /* (begin . 1), (cond (#t . 1)) */
 	    return(eval_error_with_name(sc, "~A: unexpected dot or '() at end of body? ~A", sc->code));
+
+	  /* TODO: in all cases this gives the operator name as "barrier"! (we pushed it above) [put in error handler] */
 
 	  sc->value = sc->code;
 	  goto START;
@@ -31928,7 +31943,7 @@ the error type and the info passed to the error handler.");
  *
  *     nonce-symbols need to be garbage collected
  *     map/for-each mess up when the 1st arg is a macro
- *     things to add: lint? (can we notice unreachable code, unbound variables, bad args)? 
+ *     lint? (can we notice unreachable code, unbound variables, bad args)? 
  *     if user creates an enormous list, it can seem to hang the listener: *list-print-length* ?
  *       or just *print-length* for all, including Snd cases -- in Snd print-length function becomes unneeded,
  *       but we have to change the symbol access to make sure Snd's print_length is set if ours is, or
@@ -31954,10 +31969,7 @@ the error type and the info passed to the error handler.");
  *     checkpoint by saving the heap, stack...
  *     complex number can be both nan and infinite -- is that sensible?
  *     lots of displays are not readable (hash-table, vct, etc)
- *     begin_hook could be coupled with GUI to show variable values during a computation
- *       [but in Snd, that requires keeping track of its current value]
  *     still mixed arith: * + / - < > <= >= = min max, but I haven't found any bugs
- *     segfault in eval-ptree in vct-ref test 4 with-threaded-sound or in test 29 (s7test) -- infinite recursion in mark
  *
  * --------------------------------------------------------------------------------
  * s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10

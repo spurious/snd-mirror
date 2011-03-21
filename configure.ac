@@ -925,8 +925,7 @@ else
   fi
 
   if test "$with_motif" = yes ; then
-    AC_DEFINE(USE_MOTIF)  # for Snd
-    AC_DEFINE(HAVE_MOTIF) # for xm
+    AC_DEFINE(USE_MOTIF)
     GRAPHICS_TOOLKIT="Motif"
   fi
 
@@ -1384,7 +1383,6 @@ if test "$with_s7" = yes && test "$ac_snd_have_extension_language" = yes ; then
 fi
 
 if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
-    AC_DEFINE(HAVE_S7)	
     AC_DEFINE(HAVE_SCHEME)	
     ac_snd_have_extension_language=yes
     AC_DEFINE(HAVE_EXTENSION_LANGUAGE)

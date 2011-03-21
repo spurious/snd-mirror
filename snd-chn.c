@@ -1603,7 +1603,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 }
 
 
-int make_graph(chan_info *cp) 
+static int make_graph(chan_info *cp) 
 {
   return(make_graph_1(cp, (double)(SND_SRATE(cp->sound)), NORMAL_GRAPH, NULL));
 }

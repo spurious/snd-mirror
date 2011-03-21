@@ -126,7 +126,6 @@
 #undef HAVE_SCHEME
 #undef HAVE_RUBY
 #undef HAVE_FORTH
-#undef HAVE_S7
 #undef HAVE_EXTENSION_LANGUAGE
 
 #undef HAVE_FAM
@@ -157,7 +156,6 @@
 #undef USE_NO_GUI
 
 #undef HAVE_X
-#undef HAVE_MOTIF
 #undef HAVE_XmToolTipGetLabel
 #undef HAVE_XmCreateDataField
 #undef HAVE_XmCreateButtonBox

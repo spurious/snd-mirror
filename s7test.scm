@@ -11081,6 +11081,9 @@ this prints:
 (test (map (lambda (a b) (+ a b)) (list 1 2) (list 1 2) (list 1 2)) 'error)
 (test (map (lambda (a b) (+ a b)) (list 1 2) (cons 1 2)) '(2))
 
+(test (map (lambda . (x y z 8)) '(1 2 3))  'error) ; (y unbound) but other schemes ignore unused args
+(test (map (lambda . (x 8)) '(1 2)) '(8 8)) 
+
 (test (map (lambda (a) (+ a 1)) (list 1) (list 2)) 'error)
 (test (map (lambda (a) (+ a 1)) #\a) 'error)
 (test (map (lambda (a) (+ a 1)) (cons 1 2)) '(2))
@@ -12569,6 +12572,17 @@ this prints:
 (test (lambda (a) ) 'error)
 ;; should this be an error: (lambda (a) (define x 1)) ?
 (test (lambda . 1) 'error)
+(test ((lambda . (x 1))) 1)
+(test ((lambda . ((x . y) 2)) 1) 2)
+(test ((lambda (x) . (x)) 1) 1)
+(test ((lambda . ((x) . (x))) 1) 1)
+(test ((lambda . (x . (x))) 1) '(1))
+(test ((lambda . ((x . ()) x)) 1) 1)
+
+;;; TODO: fix this error message:
+; ((lambda . (x 1 . 3)) 1)
+;barrier: unexpected dot or '() at end of body? 3 [23420]
+
 (test (lambda 1) 'error)
 (test (lambda (x 1) x) 'error)
 (test (lambda "hi" 1) 'error)

@@ -778,7 +778,7 @@ static void hop_callback(GtkAdjustment *adj, gpointer context)
 }
 
 
-gchar* scale_int_format_callback(GtkScale *w, gdouble val, gpointer data)
+static gchar* scale_int_format_callback(GtkScale *w, gdouble val, gpointer data)
 {
   /* gtk_scale_get_digits(w) here will be 0 (set below), so we want ints
    *    this is needed since the value-spacing style property apparently does not put space between the value and the scale
