@@ -10922,6 +10922,9 @@ this prints:
   (for-each (lambda* (a (b 2)) (set! x (+ x a b))) '(1 2 3))
   (test x 12))
 
+(test (let ((lst '(1 2 3)) (sum 0)) (define-macro (hi a) `(set! sum (+ sum (+ 1 ,a)))) (for-each hi lst) sum) 9)
+  
+
 
 
 
@@ -11299,6 +11302,14 @@ this prints:
 (test (map (lambda* (a (b 2)) (+ a b)) '(1 2 3)) '(3 4 5))
 (test (map (lambda* ((a 1) (b (map (lambda (c) (+ c 1)) (list 1 2)))) (+ a (apply + b))) (list 4 5 6)) '(9 10 11))
 (test (let ((lst (list 0 1 2))) (map (lambda* ((a 1) (b (for-each (lambda (c) (set! (lst c) (+ (lst c) 1))) (list 0 1 2)))) a) lst)) '(0 2 4))
+
+(test (let ((lst '(1 2 3))) (define-macro (hiho a) `(+ 1 ,a)) (map hiho lst)) '(2 3 4))
+(test (let ((lst '(1 2 3))) (define-macro (hiho a b) `(+ 1 ,a (* 2 ,b))) (map hiho lst lst)) '(4 7 10))
+(test (let ((lst '(1 2 3))) (define-macro (hi1 a) `(+ 1 ,a)) (define-macro (hiho a b) `(+ 1 ,a (* 2 ,b))) (map hiho lst (map hi1 lst))) '(6 9 12))
+(test (let ((lst '(1 2 3))) (define-macro (hiho a b) `(+ 1 ,a (* 2 ,b))) (map hiho lst (map (symbol->value (define-macro (hi1 a) `(+ 1 ,a))) lst))) '(6 9 12))
+(test (let ((lst '(1 2 3))) (define-macro (hi a) `(+ 1 ,a)) (define-macro (ho b) `(+ 1 (hi ,b))) (map ho lst)) '(3 4 5))
+(test (let ((lst '(1 2 3))) (define-macro* (hi a (b 2)) `(+ 1 ,a (* 2 ,b))) (map hi lst)) '(6 7 8))
+(test (let ((lst '(1 2 3))) (define-macro* (hi a (b 2)) `(+ 1 ,a (* 2 ,b))) (map hi lst (map hi lst))) '(14 17 20))
 
 
 
@@ -19006,7 +19017,7 @@ abs     1       2
 	      `(symbol->value (apply define-macro '((,m ,@args) ,@body)))))
 	  ((mu (a) `(+ 1 ,a)) 3))
 	4)
-  (test (let () (define-macro (hi a) `(+ 1 ,a)) (map hi '(1 2 3))) 'error)
+  (test (let () (define-macro (hi a) `(+ 1 ,a)) (map hi '(1 2 3))) '(2 3 4))
   (test (let () (define-macro (hi a) `(+ ,a 1)) (apply hi '(4))) 5)
   (test (let () 
 	  (define-macro (hi a) `(+ ,a 1))

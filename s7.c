@@ -20849,6 +20849,15 @@ static bool next_for_each(s7_scheme *sc)
   integer(number(car(sc->args))) = loc + 1;
   push_stack(sc, opcode(OP_FOR_EACH), sc->args, sc->code);
   sc->args = fargs;
+
+  if (is_macro(sc->code))
+    {
+      push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->args);
+      car(sc->TEMP_CELL_1) = sc->code;
+      cdr(sc->TEMP_CELL_1) = sc->args;
+      sc->args = sc->TEMP_CELL;
+    }
+
   return(true);
 }
 
@@ -21077,6 +21086,20 @@ static bool next_map(s7_scheme *sc)
   push_stack(sc, opcode(OP_MAP), sc->args, sc->code);
   sc->args = sc->x;
   sc->x = sc->NIL;
+
+  if (is_macro(sc->code))
+    {
+      /* (let ((lst '(1 2 3))) 
+       *   (define-macro (hiho a) `(+ 1 ,a)) 
+       *   (map hiho lst)) 
+       * -> '(2 3 4)
+       */
+      push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->args);
+      car(sc->TEMP_CELL_1) = sc->code;
+      cdr(sc->TEMP_CELL_1) = sc->args;
+      sc->args = sc->TEMP_CELL;
+    }
+
   return(true);
 }
 
@@ -23047,7 +23070,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
-	  if (next_map(sc)) goto APPLY;
+	  if (next_map(sc))
+	    goto APPLY;
 	}
       
       sc->value = safe_reverse_in_place(sc, caddr(sc->args));
@@ -23058,7 +23082,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), object(s) = cdddr(sc->args) */
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
-	  if (next_for_each(sc)) goto APPLY;
+	  if (next_for_each(sc)) 
+	    goto APPLY;
 	}
       sc->value = sc->UNSPECIFIED;
       goto START;
@@ -23415,11 +23440,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->begin_hook)
 	{
 	  opcode_t op;
-	  /* begin_hook can cause a substantial slow-down.  In Snd it calls either gtk_events_pending or
-	   *   XtAppPending, and the overall computation time doubles.  The call overhead here is 
-	   *   insignificant.  Even in optimized with-sound calls, the gtk_events_pending calls are
-	   *   a noticeable load (62 of them represent 1/3 of the total computation!)
-	   */
 	  op = sc->op;
 	  push_stack(sc, opcode(OP_BARRIER), sc->args, sc->code);
 	  if ((*(sc->begin_hook))(sc))
@@ -31944,20 +31964,17 @@ the error type and the info passed to the error handler.");
  *     function equality? 
  *       is it possible for two functions to have the same closure and source and  yet give different results to the same args?
  *       (equal? (lambda (a) (+ a 1)) (lambda (b) (+ b 1)))
- *     copy a function? -- apply lambda[*] to the procedure source + args + local env
+ *       copy a function? -- apply lambda[*] to the procedure source + args + local env
  *
- *     nonce-symbols need to be garbage collected
- *     map/for-each mess up when the 1st arg is a macro
- *     lint? (can we notice unreachable code, unbound variables, bad args)? 
  *     if user creates an enormous list, it can seem to hang the listener: *list-print-length* ?
  *       or just *print-length* for all, including Snd cases -- in Snd print-length function becomes unneeded,
  *       but we have to change the symbol access to make sure Snd's print_length is set if ours is, or
  *       make the shadowing complete in the scheme case (but then how to set vct-print-length etc in parallel)?
+ *       in gmp, there's also the int/ratio print length case (giant expt etc)
+ *
+ *     nonce-symbols need to be garbage collected
+ *     lint? (can we notice unreachable code, unbound variables, bad args)? 
  *     what about trace-output-port? or an arg to trace? [it currently goes to current-output-port]
- *     make bignum-precision a variable (not pws) -> *bignum-precision* [not sure about this -- there's a lot happening upon set]
- *       if the gmp support is fully separated, the bignum function is not needed
- *     some way to refer to car/cdr of a cons in format
- *       ~^ only acts within {}, so similarly within {} ~<... = car and ~>... = cdr? "~{~<3,1F : ~>A~}" (cons 1.5 2)
  *     sort! applied to c|s_object?
  *     the help strings use lambda* syntax for optional args, but these are not keyword args.
  *     C-side catch, dynamic-wind? (see list in s7.h)
@@ -31965,7 +31982,6 @@ the error type and the info passed to the error handler.");
  *     s7_kill to free all memory (including "permanent" stuff)
  *     settable subsequence function [setter for substring or list-tail?], append for sequences? (needs a make func)
  *     position/posq/posv along the lines of member
- *       for strings this could recognize upcase?
  *     file-exists?, directory?, delete-file, (length|copy file)? even wilder: (file position) or (for-each ... file)
  *     perhaps procedure-name, settable procedure-documentation
  *     perhaps copy port
