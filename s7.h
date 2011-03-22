@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.83"
-#define S7_DATE "14-Mar-11"
+#define S7_VERSION "1.84"
+#define S7_DATE "23-Mar-11"
 
 
 typedef long long int s7_Int;
@@ -652,6 +652,8 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
    * s7_call_with_location passes some information to the error handler.  
    */
 
+s7_pointer s7_catch_all(s7_scheme *sc, s7_pointer thunk, s7_pointer error_handler);
+
 bool s7_is_procedure_with_setter(s7_pointer obj);
 s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
 					 const char *name,
@@ -853,6 +855,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 23-Mar:    s7_catch_all.
  * 14-Mar:    s7_make_random_state, optional state argument to s7_random, random-state->list, s7_random_state_to_list.
  * 10-Feb:    s7_vector_print_length, s7_set_vector_print_length.
  * 7-Feb:     s7_begin_hook, s7_set_begin_hook.

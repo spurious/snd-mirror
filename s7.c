@@ -16363,7 +16363,11 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
 {
-  #define H_help "(help func) returns func's documentation string"
+  #define H_help "(help obj) returns obj's documentation"
+
+  if (is_hook(car(args)))
+    return(hook_documentation(car(args)));
+
   return(g_procedure_documentation_1(sc, args, "help"));  
 }
 
@@ -19727,13 +19731,56 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if 0
-void s7_catch(s7_scheme *sc, s7_pointer tag, s7_pointer thunk, s7_pointer error_handler)
+
+s7_pointer s7_catch_all(s7_scheme *sc, s7_pointer thunk, s7_pointer error_handler)
 {
-  /* ideally this would return the thunk evaluation value, but that requires s7_call
-   */
-  g_catch(sc, make_list_3(sc, tag, thunk, error_handler));
+  s7_pointer p;
+
+  NEW_CELL(sc, p);
+  catch_tag(p) = sc->T;                   /* if we catch everything, the error handling stuff in s7_call is not needed */
+  catch_goto_loc(p) = s7_stack_top(sc);
+  catch_handler(p) = error_handler;
+  set_type(p, T_CATCH | T_DONT_COPY);
+
+  push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
+  push_stack(sc, opcode(OP_CATCH), sc->NIL, p);
+  sc->args = sc->NIL;
+  sc->code = thunk;
+  eval(sc, OP_APPLY);
+
+  return(sc->value);
 }
+
+
+#if 0
+/* here's an example:
+ *
+    static s7_pointer error_handler(s7_scheme *sc, s7_pointer args)
+    {
+      fprintf(stderr, "got an error! %s\n", s7_object_to_c_string(sc, args));
+      return(s7_car(args));
+    }
+    
+    static s7_pointer adder(s7_scheme *sc, s7_pointer args)
+    {
+      return(s7_f(sc));
+    }
+    
+    int main(int argc, char **argv)
+    {
+      s7_scheme *s7;
+      s7 = s7_init();  
+      fprintf(stderr, "catch: %s\n",
+        s7_object_to_c_string(s7, 
+    	  s7_catch_all(s7, 
+    	    s7_make_function(s7, "adder", adder, 0, 0, false, "+"),
+    	    s7_make_function(s7, "error-handler", error_handler, 0, 0, true, "error handler"))));
+    }
+ *
+ * the function names are local (for error handling etc).  In general, it would be safer to
+ *    call s7_gc_protect on the functions (s7_make_function does not protect them).  The
+ *    body function ("adder") is a thunk -- args will always be nil.
+ */
 #endif
 
 
@@ -31970,24 +32017,19 @@ the error type and the info passed to the error handler.");
  *       or just *print-length* for all, including Snd cases -- in Snd print-length function becomes unneeded,
  *       but we have to change the symbol access to make sure Snd's print_length is set if ours is, or
  *       make the shadowing complete in the scheme case (but then how to set vct-print-length etc in parallel)?
- *       in gmp, there's also the int/ratio print length case (giant expt etc)
+ *       in gmp, there's also the int/ratio print length case (giant expt etc), and strings can be enormous
  *
  *     nonce-symbols need to be garbage collected
- *     lint? (can we notice unreachable code, unbound variables, bad args)? 
  *     what about trace-output-port? or an arg to trace? [it currently goes to current-output-port]
  *     sort! applied to c|s_object?
- *     the help strings use lambda* syntax for optional args, but these are not keyword args.
- *     C-side catch, dynamic-wind? (see list in s7.h)
- *     s7_quit (s7_call_with_exit?) that closes all files etc
+ *     s7_quit (s7_call_with_exit?) that closes all files etc (or perhaps close-ports?)
  *     s7_kill to free all memory (including "permanent" stuff)
  *     settable subsequence function [setter for substring or list-tail?], append for sequences? (needs a make func)
  *     position/posq/posv along the lines of member
  *     file-exists?, directory?, delete-file, (length|copy file)? even wilder: (file position) or (for-each ... file)
  *     perhaps procedure-name, settable procedure-documentation
- *     perhaps copy port
- *     help should be more general than procedure-documentation (hook strings etc)
  *     method lists for c|s_objects
- *     checkpoint by saving the heap, stack...
+ *     checkpoint by saving the heap, stack...(what about permanent memory that we don't still have a pointer to?)
  *     complex number can be both nan and infinite -- is that sensible?
  *     lots of displays are not readable (hash-table, vct, etc)
  *     still mixed arith: * + / - < > <= >= = min max, but I haven't found any bugs

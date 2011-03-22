@@ -13334,6 +13334,44 @@ this prints:
 	(format (values #f "~A" lst)))
       "#1=(0 . #1#)")
 
+(let ()
+  (define (mv n)
+    (define (mv-1 a)
+      (values a (+ a 1)))
+    (define (mv-2 b)
+      (values b (* b 2)))
+    (values n (mv-1 n) (mv-2 n)))
+  (test (list (mv 2)) '(2 2 3 2 4))
+  (test (+ (mv 1) (mv 3)) 26))
+
+(let ()
+  (define (fib n)
+    (define (1st a b) 
+      a)
+    (define (fib-1 n)
+      (if (< n 3)
+	  (values 1 1)
+	  (values (+ (fib-1 (- n 1))) 
+		  (1st (fib-1 (- n 1))))))
+    (1st (fib-1 n)))
+  (test (fib 8) 21)
+  (test (fib 13) 233))
+
+(let ()
+  (define (fib n)
+    (define (1st a b) 
+      a)
+    (define (2nd a b) 
+      (values (+ a b) a))
+    (define (fib-1 n)
+      (if (< n 3)
+	  (2nd 1 0)
+	  (2nd (fib-1 (- n 1)))))
+    (1st (fib-1 n)))
+  (test (fib 8) 21)
+  (test (fib 13) 233))
+
+
 
 
 
@@ -59700,7 +59738,9 @@ but it's the printout that is at fault:
  (lambda (arg)
    (test (random arg) 'error)
    (test (random 1.0 arg) 'error)
-   (test (make-random-state arg) 'error))
+   (test (make-random-state arg) 'error)
+   ;(test (random-state->list arg) 'error) -- this returns #f -- humph.
+   )
  (list "hi" _ht_ '() '(1 2) #f (integer->char 65) 'a-symbol (make-vector 3) abs #\f (lambda (a) (+ a 1)) (if #f #f) #<eof> #<undefined>))
 
 (let ((r1 (make-random-state 1234))
