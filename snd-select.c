@@ -785,7 +785,7 @@ static void move_selection_1(chan_info *cp, int x)
       if (((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)) ||
 	  ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)))
 	return;
-      move_axis(cp, ap, x);
+      move_axis(cp, x);
       if (!watch_selection_button) 
 	watch_selection_button = CALL_TIMEOUT(watch_selection, 50, cp);
     }

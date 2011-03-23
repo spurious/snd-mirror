@@ -1802,16 +1802,8 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
 }
 
 
-typedef struct {
-  int chans, fields;
-  double *axis_data;
-  bool *fftp, *wavep;
-} axes_data;
-
-
-void *free_axes_data(void *usa)
+axes_data *free_axes_data(axes_data *sa)
 {
-  axes_data *sa = (axes_data *)usa;
   if (sa)
     {
       if (sa->axis_data) {free(sa->axis_data); sa->axis_data = NULL;}
@@ -1826,7 +1818,7 @@ void *free_axes_data(void *usa)
 enum {SA_X0, SA_X1, SA_Y0, SA_Y1, SA_XMIN, SA_XMAX, SA_YMIN, SA_YMAX, SA_ZX, SA_ZY, SA_SX, SA_SY, SA_GSY, SA_GZY};
 #define SA_FIELDS 14
 
-void *make_axes_data(snd_info *sp)
+axes_data *make_axes_data(snd_info *sp)
 {
   axes_data *sa;
   int i;
@@ -1869,13 +1861,12 @@ void *make_axes_data(snd_info *sp)
        *    (via channel_style(ss) which defaults to channels_combined)
        */
     }
-  return((void *)sa);
+  return(sa);
 }
 
 
-void restore_axes_data(snd_info *sp, void *usa, mus_float_t new_duration, bool need_edit_history_update)
+void restore_axes_data(snd_info *sp, axes_data *sa, mus_float_t new_duration, bool need_edit_history_update)
 {
-  axes_data *sa = (axes_data *)usa;
   int i, j;
   for (i = 0, j = 0; i < sp->nchans; i++)
     {

@@ -238,6 +238,12 @@ typedef struct {
   mus_float_t scale;
 } sono_info;
 
+typedef struct {
+  int chans, fields;
+  double *axis_data;
+  bool *fftp, *wavep;
+} axes_data;
+
 typedef struct chan_info {
   int chan;                /* which chan are we */
   bool graph_transform_p;  /* f button state */
@@ -1413,12 +1419,12 @@ void display_channel_data(chan_info *cp);
 void display_channel_fft_data(chan_info *cp);
 void display_channel_time_data(chan_info *cp);
 void show_cursor_info(chan_info *cp);
-void apply_x_axis_change(axis_info *ap, chan_info *cp);
-void apply_y_axis_change(axis_info *ap, chan_info *cp);
+void apply_x_axis_change(chan_info *cp);
+void apply_y_axis_change(chan_info *cp);
 void sx_incremented(chan_info *cp, double amount);
-int move_axis(chan_info *cp, axis_info *ap, int x);
+int move_axis(chan_info *cp, int x);
 void set_axes(chan_info *cp, double x0, double x1, mus_float_t y0, mus_float_t y1);
-void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style);
+void focus_x_axis_change(chan_info *cp, int focus_style);
 bool key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym);
 void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_state, int button, oclock_t time);
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button);
@@ -1511,8 +1517,8 @@ void finish_peak_env(chan_info *cp);
 bool peak_env_maxamp_ok(chan_info *cp, int edpos);
 mus_float_t peak_env_maxamp(chan_info *cp, int edpos);
 bool peak_env_usable(chan_info *cp, mus_float_t samples_per_pixel, mus_long_t hisamp, bool start_new, int edit_pos, bool finish_env);
-int peak_env_graph(chan_info *cp, axis_info *ap, mus_float_t samples_per_pixel, int srate);
-int peak_env_partial_graph(chan_info *cp, axis_info *ap, mus_long_t beg, mus_long_t end, mus_float_t samples_per_pixel, int srate);
+int peak_env_graph(chan_info *cp, mus_float_t samples_per_pixel, int srate);
+int peak_env_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end, mus_float_t samples_per_pixel, int srate);
 char *shortname(snd_info *sp);
 char *shortname_indexed(snd_info *sp);
 void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed);
@@ -1577,9 +1583,9 @@ void delete_peak_env_info_file(chan_info *cp);
 
 /* -------- snd-file -------- */
 
-void *free_axes_data(void *sa);
-void *make_axes_data(snd_info *sp);
-void restore_axes_data(snd_info *sp, void *sa, mus_float_t new_duration, bool need_edit_history_update);
+axes_data *free_axes_data(axes_data *sa);
+axes_data *make_axes_data(snd_info *sp);
+void restore_axes_data(snd_info *sp, axes_data *sa, mus_float_t new_duration, bool need_edit_history_update);
 mus_long_t disk_kspace(const char *filename);
 time_t file_write_date(const char *filename);
 bool link_p(const char *filename);

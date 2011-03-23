@@ -6624,7 +6624,8 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   mus_long_t samples = 0;
   mus_long_t *old_cursors = NULL;
   chan_info *cp;
-  void *ms, *sa;
+  void *ms;
+  axes_data *sa;
   file_info *sphdr = NULL;
   io_error_t io_err = IO_NO_ERROR;
 

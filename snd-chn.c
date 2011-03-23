@@ -2,8 +2,7 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: the per-chan attributes (y-bounds, graph-type etc) are a mess when update, unite, sync etc happen
- * PERHAPS: if chans are syncd, shouldn't multichan mix/mark also?  syncd but mark drag doesn't edit both?
+/* PERHAPS: if chans are syncd, shouldn't multichan mix/mark also?  syncd but mark drag doesn't edit both?
  */
 
 bool graph_style_p(int grf)
@@ -848,9 +847,11 @@ void set_x_bounds(axis_info *ap)
 }
 
 
-void apply_y_axis_change(axis_info *ap, chan_info *cp)
+void apply_y_axis_change(chan_info *cp)
 {
   snd_info *sp;
+  axis_info *ap;
+  ap = cp->axis;
   sp = cp->sound;
 
   set_y_bounds(ap);
@@ -904,7 +905,7 @@ void set_x_axis_x0x1(chan_info *cp, double x0, double x1)
       ap->sx = (x0 - ap->xmin) / ap->x_ambit;
       resize_sx_and_zx(cp);
     }
-  apply_x_axis_change(ap, cp); /* this checks sync */
+  apply_x_axis_change(cp); /* this checks sync */
   ap->changed = true;
 }
 
@@ -980,14 +981,19 @@ static void update_xs(chan_info *ncp, axis_info *ap)
 }
 
 
-void apply_x_axis_change(axis_info *ap, chan_info *cp)
+void apply_x_axis_change(chan_info *cp)
 {
   int i;
   snd_info *sp;
+  axis_info *ap;
+
+  ap = cp->axis;
   sp = cp->sound;
   sp->lacp = cp;
+
   set_x_bounds(ap);
   update_graph_or_warn(cp);
+
   if (sp->sync != 0)
     {
       sync_info *si;
@@ -1052,8 +1058,9 @@ static mus_long_t zoom_focus_location(chan_info *cp)
 }
 
 
-void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
+void focus_x_axis_change(chan_info *cp, int focus_style)
 {
+  axis_info *ap;
   /* prepare for set_x_bounds given desired focus point, then drop into default
    * we need to set ap->sx to reflect the new zx value and the focus type
    * if focus_left - go on (nothing to do)
@@ -1062,7 +1069,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
    *    focus_active - find the currently active entity, if none use focus_middle 
    *    focus_proc -- call proc
    */
-
+  ap = cp->axis;
   if (ap->xmax == 0.0) return;
 
   if (ap->xmax <= ap->xmin) 
@@ -1156,7 +1163,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
       if (ap->x_ambit != 0.0)
 	ap->sx = (double)(ap->x0 - ap->xmin) / (double)(ap->x_ambit);
     }
-  apply_x_axis_change(ap, cp);
+  apply_x_axis_change(cp);
 }
 
 
@@ -1167,7 +1174,7 @@ void sx_incremented(chan_info *cp, double amount)
   ap->sx += (ap->zx * amount);
   if (ap->sx < 0.0) ap->sx = 0.0;
   if (ap->sx > (1.0 - ap->zx)) ap->sx = 1.0 - ap->zx;
-  apply_x_axis_change(ap, cp);
+  apply_x_axis_change(cp);
   resize_sx(cp);
 }
 
@@ -1183,18 +1190,20 @@ void zx_incremented(chan_info *cp, double amount)
     {
       ap->zx *= amount;
       if (ap->zx > 1.0) ap->zx = 1.0;
-      focus_x_axis_change(ap, cp, zoom_focus_style(ss));
-      /* apply_x_axis_change(ap, cp); */
+      focus_x_axis_change(cp, zoom_focus_style(ss));
       resize_sx(cp);
     }
 }
 
 
-int move_axis(chan_info *cp, axis_info *ap, int x)
+int move_axis(chan_info *cp, int x)
 {
   /* need to scroll axis forward or backward -- distance per call depends on x distance from end of axis */
   double off;
   int nx;
+  axis_info *ap;
+
+  ap = cp->axis;
   if (x > ap->x_axis_x1)
     {
       off = x - ap->x_axis_x1;
@@ -1209,8 +1218,10 @@ int move_axis(chan_info *cp, axis_info *ap, int x)
       if (ap->sx < 0.0) ap->sx = 0.0;
       nx = ap->x_axis_x0;
     }
-  apply_x_axis_change(ap, cp);
+
+  apply_x_axis_change(cp);
   resize_sx(cp);
+
   return(nx);
 }
 
@@ -1219,6 +1230,7 @@ void set_axes(chan_info *cp, double x0, double x1, mus_float_t y0, mus_float_t y
 {
   /* use to change channel_style to channels_separate, and restore axes upon update */
   axis_info *ap;
+
   ap = cp->axis;
   ap->x0 = x0;
   ap->x1 = x1;
@@ -1228,6 +1240,7 @@ void set_axes(chan_info *cp, double x0, double x1, mus_float_t y0, mus_float_t y
       ap->sx = (x0 - ap->xmin) / ap->x_ambit;
     }
   resize_sx(cp);
+
   ap->y0 = y0;
   ap->y1 = y1;
   if (ap->y_ambit != 0.0)
@@ -1489,7 +1502,15 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 	}
       if (graph_choice == NORMAL_GRAPH)
 	{
-	  draw_grf_points(cp->dot_size, ax, j, ap, 0.0, cp->time_graph_style);
+	  if (sp->channel_style == CHANNELS_SUPERIMPOSED)
+	    {
+	      color_t old_color;
+	      old_color = get_foreground_color(ax);
+	      set_foreground_color(ax, cp->combined_data_color);
+	      draw_grf_points(cp->dot_size, ax, j, ap, 0.0, cp->time_graph_style);
+	      set_foreground_color(ax, old_color);
+	    }
+	  else draw_grf_points(cp->dot_size, ax, j, ap, 0.0, cp->time_graph_style);
 	  if (cp->printing) 
 	    ps_draw_grf_points(ap, j, 0.0, cp->time_graph_style, cp->dot_size);
 	}
@@ -1503,7 +1524,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
     {
       /* take min, max */
       if (peak_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false)) /* true = start new background amp env process if needed */
-	j = peak_env_graph(cp, ap, samples_per_pixel, (graph_choice != ENVED_GRAPH) ? ((int)SND_SRATE(sp)) : 1);
+	j = peak_env_graph(cp, samples_per_pixel, (graph_choice != ENVED_GRAPH) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{
 	  mus_float_t ymin, ymax;
@@ -1570,7 +1591,15 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 	}
       if (graph_choice == NORMAL_GRAPH)
 	{
-	  draw_both_grf_points(cp->dot_size, ax, j, cp->time_graph_style);
+	  if (sp->channel_style == CHANNELS_SUPERIMPOSED)
+	    {
+	      color_t old_color;
+	      old_color = get_foreground_color(ax);
+	      set_foreground_color(ax, cp->combined_data_color);
+	      draw_both_grf_points(cp->dot_size, ax, j, cp->time_graph_style);
+	      set_foreground_color(ax, old_color);
+	    }
+	  else draw_both_grf_points(cp->dot_size, ax, j, cp->time_graph_style);
 	  if (cp->printing) 
 	    ps_draw_both_grf_points(ap, j, cp->time_graph_style, cp->dot_size);
 	}
@@ -1686,7 +1715,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
   else
     {
       if (peak_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false)) /* true = start new background amp env process if needed */
-	j = peak_env_partial_graph(cp, ap, beg, end, samples_per_pixel, (int)SND_SRATE(sp));
+	j = peak_env_partial_graph(cp, beg, end, samples_per_pixel, (int)SND_SRATE(sp));
       else
 	{
 	  mus_float_t ymin, ymax;
@@ -1968,6 +1997,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
   graphics_context *ax;
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
+  color_t old_color;
 
   /* "end" is the top displayed frequency in the FFT frequency axis 
    * "hisamp - losamp" is how many samples of data we have
@@ -2037,7 +2067,11 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
     }
 
   if (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)
-    ax = combined_context(cp);
+    {
+      ax = combined_context(cp);
+      old_color = get_foreground_color(ax);
+      set_foreground_color(ax, cp->combined_data_color);
+    }
   else ax = copy_context(cp);
 
   if (num_peaks > 6)
@@ -2045,7 +2079,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
       for (i = 0; i < num_peaks; i++) peak_amps[i] = peak_freqs[i];
       qsort((void *)peak_amps, num_peaks, sizeof(fft_peak), compare_peak_amps);
       if (num_peaks < 12) amp0 = peak_amps[2].amp; else amp0 = peak_amps[5].amp;
-      set_bold_peak_numbers_font(cp, ax); /* in snd-gchn.c */
+      set_bold_peak_numbers_font(cp, ax); /* in snd-g|xchn.c */
       if (cp->printing) ps_set_bold_peak_numbers_font();
 
 #if (!USE_GTK)
@@ -2087,7 +2121,6 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
 
   set_peak_numbers_font(cp, ax);
   if (cp->printing) ps_set_peak_numbers_font();
-  /* choose a small font for these numbers */
 #if (!USE_GTK)
   row = fap->y_axis_y1 + row_height;
 #else
@@ -2124,6 +2157,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
     }
 
   /* superimposed context reset takes place in make_fft_graph */
+  if (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)
+    set_foreground_color(ax, old_color);
 
   if (peak_freqs) free(peak_freqs); 
   if (peak_amps) free(peak_amps);
@@ -2424,7 +2459,15 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, graphics_context *ax, 
     }
   else 
     {
-      draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, 0.0, cp->transform_graph_style);
+      if (sp->channel_style == CHANNELS_SUPERIMPOSED)
+	{
+	  color_t old_color;
+	  old_color = get_foreground_color(ax);
+	  set_foreground_color(ax, cp->combined_data_color);
+	  draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, 0.0, cp->transform_graph_style);
+	  set_foreground_color(ax, old_color);
+	}
+      else draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, 0.0, cp->transform_graph_style);
     }
   
   if (cp->printing) 
@@ -5503,7 +5546,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      if (ap->x_ambit != 0.0)
 			ap->sx = (((double)(CURSOR(cp)) / (double)SND_SRATE(sp) - 
 				   ap->zx * 0.5 * (ap->xmax - ap->xmin)) - ap->xmin) / ap->x_ambit;
-		      apply_x_axis_change(ap, cp);
+		      apply_x_axis_change(cp);
 		      resize_sx_and_zx(cp);
 		    }
 		}
@@ -5816,7 +5859,14 @@ graphics_context *set_context(chan_info *cp, chan_gc_t gc)
   draw_cp = channel_to_chan(cp);
   ax = draw_cp->ax;
 
-  if (cp->selected)
+#if 0
+  if (((cp->sound->channel_style == CHANNELS_SUPERIMPOSED) &&
+       (cp->sound == selected_sound())) ||
+      ((cp->selected) &&
+       (cp->sound->channel_style != CHANNELS_SUPERIMPOSED)))
+#else
+    if (cp->selected)
+#endif
     {
       switch (gc)
 	{
@@ -5826,10 +5876,7 @@ graphics_context *set_context(chan_info *cp, chan_gc_t gc)
 	case CHAN_CGC: ax->gc = ss->selected_cursor_gc;      break;
 	case CHAN_MGC: ax->gc = ss->selected_mark_gc;        break;
 	case CHAN_MXGC: ax->gc = ss->mix_gc;                 break;
-	case CHAN_TMPGC: 
-	  ax->gc = ss->selected_basic_gc;   
-	  set_foreground_color(ax, cp->combined_data_color);  
-	  break;
+	case CHAN_TMPGC: ax->gc = ss->selected_basic_gc;     break;
 	}
     }
   else
@@ -5842,10 +5889,7 @@ graphics_context *set_context(chan_info *cp, chan_gc_t gc)
 	case CHAN_CGC: ax->gc = ss->cursor_gc;           break;
 	case CHAN_MGC: ax->gc = ss->mark_gc;             break;
 	case CHAN_MXGC: ax->gc = ss->mix_gc;             break;
-	case CHAN_TMPGC: 
-	  ax->gc = ss->combined_basic_gc;
-	  set_foreground_color(ax, cp->combined_data_color);
-	  break;
+	case CHAN_TMPGC: ax->gc = ss->combined_basic_gc; break;
 	}
     }
   return(ax);
@@ -6490,7 +6534,7 @@ static void reset_y_display(chan_info *cp, double sy, double zy)
   ap->sy = sy;
   ap->zy = zy;
   resize_sy(cp);
-  apply_y_axis_change(ap, cp);
+  apply_y_axis_change(cp);
 }
 
 

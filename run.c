@@ -8349,7 +8349,7 @@ static xen_value *symbol2string_1(ptree *pt, xen_value **args, int num_args)
 }
 
 #if USE_SND
-static void snd_print_s(int *args, ptree *pt) {fprintf(stderr, STRING_ARG_1);}
+static void snd_print_s(int *args, ptree *pt) {fprintf(stderr, "%s", STRING_ARG_1);}
 
 
 static xen_value *snd_print_1(ptree *pt, xen_value **args, int num_args) {return(package(pt, R_BOOL, snd_print_s, "snd_print_s", args, 1));}

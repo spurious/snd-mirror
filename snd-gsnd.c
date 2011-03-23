@@ -670,7 +670,7 @@ static void sync_button_click(GtkWidget *w, gpointer data)
       if (cp == NULL) cp = any_selected_channel(sp);
       goto_graph(cp);
       if (cp->cursor_on) sync_cursors(cp, CURSOR(cp));
-      apply_x_axis_change(cp->axis, cp);
+      apply_x_axis_change(cp);
     }
 }
 

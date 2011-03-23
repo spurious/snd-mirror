@@ -17075,6 +17075,38 @@ why are these different (read-time `#() ? )
   (test (sort! #(1 2 3) =) 'error)
   (set! *safety* old-safety))
 
+(if (defined? 'make-vct)
+    (let ((v (vct 1 4 2 34 2)))
+      (test (length v) 5)
+      (test (v 1) 4.0)
+      (sort! v <)
+      (test v (vct 1 2 2 4 34))
+      (set! (v 1) 32)
+      (sort! v >)
+      (test v (vct 34 32 4 2 1))
+      (test v (copy v))
+      (test (reverse v) (vct 1 2 4 32 34))
+      (test (object->string v) "#<vct[len=5]: 34.000 32.000 4.000 2.000 1.000>")
+      (test (fill! v 1.0) (vct 1 1 1 1 1))
+      ))
+
+(let* ((vtype (make-type :getter vector-ref
+			 :setter vector-set!
+			 :length vector-length))
+       (v? (car vtype))
+       (make-v (cadr vtype))
+       (v-ref (caddr vtype)))
+  (let ((v1 (make-v (make-vector 6 0))))
+    (set! (v1 0) 1)
+    (set! (v1 1) 11)
+    (set! (v1 2) 111)
+    (set! (v1 3) 1111)
+    (set! (v1 4) 11111)
+    (set! (v1 5) -1)
+    (sort! v1 <)
+    (test (v1 0) -1)
+    (test (v1 3) 111)))
+	   
 
 
 

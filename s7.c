@@ -331,7 +331,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1,
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO,
-	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO,
+	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO, OP_SORT_OBJECT,
 	      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS, OP_HOOK_APPLY, 
 	      OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
 	      OP_MAX_DEFINED} opcode_t;
@@ -350,14 +350,14 @@ static const char *op_names[OP_MAX_DEFINED] =
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
    "trace-hook-quit", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
-   "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort",
+   "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort", "sort",
    "eval-string", "eval-string", "set-access", "hook-apply", 
    "member-if", "assoc-if", "member-if", "assoc-if"
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 95 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 96 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -1154,6 +1154,7 @@ static bool s7_is_positive(s7_pointer obj);
 static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d);
 static bool args_match(s7_scheme *sc, s7_pointer x, int args);
 static s7_pointer read_error(s7_scheme *sc, const char *errmsg);
+static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj);
 
 
 
@@ -15351,8 +15352,11 @@ If its first argument is a list, the list is copied (despite the '!')."
 
   data = car(args);
   if (data == sc->NIL) return(sc->NIL);
-  if ((!is_pair(data)) && (!s7_is_vector(data)))
-    return(s7_wrong_type_arg_error(sc, "sort! data,", 1, data, "a vector or a list"));
+  if ((!is_pair(data)) && 
+      (!s7_is_vector(data)) &&
+      (!is_c_object(data)) &&
+      (!is_s_object(data)))
+    return(s7_wrong_type_arg_error(sc, "sort! data,", 1, data, "a vector, list, or an object from make-type and friends"));
 
   lessp = cadr(args);
   if (!is_procedure(lessp))
@@ -15362,37 +15366,43 @@ If its first argument is a list, the list is copied (despite the '!')."
   if (!args_match(sc, lessp, 2))
     return(s7_wrong_type_arg_error(sc, "sort!", 2, lessp, "a procedure that can take 2 arguments"));
 
-  if (is_pair(data))
+  switch (type(data))
     {
-      len = s7_list_length(sc, data); /* nil disposed of above, so 0 here == infinite */
-       if (len <= 0)
+    case T_PAIR:
+      len = s7_list_length(sc, data);            /* nil disposed of above, so 0 here == infinite */
+      if (len <= 0)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			make_list_2(sc, make_protected_string(sc, "sort! argument 1 should be a proper list: ~S"), data)));
-    }
-  else 
-    {
-      if (is_immutable(data))
-	return(s7_wrong_type_arg_error(sc, "sort!", 1, data, "a mutable vector"));
-      len = vector_length(data);
-    }
-  if (len < 2)
-    return(data);
-
-  /* what about other applicable objects? (sort string|s_object etc) -- sort hash-table|hook isn't sensible.
-   *    but if we have copy_object + set/ref/len?
-   */
-  if (is_pair(data))
-    {
+      if (len < 2) return(data);
       if (len == 2)
 	{
-	  push_stack(sc, opcode(OP_SORT_TWO), data, sc->args);
+	  push_stack(sc, opcode(OP_SORT_TWO), data, sc->args);  /* this will return a list */
 	  push_stack(sc, opcode(OP_APPLY), data, lessp);
 	  return(sc->F);
 	}
-      push_stack(sc, opcode(OP_SORT4), sc->args, sc->code); /* gc protect the original list */
+      push_stack(sc, opcode(OP_SORT4), sc->args, sc->code);    /* gc protect the original list, OP_SORT4 calls s7_vector_to_list */
       car(args) = g_list_to_vector(sc, sc->x = make_list_1(sc, data));
+      break;
+
+    case T_VECTOR:
+      if (is_immutable(data))
+	return(s7_wrong_type_arg_error(sc, "sort!", 1, data, "a mutable vector"));
+      len = vector_length(data);
+      break;
+
+    case T_C_OBJECT:
+    case T_S_OBJECT:
+      {
+	s7_pointer vect;
+	vect = object_to_vector(sc, data);                      /* this can raise an error */
+	len = vector_length(vect);
+	push_stack(sc, opcode(OP_SORT_OBJECT), sc->args, make_list_2(sc, car(args), vect)); /* gc protect, OP_SORT_OBJECT calls vector_to_object */
+	car(args) = vect;
+	break;
+      }
     }
 
+  if (len < 2) return(data);
   n = len - 1;
   k = ((int)(n / 2)) + 1;
 
@@ -16786,6 +16796,86 @@ static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
     }
 
   return(s7_wrong_type_arg_error(sc, "reverse", 0, obj, "a reversible object"));
+}
+
+
+static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj)
+{
+  int tag;
+  tag = c_object_type(obj);
+  if ((object_types[tag].length) &&
+      (object_types[tag].set) &&
+      (object_types[tag].apply))
+    {
+      s7_pointer vect, i_args;
+      int vect_gc_loc, i_gc_loc;
+      s7_Int i, len;
+      int save_x, save_y, save_z;
+
+      if (is_s_object(obj))
+	SAVE_X_Y_Z(save_x, save_y, save_z);
+
+      len = s7_integer(object_length(sc, obj));
+      vect = make_vector_1(sc, len, NOT_FILLED);
+      vect_gc_loc = s7_gc_protect(sc, vect);
+
+      i_args = make_list_1(sc, make_mutable_integer(sc, 0));
+      i_gc_loc = s7_gc_protect(sc, i_args);
+
+      for (i = 0; i < len; i++)
+	{
+	  integer(number(car(i_args))) = i;
+	  vector_element(vect, i) = apply_object(sc, obj, i_args);
+	}
+
+      if (is_s_object(obj))
+	RESTORE_X_Y_Z(save_x, save_y, save_z);
+      s7_gc_unprotect_at(sc, i_gc_loc);
+      s7_gc_unprotect_at(sc, vect_gc_loc);
+
+      return(vect);
+    }
+  return(s7_wrong_type_arg_error(sc, "object->vector", 0, obj, "an object with length, set!, and get functions"));
+}
+
+
+static s7_pointer vector_to_object(s7_scheme *sc, s7_pointer vect, s7_pointer obj)
+{
+  int tag;
+  tag = c_object_type(obj);
+  if ((object_types[tag].length) &&
+      (object_types[tag].set) &&
+      (object_types[tag].apply))
+    {
+      s7_pointer i_args, i_set_args;
+      int i_gc_loc, i_set_gc_loc;
+      s7_Int i, len;
+      int save_x, save_y, save_z;
+
+      if (is_s_object(obj))
+	SAVE_X_Y_Z(save_x, save_y, save_z);
+
+      len = vector_length(vect);
+      i_args = make_list_1(sc, make_mutable_integer(sc, 0));
+      i_gc_loc = s7_gc_protect(sc, i_args);
+      i_set_args = make_list_2(sc, car(i_args), sc->NIL);
+      i_set_gc_loc = s7_gc_protect(sc, i_set_args);
+
+      for (i = 0; i < len; i++)
+	{
+	  integer(number(car(i_args))) = i;
+	  cadr(i_set_args) = vector_element(vect, i);
+	  object_set(sc, obj, i_set_args);
+	}
+
+      if (is_s_object(obj))
+	RESTORE_X_Y_Z(save_x, save_y, save_z);
+      s7_gc_unprotect_at(sc, i_gc_loc);
+      s7_gc_unprotect_at(sc, i_set_gc_loc);
+
+      return(obj);
+    }
+  return(s7_wrong_type_arg_error(sc, "vector->object", 0, obj, "an object with length, set!, and get functions"));
 }
 
 
@@ -23071,6 +23161,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SORT4:
       /* sc->value is the sort vector which needs to be turned into a list */
       sc->value = s7_vector_to_list(sc, sc->value);
+      goto START;
+
+    case OP_SORT_OBJECT:
+      /* sc->value is the sorted vector which needs to be loaded back into the original object */
+      sc->value = vector_to_object(sc, sc->value, car(sc->code));
       goto START;
 
     case OP_SORT_TWO:
@@ -32008,11 +32103,6 @@ the error type and the info passed to the error handler.");
  *       is shared vectors in the multidimensional case (both directions).  (Or maybe
  *       :element-type but that requires type names)
  *
- *     function equality? 
- *       is it possible for two functions to have the same closure and source and  yet give different results to the same args?
- *       (equal? (lambda (a) (+ a 1)) (lambda (b) (+ b 1)))
- *       copy a function? -- apply lambda[*] to the procedure source + args + local env
- *
  *     if user creates an enormous list, it can seem to hang the listener: *list-print-length* ?
  *       or just *print-length* for all, including Snd cases -- in Snd print-length function becomes unneeded,
  *       but we have to change the symbol access to make sure Snd's print_length is set if ours is, or
@@ -32020,18 +32110,11 @@ the error type and the info passed to the error handler.");
  *       in gmp, there's also the int/ratio print length case (giant expt etc), and strings can be enormous
  *
  *     nonce-symbols need to be garbage collected
- *     what about trace-output-port? or an arg to trace? [it currently goes to current-output-port]
- *     sort! applied to c|s_object?
- *     s7_quit (s7_call_with_exit?) that closes all files etc (or perhaps close-ports?)
- *     s7_kill to free all memory (including "permanent" stuff)
  *     settable subsequence function [setter for substring or list-tail?], append for sequences? (needs a make func)
  *     position/posq/posv along the lines of member
- *     file-exists?, directory?, delete-file, (length|copy file)? even wilder: (file position) or (for-each ... file)
- *     perhaps procedure-name, settable procedure-documentation
+ *     file-exists?, directory?, delete-file
  *     method lists for c|s_objects
- *     checkpoint by saving the heap, stack...(what about permanent memory that we don't still have a pointer to?)
  *     complex number can be both nan and infinite -- is that sensible?
- *     lots of displays are not readable (hash-table, vct, etc)
  *     still mixed arith: * + / - < > <= >= = min max, but I haven't found any bugs
  *
  * --------------------------------------------------------------------------------

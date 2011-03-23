@@ -70,7 +70,7 @@ static void sy_changed(int value, chan_info *cp)
   ap = cp->axis;
   low = get_scrollbar(channel_sy(cp), value, SCROLLBAR_MAX);
   ap->sy = (1.0 - ap->zy) * low;
-  apply_y_axis_change(ap, cp);
+  apply_y_axis_change(cp);
 }
 
 
@@ -82,7 +82,7 @@ static void sx_changed(int value, chan_info *cp)
   ap = cp->axis;
   low = get_scrollbar(channel_sx(cp), value, SCROLLBAR_MAX);
   ap->sx = low * (1.0 - ap->zx);
-  apply_x_axis_change(ap, cp);
+  apply_x_axis_change(cp);
 }
 
 
@@ -96,7 +96,7 @@ static void zy_changed(int value, chan_info *cp)
   ap->zy = sqr(get_scrollbar(channel_zy(cp), value, SCROLLBAR_MAX));
   ap->sy += (.5 * (old_zy - ap->zy)); /* try to keep wave centered */
   if (ap->sy < 0) ap->sy = 0;
-  apply_y_axis_change(ap, cp);
+  apply_y_axis_change(cp);
   resize_sy(cp);
 }
 
@@ -126,7 +126,7 @@ static void zx_changed(int value, chan_info *cp)
     ap->zx = sqr(get_scrollbar(channel_zx(cp), value, SCROLLBAR_MAX));
   else ap->zx = cube(get_scrollbar(channel_zx(cp), value, SCROLLBAR_MAX));
   /* if cursor visible, focus on that, else selection, else mark, else left side */
-  focus_x_axis_change(ap, cp, zoom_focus_style(ss));
+  focus_x_axis_change(cp, zoom_focus_style(ss));
   resize_sx(cp);
 }
 
@@ -1269,7 +1269,7 @@ static void set_graph_font(chan_info *cp, graphics_context *ax, XFontStruct *bf)
 {
   if (!ax) return;
   ax->current_font = bf->fid;  
-  XSetFont(XtDisplay(cp->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
+  XSetFont(XtDisplay(channel_to_widget(cp)), copy_GC(cp), bf->fid);
 }
 
 
@@ -1396,7 +1396,9 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
     {
       int i;
       channel_style_t old_style;
-      
+      chan_info *selected_cp;
+
+      selected_cp = any_selected_channel(sp); /* chan 0 is none is selected */
       old_style = sp->channel_style;
       sp->channel_style = new_style;
 
@@ -1440,22 +1442,46 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  sp->previous_sync = sp->sync;
 		  if (sp->sync == 0) syncb(sp, 1);
 		  XtVaSetValues(unite_button(sp), XmNselectColor, ss->green, NULL);
-		  apply_y_axis_change((sp->chans[0])->axis, sp->chans[0]);
-		  apply_x_axis_change((sp->chans[0])->axis, sp->chans[0]);
-		  for (i = 1; i < sp->nchans; i++) 
-		    CURSOR(sp->chans[i]) = CURSOR(sp->chans[0]);
+
+		  apply_y_axis_change(selected_cp);
+		  apply_x_axis_change(selected_cp);
+
+		  for (i = 0; i < sp->nchans; i++) 
+		    {
+		      if (i != selected_cp->chan)
+			{
+			  chan_info *ncp;
+			  ncp = sp->chans[i];
+			  CURSOR(ncp) = CURSOR(selected_cp);
+			  if (selected_cp->graph_transform_p != ncp->graph_transform_p)
+			    {
+			      ncp->graph_transform_p = selected_cp->graph_transform_p;
+			      set_toggle_button(channel_f(ncp), selected_cp->graph_transform_p, false, (void *)ncp);
+			    }
+			  if (selected_cp->graph_time_p != ncp->graph_time_p)
+			    {
+			      ncp->graph_time_p = selected_cp->graph_time_p;
+			      set_toggle_button(channel_w(ncp), selected_cp->graph_time_p, false, (void *)ncp);
+			    }
+			}
+		    }
 		}
 	    }
 
 	  height = widget_height(w_snd_pane(sp)) - control_panel_height(sp);
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
-	      chan_info *ncp;
-	      ncp = sp->chans[0];
-	      channel_lock_pane(ncp, height);
+	      axis_info *ap;
+	      ap = selected_cp->axis;
+	      channel_lock_pane(sp->chans[0], height);
 
-	      for (i = 1; i < sp->nchans; i++) 
-		cleanup_cw(sp->chans[i]);
+	      for (i = 0; i < sp->nchans; i++) 
+		{
+		  if (i != selected_cp->chan)
+		    set_axes(sp->chans[i], ap->x0, ap->x1, ap->y0, ap->y1);
+		  if (i > 0)
+		    cleanup_cw(sp->chans[i]);
+		}
 
 	      channel_open_pane(sp->chans[0]);
 	      channel_unlock_pane(sp->chans[0]);
@@ -1492,7 +1518,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		      XmToggleButtonSetState(cw[W_f], (Boolean)(cp->graph_transform_p), false);
 		      XmToggleButtonSetState(cw[W_w], (Boolean)(cp->graph_time_p), false);
 		      /* these can get out of sync if changes are made in the unseparated case */
-		      set_axes(cp, ap->x0, ap->x1, ap->y0, ap->y1);
 		    }
 
 		  XmToggleButtonSetState(unite_button(sp), false, false);

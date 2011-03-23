@@ -1985,7 +1985,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd, XEN chn, XEN ax)
       if (ap == cp->axis)
 	{
 	  resize_sy_and_zy(cp);
-	  apply_y_axis_change(ap, cp);
+	  apply_y_axis_change(cp);
 	}
     }
 

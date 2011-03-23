@@ -437,7 +437,7 @@ static bool move_mark_1(chan_info *cp, mark *mp, int x)
 	      ((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)))
 	    return(false);
 	}
-      nx = move_axis(cp, ap, x);
+      nx = move_axis(cp, x);
       if (!watching_mouse) start_mark_watching(cp, mp);
     }
   else 

@@ -85,7 +85,7 @@ static void sy_changed(float value, chan_info *cp)
   ap = cp->axis;
   ap->sy = value - ap->zy;
   if (ap->sy < 0.0) ap->sy = 0.0;
-  apply_y_axis_change(ap, cp);
+  apply_y_axis_change(cp);
 }
 
 
@@ -94,7 +94,7 @@ static void sx_changed(float value, chan_info *cp)
   axis_info *ap;
   ap = cp->axis;
   ap->sx = value;
-  apply_x_axis_change(ap, cp);
+  apply_x_axis_change(cp);
 }
 
 
@@ -108,7 +108,7 @@ static void zy_changed(float value, chan_info *cp)
   ap->zy = sqr(value);
   ap->sy += (.5 * (old_zy - ap->zy)); /* try to keep wave centered */
   if (ap->sy < 0) ap->sy = 0;
-  apply_y_axis_change(ap, cp);
+  apply_y_axis_change(cp);
   resize_sy(cp);
 }
 
@@ -134,7 +134,7 @@ static void zx_changed(float value, chan_info *cp)
   if (fabs(old_zx - ap->zx) > .00001) /* click on zoom is moving the window */
     {
       /* if cursor visible, focus on that, else selection, else mark, else left side */
-      focus_x_axis_change(ap, cp, zoom_focus_style(ss));
+      focus_x_axis_change(cp, zoom_focus_style(ss));
 
       /* focus_x_axis_change has already displayed the new graph, but in gtk the scrollbar setting
        *   in resize_sx will try to display everything again. So try to squelch it...
@@ -1052,8 +1052,12 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
       (sp->nchans > 1))
     {
       channel_style_t old_style;
+      chan_info *selected_cp;
+
+      selected_cp = any_selected_channel(sp); /* chan 0 is none is selected */
       old_style = sp->channel_style;
       sp->channel_style = new_style;
+
       if (new_style != old_style)
 	{
 	  int i;
@@ -1088,25 +1092,51 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		{
 		  sp->previous_sync = sp->sync;
 		  if (sp->sync == 0) syncb(sp, 1);
-		  /* set to green ? */
-		  apply_y_axis_change((sp->chans[0])->axis, sp->chans[0]);
-		  apply_x_axis_change((sp->chans[0])->axis, sp->chans[0]);
-		  for (i = 1; i < sp->nchans; i++) CURSOR(sp->chans[i]) = CURSOR(sp->chans[0]);
+
+		  apply_y_axis_change(selected_cp);
+		  apply_x_axis_change(selected_cp);
+
+		  for (i = 0; i < sp->nchans; i++) 
+		    {
+		      if (i != selected_cp->chan)
+			{
+			  chan_info *ncp;
+			  ncp = sp->chans[i];
+			  CURSOR(ncp) = CURSOR(selected_cp);
+			  if (selected_cp->graph_transform_p != ncp->graph_transform_p)
+			    {
+			      ncp->graph_transform_p = selected_cp->graph_transform_p;
+			      set_toggle_button(channel_f(ncp), selected_cp->graph_transform_p, false, (void *)ncp);
+			    }
+			  if (selected_cp->graph_time_p != ncp->graph_time_p)
+			    {
+			      ncp->graph_time_p = selected_cp->graph_time_p;
+			      set_toggle_button(channel_w(ncp), selected_cp->graph_time_p, false, (void *)ncp);
+			    }
+			}
+		    }
 		}
 	    }
 
 	  height[0] = widget_height(w_snd_pane(sp)) - control_panel_height(sp);
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
-	      chan_info *ncp;
-	      ncp = sp->chans[0];
+	      axis_info *ap;
+	      ap = selected_cp->axis;
 
-	      for (i = 1; i < sp->nchans; i++) 
+	      for (i = 0; i < sp->nchans; i++) 
 		{
-		  ncp = sp->chans[i];
-		  cleanup_cw(ncp);
-		  ncp->ax->w = channel_to_widget(ncp);
-		  ncp->ax->wn = WIDGET_TO_WINDOW(ncp->ax->w);
+		  if (i != selected_cp->chan)
+		    set_axes(sp->chans[i], ap->x0, ap->x1, ap->y0, ap->y1);
+
+		  if (i > 0)
+		    {
+		      chan_info *ncp;
+		      ncp = sp->chans[i];
+		      cleanup_cw(ncp);
+		      ncp->ax->w = channel_to_widget(ncp);
+		      ncp->ax->wn = WIDGET_TO_WINDOW(ncp->ax->w);
+		    }
 		}
 	      channel_open_pane(sp->chans[0]);
 	      set_toggle_button(unite_button(sp), true, false, (void *)sp);
@@ -1133,10 +1163,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		      cp->ax->wn = WIDGET_TO_WINDOW(cp->ax->w);
 		      cw = cp->chan_widgets;
 		      gtk_widget_show_all(cw[W_main_window]);
-		      set_toggle_button(cw[W_f], cp->graph_transform_p, false, (void *)cp);
-		      set_toggle_button(cw[W_w], cp->graph_time_p, false, (void *)cp);
-		      /* these can get out of sync if changes are made in the unseparated case */
-		      set_axes(cp, ap->x0, ap->x1, ap->y0, ap->y1);
 		    }
 		  set_toggle_button(unite_button(sp), false, false, (void *)sp);
 		  if (sp->selected_channel > 0) color_selected_channel(sp);

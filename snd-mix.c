@@ -2240,7 +2240,7 @@ void move_mix_tag(int mix_id, int x, int y)
 	      watch_mix_proc = CALL_TIMEOUT(watch_mix, MIX_WAIT_TIME, md);
 	    }
 	}
-      x = move_axis(cp, ap, x); /* calls update_graph eventually (in snd-chn.c reset_x_display) */
+      x = move_axis(cp, x); /* calls update_graph eventually (in snd-chn.c reset_x_display) */
       axis_changed = true;
     }
   else 

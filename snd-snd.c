@@ -593,7 +593,7 @@ static short local_grf_y(mus_float_t val, axis_info *ap)
 }
 
 
-int peak_env_graph(chan_info *cp, axis_info *ap, mus_float_t samples_per_pixel, int srate) 
+int peak_env_graph(chan_info *cp, mus_float_t samples_per_pixel, int srate) 
 {
   mus_float_t step, x, pinc = 0.0;
   double xf, xk;
@@ -602,7 +602,9 @@ int peak_env_graph(chan_info *cp, axis_info *ap, mus_float_t samples_per_pixel, 
   int j = 0;
   mus_long_t i;
   peak_env_info *ep;
+  axis_info *ap;
 
+  ap = cp->axis;
   ep = cp->edits[cp->edit_ctr]->peak_env;
   step = samples_per_pixel / (mus_float_t)(ep->samps_per_bin);
   xf = (double)(ap->losamp) / (double)(ep->samps_per_bin);
@@ -647,7 +649,7 @@ int peak_env_graph(chan_info *cp, axis_info *ap, mus_float_t samples_per_pixel, 
 }
 
 
-int peak_env_partial_graph(chan_info *cp, axis_info *ap, mus_long_t beg, mus_long_t end, mus_float_t samples_per_pixel, int srate)
+int peak_env_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end, mus_float_t samples_per_pixel, int srate)
 {
   mus_float_t step, x;
   double xf, xk;
@@ -656,7 +658,9 @@ int peak_env_partial_graph(chan_info *cp, axis_info *ap, mus_long_t beg, mus_lon
   int j = 0;
   mus_long_t i;
   peak_env_info *ep;
+  axis_info *ap;
 
+  ap = cp->axis;
   ep = cp->edits[cp->edit_ctr]->peak_env;
   step = samples_per_pixel / (mus_float_t)(ep->samps_per_bin);
   xf = (double)(beg) / (double)(ep->samps_per_bin);

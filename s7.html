@@ -4096,7 +4096,8 @@ function passed as its second argument to choose the new ordering.
 </pre>
 
 <p>Despite the "!" in its name, sort! actually copies any list argument passed to it,
-but vectors are sorted in place.
+but vectors are sorted in place.  sort! can also handle any C-defined object, or anything from make-type,
+that provides getter, setter, and length functions.
 </p>
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
