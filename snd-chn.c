@@ -2,7 +2,16 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* PERHAPS: if chans are syncd, shouldn't multichan mix/mark also?  syncd but mark drag doesn't edit both?
+/* TODO: show-full-duration should apply to file update also, and should update current!
+ * TODO: full scale of this hung X?
+ * TODO: the data displayed by popup info is wrong? -- it's ignoring edits?
+ * TODO: show-full-range (i.e.match y-bounds to data)
+ * TODO: some way to refer to the full current sound/channel (i.e. like selection) for copy etc
+ * TODO: when freq very low, current FFT polynomial peak finder screws up
+ * TODO: package up the readers so they're easier to use with, for example, map-channel
+ * TODO: if sin(phi) is so close to min, can a trig-poly in x y and x*y get equally close to the 3 case?
+ * TODO sin(x^2) ?
+ * TODO: the peaks listing is weird if the peaks are all low
  */
 
 bool graph_style_p(int grf)
@@ -1295,24 +1304,30 @@ static char chn_id_str[LABEL_BUFFER_SIZE];
 
 static void display_channel_id(chan_info *cp, graphics_context *ax, int height, int chans)
 {
-  if (cp->show_axes == SHOW_NO_AXES) return;
-  if ((chans > 1) || (cp->edit_ctr > 0))
+  if (cp->show_axes == SHOW_NO_AXES) 
+    return;
+
+  if ((chans > 1) || 
+      (cp->edit_ctr > 0))
     {
       int x0, y0;
       color_t old_color = 0;
+
       set_peak_numbers_font(cp, ax);
       if (cp->printing) ps_set_peak_numbers_font();
+
       x0 = 5;
       y0 = height + CHN_LABEL_OFFSET;
-
       if (cp->edit_ctr == 0)
 	mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]", cp->chan + 1);
       else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]: %d", cp->chan + 1, cp->edit_ctr);
+
       if (cp == selected_channel())
 	{
 	  old_color = get_foreground_color(copy_context(cp));
 	  set_foreground_color(copy_context(cp), ss->red);
 	}
+
       draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
       if (cp->printing) 
 	ps_draw_string(cp->axis, x0, y0, chn_id_str);
@@ -5859,14 +5874,7 @@ graphics_context *set_context(chan_info *cp, chan_gc_t gc)
   draw_cp = channel_to_chan(cp);
   ax = draw_cp->ax;
 
-#if 0
-  if (((cp->sound->channel_style == CHANNELS_SUPERIMPOSED) &&
-       (cp->sound == selected_sound())) ||
-      ((cp->selected) &&
-       (cp->sound->channel_style != CHANNELS_SUPERIMPOSED)))
-#else
-    if (cp->selected)
-#endif
+  if (cp->selected)
     {
       switch (gc)
 	{

@@ -95,7 +95,6 @@
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
- * SOMEDAY: generics like length
  *
  * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings (if default types are used in s7)
  *   but does this work in multithread cases?
@@ -10021,7 +10020,7 @@ static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-/* TODO fill and copy 
+/* PERHAPS: fill and copy 
    static xen_value *string_fill_1(ptree *pt, xen_value **args, int num_args)
    static xen_value *vct_fill_1(ptree *pt, xen_value **args, int num_args)
    static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)

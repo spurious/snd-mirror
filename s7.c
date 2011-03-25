@@ -220,6 +220,7 @@
 
 
 
+
 /* -------------------------------------------------------------------------------- */
 
 /* s7.c is organized as follows:
@@ -16045,7 +16046,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   c_function(x) = ptr;
   c_function_call(x) = f;
   c_function_setter(x) = sc->F;
-  c_function_name(x) = name;       /* (procedure-name proc) => (format #f "~A" proc); perhaps add this as a built-in function? */
+  c_function_name(x) = name;       /* (procedure-name proc) => (format #f "~A" proc) */
   if (doc)
     c_function_documentation(x) = make_permanent_string(doc);
 
@@ -16342,8 +16343,6 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
   return(""); /* not NULL here so that (string=? "" (procedure-documentation no-doc-func)) -> #t */
 }
 
-
-/* perhaps this should be settable? I think it is in sbcl */
 
 static s7_pointer g_procedure_documentation_1(s7_scheme *sc, s7_pointer args, const char *caller)
 {
@@ -18558,10 +18557,6 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
 
     case T_HOOK:
       return(hook_copy(sc, obj));
-
-      /* perhaps copy input port -> saves current read position? 
-       *   would this require copying or protecting the string (sort of like a shared vector)?
-       */
     }
   return(obj);
 }
@@ -20666,6 +20661,25 @@ void s7_set_begin_hook(s7_scheme *sc, bool (*hook)(s7_scheme *sc))
 {
   sc->begin_hook = hook;
 }
+
+#if 0
+bool s7_lint_hook(s7_scheme *sc);
+bool s7_lint_hook(s7_scheme *sc)
+{
+  /* intended to be used as a begin_hook 
+   *
+   *   since we're at the start of a begin block, we know sc->code is the block,
+   *   and sc->envir has our local vars if any.  So, we should be able to traverse
+   *   this block, and lookup every name in the body.  We could do arg checks (number and type),
+   *   undefined/unused/unref'd vars, etc.  How to tell we've already checked a given block?
+   *   this also requires that the block be evaluated.  numbers could be watched for NaN/inf.
+   *   macros have not been expanded at this point.
+   */
+
+  fprintf(stderr, "code: %s, frame: %s\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, car(sc->envir)));
+  return(false);
+}
+#endif
 
 
 void s7_quit(s7_scheme *sc)
@@ -27772,8 +27786,7 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
       return(string_to_big_real(sc, s7_string(car(args)), (is_pair(cdr(args))) ? s7_integer(cadr(args)) : 10));
 
     default:      
-      /* PERHAPS: read complex via gmp -- does this ever matter? 
-       *   yes: (rationalize (real-part (bignum "0.1+i")) 0) -> 3602879701896397/36028797018963968
+      /* PERHAPS: read complex via gmp, (rationalize (real-part (bignum "0.1+i")) 0) -> 3602879701896397/36028797018963968
        */
       return(promote_number(sc, T_BIG_COMPLEX, p));
     }
@@ -32109,9 +32122,6 @@ the error type and the info passed to the error handler.");
  *       make the shadowing complete in the scheme case (but then how to set vct-print-length etc in parallel)?
  *       in gmp, there's also the int/ratio print length case (giant expt etc), and strings can be enormous
  *
- *     nonce-symbols need to be garbage collected
- *     settable subsequence function [setter for substring or list-tail?], append for sequences? (needs a make func)
- *     position/posq/posv along the lines of member
  *     file-exists?, directory?, delete-file
  *     method lists for c|s_objects
  *     complex number can be both nan and infinite -- is that sensible?

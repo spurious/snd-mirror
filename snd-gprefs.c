@@ -895,7 +895,6 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   gtk_widget_show(prf->scale);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->scale)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->scale), false);
-  
 
   prf->scale_func = scale_func;
   prf->text_func = text_func;

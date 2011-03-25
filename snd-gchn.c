@@ -828,7 +828,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       set_user_data(G_OBJECT(adjs[W_sx_adj]), (gpointer)cp);
       SG_SIGNAL_CONNECT(adjs[W_sx_adj], "value_changed", sx_valuechanged_callback, cp);
 #if HAVE_GTK_3
-      widget_modify_bg(cw[W_sx], GTK_STATE_ACTIVE, ss->position_color);
+      widget_modify_bg(cw[W_sx], GTK_STATE_NORMAL, ss->position_color);
 #endif
       gtk_widget_show(cw[W_sx]);
       gtk_widget_set_name(cw[W_sx], "sx_slider");
@@ -839,7 +839,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       set_user_data(G_OBJECT(adjs[W_zx_adj]), (gpointer)cp);
       SG_SIGNAL_CONNECT(adjs[W_zx_adj], "value_changed", zx_valuechanged_callback, cp);
 #if HAVE_GTK_3
-      widget_modify_bg(cw[W_zx], GTK_STATE_ACTIVE, ss->zoom_color);
+      widget_modify_bg(cw[W_zx], GTK_STATE_NORMAL, ss->zoom_color);
 #endif
       gtk_widget_set_name(cw[W_zx], "zx_slider");
       gtk_widget_show(cw[W_zx]);
@@ -893,7 +893,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       set_user_data(G_OBJECT(adjs[W_zy_adj]), (gpointer)cp);
       SG_SIGNAL_CONNECT(adjs[W_zy_adj], "value_changed", zy_valuechanged_callback, cp);
 #if HAVE_GTK_3
-      widget_modify_bg(cw[W_zy], GTK_STATE_ACTIVE, ss->zoom_color);
+      widget_modify_bg(cw[W_zy], GTK_STATE_NORMAL, ss->zoom_color);
 #endif
       gtk_widget_show(cw[W_zy]);
       gtk_widget_set_name(cw[W_zy], "zy_slider");
@@ -907,7 +907,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       set_user_data(G_OBJECT(adjs[W_sy_adj]), (gpointer)cp);
       SG_SIGNAL_CONNECT(adjs[W_sy_adj], "value_changed", sy_valuechanged_callback, cp);
 #if HAVE_GTK_3
-      widget_modify_bg(cw[W_sy], GTK_STATE_ACTIVE, ss->position_color);
+      widget_modify_bg(cw[W_sy], GTK_STATE_NORMAL, ss->position_color);
 #endif
       gtk_widget_show(cw[W_sy]);
       gtk_widget_set_name(cw[W_sy], "sy_slider");
@@ -969,7 +969,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
     cax->wn = WIDGET_TO_WINDOW(w);
     cax->w = w;
   }
-
   return(0);
 }
 
@@ -1301,7 +1300,9 @@ void color_chan_components(color_t color, slider_choice_t which_component)
 		    /* this sets both the trough and the slider color -- not really what I'd like */
 		    widget_modify_bg(channel_sx(cp), GTK_STATE_NORMAL, color);  
 		    widget_modify_bg(channel_sy(cp), GTK_STATE_NORMAL, color);  
-		    /* TODO: gzx etc? but this entire business scarcely works -- why is this a no-op at creation? */
+		    /* TODO: gzx etc? also the slider should be a different color
+		     *       this might work if we used scales rather than sliders
+		     */
 #endif
 		  }
 		else

@@ -675,6 +675,9 @@ void snd_doit(int argc, char **argv)
 #if HAVE_GTK_3
   set_basic_color(ss->basic_color);
   color_listener(ss->listener_color);
+
+  color_chan_components(ss->zoom_color, COLOR_ZOOM);
+  color_chan_components(ss->position_color, COLOR_POSITION);
 #endif
 
 #ifndef SND_AS_WIDGET

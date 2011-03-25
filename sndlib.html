@@ -68,8 +68,8 @@
 </td></tr></table>
 
 <p>sndlib is a collection of sound file and audio hardware
-handlers written in C and running currently on SGI (either
-audio library), Sun, OSS or ALSA (Linux and others), Mac OSX, and Windows systems.  
+handlers written in C and running currently in various Unices
+via OSS or ALSA, Mac OSX, and on old Windows systems.  
 It provides relatively straightforward access to many sound file headers and data
 types, and most of the features of the audio hardware. </p>
 
@@ -78,8 +78,7 @@ types, and most of the features of the audio hardware. </p>
   ./configure
   make
 </pre>
-<p>To install it, 'make install' &mdash; I've tested this process in Linux,
-SGI, and Sun.  It could conceivably work elsewhere. 
+<p>To install it, 'make install' &mdash; I've tested this process in Linux and on a Mac.
 </p>
 
 <p>The following files make up sndlib:</p>
@@ -736,6 +735,12 @@ static SCM call_phase-vocoder(void)
 
 <!--
 TODO: fill out sndlib.html
+          more examples, including the shell-repl as real-time player
+          and the sndlib example in s7.html
+          invert this entire file -- start with a CLM example that makes sound and work downwards
+            use c and ext langs throughout
+          move snd-trans to sndlib or delete it
+
 void src_file(const char *file, double ratio)
 {
   mus_any **rds, **srcs;

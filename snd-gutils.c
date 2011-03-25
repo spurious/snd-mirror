@@ -1320,7 +1320,3 @@ void init_gtk(void)
     -1, NULL);
 }
 #endif
-
-/* check for redundant set color/line width calls
-*    also is sonogram 1-at-a-time?
-*/
