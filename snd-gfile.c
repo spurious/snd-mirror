@@ -4169,6 +4169,13 @@ widget_t post_it(const char *subject, const char *str)
 }
 
 
+void post_it_append(const char *str)
+{
+  if (post_it_text)
+    sg_text_insert(post_it_text, (char *)str);
+}
+
+
 void save_post_it_dialog_state(FILE *fd)
 {
   if ((post_it_dialog) && (widget_is_active(post_it_dialog)))

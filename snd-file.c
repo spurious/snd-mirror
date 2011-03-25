@@ -1870,21 +1870,33 @@ void restore_axes_data(snd_info *sp, axes_data *sa, mus_float_t new_duration, bo
   int i, j;
   for (i = 0, j = 0; i < sp->nchans; i++)
     {
-      mus_float_t old_duration;
       chan_info *cp;
       axis_info *ap;
       int loc;
 
       cp = sp->chans[i];
       loc = j * sa->fields;
-      old_duration = sa->axis_data[loc + SA_X1] - sa->axis_data[loc + SA_X0];  /* old duration is x1 - x0 */
 
-      if (new_duration < sa->axis_data[loc + SA_X0])                           /* new duration < old x0 */
-	sa->axis_data[loc + SA_X0] = new_duration - old_duration;              /* try to maintain old window size */
-      if (sa->axis_data[loc + SA_X0] < 0.0) 
-	sa->axis_data[loc + SA_X0] = 0.0;
-      if (new_duration < sa->axis_data[loc + SA_X1]) 
-	sa->axis_data[loc + SA_X1] = new_duration;                             /* new x1 */
+      if ((show_full_duration(ss)) &&
+	  (sa->axis_data[loc + SA_X0] == 0.0) &&
+	  (sa->axis_data[loc + SA_X1] == sa->axis_data[loc + SA_XMAX]))
+	{
+	  /* we were viewing the full duration when the update occurred, and show-full-duration is #t,
+	   *   so show the full new duration.
+	   */
+	  sa->axis_data[loc + SA_X1] = new_duration;                             /* new x1 */
+	}
+      else
+	{
+	  mus_float_t old_duration;                                            /* old duration is x1 - x0 */
+	  old_duration = sa->axis_data[loc + SA_X1] - sa->axis_data[loc + SA_X0];  
+	  if (new_duration < sa->axis_data[loc + SA_X0])                       /* new duration < old x0 */
+	    sa->axis_data[loc + SA_X0] = new_duration - old_duration;          /* try to maintain old window size */
+	  if (sa->axis_data[loc + SA_X0] < 0.0) 
+	    sa->axis_data[loc + SA_X0] = 0.0;
+	  if (new_duration < sa->axis_data[loc + SA_X1]) 
+	    sa->axis_data[loc + SA_X1] = new_duration;                         /* new x1 */
+	}
       sa->axis_data[loc + SA_XMAX] = new_duration;                             /* new xmax */
 
       ap = cp->axis;
@@ -5818,11 +5830,25 @@ static XEN g_show_full_duration(void) {return(C_TO_XEN_BOOLEAN(show_full_duratio
 
 static XEN g_set_show_full_duration(XEN val) 
 {
+  int i;
   #define H_show_full_duration "(" S_show_full_duration "): " PROC_TRUE " if you want the entire sound \
 displayed whn it is opened."
 
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_full_duration, "a boolean");
   set_show_full_duration(XEN_TO_C_BOOLEAN(val)); 
+  
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
+	{
+	  int j;
+	  for (j = 0; j < sp->nchans; j++)
+	    set_x_axis_x0x1(sp->chans[j], 0.0, sp->chans[j]->axis->xmax);
+	}
+    }
+
   return(C_TO_XEN_BOOLEAN(show_full_duration(ss)));
 }
 
@@ -5849,6 +5875,51 @@ static XEN g_set_initial_dur(XEN val)
   set_initial_dur(XEN_TO_C_DOUBLE(val)); 
   return(C_TO_XEN_DOUBLE(initial_dur(ss)));
 }
+
+
+static XEN g_show_full_range(void) {return(C_TO_XEN_BOOLEAN(show_full_range(ss)));}
+
+static XEN g_set_show_full_range(XEN val) 
+{
+  int i;
+  #define H_show_full_range "(" S_show_full_range "): " PROC_TRUE " if you want the graph y-bounds to accommodate the sound's \
+max and min when it is opened."
+
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_full_range, "a boolean");
+  set_show_full_range(XEN_TO_C_BOOLEAN(val)); 
+
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
+	{
+	  int j;
+	  for (j = 0; j < sp->nchans; j++)
+	    {
+	      chan_info *cp;
+	      axis_info *ap;
+	      mus_float_t hi;
+	      cp = sp->chans[j];
+	      ap = cp->axis;
+	      hi = channel_maxamp(cp, AT_CURRENT_EDIT_POSITION);
+	      /* PERHAPS: get actual min here? */
+	      ap->ymin = -hi;
+	      ap->ymax = hi;
+	      ap->y_ambit = 2 * hi;
+	      ap->y0 = -hi;
+	      ap->y1 = hi;
+	      ap->zy = 1.0;
+	      ap->sy = 0.0;
+	      resize_sy_and_zy(cp);
+	      apply_y_axis_change(cp);
+	    }
+	}
+    }
+
+  return(C_TO_XEN_BOOLEAN(show_full_range(ss)));
+}
+
 
 
 
@@ -5924,6 +5995,8 @@ XEN_NARGIFY_0(g_ask_about_unsaved_edits_w, g_ask_about_unsaved_edits)
 XEN_NARGIFY_1(g_set_ask_about_unsaved_edits_w, g_set_ask_about_unsaved_edits)
 XEN_NARGIFY_0(g_show_full_duration_w, g_show_full_duration)
 XEN_NARGIFY_1(g_set_show_full_duration_w, g_set_show_full_duration)
+XEN_NARGIFY_0(g_show_full_range_w, g_show_full_range)
+XEN_NARGIFY_1(g_set_show_full_range_w, g_set_show_full_range)
 XEN_NARGIFY_0(g_initial_beg_w, g_initial_beg)
 XEN_NARGIFY_1(g_set_initial_beg_w, g_set_initial_beg)
 XEN_NARGIFY_0(g_initial_dur_w, g_initial_dur)
@@ -6002,6 +6075,8 @@ XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
 #define g_set_ask_about_unsaved_edits_w g_set_ask_about_unsaved_edits
 #define g_show_full_duration_w g_show_full_duration
 #define g_set_show_full_duration_w g_set_show_full_duration
+#define g_show_full_range_w g_show_full_range
+#define g_set_show_full_range_w g_set_show_full_range
 #define g_initial_beg_w g_initial_beg
 #define g_set_initial_beg_w g_set_initial_beg
 #define g_initial_dur_w g_initial_dur
@@ -6214,6 +6289,9 @@ files list of the View Files dialog.  If it returns " PROC_TRUE ", the default a
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_full_duration, g_show_full_duration_w, H_show_full_duration,
 				   S_setB S_show_full_duration, g_set_show_full_duration_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_full_range, g_show_full_range_w, H_show_full_range,
+				   S_setB S_show_full_range, g_set_show_full_range_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_initial_beg, g_initial_beg_w, H_initial_beg,
 				   S_setB S_initial_beg, g_set_initial_beg_w,  0, 0, 1, 0);

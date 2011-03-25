@@ -453,6 +453,7 @@ static void save_options(FILE *fd)
   if (save_as_dialog_src(ss) != DEFAULT_SAVE_AS_DIALOG_SRC) pss_ss(fd, S_save_as_dialog_src, b2s(save_as_dialog_src(ss)));
   if (save_as_dialog_auto_comment(ss) != DEFAULT_SAVE_AS_DIALOG_AUTO_COMMENT) pss_ss(fd, S_save_as_dialog_auto_comment, b2s(save_as_dialog_auto_comment(ss)));
   if (show_full_duration(ss) != DEFAULT_SHOW_FULL_DURATION) pss_ss(fd, S_show_full_duration, b2s(show_full_duration(ss)));
+  if (show_full_range(ss) != DEFAULT_SHOW_FULL_RANGE) pss_ss(fd, S_show_full_range, b2s(show_full_range(ss)));
   if (fneq(initial_beg(ss), DEFAULT_INITIAL_BEG)) pss_sf(fd, S_initial_beg, initial_beg(ss));
   if (fneq(initial_dur(ss), DEFAULT_INITIAL_DUR)) pss_sf(fd, S_initial_dur, initial_dur(ss));
   if (dac_combines_channels(ss) != DEFAULT_DAC_COMBINES_CHANNELS) pss_ss(fd, S_dac_combines_channels, b2s(dac_combines_channels(ss)));

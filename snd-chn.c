@@ -2,16 +2,22 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: show-full-duration should apply to file update also, and should update current!
- * TODO: full scale of this hung X?
- * TODO: the data displayed by popup info is wrong? -- it's ignoring edits?
- * TODO: show-full-range (i.e.match y-bounds to data)
+/* TODO: full scale of this hung X?
+ * TODO: info-popup-hook test
+ * TODO: show-full-range (i.e.match y-bounds to data) implemented (var exists) -- snd-test this
  * TODO: some way to refer to the full current sound/channel (i.e. like selection) for copy etc
+ *          (channel1) = channel->vct full?
  * TODO: when freq very low, current FFT polynomial peak finder screws up
+ * TODO:   also the peaks listing is weird if the peaks are all low
+ *         why not give full precision in this output?
  * TODO: package up the readers so they're easier to use with, for example, map-channel
  * TODO: if sin(phi) is so close to min, can a trig-poly in x y and x*y get equally close to the 3 case?
- * TODO sin(x^2) ?
- * TODO: the peaks listing is weird if the peaks are all low
+ * TODO sin(x^2) ?  -- do a GA analysis in multiprecision of those coeffs and try cascade FM
+ * TODO: GA callable with any set of harmonics/amplitudes to get min peak phases
+ * TODO: GA to match FM? or match anything
+ * TODO: why does maxamp report 0 if show-full-range?
+ * TODO: should show-full-* constantly update the axes as changes occur?
+ *       see get_peak_env in snd-snd.c for completion hook and callbacks -- is this the way to handle the initial case?
  */
 
 bool graph_style_p(int grf)

@@ -783,6 +783,9 @@
     (set! (show-full-duration) (show-full-duration)) 
     (if (not (equal? (show-full-duration) #f)) 
 	(snd-display #__line__ ";show-full-duration set def: ~A" (show-full-duration)))
+    (set! (show-full-range) (show-full-range)) 
+    (if (not (equal? (show-full-range) #f)) 
+	(snd-display #__line__ ";show-full-range set def: ~A" (show-full-range)))
     (set! (initial-beg) (initial-beg)) 
     (if (fneq (initial-beg) 0.0)
 	(snd-display #__line__ ";initial-beg set def: ~A" (initial-beg)))
@@ -1351,6 +1354,7 @@
       'show-axes (show-axes) 1
       'show-controls (show-controls) #f
       'show-full-duration (show-full-duration) #f 
+      'show-full-range (show-full-range) #f 
       'show-grid (show-grid) #f 
       'show-indices (show-indices) #f
       'show-marks (show-marks) #t 
@@ -1950,6 +1954,7 @@
 	(list 'reverb-control? reverb-control? #f #t)
 	(list 'show-axes show-axes 1 0)
 	(list 'show-full-duration show-full-duration #f #t)
+	(list 'show-full-range show-full-range #f #t)
 	(list 'show-transform-peaks show-transform-peaks #f #t)
 	(list 'show-indices show-indices #f #t)
 	(list 'show-marks show-marks #t #f)
@@ -2185,7 +2190,7 @@
 		       'hann-poisson-window 'hann-window 'header-type 'help-dialog
 		       'help-hook 'hide-widget 'highlight-color 'html-dir 'html-program
 		       'hz->radians 'iir-filter 'iir-filter? 'in 'in-any
-		       'ina 'inb 'info-dialog 'init-ladspa 'initial-graph-hook
+		       'ina 'inb 'info-dialog 'info-popup-hook 'init-ladspa 'initial-graph-hook
 		       'insert-file-dialog 'insert-region 'insert-sample 'insert-samples 'insert-samples-with-origin
 		       'insert-selection 'insert-silence 'insert-sound 'just-sounds 'kaiser-window
 		       'key 'key-binding 'key-press-hook 'keyboard-no-action 'ladspa-activate
@@ -2297,7 +2302,7 @@
 		       'selection-frames 'selection-maxamp 'selection-maxamp-position 'selection-member? 'selection-position
 		       'selection-srate 'selection?
 		       'short-file-name 'show-all-axes 'show-all-axes-unlabelled 'show-bare-x-axis
-		       'show-axes 'show-controls 'show-grid 'show-indices 'show-full-duration 'initial-beg 'initial-dur
+		       'show-axes 'show-controls 'show-grid 'show-indices 'show-full-duration 'show-full-range 'initial-beg 'initial-dur
 		       'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection 'show-selection-transform
 		       'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
 		       'show-y-zero 'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos?
@@ -30951,6 +30956,7 @@ EDITS: 2
     (hook-push mouse-enter-listener-hook arg1) (carg1 mouse-enter-listener-hook)
     (hook-push mouse-leave-listener-hook arg1) (carg1 mouse-leave-listener-hook)
     (hook-push select-sound-hook arg1) (carg1 select-sound-hook)
+    (hook-push info-popup-hook arg1) (carg1 info-popup-hook)
     (hook-push print-hook arg1) (carg1 print-hook)
     (hook-push read-hook arg1) (carg1 read-hook)
     (hook-push bad-header-hook arg1) (carg1 bad-header-hook)
@@ -61447,7 +61453,7 @@ EDITS: 1
 		     mix-region mix-sampler?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound in
-		     read-mix-sample next-sample read-region-sample show-full-duration initial-beg initial-dur
+		     read-mix-sample next-sample read-region-sample show-full-duration show-full-range initial-beg initial-dur
 		     transform-normalization open-file-dialog-directory open-raw-sound open-sound previous-sample
 		     peaks player? players play-arrow-size
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
@@ -61556,7 +61562,7 @@ EDITS: 1
 	     (set-procs (list 
 			 amp-control ask-about-unsaved-edits ask-before-overwrite audio-input-device audio-output-device auto-resize
 			 auto-update axis-color axis-label-font axis-numbers-font ;basic-color
-			 channel-style peaks-font bold-peaks-font sound-file-extensions show-full-duration initial-beg initial-dur
+			 channel-style peaks-font bold-peaks-font sound-file-extensions show-full-duration show-full-range initial-beg initial-dur
 			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp combined-data-color
 			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
@@ -62387,7 +62393,7 @@ EDITS: 1
 			      (snd-display #__line__ ";~D: misc procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
 		      (list axis-color enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite ask-about-unsaved-edits
-			    auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key show-full-duration initial-beg initial-dur
+			    auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key show-full-duration show-full-range initial-beg initial-dur
 			    channel-style color-cutoff color-orientation-dialog color-inverted color-scale
 			    cursor-color dac-combines-channels dac-size clipping data-color default-output-chans 
 			    default-output-data-format default-output-srate default-output-header-type enved-envelope enved-base
@@ -62420,6 +62426,7 @@ EDITS: 1
 			    (snd-display #__line__ ";hooks ~A: ~A" hook-name tag))))
 		    (list (list after-graph-hook 'after-graph-hook)
 			  (list after-lisp-graph-hook 'after-lisp-graph-hook)
+			  (list info-popup-hook 'info-popup-hook)
 			  (list lisp-graph-hook 'lisp-graph-hook)
 			  (list before-transform-hook 'before-transform-hook)
 			  (list mix-release-hook 'mix-release-hook)

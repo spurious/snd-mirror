@@ -1107,6 +1107,15 @@ If show-full-duration is #t, Snd displays the entire sound when it is first open
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
+<!-- show-full-range -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="showfullrange">show-full-range</a></code></td>
+<td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
+If show-full-range is #t, Snd makes sure the sound's graph y bounds can accomodate the
+entire range of sample values.  This is especially useful when you're working with sounds
+that go beyond the normal -1.0 to 1.0 range.
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
 <!-- show-indices -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="showindices">show-indices</a></code></td>
 <td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
@@ -1666,8 +1675,6 @@ useful hook-related functions.
 In the following list of hooks, the arguments after the hook name refer to the arguments to the functions invoked by
 the hook.  That is, <code>after-apply-controls-hook (snd)</code> means that the functions on the
 <a class=quiet href="#afterapplycontrolshook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afterapplycontrolshook_tip)">after-apply-controls-hook</a> list each take one argument, a sound.  
-If the argument list is followed by some
-indication such as "[or]", that means the various hook function values are or-d together.
 </p>
 
 
@@ -1775,7 +1782,7 @@ This hook is called just after an FFT (or spectrum) is calculated.
 
 <!-- bad-header-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="badheaderhook">bad-header-hook</a> (filename)</code> [<b>or</b>]
+<code><a class=def name="badheaderhook">bad-header-hook</a> (filename)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called if a file has a bogus-looking header (that is, 
 a header with what appear to be bad values such as a negative number of channels). 
@@ -1789,7 +1796,7 @@ If no header is found, <a href="#openrawsoundhook">open-raw-sound-hook</a> is in
 
 <!-- before-close-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="beforeclosehook">before-close-hook</a> (snd) </code> [<b>or</b>]
+<code><a class=def name="beforeclosehook">before-close-hook</a> (snd) </code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a file is about to be closed.  If a hook function returns #t, the file is not closed.
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -1797,7 +1804,7 @@ This hook is called when a file is about to be closed.  If a hook function retur
 
 <!-- before-exit-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="beforeexithook">before-exit-hook</a> ()</code> [<b>or</b>]
+<code><a class=def name="beforeexithook">before-exit-hook</a> ()</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called upon a request to exit Snd.
 If a hook function returns #t, Snd does not exit. 
@@ -1806,7 +1813,7 @@ If a hook function returns #t, Snd does not exit.
 
 <!-- before-save-as-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="beforesaveashook">before-save-as-hook</a> (index filename selection srate header-type data-format comment)</code> [<b>or</b>]
+<code><a class=def name="beforesaveashook">before-save-as-hook</a> (index filename selection srate header-type data-format comment)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called before <a href="#savesoundas">save-sound-as</a> or File:Save as.  
 If a hook function returns something other than #f, the
@@ -1835,7 +1842,7 @@ we're saving the selection.
 
 <!-- before-save-state-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="beforesavestatehook">before-save-state-hook</a> (filename)</code> [<b>or</b>]
+<code><a class=def name="beforesavestatehook">before-save-state-hook</a> (filename)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called before Snd saves its state (<a href="#savestate">save-state</a>).  'filename' is the saved state
 file.  If the hook functions return #t, the save state file is opened in append mode (rather than create/truncate),
@@ -1853,7 +1860,7 @@ so you can write preliminary stuff via this hook, then instruct Snd not to clobb
 
 <!-- before-transform-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="beforetransformhook">before-transform-hook</a> (snd chn)</code> [<b>progn</b>]
+<code><a class=def name="beforetransformhook">before-transform-hook</a> (snd chn)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called just before an FFT (or spectrum) is calculated.  If a hook function returns 
 an integer, that value is used as the starting point (sample number) of the fft.  Normally,
@@ -1880,7 +1887,7 @@ of a moving mark:
 
 <!-- clip-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="cliphook">clip-hook</a> (clipping-value) </code> [<b>progn</b>]
+<code><a class=def name="cliphook">clip-hook</a> (clipping-value) </code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called whenever a sample is about to be clipped while writing out a sound file. 
 The hook function can return the new value.
@@ -1917,7 +1924,7 @@ and many other places.
 
 <!-- color-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="colorhook">color-hook</a> () </code> [<b>progn</b>]
+<code><a class=def name="colorhook">color-hook</a> () </code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called whenever one of the variables associated with the color dialog changes.  
 See <a href="sndscm.html#startwaterfall">start-waterfall</a> in snd-gl.scm.
@@ -1926,7 +1933,7 @@ See <a href="sndscm.html#startwaterfall">start-waterfall</a> in snd-gl.scm.
 
 <!-- dac-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="dachook">dac-hook</a> (data) </code> [<b>progn</b>]
+<code><a class=def name="dachook">dac-hook</a> (data) </code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called just before data is sent to DAC; 'data' is a <a href="#sndsounddata">sound-data</a> object. 
 See <a href="sndscm.html#withlevelmeters">with-level-meters</a> in snd-motif.scm.
@@ -1935,7 +1942,7 @@ See <a href="sndscm.html#withlevelmeters">with-level-meters</a> in snd-motif.scm
 
 <!-- draw-mark-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="drawmarkhook">draw-mark-hook</a> (mark)</code> [<b>progn</b>]
+<code><a class=def name="drawmarkhook">draw-mark-hook</a> (mark)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called before a mark is drawn. If the hook function returns #t, the mark is not drawn.  
 <a href="sndscm.html#marksynccolor">mark-sync-color</a>
@@ -1945,7 +1952,7 @@ in snd-motif.scm uses this hook to draw sync'd marks in some other color than th
 
 <!-- draw-mix-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="drawmixhook">draw-mix-hook</a> (mix old-x old-y x y)</code> [<b>progn</b>]
+<code><a class=def name="drawmixhook">draw-mix-hook</a> (mix old-x old-y x y)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called before a mix tag is drawn. If the hook function returns either #t or a list, the mix tag is not drawn by Snd (the
 assumption is that the hook function drew something).  old-x and old-y are the previous mix tag positions (in case
@@ -1957,7 +1964,7 @@ for subsequent mouse click hit detection.
 
 <!-- drop-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="drophook">drop-hook</a> (filename) </code> [<b>or</b>]
+<code><a class=def name="drophook">drop-hook</a> (filename) </code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called each time Snd receives a drag-and-drop event, passing the hook functions the dropped filename.
 If the hook functions return #t, the file is not opened by Snd.  Normally if you drag a file icon to the menubar, 
@@ -2012,7 +2019,7 @@ effects-hook is a convenience hook for the effects dialogs.
 
 <!-- enved-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="envedhook">enved-hook</a> (env pt new-x new-y reason)</code> [<b>cascade</b>]
+<code><a class=def name="envedhook">enved-hook</a> (env pt new-x new-y reason)</code>
 </td></tr><tr><td></td><td colspan=2>
 Each time a breakpoint is changed in the envelope editor, this hook 
 is called; if it returns a list, that list defines the new envelope, 
@@ -2053,7 +2060,7 @@ This hook is called upon exit.
 
 <!-- graph-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="graphhook">graph-hook</a> (snd chn y0 y1) </code> [<b>or</b>]
+<code><a class=def name="graphhook">graph-hook</a> (snd chn y0 y1) </code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called each time a graph is updated or redisplayed.
 If its hook functions return #t, the display is not updated.
@@ -2077,7 +2084,7 @@ See examp.scm for many examples.  If you want to add your own graphics to the di
 
 <!-- help-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="helphook">help-hook</a> (subject help-string)</code> [<b>cascade</b>]
+<code><a class=def name="helphook">help-hook</a> (subject help-string)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called from <a href="#sndhelp">snd-help</a> with the current help subject and default help-string.  
 Say we want the index.scm
@@ -2089,9 +2096,19 @@ If there is more than one hook function, each function's result is passed as inp
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
+<!-- info-popup-hook -->
+<tr><td colspan=3 bgcolor="#f2f4ff">
+<code><a class=def name="infopopuphook">info-popup-hook</a> (snd) </code>
+</td></tr><tr><td></td><td colspan=2>
+This hook is called whenever you invoke the info item in the graph popup menu.
+Each function in the hook is passed the current sound object; if it returns a
+string, that string is added to the information in the info dialog.
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
 <!-- initial-graph-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="initialgraphhook">initial-graph-hook</a> (snd chn dur) </code> [<b>or</b>]
+<code><a class=def name="initialgraphhook">initial-graph-hook</a> (snd chn dur) </code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called the first time a given channel is displayed (when the sound is first opened).
 If the hook function returns a list, the list's contents are interpreted as:
@@ -2129,7 +2146,7 @@ uses the maxamp data if it is already available or the file is short:
 
 <!-- key-press-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="keypresshook">key-press-hook</a> (snd chn key state)</code> [<b>or</b>]
+<code><a class=def name="keypresshook">key-press-hook</a> (snd chn key state)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called upon key press while the mouse is in the lisp graph (the third graph, 
 to the right of the time and fft graphs).
@@ -2142,7 +2159,7 @@ channel-specific envelope editors.
 
 <!-- lisp-graph-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="lispgraphhook">lisp-graph-hook</a> (snd chn)</code> [<b>progn</b>]
+<code><a class=def name="lispgraphhook">lisp-graph-hook</a> (snd chn)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called just before the lisp graph is updated or redisplayed (see <a href="#displaydb">display-db</a>).
 If its function returns a list of pixels (xm style), these are used in order by the list of graphs (if any), rather than Snd's default set
@@ -2174,7 +2191,7 @@ This hook is called when a click occurs in the listener; the 'textpos' argument 
 
 <!-- mark-click-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="markclickhook">mark-click-hook</a> (mark)</code> [<b>progn</b>]
+<code><a class=def name="markclickhook">mark-click-hook</a> (mark)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a mark is clicked; return #t to squelch the default minibuffer mark identification.  The following 
 hook function is used in <a href="sndscm.html#withmarkedsound">with-marked-sound</a> in ws.scm to display arbitrary info about a mark.
@@ -2258,7 +2275,7 @@ and if the <a href="#marksync">mark-sync</a> is not 0, the hook is called on eac
 
 <!-- mix-click-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="mixclickhook">mix-click-hook</a> (mix)</code> [<b>progn</b>]
+<code><a class=def name="mixclickhook">mix-click-hook</a> (mix)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a mix tag is clicked; return #t to omit the default action which is to start the Mix dialog 
 with the clicked mix.
@@ -2301,7 +2318,7 @@ moving value as a comb filter.
 
 <!-- mix-release-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="mixreleasehook">mix-release-hook</a> (mix samps)</code> [<b>progn</b>]
+<code><a class=def name="mixreleasehook">mix-release-hook</a> (mix samps)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called after a mix has been dragged by the mouse to a new position.
 'samps' is the number of samples moved during the drag.  If its function returns #t, the final position
@@ -2312,7 +2329,7 @@ hook's responsibility.  See <a href="sndscm.html#snapmarktobeat">snap-mix-to-bea
 
 <!-- mouse-click-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="mouseclickhook">mouse-click-hook</a> (snd chn button state x y axis) </code> [<b>or</b>]
+<code><a class=def name="mouseclickhook">mouse-click-hook</a> (snd chn button state x y axis) </code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called upon a mouse button release or click (with various exceptions).  If its function returns #t, the click is ignored by Snd.
 
@@ -2490,7 +2507,7 @@ relative to the lisp graph axis (as if the raw mouse pixel position was passed t
 
 <!-- mus-error-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="muserrorhook">mus-error-hook</a> (error-type error-message)</code> [<b>or</b>]
+<code><a class=def name="muserrorhook">mus-error-hook</a> (error-type error-message)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called upon mus-error.
 If its functions return #t, Snd ignores the error (it assumes you've handled it via the hook).
@@ -2512,7 +2529,7 @@ To decode the 'error-type' argument, see <a href="#muserrortypetostring">mus-err
 
 <!-- name-click-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="nameclickhook">name-click-hook</a> (snd)</code> [<b>or</b>]
+<code><a class=def name="nameclickhook">name-click-hook</a> (snd)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when the sound name is clicked (in the label in the minibuffer region of the sound's pane).
 If the function returns #t, the usual highly informative minibuffer babbling is squelched.
@@ -2546,7 +2563,7 @@ make sure all newly created widgets have the same background pixmaps.
 
 <!-- open-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="openhook">open-hook</a> (filename)</code> [<b>or</b>]
+<code><a class=def name="openhook">open-hook</a> (filename)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called before a sound file is opened.
 If the function returns #t, or the sound is not readable (bad header, etc) the file is not opened
@@ -2577,7 +2594,7 @@ See also <a href="sndscm.html#openbuffer">open-buffer</a> in examp.scm.
 
 <!-- open-raw-sound-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="openrawsoundhook">open-raw-sound-hook</a> (filename current-choices)</code> [<b>cascade</b>]
+<code><a class=def name="openrawsoundhook">open-raw-sound-hook</a> (filename current-choices)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called each time <a href="#opensound">open-sound</a> encounters a headerless file.
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on):
@@ -2611,7 +2628,7 @@ the code runs slower.  This hook gives you a way to find out why the optimizer g
 
 <!-- orientation-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="orientationhook">orientation-hook</a> () </code> [<b>progn</b>]
+<code><a class=def name="orientationhook">orientation-hook</a> () </code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called whenever one of the variables associated with the orientation dialog changes.  
 See <a href="sndscm.html#startwaterfall">start-waterfall</a> in snd-gl.scm.
@@ -2620,7 +2637,7 @@ See <a href="sndscm.html#startwaterfall">start-waterfall</a> in snd-gl.scm.
 
 <!-- output-comment-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="outputcommenthook">output-comment-hook</a> (str)</code> [<b>cascade</b>]
+<code><a class=def name="outputcommenthook">output-comment-hook</a> (str)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called in the Save-As dialog to set the default output comment value. 'str' is the current sound's comment.
 If there is more than one hook function, each function's result is passed as input to the next function in the list.
@@ -2638,7 +2655,7 @@ If there is more than one hook function, each function's result is passed as inp
 
 <!-- output-name-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="outputnamehook">output-name-hook</a> (current-name)</code> [<b>progn</b>]
+<code><a class=def name="outputnamehook">output-name-hook</a> (current-name)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called in the New File dialog. If it returns a filename, that name is presented in the New File dialog,
 making it slightly easier to set default output names.
@@ -2675,7 +2692,7 @@ See <a href="sndscm.html#enveddoc">enved.scm</a> and <a href="sndscm.html#marksd
 
 <!-- print-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="printhook">print-hook</a> (text)</code> [<b>progn</b>]
+<code><a class=def name="printhook">print-hook</a> (text)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called each time some Snd-generated response ('text') is about to be appended to the listener.
 If the function returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt.
@@ -2700,7 +2717,7 @@ in some other way &mdash; I should rewrite this part of Snd.
 
 <!-- read-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="readhook">read-hook</a> (text)</code> [<b>or</b>]
+<code><a class=def name="readhook">read-hook</a> (text)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called each time a line is typed into the listener (it is triggered by the carriage return).
 </td></tr><tr><td></td><td colspan=2></td></tr>
@@ -2708,7 +2725,7 @@ This hook is called each time a line is typed into the listener (it is triggered
 
 <!-- save-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="savehook">save-hook</a> (snd name)</code> [<b>or</b>]
+<code><a class=def name="savehook">save-hook</a> (snd name)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called each time a sound ('snd') is about to be saved.
 If its function returns #t, the file is not saved.  'name' is #f unless 
@@ -2753,7 +2770,7 @@ This hook is called when a sound is selected. The argument is the about-to-be-se
 
 <!-- snd-error-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="snderrorhook">snd-error-hook</a> (error-message)</code> [<b>or</b>]
+<code><a class=def name="snderrorhook">snd-error-hook</a> (error-message)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called upon <a href="#snderror">snd-error</a>.  If the listener is closed, it is also called upon any Scheme, Ruby, or Forth error.
 If it returns #t, Snd flushes the error (it assumes you've 
@@ -2769,7 +2786,7 @@ dealt with it via the hook).
 
 <!-- snd-warning-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="sndwarninghook">snd-warning-hook</a> (warning-message)</code> [<b>or</b>]
+<code><a class=def name="sndwarninghook">snd-warning-hook</a> (warning-message)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called upon <a href="#sndwarning">snd-warning</a>.
 If it returns #t, Snd flushes the warning (it assumes you've 
@@ -2787,7 +2804,7 @@ reported it via the hook).
 
 <!-- start-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="starthook">start-hook</a> (filename)</code> [<b>or</b>]
+<code><a class=def name="starthook">start-hook</a> (filename)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when Snd starts.
 If its function returns #t, Snd exits immediately.
@@ -2807,7 +2824,7 @@ found (this code has to be in the ~/.snd init file):
 
 <!-- start-playing-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="startplayinghook">start-playing-hook</a> (snd)</code> [<b>or</b>]
+<code><a class=def name="startplayinghook">start-playing-hook</a> (snd)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a sound is about to be played.
 If its function returns #t, Snd does not play.
@@ -2831,7 +2848,7 @@ See also <a href="sndscm.html#reportmarknames">report-mark-names</a> in marks.sc
 
 <!-- start-playing-selection-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="startplayingselectionhook">start-playing-selection-hook</a> ()</code> [<b>or</b>]
+<code><a class=def name="startplayingselectionhook">start-playing-selection-hook</a> ()</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when the selection is about to be played.
 If its function returns #t, Snd does not play the selection.
@@ -2857,7 +2874,7 @@ This hook is called when a sound finishes playing.  stop-playing-hook may be cal
 
 <!-- stop-playing-selection-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="stopplayingselectionhook">stop-playing-selection-hook</a> ()</code> [<b>progn</b>]
+<code><a class=def name="stopplayingselectionhook">stop-playing-selection-hook</a> ()</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when the selection finishes playing.
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -2865,7 +2882,7 @@ This hook is called when the selection finishes playing.
 
 <!-- update-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="updatehook">update-hook</a> (snd)</code> [<b>or</b>]
+<code><a class=def name="updatehook">update-hook</a> (snd)</code>
 </td></tr><tr><td></td><td colspan=2>
 update-hook is called just before a sound is updated ("update" means the sound is re-read from the disk, flushing the current version; this
 is useful if you overwrite a sound file with some other program, while viewing it in Snd). 

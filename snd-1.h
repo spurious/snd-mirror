@@ -495,7 +495,7 @@ typedef struct snd_state {
   mus_long_t Transform_Size;
   mus_fft_window_t Fft_Window;
   graph_type_t Transform_Graph_Type, Time_Graph_Type;
-  bool Ask_Before_Overwrite, Ask_About_Unsaved_Edits, Show_Full_Duration, Remember_Sound_State;
+  bool Ask_Before_Overwrite, Ask_About_Unsaved_Edits, Show_Full_Duration, Show_Full_Range, Remember_Sound_State;
   bool Save_As_Dialog_Src, Save_As_Dialog_Auto_Comment, With_Toolbar, With_Tooltips, With_Menu_Icons;
   mus_float_t Fft_Window_Alpha, Fft_Window_Beta, Grid_Density, Initial_Beg, Initial_Dur;
   mus_float_t Color_Scale, Color_Cutoff, Beats_Per_Minute;
@@ -982,7 +982,9 @@ sync_info *snd_sync(int sync);
 sync_info *sync_to_chan(chan_info *cp);
 sync_info *make_simple_sync(chan_info *cp, mus_long_t beg);
 snd_info *find_sound(const char *name, int nth);
-void display_info(snd_info *sp);
+#if (!USE_NO_GUI)
+  void display_info(snd_info *sp);
+#endif
 void mix_display_during_drag(int mix_id, mus_long_t drag_beg, mus_long_t drag_end);
 void g_init_data(void);
 

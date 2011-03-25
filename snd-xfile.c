@@ -4917,6 +4917,13 @@ widget_t post_it(const char *subject, const char *str)
 }
 
 
+void post_it_append(const char *str)
+{
+  if (post_it_dialog)
+    XmTextInsert(post_it_text, XmTextGetLastPosition(post_it_text), (char *)str);
+}
+
+
 void save_post_it_dialog_state(FILE *fd)
 {
   if ((post_it_dialog) && (XtIsManaged(post_it_dialog)))

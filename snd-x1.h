@@ -393,6 +393,7 @@ void clear_deleted_snd_info(struct dialog_play_info *dp);
 void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
 widget_t post_it(const char *subject, const char *str);
+void post_it_append(const char *str);
 void save_post_it_dialog_state(FILE *fd);
 void reflect_region_in_save_as_dialog(void);
 void save_edits_now(snd_info *sp);

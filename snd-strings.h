@@ -267,6 +267,7 @@
   #define S_in                          "in"
 #endif
 #define S_info_dialog                   "info-dialog"
+#define S_info_popup_hook               "info-popup-hook"
 #define S_initial_beg                   "initial-beg"
 #define S_initial_dur                   "initial-dur"
 #define S_initial_graph_hook            "initial-graph-hook"
@@ -539,6 +540,7 @@
 #define S_show_bare_x_axis              "show-bare-x-axis"
 #define S_show_controls                 "show-controls"
 #define S_show_full_duration            "show-full-duration"
+#define S_show_full_range               "show-full-range"
 #define S_show_grid                     "show-grid"
 #define S_show_indices                  "show-indices"
 #define S_show_listener                 "show-listener"

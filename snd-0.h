@@ -576,6 +576,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_initial_dur(a) ss->Initial_Dur = a
 #define DEFAULT_INITIAL_DUR 0.1
 
+#define show_full_range(ss) ss->Show_Full_Range
+#define set_show_full_range(a) ss->Show_Full_Range = a
+#define DEFAULT_SHOW_FULL_RANGE false
+
 #define spectrum_end(ss) ss->Spectrum_End
 #define in_set_spectrum_end(a) ss->Spectrum_End = a
 #define DEFAULT_SPECTRUM_END 1.0
