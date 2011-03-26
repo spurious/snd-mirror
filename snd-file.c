@@ -1902,19 +1902,29 @@ void restore_axes_data(snd_info *sp, axes_data *sa, mus_float_t new_duration, bo
       ap = cp->axis;
       ap->xmin = sa->axis_data[loc + SA_XMIN];
       ap->xmax = sa->axis_data[loc + SA_XMAX];
-      ap->ymin = sa->axis_data[loc + SA_YMIN];
-      ap->ymax = sa->axis_data[loc + SA_YMAX];
-
       /* zx and sx are reset by set_axes below? */
       ap->zx = sa->axis_data[loc + SA_ZX];
       ap->sx = sa->axis_data[loc + SA_SX];
-      ap->zy = sa->axis_data[loc + SA_ZY];
-      ap->sy = sa->axis_data[loc + SA_SY];
-      cp->gsy = sa->axis_data[loc + SA_GSY];
-      cp->gzy = sa->axis_data[loc + SA_GZY];
 
-      ap->y_ambit = ap->ymax - ap->ymin;
       ap->x_ambit = ap->xmax - ap->xmin;
+      
+      if (!show_full_range(ss))
+	{
+	  ap->ymin = sa->axis_data[loc + SA_YMIN];
+	  ap->ymax = sa->axis_data[loc + SA_YMAX];
+	  ap->zy = sa->axis_data[loc + SA_ZY];
+	  ap->sy = sa->axis_data[loc + SA_SY];
+	  ap->y_ambit = ap->ymax - ap->ymin;
+	}
+      else
+	{
+	  sa->axis_data[loc + SA_Y0] = ap->y0;
+	  sa->axis_data[loc + SA_Y1] = ap->y1;
+	}
+
+      cp->gzy = sa->axis_data[loc + SA_GZY];
+      cp->gsy = sa->axis_data[loc + SA_GSY];
+
       set_axes(cp,
 	       sa->axis_data[loc + SA_X0], 
 	       sa->axis_data[loc + SA_X1], 
@@ -4757,6 +4767,149 @@ char *view_files_find_any_directory(void)
 }
 
 
+/* -------- info popup -------- */
+
+static XEN info_popup_hook;
+
+#if (!USE_NO_GUI)
+
+static char *display_file_maxamps(const char *filename, int chans)
+{
+  char *ampstr = NULL;
+  int i, len;
+  mus_sample_t *vals;
+  mus_long_t *times;
+  len = chans * 32;
+  ampstr = (char *)calloc(len, sizeof(char));
+  vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
+  times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
+  mus_snprintf(ampstr, len, "maxamp%s: ", (chans > 1) ? "s" : "");
+  mus_sound_maxamps(filename, chans, vals, times);
+  for (i = 0; i < chans; i++)
+    {
+      ampstr = mus_strcat(ampstr, prettyf(MUS_SAMPLE_TO_DOUBLE(vals[i]), 3), &len);
+      ampstr = mus_strcat(ampstr, " ", &len);
+    }
+  free(vals);
+  free(times);
+  return(ampstr);
+}
+
+
+static char *display_sound_maxamps(snd_info *sp)
+{
+  char *ampstr = NULL;
+  int i, len;
+  len = sp->nchans * 32;
+  ampstr = (char *)calloc(len, sizeof(char));
+  mus_snprintf(ampstr, len, "maxamp%s: ", (sp->nchans > 1) ? "s" : "");
+  for (i = 0; i < sp->nchans; i++)
+    {
+      ampstr = mus_strcat(ampstr, prettyf(channel_maxamp(sp->chans[i], AT_CURRENT_EDIT_POSITION), 3), &len);
+      ampstr = mus_strcat(ampstr, " ", &len);
+    }
+  return(ampstr);
+}
+
+
+void display_info(snd_info *sp)
+{
+  #define INFO_BUFFER_SIZE 1024
+  if (sp)
+    {
+      file_info *hdr;
+      int i;
+      char *comment = NULL, *ampstr = NULL, *buffer = NULL;
+
+      hdr = sp->hdr;
+      buffer = (char *)calloc(INFO_BUFFER_SIZE, sizeof(char));
+
+      mus_snprintf(buffer, INFO_BUFFER_SIZE, 
+		   "srate: %d\nchans: %d\nlength: %.3f ("MUS_LD " %s)\n%s\n",
+		   SND_SRATE(sp),
+		   sp->nchans,
+		   (double)(CURRENT_SAMPLES(sp->chans[0])) / (double)SND_SRATE(sp),
+		   CURRENT_SAMPLES(sp->chans[0]),
+		   (sp->nchans == 1) ? "samples" : "frames",
+		   ampstr = display_sound_maxamps(sp));
+      post_it(sp->short_filename, buffer);
+      if (ampstr) free(ampstr);
+
+      /* run info-popup-hook, appending each string */
+      if (XEN_HOOKED(info_popup_hook))
+	{
+	  XEN procs, result;
+	  procs = XEN_HOOK_PROCEDURES(info_popup_hook);
+	  while (XEN_NOT_NULL_P(procs))
+	    {
+	      result = XEN_CALL_1(XEN_CAR(procs), C_INT_TO_XEN_SOUND(sp->index), S_info_popup_hook);
+	      if (XEN_STRING_P(result))
+		post_it_append(XEN_TO_C_STRING(result));
+	      procs = XEN_CDR(procs);
+	    }
+	}
+
+      mus_snprintf(buffer, INFO_BUFFER_SIZE, "\n----------------------------------------\n%s:", sp->filename);
+      post_it_append(buffer);
+
+      mus_snprintf(buffer, INFO_BUFFER_SIZE, "\n    type: %s\n    format: %s\n    written: %s\n",
+		   mus_header_type_name(hdr->type),
+		   mus_data_format_name(hdr->format),
+		   snd_strftime(STRFTIME_FORMAT, sp->write_date));
+      post_it_append(buffer);
+
+      if (hdr->srate != SND_SRATE(sp))
+	{
+	  mus_snprintf(buffer, INFO_BUFFER_SIZE, "    original srate: %d\n", hdr->srate);
+	  post_it_append(buffer);
+	}
+
+      if (hdr->chans != sp->nchans)
+	{
+	  mus_snprintf(buffer, INFO_BUFFER_SIZE, "    original chans: %d\n", hdr->chans);
+	  post_it_append(buffer);
+	}
+
+      comment = hdr->comment;
+      while ((comment) && (*comment) && 
+	     (((*comment) == '\n') || 
+	      ((*comment) == '\t') || 
+	      ((*comment) == ' ') || 
+	      ((*comment) == '\xd')))
+	comment++;
+      if ((comment) && (*comment))
+	{
+	  mus_snprintf(buffer, INFO_BUFFER_SIZE, "    comment: \"%s\"\n", comment);
+	  post_it_append(buffer);
+	}
+
+      if (mus_sound_maxamp_exists(sp->filename))
+	{
+	  bool edits = false;
+	  for (i = 0; i < sp->nchans; i++)
+	    if (sp->chans[i]->edit_ctr > 0)
+	      {
+		edits = true;
+		break;
+	      }
+
+	  if (edits)
+	    {
+	      ampstr = display_file_maxamps(sp->filename, sp->nchans);
+	      if (ampstr)
+		{
+		  mus_snprintf(buffer, INFO_BUFFER_SIZE, "    original %s\n", ampstr);
+		  post_it_append(buffer);
+		  free(ampstr);
+		}
+	    }
+	}
+      free(buffer);
+    }
+}
+#endif
+
+
 
 /* -------- extlang connections -------- */
 
@@ -5903,16 +6056,18 @@ max and min when it is opened."
 	      cp = sp->chans[j];
 	      ap = cp->axis;
 	      hi = channel_maxamp(cp, AT_CURRENT_EDIT_POSITION);
-	      /* PERHAPS: get actual min here? */
-	      ap->ymin = -hi;
-	      ap->ymax = hi;
-	      ap->y_ambit = 2 * hi;
-	      ap->y0 = -hi;
-	      ap->y1 = hi;
-	      ap->zy = 1.0;
-	      ap->sy = 0.0;
-	      resize_sy_and_zy(cp);
-	      apply_y_axis_change(cp);
+	      if (hi > ap->ymax)
+		{
+		  ap->ymin = -hi;
+		  ap->ymax = hi;
+		  ap->y_ambit = 2 * hi;
+		  ap->y0 = -hi;
+		  ap->y1 = hi;
+		  ap->zy = 1.0;
+		  ap->sy = 0.0;
+		  resize_sy_and_zy(cp);
+		  apply_y_axis_change(cp);
+		}
 	    }
 	}
     }
@@ -6238,6 +6393,11 @@ the newly updated sound may have a different index."
 files list of the View Files dialog.  If it returns " PROC_TRUE ", the default action, opening the file, is omitted."
 
   view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 2, H_view_files_select_hook); /* args = dialog, filename */
+
+  #define H_info_popup_hook S_info_popup_hook " (snd): called by the info popup dialog."
+
+  info_popup_hook = XEN_DEFINE_HOOK(S_info_popup_hook, 1, H_info_popup_hook);             /* arg = sound index */
+
 
   /* file-filters and file-sorters are lists from user's point of view, but I want to
    *   make sure they're gc-protected through add/delete/set, and want such code compatible

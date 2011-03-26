@@ -1414,7 +1414,7 @@ void update_graph(chan_info *cp);
 void update_graph_or_warn(chan_info *cp);
 void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end);
 void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed);
-void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_graph_t graphed);
+bool add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_graph_t graphed);
 void set_x_bounds(axis_info *ap);
 void set_show_axes(show_axes_t val);
 void display_channel_data(chan_info *cp);

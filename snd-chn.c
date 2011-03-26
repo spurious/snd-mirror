@@ -3,8 +3,7 @@
 #include "clm-strings.h"
 
 /* TODO: full scale of this hung X?
- * TODO: info-popup-hook test
- * TODO: show-full-range (i.e.match y-bounds to data) implemented (var exists) -- snd-test this
+ * TODO: show-full-range -- snd-test this
  * TODO: some way to refer to the full current sound/channel (i.e. like selection) for copy etc
  *          (channel1) = channel->vct full?
  * TODO: when freq very low, current FFT polynomial peak finder screws up
@@ -15,9 +14,6 @@
  * TODO sin(x^2) ?  -- do a GA analysis in multiprecision of those coeffs and try cascade FM
  * TODO: GA callable with any set of harmonics/amplitudes to get min peak phases
  * TODO: GA to match FM? or match anything
- * TODO: why does maxamp report 0 if show-full-range?
- * TODO: should show-full-* constantly update the axes as changes occur?
- *       see get_peak_env in snd-snd.c for completion hook and callbacks -- is this the way to handle the initial case?
  */
 
 bool graph_style_p(int grf)
@@ -605,7 +601,7 @@ void update_graph_or_warn(chan_info *cp)
 
 static XEN initial_graph_hook;
 
-void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_graph_t graphed)
+bool add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_graph_t graphed)
 {
   /* initialize channel, including edit/sound lists */
   axis_info *ap;
@@ -666,6 +662,7 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
 	  if (error_string)
 	    snd_warning("peak-env: %s\n", error_string);
 	}
+      /* there is no data yet in the channel, so channel_maxamp here will get 0.0 */
 
       /* initial-graph-hook */
       if (XEN_HOOKED(initial_graph_hook))
@@ -772,6 +769,7 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
     initialize_scrollbars(cp);
 
   cp->active = CHANNEL_HAS_AXES;
+  return(ymax_set);
 }
 
 
@@ -789,11 +787,12 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
   mus_long_t frames;
   snd_info *sp;
   file_info *chdr, *hdr;
+  bool ymax_set;
 
   sp = cp->sound;
   hdr = sp->hdr;
   frames = hdr->samples / hdr->chans;
-  add_channel_data_1(cp, hdr->srate, frames, graphed);
+  ymax_set = add_channel_data_1(cp, hdr->srate, frames, graphed);
 
   chdr = copy_header(filename, hdr); /* need one separate from snd_info case */
   chn = cp->chan;
@@ -814,11 +813,36 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 	  cp->sounds[0] = make_snd_data_file(filename, io, chdr, DONT_DELETE_ME, cp->edit_ctr, chn);
 	}
     }
+
 #if (!USE_NO_GUI)
-  if ((CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
-      (cp->edits[0]->peak_env == NULL) &&              /* perhaps created at initial graph time */
-      (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
-    start_peak_env(cp);
+  if ((show_full_range(ss)) && 
+      (!ymax_set) && 
+      (graphed == WITH_GRAPH))
+    {
+      mus_float_t ymax;
+      ymax = channel_maxamp(cp, 0);
+      if (ymax > 1.0)
+	{
+	  axis_info *ap;
+	  ap = cp->axis;
+	  ap->ymin = -ymax;
+	  ap->ymax = ymax;
+	  ap->y_ambit = 2 * ap->ymax;
+	  ap->y0 = ap->ymin;
+	  ap->y1 = ap->ymax;
+	  ap->zy = 1.0;
+	  ap->sy = 0.0;
+	  resize_sy_and_zy(cp);
+	  apply_y_axis_change(cp);
+	}
+    }
+  else
+    {
+      if ((CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
+	  (cp->edits[0]->peak_env == NULL) &&              /* perhaps created at initial graph time */
+	  (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
+	start_peak_env(cp);
+    }
 #endif
 }
 
