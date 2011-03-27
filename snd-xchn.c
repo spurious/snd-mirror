@@ -94,6 +94,7 @@ static void zy_changed(int value, chan_info *cp)
   if (value < 1) value = 1;
   old_zy = ap->zy;
   ap->zy = sqr(get_scrollbar(channel_zy(cp), value, SCROLLBAR_MAX));
+  if (ap->zy < 1e-5) ap->zy = 1e-5;   /* if this goes to 0, X can hang */
   ap->sy += (.5 * (old_zy - ap->zy)); /* try to keep wave centered */
   if (ap->sy < 0) ap->sy = 0;
   apply_y_axis_change(cp);

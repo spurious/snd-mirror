@@ -11859,6 +11859,27 @@ EDITS: 5
 	  (set! (show-full-duration) old-show)
 	  (set! (hook-functions initial-graph-hook) old-hook))
 
+	(set! (show-full-range) #t)
+	(let ((ns (open-sound "1a.snd")))
+	  (if (or (fneq (car (y-bounds ns 0)) -1.0)
+		  (fneq (cadr (y-bounds ns 0)) 1.0))
+	      (format #t ";show-full-range 1a: ~A" (y-bounds ns 0)))
+	  (close-sound ns))
+	(with-sound (:output "test.snd" :clipped #f :to-snd #f)
+		    (fm-violin 0 1 440 3.5))
+	(let ((ns (open-sound "test.snd")))
+	  (if (or (fneq (car (y-bounds ns 0)) -3.5)
+		  (fneq (cadr (y-bounds ns 0)) 3.5))
+	      (format #t ";show-full-range 3.5 test: ~A" (y-bounds ns 0)))
+	  (with-sound (:output "test.snd" :clipped #f :to-snd #f)
+		      (fm-violin 0 1 440 1.5))
+	  (update-sound ns)
+	  (if (or (fneq (car (y-bounds ns 0)) -1.5)
+		  (fneq (cadr (y-bounds ns 0)) 1.5))
+	      (format #t ";show-full-range 1.5 test: ~A" (y-bounds ns 0)))
+	  (close-sound ns))
+	(set! (show-full-range) #f)
+
 	(let ((old-sync (sync-style)))
 	  (set! (sync-style) sync-none)
 	  (let ((ns (open-sound "2.snd")))
@@ -62195,6 +62216,8 @@ EDITS: 1
 		      (list delete-sample edit-fragment graph-data position->x position->y redo scale-by
 			    scale-to undo x->position y->position))
 	    (close-sound index))
+	  (if (sound? (find-sound "oboe.snd"))
+	      (snd-display #__line__ ";oboe.snd is still open?"))
 	  
 	  (let ((ctr 0)
 		(index (open-sound "oboe.snd")))
@@ -62221,6 +62244,8 @@ EDITS: 1
 			    wavelet-type time-graph?  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider x-axis-label
 			    x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad channel-properties channel-property ))
 	    (close-sound index))
+	  (if (sound? (find-sound "oboe.snd"))
+	      (snd-display #__line__ ";oboe.snd is still open?"))
 	  
 	  (let ((ctr 0)
 		(index (open-sound "oboe.snd")))
@@ -62249,6 +62274,8 @@ EDITS: 1
 			    ))
 	    
 	    (close-sound index))
+	  (if (sound? (find-sound "oboe.snd"))
+	      (snd-display #__line__ ";oboe.snd is still open?"))
 	  
 	  (let ((ctr 0))
 	    (for-each (lambda (n b)
@@ -62309,6 +62336,8 @@ EDITS: 1
 		      (list  mix-name mix-position mix-home mix-speed mix-tag-y)
 		      (list 'mix-name 'mix-position 'mix-home 'mix-speed 'mix-tag-y))
 	    (close-sound index))
+	  (if (sound? (find-sound "oboe.snd"))
+	      (snd-display #__line__ ";oboe.snd is still open?"))
 	  
 	  (let ((ctr 0))
 	    (for-each (lambda (n)
@@ -62347,8 +62376,9 @@ EDITS: 1
 			      (snd-display #__line__ ";~D: set mark procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
 		      (list mark-name mark-sample mark-sync))
-	    (close-sound index)
-	    )
+	    (close-sound index))
+	  (if (sound? (find-sound "oboe.snd"))
+	      (snd-display #__line__ ";oboe.snd is still open?"))
 	  
 	  (for-each (lambda (arg)
 		      (let ((ctr 0))
@@ -62828,7 +62858,10 @@ EDITS: 1
 		(check-error-tag 'no-such-mix (lambda () (mix-properties (integer->mix (+ 1 (mix-sync-max))))))
 		(check-error-tag 'no-such-mix (lambda () (set! (mix-properties (integer->mix (+ 1 (mix-sync-max)))) 1)))
 		))
-	  
+
+	  (if (not (null? (sounds)))
+	      (snd-display #__line__ ";sounds after error checks: ~A~%" (map short-file-name (sounds))))
+
 	  (if (provided? 'snd-motif)
 	      (for-each
 	       (lambda (n name)
@@ -63246,8 +63279,12 @@ EDITS: 1
 		      (list 1.5 -1 '() delay-32)))
 		   (list #f -1 1234 delay-32))
 		  ))))
+
+	(set! (ask-about-unsaved-edits) #f)
 	
 	(snd-display #__line__ ";end args")
+	(if (not (null? (sounds)))
+	    (snd-display #__line__ ";sounds after args: ~A~%" (map short-file-name (sounds))))
 	
 	(if (defined? 'mus-audio-reinitialize) (mus-audio-reinitialize))
 	(set! (window-y) 10)
@@ -63274,6 +63311,8 @@ EDITS: 1
 	    (if (not (eq? tag 'cannot-save))
 		(snd-display #__line__ ";save file deleted: ~A" tag)))
 	  (close-sound ind))
+	(if (sound? (find-sound "test.snd"))
+	    (snd-display #__line__ ";test.snd is still open?"))
 	
 	(copy-file "oboe.snd" "test.snd")
 	(let ((ind (open-sound "test.snd"))
@@ -63282,6 +63321,8 @@ EDITS: 1
 	  (view-regions-dialog)
 	  (dismiss-all-dialogs)
 	  (close-sound ind))
+	(if (sound? (find-sound "test.snd"))
+	    (snd-display #__line__ ";test.snd is still open?"))
 	
 	(copy-file "oboe.snd" "test.snd")
 	(let ((ind (open-sound "test.snd")))
@@ -63293,10 +63334,11 @@ EDITS: 1
 	    (if (not (eq? tag 'cannot-save))
 		(snd-display #__line__ ";save protected sound msg: ~A" tag)))
 	  (close-sound ind))
-	
+	(if (sound? (find-sound "test.snd"))
+	    (snd-display #__line__ ";test.snd is still open?"))
 	(system "chmod 644 test.snd")
 	(delete-file "test.snd")
-	
+
 	(copy-file "oboe.snd" "test.snd")
 	(system "chmod 400 test.snd")
 	(let ((ind (open-sound "oboe.snd")))
@@ -63308,9 +63350,11 @@ EDITS: 1
 	    (if (not (eq? tag 'cannot-save))
 		(snd-display #__line__ ";save-as write-protected sound: ~A" tag)))
 	  (close-sound ind))
+	(if (sound? (find-sound "test.snd"))
+	    (snd-display #__line__ ";test.snd is still open?"))
 	(system "chmod 644 test.snd")
 	(delete-file "test.snd")
-	
+
 	;; these redefine several basic names ("tap"), so they're not in test 23
 	(if all-args
 	    (begin
@@ -63347,6 +63391,8 @@ EDITS: 1
 				 0.0))))
 			  (lambda args (car args)))))
 	  (if (not (eq? tag 'no-such-channel)) (snd-display #__line__ ";map-channel closing own chan: ~A" tag)))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
 	
 	#|
 	;; this will return a truncated (at the start) result, but I currently can't think of a
@@ -63372,6 +63418,10 @@ EDITS: 1
 	   (lambda ()
 	     (close-sound ind1)
 	     (close-sound ind2))))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
+	(if (sound? (find-sound "pistol.snd"))
+	    (snd-display #__line__ ";pistol.snd is still open?"))
 	
 	(let ((ind1 (open-sound "oboe.snd"))
 	      (ind2 (open-sound "pistol.snd")))
@@ -63385,6 +63435,10 @@ EDITS: 1
 		(close-sound ind2))
 	      "inner edit"))
 	   "outer edit"))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
+	(if (sound? (find-sound "pistol.snd"))
+	    (snd-display #__line__ ";pistol.snd is still open?"))
 	
 	(let ((ind (open-sound "oboe.snd")))
 	  (find-channel
@@ -63392,6 +63446,8 @@ EDITS: 1
 	     (if (sound? ind)
 		 (close-sound ind))
 	     #f)))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
 	
 	(let ((ind (open-sound "oboe.snd")))
 	  (let ((rd (make-sampler 0)))
@@ -63409,6 +63465,8 @@ EDITS: 1
 	    (let ((at-end (sampler-at-end? rd)))
 	      (if (not at-end)
 		  (snd-display #__line__ ";closed sampler at end: ~A" at-end)))))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
 	
 	(let ((ind (open-sound "oboe.snd")))
 	  (let ((mx (mix-vct (vct .1 .2 .3))))
@@ -63417,6 +63475,8 @@ EDITS: 1
 	      (do ((i 0 (+ 1 i)))
 		  ((= i 10))
 		(read-mix-sample rd)))))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
 	
 	(set! (max-regions) (max 8 (max-regions)))
 	(let ((ind (open-sound "oboe.snd")))
@@ -63427,6 +63487,8 @@ EDITS: 1
 	      (do ((i 0 (+ 1 i)))
 		  ((= i 10))
 		(read-sample rd)))))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
 	
 	(let ((ind (open-sound "oboe.snd"))
 	      (scl 1.0))
@@ -63495,6 +63557,8 @@ EDITS: 1
 	      (snd-display #__line__ ";edpos bad arity proc clobbers chan?? ~A" ind)
 	      (close-sound ind))
 	  )
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
 	
 	(set! env3 #f)
 	(set! delay-32 #f)

@@ -106,6 +106,7 @@ static void zy_changed(float value, chan_info *cp)
   if (value < .01) value = .01;
   old_zy = ap->zy;
   ap->zy = sqr(value);
+  if (ap->zy < 1e-5) ap->zy = 1e-5;
   ap->sy += (.5 * (old_zy - ap->zy)); /* try to keep wave centered */
   if (ap->sy < 0) ap->sy = 0;
   apply_y_axis_change(cp);

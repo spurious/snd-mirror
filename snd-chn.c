@@ -2,18 +2,16 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: full scale of this hung X?
- * TODO: show-full-range -- snd-test this
- * TODO: some way to refer to the full current sound/channel (i.e. like selection) for copy etc
+/* TODO: some way to refer to the full current sound/channel (i.e. like selection) for copy etc
  *          (channel1) = channel->vct full?
  * TODO: when freq very low, current FFT polynomial peak finder screws up
  * TODO:   also the peaks listing is weird if the peaks are all low
- *         why not give full precision in this output?
+ *         why not give full precision in this output? and give all the peaks, not just the displayed ones
  * TODO: package up the readers so they're easier to use with, for example, map-channel
- * TODO: if sin(phi) is so close to min, can a trig-poly in x y and x*y get equally close to the 3 case?
- * TODO sin(x^2) ?  -- do a GA analysis in multiprecision of those coeffs and try cascade FM
- * TODO: GA callable with any set of harmonics/amplitudes to get min peak phases
- * TODO: GA to match FM? or match anything
+ *
+ * PERHAPS: dsp.scm channel-distance to C
+ *                  channel-difference would put c1 - c2 -> c1
+ *          or just put all the math ops in as channel ops -- need a (channel s1 c1) object?
  */
 
 bool graph_style_p(int grf)
@@ -2031,32 +2029,33 @@ static char ampstr[LABEL_BUFFER_SIZE];
 #define AMP_ROOM_CUTOFF 3.0
 
 static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data, 
-			  mus_long_t start, mus_long_t end,  /* start is not used? */
+			  mus_long_t start, mus_long_t end, 
 			  mus_long_t losamp, mus_long_t hisamp, 
 			  mus_float_t samps_per_pixel, bool fft_data, mus_float_t fft_scale /* fourier scale factor or 0.0 */)
 {
   int num_peaks, row, frq_col, frq_strlen, tens, i, amp_col, amp_strlen, row_height = 15;
-  mus_long_t samps;
+  mus_long_t samps, fsamps;
   bool with_amps;
   mus_float_t amp0;
   graphics_context *ax;
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
-  color_t old_color;
+  color_t old_color = (color_t)0; /* None in Motif, NULL in Gtk, 0 in no-gui */
 
-  /* "end" is the top displayed frequency in the FFT frequency axis 
+  /* "end" is the top displayed frequency in the FFT frequency axis (srate*spectrum_end/2)
    * "hisamp - losamp" is how many samples of data we have
    */
 
   /* "tens" is for prettyf in snd-utils, if -1 -> print int else sets decimals */
   samps = hisamp - losamp;
-  if (samps > (end * 10)) 
+  fsamps = end - start;
+  if (samps > (fsamps * 10)) 
     tens = 2; 
   else 
-    if (samps > end) 
+    if (samps > fsamps) 
       tens = 1; 
     else
-      if (samps > (end / 10)) 
+      if (samps > (fsamps / 10)) 
 	tens = 0; 
       else tens = -1;
 
@@ -2077,7 +2076,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
   peak_amps = (fft_peak *)calloc(cp->max_transform_peaks, sizeof(fft_peak));
 
   if (fft_data)
-    num_peaks = find_and_sort_transform_peaks(data, peak_freqs, num_peaks, losamp, hisamp /* "fft size" */, samps_per_pixel, fft_scale); /* srate 1.0=>freqs between 0 and 1.0 */
+    num_peaks = find_and_sort_transform_peaks(data, peak_freqs, num_peaks, losamp, hisamp /* "fft size" */, samps_per_pixel, fft_scale); 
   else num_peaks = find_and_sort_peaks(data, peak_freqs, num_peaks, losamp, hisamp);
 
   if ((num_peaks == 0) || 

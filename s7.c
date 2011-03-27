@@ -15349,7 +15349,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 If its first argument is a list, the list is copied (despite the '!')."
 
   s7_pointer data, lessp;
-  s7_Int len, n, k;
+  s7_Int len = 0, n, k;
 
   data = car(args);
   if (data == sc->NIL) return(sc->NIL);

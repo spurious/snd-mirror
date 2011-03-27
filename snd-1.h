@@ -982,9 +982,6 @@ sync_info *snd_sync(int sync);
 sync_info *sync_to_chan(chan_info *cp);
 sync_info *make_simple_sync(chan_info *cp, mus_long_t beg);
 snd_info *find_sound(const char *name, int nth);
-#if (!USE_NO_GUI)
-  void display_info(snd_info *sp);
-#endif
 void mix_display_during_drag(int mix_id, mus_long_t drag_beg, mus_long_t drag_end);
 void g_init_data(void);
 
@@ -1625,6 +1622,9 @@ int view_files_dialog_list_length(void);
 char **view_files_dialog_titles(void);
 void view_files_start_dialog_with_title(const char *title);
 void set_with_toolbar_and_display(bool val);
+#if (!USE_NO_GUI)
+  void display_info(snd_info *sp);
+#endif
 void g_init_file(void);
 void initialize_format_lists(void);
 void set_with_menu_icons(bool val);
