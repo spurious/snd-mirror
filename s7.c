@@ -32124,7 +32124,6 @@ the error type and the info passed to the error handler.");
  *
  *     file-exists?, directory?, delete-file
  *     method lists for c|s_objects
- *     complex number can be both nan and infinite -- is that sensible?
  *     still mixed arith: * + / - < > <= >= = min max, but I haven't found any bugs
  *
  * --------------------------------------------------------------------------------

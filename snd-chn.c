@@ -4,9 +4,6 @@
 
 /* TODO: some way to refer to the full current sound/channel (i.e. like selection) for copy etc
  *          (channel1) = channel->vct full?
- * TODO: when freq very low, current FFT polynomial peak finder screws up
- * TODO:   also the peaks listing is weird if the peaks are all low
- *         why not give full precision in this output? and give all the peaks, not just the displayed ones
  * TODO: package up the readers so they're easier to use with, for example, map-channel
  *
  * PERHAPS: dsp.scm channel-distance to C
@@ -1217,7 +1214,8 @@ void sx_incremented(chan_info *cp, double amount)
 
 
 void zx_incremented(chan_info *cp, double amount)
-{ /* kbd arrows etc -- needs to be able to return to original */
+{ 
+  /* kbd arrows etc -- needs to be able to return to original */
   axis_info *ap;
   mus_long_t samps;
   samps = CURRENT_SAMPLES(cp);
@@ -8832,7 +8830,9 @@ WITH_THREE_SETTER_ARGS(g_set_graphs_horizontal_reversed, g_set_graphs_horizontal
 
 void write_transform_peaks(FILE *fd, chan_info *ucp)
 {
-  /* put (sync'd) peak info in (possibly temporary) file */
+  /* put (sync'd) peak info in (possibly temporary) file.
+   *   this used to follow the displays, but I think I'd rather get all the data at high precision
+   */
   int i, chn;
   sync_info *si = NULL;
 
@@ -8859,35 +8859,18 @@ void write_transform_peaks(FILE *fd, chan_info *ucp)
 	      fft_peak *peak_freqs = NULL;
 	      fft_peak *peak_amps = NULL;
 	      mus_float_t *data;
-	      int num_peaks,samps, cutoff_samps, tens, srate, digits = 5;
-	      mus_float_t samples_per_pixel, cutoff;
+	      int num_peaks, samps, srate;
 
 	      ap = cp->axis;
 	      sp = cp->sound;
 	      data = fp->data;
-	      cutoff = cp->spectrum_end;
-	      samps = (int)(fp->current_size * 0.5);
-	      cutoff_samps = (int)(samps * cutoff);
-	      samples_per_pixel = (mus_float_t)cutoff_samps / (mus_float_t)(fap->x_axis_x1 - fap->x_axis_x0);
-
 	      srate = SND_SRATE(sp);
 	      srate2 = (mus_float_t)srate * .5;
-	      if (samps > (5 * srate)) 
-		tens = 2; 
-	      else 
-		if (samps > (int)srate2) 
-		  tens = 1; 
-		else 
-		  if (samps > (srate / 20)) 
-		    tens = 0; 
-		  else tens = -1;
-	      
-	      if (ceil(log10(srate)) > 3.0)
-		digits = (int)ceil(log10(srate)) + 2;
+	      samps = (int)(fp->current_size * 0.5);
 
 	      peak_freqs = (fft_peak *)calloc(cp->max_transform_peaks, sizeof(fft_peak));
 	      peak_amps = (fft_peak *)calloc(cp->max_transform_peaks, sizeof(fft_peak));
-	      num_peaks = find_and_sort_transform_peaks(data, peak_freqs, cp->max_transform_peaks, 0, samps, samples_per_pixel, fp->scale);
+	      num_peaks = find_and_sort_transform_peaks(data, peak_freqs, cp->max_transform_peaks, 0, samps, 0.5, fp->scale);
 
 	      if ((num_peaks != 1) || 
 		  (peak_freqs[0].freq != 0.0))
@@ -8901,9 +8884,9 @@ void write_transform_peaks(FILE *fd, chan_info *ucp)
 			  mus_fft_window_name(cp->fft_window)); /* was XEN name */
 		  for (i = 0; i < num_peaks; i++)
 		    fprintf(fd, "  %.*f  %.*f\n",
-			    tens, 
+			    6, 
 			    peak_freqs[i].freq * srate2, 
-			    digits,
+			    6,
 			    peak_freqs[i].amp); 
 		  fprintf(fd, "\n");
 		}

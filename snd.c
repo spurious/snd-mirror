@@ -190,6 +190,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Save_As_Dialog_Src =          DEFAULT_SAVE_AS_DIALOG_SRC;
   ss->Save_As_Dialog_Auto_Comment = DEFAULT_SAVE_AS_DIALOG_AUTO_COMMENT;
   ss->Show_Full_Duration =          DEFAULT_SHOW_FULL_DURATION;
+  ss->Show_Full_Range =             DEFAULT_SHOW_FULL_RANGE;
   ss->Initial_Beg =                 DEFAULT_INITIAL_BEG;
   ss->Initial_Dur =                 DEFAULT_INITIAL_DUR;
   ss->With_Background_Processes =   DEFAULT_WITH_BACKGROUND_PROCESSES;

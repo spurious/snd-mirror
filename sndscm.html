@@ -7958,6 +7958,8 @@ a brute force grid.  The first such grid used initial phases of 0 and pi, and I
 actually ran every possible such case, up to n=45 or so.  Since each harmonic can be
 positive or negative, this is 2^44 cases to check, which is starting to be a pain.
 The results were discouraging; I did not get close to the square root of n.
+I also tried smaller grids (down to pi/32) for small n (say n < 8), without
+any success.
 </p>
 
 <p>Next great idea: try random initial phases.  This actually works better than it has
@@ -7966,8 +7968,7 @@ hell freezes over and only get to n^.7 or slightly less.  I now realize that thi
 approach fails because the minima are like tiny cuspy cracks in a huge n-dimensional
 block of stuff that is all nearly the same.  If you look at the n=5 graph above, you'll
 see that the floor is getting flat, and this becomes more noticeable as n increases.
-Every case is basically two sine lobes sitting on a flat bed of nails at about n^.6.
-So, brute force and random flailing failed.
+    So, brute force and random flailing failed.
 </p>
 
 <p>As the saying goes, "an hour in the library is worth 6 months at the bench".
@@ -8326,7 +8327,7 @@ of harmonics, then the minimum peak amplitude, then <code>(log peak n)</code>.
 <p>These values
 represent about 400 GHz years of computing, 
 possible only at an enlightened institution like CCRMA.
-Here is a graph of the peaks (as of January, 2011), followed by a graph of
+Here is a graph of the peaks (as of March, 2011), followed by a graph of
 the exponent vs n (n^y = peak amp). 
 </p>
 
