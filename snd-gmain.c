@@ -27,6 +27,7 @@
 #define TEXT_FOCUS_COLOR     rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
 #define FILTER_CONTROL_WAVEFORM_COLOR rgb_to_color(0.0, 0.0, 1.0) /* "blue" */
 #define SASH_COLOR           rgb_to_color(0.56, 0.93, 0.56) /* "lightgreen" */
+#define BLUE_COLOR           rgb_to_color(0.0, 0.0, 1.0);
 
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 10
@@ -515,6 +516,7 @@ void snd_doit(int argc, char **argv)
   ss->lighter_blue =                  LIGHTER_BLUE_COLOR;
   ss->red =                           RED_COLOR;
   ss->green =                         GREEN_COLOR;
+  ss->blue =                          BLUE_COLOR;
   ss->yellow =                        YELLOW_COLOR;
   ss->highlight_color =               HIGHLIGHT_COLOR;
   ss->basic_color =                   BASIC_COLOR;

@@ -5987,7 +5987,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   #define FFT_MULT 128
   #define INCR_DOWN 0.9
   #define INCR_MAX 1.0
-  #define INCR_MIN 0.00001
+  #define INCR_MIN 0.0001
   #define RETRIES 10
   #define RETRY_MULT 2
   #define INIT_TRIES 1000

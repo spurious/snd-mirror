@@ -32111,10 +32111,9 @@ the error type and the info passed to the error handler.");
 /* --------------------------------------------------------------------------------
  * things to add or fix: 
  *
- *     could vectors maintain element type like hash-tables?  Then "uniform" vectors are
- *       automatic, and run would not have to check elements, etc.  The obvious problem
- *       is shared vectors in the multidimensional case (both directions).  (Or maybe
- *       :element-type but that requires type names)
+ *     (make-uniform-vector dims initial-element) where initial is required and sets type.
+ *       this only requires set! support I believe, and could be implemented as a c_object.
+ *       uniform-vector-elements -> array of the raw type, not s7_pointer
  *
  *     if user creates an enormous list, it can seem to hang the listener: *list-print-length* ?
  *       or just *print-length* for all, including Snd cases -- in Snd print-length function becomes unneeded,

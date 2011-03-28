@@ -590,7 +590,7 @@ typedef struct snd_state {
   xm_font_t tiny_fontlist;
   XFontStruct *tiny_fontstruct;
 
-  Pixel white, black, red, yellow, green, light_blue, lighter_blue;
+  Pixel white, black, red, yellow, green, blue, light_blue, lighter_blue;
   Pixel data_color, selected_data_color, mark_color, graph_color, selected_graph_color, listener_color, listener_text_color;
   Pixel basic_color, selection_color, zoom_color, position_color, highlight_color, enved_waveform_color, cursor_color;
   Pixel text_focus_color, filter_control_waveform_color, mix_color, sash_color;
@@ -636,7 +636,7 @@ typedef struct snd_state {
   PangoFontDescription *peaks_fnt;
   PangoFontDescription *bold_peaks_fnt; 
 
-  color_info *white, *black, *red, *yellow, *green, *light_blue, *lighter_blue;
+  color_info *white, *black, *red, *yellow, *green, *blue, *light_blue, *lighter_blue;
   color_info *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *listener_text_color, *cursor_color;
   color_info *basic_color, *selection_color, *zoom_color, *position_color, *highlight_color, *enved_waveform_color;
   color_info *text_focus_color, *filter_control_waveform_color, *mix_color, *sash_color;
@@ -667,7 +667,7 @@ typedef struct snd_state {
 
 #if USE_NO_GUI
   int data_color, selected_data_color, mix_color, basic_color, grid_color, selected_grid_color, mark_color, axis_color;
-  int white, black, red, yellow, green, light_blue;
+  int white, black, red, yellow, green, blue, light_blue;
   int fltenv_basic_gc, fltenv_data_gc;
   int basic_gc, selected_basic_gc, combined_basic_gc;        
   int cursor_gc, selected_cursor_gc;      

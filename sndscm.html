@@ -7964,14 +7964,30 @@ any success.
 
 <p>Next great idea: try random initial phases.  This actually works better than it has
 any right to, but again the results were disappointing.  You can run random phases until
-hell freezes over and only get to n^.7 or slightly less.  I now realize that this 
+hell freezes over and only get to n^.6 or slightly less.  I now realize that this 
 approach fails because the minima are like tiny cuspy cracks in a huge n-dimensional
 block of stuff that is all nearly the same.  If you look at the n=5 graph above, you'll
 see that the floor is getting flat, and this becomes more noticeable as n increases.
-    So, brute force and random flailing failed.
+</p>
+<p>
+Here's an attempt to display this aspect of the peak values.  In the next graph,
+the y axis is the peak value with n=100, the x axis is the number of tests, and we've
+sorted the tests by peak.  Each test is centered around a known excellent minimum
+peak, and the separate curves are showing the peaks when the initial phases can vary
+around that best value by pi/4, then pi/8 etc.  It's hard to read at first, but
+take the black top curve.  This is what you'd get if you randomly sampled a hypercube whose side length is pi/2 centered on that minimum.
+Nearly all the values are between 15 (100^.59) and 20 (100^.65).
+Each successive curves divides the space we sample by 2 in all n dimensions,
+so by the time we get to the bottom curve, we've reduced our search space by
+a factor 256^100, and we still don't see the actual minimum
+even once!  And we were sitting on it the whole time!  Our best hit in this set of tests was 9.96 whereas the true minimum is 9.49.
+Imagine trying to set up a grid to catch this point.
+So, brute force and random flailing fail.
 </p>
 
-<p>As the saying goes, "an hour in the library is worth 6 months at the bench".
+<img src="pix/8way.png" alt="histogram of 100 reduced 8 times">
+
+<p>What to do? As the saying goes, "an hour in the library is worth 6 months at the bench".
 There are a bunch of papers on this subject, but the best I found was:
 Horner and Beauchamp, "a genetic algorithm-based method
 for synthesis of low peak amplitude signals", J. Acoustic. Soc. Am Vol 99 No 1 Jan 96, online

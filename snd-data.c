@@ -14,7 +14,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
 	case 0: cp->combined_data_color = ss->black;      break;
 	case 1: cp->combined_data_color = ss->red;        break;
 	case 2: cp->combined_data_color = ss->green;      break;
-	case 3: cp->combined_data_color = ss->light_blue; break;
+	case 3: cp->combined_data_color = ss->blue;       break;
 	}
 #if USE_GTK
       cp->progress_pct = -1.0;

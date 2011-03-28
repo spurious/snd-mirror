@@ -687,6 +687,7 @@ void snd_doit(int argc, char **argv)
   ss->lighter_blue =            get_color(shell, LIGHTER_BLUE_COLOR,      "blue", NULL, true);
   ss->red =                     get_color(shell, RED_COLOR,               NULL, NULL, false);
   ss->green =                   get_color(shell, GREEN_COLOR,             NULL, NULL, false);
+  ss->blue =                    get_color(shell, "blue",                  NULL, NULL, false);
   ss->yellow =                  get_color(shell, YELLOW_COLOR,            NULL, NULL, true);
   ss->highlight_color =         get_color(shell, HIGHLIGHT_COLOR,         "gray90", NULL, true);
   ss->basic_color =             get_color(shell, BASIC_COLOR,             "gray80", "gray", true);
