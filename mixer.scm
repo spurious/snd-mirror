@@ -192,8 +192,7 @@
 		 (set! (mat matrix k (cols i)) temp)))))
        (list matrix b)))))
 
-;;; it would be faster to use invert-matrix to calculate the determinant, but that
-;;;   really forces us to use doubles throughout -- probably should anyway...
+;;; it would be faster to use invert-matrix to calculate the determinant
 
 (define (mixer-solve A b)
   "(mixer-solve A b) returns the solution of Ax=b"

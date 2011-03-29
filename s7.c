@@ -32108,25 +32108,7 @@ the error type and the info passed to the error handler.");
 }
 
 
-/* --------------------------------------------------------------------------------
- * things to add or fix: 
- *
- *     (make-uniform-vector dims initial-element) where initial is required and sets type.
- *       this only requires set! support I believe, and could be implemented as a c_object.
- *       uniform-vector-elements -> array of the raw type, not s7_pointer
- *
- *     if user creates an enormous list, it can seem to hang the listener: *list-print-length* ?
- *       or just *print-length* for all, including Snd cases -- in Snd print-length function becomes unneeded,
- *       but we have to change the symbol access to make sure Snd's print_length is set if ours is, or
- *       make the shadowing complete in the scheme case (but then how to set vct-print-length etc in parallel)?
- *       in gmp, there's also the int/ratio print length case (giant expt etc), and strings can be enormous
- *
- *     file-exists?, directory?, delete-file
- *     method lists for c|s_objects
- *     still mixed arith: * + / - < > <= >= = min max, but I haven't found any bugs
- *
- * --------------------------------------------------------------------------------
- * s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10
+/* s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10
  *
  *    intel core duo (1.83G):    3162     2690 1.921     2426 1.830
  *    intel E5200 (2.5G):                 1951 1.450     1751 1.28

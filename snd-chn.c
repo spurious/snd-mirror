@@ -2,15 +2,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: some way to refer to the full current sound/channel (i.e. like selection) for copy etc
- *          (channel1) = channel->vct full?
- * TODO: package up the readers so they're easier to use with, for example, map-channel
- *
- * PERHAPS: dsp.scm channel-distance to C
- *                  channel-difference would put c1 - c2 -> c1
- *          or just put all the math ops in as channel ops -- need a (channel s1 c1) object?
- */
-
 bool graph_style_p(int grf)
 {
   switch (grf)
@@ -4998,12 +4989,32 @@ void check_cursor_shape(chan_info *cp, int x, int y)
     case CLICK_SELECTION_RIGHT:
     case CLICK_MIX:
     case CLICK_MARK:
-    case CLICK_FFT_AXIS:
-      /* these all involve a drag if the mouse is pressed */
       if (cp->current_cursor != ss->bounds_cursor)
 	{
 	  cp->current_cursor = ss->bounds_cursor;
 	  GUI_SET_CURSOR(channel_graph(cp), ss->bounds_cursor);
+	}
+      break;
+
+    case CLICK_FFT_AXIS:
+      /* these all involve a drag if the mouse is pressed 
+       *   but for fft axis, if sonogram, we want an up-and-down arrow, not left-to-right
+       */
+      if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
+	{
+	  if (cp->current_cursor != ss->bounds_cursor)
+	    {
+	      cp->current_cursor = ss->bounds_cursor;
+	      GUI_SET_CURSOR(channel_graph(cp), ss->bounds_cursor);
+	    }
+	}
+      else
+	{
+	  if (cp->current_cursor != ss->yaxis_cursor)
+	    {
+	      cp->current_cursor = ss->yaxis_cursor;
+	      GUI_SET_CURSOR(channel_graph(cp), ss->yaxis_cursor);
+	    }
 	}
       break;
 

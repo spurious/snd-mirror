@@ -609,7 +609,7 @@ typedef struct snd_state {
   Widget listener_pane;
   Widget *dialogs;
   int num_dialogs, dialogs_size;
-  Cursor graph_cursor, wait_cursor, bounds_cursor, play_cursor, loop_play_cursor;
+  Cursor graph_cursor, wait_cursor, bounds_cursor, play_cursor, loop_play_cursor, yaxis_cursor;
   Widget requestor_dialog;
 #if HAVE_GL
   GLXContext cx;
@@ -659,7 +659,7 @@ typedef struct snd_state {
   GtkWidget *requestor_dialog;
   mus_float_t bg_gradient;
   
-  GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor, *bounds_cursor, *play_cursor, *loop_play_cursor;
+  GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor, *bounds_cursor, *play_cursor, *loop_play_cursor, *yaxis_cursor;
   gint fam_port;
   GtkWidget **mw;
   bool axis_color_set;
@@ -678,7 +678,7 @@ typedef struct snd_state {
   struct dialog_play_info *ignore_me; /* for the compiler's benefit */
   int requestor_dialog;
   bool axis_color_set;
-  int bounds_cursor, graph_cursor, play_cursor, loop_play_cursor;
+  int bounds_cursor, graph_cursor, play_cursor, loop_play_cursor, yaxis_cursor;
 #endif
 
 } snd_state;

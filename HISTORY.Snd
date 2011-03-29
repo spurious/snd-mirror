@@ -171,7 +171,7 @@ Snd change log
                track-colors.scm, mix-menu.scm
              moved mix-properties into C.
              added edit-properties, mix-sync.
-             spokenword.scm thanks to Ville Koskinen.\n\
+             spokenword.scm thanks to Ville Koskinen.
  23-Mar:     recorder dialog removed.
  22-Mar:     Snd 8.9.
  14-Mar:     cairo graphics backend (--with-cairo configure choice).

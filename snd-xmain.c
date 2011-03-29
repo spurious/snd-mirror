@@ -252,6 +252,7 @@ static void startup_funcs(void)
   ss->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
   ss->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
   ss->bounds_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_h_double_arrow);
+  ss->yaxis_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_v_double_arrow);
   ss->play_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_right_arrow);
   ss->loop_play_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_left_arrow);
 

@@ -3134,11 +3134,11 @@ src-fit-envelope returns a version of "env" scaled so that its duration as an sr
 <tr><td><em class=emdef>channel-variance</em> <code>snd chn</code></td>            <td><code>; &lt;f, f&gt; - ((&lt;f, 1&gt; / n) ^ 2) with quibbles</code></td></tr>
 <tr><td><em class=emdef>channel-lp</em> u-p <code>snd chn</code></td>              <td></td></tr>
 <tr><td><em class=emdef>channel-lp-inf</em> <code>snd chn</code></td>              <td><code>; max abs f</code></td></tr>
-<tr><td><em class=emdef>channel2-inner-product</em> <code>s1 c1 s2 c2</code></td>            <td><code>; &lt;f, g&gt;</code></td></tr>
-<tr><td><em class=emdef>channel2-orthogonal?</em> <code>s1 c1 s2 c2</code></td>              <td><code>; &lt;f, g&gt; == 0</code></td></tr>
-<tr><td><em class=emdef>channel2-angle</em> <code>s1 c1 s2 c2</code></td>                    <td><code>; acos(&lt;f, g&gt; / (sqrt(&lt;f, f&gt;) * sqrt(&lt;g, g&gt;)))</code></td></tr>
+<tr><td><em class=emdef>channel2-inner-product</em> <code>s1 c1 s2 c2</code></td>  <td><code>; &lt;f, g&gt;</code></td></tr>
+<tr><td><em class=emdef>channel2-orthogonal?</em> <code>s1 c1 s2 c2</code></td>    <td><code>; &lt;f, g&gt; == 0</code></td></tr>
+<tr><td><em class=emdef>channel2-angle</em> <code>s1 c1 s2 c2</code></td>          <td><code>; acos(&lt;f, g&gt; / (sqrt(&lt;f, f&gt;) * sqrt(&lt;g, g&gt;)))</code></td></tr>
 <tr><td><em class=emdef>channel2-coefficient-of-projection</em> <code>s1 c1 s2 c2</code></td><td><code>; &lt;f, g&gt; / &lt;f, f&gt;</code></td></tr>
-<tr><td><em class=emdef>channel-distance</em> <code>s1 c1 s2 c2</code></td>                  <td><code>; sqrt(&lt;f - g, f - g&gt;)</code></td></tr>
+<tr><td><em class=emdef>channel-distance</em> <code>(s1 0) (c1 0) (s2 0) (c2 0)</code></td><td><code>; sqrt(&lt;f - g, f - g&gt;)</code></td></tr>
 </table>
 </td></tr><tr><td></td><td>
 These functions are taken from (or at least inspired by) Julius Smith's "Mathematics of the
