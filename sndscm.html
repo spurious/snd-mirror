@@ -7138,7 +7138,7 @@ waveform and the FFT.  Eventually I hope to add a "waterfall" FFT display.
 <A NAME="peakphasesdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>peak-phases</h2></td></tr></table>
 </td></tr></table>
 
-<p>This file contains the phases that produce a minimum peak amplitude ("low peak-factor") sum of sinusoids,
+<p>peak-phases.scm contains the phases that produce a minimum peak amplitude ("low peak-factor") sum of sinusoids,
 the unpulse-train, so to speak.  I started with the questions: given a sum of
 n equal amplitude harmonically related sinusoids, what set of initial phases minimizes
 the peak amplitude?  What is that peak as a function of n?  Can we find any pattern
@@ -7976,11 +7976,11 @@ sorted the tests by peak.  Each test is centered around a known excellent minimu
 peak, and the separate curves are showing the peaks when the initial phases can vary
 around that best value by pi/4, then pi/8 etc.  It's hard to read at first, but
 take the black top curve.  This is what you'd get if you randomly sampled a hypercube whose side length is pi/2 centered on that minimum.
-Nearly all the values are between 15 (100^.59) and 20 (100^.65).
+Nearly all the values are between 18 (100^.63) and 23 (100^.68).  
 Each successive curves divides the space we sample by 2 in all n dimensions,
 so by the time we get to the bottom curve, we've reduced our search space by
-a factor 256^100, and we still don't see the actual minimum
-even once!  And we were sitting on it the whole time!  Our best hit in this set of tests was 9.96 whereas the true minimum is 9.49.
+a factor of 256^100 (we're down to .005 on a side), and we still don't see the actual minimum
+even once in 50000 tries!  
 Imagine trying to set up a grid to catch this point.
 So, brute force and random flailing fail.
 </p>
