@@ -5979,9 +5979,9 @@ typedef struct {
 
 #define S_fpsap "fpsap"
 
-static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_increment)
+static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_increment, XEN x_start)
 {
-  #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06)) searches \
+  #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06) (start 1)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
   #define FFT_MULT 128
@@ -5996,7 +5996,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   #define EVEN 2
   #define PRIME 3
 
-  int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0;
+  int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0, h_start = 1;
   mus_float_t increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN, overall_min;
   mus_float_t *min_phases = NULL, *temp_phases = NULL, *diff_phases = NULL, *initial_phases = NULL;
   char *choice_name[4] = {"all", "odd", "even", "prime"};
@@ -6127,7 +6127,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     /* try to find a point nearby that is better */
     for (local_try = 0; (local_try < local_tries) && (pk >= cur_min); local_try++)
       {
-	for (i = 1; i < len; i++)
+	for (i = h_start; i < len; i++)
 	  temp_phases[i] = fmod(phases[i] + local_random(increment), 2.0); /* not mus_frandom! */
 	pk = get_peak(temp_phases);
 	
@@ -6255,6 +6255,10 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     increment = XEN_TO_C_DOUBLE(x_increment);
   else increment = 0.06; /* was .03 */
 
+  if (XEN_INTEGER_P(x_start))
+    h_start = XEN_TO_C_INT(x_start);
+  else h_start = 1;
+
   counts = 50; /* was 100 */
   orig_incr = increment;
   incr_mult = INCR_DOWN;
@@ -6312,7 +6316,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 	  {
 	    if (initial_phases)
 	      {
-		for (k = 1; k < n; k++) 
+		for (k = h_start; k < n; k++) 
 		  temp_phases[k] = initial_phases[k] + local_random(increment);
 	      }
 	    else
@@ -6424,7 +6428,7 @@ XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #if HAVE_NESTED_FUNCTIONS
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
-XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
+XEN_ARGIFY_6(g_fpsap_w, g_fpsap)
 #endif
 #else
 #define g_scan_chan_w g_scan_chan
@@ -6523,7 +6527,7 @@ void g_init_sig(void)
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 #if HAVE_NESTED_FUNCTIONS
   XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
-  XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
+  XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 3, 0, H_fpsap);
 #endif
 }
 
