@@ -496,7 +496,6 @@ void env_editor_display_env(env_editor *edp, env *e, graphics_context *ax, const
 	      ix1 = grf_x(0.0, ap);
 	      iy1 = env_editor_grf_y_dB(edp, env_val);
 	      xincr = (ex1 - ex0) / (mus_float_t)dur;
-	      j = 1;
 	      for (i = 1, curx = ex0 + xincr; i < dur; i++, curx += xincr)
 		{
 		  iy0 = iy1;

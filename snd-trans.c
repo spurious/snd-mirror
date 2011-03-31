@@ -908,7 +908,6 @@ static int read_dvi_adpcm(const char *oldname, const char *newname, char *hdr, i
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
   lseek(fd, loc, SEEK_SET);
-  samps_read = 0;
   while (samps > 0)
     {
       ssize_t totalin;
@@ -997,7 +996,6 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
   lseek(fd, loc, SEEK_SET);
-  samps_read = 0;
   stat.last = 0;
   stat.step_index = 0;
   while (samps > 0)

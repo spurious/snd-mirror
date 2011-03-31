@@ -302,8 +302,6 @@ static void mix_amp_env_resize(GtkWidget *w)
   if (!(mix_is_active(mix_dialog_id))) return;
   if (ax == NULL)
     {
-      GdkWindow *wn;
-      wn = MAIN_WINDOW(ss);
       cur_gc = gc_new();
       gc_set_background(cur_gc, ss->graph_color);
       gc_set_foreground(cur_gc, ss->data_color);

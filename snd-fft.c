@@ -279,7 +279,6 @@ int find_and_sort_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, mus_lo
   for (i = 0; i < pks; i++)
     {
       j = inds[i];
-      ca = buf[j];
       found[i].amp = buf[j];
       found[i].freq = (mus_float_t)j;
     }
@@ -850,7 +849,7 @@ static void apply_fft(fft_state *fs)
 
     default:
       {
-	XEN res = XEN_FALSE, sfd;
+	XEN res, sfd;
 	vct *v;
 	int gc_loc, sf_loc;
 	mus_long_t len;

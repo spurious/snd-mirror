@@ -1284,7 +1284,6 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       get_fft_window_data();
       SG_SIGNAL_CONNECT(graph_drawer, DRAW_SIGNAL, graph_expose_callback, NULL);
       SG_SIGNAL_CONNECT(graph_drawer, "configure_event", graph_configure_callback, NULL);
-      need_callback = false;
     }
 
   return(transform_dialog);

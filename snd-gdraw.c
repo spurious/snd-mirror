@@ -300,8 +300,6 @@ void fill_two_sided_polygons(graphics_context *ax, point_t *points, point_t *poi
 void setup_graphics_context(chan_info *cp, graphics_context *ax)
 {
   GtkWidget *w;
-  snd_info *sp;
-  sp = cp->sound;
   w = channel_to_widget(cp);
   ax->gc = copy_GC(cp);
   ax->wn = WIDGET_TO_WINDOW(w);

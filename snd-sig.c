@@ -1362,10 +1362,9 @@ void display_frequency_response(env *e, axis_info *ap, graphics_context *gax, in
   invpts = 1.0 / (mus_float_t)pts;
   samps_per_pixel = (mus_float_t)(ap->x_axis_x1 - ap->x_axis_x0) * invpts;
 
-  x1 = ap->x_axis_x0;
   coeffs = get_filter_coeffs(order, e);
-
   if (!coeffs) return;
+
   fsize = 2 * snd_to_int_pow2((pts > order) ? pts : order); /* *2 for 1/2 frqs */
   rl = (mus_float_t *)calloc(fsize, sizeof(mus_float_t));
   im = (mus_float_t *)calloc(fsize, sizeof(mus_float_t));
@@ -4223,15 +4222,13 @@ static void cut_and_smooth_1(chan_info *cp, mus_long_t beg, mus_long_t end, bool
 {
   #define SPLICE_LEN 32
   /* making this 128 is not a big improvement */
-  mus_long_t frames, start;
+  mus_long_t start;
   mus_sample_t splice[2 * SPLICE_LEN];
   double ramp, incr;
   int i;
   snd_fd *sf, *sf_end;
   
   incr = 0.5 / SPLICE_LEN;
-  frames = CURRENT_SAMPLES(cp);
-  
   if (end < SPLICE_LEN)
     start = 0;
   else start = end - SPLICE_LEN;
@@ -4300,6 +4297,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
   if (!cp) return(XEN_FALSE);
 
   pos = to_c_edit_position(cp, edpos, S_delete_samples_and_smooth, 6);
+  /* TODO: what about edpos here? */
   samp = beg_to_sample(samp_n, S_delete_samples_and_smooth);
   len = XEN_TO_C_INT64_T_OR_ELSE(samps, 0);
   if (len <= 0) return(XEN_FALSE);
@@ -4953,7 +4951,6 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
     {
       mus_float_t *data;
       double *rates;
-      mus_long_t *passes;
       mus_any *e;
       double seg0, seg1;
 
@@ -4977,8 +4974,6 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 	      e = mus_make_env_with_length(data, 2, 1.0, 0.0, ebase, samps);
 
 	      rates = mus_env_rates(e);
-	      passes = mus_env_passes(e);
-
 	      if (xramp_channel(cp, mus_env_initial_power(e), rates[0], mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, NOT_IN_AS_ONE_EDIT, e, 0))
 		{
 		  if (cp->edits[pos]->peak_env)
@@ -5328,15 +5323,15 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
       if (error != SRC_ENV_NO_ERROR)
 	{
 	  XEN data;
+
 	  data = mus_array_to_list(mus_data(egen), 0, mus_env_breakpoints(egen) * 2);
 	  if (need_free) 
-	    {
-	      mus_free(egen); 
-	      need_free = false;
-	    }
+	    mus_free(egen); 
+
 	  if (error == SRC_ENV_HIT_ZERO)
 	    XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope hits 0.0");
 	  else XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, data, "~A: envelope passes through 0.0");
+
 	  return(XEN_FALSE); /* just for clarity... */
 	}
     }
@@ -5936,11 +5931,11 @@ that give a minimum peak amplitude when the signals are added together."
 
   static mus_float_t all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6394, 2.7946, 2.9617, 3.1023, 3.2180, 3.3887, 3.5241, 3.6122, 3.7680, 3.8738, 3.9802, 4.1438, 4.2210, 4.2890, 4.4824, 4.5866, 4.6052, 4.7280, 4.8531, 5.0050, 5.0640, 5.1573, 5.2413, 5.3623, 5.4800, 5.5259, 5.6320, 5.7167, 5.7648, 5.9260, 5.9291, 6.1063, 6.1247, 6.2928, 6.3296, 6.4582, 6.4755, 6.5454, 6.6312, 6.6921, 6.8293, 6.8630, 6.9144, 7.0054, 7.0637, 7.1368, 7.1997, 7.2564, 7.3299, 7.3515, 7.4959, 7.5951, 7.6448, 7.6004, 7.7645, 7.7988, 7.9057, 7.9675, 8.0372, 8.0641, 8.1492, 8.1759, 8.2203, 8.1858, 8.3294, 8.4729, 8.4355, 8.5093, 8.6166, 8.6292, 8.7018, 8.7310, 8.8532, 8.8399, 8.9659, 9.0788, 8.9469, 9.0279, 9.1400, 9.2143, 9.3444, 9.3266, 9.3608, 9.4148, 9.4762, 9.5310, 9.6777, 9.6238, 9.6045, 9.7150, 9.8212, 9.7808, 9.8684, 9.9443, 10.0713, 10.0913, 10.0825, 10.1311, 10.1809, 10.2442, 10.2892, 10.3212, 10.4478, 10.5179, 10.5072, 10.4710, 10.6064, 10.6388, 10.6937, 10.6756, 10.7588, 10.8087, 10.8980, 10.8897, 10.9437, 10.9655, 11.1049, 11.0834, 11.1704, 11.1605, 11.1939, 11.3312};
 
-  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6183, 2.7907, 2.8862, 3.0534, 3.1766, 3.3619, 3.4745, 3.5985, 3.7384, 3.8570, 3.9264, 4.0695, 4.1719, 4.3580, 4.4485, 4.5810, 4.6616, 4.7864, 4.8868, 5.0064, 5.0888, 5.0889, 5.2634, 5.3531, 5.4189, 5.5633, 5.6030, 5.7405, 5.8333, 5.9776, 6.0191, 6.1445, 6.1815, 6.2725, 6.3216, 6.4032, 6.4742, 6.5992, 6.6249, 6.7092, 6.7852, 6.8280, 6.9901, 6.9471, 7.0877, 7.0801, 7.2526, 7.3293, 7.3642, 7.4191, 7.4889, 7.5881, 7.6178, 7.6996, 7.7755, 7.8170, 7.9041, 7.9574, 8.0448, 8.1410, 8.1280, 8.2279, 8.2749, 8.3285, 8.4800, 8.3664, 8.5600, 8.4879, 8.6531, 8.6513, 8.7070, 8.7153, 8.8838, 8.9519, 8.9263, 8.8955, 9.0607, 9.1993, 9.1729, 9.2133, 9.3641, 9.3240, 9.3316, 9.4217, 9.4566, 9.5527, 9.6538, 9.6612, 9.7356, 9.7654, 9.8383, 9.9276, 9.9840, 9.9804, 9.9646, 10.0458, 10.1114, 10.1772, 10.1158, 10.1983, 10.3094, 10.3255, 10.4207, 10.4081, 10.6314, 10.5933, 10.6006, 10.6208, 10.6856, 10.7399, 10.7935, 10.8122, 10.9325, 10.9206, 11.0396, 11.0603, 11.1476, 11.2450, 11.1221, 11.2987, 11.2942, 11.3027};
+  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6183, 2.7907, 2.8862, 3.0534, 3.1766, 3.3619, 3.4745, 3.5985, 3.7384, 3.8570, 3.9264, 4.0695, 4.1719, 4.3580, 4.4485, 4.5810, 4.6616, 4.7864, 4.8868, 5.0064, 5.0888, 5.0889, 5.2634, 5.3531, 5.4189, 5.5633, 5.6030, 5.7405, 5.8333, 5.9776, 6.0191, 6.1445, 6.1815, 6.2725, 6.3216, 6.4032, 6.4742, 6.5992, 6.6249, 6.7092, 6.7852, 6.8280, 6.9901, 6.9471, 7.0877, 7.0801, 7.2526, 7.3293, 7.3642, 7.4191, 7.4889, 7.5881, 7.6178, 7.6996, 7.7755, 7.8170, 7.9041, 7.9574, 8.0448, 8.1410, 8.1280, 8.2279, 8.2749, 8.3285, 8.4800, 8.3664, 8.5593, 8.4879, 8.6531, 8.6513, 8.7070, 8.7153, 8.8838, 8.9519, 8.9263, 8.8955, 9.0607, 9.1993, 9.1729, 9.2133, 9.3641, 9.3240, 9.3316, 9.4217, 9.4566, 9.5527, 9.6538, 9.6612, 9.7356, 9.7654, 9.8383, 9.9276, 9.9840, 9.9804, 9.9646, 10.0458, 10.1114, 10.1772, 10.1158, 10.1983, 10.3094, 10.3255, 10.4207, 10.4081, 10.6314, 10.5933, 10.6006, 10.6208, 10.6856, 10.7399, 10.7935, 10.8122, 10.9322, 10.9206, 11.0396, 11.0602, 11.1476, 11.2450, 11.1221, 11.2987, 11.2938, 11.3027};
 
   static mus_float_t prime_mins[128] = {1.0000, 1.7600, 1.9798, 2.1921, 2.4768, 2.8055, 3.0619, 3.2630, 3.3824, 3.6023, 3.7790, 3.9366, 4.1551, 4.3254, 4.4680, 4.6025, 4.7203, 4.8567, 5.0167, 5.1901, 5.3299, 5.4469, 5.5660, 5.6488, 5.8136, 6.0631, 6.1376, 6.1943, 6.3688, 6.4551, 6.7060, 6.8464, 6.8528, 6.9975, 7.1698, 7.2801, 7.2978, 7.4026, 7.4626, 7.7094, 7.8733, 7.9766, 8.0526, 8.1864, 8.1655, 8.2722, 8.4314, 8.4781, 8.6466, 8.6842, 8.6633, 8.8300, 8.9627, 9.1228, 9.1564, 9.4166, 9.5807, 9.5057, 9.4611, 9.6680, 9.8578, 9.8036, 9.7298, 9.9287, 10.2856, 10.2311, 10.3407, 10.4127, 10.4243, 10.4572, 10.5887, 10.6032, 10.7745, 10.7224, 11.0321, 11.0824, 10.8967, 11.1438, 11.2405, 11.4673, 11.5138, 11.4929, 11.5309, 11.5744, 11.6582, 11.5382, 11.9413, 12.0060, 12.2362, 12.0567, 12.1409, 12.1419, 12.3374, 12.3904, 12.5299, 12.6858, 12.6639, 12.9200, 13.1127, 13.1352, 13.0875, 13.4199, 13.4492, 13.2143, 13.1622, 13.2404, 13.5786, 13.6931, 13.7139, 13.8060, 13.7890, 13.8862, 14.0573, 14.2366, 14.1959, 14.4907, 14.6271, 14.5700, 14.4088, 14.5250, 14.5755, 14.8995, 14.6292, 14.9056, 14.7970, 14.9417, 14.9909, 14.6673};
 
-  static mus_float_t even_mins[128] = {1.0000, 1.7602, 2.0215, 2.4306, 2.6048, 2.8370, 3.0470, 3.1976, 3.4541, 3.5589, 3.6567, 3.7876, 3.9730, 4.0977, 4.1935, 4.3263, 4.4641, 4.5708, 4.7435, 4.8413, 4.9220, 5.0576, 5.1502, 5.2557, 5.4056, 5.4549, 5.6237, 5.7353, 5.7702, 5.9106, 5.9916, 6.0655, 6.1677, 6.2274, 6.3678, 6.4373, 6.5859, 6.5424, 6.6894, 6.7542, 6.8880, 6.9484, 7.0624, 7.0556, 7.1722, 7.2838, 7.3002, 7.4741, 7.5955, 7.6309, 7.6632, 7.7944, 7.7598, 7.8541, 8.0161, 8.0517, 8.1251, 8.1129, 8.2039, 8.3222, 8.3667, 8.4009, 8.4237, 8.5096, 8.6762, 8.7965, 8.8351, 8.8095, 8.8822, 9.0139, 9.1149, 8.9996, 9.1732, 9.2636, 9.2213, 9.4078, 9.3745, 9.3502, 9.5516, 9.5854, 9.5585, 9.6768, 9.7673, 9.7624, 9.7113, 9.8177, 9.8890, 9.9849, 10.1260, 10.2574, 10.1851, 10.2503, 10.1394, 10.4530, 10.4633, 10.5664, 10.4737, 10.5482, 10.4316, 10.4946, 10.8160, 10.8507, 10.8520, 10.8018, 10.9420, 10.9377, 11.0059, 11.0437, 11.0988, 11.2827, 11.3712, 11.2926, 11.2163, 11.3569, 11.3579, 11.5758, 11.3894, 11.6008, 11.6472, 11.7386, 11.5980, 11.8015, 11.7724, 11.8625, 11.8411, 12.0022, 11.9138, 11.9469};
+  static mus_float_t even_mins[128] = {1.0000, 1.7602, 2.0215, 2.4306, 2.6048, 2.8370, 3.0470, 3.1975, 3.4540, 3.5587, 3.6561, 3.7869, 3.9726, 4.0967, 4.1921, 4.3250, 4.4630, 4.5694, 4.7415, 4.8395, 4.9197, 5.0552, 5.1479, 5.2532, 5.4032, 5.4523, 5.6204, 5.7317, 5.7663, 5.9070, 5.9878, 6.0611, 6.1626, 6.2228, 6.3623, 6.4321, 6.5805, 6.5366, 6.6832, 6.7481, 6.8810, 6.9415, 7.0552, 7.0483, 7.1652, 7.2760, 7.2926, 7.4670, 7.5877, 7.6224, 7.6548, 7.7863, 7.7505, 7.8451, 8.0075, 8.0420, 8.1156, 8.1027, 8.1945, 8.3124, 8.3566, 8.3910, 8.4139, 8.5009, 8.6650, 8.7856, 8.8244, 8.7974, 8.8704, 9.0019, 9.0999, 8.9861, 9.1610, 9.2507, 9.2084, 9.3931, 9.3628, 9.3360, 9.5324, 9.5719, 9.5437, 9.6639, 9.7537, 9.7490, 9.6937, 9.8045, 9.8751, 9.9693, 10.1103, 10.2407, 10.1681, 10.2333, 10.1229, 10.4374, 10.4464, 10.5480, 10.4547, 10.5307, 10.4153, 10.4725, 10.7998, 10.8259, 10.8327, 10.7831, 10.9241, 10.9193, 10.9844, 11.0254, 11.0808, 11.2647, 11.3542, 11.2731, 11.1978, 11.3365, 11.3372, 11.5548, 11.3688, 11.5805, 11.6248, 11.7167, 11.5803, 11.7809, 11.7526, 11.8401, 11.8194, 11.9818, 11.8908, 11.9243};
 
   static mus_float_t min_8[4] = {19.4199, 19.7800, 21.1471, 25.4193};
   static mus_float_t min_9[4] = {31.3912, 31.6276, 31.6281, 40.2509};
@@ -5979,9 +5974,9 @@ typedef struct {
 
 #define S_fpsap "fpsap"
 
-static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_increment, XEN x_start)
+static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_increment)
 {
-  #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06) (start 1)) searches \
+  #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
   #define FFT_MULT 128
@@ -5996,7 +5991,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   #define EVEN 2
   #define PRIME 3
 
-  int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0, h_start = 1;
+  int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0;
   mus_float_t increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN, overall_min;
   mus_float_t *min_phases = NULL, *temp_phases = NULL, *diff_phases = NULL, *initial_phases = NULL;
   char *choice_name[4] = {"all", "odd", "even", "prime"};
@@ -6127,7 +6122,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     /* try to find a point nearby that is better */
     for (local_try = 0; (local_try < local_tries) && (pk >= cur_min); local_try++)
       {
-	for (i = h_start; i < len; i++)
+	for (i = 1; i < len; i++)
 	  temp_phases[i] = fmod(phases[i] + local_random(increment), 2.0); /* not mus_frandom! */
 	pk = get_peak(temp_phases);
 	
@@ -6142,22 +6137,23 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     /* if a better point is found, try to follow the slopes */
     if (new_pk->pk < data->pk)
       {
-	bool happy = true;
+	int happy = 3;
 	for (k = 1; k < len; k++)
 	  diff_phases[k] = new_pk->phases[k] - data->phases[k];
 
-	while (happy)
+	while (happy > 0)
 	  {
 	    for (k = 1; k < len; k++)
-	      temp_phases[k] = fmod(new_pk->phases[k] + diff_phases[k], 2.0); /* frandom here? */
+	      temp_phases[k] = fmod(new_pk->phases[k] + local_frandom(diff_phases[k]), 2.0); /* use frandom 30-mar-11 */
 	    pk = get_peak(temp_phases);
 
 	    if (pk < new_pk->pk)
 	      {
 		new_pk->pk = pk;
 		for (k = 1; k < len; k++) new_pk->phases[k] = temp_phases[k];
+		happy = 3;
 	      }
-	    else happy = false;
+	    else happy--;
 	  }
       }
 
@@ -6255,10 +6251,6 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     increment = XEN_TO_C_DOUBLE(x_increment);
   else increment = 0.06; /* was .03 */
 
-  if (XEN_INTEGER_P(x_start))
-    h_start = XEN_TO_C_INT(x_start);
-  else h_start = 1;
-
   counts = 50; /* was 100 */
   orig_incr = increment;
   incr_mult = INCR_DOWN;
@@ -6316,7 +6308,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 	  {
 	    if (initial_phases)
 	      {
-		for (k = h_start; k < n; k++) 
+		for (k = 1; k < n; k++) 
 		  temp_phases[k] = initial_phases[k] + local_random(increment);
 	      }
 	    else
@@ -6428,7 +6420,7 @@ XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #if HAVE_NESTED_FUNCTIONS
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
-XEN_ARGIFY_6(g_fpsap_w, g_fpsap)
+XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
 #endif
 #else
 #define g_scan_chan_w g_scan_chan
@@ -6527,7 +6519,7 @@ void g_init_sig(void)
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 #if HAVE_NESTED_FUNCTIONS
   XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
-  XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 3, 0, H_fpsap);
+  XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
 #endif
 }
 

@@ -9302,7 +9302,6 @@ static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2"
-  s7_Double x;
 
   if (s7_is_rational(car(args)))        /* (inexact->exact -2305843009213693952/4611686018427387903) which will confuse s7_real below */
     return(car(args));
@@ -9310,7 +9309,6 @@ static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, car(args), "a real number"));
 
-  x = s7_real(car(args));
   return(inexact_to_exact(sc, car(args)));
 }
 #endif
@@ -11923,7 +11921,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval_string "(eval-string str (env (current-environment))) returns the result of evaluating the string str as Scheme code"
-  s7_pointer old_port, port;
+  s7_pointer port;
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "eval-string", (cdr(args) == sc->NIL) ? 0 : 1, car(args), "a string"));
@@ -11939,7 +11937,6 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   eval_string_string = (char *)s7_string(car(args));
 #endif
   
-  old_port = sc->input_port;
   port = s7_open_input_string(sc, s7_string(car(args)));
   push_input_port(sc, port);
   
@@ -21160,12 +21157,11 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 static bool next_map(s7_scheme *sc)
 {
   /* func = sc->code, results so far = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), object(s) = cdddr(sc->args) */
-  s7_pointer y, z, vargs, results;
+  s7_pointer y, z, vargs;
   int loc, zloc = -1;
 
   z = sc->NIL;
   vargs = cdddr(sc->args);
-  results = caddr(sc->args);
   loc = s7_integer(car(sc->args));
   sc->x = sc->NIL;                     /* can't use preset args list here (as in for-each): (map list '(a b c)) */
 
@@ -22598,7 +22594,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		  
 		  if (cdr(sc->y) == sc->NIL)
 		    err = LSTAR_NO_SUCH_KEY;
-		  err = lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))); /* cdr(sc->y) is the next arg */
+		  else err = lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))); /* cdr(sc->y) is the next arg */
 		  
 		  if (err == LSTAR_NO_SUCH_KEY)
 		    {
@@ -23140,9 +23136,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * here we call the inner loop until k <= 0 [the local k! -- this is tricky because scheme passes args by value]
        */
       {
-	s7_Int n, k;
+	s7_Int k;
 	k = SORT_K;
-	n = SORT_N;
 	if (k <= 0)
 	  goto SORT3;
 

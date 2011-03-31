@@ -2261,6 +2261,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (string-length (string #\null)) 1) ; ??
 (test (string-length (string #\null #\null)) 2) ; ??
 (test (string-length (string #\null #\newline)) 2) ; ??
+(test (string-length ``"hi") 2) ; ?? and in s7 ,"hi" is "hi" as with numbers
 
 (for-each
  (lambda (arg)
@@ -60328,6 +60329,7 @@ etc....
 (test (string->number "#b 1") #f)
 (test (string->number "# b1") #f)
 (test (string->number "#b12") #f)
+(test (string->number "000+1") #f)
 (test (string->number (string (integer->char 216))) #f) ; slashed 0
 (test (string->number (string (integer->char 189))) #f) ; 1/2 as single char
 (test (string->number (string #\1 (integer->char 127) #\0)) #f) ; backspace

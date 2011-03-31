@@ -1586,7 +1586,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 	  if (cp->printing) pinc = samples_per_pixel / cur_srate;
 	  ap->changed = false;
 	  ss->stopped_explicitly = false;
-	  for (ioff = ap->losamp, xf = 0.0; ioff <= ap->hisamp; ioff++)
+	  for (ioff = ap->losamp; ioff <= ap->hisamp; ioff++)
 	    {
 	      mus_float_t samp;
 	      samp = read_sample(sf);
@@ -1778,7 +1778,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 	  ymin = MIN_INIT;
 	  ymax = MAX_INIT;
 	  ap->changed = false;
-	  for (ioff = beg, xf = 0.0; ioff <= end; ioff++)
+	  for (ioff = beg; ioff <= end; ioff++)
 	    {
 	      mus_float_t samp;
 	      samp = read_sample(sf);
@@ -6099,9 +6099,6 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	  ((cp->chan == 0) || (cp->sound->channel_style != CHANNELS_SUPERIMPOSED)))
 	{
 	  /* draw axes around the inset graph */
-	  chan_info *grf_cp;
-	  grf_cp = cp->sound->chans[grf_chn];
-
 	  fill_rectangle(cur_ax, x_offset, chan_offset + height, width, 2);
 	  fill_rectangle(cur_ax, x_offset, chan_offset, 2, height);
 

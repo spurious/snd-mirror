@@ -1458,14 +1458,13 @@ static dac_info *play_selection_1(play_process_t background, XEN stop_proc)
 	{
 	  int i;
 	  mus_long_t *ends;
+
 	  ends = (mus_long_t *)calloc(si->chans, sizeof(mus_long_t));
 	  for (i = 0; i < si->chans; i++) 
-	    {
-	      snd_info *sp;
-	      sp = si->cps[i]->sound;
-	      ends[i] = si->begs[i] + selection_len();
-	    }
+	    ends[i] = si->begs[i] + selection_len();
+
 	  dp = play_channels_1(si->cps, si->chans, si->begs, ends, background, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), true, stop_proc, NULL, 0);
+
 	  si = free_sync_info(si); /* does not free samplers */
 	  free(ends);
 	}
@@ -1801,7 +1800,6 @@ static int fill_dac_buffers(int write_ok)
 	  dp = play_list[i];
 	  if (dp)
 	    {
-	      sp = dp->sp; /* can be nil if region playing */
 	      /* check for EOF or specified end point */
 	      if (write_ok == WRITE_TO_DAC) /* not Apply */
 		{

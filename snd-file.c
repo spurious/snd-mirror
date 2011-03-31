@@ -2250,7 +2250,6 @@ snd_info *snd_update(snd_info *sp)
 		 (nsp) ? C_INT_TO_XEN_SOUND(nsp->index) : XEN_FALSE,
 		 "procedure returned by " S_update_hook);
       if (gc_loc != NOT_A_GC_LOC) snd_unprotect_at(gc_loc);
-      gc_loc = NOT_A_GC_LOC;
     }
 
   if (saved_sp)
@@ -5419,7 +5418,7 @@ static XEN g_soundfont_info(XEN snd)
   #define H_soundfont_info "(" S_soundfont_info " :optional snd): list of lists describing snd as a soundfont. \
 each inner list has the form: (name start loopstart loopend)"
 
-  XEN inlist = XEN_EMPTY_LIST, outlist = XEN_EMPTY_LIST;
+  XEN outlist = XEN_EMPTY_LIST;
   snd_info *sp;
   ASSERT_SOUND(S_soundfont_info, snd, 1);
   sp = get_sp(snd);
@@ -5433,6 +5432,7 @@ each inner list has the form: (name start loopstart loopend)"
       if (lim > 0)
 	for (i = lim - 1; i >= 0; i--)
 	  {
+	    XEN inlist;
 	    inlist = XEN_LIST_4(C_TO_XEN_STRING(mus_header_sf2_name(i)),
 			        C_TO_XEN_INT(mus_header_sf2_start(i)),
 			        C_TO_XEN_INT(mus_header_sf2_loop_start(i)),

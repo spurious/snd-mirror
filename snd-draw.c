@@ -150,7 +150,6 @@ void draw_cursor(chan_info *cp)
   cursor_style_t cur;
 #if USE_GTK
   color_t old_color;
-  int cy0 = 0, cx0 = 0, csize;
 #endif
   axis_info *ap;
   graphics_context *ax;
@@ -169,9 +168,10 @@ void draw_cursor(chan_info *cp)
   old_color = get_foreground_color(ax);
   set_foreground_color(ax, ss->cursor_color);
 
-  if (cp->cx > cp->cursor_size) cx0 = cp->cx - cp->cursor_size;
-  if (cp->cy > cp->cursor_size) cy0 = cp->cy - cp->cursor_size;
-  csize = 2 * cp->cursor_size + 1;
+  /* if (cp->cx > cp->cursor_size) cx0 = cp->cx - cp->cursor_size; */
+  /* if (cp->cy > cp->cursor_size) cy0 = cp->cy - cp->cursor_size; */
+  /* csize = 2 * cp->cursor_size + 1; */
+  /* what were those lines for? */
 #else
   ax = cursor_context(cp);
 #endif
@@ -1319,8 +1319,10 @@ static void highlight_recolor_everything(widget_t w, color_t color)
 
 void set_highlight_color(color_t color)
 {
+#if USE_MOTIF
   color_t old_color;
   old_color = ss->highlight_color;
+#endif
   ss->highlight_color = color; 
 #if USE_MOTIF
   map_over_children_with_color(MAIN_SHELL(ss), highlight_recolor_everything, old_color);
@@ -1793,8 +1795,10 @@ static XEN g_make_color(XEN r, XEN g, XEN b, XEN alpha)
 
 void set_basic_color(color_t color)
 {
+#if USE_MOTIF
   color_t old_color;
   old_color = ss->basic_color;
+#endif
   ss->basic_color = color; 
 #if USE_MOTIF
   map_over_children_with_color(MAIN_SHELL(ss), recolor_everything, old_color);

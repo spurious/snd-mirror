@@ -288,7 +288,7 @@ static s7_pointer walk_sym;
 /* find and set (Scheme) variable values */
 static void xen_symbol_name_set_value(const char *a, s7_pointer b)
 {
-  s7_pointer var = scheme_false;
+  s7_pointer var;
   var = s7_make_symbol(s7, a);
   if (var != scheme_false)
     s7_symbol_set_value(s7, var, b);
@@ -2558,7 +2558,7 @@ static xen_value *add_value_to_ptree(ptree *prog, s7_pointer val, int type)
 
 static xen_value *add_global_var_to_ptree(ptree *prog, s7_pointer form, s7_pointer *rtn)
 {
-  s7_pointer val = scheme_undefined;
+  s7_pointer val;
   xen_var *var;
   int type;
   xen_value *v = NULL;

@@ -1823,7 +1823,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 	  ymax = MAX_INIT;
 	  if (current_sample < initial_sample) 
 	    {
-	      for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
+	      for (i = ap->losamp; i <= ap->hisamp; i++)
 		{
 		  if (i == current_sample) 
 		    for (k = current_sample; k < initial_sample; k++) 

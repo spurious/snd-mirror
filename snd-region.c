@@ -713,8 +713,8 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
 static io_error_t paste_region_2(int n, chan_info *cp, bool add, mus_long_t beg)
 {
   io_error_t err = IO_NO_ERROR;
-  int id, chans = 0;
-  id = paste_region_1(n, cp, add, beg, &err, 0, &chans);
+  int chans = 0;
+  paste_region_1(n, cp, add, beg, &err, 0, &chans);
   return(err);
 }
 

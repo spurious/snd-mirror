@@ -182,9 +182,6 @@ static void get_stdin_string(gpointer context, gint fd, int condition)
 
 static void setup_gcs(void)
 {
-  GdkWindow *wn;	
-  wn = MAIN_WINDOW(ss);
-
   ss->basic_gc = gc_new();
   gc_set_background(ss->basic_gc, ss->graph_color);
   gc_set_foreground(ss->basic_gc, ss->data_color);

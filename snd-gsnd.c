@@ -1601,8 +1601,6 @@ static bool currently_showing_controls = false;
 snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr)
 {
   snd_info *sp, *osp;
-  GtkWidget **sw;
-  GtkAdjustment **adjs;
   int snd_slot, nchans, i, k, old_chans;
   bool free_filename = false, make_widgets;
   char *old_name = NULL, *title;
@@ -1656,15 +1654,8 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
   if (sp->snd_widgets == NULL)
     {
-      sw = (GtkWidget **)calloc(NUM_SND_WIDGETS, sizeof(GtkWidget *));
-      adjs = (GtkAdjustment **)calloc(NUM_SND_ADJS, sizeof(GtkAdjustment *));
-      sp->snd_widgets = sw; 
-      sp->snd_adjs = adjs;
-    }
-  else
-    {
-      sw = sp->snd_widgets;
-      adjs = sp->snd_adjs;
+      sp->snd_widgets = (GtkWidget **)calloc(NUM_SND_WIDGETS, sizeof(GtkWidget *));
+      sp->snd_adjs = (GtkAdjustment **)calloc(NUM_SND_ADJS, sizeof(GtkAdjustment *));
     }
 
   if (!(auto_resize(ss))) gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), false);

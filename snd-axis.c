@@ -111,16 +111,19 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double
     }
   inside = (td->mhi - td->mlo) / hilo_diff;
   mticks = (int)floor(inside * max_ticks);
+
   if (mticks <= 1) mdiv = 1;
-  if (mticks < 3) mdiv = mticks;
+  else if (mticks < 3) mdiv = mticks;
   else if (mticks == 3) mdiv = 2;
   else if (mticks < 6) mdiv = mticks;
   else if (mticks < 10) mdiv = 5;
   else mdiv = (int)(10 * floor(mticks / 10));
+
   mfdiv = (td->mhi - td->mlo) / mdiv;
   flog10 = floor(log10(mfdiv));
   plog10 = pow(10, flog10);
   td->tens = (int)fabs(flog10);
+
   mten = grid_scale * (double)(floor(4.0 * (.00001 + (mfdiv / plog10)))) / 4.0;
   if (mten < 1.0) mten = 1.0;
   if ((mten == 1.0) || (mten == 2.0) || (mten == 2.5) || (mten == 5.0)) ften = mten;
@@ -128,6 +131,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double
   else if (mten < 2.5) ften = 2.5;
   else if (mten < 5.0) ften = 5.0;
   else ften = 10.0;
+
   td->tenstep = ften;
   mften = ften * plog10;
   td->step = mften;
@@ -751,27 +755,21 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
     {
       if (include_y_ticks)
 	{
-	  double y_range;
 	  /* figure out how long the longest tick label will be and make room for it */
 	  /* values go from ap->y0 to ap->y1 */
 	  /* basic tick spacing is tick_spacing pixels */
+
 	  num_ticks = cury / y_tick_spacing;
 	  /* ticks start and stop at 10-based locations (i.e. sloppy axis bounds) */
 	  /* so, given the current min..max, find the pretty min..max for ticks */
-	  y_range = ap->y1 - ap->y0;
-	  if (y_range <= 0.0)
+
+	  if (ap->y1 <= ap->y0)
 	    {
 	      if (ap->y0 != 0.0)
-		{
-		  ap->y1 = ap->y0 * 1.25;
-		  y_range = ap->y0 * .25;
-		}
-	      else
-		{
-		  ap->y1 = 1.0;
-		  y_range = 1.0;
-		}
+		ap->y1 = ap->y0 * 1.25;
+	      else ap->y1 = 1.0;
 	    }
+
 	  tdy = describe_ticks(ap->y_ticks, ap->y0, ap->y1, num_ticks, grid_scale);
 	  ap->y_ticks = tdy;
 	  if (include_y_tick_labels)
@@ -818,23 +816,14 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   
   ap->x_axis_x1 = width - right_border_width;
   ap->x_axis_x0 = curx;
-  {
-    double x_range;
-    x_range = ap->x1 - ap->x0;
-    if (x_range <= 0)
-      {
-	if (ap->x0 != 0.0)
-	  {
-	    ap->x1 = ap->x0 * 1.25;
-	    x_range = ap->x0 * .25;
-	  }
-	else
-	  {
-	    ap->x1 = .1;
-	    x_range = .1;
-	  }
-      }
-  }
+
+  if (ap->x1 <= ap->x0)
+    {
+      if (ap->x0 != 0.0)
+	ap->x1 = ap->x0 * 1.25;
+      else ap->x1 = .1;
+    }
+
   if ((x_axis_linear) && (include_x_ticks))
     {
       num_ticks = (ap->x_axis_x1 - curx) / x_tick_spacing;

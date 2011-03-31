@@ -140,11 +140,6 @@ static void fsb_update_lists(fsb *fs)
 	adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller));
 	if (ADJUSTMENT_UPPER(adj) < files->len * 16)
 	  ADJUSTMENT_SET_UPPER(adj, files->len * 16);
-#if HAVE_GTK_3
-	adj = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(gtk_widget_get_parent(fs->directory_list->topics)));
-#else
-	adj = gtk_viewport_get_vadjustment(GTK_VIEWPORT(gtk_widget_get_parent(fs->directory_list->topics)));
-#endif
 	ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)), list_top);
       }
     else slist_moveto(fs->directory_list, 0);
@@ -194,11 +189,6 @@ static void fsb_update_lists(fsb *fs)
 	 */
 	if (ADJUSTMENT_UPPER(adj) < files->len * 16)
 	  ADJUSTMENT_SET_UPPER(adj, files->len * 16);
-#if HAVE_GTK_3
-	adj = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(gtk_widget_get_parent(fs->file_list->topics)));
-#else
-	adj = gtk_viewport_get_vadjustment(GTK_VIEWPORT(gtk_widget_get_parent(fs->file_list->topics)));
-#endif
 	ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), list_top);
       }
     else slist_moveto(fs->file_list, 0);
@@ -3272,19 +3262,17 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 
 	    case FROM_VIEW_FILES_MIX_DIALOG:
 	      {
-		int err;
 		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
 		redirect_snd_error_to(redirect_vf_post_error, rp->requestor_data);
-		err = vf_mix(vdat);
+		vf_mix(vdat);
 	      }
 	      break;
 
 	    case FROM_VIEW_FILES_INSERT_DIALOG:
 	      {
-		int err;
 		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
 		redirect_snd_error_to(redirect_vf_post_error, rp->requestor_data);
-		err = vf_insert(vdat);
+		vf_insert(vdat);
 	      }
 	      break;
 

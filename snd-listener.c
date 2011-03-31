@@ -741,7 +741,6 @@ void listener_return(widget_t w, int last_prompt)
   if (full_str) GUI_FREE(full_str);
   if (str)
     {
-      bool got_error = false;
       char *errmsg = NULL;
 
       if (current_position < (last_position - 2))
@@ -819,7 +818,6 @@ void listener_return(widget_t w, int last_prompt)
 	  if (*errmsg)
 	    snd_display_result(errmsg, NULL);
 	  free(errmsg);
-	  got_error = true;
 	}
       else snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby */
 

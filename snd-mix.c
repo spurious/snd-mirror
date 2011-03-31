@@ -1577,9 +1577,7 @@ int hit_mix_triangle(chan_info *cp, int x, int y)
   mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes); /* active mixes in the current edit of this channel */
   if (mxl)
     {
-      int i, width, height;
-      width = mix_tag_width(ss);
-      height = mix_tag_height(ss);
+      int i;
       for (i = 0; i < mxl->size; i++)
 	{
 	  mix_state *ms;
@@ -2373,6 +2371,7 @@ void mix_display_during_drag(int mix_id, mus_long_t drag_beg, mus_long_t drag_en
     display_channel_time_data(cp);
   else
     {
+#if USE_MOTIF
       mus_long_t cur_end, ms_beg;
       ms_beg = mix_position_from_id(mix_id);
       cur_end = ms_beg + mix_length_from_id(mix_id);
@@ -2380,7 +2379,6 @@ void mix_display_during_drag(int mix_id, mus_long_t drag_beg, mus_long_t drag_en
 	drag_end = cur_end;
       if (ms_beg < drag_beg)
 	drag_beg = ms_beg;
-#if USE_MOTIF
       make_partial_graph(cp, drag_beg, drag_end);
       display_channel_mixes_with_bounds(cp, drag_beg, drag_end);
 #else

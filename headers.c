@@ -1549,19 +1549,15 @@ static int read_caff_header(int fd)
       /* 'desc' is always the first chunk, but easier to handle in the loop */
       if (match_four_chars((unsigned char *)hdrbuf, I_desc))
 	{
-	  int format_flags, bytes_per_packet, frames_per_packet, channels_per_frame, bits_per_channel;
+	  int format_flags, channels_per_frame, bits_per_channel;
 	  srate = (int)mus_char_to_bdouble((unsigned char *)(hdrbuf + 12));
 	  format_flags = mus_char_to_ubint((unsigned char *)(hdrbuf + 24));
-	  bytes_per_packet = mus_char_to_ubint((unsigned char *)(hdrbuf + 28));
-	  frames_per_packet = mus_char_to_ubint((unsigned char *)(hdrbuf + 32));
+	  /* bytes_per_packet = mus_char_to_ubint((unsigned char *)(hdrbuf + 28)); */
+	  /* frames_per_packet = mus_char_to_ubint((unsigned char *)(hdrbuf + 32)); */
 	  channels_per_frame = mus_char_to_ubint((unsigned char *)(hdrbuf + 36));
 	  bits_per_channel = mus_char_to_ubint((unsigned char *)(hdrbuf + 40));
 	  chans = channels_per_frame;
-#if 0
-	  fprintf(stderr, "srate: %d, format: %c%c%c%c, %d, bytes: %d, frames: %d, chans: %d, bits: %d\n",
-		  srate, hdrbuf[20], hdrbuf[21], hdrbuf[22], hdrbuf[23],
-		  format_flags, bytes_per_packet, frames_per_packet, channels_per_frame, bits_per_channel);
-#endif
+
 	  /* format id can be 'lpcm' 'alaw' 'ulaw' and a bunch of others we ignore */
 	  original_data_format = mus_char_to_bint((unsigned char *)(hdrbuf + 20));	  
 	  if (match_four_chars((unsigned char *)(hdrbuf + 20), I_lpcm))

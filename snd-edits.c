@@ -2878,7 +2878,7 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
     {
       free(sf);
       snd_error("no such edit: %s[%d]: %d (this channel has %d edit%s",
-		cp->sound->short_filename,
+		sp->short_filename,
 		cp->chan,
 		edpos,
 		cp->edit_ctr,
@@ -2892,7 +2892,7 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
       if ((err != IO_NO_ERROR) &&
 	  (err != IO_INTERRUPTED))
 	snd_error("can't save %s chan %d: %s %s", 
-		  cp->sound->short_filename,
+		  sp->short_filename,
 		  cp->chan,
 		  ofile,
 		  snd_io_strerror());
@@ -6881,9 +6881,7 @@ io_error_t save_edits_without_asking(snd_info *sp)
 
 void revert_edits(chan_info *cp)
 {
-  int old_ctr;
   if (cp->edit_ctr == 0) return;
-  old_ctr = cp->edit_ctr;
   cp->edit_ctr = 0;
   clear_transform_edit_ctrs(cp);
   reflect_edit_counter_change(cp);

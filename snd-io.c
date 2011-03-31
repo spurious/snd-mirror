@@ -210,15 +210,13 @@ static void reposition_file_buffers_1(mus_long_t loc, snd_io *io)
     }
   else
     {
-      mus_long_t seek_loc;
-      int err;
-      seek_loc = mus_file_seek_frame(io->fd, loc);
+      mus_file_seek_frame(io->fd, loc);
       io->beg = loc;
-      err = mus_file_read_chans(io->fd,
-				0, frames - 1,
-				io->chans,
-				io->arrays,
-				io->arrays);
+      mus_file_read_chans(io->fd,
+			  0, frames - 1,
+			  io->chans,
+			  io->arrays,
+			  io->arrays);
       if (frames < io->bufsize) 
 	c_io_bufclr(io, frames);
     }
@@ -368,7 +366,6 @@ static int too_many_files_cleanup(void)
 {
   int *closed;
   int rtn;
-  rtn = -1;
   closed = (int *)malloc(sizeof(int));
   (*closed) = 0;
   for_each_normal_chan_with_refint(close_temp_files, closed);
