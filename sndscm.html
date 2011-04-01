@@ -7670,32 +7670,65 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 <p>n=6 is even more beautiful and complex, but the graph is too large to include here.
 My conclusion from looking at these landscapes:
 we aren't likely to stumble on a function that gives us the initial phases!
-You can get a good feel for how these peaks behave by using
-<a href="#withmixedsound">with-mixed-sound</a> to watch the waveforms "in real-time"
-as you change the initial phases by dragging the components:
 </p>
 
-<table border=0 hspace=40><tr><td>
+
+<table border=1 bordercolor="lightgray" hspace=40 cellpadding=4>
+<tr><td bgcolor="#fbfbf0">
 <pre>
-(definstrument (sine-wave start dur freq phase)
-  (let* ((beg (seconds-&gt;samples start))
-	 (end (+ beg (seconds-&gt;samples dur)))
-	 (osc (make-oscil freq phase)))
-    (run 
-     (do ((i beg (+ 1 i))) 
-         ((= i end))
-       (outa i (oscil osc))))))
+<small>
+;;; You can get a good feel for how these peaks behave by using mix and
+;;;    with-temp-sound to create a draggable mix object for each component:
 
-;; #(0.000 1.410 1.684) is one of the minima
+(load "peak-phases.scm")
+(set! (with-mix-tags) #t)     ; drag the tag to change the harmonic's initial phase
+(set! (show-mix-waveforms) #f)
+(set! (with-inset-graph) #f)
 
-(with-mixed-sound ()
-  (sine-wave 0 1 10.0 0.0)
-  (sine-wave 0 1 20.0 (* pi 1.410))
-  (sine-wave 0 1 30.0 (* pi 1.684)))
+(define (show choice n)                           ; (show :all 14) for example
+  (definstrument (sine-wave start dur freq phase) ; make one harmonic
+    (let* ((beg (seconds-&gt;samples start))
+	   (end (+ beg (seconds-&gt;samples dur)))
+	   (osc (make-oscil freq phase)))
+      (run 
+       (do ((i beg (+ 1 i))) 
+	   ((= i end))
+	 (outa i (oscil osc))))))
 
-(hook-push mix-drag-hook       ; report the current maxamp as we drag a component
+  (if (null? (sounds))
+      (new-sound))
+  (let ((phases (cadr (get-best choice n))))
+    (do ((i 0 (+ i 1)))
+	((= i n))
+      (let* ((freq (case choice
+		     ((:all) (+ i 1))
+		     ((:even) (max (* 2 i) 1))
+		     ((:odd) (+ (* 2 i) 1))
+		     ((:prime) (primes i))))
+	     (snd (<em class=red>with-temp-sound</em> (:ignore-output #t :clipped #f)
+		   (sine-wave 0 2 (* 10 freq) (* pi (phases i))))))
+	(let ((mx (car (<em class=red>mix</em> snd 400)))) ; give some space after the axis
+	  (set! (mix-tag-y mx) (+ 10 (* 40 i)))))))
+  (let ((mx (+ 2.0 (maxamp))))
+    (set! (y-bounds) (list (- mx) mx)))
+  (set! (x-bounds) (list 0.0 0.2)))
+
+(hook-push mix-drag-hook ; report the current maxamp as we drag a component
   (lambda (id x y) 
-    (report-in-minibuffer (format #f "maxamp: ~A" (maxamp)))))
+    (let ((beg 0)
+	  (end (frames))
+	  (mx 0.0))
+      (for-each
+       (lambda (sine)
+	 (set! beg (max beg (mix-position sine)))
+	 (set! end (min end (+ (mix-position sine) (mix-length sine)))))
+       (caar (mixes)))
+      (let ((rd (make-sampler beg)))
+	(do ((i beg (+ i 1)))
+	    ((&gt; i end))
+	  (set! mx (max mx (abs (rd))))))
+      (report-in-minibuffer (format #f "maxamp: ~A" mx)))))
+</small>
 </pre>
 </td></tr></table>
 

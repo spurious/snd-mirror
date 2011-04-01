@@ -5738,22 +5738,28 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 
   switch (click_within_graph)
     {
+    case CLICK_MIX:
+      /* printing the new position in the minibuffer here is distracting and unnecessary 
+       *   and the documentation (extsnd.html) has a mix-drag-hook function to print the position.
+       */
+      move_mix_tag(mix_tag, x, y);
+      dragged = true;
+      break;
+
+    case CLICK_MARK:
+      if (dragged) 
+	report_in_minibuffer(sp, "%.4f", ungrf_x(cp->axis, x));
+      dragged = true;
+      break;
+      
     case CLICK_INSET_GRAPH:
     case CLICK_SELECTION_LEFT:
     case CLICK_SELECTION_RIGHT:
     case CLICK_SELECTION_MAIN:
-    case CLICK_MIX:
-    case CLICK_MARK:
     case CLICK_WAVE:
       if (dragged) 
 	report_in_minibuffer(sp, "%.4f", ungrf_x(cp->axis, x));
       
-      if (mix_tag != NO_MIX_TAG)
-	{
-	  move_mix_tag(mix_tag, x, y);
-	  dragged = true;
-	  return;
-	}
       if (!dragged) 
 	start_selection_creation(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
       else 
@@ -5761,9 +5767,10 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	  update_possible_selection_in_progress(snd_round_mus_long_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
 	  move_selection(cp, x);
 	}
+
       dragged = true;
       break;
-      
+
     case CLICK_FFT_AXIS:
       {
 	/* change spectrum_end(ss) and redisplay fft */
@@ -6652,24 +6659,44 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
       break;
 
     case CP_CURSOR:
-      cp->cursor_on = true; 
-      cursor_moveto(cp, beg_to_sample(on, caller));
-      return(C_TO_XEN_INT64_T(CURSOR(cp)));
+      {
+	mus_long_t samp;
+	samp = XEN_TO_C_INT64_T_OR_ELSE(on, 0);
+	if (samp < 0)
+	  {
+	    cp->cursor_on = false;
+	    update_graph(cp);
+	  }
+	else
+	  {
+	    cp->cursor_on = true; 
+	    cursor_moveto(cp, samp);
+	  }
+	return(C_TO_XEN_INT64_T(samp));
+      }
       break;
 
     case CP_EDPOS_CURSOR:
       {
 	int pos;
-	mus_long_t cpos;
+	mus_long_t samp;
 	pos = to_c_edit_position(cp, cp_edpos, caller, 3);
-	cpos = beg_to_sample(on, caller);
-	if (pos == cp->edit_ctr)
+	samp = XEN_TO_C_INT64_T_OR_ELSE(on, 0);
+	if (samp < 0)
 	  {
-	    cp->cursor_on = true; 
-	    cursor_moveto(cp, cpos);
+	    cp->cursor_on = false;
+	    update_graph(cp);
 	  }
-	else cp->edits[pos]->cursor = cpos;
-	return(C_TO_XEN_INT64_T(cpos));
+	else
+	  {
+	    if (pos == cp->edit_ctr)
+	      {
+		cp->cursor_on = true; 
+		cursor_moveto(cp, samp);
+	      }
+	    else cp->edits[pos]->cursor = samp;
+	  }
+	return(C_TO_XEN_INT64_T(samp));
       }
       break;
 

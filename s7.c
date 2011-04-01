@@ -16341,40 +16341,67 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 }
 
 
-static s7_pointer g_procedure_documentation_1(s7_scheme *sc, s7_pointer args, const char *caller)
+static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 {
+  #define H_procedure_documentation "(procedure-documentation func) returns func's documentation string"
   s7_pointer p;
 
   p = car(args);
   if (s7_is_symbol(p))
     {
       if (is_syntax(p))
-	return(s7_wrong_type_arg_error(sc, caller, 0, p, "a procedure"));
+	return(s7_wrong_type_arg_error(sc, "procedure-documentation", 0, p, "a procedure"));
       p = s7_symbol_value(sc, p);
     }
 
   if ((!is_procedure(p)) &&
       (!s7_is_macro(sc, p)))
-    return(s7_wrong_type_arg_error(sc, caller, 0, car(args), "a procedure"));
+    return(s7_wrong_type_arg_error(sc, "procedure-doucmentation", 0, car(args), "a procedure"));
   return(s7_make_string(sc, s7_procedure_documentation(sc, p)));
-}
-
-
-static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
-{
-  #define H_procedure_documentation "(procedure-documentation func) returns func's documentation string"
-  return(g_procedure_documentation_1(sc, args, "procedure-documentation"));
 }
 
 
 static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
 {
   #define H_help "(help obj) returns obj's documentation"
+  
+  s7_pointer obj;
+  obj = car(args);
 
-  if (is_hook(car(args)))
-    return(hook_documentation(car(args)));
+  if (is_syntax(obj))
+    {
+      switch (syntax_opcode(obj))
+	{
+	case OP_QUOTE:
+	  return(s7_make_string(sc, "quote returns its argument unevaluated.  single-quote is an abbreviation for quote."));
+	}
+      
+      return(sc->F); /* TODO: fill out these cases */
+      /* others: macroexpand
+:(define-macro (hiho a) "a test" `(+ 1 ,a))
+hiho
+:(hiho 2)
+3
+:(s7-help hiho)
+"a test"
+with-sound etc
+TODO: clickable urls in help strings (and gtk help dialog?)
+       */
+    }
 
-  return(g_procedure_documentation_1(sc, args, "help"));  
+  if (s7_is_symbol(obj))
+    obj = s7_symbol_value(sc, obj);
+
+  if ((typeflag(obj) & (T_ANY_MACRO | T_PROCEDURE)) != 0)
+    return(s7_make_string(sc, s7_procedure_documentation(sc, obj)));
+
+  if (is_hook(obj))
+    return(hook_documentation(obj));
+
+  /* here keep a table as in xen.c?
+   */
+
+  return(sc->F);
 }
 
 
@@ -31278,11 +31305,7 @@ s7_scheme *s7_init(void)
 
   make_standard_ports(sc);
 
-  /* TODO: there's currently no help strings for the "syntax" names! (help lambda) -> #f 
-   *   we also need doc strings for constants and variables
-   *   why not add an internal hash-table for help, (set! (help obj) ...)
-   *   C side: s7_set_help(sc, obj, str) and s7_help(sc, obj)
-   *
+  /* 
    * SOMEDAY: use load into a local env as the first step of lint?
    */
 
