@@ -51,7 +51,7 @@ void set_spectro_y_scale(mus_float_t val);
 void set_spectro_z_scale(mus_float_t val);
 void view_color_orientation_callback(Widget w, XtPointer context, XtPointer info);
 bool color_orientation_dialog_is_active(void);
-Widget start_color_orientation_dialog(bool managed);
+Widget make_color_orientation_dialog(bool managed);
 void reflect_spectro(void);
 void set_with_gl(bool val, bool with_dialogs);
 void g_init_gxdraw(void);
@@ -124,7 +124,7 @@ void set_fft_window_alpha(mus_float_t val);
 void set_transform_size(mus_long_t val);
 void set_fft_window(mus_fft_window_t val);
 void set_wavelet_type(int val);
-Widget fire_up_transform_dialog(bool managed);
+Widget make_transform_dialog(bool managed);
 bool transform_dialog_is_active(void);
 
 void set_spectrum_start(mus_float_t val);
@@ -461,7 +461,7 @@ void save_print_dialog_state(FILE *fd);
 
 /* -------- snd-xprefs.c -------- */
 
-widget_t start_preferences_dialog(void);
+widget_t make_preferences_dialog(void);
 
 #endif
 

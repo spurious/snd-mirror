@@ -1879,6 +1879,7 @@ static XEN g_set_combined_data_color(XEN color, XEN snd, XEN chn)
   if (!cp) return(XEN_FALSE);
 
   cp->combined_data_color = XEN_UNWRAP_PIXEL(color);
+  update_graph(cp);
   return(color);
 }
 

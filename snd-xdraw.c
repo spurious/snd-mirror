@@ -936,7 +936,7 @@ static void reset_color_orientation_callback(Widget w, XtPointer context, XtPoin
 
 /* I tried a scrolled window with each colormap name in an appropriate color, but it looked kinda dumb */
 
-Widget start_color_orientation_dialog(bool managed)
+Widget make_color_orientation_dialog(bool managed)
 {
   if (!ccd_dialog)
     {
@@ -1413,7 +1413,7 @@ Widget start_color_orientation_dialog(bool managed)
 
 void view_color_orientation_callback(Widget w, XtPointer context, XtPointer info)
 {
-  start_color_orientation_dialog(true);
+  make_color_orientation_dialog(true);
 }
 
 

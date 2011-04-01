@@ -45,7 +45,7 @@ void set_spectro_y_scale(mus_float_t val);
 void set_spectro_z_scale(mus_float_t val);
 void view_color_orientation_callback(GtkWidget * w, gpointer info);
 bool color_orientation_dialog_is_active(void);
-GtkWidget *start_color_orientation_dialog(bool managed);
+GtkWidget *make_color_orientation_dialog(bool managed);
 void reflect_spectro(void);
 void allocate_sono_rects(int size);
 void set_sono_rectangle(int j, int color, int x, int y, int width, int height);
@@ -121,7 +121,7 @@ void set_fft_window_alpha(mus_float_t val);
 void set_transform_size(mus_long_t val);
 void set_fft_window(mus_fft_window_t val);
 void set_wavelet_type(int val);
-GtkWidget *fire_up_transform_dialog(bool managed);
+GtkWidget *make_transform_dialog(bool managed);
 bool transform_dialog_is_active(void);
 
 void set_transform_type(int val);
@@ -505,7 +505,7 @@ widget_t make_file_print_dialog(bool managed, bool direct_to_printer);
 
 /* -------- snd-gprefs.c -------- */
 
-widget_t start_preferences_dialog(void);
+widget_t make_preferences_dialog(void);
 
 #endif
 

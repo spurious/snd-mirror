@@ -9998,11 +9998,6 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_zero_pad, g_zero_pad_w, H_zero_pad,
 					    S_setB S_zero_pad, g_set_zero_pad_w, g_set_zero_pad_reversed, 0, 2, 1, 2);
   
-#if (!SND_DISABLE_DEPRECATED)
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER("verbose-cursor", g_verbose_cursor_w, H_verbose_cursor,
-					    S_setB "verbose-cursor", g_set_verbose_cursor_w, g_set_verbose_cursor_reversed, 0, 2, 1, 2);
-#endif  
-
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_with_verbose_cursor, g_verbose_cursor_w, H_verbose_cursor,
 					    S_setB S_with_verbose_cursor, g_set_verbose_cursor_w, g_set_verbose_cursor_reversed, 0, 2, 1, 2);
   
@@ -10194,18 +10189,18 @@ If it returns a function (of no arguments), that function is called rather than 
 If it returns " PROC_TRUE ", the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
   #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur): called when a sound is displayed for the first time"
   
-  after_transform_hook =  XEN_DEFINE_HOOK(S_after_transform_hook, 3,  H_after_transform_hook); /* args = sound channel scaler */
-  graph_hook =            XEN_DEFINE_HOOK(S_graph_hook, 4,            H_graph_hook);           /* args = sound channel y0 y1 */
-  after_graph_hook =      XEN_DEFINE_HOOK(S_after_graph_hook, 2,      H_after_graph_hook);     /* args = sound channel */
+  after_transform_hook =  XEN_DEFINE_HOOK(S_after_transform_hook, 3,  H_after_transform_hook);   /* args = sound channel scaler */
+  graph_hook =            XEN_DEFINE_HOOK(S_graph_hook, 4,            H_graph_hook);             /* args = sound channel y0 y1 */
+  after_graph_hook =      XEN_DEFINE_HOOK(S_after_graph_hook, 2,      H_after_graph_hook);       /* args = sound channel */
   after_lisp_graph_hook = XEN_DEFINE_HOOK(S_after_lisp_graph_hook, 2, H_after_lisp_graph_hook);  /* args = sound channel */
-  initial_graph_hook =    XEN_DEFINE_HOOK(S_initial_graph_hook, 3,    H_initial_graph_hook);   /* args = sound channel duration */
-  lisp_graph_hook =       XEN_DEFINE_HOOK(S_lisp_graph_hook, 2,       H_lisp_graph_hook);      /* args = sound channel */
-  mouse_press_hook =      XEN_DEFINE_HOOK(S_mouse_press_hook, 6,      H_mouse_press_hook);     /* args = sound channel button state x y */
-  mouse_click_hook =      XEN_DEFINE_HOOK(S_mouse_click_hook, 7,      H_mouse_click_hook);     /* args = sound channel button state x y axis */
-  mouse_drag_hook =       XEN_DEFINE_HOOK(S_mouse_drag_hook, 6,       H_mouse_drag_hook);      /* args = sound channel button state x y */
-  key_press_hook =        XEN_DEFINE_HOOK(S_key_press_hook, 4,        H_key_press_hook);       /* args = sound channel key state */
-  mark_click_hook =       XEN_DEFINE_HOOK(S_mark_click_hook, 1,       H_mark_click_hook);      /* arg = id */
-  mix_click_hook =        XEN_DEFINE_HOOK(S_mix_click_hook, 1,        H_mix_click_hook);       /* arg = id */
+  initial_graph_hook =    XEN_DEFINE_HOOK(S_initial_graph_hook, 3,    H_initial_graph_hook);     /* args = sound channel duration */
+  lisp_graph_hook =       XEN_DEFINE_HOOK(S_lisp_graph_hook, 2,       H_lisp_graph_hook);        /* args = sound channel */
+  mouse_press_hook =      XEN_DEFINE_HOOK(S_mouse_press_hook, 6,      H_mouse_press_hook);       /* args = sound channel button state x y */
+  mouse_click_hook =      XEN_DEFINE_HOOK(S_mouse_click_hook, 7,      H_mouse_click_hook);       /* args = sound channel button state x y axis */
+  mouse_drag_hook =       XEN_DEFINE_HOOK(S_mouse_drag_hook, 6,       H_mouse_drag_hook);        /* args = sound channel button state x y */
+  key_press_hook =        XEN_DEFINE_HOOK(S_key_press_hook, 4,        H_key_press_hook);         /* args = sound channel key state */
+  mark_click_hook =       XEN_DEFINE_HOOK(S_mark_click_hook, 1,       H_mark_click_hook);        /* arg = id */
+  mix_click_hook =        XEN_DEFINE_HOOK(S_mix_click_hook, 1,        H_mix_click_hook);         /* arg = id */
 }
 
 

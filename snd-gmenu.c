@@ -171,7 +171,7 @@ static void view_files_item_callback(GtkWidget *w, gpointer info)
   char *dirname;
   dirname = get_item_label(w);
   if (mus_strcmp(dirname, "new viewer"))
-    start_view_files_dialog(true, true); /* managed and empty (brand-new) */
+    make_view_files_dialog(true, true); /* managed and empty (brand-new) */
   else view_files_start_dialog_with_title(dirname);
 }
 
@@ -182,9 +182,7 @@ static void view_files_callback(GtkWidget *w, gpointer info)
 
   size = view_files_dialog_list_length();
   if (size == 0)
-    {
-      start_view_files_dialog(true, true); /* managed and empty (brand-new) */
-    }
+    make_view_files_dialog(true, true); /* managed and empty (brand-new) */
   else
     {
       int i;
@@ -290,7 +288,7 @@ static void view_focus_active_callback(GtkWidget *w, gpointer info, gpointer dat
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
-static void options_transform_callback(GtkWidget *w, gpointer info) {fire_up_transform_dialog(true);}
+static void options_transform_callback(GtkWidget *w, gpointer info) {make_transform_dialog(true);}
 static void options_controls_callback(GtkWidget *w, gpointer info) {make_controls_dialog();}
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_callback(GtkWidget *w, gpointer info) {save_options_from_menu();}
@@ -300,7 +298,7 @@ static void options_save_callback(GtkWidget *w, gpointer info) {save_options_fro
 static void options_save_state_callback(GtkWidget *w, gpointer info) {save_state_from_menu();}
 #endif
 
-static void options_preferences_callback(GtkWidget *w, gpointer info, gpointer data) {start_preferences_dialog();}
+static void options_preferences_callback(GtkWidget *w, gpointer info, gpointer data) {make_preferences_dialog();}
 
 
 /* -------------------------------- HELP MENU -------------------------------- */

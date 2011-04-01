@@ -4582,7 +4582,7 @@ static void view_files_new_viewer_callback(GtkWidget *w, gpointer context)
 {
   view_files_info *vdat;
   vdat = new_view_files_dialog();
-  start_view_files_dialog_1(vdat, true);
+  make_view_files_dialog_1(vdat, true);
 }
 
 
@@ -5245,7 +5245,7 @@ static void view_files_reset_callback(GtkWidget *w, gpointer context)
 }
 
 
-GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
+GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
   if (!(vdat->dialog))
     {

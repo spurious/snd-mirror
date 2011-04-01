@@ -856,7 +856,7 @@ void set_with_gl(bool val, bool with_dialogs)
 
 void view_color_orientation_callback(GtkWidget *w, gpointer context)
 {
-  start_color_orientation_dialog(true);
+  make_color_orientation_dialog(true);
 }
 
 
@@ -866,7 +866,7 @@ bool color_orientation_dialog_is_active(void)
 }
 
 
-GtkWidget *start_color_orientation_dialog(bool managed)
+GtkWidget *make_color_orientation_dialog(bool managed)
 {
   if (!ccd_dialog)
     {

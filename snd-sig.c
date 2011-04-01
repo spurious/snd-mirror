@@ -4218,7 +4218,7 @@ static XEN g_smooth_selection(void)
 }
 
 
-static void cut_and_smooth_1(chan_info *cp, mus_long_t beg, mus_long_t end, bool over_selection)
+static void cut_and_smooth_1(chan_info *cp, mus_long_t beg, mus_long_t end, bool over_selection, int pos)
 {
   #define SPLICE_LEN 32
   /* making this 128 is not a big improvement */
@@ -4233,13 +4233,13 @@ static void cut_and_smooth_1(chan_info *cp, mus_long_t beg, mus_long_t end, bool
     start = 0;
   else start = end - SPLICE_LEN;
   
-  sf_end = init_sample_read_any_with_bufsize(start, cp, READ_FORWARD, cp->edit_ctr, 2 * SPLICE_LEN);
+  sf_end = init_sample_read_any_with_bufsize(start, cp, READ_FORWARD, pos, 2 * SPLICE_LEN);
   
   if (beg < SPLICE_LEN)
     start = 0;
   else start = beg - SPLICE_LEN;
   
-  sf = init_sample_read_any_with_bufsize(start, cp, READ_FORWARD, cp->edit_ctr, 2 * SPLICE_LEN);
+  sf = init_sample_read_any_with_bufsize(start, cp, READ_FORWARD, pos, 2 * SPLICE_LEN);
   for (i = 0, ramp = 1.0; i < 2 * SPLICE_LEN; i++, ramp -= incr)
     {
       mus_float_t x, y;
@@ -4252,7 +4252,7 @@ static void cut_and_smooth_1(chan_info *cp, mus_long_t beg, mus_long_t end, bool
   
   if (over_selection)
     cp_delete_selection(cp);
-  else delete_samples(beg, end - beg + 1, cp, cp->edit_ctr);
+  else delete_samples(beg, end - beg + 1, cp, pos);
   
   change_samples(start, 2 * SPLICE_LEN, splice, cp, 
 		 (over_selection) ? S_delete_selection_and_smooth : S_delete_samples_and_smooth, 
@@ -4263,7 +4263,7 @@ static void cut_and_smooth_1(chan_info *cp, mus_long_t beg, mus_long_t end, bool
 void cut_and_smooth(chan_info *cp)
 {
   if (selection_is_active_in_channel(cp))
-    cut_and_smooth_1(cp, selection_beg(cp), selection_end(cp), true);
+    cut_and_smooth_1(cp, selection_beg(cp), selection_end(cp), true, cp->edit_ctr);
 }
 
 
@@ -4296,13 +4296,12 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
   cp = get_cp(snd, chn_n, S_delete_samples_and_smooth);
   if (!cp) return(XEN_FALSE);
 
-  pos = to_c_edit_position(cp, edpos, S_delete_samples_and_smooth, 6);
-  /* TODO: what about edpos here? */
+  pos = to_c_edit_position(cp, edpos, S_delete_samples_and_smooth, 5);
   samp = beg_to_sample(samp_n, S_delete_samples_and_smooth);
   len = XEN_TO_C_INT64_T_OR_ELSE(samps, 0);
   if (len <= 0) return(XEN_FALSE);
 
-  cut_and_smooth_1(cp, samp, samp + len - 1, false);
+  cut_and_smooth_1(cp, samp, samp + len - 1, false, pos);
   update_graph(cp);
   return(samp_n);
 }

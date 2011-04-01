@@ -1614,7 +1614,7 @@ void during_open(int fd, const char *file, open_reason_t reason);
 void after_open(snd_info *sp);
 char *output_name(const char *current_name);
 void save_view_files_dialogs(FILE *fd);
-widget_t start_view_files_dialog(bool managed, bool make_new);
+widget_t make_view_files_dialog(bool managed, bool make_new);
 void view_files_unplay(void);
 void view_files_add_directory(widget_t dialog, const char *dirname);
 char *view_files_find_any_directory(void);

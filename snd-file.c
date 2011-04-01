@@ -3181,7 +3181,7 @@ void view_files_start_dialog_with_title(const char *title)
 	if (mus_strcmp(title, dialog_title)) /* this includes NULL == NULL */
 	  {
 	    if (dialog_title) free(dialog_title);
-	    start_view_files_dialog_1(view_files_infos[i], true);
+	    make_view_files_dialog_1(view_files_infos[i], true);
 	    return;
 	  }
 	if (dialog_title) free(dialog_title);
@@ -3985,7 +3985,7 @@ char *dialog_get_title(widget_t dialog)
 
 
 /* what about temps coming and going -- should we just add a need-update switch for later remanage? */
-/*   remanagement only through start_view_files_dialog -- this file */
+/*   remanagement only through make_view_files_dialog -- this file */
 /*   perhaps ss->making|deleting_temp_file -> ignore this fam event? */
 
 void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
@@ -4502,13 +4502,13 @@ static view_files_info *view_files_find_dialog(widget_t dialog)
 }
 
 
-widget_t start_view_files_dialog(bool managed, bool make_new)
+widget_t make_view_files_dialog(bool managed, bool make_new)
 {
   int i;
   view_files_info *vdat = NULL;
 
   if (make_new)
-    return(start_view_files_dialog_1(new_view_files_dialog(), managed));
+    return(make_view_files_dialog_1(new_view_files_dialog(), managed));
 
   for (i = 0; i < view_files_info_size; i++)
     if ((view_files_infos[i]) &&
@@ -4520,8 +4520,8 @@ widget_t start_view_files_dialog(bool managed, bool make_new)
       }
 
   if (vdat)
-    return(start_view_files_dialog_1(vdat, managed));
-  return(start_view_files_dialog_1(new_view_files_dialog(), managed));
+    return(make_view_files_dialog_1(vdat, managed));
+  return(make_view_files_dialog_1(new_view_files_dialog(), managed));
 }
 
 
@@ -4648,7 +4648,7 @@ void view_files_add_directory(widget_t dialog, const char *dirname)
       else 
 	{
 	  vdat = new_view_files_dialog();
-	  start_view_files_dialog_1(vdat, false);
+	  make_view_files_dialog_1(vdat, false);
 	}
     }
 
@@ -4691,7 +4691,7 @@ static void view_files_add_file(widget_t dialog, const char *filename)
       else 
 	{
 	  vdat = new_view_files_dialog();
-	  start_view_files_dialog_1(vdat, false);
+	  make_view_files_dialog_1(vdat, false);
 	}
     }
 
@@ -4921,7 +4921,7 @@ static XEN g_view_files_dialog(XEN managed, XEN make_new)
   #define H_view_files_dialog "(" S_view_files_dialog " :optional managed create-new-dialog): start the View Files dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_view_files_dialog, "a boolean");
   new_dialog = (XEN_TRUE_P(make_new));
-  w = start_view_files_dialog(XEN_TO_C_BOOLEAN(managed), new_dialog);
+  w = make_view_files_dialog(XEN_TO_C_BOOLEAN(managed), new_dialog);
   return(XEN_WRAP_WIDGET(w));
 }
 

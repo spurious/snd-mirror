@@ -100,7 +100,7 @@ void vf_post_error(const char *error_msg, view_files_info *data);
 void redirect_vf_post_error(const char *error_msg, void *data);
 void redirect_vf_post_location_error(const char *error_msg, void *data);
 void vf_post_add_error(const char *error_msg, view_files_info *data);
-widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed);
+widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed);
 void vf_post_selected_files_list(view_files_info *vdat);
 void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir);
 void vf_reflect_sort_choice_in_menu(view_files_info *vdat);

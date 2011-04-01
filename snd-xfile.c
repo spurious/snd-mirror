@@ -5415,7 +5415,7 @@ static void view_files_new_viewer_callback(Widget w, XtPointer context, XtPointe
       XtVaSetValues(vdat->dialog, XmNx, x + 30, XmNy, y - 30, NULL);
     }
   vdat = new_view_files_dialog();
-  start_view_files_dialog_1(vdat, true);
+  make_view_files_dialog_1(vdat, true);
 
 }
 
@@ -6121,7 +6121,7 @@ static void view_files_reset_callback(Widget w, XtPointer context, XtPointer inf
 }
 
 
-widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
+widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
   if (!(vdat->dialog))
     {

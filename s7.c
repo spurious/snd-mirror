@@ -15735,7 +15735,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 {
   /* basically the same layout as the global symbol table */
-  #define H_hash_table_ref "(hash-table-ref table key) returns the value associated with key (a string or symbol) in the hash table"
+  #define H_hash_table_ref "(hash-table-ref table key) returns the value associated with key in the hash table"
   s7_pointer table;
 
   table = car(args);
@@ -15758,7 +15758,7 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 {
-  #define H_hash_table_set "(hash-table-set! table key value) sets the value associated with key (a string or symbol) in the hash table to value"
+  #define H_hash_table_set "(hash-table-set! table key value) sets the value associated with key in the hash table to value"
   s7_pointer table;
 
   table = car(args);
@@ -16452,7 +16452,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 
 static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
 {
-  #define H_procedure_arity "(procedure-arity func) returns a list '(required optional rest)"
+  #define H_procedure_arity "(procedure-arity func) returns a list describing func's arguments: '(required optional rest)"
   s7_pointer p;
 
   p = car(args);
@@ -18045,7 +18045,7 @@ static s7_pointer g_hook_arity(s7_scheme *sc, s7_pointer args)
 {
   #define H_hook_arity "(hook-arity hook) returns the hook's arity, a list giving the number \
 of required arguments, optional arguments, and whether there is a rest argument.  Each function \
-on the hook's function list has to be compatible with this description."
+on the hook's function list has to be applicable to a list of arguments compatible with this description."
 
   if (!is_hook(car(args)))
     return(s7_wrong_type_arg_error(sc, "hook-arity", 0, car(args), "a hook"));
@@ -31277,6 +31277,14 @@ s7_scheme *s7_init(void)
     }
 
   make_standard_ports(sc);
+
+  /* TODO: there's currently no help strings for the "syntax" names! (help lambda) -> #f 
+   *   we also need doc strings for constants and variables
+   *   why not add an internal hash-table for help, (set! (help obj) ...)
+   *   C side: s7_set_help(sc, obj, str) and s7_help(sc, obj)
+   *
+   * SOMEDAY: use load into a local env as the first step of lint?
+   */
 
   assign_syntax(sc, "quote",             OP_QUOTE);
   assign_syntax(sc, "if",                OP_IF);

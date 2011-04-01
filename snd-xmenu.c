@@ -190,7 +190,7 @@ static void view_files_item_callback(Widget w, XtPointer context, XtPointer info
   char *dirname;
   dirname = get_label(w);
   if (mus_strcmp(dirname, "new viewer"))
-    start_view_files_dialog(true, true); /* managed and empty (brand-new) */
+    make_view_files_dialog(true, true); /* managed and empty (brand-new) */
   else view_files_start_dialog_with_title(dirname);
 }
 
@@ -201,9 +201,7 @@ static void view_files_callback(Widget w, XtPointer info, XtPointer context)
 
   size = view_files_dialog_list_length();
   if (size == 0)
-    {
-      start_view_files_dialog(true, true); /* managed and empty (brand-new) */
-    }
+    make_view_files_dialog(true, true); /* managed and empty (brand-new) */
   else
     {
       int i;
@@ -335,7 +333,7 @@ static void view_focus_active_callback(Widget w, XtPointer info, XtPointer conte
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
-static void options_transform_callback(Widget w, XtPointer info, XtPointer context) {fire_up_transform_dialog(true);}
+static void options_transform_callback(Widget w, XtPointer info, XtPointer context) {make_transform_dialog(true);}
 static void options_controls_callback(Widget w, XtPointer info, XtPointer context) {make_controls_dialog();}
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_callback(Widget w, XtPointer info, XtPointer context) {save_options_from_menu();}
@@ -343,7 +341,7 @@ static void options_save_callback(Widget w, XtPointer info, XtPointer context) {
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_state_callback(Widget w, XtPointer info, XtPointer context) {save_state_from_menu();}
 #endif
-static void options_preferences_callback(Widget w, XtPointer info, XtPointer context) {start_preferences_dialog();}
+static void options_preferences_callback(Widget w, XtPointer info, XtPointer context) {make_preferences_dialog();}
 
 
 

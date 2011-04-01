@@ -1647,7 +1647,7 @@ static void va_post_prefs_error(const char *msg, prefs_info *data, ...)
 
 /* ---------------- preferences dialog ---------------- */
 
-widget_t start_preferences_dialog(void)
+widget_t make_preferences_dialog(void)
 {
   Arg args[20];
   int n;

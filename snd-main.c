@@ -2214,7 +2214,7 @@ static XEN g_color_orientation_dialog(XEN managed)
   widget_t w;
   #define H_color_orientation_dialog "(" S_color_orientation_dialog " :optional managed): start the Color/Orientation dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_color_orientation_dialog, "a boolean");
-  w = start_color_orientation_dialog(XEN_TO_C_BOOLEAN(managed));
+  w = make_color_orientation_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -2224,7 +2224,7 @@ static XEN g_transform_dialog(XEN managed)
   widget_t w;
   #define H_transform_dialog "(" S_transform_dialog " :optional (managed " PROC_TRUE ")): start the Transforms dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_transform_dialog, "a boolean");
-  w = fire_up_transform_dialog(XEN_TO_C_BOOLEAN(managed));
+  w = make_transform_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -2244,7 +2244,7 @@ static XEN g_preferences_dialog(void)
 {
   widget_t w;
   #define H_preferences_dialog "(" S_preferences_dialog "): start the Options:Preferences dialog"
-  w = start_preferences_dialog();
+  w = make_preferences_dialog();
   return(XEN_WRAP_WIDGET(w));
 }
 

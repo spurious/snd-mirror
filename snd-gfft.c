@@ -826,7 +826,7 @@ static void dismiss_transform_callback(GtkWidget *w, gpointer context)
 
 static void color_orientation_transform_callback(GtkWidget *w, gpointer context)
 {
-  start_color_orientation_dialog(true);
+  make_color_orientation_dialog(true);
 }
 
 
@@ -860,7 +860,7 @@ gboolean spin_button_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpoint
 #define RIGHT_SEP_SIZE 10
 
 
-GtkWidget *fire_up_transform_dialog(bool managed)
+GtkWidget *make_transform_dialog(bool managed)
 {
   bool need_callback = false, need_moveto = true;
   if (!transform_dialog)

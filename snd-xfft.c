@@ -955,7 +955,7 @@ static void dismiss_transform_callback(Widget w, XtPointer context, XtPointer in
 
 static void color_orientation_callback(Widget w, XtPointer context, XtPointer info)
 {
-  start_color_orientation_dialog(true);
+  make_color_orientation_dialog(true);
 }
 
 
@@ -993,7 +993,7 @@ static void fft_white_mouse_enter_text_callback(Widget w, XtPointer context, XEv
 
 static bool need_callback = true;
 
-Widget fire_up_transform_dialog(bool managed)
+Widget make_transform_dialog(bool managed)
 {
   if (!transform_dialog)
     {
