@@ -10705,7 +10705,7 @@ this prints:
 (test ('quote 3) 'error)
 (test ((copy quote) 1) 1)
 (test ((copy quote) quote) 'quote)
-(test ((lambda (q) (let ((x 1)) (q x))) quote) 'x)
+(test ((lambda (q) (let ((x 1)) (q x))) quote) 'x) ; these two are strange -- not sure about them, but Guile 1.8 is the same
 (test ((lambda (s c) (s c)) quote #f) 'c)
 (test ((quote and) #f) 'error)
 (test ((values quote) 1) 1)

@@ -21624,7 +21624,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 {
   if (!is_pair(form))
     {
-      if ((!s7_is_symbol(form)) && (!is_syntax(form)))
+      if (!s7_is_symbol(form))     /* ((!s7_is_symbol(form)) && (!is_syntax(form))) */
 	{
 	  /* things that evaluate to themselves don't need to be quoted. 
 	   *    but this means `() -> () whereas below `(1) -> '(1) -- should nil here return '()?
@@ -22523,7 +22523,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   set_symbol_value(x, syn);
   symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS); /* | T_IMMUTABLE); */
 
-  typeflag(x) |= (T_DONT_COPY); /* | T_IMMUTABLE);  */
+  typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS); /* | T_IMMUTABLE);  */
   return(x);
 }
 
@@ -23704,12 +23704,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	case T_PAIR:
 	  /* using a local s7_pointer here drastically slows things down?!? */
-	  if (is_syntax(car(sc->code)))
+	  if ((dont_eval_args(car(sc->code))) &&
+	      (is_syntax(symbol_value(car(sc->code)))))
 	    {     
-	      sc->op = (opcode_t)syntax_opcode(car(sc->code));
+	      sc->op = (opcode_t)syntax_opcode(symbol_value(car(sc->code)));
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;
-	    } 
+	    }
 
 	  /* if we check here for a thunk (or argless macro call), and jump to apply,
 	   *   it's actually slower by about 30/2400 than just plowing ahead as if
@@ -23731,6 +23732,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (x != sc->NIL) 
 	      sc->value = symbol_value(x);
 	    else sc->value = eval_symbol_1(sc, sc->code);
+
 	    goto START;
 	  }
 
@@ -23760,9 +23762,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  /* (define progn begin)
 	   * (progn (display "hi") (+ 1 23))
-	   * TODO: we can't catch this above under T_SYMBOL because we might be using "syntax" symbols as symbols (case labels etc)
 	   */
-
 	  sc->op = (opcode_t)syntax_opcode(sc->value);
 	  goto START_WITHOUT_POP_STACK;
 	}
@@ -24236,8 +24236,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_SYNTAX:                            /* -------- syntactic keyword as applicable object -------- */
-	  /* (apply begin '((define x 3) (+ x 2))) */
-	  sc->op = (opcode_t)syntax_opcode(sc->code);
+	  sc->op = (opcode_t)syntax_opcode(sc->code);                       /* (apply begin '((define x 3) (+ x 2))) */
 	  sc->code = sc->args;
 	  goto START_WITHOUT_POP_STACK;
 	  /* this was:
