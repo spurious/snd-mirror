@@ -1453,8 +1453,7 @@ its header type.",
 
 /* ---------------- Initialization File ---------------- */
 
-static const char *init_file_xrefs[6] = {
-  "{X resources}:  .Xdefaults settings",
+static const char *init_file_xrefs[5] = {
   "{Invocation flags}", 
   "~/.snd: {Initialization file}",
   "{Customization}",
@@ -1462,7 +1461,6 @@ static const char *init_file_xrefs[6] = {
   NULL};
 
 static const char *init_file_urls[6] = {
-  "grfsnd.html#sndresources",
   "grfsnd.html#sndswitches",
   "grfsnd.html#sndinitfile",
   "extsnd.html#lisplistener",

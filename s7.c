@@ -16373,7 +16373,45 @@ static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
       switch (syntax_opcode(obj))
 	{
 	case OP_QUOTE:
-	  return(s7_make_string(sc, "quote returns its argument unevaluated.  single-quote is an abbreviation for quote."));
+	  return(s7_make_string(sc, "(quote obj) returns obj unevaluated.  'obj is an abbreviation for (quote obj)."));
+	  
+	case OP_IF:
+	  return(s7_make_string(sc, "(if expr true-stuff optional-false-stuff) evaluates expr, then \
+if it is true, evaluates true-stuff; otherwise, if optional-false-stuff exists, it is evaluated."));
+	  
+	case OP_BEGIN:
+	  return(s7_make_string(sc, "(begin ...) evaluates each form in its body, returning the value of the last one"));
+
+	case OP_SET:
+	  return(s7_make_string(sc, "(set! variable val) sets the value of variable to val."));
+
+	case OP_LET:
+	  return(s7_make_string(sc, "(let ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
+returning the value of the last form.  The let variables are local to it, and in the case of let (as opposed to let* for example), \
+the variables are not available for use until all have been initialized."));
+
+	case OP_LET_STAR:
+
+	case OP_LETREC:
+	case OP_COND:
+	case OP_AND:
+	case OP_OR:
+	case OP_CASE:
+	case OP_DO:
+	case OP_WITH_ENV:
+	case OP_LAMBDA:
+	case OP_LAMBDA_STAR:
+	case OP_DEFINE:
+	case OP_DEFINE_STAR:
+	case OP_DEFINE_CONSTANT:
+	case OP_DEFMACRO:
+	case OP_DEFMACRO_STAR:
+	case OP_DEFINE_MACRO:
+	case OP_DEFINE_MACRO_STAR:
+	case OP_DEFINE_EXPANSION:
+	case OP_DEFINE_BACRO:
+	case OP_DEFINE_BACRO_STAR:
+	  return(sc->F);
 	}
       
       return(sc->F); /* TODO: fill out these cases */
@@ -16384,13 +16422,17 @@ hiho
 3
 :(s7-help hiho)
 "a test"
-with-sound etc
-TODO: clickable urls in help strings (and gtk help dialog?)
+with-sound #f etc -- all macros at least
+TODO: clickable urls in help strings
+TODO: currently snd-help doesn't handle (help let) correctly -- it should let use try first
        */
     }
 
   if (s7_is_symbol(obj))
+    {
+      /* here look for name */
     obj = s7_symbol_value(sc, obj);
+    }
 
   if ((typeflag(obj) & (T_ANY_MACRO | T_PROCEDURE)) != 0)
     return(s7_make_string(sc, s7_procedure_documentation(sc, obj)));
@@ -16398,7 +16440,9 @@ TODO: clickable urls in help strings (and gtk help dialog?)
   if (is_hook(obj))
     return(hook_documentation(obj));
 
-  /* here keep a table as in xen.c?
+  /* if is string, apropos? (can scan symbol table)
+   */
+  /* here keep a table as in xen.c? need s7_help and s7_set_help in C + maybe s7_define_constant_with_documentation
    */
 
   return(sc->F);

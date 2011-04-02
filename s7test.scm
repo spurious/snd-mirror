@@ -818,6 +818,7 @@
 (test (symbol? if) #f)
 (test (symbol? and) #f)
 (test (symbol? lambda) #f)
+(test (symbol? 'let) #f)   ; ???
 (test (symbol? call/cc) #f)
 (test (symbol? '1.2.3) #t)
 (test (symbol? '1.2) #f)
@@ -846,6 +847,7 @@
 (test (procedure? lambda) #f)
 (test (procedure? (lambda* ((a 1)) a)) #t)
 (test (procedure? and) #f)
+(test (procedure? 'let) #f)
 (test (procedure? (make-procedure-with-setter (lambda () 1) (lambda (x) x))) #t)
 (if with-bignums (test (procedure? (bignum "1e100")) #f))
 (test (procedure? quasiquote) #f)
@@ -62935,5 +62937,206 @@ but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ? 
 in non-gmp, 
   (+ most-negative-fixnum -1 most-positive-fixnum) is the same as 
   (+ most-positive-fixnum most-positive-fixnum) -> -2!
+
+
+
+;;; TODO: add these
+
+(not quote) #f
+(not lambda) #f
+(real? case) #f
+(> quote if) error
+:(apply quote '(1))
+1
+:(apply if '((> 1 2) 3 4))
+4
+(apply or) -> #f
+(apply and) -> #t
+:(cons quote quote)
+(quote . quote)
+:(eqv? quote quote)
+#t
+:(eq? quote quote)
+#t
+:(eq? lambda and)
+#f
+:(eq? let let*)
+#f
+(eq? if 'if) -> #t
+(defined? quote) -> #t
+(defined? if) -> #t
+(copy quote) -> quote
+(copy if) -> if
+:((copy quote) 1)
+1
+(append quote) -> quote
+(append if) -> if
+(symbol? quote) -> #f
+(symbol? if) -> #f
+(call/cc quote) error
+(call/cc begin) error
+(values quote) -> quote
+(values if) -> if
+:((values quote) 1)
+1
+:(let ((x 1)) ((values set!) x 32) x)
+32
+(procedure? cond) -> #f
+(procedure? do) -> #f
+(procedure? set!) -> #f
+(boolean? or) -> #f
+(eval quote) -> quote
+(eval if) -> if
+
+;; but these aren't symbols!?!
+(symbol->string quote) -> "quote"
+(symbol->string if) -> "if"
+
+(object->string begin) -> "begin"
+(object->string let) -> "let"
+:(write quote)
+#<unspecified>
+(provided? quote) -> #f
+(provided? if) -> #f
+(keyword? if) -> #f
+(keyword? begin) -> #f
+
+(symbol->keyword quote) -> :quote
+(symbol->keyword if) -> :if
+:(equal? if :if)
+#f
+(macro? letrec) -> #f
+(macro? cond) -> #f
+
+
+:(apply 'begin)
+()
+:(apply 'or)
+#f
+(constant? 'with-environment) -> #t
+(constant? with-environment) -> #t
+
+:(eq? if 'if)
+#t
+:(eq? (copy lambda) (copy 'lambda))
+#t
+
+(symbol? 'if) -> #f
+(symbol? 'begin) -> #f
+:(symbol->string 'quote)
+"quote"
+:(object->string 'if)
+"if"
+
+(provided? 'begin) -> #f
+(provided? 'let) -> #f
+:(symbol->keyword 'begin)
+:begin
+:(quasiquote quote)
+quote
+:(quasiquote 'quote)
+'quote
+:(format #f "~A" (quasiquote 'quote))
+"'quote"
+:(format #f "~A" (quasiquote quote))
+"quote"
+
+:((lambda (a b) (format #f "(~A ~A) -> ~A~%" a b (a b))) quasiquote quote)
+"(quasiquote quote) -> b
+" ???????
+
+
+(provide quote) error -- if it's a symbol?...
+
+(lambda or or) -> #<closure>
+:(eq? if (keyword->symbol :if))
+#t
+:(eq? 'if (keyword->symbol :if))
+#t
+:(eq? 'if (string->symbol "if"))
+#t
+:(eq? if (string->symbol "if"))
+#t
+:(symbol? (string->symbol "if"))
+#f
+:(symbol? (keyword->symbol :if))
+#f
+:(symbol->value if)
+#<undefined>
+:(symbol->value 'if)
+#<undefined>
+:(defined? if)
+#t
+:(defined? 'if)
+#t
+
+:(append (begin) do)
+do
+:(begin)
+()
+:(sort! (begin) if)
+()
+:(fill! (begin) if)
+if
+
+((copy quote) quote) -> t
+((append quote) quote) -> t
+:((display lambda) quote)
+;attempt to apply the untyped #<unspecified> to (quote)?
+;; also at some point printout was truncated?
+
+:((lambda (s) ((lambda (c) (format #t "(~A ~A) - > ~A~%" s c (s c))) #f)) quote)
+"(quote #f) - > c
+"
+ /home/bil/cl/ guile
+guile> ((lambda (s) ((lambda (c) (format #t "(~A ~A) - > ~A~%" s c (s c))) #f)) quote)
+(#<primitive-builtin-macro! quote> #f) - > c
+
+:((lambda (s c) (format #t "(~A ~A) - > ~A~%" s c (s c))) quote #f)
+"(quote #f) - > c
+:((lambda (s c) (s c)) quote #f)
+c
+:((lambda (q) (let ((x 1)) (q x))) quote)
+x
+
+
+:('or #f)
+#f
+:('and 1 #f)
+#f
+:('begin 1)
+1
+:('quote 3)
+3
+:('let ((x 1)) ('set! x 3) x)
+3
+:('let* () ('define x 3) x)
+3
+:(''begin 1)
+begin
+;; this is ok but dumb
+
+:(''let ((x 1)) ('set! x 3) x)
+;x: unbound variable
+;    (x)
+
+:(cond (define #f))
+#f
+:('cond ('define '#f))
+#f
+
+(quote (lambda #f)) -> (t c)
+
+
+:(and #f)
+#f
+:('and #f)
+#f
+:((quote and) #f)
+#f
+:((quote 'and) #f)
+;list-ref index, argument 2, #f, is boolean but should be an integer
+
+
 |#
 

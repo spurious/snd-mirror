@@ -7675,8 +7675,8 @@ we aren't likely to stumble on a function that gives us the initial phases!
 
 <table border=1 bordercolor="lightgray" hspace=40 cellpadding=4>
 <tr><td bgcolor="#fbfbf0">
-<pre>
 <small>
+<pre>
 ;;; You can get a good feel for how these peaks behave by using mix and
 ;;;    with-temp-sound to create a draggable mix object for each component:
 
@@ -7728,8 +7728,8 @@ we aren't likely to stumble on a function that gives us the initial phases!
 	    ((&gt; i end))
 	  (set! mx (max mx (abs (rd))))))
       (report-in-minibuffer (format #f "maxamp: ~A" mx)))))
-</small>
 </pre>
+</small>
 </td></tr></table>
 
 
@@ -7991,7 +7991,7 @@ a brute force grid.  The first such grid used initial phases of 0 and pi, and I
 actually ran every possible such case, up to n=45 or so.  Since each harmonic can be
 positive or negative, this is 2^44 cases to check, which is starting to be a pain.
 The results were discouraging; I did not get close to the square root of n.
-I also tried smaller grids (down to pi/32) for small n (say n < 8), without
+I also tried smaller grids (down to pi/32) for small n (say n &lt; 8), without
 any success.
 </p>
 
