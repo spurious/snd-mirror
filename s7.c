@@ -683,15 +683,16 @@ struct s7_scheme {
 #define T_DYNAMIC_WIND        19
 #define T_HASH_TABLE          20
 #define T_BOOLEAN             21
-#define T_HOOK                22
-#define T_C_MACRO             23
-#define T_C_POINTER           24
-#define T_C_FUNCTION          25
-#define T_C_ANY_ARGS_FUNCTION 26
-#define T_C_OPT_ARGS_FUNCTION 27
-#define T_C_RST_ARGS_FUNCTION 28
-#define T_C_LST_ARGS_FUNCTION 29
-#define BUILT_IN_TYPES        30
+#define T_SYNTAX              22
+#define T_HOOK                23
+#define T_C_MACRO             24
+#define T_C_POINTER           25
+#define T_C_FUNCTION          26
+#define T_C_ANY_ARGS_FUNCTION 27
+#define T_C_OPT_ARGS_FUNCTION 28
+#define T_C_RST_ARGS_FUNCTION 29
+#define T_C_LST_ARGS_FUNCTION 30
+#define BUILT_IN_TYPES        31
 
 #define TYPE_BITS                     8
 #define T_MASKTYPE                    0xff
@@ -703,10 +704,6 @@ struct s7_scheme {
 #define saved_typeflag(p)             ((p)->saved_flag)
 #define saved_type(p)                 (saved_typeflag(p) & T_MASKTYPE)
 #endif
-
-#define T_SYNTAX                      (1 << (TYPE_BITS + 1))
-#define is_syntax(p)                  ((typeflag(p) & T_SYNTAX) != 0) /* the != 0 business is for MS C++'s benefit */
-#define syntax_opcode(x)              ((x)->hloc)
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
@@ -742,7 +739,9 @@ struct s7_scheme {
 #define T_ANY_MACRO                   (1 << (TYPE_BITS + 12))
 #define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
 /* this marks scheme and C-defined macros */
-#define is_any_macro_or_syntax(p)     ((typeflag(p) & (T_ANY_MACRO | T_SYNTAX)) != 0)
+
+#define T_DONT_EVAL_ARGS              (1 << (TYPE_BITS + 1))
+#define dont_eval_args(p)             ((typeflag(p) & T_DONT_EVAL_ARGS) != 0)
 
 #define T_EXPANSION                   (1 << (TYPE_BITS + 13))
 #define is_expansion(p)               ((typeflag(p) & T_EXPANSION) != 0)
@@ -874,6 +873,9 @@ struct s7_scheme {
   #define symbol_data(p)              (p)->data
 #endif
 #define symbol_global_slot(p)         (car(p))->object.string.global_slot
+
+#define is_syntax(p)                  (type(p) == T_SYNTAX)
+#define syntax_opcode(p)              ((p)->hloc)
 
 #define vector_length(p)              ((p)->object.vector.length)
 #define vector_element(p, i)          ((p)->object.vector.elements[i])
@@ -1947,6 +1949,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       break;
 
     case T_SYMBOL:
+    case T_SYNTAX:
       /* here hloc is usually NOT_IN_HEAP, but in the syntax case can be the syntax op code */
       return;
 
@@ -2341,7 +2344,7 @@ bool s7_is_symbol(s7_pointer p)
 static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_symbol "(symbol? obj) returns #t if obj is a symbol"
-  return(make_boolean(sc, (typeflag(car(args)) & (T_MASKTYPE | T_SYNTAX)) == T_SYMBOL)); /* i.e. (symbol? begin) is #f */
+  return(make_boolean(sc, s7_is_symbol(car(args))));
 }
 
 
@@ -3045,9 +3048,6 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       x = cadr(args);
     }
   else x = sc->envir;
-  
-  if (is_syntax(car(args)))        /* put env check first, else (defined? 'lambda car) -> #t */
-    return(sc->T);
   
   x = find_symbol(sc, x, car(args));
   return(make_boolean(sc, (x != sc->NIL) && (x != sc->UNDEFINED)));
@@ -12255,6 +12255,9 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	return(str);
       }
 
+    case T_SYNTAX:
+      return(copy_string(op_names[(int)syntax_opcode(obj)]));
+
     case T_STRING:
       if (string_length(obj) > 0)
 	{
@@ -12389,7 +12392,6 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_procedure(obj) ?          " procedure" : "",
 	     is_marked(obj) ?             " gc-marked" : "",
 	     is_immutable(obj) ?          " immutable" : "",
-	     is_syntax(obj) ?             " syntax" : "",
 	     dont_copy(obj) ?             " dont-copy" : "",
 	     dont_copy_cdr(obj) ?         " dont-copy-cdr" : "",
 	     is_finalizable(obj) ?        " gc-finalize" : "",
@@ -12402,6 +12404,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_multiple_value(obj) ?     " values" : "",
 	     is_keyword(obj) ?            " keyword" : "",
 	     is_environment(obj) ?        " environment" : "",
+             dont_eval_args(obj) ?        " dont-eval-args" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
 #if DEBUGGING
     if ((saved_typeflag(obj) != typeflag(obj)) &&
@@ -14574,7 +14577,7 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
   #define H_provide "(provide symbol) adds symbol to the *features* list"
   s7_pointer features;
 
-  if ((typeflag(car(args)) & (T_MASKTYPE | T_SYNTAX)) != T_SYMBOL)
+  if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "provide", 0, car(args), "a symbol"));
 
   features = make_symbol(sc, "*features*");
@@ -15581,6 +15584,9 @@ static s7_Int hash_loc(s7_pointer key)
 	loc = *c + loc * 37;
       return(loc);
 
+    case T_SYNTAX:
+      return((s7_Int)syntax_opcode(key));
+
     case T_CHARACTER:
       return((s7_Int)character(key));
 
@@ -16158,8 +16164,6 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (s7_is_symbol(p))
     {
-      if (is_syntax(p))
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-source arg, ~S, is not a procedure"), p)));
       p = s7_symbol_value(sc, p);
       if (p == sc->UNDEFINED)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-source arg, '~S, is unbound"), car(args))));
@@ -16213,8 +16217,6 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (s7_is_symbol(p))
     {
-      if (is_syntax(p))
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-environment arg, ~S, is not a procedure"), p)));
       p = s7_symbol_value(sc, p);
       if (p == sc->UNDEFINED)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-environment arg, '~S, is unbound"), car(args))));
@@ -16253,7 +16255,7 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 {
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  set_type(func, T_C_MACRO | T_SIMPLE | T_DONT_COPY | T_ANY_MACRO | T_DONT_COPY_CDR); /* this used to include T_PROCEDURE */
+  set_type(func, T_C_MACRO | T_SIMPLE | T_DONT_COPY | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_EVAL_ARGS); /* this used to include T_PROCEDURE */
   s7_define(sc, s7_global_environment(sc), make_symbol(sc, name), func);
 }
 
@@ -16348,11 +16350,7 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (s7_is_symbol(p))
-    {
-      if (is_syntax(p))
-	return(s7_wrong_type_arg_error(sc, "procedure-documentation", 0, p, "a procedure"));
-      p = s7_symbol_value(sc, p);
-    }
+    p = s7_symbol_value(sc, p);
 
   if ((!is_procedure(p)) &&
       (!s7_is_macro(sc, p)))
@@ -16529,8 +16527,6 @@ static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (s7_is_symbol(p))
     {
-      if (is_syntax(p))
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-arity arg, ~S, is not a procedure"), p)));
       p = s7_symbol_value(sc, p);
       if (p == sc->UNDEFINED)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-arity arg, '~S, is unbound"), car(args))));
@@ -19671,6 +19667,7 @@ static const char *type_name(s7_pointer arg)
     case T_BOOLEAN:      return("boolean");
     case T_STRING:       return("string");
     case T_SYMBOL:       return("symbol");
+    case T_SYNTAX:       return("syntax");
     case T_PAIR:         return("pair");
     case T_CLOSURE:      return("closure");
     case T_CLOSURE_STAR: return("closure*");
@@ -21182,12 +21179,13 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
        *   (map 0 '()) -> '()
        * so we check by hand before returning #<unspecified>
        */
-      if (((typeflag(sc->code) & (T_ANY_MACRO | T_SYNTAX | T_PROCEDURE)) != 0) ||
+      if (((typeflag(sc->code) & (T_ANY_MACRO | T_PROCEDURE)) != 0) ||
 	  (is_pair(sc->code)) ||                   /* if this used is_sequence (above), (map '()...) would not be an error */
 	  (s7_is_string(sc->code)) ||
 	  (s7_is_vector(sc->code)) ||
 	  (s7_is_hash_table(sc->code)) ||
-	  (is_hook(sc->code)))
+	  (is_hook(sc->code)) ||
+	  (is_syntax(sc->code)))
 	return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
       return(s7_wrong_type_arg_error(sc, "for-each", 1, sc->code, "a procedure or something applicable"));
     }
@@ -21373,12 +21371,13 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   if (len == 0)   /* (map 1 "hi" '()) */
     {
-      if (((typeflag(sc->code) & (T_ANY_MACRO | T_SYNTAX | T_PROCEDURE)) != 0) ||
+      if (((typeflag(sc->code) & (T_ANY_MACRO | T_PROCEDURE)) != 0) ||
 	  (is_pair(sc->code)) ||
 	  (s7_is_string(sc->code)) ||
 	  (s7_is_vector(sc->code)) ||
 	  (s7_is_hash_table(sc->code)) ||
-	  (is_hook(sc->code)))
+	  (is_hook(sc->code)) ||
+	  (is_syntax(sc->code)))
 	return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
       return(s7_wrong_type_arg_error(sc, "map", 1, sc->code, "a procedure or something applicable"));
     }
@@ -21625,7 +21624,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 {
   if (!is_pair(form))
     {
-      if (!s7_is_symbol(form))
+      if ((!s7_is_symbol(form)) && (!is_syntax(form)))
 	{
 	  /* things that evaluate to themselves don't need to be quoted. 
 	   *    but this means `() -> () whereas below `(1) -> '(1) -- should nil here return '()?
@@ -22514,10 +22513,17 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
 
 static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
 {
-  s7_pointer x;
+  s7_pointer x, syn;
   x = symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name)); 
-  typeflag(x) |= (T_SYNTAX | T_DONT_COPY); 
-  syntax_opcode(x) = (int)op;
+
+  syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  set_type(syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS); /* | T_IMMUTABLE); */
+  syntax_opcode(syn) = (int)op;
+
+  set_symbol_value(x, syn);
+  symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS); /* | T_IMMUTABLE); */
+
+  typeflag(x) |= (T_DONT_COPY); /* | T_IMMUTABLE);  */
   return(x);
 }
 
@@ -22555,7 +22561,8 @@ static s7_pointer quotify(s7_scheme *sc, s7_pointer pars)
   for (tmp = pars; is_pair(tmp); tmp = cdr(tmp))
     if ((is_pair(car(tmp))) &&
 	((is_pair(cadar(tmp))) ||
-	 (s7_is_symbol(cadar(tmp)))))
+	 (s7_is_symbol(cadar(tmp))) ||
+	 (is_syntax(cadar(tmp)))))
       cadar(tmp) = make_list_2(sc, sc->QUOTE, cadar(tmp));
   return(pars);
 }
@@ -23735,7 +23742,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_EVAL_ARGS:
-      if (is_any_macro_or_syntax(sc->value))
+      if (dont_eval_args(sc->value))
 	{
 	  if (is_any_macro(sc->value))
 	    {    
@@ -23753,7 +23760,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  /* (define progn begin)
 	   * (progn (display "hi") (+ 1 23))
-	   * we can't catch this above under T_SYMBOL because we might be using "syntax" symbols as symbols (case labels etc)
+	   * TODO: we can't catch this above under T_SYMBOL because we might be using "syntax" symbols as symbols (case labels etc)
 	   */
 
 	  sc->op = (opcode_t)syntax_opcode(sc->value);
@@ -24228,19 +24235,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else sc->value = g_hash_table_ref(sc, s7_cons(sc, sc->code, sc->args));
 	  goto START;
 
-	case T_SYMBOL:                            /* -------- syntactic keyword as applicable object -------- */
-	  if (is_syntax(sc->code))                                           /* (apply begin '((define x 3) (+ x 2))) */
-	    {
-	      sc->op = (opcode_t)syntax_opcode(sc->code);
-	      sc->code = sc->args;
-	      goto START_WITHOUT_POP_STACK;
-	      /* this was:
-	       *    sc->code = s7_cons(sc, sc->code, sc->args); goto EVAL;
-	       * but that merely leads to the code above, I think.
-	       */
-
-	    }
-	  /* else fall through */
+	case T_SYNTAX:                            /* -------- syntactic keyword as applicable object -------- */
+	  /* (apply begin '((define x 3) (+ x 2))) */
+	  sc->op = (opcode_t)syntax_opcode(sc->code);
+	  sc->code = sc->args;
+	  goto START_WITHOUT_POP_STACK;
+	  /* this was:
+	   *    sc->code = s7_cons(sc, sc->code, sc->args); goto EVAL;
+	   * but that merely leads to the code above, I think.
+	   */
 
 	default:
 	  return(apply_error(sc, sc->code, sc->args));
@@ -24718,14 +24721,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto APPLY;
 		}
 	    }
+	  if (is_syntax(symbol_value(sc->y)))
+	    return(eval_error(sc, "can't set! ~A", sc->code));
+
 	  set_symbol_value(sc->y, sc->value); 
 	  sc->y = sc->NIL;
 	  goto START;
 	}
       /* if unbound variable hook here, we need the binding, not the current value */
 
-      if (is_syntax(sc->code))
-	return(eval_error(sc, "can't set! ~A", sc->code));
       return(eval_error(sc, "set! ~A: unbound variable", sc->code));
 
       
@@ -25212,13 +25216,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_BACRO:
       /* sc->value is the symbol, sc->x is the binding (the bacro) */
-      set_type(sc->x, T_BACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY);
+      set_type(sc->x, T_BACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY | T_DONT_EVAL_ARGS);
       goto START;
 
 
     case OP_MACRO:
       /* symbol? macro name has already been checked */
-      set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY);
+      set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY | T_DONT_EVAL_ARGS);
 
       /* find name in environment, and define it */
       sc->x = find_local_symbol(sc, sc->envir, sc->code); 
@@ -25304,7 +25308,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_EXPANSION:
       /* sc->x is the value (sc->value right now is sc->code, the macro name symbol) */
-      set_type(sc->x, T_MACRO | T_ANY_MACRO | T_EXPANSION | T_DONT_COPY_CDR | T_DONT_COPY);
+      set_type(sc->x, T_MACRO | T_ANY_MACRO | T_EXPANSION | T_DONT_COPY_CDR | T_DONT_COPY | T_DONT_EVAL_ARGS);
       set_type(sc->value, type(sc->value) | T_EXPANSION | T_DONT_COPY);
       goto START;
 

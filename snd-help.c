@@ -2,6 +2,9 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
+/* TODO: when the gtk version goes to the html reader, it locks out the gtk GUI?
+ */
+
 static const char **snd_xrefs(const char *topic);
 static const char **snd_xref_urls(const char *topic);
 
@@ -111,7 +114,7 @@ static const char *main_snd_xrefs[16] = {
   "{Emacs}: Snd as Emacs subjob",
   "{Libxm}: graphics module",
   "{Sndlib}: underlying sound support library",
-  "{Scripting}: Snd as scripting language",
+  "{Scripting}: Snd with no GUI",
   "{Motif}: Motif extensions via Libxm",
   "{Gtk}: Gtk extensions via Libxm",
   "{Ladspa}: plugins",

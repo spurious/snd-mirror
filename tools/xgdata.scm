@@ -8181,6 +8181,17 @@
 
 
 #|
+;;; 3.0.7
+
+(CINT-300 "GTK_SIZE_REQUEST_CONSTANT_SIZE" "GtkSizeRequestMode")
+
+|#
+
+
+
+
+;;; --------------------------------------------------------------------------------
+#|
 (CCAST-300 "GTK_CSS_PROVIDER" "GtkCssProvider*")
 (CCHK-300 "GTK_IS_CSS_PROVIDER" "GtkCssProvider*")
 (CINT-300 "GTK_CSS_PROVIDER_ERROR_FAILED" "GtkCssProviderError")

@@ -388,8 +388,21 @@
 (test (let () (define-macro (hi a) `(+ 1 ,a)) (eq? hi hi)) #t)
 (test (let () (define (hi a) (+ 1 a)) (eq? hi hi)) #t)
 (test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (eq? x x)) #t)
+
 (test (eq? quasiquote quasiquote) #t)
 (test (eq? `quasiquote 'quasiquote) #t)
+(test (eq? 'if (keyword->symbol :if)) #t)
+(test (eq? 'if (string->symbol "if")) #t)
+(test (eq? (copy lambda) (copy 'lambda)) #f)
+(test (eq? if 'if) #f)
+(test (eq? if 'if) #f)
+(test (eq? if (keyword->symbol :if)) #f)
+(test (eq? if (string->symbol "if")) #f)
+(test (eq? lambda and) #f)
+(test (eq? let let*) #f)
+(test (eq? quote quote) #t)
+
+
 
 
 ;;; eqv?
@@ -431,6 +444,7 @@
 (test (eqv? (lambda () 1) (lambda () 1)) #f)
 (test (let () (define (make-adder x) (lambda (y) (+ x y))) (eqv? (make-adder 1) (make-adder 1))) #f)
 (test (eqv? 9/2 9/2) #t)
+(test (eqv? quote quote) #t)
 
 (let ((c1 (let ((x 32))
 	    (lambda () x)))
@@ -604,6 +618,7 @@
 (test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (equal? x x)) #t)
 (test (equal? ``"" '"") #t)
 (test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (x) x)))) (equal? pws pws)) #t)
+(test (equal? if :if) #f)
 
 (test (equal? most-positive-fixnum most-positive-fixnum) #t)
 (test (equal? most-positive-fixnum most-negative-fixnum) #f)
@@ -716,6 +731,7 @@
 (test (boolean? (list)) #f)
 (test ( boolean? #t) #t)
 (test (boolean? boolean?) #f)
+(test (boolean? or) #f)
 (test (   ; a comment 
        boolean?  ;;; and another
        #t
@@ -754,6 +770,8 @@
 (test (not 'nil) #f)
 (test (not not) #f)
 (test (not "") #f)
+(test (not lambda) #f)
+(test (not quote) #f)
 
 (for-each
  (lambda (arg)
@@ -800,6 +818,12 @@
 (test (symbol? 'sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789) #t) ;M Gran
 (test (symbol? (vector-ref '#(1 a 34) 1)) #t)
 (test (if (symbol? '1+) (symbol? '0e) #t) #t)
+(test (symbol? 'begin) #t)
+(test (symbol? 'if) #t)
+(test (symbol? (keyword->symbol :if)) #t)
+(test (symbol? (string->symbol "if")) #t)
+(test (symbol? if) #f)
+(test (symbol? quote) #f)
 
 (for-each
  (lambda (arg)
@@ -818,7 +842,7 @@
 (test (symbol? if) #f)
 (test (symbol? and) #f)
 (test (symbol? lambda) #f)
-(test (symbol? 'let) #f)   ; ???
+(test (symbol? 'let) #t)
 (test (symbol? call/cc) #f)
 (test (symbol? '1.2.3) #t)
 (test (symbol? '1.2) #f)
@@ -854,6 +878,9 @@
 (let () (define-macro (hi a) `(+ ,a 1)) (test (procedure? hi) #f))
 (test (procedure? (make-random-state 1234)) #f)
 (test (procedure? pi) #f)
+(test (procedure? cond) #f)
+(test (procedure? do) #f)
+(test (procedure? set!) #f)
 
 (for-each
  (lambda (arg)
@@ -2913,6 +2940,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (symbol? (string->symbol "(weird name for a symbol!)")) #t)
 (test (symbol->string (string->symbol "()")) "()")
 (test (symbol->string (string->symbol (string #\"))) "\"")
+(test (symbol->string 'quote) "quote")
+(test (symbol->string if) 'error)
+(test (symbol->string quote) 'error)
 
 (test (symbol? (string->symbol "0")) #t)
 (test (symbol? (symbol "0")) #t)
@@ -2998,10 +3028,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (test (symbol->value 'abs (initial-environment)) abs)
 (test (symbol->value 'abs (global-environment)) abs)
-(test (symbol->value 'lambda) #<undefined>) ; ?? all "syntax" words are like this, except 'else??
-(test (symbol->value 'do) #<undefined>)
-(test (symbol->value lambda) #<undefined>) ; ?? 
-(test (symbol->value do) #<undefined>)
+(test (symbol->value 'lambda) lambda)
+(test (symbol->value 'do) do)
+(test (symbol->value do) 'error)
 (test (symbol->value 'macroexpand) macroexpand)
 (test (symbol->value 'quasiquote) quasiquote)
 (test (symbol->value 'else) else)
@@ -3015,6 +3044,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (symbol->value 'abs '()) 'error)
 (test (let ((a1 (let ((b1 32)) (lambda () b1)))) (symbol->value 'b1 (procedure-environment a1))) 32)
 (test (let ((x #f)) (set! x (let ((a1 (let ((b1 32)) (lambda () b1)))) a1)) (symbol->value 'b1 (procedure-environment x))) 32)
+(test (symbol->value 'if) if)
+(test (symbol->value if) 'error)
 
 
 (test (let ((name "hiho"))
@@ -4612,7 +4643,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test ls '(a z c)))
 (test (memv 1 (cons 1 2)) '(1 . 2))
 (test (memv 'a (list 'a 'b . 'c)) 'error)
-(test (memv 'a (list 'a 'b . ''c)) '(a b quote c))
 (test (memv 'a '(a b . c)) '(a b . c))
 (test (memv 'asdf '(a b . c)) #f)
 (test (memv) 'error)
@@ -4689,8 +4719,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (member . (3 '(1 2 3))) '(3))
 (test (member '(1 2) '(1 2)) #f)
 (test (member '(1 2) '((1 2))) '((1 2)))
-(test (member . '(quote . ((quote)))) '(quote))
-(test (member . '(quote . ((quote) .()))) '(quote))
+(test (member . '(quote . ((quote)))) #f)
+(test (member . '(quote . ((quote) .()))) #f)
 (test (member '(((1))) '((((1).()).()).())) '((((1)))))
 (test (member '((1)) '(1 (1) ((1)) (((1))))) '(((1)) (((1)))))
 (test (member member (list abs car memq member +)) (list member +))
@@ -4870,6 +4900,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (append () () #()) #())
 (test (append () ((lambda () #f))) #f)
 
+(test (append (begin) do) do)
+(test (append if) if)
+(test (append quote) quote)
 (test (append 0) 0) ; is this correct?
 (test (append '() 0) 0)
 (test (append '() '() 0) 0)
@@ -8589,6 +8622,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f (string #\~ #\a) 1) "1")
 (test (format #f (format #f "~~a") 1) "1")
 (test (format #f (format #f "~~a") (format #f "~D" 1)) "1")
+(test (format #f "~A" (quasiquote quote)) "quote")
 
 (test (format #f "~f" (/ 1 3)) "1/3") ; hmmm -- should it call exact->inexact?
 (test (format #f "~f" 1) "1")
@@ -10249,6 +10283,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (object->string #()) "#()")
 (test (object->string "") "\"\"")
 (test (object->string abs) "abs")
+(test (object->string lambda) "lambda")
 (test (object->string +) "+")
 (test (object->string +) "+")
 (test (object->string '''2) "''2")
@@ -10261,6 +10296,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (object->string dynamic-wind) "dynamic-wind")
 (test (object->string (make-procedure-with-setter (lambda () 1) (lambda (val) val))) "#<procedure-with-setter>")
 (test (object->string object->string) "object->string")
+(test (object->string 'if) "if")
+(test (object->string begin) "begin")
+(test (object->string let) "let")
 
 (test (object->string #\n #f) "n")
 (test (object->string #\n) "#\\n")
@@ -10606,7 +10644,7 @@ this prints:
   '    ' 4)) 7)
 (test (+ '#| a comment |#2 3) 5)
 (test (+ ' #| a comment |# 2 3) 5)
-(test (eq? lambda 'lambda) #t)
+(test (eq? lambda 'lambda) #f)
 (test (equal? + '+) #f)
 (test (eq? '() ()) #t) ; s7 specific
 
@@ -10630,7 +10668,7 @@ this prints:
 (test (equal? '('3 4) (list (list 'quote 3) 4)) #t)
 (test (equal? '('3 4) (list 3 4)) #f)
 (test (equal? '('() 4) (list (list 'quote '()) 4)) #t)
-(test (equal? '('('4)) (list (list quote (list (list quote 4))))) #t) ; weird... (guile wants quoted quotes)
+(test (equal? '('('4)) (list (list quote (list (list quote 4))))) #f)
 (test (equal? '('('4)) (list (list 'quote (list (list 'quote 4))))) #t) 
 (test (equal? '('('4)) '((quote ((quote 4))))) #t)
 (test (equal? '1 ''1) #f)
@@ -10654,6 +10692,23 @@ this prints:
 (test (equal? '(1 . 2) (quote (1 . 2))) #t)
 (test ('abs -1) 'error)
 (test ('"hi" 0) #\h)
+
+(test (''begin 1) 'begin)
+(test (''let ((x 1)) ('set! x 3) x) 'error)
+(test ('and #f) 'error)
+(test ('and 1 #f) 'error)
+(test ('begin 1) 'error)
+(test ('cond ('define '#f)) 'error)
+(test ('let ((x 1)) ('set! x 3) x) 'error)
+(test ('let* () ('define x 3) x) 'error)
+(test ('or #f) 'error)
+(test ('quote 3) 'error)
+(test ((copy quote) 1) 1)
+(test ((copy quote) quote) 'quote)
+(test ((lambda (q) (let ((x 1)) (q x))) quote) 'x)
+(test ((lambda (s c) (s c)) quote #f) 'c)
+(test ((quote and) #f) 'error)
+(test ((values quote) 1) 1)
 
 ;; see also quasiquote
 
@@ -11238,7 +11293,7 @@ this prints:
 (test (map begin "hi") '(#\h #\i))
 (test (map quote "hi") '(#\h #\i))
 (test (map (begin #(1 (3))) '(1)) '((3)))
-(test (map (''2 0) ''2) ''2) ; (''2 0) -> quote
+(test (map (''2 0) ''2) 'error)
 (test (map (apply lambda 'a '(-1)) '((1 2))) '(-1))
 (test (map do '(()) '((1 2))) '(2))
 (test (map case '(1) '(((-1 1) 2) 3)) '(2))
@@ -11997,6 +12052,7 @@ this prints:
 (test (cond (+ 0)) 0)
 (test (cond (lambda ())) ())
 (test (cond . ((1 2) ((3 4)))) 2)
+(test (cond (define #f)) #f)
 
 (for-each
  (lambda (arg)
@@ -12299,7 +12355,7 @@ this prints:
 (test (case 1 (#(1 2) 3)) 'error)
 (test (case 1 #((1 2) 3)) 'error)
 
-(test (case case ((case) 1) ((cond) 3)) 1)
+(test (case 'case ((case) 1) ((cond) 3)) 1)
 (test (case 101 ((0 1 2) 200) ((3 4 5 6) 600) ((7) 700) ((8) 800) ((9 10 11 12 13) 1300) ((14 15 16) 1600) ((17 18 19 20) 2000) ((21 22 23 24 25) 2500) ((26 27 28 29) 2900) ((30 31 32) 3200) ((33 34 35) 3500) ((36 37 38 39) 3900) ((40) 4000) ((41 42) 4200) ((43) 4300) ((44 45 46) 4600) ((47 48 49 50 51) 5100) ((52 53 54) 5400) ((55) 5500) ((56 57) 5700) ((58 59 60) 6000) ((61 62) 6200) ((63 64 65) 6500) ((66 67 68 69) 6900) ((70 71 72 73) 7300) ((74 75 76 77) 7700) ((78 79 80) 8000) ((81) 8100) ((82 83) 8300) ((84 85 86 87) 8700) ((88 89 90 91 92) 9200) ((93 94 95) 9500) ((96 97 98) 9800) ((99) 9900) ((100 101 102) 10200) ((103 104 105 106 107) 10700) ((108 109) 10900) ((110 111) 11100) ((112 113 114 115) 11500) ((116) 11600) ((117) 11700) ((118) 11800) ((119 120) 12000) ((121 122 123 124 125) 12500) ((126 127) 12700) ((128) 12800) ((129 130) 13000) ((131 132) 13200) ((133 134 135 136) 13600) ((137 138) 13800)) 10200)
 (test (case most-positive-fixnum ((-1231234) 0) ((9223372036854775807) 1) (else 2)) 1)
 (test (case most-negative-fixnum ((123123123) 0) ((-9223372036854775808) 1) (else 2)) 1)
@@ -12857,6 +12913,13 @@ this prints:
 (test ((apply make-procedure-with-setter (list (lambda (x) (+ x 1)) (lambda (x y) (+ x y)))) 23) 24)
 (test (apply (apply make-procedure-with-setter (list (lambda (x) (+ x 1)) (lambda (x y) (+ x y)))) '(23)) 24)
 
+(test (apply 'begin) 'error)
+(test (apply and) #t)
+(test (apply begin) '())
+(test (apply if '((> 1 2) 3 4)) 4)
+(test (apply or) #f)
+(test (apply quote '(1)) 1)
+
 
 
 
@@ -13129,12 +13192,15 @@ this prints:
 (test (+ 1 ((lambda () ((lambda () (values 2 3)))))) 6)
 
 (test (let ((str "hi")) (string-set! (values str 0 #\x)) str) "xi")
+(test (values if) if)
+(test (values quote) quote)
 
 (test ((values '(1 (2 3)) 1 1)) 3)
 (test (let ((x #(32 33))) ((values x 0))) 32)
 (test (+ 1 (apply values '(2 3 4))) 10)
 (test (+ 1 ((lambda args (apply values args)) 2 3 4)) 10)
 (test (apply begin '(1 2 3)) 3)
+(test (let ((x 1)) ((values set!) x 32) x) 32)
 
 (test (or (values #t #f) #f) #t)
 (test (or (values #f #f) #f) #f)
@@ -14512,6 +14578,9 @@ this prints:
 (test (+ 1 (call/cc (lambda (k) (k #\a)))) 'error)
 (test (+ 1 (call-with-exit (lambda (k) (k #\a)))) 'error)
 (test ((call/cc (lambda (return) (call/cc (lambda (cont) (return cont))) list)) 1) '(1)) ; from Guile mailing list -- this strikes me as very strange
+
+(test (call/cc begin) 'error)
+(test (call/cc quote) 'error)
 
 (let ((p1 (make-procedure-with-setter (lambda (k) (k 3)) (lambda (k a) (k a)))))
   (test (call/cc p1) 3)
@@ -15980,6 +16049,7 @@ who says the continuation has to restart the map from the top?
 (test (eval (eval ``(,- ,@,@'(1())))) -1)
 (test (eval (eval ``(,- ,@'(,@()1)))) -1)
 (test (eval (eval ``(- ,@,@',().(1)))) -1)
+(test (quasiquote quote) 'quote)
 
 ;; from gauche
 (let ((quasi0 99)
@@ -16152,21 +16222,21 @@ who says the continuation has to restart the map from the top?
 		     (lambda args 'error))))
      (if (not (eqv? val -1))
 	 (format #t "~S = ~S?~%" str val))))
- (list "(  `,@` '-1)" "( '(.1 -1)1)" "( - '`-00 1)" "( - .(,`1/1))" "( - .(`1) )" "( -(/ .(1)))" "( / 01 -1 )" "(' '` -1(/ ' 1))" "(' (-01 )0)" 
+ (list "( '(.1 -1)1)" "( - '`-00 1)" "( - .(,`1/1))" "( - .(`1) )" "( -(/ .(1)))" "( / 01 -1 )" "(' '` -1(/ ' 1))" "(' (-01 )0)" 
        "(' `'`` -1 1 01)" "(''-1 .(1))" "('(, -1 )0)" "('(,-1)'000)" "('(,-1)00)" "('(-1  -.0)0)" "('(-1 '1`)0)" "('(-1 .-/-)0)" "('(-1()),0)"
        "('(-1) 0)" "('(10. -1 )1)" "(-  '`1)" "(-  `1 1 1)" "(- '  1)" "(- ' 1)" "(- '1 .())" "(- '` ,``1)" "(- '` 1)" "(- '`, `1)" "(- '`,`1)" 
        "(- '``1)" "(- (''1 1))" "(- (- ' 1 0))" "(- (-(- `1)))" "(- (`  (1)0))" "(- ,`, `1)" "(- ,`1 . ,())" "(- . ( 0 1))" "(- . ( `001))" 
        "(- .(', 01))" "(- .('`,1))" "(- .('``1))" "(- .(,,1))" "(- .(01))" "(- .(1))" "(- .(`,1))" "(- .(`,`1))" "(- .(`1))" "(- ` ,'1)" 
        "(- ` -0 '1)" "(- ` 1 )" "(- ` `1)" "(- `, 1)" "(- `,1)" "(- `,`,1)" "(- `,`1)" "(- ``,,1)" "(- ``,1)" "(- ``1 )" "(- ```,1)" 
        "(- ```1)" "(-(  / 1))" "(-( -  -1 ))" "(-( `,- 1 0))" "(-(' (1)0))" "(-('(,1)00))" "(-(- '`1) 0)" "(-(- -1))" "(-(/(/(/ 1))))" 
-       "(-(`'1 '1))" "(-(`(,1 )'0))" "(-(`,/ ,1))" "(-(`,@''1))" "(/ '-1 '1 )" "(/ ,, `,-1)" "(/ ,11 -11)" "(/ 01 (- '1))" "(/ `1 '`-1)" 
+       "(-(`'1 '1))" "(-(`(,1 )'0))" "(-(`,/ ,1))" "(/ '-1 '1 )" "(/ ,, `,-1)" "(/ ,11 -11)" "(/ 01 (- '1))" "(/ `1 '`-1)" 
        "(/(- '1)  )" "(/(- '1)1)" "(/(- 001)1)" "(/(- 1),,1)" "(/(/ -1))" "(` ,- 1)" "(` `,(-1)0)" "(`' , -1 1)" "(/(- -001(+)))"
        "(`' -1 '1/1)" "(`','-1 ,1)" "(`(,-1)-00)" "(`(-0 -1)1)" "(`(-1 -.')0)" "(`(-1 1')0)" "(`(` -1)'`0)" "(`, - 1)" "(`,- '1)" "(`,- .(1))" 
        "(`,- 1 )" "(`,- `,1)" "(`,- `1)" "(`,/ . (-1))" "(``,,- `01)" "('''-1 '1 '1)" "(/ `-1 1)" "(/ .( -1))" "(-(+(+)0)1)" "(/ ,`,`-1/1)" 
        "(-(*).())" "(*(- +1))" "(-(`,*))" "(-(+)'1)" "(+(-(*)))" "(-(+(*)))" "(-(+)(*))" "(-(/(*)))" "(*(-(*)))" "(-(*(*)))" "(/(-(*)))" "(-(+(*)))"
        "(/ .(-1))" "(-(*))" "(- 000(*))" "(-(*(+ 1)))" "(- .((*)))" "(- +0/10(*))" "(-(`,/ .(1)))" "(+ .(' -01))" "(-(''1 01))" "(- -1/1 +0)"
        "(- `,'0 `01)" "( - `,(+)'1)" "(+(- . (`1)))" "(* '`,``-1)" "(-(+ -0)1)" "(+ +0(-(*)))" "(+(- '+1 ))" "(+ '-01(+))" "(`, -(+)1)" 
-       "(`,+ 0 -1)" "(-(/(/(*))))" "(`,* .( -1))" "(-(*(*(*))))" "(`,@(list +)-1)" "(+(`,@''-1))" "(* (- 1) )" "(`, - (* ))" "(/(- (* 1)))"
+       "(`,+ 0 -1)" "(-(/(/(*))))" "(`,* .( -1))" "(-(*(*(*))))" "(`,@(list +)-1)" "(* (- 1) )" "(`, - (* ))" "(/(- (* 1)))"
        "(- -0/1(*))" "(`(,-1)0)" "(/(-(*).()))" "(* ````-1)" "(-(+(*)0))" "(-(* `,(*)))" "(- +1(*)1)" "(- (` ,* ))" "(/(-(+ )1))" "(`,* -1(*))" 
        "(` ,- .(1))" "(+(`,-( *)))" "( /(`,- 1))" "(`(1 -1)1)" "(*( -(/(*))))" "(- -1(-(+)))" "(* ``,,-1)" "(-(+(+))1)" "( +(*(-(*))))"
        "(-(+)`0(*))" "(-(+(+(*))))" "(-(+ .(01)))" "(/(*(-(* ))))" "(/ (-(* 1)))" "( /(-(/(*))))" "(+ -1 0/1)" "(/(-( +(*))))" "(*( -(`,*)))"
@@ -16321,10 +16391,6 @@ why are these different (read-time `#() ? )
 #((unquote ({apply} {values} (list 1 2 3))))
 |#
 
-(test (`,@''()) '())
-(test (`,@'''()) ''())
-(test (`,@''(())) '(()))
-
 (test (quasiquote) 'error)
 (test (quasiquote 1 2 3) 'error)
 (let ((d 1)) (test (quasiquote (a b c ,d)) '(a b c 1)))
@@ -16411,6 +16477,8 @@ why are these different (read-time `#() ? )
 (test (keyword? :-1) #t)
 (test (keyword? (symbol ":#(1 #\\a (3))")) #t)
 (test (keyword? (make-keyword (object->string #(1 #\a (3)) #f))) #t)
+(test (keyword? begin) #f)
+(test (keyword? if) #f)
 
 (let ((kw (make-keyword "hiho")))
   (test (keyword? kw) #t)
@@ -16469,6 +16537,11 @@ why are these different (read-time `#() ? )
   (test (keyword? (make-keyword (string #\"))) #t)
   (test (keyword->symbol (make-keyword (string #\"))) (symbol "\""))
   )
+
+(test (symbol->keyword 'begin) :begin)
+(test (symbol->keyword 'quote) :quote)
+(test (symbol->keyword if) 'error)
+(test (symbol->keyword quote) 'error)
 
 (test (let ((:hi 3)) :hi) 'error)
 (test (set! :hi 2) 'error)
@@ -16564,13 +16637,18 @@ why are these different (read-time `#() ? )
 
 
 (test (provided?) 'error)
-(test (provide) 'error)
 (test (or (null? *features*) (pair? *features*)) #t)
 (test (provided? 1 2 3) 'error)
-(test (provide 1 2 3) 'error)
 (provide 's7test)
 (test (provided? 's7test) #t)
 (test (provided? 'not-provided!) #f)
+(test (provided? 'begin) #f)
+(test (provided? if) 'error)
+(test (provided? quote) 'error)
+
+(test (provide quote) 'error)
+(test (provide 1 2 3) 'error)
+(test (provide) 'error)
 (test (provide lambda) 'error)
 
 (provide 's7test) ; should be a no-op
@@ -17001,6 +17079,7 @@ why are these different (read-time `#() ? )
 (test (sort! '(1 2 #t) <) 'error)
 (test (sort! '(1 2 . #t) <) 'error)
 (test (sort! '(#\c #\a #\b) <) 'error)
+(test (sort! (begin) if) '())
 
 (test (sort! (list) <) '())
 (test (sort! (vector) <) #())
@@ -18280,6 +18359,8 @@ abs     1       2
   (test (eval ((cons (quote cons) (cons 1 (quote ((quote ()))))) 1)) 1)
   (test (eval (eval (list '+ 1 2))) 3)
 
+  (test (eval if) if)
+  (test (eval quote) quote)
 
   (test (apply + (+ 1) ()) 1)
   (test (apply #(1) (+) ()) 1)
@@ -18763,14 +18844,19 @@ abs     1       2
 	    lst))
 	'(1 32 3))
 
+  ;;; macro?
   (test (macro? eval-case) #t)
   (test (macro? pi) #f)
   (test (macro? quasiquote) #t) ; s7_define_macro in s7.c
   (test (let ((m quasiquote)) (macro? m)) #t)
   (test (macro? macroexpand) #t)
+  (test (macro? cond) #f)
+  (test (macro? letrec) #f)
+
   ;; not ideal: (let () (define (hi a) (+ a 1)) (macroexpand (hi 2))) ->
   ;;              ;+ argument 1, (hi 2), is pair but should be a number
   ;;              ;    (+ a 1)
+
   (for-each
    (lambda (arg)
      (test (macro? arg) #f))
@@ -20039,6 +20125,8 @@ abs     1       2
 (test (constant? '''-) #t)
 (test (constant? '1) #t)
 (test (constant? 1/2) #t)
+(test (constant? 'with-environment) #t)
+(test (constant? with-environment) #t)
 
 ;; and some I wonder about -- in CL's terms, these always evaluate to the same thing, so they're constantp
 ;;   but Clisp:
@@ -20063,7 +20151,7 @@ abs     1       2
       (test (constant? 1624540914719833702142058941.4) #t)
       (test (constant? 7151305879464824441563197685/828567267217721441067369971) #t)))
 
-(test (constant? lambda) #f) ; I guess it can be rebound?
+(test (constant? lambda) #t)   ; like abs?
 (test (constant? (lambda () 1)) #t)
 (test (constant? ''3) #t)
 (test (constant? (if #f #f)) #t)
@@ -20114,7 +20202,7 @@ abs     1       2
 (test (defined? 'lambda defined?) 'error)
 (test (defined? 'define car) 'error)
 (test (defined? 'abs (augment-environment '())) #f)
-(test (defined? lambda) #t)
+(test (defined? lambda) 'error)
 (test (defined? 'lambda) #t)
 (test (defined? 'dynamic-wind) #t)
 (test (defined? 'asdaf) #f)
@@ -20126,6 +20214,9 @@ abs     1       2
 (test (defined? (symbol "123")) #f)
 (test (defined? (symbol "+")) #t)
 (test (defined? ''+) 'error)
+(test (defined? 'if) #t)
+(test (defined? if) 'error)
+(test (defined? quote) 'error)
 
 
 ;;; environment?
@@ -20928,6 +21019,8 @@ abs     1       2
 (test (copy "a\x00b") "a\x00b")
 (test (infinite? (copy (log 0.0))) #t)
 (test (nan? (copy 1/0)) #t)
+(test (copy if) if)
+(test (copy quote) quote)
 
 
 (test (reverse "hi") "ih")
@@ -20983,6 +21076,7 @@ abs     1       2
 (test (fill!) 'error)
 (test (copy) 'error)
 (test (fill! '"hi") 'error)
+(test (fill! (begin) if) if)
 
 (for-each
  (lambda (arg)
@@ -31157,6 +31251,7 @@ abs     1       2
       (test (real? 9223372036854775808/3) #t)
       ))
 
+(test (real? case) #f)
 (test (real?) 'error)
 (test (real? 1 2) 'error)
 
@@ -42973,6 +43068,7 @@ abs     1       2
 (test (> 2 2 1) #f)
 (test (> 3 -6246) #t )
 (test (> 9 9 -2424) #f )
+(test (> quote if) 'error)
 
 (test (> 0) 'error)
 (test (> 0.0 0.0) #f)
@@ -62938,205 +63034,6 @@ in non-gmp,
   (+ most-negative-fixnum -1 most-positive-fixnum) is the same as 
   (+ most-positive-fixnum most-positive-fixnum) -> -2!
 
-
-
-;;; TODO: add these
-
-(not quote) #f
-(not lambda) #f
-(real? case) #f
-(> quote if) error
-:(apply quote '(1))
-1
-:(apply if '((> 1 2) 3 4))
-4
-(apply or) -> #f
-(apply and) -> #t
-:(cons quote quote)
-(quote . quote)
-:(eqv? quote quote)
-#t
-:(eq? quote quote)
-#t
-:(eq? lambda and)
-#f
-:(eq? let let*)
-#f
-(eq? if 'if) -> #t
-(defined? quote) -> #t
-(defined? if) -> #t
-(copy quote) -> quote
-(copy if) -> if
-:((copy quote) 1)
-1
-(append quote) -> quote
-(append if) -> if
-(symbol? quote) -> #f
-(symbol? if) -> #f
-(call/cc quote) error
-(call/cc begin) error
-(values quote) -> quote
-(values if) -> if
-:((values quote) 1)
-1
-:(let ((x 1)) ((values set!) x 32) x)
-32
-(procedure? cond) -> #f
-(procedure? do) -> #f
-(procedure? set!) -> #f
-(boolean? or) -> #f
-(eval quote) -> quote
-(eval if) -> if
-
-;; but these aren't symbols!?!
-(symbol->string quote) -> "quote"
-(symbol->string if) -> "if"
-
-(object->string begin) -> "begin"
-(object->string let) -> "let"
-:(write quote)
-#<unspecified>
-(provided? quote) -> #f
-(provided? if) -> #f
-(keyword? if) -> #f
-(keyword? begin) -> #f
-
-(symbol->keyword quote) -> :quote
-(symbol->keyword if) -> :if
-:(equal? if :if)
-#f
-(macro? letrec) -> #f
-(macro? cond) -> #f
-
-
-:(apply 'begin)
-()
-:(apply 'or)
-#f
-(constant? 'with-environment) -> #t
-(constant? with-environment) -> #t
-
-:(eq? if 'if)
-#t
-:(eq? (copy lambda) (copy 'lambda))
-#t
-
-(symbol? 'if) -> #f
-(symbol? 'begin) -> #f
-:(symbol->string 'quote)
-"quote"
-:(object->string 'if)
-"if"
-
-(provided? 'begin) -> #f
-(provided? 'let) -> #f
-:(symbol->keyword 'begin)
-:begin
-:(quasiquote quote)
-quote
-:(quasiquote 'quote)
-'quote
-:(format #f "~A" (quasiquote 'quote))
-"'quote"
-:(format #f "~A" (quasiquote quote))
-"quote"
-
-:((lambda (a b) (format #f "(~A ~A) -> ~A~%" a b (a b))) quasiquote quote)
-"(quasiquote quote) -> b
-" ???????
-
-
-(provide quote) error -- if it's a symbol?...
-
-(lambda or or) -> #<closure>
-:(eq? if (keyword->symbol :if))
-#t
-:(eq? 'if (keyword->symbol :if))
-#t
-:(eq? 'if (string->symbol "if"))
-#t
-:(eq? if (string->symbol "if"))
-#t
-:(symbol? (string->symbol "if"))
-#f
-:(symbol? (keyword->symbol :if))
-#f
-:(symbol->value if)
-#<undefined>
-:(symbol->value 'if)
-#<undefined>
-:(defined? if)
-#t
-:(defined? 'if)
-#t
-
-:(append (begin) do)
-do
-:(begin)
-()
-:(sort! (begin) if)
-()
-:(fill! (begin) if)
-if
-
-((copy quote) quote) -> t
-((append quote) quote) -> t
-:((display lambda) quote)
-;attempt to apply the untyped #<unspecified> to (quote)?
-;; also at some point printout was truncated?
-
-:((lambda (s) ((lambda (c) (format #t "(~A ~A) - > ~A~%" s c (s c))) #f)) quote)
-"(quote #f) - > c
-"
- /home/bil/cl/ guile
-guile> ((lambda (s) ((lambda (c) (format #t "(~A ~A) - > ~A~%" s c (s c))) #f)) quote)
-(#<primitive-builtin-macro! quote> #f) - > c
-
-:((lambda (s c) (format #t "(~A ~A) - > ~A~%" s c (s c))) quote #f)
-"(quote #f) - > c
-:((lambda (s c) (s c)) quote #f)
-c
-:((lambda (q) (let ((x 1)) (q x))) quote)
-x
-
-
-:('or #f)
-#f
-:('and 1 #f)
-#f
-:('begin 1)
-1
-:('quote 3)
-3
-:('let ((x 1)) ('set! x 3) x)
-3
-:('let* () ('define x 3) x)
-3
-:(''begin 1)
-begin
-;; this is ok but dumb
-
-:(''let ((x 1)) ('set! x 3) x)
-;x: unbound variable
-;    (x)
-
-:(cond (define #f))
-#f
-:('cond ('define '#f))
-#f
-
-(quote (lambda #f)) -> (t c)
-
-
-:(and #f)
-#f
-:('and #f)
-#f
-:((quote and) #f)
-#f
-:((quote 'and) #f)
-;list-ref index, argument 2, #f, is boolean but should be an integer
-
-
 |#
+
 
