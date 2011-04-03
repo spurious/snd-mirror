@@ -10494,9 +10494,6 @@ this prints:
 (test ((car (list if)) #t 0 1) 0)
 (test (symbol->string 'if) "if")
 (test (if (and if (if if if)) if 'gad) if)
-(test (let ((if #t)) (or if)) #t)
-;(test (let ((if +)) (if 1 2 3)) 6)
-; this is another of the "syntax" as car choices
 (test (let ((ctr 0)) (if (let () (set! ctr (+ ctr 1)) (= ctr 1)) 0 1)) 0)
 (test (let ((ctr 0)) (if (let () (set! ctr (+ ctr 1)) (if (= ctr 1) (> 3 2) (< 3 2))) 0 1)) 0)
 (test (        if (> 3 2) 1 2) 1)
@@ -10514,7 +10511,6 @@ this prints:
 (test (let ((ctr 0)) (if (= ctr 0) (let () (set! ctr (+ ctr 1)) (if (= ctr 1) 2 3)) (let () (set! ctr (+ ctr 1)) (if (= ctr 1) 4 5)))) 2)
 (test (let ((x (cons 1 2))) (set-cdr! x x) (if x 1 2)) 1)
 (test (let ((ctr 0)) (if (let ((ctr 123)) (set! ctr (+ ctr 1)) (= ctr 124)) (let () (set! ctr (+ ctr 100)) ctr) (let () (set! ctr (+ ctr 1000)) ctr)) ctr) 100)
-(test (if (let ((if 3)) (> 2 if)) 4 5) 5)
 (test (let () (if #t (define (hi a) a)) (hi 1)) 1)
 (test (let () (if #f (define (hi a) (+ a 1)) (define (hi a) a)) (hi 1)) 1)
 
@@ -10647,10 +10643,6 @@ this prints:
 (test (eq? lambda 'lambda) #f)
 (test (equal? + '+) #f)
 (test (eq? '() ()) #t) ; s7 specific
-
-(test (let ((quote 1)) (+ quote 1)) 2)
-(test ((lambda (quote) (+ quote 1)) 2) 3)
-(test ((lambda (quote . args) (list quote args)) 1 2 3) '(1 (2 3)))
 
 (test (quote . -1) 'error)
 (test (quote 1 1) 'error)
@@ -11423,10 +11415,6 @@ this prints:
 (test (do ((i 0 (+ i j)) (j 0 (+ j 1))) (#t 1)) 1)
 (test (do ((i 0 j) (j 0 (+ j 1))) ((= j 3) i)) 2) ; uh, lessee... lexical scoping...
 (test (do ((i 1 j) (j 0 k) (k 0 m) (m 0 (+ i j k))) ((> m 10) (list i j k m))) (list 4 5 8 11))
-(test (do ((do 1 (+ do do))) ((> do 3) do)) 4)
-(test (do ((do 1 do) (j do do)) (do do)) 1)
-(test (do ((do do do)) (do do)) do)
-(test (do ((do do do)) (do do do)) do) ; ok ok!
 (test (let ((i 10) (j 11) (k 12)) (do ((i i j) (j j k) (k k m) (m (+ i j k) (+ i j k))) ((> m 100) (list i j k m)))) (list 33 56 78 122))
 (test (do ((i 0 (let () (set! j 3) (+ i 1))) (j 0 (+ j 1))) ((= i 3) j)) 4)
 (test (let ((i 0)) (do () ((= i 3) (* i 2)) (set! i (+ i 1)))) 6)
@@ -11556,7 +11544,6 @@ this prints:
 (test (let ((happy #f)) (do ((i 0 (+ i 1))) (happy happy) (if (> i 3) (set! happy i)))) 4)
 
 (test (+ (do ((i 0 (+ i 1))) ((= i 3) i)) (do ((j 0 (+ j 1))) ((= j 4) j))) 7)
-(test (let ((do 1) (map 2) (for-each 3) (quote 4)) (+ do map for-each quote)) 10)
 (test (do ((i (if #f #f))) (i i)) (if #f #f))
 (test (do ((i (if #f #f)) (j #f i)) (j j)) (if #f #f))
 
@@ -11650,8 +11637,6 @@ this prints:
 (test (do ((i 0 (abs ()))) ((not (= i 0)) i)) 'error)
 (test (do ((i j) (j i)) (i i)) 'error)
 (test (do ((i 0 0) . ((j 0 j))) (#t j)) 0)
-(test (do ((i 0 0) '(+ 0 1)) ((= i 0) i)) 0) ; guile also! (do ((i 0 0) (quote list (+ 0 1))) ((= i 0) i))?
-(test (do ((i 0 1) '(list)) (#t quote)) '())
 (test (do ((i 0 1 . 2)) (#t i)) 'error)
 (test (do ((i 0 "hi")) ((string? i) . i)) 'error)
 (test (do ((i 0 j)) (#t i)) 0) ; guile also -- (do ((i 0 (abs "hi"))) (#t i)) etc (do ((i 0 1)) (#t i) (abs "hi"))
@@ -11929,7 +11914,6 @@ this prints:
 (test (or (or (or))) #f)
 (test (or (or (or) (and))) #t)
 (test (let ((a 1)) (or (let () (set! a 2) #f) (= a 1) (let () (set! a 3) #f) (and (= a 3) a) (let () (set! a 4) #f) a)) 3)
-(test (or (let ((or #t)) or)) #t)
 (test (or '#f '()) '())
 (test (call/cc (lambda (r) (or #f (> 3 2) (r 123) 321))) #t)
 (test (call/cc (lambda (r) (or #f (< 3 2) (r 123) 321))) 123)
@@ -11993,7 +11977,6 @@ this prints:
 (test (and (and (and))) #t)
 (test (and (and (and (and (or))))) #f)
 (test (let ((a 1)) (and (let () (set! a 2) #t) (= a 1) (let () (set! a 3) #f) (and (= a 3) a) (let () (set! a 4) #f) a)) #f)
-(test (and (let ((and #t)) and)) #t)
 (test (and '#t '()) '())
 (test (call/cc (lambda (r) (and #t (> 3 2) (r 123) 321))) 123)
 (test (call/cc (lambda (r) (and #t (< 3 2) (r 123) 321))) #f)
@@ -12106,7 +12089,6 @@ this prints:
 (test (cond ((let () 1) => (let ((x 2)) (cond (3 => (let ((y 4)) (lambda (n) (lambda (m) (+ n m x y))))))))) 10)
 
 (test (let ((=> 3)) (cond (=> =>))) 3)
-(test (let ((=> 3) (cond 4)) (+ => cond)) 7)
 (test (cond (cond 'cond)) 'cond)
 (test (cond (3 => (lambda args (car args)))) 3)
 (test (cond (3 => (lambda (a . b) a))) 3)
@@ -12282,7 +12264,6 @@ this prints:
 (test (let ((x 1)) (case x ((0) (set! x 12)) ((2) (set! x 32))) x) 1)
 
 (test (case 1 (else #f)) #f)
-(test (case 1 ((1 2) (let ((case 3)) (+ case 1))) ((3 4) 0)) 4)
 (test (let () (case 0 ((0) (define (hi a) a)) (else (define (hi a) (+ a 1)))) (hi 1)) 1)
 (test (let () (case 1 ((0) (define (hi a) a)) (else (define (hi a) (+ a 1)))) (hi 1)) 2)
 (test (let () (case (define (hi a) a) ((hi) (hi 1)))) 1)
@@ -12458,16 +12439,12 @@ this prints:
 (test ((lambda x x) '()) '(()))
 (test ((lambda x x)) '())
 (test ((lambda (x) x) '()) '())
-(test (let ((lambda 4)) (+ lambda 1)) 5)
 (test ((lambda (x) (+ x ((lambda (x) (+ x 1)) 2))) 3) 6)
 (test ((lambda (x) (define y 1) (+ x y)) 2) 3)
 (test ((lambda (a) "this is a doc string" a) 1) 1)
 ;;; ideally ((lambda (a) "hiho" (define x 1) x) 1) -> 1 but I'm not sure it's r5rs-ish
 (test (let ((g (lambda () '3))) (= (g) 3)) #t)
 (test ((((lambda () lambda)) () 1)) 1)
-
-(test ((lambda lambda lambda) 'x) '(x))
-					;(test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) 3)
 
 (test (let () ; PLP Scott p168
 	(define A
@@ -12612,8 +12589,6 @@ this prints:
 	(define hiho (function (a) (+ a 1)))
 	(hiho 2))
       3)
-(test ((lambda (let) (let* ((letrec 1)) (+ letrec let))) 123) 124)
-(test ((lambda (let*) (let ((letrec 1)) (+ letrec let*))) 123) 124)
 (test ((lambda (a b c d e f g h i j k l m n o p q r s t u v x y z)
 	 (+ a b c d e f g h i j k l m n o p q r s t u v x y z))
        1 2 3 4 5 6 7 8 9 11 12 13 14 15 16 17 18 19 21 22 23 24 25 26 27)
@@ -12750,7 +12725,6 @@ this prints:
       (test (if (= 1 1) (begin 2) (begin 3)) 2)
       ))
 
-(test (let ((begin 3)) (+ begin 1)) 4)
 (test ((lambda (x) (begin (set! x 1) (let ((a x)) (+ a 1)))) 2) 2)
 ;;; apparently these can be considered errors or not (guile says error, stklos and gauche do not)
 (test (begin (define x 0) (+ x 1)) 1)
@@ -13493,7 +13467,6 @@ this prints:
 (test (letrec ((sum (lambda (x) (if (zero? x) 0 (+ x (sum (- x 1))))))) (sum 5)) 15)
 (test (let ((divisors (lambda (n) (let f ((i 2)) (cond ((>= i n) '()) ((integer? (/ n i)) (cons i (f (+ i 1)))) (else (f (+ i 1)))))))) (divisors 32)) '(2 4 8 16))
 (test (let ((a -1)) (let loop () (if (not (positive? a)) (begin (set! a (+ a 1)) (loop)))) a) 1)
-(test (let* ((let 3) (x let)) (+ x let)) 6)
 (test (let () (let () (let () '()))) '())
 (test (let ((x 1)) (let ((y 0)) (begin (let ((x (* 2 x))) (set! y x))) y)) 2)
 (test (let* ((x 1) (x (+ x 1)) (x (+ x 2))) x) 4)
@@ -13963,7 +13936,6 @@ this prints:
 ;;      (test (let ((#z1 2)) 1) 'error)
 (test (let ('a 3) 1) 'error)
 (test (let 'a 1) 'error)
-;; what about: (let ('1 ) quote) -> 1
 (test (let* func ((a 1)) a) 'error)
 (test (letrec func ((a 1)) a) 'error)
 (test (letrec* func ((a 1)) a) 'error)
@@ -21519,8 +21491,6 @@ abs     1       2
 (test ((((values append) begin) object->string) car) "car")
 (test ((((((values and) or) append) begin) object->string) car) "car")
 (test (((((((values values) and) or) append) begin) object->string) car) "car")
-(test (((lambda case lcm))) 1)
-(test (((lambda let* *))) 1)
 (test ((((eval lambda) lcm gcd))) 0)
 (test (((append s7-version)) 0) #\s)
 (test ((values (lambda hi #()))) #())
@@ -21604,7 +21574,6 @@ abs     1       2
 (test (cond (((#2d((1 2) (3 4)) 0) 0) 32)) 32)
 (test (cond ((apply < '(1 2)))) #t)
 (test (dynamic-wind lcm gcd *) 'error)
-(test ((lambda (let) (+)) 0) 0)
 (test (case 0 ((> 0 1) 32)) 32)
 (test (char-downcase (char-downcase #\newline)) #\newline)
 (test (and (and) (and (and)) (and (and (and (or))))) #f)
@@ -21617,16 +21586,6 @@ abs     1       2
 (test ((lambda* ((symbol "#(1 #\\a (3))")) #t)) #t)
 (test (apply if ('((1 2) (3 4)) 1)) 4)
 
-(test (let () (define (hi cond) (+ cond 1)) (hi 2)) 3)
-(test (let () (define* (hi (cond 1)) (+ cond 1)) (hi 2)) 3)
-(test (let () (define* (hi (cond 1)) (+ cond 1)) (hi)) 2)
-(test (let () ((lambda (cond) (+ cond 1)) 2)) 3)
-(test (let () ((lambda* (cond) (+ cond 1)) 2)) 3)
-(test (let () (define-macro (hi cond) `(+ 1 ,cond)) (hi 2)) 3)
-(test (let () (define-macro* (hi (cond 1)) `(+ 1 ,cond)) (hi)) 2)
-(test (let () (define (hi abs) (+ abs 1)) (hi 2)) 3)
-(test (let () (define (hi if) (+ if 1)) (hi 2)) 3)
-(test (let () (define* (hi (lambda 1)) (+ lambda 1)) (hi)) 2)
 (test (((lambda #\newline gcd))) 'error)
 (test (symbol? (let () (define (hi) (+ 1 2)))) #t)
 (test (symbol? (begin (define (x y) y) (x (define (x y) y)))) #t)
@@ -63000,6 +62959,49 @@ etc
 
 ;;; --------------------------------------------------------------------------------
 
+
+
+;;; these can slow us down if included in their normal place
+
+(test (let ((if #t)) (or if)) #t)
+(test (let ((if +)) (if 1 2 3)) 6)
+(test (if (let ((if 3)) (> 2 if)) 4 5) 5)
+(test (let ('1 ) quote) 1)
+(test (let ((quote 1)) (+ quote 1)) 2)
+(test (do ((do 1 (+ do do))) ((> do 3) do)) 4)
+(test (do ((do 1 do) (j do do)) (do do)) 1)
+(test (do ((do do do)) (do do)) do)
+(test (do ((do do do)) (do do do)) do) ; ok ok!
+(test (or (let ((or #t)) or)) #t)
+(test (and (let ((and #t)) and)) #t)
+(test (let ((=> 3) (cond 4)) (+ => cond)) 7)
+(test (case 1 ((1 2) (let ((case 3)) (+ case 1))) ((3 4) 0)) 4)
+(test (let ((lambda 4)) (+ lambda 1)) 5)
+(test ((lambda (let) (let* ((letrec 1)) (+ letrec let))) 123) 124)
+(test ((lambda (let*) (let ((letrec 1)) (+ letrec let*))) 123) 124)
+(test (let ((begin 3)) (+ begin 1)) 4)
+(test ((lambda (quote) (+ quote 1)) 2) 3)
+(test ((lambda (quote . args) (list quote args)) 1 2 3) '(1 (2 3)))
+(test (let ((do 1) (map 2) (for-each 3) (quote 4)) (+ do map for-each quote)) 10)
+(test ((lambda lambda lambda) 'x) '(x))
+(test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) '(1 2 3))
+(test (let* ((let 3) (x let)) (+ x let)) 6)
+(test (((lambda case lcm))) 1)
+(test (((lambda let* *))) 1)
+(test (do ((i 0 1) '(list)) (#t quote)) '())
+(test ((lambda (let) (+)) 0) 0)
+(test (let () (define (hi cond) (+ cond 1)) (hi 2)) 3)
+(test (let () (define* (hi (cond 1)) (+ cond 1)) (hi 2)) 3)
+(test (let () (define* (hi (cond 1)) (+ cond 1)) (hi)) 2)
+(test (let () ((lambda (cond) (+ cond 1)) 2)) 3)
+(test (let () ((lambda* (cond) (+ cond 1)) 2)) 3)
+(test (let () (define-macro (hi cond) `(+ 1 ,cond)) (hi 2)) 3)
+(test (let () (define-macro* (hi (cond 1)) `(+ 1 ,cond)) (hi)) 2)
+(test (let () (define (hi abs) (+ abs 1)) (hi 2)) 3)
+(test (let () (define (hi if) (+ if 1)) (hi 2)) 3)
+(test (let () (define* (hi (lambda 1)) (+ lambda 1)) (hi)) 2)
+(test (do ((i 0 0) '(+ 0 1)) ((= i 0) i)) 0) ; guile also! (do ((i 0 0) (quote list (+ 0 1))) ((= i 0) i))?
+
 (format #t "~%;all done!~%")
 
 
@@ -63035,5 +63037,4 @@ in non-gmp,
   (+ most-positive-fixnum most-positive-fixnum) -> -2!
 
 |#
-
 

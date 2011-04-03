@@ -750,7 +750,8 @@ struct s7_scheme {
 #define T_LOCAL                       (1 << (TYPE_BITS + 14))
 #define is_not_local(p)               ((typeflag(p) & T_LOCAL) == 0)
 #define is_local(p)                   ((typeflag(p) & T_LOCAL) != 0)
-#define set_local(p)                  typeflag(p) |= T_LOCAL
+/* #define set_local(p)                  typeflag(p) |= T_LOCAL */
+#define set_local(p)                  typeflag(p) = ((typeflag(p) & ~(T_DONT_EVAL_ARGS)) | T_LOCAL)
 /* this marks a symbol that has been used at some time as a local variable */
 
 #define T_ENVIRONMENT                 (1 << (TYPE_BITS + 15))
@@ -19875,6 +19876,14 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 
   push_stack(sc, opcode(OP_CATCH), sc->NIL, p);
   sc->args = sc->NIL;
+
+  /* I was hoping to avoid a push_stack here, but no luck.  This might be slightly faster then going to APPLY in all cases
+   *
+   *  sc->code = closure_body(cadr(args));
+   *  NEW_FRAME(sc, closure_environment(cadr(args)), sc->envir);
+   *  push_stack(sc, opcode(OP_BEGIN), sc->args, sc->code);
+   */
+
   sc->code = cadr(args);
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->F);
@@ -22517,13 +22526,13 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   x = symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name)); 
 
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
-  set_type(syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS); /* | T_IMMUTABLE); */
+  set_type(syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS); 
   syntax_opcode(syn) = (int)op;
 
   set_symbol_value(x, syn);
-  symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS); /* | T_IMMUTABLE); */
+  symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS);
 
-  typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS); /* | T_IMMUTABLE);  */
+  typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS);
   return(x);
 }
 
@@ -23704,9 +23713,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	case T_PAIR:
 	  /* using a local s7_pointer here drastically slows things down?!? */
-	  if ((dont_eval_args(car(sc->code))) &&
-	      (is_syntax(symbol_value(car(sc->code)))))
-	    {     
+
+	  /* 
+	   * (let () (define (cond a) a) (cond 1)) 1
+	   * (let ((cond 1)) (+ cond 3)) 4
+	   * (let () (define (tst cond) (if cond 0 1)) (tst #f)) 1
+	   * (let () (define (tst fnc) (fnc ((> 0 1) 2) (#t 3))) (tst cond)) 3
+	   * (let () (define (tst fnc) (fnc ((> 0 1) 2) (#t 3))) (define (val) cond) (tst (val))) 3
+	   * (let () (define (cond a) a) (procedure-arity cond)) '(1 0 #f)
+	   *
+	   *  TODO: make sure these cases are in s7test
+	   */
+	  if (dont_eval_args(car(sc->code)))
+	    {
 	      sc->op = (opcode_t)syntax_opcode(symbol_value(car(sc->code)));
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;
