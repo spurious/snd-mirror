@@ -19877,7 +19877,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   push_stack(sc, opcode(OP_CATCH), sc->NIL, p);
   sc->args = sc->NIL;
 
-  /* I was hoping to avoid a push_stack here, but no luck.  This might be slightly faster then going to APPLY in all cases
+  /* I was hoping to avoid a push_stack here, but no luck.  This might be slightly faster then going to APPLY
    *
    *  sc->code = closure_body(cadr(args));
    *  NEW_FRAME(sc, closure_environment(cadr(args)), sc->envir);
@@ -21633,7 +21633,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 {
   if (!is_pair(form))
     {
-      if (!s7_is_symbol(form))     /* ((!s7_is_symbol(form)) && (!is_syntax(form))) */
+      if (!s7_is_symbol(form))
 	{
 	  /* things that evaluate to themselves don't need to be quoted. 
 	   *    but this means `() -> () whereas below `(1) -> '(1) -- should nil here return '()?
@@ -23713,17 +23713,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	case T_PAIR:
 	  /* using a local s7_pointer here drastically slows things down?!? */
-
-	  /* 
-	   * (let () (define (cond a) a) (cond 1)) 1
-	   * (let ((cond 1)) (+ cond 3)) 4
-	   * (let () (define (tst cond) (if cond 0 1)) (tst #f)) 1
-	   * (let () (define (tst fnc) (fnc ((> 0 1) 2) (#t 3))) (tst cond)) 3
-	   * (let () (define (tst fnc) (fnc ((> 0 1) 2) (#t 3))) (define (val) cond) (tst (val))) 3
-	   * (let () (define (cond a) a) (procedure-arity cond)) '(1 0 #f)
-	   *
-	   *  TODO: make sure these cases are in s7test
-	   */
 	  if (dont_eval_args(car(sc->code)))
 	    {
 	      sc->op = (opcode_t)syntax_opcode(symbol_value(car(sc->code)));
@@ -24443,6 +24432,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", sc->x));
       if (is_keyword(sc->x))                                                /* (define :hi 1) */
 	return(eval_error_with_name(sc, "~A ~A: keywords are constants", sc->x));
+      if (dont_eval_args(sc->x))                                            /* (define (and a) a) */
+	return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", sc->x));
 
       /* (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b)))) */
 
@@ -25351,6 +25342,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->x = caar(sc->code);
       if (!s7_is_symbol(sc->x))
 	return(eval_error_with_name(sc, "~A: ~S is not a symbol?", sc->x));
+      if (dont_eval_args(sc->x))                                            /* (define-macro (quote a) quote) */
+	return(eval_error_with_name(sc, "~A: syntactic keywords (such as ~S) tend to behave badly if redefined", sc->x));
 
       if (is_immutable_or_accessed(sc->x))
 	{

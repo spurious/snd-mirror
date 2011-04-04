@@ -11925,6 +11925,7 @@ this prints:
 (test (or #f . 1) 'error)
 (test (or . (1 2)) 1)
 (test (or . ()) (or))
+(test (or 1 . 2) 1) ; oh well...
 
 (test (let () (or (define (hi a) a)) (hi 1)) 1)
 (test (let () (or #t (define (hi a) a)) (hi 1)) 'error)
@@ -12985,7 +12986,7 @@ this prints:
 (test (define (#b1 a) a) 'error)
 (test (define (hi #b1) #b1) 'error)
 (test (let() (define #(hi a) a)) 'error)
-					;(test (define 'hi 1) 'error) ; this redefines quote, which maybe isn't an error
+(test (let () (define hi (lambda args args)) (hi 1 . 2)) 'error)
 (test (let () (define . 1) 1) 'error)
 (test (let () (define func (do () (#t (lambda (y) 2)))) (func 1)) 2)
 
@@ -18400,7 +18401,7 @@ abs     1       2
       (for-each
        (lambda (arg)
 	 (test (procedure-documentation arg) 'error)
-	 (test (help arg) 'error))
+	 (test (help arg) #f))
        (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi")))
   
   (test (let ((hi (lambda (x) (+ x 1)))) (procedure-source hi)) '(lambda (x) (+ x 1)))
@@ -21616,6 +21617,7 @@ abs     1       2
 (test (let ((x (list 1 2))) (list-set! (list-set! x 0 (list 4 3)) 0 32) x) '((32 3) 2))
 (test (set! (('((0 2) (3 4)) 0) 0) 0) 0)
 (test (set! ((map abs '(1 2)) 1) 0) 0)
+(test (let () (set! ((define x #(1 2)) 0) 12) x) #(12 2))
 (test (let ((x (list 1 2))) (set! ((call-with-exit (lambda (k) (k x))) 0) 12) x) '(12 2))
 (test (let ((x #2d((1 2) (3 4)))) (set! (((values x) 0) 1) 12) x) #2D((1 12) (3 4)))
 (test (let ((x 0)) (set! ((make-procedure-with-setter (lambda () x) (lambda (y) (set! x y)))) 12) x) 12)
@@ -63001,6 +63003,22 @@ etc
 (test (let () (define (hi if) (+ if 1)) (hi 2)) 3)
 (test (let () (define* (hi (lambda 1)) (+ lambda 1)) (hi)) 2)
 (test (do ((i 0 0) '(+ 0 1)) ((= i 0) i)) 0) ; guile also! (do ((i 0 0) (quote list (+ 0 1))) ((= i 0) i))?
+(test (let () (define (cond a) a) (cond 1)) 1)
+(test (let ((cond 1)) (+ cond 3)) 4)
+(test (let () (define (tst cond) (if cond 0 1)) (tst #f)) 1)
+(test (let () (define (tst fnc) (fnc ((> 0 1) 2) (#t 3))) (tst cond)) 3)
+(test (let () (define (tst fnc) (fnc ((> 0 1) 2) (#t 3))) (define (val) cond) (tst (val))) 3)
+(test (let () (define (cond a) a) (procedure-arity cond)) '(1 0 #f))
+(test (let () (define-macro (hi a) `(let ((lambda +)) (lambda ,a 1))) (hi 2)) 3)
+(test (define 'quote 'quote) 'error)
+(test (define (and a) a) 'error)
+(test (define-constant and 1) 'error)
+(test (define-macro (quote a) quote) 'error)
+(test ((let ((do or)) do) 1 2) 1)
+(test (define 'hi 1) 'error)
+
+
+
 
 (format #t "~%;all done!~%")
 
