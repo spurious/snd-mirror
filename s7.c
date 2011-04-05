@@ -11607,7 +11607,7 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 
 static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
 {
-  #define H_read "(read (port (current-input-port))) returns the next object in the input port"
+  #define H_read "(read (port (current-input-port))) returns the next object in the input port, or #<eof> at the end"
   s7_pointer port;
   
   if (args != sc->NIL)
@@ -20736,25 +20736,6 @@ void s7_set_begin_hook(s7_scheme *sc, bool (*hook)(s7_scheme *sc))
   sc->begin_hook = hook;
 }
 
-#if 0
-bool s7_lint_hook(s7_scheme *sc);
-bool s7_lint_hook(s7_scheme *sc)
-{
-  /* intended to be used as a begin_hook 
-   *
-   *   since we're at the start of a begin block, we know sc->code is the block,
-   *   and sc->envir has our local vars if any.  So, we should be able to traverse
-   *   this block, and lookup every name in the body.  We could do arg checks (number and type),
-   *   undefined/unused/unref'd vars, etc.  How to tell we've already checked a given block?
-   *   this also requires that the block be evaluated.  numbers could be watched for NaN/inf.
-   *   macros have not been expanded at this point.
-   */
-
-  fprintf(stderr, "code: %s, frame: %s\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, car(sc->envir)));
-  return(false);
-}
-#endif
-
 
 void s7_quit(s7_scheme *sc)
 {
@@ -22544,6 +22525,16 @@ static bool memq(s7_pointer symbol, s7_pointer list)
     if (car(x) == symbol)
       return(true);
   return(false);
+}
+
+
+static s7_pointer g_pair_line_number(s7_scheme *sc, s7_pointer args)
+{
+  #define H_pair_line_number "(pair-line-number pair) returns the line number at which it read 'pair'"
+
+  if (!is_pair(car(args)))
+    return(s7_wrong_type_arg_error(sc, "pair-line-number", 0, car(args), "a pair"));	
+  return(s7_make_integer(sc, (s7_Int)(pair_line_number(car(args)) & 0xffffff)));
 }
 
 
@@ -31364,10 +31355,6 @@ s7_scheme *s7_init(void)
 
   make_standard_ports(sc);
 
-  /* 
-   * SOMEDAY: use load into a local env as the first step of lint?
-   */
-
   assign_syntax(sc, "quote",             OP_QUOTE);
   assign_syntax(sc, "if",                OP_IF);
   assign_syntax(sc, "begin",             OP_BEGIN);
@@ -31567,6 +31554,7 @@ s7_scheme *s7_init(void)
 
   s7_define_function(sc, "port-line-number",          g_port_line_number,         0, 1, false, H_port_line_number);
   s7_define_function(sc, "port-filename",             g_port_filename,            0, 1, false, H_port_filename);
+  s7_define_function(sc, "pair-line-number",          g_pair_line_number,         1, 0, false, H_pair_line_number);
   
   s7_define_function(sc, "input-port?",               g_is_input_port,            1, 0, false, H_is_input_port);
   s7_define_function(sc, "output-port?",              g_is_output_port,           1, 0, false, H_is_output_port);

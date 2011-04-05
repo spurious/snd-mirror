@@ -423,9 +423,9 @@ last end of the mixes in 'mix-list'"
 
 ;;; -------- pan-mix --------
 
-(define* (pan-mix name beg pan snd (chn 0) auto-delete)
+(define* (pan-mix name beg pan snd auto-delete)
 
-  "(pan-mix file start pan-env snd (chn 0) (auto-delete #f)) mixes 'file' into the sound 'snd'
+  "(pan-mix file start pan-env snd (auto-delete #f)) mixes 'file' into the sound 'snd'
 starting at 'start' (in samples) using 'pan-env' to decide how to split the sound between the output channels (0: all chan 0, 1: all chan 1).
 So, (pan-mix \"oboe.snd\" 0 '(0 0 1 1)) goes from all chan 0 to all chan 1.
 'auto-delete' determines whether the in-coming file should be treated as a temporary file and deleted when the mix
@@ -516,36 +516,36 @@ panning operation."
 		       #f)))))))))
 
 
-(define* (pan-mix-selection beg pan snd chn)
+(define* (pan-mix-selection beg pan snd)
 
-  "(pan-mix-selection start pan-env snd chn) mixes the current selection  into the sound 'snd'
+  "(pan-mix-selection start pan-env snd) mixes the current selection  into the sound 'snd'
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
 
   (if (not (selection?))
       (throw 'no-active-selection (list "pan-mix-selection"))
-      (pan-mix (save-selection (snd-tempnam)) beg pan snd chn #t)))
+      (pan-mix (save-selection (snd-tempnam)) beg pan snd #t)))
 
 
-(define* (pan-mix-region reg beg pan snd chn)
+(define* (pan-mix-region reg beg pan snd)
 
-  "(pan-mix-region reg start pan-env snd chn) mixes the given region into the sound 'snd' 
+  "(pan-mix-region reg start pan-env snd) mixes the given region into the sound 'snd' 
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
 
   (if (not (region? reg))
       (throw 'no-such-region (list "pan-mix-region" reg))
-      (pan-mix (save-region reg (snd-tempnam)) beg pan snd chn #t)))
+      (pan-mix (save-region reg (snd-tempnam)) beg pan snd #t)))
 
 
-(define* (pan-mix-vct v beg pan snd chn)
+(define* (pan-mix-vct v beg pan snd)
 
-  "(pan-mix-vct v start pan-env snd chn) mixes the vct data into the sound 'snd' 
+  "(pan-mix-vct v start pan-env snd) mixes the vct data into the sound 'snd' 
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
 
   (let* ((temp-file (snd-tempnam))
 	 (fd (mus-sound-open-output temp-file (srate snd) 1 #f #f "")))
     (mus-sound-write fd 0 (- (length v) 1) 1 (vct->sound-data v))
     (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v)))
-    (pan-mix temp-file beg pan snd chn #t)))
+    (pan-mix temp-file beg pan snd #t)))
 
 
 

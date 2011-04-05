@@ -54796,7 +54796,7 @@ EDITS: 1
 	      (sample-mxf 5 .2 440 .1)
 	      (sample-osc 5.25 .2 440 .1)
 	      (if all-args (sample-ardcl 5.5 .2 440 .1))
-	      (sample-strs 5.75 .2 440 .1)
+	      (sample-strs 5.75 .2 440)
 	      (sample-flt 6 .2 440 .1)
 	      (sample-arrintp 6.25 .2 440 .1)
 	      (sample-if 6.5 .2 440 .1)

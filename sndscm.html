@@ -6615,7 +6615,7 @@ See also <a href="#snapmixtobeat">snap-syncd-mixes-to-beat</a>.
 
 <!-- pan-mix -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="panmix">pan-mix</a> <code>file beg env snd chn auto-delete</code>
+<a class=def name="panmix">pan-mix</a> <code>file beg env snd auto-delete</code>
 </td></tr><tr><td></td><td>
 pan-mix
 mixes 'file' into the current sound starting at 'beg' using the envelope 'env'
@@ -6633,7 +6633,7 @@ is no longer accessible.
 
 <!-- pan-mix-region -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>pan-mix-region</em> <code>region beg env snd chn</code>
+<em class=emdef>pan-mix-region</em> <code>region beg env snd</code>
 </td></tr><tr><td></td><td>
 pan-mix-region is similar to pan-mix above, but mixes a region, rather than a file.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6641,7 +6641,7 @@ pan-mix-region is similar to pan-mix above, but mixes a region, rather than a fi
 
 <!-- pan-mix-selection -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>pan-mix-selection</em> <code>beg env snd chn</code>
+<em class=emdef>pan-mix-selection</em> <code>beg env snd</code>
 </td></tr><tr><td></td><td>
 pan-mix-selection is similar to pan-mix above, but mixes the current selection, rather than a file.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6649,7 +6649,7 @@ pan-mix-selection is similar to pan-mix above, but mixes the current selection, 
 
 <!-- pan-mix-vct -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="panmixvct">pan-mix-vct</a> <code>vct beg env snd chn</code>
+<a class=def name="panmixvct">pan-mix-vct</a> <code>vct beg env snd</code>
 </td></tr><tr><td></td><td>
 pan-mix-vct is similar to pan-mix above, but mixes a vct, rather than a file.
 The vct data represents one channel of sound.
@@ -7996,7 +7996,7 @@ any success.
 </p>
 
 <p>Next great idea: try random initial phases.  This actually works better than it has
-any right to, but again the results were disappointing.  You can run random phases until
+any right to, but again the results are disappointing.  You can run random phases until
 hell freezes over and only get to n^.6 or slightly less.  I now realize that this 
 approach fails because the minima are like tiny cuspy cracks in a huge n-dimensional
 block of stuff that is all nearly the same.  If you look at the n=5 graph above, you'll
@@ -8010,9 +8010,9 @@ peak, and the separate curves are showing the peaks when the initial phases can 
 around that best value by pi/4, then pi/8 etc.  It's hard to read at first, but
 take the black top curve.  This is what you'd get if you randomly sampled a hypercube whose side length is pi/2 centered on that minimum.
 Nearly all the values are between 18 (100^.63) and 23 (100^.68).  
-Each successive curves divides the space we sample by 2 in all n dimensions,
+Each successive curves divides the space we sample by 2 in all 100 dimensions,
 so by the time we get to the bottom curve, we've reduced our search space by
-a factor of 256^100 (we're down to .005 on a side), and we still don't see the actual minimum
+a factor of 256^100 (we're down to .006 on a side), and we still don't see the actual minimum
 even once in 50000 tries!  
 Imagine trying to set up a grid to catch this point.
 So, brute force and random flailing fail.

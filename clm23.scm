@@ -1205,8 +1205,8 @@
        (if (not (= (length amps) 3)) (clm-print "amps len: ~A" (length amps)))
        (out-any i (clm23-sine-bank amps phases 3) 0)))))
 
-(define (sample-strs beg dur freq amp)
-  "(sample-strs beg dur freq amp) test instrument for strings"
+(define (sample-strs beg dur freq)
+  "(sample-strs beg dur freq) test instrument for strings"
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (os (make-oscil freq))
@@ -1535,7 +1535,7 @@
 	    (sample-mxf 5 .2 440 .1)
 	    (sample-osc 5.25 .2 440 .1)
 	    (sample-ardcl 5.5 .2 440 .1)
-	    (sample-strs 5.75 .2 440 .1)
+	    (sample-strs 5.75 .2 440)
 	    (sample-flt 6 .2 440 .1)
 	    (sample-arrintp 6.25 .2 440 .1)
 	    (sample-if 6.5 .2 440 .1)

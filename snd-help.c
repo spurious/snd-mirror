@@ -490,6 +490,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+5-Apr:   lint.scm.\n\
 25-Mar:  show-full-range, info-popup-hook.\n\
 21-Mar:  with-interrupts.\n\
 18-Mar:  Snd 12.0.\n\

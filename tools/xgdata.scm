@@ -8183,7 +8183,7 @@
 #|
 ;;; 3.0.7
 
-(CINT-300 "GTK_SIZE_REQUEST_CONSTANT_SIZE" "GtkSizeRequestMode")
+;;; out 3.0.8! (CINT-300 "GTK_SIZE_REQUEST_CONSTANT_SIZE" "GtkSizeRequestMode")
 
 |#
 
