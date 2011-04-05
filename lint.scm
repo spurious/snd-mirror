@@ -1,5 +1,6 @@
 ;;; lint for s7 scheme
 
+(provide 'lint.scm)
 
 
 ;;; --------------------------------------------------------------------------------
@@ -52,9 +53,9 @@
 	  (unused '()))
       (for-each 
        (lambda (arg)
-	 (if (member arg '(quote if begin let let* letrec cond case or and do set! with-environment lambda lambda* define
-			   define* defmacro defmacro* define-macro define-macro* define-bacro define-bacro* define-constant))
-	     (format #t "  ~A (line ~D): ~A ~A named ~A is asking for trouble~%" name line-number head type arg))
+	 (if (member (car arg) '(quote if begin let let* letrec cond case or and do set! with-environment lambda lambda* define
+				 define* defmacro defmacro* define-macro define-macro* define-bacro define-bacro* define-constant))
+	     (format #t "  ~A (line ~D): ~A ~A named ~A is asking for trouble~%" name line-number head type (car arg)))
 
 	 (if (not (cadr arg))
 	     (if (caddr arg)
@@ -85,7 +86,7 @@
 					   (values)                  ; map omits this entry 
 					   (list arg #f #f))
 				       (if (or (not (pair? arg))
-					       (not (member head '(define* lambda* defmacro* define-macro* define-bacro*))))
+					       (not (member head '(define* lambda* defmacro* define-macro* define-bacro* definstrument))))
 					   (format #t "  ~A (line ~D): strange parameter ~A~%" name line-number arg)
 					   (list (car arg) #f #f))))
 				 (proper-list args)))))
@@ -106,7 +107,10 @@
 		  (line-number (pair-line-number form)))
 	      (case head
 		
-		((define define* define-constant define-expansion define-macro define-macro* define-bacro define-bacro* defmacro defmacro*)
+		((define define* 
+		  define-constant 
+		  define-expansion define-macro define-macro* define-bacro define-bacro* defmacro defmacro* 
+		  definstrument)
 		 (let ((sym (cadr form))
 		       (val (cddr form)))
 		   (if (symbol? sym)
@@ -121,6 +125,7 @@
 		
 		((lambda lambda*)
 		 (walk-function head name (cadr form) (cddr form) line-number env))
+		;; the lambda case includes stuff like call/cc
 		
 		((set!)
 		 (let* ((settee (cadr form))
@@ -129,19 +134,29 @@
 		       (begin
 			 (walk name settee env) ; this counts as a reference since it's by reference so to speak
 			 (set! settee (do ((sym (car settee) (car sym)))
-					  ((symbol? sym) sym)))))
-		   (call-with-exit
-		    (lambda (ok)
-		      (for-each
-		       (lambda (var)
-			 (if (eq? settee (car var))
-			     (begin 
-			       (set! (var 2) #t)  ; (list-set! var 2 #t)
-			       (ok))))
-		       env)))
+					  ((not (pair? sym)) sym)))))
+		   (if (symbol? settee)
+		       (call-with-exit
+			(lambda (ok)
+			  (for-each
+			   (lambda (var)
+			     (if (eq? settee (car var))
+				 (begin 
+				   (set! (var 2) #t)  ; (list-set! var 2 #t)
+				   (ok))))
+			   env))))
 		   (walk name setval env)))
 		
 		((quote) env)
+
+		((case)
+		 ;; here the keys are not evaluated, so we might have a list like (letrec define ...)
+		 (walk name (cadr form) env) ; the selector
+		 (for-each
+		  (lambda (clause)
+		    (walk name (cdr clause) env))
+		  (cddr form))
+		 env)
 		
 		((let do)
 		 (let* ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
@@ -213,10 +228,9 @@
 				   name line-number head (abs curlys) (if (positive? curlys) "{" "}") (if (> curlys 1) "s" "")))
 		       dirs))
 		       
-		   ;(format #t "~A -> ~A ~A~%" form control-string args)
-		   (if (and (not (string? control-string))
-			    (not (pair? args)))
-		       (format #t "  ~A (line ~D): ~A looks suspicious~%" name line-number form)
+		   (if (not (string? control-string))
+		       (if (not (pair? args))
+			   (format #t "  ~A (line ~D): ~A looks suspicious~%" name line-number form))
 		       (let ((ndirs (count-directives control-string))
 			     (nargs (if (or (null? args) (pair? args)) (length args) 0)))
 			 (if (not (= ndirs nargs))
@@ -225,11 +239,68 @@
 				     (if (> ndirs nargs) "too few" "too many")))))
 		   (walk name (cdr form) env)))
 		
-		(else  ; if begin cond and or case with-environment
-
-		 ;; TODO: if car is known func we could check arg num/type [and :names for define*]
+		(else  ; if begin cond and or with-environment
 		 ;; we can't expand macros so free variables can confuse the usage checks
-		 
+
+		 (if (and (symbol? head)
+			  (defined? head)
+			  (procedure? (symbol->value head)))
+		     (let ((arity (procedure-arity (symbol->value head)))
+			   (args (length (cdr form))))
+		       (if (pair? arity)
+			   (begin
+			     (if (< args (car arity))
+				 (format #t "  ~A (line ~D): ~A needs at least ~D argument~A~%" 
+					 name line-number head (car arity) (if (> (car arity) 1) "s" ""))
+				 (if (and (not (caddr arity))
+					  (> args (+ (car arity) (cadr arity))))
+				     (format #t "  ~A (line ~D): ~A has too many arguments~%" 
+					     name line-number head)))))
+		       ;; now try to check arg types for egregious errors
+		       (if (pair? (cdr form)) ; there are args
+			   (let ((arg1 (cadr form)))
+			     (if (and (not (symbol? arg1))
+				      (not (pair? arg1))) ; no check if it's a variable or some expression
+				 (let ((number-ops '(= > < random abs * imag-part real-part / magnitude max nan? negative? 
+						     positive? >= expt number->string zero?
+						     floor denominator integer->char min <= cos rationalize sin 
+						     log round ceiling truncate atan numerator make-rectangular
+						     cosh even? sqrt odd? tanh sinh tan exp acos asin acosh asinh 
+						     atanh modulo make-polar gcd angle remainder quotient
+						     lcm inexact->exact ash exact->inexact integer-decode-float 
+						     logand lognot logior logxor exact? integer-length
+						     inexact? infinite?))
+				       (list-ops '(cdr car assq list-ref cadr list-set! memq member caddr cddr set-cdr! 
+						   assoc caar set-car! list-tail cadar cdddr cadddr
+						   cddddr cdar assv caadr cadadr cdadr caaaar caaddr caddar cdaaar 
+						   cdaadr cdaddr cddar list->vector memv list->string
+						   caaadr caaar caadar cadaar cdadar cdddar cdaar cddaar cddadr))
+				       (vector-ops '(vector-ref vector-set! vector-length vector-fill! vector-dimensions))
+				       (string-ops '(string->number string-set! string-ref string=? string-append 
+						     string-ci=? string->symbol string-copy with-input-from-string
+						     substring string->list string<? string>=? string-ci<? string>? 
+						     string-ci>=? string-ci>? string<=? string-ci<=? string-fill!
+						     string-length ))
+				       (char-ops '(char->integer char=? char-upcase char-alphabetic? write-char char-ci=? 
+						   char-numeric? char-downcase char-whitespace?
+						   char<? char>? char-upper-case? char-ci=? char<=? char-ci<=? char-ci>? 
+						   char-lower-case? char-ci<? char>=?)))
+
+				   (if (member head list-ops)
+				       (if (not (null? arg1))
+					   (format #t "  ~A (line ~D): ~A's 1st argument should be a list: ~S~%" name line-number head arg1))
+				       (if (member head number-ops)
+					   (if (not (number? arg1))
+					       (format #t "  ~A (line ~D): ~A's 1st argument should be a number: ~S~%" name line-number head arg1))
+					   (if (member head string-ops)
+					       (if (not (string? arg1))
+						   (format #t "  ~A (line ~D): ~A's 1st argument should be a string: ~S~%" name line-number head arg1))
+					       (if (member head char-ops)
+						   (if (not (char? arg1))
+						       (format #t "  ~A (line ~D): ~A's 1st argument should be a character: ~S~%" name line-number head arg1))
+						   (if (member head vector-ops)
+						       (if (not (vector? arg1))
+							   (format #t "  ~A (line ~D): ~A's 1st argument should be a vector: ~S~%" name line-number head arg1)))))))))))))
 		 (for-each
 		  (lambda (f)
 		    (walk name f env))
@@ -246,14 +317,11 @@
 	  (format #t ";~A~%" file)
 	  (do ((form (read fp) (read fp)))
 	      ((eof-object? form))
-	    (walk form form '()))
+	    (walk (if (symbol? form) form (car form)) form '()))
 	  (close-input-port fp)))))
 
 
-;;; check for bad args if func is known (and save as we go?)
-;;; check for call/cc where continuation is not saved and suggest call-with-exit
 ;;; check for obvious cases like (list-ref '(1 2 3) 12)
-;;; call/cc with no use of the continuation
 ;;; eq? with something that will always be #f (and eqv? catch)
 ;;; (not list) -> (not (null?...))
-;;; doc/test pair-line-number, this file and use in va.scm
+;;; use this stuff in va.scm/s7test.scm/sndscm.html lint section
