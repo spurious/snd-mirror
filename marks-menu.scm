@@ -212,7 +212,6 @@
             ;; if loop-between-marks-dialog doesn't exist, create it
             (let ((initial-loop-between-marks-m1 0)
                   (initial-loop-between-marks-m2 1)
-                  (initial-loop-between-marks-buffer-size 512)
                   (sliders '())
 		  (max-mark-id (overall-max-mark-id 25)))
               (set! loop-between-marks-dialog

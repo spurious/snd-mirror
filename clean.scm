@@ -135,10 +135,6 @@
 	 (mx-ahead (make-moving-average (* 4 size))) ; local average of abs difference ahead of current window
 	 (mx-behind (make-moving-average (* 4 size))) ; local average of abs difference behind current window
 	 (mx (make-moving-average size)) ; local average of abs difference
-	 (samp0 0.0)
-	 (samp1 0.0)
-	 (samp2 0.0)
-	 (samp3 0.0)
 
 	 (last-ahead-samp 0.0)
 	 (last-dly0-samp 0.0)

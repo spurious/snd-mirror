@@ -3405,7 +3405,7 @@
 	  (if (not (vequal (sound-data->vct sd 1) (make-vct 10 1.0)))
 	      (snd-display #__line__ ";fill! sd chan 1: ~A" (sound-data->vct sd 1)))
 	  (let ((sd1 (copy sd)))
-	    (if (not (equal? sd sd1)) (snd-display #__line__ ";copy sd: ~A ~A"))))
+	    (if (not (equal? sd sd1)) (snd-display #__line__ ";copy sd: ~A ~A" sd sd1))))
 	
 	(for-each
 	 (lambda (file)
@@ -4370,7 +4370,7 @@
 	       (let ((ind (open-sound "test.aif")))
 		 (if (not (= (frames ind) 2)) (snd-display #__line__ ";bad frames in header: ~A" (frames ind)))
 		 (close-sound ind)))
-	     (lambda args (snd-display #__line__ args)))
+	     (lambda args (snd-display #__line__ ";~S" args)))
       (delete-file "test.aif")
       (mus-sound-forget "test.aif")
       (make-aifc-file #o002 #o150 #o020)
@@ -4449,7 +4449,7 @@
 	   (lambda ()
 	     (if (not (= (string-length (mus-sound-comment "test.aif")) 15))
 		 (snd-display #__line__ ";aifc 3 aux comments: ~A?" (mus-sound-comment "test.aif"))))
-	   (lambda args (snd-display #__line__ args)))
+	   (lambda args (snd-display #__line__ ";~S" args)))
     (delete-file "test.aif")
     (mus-sound-forget "test.aif")
     (with-output-to-file "test.aif"
@@ -4484,7 +4484,7 @@
 	   (lambda ()
 	     (if (not (string=? (substring (mus-sound-comment "test.aif") 0 3) "bil"))
 		 (snd-display #__line__ ";aifc trailing comt comment: ~A?" (mus-sound-comment "test.aif"))))
-	   (lambda args (snd-display #__line__ args)))
+	   (lambda args (snd-display #__line__ ";~S" args)))
     (if (not (= (mus-sound-frames "test.aif") 2))
 	(snd-display #__line__ ";aifc trailing comt frames: ~A?" (mus-sound-frames "test.aif")))
     (catch #t
@@ -4496,7 +4496,7 @@
 		       (fneq (sample 3) 0.0))
 		   (snd-display #__line__ ";aifc trailing comt samps: ~A ~A ~A ~A" (sample 0) (sample 1) (sample 2) (sample 3)))
 	       (close-sound ind)))
-	   (lambda args (snd-display #__line__ args)))
+	   (lambda args (snd-display #__line__ ";~S" args)))
     (delete-file "test.aif")
     (mus-sound-forget "test.aif")
     (with-output-to-file "test.aif"
@@ -4541,7 +4541,7 @@
 		       (fneq (sample 3) 0.0))
 		   (snd-display #__line__ ";aifc trailing comt samps (bogus frame setting): ~A ~A ~A ~A" (sample 0) (sample 1) (sample 2) (sample 3)))
 	       (close-sound ind)))
-	   (lambda args (snd-display #__line__ args)))
+	   (lambda args (snd-display #__line__ ";~S" args)))
     (delete-file "test.aif")
     (mus-sound-forget "test.aif")
     (with-output-to-file "test.aif"
@@ -4658,11 +4658,11 @@
 	       (if (fneq (sample 2) 0.0) (snd-display #__line__ ";file chunked eof: ~A" (sample 2)))
 	       (if (fneq (sample 3) 0.0) (snd-display #__line__ ";file chunked eof+1: ~A" (sample 3)))
 	       (close-sound file)))
-	   (lambda args (snd-display #__line__ args)))
+	   (lambda args (snd-display #__line__ ";~S" args)))
     (catch #t
 	   (lambda ()
 	     (if (not (= (mus-sound-frames "test.aif") 2)) (snd-display #__line__ ";chunked mus-sound-frames: ~A" (mus-sound-frames "test.aif"))))
-	   (lambda args (snd-display #__line__ args)))
+	   (lambda args (snd-display #__line__ ";~S" args)))
     (delete-file "test.aif")
     (mus-sound-forget "test.aif")
     
@@ -4712,7 +4712,7 @@
 		       (not (string=? (comment) ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98")))
 		   (snd-display #__line__ ";chunked appl comment: ~A" (comment)))
 	       (close-sound file)))
-	   (lambda args (snd-display #__line__ args)))
+	   (lambda args (snd-display #__line__ ";~S" args)))
     (delete-file "test.aif")
     (mus-sound-forget "test.aif")
     
@@ -4762,7 +4762,7 @@
 		       (not (string=? (comment) ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98")))
 		   (snd-display #__line__ ";chunked appl comment (stereo): ~A" (comment)))
 	       (close-sound file)))
-	   (lambda args (snd-display #__line__ args)))
+	   (lambda args (snd-display #__line__ ";~S" args)))
     (delete-file "test.aif")
     (mus-sound-forget "test.aif")
     
@@ -10752,7 +10752,7 @@ EDITS: 5
 	      (snd-display #__line__ ";selection maxamp position: ~A" (selection-maxamp-position)))
 	  (let ((reg (make-region 24000 25000)))
 	    (if (not (= (region-maxamp-position reg) 971))
-		(snd-display #__line__ ";region maxamp position: ~A" (region-maxamp-position))))
+		(snd-display #__line__ ";region maxamp position: ~A" (region-maxamp-position reg))))
 	  (close-sound ind1))
 	(let* ((ind1 (open-sound "oboe.snd")))
 	  (test-edpos maxamp 'maxamp (lambda () (scale-by 2.0 ind1 0)) ind1)
@@ -11730,7 +11730,7 @@ EDITS: 5
 		    (snd-display #__line__ ";widget-text of non-text widget: ~A" (widget-text (cadr (main-widget)))))
 		(set! (widget-text (list-ref (channel-widgets ind 0) 2)) "F")
 		(if (not (string=? (widget-text (list-ref (channel-widgets ind 0) 2)) "F"))
-		    (snd-display #__line__ ";set button label to F: ~A" (widget-text (list-ref (channel-widgets ind 0) 2)) "F"))
+		    (snd-display #__line__ ";set button label to F: ~A" (widget-text (list-ref (channel-widgets ind 0) 2))))
 		(if (and (not (string=? str "no marks"))
 			 (not (string=? str "no such mark")))
 		    (snd-display #__line__ ";C-x c w/o marks: ~A?" str))))
@@ -16773,7 +16773,7 @@ EDITS: 2
     (gen -2.0)
     (if (and (fneq (mus-phase gen) -2.0)
 	     (fneq (mus-phase gen) (- (* 2 pi) 2.0)))
-	(snd-display #__line__ ";phase: ~A freq: ~A" (mus-phase gen))))
+	(snd-display #__line__ ";phase: ~A freq: ~A" (mus-phase gen) (mus-frequency gen))))
   
   ;; ----------------
   ;; from mixer.scm (commented out)
@@ -17341,7 +17341,7 @@ EDITS: 2
 	  (if (fneq (polynomial lv7 val) (cosh (* 7 (acosh val)))) 
 	      (snd-display #__line__ ";ccosh cheb 7 ~A: ~A ~A" val (polynomial lv7 val) (cosh (* 7 (acosh val)))))
 	  (if (fneq (polynomial lv7 val) (cos (* 7 (acos val)))) 
-	      (snd-display #__line__ ";cos cheb 7 ~A: ~A ~A" (polynomial lv7 val) (cos (* 7 (acos val)))))
+	      (snd-display #__line__ ";cos cheb 7 ~A: ~A ~A" val (polynomial lv7 val) (cos (* 7 (acos val)))))
 	  (if (fneq (polynomial lv8 val) (/ (sin (* 7 (acos val))) (sin (acos val))))
 	      (snd-display #__line__ ";acos cheb 7 ~A: ~A ~A" val (polynomial lv8 val) (/ (sin (* 7 (acos val))) (sin (acos val)))))))
       )
@@ -25960,7 +25960,7 @@ EDITS: 2
     
     (if *output* 
 	(begin
-	  (snd-display #__line__ ";*output* ~A")
+	  (snd-display #__line__ ";*output* ~A" *output*)
 	  (set! *output* #f)))
     
     (let ((nind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment")))
@@ -30123,7 +30123,7 @@ EDITS: 2
 		      (if (not (= (mark-sample m10) 1234)) (snd-display #__line__ ";mark 10th: ~A" (mark-sample m10))))
 		  (if (not m11) (snd-display #__line__ ";can't find 11th mark")
 		      (if (not (= (mark-sample m11 1) 23)) (snd-display #__line__ ";mark 11th: ~A" (mark-sample m11 1))))
-		  (if (mark? m12) (snd-display #__line__ ";found 12th mark: ~A ~A ~A" m12 (mark-sample m12 2) (mark-name m12 2)))))
+		  (if (mark? m12) (snd-display #__line__ ";found 12th mark: ~A ~A ~A" m12 (mark-sample m12 2) (mark-name m12)))))
 	      (set! (mark-name m1) #f)))
 	  (close-sound ind))
 	(if (string? sf-dir)
@@ -30717,7 +30717,7 @@ EDITS: 2
 			    (snd-display #__line__ ";copy-sampler (region): ~A ~A" rd11 rd22))
 			(if (or (mix-sampler? rd11) (mix-sampler? rd22)
 				(sampler? rd11) (sampler? rd22))
-			    (snd-display #__line__ ";copy (region) sampler-p trouble: ~A ~A ~A ~A ~A ~A"
+			    (snd-display #__line__ ";copy (region) sampler-p trouble: ~A ~A ~A ~A"
 					 (mix-sampler? rd11) (mix-sampler? rd22)
 					 (sampler? rd11) (sampler? rd22)))
 			(if (or (not (equal? (sampler-home rd11) (list reg 0)))
@@ -35776,7 +35776,7 @@ EDITS: 2
 	    (if (mix? val)
 		(snd-display #__line__ ";mix-channel returned a mix: ~A?" val)))
 	  (if (not (vequal (channel->vct 0 #f ind 1) (make-vct 10 0.0)))
-	      (snd-display #__line__ ";mix-channel mixed channel 1: A?" (channel->vct 0 #f ind 1)))
+	      (snd-display #__line__ ";mix-channel mixed channel 1: ~A?" (channel->vct 0 #f ind 1)))
 	  (if (not (vequal (channel->vct 0 #f ind 0) (vct 0 0 0 .5 0 0 0 0 0 0)))
 	      (snd-display #__line__ ";mix-channel chan 0: ~A" (channel->vct 0 #f ind 0)))
 	  (revert-sound ind)
@@ -35784,7 +35784,7 @@ EDITS: 2
 	    (if (mix? val)
 		(snd-display #__line__ ";mix-channel 2 returned a mix: ~A?" val)))
 	  (if (not (vequal (channel->vct 0 #f ind 1) (make-vct 10 0.0)))
-	      (snd-display #__line__ ";mix-channel mixed channel 1a: A?" (channel->vct 0 #f ind 1)))
+	      (snd-display #__line__ ";mix-channel mixed channel 1a: ~A?" (channel->vct 0 #f ind 1)))
 	  (if (not (vequal (channel->vct 0 #f ind 0) (vct -.4 0 0 0 0 0 0 0 0 0)))
 	      (snd-display #__line__ ";mix-channel chan 0a: ~A" (channel->vct 0 #f ind 0)))
 	  (revert-sound ind)
@@ -35793,7 +35793,7 @@ EDITS: 2
 	    (if (not (mix? val))
 		(snd-display #__line__ ";mix-channel with-tag: ~A" val)))
 	  (if (not (vequal (channel->vct 0 #f ind 1) (vct 0 0 -.4 0 0 0 0 0 0 0)))
-	      (snd-display #__line__ ";mix-channel mixed channel 1b: A?" (channel->vct 0 #f ind 1)))
+	      (snd-display #__line__ ";mix-channel mixed channel 1b: ~A?" (channel->vct 0 #f ind 1)))
 	  (if (not (vequal (channel->vct 0 #f ind 0) (vct -.4 0 0 0 0 0 0 0 0 0)))
 	      (snd-display #__line__ ";mix-channel chan 0b: ~A" (channel->vct 0 #f ind 0)))
 	  (revert-sound ind)
@@ -35801,7 +35801,7 @@ EDITS: 2
 	    (if (not (mix? val))
 		(snd-display #__line__ ";mix-channel file with-tag: ~A" val)))
 	  (if (not (vequal (channel->vct 0 #f ind 1) (make-vct 10 0.0)))
-	      (snd-display #__line__ ";mix-channel mixed channel 1c: A?" (channel->vct 0 #f ind 1)))
+	      (snd-display #__line__ ";mix-channel mixed channel 1c: ~A?" (channel->vct 0 #f ind 1)))
 	  (if (not (vequal (channel->vct 0 #f ind 0) (vct -.4 0 0 0 0 0 0 0 0 0)))
 	      (snd-display #__line__ ";mix-channel chan 0c: ~A" (channel->vct 0 #f ind 0)))
 	  (revert-sound ind)
@@ -35809,7 +35809,7 @@ EDITS: 2
 	    (if (not (mix? val))
 		(snd-display #__line__ ";mix-channel file 1 with-tag: ~A" val)))
 	  (if (not (vequal (channel->vct 0 #f ind 0) (make-vct 10 0.0)))
-	      (snd-display #__line__ ";mix-channel mixed channel 0d: A?" (channel->vct 0 #f ind 1)))
+	      (snd-display #__line__ ";mix-channel mixed channel 0d: ~A?" (channel->vct 0 #f ind 1)))
 	  (if (not (vequal (channel->vct 0 #f ind 1) (vct 0 0 0 .5 0 0 0 0 0 0)))
 	      (snd-display #__line__ ";mix-channel chan 1d: ~A" (channel->vct 0 #f ind 1)))
 	  (revert-sound ind)
@@ -45270,7 +45270,7 @@ EDITS: 1
 		 (begin
 		   (if (sampler-at-end? fd) (snd-display #__line__ ";~A: sampler-at-end?: ~A" file fd))
 		   (if (not (= (sampler-position fd) 10000)) 
-		       (snd-display #__line__ ";~A: sampler: position: ~A ~A" fd (sampler-position file fd))))
+		       (snd-display #__line__ ";~A: sampler: position: ~A ~A" fd (sampler-position fd))))
 		 (begin
 		   (if (not (sampler-at-end? fd)) (snd-display #__line__ ";~A: not sampler-at-end?: ~A" file fd))
 		   (if (= (sampler-position fd) 10000)
@@ -47706,8 +47706,7 @@ EDITS: 1
     
     (let ((j 1))
       (run
-       (do ((i 0 (+ i 1))
-	    (k 1 (+ k 2)))
+       (do ((i 0 (+ i 1)))
 	   ((= i 3))
 	 (set! j i)))
       (if (not (= j 2)) (snd-display #__line__ ";loop 2 j=~A" j)))
@@ -54603,7 +54602,7 @@ EDITS: 1
   (if (not (= *clm-channels* (default-output-chans))) (snd-display #__line__ ";*clm-channels*: ~A ~A" *clm-channels* (default-output-chans)))
   (if (not (= *clm-header-type* (default-output-header-type))) (snd-display #__line__ ";*clm-header-type*: ~A ~A" *clm-header-type* (default-output-header-type)))
 					;	(if (not (= *clm-data-format* (default-output-data-format))) (snd-display #__line__ ";*clm-data-format*: ~A ~A" *clm-data-format* (default-output-data-format)))
-  (if (not (= *clm-reverb-channels* 1)) (snd-display #__line__ ";*clm-reverb-channels*: ~A ~A" *clm-reverb-channels*))
+  (if (not (= *clm-reverb-channels* 1)) (snd-display #__line__ ";*clm-reverb-channels*: ~A" *clm-reverb-channels*))
   (if (not (string=? *clm-file-name* "test.snd")) (snd-display #__line__ ";*clm-file-name*: ~A" *clm-file-name*))
   (if *clm-play* (snd-display #__line__ ";*clm-play*: ~A" *clm-play*))
   (if *clm-verbose* (snd-display #__line__ ";*clm-verbose*: ~A" *clm-verbose*))
@@ -54949,7 +54948,7 @@ EDITS: 1
 	     (v1 (* gain (mfilter-1 m1 y 0.0)))
 	     (v2 (firmant m2 y)))
 	(if (fneq v1 v2)
-	    (snd-display #__line__ ";rand case mfilter/firmant: ~A ~A" i v1 v2)))))
+	    (snd-display #__line__ ";rand case mfilter/firmant: ~A ~A ~A" i v1 v2)))))
   
   
   ;; dlocsig tests
@@ -57297,7 +57296,7 @@ EDITS: 1
 	   (format #t "~A is not a ~A?" gen name)
 	   (let* ((funcs (methods)))
 	     (if (null? funcs)
-		 (format #t "A has no methods?" name)
+		 (format #t "~A has no methods?" name)
 		 (for-each
 		  (lambda (method)
 		    (let ((method-name (car method)))
@@ -58520,7 +58519,7 @@ EDITS: 1
 	    (XStoreBytes dpy "hiho" 4)
 	    (if (not (string=? (XFetchBytes dpy) "hiho")) (snd-display #__line__ ";XStoreBytes: ~A" (XFetchBytes dpy)))
 	    (XStoreBuffer dpy "hiho" 4 1)
-	    (if (not (string=? (XFetchBuffer dpy 1) "hiho")) (snd-display #__line__ ";XStoreBuffer: ~A" (XFetchBuffer dpy)))
+	    (if (not (string=? (XFetchBuffer dpy 1) "hiho")) (snd-display #__line__ ";XStoreBuffer: ~A" (XFetchBuffer dpy 1)))
 	    )
 	  
 	  
@@ -58972,7 +58971,7 @@ EDITS: 1
 		(XmRenditionFree r1))
 	      
 	      (if (not (equal? (XmDropSiteQueryStackingOrder (list-ref (main-widgets) 4)) (list #f)))
-		  (snd-display #__line__ ";XmDropSiteQueryStackingOrder: ~A" (XmDropSiteQueryStackingOrder (list-ref (main-widgets) 4)) (list #f)))
+		  (snd-display #__line__ ";XmDropSiteQueryStackingOrder: ~A" (XmDropSiteQueryStackingOrder (list-ref (main-widgets) 4))))
 	      (let ((tab (XmStringComponentCreate XmSTRING_COMPONENT_TAB 0 #f))
 		    (row #f)
 		    (table '())
@@ -59509,7 +59508,7 @@ EDITS: 1
 						   XmNdestinationCallback 
 						   (list (lambda (w c i) 
 							   (vector-set! calls c "dest")
-							   (if (< (.location_data i) 0) (snd-display #__line__ ";location_data: A~" (.location_data i))))
+							   (if (< (.location_data i) 0) (snd-display #__line__ ";location_data: ~A" (.location_data i))))
 							 1)
 						   XmNactivateCallback (list (lambda (w c i) (vector-set! calls c "act")) 2)
 						   XmNfocusCallback (list (lambda (w c i) (vector-set! calls c "focus")) 3)
@@ -59519,11 +59518,11 @@ EDITS: 1
 						   XmNmodifyVerifyCallback 
 						   (list (lambda (w c i) 
 							   (vector-set! calls c "modify")
-							   (if (< (.currInsert i) 0) (snd-display #__line__ ";currInsert: A~" (.currInsert i)))
-							   (if (< (.newInsert i) 0) (snd-display #__line__ ";newInsert: A~" (.newInsert i)))
-							   (if (string? (.doit i)) (snd-display #__line__ ";doit: A~" (.doit i)))
-							   (if (< (.startPos i) 0) (snd-display #__line__ ";startPos: A~" (.startPos i)))
-							   (if (< (.endPos i) 0) (snd-display #__line__ ";endPos: A~" (.endPos i))))
+							   (if (< (.currInsert i) 0) (snd-display #__line__ ";currInsert: ~A" (.currInsert i)))
+							   (if (< (.newInsert i) 0) (snd-display #__line__ ";newInsert: ~A" (.newInsert i)))
+							   (if (string? (.doit i)) (snd-display #__line__ ";doit: ~A" (.doit i)))
+							   (if (< (.startPos i) 0) (snd-display #__line__ ";startPos: ~A" (.startPos i)))
+							   (if (< (.endPos i) 0) (snd-display #__line__ ";endPos: ~A" (.endPos i))))
 							 7)
 						   XmNmotionVerifyCallback (list (lambda (w c i) (vector-set! calls c "motion")) 8)
 						   XmNvalueChangedCallback (list (lambda (w c i) (vector-set! calls c "value")) 9)))))

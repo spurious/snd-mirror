@@ -115,7 +115,6 @@
 	 (st (seconds->samples beg))
 	 (durlen (seconds->samples dur))
 	 (end (+ st durlen))
-	 (out-data (make-vct durlen))
 	 (ctr 0)
 	 (release (floor (* .8 durlen)))
 	 (bridgeout 0.0)

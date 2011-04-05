@@ -632,36 +632,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 
-;;; -------- with-threaded-channels
-;;;
-;;; experimental!
-
-(define (with-threaded-channels func)
-  (let ((chns (chans)))
-    (if (and (provided? 'snd-threads)
-	     (not (provided? 'gmp))
-	     (provided? 'snd-nogui))
-	
-	;; use threads (s7 only)
-	(let ((threads '()))
-	  (do ((chn 0 (+ 1 chn)))
-	      ((= chn chns))
-	    (let ((lchn chn))
-	      (set! threads (cons (make-thread 
-				   (lambda () 
-				     (func lchn))) 
-				  threads))))
-	  (for-each 
-	   (lambda (expr) 
-	     (join-thread expr))
-	   threads))
-
-	;; else do it the normal way
-	(do ((chn 0 (+ 1 chn)))
-	    ((= chn chns))
-	  (func chn)))))
-      
-
 ;;; -------- profiling
 
 (define* (profile (file "sort.data"))

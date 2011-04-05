@@ -98,7 +98,6 @@
   (let* ((old-srate (mus-srate))
 	 (old-*output* *output*)
 	 (old-*reverb* *reverb*)
-	 (in-debugger #f)
 	 (old-notehook *clm-notehook*)
 	 (old-verbose *clm-verbose*)
 	 (output-to-file (string? output))
@@ -430,16 +429,15 @@ finish-with-sound to complete the process."
 (define (finish-with-sound wsd)
   "(finish-with-sound wsd) closes the notelist process started by init-with-sound"
   (if (eq? (car wsd) 'with-sound-data)
-      (let ((cycles 0)
-	    (output (list-ref wsd 1))
+      (let ((output (list-ref wsd 1))
 	    (reverb (list-ref wsd 2))
 	    (revfile (list-ref wsd 3))
 	    (old-srate (list-ref wsd 4))
 	    (statistics (list-ref wsd 5))
 	    ;(to-snd (list-ref wsd 6))
-	    (scaled-to (list-ref wsd 7))
-	    (scaled-by (list-ref wsd 8))
-	    (play (list-ref wsd 9))
+	    ;(scaled-to (list-ref wsd 7))
+	    ;(scaled-by (list-ref wsd 8))
+	    ;(play (list-ref wsd 9))
 	    (reverb-data (list-ref wsd 10))
 	    (start (list-ref wsd 11)))
 
@@ -454,8 +452,6 @@ finish-with-sound to complete the process."
 	(if (mus-output? *output*)
 	    (mus-close *output*))
 
-	(if statistics
-	    (set! cycles (/ (- (get-internal-real-time) start) 100)))
 	(set! (mus-srate) old-srate)
 	output)
       (throw 'wrong-type-arg

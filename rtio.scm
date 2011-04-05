@@ -66,7 +66,6 @@
 		  (card+device in-sys mus-audio-default) 
 		  our-srate our-chans our-short our-dac-buffer-size-in-bytes))
 	(data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
-	(vobj (make-vct our-dac-buffer-size-in-shorts))
 	(stop #f))
     (bind-key #\space 0 (lambda () (set! stop #t))) ; type space in the graph to stop this loop
     (catch #t ; try to make sure we close the audio ports upon an error

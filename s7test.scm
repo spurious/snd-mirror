@@ -62962,9 +62962,13 @@ etc
 ;;; --------------------------------------------------------------------------------
 
 
-
 ;;; these can slow us down if included in their normal place
 
+(test (define 'quote 'quote) 'error)
+(test (define (and a) a) 'error)
+(test (define-constant and 1) 'error)
+(test (define-macro (quote a) quote) 'error)
+(test (define 'hi 1) 'error)
 (test (let ((if #t)) (or if)) #t)
 (test (let ((if +)) (if 1 2 3)) 6)
 (test (if (let ((if 3)) (> 2 if)) 4 5) 5)
@@ -63010,12 +63014,7 @@ etc
 (test (let () (define (tst fnc) (fnc ((> 0 1) 2) (#t 3))) (define (val) cond) (tst (val))) 3)
 (test (let () (define (cond a) a) (procedure-arity cond)) '(1 0 #f))
 (test (let () (define-macro (hi a) `(let ((lambda +)) (lambda ,a 1))) (hi 2)) 3)
-(test (define 'quote 'quote) 'error)
-(test (define (and a) a) 'error)
-(test (define-constant and 1) 'error)
-(test (define-macro (quote a) quote) 'error)
 (test ((let ((do or)) do) 1 2) 1)
-(test (define 'hi 1) 'error)
 
 
 

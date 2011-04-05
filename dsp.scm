@@ -2158,7 +2158,6 @@ is assumed to be outside -1.0 to 1.0."
     (if (> clips 0)                             ; we did find clipped portions
 	(let* ((clip-data (make-vector clips 0))  ; clipped portion begin and end points
 	       (clip-beg 0)
-	       (clip-end 0)
 	       (in-clip #f)
 	       (cur-clip 0)
 	       (samp 0))
@@ -2183,7 +2182,6 @@ is assumed to be outside -1.0 to 1.0."
 	  ;; try to restore clipped portions
 	  
 	  (let ((min-data-len 32)
-		(max-diff 0.0)
 		(max-len 0))
 	    (as-one-edit
 	     (lambda ()
@@ -2545,8 +2543,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
     (let ((new-amps (vct-scale! min-partials (/ original-sum min-sum)))
 	  (new-partials (vct-copy partials)))
-      (do ((i 0 (+ i 2))
-	   (k 0 (+ k 1)))
+      (do ((i 0 (+ i 2)))
 	  ((>= i len))
 	(let ((hnum (new-partials i)))
 	  (if (= hnum 0)

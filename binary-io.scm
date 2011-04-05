@@ -285,7 +285,7 @@
 	(let ((magic (read-chars 4)))
 	  (if (not (string=? magic "FORM"))
 	      (error 'bad-header "~A is not an aif file: ~A" file magic)
-	      (let* ((size (read-bint32))
+	      (let* (;(size (read-bint32))
 		     (magic (read-chars 4)))
 		(set! current-location 12)
 		(if (and (not (string=? magic "AIFF"))

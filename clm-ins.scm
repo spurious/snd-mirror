@@ -945,6 +945,7 @@ is a physical model of a flute:
   ;; reverb-factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
   ;; lp-coeff controls the strength of the low pass filter inserted in the feedback loop
   ;; output-scale can be used to boost the reverb output
+
   (define (prime? val)
     (or (= val 2)
 	(and (odd? val)
@@ -952,13 +953,13 @@ is a physical model of a flute:
 		  (lim (sqrt val)))
 		 ((or (= 0 (modulo val i)) (> i lim))
 		  (> i lim))))))
+
   (define (next-prime val)
     (if (prime? val)
 	val
 	(next-prime (+ val 2))))
        
   (let* ((srscale (/ (mus-srate) 25641))
-	 (val 0)
 	 (dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19)))
     (do ((i 0 (+ i 1)))
 	((= i 15))
@@ -1124,11 +1125,6 @@ is a physical model of a flute:
 	 (outdel1 (make-delay (seconds->samples .013)))
 	 (outdel2 (make-delay (seconds->samples .011)))
 	 (comb-sum 0.0)
-	 (comb-sum-1 0.0)
-	 (comb-sum-2 0.0)
-	 (all-sums 0.0)
-	 (delA 0.0)
-	 (delB 0.0)
 	 (decay-dur (* decay (mus-srate)))
 	 (len (floor (+ decay-dur (length *reverb*)))))
     (run
@@ -1861,7 +1857,6 @@ is a physical model of a flute:
 	 (start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (fil (make-file->sample file))
-	 (file-duration (mus-sound-duration file))
 	 (fdr (make-vct fftsize-1))
 	 (fdi (make-vct fftsize-1))
 	 (window (make-fft-window blackman2-window fftsize-1))

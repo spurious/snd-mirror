@@ -117,11 +117,9 @@
 	 (xspring 0.1)
 	 (damp 0.0)
 	 (bounds '())
-	 (pts0 #f)
 	 (pts1 #f)
 	 (ax0 0) (ax1 0) (ay0 0) (ay1 0)
 	 (gc (car (snd-gcs)))
-	 (egc (list-ref (snd-gcs) 7))
 	 
 	 ;; now set up a paned window in the main Snd window with controllers on the left and the graph on the right
 	 (scan-outer (let ((pane (gtk_hbox_new #f 0)))
@@ -153,7 +151,6 @@
 		      label))
 	 (size 128)
 	 (tbl (make-table-lookup :size size))
-	 (frequency 440.0)
 	 (amplitude 0.02)
 	 (gx0 (mus-data tbl))
 	 (gx1 (make-vct size))	   
@@ -669,11 +666,7 @@
 	 (height (list-ref meter-data 6))
 	 ;; (size (list-ref meter-data 2))
 	 (win ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window meter)))
-	 (major-tick (round (/ width 24)))
-	 (minor-tick (round (* major-tick .6)))
-	 (wid2 (floor (/ width 2)))
-	 (gc (car (snd-gcs)))
-	 (top (round (/ height 3.2)))) ; distance of label from top of meter
+	 (major-tick (round (/ width 24))))
 
     ;; this is too slow -- can we save the plate? (also if just 1 meter, put pivot higher?)
     (let ((cr (gdk_cairo_create win)))

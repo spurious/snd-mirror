@@ -8,6 +8,10 @@
 (define with-gtk3 (provided? 'gtk3))
 
 (if (provided? 'snd-motif)
+    (if (not (provided? 'snd-snd-motif.scm))
+	(load "snd-motif.scm")))
+
+(if (provided? 'snd-motif)
     (if (not (provided? 'xm))
 	(let ((hxm (dlopen "xm.so")))
 	  (if (string? hxm)
@@ -142,7 +146,6 @@
     (let* ((cur-env (xe-envelope drawer))
 	   (x (xe-ungrfx drawer xx))
 	   (y (xe-ungrfy drawer yy))
-	   (ax-pix (list-ref drawer 2))
 	   (lx (if (= xe-mouse-pos 0)
 		   (car cur-env)
 		   (if (>= xe-mouse-pos (- (length cur-env) 2))
@@ -155,10 +158,7 @@
       (xe-redraw drawer)))
 
   (define (xe-mouse-release drawer xx yy)
-    (let* ((cur-env (xe-envelope drawer))
-	   (x (xe-ungrfx drawer xx))
-	   (y (xe-ungrfy drawer yy))
-	   (ax-pix (list-ref drawer 2)))
+    (let* ((cur-env (xe-envelope drawer)))
       (set! xe-mouse-up (get-internal-real-time))
       (if (and (not xe-mouse-new)
 	       (<= (- xe-mouse-up xe-mouse-down) xe-click-time)
@@ -384,11 +384,9 @@
 			   (size (widget-size (GTK_WIDGET widget))))
 		      
 		      (cairo_push_group cr)
-
-		      (let ((bg-color (color->list (basic-color))))
-			(cairo_set_source_rgb cr 1.0 1.0 1.0)
-			(cairo_rectangle cr 0 0 (car size) (cadr size))
-			(cairo_fill cr))
+		      (cairo_set_source_rgb cr 1.0 1.0 1.0)
+		      (cairo_rectangle cr 0 0 (car size) (cadr size))
+		      (cairo_fill cr)
 
 		      (draw-axes widget gc name ix0 ix1 iy0 iy1 x-axis-in-seconds show-all-axes cr)
 

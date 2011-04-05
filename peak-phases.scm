@@ -5154,10 +5154,9 @@
 	    ((= k len))
 	  (set! val (+ val (sin (+ (* j x) (* pi (phs k)))))))
 	(set! (v i) val)))
-    (let ((ns (new-sound)))
-      (vct->channel v)
-      (set! (y-bounds) (list (- mx) mx)))))
-      
+    (new-sound)
+    (vct->channel v)
+    (set! (y-bounds) (list (- mx) mx))))
 
 
 (define (get-worst-overall choice choices)
@@ -5182,7 +5181,7 @@
     (do ((i (- choices 1) (- i 1)))
 	((< i 0))
       (let ((c (diffs i)))
-	(set! choice-list (cons (diffs i) choice-list))))
+	(set! choice-list (cons c choice-list))))
 
     (list choice-list (- (+ total first) this)))) ; first to this would be a straight line
 

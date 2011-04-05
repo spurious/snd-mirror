@@ -290,10 +290,7 @@
                (lambda (snd)
                  (set! (with-tracking-cursor) old-tracking))))
   
-  (let ((old-channel-style(channel-style (selected-sound))))
-    (lambda (snd)
-      
-      (set! (channel-style snd) channels-superimposed)))
+  (set! (channel-style snd) channels-superimposed)
   (play (selected-sound) :start (cursor)))
 
 (define (play-end)

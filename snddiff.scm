@@ -6,9 +6,7 @@
 	 (len1 (frames snd1 chn1))
 	 (ilen (max len0 len1))
 	 (pow2 (ceiling (/ (log ilen) (log 2))))
-	 (fftlen (floor (expt 2 pow2)))
-	 (fftlen2 (/ fftlen 2))
-	 (fftscale (/ 1.0 fftlen)))
+	 (fftlen (floor (expt 2 pow2))))
     (correlate (channel->vct 0 fftlen snd1 chn1) 
 	       (channel->vct 0 fftlen snd0 chn0))))
 

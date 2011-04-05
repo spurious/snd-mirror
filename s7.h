@@ -61,6 +61,7 @@ typedef double s7_Double;
    *    provide                 adds a symbol to the *features* list
    *    port-line-number        current line during loading
    *    port-filename           current file name during loading
+   *    pair-line-number        location of a piece of code read from a file
    *    gc                      calls the GC. If its argument is #f, the GC is turned off
    *    quit                    exits s7
    *    call-with-exit          just like call/cc but jump back into a context
@@ -855,6 +856,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 5-Apr:     pair-line-number.
  * 23-Mar:    s7_catch_all.
  * 14-Mar:    s7_make_random_state, optional state argument to s7_random, random-state->list, s7_random_state_to_list.
  * 10-Feb:    s7_vector_print_length, s7_set_vector_print_length.

@@ -1257,7 +1257,6 @@
 	   (frqf (make-env (list 0 2000  .9 2000 1 1700) :duration dur :scaler (hz->radians 1.0)))
 	   (gen1 (make-polywave :partials (list 1 .92 2 .05  3 .02  4 .01)))
 	   (frqf2 (make-env '(0 0  .1 25  4 20) :duration dur :scaler (hz->radians 1.0)))
-	   (gen2 (make-ncos2 100 17))
 	   (gen3 (make-oscil 900))
 	   (gen4 (make-oscil 400))
 	   (low-ampf (make-env (list 0 0 .2 1 dur 1) :duration dur :scaler .15))
@@ -3138,7 +3137,6 @@
 (definstrument (carolina-wren beg amp)
   (let* ((start (seconds->samples beg))
 	 (pulse-dur 0.25)
-	 (pulses 7)
 	 (dur 1.84)
 	 (stop (+ start (seconds->samples dur)))
 	 (pulsef (make-env '(0.000 0.000 0.027 0.031 0.049 0.185 0.065 0.749 0.121 0.508 0.137 0.339 0.146 0.270 
@@ -3182,7 +3180,6 @@
 	 (gen1 (make-polywave :partials (list 1 .98 3 .02)))
 	 (frqf1 (make-env '(0 4970 1 4850) :duration call1-dur :scaler (hz->radians 1.0)))
 	 (pulser (make-pulse-train (/ 1.0 .184)))
-	 (pulses 10)
 	 (call2-dur .172)
 	 (stop2 (+ start (seconds->samples 2.4)))
 	 (ampf2 (make-env '(0.000 0.000 0.070 0.025 0.239 0.430 0.331 0.404 0.381 0.000 0.422 0.007 
@@ -3701,7 +3698,6 @@
 (definstrument (bobwhite beg amp)
   (let* ((call1-dur .32)
 	 (call1-amp .07)
-	 (call1-pitch 1500) ; 1530 down to 1450? 1 is pure, 2 and 3 have 1 2, no 3, 4
 	 (call1-gen (make-oscil 1450))
 	 (call1-ampf (make-env '(0 0 1 1 8 1 9 0) :duration call1-dur :scaler (* amp call1-amp)))
 	 (call1-frqf (make-env '(0 1 1 0) :duration call1-dur :scaler (hz->radians 80)))
@@ -4236,7 +4232,6 @@
 	 
 	 (pulser (make-pulse-train (/ 1.0 .13)))
 	 (pulse-dur .09)
-	 (pulse-samps (seconds->samples pulse-dur))
 	 (pulse-ampf (make-env '(0.000 0.000 0.119 0.698 0.258 1.000 0.355 0.310 0.564 0.1  0.7 0.070  1.3 0) :duration pulse-dur))
 	 (pulse-frqf (make-env '(0 150 .3 300 1 250 2 200 3 200 3.5 150 4 230) :duration pulse-dur :scaler (hz->radians 1.0)))
 	 (pulse-rnd (make-rand-interp 4000 .2)))
@@ -4332,7 +4327,6 @@
 	 (frqf (make-env '(0 0 7 1 10 0) :duration dur :scaler (hz->radians 600.0)))
 	 
 	 (pulse-dur 0.045)
-	 (pulse-samps (seconds->samples pulse-dur))
 	 (pulse-ampf1 (make-env '(0.000 0.000 0.038 0.152 0.062 0.115 0.148 0.468 0.211 0.530 0.228 0.290 
 					0.266 0.642 0.313 0.873 0.362 0.623 0.401 0.918 0.443 0.054 0.475 0.983 
 					0.490 0.901 0.501 0.290 0.525 0.668 0.576 0.189 0.605 0.155 0.621 0.313 
@@ -5663,7 +5657,7 @@
 		       (* (env rndf) 
 			  (rand-interp rnd))))
 	       (amp2 (env ampf2)))
-	   (outa i (* (env ampf)
+	   (outa i (* amp (env ampf)
 		      (+ (polywave gen1 (* 2 frq))
 			 (* amp2 (polywave gen2 frq))
 			 (* (- 1.0 amp2) 2 (polywave gen3 (* 2 frq)))

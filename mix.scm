@@ -113,7 +113,7 @@
 
 (define (snap-mix-to-beat)
   "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  (hook-remove mix-release-hook snap-mix-1) to cancel."
-  (hook-push mix-release-hook snap-mix-1 #t))
+  (hook-push mix-release-hook snap-mix-1))
 
 
 (define (snap-syncd-mixes-1 id samps-moved)
@@ -137,7 +137,7 @@
 (define (snap-syncd-mixes-to-beat)
   "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute). \
 All mixes sync'd to it are also moved the same number of samples. (hook-remove mix-release-hook snap-syncd-mixes-1) to cancel."
-  (hook-push mix-release-hook snap-syncd-mixes-1 #t))
+  (hook-push mix-release-hook snap-syncd-mixes-1))
 
 
 

@@ -267,8 +267,7 @@
 	 (dpy (XtDisplay shell))
 	 (screen (DefaultScreenOfDisplay dpy))
 	 (cmap (DefaultColormap dpy (DefaultScreen dpy)))
-	 (black (BlackPixelOfScreen screen))
-	 (white (WhitePixelOfScreen screen)))
+	 (black (BlackPixelOfScreen screen)))
 
     (define (get-color color)
       (let ((col (XColor)))

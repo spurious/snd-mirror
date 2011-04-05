@@ -2,6 +2,8 @@
 
 (provide 'lint.scm)
 
+(define *report-unused-parameters* #t)
+
 
 ;;; --------------------------------------------------------------------------------
 ;;; for snd-test.scm
@@ -48,6 +50,15 @@
 		      (set! (res i) x)))        ; (list-set! res i x)
 		res)))))
 
+  (define (keywords lst)
+    (let ((keys 0))
+      (for-each 
+       (lambda (arg)
+	 (if (keyword? arg)
+	     (set! keys (+ keys 1))))
+       lst)
+      keys))
+
   (define (report-usage name line-number type head vars)
     (let ((set '())
 	  (unused '()))
@@ -91,7 +102,7 @@
 					   (list (car arg) #f #f))))
 				 (proper-list args)))))
 	      (walk name val (append arg-data env))
-	      (report-usage name line-number 'parameter head arg-data)
+	      (if *report-unused-parameters* (report-usage name line-number 'parameter head arg-data))
 	      (append (list (list name #f #f)) env))
 	    (begin
 	      (format #t "  ~A (line ~D): strange ~A parameter list ~A~%" name line-number head args)
@@ -111,11 +122,12 @@
 		  define-constant 
 		  define-expansion define-macro define-macro* define-bacro define-bacro* defmacro defmacro* 
 		  definstrument)
+
 		 (let ((sym (cadr form))
 		       (val (cddr form)))
 		   (if (symbol? sym)
 		       (begin
-			 (walk sym val env)
+			 (walk sym (caddr form) env)
 			 (append (list (list sym #f #f)) env))
 		       (if (pair? sym)
 			   (walk-function head (car sym) (cdr sym) val line-number env)
@@ -189,7 +201,7 @@
 		   (report-usage name line-number 'variable head vars)
 		   env))
 
-		((format snd-display clm-print)
+		((format snd-display clm-print error)
 		 (let ((control-string (if (string? (cadr form)) (cadr form) (caddr form)))
 		       (args (if (string? (cadr form)) (cddr form) (cdddr form))))
 		   
@@ -245,6 +257,8 @@
 		 (if (and (symbol? head)
 			  (defined? head)
 			  (procedure? (symbol->value head)))
+
+		     ;; check arg number
 		     (let ((arity (procedure-arity (symbol->value head)))
 			   (args (length (cdr form))))
 		       (if (pair? arity)
@@ -253,9 +267,10 @@
 				 (format #t "  ~A (line ~D): ~A needs at least ~D argument~A~%" 
 					 name line-number head (car arity) (if (> (car arity) 1) "s" ""))
 				 (if (and (not (caddr arity))
-					  (> args (+ (car arity) (cadr arity))))
+					  (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity))))
 				     (format #t "  ~A (line ~D): ~A has too many arguments~%" 
 					     name line-number head)))))
+
 		       ;; now try to check arg types for egregious errors
 		       (if (pair? (cdr form)) ; there are args
 			   (let ((arg1 (cadr form)))
@@ -270,10 +285,10 @@
 						     lcm inexact->exact ash exact->inexact integer-decode-float 
 						     logand lognot logior logxor exact? integer-length
 						     inexact? infinite?))
-				       (list-ops '(cdr car assq list-ref cadr list-set! memq member caddr cddr set-cdr! 
-						   assoc caar set-car! list-tail cadar cdddr cadddr
-						   cddddr cdar assv caadr cadadr cdadr caaaar caaddr caddar cdaaar 
-						   cdaadr cdaddr cddar list->vector memv list->string
+				       (list-ops '(cdr car list-ref cadr list-set! caddr cddr set-cdr! 
+						   caar set-car! list-tail cadar cdddr cadddr
+						   cddddr cdar caadr cadadr cdadr caaaar caaddr caddar cdaaar 
+						   cdaadr cdaddr cddar list->vector list->string
 						   caaadr caaar caadar cadaar cdadar cdddar cdaar cddaar cddadr))
 				       (vector-ops '(vector-ref vector-set! vector-length vector-fill! vector-dimensions))
 				       (string-ops '(string->number string-set! string-ref string=? string-append 
@@ -325,3 +340,6 @@
 ;;; eq? with something that will always be #f (and eqv? catch)
 ;;; (not list) -> (not (null?...))
 ;;; use this stuff in va.scm/s7test.scm/sndscm.html lint section
+;;; begin define -> env
+;;; (set! (func...) can confuse the arg num checker
+;;; (lambda (abs) ... can confuse it also

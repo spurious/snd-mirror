@@ -2604,8 +2604,8 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	    (begin
 	      ;; R
 	      (vector-set! channel-gains r-offset (cons time (vector-ref channel-gains r-offset)))
-	      (vector-set! channel-gains r-offset (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zerop dist) 1 (/ 1 (* dist dist)))) 0.5) att)
-							   (vector-ref channel-gains r-offset))))
+	      (vector-set! channel-gains r-offset (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zerop dist) 1 (/ 1 (* dist dist)))) 0.5)) att)
+							   (vector-ref channel-gains r-offset)))
 	      ;; S
 	      (vector-set! channel-gains s-offset (cons time (vector-ref channel-gains s-offset)))
 	      (vector-set! channel-gains s-offset (cons (* (if (zero? dist) 0 2) z (- x) (if (zero? dist) 1 (/ 1 (* dist dist))) att)

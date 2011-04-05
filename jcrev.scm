@@ -21,8 +21,6 @@
 	 (comb-sum-1 0.0)
 	 (comb-sum-2 0.0)
 	 (all-sums 0.0)
-	 (delA 0.0)
-	 (delB 0.0)
 	 (file-dur (frames *reverb*))
 	 (decay-dur (mus-srate))
 	 (len (floor (+ decay-dur file-dur)))
