@@ -48834,7 +48834,7 @@ EDITS: 1
       (if (not (eq? tag 'cannot-parse))
 	  (snd-display #__line__ ";format arg type check? ~A" tag)))
     
-    ;; this is testing a missing quote??
+    ;; this is testing that eq? of numbers gets an error?
     (let ((tag (catch #t (lambda () (run-eval (lambda () (eq? .3 .2)))) (lambda args (car args)))))
       (if (not (eq? tag 'cannot-parse)) (snd-display #__line__ ";cannot parse case: ~A" tag)))
     

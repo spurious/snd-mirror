@@ -900,8 +900,7 @@
 	))
 
 (define (type-it type)
-  (let ((typ (assoc type direct-types))
-	(g2 '()))
+  (let ((typ (assoc type direct-types)))
     (if typ
 	(if (cdr typ)
 	    (begin
@@ -1003,12 +1002,10 @@
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 (define (CFNC-PA data min-len max-len types)
-  (let ((step (length types)))
-    (CFNC data 'etc (list min-len max-len types))))
+  (CFNC data 'etc (list min-len max-len types)))
 
 (define (CFNC-23-PA data min-len max-len types)
-  (let ((step (length types)))
-    (CFNC data 'etc (list min-len max-len types))))
+  (CFNC data 'etc (list min-len max-len types)))
 
 (define* (CFNC-22 data)
   (let ((name (cadr-str data))
@@ -2290,7 +2287,8 @@
 		(for-each 
 		 (lambda (arg)
 		   (let ((argname (cadr arg))
-			 (argtype (car arg)))
+			 ;(argtype (car arg))
+			 )
 		     (if previous-arg (heyc ", "))
 		     (set! previous-arg #t)
 		     (if (and (ref-arg? arg)
@@ -2385,7 +2383,8 @@
 		      (for-each
 		       (lambda (arg)
 			 (let ((argname (cadr arg))
-			       (argtype (car arg)))
+			       ;(argtype (car arg))
+			       )
 			   (if (string=? argname "func")
 			       (name-it "func"))))
 		       args)
@@ -2471,7 +2470,7 @@
 		      (hey "        case ~D: ~A(" i name))
 		  (do ((j 0 (+ 1 j)))
 		      ((= j (- cargs 1)))
-		    (let ((arg (list-ref args j)))
+		    (let () ;(arg (list-ref args j)))
 		      (hey "p_arg~D, " j)))
 		  ;; assume ending null for now
 		  (let ((modctr 0))
@@ -3019,7 +3018,8 @@
 (define (argify-func func)
   (let* ((cargs (length (caddr func)))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
-	 (args (- cargs refargs)))
+	 ;(args (- cargs refargs))
+	 )
     (hey "XEN_~A(gxg_~A_w, gxg_~A)~%" 
 	 (if (>= cargs 10) "VARGIFY"
 	     (if (> refargs 0)
@@ -3028,9 +3028,10 @@
 	 (car func) (car func))))
 
 (define (unargify-func func)
-  (let* ((cargs (length (caddr func)))
-	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
-	 (args (- cargs refargs)))
+  (let* (;(cargs (length (caddr func)))
+	 ;(refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
+	 ;(args (- cargs refargs))
+	 )
     (hey "#define gxg_~A_w gxg_~A~%" 
 	 (car func) (car func))))
 

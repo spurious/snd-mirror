@@ -19442,7 +19442,7 @@ const char *s7_format(s7_scheme *sc, s7_pointer args)
      3
 */
 
-/* trace should work with internal functions
+/* to trace an internal function, put the trace/untrace pair in the enclosing function
  */
 
 static s7_pointer g_trace(s7_scheme *sc, s7_pointer args)

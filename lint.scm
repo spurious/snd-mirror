@@ -31,24 +31,14 @@
     env)
   
   (define (proper-list lst)
-    (let ((len (length lst)))
-      (if (infinite? len)                       ; (and (not (finite? len)) (not (nan? len)))
-	  (begin
-	    (format #t "  circular list: ~A?~%" lst)
-	    lst)
-	  (if (>= len 0)
-	      lst
-	      (let* ((nlen (+ (abs len) 1))
-		     (res (make-list nlen)))    ; make-list returns a list of n elements
-		(do ((i 0 (+ i 1))
-		     (x lst))
-		    ((= i nlen))
-		  (if (pair? x)
-		      (begin
-			(set! (res i) (car x))  ; (list-set! res i (car x))
-			(set! x (cdr x)))
-		      (set! (res i) x)))        ; (list-set! res i x)
-		res)))))
+    (if (pair? lst)
+	(cons (car lst) 
+	      (if (pair? (cdr lst)) 
+		  (proper-list (cdr lst)) 
+		  (if (null? (cdr lst)) 
+		      '() 
+		      (list (cdr lst)))))
+	lst))
 
   (define (keywords lst)
     (let ((keys 0))
@@ -113,8 +103,6 @@
 	      env))))
   
   (define (walk name form env)
-    
-    ;(format #t "walk ~S ~S ~S~%" name form env)
     (if (symbol? form)
 	(ref-var form env)
 	
@@ -296,7 +284,8 @@
 
 		       ;; now try to check arg types for egregious errors
 		       (if (pair? (cdr form)) ; there are args
-			   (let ((arg1 (cadr form)))
+			   (let ((arg1 (cadr form))
+				 (arg2 (and (pair? (cddr form)) (caddr form))))
 			     (if (and (not (symbol? arg1))
 				      (not (pair? arg1))) ; no check if it's a variable or some expression
 				 (let ((number-ops '(= > < random abs * imag-part real-part / magnitude max nan? negative? 
@@ -323,6 +312,18 @@
 						   char-numeric? char-downcase char-whitespace?
 						   char<? char>? char-upper-case? char-ci=? char<=? char-ci<=? char-ci>? 
 						   char-lower-case? char-ci<? char>=?)))
+
+				   (if (and (eq? head 'eq?)
+					    (or (and (number? arg1)
+						     (number? arg2))
+						(and (char? arg1)
+						     (char? arg2))))
+				       (format #t "   ~A (line ~D): eq? shouldn't be used to compare number or characters: ~S~%"
+					       name line-number form))
+
+				   (if (eq? head 'not)
+				       (format #t "  ~A (line ~D): ~S is always ~A~%"
+					       name line-number form (if (eq? arg1 #f) "#t" "#f")))
 
 				   (if (member head list-ops)
 				       (if (not (null? arg1))
@@ -375,11 +376,5 @@
 	      ((eof-object? form))
 	    (walk (if (symbol? form) form (car form)) form '()))
 	  (close-input-port fp)))))
-
-
-;;; check for obvious cases like (list-ref '(1 2 3) 12)
-;;; eq? with something that will always be #f (and eqv? catch)
-;;; (not list) -> (not (null?...))
-;;; use this stuff in va.scm/s7test.scm/sndscm.html lint section
 
 

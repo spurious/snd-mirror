@@ -5940,7 +5940,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("06-Feb-10"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("06-Apr-11"));
       gl_already_inited = true;
     }
 }

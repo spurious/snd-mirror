@@ -291,8 +291,7 @@
 		  "gluTessNormal" "gluTessProperty" "gluNewTess"))
 
 (define (type-it type)
-  (let ((typ (assoc type direct-types))
-	(g2 '()))
+  (let ((typ (assoc type direct-types)))
     (if typ
 	(if (cdr typ)
 	    (begin
@@ -573,7 +572,7 @@
 	  (refargs (ref-args args))
 	  (xgargs (- cargs refargs))
 	  (argstr (cadddr data))
-	  (lambda-type (cdr (assoc name names)))
+	  ;(lambda-type (cdr (assoc name names)))
 	  (arg-start 0)
 	  (line-len 0)
 	  (line-max 120)
@@ -621,7 +620,8 @@
 	       (for-each 
 		(lambda (arg)
 		  (let ((argname (cadr arg))
-			(argtype (car arg)))
+			;(argtype (car arg))
+			)
 		    (if previous-arg (heyc ", "))
 		    (set! previous-arg #t)
 		    (hey "XEN ~A" argname)))
@@ -675,8 +675,7 @@
 				 (no-stars argtype) argname argname ctr name argtype))))
 		(set! ctr (+ 1 ctr))))
 	    args)))
-     (let ((using-result #f)
-	   (using-loc #f))
+     (let ((using-result #f))
        (set! using-result (and (> refargs 0)
 			       (not (string=? return-type "void"))))
        (if using-result
@@ -769,7 +768,7 @@
   (let* ((cargs (length (caddr func)))
 	 (name (car func))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
-	 (args (- cargs refargs))
+	 ;(args (- cargs refargs))
 	 (if-fnc (and (> (length func) 4)
 		      (eq? (list-ref func 4) 'if))))
     (check-glu name)
@@ -796,10 +795,10 @@
 (hey "~%#else~%~%")
 
 (define (unargify-func func)
-  (let* ((cargs (length (caddr func)))
+  (let* (;(cargs (length (caddr func)))
 	 (name (car func))
-	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
-	 (args (- cargs refargs))
+	 ;(refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
+	 ;(args (- cargs refargs))
 	 (if-fnc (and (> (length func) 4)
 		      (eq? (list-ref func 4) 'if))))
 

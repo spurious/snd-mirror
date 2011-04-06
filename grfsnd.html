@@ -80,6 +80,7 @@
   <li><a href="#sndandgsl" onmouseout="UnTip()" onmouseover="Tip('include some special functions from GSL')">Snd and GSL</a>
   <li><a href="#sndandgmp" onmouseout="UnTip()" onmouseover="Tip('include multiprecision arithmetic')">Snd and multiprecision arithmetic (gmp, mpfr, mpc)</a>
   </ul>
+  <li><a href="#otherstuff">Other stuff</a>
 </ul>
 </td><td width="40%">
   <ul>
@@ -2480,6 +2481,33 @@ But, one thing at a time...
 </p>
 
 <br><br>
+
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="otherstuff">Other stuff</a></h2></td></tr></table>
+</td></tr></table>
+<br>
+
+<p>lint.scm is a lint program for s7 scheme.
+</p>
+
+<p>pretty-print.scm is a pretty-printer written by Marc Feeley, and changed slightly for s7.
+</p>
+
+<p>primes.scm is a list of primes for the <a href="sndscm.html#peakphases">peak phases</a> functions.
+</p>
+
+<p>The tools directory has several things that might be of interest.  sam.c is a
+Samson box emulator.  crossref.c is a cross-referencer for the Snd sources.
+exs7.c is one of the examples from s7.html.  xgdata.scm and makexg.scm create xg.c,
+the Gtk bindings.  Similarly gldata.scm and makegl.scm create gl.c, the OpenGL bindings.  make-index.scm
+creates index.html, the overall Snd index, and performs a lot of HTML error checks.
+snd.supp is the suppressions list for valgrind.  table.scm creates the table of contents
+at the start of snd-test.scm.  The other files in the tools directory are intended
+for semi-automatic regression testing.
+</p>
+
+<br><br>
+
 
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>

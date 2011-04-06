@@ -2,9 +2,6 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
-/* TODO: when the gtk version goes to the html reader, it locks out the gtk GUI?
- */
-
 static const char **snd_xrefs(const char *topic);
 static const char **snd_xref_urls(const char *topic);
 
@@ -3536,7 +3533,7 @@ void url_to_html_viewer(const char *url)
 	  int len, err;
 	  len = strlen(dir_path) + strlen(url) + 256;
 	  path = (char *)calloc(len, sizeof(char));
-	  snprintf(path, len, "%s file:%s/%s", program, dir_path, url);
+	  snprintf(path, len, "%s file:%s/%s &", program, dir_path, url);
 	  err = system(path);
 	  if (err == -1)
 	    fprintf(stderr, "can't start %s?", program);
