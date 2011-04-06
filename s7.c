@@ -16423,7 +16423,7 @@ hiho
 "a test"
 with-sound #f etc -- all macros at least
 TODO: clickable urls in help strings
-TODO: currently snd-help doesn't handle (help let) correctly -- it should let use try first
+TODO: currently snd-help doesn't handle (help let) correctly -- it should let us try first
        */
     }
 
@@ -19441,6 +19441,9 @@ const char *s7_format(s7_scheme *sc, s7_pointer args)
       2
      3
 */
+
+/* trace should work with internal functions
+ */
 
 static s7_pointer g_trace(s7_scheme *sc, s7_pointer args)
 {

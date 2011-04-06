@@ -819,8 +819,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 					  (list XmNbackground (basic-color))))
        (filter-cascade (XtCreateManagedWidget "Filter Effects" xmCascadeButtonWidgetClass (main-menu effects-menu)
 					      (list XmNsubMenuId filter-menu
-						    XmNbackground (basic-color))))
-       (root-2 (sqrt 2.0)))
+						    XmNbackground (basic-color)))))
   
   (XtAddCallback filter-cascade XmNcascadingCallback (lambda (w c i) (update-label filter-menu-list)))
   
@@ -1459,7 +1458,6 @@ Move the sliders to set the filter cutoff frequency and resonance."))
   (let ((src-amount 0.0)
 	(src-label "Sample rate conversion")
 	(src-dialog #f)
-	(src-menu-widget #f)
 	(src-target 'sound))
     
     (define (post-src-dialog)
@@ -1868,9 +1866,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (lambda (freq gliss-env)
 	(let* ((os (make-oscil freq))
 	       (need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0)))))
-	       (e (and need-env (make-env (xe-envelope rm-envelope) :length (effect-frames rm-target))))
-	       (len (frames))
-	       (genv (make-env :envelope gliss-env :length len)))
+	       (e (and need-env (make-env (xe-envelope rm-envelope) :length (effect-frames rm-target)))))
 	  (if need-env
 	      (lambda (inval)
 		(* inval (* (env e) (oscil os))))
@@ -1993,10 +1989,6 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	 (comb4 (make-comb 0.697 5801))
 	 (outdel1 (make-delay (round (* .013 (srate)))))
 	 (comb-sum 0.0)
-	 (comb-sum-1 0.0)
-	 (comb-sum-2 0.0)
-	 (delA 0.0)
-	 (delB 0.0)
 	 (samp 0))
     (lambda (inval)
       (let ((allpass-sum (all-pass allpass3 
@@ -2004,8 +1996,6 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 					     (all-pass allpass1 
 						       (if (< samp input-samps) inval 0.0))))))
 	(set! samp (+ 1 samp))
-	(set! comb-sum-2 comb-sum-1)
-	(set! comb-sum-1 comb-sum)
 	(set! comb-sum 
 	      (+ (comb comb1 allpass-sum)
 		 (comb comb2 allpass-sum)
@@ -2353,18 +2343,17 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	((= i freq-inc))
       (vector-set! formants i (make-formant (* i bin) radius)))
     (lambda (inval)
-      (let ((outval 0.0))
-	(if (= ctr freq-inc)
-	    (begin
-	      (set! fdr (channel->vct inctr fftsize cross-snd 0))
-	      (set! inctr (+ inctr freq-inc))
-	      (spectrum fdr fdi #f 2)
-	      (vct-subtract! fdr spectr)
-	      (vct-scale! fdr (/ 1.0 freq-inc))
-	      (set! ctr 0)))
-	(set! ctr (+ ctr 1))
-	(vct-add! spectr fdr)
-	(* amp (formant-bank spectr formants inval))))))
+      (if (= ctr freq-inc)
+	  (begin
+	    (set! fdr (channel->vct inctr fftsize cross-snd 0))
+	    (set! inctr (+ inctr freq-inc))
+	    (spectrum fdr fdi #f 2)
+	    (vct-subtract! fdr spectr)
+	    (vct-scale! fdr (/ 1.0 freq-inc))
+	    (set! ctr 0)))
+      (set! ctr (+ ctr 1))
+      (vct-add! spectr fdr)
+      (* amp (formant-bank spectr formants inval)))))
 
 (define* (effects-cross-synthesis-1 cross-snd amp fftsize r beg dur snd chn)
   "(effects-cross-synthesis-1 cross-snd amp fftsize r beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
@@ -2397,14 +2386,13 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
       "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
 it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
 a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
-      (let ((len (frames mono-snd)))
-	(if (number? pan-env)
-	    (let* ((pos (/ pan-env 90.0)))
-	      (effects-position-sound mono-snd pos stereo-snd 1)
-	      (effects-position-sound mono-snd (- 1.0 pos) stereo-snd 0))
-	    (begin
-	      (effects-position-sound mono-snd pan-env stereo-snd 1)
-	      (effects-position-sound mono-snd pan-env stereo-snd 0)))))
+      (if (number? pan-env)
+	  (let* ((pos (/ pan-env 90.0)))
+	    (effects-position-sound mono-snd pos stereo-snd 1)
+	    (effects-position-sound mono-snd (- 1.0 pos) stereo-snd 0))
+	  (begin
+	    (effects-position-sound mono-snd pan-env stereo-snd 1)
+	    (effects-position-sound mono-snd pan-env stereo-snd 0))))
     
     (define (post-place-sound-dialog)
       (if (not (Widget? place-sound-dialog))
@@ -3157,7 +3145,6 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		       (samp2 0.0)
 		       (samps (make-vct 10))
 		       (samps-ctr 0)
-		       (diff 1.0)
 		       (len (frames)))
 		   (call-with-exit
 		    (lambda (return)

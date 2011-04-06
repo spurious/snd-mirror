@@ -97,7 +97,6 @@
 	       (sum 0.0)
 	       (last-cross 0)
 	       (cross 0)
-	       (silences 0)
 	       (silence (* extension .001)))
 	  (do ((i 0 (+ 1 i)))
 	      ((= i len))

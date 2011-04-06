@@ -665,8 +665,7 @@
 	 (width (list-ref meter-data 5))
 	 (height (list-ref meter-data 6))
 	 ;; (size (list-ref meter-data 2))
-	 (win ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window meter)))
-	 (major-tick (round (/ width 24))))
+	 (win ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window meter))))
 
     ;; this is too slow -- can we save the plate? (also if just 1 meter, put pivot higher?)
     (let ((cr (gdk_cairo_create win)))
@@ -747,8 +746,7 @@
 	    (begin
 	      (cairo_set_source_rgb cr 1.0 0.0 0.0)
 	      (cairo_set_line_width cr (/ 5.0 width))
-	      (let* ((redx (* val 0.5 pi))
-		     (redy (min redx bubble-size)))
+	      (let* ((redx (* val 0.5 pi)))
 		(cairo_arc cr 0 0 (- 0.5 (/ 3.0 width))  (+ (* 5 (/ pi 4)) (max 0.0 (- redx bubble-size))) (+ (* 5 (/ pi 4)) redx))
 		(cairo_stroke cr)))))
       

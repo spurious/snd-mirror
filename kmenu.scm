@@ -135,7 +135,7 @@
       
       ;;(define (mksetaccel)
       (define setaccel!
-	(let setaccel ()
+	(let ()
 	  (define rootwin (GTK_WINDOW (list-ref (main-widgets) 1))) 
 	  (define agroup (gtk_accel_group_new))
 	  (define (set-accel widget gdk_key gdk_mod)

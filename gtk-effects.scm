@@ -2878,7 +2878,6 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		       (samp2 0.0)
 		       (samps (make-vct 10))
 		       (samps-ctr 0)
-		       (diff 1.0)
 		       (len (frames)))
 		   (call-with-exit
 		    (lambda (return)

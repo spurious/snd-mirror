@@ -225,8 +225,8 @@
     fixed))
 
 (define (test-remove-pops)
-  (let ((test (new-sound "test.snd"))
-	(data (make-vct 4001)))
+  (new-sound "test.snd")
+  (let ((data (make-vct 4001)))
     (do ((i 100 (+ i 200)))
 	((>= i 3800))
       (let ((size (random 8)))

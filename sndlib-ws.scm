@@ -433,13 +433,14 @@ finish-with-sound to complete the process."
 	    (reverb (list-ref wsd 2))
 	    (revfile (list-ref wsd 3))
 	    (old-srate (list-ref wsd 4))
-	    (statistics (list-ref wsd 5))
+	    ;(statistics (list-ref wsd 5))
 	    ;(to-snd (list-ref wsd 6))
 	    ;(scaled-to (list-ref wsd 7))
 	    ;(scaled-by (list-ref wsd 8))
 	    ;(play (list-ref wsd 9))
 	    (reverb-data (list-ref wsd 10))
-	    (start (list-ref wsd 11)))
+	    ;(start (list-ref wsd 11))
+	    )
 
 	(if reverb
 	    (begin

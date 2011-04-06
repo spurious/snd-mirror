@@ -101,7 +101,11 @@
 					   (format #t "  ~A (line ~D): strange parameter ~A~%" name line-number arg)
 					   (list (car arg) #f #f))))
 				 (proper-list args)))))
-	      (walk name val (append arg-data env))
+	      (let ((new-env (append arg-data env)))
+		(for-each
+		 (lambda (form)
+		   (walk name form new-env))
+		 val))
 	      (if *report-unused-parameters* (report-usage name line-number 'parameter head arg-data))
 	      (append (list (list name #f #f)) env))
 	    (begin
@@ -110,6 +114,7 @@
   
   (define (walk name form env)
     
+    ;(format #t "walk ~S ~S ~S~%" name form env)
     (if (symbol? form)
 	(ref-var form env)
 	
@@ -141,7 +146,7 @@
 		
 		((set!)
 		 (let* ((settee (cadr form))
-			(setval (cddr form)))
+			(setval (caddr form)))
 		   (if (pair? settee)
 		       (begin
 			 (walk name settee env) ; this counts as a reference since it's by reference so to speak
@@ -170,12 +175,28 @@
 		  (cddr form))
 		 env)
 		
-		((let do)
+		((do)
+		 (let ((vars '()))
+		   ;; walk the init forms before adding the step vars to env
+		   (do ((bindings (cadr form) (cdr bindings)))
+		       ((null? bindings))
+		     (walk name (cadar bindings) env)
+		     (set! vars (append (list (list (caar bindings) #f #f)) vars)))
+		   ;; walk the step exprs
+		   (do ((bindings (cadr form) (cdr bindings)))
+		       ((null? bindings))
+		     (if (not (null? (cddar bindings)))
+			 (walk name (caddar bindings) (append vars env))))
+		   (walk name (cddr form) (append vars env))
+		   (report-usage name line-number 'variable head vars)
+		   env))
+		
+		((let)
 		 (let* ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
 		   (let ((vars (if named-let (list (list named-let #f #f)) '())))
 		     (do ((bindings (if named-let (caddr form) (cadr form)) (cdr bindings)))
 			 ((null? bindings))
-		       (walk name (cdar bindings) env)
+		       (walk name (cadar bindings) env)
 		       (set! vars (append (list (list (caar bindings) #f #f)) vars)))
 		     (walk name (if named-let (cdddr form) (cddr form)) (append vars env))
 		     (report-usage name line-number 'variable head vars)
@@ -185,7 +206,7 @@
 		 (let ((vars '()))
 		   (do ((bindings (cadr form) (cdr bindings)))
 		       ((null? bindings))
-		     (walk name (cdar bindings) (append vars env))
+		     (walk name (cadar bindings) (append vars env))
 		     (set! vars (append (list (list (caar bindings) #f #f)) vars)))
 		   (walk name (cddr form) (append vars env))
 		   (report-usage name line-number 'variable head vars)
@@ -196,12 +217,12 @@
 		   (do ((bindings (cadr form) (cdr bindings)))
 		       ((null? bindings))
 		     (set! vars (append (list (list (caar bindings) #f #f)) vars))
-		     (walk name (cdar bindings) (append vars env)))
+		     (walk name (cadar bindings) (append vars env)))
 		   (walk name (cddr form) (append vars env))
 		   (report-usage name line-number 'variable head vars)
 		   env))
 
-		((format snd-display clm-print error)
+		((format snd-display clm-print)
 		 (let ((control-string (if (string? (cadr form)) (cadr form) (caddr form)))
 		       (args (if (string? (cadr form)) (cddr form) (cdddr form))))
 		   
@@ -236,19 +257,20 @@
 			       (if (char=? c #\~)
 				   (set! tilde-time #t)))))
 		       (if (not (= curlys 0))
-			   (format #t "  ~A (line ~D): ~A has ~D unmatched ~A~A~%"
-				   name line-number head (abs curlys) (if (positive? curlys) "{" "}") (if (> curlys 1) "s" "")))
+			   (format #t "  ~A (line ~D): ~A has ~D unmatched ~A~A:~%        ~S~%"
+				   name line-number head (abs curlys) (if (positive? curlys) "{" "}") (if (> curlys 1) "s" "") form))
 		       dirs))
 		       
 		   (if (not (string? control-string))
 		       (if (not (pair? args))
-			   (format #t "  ~A (line ~D): ~A looks suspicious~%" name line-number form))
+			   (format #t "  ~A (line ~D): ~S looks suspicious~%" name line-number form))
 		       (let ((ndirs (count-directives control-string))
 			     (nargs (if (or (null? args) (pair? args)) (length args) 0)))
 			 (if (not (= ndirs nargs))
-			     (format #t "  ~A (line ~D): ~A has ~A arguments~%" 
+			     (format #t "  ~A (line ~D): ~A has ~A arguments:~%       ~S~%" 
 				     name line-number head 
-				     (if (> ndirs nargs) "too few" "too many")))))
+				     (if (> ndirs nargs) "too few" "too many")
+				     form))))
 		   (walk name (cdr form) env)))
 		
 		(else  ; if begin cond and or with-environment
@@ -256,20 +278,21 @@
 
 		 (if (and (symbol? head)
 			  (defined? head)
-			  (procedure? (symbol->value head)))
-
+			  (procedure? (symbol->value head))
+			  (not (procedure-with-setter? (symbol->value head))) ; set! case is confusing here
+			  (not (member head env)))                            ; not shadowed locally (confusable if the file was loaded first)
 		     ;; check arg number
 		     (let ((arity (procedure-arity (symbol->value head)))
 			   (args (length (cdr form))))
 		       (if (pair? arity)
 			   (begin
 			     (if (< args (car arity))
-				 (format #t "  ~A (line ~D): ~A needs at least ~D argument~A~%" 
-					 name line-number head (car arity) (if (> (car arity) 1) "s" ""))
+				 (format #t "  ~A (line ~D): ~A needs at least ~D argument~A:~%        ~S~%" 
+					 name line-number head (car arity) (if (> (car arity) 1) "s" "") form)
 				 (if (and (not (caddr arity))
 					  (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity))))
-				     (format #t "  ~A (line ~D): ~A has too many arguments~%" 
-					     name line-number head)))))
+				     (format #t "  ~A (line ~D): ~A has too many arguments:~%        ~S~%" 
+					     name line-number head form)))))
 
 		       ;; now try to check arg types for egregious errors
 		       (if (pair? (cdr form)) ; there are args
@@ -303,23 +326,41 @@
 
 				   (if (member head list-ops)
 				       (if (not (null? arg1))
-					   (format #t "  ~A (line ~D): ~A's 1st argument should be a list: ~S~%" name line-number head arg1))
+					   (format #t "  ~A (line ~D): ~A's 1st argument should be a list: ~S:~%        ~S~%" 
+						   name line-number head arg1 form))
 				       (if (member head number-ops)
 					   (if (not (number? arg1))
-					       (format #t "  ~A (line ~D): ~A's 1st argument should be a number: ~S~%" name line-number head arg1))
+					       (format #t "  ~A (line ~D): ~A's 1st argument should be a number: ~S:~%        ~S~%" 
+						       name line-number head arg1 form))
 					   (if (member head string-ops)
 					       (if (not (string? arg1))
-						   (format #t "  ~A (line ~D): ~A's 1st argument should be a string: ~S~%" name line-number head arg1))
+						   (format #t "  ~A (line ~D): ~A's 1st argument should be a string: ~S:~%        ~S~%" 
+							   name line-number head arg1 form))
 					       (if (member head char-ops)
 						   (if (not (char? arg1))
-						       (format #t "  ~A (line ~D): ~A's 1st argument should be a character: ~S~%" name line-number head arg1))
+						       (format #t "  ~A (line ~D): ~A's 1st argument should be a character: ~S:~%        ~S~%" 
+							       name line-number head arg1 form))
 						   (if (member head vector-ops)
 						       (if (not (vector? arg1))
-							   (format #t "  ~A (line ~D): ~A's 1st argument should be a vector: ~S~%" name line-number head arg1)))))))))))))
-		 (for-each
-		  (lambda (f)
-		    (walk name f env))
-		  form)))))))
+							   (format #t "  ~A (line ~D): ~A's 1st argument should be a vector: ~S:~%        ~S~%" 
+								   name line-number head arg1 form)))))))))))))
+		 (let ((vars env))
+		   (for-each
+		    (lambda (f)
+		      (set! vars (walk name f vars)))
+		    form)
+		   (if (and (not (eq? vars env))
+			    (eq? head 'begin))
+		       (let ((nvars '()))
+			 (do ((v vars (cdr v)))
+			     ((or (null? v)
+				  (eq? v env)))
+			   (set! nvars (cons (car vars) nvars)))
+			 (report-usage name line-number 'local-variable head nvars))))
+		 env)))
+
+	    ;; else form is a constant or something
+	    env)))
   
   (let ((fp (catch #t
 		   (lambda ()
@@ -340,6 +381,5 @@
 ;;; eq? with something that will always be #f (and eqv? catch)
 ;;; (not list) -> (not (null?...))
 ;;; use this stuff in va.scm/s7test.scm/sndscm.html lint section
-;;; begin define -> env
-;;; (set! (func...) can confuse the arg num checker
-;;; (lambda (abs) ... can confuse it also
+
+

@@ -19,8 +19,7 @@
 	 (dpy (XtDisplay (cadr (main-widgets))))
 	 (version (glXQueryVersion dpy 0 0)))
     (if (car version)
-	(let* ((scr (DefaultScreen dpy))
-	       (visuals (XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))
+	(let* ((visuals (XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))
 	  (glXMakeCurrent dpy (XtWindow (cadr (main-widgets))) cx)
 	  (snd-print (format #f "GL version: ~A.~A, (~A ~A ~A)~%"
 			     (cadr version) (caddr version)

@@ -2575,9 +2575,10 @@
 				       (if (> dist (- 1.0 amp-time))
 					   (- 1.0 dist)
 					   amp-time))))
-	 (outa i (* (env amp-env)
-		    (rxyk!cos gen (+ (hz->radians frq)
-				     (* vib-index (oscil vib)))))))))))
+	 (outa (+ start i)
+	       (* (env amp-env)
+		  (rxyk!cos gen (+ (hz->radians frq)
+				   (* vib-index (oscil vib)))))))))))
 #|
 (with-sound (:statistics #t :play #t)
   (brassy 0 4 50 .5 '(0 0 1 1 10 1 11 0) '(0 1 1 0) 1000))
@@ -5681,7 +5682,7 @@ index 10 (so 10/2 is the bes-jn arg):
 					  ((prime) primoid-min-peak-phases)
 					  ((even) neven-min-peak-phases)))))
 			  (if min-dat
-			      (let ((norm (car min-dat))
+			      (let (;(norm (car min-dat))
 				    (rats (cadr min-dat)))
 				(do ((i 1 (+ i 1))
 				     (j 0 (+ j 3)))
@@ -5991,7 +5992,6 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 
   (declare (gen moving-fft))
   (let* ((n (moving-fft-n gen))
-	 (n2 (/ n 2))
 	 (rl (moving-fft-rl gen))
 	 (im (moving-fft-im gen))
 	 (data (moving-fft-data gen))

@@ -1760,7 +1760,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		 (zf (list-ref z (+ i 1))))
 	    (set! sofar (+ sofar (distance (- xf xi) (- yf yi) (- zf zi))))
 	    (set! dp (cons sofar dp))))
-	(let ((df (car dp)))	
+	(let ()
 	  (set! dp (reverse dp))
 	  (let* ((tp '())
 		 (td 0)
@@ -2109,7 +2109,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 			    (- (car (last tpoints)) (car tpoints)))
 			 duration))
 	 (start 0)
-	 (end 0)
+	 ;(end 0)
 	 (delay '())
 	 (doppler '())
 	 (real-dur 0)
@@ -2952,7 +2952,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     ;; run with zeroed samples at the end so it should be fine
     (set! real-dur (* duration (src-duration (reverse doppler)))) 
     ;; end of the run according to the duration of the note
-    (set! end (time->samples duration))
+    ;; (set! end (time->samples duration))
     ;; start and end of the run loop in samples
     (set! run-beg (time->samples start-time))
     (set! run-end (inexact->exact (floor (- (+ (time->samples (+ start-time (max duration real-dur)))

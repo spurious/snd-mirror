@@ -6703,8 +6703,7 @@ EDITS: 5
       
       ;; ptree2
       (let ((ind (new-sound "test.snd")) ;4th
-	    (case1 #f)
-	    (case2 #f))
+	    (case1 #f))
 	(map-chan (lambda (y) 1.0) 0 10)
 	(ptree-channel (lambda (y) (* y 0.5)))
 	(if (not (vequal (channel->vct) (make-vct 11 0.5)))
@@ -6774,8 +6773,7 @@ EDITS: 5
       
       ;; ptree2-zero
       (let ((ind (new-sound "test.snd"))
-	    (case1 #f)
-	    (case2 #f))
+	    (case1 #f))
 	(map-chan (lambda (y) 1.0) 0 10)
 	(scale-by 0.0)
 	(ptree-channel (lambda (y) (+ y 0.5)))
@@ -8171,8 +8169,7 @@ EDITS: 5
       
       ;; ptree3 + ramps
       (let ((ind (new-sound "test.snd"))
-	    (case1 #f)
-	    (case2 #f))
+	    (case1 #f))
 	(map-chan (lambda (y) 1.0) 0 10)
 	(ptree-channel (lambda (y) (* y 0.5)))
 	(ptree-channel (lambda (y) (+ y 1.5)))
@@ -12425,8 +12422,7 @@ EDITS: 5
 	  (if (and (provided? 'snd-motif)
 		   (provided? 'xm))
 	      (let* ((edhist (list-ref (channel-widgets ind 0) 7))
-		     (edp (XtParent edhist))
-		     (pmax (cadr (XtVaGetValues edp (list XmNpaneMaximum 0)))))
+		     (edp (XtParent edhist)))
 		(XtUnmanageChild edp) 
 		(XtVaSetValues edp (list XmNpaneMinimum 100)) 
 		(XtManageChild edp)))
@@ -30614,9 +30610,7 @@ EDITS: 2
 		
 		(do ()
 		    ((= open-ctr 32))
-		  (let* ((len (length open-files))
-			 (open-chance (* (- 8 len) .125))
-			 (close-chance (* len .125)))
+		  (let* ((len (length open-files)))
 		    (if (or (= len 0) (> (random 1.0) .5))
 			(let* ((choice (floor (random sf-dir-len)))
 			       (name (string-append sf-dir (list-ref sf-dir-files choice)))
@@ -30754,14 +30748,13 @@ EDITS: 2
 		    (free-sampler rd)))
 		
 		;; mix reader
-		(let ((save-md 0))
+		(let ()
 		  (mix-click-sets-amp)
 		  (let* ((ind (open-sound "oboe.snd"))
 			 (reg (make-region 1000 2000 ind 0))
 			 (md (car (mix-region reg 0 ind 0 0)))
 			 (rd (make-mix-sampler md)))
 		    (set! (mix-property :hi md) "hi")
-		    (set! save-md md)
 		    (if (not (string=? (mix-property :hi md) "hi")) (snd-display #__line__ ";mix(9)-property: ~A" (mix-property :hi md)))
 		    (let ((val (rd)))
 		      (if (fneq val .0328) (snd-display #__line__ ";mix-sampler at start: ~A" val))
@@ -32093,8 +32086,7 @@ EDITS: 2
       (if (and (provided? 'snd-motif)
 	       (provided? 'xm))
 	  (let* ((edhist (list-ref (channel-widgets ind 0) 7))
-		 (edp (XtParent edhist))
-		 (pmax (cadr (XtVaGetValues edp (list XmNpaneMaximum 0)))))
+		 (edp (XtParent edhist)))
 	    (XtUnmanageChild edp) 
 	    (XtVaSetValues edp (list XmNpaneMinimum 100)) 
 	    (XtManageChild edp)))
@@ -32451,9 +32443,7 @@ EDITS: 2
 		(snd-display #__line__ ";save state restart from ~A to ~A sounds?" files (length (sounds))))
 	    (set! open-files (sounds))))
       
-      (let* ((len (length open-files))
-	     (open-chance (max 0.0 (* (- 8 len) .125)))
-	     (close-chance (* len .125)))
+      (let* ((len (length open-files)))
 	(let* ((choice (random cur-dir-len))
 	       (name (list-ref cur-dir-files choice))
 	       (ht (mus-sound-header-type name))
@@ -34133,8 +34123,7 @@ EDITS: 2
 	      (if (fneq (cheby-hka 1 0.25 (vct 0 0 0 0 1.0 1.0)) 1.025390625)
 		  (snd-display #__line__ ";cheby-hka 2: ~A" (cheby-hka 1 0.25 (vct 0 0 0 0 1.0 1.0))))
 	      (if (fneq (cheby-hka 0 0.25 (vct 0 0 0 0 1.0 1.0)) 1.5234375)
-		  (snd-display #__line__ ";cheby-hka 3: ~A" (cheby-hka 0 0.25 (vct 0 0 0 0 1.0 1.0)) 1.5234375))
-	      
+		  (snd-display #__line__ ";cheby-hka 3: ~A" (cheby-hka 0 0.25 (vct 0 0 0 0 1.0 1.0))))
 	      
 	      (map-channel (lambda (y) (* .5 (oscil osc))))
 	      (let ((vals (freq-peak 0 ind 8192)))
@@ -45270,7 +45259,7 @@ EDITS: 1
 		 (begin
 		   (if (sampler-at-end? fd) (snd-display #__line__ ";~A: sampler-at-end?: ~A" file fd))
 		   (if (not (= (sampler-position fd) 10000)) 
-		       (snd-display #__line__ ";~A: sampler: position: ~A ~A" fd (sampler-position fd))))
+		       (snd-display #__line__ ";~A: sampler: position: ~A" fd (sampler-position fd))))
 		 (begin
 		   (if (not (sampler-at-end? fd)) (snd-display #__line__ ";~A: not sampler-at-end?: ~A" file fd))
 		   (if (= (sampler-position fd) 10000)
@@ -52346,7 +52335,7 @@ EDITS: 1
     
     (let ((ho (make-hi308 1.0 2.0))) 
       (if (fneq (run (lambda () (hi308-freq ho))) 1.0)
-	  (snd-display #__line__ ";hi308-freq 1.0: ~A" (run (lambda () (hi308-freq ho))) 1.0)))
+	  (snd-display #__line__ ";hi308-freq 1.0: ~A" (run (lambda () (hi308-freq ho))))))
     
     (let ((ho (make-hi308 1.0 2.0))) 
       (run (lambda () (set! (hi308-phase ho) 123.0)))
@@ -52355,7 +52344,7 @@ EDITS: 1
     
     (let ((ho (make-hi308 1.0 2.0))) 
       (if (fneq (run (lambda () (set! (hi308-phase ho) 123.0) (hi308-phase ho))) 123.0)
-	  (snd-display #__line__ ";set hi308-phase and rtn 123.0: ~A ~A" ho (run (lambda () (set! (hi308-phase ho) 123.0) (hi308-phase ho))) 123.0)))
+	  (snd-display #__line__ ";set hi308-phase and rtn 123.0: ~A ~A" ho (run (lambda () (set! (hi308-phase ho) 123.0) (hi308-phase ho))))))
     
     (let ((ho (make-hi308 :freq 1.0 :phase 2.0)))
       (if (fneq (run (lambda () (call-hi308 ho))) 1.0)
@@ -54139,25 +54128,11 @@ EDITS: 1
 	  (ampf '(0 0 25 1 75 1 100 0))
 	  (ranf '(0 .5 100 .5))
 	  (index '(0 1 100 1))
-	  (zero_fun '(0 0 100 0))
-	  (atskew '(0 -1 15 .3 22 -.1 25 0 75 0 100 -.2))
-	  (vibfun '(0 0 .3 .3 15 .6 25 1 100 1))
-	  (slopefun '(0 1 75 1 100 0))
-	  (trap '(0 0 25 1 75 1 100 0))
-	  (ramp '(0 0 25 0 75 1 100 1))
 	  (solid '(0 0 5 1 95 1 100 0))
-	  (sfz '(0 0 25 1 30 .6 50 .5 75 .2 100 0))
-	  (mound '(0 0 10 .4 25 .8 40 1 60 1 75 .8 90 .4 100 0))
-	  (vio '(0 0 7 .2 25 .5 40 .6 60 .6 75 .5 90 .2 100 0))
 	  (bassdr2 '(.5 .06 1 .62 1.5 .07 2.0 .6 2.5 .08 3.0 .56 4.0 .24 
 			5 .98 6 .53 7 .16 8 .33 9 .62 10 .12 12 .14 14 .86
 			16 .12 23 .14 24 .17))
-	  (bassdrstr '(.5 .06 1.0 .63 1.5 .07 2.01 .6 2.5 .08 3.02 .56
-			  4.04 .24 5.05 .98 6.06 .53 7.07 .16 8.08 .33 9.09 .62
-			  10.1 .12 12.12 .14 13.13 .37 14.14 .86 16.16 .12 23.23 .14 24.24 .17))
-	  (tenordr '(.3 .04 1 .81 2 .27 3 .2 4 .21 5 .18 6 .35 7 .03 8 .07 9 .02 10 .025 11 .035))
-	  (tenordrstr '(.3 .04 1.03 .81 2.03 .27 3.03 .20 4.03 .21 5.03 .18
-			   6.03 .35 7.03 .03 8.03 .07 9.03 .02 10.03 .03 11.03 .04)))
+	  (tenordr '(.3 .04 1 .81 2 .27 3 .2 4 .21 5 .18 6 .35 7 .03 8 .07 9 .02 10 .025 11 .035)))
       (with-sound (:reverb nrev)
 		  (drone  .000  4.000  115.000  (* .25 .500) solid bassdr2  .100  .500
 			  .030  45.000 1  .010 10)
@@ -55602,7 +55577,8 @@ EDITS: 1
 	(with-sound (:output v1)
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
-	(if (fneq (vct-peak v1) .2) (snd-display #__line__ ";with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1))))))
+	(if (fneq (vct-peak v1) .2) (snd-display #__line__ ";with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1)))))
+    (set! (optimization) oldopt))
   
   (let ((oldopt (optimization)))
     (set! (optimization) 6)
@@ -55616,7 +55592,8 @@ EDITS: 1
 	(with-sound (:output v1)
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
-	(if (fneq (car (sound-data-maxamp v1)) .2) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+	(if (fneq (car (sound-data-maxamp v1)) .2) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+    (set! (optimization) oldopt))
   
   (let ((oldopt (optimization)))
     (set! (locsig-type) mus-interp-linear)
@@ -55636,7 +55613,8 @@ EDITS: 1
 	(with-sound (:output v1)
 		    (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0)
 		    (fm-violin 0 .1 440 .1 :degree 0 :random-vibrato-amplitude 0.0))
-	(if (fneq (car (sound-data-maxamp v1)) .2) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+	(if (fneq (car (sound-data-maxamp v1)) .2) (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+    (set! (optimization) oldopt))
   
   (let ((oldopt (optimization)))
     (set! (optimization) 6)
@@ -55652,7 +55630,8 @@ EDITS: 1
 	(with-sound (:output v1 :scaled-by 2.0)
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
-	(if (fneq (vct-peak v1) .4) (snd-display #__line__ ";with-sound -> vct fm-violin maxamp (opt 2 scaled-by): ~A" (vct-peak v1))))))
+	(if (fneq (vct-peak v1) .4) (snd-display #__line__ ";with-sound -> vct fm-violin maxamp (opt 2 scaled-by): ~A" (vct-peak v1)))))
+    (set! (optimization) oldopt))
   
   (let ((oldopt (optimization)))
     (set! (optimization) 6)
@@ -55669,7 +55648,8 @@ EDITS: 1
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0)
 		    (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
 	(if (fneq (car (sound-data-maxamp v1)) .1) 
-	    (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2 scaled-by): ~A" (sound-data-maxamp v1))))))
+	    (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2 scaled-by): ~A" (sound-data-maxamp v1)))))
+    (set! (optimization) oldopt))
   
   (let ((stats-string ""))
     (let ((v1 (with-sound (:output (make-vct 2210) :statistics (lambda (str) (set! stats-string str)))
@@ -55754,7 +55734,8 @@ EDITS: 1
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
 	(if (< (vct-peak v1) .29) 
-	    (snd-display #__line__ ";rev with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1))))))
+	    (snd-display #__line__ ";rev with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1)))))
+    (set! (optimization) oldopt))
   
   (let ((oldopt (optimization)))
     (set! (optimization) 6)
@@ -55775,7 +55756,8 @@ EDITS: 1
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
 	(if (< (car (sound-data-maxamp v1)) .55) 
-	    (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+	    (snd-display #__line__ ";with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+    (set! (optimization) oldopt))
   
   (let ((oldopt (optimization)))
     (set! (locsig-type) mus-interp-linear)
@@ -55800,7 +55782,8 @@ EDITS: 1
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9))
 	(if (< (car (sound-data-maxamp v1)) .56) 
-	    (snd-display #__line__ ";rev with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+	    (snd-display #__line__ ";rev with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+    (set! (optimization) oldopt))
   
   
   (let ((oldopt (optimization)))
@@ -55824,7 +55807,8 @@ EDITS: 1
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
 	(if (< (vct-peak v1) .28) 
-	    (snd-display #__line__ ";1 rev with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1))))))
+	    (snd-display #__line__ ";1 rev with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1)))))
+    (set! (optimization) oldopt))
   
   (let ((oldopt (optimization)))
     (set! (optimization) 6)
@@ -55846,7 +55830,8 @@ EDITS: 1
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
 	(if (< (car (sound-data-maxamp v1)) .54) 
-	    (snd-display #__line__ ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+	    (snd-display #__line__ ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+    (set! (optimization) oldopt))
   
   (let ((oldopt (optimization)))
     (set! (optimization) 0)
@@ -55868,7 +55853,8 @@ EDITS: 1
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
 	(if (< (car (sound-data-maxamp v1)) .5) 
-	    (snd-display #__line__ ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+	    (snd-display #__line__ ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+    (set! (optimization) oldopt))
   
   (let ((oldopt (optimization)))
     (set! (locsig-type) mus-interp-linear)
@@ -55893,7 +55879,8 @@ EDITS: 1
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9))
 	(if (< (car (sound-data-maxamp v1)) .56) 
-	    (snd-display #__line__ ";3 rev with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+	    (snd-display #__line__ ";3 rev with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
+    (set! (optimization) oldopt))
   
   
   (let ((oldopt (optimization)))
@@ -61001,7 +60988,6 @@ EDITS: 1
 	       (xm-procs1 (remove-if (lambda (n) (not (arity-ok n 1))) xm-procs))
 	       (xm-procs2 (remove-if (lambda (n) (not (arity-ok n 2))) xm-procs))
 	       (xm-procs3 (remove-if (lambda (n) (not (arity-ok n 3))) xm-procs))
-	       (xm-procs4 (remove-if (lambda (n) (not (arity-ok n 4))) xm-procs))
 	       )
 	  
 	  ;; ---------------- 0 Args
@@ -61436,7 +61422,6 @@ EDITS: 1
 	     (cadr-main (if with-gui (cadr (main-widgets)) #f))
 	     (sound-data-23 (make-sound-data 2 3))
 	     (a-hook (make-hook 2))
-	     (a-sound #f)
 	     (exts (sound-file-extensions)) ; save across possible set below
 	     
 	     (procs (list 
@@ -61676,10 +61661,6 @@ EDITS: 1
 	     (procs7 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 7)))) procs))
 	     (procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 8)))) procs))
 	     (procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 10)))) procs))
-	     
-	     (already-warned '("mus-length" "mus-data" "hz->radians" "mus-order" "mus-xcoeffs" "mus-ycoeffs"
-			       "list->vct" "vct" "formant-bank"
-			       ))
 	     )
 	#|
 	(for-each 

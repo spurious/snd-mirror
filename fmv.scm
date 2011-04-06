@@ -161,7 +161,6 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 calls the fm-violin with the given args and mixes the results into the current sound"
     (let* ((beg (floor (* startime (srate))))
 	   (len (floor (* dur (srate))))
-	   (end (+ beg len))
 	   (loc (make-locsig :channels (channels) :degree (or degree (random 90.0)) :reverb reverb-amount :distance distance))
 	   (out-data (make-vct len))
 	   (v (apply make-fm-violin freq amp args)))

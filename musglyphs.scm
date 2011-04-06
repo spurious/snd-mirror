@@ -253,7 +253,7 @@
 	 (accidental (note-data->accidental note-data))
 	 (cclass (note-data->cclass note-data))
 	 (octave (note-data->octave note-data))
-	 (pitch (note-data->pitch note-data))
+	 ;(pitch (note-data->pitch note-data))
 	 (y0 (if treble treble-tag-y bass-tag-y))
 	 (width (* (+ (if with-clef (if treble 0.9 1.2) 0.75)
 		      (if accidental 0.1 0.0) 

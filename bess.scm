@@ -1,6 +1,5 @@
 ;;; set up our user-interface
-(let* ((shell-app #f)
-       (app (car (main-widgets)))
+(let* ((app (car (main-widgets)))
 
        (shell (let* ((xdismiss (XmStringCreate "Go away" XmFONTLIST_DEFAULT_TAG))
 		     (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
