@@ -384,7 +384,7 @@
 
 ;;@ Define SLIB:EXIT to be the implementation procedure to exit or
 ;;; return if exiting not supported.
-(define slib:exit quit)
+(define slib:exit s7-version) 
 
 ;;@ Here for backward compatability
 (define scheme-file-suffix

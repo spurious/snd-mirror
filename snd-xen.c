@@ -1331,6 +1331,10 @@ static XEN g_dlinit(XEN handle, XEN func)
   #define H_dlinit "(dlinit handle func) calls 'func' from the library referred to by 'handle'."
   typedef void *(*snd_dl_func)(void);
   void *proc;
+
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(handle), handle, XEN_ARG_1, "dlinit", "a library handle");
+  XEN_ASSERT_TYPE(XEN_STRING_P(func), func, XEN_ARG_2, "dlinit", "a string (init func name)");
+
   proc = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
   if (proc == NULL) return(C_TO_XEN_STRING(dlerror()));
   ((snd_dl_func)proc)();

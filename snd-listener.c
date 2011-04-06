@@ -939,6 +939,7 @@ static XEN g_snd_completion(XEN text)
   /* perhaps callable from emacs? */
   char *str, *temp;
   XEN res;
+  XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ONLY_ARG, "snd-completion", "a string"); 
   temp = mus_strdup(XEN_TO_C_STRING(text));
   str = expression_completer(NULL_WIDGET, temp, NULL);
   res = C_TO_XEN_STRING(str);

@@ -1857,7 +1857,7 @@ static s7_pointer g_gc_stats_set(s7_scheme *sc, s7_pointer args)
 void s7_gc_stats(s7_scheme *sc, bool on)
 {
   (*(sc->gc_stats)) = on;
-  s7_symbol_set_value(sc, s7_make_symbol(sc, "*gc-stats*"), (on) ? sc->T : sc->F);
+  s7_symbol_set_value(sc, s7_make_symbol(sc, "*gc-stats*"), make_boolean(sc, on));
 }
 
 
@@ -16382,7 +16382,7 @@ if it is true, evaluates true-stuff; otherwise, if optional-false-stuff exists, 
 	  return(s7_make_string(sc, "(begin ...) evaluates each form in its body, returning the value of the last one"));
 
 	case OP_SET:
-	  return(s7_make_string(sc, "(set! variable val) sets the value of variable to val."));
+	  return(s7_make_string(sc, "(set! variable value) sets the value of variable to value."));
 
 	case OP_LET:
 	  return(s7_make_string(sc, "(let ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
@@ -16390,6 +16390,8 @@ returning the value of the last form.  The let variables are local to it, and in
 the variables are not available for use until all have been initialized."));
 
 	case OP_LET_STAR:
+	  return(s7_make_string(sc, "(let* ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
+returning the value of the last form.  The let* variables are local to it, and are available immediately (unlike let, for example)."));
 
 	case OP_LETREC:
 	case OP_COND:
@@ -16454,7 +16456,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
     return(make_list_3(sc, 
 		       s7_make_integer(sc, c_function_required_args(x)), 
 		       s7_make_integer(sc, c_function_optional_args(x)),
-		       (c_function_has_rest_arg(x)) ? sc->T : sc->F));
+		       make_boolean(sc, c_function_has_rest_arg(x))));
   
   if ((is_closure(x)) ||
       (is_closure_star(x)) ||
@@ -17167,22 +17169,26 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   int tag;
 
-  tag = s7_integer(car(args));
-  x = cadr(args);
-  if (is_s_object(x))
+  if (s7_is_integer(car(args)))
     {
-      s_type_t *obj;
-      obj = (s_type_t *)s7_object_value(x);
-      if (obj->type == tag)
-	return(obj->value);
-    }
+      tag = s7_integer(car(args));
+      x = cadr(args);
+      if (is_s_object(x))
+	{
+	  s_type_t *obj;
+	  obj = (s_type_t *)s7_object_value(x);
+	  if (obj->type == tag)
+	    return(obj->value);
+	}
 
-  return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-		  make_list_4(sc, 
-			      make_protected_string(sc, "~A type's 'ref' function argument, ~S, is ~A?"),
-			      make_protected_string(sc, object_types[tag].name),
-			      x,
-			      make_protected_string(sc, type_name(x)))));
+      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+		      make_list_4(sc, 
+				  make_protected_string(sc, "~A type's 'ref' function argument, ~S, is ~A?"),
+				  make_protected_string(sc, object_types[tag].name),
+				  x,
+				  make_protected_string(sc, type_name(x)))));
+    }
+  return(sc->F); /* someone has completely messed up */
 }
 
 
@@ -32203,4 +32209,12 @@ the error type and the info passed to the error handler.");
  *
  * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  * 4-Feb-11 callgrind non-gmp: 1678 0.67, gmp: 9114 2.56 (but it's running lots of additional tests)
+ */
+
+
+/* auto-tester:
+ *   reads as in lint.scm, but evaluates each top-level form.
+ *   if a function, it systematically tries to get it to mess up,
+ *   saving non-error values.  Or the same idea, but applied to
+ *   the symbol table entries.
  */

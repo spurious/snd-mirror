@@ -3046,6 +3046,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((x #f)) (set! x (let ((a1 (let ((b1 32)) (lambda () b1)))) a1)) (symbol->value 'b1 (procedure-environment x))) 32)
 (test (symbol->value 'if) if)
 (test (symbol->value if) 'error)
+(test ((symbol->value (define (hi a) (+ a 1))) 2) 3)
+(test ((symbol->value (define-macro (hi a) `(+ ,a 1))) 2) 3)
+(test (let ((mac (symbol->value (define-macro (hi a) `(+ ,a 1))))) (mac 3)) 4)
+
 
 
 (test (let ((name "hiho"))
