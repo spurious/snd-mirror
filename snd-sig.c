@@ -4545,16 +4545,16 @@ static mus_float_t *load_mus_float_ts(XEN scalers, int *result_len, const char *
       else
 	{
 	  if (XEN_LIST_P(scalers))
-	    {
-	      len = XEN_LIST_LENGTH(scalers);
-	      if (len == 0) 
-		XEN_ERROR(NO_DATA,
-			  XEN_LIST_2(C_TO_XEN_STRING("~A: scalers list is empty?"), 
-				     C_TO_XEN_STRING(caller)));
-	    }
+	    len = XEN_LIST_LENGTH(scalers);
 	  else XEN_WRONG_TYPE_ARG_ERROR(caller, 1, scalers, "a number, list, or vct");
 	}
+
+      if (len == 0) 
+	XEN_ERROR(NO_DATA,
+		  XEN_LIST_2(C_TO_XEN_STRING("~A: scalers data is empty?"), 
+			     C_TO_XEN_STRING(caller)));
     }
+  
   scls = (mus_float_t *)calloc(len, sizeof(mus_float_t));
   if (v)
     memcpy((void *)scls, (void *)(v->data), len * sizeof(mus_float_t));
@@ -4607,11 +4607,20 @@ scale snd by scalers (following sync); scalers can be a float or a vct/list of f
   chan_info *cp;
   int len[1];
   mus_float_t *scls;
+
   ASSERT_CHANNEL(S_scale_by, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_scale_by);
   if (!cp) return(XEN_FALSE);
+  len[0] = 0;
+
+  /* fprintf(stderr, "(scale-by %s %s %s)\n", XEN_AS_STRING(scalers), XEN_AS_STRING(snd), XEN_AS_STRING(chn_n)); */
 
   scls = load_mus_float_ts(scalers, len, S_scale_by);
+  if (len[0] == 0)
+    {
+      /* fprintf(stderr, "len is 0\n"); */
+      return(XEN_FALSE);
+    }
   scale_by(cp, scls, len[0], OVER_SOUND);
 
   free(scls);

@@ -17055,6 +17055,9 @@ static s7_pointer g_run_eval(s7_pointer code, s7_pointer arg, s7_pointer arg1, s
   optimizing = true;
 #endif
 
+  if (!s7_is_pair(code))
+    return(code);
+
   cl = s7_make_closure(s7, code, xen_nil);
   gc_loc = s7_gc_protect(s7, cl);
 

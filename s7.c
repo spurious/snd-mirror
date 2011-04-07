@@ -32213,11 +32213,3 @@ the error type and the info passed to the error handler.");
  * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  * 4-Feb-11 callgrind non-gmp: 1678 0.67, gmp: 9114 2.56 (but it's running lots of additional tests)
  */
-
-
-/* auto-tester:
- *   reads as in lint.scm, but evaluates each top-level form.
- *   if a function, it systematically tries to get it to mess up,
- *   saving non-error values.  Or the same idea, but applied to
- *   the symbol table entries.
- */

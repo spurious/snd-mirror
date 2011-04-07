@@ -3288,16 +3288,20 @@ static XEN gxm_XmStringGenerate(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 generates a compound string"
 
   XmTextType type;
+  XmStringTag rendition;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringGenerate", "XtPointer");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2) || XEN_FALSE_P(arg2), arg2, 2, "XmStringGenerate", "XmStringTag");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringGenerate", "XmTextType");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XmStringGenerate", "XmStringTag");
   type = (XmTextType)XEN_TO_C_INT(arg3);
   if (type > 1) XEN_ASSERT_TYPE(0, arg3, 3, "XmStringGenerate", "XmTextType");
+  rendition = (XmStringTag)XEN_TO_C_STRING(arg4);
+  if (!rendition)
+    XEN_OUT_OF_RANGE_ERROR("XmStringGenerate", 4, arg4, "a null rendition?");
   return(C_TO_XEN_XmString(XmStringGenerate((XtPointer)XEN_TO_C_STRING(arg1), 
 					    XEN_FALSE_P(arg2) ? NULL : (char *)XEN_TO_C_STRING(arg2), 
 					    type,
-					    (char *)XEN_TO_C_STRING(arg4))));
+					    rendition)));
 }
 
 static XEN gxm_XmStringDirectionToDirection(XEN arg1)
@@ -9283,7 +9287,7 @@ static XEN gxm_XReadBitmapFileData(XEN arg1)
 file containing a bitmap, in the same manner as XReadBitmapFile, but returns the data directly rather than creating a pixmap in the server."
   /* DIFF: XReadBitmapFileData omits last 5 args, returns as list
    */
-  unsigned int w, h, i, j;
+  unsigned int w = 0, h = 0, i, j;
   int x, y;
   unsigned char **str = NULL; /* allocated by X? */
   int val, loc;
@@ -10402,6 +10406,7 @@ static XEN gxm_XFree(XEN arg1)
 {
   #define H_XFree "XFree(data) is a general-purpose Xlib routine that frees the specified data."
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1) || XEN_LIST_P(arg1), arg1, 1, "XFree", "void* or xm entity");
+
   if (XEN_LIST_P(arg1))
     XFree((void *)XEN_UNWRAP_C_POINTER(XEN_CADR(arg1)));
   else XFree((void *)XEN_UNWRAP_C_POINTER(arg1));
@@ -14158,32 +14163,61 @@ application identified by app_context."
 static XEN gxm_XtFree(XEN arg1)
 {
   #define H_XtFree "void XtFree(ptr)"
+  char *ptr;
+
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, 1, "XtFree", "pointer");
-  XtFree((char *)XEN_UNWRAP_C_POINTER(arg1));
+
+  ptr = (char *)XEN_UNWRAP_C_POINTER(arg1);
+  if (ptr) XtFree(ptr);
   return(XEN_FALSE);
 }
 
 static XEN gxm_XtRealloc(XEN arg1, XEN arg2)
 {
   #define H_XtRealloc "char *XtRealloc(ptr, num)"
+  int num;
+  char *ptr;
+
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, 1, "XtRealloc", "pointer");
+  ptr = (char *)XEN_UNWRAP_C_POINTER(arg1);
+  if (!ptr) return(XEN_FALSE);
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtRealloc", "int");
-  return(C_TO_XEN_ULONG(XtRealloc((char *)XEN_UNWRAP_C_POINTER(arg1), XEN_TO_C_INT(arg2))));
+  num = XEN_TO_C_INT(arg2);
+  if (num <= 0)
+    XEN_OUT_OF_RANGE_ERROR("XtRealloc", 2, arg2, "num should be positive");
+
+  return(C_TO_XEN_ULONG(XtRealloc(ptr, num)));
 }
 
 static XEN gxm_XtCalloc(XEN arg1, XEN arg2)
 {
   #define H_XtCalloc "char *XtCalloc(num, size)"
+  int num, size;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XtCalloc", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtCalloc", "int");
-  return(XEN_WRAP_C_POINTER(XtCalloc(XEN_TO_C_INT(arg1), XEN_TO_C_INT(arg2))));
+  num = XEN_TO_C_INT(arg1);
+  if (num <= 0)
+    XEN_OUT_OF_RANGE_ERROR("XtCalloc", 1, arg1, "num should be positive");
+  size = XEN_TO_C_INT(arg2);
+  if (size <= 0)
+    XEN_OUT_OF_RANGE_ERROR("XtCalloc", 2, arg2, "size should be positive");
+
+  return(XEN_WRAP_C_POINTER(XtCalloc(num, size))); /* dumb thing simply exits the main program on error! */
 }
 
 static XEN gxm_XtMalloc(XEN arg1)
 {
   #define H_XtMalloc "char *XtMalloc(size)"
+  int size;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XtMalloc", "int");
-  return(XEN_WRAP_C_POINTER(XtMalloc(XEN_TO_C_INT(arg1))));
+  size = XEN_TO_C_INT(arg1);
+  if (size <= 0)
+    XEN_OUT_OF_RANGE_ERROR("XtMalloc", 1, arg1, "size should be positive");
+
+  return(XEN_WRAP_C_POINTER(XtMalloc(size)));
 }
 
 static XEN xm_XtErrorHandler;
@@ -14584,11 +14618,20 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
     {
       int gcloc;
       len = XEN_LIST_LENGTH(specs);
+      if (len <= 0) return(XEN_FALSE);
       lst = XEN_COPY_ARG(specs);
       gcloc = xm_protect(lst);
       fallbacks = (char **)calloc(len + 1, sizeof(char *)); /* +1 for null termination */
       for (i = 0; i < len; i++, lst = XEN_CDR(lst)) 
-	fallbacks[i] = xen_strdup(XEN_TO_C_STRING(XEN_CAR(lst)));
+	{
+	  if (!XEN_STRING_P(XEN_CAR(lst)))
+	    {
+	      free(fallbacks);
+	      xm_unprotect_at(gcloc);
+	      return(XEN_FALSE);
+	    }
+	  fallbacks[i] = xen_strdup(XEN_TO_C_STRING(XEN_CAR(lst)));
+	}
       xm_unprotect_at(gcloc);
     }
   args = XEN_TO_C_Args(arg8);

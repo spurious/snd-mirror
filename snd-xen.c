@@ -1032,8 +1032,12 @@ static XEN g_snd_print(XEN msg)
 	}
       else str = gl_print(msg);
     }
-  listener_append(str);
-  if (str) free(str);
+
+  if (str)
+    {
+      listener_append(str);
+      free(str);
+    }
   /* used to check for event in Motif case, but that is very dangerous -- check for infinite loop C-c needs to be somewhere else */
   return(msg);
 }
@@ -2345,9 +2349,17 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   if (!s7_is_string(s7_car(s7_cdr(args))))
     return(s7_wrong_type_arg_error(sc, "char-position", 2, s7_car(s7_cdr(args)), "a string"));
 
-  if ((s7_is_pair(s7_cdr(s7_cdr(args)))) &&
-      (s7_is_integer(s7_car(s7_cdr(s7_cdr(args))))))
-    start = s7_integer(s7_car(s7_cdr(s7_cdr(args))));
+  if (s7_is_pair(s7_cdr(s7_cdr(args))))
+    {
+      s7_pointer arg;
+      arg = s7_car(s7_cdr(s7_cdr(args)));
+      if (!s7_is_integer(arg))
+	return(s7_wrong_type_arg_error(sc, "char-position", 3, arg, "an integer"));
+
+      start = s7_integer(arg);
+      if (start < 0)
+	return(s7_wrong_type_arg_error(sc, "char-position", 3, arg, "a non-negative integer"));
+    }
 
   c = s7_character(s7_car(args));
   porig = s7_string(s7_car(s7_cdr(args)));
@@ -2372,9 +2384,17 @@ static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, c
   if (!s7_is_string(s7_car(s7_cdr(args))))
     return(s7_wrong_type_arg_error(sc, name, 2, s7_car(s7_cdr(args)), "a string"));
 
-  if ((s7_is_pair(s7_cdr(s7_cdr(args)))) &&
-      (s7_is_integer(s7_car(s7_cdr(s7_cdr(args))))))
-    start = s7_integer(s7_car(s7_cdr(s7_cdr(args))));
+  if (s7_is_pair(s7_cdr(s7_cdr(args))))
+    {
+      s7_pointer arg;
+      arg = s7_car(s7_cdr(s7_cdr(args)));
+      if (!s7_is_integer(arg))
+	return(s7_wrong_type_arg_error(sc, name, 3, arg, "an integer"));
+
+      start = s7_integer(arg);
+      if (start < 0)
+	return(s7_wrong_type_arg_error(sc, name, 3, arg, "a non-negative integer"));
+    }
   
   s1 = s7_string(s7_car(args));
   s2 = s7_string(s7_car(s7_cdr(args)));
@@ -2432,9 +2452,17 @@ static s7_pointer g_string_vector_position(s7_scheme *sc, s7_pointer args)
   if (!s7_is_vector(s7_car(s7_cdr(args))))
     return(s7_wrong_type_arg_error(sc, "string-vector-position", 2, s7_car(s7_cdr(args)), "a vector"));
 
-  if ((s7_is_pair(s7_cdr(s7_cdr(args)))) &&
-      (s7_is_integer(s7_car(s7_cdr(s7_cdr(args))))))
-    start = s7_integer(s7_car(s7_cdr(s7_cdr(args))));
+  if (s7_is_pair(s7_cdr(s7_cdr(args))))
+    {
+      s7_pointer arg;
+      arg = s7_car(s7_cdr(s7_cdr(args)));
+      if (!s7_is_integer(arg))
+	return(s7_wrong_type_arg_error(sc, "string-vector-position", 3, arg, "an integer"));
+
+      start = s7_integer(arg);
+      if (start < 0)
+	return(s7_wrong_type_arg_error(sc, "string-vector-position", 3, arg, "a non-negative integer"));
+    }
   
   s1 = s7_string(s7_car(args));
   strs = s7_vector_elements(s7_car(s7_cdr(args)));
@@ -2464,9 +2492,17 @@ static s7_pointer g_string_list_position_1(s7_scheme *sc, s7_pointer args, bool 
   if (!s7_is_pair(p))
     return(s7_wrong_type_arg_error(sc, name, 2, p, "a list"));
 
-  if ((s7_is_pair(s7_cdr(s7_cdr(args)))) &&
-      (s7_is_integer(s7_car(s7_cdr(s7_cdr(args))))))
-    start = s7_integer(s7_car(s7_cdr(s7_cdr(args))));
+  if (s7_is_pair(s7_cdr(s7_cdr(args))))
+    {
+      s7_pointer arg;
+      arg = s7_car(s7_cdr(s7_cdr(args)));
+      if (!s7_is_integer(arg))
+	return(s7_wrong_type_arg_error(sc, "string-list-position", 3, arg, "an integer"));
+
+      start = s7_integer(arg);
+      if (start < 0)
+	return(s7_wrong_type_arg_error(sc, "string-list-position", 3, arg, "a non-negative integer"));
+    }
   
   s1 = s7_string(s7_car(args));
 
