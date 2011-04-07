@@ -102,7 +102,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
 	  err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
 	  mus_file_read_chans(ifd, 0, size - 1, in_chans, data, data);
 	  j = 0;
-	  if (err == -1) break;
+	  if (err != MUS_NO_ERROR) break;
 	}
       chandata[j] += read_sample_to_mus_sample(sf);
       j++;
@@ -1230,7 +1230,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
 		{
 		  err = mus_file_write(fd, 0, j - 1, 1, data);
 		  j = 0;
-		  if (err == -1) break;
+		  if (err != MUS_NO_ERROR) break;
 		}
 	    }
 	}
@@ -1245,7 +1245,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
 		    {
 		      err = mus_file_write(fd, 0, j - 1, 1, data);
 		      j = 0;
-		      if (err == -1) break;
+		      if (err != MUS_NO_ERROR) break;
 		    }
 		}
 	    }
@@ -1258,7 +1258,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
 		    {
 		      err = mus_file_write(fd, 0, j - 1, 1, data);
 		      j = 0;
-		      if (err == -1) break;
+		      if (err != MUS_NO_ERROR) break;
 		    }
 		}
 	    }
@@ -3734,7 +3734,7 @@ static io_error_t save_mix(int id, const char *name, int type, int format)
 	      for (k = 0; k < cursamples; k++)
 		data[k] = read_sample(mf->sf);
 	      err = mus_file_write(ofd, 0, cursamples - 1, 1, bufs);
-	      if (err == -1) 
+	      if (err != MUS_NO_ERROR) 
 		{
 		  snd_warning("write error while saving mix");
 		  break;

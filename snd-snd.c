@@ -4628,7 +4628,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 The 'size' argument sets the number of samples (zeros) in the newly created sound. \n  " new_sound_example
 
   snd_info *sp = NULL; 
-  int ht, df, sr, ch, err;
+  int ht, df, sr, ch;
   int chan;
   mus_long_t size, len = 1;
   char *str = NULL;
@@ -4637,6 +4637,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len;
+  io_error_t io_err;
 
   keys[0] = kw_file;
   keys[1] = kw_header_type;
@@ -4659,6 +4660,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_new_sound, orig_arg[0], NULL);
+      /* this can be null if :file is not passed as an arg (use temp name below) */
       ht = mus_optkey_to_int(keys[1], S_new_sound, orig_arg[1], ht);
       df = mus_optkey_to_int(keys[2], S_new_sound, orig_arg[2], df);
       sr = mus_optkey_to_int(keys[3], S_new_sound, orig_arg[3], sr);
@@ -4689,12 +4691,16 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[6], keys[6], "size ~A < 0?");
 
   if (file)
-    str = mus_expand_filename(file);
+    {
+      str = mus_expand_filename(file);
+      if (!str)
+	XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[0], keys[0], "bad file name?");
+    }
   else str = snd_tempnam();
   mus_sound_forget(str);
 
-  err = snd_write_header(str, ht, sr, ch, len * ch, df, com, NULL); /* last arg is loop info */
-  if (err == -1)
+  io_err = snd_write_header(str, ht, sr, ch, len * ch, df, com, NULL); /* last arg is loop info */
+  if (io_err != MUS_NO_ERROR)
     {
       if (str) {free(str); str = NULL;}
       XEN_ERROR(XEN_ERROR_TYPE("IO-error"),

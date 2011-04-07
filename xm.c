@@ -1018,6 +1018,7 @@ static XEN C_TO_XEN_Ints(int *array, int len)
 static XEN c_to_xen_ints(XEN array, XEN len)
 {
   #define H_to_ints "->ints translates a Motif int array (from a .value reference for example) into a scheme list of ints"
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(array), array, 1, "->ints", "int*");
   return(C_TO_XEN_Ints((int *)XEN_UNWRAP_C_POINTER(array), XEN_TO_C_INT(len)));
 }
 #endif
@@ -1040,6 +1041,7 @@ static XEN C_TO_XEN_Atoms(Atom *array, int len)
 static XEN c_to_xen_atoms(XEN array, XEN len)
 {
   #define H_to_Atoms "->Atoms translates a Motif Atoms array (from a .value reference for example) into a scheme list of Atoms"
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(array), array, 1, "->Atoms", "Atom*");
   return(C_TO_XEN_Atoms((Atom *)XEN_UNWRAP_C_POINTER(array), XEN_TO_C_INT(len)));
 }
 #endif
@@ -1062,6 +1064,7 @@ static XEN C_TO_XEN_Strings(char **array, int len)
 static XEN c_to_xen_strings(XEN array, XEN len)
 {
   #define H_to_strings "->strings translates a Motif string array (from a .value reference for example) into a scheme list of strings"
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(array), array, 1, "->strings", "char**");
   return(C_TO_XEN_Strings((char **)XEN_UNWRAP_C_POINTER(array), XEN_TO_C_INT(len)));
 }
 
@@ -1069,6 +1072,7 @@ static XEN c_to_xen_string(XEN str)
 {
   #define H_to_string "->string translates a Motif string (from a .value reference for example) into a scheme string"
   char *tmp;
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(str), str, 1, "->string", "char*");
   tmp = (char *)XEN_UNWRAP_C_POINTER(str);
   if (tmp)
     return(C_TO_XEN_STRING(tmp));
@@ -1105,6 +1109,7 @@ static XEN C_TO_XEN_XRectangles(XRectangle *array, int len)
 static XEN c_to_xen_xrectangles(XEN array, XEN len)
 {
   #define H_to_XRectangles "->XRectangles translates a Motif rectangle array (from a .value reference for example) into a scheme list of rectangles"
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(array), array, 1, "->XRectangles", "Motif rectangle array");
   return(C_TO_XEN_XRectangles((XRectangle *)XEN_UNWRAP_C_POINTER(array), XEN_TO_C_INT(len)));
 }
 #endif
@@ -3259,10 +3264,13 @@ static XEN gxm_XmCvtByteStreamToXmString(XEN str)
 static XEN gxm_XmStringByteStreamLength(XEN str)
 {
   #define H_XmStringByteStreamLength "int XmStringByteStreamLength(char *str): returns the length of the byte stream."
-  int res;
+  unsigned char *stream;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(str), str, XEN_ONLY_ARG, "XmStringByteStreamLength", "char *");
-  res = (int)XmStringByteStreamLength((unsigned char *)(XEN_TO_C_STRING(str)));
-  return(C_TO_XEN_INT(res));
+  stream = (unsigned char *)(XEN_TO_C_STRING(str));
+  if (!stream)
+    XEN_OUT_OF_RANGE_ERROR("XmStringByteStreamLength", 1, str, "a null stream?");
+  return(C_TO_XEN_INT((int)XmStringByteStreamLength(stream)));
 }
 
 static XEN gxm_XmStringPutRendition(XEN arg1, XEN arg2)

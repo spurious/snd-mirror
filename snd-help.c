@@ -3934,6 +3934,8 @@ whose name (as a string) is 'symbol-name'"
 
   int i;
   const char *name;
+
+  XEN_ASSERT_TYPE(XEN_STRING_P(symbol_name), symbol_name, XEN_ONLY_ARG, S_autoload_file, "a string");
   name = XEN_TO_C_STRING(symbol_name);
 
   for (i = 0; i < AUTOLOAD_NAMES; i++)

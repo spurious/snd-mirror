@@ -468,12 +468,15 @@ io_error_t snd_write_header(const char *name, int type, int srate, int chans,
 {
   int err; /* sndlib-style error */
   /* trap mus_error locally here so that callers of open_temp_file can cleanup samplers and whatnot */
+
   local_mus_error = MUS_NO_ERROR;
   old_error_handler = mus_error_set_handler(local_mus_error_to_snd);
   mus_sound_forget(name);
   mus_header_set_aiff_loop_info(loops);
+
   err = mus_write_header(name, type, srate, chans, samples, format, comment);
-  if (err == -1)
+  /* err here is a mus error */
+  if (err != MUS_NO_ERROR)
     {
       if (errno == EMFILE) /* 0 => no error (err not actually returned unless it's -1) */
 	{
@@ -487,8 +490,7 @@ io_error_t snd_write_header(const char *name, int type, int srate, int chans,
 	    }
 	}
     }
-  if (err != -1)
-    mus_header_set_aiff_loop_info(NULL);
+  else mus_header_set_aiff_loop_info(NULL);
   mus_error_set_handler(old_error_handler);
   return(sndlib_error_to_snd(local_mus_error));
 }

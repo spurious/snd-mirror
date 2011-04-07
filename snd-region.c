@@ -939,7 +939,7 @@ static void deferred_region_to_temp_file(region *r)
 		{
 		  err = mus_file_write(ofd, 0, k - 1, r->chans, data);
 		  k = 0;
-		  if (err == -1) break;
+		  if (err != MUS_NO_ERROR) break;
 		}
 	      for (i = 0; i < r->chans; i++)
 		{
@@ -1288,7 +1288,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 		  else cursamples = (frames - ioff);
 		  mus_file_read(ifd, 0, cursamples - 1, chans, bufs);
 		  err = mus_file_write(ofd, 0, cursamples - 1, chans, bufs);
-		  if (err == -1) 
+		  if (err != MUS_NO_ERROR) 
 		    {
 		      snd_warning("write error during %s", S_save_region);
 		      break;

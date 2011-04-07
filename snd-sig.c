@@ -696,7 +696,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 	      err = mus_file_write(ofd0, 0, j - 1, 1, data0);
 	      err = mus_file_write(ofd1, 0, j - 1, 1, data1);
 	      j = 0;
-	      if (err == -1) break;
+	      if (err != MUS_NO_ERROR) break;
 	      if (reporting) 
 		{
 		  progress_report(cp0, (mus_float_t)((double)k / (double)dur));
@@ -899,7 +899,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 		{
 		  err = mus_file_write(ofd, 0, j - 1, 1, data);
 		  j = 0;
-		  if (err == -1) break;
+		  if (err != MUS_NO_ERROR) break;
 		  if (reporting) 
 		    {
 		      progress_report(cp, (mus_float_t)((double)(sr->sample) / (double)dur));
@@ -923,7 +923,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 		{
 		  err = mus_file_write(ofd, 0, j - 1, 1, data);
 		  j = 0;
-		  if (err == -1) break;
+		  if (err != MUS_NO_ERROR) break;
 		  if (reporting) 
 		    {
 		      progress_report(cp, (mus_float_t)((double)(sr->sample) / (double)dur));
@@ -993,7 +993,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
 	      j = 0;
-	      if (err == -1) break;
+	      if (err != MUS_NO_ERROR) break;
 	      if (reporting) 
 		{
 		  progress_report(cp, (mus_float_t)((double)(sr->sample) / (double)dur));
@@ -1453,7 +1453,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
 	      j = 0;
-	      if (err == -1) break;
+	      if (err != MUS_NO_ERROR) break;
 	    }
 	}
     }
@@ -1470,7 +1470,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
 	{
 	  err = mus_file_write(ofd, 0, j - 1, 1, data);
 	  j = 0;
-	  if (err == -1) break;
+	  if (err != MUS_NO_ERROR) break;
 	}
     }
   dur += overlap;
@@ -1587,7 +1587,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
 	      j = 0;
-	      if (err == -1) break;
+	      if (err != MUS_NO_ERROR) break;
 	      if (reporting)
 		{
 		  progress_report(cp, (mus_float_t)((double)offk / (double)dur));
@@ -1802,7 +1802,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
 	      j = 0;
-	      if (err == -1) break;
+	      if (err != MUS_NO_ERROR) break;
 	      if (reporting) 
 		{
 		  progress_report(cp, (mus_float_t)((double)offk / (double)dur));
@@ -1848,7 +1848,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
 	      j = 0;
-	      if (err == -1) break;
+	      if (err != MUS_NO_ERROR) break;
 	    }
 	}
       dur += order;
@@ -2192,7 +2192,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
 	      j = 0;
-	      if (err == -1) break;
+	      if (err != MUS_NO_ERROR) break;
 	    }
 	}
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
@@ -2561,7 +2561,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 			}
 		      err = mus_file_write(ofd, 0, j - 1, si->chans, data);
 		      j = 0;
-		      if (err == -1) break;
+		      if (err != MUS_NO_ERROR) break;
 		    }
 		}
 	    }
@@ -2600,7 +2600,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 			}
 		      err = mus_file_write(ofd, 0, j - 1, 1, data);
 		      j = 0;
-		      if (err == -1) break;
+		      if (err != MUS_NO_ERROR) break;
 		    }
 		}
 	    }
@@ -3049,7 +3049,7 @@ static char *run_channel(chan_info *cp, struct ptree *pt, mus_long_t beg, mus_lo
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
 	      j = 0;
-	      if (err == -1) break;
+	      if (err != MUS_NO_ERROR) break;
 	      check_for_event();
 	      if (ss->stopped_explicitly) break;
 	    }
@@ -3210,7 +3210,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, chans, data);
 	      j = 0;
-	      if (err == -1) break;
+	      if (err != MUS_NO_ERROR) break;
 	    }
 	}
     }
@@ -3226,7 +3226,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, chans, data);
 	      j = 0;
-	      if (err == -1) break;
+	      if (err != MUS_NO_ERROR) break;
 	    }
 	}
     }
@@ -3412,7 +3412,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			{
 			  err = mus_file_write(ofd, 0, j - 1, 1, data);
 			  j = 0;
-			  if (err == -1) break;
+			  if (err != MUS_NO_ERROR) break;
 			}
 		    }
 		  else
@@ -3434,7 +3434,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 					{
 					  err = mus_file_write(ofd, 0, j - 1, 1, data);
 					  j = 0;
-					  if (err == -1) break;
+					  if (err != MUS_NO_ERROR) break;
 					}
 				    }
 				  samps += v->length - 1;

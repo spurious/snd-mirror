@@ -137,11 +137,16 @@ static char *last_file_loaded = NULL;
 #if HAVE_SCHEME
 static XEN g_snd_s7_error_handler(XEN args)
 {
+  s7_pointer msg;
+  msg = s7_car(args);
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, "_snd_s7_error_handler_", "a string");
+
 #if MUS_DEBUGGING
   fprintf(stderr, "error: %s\n", s7_object_to_c_string(s7, args));
 #endif
+
   if (ss->xen_error_handler)
-    (*(ss->xen_error_handler))(s7_string(s7_car(args)), (void *)any_selected_sound()); /* not NULL! */
+    (*(ss->xen_error_handler))(s7_string(msg), (void *)any_selected_sound()); /* not NULL! */
   return(s7_f(s7));
 }
 #endif
@@ -2021,8 +2026,11 @@ static XEN g_lgamma(XEN x)
 #include <gsl/gsl_sf_ellint.h>
 static XEN g_gsl_ellipk(XEN k)
 {
+  double f;
   #define H_gsl_ellipk "(gsl-ellipk k): returns the complete elliptic integral k"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(k), k, XEN_ONLY_ARG, "gsl-ellipk", "a number");
+  f = XEN_TO_C_DOUBLE(k);
+  XEN_ASSERT_TYPE(f >= 0.0, k, XEN_ONLY_ARG, "gsl-ellipk", "a non-negative number");
   return(C_TO_XEN_DOUBLE(gsl_sf_ellint_Kcomp(sqrt(XEN_TO_C_DOUBLE(k)), GSL_PREC_APPROX)));
 }
 
@@ -2122,6 +2130,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
   int i, j, len;
   XEN values = XEN_FALSE, vectors = XEN_FALSE;
 
+  XEN_ASSERT_TYPE(mus_xen_p(matrix), matrix, XEN_ONLY_ARG, "gsl-eigenvectors", "a mixer (matrix)");
   u1 = XEN_TO_MUS_ANY(matrix);
   if (!mus_mixer_p(u1)) return(XEN_FALSE);
   vals = mus_data(u1);
@@ -2503,20 +2512,6 @@ static s7_pointer g_string_ci_list_position(s7_scheme *sc, s7_pointer args)
 #endif
 
 
-#if MUS_DEBUGGING && HAVE_SCHEME
-static XEN g_test_load(XEN name)
-{
-  XEN_LOAD_FILE(XEN_TO_C_STRING(name));
-  return(XEN_FALSE);
-}
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_1(g_test_load_w, g_test_load)
-#else
-  #define g_test_load_w g_test_load
-#endif
-#endif
-
-
 #ifdef XEN_ARGIFY_1
 #if HAVE_SCHEME && HAVE_DLFCN_H
   XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
@@ -2712,9 +2707,6 @@ void g_xen_initialize(void)
 
 #if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
-#endif
-#if MUS_DEBUGGING && HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("_test_load_", g_test_load_w, 1, 0, 0, "internal testing function");
 #endif
 
   Init_sndlib();

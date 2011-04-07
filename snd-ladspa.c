@@ -835,7 +835,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 			   lBlockSize - 1,
 			   outchans,
 			   data);
-      if (err == -1)
+      if (err != MUS_NO_ERROR)
 	break;
       if (ss->stopped_explicitly)
 	break;

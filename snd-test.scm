@@ -62914,8 +62914,7 @@ EDITS: 1
 		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32)))
 		    keyargs))
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32))))
-	  
-	  ;;	(set! a-sound (new-sound "test.snd" mus-next mus-bshort 22050 1 "set-samples test" 100))
+
 	  (if all-args (snd-display #__line__ ";args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))))
 	  
 	  ;; ---------------- 0 Args
@@ -63560,7 +63559,6 @@ EDITS: 1
 	(set! car-main #f)
 	(set! cadr-main #f)
 	(set! a-hook #f)
-	(set! a-sound #f)
 	(set! vct-5 #f)
 	
 	)))

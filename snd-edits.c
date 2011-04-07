@@ -2806,7 +2806,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 		{
 		  sl_err = mus_file_write(ofd, 0, j - 1, 1, obufs);
 		  j = 0;
-		  if (sl_err == -1) break;
+		  if (sl_err != MUS_NO_ERROR) break;
 		  if (reporting)
 		    {
 		      total += FILE_BUFFER_SIZE;
@@ -2837,7 +2837,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 	    {
 	      sl_err = mus_file_write(ofd, 0, j - 1, chans, obufs);
 	      j = 0;
-	      if (sl_err == -1) break;
+	      if (sl_err != MUS_NO_ERROR) break;
 	      if (reporting)
 		{
 		  total += FILE_BUFFER_SIZE;

@@ -9680,7 +9680,10 @@ You can later apply make-random-state to this list to continue a random number s
   else
     {
       obj = car(args);
-      if (c_object_type(obj) == rng_tag)
+      if ((!is_c_object(obj)) ||
+	  (c_object_type(obj) != rng_tag))
+	return(s7_wrong_type_arg_error(sc, "random-state->list,", 1, obj, "a random state as returned by make-random-state"));
+
 	r = (s7_rng_t *)s7_object_value(obj);
     }
   

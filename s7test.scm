@@ -59835,7 +59835,7 @@ but it's the printout that is at fault:
    (test (random arg) 'error)
    (test (random 1.0 arg) 'error)
    (test (make-random-state arg) 'error)
-   ;(test (random-state->list arg) 'error) -- this returns #f -- humph.
+   (test (random-state->list arg) 'error)
    )
  (list "hi" _ht_ '() '(1 2) #f (integer->char 65) 'a-symbol (make-vector 3) abs #\f (lambda (a) (+ a 1)) (if #f #f) #<eof> #<undefined>))
 

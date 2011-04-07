@@ -1299,33 +1299,39 @@ static XEN g_mus_sound_report_cache(XEN file)
 {
   #define H_mus_sound_report_cache "(" S_mus_sound_report_cache " (name)): print the current sound \
 cache info to the file given or stdout"
+  FILE *fd;
+  const char *name;
+  char *str = NULL;
 
-  XEN res = XEN_FALSE;
   if (XEN_NOT_BOUND_P(file))
-    mus_sound_report_cache(stdout);
-  else
     {
-      FILE *fd;
-      const char *name;
-      char *str = NULL;
-      name = XEN_TO_C_STRING(file);
-      fd = FOPEN(str = mus_expand_filename(name), "w");
-      if (str) free(str);
-      if (fd)
-	{
-	  mus_sound_report_cache(fd);
-	  FCLOSE(fd, name);
-	}
-      else
-	{
-	  XEN_ERROR(XEN_ERROR_TYPE("cannot-save"),
-		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_sound_report_cache ": ~S ~A"),
-			       file,
-			       C_TO_XEN_STRING(STRERROR(errno))));
-	}
-      return(file);
+      mus_sound_report_cache(stdout);
+      return(XEN_FALSE);
     }
-  return(res);
+
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_report_cache, "a string");
+  name = XEN_TO_C_STRING(file);
+  if (name)
+    {
+      str = mus_expand_filename(name);
+      if (str)
+	{
+	  fd = FOPEN(str, "w");
+	  free(str);
+	  if (fd)
+	    {
+	      mus_sound_report_cache(fd);
+	      FCLOSE(fd, name);
+	      return(file);
+	    }
+	}
+    }
+
+  XEN_ERROR(XEN_ERROR_TYPE("cannot-save"),
+	    XEN_LIST_3(C_TO_XEN_STRING(S_mus_sound_report_cache ": ~S ~A"),
+		       file,
+		       C_TO_XEN_STRING(STRERROR(errno))));
+  return(XEN_FALSE);
 }
 
 

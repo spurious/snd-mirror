@@ -1924,9 +1924,8 @@ static XEN g_mus_apply(XEN arglist)
   if ((arglist_len > 3) || (arglist_len == 0)) 
     return(C_TO_XEN_DOUBLE(0.0));
 
-#if HAVE_FORTH
   XEN_ASSERT_TYPE(MUS_XEN_P(XEN_CAR(arglist)), XEN_CAR(arglist), XEN_ARG_1, S_mus_apply, "a generator");
-#endif
+
   gen = XEN_TO_MUS_ANY(XEN_CAR(arglist));
   if (arglist_len == 1) 
     return(C_TO_XEN_DOUBLE(mus_apply(gen, 0.0, 0.0)));
