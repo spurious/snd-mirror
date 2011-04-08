@@ -806,8 +806,7 @@
 	      (set! peak val)
 	      (set! location x)))))
     ;; now narrow it by zigzagging around the peak
-    (let ((zig-size (* incr 2))
-	  (x location))
+    (let ((x location))
       (do ((zig-size (* incr 2) (/ zig-size 2)))
 	  ((< zig-size error))
 	(let ((cur (abs (+ (sin x) (sin (+ offset (* n x))))))

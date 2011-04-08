@@ -15789,13 +15789,14 @@ static s7_pointer g_hash_table(s7_scheme *sc, s7_pointer args)
   #define H_hash_table "(hash-table ...) returns a hash-table containing the cons's passed as its arguments. \
 That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with the two key/value pairs preinstalled."
 
-  int i, len;
+  int i, len, ht_loc;
   s7_pointer x, ht;
   
   len = s7_list_length(sc, args);
   ht = s7_make_hash_table(sc, (len > 512) ? 4095 : 511);
   if (args != sc->NIL)
     {
+      ht_loc = s7_gc_protect(sc, ht); /* hash_table_set can cons, so we need to protect this */
       for (x = args, i = 1; i <= len; x = cdr(x), i++) 
 	{
 	  if (is_pair(car(x)))
@@ -15803,9 +15804,13 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
 	  else
 	    {
 	      if (car(x) != sc->NIL)
-		return(s7_wrong_type_arg_error(sc, "hash-table", i, car(x), "a pair: (key value)"));
+		{
+		  s7_gc_unprotect_at(sc, ht_loc);
+		  return(s7_wrong_type_arg_error(sc, "hash-table", i, car(x), "a pair: (key value)"));
+		}
 	    }
 	}
+      s7_gc_unprotect_at(sc, ht_loc);
     }
   return(ht);
 }

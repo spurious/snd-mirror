@@ -2932,8 +2932,7 @@
   (savannah-6 (+ beg 1.46) (* amp .15))
   (savannah-6 (+ beg 1.5) (* amp .15))
   
-  (let* ((beg2 0.0)
-	 (repeats 20)
+  (let* ((repeats 20)
 	 (af-incr (/ .6 repeats)))
     (do ((i 0 (+ i 1))
 	 (beg2 0.0 (+ beg2 .004))

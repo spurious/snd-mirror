@@ -4545,7 +4545,11 @@ static mus_float_t *load_mus_float_ts(XEN scalers, int *result_len, const char *
       else
 	{
 	  if (XEN_LIST_P(scalers))
-	    len = XEN_LIST_LENGTH(scalers);
+	    {
+	      len = XEN_LIST_LENGTH(scalers);
+	      if (len < 0)
+		XEN_WRONG_TYPE_ARG_ERROR(caller, 1, scalers, "a proper list");
+	    }
 	  else XEN_WRONG_TYPE_ARG_ERROR(caller, 1, scalers, "a number, list, or vct");
 	}
 
@@ -6221,6 +6225,10 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
     if (day_counter < counts)
       {
+	/* .9^50 = .005, so starting at .1 bottoms out at .0005
+	 *   perhaps the counts variable should be (ceiling (log INCR_MIN incr_mult)) = 90 or so in the current case
+	 *   incr_mult is currently always INCR_DOWN = .9
+	 */
 	increment *= incr_mult;
 	if (increment < INCR_MIN) 
 	  {
