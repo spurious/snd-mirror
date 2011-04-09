@@ -12993,6 +12993,7 @@ this prints:
 (test (let () (define hi (lambda args args)) (hi 1 . 2)) 'error)
 (test (let () (define . 1) 1) 'error)
 (test (let () (define func (do () (#t (lambda (y) 2)))) (func 1)) 2)
+(test (let () (define* x 3)) 'error)
 
 ;; y combinator example from some CS website
 (let ()

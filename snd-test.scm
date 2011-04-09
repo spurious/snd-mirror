@@ -507,7 +507,7 @@
   (if (> tests 1) (begin (snd-display #__line__ ";test ~D:~D " test-number (+ 1 tst)) )))
 
 (defmacro without-errors (func)
-  `(catch #t 
+  `(catch #t ; but this also squelches syntax errors!
 	  (lambda ()
 	    ,func)
 	  (lambda args 
@@ -31039,9 +31039,9 @@ EDITS: 2
 						"Save options"
 						"Record"
 						"Mixes" "clm" "fm-violin"))))
-			(XtCallCallbacks menu XmNactivateCallback (snd-global-state)))))))))
-	(for-each close-sound (sounds))
-	(dismiss-all-dialogs)))
+			(XtCallCallbacks menu XmNactivateCallback (snd-global-state))))))))))
+    (for-each close-sound (sounds))
+    (dismiss-all-dialogs))
   
   (define (mdt-test id x time drg) #f)
   
@@ -49683,6 +49683,7 @@ EDITS: 1
 		    (locsig-reverb-set! loc 0 .23)
 		    (set! (locsig-reverb-ref loc 0) .123)
 		    0.0))
+      (if (not isloc) (snd-display #__line__ ";run locsig? ~A" isloc))
       (if (fneq d0 .667) (snd-display #__line__ ";run locsig ref 0: ~A" d0))
       (if (fneq d1 .333) (snd-display #__line__ ";run locsig ref 1: ~A" d1))
       (if (fneq dr .1) (snd-display #__line__ ";run locsig reverb ref 0: ~A" dr))
@@ -52598,7 +52599,7 @@ EDITS: 1
     (ixtst (let ((x 1) (y 2)) (run (lambda () (if (not (= x y 1)) 3 2)))) 3)
     (ixtst (let ((x 1)) (run (lambda () (if (or (= x 2) (not (= x 3))) 3 2)))) 3)
     (ixtst (let ((x 0) (y 1)) (run (lambda () (if (not (= x 1)) (if (not (= y 1)) 3 2) 1)))) 2)
-    (ixtst (let ((x 1) (y 2) (z #t)) (run (lambda () (= x y) (if z 1 0)))) 1)
+    (ixtst (let ((x 1) (y 2) (z #t)) (run (lambda () (if z 1 0)))) 1)
     (ixtst (let ((x 1)) (run (lambda () (if (and (= x 1) (not (< x 0))) 3 2)))) 3)
     (ixtst (let ((x 1)) (run (lambda () (if (or (= x 1) (not (< x 0))) 3 2)))) 3)
     (ixtst (let ((x 1)) (run (lambda () (cond ((= x 0) 1) ((= x 1) 2) ((= x 3) 3))))) 2)

@@ -24431,6 +24431,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	} 
       else 
 	{
+	  if (sc->op == OP_DEFINE_STAR)
+	    return(eval_error(sc, "define* is restricted to functions: (define* ~{~S~^ ~})", sc->code));
 	  sc->x = car(sc->code);
 	  sc->code = cadr(sc->code);
 	}

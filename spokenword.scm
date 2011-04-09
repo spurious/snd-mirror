@@ -24,7 +24,7 @@
 
 (define secs->samples
   (lambda (time)
-    (define* sr 44100)
+    (define sr 44100)
     (round (* sr time))))
 
 (define size                (secs->samples 0.10)) ;length of the window for rms and peak calculations
