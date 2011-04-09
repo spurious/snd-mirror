@@ -457,8 +457,8 @@
 (define default-srate (mus-srate))
 
 (snd-display #__line__ ";;~A" (snd-version))
-(if (not (defined? 'before-test-hook)) (define before-test-hook (make-hook 1)))
-(if (not (defined? 'after-test-hook)) (define after-test-hook (make-hook 1)))
+(if (not (defined? 'before-test-hook)) (define before-test-hook (make-hook '(1 0 #f))))
+(if (not (defined? 'after-test-hook)) (define after-test-hook (make-hook '(1 0 #f))))
 (set! (hook-functions before-test-hook) '())
 (hook-push before-test-hook (lambda (n)
 			      (set! (mus-srate) default-srate)
@@ -10530,7 +10530,7 @@ EDITS: 5
 	  (test-orig (lambda (snd) (clm-channel (make-one-pole :a0 2.0 :b1 0.0)))
 		     (lambda (snd) (clm-channel (make-one-pole :a0 0.5 :b1 0.0))) 'clm-channel ind1)
 	  (test-orig (lambda (snd) (filter-sound (make-one-zero :a0 2.0 :a1 0.0) 2 ind1 0)) 
-		     (lambda (snd) (filter-sound (make-one-zero :a0 0.5 :a1 0.0)) 2 ind1 0) 'filter-sound ind1)
+		     (lambda (snd) (filter-sound (make-one-zero :a0 0.5 :a1 0.0) 2 ind1 0)) 'filter-sound ind1)
 	  
 	  (let ((var (catch #t (lambda () (src-sound '(0 0 1 1))) (lambda args args))))
 	    (if (not (eq? (car var) 'out-of-range))
@@ -17178,7 +17178,7 @@ EDITS: 2
 	(close-sound index)))
     
     
-    (let ((h0 (lambda (x) 1.0))
+    (let (;(h0 (lambda (x) 1.0))
 	  (h1 (lambda (x) (* 2 x)))
 	  (h2 (lambda (x) (- (* 4 x x) 2)))
 	  (h3 (lambda (x) (- (* 8 x x x) (* 12 x))))
@@ -26687,11 +26687,11 @@ EDITS: 2
 		     (lambda (arg2)
 		       (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-			   (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
+			   (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 			   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			   )))
 		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-			(lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
+			(lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			))
 		 ;; generic args
@@ -32691,9 +32691,9 @@ EDITS: 2
 		   (lambda () (convolve-with "z.snd" 1.0))
 		   (lambda args args))
 	    (if (not (= (edit-position ind 0) 0)) (snd-display #__line__ ";convolve z: ~A" (edit-position ind 0)))
-	    (let ((tag (catch #t (lambda () (find-channel (lambda (y) *> y .1))) (lambda args (car args)))))
+	    (let ((tag (catch #t (lambda () (find-channel (lambda (y) (> y .1)))) (lambda args (car args)))))
 	      (if (not (eq? tag 'no-such-sample)) (snd-display #__line__ ";find z: ~A" tag)))
-	    (let ((tag (catch #t (lambda () (count-matches (lambda (y) *> y .1))) (lambda args (car args)))))
+	    (let ((tag (catch #t (lambda () (count-matches (lambda (y) (> y .1)))) (lambda args (car args)))))
 	      (if (not (eq? tag 'no-such-sample)) (snd-display #__line__ ";count z: ~A" tag)))
 	    (let* ((reader (make-sampler 0))
 		   (val (next-sample reader))
@@ -36243,10 +36243,10 @@ EDITS: 2
 	    
 	    (lambda (ind)
 	      ;; forced-fallback
-	      (ptree-channel (let ((sym (list 1))) (lambda (y) (if (eq? (car sym) 1) (* y 0.5) y))) 2 3 ind 0 #f #f))
+	      (ptree-channel (let ((sym (list 1))) (lambda (y) (if (equal? (car sym) 1) (* y 0.5) y))) 2 3 ind 0 #f #f))
 	    (lambda (ind)
 	      ;; forced-fallback
-	      (ptree-channel (let ((sym (list 1))) (lambda (y) (if (eq? (car sym) 1) (* y 0.5) y))) 0 #f ind 0 #f #f))
+	      (ptree-channel (let ((sym (list 1))) (lambda (y) (if (equal? (car sym) 1) (* y 0.5) y))) 0 #f ind 0 #f #f))
 	    
 	    (lambda (ind)
 	      (scale-by 0.0)
@@ -36336,7 +36336,7 @@ EDITS: 2
 	      ;; forced-fallback
 	      (ptree-channel (let ((sym (list 1))) 
 			       (lambda (y data dir)
-				 (if (eq? (car sym) 1) (* y 0.5) (* y (vct-ref data 0)))))
+				 (if (equal? (car sym) 1) (* y 0.5) (* y (vct-ref data 0)))))
 			     2 3 ind 0 #f #f
 			     (lambda (pos dur)
 			       (vct 1.0))))
@@ -36344,7 +36344,7 @@ EDITS: 2
 	      ;; forced-fallback
 	      (ptree-channel (let ((sym (list 1))) 
 			       (lambda (y data dir)
-				 (if (eq? (car sym) 1) (* y 0.5) (* y (vct-ref data 0)))))
+				 (if (equal? (car sym) 1) (* y 0.5) (* y (vct-ref data 0)))))
 			     0 #f ind 0 #f #f
 			     (lambda (pos dur)
 			       (vct 1.0))))
@@ -36401,10 +36401,10 @@ EDITS: 2
 	    
 	    (lambda (ind)
 	      ;; forced-fallback
-	      (map-channel (let ((sym (list 1))) (lambda (y) (if (eq? (car sym) 1) (* y 0.5) y))) 2 3 ind 0))
+	      (map-channel (let ((sym (list 1))) (lambda (y) (if (equal? (car sym) 1) (* y 0.5) y))) 2 3 ind 0))
 	    (lambda (ind)
 	      ;; forced-fallback
-	      (map-channel (let ((sym (list 1))) (lambda (y) (if (eq? (car sym) 1) (* y 0.5) y))) 0 #f ind 0))
+	      (map-channel (let ((sym (list 1))) (lambda (y) (if (equal? (car sym) 1) (* y 0.5) y))) 0 #f ind 0))
 	    (lambda (ind)
 	      (scale-by 0.0)
 	      (map-channel (lambda (y12a) y12a) 0 #f ind 0 2)
@@ -51465,8 +51465,6 @@ EDITS: 1
       (if (not val) (snd-display #__line__ ";run keyword? of keyword?")))
     (let ((val (run (lambda () (eq? unique-keyword :hiho)))))
       (if (not val) (snd-display #__line__ ";run eq? of :hiho?")))
-    (let ((val (run (lambda () (eq? unique-keyword 0)))))
-      (if val (snd-display #__line__ ";run eq? key 0?")))
     (let ((val (run-eval '(cond ((= 1 2) 3) ((+ 2 3) 4)))))
       (if (not (= val 4)) (snd-display #__line__ ";run bad cond: ~A" val)))
     (let ((tag (catch #t (lambda () (run-eval '(let ((a 3)) (set! a (current-environment))))) (lambda args (car args)))))
@@ -61009,7 +61007,7 @@ EDITS: 1
 		       (lambda args (car args))))
 	      xm-procs1))
 	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-		 (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0)))
+		 (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t '() (make-vector 0)))
 	  
 	  ;; ---------------- 2 Args
 	  (for-each 
@@ -61421,7 +61419,7 @@ EDITS: 1
 	     (car-main (if with-gui (car (main-widgets)) #f))
 	     (cadr-main (if with-gui (cadr (main-widgets)) #f))
 	     (sound-data-23 (make-sound-data 2 3))
-	     (a-hook (make-hook 2))
+	     (a-hook (make-hook '(2 0 #f)))
 	     (exts (sound-file-extensions)) ; save across possible set below
 	     
 	     (procs (list 

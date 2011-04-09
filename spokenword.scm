@@ -79,14 +79,14 @@
 (define next-phrase
   (lambda (position)
     (do ((i 0 (+ i 1)) (found #f))
-        ((or (eq? i 100) (eq? found #t) (eq? position (frames))) position)
+        ((or (= i 100) found (= position (frames))) position)
           (set! position (min (frames) (+ position jump-length)))
           (set! found (phrase-start? position)))))
 
 (define previous-phrase
   (lambda (position)
     (do ((i 0 (+ i 1)) (found #f))
-        ((or (eq? i 100) (eq? found #t) (eq? position 0)) position)
+        ((or (= i 100) found (= position 0)) position)
           (set! position (max 0 (- position jump-length)))
           (set! found (phrase-start? position)))))
 

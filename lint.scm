@@ -3,7 +3,7 @@
 ;;; non-standard stuff we need: 
 ;;;      procedure-arity, symbol->value, pair-line-number, keyword handlers, defined? 
 ;;; easily translated: 
-;;;      call-with-exit, implicit indexing, procedure-with-setter, provide
+;;;      call-with-exit, implicit indexing, procedure-with-setter, provide, hash-table
 
 
 (provide 'lint.scm)
@@ -209,6 +209,12 @@
 		     (cons 'hash-table-set! (list hash-table? integer?))
 		     (cons 'hash-table-size hash-table?)
 		     (cons 'make-hash-table-iterator hash-table?)
+
+		     (cons 'hook-arity hook?)
+		     (cons 'hook-functions hook?)
+		     (cons 'hook-documentation hook?)
+		     (cons 'make-hook (list list? string?))
+		     (cons 'hook procedure?)
 		     
 		     (cons 'call/cc procedure?)
 		     (cons 'call-with-current-continuation procedure?)
@@ -253,13 +259,24 @@
 					's7-version 'procedure-with-setter? 'hook? 'hook-arity 'hook-functions 
 					'hook-documentation 'make-hook 'hook-apply 'hook))
 	)
+    
+    (define (env-member arg env)
+      (member arg env (lambda (a b) (eq? a (car b)))))
 
-    (define (side-effect? form)
+    (define (side-effect? form env)
       (if (pair? form)
-	  (or (side-effect? (car form))
-	      (side-effect? (cdr form)))
+	  (or (not (member (car form) no-side-effect-functions)) ; if func is not in that list, make no assumptions about it
+	      (call-with-exit
+	       (lambda (return)
+		 (for-each
+		  (lambda (f)
+		    (if (side-effect? f env)
+			(return #t)))
+		  (cdr form))
+		 #f)))
 	  (and (symbol? form)
-	       (not (member form no-side-effect-functions)))))
+	       (and (not (member form no-side-effect-functions))
+		    (not (env-member form env))))))
     
     (define (check-args name line-number head form checkers)
       (let ((arg-number 1))
@@ -267,19 +284,19 @@
 	 (lambda (done)
 	   (for-each 
 	    (lambda (arg)
-	      (if (and (not (symbol? arg))
-		       (not (pair? arg)))
-		  (let ((checker (if (list? checkers) (car checkers) checkers)))
-		    (if (not (checker arg))
-			(format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~%        ~S~%" 
-				name line-number head arg-number 
-				(if (eq? checker integer?) "n" "")
-				checker arg form))))
-	      (if (list? checkers)
-		  (if (null? (cdr checkers))
-		      (done)
-		      (set! checkers (cdr checkers))))
-	      (set! arg-number (+ arg-number 1)))
+	      (let ((checker (if (list? checkers) (car checkers) checkers)))  
+		(if (and (not (symbol? arg))
+			 (not (pair? arg))
+			 (not (checker arg)))
+		    (format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~%        ~S~%" 
+			    name line-number head arg-number 
+			    (if (eq? checker integer?) "n" "")
+			    checker arg form))
+		(if (list? checkers)
+		    (if (null? (cdr checkers))
+			(done)
+			(set! checkers (cdr checkers))))
+		(set! arg-number (+ arg-number 1))))
 	    (cdr form))))))
     
   ;;; --------------------------------------------------------------------------------
@@ -293,7 +310,10 @@
 		(begin 
 		  (set! (var 1) #t)               ; (list-set! var 1 #t)
 		  (ok))))
-	  env)))
+	  env)
+;	 (if (not (defined? name))
+;	     (format #t "~A is undefined?~%" name))
+	 ))
       env)
     
     (define (proper-list lst)
@@ -338,6 +358,22 @@
 	    (format #t "  ~A (line ~D): ~A ~A~A ~{~A~^, ~} not used~%" 
 		    name line-number head type (if (> (length unused) 1) "s" "") (reverse unused)))))
     
+    (define (walk-body name line-number head body env)
+      (if (and (pair? body)
+	       (string? (car body)) ; ;possible doc string
+	       (not (member head '(let let* letrec letrec* do))))
+	  (set! body (cdr body)))
+      (let ((ctr 0)
+	    (len (length body)))
+	(for-each
+	 (lambda (f)
+	   (if (and (< ctr (- len 1))
+		    (not (side-effect? f env)))
+	       (format #t "  ~A (line ~D): ~S in ~A body has no effect~%" 
+		       name line-number f head))
+	   (set! env (walk name f env))
+	   (set! ctr (+ ctr 1)))
+	 body)))
     
     (define (walk-function head name args val line-number env)
       (if (null? args)
@@ -355,15 +391,12 @@
 					     (values)                  ; map omits this entry 
 					     (list arg #f #f))
 					 (if (or (not (pair? arg))
+						 (not (= (length arg) 2))
 						 (not (member head '(define* lambda* defmacro* define-macro* define-bacro* definstrument))))
 					     (format #t "  ~A (line ~D): strange parameter ~A~%" name line-number arg)
 					     (list (car arg) #f #f))))
 				   (proper-list args)))))
-		(let ((new-env (append arg-data env)))
-		  (for-each
-		   (lambda (form)
-		     (walk name form new-env))
-		   val))
+		(walk-body name line-number head val (append arg-data env))
 		(if *report-unused-parameters* (report-usage name line-number 'parameter head arg-data))
 		(append (list (list name #f #f)) env))
 	      (begin
@@ -452,7 +485,7 @@
 			 ((null? bindings))
 		       (if (not (null? (cddar bindings)))
 			   (walk name (caddar bindings) (append vars env))))
-		     (walk name (cddr form) (append vars env))
+		     (walk-body name line-number head (cddr form) (append vars env))
 		     (report-usage name line-number 'variable head vars)
 		     env))
 		  
@@ -463,7 +496,7 @@
 			   ((null? bindings))
 			 (walk name (cadar bindings) env)
 			 (set! vars (append (list (list (caar bindings) #f #f)) vars)))
-		       (walk name (if named-let (cdddr form) (cddr form)) (append vars env))
+		       (walk-body name line-number head (if named-let (cdddr form) (cddr form)) (append vars env))
 		       (report-usage name line-number 'variable head vars)
 		       env)))
 		  
@@ -473,7 +506,7 @@
 			 ((null? bindings))
 		       (walk name (cadar bindings) (append vars env))
 		       (set! vars (append (list (list (caar bindings) #f #f)) vars)))
-		     (walk name (cddr form) (append vars env))
+		     (walk-body name line-number head (cddr form) (append vars env))
 		     (report-usage name line-number 'variable head vars)
 		     env))
 		  
@@ -483,7 +516,7 @@
 			 ((null? bindings))
 		       (set! vars (append (list (list (caar bindings) #f #f)) vars))
 		       (walk name (cadar bindings) (append vars env)))
-		     (walk name (cddr form) (append vars env))
+		     (walk-body name line-number head (cddr form) (append vars env))
 		     (report-usage name line-number 'variable head vars)
 		     env))
 		  
@@ -538,10 +571,6 @@
 				       form))))
 		     (walk name (cdr form) env)))
 		  
-		  ;; TODO: here not eq? at least maybe if with constant selector
-		  ;; TODO: known type funcs added to arg type check
-		  ;; TODO: check arg's default value against its use
-		  
 		  (else  ; if begin cond and or with-environment
 		   ;; we can't expand macros so free variables can confuse the usage checks
 		   
@@ -549,7 +578,7 @@
 			    (defined? head)
 			    (procedure? (symbol->value head))
 			    (not (procedure-with-setter? (symbol->value head))) ; set! case is confusing here
-			    (not (member head env)))                            ; not shadowed locally (confusable if the file was loaded first)
+			    (not (env-member head env)))                        ; not shadowed locally (confusable if the file was loaded first)
 		       ;; check arg number
 		       (let ((arity (procedure-arity (symbol->value head)))
 			     (args (length (cdr form))))
@@ -563,7 +592,8 @@
 				       (format #t "  ~A (line ~D): ~A has too many arguments:~%        ~S~%" 
 					       name line-number head form)))))
 
-			 (if (pair? (cdr form)) ; there are args
+			 (if (and (pair? (cdr form)) ; there are args
+				  (not (eq? name 'defgenerator)))
 			     (begin
 			       ;; if keywords, check that they are acceptable
 			       ;;    this only applies to lambda*'s that have been previously loaded (lint doesn't create them)
@@ -583,21 +613,37 @@
 							  name line-number head arg form decls))))
 					(cdr form)))))
 			 
-			       ;; now try to check arg types for egregious errors
-			       (if (pair? (cdr form)) ; there are args
-				   (let ((arg-data (argument-data head)))
-				     (if arg-data
-					 (check-args name line-number head form arg-data))))))))
-		   
-		   ;; TODO: handle pws better
-		   ;; TODO: check for bad not/eq?
-		   ;; TODO: is there a way to add other stuff to the argument-data table?
+			       (case head
+				 ((eq?) (if (or (number? (cadr form))
+						(char? (cadr form))
+						(and (not (null? (cddr form)))
+						     (or (number? (caddr form))
+							 (char? (caddr form)))))
+					    (format #t "  ~A (line ~D): eq? doesn't work reliably with args like ~S~%" 
+						    name line-number form)))
+
+				 ((not) (if (and (not (symbol? (cadr form)))
+						 (not (pair? (cadr form)))
+						 (not (eq? (cadr form) #f)))
+					    (format #t "  ~A (line ~D): ~S is always #f~%" name line-number form)))
+
+				 ((catch)
+				  (if (and (not (symbol? (cadr form)))
+					   (not (boolean? (cadr form)))
+					   (or (not (pair? (cadr form)))
+					       (not (eq? (caadr form) 'quote))))
+				      (format #t "  ~A (line ~D): catch tag ~S is unreliable~%" name line-number (cadr form))))
+
+				 (else
+				  ;; now try to check arg types for egregious errors
+				  (let ((arg-data (argument-data head)))
+				    (if arg-data
+					(check-args name line-number head form arg-data)))))))))
 		   
 		   (let ((vars env))
 		     (for-each
 		      (lambda (f)
 			(set! vars (walk name f vars)))
-		      ;; TODO: check if not final form and expr has no side effects 
 		      form)
 		     
 		     (if (and (not (eq? vars env))
@@ -613,6 +659,8 @@
 	      ;; else form is a constant or something
 	      env)))
     
+    ;;; --------------------------------------------------------------------------------
+
     (lambda (file)
       (if *load-file-first* ; this can improve the error checks
 	  (load file))
@@ -632,4 +680,17 @@
 	      (if *report-unused-top-level-functions* (report-usage file 0 'top-level-function #f vars))
 	      (close-input-port fp)))))))
 
+
+;;; TODO: 
+;;; some funcs have known types, and these could be checked in the arg checker
+;;;          (func (+ ...) etc
+;;; check pws arg number
+;;; begin needs walk-body (and outer env reset if begin has defines)
+;;; (set! (f...) ..) -> is f pws [car cdr string-ref vector-ref list-ref hash-table-ref current-*-port, c|s_obj with setter]
+;;; undef'd or misspelled stuff
+;;; if all parts known, eval (error check etc)
+;;; if x y z
+;;; keep track of local functions and their args, and check these! [lambda in let as well?]
+;;; shadowed pars, redefined locals
+;;; funny symbols that are probably bad numbers 1e.1 etc [undef'd sym that has some digits and all numerical components]
 

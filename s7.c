@@ -16124,7 +16124,6 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 
 static void s7_function_set_setter(s7_scheme *sc, const char *getter, const char *setter)
 {
-  /* perhaps these functions should be procedure-with-setter's? */
   c_function_setter(s7_name_to_value(sc, getter)) = s7_name_to_value(sc, setter);
 }
 
