@@ -11,7 +11,7 @@
 	   (set! res (char=? (string-ref str i) chr))))))
 
 (define (string-replace str rstr ind ignore)
-  (string-set! str i (string-ref rstr 0)))
+  (string-set! str ind (string-ref rstr 0)))
 
 (define (find thunk lst)
   (if (null? lst)

@@ -17232,9 +17232,9 @@ EDITS: 2
 	      (va33 (laguerre 3 x a)))
 	  (if (fneq v1 v11) (snd-display #__line__ ";laguerre 1 ~A: ~A ~A" x v1 v11)
 	      (if (fneq v2 v22) (snd-display #__line__ ";laguerre 2 ~A: ~A ~A" x v2 v22)
-		  (if (fneq va1 va11) (snd-display #__line__ ";laguerre 1a ~A ~A: ~A ~A" x alpha va1 va11)
-		      (if (fneq va2 va22) (snd-display #__line__ ";laguerre 2a ~A ~A: ~A ~A" x alpha va2 va22)
-			  (if (fneq va3 va33) (snd-display #__line__ ";laguerre 3a ~A ~A: ~A ~A" x alpha va3 va33)))))))))
+		  (if (fneq va1 va11) (snd-display #__line__ ";laguerre 1a ~A ~A: ~A ~A" x a va1 va11)
+		      (if (fneq va2 va22) (snd-display #__line__ ";laguerre 2a ~A ~A: ~A ~A" x a va2 va22)
+			  (if (fneq va3 va33) (snd-display #__line__ ";laguerre 3a ~A ~A: ~A ~A" x a va3 va33)))))))))
     )
   
   ;; ----------------
@@ -18090,7 +18090,7 @@ EDITS: 2
 	  (snd-display #__line__ ";delay size 0: ~A" data))
       
       (if (fneq (delay dly1 0.5) 0.5)
-	  (snd-display #__line__ ";delay size 0 0.5: ~A" (delay dly 0.5)))
+	  (snd-display #__line__ ";delay size 0 0.5: ~A" (delay dly1 0.5)))
       )
     
     (let ((gen (make-delay :size 0 :max-size 100))
@@ -22626,7 +22626,7 @@ EDITS: 2
 		    (val2 (oscil gen2)))
 		(set! max-dist (max max-dist (abs (- val1 val2)))))))
 	   (if (fneq max-dist 0.0)
-	       (snd-display #__line__ ";polywave run ~A: ~A ~A" n val1 val2))))
+	       (snd-display #__line__ ";polywave run ~A: ~A" n max-dist))))
        (list 1 3 30 200))
       
       (for-each
@@ -22641,7 +22641,7 @@ EDITS: 2
 		    (val2 (oscil gen2)))
 		(set! max-dist (max max-dist (abs (- val1 val2)))))))
 	   (if (fneq max-dist 0.0)
-	       (snd-display #__line__ ";polywave 2nd run ~A: ~A ~A" n val1 val2))))
+	       (snd-display #__line__ ";polywave 2nd run ~A: ~A" n max-dist))))
        (list 1 3 30 200))
       
       (for-each
@@ -22656,7 +22656,7 @@ EDITS: 2
 		    (val2 (oscil gen2)))
 		(set! max-dist (max max-dist (abs (- val1 val2)))))))
 	   (if (fneq max-dist 0.0)
-	       (snd-display #__line__ ";polyshape run ~A: ~A ~A" n val1 val2))))
+	       (snd-display #__line__ ";polyshape run ~A: ~A" n max-dist))))
        (list 1 3 25))
       
       (for-each
@@ -22671,7 +22671,7 @@ EDITS: 2
 		    (val2 (oscil gen2)))
 		(set! max-dist (max max-dist (abs (- val1 val2)))))))
 	   (if (fneq max-dist 0.0)
-	       (snd-display #__line__ ";polyshape 2nd run ~A: ~A ~A" n val1 val2))))
+	       (snd-display #__line__ ";polyshape 2nd run ~A: ~A" n max-dist))))
        (list 1 3 25))
       
       (let ((gen (make-polywave 100.0 (list 1 .9 3 .1))))
@@ -30404,7 +30404,7 @@ EDITS: 2
 		(snd-display #__line__ ";snd-help hamming-window: ~A ~A" str1 str2)))
 	  (if (or (not (number? hamming-window))
 		  (not (= hamming-window old-val)))
-	      (snd-display #__line__ ";snd-help clobbered out-of-module variable: ~A ~A" old-value hamming-window)))
+	      (snd-display #__line__ ";snd-help clobbered out-of-module variable: ~A ~A" old-val hamming-window)))
 	(let ((vals (snd-urls)))
 	  (do ((i 0 (+ 1 i)))
 	      ((= i 25)) ; need to cycle the 8's
@@ -31388,21 +31388,21 @@ EDITS: 2
 	    (snd-display #__line__ ";search-procedure (1): ~A?" str)))
       
       (set! (hook-functions (edit-hook ind 0)) '())
-      (hook-push (edit-hook ind 0) (lambda () (+ snd chn)))
+      (hook-push (edit-hook ind 0) (lambda () #f))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (edit-hook ind 0))))))))
-	(if (not (string=? str "((lambda () (+ snd chn)))"))
+	(if (not (string=? str "((lambda () #f))"))
 	    (snd-display #__line__ ";edit-hook: ~A?" str)))
       (set! (hook-functions (edit-hook ind 0)) '())
       (set! (hook-functions (after-edit-hook ind 0)) '())
-      (hook-push (after-edit-hook ind 0) (lambda () (+ snd chn)))
+      (hook-push (after-edit-hook ind 0) (lambda () #f))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (after-edit-hook ind 0))))))))
-	(if (not (string=? str "((lambda () (+ snd chn)))"))
+	(if (not (string=? str "((lambda () #f))"))
 	    (snd-display #__line__ ";after-edit-hook: ~A?" str)))
       (set! (hook-functions (after-edit-hook ind 0)) '())
       (set! (hook-functions (undo-hook ind 0)) '())
-      (hook-push (undo-hook ind 0) (lambda () (+ snd chn)))
+      (hook-push (undo-hook ind 0) (lambda () #f))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (undo-hook ind 0))))))))
-	(if (not (string=? str "((lambda () (+ snd chn)))"))
+	(if (not (string=? str "((lambda () #f))"))
 	    (snd-display #__line__ ";undo-hook: ~A?" str)))
       (set! (hook-functions (undo-hook ind 0)) '())
       (let ((calls 0))
@@ -32394,11 +32394,12 @@ EDITS: 2
 			(if (= chans 8)
 			    (set! octo-files (cons name octo-files)))))))))
     
+#|
     (if (not buffer-menu)
 	(set! buffer-menu (add-to-main-menu "Buffers")))
     (hook-push open-hook open-buffer)
     (hook-push close-hook close-buffer)
-    
+|#
     (do ((test-ctr 0 (+ 1 test-ctr)))
 	((= test-ctr tests))
       (if (> (length open-files) 8)
@@ -33781,7 +33782,7 @@ EDITS: 2
 			(not (= val 3210)))
 		    (snd-display #__line__ ";edit-property look back to 0: ~A" val)))
 	      (let ((val (edit-property 'test-key ind 0 1)))
-		(if val (snd-display #__line__ ";edit-property current: ~A ~A?" val val1)))
+		(if val (snd-display #__line__ ";edit-property current: ~A?" val)))
 	      (undo)
 	      (let ((val (edit-property 'test-key ind 0 0)))
 		(if (or (not (number? val))
@@ -33796,7 +33797,7 @@ EDITS: 2
 	      (undo)
 	      (pad-channel 0 10 ind 0)
 	      (let ((val (edit-property 'test-key ind 0 1)))
-		(if val (snd-display #__line__ ";edit-property not erased upon re-edit: ~A ~A?" val val1)))
+		(if val (snd-display #__line__ ";edit-property not erased upon re-edit: ~A?" val)))
 	      (close-sound ind))
 	    
 	    (let ((id (open-sound "oboe.snd")))
@@ -42015,7 +42016,7 @@ EDITS: 1
   
   (define (bes-y1-1 x)				;Bessel function Y1(x)
     (if (= x 0.0)
-	-inf.0
+	(real-part (log 0.0)) ; -inf.0
 	(if (< x 8.0)
 	    (let* ((y (* x x))
 		   (ans1 (* x (+ -0.4900604943e13
@@ -51705,7 +51706,7 @@ EDITS: 1
 					 (- (* (cos xx) ans1)
 					    (* z (sin xx) ans2)))))))
 		      (abs (- val1 val2))))))))
-      (if (> diff .001) (snd-print (format #f ";opt exploded j0 ~A ~A?" val1 val2))))
+      (if (> diff .001) (snd-print (format #f ";opt exploded j0 ~A?" diff))))
     (ftst '(bes-j0 1.0) 0.7651976865)
     (ftst '(bes-j1 1.0) 0.4400505857)
     (ftst '(bes-jn 2 1.0) 0.11490348)
@@ -52288,7 +52289,7 @@ EDITS: 1
       (let ((sym (run (lambda () (list-ref val 0)))))
 	(if (or (not (symbol? sym))
 		(not (eq? sym 'a)))
-	    (snd-display #__line__ ";list-ref sym: ~A" x))))
+	    (snd-display #__line__ ";list-ref sym: ~A" sym))))
     
     (let ((val (list 'a 'b 'c)))
       (run (lambda () (list-set! val 1 'd)))
@@ -52299,7 +52300,7 @@ EDITS: 1
       (let ((sym (run (lambda () (list-ref val 0)))))
 	(if (or (not (keyword? sym))
 		(not (eq? sym :a)))
-	    (snd-display #__line__ ";list-ref key: ~A" x))))
+	    (snd-display #__line__ ";list-ref key: ~A" sym))))
     
     (let ((val (list :a :b :c)))
       (run (lambda () (list-set! val 1 :d)))
@@ -54489,7 +54490,7 @@ EDITS: 1
 			     :amp-envelope '(0 1 1 1) :grain-density 40
 			     :grain-duration '(0 0.02 1 0.1) 
 			     :grain-duration-spread '(0 0 0.5 0.1 1 0)
-			     :where-to grani-to-grain-duration
+			     :where-to grani-to-grain-duration ; from grani.scm
 			     :where-bins (vct 0 0.05 1))
 		      (grani 0 2 1 "oboe.snd" 
 			     :grain-start 0.1 :grain-start-spread 0.01
@@ -54566,7 +54567,7 @@ EDITS: 1
 	(let ((tag (catch #t (lambda () (set! (sample 0 (car wid3) 0) .5)) (lambda args (car args)))))
 	  (if (> (edit-position (car wid3) 0) 0) (snd-display #__line__ ";edited variable graph? ~A ~A" tag (edit-position (car wid3) 0))))
 	(if (provided? 'snd-motif)
-	    (XtUnmanageChild variables-dialog)
+	    (XtUnmanageChild variables-dialog) ; from snd-motif.scm
 	    (gtk_widget_hide variables-dialog))
 	(close-sound (car wid3))
 	(close-sound (car wid4))
@@ -56963,8 +56964,7 @@ EDITS: 1
     (if (fneq (maxamp snd) 1.0) (snd-display #__line__ ";vect nrcos max: ~A" (maxamp snd))))
   
   (let* ((res (with-sound (:clipped #f)
-			  (let ((val (make-vector 2))
-				(frq 0.0))
+			  (let ((val (make-vector 2)))
 			    (vector-set! val 0 (make-nrcos 100 1 .1))  
 			    (vector-set! val 1 (make-nrcos 200 1 .1))  
 			    (run
@@ -56979,8 +56979,7 @@ EDITS: 1
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((gen1 (make-nrcos 100 1 .1))
-				(gen2 (make-nrcos 200 1 .1))
-				(frq 0.0))
+				(gen2 (make-nrcos 200 1 .1)))
 			    (run
 			     (lambda ()
 			       (do ((i 0 (+ 1 i)))

@@ -1787,7 +1787,7 @@
        (if (or e1 e2)
 	   (set! ok1 (+ ok1 (env e1)))
 	   (clm-print ";or2 a~%"))
-       (if (not (or e1 e2))
+       (if (not (or e1 e2 okb))
 	   (clm-print ";or2 1~%"))
        (if (and e1 e2)
 	   (set! ok1 (+ ok1 (env e2)))

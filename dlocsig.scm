@@ -1155,9 +1155,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	   (if (bezier-curvature path)
 	       (do ((i 0 (+ 1 i)))
 		   ((= i n))
-		 (vector-set! (vector-ref d 0) i (* (vector-ref (vector-ref d 0) i) curve))
-		 (vector-set! (vector-ref d 1) i (* (vector-ref (vector-ref d 1) i) curve))
-		 (vector-set! (vector-ref d 2) i (* (vector-ref (vector-ref d 2) i) curve))))
+		 (vector-set! (vector-ref d 0) i (* (vector-ref (vector-ref d 0) i) (bezier-curvature path)))
+		 (vector-set! (vector-ref d 1) i (* (vector-ref (vector-ref d 1) i) (bezier-curvature path)))
+		 (vector-set! (vector-ref d 2) i (* (vector-ref (vector-ref d 2) i) (bezier-curvature path)))))
 	   (list (- n 1) p d)))
 	(else
 	 (let* ((n (- (length (bezier-x path)) 1))
@@ -1949,12 +1949,12 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;;; Scale a path
 
-(define (scale-path path)
+(define (scale-path path scaling)
   (transform-path path :scaling scaling))
 
 ;;; Translate a path
 
-(define (translate-path path)
+(define (translate-path path translation)
   (transform-path path :translation translation))
 
 ;;; Rotate a path
@@ -2635,7 +2635,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 							 (- 1.0 (expt (/ dist inside-radius) (/ inside-reverb-power))))
 						     (vector-ref channel-rev-gains 0)))))
 	(if (> rev-channels 1)
-	    (begin
+	    (let ((ho-ratt dlocsig-ambisonics-ho-rev-scaler))
 	      ;; multichannel reverb, send ambisonics components
 	      ;; W: 0.707
 	      (vector-set! channel-rev-gains w-offset (cons time (vector-ref channel-rev-gains w-offset)))

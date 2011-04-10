@@ -2638,7 +2638,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		     (set! cross-synth-amp initial-cross-synth-amp)
 		     (XtSetValues (list-ref sliders 1) (list XmNvalue (floor (* cross-synth-amp 100))))
 		     (set! cross-synth-fft-size initial-cross-synth-fft-size)
-		     (if use-combo-box-for-fft-size
+		     (if use-combo-box-for-fft-size ; defined in effects-utils.scm
 			 (XtSetValues cross-synth-default-fft-widget (list XmNselectedPosition 1))
 			 (XmToggleButtonSetState cross-synth-default-fft-widget #t #t))
 		     (set! cross-synth-radius initial-cross-synth-radius)

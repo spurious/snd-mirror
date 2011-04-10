@@ -88,6 +88,8 @@
 		     (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
 		     (* (env indf3) (oscil fmosc3 (* 4.0 vib))))))))))
 
+(define lim 256)
+
 ;; from clm-2/rt.lisp
 (define* (make-vct-test (srate *clm-srate*)
 			(bufsize *clm-rt-bufsize*)
@@ -143,7 +145,6 @@
       func)))
 
 ;; from clm-2/bess5.cl and clm-2/clm-example.lisp
-(define lim 256)
 (define time 60)
 (define mode (vector 0 0 2 4 11 11 5 6 7 9 2 0 0))
 (define rats (vector 1.0 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2.0))

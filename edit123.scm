@@ -288,9 +288,8 @@
     (set! (with-tracking-cursor) #t)
     (hook-push stop-playing-hook 
                (lambda (snd)
-                 (set! (with-tracking-cursor) old-tracking))))
-  
-  (set! (channel-style snd) channels-superimposed)
+                 (set! (with-tracking-cursor) old-tracking)
+		 (set! (channel-style snd) channels-superimposed))))
   (play (selected-sound) :start (cursor)))
 
 (define (play-end)

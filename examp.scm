@@ -240,12 +240,12 @@
 ;;;	     fftscale) "lag time" 0 fftlen2)))
 
 
-
+#|
 ;;; -------- Buffers Menu --------
 ;;; patterned after the XEmacs Buffers menu
 ;;; see new-effects.scm for a much fancier example
 
-;(define buffer-menu (add-to-main-menu "Buffers"))
+(define buffer-menu (add-to-main-menu "Buffers"))
 
 (define (open-buffer filename)
   "(open-buffer filename) adds a menu item that will select filename (use with open-hook)"
@@ -263,8 +263,9 @@
 
 ;;; here we're adding this menu handling code to whatever is already happening at open/close-hook time
 
-;(hook-push open-hook open-buffer)
-;(hook-push close-hook close-buffer)
+(hook-push open-hook open-buffer)
+(hook-push close-hook close-buffer)
+|#
 
 
 
@@ -421,7 +422,7 @@
 	(save-sound-as file snd mus-riff)
 	(system (format #f "speexenc ~A ~A" file spxfile))
 	(delete-file file))
-      (system (format #f "speexenc ~A ~A" (file-name snd) spxfile))))
+      (system (format #f "speexenc ~A ~A" (file-name snd) (string-append (file-name snd) ".spx")))))
 
 
 ;;; -------- read and write FLAC files
@@ -1899,7 +1900,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 			   (do ((i 0 (+ i 1)))
 			       ((= i (/ (transform-size) 2)) 
 				(if (or (= pk 0.0)
-					(= peak-loc 0))
+					(= pkloc 0))
 				    0.0
 				    (/ (* (+ pkloc
 					     (interpolated-peak-offset (spectr (- pkloc 1))

@@ -29,7 +29,7 @@
 (if (not (hook-member show-disk-space after-open-hook))
     (hook-push after-open-hook show-disk-space))
 
-;(define wd (make-pixmap (cadr (main-widgets)) rough))
+;(define wd (make-pixmap (cadr (main-widgets)) rough)) ; this comes from new-backgrounds.scm
 ;(for-each-child (cadr (main-widgets)) (lambda (w) (XtSetValues w (list XmNbackgroundPixmap wd))))
 
 (define wd (make-pixmap (cadr (main-widgets)) rough))

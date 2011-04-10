@@ -196,14 +196,14 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
     (if (and old-att
 	     (not new-att))
 	(throw 'wrong-number-of-args (list "stretch-envelope" 
-					   old-attack 
+					   old-att
 					   "old-attack but no new-attack?"))
 	(if (not new-att)
 	    fn
 	    (if (and old-dec
 		     (not new-dec))
 		(throw 'wrong-number-of-args (list "stretch-envelope" 
-						   old-attack new-attack old-decay
+						   old-att new-att old-dec
 						   "old-decay but no new-decay?"))
 		(let* ((x0 (car fn))
 		       (new-x x0)

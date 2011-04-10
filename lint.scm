@@ -14,18 +14,18 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; for snd-test.scm
+;;; for snd-test.scm (also included defvar for CLM)
+
 (set! *#readers* 
       (cons (cons #\_ (lambda (str)
 			(if (string=? str "__line__")
 			    (port-line-number)
 			    #f)))
             *#readers*))
-;;; --------------------------------------------------------------------------------
 
 
 ;;; --------------------------------------------------------------------------------
-;;; function argument data
+;;; function data
 
 (define lint
   (let ((argument-data
@@ -195,7 +195,7 @@
 		     (cons 'cdddar list?)
 		     (cons 'list-ref (list list? integer?))
 		     (cons 'list-set! (list list? integer?))
-		     (cons 'list-tail list?)
+		     (cons 'list-tail (list list? integer?))
 		     
 		     (cons 'vector->list vector?)
 		     (cons 'vector-fill! (list vector?))
@@ -348,7 +348,7 @@
 				    (cons 'complex? #f)
 				    (cons 'rational? #f)
 				    (cons 'number->string "")
-				    (cons 'string->number 1)
+				    (cons 'string->number 1) ; or #f -- can this cause confusion?
 				    (cons 'char-upcase #\a)
 				    (cons 'char-downcase #\a)
 				    (cons 'char->integer 1)
@@ -412,6 +412,23 @@
 				    (cons 'equal? #f)))
 	)
     
+    ;;; --------------------------------------------------------------------------------
+
+    (define (truncated-list->string form)
+      (let* ((str (object->string form))
+	     (len (length str)))
+	(if (< len 40)
+	    (format #f " ~A" str)
+	    (if (<= len 80)
+		(format #f "~%        ~A" str)
+		(call-with-exit
+		 (lambda (return)
+		   (do ((i 80 (- i 1)))
+		       ((= i 40) 
+			(format #f "~%        ~A..." str))
+		     (if (char-whitespace? (str i))
+			 (return (format #f "~%        ~A..." (substring str 0 (+ i 1))))))))))))
+
     (define (env-member arg env)
       (member arg env (lambda (a b) (eq? a (car b)))))
 
@@ -429,7 +446,7 @@
 	  (and (symbol? form)
 	       (and (not (member form no-side-effect-functions))
 		    (not (env-member form env))))))
-    
+
     (define (check-args name line-number head form checkers)
       (let ((arg-number 1))
 	(call-with-exit
@@ -441,24 +458,22 @@
 		    (let ((op (function-types (car arg))))
 		      (if (and op
 			       (not (checker op)))
-			  (format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~%        ~S~%" 
+			  (format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~A~%" 
 				  name line-number head arg-number 
 				  (if (eq? checker integer?) "n" "")
-				  checker arg form)))
+				  checker arg (truncated-list->string form))))
 		    (if (and (not (symbol? arg))
 			     (not (checker arg)))
-			(format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~%        ~S~%" 
+			(format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~A~%" 
 				name line-number head arg-number 
 				(if (eq? checker integer?) "n" "")
-				checker arg form)))
+				checker arg (truncated-list->string form))))
 		(if (list? checkers)
 		    (if (null? (cdr checkers))
 			(done)
 			(set! checkers (cdr checkers))))
 		(set! arg-number (+ arg-number 1))))
 	    (cdr form))))))
-    
-  ;;; --------------------------------------------------------------------------------
     
     (define (ref-var name env)
       (call-with-exit         
@@ -467,12 +482,9 @@
 	  (lambda (var)
 	    (if (eq? name (car var))
 		(begin 
-		  (set! (var 1) #t)               ; (list-set! var 1 #t)
+		  (set! (var 1) #t)
 		  (ok))))
-	  env)
-;	 (if (not (defined? name))
-;	     (format #t "~A is undefined?~%" name))
-	 ))
+	  env)))
       env)
     
     (define (proper-list lst)
@@ -507,7 +519,7 @@
 	    (unused '()))
 	(for-each 
 	 (lambda (arg)
-	   (if (member (car arg) '(quote if begin let let* letrec cond case or and do set! with-environment lambda lambda* define
+	   (if (member (car arg) '(quote if begin let let* letrec cond case or and do set! with-environment lambda lambda* define defvar
 					 define* defmacro defmacro* define-macro define-macro* define-bacro define-bacro* define-constant))
 	       (format #t "  ~A (line ~D): ~A ~A named ~A is asking for trouble~%" name line-number head type (car arg))
 	       (if (not (symbol? (car arg)))
@@ -535,6 +547,7 @@
 	(for-each
 	 (lambda (f)
 	   (if (and (< ctr (- len 1))
+		    (pair? f)
 		    (not (side-effect? f env)))
 	       (format #t "  ~A (line ~D): ~S in ~A body has no effect~%" 
 		       name line-number f head))
@@ -590,7 +603,7 @@
 			 (walk-function head sym args body line-number env))))
 		  
 		  ((define define* 
-		     define-constant 
+		     define-constant defvar
 		     define-expansion define-macro define-macro* define-bacro define-bacro*
 		     definstrument)
 		   
@@ -598,7 +611,7 @@
 			 (val (cddr form)))
 		     (if (symbol? sym)
 			 (begin
-			   (if (member head '(define define-constant))
+			   (if (member head '(define define-constant defvar))
 			       (let ((len (length form)))
 				 (if (not (= len 3))
 				     (format #t "  ~A (line ~D): ~S has ~A value~A?~%"
@@ -731,19 +744,21 @@
 		     (for-each
 		      (lambda (f)
 			(if (and (< ctr (- len 1))
+				 (pair? f)
 				 (not (side-effect? f env)))
 			    (format #t "  ~A (line ~D): ~S in ~A body has no effect~%" 
 				    name line-number f head))
 			(set! vars (walk name f vars))
 			(set! ctr (+ ctr 1)))
 		      body)
-		     (if (not (eq? vars env))
-			 (let ((nvars '()))
-			   (do ((v vars (cdr v)))
-			       ((or (null? v)
-				    (eq? v env)))
-			     (set! nvars (cons (car v) nvars)))
-			   (report-usage name line-number 'local-variable head nvars))) ; this is actually not right, but it's better than nothing
+		     (if (not (eq? head 'begin)) ; top level simply as an organizing device
+			 (if (not (eq? vars env))
+			     (let ((nvars '()))
+			       (do ((v vars (cdr v)))
+				   ((or (null? v)
+					(eq? v env)))
+				 (set! nvars (cons (car v) nvars)))
+			       (report-usage name line-number 'local-variable head nvars)))) ; this is actually not right, but it's better than nothing
 		     vars))
 		  
 		  ((format snd-display clm-print)
@@ -781,8 +796,12 @@
 				 (if (char=? c #\~)
 				     (set! tilde-time #t)))))
 			 (if (not (= curlys 0))
-			     (format #t "  ~A (line ~D): ~A has ~D unmatched ~A~A:~%        ~S~%"
-				     name line-number head (abs curlys) (if (positive? curlys) "{" "}") (if (> curlys 1) "s" "") form))
+			     (format #t "  ~A (line ~D): ~A has ~D unmatched ~A~A:~A~%"
+				     name line-number head 
+				     (abs curlys) 
+				     (if (positive? curlys) "{" "}") 
+				     (if (> curlys 1) "s" "") 
+				     (truncated-list->string form)))
 			 dirs))
 		     
 		     (if (not (string? control-string))
@@ -791,12 +810,18 @@
 			 (let ((ndirs (count-directives control-string))
 			       (nargs (if (or (null? args) (pair? args)) (length args) 0)))
 			   (if (not (= ndirs nargs))
-			       (format #t "  ~A (line ~D): ~A has ~A arguments:~%       ~S~%" 
+			       (format #t "  ~A (line ~D): ~A has ~A arguments:~A~%" 
 				       name line-number head 
 				       (if (> ndirs nargs) "too few" "too many")
-				       form))))
+				       (truncated-list->string form)))))
 		     (walk name (cdr form) env)))
 		  
+		  ((define-syntax let-syntax letrec-syntax define-module) ; for other's code
+		   env)
+
+		  ((declare) ; for the run macro
+		   env)
+
 		  (else  ; if begin cond and or with-environment
 		   ;; we can't expand macros so free variables can confuse the usage checks
 		   
@@ -815,14 +840,27 @@
 				     (let ((req (if (eq? type 'define) decl-args 0))
 					   (opt (if (eq? type 'define) 0 decl-args)))
 				       (if (< call-args req)
-					   (format #t "  ~A (line ~D): ~A needs ~D argument~A:~%        ~S~%" 
-						   name line-number head req (if (> req 1) "s" "") form)
+					   (format #t "  ~A (line ~D): ~A needs ~D argument~A:~A~%" 
+						   name line-number head req (if (> req 1) "s" "") (truncated-list->string form))
 					   (if (and (not rst)
 
 						    (> (- call-args (keywords (cdr form))) (+ req opt)))
-					       (format #t "  ~A (line ~D): ~A has too many arguments:~%        ~S~%" 
-						       name line-number head form)))))))))
-			 
+					       (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
+						       name line-number head (truncated-list->string form))))
+				       (if (eq? type 'define*)
+					   (if (not (member :allow-other-keys pargs))
+					       (for-each
+						(lambda (arg)
+						  (if (and (keyword? arg)
+							   (not (member arg '(:rest :key :optional))))
+						      (if (not (member (keyword->symbol arg) pargs 
+								       (lambda (a b)
+									 (if (pair? b) 
+									     (eq? a (car b))
+									     (eq? a b)))))
+							  (format #t "  ~A (line ~D): ~A keyword argument ~A (in ~S) does not match any argument in ~S~%"
+								  name line-number head arg form pargs))))
+						(cdr form))))))))))
 			 (if (and (symbol? head)
 				  (defined? head)
 				  (procedure? (symbol->value head)))
@@ -832,23 +870,26 @@
 			       (if (pair? arity)
 				   (if (not (procedure-with-setter? (symbol->value head))) ; set! case is confusing here
 				       (if (< args (car arity))
-					   (format #t "  ~A (line ~D): ~A needs at least ~D argument~A:~%        ~S~%" 
-						   name line-number head (car arity) (if (> (car arity) 1) "s" "") form)
+					   (format #t "  ~A (line ~D): ~A needs at least ~D argument~A:~A~%" 
+						   name line-number head 
+						   (car arity) 
+						   (if (> (car arity) 1) "s" "") 
+						   (truncated-list->string form))
 					   (if (and (not (caddr arity))
 						    (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity))))
-					       (format #t "  ~A (line ~D): ~A has too many arguments:~%        ~S~%" 
-						       name line-number head form)))
+					       (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
+						       name line-number head (truncated-list->string form))))
 				       (let ((req (max (arity 0) (arity 3)))
 					     (min-req (min (arity 0) (arity 3)))
 					     (opt (max (arity 1) (arity 4)))
 					     (rst (or (arity 2) (arity 5))))
 					 (if (< args min-req)
-					     (format #t "  ~A (line ~D): ~A needs at least ~D argument~A:~%        ~S~%" 
-						     name line-number head min-req (if (> min-req 1) "s" "") form)
+					     (format #t "  ~A (line ~D): ~A needs at least ~D argument~A:~A~%" 
+						     name line-number head min-req (if (> min-req 1) "s" "") (truncated-list->string form))
 					     (if (and (not rst)
 						      (> (- args (keywords (cdr form))) (+ req opt)))
-						 (format #t "  ~A (line ~D): ~A has too many arguments:~%        ~S~%" 
-							 name line-number head form))))))
+						 (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
+							 name line-number head (truncated-list->string form)))))))
 			       
 			       (if (and (pair? (cdr form)) ; there are args
 					(not (eq? name 'defgenerator)))
@@ -863,7 +904,7 @@
 						 (for-each
 						  (lambda (arg)
 						    (if (and (keyword? arg)
-							     (not (member arg '(:rest :key :optional :allow-other-keywords))))
+							     (not (member arg '(:rest :key :optional))))
 							(if (not (member arg decls (lambda (a b) 
 										     (if (pair? b) 
 											 (eq? (keyword->symbol a) (car b))
@@ -881,6 +922,14 @@
 						  (format #t "  ~A (line ~D): eq? doesn't work reliably with args like ~S~%" 
 							  name line-number form)))
 				       
+				       ((eqv?) (if (or (vector? (cadr form))
+						       (string? (cadr form))
+						       (and (not (null? (cddr form)))
+							    (or (vector? (caddr form))
+								(string? (caddr form)))))
+						   (format #t "  ~A (line ~D): eqv? doesn't work reliably with args like ~S~%" 
+							   name line-number form)))
+				       
 				       ((not) (if (and (not (symbol? (cadr form)))
 						       (not (pair? (cadr form)))
 						       (not (eq? (cadr form) #f)))
@@ -897,7 +946,8 @@
 					;; now try to check arg types for egregious errors
 					(let ((arg-data (argument-data head)))
 					  (if arg-data
-					      (check-args name line-number head form arg-data)))))))))))
+					      (check-args name line-number head form arg-data)
+					      ))))))))))
 		   
 		   (if (eq? head 'if)
 		       (if (> (length form) 4)
@@ -906,10 +956,23 @@
 			       (format #t "  ~A (line ~D): if has too few clauses: ~S~%" name line-number form))))
 
 		   (let ((vars env))
+		     (set! vars (walk name (car form) vars))
 		     (for-each
 		      (lambda (f)
+
+			(if (and (symbol? f)
+				 (not (keyword? f))
+				 (not (member name '(defgenerator define-record)))
+				 (not (eq? f name))
+				 (not (member (car form) '(apply map for-each)))
+				 (not (eq? f '=>))
+				 (not (defined? f))
+				 (not (env-member f vars)))
+			    (format #t "  ~A (line ~D): lint worries about ~A in:~A~%" name line-number f (truncated-list->string form)))
+
 			(set! vars (walk name f vars)))
-		      form))
+		      (cdr form))
+		     (if (eq? head 'if) (set! env vars))) ; in case 'define as clause
 		   env)))
 	      
 	      ;; else form is a constant or something
@@ -918,6 +981,7 @@
     ;;; --------------------------------------------------------------------------------
 
     (lambda (file)
+      "(lint file) looks for possible imperfections in file (scheme code)"
       (if *load-file-first* ; this can improve the error checks
 	  (load file))
       (let ((fp (catch #t
@@ -931,15 +995,10 @@
 	      (format #t ";~A~%" file)
 	      (do ((form (read fp) (read fp)))
 		  ((eof-object? form))
-		(set! vars (walk (if (symbol? form) form (car form)) form vars)))
+		(set! vars (walk (if (symbol? form) form (if (pair? form) (car form))) form vars)))
 	      (if *report-unused-top-level-functions* (report-usage file 0 'top-level-function #f vars))
 	      (close-input-port fp)))))))
 
 
-;;; TODO: 
-;;; undef'd or misspelled stuff
-;;; if all parts known, eval (error check etc)
-;;; keep track of local lambda - functions and their args (like define etc)
-;;; shadowed pars
-;;; :arg checking doesn't work
-
+;;; same kind of arg checking for define-macro*?
+;;; can macros be expanded so that unquote errors and the like are caught?
