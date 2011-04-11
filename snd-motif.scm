@@ -288,7 +288,8 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 
 		       (if (file-exists? filename)
 			   (if (not (directory? filename))
-			       (let ((snd (open-sound filename)))
+			       (begin
+				 (open-sound filename)
 				 (select-channel 0))
 			       (snd-error (format #f "~S is a directory" filename)))
 			   (snd-error (format #f "no such file: ~A" filename))))))
@@ -1411,7 +1412,8 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 	    (let* ((mins (car (sound-button-peaks data)))
 		   (maxes (cadr (sound-button-peaks data)))
 		   (gc (sound-button-gc data))
-		   (name (sound-button-filename data)))	     
+		   ;;(name (sound-button-filename data))
+		   )	     
 	      (let* ((secs (format #f "~,1F" (mus-sound-duration (sound-button-filename data))))
 		     (size (XTextWidth button-fontstruct secs (string-length secs))))
 		(if (<= size width) 
@@ -2584,11 +2586,11 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
       (case type
 	((text)
 	 ;; add a horizontal pair: label text
-	 (let* ((row (XtCreateManagedWidget (string-append variable-name "-row") xmRowColumnWidgetClass row-pane
+	 (let ((row (XtCreateManagedWidget (string-append variable-name "-row") xmRowColumnWidgetClass row-pane
 					    (list XmNorientation XmHORIZONTAL
-						  XmNbackground  (basic-color))))
-		(label (XtCreateManagedWidget var-label xmLabelWidgetClass row
-					      (list XmNbackground  (basic-color)))))
+						  XmNbackground  (basic-color)))))
+	   (XtCreateManagedWidget var-label xmLabelWidgetClass row
+				  (list XmNbackground  (basic-color)))
 	   (XtCreateManagedWidget (string-append variable-name "-value") xmTextFieldWidgetClass row
 				  (list XmNeditable #f
 					XmNresizeWidth #t
@@ -2610,10 +2612,10 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	   scl))
 	((meter)
 	 ;; using the level meters in snd-motif.scm
-	 (let* ((height 70)
-		(width 210)
-		(label (XtCreateManagedWidget var-label xmLabelWidgetClass row-pane
-					      (list XmNbackground  (basic-color)))))
+	 (let ((height 70)
+	       (width 210))
+	   (XtCreateManagedWidget var-label xmLabelWidgetClass row-pane
+				  (list XmNbackground  (basic-color)))
 	   (make-level-meter row-pane width height '() #f)))
 	((graph)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane 

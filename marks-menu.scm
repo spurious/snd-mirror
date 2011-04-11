@@ -302,8 +302,8 @@
                                          XmNrightAttachment     XmATTACH_FORM
                                          XmNtopAttachment       XmATTACH_FORM
                                          XmNbottomAttachment    XmATTACH_NONE
-                                         XmNbackground          (basic-color))))
-                         (lab (XtCreateManagedWidget "Buffer size" xmLabelWidgetClass frm
+                                         XmNbackground          (basic-color)))))
+		    (XtCreateManagedWidget "Buffer size" xmLabelWidgetClass frm
                                    (list XmNleftAttachment      XmATTACH_FORM
                                          XmNrightAttachment     XmATTACH_FORM
                                          XmNtopAttachment       XmATTACH_WIDGET
@@ -311,7 +311,7 @@
                                          XmNbottomAttachment    XmATTACH_FORM
                                          XmNlabelString         s1
                                          XmNalignment           XmALIGNMENT_BEGINNING
-                                         XmNbackground          (basic-color)))))
+                                         XmNbackground          (basic-color)))
                     (for-each
 
                     (lambda (size)

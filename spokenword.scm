@@ -45,12 +45,12 @@
 (define local-rms
   (lambda  (position)
     (let* ((data (local-data position)))
-            (sqrt (/ (dot-product data data) size)))))
+      (sqrt (/ (dot-product data data) size)))))
 
 (define local-peak
   (lambda (position)
     (let* ((data (local-data position)))
-            (vct-peak data))))
+      (vct-peak data))))
 
 (define local-smooth
   (lambda (position)
@@ -58,23 +58,17 @@
 
 (define silence?
   (lambda (position)
-    (if (< (local-rms position) rms-threshold)
-     #t
-     #f)))
+    (< (local-rms position) rms-threshold)))
 
 (define phrase? 
   (lambda (position)
-    (if (and (> (local-peak position) peak-threshold)
-             (> (local-rms position) rms-threshold))
-     #t
-     #f)))
+    (and (> (local-peak position) peak-threshold)
+	 (> (local-rms position) rms-threshold))))
 
 (define phrase-start?
   (lambda (position)
-    (if (and (silence? position) 
-             (phrase? (+ position phrase-look-offset))) 
-     #t
-     #f)))
+    (and (silence? position) 
+	 (phrase? (+ position phrase-look-offset)))))
 
 (define next-phrase
   (lambda (position)

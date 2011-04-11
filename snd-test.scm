@@ -1094,7 +1094,7 @@
     (if (not (equal? (with-smpte-label)  #f)) 
 	(snd-display #__line__ ";with-smpte-label set def: ~A" (with-smpte-label)))
     (set! (with-toolbar) (with-toolbar))
-    (if (not (equal? (with-toolbar) (if (provided? 'snd-gtk) #t #f)))
+    (if (not (equal? (with-toolbar) (provided? 'snd-gtk)))
 	(snd-display #__line__ ";with-toolbar set def: ~A" (with-toolbar)))
     (set! (with-tooltips) (with-tooltips))
     (if (not (equal? (with-tooltips) #t))
@@ -3236,7 +3236,7 @@
 			  (string-append sf-dir "bad_length.nist")))
 	  (close-sound ind))
 	
-	(map close-sound (sounds))
+	(for-each close-sound (sounds))
 	
 	(let* ((ob (open-sound (string-append "~/baddy/" home-dir "/cl/oboe.snd")))
 	       (sd (vct->sound-data (channel->vct)))
@@ -38581,9 +38581,9 @@ EDITS: 3
 					     (+ (vct-ref ho 0) .1))) 
 			      (vct-ref ho 0)))
 	       (if (not (vequal hi (vct .2 .3 .4))) (snd-display #__line__ ";vct-map! with vct-map! (~A): ~A ~A" n hi ho)))
-	     (let ((val (find-channel (lambda (y) (if (find-channel (lambda (n6) (> n6 .1))) #t #f)))))
+	     (let ((val (find-channel (lambda (y) (find-channel (lambda (n6) (> n6 .1)))))))
 	       (if (not (= val 0)) (snd-display #__line__ ";find with find: ~A" val)))
-	     (let ((val (find-channel (lambda (y) (if (scan-channel (lambda (n7) (> n7 .1))) #t #f)))))
+	     (let ((val (find-channel (lambda (y) (scan-channel (lambda (n7) (> n7 .1)))))))
 	       (if (not (= val 0)) (snd-display #__line__ ";find with scan-channel: ~A" val)))
 	     (let ((mx (maxamp ind 0))
 		   (val (scan-channel (lambda (y) (map-channel (lambda (n) (* n 2))) #t))))
@@ -45512,7 +45512,7 @@ EDITS: 1
 		  (sounds)))
 	       (free-frame-reader fd))))
 	 (list "oboe.snd" "4.aiff" "2.snd"))
-	(map close-sound (sounds)))
+	(for-each close-sound (sounds)))
       
       (let ((index0 (open-sound "oboe.snd"))
 	    (index1 (open-sound "2.snd")))
