@@ -1636,7 +1636,7 @@ static void init_selection_keywords(void)
 
 static XEN g_save_selection(XEN arglist)
 {
-  #define H_save_selection "(" S_save_selection " :file :header-type :data-format :srate :comment :channel): \
+  #define H_save_selection "(" S_save_selection " file header-type data-format srate comment channel): \
 save the current selection in file using the indicated file attributes.  If channel is given, save only that channel."
 
   int type = -1, format = -1, sr = -1, chn = 0;

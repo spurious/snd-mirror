@@ -4327,7 +4327,7 @@ static void init_sound_keywords(void)
 
 static XEN g_open_raw_sound(XEN arglist)
 {
-  #define H_open_raw_sound "(" S_open_raw_sound " :file :channels :srate :data-format): \
+  #define H_open_raw_sound "(" S_open_raw_sound " file channels srate data-format): \
 open file assuming the data matches the attributes indicated unless the file actually has a header"
 
   const char *file = NULL;
@@ -4443,7 +4443,7 @@ static XEN g_save_sound_as(XEN arglist)
     #define save_as_example "\"test.snd\" index mus-next mus-bshort save-sound-as"
   #endif
 
-  #define H_save_sound_as "("  S_save_sound_as " :file :sound :header-type :data-format :srate :channel :edit-position :comment): \
+  #define H_save_sound_as "("  S_save_sound_as " file sound header-type data-format srate channel edit-position comment): \
 save sound in file using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
 Omitted arguments take their value from the sound being saved.\n  " save_as_example
   
@@ -4623,7 +4623,7 @@ static XEN g_new_sound(XEN arglist)
     #define new_sound_example "\"test.snd\" mus-next mus-bshort 22050 1 \"no comment\" 1000 new-sound"
   #endif
 
-  #define H_new_sound "(" S_new_sound " :file :header-type :data-format :srate :channels :comment :size): \
+  #define H_new_sound "(" S_new_sound " file header-type data-format srate channels comment size): \
 creates a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used. \
 The 'size' argument sets the number of samples (zeros) in the newly created sound. \n  " new_sound_example
 

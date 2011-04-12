@@ -9439,7 +9439,7 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
 
 static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 {
-  #define H_logior "(logior i1 ...) returns the bitwise OR of its integer arguments (the bits that are on in any of the arguments)"
+  #define H_logior "(logior int ...) returns the bitwise OR of its integer arguments (the bits that are on in any of the arguments)"
   s7_Int result = 0;
   int i; 
   s7_pointer x;
@@ -9455,7 +9455,7 @@ static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_logxor(s7_scheme *sc, s7_pointer args)
 {
-  #define H_logxor "(logxor i1 ...) returns the bitwise XOR of its integer arguments (the bits that are on in an odd number of the arguments)"
+  #define H_logxor "(logxor int ...) returns the bitwise XOR of its integer arguments (the bits that are on in an odd number of the arguments)"
   s7_Int result = 0;
   int i;
   s7_pointer x;
@@ -9471,7 +9471,7 @@ static s7_pointer g_logxor(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_logand(s7_scheme *sc, s7_pointer args)
 {
-  #define H_logand "(logand i1 ...) returns the bitwise AND of its integer arguments (the bits that are on in every argument)"
+  #define H_logand "(logand int ...) returns the bitwise AND of its integer arguments (the bits that are on in every argument)"
   s7_Int result = -1;
   int i;
   s7_pointer x;
@@ -9960,70 +9960,70 @@ static s7_pointer g_char_cmp_not(s7_scheme *sc, s7_pointer args, int val, const 
 
 static s7_pointer g_chars_are_equal(s7_scheme *sc, s7_pointer args)
 {
-  #define H_chars_are_equal "(char=? chr...) returns #t if all the character arguments are equal"
+  #define H_chars_are_equal "(char=? char ...) returns #t if all the character arguments are equal"
   return(g_char_cmp(sc, args, 0, "char=?", false));
 }	
 
 
 static s7_pointer g_chars_are_less(s7_scheme *sc, s7_pointer args)
 {
-  #define H_chars_are_less "(char<? chr...) returns #t if all the character arguments are increasing"
+  #define H_chars_are_less "(char<? char ...) returns #t if all the character arguments are increasing"
   return(g_char_cmp(sc, args, -1, "char<?", false));
 }	
 
 
 static s7_pointer g_chars_are_greater(s7_scheme *sc, s7_pointer args)
 {
-  #define H_chars_are_greater "(char>? chr...) returns #t if all the character arguments are decreasing"
+  #define H_chars_are_greater "(char>? char ...) returns #t if all the character arguments are decreasing"
   return(g_char_cmp(sc, args, 1, "char>?", false));
 }
 
 
 static s7_pointer g_chars_are_geq(s7_scheme *sc, s7_pointer args)
 {
-  #define H_chars_are_geq "(char>=? chr...) returns #t if all the character arguments are equal or decreasing"
+  #define H_chars_are_geq "(char>=? char ...) returns #t if all the character arguments are equal or decreasing"
   return(g_char_cmp_not(sc, args, -1, "char>=?", false));
 }	
 
 
 static s7_pointer g_chars_are_leq(s7_scheme *sc, s7_pointer args)
 {
-  #define H_chars_are_leq "(char<=? chr...) returns #t if all the character arguments are equal or increasing"
+  #define H_chars_are_leq "(char<=? char ...) returns #t if all the character arguments are equal or increasing"
   return(g_char_cmp_not(sc, args, 1, "char<=?", false));
 }
 
 
 static s7_pointer g_chars_are_ci_equal(s7_scheme *sc, s7_pointer args)
 {
-  #define H_chars_are_ci_equal "(char-ci=? chr...) returns #t if all the character arguments are equal, ignoring case"
+  #define H_chars_are_ci_equal "(char-ci=? char ...) returns #t if all the character arguments are equal, ignoring case"
   return(g_char_cmp(sc, args, 0, "char-ci=?", true));
 }
 
 
 static s7_pointer g_chars_are_ci_less(s7_scheme *sc, s7_pointer args)
 {
-  #define H_chars_are_ci_less "(char-ci<? chr...) returns #t if all the character arguments are increasing, ignoring case"
+  #define H_chars_are_ci_less "(char-ci<? char ...) returns #t if all the character arguments are increasing, ignoring case"
   return(g_char_cmp(sc, args, -1, "char-ci<?", true));
 }	
 
 
 static s7_pointer g_chars_are_ci_greater(s7_scheme *sc, s7_pointer args)
 {
-  #define H_chars_are_ci_greater "(char-ci>? chr...) returns #t if all the character arguments are decreasing, ignoring case"
+  #define H_chars_are_ci_greater "(char-ci>? char ...) returns #t if all the character arguments are decreasing, ignoring case"
   return(g_char_cmp(sc, args, 1, "char-ci>?", true));
 }	
 
 
 static s7_pointer g_chars_are_ci_geq(s7_scheme *sc, s7_pointer args)
 {
-  #define H_chars_are_ci_geq "(char-ci>=? chr...) returns #t if all the character arguments are equal or decreasing, ignoring case"
+  #define H_chars_are_ci_geq "(char-ci>=? char ...) returns #t if all the character arguments are equal or decreasing, ignoring case"
   return(g_char_cmp_not(sc, args, -1, "char-ci>=?", true));
 }
 
 
 static s7_pointer g_chars_are_ci_leq(s7_scheme *sc, s7_pointer args)
 {
-  #define H_chars_are_ci_leq "(char-ci<=? chr...) returns #t if all the character arguments are equal or increasing, ignoring case"
+  #define H_chars_are_ci_leq "(char-ci<=? char ...) returns #t if all the character arguments are equal or increasing, ignoring case"
   return(g_char_cmp_not(sc, args, 1, "char-ci<=?", true));
 }
 
@@ -10455,7 +10455,7 @@ static s7_pointer g_string_cmp_not(s7_scheme *sc, s7_pointer args, int val, cons
 
 static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
 {
-  #define H_strings_are_equal "(string=? str...) returns #t if all the string arguments are equal"
+  #define H_strings_are_equal "(string=? str ...) returns #t if all the string arguments are equal"
 
   /* C-based check stops at null, but we can have embedded nulls.  We can't
    *   just look at string-length because we need to check past the nulls.
@@ -10468,28 +10468,28 @@ static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_strings_are_less(s7_scheme *sc, s7_pointer args)
 {
-  #define H_strings_are_less "(string<? str...) returns #t if all the string arguments are increasing"
+  #define H_strings_are_less "(string<? str ...) returns #t if all the string arguments are increasing"
   return(g_string_cmp(sc, args, -1, "string<?"));
 }	
 
 
 static s7_pointer g_strings_are_greater(s7_scheme *sc, s7_pointer args)
 {
-  #define H_strings_are_greater "(string>? str...) returns #t if all the string arguments are decreasing"
+  #define H_strings_are_greater "(string>? str ...) returns #t if all the string arguments are decreasing"
   return(g_string_cmp(sc, args, 1, "string>?"));
 }	
 
 
 static s7_pointer g_strings_are_geq(s7_scheme *sc, s7_pointer args)
 {
-  #define H_strings_are_geq "(string>=? str...) returns #t if all the string arguments are equal or decreasing"
+  #define H_strings_are_geq "(string>=? str ...) returns #t if all the string arguments are equal or decreasing"
   return(g_string_cmp_not(sc, args, -1, "string>=?"));
 }	
 
 
 static s7_pointer g_strings_are_leq(s7_scheme *sc, s7_pointer args)
 {
-  #define H_strings_are_leq "(string<=? str...) returns #t if all the string arguments are equal or increasing"
+  #define H_strings_are_leq "(string<=? str ...) returns #t if all the string arguments are equal or increasing"
   return(g_string_cmp_not(sc, args, 1, "string<=?"));
 }	
 
@@ -10568,35 +10568,35 @@ static s7_pointer g_string_ci_cmp_not(s7_scheme *sc, s7_pointer args, int val, c
 
 static s7_pointer g_strings_are_ci_equal(s7_scheme *sc, s7_pointer args)
 {
-  #define H_strings_are_ci_equal "(string-ci=? str...) returns #t if all the string arguments are equal, ignoring case"
+  #define H_strings_are_ci_equal "(string-ci=? str ...) returns #t if all the string arguments are equal, ignoring case"
   return(g_string_ci_cmp(sc, args, 0, "string-ci=?"));
 }	
 
 
 static s7_pointer g_strings_are_ci_less(s7_scheme *sc, s7_pointer args)
 {
-  #define H_strings_are_ci_less "(string-ci<? str...) returns #t if all the string arguments are increasing, ignoring case"
+  #define H_strings_are_ci_less "(string-ci<? str ...) returns #t if all the string arguments are increasing, ignoring case"
   return(g_string_ci_cmp(sc, args, -1, "string-ci<?"));
 }	
 
 
 static s7_pointer g_strings_are_ci_greater(s7_scheme *sc, s7_pointer args)
 {
-  #define H_strings_are_ci_greater "(string-ci>? str...) returns #t if all the string arguments are decreasing, ignoring case"
+  #define H_strings_are_ci_greater "(string-ci>? str ...) returns #t if all the string arguments are decreasing, ignoring case"
   return(g_string_ci_cmp(sc, args, 1, "string-ci>?"));
 }	
 
 
 static s7_pointer g_strings_are_ci_geq(s7_scheme *sc, s7_pointer args)
 {
-  #define H_strings_are_ci_geq "(string-ci>=? str...) returns #t if all the string arguments are equal or decreasing, ignoring case"
+  #define H_strings_are_ci_geq "(string-ci>=? str ...) returns #t if all the string arguments are equal or decreasing, ignoring case"
   return(g_string_ci_cmp_not(sc, args, -1, "string-ci>=?"));
 }	
 
 
 static s7_pointer g_strings_are_ci_leq(s7_scheme *sc, s7_pointer args)
 {
-  #define H_strings_are_ci_leq "(string-ci<=? str...) returns #t if all the string arguments are equal or increasing, ignoring case"
+  #define H_strings_are_ci_leq "(string-ci<=? str ...) returns #t if all the string arguments are equal or increasing, ignoring case"
   return(g_string_ci_cmp_not(sc, args, 1, "string-ci<=?"));
 }	
 

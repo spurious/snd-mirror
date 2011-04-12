@@ -2,11 +2,11 @@
 
 (provide 'lint.scm)
 
-(define *report-unused-parameters* #t)
+(define *report-unused-parameters* #f)
 (define *report-unused-top-level-functions* #f)
 (define *load-file-first* #f)
-(define *report-undefined-variables* #t)
-(define *report-minor-stuff* #t)                 ; let* -> let, if cases
+(define *report-undefined-variables* #f)
+(define *report-minor-stuff* #f)                 ; let* -> let, if cases, docstring checks
 
 
 ;;; --------------------------------------------------------------------------------
@@ -36,7 +36,7 @@
 	(let ((data (assoc var ht)))
 	  (and data (car data))))
 
-      (define (pair-line-number pair) 0)
+      (define (pair-line-number pair) 0) ; the line number reported below is actually that of the enclosing right paren
       (define call-with-exit call/cc)
 
       (define (symbol->value sym)
@@ -47,6 +47,9 @@
 
       (define (keyword? obj) #f)
       (define (keyword->symbol obj) obj)
+
+      (define (eval-string . args) #f)
+      (define (lint-values) '())
 
       (define (lint-member val lst func)
 	(if (null? lst)
@@ -66,10 +69,19 @@
 		  (length-1 (cdr lst) (+ len 1)))))
 	(length-1 lst 0))
 
-      ;; I'm also using (values) in map to mean "don't include anything in the output list for this call"
-      ;;    but hopefully this only affects define* keywords
+      (define (lint-map func lst)
+	(let ((result '()))
+	  (for-each
+	   (lambda (arg)
+	     (let ((val (func arg)))
+	       (if (not (null? val))
+		   (set! result (cons val result)))))
+	   lst)
+	  (reverse result)))
       )
     (begin
+      (define lint-values values)
+      (define lint-map map)
       (define lint-member member)))
 
 	
@@ -465,6 +477,7 @@
     ;;; --------------------------------------------------------------------------------
 
     (define (truncated-list->string form)
+      ;; return form -> string with limits on its length
       (let* ((str (object->string form))
 	     (len (string-length str)))
 	(if (< len 40)
@@ -479,10 +492,14 @@
 		     (if (char-whitespace? (string-ref str i))
 			 (return (format #f "~%        ~A..." (substring str 0 (+ i 1))))))))))))
 
+
     (define (env-member arg env)
+      ;; is arg in env using car
       (lint-member arg env (lambda (a b) (eq? a (car b)))))
 
+
     (define (side-effect? form env)
+      ;; could evaluation of form have any side effects (like IO etc)
       (if (pair? form)
 	  (or (and (not (member (car form) no-side-effect-functions)) ; if func is not in that list, make no assumptions about it
 		   (or (not (eq? (car form) 'format))                 ; (format #f ...)
@@ -499,7 +516,9 @@
 	       (and (not (member form no-side-effect-functions))
 		    (not (env-member form env))))))
 
+
     (define (check-args name line-number head form checkers)
+      ;; check for obvious argument type problems
       (let ((arg-number 1))
 	(call-with-exit
 	 (lambda (done)
@@ -513,21 +532,25 @@
 			  (format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~A~%" 
 				  name line-number head arg-number 
 				  (if (eq? checker integer?) "n" "")
-				  checker arg (truncated-list->string form))))
+				  checker arg 
+				  (truncated-list->string form))))
 		    (if (and (not (symbol? arg))
 			     (not (checker arg)))
 			(format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~A~%" 
 				name line-number head arg-number 
 				(if (eq? checker integer?) "n" "")
-				checker arg (truncated-list->string form))))
+				checker arg 
+				(truncated-list->string form))))
 		(if (list? checkers)
 		    (if (null? (cdr checkers))
 			(done)
 			(set! checkers (cdr checkers))))
 		(set! arg-number (+ arg-number 1))))
 	    (cdr form))))))
+
     
     (define (ref-var name env)
+      ;; if name is in env, set its "I've been referenced" flag
       (call-with-exit         
        (lambda (ok)
 	 (for-each
@@ -538,8 +561,10 @@
 		  (ok))))
 	  env)))
       env)
+
     
     (define (proper-list lst)
+      ;; return lst as a proper list
       (if (pair? lst)
 	  (cons (car lst) 
 		(if (pair? (cdr lst)) 
@@ -548,8 +573,10 @@
 			'() 
 			(list (cdr lst)))))
 	  lst))
+
     
     (define (keywords lst)
+      ;; count keywords in lst
       (let ((keys 0))
 	(for-each 
 	 (lambda (arg)
@@ -557,19 +584,36 @@
 	       (set! keys (+ keys 1))))
 	 lst)
 	keys))
+
     
     (define (binding-ok? name line-number head binding)
+      ;; check let-style variable binding for various syntactic problems
       (if (not (pair? binding))
-	  (begin (format #t "  ~A (line ~D): ~A binding is not a list? ~S~%" name line-number head binding) #f)
+	  (begin 
+	    (format #t "  ~A (line ~D): ~A binding is not a list? ~S~%" name line-number head binding) 
+	    #f)
 	  (if (not (symbol? (car binding)))
-	      (begin (format #t "  ~A (line ~D): ~A variable is not a symbol? ~S~%" name line-number head binding) #f)
+	      (begin 
+		(format #t "  ~A (line ~D): ~A variable is not a symbol? ~S~%" name line-number head binding) 
+		#f)
 	      (if (keyword? (car binding))
-		  (begin (format #t "  ~A (line ~D): ~A variable is a keyword? ~S~%" name line-number head binding) #f)
+		  (begin 
+		    (format #t "  ~A (line ~D): ~A variable is a keyword? ~S~%" name line-number head binding) 
+		    #f)
 		  (if (null? (cdr binding))
-		      (begin (format #t "  ~A (line ~D): ~A variable value is missing? ~S~%" name line-number head binding) #f)
-		      #t)))))
+		      (begin 
+			(format #t "  ~A (line ~D): ~A variable value is missing? ~S~%" name line-number head binding) 
+			#f)
+		      (if (and (not (= (length binding) 2))
+			       (not (eq? head 'do)))
+			  (begin
+			    (format #t "  ~A (line ~D): ~A binding is messed up: ~S~%" name line-number head binding)
+			    #f)
+			  #t))))))
+
 
     (define (report-usage name line-number type head vars)
+      ;; report unused or set-but-unreferenced variable
       (if (and (not (eq? head 'begin)) ; begin can redefine = set a variable
 	       (not (null? vars)))
 	  (do ((cur vars (cdr cur))
@@ -578,12 +622,15 @@
 	    (let ((repeat (env-member (caar cur) rst)))
 	      (if repeat
 		  (format #t "  ~A (line ~D): ~A ~A ~A is declared twice~%" name line-number head type (caar cur))))))
+
       (let ((set '())
 	    (unused '()))
 	(for-each 
 	 (lambda (arg)
-	   (if (member (car arg) '(quote if begin let let* letrec cond case or and do set! with-environment lambda lambda* define defvar
-					 define* defmacro defmacro* define-macro define-macro* define-bacro define-bacro* define-constant))
+	   (if (member (car arg) '(quote if begin let let* letrec cond case or and do set! 
+				   with-environment lambda lambda* define defvar
+				   define* defmacro defmacro* define-macro define-macro* 
+				   define-bacro define-bacro* define-constant))
 	       (format #t "  ~A (line ~D): ~A ~A named ~A is asking for trouble~%" name line-number head type (car arg))
 	       (if (not (symbol? (car arg)))
 		   (format #t "  ~A (line ~D): bad ~A ~A name: ~S~%" name line-number head type (car arg))))
@@ -593,6 +640,7 @@
 		   (set! set (cons (car arg) set))
 		   (set! unused (cons (car arg) unused)))))
 	 vars)
+
 	(if (not (null? set))
 	    (format #t "  ~A (line ~D): ~A ~A~A ~{~A~^, ~} set, but not used~%" 
 		    name line-number head type (if (> (length set) 1) "s" "") (reverse set)))
@@ -600,44 +648,98 @@
 	    (format #t "  ~A (line ~D): ~A ~A~A ~{~A~^, ~} not used~%" 
 		    name line-number head type (if (> (length unused) 1) "s" "") (reverse unused)))))
     
+
     (define (lint-walk-body name line-number head body env)
-      (if (and (pair? body)
-	       (string? (car body)) ; ;possible doc string
-	       (not (member head '(let let* letrec letrec* do))))
-	  (set! body (cdr body)))
+      ;; walk a body (a list of forms, the value of the last of which might be returned)
+
       (if (or (not (list? body))
 	      (negative? (length body)))
-	  (format #t "  ~A (line ~D): stray dot? ~A~%" name line-number (truncated-list->string body))
+	  (format #t "  ~A (line ~D): stray dot? ~A~%" 
+		  name line-number (truncated-list->string body))
 	  (let ((ctr 0)
 		(len (length body)))
 	    (for-each
 	     (lambda (f)
-	       (if (< ctr (- len 1))
+	       (if (< ctr (- len 1)) ; not the last form, so its value is ignored
 		   (if (and (pair? f)
 			    (eq? (car f) 'map))
 		       (format #t "  ~A (line ~D): map could be for-each instead in:~A~%" 
-			       name line-number (truncated-list->string f))
+			       name line-number 
+			       (truncated-list->string f))
 		       (if (not (side-effect? f env))
 			   (format #t "  ~A (line ~D): ~S in ~A body has no effect~%" 
 				   name line-number f head))))
 	       (set! env (lint-walk name f env))
 	       (set! ctr (+ ctr 1)))
 	     body))))
-    
+
+
+    (define (lint-walk-function-body name line-number head args arg-data body env)
+      ;; walk function body, with possible doc string at the start
+      
+      (if (and (pair? body)
+	       (not (null? (cdr body)))
+	       (string? (car body)))
+	  (begin
+	    (if *report-minor-stuff*
+		(let* ((doc (car body))
+		       (doclen (string-length doc))
+		       (func (object->string name))
+		       (funclen (if (string? func) (string-length func) -1)))
+		  ;; check, then discard the doc string
+		  ;;   look for the current function name and arg names.
+		  
+		  (if (and (> doclen funclen)
+			   (char=? (string-ref doc 0) #\()
+			   (string=? (substring doc 1 (+ funclen 1)) func))
+		      (let ((p 1)
+			    (end 0))
+			(do ((i 1 (+ i 1)))
+			    ((or (= p 0)
+				 (= i doclen)))
+			  (if (char=? (string-ref doc i) #\()
+			      (set! p (+ p 1))
+			      (if (char=? (string-ref doc i) #\))
+				  (set! p (- p 1))))
+			  (if (= p 0) 
+			      (set! end i)))
+			
+			(if (not (zero? p))
+			    (format #t "  ~A (line ~D): docstring is messed up: ~S~%" name line-number doc)
+			    (if (< end doclen)
+				(let* ((arglst (catch #t 
+						      (lambda ()
+							(eval-string (string-append "'" (substring doc 0 (+ 1 end)))))
+						      (lambda args #f)))
+				       (keys (if arglst (keywords arglst) 0))
+				       (argn (if (list? arglst) (- (length (proper-list arglst)) keys 1) 0)))
+			      (if (and arglst
+				       (not (= (length arg-data) argn)))
+				  (format #t "  ~A (line ~D): possible docstring mismatch:~%       ~S~%        ~S~%" 
+					  name line-number (substring doc 0 (+ end 1)) (append (list name) args))))))))))
+	    ;; in any case, skip the docstring during the walk
+	    (set! body (cdr body))))
+
+      (lint-walk-body name line-number head body env))
+
+
     (define (lint-walk-function head name args val line-number env)
+      ;; check out function arguments (adding them to the current env), then walk its body, (name == function name, val == body)
+
       (if (null? args)
 	  (begin
-	    (lint-walk-body name line-number head val env)
+	    (lint-walk-function-body name line-number head args '() val env)
 	    (append (list (list name #f #f (list head args))) env))
+
 	  (if (or (symbol? args) 
 		  (pair? args))
 	      (let ((arg-data (if (symbol? args)
 				  (list (list args #f #f))
-				  (map
+				  (lint-map
 				   (lambda (arg)
 				     (if (symbol? arg)
 					 (if (member arg '(:optional :key :rest :allow-other-keys))
-					     (values)                  ; map omits this entry 
+					     (lint-values)                  ; map omits this entry 
 					     (list arg #f #f))
 					 (if (or (not (pair? arg))
 						 (not (= (length arg) 2))
@@ -645,17 +747,23 @@
 					     (begin
 					       (format #t "  ~A (line ~D): strange parameter for ~A: ~S~%" 
 						       name line-number head arg)
-					       (values))
+					       (lint-values))
 					     (list (car arg) #f #f))))
 				   (proper-list args)))))
-		(lint-walk-body name line-number head val (append arg-data env))
-		(if *report-unused-parameters* (report-usage name line-number 'parameter head arg-data))
+
+		(lint-walk-function-body name line-number head args arg-data val (append arg-data env))
+		(if *report-unused-parameters* 
+		    (report-usage name line-number 'parameter head arg-data))
 		(append (list (list name #f #f (list head args))) env))
+
 	      (begin
 		(format #t "  ~A (line ~D): strange ~A parameter list ~A~%" name line-number head args)
 		env))))
     
+
     (define (lint-walk name form env)
+      ;; walk a form 
+
       (if (symbol? form)
 	  (ref-var form env)
 	  
@@ -693,11 +801,14 @@
 				   (let ((len (length form)))
 				     (if (not (= len 3))
 					 (format #t "  ~A (line ~D): ~S has ~A value~A?~%"
-						 name line-number form (if (< len 3) "no" "too many") (if (< len 3) "" "s"))))
+						 name line-number form 
+						 (if (< len 3) "no" "too many") 
+						 (if (< len 3) "" "s"))))
 				   (format #t "  ~A (line ~D): ~S is messed up~%" name line-number form))
 			       (if (not (null? (cddr form))) 
 				   (lint-walk sym (caddr form) env))
 			       (append (list (list sym #f #f)) env))
+
 			     (if (pair? sym)
 				 (lint-walk-function head (car sym) (cdr sym) val line-number env)
 				 (begin
@@ -719,7 +830,9 @@
 		   (if (not (= (length form) 3))
 		       (begin
 			 (format #t "  ~A (line ~D): set! has too ~A arguments: ~S~%" 
-				 name line-number (if (> (length form) 3) "many" "few") form)
+				 name line-number 
+				 (if (> (length form) 3) "many" "few") 
+				 form)
 			 env)
 		       (let* ((settee (cadr form))
 			      (setval (caddr form)))
@@ -750,8 +863,49 @@
 				 name line-number form)
 			 (if (not (= len 2))
 			     (format #t "  ~A (line ~D): quote has too ~A arguments: ~S~%" 
-				     name line-number (if (> (length form) 2) "many" "few") form))))
+				     name line-number 
+				     (if (> (length form) 2) "many" "few") 
+				     form))))
 		   env)
+
+		  ;; ---------------- cond ----------------
+		  ((cond)
+		   (let ((ctr 0)
+			 (len (- (length form) 1)))
+		     (if (negative? len)
+			 (format #t "  ~A (line ~D): cond is messed up:~S~%" 
+				 name line-number
+				 (truncated-list->string form))
+			 (for-each
+			  (lambda (clause)
+			    (set! ctr (+ ctr 1))
+			    (if (not (pair? clause))
+				(format #t "  ~A (line ~D): cond clause is messed up: ~S~%"
+					name line-number
+					(truncated-list->string clause))
+				(begin
+				  (if (eq? (car clause) 'else)
+				      (if (not (= ctr len))
+					  (format #t "  ~A (line ~D): cond else clause is not the last: ~S~%"
+						  name line-number 
+						  (truncated-list->string form)))
+				      (if (pair? (car clause))
+					  (lint-walk name (car clause) env)))
+				  (if (pair? (cdr clause))
+				      (if (eq? (cadr clause) '=>)
+					  (if (not (pair? (cddr clause)))
+					      (format #t "  ~A (line ~D): cond => target is messed up: ~S~%"
+						      name line-number
+						      (truncated-list->string clause))
+					      (lint-walk name (caddr clause) env))
+					  (lint-walk-body name line-number head (cdr clause) env))
+				      (if (not (null? (cdr clause)))
+					  (format #t "  ~A (line ~D): cond clause is messed up: ~S~%"
+						  name line-number
+						  (truncated-list->string clause)))))))
+			  (cdr form)))
+		     env))
+		  
 		  
 		  ;; ---------------- case ----------------		  
 		  ((case)
@@ -761,18 +915,23 @@
 			       name line-number (truncated-list->string form))
 		       (begin
 			 (lint-walk name (cadr form) env) ; the selector
-			 (let ((all-keys '()))
+			 (let ((all-keys '())
+			       (ctr 0)
+			       (len (length (cddr form))))
 			   (for-each
 			    (lambda (clause)
+			      (set! ctr (+ ctr 1))
 			      (if (not (pair? clause))
 				  (format #t "  ~A (line ~D): case clause should be a list: ~S~%"
-					  name line-number (truncated-list->string clause))
+					  name line-number 
+					  (truncated-list->string clause))
 				  (let ((keys (car clause))
 					(exprs (cdr clause)))
 				    (if (pair? keys)
 					(if (negative? (length keys))
 					    (format #t "  ~A (line ~D): stray dot in case case key list: ~S~%"
-						    name line-number (truncated-list->string clause))
+						    name line-number 
+						    (truncated-list->string clause))
 					    (for-each
 					     (lambda (key)
 					       (if (or (vector? key)
@@ -788,8 +947,16 @@
 					     keys))
 					(if (not (eq? keys 'else))
 					    (format #t "  ~A (line ~D): bad case key ~S in ~S~%" 
-						    name line-number keys clause)))
-				    (set! all-keys (append (if (pair? keys) keys (list keys)) all-keys))
+						    name line-number keys clause)
+					    (if (not (= ctr len))
+						(format #t "  ~A (line ~D): case else clause is not the last:~A~%"
+							name line-number 
+							(truncated-list->string (cddr form))))))
+				    (set! all-keys (append (if (and (pair? keys)
+								    (not (negative? (length keys))))
+							       keys 
+							       (list keys))
+							   all-keys))
 				    (lint-walk-body name line-number head exprs env))))
 			    (cddr form)))))
 		   env)
@@ -802,6 +969,7 @@
 			     (not (list? (caddr form))))
 			 (format #t "  ~A (line ~D): do is messed up: ~A~%" name line-number (truncated-list->string form))
 			 (begin
+
 			   ;; walk the init forms before adding the step vars to env
 			   (do ((bindings (cadr form) (cdr bindings)))
 			       ((null? bindings))
@@ -809,12 +977,15 @@
 				 (begin
 				   (lint-walk name (cadar bindings) env)
 				   (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
+
 			   ;; walk the step exprs
 			   (do ((bindings (cadr form) (cdr bindings)))
 			       ((null? bindings))
 			     (if (and (binding-ok? name line-number head (car bindings))
 				      (pair? (cddar bindings)))
 				 (lint-walk name (caddar bindings) (append vars env))))
+
+			   ;; walk the body
 			   (lint-walk-body name line-number head (cddr form) (append vars env))
 			   (report-usage name line-number 'variable head vars)))
 		     env))
@@ -851,7 +1022,9 @@
 					(return #f)))
 				  vars)
 				 #t)))
-			 (format #t "  ~A (line ~D): let* could be let:~A~%" name line-number (truncated-list->string form)))
+			 (format #t "  ~A (line ~D): let* could be let:~A~%" 
+				 name line-number 
+				 (truncated-list->string form)))
 		     (lint-walk-body name line-number head (cddr form) (append vars env))
 		     (report-usage name line-number 'variable head vars)
 		     env))
@@ -866,39 +1039,47 @@
 		     (let ((new-env (append vars env)))
 		       (do ((bindings (cadr form) (cdr bindings)))
 			   ((null? bindings))
-			 (lint-walk name (cadar bindings) new-env))
+			 (if (binding-ok? name line-number head (car bindings))
+			     (lint-walk name (cadar bindings) new-env)))
 		       (lint-walk-body name line-number head (cddr form) new-env))
 		     (report-usage name line-number 'variable head vars)
 		     env))
 
-		  ;; ---------------- begin ----------------		  
+		  ;; ---------------- begin ----------------
 		  ((begin)
-		   (let* ((ctr 0)
-			  (body (cdr form))
-			  (len (length body))
-			  (vars env))
-		     (for-each
-		      (lambda (f)
-			(if (< ctr (- len 1))
-			    (if (and (pair? f)
-				     (eq? (car f) 'map))
-				(format #t "  ~A (line ~D): map could be for-each instead in:~A~%" 
-					name line-number (truncated-list->string f))
-				(if (not (side-effect? f env))
-				    (format #t "  ~A (line ~D): ~S in ~A body has no effect~%" 
-					    name line-number f head))))
-			(set! vars (lint-walk name f vars))
-			(set! ctr (+ ctr 1)))
-		      body)
-		     (if (not (eq? head 'begin)) ; top level simply as an organizing device
-			 (if (not (eq? vars env))
-			     (let ((nvars '()))
-			       (do ((v vars (cdr v)))
-				   ((or (null? v)
-					(eq? v env)))
-				 (set! nvars (cons (car v) nvars)))
-			       (report-usage name line-number 'local-variable head nvars)))) ; this is not right, but it's better than nothing
-		     vars))
+		   (if (negative? (length form))
+		       (begin
+			 (format #t "  ~A (line ~D): stray dot in begin? ~A~%"
+				 name line-number
+				 (truncated-list->string form))
+			 env)
+		       (let* ((ctr 0)
+			      (body (cdr form))
+			      (len (length body))
+			      (vars env))
+			 (for-each
+			  (lambda (f)
+			    (if (< ctr (- len 1))
+				(if (and (pair? f)
+					 (eq? (car f) 'map))
+				    (format #t "  ~A (line ~D): map could be for-each instead in:~A~%" 
+					    name line-number 
+					    (truncated-list->string f))
+				    (if (not (side-effect? f env))
+					(format #t "  ~A (line ~D): ~S in ~A body has no effect~%" 
+						name line-number f head))))
+			    (set! vars (lint-walk name f vars))
+			    (set! ctr (+ ctr 1)))
+			  body)
+			 (if (not (eq? head 'begin)) ; top level simply as an organizing device
+			     (if (not (eq? vars env))
+				 (let ((nvars '()))
+				   (do ((v vars (cdr v)))
+				       ((or (null? v)
+					    (eq? v env)))
+				     (set! nvars (cons (car v) nvars)))
+				   (report-usage name line-number 'local-variable head nvars)))) ; this is not right, but it's better than nothing
+		     vars)))
 		  
 		  ;; ---------------- format ----------------		  
 		  ((format snd-display clm-print)
@@ -906,7 +1087,8 @@
 		       (begin
 			 (if (< (length form) 2)
 			     (format #t "  ~A (line ~D): ~A has too few arguments:~A~%"
-				     name line-number head (truncated-list->string form)))
+				     name line-number head 
+				     (truncated-list->string form)))
 			 env)
 		       (let ((control-string (if (string? (cadr form)) (cadr form) (caddr form)))
 			     (args (if (string? (cadr form)) (cddr form) (cdddr form))))
@@ -945,6 +1127,7 @@
 					       (set! curlys (- curlys 1)))))
 				     (if (char=? c #\~)
 					 (set! tilde-time #t)))))
+
 			     (if (not (= curlys 0))
 				 (format #t "  ~A (line ~D): ~A has ~D unmatched ~A~A:~A~%"
 					 name line-number head 
@@ -956,7 +1139,8 @@
 			 
 			 (if (not (string? control-string))
 			     (if (not (list? args))
-				 (format #t "  ~A (line ~D): ~S looks suspicious~%" name line-number form))
+				 (format #t "  ~A (line ~D): ~S looks suspicious~%" 
+					 name line-number form))
 			     (let ((ndirs (count-directives control-string name line-number form))
 				   (nargs (if (or (null? args) (pair? args)) (length args) 0)))
 			       (if (not (= ndirs nargs))
@@ -975,11 +1159,14 @@
 		   env)
 
 		  ;; ---------------- everything else ----------------		  
-		  (else  ; if begin cond and or with-environment
+		  (else  ; if and or with-environment
 		   ;; we can't expand macros so free variables can confuse the usage checks
+		   ;; this block returns the current env at the end
 
 		   (if (negative? (length form))
-		       (format #t "  ~A (line ~D): stray dot? ~A~%" name line-number (truncated-list->string form))
+		       (format #t "  ~A (line ~D): stray dot? ~A~%" 
+			       name line-number 
+			       (truncated-list->string form))
 		       (begin
 
 			 (let ((local-value (env-member head env)))
@@ -992,17 +1179,21 @@
 						      (negative? (length args))
 						      (member ':rest args)))
 					     (pargs (if (pair? args) (proper-list args) '())))
+
 					 (let ((call-args (length (cdr form)))
 					       (decl-args (max 0 (- (length pargs) (keywords pargs) (if rst 1 0)))))
 					   (let ((req (if (eq? type 'define) decl-args 0))
 						 (opt (if (eq? type 'define) 0 decl-args)))
 					     (if (< call-args req)
 						 (format #t "  ~A (line ~D): ~A needs ~D argument~A:~A~%" 
-							 name line-number head req (if (> req 1) "s" "") (truncated-list->string form))
+							 name line-number head 
+							 req (if (> req 1) "s" "") 
+							 (truncated-list->string form))
 						 (if (and (not rst)
 							  (> (- call-args (keywords (cdr form))) (+ req opt)))
 						     (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
-							     name line-number head (truncated-list->string form))))
+							     name line-number head 
+							     (truncated-list->string form))))
 					     (if (eq? type 'define*)
 						 (if (not (member ':allow-other-keys pargs))
 						     (for-each
@@ -1016,7 +1207,7 @@
 											(eq? a b)))))
 								(format #t "  ~A (line ~D): ~A keyword argument ~A (in ~S) does not match any argument in ~S~%"
 									name line-number head arg form pargs))))
-						      (cdr form))))))))))
+						      (cdr form)))))))))) ; end if local-value
 			       
 			       (if (and (symbol? head)
 					(defined? head)
@@ -1036,18 +1227,23 @@
 						 (if (and (not (caddr arity))
 							  (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity))))
 						     (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
-							     name line-number head (truncated-list->string form))))
+							     name line-number head 
+							     (truncated-list->string form))))
+
 					     (let ((req (max (list-ref arity 0) (list-ref arity 3)))
 						   (min-req (min (list-ref arity 0) (list-ref arity 3)))
 						   (opt (max (list-ref arity 1) (list-ref arity 4)))
 						   (rst (or (list-ref arity 2) (list-ref arity 5))))
 					       (if (< args min-req)
 						   (format #t "  ~A (line ~D): ~A needs at least ~D argument~A:~A~%" 
-							   name line-number head min-req (if (> min-req 1) "s" "") (truncated-list->string form))
+							   name line-number head 
+							   min-req (if (> min-req 1) "s" "") 
+							   (truncated-list->string form))
 						   (if (and (not rst)
 							    (> (- args (keywords (cdr form))) (+ req opt)))
 						       (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
-							       name line-number head (truncated-list->string form)))))))
+							       name line-number head 
+							       (truncated-list->string form)))))))
 				     
 				     (if (and (pair? (cdr form)) ; there are args
 					      (not (eq? name 'defgenerator)))
@@ -1063,10 +1259,11 @@
 							(lambda (arg)
 							  (if (and (keyword? arg)
 								   (not (member arg '(:rest :key :optional))))
-							      (if (not (lint-member arg decls (lambda (a b) 
-												(if (pair? b) 
-												    (eq? (keyword->symbol a) (car b))
-												    (eq? (keyword->symbol a) b)))))
+							      (if (not (lint-member arg decls 
+										    (lambda (a b) 
+										      (if (pair? b) 
+											  (eq? (keyword->symbol a) (car b))
+											  (eq? (keyword->symbol a) b)))))
 								  (format #t "  ~A (line ~D): ~A keyword argument ~A (in ~S) does not match any argument in ~S~%"
 									  name line-number head arg form decls))))
 							(cdr form))))))
@@ -1098,13 +1295,16 @@
 						     (args (- len 2)))
 						(if (< len 3)
 						    (format #t "  ~A (line ~D): ~A missing argument~A in:~A~%"
-							    name line-number head (if (= len 2) "" "s") (truncated-list->string form)))
+							    name line-number head 
+							    (if (= len 2) "" "s") 
+							    (truncated-list->string form)))
 						(let ((func (cadr form))
 						      (arity #f))
 						  (if (and (symbol? func)
 							   (defined? func)
 							   (procedure? (symbol->value func)))
 						      (set! arity (procedure-arity (symbol->value func)))
+
 						      (if (and (pair? (cadr form))
 							       (member (caadr form) '(lambda lambda*))
 							       (pair? (cadr (cadr form))))
@@ -1116,21 +1316,26 @@
 								(if (negative? arglen)
 								    (set! arity (list 0 (abs arglen) #t))
 								    (set! arity (list 0 arglen (member ':rest (cadr (cadr form))))))))))
+
 						  (if (pair? arity)
 						      (if (< args (car arity))
 							  (format #t "  ~A (line ~D): ~A has too few arguments in: ~A~%"
-								  name line-number head (truncated-list->string form))
+								  name line-number head 
+								  (truncated-list->string form))
 							  (if (and (not (caddr arity))
 								   (> args (+ (car arity) (cadr arity))))
 							      (format #t "  ~A (line ~D): ~A has too many arguments in: ~A~%"
-								      name line-number head (truncated-list->string form))))))))
+								      name line-number head 
+								      (truncated-list->string form))))))))
 					     
 					     ((catch)
 					      (if (and (not (symbol? (cadr form)))
 						       (not (boolean? (cadr form)))
 						       (or (not (pair? (cadr form)))
 							   (not (eq? (caadr form) 'quote))))
-						  (format #t "  ~A (line ~D): catch tag ~S is unreliable~%" name line-number (cadr form))))
+						  (format #t "  ~A (line ~D): catch tag ~S is unreliable~%" 
+							  name line-number
+							  (cadr form))))
 					     
 					     (else
 					      ;; now try to check arg types for egregious errors
@@ -1142,9 +1347,11 @@
 			 (if (eq? head 'if)
 			     (begin
 			       (if (> (length form) 4)
-				   (format #t "  ~A (line ~D): if has too many clauses: ~S~%" name line-number form)
+				   (format #t "  ~A (line ~D): if has too many clauses: ~S~%" 
+					   name line-number form)
 				   (if (< (length form) 3)
-				       (format #t "  ~A (line ~D): if has too few clauses: ~S~%" name line-number form)
+				       (format #t "  ~A (line ~D): if has too few clauses: ~S~%" 
+					       name line-number form)
 				       (if (and *report-minor-stuff*
 						(boolean? (list-ref form 2))
 						(not (null? (cdddr form)))
@@ -1161,7 +1368,7 @@
 			   (set! vars (lint-walk name (car form) vars))
 			   (for-each
 			    (lambda (f)
-			      
+			      ;; look for names we don't know about
 			      (if (and (symbol? f)
 				       (not (keyword? f))
 				       (not (member name '(defgenerator define-record)))
@@ -1171,7 +1378,6 @@
 				       (not (defined? f))
 				       (not (env-member f vars)))
 				  (set! unvars (cons f unvars)))
-			      
 			      (set! vars (lint-walk name f vars)))
 			    (cdr form))
 			   
@@ -1218,7 +1424,8 @@
 	      (do ((form (read fp) (read fp)))
 		  ((eof-object? form))
 		(set! vars (lint-walk (if (symbol? form) form (if (pair? form) (car form))) form vars)))
-	      (if *report-unused-top-level-functions* (report-usage file 0 'top-level-function #f vars))
+	      (if *report-unused-top-level-functions* 
+		  (report-usage file 0 'top-level-function #f vars))
 	      (close-input-port fp)))))))
 
 

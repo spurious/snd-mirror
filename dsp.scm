@@ -224,7 +224,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.com
 
 (define* (freqdiv n snd chn)
-  "(freqdiv n) repeats each nth sample n times (clobbering the intermediate samples): (freqdiv 8)"
+  "(freqdiv n snd chn) repeats each nth sample n times (clobbering the intermediate samples): (freqdiv 8)"
   (let ((div 0)
 	(curval 0.0))
     (map-channel (lambda (val)
@@ -243,7 +243,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;;   (map-channel (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
 
 (define* (adsat size beg dur snd chn)
-  "(adsat size) is an 'adaptive saturation' sound effect"
+  "(adsat size beg dur snd chn) is an 'adaptive saturation' sound effect"
   (let* ((mn 0.0)
 	 (mx 0.0)
 	 (n 0)
@@ -274,7 +274,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; makes sound more spikey -- sometimes a nice effect
 
 (define* (spike snd chn)
-  "(spike) multiplies successive samples together to make a sound more spikey"
+  "(spike snd chn) multiplies successive samples together to make a sound more spikey"
   (map-channel (let ((x1 0.0) 
 		     (x2 0.0) 
 		     (amp (maxamp snd chn))) ; keep resultant peak at maxamp
@@ -293,32 +293,28 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 ;;; -------- easily-fooled autocorrelation-based pitch tracker 
 
-(define spot-freq
-  (lambda args
-    "(spot-freq samp snd chn) tries to determine the current pitch: (spot-freq (left-sample))"
-    (let* ((s0 (car args))
-	   (snd (if (> (length args) 1) (args 1) #f))
-	   (chn (if (> (length args) 2) (args 2) #f))
-	   (pow2 (ceiling (/ (log (/ (srate snd) 20.0)) (log 2))))
-	   (fftlen (floor (expt 2 pow2)))
-	   (data (autocorrelate (channel->vct s0 fftlen snd chn)))
-	   (cor-peak (vct-peak data)))
-      (if (= cor-peak 0.0)
-	  0.0
-	  (call-with-exit
-	   (lambda (return)
-	     (do ((i 1 (+ i 1)))
-		 ((= i (- fftlen 2)) 0)
-	       (if (and (< (data i) (data (+ i 1)))
-			(> (data (+ i 1)) (data (+ i 2))))
-		   (begin
-		     (let* ((logla (log10 (/ (+ cor-peak (data i)) (* 2 cor-peak))))
-			    (logca (log10 (/ (+ cor-peak (data (+ i 1))) (* 2 cor-peak))))
-			    (logra (log10 (/ (+ cor-peak (data (+ i 2))) (* 2 cor-peak))))
-			    (offset (/ (* 0.5 (- logla logra))
-				       (+ logla logra (* -2.0 logca)))))
-		       (return (/ (srate snd)
-				  (* 2 (+ i 1 offset))))))))))))))
+(define* (spot-freq s0 snd chn)
+  "(spot-freq samp snd chn) tries to determine the current pitch: (spot-freq (left-sample))"
+  (let* ((pow2 (ceiling (/ (log (/ (srate snd) 20.0)) (log 2))))
+	 (fftlen (floor (expt 2 pow2)))
+	 (data (autocorrelate (channel->vct s0 fftlen snd chn)))
+	 (cor-peak (vct-peak data)))
+    (if (= cor-peak 0.0)
+	0.0
+	(call-with-exit
+	 (lambda (return)
+	   (do ((i 1 (+ i 1)))
+	       ((= i (- fftlen 2)) 0)
+	     (if (and (< (data i) (data (+ i 1)))
+		      (> (data (+ i 1)) (data (+ i 2))))
+		 (begin
+		   (let* ((logla (log10 (/ (+ cor-peak (data i)) (* 2 cor-peak))))
+			  (logca (log10 (/ (+ cor-peak (data (+ i 1))) (* 2 cor-peak))))
+			  (logra (log10 (/ (+ cor-peak (data (+ i 2))) (* 2 cor-peak))))
+			  (offset (/ (* 0.5 (- logla logra))
+				     (+ logla logra (* -2.0 logca)))))
+		     (return (/ (srate snd)
+				(* 2 (+ i 1 offset)))))))))))))
 
 ;(hook-push graph-hook 
 ;	   (lambda (snd chn y0 y1) 
@@ -376,7 +372,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; fft games (from the "phazor" package of Scott McNab)
 
 (define* (zero-phase snd chn)
-  "(zero-phase) calls fft, sets all phases to 0, and un-ffts"
+  "(zero-phase snd chn) calls fft, sets all phases to 0, and un-ffts"
   (let* ((len (frames snd chn))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (floor (expt 2 pow2)))
@@ -395,7 +391,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	    (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len snd chn #f "zero-phase"))))))
 
 (define* (rotate-phase func snd chn)
-  "(rotate-phase func) calls fft, applies func to each phase, then un-ffts"
+  "(rotate-phase func snd chn) calls fft, applies func to each phase, then un-ffts"
   (let* ((len (frames snd chn))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (floor (expt 2 pow2)))
@@ -440,7 +436,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; -------- brighten-slightly
 
 (define* (brighten-slightly amount snd chn)
-  "(brighten-slightly amount) is a form of contrast-enhancement ('amount' between ca .1 and 1)"
+  "(brighten-slightly amount snd chn) is a form of contrast-enhancement ('amount' between ca .1 and 1)"
   (let* ((mx (maxamp))
 	 (brt (/ (* 2 pi amount) mx)))
     (map-channel (lambda (y)
@@ -506,7 +502,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; -------- Hilbert transform
 
 (define* (make-hilbert-transform (len 30))
-  "(make-hilbert-transform (len 30) makes a Hilbert transform filter"
+  "(make-hilbert-transform (len 30)) makes a Hilbert transform filter"
   (let* ((arrlen (+ 1 (* 2 len)))
 	 (arr (make-vct arrlen))
 	 (lim (if (even? len) len (+ 1 len))))
@@ -1803,7 +1799,7 @@ and replaces it with the spectrum given in coeffs"
 ;;; linear sampling rate conversion
 
 (define* (linear-src-channel sr snd chn)
-  "(linear-src-channel sr snd chn performs sampling rate conversion using linear interpolation."
+  "(linear-src-channel sr snd chn) performs sampling rate conversion using linear interpolation."
   (let* ((rd (make-sampler 0 snd chn))
 	 (last (rd))
 	 (next (rd))

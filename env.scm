@@ -178,7 +178,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 ;;; -------- stretch-envelope
 
-(define (stretch-envelope . args)
+(define* (stretch-envelope fn old-att new-att old-dec new-dec)
 
   "(stretch-envelope env old-attack new-attack old-decay new-decay) takes 'env' and 
 returns a new envelope based on it but with the attack and optionally decay portions stretched 
@@ -188,11 +188,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
   (stretch-envelope '(0 0 1 1) .1 .2) -> (0 0 0.2 0.1 1.0 1) 
   (stretch-envelope '(0 0 1 1 2 0) .1 .2 1.5 1.6) -> (0 0 0.2 0.1 1.1 1 1.6 0.5 2.0 0)"
 
-  (let ((fn (list-ref args 0))
-	(old-att (if (> (length args) 1) (list-ref args 1) #f))
-	(new-att (if (> (length args) 2) (list-ref args 2) #f))
-	(old-dec (if (> (length args) 3) (list-ref args 3) #f))
-	(new-dec (if (> (length args) 4) (list-ref args 4) #f)))
+  (let ()
     (if (and old-att
 	     (not new-att))
 	(throw 'wrong-number-of-args (list "stretch-envelope" 

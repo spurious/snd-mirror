@@ -413,8 +413,8 @@ vocal sounds using phase quadrature waveshaping"
 
 
 ;;; -------- STEREO-FLUTE
+
 (definstrument (stereo-flute start dur freq flow 
-			    
 			     (flow-envelope '(0  1 100 1))
 			     (decay 0.01) 		; additional time for instrument to decay
 			     (noise 0.0356) 

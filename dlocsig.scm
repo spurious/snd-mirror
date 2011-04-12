@@ -209,7 +209,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
   (if (>= (length a) 4) (list-ref a 3) #f))
 
 (define* (last a n) 
-  "(last lst) returns the last 'n' elements of 'lst' as a list"
+  "(last lst n) returns the last 'n' elements of 'lst' as a list"
   (if (null? a)
       #f
       (if (not n)

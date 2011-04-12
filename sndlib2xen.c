@@ -1076,7 +1076,7 @@ return the audio line number:\n  " audio_open_example
 
 static XEN g_mus_audio_open_input(XEN dev, XEN srate, XEN chans, XEN format, XEN size)
 {
-  #define H_mus_audio_open_input "(" S_mus_audio_open_input " (device srate chans format bufsize): \
+  #define H_mus_audio_open_input "(" S_mus_audio_open_input " device srate chans format bufsize): \
 open the audio device ready for input with the indicated attributes; return the audio line number"
 
   int line, idev, ifmt, isize, israte, ichans;

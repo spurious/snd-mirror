@@ -165,7 +165,7 @@
 
 
 (define (fft-peak snd chn scale)
-  "(fft-peak) returns the peak spectral magnitude"
+  "(fft-peak snd chn scale) returns the peak spectral magnitude.  It is intended for use with after-transform-hook."
   (if (and (transform-graph?) 
 	   (= (transform-graph-type) graph-once))
       (report-in-minibuffer 
@@ -613,7 +613,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
 	(snd-warning "sync not set"))))
 
 (define* (do-sound-chans proc origin)
-  "(do-sound-chans func args edhist) applies func to all selected channels using edhist as the edit history indication"
+  "(do-sound-chans func edhist) applies func to all selected channels using edhist as the edit history indication"
   (let ((snd (selected-sound)))
     (if snd
 	(begin
@@ -677,7 +677,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 ;;;
 
 (define* (fft-edit bottom top snd chn)
-  "(fft-edit low-Hz high-Hz) ffts an entire sound, removes all energy below low-Hz and all above high-Hz, 
+  "(fft-edit low-Hz high-Hz snd chn) ffts an entire sound, removes all energy below low-Hz and all above high-Hz, 
 then inverse ffts."
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
@@ -712,7 +712,7 @@ then inverse ffts."
 
 
 (define* (fft-squelch squelch snd chn)
-  "(fft-squelch squelch) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"
+  "(fft-squelch squelch snd chn) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"
   (let* ((len (frames snd chn))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
 	 (rdata (channel->vct 0 fsize snd chn))
@@ -746,7 +746,7 @@ then inverse ffts."
 
 
 (define* (fft-cancel lo-freq hi-freq snd chn)
-  "(fft-cancel lo-freq hi-freq) ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts"
+  "(fft-cancel lo-freq hi-freq snd chn) ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts"
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
@@ -790,7 +790,7 @@ then inverse ffts."
 
 
 (define* (squelch-vowels snd chn)
-  "(squelch-vowels) suppresses portions of a sound that look like steady-state"
+  "(squelch-vowels snd chn) suppresses portions of a sound that look like steady-state"
   (let* ((fft-size 32)
 	 (fft-mid (floor (/ fft-size 2)))
 	 (rl (make-vct fft-size))
@@ -828,7 +828,7 @@ then inverse ffts."
 
 
 (define* (fft-env-data fft-env snd chn)
-  "(fft-env-data fft-env) applies fft-env as spectral env to current sound, returning vct of new data"
+  "(fft-env-data fft-env snd chn) applies fft-env as spectral env to current sound, returning vct of new data"
   (let* ((len (frames snd chn))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
 	 (rdata (channel->vct 0 fsize snd chn))
@@ -852,12 +852,12 @@ then inverse ffts."
 
 
 (define* (fft-env-edit fft-env snd chn)
-  "(fft-env-edit fft-env) edits (filters) current chan using fft-env"
+  "(fft-env-edit fft-env snd chn) edits (filters) current chan using fft-env"
   (vct->channel (fft-env-data fft-env snd chn) 0 (- (frames) 1) snd chn #f (format #f "fft-env-edit '~A" fft-env)))
 
 
 (define* (fft-env-interp env1 env2 interp snd chn)
-  "(fft-env-interp env1 env2 interp) interpolates between two fft-filtered versions (env1 and env2 are the 
+  "(fft-env-interp env1 env2 interp snd chn) interpolates between two fft-filtered versions (env1 and env2 are the 
 spectral envelopes) following interp (an env between 0 and 1)"
   (let* ((data1 (fft-env-data env1 snd chn))
 	 (data2 (fft-env-data env2 snd chn))
@@ -1149,7 +1149,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 ;;; CLM instrument version is in clm.html
 
 (define* (hello-dentist frq amp snd chn)
-  "(hello-dentist frq amp) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"
+  "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"
   (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
 	 (i 0)
 	 (len (frames))
@@ -1174,7 +1174,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 ;;; various "Forbidden Planet" sound effects:
 
 (define* (fp sr osamp osfrq snd chn)
-  "(fp sr osamp osfrq) varies the sampling rate via an oscil: (fp 1.0 .3 20)"
+  "(fp sr osamp osfrq snd chn) varies the sampling rate via an oscil: (fp 1.0 .3 20)"
   (let* ((os (make-oscil osfrq))
 	 (s (make-src :srate sr))
 	 (len (frames snd chn))
@@ -1265,7 +1265,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 ;;; the overall expansion, then use that to decide the new length.
 
 (define* (expsnd gr-env snd chn)
-  "(expsnd gr-env) uses the granulate generator to change tempo according to an envelope: (expsnd '(0 .5 2 2.0))"
+  "(expsnd gr-env snd chn) uses the granulate generator to change tempo according to an envelope: (expsnd '(0 .5 2 2.0))"
   (let* ((dur (/ (* (/ (frames snd chn) (srate snd)) 
 		    (integrate-envelope gr-env)) ; in env.scm
 		 (envelope-last-x gr-env)))
@@ -1326,7 +1326,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 ;;; similar ideas can be used for spectral cross-fades, etc -- for example:
 
 (define* (voiced->unvoiced amp fftsize r tempo snd chn)
-  "(voiced->unvoiced amp fftsize r tempo) turns a vocal sound into whispering: (voiced->unvoiced 1.0 256 2.0 2.0)"
+  "(voiced->unvoiced amp fftsize r tempo snd chn) turns a vocal sound into whispering: (voiced->unvoiced 1.0 256 2.0 2.0)"
   (let* ((freq-inc (/ fftsize 2))
 	 (fdr (make-vct fftsize))
 	 (fdi (make-vct fftsize))
@@ -1641,7 +1641,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 ;;; -------- filtered-env 
 
 (define* (filtered-env e snd chn)
-  "(filtered-env env) is a time-varying one-pole filter: when env is at 1.0, no filtering, 
+  "(filtered-env env snd chn) is a time-varying one-pole filter: when env is at 1.0, no filtering, 
 as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount move together"
   (let* ((samps (frames))
 	 (flt (make-one-pole 1.0 0.0))
@@ -1933,7 +1933,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 
 
 (define* (add-notes notes snd chn)
-  "(add-notes notes) adds (mixes) 'notes' which is a list of lists of the form: file (offset 0.0) (amp 1.0) 
+  "(add-notes notes snd chn) adds (mixes) 'notes' which is a list of lists of the form: file (offset 0.0) (amp 1.0) 
 starting at the cursor in the currently selected channel: (add-notes '((\"oboe.snd\") (\"pistol.snd\" 1.0 2.0)))"
   (let* ((start (cursor snd chn)))
     (as-one-edit

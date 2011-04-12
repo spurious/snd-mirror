@@ -168,7 +168,7 @@
 ;;; -------- hold DAC open and play sounds via keyboard
 
 (define* (start-dac (sr 44100) (chans 1))
-  "(start-dac) starts the DAC running continuously in the background"
+  "(start-dac (srate 44100) (chans 1)) starts the DAC running continuously in the background"
   (play #f :srate sr :channels chans))
 
 (define stop-dac stop-playing)

@@ -1840,7 +1840,7 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 	    (XmStringFree str)
 	    (XtAppAddTimeOut (caddr data) 10000 show-label data))))
     (lambda* (snd-arg)
-      "(show-disk-space) adds a label to the minibuffer area showing the current free space (for use with after-open-hook)"
+      "(show-disk-space snd) adds a label to snd's minibuffer area showing the current free space (for use with after-open-hook)"
       (let* ((snd (or snd-arg (selected-sound)))
 	     (previous-label (find-if (lambda (n) (equal? (car n) snd)) labelled-snds)))
 	(if (not previous-label)
