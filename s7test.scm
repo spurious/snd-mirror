@@ -9115,6 +9115,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "~,0F" 0.6) "1.0")
 (test (format #f "~,-0F" 1.4) 'error)
 (test (format #f "~, 0F" 1.4) 'error)
+(test (format #f "~*1~*" 1) 'error)
+(test (format #f "~*1~A" 1) 'error)
 
 (test (reverse (format #f "~{~A~}" '((1 2) (3 4)))) ")4 3()2 1(")
 (test (string->symbol (format #f "~A" '(1 2))) (symbol "(1 2)"))

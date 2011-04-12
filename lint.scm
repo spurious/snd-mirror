@@ -1,18 +1,12 @@
 ;;; lint for s7 scheme
-;;;
-;;; non-standard stuff we need: 
-;;;      procedure-arity, symbol->value, pair-line-number, keyword handlers, defined?, catch
-;;; easily translated: 
-;;;      call-with-exit, implicit indexing, procedure-with-setter, provide, hash-table
-
 
 (provide 'lint.scm)
 
-(define *report-unused-parameters* #f)
+(define *report-unused-parameters* #t)
 (define *report-unused-top-level-functions* #f)
 (define *load-file-first* #f)
-(define *report-undefined-variables* #f)
-(define *report-minor-stuff* #f)                 ; let* -> let
+(define *report-undefined-variables* #t)
+(define *report-minor-stuff* #t)                 ; let* -> let, if cases
 
 
 ;;; --------------------------------------------------------------------------------
@@ -26,6 +20,59 @@
 				#f)))
 		*#readers*)))
 
+
+(if (not (provided? 's7))
+    (begin
+      ;; here's an attempt to make this work in Guile 1.8
+      (use-modules (ice-9 format))
+
+      (define (hash-table . args)
+	(let ((ht (list)))
+	  (do ((lst args (cdr lst)))
+	      ((null? lst) ht)
+	    (set! ht (cons lst ht)))))
+
+      (define (hash-table-ref ht var)
+	(let ((data (assoc var ht)))
+	  (and data (car data))))
+
+      (define (pair-line-number pair) 0)
+      (define call-with-exit call/cc)
+
+      (define (symbol->value sym)
+	(symbol-binding #f sym))
+
+      (define (procedure-arity f)
+	(procedure-property f 'arity))
+
+      (define (keyword? obj) #f)
+      (define (keyword->symbol obj) obj)
+
+      (define (lint-member val lst func)
+	(if (null? lst)
+	    #f
+	    (if (func val (car lst))
+		lst
+		(lint-member val (cdr lst) func))))
+
+      (define (procedure-source f) #f) ; this only affects define* keyword checking
+      
+      (define (length lst)
+	(define (length-1 lst len)
+	  (if (null? lst)
+	      len
+	      (if (not (pair? lst))
+		  (- len)
+		  (length-1 (cdr lst) (+ len 1)))))
+	(length-1 lst 0))
+
+      ;; I'm also using (values) in map to mean "don't include anything in the output list for this call"
+      ;;    but hopefully this only affects define* keywords
+      )
+    (begin
+      (define lint-member member)))
+
+	
 
 ;;; --------------------------------------------------------------------------------
 ;;; function data
@@ -419,7 +466,7 @@
 
     (define (truncated-list->string form)
       (let* ((str (object->string form))
-	     (len (length str)))
+	     (len (string-length str)))
 	(if (< len 40)
 	    (format #f " ~A" str)
 	    (if (<= len 80)
@@ -429,11 +476,11 @@
 		   (do ((i 80 (- i 1)))
 		       ((= i 40) 
 			(format #f "~%        ~A..." str))
-		     (if (char-whitespace? (str i))
+		     (if (char-whitespace? (string-ref str i))
 			 (return (format #f "~%        ~A..." (substring str 0 (+ i 1))))))))))))
 
     (define (env-member arg env)
-      (member arg env (lambda (a b) (eq? a (car b)))))
+      (lint-member arg env (lambda (a b) (eq? a (car b)))))
 
     (define (side-effect? form env)
       (if (pair? form)
@@ -460,7 +507,7 @@
 	    (lambda (arg)
 	      (let ((checker (if (list? checkers) (car checkers) checkers)))  
 		(if (pair? arg)
-		    (let ((op (function-types (car arg))))
+		    (let ((op (hash-table-ref function-types (car arg))))
 		      (if (and op
 			       (not (checker op)))
 			  (format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~A~%" 
@@ -487,7 +534,7 @@
 	  (lambda (var)
 	    (if (eq? name (car var))
 		(begin 
-		  (set! (var 1) #t)
+		  (list-set! var 1 #t)
 		  (ok))))
 	  env)))
       env)
@@ -595,7 +642,10 @@
 					 (if (or (not (pair? arg))
 						 (not (= (length arg) 2))
 						 (not (member head '(define* lambda* defmacro* define-macro* define-bacro* definstrument))))
-					     (format #t "  ~A (line ~D): strange parameter ~A~%" name line-number arg)
+					     (begin
+					       (format #t "  ~A (line ~D): strange parameter for ~A: ~S~%" 
+						       name line-number head arg)
+					       (values))
 					     (list (car arg) #f #f))))
 				   (proper-list args)))))
 		(lint-walk-body name line-number head val (append arg-data env))
@@ -685,7 +735,7 @@
 				 (lambda (var)
 				   (if (eq? settee (car var))
 				       (begin 
-					 (set! (var 2) #t)  ; (list-set! var 2 #t)
+					 (list-set! var 2 #t)
 					 (ok))))
 				 env)))
 			     (if (not (pair? settee))
@@ -797,7 +847,7 @@
 			       (lambda (return)
 				 (for-each
 				  (lambda (v)
-				    (if (v 1)
+				    (if (list-ref v 1)
 					(return #f)))
 				  vars)
 				 #t)))
@@ -862,35 +912,32 @@
 			     (args (if (string? (cadr form)) (cddr form) (cdddr form))))
 			 
 			 (define (count-directives str name line-number form)
-			   
-			   (define (t-time str i len)
-			     (call-with-exit
-			      (lambda (return)
-				(do ((k i (+ k 1)))
-				    ((= k len) #f)
-				  (if (not (char-numeric? (str k)))
-				      (return (char-ci=? (str k) #\t)))))))
-			   
 			   (let ((curlys 0)
-				 (len (length str))
+				 (len (string-length str))
 				 (dirs 0)
 				 (tilde-time #f))
 			     (do ((i 0 (+ i 1)))
 				 ((= i len))
-			       (let ((c (str i)))
+			       (let ((c (string-ref str i)))
 				 (if tilde-time
 				     (begin
-				       (if (and (= curlys 0)
-						(not (member c '(#\~ #\T #\t #\& #\% #\^ #\newline #\})))
-						(not (t-time str i len)))
-					   (let ((dir (str i)))
-					     ;; the possibilities are endless, so I'll stick to the simplest
-					     (if (and (not (char-numeric? dir))
-						      (not (member dir '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\, #\{ #\} #\@ #\P
-									 #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p))))
-						 (format #t "  ~A (line ~D): unrecognized format directive: ~C in ~S, ~S~%"
-							 name line-number dir str form))
-					     (set! dirs (+ dirs 1))))
+				       (if (= curlys 0)
+					   (if (and (not (member c '(#\~ #\T #\t #\& #\% #\^ #\newline #\}))) ; ~* consumes an arg
+						    (not (call-with-exit
+							  (lambda (return)
+							    (do ((k i (+ k 1)))
+								((= k len) #f)
+							      (if (and (not (char-numeric? (string-ref str k)))
+								       (not (char=? (string-ref str k) #\,)))
+								  (return (char-ci=? (string-ref str k) #\t))))))))
+					       (let ((dir (string-ref str i)))
+						 ;; the possibilities are endless, so I'll stick to the simplest
+						 (if (and (not (char-numeric? dir))
+							  (not (member dir '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\, #\{ #\} #\@ #\P #\*
+									     #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p))))
+						     (format #t "  ~A (line ~D): unrecognized format directive: ~C in ~S, ~S~%"
+							     name line-number dir str form))
+						 (set! dirs (+ dirs 1)))))
 				       (set! tilde-time #f)
 				       (if (char=? c #\{)
 					   (set! curlys (+ curlys 1))
@@ -919,7 +966,7 @@
 					   (truncated-list->string form)))))
 			 (lint-walk name (cdr form) env))))
 		  
-		  ;; ---------------- junk ----------------		  
+		  ;; ---------------- other schemes ----------------		  
 		  ((define-syntax let-syntax letrec-syntax define-module re-export) ; for other's code
 		   env) 
 
@@ -939,11 +986,11 @@
 			   (if local-value
 			       (let ((fdata (car local-value)))
 				 (if (= (length fdata) 4)
-				     (let ((type (car (fdata 3)))
-					   (args (cadr (fdata 3))))
+				     (let ((type (car (list-ref fdata 3)))
+					   (args (cadr (list-ref fdata 3))))
 				       (let ((rst (or (not (pair? args))
 						      (negative? (length args))
-						      (member :rest args)))
+						      (member ':rest args)))
 					     (pargs (if (pair? args) (proper-list args) '())))
 					 (let ((call-args (length (cdr form)))
 					       (decl-args (max 0 (- (length pargs) (keywords pargs) (if rst 1 0)))))
@@ -957,16 +1004,16 @@
 						     (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
 							     name line-number head (truncated-list->string form))))
 					     (if (eq? type 'define*)
-						 (if (not (member :allow-other-keys pargs))
+						 (if (not (member ':allow-other-keys pargs))
 						     (for-each
 						      (lambda (arg)
 							(if (and (keyword? arg)
 								 (not (member arg '(:rest :key :optional))))
-							    (if (not (member (keyword->symbol arg) pargs 
-									     (lambda (a b)
-									       (if (pair? b) 
-										   (eq? a (car b))
-										   (eq? a b)))))
+							    (if (not (lint-member (keyword->symbol arg) pargs 
+										  (lambda (a b)
+										    (if (pair? b) 
+											(eq? a (car b))
+											(eq? a b)))))
 								(format #t "  ~A (line ~D): ~A keyword argument ~A (in ~S) does not match any argument in ~S~%"
 									name line-number head arg form pargs))))
 						      (cdr form))))))))))
@@ -980,8 +1027,9 @@
 				     (if (pair? arity)
 					 (if (not (procedure-with-setter? (symbol->value head))) ; set! case is confusing here
 					     (if (< args (car arity))
-						 (format #t "  ~A (line ~D): ~A needs at least ~D argument~A:~A~%" 
+						 (format #t "  ~A (line ~D): ~A needs ~A~D argument~A:~A~%" 
 							 name line-number head 
+							 (if (and (= 0 (cadr arity)) (not (caddr arity))) "" "at least ")
 							 (car arity) 
 							 (if (> (car arity) 1) "s" "") 
 							 (truncated-list->string form))
@@ -989,10 +1037,10 @@
 							  (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity))))
 						     (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
 							     name line-number head (truncated-list->string form))))
-					     (let ((req (max (arity 0) (arity 3)))
-						   (min-req (min (arity 0) (arity 3)))
-						   (opt (max (arity 1) (arity 4)))
-						   (rst (or (arity 2) (arity 5))))
+					     (let ((req (max (list-ref arity 0) (list-ref arity 3)))
+						   (min-req (min (list-ref arity 0) (list-ref arity 3)))
+						   (opt (max (list-ref arity 1) (list-ref arity 4)))
+						   (rst (or (list-ref arity 2) (list-ref arity 5))))
 					       (if (< args min-req)
 						   (format #t "  ~A (line ~D): ~A needs at least ~D argument~A:~A~%" 
 							   name line-number head min-req (if (> min-req 1) "s" "") (truncated-list->string form))
@@ -1010,15 +1058,15 @@
 					     (if (and (pair? source)
 						      (eq? (car source) 'lambda*))
 						 (let ((decls (cadr source)))
-						   (if (not (member :allow-other-keys decls))
+						   (if (not (member ':allow-other-keys decls))
 						       (for-each
 							(lambda (arg)
 							  (if (and (keyword? arg)
 								   (not (member arg '(:rest :key :optional))))
-							      (if (not (member arg decls (lambda (a b) 
-											   (if (pair? b) 
-											       (eq? (keyword->symbol a) (car b))
-											       (eq? (keyword->symbol a) b)))))
+							      (if (not (lint-member arg decls (lambda (a b) 
+												(if (pair? b) 
+												    (eq? (keyword->symbol a) (car b))
+												    (eq? (keyword->symbol a) b)))))
 								  (format #t "  ~A (line ~D): ~A keyword argument ~A (in ~S) does not match any argument in ~S~%"
 									  name line-number head arg form decls))))
 							(cdr form))))))
@@ -1067,7 +1115,7 @@
 								    (set! arity (list arglen 0 #f)))
 								(if (negative? arglen)
 								    (set! arity (list 0 (abs arglen) #t))
-								    (set! arity (list 0 arglen (member :rest (cadr (cadr form))))))))))
+								    (set! arity (list 0 arglen (member ':rest (cadr (cadr form))))))))))
 						  (if (pair? arity)
 						      (if (< args (car arity))
 							  (format #t "  ~A (line ~D): ~A has too few arguments in: ~A~%"
@@ -1086,7 +1134,7 @@
 					     
 					     (else
 					      ;; now try to check arg types for egregious errors
-					      (let ((arg-data (argument-data head)))
+					      (let ((arg-data (hash-table-ref argument-data head)))
 						(if arg-data
 						    (check-args name line-number head form arg-data)
 						    ))))))))))
@@ -1098,15 +1146,15 @@
 				   (if (< (length form) 3)
 				       (format #t "  ~A (line ~D): if has too few clauses: ~S~%" name line-number form)
 				       (if (and *report-minor-stuff*
-						(boolean? (form 2))
+						(boolean? (list-ref form 2))
 						(not (null? (cdddr form)))
-						(boolean? (form 3))
-						(not (eq? (form 2) (form 3)))) ; !
+						(boolean? (list-ref form 3))
+						(not (eq? (list-ref form 2) (list-ref form 3)))) ; !
 					   (format #t "  ~A (line ~D): ~S is the same as ~S~%"
 						   name line-number form
-						   (if (form 2)
-						       (form 1)
-						       (format #f "(not ~S)" (form 1)))))))))
+						   (if (list-ref form 2)
+						       (list-ref form 1)
+						       (format #f "(not ~S)" (list-ref form 1)))))))))
 			 
 			 (let ((vars env)
 			       (unvars '()))
@@ -1169,7 +1217,6 @@
 	      (format #t ";~A~%" file)
 	      (do ((form (read fp) (read fp)))
 		  ((eof-object? form))
-		;(format #t "~A~%" form)
 		(set! vars (lint-walk (if (symbol? form) form (if (pair? form) (car form))) form vars)))
 	      (if *report-unused-top-level-functions* (report-usage file 0 'top-level-function #f vars))
 	      (close-input-port fp)))))))

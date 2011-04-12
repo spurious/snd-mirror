@@ -22297,24 +22297,31 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 		    sc->strbuf[i++] = '\n';
 		  else 
 		    {
-		      if (c == 'x')
+		      if (c == 't') /* this is for compatibility with other Schemes */
+			sc->strbuf[i++] = '\t';
+		      else 
 			{
-			  c = read_x_char(pt);
-			  if (c == NOT_AN_X_CHAR)
-			    return(sc->T);
-			  sc->strbuf[i++] = (unsigned char)c;
-			}
-		      else
-			if (!is_white_space(c))
-			  return(sc->T); 
+			  if (c == 'x')
+			    {
+			      c = read_x_char(pt);
+			      if (c == NOT_AN_X_CHAR)
+				return(sc->T);
+			      sc->strbuf[i++] = (unsigned char)c;
+			    }
+			  else
+			    {
+			      if (!is_white_space(c))
+				return(sc->T); 
 
-		      /* #f here would give confusing error message "end of input", so return #t=bad backslash.
-		       *     this is not optimal. It's easy to forget that backslash needs to be backslashed. 
-		       *
-		       * the white_space business implements Scheme's \<newline> or \<space> feature -- the character after \ is flushed.
-		       *   It may be that r6rs expects all white space after \ to be flushed, but in that case
-		       *   (string->number "1\   2") is 12??  Too bizarre.
-		       */
+			      /* #f here would give confusing error message "end of input", so return #t=bad backslash.
+			       *     this is not optimal. It's easy to forget that backslash needs to be backslashed. 
+			       *
+			       * the white_space business implements Scheme's \<newline> or \<space> feature -- the character after \ is flushed.
+			       *   It may be that r6rs expects all white space after \ to be flushed, but in that case
+			       *   (string->number "1\   2") is 12??  Too bizarre.
+			       */
+			    }
+			}
 		    }
 		}
 	    }
@@ -22421,7 +22428,12 @@ static s7_pointer read_expression(s7_scheme *sc)
 	   *   strbuf[0] == '#', false above = # case, not an atom
 	   */
 	  if (sc->value == sc->NIL)
-	    return(read_error(sc, "undefined # expression"));
+	    {
+	      return(read_error(sc, "undefined # expression"));
+	      /* a read error here seems draconian -- this unknown constant doesn't otherwise get in our way
+	       *   but how to alert the caller to the problem without stopping the read?
+	       */
+	    }
 	  return(sc->value);
 
 	case TOKEN_DOT:                                             /* (catch #t (lambda () (+ 1 . . )) (lambda args 'hiho)) */
