@@ -132,6 +132,14 @@
   (and (vector? v)
        (not (constant? v))))
 
+(define (sequence? obj)
+  ;; scheme and C types here are ok, so...
+  (and (not (number? obj))
+       (not (char? obj))
+       (not (boolean? obj))
+       (not (symbol? obj))))
+       
+
 (define lint
   (let ((argument-data
 	 (hash-table (cons 'gensym string?)
@@ -261,7 +269,7 @@
 		     (cons 'string-ci<=? string?)
 		     (cons 'string-ci>=? string?)
 		     (cons 'string-append string?)
-		     (cons 'string-fill! (list string? char?))
+		     (cons 'string-fill! (list non-constant-string? char?))
 		     (cons 'string-copy string?)
 		     (cons 'substring (list string? non-negative-integer? non-negative-integer?))
 		     (cons 'string->list string?)
@@ -303,7 +311,7 @@
 		     (cons 'list-tail (list list? non-negative-integer?))
 		     
 		     (cons 'vector->list vector?)
-		     (cons 'vector-fill! (list vector?))
+		     (cons 'vector-fill! (list non-constant-vector?))
 		     (cons 'vector-length vector?)
 		     (cons 'vector-ref (list vector? non-negative-integer?))
 		     (cons 'vector-set! (list non-constant-vector? non-negative-integer?))
@@ -324,6 +332,12 @@
 		     (cons 'call/cc procedure?)
 		     (cons 'call-with-current-continuation procedure?)
 		     (cons 'call-with-exit procedure?)
+
+		     (cons 'length sequence?)
+		     (cons 'reverse sequence?)
+		     (cons 'reverse! sequence?)
+		     (cons 'fill! (list sequence?))
+		     (cons 'sort! (list sequence? procedure?))
 		     
 		     (cons 'load string?)
 		     (cons 'eval-string string?)
@@ -382,21 +396,21 @@
 				    (cons 'port-closed? #f)
 				    (cons 'char-ready? #f)
 				    (cons 'eof-object? #f)
-				    (cons 'make-polar 1)
-				    (cons 'make-rectangular 1)
-				    (cons 'magnitude 1)
-				    (cons 'angle 1)
-				    (cons 'real-part 1)
-				    (cons 'imag-part 1)
-				    (cons 'numerator 1)
-				    (cons 'denominator 1)
-				    (cons 'rationalize 1)
-				    (cons 'abs 1)
-				    (cons 'exp 1)
-				    (cons 'log 1)
-				    (cons 'sin 1)
-				    (cons 'cos 1)
-				    (cons 'tan 1)
+				    (cons 'make-polar 2) ; if it can be an int, use 2, else 1
+				    (cons 'make-rectangular 2)
+				    (cons 'magnitude 2)
+				    (cons 'angle 2)
+				    (cons 'real-part 2)
+				    (cons 'imag-part 2)
+				    (cons 'numerator 2)
+				    (cons 'denominator 2)
+				    (cons 'rationalize 2)
+				    (cons 'abs 2)
+				    (cons 'exp 2)
+				    (cons 'log 2)
+				    (cons 'sin 2)
+				    (cons 'cos 2)
+				    (cons 'tan 2)
 				    (cons 'asin 1)
 				    (cons 'acos 1)
 				    (cons 'atan 1)
@@ -406,23 +420,23 @@
 				    (cons 'asinh 1)
 				    (cons 'acosh 1)
 				    (cons 'atanh 1)
-				    (cons 'sqrt 1)
-				    (cons 'expt 1)
-				    (cons 'floor 1)
-				    (cons 'ceiling 1)
-				    (cons 'truncate 1)
-				    (cons 'round 1)
-				    (cons 'lcm 1)
-				    (cons 'gcd 1)
-				    (cons '+ 1)
-				    (cons '- 1)
-				    (cons '* 1)
-				    (cons '/ 1)
-				    (cons 'max 1)
-				    (cons 'min 1)
-				    (cons 'quotient 1)
-				    (cons 'remainder 1)
-				    (cons 'modulo 1)
+				    (cons 'sqrt 2)
+				    (cons 'expt 2)
+				    (cons 'floor 2)
+				    (cons 'ceiling 2)
+				    (cons 'truncate 2)
+				    (cons 'round 2)
+				    (cons 'lcm 2)
+				    (cons 'gcd 2)
+				    (cons '+ 2)
+				    (cons '- 2)
+				    (cons '* 2)
+				    (cons '/ 2)
+				    (cons 'max 2)
+				    (cons 'min 2)
+				    (cons 'quotient 2)
+				    (cons 'remainder 2)
+				    (cons 'modulo 2)
 				    (cons '= #f)
 				    (cons '< #f)
 				    (cons '> #f)
@@ -435,16 +449,16 @@
 				    (cons 'negative? #f)
 				    (cons 'infinite? #f)
 				    (cons 'nan? #f)
-				    (cons 'inexact->exact 1)
+				    (cons 'inexact->exact 2)
 				    (cons 'exact->inexact 1)
-				    (cons 'integer-length 1)
-				    (cons 'logior 1)
-				    (cons 'logxor 1)
-				    (cons 'logand 1)
-				    (cons 'lognot 1)
-				    (cons 'ash 1)
+				    (cons 'integer-length 2)
+				    (cons 'logior 2)
+				    (cons 'logxor 2)
+				    (cons 'logand 2)
+				    (cons 'lognot 2)
+				    (cons 'ash 2)
 				    (cons 'random-state->list '())
-				    (cons 'integer-decode-float 1)
+				    (cons 'integer-decode-float '())
 				    (cons 'exact? #f)
 				    (cons 'inexact? #f)
 				    (cons 'number? #f)
@@ -453,10 +467,10 @@
 				    (cons 'complex? #f)
 				    (cons 'rational? #f)
 				    (cons 'number->string "")
-				    (cons 'string->number 1) ; or #f -- can this cause confusion?
+				    (cons 'string->number 2) ; or #f -- can this cause confusion?
 				    (cons 'char-upcase #\a)
 				    (cons 'char-downcase #\a)
-				    (cons 'char->integer 1)
+				    (cons 'char->integer 2)
 				    (cons 'integer->char #\a)
 				    (cons 'char-upper-case? #f)
 				    (cons 'char-lower-case? #f)
@@ -476,7 +490,7 @@
 				    (cons 'char-ci>=? #f)
 				    (cons 'string? #f)
 				    (cons 'make-string "")
-				    (cons 'string-length 1)
+				    (cons 'string-length 2)
 				    (cons 'string-ref #\a)
 				    (cons 'string=? #f)
 				    (cons 'string<? #f)
@@ -500,12 +514,12 @@
 				    (cons 'cons '())
 				    (cons 'list '())
 				    (cons 'make-list '())
-				    (cons 'length 1)
+				    (cons 'length 2)
 				    (cons 'vector? #f)
 				    (cons 'vector->list '())
 				    (cons 'list->vector #())
 				    (cons 'vector #())
-				    (cons 'vector-length 1)
+				    (cons 'vector-length 2)
 				    (cons 'make-vector #())
 				    (cons 'continuation? #f)
 				    (cons 'map '())
@@ -613,7 +627,7 @@
 	    (cdr form))))))
 
     
-    (define (ref-var name env)
+    (define (ref-var name line-number env)
       ;; if name is in env, set its "I've been referenced" flag
       (call-with-exit         
        (lambda (ok)
@@ -621,11 +635,23 @@
 	  (lambda (var)
 	    (if (eq? name (car var))
 		(begin 
-		  (list-set! var 1 #t)
+		  (list-set! var 1 line-number)
 		  (ok))))
 	  env)))
       env)
 
+    
+    (define (set-var name line-number env)
+      (call-with-exit
+       (lambda (ok)
+	 (for-each
+	  (lambda (var)
+	    (if (eq? name (car var))
+		(begin 
+		  (list-set! var 2 line-number)
+		  (ok))))
+	  env)))
+      env)
     
     (define (proper-list lst)
       ;; return lst as a proper list
@@ -657,7 +683,7 @@
 		    (tree-member sym (car tree)))
 	       (tree-member sym (cdr tree)))))
 
-    
+
     (define (binding-ok? name line-number head binding)
       ;; check let-style variable binding for various syntactic problems
       (if (not (pair? binding))
@@ -706,7 +732,6 @@
 	       (format #t "  ~A (line ~D): ~A ~A named ~A is asking for trouble~%" name line-number head type (car arg))
 	       (if (not (symbol? (car arg)))
 		   (format #t "  ~A (line ~D): bad ~A ~A name: ~S~%" name line-number head type (car arg))))
-	   
 	   (if (not (cadr arg))
 	       (if (caddr arg)
 		   (set! set (cons (car arg) set))
@@ -749,7 +774,7 @@
 			   name line-number head
 			   (truncated-list->string f)))
 
-	       (set! env (lint-walk name f env))
+	       (set! env (lint-walk name line-number f env))
 	       (set! ctr (+ ctr 1)))
 	     body))))
 
@@ -841,11 +866,11 @@
 		env))))
     
 
-    (define (lint-walk name form env)
+    (define (lint-walk name line form env)
       ;; walk a form 
 
       (if (symbol? form)
-	  (ref-var form env)
+	  (ref-var form line env)
 	  
 	  (if (pair? form)
 	      (let ((head (car form))
@@ -886,7 +911,7 @@
 						 (if (< len 3) "" "s"))))
 				   (format #t "  ~A (line ~D): ~S is messed up~%" name line-number form))
 			       (if (not (null? (cddr form))) 
-				   (lint-walk sym (caddr form) env))
+				   (lint-walk sym line-number (caddr form) env))
 			       (append (list (list sym #f #f)) env))
 
 			     (if (pair? sym)
@@ -918,22 +943,14 @@
 			      (setval (caddr form)))
 			 (if (pair? settee)
 			     (begin
-			       (lint-walk name settee env) ; this counts as a reference since it's by reference so to speak
+			       (lint-walk name line-number settee env) ; this counts as a reference since it's by reference so to speak
 			       (set! settee (do ((sym (car settee) (car sym)))
 						((not (pair? sym)) sym)))))
 			 (if (symbol? settee)
-			     (call-with-exit
-			      (lambda (ok)
-				(for-each
-				 (lambda (var)
-				   (if (eq? settee (car var))
-				       (begin 
-					 (list-set! var 2 #t)
-					 (ok))))
-				 env)))
+			     (set-var settee line-number env)
 			     (if (not (pair? settee))
 				 (format #t "  ~A (line ~D): bad set? ~A~%" name line-number form)))
-			 (lint-walk name setval env))))
+			 (lint-walk name line-number setval env))))
 
 		  ;; ---------------- quote ----------------		  
 		  ((quote) 
@@ -969,15 +986,14 @@
 					  (format #t "  ~A (line ~D): cond else clause is not the last: ~S~%"
 						  name line-number 
 						  (truncated-list->string form)))
-				      (if (pair? (car clause))
-					  (lint-walk name (car clause) env)))
+				      (lint-walk name line-number (car clause) env))
 				  (if (pair? (cdr clause))
 				      (if (eq? (cadr clause) '=>)
 					  (if (not (pair? (cddr clause)))
 					      (format #t "  ~A (line ~D): cond => target is messed up: ~S~%"
 						      name line-number
 						      (truncated-list->string clause))
-					      (lint-walk name (caddr clause) env))
+					      (lint-walk name line-number (caddr clause) env))
 					  (lint-walk-body name line-number head (cdr clause) env))
 				      (if (not (null? (cdr clause)))
 					  (format #t "  ~A (line ~D): cond clause is messed up: ~S~%"
@@ -994,7 +1010,7 @@
 		       (format #t "  ~A (line ~D): case is messed up: ~A~%"
 			       name line-number (truncated-list->string form))
 		       (begin
-			 (lint-walk name (cadr form) env) ; the selector
+			 (lint-walk name line-number (cadr form) env) ; the selector
 			 (let ((all-keys '())
 			       (ctr 0)
 			       (len (lint-length (cddr form))))
@@ -1055,7 +1071,7 @@
 			       ((null? bindings))
 			     (if (binding-ok? name line-number head (car bindings))
 				 (begin
-				   (lint-walk name (cadar bindings) env)
+				   (lint-walk name line-number (cadar bindings) env)
 				   (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
 
 			   ;; walk the step exprs
@@ -1063,7 +1079,7 @@
 			       ((null? bindings))
 			     (if (and (binding-ok? name line-number head (car bindings))
 				      (pair? (cddar bindings)))
-				 (lint-walk name (caddar bindings) (append vars env))))
+				 (lint-walk name line-number (caddar bindings) (append vars env))))
 
 			   ;; walk the body
 			   (lint-walk-body name line-number head (cddr form) (append vars env))
@@ -1078,7 +1094,7 @@
 			   ((null? bindings))
 			 (if (binding-ok? name line-number head (car bindings))
 			     (begin
-			       (lint-walk name (cadar bindings) env)
+			       (lint-walk name line-number (cadar bindings) env)
 			       (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
 		       (lint-walk-body name line-number head (if named-let (cdddr form) (cddr form)) (append vars env))
 		       (report-usage name line-number 'variable head vars)
@@ -1091,7 +1107,7 @@
 			 ((null? bindings))
 		       (if (binding-ok? name line-number head (car bindings))
 			   (begin
-			     (lint-walk name (cadar bindings) (append vars env))
+			     (lint-walk name line-number (cadar bindings) (append vars env))
 			     (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
 		     (if (and *report-minor-stuff*
 			      (call-with-exit
@@ -1120,7 +1136,7 @@
 		       (do ((bindings (cadr form) (cdr bindings)))
 			   ((null? bindings))
 			 (if (binding-ok? name line-number head (car bindings))
-			     (lint-walk name (cadar bindings) new-env)))
+			     (lint-walk name line-number (cadar bindings) new-env)))
 		       (lint-walk-body name line-number head (cddr form) new-env))
 		     (report-usage name line-number 'variable head vars)
 		     env))
@@ -1148,7 +1164,7 @@
 				    (if (not (side-effect? f env))
 					(format #t "  ~A (line ~D): ~S in ~A body has no effect~%" 
 						name line-number f head))))
-			    (set! vars (lint-walk name f vars))
+			    (set! vars (lint-walk name line-number f vars))
 			    (set! ctr (+ ctr 1)))
 			  body)
 			 (if (not (eq? head 'begin)) ; top level simply as an organizing device
@@ -1228,7 +1244,7 @@
 					   name line-number head 
 					   (if (> ndirs nargs) "too few" "too many")
 					   (truncated-list->string form)))))
-			 (lint-walk name (cdr form) env))))
+			 (lint-walk name line-number (cdr form) env))))
 		  
 		  ;; ---------------- other schemes ----------------		  
 		  ((define-syntax let-syntax letrec-syntax define-module re-export) ; for other's code
@@ -1442,9 +1458,10 @@
 						   (if (list-ref form 2)
 						       (list-ref form 1)
 						       (format #f "(not ~S)" (list-ref form 1)))))))))
+
 			 (let ((vars env)
 			       (unvars '()))
-			   (set! vars (lint-walk name (car form) vars))
+			   (set! vars (lint-walk name line-number (car form) vars))
 			   (for-each
 			    (lambda (f)
 			      ;; look for names we don't know about
@@ -1457,7 +1474,7 @@
 				       (not (defined? f))
 				       (not (env-member f vars)))
 				  (set! unvars (cons f unvars)))
-			      (set! vars (lint-walk name f vars)))
+			      (set! vars (lint-walk name line-number f vars)))
 			    (cdr form))
 			   
 			   (if (and *report-undefined-variables*
@@ -1498,26 +1515,21 @@
 			 (format #t "  can't open ~S: ~A~%" file (apply format #f (cdr args)))
 			 #f))))
 	(if (input-port? fp)
-	    (let ((vars '()))
+	    (let ((vars '())
+		  (line 0))
 	      (format #t ";~A~%" file)
 	      (do ((form (read fp) (read fp)))
 		  ((eof-object? form))
-		(set! vars (lint-walk (if (symbol? form) form (if (pair? form) (car form))) form vars)))
+		(if (pair? form)
+		    (set! line (max line (pair-line-number form))))
+		(set! vars (lint-walk (if (symbol? form) 
+					  form 
+					  (if (pair? form) 
+					      (car form)))
+				      line
+				      form 
+				      vars)))
 	      (if *report-unused-top-level-functions* 
 		  (report-usage file 0 'top-level-function #f vars))
 	      (close-input-port fp)))))))
-
-
-;;; same kind of arg checking for define-macro*? (we'd need to save them because procedure-arity does not currently work with macros)
-;;; check args to sort!? or the number of args to the various procedure args
-;;;   here split out the arg-num stuff in the map/for-each case 
-;;; values changes the arg num calculation above
-;;; func returning a closure sequence value (see also bad-idea in s7.html)
-;;; func args that assume left-to-right evaluation (how to see this)
-;;;   if during walk a var is set, then ref'd later?
-;;; make-* with huge size, substring with start>end, load or others with obvious bad filename
-;;; checks of arg types for length/copy/fill/reverse
-;;; redefinition within scope (global for example)
-;;; variable set and thereafter not used?
-;;; see odd62 bad error
 
