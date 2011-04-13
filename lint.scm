@@ -24,6 +24,8 @@
 (if (not (provided? 's7))
     (begin
       ;; here's an attempt to make this work in Guile 1.8
+      ;;   (lint also uses catch, object->string)
+
       (use-modules (ice-9 format))
 
       (define (hash-table . args)
@@ -49,6 +51,7 @@
       (define (keyword->symbol obj) obj)
 
       (define (eval-string . args) #f)
+      (define (lint-eval f) (eval f (interaction-environment)))
       (define (lint-values) '())
 
       (define (lint-member val lst func)
@@ -60,7 +63,7 @@
 
       (define (procedure-source f) #f) ; this only affects define* keyword checking
       
-      (define (length lst)
+      (define (lint-length lst)
 	(define (length-1 lst len)
 	  (if (null? lst)
 	      len
@@ -80,14 +83,54 @@
 	  (reverse result)))
       )
     (begin
+      (define lint-eval eval)
       (define lint-values values)
       (define lint-map map)
+      (define lint-length length)
       (define lint-member member)))
 
 	
 
 ;;; --------------------------------------------------------------------------------
 ;;; function data
+
+(define (integer-between-2-and-16? radix) 
+  (and (integer? radix) 
+       (<= 2 radix 16)))
+
+(define (non-negative-integer? index)
+  (and (integer? index) 
+       (not (negative? index))))
+
+(define (non-zero-number? x)
+  (and (number? x)
+       (not (zero? x))))
+
+(define (real-but-not-rational? x)
+  (and (real? x)
+       (not (rational? x))))
+
+(define (thunk? p)
+  (and (procedure? p)
+       (let ((arity (procedure-arity p)))
+	 (and (= (car arity) 0)
+	      (= (cadr arity) 0)
+	      (not (caddr arity))))))
+
+(define (integer-between-0-and-255? i) 
+  (and (integer? i) (<= 0 i 255)))
+
+(define (non-constant-string? str)
+  (and (string? str)
+       (not (constant? str))))
+
+(define (non-constant-list? lst)
+  (and (pair? lst)
+       (not (constant? lst))))
+
+(define (non-constant-vector? v)
+  (and (vector? v)
+       (not (constant? v))))
 
 (define lint
   (let ((argument-data
@@ -104,10 +147,10 @@
 		     (cons 'call-with-input-file (list string? procedure?))
 		     (cons 'call-with-input-string (list string? procedure?))
 		     (cons 'call-with-output-string procedure?)
-		     (cons 'with-input-from-file (list string? procedure?))
-		     (cons 'with-input-from-string (list string? procedure?))
-		     (cons 'with-output-to-file (list string? procedure?))
-		     (cons 'with-output-to-string procedure?)
+		     (cons 'with-input-from-file (list string? thunk?))
+		     (cons 'with-input-from-string (list string? thunk?))
+		     (cons 'with-output-to-file (list string? thunk?))
+		     (cons 'with-output-to-string thunk?)
 		     (cons 'provide symbol?)
 		     
 		     (cons 'even? integer?)
@@ -118,22 +161,22 @@
 		     (cons 'logand (list integer? integer?))
 		     (cons 'lognot (list integer? integer?))
 		     (cons 'ash (list integer? integer?))
-		     (cons 'integer-decode-float integer?)
-		     (cons 'integer->char integer?)
+		     (cons 'integer-decode-float real-but-not-rational?)
+		     (cons 'integer->char integer-between-0-and-255?)
 		     
 		     (cons 'numerator rational?)
 		     (cons 'denominator rational?)
 		     
-		     (cons 'make-polar number?)
-		     (cons 'make-rectangular number?)
+		     (cons 'make-polar real?)
+		     (cons 'make-rectangular real?)
 		     (cons 'magnitude number?)
 		     (cons 'angle number?)
 		     (cons 'real-part number?)
 		     (cons 'imag-part number?)
-		     (cons 'rationalize (list number? number?))
+		     (cons 'rationalize (list real? real?))
 		     (cons 'abs number?)
 		     (cons 'exp number?)
-		     (cons 'log (list number? number?))
+		     (cons 'log (list number? non-zero-number?))
 		     (cons 'sin number?)
 		     (cons 'cos number?)
 		     (cons 'tan number?)
@@ -148,10 +191,10 @@
 		     (cons 'atanh number?)
 		     (cons 'sqrt number?)
 		     (cons 'expt (list number? number?))
-		     (cons 'floor number?)
-		     (cons 'ceiling number?)
-		     (cons 'truncate number?)
-		     (cons 'round number?)
+		     (cons 'floor real?)
+		     (cons 'ceiling real?)
+		     (cons 'truncate real?)
+		     (cons 'round real?)
 		     (cons 'lcm (list real? real?))
 		     (cons 'gcd (list real? real?))
 		     (cons '+ number?)
@@ -169,8 +212,8 @@
 		     (cons '<= real?)
 		     (cons '>= real?)
 		     (cons 'zero? number?)
-		     (cons 'positive? number?)
-		     (cons 'negative? number?)
+		     (cons 'positive? real?)
+		     (cons 'negative? real?)
 		     (cons 'infinite? number?)
 		     (cons 'nan? number?)
 		     (cons 'inexact->exact real?)
@@ -179,8 +222,8 @@
 		     (cons 'exact? number?)
 		     (cons 'inexact? number?)
 		     
-		     (cons 'number->string (list number? integer?))
-		     (cons 'string->number (list string? integer?))
+		     (cons 'number->string (list number? integer-between-2-and-16?))
+		     (cons 'string->number (list string? integer-between-2-and-16?))
 		     
 		     (cons char-upcase char?)
 		     (cons char-downcase char?)
@@ -201,12 +244,12 @@
 		     (cons char-ci<=? char?)
 		     (cons char-ci>=? char?)
 		     
-		     (cons 'make-string (list integer? char?))
+		     (cons 'make-string (list non-negative-integer? char?))
 		     (cons 'string char?)
 		     
 		     (cons 'string-length string?)
-		     (cons 'string-ref (list string? integer?))
-		     (cons 'string-set! (list string? integer? char?))
+		     (cons 'string-ref (list string? non-negative-integer?))
+		     (cons 'string-set! (list non-constant-string? non-negative-integer? char?))
 		     (cons 'string=? string?)
 		     (cons 'string<? string?)
 		     (cons 'string>? string?)
@@ -220,7 +263,7 @@
 		     (cons 'string-append string?)
 		     (cons 'string-fill! (list string? char?))
 		     (cons 'string-copy string?)
-		     (cons 'substring (list string? integer? integer?))
+		     (cons 'substring (list string? non-negative-integer? non-negative-integer?))
 		     (cons 'string->list string?)
 		     
 		     (cons 'list->string list?)
@@ -255,20 +298,20 @@
 		     (cons 'cddddr list?)
 		     (cons 'cddadr list?)
 		     (cons 'cdddar list?)
-		     (cons 'list-ref (list list? integer?))
-		     (cons 'list-set! (list list? integer?))
-		     (cons 'list-tail (list list? integer?))
+		     (cons 'list-ref (list list? non-negative-integer?))
+		     (cons 'list-set! (list non-constant-list? non-negative-integer?))
+		     (cons 'list-tail (list list? non-negative-integer?))
 		     
 		     (cons 'vector->list vector?)
 		     (cons 'vector-fill! (list vector?))
 		     (cons 'vector-length vector?)
-		     (cons 'vector-ref (list vector? integer?))
-		     (cons 'vector-set! (list vector? integer?))
+		     (cons 'vector-ref (list vector? non-negative-integer?))
+		     (cons 'vector-set! (list non-constant-vector? non-negative-integer?))
 		     (cons 'vector-dimensions vector?)
 		     
-		     (cons 'make-hash-table integer?)
-		     (cons 'hash-table-ref (list hash-table? integer?))
-		     (cons 'hash-table-set! (list hash-table? integer?))
+		     (cons 'make-hash-table non-negative-integer?)
+		     (cons 'hash-table-ref (list hash-table?))
+		     (cons 'hash-table-set! (list hash-table?))
 		     (cons 'hash-table-size hash-table?)
 		     (cons 'make-hash-table-iterator hash-table?)
 
@@ -284,7 +327,7 @@
 		     
 		     (cons 'load string?)
 		     (cons 'eval-string string?)
-		     (cons 'dynamic-wind (list procedure? procedure? procedure?))))
+		     (cons 'dynamic-wind (list thunk? thunk? thunk?))))
 	
 	(no-side-effect-functions (list 'not '= '+ 'cdr 'real? 'rational? 'number? '> '- 'integer? 'catch 
 					'length 'eq? 'car '< 'assq 'complex? 'vector-ref 'random 'abs '* 
@@ -517,6 +560,19 @@
 		    (not (env-member form env))))))
 
 
+    (define (just-constants? form)
+      (define (lint-constant? arg)
+	(or (number? arg)
+	    (string? arg)
+	    (null? arg)
+	    (char? arg)))
+      (or (lint-constant? form)
+	  (and (pair? form)
+	       (or (member (car form) no-side-effect-functions)
+		   (lint-constant? (car form)))
+	       (just-constants? (cdr form)))))
+
+
     (define (check-args name line-number head form checkers)
       ;; check for obvious argument type problems
       (let ((arg-number 1))
@@ -524,21 +580,29 @@
 	 (lambda (done)
 	   (for-each 
 	    (lambda (arg)
-	      (let ((checker (if (list? checkers) (car checkers) checkers)))  
+	      (let ((checker (if (list? checkers) 
+				 (car checkers) 
+				 checkers)))  
 		(if (pair? arg)
 		    (let ((op (hash-table-ref function-types (car arg))))
-		      (if (and op
-			       (not (checker op)))
+		      (if (or (and op
+				   (not (checker op)))
+			      (and (just-constants? arg)
+				   (catch #t 
+					  (lambda ()
+					    (not (checker (lint-eval arg))))
+					  (lambda args
+					    #f))))
 			  (format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~A~%" 
 				  name line-number head arg-number 
-				  (if (eq? checker integer?) "n" "")
+				  (if (char=? (string-ref (procedure-name checker) 0) #\i) "n" "")
 				  checker arg 
 				  (truncated-list->string form))))
 		    (if (and (not (symbol? arg))
 			     (not (checker arg)))
 			(format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~A~%" 
 				name line-number head arg-number 
-				(if (eq? checker integer?) "n" "")
+				(if (char=? (string-ref (procedure-name checker) 0) #\i) "n" "")
 				checker arg 
 				(truncated-list->string form))))
 		(if (list? checkers)
@@ -586,6 +650,14 @@
 	keys))
 
     
+    (define (tree-member sym tree)
+      (and (pair? tree)
+	   (or (eq? (car tree) sym)
+	       (and (pair? (car tree))
+		    (tree-member sym (car tree)))
+	       (tree-member sym (cdr tree)))))
+
+    
     (define (binding-ok? name line-number head binding)
       ;; check let-style variable binding for various syntactic problems
       (if (not (pair? binding))
@@ -604,7 +676,7 @@
 		      (begin 
 			(format #t "  ~A (line ~D): ~A variable value is missing? ~S~%" name line-number head binding) 
 			#f)
-		      (if (and (not (= (length binding) 2))
+		      (if (and (not (= (lint-length binding) 2))
 			       (not (eq? head 'do)))
 			  (begin
 			    (format #t "  ~A (line ~D): ~A binding is messed up: ~S~%" name line-number head binding)
@@ -643,21 +715,21 @@
 
 	(if (not (null? set))
 	    (format #t "  ~A (line ~D): ~A ~A~A ~{~A~^, ~} set, but not used~%" 
-		    name line-number head type (if (> (length set) 1) "s" "") (reverse set)))
+		    name line-number head type (if (> (lint-length set) 1) "s" "") (reverse set)))
 	(if (not (null? unused))
 	    (format #t "  ~A (line ~D): ~A ~A~A ~{~A~^, ~} not used~%" 
-		    name line-number head type (if (> (length unused) 1) "s" "") (reverse unused)))))
+		    name line-number head type (if (> (lint-length unused) 1) "s" "") (reverse unused)))))
     
 
     (define (lint-walk-body name line-number head body env)
       ;; walk a body (a list of forms, the value of the last of which might be returned)
 
       (if (or (not (list? body))
-	      (negative? (length body)))
+	      (negative? (lint-length body)))
 	  (format #t "  ~A (line ~D): stray dot? ~A~%" 
 		  name line-number (truncated-list->string body))
 	  (let ((ctr 0)
-		(len (length body)))
+		(len (lint-length body)))
 	    (for-each
 	     (lambda (f)
 	       (if (< ctr (- len 1)) ; not the last form, so its value is ignored
@@ -669,6 +741,14 @@
 		       (if (not (side-effect? f env))
 			   (format #t "  ~A (line ~D): ~S in ~A body has no effect~%" 
 				   name line-number f head))))
+	       
+	       (if (and (pair? f)
+			(member head '(defmacro defmacro* define-macro define-macro* define-bacro define-bacro*))
+			(tree-member 'unquote f))
+		   (format #t "  ~A (line ~D): ~A possibly has too many unquotes:~S~%"
+			   name line-number head
+			   (truncated-list->string f)))
+
 	       (set! env (lint-walk name f env))
 	       (set! ctr (+ ctr 1)))
 	     body))))
@@ -712,9 +792,9 @@
 							(eval-string (string-append "'" (substring doc 0 (+ 1 end)))))
 						      (lambda args #f)))
 				       (keys (if arglst (keywords arglst) 0))
-				       (argn (if (list? arglst) (- (length (proper-list arglst)) keys 1) 0)))
+				       (argn (if (list? arglst) (- (lint-length (proper-list arglst)) keys 1) 0)))
 			      (if (and arglst
-				       (not (= (length arg-data) argn)))
+				       (not (= (lint-length arg-data) argn)))
 				  (format #t "  ~A (line ~D): possible docstring mismatch:~%       ~S~%        ~S~%" 
 					  name line-number (substring doc 0 (+ end 1)) (append (list name) args))))))))))
 	    ;; in any case, skip the docstring during the walk
@@ -742,7 +822,7 @@
 					     (lint-values)                  ; map omits this entry 
 					     (list arg #f #f))
 					 (if (or (not (pair? arg))
-						 (not (= (length arg) 2))
+						 (not (= (lint-length arg) 2))
 						 (not (member head '(define* lambda* defmacro* define-macro* define-bacro* definstrument))))
 					     (begin
 					       (format #t "  ~A (line ~D): strange parameter for ~A: ~S~%" 
@@ -774,7 +854,7 @@
 
 		  ;; ---------------- defmacro ----------------
 		  ((defmacro defmacro*)
-		   (if (or (< (length form) 4)
+		   (if (or (< (lint-length form) 4)
 			   (not (symbol? (cadr form))))
 		       (format #t "  ~A (line ~D): ~A declaration is messed up: ~S~%"
 			       name line-number head form)
@@ -789,7 +869,7 @@
 		     define-expansion define-macro define-macro* define-bacro define-bacro*
 		     definstrument)
 		   
-		   (if (< (length form) 2)
+		   (if (< (lint-length form) 2)
 		       (begin
 			 (format #t "  ~A (line ~D): ~S makes no sense~%" name line-number form)
 			 env)
@@ -798,7 +878,7 @@
 			 (if (symbol? sym)
 			     (begin
 			       (if (member head '(define define-constant defvar))
-				   (let ((len (length form)))
+				   (let ((len (lint-length form)))
 				     (if (not (= len 3))
 					 (format #t "  ~A (line ~D): ~S has ~A value~A?~%"
 						 name line-number form 
@@ -817,7 +897,7 @@
 
 		  ;; ---------------- lambda ----------------		  
 		  ((lambda lambda*)
-		   (if (< (length form) 3)
+		   (if (< (lint-length form) 3)
 		       (begin
 			 (format #t "  ~A (line ~D): ~A is messed up in ~A~%"
 				 name line-number head (truncated-list->string form))
@@ -827,11 +907,11 @@
 
 		  ;; ---------------- set! ----------------		  
 		  ((set!)
-		   (if (not (= (length form) 3))
+		   (if (not (= (lint-length form) 3))
 		       (begin
 			 (format #t "  ~A (line ~D): set! has too ~A arguments: ~S~%" 
 				 name line-number 
-				 (if (> (length form) 3) "many" "few") 
+				 (if (> (lint-length form) 3) "many" "few") 
 				 form)
 			 env)
 		       (let* ((settee (cadr form))
@@ -857,21 +937,21 @@
 
 		  ;; ---------------- quote ----------------		  
 		  ((quote) 
-		   (let ((len (length form)))
+		   (let ((len (lint-length form)))
 		     (if (negative? len)
 			 (format #t "  ~A (line ~D): stray dot in quote's arguments? ~S~%"
 				 name line-number form)
 			 (if (not (= len 2))
 			     (format #t "  ~A (line ~D): quote has too ~A arguments: ~S~%" 
 				     name line-number 
-				     (if (> (length form) 2) "many" "few") 
+				     (if (> (lint-length form) 2) "many" "few") 
 				     form))))
 		   env)
 
 		  ;; ---------------- cond ----------------
 		  ((cond)
 		   (let ((ctr 0)
-			 (len (- (length form) 1)))
+			 (len (- (lint-length form) 1)))
 		     (if (negative? len)
 			 (format #t "  ~A (line ~D): cond is messed up:~S~%" 
 				 name line-number
@@ -910,14 +990,14 @@
 		  ;; ---------------- case ----------------		  
 		  ((case)
 		   ;; here the keys are not evaluated, so we might have a list like (letrec define ...)
-		   (if (< (length form) 3)
+		   (if (< (lint-length form) 3)
 		       (format #t "  ~A (line ~D): case is messed up: ~A~%"
 			       name line-number (truncated-list->string form))
 		       (begin
 			 (lint-walk name (cadr form) env) ; the selector
 			 (let ((all-keys '())
 			       (ctr 0)
-			       (len (length (cddr form))))
+			       (len (lint-length (cddr form))))
 			   (for-each
 			    (lambda (clause)
 			      (set! ctr (+ ctr 1))
@@ -928,7 +1008,7 @@
 				  (let ((keys (car clause))
 					(exprs (cdr clause)))
 				    (if (pair? keys)
-					(if (negative? (length keys))
+					(if (negative? (lint-length keys))
 					    (format #t "  ~A (line ~D): stray dot in case case key list: ~S~%"
 						    name line-number 
 						    (truncated-list->string clause))
@@ -953,7 +1033,7 @@
 							name line-number 
 							(truncated-list->string (cddr form))))))
 				    (set! all-keys (append (if (and (pair? keys)
-								    (not (negative? (length keys))))
+								    (not (negative? (lint-length keys))))
 							       keys 
 							       (list keys))
 							   all-keys))
@@ -964,7 +1044,7 @@
 		  ;; ---------------- do ----------------		  
 		  ((do)
 		   (let ((vars '()))
-		     (if (or (< (length form) 3)
+		     (if (or (< (lint-length form) 3)
 			     (not (list? (cadr form)))
 			     (not (list? (caddr form))))
 			 (format #t "  ~A (line ~D): do is messed up: ~A~%" name line-number (truncated-list->string form))
@@ -1047,7 +1127,7 @@
 
 		  ;; ---------------- begin ----------------
 		  ((begin)
-		   (if (negative? (length form))
+		   (if (negative? (lint-length form))
 		       (begin
 			 (format #t "  ~A (line ~D): stray dot in begin? ~A~%"
 				 name line-number
@@ -1055,7 +1135,7 @@
 			 env)
 		       (let* ((ctr 0)
 			      (body (cdr form))
-			      (len (length body))
+			      (len (lint-length body))
 			      (vars env))
 			 (for-each
 			  (lambda (f)
@@ -1083,9 +1163,9 @@
 		  
 		  ;; ---------------- format ----------------		  
 		  ((format snd-display clm-print)
-		   (if (< (length form) 3)
+		   (if (< (lint-length form) 3)
 		       (begin
-			 (if (< (length form) 2)
+			 (if (< (lint-length form) 2)
 			     (format #t "  ~A (line ~D): ~A has too few arguments:~A~%"
 				     name line-number head 
 				     (truncated-list->string form)))
@@ -1142,7 +1222,7 @@
 				 (format #t "  ~A (line ~D): ~S looks suspicious~%" 
 					 name line-number form))
 			     (let ((ndirs (count-directives control-string name line-number form))
-				   (nargs (if (or (null? args) (pair? args)) (length args) 0)))
+				   (nargs (if (or (null? args) (pair? args)) (lint-length args) 0)))
 			       (if (not (= ndirs nargs))
 				   (format #t "  ~A (line ~D): ~A has ~A arguments:~A~%" 
 					   name line-number head 
@@ -1163,7 +1243,7 @@
 		   ;; we can't expand macros so free variables can confuse the usage checks
 		   ;; this block returns the current env at the end
 
-		   (if (negative? (length form))
+		   (if (negative? (lint-length form))
 		       (format #t "  ~A (line ~D): stray dot? ~A~%" 
 			       name line-number 
 			       (truncated-list->string form))
@@ -1172,16 +1252,16 @@
 			 (let ((local-value (env-member head env)))
 			   (if local-value
 			       (let ((fdata (car local-value)))
-				 (if (= (length fdata) 4)
+				 (if (= (lint-length fdata) 4)
 				     (let ((type (car (list-ref fdata 3)))
 					   (args (cadr (list-ref fdata 3))))
 				       (let ((rst (or (not (pair? args))
-						      (negative? (length args))
+						      (negative? (lint-length args))
 						      (member ':rest args)))
 					     (pargs (if (pair? args) (proper-list args) '())))
 
-					 (let ((call-args (length (cdr form)))
-					       (decl-args (max 0 (- (length pargs) (keywords pargs) (if rst 1 0)))))
+					 (let ((call-args (lint-length (cdr form)))
+					       (decl-args (max 0 (- (lint-length pargs) (keywords pargs) (if rst 1 0)))))
 					   (let ((req (if (eq? type 'define) decl-args 0))
 						 (opt (if (eq? type 'define) 0 decl-args)))
 					     (if (< call-args req)
@@ -1214,7 +1294,7 @@
 					(procedure? (symbol->value head)))
 				   ;; check arg number
 				   (let ((arity (procedure-arity (symbol->value head)))
-					 (args (length (cdr form))))
+					 (args (lint-length (cdr form))))
 				     (if (pair? arity)
 					 (if (not (procedure-with-setter? (symbol->value head))) ; set! case is confusing here
 					     (if (< args (car arity))
@@ -1291,7 +1371,7 @@
 							(format #t "  ~A (line ~D): ~S is always #f~%" name line-number form)))
 					     
 					     ((map for-each)
-					      (let* ((len (length form))
+					      (let* ((len (lint-length form))
 						     (args (- len 2)))
 						(if (< len 3)
 						    (format #t "  ~A (line ~D): ~A missing argument~A in:~A~%"
@@ -1308,7 +1388,7 @@
 						      (if (and (pair? (cadr form))
 							       (member (caadr form) '(lambda lambda*))
 							       (pair? (cadr (cadr form))))
-							  (let ((arglen (length (cadr (cadr form)))))
+							  (let ((arglen (lint-length (cadr (cadr form)))))
 							    (if (eq? (cadr form) 'lambda)
 								(if (negative? arglen)
 								    (set! arity (list (abs arglen) 0 #t))
@@ -1346,10 +1426,10 @@
 			 
 			 (if (eq? head 'if)
 			     (begin
-			       (if (> (length form) 4)
+			       (if (> (lint-length form) 4)
 				   (format #t "  ~A (line ~D): if has too many clauses: ~S~%" 
 					   name line-number form)
-				   (if (< (length form) 3)
+				   (if (< (lint-length form) 3)
 				       (format #t "  ~A (line ~D): if has too few clauses: ~S~%" 
 					       name line-number form)
 				       (if (and *report-minor-stuff*
@@ -1362,7 +1442,6 @@
 						   (if (list-ref form 2)
 						       (list-ref form 1)
 						       (format #f "(not ~S)" (list-ref form 1)))))))))
-			 
 			 (let ((vars env)
 			       (unvars '()))
 			   (set! vars (lint-walk name (car form) vars))
@@ -1383,7 +1462,7 @@
 			   
 			   (if (and *report-undefined-variables*
 				    (not (null? unvars)))
-			       (let ((len (length unvars))
+			       (let ((len (lint-length unvars))
 				     (str (truncated-list->string form)))
 				 (case len
 				   ((1) 
@@ -1429,8 +1508,16 @@
 	      (close-input-port fp)))))))
 
 
-;;; same kind of arg checking for define-macro*?
+;;; same kind of arg checking for define-macro*? (we'd need to save them because procedure-arity does not currently work with macros)
 ;;; check args to sort!? or the number of args to the various procedure args
 ;;;   here split out the arg-num stuff in the map/for-each case 
 ;;; values changes the arg num calculation above
+;;; func returning a closure sequence value (see also bad-idea in s7.html)
+;;; func args that assume left-to-right evaluation (how to see this)
+;;;   if during walk a var is set, then ref'd later?
+;;; make-* with huge size, substring with start>end, load or others with obvious bad filename
+;;; checks of arg types for length/copy/fill/reverse
+;;; redefinition within scope (global for example)
+;;; variable set and thereafter not used?
+;;; see odd62 bad error
 

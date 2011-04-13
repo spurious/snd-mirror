@@ -114,7 +114,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define* (match-sound-files func dir)
   "(match-sound-files func dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
-  (let* ((matches '()))
+  (let ((matches '()))
     (for-each
      (lambda (file)
        (if (func file)
@@ -430,7 +430,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;;
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (channels index)))
+	(let ((out-chans (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (offset-channel off beg dur index chn)))
@@ -443,7 +443,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(pad-sound beg dur snd) places a block of 'dur' zeros in every channel of 'snd' starting at 'beg'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (channels index)))
+	(let ((out-chans (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (pad-channel beg dur index chn)))
@@ -463,7 +463,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(dither-sound (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (channels index)))
+	(let ((out-chans (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (dither-channel amount beg dur index chn)))
@@ -485,7 +485,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(contrast-sound index beg dur snd) applies contrast-enhancement to every channel of 'snd'"
   (let ((ind (or snd (selected-sound) (car (sounds)))))
     (if (sound? ind)
-	(let* ((out-chans (channels ind)))
+	(let ((out-chans (channels ind)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (contrast-channel index beg dur ind chn)))
@@ -500,7 +500,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;; (map-sound (lambda (fr) (frame* fr scl)) beg dur snd))
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (channels index)))
+	(let ((out-chans (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (scale-channel scl beg dur index chn)))
@@ -513,8 +513,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(normalize-sound amp beg dur snd) scales 'snd' to peak amplitude 'amp'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (channels index))
-	       (mx (apply max (maxamp index #t))))
+	(let ((out-chans (channels index))
+	      (mx (apply max (maxamp index #t))))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (scale-channel (/ amp mx) beg dur index chn)))
@@ -548,7 +548,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		       (set! (data 1) dly)
 		       (if (= fpos 0)
 			   data
-			   (let* ((reader (make-sampler (- fpos 1) snd chn -1 cur-edpos)))
+			   (let ((reader (make-sampler (- fpos 1) snd chn -1 cur-edpos)))
 			     (do ((i (- dly 1) (- i 1)))
 				 ((< i 0))
 			       (set! (data (+ i 2)) (reader)))

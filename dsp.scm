@@ -244,10 +244,10 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define* (adsat size beg dur snd chn)
   "(adsat size beg dur snd chn) is an 'adaptive saturation' sound effect"
-  (let* ((mn 0.0)
-	 (mx 0.0)
-	 (n 0)
-	 (vals (make-vct size)))
+  (let ((mn 0.0)
+	(mx 0.0)
+	(n 0)
+	(vals (make-vct size)))
     (map-channel (lambda (val)
 		   (if (= n size)
 		       (begin
@@ -487,7 +487,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define (fltit-1 order spectr)
   "(fltit-1 order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it: 
 (map-channel (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))"
-  (let* ((flt (make-fir-filter order (spectrum->coeffs order spectr))))
+  (let ((flt (make-fir-filter order (spectrum->coeffs order spectr))))
     (lambda (x)
       (fir-filter flt x))))
 
@@ -509,9 +509,9 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     (run
      (do ((i (- len) (+ i 1)))
 	 ((= i lim))
-       (let* ((k (+ i len))
-	      (denom (* pi i))
-	      (num (- 1.0 (cos (* pi i)))))
+       (let ((k (+ i len))
+	     (denom (* pi i))
+	     (num (- 1.0 (cos (* pi i)))))
 	 (if (or (= num 0.0) 
 		 (= i 0))
 	     (set! (arr k) 0.0)
@@ -578,9 +578,9 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (+ i 1)))
 	((= i len))
-      (let* ((k (+ i len))
-	     (denom (* pi i))
-	     (num (- (sin (* fc i)))))
+      (let ((k (+ i len))
+	    (denom (* pi i))
+	    (num (- (sin (* fc i)))))
 	(if (= i 0)
 	    (set! (arr k) (- 1.0 (/ fc pi)))
 	    (set! (arr k) (* (/ num denom) 
@@ -606,9 +606,9 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (+ i 1)))
 	((= i len))
-      (let* ((k (+ i len))
-	     (denom (* pi i))
-	     (num (sin (* fc i))))
+      (let ((k (+ i len))
+	    (denom (* pi i))
+	    (num (sin (* fc i))))
 	(if (= i 0)
 	    (set! (arr k) (/ fc pi))
 	    (set! (arr k) (* (/ num denom) 
@@ -633,9 +633,9 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (+ i 1)))
 	((= i len))
-      (let* ((k (+ i len))
-	     (denom (* pi i))
-	     (num (- (sin (* fhi i)) (sin (* flo i)))))
+      (let ((k (+ i len))
+	    (denom (* pi i))
+	    (num (- (sin (* fhi i)) (sin (* flo i)))))
 	(if (= i 0)
 	    (set! (arr k) (/ (- fhi flo) pi))
 	    (set! (arr k) (* (/ num denom) 
@@ -675,9 +675,9 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (+ i 1)))
 	((= i len))
-      (let* ((k (+ i len))
-	     (denom (* pi i))
-	     (num (- (sin (* flo i)) (sin (* fhi i)))))
+      (let ((k (+ i len))
+	    (denom (* pi i))
+	    (num (- (sin (* flo i)) (sin (* fhi i)))))
 	(if (= i 0)
 	    (set! (arr k) (- 1.0 (/ (- fhi flo) pi)))
 	    (set! (arr k) (* (/ num denom) 
@@ -702,7 +702,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (arr (make-vct arrlen)))
     (do ((i (- len) (+ i 1)))
 	((= i len))
-      (let* ((k (+ i len)))
+      (let ((k (+ i len)))
 	(if (= i 0)
 	    (set! (arr k) 0.0)
 	    (set! (arr k) (* (- (/ (cos (* pi i)) i) (/ (sin (* pi i)) (* pi i i))) 
@@ -1247,7 +1247,7 @@ the era when computers were human beings"
       (set! e (cons sum e))
       (set! e (cons x e))
       (set! sum (+ sum (envelope-interp x dist))))
-    (let* ((incr (/ (- (cadr e) first-sum) (- data-size 1))))
+    (let ((incr (/ (- (cadr e) first-sum) (- data-size 1))))
       (set! e (reverse e))
       (do ((i 0 (+ i 1))
 	   (x first-sum (+ x incr)))
@@ -1353,10 +1353,10 @@ the era when computers were human beings"
 
 (define* (channel-distance (s1 0) (c1 0) (s2 0) (c2 1))    ; sqrt(<f - g, f - g>)
   "(channel-distance s1 c1 s2 c2) returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)"
-  (let* ((r1 (make-sampler 0 s1 c1))
-	 (r2 (make-sampler 0 s2 c2))
-	 (sum 0.0)
-	 (N (min (frames s1 c1) (frames s2 c2))))
+  (let ((r1 (make-sampler 0 s1 c1))
+	(r2 (make-sampler 0 s2 c2))
+	(sum 0.0)
+	(N (min (frames s1 c1) (frames s2 c2))))
     (run
      (do ((i 0 (+ i 1)))
 	 ((= i N))
@@ -1396,7 +1396,7 @@ the era when computers were human beings"
   "(shift-channel-pitch freq (order 40) (beg 0) dur snd chn edpos) uses the ssb-am CLM generator to \
 shift the given channel in pitch without changing its length.  The higher 'order', the better usually."
   ;; higher order = better cancellation
-  (let* ((gen (make-ssb-am freq order)))
+  (let ((gen (make-ssb-am freq order)))
     (map-channel (lambda (y) 
 		   (ssb-am gen y)) 
 		 beg dur snd chn edpos 
@@ -1407,14 +1407,14 @@ shift the given channel in pitch without changing its length.  The higher 'order
   (/ (* 2 pi freq) (srate))) 
 
 (define* (ssb-bank old-freq new-freq pairs (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
-  (let* ((ssbs (make-vector pairs))
-	 (bands (make-vector pairs))
-	 (factor (/ (- new-freq old-freq) old-freq))
-	 (mx (maxamp)))
+  (let ((ssbs (make-vector pairs))
+	(bands (make-vector pairs))
+	(factor (/ (- new-freq old-freq) old-freq))
+	(mx (maxamp)))
     (do ((i 1 (+ i 1)))
 	((> i pairs))
-      (let* ((aff (* i old-freq))
-	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+      (let ((aff (* i old-freq))
+	    (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
 	(set! (ssbs (- i 1)) (make-ssb-am (* i factor old-freq)))
 	(set! (bands (- i 1)) (make-bandpass (hz->2pi (- aff bwf)) 
 						 (hz->2pi (+ aff bwf)) 
@@ -1439,15 +1439,15 @@ shift the given channel in pitch without changing its length.  The higher 'order
 (define* (ssb-bank-env old-freq new-freq freq-env pairs (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   ;; this version adds a frequency envelope
   ;; (ssb-bank-env 557 880 '(0 0 1 100.0) 7)
-  (let* ((ssbs (make-vector pairs))
-	 (bands (make-vector pairs))
-	 (factor (/ (- new-freq old-freq) old-freq))
-	 (frenvs (make-vector pairs))
-	 (mx (maxamp)))
+  (let ((ssbs (make-vector pairs))
+	(bands (make-vector pairs))
+	(factor (/ (- new-freq old-freq) old-freq))
+	(frenvs (make-vector pairs))
+	(mx (maxamp)))
     (do ((i 1 (+ i 1)))
 	((> i pairs))
-      (let* ((aff (* i old-freq))
-	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+      (let ((aff (* i old-freq))
+	    (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
 	(set! (ssbs (- i 1)) (make-ssb-am (* i factor old-freq)))
 	(set! (bands (- i 1)) (make-bandpass (hz->2pi (- aff bwf)) 
 					     (hz->2pi (+ aff bwf)) 
@@ -1753,18 +1753,18 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 (define* (harmonicizer freq coeffs pairs (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   "(harmonicizer freq coeffs pairs (order 40) (bw 50.0) (beg 0) dur snd chn edpos) splits out each harmonic \
 and replaces it with the spectrum given in coeffs"
-  (let* ((bands (make-vector pairs))
-	 (pcoeffs (partials->polynomial coeffs))
-	 (avgs (make-vector pairs))
-	 (peaks (make-vector pairs))
-	 (flt (make-filter 2 (vct 1 -1) (vct 0 -0.9)))
-	 (old-mx (maxamp))
-	 (new-mx 0.0)
-	 (ctr 40))
+  (let ((bands (make-vector pairs))
+	(pcoeffs (partials->polynomial coeffs))
+	(avgs (make-vector pairs))
+	(peaks (make-vector pairs))
+	(flt (make-filter 2 (vct 1 -1) (vct 0 -0.9)))
+	(old-mx (maxamp))
+	(new-mx 0.0)
+	(ctr 40))
     (do ((i 1 (+ i 1)))
 	((> i pairs))
-      (let* ((aff (* i freq))
-	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+      (let ((aff (* i freq))
+	    (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
 	(set! (peaks (- i 1)) (make-moving-max 128))
 	(set! (avgs (- i 1)) (make-moving-average 128))
 	(set! (bands (- i 1)) (make-bandpass (hz->2pi (- aff bwf)) 
@@ -1966,8 +1966,8 @@ and replaces it with the spectrum given in coeffs"
 	      (if bark-numbers-font (set! (current-font snd chn copy-context) bark-numbers-font))
 	      
 	      (draw-line axis-x0 tick-y0 axis-x0 major-y0 snd chn copy-context cr)
-	      (let* ((i1000 (scale-position bark-function 1000.0))
-		     (i10000 (scale-position bark-function 10000.0)))
+	      (let ((i1000 (scale-position bark-function 1000.0))
+		    (i10000 (scale-position bark-function 10000.0)))
 		
 		(draw-line i1000 tick-y0 i1000 major-y0 snd chn copy-context cr)
 		(draw-line i10000 tick-y0 i10000 major-y0 snd chn copy-context cr)
@@ -1980,12 +1980,12 @@ and replaces it with the spectrum given in coeffs"
 		
 		(do ((i 100 (+ i 100)))
 		    ((= i 1000))
-		  (let* ((i100 (scale-position bark-function i)))
+		  (let ((i100 (scale-position bark-function i)))
 		    (draw-line i100 tick-y0 i100 minor-y0 snd chn copy-context cr)))
 		
 		(do ((i 2000 (+ i 1000)))
 		    ((= i 10000))
-		  (let* ((i1000 (scale-position bark-function i)))
+		  (let ((i1000 (scale-position bark-function i)))
 		    (draw-line i1000 tick-y0 i1000 minor-y0 snd chn copy-context cr)))))
 	    
 	    ;; bark label/ticks
@@ -2131,8 +2131,8 @@ is assumed to be outside -1.0 to 1.0."
 
 (define* (unclip-channel snd chn)
   "(unclip-channel snd chn) looks for clipped portions and tries to reconstruct the original using LPC"
-  (let* ((clips 0)                              ; number of clipped portions * 2
-	 (unclipped-max 0.0))
+  (let ((clips 0)                              ; number of clipped portions * 2
+	(unclipped-max 0.0))
 
     ;; count clipped portions (this search split into two portions for the optimizer's benefit)
     (let ((in-clip #f))
@@ -2152,11 +2152,11 @@ is assumed to be outside -1.0 to 1.0."
        0 (frames snd chn) snd chn))
 
     (if (> clips 0)                             ; we did find clipped portions
-	(let* ((clip-data (make-vector clips 0))  ; clipped portion begin and end points
-	       (clip-beg 0)
-	       (in-clip #f)
-	       (cur-clip 0)
-	       (samp 0))
+	(let ((clip-data (make-vector clips 0))  ; clipped portion begin and end points
+	      (clip-beg 0)
+	      (in-clip #f)
+	      (cur-clip 0)
+	      (samp 0))
 	  (scan-channel
 	   (lambda (y)
 	     (let ((absy (abs y)))
@@ -2231,7 +2231,7 @@ is assumed to be outside -1.0 to 1.0."
 			     (do ((i 0 (+ i 1))
 				  (j (- clip-len 1) (- j 1)))
 				 ((= i clip-len))
-			       (let* ((sn (* 0.5 (+ 1.0 (cos (* pi (/ i (- clip-len 1))))))))
+			       (let ((sn (* 0.5 (+ 1.0 (cos (* pi (/ i (- clip-len 1))))))))
 				 (set! (new-data i) (+ (* sn 
 							  (future i))
 						       (* (- 1.0 sn) 
@@ -2268,16 +2268,16 @@ is assumed to be outside -1.0 to 1.0."
 
 (define* (kalman-filter-channel (Q 1.0e-5))
   ;; translated from http://www.scipy.org/Cookbook/KalmanFiltering by Andrew Straw (but "R" here is a signal)
-  (let* ((size (frames))
-	 (mx (maxamp))
-	 (data (channel->vct 0))
-	 (xhat 0.0)
-	 (P 1.0) ; any non-zero value ok here
-	 (R 0.01) ; first guess
-	 (Pminus 0.0)
-	 (frm (make-formant :radius (- 1.0 (/ 2000.0 (srate))) :frequency 1000))
-	 (del (make-moving-average 256))
-	 (K 0.0))
+  (let ((size (frames))
+	(mx (maxamp))
+	(data (channel->vct 0))
+	(xhat 0.0)
+	(P 1.0) ; any non-zero value ok here
+	(R 0.01) ; first guess
+	(Pminus 0.0)
+	(frm (make-formant :radius (- 1.0 (/ 2000.0 (srate))) :frequency 1000))
+	(del (make-moving-average 256))
+	(K 0.0))
 
     (run
      (do ((k 1 (+ 1 k)))
@@ -2315,8 +2315,8 @@ is assumed to be outside -1.0 to 1.0."
 (define* (make-savitzky-golay-filter size (order 2)) ;assuming symmetric filter (left = right)
   (if (even? size) 
       (set! size (+ 1 size)))
-  (let* ((n (/ (- size 1) 2))
-	 (a (make-mixer (+ 1 order))))
+  (let ((n (/ (- size 1) 2))
+	(a (make-mixer (+ 1 order))))
     (do ((i 0 (+ i 1)))
 	((> i (* order 2)))
       (let ((sum (if (= i 0) 1.0 0.0)))
@@ -2404,9 +2404,9 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 ;;; this returns the component in FM with complex index (using-sine ignored for now)
 
 (define (fm-complex-component freq-we-want wc wm a b interp using-sine)
-  (let* ((sum 0.0)
-	 (mxa (ceiling (* 7 a)))
-	 (mxb (ceiling (* 7 b))))
+  (let ((sum 0.0)
+	(mxa (ceiling (* 7 a)))
+	(mxb (ceiling (* 7 b))))
     (do ((k (- mxa) (+ 1 k)))
 	((>= k mxa))
       (do ((j (- mxb) (+ 1 j)))
@@ -2429,9 +2429,9 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
 
 (define (fm-cascade-component freq-we-want wc wm1 a wm2 b)
-  (let* ((sum 0.0)
-	 (mxa (ceiling (* 7 a)))
-	 (mxb (ceiling (* 7 b))))
+  (let ((sum 0.0)
+	(mxa (ceiling (* 7 a)))
+	(mxb (ceiling (* 7 b))))
     (do ((k (- mxa) (+ 1 k)))
 	((>= k mxa))
       (do ((j (- mxb) (+ 1 j)))
@@ -2454,12 +2454,12 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 ;;; waveshaping harmonic amplitude at a given index
 
 (define (cheby-hka k a coeffs) ; (coeff 0 = DC)
-  (let* ((sum 0.0)
-	 (n (length coeffs)))
+  (let ((sum 0.0)
+	(n (length coeffs)))
     (do ((j 0 (+ 1 j)))
 	((= j n))
-      (let* ((dsum 0.0)
-	     (p (+ k (* 2 j))))
+      (let ((dsum 0.0)
+	    (p (+ k (* 2 j))))
 	(do ((i 0 (+ i 1)))
 	    ((>= (+ p (* 2 i)) n))
 	  (set! dsum (+ dsum (* (expt -1 i)
