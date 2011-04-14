@@ -8181,9 +8181,20 @@
 
 
 #|
-;;; 3.0.7
+;;; 3.1.2
 
-;;; out 3.0.8! (CINT-300 "GTK_SIZE_REQUEST_CONSTANT_SIZE" "GtkSizeRequestMode")
+(CINT-300 "GTK_SIZE_REQUEST_CONSTANT_SIZE" "GtkSizeRequestMode")
+
+(CINT-310 "GDK_RENDERING_MODE_SIMILAR" "GdkRenderingMode")
+(CINT-310 "GDK_RENDERING_MODE_IMAGE" "GdkRenderingMode")
+(CINT-310 "GDK_RENDERING_MODE_RECORDING" "GdkRenderingMode")
+ 
+(CFNC-310 "gchar* gtk_entry_get_placeholder_text GtkEntry* entry" 'const)
+(CFNC-310 "void gtk_entry_set_placeholder_text GtkEntry* entry gchar* text" 'const)
+(CFNC-310 "void gtk_expander_set_resize_toplevel GtkExpander* expander gboolean resize_toplevel")
+(CFNC-310 "gboolean gtk_expander_get_resize_toplevel GtkExpander* expander")
+;(CFNC-310 "void gtk_widget_queue_draw_region GtkWidget* widget cairo_region_t* [region]" 'const)
+(CFNC-310 "char *gtk_widget_path_to_string GtkWidgetPath* path" 'const)
 
 |#
 
