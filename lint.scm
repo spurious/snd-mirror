@@ -2,11 +2,13 @@
 
 (provide 'lint.scm)
 
-(define *report-unused-parameters* #f)
-(define *report-unused-top-level-functions* #f)
+(define *report-unused-parameters* #t)
+(define *report-unused-top-level-functions* #t)
+(define *report-undefined-variables* #t)
+(define *report-shadowed-variables* #t)
+(define *report-minor-stuff* #t)                 ; let* -> let, if cases, docstring checks
+
 (define *load-file-first* #f)
-(define *report-undefined-variables* #f)
-(define *report-minor-stuff* #f)                 ; let* -> let, if cases, docstring checks
 
 
 ;;; --------------------------------------------------------------------------------
@@ -684,30 +686,46 @@
 	       (tree-member sym (cdr tree)))))
 
 
-    (define (binding-ok? name line-number head binding)
+    (define (binding-ok? name line-number head binding env second-pass)
       ;; check let-style variable binding for various syntactic problems
       (if (not (pair? binding))
 	  (begin 
-	    (format #t "  ~A (line ~D): ~A binding is not a list? ~S~%" name line-number head binding) 
+	    (if (not second-pass)
+		(format #t "  ~A (line ~D): ~A binding is not a list? ~S~%" 
+			name line-number head binding))
 	    #f)
 	  (if (not (symbol? (car binding)))
 	      (begin 
-		(format #t "  ~A (line ~D): ~A variable is not a symbol? ~S~%" name line-number head binding) 
+		(if (not second-pass)
+		    (format #t "  ~A (line ~D): ~A variable is not a symbol? ~S~%" 
+			    name line-number head binding))
 		#f)
 	      (if (keyword? (car binding))
 		  (begin 
-		    (format #t "  ~A (line ~D): ~A variable is a keyword? ~S~%" name line-number head binding) 
+		    (if (not second-pass)
+			(format #t "  ~A (line ~D): ~A variable is a keyword? ~S~%" 
+				name line-number head binding))
 		    #f)
 		  (if (null? (cdr binding))
 		      (begin 
-			(format #t "  ~A (line ~D): ~A variable value is missing? ~S~%" name line-number head binding) 
+			(if (not second-pass)
+			    (format #t "  ~A (line ~D): ~A variable value is missing? ~S~%" 
+				    name line-number head binding))
 			#f)
 		      (if (and (not (= (lint-length binding) 2))
 			       (not (eq? head 'do)))
 			  (begin
-			    (format #t "  ~A (line ~D): ~A binding is messed up: ~S~%" name line-number head binding)
+			    (if (not second-pass)
+				(format #t "  ~A (line ~D): ~A binding is messed up: ~S~%" 
+					name line-number head binding))
 			    #f)
-			  #t))))))
+			  (begin
+			    (if (and *report-shadowed-variables*
+				     (not second-pass)
+				     (env-member (car binding) env))
+				(format #t "  ~A (line ~D): ~A variable ~A in ~S shadows an earlier declaration~%" 
+					name line-number head (car binding) binding))
+			    #t)))))))
 
 
     (define (report-usage name line-number type head vars)
@@ -1069,7 +1087,7 @@
 			   ;; walk the init forms before adding the step vars to env
 			   (do ((bindings (cadr form) (cdr bindings)))
 			       ((null? bindings))
-			     (if (binding-ok? name line-number head (car bindings))
+			     (if (binding-ok? name line-number head (car bindings) env #f)
 				 (begin
 				   (lint-walk name line-number (cadar bindings) env)
 				   (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
@@ -1077,7 +1095,7 @@
 			   ;; walk the step exprs
 			   (do ((bindings (cadr form) (cdr bindings)))
 			       ((null? bindings))
-			     (if (and (binding-ok? name line-number head (car bindings))
+			     (if (and (binding-ok? name line-number head (car bindings) env #t)
 				      (pair? (cddar bindings)))
 				 (lint-walk name line-number (caddar bindings) (append vars env))))
 
@@ -1092,7 +1110,7 @@
 		     (let ((vars (if named-let (list (list named-let #f #f)) '())))
 		       (do ((bindings (if named-let (caddr form) (cadr form)) (cdr bindings)))
 			   ((null? bindings))
-			 (if (binding-ok? name line-number head (car bindings))
+			 (if (binding-ok? name line-number head (car bindings) env #f)
 			     (begin
 			       (lint-walk name line-number (cadar bindings) env)
 			       (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
@@ -1105,7 +1123,7 @@
 		   (let ((vars '()))
 		     (do ((bindings (cadr form) (cdr bindings)))
 			 ((null? bindings))
-		       (if (binding-ok? name line-number head (car bindings))
+		       (if (binding-ok? name line-number head (car bindings) env #f)
 			   (begin
 			     (lint-walk name line-number (cadar bindings) (append vars env))
 			     (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
@@ -1130,12 +1148,12 @@
 		   (let ((vars '()))
 		     (do ((bindings (cadr form) (cdr bindings)))
 			 ((null? bindings))
-		       (if (binding-ok? name line-number head (car bindings))
+		       (if (binding-ok? name line-number head (car bindings) env #f)
 			   (set! vars (append (list (list (caar bindings) #f #f)) vars))))
 		     (let ((new-env (append vars env)))
 		       (do ((bindings (cadr form) (cdr bindings)))
 			   ((null? bindings))
-			 (if (binding-ok? name line-number head (car bindings))
+			 (if (binding-ok? name line-number head (car bindings) env #t)
 			     (lint-walk name line-number (cadar bindings) new-env)))
 		       (lint-walk-body name line-number head (cddr form) new-env))
 		     (report-usage name line-number 'variable head vars)
@@ -1167,7 +1185,7 @@
 			    (set! vars (lint-walk name line-number f vars))
 			    (set! ctr (+ ctr 1)))
 			  body)
-			 (if (not (eq? head 'begin)) ; top level simply as an organizing device
+			 (if (not (eq? head 'begin))
 			     (if (not (eq? vars env))
 				 (let ((nvars '()))
 				   (do ((v vars (cdr v)))

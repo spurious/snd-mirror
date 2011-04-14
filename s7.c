@@ -31424,7 +31424,7 @@ s7_scheme *s7_init(void)
   typeflag(sc->QUOTE) |= T_DONT_COPY; 
   
   sc->UNQUOTE = make_symbol(sc, "unquote");
-  typeflag(sc->UNQUOTE) |= T_DONT_COPY; 
+  typeflag(sc->UNQUOTE) |= T_DONT_COPY;                /* should this include T_IMMUTABLE? (define-macro ,a ...) redefines unquote! */
   
   sc->MACROEXPAND = make_symbol(sc, "macroexpand");
   typeflag(sc->MACROEXPAND) |= T_DONT_COPY; 

@@ -8522,7 +8522,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "~{~A~}" #2D((1 2) (3 4))) "1234") ; this seems inconsistent with:
 (test (format #f "~{~A~}" '((1 2) (3 4))) "(1 2)(3 4)")
 (test (format #f "~{~A ~}" #2d((1 2) (3 4))) "1 2 3 4 ")
-
+(test (format #f "1~\
+a2" 3) "132")
 
 ;; ~nT handling is a mess -- what are the defaults?  which is column 1? do we space up to or up to and including?
 
@@ -17834,6 +17835,10 @@ abs     1       2
   (test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi 2)) '(2))
   (test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi :a 2)) '(2))
   (test (let () (define-macro* (hi (a 1) :rest b :allow-other-keys) `(list ,a ,@b)) (hi :a 2 :b 3)) '(2 :b 3))
+
+;  (test (let () (define-macro ,@a 23)) 'error)
+;  (test (let () (define-macro ,a 23)) 'error)
+; maybe this isn't right
 
   (test ((lambda* ((a 1) :allow-other-keys) a) :b 1 :a 3) 3)
   (test (let () (define-macro* (hi (a 1) :allow-other-keys) `(list ,a)) (hi :b 2 :a 3)) '(3))
@@ -42716,6 +42721,7 @@ abs     1       2
 (test (= 0/1) 'error)
 (test (= 1.0) 'error)
 (test (= 1.0+1.0i) 'error)
+(test (= 1 lambda) 'error)
 (test (= 10/3) 'error)
 (test (= 1234000000.0+2.71828182845905i) 'error)
 (test (= 2) 'error)

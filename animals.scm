@@ -513,11 +513,11 @@
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
-       (let ((fm (* index (oscil fm))))
+       (let ((fm1 (* index (oscil fm))))
 	 (outa i (* (env ampf)
 		    (pulsed-env pulse)
-		    (+ (* (env f1) (oscil gen1 fm))
-		       (* (env f2) (oscil gen2 (* 2 fm)))))))))))
+		    (+ (* (env f1) (oscil gen1 fm1))
+		       (* (env f2) (oscil gen2 (* 2 fm1)))))))))))
 
 ;; (with-sound () (southern-cricket-frog 0 0.5))
 
@@ -1610,11 +1610,11 @@
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
-       (let* ((amp (env ampf))
+       (let* ((amp1 (env ampf))
 	      (frq (+ (env frqf) (rand-interp vib)))
 	      (pitch (oscil carrier frq))
 	      (index1 (hz->radians (* freq (+ 1.0 (rand-interp indf))))))
-	 (outa i (* amp
+	 (outa i (* amp1
 		    (+ (* 0.6 (oscil modulator1 (+ (* 2 frq) (* index1 pitch))))
 		       (* 0.3 (oscil modulator3 (+ (* 3 frq) (* index3 pitch))))
 		       (* 0.1 (oscil modulator2 (+ (* 8 frq) (* index2 pitch))))))))))))
@@ -8937,7 +8937,7 @@
     (let* ((start (seconds->samples beg))
 	   (stop (+ start (seconds->samples dur)))
 	   (ampf (make-env ampf :duration dur :scaler amp))
-	   (frqf (make-env frqf :duration dur :scaler (hz->radians frq)))
+	   (frqf1 (make-env frqf :duration dur :scaler (hz->radians frq)))
 	   (gen1 (make-polywave :partials (list 1 .99  2 .008 3 .003)))
 	   (speed 200)
 	   (vib (make-oscil speed))
@@ -8953,7 +8953,7 @@
 	       (noise (rand-interp rnd)))
 	   (outa i (* (env ampf)
 		      (+ .25 (* .45 (abs (+ noise (* .7 (oscil trem))))))
-		      (polywave gen1 (+ (env frqf)
+		      (polywave gen1 (+ (env frqf1)
 					(* vib-index vbf vb))))))))))
   
   (let ((main-ampf '(0.000 0.000 0.321 0.215 0.679 0.569 0.826 0.992 0.874 1.000 1.000 0.000))
@@ -9145,7 +9145,7 @@
 	   (ampf5 (make-env amp5 :duration dur :scaler .125))
 	   (ampf6 (make-env '(0 0 .3 0 .4 1  1 0) :duration dur :scaler .5))
 	   (vib (make-oscil 1000))
-	   (vibf (make-env vibf :duration dur :scaler (hz->radians 200)))
+	   (vibf1 (make-env vibf :duration dur :scaler (hz->radians 200)))
 	   (rnd (make-rand-interp 10000 vibamp))
 	   (frm1 (make-formant frm1frq .97))
 	   (frm2 (make-formant frm2frq .95))
@@ -9156,7 +9156,7 @@
        (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
-		       (* (env vibf) 
+		       (* (env vibf1) 
 			  (+ (oscil vib)
 			     (rand-interp rnd)))))
 	       (frm (env frmf)))
@@ -9421,9 +9421,9 @@
 	   (index (hz->radians 800))
 	   (rnd (make-rand-interp 4000 .425)))
       (run
-       (do ((i start (+ i 1)))
-	   ((= i stop))
-	 (outa i (* (env ampf)
+       (do ((k start (+ k 1)))
+	   ((= k stop))
+	 (outa k (* (env ampf)
 		    (polywave gen1 (* index (+ (polywave gen2)
 					       (rand-interp rnd)))))))))))
 ;; (with-sound (:play #t) (crested-caracara 0 .5))

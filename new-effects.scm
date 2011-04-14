@@ -114,11 +114,12 @@
   ;; add a set of 3 radio buttons at the bottom of the main section for choice between sound, selection, between-marks
   ;;   target-callback should take one arg, a symbol: 'sound, 'selection, 'marks, and apply the effect accordingly (upon "DoIt")
   ;;   truncate-callback (if any) takes one arg: boolean representing toggle state (#t = on)
-  (let* ((sep (XtCreateManagedWidget "sep" xmSeparatorWidgetClass mainform
-				     (list XmNorientation      XmHORIZONTAL
-					   XmNseparatorType    XmSHADOW_ETCHED_OUT
-					   XmNbackground       (basic-color))))
-	 (rc (XtCreateManagedWidget "rc"  xmRowColumnWidgetClass mainform
+
+  (XtCreateManagedWidget "sep" xmSeparatorWidgetClass mainform
+			 (list XmNorientation      XmHORIZONTAL
+			       XmNseparatorType    XmSHADOW_ETCHED_OUT
+			       XmNbackground       (basic-color)))
+  (let ((rc (XtCreateManagedWidget "rc"  xmRowColumnWidgetClass mainform
 				    (list XmNorientation      XmHORIZONTAL
 					  XmNbackground       (basic-color)
 					  XmNradioBehavior    #t
@@ -142,13 +143,14 @@
      (list 'sound 'selection 'marks)
      (list #t #f #f))
     (if truncate-callback
-	(let* ((trsep (XtCreateManagedWidget "trsep" xmSeparatorWidgetClass mainform
-					     (list XmNorientation      XmHORIZONTAL)))
-	       (trbutton (XtCreateManagedWidget "truncate at end" xmToggleButtonWidgetClass mainform
-						(list XmNbackground       (basic-color)
-						      XmNset              #t
-						      XmNselectColor      (yellow-pixel)))))
-	  (XtAddCallback trbutton XmNvalueChangedCallback (lambda (w c i) (truncate-callback (.set i)))) ))
+	(begin
+	  (XtCreateManagedWidget "trsep" xmSeparatorWidgetClass mainform
+				 (list XmNorientation      XmHORIZONTAL)))
+	(let ((trbutton (XtCreateManagedWidget "truncate at end" xmToggleButtonWidgetClass mainform
+					       (list XmNbackground       (basic-color)
+						     XmNset              #t
+						     XmNselectColor      (yellow-pixel)))))
+	  (XtAddCallback trbutton XmNvalueChangedCallback (lambda (w c i) (truncate-callback (.set i))))))
     rc))
 
 (define (effect-frames target)
@@ -2728,16 +2730,16 @@ the synthesis amplitude, the FFT size, and the radius value."))
 							XmNrightAttachment     XmATTACH_FORM
 							XmNtopAttachment       XmATTACH_FORM
 							XmNbottomAttachment    XmATTACH_NONE
-							XmNbackground          (basic-color))))
-		       (lab (XtCreateManagedWidget "FFT size" xmLabelWidgetClass frm
-						   (list XmNleftAttachment      XmATTACH_FORM
-							 XmNrightAttachment     XmATTACH_FORM
-							 XmNtopAttachment       XmATTACH_WIDGET
-							 XmNtopWidget           rc
-							 XmNbottomAttachment    XmATTACH_FORM
-							 XmNlabelString         s1
-							 XmNalignment           XmALIGNMENT_BEGINNING
-							 XmNbackground          (basic-color)))))
+							XmNbackground          (basic-color)))))
+		  (XtCreateManagedWidget "FFT size" xmLabelWidgetClass frm
+					 (list XmNleftAttachment      XmATTACH_FORM
+					       XmNrightAttachment     XmATTACH_FORM
+					       XmNtopAttachment       XmATTACH_WIDGET
+					       XmNtopWidget           rc
+					       XmNbottomAttachment    XmATTACH_FORM
+					       XmNlabelString         s1
+					       XmNalignment           XmALIGNMENT_BEGINNING
+					       XmNbackground          (basic-color)))
 		  (for-each 
 		   (lambda (size)
 		     (let ((button (XtCreateManagedWidget (format #f "~D" size) xmToggleButtonWidgetClass rc
