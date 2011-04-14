@@ -8113,7 +8113,7 @@ are searching for a coefficient that gives us an expression that matches some da
 	(do ((i (/ population-size 2) (+ i 1))            ; replace bad coeffs using good coeffs
 	     (j 0 (+ j 1)))
 	    ((= i population-size))
-	    (let ((coeff (population j))
+	    (let ((coeff (population (cdr (distances j))))
 		  (loc (cdr (distances i))))
 	      (set! (population loc) (+ coeff (- (random range) (/ range 2))))))
 	(distances 0)))                        ; return current best case
