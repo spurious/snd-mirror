@@ -8107,16 +8107,16 @@ are searching for a coefficient that gives us an expression that matches some da
 		  (set! dist (+ dist (* err err)))))
 	      (set! (distances i) (cons dist i)))))
 
-	(sort! distances (lambda (a b)         ; sort coeffs by total error
+	(sort! distances (lambda (a b)                     ; sort coeffs by error
 			   (&lt; (car a) (car b))))
 
-	(do ((i (/ population-size 2) (+ i 1))            ; replace bad coeffs using good coeffs
+	(do ((i (/ population-size 2) (+ i 1))             ; replace bad coeffs using good coeffs
 	     (j 0 (+ j 1)))
 	    ((= i population-size))
 	    (let ((coeff (population (cdr (distances j))))
 		  (loc (cdr (distances i))))
 	      (set! (population loc) (+ coeff (- (random range) (/ range 2))))))
-	(distances 0)))                        ; return current best case
+	(distances 0)))                                    ; return current best case
 
     ;; set up our population of coeffs
     (initial-generation)
@@ -8149,7 +8149,7 @@ we used to generate that data:
 <p>If you push this a little, you'll notice that our range (1.0) coupled with
 the number of generations (100) limits how far afield we can wander in our coefficient
 search.  And surely we need to add the possibility of a constant offset! 
-Most distracting!
+Very distracting! (see expr.scm for more in this vein).
 </p>
 
 
