@@ -8149,7 +8149,7 @@ we used to generate that data:
 <p>If you push this a little, you'll notice that our range (1.0) coupled with
 the number of generations (100) limits how far afield we can wander in our coefficient
 search.  And surely we need to add the possibility of a constant offset! 
-Very distracting! (see expr.scm for more in this vein).
+Very distracting! (see expr.scm for more code).
 </p>
 
 
@@ -8311,9 +8311,45 @@ so it sets how far a generational step can progress.
 I had used .001 for two years thinking anything less was pointless.  My FFTs were set to give me .001 of
 accuracy, and surely making the increment tiny would only
 make the search slower!  
+That change essentially sped up the search by about a year; at one point I got 7 square roots in
+a single day!  Then we were back to the slow grind again.  
 </p>
 
-<p>(To be continued... This new method is going down so fast I got 7 square roots last night!)
+<p>Since much of the data looked good to
+me (the waveforms were FM-like in that they had many equal peaks), I decided to try the expression
+finder mentioned above (poly-expr in expr.scm) to see if there was any pattern in the initial phase data.  The values look
+almost random.
+There are regularities, especially in the even-harmonic case, but nothing I could just look at
+and pin down in a math expression.  
+The poly-expr distance calculation was:
+</p>
+<pre>
+      (define (distance coeffs power)
+	(let ((dist 0.0))
+	  (do ((k 0 (+ k 1)))
+	      ((= k data-size) dist)
+	    (let ((err (modulo (- (data k) (poly coeffs (* xscale k) power)) 2.0))) 
+	    ;; the factor of pi has been divided out of the data, hence the mod 2.0
+	      (if (&gt; err 1.0)
+		  (set! err (- 2.0 err)))
+	      (set! dist (+ dist (* err err)))))))
+</pre>
+<p>and the overall driver:
+</p>
+<pre>
+      (define* (all-poly? i (gens 100) (pow 2))
+        (let* ((min-vals (get-best :all i))
+               (all-phases (find-other-mins (car min-vals) (cadr min-vals))))
+          (do ((k 0 (+ k 1)))
+              ((= k 4))
+            (let ((vals (cadr (all-phases k))))
+              (poly-expr vals gens pow 1.0)))))
+</pre>
+<p>
+But the best it could do was a straight line at 0.0.  I interpret
+this to mean that the phases are in fact randomly distributed around 0.0, at least from a
+polynomial's point of view.  High order polynomials produced smaller errors, as you'd expect,
+but didn't look meaningful.  Iterated functions did not do any better than polynomials.
 </p>
 
 <br><br>

@@ -31,7 +31,7 @@
 (defgenerator one-pole-swept (y1 0.0))
 
 (define (one-pole-swept gen input coef)
-  (declare (gen one-pole-swept) (input float) (coeff float))
+  (declare (gen one-pole-swept) (input float) (coef float))
   ;; signal controlled one-pole lowpass filter
   (set! (one-pole-swept-y1 gen) (- (* (+ 1 coef) input) (* coef (one-pole-swept-y1 gen))))
   (one-pole-swept-y1 gen))

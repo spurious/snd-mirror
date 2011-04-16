@@ -73,8 +73,16 @@
 	    ((= i 100)) 
 	  (set! (v i) (+ 1 (* i 2))) )
 	v))
-"2 * k + 1, err: 0.0
-"
+"2 * k + 1, err: 0.0"
+
+(linear-expr-1D (let ((v (make-vector 100)))
+	(do ((i 0 (+ i 1))) 
+	    ((= i 100)) 
+	  (set! (v i) (+ 1 (- (random .01) .005) (* i 2))))
+	v))
+"2 * k + 1, err: 0.00079150685524436"
+;; so noise is not a problem
+
 |#
 
 (define *show-progress* #f)
@@ -116,6 +124,22 @@
 	      ((= k data-size) dist)
 	    (let ((err (- (data k) (poly coeffs (* xscale k) power))))
 	      (set! dist (+ dist (* err err)))))))
+
+      (define (iterate-distance coeffs power)
+	;; distance if using iterated function, rather than just polynomial
+	(call-with-exit
+	 (lambda (return)
+	   (let* ((dist 0.0)
+		  (y 0.0))
+	     (do ((k 0 (+ k 1)))
+		 ((= k data-size) dist)
+	       (let ((err (modulo (- (data k) y) 2.0)))
+		 (if (nan? err) ; modulo returns NaN if either arg is inf
+		     (return 1.0e50))
+		 (if (> err 1.0)
+		     (set! err (- 2.0 err)))
+		 (set! dist (+ dist (* err err)))
+		 (set! y (poly coeffs y power))))))))
 
       (define (display-expr coeffs power)
 	(do ((k power (- k 1)))
