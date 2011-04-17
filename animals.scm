@@ -1770,10 +1770,10 @@
 	   (let ((dont-click
 		  ;; count pulses in current group -- at least 2, at most 4, if 2 or 3, possibly and if 4 definitely insert a space
 		  (or (= pulses 4)
-		      (and (or (and (= pulses 2)
-				    (> (random 1.0) 0.6))
-			       (and (= pulses 3)
-				    (> (random 1.0) 0.3)))))))
+		      (and (= pulses 2)
+			   (> (random 1.0) 0.6))
+		      (and (= pulses 3)
+			   (> (random 1.0) 0.3)))))
 	     (set! pulse-count 0)
 	     (if dont-click
 		 (begin

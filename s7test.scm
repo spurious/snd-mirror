@@ -12295,6 +12295,7 @@ this prints:
 (test (case (list) ((1) 1) ((()) 2)) 2)
 (test (case #<eof> ((#<eof>) 1)) 1)
 (test (case #\newline ((#\newline) 1)) 1)
+(test (case 'c (else => (lambda (x) (symbol? x)))) #t)
 
 ; case use eqv? -- why not case-equal?
 (test (case "" (("") 1)) #<unspecified>)
@@ -12311,7 +12312,9 @@ this prints:
 (test (case 1 . 1) 'error)
 (test (case 1 (#t #f) ((1) #t)) 'error)
 (test (case 1 (#t #f)) 'error)
-(test (case -1 ((-1) => abs)) 'error)
+(test (case -1 ((-1) => abs)) 1)
+(test (case 1 (else =>)) 'error)
+(test (case 1 (else => + - *)) 'error)
 (test (case #t ((1 2) (3 4)) -1) 'error)
 (test (case 1 1) 'error)
 (test (case 1 ((2) 1) . 1) 'error)
@@ -13482,6 +13485,7 @@ this prints:
 (test (let ((.. 2) (.... 4) (..... +)) (..... .. ....)) 6)
 
 (test (let () (begin (define x 1)) x) 1)
+(test (let ((define 1)) define) 1)
 (test (let ((y 1)) (begin (define x 1)) (+ x y)) 2)
 (test (let ((: 0)) (- :)) 0) 
 ;; this only works if we haven't called (string->symbol "") making : into a keyword (see also other cases below)

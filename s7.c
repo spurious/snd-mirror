@@ -322,7 +322,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_LETREC, OP_LETREC1, OP_LETREC2, OP_COND, OP_COND1, 
 	      OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR,
 	      OP_MACRO, OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
-	      OP_CASE, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
+	      OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
 	      OP_READ_VECTOR, OP_READ_DONE, 
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
@@ -343,7 +343,7 @@ static const char *op_names[OP_MAX_DEFINED] =
    "let", "let", "let", "let*", "let*", "letrec", "letrec", "letrec", 
    "cond", "cond", "and", "and", "or", "or", "defmacro", "defmacro*", "macro", 
    "define-macro", "define-macro*", "define-expansion", "expansion", "case", "case", 
-   "case", "read-list", "read-dot", "read-quote", "read-quasiquote", "read-quasiquote-vector", 
+   "read-list", "read-dot", "read-quote", "read-quasiquote", "read-quasiquote-vector", 
    "read-unquote", "read-apply-values", "read-vector", "read-done", 
    "load-return-if-eof", "load-close-and-stop-if-eof", "eval-string", "eval-done", "catch", 
    "dynamic-wind", "define-constant", "define-constant", "do", "do", "do", 
@@ -358,7 +358,7 @@ static const char *op_names[OP_MAX_DEFINED] =
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 96 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 95 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -5432,6 +5432,19 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
       if ((strings_are_equal(name + 1, "null")) || 
 	  (strings_are_equal(name + 1, "nul")))
 	return(chars[0]);
+
+      /* the next 4 are for r7rs */
+      if (strings_are_equal(name + 1, "alarm")) 
+	return(chars[7]);
+
+      if (strings_are_equal(name + 1, "backspace")) 
+	return(chars[8]);
+
+      if (strings_are_equal(name + 1, "escape")) 
+	return(chars[0x1b]);
+
+      if (strings_are_equal(name + 1, "delete")) 
+	return(chars[0x7f]);
 
       if (name[1] == 'x')     /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e -- Guile doesn't have this
 			       *    (it is from r6rs -- perhaps it is a bad idea...)
@@ -25487,24 +25500,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (sc->x != sc->NIL) 
 	{
-	  if (is_pair(caar(sc->x)))  /* the normal case (list of keys = caar, rest of clause = cdar) */
-	    {
-	      sc->code = cdar(sc->x);
-	      goto BEGIN;
-	    }                        /* else it's the "else" clause presumably -- evaluate caar to make sure? */
-	  push_stack(sc, opcode(OP_CASE2), sc->NIL, cdar(sc->x));
-	  sc->code = caar(sc->x);
-	  goto EVAL;
-	} 
+	  sc->code = cdar(sc->x);
 
+	  /* check for => */
+	  if ((is_pair(sc->code)) &&
+	      (car(sc->code) == sc->FEED_TO) &&
+	      (s7_symbol_value(sc, sc->FEED_TO) == sc->UNDEFINED))
+	    {
+	      if (!is_pair(cdr(sc->code)))                                  /* (case 1 (else =>)) */
+		return(eval_error(sc, "case: '=>' target missing?  ~A", cdr(sc->code)));
+	      if (is_pair(cddr(sc->code)))                                  /* (case 1 (else => + - *)) */
+		return(eval_error(sc, "case: '=>' has too many targets: ~A", sc->code));
+
+	      sc->code = make_list_2(sc, cadr(sc->code), make_list_2(sc, sc->QUOTE, sc->value)); 
+	      goto EVAL;
+	    }
+	  goto BEGIN;
+	}
+
+      /* no match found */
       sc->value = sc->UNSPECIFIED; /* this was sc->NIL but the spec says case value is unspecified if no clauses match */
-      goto START;
-      
-      
-    case OP_CASE2: 
-      if (is_true(sc, sc->value)) 
-	goto BEGIN;
-      sc->value = sc->NIL;
       goto START;
       
 

@@ -6,7 +6,7 @@
 (define *report-unused-top-level-functions* #f)
 (define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
-(define *report-minor-stuff* #f)                 ; let* -> let, if cases, docstring checks
+(define *report-minor-stuff* #f)          ; let* -> let, if expr #f#t cases, docstring checks, (= 1.0 x)
 
 (define *load-file-first* #f)
 
@@ -111,6 +111,12 @@
 (define (real-but-not-rational? x)
   (and (real? x)
        (not (rational? x))))
+
+(define (any-real? lst)
+  (and (pair? lst)
+       (or (and (number? (car lst))
+		(not (rational? (car lst))))
+	   (any-real? (cdr lst)))))
 
 (define (thunk? p)
   (and (procedure? p)
@@ -588,6 +594,52 @@
 		   (lint-constant? (car form)))
 	       (just-constants? (cdr form)))))
 
+    
+    (define (check-for-repeated-args name line-number head form env)
+
+      (define (repeated-member? lst env)
+	(and (pair? lst)
+	     (or (and (or (not (pair? (car lst)))
+			  (not (side-effect? (car lst) env)))
+		      (member (car lst) (cdr lst)))
+		 (repeated-member? (cdr lst) env))))
+
+      (if (repeated-member? (cdr form) env)
+	  (if (or (member head '(eq? eqv? equal?))
+		  (and (= (lint-length form) 3)
+		       (member head '(= / max min < > <= >= - quotient remainder modulo and or
+				      string=? string<=? string>=? string<? string>?
+				      char=? char<=? char>=? char<? char>?))))
+	      (format #t "  ~A (line ~D): this looks odd:~A~%"
+		      name line-number 
+		      ;; sigh (= a a) could be used to check for non-finite numbers, I suppose,
+		      ;;   and (/ 0 0) might be deliberate (as in gmp)
+		      (truncated-list->string form))
+	      (if (member head '(= max min < > <= >= and or
+				 string=? string<=? string>=? string<? string>?
+				 char=? char<=? char>=? char<? char>?))
+		  (format #t "  ~A (line ~D): it looks odd to have repeated arguments in~A~%"
+			  name line-number (truncated-list->string form))))))
+
+
+    (define (check-for-repeated-args-with-not name line-number head form env)
+
+      (define (repeated-member-with-not? lst env)
+	(and (pair? lst)
+	     (or (and (or (not (pair? (car lst)))
+			  (not (side-effect? (car lst) env)))
+		      (or (member (list 'not (car lst)) (cdr lst))
+			  (and (pair? (car lst))
+			       (eq? (caar lst) 'not)
+			       (= (lint-length (car lst)) 2)
+			       (member (cadar lst) (cdr lst)))))
+		 (repeated-member-with-not? (cdr lst) env))))
+      
+      (if (repeated-member-with-not? (cdr form) env)
+	  (format #t "  ~A (line ~D): this looks odd:~A~%"
+		  name line-number 
+		  (truncated-list->string form))))
+
 
     (define (check-args name line-number head form checkers)
       ;; check for obvious argument type problems
@@ -894,6 +946,8 @@
 
       (if (symbol? form)
 	  (begin
+	    ;; TODO: catch else and => outside cond/case 
+	    ;;       also check that => target is a function?
 	    (ref-var form env)
 	    env)
 	  
@@ -937,6 +991,11 @@
 				   (format #t "  ~A (line ~D): ~S is messed up~%" name line-number form))
 			       (if (not (null? (cddr form))) 
 				   (lint-walk sym line-number (caddr form) env))
+
+			       (if (equal? sym val)
+				   (format #t "  ~A (line ~D): this ~A is either not needed, or an error:~A~%" 
+					   name line-number head (truncated-list->string form)))
+
 			       (append (list (list sym #f #f)) env))
 
 			     (if (pair? sym)
@@ -1010,12 +1069,20 @@
 					name line-number
 					(truncated-list->string clause))
 				(begin
-				  (if (eq? (car clause) 'else)
-				      (if (not (= ctr len))
-					  (format #t "  ~A (line ~D): cond else clause is not the last: ~A~%"
-						  name line-number 
-						  (truncated-list->string form)))
-				      (lint-walk name line-number (car clause) env))
+				  (if (boolean? (car clause))
+				      (if (not (car clause))
+					  (format #t "  ~A (line ~D): cond clause will never be evaluated:~A~%"
+						  name line-number (truncated-list->string clause))
+					  (if (not (= ctr len))
+					      (format #t "  ~A (line ~D): cond #t clause is not the last: ~A~%"
+						      name line-number 
+						      (truncated-list->string form))))
+				      (if (eq? (car clause) 'else)
+					  (if (not (= ctr len))
+					      (format #t "  ~A (line ~D): cond else clause is not the last: ~A~%"
+						      name line-number 
+						      (truncated-list->string form)))
+					  (lint-walk name line-number (car clause) env)))
 				  (if (pair? (cdr clause))
 				      (if (eq? (cadr clause) '=>)
 					  (if (not (pair? (cddr clause)))
@@ -1411,21 +1478,27 @@
 							(cdr form))))))
 					   
 					   (case head
-					     ((eq?) (if (or (number? (cadr form))
-							    (char? (cadr form))
-							    (and (not (null? (cddr form)))
-								 (or (number? (caddr form))
-								     (char? (caddr form)))))
-							(format #t "  ~A (line ~D): eq? doesn't work reliably with args like ~S~%" 
-								name line-number form)))
+					     ((eq?) 
+					      (if (or (number? (cadr form))
+						      (char? (cadr form))
+						      (and (not (null? (cddr form)))
+							   (or (number? (caddr form))
+							       (char? (caddr form)))))
+						  (format #t "  ~A (line ~D): eq? doesn't work reliably with args like ~S~%" 
+							  name line-number form))
+					      (check-for-repeated-args name line-number head form env)
+					      (check-for-repeated-args-with-not name line-number head form env))
 					     
-					     ((eqv?) (if (or (vector? (cadr form))
-							     (string? (cadr form))
-							     (and (not (null? (cddr form)))
-								  (or (vector? (caddr form))
-								      (string? (caddr form)))))
-							 (format #t "  ~A (line ~D): eqv? doesn't work reliably with args like ~S~%" 
-								 name line-number form)))
+					     ((eqv?) 
+					      (if (or (vector? (cadr form))
+						      (string? (cadr form))
+						      (and (not (null? (cddr form)))
+							   (or (vector? (caddr form))
+							       (string? (caddr form)))))
+						  (format #t "  ~A (line ~D): eqv? doesn't work reliably with args like ~S~%" 
+							  name line-number form))
+					      (check-for-repeated-args name line-number head form env)
+					      (check-for-repeated-args-with-not name line-number head form env))
 					     
 					     ((not) (if (and (not (symbol? (cadr form)))
 							     (not (pair? (cadr form)))
@@ -1480,30 +1553,100 @@
 							  (cadr form))))
 					     
 					     (else
+					      ;; we've already checked for head in env-member above
+					      (check-for-repeated-args name line-number head form env)
 					      ;; now try to check arg types for egregious errors
 					      (let ((arg-data (hash-table-ref argument-data head)))
 						(if arg-data
 						    (check-args name line-number head form arg-data)
 						    ))))))))))
 			 
-			 (if (eq? head 'if)
-			     (begin
-			       (if (> (lint-length form) 4)
-				   (format #t "  ~A (line ~D): if has too many clauses: ~S~%" 
-					   name line-number form)
-				   (if (< (lint-length form) 3)
-				       (format #t "  ~A (line ~D): if has too few clauses: ~S~%" 
-					       name line-number form)
-				       (if (and *report-minor-stuff*
-						(boolean? (list-ref form 2))
-						(not (null? (cdddr form)))
-						(boolean? (list-ref form 3))
-						(not (eq? (list-ref form 2) (list-ref form 3)))) ; !
-					   (format #t "  ~A (line ~D): ~S is the same as ~S~%"
-						   name line-number form
-						   (if (list-ref form 2)
-						       (list-ref form 1)
-						       (format #f "(not ~S)" (list-ref form 1)))))))))
+			 (if (and (member head '(and or))
+				  (or (member #f (cdr form))
+				      (member #t (cdr form))))
+			     (format #t "  ~A (line ~D): why the boolean argument?~A~%"
+				     name line-number (truncated-list->string form))
+
+			     (if (and *report-minor-stuff*
+				      (> (lint-length form) 2)
+				      (member head '(equal? =))
+				      (any-real? (cdr form)))
+				 (format #t "  ~A (line ~D): ~A can be troublesome with floats:~A~%"
+					 name line-number head (truncated-list->string form))
+
+				 (case head
+				   ((if)
+				    (let ((len (lint-length form)))
+				      (if (> len 4)
+					  (format #t "  ~A (line ~D): if has too many clauses: ~S~%" 
+						  name line-number form)
+					  (if (< len 3)
+					      (format #t "  ~A (line ~D): if has too few clauses: ~S~%" 
+						      name line-number form)
+					      (begin
+						(if (and *report-minor-stuff*
+							 (boolean? (list-ref form 2))
+							 (not (null? (cdddr form)))
+							 (boolean? (list-ref form 3))
+							 (not (eq? (list-ref form 2) (list-ref form 3)))) ; !
+						    (format #t "  ~A (line ~D): ~S is the same as ~S~%"
+							    name line-number form
+							    (if (list-ref form 2)
+								(list-ref form 1)
+								(format #f "(not ~S)" (list-ref form 1)))))
+						(if (and (= len 4)
+							 (equal? (caddr form) (cadddr form)))
+						    (format #t "  ~A (line ~D): if is not needed here:~A~%"
+							    name line-number (truncated-list->string form))))))))
+				   
+				   ((logior)
+				    (if (member -1 (cdr form))
+					(format #t "  ~A (line ~D): this is always -1:~A~"
+						name line-number (truncated-list->string form))))
+				   
+				   ((logand lcm)
+				    (if (member 0 (cdr form))
+					(format #t "  ~A (line ~D): this is always 0:~A~"
+						name line-number (truncated-list->string form))))
+				   
+				   ((ash)
+				    (if (and (= (lint-length form) 3)
+					     (not (equal? (cadr form) 1)) ; ignore (ash 1 0)
+					     (equal? (caddr form) 0))
+					(format #t "  ~A (line ~D): this is always ~S:~A~%"
+						name line-number (cadr form) (truncated-list->string form))))
+
+				   ((/)
+				    (let ((len (lint-length form)))
+				      (if (or (and (= len 2)
+						   (member (cadr form) '(0 0.0)))
+					      (and (> len 2)
+						   (or (member 0 (cddr form))
+						       (member 0.0 (cddr form)))))
+					  (format #t "  ~A (line ~D): possible divide by zero:~A"
+						  name line-number (truncated-list->string form)))))
+				   
+				   ((gcd)
+				    (if (member 1 (cdr form))
+					(format #t "  ~A (line ~D): this is always 1:~A~"
+						name line-number (truncated-list->string form))))
+				   
+				   ((and or)
+				    (if (= (lint-length form) 2)
+					(format #t "  ~A (line ~D): ~A is not needed here:~A"
+						name line-number head
+						(truncated-list->string form))
+					(begin
+					  (check-for-repeated-args name line-number head form env)
+					  (check-for-repeated-args-with-not name line-number head form env))))
+				   
+				   ((not) ; (not <constant>) is checked above
+				    (if (and (pair? (cdr form))
+					     (eq? (cadr form) 'not))
+					(format #t "  ~A (line ~D): pointless (not (not ...)):~A~%"
+						name line-number 
+						(truncated-list->string form))))
+				   )))
 
 			 (let ((vars env)
 			       (unvars '()))

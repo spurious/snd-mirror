@@ -1412,7 +1412,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	   (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
 	   (set! (out-data k) outval)))
        (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))
-       (vct->channel out-data 0 (max len len) snd chn))))
+       (vct->channel out-data 0 len snd chn))))
 
 ;;; (pulse-voice 80 20.0 1.0 1024 0.01)
 ;;; (pulse-voice 80 120.0 1.0 1024 0.2)

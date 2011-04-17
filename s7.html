@@ -4215,6 +4215,7 @@ bind it to something else, which is asking for confusion).
 <li>the default IO ports are named *stdin*, *stdout*, and *stderr*.
 <li>*gc-stats* is a boolean that controls whether GC stats are printed.
 <li>member and assoc accept an optional 3rd argument, the comparison function (equal? is the default).
+<li>case accepts => much like cond (the function argument is the selector).
 </ul>
 
 <small>
@@ -4704,6 +4705,57 @@ have any number after, for example, #b:
 </p>
 
 
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>r7rs:
+</p>
+
+<pre>
+
+  (define vector-map map) (define vector-for-each for-each) (define copy-vector copy) (define (vector->string vect) (apply string (vector->list vect)))
+  (define string-map map) (define string-for-each for-each) (define (string->vector str) (apply vector (string->list str)))
+  (define copy-list copy)
+
+  (define string-ni=? string=?) (define string-ni<? string<?) (define string-ni>? string>?) 
+  (define string-ni<=? string<=?) (define string-ni>=? string>=?)   
+  (define char-foldcase char-downcase) (define string-foldcase string-downcase)
+  (define (string-downcase str) (apply string (map char-downcase str)))
+  (define (string-upcase str) (apply string (map char-upcase str)))
+
+  (define -inf.0 (real-part (log 0.0))) (define +inf.0 (- -inf.0)) (define +nan.0 (/ +inf.0 +inf.0))
+  (define (finite? n) (and (number? n) (not (nan? n)) (not (infinite? n))))
+
+  (define exact-integer? integer?)	
+  (define (exact-integer-sqrt i) (let ((sq (floor (sqrt i)))) (values sq (- i (* sq sq)))))
+
+  (define (port-open? p) (not (port-closed? p))) (define (character-port? p) #t) (define (binary-port? p) #t)
+  (define (port? p) (or (input-port? p) (output-port? p)))
+
+  (define read-u8 read-byte) (define write-u8 write-byte) (define u8-ready? char-ready?) (define peek-u8 peek-char)
+  (define blob? vector?) (define make-blob make-vector) (define blob-length length) (define blob-copy copy)
+  (define blob-u8-ref vector-ref) (define blob-u8-set! vector-set!)
+
+  (define scheme-report-environment initial-environment)
+  (define interaction-environment current-environment)
+  (define (include file) (load file (current-environment)))
+
+<!--
+  modules: include-ci import export
+  raise raise-continuable error [error msg obj] guard
+  define-record-type
+  parameter objects: make-parameter parameterize
+  copy-partial-blob[!] copy-blob!
+  case-lambda
+  #; for comment out next expr
+  file-exists? delete-file command-line
+  getenv? time?: get-environment-variable[s] current-jiffy|second jiffies-per-second current-posix-second
+  "complete" set of int div: truncate-quotient truncate-remainder truncate/ round-* floor-* euclidean-*? ceiling-*
+  with-exception-handler null-environment
+  (set! *#readers* (cons (cons #\\ (lambda (str) (if (string=? str "\\alarm")... #f))) *#readers*))
+-->
+</pre>
+
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -4782,17 +4834,6 @@ Here's an idle thought:
 <br>
 <br><br>
 
-
-<!--
-for r7rs: (?)
-  (define (finite? n) (and (number? n) (not (nan? n)) (not (infinite? n))))
-  (define vector-map map)
-  (define vector-for-each for-each)
-  (define string-map map)
-  (define string-for-each for-each)
-  (define list-copy copy)
-  (define vector-copy copy)
--->
 
 
 
