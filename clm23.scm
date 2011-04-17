@@ -1138,7 +1138,7 @@
 	       ((= k 2))
 	     (mixer-set! nmx j k 0.0)
 	     (set! (mixer-ref mx1 j k) (* 1.0 (+ j k)))
-	     (set! (mixer-ref mx2 j k) (* 1.0 (* j k)))))
+	     (set! (mixer-ref mx2 j k) (* 1.0 j k))))
 	 (mixer* mx1 mx2 nmx)
 	 (if (or (> (abs (- (mixer-ref nmx 0 0) 0.0)) .001)
 		 (> (abs (- (mixer-ref nmx 0 1) 1.0)) .001)
@@ -2087,13 +2087,13 @@
 		   (set! even-freq (hz->radians (* (+ frm-int 1) frq)))
 		   (set! even-amp (- frm0 frm-int))
 		   (set! odd-amp (- 1.0 even-amp))))
-	     (set! sum (+ sum (+ (* (amps k) 
-				    (+ (* even-amp 
-					  (oscil (evens k) 
-						 (+ even-freq (* (indices k) car))))
-				       (* odd-amp 
-					  (oscil (odds k) 
-						 (+ odd-freq (* (indices k) car)))))))))))
+	     (set! sum (+ sum (* (amps k) 
+				 (+ (* even-amp 
+				       (oscil (evens k) 
+					      (+ even-freq (* (indices k) car))))
+				    (* odd-amp 
+				       (oscil (odds k) 
+					      (+ odd-freq (* (indices k) car))))))))))
 	 (outa i (* (env ampf) sum)))))))
 
 ;;; --------------------------------------------------------------------------------

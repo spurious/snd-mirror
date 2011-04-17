@@ -323,7 +323,7 @@
 		     ((= k N2))
 		   (let* ((a (vct-ref fdr k))
 			  (b (vct-ref fdi k))
-			  (mag (* (sqrt (+ (* a a) (* b b)))))
+			  (mag (sqrt (+ (* a a) (* b b))))
 			  (phase 0)
 			  (phasediff 0))
 		     (vct-set! fdr k mag)    ;; current amp stored in fdr

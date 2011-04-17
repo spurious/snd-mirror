@@ -1096,7 +1096,7 @@
 	       (c1 (- (/ (* n (sin nx2)) sx22)
 		      (/ (- 1.0 (cos nx)) sxsx))))
 	  (/ (- (* (cos cxx) c1)
-		(* interp (* (sin cxx) s1)))
+		(* interp (sin cxx) s1))
 	     (* 0.5 n (- n 1))))))) ; normalization, nominal n is off by 1, peak seems to be solid right through the interpolation
 
 	       
@@ -2789,8 +2789,7 @@
     (set! (k2ssb-angle gen) (+ fm cx (k2ssb-frequency gen)))
 
     (/ (- (* 3 (cos cx))
-	  (* (sin cx) 
-	     (* 4.0 (sin mx))))
+	  (* (sin cx) 4.0 (sin mx)))
        (* 3.0 (- 5.0 (* 4.0 (cos mx)))))))
 
 #|
@@ -4165,7 +4164,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (- (* (cos cx)
 	  (sin (* B (cos mx))))
        (* (sin cx)
-	  (* (sin (* B (sin mx)))))))) ; use -B for the other side
+	  (sin (* B (sin mx))))))) ; use -B for the other side
 
 ;;; FM with complex index
 (define* (fpmc beg dur freq amp mc-ratio fm-index interp)
@@ -4352,7 +4351,7 @@ index 10 (so 10/2 is the bes-jn arg):
       (outa i (* amp (- (* (cos cx)
 			   (sin (* index (cos mx))))
 			(* (sin cx)
-			   (* (sin (* index (sin mx))))))) 
+			   (sin (* index (sin mx))))))
 	                   ;; use -index for reflection
 	   )
       (set! cx (+ cx car-frequency))

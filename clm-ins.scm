@@ -472,8 +472,9 @@ is a physical model of a flute:
 			     (* ran-amount (rand-interp random-vibrato)) 
 			     (env flowf)))
        (set! current-difference 
-	     (+  (+ current-flow (* noise (* current-flow (rand breath))))
-		 (* fbk-scl1 delay-sig)))
+	     (+ current-flow 
+		(* noise current-flow (rand breath))
+		(* fbk-scl1 delay-sig)))
        (set! current-excitation (- emb-sig (* emb-sig emb-sig emb-sig)))
        (set! out-sig (one-pole reflection-lowpass-filter 
 			       (+ current-excitation (* fbk-scl2 delay-sig))))

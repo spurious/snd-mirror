@@ -370,8 +370,10 @@
 			 (set! temp (/ one-over-two-pi (* (- b a) k)))
 			 (set! (sines k) (* (+ (cos ka2) (* (- (sin ka2) (sin (* k b2))) temp)) (/ temp1 k)))
 			 (set! (cosines k) (* (+ (- (sin ka2)) (* (- (cos ka2) (cos (* k b2))) temp)) (/ temp1 k)))))
-		   (set! (sines k) (+ (sines k) (+ (/ (- 1.0 (cos ka2)) k) (/ (* (- (cos ka1) 1.0) 0.5) (- k 1))
-						   (/ (* (- (cos ka3) 1.0) 0.5) (+ k 1)))))
+		   (set! (sines k) (+ (sines k) 
+				      (/ (- 1.0 (cos ka2)) k)
+				      (/ (* (- (cos ka1) 1.0) 0.5) (- k 1))
+				      (/ (* (- (cos ka3) 1.0) 0.5) (+ k 1))))
 		   (set! (sines k) (* (sines k) one-over-two-pi))
 		   (set! (cosines k) (+ (cosines k) (- (/ (sin ka2) k) (/ (* (sin ka1) 0.5) (- k 1)) (/ (* (sin ka3) 0.5) (+ k 1)))))
 		   (set! (cosines k) (* (cosines k) one-over-two-pi)))
@@ -382,8 +384,9 @@
 					;(set! (glot-table j) 0.0)
 		   (do ((k 1 (+ 1 k)))
 		       ((> k harms))
-		     (set! (glot-table j) (+ (glot-table j) (+ (* (cosines k) (cos (* k x)))
-							       (* (sines k) (sin (* k x)))))))))
+		     (set! (glot-table j) (+ (glot-table j) 
+					     (* (cosines k) (cos (* k x)))
+					     (* (sines k) (sin (* k x))))))))
 	       (set! s-glot-mix 1.0)
 	       (set! delta (/ 1.0 (- next-offset i)))
 	       (if (not (= first-glot 0))
@@ -460,7 +463,7 @@
 		 (begin
 		   (if (not (= velum-pos 0.0))
 		       (set! time-nose-closed 0)
-		       (set! time-nose-closed (+ time-nose-closed)))
+		       (set! time-nose-closed (+ time-nose-closed 1))) ; added 1 bil 17-Apr-11 but didn't test it
 		   ;; nasal tick
 		   (let* ((nose-t1 0.0)
 			  (nose-temp 0.0)

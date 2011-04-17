@@ -1385,8 +1385,8 @@ the era when computers were human beings"
        (do ((k 0 (+ 1 k)))
 	   ((= k N))
 	 (set! (average-data k) (+ (average-data k) 
-				   (+ (* (rl k) (rl k)) 
-				      (* (im k) (im k))))))))
+				   (* (rl k) (rl k)) 
+				   (* (im k) (im k)))))))
     (graph (vct-scale! average-data (/ 1.0 (ceiling (/ len N)))))))
 
 
@@ -2463,9 +2463,9 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	(do ((i 0 (+ i 1)))
 	    ((>= (+ p (* 2 i)) n))
 	  (set! dsum (+ dsum (* (expt -1 i)
-				(* (coeffs (+ p (* 2 i)))
-				   (+ (binomial (+ p i) i)
-				      (binomial (+ p i -1) (- i 1))))))))
+				(coeffs (+ p (* 2 i)))
+				(+ (binomial (+ p i) i)
+				   (binomial (+ p i -1) (- i 1)))))))
 	(set! sum (+ sum (* dsum 
 			    (expt a p)
 			    (binomial p j))))))

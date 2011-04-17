@@ -205,10 +205,9 @@
 (define* (make-frame-reader (beg 0) snd dir edpos)
   "(make-frame-reader beg snd dir edpos) returns a frame reader, basically a sampler that reads all channels on each call"
   (let ((index (or snd (selected-sound) (car (sounds)))))
-    (if (and (not (sound? index))
-	     (not (string? index))) ; filename is a possibility here -- TODO: fix this!
+    (if (not (sound? index))
 	(throw 'no-such-sound (list "make-frame-reader" snd))
-	(let* ((chns (if (sound? index) (channels index) (mus-sound-channels snd)))
+	(let* ((chns (channels index))
 	       (fr (make-vector (+ chns +frame-reader0+))))
 	  (set! (fr +frame-reader-tag+) 'frame-reader)
 	  (set! (fr +frame-reader-snd+) index)
@@ -341,7 +340,7 @@
 			   (begin
 			     (do ((i 0 (+ i 1)))
 				 ((= i (channels s)))
-			       (set! (fr (+ (+ i ctr) +frame-reader0+)) (make-sampler beg s i dir edpos)))
+			       (set! (fr (+ i ctr +frame-reader0+)) (make-sampler beg s i dir edpos)))
 			     (set! ctr (+ ctr (channels s))))))
 		     (sounds)))
 		  fr)))))))

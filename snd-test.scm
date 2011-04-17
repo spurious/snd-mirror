@@ -17346,8 +17346,8 @@ EDITS: 2
 	       (y (sin a))
 	       (cax (polynomial cos-coeffs x))
 	       (sax (polynomial sin-coeffs x))
-	       (upper (- (* (cos (* 2 a)) cax) (* (sin (* 2 a)) (* y sax))))
-	       (lower (+ (* (cos (* 2 a)) cax) (* (sin (* 2 a)) (* y sax))))
+	       (upper (- (* (cos (* 2 a)) cax) (* (sin (* 2 a)) y sax)))
+	       (lower (+ (* (cos (* 2 a)) cax) (* (sin (* 2 a)) y sax)))
 	       (upper2 (+ (cos (* a 3)) (cos (* a 4))))
 	       (lower2 (+ 1.0 (cos a))))
 	  (if (or (fneq upper upper2)
@@ -19516,7 +19516,7 @@ EDITS: 2
 	  (if (< (abs (- 1.0 (vct-ref spectr1 i))) .01) (set! s1-loc i))
 	  (if (< (abs (- 1.0 (vct-ref spectr2 i))) .01) (set! s2-loc i)))
 	(if (> s2-loc s1-loc) (snd-display #__line__ ";asymmetric-fm peaks: ~A ~A" s1-loc s2-loc))
-	(let ((center (* (/ 22050 2048) (* .5 (+ s1-loc s2-loc)))))
+	(let ((center (* (/ 22050 2048) .5 (+ s1-loc s2-loc))))
 	  (if (> (abs (- 1000 center)) 60) (snd-display #__line__ ";asymmetric-fm center: ~A" center)))
 	(set! (mus-scaler gen3) 0.5)
 	(do ((i 0 (+ 1 i)))
@@ -22410,8 +22410,9 @@ EDITS: 2
 		 (cval (mus-chebyshev-tu-sum angle camps samps)))
 	     (do ((k 1 (+ 1 k)))
 		 ((= k n))
-	       (set! sum (+ sum (+ (* (vct-ref samps k) (sin (* k angle)))
-				   (* (vct-ref camps k) (cos (* k angle)))))))
+	       (set! sum (+ sum
+			    (* (vct-ref samps k) (sin (* k angle)))
+			    (* (vct-ref camps k) (cos (* k angle))))))
 	     (set! angle (+ angle incr))
 	     (if (fneq cval sum)
 		 (begin
@@ -33377,7 +33378,7 @@ EDITS: 2
 	   (rd (make-sampler 0 snd2 0))
 	   (mx (maxamp snd2 0)))
       (map-channel (lambda (val) 
-		     (sound-interp intrp (floor (* len (* 0.5 (+ 1.0 (/ (read-sample rd) mx))))))))))
+		     (sound-interp intrp (floor (* len 0.5 (+ 1.0 (/ (read-sample rd) mx)))))))))
   
   (set! (transform-type) fourier-transform)
   

@@ -1742,7 +1742,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	 (e (and gliss-env (make-env gliss-env :length dur))))
     (map-channel (if e
 		     (lambda (inval)
-		       (* inval (* (env e) (oscil os))))
+		       (* inval (env e) (oscil os)))
 		     (lambda (inval)
 		       (* inval (oscil os))))
 		 beg dur snd chn #f
@@ -1871,7 +1871,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	       (e (and need-env (make-env (xe-envelope rm-envelope) :length (effect-frames rm-target)))))
 	  (if need-env
 	      (lambda (inval)
-		(* inval (* (env e) (oscil os))))
+		(* inval (env e) (oscil os)))
 	      (lambda (inval)
 		(* inval (oscil os)))))))
     

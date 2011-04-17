@@ -664,7 +664,7 @@
        (let* ((md (* index (oscil mod277)))
 	      (frq (env frqf)))
 	 (outa i (* (env ampf)
-		    (* .333 (pulsed-env pulsef frq))
+		    .333 (pulsed-env pulsef frq)
 		    (+ (* .78 (polywave poly frq))
 		       (* .2 (oscil gen2770 (* 10 (+ frq md))))
 		       (* .02 (oscil gen7479 (* 27 (+ frq md))))
@@ -1648,7 +1648,7 @@
 			  (+ (* .95 (oscil gen1 noise))
 			     (* .05 (oscil gen4 noise))))
 		       (* (max (- 1.0 pval) 0.0)
-			  (* .05 aval (oscil gen2 (* 2.4 noise))))))))))))
+			  .05 aval (oscil gen2 (* 2.4 noise)))))))))))
 
 ;; (with-sound () (southern-mole-cricket 0 3 .5))
 
@@ -1854,10 +1854,10 @@
 	 ((= i stop))
        (let ((frq (env frqf)))
 	 (outa i (* (env ampf)
-		    (* .5 (+ (oscil gen1 (+ frq
-					    (* (env rndf) (rand-interp rnd))
-					    (* .15 (oscil gen2))))
-			     (rxyk!cos rx))))))))))
+		    .5 (+ (oscil gen1 (+ frq
+					 (* (env rndf) (rand-interp rnd))
+					 (* .15 (oscil gen2))))
+			  (rxyk!cos rx)))))))))
 
 ;; (with-sound () (dog-day-cicada 0 2 .5))
 
@@ -5794,7 +5794,7 @@
        (let* ((frq (+ (env frqf)
 		      (rand-interp rnd)))
 	      (val (* (env ampf)
-		      (+ (* (polywave histuff (* 2 frq)))
+		      (+ (polywave histuff (* 2 frq))
 			 (* (env oddf) 
 			    (polywave lostuff frq))
 			 (* (env midf)
