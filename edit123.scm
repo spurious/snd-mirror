@@ -24,6 +24,7 @@
 ;;; tom@tomroth.de
 
 (provide 'snd-edit123.scm)
+(if (not (provided? 'snd-selection.scm)) (load "selection.scm")) ; make-selection
 
 (define status 0)
 (define curpos 0)

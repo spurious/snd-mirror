@@ -1,6 +1,7 @@
 ;;; examples of mark-related functions
 
 (provide 'snd-marks.scm)
+(if (not (provided? 'snd-selection.scm)) (load "selection.scm")) ; selection-members
 
 ;;; Contents:
 ;;;     mark-name->id is a global version of find-mark

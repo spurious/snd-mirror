@@ -169,10 +169,11 @@
 				  (if (and (string? new-name)
 					   (> (string-length new-name) 0)
 					   (>= (selected-sound) 0))
-				      (let ((current-name (file-name)))
+				      (let ();(current-name (file-name)))
 					(save-sound-as new-name)
 					(close-sound)
-					(rename-file current-name new-name)
+					;(rename-file current-name new-name)
+					;; (delete-file current-name) perhaps?
 					(open-sound new-name)
 					(XtUnmanageChild w))))))
 	      (XmStringFree xhelp)

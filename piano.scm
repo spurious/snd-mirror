@@ -192,6 +192,12 @@
 		  (+ 1 (* a1 c))) 
 	       (* b1 s a1 s)))))
   
+  (define (signum n)
+    ;; in CL this returns 1.0 if n is float
+    (if (positive? n) 1
+	(if (zero? n) 0
+	    -1)))
+
   (define (get-allpass-coef samp-frac wT)
     (let ((ta (tan (- (* samp-frac wT))))
 	  (c (cos wT))

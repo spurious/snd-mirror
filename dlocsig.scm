@@ -23,6 +23,7 @@
 ;;; http://www.york.ac.uk/inst/mustech/3d_audio/ambison.htm for more details...
 
 ;;; CHANGES:
+;;; 04/18/2011: various small changes from lint.scm.
 ;;; 04/26/2010: add delay hack to remove artifacts in delay output, fix other bugs (Nando)
 ;;;             added proper doppler src conversion thanks to Bill's code in dsp.scm
 ;;;             merged in code for higher order ambisonics (up to 2nd order h/v)
@@ -82,7 +83,6 @@
 ;;; | 11/25/1999 fix the "diagonal case" (sounds go through the head of the listener)
 
 (provide 'snd-dlocsig.scm)
-
 
 (define* (envelope-interp x env base)   ;env is list of x y breakpoint pairs, interpolate at x returning y
   "(envelope-interp x env (base 1.0)) -> value of env at x; base controls connecting segment 
@@ -1377,7 +1377,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		   (set! xc (cons (list x1 x1 x2 x2) xc))
 		   (set! yc (cons (list y1 y1 y2 y2) yc))
 		   (set! zc (cons (list z1 z1 z2 z2) zc))))
-	       (warn "[fit-path:closed-path] not enough points to do bezier fit (~A points)" len)
+	       (format *stderr* "[fit-path:closed-path] not enough points to do bezier fit (~A points)" len)
 	       (set! (bezier-bx path) (reverse xc))
 	       (set! (bezier-by path) (reverse yc))
 	       (set! (bezier-bz path) (reverse zc))))
@@ -1974,7 +1974,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (define* (mirror-path path (axis 'y) (around 0))
   (if (not-transformed path)
       (transform-path path))
-  (if (equal axis 'y)
+  (if (equal? axis 'y)
       (let ((val '()))
 	(for-each
 	 (lambda (x)
@@ -2494,10 +2494,10 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 					   (if (and (member (car edge) (group-vertices int-group))
 						    (not (equal? int-group group))
 						    (not (equal? int-group prev-group)))
-					       (let* ((edge1 (equal-intersection (group-vertices int-group)
-										 (group-vertices prev-group)))
-						      (edge2 (equal-intersection (group-vertices int-group)
-										 (group-vertices group))))
+					       (let* ((edge1 (equalp-intersection (group-vertices int-group)
+										  (group-vertices prev-group)))
+						      (edge2 (equalp-intersection (group-vertices int-group)
+										  (group-vertices group))))
 						 (format #t "e1=~A; e2=~A~%~%" edge1 edge2))))
 					 (speaker-config-groups speakers))
 					(format #t "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%~%" prev-group group))
@@ -2604,7 +2604,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	    (begin
 	      ;; R
 	      (vector-set! channel-gains r-offset (cons time (vector-ref channel-gains r-offset)))
-	      (vector-set! channel-gains r-offset (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zerop dist) 1 (/ 1 (* dist dist)))) 0.5)) att)
+	      (vector-set! channel-gains r-offset (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zero? dist) 1 (/ 1 (* dist dist)))) 0.5)) att)
 							   (vector-ref channel-gains r-offset)))
 	      ;; S
 	      (vector-set! channel-gains s-offset (cons time (vector-ref channel-gains s-offset)))
@@ -2642,16 +2642,16 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	      (vector-set! channel-rev-gains w-offset (cons rattW (vector-ref channel-rev-gains w-offset)))
 	      ;; X: (* (cos A)(cos E))
 	      (vector-set! channel-rev-gains x-offset (cons time (vector-ref channel-rev-gains x-offset)))
-	      (vector-set! channel-rev-gains x-offset (cons (* (if (zero? dist) 0 1) y (if (zerop dist) 1 (/ dist)) ratt)(vector-ref channel-rev-gains x-offset)))
+	      (vector-set! channel-rev-gains x-offset (cons (* (if (zero? dist) 0 1) y (if (zero? dist) 1 (/ dist)) ratt)(vector-ref channel-rev-gains x-offset)))
 	      ;; Y: (* (sin A)(cos E))
 	      (vector-set! channel-rev-gains y-offset (cons time (vector-ref channel-rev-gains y-offset)))
-	      (vector-set! channel-rev-gains y-offset (cons (* (if (zero? dist) 0 1) (- x) (if (zerop dist) 1 (/ dist)) ratt)
+	      (vector-set! channel-rev-gains y-offset (cons (* (if (zero? dist) 0 1) (- x) (if (zero? dist) 1 (/ dist)) ratt)
 							    (vector-ref channel-rev-gains y-offset)))
 	      (if (>= ambisonics-v-order 1)
 		  (begin
 		    ;; Z: (sin E)
 		    (vector-set! channel-rev-gains z-offset (cons time (vector-ref channel-rev-gains z-offset)))
-		    (vector-set! channel-rev-gains z-offset (cons (* (if (zero? dist) 0 1) z (if (zerop dist) 1 (/ dist)) ratt)
+		    (vector-set! channel-rev-gains z-offset (cons (* (if (zero? dist) 0 1) z (if (zero? dist) 1 (/ dist)) ratt)
 								  (vector-ref channel-rev-gains z-offset)))))
 	      (if (>= ambisonics-v-order 2)
 		  (begin

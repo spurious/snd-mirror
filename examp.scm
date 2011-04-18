@@ -54,6 +54,7 @@
 
 (provide 'snd-examp.scm)
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (not (provided? 'snd-env.scm)) (load "env.scm")) ; integrate-envelope
 
 
 ;;; -------- (ext)snd.html examples made harder to break --------
@@ -329,12 +330,12 @@
 
 (define (mpg mpgfile rawfile)
   "(mpg file tmpname) converts file from MPEG to raw 16-bit samples using mpg123"
-  (let* ((fd (open-file mpgfile "r"))
+  (let* ((fd (open-input-file mpgfile "r"))
 	 (b0 (char->integer (read-char fd)))
 	 (b1 (char->integer (read-char fd)))
 	 (b2 (char->integer (read-char fd)))
 	 (b3 (char->integer (read-char fd))))
-    (close fd)
+    (close-input-port fd)
     (if (or (not (= b0 255))
 	    (not (= (logand b1 #b11100000) #b11100000)))
 	(snd-print (format #f "~S is not an MPEG file (first 11 bytes: #b~B #b~B)" mpgfile b0 (logand b1 #b11100000)))
@@ -2380,6 +2381,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	(reverse-channel 0 #f snd chn))))
 
   
+#|
 ;;; -------- sound segmentation
 ;;;
 ;;; this code was used to return note on and off points for the Iowa Musical Instrument Sound library
@@ -2387,6 +2389,8 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 ;;;   file containing the start times (in samples) and durations of all the notes (each sound file in
 ;;;   this library can have about 12 notes).  The results of this function need to be fixed up by hand
 ;;;   in some cases (violin notes in particular).
+
+;;; this code needs closedir, readdir and opendir (Guile-isms, I think)
 
 (define* (sounds->segment-data main-dir (output-file "sounds.data"))
 
@@ -2501,6 +2505,8 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	(set! (with-file-monitor) old-fam)))))
 
 ;;; (sounds->segment-data "/home/bil/test/iowa/sounds/" "iowa.data")
+|#
+
 
 
 ;;; -------- channel-clipped?

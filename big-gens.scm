@@ -80,7 +80,7 @@
   (let ((len (min (length v1) (length v2))))
     (do ((i 0 (+ i 1)))
 	((= i len) v1)
-      (set! (v1 i) (* (vi 1) (v2 i))))))
+      (set! (v1 i) (* (v1 i) (v2 i))))))
 
 
 

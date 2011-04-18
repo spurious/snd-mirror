@@ -4,7 +4,7 @@
 
 (define *report-unused-parameters* #f)
 (define *report-unused-top-level-functions* #f)
-(define *report-undefined-variables* #f)
+(define *report-undefined-variables* #t)
 (define *report-shadowed-variables* #f)
 (define *report-minor-stuff* #f)          ; let* -> let, if expr #f#t cases, docstring checks, (= 1.0 x), numerical redundancies
 
@@ -579,7 +579,9 @@
 				   (cons 'ash (list 1 #f #f #f #f))
 				   ))
 					 
-	(loaded-files '())
+	(loaded-files #f)
+	(globals #f)
+	(undefined-identifiers #f)
 	)
     
     ;;; --------------------------------------------------------------------------------
@@ -601,9 +603,21 @@
 			 (return (format #f "~%        ~A..." (substring str 0 (+ i 1))))))))))))
 
 
-    (define (env-member arg env)
+    (define (env-member? arg env)
       ;; is arg in env using car
-      (lint-member arg env (lambda (a b) (eq? a (car b)))))
+      (or (lint-member arg env (lambda (a b) (eq? a (car b))))
+	  (hash-table-ref globals arg)))
+
+
+    (define (env-member arg env)
+      ;; find data associated with arg in env
+      (let ((lst (lint-member arg env (lambda (a b) 
+					(if (not (pair? b))
+					    (format #t "env-member ~A: ~A ~A in ~A~%" arg a b env))
+					(eq? a (car b))))))
+	(if (pair? lst)
+	    (car lst)
+	    (hash-table-ref globals arg))))
 
 
     (define (side-effect? form env)
@@ -622,7 +636,7 @@
 		 #f)))
 	  (and (symbol? form)
 	       (not (member form no-side-effect-functions))
-	       (not (env-member form env)))))
+	       (not (env-member? form env)))))
 
 
     (define (just-constants? form)
@@ -737,17 +751,15 @@
 
     (define (ref-var name env)
       ;; if name is in env, set its "I've been referenced" flag
-      (if (pair? env)
-	  (if (eq? name (caar env))
-	      (list-set! (car env) 1 #t)
-	      (ref-var name (cdr env)))))
+      (let ((data (env-member name env)))
+	(if (pair? data)
+	    (list-set! data 1 #t))))
 
 
     (define (set-var name env)
-      (if (pair? env)
-	  (if (eq? name (caar env))
-	      (list-set! (car env) 2 #t)
-	      (set-var name (cdr env)))))
+      (let ((data (env-member name env)))
+	(if (pair? data)
+	    (list-set! data 2 #t))))
 
     
     (define (proper-list lst)
@@ -803,50 +815,83 @@
 			(cdr tree))
 		       #f))))))
 
+    
+    (define (get-generator form)
+      (let ((name (if (pair? (cadr form))
+		      (car (cadr form))
+		      (cadr form))))
+	;; auto-define make-name, name?, name-field for each field (also set! case?)
+	(let ((make-name (string->symbol (string-append "make-" (symbol->string name))))
+	      (name? (string->symbol (string-append (symbol->string name) "?")))
+	      (methods (string->symbol (string-append (symbol->string name) "-methods"))))
 
-    (define (load-walk form env)
+	  (hash-table-set! globals make-name (list make-name #f #f))
+	  (hash-table-set! globals name? (list name? #f #f))
+	  (hash-table-set! globals methods (list methods #f #f))
+
+	  (for-each
+	   (lambda (field)
+	     (let ((fname (string->symbol 
+			   (string-append 
+			    (symbol->string name) "-" (symbol->string (if (pair? field)
+									  (car field)
+									  field))))))
+	       (hash-table-set! globals fname (list fname #f #f (list 'lambda (list 'gen))))))
+	   (cddr form)))))
+
+
+    (define (load-walk form)
       ;; check form form top-level declarations, if load seen, and we haven't seen that file, load it
       (let ((head (car form)))
-
 	(case head
 	  ((begin)
-	   (load-walk (cdr form) env))
+	   (load-walk (cdr form)))
 
-	  ((define define* defmacro defmacro*
-	     define-constant defvar
-	     define-expansion define-macro define-macro* define-bacro define-bacro*
-	     definstrument)
-	   (let ((var (if (pair? (cadr form))
-			  (car (cadr form))
-			  (cadr form))))
-	     (if (not (env-member var env))
-		 (set! env (append (list (list var #f #f)) env)))))
-	  ;; TODO: if args can be scanned, include that data (see walk-function)
-	  )
-	env))
+	  ((define-constant defvar)
+	   (hash-table-set! globals (cadr form) (list (cadr form) #f #f)))
+
+	  ((defmacro defmacro*)
+	   (hash-table-set! globals (cadr form) (list (cadr form) #f #f (list head (caddr form)))))
+
+	  ((define define* definstrument define-expansion define-macro define-macro* define-bacro define-bacro*)
+	   (if (pair? (cadr form))
+	       (hash-table-set! globals (car (cadr form)) (list (car (cadr form)) #f #f (list head (cdr (cadr form)))))
+	       (hash-table-set! globals (cadr form) (list (cadr form) #f #f))))
+
+	  ((defgenerator)
+	   (get-generator form))
+
+	  ((if)
+	   (if (pair? (cddr form))
+	       (if (pair? (cdddr form))
+		   (begin
+		     (load-walk (cadddr form))
+		     (load-walk (caddr form)))
+		   (load-walk (caddr form)))))
+
+	  ((load)
+	   (scan form)))))
 
 
-    (define (scan form env)
+    (define (scan form)
       (let ((file (cadr form)))
-	(if (not (string? file))
-	    (format #t "  can't load ~A~%" (cadr form))
-	    (if (not (member file loaded-files))
-		(let ((fp (catch #t
-				 (lambda ()
-				   (open-input-file file))
-				 (lambda args
-				   (format #t "  can't load ~S: ~A~%" file (apply format #f (cdr args)))
-				   #f))))
-		  (if (input-port? fp)
-		      (begin
-			(set! loaded-files (cons file loaded-files))
-			(format #t "  (scanning ~S)~%" file)
-			(do ((form (read fp) (read fp)))
-			    ((eof-object? form))
-			  (if (pair? form)
-			      (set! env (load-walk form env))))
-			(close-input-port fp))))))
-	env))
+	(if (and (string? file)
+		 (not (member file loaded-files)))
+	    (let ((fp (catch #t
+			     (lambda ()
+			       (open-input-file file))
+			     (lambda args
+			       (format #t "  can't load ~S: ~A~%" file (apply format #f (cdr args)))
+			       #f))))
+	      (if (input-port? fp)
+		  (begin
+		    (set! loaded-files (cons file loaded-files))
+		    (format #t "  (scanning ~S)~%" file)
+		    (do ((form (read fp) (read fp)))
+			((eof-object? form))
+		      (if (pair? form)
+			  (load-walk form)))
+		    (close-input-port fp)))))))
 
 
     (define (binding-ok? name line-number head binding env second-pass)
@@ -885,7 +930,7 @@
 			  (begin
 			    (if (and *report-shadowed-variables*
 				     (not second-pass)
-				     (env-member (car binding) env))
+				     (env-member? (car binding) env))
 				(format #t "  ~A (line ~D): ~A variable ~A in ~S shadows an earlier declaration~%" 
 					name line-number head (car binding) binding))
 			    #t)))))))
@@ -898,7 +943,8 @@
 	  (do ((cur vars (cdr cur))
 	       (rst (cdr vars) (cdr rst)))
 	      ((null? rst))
-	    (let ((repeat (env-member (caar cur) rst)))
+	    (let ((repeat (lint-member (caar cur) rst (lambda (a b) (eq? a (car b))))))
+	      ;; not env-member? here because the same name might be used as a global
 	      (if repeat
 		  (format #t "  ~A (line ~D): ~A ~A ~A is declared twice~%" name line-number head type (caar cur))))))
 
@@ -1019,7 +1065,7 @@
 
 	  (if (or (symbol? args) 
 		  (pair? args))
-	      (let ((arg-data (if (symbol? args)
+	      (let ((arg-data (if (symbol? args)                            ; this is getting arg names to add to the environment
 				  (list (list args #f #f))
 				  (lint-map
 				   (lambda (arg)
@@ -1122,6 +1168,10 @@
 				 (begin
 				   (format #t "  ~A (line ~D): strange form: ~S~%" head line-number form)
 				   env))))))
+
+		  ((defgenerator)
+		   (get-generator form)
+		   env)
 
 		  ;; ---------------- lambda ----------------		  
 		  ((lambda lambda*)
@@ -1334,7 +1384,7 @@
 			   ((null? bindings))
 			 (if (binding-ok? name line-number head (car bindings) env #f)
 			     (begin
-			       (if (and (not (env-member (caar bindings) env))
+			       (if (and (not (env-member? (caar bindings) env))
 					(pair? (cadar bindings))
 					(eq? 'lambda (car (cadar bindings)))
 					(tree-car-member (caar bindings) (cadar bindings)))
@@ -1516,7 +1566,7 @@
 		      (if (not (pair? decl))
 			  (format #t "   ~A (line ~D): run declare statement is messed up: ~S~%" 
 				  name line-number form)
-			  (if (not (env-member (car decl) env))
+			  (if (not (env-member? (car decl) env))
 			      (format #t "  ~A (line ~D): run declare statement variable name ~A is unknown: ~S~%"
 				      name line-number (car decl) form))))
 		    (cdr form))
@@ -1533,9 +1583,9 @@
 			       (truncated-list->string form))
 		       (begin
 
-			 (let ((local-value (env-member head env)))
-			   (if local-value
-			       (let ((fdata (car local-value)))
+			 (let ((fdata (env-member head env)))
+			   (if (pair? fdata)
+			       (let ()
 				 (if (= (lint-length fdata) 4)
 				     (let ((type (car (list-ref fdata 3)))
 					   (args (cadr (list-ref fdata 3))))
@@ -1609,8 +1659,7 @@
 							       name line-number head 
 							       (truncated-list->string form)))))))
 				     
-				     (if (and (pair? (cdr form)) ; there are args
-					      (not (eq? name 'defgenerator)))
+				     (if (pair? (cdr form)) ; there are args
 					 (begin
 					   ;; if keywords, check that they are acceptable
 					   ;;    this only applies to lambda*'s that have been previously loaded (lint doesn't create them)
@@ -1660,7 +1709,7 @@
 							   (not (pair? (cadr form)))
 							   (not (eq? (cadr form) #f)))
 						      (and (pair? (cadr form))
-							   (not (env-member (caadr form) env))
+							   (not (env-member? (caadr form) env))
 							   (not (boolean? (hash-table-ref function-types (caadr form))))))
 						  (format #t "  ~A (line ~D): ~S is always #f~%" name line-number form)))
 					     
@@ -1737,7 +1786,8 @@
 
 				 (case head
 				   ((load) ; pick up the top level declarations
-				    (set! env (scan form env)))
+				    (scan form)
+				    env)
 
 				   ((if)
 				    (let ((len (lint-length form)))
@@ -1841,7 +1891,7 @@
 				   )))
 
 			 (if (and *report-minor-stuff*
-				  (not (env-member head env)))
+				  (not (env-member? head env)))
 			     (let ((num-info (hash-table-ref numerical-ops head)))
 			       (if num-info
 				   (let ((len (lint-length form))
@@ -1887,53 +1937,22 @@
 						     name line-number redundant 
 						     (truncated-list->string form))))))))
 
-			 (let ((vars env)
-			       (unvars '()))
-			   ;(set! vars (lint-walk name line-number (car form) vars))
+			 (let ((vars env))
 			   (for-each
 			    (lambda (f)
 			      ;; look for names we don't know about
 			      (if (and (symbol? f)
 				       (not (keyword? f))
-				       (not (member name '(defgenerator define-record)))
+				       (not (member name '(defgenerator define-record))) ; TODO: omit?
 				       (not (eq? f name))
-				       (not (member (car form) '(apply map for-each)))
+				       (not (member (car form) '(apply map for-each))) ; TODO: omit after fixing apply?
 				       (not (eq? f '=>))
 				       (not (defined? f))
-				       (not (env-member f vars)))
-				  (set! unvars (cons f unvars)))
+				       (not (env-member? f vars)))
+				  (if (not (member f undefined-identifiers (lambda (a b) (eq? a (car b)))))
+				      (set! undefined-identifiers (cons (list f name line-number (truncated-list->string form)) undefined-identifiers))))
 			      (set! vars (lint-walk name line-number f vars)))
-			    form)
-
-			   (if (and *report-undefined-variables*
-				    (not (null? unvars)))
-			       (let ((len (lint-length unvars))
-				     (str (truncated-list->string form)))
-
-				 (for-each
-				  (lambda (unb)
-				    (if (and (symbol? unb)
-					     (defined? (string->symbol (string-append (symbol->string unb) "?"))))
-					(format #t "  ~A (line ~D): perhaps ~A should be ~A?:~A~%"
-						name line-number unb unb str)))
-				  unvars)
-
-				 (case len
-				   ((1) 
-				    (format #t "  ~A (line ~D): lint worries about ~A in:~A~%" 
-					    name line-number (car unvars) str))
-				   ((2)
-				    (format #t "  ~A (line ~D): lint worries about ~A and ~A in:~A~%" 
-					    name line-number (car unvars) (cadr unvars) str))
-				   ((3)
-				    (format #t "  ~A (line ~D): lint worries about ~A, ~A, and ~A in:~A~%" 
-					    name line-number (car unvars) (cadr unvars) (caddr unvars) str))
-				   (else 
-				    (format #t "  ~A (line ~D): lint worries about ~A, and ~A, and ~D others in:~A~%" 
-					    name line-number (car unvars) (cadr unvars) (- len 2) str)))))
-			   
-			   (if (eq? head 'if) (set! env vars))) ; in case 'define as clause
-			 ))
+			    form))))
 		   env)))
 	      
 	      ;; else form is a constant or something
@@ -1943,6 +1962,10 @@
     
     (lambda (file)
       "(lint file) looks for possible imperfections in file (scheme code)"
+      (set! undefined-identifiers '())
+      (set! globals (make-hash-table))
+      (set! loaded-files '())
+      
       (if *load-file-first* ; this can improve the error checks
 	  (load file))
       (let ((fp (catch #t
@@ -1967,7 +1990,22 @@
 				      line
 				      form 
 				      vars)))
+
 	      (if *report-unused-top-level-functions* 
 		  (report-usage file 0 'top-level-function #f vars))
+
+	      ;; TODO: if defined, remove from the undef list (affects locals used only locally)
+
+	      (if *report-undefined-variables*
+		  (for-each
+		   (lambda (var)
+		     (if (not (env-member? (car var) vars))
+			 (format #t "  ~A (line ~D): undefined identifier ~A in:~A~%"
+				 (list-ref var 1)
+				 (list-ref var 2)
+				 (list-ref var 0)
+				 (list-ref var 3))))
+		   undefined-identifiers))
+
 	      (close-input-port fp)))))))
 

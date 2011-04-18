@@ -4,6 +4,8 @@
 ;; Last: Tue Mar 25 04:32:23 CET 2003
 ;; Version: $Revision: 1.2 $
 
+;; array -> vector functions added by Bill S, 18-Apr-11
+
 ;; It follows the original header by Juan Reyes.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -80,6 +82,14 @@
      (set! (mvm-pp1 b) (- 1.0 (/ 2.0  (* fdecay (mus-srate)))))
      (set! (mvm-pp2 b) (/ (* 2.0 pi ffreq) (mus-srate)))
      (set! (mvm-pp3 b) (* (mvm-pp2 b) famp))))
+
+(define (make-array initial-value dim1 dim2) ; I'm guessing ...
+  (make-vector (list dim1 dim2) initial-value))
+
+(define (array-set! arr val i1 i2)
+  (vector-set! arr i1 i2 val))
+
+(define array-ref vector-ref)
 
 (define* (maxfilter file beg
 		    (att 1.0)

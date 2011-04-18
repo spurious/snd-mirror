@@ -140,6 +140,15 @@
     (let* ((edit-cascade (list-ref (menu-widgets) 2))
 	   (edit-menu (cadr (XtGetValues edit-cascade (list XmNsubMenuId 0)))))
 
+      (define (for-each-child w func)
+	"(for-each-child w func) applies func to w and its descendents"
+	(func w)
+	(if (XtIsComposite w)
+	    (for-each 
+	     (lambda (n)
+	       (for-each-child n func))
+	     (cadr (XtGetValues w (list XmNchildren 0) 1)))))
+
       (XtAddCallback edit-cascade XmNcascadingCallback 
 	(lambda (w c i)
 	  (for-each-child 

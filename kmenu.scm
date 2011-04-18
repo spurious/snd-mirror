@@ -123,6 +123,7 @@
 		(add-tearoff (submenu m))
 		(map add-tearoff 
 		     (filter-map submenu (menu-items (submenu m)))))))
+    ;; TODO: what is filter-map?
     
     ;;add tearoff to Effects menu
     (cond ((find-menu "Effects")

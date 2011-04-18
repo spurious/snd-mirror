@@ -43,11 +43,8 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 		    obj
 		    (if (symbol? obj) 
 			(symbol->string obj)
-			(let ((doc (if (procedure? obj)
-				       (or (procedure-property obj 'documentation)
-					   (procedure-documentation obj)
-					   (object-property obj 'documentation))
-				       (object-property obj 'documentation))))
+			(let ((doc (and (procedure? obj)
+					(procedure-documentation obj))))
 			  (if (and (string? doc)
 				   (char=? (string-ref doc 0) #\())
 			      (let ((pos (find-close-paren doc)))

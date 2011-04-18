@@ -47,6 +47,17 @@
 ;;     editing func with fallback 
 ;;     resynthesis func with fallback
 
+
+(define* (sine-bank amps phases size)
+  (let ((len (or size (length amps)))
+	(sum 0.0))
+    (do ((i 0 (+ 1 i)))
+	((= i len))
+      (set! sum (+ sum (* (vct-ref amps i)
+			  (sin (vct-ref phases i))))))
+    sum))
+
+
 (define (pvocoder pv input)
   "(pvocoder pv input) is the phase-vocoder generator associated with make-pvocoder"
 

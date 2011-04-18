@@ -165,8 +165,7 @@
 
 (define with-big-file #f)
 (define big-file-name "/home/bil/zap/sounds/bigger.snd")
-(if (and with-big-file 
-	 (not (string=? (version) "1.8.0")))
+(if with-big-file 
     (begin
       (set! with-big-file (file-exists? big-file-name))
       (if (not with-big-file) (snd-display #__line__ ";no big file"))))
@@ -3649,7 +3648,7 @@
 		    (fneq (sound-data-ref sdata1 0 2) 0.1)
 		    (fneq (sound-data-ref sdata1 0 3) 0.1)
 		    (fneq (sound-data-ref sdata1 0 6) 0.0))
-		(snd-display #__line__ ";re-read/write: ~A ~A?" (sound-data->list sdata1) (sound-data->lisp sdata))))
+		(snd-display #__line__ ";re-read/write: ~A ~A?" (sound-data->list sdata1) (sound-data->list sdata))))
 	  (mus-sound-close-input fd)
 	  
 	  ;; check clipping choices
@@ -11716,7 +11715,7 @@ EDITS: 5
 	  (if with-gui
 	      (let ((str (widget-text (list-ref (sound-widgets ind) 3))))
 		(if (widget-text (cadr (main-widgets))) 
-		    (snd-display #__line__ ";widget-text of non-text widget: ~A" (widget-text (cadr (main-widget)))))
+		    (snd-display #__line__ ";widget-text of non-text widget: ~A" (widget-text (cadr (main-widgets)))))
 		(set! (widget-text (list-ref (channel-widgets ind 0) 2)) "F")
 		(if (not (string=? (widget-text (list-ref (channel-widgets ind 0) 2)) "F"))
 		    (snd-display #__line__ ";set button label to F: ~A" (widget-text (list-ref (channel-widgets ind 0) 2))))
@@ -32526,10 +32525,9 @@ EDITS: 2
 			(selection?))
 		   (let ((r1 (region-rms (car (regions))))
 			 (r2 (selection-rms))
-			 (r3 (selection-rms-1))
-			 (r4 (region-rms-1 (car (regions)))))
-		     (if (fneq r1 r4)
-			 (snd-display #__line__ ";region rms: ~A ~A?" r1 r4))
+			 (r3 (selection-rms-1)))
+		     (if (fneq r1 r2)
+			 (snd-display #__line__ ";region rms: ~A?" r1))
 		     (if (fneq r2 r3)
 			 (snd-display #__line__ ";selection rms: ~A ~A?" r2 r3))))))
 	    (set! (selection-creates-region) old-setting))
@@ -43550,36 +43548,12 @@ EDITS: 1
 		    (not (= (length size) 3)))
 		(snd-display #__line__ ";transform-frames of sonogram: ~A" size)))
 	  (graph->ps "aaa.eps")
-	  (catch #t
-		 (lambda ()
-		   (let ((ax (axis-info ind1 0 transform-graph)))
-		     (if (not ax) (snd-display #__line__ ";axis-info transform-graph?"))
-		     (if (and (provided? 'xm) (provided? 'snd-debug))
-			 (let ((cwid (car (channel-widgets ind1 0))))
-			   (focus-widget cwid)
-			   (click-event cwid 0 0 
-					(floor (* .5 (+ (list-ref ax 10) (list-ref ax 12))))
-					(floor (* .5 (+ (list-ref ax 11) (list-ref ax 13)))))
-			   (force-event)))))
-		 (lambda args args))
 	  (let ((old-colormap (colormap)))
 	    (set! (colormap) black-and-white-colormap)
 	    (update-transform-graph)
 	    (set! (transform-graph-type ind1 0) graph-as-spectrogram)
 	    (update-transform-graph)
 	    (graph->ps "aaa.eps")
-	    (catch #t
-		   (lambda ()
-		     (let ((ax (axis-info ind1 0 transform-graph)))
-		       (if (not ax) (snd-display #__line__ ";axis-info transform-graph?"))
-		       (if (and (provided? 'xm) (provided? 'snd-debug))
-			   (let ((cwid (car (channel-widgets ind1 0))))
-			     (focus-widget cwid)
-			     (click-event cwid 0 0 
-					  (floor (* .5 (+ (list-ref ax 10) (list-ref ax 12))))
-					  (floor (* .5 (+ (list-ref ax 11) (list-ref ax 13)))))
-			     (force-event)))))
-		   (lambda args args))
 	    (set! (colormap) old-colormap))
 	  (close-sound ind1))
 	
@@ -53306,9 +53280,7 @@ EDITS: 1
 	(if (sound? prev)
 	    (begin
 	      (snd-display #__line__ ";ws error -220 opened test.snd?")
-	      (close-sound prev))))
-      (if *ws-finish*
-	  (snd-display #__line__ ";ws error -220 caught interrupt? ~A" *ws-finish*)))
+	      (close-sound prev)))))
     
     (if (defined? 'all-threads)
 	(let ((current-threads (all-threads)))
@@ -53337,8 +53309,6 @@ EDITS: 1
 		  (begin
 		    (snd-display #__line__ ";ws error threaded -220 opened test.snd?")
 		    (close-sound prev))))
-	    (if *ws-finish*
-		(snd-display #__line__ ";ws error threaded -220 caught interrupt? ~A" *ws-finish*))
 	    
 	    (if (not (equal? current-threads (all-threads)))
 		(snd-display #__line__ ";ws error threaded -220 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
@@ -53362,8 +53332,6 @@ EDITS: 1
 		  (begin
 		    (snd-display #__line__ ";ws error threaded -220 1 opened test.snd?")
 		    (close-sound prev))))
-	    (if *ws-finish*
-		(snd-display #__line__ ";ws error threaded -220 1 caught interrupt? ~A" *ws-finish*))
 	    
 	    (if (not (equal? current-threads (all-threads)))
 		(snd-display #__line__ ";ws error threaded -220 1 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
@@ -53396,8 +53364,6 @@ EDITS: 1
 		  (begin
 		    (snd-display #__line__ ";ws error threaded -220 2 opened test.snd?")
 		    (close-sound prev))))
-	    (if *ws-finish*
-		(snd-display #__line__ ";ws error threaded -220 2 caught interrupt? ~A" *ws-finish*))
 	    
 	    (if (not (equal? current-threads (all-threads)))
 		(snd-display #__line__ ";ws error threaded -220 2 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
@@ -53428,9 +53394,7 @@ EDITS: 1
       (let ((prev (find-sound "test.snd")))
 	(if (not (sound? prev))
 	    (snd-display #__line__ ";ws error bad env did not open test.snd?")
-	    (close-sound prev)))
-      (if *ws-finish*
-	  (snd-display #__line__ ";ws error bad env caught interrupt? ~A" *ws-finish*)))
+	    (close-sound prev))))
     
     (if (defined? 'all-threads)
 	(let ((current-threads (all-threads)))
@@ -53458,11 +53422,9 @@ EDITS: 1
 	      (if (not (sound? prev))
 		  (snd-display #__line__ ";ws error threaded bad env did not open test.snd?")
 		  (close-sound prev)))
-	    (if *ws-finish*
-		(snd-display #__line__ ";ws error threaded bad env caught interrupt? ~A" *ws-finish*)))
 	  
-	  (if (not (equal? current-threads (all-threads)))
-	      (snd-display #__line__ ";ws error threaded bad env threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads)))))
+	    (if (not (equal? current-threads (all-threads)))
+		(snd-display #__line__ ";ws error threaded bad env threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))))
     
     
     ;; ---------------- interrupt with-sound ----------------
@@ -53484,9 +53446,7 @@ EDITS: 1
       (let ((prev (find-sound "test.snd")))
 	(if (not (sound? prev))
 	    (snd-display #__line__ ";ws error interrupt quit did not open test.snd?")
-	    (close-sound prev)))
-      (if *ws-finish*
-	  (snd-display #__line__ ";ws error interrupt not complete? ~A" *ws-finish*)))
+	    (close-sound prev))))
     
     (let ((tag (catch #t
 		      (lambda ()
@@ -53505,9 +53465,7 @@ EDITS: 1
       (let ((prev (find-sound "test.snd")))
 	(if (not (sound? prev))
 	    (snd-display #__line__ ";ws error threaded interrupt quit did not open test.snd?")
-	    (close-sound prev)))
-      (if *ws-finish*
-	  (snd-display #__line__ ";ws error threaded interrupt not complete? ~A" *ws-finish*)))
+	    (close-sound prev))))
     
     
     (snd-display #__line__ ";end error printout.")
@@ -57228,7 +57186,7 @@ EDITS: 1
 				     (begin
 				       (if (eq? method-name 'mus-name)
 					   (set! (mus-name gen) "hiho")
-					   (if (eq? method-name 'mus-n)
+					   (if (eq? method-name 'mus-n) ; TODO: what was this?
 					       (set! (mus-n gen) 1)
 					       ((caddr method) gen 10.0)))))))
 			     (lambda args

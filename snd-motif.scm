@@ -51,6 +51,7 @@
 
 (if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
 (if (not (provided? 'snd-play.scm)) (load "play.scm"))
+(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm")) ; make-bandpass
 
 (define (load-font name)
   "(load-font name) loads the font 'name', returning the font id"
@@ -2142,10 +2143,11 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 				 (if (and (string? new-name)
 					  (> (string-length new-name) 0)
 					  (selected-sound))
-				     (let ((current-name (file-name)))
+				     (let ();(current-name (file-name)))
 				       (save-sound-as new-name)
 				       (close-sound)
-				       (rename-file current-name new-name)
+				       ;(rename-file current-name new-name) ; was this from Guile?
+				       ;(system (format #f "mv ~A ~A" new-name current-name)) ; surely it should be (delete-file current-name)?
 				       (open-sound new-name)
 				       (XtUnmanageChild w))))))
 
@@ -2378,7 +2380,7 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 			    (list 'Atom (cadr name))))))
 		(snd-print (format #f "no font found!~%")))
 	    (show-next-font context)))))
-  (let ((context (XmFontListInitFontContext font)))
+  (let ((context (XmFontListInitFontContext font))) ; TODO: what are XmFontListInitFontContext and friends?
     (if context
 	(begin
 	  (show-next-font context)
@@ -2925,9 +2927,9 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 				       (let* ((aff (* i old-freq))
 					      (bwf (* bw (+ 1.0 (/ i (* 2 ssb-pairs))))))
 					 (set! (ssbs (- i 1)) (make-ssb-am (* i ratio old-freq)))
-					 (set! (bands (- i 1)) (make-bandpass (hz->2pi (- aff bwf)) 
-										  (hz->2pi (+ aff bwf)) 
-										  hilbert-order))))
+					 (set! (bands (- i 1)) (make-bandpass (hz->radians (- aff bwf)) 
+									      (hz->radians (+ aff bwf)) 
+									      hilbert-order))))
     				     (set! reader (make-sampler 0))
 				     (set! running #t)
 				     (do ()

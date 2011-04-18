@@ -6,6 +6,7 @@
 
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
+(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm")) ; hilbert-transform
 
 
 ;;; -------- pluck

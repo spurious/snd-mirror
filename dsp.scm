@@ -3,6 +3,20 @@
 (provide 'snd-dsp.scm)
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm")) ; moving-*
+(if (not (provided? 'snd-env.scm)) (load "env.scm"))
+
+(define (binomial n k)
+  "(binomial n k) computes the binomial coefficient C(N,K)"
+  (let ((mn (min k (- n k))))
+    (if (< mn 0)
+	0
+	(if (= mn 0)
+	    1
+	    (let* ((mx (max k (- n k)))
+		   (cnk (+ 1 mx)))
+	      (do ((i 2 (+ 1 i)))
+		  ((> i mn) cnk)
+		(set! cnk (/ (* cnk (+ mx i)) i))))))))
 
 (define (log10 a) 
   "(log10 a) returns the log base 10 of 'a'"
@@ -1230,8 +1244,6 @@ the era when computers were human beings"
 ;(let ((g (pareto-distribution 1.0))) (map-channel (lambda (y) (any-random 1.0 g))))
 
 ;;; this is the inverse integration function used by CLM to turn a distribution function into a weighting function
-
-(if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (define* (inverse-integrate dist (data-size 512) (e-size 50))
   (let* ((e '())

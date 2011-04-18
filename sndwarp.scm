@@ -1,6 +1,7 @@
 ;;; SNDWARP
 
 (provide 'snd-sndwarp.scm)
+(if (not (provided? 'snd-env.scm)) (load "env.scm")) ; normalize-envelope
 
 ;;;
 ;;; CLM 3 implementation of Richard Karpen's SNDWARP Csound Ugen.
