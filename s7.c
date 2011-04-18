@@ -19054,10 +19054,13 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
     }
   else
     {
-      for (i = 0; i < str_len - 1; i++)
+      for (i = 0; i < str_len; i++)
 	{
 	  if (str[i] == '~')
 	    {
+	      if (i == str_len - 1)
+		return(format_error(sc, "control string ends in tilde", str, args, fdat));
+
 	      switch (str[i + 1])
 		{
 		case '%':                           /* -------- newline -------- */
@@ -32143,7 +32146,7 @@ the error type and the info passed to the error handler.");
    */
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, "quasiquote");
 
-  /* letrec* -- the less said the better...
+  /* letrec* -- the less said the better... TODO: check this against r7rs docs
    */
   s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                            \n\
                           (if (null? body)                                                 \n\

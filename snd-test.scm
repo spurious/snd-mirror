@@ -35194,7 +35194,7 @@ EDITS: 2
 				(set! y (- (random 2.0) 1.0)))
 			    (set! e1 (cons y e1))
 			    (if (> (abs y) maxpt) (set! maxpt (abs y)))
-			    (set! x (+ x (+ .01 (random 1.0)))))
+			    (set! x (+ x .01 (random 1.0))))
 			  (reverse e1)))
 		     (beg (random (- (frames cursnd curchn) 300)))
 		     (dur (+ 80 (random 200)))
@@ -35232,7 +35232,7 @@ EDITS: 2
 			       (set! y (- (random 2.0) 1.0)))
 			   (set! e1 (cons y e1))
 			   (if (> (abs y) maxpt) (set! maxpt (abs y)))
-			   (set! x (+ x (+ .01 (random 1.0)))))
+			   (set! x (+ x .01 (random 1.0))))
 			 (reverse e1))))
 	       (if (undo-env cursnd curchn)
 		   (begin
@@ -35283,7 +35283,7 @@ EDITS: 2
 			       (set! y (- (random 2.0) 1.0)))
 			   (set! e1 (cons y e1))
 			   (if (> (abs y) maxpt) (set! maxpt (abs y)))
-			   (set! x (+ x (+ .01 (random 1.0)))))
+			   (set! x (+ x .01 (random 1.0))))
 			 (reverse e1)))
 		    (end (apply min cur-frames)) ; env-sound can lengthen a shorter sound if syncd+multichannel
 		    (beg (random (floor (/ end 2)))))

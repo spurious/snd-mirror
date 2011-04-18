@@ -6,7 +6,7 @@
 (define *report-unused-top-level-functions* #f)
 (define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
-(define *report-minor-stuff* #f)          ; let* -> let, if expr #f#t cases, docstring checks, (= 1.0 x)
+(define *report-minor-stuff* #f)          ; let* -> let, if expr #f#t cases, docstring checks, (= 1.0 x), numerical redundancies
 
 (define *load-file-first* #f)
 
@@ -53,7 +53,7 @@
       (define (keyword->symbol obj) obj)
 
       (define (eval-string . args) #f)
-      (define (lint-eval f) (eval f (interaction-environment)))
+      (define (lint-eval f) (eval f (interaction-environment))) ; set lint-eval to #f if eval is not available
       (define (lint-values) '())
 
       (define (lint-member val lst func)
@@ -112,10 +112,12 @@
   (and (real? x)
        (not (rational? x))))
 
-(define (any-real? lst)
+(define (any-real? lst) ; ignore 0.0 and 1.0 in this since they normally work
   (and (pair? lst)
        (or (and (number? (car lst))
-		(not (rational? (car lst))))
+		(not (rational? (car lst)))
+		(not (= (car lst) 0.0))
+		(not (= (car lst) 1.0)))
 	   (any-real? (cdr lst)))))
 
 (define (thunk? p)
@@ -288,8 +290,8 @@
 		     
 		     (cons 'list->string list?)
 		     (cons 'list->vector list?)
-		     (cons 'car pair-or-null?)
-		     (cons 'cdr pair-or-null?)
+		     (cons 'car pair?)
+		     (cons 'cdr pair?)
 		     (cons 'caar pair?)
 		     (cons 'cadr pair?)
 		     (cons 'cdar pair?)
@@ -469,8 +471,8 @@
 				    (cons 'logand 2)
 				    (cons 'lognot 2)
 				    (cons 'ash 2)
-				    (cons 'random-state->list '())
-				    (cons 'integer-decode-float '())
+				    (cons 'random-state->list '(1))
+				    (cons 'integer-decode-float '(1))
 				    (cons 'exact? #f)
 				    (cons 'inexact? #f)
 				    (cons 'number? #f)
@@ -518,23 +520,23 @@
 				    (cons 'string-copy "")
 				    (cons 'string "")
 				    (cons 'list->string "")
-				    (cons 'string->list '())
+				    (cons 'string->list '(1))
 				    (cons 'object->string "")
 				    (cons 'null? #f)
 				    (cons 'list? #f)
 				    (cons 'pair? #f)
-				    (cons 'cons '())
-				    (cons 'list '())
-				    (cons 'make-list '())
+				    (cons 'cons '(1))
+				    (cons 'list '(1))
+				    (cons 'make-list '(1))
 				    (cons 'length 2)
 				    (cons 'vector? #f)
-				    (cons 'vector->list '())
+				    (cons 'vector->list '(1))
 				    (cons 'list->vector #())
 				    (cons 'vector #())
 				    (cons 'vector-length 2)
 				    (cons 'make-vector #())
 				    (cons 'continuation? #f)
-				    (cons 'map '())
+				    (cons 'map '(1))
 				    (cons 'procedure? #f)
 				    (cons 'not #f)
 				    (cons 'boolean? #f)
@@ -577,6 +579,7 @@
 				   (cons 'ash (list 1 #f #f #f #f))
 				   ))
 					 
+	(loaded-files '())
 	)
     
     ;;; --------------------------------------------------------------------------------
@@ -799,6 +802,51 @@
 			      (return #t)))
 			(cdr tree))
 		       #f))))))
+
+
+    (define (load-walk form env)
+      ;; check form form top-level declarations, if load seen, and we haven't seen that file, load it
+      (let ((head (car form)))
+
+	(case head
+	  ((begin)
+	   (load-walk (cdr form) env))
+
+	  ((define define* defmacro defmacro*
+	     define-constant defvar
+	     define-expansion define-macro define-macro* define-bacro define-bacro*
+	     definstrument)
+	   (let ((var (if (pair? (cadr form))
+			  (car (cadr form))
+			  (cadr form))))
+	     (if (not (env-member var env))
+		 (set! env (append (list (list var #f #f)) env)))))
+	  ;; TODO: if args can be scanned, include that data (see walk-function)
+	  )
+	env))
+
+
+    (define (scan form env)
+      (let ((file (cadr form)))
+	(if (not (string? file))
+	    (format #t "  can't load ~A~%" (cadr form))
+	    (if (not (member file loaded-files))
+		(let ((fp (catch #t
+				 (lambda ()
+				   (open-input-file file))
+				 (lambda args
+				   (format #t "  can't load ~S: ~A~%" file (apply format #f (cdr args)))
+				   #f))))
+		  (if (input-port? fp)
+		      (begin
+			(set! loaded-files (cons file loaded-files))
+			(format #t "  (scanning ~S)~%" file)
+			(do ((form (read fp) (read fp)))
+			    ((eof-object? form))
+			  (if (pair? form)
+			      (set! env (load-walk form env))))
+			(close-input-port fp))))))
+	env))
 
 
     (define (binding-ok? name line-number head binding env second-pass)
@@ -1065,7 +1113,7 @@
 			     (if (pair? sym)
 				 (begin
 				   (if (and (pair? (cdr sym))
-					    (repeated-member? (cdr sym) env))
+					    (repeated-member? (proper-list (cdr sym)) env))
 				       (format #t "  ~A (line ~D): ~A parameter is repeated:~A~%"
 					       name line-number head 
 					       (truncated-list->string sym)))
@@ -1085,7 +1133,7 @@
 			 env)
 		       (begin
 			 (if (and (pair? (cadr form))
-				  (repeated-member? (cadr form) env))
+				  (repeated-member? (proper-list (cadr form)) env))
 			     (format #t "  ~A (line ~D): ~A parameter is repeated:~A~%"
 				     name line-number head 
 				     (truncated-list->string (cadr form))))
@@ -1118,6 +1166,18 @@
 				     name line-number 
 				     (truncated-list->string form)))
 			 (lint-walk name line-number setval env))))
+
+		  ;; TODO: list|string|vector|hash-set! so that settee is a set-var, not a ref-var
+		  ;;  all are 3 args = 4 len
+		  ;;  also set-car! set-cdr!
+
+		  ;; TODO: apply proc args -- here if we know proc we can check the args (len/type)
+		  ;;       also the type for other arg checks can be got from proc (rather than car)
+		  
+		  ;; also can eval be checked?
+		  ;; also can we simplify complicated boolean exprs?  numerical?
+
+		  ;; TODO: if load seen, scan the loaded file(s) for top-level defines and add them to env
 
 		  ;; ---------------- quote ----------------		  
 		  ((quote) 
@@ -1351,6 +1411,13 @@
 				    (if (not (side-effect? f env))
 					(format #t "  ~A (line ~D): ~S in ~A body has no effect~%" 
 						name line-number f head))))
+
+			    (if (and (pair? f)
+				     (eq? (car f) 'begin))
+				(format #t "  ~A (line ~D): redundant begin:~A~%"
+					name line-number
+					(truncated-list->string form)))
+
 			    (set! vars (lint-walk name line-number f vars))
 			    (set! ctr (+ ctr 1)))
 			  body)
@@ -1410,6 +1477,11 @@
 					       (set! curlys (- curlys 1)))))
 				     (if (char=? c #\~)
 					 (set! tilde-time #t)))))
+
+			     (if tilde-time
+				 (format #t "  ~A (line ~D): ~A control string ends in tilde:~A~%"
+					 name line-number head
+					 (truncated-list->string form)))
 
 			     (if (not (= curlys 0))
 				 (format #t "  ~A (line ~D): ~A has ~D unmatched ~A~A:~A~%"
@@ -1664,6 +1736,9 @@
 					 (truncated-list->string form))
 
 				 (case head
+				   ((load) ; pick up the top level declarations
+				    (set! env (scan form env)))
+
 				   ((if)
 				    (let ((len (lint-length form)))
 				      (if (> len 4)
@@ -1691,13 +1766,13 @@
 				   
 				   ((logior)
 				    (if (member -1 (cdr form))
-					(format #t "  ~A (line ~D): this is always -1:~A~"
+					(format #t "  ~A (line ~D): this is always -1:~A~%"
 						name line-number 
 						(truncated-list->string form))))
 				   
 				   ((logand lcm)
 				    (if (member 0 (cdr form))
-					(format #t "  ~A (line ~D): this is always 0:~A~"
+					(format #t "  ~A (line ~D): this is always 0:~A~%"
 						name line-number 
 						(truncated-list->string form))))
 				   
@@ -1722,7 +1797,7 @@
 				   
 				   ((gcd)
 				    (if (member 1 (cdr form))
-					(format #t "  ~A (line ~D): this is always 1:~A~"
+					(format #t "  ~A (line ~D): this is always 1:~A~%"
 						name line-number 
 						(truncated-list->string form))))
 
@@ -1738,7 +1813,7 @@
 				   
 				   ((and or)
 				    (if (= (lint-length form) 2)
-					(format #t "  ~A (line ~D): ~A is not needed here:~A"
+					(format #t "  ~A (line ~D): ~A is not needed here:~A~%"
 						name line-number head
 						(truncated-list->string form))
 					(begin
@@ -1765,8 +1840,8 @@
 						(truncated-list->string form))))
 				   )))
 
-			 ;; TODO: under *report-minor-stuff* 
-			 (if (not (env-member head env))
+			 (if (and *report-minor-stuff*
+				  (not (env-member head env)))
 			     (let ((num-info (hash-table-ref numerical-ops head)))
 			       (if num-info
 				   (let ((len (lint-length form))
@@ -1814,7 +1889,7 @@
 
 			 (let ((vars env)
 			       (unvars '()))
-			   (set! vars (lint-walk name line-number (car form) vars))
+			   ;(set! vars (lint-walk name line-number (car form) vars))
 			   (for-each
 			    (lambda (f)
 			      ;; look for names we don't know about
@@ -1828,7 +1903,7 @@
 				       (not (env-member f vars)))
 				  (set! unvars (cons f unvars)))
 			      (set! vars (lint-walk name line-number f vars)))
-			    (cdr form))
+			    form)
 
 			   (if (and *report-undefined-variables*
 				    (not (null? unvars)))
@@ -1839,7 +1914,7 @@
 				  (lambda (unb)
 				    (if (and (symbol? unb)
 					     (defined? (string->symbol (string-append (symbol->string unb) "?"))))
-					(format #t "  ~A (line ~D): perhaps ~A for ~A?:~A~%"
+					(format #t "  ~A (line ~D): perhaps ~A should be ~A?:~A~%"
 						name line-number unb unb str)))
 				  unvars)
 
@@ -1880,6 +1955,7 @@
 	    (let ((vars '())
 		  (line 0))
 	      (format #t ";~A~%" file)
+	      (set! loaded-files (cons file loaded-files))
 	      (do ((form (read fp) (read fp)))
 		  ((eof-object? form))
 		(if (pair? form)
