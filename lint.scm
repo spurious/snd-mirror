@@ -635,8 +635,6 @@
     (define (side-effect? form env)
       ;; could evaluation of form have any side effects (like IO etc)
 
-      ;; TODO: this is confused in let by the variable bindings (it thinks a function is involved)
-
       (if (pair? form)
 	  (or (and (not (member (car form) no-side-effect-functions)) ; if func is not in that list, make no assumptions about it
 		   (or (not (eq? (car form) 'format))                 ; (format #f ...)
@@ -851,14 +849,10 @@
       ;;   (or ... (or ...) ...) -> or of all, (or ... #f ...) toss the #f
       ;; similarly for and
       ;; (or ... (not (and ...))) -> (or ... (not x) [from here we know x is true] (not y)...)
-
-      ;; TODO: fix the format error string!
-      ;; TODO: simplify-boolean in if
-      ;; PERHAPS: (or ... (not (and x1 x2 ...))) -> (or ... (not x1) (not x2)...)
+      ;; (or ... (not (and x1 x2 ...))) -> (or ... (not x1) (not x2)...), but is that simpler?
 
       (define (classify e)
 	;; do we already know that e is true or false?
-	;(format #t "~A in ~A ~A~%" e true false)
 	(if (member e true)
 	    #t ; the simple boolean is passed back which will either be dropped or will stop the outer expr build
 	    (if (member e false)
@@ -870,7 +864,6 @@
 				 (if (lint-eval arg) #t #f) ; we want the actual booleans here
 				 e))
 			   (lambda ignore-catch-error-args
-			     ;(format #t "error: ~A~%" ignore-catch-error-args)
 			     e))
 		    e))))
       
@@ -886,7 +879,6 @@
 		    (set! false (cons e false))
 		    (set! true (cons e true))))))
 
-      ;(format #t "simplify ~A~%" form)
       (if (or (not (pair? form))
 	      (not (member (car form) '(or and not))))
 	  (classify form)
@@ -967,7 +959,6 @@
 				  (if (null? (cdr new-form))
 				      (car new-form)
 				      `(and ,@(reverse new-form)))))
-			   ;(format #t "exprs: ~A~%" exprs)
 			   (let* ((e (car exprs))
 				  (val (classify e)))
 
@@ -986,11 +977,9 @@
 				     (if (and (pair? e)       ; if (and ...) splice into current
 					      (eq? (car e) 'and))
 					 (set! exprs (append e (cdr exprs)))
-					 ;; TODO: if 'or call simplify boolean?
-				       (begin                 ; else add it to our new expression with value #t
-					 (store e val 'and)
-					 ;(format #t "and now ~A -> ~A ~A~%" e true false)
-					 (set! new-form (cons val new-form))))))))))))
+					 (begin                 ; else add it to our new expression with value #t
+					   (store e val 'and)
+					   (set! new-form (cons val new-form))))))))))))
 	       
 	      ))))
 
@@ -1285,8 +1274,6 @@
 
       (if (symbol? form)
 	  (begin
-	    ;; TODO: catch else and => outside cond/case 
-	    ;;       also check that => target is a function?
 	    (ref-var form env)
 	    env)
 	  
@@ -1943,7 +1930,7 @@
 						    (check-args name line-number head form arg-data)
 						    ))))))))))
 			 
-			 (if (or #t *report-minor-stuff*)
+			 (if *report-minor-stuff*
 			     (begin
 			       (if (and (> (lint-length form) 2)
 					(member head '(equal? =))
@@ -1968,33 +1955,24 @@
 					    (if (< len 3)
 						(format #t "  ~A (line ~D): if has too few clauses: ~S~%" 
 							name line-number form)
-						(begin
-						  ;; This business apparently goes under names like Quine-McClusky and Karnaugh
-						  ;;    here we turn (if x #f #t) into (not x)
-						  ;;                 (if x #t #f) into x
-						  (if (and *report-minor-stuff*
-							   (boolean? (list-ref form 2))
+						
+						(let ((expr (if (and (pair? (cadr form))
+								     (member (car (cadr form)) '(and or not)))
+								(simplify-boolean (cadr form) '() '() env)
+								(cadr form))))
+						  (if (and (boolean? (list-ref form 2))
 							   (not (null? (cdddr form)))
 							   (boolean? (list-ref form 3))
 							   (not (eq? (list-ref form 2) (list-ref form 3)))) ; !
-						      (format #t "  ~A (line ~D): ~S is the same as ~S~%"
-							      name line-number form
-							      (if (list-ref form 2)
-								  (list-ref form 1)
-								  (format #f "(not ~S)" (list-ref form 1)))))
-						  
-						  ;; others that might be interesting:
-						  ;;   (and #f ...) -> #f
-						  ;;   (or #t ...) -> #t
-						  ;;   (or ... #f ...) -> (or ... ...)
-						  ;;   (and ... #t ...) -> (and ... ...)
-						  ;;   (or ... #t ...) -> (or ... #t) -- looks kinda dumb
-						  ;;   (and ... #f ...) -> (and ... #f)
-						  ;;   (if x #t y) -> (or x y)
-						  ;;   (if x #f y) -> (and (not x) y)
-						  ;;   (if x y #t) -> (or (not x) y)
-						  ;;   (if x y #f) -> (and x y)
-						  
+						      (format #t "  ~A (line ~D): possible simplification:~A~%"
+							      name line-number
+							      (lists->string form (if (list-ref form 2)
+										      expr
+										      `(not ,expr)))))
+
+						  ;; PERHAPS: unravel complicated ifs
+						  ;; also dependencies that are checked twice
+
 						  (if (and (= len 4)
 							   (equal? (caddr form) (cadddr form)))
 						      (format #t "  ~A (line ~D): if is not needed here:~A~%"
@@ -2048,7 +2026,7 @@
 						      (truncated-list->string (cadr (cadr form)))
 						      (truncated-list->string (caddr (cadr form)))))))
 				     
-				     ((and or)
+				     ((and or not)
 				      (let ((val (simplify-boolean form '() '() env)))
 					(if (not (equal? form val))
 					    (format #t "  ~A (line ~D): possible simplification:~A~%"
@@ -2062,19 +2040,6 @@
 					  (format #t "  ~A (line ~D): sort! with ~A may hang:~A~%"
 						  name line-number head 
 						  (truncated-list->string form))))
-				     
-				     ((not) 
-				      (if (and (pair? (cdr form))
-					       (eq? (cadr form) 'not))
-					  (format #t "  ~A (line ~D): pointless (not (not ...)):~A~%"
-						  name line-number 
-						  (truncated-list->string form)))
-
-				      (let ((val (simplify-boolean form '() '() env)))
-					(if (not (equal? form val))
-					    (format #t "  ~A (line ~D): possible simplification:~A~%"
-						    name line-number 
-						    (lists->string form val)))))
 				     ))
 		       
 			       (if (not (env-member? head env))

@@ -18905,7 +18905,9 @@ static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_po
     {
       len = safe_strlen(msg) + 32;
       errmsg = (char *)malloc(len * sizeof(char));
-      snprintf(errmsg, len, "format ~S ~{~S~^ ~}: %s", msg);
+      if (is_pair(args))
+	snprintf(errmsg, len, "format ~S ~{~S~^ ~}: %s", msg);
+      else snprintf(errmsg, len, "format ~S: %s", msg);
     }
   else 
     {
@@ -18916,11 +18918,15 @@ static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_po
 	filler[i] = ' ';
       len = safe_strlen(msg) + 32 + dat->loc + 12;
       errmsg = (char *)malloc(len * sizeof(char));
-      snprintf(errmsg, len, "\nformat: ~S ~{~S~^ ~}\n%s^: %s", filler, msg);
+      if (is_pair(args))
+	snprintf(errmsg, len, "format: ~S ~{~S~^ ~}\n%s^: %s", filler, msg);
+      else snprintf(errmsg, len, "format: ~S\n%s^: %s", filler, msg);
       free(filler);
     }
 
-  x = make_list_3(sc, make_string_uncopied(sc, errmsg), make_protected_string(sc, str), args);
+  if (is_pair(args))
+    x = make_list_3(sc, make_string_uncopied(sc, errmsg), make_protected_string(sc, str), args);
+  else x = make_list_2(sc, make_string_uncopied(sc, errmsg), make_protected_string(sc, str));
 
   if (dat->str) free(dat->str);
   free(dat);

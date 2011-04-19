@@ -57185,9 +57185,7 @@ EDITS: 1
 				     (begin
 				       (if (eq? method-name 'mus-name)
 					   (set! (mus-name gen) "hiho")
-					   (if (eq? method-name 'mus-n) ; TODO: what was this?
-					       (set! (mus-n gen) 1)
-					       ((caddr method) gen 10.0)))))))
+					   ((caddr method) gen 10.0))))))
 			     (lambda args
 			       (format #t "error in ~A~%" (car method))
 			       #f))))
