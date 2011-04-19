@@ -879,7 +879,7 @@ is a physical model of a flute:
     (run 
      (do ((i beg (+ i 1)))
 	 ((= i end))
-       (locsig loc i (* (env amp-env) (table-lookup s (+ (rand ran-vib)))))))))
+       (locsig loc i (* (env amp-env) (table-lookup s (rand ran-vib))))))))
 
 
 (definstrument (canter beg dur pitch amp-1 deg dis pcrev ampfun ranfun skewfun

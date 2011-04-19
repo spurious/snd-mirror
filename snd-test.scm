@@ -37903,7 +37903,7 @@ EDITS: 3
 	  (let* ((val (sample 20000))
 		 (ratio (/ 20000.0 50828))
 		 (val1 (+ 0.5 (* 0.5 ratio)))
-		 (val2 (* val1 (* 0.5 ratio)))
+		 (val2 (* val1 0.5 ratio))
 		 (val3 (* val2 (+ 0.1 (* ratio 0.3)))))
 	    (if (fneq val val3)
 		(snd-display #__line__ ";ramp-channels piled up (2): ~A ~A" val val3)))
@@ -52709,7 +52709,6 @@ EDITS: 1
     (bxtst (run (lambda () (and 3 (zero? 1) (/ 1 0) (display "or is about to exit!") (exit)))) #f)
     (bxtst (run (lambda () (and (or (and (> 3 2) (> 3 4)) (> 2 3)) 4))) #f)
     (bxtst (run (lambda () (let ((a 1)) (and (let () (set! a 2) #t) (= a 1) (let () (set! a 3) #f) (and (= a 3) a) (let () (set! a 4) #f) a)))) #f)
-    
     
     (ixtst (run (lambda () (lcm -1))) 1)
     (ixtst (run (lambda () (gcd -1))) 1)

@@ -2697,17 +2697,12 @@ from map's function application:
 <pre>
 &gt; (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3))
 (1 20 3 60)
+
+&gt; (define (filter-map func lst) (map (lambda (x) (if (func x) x (values))) lst))
 </pre>
 
-<p>As this example shows, if the map function returns <code>(values)</code>, nothing is added to the map output list.
-</p>
-
-<pre>
-&gt; (map (lambda (x) (if #f x (values))) (list 1 2))
-()
-</pre>
-
-<p>Second, you can use multiple-values to turn off the short-circuit evaluation
+<p>
+Second, you can use multiple-values to turn off the short-circuit evaluation
 of 'or' and 'and'.  Normally these operators 
 stop evaluating their arguments as soon as they hit #t ('or') or #f ('and').
 By wrapping the arguments in 'values', you can force all of them to be evaluated:
