@@ -23,7 +23,6 @@
 ;;; (add-tooltip widget tip) adds tooltip tip to widget
 ;;; (menu-option name) to access menu items
 ;;; (show-all-atoms) shows all X atoms
-;;; show-font-name shows the Snd-related name and the X-related name of a font
 ;;; show-widget-font shows what fonts are associated with a widget
 ;;; add-find-to-listener enables C-s and C-r in the listener
 ;;; add a function to be called when the window manager sends us a "save yourself" message
@@ -2362,33 +2361,6 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
     (XSetErrorHandler #f)))
 
 
-(define (show-font-name font)
-  "(show-font-name font-list) shows the Snd-related name and the X-related name of each font in a font list"
-  (define (show-next-font context)
-    (let ((next-font (XmFontListGetNextFont context)))
-      (if (and next-font (car next-font))
-	  (begin
-	    (if (XFontStruct? (caddr next-font))
-		(let ((name (XGetFontProperty (caddr next-font) XA_FULL_NAME)))
-		  (if (not (car name))
-		      (set! name (XGetFontProperty (caddr next-font) XA_FAMILY_NAME)))
-		  (snd-print 
-		   (format #f "~A: ~A~%"
-			   (cadr next-font)
-			   (XGetAtomName 
-			    (XtDisplay (cadr (main-widgets)))
-			    (list 'Atom (cadr name))))))
-		(snd-print (format #f "no font found!~%")))
-	    (show-next-font context)))))
-  (let ((context (XmFontListInitFontContext font))) ; TODO: what are XmFontListInitFontContext and friends?
-    (if context
-	(begin
-	  (show-next-font context)
-	  (XmFontListFreeFontContext context))
-	"no fonts?")))
-
-
-
 ;;; -------- enable C-s and C-r in listener
 
 (define add-find-to-listener
@@ -2425,7 +2397,27 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 	       (list (highlight-color) (highlight-color) (highlight-color)))
 	      (XtAddCallback dialog XmNcancelCallback (lambda (w context info) (XtUnmanageChild dialog)))
 	      (XtAddCallback dialog XmNhelpCallback (lambda (w context info) (help-dialog "Find" "no help yet")))
-	      (XtAddCallback dialog XmNokCallback (lambda (w context info) (find-it)))
+	      (XtAddCallback dialog XmNokCallback (lambda (w context info)
+						    (let* ((search-str (XmTextFieldGetString find-text))
+							   (len (string-length search-str))
+							   (pos (XmTextFindString listener-text
+										  (+ (XmTextGetCursorPosition listener-text)
+										     (if find-new 0 (if find-forward 1 -1)))
+										  search-str
+										  (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
+						      (if (not pos)
+							  (set! pos (XmTextFindString listener-text
+										      (if find-forward 0 (XmTextGetLastPosition listener-text))
+										      search-str
+										      (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
+						      (if (number? pos)
+							  (begin
+							    (XmTextSetInsertionPosition listener-text pos)
+							    (XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_SELECTED) ; flash the string briefly
+							    (XtAppAddTimeOut snd-app 200 
+									     (lambda (context id) 
+									       (XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_NORMAL)))))
+						      (set! find-new #f))))
 	      (XmStringFree xhelp)
 	      (XmStringFree xdismiss)
 	      (XmStringFree xfind)
@@ -2443,28 +2435,6 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 	      (XtAddCallback find-text XmNvalueChangedCallback (lambda (w c i) (set! find-new #t)))))
 	(XtManageChild dialog))
 
-      (define (find-it)
-	(let* ((search-str (XmTextFieldGetString find-text))
-	       (len (string-length search-str))
-	       (pos (XmTextFindString listener-text
-				      (+ (XmTextGetCursorPosition listener-text)
-					 (if find-new 0 (if find-forward 1 -1)))
-				      search-str
-				      (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
-	  (if (not pos)
-	      (set! pos (XmTextFindString listener-text
-					  (if find-forward 0 (XmTextGetLastPosition listener-text))
-					  search-str
-					  (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
-	  (if (number? pos)
-	      (begin
-		(XmTextSetInsertionPosition listener-text pos)
-		(XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_SELECTED) ; flash the string briefly
-		(XtAppAddTimeOut snd-app 200 
-				 (lambda (context id) 
-				   (XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_NORMAL)))))
-	  (set! find-new #f)))
-	  
       (XtAppAddActions snd-app
 		       (list (list "search-forward" 
 				   (lambda args 

@@ -44,12 +44,12 @@
 
 (define local-rms
   (lambda  (position)
-    (let* ((data (local-data position)))
+    (let ((data (local-data position)))
       (sqrt (/ (dot-product data data) size)))))
 
 (define local-peak
   (lambda (position)
-    (let* ((data (local-data position)))
+    (let ((data (local-data position)))
       (vct-peak data))))
 
 (define local-smooth
@@ -86,8 +86,8 @@
 
 (define mark-out
   (lambda (position)
-    (let* ((in-mark (find-mark "In"))
-           (out-mark (find-mark "Out")))
+    (let ((in-mark (find-mark "In"))
+	  (out-mark (find-mark "Out")))
     (if (not (eq? in-mark #f))
         (if (<= (mark-sample in-mark) position)
                 (delete-mark in-mark)))
@@ -97,8 +97,8 @@
 
 (define mark-in
   (lambda (position)
-    (let* ((in-mark (find-mark "In"))
-           (out-mark (find-mark "Out")))
+    (let ((in-mark (find-mark "In"))
+	  (out-mark (find-mark "Out")))
     (if (not (eq? out-mark #f))
         (if (>= (mark-sample out-mark) position)
                 (delete-mark out-mark)))
@@ -108,8 +108,8 @@
 
 (define delete-from-out-to-in
   (lambda ()
-    (let* ((in-mark (find-mark "In"))
-           (out-mark (find-mark "Out")))
+    (let ((in-mark (find-mark "In"))
+	  (out-mark (find-mark "Out")))
     (if (and
           (not (eq? in-mark #f))
           (not (eq? out-mark #f)))

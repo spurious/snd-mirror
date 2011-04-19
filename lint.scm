@@ -4,7 +4,7 @@
 
 (define *report-unused-parameters* #f)
 (define *report-unused-top-level-functions* #f)
-(define *report-undefined-variables* #t)
+(define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
 (define *report-minor-stuff* #f)          ; let* -> let, if expr #f#t cases, docstring checks, (= 1.0 x), numerical redundancies
 
@@ -30,15 +30,14 @@
 
       (use-modules (ice-9 format))
 
+      (define hash-table-ref hash-ref)
+      (define hash-table-set! hash-set!)
+
       (define (hash-table . args)
-	(let ((ht (list)))
+	(let ((ht (make-hash-table)))
 	  (do ((lst args (cdr lst)))
 	      ((null? lst) ht)
-	    (set! ht (cons lst ht)))))
-
-      (define (hash-table-ref ht var)
-	(let ((data (assoc var ht)))
-	  (and data (car data))))
+	    (hash-table-set! ht (car lst) (cdr lst)))))
 
       (define (pair-line-number pair) 0) ; the line number reported below is actually that of the enclosing right paren
       (define call-with-exit call/cc)
@@ -816,6 +815,77 @@
 		       #f))))))
 
     
+    (define (remove x list) 
+      (cond ((null? list) '()) 
+	    ((eq? (car list) x) (cdr list)) 
+	    (else (cons (car list) 
+			(remove x (cdr list))))))
+
+
+    (define (simplify-boolean form true false)
+      ;; (or)->#f, (or x) -> x, (or x ... from here on we know x is #f), (or x #t...) -> (or x #t), any constant expr can be collapsed
+      ;;   (or ... (or ...) ...) -> or of all, (or ... #f ...) toss the #f
+      ;; similarly for and
+      ;; (or ... (not (and ...))) -> (or ... (not x) [from here we know x is true] (not y)...)
+
+      ;; TODO: a pretty-printer for these guys, and fix the format error string!
+
+      (define (classify e)
+	;; do we already know that e is true or false?
+	(if (member e true)
+	    #t ; the simple boolean is passed back which will either be dropped or will stop the outer expr build
+	    (if (member e false)
+		#f
+		(if (just-constants? e)
+		    (catch #t 
+			   (lambda ()
+			     (if lint-eval
+				 (if (lint-eval arg) #t #f) ; we want the actual booleans here
+				 e))
+			   (lambda ignore-catch-error-args
+			     e))
+		    e))))
+      
+      (define (store e value and/or)
+	(if (eq? and/or 'or)
+	    (if (eq? value #t)              ; or, so it's false if unknown
+		(set! true (cons e true))
+		(set! false (cons e true)))
+	    (if (eq? value #f)
+		(set! false (cons e true))
+		(set! true (cons e true)))))
+
+      (if (or (not (pair? form))
+	      (not (member (car form) '(or and not))))
+	  (classify form)
+	  (let ((len (lint-length form)))
+	    (case (car form)
+	      ((or)
+	       (if (= len 1)
+		   #f
+		   (if (= len 2)
+		       (classify (cadr form))
+		       (let ((new-form '()))
+			 (do ((exprs form (cdr exprs)))
+			     ((null? exprs) 
+			      (if (null? new-form)
+				  #f
+				  (if (null? (cdr new-form))
+				      (car new-form)
+				      `(or ,@(reverse new-form)))))
+			   (let* ((e (car exprs))
+				  (val (classify e)))
+			     (if (not (eq? val #f))           ; #f in or is ignored
+				 (if (eq? val #t)             ; #t in or end the expression
+				     (set! exprs '(#t))
+				     (if (and (pair? e)       ; if (or ...) splice into current
+					      (eq? (car e) 'or))
+					 (set! exprs (append (cdr e) exprs))
+				       (begin                 ; else add it to our new expression with value #f
+					 (store (car exprs) val 'or)
+					 (set! new-form (cons val new-form))))))))))))
+	      ))))
+
     (define (get-generator form)
       (let ((name (if (pair? (cadr form))
 		      (car (cadr form))
@@ -886,10 +956,11 @@
 	      (if (input-port? fp)
 		  (begin
 		    (set! loaded-files (cons file loaded-files))
-		    (format #t "  (scanning ~S)~%" file)
+		    ;(format #t "  (scanning ~S)~%" file)
 		    (do ((form (read fp) (read fp)))
 			((eof-object? form))
-		      (if (pair? form)
+		      (if (and (pair? form)
+			       (pair? (cdr form)))
 			  (load-walk form)))
 		    (close-input-port fp)))))))
 
@@ -959,6 +1030,9 @@
 	       (format #t "  ~A (line ~D): ~A ~A named ~A is asking for trouble~%" name line-number head type (car arg))
 	       (if (not (symbol? (car arg)))
 		   (format #t "  ~A (line ~D): bad ~A ~A name: ~S~%" name line-number head type (car arg))))
+
+	   (set! undefined-identifiers (remove (car arg) undefined-identifiers))
+
 	   (if (not (cadr arg))
 	       (if (caddr arg)
 		   (set! set (cons (car arg) set))
@@ -1217,17 +1291,12 @@
 				     (truncated-list->string form)))
 			 (lint-walk name line-number setval env))))
 
-		  ;; TODO: list|string|vector|hash-set! so that settee is a set-var, not a ref-var
-		  ;;  all are 3 args = 4 len
-		  ;;  also set-car! set-cdr!
-
 		  ;; TODO: apply proc args -- here if we know proc we can check the args (len/type)
 		  ;;       also the type for other arg checks can be got from proc (rather than car)
 		  
 		  ;; also can eval be checked?
 		  ;; also can we simplify complicated boolean exprs?  numerical?
 
-		  ;; TODO: if load seen, scan the loaded file(s) for top-level defines and add them to env
 
 		  ;; ---------------- quote ----------------		  
 		  ((quote) 
@@ -1789,6 +1858,9 @@
 				    (scan form)
 				    env)
 
+				   ;; TODO: add require for slib
+				   ;;   (also how does Rick get things loaded?)
+
 				   ((if)
 				    (let ((len (lint-length form)))
 				      (if (> len 4)
@@ -1798,6 +1870,9 @@
 					      (format #t "  ~A (line ~D): if has too few clauses: ~S~%" 
 						      name line-number form)
 					      (begin
+						;; This business apparently goes under names like Quine-McClusky and Karnaugh
+						;;    here we turn (if x #f #t) into (not x)
+						;;                 (if x #t #f) into x
 						(if (and *report-minor-stuff*
 							 (boolean? (list-ref form 2))
 							 (not (null? (cdddr form)))
@@ -1808,6 +1883,19 @@
 							    (if (list-ref form 2)
 								(list-ref form 1)
 								(format #f "(not ~S)" (list-ref form 1)))))
+
+						;; others that might be interesting:
+						;;   (and #f ...) -> #f
+						;;   (or #t ...) -> #t
+						;;   (or ... #f ...) -> (or ... ...)
+						;;   (and ... #t ...) -> (and ... ...)
+						;;   (or ... #t ...) -> (or ... #t) -- looks kinda dumb
+						;;   (and ... #f ...) -> (and ... #f)
+						;;   (if x #t y) -> (or x y)
+						;;   (if x #f y) -> (and (not x) y)
+						;;   (if x y #t) -> (or (not x) y)
+						;;   (if x y #f) -> (and x y)
+
 						(if (and (= len 4)
 							 (equal? (caddr form) (cadddr form)))
 						    (format #t "  ~A (line ~D): if is not needed here:~A~%"
@@ -1943,13 +2031,13 @@
 			      ;; look for names we don't know about
 			      (if (and (symbol? f)
 				       (not (keyword? f))
-				       (not (member name '(defgenerator define-record))) ; TODO: omit?
+				       (not (member name '(defgenerator define-record))) ; TODO: omit? or add support for define-record? sound-let define-envelope
 				       (not (eq? f name))
 				       (not (member (car form) '(apply map for-each))) ; TODO: omit after fixing apply?
 				       (not (eq? f '=>))
 				       (not (defined? f))
 				       (not (env-member? f vars)))
-				  (if (not (member f undefined-identifiers (lambda (a b) (eq? a (car b)))))
+				  (if (not (lint-member f undefined-identifiers (lambda (a b) (eq? a (car b)))))
 				      (set! undefined-identifiers (cons (list f name line-number (truncated-list->string form)) undefined-identifiers))))
 			      (set! vars (lint-walk name line-number f vars)))
 			    form))))
@@ -1961,7 +2049,7 @@
     ;;; --------------------------------------------------------------------------------
     
     (lambda (file)
-      "(lint file) looks for possible imperfections in file (scheme code)"
+      "(lint file) looks for infelicities in file's scheme code"
       (set! undefined-identifiers '())
       (set! globals (make-hash-table))
       (set! loaded-files '())
@@ -1986,15 +2074,14 @@
 		(set! vars (lint-walk (if (symbol? form) 
 					  form 
 					  (if (pair? form) 
-					      (car form)))
+					      (car form)
+					      #f))
 				      line
 				      form 
 				      vars)))
 
 	      (if *report-unused-top-level-functions* 
 		  (report-usage file 0 'top-level-function #f vars))
-
-	      ;; TODO: if defined, remove from the undef list (affects locals used only locally)
 
 	      (if *report-undefined-variables*
 		  (for-each

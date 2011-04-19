@@ -99,6 +99,10 @@
       (let ((tearoff (gtk_tearoff_menu_item_new)))
 	(gtk_menu_shell_prepend (GTK_MENU_SHELL menu) tearoff)
 	(gtk_widget_show tearoff)))
+
+    ;; filter-map I hope (Bill S)
+    (define (filter-map func lst)
+      (map (lambda (x) (or (func x) (values))) lst))
     
     ;;lookup top-level menu by name
     (define (find-menu name)
@@ -123,7 +127,6 @@
 		(add-tearoff (submenu m))
 		(map add-tearoff 
 		     (filter-map submenu (menu-items (submenu m)))))))
-    ;; TODO: what is filter-map?
     
     ;;add tearoff to Effects menu
     (cond ((find-menu "Effects")
