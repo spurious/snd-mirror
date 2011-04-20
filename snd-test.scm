@@ -53425,65 +53425,8 @@ EDITS: 1
 	    (if (not (equal? current-threads (all-threads)))
 		(snd-display #__line__ ";ws error threaded bad env threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))))
     
-    
-    ;; ---------------- interrupt with-sound ----------------
-    
-    (let ((tag (catch #t
-		      (lambda ()
-			(with-sound (:output "test.snd")
-				    (fm-violin 0 1 440 .1)
-				    (bad-ins 1)
-				    (fm-violin 2 1 220 .1)))
-		      (lambda args args))))
-      
-      (ws-quit!)
-      (if (mus-output? *output*)
-	  (begin
-	    (snd-display #__line__ ";ws-error interrupt quit: *output*: ~A ~A" tag *output*)
-	    (mus-close *output*)
-	    (set! *output* #f)))
-      (let ((prev (find-sound "test.snd")))
-	(if (not (sound? prev))
-	    (snd-display #__line__ ";ws error interrupt quit did not open test.snd?")
-	    (close-sound prev))))
-    
-    (let ((tag (catch #t
-		      (lambda ()
-			(with-threaded-sound (:output "test.snd")
-					     (fm-violin 0 1 440 .1)
-					     (bad-ins 1)
-					     (fm-violin 2 1 220 .1)))
-		      (lambda args args))))
-      
-      (ws-quit!)
-      (if (mus-output? *output*)
-	  (begin
-	    (snd-display #__line__ ";ws-error threaded interrupt quit: *output*: ~A ~A" tag *output*)
-	    (mus-close *output*)
-	    (set! *output* #f)))
-      (let ((prev (find-sound "test.snd")))
-	(if (not (sound? prev))
-	    (snd-display #__line__ ";ws error threaded interrupt quit did not open test.snd?")
-	    (close-sound prev))))
-    
-    
-    (snd-display #__line__ ";end error printout.")
-    
-    (let ((tag (with-sound (:output "test.snd" :srate 44100) (fm-violin 0 1 440 .1))))
-      (if (or (not (string? tag))
-	      (not (string=? tag "test.snd")))
-	  (snd-display #__line__ ";ws-error all done: ~A" tag))
-      (if (not (= (mus-sound-frames "test.snd") 44100))
-	  (snd-display #__line__ ";ws-error all done frames: ~A" (mus-sound-frames "test.snd"))))
-    
-    (let ((tag (with-threaded-sound (:output "test.snd" :srate 44100) (fm-violin 0 1 440 .1))))
-      (if (or (not (string? tag))
-	      (not (string=? tag "test.snd")))
-	  (snd-display #__line__ ";ws-error threaded all done: ~A" tag))
-      (if (not (= (mus-sound-frames "test.snd") 44100))
-	  (snd-display #__line__ ";ws-error threaded all done frames: ~A" (mus-sound-frames "test.snd"))))
-    
-    (close-sound (find-sound "test.snd"))
+    (if (sound? (find-sound "test.snd"))
+	(close-sound (find-sound "test.snd")))
     (delete-file "test.snd")
     )
   
@@ -57345,7 +57288,7 @@ EDITS: 1
 			   ((= i 30000))
 			 (fm-violin i .1 440 (+ .1 (* (/ i 30000.0) .9)))))
 	   (if (not (file-exists? outfile))
-	       (snd-display #__line__ ";big3 ~A not written?" (mus-header-type-to-string ht))
+	       (snd-display #__line__ ";big3 ~A not written?" (mus-header-type->string ht))
 	       (let ((snd (find-sound outfile)))
 		 (if (> (abs (- (frames snd 0) (* 30000 44100))) 44100)
 		     (snd-display #__line__ ";big3 frames: ~A, should be ~A (~A)" (frames snd 0) (* 30000 44100) (- (frames snd 0) (* 30000 44100))))
@@ -57353,7 +57296,7 @@ EDITS: 1
 		     (snd-display #__line__ ";big3 max: ~A" (maxamp snd)))
 		 (if (and (= ht mus-riff)
 			  (not (= (header-type snd) mus-rf64)))
-		     (snd-display #__line__ ";big3 auto convert? ~A -> ~A" (mus-header-type-to-string ht) (mus-header-type-to-string (header-type snd))))
+		     (snd-display #__line__ ";big3 auto convert? ~A -> ~A" (mus-header-type->string ht) (mus-header-type->string (header-type snd))))
 		 (close-sound snd))))
 	 (list mus-next mus-caff))
 	
