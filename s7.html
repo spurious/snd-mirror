@@ -4029,8 +4029,7 @@ at startup *features* is:
 
 
 
-<p>Multi-line comments can be enclosed in either #| and |#, or #! and !# (the latter
-is for compatibility with Guile).  These are also useful for in-line comments:
+<p>Multi-line and in-line comments can be enclosed in #| and |#.
 <code>(+ #| add |# 1 2)</code>.
 </p>
 
@@ -4086,6 +4085,15 @@ I need to know where something unexpected happened.  So:
 
 &gt; '(1 2 #.(* 3 4) 5)
 (1 2 12 5)
+</pre>
+
+<p>To return no value from a reader, use <code>(values)</code>.
+</p>
+<pre>
+    &gt; (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
+    ((#\; . #&lt;closure&gt;))
+    &gt; (+ 1 #;(* 2 3) 4)
+    5
 </pre>
 
 
@@ -4708,12 +4716,12 @@ have any number after, for example, #b:
 
 <pre>
 
-  (define vector-map map) (define vector-for-each for-each) (define copy-vector copy) (define (vector->string vect) (apply string (vector->list vect)))
-  (define string-map map) (define string-for-each for-each) (define (string->vector str) (apply vector (string->list str)))
+  (define vector-map map) (define vector-for-each for-each) (define copy-vector copy) (define (vector-&gt;string vect) (apply string (vector-&gt;list vect)))
+  (define string-map map) (define string-for-each for-each) (define (string-&gt;vector str) (apply vector (string-&gt;list str)))
   (define copy-list copy)
 
-  (define string-ni=? string=?) (define string-ni<? string<?) (define string-ni>? string>?) 
-  (define string-ni<=? string<=?) (define string-ni>=? string>=?)   
+  (define string-ni=? string=?) (define string-ni&lt;? string&lt;?) (define string-ni&gt;? string&gt;?) 
+  (define string-ni&lt;=? string&lt;=?) (define string-ni&gt;=? string&gt;=?)   
   (define char-foldcase char-downcase) (define string-foldcase string-downcase)
   (define (string-downcase str) (apply string (map char-downcase str)))
   (define (string-upcase str) (apply string (map char-upcase str)))
@@ -4735,6 +4743,7 @@ have any number after, for example, #b:
   (define interaction-environment current-environment)
   (define (include file) (load file (current-environment)))
 
+  (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
 <!--
   modules: include-ci import export
   raise raise-continuable error [error msg obj] guard
@@ -4742,12 +4751,10 @@ have any number after, for example, #b:
   parameter objects: make-parameter parameterize
   copy-partial-blob[!] copy-blob!
   case-lambda
-  #; for comment out next expr
   file-exists? delete-file command-line
   getenv? time?: get-environment-variable[s] current-jiffy|second jiffies-per-second current-posix-second
   "complete" set of int div: truncate-quotient truncate-remainder truncate/ round-* floor-* euclidean-*? ceiling-*
   with-exception-handler null-environment
-  (set! *#readers* (cons (cons #\\ (lambda (str) (if (string=? str "\\alarm")... #f))) *#readers*))
 -->
 </pre>
 

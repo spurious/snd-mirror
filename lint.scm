@@ -6,7 +6,7 @@
 (define *report-unused-top-level-functions* #f)
 (define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
-(define *report-minor-stuff* #t)          ; let*, docstring checks, (= 1.0 x), numerical and boolean simplification
+(define *report-minor-stuff* #f)          ; let*, docstring checks, (= 1.0 x), numerical and boolean simplification
 
 (define *load-file-first* #f)
 
@@ -22,6 +22,9 @@
 				#f)))
 		*#readers*)))
 
+
+;;; --------------------------------------------------------------------------------
+;;; for Guile
 
 (if (not (provided? 's7))
     (begin
@@ -840,6 +843,26 @@
 		       #f))))))
 
     
+    (define (tree-member-ignoring-car sym tree)
+      ;; this is a mess!
+      (or (eq? sym tree)
+	  (and (pair? tree)
+	       (or (and (pair? (car tree))
+			(tree-member-ignoring-car sym (car tree)))
+		   (and (pair? (cdr tree))
+			(call-with-exit
+			 (lambda (return)
+			   (for-each
+			    (lambda (l)
+			      (if (or (eq? sym l)
+				      (and (pair? l)
+					   (tree-member-ignoring-car sym l)))
+				  (return #t)))
+			    (cdr tree))
+			   #f)))
+		   (eq? sym (cdr tree))))))
+
+    
     (define (remove x list) 
       (cond ((null? list) '()) 
 	    ((eq? (car list) x) (cdr list)) 
@@ -853,6 +876,10 @@
       ;; similarly for and
       ;; (or ... (not (and ...))) -> (or ... (not x) [from here we know x is true] (not y)...)
       ;; (or ... (not (and x1 x2 ...))) -> (or ... (not x1) (not x2)...), but is that simpler?
+
+      ;; I wonder how far this could be pushed
+      ;;   (or x1 x2 x1) -> (or x1 x2) 
+      ;;   (and x1 x2 x1) -> (and x2 x1)
 
       (define (classify e)
 	;; do we already know that e is true or false?
@@ -1068,7 +1095,8 @@
 		   (load-walk (caddr form)))))
 
 	  ((load)
-	   (scan form)))))
+	   (if (>= (lint-length form) 2)
+	       (scan form))))))
 
 
     (define (scan form)
@@ -1079,7 +1107,7 @@
 			     (lambda ()
 			       (open-input-file file))
 			     (lambda args
-			       (format #t "  can't load ~S: ~A~%" file (apply format #f (cdr args)))
+			       (format #t "  can't load ~S: ~A~%" file (apply format #f (cadr args)))
 			       #f))))
 	      (if (input-port? fp)
 		  (begin
@@ -1571,65 +1599,79 @@
 		  
 		  ;; ---------------- let ----------------		  
 		  ((let)
-		   (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
-		     (let ((vars (if named-let (list (list named-let #f #f)) '())))
-		       (do ((bindings (if named-let (caddr form) (cadr form)) (cdr bindings)))
-			   ((null? bindings))
-			 (if (binding-ok? name line-number head (car bindings) env #f)
-			     (begin
-			       (if (and (not (env-member? (caar bindings) env))
-					(pair? (cadar bindings))
-					(eq? 'lambda (car (cadar bindings)))
-					(tree-car-member (caar bindings) (cadar bindings)))
-				   (format #t "  ~A (line ~D): let variable ~A is called in its binding?  perhaps let should be letrec:~A~%"
-					   name line-number (caar bindings) 
-					   (truncated-list->string bindings)))
-			       (lint-walk name line-number (cadar bindings) env)
-			       (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
-		       (lint-walk-body name line-number head (if named-let (cdddr form) (cddr form)) (append vars env))
-		       (report-usage name line-number 'variable head vars)
-		       env)))
+		   (if (< (lint-length form) 3)
+		       (format #t "  ~A (line ~D): let is messed up: ~A~%" 
+			       name line-number 
+			       (truncated-list->string form))
+		       (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
+			 (let ((vars (if named-let (list (list named-let #f #f)) '())))
+			   (do ((bindings (if named-let (caddr form) (cadr form)) (cdr bindings)))
+			       ((null? bindings))
+			     (if (binding-ok? name line-number head (car bindings) env #f)
+				 (begin
+				   (if (and (not (env-member? (caar bindings) env))
+					    (pair? (cadar bindings))
+					    (eq? 'lambda (car (cadar bindings)))
+					    (tree-car-member (caar bindings) (cadar bindings)))
+				       (format #t "  ~A (line ~D): let variable ~A is called in its binding?  perhaps let should be letrec:~A~%"
+					       name line-number (caar bindings) 
+					       (truncated-list->string bindings)))
+				   (lint-walk name line-number (cadar bindings) env)
+				   (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
+			   (lint-walk-body name line-number head (if named-let (cdddr form) (cddr form)) (append vars env))
+			   (report-usage name line-number 'variable head vars))))
+		   env)
 		  
 		  ;; ---------------- let* ----------------		  
 		  ((let*)
-		   (let ((vars '()))
-		     (do ((bindings (cadr form) (cdr bindings)))
-			 ((null? bindings))
-		       (if (binding-ok? name line-number head (car bindings) env #f)
-			   (begin
-			     (lint-walk name line-number (cadar bindings) (append vars env))
-			     (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
-		     (if (and *report-minor-stuff*
-			      (call-with-exit
-			       (lambda (return)
-				 (for-each
-				  (lambda (v)
-				    (if (list-ref v 1)
-					(return #f)))
-				  vars)
-				 #t)))
-			 (format #t "  ~A (line ~D): let* could be let:~A~%" 
-				 name line-number 
-				 (truncated-list->string form)))
-		     (lint-walk-body name line-number head (cddr form) (append vars env))
-		     (report-usage name line-number 'variable head vars)
-		     env))
+		   (if (< (lint-length form) 3)
+		       (format #t "  ~A (line ~D): let* is messed up: ~A~%" 
+			       name line-number 
+			       (truncated-list->string form))
+		       (let ((vars '()))
+			 (do ((bindings (cadr form) (cdr bindings)))
+			     ((null? bindings))
+			   (if (binding-ok? name line-number head (car bindings) env #f)
+			       (begin
+				 (lint-walk name line-number (cadar bindings) (append vars env))
+				 (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
+
+			 (if (and *report-minor-stuff*
+				  (call-with-exit
+				   (lambda (return)
+				     (for-each
+				      (lambda (v)
+					(if (list-ref v 1)
+					    (return #f)))
+				      vars)
+				     #t)))
+			     (format #t "  ~A (line ~D): let* could be let:~A~%" 
+				     name line-number 
+				     (truncated-list->string form)))
+
+			 (lint-walk-body name line-number head (cddr form) (append vars env))
+			 (report-usage name line-number 'variable head vars)))
+		   env)
 		  
 		  ;; ---------------- letrec ----------------		  
 		  ((letrec letrec*)
-		   (let ((vars '()))
-		     (do ((bindings (cadr form) (cdr bindings)))
-			 ((null? bindings))
-		       (if (binding-ok? name line-number head (car bindings) env #f)
-			   (set! vars (append (list (list (caar bindings) #f #f)) vars))))
-		     (let ((new-env (append vars env)))
-		       (do ((bindings (cadr form) (cdr bindings)))
-			   ((null? bindings))
-			 (if (binding-ok? name line-number head (car bindings) env #t)
-			     (lint-walk name line-number (cadar bindings) new-env)))
-		       (lint-walk-body name line-number head (cddr form) new-env))
-		     (report-usage name line-number 'variable head vars)
-		     env))
+		   (if (< (lint-length form) 3)
+		       (format #t "  ~A (line ~D): ~A is messed up: ~A~%" 
+			       name line-number head
+			       (truncated-list->string form))
+		       (let ((vars '()))
+			 (do ((bindings (cadr form) (cdr bindings)))
+			     ((null? bindings))
+			   (if (binding-ok? name line-number head (car bindings) env #f)
+			       (set! vars (append (list (list (caar bindings) #f #f)) vars))))
+			 (let ((new-env (append vars env)))
+			   (do ((bindings (cadr form) (cdr bindings)))
+			       ((null? bindings))
+			     (if (binding-ok? name line-number head (car bindings) env #t)
+				 (lint-walk name line-number (cadar bindings) new-env)))
+			   (lint-walk-body name line-number head (cddr form) new-env))
+			 (report-usage name line-number 'variable head vars)))
+		   env)
 
 		  ;; ---------------- begin ----------------
 		  ((begin)
@@ -1750,7 +1792,7 @@
 			 (lint-walk name line-number (cdr form) env))))
 		  
 		  ;; ---------------- other schemes ----------------		  
-		  ((define-syntax let-syntax letrec-syntax define-module re-export) ; for other's code
+		  ((define-syntax let-syntax letrec-syntax define-module re-export case-lambda) ; for other's code
 		   env) 
 
 		  ;; ---------------- declare ----------------		  
@@ -1959,7 +2001,8 @@
 			 ;; special case checks
 			 (case head
 			   ((load) ; pick up the top level declarations
-			    (scan form)
+			    (if (>= (lint-length form) 2)
+				(scan form))
 			    env)
 			   
 			   ((= equal?)
@@ -2061,6 +2104,25 @@
 				      (format #t "  ~A (line ~D): possible simplification:~A~%"
 					      name line-number 
 					      (lists->string form val))))))
+
+			   ((call/cc call-with-current-continuation)
+			    (let ((continuation (and (pair? (cdr form))
+						     (pair? (cadr form))
+						     (eq? (caadr form) 'lambda)
+						     (pair? (cdadr form))
+						     (pair? (cadadr form))
+						     (car (cadadr form)))))
+			      (if (symbol? continuation)
+				  (let ((body (cddadr form)))
+				    (if (not (eq? continuation (car body)))
+					(if (not (tree-member continuation body))
+					    (format #t "  ~A (line ~D): ~A is not needed:~A~%"
+						    name line-number head 
+						    (truncated-list->string form))
+					    (if (not (tree-member-ignoring-car continuation body))
+						(format #t "  ~A (line ~D): ~A could be call-with-exit:~A~%"	
+							name line-number head 
+							(truncated-list->string form)))))))))
 			   
 			   ((sort!)
 			    (if (member (caddr form) '(= <= >= eq? eqv? equal?
@@ -2126,9 +2188,7 @@
 			      ;; look for names we don't know about
 			      (if (and (symbol? f)
 				       (not (keyword? f))
-				       (not (member name '(defgenerator define-record))) ; TODO: omit? or add support for define-record? sound-let define-envelope
 				       (not (eq? f name))
-				       (not (member (car form) '(apply map for-each))) ; TODO: omit after fixing apply?
 				       (not (eq? f '=>))
 				       (not (defined? f))
 				       (not (env-member? f vars)))
@@ -2155,7 +2215,7 @@
 		       (lambda ()
 			 (open-input-file file))
 		       (lambda args
-			 (format #t "  can't open ~S: ~A~%" file (apply format #f (cdr args)))
+			 (format #t "  can't open ~S: ~A~%" file (apply format #f (cadr args)))
 			 #f))))
 
 	(if (input-port? fp)

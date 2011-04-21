@@ -4652,7 +4652,7 @@
 ;(factorize (* 98947 98947))
 ;(factorize (* 499523  499549  499559  499571  499591  499601  499607  499621  499633))
 
-#!
+#|
 (define (factorize-1 num)
   ;; much slower in Scheme!
   (let ((factors '()))
@@ -4688,9 +4688,9 @@
 		   (if (= num 1)
 		       (return (reverse factors)))))))))
     (reverse factors))
-!#
+|#
 
-#!
+#|
 (do ((i 0 (+ 1 i)))
     ((= i 10))
   (let ((num (random (* 75000 75000))))
@@ -4701,5 +4701,5 @@
 	(display (format #f "~A " val2))
 	(if (not (equal? val1 val2)) (display "oops"))
 	(display (format #f "~%"))))))
-!#
+|#
 

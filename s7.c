@@ -5169,7 +5169,7 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
    *    where each proc takes one argument, the string from just beyond the "#" to the next delimiter.
    *    The procedure can call read-char to read ahead in the current-input-port.
    *    If it returns anything other than #f, that is the value of the sharp expression.
-   * This search happens after #|, #!, #t, and #f.
+   * This search happens after #|, #t, and #f.
    */
 
   for (reader = symbol_value(sc->sharp_readers); reader != sc->NIL; reader = cdr(reader))
@@ -14728,7 +14728,8 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
     {
       vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
       if (!(vector_elements(x)))
-	return(s7_error(sc, make_symbol(sc, "out-of-memory"), make_protected_string(sc, "make-vector allocation failed!")));
+	return(s7_error(sc, make_symbol(sc, "out-of-memory"), 
+			make_list_1(sc, make_protected_string(sc, "make-vector allocation failed!"))));
 
       vector_length(x) = len;
       if (filled) s7_vector_fill(sc, x, sc->NIL); /* make_hash_table assumes nil as the default value */
@@ -16187,7 +16188,8 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
     {
       p = s7_symbol_value(sc, p);
       if (p == sc->UNDEFINED)
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-source arg, '~S, is unbound"), car(args))));
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			make_list_2(sc, make_protected_string(sc, "procedure-source arg, '~S, is unbound"), car(args))));
     }
 
 #if HAVE_PTHREADS
@@ -16240,7 +16242,8 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
     {
       p = s7_symbol_value(sc, p);
       if (p == sc->UNDEFINED)
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-environment arg, '~S, is unbound"), car(args))));
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			make_list_2(sc, make_protected_string(sc, "procedure-environment arg, '~S, is unbound"), car(args))));
     }
 
   if ((!is_procedure(p)) && 
@@ -16552,7 +16555,8 @@ static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
     {
       p = s7_symbol_value(sc, p);
       if (p == sc->UNDEFINED)
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_protected_string(sc, "procedure-arity arg, '~S, is unbound"), car(args))));
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			make_list_2(sc, make_protected_string(sc, "procedure-arity arg, '~S, is unbound"), car(args))));
     }
 
   if (!is_procedure(p))
@@ -20530,7 +20534,8 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 	}
       
       if (recent_input) free(recent_input);
-      return(s7_error(sc, sc->READ_ERROR, make_string_uncopied_with_length(sc, msg, len)));
+      return(s7_error(sc, sc->READ_ERROR, 
+		      make_list_1(sc, make_string_uncopied_with_length(sc, msg, len))));
     }
 
   if ((port_line_number(pt) > 0) &&
@@ -20541,10 +20546,12 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
       len = snprintf(msg, len, "%s %s[%d], last top-level form at %s[%d]", 
 		     errmsg, port_filename(pt), port_line_number(pt), 
 		     sc->current_file, sc->current_line);
-      return(s7_error(sc, sc->READ_ERROR, make_string_uncopied_with_length(sc, msg, len)));
+      return(s7_error(sc, sc->READ_ERROR, 
+		      make_list_1(sc, make_string_uncopied_with_length(sc, msg, len))));
     }
 
-  return(s7_error(sc, sc->READ_ERROR, make_protected_string(sc, (char *)errmsg)));
+  return(s7_error(sc, sc->READ_ERROR, 
+		  make_list_1(sc, make_protected_string(sc, (char *)errmsg))));
 }
 
 
@@ -20584,7 +20591,8 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
 		     sc->current_file, sc->current_line);
       return(s7_error(sc, sc->READ_ERROR, make_string_uncopied_with_length(sc, msg, len)));
     }
-  return(s7_error(sc, sc->READ_ERROR, make_protected_string(sc, "missing close paren")));
+  return(s7_error(sc, sc->READ_ERROR, 
+		  make_list_1(sc, make_protected_string(sc, "missing close paren"))));
 }
 
 
@@ -21866,13 +21874,31 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
       sc->strbuf[0] = ':';
       return(TOKEN_ATOM);
     }
-#endif
 
   /* block comments in either #! ... !# */
   if (c == '!') 
     {
       char last_char;
+#if 0
+      c = inchar(pt);
+      if (c == 'r')
+	{
+	  c = inchar(pt);
+	  if (c == '6')
+	    {
+	      c = inchar(pt);
+	      if (c == 'r')
+		{
+		  c = inchar(pt);
+		  if (c == 's')
+		    return(token(sc));
+		}
+	    }
+	}
+      last_char = c;
+#else
       last_char = ' ';
+#endif
       while ((c = inchar(pt)) != EOF)
 	{
 	  if ((c == '#') &&
@@ -21885,6 +21911,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 		 make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #!")));
       return(token(sc));
     }
+#endif
       
   /*   or #| ... |# */
   if (c == '|') 
@@ -23046,7 +23073,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       if (port_is_closed(sc->input_port))
-	return(s7_error(sc, sc->READ_ERROR, make_list_1(sc, make_protected_string(sc, "our input port got clobbered!"))));
+	return(s7_error(sc, sc->READ_ERROR, 
+			make_list_1(sc, make_protected_string(sc, "our input port got clobbered!"))));
 
       sc->tok = token(sc);
 
@@ -25770,6 +25798,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
       }
 
+    READ_TOK:
       switch (sc->tok)
 	{
 	case TOKEN_RIGHT_PAREN:
@@ -25846,6 +25875,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = read_delimited_string(sc, WITH_SHARP);
 	  if (sc->value == sc->NIL)
 	    return(read_error(sc, "undefined # expression"));
+	  if (sc->value == sc->NO_VALUE)
+	    {
+	      /* (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
+	       * (+ 1 #;(* 2 3) 4)
+	       * so we need to get the next token, act on it without any assumptions about read list
+	       */
+	      sc->tok = token(sc);
+	      goto READ_TOK;
+	    }
 	  goto READ_LIST;
 	  break;
 
@@ -26432,7 +26470,8 @@ static s7_pointer g_make_thread_variable(s7_scheme *sc, s7_pointer args)
   err = pthread_key_create(key, NULL);
   if (err == 0)
     return(s7_make_object(sc, key_tag, (void *)key));  
-  return(s7_error(sc, make_symbol(sc, "thread-error"), make_list_1(sc, make_protected_string(sc, "make-thread-variable failed!?"))));
+  return(s7_error(sc, make_symbol(sc, "thread-error"), 
+		  make_list_1(sc, make_protected_string(sc, "make-thread-variable failed!?"))));
 }
 
 
@@ -32152,7 +32191,7 @@ the error type and the info passed to the error handler.");
    */
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, "quasiquote");
 
-  /* letrec* -- the less said the better... TODO: check this against r7rs docs
+  /* letrec* -- the less said the better...
    */
   s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                            \n\
                           (if (null? body)                                                 \n\

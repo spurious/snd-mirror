@@ -3463,7 +3463,7 @@
 
 (close-output-port xg-file)
 
-#!
+#|
 (for-each
  (lambda (type)
    (if (not (assoc type direct-types))
@@ -3475,6 +3475,6 @@
    (if (not (member (car v) declared-types))
        (display (format #f "~A " (car v)))))
  direct-types)
-!#
+|#
 
 (exit)

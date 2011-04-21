@@ -55,7 +55,7 @@
       ;; find the next file in the sorted list, with wrap-around
       (let ((choose-next (not (string? last-file-opened)))
 	    (just-filename (file-from-path last-file-opened)))
-	(call-with-current-continuation
+	(call-with-exit
 	 (lambda (return)
 	   (for-each
 	    (lambda (file)

@@ -290,7 +290,7 @@
 (test (eq? eq? eq?) #t)
 (test (eq? (if #f 1) 1) #f)
 (test (eq? '() '(#||#)) #t)
-(test (eq? '() '(#!@%$&!#)) #t)
+(test (eq? '() '(#|@%$&|#)) #t)
 (test (eq? '#||#hi 'hi) #t) ; ??
 (test (eq? '; a comment
          hi 'hi) #t) ; similar:
@@ -340,11 +340,11 @@
        (;)()#
 	);((")";
        ;"#|)#""
-       '#|";"|#(#!;!#); ;#
+       '#|";"|#(#|;|#); ;#
 	 ;\;"#"#f 
 	       )#t)
 
-(test (+ #| this is a comment |# 2 #! and this is another !# 3) 5)
+(test (+ #| this is a comment |# 2 #| and this is another |# 3) 5)
 (test (eq? #| a comment |# #f #f) #t)
 (test (eq? #| a comment |##f #f) #t)  ; ??
 (test (eq? #| a comment | ##f|##f #f) #t) ; ??
@@ -9991,7 +9991,7 @@ a2" 3) "132")
 (test (equal? '("hi""ho") '("hi" "ho")) #t)
 (test '("""""") '("" "" ""))
 (test '(#|;"();|#) '())
-(test '(#||##\# #!!##b1) '(#\# 1))
+(test '(#||##\# #||##b1) '(#\# 1))
 (test '((). '()) '(() quote ()))
 (test '(1. . .2) '(1.0 . 0.2))
 (test (equal? '(().()) '(())) #t)
@@ -12817,6 +12817,7 @@ this prints:
 (test ((apply car '((1 2) (3 4)) ()) 1) 2)
 (test ((apply cadr '((1 2) (3 4)) ()) 1) 4)
 
+(test (apply +) 0)
 (test (apply + #f) 'error)
 (test (apply #f '(2 3)) 'error)
 (test (apply make-vector '(1 2 3)) 'error)
@@ -13848,10 +13849,10 @@ this prints:
 	    a comment
 |#
 	    1 #| this is a |# 
-#!
+#|
             another comment
-!#
- 2 #! this is b !# 3)))
+|#
+ 2 #| this is b |# 3)))
 
     (test val 6)))
 
