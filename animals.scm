@@ -841,7 +841,7 @@
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
-       (let* ((frq (env frqf)))
+       (let ((frq (env frqf)))
 	 (outa i (* (env ampf)
 		    (oscil gen1 (+ frq 
 				   (* index
@@ -849,7 +849,7 @@
 					 (* 1.5 (oscil gen2a frq)))))))))) ; end is not quite right (original has a catch)
      (do ((i start2 (+ i 1)))
 	 ((= i stop2))
-       (let* ((frq (env frqf2)))
+       (let ((frq (env frqf2)))
 	 (outa i (* (env ampf2)
 		    (oscil gen3 (+ frq (* index (oscil gen4 (* 0.5 frq))))))))))))
 

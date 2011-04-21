@@ -22,6 +22,30 @@
 	  (set! (factorials n) (* n (factorial (- n 1)))))
       (factorials n))))
 
+#|
+;;; maxima uses this:
+
+;; From Richard Fateman's paper, "Comments on Factorial Programs",
+;; http://www.cs.berkeley.edu/~fateman/papers/factorial.pdf
+;;
+;; k(n,m) = n*(n-m)*(n-2*m)*...
+;;
+;; (k n 1) is n!
+;;
+;; This is much faster (3-4 times) than the original factorial
+;; function.
+
+(define (factorial n)
+  (define (k n m)
+    (if (<= n m)
+	n
+	(* (k n (* 2 m))
+	   (k (- n m) (* 2 m)))))
+  (if (zero? n)
+      1
+      (k n 1)))
+|#
+
 (define (binomial-direct n m) ; "n-choose-m" might be a better name (there are much better ways to compute this -- see below)
   (/ (factorial n)
      (* (factorial m) (factorial (- n m)))))

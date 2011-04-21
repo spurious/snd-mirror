@@ -9737,19 +9737,13 @@ for a widget named 'name' belonging to 'w'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- install-searcher -->
+<!-- install-searcher-with-colors -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>install-searcher</em> <code>proc</code>
+<em class=emdef>install-searcher-with-colors</em> <code>proc</code>
 </td></tr><tr><td></td><td>
-install-searcher places
+install-searcher-with-colors places
 our own search procedure into the filter mechanism in the File:Open
 dialog.  This has been superseded by the <a href="extsnd.html#addfilefilter">file-filter</a> mechanism now built into Snd.
-<pre>
-    (install-searcher (lambda (file) (= (srate file) 44100)))
-    (install-searcher (lambda (file) (= (channels file) 4)))
-</pre>
-There's a fancier version, install-searcher-with-colors, that distinguishes between categories
-of files by using different colors.
 <pre>
     (install-searcher-with-colors (lambda (file) #t))
 </pre>

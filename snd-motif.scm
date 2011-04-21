@@ -148,50 +148,6 @@
 ;;; -------- install-searcher --------
 ;;;
 ;;; replaces the current file search procedure in the File Selection Box
-;;;
-;;;    (install-searcher (lambda (file) (= (srate file) 44100)))
-;;;    (install-searcher (lambda (file) (= (channels file) 4)))
-;;;
-;;; this is obsolete -- use the file-filter mechanism instead
-
-(define (install-searcher proc)
-  "(install-searcher proc) replaces the current file search procedure in the File Selection 
-Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
-  (define match-sound-files
-    (lambda args
-      "(match-sound-files func dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
-      (let* ((func (car args))
-	     (matches '()))
-	(for-each
-	 (lambda (file)
-	   (if (func file)
-	       (set! matches (cons file matches))))
-	 (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
-	matches)))
-  (define (XmString->string str)
-    (XmStringUnparse str #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
-  (define (XmStringTable->list st len)
-    (XmStringTableUnparse st len #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
-  (define (list->XmStringTable strs)
-    (XmStringTableParseStringArray strs (length strs) #f XmCHARSET_TEXT #f 0 #f))
-  (XtSetValues (open-file-dialog #f)
-	       (list XmNfileSearchProc
-		     (lambda (widget info)
-		       (let* ((dir (XmString->string (.dir info)))
-			      (files (match-sound-files proc dir))
-			      (fileTable (list->XmStringTable 
-					  (map (lambda (n) 
-						 (string-append dir n)) 
-					       files))))
-			 (XtSetValues widget
-				      (list XmNfileListItems fileTable
-					    XmNfileListItemCount (length files)
-					    XmNlistUpdated #t))
-			 (for-each (lambda (n) (XmStringFree n)) fileTable))))))
-
-
-;;; here's a fancier version that gets rid of the useless directory list,
-;;;   and shows multi-channel files in color
 
 (define (install-searcher-with-colors proc)
 

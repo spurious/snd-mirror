@@ -1384,40 +1384,6 @@ create_scale_dialog $Snd_widgets[1]
 </pre></td></tr></table>
 
 <p>All of Snd is at your disposal once this module is loaded.
-The next function installs our own file filtering procedure into the File:Open dialog (it uses
-match-sound-files from extensions.scm):
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td><pre>
-(define (install-searcher proc)
-  (define (XmString-&gt;string str)
-    (cadr (XmStringGetLtoR str XmFONTLIST_DEFAULT_TAG)))
-  (define (XmStringTable-&gt;list st len)
-    (XmStringTableUnparse st len #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
-  (define (list-&gt;XmStringTable strs)
-    (XmStringTableParseStringArray strs (length strs) #f XmCHARSET_TEXT #f 0 #f))
-  (XtSetValues (let ((m (<a class=quiet href="extsnd.html#openfiledialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_openfiledialog_tip)">open-file-dialog</a> #f)))
-                         ; make sure the dialog exists
-		  (list-ref (<a class=quiet href="extsnd.html#dialogwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_dialogwidgets_tip)">dialog-widgets</a>) 6))
-		(list XmNfileSearchProc                             ; set dialog file search procedure
-		       (lambda (widget info)
-			 (let* ((dir (XmString-&gt;string (dir info))) ; directory string
-				(files (<a class=quiet href="sndscm.html#matchsoundfiles" onmouseout="UnTip()" onmouseover="Tip(sndscm_matchsoundfiles_tip)">match-sound-files</a> proc dir)) ; list of matching files
-				(fileTable (list-&gt;XmStringTable      ; XmStringTable for XmNfileListItems
-                                             (map (lambda (n)        ; every file needs prepended dir
-                                                    (string-append dir n)) 
-                                                  files))))
-			   (XtSetValues widget                      ; change the list of files
-					 (list XmNfileListItems fileTable
-					       XmNfileListItemCount (length files)
-					       XmNlistUpdated #t)))))))
-
-;(install-searcher (lambda (file) (= (srate file) 44100)))
-;(install-searcher (lambda (file) (= (channels file) 4)))
-</pre></td></tr></table>
-
-<p>Now click the 'Filter' button to see only those files that fit the procedure in
-the dialog's files list.  See snd-motif.scm.
 </p>
 <br>
 

@@ -378,10 +378,10 @@
 (define (string-=? a b)
   "string=? but ignore -0.0"
   (or (string=? a b)
-      (let* ((alen (string-length a))
-	     (blen (string-length b))
-	     (j 0)
-	     (happy #t))
+      (let ((alen (string-length a))
+	    (blen (string-length b))
+	    (j 0)
+	    (happy #t))
 	(do ((i 0 (+ 1 i)))
 	    ((or (not happy) 
 		 (= i alen))
@@ -2571,7 +2571,7 @@
 	  (mus-sound-forget long-file-name)
 	  (delete-file long-file-name))
 	
-	(let* ((fsnd (string-append sf-dir "forest.aiff")))
+	(let ((fsnd (string-append sf-dir "forest.aiff")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(system (format #f "cp ~A fmv.snd" fsnd))
@@ -3675,16 +3675,16 @@
 	    (let ((mx (maxamp ind)))
 	      (map-channel (lambda (y) (+ y (- 1.001 mx))) 0 (frames) ind 0)
 	      (save-sound-as "test.snd" ind mus-next mus-bshort)
-	      (let* ((ind1 (open-sound "test.snd"))
-		     (baddy (scan-channel (lambda (y) (< y 0.0)))))
+	      (let ((ind1 (open-sound "test.snd"))
+		    (baddy (scan-channel (lambda (y) (< y 0.0)))))
 		(if (not baddy)
 		    (snd-display #__line__ ";clipping 2: ~A" baddy))
 		(close-sound ind1))
 	      (delete-file "test.snd")
 	      (set! (clipping) #t)
 	      (save-sound-as "test.snd" ind mus-next mus-bshort)
-	      (let* ((ind1 (open-sound "test.snd"))
-		     (baddy (scan-channel (lambda (y) (< y 0.0)))))
+	      (let ((ind1 (open-sound "test.snd"))
+		    (baddy (scan-channel (lambda (y) (< y 0.0)))))
 		(if baddy
 		    (snd-display #__line__ ";clipping 3: ~A" baddy))
 		(close-sound ind1))
@@ -5191,7 +5191,7 @@
       (revert-sound ind1)))
   
   (define* (make-bandpass-2 flo1 fhi1 flo2 fhi2 (len 30))
-    (let* ((f1 (make-bandpass flo1 fhi1 len))
+    (let ((f1 (make-bandpass flo1 fhi1 len))
 	   (f2 (make-bandpass flo2 fhi2 len)))
       (vct-add! (mus-xcoeffs f1) (mus-xcoeffs f2))
       f1))
@@ -5201,8 +5201,8 @@
 	  (samps (or dur (frames snd chn))))
       (set! (optimization) 0)
       (map-channel
-       (let* ((incr (/ pi samps))
-	      (angle (* -0.5 pi)))
+       (let ((incr (/ pi samps))
+	     (angle (* -0.5 pi)))
 	 (lambda (y)
 	   (let ((val (* y (cos angle))))
 	     (set! angle (+ angle incr))
@@ -5254,8 +5254,8 @@
        (x->position x ind))))
   
   (define (region-to-vct r c len)
-    (let* ((rs (make-region-sampler r 0 c))
-	   (v (make-vct len)))
+    (let ((rs (make-region-sampler r 0 c))
+	  (v (make-vct len)))
       (do ((i 0 (+ 1 i)))
 	  ((= i len) v)
 	(vct-set! v i (next-sample rs)))))
@@ -5284,7 +5284,7 @@
 			 (vct-set! data 1 dly)
 			 (if (= fpos 0)
 			     data
-			     (let* ((reader (make-sampler (- fpos 1) snd chn -1 cur-edpos)))
+			     (let ((reader (make-sampler (- fpos 1) snd chn -1 cur-edpos)))
 			       (do ((i (- dly 1) (- i 1)))
 				   ((< i 0))
 				 (vct-set! data (+ i 2) (reader)))
@@ -10312,7 +10312,7 @@ EDITS: 5
 	  (close-sound ind1)
 	  (close-sound ind2))
 	
-	(let* ((ind (open-sound "now.snd")))
+	(let ((ind (open-sound "now.snd")))
 	  (set! (amp-control ind) .5)
 	  (if (ffneq (amp-control ind) .5) (snd-display #__line__ ";amp-control (.5): ~A?" (amp-control ind)))
 	  (set! (amp-control ind 0) .25)
@@ -10742,7 +10742,7 @@ EDITS: 5
 	    (if (not (= (region-maxamp-position reg) 971))
 		(snd-display #__line__ ";region maxamp position: ~A" (region-maxamp-position reg))))
 	  (close-sound ind1))
-	(let* ((ind1 (open-sound "oboe.snd")))
+	(let ((ind1 (open-sound "oboe.snd")))
 	  (test-edpos maxamp 'maxamp (lambda () (scale-by 2.0 ind1 0)) ind1)
 	  (test-edpos frames 'frames (lambda () (src-sound 2.0 1.0 ind1 0)) ind1)
 	  (test-edpos 
@@ -30031,7 +30031,7 @@ EDITS: 2
 		      (lambda (id old-loc)
 			(if (not (mark? id))
 			    (snd-display #__line__ ";reverse-channel clobbered mark: ~A" id)
-			    (if (> (abs (- (- (frames) old-loc) (mark-sample id))) 2)
+			    (if (> (abs (- (frames) old-loc (mark-sample id))) 2)
 				(snd-display #__line__ ";reverse moved mark: ~A ~A ~A (~A)" 
 					     id old-loc (- (frames) old-loc) (mark-sample id)))))
 		      current-marks
@@ -59834,7 +59834,6 @@ EDITS: 1
 					0  (lambda (w c i) #f) '())
 	    
 					;	       (if (not (XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display #__line__ ";not XmIsMotifWMRunning?"))
-	    (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 	    (zync)
 	    (make-pixmap (cadr (main-widgets)) arrow-strs)
 	    (display-scanned-synthesis)
