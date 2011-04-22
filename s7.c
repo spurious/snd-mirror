@@ -20581,6 +20581,10 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
   s7_pointer pt;
   pt = sc->input_port;
 
+  /* it's hard to give a good idea here of where the missing paren is because we've already
+   *   popped off all the stacked info, following ')' until eof.
+   */
+
   if ((port_line_number(pt) > 0) &&
       (port_filename(pt)))
     {

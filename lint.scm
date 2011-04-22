@@ -488,7 +488,7 @@
 			  name line-number (truncated-list->string form))))))
 
 
-    (define (check-for-repeated-args-with-not name line-number head form env)
+    (define (check-for-repeated-args-with-not name line-number form env)
 
       (define (repeated-member-with-not? lst env)
 	(and (pair? lst)
@@ -681,7 +681,7 @@
 	    #t ; the simple boolean is passed back which will either be dropped or will stop the outer expr build
 	    (if (member e false)
 		#f
-		;; eval of a constant expression here is tricky -- for example, (sqrt 2.0) should not be turned into 1.414...
+		;; eval of a constant expression here is tricky -- for example, (sqrt 2) should not be turned into 1.414...
 		(if (and lint-eval
 			 (just-constants? e env))
 		    (catch #t
@@ -1553,7 +1553,7 @@
 				   (format #t "  ~A (line ~D): eq? doesn't work reliably with args like ~S~%" 
 					   name line-number form))
 			       (check-for-repeated-args name line-number head form env)
-			       (check-for-repeated-args-with-not name line-number head form env))
+			       (check-for-repeated-args-with-not name line-number form env))
 			      
 			      ((eqv?) 
 			       (if (or (vector? (cadr form))
@@ -1564,7 +1564,7 @@
 				   (format #t "  ~A (line ~D): eqv? doesn't work reliably with args like ~S~%" 
 					   name line-number form))
 			       (check-for-repeated-args name line-number head form env)
-			       (check-for-repeated-args-with-not name line-number head form env))
+			       (check-for-repeated-args-with-not name line-number form env))
 			      
 			      ((map for-each)
 			       (let* ((len (lint-length form))
@@ -1818,7 +1818,7 @@
 			   name line-number head
 			   (truncated-list->string f)))
 
-	       (set! env (lint-walk name line-number f env))
+	       (set! env (lint-walk name f env))
 	       (set! ctr (+ ctr 1)))
 	     body))))
 
@@ -1915,7 +1915,7 @@
 		env))))
     
 
-    (define (lint-walk name line form env) ; line currently not used
+    (define (lint-walk name form env)
        ;; walk a form 
 
       (if (symbol? form)
@@ -1967,7 +1967,7 @@
 						 (if (< len 3) "" "s"))))
 				   (format #t "  ~A (line ~D): ~S is messed up~%" name line-number form))
 			       (if (not (null? (cddr form))) 
-				   (lint-walk sym line-number (caddr form) env))
+				   (lint-walk sym (caddr form) env))
 
 			       (if (equal? sym val)
 				   (format #t "  ~A (line ~D): this ~A is either not needed, or an error:~A~%" 
@@ -2024,7 +2024,7 @@
 			     (setval (caddr form)))
 			 (if (pair? settee)
 			     (begin
-			       (lint-walk name line-number settee env) ; this counts as a reference since it's by reference so to speak
+			       (lint-walk name settee env) ; this counts as a reference since it's by reference so to speak
 			       (set! settee (do ((sym (car settee) (car sym)))
 						((not (pair? sym)) sym)))))
 			 (if (symbol? settee)
@@ -2036,7 +2036,7 @@
 			     (format #t "  ~A (line ~D): pointless set!~A~%" 
 				     name line-number 
 				     (truncated-list->string form)))
-			 (lint-walk name line-number setval env))))
+			 (lint-walk name setval env))))
 
 		  ;; ---------------- quote ----------------		  
 		  ((quote) 
@@ -2081,14 +2081,14 @@
 					      (format #t "  ~A (line ~D): cond else clause is not the last: ~A~%"
 						      name line-number 
 						      (truncated-list->string form)))
-					  (lint-walk name line-number (car clause) env)))
+					  (lint-walk name (car clause) env)))
 				  (if (pair? (cdr clause))
 				      (if (eq? (cadr clause) '=>)
 					  (if (not (pair? (cddr clause)))
 					      (format #t "  ~A (line ~D): cond => target is messed up: ~A~%"
 						      name line-number
 						      (truncated-list->string clause))
-					      (lint-walk name line-number (caddr clause) env))
+					      (lint-walk name (caddr clause) env))
 					  (lint-walk-body name line-number head (cdr clause) env))
 				      (if (not (null? (cdr clause)))
 					  (format #t "  ~A (line ~D): cond clause is messed up: ~A~%"
@@ -2106,7 +2106,7 @@
 			       name line-number 
 			       (truncated-list->string form))
 		       (begin
-			 (lint-walk name line-number (cadr form) env) ; the selector
+			 (lint-walk name (cadr form) env) ; the selector
 			 (let ((all-keys '())
 			       (ctr 0)
 			       (len (lint-length (cddr form))))
@@ -2170,7 +2170,7 @@
 			       ((null? bindings))
 			     (if (binding-ok? name line-number head (car bindings) env #f)
 				 (begin
-				   (lint-walk name line-number (cadar bindings) env)
+				   (lint-walk name (cadar bindings) env)
 				   (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
 
 			   ;; walk the step exprs
@@ -2178,7 +2178,7 @@
 			       ((null? bindings))
 			     (if (and (binding-ok? name line-number head (car bindings) env #t)
 				      (pair? (cddar bindings)))
-				 (lint-walk name line-number (caddar bindings) (append vars env))))
+				 (lint-walk name (caddar bindings) (append vars env))))
 
 			   ;; walk the body and end stuff (it's too tricky to find infinite do loops)
 			   (lint-walk-body name line-number head (cddr form) (append vars env))
@@ -2204,7 +2204,7 @@
 				       (format #t "  ~A (line ~D): let variable ~A is called in its binding?  perhaps let should be letrec:~A~%"
 					       name line-number (caar bindings) 
 					       (truncated-list->string bindings)))
-				   (lint-walk name line-number (cadar bindings) env)
+				   (lint-walk name (cadar bindings) env)
 				   (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
 
 			   (lint-walk-body name line-number head (if named-let (cdddr form) (cddr form)) (append vars env))
@@ -2222,7 +2222,7 @@
 			     ((null? bindings))
 			   (if (binding-ok? name line-number head (car bindings) env #f)
 			       (begin
-				 (lint-walk name line-number (cadar bindings) (append vars env))
+				 (lint-walk name (cadar bindings) (append vars env))
 				 (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
 
 			 (if (and *report-minor-stuff* ; maybe we need *report-very-minor-stuff* !
@@ -2261,7 +2261,7 @@
 			   (do ((bindings (cadr form) (cdr bindings)))
 			       ((null? bindings))
 			     (if (binding-ok? name line-number head (car bindings) env #t)
-				 (lint-walk name line-number (cadar bindings) new-env)))
+				 (lint-walk name (cadar bindings) new-env)))
 			   (lint-walk-body name line-number head (cddr form) new-env))
 			 (report-usage name line-number 'variable head vars)))
 		   env)
@@ -2297,7 +2297,7 @@
 					name line-number
 					(truncated-list->string form)))
 
-			    (set! vars (lint-walk name line-number f vars))
+			    (set! vars (lint-walk name f vars))
 			    (set! ctr (+ ctr 1)))
 			  body)
 			 (if (not (eq? head 'begin))
@@ -2382,7 +2382,7 @@
 					   name line-number head 
 					   (if (> ndirs nargs) "too few" "too many")
 					   (truncated-list->string form)))))
-			 (lint-walk name line-number (cdr form) env))))
+			 (lint-walk name (cdr form) env))))
 		  
 		  ;; ---------------- other schemes ----------------		  
 		  ((define-syntax let-syntax letrec-syntax define-module re-export case-lambda) ; for other's code
@@ -2403,9 +2403,6 @@
 
 		  ;; ---------------- everything else ----------------		  
 		  (else  ; if and or with-environment
-
-		   ;; we can't expand macros so free variables can confuse the usage checks
-		   ;; this block returns the current env at the end
 
 		   (if (negative? (lint-length form))
 		       (format #t "  ~A (line ~D): stray dot? ~A~%" 
@@ -2443,7 +2440,7 @@
 				      (set! undefined-identifiers (cons (list f name line-number 
 									      (truncated-list->string form)) 
 									undefined-identifiers))))
-			      (set! vars (lint-walk name line-number f vars)))
+			      (set! vars (lint-walk name f vars)))
 			    form))))
 		   env)))
 	      
@@ -2452,7 +2449,7 @@
     
     ;;; --------------------------------------------------------------------------------
     
-    (lambda (file)
+    (lambda (file . args)
       "(lint file) looks for infelicities in file's scheme code"
       (set! undefined-identifiers '())
       (set! globals (make-hash-table))
@@ -2474,6 +2471,13 @@
 		  (last-line-number -1))
 	      (format #t ";~A~%" file)
 	      (set! loaded-files (cons file loaded-files))
+
+	      (if (not (null? args))
+		  (for-each
+		   (lambda (f)
+		     (hash-table-set! no-side-effect-functions f #t))
+		   (car args)))
+
 	      (do ((form (read fp) (read fp)))
 		  ((eof-object? form))
 		(if (pair? form)
@@ -2492,7 +2496,6 @@
 					  (if (pair? form) 
 					      (car form)
 					      #f))
-				      line
 				      form 
 				      vars)))
 
@@ -2511,5 +2514,4 @@
 		   undefined-identifiers))
 
 	      (close-input-port fp)))))))
-
 

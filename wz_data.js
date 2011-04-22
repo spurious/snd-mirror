@@ -1170,9 +1170,6 @@ var sndscm_makespencerfilter_tip = "<code>(make-spencer-filter)</code> returns a
 
 var sndscm_markproperties_tip = "<code>(mark-properties id)</code> accesses the property list associated with the mark 'id'";
 
-var sndscm_matchsoundfiles_tip = "<code>(match-sound-files func dir)</code>: apply 'func' to each sound file in 'dir'<br>" +
-                                 " and return a list of files for which func does not return #f.";
-
 var sndscm_maxenvelope_tip = "<code>(max-envelope env)</code>: return the maximum y value in 'env'";
 
 var sndscm_moogfilter_tip = "<code>(moog-filter gen input)</code>: return Moog-style 4-pole lowpass filtering of 'input'";

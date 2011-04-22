@@ -4700,7 +4700,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   mus_sound_forget(str);
 
   io_err = snd_write_header(str, ht, sr, ch, len * ch, df, com, NULL); /* last arg is loop info */
-  if (io_err != MUS_NO_ERROR)
+  if (io_err != IO_NO_ERROR)
     {
       if (str) {free(str); str = NULL;}
       XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
