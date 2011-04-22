@@ -83,15 +83,15 @@
   (define (pvoc-edit pv) (list-ref pv 14))
   (define (pvoc-synthesize pv) (list-ref pv 15))
 
-  (let* ((pi2 (* 2 pi)))
+  (let ((pi2 (* 2 pi)))
 
     (if (>= (pvoc-output pv) (pvoc-interp pv))
 	;; get next block of amp/phase info
-	(let* ((N (pvoc-N pv))
-	       (D (pvoc-D pv))
-	       (amps (pvoc-ampinc pv))
-	       (freqs (pvoc-freqs pv))
-	       (filptr (pvoc-filptr pv)))
+	(let ((N (pvoc-N pv))
+	      (D (pvoc-D pv))
+	      (amps (pvoc-ampinc pv))
+	      (freqs (pvoc-freqs pv))
+	      (filptr (pvoc-filptr pv)))
 
 	  (if (pvoc-analyze pv)
 	      ((pvoc-analyze pv) pv input)

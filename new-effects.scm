@@ -449,10 +449,10 @@
 
 (define* (effects-flecho-1 scaler secs input-samps-1 beg dur snd chn)
   "(effects-flecho-1 scaler secs input-samps-1 beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
-  (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-	 (del (make-delay (round (* secs (srate snd)))))
-	 (samp 0)
-	 (input-samps (or input-samps-1 dur (frames snd chn))))
+  (let ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
+	(del (make-delay (round (* secs (srate snd)))))
+	(samp 0)
+	(input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
 		   (set! samp (+ 1 samp))
 		   (+ inval 
@@ -578,9 +578,9 @@
     
     (define flecho-1
       (lambda (scaler secs input-samps)
-	(let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-	       (del (make-delay (round (* secs (srate)))))
-	       (samp 0))
+	(let ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
+	      (del (make-delay (round (* secs (srate)))))
+	      (samp 0))
 	  (lambda (inval)
 	    (set! samp (+ 1 samp))
 	    (+ inval 
@@ -1726,8 +1726,8 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 
 (define* (effects-am freq en beg dur snd chn)
   "(effects-am freq en beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
-  (let* ((os (make-oscil freq))
-	 (e (and en (make-env en :length dur))))
+  (let ((os (make-oscil freq))
+	(e (and en (make-env en :length dur))))
     (map-channel (if e
 		     (lambda (inval)
 		       (amplitude-modulate 1.0 inval (* (env e) (oscil os))))
@@ -1738,8 +1738,8 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 
 (define* (effects-rm freq gliss-env beg dur snd chn)
   "(effects-rm freq gliss-env beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
-  (let* ((os (make-oscil freq))
-	 (e (and gliss-env (make-env gliss-env :length dur))))
+  (let ((os (make-oscil freq))
+	(e (and gliss-env (make-env gliss-env :length dur))))
     (map-channel (if e
 		     (lambda (inval)
 		       (* inval (env e) (oscil os)))
@@ -1982,16 +1982,16 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 
 (define (effects-jc-reverb input-samps volume)
   "(effects-jc-reverb input-samps volume) is used by the effects dialog to tie into edit-list->function"
-  (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
-	 (allpass2 (make-all-pass -0.700 0.700  337))
-	 (allpass3 (make-all-pass -0.700 0.700  113))
-	 (comb1 (make-comb 0.742 4799))
-	 (comb2 (make-comb 0.733 4999))
-	 (comb3 (make-comb 0.715 5399))
-	 (comb4 (make-comb 0.697 5801))
-	 (outdel1 (make-delay (round (* .013 (srate)))))
-	 (comb-sum 0.0)
-	 (samp 0))
+  (let ((allpass1 (make-all-pass -0.700 0.700 1051))
+	(allpass2 (make-all-pass -0.700 0.700  337))
+	(allpass3 (make-all-pass -0.700 0.700  113))
+	(comb1 (make-comb 0.742 4799))
+	(comb2 (make-comb 0.733 4999))
+	(comb3 (make-comb 0.715 5399))
+	(comb4 (make-comb 0.697 5801))
+	(outdel1 (make-delay (round (* .013 (srate)))))
+	(comb-sum 0.0)
+	(samp 0))
     (lambda (inval)
       (let ((allpass-sum (all-pass allpass3 
 				   (all-pass allpass2 
@@ -2389,7 +2389,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
 a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
       (if (number? pan-env)
-	  (let* ((pos (/ pan-env 90.0)))
+	  (let ((pos (/ pan-env 90.0)))
 	    (effects-position-sound mono-snd pos stereo-snd 1)
 	    (effects-position-sound mono-snd (- 1.0 pos) stereo-snd 0))
 	  (begin
@@ -3189,7 +3189,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 
 (define* (effects-compand snd chn)
   (map-channel 
-   (let* ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
+   (let ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
 		    0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
      (lambda (inval)
        (let ((index (+ 8.0 (* 8.0 inval))))

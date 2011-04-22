@@ -117,8 +117,8 @@
        (run
 	(do ((i 0 (+ 1 i)))
 	    ((= i (- crosses 1)))
-	  (let* ((start (floor (vct-ref cross-samples i)))
-		 (autolen 0))
+	  (let ((start (floor (vct-ref cross-samples i)))
+		(autolen 0))
 	    (let* ((s0 start)
 		   (pow2 (ceiling (/ (log (* extension (/ (srate snd) 40.0))) (log 2))))
 		   (fftlen (floor (expt 2 pow2)))
@@ -149,8 +149,8 @@
 		      (begin
 			(set! min-samps dist)
 			(set! min-i k)))))
-	      (let* ((current-mark min-i)
-		     (current-min 0.0))
+	      (let ((current-mark min-i)
+		    (current-min 0.0))
 		(let* ((s0 start)
 		       (s1 (floor (vct-ref cross-samples current-mark)))
 		       (len autolen)

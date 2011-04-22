@@ -164,9 +164,9 @@
 	  
 (define (create-log-scale-widget parent title low initial high callback scale)
   "(create-log-scale-widget parent title low initial high callback scale) returns a log scale widget"
-  (let* ((label (XtCreateManagedWidget (format #f "~,2F" initial) xmLabelWidgetClass parent
-	   (list XmNbackground          (basic-color))))
-	 (scale (XtCreateManagedWidget "scale" xmScaleWidgetClass parent
+  (let ((label (XtCreateManagedWidget (format #f "~,2F" initial) xmLabelWidgetClass parent
+				       (list XmNbackground          (basic-color))))
+	(scale (XtCreateManagedWidget "scale" xmScaleWidgetClass parent
                   (list XmNorientation   XmHORIZONTAL
 			XmNshowValue     #f
 			XmNminimum       0
@@ -205,9 +205,9 @@
 	  
 (define (create-semi-scale-widget parent title initial callback)
   "(create-semi-scale-widget parent title initial callback) returns a semitone scale widget"
-  (let* ((label (XtCreateManagedWidget (format #f "semitones: ~D" (ratio->semitones initial)) xmLabelWidgetClass parent
-	   (list XmNbackground          (basic-color))))
-	 (scale (XtCreateManagedWidget "scale" xmScaleWidgetClass parent
+  (let ((label (XtCreateManagedWidget (format #f "semitones: ~D" (ratio->semitones initial)) xmLabelWidgetClass parent
+				      (list XmNbackground          (basic-color))))
+	(scale (XtCreateManagedWidget "scale" xmScaleWidgetClass parent
                   (list XmNorientation   XmHORIZONTAL
 			XmNshowValue     #f
 			XmNminimum       0

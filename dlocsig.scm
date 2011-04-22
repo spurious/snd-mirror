@@ -1732,7 +1732,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     (let* ((x '())
 	   (y '())
 	   (z '())
-	   (segments (inexact->exact (round (abs (/ total step)))))
+	   (segments (round (abs (/ total step))))
 	   (len (+ 1 segments)))
       (do ((i 0 (+ 1 i))
 	   (angle start (+ angle step)))
@@ -2181,9 +2181,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		  (else (loop1 (cdr l1) 
 			       result))))))
 
-    (define (dist->samples d) (inexact->exact (round (* d (/ (mus-srate) dlocsig-speed-of-sound)))))
+    (define (dist->samples d) (round (* d (/ (mus-srate) dlocsig-speed-of-sound))))
     (define (dist->seconds d) (/ d dlocsig-speed-of-sound))
-    (define (time->samples time) (inexact->exact (round (* time (mus-srate)))))
+    (define (time->samples time) (round (* time (mus-srate))))
 
     (define (transition-point-3 vert-a vert-b xa ya za xb yb zb) 
       (define (cross v1 v2)
@@ -2955,10 +2955,10 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     ;; (set! end (time->samples duration))
     ;; start and end of the run loop in samples
     (set! run-beg (time->samples start-time))
-    (set! run-end (inexact->exact (floor (- (+ (time->samples (+ start-time (max duration real-dur)))
-					       (dist->samples last-dist)
-					       (time->samples max-out-delay))
-					    (if initial-delay 0.0 min-delay)))))
+    (set! run-end (floor (- (+ (time->samples (+ start-time (max duration real-dur)))
+			       (dist->samples last-dist)
+			       (time->samples max-out-delay))
+			    (if initial-delay 0.0 min-delay))))
     ;; sample at which signal first arrives to the listener
     (set! start (+ run-beg (dist->samples (- first-dist (if initial-delay 0.0 min-dist)))))
     ;; minimum distance for unity gain calculation

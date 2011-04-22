@@ -17547,7 +17547,7 @@ EDITS: 2
 	      ((= i 4))
 	    (vector-set! vals i (+ i 1.0)))
 	  (set! v1 (edot-product (* 0.25 2 pi 0.0-i) vals))
-	  (let ((v2 (+ (* 1 (exp (* 0 2 pi 0.0-i)))
+	  (let ((v2 (+ (*   (exp (* 0 2 pi 0.0-i)))
 		       (* 2 (exp (* 0.25 2 pi 0.0-i)))
 		       (* 3 (exp (* 0.5 2 pi 0.0-i)))
 		       (* 4 (exp (* 0.75 2 pi 0.0-i))))))

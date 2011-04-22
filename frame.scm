@@ -317,7 +317,7 @@
 
 (define* (make-sync-frame-reader (beg 0) snd dir edpos)
   "(make-sync-frame-reader beg snd dir edpos) returns a frame reader that reads all channels sync'd to 'snd'"
-  (let* ((index (or snd (selected-sound) (car (sounds)))))
+  (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "make-sync-frame-reader" snd))
 	(let ((snc (sync index)))

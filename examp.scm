@@ -64,9 +64,9 @@
 (define (selection-rms-1)
   "(selection-rms-1) -> rms of selection data using samplers"
   (if (selection?)
-      (let* ((reader (make-sampler (selection-position)))
-	     (len (selection-frames))
-	     (sum 0.0))
+      (let ((reader (make-sampler (selection-position)))
+	    (len (selection-frames))
+	    (sum 0.0))
 	(do ((i 0 (+ i 1))) 
 	    ((= i len) 
 	     (begin 
@@ -83,8 +83,8 @@
   ;; this is actually slightly faster than selection-rms-1
   ;; all the DO loops in this file could be re-written in this form, but I find loops easier to read
   (if (selection?)
-      (let* ((reader (make-sampler (selection-position)))
-	     (len (selection-frames)))
+      (let ((reader (make-sampler (selection-position)))
+	    (len (selection-frames)))
 	(define rsum 
 	  (lambda (leng sum)
 	    (if (= leng 0)
@@ -100,7 +100,7 @@
 (define (region-rms reg)
   "(region-rms n) -> rms of region n's data (chan 0)"
   (if (region? reg)
-      (let* ((data (region->vct reg 0 0)))
+      (let ((data (region->vct reg 0 0)))
 	(sqrt (/ (dot-product data data) (length data))))
       (throw 'no-such-region (list "region-rms" reg))))
 
@@ -213,9 +213,9 @@
 	     (im2 (make-vct fftlen)))
 	(fft rl1 im1 1)
 	(fft rl2 im2 1)
-	(let* ((tmprl (vct-copy rl1))
-	       (tmpim (vct-copy im1))
-	       (data3 (make-vct fftlen)))
+	(let ((tmprl (vct-copy rl1))
+	      (tmpim (vct-copy im1))
+	      (data3 (make-vct fftlen)))
 	  (vct-multiply! tmprl rl2)     ; (* tempr1 tempr2)
 	  (vct-multiply! tmpim im2)     ; (* tempi1 tempi2)
 	  (vct-multiply! im2 rl1)       ; (* tempr1 tempi2)
@@ -312,9 +312,9 @@
 		 (lambda (n)
 		   (if (and (= (sync n) (sync snd))
 			    (> (channels n) chn))
-		       (set! ffts (append ffts (let* ((fdr (channel->vct ls fftlen n chn))
-						      (fdi (make-vct fftlen))
-						      (spectr (make-vct (/ fftlen 2))))
+		       (set! ffts (append ffts (let ((fdr (channel->vct ls fftlen n chn))
+						     (fdi (make-vct fftlen))
+						     (spectr (make-vct (/ fftlen 2))))
 						 (list (vct-add! spectr (spectrum fdr fdi #f 2))))))))
 		 (sounds))
 		(graph ffts "spectra" 0.0 0.5 y0 y1 snd chn)))))
@@ -652,9 +652,9 @@ it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-e
 a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
   (let ((len (frames mono-snd)))
     (if (number? pan-env)
-	(let* ((pos (/ pan-env 90.0))
-	       (reader0 (make-sampler 0 mono-snd))
-	       (reader1 (make-sampler 0 mono-snd)))
+	(let ((pos (/ pan-env 90.0))
+	      (reader0 (make-sampler 0 mono-snd))
+	      (reader1 (make-sampler 0 mono-snd)))
 	  (map-channel (lambda (y)
 			 (+ y (* pos (read-sample reader1))))
 		       0 len stereo-snd 1)
@@ -954,9 +954,9 @@ section: (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
 	 (rl (channel->vct start fftpts snd chn))
 	 (im (make-vct fftpts))
 	 (top (floor (* fftpts cutoff))))
-    (let* ((old0 (rl 0))
-	   (old1 (rl (- samps 1)))
-	   (oldmax (vct-peak rl)))
+    (let ((old0 (rl 0))
+	  (old1 (rl (- samps 1)))
+	  (oldmax (vct-peak rl)))
       (fft rl im 1)
       (do ((i top (+ i 1)))
 	  ((= i fftpts))
@@ -1106,8 +1106,8 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 
 (define (flecho scaler secs)
   "(flecho scaler secs) returns a low-pass filtered echo maker: (map-channel (flecho .5 .9) 0 75000)"
-  (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-	 (del (make-delay  (round (* secs (srate))))))
+  (let ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
+	(del (make-delay  (round (* secs (srate))))))
     (lambda (inval)
       (+ inval 
 	 (delay del 
@@ -1222,7 +1222,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
   "(compand-sound beg dur snd) applies companding to every channel of 'snd'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (channels index)))
+	(let ((out-chans (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (compand-channel beg dur index chn)))
@@ -1727,8 +1727,8 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 		   (short-file-name (car last-buffer))))
        "switch to buf: (default: make new sound)")
    (lambda (response)
-     (let* ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
-	    (height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
+     (let ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
+	   (height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
        (call-with-exit
 	(lambda (give-up)
 	  (if (or (not (string? response))
@@ -1936,7 +1936,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 (define* (add-notes notes snd chn)
   "(add-notes notes snd chn) adds (mixes) 'notes' which is a list of lists of the form: file (offset 0.0) (amp 1.0) 
 starting at the cursor in the currently selected channel: (add-notes '((\"oboe.snd\") (\"pistol.snd\" 1.0 2.0)))"
-  (let* ((start (cursor snd chn)))
+  (let ((start (cursor snd chn)))
     (as-one-edit
      (lambda ()
        (for-each 
@@ -2369,8 +2369,8 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
   (let* ((len (frames snd chn))
 	 (num-blocks (floor (/ len (* (srate snd) block-len)))))
     (if (> num-blocks 1)
-	(let* ((actual-block-len (ceiling (/ len num-blocks)))
-	       (no-clicks-env (list 0.0 0.0  .01 1.0  .99 1.0  1.0 0.0)))
+	(let ((actual-block-len (ceiling (/ len num-blocks)))
+	      (no-clicks-env (list 0.0 0.0  .01 1.0  .99 1.0  1.0 0.0)))
 	  (as-one-edit
 	   (lambda ()
 	     (do ((beg 0 (+ beg actual-block-len)))

@@ -37,11 +37,11 @@
 (define* (make-effect-dialog label ok-callback help-callback reset-callback target-ok-callback)
   ;; make a standard dialog
   ;; callbacks take 2 args: widget data
-  (let* ((dismiss-button (gtk_button_new_with_label "Go Away"))
-	 (help-button (gtk_button_new_with_label "Help"))
-	 (ok-button (gtk_button_new_with_label "DoIt"))
-	 (reset-button (if reset-callback (gtk_button_new_with_label "Reset") #f))
-	 (new-dialog (gtk_dialog_new)))
+  (let ((dismiss-button (gtk_button_new_with_label "Go Away"))
+	(help-button (gtk_button_new_with_label "Help"))
+	(ok-button (gtk_button_new_with_label "DoIt"))
+	(reset-button (if reset-callback (gtk_button_new_with_label "Reset") #f))
+	(new-dialog (gtk_dialog_new)))
     (gtk_widget_set_name dismiss-button "quit_button")
     (gtk_widget_set_name help-button "help_button")
     (gtk_widget_set_name ok-button "doit_button")

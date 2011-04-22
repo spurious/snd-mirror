@@ -26,7 +26,7 @@
 	0
 	(if (< lag (/ len 2))
 	    lag
-	    (- (- len lag))))))
+	    (- lag len)))))
 
 
 (define* (snddiff-1 v0 v1 (maxdiff 0.0))

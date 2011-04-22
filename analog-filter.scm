@@ -14,10 +14,10 @@
 
 
 (define* (analog->digital n num den fz)
-  (let* ((g 1.0)
-	 (Q 1.0)
-	 (wc (tan (* pi fz)))
-	 (c (make-vct (* 2 n))))
+  (let ((g 1.0)
+	(Q 1.0)
+	(wc (tan (* pi fz)))
+	(c (make-vct (* 2 n))))
 
     (define (cascade->canonical A)
       "(cascade->canonical A) converts cascade filter coeffs to canonical form"
@@ -56,7 +56,7 @@
 	    (dt2 (den (+ j 2)))
 	    (kd (+ dt0 dt1 dt2))
 	    (kn (+ nt0 nt1 nt2)))
-	(set! (c (+ k 0)) (/ (- (* 2.0 dt2) (* 2.0 dt0)) kd))
+	(set! (c    k   ) (/ (- (* 2.0 dt2) (* 2.0 dt0)) kd))
 	(set! (c (+ k 1)) (/ (+ dt0 (- dt1) dt2) kd))
 	(set! (c (+ k 2)) (/ (- (* 2.0 nt2) (* 2.0 nt0)) kn))
 	(set! (c (+ k 3)) (/ (+ nt0 (- nt1) nt2) kn))
@@ -74,17 +74,17 @@
 	    (cascade->canonical b)))))
 
 (define (prototype->highpass n num den)
-  (let* ((g 1.0)
-	 (numt (make-vct (length num)))
-	 (dent (make-vct (length den))))
+  (let ((g 1.0)
+	(numt (make-vct (length num)))
+	(dent (make-vct (length den))))
     (do ((k 0 (+ k 2))
 	 (i 0 (+ i 3)))
 	((>= k n)) 
       (set! g (* g (/ (num (+ i 2)) (den (+ i 2)))))
-      (set! (numt (+ i 0)) 1.0)
+      (set! (numt    i   ) 1.0)
       (set! (numt (+ i 1)) (/ (num (+ i 1)) (num (+ i 2))))
       (set! (numt (+ i 2)) (/ (num i) (num (+ i 2))))
-      (set! (dent (+ i 0)) 1.0)
+      (set! (dent    i   ) 1.0)
       (set! (dent (+ i 1)) (/ (den (+ i 1)) (den (+ i 2))))
       (set! (dent (+ i 2)) (/ (den i) (den (+ i 2)))))
     (set! (numt 0) g)
@@ -131,8 +131,8 @@ freq (srate = 1.0): (make-butterworth-highpass 8 .1)"
   "(make-butterworth-bandpass n fl fh) returns a bandpass Butterworth filter; n = order, fl and fh \
 are (1.0-based) edge freqs: (make-butterworth-bandpass 4 .1 .2)"
   (if (odd? n) (set! n (+ n 1)))
-  (let* ((lp (make-butterworth-lowpass n fh))
-	 (hp (make-butterworth-highpass n fl)))
+  (let ((lp (make-butterworth-lowpass n fh))
+	(hp (make-butterworth-highpass n fl)))
     (lambda (y) 
       (filter lp (filter hp y)))))
 
@@ -140,8 +140,8 @@ are (1.0-based) edge freqs: (make-butterworth-bandpass 4 .1 .2)"
   "(make-butterworth-bandstop n fl fh) returns a bandstop Butterworth filter; n = order, fl and fh \
 are (1.0-based) edge freqs: (make-butterworth-bandstop 4 .1 .2)"
   (if (odd? n) (set! n (+ n 1)))
-  (let* ((lp (make-butterworth-lowpass n fl))
-	 (hp (make-butterworth-highpass n fh)))
+  (let ((lp (make-butterworth-lowpass n fl))
+	(hp (make-butterworth-highpass n fh)))
     (lambda (y) 
       (+ (filter lp y) (filter hp y)))))
 
@@ -160,10 +160,10 @@ are (1.0-based) edge freqs: (make-butterworth-bandstop 4 .1 .2)"
 	((>= l n))
       (let* ((u (- (* (sinh v0) (sin (/ (* l pi) (* 2.0 n))))))
 	     (w (* (cosh v0) (cos (/ (* l pi) (* 2.0 n))))))
-      (set! (num (+ j 0)) 0.0)
+      (set! (num    j   ) 0.0)
       (set! (num (+ j 1)) 0.0)
       (set! (num (+ j 2)) 1.0)
-      (set! (den (+ j 0)) 1.0)
+      (set! (den    j   ) 1.0)
       (set! (den (+ j 1)) (* -2.0 u))
       (set! (den (+ j 2)) (+ (* u u) (* w w)))))
     (set! (num 2) (/ (expt 2.0 (- 2 n))
@@ -191,8 +191,8 @@ fc = cutoff freq (srate = 1.0): (make-chebyshev-highpass 8 .1 .01)"
   "(make-chebyshev-bandpass n fl fh (ripple 1.0)) returns a bandpass Chebyshev filter; n = order, \
 fl and fh = edge freqs (srate = 1.0): (make-chebyshev-bandpass 4 .1 .2)"
   (if (odd? n) (set! n (+ n 1)))
-  (let* ((lp (make-chebyshev-lowpass n fh ripple))
-	 (hp (make-chebyshev-highpass n fl ripple)))
+  (let ((lp (make-chebyshev-lowpass n fh ripple))
+	(hp (make-chebyshev-highpass n fl ripple)))
     (lambda (y) 
       (filter lp (filter hp y)))))
 
@@ -200,8 +200,8 @@ fl and fh = edge freqs (srate = 1.0): (make-chebyshev-bandpass 4 .1 .2)"
   "(make-chebyshev-bandstop n fl fh (ripple 1.0)) returns a bandstop Chebyshev filter; n = order, \
 fl and fh = edge freqs (srate = 1.0): (make-chebyshev-bandstop 8 .1 .4 .01)"
   (if (odd? n) (set! n (+ n 1)))
-  (let* ((lp (make-chebyshev-lowpass n fl ripple))
-	 (hp (make-chebyshev-highpass n fh ripple)))
+  (let ((lp (make-chebyshev-lowpass n fl ripple))
+	(hp (make-chebyshev-highpass n fh ripple)))
     (lambda (y) 
       (+ (filter lp y) (filter hp y)))))
 
@@ -219,13 +219,13 @@ fl and fh = edge freqs (srate = 1.0): (make-chebyshev-bandstop 8 .1 .4 .01)"
       (do ((l 1.0 (+ l 2.0))
 	   (j 0 (+ j 3)))
 	  ((>= l n))
-	(let* ((u (- (* (sinh v0) (sin (/ (* l pi) (* 2.0 n))))))
-	       (w (* (cosh v0) (cos (/ (* l pi) (* 2.0 n)))))
-	       (t (/ 1.0 (sin (/ (* (+ l pl) pi) (* 2.0 n))))))
-	  (set! (num (+ j 0)) 1.0)
+	(let ((u (- (* (sinh v0) (sin (/ (* l pi) (* 2.0 n))))))
+	      (w (* (cosh v0) (cos (/ (* l pi) (* 2.0 n)))))
+	      (t (/ 1.0 (sin (/ (* (+ l pl) pi) (* 2.0 n))))))
+	  (set! (num    j   ) 1.0)
 	  (set! (num (+ j 1)) 0.0)
 	  (set! (num (+ j 2)) (* t t))
-	  (set! (den (+ j 0)) 1.0)
+	  (set! (den    j   ) 1.0)
 	  (set! (den (+ j 1)) (/ (* -2.0 u) (+ (* u u) (* w w))))
 	  (set! (den (+ j 2)) (/ 1.0 (+ (* u u) (* w w)))))))
     (list num den
@@ -252,16 +252,16 @@ fc = cutoff freq (srate = 1.0): (make-inverse-chebyshev-highpass 10 .1 120)"
   "(make-inverse-chebyshev-bandpass n fl fh (loss-dB 60.0)) returns a bandpass inverse-Chebyshev filter; n = order, \
 fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandpass 8 .1 .4)"
   (if (odd? n) (set! n (+ n 1)))
-  (let* ((lp (make-inverse-chebyshev-lowpass n fh loss-dB))
-	 (hp (make-inverse-chebyshev-highpass n fl loss-dB)))
+  (let ((lp (make-inverse-chebyshev-lowpass n fh loss-dB))
+	(hp (make-inverse-chebyshev-highpass n fl loss-dB)))
     (lambda (y) (filter lp (filter hp y)))))
 
 (define* (make-inverse-chebyshev-bandstop n fl fh (loss-dB 60.0))
   "(make-inverse-chebyshev-bandstop n fl fh (loss-dB 60.0)) returns a bandstop inverse-Chebyshev filter; n = order, \
 fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 90)"
   (if (odd? n) (set! n (+ n 1)))
-  (let* ((lp (make-inverse-chebyshev-lowpass n fl loss-dB))
-	 (hp (make-inverse-chebyshev-highpass n fh loss-dB)))
+  (let ((lp (make-inverse-chebyshev-lowpass n fl loss-dB))
+	(hp (make-inverse-chebyshev-highpass n fh loss-dB)))
     (lambda (y) (+ (filter lp y) (filter hp y)))))
 
 
@@ -302,17 +302,17 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 	 (num (make-vct len))
 	 (den (make-vct len))
 	 (b2 (bessel-i n)))
-    (let* ((p (gsl-roots (vct->vector b2))))
+    (let ((p (gsl-roots (vct->vector b2))))
       (do ((i 0 (+ 1 i)))
 	  ((= i n))
 	(set! (p i) (/ (p i) (expt (b2 0) (/ 1.0 n)))))
       (do ((j 0 (+ j 3))
 	   (i 0 (+ i 2)))
 	  ((>= i n))
-	(set! (num (+ j 0)) 0.0)
+	(set! (num    j   ) 0.0)
 	(set! (num (+ j 1)) 0.0)
 	(set! (num (+ j 2)) 1.0)
-	(set! (den (+ j 0)) 1.0)
+	(set! (den    j   ) 1.0)
 	(set! (den (+ j 1)) (* -2.0 (real-part (p i))))
 	(set! (den (+ j 2)) (real-part (* (p i) (p (+ i 1)))))))
     (list num den)))
@@ -335,16 +335,16 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 (define* (make-bessel-bandpass n fl fh)
   "(make-bessel-bandpass n fl fh) returns a bandpass Bessel filter; n = order, fl and fh are edge freqs (srate=1.0): (make-bessel-bandpass 4 .1 .2)"
   (if (odd? n) (set! n (+ n 1)))
-  (let* ((lp (make-bessel-lowpass n fh))
-	 (hp (make-bessel-highpass n fl)))
+  (let ((lp (make-bessel-lowpass n fh))
+	(hp (make-bessel-highpass n fl)))
     (lambda (y) 
       (filter lp (filter hp y)))))
 
 (define* (make-bessel-bandstop n fl fh)
   "(make-bessel-bandstop n fl fh) returns a bandstop Bessel filter; n = order, fl and fh are edge freqs (srate=1.0): (make-bessel-bandstop 8 .1 .2)"
   (if (odd? n) (set! n (+ n 1)))
-  (let* ((lp (make-bessel-lowpass n fl))
-	 (hp (make-bessel-highpass n fh)))
+  (let ((lp (make-bessel-lowpass n fl))
+	(hp (make-bessel-highpass n fh)))
     (lambda (y) 
       (+ (filter lp y) (filter hp y)))))
 
@@ -406,13 +406,13 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 	       (sn (car vals))
 	       (cn (cadr vals))
 	       (dn (caddr vals)))
-	  (set! (cv (+ j 0)) sn)
+	  (set! (cv    j   ) sn)
 	  (set! (cv (+ j 1)) cn)
 	  (set! (cv (+ j 2)) dn)
 	  (let* ((z (/ 0.0-i (* (sqrt m) sn)))
 		 (pz (real-part (* z (make-rectangular (real-part z) (- (imag-part z)))))))
 	    (set! g (/ g pz))
-	    (set! (num (+ j 0)) 1.0)
+	    (set! (num    j   ) 1.0)
 	    (set! (num (+ j 1)) (* -2.0 (real-part z)))
 	    (set! (num (+ j 2)) pz))))
       (let* ((optarg0 (* k1p k1p))
@@ -428,12 +428,12 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 	     (j 0 (+ j 3)))
 	    ((>= i n))
 	  (let* ((p (/ (- (+ (* (cv (+ j 1)) (cv (+ j 2)) sn cn)
-			     (* 0.0+i (cv (+ j 0)) dn)))
+			     (* 0.0+i (cv j) dn)))
 		       (- 1.0 (* (cv (+ j 2)) sn
 				 (cv (+ j 2)) sn)))))
 	    (let ((pp (real-part (* p (make-rectangular (real-part p) (- (imag-part p)))))))
 	      (set! g (* g pp))
-	      (set! (den (+ j 0)) 1.0)
+	      (set! (den    j   ) 1.0)
 	      (set! (den (+ j 1)) (* -2.0 (real-part p)))
 	      (set! (den (+ j 2)) pp))))))
     (set! g (abs (/ g (sqrt (+ 1.0 (* e e))))))
@@ -460,8 +460,8 @@ fc = cutoff freq (srate = 1.0): (make-elliptic-highpass 8 .25 .01 90)"
   "(make-elliptic-bandpass n fl fh (ripple 1.0) (loss-dB 60.0)) returns a bandpass elliptic filter; n = order, \
 fl and fh are edge freqs (srate=1.0): (make-elliptic-bandpass 6 .1 .2 .1 90)"
   (if (odd? n) (set! n (+ n 1)))
-  (let* ((lp (make-elliptic-lowpass n fh ripple loss-dB))
-	 (hp (make-elliptic-highpass n fl ripple loss-dB)))
+  (let ((lp (make-elliptic-lowpass n fh ripple loss-dB))
+	(hp (make-elliptic-highpass n fl ripple loss-dB)))
     (lambda (y) 
       (filter lp (filter hp y)))))
 
@@ -469,8 +469,8 @@ fl and fh are edge freqs (srate=1.0): (make-elliptic-bandpass 6 .1 .2 .1 90)"
   "(make-elliptic-bandstop n fl fh (ripple 1.0) (loss-dB 60.0)) returns a bandstop elliptic filter; n = order, \
 fl and fh are edge freqs (srate=1.0): (make-elliptic-bandstop 6 .1 .2 .1 90)"
   (if (odd? n) (set! n (+ n 1)))
-  (let* ((lp (make-elliptic-lowpass n fl ripple loss-dB))
-	 (hp (make-elliptic-highpass n fh ripple loss-dB)))
+  (let ((lp (make-elliptic-lowpass n fl ripple loss-dB))
+	(hp (make-elliptic-highpass n fh ripple loss-dB)))
     (lambda (y) 
       (+ (filter lp y) (filter hp y)))))
 

@@ -23,8 +23,8 @@
 	val
 	(next-prime (+ val 2))))
        
-  (let* ((srscale (/ (mus-srate) 25641))
-	 (dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19)))
+  (let ((srscale (/ (mus-srate) 25641))
+	(dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19)))
     (do ((i 0 (+ i 1)))
 	((= i 15))
       (let ((val (floor (* srscale (list-ref dly-len i)))))

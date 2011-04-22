@@ -366,9 +366,9 @@
 	 #f))))
 
   (define (nth-roots a b deg) ; ax^n + b
-    (let* ((n (expt (/ (- b) a) (/ 1.0 deg)))
-	   (incr (/ (* 2 pi 0+i) deg))
-	   (roots '()))
+    (let ((n (expt (/ (- b) a) (/ 1.0 deg)))
+	  (incr (/ (* 2 pi 0+i) deg))
+	  (roots '()))
       (do ((i 0 (+ i 1)))
 	  ((= i deg))
 	(set! roots (cons (simplify-complex (* n (exp (* i incr)))) roots)))

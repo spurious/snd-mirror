@@ -10,9 +10,9 @@
 
 (define (one-pole-allpass gen input)
   (declare (gen one-pole-allpass) (input float))
-  (let* ((coeff (one-pole-allpass-coeff gen))
-	 (y1 (one-pole-allpass-y1 gen))
-	 (x1 (one-pole-allpass-x1 gen)))
+  (let ((coeff (one-pole-allpass-coeff gen))
+	(y1 (one-pole-allpass-y1 gen))
+	(x1 (one-pole-allpass-x1 gen)))
     (set! (one-pole-allpass-y1 gen) (+ (* coeff (- input y1)) x1))
     (set! (one-pole-allpass-x1 gen) input)
     (one-pole-allpass-y1 gen)))

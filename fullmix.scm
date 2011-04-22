@@ -121,9 +121,9 @@
 		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe))))))))
 	    
 	    ;; more than 1 chan input
-	    (let* ((inframe (make-frame in-chans))
-		   (outframe (make-frame out-chans))
-		   (srcs (make-vector in-chans #f)))
+	    (let ((inframe (make-frame in-chans))
+		  (outframe (make-frame out-chans))
+		  (srcs (make-vector in-chans #f)))
 	      (do ((inp 0 (+ 1 inp)))
 		  ((= inp in-chans))
 		(vector-set! srcs inp (make-src :input (vector-ref file inp) :srate (if (number? srate) (abs srate) 0.0))))

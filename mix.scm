@@ -80,9 +80,9 @@
 (define (mix-maxamp id)
   "(mix-maxamp mix) returns the max amp in the given mix"
   (if (mix? id)
-      (let* ((len (frames id))
-	     (peak 0.0)
-	     (reader (make-mix-sampler id)))
+      (let ((len (frames id))
+	    (peak 0.0)
+	    (reader (make-mix-sampler id)))
 	(set! peak (abs (read-mix-sample reader)))
 	(do ((i 1 (+ 1 i)))
 	    ((= i len))

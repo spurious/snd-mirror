@@ -199,9 +199,9 @@
 	;;                           gtk_widget_modify_base(w, GTK_STATE_PRELIGHT, col);
 	(let ((mainform (gtk_dialog_get_content_area (GTK_DIALOG oscope-dialog))))
 	  (set! oscope-graph (make-variable-graph mainform "input" max-cycle audio-srate))
-	  (let* ((hbox (gtk_hbox_new #f 0))
-		 (power-button (gtk_toggle_button_new_with_label "power"))
-		 (freeze-button (gtk_toggle_button_new_with_label "freeze")))
+	  (let ((hbox (gtk_hbox_new #f 0))
+		(power-button (gtk_toggle_button_new_with_label "power"))
+		(freeze-button (gtk_toggle_button_new_with_label "freeze")))
 	    (set! oscope-graph-data (channel-data oscope-graph 0))
 	    (set! oscope-input-frames 256)
 	    (gtk_box_pack_start (GTK_BOX mainform) hbox #f #f 4)

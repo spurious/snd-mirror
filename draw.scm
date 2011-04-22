@@ -4,15 +4,15 @@
 
 
 (define (overlay-rms-env snd chn)
-  (let* ((red (make-color 1 0 0))            ; rms env displayed in red
-	 (left (left-sample snd chn))
-	 (right (right-sample snd chn))
-	 (rms-size 128)                      ; this could be a parameter -- not sure what the "right" size is
-	 (sr (/ 1.0 (srate snd)))
-	 (old-color (foreground-color snd chn))
-	 (axinf (axis-info snd chn))
-	 (old-axinf (channel-property 'rms-axis-info snd chn))
-	 (cr (make-cairo (car (channel-widgets snd chn)))))
+  (let ((red (make-color 1 0 0))            ; rms env displayed in red
+	(left (left-sample snd chn))
+	(right (right-sample snd chn))
+	(rms-size 128)                      ; this could be a parameter -- not sure what the "right" size is
+	(sr (/ 1.0 (srate snd)))
+	(old-color (foreground-color snd chn))
+	(axinf (axis-info snd chn))
+	(old-axinf (channel-property 'rms-axis-info snd chn))
+	(cr (make-cairo (car (channel-widgets snd chn)))))
 
     ;; these functions are an optimization to speed up calculating the rms env graph.
     ;; ideally we'd use something like:
@@ -90,8 +90,8 @@
 		   (set! (lines 1) y0))
 		 (do ((i (+ left 1) (+ 1 i)))       ; loop through all samples calling moving-rms
 		     ((= i right))
-		   (let* ((x1 (grf-it (* i sr) xdata))
-			  (y (moving-rms rms (next-sample reader))))
+		   (let ((x1 (grf-it (* i sr) xdata))
+			 (y (moving-rms rms (next-sample reader))))
 		     (if (> x1 x0)                 ; very often many samples are represented by one pixel
 			 (let ((y1 (grf-it y ydata)))
 			   (set! (lines line-ctr) x1)
@@ -124,7 +124,7 @@ whenever they're in the current view."
 	(cr (make-cairo (car (channel-widgets snd chn)))))
     (if (and (< left end)
 	     (> right beg))
-	(let* ((data (make-graph-data snd chn)))
+	(let ((data (make-graph-data snd chn)))
 	  (if (vct? data)
 	      (let* ((samps (- (min right end) (max left beg)))
 		     (offset (max 0 (- beg left)))
@@ -226,11 +226,11 @@ whenever they're in the current view."
 
 (define (samples-via-colormap snd chn)
   "(samples-via-colormap snd chn) displays time domain graph using current colormap (just an example of colormap-ref)"
-  (let* ((left (left-sample snd chn))
-	 (right (right-sample snd chn))
-	 (old-color (foreground-color snd chn))
-	 (data (make-graph-data snd chn))
-	 (cr (make-cairo (car (channel-widgets snd chn)))))
+  (let ((left (left-sample snd chn))
+	(right (right-sample snd chn))
+	(old-color (foreground-color snd chn))
+	(data (make-graph-data snd chn))
+	(cr (make-cairo (car (channel-widgets snd chn)))))
 
     (define (samples-1 cur-data)
       (let* ((x0 (x->position (/ left (srate snd))))

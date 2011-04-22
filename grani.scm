@@ -231,8 +231,8 @@
 ;;; create a vct from an envelope
 
 (define* (make-gr-env env (length 512))
-  (let* ((env-vct (make-vct length))
-	 (length-1 (exact->inexact (- length 1))))
+  (let ((env-vct (make-vct length))
+	(length-1 (exact->inexact (- length 1))))
     (do ((i 0 (+ 1 i)))
 	((= i length) env-vct)
       (vct-set! env-vct i (envelope-interp (/ i length-1) env)))))

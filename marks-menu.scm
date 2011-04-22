@@ -73,9 +73,9 @@
 
       (define (post-play-between-marks-dialog)
         (if (not play-between-marks-dialog)
-            (let* ((inits (find-two-marks))
-		   (max-mark-id (max-mark))
-		   (sliders '()))
+            (let ((inits (find-two-marks))
+		  (max-mark-id (max-mark))
+		  (sliders '()))
 
 	      (if (null? inits)
 		  (snd-display ";no marks")
@@ -229,11 +229,11 @@
 		     loop-between-marks-dialog
                                  (list (list "mark one" 0 initial-loop-between-marks-m1 max-mark-id
                                              (lambda (w context info)
-                                               (set! loop-between-marks-m1 (/ (.value info) 1)))
+                                               (set! loop-between-marks-m1 (.value info)))
                                              1)
                                        (list "mark two" 0 initial-loop-between-marks-m2 max-mark-id
                                              (lambda (w context info)
-                                               (set! loop-between-marks-m2 (/ (.value info) 1)))
+                                               (set! loop-between-marks-m2 (.value info)))
                                              1))))
 
               ;; now add either a radio-button box or a combo-box for the buffer size
@@ -843,11 +843,11 @@ using the granulate generator to fix up the selection duration (this still is no
 				      (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))
 		     (for-each
 		      (lambda (rparent loc)
-			(let* ((farleft (XtCreateManagedWidget "<<" xmPushButtonWidgetClass rparent '()))
-			       (stopleft (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent '()))
-			       (lotsleft (XtCreateManagedWidget "<< " xmPushButtonWidgetClass rparent '()))
-			       (someleft (XtCreateManagedWidget " < " xmPushButtonWidgetClass rparent '()))
-			       (sus-rel-start (* offset 2)))
+			(let ((farleft (XtCreateManagedWidget "<<" xmPushButtonWidgetClass rparent '()))
+			      (stopleft (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent '()))
+			      (lotsleft (XtCreateManagedWidget "<< " xmPushButtonWidgetClass rparent '()))
+			      (someleft (XtCreateManagedWidget " < " xmPushButtonWidgetClass rparent '()))
+			      (sus-rel-start (* offset 2)))
 			  
 			  (XtAddCallback farleft XmNactivateCallback
 					 (lambda (w c i)
@@ -873,11 +873,11 @@ using the granulate generator to fix up the selection duration (this still is no
 		      (list 0 1))
 		     (for-each
 		      (lambda (rparent loc)
-			(let* ((someright (XtCreateManagedWidget " > " xmPushButtonWidgetClass rparent '()))
-			       (lotsright (XtCreateManagedWidget " >>" xmPushButtonWidgetClass rparent '()))
-			       (stopright (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent '()))
-			       (farright (XtCreateManagedWidget ">>" xmPushButtonWidgetClass rparent '()))
-			       (sus-rel-start (* offset 2)))
+			(let ((someright (XtCreateManagedWidget " > " xmPushButtonWidgetClass rparent '()))
+			      (lotsright (XtCreateManagedWidget " >>" xmPushButtonWidgetClass rparent '()))
+			      (stopright (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent '()))
+			      (farright (XtCreateManagedWidget ">>" xmPushButtonWidgetClass rparent '()))
+			      (sus-rel-start (* offset 2)))
 			  
 			  (XtAddCallback farright XmNactivateCallback
 					 (lambda (w c i)

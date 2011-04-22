@@ -33,8 +33,8 @@
   (let ((len (length rl)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (let* ((rl1 (rl i))
-	     (im1 (im i)))
+      (let ((rl1 (rl i))
+	    (im1 (im i)))
 	(set! (rl i) (sqrt (+ (* rl1 rl1) (* im1 im1))))
 	(set! (im i) (- (atan im1 rl1)))))))
 
@@ -42,8 +42,8 @@
   (let ((len (length mag)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (let* ((mag1 (mag i))
-	     (ang1 (- (ang i))))
+      (let ((mag1 (mag i))
+	    (ang1 (- (ang i))))
 	(set! (mag i) (* mag1 (cos ang1)))
 	(set! (ang i) (* mag1 (sin ang1)))))))
 
@@ -54,8 +54,8 @@
   (vector-fill! v 0.0))
 
 (define (big-array-normalize v)
-  (let* ((len (length v))
-	 (pk 0.0))
+  (let ((len (length v))
+	(pk 0.0))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (set! pk (max pk (abs (v i)))))

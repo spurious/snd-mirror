@@ -85,9 +85,9 @@
   ;; from Andrews, Askey, Roy "Special Functions" p 314 with my amplitude scaling
   (if (< (abs angle) 1.0e-9)
       1.0
-      (let* ((val (/ (sin (* angle (+ n 0.5))) 
-		     (* (sin (* 0.5 angle))
-			(+ (* 2 n) 1))))) ; amplitude normalization -- we want a peak amp of 1.0
+      (let ((val (/ (sin (* angle (+ n 0.5))) 
+		    (* (sin (* 0.5 angle))
+		       (+ (* 2 n) 1))))) ; amplitude normalization -- we want a peak amp of 1.0
 	(* val val))))
 
 ;;; (let ((angle 0.0)) (map-channel (lambda (y) (let ((val (legendre-sum angle 3))) (set! angle (+ angle .1)) (* .1 val)))))
@@ -148,9 +148,9 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
   (let ((s4 (+ 1.0 (* -2.0 a (cos x)) (* a a))))
     (if (< (abs s4) 1.0e-9)
 	0.0
-	(let* ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) fi))))
-	       (s2 (* (expt a N) (sin (+ (* N x) fi))))
-	       (s3 (* a (sin (+ x fi)))))
+	(let ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) fi))))
+	      (s2 (* (expt a N) (sin (+ (* N x) fi))))
+	      (s3 (* a (sin (+ x fi)))))
 	  (/ (+ (sin fi) (- s3) (- s2) s1) s4)))))
 
 ;;; (let ((angle 0.0)) (map-channel (lambda (y) (let ((val (band-limited-sawtooth angle 0.5 8 .2))) (set! angle (+ angle .2)) val))))
@@ -282,9 +282,9 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 (define make-smoothing-filter make-moving-average)
 
 (define (smoothing-filter gen sig)
-  (let* ((val (moving-average gen sig))
-	 (old-sig (tap gen))
-	 (n (mus-order gen)))
+  (let ((val (moving-average gen sig))
+	(old-sig (tap gen))
+	(n (mus-order gen)))
     (* (/ n (- n 1))   ; scale back to 1.0
        (- val (* (mus-increment gen) 0.5 (+ old-sig sig))))))
 

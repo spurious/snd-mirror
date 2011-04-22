@@ -302,8 +302,8 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 
 (define (play-sine freq amp)
   "(play-sine freq amp) plays a 1 second sinewave at freq and amp"
-  (let* ((len 22050)
-	 (osc (make-oscil freq)))
+  (let ((len 22050)
+	(osc (make-oscil freq)))
     (play (lambda ()
 	    (set! len (- len 1))
 	    (if (<= len 0)

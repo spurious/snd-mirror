@@ -193,8 +193,8 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
   "(eval-over-selection func) evaluates func on each sample in the current selection"
   (if (and (procedure? func) 
 	   (selection?))
-      (let* ((beg (selection-position))
-	     (len (selection-frames)))
+      (let ((beg (selection-position))
+	    (len (selection-frames)))
 	(apply map (lambda (snd chn)
 		     (if (selection-member? snd chn)
 			 (let ((new-data (make-vct len))

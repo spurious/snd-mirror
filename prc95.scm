@@ -124,11 +124,11 @@
     (run
      (do ((i st (+ 1 i)))
 	 ((= i end))
-       (let* ((bridgerefl 0.0)
-	      (nutrefl 0.0) 
-	      (veldiff 0.0) 
-	      (stringvel 0.0) 
-	      (bowtemp 0.0))
+       (let ((bridgerefl 0.0)
+	     (nutrefl 0.0) 
+	     (veldiff 0.0) 
+	     (stringvel 0.0) 
+	     (bowtemp 0.0))
 	 (if bowing
 	     (if (not (= maxvelocity bowvelocity))
 		 (if (< bowvelocity maxvelocity)

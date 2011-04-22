@@ -479,7 +479,7 @@
 	  )
 
 					; - zoom out
-(bind-key (char->integer #\-) 0 (lambda () (let* ((curs (cursor)))
+(bind-key (char->integer #\-) 0 (lambda () (let ((curs (cursor)))
 					     (set! (x-bounds) (list 0 5))
 					     (set! (cursor) curs))
 					)

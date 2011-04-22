@@ -103,16 +103,16 @@
 			    (thread-reverb #f)
 			    (output-safety *clm-output-safety*))
   "with-sound-helper is the business portion of the with-sound macro"
-  (let* ((old-srate (mus-srate))
-	 (old-*output* *output*)
-	 (old-*reverb* *reverb*)
-	 (old-notehook *clm-notehook*)
-	 (old-verbose *clm-verbose*)
-	 (old-auto-update-interval (auto-update-interval))
-	 (output-1 output)                    ; protect during nesting
-	 (output-to-file (string? output))
-	 (reverb-1 revfile)
-	 (reverb-to-file (and reverb (string? revfile))))
+  (let ((old-srate (mus-srate))
+	(old-*output* *output*)
+	(old-*reverb* *reverb*)
+	(old-notehook *clm-notehook*)
+	(old-verbose *clm-verbose*)
+	(old-auto-update-interval (auto-update-interval))
+	(output-1 output)                    ; protect during nesting
+	(output-to-file (string? output))
+	(reverb-1 revfile)
+	(reverb-to-file (and reverb (string? revfile))))
 
     (if ignore-output
 	(begin
@@ -258,7 +258,7 @@
 	       (set! cycles (/ (* 1.0 (- (get-internal-real-time) start)) internal-time-units-per-second)))
 
 	   (if (and to-snd output-to-file)
-	       (let* ((cur (find-sound output-1)))
+	       (let ((cur (find-sound output-1)))
 		 (set! cur-sync (and cur (sync cur)))
 		 (if cur 
 		     (set! snd-output (update-sound cur))

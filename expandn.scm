@@ -299,8 +299,8 @@
 			     ;; output interpolated samples
 			     (do ((ix 0 (+ 1 ix)))
 				 ((= ix in-chans))
-			       (let* ((v0 (vct-ref samples-0 ix))
-				      (v1 (vct-ref samples-1 ix)))
+			       (let ((v0 (vct-ref samples-0 ix))
+				     (v1 (vct-ref samples-1 ix)))
 				 (frame-set! inframe ix (+ v0 (* (- next-samp ex-samp)
 								 (- v1 v0)))))))
 			 ;; output mixed result
