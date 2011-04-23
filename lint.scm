@@ -156,6 +156,9 @@
 			 (cons 'ash 2)
 			 (cons 'asin 1)
 			 (cons 'asinh 1)
+			 (cons 'assoc 'list-or-f)
+			 (cons 'assq 'list-or-f)
+			 (cons 'assv 'list-or-f)
 			 (cons 'atan 1)
 			 (cons 'atanh 1)
 			 (cons 'boolean? #t)
@@ -236,6 +239,9 @@
 			 (cons 'make-vector #())
 			 (cons 'map '(1))
 			 (cons 'max 2)
+			 (cons 'member 'list-or-f)
+			 (cons 'memq 'list-or-f)
+			 (cons 'memv 'list-or-f)
 			 (cons 'min 2)
 			 (cons 'modulo 2)
 			 (cons 'nan? #t)
@@ -520,7 +526,7 @@
 		(if (pair? arg)
 		    (let ((op (hash-table-ref function-types (car arg))))
 		      (case op
-			((number-or-f)
+			((number-or-f list-or-f)
 			 (if checker
 			     (format #t "  ~A (line ~D): ~A argument ~D might be #f:~A~%"
 				     name line-number head arg-number
@@ -736,7 +742,7 @@
 				      (not (pair? arg)))
 				 (and (pair? arg)
 				      (not (env-member? (car arg) env))
-				      (not (boolean? (hash-table-ref function-types (car arg))))))
+				      (not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f)))))
 			     #f
 			     (if (and (pair? arg)
 				      (pair? (cdr arg))
@@ -2515,3 +2521,8 @@
 
 	      (close-input-port fp)))))))
 
+
+;;; TODO: what about (floor (sin x)) which might be complex, or (max (sin x) ...)
+;;;  perhaps the result table should hold a list of representative results
+;;; member et al with constants?
+;;; doubled open paren? 

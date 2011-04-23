@@ -20581,6 +20581,17 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
   s7_pointer pt;
   pt = sc->input_port;
 
+#if 0
+  /* I think the current incoming program code is in sc->args, but reversed at its top level (ok within)
+   */
+  if (is_pair(sc->args))
+    {
+      int i, indent = 0;
+      sc->x = s7_reverse(sc, sc->args);
+      
+    }
+#endif
+
   /* it's hard to give a good idea here of where the missing paren is because we've already
    *   popped off all the stacked info, following ')' until eof.
    */

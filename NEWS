@@ -1,86 +1,24 @@
-Snd 12.0
+Snd 12.1
 
-   selection has a loop play triangle
-   mix and cursor have play triangles
-   if mouse click would trigger play, the cursor is a right or left arrow.
-   removed draggable mark play triangle and mark-drag-triangle-hook.
-   added variable play-arrow-size (default: 10)
+  added lint.scm, a scheme lint checker.
 
-   added Edit:Unselect menu option
-   added with-menu-icons (gtk only).
-   added optional "alpha" arg to make-color.
-   moved delete-selection-and-smooth from selection.scm to C.
-   added delete-samples-and-smooth.
-   typing space in a graph plays from the cursor, space while playing = pause/continue
-   startup window size is 700x300
-   auto-resize defaults to false in Gtk, true in Motif.
-   in gtk, the trailing cr argument to draw-axes in not optional.
-   in Motif, libXpm is no longer optional.
-   the Region browser print option has been removed.
-   removed click-for-listener-help.
-   removed Snd.gtkrc, Snd.ad, and the obsolete X resources stuff.
-   removed time-graph-hook; replaced by combined-data-color.
+  added expr.scm, which tries to find a math expression that matches
+     an arbitrary set of data.
 
-   tracking-cursor-style defaults to cursor-line.
-     cursor-follows-play moved to snd11.scm.
-     with-tracking-cursor is now a global (not sound-local).
+  added with-interrupts.  It defaults to #t, but both XtAppPending and 
+     gtk_events_pending can cause a noticeable slow-down in the computation,
+     so set with-interrupts to #f to turn off the GUI checks.
 
-   removed c-g! function; it can be replaced by stop-playing.
-     removed c-g? in Scheme -- it is superfluous.
+  added show-full-range to make the y-axis bounds accommodate the sound values.
 
-   added 'src' and 'auto' buttons to the Save-as dialogs for automatic srate conversion
-    and a blog-style commentary.  In the extension language, these are
-    save-as-dialog-src and save-as-dialog-auto-comment.
+  added info-popup-hook to specialize the popup menu's info output.
 
-   added sync-style variable: sync-none, sync-all, or sync-by-sound (now the default).
-     this used to be handled in extensions.* under names like global-sync-choice.
-     sync-none was the previous default. examp.scm sync-all function renamed sync-everything.
+  removed verbose-cursor (use with-verbose-cursor).
 
-   moved with-reopen-menu to snd11.scm, and removed it from the preferences dialog.
-     This menu is almost the same as the built-in File:Open recent menu.
+  removed the unused "chn" parameter from the pan-mix functions in mix.scm.
 
-   moved make-hidden-controls-dialog from snd-motif|gtk.scm to snd11.scm, and removed it 
-     from the preferences dialog.  It is now built-in as Options:Controls
-  
-   moved show-selection from extensions.* to C, added unselect-all (in C)
-     which replaces clear-selection (selection.scm).
+checked: gtk 3.0.4|5|6|7|8, 3.1.2, sbcl 1.0.47, mpfr 3.0.1
 
-   added show-full-duration, initial-beg, initial-dur, ask-about-unsaved-edits,
-     with-toolbar, remember-sound-state, with-smpte-label.  removed old
-     show-smpte-label in *.scm.
-
-   remember-sound-state in extensions has been moved to C (old scheme code is in snd11.scm).
-     it now reads/writes a file named "remembered-<soundfile-name>.scm|fs|rb" where
-     <soundfile-name> is the current sound's file name.
-
-   with-toolbar defaults to true in gtk, false otherwise.  It replaces toolbar.scm
-     and panic.scm.  Also with-tooltips to turn tooltips on or off.
-
-   The built-in popup menus are now context sensitive, and the files popup.scm
-     and gtk-popup.scm have been removed. In s7/Motif, the listener popup can
-     show a stacktrace of code as it is running!
-
-   In the beginning, before the libxm library, I thought it made sense to include
-     functions like draw-line which would draw a line, no matter what graphics
-     environment Snd was built with.  Unfortunately, cairo needs an explicitly
-     handled cairo_t structure.  So, draw-line, draw-lines, draw-dot, draw-dots,
-     draw-string, fill-rectangle, and fill-polygon now have a required trailing 
-     cairo_t argument (it's ignored in Motif).  Also two new kludges to get and
-     free this structure: make-cairo and free-cairo.  There aren't that many
-     uses of these functions (most the fancy graphic stuff uses direct cairo
-     or Motif calls from libxm), so perhaps eventually, they'll be removed.
-
-   To make it easier to zoom in on the FFT, the keypad arrow keys are bound
-     to zoom and move the FFT bounds, analogous to the normal arrow keys which
-     affect the time domain graph.  (There isn't any place to put sliders for
-     this, and the Options:Transform sliders aren't always handy).
-
-   in s7, random-state->list and a C tie-in for the random number functions.
-
-   Snd now needs Gtk 2.12 or later.
-
-checked: sbcl 1.0.46, gtk 3.0.1|2|3, mpc 0.9
+Thanks!: Mike Scholz.
 
 
-Thanks!: Louis Gorenfeld, Hartmut Noack, Philipp Uberbacher, Fernando Lopez-Lezcano,
-         Mike Scholz, Rick Taube.

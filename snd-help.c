@@ -272,48 +272,23 @@ static char *gl_version(void)
 static char *glx_version(void)
 {
   #define VERSION_SIZE 128
-  int major = 0, minor = 0;
-  char *version;
-  version = (char *)calloc(VERSION_SIZE, sizeof(char));
-  if (ss->dialogs == NULL) /* snd --help for example */
-    {
-#if HAVE_X
-      /* Mesa has version.h with all the info we want at compile time, but insists on hiding it! */
-      /*   so we go to the trouble of creating a context... */
-      int glAttribs[] = {GLX_DOUBLEBUFFER, GLX_RGBA, GLX_DEPTH_SIZE, 1, None};
-      Display *dpy;
-      XVisualInfo *visInfo;
-      int scrn;
-      Window win;
-      GLXContext glCtx;
-      dpy = XOpenDisplay(NULL);
-      if (!dpy) return(mus_strdup(" "));
-      scrn = DefaultScreen(dpy);
-      visInfo = glXChooseVisual(dpy, scrn, glAttribs);
-      if (!visInfo) return(mus_strdup(" "));
-      glCtx = glXCreateContext(dpy, visInfo, 0, True);
-      if (!glCtx) return(mus_strdup(" "));
-      win = XCreateSimpleWindow(dpy, RootWindow(dpy, scrn), 0, 0, 1, 1, 0, 0, 0);
-      glXMakeCurrent(dpy, win, glCtx);
-      mus_snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
-      return(version);
-#else
-      return(mus_strdup(" "));
-#endif
-    }
+  char *version = NULL;
 
-  if (MAIN_DISPLAY(ss) != NULL)
+  if ((ss->dialogs == NULL) || /* snd --help for example */
+      (MAIN_DISPLAY(ss) == NULL))
+    return(mus_strdup(" "));
+
+  version = (char *)calloc(VERSION_SIZE, sizeof(char));
+  if (ss->cx)
     {
-      if (ss->cx)
-	{
-	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->mainshell), ss->cx);
-	  mus_snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
-	}
-      else 
-	{
-	  glXQueryVersion(MAIN_DISPLAY(ss), &major, &minor);
-	  mus_snprintf(version, VERSION_SIZE, " %d.%d", major, minor);
-	}
+      glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->mainshell), ss->cx);
+      mus_snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
+    }
+  else 
+    {
+      int major = 0, minor = 0;
+      glXQueryVersion(MAIN_DISPLAY(ss), &major, &minor);
+      mus_snprintf(version, VERSION_SIZE, " %d.%d", major, minor);
     }
   if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
   return(version);
@@ -487,6 +462,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+24-Apr:  Snd 12.1.\n\
 5-Apr:   lint.scm.\n\
 25-Mar:  show-full-range, info-popup-hook.\n\
 21-Mar:  with-interrupts.\n\
