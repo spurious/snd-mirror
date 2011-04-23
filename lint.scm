@@ -85,6 +85,9 @@
 		   (set! result (cons val result)))))
 	   lst)
 	  (reverse result)))
+
+      ;; in a pinch, object->string could perhaps be (format #f "~A" obj)
+      ;;   and catch could be: (define (catch tag func err) (func))
       )
 
     ;; s7 
@@ -2522,7 +2525,8 @@
 	      (close-input-port fp)))))))
 
 
-;;; TODO: what about (floor (sin x)) which might be complex, or (max (sin x) ...)
-;;;  perhaps the result table should hold a list of representative results
+;;; TODO: what about floor or max of possibly-complex number?
+;;;       perhaps the result table should hold a list of representative results
 ;;; member et al with constants?
 ;;; doubled open paren? 
+;;; most important: if missing close paren, pretty print the stuff we have
