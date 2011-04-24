@@ -608,8 +608,8 @@
      (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
 
      (if (and (> (length data) 4)
-	      (eq? (list-ref data 4) 'if))
-	 (hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref data 5)))))
+	      (eq? (data 4) 'if))
+	 (hey "#if HAVE_~A~%" (string-upcase (symbol->string (data 5)))))
      (hey "static XEN gxg_~A(" name)
      (if (= (length args) 0)
 	 (heyc "void")
@@ -700,7 +700,7 @@
 		  (if previous-arg (hey-ok ", "))
 		  (if (and (not previous-arg)
 			   (> (length data) 4)
-			   (eq? (list-ref data 4) 'const))
+			   (eq? (data 4) 'const))
 		      (hey "(const ~A)" argtype))
 		  (set! previous-arg #t)
 		  (if (ref-arg? arg)
@@ -724,8 +724,8 @@
 		   (hey "    result = XEN_EMPTY_LIST;~%")
 		   (hey "    for (i = 0; i < vals; i++)~%")
 		   (hey "      result = XEN_CONS(C_TO_XEN_~A(~A[i]), result);~%" 
-			(no-stars (deref-type (list-ref args (- (length args) 1))))
-			(deref-name (list-ref args (- (length args) 1))))
+			(no-stars (deref-type (args (- (length args) 1))))
+			(deref-name (args (- (length args) 1))))
 		   (hey "    return(result);~%")
 		   (hey "  }~%"))
 		 (begin
@@ -770,11 +770,11 @@
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 ;(args (- cargs refargs))
 	 (if-fnc (and (> (length func) 4)
-		      (eq? (list-ref func 4) 'if))))
+		      (eq? (func 4) 'if))))
     (check-glu name)
     (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
     (if if-fnc
-	(hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5)))))
+	(hey "#if HAVE_~A~%" (string-upcase (symbol->string (func 5)))))
     (hey "XEN_~A(gxg_~A_w, gxg_~A)~%" 
 	 (if (>= cargs 10) "VARGIFY"
 	     (if (> refargs 0)
@@ -800,13 +800,13 @@
 	 ;(refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 ;(args (- cargs refargs))
 	 (if-fnc (and (> (length func) 4)
-		      (eq? (list-ref func 4) 'if))))
+		      (eq? (func 4) 'if))))
 
     (check-glu name)
     (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
 
     (if if-fnc
-	(hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5)))))
+	(hey "#if HAVE_~A~%" (string-upcase (symbol->string (func 5)))))
     (hey "#define gxg_~A_w gxg_~A~%" 
 	 (car func) (car func))
     (if if-fnc

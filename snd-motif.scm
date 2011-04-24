@@ -142,7 +142,7 @@
   (let* ((dpy (XtDisplay (cadr (main-widgets))))
 	 (win (XtWindow (cadr (main-widgets))))
 	 (host (XGetWindowProperty dpy win (XInternAtom (XtDisplay (cadr (main-widgets))) "WM_CLIENT_MACHINE" #f) 0 32 #f XA_STRING)))
-    (and host (list-ref host 5))))
+    (and host (host 5))))
 
 
 ;;; -------- install-searcher --------
@@ -264,7 +264,7 @@
     (if calls
 	(do ((chn 0 (+ 1 chn)))
 	    ((= chn (channels snd)))
-	  (let ((zy (list-ref (channel-widgets snd chn) 6)))
+	  (let ((zy ((channel-widgets snd chn) 6)))
 	    (XtRemoveCallback zy XmNdragCallback (car calls))
 	    (set! calls (cdr calls))))))
   (set! (sound-property 'dragger snd) #f)
@@ -280,7 +280,7 @@
 	(let ((calls '()))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn (channels snd)))
-	    (let* ((zy (list-ref (channel-widgets snd chn) 6))
+	    (let* ((zy ((channel-widgets snd chn) 6))
 		   (slider-size (cadr (XtGetValues zy (list XmNsliderSize 0)))) ; this is relative to max size
 		   (max-size (cadr (XtGetValues zy (list XmNmaximum 0))))
 		   (zy-div (max 10 (- max-size slider-size))))
@@ -322,7 +322,7 @@
 
 (define* (add-channel-pane snd chn name type (args '()))
   "(add-channel-pane snd chn name type (args '())) adds a pane to the channel section"
-  (XtCreateManagedWidget name type (XtParent (XtParent (list-ref (channel-widgets snd chn) 7))) args))
+  (XtCreateManagedWidget name type (XtParent (XtParent ((channel-widgets snd chn) 7))) args))
 
 
 ;;; -------- add our own pane to the sound section (underneath the controls in this case) --------
@@ -336,7 +336,7 @@
 
 (define* (add-main-pane name type (args '()))
   "(add-main-pane name type (args '())) adds a pane to Snd (underneath the listener)"
-  (XtCreateManagedWidget name type (or (list-ref (main-widgets) 5) (list-ref (main-widgets) 3)) args))
+  (XtCreateManagedWidget name type (or ((main-widgets) 5) ((main-widgets) 3)) args))
 
 
 ;;; -------- add a widget at the top of the listener
@@ -371,7 +371,7 @@
 (define (remove-menu-bar-menu which)
   "(remove-menu-bar-menu which) removes a top-level menu; 'which' can be 0: top-level-menu-bar, 1: file-menu, \
 2: edit-menu, 3: view-menu, 4: options-menu, 5: help-menu, 6: default popup menu"
-  (XtUnmanageChild (list-ref (menu-widgets) which)))
+  (XtUnmanageChild ((menu-widgets) which)))
 
 #|
 (define (add-second-row)
@@ -652,7 +652,7 @@
 	(cadr (XpmCreatePixmapFromData dpy win strs attr)))
       #f))
 
-; (XtSetValues (list-ref (sound-widgets) 8) (list XmNlabelPixmap (make-pixmap (cadr (main-widgets)) arrow-strs))))
+; (XtSetValues ((sound-widgets) 8) (list XmNlabelPixmap (make-pixmap (cadr (main-widgets)) arrow-strs))))
 
 ;;; if you have a nice background pixmap, you can map it over all of Snd with:
 #|
@@ -687,7 +687,7 @@
   "(bitmap->pixmap widget bits width height) takes an X-style bitmap and turns it into a pixmap"
   (XCreateBitmapFromData (XtDisplay widget) (XtWindow widget) bits width height))
 
-; (XtSetValues (list-ref (sound-widgets) 8) (list XmNlabelPixmap (bitmap->pixmap (list-ref (sound-widgets) 8) iconw right-arrow 16 12)))
+; (XtSetValues ((sound-widgets) 8) (list XmNlabelPixmap (bitmap->pixmap ((sound-widgets) 8) iconw right-arrow 16 12)))
 
 
 
@@ -701,7 +701,7 @@
 (define (display-scanned-synthesis)
   
   (define (add-main-pane name type args)
-    (XtCreateManagedWidget name type (list-ref (main-widgets) 3) args))
+    (XtCreateManagedWidget name type ((main-widgets) 3) args))
   
   (define compute-uniform-circular-string
     ;; copied from dsp.scm to simplify life
@@ -744,7 +744,7 @@
 	 (amplitude 0.02)
 	 (ax0 0) (ax1 0) (ay0 0) (ay1 0)
 	 (gc (car (snd-gcs)))
-	 (egc (list-ref (snd-gcs) 7))
+	 (egc ((snd-gcs) 7))
 	 (app (car (main-widgets)))
 	 
 	 ;; now set up a paned window in the main Snd window with controllers on the left and the graph on the right
@@ -862,13 +862,13 @@
 					     (list XmNbackground    (basic-color)
 						   XmNorientation   XmHORIZONTAL
 						   XmNshowValue     #t
-						   XmNminimum       (list-ref data 1)
-						   XmNmaximum       (list-ref data 2)
-						   XmNvalue         (list-ref data 3)
-						   XmNdecimalPoints (list-ref data 4)
+						   XmNminimum       (data 1)
+						   XmNmaximum       (data 2)
+						   XmNvalue         (data 3)
+						   XmNdecimalPoints (data 4)
 						   XmNtitleString   title))))
-	 (XtAddCallback button XmNdragCallback (lambda (w c i) ((list-ref data 5) (.value i))))
-	 (XtAddCallback button XmNvalueChangedCallback (lambda (w c i) ((list-ref data 5) (.value i))))
+	 (XtAddCallback button XmNdragCallback (lambda (w c i) ((data 5) (.value i))))
+	 (XtAddCallback button XmNvalueChangedCallback (lambda (w c i) ((data 5) (.value i))))
 	 (XmStringFree title)))
      (list (list "mass" 1 200 100 2 (lambda (val) (set! mass (/ val 100.0))))
 	   (list "spring" 1 100 10 2 (lambda (val) (set! xspring (/ val 100.0))))
@@ -1188,11 +1188,11 @@
 	      (find-dialog-widget wid (cdr ds)))))
     (lambda args
       ;; (file-select func title dir filter help)
-      (let* ((func (if (> (length args) 0) (list-ref args 0) #f))
-	     (title (if (> (length args) 1) (list-ref args 1) "select file"))
-	     (dir (if (> (length args) 2) (list-ref args 2) "."))
-	     (filter (if (> (length args) 3) (list-ref args 3) "*"))
-	     (help (if (> (length args) 4) (list-ref args 4) #f))
+      (let* ((func (if (> (length args) 0) (args 0) #f))
+	     (title (if (> (length args) 1) (args 1) "select file"))
+	     (dir (if (> (length args) 2) (args 2) "."))
+	     (filter (if (> (length args) 3) (args 3) "*"))
+	     (help (if (> (length args) 4) (args 4) #f))
 	     (dialog (or (find-free-dialog file-selector-dialogs)
 		 	 (let ((new-dialog (XmCreateFileSelectionDialog 
 					     (cadr (main-widgets)) 
@@ -1201,12 +1201,12 @@
 			   (XtAddCallback new-dialog XmNhelpCallback
 					    (lambda (w c i)
 					      (let ((lst (find-dialog-widget w file-selector-dialogs)))
-						(if (list-ref lst 4)
-						    (help-dialog (list-ref lst 3) (list-ref lst 4))))))
+						(if (lst 4)
+						    (help-dialog (lst 3) (lst 4))))))
 			   (XtAddCallback new-dialog XmNokCallback 
 					   (lambda (w c i)
 					     (let ((lst (find-dialog-widget w file-selector-dialogs)))
-					       ((list-ref lst 2) (XmStringUnparse (.value i) #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
+					       ((lst 2) (XmStringUnparse (.value i) #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
 					       (list-set! lst 1 #f)
 					       (XtUnmanageChild w))))
 			   (XtAddCallback new-dialog XmNcancelCallback
@@ -1252,7 +1252,7 @@
 ;;;   call from a work proc or whatever with hour going from 0 to 12 then #f
 
 (define snd-clock-icon
-  (let* ((shell (list-ref (main-widgets) 1))
+  (let* ((shell ((main-widgets) 1))
 	 (dpy (XtDisplay shell))
 	 (win (XtWindow shell))
 	 (clock-pixmaps (make-vector 12))
@@ -1276,7 +1276,7 @@
     (XSetForeground dpy dgc (data-color))
     (lambda (snd hour)
       (if hour
-	  (XtSetValues (list-ref (sound-widgets snd) 8)
+	  (XtSetValues ((sound-widgets snd) 8)
 		       (list XmNlabelPixmap (clock-pixmaps hour)))
 	  (bomb snd #f))))) ; using bomb to clear the icon
 
@@ -1323,7 +1323,7 @@
 (define make-sound-box 
   ;; graphics stuff (fonts etc)
   (let*  ((gv (XGCValues))
-	  (shell (list-ref (main-widgets) 1))
+	  (shell ((main-widgets) 1))
 	  (button-fontstruct (XLoadQueryFont (XtDisplay shell) (or (listener-font) "9x15"))))
     (set! (.foreground gv) (data-color))
     (set! (.background gv) (basic-color))
@@ -1336,22 +1336,22 @@
       ;; button data list handlers
       (define sound-button-gc
 	(make-procedure-with-setter
-	 (lambda (data) (list-ref data 0))
+	 (lambda (data) (data 0))
 	 (lambda (data val) (list-set! data 0 val))))
 
       (define sound-button-filename
 	(make-procedure-with-setter
-	 (lambda (data) (list-ref data 1))
+	 (lambda (data) (data 1))
 	 (lambda (data val) (list-set! data 1 val))))
 
       (define sound-button
 	(make-procedure-with-setter
-	 (lambda (data) (list-ref data 2))
+	 (lambda (data) (data 2))
 	 (lambda (data val) (list-set! data 2 val))))
 
       (define sound-button-peaks
 	(make-procedure-with-setter
-	 (lambda (data) (list-ref data 3))
+	 (lambda (data) (data 3))
 	 (lambda (data val) (list-set! data 3 val))))
 
       (define (sound-button-data button)
@@ -1435,7 +1435,7 @@
 
   (make-sound-box
    "sounds"
-   (XtCreateManagedWidget "scrolled-window" xmScrolledWindowWidgetClass (list-ref (main-widgets) 3)
+   (XtCreateManagedWidget "scrolled-window" xmScrolledWindowWidgetClass ((main-widgets) 3)
 			  (list XmNscrollBarDisplayPolicy XmAS_NEEDED
 				XmNbackground             (basic-color)
 				XmNvisualPolicy           XmVARIABLE
@@ -1481,10 +1481,10 @@
     (lambda (snd chn)
       "(draw-smpte-label snd chn) draws a SMPTE time stamp in a box on a graph"
       (let* ((axinf (axis-info snd chn))
-	     (x (list-ref axinf 10))
-	     (y (list-ref axinf 13))
-	     (grf-width (- (list-ref axinf 12) x))
-	     (grf-height (- (list-ref axinf 11) y)))
+	     (x (axinf 10))
+	     (y (axinf 13))
+	     (grf-width (- (axinf 12) x))
+	     (grf-height (- (axinf 11) y)))
 	(if (and (> grf-height (* 2 height))
 		 (> grf-width (* 1.5 width))
 		 (time-graph? snd chn))
@@ -1579,12 +1579,12 @@
 (define (display-level meter-data)
   "(display-level meter-data) displays a VU level meter"
   (let* ((meter (car meter-data))
-	 (level (list-ref meter-data 1))
-	 (last-level (list-ref meter-data 3))
-	 (red-deg (list-ref meter-data 4))
-	 (width (list-ref meter-data 5))
-	 (height (list-ref meter-data 6))
-	 ;; (size (list-ref meter-data 2))
+	 (level (meter-data 1))
+	 (last-level (meter-data 3))
+	 (red-deg (meter-data 4))
+	 (width (meter-data 5))
+	 (height (meter-data 6))
+	 ;; (size (meter-data 2))
 	 (dpy (XtDisplay meter))
 	 (win (XtWindow meter))
 	 (major-tick (round (/ width 24)))
@@ -1641,10 +1641,10 @@
 	    (if (> val red-deg)
 		(list-set! meter-data 4 val)
 		(list-set! meter-data 4 (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
-	    (if (> (list-ref meter-data 4) .01)
+	    (if (> (meter-data 4) .01)
 		(begin
 		  (XSetForeground dpy gc (red-pixel))
-		  (let* ((redx (floor (* (list-ref meter-data 4) 90 64)))
+		  (let* ((redx (floor (* (meter-data 4) 90 64)))
 			 (redy (min redx bubble-size)))
 		    (do ((i 0 (+ i 1)))
 			((= i 4))
@@ -1653,7 +1653,7 @@
 
 (define (with-level-meters n)
   "(with-level-meters n) adds 'n' level meters to a pane at the top of the Snd window"
-  (let* ((parent (list-ref (main-widgets) 3))
+  (let* ((parent ((main-widgets) 3))
 	 (height 70)
 	 (width (floor (/ (cadr (XtGetValues parent (list XmNwidth 0))) n)))
 	 (meters (XtCreateManagedWidget "meters" xmFormWidgetClass parent
@@ -1804,9 +1804,9 @@
 		(snd-error "no sound found for disk space label")
 		(let* ((app (car (main-widgets)))
 		       (widgets (sound-widgets snd))
-		       (minibuffer (list-ref widgets 3))
-		       (unite-button (list-ref widgets 6))
-		       (sync-button (list-ref widgets 9))
+		       (minibuffer (widgets 3))
+		       (unite-button (widgets 6))
+		       (sync-button (widgets 9))
 		       (name-form (XtParent minibuffer)) ; "snd-name-form"
 		       (space (kmg (disk-kspace (file-name snd))))
 		       (str (XmStringCreateLocalized space)))
@@ -1872,7 +1872,7 @@
       (XmStringFree ampstr)
       (if ctrl
 	  (let* ((wids (sound-widgets snd))
-		 (ctrls (list-ref wids 2))
+		 (ctrls (wids 2))
 		 (snd-amp (find-child ctrls "snd-amp"))
 		 (chns (channels snd)))
 	    (do ((i 0 (+ i 1)))
@@ -1945,7 +1945,7 @@
   
   (define (amp-controls-reflect-chans snd)
     (let* ((wids (sound-widgets snd))
-	   (ctrls (list-ref wids 2))
+	   (ctrls (wids 2))
 	   (snd-amp (find-child ctrls "snd-amp"))
 	   (chns (channels snd)))
       
@@ -2011,7 +2011,7 @@
   (define (amp-controls-clear snd)
     (if (> (channels snd) 1)
 	(let* ((wids (sound-widgets snd))
-	       (ctrls (list-ref wids 2))
+	       (ctrls (wids 2))
 	       (snd-amp (find-child ctrls "snd-amp"))
 	       (top (- (channels snd) 1)))
 	  (do ((i 1 (+ i 1)))
@@ -2033,7 +2033,7 @@
 
 (define (remove-main-menu menu)
   "(remove-main-menu menu) removes the specified top-level menu: (remove-main-menu 5) removes the Help menu"
-  (let* ((cascade (list-ref (menu-widgets) menu))
+  (let* ((cascade ((menu-widgets) menu))
 	 (top (cadr (XtGetValues cascade (list XmNsubMenuId 0)))))
     (XtUnmanageChild cascade)
     (XtUnmanageChild top)))
@@ -2156,7 +2156,7 @@
 ;;; this deletes the play button
 ;(hook-push after-open-hook
 ;	   (lambda (snd)
-;	     (let* ((ctrls (list-ref (sound-widgets snd) 2))
+;	     (let* ((ctrls ((sound-widgets snd) 2))
 ;		    (play-button (find-child ctrls "play"))
 ;		    (sync-button (find-child ctrls "sync")))
 ;	     (XtUnmanageChild play-button)
@@ -2180,8 +2180,8 @@
 	    (snd-error (format #f "can't allocate ~A" color-name))
 	    (.pixel col)))))
 
-  (let* ((mark-gc (list-ref (snd-gcs) 9))
-	 (selected-mark-gc (list-ref (snd-gcs) 10))
+  (let* ((mark-gc ((snd-gcs) 9))
+	 (selected-mark-gc ((snd-gcs) 10))
 	 (dpy (XtDisplay (cadr (main-widgets))))
 	 (original-mark-color (list 'Pixel (logxor (cadr (mark-color)) 
 						   (cadr (graph-color)))))
@@ -2324,7 +2324,7 @@
 	(find-text #f)
 	(find-forward #t)
 	(find-new #t)
-	(listener-text (list-ref (main-widgets) 4))
+	(listener-text ((main-widgets) 4))
 	(shell (cadr (main-widgets)))
 	(snd-app (car (main-widgets))))
     (lambda ()
@@ -2433,7 +2433,7 @@
 (define (add-text-to-status-area)
   "(add-text-to-status-area) adds a text widget to the notebook status area"
   ;; it might be a better use of this space to put dlp's icon row in it
-  (let ((notebook (list-ref (main-widgets) 3)))
+  (let ((notebook ((main-widgets) 3)))
     (if (XmIsNotebook notebook)
 	(let ((text (XtCreateManagedWidget "notebook-text" xmTextFieldWidgetClass notebook
 	              (list XmNbackground (basic-color)))))
@@ -2631,8 +2631,8 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
       (let ((previous-minmax (find-if (lambda (n) (equal? (car n) snd)) maxed-snds)))
 	(if (not previous-minmax)
 	    (let* ((widgets (sound-widgets snd))
-		   (minibuffer (list-ref widgets 3))
-		   (play-button (list-ref widgets 4))
+		   (minibuffer (widgets 3))
+		   (play-button (widgets 4))
 		   (cur-size (cadr (XtVaGetValues (car widgets) (list XmNheight 0)))))
 	      (XtUnmanageChild play-button)
 	      (let* ((name-form (XtParent minibuffer)) ; "snd-name-form"
@@ -2659,15 +2659,15 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 				 (list-set! mv 4 (show-controls c))
 				 (do ((i 0 (+ i 1)))
 				     ((= i (channels c)))
-				   (XtUnmanageChild (list-ref (channel-widgets c i) 10)))
+				   (XtUnmanageChild ((channel-widgets c i) 10)))
 				 (set! (show-controls c) #f)
 				 (XmChangeColor new-minmax (make-color 1 1 0))
 				 (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum 25)))
-			       (let ((prev-size (list-ref mv 3)))
+			       (let ((prev-size (mv 3)))
 				 (do ((i 0 (+ i 1)))
 				     ((= i (channels c)))
-				   (XtManageChild (list-ref (channel-widgets c i) 10)))
-				 (if (list-ref mv 4) (set! (show-controls c) #t))
+				   (XtManageChild ((channel-widgets c i) 10)))
+				 (if (mv 4) (set! (show-controls c) #t))
 				 (XmChangeColor new-minmax (basic-color))
 				 (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum prev-size XmNpaneMinimum (- prev-size 1)))
 				 (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum 1000 XmNpaneMinimum 1))))
@@ -2699,7 +2699,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 ;;; this is now the default
 (define (notebook-with-top-tabs)
   "(notebook-with-top-tabs) posts the list of open sounds across the top of the Snd window (like the Emacs buffer list)"
-  (let ((nb (list-ref (main-widgets) 3)))
+  (let ((nb ((main-widgets) 3)))
     (XtVaSetValues nb (list XmNorientation XmVERTICAL
                             XmNbindingType XmNONE
                             XmNbackPagePlacement XmTOP_RIGHT))))

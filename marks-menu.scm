@@ -110,8 +110,8 @@
 				 ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (cadr sliders)))
 				 )
 			       (lambda (w c i)
-				 (XtSetValues (list-ref sliders 0) (list XmNvalue play-between-marks-m1))
-				 (XtSetValues (list-ref sliders 1) (list XmNvalue play-between-marks-m2))))))
+				 (XtSetValues (sliders 0) (list XmNvalue play-between-marks-m1))
+				 (XtSetValues (sliders 1) (list XmNvalue play-between-marks-m2))))))
 
 		    (set! sliders
 			  (add-sliders 
@@ -455,9 +455,9 @@ using the granulate generator to fix up the selection duration (this still is no
 			   )
 			 (lambda (w c i)
 			   (set! fit-to-mark-one initial-fit-to-mark-one)
-			   (XtSetValues (list-ref sliders 0) (list XmNvalue fit-to-mark-one))
+			   (XtSetValues (sliders 0) (list XmNvalue fit-to-mark-one))
 			   (set! fit-to-mark-two initial-fit-to-mark-two)
-			   (XtSetValues (list-ref sliders 1) (list XmNvalue fit-to-mark-two))))))
+			   (XtSetValues (sliders 1) (list XmNvalue fit-to-mark-two))))))
 
 	      (set! sliders
 		    (add-sliders 
@@ -546,9 +546,9 @@ using the granulate generator to fix up the selection duration (this still is no
 			   )
 			 (lambda (w c i)
 			   (set! define-by-mark-one initial-define-by-mark-one)
-			   (XtSetValues (list-ref sliders 0) (list XmNvalue define-by-mark-one))
+			   (XtSetValues (sliders 0) (list XmNvalue define-by-mark-one))
 			   (set! define-by-mark-two initial-define-by-mark-two)
-			   (XtSetValues (list-ref sliders 1) (list XmNvalue define-by-mark-two))))))
+			   (XtSetValues (sliders 1) (list XmNvalue define-by-mark-two))))))
 
 	      (set! sliders
 		    (add-sliders 
@@ -647,13 +647,13 @@ using the granulate generator to fix up the selection duration (this still is no
       (define (update-labels start range end sus-rel range-in-secs)
 	(if range-in-secs
 	    (begin
-	      (change-label start (format #f "~,3F" (/ (list-ref loop-data (* sus-rel 2)) (srate))))
-	      (change-label range (format #f "~,3F" (/ (- (list-ref loop-data (+ 1 (* sus-rel 2))) (list-ref loop-data (* sus-rel 2))) (srate))))
-	      (change-label end (format #f "~,3F" (/ (list-ref loop-data (+ 1 (* sus-rel 2))) (srate)))))
+	      (change-label start (format #f "~,3F" (/ (loop-data (* sus-rel 2)) (srate))))
+	      (change-label range (format #f "~,3F" (/ (- (loop-data (+ 1 (* sus-rel 2))) (loop-data (* sus-rel 2))) (srate))))
+	      (change-label end (format #f "~,3F" (/ (loop-data (+ 1 (* sus-rel 2))) (srate)))))
 	    (begin
-	      (change-label start (format #f "~D" (list-ref loop-data (* sus-rel 2))))
-	      (change-label range (format #f "~D" (- (list-ref loop-data (+ 1 (* sus-rel 2))) (list-ref loop-data (* sus-rel 2)))))
-	      (change-label end (format #f "~D" (list-ref loop-data (+ 1 (* sus-rel 2))))))))
+	      (change-label start (format #f "~D" (loop-data (* sus-rel 2))))
+	      (change-label range (format #f "~D" (- (loop-data (+ 1 (* sus-rel 2))) (loop-data (* sus-rel 2)))))
+	      (change-label end (format #f "~D" (loop-data (+ 1 (* sus-rel 2))))))))
       
       (define (create-loop-dialog)
 	(if (not (Widget? loop-dialog))
@@ -851,23 +851,23 @@ using the granulate generator to fix up the selection duration (this still is no
 			  
 			  (XtAddCallback farleft XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) 0 (list-ref loop-data sus-rel-start))))
+					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))
 					     (list-set! loop-data (+ loc (* offset 2)) ml)
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback stopleft XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) 0 (list-ref loop-data sus-rel-start))))
+					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))
 					     (list-set! loop-data (+ loc (* offset 2)) ml)
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback lotsleft XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) 0 (list-ref loop-data sus-rel-start))))
-					     (list-set! loop-data (+ loc (* offset 2)) (max ml (- (list-ref loop-data (+ loc (* offset 2))) 10)))
+					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))
+					     (list-set! loop-data (+ loc (* offset 2)) (max ml (- (loop-data (+ loc (* offset 2))) 10)))
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback someleft XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) 0 (list-ref loop-data sus-rel-start))))
-					     (list-set! loop-data (+ loc (* offset 2)) (max ml (- (list-ref loop-data (+ loc (* offset 2))) 1)))
+					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))
+					     (list-set! loop-data (+ loc (* offset 2)) (max ml (- (loop-data (+ loc (* offset 2))) 1)))
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
 		      (list rowlefttop rowleftbottom)
 		      (list 0 1))
@@ -881,23 +881,23 @@ using the granulate generator to fix up the selection duration (this still is no
 			  
 			  (XtAddCallback farright XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (list-ref loop-data (+ sus-rel-start 1)) (frames))))
+					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
 					     (list-set! loop-data (+ loc (* offset 2)) ml)
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback stopright XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (list-ref loop-data (+ sus-rel-start 1)) (frames))))
+					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
 					     (list-set! loop-data (+ loc (* offset 2)) ml)
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback lotsright XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (list-ref loop-data (+ sus-rel-start 1)) (frames))))
-					     (list-set! loop-data (+ loc (* offset 2)) (min ml (+ (list-ref loop-data (+ loc (* offset 2))) 10)))
+					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
+					     (list-set! loop-data (+ loc (* offset 2)) (min ml (+ (loop-data (+ loc (* offset 2))) 10)))
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback someright XmNactivateCallback
 					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (list-ref loop-data (+ sus-rel-start 1)) (frames))))
-					     (list-set! loop-data (+ loc (* offset 2)) (min ml (+ (list-ref loop-data (+ loc (* offset 2))) 1)))
+					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
+					     (list-set! loop-data (+ loc (* offset 2)) (min ml (+ (loop-data (+ loc (* offset 2))) 1)))
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
 		      (list rowrighttop rowrightbottom)
 		      (list 0 1))))

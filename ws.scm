@@ -293,7 +293,7 @@
 				(let ((lst (mus-sound-maxamp output-1)))
 				  (do ((i 0 (+ i 2)))
 				      ((>= i (length lst)))
-				    (list-set! lst i (/ (list-ref lst i) (mus-srate))))
+				    (list-set! lst i (/ (lst i) (mus-srate))))
 				  lst))
 			    (if (vct? output-1)
 				(list (vct-peak output-1))
@@ -782,17 +782,17 @@ finish-with-sound to complete the process."
   "(finish-with-sound wsd) closes the notelist process started by init-with-sound"
   (if (eq? (car wsd) 'with-sound-data)
       (let ((cycles 0)
-	    (output (list-ref wsd 1))
-	    (reverb (list-ref wsd 2))
-	    (revfile (list-ref wsd 3))
-	    (old-srate (list-ref wsd 4))
-	    (statistics (list-ref wsd 5))
-	    (to-snd (list-ref wsd 6))
-	    (scaled-to (list-ref wsd 7))
-	    (scaled-by (list-ref wsd 8))
-	    (play (list-ref wsd 9))
-	    (reverb-data (list-ref wsd 10))
-	    (start (list-ref wsd 11)))
+	    (output (wsd 1))
+	    (reverb (wsd 2))
+	    (revfile (wsd 3))
+	    (old-srate (wsd 4))
+	    (statistics (wsd 5))
+	    (to-snd (wsd 6))
+	    (scaled-to (wsd 7))
+	    (scaled-by (wsd 8))
+	    (play (wsd 9))
+	    (reverb-data (wsd 10))
+	    (start (wsd 11)))
 
 	(if reverb
 	    (begin
@@ -835,7 +835,7 @@ finish-with-sound to complete the process."
   (make-procedure-with-setter
    (lambda (w)
      "accessor for play field of init-with-sound struct"
-     (list-ref w 9))
+     (w 9))
    (lambda (w val)
      (list-set! w 9 val))))
 

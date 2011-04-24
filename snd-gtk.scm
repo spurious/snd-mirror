@@ -53,7 +53,7 @@
 			       GDK_TARGET_STRING 0 1024 0)))
     ;; val is list: (success atom element-size length unterminated-string)
     (and (car val)
-	 (substring (list-ref val 4) 0 (list-ref val 3)))))
+	 (substring (val 4) 0 (val 3)))))
 
 
 (define red-pixel
@@ -123,7 +123,7 @@
 	 
 	 ;; now set up a paned window in the main Snd window with controllers on the left and the graph on the right
 	 (scan-outer (let ((pane (gtk_hbox_new #f 0)))
-		       (gtk_box_pack_start (GTK_BOX (list-ref (main-widgets) 5)) pane #f #f 4)
+		       (gtk_box_pack_start (GTK_BOX ((main-widgets) 5)) pane #f #f 4)
 		       (gtk_widget_show pane)
 		       pane))
 	 (scan-row (let ((box (gtk_vbox_new #f 0)))
@@ -249,12 +249,12 @@
     ;; controller callbacks
     (for-each 
      (lambda (data)
-       (let* ((title (list-ref data 0))
-	      (minval (list-ref data 1))
-	      (maxval (list-ref data 2))
-	      (curval (list-ref data 3))
-	      (decimals (list-ref data 4))
-	      (func (list-ref data 5))
+       (let* ((title (data 0))
+	      (minval (data 1))
+	      (maxval (data 2))
+	      (curval (data 3))
+	      (decimals (data 4))
+	      (func (data 5))
 	      (adj (gtk_adjustment_new curval minval maxval 1.0 10.0 1.0))
 	      (scale (gtk_hscale_new (GTK_ADJUSTMENT adj)))
 	      (label (gtk_label_new title)))
@@ -396,7 +396,7 @@
 		  (list 'save-state-ignore))))
   (do ((chn 0 (+ 1 chn)))
       ((= chn (channels snd)))
-    (let ((zy (list-ref (channel-widgets snd chn) 14)))
+    (let ((zy ((channel-widgets snd chn) 14)))
       (g_signal_connect_closure_by_id (GPOINTER zy)
 				      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (G_OBJECT zy)))
 				      0
@@ -467,7 +467,7 @@
 	(if (not previous-label)
 	    (if (not snd)
 		(snd-error "no sound found for disk space label")
-		(let* ((name-form (list-ref (sound-widgets) 10))
+		(let* ((name-form ((sound-widgets) 10))
 		       (space (kmg (disk-kspace (file-name snd))))
 		       (new-label (gtk_label_new space)))
 		  (gtk_box_pack_start (GTK_BOX name-form) new-label #f #f 6)
@@ -484,7 +484,7 @@
 
 (define (remove-main-menu menu)
   "(remove-main-menu menu) removes the specified top-level menu: (remove-main-menu 5) removes the Help menu"
-  (gtk_widget_hide (list-ref (menu-widgets) menu)))
+  (gtk_widget_hide ((menu-widgets) menu)))
 
 
 ;;; -------- keep-file-dialog-open-upon-ok
@@ -504,7 +504,7 @@
 
 (define snd-clock-icon
   (lambda (snd hour)
-    (let* ((window ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
+    (let* ((window ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window ((sound-widgets snd) 8))))
 	   (cr (gdk_cairo_create window))
 	   (bg (color->list (basic-color))))
       (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
@@ -526,7 +526,7 @@
 ;;; this is the happy face progress bar
 
 (define (snd-happy-face snd progress)
-  (let* ((window ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
+  (let* ((window ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window ((sound-widgets snd) 8))))
 	 (cr (gdk_cairo_create window))
 	 (bg (color->list (basic-color)))
 	 (fc (list 1.0 progress 0.0)))
@@ -607,10 +607,10 @@
 
     (lambda args
       ;; (file-select func title dir filter help)
-      (let* ((func (if (> (length args) 0) (list-ref args 0) #f))
-	     (title (if (> (length args) 1) (list-ref args 1) "select file"))
-	     (dir (if (> (length args) 2) (list-ref args 2) "."))
-	     ;; (filter (if (> (length args) 3) (list-ref args 3) "*"))
+      (let* ((func (if (> (length args) 0) (args 0) #f))
+	     (title (if (> (length args) 1) (args 1) "select file"))
+	     (dir (if (> (length args) 2) (args 2) "."))
+	     ;; (filter (if (> (length args) 3) (args 3) "*"))
 	     (dialog (or (find-free-dialog file-selector-dialogs)
 			 (GTK_FILE_CHOOSER_DIALOG (gtk_file_chooser_dialog_new
 						   title
@@ -659,12 +659,12 @@
 
 (define (display-level meter-data)
   (let* ((meter (car meter-data))
-	 (level (list-ref meter-data 1))
-	 (last-level (list-ref meter-data 3))
-	 (red-deg (list-ref meter-data 4))
-	 (width (list-ref meter-data 5))
-	 (height (list-ref meter-data 6))
-	 ;; (size (list-ref meter-data 2))
+	 (level (meter-data 1))
+	 (last-level (meter-data 3))
+	 (red-deg (meter-data 4))
+	 (width (meter-data 5))
+	 (height (meter-data 6))
+	 ;; (size (meter-data 2))
 	 (win ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window meter))))
 
     ;; this is too slow -- can we save the plate? (also if just 1 meter, put pivot higher?)
@@ -755,7 +755,7 @@
 
 (define (with-level-meters n)
   ;; add n level meters to a pane at the top of the Snd window
-  (let* ((parent (list-ref (main-widgets) 5))
+  (let* ((parent ((main-widgets) 5))
 	 (height (if (> n 2) 70 85))
 	 (parent-width (cadr (gdk_drawable_get_size ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window parent)))))
 	 (width (floor (/ parent-width n)))
@@ -926,7 +926,7 @@
   var)
 
 (define (notebook-with-top-tabs)
-  (gtk_notebook_set_tab_pos (GTK_NOTEBOOK (list-ref (main-widgets) 5)) GTK_POS_TOP))
+  (gtk_notebook_set_tab_pos (GTK_NOTEBOOK ((main-widgets) 5)) GTK_POS_TOP))
 
 
 
@@ -1013,7 +1013,7 @@
 ;;; this doesn't actually work yet, but the simpler C case below almost works
 (define (emacs)
   (let ((emacs-pane (gtk_vbox_new #t 0)))
-    (gtk_box_pack_start (GTK_BOX (list-ref (main-widgets) 5)) emacs-pane #f #f 4)
+    (gtk_box_pack_start (GTK_BOX ((main-widgets) 5)) emacs-pane #f #f 4)
     (gtk_widget_show emacs-pane)
     (let ((socket (gtk_socket_new)))
       (gtk_container_add (GTK_CONTAINER emacs-pane) socket)

@@ -20324,7 +20324,7 @@ GOT_CATCH:
 	      else format_to_output(sc, error_port, "\n;~A ~A", make_list_2(sc, type, info));
 	    }
 	  
-	  /* now display location and \n at end */
+	  /* now display location at end */
 	  
 	  if ((is_input_port(sc->input_port)) &&
 	      (port_file(sc->input_port) != stdin))
@@ -20336,12 +20336,12 @@ GOT_CATCH:
 	      line = port_line_number(sc->input_port);
 	      
 	      if (filename)
-		format_to_output(sc, error_port, ", ~A[~D]",
+		format_to_output(sc, error_port, "\n;  ~A[~D]",
 				 make_list_2(sc, make_protected_string(sc, filename), s7_make_integer(sc, line)));
 	      else 
 		{
 		  if (line > 0)
-		    format_to_output(sc, error_port, ", line ~D", 
+		    format_to_output(sc, error_port, "\n;  line ~D", 
 				     make_list_1(sc, s7_make_integer(sc, line)));
 		}
 	    }
@@ -20351,7 +20351,7 @@ GOT_CATCH:
 		  (call_name != NULL) &&
 		  (call_line >= 0))
 		{
-		  format_to_output(sc, error_port, ", ~A ~A[~D]",
+		  format_to_output(sc, error_port, "\n;  ~A ~A[~D]",
 				   make_list_3(sc, 
 					       make_protected_string(sc, call_name), 
 					       make_protected_string(sc, call_file), 
@@ -20574,36 +20574,137 @@ and applies it to the rest of the arguments."
 }
 
 
+static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p)
+{
+  int form_len;
+  char *form;
+
+  form = s7_object_to_c_string(sc, p);
+  form_len = safe_strlen(form);
+  if (form_len > 80)
+    {
+      int i;
+      for (i = 76; i >= 40; i--)
+	if (is_white_space((int)form[i]))
+	  {
+	    form[i] = '.';
+	    form[i + 1] = '.';
+	    form[i + 2] = '.';
+	    form[i + 3] = '\0';
+	    break;
+	  }
+    }
+
+  return(form);
+}
+
+
+static bool too_many_arguments(s7_scheme *sc, s7_pointer proc, int len)
+{
+  s7_pointer proc_args;
+  proc_args = s7_procedure_arity(sc, proc);
+  return((is_pair(proc_args)) &&
+	 (caddr(proc_args) == sc->F) &&
+	 ((s7_integer(car(proc_args)) + s7_integer(cadr(proc_args))) < len));
+}
+
+
+static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
+{
+  s7_pointer p;
+  char *msg = NULL;
+  for (p = lst; is_pair(p); p = cdr(p))
+    {
+      if (is_pair(car(p)))
+	{
+	  if (s7_is_symbol(caar(p)))
+	    {
+	      int len;
+	      
+	      len = s7_list_length(sc, car(p));
+	      if (((s7_is_eq(caar(p), s7_make_symbol(sc, "if"))) &&
+		   (len > 4)) ||
+		  ((s7_is_procedure(symbol_value(caar(p)))) &&
+		   (too_many_arguments(sc, symbol_value(caar(p)), len))) ||
+		  ((s7_is_eq(caar(p), s7_make_symbol(sc, "define"))) &&
+		   (is_pair(cdr(p))) &&
+		   (s7_is_symbol(cadr(p))) &&
+		   (len > 3)))
+		{
+		  int msg_len, form_len;
+		  char *form;
+		  /* it's very tricky to try to see other errors here, especially because 'case'
+		   *   can have syntax names in its key lists.  Even this may get fooled, but
+		   *   I'm hoping that more often than not, it will help track down the missing
+		   *   close paren.
+		   */
+
+		  form = object_to_truncated_string(sc, car(p));
+		  form_len = safe_strlen(form);
+		  msg_len = form_len + 128;
+		  msg = (char *)calloc(msg_len, sizeof(char));
+		  snprintf(msg, msg_len, ";  this looks bogus: %s", form);
+		  free(form);
+
+		  return(msg);
+		}
+	    }
+	  msg = missing_close_paren_syntax_check(sc, car(p));
+	  if (msg) 
+	    return(msg);
+	}
+    }
+  return(NULL);
+}
+
+
 static s7_pointer missing_close_paren_error(s7_scheme *sc)
 {
   int len;
-  char *msg;
+  char *msg, *syntax_msg = NULL;
   s7_pointer pt;
   pt = sc->input_port;
 
-#if 0
-  /* I think the current incoming program code is in sc->args, but reversed at its top level (ok within)
-   */
-  if (is_pair(sc->args))
-    {
-      int i, indent = 0;
-      sc->x = s7_reverse(sc, sc->args);
-      
-    }
-#endif
-
   /* it's hard to give a good idea here of where the missing paren is because we've already
    *   popped off all the stacked info, following ')' until eof.
+   * but the current incoming program code is in sc->args, reversed at its top level,
+   *   so it's worth looking for some problem involving too many clauses (if) or arguments, etc.
+   * this can be a hard bug to track down in a large program, so s7 really has to make an effort to help.
    */
+
+  if (is_pair(sc->args))
+    {
+      sc->x = s7_reverse(sc, sc->args);
+      syntax_msg = missing_close_paren_syntax_check(sc, sc->x);
+
+      /* PERHAPS: if syntax_msg is null, we didn't find the problem, so perhaps show it indented?
+       */
+    }
 
   if ((port_line_number(pt) > 0) &&
       (port_filename(pt)))
     {
-      len = safe_strlen(port_filename(pt)) + safe_strlen(sc->current_file) + 128;
+      len = safe_strlen(port_filename(pt)) + safe_strlen(sc->current_file) + safe_strlen(syntax_msg) + 128;
       msg = (char *)malloc(len * sizeof(char));
-      len = snprintf(msg, len, "missing close paren, %s[%d], last top-level form at %s[%d]\n", 
-		     port_filename(pt), port_line_number(pt), 
-		     sc->current_file, sc->current_line);
+      if (syntax_msg)
+	{
+	  len = snprintf(msg, len, "missing close paren, %s[%d], last top-level form at %s[%d]\n%s", 
+			 port_filename(pt), port_line_number(pt), 
+			 sc->current_file, sc->current_line, syntax_msg);
+	  free(syntax_msg);
+	}
+      else len = snprintf(msg, len, "missing close paren, %s[%d], last top-level form at %s[%d]", 
+			  port_filename(pt), port_line_number(pt), 
+			  sc->current_file, sc->current_line);
+      return(s7_error(sc, sc->READ_ERROR, make_string_uncopied_with_length(sc, msg, len)));
+    }
+
+  if (syntax_msg)
+    {
+      len = safe_strlen(syntax_msg) + 128;
+      msg = (char *)malloc(len * sizeof(char));
+      len = snprintf(msg, len, "missing close paren\n%s\n", syntax_msg);
+      free(syntax_msg);
       return(s7_error(sc, sc->READ_ERROR, make_string_uncopied_with_length(sc, msg, len)));
     }
   return(s7_error(sc, sc->READ_ERROR, 
@@ -22626,7 +22727,7 @@ static s7_pointer g_pair_line_number(s7_scheme *sc, s7_pointer args)
 
   if (!is_pair(car(args)))
     return(s7_wrong_type_arg_error(sc, "pair-line-number", 0, car(args), "a pair"));	
-  return(s7_make_integer(sc, (s7_Int)(pair_line_number(car(args)) & 0xffffff)));
+  return(s7_make_integer(sc, (s7_Int)(remembered_line_number(pair_line_number(car(args))))));
 }
 
 

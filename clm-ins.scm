@@ -110,8 +110,8 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	    (len (length phons)))
 	(do ((i 0 (+ i 2)))
 	    ((>= i len))
-	  (set! f1 (cons (list-ref phons i) f1))
-	  (set! f1 (cons (list-ref (find-phoneme (list-ref phons (+ i 1)) formants) which) f1)))
+	  (set! f1 (cons (phons i) f1))
+	  (set! f1 (cons ((find-phoneme (phons (+ i 1)) formants) which) f1)))
 	(reverse f1)))
 
   (let* ((start (seconds->samples beg))
@@ -140,8 +140,8 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	 (ran-vib (make-rand-interp :frequency 20 :amplitude (* freq .5 vibscl))))
     (do ((i 0 (+ i 1)))
 	((= i fs))
-      (let ((amp (list-ref formant-amps i))
-	    (index (list-ref formant-indices i)))
+      (let ((amp (formant-amps i))
+	    (index (formant-indices i)))
 	(set! (evens i) (make-oscil 0))
 	(set! (odds i) (make-oscil 0))
 	(set! (amps i) amp)
@@ -333,7 +333,7 @@ vocal sounds using phase quadrature waveshaping"
       (vox-fun (cddr phons) which
 	       (append newenv
 		       (list (car phons)
-			     (list-ref (find-phoneme (cadr phons) formants) which))))))
+			     ((find-phoneme (cadr phons) formants) which))))))
 
   (let* ((start (seconds->samples beg))
 	 (samps (seconds->samples dur))
@@ -356,8 +356,8 @@ vocal sounds using phase quadrature waveshaping"
 	 (ran-vib (make-rand-interp :frequency 20.0 :amplitude (* freq .05))))
     (do ((i 0 (+ i 1)))
 	((= i fs))
-      (let* ((amp (list-ref formant-amps i))
-	     (fshape (list-ref formant-shapes i))
+      (let* ((amp (formant-amps i))
+	     (fshape (formant-shapes i))
 	     (shape (normalize-partials fshape)))
 	(set! (sin-evens i) (make-oscil 0))
 	(set! (sin-odds i) (make-oscil 0))
@@ -965,28 +965,28 @@ is a physical model of a flute:
 	(dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19)))
     (do ((i 0 (+ i 1)))
 	((= i 15))
-      (let ((val (floor (* srscale (list-ref dly-len i)))))
+      (let ((val (floor (* srscale (dly-len i)))))
 	(if (even? val) (set! val (+ 1 val)))
 	(list-set! dly-len i (next-prime val))))
 
     (let* ((len (+ (mus-srate) (length *reverb*)))
-	   (comb1 (make-comb (* .822 reverb-factor) (list-ref dly-len 0)))
-	   (comb2 (make-comb (* .802 reverb-factor) (list-ref dly-len 1)))
-	   (comb3 (make-comb (* .773 reverb-factor) (list-ref dly-len 2)))
-	   (comb4 (make-comb (* .753 reverb-factor) (list-ref dly-len 3)))
-	   (comb5 (make-comb (* .753 reverb-factor) (list-ref dly-len 4)))
-	   (comb6 (make-comb (* .733 reverb-factor) (list-ref dly-len 5)))
+	   (comb1 (make-comb (* .822 reverb-factor) (dly-len 0)))
+	   (comb2 (make-comb (* .802 reverb-factor) (dly-len 1)))
+	   (comb3 (make-comb (* .773 reverb-factor) (dly-len 2)))
+	   (comb4 (make-comb (* .753 reverb-factor) (dly-len 3)))
+	   (comb5 (make-comb (* .753 reverb-factor) (dly-len 4)))
+	   (comb6 (make-comb (* .733 reverb-factor) (dly-len 5)))
 	   (low (make-one-pole lp-coeff (- lp-coeff 1.0)))
 	   (chan2 (> (channels *output*) 1))
 	   (chan4 (= (channels *output*) 4))
-	   (allpass1 (make-all-pass -0.700 0.700 (list-ref dly-len 6)))
-	   (allpass2 (make-all-pass -0.700 0.700 (list-ref dly-len 7)))
-	   (allpass3 (make-all-pass -0.700 0.700 (list-ref dly-len 8)))
-	   (allpass4 (make-all-pass -0.700 0.700 (list-ref dly-len 9))) ; 10 for quad
-	   (allpass5 (make-all-pass -0.700 0.700 (list-ref dly-len 11)))
-	   (allpass6 (if chan2 (make-all-pass -0.700 0.700 (list-ref dly-len 12)) #f))
-	   (allpass7 (if chan4 (make-all-pass -0.700 0.700 (list-ref dly-len 13)) #f))
-	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (list-ref dly-len 14)) #f)))
+	   (allpass1 (make-all-pass -0.700 0.700 (dly-len 6)))
+	   (allpass2 (make-all-pass -0.700 0.700 (dly-len 7)))
+	   (allpass3 (make-all-pass -0.700 0.700 (dly-len 8)))
+	   (allpass4 (make-all-pass -0.700 0.700 (dly-len 9))) ; 10 for quad
+	   (allpass5 (make-all-pass -0.700 0.700 (dly-len 11)))
+	   (allpass6 (if chan2 (make-all-pass -0.700 0.700 (dly-len 12)) #f))
+	   (allpass7 (if chan4 (make-all-pass -0.700 0.700 (dly-len 13)) #f))
+	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (dly-len 14)) #f)))
       (run
        (do ((i 0 (+ i 1)))
 	   ((= i len))
@@ -1029,19 +1029,19 @@ is a physical model of a flute:
     ;; initialize the "formant" generators
     (do ((i 0 (+ i 1)))
 	((= i numformants))
-      (set! totalamp (+ totalamp (list-ref (list-ref data i) 2))))
+      (set! totalamp (+ totalamp ((data i) 2))))
     (do ((i 0 (+ i 1)))
 	((= i numformants))
-      (let* ((frmdat (list-ref data i))
+      (let* ((frmdat (data i))
 	     (freq (cadr frmdat))
 	     (ampf (car frmdat))
-	     (rfamp  (list-ref frmdat 2))
-	     (ampat (* 100 (/ (list-ref frmdat 3) dur)))
-	     (ampdc (- 100 (* 100 (/ (list-ref frmdat 4) dur))))
-	     (dev0 (hz->radians (* (list-ref frmdat 5) freq)))
-	     (dev1 (hz->radians (* (list-ref frmdat 6) freq)))
-	     (indxat (* 100 (/ (list-ref frmdat 7) dur)))
-	     (indxdc (- 100 (* 100 (/ (list-ref frmdat 8) dur))))
+	     (rfamp  (frmdat 2))
+	     (ampat (* 100 (/ (frmdat 3) dur)))
+	     (ampdc (- 100 (* 100 (/ (frmdat 4) dur))))
+	     (dev0 (hz->radians (* (frmdat 5) freq)))
+	     (dev1 (hz->radians (* (frmdat 6) freq)))
+	     (indxat (* 100 (/ (frmdat 7) dur)))
+	     (indxdc (- 100 (* 100 (/ (frmdat 8) dur))))
 	     (harm (round (/ freq pitch)))
 	     (rsamp (- 1.0 (abs (- harm (/ freq pitch)))))
 	     (cfq (* pitch harm)))
@@ -1166,7 +1166,7 @@ is a physical model of a flute:
 	(touch-tab-2 '(0 1209 1336 1477 1209 1336 1477 1209 1336 1477 1209 1336 1477)))
     (do ((i 0 (+ i 1)))
 	((= i (length telephone-number)))
-      (let* ((k (list-ref telephone-number i))
+      (let* ((k (telephone-number i))
 	     (beg (seconds->samples (+ start (* i .4))))
 	     (end (+ beg (seconds->samples .3)))
 	     (i (if (number? k)
@@ -1176,8 +1176,8 @@ is a physical model of a flute:
 		    (if (eq? k '*) 
 			10
 			12)))
-	     (frq1 (make-oscil (list-ref touch-tab-1 i)))
-	     (frq2 (make-oscil (list-ref touch-tab-2 i))))
+	     (frq1 (make-oscil (touch-tab-1 i)))
+	     (frq2 (make-oscil (touch-tab-2 i))))
 	(run
 	 (do ((j beg (+ 1 j)))
 	     ((= j end))
@@ -1671,7 +1671,7 @@ is a physical model of a flute:
 
     (define (get-piano-partials freq)
       (let ((pitch (round (* 12 (log (/ freq 32.703) 2)))))
-	(list-ref piano-spectra pitch)))
+	(piano-spectra pitch)))
 
     (define (make-piano-ampfun dur)
       (let* ((releaseAmp (db->linear (* *db-drop-per-second* dur)))
@@ -1707,7 +1707,7 @@ is a physical model of a flute:
 			      :scaler  amplitude
 			      :duration env1dur
 			      :base 10000.0))
-	   (releaseamp (list-ref ampfun1 (- (length ampfun1) 1)))
+	   (releaseamp (ampfun1 (- (length ampfun1) 1)))
 	   (ampenv2 (make-env '(0 1 100 0)
 			      :scaler (* amplitude releaseamp)
 			      :duration env1dur
@@ -2362,13 +2362,13 @@ nil doesnt print anything, which will speed up a bit the process.
 			  (len (length gain-freq-list)))
 		      (do ((i (- len 2) (- i 2)))
 			  ((< i 0))
-			(set! lst (cons (list-ref gain-freq-list i) lst)))
+			(set! lst (cons (gain-freq-list i) lst)))
 		      lst))
 	 (freq-list (let ((lst '())
 			  (len (length gain-freq-list)))
 		      (do ((i (- len 1) (- i 2)))
 			  ((<= i 0))
-			(set! lst (cons (list-ref gain-freq-list i) lst)))
+			(set! lst (cons (gain-freq-list i) lst)))
 		      lst))
 	 (env-size (if (list? (car gain-list))
 		       (make-vector (length freq-list))
@@ -2380,8 +2380,8 @@ nil doesnt print anything, which will speed up a bit the process.
 
     (do ((k 0 (+ 1 k)))
 	((= k half-list))
-      (let ((gval (list-ref gain-list k))
-	    (fval (list-ref freq-list k)))
+      (let ((gval (gain-list k))
+	    (fval (freq-list k)))
 	(if (list? gval)
 	  (begin
 	    (set! (env-size k) (make-env gval
@@ -2552,8 +2552,8 @@ mjkoskin@sci.fi
 
 (define (fm2 gen index)
   "(fm2 gen index) runs an fm2 generator"
-  (* .25 (+ (oscil (list-ref gen 0) (* index (oscil (list-ref gen 1))))
-	    (oscil (list-ref gen 2) (* index (oscil (list-ref gen 3)))))))
+  (* .25 (+ (oscil (gen 0) (* index (oscil (gen 1))))
+	    (oscil (gen 2) (* index (oscil (gen 3)))))))
 
 
 ;;; rms gain balance
@@ -2708,10 +2708,10 @@ mjkoskin@sci.fi
 	      (begin
 		(do ((inp 0 (+ 1 inp)))
 		    ((= inp in-chans))
-		  (let ((inlist (list-ref matrix inp)))
+		  (let ((inlist (matrix inp)))
 		    (do ((outp 0 (+ 1 outp)))
 			((= outp out-chans))
-		      (let ((outn (list-ref inlist outp)))
+		      (let ((outn (inlist outp)))
 			(mixer-set! mx inp outp outn)))))))
 
 	  ;; split out 1 and 2 chan input 
@@ -2997,10 +2997,10 @@ mjkoskin@sci.fi
 	      (do ((inp 0 (+ 1 inp))
 		   (off 0 (+ off out-chans)))
 		  ((= inp in-chans))
-		(let ((inlist (list-ref matrix inp)))
+		(let ((inlist (matrix inp)))
 		  (do ((outp 0 (+ 1 outp)))
 		      ((= outp out-chans))
-		    (let ((outn (list-ref inlist outp)))
+		    (let ((outn (inlist outp)))
 		      (if outn
 			  (if (number? outn)
 			      (mixer-set! mx inp outp outn)

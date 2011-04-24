@@ -261,7 +261,7 @@
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
 						  XmNtopAttachment       XmATTACH_WIDGET
-						  XmNtopWidget           (list-ref sliders (- (length sliders) 1))
+						  XmNtopWidget           (sliders (- (length sliders) 1))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    
@@ -615,9 +615,9 @@
 		   
 		   (lambda (w c i)
 		     (set! flecho-scaler initial-flecho-scaler)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (floor (* flecho-scaler 100))))
+		     (XtSetValues (sliders 0) (list XmNvalue (floor (* flecho-scaler 100))))
 		     (set! flecho-delay initial-flecho-delay)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (floor (* flecho-delay 100)))))
+		     (XtSetValues (sliders 1) (list XmNvalue (floor (* flecho-delay 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok flecho-target))))
@@ -709,13 +709,13 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		   
 		   (lambda (w c i)
 		     (set! zecho-scaler initial-zecho-scaler)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (floor (* zecho-scaler 100))))
+		     (XtSetValues (sliders 0) (list XmNvalue (floor (* zecho-scaler 100))))
 		     (set! zecho-delay initial-zecho-delay)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (floor (* zecho-delay 100))))
+		     (XtSetValues (sliders 1) (list XmNvalue (floor (* zecho-delay 100))))
 		     (set! zecho-freq initial-zecho-freq)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue (floor (* zecho-freq 100))))
+		     (XtSetValues (sliders 2) (list XmNvalue (floor (* zecho-freq 100))))
 		     (set! zecho-amp initial-zecho-amp)
-		     (XtSetValues (list-ref sliders 3) (list XmNvalue (floor (* zecho-amp 100)))))
+		     (XtSetValues (sliders 3) (list XmNvalue (floor (* zecho-amp 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok zecho-target))))
@@ -1223,15 +1223,15 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		   
 		   (lambda (w c i)
 		     (set! new-comb-chord-scaler initial-new-comb-chord-scaler)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (floor (* new-comb-chord-scaler 100))))
+		     (XtSetValues (sliders 0) (list XmNvalue (floor (* new-comb-chord-scaler 100))))
 		     (set! new-comb-chord-size initial-new-comb-chord-size)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue new-comb-chord-size))
+		     (XtSetValues (sliders 1) (list XmNvalue new-comb-chord-size))
 		     (set! new-comb-chord-amp initial-new-comb-chord-amp)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue (floor (* new-comb-chord-amp 100))))
+		     (XtSetValues (sliders 2) (list XmNvalue (floor (* new-comb-chord-amp 100))))
 		     (set! new-comb-chord-interval-one initial-new-comb-chord-interval-one)
-		     (XtSetValues (list-ref sliders 3) (list XmNvalue (floor (* new-comb-chord-interval-one 100))))
+		     (XtSetValues (sliders 3) (list XmNvalue (floor (* new-comb-chord-interval-one 100))))
 		     (set! new-comb-chord-interval-two initial-new-comb-chord-interval-two)
-		     (XtSetValues (list-ref sliders 4) (list XmNvalue (floor (* new-comb-chord-interval-two 100)))))
+		     (XtSetValues (sliders 4) (list XmNvalue (floor (* new-comb-chord-interval-two 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok new-comb-chord-target))))
@@ -1566,15 +1566,15 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		   
 		   (lambda (w c i)
 		     (set! time-scale initial-time-scale)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (floor (* time-scale 100))))
+		     (XtSetValues (sliders 0) (list XmNvalue (floor (* time-scale 100))))
 		     (set! hop-size initial-hop-size)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (floor (* hop-size 100))))
+		     (XtSetValues (sliders 1) (list XmNvalue (floor (* hop-size 100))))
 		     (set! segment-length initial-segment-length)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue (floor (* segment-length 100))))
+		     (XtSetValues (sliders 2) (list XmNvalue (floor (* segment-length 100))))
 		     (set! ramp-scale initial-ramp-scale)
-		     (XtSetValues (list-ref sliders 3) (list XmNvalue (floor (* ramp-scale 100))))
+		     (XtSetValues (sliders 3) (list XmNvalue (floor (* ramp-scale 100))))
 		     (set! pitch-scale initial-pitch-scale)
-		     (XtSetValues (list-ref sliders 4) (list XmNvalue (floor (* pitch-scale 100)))))
+		     (XtSetValues (sliders 4) (list XmNvalue (floor (* pitch-scale 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok expsrc-target))))
@@ -1685,7 +1685,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
 						  XmNtopAttachment       XmATTACH_WIDGET
-						  XmNtopWidget           (list-ref sliders (- (length sliders) 1))
+						  XmNtopWidget           (sliders (- (length sliders) 1))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    
@@ -1824,7 +1824,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
 						  XmNtopAttachment       XmATTACH_WIDGET
-						  XmNtopWidget           (list-ref sliders (- (length sliders) 1))
+						  XmNtopWidget           (sliders (- (length sliders) 1))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    (let ((target-row (add-target (XtParent (XtParent (car sliders))) 
@@ -1929,7 +1929,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
 						  XmNtopAttachment       XmATTACH_WIDGET
-						  XmNtopWidget           (list-ref sliders (- (length sliders) 1))
+						  XmNtopWidget           (sliders (- (length sliders) 1))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    (let ((target-row (add-target (XtParent (XtParent (car sliders))) 
@@ -2147,9 +2147,9 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		   
 		   (lambda (w c i)
 		     (set! jc-reverb-decay initial-jc-reverb-decay)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (floor (* jc-reverb-decay 100))))
+		     (XtSetValues (sliders 0) (list XmNvalue (floor (* jc-reverb-decay 100))))
 		     (set! jc-reverb-volume initial-jc-reverb-volume)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (floor (* jc-reverb-volume 100)))))
+		     (XtSetValues (sliders 1) (list XmNvalue (floor (* jc-reverb-volume 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok jc-reverb-target))))
@@ -2214,11 +2214,11 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		   
 		   (lambda (w c i)
 		     (set! convolve-sound-one initial-convolve-sound-one)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue convolve-sound-one))
+		     (XtSetValues (sliders 0) (list XmNvalue convolve-sound-one))
 		     (set! convolve-sound-two initial-convolve-sound-two)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue convolve-sound-two))
+		     (XtSetValues (sliders 1) (list XmNvalue convolve-sound-two))
 		     (set! convolve-amp initial-convolve-amp)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue (floor (* convolve-amp 100)))))
+		     (XtSetValues (sliders 2) (list XmNvalue (floor (* convolve-amp 100)))))
 		   
 		   (lambda () 
 		     (not (null? (sounds))))))
@@ -2419,11 +2419,11 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		   
 		   (lambda (w c i)
 		     (set! mono-snd initial-mono-snd)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue mono-snd))
+		     (XtSetValues (sliders 0) (list XmNvalue mono-snd))
 		     (set! stereo-snd initial-stereo-snd)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue stereo-snd))
+		     (XtSetValues (sliders 1) (list XmNvalue stereo-snd))
 		     (set! pan-pos initial-pan-pos)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue pan-pos)))
+		     (XtSetValues (sliders 2) (list XmNvalue pan-pos)))
 		   
 		   (lambda () 
 		     (effect-target-ok place-sound-target))))
@@ -2448,7 +2448,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 						  XmNrightAttachment     XmATTACH_FORM
 						  XmNtopAttachment       XmATTACH_WIDGET
 						  XmNbottomAttachment    XmATTACH_FORM
-						  XmNtopWidget           (list-ref sliders (- (length sliders) 1))
+						  XmNtopWidget           (sliders (- (length sliders) 1))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    
@@ -2636,15 +2636,15 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		   
 		   (lambda (w c i)
 		     (set! cross-synth-sound initial-cross-synth-sound)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue cross-synth-sound))
+		     (XtSetValues (sliders 0) (list XmNvalue cross-synth-sound))
 		     (set! cross-synth-amp initial-cross-synth-amp)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (floor (* cross-synth-amp 100))))
+		     (XtSetValues (sliders 1) (list XmNvalue (floor (* cross-synth-amp 100))))
 		     (set! cross-synth-fft-size initial-cross-synth-fft-size)
 		     (if use-combo-box-for-fft-size ; defined in effects-utils.scm
 			 (XtSetValues cross-synth-default-fft-widget (list XmNselectedPosition 1))
 			 (XmToggleButtonSetState cross-synth-default-fft-widget #t #t))
 		     (set! cross-synth-radius initial-cross-synth-radius)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue (floor (* cross-synth-radius 100)))))
+		     (XtSetValues (sliders 2) (list XmNvalue (floor (* cross-synth-radius 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok cross-synth-target))))

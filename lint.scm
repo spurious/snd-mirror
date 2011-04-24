@@ -6,7 +6,7 @@
 (define *report-unused-top-level-functions* #f)
 (define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
-(define *report-minor-stuff* #t)          ; let*, docstring checks, (= 1.0 x), numerical and boolean simplification
+(define *report-minor-stuff* #f)          ; let*, docstring checks, (= 1.0 x), numerical and boolean simplification
 
 (define *load-file-first* #f)
 
@@ -1263,7 +1263,6 @@
     (define check-call 
       (let ((argument-data
 	     (hash-table 
-	      (cons 'gensym string?)
 	      (cons '* number?)
 	      (cons '+ number?)
 	      (cons '- number?)
@@ -1351,6 +1350,7 @@
 	      (cons 'fill! (list sequence?))
 	      (cons 'floor real?)
 	      (cons 'gcd (list real? real?))
+	      (cons 'gensym string?)
 	      (cons 'hash-table-ref (list hash-table?))
 	      (cons 'hash-table-set! (list hash-table?))
 	      (cons 'hash-table-size hash-table?)
@@ -1756,7 +1756,7 @@
 
 
     (define (report-usage name line-number type head vars)
-      ;; report unused or set-but-unreferenced variable
+      ;; report unused or set-but-unreferenced variables
       (if (and (not (eq? head 'begin)) ; begin can redefine = set a variable
 	       (not (null? vars)))
 	  (do ((cur vars (cdr cur))
@@ -2525,8 +2525,3 @@
 	      (close-input-port fp)))))))
 
 
-;;; TODO: what about floor or max of possibly-complex number?
-;;;       perhaps the result table should hold a list of representative results
-;;; member et al with constants?
-;;; doubled open paren? 
-;;; most important: if missing close paren, pretty print the stuff we have

@@ -661,7 +661,7 @@
 (define (callback-type func) (cadr func))
 (define (callback-func func) (caddr func))
 (define (callback-args func) (cadddr func))
-(define (callback-gc func) (list-ref func 4))
+(define (callback-gc func) (func 4))
 
 (define (find-callback test)
   (define (find-callback-1 test funcs)
@@ -2244,8 +2244,8 @@
 				(lambda (func)
 				  (and (eq? (callback-name func) lambda-type)
 				       func)))))
-	   (spec (and (> (length data) 4) (list-ref data 4)))
-	   (spec-data (and (> (length data) 5) (list-ref data 5)))
+	   (spec (and (> (length data) 4) (data 4)))
+	   (spec-data (and (> (length data) 5) (data 5)))
 	   (arg-start 0)
 	   (line-len 0)
 	   (line-max 120)
@@ -2345,11 +2345,11 @@
 			     (hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%"
 				  (no-stars argtype) argname argname ctr name argtype)))
 		     (if (>= (length arg) 3)
-			 (if (char=? (string-ref (list-ref arg 2) 0) #\{)
+			 (if (char=? (string-ref (arg 2) 0) #\{)
 			     (begin
 			       (set! argc (deref-name arg))
 			       (hey "  ~A = XEN_TO_C_~A(~A);~%" (deref-name arg) (deref-type arg) argname))
-			     (if (char=? (string-ref (list-ref arg 2) 0) #\|)
+			     (if (char=? (string-ref (arg 2) 0) #\|)
 				 (begin
 				   (hey "  ~A = (~A)calloc(~A, sizeof(~A));~%" 
 					(deref-name arg)
@@ -2430,7 +2430,7 @@
 	    (begin
 	      ;; goes to end
 	      ;; need to check ... list, set up locals, send out switch, return result
-	      (let* ((list-name (cadr (list-ref args (- cargs 1))))
+	      (let* ((list-name (cadr (args (- cargs 1))))
 		     (min-len (car spec-data))
 		     (max-len (cadr spec-data))
 		     (types (caddr spec-data))
@@ -2446,7 +2446,7 @@
 		    (hey "    ~A result = ~A;~%" return-type (if (has-stars return-type) "NULL" "0")))
 		(do ((i 0 (+ 1 i)))
 		    ((= i (- cargs 1)))
-		  (let ((arg (list-ref args i)))
+		  (let ((arg (args i)))
 		    (hey "    ~A p_arg~D;~%" (car arg) i)))
 		(hey "    if (XEN_LIST_P(~A)) etc_len = XEN_LIST_LENGTH(~A);~%" list-name list-name)
 		(if (> min-len 0)
@@ -2459,7 +2459,7 @@
 			 modlen name (- cargs 1) list-name modlen))
 		(do ((i 0 (+ 1 i)))
 		    ((= i (- cargs 1)))
-		  (let ((arg (list-ref args i)))
+		  (let ((arg (args i)))
 		    (hey "    p_arg~D = XEN_TO_C_~A(~A);~%" i (no-stars (car arg)) (cadr arg))))
 		(hey "    switch (etc_len)~%")
 		(hey "      {~%")
@@ -2470,13 +2470,13 @@
 		      (hey "        case ~D: ~A(" i name))
 		  (do ((j 0 (+ 1 j)))
 		      ((= j (- cargs 1)))
-		    (let () ;(arg (list-ref args j)))
+		    (let () ;(arg (args j)))
 		      (hey "p_arg~D, " j)))
 		  ;; assume ending null for now
 		  (let ((modctr 0))
 		    (do ((j 0 (+ 1 j)))
 			((= j i))
-		      (let ((type (list-ref types modctr)))
+		      (let ((type (types modctr)))
 			(set! modctr (+ 1 modctr))
 			(if (>= modctr modlen) (set! modctr 0))
 			(if (string=? type "int")

@@ -346,7 +346,7 @@
 		  (= (length yroot) 4))
 	     (do ((i 0 (+ i 1)))
 		 ((= i 3))
-	       (let* ((y1 (list-ref yroot i))
+	       (let* ((y1 (yroot i))
 		      (R (sqrt (+ (* 0.25 a3 a3) (- a2) y1)))
 		      (D (if (= R 0)
 			     (sqrt (+ (* 0.75 a3 a3) (* -2 a2) (* 2 (sqrt (- (* y1 y1) (* 4 a0))))))

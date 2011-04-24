@@ -15802,6 +15802,23 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 		  if (num_args == 0) res = goto_0(prog, args, v);         
 		  break;
 
+		case R_LIST:
+		  {
+		    /* this implements the "implicit-indexing" of lists: (lst 1) -> (list-ref lst 1) 
+		     *
+		     * TODO: list-set! in run: see line 16145 or so
+		     */
+		    xen_value **new_args;
+		    new_args = (xen_value **)calloc(3, sizeof(xen_value *));
+		    new_args[1] = v;
+		    new_args[2] = args[1];
+		    res = list_ref_1(prog, new_args, 2);
+		    new_args[1] = NULL;
+		    if (args[0]) free(args[0]);
+		    return(clean_up(res, new_args, 2));
+		  }
+		  break;
+
 		case R_FUNCTION:     
 		  res = funcall_n(prog, args, num_args, v);
 		  break;

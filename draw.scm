@@ -31,20 +31,20 @@
     ;; flicker a lot to have this data instantly available.
 
     (define (pack-x-info axinf)
-      (vct (list-ref axinf 2) ;  x0
-	   (list-ref axinf 4) ;  x1
-	   (list-ref axinf 10) ; x_axis_x0
-	   (list-ref axinf 12) ; x_axis_x1
-	   (list-ref axinf 15) ; scale
-	   (- (list-ref axinf 10) (* (list-ref axinf 2) (list-ref axinf 15))))) ; base
+      (vct (axinf 2) ;  x0
+	   (axinf 4) ;  x1
+	   (axinf 10) ; x_axis_x0
+	   (axinf 12) ; x_axis_x1
+	   (axinf 15) ; scale
+	   (- (axinf 10) (* (axinf 2) (axinf 15))))) ; base
 
     (define (pack-y-info axinf)
-      (vct (list-ref axinf 3) ;  y0
-	   (list-ref axinf 5) ;  y1
-	   (list-ref axinf 11) ; y_axis_y0
-	   (list-ref axinf 13) ; y_axis_y1
-	   (list-ref axinf 16) ; scale
-	   (- (list-ref axinf 11) (* (list-ref axinf 3) (list-ref axinf 16))))) ; base
+      (vct (axinf 3) ;  y0
+	   (axinf 5) ;  y1
+	   (axinf 11) ; y_axis_y0
+	   (axinf 13) ; y_axis_y1
+	   (axinf 16) ; scale
+	   (- (axinf 11) (* (axinf 3) (axinf 16))))) ; base
 
     (define (grf-it val v)
       (round
@@ -73,7 +73,7 @@
 	       (x0 0)
 	       (y0 0)
 	       (line-ctr 2)
-	       (lines (make-vector (* 2 (+ 1 (- (list-ref axinf 12) (list-ref axinf 10)))) 0)))
+	       (lines (make-vector (* 2 (+ 1 (- (axinf 12) (axinf 10)))) 0)))
 	  (dynamic-wind
 	      (lambda ()
 		(set! (foreground-color snd chn) red))

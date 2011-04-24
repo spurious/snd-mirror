@@ -13108,6 +13108,10 @@ this prints:
   (test (a1) 32)
   (test (a1 1) 1))
 
+(test (let ((x 1)) (cond (else (define x 2))) x) 2)
+(test (let ((x 1)) (and (define x 2)) x) 2)
+(test (let () (begin 1)) 1)
+(test (let () (begin (define x 1) x)) 1)
 
 
 

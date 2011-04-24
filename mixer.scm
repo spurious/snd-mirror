@@ -101,11 +101,11 @@
 (define* (mixer-poly mx :rest coeffs)
   "(mixer-poly mx :rest coeffs) returns a new mixer, the result of treating 'mx' as the argument to the polynomial defined by the 'coeffs' list"
   (let* ((n (length coeffs))
-	 (nmx (make-scalar-mixer (length mx) (list-ref coeffs (- n 1))))
+	 (nmx (make-scalar-mixer (length mx) (coeffs (- n 1))))
 	 (x (mixer* mx 1.0)))
     (do ((i (- n 2) (- i 1)))
 	((< i 0))
-      (set! nmx (mixer+ nmx (mixer* x (list-ref coeffs i))))
+      (set! nmx (mixer+ nmx (mixer* x (coeffs i))))
       (set! x (mixer* mx x)))
     nmx))
 
@@ -210,9 +210,9 @@
 	(f (make-frame 3 1 1 1)))
     (do ((i 0 (+ 1 i)))
 	((= i 3))
-      (mixer-set! m 0 i (list-ref p1 i))
-      (mixer-set! m 1 i (list-ref p2 i))
-      (mixer-set! m 2 i (list-ref p3 i)))
+      (mixer-set! m 0 i (p1 i))
+      (mixer-set! m 1 i (p2 i))
+      (mixer-set! m 2 i (p3 i)))
     (let ((b (mixer-solve m f)))
       (list (frame-ref b 0) (frame-ref b 1) (frame-ref b 2) -1))))
 

@@ -43,11 +43,11 @@
 	 (jy 0 (+ jy 1)));;index for writing to xy-array (a 1-dimensional vct)
 	((= iy xy-array-l) xy-array)
       (vct-set! xy-array iy 
-		(list-ref (list-ref init-array jy) 0))
+		((init-array jy) 0))
       (vct-set! xy-array (+ iy 1)
 		;;convert signed float y values into signed integers 
 		(floor (* b
-			  (list-ref (list-ref init-array jy) 1)
+			  ((init-array jy) 1)
 			  ))))
     (run
      (do ((i beg (+ 1 i)))

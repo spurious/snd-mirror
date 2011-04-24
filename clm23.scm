@@ -48,7 +48,7 @@
 	(let ((clen (min len (length initial-contents))))
 	  (do ((i 0 (+ i 1)))
 	      ((= i clen))
-	    (set! (v i) (list-ref initial-contents i)))))
+	    (set! (v i) (initial-contents i)))))
     v))
 
 (define make-double-float-array make-double-array)
@@ -1974,8 +1974,8 @@
          (fm-indices (make-vct n)))
     (do ((i 0 (+ i 1)))
 	((= i n))
-      (set! (modulators i) (make-oscil (* freq (list-ref mc-ratios i)) (list-ref mod-phases i)))
-      (set! (fm-indices i) (hz->radians (* freq (list-ref indexes i) (list-ref mc-ratios i)))))
+      (set! (modulators i) (make-oscil (* freq (mc-ratios i)) (mod-phases i)))
+      (set! (fm-indices i) (hz->radians (* freq (indexes i) (mc-ratios i)))))
     (run
      (do ((i start (+ i 1)))
 	 ((= i end))
@@ -2140,9 +2140,9 @@
 	(touch-tab-2 '(0 1209 1336 1477 1209 1336 1477 1209 1336 1477 1209 1336 1477)))
     (do ((i 0 (+ i 1)))
 	((= i (length telephone-number)))
-      (let* ((num (list-ref telephone-number i))
-	     (frq1 (list-ref touch-tab-1 num))
-	     (frq2 (list-ref touch-tab-2 num)))
+      (let* ((num (telephone-number i))
+	     (frq1 (touch-tab-1 num))
+	     (frq2 (touch-tab-2 num)))
         (sndclmdoc-simp-3 (+ start (* i .4)) .3 frq1 .1)
         (sndclmdoc-simp-3 (+ start (* i .4)) .3 frq2 .1)))))
 
@@ -2695,12 +2695,12 @@
 	((= k num-combs0))
       (set! (cmbs0 k)
 	    (make-comb scaler 
-		       (floor (* comb-len (list-ref combs0 k))))))
+		       (floor (* comb-len (combs0 k))))))
     (do ((k 0 (+ 1 k)))
 	((= k num-combs1))
       (set! (cmbs1 k)
 	    (make-comb scaler 
-		       (floor (* comb-len (list-ref combs1 k))))))
+		       (floor (* comb-len (combs1 k))))))
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))

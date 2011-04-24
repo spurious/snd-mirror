@@ -38,7 +38,7 @@
 	(set! (a1 0) 1.0)
 	(do ((i 0 (+ 1 i)))
 	    ((= i K))
-	  (conv 2 (list-ref A i) (+ 1 (* 2 i)) a1 d)
+	  (conv 2 (A i) (+ 1 (* 2 i)) a1 d)
 	  (do ((j 0 (+ 1 j)))
 	      ((= j (+ 3 (* 2 i))))
 	    (set! (a1 j) (d j))))

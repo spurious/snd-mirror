@@ -123,7 +123,7 @@
 
     (play reg :wait #f :stop play-region-again)))
 
-;(bind-key #\p 0 (lambda (n) "play region forever" (play-region-forever (list-ref (regions) (max 0 n)))))
+;(bind-key #\p 0 (lambda (n) "play region forever" (play-region-forever ((regions) (max 0 n)))))
 
 
 ;;; -------- play while looping continuously between two movable marks
@@ -204,7 +204,7 @@ read, even if not playing.  'files' is a list of files to be played."
 	      (begin
 		(do ((i 0 (+ 1 i)))
 		    ((= i files-len))
-		  (set! (pframes i) (frames (list-ref files i))))
+		  (set! (pframes i) (frames (files i))))
 		(catch #t
 		       (lambda ()
 			 (while reading
@@ -212,9 +212,9 @@ read, even if not playing.  'files' is a list of files to be played."
 				  (if (not (= next-file current-file))
 				      (let* ((ramp-down 1.0)
 					     (ramp (/ 1.0 bufsize))
-					     (current (list-ref readers current-file))
+					     (current (readers current-file))
 					     (current-loc (locs current-file))
-					     (next (list-ref readers next-file))
+					     (next (readers next-file))
 					     (next-loc (locs next-file))
 					     (downs (channels current))
 					     (ups (channels next))
@@ -242,7 +242,7 @@ read, even if not playing.  'files' is a list of files to be played."
 					      (set! (locs current-file) (+ (locs current-file) bufsize))
 					      (set! (locs next-file) (+ (locs next-file) bufsize))))
 					(set! current-file next-file))
-				      (let* ((current (list-ref readers current-file))
+				      (let* ((current (readers current-file))
 					     (current-loc (locs current-file))
 					     (ons (channels current))
 					     (on (make-frame ons)))
@@ -293,7 +293,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
       (do ((chan 0 (+ 1 chan)))
           ((= chan chans))
         (let ((player (make-player sound chan)))
-          (set! (amp-control player) (list-ref amps chan))
+          (set! (amp-control player) (amps chan))
           (add-player player)))
       (start-playing chans (srate sound)))))
 
@@ -319,8 +319,8 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 	 (amps (make-vector num-oscs)))
     (do ((i 0 (+ 1 i)))
 	((= i num-oscs))
-      (set! (oscs i) (make-oscil (car (list-ref freqs-and-amps i))))
-      (set! (amps i) (cadr (list-ref freqs-and-amps i))))
+      (set! (oscs i) (make-oscil (car (freqs-and-amps i))))
+      (set! (amps i) (cadr (freqs-and-amps i))))
     (play (lambda ()
 	    (set! len (- len 1))
 	    (if (<= len 0)
