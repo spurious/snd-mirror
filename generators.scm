@@ -1091,10 +1091,10 @@
 
     (if (< (abs sx2) 1.0e-8)
 	-1.0
-	(let* ((s1 (- (/ (sin nx) sxsx)
-		      (/ (* n (cos nx2)) sx22)))
-	       (c1 (- (/ (* n (sin nx2)) sx22)
-		      (/ (- 1.0 (cos nx)) sxsx))))
+	(let ((s1 (- (/ (sin nx) sxsx)
+		     (/ (* n (cos nx2)) sx22)))
+	      (c1 (- (/ (* n (sin nx2)) sx22)
+		     (/ (- 1.0 (cos nx)) sxsx))))
 	  (/ (- (* (cos cxx) c1)
 		(* interp (sin cxx) s1))
 	     (* 0.5 n (- n 1))))))) ; normalization, nominal n is off by 1, peak seems to be solid right through the interpolation

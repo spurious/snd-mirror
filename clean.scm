@@ -361,8 +361,8 @@
 
     (map-channel
      (lambda (datum)
-       (let* ((xhatminus xhat)
-	      (avg (moving-sum del (formant frm (rd0)))))
+       (let ((xhatminus xhat)
+	     (avg (moving-sum del (formant frm (rd0)))))
 
 	 (set! K (min 1.0 (+ .1 (/ avg 100.0))))
 ;	 (set! K .5)

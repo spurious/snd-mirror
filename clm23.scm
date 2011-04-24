@@ -110,7 +110,7 @@
     (set! (arr 2) (make-ssb-am 660 40))
     (run
      (do ((i start (+ i 1))) ((= i end))
-       (let* ((sum 0.0))
+       (let ((sum 0.0))
 	 (do ((i 0 (+ i 1)))
 	     ((= i (length arr)))
 	   (if (ssb-am? (arr i))
@@ -1703,8 +1703,8 @@
 				      #f))
 				  
 				  (lambda (closure)
-				    (let* ((pscl (/ 1.0 D))
-					   (kscl (/ two-pi size)))
+				    (let ((pscl (/ 1.0 D))
+					  (kscl (/ two-pi size)))
 				      (do ((k 0 (+ 1 k))
 					   (ks 0.0 (+ ks kscl)))
 					  ((= k N2))
@@ -2291,11 +2291,11 @@
 		       (polynomial cos-coeffs ax)))))))))
 
 (definstrument (sndclmdoc-bl-saw start dur frequency order)
-  (let* ((norm (if (= order 1) 1.0     ; these peak amps were determined empirically
-                 (if (= order 2) 1.3   ;   actual limit is supposed to be pi/2 (G&R 1.441)
-                   (if (< order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
-                     1.9))))           ;   if order>25, numerical troubles -- use table-lookup
-         (freqs '()))
+  (let ((norm (if (= order 1) 1.0           ; these peak amps were determined empirically
+		  (if (= order 2) 1.3       ;   actual limit is supposed to be pi/2 (G&R 1.441)
+		      (if (< order 9) 1.7   ;   but Gibbs phenomenon pushes it to 1.851
+			  1.9))))           ;   if order>25, numerical troubles -- use table-lookup
+	(freqs '()))
     (do ((i 1 (+ i 1)))
 	((> i order))
       (set! freqs (cons (/ 1.0 (* norm i)) (cons i freqs))))
@@ -2376,8 +2376,8 @@
 	 (rd (make-readin sound)))
     (do ((i 1 (+ i 1)))
 	((> i pairs))
-      (let* ((aff (* i old-freq))
-	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+      (let ((aff (* i old-freq))
+	    (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
 	(set! (ssbs (- i 1)) (make-ssb-am (* i factor old-freq)))
 	(set! (bands (- i 1)) (make-bandpass (hz->radians (- aff bwf)) 
 						 (hz->radians (+ aff bwf)) 
@@ -2506,9 +2506,9 @@
        (outa i (granulate exA))))))
 
 (definstrument (sndclmdoc-grev beg dur exp-amt file file-beg)
-  (let* ((exA (make-granulate :expansion exp-amt))
-	 (fil (make-file->sample file))
-	 (ctr file-beg))
+  (let ((exA (make-granulate :expansion exp-amt))
+	(fil (make-file->sample file))
+	(ctr file-beg))
     (run
      (do ((i beg (+ i 1)))
 	 ((= i (+ beg dur)))
@@ -2633,7 +2633,7 @@
       (run
        (do ((i beg (+ i 1)))
 	   ((= i end))
-	 (let* ((gliss (env frqf)))
+	 (let ((gliss (env frqf)))
 	   (outa i (* (env ampf) (wave-train grains gliss)))
 	   (let ((click (pulse-train click-track gliss)))
 	     (if (> click 0.0)
@@ -2704,10 +2704,10 @@
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
-       (let* ((interp (oscil osc))
-	      (sum0 0.0)
-	      (sum1 0.0)
-	      (x (readin rd)))
+       (let ((interp (oscil osc))
+	     (sum0 0.0)
+	     (sum1 0.0)
+	     (x (readin rd)))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k num-combs0))
 	   (set! sum0 (+ sum0 (comb (cmbs0 k) x))))

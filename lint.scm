@@ -1658,7 +1658,7 @@
 
 
     (define (load-walk form)
-      ;; check form form top-level declarations, if load seen, and we haven't seen that file, load it
+      ;; check form for top-level declarations, if load seen, and we haven't seen that file, load it
       (let ((head (car form)))
 	(case head
 	  ((begin)

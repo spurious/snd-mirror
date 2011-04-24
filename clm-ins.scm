@@ -395,8 +395,8 @@ vocal sounds using phase quadrature waveshaping"
 		   (set! even-freq (hz->radians (* (+ frm-int 1) frq)))
 		   (set! even-amp (- frm0 frm-int))
 		   (set! odd-amp (- 1.0 even-amp))))
-	     (let* ((fax (polynomial (cos-coeffs k) carcos))
-		    (yfax (* carsin (polynomial (sin-coeffs k) carcos))))
+	     (let ((fax (polynomial (cos-coeffs k) carcos))
+		   (yfax (* carsin (polynomial (sin-coeffs k) carcos))))
 	       (set! sum (+ sum (* (amps k)
 				   (+ (* even-amp (- (* yfax (oscil (sin-evens k) even-freq))
 						     (* fax (oscil (cos-evens k) even-freq))))
@@ -961,8 +961,8 @@ is a physical model of a flute:
 	val
 	(next-prime (+ val 2))))
        
-  (let* ((srscale (/ (mus-srate) 25641))
-	 (dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19)))
+  (let ((srscale (/ (mus-srate) 25641))
+	(dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19)))
     (do ((i 0 (+ i 1)))
 	((= i 15))
       (let ((val (floor (* srscale (list-ref dly-len i)))))
@@ -1108,9 +1108,9 @@ is a physical model of a flute:
     (run 
      (do ((i st (+ i 1)))
 	 ((= i nd))
-       (let* ((vib (+ (* (env pvibenv) (triangle-wave pvib))
-		      (* (env rvibenv) (rand-interp rvib))
-		      (env glisenv))))
+       (let ((vib (+ (* (env pvibenv) (triangle-wave pvib))
+		     (* (env rvibenv) (rand-interp rvib))
+		     (env glisenv))))
 	 (set! fm (one-zero low (* (env betaenv) (oscil fmosc (+ fm vib)))))
 	 (locsig loc i (* (env amplenv) 
 			  (oscil car (+ fm vib)))))))))
@@ -2900,8 +2900,8 @@ mjkoskin@sci.fi
 			     ;; output interpolated samples
 			     (do ((ix 0 (+ 1 ix)))
 				 ((= ix in-chans))
-			       (let* ((v0 (samples-0 ix))
-				      (v1 (samples-1 ix)))
+			       (let ((v0 (samples-0 ix))
+				     (v1 (samples-1 ix)))
 				 (frame-set! inframe ix (+ v0 (* (- next-samp ex-samp)
 								 (- v1 v0)))))))
 			 ;; output mixed result
@@ -3065,9 +3065,9 @@ mjkoskin@sci.fi
 		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe))))))))
 	    
 	    ;; more than 1 chan input
-	    (let* ((inframe (make-frame in-chans))
-		   (outframe (make-frame out-chans))
-		   (srcs (make-vector in-chans #f)))
+	    (let ((inframe (make-frame in-chans))
+		  (outframe (make-frame out-chans))
+		  (srcs (make-vector in-chans #f)))
 	      (do ((inp 0 (+ 1 inp)))
 		  ((= inp in-chans))
 		(set! (srcs inp) (make-src :input (file inp) :srate (if (number? srate) (abs srate) 0.0))))

@@ -19,7 +19,7 @@
 	 (dpy (XtDisplay (cadr (main-widgets))))
 	 (version (glXQueryVersion dpy 0 0)))
     (if (car version)
-	(let* ((visuals (XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))
+	(let ((visuals (XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))
 	  (glXMakeCurrent dpy (XtWindow (cadr (main-widgets))) cx)
 	  (snd-print (format #f "GL version: ~A.~A, (~A ~A ~A)~%"
 			     (cadr version) (caddr version)
@@ -80,9 +80,9 @@
 	 (cutoff 0.2)) ; 0.5 is full spectrum
     
     (define (redraw-graph)
-      (let* ((win (XtWindow drawer))
-	     (dpy (XtDisplay drawer))
-	     (cx (snd-glx-context)))
+      (let ((win (XtWindow drawer))
+	    (dpy (XtDisplay drawer))
+	    (cx (snd-glx-context)))
 	(glXMakeCurrent dpy win cx)
 	(if gl-list (glDeleteLists gl-list 1))
 	(set! gl-list (glGenLists 1))
@@ -135,9 +135,9 @@
       (define (add-main-pane name type args)
 	(XtCreateManagedWidget name type (list-ref (main-widgets) 3) args))
       (if (not drawer)
-	  (let* ((outer (add-main-pane "Waterfall" xmFormWidgetClass
-				       (list XmNbackground (basic-color)
-					     XmNpaneMinimum 320))))
+	  (let ((outer (add-main-pane "Waterfall" xmFormWidgetClass
+				      (list XmNbackground (basic-color)
+					    XmNpaneMinimum 320))))
 	    (set! drawer (XtCreateManagedWidget "draw" xmDrawingAreaWidgetClass outer
 						(list XmNbackground       (graph-color)
 						      XmNforeground       (data-color)
@@ -424,13 +424,13 @@
 ;;; -------- complexify --------
 
 (define complexify
-  (let* ((gl-list #f)
-	 (drawer #f))
+  (let ((gl-list #f)
+	(drawer #f))
     
     (define (redraw-graph)
-      (let* ((win (XtWindow drawer))
-	     (dpy (XtDisplay drawer))
-	     (cx (snd-glx-context)))
+      (let ((win (XtWindow drawer))
+	    (dpy (XtDisplay drawer))
+	    (cx (snd-glx-context)))
 	(glXMakeCurrent dpy win cx)
 	(if gl-list (glDeleteLists gl-list 1))
 	(set! gl-list (glGenLists 1))
@@ -439,8 +439,8 @@
 	(glClearDepth 1.0)
 	(glClearColor 1.0 1.0 1.0 1.0)
 	(glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-	(let* ((rl (channel->vct (left-sample) 512))
-	       (im (make-vct 512 0.0)))
+	(let ((rl (channel->vct (left-sample) 512))
+	      (im (make-vct 512 0.0)))
 	  (mus-fft rl im)
 	  (let ((peak (* 2 (max (vct-peak rl) (vct-peak im)))))
 	    (vct-scale! rl (/ 1.0 peak))
@@ -473,9 +473,9 @@
 
       (lambda ()
 	(if (not drawer)
-	    (let* ((outer (add-main-pane "Waterfall" xmFormWidgetClass
-					 (list XmNbackground (basic-color)
-					       XmNpaneMinimum 320))))
+	    (let ((outer (add-main-pane "Waterfall" xmFormWidgetClass
+					(list XmNbackground (basic-color)
+					      XmNpaneMinimum 320))))
 	      (set! drawer (XtCreateManagedWidget "draw" xmDrawingAreaWidgetClass outer
 						  (list XmNbackground       (graph-color)
 							XmNforeground       (data-color)
