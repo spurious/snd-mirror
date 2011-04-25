@@ -2199,7 +2199,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 	 (formants (make-vector freq-inc)))
     (do ((i 0 (+ 1 i)))
 	((= i freq-inc))
-      (vector-set! formants i (make-formant (* i bin) radius)))
+      (set! (formants i) (make-formant (* i bin) radius)))
     (lambda (inval)
       (if (= ctr freq-inc)
 	  (begin

@@ -284,7 +284,7 @@
 	 (str (make-string len)))
     (do ((i 0 (+ 1 i)))
 	((= i len))
-      (string-set! str i (char-upcase (name i))))
+      (set! (str i) (char-upcase (name i))))
     str))
 
 (define (ref-arg? arg)
@@ -360,7 +360,7 @@
     (do ((i 0 (+ 1 i)))
 	((= i len) val)
       (if (char=? (val i) #\*)
-	  (string-set! val i #\_)))))
+	  (set! (val i) #\_)))))
 
 (define (no-arg-or-stars name)
   (let ((len (string-length name)))

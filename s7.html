@@ -2357,6 +2357,12 @@ This also affects format and sort!:
 #2D((4 3) (2 1))
 </pre>
 
+<p>Another question: should we accept the multi-index syntax in a case such as:
+<code>(let ((v #("abc" "def"))) (v 0 2))</code>?  Currently s7 complains because
+it expects each index in a case like this to refer to the same kind of object.
+It wants you to use: <code>(let ((v #("abc" "def"))) ((v 0) 2))</code>.  
+</p>
+
 </blockquote>
 </small>
 </dd>

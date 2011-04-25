@@ -33,8 +33,8 @@
 	(do ((i 0 (+ i 1))
 	     (j (- len 1) (- j 1)))
 	    ((>= i (/ len 2)))
-	  (let ((temp (frame-ref fr i)))
-	    (frame-set! fr i (frame-ref fr j))
+	  (let ((temp (fr i)))
+	    (frame-set! fr i (fr j))
 	    (frame-set! fr j temp)))
 	fr)))
 
@@ -46,7 +46,7 @@
 	     (nfr (make-frame len)))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
-	  (frame-set! nfr i (frame-ref fr i)))
+	  (frame-set! nfr i (fr i)))
 	nfr)))
 
 #|
@@ -56,12 +56,12 @@
 	  (not (= (channels m2) 3)))
       (snd-print "cross product only in 3 dimensions")
       (make-frame 3 
-		  (- (* (frame-ref m1 1) (frame-ref m2 2)) 
-		     (* (frame-ref m1 2) (frame-ref m2 1)))
-		  (- (* (frame-ref m1 2) (frame-ref m2 0)) 
-		     (* (frame-ref m1 0) (frame-ref m2 2)))
-		  (- (* (frame-ref m1 0) (frame-ref m2 1)) 
-		     (* (frame-ref m1 1) (frame-ref m2 0))))))
+		  (- (* (m1 1) (m2 2)) 
+		     (* (m1 2) (m2 1)))
+		  (- (* (m1 2) (m2 0)) 
+		     (* (m1 0) (m2 2)))
+		  (- (* (m1 0) (m2 1)) 
+		     (* (m1 1) (m2 0))))))
 
 ;;; (frame-cross (make-frame 3 0 0 1) (make-frame 3 0 -1 0))
 ;;; <frame[3]: [1.000 0.000 0.000]>
@@ -87,7 +87,7 @@
 	     (len (min flen (length nv))))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
-	  (set! (nv i) (frame-ref fr i)))
+	  (set! (nv i) (fr i)))
 	nv)))
 
 (define* (vct->frame v fr)
@@ -116,7 +116,7 @@
 			      (channels sd))))
 		(do ((i 0 (+ i 1)))
 		    ((= i len))
-		  (sound-data-set! sd i pos (frame-ref fr i)))
+		  (sound-data-set! sd i pos (fr i)))
 		sd)))))
 
 (define (sound-data->frame sd pos fr)
@@ -154,7 +154,7 @@
 	(do ((i 0 (+ i 1)))
 	    ((= i (channels index))
 	     fr)
-	  (set! (sample pos index i) (frame-ref fr i))))))
+	  (set! (sample pos index i) (fr i))))))
 
 	
 (define (region->frame reg pos)
@@ -458,7 +458,7 @@
 	    (let ((chns (min (channels fr) (channels index))))
 	      (do ((chn 0 (+ 1 chn)))
 		  ((= chn chns))
-		(insert-sample beg (frame-ref fr chn) index chn edpos)))))))
+		(insert-sample beg (fr chn) index chn edpos)))))))
 
 (define* (insert-sound-data sd (beg 0) dur snd edpos)
   "(insert-sound-data sd beg dur snd edpos) inserts sound-data sd's contents into sound snd at beg"
@@ -486,7 +486,7 @@
 	    (let ((chns (min (channels fr) (channels index))))
 	      (do ((chn 0 (+ 1 chn)))
 		  ((= chn chns))
-		(set! (sample beg index chn) (+ (frame-ref fr chn) (sample beg index chn)))))))))
+		(set! (sample beg index chn) (+ (fr chn) (sample beg index chn)))))))))
 
 (define* (mix-sound-data sd (beg 0) dur snd tagged)
   "(mix-sound-data sd beg dur snd tagged) mixes the contents of sound-data sd into sound snd at beg"
@@ -559,8 +559,8 @@
 		  (let ((result #t))
 		    (do ((chn 0 (+ 1 chn)))
 			((= chn (channels fr)))
-		      (set! result (and result (< (* (frame-ref fr chn) (frame-ref last-fr chn)) 0.0)))
-		      (frame-set! last-fr chn (frame-ref fr chn)))
+		      (set! result (and result (< (* (fr chn) (last-fr chn)) 0.0)))
+		      (frame-set! last-fr chn (fr chn)))
 		    result))
 		beg dur snd)))
 

@@ -2400,7 +2400,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
       (do ((i 0 (+ i 1)))
 	  ((= i len) new-name)
 	(if (char=? (new-name i) #\space)
-	    (string-set! new-name i #\-)))))
+	    (set! (new-name i) #\-)))))
 
   (define (directory->list dir)
     (let ((dport (opendir dir)) 

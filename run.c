@@ -15775,7 +15775,9 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 	      /* (let ((gen (make-oscil 440))) (vct-map! v (lambda () (gen 0.0)))) */
 	      else 
 		{
-		  if (s7_is_list(s7, function))
+		  if ((s7_is_list(s7, function)) ||
+		      (s7_is_string(function)) ||          /* ("asdf" 2) */
+		      (s7_is_vector(function))) 
 		    v = walk(prog, function, NEED_ANY_RESULT);
 		}
 	      /* trying to support stuff like ((vector-ref gens 0) 0.0) here */
@@ -15805,10 +15807,14 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 		case R_LIST:
 		  {
 		    /* this implements the "implicit-indexing" of lists: (lst 1) -> (list-ref lst 1) 
-		     *
-		     * TODO: list-set! in run: see line 16145 or so, and implicit string-ref here?
+		     *    the constant case is above
 		     */
 		    xen_value **new_args;
+		    if (num_args == 0)
+		      return(run_warn("not enough args"));
+		    if (args[1]->type != R_INT)
+		      return(clean_up(arg_warn(prog, "implicit list-ref", 1, args, "integer"), args, num_args));		      
+
 		    new_args = (xen_value **)calloc(3, sizeof(xen_value *));
 		    new_args[1] = v;
 		    new_args[2] = args[1];
@@ -15818,10 +15824,15 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 		    return(clean_up(res, new_args, 2));
 		  }
 		  break;
-
+		  
 		case R_STRING:
 		  {
 		    xen_value **new_args;
+		    if (num_args == 0)
+		      return(run_warn("not enough args"));
+		    if (args[1]->type != R_INT)
+		      return(clean_up(arg_warn(prog, "implicit string-ref", 1, args, "integer"), args, num_args));		      
+
 		    new_args = (xen_value **)calloc(3, sizeof(xen_value *));
 		    new_args[1] = v;
 		    new_args[2] = args[1];
@@ -15830,7 +15841,6 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 		    if (args[0]) free(args[0]);
 		    return(clean_up(res, new_args, 2));
 		  }
-		  /* TODO: but ("asdf" 2) is not handled by this code? */
 		  break;
 
 		case R_FUNCTION:     
@@ -16139,40 +16149,79 @@ static xen_value *lookup_generalized_set(ptree *prog, s7_pointer acc_form, xen_v
     /* val is the gen, v is the new value, in_v is the 1st index, in_v1 is 2nd index if it exists */
     if (val)
       {
-	if ((val->type == R_VCT) ||
-	    (val->type == R_FLOAT_VECTOR))
+	switch (val->type)
 	  {
+	  case R_VCT:
+	  case R_FLOAT_VECTOR:
 	    /* (let ((v (vct 1.0 2.0 3.0))) (run (lambda () (set! (v 1) 0.5)))) */
 	    vct_set_1(prog, val, in_v, NULL, v);
 	    happy = 1;
-	  }
-	else
-	  {
-	    if (val->type == R_SOUND_DATA)
-	      {
-		/* (let ((sd (make-sound-data 2 2))) (run (lambda () (set! (sd 1 0) 1.0))) sd) */
-		sound_data_set_1(prog, val, in_v, in_v1, v);
-		happy = 1;
-	      }
-	    else
-	      {
-		if (val->type == R_CLM)
-		  {
-		    /* (let ((mx (make-mixer 2))) (run (lambda () (set! (mx 0 1) 1.0))) mx) */
-		    /* (let ((fr (make-frame 2))) (run (lambda () (set! (fr 1) 1.0))) fr) */
-		    clm_set_1(prog, val, in_v, in_v1, v);
-		    happy = 1;
-		  }
-		else 
-		  {
-		    if (val->type == R_INT_VECTOR)
-		      {
-			/* (let ((v (vector 1 2 3))) (run (set! (v 1) 32) (v 1))) */
-			int_vector_set_1(prog, val, in_v, NULL, v);
-			happy = 1;
-		      }
-		  }
-	      }
+	    break;
+
+	  case R_SOUND_DATA:
+	    /* (let ((sd (make-sound-data 2 2))) (run (lambda () (set! (sd 1 0) 1.0))) sd) */
+	    sound_data_set_1(prog, val, in_v, in_v1, v);
+	    happy = 1;
+	    break;
+
+	  case R_CLM:
+	    /* (let ((mx (make-mixer 2))) (run (lambda () (set! (mx 0 1) 1.0))) mx) */
+	    /* (let ((fr (make-frame 2))) (run (lambda () (set! (fr 1) 1.0))) fr) */
+	    clm_set_1(prog, val, in_v, in_v1, v);
+	    happy = 1;
+	    break;
+
+	  case R_INT_VECTOR:
+	    /* (let ((v (vector 1 2 3))) (run (set! (v 1) 32) (v 1))) */
+	    int_vector_set_1(prog, val, in_v, NULL, v);
+	    happy = 1;
+	    break;
+
+	  case R_LIST:
+	    {
+	      /* (let ((lst '(1 2 3))) (run (lambda () (set! (lst 1) 123) lst)))
+	       */
+	      if ((!in_v) || (!v) ||
+		  (in_v->type != R_INT))
+		happy = 0;
+	      else
+		{
+		  xen_value **new_args;
+		  new_args = (xen_value **)calloc(4, sizeof(xen_value *));
+		  new_args[1] = val;
+		  new_args[2] = in_v;
+		  new_args[3] = v;
+		  list_set_1(prog, new_args, 3);
+		  free(new_args);
+		  happy = 1;
+		}
+	    }
+	    break;
+
+	  case R_STRING:
+	    {
+	      /*
+		(define str "12345")
+		(run-eval `(set! (str 2) #\x))
+		but this leaves the global untouched because we don't copy back!
+		perhaps it's time to use s7 values directly (list-set! does get copied out)
+	      */
+	      if ((!in_v) || (!v) ||
+		  (in_v->type != R_INT))
+		happy = 0;
+	      else
+		{
+		  xen_value **new_args;
+		  new_args = (xen_value **)calloc(4, sizeof(xen_value *));
+		  new_args[1] = val;
+		  new_args[2] = in_v;
+		  new_args[3] = v;
+		  string_set_1(prog, new_args, 3);
+		  free(new_args);
+		  happy = 1;
+		}
+	    }
+	    break;
 	  }
 	free(val);
       }

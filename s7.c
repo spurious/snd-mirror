@@ -19768,6 +19768,16 @@ static const char *type_name(s7_pointer arg)
 }
 
 
+static bool is_vowel(const char *name)
+{
+  return((name[0] == 'a') || 
+	 (name[0] == 'e') || 
+	 (name[0] == 'i') || 
+	 (name[0] == 'o') || 
+	 (name[0] == 'u'));
+}
+
+
 s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
 {
   /* info list is '(format_string caller arg_n arg type_name descr) */
@@ -19778,14 +19788,16 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
       s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 1, make_protected_string(sc, caller));
       s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 2, (arg_n < NUM_SMALL_INTS) ? small_int(arg_n) : s7_make_integer(sc, arg_n));
       s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 3, arg);
-      s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 4, make_protected_string(sc, type_name(arg)));
-      s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 5, make_protected_string(sc, descr));
+      s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 4, make_protected_string(sc, (is_vowel(type_name(arg))) ? "n" : ""));
+      s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 5, make_protected_string(sc, type_name(arg)));
+      s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 6, make_protected_string(sc, descr));
       return(s7_error(sc, sc->WRONG_TYPE_ARG, sc->WRONG_TYPE_ARG_INFO));
     }
   s7_list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 1, make_protected_string(sc, caller));
   s7_list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 2, arg);
-  s7_list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 3, make_protected_string(sc, type_name(arg)));
-  s7_list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 4, make_protected_string(sc, descr));
+  s7_list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 3, make_protected_string(sc, (is_vowel(type_name(arg))) ? "n" : ""));
+  s7_list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 4, make_protected_string(sc, type_name(arg)));
+  s7_list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 5, make_protected_string(sc, descr));
   return(s7_error(sc, sc->WRONG_TYPE_ARG, sc->SIMPLE_WRONG_TYPE_ARG_INFO));
 }
 
@@ -31671,14 +31683,14 @@ s7_scheme *s7_init(void)
   typeflag(sc->WRONG_TYPE_ARG) |= T_DONT_COPY; 
 
   sc->WRONG_TYPE_ARG_INFO = sc->NIL;
-  for (i = 0; i < 6; i++)
+  for (i = 0; i < 7; i++)
     sc->WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->WRONG_TYPE_ARG_INFO, T_PAIR | T_STRUCTURE);
-  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 0, s7_make_permanent_string("~A argument ~D, ~S, is ~A but should be ~A"));
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 0, s7_make_permanent_string("~A argument ~D, ~S, is a~A ~A but should be ~A"));
 
   sc->SIMPLE_WRONG_TYPE_ARG_INFO = sc->NIL;
-  for (i = 0; i < 5; i++)
+  for (i = 0; i < 6; i++)
     sc->SIMPLE_WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->SIMPLE_WRONG_TYPE_ARG_INFO, T_PAIR | T_STRUCTURE);
-  s7_list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 0, s7_make_permanent_string("~A argument, ~S, is ~A but should be ~A"));
+  s7_list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 0, s7_make_permanent_string("~A argument, ~S, is a~A ~A but should be ~A"));
 
   sc->WRONG_NUMBER_OF_ARGS = make_symbol(sc, "wrong-number-of-args");
   typeflag(sc->WRONG_NUMBER_OF_ARGS) |= T_DONT_COPY; 
@@ -32418,4 +32430,8 @@ the error type and the info passed to the error handler.");
 ;    (lst 0 1)
 :(let ((lst '("12" "34"))) ((lst 0) 1))
 #\2
+(let ((lst (list #(1 2) #(3 4)))) (lst 0 1))
+;list-ref argument 1, #(1 2), is vector but should be a pair
+;    (lst 0 1)
+
 */

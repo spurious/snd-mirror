@@ -10,8 +10,8 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 	      (let loop ((pos 0)) ;from slib/strsrch.scm
 		(cond
 		 ((>= pos (string-length str)) #f)
-		 ((char=? #\) (string-ref str pos)) pos)
-		 ((char=? #\space (string-ref str pos)) pos)
+		 ((char=? #\) (str pos)) pos)
+		 ((char=? #\space (str pos)) pos)
 		 (else (loop (+ 1 pos)))))))
 	   
 	   (goto-html
@@ -46,7 +46,7 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 			(let ((doc (and (procedure? obj)
 					(procedure-documentation obj))))
 			  (if (and (string? doc)
-				   (char=? (string-ref doc 0) #\())
+				   (char=? (doc 0) #\())
 			      (let ((pos (find-close-paren doc)))
 				(if pos
 				    (substring doc 1 pos)

@@ -2647,7 +2647,7 @@ mjkoskin@sci.fi
 			   (let ((rmx (make-mixer (max out-chans rev-chans))))
 			     (do ((i 0 (+ i 1)))
 				 ((= i (max out-chans rev-chans)))
-			       (mixer-set! rmx (modulo i out-chans) (modulo i rev-chans) reverb))
+			       (set! (rmx (modulo i out-chans) (modulo i rev-chans)) reverb))
 			     rmx)
 			   #f))
 	       (revframe (if rev-mx (make-frame (max out-chans rev-chans)) #f))
@@ -2712,7 +2712,7 @@ mjkoskin@sci.fi
 		    (do ((outp 0 (+ 1 outp)))
 			((= outp out-chans))
 		      (let ((outn (inlist outp)))
-			(mixer-set! mx inp outp outn)))))))
+			(set! (mx inp) outp outn)))))))
 
 	  ;; split out 1 and 2 chan input 
 	  (if (= in-chans 1)
@@ -2971,7 +2971,7 @@ mjkoskin@sci.fi
 		     (let ((rmx (make-mixer in-chans)))
 		       (do ((i 0 (+ i 1)))
 			   ((= i in-chans))
-			 (mixer-set! rmx i 0 reverb-amount)) ; 0->assume 1 chan reverb stream, I think
+			 (set! (rmx i 0) reverb-amount)) ; 0->assume 1 chan reverb stream, I think
 		       rmx)
 		     #f))
 	 (revframe (if rev-mx (make-frame 1) #f))
@@ -3003,7 +3003,7 @@ mjkoskin@sci.fi
 		    (let ((outn (inlist outp)))
 		      (if outn
 			  (if (number? outn)
-			      (mixer-set! mx inp outp outn)
+			      (set! (mx inp outp) outn)
 			      (if (or (env? outn)
 				      (list? outn))
 				  (begin
@@ -3016,7 +3016,7 @@ mjkoskin@sci.fi
 	      (do ((inp 0 (+ 1 inp))) ; matrix is a number in this case (a global scaler)
 		  ((= inp in-chans))
 		(if (< inp out-chans)
-		    (mixer-set! mx inp inp matrix))))))
+		    (set! (mx inp inp) matrix))))))
 
     (if (or (not srate)
 	    (and (number? srate)
@@ -3051,7 +3051,7 @@ mjkoskin@sci.fi
 		     (do ((outp 0 (+ 1 outp)))
 			 ((= outp out-chans))
 		       (if (env? (envs outp))
-			   (mixer-set! mx 0 outp (env (envs outp)))))
+			   (set! (mx 0 outp) (env (envs outp)))))
 		     (let ((inframe (src sr (if srcenv (env srcenv) 0.0))))
 		       (frame->file *output* i (sample->frame mx inframe outframe))
 		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe))))))
@@ -3083,7 +3083,7 @@ mjkoskin@sci.fi
 		       (do ((outp 0 (+ 1 outp)))
 			   ((= outp out-chans))
 			 (if (env? (envs (+ off outp)))
-			     (mixer-set! mx inp outp (env (envs (+ off outp)))))))
+			     (set! (mx inp outp) (env (envs (+ off outp)))))))
 		     (let ((sr-val (if srcenv (env srcenv) 0.0)))
 		       (do ((inp 0 (+ 1 inp)))
 			   ((= inp in-chans))

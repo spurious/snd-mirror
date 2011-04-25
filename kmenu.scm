@@ -8,10 +8,10 @@
     (and (char? chr)
 	 (do ((i 0 (+ i 1)))
 	     ((or res (= i len)) res)
-	   (set! res (char=? (string-ref str i) chr))))))
+	   (set! res (char=? (str i) chr))))))
 
 (define (string-replace str rstr ind ignore)
-  (string-set! str ind (string-ref rstr 0)))
+  (set! (str ind) (rstr 0)))
 
 (define (find thunk lst)
   (if (null? lst)
@@ -102,7 +102,7 @@
 
     ;; filter-map I hope (Bill S)
     (define (filter-map func lst)
-      (map (lambda (x) (or (func x) (values))) lst))
+      (map (lambda (x) (if (func x) x (values))) lst))
     
     ;;lookup top-level menu by name
     (define (find-menu name)

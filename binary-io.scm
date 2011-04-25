@@ -28,7 +28,7 @@
   (let ((str (make-string len)))
     (do ((i 0 (+ i 1)))
 	((= i len) str)
-      (string-set! str i (read-char)))))
+      (set! (str i) (read-char)))))
 	 
 (define (write-chars str)
   (for-each write-char str))

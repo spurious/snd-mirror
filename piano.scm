@@ -306,7 +306,7 @@
     
     (do ((i 0 (+ 1 i)))
 	((= i 4))
-      (vector-set! hammer-one-pole i (make-one-pole (* 1.0 (- 1.0 hammerPole)) (- hammerPole))))
+      (set! (hammer-one-pole i) (make-one-pole (* 1.0 (- 1.0 hammerPole)) (- hammerPole))))
     
     (let* ((vals (apfloor agraffe-len wT))
 	   (dlen1 (car vals))
@@ -388,11 +388,11 @@
 	   (noi (make-pnoise)))
       
       (do ((i 0 (+ 1 i))) ((= i 8))
-	(vector-set! string1-stiffness-ap i (make-one-pole-allpass stiffnessCoefficientL)))
+	(set! (string1-stiffness-ap i) (make-one-pole-allpass stiffnessCoefficientL)))
       (do ((i 0 (+ 1 i))) ((= i 8))
-	(vector-set! string2-stiffness-ap i (make-one-pole-allpass stiffnessCoefficient)))
+	(set! (string2-stiffness-ap i) (make-one-pole-allpass stiffnessCoefficient)))
       (do ((i 0 (+ 1 i))) ((= i 8))
-	(vector-set! string3-stiffness-ap i (make-one-pole-allpass stiffnessCoefficient)))
+	(set! (string3-stiffness-ap i) (make-one-pole-allpass stiffnessCoefficient)))
       
       (run
        (do ((i beg (+ 1 i)))

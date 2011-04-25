@@ -594,7 +594,7 @@
 	  #f
 	  (if (not (cadr (car ds)))
 	      (begin
-		(list-set! (car ds) 1 #t)
+		(set! ((car ds) 1) #t)
 		(caar ds))
 	      (find-free-dialog (cdr ds)))))
 
@@ -651,8 +651,8 @@
 					  (gdk_drawable_get_size ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window w)))
 					  (list (gtk_widget_get_allocated_width w)
 						(gtk_widget_get_allocated_height w)))))
-			      (list-set! d 5 (car xy))
-			      (list-set! d 6 (cadr xy))
+			      (set! (d 5) (car xy))
+			      (set! (d 6) (cadr xy))
 			      (display-level d)))
 			  context)
 	context))))
@@ -736,10 +736,10 @@
 	(cairo_stroke cr)
 	(cairo_restore cr)
 	
-	(list-set! meter-data 3 val)
+	(set! (meter-data 3) val)
 	(if (<= val red-deg)
 	    (set! val (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
-	(list-set! meter-data 4 val)
+	(set! (meter-data 4) val)
 	
 	;; now the red bubble...
 	(if (> val .01)
@@ -773,9 +773,9 @@
 		   (for-each
 		    (lambda (meter)
 		      (if (null? maxes)
-			  (list-set! meter 1 0.0)
+			  (set! (meter 1) 0.0)
 			  (begin
-			    (list-set! meter 1 (car maxes))
+			    (set! (meter 1) (car maxes))
 			    (display-level meter)
 			    (set! maxes (cdr maxes)))))
 		    (reverse meter-list)))))
@@ -786,7 +786,7 @@
 		    (lambda (ignored)
 		      (for-each 
 		       (lambda (meter)
-			 (list-set! meter 1 0.0)
+			 (set! (meter 1) 0.0)
 			 (display-level meter))
 		       meter-list)
 		      (set! ctr (+ ctr 1))
@@ -920,7 +920,7 @@
 		     (max 0.0 (min 1.0 (/ (- var y0) (- y1 y0))))))
 		  ;; level meter
 		  (begin
-		    (list-set! widget 1 var)
+		    (set! (widget 1) var)
 		    (display-level widget)
 		    (force-update (car widget)))))))
   var)

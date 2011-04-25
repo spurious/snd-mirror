@@ -228,10 +228,10 @@ read, even if not playing.  'files' is a list of files to be played."
 					      ((= j chans))
 					    (sound-data-set! data j i 
 							     (+ (if (< j downs) 
-								    (* ramp-down (frame-ref down j))
+								    (* ramp-down (down j))
 								    0.0)
 								(if (< j ups) 
-								    (* (- 1.0 ramp-down) (frame-ref up j))
+								    (* (- 1.0 ramp-down) (up j))
 								    0.0))))
 					  (set! ramp-down (- ramp-down ramp)))
 					(if read-even-when-not-playing
@@ -251,7 +251,7 @@ read, even if not playing.  'files' is a list of files to be played."
 					  (file->frame current (+ current-loc i) on)
 					  (do ((k 0 (+ 1 k)))
 					      ((= k chans))
-					    (sound-data-set! data k i (if (< k ons) (frame-ref on k) 0.0))))
+					    (sound-data-set! data k i (if (< k ons) (on k) 0.0))))
 					(if read-even-when-not-playing
 					    (do ((i 0 (+ 1 i)))
 						((= i files-len))

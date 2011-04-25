@@ -2340,7 +2340,7 @@ is assumed to be outside -1.0 to 1.0."
 	      (set! m (- (* 2 order) i)))
 	  (do ((k (- m) (+ k 2)))
 	      ((> k m))
-	    (mixer-set! a (/ (+ i k) 2) (/ (- i k) 2) sum)))))
+	    (set! (a (/ (+ i k) 2) (/ (- i k) 2)) sum)))))
     (let ((b (mixer-solve a (let ((f (make-frame (+ order 1))))
 			      (frame-set! f 0 1.0) ; set others instead for derivative
 			      f)))
@@ -2348,12 +2348,12 @@ is assumed to be outside -1.0 to 1.0."
       (do ((k (- n) (+ 1 k))
 	   (i 0 (+ i 1)))
 	  ((> k n))
-	(let ((sum (frame-ref b 0))
+	(let ((sum (b 0))
 	      (fac 1.0))
 	  (do ((m 1 (+ 1 m))) 
 	      ((> m order)) 
 	    (set! fac (* fac k))
-	    (set! sum (+ sum (* (frame-ref b m) fac))))
+	    (set! sum (+ sum (* (b m) fac))))
 	  (set! (result i) sum)))
       (make-fir-filter :order size :xcoeffs result))))
 

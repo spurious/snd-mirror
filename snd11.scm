@@ -30,7 +30,7 @@
      (lambda (ok)
        (do ((i (- len 1) (- i 1)))
 	   ((= i 0))
-	 (if (char=? (string-ref file i) #\.)
+	 (if (char=? (file i) #\.)
 	     (ok (substring file (+ 1 i) len))))
        default))))
 
@@ -313,7 +313,7 @@ but not anymore.
 		  (len (string-length name)))
 	      (do ((i 0 (+ 1 i)))
 		  ((= i len) (substring name (+ 1 last-slash)))
-		(if (char=? (string-ref name i) #\/)
+		(if (char=? (name i) #\/)
 		    (set! last-slash i)))))
 	  (let ((brief-name (just-filename filename)))
 	    (if (member brief-name reopen-names)

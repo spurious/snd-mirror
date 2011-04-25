@@ -87,7 +87,7 @@
   (make-vector (list dim1 dim2) initial-value))
 
 (define (array-set! arr val i1 i2)
-  (vector-set! arr i1 i2 val))
+  (set! (arr i1 i2) val))
 
 (define array-ref vector-ref)
 

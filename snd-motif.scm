@@ -81,11 +81,11 @@
 	 (new-str (make-string len #\.)))
     (do ((i 0 (+ i 1)))
 	((= i len) new-str)
-      (let ((c (string-ref str i)))
+      (let ((c (str i)))
 	(if (or (char=? c #\\)
 		(char=? c #\/))
-	    (string-set! new-str i #\_)
-	    (string-set! new-str i c))))))
+	    (set! (new-str i) #\_)
+	    (set! (new-str i) c))))))
 
 
 ;;; -------- apply func to every widget belonging to w (and w) --------
