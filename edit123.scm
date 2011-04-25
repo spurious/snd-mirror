@@ -39,7 +39,7 @@
       (let ((last-slash 0))
 	(do ((i 0 (+ 1 i)))
 	    ((= i (string-length curfile)))
-	  (if (char=? (string-ref curfile i) #\/)
+	  (if (char=? (curfile i) #\/)
 	      (set! last-slash i)))
 	(substring curfile (+ 1 last-slash))))
     
@@ -47,7 +47,7 @@
       (let ((last-slash 0))
 	(do ((i 0 (+ 1 i)))
 	    ((= i (string-length curfile)))
-	  (if (char=? (string-ref curfile i) #\/)
+	  (if (char=? (curfile i) #\/)
 	      (set! last-slash i)))
 	(substring curfile 0 last-slash)))
     

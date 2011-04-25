@@ -91,12 +91,12 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 		(let* ((diff (car e))
 		       (len (length e))
 		       (lastx (e (- len 2)))
-		       (newe (copy e))) ; it is dangerous (and unclean...) to use list-set! on the original list
+		       (newe (copy e)))
 		  (do ((i 0 (+ i 2)))
 		      ((>= i len) newe)
 		    (let ((x (/ (- (newe i) diff) lastx)))
 		      (set! xs (cons x xs))
-		      (list-set! newe i x))))))
+		      (set! (newe i) x))))))
 	     (remove-duplicates
 	      (lambda (lst)
 		(letrec ((rem-dup
@@ -351,7 +351,7 @@ repetition to be in reverse."
 	      (new-len (length new-env)))
 	  (do ((i 0 (+ i 2)))
 	      ((>= i new-len))
-	    (list-set! new-env i (* scl (new-env i))))))
+	    (set! (new-env i) (* scl (new-env i))))))
     new-env))
 
 

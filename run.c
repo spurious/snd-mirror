@@ -15806,7 +15806,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 		  {
 		    /* this implements the "implicit-indexing" of lists: (lst 1) -> (list-ref lst 1) 
 		     *
-		     * TODO: list-set! in run: see line 16145 or so
+		     * TODO: list-set! in run: see line 16145 or so, and implicit string-ref here?
 		     */
 		    xen_value **new_args;
 		    new_args = (xen_value **)calloc(3, sizeof(xen_value *));
@@ -15817,6 +15817,20 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 		    if (args[0]) free(args[0]);
 		    return(clean_up(res, new_args, 2));
 		  }
+		  break;
+
+		case R_STRING:
+		  {
+		    xen_value **new_args;
+		    new_args = (xen_value **)calloc(3, sizeof(xen_value *));
+		    new_args[1] = v;
+		    new_args[2] = args[1];
+		    res = string_ref_1(prog, new_args, 2);
+		    new_args[1] = NULL;
+		    if (args[0]) free(args[0]);
+		    return(clean_up(res, new_args, 2));
+		  }
+		  /* TODO: but ("asdf" 2) is not handled by this code? */
 		  break;
 
 		case R_FUNCTION:     

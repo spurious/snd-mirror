@@ -241,7 +241,7 @@
      (lambda (return)
        (do ((i 0 (+ 1 i)))
 	   ((= i len) (substring data sp1))
-	 (if (char=? (string-ref data i) #\space)
+	 (if (char=? (data i) #\space)
 	     (if (= sp1 -1)
 		 (set! sp1 i)
 		 (return (substring data (+ 1 sp1) i)))))))))
@@ -254,7 +254,7 @@
      (lambda (return)
        (do ((i 0 (+ 1 i)))
 	   ((= i len) (substring data sp2))
-	 (if (char=? (string-ref data i) #\space)
+	 (if (char=? (data i) #\space)
 	     (if (= sp1 -1)
 		 (set! sp1 i)
 		 (if (= sp2 -1)
@@ -267,7 +267,7 @@
      (lambda (return)
        (do ((i 0 (+ 1 i)))
 	   ((= i len) data)
-	 (if (char=? (string-ref data i) #\space)
+	 (if (char=? (data i) #\space)
 	     (return (substring data 0 i))))))))
 
 (define (cdr-str data)
@@ -276,7 +276,7 @@
      (lambda (return)
        (do ((i 0 (+ 1 i)))
 	   ((= i len) data)
-	 (if (char=? (string-ref data i) #\space)
+	 (if (char=? (data i) #\space)
 	     (return (substring data (+ 1 i)))))))))
 
 (define (string-upcase name)
@@ -284,7 +284,7 @@
 	 (str (make-string len)))
     (do ((i 0 (+ 1 i)))
 	((= i len))
-      (string-set! str i (char-upcase (string-ref name i))))
+      (string-set! str i (char-upcase (name i))))
     str))
 
 (define (ref-arg? arg)
@@ -340,7 +340,7 @@
        (do ((i (- len 1) (- i 1))
 	    (ctr 0 (+ ctr 1)))
 	   ((= i 0) #f)
-	 (if (not (char=? (string-ref type i) #\*))
+	 (if (not (char=? (type i) #\*))
 	     (return (> ctr 1))))))))
 
 (define (has-stars type)
@@ -350,7 +350,7 @@
        (do ((i (- len 1) (- i 1))
 	    (ctr 0 (+ ctr 1)))
 	   ((= i 0) #f)
-	 (if (char=? (string-ref type i) #\*)
+	 (if (char=? (type i) #\*)
 	     (return #t)))
        #f))))
 
@@ -359,7 +359,7 @@
 	(val (string-copy type)))
     (do ((i 0 (+ 1 i)))
 	((= i len) val)
-      (if (char=? (string-ref val i) #\*)
+      (if (char=? (val i) #\*)
 	  (string-set! val i #\_)))))
 
 (define (no-arg-or-stars name)
@@ -368,8 +368,8 @@
      (lambda (return)
        (do ((i 0 (+ 1 i)))
 	   ((= i len) name)
-	 (if (or (char=? (string-ref name i) #\()
-		 (char=? (string-ref name i) #\*))
+	 (if (or (char=? (name i) #\()
+		 (char=? (name i) #\*))
 	     (return (substring name 0 i))))))))
 
 (define (parse-args args extra)
@@ -381,33 +381,33 @@
 	'()
 	(do ((i 0 (+ 1 i)))
 	    ((= i len) (reverse data))
-	  (let ((ch (string-ref args i)))
+	  (let ((ch (args i)))
 	    (if (or (char=? ch #\space)
 		    (= i (- len 1)))
 		(begin
 		  (if type
 		      (let* ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ 1 i) i)))
 			     (reftype #f))
-			(if (char=? (string-ref given-name 0) #\@)
+			(if (char=? (given-name 0) #\@)
 			    (set! data (cons (list type 
 						   (substring given-name 1 (string-length given-name))
 						   'null)
 					     data))
-			    (if (char=? (string-ref given-name 0) #\#)
+			    (if (char=? (given-name 0) #\#)
 				(set! data (cons (list type 
 						       (substring given-name 1 (string-length given-name))
 						       'opt)
 						 data))
-				(if (or (char=? (string-ref given-name 0) #\[)
-					(char=? (string-ref given-name 0) #\{)
-					(char=? (string-ref given-name 0) #\|))
+				(if (or (char=? (given-name 0) #\[)
+					(char=? (given-name 0) #\{)
+					(char=? (given-name 0) #\|))
 				    (begin
 				      (set! reftype (deref-type (list type)))
 				      (set! data (cons (list type 
 							     (substring given-name 1 (- (string-length given-name) 1))
 							     given-name) 
 						       data)))
-				    (if (char=? (string-ref given-name 0) #\&)
+				    (if (char=? (given-name 0) #\&)
 					(set! data (cons (list type 
 							       (substring given-name 1 (string-length given-name))
 							       'set)
@@ -1242,7 +1242,7 @@
     (hey initial)
     (do ((i 0 (+ 1 i)))
 	((= i len))
-      (let ((ch (string-ref args i)))
+      (let ((ch (args i)))
 	(if (char=? ch #\space)
 	    (if typed
 		(begin
@@ -1598,7 +1598,7 @@
      (lambda (return)
        (do ((i 0 (+ 1 i)))
 	   ((= i len) name)
-	 (if (char=? (string-ref name i) #\()
+	 (if (char=? (name i) #\()
 	     (return (substring name 0 i))))))))
 
 ;;; ---------------------------------------- read data ---------------------------------------- 
@@ -1609,7 +1609,7 @@
 (for-each
  (lambda (type)
    (let* ((len (string-length type))
-	  (dereftype (if (and (char=? (string-ref type (- len 1)) #\*)
+	  (dereftype (if (and (char=? (type (- len 1)) #\*)
 			      (not (string=? type "char*")) ; these are surely strings (and set would need XEN_TO_C_gchar etc)
 			      (not (string=? type "GError*"))
 			      (not (string=? type "GError**"))
@@ -2345,11 +2345,11 @@
 			     (hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%"
 				  (no-stars argtype) argname argname ctr name argtype)))
 		     (if (>= (length arg) 3)
-			 (if (char=? (string-ref (arg 2) 0) #\{)
+			 (if (char=? ((arg 2) 0) #\{)
 			     (begin
 			       (set! argc (deref-name arg))
 			       (hey "  ~A = XEN_TO_C_~A(~A);~%" (deref-name arg) (deref-type arg) argname))
-			     (if (char=? (string-ref (arg 2) 0) #\|)
+			     (if (char=? ((arg 2) 0) #\|)
 				 (begin
 				   (hey "  ~A = (~A)calloc(~A, sizeof(~A));~%" 
 					(deref-name arg)

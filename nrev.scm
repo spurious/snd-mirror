@@ -29,7 +29,7 @@
 	((= i 15))
       (let ((val (floor (* srscale (dly-len i)))))
 	(if (even? val) (set! val (+ 1 val)))
-	(list-set! dly-len i (next-prime val))))
+	(set! (dly-len i) (next-prime val))))
 
     (let* ((len (+ (mus-srate) (frames *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (dly-len 0)))

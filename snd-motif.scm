@@ -1177,7 +1177,7 @@
 	  #f
 	  (if (not (cadr (car ds)))
 	      (begin
-		(list-set! (car ds) 1 #t)
+		(set! ((car ds) 1) #t)
 		(caar ds))
 	      (find-free-dialog (cdr ds)))))
     (define (find-dialog-widget wid ds)
@@ -1207,12 +1207,12 @@
 					   (lambda (w c i)
 					     (let ((lst (find-dialog-widget w file-selector-dialogs)))
 					       ((lst 2) (XmStringUnparse (.value i) #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
-					       (list-set! lst 1 #f)
+					       (set! (lst 1) #f)
 					       (XtUnmanageChild w))))
 			   (XtAddCallback new-dialog XmNcancelCallback
 					   (lambda (w c i)
 					     (let ((lst (find-dialog-widget w file-selector-dialogs)))
-					       (list-set! lst 1 #f)
+					       (set! (lst 1) #f)
 					       (XtUnmanageChild w))))
 			  (set! file-selector-dialogs (cons (list new-dialog #t func title help) file-selector-dialogs))
 			  (set-main-color-of-widget new-dialog)
@@ -1337,22 +1337,22 @@
       (define sound-button-gc
 	(make-procedure-with-setter
 	 (lambda (data) (data 0))
-	 (lambda (data val) (list-set! data 0 val))))
+	 (lambda (data val) (set! (data 0) val))))
 
       (define sound-button-filename
 	(make-procedure-with-setter
 	 (lambda (data) (data 1))
-	 (lambda (data val) (list-set! data 1 val))))
+	 (lambda (data val) (set! (data 1) val))))
 
       (define sound-button
 	(make-procedure-with-setter
 	 (lambda (data) (data 2))
-	 (lambda (data val) (list-set! data 2 val))))
+	 (lambda (data val) (set! (data 2) val))))
 
       (define sound-button-peaks
 	(make-procedure-with-setter
 	 (lambda (data) (data 3))
-	 (lambda (data val) (list-set! data 3 val))))
+	 (lambda (data val) (set! (data 3) val))))
 
       (define (sound-button-data button)
 	(define (sb-data lst)
@@ -1570,8 +1570,8 @@
     (if resizable
 	(XtAddCallback meter XmNresizeCallback 
 		       (lambda (w c i) 
-			 (list-set! c 5 (cadr (XtGetValues w (list XmNwidth 0))))
-			 (list-set! c 6 (cadr (XtGetValues w (list XmNheight 0))))
+			 (set! (c 5) (cadr (XtGetValues w (list XmNwidth 0))))
+			 (set! (c 6) (cadr (XtGetValues w (list XmNheight 0))))
 			 (display-level c))
 		       context))
     context))
@@ -1637,10 +1637,10 @@
 		 (nx1 (round (+ wid2 (* (+ wid2 major-tick) (sin rdeg)))))
 		 (ny1 (round (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg))))))
 	    (XDrawLine dpy win gc wid2 (+ top wid2) nx1 ny1)
-	    (list-set! meter-data 3 val)
+	    (set! (meter-data 3) val)
 	    (if (> val red-deg)
-		(list-set! meter-data 4 val)
-		(list-set! meter-data 4 (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
+		(set! (meter-data 4) val)
+		(set! (meter-data 4) (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
 	    (if (> (meter-data 4) .01)
 		(begin
 		  (XSetForeground dpy gc (red-pixel))
@@ -1679,9 +1679,9 @@
 		   (for-each
 		    (lambda (meter)
 		      (if (null? maxes)
-			  (list-set! meter 1 0.0)
+			  (set! (meter 1) 0.0)
 			  (begin
-			    (list-set! meter 1 (car maxes))
+			    (set! (meter 1) (car maxes))
 			    (display-level meter)
 			    (set! maxes (cdr maxes)))))
 		    (reverse meter-list)))))
@@ -1692,7 +1692,7 @@
 				     (lambda (ignored)
 				       (for-each 
 					(lambda (meter)
-					  (list-set! meter 1 0.0)
+					  (set! (meter 1) 0.0)
 					  (display-level meter))
 					meter-list)
 				       (set! ctr (+ ctr 1))
@@ -2592,7 +2592,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	      (if (XmIsDrawingArea (car widget))
 		  ;; level meter
 		  (begin
-		    (list-set! widget 1 var)
+		    (set! (widget 1) var)
 		    (display-level widget)
 		    (XmUpdateDisplay (car widget)))))))
   var)
@@ -2655,8 +2655,8 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 			 (let ((maxed (caddr mv)))
 			   (if maxed
 			       (begin
-				 (list-set! mv 3 (cadr (XtVaGetValues (car (sound-widgets c)) (list XmNheight 0))))
-				 (list-set! mv 4 (show-controls c))
+				 (set! (mv 3) (cadr (XtVaGetValues (car (sound-widgets c)) (list XmNheight 0))))
+				 (set! (mv 4) (show-controls c))
 				 (do ((i 0 (+ i 1)))
 				     ((= i (channels c)))
 				   (XtUnmanageChild ((channel-widgets c i) 10)))
@@ -2671,8 +2671,8 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 				 (XmChangeColor new-minmax (basic-color))
 				 (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum prev-size XmNpaneMinimum (- prev-size 1)))
 				 (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum 1000 XmNpaneMinimum 1))))
-			   (list-set! mv 2 (not maxed))))))
-			       snd)
+			   (set! (mv 2) (not maxed))))))
+		 snd)
 
 		(set! previous-minmax (list snd new-minmax #t cur-size (show-controls snd)))
 		(set! maxed-snds (cons previous-minmax maxed-snds)))))

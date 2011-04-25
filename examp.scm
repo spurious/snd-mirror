@@ -2018,7 +2018,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
       (let ((last-slash 0))
 	(do ((i 0 (+ i 1)))
 	    ((= i (string-length curfile)))
-	  (if (char=? (string-ref curfile i) #\/)
+	  (if (char=? (curfile i) #\/)
 	      (set! last-slash i)))
 	(substring curfile (+ 1 last-slash))))
 
@@ -2026,7 +2026,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
       (let ((last-slash 0))
 	(do ((i 0 (+ i 1)))
 	    ((= i (string-length curfile)))
-	  (if (char=? (string-ref curfile i) #\/)
+	  (if (char=? (curfile i) #\/)
 	      (set! last-slash i)))
 	(substring curfile 0 last-slash)))
 
@@ -2399,7 +2399,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	   (len (string-length new-name)))
       (do ((i 0 (+ i 1)))
 	  ((= i len) new-name)
-	(if (char=? (string-ref new-name i) #\space)
+	(if (char=? (new-name i) #\space)
 	    (string-set! new-name i #\-)))))
 
   (define (directory->list dir)
@@ -2487,17 +2487,17 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
       (let ((old-fam (with-file-monitor))) 
 	(set! (with-file-monitor) #f) ; no need to monitor these guys
 	(format fd ";;; sound data from ~S" main-dir)
-	(if (not (char=? (string-ref main-dir (- (string-length main-dir) 1)) #\/))
+	(if (not (char=? (main-dir (- (string-length main-dir) 1)) #\/))
 	    (set! main-dir (string-append main-dir "/")))
 	(for-each
 	 (lambda (dir)
-	   (if (not (char=? (string-ref dir 0) #\.))
+	   (if (not (char=? (dir 0) #\.))
 	       (let ((ins-name (lower-case-and-no-spaces dir)))
 		 (format fd "~%~%;;; ---------------- ~A ----------------" dir)
 		 (if (string=? dir "Piano")
 		     (for-each
 		      (lambda (inner-dir)
-			(if (not (char=? (string-ref inner-dir 0) #\.))
+			(if (not (char=? (inner-dir 0) #\.))
 			    (do-one-directory fd (string-append main-dir dir "/" inner-dir) ins-name .001 .0001))) ; pp piano notes are .01 maxamp and short
 		      (directory->list (string-append main-dir dir)))
 		     (do-one-directory fd (string-append main-dir dir) ins-name)))))

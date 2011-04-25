@@ -35,7 +35,7 @@
 		 (ax-inf 2)
 		 (ax-inf 3))))) ; was 1?
    (lambda (drawer new-env)
-     (list-set! drawer 0 new-env)
+     (set! (drawer 0) new-env)
      (xe-redraw drawer))))
 
 (define (xe-create-enved name parent args axis-bounds)
@@ -190,11 +190,11 @@
 			     name)))
 	  (XtAddCallback drawer XmNresizeCallback 
 			 (lambda (w context info) 
-			   (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
+			   (set! (editor 2) (apply draw-axes drawer gc name axis-bounds))
 			   (xe-redraw editor)))
 	  (XtAddCallback drawer XmNexposeCallback 
 			 (lambda (w context info) 
-			   (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
+			   (set! (editor 2) (apply draw-axes drawer gc name axis-bounds))
 			   (xe-redraw editor)))
 	  (XtAddEventHandler drawer ButtonPressMask #f 
 			     (lambda (w context ev flag) 
@@ -246,7 +246,7 @@
 					(g_signal_lookup (if with-gtk3 "draw" "expose_event")
 							 (G_OBJECT_TYPE (G_OBJECT drawer)))
 					0 (g_cclosure_new (lambda (w e d)
-							    (list-set! editor 2 (apply local-draw-axes drawer gc name axis-bounds))
+							    (set! (editor 2) (apply local-draw-axes drawer gc name axis-bounds))
 							    (xe-redraw editor)
 							    #f)
 							  #f #f)
@@ -254,7 +254,7 @@
 	(g_signal_connect_closure_by_id (GPOINTER drawer)
 					(g_signal_lookup "configure_event" (G_OBJECT_TYPE (G_OBJECT drawer)))
 					0 (g_cclosure_new (lambda (w e d)
-							    (list-set! editor 2 (apply local-draw-axes drawer gc name axis-bounds))
+							    (set! (editor 2) (apply local-draw-axes drawer gc name axis-bounds))
 							    (xe-redraw editor)
 							    #f)
 							  #f #f) 

@@ -835,7 +835,7 @@ using the granulate generator to fix up the selection duration (this still is no
 					(if (= mode 1)
 					    (set! mode 2)
 					    (set! mode 1))
-					(list-set! loop-data (+ offset 6) mode)
+					(set! (loop-data (+ offset 6)) mode)
 					(change-label w (if (= mode 1) "forward" "forw/back")))))
 		     (XtAddCallback leftrange XmNactivateCallback
 				    (lambda (w c i)
@@ -852,22 +852,22 @@ using the granulate generator to fix up the selection duration (this still is no
 			  (XtAddCallback farleft XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))
-					     (list-set! loop-data (+ loc (* offset 2)) ml)
+					     (set! (loop-data (+ loc (* offset 2))) ml)
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback stopleft XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))
-					     (list-set! loop-data (+ loc (* offset 2)) ml)
+					     (set! (loop-data (+ loc (* offset 2))) ml)
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback lotsleft XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))
-					     (list-set! loop-data (+ loc (* offset 2)) (max ml (- (loop-data (+ loc (* offset 2))) 10)))
+					     (set! (loop-data (+ loc (* offset 2))) (max ml (- (loop-data (+ loc (* offset 2))) 10)))
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback someleft XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))
-					     (list-set! loop-data (+ loc (* offset 2)) (max ml (- (loop-data (+ loc (* offset 2))) 1)))
+					     (set! (loop-data (+ loc (* offset 2))) (max ml (- (loop-data (+ loc (* offset 2))) 1)))
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
 		      (list rowlefttop rowleftbottom)
 		      (list 0 1))
@@ -882,22 +882,22 @@ using the granulate generator to fix up the selection duration (this still is no
 			  (XtAddCallback farright XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
-					     (list-set! loop-data (+ loc (* offset 2)) ml)
+					     (set! (loop-data (+ loc (* offset 2))) ml)
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback stopright XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
-					     (list-set! loop-data (+ loc (* offset 2)) ml)
+					     (set! (loop-data (+ loc (* offset 2))) ml)
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback lotsright XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
-					     (list-set! loop-data (+ loc (* offset 2)) (min ml (+ (loop-data (+ loc (* offset 2))) 10)))
+					     (set! (loop-data (+ loc (* offset 2))) (min ml (+ (loop-data (+ loc (* offset 2))) 10)))
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 			  (XtAddCallback someright XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (frames))))
-					     (list-set! loop-data (+ loc (* offset 2)) (min ml (+ (loop-data (+ loc (* offset 2))) 1)))
+					     (set! (loop-data (+ loc (* offset 2))) (min ml (+ (loop-data (+ loc (* offset 2))) 1)))
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
 		      (list rowrighttop rowrightbottom)
 		      (list 0 1))))

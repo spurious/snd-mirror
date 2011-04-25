@@ -216,10 +216,10 @@
 		 (slen (length place)))
 	    (do ((k 0 (+ k 1)))
 		((= k slen))
-	      (if (char=? (string-ref place k) #\/)
+	      (if (char=? (place k) #\/)
 		  (set! pos k)))
 	    (if (> pos -1)
-		(list-set! places i (substring place pos)))))
+		(set! (places i) (substring place pos)))))
 	
 	(set! places (sort! places string<?))
 	(set! names (sort! names (lambda (a b)

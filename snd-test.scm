@@ -57,7 +57,7 @@
 	 (newstr (make-string len)))
     (do ((i 0 (+ 1 i)))
 	((= i len))
-      (string-set! newstr i (char-downcase (string-ref str i))))
+      (string-set! newstr i (char-downcase (str i))))
     newstr))
 
 (define* (cfft! data n (dir 1))
@@ -387,8 +387,8 @@
 		 (= i alen))
 	     (and happy 
 		  (= j blen)))
-	  (let ((ac (string-ref a i))
-		(bc (string-ref b j)))
+	  (let ((ac (a i))
+		(bc (b j)))
 	    (if (char=? ac bc)
 		(set! j (+ 1 j))
 		(if (not (and (char=? ac #\-)	
@@ -399,7 +399,7 @@
 			     (string=? (substring b j (+ j 6)) "-0.000"))
 			(begin
 			  (set! j (+ 1 j))
-			  (if (not (char=? ac (string-ref b j)))
+			  (if (not (char=? ac (b j)))
 			      (set! happy #f)
 			      (set! j (+ 1 j))))
 			(set! happy #f)))))))))
@@ -30322,21 +30322,21 @@ EDITS: 2
   (define (string-equal-ignoring-white-space s1 s2)
     (let ((len1 (string-length s2)))
       (define (white-space? str pos)
-	(or (char=? (string-ref str pos) #\space)
-	    (char=? (string-ref str pos) #\newline)))
+	(or (char=? (str pos) #\space)
+	    (char=? (str pos) #\newline)))
       (call-with-exit
        (lambda (return)
 	 (do ((i 0)
 	      (j 0))
 	     ((= i len1) (begin (while (and (< j len1) (white-space? s2 j)) (set! j (+ j 1))) (= j len1)))
-	   (if (char=? (string-ref s1 i) (string-ref s2 j))
+	   (if (char=? (s1 i) (s2 j))
 	       (begin
 		 (set! i (+ i 1))
 		 (set! j (+ j 1)))
 	       (begin
 		 (while (and (< i len1) (white-space? s1 i)) (set! i (+ i 1)))
 		 (while (and (< j len1) (white-space? s2 j)) (set! j (+ j 1)))
-		 (if (not (char=? (string-ref s1 i) (string-ref s2 j)))
+		 (if (not (char=? (s1 i) (s2 j)))
 		     (return #f)))))))))
   
   (if with-gui
@@ -31896,7 +31896,7 @@ EDITS: 2
       (close-sound other))
     
     (hook-push print-hook (lambda (str) 
-			    (if (and (char=? (string-ref str 0) #\#) 
+			    (if (and (char=? (str 0) #\#) 
 				     (or (and (= (print-length) 30) ; test 9
 					      (not (string=? str "#(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ...)")))
 					 (and (= (print-length) 12) ; just test 13
@@ -33199,7 +33199,7 @@ EDITS: 2
 	(key (char->integer #\u) 0 id)
 	(do ((i 0 (+ 1 i)))
 	    ((= i digits))
-	  (key (char->integer (string-ref ns i)) 0 id)))))
+	  (key (char->integer (ns i)) 0 id)))))
   
   (define prefix-uit
     (lambda (n id)
@@ -33207,7 +33207,7 @@ EDITS: 2
 	     (digits (string-length ns)))
 	(do ((i 0 (+ 1 i)))
 	    ((= i digits))
-	  (key (char->integer (string-ref ns i)) 0 id)))))
+	  (key (char->integer (ns i)) 0 id)))))
   
   (define funcs (list time-graph-type wavo-hop wavo-trace max-transform-peaks show-transform-peaks zero-pad transform-graph-type fft-window 
 		      with-verbose-cursor fft-log-frequency fft-log-magnitude fft-with-phases min-dB
@@ -46306,7 +46306,7 @@ EDITS: 1
   (define (t22-i-f->f arg1 arg2) (+ arg1 arg2))
   (define (t22-iv-i-i->iv arg1 arg2 arg3) (vector-set! arg1 arg2 arg3) arg1)
   (define (t22-fv-i-f->fv arg1 arg2 arg3) (vector-set! arg1 arg2 arg3) arg1)
-  (define (t22-s->c arg) (string-ref arg 1))
+  (define (t22-s->c arg) (arg 1))
   (define (t22-sd->f arg) (sound-data-ref arg 1 1))
   (define (t22-sd->sd arg) (sound-data-set! arg 1 1 44.0) arg)
   (define (t22-clm->i arg) (mus-order arg))
@@ -48109,8 +48109,8 @@ EDITS: 1
     (stst '(let ((str "asdfg")) (string-fill! str #\x) str) "xxxxx")
     (stst '(let ((str "asdf")) (string-set! str 1 #\x) str) "axdf")
     (ctst '(string-ref "asdf" 2) #\d)
-    (etst '(string-ref 123))
-    (etst '(string-ref "hi" "ho"))
+    (etst '(123))
+    (etst '("hi" "ho"))
     (etst '(string-set! "hi" 1 "c"))
     (etst '(string-set! "hi" 1 #\b))
     (etst '(string-fill! "hi" "ho"))
@@ -48242,7 +48242,7 @@ EDITS: 1
     (stst '(let ((str (make-string 4 #\a))) (string-set! str 0 #\b) str) "baaa")
     (itst '(let ((str (make-string 4 #\a))) (string-set! str 0 #\b) (string-length str)) 4)
     (itsta '(lambda (y) (let ((str (make-string 4 #\a))) (string-set! str 0 #\b) (string-length str))) 0 4)
-    (stst '(let ((str (make-string 4 #\a))) (string-set! str 0 #\b) (set! str-var "a") (set! str (string (string-ref str-var 0))) str) "a")
+    (stst '(let ((str (make-string 4 #\a))) (string-set! str 0 #\b) (set! str-var "a") (set! str (string (str-var 0))) str) "a")
     
     (stst '(substring "012345" 0 1) "0")
     (stst '(substring "012345" 0 0) "")
@@ -48282,7 +48282,7 @@ EDITS: 1
     
     (etst '(snd-print #f))
     (etst '(snd-warning #f))
-    (etst '(string-ref #f 1))
+    (etst '(#f 1))
     (etst '(string-fill! #f #\c))
     (etst '(string-set! #f 1 #\c))
     
@@ -52319,7 +52319,7 @@ EDITS: 1
     
     (let ((val (list 1 2 3)) (val1 (list 1 2 3)))
       (let ((x (run (lambda () (eq? val1 val)))))
-	(if (not x) (snd-display #__line__ ";run list eq 2: ~A" x))))
+	(if x (snd-display #__line__ ";run list eq 2: ~A" x))))
     
     (let ((val (list 1 2 3)) (val1 (list 1 2 3))) 
       (let ((x (run (lambda () (equal? val1 val)))))
@@ -57331,7 +57331,7 @@ EDITS: 1
 	   (new-str (make-string len #\.)))
       (do ((i 0 (+ 1 i)))
 	  ((= i len) new-str)
-	(let ((c (string-ref str i)))
+	(let ((c (str i)))
 	  (if (or (char=? c #\\)
 		  (char=? c #\/))
 	      (string-set! new-str i #\_)
@@ -59868,7 +59868,7 @@ EDITS: 1
 					(lambda (return)
 					  (do ((i (- (string-length filename) 1) (- i 1)))
 					      ((= 0 i) filename)
-					    (if (char=? (string-ref filename i) #\/)
+					    (if (char=? (filename i) #\/)
 						(return (my-substring filename (+ i 1))))))))
 				     (format #f "~~/peaks/~A-peaks-~D" 
 					     (snd-test-clean-string (mus-expand-filename file))

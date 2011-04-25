@@ -699,7 +699,7 @@
       (do ((i 0 (+ i 1)))
 	  ((= i nhx))
 	(set! y (* 16.0 (- y (floor y))))
-	(string-set! chx i (string-ref hx (floor y))))
+	(set! (chx i) (hx (floor y))))
       chx))
   
   (define expm

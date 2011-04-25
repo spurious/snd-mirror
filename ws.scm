@@ -293,7 +293,7 @@
 				(let ((lst (mus-sound-maxamp output-1)))
 				  (do ((i 0 (+ i 2)))
 				      ((>= i (length lst)))
-				    (list-set! lst i (/ (lst i) (mus-srate))))
+				    (set! (lst i) (/ (lst i) (mus-srate))))
 				  lst))
 			    (if (vct? output-1)
 				(list (vct-peak output-1))
@@ -837,7 +837,7 @@ finish-with-sound to complete the process."
      "accessor for play field of init-with-sound struct"
      (w 9))
    (lambda (w val)
-     (list-set! w 9 val))))
+     (set! (w 9) val))))
 
 
 ;;; -------- with-sound save state --------
@@ -882,17 +882,17 @@ finish-with-sound to complete the process."
 symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small-integer ratios, rather than equal-tempered tuning."
       (if (symbol? pitch)
 	  (let* ((name (string-downcase (symbol->string pitch)))
-		 (base-char (string-ref name 0))
+		 (base-char (name 0))
 		 (sign-char (and (> (string-length name) 1)
-				 (not (char-numeric? (string-ref name 1)))
-				 (not (char=? (string-ref name 1) #\n))
-				 (string-ref name 1)))
+				 (not (char-numeric? (name 1)))
+				 (not (char=? (name 1) #\n))
+				 (name 1)))
 		 (octave-char (if (and (> (string-length name) 1)
-				       (char-numeric? (string-ref name 1))) 
-				  (string-ref name 1)
+				       (char-numeric? (name 1))) 
+				  (name 1)
 				  (if (and (> (string-length name) 2) 
-					   (char-numeric? (string-ref name 2)))
-				      (string-ref name 2)
+					   (char-numeric? (name 2)))
+				      (name 2)
 				      #f)))
 		 (base (modulo (+ 5 (- (char->integer base-char) (char->integer #\a))) 7)) ; c-based (diatonic) octaves
 		 (sign (if (not sign-char) 0 (if (char=? sign-char #\f) -1 1)))
@@ -1168,7 +1168,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				   "generator field accessor"
 				   (arg ,ctr))
 				 (lambda (arg val)
-				   (list-set! arg ,ctr val))))))
+				   (set! (arg ,ctr) val))))))
 		    (add-clm-field sname (string-append sname "-" n) ctr type)
 		    (set! ctr (+ 1 ctr))
 		    val)))

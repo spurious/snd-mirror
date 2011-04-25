@@ -534,6 +534,17 @@ static s7_pointer *small_ints, *small_negative_ints, *chars;
 static s7_pointer real_zero, real_one; /* -1.0 as constant gains us almost nothing in run time */
 
 struct s7_scheme {  
+  token_t tok;
+  opcode_t op;
+  s7_pointer value;
+  s7_pointer args;                    /* arguments of current function */
+  s7_pointer code, cur_code;          /* current code */
+  s7_pointer envir;                   /* current environment */
+
+  s7_pointer stack;                   /* stack is a vector */
+  int stack_size;
+  s7_pointer *stack_start, *stack_end, *stack_resize_trigger;
+  
   s7_cell **heap, **free_heap, **free_heap_top, **free_heap_trigger;
   unsigned int heap_size;
 
@@ -543,14 +554,6 @@ struct s7_scheme {
    *      vectors might be full of the same object (sc->NIL for example), so there
    *      we need ca 38 GBytes RAM (8 bytes per pointer).
    */
-  
-  s7_pointer args;                    /* arguments of current function */
-  s7_pointer envir;                   /* current environment */
-  s7_pointer code, cur_code;          /* current code */
-
-  s7_pointer stack;                   /* stack is a vector */
-  int stack_size;
-  s7_pointer *stack_start, *stack_end, *stack_resize_trigger;
   
   s7_pointer protected_objects;       /* a vector of gc-protected objects */
   int *protected_objects_size, *protected_objects_loc; /* pointers so they're global across threads */
@@ -627,9 +630,6 @@ struct s7_scheme {
   char *read_line_buf;
   int read_line_buf_size;
 
-  token_t tok;
-  s7_pointer value;
-  opcode_t op;
   s7_pointer w, x, y, z;         /* evaluator local vars */
 
   s7_pointer *temps;             /* short-term gc protection */
@@ -32410,3 +32410,12 @@ the error type and the info passed to the error handler.");
  * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  * 4-Feb-11 callgrind non-gmp: 1678 0.67, gmp: 9114 2.56 (but it's running lots of additional tests)
  */
+
+
+/* should we fix this?
+:(let ((lst '("12" "34"))) (lst 0 1))
+;list-ref argument 1, "12", is string but should be a pair
+;    (lst 0 1)
+:(let ((lst '("12" "34"))) ((lst 0) 1))
+#\2
+*/
