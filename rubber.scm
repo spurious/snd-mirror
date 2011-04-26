@@ -75,7 +75,7 @@
       (run
        (do ((i 0 (+ 1 i)))
 	   ((= i samps))
-	 (vct-set! data i (+ (* x (next-sample sr0))
+	 (set! (data i) (+ (* x (next-sample sr0))
 			     (* (- 1.0 x) (next-sample sr1))))
 	 (set! x (+ x xinc))))
       data))
@@ -108,7 +108,7 @@
 		  (begin
 		    (set! last-cross i)
 		    (set! sum 0.0)
-		    (vct-set! cross-samples cross i)
+		    (set! (cross-samples cross) i)
 		    (set! cross (+ cross 1))))
 	      (set! sum (+ sum (abs samp0)))
 	      (set! samp0 samp1)))))
@@ -128,7 +128,7 @@
 	      (do ((j 0 (+ 1 j)))
 		  ((= j fftlen))
 		(let ((val (next-sample reader)))
-		  (vct-set! data j val)))
+		  (set! (data j) val)))
 	      (autocorrelate data)
 	      (set! autolen 0)
 	      (let ((happy #f))
@@ -195,12 +195,12 @@
 		(if (not (= current-mark min-i))
 		    (begin
 		      ;; these are confused, so effectively erase them
-		      (vct-set! cross-weights i 1000.0)
+		      (set! (cross-weights i) 1000.0)
 		      )
 		    (begin
-		      (vct-set! cross-weights i current-min)
-		      (vct-set! cross-marks i current-mark)
-		      (vct-set! cross-periods i (- (cross-samples current-mark) (cross-samples i)))
+		      (set! (cross-weights i) current-min)
+		      (set! (cross-marks i) current-mark)
+		      (set! (cross-periods i) (- (cross-samples current-mark) (cross-samples i)))
 		      ))
 		))
 	    )))
@@ -234,9 +234,9 @@
 	      (if (or (< handled needed-samps)
 		      (< (- handled needed-samps) (- needed-samps old-handled)))
 		  (begin
-		    (vct-set! edits curs best-mark)
+		    (set! (edits curs) best-mark)
 		    (set! curs (+ 1 curs))))
-	      (vct-set! cross-weights best-mark 1000.0)))
+	      (set! (cross-weights best-mark) 1000.0)))
 	  )
 	 (if (>= curs weights)
 	     (set! mult (ceiling (/ needed-samps handled))))
@@ -265,7 +265,7 @@
 			     ((= j weights))
 			   (let ((curbeg (floor (cross-samples j))))
 			     (if (> curbeg beg)
-				 (vct-set! cross-samples j (+ curbeg len))))))
+				 (set! (cross-samples j) (+ curbeg len))))))
 		       (begin
 			 (if (>= beg (frames))
 			     (snd-print (format #f "trouble at ~D: ~D of ~D~%" i beg (frames))))
@@ -279,8 +279,8 @@
 			     (let ((curbeg (floor (cross-samples j))))
 			       (if (> curbeg beg)
 				   (if (< curbeg end)
-				       (vct-set! cross-periods j 0)
-				       (vct-set! cross-samples j (- curbeg len))))))))))))
+				       (set! (cross-periods j) 0)
+				       (set! (cross-samples j) (- curbeg len))))))))))))
 	   (if show-details
 	       (snd-print (format #f "wanted: ~D, got ~D~%" (floor samps) (floor changed-len)))))
 	 ))

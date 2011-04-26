@@ -3037,7 +3037,7 @@ s7_pointer s7_current_environment(s7_scheme *sc)
 static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_defined "(defined? obj (env (current-environment))) returns #t if obj has a binding (a value) in the environment env"
-  s7_pointer x;
+  s7_pointer x, e;
 
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "defined?", (cdr(args) == sc->NIL) ? 0 : 1, car(args), "a symbol"));
@@ -3046,14 +3046,16 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
     {
       if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "defined?", 2, cadr(args), "an environment"));
-      x = cadr(args);
+      e = cadr(args);
     }
-  else x = sc->envir;
+  else e = sc->envir;
   
-  x = find_symbol(sc, x, car(args));
+  x = find_symbol(sc, e, car(args));
   return(make_boolean(sc, (x != sc->NIL) && (x != sc->UNDEFINED)));
 }
 
+/* TODO: (let () (define (scan) 1) (defined? 'scan (initial-environment))) -> #t!
+ */
 
 bool s7_is_defined(s7_scheme *sc, const char *name)
 {
@@ -32425,13 +32427,16 @@ the error type and the info passed to the error handler.");
 
 
 /* should we fix this?
-:(let ((lst '("12" "34"))) (lst 0 1))
-;list-ref argument 1, "12", is string but should be a pair
-;    (lst 0 1)
-:(let ((lst '("12" "34"))) ((lst 0) 1))
-#\2
-(let ((lst (list #(1 2) #(3 4)))) (lst 0 1))
-;list-ref argument 1, #(1 2), is vector but should be a pair
-;    (lst 0 1)
+ *    :(let ((lst '("12" "34"))) (lst 0 1))
+ *    ;list-ref argument 1, "12", is string but should be a pair
+ *    ;    (lst 0 1)
+ *    :(let ((lst '("12" "34"))) ((lst 0) 1))
+ *    #\2
+ *    (let ((lst (list #(1 2) #(3 4)))) (lst 0 1))
+ *    ;list-ref argument 1, #(1 2), is vector but should be a pair
+ *    ;    (lst 0 1)
+ */
 
-*/
+/* more sets/refs to remove: sound-data-ref|set!, rest of frame|mixer|list|vector|string, vct-set
+ *   also vct|sound-data-fill!, vct|sound-data-copy, and maybe length?
+ */

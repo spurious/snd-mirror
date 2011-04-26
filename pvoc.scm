@@ -108,7 +108,7 @@
 		      (vct-move! indat 0 D)
 		      (do ((i (- N D) (+ 1 i)))
 			  ((= i N))
-			(vct-set! indat i (input)))))
+			(set! (indat i) (input)))))
 		(let ((buf (modulo filptr N)))
 		  (if (= buf 0)
 		      (begin
@@ -118,7 +118,7 @@
 		      (begin
 			(do ((k 0 (+ 1 k)))
 			    ((= k N))
-			  (vct-set! amps buf (* ((pvoc-window pv) k) ((pvoc-in-data pv) k)))
+			  (set! (amps buf) (* ((pvoc-window pv) k) ((pvoc-in-data pv) k)))
 			  (set! buf (+ 1 buf))
 			  (if (= buf N) (set! buf 0))))))
 		(set-pvoc-filptr pv (+ filptr D))
@@ -137,7 +137,7 @@
 		    (vct-set! (pvoc-lastphase pv) k (freqs k))
 		    (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
 		    (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))
-		    (vct-set! freqs k (+ (* pscl phasediff) (* k kscl)))))))
+		    (set! (freqs k) (+ (* pscl phasediff) (* k kscl)))))))
 
 	  (let ((scl (/ 1.0 (pvoc-interp pv))))
 	    (vct-subtract! amps (pvoc-amps pv))
@@ -314,7 +314,7 @@
 		 (do ((k 0 (+ 1 k)))
 		     ((= k N))
 		   ;; apply the window and then stuff into the input array
-		   (vct-set! fdr buffix (* (window k) (in-data (- filptr in-data-beg))))
+		   (set! (fdr buffix) (* (window k) (in-data (- filptr in-data-beg))))
 		   (set! filptr (+ 1 filptr))
 		   ;; increment the buffer index with wrap around
 		   (set! buffix (+ 1 buffix))
@@ -337,35 +337,35 @@
 			  (mag (sqrt (+ (* a a) (* b b))))
 			  (phase 0)
 			  (phasediff 0))
-		     (vct-set! fdr k mag)    ;; current amp stored in fdr
+		     (set! (fdr k) mag)    ;; current amp stored in fdr
 		     ;; mag is always positive
 		     ;; if it is zero then the phase difference is zero
 		     (if (> mag 0)
 			 (begin
 			  (set! phase (- (atan b a)))
 			  (set! phasediff (- phase (lastphase k)))
-			  (vct-set! lastphase k phase)
+			  (set! (lastphase k) phase)
 			  ;; frequency wrapping from Moore p. 254
 			  (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
 			  (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))))
 		     ;; current frequency stored in fdi
 		     ;; scale by the pitch transposition
-		     (vct-set! fdi k 
+		     (set! (fdi k) 
 			       (* pitch (+ (/ (* phasediff sr) (* D sr))
 					   (* k fundamental)
 					   poffset)))
 		     ;; resynthesis gating
-		     (if (< (fdr k) syngate) (vct-set! fdr k 0.0))
+		     (if (< (fdr k) syngate) (set! (fdr k) 0.0))
 		     ;; take (lastamp k) and count up to (fdr k)
 		     ;; interpolating by ampinc
-		     (vct-set! ampinc k (/ (- (fdr k) (lastamp k)) interp))
+		     (set! (ampinc k) (/ (- (fdr k) (lastamp k)) interp))
 		     ;; take (lastfreq k) and count up to (fdi k)
 		     ;; interpolating by freqinc
-		     (vct-set! freqinc k (/ (- (fdi k) (lastfreq k)) interp))))))
+		     (set! (freqinc k) (/ (- (fdi k) (lastfreq k)) interp))))))
 	   ;; loop over the partials interpolate frequency and amplitude
 	   (vct-add! lastamp ampinc)
 	   (vct-add! lastfreq freqinc)
-	   (vct-set! out-data i (oscil-bank lastamp resynth-oscils lastfreq))
+	   (set! (out-data i) (oscil-bank lastamp resynth-oscils lastfreq))
 	   (set! output (+ 1 output)))
 	 (vct->channel out-data 0 (max len outlen)))))))
 

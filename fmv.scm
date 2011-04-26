@@ -164,7 +164,7 @@ calls the fm-violin with the given args and mixes the results into the current s
 	   (v (apply make-fm-violin freq amp args)))
       (do ((i 0 (+ 1 i)))
 	  ((= i len))
-	(vct-set! out-data i (v)))
+	(set! (out-data i) (v)))
       (if (= (channels) 2)
 	  (let ((bsamps (vct-copy out-data)))
 	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)

@@ -597,14 +597,14 @@
 		(set! ((car ds) 1) #t)
 		(caar ds))
 	      (find-free-dialog (cdr ds)))))
-
+#|
     (define (find-dialog-widget wid ds)
       (if (null? ds)
 	  #f
 	  (if (equal? wid (caar ds))
 	      (car ds)
 	      (find-dialog-widget wid (cdr ds)))))
-
+|#
     (lambda args
       ;; (file-select func title dir filter help)
       (let* ((func (if (> (length args) 0) (args 0) #f))

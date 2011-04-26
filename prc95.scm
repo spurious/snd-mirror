@@ -47,8 +47,8 @@
   (vct 0.0 0.0))
 
 (define (dc-block b sample)
-  (vct-set! b 1 (+ sample (- (* 0.99 (b 1)) (b 0))))
-  (vct-set! b 0 sample)
+  (set! (b 1) (+ sample (- (* 0.99 (b 1)) (b 0))))
+  (set! (b 0) sample)
   (b 1))
 ;; we could also use a filter generator here: (make-filter 2 (vct 1 -1) (vct 0 -0.99))
 

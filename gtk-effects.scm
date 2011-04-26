@@ -2640,7 +2640,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	(osc-freq 20)
 	(robotize-dialog #f)
 	(robotize-target 'sound))
-
+#|
     (define fp-1 ; fp from examp.scm with added beg end args
       (lambda (sr osamp osfrq beg end)
 	(let* ((os (make-oscil osfrq))
@@ -2657,7 +2657,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
                                  (previous-sample sf))))))
           (free-sampler sf)
           (vct->channel out-data beg len))))
-
+|#
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect child "activate"

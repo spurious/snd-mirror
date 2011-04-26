@@ -22,15 +22,17 @@
 
        (dpy (XtDisplay shell))
        (screen (DefaultScreenOfDisplay dpy))
-       (cmap (DefaultColormap dpy (DefaultScreen dpy)))
+       ;; (cmap (DefaultColormap dpy (DefaultScreen dpy)))
        (black (BlackPixelOfScreen screen))
        (white (WhitePixelOfScreen screen)))
 
+#|
   (define (get-color color)
     (let ((col (XColor)))
       (if (= (XAllocNamedColor dpy cmap color col col) 0)
 	  (error (format #f "can't allocate ~A" color))
 	  (.pixel col))))
+|#
 
   (define (set-flabel label value)
     (let ((s1 (XmStringCreate (format #f "~,3F" value) XmFONTLIST_DEFAULT_TAG)))

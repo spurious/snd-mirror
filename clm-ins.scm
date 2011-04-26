@@ -2712,7 +2712,7 @@ mjkoskin@sci.fi
 		    (do ((outp 0 (+ 1 outp)))
 			((= outp out-chans))
 		      (let ((outn (inlist outp)))
-			(set! (mx inp) outp outn)))))))
+			(set! (mx inp outp) outn)))))))
 
 	  ;; split out 1 and 2 chan input 
 	  (if (= in-chans 1)

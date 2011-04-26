@@ -68,7 +68,7 @@
 	     (reader (make-mix-sampler id)))
 	(do ((i 0 (+ 1 i)))
 	    ((= i len))
-	  (vct-set! v i (read-mix-sample reader)))
+	  (set! (v i) (read-mix-sample reader)))
 	(free-sampler reader)
 	v)
       (throw 'no-such-mix (list "mix->vct" id))))

@@ -1353,7 +1353,7 @@
 	(make-procedure-with-setter
 	 (lambda (data) (data 3))
 	 (lambda (data val) (set! (data 3) val))))
-
+#|
       (define (sound-button-data button)
 	(define (sb-data lst)
 	  (if (null? lst)
@@ -1362,7 +1362,7 @@
 		  (car lst)
 		  (sb-data (cdr lst)))))
 	(sb-data sound-buttons))
-
+|#
       (define (make-sound-button-pixmap dpy wn data width height)
 	(if (list? (sound-button-peaks data))
 	    (let* ((mins (car (sound-button-peaks data)))

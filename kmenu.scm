@@ -29,13 +29,14 @@
 		(gtk_label_get_text (GTK_LABEL child))))
 	  (else #f)))
   
+#|
   (define (get-mnemonic widget)
     (let ((child (gtk_bin_get_child (GTK_BIN widget))))
       (if (not child) #f
 	  (let ((symbol (gtk_label_get_mnemonic_keyval (GTK_LABEL child))))
 	    (if (equal? GDK_KEY_VoidSymbol symbol) #f
 		symbol)))))
-  
+|#  
   (define (set-label widget text)
     (gtk_label_set_text_with_mnemonic 
      (GTK_LABEL (gtk_bin_get_child (GTK_BIN widget))) 

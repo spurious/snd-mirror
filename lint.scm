@@ -6,7 +6,7 @@
 (define *report-unused-top-level-functions* #f)
 (define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
-(define *report-minor-stuff* #f)          ; let*, docstring checks, (= 1.0 x), numerical and boolean simplification
+(define *report-minor-stuff* #t)          ; let*, docstring checks, (= 1.0 x), numerical and boolean simplification
 
 (define *load-file-first* #f)
 
@@ -104,7 +104,7 @@
 
 (define lint
   (let ((no-side-effect-functions 
-	 (hash-table 
+	 (apply hash-table 
 	  (map 
 	   (lambda (op) 
 	     (cons op #t)) 
@@ -314,6 +314,7 @@
 	(loaded-files #f)
 	(globals #f)
 	(undefined-identifiers #f)
+	(other-identifiers #f)
 	(last-simplify-boolean-line-number -1)
 	(last-simplify-numeric-line-number -1))
     
@@ -612,13 +613,6 @@
 	       (set! keys (+ keys 1))))
 	 lst)
 	keys))
-
-    
-    (define (caar-member obj lst)
-      (and (pair? lst)
-	   (or (and (pair? (car lst))
-		    (eq? obj (caar lst)))
-	       (caar-member obj (cdr lst)))))
 
     
     (define (tree-member sym tree)
@@ -1755,6 +1749,17 @@
 			    #t)))))))
 
 
+    (define (env-difference name e1 e2 lst)
+      (if (or (null? e1)
+	      (null? e2)
+	      (eq? (car e1) (car e2)))
+	  lst
+	  (env-difference name (cdr e1) e2 
+			  (if (eq? name (caar e1))
+			      lst
+			      (cons (car e1) lst)))))
+
+
     (define (report-usage name line-number type head vars)
       ;; report unused or set-but-unreferenced variables
       (if (and (not (eq? head 'begin)) ; begin can redefine = set a variable
@@ -1781,7 +1786,8 @@
 
 	   (set! undefined-identifiers (remove (car arg) undefined-identifiers))
 
-	   (if (not (cadr arg))
+	   (if (and (not (cadr arg))
+		    (not (member (car arg) other-identifiers)))
 	       (if (caddr arg)
 		   (set! set (cons (car arg) set))
 		   (set! unused (cons (car arg) unused)))))
@@ -1829,7 +1835,8 @@
 
 	       (set! env (lint-walk name f env))
 	       (set! ctr (+ ctr 1)))
-	     body))))
+	     body)))
+      env)
 
 
     (define (lint-walk-function-body name line-number head args arg-data body env)
@@ -2216,9 +2223,12 @@
 				   (lint-walk name (cadar bindings) env)
 				   (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
 
-			   ;; this, and others like it, should add internally defined stuff to vars
-			   ;; currently (let () (define x 3) 4) does not report the unused variable x
-			   (lint-walk-body name line-number head (if named-let (cdddr form) (cddr form)) (append vars env))
+			   (let* ((cur-env (append vars env))
+				  (e (lint-walk-body name line-number head (if named-let (cdddr form) (cddr form)) cur-env))
+				  (nvars (and (not (eq? e cur-env))
+					      (env-difference name e cur-env '()))))
+			     (if (pair? nvars)
+				 (set! vars (append nvars vars))))
 			   (report-usage name line-number 'variable head vars))))
 		   env)
 		  
@@ -2249,7 +2259,13 @@
 				     name line-number 
 				     (truncated-list->string form)))
 
-			 (lint-walk-body name line-number head (cddr form) (append vars env))
+			   (let* ((cur-env (append vars env))
+				  (e (lint-walk-body name line-number head (cddr form) cur-env))
+				  (nvars (and (not (eq? e cur-env))
+					      (env-difference name e cur-env '()))))
+			     (if (pair? nvars)
+				 (set! vars (append nvars vars))))
+
 			 (report-usage name line-number 'variable head vars)))
 		   env)
 		  
@@ -2273,7 +2289,14 @@
 			       ((null? bindings))
 			     (if (binding-ok? name line-number head (car bindings) env #t)
 				 (lint-walk name (cadar bindings) new-env)))
-			   (lint-walk-body name line-number head (cddr form) new-env))
+
+			   (let* ((cur-env (append vars env))
+				  (e (lint-walk-body name line-number head (cddr form) cur-env))
+				  (nvars (and (not (eq? e cur-env))
+					      (env-difference name e cur-env '()))))
+			     (if (pair? nvars)
+				 (set! vars (append nvars vars)))))
+
 			 (report-usage name line-number 'variable head vars)))
 		   env)
 
@@ -2416,9 +2439,11 @@
 		  (else  ; if and or with-environment
 
 		   (if (negative? (lint-length form))
-		       (format #t "  ~A (line ~D): stray dot? ~A~%" 
-			       name line-number 
-			       (truncated-list->string form))
+		       (begin
+			 (format #t "  ~A (line ~D): stray dot? ~A~%" 
+				 name line-number 
+				 (truncated-list->string form))
+			 env)
 		       (begin
 			 (check-call name line-number head form env)
 			 (check-special-cases name line-number head form env)
@@ -2435,6 +2460,15 @@
 					   (lists->string form val)))))
 
 			 ;; walk everything looking for undefined vars (saved until we finish the file)
+			 ;;  if we loaded this file first, and f (head) is defined (e.g. scan above),
+			 ;;  and it is used before it is defined, but not thereafter, the usage stuff 
+			 ;;  can get confused, so other-identifiers is trying to track those.
+			 (if (and (symbol? head)
+				  (not (member head other-identifiers))
+				  (not (hash-table-ref no-side-effect-functions head)))
+					;(not (defined? head (initial-environment)))
+			     (set! other-identifiers (cons head other-identifiers)))
+
 			 (let ((vars env))
 			   (for-each
 			    (lambda (f)
@@ -2443,11 +2477,11 @@
 				       (not (keyword? f))
 				       (not (eq? f name))
 				       (not (eq? f '=>))
-				       (not (defined? f))
 				       (not (env-member? f vars)))
-				  (if (not (lint-member f undefined-identifiers 
-							(lambda (a b) 
-							  (eq? a (car b)))))
+				  (if (and (not (defined? f))
+					   (not (lint-member f undefined-identifiers 
+							     (lambda (a b) 
+							       (eq? a (car b))))))
 				      (set! undefined-identifiers (cons (list f name line-number 
 									      (truncated-list->string form)) 
 									undefined-identifiers))))
@@ -2465,7 +2499,8 @@
       (set! undefined-identifiers '())
       (set! globals (make-hash-table))
       (set! loaded-files '())
-      
+      (set! other-identifiers '())
+
       (if *load-file-first* ; this can improve the error checks
 	  (load file))
       (let ((fp (catch #t

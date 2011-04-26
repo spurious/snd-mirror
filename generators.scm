@@ -4758,7 +4758,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (e (make-env pulse-env :length len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vct-set! ve i (env e)))
+      (set! (ve i) (env e)))
     (make-table-lookup frequency 0.0 ve len)))
 
 (define* (make-wave-train-with-env frequency pulse-env size)
@@ -4767,7 +4767,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (e (make-env pulse-env :length len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vct-set! ve i (env e)))
+      (set! (ve i) (env e)))
     (make-wave-train frequency 0.0 ve len)))
 
 
@@ -5420,8 +5420,8 @@ index 10 (so 10/2 is the bes-jn arg):
 					 (amp (lst (+ j 1)))
 					 (phase (lst (+ j 2))))
 				     (if (> n 0)                                   ; constant only applies to cos side
-					 (vct-set! sin-amps n (* amp (cos phase))))
-				     (vct-set! cos-amps n (* amp (sin phase)))))
+					 (set! (sin-amps n) (* amp (cos phase))))
+				     (set! (cos-amps n) (* amp (sin phase)))))
 				 (set! (polyoid-tn g) cos-amps)
 				 (set! (polyoid-un g) sin-amps)
 				 (set! (polyoid-frequency g) (hz->radians (polyoid-frequency g)))
@@ -5477,8 +5477,8 @@ index 10 (so 10/2 is the bes-jn arg):
       (let ((hn (floor (original-data i)))
 	    (amp (env (amps j)))
 	    (phase (env (phases j))))
-	(vct-set! tn hn (* amp (sin phase)))
-	(vct-set! un hn (* amp (cos phase)))))
+	(set! (tn hn) (* amp (sin phase)))
+	(set! (un hn) (* amp (cos phase)))))
     (polyoid gen fm)))
 
 
@@ -5516,9 +5516,9 @@ index 10 (so 10/2 is the bes-jn arg):
 		  (do ((i 0 (+ i 1))
 		       (j 0 (+ j 3)))
 		      ((= i n))
-		    (vct-set! cur-phases j (+ i 1))
-		    (vct-set! cur-phases (+ j 1) (/ 1.0 n))
-		    (vct-set! cur-phases (+ j 2) (random (* 2 pi))))
+		    (set! (cur-phases j) (+ i 1))
+		    (set! (cur-phases (+ j 1)) (/ 1.0 n))
+		    (set! (cur-phases (+ j 2)) (random (* 2 pi))))
 		  (let ((gen (make-polyoid 1.0 cur-phases)))
 		    (do ((i 0 (+ i 1)))
 			((= i 88200))
@@ -5542,9 +5542,9 @@ index 10 (so 10/2 is the bes-jn arg):
 		  (do ((i 0 (+ i 1))
 		       (j 0 (+ j 3)))
 		      ((= i n))
-		    (vct-set! cur-phases j (+ i 1))
-		    (vct-set! cur-phases (+ j 1) (/ 1.0 n))
-		    (vct-set! cur-phases (+ j 2) (random (* 2 pi))))
+		    (set! (cur-phases j) (+ i 1))
+		    (set! (cur-phases (+ j 1)) (/ 1.0 n))
+		    (set! (cur-phases (+ j 2)) (random (* 2 pi))))
 		  (let ((gen (make-polyoid 1.0 cur-phases)))
 		    (run
 		     (do ((i 0 (+ i 1)))
@@ -5630,19 +5630,19 @@ index 10 (so 10/2 is the bes-jn arg):
 		      ((> i n))
 
 		    (case choice
-		      ((all)   (vct-set! amps j i))
-		      ((odd)   (vct-set! amps j (- (* 2 i) 1)))
-		      ((prime) (vct-set! amps j (some-primes (- i 1)))) ; defined below up to 1024th or so -- probably should use low-primes.scm
-		      ((even)  (vct-set! amps j (max 1 (* 2 (- i 1))))))
+		      ((all)   (set! (amps j) i))
+		      ((odd)   (set! (amps j) (- (* 2 i) 1)))
+		      ((prime) (set! (amps j) (some-primes (- i 1)))) ; defined below up to 1024th or so -- probably should use low-primes.scm
+		      ((even)  (set! (amps j) (max 1 (* 2 (- i 1))))))
 		    
-		    (vct-set! amps (+ j 1) (/ 1.0 n))
+		    (set! (amps (+ j 1)) (/ 1.0 n))
 
 		    (if (vct? phases)
-			(vct-set! amps (+ j 2) (phases (- i 1)))
+			(set! (amps (+ j 2)) (phases (- i 1)))
 			(if (not phases)
-			    (vct-set! amps (+ j 2) (random (* 2 pi)))
+			    (set! (amps (+ j 2)) (random (* 2 pi)))
 			    (if (eq? phases 'max-peak)
-				(vct-set! amps (+ j 2) (/ pi 2))
+				(set! (amps (+ j 2)) (/ pi 2))
 				;; else min-peak, handled below
 				))))
 
@@ -5686,8 +5686,8 @@ index 10 (so 10/2 is the bes-jn arg):
 				(do ((i 1 (+ i 1))
 				     (j 0 (+ j 3)))
 				    ((> i n))
-				  (vct-set! amps (+ j 1) (/ 1.0 n)) ;(/ 0.999 norm)) -- can't decide about this -- I guess it should be consistent with the #f case
-				  (vct-set! amps (+ j 2) (* pi (rats (- i 1))))))))))
+				  (set! (amps (+ j 1)) (/ 1.0 n)) ;(/ 0.999 norm)) -- can't decide about this -- I guess it should be consistent with the #f case
+				  (set! (amps (+ j 2)) (* pi (rats (- i 1))))))))))
 			      
 		  amps)))
 
@@ -5848,15 +5848,15 @@ index 10 (so 10/2 is the bes-jn arg):
 		  (do ((i 1 (+ i 1))
 		       (j 0 (+ j 3)))
 		      ((> i n))
-		    (vct-set! amps j i)
-		    (vct-set! amps (+ j 1) rn)
+		    (set! (amps j) i)
+		    (set! (amps (+ j 1)) rn)
 		    (set! rn (* rn r))
 		    (if (vct? phases)
-			(vct-set! amps (+ j 2) (phases (- i 1)))
+			(set! (amps (+ j 2)) (phases (- i 1)))
 			(if (not phases)
-			    (vct-set! amps (+ j 2) (random (* 2 pi)))
+			    (set! (amps (+ j 2)) (random (* 2 pi)))
 			    (if (eq? phases 'max-peak)
-				(vct-set! amps (+ j 2) (/ pi 2))
+				(set! (amps (+ j 2)) (/ pi 2))
 				;; else min-peak, handled separately
 				))))
 
@@ -5897,9 +5897,9 @@ index 10 (so 10/2 is the bes-jn arg):
 				(do ((i 1 (+ i 1))
 				     (j 0 (+ j 3)))
 				    ((> i n))
-				  (vct-set! amps (+ j 1) rn)
+				  (set! (amps (+ j 1)) rn)
 				  (set! rn (* rn r))
-				  (vct-set! amps (+ j 2) (* pi (rats (- i 1))))))))))
+				  (set! (amps (+ j 2)) (* pi (rats (- i 1))))))))))
 			      
 		  amps)))
 
@@ -6003,21 +6003,21 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 	      (begin
 		(do ((i 0 (+ i 1)))
 		    ((= i n))
-		  (vct-set! data i (readin (moving-fft-input gen)))))
+		  (set! (data i) (readin (moving-fft-input gen)))))
 	      (begin
 		(do ((i 0 (+ i 1))
 		     (j hop (+ 1 j)))
 		    ((= j n))
-		  (vct-set! data i (data j)))
+		  (set! (data i) (data j)))
 		(do ((i (- n hop) (+ i 1)))
 		    ((= i n))
-		  (vct-set! data i (readin (moving-fft-input gen))))))
+		  (set! (data i) (readin (moving-fft-input gen))))))
 	  (set! outctr 0)
 	  (set! new-data #t)
 	  (clear-array im)
 	  (do ((i 0 (+ i 1)))
 	      ((= i n))
-	    (vct-set! rl i (* (fft-window i) (data i))))
+	    (set! (rl i) (* (fft-window i) (data i))))
 	  (mus-fft rl im n 1)
 	  (rectangular->polar rl im)))
     (set! (moving-fft-outctr gen) (+ outctr 1))
@@ -6085,15 +6085,15 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 	      (begin
 		(do ((i 0 (+ i 1)))
 		    ((= i n))
-		  (vct-set! data i (readin (moving-spectrum-input gen)))))
+		  (set! (data i) (readin (moving-spectrum-input gen)))))
 	      (begin
 		(do ((i 0 (+ i 1))
 		     (j hop (+ 1 j)))
 		    ((= j n))
-		  (vct-set! data i (data j)))
+		  (set! (data i) (data j)))
 		(do ((i (- n hop) (+ i 1)))
 		    ((= i n))
-		  (vct-set! data i (readin (moving-spectrum-input gen))))))
+		  (set! (data i) (readin (moving-spectrum-input gen))))))
 
 	  (set! outctr 0) ; -1??
 	  (set! dataloc (modulo dataloc n))
@@ -6103,7 +6103,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 	       (j dataloc (+ 1 j)))
 	      ((= i n))
 	    (if (= j n) (set! j 0))
-	    (vct-set! amp-incs j (* (fft-window i)
+	    (set! (amp-incs j) (* (fft-window i)
 				    (data i))))
 
 	  (set! (moving-spectrum-dataloc gen) (+ dataloc hop))
@@ -6120,10 +6120,10 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		 (ks 0.0 (+ ks kscl)))
 		((= i n2))
 	      (let ((diff (modulo (- (new-freq-incs i) (freq-incs i)) (* 2 pi))))
-		(vct-set! freq-incs i (new-freq-incs i))
+		(set! (freq-incs i) (new-freq-incs i))
 		(if (> diff pi) (set! diff (- diff (* 2 pi))))
 		(if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
-		(vct-set! new-freq-incs i (+ (* diff scl) ks))))
+		(set! (new-freq-incs i) (+ (* diff scl) ks))))
 
 	    (vct-subtract! new-freq-incs freqs)
 	    (vct-scale! new-freq-incs scl))))
@@ -6296,15 +6296,15 @@ taking input from the readin generator 'reader'.  The output data is available v
 	      (begin
 		(do ((i 0 (+ i 1)))
 		    ((= i n))
-		  (vct-set! data i (readin (moving-autocorrelation-input gen)))))
+		  (set! (data i) (readin (moving-autocorrelation-input gen)))))
 	      (begin
 		(do ((i 0 (+ i 1))
 		     (j hop (+ 1 j)))
 		    ((= j n))
-		  (vct-set! data i (data j)))
+		  (set! (data i) (data j)))
 		(do ((i (- n hop) (+ i 1)))
 		    ((= i n))
-		  (vct-set! data i (readin (moving-autocorrelation-input gen))))))
+		  (set! (data i) (readin (moving-autocorrelation-input gen))))))
 	  (set! outctr 0)
 	  (set! new-data #t)
 	  (clear-array im)
@@ -6387,8 +6387,8 @@ taking input from the readin generator 'reader'.  The output data is available v
 	   (j 0 (+ j 2))
 	   (n -1 (- n))) 
 	  ((= i k)) 
-	(vct-set! harmonics j i)
-	(vct-set! harmonics (+ j 1) (/ n i)))
+	(set! (harmonics j) i)
+	(set! (harmonics (+ j 1)) (/ n i)))
       (let ((gen (make-polywave 100.0 :partials (normalize-partials harmonics))))
 	(run 
 	 (do ((i 0 (+ i 1)))
@@ -6402,8 +6402,8 @@ taking input from the readin generator 'reader'.  The output data is available v
       (do ((i 1 (+ 1 i))
 	   (j 0 (+ j 2)))
 	  ((= i num)) 
-	(vct-set! harmonics j i)
-	(vct-set! harmonics (+ j 1) (env freqe)))
+	(set! (harmonics j) i)
+	(set! (harmonics (+ j 1)) (env freqe)))
       (let ((gen (make-polywave freq :partials (normalize-partials harmonics) :type type))
 	    (vib (make-oscil 5)))
 	(run 
@@ -6512,15 +6512,15 @@ taking input from the readin generator 'reader'.  The output data is available v
 	 (loc21 (modulo (+ loc 1 (floor dly2)) size))
 	 (rev (flocsig-reverb-amount gen)))
 
-    (vct-set! out1 loc10 (+ (out1 loc10) (* amp1 input (- 1.0 frac1))))
-    (vct-set! out1 loc11 (+ (out1 loc11) (* amp1 input frac1)))
-    (vct-set! out2 loc20 (+ (out2 loc20) (* amp2 input (- 1.0 frac2))))
-    (vct-set! out2 loc21 (+ (out2 loc21) (* amp2 input frac2)))
+    (set! (out1 loc10) (+ (out1 loc10) (* amp1 input (- 1.0 frac1))))
+    (set! (out1 loc11) (+ (out1 loc11) (* amp1 input frac1)))
+    (set! (out2 loc20) (+ (out2 loc20) (* amp2 input (- 1.0 frac2))))
+    (set! (out2 loc21) (+ (out2 loc21) (* amp2 input frac2)))
 
     (let ((val1 (out1 loc))
 	  (val2 (out2 loc)))
-      (vct-set! out1 loc 0.0)
-      (vct-set! out2 loc 0.0)
+      (set! (out1 loc) 0.0)
+      (set! (out2 loc) 0.0)
       (set! loc (+ loc 1))
       (if (= loc size) (set! loc 0))
       (outa samp val1)

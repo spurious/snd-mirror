@@ -2182,7 +2182,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 			       result))))))
     
     (define (dist->samples d) (round (* d (/ (mus-srate) dlocsig-speed-of-sound))))
-    (define (dist->seconds d) (/ d dlocsig-speed-of-sound))
+    ;; (define (dist->seconds d) (/ d dlocsig-speed-of-sound))
     (define (time->samples time) (round (* time (mus-srate))))
     
     (define (transition-point-3 vert-a vert-b xa ya za xb yb zb) 

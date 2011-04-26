@@ -16149,14 +16149,27 @@ static xen_value *lookup_generalized_set(ptree *prog, s7_pointer acc_form, xen_v
 	  case R_VCT:
 	  case R_FLOAT_VECTOR:
 	    /* (let ((v (vct 1.0 2.0 3.0))) (run (lambda () (set! (v 1) 0.5)))) */
-	    vct_set_1(prog, val, in_v, NULL, v);
-	    happy = 1;
+	    if ((!in_v) || (!v) ||
+		(in_v->type != R_INT))
+	      happy = 0;
+	    else
+	      {
+		vct_set_1(prog, val, in_v, NULL, v);
+		happy = 1;
+	      }
 	    break;
 
 	  case R_SOUND_DATA:
 	    /* (let ((sd (make-sound-data 2 2))) (run (lambda () (set! (sd 1 0) 1.0))) sd) */
-	    sound_data_set_1(prog, val, in_v, in_v1, v);
-	    happy = 1;
+	    if ((!in_v) || (!v) || (!in_v1) ||
+		(in_v->type != R_INT) ||
+		(in_v1->type != R_INT))
+	      happy = 0;
+	    else
+	      {
+		sound_data_set_1(prog, val, in_v, in_v1, v);
+		happy = 1;
+	      }
 	    break;
 
 	  case R_CLM:
@@ -16168,8 +16181,14 @@ static xen_value *lookup_generalized_set(ptree *prog, s7_pointer acc_form, xen_v
 
 	  case R_INT_VECTOR:
 	    /* (let ((v (vector 1 2 3))) (run (set! (v 1) 32) (v 1))) */
-	    int_vector_set_1(prog, val, in_v, NULL, v);
-	    happy = 1;
+	    if ((!in_v) || (!v) ||
+		(in_v->type != R_INT))
+	      happy = 0;
+	    else
+	      {
+		int_vector_set_1(prog, val, in_v, NULL, v);
+		happy = 1;
+	      }
 	    break;
 
 	  case R_LIST:
