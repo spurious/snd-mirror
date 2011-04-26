@@ -59,7 +59,7 @@
 
 (define (poly-reduce p1)
   "(poly-reduce p1) removes trailing (high-degree) zeros from the vct p1"
-  (if (= (vct-ref p1 (- (length p1) 1)) 0.0)
+  (if (= (p1 (- (length p1) 1)) 0.0)
       (vector->vct (poly-as-vector-reduce (vct->vector p1)))
       p1))
 

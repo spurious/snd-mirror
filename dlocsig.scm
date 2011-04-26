@@ -387,7 +387,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	 (times (let ((v (make-vct (length speakers))))
 		  (do ((i 0 (+ 1 i)))
 		      ((= i (length speakers)))
-		    (vct-set! v i (let ((distance (and (not (null? distances)) (distances i)))
+		    (set! (v i) (let ((distance (and (not (null? distances)) (distances i)))
 					(delay (and (not (null? delays)) (delays i))))
 				    (or delay
 					(and distance 
@@ -2938,7 +2938,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	       (len (length delays)))
 	  (do ((channel 0 (+ 1 channel)))
 	      ((= channel len))
-	    (let ((delayo (vct-ref delays channel)))
+	    (let ((delayo (delays channel)))
 	      (set! (out-delays channel) (if (not (= delayo 0.0))
 					     (make-delay (time->samples delayo))
 					     #f))

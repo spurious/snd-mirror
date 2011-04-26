@@ -132,12 +132,12 @@
 			       (rd (make-sampler (selection-position))))
 			   (do ((i 0 (+ 1 i)))
 			       ((= i selection-samps))
-			     (vct-set! data i (rd)))
+			     (set! (data i) (rd)))
 			   data))
 	       (inctr 0))
 	  (if (= mark-samps selection-samps)
 	      (map-channel (lambda (y) 
-			     (let ((val (+ y (vct-ref reg-data inctr))))
+			     (let ((val (+ y (reg-data inctr))))
 			       (set! inctr (+ 1 inctr))
 			       val))
 			   m1-samp mark-samps (car m1-home) (cadr m1-home))
@@ -147,7 +147,7 @@
 						    (if (or (>= inctr selection-samps)
 							    (< inctr 0))
 							0.0
-							(let ((val (vct-ref reg-data inctr)))
+							(let ((val (reg-data inctr)))
 							  (set! inctr (+ inctr dir))
 							  val))))))
 			     m1-samp mark-samps (car m1-home) (cadr m1-home))))))))
@@ -282,7 +282,7 @@
 			   (old-data (channel->vct beg len snd chan)))
 		      (do ((k 0 (+ 1 k)))
 			  ((= k len) (vct->channel new-data beg len snd chan))
-			(vct-set! new-data k (func (vct-ref old-data k))))))))))))
+			(set! (new-data k) (func (old-data k))))))))))))
 
 ;(bind-key #\m 0 (lambda () "eval between marks" (prompt-in-minibuffer "mark eval:" eval-between-marks)))
 

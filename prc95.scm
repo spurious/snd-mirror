@@ -9,13 +9,13 @@
   (vct offset slope))
 
 (define (reedtable r sample)
-  (min 1.0 (+ (vct-ref r 0) (* (vct-ref r 1) sample))))
+  (min 1.0 (+ (r 0) (* (r 1) sample))))
 
 (define* (make-bowtable (offset 0.0) (slope 1.0))
   (vct offset slope))
 
 (define (bowtable b sample)
-  (max 0.0 (- 1.0 (abs (* (vct-ref b 1) (+ sample (vct-ref b 0)))))))
+  (max 0.0 (- 1.0 (abs (* (b 1) (+ sample (b 0)))))))
 
 (define (jettable sample) 
   (max -1.0 (min 1.0 (* sample (- (* sample sample) 1.0)))))
@@ -47,9 +47,9 @@
   (vct 0.0 0.0))
 
 (define (dc-block b sample)
-  (vct-set! b 1 (+ sample (- (* 0.99 (vct-ref b 1)) (vct-ref b 0))))
+  (vct-set! b 1 (+ sample (- (* 0.99 (b 1)) (b 0))))
   (vct-set! b 0 sample)
-  (vct-ref b 1))
+  (b 1))
 ;; we could also use a filter generator here: (make-filter 2 (vct 1 -1) (vct 0 -0.99))
 
 

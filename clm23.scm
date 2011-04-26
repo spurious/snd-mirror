@@ -36,8 +36,8 @@
   (let ((sum 0.0))
     (do ((i 0 (+ 1 i)))
 	((= i len))
-      (set! sum (+ sum (* (vct-ref amps i)
-			  (sin (vct-ref phases i))))))
+      (set! sum (+ sum (* (amps i)
+			  (sin (phases i))))))
     sum))
 
 

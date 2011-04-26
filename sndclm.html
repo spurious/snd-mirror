@@ -9516,6 +9516,41 @@ by the inverse of this, so it is always between -1 and 1.
 </p>
 <br>
 
+<!--
+(%i1) (sin(A+((n+1)/2*X))*sin(n*X/2))/sin(X/2);
+                              n X      (n + 1) X
+                          sin(---) sin(--------- + A)
+                               2           2
+(%o1)                     ---------------------------
+                                        X
+                                    sin(-)
+                                        2
+(%i2) diff(%i1, X)
+;
+            X      n X      (n + 1) X              n X      (n + 1) X
+        cos(-) sin(---) sin(--------- + A)   n cos(---) sin(--------- + A)
+            2       2           2                   2           2
+(%o2) - ---------------------------------- + -----------------------------
+                         2 X                                 X
+                    2 sin (-)                          2 sin(-)
+                           2                                 2
+                                                        n X      (n + 1) X
+                                            (n + 1) sin(---) cos(--------- + A)
+                                                         2           2
+                                          + -----------------------------------
+                                                               X
+                                                         2 sin(-)
+                                                               2
+
+(%i9) trigsimp(%o2); 
+              X      n X          X      n X       (n + 1) X + 2 A
+(%o9) - ((cos(-) sin(---) - n sin(-) cos(---)) sin(---------------)
+              2       2           2       2               2
+                                  X      n X      (n + 1) X + 2 A         2 X
+                  + (- n - 1) sin(-) sin(---) cos(---------------))/(2 sin (-))
+                                  2       2              2                  2
+-->
+
 
 <pre style="background-color: #f2f4ff">
   <A class=def NAME="make-nrcos">make-nrcos</A> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0

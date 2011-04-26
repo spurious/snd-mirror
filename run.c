@@ -10394,25 +10394,6 @@ static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-static void vct_nf(int *args, ptree *pt) {if (VCT_ARG_1) FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2];}
-
-static xen_value *vct_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
-{
-  /* this is handling the vct-as-applicable-func stuff (v ind) = (vct-ref v ind) */
-  /* (let ((v (make-vct 3 1.0))) (run (lambda () (v 0))))
-   * (run ((make-vct 3 1.0) 1))
-   */
-
-  if (args[0]) free(args[0]);
-  if (args[1]->type != R_INT)
-    return(run_warn("vct index should be an integer"));
-    
-  args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
-  add_triple_to_ptree(prog, va_make_triple(vct_nf, "vct_nf", 3, args[0], sf, args[1]));
-  return(args[0]);
-}
-
-
 static void vct_constant_set_0(int *args, ptree *pt) {VCT_ARG_1->data[0] = FLOAT_ARG_3; /* FLOAT_RESULT = FLOAT_ARG_3; */}
 static void vct_constant_set_1(int *args, ptree *pt) {VCT_ARG_1->data[1] = FLOAT_ARG_3; /* FLOAT_RESULT = FLOAT_ARG_3; */}
 static void vct_constant_set_2(int *args, ptree *pt) {VCT_ARG_1->data[2] = FLOAT_ARG_3; /* FLOAT_RESULT = FLOAT_ARG_3; */}
@@ -15849,7 +15830,21 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 
 		case R_VCT:
 		case R_FLOAT_VECTOR:
-		  res = vct_n(prog, args, num_args, v);
+		  {
+		    xen_value **new_args;
+		    if (num_args == 0)
+		      return(run_warn("not enough args"));
+		    if (args[1]->type != R_INT)
+		      return(clean_up(arg_warn(prog, "implicit vct-ref", 1, args, "integer"), args, num_args));		      
+
+		    new_args = (xen_value **)calloc(3, sizeof(xen_value *));
+		    new_args[1] = v;
+		    new_args[2] = args[1];
+		    res = vct_ref_1(prog, new_args, 2);
+		    new_args[1] = NULL;
+		    if (args[0]) free(args[0]);
+		    return(clean_up(res, new_args, 2));
+		  }
 		  break;
 
 		case R_CLM_VECTOR:

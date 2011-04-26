@@ -54,9 +54,9 @@
 	 ((= i end))
        (if (= dx dt);;when current sample is a breakpoint
 	   (begin
-	     (set! dx (floor (vct-ref xy-array (modulo m xy-array-l))))
-	     (set! y (vct-ref xy-array (+ (modulo m xy-array-l) 1)))
-	     (set! prev-dx (floor (vct-ref xy-array (modulo (- m 2) xy-array-l))))
+	     (set! dx (floor (xy-array (modulo m xy-array-l))))
+	     (set! y (xy-array (+ (modulo m xy-array-l) 1)))
+	     (set! prev-dx (floor (xy-array (modulo (- m 2) xy-array-l))))
 	     (set! dy (- y oldy))
 	     (set! oldy y)
 	     ;;straight uniform distribution for y

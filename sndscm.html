@@ -8306,7 +8306,7 @@ By Spring Break 2011, I had decided that I couldn't justify the bother and expen
 after a full day of computing.  I was saying "oh well, I sure tried", and preparing to shut down the project,
 but just for kicks I tried a few last desperate experiments.
 One such experiment set the minimum generation mutation
-size to 1e-5.  This number sets the maximum change allowed in a phase when a new generation is being prepared,
+size to 0.0001.  This number sets the maximum change allowed in a phase when a new generation is being prepared,
 so it sets how far a generational step can progress.
 I had used .001 for two years thinking anything less was pointless.  My FFTs were set to give me .001 of
 accuracy, and surely making the increment tiny would only

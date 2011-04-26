@@ -20,7 +20,7 @@
 		  ((or (= i len)
 		       (>= pos 0))
 		   pos)
-		(if (>= (vct-ref corr i) pk)
+		(if (>= (corr i) pk)
 		    (set! pos i)))))
     (if (= lag -1)
 	0
@@ -39,10 +39,10 @@
 	  (do ((i 0 (+ i 1)))
 	      ((or (> diffs 10)
 		   (= i len)))
-	    (if (> (abs (- (vct-ref v0 i) (vct-ref v1 i))) .00001)
+	    (if (> (abs (- (v0 i) (v1 i))) .00001)
 		(begin
 		  (set! diffs (+ diffs 1))
-		  (set! diff-data (cons (list i (vct-ref v0 i) (vct-ref v1 i)) diff-data)))))
+		  (set! diff-data (cons (list i (v0 i) (v1 i)) diff-data)))))
 	  (if (< diffs 10)
 	      (list 'differences diff-data)
 	      #f)))))
@@ -58,11 +58,11 @@
     (do ((i 0 (+ i 1)))
 	((or (>= pos 0)
 	     (= i len)))
-      (if (not (= (vct-ref v1 i) 0.0))
+      (if (not (= (v1 i) 0.0))
 	  (set! pos i)))
     
     (if (>= pos 0) ; if still -1, must be all zero 
-	(let ((scl (/ (vct-ref v1 pos) (vct-ref v0 0)))
+	(let ((scl (/ (v1 pos) (v0 0)))
 	      (size (vct-size v1)))
 	  (vct-subtract! 
 	   (vct-move! v1 0 pos)            ; align new copy with original (todo: move doesn't clear trailing entries)
@@ -81,8 +81,8 @@
 	 (do ((i 0 (+ i 1)))
 	     ((or (> trim -1)
 		  (= i len)))
-	   (if (or (not (= (vct-ref v0 i) 0.0))
-		   (not (= (vct-ref v1 i) 0.0)))
+	   (if (or (not (= (v0 i) 0.0))
+		   (not (= (v1 i) 0.0)))
 	       (set! trim i)))
 	 (if (> trim 0)
 	     (begin

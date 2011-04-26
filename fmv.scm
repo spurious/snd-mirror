@@ -60,7 +60,7 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 			 (lambda () (env e)))))
 	  (data (channel->vct beg dur)))
       (do ((i 0 (+ 1 i))) ((= i dur))
-	(vct-set! data i (+ (vct-ref data i) (v))))
+	(set! (data i) (+ (data i) (v))))
       (vct->channel data beg dur))))"
 
     (let* ((frq-scl (hz->radians frequency))
@@ -131,8 +131,7 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 	  (data (channel->vct beg dur)))
       (do ((i 0 (+ 1 i)))
 	  ((= i dur))
-	(vct-set! data i (+ (vct-ref data i)
-			    (v))))
+	(set! (data i) (+ (data i) (v))))
       (vct->channel data beg dur))))
 
 ;;; (with-sound () (test-v 0 10000 440 .1 '(0 0 1 1 2 0)))
@@ -151,8 +150,7 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 	  (data (channel->vct beg dur)))
       (do ((i 0 (+ 1 i)))
 	  ((= i dur))
-	(vct-set! data i (+ (vct-ref data i)
-			    (v))))
+	(set! (data i) (+ (data i) (v))))
       (vct->channel data beg dur))))
 |#
 

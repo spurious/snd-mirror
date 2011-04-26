@@ -201,7 +201,7 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 			       (old-data (channel->vct beg len snd chn)))
 			   (do ((k 0 (+ 1 k))) ;here we're applying our function to each sample in the currently selected portion
 			       ((= k len) (vct->channel new-data beg len snd chn))
-			     (vct-set! new-data k (func (vct-ref old-data k)))))))
+			     (set! (new-data k) (func (old-data k)))))))
 	       (all-chans)))))
 
 ;;; the same idea can be used to apply a function between two marks (see eval-between-marks in marks.scm)
