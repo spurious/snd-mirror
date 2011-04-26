@@ -2216,6 +2216,8 @@
 				   (lint-walk name (cadar bindings) env)
 				   (set! vars (append (list (list (caar bindings) #f #f)) vars)))))
 
+			   ;; this, and others like it, should add internally defined stuff to vars
+			   ;; currently (let () (define x 3) 4) does not report the unused variable x
 			   (lint-walk-body name line-number head (if named-let (cdddr form) (cddr form)) (append vars env))
 			   (report-usage name line-number 'variable head vars))))
 		   env)
