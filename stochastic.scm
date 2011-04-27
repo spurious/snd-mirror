@@ -42,13 +42,11 @@
     (do ((iy 0 (+ iy 2));;index for reading values from init-array (a 2-dimensional list)
 	 (jy 0 (+ jy 1)));;index for writing to xy-array (a 1-dimensional vct)
 	((= iy xy-array-l) xy-array)
-      (vct-set! xy-array iy 
-		((init-array jy) 0))
-      (vct-set! xy-array (+ iy 1)
-		;;convert signed float y values into signed integers 
-		(floor (* b
-			  ((init-array jy) 1)
-			  ))))
+      (set! (xy-array iy) ((init-array jy) 0))
+      (set! (xy-array (+ iy 1))
+	    ;;convert signed float y values into signed integers 
+	    (floor (* b
+		      ((init-array jy) 1)))))
     (run
      (do ((i beg (+ 1 i)))
 	 ((= i end))
@@ -67,7 +65,7 @@
 			     (* xwig 
 				(sqrt (* -2.0 (log (- 1 (random 1.0)))))
 				(cos (* 6.283185307179586 (random 1.0)))))))
-	     (vct-set! xy-array (modulo m xy-array-l)
+	     (set! (xy-array (modulo m xy-array-l))
 		       ;;mirror stuff for x
 		       (cond ((or  (< (round xmax) (+ dx xdev))
 				   (> (round xmin)(+ dx xdev)))
@@ -77,7 +75,7 @@
 				   (round xmin)))
 			     (else (round (+ (* xfb prev-dx)
 					     (* (- 1  xfb) (+ dx xdev)))))))
-	     (vct-set! xy-array (+ (modulo m xy-array-l) 1)
+	     (set! (xy-array (+ (modulo m xy-array-l) 1))
 		       ;;mirror stuff for y 
 		       (cond ((or (< b (+ y ydev)) (> (- b) (+ y ydev)))
 			      (max (min (+ y (- ydev)) b) (- b)))

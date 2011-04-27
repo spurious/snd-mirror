@@ -94,9 +94,9 @@
     ;; gourd resonance filters
     (do ((i 0 (+ 1 i)))
 	((= i resn))
-      (set! (coeffs    (* i 2)   ) (* -2.0 (list-ref shell-resos i) (cos (hz->radians (list-ref shell-freqs i)))))
+      (set! (coeffs    (* i 2)   ) (* -2.0 (shell-resos i) (cos (hz->radians (shell-freqs i)))))
       (set! (basesf i) (coeffs (+ (* i 2) 0)))
-      (set! (coeffs (+ (* i 2) 1)) (* (list-ref shell-resos i) (list-ref shell-resos i))))
+      (set! (coeffs (+ (* i 2) 1)) (* (shell-resos i) (shell-resos i))))
 
     (run
      (do ((i st (+ 1 i)))

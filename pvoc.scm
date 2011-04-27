@@ -295,7 +295,7 @@
       ;; setup oscillators
       (do ((i 0 (+ 1 i)))
 	  ((= i N2))
-	(vector-set! resynth-oscils i (make-oscil :frequency 0)))
+	(set! (resynth-oscils i) (make-oscil :frequency 0)))
       (vct-scale! window (/ 2.0 (* 0.54 fftsize))) ;den = hamming window integrated
       (call-with-exit
        (lambda (break)

@@ -10007,7 +10007,7 @@ static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
     case R_INT_VECTOR:  
     case R_VCT_VECTOR:  
     case R_CLM_VECTOR:   
-      return(vector_length_1(prog, args, num_args));
+      return(vector_length_1(prog, args, num_args)); /* (let ((v (make-vector 32 0.0))) (run-eval `(length v))) -> 32 -- the 0.0 is needed */
 
 #if USE_SND
     case R_SOUND:      return(sound_length_1(prog, args, num_args));    /* (let ((snd (integer->sound 0))) (run (lambda () (length snd)))) */
@@ -10020,7 +10020,7 @@ static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-/* PERHAPS: fill and copy 
+/* fill and copy as generics?
    static xen_value *string_fill_1(ptree *pt, xen_value **args, int num_args)
    static xen_value *vct_fill_1(ptree *pt, xen_value **args, int num_args)
    static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)

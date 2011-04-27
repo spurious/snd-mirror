@@ -241,34 +241,6 @@
 ;;;	     fftscale) "lag time" 0 fftlen2)))
 
 
-#|
-;;; -------- Buffers Menu --------
-;;; patterned after the XEmacs Buffers menu
-;;; see new-effects.scm for a much fancier example
-
-(define buffer-menu (add-to-main-menu "Buffers"))
-
-(define (open-buffer filename)
-  "(open-buffer filename) adds a menu item that will select filename (use with open-hook)"
-  (add-to-menu buffer-menu 
-	       filename 
-	       (lambda () 
-		 (let ((ind (find-sound filename)))
-		   (if (sound? ind) 
-		       (select-sound ind)))))
-  #f)
-
-(define (close-buffer snd)
-  "(close-buffer snd) removes the menu item associated with snd (use with close-hook)"
-  (remove-from-menu buffer-menu (file-name snd)))
-
-;;; here we're adding this menu handling code to whatever is already happening at open/close-hook time
-
-(hook-push open-hook open-buffer)
-(hook-push close-hook close-buffer)
-|#
-
-
 
 ;;; -------- set transform-size based on current time domain window size
 ;;;

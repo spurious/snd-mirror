@@ -52,14 +52,6 @@
 (if (defined? 'run-clear-counts) (run-clear-counts))
 (define (copy-file src dest) (system (string-append "cp " src " " dest)))
 
-(define (string-downcase str)
-  (let* ((len (string-length str))
-	 (newstr (make-string len)))
-    (do ((i 0 (+ 1 i)))
-	((= i len))
-      (string-set! newstr i (char-downcase (str i))))
-    newstr))
-
 (define* (cfft! data n (dir 1))
   (if (not n) (set! n (length data)))
   (do ((i 0 (+ i 1))
@@ -229,7 +221,6 @@
 ;;(setlocale LC_ALL "de_DE")
 (set! (with-background-processes) #f)
 (define max-optimization 6)
-(define sampler-tests 300)
 
 ;; try to get a different random number sequence on each run
 (set! (mus-rand-seed) (current-time))
@@ -282,8 +273,6 @@
 (set! (show-listener) #t)
 (set! (window-x) 600)
 (set! (window-y) 10)
-
-(define test14-file #f)
 
 (define (fneq a b) 
   "float equal within .001"
@@ -2360,8 +2349,6 @@
     ))
 
 ;;; ---------------- test 4: sndlib ----------------
-
-(define buffer-menu #f) ; needed by examp.scm
 
 (if (or (not (provided? 'snd-examp.scm))
 	(and (defined? 'ramp) ; why this? protection against funcs?
@@ -20658,7 +20645,7 @@ EDITS: 2
 	  (fr2 (make-frame 2))
 	  (mx1 (make-mixer 2))
 	  (mx2 (make-mixer 2)))
-      (frame-set! fr1 0 .1)
+      (set! (fr1 0) .1)
       (let ((fradd (frame+ fr1 fr1 fr2)))
 	(if (not (equal? fr2 fradd)) (snd-display #__line__ ";frame+ with res frame: ~A ~A" fr2 fradd))
 	(if (not (equal? fr2 (make-frame 2 0.2 0.0))) (snd-display #__line__ ";frame+ res: ~A" fr2))
@@ -32388,12 +32375,6 @@ EDITS: 2
 			(if (= chans 8)
 			    (set! octo-files (cons name octo-files)))))))))
     
-#|
-    (if (not buffer-menu)
-	(set! buffer-menu (add-to-main-menu "Buffers")))
-    (hook-push open-hook open-buffer)
-    (hook-push close-hook close-buffer)
-|#
     (do ((test-ctr 0 (+ 1 test-ctr)))
 	((= test-ctr tests))
       (if (> (length open-files) 8)
@@ -32459,7 +32440,6 @@ EDITS: 2
 		 (curfd (choose-fd))
 		 (curloc (max 0 (min 1200 (frames curfd 0))))
 		 (old-marks (length (marks curfd 0))))
-	    (set! test14-file (short-file-name curfd))
 	    (if (> (duration curfd) 0.0)
 		(begin
 		  (set! (x-bounds curfd) (list 0.0 (min (duration curfd) 1.0)))
@@ -45401,7 +45381,7 @@ EDITS: 1
 				 (= j (mus-length fr0))))
 			  (if (< (abs (- (fr0 j) val0)) .001)
 			      (begin
-				(frame-set! fr0 j -100.0)
+				(set! (fr0 j) -100.0)
 				(set! got0 #t))))
 			(if (not got0) (snd-display #__line__ ";sync fr0 missed for ~A (~A) ~A" snd (short-file-name snd) i))
 			(do ((j 0 (+ 1 j)))
@@ -45409,7 +45389,7 @@ EDITS: 1
 				 (= j (mus-length fr1))))
 			  (if (< (abs (- (fr1 j) val1)) .001)
 			      (begin
-				(frame-set! fr1 j -100.0)
+				(set! (fr1 j) -100.0)
 				(set! got1 #t))))
 			(if (not got1) (snd-display #__line__ ";sync fr1 missed for ~A (~A) ~A" snd (short-file-name snd) i))
 			(do ((j 0 (+ 1 j)))
@@ -45417,7 +45397,7 @@ EDITS: 1
 				 (= j (mus-length fr2))))
 			  (if (< (abs (- (fr2 j) val1)) .001)
 			      (begin
-				(frame-set! fr2 j -100.0)
+				(set! (fr2 j) -100.0)
 				(set! got2 #t))))
 			(if (not got2) (snd-display #__line__ ";sync fr2 missed for ~A (~A) ~A" snd (short-file-name snd) i)))))
 		  (sounds)))
@@ -45450,7 +45430,7 @@ EDITS: 1
 				 (= j (mus-length fr0))))
 			  (if (< (abs (- (fr0 j) val0)) .001)
 			      (begin
-				(frame-set! fr0 j -100.0)
+				(set! (fr0 j) -100.0)
 				(set! got0 #t))))
 			(if (not got0) (snd-display #__line__ ";selection fr0 missed for ~A (~A) ~A" snd (short-file-name snd) i))
 			(do ((j 0 (+ 1 j)))
@@ -45458,7 +45438,7 @@ EDITS: 1
 				 (= j (mus-length fr1))))
 			  (if (< (abs (- (fr1 j) val1)) .001)
 			      (begin
-				(frame-set! fr1 j -100.0)
+				(set! (fr1 j) -100.0)
 				(set! got1 #t))))
 			(if (not got1) (snd-display #__line__ ";selection fr1 missed for ~A (~A) ~A" snd (short-file-name snd) i))
 			(do ((j 0 (+ 1 j)))
@@ -45466,7 +45446,7 @@ EDITS: 1
 				 (= j (mus-length fr2))))
 			  (if (< (abs (- (fr2 j) val1)) .001)
 			      (begin
-				(frame-set! fr2 j -100.0)
+				(set! (fr2 j) -100.0)
 				(set! got2 #t))))
 			(if (not got2) (snd-display #__line__ ";selection fr2 missed for ~A (~A) ~A" snd (short-file-name snd) i)))))
 		  (sounds)))
@@ -56754,9 +56734,9 @@ EDITS: 1
   
   (let ((val (make-vector 3))
 	(frq 0.0))
-    (vector-set! val 0 (make-nrcos 100))  
-    (vector-set! val 1 (make-nrcos 200))  
-    (vector-set! val 2 (make-nrcos 300))
+    (set! (val 0) (make-nrcos 100))  
+    (set! (val 1) (make-nrcos 200))  
+    (set! (val 2) (make-nrcos 300))
     (run
      (lambda ()
        (set! frq (mus-frequency (vector-ref val 1)))))
@@ -56764,9 +56744,9 @@ EDITS: 1
   
   (let ((val (make-vector 3))
 	(frq 0.0))
-    (vector-set! val 0 (make-nrcos 100))  
-    (vector-set! val 1 (make-nrcos 200))  
-    (vector-set! val 2 (make-nrcos 300))
+    (set! (val 0) (make-nrcos 100))  
+    (set! (val 1) (make-nrcos 200))  
+    (set! (val 2) (make-nrcos 300))
     (run
      (lambda ()
        (set! frq (+ (mus-frequency (vector-ref val 0))
@@ -56776,9 +56756,9 @@ EDITS: 1
   
   (let ((val (make-vector 3))
 	(frq 0.0))
-    (vector-set! val 0 (make-nrcos 100))  
-    (vector-set! val 1 (make-nrcos 200))  
-    (vector-set! val 2 (make-nrcos 300))
+    (set! (val 0) (make-nrcos 100))  
+    (set! (val 1) (make-nrcos 200))  
+    (set! (val 2) (make-nrcos 300))
     (run
      (lambda ()
        (set! (mus-frequency (vector-ref val 1)) 500.0)
@@ -56788,8 +56768,8 @@ EDITS: 1
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((v (make-vector 2 #f)))
-			    (vector-set! v 0 (make-nrcos 440 10 .5))    
-			    (vector-set! v 1 (make-nrcos 440 10 .5))    
+			    (set! (v 0) (make-nrcos 440 10 .5))    
+			    (set! (v 1) (make-nrcos 440 10 .5))    
 			    (run
 			     (lambda ()
 			       (do ((i 0 (+ 1 i)))
@@ -56801,8 +56781,8 @@ EDITS: 1
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((val (make-vector 2)))
-			    (vector-set! val 0 (make-nrcos 100 1 .1))  
-			    (vector-set! val 1 (make-nrcos 200 1 .1))  
+			    (set! (val 0) (make-nrcos 100 1 .1))  
+			    (set! (val 1) (make-nrcos 200 1 .1))  
 			    (run
 			     (lambda ()
 			       (do ((i 0 (+ 1 i)))
@@ -56828,8 +56808,8 @@ EDITS: 1
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((v (make-vector 2 #f)))
-			    (vector-set! v 0 (make-nrcos 440 10 .5))    
-			    (vector-set! v 1 (make-nrcos 440 10 .5))    
+			    (set! (v 0) (make-nrcos 440 10 .5))    
+			    (set! (v 1) (make-nrcos 440 10 .5))    
 			    (run
 			     (lambda () 
 			       (do ((i 0 (+ 1 i))) 
@@ -59323,25 +59303,25 @@ EDITS: 1
 						   XmNbottomAttachment    XmATTACH_NONE
 						   XmNdestinationCallback 
 						   (list (lambda (w c i) 
-							   (vector-set! calls c "dest")
+							   (set! (calls c) "dest")
 							   (if (< (.location_data i) 0) (snd-display #__line__ ";location_data: ~A" (.location_data i))))
 							 1)
-						   XmNactivateCallback (list (lambda (w c i) (vector-set! calls c "act")) 2)
-						   XmNfocusCallback (list (lambda (w c i) (vector-set! calls c "focus")) 3)
-						   XmNlosingFocusCallback (list (lambda (w c i) (vector-set! calls c "losingfocus")) 4)
-						   XmNgainPrimaryCallback (list (lambda (w c i) (vector-set! calls c "gain")) 5)
-						   XmNlosePrimaryCallback (list (lambda (w c i) (vector-set! calls c "lose")) 6)
+						   XmNactivateCallback (list (lambda (w c i) (set! (calls c) "act")) 2)
+						   XmNfocusCallback (list (lambda (w c i) (set! (calls c) "focus")) 3)
+						   XmNlosingFocusCallback (list (lambda (w c i) (set! (calls c) "losingfocus")) 4)
+						   XmNgainPrimaryCallback (list (lambda (w c i) (set! (calls c) "gain")) 5)
+						   XmNlosePrimaryCallback (list (lambda (w c i) (set! (calls c) "lose")) 6)
 						   XmNmodifyVerifyCallback 
 						   (list (lambda (w c i) 
-							   (vector-set! calls c "modify")
+							   (set! (calls c) "modify")
 							   (if (< (.currInsert i) 0) (snd-display #__line__ ";currInsert: ~A" (.currInsert i)))
 							   (if (< (.newInsert i) 0) (snd-display #__line__ ";newInsert: ~A" (.newInsert i)))
 							   (if (string? (.doit i)) (snd-display #__line__ ";doit: ~A" (.doit i)))
 							   (if (< (.startPos i) 0) (snd-display #__line__ ";startPos: ~A" (.startPos i)))
 							   (if (< (.endPos i) 0) (snd-display #__line__ ";endPos: ~A" (.endPos i))))
 							 7)
-						   XmNmotionVerifyCallback (list (lambda (w c i) (vector-set! calls c "motion")) 8)
-						   XmNvalueChangedCallback (list (lambda (w c i) (vector-set! calls c "value")) 9)))))
+						   XmNmotionVerifyCallback (list (lambda (w c i) (set! (calls c) "motion")) 8)
+						   XmNvalueChangedCallback (list (lambda (w c i) (set! (calls c) "value")) 9)))))
 	    (letrec ((transfer-proc
 		      (lambda (w c info)
 			(let* ((dpy (XtDisplay w))
@@ -61217,8 +61197,8 @@ EDITS: 1
 	      (do ((j 0 (+ 1 j)))
 		  ((or (= j len) 
 		       (not (vector-ref vals j)))
-		   (vector-set! vals j (car lst))))
-	      (vector-set! vals loc (car lst)))
+		   (set! (vals j) (car lst))))
+	      (set! (vals loc) (car lst)))
 	  (set! lst (cdr lst))))
       (do ((i 0 (+ 1 i)))
 	  ((= i len))
@@ -63399,36 +63379,36 @@ EDITS: 1
 					;(tracing #t)
 
 (define test-funcs (make-vector (+ 1 total-tests)))
-(vector-set! test-funcs 0 snd_test_0)
-(vector-set! test-funcs 1 snd_test_1)
-(vector-set! test-funcs 2 snd_test_2)
-(vector-set! test-funcs 3 snd_test_3)
-(vector-set! test-funcs 4 snd_test_4)
-(vector-set! test-funcs 5 snd_test_5)
-(vector-set! test-funcs 6 snd_test_6)
-(vector-set! test-funcs 7 snd_test_7)
-(vector-set! test-funcs 8 snd_test_8)
-(vector-set! test-funcs 9 snd_test_9)
-(vector-set! test-funcs 10 snd_test_10)
-(vector-set! test-funcs 11 snd_test_11)
-(vector-set! test-funcs 12 snd_test_12)
-(vector-set! test-funcs 13 snd_test_13)
-(vector-set! test-funcs 14 snd_test_14)
-(vector-set! test-funcs 15 snd_test_15)
-(vector-set! test-funcs 16 snd_test_16)
-(vector-set! test-funcs 17 snd_test_17)
-(vector-set! test-funcs 18 snd_test_18)
-(vector-set! test-funcs 19 snd_test_19)
-(vector-set! test-funcs 20 snd_test_20)
-(vector-set! test-funcs 21 snd_test_21)
-(vector-set! test-funcs 22 snd_test_22)
-(vector-set! test-funcs 23 snd_test_23)
-(vector-set! test-funcs 24 snd_test_24)
-(vector-set! test-funcs 25 snd_test_25)
-(vector-set! test-funcs 26 snd_test_26)
-(vector-set! test-funcs 27 snd_test_27)
-(vector-set! test-funcs 28 snd_test_28)
-(vector-set! test-funcs 29 snd_test_29)
+(set! (test-funcs 0) snd_test_0)
+(set! (test-funcs 1) snd_test_1)
+(set! (test-funcs 2) snd_test_2)
+(set! (test-funcs 3) snd_test_3)
+(set! (test-funcs 4) snd_test_4)
+(set! (test-funcs 5) snd_test_5)
+(set! (test-funcs 6) snd_test_6)
+(set! (test-funcs 7) snd_test_7)
+(set! (test-funcs 8) snd_test_8)
+(set! (test-funcs 9) snd_test_9)
+(set! (test-funcs 10) snd_test_10)
+(set! (test-funcs 11) snd_test_11)
+(set! (test-funcs 12) snd_test_12)
+(set! (test-funcs 13) snd_test_13)
+(set! (test-funcs 14) snd_test_14)
+(set! (test-funcs 15) snd_test_15)
+(set! (test-funcs 16) snd_test_16)
+(set! (test-funcs 17) snd_test_17)
+(set! (test-funcs 18) snd_test_18)
+(set! (test-funcs 19) snd_test_19)
+(set! (test-funcs 20) snd_test_20)
+(set! (test-funcs 21) snd_test_21)
+(set! (test-funcs 22) snd_test_22)
+(set! (test-funcs 23) snd_test_23)
+(set! (test-funcs 24) snd_test_24)
+(set! (test-funcs 25) snd_test_25)
+(set! (test-funcs 26) snd_test_26)
+(set! (test-funcs 27) snd_test_27)
+(set! (test-funcs 28) snd_test_28)
+(set! (test-funcs 29) snd_test_29)
 
 (if (> test-at-random 0)
     (begin                                       ; run tests in any random order
@@ -63503,8 +63483,8 @@ EDITS: 1
       ((= i (vector-length timings)))
     (if (and (> (vector-ref timings i) 0)
 	     (> (vector-ref best-times i) 0))
-	(vector-set! best-times i (exact->inexact (/ (vector-ref timings i) (vector-ref best-times i))))
-	(vector-set! best-times i 0.0)))
+	(set! (best-times i) (exact->inexact (/ (vector-ref timings i) (vector-ref best-times i))))
+	(set! (best-times i) 0.0)))
   (display (format #f ";ratios: ("))
   (do ((i 0 (+ 1 i)))
       ((= i (vector-length timings)))

@@ -410,7 +410,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 					       ((= i 3))
 					     (do ((j 0 (+ 1 j)))
 						 ((= j 3))
-					       (mixer-set! m i j ((vertices i) j))))
+					       (set! (m i j) ((vertices i) j))))
 					   (invert3x3 m))
 					 (if (= size 2)
 					     (let* ((m (make-mixer 2)))
@@ -418,7 +418,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 						   ((= i 2))
 						 (do ((j 0 (+ 1 j)))
 						     ((= j 2))
-						   (mixer-set! m i j ((vertices i) j))))
+						   (set! (m i j) ((vertices i) j))))
 					       (invert2x2 m))
 					     #f))))
 			(set! vals (cons (make-group :id id

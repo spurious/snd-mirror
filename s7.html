@@ -4751,6 +4751,7 @@ have any number after, for example, #b:
 
   (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
 <!--
+  ;; and why no blob-&gt;string, blob-for-each, exact-integer-expt, euclidean-rationalize ...?
   modules: include-ci import export
   raise raise-continuable error [error msg obj] guard
   define-record-type
@@ -4833,6 +4834,7 @@ Here's an idle thought:
 (+ (((lambda () values)) 1 2 3))
 (map apply (list map) (list map) (list (list *)) '((((1 2)) ((3 4 5)))))
 (do ((do do do)) (do do do))
+(*(*)(*) (+)(+) 1)
 </pre>
 
 </blockquote>

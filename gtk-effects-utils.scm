@@ -133,14 +133,14 @@
 	  (gtk_widget_show table)))
     (map 
      (lambda (slider-data)
-       (let* ((title (list-ref slider-data 0))
-	      (low (list-ref slider-data 1))
-	      (initial (list-ref slider-data 2))
-	      (high (list-ref slider-data 3))
-	      (func (list-ref slider-data 4))
-	      (scaler (list-ref slider-data 5))
+       (let* ((title (slider-data 0))
+	      (low (slider-data 1))
+	      (initial (slider-data 2))
+	      (high (slider-data 3))
+	      (func (slider-data 4))
+	      (scaler (slider-data 5))
 	      (use-log (and (= (length slider-data) 7)
-			    (eq? (list-ref slider-data 6) 'log)))
+			    (eq? (slider-data 6) 'log)))
 	      (hbox (and use-hbox (gtk_hbox_new #f 0)))
 	      (label (gtk_label_new 
 		      (if use-hbox

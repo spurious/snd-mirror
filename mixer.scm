@@ -147,8 +147,8 @@
 	       (let ((temp (if b (b row) 0.0)))
 		 (if b
 		     (begin
-		       (frame-set! b row (b col))
-		       (frame-set! b col temp)))
+		       (set! (b row) (b col))
+		       (set! (b col) temp)))
 		 (do ((k 0 (+ 1 k)))
 		     ((= k n))
 		   (set! temp (matrix row k))
@@ -164,7 +164,7 @@
 	     (do ((k 0 (+ 1 k)))
 		 ((= k n))
 	       (set! (matrix col k) (* inverse-pivot (matrix col k))))
-	     (if b (frame-set! b col (* inverse-pivot (b col)))))
+	     (if b (set! (b col) (* inverse-pivot (b col)))))
 	   (do ((k 0 (+ 1 k)))
 	       ((= k n))
 	     (if (not (= k col))
@@ -173,7 +173,7 @@
 		   (do ((m 0 (+ 1 m)))
 		       ((= m n))
 		     (set! (matrix k m) (- (matrix k m) (* scl (matrix col m)))))
-		   (if b (frame-set! b k (- (b k) (* scl (b col))))))))))
+		   (if b (set! (b k) (- (b k) (* scl (b col))))))))))
        (do ((i (- n 1) (- i 1)))
 	   ((< i 0))
 	 (if (not (= (rows i) (cols i)))

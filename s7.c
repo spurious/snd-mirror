@@ -2661,9 +2661,13 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
   #define H_initial_environment "(initial-environment) establishes the original bindings of all the predefined functions"
 
   /* maybe this should be named with-initial-environment or something -- it currently looks
-   *   like it simply returns the initial env
+   *   like it simply returns the initial env, but it actually shadows the global env entries
+   *   that have changed.  But that doesn't behave the way one would expect:
+   *
+   *     (let () (define (x) 1) (defined? 'x (initial-environment)) -> #t!
+   *   
+   *   I can't see how to fix this short of copying the thing.
    */
-
   int i;
   s7_pointer *inits;
   s7_pointer x;
@@ -16417,28 +16421,72 @@ the variables are not available for use until all have been initialized."));
 returning the value of the last form.  The let* variables are local to it, and are available immediately (unlike let, for example)."));
 
 	case OP_LETREC:
+	  return(s7_make_string(sc, "(letrec ((var (lambda ...)))...) is like let, but var can refer to itself in \
+its value (i.e. you can define local recursive functions)"));
+
 	case OP_COND:
+	  return(s7_make_string(sc, "(cond (expr clause...)...) is like if..then.  Each expr is evaluated in \
+order, and if one is not #f, the associated clauses are evaluated, whereupon cond returns."));
+
 	case OP_AND:
+	  return(s7_make_string(sc, "(and expr expr ...) evaluates each of its arguments in order, quitting (and returning #f) as soon \
+as one of them returns #f.  If all are non-#f, it returns the last value."));
+
 	case OP_OR:
+	  return(s7_make_string(sc, "(or expr expr ...) evaluates each of its argments in order, quitting as soon as \
+one of them is not #f.  If all are #f, or returns #f."));
+
 	case OP_CASE:
+	  return(s7_make_string(sc, "(case val ((key...) clause...)...) looks for val in the various lists of keys, \
+and if a match is found (via eqv?), the asssociated clauses are evaluated, and case returns."));
+
 	case OP_DO:
+	  return(s7_make_string(sc, "(do (vars...) (loop control and return value) ...) is a do-loop."));
+
 	case OP_WITH_ENV:
+	  return(s7_make_string(sc, "(with-environment env ...) evaluates its body in the environment env."));
+
 	case OP_LAMBDA:
+	  return(s7_make_string(sc, "(lambda args ...) returns a function."));
+
 	case OP_LAMBDA_STAR:
+	  return(s7_make_string(sc, "(lambda* args ...) returns a function; the args list can have default values, \
+the parameters themselves can be accessed via keywords."));
+
 	case OP_DEFINE:
+	  return(s7_make_string(sc, "(define var val) assigns val to the variable (symbol) var.  (define (func args) ...) is \
+shorthand for (define func (lambda args ...))"));
+
 	case OP_DEFINE_STAR:
+	  return(s7_make_string(sc, "(define* (func args) ...) defines a function with optional/keyword arguments."));
+
 	case OP_DEFINE_CONSTANT:
+	  return(s7_make_string(sc, "(define-constant var val) defines var to be a constant (it can't be set or bound), with the value val."));
+
 	case OP_DEFMACRO:
+	  return(s7_make_string(sc, "(defmacro mac (args) ...) defines mac to be a macro."));
+
 	case OP_DEFMACRO_STAR:
+	  return(s7_make_string(sc, "(defmacro* mac (args) ...) defines mac to be a macro with optional/keyword arguments."));
+
 	case OP_DEFINE_MACRO:
+	  return(s7_make_string(sc, "(define-macro (mac args) ...) defines mac to be a macro."));
+
 	case OP_DEFINE_MACRO_STAR:
+	  return(s7_make_string(sc, "(define-macro* (mac args) ...) defines mac to be a macro with optional/keyword arguments."));
+
 	case OP_DEFINE_EXPANSION:
+	  return(s7_make_string(sc, "(define-expansion (mac args) ...) defines mac to be a read-time macro."));
+
 	case OP_DEFINE_BACRO:
+	  return(s7_make_string(sc, "(define-bacro (mac args) ...) defines mac to be a bacro."));
+
 	case OP_DEFINE_BACRO_STAR:
-	  return(sc->F);
+	  return(s7_make_string(sc, "(define-bacro* (mac args) ...) defines mac to be a bacro with optional/keyword arguments."));
 	}
       
-      return(sc->F); /* TODO: fill out these cases */
+      return(sc->F);
+
       /* others: macroexpand
 :(define-macro (hiho a) "a test" `(+ 1 ,a))
 hiho
@@ -16447,8 +16495,7 @@ hiho
 :(s7-help hiho)
 "a test"
 with-sound #f etc -- all macros at least
-TODO: clickable urls in help strings
-TODO: currently snd-help doesn't handle (help let) correctly -- it should let us try first
+TODO: currently snd-help doesn't handle (help let) correctly -- it should let us try first, but that means exporting s7_help
        */
     }
 
@@ -32433,8 +32480,4 @@ the error type and the info passed to the error handler.");
  *    (let ((lst (list #(1 2) #(3 4)))) (lst 0 1))
  *    ;list-ref argument 1, #(1 2), is vector but should be a pair
  *    ;    (lst 0 1)
- */
-
-/* more sets/refs to remove: sound-data-ref|set!, rest of frame|mixer|list|vector|string, vct-set
- *   also vct|sound-data-fill!, vct|sound-data-copy, and maybe length?
  */

@@ -987,7 +987,7 @@
 	       (else 
 		(if (just-rationals? args)
 		    (apply - args)
-		    (let ((nargs (remove-all 0 (cdr args))))
+		    (let ((nargs (remove-all 0 (splice-if (lambda (x) (eq? x '+)) (cdr args))))) ; (- x a (+ b c) d) -> (- x a b c d)
 		      (if (null? nargs)
 			  (car args) ; (- x 0 0 0)?
 			  (if (and (equal? (car args) 0)
@@ -1009,12 +1009,18 @@
 			    (cadar args)
 			    `(/ ,@args))
 			form)))
-	       (else 
+	       (else ; one other verbose case is (/ 1 x) -> (/ x)
 		(if (and (just-rationals? args)
 			 (not (member 0 args))
 			 (not (member 0.0 args)))
 		    (apply / args)
-		    `(/ ,@(cons (car args) (remove-all 1 (cdr args))))))))
+		    (let ((nargs 
+			   (if (> len 2) ; (/ x a (* b 1 c) d) -> (/ x a b c d) but not short cases
+			       (remove-all 1 (splice-if (lambda (x) (eq? x '*)) (cdr args)))
+			       (remove-all 1 (cdr args)))))
+		      (if (null? nargs) ; (/ x 1 1) -> x
+			  (car args)
+			  `(/ ,@(cons (car args) nargs))))))))
 
 	    ((sin cos asin acos sinh cosh tanh asinh acosh atanh log exp)
 	     (if (and (= len 1)
@@ -2618,9 +2624,6 @@
 	      (close-input-port fp)))))))
 
 
-;;; if vector (or hash-table etc) get one list arg, should we ask if they mean apply vector...?
-;;;    func has rest arg, called with 1 list in that position
-
+;;; if vector or hash-table get one list arg, should we ask if they mean apply vector...?
 ;;; also no-ops: (apply list lst) -- 1 arg here
-;;; also (apply append ... ) tests
 

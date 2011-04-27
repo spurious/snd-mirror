@@ -34,8 +34,8 @@
 	     (j (- len 1) (- j 1)))
 	    ((>= i (/ len 2)))
 	  (let ((temp (fr i)))
-	    (frame-set! fr i (fr j))
-	    (frame-set! fr j temp)))
+	    (set! (fr i) (fr j))
+	    (set! (fr j) temp)))
 	fr)))
 
 (define (frame-copy fr)
@@ -46,7 +46,7 @@
 	     (nfr (make-frame len)))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
-	  (frame-set! nfr i (fr i)))
+	  (set! (nfr i) (fr i)))
 	nfr)))
 
 #|
@@ -100,7 +100,7 @@
 	     (len (min vlen (channels nfr))))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
-	  (frame-set! nfr i (v i)))
+	  (set! (nfr i) (v i)))
 	nfr)))
 
 
@@ -131,7 +131,7 @@
 			      (channels sd))))
 		(do ((i 0 (+ i 1)))
 		    ((= i len))
-		  (frame-set! fr i (sound-data-ref sd i pos)))
+		  (set! (fr i) (sound-data-ref sd i pos)))
 		fr)))))
 
 
@@ -144,7 +144,7 @@
 	  (do ((i 0 (+ i 1)))
 	      ((= i (channels index))
 	       fr)
-	    (frame-set! fr i (sample pos index i)))))))
+	    (set! (fr i) (sample pos index i)))))))
 
 (define* (frame->sound fr (pos 0) snd)
   "(frame->sound fr pos snd) places the contents of frame fr into sound snd at position pos"
@@ -165,7 +165,7 @@
 	(do ((i 0 (+ i 1)))
 	    ((= i (channels reg))
 	     fr)
-	  (frame-set! fr i (region-sample reg pos i))))))
+	  (set! (fr i) (region-sample reg pos i))))))
 
 
 (define* (sound->sound-data (beg 0) dur snd)
@@ -280,7 +280,7 @@
   (let ((vals (fr +frame-reader-frame+)))
     (do ((i 0 (+ i 1)))
 	((= i (fr +frame-reader-channels+)))
-      (frame-set! vals i (next-sample (fr (+ i +frame-reader0+)))))
+      (set! (vals i) (next-sample (fr (+ i +frame-reader0+)))))
     vals))
 
 (define (previous-frame fr)
@@ -288,7 +288,7 @@
   (let ((vals (fr +frame-reader-frame+)))
     (do ((i 0 (+ i 1)))
 	((= i (fr +frame-reader-channels+)))
-      (frame-set! vals i (previous-sample (fr (+ i +frame-reader0+)))))
+      (set! (vals i) (previous-sample (fr (+ i +frame-reader0+)))))
     vals))
 
 (define (read-frame fr)
@@ -296,7 +296,7 @@
   (let ((vals (fr +frame-reader-frame+)))
     (do ((i 0 (+ i 1)))
 	((= i (fr +frame-reader-channels+)))
-      (frame-set! vals i (read-sample (fr (+ i +frame-reader0+)))))
+      (set! (vals i) (read-sample (fr (+ i +frame-reader0+)))))
     vals))
 
 
@@ -560,7 +560,7 @@
 		    (do ((chn 0 (+ 1 chn)))
 			((= chn (channels fr)))
 		      (set! result (and result (< (* (fr chn) (last-fr chn)) 0.0)))
-		      (frame-set! last-fr chn (fr chn)))
+		      (set! (last-fr chn) (fr chn)))
 		    result))
 		beg dur snd)))
 

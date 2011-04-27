@@ -2760,9 +2760,9 @@ mjkoskin@sci.fi
 		     
 		     (if (= next-samp ex-samp)
 			 ;; output actual samples
-			 (frame-set! inframe 0 sample-0)
+			 (set! (inframe 0) sample-0)
 			 ;; output interpolated samples
-			 (frame-set! inframe 0 (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0)))))
+			 (set! (inframe 0) (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0)))))
 		     
 		     ;; output mixed result
 		     (frame->file *output* i (frame->frame inframe mx outframe))
@@ -2827,12 +2827,12 @@ mjkoskin@sci.fi
 			 (if (= next-samp ex-samp)
 			     ;; output actual samples
 			     (begin
-			       (frame-set! inframe 0 sample-0-0)
-			       (frame-set! inframe 1 sample-0-1))
+			       (set! (inframe 0) sample-0-0)
+			       (set! (inframe 1) sample-0-1))
 			     (begin
 			       ;; output interpolated samples
-			       (frame-set! inframe 0 (+ sample-0-0 (* (- next-samp ex-samp) (- sample-1-0 sample-0-0))))
-			       (frame-set! inframe 1 (+ sample-0-1 (* (- next-samp ex-samp) (- sample-1-1 sample-0-1))))))
+			       (set! (inframe 0) (+ sample-0-0 (* (- next-samp ex-samp) (- sample-1-0 sample-0-0))))
+			       (set! (inframe 1) (+ sample-0-1 (* (- next-samp ex-samp) (- sample-1-1 sample-0-1))))))
 			 
 			 ;; output mixed result
 			 (frame->file *output* i (frame->frame inframe mx outframe))
@@ -2896,13 +2896,13 @@ mjkoskin@sci.fi
 			     ;; output actual samples
 			     (do ((ix 0 (+ 1 ix)))
 				 ((= ix in-chans))
-			       (frame-set! inframe ix (samples-0 ix)))
+			       (set! (inframe ix) (samples-0 ix)))
 			     ;; output interpolated samples
 			     (do ((ix 0 (+ 1 ix)))
 				 ((= ix in-chans))
 			       (let ((v0 (samples-0 ix))
 				     (v1 (samples-1 ix)))
-				 (frame-set! inframe ix (+ v0 (* (- next-samp ex-samp)
+				 (set! (inframe ix) (+ v0 (* (- next-samp ex-samp)
 								 (- v1 v0)))))))
 			 ;; output mixed result
 			 (frame->file *output* i (frame->frame inframe mx outframe))
@@ -3087,7 +3087,7 @@ mjkoskin@sci.fi
 		     (let ((sr-val (if srcenv (env srcenv) 0.0)))
 		       (do ((inp 0 (+ 1 inp)))
 			   ((= inp in-chans))
-			 (frame-set! inframe inp (src (srcs inp) sr-val)))
+			 (set! (inframe inp) (src (srcs inp) sr-val)))
 		       (frame->file *output* i (frame->frame inframe mx outframe))
 		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))
 		  
@@ -3098,7 +3098,7 @@ mjkoskin@sci.fi
 		     (let ((sr-val (if srcenv (env srcenv) 0.0)))
 		       (do ((inp 0 (+ 1 inp)))
 			   ((= inp in-chans))
-			 (frame-set! inframe inp (src (srcs inp) sr-val)))
+			 (set! (inframe inp) (src (srcs inp) sr-val)))
 		       (frame->file *output* i (frame->frame inframe mx outframe))
 		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))))))))
 
