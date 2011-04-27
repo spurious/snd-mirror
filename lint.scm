@@ -6,9 +6,10 @@
 (define *report-unused-top-level-functions* #f)
 (define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
-(define *report-minor-stuff* #t)          ; let*, docstring checks, (= 1.0 x), numerical and boolean simplification
+(define *report-minor-stuff* #f)          ; let*, docstring checks, (= 1.0 x), numerical and boolean simplification
 
 (define *load-file-first* #f)
+(define start-up-environment (if (provided? 's7) (global-environment) #f))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1245,6 +1246,59 @@
 			     name line-number
 			     (truncated-list->string form))))))
 
+	((copy)
+	 (if (not (null? (cdr form)))
+	     (if (or (number? (cadr form))
+		     (boolean? (cadr form))
+		     (char? (cadr form))
+		     (and (pair? (cadr form))
+			  (or (eq? (caadr form) 'copy)
+			      (eq? (caadr form) 'string-copy))))
+		 (format #t "  ~A (line ~D): ~A could be ~A~%" 
+			 name line-number form (cadr form)))))
+
+	((string-copy)
+	 (if (and (not (null? (cdr form)))
+		  (pair? (cadr form))
+		  (or (eq? (caadr form) 'copy)
+		      (eq? (caadr form) 'string-copy)))
+	     (format #t "  ~A (line ~D): ~A could be ~A~%" 
+		     name line-number form (cadr form))))
+
+	((reverse list->vector vector->list list->string string->list symbol->string string->symbol number->string)
+	 (let ((inverses '((reverse . reverse) 
+			   (list->vector . vector->list)
+			   (vector->list . list->vector)
+			   (symbol->string . string->symbol)
+			   (string->symbol . symbol->string)
+			   (list->string . string->list)
+			   (string->list . list->string)
+			   (number->string . string->number))))
+	   (if (and (not (null? (cdr form)))
+		    (pair? (cadr form))
+		    (not (null? (cdadr form)))
+		    (eq? (caadr form) (let ((p (assq head inverses))) (and (pair? p) (cdr p)))))
+	       (format #t "  ~A (line ~D): ~A could be (copy ~A)~%" 
+		       name line-number form (cadadr form)))))
+
+	((char->integer integer->char symbol->keyword keyword->symbol string->number)
+	 (let ((inverses '((char->integer . integer->char)
+			   (integer->char . char->integer)
+			   (symbol->keyword . keyword->symbol)
+			   (keyword->symbol . symbol->keyword)
+			   (string->number . number->string))))
+	   (if (and (not (null? (cdr form)))
+		    (pair? (cadr form))
+		    (not (null? (cdadr form)))
+		    (eq? (caadr form) (let ((p (assq head inverses))) (and (pair? p) (cdr p)))))
+	       (format #t "  ~A (line ~D): ~A could be ~A~%" 
+		       name line-number form (cadadr form)))))
+
+	((append)
+	 (if (= (lint-length form) 2)
+	     (format #t "  ~A (line ~D): ~A could be ~A~%" 
+		     name line-number form (cadr form))))
+
 	((sort!)
 	 (if (member (caddr form) '(= <= >= eq? eqv? equal?
 				      string=? string<=? string>=? char=? char<=? char>=?
@@ -2459,14 +2513,16 @@
 					   name line-number 
 					   (lists->string form val)))))
 
-			 ;; walk everything looking for undefined vars (saved until we finish the file)
-			 ;;  if we loaded this file first, and f (head) is defined (e.g. scan above),
-			 ;;  and it is used before it is defined, but not thereafter, the usage stuff 
-			 ;;  can get confused, so other-identifiers is trying to track those.
+			 ;; walk everything looking for undefined vars (saved until we finish the file).
+			 ;;
+			 ;;   if we loaded this file first, and f (head) is defined (e.g. scan above),
+			 ;;   and it is used before it is defined, but not thereafter, the usage stuff 
+			 ;;   can get confused, so other-identifiers is trying to track those.
+
 			 (if (and (symbol? head)
 				  (not (member head other-identifiers))
-				  (not (hash-table-ref no-side-effect-functions head)))
-					;(not (defined? head (initial-environment)))
+				  start-up-environment ; not s7?
+				  (not (defined? head start-up-environment)))
 			     (set! other-identifiers (cons head other-identifiers)))
 
 			 (let ((vars env))
@@ -2561,4 +2617,10 @@
 
 	      (close-input-port fp)))))))
 
+
+;;; if vector (or hash-table etc) get one list arg, should we ask if they mean apply vector...?
+;;;    func has rest arg, called with 1 list in that position
+
+;;; also no-ops: (apply list lst) -- 1 arg here
+;;; also (apply append ... ) tests
 

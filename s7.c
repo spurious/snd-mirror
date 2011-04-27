@@ -3054,8 +3054,6 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, (x != sc->NIL) && (x != sc->UNDEFINED)));
 }
 
-/* TODO: (let () (define (scan) 1) (defined? 'scan (initial-environment))) -> #t!
- */
 
 bool s7_is_defined(s7_scheme *sc, const char *name)
 {
