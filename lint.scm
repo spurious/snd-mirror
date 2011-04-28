@@ -6,7 +6,7 @@
 (define *report-unused-top-level-functions* #f)
 (define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
-(define *report-minor-stuff* #f)          ; let*, docstring checks, (= 1.0 x), numerical and boolean simplification
+(define *report-minor-stuff* #f)          ; let*, docstring checks, (= 1.5 x), numerical and boolean simplification
 
 (define *load-file-first* #f)
 (define start-up-environment (if (provided? 's7) (global-environment) #f))
@@ -564,7 +564,7 @@
 			     (if (and (eq? (car arg) 'if)
 				      (= (lint-length arg) 3)
 				      (not (checker (if #f #f))))
-				 (format #t "  ~A (line ~D): ~A arg might be ~A:~A~%"
+				 (format #t "  ~A (line ~D): ~A argument might be ~A:~A~%"
 					 name line-number head
 					 (if #f #f)
 					 (truncated-list->string form)))))))
@@ -670,6 +670,12 @@
 	    ((eq? (car list) x) (cdr list)) 
 	    (else (cons (car list) 
 			(remove x (cdr list))))))
+
+
+    (define (remove-all x list) 
+      (cond ((null? list) '()) 
+	    ((equal? (car list) x) (remove-all x (cdr list)))
+	    (else (cons (car list) (remove-all x (cdr list))))))
 
 
     (define (simplify-boolean form true false env)
@@ -876,11 +882,6 @@
 	     ((log) exp) ((exp) log)))
 
 	
-	(define (remove-all x list) 
-	  (cond ((null? list) '()) 
-		((equal? (car list) x) (remove-all x (cdr list)))
-		(else (cons (car list) (remove-all x (cdr list))))))
-
 	(define (remove-duplicates lst)
 	  (letrec ((rem-dup
 		    (lambda (lst nlst)
@@ -1171,6 +1172,25 @@
 	     (format #t "  ~A (line ~D): ~A can be troublesome with floats:~A~%"
 		     name line-number head 
 		     (truncated-list->string form))))
+
+	((memq assq)
+	 (if (= (lint-length form) 3)
+	     (if (or (and (number? (cadr form))
+			  (not (rational? (cadr form))))
+		     (string? (cadr form))
+		     (vector? (cadr form)))
+		 (format #t "  ~A (line ~D): this is always #f:~A~%"
+			 name line-number
+			 (truncated-list->string form)))))
+	
+	((memv assv)
+	 (if (= (lint-length form) 3)
+	     (if (or (string? (cadr form))
+		     (vector? (cadr form)))
+		 (format #t "  ~A (line ~D): this is problematic -- perhaps use ~A instead:~A~%"
+			 name line-number
+			 (if (eq? head 'memv) 'member 'assoc)
+			 (truncated-list->string form)))))
 	
 	((if)
 	 (let ((len (lint-length form)))
@@ -1274,6 +1294,17 @@
 		      (eq? (caadr form) 'string-copy)))
 	     (format #t "  ~A (line ~D): ~A could be ~A~%" 
 		     name line-number form (cadr form))))
+
+	((string-append)
+	 (let ((args (remove-all "" (cdr form))))
+	   (if (null? args)
+	       (format #t "  ~A (line ~D): this is pointless:~A~%"
+		       name line-number
+		       (truncated-list->string form))
+	       (if (< (lint-length args) (lint-length (cdr form)))
+		   (format #t "  ~A (line ~D): possible simplification:~A~%"
+			   name line-number
+			   (lists->string form `(string-append ,@args)))))))
 
 	((reverse list->vector vector->list list->string string->list symbol->string string->symbol number->string)
 	 (let ((inverses '((reverse . reverse) 
@@ -1539,7 +1570,7 @@
 				      (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
 					      name line-number head 
 					      (truncated-list->string form))))
-			      (if (member type '(define* lambda*)) ; TODO: what about macro arg checks?
+			      (if (member type '(define* lambda*))
 				  (if (not (member ':allow-other-keys pargs))
 				      (for-each
 				       (lambda (arg)
@@ -1616,24 +1647,44 @@
 			    
 			    (case head
 			      ((eq?) 
-			       (if (or (number? (cadr form))
-				       (char? (cadr form))
-				       (and (not (null? (cddr form)))
-					    (or (number? (caddr form))
-						(char? (caddr form)))))
-				   (format #t "  ~A (line ~D): eq? doesn't work reliably with args like ~S~%" 
-					   name line-number form))
+			       (if (< (lint-length form) 3)
+				   (format #t "  ~A (line ~D): eq? needs 2 arguments:~A~%"
+					   name line-number 
+					   (truncated-list->string form))
+				   (if (or (and (number? (cadr form))
+						(rational? (cadr form)))
+					   (char? (cadr form))
+					   (and (number? (caddr form))
+						(rational? (caddr form)))
+					   (char? (caddr form)))
+				       (format #t "  ~A (line ~D): eq? doesn't work reliably with args like ~S~%" 
+					       name line-number form)
+				       (if (or (and (number? (cadr form))
+						    (not (rational? (cadr form))))
+					       (string? (cadr form))
+					       (vector? (cadr form))
+					       (and (number? (caddr form))
+						    (not (rational? (caddr form))))
+					       (string? (caddr form))
+					       (vector? (caddr form)))
+					   (format #t "  ~A (line ~D): ~A is always #f~%"
+						   name line-number form))))
+
 			       (check-for-repeated-args name line-number head form env)
 			       (check-for-repeated-args-with-not name line-number form env))
 			      
 			      ((eqv?) 
-			       (if (or (vector? (cadr form))
-				       (string? (cadr form))
-				       (and (not (null? (cddr form)))
-					    (or (vector? (caddr form))
-						(string? (caddr form)))))
-				   (format #t "  ~A (line ~D): eqv? doesn't work reliably with args like ~S~%" 
-					   name line-number form))
+			       (if (< (lint-length form) 3)
+				   (format #t "  ~A (line ~D): eqv? needs 2 arguments:~A~%"
+					   name line-number 
+					   (truncated-list->string form))
+				   (if (or (vector? (cadr form))
+					   (string? (cadr form))
+					   (vector? (caddr form))
+					   (string? (caddr form)))
+				       (format #t "  ~A (line ~D): eqv? doesn't work reliably with args like ~S~%" 
+					       name line-number form)))
+
 			       (check-for-repeated-args name line-number head form env)
 			       (check-for-repeated-args-with-not name line-number form env))
 			      
@@ -2665,7 +2716,4 @@
 ;;; if vector or hash-table get one list arg, should we ask if they mean apply vector...?
 ;;; also no-ops: (apply list lst) -- 1 arg here
 
-;;; is there a way to check things like set-current-input-port?
-;;; memq with arg that won't ever be eq? and so on
-;;; unnecessary quote (number etc)
 

@@ -247,6 +247,7 @@
 (test (eq? #t 't) #f)
 (test (eq? "abs" 'abc) #f)
 (test (eq? "hi" '(hi)) #f)
+(test (eq? "hi" "hi") #f)
 (test (eq? "()" '()) #f)
 (test (eq? '(1) '(1)) #f)
 (test (eq? '(#f) '(#f)) #f)
@@ -310,6 +311,7 @@
 (test (eq? '()(list)) #t)
 (test (eq? '() (list)) #t)
 (test (eq? (begin) (append)) #t)
+(test (let ((lst (list 1 2 3))) (eq? lst (apply list lst))) #t)
 
 (test (eq? ''2 '2) #f)
 (test (eq? '2 '2) #t) ; unspecified??
@@ -401,8 +403,16 @@
 (test (eq? lambda and) #f)
 (test (eq? let let*) #f)
 (test (eq? quote quote) #t)
-
-
+(test (eq? '"hi" '"hi") #f) ; guile also
+(test (eq? '"" "") #f)
+(test (eq? '"" '"") #f)
+(test (eq? "" "") #f)
+(test (eq? #() '#()) #f)
+(test (eq? #() #()) #f)
+(test (eq? '#() '#()) #f)
+(test (let ((v #())) (eq? v #())) #f)
+(test (let ((v '#())) (eq? v '#())) #f)
+(test (let ((v #())) (eq? v v)) #t)
 
 
 ;;; eqv?
@@ -445,6 +455,8 @@
 (test (let () (define (make-adder x) (lambda (y) (+ x y))) (eqv? (make-adder 1) (make-adder 1))) #f)
 (test (eqv? 9/2 9/2) #t)
 (test (eqv? quote quote) #t)
+(test (eqv? "hi" "hi") #f) ; unspecified 
+(test (eqv? #() #()) #f)   ; unspecified
 
 (let ((c1 (let ((x 32))
 	    (lambda () x)))
@@ -4622,6 +4634,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (memq 'a '(a a a)) '(a a a)) ;?
 (test (memq 'a '(b a a)) '(a a))
 (test (memq "hi" '(1 "hi" 2)) #f)
+(test (let ((str "hi")) (memq str (list 1 str 2))) '("hi" 2))
 (test (memq #\a '(1 #f #\a 2)) '(#\a 2))
 
 (let ((odd '(3 a 3.0 b 3/4 c #(1) d))
@@ -4672,6 +4685,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (memv 3.0 even) '(3.0 b 3/4 c #(1) d))
   (test (memv #(1) odd) #f)
   (test (memv #(1) even) #f))
+(test (memv #(1) '(1 #(1) 2)) #f)
+(test (memv '() '(1 () 2)) '(() 2))
 
 
 
