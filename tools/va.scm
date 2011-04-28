@@ -244,6 +244,7 @@
       "jcrev.scm"
       "jcvoi.scm"
       "kmenu.scm"
+      "lint.scm"
       "maraca.scm"
       "marks-menu.scm"
       "marks.scm"

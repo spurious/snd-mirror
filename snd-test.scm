@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [607]
-;;;  test 1: defaults                           [1202]
-;;;  test 2: headers                            [1421]
-;;;  test 3: variables                          [1736]
-;;;  test 4: sndlib                             [2368]
-;;;  test 5: simple overall checks              [5101]
-;;;  test 6: vcts                               [14286]
-;;;  test 7: colors                             [14723]
-;;;  test 8: clm                                [15243]
-;;;  test 9: mix                                [27122]
-;;;  test 10: marks                             [29351]
-;;;  test 11: dialogs                           [30318]
-;;;  test 12: extensions                        [30529]
-;;;  test 13: menus, edit lists, hooks, etc     [30795]
-;;;  test 14: all together now                  [32287]
-;;;  test 15: chan-local vars                   [33186]
-;;;  test 16: regularized funcs                 [34987]
-;;;  test 17: dialogs and graphics              [39935]
-;;;  test 18: enved                             [40031]
-;;;  test 19: save and restore                  [40050]
-;;;  test 20: transforms                        [41816]
-;;;  test 21: new stuff                         [44004]
-;;;  test 22: run                               [46058]
-;;;  test 23: with-sound                        [52935]
-;;;  test 25: X/Xt/Xm                           [57440]
-;;;  test 26:                                   [61139]
-;;;  test 27: GL                                [61145]
-;;;  test 28: errors                            [61269]
-;;;  test 29: s7                                [63520]
-;;;  test all done                              [63591]
-;;;  test the end                               [63781]
+;;;  test 0: constants                          [588]
+;;;  test 1: defaults                           [1183]
+;;;  test 2: headers                            [1402]
+;;;  test 3: variables                          [1717]
+;;;  test 4: sndlib                             [2349]
+;;;  test 5: simple overall checks              [5080]
+;;;  test 6: vcts                               [14265]
+;;;  test 7: colors                             [14702]
+;;;  test 8: clm                                [15222]
+;;;  test 9: mix                                [26885]
+;;;  test 10: marks                             [29114]
+;;;  test 11: dialogs                           [30081]
+;;;  test 12: extensions                        [30291]
+;;;  test 13: menus, edit lists, hooks, etc     [30557]
+;;;  test 14: all together now                  [32049]
+;;;  test 15: chan-local vars                   [32940]
+;;;  test 16: regularized funcs                 [34742]
+;;;  test 17: dialogs and graphics              [39689]
+;;;  test 18: enved                             [39785]
+;;;  test 19: save and restore                  [39804]
+;;;  test 20: transforms                        [41563]
+;;;  test 21: new stuff                         [43727]
+;;;  test 22: run                               [45782]
+;;;  test 23: with-sound                        [52632]
+;;;  test 25: X/Xt/Xm                           [57023]
+;;;  test 26:                                   [60721]
+;;;  test 27: GL                                [60727]
+;;;  test 28: errors                            [60851]
+;;;  test 29: s7                                [63101]
+;;;  test all done                              [63172]
+;;;  test the end                               [63362]
 
 (define tests 1)
 (define keep-going #f)
@@ -575,8 +575,6 @@
 	(begin
 	  (if (not (provided? 'snd-snd-gtk.scm)) (load "snd-gtk.scm")))))
 
-
-(if (not (provided? 'snd-snd9.scm)) (load "snd9.scm")) ; make-ppolar|zpolar, various generators later moved to generators.scm
 
 (define default-file-buffer-size 65536)
 (set! (mus-file-buffer-size) default-file-buffer-size)
@@ -17343,22 +17341,6 @@ EDITS: 2
     (let ((tag (catch #t (lambda () (harmonicizer 550.0 (list .5 .3 .2) 10)) (lambda args (car args)))))
       (if (not (eq? tag 'no-data)) (snd-display #__line__ ";odd length arg to partials->polynomial: ~A" tag)))
     
-    (let* ((amps (list->vct '(1.0)))
-	   (phases (list->vct '(0.0)))
-	   (val (sine-bank amps phases)))
-      (if (fneq val 0.0) (snd-display #__line__ ";sine-bank: ~A 0.0?" val))
-      (set! (phases 0) (/ pi 2))
-      (set! val (sine-bank amps phases))
-      (if (fneq val 1.0) (snd-display #__line__ ";sine-bank: ~A 1.0?" val))
-      (set! amps (list->vct '(0.5 0.25 1.0)))
-      (set! phases (list->vct '(1.0 0.5 2.0)))
-      (set! val (sine-bank amps phases))
-      (if (fneq val 1.44989) (snd-display #__line__ ";sine-bank: ~A 1.449?" val))
-      (set! val (sine-bank amps phases 3))
-      (if (fneq val 1.44989) (snd-display #__line__ ";sine-bank (3): ~A 1.449?" val))
-      (set! val (sine-bank amps phases 1))
-      (if (fneq val 0.4207) (snd-display #__line__ ";sine-bank (1): ~A 1.449?" val)))
-    
     (let ((rdat (make-vct 16))
 	  (idat (make-vct 16))
 	  (vdat (make-vct 16)))
@@ -19156,14 +19138,6 @@ EDITS: 2
     (test-gen-equal (make-nsin 440.0 3) (make-nsin 440.0 3) (make-nsin 440.0 5))
     (test-gen-equal (make-nsin 440.0 3) (make-nsin 440.0 3) (make-nsin 400.0 3))
     
-    (let ((gen (make-nsin 440 5)))
-      (do ((i 0 (+ 1 i)))
-	  ((= i 1100))
-	(let* ((val1 (* (sum-of-n-sines (mus-phase gen) 5) (mus-scaler gen)))
-	       (val2 (gen 0.0)))
-	  (if (fneq val1 val2)
-	      (snd-display #__line__ ";nsin: ~A ~A" val1 val2)))))
-    
     (let ((gen1 (make-nsin 100.0 10))
 	  (gen2 (make-nsin -100.0 10))
 	  (mx 0.0))
@@ -19241,150 +19215,6 @@ EDITS: 2
 			      (outa i (nrxycos gen)))))))
       (if (not (vequal v1 (vct 1.000 0.602 -0.067 -0.242 -0.007 0.071 -0.087 -0.128 -0.007 0.012)))
 	  (snd-display #__line__ ";ws nrxycos output: ~A" v1)))
-    
-    
-    (let ((ind (new-sound "test.snd" mus-next mus-bfloat)))
-      (pad-channel 0 1000)
-      (let ((gen (make-cosine-summation 100.0)))
-	(map-channel (lambda (y) (* .2 (cosine-summation gen 0.5))))
-	(let ((vals (channel->vct 280 10)))
-	  (if (not (vequal vals (vct 0.191 0.187 0.181 0.176 0.169 0.163 0.156 0.148 0.141 0.133)))
-	      (snd-display #__line__ ";cosine-summation: ~A" vals)))
-	(undo))
-      
-      (let ((gen (make-kosine-summation 100.0)))
-	(map-channel (lambda (y) (* .2 (kosine-summation gen 0.5 1.0))))
-	(let ((vals (channel->vct 280 10)))
-	  (if (not (vequal vals (vct 0.194 0.191 0.188 0.184 0.180 0.175 0.170 0.166 0.160 0.155)))
-	      (snd-display #__line__ ";kosine-summation 1: ~A" vals)))
-	(undo))
-      (let ((gen (make-kosine-summation 100.0)))
-	(map-channel (lambda (y) (* .2 (kosine-summation gen 0.5 3.0))))
-	(let ((vals (channel->vct 280 10)))
-	  (if (not (vequal vals (vct 0.182 0.174 0.165 0.155 0.145 0.134 0.124 0.113 0.103 0.094)))
-	      (snd-display #__line__ ";kosine-summation 3: ~A" vals)))
-	(undo))
-      
-      (let ((angle 0.0)
-	    (v (make-vct 20)))
-	(do ((i 0 (+ 1 i)))
-	    ((= i 20))
-	  (set! (v i) (fejer-sum angle 3))
-	  (set! angle (+ angle .1)))
-	(if (not (vequal v (vct 1.000 0.988 0.951 0.892 0.815 0.723 0.622 0.516 0.412 0.313 0.225 0.150 0.089 0.045 0.017 0.003 0.000 0.007 0.020 0.035)))
-	    (snd-display #__line__ ";fejer-sum: ~A" v)))
-      
-      (for-each
-       (lambda (n)
-	 (let ((mx 0.0)
-	       (angle 0.0))
-	   (do ((i 0 (+ 1 i)))
-	       ((= i 300))
-	     (set! mx (max mx (fejer-sum angle n)))
-	     (set! angle (+ angle .01)))
-	   (if (fneq mx 1.0) (snd-display #__line__ ";fejer-sum maxamp ~D: ~A" n mx))))
-       (list 1 4 9 16 32 100))
-      
-      (let ((angle 0.0)
-	    (v (make-vct 20)))
-	(do ((i 0 (+ 1 i)))
-	    ((= i 20))
-	  (set! (v i) (poussin-sum angle 3))
-	  (set! angle (+ angle .1)))
-	(if (not (vequal v (vct 1.000 0.910 0.663 0.323 -0.024 -0.301 -0.458 -0.486 -0.411 -0.281 -0.147 -0.046 0.008 0.021 0.013 0.003 0.000 0.006 0.012 0.009)))
-	    (snd-display #__line__ ";poussin-sum: ~A" v)))
-      
-      (for-each
-       (lambda (n)
-	 (let ((mx 0.0)
-	       (angle 0.0))
-	   (do ((i 0 (+ 1 i)))
-	       ((= i 300))
-	     (set! mx (max mx (poussin-sum angle n)))
-	     (set! angle (+ angle .01)))
-	   (if (fneq mx 1.0) (snd-display #__line__ ";poussin-sum maxamp ~D: ~A" n mx))))
-       (list 1 4 9 16 32 100))
-      
-      (let ((angle 0.0)
-	    (v (make-vct 20)))
-	(do ((i 0 (+ 1 i)))
-	    ((= i 20))
-	  (set! (v i) (jackson-sum angle 3))
-	  (set! angle (+ angle .1)))
-	(if (not (vequal v (vct 1.000 0.975 0.904 0.796 0.664 0.523 0.386 0.266 0.170 0.098 0.051 0.022 0.008 0.002 0.000 0.000 0.000 0.000 0.000 0.001)))
-	    (snd-display #__line__ ";jackson-sum: ~A" v)))
-      
-      (for-each
-       (lambda (n)
-	 (let ((mx 0.0)
-	       (angle 0.0))
-	   (do ((i 0 (+ 1 i)))
-	       ((= i 300))
-	     (set! mx (max mx (jackson-sum angle n)))
-	     (set! angle (+ angle .01)))
-	   (if (fneq mx 1.0) (snd-display #__line__ ";jackson-sum maxamp ~D: ~A" n mx))))
-       (list 1 4 9 16 32 100))
-      
-      (let ((angle 0.0)
-	    (v (make-vct 20)))
-	(do ((i 0 (+ 1 i)))
-	    ((= i 20))
-	  (set! (v i) (legendre-sum angle 3))
-	  (set! angle (+ angle .1)))
-	(if (not (vequal v (vct 1.000 0.961 0.850 0.688 0.502 0.323 0.174 0.071 0.015 0.000 0.011 0.032 0.049 0.054 0.047 0.032 0.016 0.004 0.000 0.004)))
-	    (snd-display #__line__ ";legendre-sum: ~A" v)))
-      
-      (for-each
-       (lambda (n)
-	 (let ((mx 0.0)
-	       (angle 0.0))
-	   (do ((i 0 (+ 1 i)))
-	       ((= i 300))
-	     (set! mx (max mx (legendre-sum angle n)))
-	     (set! angle (+ angle .01)))
-	   (if (fneq mx 1.0) (snd-display #__line__ ";legendre-sum maxamp ~D: ~A" n mx))))
-       (list 1 4 9 16 32 100))
-      
-      
-      (let ((angle 0.0)) 
-	(map-channel (lambda (y) 
-		       (let ((val (band-limited-sawtooth angle 0.5 8 .2))) 
-			 (set! angle (+ angle .2)) 
-			 val))))
-      (let ((vals (channel->vct 10 10)))
-	(if (not (vequal vals (vct -0.118 -0.073 -0.035 0.012 0.062 0.106 0.142 0.185 0.237 0.288)))
-	    (snd-display #__line__ ";band-limited-sawtooth: ~A" vals)))
-      (undo)
-      
-      (let ((angle 0.0)) 
-	(map-channel (lambda (y) 
-		       (let ((val (band-limited-square-wave angle 10))) 
-			 (set! angle (+ angle .2)) 
-			 val))))
-      (let ((vals (channel->vct 10 10)))
-	(if (not (vequal vals (vct 1.000 1.000 1.000 1.000 0.998 0.888 -0.525 -0.988 -1.000 -1.000)))
-	    (snd-display #__line__ ";band-limited-square-wave: ~A" vals)))
-      (undo)
-      
-      (let ((angle 0.0)) 
-	(map-channel (lambda (y) (let ((val (sum-of-n-sines angle 3))) (set! angle (+ angle .1)) (* .1 val))))
-	(let ((vals (channel->vct 260 10)))
-	  (if (not (vequal vals (vct 0.226 0.200 0.166 0.129 0.091 0.056 0.025 0.001 -0.015 -0.023)))
-	      (snd-display #__line__ ";sum-of-n-sines: ~A" vals)))
-	(undo))
-      (let ((angle 0.0)) 
-	(map-channel (lambda (y) (let ((val (sum-of-n-odd-sines angle 3))) (set! angle (+ angle .1)) (* .1 val))))
-	(let ((vals (channel->vct 260 10)))
-	  (if (not (vequal vals (vct 0.035 0.007 0.000 0.014 0.039 0.069 0.091 0.100 0.092 0.070)))
-	      (snd-display #__line__ ";sum-of-n-odd-sines: ~A" vals)))
-	(undo))
-      (let ((angle 0.0)) 
-	(map-channel (lambda (y) (let ((val (sum-of-n-odd-cosines angle 3))) (set! angle (+ angle .1)) (* .1 val))))
-	(let ((vals (channel->vct 250 10)))
-	  (if (not (vequal vals (vct 0.270 0.298 0.292 0.253 0.189 0.112 0.037 -0.024 -0.061 -0.072)))
-	      (snd-display #__line__ ";sum-of-n-odd-cosines: ~A" vals)))
-	(undo))
-      (close-sound ind))
     
     (let ((gen (make-asymmetric-fm 440.0))
 	  (v0 (make-vct 10))
@@ -20171,91 +20001,41 @@ EDITS: 2
       (set! (mus-srate) old-srate))
     
     
-    (let ((gen (make-ppolar .1 1200.0))
-	  (v0 (make-vct 10)))
-      (set! (v0 0) (two-pole gen 1.0))
-      (do ((i 1 (+ 1 i)))
-	  ((= i 10))
-	(set! (v0 i) (two-pole gen 0.0)))
-      (if (not (two-pole? gen)) (snd-display #__line__ ";~A not ppolar?" gen))
-      (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";ppolar order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";ppolar a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-b1 gen) -.188) (snd-display #__line__ ";ppolar b1: ~F?" (mus-b1 gen)))
-      (if (fneq (mus-b2 gen) .01) (snd-display #__line__ ";ppolar b2: ~F?" (mus-b2 gen)))
-      (if (or (fneq (v0 0) 1.0) (fneq (v0 1) .188)) (snd-display #__line__ ";ppolar output: ~A" v0))
-      (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq ppolar: ~A" (mus-frequency gen)))
-      (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler ppolar: ~A" (mus-scaler gen))))
-    
-    (test-gen-equal (let ((z1 (make-ppolar .1 600.0))) (two-pole z1 1.0) z1)
-		    (let ((z2 (make-ppolar .1 600.0))) (two-pole z2 1.0) z2)
-		    (let ((z3 (make-ppolar .1 1200.0))) (two-pole z3 1.0) z3))
-    (test-gen-equal (let ((z1 (make-ppolar :radius .1 :frequency 600.0))) (two-pole z1 1.0) z1)
-		    (let ((z2 (make-ppolar :radius .1 :frequency 600.0))) (two-pole z2 1.0) z2)
-		    (let ((z3 (make-ppolar :radius .2 :frequency 1200.0))) (two-pole z3 1.0) z3))
-    (test-gen-equal (let ((z1 (make-ppolar .1 600.0))) (two-pole z1 1.0) z1)
-		    (let ((z2 (make-ppolar .1 600.0))) (two-pole z2 1.0) z2)
-		    (let ((z3 (make-ppolar .1 600.0))) (two-pole z3 0.5) z3))
-    
     (let ((gen (make-two-pole 1200.0 .1)))
-      (if (not (two-pole? gen)) (snd-display #__line__ ";~A not 2ppolar?" gen))
-      (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";2ppolar order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";2ppolar a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-b1 gen) -.188) (snd-display #__line__ ";2ppolar b1: ~F?" (mus-b1 gen)))
-      (if (fneq (mus-b2 gen) .01) (snd-display #__line__ ";2ppolar b2: ~F?" (mus-b2 gen)))
-      (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq 2ppolar: ~A" (mus-frequency gen)))
-      (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler 2ppolar: ~A" (mus-scaler gen))))
+      (if (not (two-pole? gen)) (snd-display #__line__ ";~A not 2-polar?" gen))
+      (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";2-polar order: ~D?" (mus-order gen)))
+      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";2-polar a0: ~F?" (mus-a0 gen)))
+      (if (fneq (mus-b1 gen) -.188) (snd-display #__line__ ";2-polar b1: ~F?" (mus-b1 gen)))
+      (if (fneq (mus-b2 gen) .01) (snd-display #__line__ ";2-polar b2: ~F?" (mus-b2 gen)))
+      (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq 2-polar: ~A" (mus-frequency gen)))
+      (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler 2-polar: ~A" (mus-scaler gen))))
     
     (let ((gen (make-two-pole :frequency 1200.0 :radius .1)))
-      (if (not (two-pole? gen)) (snd-display #__line__ ";~A not f2ppolar?" gen))
-      (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";f2ppolar order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";f2ppolar a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-b1 gen) -.188) (snd-display #__line__ ";f2ppolar b1: ~F?" (mus-b1 gen)))
-      (if (fneq (mus-b2 gen) .01) (snd-display #__line__ ";f2ppolar b2: ~F?" (mus-b2 gen)))
-      (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq f2ppolar: ~A" (mus-frequency gen)))
-      (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler f2ppolar: ~A" (mus-scaler gen))))
-    
-    (let ((gen (make-zpolar :radius .1 :frequency 1200.0))
-	  (v0 (make-vct 10)))
-      (set! (v0 0) (two-zero gen 1.0))
-      (do ((i 1 (+ 1 i)))
-	  ((= i 10))
-	(set! (v0 i) (two-zero gen 0.0)))
-      (if (not (two-zero? gen)) (snd-display #__line__ ";~A not zpolar?" gen))
-      (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";zpolar order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";zpolar a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-a1 gen) -.188) (snd-display #__line__ ";zpolar a1: ~F?" (mus-a1 gen)))
-      (if (fneq (mus-a2 gen) .01) (snd-display #__line__ ";zpolar a2: ~F?" (mus-a2 gen)))
-      (if (or (fneq (v0 0) 1.0) (fneq (v0 1) -.188)) (snd-display #__line__ ";zpolar output: ~A" v0))
-      (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq zpolar: ~A" (mus-frequency gen)))
-      (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler zpolar: ~A" (mus-scaler gen))))
+      (if (not (two-pole? gen)) (snd-display #__line__ ";~A not f2-polar?" gen))
+      (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";f2-polar order: ~D?" (mus-order gen)))
+      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";f2-polar a0: ~F?" (mus-a0 gen)))
+      (if (fneq (mus-b1 gen) -.188) (snd-display #__line__ ";f2-polar b1: ~F?" (mus-b1 gen)))
+      (if (fneq (mus-b2 gen) .01) (snd-display #__line__ ";f2-polar b2: ~F?" (mus-b2 gen)))
+      (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq f2-polar: ~A" (mus-frequency gen)))
+      (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler f2-polar: ~A" (mus-scaler gen))))
     
     (let ((gen (make-two-zero :radius .1 :frequency 1200.0)))
-      (if (not (two-zero? gen)) (snd-display #__line__ ";~A not 2zpolar?" gen))
-      (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";2zpolar order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";2zpolar a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-a1 gen) -.188) (snd-display #__line__ ";2zpolar a1: ~F?" (mus-a1 gen)))
-      (if (fneq (mus-a2 gen) .01) (snd-display #__line__ ";2zpolar a2: ~F?" (mus-a2 gen)))
-      (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq 2zpolar: ~A" (mus-frequency gen)))
-      (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler 2zpolar: ~A" (mus-scaler gen))))
+      (if (not (two-zero? gen)) (snd-display #__line__ ";~A not 2-zp?" gen))
+      (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";2-zp order: ~D?" (mus-order gen)))
+      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";2-zp a0: ~F?" (mus-a0 gen)))
+      (if (fneq (mus-a1 gen) -.188) (snd-display #__line__ ";2-zp a1: ~F?" (mus-a1 gen)))
+      (if (fneq (mus-a2 gen) .01) (snd-display #__line__ ";2-zp a2: ~F?" (mus-a2 gen)))
+      (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq 2-zp: ~A" (mus-frequency gen)))
+      (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler 2-zp: ~A" (mus-scaler gen))))
     
     (let ((gen (make-two-zero 1200.0 .1)))
-      (if (not (two-zero? gen)) (snd-display #__line__ ";~A not f2zpolar?" gen))
-      (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";f2zpolar order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";f2zpolar a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-a1 gen) -.188) (snd-display #__line__ ";f2zpolar a1: ~F?" (mus-a1 gen)))
-      (if (fneq (mus-a2 gen) .01) (snd-display #__line__ ";f2zpolar a2: ~F?" (mus-a2 gen)))
-      (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq f2zpolar: ~A" (mus-frequency gen)))
-      (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler f2zpolar: ~A" (mus-scaler gen))))
-    
-    (test-gen-equal (let ((z1 (make-zpolar .1 600.0))) (two-zero z1 1.0) z1)
-		    (let ((z2 (make-zpolar .1 600.0))) (two-zero z2 1.0) z2)
-		    (let ((z3 (make-zpolar .1 1200.0))) (two-zero z3 1.0) z3))
-    (test-gen-equal (let ((z1 (make-zpolar :radius .1 :frequency 600.0))) (two-zero z1 1.0) z1)
-		    (let ((z2 (make-zpolar :radius .1 :frequency 600.0))) (two-zero z2 1.0) z2)
-		    (let ((z3 (make-zpolar :radius .2 :frequency 1200.0))) (two-zero z3 1.0) z3))
-    (test-gen-equal (let ((z1 (make-zpolar .1 600.0))) (two-zero z1 1.0) z1)
-		    (let ((z2 (make-zpolar .1 600.0))) (two-zero z2 1.0) z2)
-		    (let ((z3 (make-zpolar .1 600.0))) (two-zero z3 0.5) z3))
+      (if (not (two-zero? gen)) (snd-display #__line__ ";~A not f2-zp?" gen))
+      (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";f2-zp order: ~D?" (mus-order gen)))
+      (if (fneq (mus-a0 gen) 1.0) (snd-display #__line__ ";f2-zp a0: ~F?" (mus-a0 gen)))
+      (if (fneq (mus-a1 gen) -.188) (snd-display #__line__ ";f2-zp a1: ~F?" (mus-a1 gen)))
+      (if (fneq (mus-a2 gen) .01) (snd-display #__line__ ";f2-zp a2: ~F?" (mus-a2 gen)))
+      (if (fneq (mus-frequency gen) 1200.0) (snd-display #__line__ ";freq f2-zp: ~A" (mus-frequency gen)))
+      (if (fneq (mus-scaler gen) 0.1) (snd-display #__line__ ";scaler f2-zp: ~A" (mus-scaler gen))))
     
     (let ((gen (make-formant 1200.0 0.9))
 	  (v0 (make-vct 10))
@@ -26493,43 +26273,43 @@ EDITS: 2
 		       (lambda () (make-filtered-comb :filter (make-one-zero .5 .5)))
 		       make-formant (lambda () (make-frame 3)) make-granulate
 		       (lambda () (make-iir-filter :xcoeffs (vct 0 1 2))) make-locsig (lambda () (make-mixer 3 3)) 
-		       make-notch make-one-pole make-one-zero make-oscil make-ppolar
+		       make-notch make-one-pole make-one-zero make-oscil 
 		       make-pulse-train make-rand make-rand-interp make-sawtooth-wave
 		       make-square-wave make-src make-table-lookup make-triangle-wave
-		       make-two-pole make-two-zero make-wave-train make-polyshape make-zpolar make-phase-vocoder make-ssb-am
+		       make-two-pole make-two-zero make-wave-train make-polyshape make-phase-vocoder make-ssb-am
 		       (lambda () (make-filter :ycoeffs (vct 0 1 2)))
 		       (lambda () (make-filter :xcoeffs (vct 1 2 3) :ycoeffs (vct 0 1 2)))))
 	  (run-procs (list all-pass asymmetric-fm moving-average
 			   comb convolve delay env 
 			   filter fir-filter filtered-comb formant (lambda (gen ind) (gen ind)) granulate
-			   iir-filter (lambda (gen a) (locsig gen 0 a)) (lambda (gen a) (gen a 0)) notch one-pole one-zero oscil two-pole
+			   iir-filter (lambda (gen a) (locsig gen 0 a)) (lambda (gen a) (gen a 0)) notch one-pole one-zero oscil 
 			   pulse-train rand rand-interp sawtooth-wave
 			   square-wave (lambda (gen a) (src gen 0.0 a)) table-lookup triangle-wave
-			   two-pole two-zero wave-train polyshape two-zero phase-vocoder ssb-am
+			   two-pole two-zero wave-train polyshape phase-vocoder ssb-am
 			   filter filter))
 	  (ques-procs (list all-pass? asymmetric-fm? moving-average?
 			    comb? convolve? delay? env? 
 			    filter? fir-filter? filtered-comb? formant? frame? granulate?
-			    iir-filter? locsig? mixer? notch? one-pole? one-zero? oscil? two-pole?
+			    iir-filter? locsig? mixer? notch? one-pole? one-zero? oscil? 
 			    pulse-train? rand? rand-interp? sawtooth-wave?
 			    square-wave? src? table-lookup? triangle-wave?
-			    two-pole? two-zero? wave-train? polyshape? two-zero? phase-vocoder? ssb-am?
+			    two-pole? two-zero? wave-train? polyshape? phase-vocoder? ssb-am?
 			    filter? filter?))
 	  (func-names (list 'all-pass 'asymmetric-fm 'moving-average
 			    'comb 'convolve 'delay 'env 
 			    'filter-x 'fir-filter 'filtered-comb 'formant 'frame 'granulate
-			    'iir-filter 'locsig 'mixer 'notch 'one-pole 'one-zero 'oscil 'two-pole
+			    'iir-filter 'locsig 'mixer 'notch 'one-pole 'one-zero 'oscil
 			    'pulse-train 'rand 'rand-interp 'sawtooth-wave
 			    'square-wave 'src 'table-lookup 'triangle-wave
-			    'two-pole 'two-zero 'wave-train 'polyshape 'two-zero 'phase-vocoder 'ssb-am
+			    'two-pole 'two-zero 'wave-train 'polyshape 'phase-vocoder 'ssb-am
 			    'filter-y 'filter-xy))
 	  (gen-args (list 0.0 0.0 1.0
 			  0.0 (lambda (dir) 0.0) 0.0 #f
 			  0.0 0.0 0.0 0.0 0 (lambda (dir) 0.0)
-			  0.0 0.0 0 0.0 0.0 0.0 0.0 0.0
+			  0.0 0.0 0 0.0 0.0 0.0 0.0
 			  0.0 0.0 0.0 0.0
 			  0.0 (lambda (dir) 0.0) 0.0 0.0
-			  0.0 0.0 0.0 0.0 0.0 (lambda (dir) 0.0) 0.0
+			  0.0 0.0 0.0 0.0 (lambda (dir) 0.0) 0.0
 			  0.0 0.0))
 	  (generic-procs (list mus-channel mus-channels mus-data
 			       mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
@@ -26742,10 +26522,10 @@ EDITS: 2
 					make-comb ;make-convolve
 					make-delay make-env make-fft-window
 					make-filter make-filtered-comb make-fir-filter make-formant make-frame ;make-granulate
-					make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
+					make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
 					make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape make-polywave
 					make-square-wave ;make-src
-					make-two-pole make-two-zero make-wave-train make-zpolar ;make-phase-vocoder 
+					make-two-pole make-two-zero make-wave-train
 					make-ssb-am)))
 	      
 	      (define (random-gen args)
@@ -49971,19 +49751,6 @@ EDITS: 1
 	      (not (vequal v1 (vct 0.0 0.0 0.0 0.0))))
 	  (snd-display #__line__ ";run convolution: ~A ~A" v0 v1)))
     
-    (if all-args
-	(let ((v (make-vct 1))
-	      (amps (list->vct '(0.5 0.25 1.0)))
-	      (phases (list->vct '(1.0 0.5 2.0))))
-	  (vct-map! v (lambda () (sine-bank amps phases)))
-	  (if (fneq (v 0) 1.44989) (snd-display #__line__ ";run sine-bank: ~A?" (v 0)))))
-    (if all-args
-	(let ((v (make-vct 1))
-	      (amps (list->vct '(0.5 0.25 1.0)))
-	      (phases (list->vct '(1.0 0.5 2.0))))
-	  (vct-map! v (lambda () (sine-bank amps phases 3)))
-	  (if (fneq (v 0) 1.44989) (snd-display #__line__ ";run sine-bank (1): ~A?" (v 0)))))
-    
     (let ((fr0 (make-frame 2 1.0 1.0))
 	  (fr1 (make-frame 2 0.0 0.0))
 	  (gen (make-mixer 2 .5 .25 .125 1.0))
@@ -54703,44 +54470,6 @@ EDITS: 1
     (pad-channel 0 1000 ind 0)
     (catch #t (lambda () (map-channel (lambda (y) (ssb-fm gen (* .02 (oscil mg)))))) (lambda arg (display arg) arg))
     (close-sound ind))
-  
-  (let ((file (with-sound () 
-			  (let ((rd (make-sampler 0 "oboe.snd")) 
-				(m (make-mfilter :decay .99 :frequency 1000)) 
-				(e (make-env '(0 100 1 2000) :length 10000))) 
-			    (run 
-			     (do ((i 0 (+ 1 i))) 
-				 ((= i 10000))
-			       (outa i (mfilter-1 m (* .1 (rd)) 0.0)) 
-			       (set! (mflt-eps m) (* 2.0 (sin (/ (* pi (env e)) (mus-srate)))))))))))
-    (let ((ind (find-sound file)))
-      (if (not (sound? ind))
-	  (snd-display #__line__ ";with-sound mfilter?")
-	  (close-sound ind))))
-  
-  (let ((m1 (make-mfilter .9 1000.0))
-	(m2 (make-firmant 1000.0 .9))
-	(gain (- 1.0 (* .9 .9))))
-    (firmant m2 1.0)
-    (mfilter-1 m1 1.0 0.0)
-    (do ((i 0 (+ 1 i)))
-	((= i 10))
-      (let ((v1 (* gain (mfilter-1 m1 0.0 0.0)))
-	    (v2 (firmant m2 0.0)))
-	(if (fneq v1 v2)
-	    (snd-display #__line__ ";~D mfilter/firmant: ~A ~A" i v1 v2)))))
-  
-  (let ((m1 (make-mfilter .9 1000.0))
-	(m2 (make-firmant 1000.0 .9))
-	(gain (- 1.0 (* .9 .9))))
-    (do ((i 0 (+ 1 i)))
-	((= i 10))
-      (let* ((y (- (random 2.0 )1.0))
-	     (v1 (* gain (mfilter-1 m1 y 0.0)))
-	     (v2 (firmant m2 y)))
-	(if (fneq v1 v2)
-	    (snd-display #__line__ ";rand case mfilter/firmant: ~A ~A ~A" i v1 v2)))))
-  
   
   ;; dlocsig tests
   (if (not (provided? 'snd-dlocsig.scm))
@@ -62591,7 +62320,6 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (set! (mus-srate) 0.0)))
 		(check-error-tag 'out-of-range (lambda () (set! (mus-srate) -1000)))
 		(check-error-tag 'out-of-range (lambda () (dot-product (make-vct 3) (make-vct 3) -1)))
-		(check-error-tag 'out-of-range (lambda () (sine-bank (make-vct 3) (make-vct 3) -1)))
 		(check-error-tag 'out-of-range (lambda () (multiply-arrays (make-vct 3) (make-vct 3) -1)))
 		(check-error-tag 'out-of-range (lambda () (make-delay 3 :initial-element 0.0 :initial-contents (vct .1 .2 .3))))
 		(check-error-tag 'out-of-range (lambda () (make-delay 3 :max-size 100 :initial-contents (vct .1 .2 .3))))

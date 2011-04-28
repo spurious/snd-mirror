@@ -154,21 +154,21 @@
        (set! indexlt (modulo (inexact->exact (- (+ i poslt bufsize) samp_lperiodt)) bufsize))
        (set! indexrt (modulo (inexact->exact (- (+ i posrt bufsize) samp_rperiodt)) bufsize))
        (set! indexl_1 (modulo
-		       (inexact->exact (- (- (+ i posl bufsize) samp_lperiod) 1)) bufsize))
+		       (inexact->exact (- (+ i posl bufsize) samp_lperiod 1)) bufsize))
        (set! indexr_1 (modulo
-		       (inexact->exact (- (- (+ i posr bufsize) samp_rperiod) 1)) bufsize))
+		       (inexact->exact (- (+ i posr bufsize) samp_rperiod 1)) bufsize))
        (set! indexlt_1 (modulo
-			(inexact->exact (- (- (+ i poslt bufsize) samp_lperiodt) 1)) bufsize))
+			(inexact->exact (- (+ i poslt bufsize) samp_lperiodt 1)) bufsize))
        (set! indexrt_1 (modulo
-			(inexact->exact (- (- (+ i posrt bufsize) samp_rperiodt) 1)) bufsize))
+			(inexact->exact (- (+ i posrt bufsize) samp_rperiodt 1)) bufsize))
        (set! indexl_2 (modulo
-		       (inexact->exact (- (- (+ i posl bufsize) samp_lperiod) 2)) bufsize))
+		       (inexact->exact (- (+ i posl bufsize) samp_lperiod 2)) bufsize))
        (set! indexr_2 (modulo
-		       (inexact->exact (- (- (+ i posr bufsize) samp_rperiod) 2)) bufsize))
+		       (inexact->exact (- (+ i posr bufsize) samp_rperiod 2)) bufsize))
        (set! indexlt_2 (modulo
-			(inexact->exact (- (- (+ i poslt bufsize) samp_lperiodt) 2)) bufsize))
+			(inexact->exact (- (+ i poslt bufsize) samp_lperiodt 2)) bufsize))
        (set! indexrt_2 (modulo
-			(inexact->exact (- (- (+ i posrt bufsize) samp_rperiodt) 2)) bufsize))
+			(inexact->exact (- (+ i posrt bufsize) samp_rperiodt 2)) bufsize))
        (set! vib (+ (/ (* (vinbridge indexl_2) (- alphal 1) (- alphal 2)) 2)
 		    (* (vinbridge indexl_1) alphal -1 (- alphal 2))
 		    (/ (* (vinbridge indexl) alphal (- alphal 1)) 2)))

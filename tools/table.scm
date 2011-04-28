@@ -1,7 +1,6 @@
 (define (no-dashes-or-cr str)
   (let* ((len (string-length str))
 	 (newstr (make-string 0))
-	 (colons 0)
 	 (last-ch #\-))
     (do ((i 0 (1+ i)))
 	((= i (1- len)))

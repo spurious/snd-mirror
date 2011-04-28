@@ -444,7 +444,9 @@
 		 #f)))
 	  (and (symbol? form)
 	       (not (hash-table-ref no-side-effect-functions form))
-	       (not (env-member? form env)))))
+	       (let ((e (env-member form env)))
+		 (or (not e)
+		     (>= (length e) 4)))))) ; it is a local function
 
 
     (define (just-constants? form env)
@@ -484,7 +486,7 @@
       (if (repeated-member? (cdr form) env)
 	  (if (or (member head '(eq? eqv? equal?))
 		  (and (= (lint-length form) 3)
-		       (member head '(= / max min < > <= >= - quotient remainder modulo and or
+		       (member head '(= / max min < > <= >= - quotient remainder modulo lcm gcd and or
 				      string=? string<=? string>=? string<? string>?
 				      char=? char<=? char>=? char<? char>?))))
 	      (format #t "  ~A (line ~D): this looks odd:~A~%"
@@ -532,12 +534,14 @@
 		    (let ((op (hash-table-ref function-types (car arg))))
 		      (case op
 			((number-or-f list-or-f)
-			 (if checker
+			 (if (and checker
+				  *report-minor-stuff*)
 			     (format #t "  ~A (line ~D): ~A argument ~D might be #f:~A~%"
 				     name line-number head arg-number
 				     (truncated-list->string form))))
 			((number-or-eof char-or-eof string-or-eof)
-			 (if checker
+			 (if (and checker
+				  *report-minor-stuff*)
 			     (format #t "  ~A (line ~D): ~A argument ~D might be the eof object:~A~%"
 				     name line-number head arg-number
 				     (truncated-list->string form))))
@@ -1438,6 +1442,7 @@
 	      (cons 'make-hash-table-iterator hash-table?)
 	      (cons 'make-hook (list list? string?))
 	      (cons 'make-polar real?)
+	      (cons 'make-procedure-with-setter procedure?)
 	      (cons 'make-rectangular real?)
 	      (cons 'make-string (list non-negative-integer? char?))
 	      (cons 'max real?)
@@ -1502,6 +1507,7 @@
 	      (cons 'with-input-from-string (list string? thunk?))
 	      (cons 'with-output-to-file (list string? thunk?))
 	      (cons 'with-output-to-string thunk?)
+	      (cons 'write-byte (list integer-between-0-and-255?))
 	      (cons 'zero? number?))))
 
 	(lambda (name line-number head form env)
@@ -1512,6 +1518,7 @@
 		  (if (= (lint-length fdata) 4)
 		      (let ((type (car (list-ref fdata 3)))
 			    (args (cadr (list-ref fdata 3))))
+
 			(let ((rst (or (not (pair? args))
 				       (negative? (lint-length args))
 				       (member ':rest args)))
@@ -1519,8 +1526,9 @@
 			  
 			  (let ((call-args (lint-length (cdr form)))
 				(decl-args (max 0 (- (lint-length pargs) (keywords pargs) (if rst 1 0)))))
-			    (let ((req (if (eq? type 'define) decl-args 0))
-				  (opt (if (eq? type 'define) 0 decl-args)))
+
+			    (let ((req (if (member type '(define lambda)) decl-args 0))
+				  (opt (if (member type '(define lambda)) 0 decl-args)))
 			      (if (< call-args req)
 				  (format #t "  ~A (line ~D): ~A needs ~D argument~A:~A~%" 
 					  name line-number head 
@@ -1531,7 +1539,7 @@
 				      (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
 					      name line-number head 
 					      (truncated-list->string form))))
-			      (if (eq? type 'define*)
+			      (if (member type '(define* lambda*)) ; TODO: what about macro arg checks?
 				  (if (not (member ':allow-other-keys pargs))
 				      (for-each
 				       (lambda (arg)
@@ -1956,6 +1964,7 @@
     (define (lint-walk-function head name args val line-number env)
       ;; check out function arguments (adding them to the current env), then walk its body, (name == function name, val == body)
 
+      ;; (format #t "walk function ~A ~A ~A ~A~%" head name args (if (pair? env) (car env) ""))
       (if (null? args)
 	  (begin
 	    (lint-walk-function-body name line-number head args '() val env)
@@ -2032,6 +2041,7 @@
 			 env)
 		       (let ((sym (cadr form))
 			     (val (cddr form)))
+
 			 (if (symbol? sym)
 			     (begin
 			       (if (member head '(define define-constant defvar define-envelope))
@@ -2042,15 +2052,20 @@
 						 (if (< len 3) "no" "too many") 
 						 (if (< len 3) "" "s"))))
 				   (format #t "  ~A (line ~D): ~S is messed up~%" name line-number form))
-			       (if (not (null? (cddr form))) 
-				   (lint-walk sym (caddr form) env))
 
 			       (if (equal? sym val)
 				   (format #t "  ~A (line ~D): this ~A is either not needed, or an error:~A~%" 
 					   name line-number head 
 					   (truncated-list->string form)))
-
-			       (append (list (list sym #f #f)) env))
+			       
+			       (if (not (null? (cddr form)))
+				   (let ((e (lint-walk sym (caddr form) env)))
+				     ;(format #t "define ~A: ~A~%" sym (car e))
+				     (if (and (pair? e)
+					      (eq? (caar e) sym)) ; (define x (lambda ...))
+					 e
+					 (append (list (list sym #f #f)) env)))
+				   (append (list (list sym #f #f)) env)))
 
 			     (if (pair? sym)
 				 (begin
@@ -2061,6 +2076,7 @@
 					       (truncated-list->string sym)))
 				       
 				   (lint-walk-function head (car sym) (cdr sym) val line-number env))
+
 				 (begin
 				   (format #t "  ~A (line ~D): strange form: ~S~%" head line-number form)
 				   env))))))
@@ -2100,6 +2116,11 @@
 			     (setval (caddr form)))
 			 (if (pair? settee)
 			     (begin
+			       (if (and *report-minor-stuff*
+					(member (car settee) '(vector-ref list-ref string-ref hash-table-ref)))
+				   (format #t "  ~A (line ~D): ~A as target of set!~A~%"
+					   name line-number (car settee)
+					   (truncated-list->string form)))
 			       (lint-walk name settee env) ; this counts as a reference since it's by reference so to speak
 			       (set! settee (do ((sym (car settee) (car sym)))
 						((not (pair? sym)) sym)))))
@@ -2124,7 +2145,13 @@
 			     (format #t "  ~A (line ~D): quote has too ~A arguments: ~S~%" 
 				     name line-number 
 				     (if (> (lint-length form) 2) "many" "few") 
-				     form))))
+				     form)
+			     (if (and *report-minor-stuff*
+				      (or (number? (cadr form))
+					  (boolean? (cadr form))
+					  (string? (cadr form))))
+				 (format #t "  ~A (line ~D): quote is not needed here:~A~%"
+					 name line-number (truncated-list->string form))))))
 		   env)
 
 		  ;; ---------------- cond ----------------
@@ -2495,8 +2522,19 @@
 		    (cdr form))
 		   env)
 
+		  ((with-environment)
+		   (if (< (lint-length form) 3)
+		       (format #t "  ~A (line ~D): with-environment is messed up: ~A~%" 
+			       name line-number 
+			       (truncated-list->string form))
+		       (let* ((e (lint-walk-body name line-number head (cddr form) env))
+			      (vars (and (not (eq? e env))
+					 (env-difference name e env '()))))
+			 (report-usage name line-number 'variable head vars)))
+		   env)
+
 		  ;; ---------------- everything else ----------------		  
-		  (else  ; if and or with-environment
+		  (else
 
 		   (if (negative? (lint-length form))
 		       (begin
@@ -2626,4 +2664,8 @@
 
 ;;; if vector or hash-table get one list arg, should we ask if they mean apply vector...?
 ;;; also no-ops: (apply list lst) -- 1 arg here
+
+;;; is there a way to check things like set-current-input-port?
+;;; memq with arg that won't ever be eq? and so on
+;;; unnecessary quote (number etc)
 
