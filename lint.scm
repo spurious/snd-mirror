@@ -31,6 +31,7 @@
     (begin
       ;; here's an attempt to make this work in Guile 1.8/2.0
       ;;   (lint also uses catch, object->string)
+      ;;   I'm using old-style sequence accessors and so on to make it easier to port this code
 
       (use-modules (ice-9 format))
 
@@ -679,7 +680,7 @@
 	    (else (cons (car list) (remove-all x (cdr list))))))
 
 
-    (define (simplify-boolean form true false env)
+    (define (simplify-boolean in-form true false env)
       ;; (or)->#f, (or x) -> x, (or x ... from here on we know x is #f), (or x #t...) -> (or x #t), any constant expr can be collapsed
       ;;   (or ... (or ...) ...) -> or of all, (or ... #f ...) toss the #f
       ;; similarly for and
@@ -690,6 +691,129 @@
       ;;   (or x1 x2 x1) -> (or x1 x2) 
       ;;   (and x1 x2 x1) -> (and x2 x1)
 
+      (define (bsimp uform)
+	;; find and remove any expressions that have no effect on the outcome
+	(if (or (not (pair? uform))
+		(not (memq (car uform) '(and or not)))
+		(side-effect? uform env)
+		(not lint-eval))
+	    uform
+	    
+	    (let ((vars '())
+		  (associated-exprs '())
+		  (ctr 0))
+	      
+	      (define (tree-remove-all x list) 
+		(cond ((null? list) '()) 
+		      ((equal? (car list) x) (tree-remove-all x (cdr list)))
+		      ((pair? (car list)) (cons (tree-remove-all x (car list)) (tree-remove-all x (cdr list))))
+		      (else (cons (car list) (tree-remove-all x (cdr list))))))
+	      
+	      (define (bool-walk form func)
+		(if (and (pair? form)
+			 (memq (car form) '(and or not)))
+		    (for-each
+		     (lambda (e)
+		       (bool-walk e func))
+		     (cdr form))
+		    (func form)))
+	      
+	      (define (canonical-tree list)
+		(let ((data (assoc list associated-exprs)))
+		  (if data
+		      (cdr data)
+		      (if (pair? list) 
+			  (cons (canonical-tree (car list)) 
+				(canonical-tree (cdr list))) 
+			  list))))
+	      
+	      (define (cdr-assoc val lst)
+		(if (not (pair? lst))
+		    #f
+		    (if (equal? (cdar lst) val)
+			(car lst)
+			(cdr-assoc val (cdr lst)))))
+	      
+	      (define (expand expr)
+		(let ((data (cdr-assoc expr associated-exprs)))
+		  (if data
+		      (copy (car data))
+		      (if (pair? expr)
+			  (cons (expand (car expr))
+				(expand (cdr expr)))
+			  expr))))
+	      
+	      (bool-walk uform (lambda (val) 
+				 (if (and (or (pair? val)
+					      (symbol? val))
+					  (not (assoc val associated-exprs)))
+				     (let ((new-var (string->symbol (format #f "bool-~D" ctr))))
+				       (set! vars (cons new-var vars))
+				       (set! associated-exprs (cons (cons val new-var) associated-exprs))
+				       (set! ctr (+ ctr 1))))))
+	      
+	      (if (or (null? vars)
+		      (> (length vars) 8))
+		  uform
+		  (let* ((len (length vars))
+			 (vsize (expt 2 len)) ; so 2^n * (len + 2) possible cases
+			 (v (make-vector vsize))
+			 (vals '())
+			 (nonf (make-vector len))
+			 (cur 0)
+			 (ctr 0)
+			 (form (canonical-tree uform)))
+		    
+		    (for-each
+		     (lambda (var)
+		       (do ((i cur (+ i 1)))
+			   ((not (tree-member i form))
+			    (set! cur (+ i 1))
+			    (set! (nonf ctr) i)
+			    (set! ctr (+ ctr 1)))))
+		     vars)
+		    
+		    (do ((ctr 0 (+ ctr 1)))
+			((= ctr vsize))
+		      (set! (v ctr) (lint-eval `((lambda ,vars ,form)
+						 ,@(let ((pos -1))
+						     (map (lambda (var)
+							    (set! pos (+ pos 1))
+							    (if (zero? (logand ctr (ash 1 pos)))
+								#f
+								(nonf pos)))
+							  vars)))))
+		      (if (not (member (v ctr) vals))
+			  (set! vals (cons (v ctr) vals))))
+		    
+		    (if (= (length vals) 1)
+			(car vals)
+			(let ((none-vars '())
+			      (pos -1))
+			  (for-each
+			   (lambda (var)
+			     (set! pos (+ pos 1))
+			     (let ((bit (ash 1 pos)))
+			       (call-with-exit
+				(lambda (return)
+				  (do ((ctr 0 (+ ctr 1)))
+				      ((= ctr vsize)
+				       (set! none-vars (cons var none-vars)))
+				    (if (zero? (logand ctr bit))
+					(if (not (equal? (vector-ref v ctr) (vector-ref v (logior ctr bit))))
+					    (return))))))))
+			   vars)
+			  
+			  (if (not (null? none-vars))
+			      (begin
+				(for-each
+				 (lambda (nv)
+				   (set! form (tree-remove-all nv form)))
+				 none-vars)
+				(expand form))
+			      uform))))))))
+      
+      
       (define (classify e)
 	;; do we already know that e is true or false?
 	(if (member e true)
@@ -707,7 +831,7 @@
 				   e)))
 			   (lambda ignore e))
 		    e))))
-
+      
       (define (store e value and/or)
 	;; we can't make any assumptions about the expression if it might have side effects
 	;;   for example (or (= (oscil o) 0.0) (= (oscil o) 0.0)) can't be reduced
@@ -719,7 +843,7 @@
 		(if (eq? value #f)
 		    (set! false (cons e false))
 		    (set! true (cons e true))))))
-
+      
       (define (remove-duplicates-and-reverse lst)
 	(let ((new-lst '()))
 	  (for-each
@@ -731,125 +855,141 @@
 	  new-lst))
 	  
 
-      (if (or (not (pair? form))
-	      (not (memq (car form) '(or and not))))
-	  (classify form)
-	  (let ((len (lint-length form)))
-	    
-	    (case (car form)
-	      
-	      ((not)
-	       (if (= len 2)
-		   (let* ((arg (cadr form))
-			  (val (if (and (pair? arg)
-					(memq (car arg) '(and or not)))
-				   (classify (simplify-boolean arg true false env))
-				   (classify arg))))
-		     (if (boolean? val)
-			 (not val)
-			 (if (or (and (not (symbol? arg))
-				      (not (pair? arg)))
-				 (and (pair? arg)
-				      (not (env-member? (car arg) env))
-				      (not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f)))))
-			     #f
-			     (if (and (pair? arg)
-				      (pair? (cdr arg))
-				      (eq? (car arg) 'not))
-				 (cadr arg)
-				 (if (not (equal? val arg))
-				     `(not ,val)
-				     form)))))
-		   form))
-	      
-	      ((or)
-	       (if (= len 1)
-		   #f
-		   (if (= len 2)
-		       (classify (cadr form))
-		       (let ((new-form '()))
-			 (do ((exprs (cdr form) (cdr exprs)))
-			     ((null? exprs) 
-			      (if (null? new-form)
-				  #f
-				  (if (null? (cdr new-form))
-				      (car new-form)
-				      `(or ,@(reverse new-form)))))
-			   (let* ((e (car exprs))
-				  (val (classify e)))
-			     
-			     (if (and (pair? val)
-				      (memq (car val) '(and or not)))
-				 (set! val (classify (simplify-boolean e true false env))))
-			     
-			     (if (not (eq? val #f))                 ; #f in or is ignored
-				 (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
-					 (and (not (pair? val))
-					      (not (symbol? val))))
-				     (begin
-				       (if (null? new-form)         ; (or x1 123) -> value of x1, so we can't throw it away here, unlike the and case
-					   (set! new-form `(,val))
-					   (set! new-form (append `(,val) new-form))) ; reversed when returned
-				       (set! exprs '(#t)))
-				     
-				     ;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, so trailing x1 would still be #f
-				     
-				     (if (and (pair? e)             ; (or ...) -> splice into current
-					      (eq? (car e) 'or))
-					 (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
-					 (begin                     ; else add it to our new expression with value #f
-					   (store e val 'or)
-					   (set! new-form (cons val new-form))))))))))))
-	      
-	      ((and)
-	       (if (= len 1)
-		   #t
-		   (if (= len 2)
-		       (classify (cadr form))
-		       (let ((new-form '())
-			     (preceding? #f))
-			 (do ((exprs (cdr form) (cdr exprs)))
-			     ((null? exprs) 
-			      (if (null? new-form)
-				  #t
-				  (if (null? (cdr new-form))
-				      (car new-form)
-				      (if preceding?
-					  `(and ,@(remove-duplicates-and-reverse new-form))
-					  `(and ,@(reverse new-form))))))
+      (let ((form (bsimp in-form)))
+	; (if (not (equal? form in-form)) (format #t "bsimp ~A -> ~A~%" in-form form))
 
-			   (let* ((e (car exprs))
-				  (val (classify e)))
+	(if (or (not (pair? form))
+		(not (memq (car form) '(or and not))))
+	    (classify form)
+	    (let ((len (lint-length form)))
+	      
+	      (case (car form)
+		
+		((not)
+		 (if (= len 2)
+		     (let* ((arg (cadr form))
+			    (val (if (and (pair? arg)
+					  (memq (car arg) '(and or not)))
+				     (classify (simplify-boolean arg true false env))
+				     (classify arg))))
+		       (if (boolean? val)
+			   (not val)
+			   (if (or (and (not (symbol? arg))
+					(not (pair? arg)))
+				   (and (pair? arg)
+					(not (env-member? (car arg) env))
+					(not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f)))))
+			       #f
+			       (if (and (pair? arg)
+					(pair? (cdr arg))
+					(eq? (car arg) 'not))
+				   (cadr arg)
+				   (if (not (equal? val arg))
+				       `(not ,val)
+				       form)))))
+		     form))
+		
+		((or)
+		 (if (= len 1)
+		     #f
+		     (if (= len 2)
+			 (classify (cadr form))
+			 (let ((new-form '()))
+			   (do ((exprs (cdr form) (cdr exprs)))
+			       ((null? exprs) 
+				(if (null? new-form)
+				    #f
+				    (if (null? (cdr new-form))
+					(car new-form)
+					`(or ,@(reverse new-form)))))
+			     (let* ((e (car exprs))
+				    (val (classify e)))
+			       
+			       (if (and (pair? val)
+					(memq (car val) '(and or not)))
+				   (set! val (classify (simplify-boolean e true false env))))
+			       
+			       (if (not (eq? val #f))                 ; #f in or is ignored
+				   (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
+					   (and (not (pair? val))
+						(not (symbol? val))))
+				       (begin
+					 (if (null? new-form)         ; (or x1 123) -> value of x1, so we can't throw it away here, unlike the and case
+					     (set! new-form `(,val))
+					     (set! new-form (append `(,val) new-form))) ; reversed when returned
+					 (set! exprs '(#t)))
+				       
+				       ;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, so trailing x1 would still be #f
+				       
+				       (if (and (pair? e)             ; (or ...) -> splice into current
+						(eq? (car e) 'or))
+					   (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
+					   (begin                     ; else add it to our new expression with value #f
+					     (store e val 'or)
+					     (set! new-form (cons val new-form))))))))))))
+		
+		((and)
+		 (if (= len 1)
+		     #t
+		     (if (= len 2)
+			 (classify (cadr form))
+			 (let ((new-form '())
+			       (preceding? #f))
+			   (do ((exprs (cdr form) (cdr exprs)))
+			       ((null? exprs) 
+				(if (null? new-form)
+				    #t
+				    (if (null? (cdr new-form))
+					(car new-form)
+					(if preceding?
+					    (let ((new-exprs (remove-duplicates-and-reverse new-form)))
+					      (if (null? new-exprs)
+						  #t
+						  (if (null? (cdr new-exprs))
+						      (car new-exprs)
+						      `(and ,@new-exprs))))
+					    `(and ,@(reverse new-form))))))
 			     
-			     (if (and (pair? val)
-				      (memq (car val) '(and or not)))
-				 (set! val (classify (simplify-boolean e true false env))))
-			     
-			     ;; (and x1 x2 x1) is not reducible, unless to (and x2 x1)
-			     ;;   the final thing has to remain at the end, but can be deleted earlier if it can't short-circuit the evaluation
-			     
-			     (if (eq? val #t)                 ; #t in and is (eventually) ignored
-				 (if (and (not (eq? e #t))
-					  (not (just-constants? e env)))
-				     (begin
-				       (set! preceding? #t)
-				       (set! new-form (cons e new-form))))
-				 (if (eq? val #f)             ; #f in and ends the expression
-				     (begin
-				       (if (or (null? new-form)   
-					       (just-symbols? new-form))
-					   (set! new-form '(#f))
-					   (set! new-form (append '(#f) new-form)))
-				       (set! exprs '(#f)))
-				     (if (and (pair? e)       ; if (and ...) splice into current
-					      (eq? (car e) 'and))
-					 (set! exprs (append e (cdr exprs)))
-					 (begin                 ; else add it to our new expression with value #t
-					   (store e val 'and)
-					   (set! new-form (cons val new-form))))))))))))
-	      ))))
-
-
+			     (let* ((e (car exprs))
+				    (val (classify e)))
+			       
+			       (if (and (pair? val)
+					(memq (car val) '(and or not)))
+				   (set! val (classify (simplify-boolean e true false env))))
+			       
+			       ;; (and x1 x2 x1) is not reducible, unless to (and x2 x1)
+			       ;;   the final thing has to remain at the end, but can be deleted earlier if it can't short-circuit the evaluation
+			       
+			       (if (eq? val #t)                 ; #t in and is (eventually) ignored
+				   (if (and (not (eq? e #t))
+					    (not (just-constants? e env)))
+				       (begin
+					 (set! preceding? #t)
+					 (set! new-form (cons e new-form))))
+				   (if (eq? val #f)             ; #f in and ends the expression
+				       (begin
+					 (if (or (null? new-form)   
+						 (just-symbols? new-form))
+					     (set! new-form '(#f))
+					     (set! new-form (append '(#f) new-form)))
+					 (set! exprs '(#f)))
+				       (if (and (pair? e)       ; if (and ...) splice into current
+						(eq? (car e) 'and))
+					   (set! exprs (append e (cdr exprs)))
+					   (if (not (and (pair? e)                   ; (and ... (or ... 123) ...) -> splice out or
+							 (not (null? (cdr exprs)))
+							 (eq? (car e) 'or)
+							 (> (length e) 2)
+							 (let ((last (list-ref e (- (length e) 1))))
+							   (and last ; (or ... #f)
+								(not (pair? last))
+								(not (symbol? last))))))
+					       (begin                 ; else add it to our new expression with value #t
+						 (store e val 'and)
+						 (set! new-form (cons val new-form)))))))))))))
+		)))))
+      
+      
     (define (numeric? op)
       (memq op '(+ * - / 
 		   sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
@@ -859,8 +999,8 @@
 		   rationalize inexact->exact
 		   logior lognot logxor logand numerator denominator 
 		   floor round truncate ceiling ash)))
-
-
+    
+    
     (define (simplify-numerics form env)
       ;;   I first tried a table of rules, but the code was unreadable, so
       ;;   here I'll split out each case by hand.
@@ -2644,7 +2784,8 @@
 									      (truncated-list->string form)) 
 									undefined-identifiers))))
 			      (set! vars (lint-walk name f vars)))
-			    form))))
+			    form))
+			 ))
 		   env)))
 	      
 	      ;; else form is a constant or something
@@ -2667,7 +2808,7 @@
 		       (lambda args
 			 (format #t "  can't open ~S: ~A~%" file (apply format #f (cadr args)))
 			 #f))))
-
+	
 	(if (input-port? fp)
 	    (let ((vars '())
 		  (line 0)
@@ -2718,18 +2859,18 @@
 				    (prefix-len (string-length field-prefix)))
 			       (do ((gfield (giter) (giter)))
 				   ((null? gfield))
-				 (if (not (memq (car gfield) other-identifiers)) (begin
-				 (set! gfield (cdr gfield))
-				 (if (and (= (lint-length gfield) 4)
-					  (not (cadr gfield))
-					  (equal? (cadddr gfield) descr)
-					  (let ((symstr (symbol->string (car gfield))))
-					    (and (> (string-length symstr) prefix-len)
-						 (string=? (substring symstr 0 prefix-len) field-prefix))))
-				     (if (caddr gfield)
-					 (set! set (cons (car gfield) set))
-					 (set! unused (cons (car gfield) unused)))))))
-			       ))
+				 (if (not (memq (car gfield) other-identifiers)) 
+				     (begin
+				       (set! gfield (cdr gfield))
+				       (if (and (= (lint-length gfield) 4)
+						(not (cadr gfield))
+						(equal? (cadddr gfield) descr)
+						(let ((symstr (symbol->string (car gfield))))
+						  (and (> (string-length symstr) prefix-len)
+						       (string=? (substring symstr 0 prefix-len) field-prefix))))
+					   (if (caddr gfield)
+					       (set! set (cons (car gfield) set))
+					       (set! unused (cons (car gfield) unused)))))))))
 			   generators)
 			  (if (not (null? set))
 			      (format #t "  generator fields set, but not used: ~{~A~^, ~}~%" set))
@@ -2758,20 +2899,11 @@
 ;;;    (define (v n) (vector-ref #(1 2 3) n))
 ;;;   or even generate a test suite (especially for each top-level function)
 ;;;   and same process for built-in functions: figure out possible return types etc
-;;;   [how to know that vct-add! for example needs a vct to do anything reasonable?
+;;;   [how to know that vct-add! for example needs a vct to do anything reasonable?]
 ;;;   [get a list of make-* and figure out how to get each object? -- could s7 return a list of these as if make-type?]
-
-;;; we could follow the parameters through the function body, and see if things look consistent
 
 ;;; also to find infinite loops, could we run the code in the current
 ;;;   environment with a hook added to count iterations?
-
-;;; also if a local function is used in an expression where we know what its type must be,
-;;;   can we check that it will actually return that type?
-
-;;; also if such a function is called with constant args, simplify?
-
 ;;; if define-record, report fields that are unused or just set
 ;;;  shouldn't we mention two top-level defs of the same function, if their sources aren't equal?
-
 ;;; another kind of docstring check would look for examples and try to replicate them

@@ -1737,9 +1737,7 @@
 (for-each
  (lambda (name)
    (let ((args (cadr (find-struct name))))
-     (if (> (length args) 0)
-	 (hey " *    (~A" name)
-	 (hey " *    (~A" name))
+     (hey " *    (~A" name)
      (for-each
       (lambda (str)
 	(hey " ~A" (cadr str)))
@@ -1751,9 +1749,7 @@
     (for-each
      (lambda (name)
        (let ((args (cadr (find-struct name))))
-	 (if (> (length args) 0)
-	     (hey " *    (~A" name)
-	     (hey " *    (~A" name))
+	 (hey " *    (~A" name)
 	 (for-each
 	  (lambda (str)
 	    (hey " ~A" (cadr str)))
@@ -3158,10 +3154,7 @@
 (for-each (lambda (field) (hey "#define gxg_set_~A_w gxg_set_~A~%" field field)) settable-struct-fields)
 
 (for-each (lambda (struct) 
-	    (let* ((s (find-struct struct)))
-	      (if (> (length (cadr s)) 0)
-		  (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct)
-		  (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))))
+	    (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))
 	  (reverse make-structs))
 (hey "~%")
 
@@ -3170,19 +3163,13 @@
 		(lambda () 
 		  (for-each 
 		   (lambda (struct) 
-		     (let* ((s (find-struct struct)))
-		       (if (> (length (cadr s)) 0)
-			   (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct)
-			   (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))))
+		     (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))
 		   (reverse cairo-make-structs)))))
 (hey "~%")
 
 (with-300 hey (lambda ()
 		(for-each (lambda (struct) 
-			    (let* ((s (find-struct struct)))
-			      (if (> (length (cadr s)) 0)
-				  (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct)
-				  (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))))
+			    (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))
 			  (reverse make-structs-300))
 		(hey "~%")))
 
