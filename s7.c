@@ -16387,115 +16387,109 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
+const char *s7_help(s7_scheme *sc, s7_pointer obj)
 {
-  #define H_help "(help obj) returns obj's documentation"
-  
-  s7_pointer obj;
-  obj = car(args);
-
   if (is_syntax(obj))
     {
       switch (syntax_opcode(obj))
 	{
 	case OP_QUOTE:
-	  return(s7_make_string(sc, "(quote obj) returns obj unevaluated.  'obj is an abbreviation for (quote obj)."));
+	  return("(quote obj) returns obj unevaluated.  'obj is an abbreviation for (quote obj).");
 	  
 	case OP_IF:
-	  return(s7_make_string(sc, "(if expr true-stuff optional-false-stuff) evaluates expr, then \
-if it is true, evaluates true-stuff; otherwise, if optional-false-stuff exists, it is evaluated."));
+	  return("(if expr true-stuff optional-false-stuff) evaluates expr, then \
+if it is true, evaluates true-stuff; otherwise, if optional-false-stuff exists, it is evaluated.");
 	  
 	case OP_BEGIN:
-	  return(s7_make_string(sc, "(begin ...) evaluates each form in its body, returning the value of the last one"));
+	  return("(begin ...) evaluates each form in its body, returning the value of the last one");
 
 	case OP_SET:
-	  return(s7_make_string(sc, "(set! variable value) sets the value of variable to value."));
+	  return("(set! variable value) sets the value of variable to value.");
 
 	case OP_LET:
-	  return(s7_make_string(sc, "(let ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
+	  return("(let ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
 returning the value of the last form.  The let variables are local to it, and in the case of let (as opposed to let* for example), \
-the variables are not available for use until all have been initialized."));
+the variables are not available for use until all have been initialized.");
 
 	case OP_LET_STAR:
-	  return(s7_make_string(sc, "(let* ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
-returning the value of the last form.  The let* variables are local to it, and are available immediately (unlike let, for example)."));
+	  return("(let* ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
+returning the value of the last form.  The let* variables are local to it, and are available immediately (unlike let, for example).");
 
 	case OP_LETREC:
-	  return(s7_make_string(sc, "(letrec ((var (lambda ...)))...) is like let, but var can refer to itself in \
-its value (i.e. you can define local recursive functions)"));
+	  return("(letrec ((var (lambda ...)))...) is like let, but var can refer to itself in \
+its value (i.e. you can define local recursive functions)");
 
 	case OP_COND:
-	  return(s7_make_string(sc, "(cond (expr clause...)...) is like if..then.  Each expr is evaluated in \
-order, and if one is not #f, the associated clauses are evaluated, whereupon cond returns."));
+	  return("(cond (expr clause...)...) is like if..then.  Each expr is evaluated in \
+order, and if one is not #f, the associated clauses are evaluated, whereupon cond returns.");
 
 	case OP_AND:
-	  return(s7_make_string(sc, "(and expr expr ...) evaluates each of its arguments in order, quitting (and returning #f) as soon \
-as one of them returns #f.  If all are non-#f, it returns the last value."));
+	  return("(and expr expr ...) evaluates each of its arguments in order, quitting (and returning #f) as soon \
+as one of them returns #f.  If all are non-#f, it returns the last value.");
 
 	case OP_OR:
-	  return(s7_make_string(sc, "(or expr expr ...) evaluates each of its argments in order, quitting as soon as \
-one of them is not #f.  If all are #f, or returns #f."));
+	  return("(or expr expr ...) evaluates each of its argments in order, quitting as soon as \
+one of them is not #f.  If all are #f, or returns #f.");
 
 	case OP_CASE:
-	  return(s7_make_string(sc, "(case val ((key...) clause...)...) looks for val in the various lists of keys, \
-and if a match is found (via eqv?), the asssociated clauses are evaluated, and case returns."));
+	  return("(case val ((key...) clause...)...) looks for val in the various lists of keys, \
+and if a match is found (via eqv?), the asssociated clauses are evaluated, and case returns.");
 
 	case OP_DO:
-	  return(s7_make_string(sc, "(do (vars...) (loop control and return value) ...) is a do-loop."));
+	  return("(do (vars...) (loop control and return value) ...) is a do-loop.");
 
 	case OP_WITH_ENV:
-	  return(s7_make_string(sc, "(with-environment env ...) evaluates its body in the environment env."));
+	  return("(with-environment env ...) evaluates its body in the environment env.");
 
 	case OP_LAMBDA:
-	  return(s7_make_string(sc, "(lambda args ...) returns a function."));
+	  return("(lambda args ...) returns a function.");
 
 	case OP_LAMBDA_STAR:
-	  return(s7_make_string(sc, "(lambda* args ...) returns a function; the args list can have default values, \
-the parameters themselves can be accessed via keywords."));
+	  return("(lambda* args ...) returns a function; the args list can have default values, \
+the parameters themselves can be accessed via keywords.");
 
 	case OP_DEFINE:
-	  return(s7_make_string(sc, "(define var val) assigns val to the variable (symbol) var.  (define (func args) ...) is \
-shorthand for (define func (lambda args ...))"));
+	  return("(define var val) assigns val to the variable (symbol) var.  (define (func args) ...) is \
+shorthand for (define func (lambda args ...))");
 
 	case OP_DEFINE_STAR:
-	  return(s7_make_string(sc, "(define* (func args) ...) defines a function with optional/keyword arguments."));
+	  return("(define* (func args) ...) defines a function with optional/keyword arguments.");
 
 	case OP_DEFINE_CONSTANT:
-	  return(s7_make_string(sc, "(define-constant var val) defines var to be a constant (it can't be set or bound), with the value val."));
+	  return("(define-constant var val) defines var to be a constant (it can't be set or bound), with the value val.");
 
 	case OP_DEFMACRO:
-	  return(s7_make_string(sc, "(defmacro mac (args) ...) defines mac to be a macro."));
+	  return("(defmacro mac (args) ...) defines mac to be a macro.");
 
 	case OP_DEFMACRO_STAR:
-	  return(s7_make_string(sc, "(defmacro* mac (args) ...) defines mac to be a macro with optional/keyword arguments."));
+	  return("(defmacro* mac (args) ...) defines mac to be a macro with optional/keyword arguments.");
 
 	case OP_DEFINE_MACRO:
-	  return(s7_make_string(sc, "(define-macro (mac args) ...) defines mac to be a macro."));
+	  return("(define-macro (mac args) ...) defines mac to be a macro.");
 
 	case OP_DEFINE_MACRO_STAR:
-	  return(s7_make_string(sc, "(define-macro* (mac args) ...) defines mac to be a macro with optional/keyword arguments."));
+	  return("(define-macro* (mac args) ...) defines mac to be a macro with optional/keyword arguments.");
 
 	case OP_DEFINE_EXPANSION:
-	  return(s7_make_string(sc, "(define-expansion (mac args) ...) defines mac to be a read-time macro."));
+	  return("(define-expansion (mac args) ...) defines mac to be a read-time macro.");
 
 	case OP_DEFINE_BACRO:
-	  return(s7_make_string(sc, "(define-bacro (mac args) ...) defines mac to be a bacro."));
+	  return("(define-bacro (mac args) ...) defines mac to be a bacro.");
 
 	case OP_DEFINE_BACRO_STAR:
-	  return(s7_make_string(sc, "(define-bacro* (mac args) ...) defines mac to be a bacro with optional/keyword arguments."));
+	  return("(define-bacro* (mac args) ...) defines mac to be a bacro with optional/keyword arguments.");
 	}
       
-      return(sc->F);
+      return(NULL);
 
       /* others: macroexpand
-:(define-macro (hiho a) "a test" `(+ 1 ,a))
-hiho
-:(hiho 2)
-3
-:(s7-help hiho)
-"a test"
-with-sound #f etc -- all macros at least
-TODO: currently snd-help doesn't handle (help let) correctly -- it should let us try first, but that means exporting s7_help
+            :(define-macro (hiho a) "a test" `(+ 1 ,a))
+            hiho
+            :(hiho 2)
+            3
+            :(s7-help hiho)
+            "a test"
+            with-sound #f etc -- all macros at least
        */
     }
 
@@ -16506,17 +16500,29 @@ TODO: currently snd-help doesn't handle (help let) correctly -- it should let us
     }
 
   if ((typeflag(obj) & (T_ANY_MACRO | T_PROCEDURE)) != 0)
-    return(s7_make_string(sc, s7_procedure_documentation(sc, obj)));
+    return(s7_procedure_documentation(sc, obj));
 
-  if (is_hook(obj))
-    return(hook_documentation(obj));
+  if ((is_hook(obj)) &&
+      (s7_is_string(hook_documentation(obj))))
+    return(s7_string(hook_documentation(obj)));
 
   /* if is string, apropos? (can scan symbol table)
    */
   /* here keep a table as in xen.c? need s7_help and s7_set_help in C + maybe s7_define_constant_with_documentation
    */
 
-  return(sc->F);
+  return(NULL);
+}
+
+
+static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
+{
+  #define H_help "(help obj) returns obj's documentation"
+  const char *doc;
+  doc = s7_help(sc, car(args));
+  if (!doc)
+    return(sc->F);
+  return(s7_make_string(sc, doc));
 }
 
 

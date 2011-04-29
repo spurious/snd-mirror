@@ -2039,9 +2039,9 @@ and decay portions in the envelope editor, or use functions such as
   (lambda (env pt x y reason)
     (if (= reason enved-move-point)
         (if (and (&gt; x 0.0) (&lt; x (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopelastx_tip)">envelope-last-x</a> env))) ; from env.scm
-            (let* ((old-x (list-ref env (* pt 2)))
+            (let* ((old-x (env (* pt 2)))
                    (new-env (<em class=red>stretch-envelope</em> env old-x x)))
-              (list-set! new-env (+ (* pt 2) 1) y)
+              (set! (new-env (+ (* pt 2) 1)) y)
               new-env)
             env)
         #f)))
@@ -2140,7 +2140,7 @@ uses the maxamp data if it is already available or the file is short:
     (if (or (<a class=quiet href="#mussoundmaxampexists" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxampexists_tip)">mus-sound-maxamp-exists?</a> (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd))
             (&lt; (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) 10000000))
 	(let* ((amp-vals (<a class=quiet href="#mussoundmaxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxamp_tip)">mus-sound-maxamp</a> (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd)))
-	       (max-val (max 1.0 (list-ref amp-vals (+ (* chn 2) 1)))))
+	       (max-val (max 1.0 (amp-vals (+ (* chn 2) 1)))))
                ;; max amp data is list: (sample value sample value ...)
 	  (list 0.0 dur (- max-val) max-val)) ; these are the new y-axis limits
 	(list 0.0 dur -1.0 1.0))))            ; max amp unknown, so use defaults
@@ -2710,7 +2710,7 @@ in some other way &mdash; I should rewrite this part of Snd.
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (hook-push <em class=red>print-hook</em>
   (lambda (msg) 
-    (if (char=? (string-ref msg 0) #\newline)
+    (if (char=? (msg 0) #\newline)
 	(<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> msg)
 	(<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A~%[~A]~%~A" ;need newline just before listener-prompt
 			   msg 
@@ -3578,7 +3578,7 @@ vct-scale! multiplies each element of 'v' by 'scl': <code>v[i] *= scl</code>.  I
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="vctset">vct-set!</a> v pos val</code>
 </td></tr><tr><td></td><td>
 vct-set! sets the vct 'v' element at 'pos' to 'val': <code>v[pos] = val</code>. 
-In Scheme, this is the same as <code>(set! (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> v pos) val)</code>.
+In Scheme, this is the same as <code>(set! (v pos) val)</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6181,10 +6181,10 @@ could be:
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (x-&gt;position-1 x snd chn)
   (let* ((axinfo (<em class=red>axis-info</em> snd chn <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>))
-	 (x0 (list-ref axinfo 2))
-	 (x1 (list-ref axinfo 4))
-	 (axis-left (list-ref axinfo 10))
-	 (axis-right (list-ref axinfo 12)))
+	 (x0 (axinfo 2))
+	 (x1 (axinfo 4))
+	 (axis-left (axinfo 10))
+	 (axis-right (axinfo 12)))
     (floor
      (+ axis-left
 	(* (- x x0) 
@@ -6210,17 +6210,17 @@ then restore that state upon "Page Up":
 			  (if last-page-state
 			      (for-each
 			       (lambda (lst)
-				 (let ((snd (list-ref lst 0))
-				       (name (list-ref lst 1)))
+				 (let ((snd (lst 0))
+				       (name (lst 1)))
 				   (if (and (<a class=quiet href="#soundp" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundp_tip)">sound?</a> snd) 
 					    (string=? (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd) name))
 				       (for-each
 					(lambda (chan-data)
-					  (let ((chn (list-ref chan-data 0))
-						(x0 (list-ref chan-data 3))
-						(x1 (list-ref chan-data 5))
-						(y0 (list-ref chan-data 4))
-						(y1 (list-ref chan-data 6)))
+					  (let ((chn (chan-data 0))
+						(x0 (chan-data 3))
+						(x1 (chan-data 5))
+						(y0 (chan-data 4))
+						(y1 (chan-data 6)))
 					    (set! (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a> snd chn) (list x0 x1))
 					    (set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd chn) (list y0 y1))))
 					(cddr lst)))))
@@ -7432,7 +7432,7 @@ sound with individual amplitudes for the channels:
       (do ((chan 0 (+ 1 chan)))
           ((= chan chans))
         (let ((player (<em class=red>make-player</em> sound chan)))
-          (set! (<a class=quiet href="#ampcontrol" onmouseout="UnTip()" onmouseover="Tip(extsnd_ampcontrol_tip)">amp-control</a> player) (list-ref amps chan))
+          (set! (<a class=quiet href="#ampcontrol" onmouseout="UnTip()" onmouseover="Tip(extsnd_ampcontrol_tip)">amp-control</a> player) (amps chan))
           (<em class=red>add-player</em> player)))
       (<em class=red>start-playing</em> chans (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> sound)))))
 
@@ -8151,7 +8151,7 @@ more like Emacs (it prompts for confirmation first):
      (lambda (response)
        (if (or (not (string? response))
 	       (= (string-length response) 0)
-               (char=? (string-ref response 0) #\y))
+               (char=? (response 0) #\y))
 	   (<a class=quiet href="#closesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_closesound_tip)">close-sound</a>)))
      #f   ; selected sound
      #t)) ; treat as string (i.e. don't require double quotes)
@@ -8448,7 +8448,7 @@ result appear to be one operation in the edit history list.
 	 (fulldur (or dur (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn edpos)))
 	 (len (length envelope))
 	 (x1 (car envelope))
-	 (xrange (- (list-ref envelope (- len 3)) x1))
+	 (xrange (- (envelope (- len 3)) x1))
 	 (y1 (cadr envelope))
 	 (base (caddr envelope))
 	 (x0 0.0)
@@ -8461,12 +8461,12 @@ result appear to be one operation in the edit history list.
 	       ((= i len))
 	     (set! x0 x1)
 	     (set! y0 y1)
-	     (set! x1 (list-ref envelope i))
-	     (set! y1 (list-ref envelope (+ i 1)))
+	     (set! x1 (envelope i))
+	     (set! y1 (envelope (+ i 1)))
 	     (let* ((curdur (round (* fulldur (/ (- x1 x0) xrange)))))
 	       (<em class=red>xramp-channel</em> y0 y1 base curbeg curdur snd chn edpos)
 	       (set! curbeg (+ curbeg curdur)))
-	     (set! base (list-ref envelope (+ i 2)))))))))
+	     (set! base (envelope (+ i 2)))))))))
 </pre></td></tr></table>
 
 If the init-func returns something other than a vct, you need to declare its type
@@ -10568,7 +10568,7 @@ The Options:Controls menu option
 starts a dialog to handle the controls that aren't handled by
 the control panel (expand-control-hop, expand-control-length, expand-control-ramp,
 contrast-control-amp, reverb-control-lowpass, and reverb-control-feedback).
-The control panel itself is accessible as <code>(list-ref (<a href="#soundwidgets">sound-widgets</a>) 2)</code>.
+The control panel itself is accessible as <code>((<a href="#soundwidgets">sound-widgets</a>) 2)</code>.
 You can add or remove controls; <a href="sndscm.html#addampcontrols">add-amp-controls</a>
 in snd-motif.scm sets up a separate amp slider for each channel in the current sound.
 <a href="sndscm.html#disablecontrolpanel">disable-control-panel</a> disables (hides) the
@@ -11532,7 +11532,7 @@ This hides (unmanages) 'widget'.
 To remove the y-position slider (which is only there
 for looks):
 <pre>
-    (<a class=quiet href="#hidewidget" onmouseout="UnTip()" onmouseover="Tip(extsnd_hidewidget_tip)">hide-widget</a> (list-ref (<a class=quiet href="#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>) 4))
+    (<a class=quiet href="#hidewidget" onmouseout="UnTip()" onmouseover="Tip(extsnd_hidewidget_tip)">hide-widget</a> ((<a class=quiet href="#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>) 4))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -11896,7 +11896,7 @@ For example, we can read and write the minibuffer:
     Scheme:
     :<em class=typing>(report-in-minibuffer "this is a test")</em>
     <em class=listener>"this is a test"</em>
-    :<em class=typing>(widget-text (list-ref (sound-widgets) 3))</em>
+    :<em class=typing>(widget-text ((sound-widgets) 3))</em>
     <em class=listener>"this is a test"</em>
     
     Ruby:
@@ -11965,7 +11965,7 @@ new..old, old..new (sort by file write date), and small..big, big..small (sort b
 If you set view-files-sort without giving the dialog argument, it just affects the startup state of subsequent new View:Files
 dialogs.  To set the sort choice in the current dialog:
 <pre>
-  (set! (view-files-sort (list-ref (<a class=quiet href="#dialogwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_dialogwidgets_tip)">dialog-widgets</a>) 8)) 2) ; 2=new..old
+  (set! (view-files-sort ((<a class=quiet href="#dialogwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_dialogwidgets_tip)">dialog-widgets</a>) 8)) 2) ; 2=new..old
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -12182,10 +12182,10 @@ A similar set rebinds the arrow keys to give much more precise window position a
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (<a NAME="moveonepixel">move-one-pixel</a> s c right)
   (let* ((ax (<a class=quiet href="#axisinfo" onmouseout="UnTip()" onmouseover="Tip(extsnd_axisinfo_tip)">axis-info</a> s c <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>))
-	 (lo (list-ref ax 0))
-	 (hi (list-ref ax 1))
-	 (lo-pix (list-ref ax 10))
-	 (hi-pix (list-ref ax 12))
+	 (lo (ax 0))
+	 (hi (ax 1))
+	 (lo-pix (ax 10))
+	 (hi-pix (ax 12))
 	 (samps-per-pixel (max 1 (round (/ (- hi lo) (- hi-pix lo-pix)))))
 	 (change (if right 
                      (- (min (+ hi samps-per-pixel) (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> s c)) hi)
@@ -12206,10 +12206,10 @@ A similar set rebinds the arrow keys to give much more precise window position a
 
 (define (<a NAME="zoomonepixel">zoom-one-pixel</a> s c in)
   (let* ((ax (<a class=quiet href="#axisinfo" onmouseout="UnTip()" onmouseover="Tip(extsnd_axisinfo_tip)">axis-info</a> s c <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>))
-	 (lo (list-ref ax 0))
-	 (hi (list-ref ax 1))
-	 (lo-pix (list-ref ax 10))
-	 (hi-pix (list-ref ax 12))
+	 (lo (ax 0))
+	 (hi (ax 1))
+	 (lo-pix (ax 10))
+	 (hi-pix (ax 12))
 	 (samps-per-pixel (max 1 (round (/ (- hi lo) (- hi-pix lo-pix)))))
 	 (len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> s c)))
     (if in
@@ -12241,7 +12241,7 @@ in the following manner (this assumes you're using Motif and have the xm module 
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (XtAppAddActions (car (<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>)) (list (list "hiho" (lambda args (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> "hiho")))))
-(XtOverrideTranslations (list-ref (<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 4) (XtParseTranslationTable "Ctrl &lt;Key&gt;i: hiho()\n"))
+(XtOverrideTranslations ((<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 4) (XtParseTranslationTable "Ctrl &lt;Key&gt;i: hiho()\n"))
 </pre></td></tr></table>
 
 Since neither Motif nor Gtk explicitly support an Emacs-like extended mode, we have to go to
@@ -12254,7 +12254,7 @@ in either Motif or Gtk:
 
 (define extended #f)     ; our extended mode flag
 
-(XtAddEventHandler (list-ref (<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 4) KeyPressMask #f
+(XtAddEventHandler ((<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 4) KeyPressMask #f
   (lambda (w context event go)
     (let* ((bits (.state event))
 	   (keysym (XKeycodeToKeysym (XtDisplay w)
@@ -12276,7 +12276,7 @@ in either Motif or Gtk:
 
 (define extended #f)     ; our extended mode flag
 
-(let ((listener (list-ref (<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 4)))
+(let ((listener ((<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 4)))
   (g_signal_connect_closure_by_id 
    (GPOINTER listener)
    (g_signal_lookup "key_press_event" (G_OBJECT_TYPE (G_OBJECT listener)))

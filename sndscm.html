@@ -994,8 +994,8 @@ end points.  (This is also "just-good-enough" software).
   (do ((i 0 (+ 1 i)))
       ((= i n))
       ;; "clips" here is a list form of the earlier vector of clip locations
-    (fix-clip (list-ref clips (* i 2)) 
-	      (list-ref clips (+ 1 (* i 2)))))
+    (fix-clip (clips (* i 2)) 
+	      (clips (+ 1 (* i 2)))))
   (set! (<a class=quiet href="extsnd.html#squelchupdate" onmouseout="UnTip()" onmouseover="Tip(extsnd_squelchupdate_tip)">squelch-update</a>) #f))
 
 (fix-it 669)
@@ -5275,8 +5275,8 @@ If 'with-sync' is #t, the frame read includes all channels currently sync'd to t
 		    (do ((chn 0 (+ 1 chn)))
 			((= chn (channels fr)))
 		      (set! result (and result 
-                                        (&lt; (* (<a class=quiet href="sndclm.html#frame-ref" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_ref_tip)">frame-ref</a> fr chn) (<a class=quiet href="sndclm.html#frame-ref" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_ref_tip)">frame-ref</a> last-fr chn)) 0.0)))
-		      (<a class=quiet href="sndclm.html#frame-set!" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_set_tip)">frame-set!</a> last-fr chn (<a class=quiet href="sndclm.html#frame-ref" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_ref_tip)">frame-ref</a> fr chn)))
+                                        (&lt; (* (fr chn) (last-fr chn)) 0.0)))
+		      (set! (last-fr chn) (fr chn)))
 		    result))
 		beg dur snd)))
 </pre>
@@ -8200,10 +8200,10 @@ Very distracting! (see expr.scm for more code).
   (let* ((snd 0)
 	 (chn 0)
 	 (axinf (axis-info snd chn))
-	 (x (list-ref axinf 10))
-	 (y (list-ref axinf 13))
-	 (grf-width (- (list-ref axinf 12) x))
-	 (grf-height (- (list-ref axinf 11) y))
+	 (x (axinf 10))
+	 (y (axinf 13))
+	 (grf-width (- (axinf 12) x))
+	 (grf-height (- (axinf 11) y))
 
 	 (width 278)
 	 (height 115)
@@ -8502,32 +8502,32 @@ of harmonics, then the minimum peak amplitude, then <code>(log peak n)</code>.
 121  10.944  0.4989    | 68    8.228   0.4995   | 33   6.163   0.5201   | 112   13.865  0.5572
 67   8.149   0.4989    | 65    8.045   0.4995   | 29   5.766   0.5203   | 89    12.219  0.5576
 118  10.809  0.4990    | 117   10.793  0.4995   | 35   6.362   0.5205   | 125   14.772  0.5577
-47   6.829   0.4990    | 104   10.177  0.4996   | 26   5.452   0.5206   | 98    12.899  0.5577
-64   7.967   0.4990    | 100   9.980   0.4996   | 49   7.588   0.5207   | 109   13.694  0.5578
-124  11.083  0.4990    | 109   10.421  0.4996   | 31   5.988   0.5212   | 107   13.562  0.5580
-63   7.906   0.4990    | 49    6.990   0.4996   | 37   6.581   0.5218   | 119   14.391  0.5580
-42   6.458   0.4991    | 95    9.736   0.4997   | 24   5.253   0.5220   | 65    10.274  0.5581
-79   8.853   0.4991    | 79    8.878   0.4997   | 30   5.907   0.5222   | 110   13.780  0.5581
+47   6.829   0.4990    | 79    8.871   0.4996   | 26   5.452   0.5206   | 98    12.899  0.5577
+64   7.967   0.4990    | 104   10.177  0.4996   | 49   7.588   0.5207   | 109   13.694  0.5578
+124  11.083  0.4990    | 100   9.980   0.4996   | 31   5.988   0.5212   | 107   13.562  0.5580
+63   7.906   0.4990    | 109   10.421  0.4996   | 37   6.581   0.5218   | 119   14.391  0.5580
+42   6.458   0.4991    | 49    6.990   0.4996   | 24   5.253   0.5220   | 65    10.274  0.5581
+79   8.853   0.4991    | 95    9.736   0.4997   | 30   5.907   0.5222   | 110   13.780  0.5581
 81   8.966   0.4991    | 97    9.838   0.4998   | 23   5.148   0.5226   | 121   14.551  0.5583
 114  10.639  0.4992    | 75    8.652   0.4998   | 21   4.920   0.5233   | 108   13.663  0.5584
-65   8.037   0.4993    | 122   11.044  0.5000   | 27   5.620   0.5238   | 127   14.966  0.5586
-58   7.595   0.4993    | 80    8.949   0.5001   | 28   5.732   0.5240   | 57    9.570   0.5586
-97   9.821   0.4994    | 112   10.590  0.5001   | 25   5.403   0.5241   | 120   14.506  0.5587
-115  10.694  0.4994    | 93    9.650   0.5002   | 22   5.055   0.5242   | 115   14.170  0.5587
-111  10.507  0.4994    | 119   10.923  0.5003   | 18   4.569   0.5257   | 113   14.036  0.5588
-113  10.606  0.4995    | 127   11.290  0.5004   | 20   4.839   0.5264   | 126   14.920  0.5588
+65   8.037   0.4993    | 122   11.037  0.4998   | 27   5.620   0.5238   | 127   14.966  0.5586
+58   7.595   0.4993    | 112   10.588  0.5001   | 28   5.732   0.5240   | 57    9.570   0.5586
+97   9.821   0.4994    | 80    8.949   0.5001   | 25   5.403   0.5241   | 120   14.506  0.5587
+115  10.694  0.4994    | 93    9.649   0.5001   | 22   5.055   0.5242   | 115   14.170  0.5587
+111  10.507  0.4994    | 119   10.921  0.5002   | 18   4.569   0.5257   | 113   14.036  0.5588
+113  10.606  0.4995    | 127   11.286  0.5003   | 20   4.839   0.5264   | 126   14.920  0.5588
 72   8.473   0.4997    | 73    8.559   0.5004   | 17   4.463   0.5280   | 100   13.116  0.5589
-125  11.169  0.4998    | 66    8.139   0.5004   | 16   4.325   0.5282   | 99    13.089  0.5597
-119  10.898  0.4998    | 121   11.025  0.5005   | 19   4.741   0.5286   | 124   14.877  0.5601
-102  10.091  0.4998    | 98    9.926   0.5006   | 15   4.192   0.5292   | 103   13.424  0.5603
-109  10.443  0.5001    | 99    9.978   0.5006   | 14   4.097   0.5344   | 114   14.214  0.5604
-128  11.321  0.5001    | 84    9.194   0.5007   | 12   3.787   0.5359   | 102   13.399  0.5611
-123  11.098  0.5001    | 87    9.360   0.5008   | 13   3.973   0.5378   | 118   14.545  0.5612
-87   9.344   0.5004    | 123   11.141  0.5009   | 11   3.656   0.5406   | 122   14.875  0.5620
-101  10.071  0.5005    | 126   11.278  0.5010   | 10   3.559   0.5513   | 116   14.467  0.5621
-110  10.514  0.5005    | 71    8.479   0.5015   | 8    3.198   0.5590   | 117   14.601  0.5630
-82   9.077   0.5005    | 124   11.229  0.5017   | 9    3.454   0.5641   | 5     2.477   0.5635
-93   9.678   0.5008    | 111   10.624  0.5018   | 7    3.047   0.5726   | 4     2.192   0.5662
+125  11.167  0.4998    | 66    8.139   0.5004   | 16   4.325   0.5282   | 99    13.089  0.5597
+119  10.897  0.4998    | 121   11.024  0.5005   | 19   4.741   0.5286   | 124   14.877  0.5601
+102  10.091  0.4998    | 99    9.974   0.5005   | 15   4.192   0.5292   | 103   13.424  0.5603
+109  10.442  0.5000    | 98    9.926   0.5006   | 14   4.097   0.5344   | 114   14.214  0.5604
+128  11.321  0.5001    | 84    9.193   0.5007   | 12   3.787   0.5359   | 102   13.399  0.5611
+123  11.098  0.5001    | 87    9.357   0.5007   | 13   3.973   0.5378   | 118   14.545  0.5612
+87   9.341   0.5003    | 126   11.267  0.5008   | 11   3.656   0.5406   | 122   14.875  0.5620
+101  10.071  0.5005    | 123   11.140  0.5009   | 10   3.559   0.5513   | 116   14.467  0.5621
+110  10.514  0.5005    | 71    8.478   0.5014   | 8    3.198   0.5590   | 117   14.601  0.5630
+82   9.077   0.5005    | 124   11.219  0.5016   | 9    3.454   0.5641   | 5     2.477   0.5635
+93   9.677   0.5008    | 111   10.622  0.5017   | 7    3.047   0.5726   | 4     2.192   0.5662
 4    2.039   0.5139    | 3     1.739   0.5035   | 6    2.837   0.5820   | 8     3.263   0.5687
 6    2.549   0.5223    | 4     2.045   0.5161   | 5    2.605   0.5948   | 7     3.062   0.5750
 5    2.343   0.5292    | 6     2.523   0.5164   | 3    2.021   0.6406   | 6     2.805   0.5757
@@ -9099,7 +9099,7 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 				    (let ((N (length v)))
 				      (do ((i 0 (+ 1 i)))
 					  ((= i N))
-					(if (&lt; (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> (phase-vocoder-amp-increments v) i) gate)
+					(if (&lt; (vct-ref (phase-vocoder-amp-increments v) i) gate)
 					    (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> (phase-vocoder-amp-increments v) i 0.0)))
 				      #t))
 				  #f ;no change to synthesis))
@@ -9770,7 +9770,7 @@ for-each-child applies 'func' to the widget 'w' and to each widget in the hierar
 for a widget named 'name' belonging to 'w'.
 <pre>
     (for-each-child 
-      (list-ref (<a class=quiet href="extsnd.html#soundwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundwidgets_tip)">sound-widgets</a>) 2) ; control panel
+      ((<a class=quiet href="extsnd.html#soundwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundwidgets_tip)">sound-widgets</a>) 2) ; control panel
       (lambda (w) 
         (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%~A" (XtName w)))))
 </pre>
@@ -10058,7 +10058,7 @@ mouse location in that channel.
 
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (make-sound-box "sounds"
-		(list-ref (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 3)
+		((<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 3)
 		(lambda (file) 
                   (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> file))
 		(peak-env-dir)

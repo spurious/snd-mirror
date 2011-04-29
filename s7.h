@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.84"
-#define S7_DATE "23-Mar-11"
+#define S7_VERSION "1.85"
+#define S7_DATE "28-Apr-11"
 
 
 typedef long long int s7_Int;
@@ -434,6 +434,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);                /* (
 s7_pointer s7_procedure_environment(s7_pointer p);                          /* (procedure-environment x) */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);                 /* (procedure-arity x) -- returns a list (required optional rest?) */
+const char *s7_help(s7_scheme *sc, s7_pointer obj);                         /* (help obj) */
 
 bool s7_is_continuation(s7_pointer p);                                      /* (continuation? p) */
 s7_pointer s7_make_continuation(s7_scheme *sc);                             /* call/cc... (see example below) */
@@ -835,7 +836,7 @@ void s7_mark_object(s7_pointer p);
  *    char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? 
  *    char-numeric? char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? 
  *    char=? char>=? char>? copy cos cosh dynamic-wind environment? eof-object? eval even? 
- *    exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size help 
+ *    exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size 
  *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
  *    integer-length keyword->symbol lcm list list->string list->vector list-tail log logand 
  *    logior lognot logxor magnitude make-hash-table-iterator make-list make-polar
@@ -856,6 +857,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 28-Apr:    s7_help.
  * 5-Apr:     pair-line-number.
  * 23-Mar:    s7_catch_all.
  * 14-Mar:    s7_make_random_state, optional state argument to s7_random, random-state->list, s7_random_state_to_list.

@@ -499,9 +499,9 @@ is the word "definstrument":
 	(touch-tab-2 '(0 1209 1336 1477 1209 1336 1477 1209 1336 1477 1209 1336 1477)))
     (do ((i 0 (+ 1 i)))
 	((= i (length telephone-number)))
-      (let* ((num (list-ref telephone-number i))
-	     (frq1 (list-ref touch-tab-1 num))
-	     (frq2 (list-ref touch-tab-2 num)))
+      (let* ((num (telephone-number i))
+	     (frq1 (touch-tab-1 num))
+	     (frq2 (touch-tab-2 num)))
         (<em class=red>simp</em> (+ start (* i .4)) .3 frq1 .1)
         (<em class=red>simp</em> (+ start (* i .4)) .3 frq2 .1)))))
 
@@ -563,12 +563,12 @@ as the generator object:
 (define (<A NAME="make-my-oscil">make-my-oscil</A> frequency)       ; we want our own oscil!
   (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency)))    ; current phase and frequency-based phase increment
 
-(define (my-oscil gen fm)               ; the corresponding generator
-  (let ((result (sin (vct-ref gen 0)))) ; return sin(current-phase)
-    (vct-set! gen 0 (+ (vct-ref gen 0)  ; increment current phase
-                       (vct-ref gen 1)  ;    by frequency
-                       fm))             ;    and FM
-    result))                            ; return sine wave
+(define (my-oscil gen fm)       ; the corresponding generator
+  (let ((result (sin (gen 0)))) ; return sin(current-phase)
+    (set! (gen 0) (+ (gen 0)    ; increment current phase
+                       (gen 1)  ;    by frequency
+                       fm))     ;    and FM
+    result))                    ; return sine wave
 
 (with-sound () 
   (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a> 
@@ -964,7 +964,7 @@ are times when nothing but a ton of oscils will do:
    (do ((i 0 (+ i 1))
 	(k 0 (+ k 2)))
        ((= i len))
-     (set! (amps (list-ref peaks k)) (list-ref peaks (+ k 1))))
+     (set! (amps (peaks k)) (peaks (+ k 1))))
    ...
    (outa i (* (env ampf) (<em class=red>mus-chebyshev-t-sum</em> angle amps)))
    (set! angle (+ angle freq (rand-interp vib)))
@@ -1006,7 +1006,7 @@ are times when nothing but a ton of oscils will do:
    (do ((i 0 (+ i 1))
 	(k 0 (+ k 2)))
        ((= i len))
-     (set! (amps (list-ref peaks k)) (list-ref peaks (+ k 1))))
+     (set! (amps (peaks k)) (peaks (+ k 1))))
 
    (run
       (do ((i 0 (+ 1 i)))
@@ -3702,8 +3702,8 @@ getting waveforms and results like these:
 				 (do ((i 0 (+ 1 i)))
 				     ((= i n))
 				   (if (vct? phases)
-				       (vector-set! (ngencos-arr g) i (make-oscil (* frq (+ 1 i)) (phases i)))
-				       (vector-set! (ngencos-arr g) i (make-oscil (* frq (+ 1 i)) (random (* 2 pi)))))))
+				       (set! ((ngencos-arr g) i) (make-oscil (* frq (+ 1 i)) (phases i)))
+				       (set! ((ngencos-arr g) i) (make-oscil (* frq (+ 1 i)) (random (* 2 pi)))))))
 			       g))
   (frequency 0.0) (n 1 :type int) (phases #f :type vct) (arr #f :type clm-vector))
 
@@ -3715,7 +3715,7 @@ getting waveforms and results like these:
 	 (sum 0.0))
     (do ((i 0 (+ 1 i)))
 	((= i n))
-      (set! sum (+ sum (oscil (vector-ref arr i) (* (+ 1 i) fm)))))
+      (set! sum (+ sum (oscil (arr i) (* (+ 1 i) fm)))))
     (/ sum n)))
 
 (with-sound (:channels 1 :clipped #f)
@@ -3846,7 +3846,7 @@ compare ncos as FM and direct sum of cos:
 	    (let ((sum 0.0))
 	      (do ((k 0 (+ 1 k)))
 		  ((= k n))
-		(set! sum (+ sum (oscil (vector-ref mods k)))))
+		(set! sum (+ sum (oscil (mods k)))))
 	      (outb i (* amp (oscil car2 (* (/ index n) sum)))))))))
     (list
      (list 0.0 1)
@@ -4743,8 +4743,8 @@ add a "stretch" argument to spread out or squeeze down the spectrum.
 We would replace the current make-ssb-am line with:
 </p>
 <pre>
-    (vector-set! ssbs (- i 1) (<em class=red>make-ssb-am</em> (+ (* i factor old-freq)
-                                              (* new-freq (round (* i <em class=red>stretch</em>))))))
+    (set! (ssbs (- i 1)) (<em class=red>make-ssb-am</em> (+ (* i factor old-freq)
+                                       (* new-freq (round (* i <em class=red>stretch</em>))))))
 </pre>
 
 
@@ -6389,12 +6389,12 @@ delay line as the coefficients for an FIR filter:
         ((= k num-combs0))
       (set! (cmbs0 k)
             (<em class=red>make-comb</em> scaler 
-              (floor (* comb-len (list-ref combs0 k))))))
+              (floor (* comb-len (combs0 k))))))
     (do ((k 0 (+ 1 k)))
         ((= k num-combs1))
       (set! (cmbs1 k)
             (<em class=red>make-comb</em> scaler 
-              (floor (* comb-len (list-ref combs1 k))))))
+              (floor (* comb-len (combs1 k))))))
     (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
      (do ((i beg (+ 1 i)))
          ((= i end))
@@ -7821,11 +7821,11 @@ In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_mult
     <em class=listener>3</em>
     <em class=listener>&gt;</em><em class=typing>(mus-data f1)</em>
     <em class=listener>#&lt;vct[len=3]: 1.000 0.500 0.100&gt;</em>
-    <em class=listener>&gt;</em><em class=typing>(frame-set! f1 1 -.5)</em> ; same as (set! (frame-ref f1 1) -.5)
+    <em class=listener>&gt;</em><em class=typing>(frame-set! f1 1 -.5)</em> ; same as (set! (f1 1) -.5)
     <em class=listener>-0.5</em>
     <em class=listener>&gt;</em><em class=typing>f1</em>
     <em class=listener>#&lt;frame[3]: [1.000 -0.500 0.100]&gt;</em>
-    <em class=listener>&gt;</em><em class=typing>(mixer-set! m1 0 1 0.5)</em> ; same as (set! (mixer-ref m1 0 1) 0.5)
+    <em class=listener>&gt;</em><em class=typing>(mixer-set! m1 0 1 0.5)</em> ; same as (set! (m1 0 1) 0.5)
     <em class=listener>0.5</em>
     <em class=listener>&gt;</em><em class=typing>m1</em>
     <em class=listener>#&lt;mixer: chans: 3, [
@@ -7941,9 +7941,9 @@ object.
     (do ((i 0 (+ 1 i)))
 	((= i len))
       (file-&gt;frame input i frame)
-      (let ((val (frame-ref frame 0)))
-	(frame-set! frame 0 (frame-ref frame 1))
-	(frame-set! frame 1 val))
+      (let ((val (frame 0)))
+	(set! (frame 0) (frame 1))
+	(set! (frame 1) val))
       (frame-&gt;file *output* i frame))))
 </pre>
 </td>

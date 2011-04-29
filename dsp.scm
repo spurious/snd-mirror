@@ -182,7 +182,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define compute-uniform-circular-string
   (lambda (size x0 x1 x2 mass xspring damp)
-    (define circle-vct-ref 
+    (define circle-ref 
       (lambda (v i)
 	(if (< i 0)
 	    (v (+ size i))
@@ -198,7 +198,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
       (do ((i 0 (+ i 1)))
 	  ((= i size))
 	(set! (x0 i) (+ (* p1 (x1 i))
-			(* p2 (+ (circle-vct-ref x1 (- i 1)) (circle-vct-ref x1 (+ i 1))))
+			(* p2 (+ (circle-ref x1 (- i 1)) (circle-ref x1 (+ i 1))))
 			(* p3 (x2 i)))))
       (vct-fill! x2 0.0)
       (vct-add! x2 x1)
@@ -208,7 +208,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define compute-string
   ;; this is the more general form
   (lambda (size x0 x1 x2 masses xsprings esprings damps haptics)
-    (define circle-vct-ref 
+    (define circle-ref 
       (lambda (v i)
 	(if (< i 0)
 	    (v (+ size i))
@@ -226,7 +226,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	     (p3 (/ -1.0 denom))
 	     (p4 (/ (haptics i) (* (masses i) denom))))
 	(set! (x0 i) (+ (* p1 (x1 i))
-			(* p2 (+ (circle-vct-ref x1 (- i 1)) (circle-vct-ref x1 (+ i 1))))
+			(* p2 (+ (circle-ref x1 (- i 1)) (circle-ref x1 (+ i 1))))
 			(* p3 (x2 i))
 			p4))))
     (do ((i 0 (+ i 1)))

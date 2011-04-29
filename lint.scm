@@ -314,6 +314,7 @@
 			 (cons 'procedure-with-setter? #t)))
 	(loaded-files #f)
 	(globals #f)
+	(generators '())
 	(undefined-identifiers #f)
 	(other-identifiers #f)
 	(last-simplify-boolean-line-number -1)
@@ -484,19 +485,19 @@
 
     (define (check-for-repeated-args name line-number head form env)
       (if (repeated-member? (cdr form) env)
-	  (if (or (member head '(eq? eqv? equal?))
+	  (if (or (memq head '(eq? eqv? equal?))
 		  (and (= (lint-length form) 3)
-		       (member head '(= / max min < > <= >= - quotient remainder modulo lcm gcd and or
-				      string=? string<=? string>=? string<? string>?
-				      char=? char<=? char>=? char<? char>?))))
+		       (memq head '(= / max min < > <= >= - quotient remainder modulo lcm gcd and or
+				    string=? string<=? string>=? string<? string>?
+				    char=? char<=? char>=? char<? char>?))))
 	      (format #t "  ~A (line ~D): this looks odd:~A~%"
 		      name line-number 
 		      ;; sigh (= a a) could be used to check for non-finite numbers, I suppose,
 		      ;;   and (/ 0 0) might be deliberate (as in gmp)
 		      (truncated-list->string form))
-	      (if (member head '(= max min < > <= >= and or
-				 string=? string<=? string>=? string<? string>?
-				 char=? char<=? char>=? char<? char>?))
+	      (if (memq head '(= max min < > <= >= and or
+			       string=? string<=? string>=? string<? string>?
+			       char=? char<=? char>=? char<? char>?))
 		  (format #t "  ~A (line ~D): it looks odd to have repeated arguments in~A~%"
 			  name line-number (truncated-list->string form))))))
 
@@ -507,7 +508,7 @@
 	(and (pair? lst)
 	     (or (and (or (not (pair? (car lst)))
 			  (not (side-effect? (car lst) env)))
-		      (or (member (list 'not (car lst)) (cdr lst))
+		      (or (memq (list 'not (car lst)) (cdr lst))
 			  (and (pair? (car lst))
 			       (eq? (caar lst) 'not)
 			       (= (lint-length (car lst)) 2)
@@ -731,7 +732,7 @@
 	  
 
       (if (or (not (pair? form))
-	      (not (member (car form) '(or and not))))
+	      (not (memq (car form) '(or and not))))
 	  (classify form)
 	  (let ((len (lint-length form)))
 	    
@@ -741,7 +742,7 @@
 	       (if (= len 2)
 		   (let* ((arg (cadr form))
 			  (val (if (and (pair? arg)
-					(member (car arg) '(and or not)))
+					(memq (car arg) '(and or not)))
 				   (classify (simplify-boolean arg true false env))
 				   (classify arg))))
 		     (if (boolean? val)
@@ -778,7 +779,7 @@
 				  (val (classify e)))
 			     
 			     (if (and (pair? val)
-				      (member (car val) '(and or not)))
+				      (memq (car val) '(and or not)))
 				 (set! val (classify (simplify-boolean e true false env))))
 			     
 			     (if (not (eq? val #f))                 ; #f in or is ignored
@@ -821,7 +822,7 @@
 				  (val (classify e)))
 			     
 			     (if (and (pair? val)
-				      (member (car val) '(and or not)))
+				      (memq (car val) '(and or not)))
 				 (set! val (classify (simplify-boolean e true false env))))
 			     
 			     ;; (and x1 x2 x1) is not reducible, unless to (and x2 x1)
@@ -850,7 +851,7 @@
 
 
     (define (numeric? op)
-      (member op '(+ * - / 
+      (memq op '(+ * - / 
 		   sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
 		   log exp expt sqrt make-polar make-rectangular
 		   imag-part real-part abs magnitude angle max min exact->inexact
@@ -866,13 +867,13 @@
       ;; This is not an agressive simplification.
 
       ;; this returns a form, possibly the original simplified
-      (let ((complex-result? (lambda (op) (member op '(+ * - / 
+      (let ((complex-result? (lambda (op) (memq op '(+ * - / 
 						       sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
 						       log exp expt sqrt make-polar make-rectangular))))
-	    (real-result? (lambda (op) (member op '(imag-part real-part abs magnitude angle max min exact->inexact
+	    (real-result? (lambda (op) (memq op '(imag-part real-part abs magnitude angle max min exact->inexact
 						    modulo remainder quotient lcd gcd))))
-	    (rational-result? (lambda (op) (member op '(rationalize inexact->exact))))
-	    (integer-result? (lambda (op) (member op '(logior lognot logxor logand numerator denominator 
+	    (rational-result? (lambda (op) (memq op '(rationalize inexact->exact))))
+	    (integer-result? (lambda (op) (memq op '(logior lognot logxor logand numerator denominator 
 						       floor round truncate ceiling ash)))))
 
 	(define (inverse-op op)
@@ -1203,7 +1204,7 @@
 		   
 		   (if *report-minor-stuff*
 		       (let ((expr (if (and (pair? (cadr form))
-					    (member (car (cadr form)) '(and or not)))
+					    (memq (car (cadr form)) '(and or not)))
 				       (simplify-boolean (cadr form) '() '() env)
 				       (cadr form))))
 			 (if (and (boolean? (list-ref form 2))
@@ -1341,9 +1342,9 @@
 		     name line-number form (cadr form))))
 
 	((sort!)
-	 (if (member (caddr form) '(= <= >= eq? eqv? equal?
-				      string=? string<=? string>=? char=? char<=? char>=?
-				      string-ci=? string-ci<=? string-ci>=? char-ci=? char-ci<=? char-ci>=?))
+	 (if (memq (caddr form) '(= <= >= eq? eqv? equal?
+			          string=? string<=? string>=? char=? char<=? char>=?
+				  string-ci=? string-ci<=? string-ci>=? char-ci=? char-ci<=? char-ci>=?))
 	     (format #t "  ~A (line ~D): sort! with ~A may hang:~A~%"
 		     name line-number head 
 		     (truncated-list->string form))))))
@@ -1558,8 +1559,8 @@
 			  (let ((call-args (lint-length (cdr form)))
 				(decl-args (max 0 (- (lint-length pargs) (keywords pargs) (if rst 1 0)))))
 
-			    (let ((req (if (member type '(define lambda)) decl-args 0))
-				  (opt (if (member type '(define lambda)) 0 decl-args)))
+			    (let ((req (if (memq type '(define lambda)) decl-args 0))
+				  (opt (if (memq type '(define lambda)) 0 decl-args)))
 			      (if (< call-args req)
 				  (format #t "  ~A (line ~D): ~A needs ~D argument~A:~A~%" 
 					  name line-number head 
@@ -1570,7 +1571,7 @@
 				      (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
 					      name line-number head 
 					      (truncated-list->string form))))
-			      (if (member type '(define* lambda*))
+			      (if (memq type '(define* lambda*))
 				  (if (not (member ':allow-other-keys pargs))
 				      (for-each
 				       (lambda (arg)
@@ -1704,7 +1705,7 @@
 				       (set! arity (procedure-arity (symbol->value func)))
 				       
 				       (if (and (pair? (cadr form))
-						(member (caadr form) '(lambda lambda*))
+						(memq (caadr form) '(lambda lambda*))
 						(pair? (cadr (cadr form))))
 					   (let ((arglen (lint-length (cadr (cadr form)))))
 					     (if (eq? (cadr form) 'lambda)
@@ -1746,7 +1747,7 @@
 				     )))))))))))))
     
 
-    (define (get-generator form) ; defgenerator funcs
+    (define (get-generator form env) ; defgenerator funcs
       (let ((name (if (pair? (cadr form))
 		      (car (cadr form))
 		      (cadr form))))
@@ -1758,6 +1759,7 @@
 	  (hash-table-set! globals make-name (list make-name #f #f))
 	  (hash-table-set! globals name? (list name? #f #f))
 	  (hash-table-set! globals methods (list methods #f #f))
+	  (set! generators (cons name generators))
 
 	  (for-each
 	   (lambda (field)
@@ -1767,7 +1769,11 @@
 									  (car field)
 									  field))))))
 	       (hash-table-set! globals fname (list fname #f #f (list 'lambda (list 'gen))))))
-	   (cddr form)))))
+	   (cddr form))
+	  (if (and env
+		   (pair? (cadr form)))
+	      (lint-walk name (cdadr form) env)))
+	env))
 
 
     (define (load-walk form)
@@ -1789,7 +1795,7 @@
 	       (hash-table-set! globals (cadr form) (list (cadr form) #f #f))))
 
 	  ((defgenerator)
-	   (get-generator form))
+	   (get-generator form #f))
 
 	  ((if)
 	   (if (pair? (cddr form))
@@ -1895,7 +1901,7 @@
 	    (unused '()))
 	(for-each 
 	 (lambda (arg)
-	   (if (member (car arg) '(quote if begin let let* letrec cond case or and do set! 
+	   (if (memq (car arg) '(quote if begin let let* letrec cond case or and do set! 
 				   with-environment lambda lambda* define defvar define-envelope
 				   define* defmacro defmacro* define-macro define-macro* 
 				   define-bacro define-bacro* define-constant))
@@ -1946,7 +1952,7 @@
 				 (truncated-list->string f)))))
 
 	       (if (and (pair? f)
-			(member head '(defmacro defmacro* define-macro define-macro* define-bacro define-bacro*))
+			(memq head '(defmacro defmacro* define-macro define-macro* define-bacro define-bacro*))
 			(tree-member 'unquote f))
 		   (format #t "  ~A (line ~D): ~A possibly has too many unquotes:~A~%"
 			   name line-number head
@@ -2033,7 +2039,7 @@
 					     (list arg #f #f))
 					 (if (or (not (pair? arg))
 						 (not (= (lint-length arg) 2))
-						 (not (member head '(define* lambda* defmacro* define-macro* define-bacro* definstrument))))
+						 (not (memq head '(define* lambda* defmacro* define-macro* define-bacro* definstrument))))
 					     (begin
 					       (format #t "  ~A (line ~D): strange parameter for ~A: ~S~%" 
 						       name line-number head arg)
@@ -2095,7 +2101,7 @@
 
 			 (if (symbol? sym)
 			     (begin
-			       (if (member head '(define define-constant defvar define-envelope))
+			       (if (memq head '(define define-constant defvar define-envelope))
 				   (let ((len (lint-length form)))
 				     (if (not (= len 3))
 					 (format #t "  ~A (line ~D): ~S has ~A value~A?~%"
@@ -2113,7 +2119,7 @@
 				   (let ((e (lint-walk sym (caddr form) env)))
 				     ;(format #t "define ~A: ~A~%" sym (car e))
 				     (if (and (pair? e)
-					      (eq? (caar e) sym)) ; (define x (lambda ...))
+					      (eq? (caar e) sym)) ; (define x (lambda ...)) but it misses closures
 					 e
 					 (append (list (list sym #f #f)) env)))
 				   (append (list (list sym #f #f)) env)))
@@ -2134,7 +2140,7 @@
 
 		  ;; ---------------- defgenerator ----------------
 		  ((defgenerator)
-		   (get-generator form)
+		   (get-generator form env)
 		   env)
 
 		  ;; ---------------- lambda ----------------		  
@@ -2168,7 +2174,7 @@
 			 (if (pair? settee)
 			     (begin
 			       (if (and *report-minor-stuff*
-					(member (car settee) '(vector-ref list-ref string-ref hash-table-ref)))
+					(memq (car settee) '(vector-ref list-ref string-ref hash-table-ref)))
 				   (format #t "  ~A (line ~D): ~A as target of set!~A~%"
 					   name line-number (car settee)
 					   (truncated-list->string form)))
@@ -2510,6 +2516,7 @@
 							  (lambda (return)
 							    (do ((k i (+ k 1)))
 								((= k len) #f)
+							      ;; this can be confused by pad chars in ~T
 							      (if (and (not (char-numeric? (string-ref str k)))
 								       (not (char=? (string-ref str k) #\,)))
 								  (return (char-ci=? (string-ref str k) #\t))))))))
@@ -2697,7 +2704,37 @@
 				      vars)))
 
 	      (if *report-unused-top-level-functions* 
-		  (report-usage file 0 'top-level-function #f vars))
+		  (begin
+		    (report-usage file 0 'top-level-function #f vars)
+		    (if (not (null? generators))
+			(let ((descr `(lambda (gen)))
+			      (set '())
+			      (unused '()))
+			  (for-each
+			   (lambda (gen)
+			     ;; look for unused fields
+			     (let* ((giter (make-hash-table-iterator globals))
+				    (field-prefix (string-append (symbol->string gen) "-"))
+				    (prefix-len (string-length field-prefix)))
+			       (do ((gfield (giter) (giter)))
+				   ((null? gfield))
+				 (if (not (memq (car gfield) other-identifiers)) (begin
+				 (set! gfield (cdr gfield))
+				 (if (and (= (lint-length gfield) 4)
+					  (not (cadr gfield))
+					  (equal? (cadddr gfield) descr)
+					  (let ((symstr (symbol->string (car gfield))))
+					    (and (> (string-length symstr) prefix-len)
+						 (string=? (substring symstr 0 prefix-len) field-prefix))))
+				     (if (caddr gfield)
+					 (set! set (cons (car gfield) set))
+					 (set! unused (cons (car gfield) unused)))))))
+			       ))
+			   generators)
+			  (if (not (null? set))
+			      (format #t "  generator fields set, but not used: ~{~A~^, ~}~%" set))
+			  (if (not (null? unused))
+			      (format #t "  unused generator fields: ~{~A~^, ~}~%" unused))))))
 
 	      (if *report-undefined-variables*
 		  (for-each
@@ -2713,7 +2750,28 @@
 	      (close-input-port fp)))))))
 
 
-;;; if vector or hash-table get one list arg, should we ask if they mean apply vector...?
-;;; also no-ops: (apply list lst) -- 1 arg here
 
+;;; it should be possible to automatically test each (no-side-effect) function, and return a list of problems
+;;;   for example inputs that generate infs/nans, or non-type errors
+;;;    (define (f x) (/ 123 x))
+;;;   or out-of-range indices
+;;;    (define (v n) (vector-ref #(1 2 3) n))
+;;;   or even generate a test suite (especially for each top-level function)
+;;;   and same process for built-in functions: figure out possible return types etc
+;;;   [how to know that vct-add! for example needs a vct to do anything reasonable?
+;;;   [get a list of make-* and figure out how to get each object? -- could s7 return a list of these as if make-type?]
 
+;;; we could follow the parameters through the function body, and see if things look consistent
+
+;;; also to find infinite loops, could we run the code in the current
+;;;   environment with a hook added to count iterations?
+
+;;; also if a local function is used in an expression where we know what its type must be,
+;;;   can we check that it will actually return that type?
+
+;;; also if such a function is called with constant args, simplify?
+
+;;; if define-record, report fields that are unused or just set
+;;;  shouldn't we mention two top-level defs of the same function, if their sources aren't equal?
+
+;;; another kind of docstring check would look for examples and try to replicate them

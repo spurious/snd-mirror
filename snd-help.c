@@ -3659,7 +3659,6 @@ and its value is returned."
 
 #if HAVE_SCHEME
   {
-    /* hooks and vars are broken here */
     XEN sym = XEN_FALSE;
     if (XEN_STRING_P(text))
       {
@@ -3679,45 +3678,50 @@ and its value is returned."
 	  }
       }
 
-    if (XEN_PROCEDURE_P(sym))
+    str = (char *)s7_help(s7, sym);
+    if (!str)
       {
-	str = (char *)s7_procedure_documentation(s7, sym);
-	if ((str == NULL) || (mus_strlen(str) == 0))
+	if (XEN_PROCEDURE_P(sym))
 	  {
-	    const char *url = NULL;
-	    s7_pointer x;
-
-	    /* (cdr (assoc '__func__ (car (procedure-environment func))) => (name file line) or name */
-	    x = s7_procedure_environment(sym);
-	    if (s7_is_pair(x))
+	    str = (char *)s7_procedure_documentation(s7, sym);
+	    if ((str == NULL) || 
+		(mus_strlen(str) == 0))
 	      {
-		x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_car(x)));
+		const char *url = NULL;
+		s7_pointer x;
+		
+		/* (cdr (assoc '__func__ (car (procedure-environment func))) => (name file line) or name */
+		x = s7_procedure_environment(sym);
 		if (s7_is_pair(x))
 		  {
-		    subject = (char *)s7_symbol_name(s7_car(x));
-		    url = snd_url(subject);
-		    /* unavoidable memleak I guess */
-		    str = (char *)calloc(256, sizeof(char));
-		    if (url)
-		      mus_snprintf(str, 256, "%s is defined at line %lld of %s, and documented at %s",
-				   subject, 
-				   s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
-				   s7_string(s7_car(s7_cdr(x))),
-				   url);
-		    else 
-		      mus_snprintf(str, 256, "%s is defined at line %lld of %s",
-				   subject, 
-				   s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
-				   s7_string(s7_car(s7_cdr(x))));
+		    x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_car(x)));
+		    if (s7_is_pair(x))
+		      {
+			subject = (char *)s7_symbol_name(s7_car(x));
+			url = snd_url(subject);
+			/* unavoidable memleak I guess */
+			str = (char *)calloc(256, sizeof(char));
+			if (url)
+			  mus_snprintf(str, 256, "%s is defined at line %lld of %s, and documented at %s",
+				       subject, 
+				       s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
+				       s7_string(s7_car(s7_cdr(x))),
+				       url);
+			else 
+			  mus_snprintf(str, 256, "%s is defined at line %lld of %s",
+				       subject, 
+				       s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
+				       s7_string(s7_car(s7_cdr(x))));
+		      }
 		  }
 	      }
 	  }
-      }
-    else
-      {
-	if (XEN_HOOK_P(sym))
-	  str = (char *)s7_hook_documentation(sym);
-	else str = (char *)xen_s7_constant_help(subject);
+	else
+	  {
+	    if (XEN_HOOK_P(sym))
+	      str = (char *)s7_hook_documentation(sym);
+	    else str = (char *)xen_s7_constant_help(subject);
+	  }
       }
   }
 #endif

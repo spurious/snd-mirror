@@ -1491,8 +1491,8 @@ In general:
          (fm-indices (make-vct n)))
     (do ((i 0 (+ 1 i)))
 	((= i n))
-      (set! (modulators i) (make-oscil (* freq (list-ref mc-ratios i)) (list-ref mod-phases i)))
-      (set! (fm-indices i) (hz-&gt;radians (* freq (list-ref indexes i) (list-ref mc-ratios i)))))
+      (set! (modulators i) (make-oscil (* freq (mc-ratios i)) (mod-phases i)))
+      (set! (fm-indices i) (hz-&gt;radians (* freq (indexes i) (mc-ratios i)))))
     (run
      (do ((i start (+ 1 i)))
          ((= i end))
