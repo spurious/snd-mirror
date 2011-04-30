@@ -26,10 +26,10 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;; for Guile
+;;;   this no longer works
 
 (if (not (provided? 's7))
     (begin
-      ;; here's an attempt to make this work in Guile 1.8/2.0
       ;;   (lint also uses catch, object->string)
       ;;   I'm using old-style sequence accessors and so on to make it easier to port this code
 
@@ -114,7 +114,7 @@
 		 'abs 'acos 'acosh 'and 'angle 'append 'ash 'asin 'asinh 'assoc 'assq 'assv 'atan 'atanh 
 		 'begin 'boolean? 
 		 'caaaar 'caaadr 'caaar 'caadar 'caaddr 'caadr 'caar 'cadaar 'cadadr 'cadar 'caddar 'cadddr 'caddr 'cadr 
-		 'call-with-exit 'car 'case 'catch 'catch 'cdaaar 'cdaadr 'cdaar 'cdadar 'cdaddr 'cdadr 'cdar 'cddaar 'cddadr 
+		 'call-with-exit 'car 'case 'catch 'cdaaar 'cdaadr 'cdaar 'cdadar 'cdaddr 'cdadr 'cdar 'cddaar 'cddadr 
 		 'cddar 'cdddar 'cddddr 'cdddr 'cddr 'cdr 'ceiling 'char->integer 'char-alphabetic? 'char-ci<=? 'char-ci<? 
 		 'char-ci=? 'char-ci>=? 'char-ci>? 'char-downcase 'char-lower-case? 'char-numeric? 'char-ready? 'char-upcase 
 		 'char-upper-case? 'char-whitespace? 'char<=? 'char<? 'char=? 'char>=? 'char>? 'char? 'complex? 'cond 
@@ -756,7 +756,7 @@
 		      (> (length vars) 8))
 		  uform
 		  (let* ((len (length vars))
-			 (vsize (expt 2 len)) ; so 2^n * (len + 2) possible cases
+			 (vsize (expt 2 len)) ; 2^n possible cases
 			 (v (make-vector vsize))
 			 (vals '())
 			 (nonf (make-vector len))
@@ -1000,7 +1000,15 @@
 		   logior lognot logxor logand numerator denominator 
 		   floor round truncate ceiling ash)))
     
-    
+    (define (splice-if f lst)
+      (cond ((null? lst) '())
+	    ((pair? lst)
+	     (if (and (pair? (car lst))
+		      (f (caar lst)))
+		 (append (splice-if f (cdar lst)) (splice-if f (cdr lst)))
+		 (cons (car lst) (splice-if f (cdr lst)))))
+	    (#t lst)))
+
     (define (simplify-numerics form env)
       ;;   I first tried a table of rules, but the code was unreadable, so
       ;;   here I'll split out each case by hand.
@@ -1030,15 +1038,6 @@
 			    ((member (car lst) nlst) (rem-dup (cdr lst) nlst))
 			    (else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
 	    (reverse (rem-dup lst '()))))
-
-	(define (splice-if f lst)
-	  (cond ((null? lst) '())
-		((pair? lst)
-		 (if (and (pair? (car lst))
-			  (f (caar lst)))
-		     (append (splice-if f (cdar lst)) (splice-if f (cdr lst)))
-		     (cons (car lst) (splice-if f (cdr lst)))))
-		(#t lst)))
 
 	(define (just-rationals? form)
 	  (or (null? form)
@@ -1100,7 +1099,9 @@
 		    (else 
 		     (if (just-rationals? val)
 			 (apply * val)
-			 `(* ,@val))))))))
+			 (if (member 0 val)
+			     0 
+			     `(* ,@val)))))))))
 
 	    ((-)
 	     (case len
@@ -1125,21 +1126,30 @@
 			`(- ,(cadr args))     ; (- 0 x) -> (- x)
 			(if (equal? (cadr args) 0)
 			    (car args)        ; (- x 0) -> x
-			    (if (and (pair? (car args))
-				     (eq? (caar args) '-)
-				     (> (lint-length (car args)) 2))
-				`(- ,@(cdar args) ,(cadr args)) ; (- (- x y) z) -> (- x y z) but leave (- (- x) ...)
-				`(- ,@args))))))
+			    (if (equal? (car args) (cadr args))
+				0             ; (- x x)
+				(if (and (pair? (car args))
+					 (eq? (caar args) '-)
+					 (> (lint-length (car args)) 2))
+				    `(- ,@(cdar args) ,(cadr args)) ; (- (- x y) z) -> (- x y z) but leave (- (- x) ...)
+				    `(- ,@args)))))))
 	       (else 
 		(if (just-rationals? args)
 		    (apply - args)
-		    (let ((nargs (remove-all 0 (splice-if (lambda (x) (eq? x '+)) (cdr args))))) ; (- x a (+ b c) d) -> (- x a b c d)
+		    (let ((nargs (remove-all 0 (splice-if (lambda (x) (eq? x '+)) (cdr args)))) ; (- x a (+ b c) d) -> (- x a b c d)
+			  (first-arg (car args)))
+		      (if (member first-arg nargs)
+			  (begin
+			    (set! nargs (remove first-arg nargs)) ; remove once
+			    (set! first-arg 0)))
 		      (if (null? nargs)
-			  (car args) ; (- x 0 0 0)?
-			  (if (and (equal? (car args) 0)
+			  first-arg ; (- x 0 0 0)?
+			  (if (and (equal? first-arg 0)
 				   (= (lint-length nargs) 1))
-			      `(- ,(car nargs)) ; (- 0 0 0 x)?
-			      `(- ,@(cons (car args) nargs)))))))))
+			      (if (number? (car nargs))
+				  (- (car nargs))
+				  `(- ,(car nargs))) ; (- 0 0 0 x)?
+			      `(- ,@(cons first-arg nargs)))))))))
 
 	    ((/)
 	     (case len
@@ -1168,13 +1178,32 @@
 			  (car args)
 			  `(/ ,@(cons (car args) nargs))))))))
 
-	    ((sin cos asin acos sinh cosh tanh asinh acosh atanh log exp)
+	    ((sin cos asin acos sinh cosh tanh asinh acosh atanh exp)
 	     (if (and (= len 1)
 		      (pair? (car args))
 		      (= (lint-length (car args)) 2)
 		      (eq? (caar args) (inverse-op (car form))))
 		 (cadar args)
-		 `(,(car form) ,@args)))
+		 (if (and (= len 1)
+			  (equal? (car args) 0))
+		     (case (car form)
+		       ((sin asin sinh asinh tanh atanh) 0)
+		       ((exp cos cosh) 1)
+		       (else `(,(car form) 0)))
+		     `(,(car form) ,@args))))
+
+	    ((log)
+	     (if (and (= len 1)
+		      (pair? (car args))
+		      (= (lint-length (car args)) 2)
+		      (eq? (caar args) 'exp))
+		 (cadar args)
+		 (if (and (= len 2)
+			  (equal? (car args) (cadr args)))
+		     (if (integer? (car args))
+			 1
+			 1.0)
+		     `(log ,@args))))
 
 	    ((sqrt)
 	     (if (and (pair? args)
@@ -1249,7 +1278,7 @@
 		 `(inexact->exact ,@args)))
 
 	    ((logior)
-	     (set! args (remove-duplicates args))
+	     (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'logior)) args)))
 	     (if (null? args)
 		 0
 		 (if (member -1 args)
@@ -1259,7 +1288,7 @@
 			 `(logior ,@args)))))
 
 	    ((logand)
-	     (set! args (remove-duplicates args))
+	     (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'logand)) args)))
 	     (if (null? args)
 		 -1
 		 (if (member 0 args)
@@ -1269,7 +1298,7 @@
 			 `(logand ,@args)))))
 	     
 	    ((gcd)
-	     (set! args (remove-duplicates args))
+	     (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'gcd)) args)))
 	     (if (null? args)
 		 0
 		 (if (member 1 args)
@@ -1279,7 +1308,7 @@
 			 `(gcd ,@(remove-duplicates args))))))
 	     
 	    ((lcm)
-	     (set! args (remove-duplicates args))
+	     (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'lcm)) args)))
 	     (if (null? args)
 		 1
 		 (if (member 0 args)
@@ -1289,7 +1318,7 @@
 			 `(lcm ,@args)))))
 
 	    ((max min)
-	     (set! args (remove-duplicates args))
+	     (set! args (remove-duplicates (splice-if (lambda (x) (eq? x (car form))) args)))
 	     (if (= len 1)
 		 (car args)
 		 (if (just-rationals? args)
@@ -1437,15 +1466,17 @@
 		     name line-number form (cadr form))))
 
 	((string-append)
-	 (let ((args (remove-all "" (cdr form))))
-	   (if (null? args)
-	       (format #t "  ~A (line ~D): this is pointless:~A~%"
-		       name line-number
-		       (truncated-list->string form))
-	       (if (< (lint-length args) (lint-length (cdr form)))
-		   (format #t "  ~A (line ~D): possible simplification:~A~%"
+	 (if (not (= line-number last-simplify-boolean-line-number))
+	     (let ((args (remove-all "" (splice-if (lambda (x) (eq? x 'string-append)) (cdr form)))))
+	       (if (null? args)
+		   (format #t "  ~A (line ~D): this is pointless:~A~%"
 			   name line-number
-			   (lists->string form `(string-append ,@args)))))))
+			   (truncated-list->string form))
+		   (if (< (lint-length args) (lint-length (cdr form)))
+		       (format #t "  ~A (line ~D): possible simplification:~A~%"
+			       name line-number
+			       (lists->string form `(string-append ,@args)))))
+	       (set! last-simplify-boolean-line-number line-number))))
 
 	((reverse list->vector vector->list list->string string->list symbol->string string->symbol number->string)
 	 (let ((inverses '((reverse . reverse) 
@@ -1986,33 +2017,37 @@
 		    (format #t "  ~A (line ~D): ~A variable is not a symbol? ~S~%" 
 			    name line-number head binding))
 		#f)
-	      (if (keyword? (car binding))
-		  (begin 
-		    (if (not second-pass)
-			(format #t "  ~A (line ~D): ~A variable is a keyword? ~S~%" 
-				name line-number head binding))
-		    #f)
-		  (if (null? (cdr binding))
-		      (begin 
-			(if (not second-pass)
-			    (format #t "  ~A (line ~D): ~A variable value is missing? ~S~%" 
-				    name line-number head binding))
-			#f)
-		      (if (and (not (= (lint-length binding) 2))
-			       (not (eq? head 'do)))
-			  (begin
-			    (if (not second-pass)
-				(format #t "  ~A (line ~D): ~A binding is messed up: ~S~%" 
-					name line-number head binding))
-			    #f)
-			  (begin
-			    (if (and *report-shadowed-variables*
-				     (not second-pass)
-				     (env-member? (car binding) env))
-				(format #t "  ~A (line ~D): ~A variable ~A in ~S shadows an earlier declaration~%" 
-					name line-number head (car binding) binding))
-			    #t)))))))
-
+	      (begin
+		(if (constant? (car binding))
+		    (format #t "  ~A (line ~D): can't bind a constant: ~S~%"
+			    name line-number binding))
+		(if (keyword? (car binding))
+		    (begin 
+		      (if (not second-pass)
+			  (format #t "  ~A (line ~D): ~A variable is a keyword? ~S~%" 
+				  name line-number head binding))
+		      #f)
+		    (if (null? (cdr binding))
+			(begin 
+			  (if (not second-pass)
+			      (format #t "  ~A (line ~D): ~A variable value is missing? ~S~%" 
+				      name line-number head binding))
+			  #f)
+			(if (and (not (= (lint-length binding) 2))
+				 (not (eq? head 'do)))
+			    (begin
+			      (if (not second-pass)
+				  (format #t "  ~A (line ~D): ~A binding is messed up: ~S~%" 
+					  name line-number head binding))
+			      #f)
+			    (begin
+			      (if (and *report-shadowed-variables*
+				       (not second-pass)
+				       (env-member? (car binding) env))
+				  (format #t "  ~A (line ~D): ~A variable ~A in ~S shadows an earlier declaration~%" 
+					  name line-number head (car binding) binding))
+			      #t))))))))
+      
 
     (define (env-difference name e1 e2 lst)
       (if (or (null? e1)
@@ -2309,6 +2344,7 @@
 				 (if (> (lint-length form) 3) "many" "few") 
 				 form)
 			 env)
+
 		       (let ((settee (cadr form))
 			     (setval (caddr form)))
 			 (if (pair? settee)
@@ -2322,14 +2358,21 @@
 			       (set! settee (do ((sym (car settee) (car sym)))
 						((not (pair? sym)) sym)))))
 			 (if (symbol? settee)
-			     (set-var settee env)
+			     (begin
+			       (if (constant? settee)
+				   (format #t "  ~A (line ~D): can't set! a constant:~A~%"
+					   name line-number 
+					   (truncated-list->string form)))
+			       (set-var settee env))
 			     (if (not (pair? settee))
 				 (format #t "  ~A (line ~D): bad set? ~A~%" 
 					 name line-number form)))
+
 			 (if (equal? settee setval)
 			     (format #t "  ~A (line ~D): pointless set!~A~%" 
 				     name line-number 
 				     (truncated-list->string form)))
+
 			 (lint-walk name setval env))))
 
 		  ;; ---------------- quote ----------------		  
@@ -2899,11 +2942,11 @@
 ;;;    (define (v n) (vector-ref #(1 2 3) n))
 ;;;   or even generate a test suite (especially for each top-level function)
 ;;;   and same process for built-in functions: figure out possible return types etc
-;;;   [how to know that vct-add! for example needs a vct to do anything reasonable?]
-;;;   [get a list of make-* and figure out how to get each object? -- could s7 return a list of these as if make-type?]
-
-;;; also to find infinite loops, could we run the code in the current
-;;;   environment with a hook added to count iterations?
-;;; if define-record, report fields that are unused or just set
+;;;   how to know that vct-add! for example needs a vct to do anything reasonable?
+;;;   get a list of make-* and figure out how to get each object? -- could s7 return a list of these as if make-type?
+;;;     or scan symbol-table for make-* and see what happens when it's called? -- have to scan also for *? etc
 ;;;  shouldn't we mention two top-level defs of the same function, if their sources aren't equal?
-;;; another kind of docstring check would look for examples and try to replicate them
+
+;;; obj->str rationalize
+;;; repeated key to hash-table?
+;;; (+ x (- x))
