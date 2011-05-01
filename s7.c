@@ -12588,6 +12588,8 @@ static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
   ci->refs[ci->top++] = ref_x;
 }
 
+/* TODO: this can appear to hang if we're trying to print an enormous structure
+ */
 
 static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
 {

@@ -547,7 +547,7 @@
 					       #f))))
 			     (format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~A~%" 
 				     name line-number head arg-number 
-				     (if (char=? (string-ref (procedure-name checker) 0) #\i) "n" "")
+				     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
 				     checker arg 
 				     (truncated-list->string form))
 			     
@@ -563,7 +563,7 @@
 			     (not (checker arg)))
 			(format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~A~%" 
 				name line-number head arg-number 
-				(if (char=? (string-ref (procedure-name checker) 0) #\i) "n" "")
+				(if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
 				checker arg 
 				(truncated-list->string form))))
 		(if (list? checkers)
@@ -697,15 +697,6 @@
 		      ((pair? (car list)) (cons (tree-remove-all x (car list)) (tree-remove-all x (cdr list))))
 		      (else (cons (car list) (tree-remove-all x (cdr list))))))
 	      
-	      (define (bool-walk form func)
-		(if (and (pair? form)
-			 (memq (car form) '(and or not)))
-		    (for-each
-		     (lambda (e)
-		       (bool-walk e func))
-		     (cdr form))
-		    (func form)))
-	      
 	      (define (canonical-tree list)
 		(let ((data (assoc list associated-exprs)))
 		  (if data
@@ -731,10 +722,20 @@
 				(expand (cdr expr)))
 			  expr))))
 	      
+	      (define (bool-walk form func)
+		(if (and (pair? form)
+			 (memq (car form) '(and or not)))
+		    (for-each
+		     (lambda (e)
+		       (bool-walk e func))
+		     (cdr form))
+		    (func form)))
+	      
 	      (bool-walk uform (lambda (val) 
 				 (if (and (or (pair? val)
 					      (symbol? val))
-					  (not (assoc val associated-exprs)))
+					  (not (assoc val associated-exprs))
+					  (not (memq val '(and or not)))) ; (not not)
 				     (let ((new-var (string->symbol (format #f "bool-~D" ctr))))
 				       (set! vars (cons new-var vars))
 				       (set! associated-exprs (cons (cons val new-var) associated-exprs))
@@ -807,6 +808,7 @@
 		 (= (lint-length e) 2)
 		 (lint-member e true (lambda (a b)
 				       ;; if a follows b, and b is true, do we know already know that a?
+				       ;; (and (< x1 12) (real? x1) (= x1 1)) -> (and (< x1 12) (= x1 1))
 				       (and (pair? b)
 					    (or (and (= (lint-length b) 2)
 						     (equal? (cadr a) (cadr b))
@@ -830,6 +832,7 @@
 
 	(define (bad-arg-match a b)
 	  
+	  ;; these accept only the given type and can return a boolean (so their value in a boolean expression is not known in advance)
 	  (define (number-op? x) (memq x '(= < > <= >= even? odd? positive? negative? zero?)))
 	  (define (char-op? x)   (memq x '(char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=? 
 						  char-alphabetic? char-numeric? char-whitespace? char-lower-case? char-upper-case?)))
@@ -839,14 +842,10 @@
 	  (define (string-op? x) (memq x '(string=? string<? string<=? string>? string>=? string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?)))
 	  
 	  (case a
-	    ((complex?) 
-	     (or (char-op? b)  ; that is, if these are false, then a non-number was accepted
-		 (list-op? b)  ;    earlier as a valid argument, so it can't be a number
-		 (string-op? b)))
-	    ((real? rational? integer?) 
-	     (or (char-op? b)
-		 (list-op? b)
-		 (string-op? b)))
+	    ((complex? number? real? rational? integer?) 
+	     (or (char-op? b)     ; that is, if these are false, then a non-number was accepted
+		 (list-op? b)     ;    earlier as a valid argument, so it can't be a number
+		 (string-op? b))) ;    (or (char=? x1 #\a) (complex? x1) x1) -> (or (char=? x1 #\a) x1)
 	    ((char?) 
 	     (or (number-op? b)
 		 (list-op? b)
@@ -858,6 +857,11 @@
 	    ((list?) 
 	     (or (char-op? b)
 		 (number-op? b)
+		 (string-op? b)))
+	    ((boolean? procedure? symbol? hook? continuation? environment?)
+	     (or (char-op? b)
+		 (number-op? b)
+		 (list-op? b)
 		 (string-op? b)))
 	    (else #f)))
 	
@@ -1133,7 +1137,7 @@
 			     (lint-eval f))
 			   (lambda ignore f))
 		    f))))
-
+	
 	(let* ((args (map simplify-arg (cdr form)))
 	       (len (lint-length args)))
 
@@ -1327,7 +1331,11 @@
 
 	    ((rationalize make-polar make-rectangular lognot logxor ash modulo remainder quotient exact->inexact tan)
 	     (if (just-rationals? args)
-		 (apply (symbol->value (car form)) args)
+		 (catch #t ; catch needed here for things like (ash 2 64)
+			(lambda ()
+			  (apply (symbol->value (car form)) args))
+			(lambda ignore
+			  `(,(car form) ,@args)))
 		 `(,(car form) ,@args)))
 
 	    ((atan expt angle) ; (angle -1) and (* 4 (atan 1)) are common ways to get pi, so don't simplify these 
@@ -1372,8 +1380,12 @@
 		 (if (member 1 args)
 		     1
 		     (if (just-integers? args)
-			 (apply gcd args)
-			 `(gcd ,@(remove-duplicates args))))))
+			 (catch #t  ; maybe (gcd -9223372036854775808 -9223372036854775808)
+				(lambda ()
+				  (apply gcd args))
+				(lambda ignore
+				  `(gcd ,@args)))
+			 `(gcd ,@args)))))
 	     
 	    ((lcm)
 	     (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'lcm)) args)))
@@ -1382,7 +1394,11 @@
 		 (if (member 0 args)
 		     0
 		     (if (just-integers? args)
-			 (apply lcm args)
+			 (catch #t
+				(lambda ()
+				  (apply lcm args))
+				(lambda ignore
+				  `(lcm ,@args)))
 			 `(lcm ,@args)))))
 
 	    ((max min)
@@ -1588,9 +1604,10 @@
 		     name line-number form (cadr form))))
 
 	((sort!)
-	 (if (memq (caddr form) '(= <= >= eq? eqv? equal?
-			          string=? string<=? string>=? char=? char<=? char>=?
-				  string-ci=? string-ci<=? string-ci>=? char-ci=? char-ci<=? char-ci>=?))
+	 (if (and (= (lint-length form) 3)
+		  (memq (caddr form) '(= <= >= eq? eqv? equal?
+				       string=? string<=? string>=? char=? char<=? char>=?
+				       string-ci=? string-ci<=? string-ci>=? char-ci=? char-ci<=? char-ci>=?)))
 	     (format #t "  ~A (line ~D): sort! with ~A may hang:~A~%"
 		     name line-number head 
 		     (truncated-list->string form))))))
@@ -2690,7 +2707,8 @@
 			       (set! vars (append (list (list (caar bindings) #f #f)) vars))))
 			 (let ((new-env (append vars env)))
 			   (do ((bindings (cadr form) (cdr bindings)))
-			       ((null? bindings))
+			       ((or (not (list? bindings))
+				    (null? bindings)))
 			     (if (binding-ok? name line-number head (car bindings) env #t)
 				 (lint-walk name (cadar bindings) new-env)))
 
@@ -2846,8 +2864,9 @@
 			       name line-number 
 			       (truncated-list->string form))
 		       (let* ((e (lint-walk-body name line-number head (cddr form) env))
-			      (vars (and (not (eq? e env))
-					 (env-difference name e env '()))))
+			      (vars (if (not (eq? e env))
+					(env-difference name e env '())
+					'())))
 			 (report-usage name line-number 'variable head vars)))
 		   env)
 
@@ -2867,7 +2886,8 @@
 			 (if (and *report-minor-stuff*
 				  (not (= line-number last-simplify-numeric-line-number))
 				  (not (env-member? head env))
-				  (numeric? head))
+				  (numeric? head)
+				  (not (null? (cdr form))))
 			     (let ((val (simplify-numerics form env)))
 			       (set! last-simplify-numeric-line-number line-number)
 			       (if (not (equal? form val))
@@ -2956,6 +2976,7 @@
 		(set! last-form form)
 		(set! last-line-number line)
 
+		;(format #t "~A~%" form)
 		(set! vars (lint-walk (if (symbol? form) 
 					  form 
 					  (if (pair? form) 
