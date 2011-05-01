@@ -58549,11 +58549,6 @@ EDITS: 1
 		       (format #f "Ctrl <Key>osfLeft:  try1()~%Ctrl <Key>osfRight: try2()~%Ctrl <Key>osfUp:  try1(hiho)~%Ctrl <Key>osfDown: try2(down, up)~%")))
 		 (pane (add-main-pane "hiho" xmTextWidgetClass '())))
 	    (XtOverrideTranslations pane tab))
-	  (if (defined? 'XtAddActions)
-	      (XtAddActions (list (list "try3" (lambda (w e strs)	
-						 (snd-display #__line__ ";try3: ~A~%" strs)))
-				  (list "try4" (lambda (w e strs)
-						 (snd-display #__line__ ";try4: ~A~%" strs))))))
 	  
 	  (let ((XmNhiho (add-resource "hiho" 0)))
 	    (if (not (string=? XmNhiho "hiho")) (snd-display #__line__ ";add-resource XmNhiho: ~A" XmNhiho)))
@@ -60850,8 +60845,6 @@ EDITS: 1
 
 ;;; ---------------- test 28: errors ----------------
 
-(defvar env3 '(0 0 1 1))
-
 (defmacro simple-time (a) 
   `(let ((start (get-internal-real-time))) 
      ,a 
@@ -63079,7 +63072,6 @@ EDITS: 1
 	(if (sound? (find-sound "oboe.snd"))
 	    (snd-display #__line__ ";oboe.snd is still open?"))
 	
-	(set! env3 #f)
 	(set! delay-32 #f)
 	(set! color-95 #f)
 	(set! vector-0 #f)

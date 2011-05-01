@@ -7223,6 +7223,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;; no null hash-tables?
 
 (let ((ht (make-hash-table)))
+  ;; these are broken on purpose -- ht has no entries, so its lenth is 0, so we don't check arg nums etc
   (test (map (lambda (x) x) ht) '())
   (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) ht) ctr) 0)
   (test (map (lambda (x y) (cons x y)) (list 1 2 3) ht) '())

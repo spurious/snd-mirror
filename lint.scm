@@ -6,7 +6,7 @@
 (define *report-unused-top-level-functions* #f)
 (define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
-(define *report-minor-stuff* #f)          ; let*, docstring checks, (= 1.5 x), numerical and boolean simplification
+(define *report-minor-stuff* #t)          ; let*, docstring checks, (= 1.5 x), numerical and boolean simplification
 
 (define *load-file-first* #f)
 (define start-up-environment (if (provided? 's7) (global-environment) #f))
@@ -26,7 +26,7 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;; for Guile
-;;;   this no longer works
+;;;   this no longer works in Guile 2.0
 
 (if (not (provided? 's7))
     (begin
@@ -358,18 +358,6 @@
     (define (integer-between-0-and-255? i) 
       (and (integer? i) (<= 0 i 255)))
     
-    (define (non-constant-string? str)
-      (and (string? str)
-	   (not (constant? str))))
-    
-    (define (non-constant-list? lst)
-      (and (pair? lst)
-	   (not (constant? lst))))
-    
-    (define (non-constant-vector? v)
-      (and (vector? v)
-	   (not (constant? v))))
-    
     (define (sequence? obj)
       ;; scheme and C types here are ok, so...
       (and (not (number? obj))
@@ -448,7 +436,7 @@
 	       (not (hash-table-ref no-side-effect-functions form))
 	       (let ((e (env-member form env)))
 		 (or (not e)
-		     (>= (length e) 4)))))) ; it is a local function
+		     (>= (lint-length e) 4)))))) ; it is a local function
 
 
     (define (just-constants? form env)
@@ -753,9 +741,9 @@
 				       (set! ctr (+ ctr 1))))))
 	      
 	      (if (or (null? vars)
-		      (> (length vars) 8))
+		      (> (lint-length vars) 8))
 		  uform
-		  (let* ((len (length vars))
+		  (let* ((len (lint-length vars))
 			 (vsize (expt 2 len)) ; 2^n possible cases
 			 (v (make-vector vsize))
 			 (vals '())
@@ -786,7 +774,7 @@
 		      (if (not (member (v ctr) vals))
 			  (set! vals (cons (v ctr) vals))))
 		    
-		    (if (= (length vals) 1)
+		    (if (= (lint-length vals) 1)
 			(car vals)
 			(let ((none-vars '())
 			      (pos -1))
@@ -813,12 +801,86 @@
 				(expand form))
 			      uform))))))))
       
+      (define (true? e)
+	(or (member e true)
+	    (and (pair? e)
+		 (= (lint-length e) 2)
+		 (lint-member e true (lambda (a b)
+				       ;; if a follows b, and b is true, do we know already know that a?
+				       (and (pair? b)
+					    (or (and (= (lint-length b) 2)
+						     (equal? (cadr a) (cadr b))
+						     (case (car a)
+						       ((complex?)  (memq (car b) '(number? real? rational? integer? even? odd? 
+										    positive? negative? zero? exact? inexact?)))
+						       ((number?)   (memq (car b) '(complex? real? rational? integer? even? odd? 
+										    positive? negative? zero? exact? inexact?)))
+						       ((real?)     (memq (car b) '(rational? integer? even? odd? positive? negative? exact? inexact?)))
+						       ((rational?) (memq (car b) '(integer? even? odd?)))
+						       ((integer?)  (memq (car b) '(even? 'odd)))
+						       (else #f)))
+						(and (> (lint-length b) 2)
+						     (member (cadr a) (cdr b))
+						     (case (car a)
+						       ((complex? number?) (eq? (car b) '=))
+						       ((real?)            (memq (car b) '(< > <= >=)))
+						       (else #f))))))))))
+
+      (define (false? e)
+
+	(define (bad-arg-match a b)
+	  
+	  (define (number-op? x) (memq x '(= < > <= >= even? odd? positive? negative? zero?)))
+	  (define (char-op? x)   (memq x '(char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=? 
+						  char-alphabetic? char-numeric? char-whitespace? char-lower-case? char-upper-case?)))
+	  (define (list-op? x)   (memq x '(caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr 
+						  cadr car cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr cddar cdddar 
+						  cddddr cdddr cddr cdr list-ref)))
+	  (define (string-op? x) (memq x '(string=? string<? string<=? string>? string>=? string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?)))
+	  
+	  (case a
+	    ((complex?) 
+	     (or (char-op? b)  ; that is, if these are false, then a non-number was accepted
+		 (list-op? b)  ;    earlier as a valid argument, so it can't be a number
+		 (string-op? b)))
+	    ((real? rational? integer?) 
+	     (or (char-op? b)
+		 (list-op? b)
+		 (string-op? b)))
+	    ((char?) 
+	     (or (number-op? b)
+		 (list-op? b)
+		 (string-op? b)))
+	    ((string?) 
+	     (or (char-op? b)
+		 (list-op? b)
+		 (number-op? b)))
+	    ((list?) 
+	     (or (char-op? b)
+		 (number-op? b)
+		 (string-op? b)))
+	    (else #f)))
+	
+	(or (member e false)
+	    (and (pair? e)
+		 (= (lint-length e) 2)
+		 (or (lint-member e false (lambda (a b)
+					    (and (pair? b)
+						 (>= (lint-length b) 2)
+						 (member (cadr a) (cdr b))
+						 (bad-arg-match (car a) (car b)))))
+		     (lint-member e true (lambda (a b)
+					   (and (pair? b)
+						(>= (lint-length b) 2)
+						(member (cadr a) (cdr b))
+						(bad-arg-match (car a) (car b)))))))))
       
       (define (classify e)
 	;; do we already know that e is true or false?
-	(if (member e true)
+	;;   some cases subsume others: if we know (integer? x) is true, (complex? x) is also true
+	(if (true? e)
 	    #t ; the simple boolean is passed back which will either be dropped or will stop the outer expr build
-	    (if (member e false)
+	    (if (false? e)
 		#f
 		;; eval of a constant expression here is tricky -- for example, (sqrt 2) should not be turned into 1.414...
 		(if (and lint-eval
@@ -835,14 +897,15 @@
       (define (store e value and/or)
 	;; we can't make any assumptions about the expression if it might have side effects
 	;;   for example (or (= (oscil o) 0.0) (= (oscil o) 0.0)) can't be reduced
+
 	(if (not (side-effect? e env))
-	    (if (eq? and/or 'or)
-		(if (eq? value #t)              ; or, so it's false if unknown
-		    (set! true (cons e true))
-		    (set! false (cons e false)))
-		(if (eq? value #f)
-		    (set! false (cons e false))
-		    (set! true (cons e true))))))
+	    (let ((its-true (if (eq? and/or 'or)
+				(eq? value #t)             ; or, so it's false if unknown
+				(not (eq? value #f)))))
+	      (if its-true
+		  (set! true (cons e true))
+		  (set! false (cons e false))))))
+
       
       (define (remove-duplicates-and-reverse lst)
 	(let ((new-lst '()))
@@ -962,7 +1025,9 @@
 			       
 			       (if (eq? val #t)                 ; #t in and is (eventually) ignored
 				   (if (and (not (eq? e #t))
-					    (not (just-constants? e env)))
+					    (not (just-constants? e env))
+					    (or (not (pair? e))
+						(not (eq? (hash-table-ref function-types (car e)) #t))))
 				       (begin
 					 (set! preceding? #t)
 					 (set! new-form (cons e new-form))))
@@ -979,8 +1044,8 @@
 					   (if (not (and (pair? e)                   ; (and ... (or ... 123) ...) -> splice out or
 							 (not (null? (cdr exprs)))
 							 (eq? (car e) 'or)
-							 (> (length e) 2)
-							 (let ((last (list-ref e (- (length e) 1))))
+							 (> (lint-length e) 2)
+							 (let ((last (list-ref e (- (lint-length e) 1))))
 							   (and last ; (or ... #f)
 								(not (pair? last))
 								(not (symbol? last))))))
@@ -1081,7 +1146,7 @@
 		(let ((val (remove-all 0 (splice-if (lambda (x) (eq? x '+)) args))))
 		  (case (lint-length val)
 		    ((0) 0)
-		    ((1) (car val))
+		    ((1) (car val))                     ; (+ x) -> x
 		    (else 
 		     (if (just-rationals? val)
 			 (apply + val)
@@ -1095,13 +1160,16 @@
 		(let ((val (remove-all 1 (splice-if (lambda (x) (eq? x '*)) args))))
 		  (case (lint-length val)
 		    ((0) 0)
-		    ((1) (car val))
+		    ((1) (car val))                     ; (* x) -> x
 		    (else 
 		     (if (just-rationals? val)
 			 (apply * val)
-			 (if (member 0 val)
+			 (if (member 0 val)             ; (* x 0 2) -> 0
 			     0 
-			     `(* ,@val)))))))))
+			     (if (and (= len 2)
+				      (member -1 val))
+				 `(- ,@(remove -1 val)) ; (* -1 x) -> (- x)
+				 `(* ,@val))))))))))
 
 	    ((-)
 	     (case len
@@ -1123,11 +1191,11 @@
 		(if (just-rationals? args)
 		    (apply - args)
 		    (if (equal? (car args) 0)
-			`(- ,(cadr args))     ; (- 0 x) -> (- x)
+			`(- ,(cadr args))                ; (- 0 x) -> (- x)
 			(if (equal? (cadr args) 0)
-			    (car args)        ; (- x 0) -> x
+			    (car args)                   ; (- x 0) -> x
 			    (if (equal? (car args) (cadr args))
-				0             ; (- x x)
+				0                        ; (- x x)
 				(if (and (pair? (car args))
 					 (eq? (caar args) '-)
 					 (> (lint-length (car args)) 2))
@@ -1143,12 +1211,12 @@
 			    (set! nargs (remove first-arg nargs)) ; remove once
 			    (set! first-arg 0)))
 		      (if (null? nargs)
-			  first-arg ; (- x 0 0 0)?
+			  first-arg                     ; (- x 0 0 0)?
 			  (if (and (equal? first-arg 0)
 				   (= (lint-length nargs) 1))
 			      (if (number? (car nargs))
 				  (- (car nargs))
-				  `(- ,(car nargs))) ; (- 0 0 0 x)?
+				  `(- ,(car nargs)))    ; (- 0 0 0 x)?
 			      `(- ,@(cons first-arg nargs)))))))))
 
 	    ((/)
@@ -1262,7 +1330,7 @@
 		 (apply (symbol->value (car form)) args)
 		 `(,(car form) ,@args)))
 
-	    ((atan expt angle) ; (angle -1) and (* 4 (atan 1)) are common ways to get pi, so don't optimize these 
+	    ((atan expt angle) ; (angle -1) and (* 4 (atan 1)) are common ways to get pi, so don't simplify these 
 	     `(,(car form) ,@args))
 
 	    ((inexact->exact)
@@ -1478,6 +1546,13 @@
 			       (lists->string form `(string-append ,@args)))))
 	       (set! last-simplify-boolean-line-number line-number))))
 
+	((object->string)
+	 (if (and (not (null? (cdr form)))
+		  (pair? (cadr form))
+		  (eq? (caadr form) 'object->string))
+	     (format #t "  ~A (line ~D): ~A could be ~A~%" 
+		     name line-number form (cadr form))))
+
 	((reverse list->vector vector->list list->string string->list symbol->string string->symbol number->string)
 	 (let ((inverses '((reverse . reverse) 
 			   (list->vector . vector->list)
@@ -1632,7 +1707,7 @@
 	      (cons 'list->string list?)
 	      (cons 'list->vector list?)
 	      (cons 'list-ref (list pair-or-null? non-negative-integer?))
-	      (cons 'list-set! (list non-constant-list? non-negative-integer?))
+	      (cons 'list-set! (list pair? non-negative-integer?))
 	      (cons 'list-tail (list pair-or-null? non-negative-integer?))
 	      (cons 'load string?)
 	      (cons 'log (list number? non-zero-number?))
@@ -1684,10 +1759,10 @@
 	      (cons 'string-ci>=? string?)
 	      (cons 'string-ci>? string?)
 	      (cons 'string-copy string?)
-	      (cons 'string-fill! (list non-constant-string? char?))
+	      (cons 'string-fill! (list string? char?))
 	      (cons 'string-length string?)
 	      (cons 'string-ref (list string? non-negative-integer?))
-	      (cons 'string-set! (list non-constant-string? non-negative-integer? char?))
+	      (cons 'string-set! (list string? non-negative-integer? char?))
 	      (cons 'string<=? string?)
 	      (cons 'string<? string?)
 	      (cons 'string=? string?)
@@ -1696,16 +1771,16 @@
 	      (cons 'substring (list string? non-negative-integer? non-negative-integer?))
 	      (cons 'symbol->keyword symbol?)
 	      (cons 'symbol->string symbol?)
-	      (cons 'symbol->value symbol?)
+	      (cons 'symbol->value (list symbol?)) ; opt arg is env
 	      (cons 'tan number?)
 	      (cons 'tanh number?)
 	      (cons 'truncate real?)
 	      (cons 'vector->list vector?)
 	      (cons 'vector-dimensions vector?)
-	      (cons 'vector-fill! (list non-constant-vector?))
+	      (cons 'vector-fill! (list vector?))
 	      (cons 'vector-length vector?)
 	      (cons 'vector-ref (list vector? non-negative-integer?))
-	      (cons 'vector-set! (list non-constant-vector? non-negative-integer?))
+	      (cons 'vector-set! (list vector? non-negative-integer?))
 	      (cons 'with-input-from-file (list string? thunk?))
 	      (cons 'with-input-from-string (list string? thunk?))
 	      (cons 'with-output-to-file (list string? thunk?))
@@ -2063,6 +2138,7 @@
     (define (report-usage name line-number type head vars)
       ;; report unused or set-but-unreferenced variables
       (if (and (not (eq? head 'begin)) ; begin can redefine = set a variable
+	       (list? vars)
 	       (not (null? vars)))
 	  (do ((cur vars (cdr cur))
 	       (rst (cdr vars) (cdr rst)))
@@ -2363,12 +2439,10 @@
 				   (format #t "  ~A (line ~D): can't set! a constant:~A~%"
 					   name line-number 
 					   (truncated-list->string form)))
-			       (set-var settee env))
-			     (if (not (pair? settee))
-				 (format #t "  ~A (line ~D): bad set? ~A~%" 
-					 name line-number form)))
+			       (set-var settee env)))
 
-			 (if (equal? settee setval)
+			 (if (and (symbol? (cadr form))
+				  (equal? (cadr form) (caddr form))) ; not settee and setval here!
 			     (format #t "  ~A (line ~D): pointless set!~A~%" 
 				     name line-number 
 				     (truncated-list->string form)))
@@ -2537,7 +2611,8 @@
 		       (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
 			 (let ((vars (if named-let (list (list named-let #f #f)) '())))
 			   (do ((bindings (if named-let (caddr form) (cadr form)) (cdr bindings)))
-			       ((null? bindings))
+			       ((or (not (list? bindings))
+				    (null? bindings)))
 			     (if (binding-ok? name line-number head (car bindings) env #f)
 				 (begin
 				   (if (and (not (env-member? (caar bindings) env))
@@ -2567,7 +2642,8 @@
 			       (truncated-list->string form))
 		       (let ((vars '()))
 			 (do ((bindings (cadr form) (cdr bindings)))
-			     ((null? bindings))
+			     ((or (not (list? bindings))
+				  (null? bindings)))
 			   (if (binding-ok? name line-number head (car bindings) env #f)
 			       (begin
 				 (lint-walk name (cadar bindings) (append vars env))
@@ -2608,7 +2684,8 @@
 				     name line-number head 
 				     (truncated-list->string form)))
 			 (do ((bindings (cadr form) (cdr bindings)))
-			     ((null? bindings))
+			     ((or (not (list? bindings))
+				  (null? bindings)))
 			   (if (binding-ok? name line-number head (car bindings) env #f)
 			       (set! vars (append (list (list (caar bindings) #f #f)) vars))))
 			 (let ((new-env (append vars env)))
@@ -2831,7 +2908,7 @@
 			 ))
 		   env)))
 	      
-	      ;; else form is a constant or something
+	      ;; else form is not a symbol and not a pair
 	      env)))
     
     ;;; --------------------------------------------------------------------------------
@@ -2889,7 +2966,7 @@
 
 	      (if *report-unused-top-level-functions* 
 		  (begin
-		    (report-usage file 0 'top-level-function #f vars)
+		    (report-usage file 0 'top-level-stuff #f vars)
 		    (if (not (null? generators))
 			(let ((descr `(lambda (gen)))
 			      (set '())
@@ -2933,20 +3010,3 @@
 
 	      (close-input-port fp)))))))
 
-
-
-;;; it should be possible to automatically test each (no-side-effect) function, and return a list of problems
-;;;   for example inputs that generate infs/nans, or non-type errors
-;;;    (define (f x) (/ 123 x))
-;;;   or out-of-range indices
-;;;    (define (v n) (vector-ref #(1 2 3) n))
-;;;   or even generate a test suite (especially for each top-level function)
-;;;   and same process for built-in functions: figure out possible return types etc
-;;;   how to know that vct-add! for example needs a vct to do anything reasonable?
-;;;   get a list of make-* and figure out how to get each object? -- could s7 return a list of these as if make-type?
-;;;     or scan symbol-table for make-* and see what happens when it's called? -- have to scan also for *? etc
-;;;  shouldn't we mention two top-level defs of the same function, if their sources aren't equal?
-
-;;; obj->str rationalize
-;;; repeated key to hash-table?
-;;; (+ x (- x))

@@ -21407,6 +21407,8 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
       return(s7_wrong_type_arg_error(sc, "for-each", 1, sc->code, "a procedure or something applicable"));
     }
 
+
+
   if (len == S7_LONG_MAX)
     {
       /* if at this point len == S7_LONG_MAX, then all args are circular lists, assuming that
@@ -24055,6 +24057,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   things took more time, and s7 ended up running slightly slower.  So, I think I could
        *   get a slight speed-up this way, with a few more days of work, but the code would be
        *   much more complicated.  I prefer simpler code in this case.
+       *
+       * I also tried a T_GCABLE bit added below, checked in all the numerical ops as they
+       *   traverse their arglists, and if seen, free that object and return it to the heap
+       *   immediately.  This reduces the GC time slightly, but it collides with *trace-hook*
+       *   (which is passed the arglist after the call, but we just GC'd the arglist), and
+       *   with some error checks (divide by 0 gets the now-partly-GC'd arglist).  Hard choice!
        */
 
       {
