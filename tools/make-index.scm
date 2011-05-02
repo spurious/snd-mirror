@@ -429,7 +429,7 @@
 			       caps)))))))
 	   (when (not (search-caps line))
 	     ;; now the hard part -- find the first character of the >name< business and downcase it
-	     (let* ((bpos (char-position #\> line)))
+	     (let ((bpos (char-position #\> line)))
 	       (set! (line (+ 1 bpos)) (char-downcase (line (+ 1 bpos)))))))
 	 
 	 (let ((bpos (char-position #\> line))
@@ -442,7 +442,7 @@
 
 
 (define (create-general str file)
-  (let* ((mid (char-position #\: str)))
+  (let ((mid (char-position #\: str)))
     (make-ind :name (string-append "<a href=\"" 
 				   (or file "") 
 				   "#" 
@@ -897,7 +897,7 @@
 		(offset (ceiling (/ n cols))))
 	    (do ((i 0 (+ 1 i)))
 		((>= row offset))
-	      (let* ((x (+ row (* ctr offset))))
+	      (let ((x (+ row (* ctr offset))))
 		(if (< x n)
 		    (let ((name (tnames x)))
 		      (format ofil 

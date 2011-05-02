@@ -129,7 +129,7 @@
     (substring type 0 (- (string-length type) 1))))
 
 (define (deref-name arg)
-  (let* ((name (cadr arg)))
+  (let ((name (cadr arg)))
     (string-append "ref_" name)))
 
 (define (derefable type)
@@ -189,8 +189,8 @@
 		    (= i (- len 1)))
 		(begin
 		  (if type
-		      (let* ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ 1 i) i)))
-			     (reftype #f))
+		      (let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ 1 i) i)))
+			    (reftype #f))
 			(if (char=? (given-name 0) #\@)
 			    (set! data (cons (list type 
 						   (substring given-name 1 (string-length given-name))
@@ -709,7 +709,7 @@
 	      args)))
 
        (if (> refargs 0)
-	   (let* ((previous-arg using-result))
+	   (let ((previous-arg using-result))
 	     (if (not (string=? return-type "void")) 
 		 (heyc ")"))
 	     (hey ");~%")
@@ -765,12 +765,12 @@
 
 (hey "#ifdef XEN_ARGIFY_1~%")
 (define (argify-func func)
-  (let* ((cargs (length (caddr func)))
-	 (name (car func))
-	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
-	 ;(args (- cargs refargs))
-	 (if-fnc (and (> (length func) 4)
-		      (eq? (func 4) 'if))))
+  (let ((cargs (length (caddr func)))
+	(name (car func))
+	(refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
+	;(args (- cargs refargs))
+	(if-fnc (and (> (length func) 4)
+		     (eq? (func 4) 'if))))
     (check-glu name)
     (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
     (if if-fnc
@@ -795,7 +795,7 @@
 (hey "~%#else~%~%")
 
 (define (unargify-func func)
-  (let* (;(cargs (length (caddr func)))
+  (let (;(cargs (length (caddr func)))
 	 (name (car func))
 	 ;(refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 ;(args (- cargs refargs))

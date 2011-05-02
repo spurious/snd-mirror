@@ -522,42 +522,40 @@
 				 checkers)))  
 		(if (pair? arg)
 		    (let ((op (hash-table-ref function-types (car arg))))
-		      (case op
-			((number-or-f list-or-f)
-			 (if (and checker
-				  *report-minor-stuff*)
-			     (format #t "  ~A (line ~D): ~A argument ~D might be #f:~A~%"
-				     name line-number head arg-number
-				     (truncated-list->string form))))
-			((number-or-eof char-or-eof string-or-eof)
-			 (if (and checker
-				  *report-minor-stuff*)
-			     (format #t "  ~A (line ~D): ~A argument ~D might be the eof object:~A~%"
-				     name line-number head arg-number
-				     (truncated-list->string form))))
-			(else
-			 (if (or (and op
-				      (not (checker op)))
-				 (and (just-constants? arg env)
-				      (catch #t 
-					     (lambda ()
-					       (and lint-eval
-						    (not (checker (lint-eval arg)))))
-					     (lambda ignore-catch-error-args
-					       #f))))
-			     (format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~A~%" 
-				     name line-number head arg-number 
-				     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
-				     checker arg 
-				     (truncated-list->string form))
-			     
-			     (if (and (eq? (car arg) 'if)
-				      (= (lint-length arg) 3)
-				      (not (checker (if #f #f))))
-				 (format #t "  ~A (line ~D): ~A argument might be ~A:~A~%"
-					 name line-number head
-					 (if #f #f)
-					 (truncated-list->string form)))))))
+		      (if (and (symbol? op)
+			       (not (eq? symbol 'symbol)))
+			  (if (and checker
+				   *report-minor-stuff*)
+			      (if (memq op '(number-or-f list-or-f))
+				  (format #t "  ~A (line ~D): ~A argument ~D might be #f:~A~%"
+					  name line-number head arg-number
+					  (truncated-list->string form))
+				  (if (memq op '(number-or-eof char-or-eof string-or-eof))
+				      (format #t "  ~A (line ~D): ~A argument ~D might be the eof object:~A~%"
+					      name line-number head arg-number
+					      (truncated-list->string form)))))
+			  (if (or (and op
+				       (not (checker op)))
+				  (and (just-constants? arg env)
+				       (catch #t 
+					      (lambda ()
+						(and lint-eval
+						     (not (checker (lint-eval arg)))))
+					      (lambda ignore-catch-error-args
+						#f))))
+			      (format #t "  ~A (line ~D): ~A's argument ~D should be a~A ~A: ~S:~A~%" 
+				      name line-number head arg-number 
+				      (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
+				      checker arg 
+				      (truncated-list->string form))
+			      
+			      (if (and (eq? (car arg) 'if)
+				       (= (lint-length arg) 3)
+				       (not (checker (if #f #f))))
+				  (format #t "  ~A (line ~D): ~A argument might be ~A:~A~%"
+					  name line-number head
+					  (if #f #f)
+					  (truncated-list->string form))))))
 
 		    (if (and (not (symbol? arg))
 			     (not (checker arg)))
@@ -806,27 +804,37 @@
 	(or (member e true)
 	    (and (pair? e)
 		 (= (lint-length e) 2)
-		 (lint-member e true (lambda (a b)
-				       ;; if a follows b, and b is true, do we know already know that a?
-				       ;; (and (< x1 12) (real? x1) (= x1 1)) -> (and (< x1 12) (= x1 1))
-				       (and (pair? b)
-					    (or (and (= (lint-length b) 2)
-						     (equal? (cadr a) (cadr b))
-						     (case (car a)
-						       ((complex?)  (memq (car b) '(number? real? rational? integer? even? odd? 
-										    positive? negative? zero? exact? inexact?)))
-						       ((number?)   (memq (car b) '(complex? real? rational? integer? even? odd? 
-										    positive? negative? zero? exact? inexact?)))
-						       ((real?)     (memq (car b) '(rational? integer? even? odd? positive? negative? exact? inexact?)))
-						       ((rational?) (memq (car b) '(integer? even? odd?)))
-						       ((integer?)  (memq (car b) '(even? 'odd)))
-						       (else #f)))
-						(and (> (lint-length b) 2)
-						     (member (cadr a) (cdr b))
-						     (case (car a)
-						       ((complex? number?) (eq? (car b) '=))
-						       ((real?)            (memq (car b) '(< > <= >=)))
-						       (else #f))))))))))
+		 (or (lint-member e true 
+				  (lambda (a b)
+				    ;; if a follows b, and b is true, do we know already know that a?
+				    ;; (and (< x1 12) (real? x1) (= x1 1)) -> (and (< x1 12) (= x1 1))
+				    (and (pair? b)
+					 (or (and (= (lint-length b) 2)
+						  (equal? (cadr a) (cadr b))
+						  (case (car a)
+						    ((complex?)  (memq (car b) '(number? real? rational? integer? even? odd? 
+											 positive? negative? zero? exact? inexact?)))
+						    ((number?)   (memq (car b) '(complex? real? rational? integer? even? odd? 
+											  positive? negative? zero? exact? inexact?)))
+						    ((real?)     (memq (car b) '(rational? integer? even? odd? positive? negative? exact? inexact?)))
+						    ((rational?) (memq (car b) '(integer? even? odd?)))
+						    ((integer?)  (memq (car b) '(even? 'odd)))
+						    (else #f)))
+					     (and (> (lint-length b) 2)
+						  (member (cadr a) (cdr b))
+						  (case (car a)
+						    ((complex? number?) (eq? (car b) '=))
+						    ((real?)            (memq (car b) '(< > <= >=)))
+						    (else #f)))))))
+		     (and (pair? (cadr e))
+			  (case (car e)
+			    ((complex? number?) (number? (hash-table-ref function-types (caadr e))))
+			    ((exact? rational?) (eq? (caadr e) 'inexact->exact))
+			    ((inexact? real?)   (eq? (caadr e) 'exact->inexact))
+			    ((char?)            (char? (hash-table-ref function-types (caadr e))))
+			    ((string?)          (string? (hash-table-ref function-types (caadr e))))
+			    ((vector?)          (vector? (hash-table-ref function-types (caadr e))))
+			    (else #f)))))))
 
       (define (false? e)
 
@@ -910,18 +918,6 @@
 		  (set! true (cons e true))
 		  (set! false (cons e false))))))
 
-      
-      (define (remove-duplicates-and-reverse lst)
-	(let ((new-lst '()))
-	  (for-each
-	   (lambda (e)
-	     (if (or (not (member e new-lst))
-		     (not (member e true)))
-		 (set! new-lst (cons e new-lst))))
-	   lst)
-	  new-lst))
-	  
-
       (let ((form (bsimp in-form)))
 	; (if (not (equal? form in-form)) (format #t "bsimp ~A -> ~A~%" in-form form))
 
@@ -1000,22 +996,14 @@
 		     #t
 		     (if (= len 2)
 			 (classify (cadr form))
-			 (let ((new-form '())
-			       (preceding? #f))
+			 (let ((new-form '()))
 			   (do ((exprs (cdr form) (cdr exprs)))
 			       ((null? exprs) 
 				(if (null? new-form)
 				    #t
 				    (if (null? (cdr new-form))
 					(car new-form)
-					(if preceding?
-					    (let ((new-exprs (remove-duplicates-and-reverse new-form)))
-					      (if (null? new-exprs)
-						  #t
-						  (if (null? (cdr new-exprs))
-						      (car new-exprs)
-						      `(and ,@new-exprs))))
-					    `(and ,@(reverse new-form))))))
+					`(and ,@(reverse new-form)))))
 			     
 			     (let* ((e (car exprs))
 				    (val (classify e)))
@@ -1025,16 +1013,19 @@
 				   (set! val (classify (simplify-boolean e true false env))))
 			       
 			       ;; (and x1 x2 x1) is not reducible, unless to (and x2 x1)
-			       ;;   the final thing has to remain at the end, but can be deleted earlier if it can't short-circuit the evaluation
+			       ;;   the final thing has to remain at the end, but can be deleted earlier if it can't short-circuit the evaluation,
+			       ;;   but if there are expressions following the first x1, we can't be sure that it is not
+			       ;;   protecting them:
+			       ;;       (and false-or-0 (display (list-ref lst false-or-0)) false-or-0)
+			       ;;   so I'll not try to optimize that case.  But (and x x) is optimizable.
 			       
-			       (if (eq? val #t)                 ; #t in and is (eventually) ignored
-				   (if (and (not (eq? e #t))
-					    (not (just-constants? e env))
+			       (if (eq? val #t)
+				   (if (and (not (equal? e #t))
 					    (or (not (pair? e))
 						(not (eq? (hash-table-ref function-types (car e)) #t))))
-				       (begin
-					 (set! preceding? #t)
-					 (set! new-form (cons e new-form))))
+				       (if (or (null? new-form)
+					       (not (equal? e (car new-form))))
+					   (set! new-form (cons e new-form))))
 				   (if (eq? val #f)             ; #f in and ends the expression
 				       (begin
 					 (if (or (null? new-form)   
@@ -1279,8 +1270,9 @@
 
 	    ((sqrt)
 	     (if (and (pair? args)
-		      (equal? (car args) 0))
-		 0
+		      (rational? (car args))
+		      (= (car args) (* (sqrt (car args)) (sqrt (car args)))))
+		 (sqrt (car args))
 		 `(sqrt ,@args)))
 
 	    ((floor round ceiling truncate numerator)

@@ -330,7 +330,7 @@
     (substring type 0 (- (string-length type) 2))))
 
 (define (deref-name arg)
-  (let* ((name (cadr arg)))
+  (let ((name (cadr arg)))
     (string-append "ref_" name)))
 
 (define (derefable type)
@@ -386,8 +386,8 @@
 		    (= i (- len 1)))
 		(begin
 		  (if type
-		      (let* ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ 1 i) i)))
-			     (reftype #f))
+		      (let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ 1 i) i)))
+			    (reftype #f))
 			(if (char=? (given-name 0) #\@)
 			    (set! data (cons (list type 
 						   (substring given-name 1 (string-length given-name))
@@ -2548,7 +2548,7 @@
 			  (hey "   }~%"))
 			(begin ;'fnc
 			  (if (> refargs 0)
-			      (let* ((previous-arg using-result))
+			      (let ((previous-arg using-result))
 				(if using-result (heyc "  "))
 				(if (string=? name "gdk_property_get")
 				    (begin
@@ -3012,7 +3012,7 @@
 ;;; ---------------- argify ----------------
 
 (define (argify-func func)
-  (let* ((cargs (length (caddr func)))
+  (let ((cargs (length (caddr func)))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 ;(args (- cargs refargs))
 	 )
@@ -3024,7 +3024,7 @@
 	 (car func) (car func))))
 
 (define (unargify-func func)
-  (let* (;(cargs (length (caddr func)))
+  (let (;(cargs (length (caddr func)))
 	 ;(refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 ;(args (- cargs refargs))
 	 )
@@ -3078,7 +3078,7 @@
 (for-each (lambda (field) (hey "XEN_NARGIFY_2(gxg_set_~A_w, gxg_set_~A)~%" field field)) settable-struct-fields)
 
 (for-each (lambda (struct) 
-	    (let* ((s (find-struct struct)))
+	    (let ((s (find-struct struct)))
 	      (if (> (length (cadr s)) 0)
 		  (hey "XEN_VARGIFY(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
 		  (hey "XEN_NARGIFY_0(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
@@ -3089,7 +3089,7 @@
 	    (lambda ()
 	      (for-each 
 	       (lambda (struct) 
-		 (let* ((s (find-struct struct)))
+		 (let ((s (find-struct struct)))
 		   (if (> (length (cadr s)) 0)
 		       (hey "XEN_VARGIFY(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
 		       (hey "XEN_NARGIFY_0(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
@@ -3098,7 +3098,7 @@
 
 (with-300 hey (lambda ()
 		(for-each (lambda (struct) 
-			    (let* ((s (find-struct struct)))
+			    (let ((s (find-struct struct)))
 			      (if (> (length (cadr s)) 0)
 				  (hey "XEN_VARGIFY(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
 				  (hey "XEN_NARGIFY_0(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
@@ -3263,7 +3263,7 @@
 (for-each (lambda (field) (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field)) settable-struct-fields)
 
 (for-each (lambda (struct)
-	    (let* ((s (find-struct struct)))
+	    (let ((s (find-struct struct)))
 	      (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A): a new ~A struct\");~%" 
 		   struct 
 		   struct 
@@ -3278,7 +3278,7 @@
 		(lambda ()
 		  (for-each 
 		   (lambda (struct)
-		     (let* ((s (find-struct struct)))
+		     (let ((s (find-struct struct)))
 		       (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A): a new ~A struct\");~%" 
 			    struct 
 			    struct 
@@ -3289,7 +3289,7 @@
 		   (reverse cairo-make-structs)))))
 (with-300 hey (lambda ()
 		(for-each (lambda (struct)
-			    (let* ((s (find-struct struct)))
+			    (let ((s (find-struct struct)))
 			      (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A): a new ~A struct\");~%" 
 				   struct 
 				   struct 

@@ -99,7 +99,7 @@
 	 (phase (- (/ pi 2)) (+ phase freq)))
 	((= i N))
       (set! (vals i) (* mult den (cos (* N (acos (* alpha (cos phase)))))))
-      (set! mult (* -1 mult)))
+      (set! mult (- mult)))
     ;; now take the DFT
     (do ((i 0 (+ i 1)))
 	((= i N))

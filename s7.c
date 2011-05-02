@@ -23943,7 +23943,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->op = op; /* for better error handling.  otherwise we get "barrier" as the offending function name in eval_error_with_name */
 	}
 
-      sc->args = sc->NIL;
+      /* sc->args = sc->NIL; */ /* 1-may-11 */
       if (!is_pair(sc->code)) 
 	{
 	  if (sc->code != sc->NIL)            /* (begin . 1), (cond (#t . 1)) */
@@ -23995,14 +23995,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->value = symbol_value(x);
 	    else sc->value = eval_symbol_1(sc, sc->code);
 
-	    goto START;
+	    pop_stack(sc);
+	    if (sc->op != OP_EVAL_ARGS)
+	      goto START_WITHOUT_POP_STACK;
+	    break;
 	  }
 
 	default:
 	  sc->value = sc->code;
 	  goto START;
 	}
-      break;
 
       
     case OP_EVAL_ARGS:
@@ -24083,7 +24085,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  s7_pointer car_code;
 	  car_code = car(sc->code);
 	  typ = type(car_code);
-
+	  
 	  /* switch statement here is much slower for some reason */
 	  if (typ == T_PAIR)
 	    {
@@ -24093,21 +24095,51 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL;
 	    }
 
-	  if (typ == T_SYMBOL)
-	    {
-	      /* expand eval_symbol here to speed it up, was sc->value = eval_symbol(sc, car(sc->code)); */
-	      s7_pointer x;
-	      if (is_not_local(car_code))
-		x = symbol_global_slot(car_code);
-	      else x = find_symbol(sc, sc->envir, car_code);
-	      if (x != sc->NIL) 
-		sc->value = symbol_value(x);
-	      else sc->value = eval_symbol_1(sc, car_code);
-	    }
-	  else sc->value = car_code;
-
 	  sc->code = cdr(sc->code);
-	  goto EVAL_ARGS;
+	  if (sc->code != sc->NIL)
+	    {
+	      if (typ == T_SYMBOL)
+		{
+		  /* expand eval_symbol here to speed it up, was sc->value = eval_symbol(sc, car(sc->code)); */
+		  s7_pointer x;
+		  if (is_not_local(car_code))
+		    x = symbol_global_slot(car_code);
+		  else x = find_symbol(sc, sc->envir, car_code);
+		  if (x != sc->NIL) 
+		    sc->value = symbol_value(x);
+		  else sc->value = eval_symbol_1(sc, car_code);
+		}
+	      else sc->value = car_code;
+	      goto EVAL_ARGS;
+	    }
+	  else
+	    {
+	      s7_pointer x;
+	      NEW_CELL(sc, x); 
+
+	      if (typ == T_SYMBOL)
+		{
+		  /* duplicate the code to get rid of several assignments, an if, and a jump
+		   *   this saves 2% overall time in lg.scm -- perhaps about that in s7test.scm
+		   *   but the latter does not repeat reliably.
+		   */
+		  s7_pointer xx;
+		  if (is_not_local(car_code))
+		    xx = symbol_global_slot(car_code);
+		  else xx = find_symbol(sc, sc->envir, car_code);
+		  if (xx != sc->NIL) 
+		    car(x) = symbol_value(xx);
+		  else car(x) = eval_symbol_1(sc, car_code);
+		}
+	      else car(x) = car_code;
+
+	      cdr(x) = sc->args;
+	      set_type(x, T_PAIR | T_STRUCTURE);
+	      x = safe_reverse_in_place(sc, x); 
+	      sc->code = car(x);
+	      sc->args = cdr(x);
+	      /* drop into APPLY */
+	    }
 	}
       else                       /* got all args -- go to apply */
 	{
