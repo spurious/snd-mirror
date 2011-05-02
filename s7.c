@@ -632,8 +632,6 @@ struct s7_scheme {
 
   s7_pointer w, x, y, z;         /* evaluator local vars */
 
-  s7_pointer *temps;             /* short-term gc protection */
-  int temps_ctr, temps_size;
   struct s7_cell _TEMP_CELL, _TEMP_CELL_1;
   s7_pointer TEMP_CELL, TEMP_CELL_1;
 
@@ -1555,6 +1553,8 @@ void s7_mark_object(s7_pointer p)
   S7_MARK(p);
 }
 
+#define GC_TRIGGER_SIZE 64
+
 
 #if HAVE_GETTIMEOFDAY && (!_MSC_VER)
   #include <time.h>
@@ -1566,7 +1566,6 @@ void s7_mark_object(s7_pointer p)
 
 static int gc(s7_scheme *sc)
 {
-  int i;
   s7_cell **old_free_heap_top;
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
 
@@ -1598,10 +1597,14 @@ static int gc(s7_scheme *sc)
 
   S7_MARK(sc->protected_objects);
   {
-    s7_pointer *tmps;
-    tmps = sc->temps;
-    for (i = 0; i < sc->temps_size; i++)
-      S7_MARK(tmps[i]);
+    s7_pointer *tmps, *tmps_top;
+    tmps = sc->free_heap_top;
+    tmps_top = tmps + GC_TEMPS_SIZE;
+    while (tmps < tmps_top)
+      {
+	S7_MARK(*tmps);
+	tmps++;
+      }
   }
 
   /* free up all unmarked objects */
@@ -1619,11 +1622,11 @@ static int gc(s7_scheme *sc)
 	s7_pointer p;
 	p = (*tp++);
 
-	if (is_marked(p))
+	if (is_marked(p))          /* this order is faster than checking typeflag(p) != 0 first */
 	  clear_mark(p);
 	else 
 	  {
-	    if (typeflag(p) != 0) /* an already-free object? */
+	    if (typeflag(p) != 0) /* an already-free object -- the free_heap is usually not empty when we call the GC */
 	      {
 		if (is_finalizable(p))
 		  finalize_s7_cell(sc, p); 
@@ -1674,11 +1677,6 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 	fprintf(fd, "%s\n", s7_object_to_c_string(sc, p));
     }
 
-  fprintf(fd, "-------------------------------- temps --------------------------------\n");
-  for (i = 0; i < sc->temps_size; i++)
-    if (typeflag(sc->temps[i]) != 0)
-      fprintf(fd, "%s\n", s7_object_to_c_string(sc, sc->temps[i]));
-
   fflush(fd);
   fclose(fd);
   return(sc->NIL);
@@ -1687,8 +1685,12 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 
 
 #if HAVE_PTHREADS
+
   #define NEW_CELL(Sc, Obj) Obj = new_cell(Sc)
+  #define NEW_CELL_NO_CHECK(Sc, Obj) Obj = new_cell(Sc)
+
 #else
+
   #define NEW_CELL(Sc, Obj) \
     do { \
       if (Sc->free_heap_top > Sc->free_heap_trigger) \
@@ -1696,10 +1698,15 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
       else Obj = new_cell(Sc);                       \
     } while (0)
 
-/* not faster:
-  #define NEW_CELL(Sc, Obj) do {Obj = ((Sc->free_heap_top > Sc->free_heap_trigger) ? (*(--(Sc->free_heap_top))) : new_cell(Sc);} while (0)
-*/
+  #define NEW_CELL_NO_CHECK(Sc, Obj) do {Obj = (*(--(Sc->free_heap_top)));} while (0)
+  /* since sc->free_heap_trigger is GC_TRIGGER_SIZE above the free heap base, we don't need
+   *   to check it repeatedly after the 1st such check.
+   */
+  /* not faster:
+    #define NEW_CELL(Sc, Obj) do {Obj = ((Sc->free_heap_top > Sc->free_heap_trigger) ? (*(--(Sc->free_heap_top))) : new_cell(Sc);} while (0)
+  */
 #endif
+
 
 #if HAVE_PTHREADS
 static pthread_mutex_t alloc_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -1719,7 +1726,7 @@ static s7_pointer new_cell(s7_scheme *sc)
   sc = nsc->orig_sc;
 #endif
 
-  if (sc->free_heap_top == sc->free_heap)
+  if (sc->free_heap_top <= sc->free_heap_trigger)
     {
       /* no free heap */
       unsigned int k, old_size, freed_heap = 0;
@@ -1745,7 +1752,7 @@ static s7_pointer new_cell(s7_scheme *sc)
 	  if (!(sc->free_heap))
 	    fprintf(stderr, "free heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));	  
 
-	  sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TEMPS_SIZE);
+	  sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TRIGGER_SIZE);
 	  sc->free_heap_top = sc->free_heap;
 
 	  { 
@@ -1776,29 +1783,13 @@ static s7_pointer new_cell(s7_scheme *sc)
    * I think this is no longer needed.
    */
 
-#if 0
-  /* I don't think this is safe */
-  if (sc->free_heap_top <= sc->free_heap_trigger)
-#endif
-    {
-      nsc->temps[nsc->temps_ctr++] = p;
-      if (nsc->temps_ctr >= nsc->temps_size)
-	nsc->temps_ctr = 0;
-    }
   pthread_mutex_unlock(&alloc_lock);
-#else
-  if (sc->free_heap_top <= sc->free_heap_trigger)
-    {
-      sc->temps[sc->temps_ctr++] = p;
-      if (sc->temps_ctr >= sc->temps_size)
-	sc->temps_ctr = 0;
-    }
 #endif
+
   /* originally I tried to mark each temporary value until I was done with it, but
    *   that way madness lies... By delaying GC of _every_ %$^#%@ pointer, I can dispense
-   *   with hundreds of individual protections.  Using this array of temps is much faster
-   *   than using a type bit to say "newly allocated" because that protects so many cells
-   *   betweeen gc calls that we end up calling the gc twice as often overall.
+   *   with hundreds of individual protections.  So the free_heap's last GC_TEMPS_SIZE
+   *   allocated pointers are protected during the mark sweep.
    */
 
   return(p);
@@ -1824,11 +1815,6 @@ Evaluation produces a surprising amount of garbage, so don't leave the GC off fo
   gc(sc->orig_sc);
   pthread_mutex_unlock(&alloc_lock);
 #else
-  {
-    int i;
-    for (i = 0; i < sc->temps_size; i++)
-      sc->temps[i] = sc->NIL;
-  }
   gc(sc);
 #endif
   
@@ -2067,6 +2053,7 @@ static void push_stack(s7_scheme *sc, s7_pointer int_op, s7_pointer args, s7_poi
   sc->stack_end += 4;
 }
 
+/* TODO: also what about putting pop_stacks in place, not at the top of eval? */
 
 static void increase_stack_size(s7_scheme *sc)
 {
@@ -2607,7 +2594,7 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   cdr(y) = value;
   set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
 
-  NEW_CELL(sc, x);
+  NEW_CELL_NO_CHECK(sc, x);
   /* car(x) = immutable_cons(sc, variable, value); */
   car(x) = y;
   cdr(x) = car(sc->envir);
@@ -3292,8 +3279,7 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
   s7_pointer *nv, *ov;
 
   new_v = s7_make_vector(sc, vector_length(old_v));
-  /* we can't leave the upper stuff simply malloc-garbage because this object could be in the
-   *   temps array for a nanosecond or two, and we're sure to call the GC at that moment.
+  /* we can't leave the upper stuff simply malloc-garbage because we're sure to call the GC.
    *   We also can't just copy the vector since that seems to confuse the gc mark process.
    */
 
@@ -10690,6 +10676,7 @@ static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
     return(sc->NIL);
 
   sc->w = sc->NIL;
+  /* TODO: we know len -- could use NO_CHECK */
   for (i = 0; i < len; i++)
     sc->w = s7_cons(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
   p = sc->w;
@@ -13361,7 +13348,7 @@ static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b)
   car(y) = b;
   cdr(y) = sc->NIL;
   set_type(y, T_PAIR | T_STRUCTURE);
-  NEW_CELL(sc, x); /* order matters because the GC will see "y" and expect it to have legit car/cdr */
+  NEW_CELL_NO_CHECK(sc, x); /* order matters because the GC will see "y" and expect it to have legit car/cdr */
   car(x) = a;
   cdr(x) = y;
   set_type(x, T_PAIR | T_STRUCTURE);
@@ -13376,11 +13363,11 @@ static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_poin
   car(z) = c;
   cdr(z) = sc->NIL;
   set_type(z, T_PAIR | T_STRUCTURE);
-  NEW_CELL(sc, y);
+  NEW_CELL_NO_CHECK(sc, y);
   car(y) = b;
   cdr(y) = z;
   set_type(y, T_PAIR | T_STRUCTURE);
-  NEW_CELL(sc, x);
+  NEW_CELL_NO_CHECK(sc, x);
   car(x) = a;
   cdr(x) = y;
   set_type(x, T_PAIR | T_STRUCTURE);
@@ -13395,15 +13382,15 @@ static s7_pointer make_list_4(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_poin
   car(zz) = d;
   cdr(zz) = sc->NIL;
   set_type(zz, T_PAIR | T_STRUCTURE);
-  NEW_CELL(sc, z);
+  NEW_CELL_NO_CHECK(sc, z);
   car(z) = c;
   cdr(z) = zz;
   set_type(z, T_PAIR | T_STRUCTURE);
-  NEW_CELL(sc, y);
+  NEW_CELL_NO_CHECK(sc, y);
   car(y) = b;
   cdr(y) = z;
   set_type(y, T_PAIR | T_STRUCTURE);
-  NEW_CELL(sc, x);
+  NEW_CELL_NO_CHECK(sc, x);
   car(x) = a;
   cdr(x) = y;
   set_type(x, T_PAIR | T_STRUCTURE);
@@ -13706,6 +13693,7 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 
   sc->w = sc->NIL;
   ilen = (int)len;
+  /* TODO: we know len O_CHECK */
   for (i = 0; i < ilen; i++)
     sc->w = s7_cons(sc, init, sc->w);
   p = sc->w;
@@ -14718,7 +14706,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
 	}
     }
 
-  /* this has to follow the error checks!  (else garbage in temps array confuses GC when "vector" is finalized) */
+  /* this has to follow the error checks!  (else garbage in free_heap temps portion confuses GC when "vector" is finalized) */
 
   NEW_CELL(sc, x);
   vector_length(x) = 0;
@@ -14880,6 +14868,7 @@ s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
   s7_pointer p;
   len = vector_length(vect);
   sc->w = sc->NIL;
+  /* TODO: NO_CHECK */
   for (i = len - 1; i >= 0; i--)
     sc->w = s7_cons(sc, vector_element(vect, i), sc->w);
   p = sc->w;
@@ -15228,6 +15217,7 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
     {
       int i;
       sc->w = sc->NIL;
+      /* TODO: NO_CHECK */
       for (i = vector_ndims(x) - 1; i >= 0; i--)
 	sc->w = s7_cons(sc, s7_make_integer(sc, vector_dimension(x, i)), sc->w);
       x = sc->w;
@@ -21361,6 +21351,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
   if (len != 0)
     {
+      /* TODO: opt this! */
       sc->x = make_list_1(sc, sc->NIL);
       if (s7_is_hash_table(obj))
 	sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
@@ -21431,6 +21422,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 			make_list_2(sc, make_protected_string(sc, "for-each's arguments are circular lists! ~A"), cdr(args))));
     }
 
+  /* TODO: opt this! */
   sc->args = s7_cons(sc, make_mutable_integer(sc, 0),   /* '(counter applicable-len func-args-holder . objects) */
                s7_cons(sc, s7_make_integer(sc, len), 
                  s7_cons(sc, sc->x, 
@@ -23430,7 +23422,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->x = SORT_LESSP;
 	    sc->args = SORT_ARGS;
 	    sc->code = sc->x;
-	    goto APPLY;
+	    goto APPLY_WITHOUT_TRACE;
 	  }
 	else sc->value = sc->F;
       }
@@ -23452,7 +23444,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->x = SORT_LESSP;
 	sc->args = SORT_ARGS;
 	sc->code = sc->x;
-	goto APPLY;
+	goto APPLY_WITHOUT_TRACE;
       }
 
     case OP_SORT2:
@@ -23603,7 +23595,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  /* circular list check */
 	  caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list (check for circular list) */
-	  if (cadr(sc->args) == caddr(sc->args))
+	  if (cadr(sc->args) == caddr(sc->args)) /* TODO: use a vector? */
 	    {
 	      sc->value = sc->F;
 	      goto START;
@@ -23733,8 +23725,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  sc->value = sc->NIL;
 	  pop_stack(sc); 
-	  sc->op = OP_DO_END;
-	  goto START_WITHOUT_POP_STACK;
+	  goto DO_END;
 	}
 
       /* check for (very common) optimized case */
@@ -23848,7 +23839,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     DO_END1:
       prepare_do_end_test(sc);
       
-
+    DO_END:
     case OP_DO_END:
       /* here vars have been init'd or incr'd
        *    args = (list var-data end-expr return-expr-if-any)
@@ -24021,7 +24012,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      cdr(sc->TEMP_CELL_1) = sc->code;  /* args */
 	      sc->args = sc->TEMP_CELL;
 	      sc->code = sc->value;
-	      goto APPLY;
+	      goto APPLY_WITHOUT_TRACE;
 	    }
 
 	  /* (define progn begin)
@@ -24062,7 +24053,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   get a slight speed-up this way, with a few more days of work, but the code would be
        *   much more complicated.  I prefer simpler code in this case.
        *
-       * I also tried a T_GCABLE bit added below, checked in all the numerical ops as they
+       * I then tried a "safe function" bit meaning the args could be gc'd immediately after
+       *   the call, setting sc->arg_temp = sc->args here, then returning those
+       *   args to the free list after the function call -- a kind of incremental GC.
+       *   The GC is called less often, but the local free code takes more time than
+       *   we save in the GC, so the only gain is that there are fewer points where
+       *   s7 pauses to call the GC.  The time lost is about 1%.  This was a big
+       *   disappointment!
+       *
+       * Undaunted, I tried a T_GCABLE bit added below, checked in all the numerical ops as they
        *   traverse their arglists, and if seen, free that object and return it to the heap
        *   immediately.  This reduces the GC time slightly, but it collides with *trace-hook*
        *   (which is passed the arglist after the call, but we just GC'd the arglist), and
@@ -24115,7 +24114,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else
 	    {
 	      s7_pointer x;
-	      NEW_CELL(sc, x); 
+	      NEW_CELL_NO_CHECK(sc, x); /* NO_CHECK should be safe -- we can't get here except just after the NEW_CELL check above */
 
 	      if (typ == T_SYMBOL)
 		{
@@ -24156,15 +24155,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = car(sc->args);
 	      sc->args = cdr(sc->args);
 	      /* fall through  */
-
-	      /* I tried a "safe function" bit meaning the args could be gc'd immediately after
-	       *   the call, setting sc->arg_temp = sc->args here, then returning those
-	       *   args to the free list after the function call -- a kind of incremental GC.
-	       *   The GC is called less often, but the local free code takes more time than
-	       *   we save in the GC, so the only gain is that there are fewer points where
-	       *   s7 pauses to call the GC.  The time lost is about 1%.  This was a big
-	       *   disappointment!
-	       */
 	    }
 	}
       
@@ -24230,7 +24220,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_C_ANY_ARGS_FUNCTION:                 /* -------- C-based function that can take any number of arguments -------- */
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
-	  goto START;
+
+	  pop_stack(sc);
+	  if (sc->op == OP_EVAL_ARGS1)
+	    goto EVAL_ARGS;
+	  goto START_WITHOUT_POP_STACK;
 
 	case T_C_OPT_ARGS_FUNCTION:                 /* -------- C-based function that has n optional arguments -------- */
 	  {
@@ -24378,12 +24372,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
 		  }
 
-		NEW_CELL(sc, y);
+		NEW_CELL(sc, y); /* TODO: possible NO_CHECK -- we check in NEW_FRAME? */
 		car(y) = z;
 		cdr(y) = car(sc->y);
 		set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
 
-		NEW_CELL(sc, x);
+		NEW_CELL_NO_CHECK(sc, x);
 		car(x) = y;
 		cdr(x) = car(sc->envir);
 		set_type(x, T_PAIR | T_STRUCTURE);
@@ -24488,7 +24482,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_C_OBJECT:	                  /* -------- applicable c object -------- */
 	  sc ->value = apply_object(sc, sc->code, sc->args);
 	  if (sc->stack_end > sc->stack_start)
-	    pop_stack(sc);
+	    {
+	      pop_stack(sc);
+	      if (sc->op == OP_EVAL_ARGS1)
+		goto EVAL_ARGS;
+	    }
 	  goto START_WITHOUT_POP_STACK;
 
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
@@ -25739,6 +25737,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *    (case '2 (('2) 3) (else 1)) -> 1
 	   */
 
+	  /* TODO: somehow use == here if possible */
 	  if (s7_is_eqv(car(sc->y), sc->value)) 
 	    break;
 
@@ -26079,7 +26078,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      x = symbol_value(find_symbol(sc, sc->envir, car(sc->value)));
 		      sc->args = make_list_1(sc, sc->value); 
 		      sc->code = x;
-		      goto APPLY;
+		      goto APPLY_WITHOUT_TRACE;
 		    }
 		}
 	    }
@@ -26129,6 +26128,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* by far the main case here is TOKEN_LEFT_PAREN, but it doesn't save anything to move it to this level */
 	  push_stack(sc, opcode(OP_READ_LIST), sc->args, sc->NIL);
 	  sc->value = read_expression(sc);
+	  /* check for op_read_list here and explicit pop_stack are slower */
 	  break;
 	}
       goto START;
@@ -26240,6 +26240,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 #if HAVE_PTHREADS
 
+/* TODO: in threads we may need to protect more of the free_heap */
+
 static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
 {
   int i;
@@ -26251,7 +26253,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
   
   /* share the heap, symbol table and global environment, protected objects list, and all the startup stuff (all via the memcpy),
-   *   but have separate stacks and eval locals (and GC temps)
+   *   but have separate stacks and eval locals
    */
   
   new_sc->longjmp_ok = false;
@@ -26281,12 +26283,6 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
    * sc->input_port_stack = sc->NIL;
    */
 
-  new_sc->temps_size = GC_TEMPS_SIZE;
-  new_sc->temps_ctr = 0;
-  new_sc->temps = (s7_pointer *)malloc(new_sc->temps_size * sizeof(s7_pointer));
-  for (i = 0; i < new_sc->temps_size; i++)
-    new_sc->temps[i] = new_sc->NIL;
-
   new_sc->no_values = 0;
   new_sc->key_values = sc->NIL;
 
@@ -26305,7 +26301,6 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
 static s7_scheme *close_s7(s7_scheme *sc)
 {
   free(sc->strbuf);
-  free(sc->temps);
   if (sc->read_line_buf) free(sc->read_line_buf);
   if (sc->default_rng) free(sc->default_rng);
 #if WITH_GMP
@@ -26329,8 +26324,6 @@ static void mark_s7(s7_scheme *sc)
   S7_MARK(sc->x);
   S7_MARK(sc->y);
   S7_MARK(sc->z);
-  for (i = 0; i < sc->temps_size; i++)
-    S7_MARK(sc->temps[i]);
   S7_MARK(sc->key_values);
   S7_MARK(sc->input_port);
   S7_MARK(sc->input_port_stack);
@@ -31555,7 +31548,7 @@ s7_scheme *s7_init(void)
   
   sc->free_heap = (s7_cell **)malloc(sc->heap_size * sizeof(s7_cell *));
   sc->free_heap_top = (s7_cell **)(sc->free_heap + INITIAL_HEAP_SIZE);
-  sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TEMPS_SIZE);
+  sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TRIGGER_SIZE);
 
   {
     s7_cell *cells = (s7_cell *)calloc(INITIAL_HEAP_SIZE, sizeof(s7_cell));
@@ -31571,12 +31564,6 @@ s7_scheme *s7_init(void)
   permanent_heap_top = (unsigned char *)(permanent_heap + PERMANENT_HEAP_SIZE);
   
   /* this has to precede s7_make_* allocations */
-  sc->temps_size = GC_TEMPS_SIZE;
-  sc->temps_ctr = 0;
-  sc->temps = (s7_pointer *)malloc(sc->temps_size * sizeof(s7_pointer));
-  for (i = 0; i < sc->temps_size; i++)
-    sc->temps[i] = sc->NIL;
-
   sc->protected_objects_size = (int *)malloc(sizeof(int));
   (*(sc->protected_objects_size)) = INITIAL_PROTECTED_OBJECTS_SIZE;
   sc->protected_objects_loc = (int *)malloc(sizeof(int));
