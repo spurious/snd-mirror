@@ -806,10 +806,10 @@ struct s7_scheme {
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
-#define UNUSED_BITS                   0x81084800
+#define UNUSED_BITS                   0x81084900
 
 /* TYPE_BITS could be 5
- * TYPE_BITS + 3, 6, 11, 16 and 23 are currently unused
+ * TYPE_BITS + 0, 3, 6, 11, 16 and 23 are currently unused
  */
 
 
@@ -1637,6 +1637,9 @@ static int gc(s7_scheme *sc)
 		(*fp++) = p;
 	      }
 	  }
+	/* by grouping the T_GC_MARK and T_FINALIZABLE bits with the type bits, it's possible
+	 *   to use a switch statement here rather than 3 if's, but that is much slower!
+	 */
       }
     sc->free_heap_top = fp;
   }
@@ -2527,7 +2530,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
   else
     {
       s7_pointer x;
-      NEW_CELL(sc, x); 
+      NEW_CELL_NO_CHECK(sc, x); 
       car(x) = slot;
       cdr(x) = e;
       set_type(x, T_PAIR | T_STRUCTURE);
@@ -13285,6 +13288,17 @@ s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 }
 
 
+static s7_pointer s7_cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b) 
+{
+  s7_pointer x;
+  NEW_CELL_NO_CHECK(sc, x);
+  car(x) = a;
+  cdr(x) = b;
+  set_type(x, T_PAIR | T_STRUCTURE);
+  return(x);
+}
+
+
 static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type)
 {
   /* for the symbol table which is never GC'd (and its contents aren't marked) */
@@ -21422,10 +21436,10 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 			make_list_2(sc, make_protected_string(sc, "for-each's arguments are circular lists! ~A"), cdr(args))));
     }
 
-  /* TODO: opt this! */
-  sc->args = s7_cons(sc, make_mutable_integer(sc, 0),   /* '(counter applicable-len func-args-holder . objects) */
-               s7_cons(sc, s7_make_integer(sc, len), 
-                 s7_cons(sc, sc->x, 
+  x = make_mutable_integer(sc, 0);
+  sc->args = s7_cons_unchecked(sc, x,                         /* '(counter applicable-len func-args-holder . objects) */
+               s7_cons_unchecked(sc, s7_make_integer(sc, len), 
+                 s7_cons_unchecked(sc, sc->x, 
                    safe_reverse_in_place(sc, sc->z))));
 
   sc->x = sc->NIL;
@@ -21604,9 +21618,10 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 			make_list_2(sc, make_protected_string(sc, "map's arguments are circular lists! ~A"), cdr(args))));
     }
 
-  sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
-               s7_cons(sc, s7_make_integer(sc, len), 
-		 s7_cons(sc, sc->NIL, 
+  x = make_mutable_integer(sc, 0);
+  sc->args = s7_cons_unchecked(sc, x,
+	       s7_cons_unchecked(sc, s7_make_integer(sc, len), 
+		 s7_cons_unchecked(sc, sc->NIL, 
                    safe_reverse_in_place(sc, sc->z))));
 
   sc->y = sc->NIL;
@@ -23104,7 +23119,7 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
 		s7_gc_unprotect_at(sc, gc_loc);
 	      }
 	  }
-	sc->args = s7_cons(sc, 
+	sc->args = s7_cons_unchecked(sc, 
 			   make_list_4(sc, binding, step_expr, cdar(sc->y), new_expr),
 			   sc->args);
       }
@@ -23797,7 +23812,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_DO_INIT:
-      sc->args = s7_cons(sc, sc->value, sc->args);    /* code will be last element (first after reverse) */
+      sc->args = s7_cons_unchecked(sc, sc->value, sc->args);    /* code will be last element (first after reverse) */
       if (is_pair(sc->code))
 	{
 	  /* here sc->code is a list like: ((i 0 (+ i 1)) ...)
@@ -23958,7 +23973,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	case T_PAIR:
 	  /* using a local s7_pointer here drastically slows things down?!? */
-	  if (dont_eval_args(car(sc->code)))
+	  if (dont_eval_args(car(sc->code))) /* actually is_syntax(symbol_value(car(sc->code))) */
 	    {
 	      sc->op = (opcode_t)syntax_opcode(symbol_value(car(sc->code)));
 	      sc->code = cdr(sc->code);
@@ -24372,7 +24387,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
 		  }
 
-		NEW_CELL(sc, y); /* TODO: possible NO_CHECK -- we check in NEW_FRAME? */
+		NEW_CELL(sc, y); 
 		car(y) = z;
 		cdr(y) = car(sc->y);
 		set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
@@ -24480,14 +24495,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	    
 	case T_C_OBJECT:	                  /* -------- applicable c object -------- */
-	  sc ->value = apply_object(sc, sc->code, sc->args);
-	  if (sc->stack_end > sc->stack_start)
-	    {
-	      pop_stack(sc);
-	      if (sc->op == OP_EVAL_ARGS1)
-		goto EVAL_ARGS;
-	    }
-	  goto START_WITHOUT_POP_STACK;
+	  {
+	    int tag;
+	    tag = c_object_type(sc->code);
+	    if (object_types[tag].apply)
+	      sc->value = ((*(object_types[tag].apply))(sc, sc->code, sc->args));
+	    else return(apply_error(sc, sc->code, sc->args));
+
+	    if (sc->stack_end > sc->stack_start)
+	      {
+		pop_stack(sc);
+		if (sc->op == OP_EVAL_ARGS1)
+		  goto EVAL_ARGS;
+	      }
+	    goto START_WITHOUT_POP_STACK;
+	  }
 
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of dimensions */
@@ -25737,18 +25759,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *    (case '2 (('2) 3) (else 1)) -> 1
 	   */
 
-	  /* TODO: somehow use == here if possible */
-	  if (s7_is_eqv(car(sc->y), sc->value)) 
-	    break;
-
-	  for (sc->y = cdr(sc->y); sc->y != sc->NIL; sc->y = cdr(sc->y)) 
+	  if (s7_is_symbol(sc->value))
 	    {
-	      if (!is_pair(sc->y))                                        /* (case () ((1 . 2) . hi) . hi) */
-		return(eval_error(sc, "case key list is improper? ~A", sc->x));
+	      if (car(sc->y) == sc->value)
+		break;
+
+	      for (sc->y = cdr(sc->y); sc->y != sc->NIL; sc->y = cdr(sc->y)) 
+		{
+		  if (!is_pair(sc->y))                                        /* (case () ((1 . 2) . hi) . hi) */
+		    return(eval_error(sc, "case key list is improper? ~A", sc->x));
+		  if (car(sc->y) == sc->value)
+		    break;
+		}
+	    }
+	  else
+	    {
 	      if (s7_is_eqv(car(sc->y), sc->value)) 
 		break;
+	      
+	      for (sc->y = cdr(sc->y); sc->y != sc->NIL; sc->y = cdr(sc->y)) 
+		{
+		  if (!is_pair(sc->y))                                        /* (case () ((1 . 2) . hi) . hi) */
+		    return(eval_error(sc, "case key list is improper? ~A", sc->x));
+		  if (s7_is_eqv(car(sc->y), sc->value)) 
+		    break;
+		}
 	    }
-	  
 	  if (sc->y != sc->NIL) 
 	    break;
 	}
