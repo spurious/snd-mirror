@@ -330,7 +330,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1,
-	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
+	      OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO,
 	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO, OP_SORT_OBJECT,
 	      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS, OP_HOOK_APPLY, 
@@ -349,7 +349,7 @@ static const char *op_names[OP_MAX_DEFINED] =
    "dynamic-wind", "define-constant", "define-constant", "do", "do", "do", 
    "do", "do", "do", "define*", "lambda*", 
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
-   "trace-hook-quit", "with-environment", "with-environment", "for-each", "map", 
+   "trace-hook-quit", "with-environment", "with-environment", "for-each", "for-each", "map", "map",
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
    "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort", "sort",
    "eval-string", "eval-string", "set-access", "hook-apply", 
@@ -358,7 +358,7 @@ static const char *op_names[OP_MAX_DEFINED] =
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 95 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 97 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -1137,6 +1137,7 @@ static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c);
 static s7_pointer make_list_4(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c, s7_pointer d);
 static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
+static s7_pointer s7_cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
@@ -1448,13 +1449,7 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 
 static void s7_mark_object_1(s7_pointer p);
 
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define S7_MARK(Obj) ({ s7_pointer _p_; _p_ = Obj; if (!is_marked(_p_)) {set_mark(_p_); if (!is_simple(_p_)) s7_mark_object_1(_p_);}})
-#else
-  #define S7_MARK(Obj) do {if (!is_marked(Obj)) {set_mark(Obj); if (!is_simple(Obj)) s7_mark_object_1(Obj);}} while (0)
-#endif
-/* this is slightly faster than if we first call s7_mark_object, then check the mark bit */
-
+#define S7_MARK(Obj) do {s7_pointer pp; pp = Obj; if (!is_marked(pp)) {set_mark(pp); if (!is_simple(pp)) s7_mark_object_1(pp);}} while (0)
 
 static void mark_vector(s7_pointer p, s7_Int top)
 {
@@ -1467,11 +1462,7 @@ static void mark_vector(s7_pointer p, s7_Int top)
   tend = (s7_pointer *)(tp + top);
 
   while (tp < tend) 
-    {
-      s7_pointer tmp; 
-      tmp = (*tp++); 
-      S7_MARK(tmp);
-    }
+    S7_MARK(*tp++);
 }
 
 
@@ -1601,10 +1592,7 @@ static int gc(s7_scheme *sc)
     tmps = sc->free_heap_top;
     tmps_top = tmps + GC_TEMPS_SIZE;
     while (tmps < tmps_top)
-      {
-	S7_MARK(*tmps);
-	tmps++;
-      }
+      S7_MARK(*tmps++);
   }
 
   /* free up all unmarked objects */
@@ -2056,7 +2044,6 @@ static void push_stack(s7_scheme *sc, s7_pointer int_op, s7_pointer args, s7_poi
   sc->stack_end += 4;
 }
 
-/* TODO: also what about putting pop_stacks in place, not at the top of eval? */
 
 static void increase_stack_size(s7_scheme *sc)
 {
@@ -2520,7 +2507,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 #endif
 
       loc = symbol_location(variable);
-      vector_element(e, loc) = s7_cons(sc, slot, vector_element(e, loc));
+      vector_element(e, loc) = s7_cons_unchecked(sc, slot, vector_element(e, loc));
       symbol_global_slot(variable) = slot;
 
       /* so if we (define hi "hiho") at the top level,  "hi" hashes to 1746 with symbol table size 2207
@@ -3084,24 +3071,6 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   s7_define(sc, s7_global_environment(sc), sym, value);
   x = symbol_global_slot(sym);
   set_immutable(car(x));
-
-  /* We could move constants (x here) and function slots to a separate "heap" or the gc_protected table.
-   *   They need to be marked (pi for example can change its value in the gmp case),
-   *   but will never be freed, and in the Xm case there are several thousand
-   *   constants sitting in the heap.  In the simple (non Xm) case, this reduces
-   *   the initial heap from 800 to ca 400 objects, and saves ca 9/2400 in overall
-   *   compute time (all the savings are in s7_mark_object which strikes me as weird).
-   *   In the Xm case we go from 12000 to 6000 initial objects.  I decided not to
-   *   do this since it makes me feel uneasy.  The basic idea is:
-   *     s7_remove_from_heap(sc, x);
-   *     s7_gc_protect(sc, x);
-   *   and in the function case, save the symbol table pointer as sym and
-   *     x = symbol_global_slot(sym);
-   *     etc
-   *   big_pi must be handled specially:
-   *     s7_symbol_set_value(sc, make_symbol(sc, "pi"), tmp = big_pi(sc));
-   *     s7_gc_protect(sc, tmp);
-   */
 }
 
 /*        (define (func a) (let ((cvar (+ a 1))) cvar))
@@ -10678,10 +10647,18 @@ static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
   if (len == 0)
     return(sc->NIL);
 
-  sc->w = sc->NIL;
-  /* TODO: we know len -- could use NO_CHECK */
-  for (i = 0; i < len; i++)
-    sc->w = s7_cons(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
+  if (len < (sc->free_heap_top - sc->free_heap))
+    {
+      sc->w = s7_cons (sc, s7_make_character(sc, ((unsigned char)str[0])), sc->NIL);
+      for (i = 1; i < len; i++)
+	sc->w = s7_cons_unchecked(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
+    }
+  else
+    {
+      sc->w = sc->NIL;
+      for (i = 0; i < len; i++)
+	sc->w = s7_cons(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
+    }
   p = sc->w;
   sc->w = sc->NIL;
 
@@ -13707,9 +13684,18 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 
   sc->w = sc->NIL;
   ilen = (int)len;
-  /* TODO: we know len O_CHECK */
-  for (i = 0; i < ilen; i++)
-    sc->w = s7_cons(sc, init, sc->w);
+
+  if (len < (sc->free_heap_top - sc->free_heap))
+    {
+      sc->w = s7_cons(sc, init, sc->NIL);
+      for (i = 1; i < ilen; i++)
+	sc->w = s7_cons_unchecked(sc, init, sc->w);
+    }
+  else
+    {
+      for (i = 0; i < ilen; i++)
+	sc->w = s7_cons(sc, init, sc->w);
+    }
   p = sc->w;
   sc->w = sc->NIL;
 
@@ -14434,18 +14420,37 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
   y = x;
   obj = car(args);
 
-  while (true)
+  if (s7_is_symbol(obj))
     {
-      if ((is_pair(car(x))) && (s7_is_equal(sc, obj, caar(x)))) return(car(x));
-      x = cdr(x);
-      if (!is_pair(x)) return(sc->F);
-
-      if ((is_pair(car(x))) && (s7_is_equal(sc, obj, caar(x)))) return(car(x));
-      x = cdr(x);
-      if (!is_pair(x)) return(sc->F);
-
-      y = cdr(y);
-      if (x == y) return(sc->F);
+      while (true)
+	{
+	  if ((is_pair(car(x))) && (obj == caar(x))) return(car(x));
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+	  
+	  if ((is_pair(car(x))) && (obj == caar(x))) return(car(x));
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+	  
+	  y = cdr(y);
+	  if (x == y) return(sc->F);
+	}
+    }
+  else
+    {
+      while (true)
+	{
+	  if ((is_pair(car(x))) && (s7_is_equal(sc, obj, caar(x)))) return(car(x));
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+	  
+	  if ((is_pair(car(x))) && (s7_is_equal(sc, obj, caar(x)))) return(car(x));
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+	  
+	  y = cdr(y);
+	  if (x == y) return(sc->F);
+	}
     }
   return(sc->F); /* not reached */
 }
@@ -14501,18 +14506,35 @@ static s7_pointer g_memv(s7_scheme *sc, s7_pointer args)
   y = x;
   obj = car(args);
 
-  while (true)
+  if (s7_is_symbol(obj))
     {
-      if (s7_is_eqv(obj, car(x))) return(x);
-      x = cdr(x);
-      if (!is_pair(x)) return(sc->F);
-
-      if (s7_is_eqv(obj, car(x))) return(x);
-      x = cdr(x);
-      if (!is_pair(x)) return(sc->F);
-
-      y = cdr(y);
-      if (x == y) return(sc->F);
+      while (true)
+	{
+	  if (obj == car(x)) return(x);
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+	  if (obj == car(x)) return(x);
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+	  y = cdr(y);
+	  if (x == y) return(sc->F);
+	}
+    }
+  else
+    {
+      while (true)
+	{
+	  if (s7_is_eqv(obj, car(x))) return(x);
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+	  
+	  if (s7_is_eqv(obj, car(x))) return(x);
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+	  
+	  y = cdr(y);
+	  if (x == y) return(sc->F);
+	}
     }
   return(sc->F); /* not reached */
 }
@@ -14558,19 +14580,35 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
   
   y = x;
   obj = car(args);
-
-  while (true)
+  if (s7_is_symbol(obj))
     {
-      if (s7_is_equal(sc, obj, car(x))) return(x);
-      x = cdr(x);
-      if (!is_pair(x)) return(sc->F);
+      while (true)
+	{
+	  if (obj == car(x)) return(x);
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+	  if (obj == car(x)) return(x);
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+	  y = cdr(y);
+	  if (x == y) return(sc->F);
+	}
+    }
+  else
+    {
+      while (true)
+	{
+	  if (s7_is_equal(sc, obj, car(x))) return(x);
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
 
-      if (s7_is_equal(sc, obj, car(x))) return(x);
-      x = cdr(x);
-      if (!is_pair(x)) return(sc->F);
-
-      y = cdr(y);
-      if (x == y) return(sc->F);
+	  if (s7_is_equal(sc, obj, car(x))) return(x);
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+	  
+	  y = cdr(y);
+	  if (x == y) return(sc->F);
+	}
     }
   return(sc->F); /* not reached */
 }
@@ -14880,11 +14918,22 @@ s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 {
   s7_Int i, len;
   s7_pointer p;
+
   len = vector_length(vect);
-  sc->w = sc->NIL;
-  /* TODO: NO_CHECK */
-  for (i = len - 1; i >= 0; i--)
-    sc->w = s7_cons(sc, vector_element(vect, i), sc->w);
+  if (len == 0) return(sc->NIL);
+
+  if (len < (sc->free_heap_top - sc->free_heap))
+    {
+      sc->w = s7_cons(sc, vector_element(vect, len - 1), sc->NIL);
+      for (i = len - 2; i >= 0; i--)
+	sc->w = s7_cons_unchecked(sc, vector_element(vect, i), sc->w);
+    }
+  else
+    {
+      sc->w = sc->NIL;
+      for (i = len - 1; i >= 0; i--)
+	sc->w = s7_cons(sc, vector_element(vect, i), sc->w);
+    }
   p = sc->w;
   sc->w = sc->NIL;
   return(p);
@@ -15231,7 +15280,6 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
     {
       int i;
       sc->w = sc->NIL;
-      /* TODO: NO_CHECK */
       for (i = vector_ndims(x) - 1; i >= 0; i--)
 	sc->w = s7_cons(sc, s7_make_integer(sc, vector_dimension(x, i)), sc->w);
       x = sc->w;
@@ -21365,7 +21413,16 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
   if (len != 0)
     {
-      /* TODO: opt this! */
+      if ((len != S7_LONG_MAX) &&
+	  (is_pair(obj)) &&
+	  (cddr(args) == sc->NIL) &&
+	  (!(is_macro(sc->code))))
+	{
+	  /* one list arg -- special, but very common case */
+	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), s7_cons(sc, make_list_1(sc, sc->NIL), obj), sc->code);
+	  return(sc->UNSPECIFIED);
+	}
+
       sc->x = make_list_1(sc, sc->NIL);
       if (s7_is_hash_table(obj))
 	sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
@@ -21413,8 +21470,6 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
       return(s7_wrong_type_arg_error(sc, "for-each", 1, sc->code, "a procedure or something applicable"));
     }
-
-
 
   if (len == S7_LONG_MAX)
     {
@@ -21569,6 +21624,16 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   if (len != 0)
     {
+      if ((len != S7_LONG_MAX) &&
+	  (is_pair(obj)) &&
+	  (cddr(args) == sc->NIL) &&
+	  (!(is_macro(sc->code))))
+	{
+	  /* one list arg -- special, but very common case */
+	  push_stack(sc, opcode(OP_MAP_SIMPLE), s7_cons(sc, make_mutable_integer(sc, len), s7_cons(sc, sc->NIL, obj)), sc->code);
+	  return(sc->NO_VALUE);
+	}
+
       if (s7_is_hash_table(obj))
 	sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
       else sc->z = make_list_1(sc, obj);
@@ -23558,6 +23623,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
 
+    case OP_MAP_SIMPLE:
+      /* func = sc->code, func takes one arg, args = '((nil) nil arglist) at the start */
+      /* fprintf(stderr, "value: %s, args: %s\n", s7_object_to_c_string(sc, sc->value), s7_object_to_c_string(sc, sc->args)); */
+      if (sc->value != sc->NO_VALUE)
+	{
+	  if (is_multiple_value(sc->value))
+	    cadr(sc->args) = s7_append(sc, safe_reverse_in_place(sc, multiple_value(sc->value)), cadr(sc->args));
+	  else cadr(sc->args) = s7_cons(sc, sc->value, cadr(sc->args));
+	}
+      if (is_pair(cddr(sc->args)))
+	{
+	  if ((--integer(number(car(sc->args)))) >= 0) /* protect against circular arg lists created by the map function! */
+	    {
+	      sc->x = caddr(sc->args);
+	      cddr(sc->args) = cdddr(sc->args);  /* move down for-each list of args */
+	      push_stack(sc, opcode(OP_MAP_SIMPLE), sc->args, sc->code);
+	      sc->args = s7_cons(sc, sc->x, sc->NIL);  /* we can't optimize out this cons */
+	      goto APPLY_WITHOUT_TRACE;
+	    }
+	}
+      sc->value = safe_reverse_in_place(sc, cadr(sc->args));
+      goto START;
+      
+
     case OP_MAP:
       if (sc->value != sc->NO_VALUE)                   /* (map (lambda (x) (values)) (list 1)) */
 	{
@@ -23574,6 +23663,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       sc->value = safe_reverse_in_place(sc, caddr(sc->args));
+      goto START;
+
+      
+    case OP_FOR_EACH_SIMPLE:
+      /* func = sc->code, func takes one arg, args = '((nil) arglist) */
+      /* (for-each (lambda (x) (display x)) (list 1 2 3)) */
+      if (is_pair(cdr(sc->args)))
+	{
+	  caar(sc->args) = cadr(sc->args); /* current func arg */
+	  cdr(sc->args) = cddr(sc->args);  /* move down for-each list of args */
+	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), sc->args, sc->code);
+	  sc->args = car(sc->args);
+	  goto APPLY_WITHOUT_TRACE;
+	}
+      sc->value = sc->UNSPECIFIED;
       goto START;
 
       
@@ -23610,7 +23714,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  /* circular list check */
 	  caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list (check for circular list) */
-	  if (cadr(sc->args) == caddr(sc->args)) /* TODO: use a vector? */
+	  if (cadr(sc->args) == caddr(sc->args)) 
 	    {
 	      sc->value = sc->F;
 	      goto START;
