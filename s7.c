@@ -150,6 +150,7 @@
  *    (valgrind timings from 23-Feb-10 running s7test.scm)
  *
  * If the initial heap is small, s7 can run in less than 1 Mbyte of memory.
+ * As of 5-May-2011, the heap size must be a multiple of 32.
  */
 
 #define SYMBOL_TABLE_SIZE 2207
@@ -698,10 +699,6 @@ struct s7_scheme {
 #define typeflag(p)                   ((p)->flag)
 #define type(p)                       (typeflag(p) & T_MASKTYPE)
 /* set_type below -- needs to maintain mark setting */
-#if DEBUGGING
-#define saved_typeflag(p)             ((p)->saved_flag)
-#define saved_type(p)                 (saved_typeflag(p) & T_MASKTYPE)
-#endif
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
@@ -1460,9 +1457,26 @@ static void mark_vector(s7_pointer p, s7_Int top)
   tp = (s7_pointer *)(vector_elements(p));
   if (!tp) return;
   tend = (s7_pointer *)(tp + top);
-
-  while (tp < tend) 
-    S7_MARK(*tp++);
+  
+  if ((vector_length(p) % 8) == 0)
+    {
+      while (tp < tend) 
+	{
+	  S7_MARK(*tp++);
+	  S7_MARK(*tp++);
+	  S7_MARK(*tp++);
+	  S7_MARK(*tp++);
+	  S7_MARK(*tp++);
+	  S7_MARK(*tp++);
+	  S7_MARK(*tp++);
+	  S7_MARK(*tp++);
+	}
+    }
+  else
+    {
+      while (tp < tend) 
+	S7_MARK(*tp++);
+    }
 }
 
 
@@ -1474,8 +1488,6 @@ static void s7_mark_object_1(s7_pointer p)
       return;
 
     case T_PAIR:
-      if (symbol_has_accessor(p))
-	S7_MARK(csr(p));
       S7_MARK(car(p));
       S7_MARK(cdr(p));
       break;
@@ -1554,6 +1566,18 @@ void s7_mark_object(s7_pointer p)
   static struct timezone z0;
 #endif
 
+#define GC_CALL(P, Tp) \
+	p = (*tp++); \
+	if (is_marked(p)) \
+	  clear_mark(p); \
+	else  \
+	  { \
+	    if (typeflag(p) != 0) \
+	      { \
+		if (is_finalizable(p)) finalize_s7_cell(sc, p); \
+		typeflag(p) = 0;  \
+		(*fp++) = p; \
+	      }}
 
 static int gc(s7_scheme *sc)
 {
@@ -1608,6 +1632,8 @@ static int gc(s7_scheme *sc)
     while (tp < heap_top)          /* != here or ^ makes no difference */
       {
 	s7_pointer p;
+	/* from here down is GC_CALL, but I wanted one case explicit for readability
+	 */
 	p = (*tp++);
 
 	if (is_marked(p))          /* this order is faster than checking typeflag(p) != 0 first */
@@ -1618,9 +1644,6 @@ static int gc(s7_scheme *sc)
 	      {
 		if (is_finalizable(p))
 		  finalize_s7_cell(sc, p); 
-#if DEBUGGING
-		saved_typeflag(p) = typeflag(p);
-#endif		
 		typeflag(p) = 0;  /* (this is needed -- otherwise we try to free some objects twice) */
 		(*fp++) = p;
 	      }
@@ -1628,6 +1651,48 @@ static int gc(s7_scheme *sc)
 	/* by grouping the T_GC_MARK and T_FINALIZABLE bits with the type bits, it's possible
 	 *   to use a switch statement here rather than 3 if's, but that is much slower!
 	 */
+
+	/* this looks crazy, but it speeds up the entire GC process by 25%!
+	 *   going from 16 to 32 saves .2% so it may not matter.
+	 */
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
+	GC_CALL(p, tp);
       }
     sc->free_heap_top = fp;
   }
@@ -5467,12 +5532,20 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 	  if (dig < 10)
 	    lval = dig + (lval * 10);
 	  else break;
+	  dig = digits[(unsigned char)(*tmp++)];
+	  if (dig < 10)
+	    lval = dig + (lval * 10);
+	  else break;
 	}
     }
   else
     {
       while (true)
 	{
+	  dig = digits[(unsigned char)(*tmp++)];
+	  if (dig < radix)
+	    lval = dig + (lval * radix);
+	  else break;
 	  dig = digits[(unsigned char)(*tmp++)];
 	  if (dig < radix)
 	    lval = dig + (lval * radix);
@@ -12394,29 +12467,6 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_environment(obj) ?        " environment" : "",
              dont_eval_args(obj) ?        " dont-eval-args" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
-#if DEBUGGING
-    if ((saved_typeflag(obj) != typeflag(obj)) &&
-	(saved_typeflag(obj) > 0) &&
-	(saved_type(obj) < BUILT_IN_TYPES))
-      {
-	char *descr, *new_buf;
-	int old_flag;
-	old_flag = typeflag(obj);
-	typeflag(obj) = saved_typeflag(obj);
-	descr = atom_to_c_string(sc, obj, WITH_ELLIPSES);
-	typeflag(obj) = old_flag;
-	if (descr)
-	  {
-	    int len;
-	    len = strlen(descr) + strlen(buf) + 32;
-	    new_buf = (char *)calloc(len, sizeof(char));
-	    snprintf(new_buf, len, "%s (possibly: %s)", buf, descr);
-	    free(descr);
-	    free(buf);
-	    return(new_buf);
-	  }
-      }
-#endif
     return(buf);
   }
 }
@@ -17882,6 +17932,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
   if (x == sc->NIL)
     x = add_to_current_environment(sc, symbol, sc->F);
   csr(x) = funcs;
+  s7_gc_protect(sc, funcs);
   symbol_set_accessed(symbol);
   if ((is_pair(funcs)) &&
       (s7_list_length(sc, funcs) >= 3) &&
@@ -24193,7 +24244,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       
-      /* using while here rather than EVAL_ARGS and a goto made no speed difference */
+                                      /* using while here rather than EVAL_ARGS and a goto made no speed difference */
     EVAL_ARGS:
     case OP_EVAL_ARGS1:
       /* this is where most of s7's compute time goes */
@@ -31723,6 +31774,8 @@ s7_scheme *s7_init(void)
   sc->default_rng = NULL;
   
   sc->heap_size = INITIAL_HEAP_SIZE;
+  if ((sc->heap_size % 32) != 0)
+    sc->heap_size = 32 * (int)ceil((double)(sc->heap_size) / 32.0);
   sc->heap = (s7_pointer *)malloc(sc->heap_size * sizeof(s7_pointer));
   
   sc->free_heap = (s7_cell **)malloc(sc->heap_size * sizeof(s7_cell *));

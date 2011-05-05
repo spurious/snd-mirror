@@ -6269,6 +6269,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (map (lambda (x y) (+ x y)) lst1 '(1 2 3)) '(2 3 4))
   )
 
+(test (let ((lst '(a b c)))
+	(set! (cdr (cddr lst)) lst)
+	(map cons lst '(0 1 2 3 4 5)))
+      '((a . 0) (b . 1) (c . 2) (a . 3) (b . 4) (c . 5)))
+
 (test (copy (list 1 2 (list 3 4))) '(1 2 (3 4)))
 (test (copy (cons 1 2)) '(1 . 2))
 (test (copy '(1 2 (3 4) . 5)) '(1 2 (3 4) . 5))

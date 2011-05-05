@@ -6539,7 +6539,7 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
   n = XEN_TO_C_INT(x_n);
   
   size = n - 1;
-  increment = 0.0003;
+  increment = 0.001;
 
   if (XEN_VECTOR_P(start_phases))
     {
@@ -6605,10 +6605,11 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
 	  else
 	    {
 	      choices[current_choice]->pk = peak;
-	      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-	      fprintf(stderr, "    %d at %d got %f with %f!\n", current_choice, k, peak, increment);
-	      if (peak < current_min) current_min = peak;
-
+	      if (peak < current_min)
+		{
+		  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+		  current_min = peak;
+		}
 	      while (true)
 		{
 		  mus_float_t local_peak;
@@ -6624,9 +6625,11 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
 		    {
 		      peak = local_peak;
 		      choices[current_choice]->pk = peak;
-		      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-		      fprintf(stderr, "    %d at %d got %f\n", current_choice, k, peak);
-		      if (local_peak < current_min) current_min = local_peak;
+		      if (peak < current_min)
+			{
+			  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+			  current_min = local_peak;
+			}
 		    }
 		}
 	      current_choice++;
@@ -6642,10 +6645,11 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
 	  else
 	    {
 	      choices[current_choice]->pk = peak;
-	      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-	      fprintf(stderr, "    %d at %d got %f with %f!\n", current_choice, k, peak, -increment);
-	      if (peak < current_min) current_min = peak;
-
+	      if (peak < current_min)
+		{
+		  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+		  current_min = peak;
+		}
 	      while (true)
 		{
 		  mus_float_t local_peak;
@@ -6661,9 +6665,11 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
 		    {
 		      peak = local_peak;
 		      choices[current_choice]->pk = peak;
-		      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-		      fprintf(stderr, "    %d at %d got %f\n", current_choice, k, peak);
-		      if (local_peak < current_min) current_min = local_peak;
+		      if (peak < current_min)
+			{
+			  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+			  current_min = local_peak;
+			}
 		    }
 		}
 	      current_choice++;
@@ -6679,7 +6685,7 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
 	  continue;
 	}
 
-      increment *= 0.5;
+      increment *= 0.75;
       if (increment < .00001) break;
     }
 
@@ -6698,7 +6704,7 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
 
       for (current_choice = 0; current_choice < size; current_choice++)
 	{
-	  for (counter = 1; counter < 10000; counter++)
+	  for (counter = 1; counter < 100000; counter++)
 	    {
 	      int k, bits, cur;
 	      big_counter++;
@@ -6716,9 +6722,11 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
 		{
 		  hits++;
 		  choices[current_choice]->pk = peak;
-		  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-		  fprintf(stderr, "    %d at %d got %f with %f!\n", current_choice, big_counter, peak, increment);
-		  if (peak < current_min) current_min = peak;
+		  if (peak < current_min)
+		    {
+		      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+		      current_min = peak;
+		    }
 		}
 	      else
 		{
@@ -6744,9 +6752,11 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
 		    {
 		      hits++;
 		      choices[current_choice]->pk = peak;
-		      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-		      fprintf(stderr, "    %d at %d got %f with %f!\n", current_choice, big_counter, peak, -increment);
-		      if (peak < current_min) current_min = peak;
+		      if (peak < current_min)
+			{
+			  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+			  current_min = peak;
+			}
 		    }
 		}
 	    }
