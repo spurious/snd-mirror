@@ -24075,38 +24075,42 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_EVAL:   
       /* main part of evaluation */
       /* try to unroll this implicit loop to optimize the most common case of (func...) */
+
       if (is_pair(sc->code))
 	{
-	  if (dont_eval_args(car(sc->code))) /* actually is_syntax(symbol_value(car(sc->code))) */
+	  s7_pointer carc;
+	  carc = car(sc->code);
+
+	  if (dont_eval_args(carc)) /* actually is_syntax(symbol_value(car(sc->code))) */
 	    {
-	      sc->op = (opcode_t)syntax_opcode(symbol_value(car(sc->code)));
+	      sc->op = (opcode_t)syntax_opcode(symbol_value(carc));
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;
 	    }
-	  
-	  sc->args = cdr(sc->code);
-	  sc->code = car(sc->code);
-	  if (s7_is_symbol(sc->code))
+
+	  if (s7_is_symbol(carc))
 	    {
 	      s7_pointer x;
-	      if (is_not_local(sc->code))
-		x = symbol_global_slot(sc->code);
-	      else x = find_symbol(sc, sc->envir, sc->code);
+	      if (is_not_local(carc))
+		x = symbol_global_slot(carc);
+	      else x = find_symbol(sc, sc->envir, carc);
 	      
 	      if (x != sc->NIL) 
 		sc->value = symbol_value(x);
-	      else sc->value = eval_symbol_1(sc, sc->code);
+	      else sc->value = eval_symbol_1(sc, carc);
 	      
-	      sc->code = sc->args;
+	      sc->code = cdr(sc->code);
 	      sc->args = sc->NIL;
 	    }
 	  else
 	    {
+	      sc->args = cdr(sc->code);
+	      sc->code = carc;
+
 	      if (is_pair(sc->code))
 		{
 		  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->args);
-		  
-		  if (dont_eval_args(car(sc->code))) /* actually is_syntax(symbol_value(car(sc->code))) */
+		  if (dont_eval_args(car(sc->code)))
 		    {
 		      sc->op = (opcode_t)syntax_opcode(symbol_value(car(sc->code)));
 		      sc->code = cdr(sc->code);

@@ -5941,9 +5941,9 @@ that give a minimum peak amplitude when the signals are added together."
      17827, 17837, 17839, 17851, 17863};
 #endif
 
-  static mus_float_t all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6394, 2.7946, 2.9617, 3.1023, 3.2180, 3.3887, 3.5241, 3.6122, 3.7680, 3.8738, 3.9802, 4.1438, 4.2210, 4.2890, 4.4824, 4.5866, 4.6052, 4.7280, 4.8531, 5.0050, 5.0640, 5.1573, 5.2413, 5.3623, 5.4800, 5.5259, 5.6320, 5.7167, 5.7648, 5.9260, 5.9291, 6.1063, 6.1247, 6.2928, 6.3296, 6.4582, 6.4755, 6.5454, 6.6312, 6.6921, 6.8293, 6.8630, 6.9144, 7.0054, 7.0637, 7.1368, 7.1997, 7.2564, 7.3299, 7.3515, 7.4959, 7.5951, 7.6448, 7.6004, 7.7645, 7.7988, 7.9057, 7.9675, 8.0372, 8.0641, 8.1492, 8.1759, 8.2203, 8.1858, 8.3294, 8.4729, 8.4355, 8.5093, 8.6166, 8.6292, 8.7018, 8.7310, 8.8532, 8.8399, 8.9659, 9.0773, 8.9469, 9.0279, 9.1400, 9.2143, 9.3414, 9.3266, 9.3608, 9.4148, 9.4762, 9.5310, 9.6772, 9.6238, 9.6045, 9.7150, 9.8212, 9.7808, 9.8684, 9.9443, 10.0713, 10.0911, 10.0825, 10.1311, 10.1809, 10.2442, 10.2892, 10.3212, 10.4419, 10.5137, 10.5072, 10.4710, 10.6064, 10.6388, 10.6937, 10.6756, 10.7588, 10.8087, 10.8970, 10.8897, 10.9437, 10.9655, 11.0981, 11.0834, 11.1670, 11.1605, 11.1939, 11.3215};
+  static mus_float_t all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6394, 2.7946, 2.9617, 3.1023, 3.2180, 3.3887, 3.5241, 3.6122, 3.7680, 3.8738, 3.9802, 4.1438, 4.2210, 4.2890, 4.4824, 4.5866, 4.6052, 4.7280, 4.8531, 5.0050, 5.0640, 5.1573, 5.2413, 5.3623, 5.4800, 5.5259, 5.6320, 5.7167, 5.7648, 5.9260, 5.9291, 6.1063, 6.1247, 6.2928, 6.3296, 6.4582, 6.4755, 6.5454, 6.6312, 6.6921, 6.8293, 6.8630, 6.9144, 7.0054, 7.0637, 7.1368, 7.1997, 7.2564, 7.3299, 7.3515, 7.4959, 7.5951, 7.6448, 7.6004, 7.7645, 7.7988, 7.9057, 7.9675, 8.0372, 8.0641, 8.1492, 8.1759, 8.2203, 8.1858, 8.3294, 8.4729, 8.4355, 8.5093, 8.6166, 8.6292, 8.7018, 8.7310, 8.8532, 8.8399, 8.9659, 9.0769, 8.9469, 9.0279, 9.1400, 9.2143, 9.3406, 9.3266, 9.3608, 9.4148, 9.4762, 9.5310, 9.6760, 9.6238, 9.6045, 9.7150, 9.8212, 9.7808, 9.8684, 9.9443, 10.0698, 10.0884, 10.0825, 10.1311, 10.1809, 10.2442, 10.2892, 10.3212, 10.4411, 10.5132, 10.5072, 10.4710, 10.6064, 10.6388, 10.6937, 10.6756, 10.7588, 10.8087, 10.8942, 10.8897, 10.9437, 10.9655, 11.0974, 11.0834, 11.1661, 11.1605, 11.1939, 11.3197};
 
-  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6183, 2.7907, 2.8862, 3.0534, 3.1766, 3.3619, 3.4745, 3.5985, 3.7384, 3.8570, 3.9264, 4.0695, 4.1719, 4.3580, 4.4485, 4.5810, 4.6616, 4.7864, 4.8868, 5.0064, 5.0888, 5.0889, 5.2634, 5.3531, 5.4189, 5.5633, 5.6030, 5.7405, 5.8333, 5.9776, 6.0191, 6.1445, 6.1815, 6.2725, 6.3216, 6.4032, 6.4742, 6.5992, 6.6249, 6.7092, 6.7852, 6.8280, 6.9901, 6.9471, 7.0877, 7.0801, 7.2526, 7.3293, 7.3642, 7.4191, 7.4889, 7.5881, 7.6178, 7.6996, 7.7755, 7.8170, 7.9041, 7.9574, 8.0448, 8.1386, 8.1280, 8.2279, 8.2749, 8.3285, 8.4779, 8.3664, 8.5593, 8.4879, 8.6523, 8.6513, 8.7070, 8.7153, 8.8710, 8.9487, 8.9263, 8.8955, 9.0607, 9.1927, 9.1729, 9.2133, 9.3575, 9.3240, 9.3316, 9.4217, 9.4566, 9.5527, 9.6488, 9.6612, 9.7356, 9.7654, 9.8383, 9.9258, 9.9742, 9.9804, 9.9646, 10.0458, 10.1114, 10.1772, 10.1158, 10.1983, 10.3094, 10.3255, 10.4207, 10.4081, 10.6216, 10.5882, 10.6006, 10.6208, 10.6856, 10.7399, 10.7935, 10.8122, 10.9214, 10.9206, 11.0239, 11.0370, 11.1398, 11.2193, 11.1221, 11.2674, 11.2858, 11.2620};
+  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6183, 2.7907, 2.8862, 3.0534, 3.1766, 3.3619, 3.4745, 3.5985, 3.7384, 3.8570, 3.9264, 4.0695, 4.1719, 4.3580, 4.4485, 4.5810, 4.6616, 4.7864, 4.8868, 5.0064, 5.0888, 5.0889, 5.2634, 5.3531, 5.4189, 5.5633, 5.6030, 5.7405, 5.8333, 5.9776, 6.0191, 6.1445, 6.1815, 6.2725, 6.3216, 6.4032, 6.4742, 6.5992, 6.6249, 6.7092, 6.7852, 6.8280, 6.9901, 6.9471, 7.0877, 7.0801, 7.2526, 7.3293, 7.3642, 7.4191, 7.4889, 7.5881, 7.6178, 7.6996, 7.7755, 7.8170, 7.9041, 7.9574, 8.0448, 8.1382, 8.1280, 8.2279, 8.2749, 8.3285, 8.4775, 8.3664, 8.5593, 8.4879, 8.6519, 8.6513, 8.7070, 8.7153, 8.8682, 8.9484, 8.9263, 8.8955, 9.0607, 9.1904, 9.1729, 9.2133, 9.3559, 9.3240, 9.3316, 9.4217, 9.4566, 9.5527, 9.6483, 9.6612, 9.7356, 9.7654, 9.8383, 9.9226, 9.9724, 9.9804, 9.9646, 10.0458, 10.1114, 10.1772, 10.1158, 10.1983, 10.3094, 10.3255, 10.4207, 10.4081, 10.6205, 10.5878, 10.6006, 10.6208, 10.6856, 10.7399, 10.7935, 10.8122, 10.9209, 10.9206, 11.0201, 11.0366, 11.1349, 11.2159, 11.1221, 11.2597, 11.2829, 11.2616};
 
   static mus_float_t prime_mins[128] = {1.0000, 1.7600, 1.9798, 2.1921, 2.4768, 2.8054, 3.0618, 3.2628, 3.3822, 3.6019, 3.7784, 3.9359, 4.1545, 4.3244, 4.4669, 4.6015, 4.7191, 4.8554, 5.0150, 5.1886, 5.3250, 5.4444, 5.5636, 5.6457, 5.8110, 6.0603, 6.1342, 6.1909, 6.3650, 6.4518, 6.7015, 6.8403, 6.8471, 6.9918, 7.1647, 7.2743, 7.2923, 7.3972, 7.4571, 7.7036, 7.8670, 7.9689, 8.0462, 8.1786, 8.1587, 8.2656, 8.4225, 8.4701, 8.6383, 8.6779, 8.6547, 8.8203, 8.9537, 9.1135, 9.1486, 9.4076, 9.5698, 9.4963, 9.4489, 9.6577, 9.8482, 9.7939, 9.7212, 9.9180, 10.2736, 10.2168, 10.3295, 10.4019, 10.4139, 10.4406, 10.5788, 10.5922, 10.7617, 10.7115, 11.0223, 11.0723, 10.8825, 11.1288, 11.2266, 11.4514, 11.5009, 11.4800, 11.5157, 11.5609, 11.6403, 11.5250, 11.9270, 11.9889, 12.2189, 12.0405, 12.1250, 12.1239, 12.3234, 12.3723, 12.5103, 12.6686, 12.6382, 12.8988, 13.0893, 13.1158, 13.0683, 13.3991, 13.4243, 13.1969, 13.1439, 13.2161, 13.5618, 13.6628, 13.6943, 13.7797, 13.7655, 13.8646, 14.0364, 14.2144, 14.1698, 14.4672, 14.6007, 14.5453, 14.3907, 14.5061, 14.5506, 14.8748, 14.6063, 14.8769, 14.7724, 14.9200, 14.9658, 14.6466};
 
@@ -6389,6 +6389,397 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 		    xen_make_vct(n, min_phases)));
 }
 
+
+
+/* -------------------------------------------------------------------------------- */
+
+#define S_fpgrid "fpgrid"
+
+static char *choice_name[4] = {"all", "odd", "even", "prime"};
+
+static void save_peaks(const char *file, int choice, int n, mus_float_t peak, mus_float_t *phases)
+{
+  FILE *ofile;
+  int k;
+  fprintf(stderr, "%s, %d: %f\n", choice_name[choice], n, peak);
+  ofile = fopen(file, "a");
+  fprintf(ofile, "%s, %d %f #(", choice_name[choice], n, peak);
+  for (k = 0; k < n - 1; k++) 
+    fprintf(ofile, "%f ", phases[k]);
+  fprintf(ofile, "%f)\n", phases[n - 1]);
+  fclose(ofile);
+}
+
+
+static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
+{
+
+  #define FFT_MULT 128
+  #define ALL 0
+  #define ODD 1
+  #define EVEN 2
+  #define PRIME 3
+
+  int choice, current_choice, n, size, fft_size, hits, big_counter;
+  mus_float_t increment = .01, overall_min, current_min;
+  mus_float_t *initial_phases = NULL;
+  pk_data **choices = NULL;
+  mus_float_t *rl, *im;
+
+  auto mus_float_t saved_min(int ch, int nn);
+  auto mus_float_t get_peak(mus_float_t *phases);
+
+  mus_float_t saved_min(int ch, int nn)
+  {
+    if (nn <= 128)
+      {
+	switch (ch)
+	  {
+	  case ALL:   return(all_mins[nn - 1]);
+	  case ODD:   return(odd_mins[nn - 1]);
+	  case EVEN:  return(even_mins[nn - 1]);
+	  case PRIME: return(prime_mins[nn - 1]);
+	  }
+      }
+    if (nn == 256) return(min_8[ch]);
+    if (nn == 512) return(min_9[ch]);
+    if (nn == 1024) return(min_10[ch]);
+    if (nn == 2048) return(min_11[ch]);
+    return((mus_float_t)nn);
+  }
+
+  mus_float_t get_peak(mus_float_t *phases)
+  {
+    int i, m;
+    mus_float_t pi2, mx_sin, mx_cos;
+
+    pi2 = M_PI / 2.0;
+    memset((void *)rl, 0, fft_size * sizeof(mus_float_t));
+    memset((void *)im, 0, fft_size * sizeof(mus_float_t));
+
+    for (m = 0; m < n; m++)
+      {
+	int bin;
+	mus_float_t phi;
+	phi = (M_PI * phases[m]) + pi2;
+	if (choice == ALL)
+	  bin = m + 1;
+	else
+	  {
+	    if (choice == ODD)
+	      bin = (m * 2) + 1;
+	    else 
+	      {
+		if (choice == EVEN)
+		  {
+		    bin = m * 2;
+		    if (bin == 0) bin = 1;
+		  }
+		else bin = primes[m];
+	      }
+	  }
+	rl[bin] = cos(phi);
+	im[bin] = sin(phi);
+      }
+
+    mus_fft(rl, im, fft_size, -1);
+    /* real part is sine reconstruction, imaginary part is cosine, we're interested in both! */
+    /*   we could also add and subtract the 2 to get 2 more cases "for free", amp sqrt(2), phase asin(cos(0)/sqrt(2)) */
+    /*   and repeat this with a shift (rotation from i) for 2n other cases */
+    /*   resultant amp is between 0 and 2 (cosine) */
+
+    mx_sin = fabs(rl[0]);
+    mx_cos = fabs(im[0]);
+    for (i = 1; i < fft_size; i++)
+      {
+	mus_float_t mxtemp;
+	mxtemp = fabs(rl[i]);
+	if (mxtemp > mx_sin)
+	  mx_sin = mxtemp;
+	mxtemp = fabs(im[i]);
+	if (mxtemp > mx_cos)
+	  mx_cos = mxtemp;
+      }
+
+    if (mx_sin <= mx_cos)
+      return(mx_sin);
+
+    /* use the cosine case, but make it sine-based with 0.0 initial phase for the fundamental */
+    fprintf(stderr, "\n     cos!\n");
+    for (m = 1; m < n; m++)
+      {
+	int bin;
+	if (choice == ALL)
+	  bin = m + 1;
+	else
+	  {
+	    if (choice == ODD)
+	      bin = (m * 2) + 1;
+	    else 
+	      {
+		if (choice == EVEN)
+		  {
+		    bin = m * 2;
+		    if (bin == 0) bin = 1;
+		  }
+		else bin = primes[m];
+	      }
+	  }
+	phases[m] += (0.5 * (bin - 1));
+      }
+
+    return(mx_cos);
+  }
+  
+
+  choice = XEN_TO_C_INT(x_choice);
+  if ((choice < ALL) || (choice > PRIME))
+    choice = ALL;
+
+  n = XEN_TO_C_INT(x_n);
+  
+  size = n - 1;
+  increment = 0.0003;
+
+  if (XEN_VECTOR_P(start_phases))
+    {
+      int i;
+      initial_phases = (mus_float_t *)malloc(n * sizeof(mus_float_t));
+      for (i = 0; i < n; i++)
+	initial_phases[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(start_phases, i));
+    }
+  else return(XEN_FALSE);
+
+  overall_min = saved_min(choice, n);
+
+  {
+    int start, n1;
+
+    if (choice == ALL)
+      n1 = n;
+    else
+      {
+	if (choice != PRIME)
+	  n1 = n * 2;
+	else n1 = primes[n];
+      }
+
+    fft_size = (int)pow(2.0, (int)ceil(log(FFT_MULT * n1) / log(2.0)));
+    rl = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
+    im = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
+
+    choices = (pk_data **)calloc(size, sizeof(pk_data *));
+
+    for (start = 0; start < size; start++)
+      {
+	int k;
+	choices[start] = (pk_data *)calloc(1, sizeof(pk_data));
+	choices[start]->phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
+	for (k = 1; k < n; k++)
+	  choices[start]->phases[k] = initial_phases[k];
+      }
+  }
+
+    /* now the initial population has the initial phases */
+
+  current_min = overall_min;
+  current_choice = 0;
+
+  while (true)
+    {
+      int k;
+      mus_float_t peak;
+
+      fprintf(stderr, "1 increment: %f %f\n", increment, overall_min);
+
+      for (k = 1; k < n; k++)
+	{
+	  mus_float_t phs, orig_incr;
+	  orig_incr = increment;
+
+	  phs = choices[current_choice]->phases[k];
+	  choices[current_choice]->phases[k] += increment;
+	  peak = get_peak(choices[current_choice]->phases);
+	  if (peak >= overall_min)
+	    choices[current_choice]->phases[k] = phs;
+	  else
+	    {
+	      choices[current_choice]->pk = peak;
+	      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+	      fprintf(stderr, "    %d at %d got %f with %f!\n", current_choice, k, peak, increment);
+	      if (peak < current_min) current_min = peak;
+
+	      while (true)
+		{
+		  mus_float_t local_peak;
+		  phs = choices[current_choice]->phases[k];
+		  choices[current_choice]->phases[k] += increment;
+		  local_peak = get_peak(choices[current_choice]->phases);
+		  if (local_peak >= peak)
+		    {
+		      choices[current_choice]->phases[k] = phs;
+		      break;
+		    }
+		  else
+		    {
+		      peak = local_peak;
+		      choices[current_choice]->pk = peak;
+		      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+		      fprintf(stderr, "    %d at %d got %f\n", current_choice, k, peak);
+		      if (local_peak < current_min) current_min = local_peak;
+		    }
+		}
+	      current_choice++;
+	      if (current_choice >= size) break;
+	    }
+
+	  increment = orig_incr;
+	  phs = choices[current_choice]->phases[k];
+	  choices[current_choice]->phases[k] -= increment;
+	  peak = get_peak(choices[current_choice]->phases);
+	  if (peak >= overall_min)
+	    choices[current_choice]->phases[k] = phs;
+	  else
+	    {
+	      choices[current_choice]->pk = peak;
+	      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+	      fprintf(stderr, "    %d at %d got %f with %f!\n", current_choice, k, peak, -increment);
+	      if (peak < current_min) current_min = peak;
+
+	      while (true)
+		{
+		  mus_float_t local_peak;
+		  phs = choices[current_choice]->phases[k];
+		  choices[current_choice]->phases[k] -= increment;
+		  local_peak = get_peak(choices[current_choice]->phases);
+		  if (local_peak >= peak)
+		    {
+		      choices[current_choice]->phases[k] = phs;
+		      break;
+		    }
+		  else
+		    {
+		      peak = local_peak;
+		      choices[current_choice]->pk = peak;
+		      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+		      fprintf(stderr, "    %d at %d got %f\n", current_choice, k, peak);
+		      if (local_peak < current_min) current_min = local_peak;
+		    }
+		}
+	      current_choice++;
+	      if (current_choice >= size) break;
+	    }
+
+	}
+
+      if (current_choice >= size) 
+	{
+	  overall_min = current_min;
+	  current_choice = 0;
+	  continue;
+	}
+
+      increment *= 0.5;
+      if (increment < .00001) break;
+    }
+
+  /* now try the counter combinations */
+  increment = .0001;
+  current_choice = 0;
+  big_counter = 0;
+  hits = 0;
+
+  while (true)
+    {
+      int counter;
+      mus_float_t peak;
+
+      fprintf(stderr, "2 increment: %f %f\n", increment, overall_min);
+
+      for (current_choice = 0; current_choice < size; current_choice++)
+	{
+	  for (counter = 1; counter < 10000; counter++)
+	    {
+	      int k, bits, cur;
+	      big_counter++;
+	      bits = big_counter << 1;
+	      
+	      for (k = 1; k < n; k++)
+		{
+		  cur = 1 << k;
+		  if (cur > bits) break;
+		  if ((cur & bits) != 0)
+		    choices[current_choice]->phases[k] += increment;
+		}
+	      peak = get_peak(choices[current_choice]->phases);
+	      if (peak < choices[current_choice]->pk)
+		{
+		  hits++;
+		  choices[current_choice]->pk = peak;
+		  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+		  fprintf(stderr, "    %d at %d got %f with %f!\n", current_choice, big_counter, peak, increment);
+		  if (peak < current_min) current_min = peak;
+		}
+	      else
+		{
+		  for (k = 1; k < n; k++)
+		    {
+		      cur = 1 << k;
+		      if (cur > bits) break;
+		      if ((cur & bits) != 0)
+			choices[current_choice]->phases[k] -= 2 * increment;
+		    }
+		  peak = get_peak(choices[current_choice]->phases);
+		  if (peak >= choices[current_choice]->pk)
+		    {
+		      for (k = 1; k < n; k++)
+			{
+			  cur = 1 << k;
+			  if (cur > bits) break;
+			  if ((cur & bits) != 0)
+			    choices[current_choice]->phases[k] += increment;
+			}
+		    }
+		  else
+		    {
+		      hits++;
+		      choices[current_choice]->pk = peak;
+		      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
+		      fprintf(stderr, "    %d at %d got %f with %f!\n", current_choice, big_counter, peak, -increment);
+		      if (peak < current_min) current_min = peak;
+		    }
+		}
+	    }
+	}
+
+      overall_min = current_min;
+      fprintf(stderr, "hits: %d\n", hits);
+      if (hits < 3) 
+	{
+	  increment *= 0.5;
+	  big_counter = 0;
+	  if (increment < .00001) break;
+	}
+      hits = 0;
+    }
+
+  free(rl);
+  free(im);
+  if (initial_phases) free(initial_phases);
+
+  {
+    int i;
+    for (i = 0; i < size; i++)
+      {
+	free(choices[i]->phases);
+	free(choices[i]);
+      }
+    free(choices);
+  }
+
+  return(XEN_FALSE);
+}
+
 #endif
 
 
@@ -6438,6 +6829,7 @@ XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #if HAVE_NESTED_FUNCTIONS
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
 XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
+XEN_ARGIFY_3(g_fpgrid_w, g_fpgrid)
 #endif
 #else
 #define g_scan_chan_w g_scan_chan
@@ -6484,6 +6876,7 @@ XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
 #if HAVE_NESTED_FUNCTIONS
 #define g_find_min_peak_phases_w g_find_min_peak_phases
 #define g_fpsap_w g_fpsap
+#define g_fpgrid_w g_fpgrid
 #endif
 #endif
 
@@ -6537,6 +6930,7 @@ void g_init_sig(void)
 #if HAVE_NESTED_FUNCTIONS
   XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
   XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
+  XEN_DEFINE_PROCEDURE(S_fpgrid, g_fpgrid_w, 3, 0, 0, "");
 #endif
 }
 
