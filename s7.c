@@ -24072,50 +24072,85 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* replacing this label with the equivalent sc->op = OP_EVAL and so on is much slower */
     EVAL:
-    case OP_EVAL:                           /* main part of evaluation */
-      switch (type(sc->code))
+    case OP_EVAL:   
+      /* main part of evaluation */
+      /* try to unroll this implicit loop to optimize the most common case of (func...) */
+      if (is_pair(sc->code))
 	{
-	case T_PAIR:
-	  /* using a local s7_pointer here drastically slows things down?!? */
 	  if (dont_eval_args(car(sc->code))) /* actually is_syntax(symbol_value(car(sc->code))) */
 	    {
 	      sc->op = (opcode_t)syntax_opcode(symbol_value(car(sc->code)));
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;
 	    }
-
-	  /* if we check here for a thunk (or argless macro call), and jump to apply,
-	   *   it's actually slower by about 30/2400 than just plowing ahead as if
-	   *   there were args.  (The check costs 27 and we only hit it a few hundred times).
-	   */
-	  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, cdr(sc->code));
+	  
+	  sc->args = cdr(sc->code);
 	  sc->code = car(sc->code);
-	  goto EVAL;
-
-	case T_SYMBOL:
-	  {
-	    /* expand eval_symbol here to speed it up by a lot */
-	    s7_pointer x;
-
-	    if (is_not_local(sc->code))
-	      x = symbol_global_slot(sc->code);
-	    else x = find_symbol(sc, sc->envir, sc->code);
-
-	    if (x != sc->NIL) 
-	      sc->value = symbol_value(x);
-	    else sc->value = eval_symbol_1(sc, sc->code);
-
-	    pop_stack(sc);
-	    if (sc->op != OP_EVAL_ARGS)
-	      goto START_WITHOUT_POP_STACK;
-	    break;
-	  }
-
-	default:
-	  sc->value = sc->code;
-	  goto START;
+	  if (s7_is_symbol(sc->code))
+	    {
+	      s7_pointer x;
+	      if (is_not_local(sc->code))
+		x = symbol_global_slot(sc->code);
+	      else x = find_symbol(sc, sc->envir, sc->code);
+	      
+	      if (x != sc->NIL) 
+		sc->value = symbol_value(x);
+	      else sc->value = eval_symbol_1(sc, sc->code);
+	      
+	      sc->code = sc->args;
+	      sc->args = sc->NIL;
+	    }
+	  else
+	    {
+	      if (is_pair(sc->code))
+		{
+		  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->args);
+		  
+		  if (dont_eval_args(car(sc->code))) /* actually is_syntax(symbol_value(car(sc->code))) */
+		    {
+		      sc->op = (opcode_t)syntax_opcode(symbol_value(car(sc->code)));
+		      sc->code = cdr(sc->code);
+		      goto START_WITHOUT_POP_STACK;
+		    }
+		  
+		  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, cdr(sc->code));
+		  sc->code = car(sc->code);
+		  goto EVAL;
+		}
+	      else
+		{
+		  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->args);
+		  sc->value = sc->code;
+		  goto START;
+		}
+	    }
 	}
-
+      else
+	{
+	  if (s7_is_symbol(sc->code))
+	    {
+	      /* expand eval_symbol here to speed it up by a lot */
+	      s7_pointer x;
+	      
+	      if (is_not_local(sc->code))
+		x = symbol_global_slot(sc->code);
+	      else x = find_symbol(sc, sc->envir, sc->code);
+	      
+	      if (x != sc->NIL) 
+		sc->value = symbol_value(x);
+	      else sc->value = eval_symbol_1(sc, sc->code);
+	      
+	      pop_stack(sc);
+	      if (sc->op != OP_EVAL_ARGS)
+		goto START_WITHOUT_POP_STACK;
+	    }
+	  else
+	    {
+	      sc->value = sc->code;
+	      goto START;
+	    }
+	}
+      
       
     case OP_EVAL_ARGS:
       if (dont_eval_args(sc->value))
