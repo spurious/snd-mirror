@@ -489,17 +489,17 @@ typedef struct s7_cell {
     
     struct {               /* call/cc */
       s7_pointer stack;
-      s7_pointer *stack_start, *stack_end;
-      int stack_size;
+      s7_pointer *stack_start, *stack_end, *op_stack;
+      int stack_size, op_stack_top;
     } continuation;
     
     struct {               /* call-with-exit */
-      int goto_loc;
+      int goto_loc, op_loc;
       bool active;
     } rexit;
     
     struct {               /* catch */
-      int goto_loc;
+      int goto_loc, op_loc;
       s7_pointer tag;
       s7_pointer handler;
     } rcatch; /* C++ reserves "catch" I guess */
@@ -546,6 +546,9 @@ struct s7_scheme {
   int stack_size;
   s7_pointer *stack_start, *stack_end, *stack_resize_trigger;
   
+  s7_pointer *op_stack;
+  int op_stack_top;
+
   s7_cell **heap, **free_heap, **free_heap_top, **free_heap_trigger;
   unsigned int heap_size;
 
@@ -694,7 +697,10 @@ struct s7_scheme {
 #define T_C_EQ_FUNCTION       31
 #define T_C_PAIR_FUNCTION     32
 #define T_C_NOT_FUNCTION      33
-#define BUILT_IN_TYPES        34
+#define T_C_CAR_FUNCTION      34
+#define T_C_CDR_FUNCTION      35
+#define T_C_SYMBOL_FUNCTION   36
+#define BUILT_IN_TYPES        37
 
 #define TYPE_BITS                     8
 #define T_MASKTYPE                    0xff
@@ -934,8 +940,11 @@ struct s7_scheme {
 #define continuation_stack_start(p)   (p)->object.continuation.stack_start
 #define continuation_stack_size(p)    (p)->object.continuation.stack_size
 #define continuation_stack_top(p)     (continuation_stack_end(p) - continuation_stack_start(p))
+#define continuation_op_stack(p)      (p)->object.continuation.op_stack
+#define continuation_op_loc(p)        (p)->object.continuation.op_stack_top
 
 #define call_exit_goto_loc(p)         (p)->object.rexit.goto_loc
+#define call_exit_op_loc(p)           (p)->object.rexit.op_loc
 #define call_exit_active(p)           (p)->object.rexit.active
 
 #define s7_stack_top(Sc)              ((Sc)->stack_end - (Sc)->stack_start)
@@ -954,6 +963,7 @@ struct s7_scheme {
 
 #define catch_tag(p)                  (p)->object.rcatch.tag
 #define catch_goto_loc(p)             (p)->object.rcatch.goto_loc
+#define catch_op_loc(p)               (p)->object.rcatch.op_loc
 #define catch_handler(p)              (p)->object.rcatch.handler
 
 enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
@@ -1532,6 +1542,11 @@ static void s7_mark_object_1(s7_pointer p)
 
     case T_CONTINUATION:
       mark_vector(continuation_stack(p), continuation_stack_top(p));
+      {
+	int i;
+	for (i = 0; i < continuation_op_loc(p); i++)
+	  S7_MARK(continuation_op_stack(p)[i]);
+      }
       return;
 
     case T_CATCH:
@@ -1620,6 +1635,12 @@ static int gc(s7_scheme *sc)
     tmps_top = tmps + GC_TEMPS_SIZE;
     while (tmps < tmps_top)
       S7_MARK(*tmps++);
+  }
+
+  {
+    int i;
+    for (i = 0; i < sc->op_stack_top; i++)
+      S7_MARK(sc->op_stack[i]);
   }
 
   /* free up all unmarked objects */
@@ -1989,6 +2010,9 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_EQ_FUNCTION:
+    case T_C_CAR_FUNCTION:
+    case T_C_CDR_FUNCTION:
+    case T_C_SYMBOL_FUNCTION:
     case T_C_NOT_FUNCTION:
     case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:
@@ -2113,6 +2137,19 @@ static void push_stack(s7_scheme *sc, s7_pointer int_op, s7_pointer args, s7_poi
   sc->stack_end[2] = args;
   sc->stack_end[3] = int_op;
   sc->stack_end += 4;
+}
+
+
+static void push_op_stack(s7_scheme *sc, s7_pointer op)
+{
+  /* fprintf(stderr, "push %s = %p at %d\n", s7_object_to_c_string(sc, op), op, sc->op_stack_top); */
+  sc->op_stack[sc->op_stack_top++] = op;
+}
+
+static s7_pointer pop_op_stack(s7_scheme *sc)
+{
+  /* fprintf(stderr, "pop %s = %p at %d\n", s7_object_to_c_string(sc, sc->op_stack[sc->op_stack_top - 1]), sc->op_stack[sc->op_stack_top - 1], sc->op_stack_top - 1); */
+  return(sc->op_stack[--sc->op_stack_top]);
 }
 
 
@@ -3354,8 +3391,22 @@ static s7_pointer make_goto(s7_scheme *sc)
   NEW_CELL(sc, x);
   set_type(x, T_GOTO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE);
   call_exit_goto_loc(x) = s7_stack_top(sc);
+  call_exit_op_loc(x) = sc->op_stack_top;
   call_exit_active(x) = true;
   return(x);
+}
+
+
+static s7_pointer *copy_op_stack(s7_scheme *sc)
+{
+  int i;
+  s7_pointer *ops;
+  ops = (s7_pointer *)malloc(1024 * sizeof(s7_pointer));
+  for (i = 0; i < sc->op_stack_top; i++)
+    ops[i] = sc->op_stack[i];
+  for (i = sc->op_stack_top; i < 1024; i++)
+    ops[i] = sc->NIL;
+  return(ops);
 }
 
 
@@ -3393,6 +3444,8 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_stack(x) = copy_stack(sc, sc->stack, s7_stack_top(sc));
   continuation_stack_start(x) = vector_elements(continuation_stack(x));
   continuation_stack_end(x) = (s7_pointer *)(continuation_stack_start(x) + loc);
+  continuation_op_stack(x) = copy_op_stack(sc);
+  continuation_op_loc(x) = sc->op_stack_top;
   set_type(x, T_CONTINUATION | T_DONT_COPY | T_PROCEDURE);
   return(x);
 }
@@ -3495,6 +3548,13 @@ static void call_with_current_continuation(s7_scheme *sc)
   sc->stack_start = vector_elements(sc->stack);
   sc->stack_end = (s7_pointer *)(sc->stack_start + continuation_stack_top(sc->code));
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
+  
+  {
+    int i;
+    sc->op_stack_top = continuation_op_loc(sc->code);
+    for (i = 0; i < sc->op_stack_top; i++)
+      sc->op_stack[i] = continuation_op_stack(sc->code)[i];
+  }
 
   if (sc->args == sc->NIL)
     sc->value = sc->NIL;
@@ -3516,6 +3576,7 @@ static void call_with_exit(s7_scheme *sc)
 	     make_list_1(sc, make_protected_string(sc, "call-with-exit escape procedure called outside its block")));
   call_exit_active(sc->code) = false;
   new_stack_top = call_exit_goto_loc(sc->code);
+  sc->op_stack_top = call_exit_op_loc(sc->code);
 
   /* look for dynamic-wind in the stack section that we are jumping out of */
   for (i = s7_stack_top(sc) - 1; i > new_stack_top; i -= 4)
@@ -12403,6 +12464,9 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_EQ_FUNCTION:
+    case T_C_CAR_FUNCTION:
+    case T_C_CDR_FUNCTION:
+    case T_C_SYMBOL_FUNCTION:
     case T_C_NOT_FUNCTION:
     case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:
@@ -13854,6 +13918,7 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
 
 static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
 {
+  /* fprintf(stderr, "list set: %s\n", s7_object_to_c_string(sc, args)); */
   return(g_list_set_1(sc, car(args), cdr(args), 2));
 }
 
@@ -15166,7 +15231,8 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 
   s7_pointer vec, val;
   s7_Int index;
-  
+
+  /* fprintf(stderr, "vector set: %s\n", s7_object_to_c_string(sc, args));   */
   vec = car(args);
   if (!s7_is_vector(vec))
     return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
@@ -17823,6 +17889,9 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
     case T_C_RST_ARGS_FUNCTION:
     case T_C_LST_ARGS_FUNCTION:
     case T_C_EQ_FUNCTION:
+    case T_C_CAR_FUNCTION:
+    case T_C_CDR_FUNCTION:
+    case T_C_SYMBOL_FUNCTION:
     case T_C_NOT_FUNCTION:
     case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:
@@ -19891,6 +19960,9 @@ static const char *type_name(s7_pointer arg)
     case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_EQ_FUNCTION:
+    case T_C_CAR_FUNCTION:
+    case T_C_CDR_FUNCTION:
+    case T_C_SYMBOL_FUNCTION:
     case T_C_NOT_FUNCTION:
     case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:   return("function");
@@ -20098,6 +20170,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   NEW_CELL(sc, p);
   catch_tag(p) = car(args);
   catch_goto_loc(p) = s7_stack_top(sc);
+  catch_op_loc(p) = sc->op_stack_top;
   catch_handler(p) = caddr(args);
   set_type(p, T_CATCH | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
 
@@ -20125,6 +20198,7 @@ s7_pointer s7_catch_all(s7_scheme *sc, s7_pointer thunk, s7_pointer error_handle
   NEW_CELL(sc, p);
   catch_tag(p) = sc->T;                   /* if we catch everything, the error handling stuff in s7_call is not needed */
   catch_goto_loc(p) = s7_stack_top(sc);
+  catch_op_loc(p) = sc->op_stack_top;
   catch_handler(p) = error_handler;
   set_type(p, T_CATCH | T_DONT_COPY);
 
@@ -20426,6 +20500,7 @@ GOT_CATCH:
       sc->args = make_list_2(sc, type, info);
       sc->code = catch_handler(catcher);
       loc = catch_goto_loc(catcher);
+      sc->op_stack_top = catch_op_loc(catcher);
       sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
 
       /* if user (i.e. yers truly!) copies/pastes the preceding lambda () into the
@@ -24258,10 +24333,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * allocating sc->args here rather than below (trading 2 sets for a jump) was much slower
        */
 
-      
+      push_op_stack(sc, sc->value);
+      goto EVAL_ARGS_NO_CONS;
+
+      /* TODO: all comments in this section are out-of-date! */
+
                                       /* using while here rather than EVAL_ARGS and a goto made no speed difference */
     EVAL_ARGS:
     case OP_EVAL_ARGS1:
+
       /* this is where most of s7's compute time goes */
       /* expanding the function calls (s7_cons, new_cell, and eval_symbol) in place seems to speed up s7 by a noticeable amount! */
       /*    before expansion: sc->args = s7_cons(sc, sc->value, sc->args); */
@@ -24301,7 +24381,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->args = x;
       }
 
-      /* 1st time, value = op, args = nil (only e0 entry is from op_eval above), code is full list (at e0) */
+    EVAL_ARGS_NO_CONS:
+      /* 1st time, value = op, args = nil, code is args */
       if (is_pair(sc->code))  /* evaluate current arg -- must check for pair here, not sc->NIL (improper list as args) */
 	{ 
 	  int typ;
@@ -24314,7 +24395,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      push_stack(sc, opcode(OP_EVAL_ARGS1), sc->args, cdr(sc->code));
 	      sc->code = car_code;
-	      /* sc->args = sc->NIL; */
 	      goto EVAL;
 	    }
 
@@ -24338,7 +24418,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else
 	    {
 	      s7_pointer x;
-	      NEW_CELL_NO_CHECK(sc, x); /* NO_CHECK should be safe -- we can't get here except just after the NEW_CELL check above */
+	      NEW_CELL(sc, x);
 
 	      if (typ == T_SYMBOL)
 		{
@@ -24358,9 +24438,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      cdr(x) = sc->args;
 	      set_type(x, T_PAIR | T_STRUCTURE);
-	      x = safe_reverse_in_place(sc, x); 
-	      sc->code = car(x);
-	      sc->args = cdr(x);
+	      sc->code = pop_op_stack(sc);
+	      sc->args = safe_reverse_in_place(sc, x); 
 	      /* drop into APPLY */
 	    }
 	}
@@ -24370,19 +24449,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    improper_arglist_error(sc);
 	  else
 	    {
+	      sc->code = pop_op_stack(sc);
 	      sc->args = safe_reverse_in_place(sc, sc->args); 
-	      /* we could omit this reversal in many cases: all built in ops could
-	       *   assume reversed args, things like eq? and + don't care about order, etc.
-	       *   But, I think the reversal is not taking any noticeable percentage of
-	       *   the overall compute time (ca 1% according to callgrind).
-	       */
-	      sc->code = car(sc->args);
-	      sc->args = cdr(sc->args);
 	      /* fall through  */
 	    }
 	}
-      
-      
+
+      /* TODO: omit arg reversal if TC_func_* or until actual call (error ?)
+       */
+
+
       /* ---------------- OP_APPLY ---------------- */
     APPLY:
     case OP_APPLY:      /* apply 'code' to 'args' */
@@ -24493,6 +24569,51 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_false(sc, car(sc->args)))
 	    sc->value = sc->T;
 	  else sc->value = sc->F;
+	  goto START;
+
+	case T_C_SYMBOL_FUNCTION:
+	  if (sc->args == sc->NIL)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
+	  if (cdr(sc->args) != sc->NIL)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+	    
+	  if (s7_is_symbol(car(sc->args)))
+	    sc->value = sc->T;
+	  else sc->value = sc->F;
+	  goto START;
+
+	case T_C_CAR_FUNCTION:
+	  if (sc->args == sc->NIL)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
+	  if (cdr(sc->args) != sc->NIL)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+	  if (!is_pair(car(sc->args))) 
+	    return(s7_wrong_type_arg_error(sc, "car", 0, car(sc->args), "a pair"));
+
+	  sc->value = caar(sc->args);
+	  goto START;
+
+	case T_C_CDR_FUNCTION:
+	  if (sc->args == sc->NIL)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
+	  if (cdr(sc->args) != sc->NIL)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+	  if (!is_pair(car(sc->args))) 
+	    return(s7_wrong_type_arg_error(sc, "cdr", 0, car(sc->args), "a pair"));
+
+	  sc->value = cdar(sc->args);
 	  goto START;
 
 	case T_C_OPT_ARGS_FUNCTION:                 /* -------- C-based function that has n optional arguments -------- */
@@ -25110,8 +25231,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* old form:
 	   *    sc->code = s7_cons(sc, sc->LIST_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));  
 	   */
-
-	  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->value, sc->LIST_SET), s7_append(sc, cdr(sc->args), sc->code));
+	  push_op_stack(sc, sc->LIST_SET);
+	  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
 	  sc->code = car(sc->args);
 	  goto EVAL;
 
@@ -25126,7 +25247,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *     sc->code = s7_cons(sc, sc->VECTOR_SET, s7_cons(sc, sc->value, s7_append(sc, sc->args, sc->code)));
 	   *     [vector arg (sc->value) doesn't need to be quoted since eval won't treat it as code]
 	   */
-	  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->value, sc->VECTOR_SET), s7_append(sc, cdr(sc->args), sc->code));
+	  push_op_stack(sc, sc->VECTOR_SET);
+	  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
 	  sc->code = car(sc->args);
 	  goto EVAL;
 	}
@@ -25203,38 +25325,38 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case T_S_OBJECT:
 	      /* it's tricky to split out this case because we haven't evaluated the args yet, so we check in g_internal_object_set.
 	       */
+
 	    case T_C_OBJECT:
 	      if (object_set_function(sc->x))
 		{
-		  /* sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
+		  push_op_stack(sc, sc->OBJECT_SET);
 		  if (is_pair(cdar(sc->code)))
 		    {
-		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->OBJECT_SET), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 		      sc->code = cadar(sc->code);
 		    }
 		  else /* (set! (window-width) 800) -> ((window-width) 800) so cdar(sc->code) is nil */
 		    {
-		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->OBJECT_SET), cddr(sc->code));
+		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), cddr(sc->code));
 		      sc->code = cadr(sc->code);
 		    }
 		}
-	        /* use set method (append copies/flattens the lists) -- we can't stitch car to cdr here because we're
-		 *   dealing with in-coming code -- set_cdr! will create a circular list.
-		 */
 	      else return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	      break;
 
 	    case T_VECTOR:
+	      push_op_stack(sc, sc->VECTOR_SET);
 	      /* sc->x is the vector, sc->code is expr without the set! */
 	      /*  args have not been evaluated! */
 	      /* sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
-	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->VECTOR_SET), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 	      sc->code = cadar(sc->code);
 	      break;
 	      
 	    case T_STRING:
+	      push_op_stack(sc, sc->STRING_SET);
 	      /* sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
-	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->STRING_SET), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 	      sc->code = cadar(sc->code);
 	      break;
 
@@ -25245,19 +25367,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *    old: 2.32, new: 1.77 (1.50 direct)
 	       *    (time (let ((lst '(1 2 3))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! (lst 1) 32))))
 	       */
-	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->LIST_SET), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+	      push_op_stack(sc, sc->LIST_SET);
+	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 	      sc->code = cadar(sc->code);
 	      break;
 
 	    case T_HASH_TABLE:
+	      push_op_stack(sc, sc->HASH_TABLE_SET);
 	      /* sc->code = s7_cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
-	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->HASH_TABLE_SET), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 	      sc->code = cadar(sc->code);
 	      break;
+
 
 	    case T_C_OPT_ARGS_FUNCTION:
 	    case T_C_RST_ARGS_FUNCTION:
 	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 1) 2) lst) */
+	    case T_C_CAR_FUNCTION:
+	    case T_C_CDR_FUNCTION:
 	    case T_C_FUNCTION:
 	      /* perhaps it has a setter */
 	      
@@ -31869,6 +31996,11 @@ s7_scheme *s7_init(void)
   sc->stack_end = sc->stack_start;
   sc->stack_size = INITIAL_STACK_SIZE;
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
+
+  sc->op_stack = (s7_pointer *)malloc(1024 * sizeof(s7_pointer));
+  sc->op_stack_top = 0;
+  for (i = 0; i < 1024; i++)
+    sc->op_stack[i] = sc->NIL;
   
   /* keep the symbol table out of the heap */
   sc->symbol_table = (s7_pointer)calloc(1, sizeof(s7_cell));
@@ -32119,6 +32251,11 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "gensym",                    g_gensym,                   0, 1, false, H_gensym);
   s7_define_function(sc, "symbol-table",              g_symbol_table,             0, 0, false, H_symbol_table);
   s7_define_function(sc, "symbol?",                   g_is_symbol,                1, 0, false, H_is_symbol);
+  {
+    s7_pointer p;
+    p = s7_symbol_value(sc, make_symbol(sc, "symbol?"));
+    set_type(p, (T_C_SYMBOL_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+  }
   s7_define_function(sc, "symbol->string",            g_symbol_to_string,         1, 0, false, H_symbol_to_string);
   s7_define_function(sc, "string->symbol",            g_string_to_symbol,         1, 0, false, H_string_to_symbol);
   s7_define_function(sc, "symbol",                    g_symbol,                   1, 0, false, H_symbol);
@@ -32340,7 +32477,17 @@ s7_scheme *s7_init(void)
   }
   s7_define_function(sc, "cons",                      g_cons,                     2, 0, false, H_cons);
   s7_define_function(sc, "car",                       g_car,                      1, 0, false, H_car);
+  {
+    s7_pointer p;
+    p = s7_symbol_value(sc, make_symbol(sc, "car"));
+    set_type(p, (T_C_CAR_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+  }
   s7_define_function(sc, "cdr",                       g_cdr,                      1, 0, false, H_cdr);
+  {
+    s7_pointer p;
+    p = s7_symbol_value(sc, make_symbol(sc, "cdr"));
+    set_type(p, (T_C_CDR_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+  }
   s7_define_function(sc, "set-car!",                  g_set_car,                  2, 0, false, H_set_car);
   s7_define_function(sc, "set-cdr!",                  g_set_cdr,                  2, 0, false, H_set_cdr);
   s7_define_function(sc, "caar",                      g_caar,                     1, 0, false, H_caar);
