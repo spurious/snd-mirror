@@ -691,7 +691,10 @@ struct s7_scheme {
 #define T_C_OPT_ARGS_FUNCTION 28
 #define T_C_RST_ARGS_FUNCTION 29
 #define T_C_LST_ARGS_FUNCTION 30
-#define BUILT_IN_TYPES        31
+#define T_C_EQ_FUNCTION       31
+#define T_C_PAIR_FUNCTION     32
+#define T_C_NOT_FUNCTION      33
+#define BUILT_IN_TYPES        34
 
 #define TYPE_BITS                     8
 #define T_MASKTYPE                    0xff
@@ -1985,6 +1988,9 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_C_RST_ARGS_FUNCTION:
     case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
+    case T_C_EQ_FUNCTION:
+    case T_C_NOT_FUNCTION:
+    case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:
     case T_C_MACRO:
     case T_C_POINTER:
@@ -12396,6 +12402,9 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_C_RST_ARGS_FUNCTION:
     case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
+    case T_C_EQ_FUNCTION:
+    case T_C_NOT_FUNCTION:
+    case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:
       return(copy_string(c_function_name(obj)));
 
@@ -17813,6 +17822,9 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
     case T_C_LST_ARGS_FUNCTION:
+    case T_C_EQ_FUNCTION:
+    case T_C_NOT_FUNCTION:
+    case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:
       return((c_function_required_args(x) <= args) &&
 	     (c_function_all_args(x) >= args));
@@ -19878,6 +19890,9 @@ static const char *type_name(s7_pointer arg)
     case T_C_RST_ARGS_FUNCTION:
     case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
+    case T_C_EQ_FUNCTION:
+    case T_C_NOT_FUNCTION:
+    case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:   return("function");
     case T_C_MACRO:      return("macro");
     case T_C_POINTER:    return("c-pointer");
@@ -24434,6 +24449,51 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (sc->op == OP_EVAL_ARGS1)
 	    goto EVAL_ARGS;
 	  goto START_WITHOUT_POP_STACK;
+
+	case T_C_EQ_FUNCTION:
+	  if ((sc->args == sc->NIL) || (cdr(sc->args) == sc->NIL))
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
+	  if (cddr(sc->args) != sc->NIL)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+	    
+	  if (car(sc->args) == cadr(sc->args))
+	    sc->value = sc->T;
+	  else sc->value = sc->F;
+	  goto START;
+
+	case T_C_PAIR_FUNCTION:
+	  if (sc->args == sc->NIL)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
+	  if (cdr(sc->args) != sc->NIL)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+	    
+	  if (is_pair(car(sc->args)))
+	    sc->value = sc->T;
+	  else sc->value = sc->F;
+	  goto START;
+
+	case T_C_NOT_FUNCTION:
+	  if (sc->args == sc->NIL)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
+	  if (cdr(sc->args) != sc->NIL)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+	    
+	  if (is_false(sc, car(sc->args)))
+	    sc->value = sc->T;
+	  else sc->value = sc->F;
+	  goto START;
 
 	case T_C_OPT_ARGS_FUNCTION:                 /* -------- C-based function that has n optional arguments -------- */
 	  {
@@ -32273,6 +32333,11 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "null?",                     g_is_null,                  1, 0, false, H_is_null);
   s7_define_function(sc, "list?",                     g_is_list,                  1, 0, false, H_is_list);
   s7_define_function(sc, "pair?",                     g_is_pair,                  1, 0, false, H_is_pair);
+  {
+    s7_pointer p;
+    p = s7_symbol_value(sc, make_symbol(sc, "pair?"));
+    set_type(p, (T_C_PAIR_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+  }
   s7_define_function(sc, "cons",                      g_cons,                     2, 0, false, H_cons);
   s7_define_function(sc, "car",                       g_car,                      1, 0, false, H_car);
   s7_define_function(sc, "cdr",                       g_cdr,                      1, 0, false, H_cdr);
@@ -32402,8 +32467,18 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "procedure-environment",     g_procedure_environment,    1, 0, false, H_procedure_environment);
   
   s7_define_function(sc, "not",                       g_not,                      1, 0, false, H_not);
+  {
+    s7_pointer p;
+    p = s7_symbol_value(sc, make_symbol(sc, "not"));
+    set_type(p, (T_C_NOT_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+  }
   s7_define_function(sc, "boolean?",                  g_is_boolean,               1, 0, false, H_is_boolean);
   s7_define_function(sc, "eq?",                       g_is_eq,                    2, 0, false, H_is_eq);
+  {
+    s7_pointer p;
+    p = s7_symbol_value(sc, make_symbol(sc, "eq?"));
+    set_type(p, (T_C_EQ_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+  }
   s7_define_function(sc, "eqv?",                      g_is_eqv,                   2, 0, false, H_is_eqv);
   s7_define_function(sc, "equal?",                    g_is_equal,                 2, 0, false, H_is_equal);
   
@@ -32714,28 +32789,6 @@ the error type and the info passed to the error handler.");
 
   return(sc);
 }
-
-
-/* s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10
- *
- *    intel core duo (1.83G):    3162     2690 1.921     2426 1.830
- *    intel E5200 (2.5G):                 1951 1.450     1751 1.28
- *    amd opteron 2218 (2.5G):            1859 1.335     1667 1.33
- *    amd opteron 8356 (2.3G):   2181     1949 1.201     1752 1.18
- *    intel E6850 (3.0G):                 1952 1.045     1752 0.945
- *    intel Q9650 (3.0G):        2081     1856 0.938     1665 0.840
- *    amd phenom 945 (3.0G):     2085     1864 0.894     1667 0.808
- *    intel Q9450 (2.66G):                1951 0.857
- *    intel Q9550 (2.83G):       2184     1948 0.838     1751 0.800
- *    intel E8400  (3.0G):       2372     2082 0.836     1857 0.750
- *    intel xeon 5530 (2.4G)     2093     1855 0.811     1675 0.711
- *    amd phenom 965 (3.4G):     2083     1862 0.808     1667 0.823
- *    intel i7 930 (2.8G):       2084     1864 0.704     1667 0.620
- *    intel i7 950 (3.1G):                               1667 0.590
- *
- * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
- * 4-Feb-11 callgrind non-gmp: 1678 0.67, gmp: 9114 2.56 (but it's running lots of additional tests)
- */
 
 
 /* should we fix this?
