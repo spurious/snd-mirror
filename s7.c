@@ -740,6 +740,10 @@ struct s7_scheme {
 #define is_procedure(p)               ((typeflag(p) & T_PROCEDURE) != 0)
 /* closure, macro, c_function, procedure-with-setter, settable object, goto or continuation */
 
+#define T_SAFE_PROCEDURE              (1 << (TYPE_BITS + 11))
+#define is_safe_procedure(p)          ((typeflag(p) & T_SAFE_PROCEDURE) != 0)
+/* c_functions that return or modify the arg list directly (no :rest arg in particular) */
+
 #define T_ANY_MACRO                   (1 << (TYPE_BITS + 12))
 #define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
 /* this marks scheme and C-defined macros */
@@ -812,10 +816,10 @@ struct s7_scheme {
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
-#define UNUSED_BITS                   0x81084900
+#define UNUSED_BITS                   0x81004900
 
-/* TYPE_BITS could be 5
- * TYPE_BITS + 0, 3, 6, 11, 16 and 23 are currently unused
+/* TYPE_BITS could be 6
+ * TYPE_BITS + 0, 3, 6, 16 and 23 are currently unused
  */
 
 
@@ -2118,6 +2122,9 @@ static void stack_reset(s7_scheme *sc)
 #define stack_args(Stack, Loc)        vector_element(Stack, Loc - 1)
 #define stack_op(Stack, Loc)          integer(number(vector_element(Stack, Loc)))
 
+#define push_op_stack(Sc, Op) Sc->op_stack[Sc->op_stack_top++] = Op
+#define pop_op_stack(Sc)      Sc->op_stack[--Sc->op_stack_top]
+
 
 static void pop_stack(s7_scheme *sc) 
 { 
@@ -2137,19 +2144,6 @@ static void push_stack(s7_scheme *sc, s7_pointer int_op, s7_pointer args, s7_poi
   sc->stack_end[2] = args;
   sc->stack_end[3] = int_op;
   sc->stack_end += 4;
-}
-
-
-static void push_op_stack(s7_scheme *sc, s7_pointer op)
-{
-  /* fprintf(stderr, "push %s = %p at %d\n", s7_object_to_c_string(sc, op), op, sc->op_stack_top); */
-  sc->op_stack[sc->op_stack_top++] = op;
-}
-
-static s7_pointer pop_op_stack(s7_scheme *sc)
-{
-  /* fprintf(stderr, "pop %s = %p at %d\n", s7_object_to_c_string(sc, sc->op_stack[sc->op_stack_top - 1]), sc->op_stack[sc->op_stack_top - 1], sc->op_stack_top - 1); */
-  return(sc->op_stack[--sc->op_stack_top]);
 }
 
 
@@ -8227,7 +8221,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
   if (cdr(args) == sc->NIL)
     {
       if (s7_is_zero(car(args)))
-	return(division_by_zero_error(sc, "/", args));
+	return(division_by_zero_error(sc, "/", car(args)));
       return(s7_invert(sc, car(args)));
     }
 #endif
@@ -16250,7 +16244,9 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 	ftype = T_C_RST_ARGS_FUNCTION;
     }
   
-  set_type(x, ftype | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR);
+  if (!rest_arg)
+    set_type(x, ftype | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_SAFE_PROCEDURE | T_DONT_COPY_CDR);
+  else set_type(x, ftype | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR);
 
   c_function(x) = ptr;
   c_function_call(x) = f;
@@ -16448,6 +16444,24 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 }
 
 
+static void s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+{
+  s7_pointer func;
+  func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
+  typeflag(func) |= T_SAFE_PROCEDURE;
+  s7_define(sc, s7_global_environment(sc), make_symbol(sc, name), func);
+}
+
+
+static void s7_define_unsafe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+{
+  s7_pointer func;
+  func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
+  typeflag(func) &= ~(T_SAFE_PROCEDURE);
+  s7_define(sc, s7_global_environment(sc), make_symbol(sc, name), func);
+}
+
+
 static void s7_define_constant_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func, sym;
@@ -16455,6 +16469,11 @@ static void s7_define_constant_function(s7_scheme *sc, const char *name, s7_func
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   s7_define(sc, s7_global_environment(sc), sym, func);
   set_immutable(car(symbol_global_slot(sym)));
+  {
+    s7_pointer p;
+    p = s7_symbol_value(sc, make_symbol(sc, name));
+    typeflag(p) &= ~(T_SAFE_PROCEDURE);
+  }
 }
 
 
@@ -24208,6 +24227,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       sc->code = car(sc->code);
       sc->cur_code = sc->code;               /* in case error occurs, this helps tell us where we are */
+
+      /* fprintf(stderr, "begin %s\n", s7_object_to_c_string(sc, sc->code)); */
       /* fall through */
       
 
@@ -24337,6 +24358,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL_ARGS_NO_CONS;
 
       /* TODO: all comments in this section are out-of-date! */
+      /* TODO: thread op_stack handlers (mark at least) */
 
                                       /* using while here rather than EVAL_ARGS and a goto made no speed difference */
     EVAL_ARGS:
@@ -24369,7 +24391,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   traverse their arglists, and if seen, free that object and return it to the heap
        *   immediately.  This reduces the GC time slightly, but it collides with *trace-hook*
        *   (which is passed the arglist after the call, but we just GC'd the arglist), and
-       *   with some error checks (divide by 0 gets the now-partly-GC'd arglist).  Hard choice!
+       *   with some error checks (divide by 0 gets the now-partly-GC'd arglist).
+       *
+       * Currently I use op_stack for the function, and the last (non-rest) arg can be TEMP_CELL_1
+       *   if the T_SAFE_PROCEDURE bit is set in that function.  Slightly risky.
        */
 
       {
@@ -24418,7 +24443,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else
 	    {
 	      s7_pointer x;
-	      NEW_CELL(sc, x);
+
+	      sc->code = pop_op_stack(sc);
+	      if (is_safe_procedure(sc->code))
+		x = sc->TEMP_CELL_1;
+	      else
+		{
+		  NEW_CELL(sc, x); 
+		}
 
 	      if (typ == T_SYMBOL)
 		{
@@ -24438,8 +24470,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      cdr(x) = sc->args;
 	      set_type(x, T_PAIR | T_STRUCTURE);
-	      sc->code = pop_op_stack(sc);
-	      sc->args = safe_reverse_in_place(sc, x); 
+	      x = safe_reverse_in_place(sc, x); 
+	      sc->args = x;
 	      /* drop into APPLY */
 	    }
 	}
@@ -24454,9 +24486,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* fall through  */
 	    }
 	}
-
-      /* TODO: omit arg reversal if TC_func_* or until actual call (error ?)
-       */
+      /* we could omit the arg reversal in many cases, but lots of code assumes OP_APPLY gets the args in order */
 
 
       /* ---------------- OP_APPLY ---------------- */
@@ -26746,6 +26776,7 @@ static void mark_s7(s7_scheme *sc)
   S7_MARK(sc->input_port_stack);
   S7_MARK(sc->output_port);
   S7_MARK(sc->error_port);
+  /* TODO: also local op_stack */
 }
 
 
@@ -32254,7 +32285,7 @@ s7_scheme *s7_init(void)
   {
     s7_pointer p;
     p = s7_symbol_value(sc, make_symbol(sc, "symbol?"));
-    set_type(p, (T_C_SYMBOL_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+    set_type(p, (T_C_SYMBOL_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_SAFE_PROCEDURE | T_DONT_COPY_CDR));
   }
   s7_define_function(sc, "symbol->string",            g_symbol_to_string,         1, 0, false, H_symbol_to_string);
   s7_define_function(sc, "string->symbol",            g_string_to_symbol,         1, 0, false, H_string_to_symbol);
@@ -32362,22 +32393,22 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "ceiling",                   g_ceiling,                  1, 0, false, H_ceiling);
   s7_define_function(sc, "truncate",                  g_truncate,                 1, 0, false, H_truncate);
   s7_define_function(sc, "round",                     g_round,                    1, 0, false, H_round);
-  s7_define_function(sc, "lcm",                       g_lcm,                      0, 0, true,  H_lcm);
-  s7_define_function(sc, "gcd",                       g_gcd,                      0, 0, true,  H_gcd);
-  s7_define_function(sc, "+",                         g_add,                      0, 0, true,  H_add);
-  s7_define_function(sc, "-",                         g_subtract,                 1, 0, true,  H_subtract);
-  s7_define_function(sc, "*",                         g_multiply,                 0, 0, true,  H_multiply);
+  s7_define_safe_function(sc, "lcm",                  g_lcm,                      0, 0, true,  H_lcm);
+  s7_define_safe_function(sc, "gcd",                  g_gcd,                      0, 0, true,  H_gcd);
+  s7_define_safe_function(sc, "+",                    g_add,                      0, 0, true,  H_add);
+  s7_define_safe_function(sc, "-",                    g_subtract,                 1, 0, true,  H_subtract);
+  s7_define_safe_function(sc, "*",                    g_multiply,                 0, 0, true,  H_multiply);
   s7_define_function(sc, "/",                         g_divide,                   1, 0, true,  H_divide);
-  s7_define_function(sc, "max",                       g_max,                      1, 0, true,  H_max);
-  s7_define_function(sc, "min",                       g_min,                      1, 0, true,  H_min);
+  s7_define_safe_function(sc, "max",                  g_max,                      1, 0, true,  H_max);
+  s7_define_safe_function(sc, "min",                  g_min,                      1, 0, true,  H_min);
   s7_define_function(sc, "quotient",                  g_quotient,                 2, 0, false, H_quotient);
   s7_define_function(sc, "remainder",                 g_remainder,                2, 0, false, H_remainder);
   s7_define_function(sc, "modulo",                    g_modulo,                   2, 0, false, H_modulo);
-  s7_define_function(sc, "=",                         g_equal,                    2, 0, true,  H_equal);
-  s7_define_function(sc, "<",                         g_less,                     2, 0, true,  H_less);
-  s7_define_function(sc, ">",                         g_greater,                  2, 0, true,  H_greater);
-  s7_define_function(sc, "<=",                        g_less_or_equal,            2, 0, true,  H_less_or_equal);
-  s7_define_function(sc, ">=",                        g_greater_or_equal,         2, 0, true,  H_greater_or_equal);
+  s7_define_safe_function(sc, "=",                    g_equal,                    2, 0, true,  H_equal);
+  s7_define_safe_function(sc, "<",                    g_less,                     2, 0, true,  H_less);
+  s7_define_safe_function(sc, ">",                    g_greater,                  2, 0, true,  H_greater);
+  s7_define_safe_function(sc, "<=",                   g_less_or_equal,            2, 0, true,  H_less_or_equal);
+  s7_define_safe_function(sc, ">=",                   g_greater_or_equal,         2, 0, true,  H_greater_or_equal);
   s7_define_function(sc, "even?",                     g_is_even,                  1, 0, false, H_is_even);
   s7_define_function(sc, "odd?",                      g_is_odd,                   1, 0, false, H_is_odd);
   s7_define_function(sc, "zero?",                     g_is_zero,                  1, 0, false, H_is_zero);
@@ -32393,9 +32424,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "make-random-state",         s7_make_random_state,       1, 1, false, H_make_random_state);
 
   s7_define_function(sc, "integer-length",            g_integer_length,           1, 0, false, H_integer_length);
-  s7_define_function(sc, "logior",                    g_logior,                   0, 0, true,  H_logior);
-  s7_define_function(sc, "logxor",                    g_logxor,                   0, 0, true,  H_logxor);
-  s7_define_function(sc, "logand",                    g_logand,                   0, 0, true,  H_logand);
+  s7_define_safe_function(sc, "logior",               g_logior,                   0, 0, true,  H_logior);
+  s7_define_safe_function(sc, "logxor",               g_logxor,                   0, 0, true,  H_logxor);
+  s7_define_safe_function(sc, "logand",               g_logand,                   0, 0, true,  H_logand);
   s7_define_function(sc, "lognot",                    g_lognot,                   1, 0, false, H_lognot);
   s7_define_function(sc, "ash",                       g_ash,                      2, 0, false, H_ash);
 #endif
@@ -32428,16 +32459,16 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "char-whitespace?",          g_is_char_whitespace,       1, 0, false, H_is_char_whitespace);
   s7_define_function(sc, "char?",                     g_is_char,                  1, 0, false, H_is_char);
   
-  s7_define_function(sc, "char=?",                    g_chars_are_equal,          2, 0, true,  H_chars_are_equal);
-  s7_define_function(sc, "char<?",                    g_chars_are_less,           2, 0, true,  H_chars_are_less);
-  s7_define_function(sc, "char>?",                    g_chars_are_greater,        2, 0, true,  H_chars_are_greater);
-  s7_define_function(sc, "char<=?",                   g_chars_are_leq,            2, 0, true,  H_chars_are_leq);
-  s7_define_function(sc, "char>=?",                   g_chars_are_geq,            2, 0, true,  H_chars_are_geq);
-  s7_define_function(sc, "char-ci=?",                 g_chars_are_ci_equal,       2, 0, true,  H_chars_are_ci_equal);
-  s7_define_function(sc, "char-ci<?",                 g_chars_are_ci_less,        2, 0, true,  H_chars_are_ci_less);
-  s7_define_function(sc, "char-ci>?",                 g_chars_are_ci_greater,     2, 0, true,  H_chars_are_ci_greater);
-  s7_define_function(sc, "char-ci<=?",                g_chars_are_ci_leq,         2, 0, true,  H_chars_are_ci_leq);
-  s7_define_function(sc, "char-ci>=?",                g_chars_are_ci_geq,         2, 0, true,  H_chars_are_ci_geq);
+  s7_define_safe_function(sc, "char=?",               g_chars_are_equal,          2, 0, true,  H_chars_are_equal);
+  s7_define_safe_function(sc, "char<?",               g_chars_are_less,           2, 0, true,  H_chars_are_less);
+  s7_define_safe_function(sc, "char>?",               g_chars_are_greater,        2, 0, true,  H_chars_are_greater);
+  s7_define_safe_function(sc, "char<=?",              g_chars_are_leq,            2, 0, true,  H_chars_are_leq);
+  s7_define_safe_function(sc, "char>=?",              g_chars_are_geq,            2, 0, true,  H_chars_are_geq);
+  s7_define_safe_function(sc, "char-ci=?",            g_chars_are_ci_equal,       2, 0, true,  H_chars_are_ci_equal);
+  s7_define_safe_function(sc, "char-ci<?",            g_chars_are_ci_less,        2, 0, true,  H_chars_are_ci_less);
+  s7_define_safe_function(sc, "char-ci>?",            g_chars_are_ci_greater,     2, 0, true,  H_chars_are_ci_greater);
+  s7_define_safe_function(sc, "char-ci<=?",           g_chars_are_ci_leq,         2, 0, true,  H_chars_are_ci_leq);
+  s7_define_safe_function(sc, "char-ci>=?",           g_chars_are_ci_geq,         2, 0, true,  H_chars_are_ci_geq);
   
   
   s7_define_function(sc, "string?",                   g_is_string,                1, 0, false, H_is_string);
@@ -32445,16 +32476,16 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "string-length",             g_string_length,            1, 0, false, H_string_length);
   s7_define_function(sc, "string-ref",                g_string_ref,               2, 0, false, H_string_ref);
   s7_define_function(sc, "string-set!",               g_string_set,               3, 0, false, H_string_set);
-  s7_define_function(sc, "string=?",                  g_strings_are_equal,        2, 0, true,  H_strings_are_equal);
-  s7_define_function(sc, "string<?",                  g_strings_are_less,         2, 0, true,  H_strings_are_less);
-  s7_define_function(sc, "string>?",                  g_strings_are_greater,      2, 0, true,  H_strings_are_greater);
-  s7_define_function(sc, "string<=?",                 g_strings_are_leq,          2, 0, true,  H_strings_are_leq);
-  s7_define_function(sc, "string>=?",                 g_strings_are_geq,          2, 0, true,  H_strings_are_geq);
-  s7_define_function(sc, "string-ci=?",               g_strings_are_ci_equal,     2, 0, true,  H_strings_are_ci_equal);
-  s7_define_function(sc, "string-ci<?",               g_strings_are_ci_less,      2, 0, true,  H_strings_are_ci_less);
-  s7_define_function(sc, "string-ci>?",               g_strings_are_ci_greater,   2, 0, true,  H_strings_are_ci_greater);
-  s7_define_function(sc, "string-ci<=?",              g_strings_are_ci_leq,       2, 0, true,  H_strings_are_ci_leq);
-  s7_define_function(sc, "string-ci>=?",              g_strings_are_ci_geq,       2, 0, true,  H_strings_are_ci_geq);
+  s7_define_safe_function(sc, "string=?",             g_strings_are_equal,        2, 0, true,  H_strings_are_equal);
+  s7_define_safe_function(sc, "string<?",             g_strings_are_less,         2, 0, true,  H_strings_are_less);
+  s7_define_safe_function(sc, "string>?",             g_strings_are_greater,      2, 0, true,  H_strings_are_greater);
+  s7_define_safe_function(sc, "string<=?",            g_strings_are_leq,          2, 0, true,  H_strings_are_leq);
+  s7_define_safe_function(sc, "string>=?",            g_strings_are_geq,          2, 0, true,  H_strings_are_geq);
+  s7_define_safe_function(sc, "string-ci=?",          g_strings_are_ci_equal,     2, 0, true,  H_strings_are_ci_equal);
+  s7_define_safe_function(sc, "string-ci<?",          g_strings_are_ci_less,      2, 0, true,  H_strings_are_ci_less);
+  s7_define_safe_function(sc, "string-ci>?",          g_strings_are_ci_greater,   2, 0, true,  H_strings_are_ci_greater);
+  s7_define_safe_function(sc, "string-ci<=?",         g_strings_are_ci_leq,       2, 0, true,  H_strings_are_ci_leq);
+  s7_define_safe_function(sc, "string-ci>=?",         g_strings_are_ci_geq,       2, 0, true,  H_strings_are_ci_geq);
   
   s7_define_function(sc, "string-append",             g_string_append,            0, 0, true,  H_string_append);
   s7_define_function(sc, "string-fill!",              g_string_fill,              2, 0, false, H_string_fill);
@@ -32473,23 +32504,26 @@ s7_scheme *s7_init(void)
   {
     s7_pointer p;
     p = s7_symbol_value(sc, make_symbol(sc, "pair?"));
-    set_type(p, (T_C_PAIR_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+    set_type(p, (T_C_PAIR_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_SAFE_PROCEDURE | T_DONT_COPY_CDR));
   }
   s7_define_function(sc, "cons",                      g_cons,                     2, 0, false, H_cons);
   s7_define_function(sc, "car",                       g_car,                      1, 0, false, H_car);
   {
     s7_pointer p;
     p = s7_symbol_value(sc, make_symbol(sc, "car"));
-    set_type(p, (T_C_CAR_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+    set_type(p, (T_C_CAR_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_SAFE_PROCEDURE | T_DONT_COPY_CDR));
   }
   s7_define_function(sc, "cdr",                       g_cdr,                      1, 0, false, H_cdr);
   {
     s7_pointer p;
     p = s7_symbol_value(sc, make_symbol(sc, "cdr"));
-    set_type(p, (T_C_CDR_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+    set_type(p, (T_C_CDR_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR)); 
+    /* not t_safe_procedure here -- the internal macro function defined by defmacro et al
+     *   has a built-in cdr of the uncopied nominal macro value.
+     */
   }
-  s7_define_function(sc, "set-car!",                  g_set_car,                  2, 0, false, H_set_car);
-  s7_define_function(sc, "set-cdr!",                  g_set_cdr,                  2, 0, false, H_set_cdr);
+  s7_define_unsafe_function(sc, "set-car!",           g_set_car,                  2, 0, false, H_set_car);
+  s7_define_unsafe_function(sc, "set-cdr!",           g_set_cdr,                  2, 0, false, H_set_cdr);
   s7_define_function(sc, "caar",                      g_caar,                     1, 0, false, H_caar);
   s7_define_function(sc, "cadr",                      g_cadr,                     1, 0, false, H_cadr);
   s7_define_function(sc, "cdar",                      g_cdar,                     1, 0, false, H_cdar);
@@ -32536,7 +32570,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "copy",                      g_copy,                     1, 0, false, H_copy);
   s7_define_function(sc, "fill!",                     g_fill,                     2, 0, false, H_fill);
   s7_define_function(sc, "reverse",                   g_reverse,                  1, 0, false, H_reverse);
-  s7_define_function(sc, "reverse!",                  g_reverse_in_place,         1, 0, false, H_reverse_in_place); /* used by Snd code */
+  s7_define_unsafe_function(sc, "reverse!",           g_reverse_in_place,         1, 0, false, H_reverse_in_place); /* used by Snd code */
   
 
   s7_define_function(sc, "vector?",                   g_is_vector,                1, 0, false, H_is_vector);
@@ -32549,7 +32583,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "vector-set!",               g_vector_set,               3, 0, true,  H_vector_set);
   s7_define_function(sc, "make-vector",               g_make_vector,              1, 1, false, H_make_vector);
   s7_define_function(sc, "vector-dimensions",         g_vector_dimensions,        1, 0, false, H_vector_dimensions);
-  s7_define_function(sc, "sort!",                     g_sort,                     2, 0, false, H_sort);
+  s7_define_unsafe_function(sc, "sort!",              g_sort,                     2, 0, false, H_sort);
 
 
   s7_define_function(sc, "hash-table",                g_hash_table,               0, 0, true,  H_hash_table);
@@ -32593,13 +32627,7 @@ s7_scheme *s7_init(void)
   s7_define_constant_function(sc, "{apply}",          g_apply,                    1, 0, true,  H_apply);
   s7_define_constant_function(sc, "{append}",         g_append,                   0, 0, true,  H_append);
   s7_define_constant_function(sc, "{multivector}",    g_qq_multivector,           1, 0, true,  H_qq_multivector);
-    
   s7_define_constant_function(sc, "{list}",           g_qq_list,                  0, 0, true,  H_qq_list);
-  {
-    s7_pointer p;
-    p = s7_symbol_value(sc, make_symbol(sc, "{list}"));
-    set_type(p, (T_C_LST_ARGS_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
-  }
 
   s7_define_function(sc, "stacktrace",                g_stacktrace,               0, 2, false, H_stacktrace);
   s7_define_function(sc, "trace",                     g_trace,                    0, 0, true,  H_trace);
@@ -32617,14 +32645,14 @@ s7_scheme *s7_init(void)
   {
     s7_pointer p;
     p = s7_symbol_value(sc, make_symbol(sc, "not"));
-    set_type(p, (T_C_NOT_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+    set_type(p, (T_C_NOT_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_SAFE_PROCEDURE | T_DONT_COPY_CDR));
   }
   s7_define_function(sc, "boolean?",                  g_is_boolean,               1, 0, false, H_is_boolean);
   s7_define_function(sc, "eq?",                       g_is_eq,                    2, 0, false, H_is_eq);
   {
     s7_pointer p;
     p = s7_symbol_value(sc, make_symbol(sc, "eq?"));
-    set_type(p, (T_C_EQ_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+    set_type(p, (T_C_EQ_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_SAFE_PROCEDURE | T_DONT_COPY_CDR));
   }
   s7_define_function(sc, "eqv?",                      g_is_eqv,                   2, 0, false, H_is_eqv);
   s7_define_function(sc, "equal?",                    g_is_equal,                 2, 0, false, H_is_equal);

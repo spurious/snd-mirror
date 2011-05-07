@@ -3753,6 +3753,15 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((x (list 1 2 3))) (recompose 31 reverse! x)) '(3 2 1))
 (test (reverse! '(1 2 . 3)) 'error)
 
+(let* ((lst1 (list 1 2 3))
+       (lst2 (apply list '(4 5 6)))
+       (lst3 (sort! (reverse! (append lst1 lst2)) <)))
+  (test lst3 '(1 2 3 4 5 6))
+  (define (lt . args)
+    args)
+  (set! lst3 (sort! (apply reverse! (lt lst3)) >))
+  (test lst3 '(6 5 4 3 2 1)))
+
 (for-each
  (lambda (arg)
    (test (reverse! arg) 'error))

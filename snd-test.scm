@@ -56494,7 +56494,6 @@ EDITS: 1
        (set! frq (mus-frequency (vector-ref val 1)))))
     (if (fneq frq 500.0) (snd-display #__line__ ";defgen set freq: ~A ~A" frq (mus-frequency (vector-ref val 1)))))
   
-  
   (let* ((res (with-sound (:clipped #f)
 			  (let ((v (make-vector 2 #f)))
 			    (set! (v 0) (make-nrcos 440 10 .5))    
@@ -63415,17 +63414,17 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 
-5-May-11
-208,299,075,069  PROGRAM TOTALS
-26,783,285,189  s7.c:eval [/home/bil/snd-12/snd]
-19,755,174,011  s7.c:eval'2 [/home/bil/snd-12/snd]
-19,521,828,740  ???:sin [/lib64/libm-2.12.so]
-16,650,172,187  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
-11,801,217,069  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
- 8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
- 8,837,902,736  run.c:eval_ptree [/home/bil/snd-12/snd]
- 7,898,917,211  s7.c:gc [/home/bil/snd-12/snd]
- 7,228,494,513  io.c:mus_write_1 [/home/bil/snd-12/snd]
- |#
+6-May-11
+206,510,597,567  PROGRAM TOTALS
+26,913,090,777  s7.c:eval [/home/bil/snd-12/snd]
+19,945,200,253  s7.c:eval'2 [/home/bil/snd-12/snd]
+19,532,641,788  ???:sin [/lib64/libm-2.12.so]
+16,701,719,326  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
+11,707,070,839  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
+ 8,912,887,850  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
+ 8,840,528,289  run.c:eval_ptree [/home/bil/snd-12/snd]
+ 7,226,125,422  io.c:mus_write_1 [/home/bil/snd-12/snd]
+ 6,141,470,676  s7.c:gc [/home/bil/snd-12/snd]
+|#
 
 
