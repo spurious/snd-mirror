@@ -885,7 +885,10 @@
 					   (and (pair? b)
 						(>= (lint-length b) 2)
 						(member (cadr a) (cdr b))
-						(bad-arg-match (car a) (car b)))))))))
+						(bad-arg-match (car a) (car b)))))
+		     (and (eq? (car e) 'null?)
+			  (pair? (cadr e))
+			  (eq? (hash-table-ref function-types (caadr e)) 'list-or-f))))))
       
       (define (classify e)
 	;; do we already know that e is true or false?
@@ -1448,24 +1451,34 @@
 			   name line-number form)
 		   
 		   (if *report-minor-stuff*
-		       (let ((expr (if (and (pair? (cadr form))
-					    (memq (car (cadr form)) '(and or not)))
-				       (simplify-boolean (cadr form) '() '() env)
-				       (cadr form))))
-			 (if (and (boolean? (list-ref form 2))
-				  (not (null? (cdddr form)))
-				  (boolean? (list-ref form 3))
-				  (not (eq? (list-ref form 2) (list-ref form 3)))) ; !
+		       (let ((expr (simplify-boolean (cadr form) '() '() env)))
+			 (if (equal? expr #t)
 			     (format #t "  ~A (line ~D): possible simplification:~A~%"
 				     name line-number
-				     (lists->string form (if (list-ref form 2)
-							     expr
-							     `(not ,expr)))))
-			 (if (and (= len 4)
-				  (equal? (caddr form) (cadddr form)))
-			     (format #t "  ~A (line ~D): if is not needed here:~A~%"
-				     name line-number 
-				     (truncated-list->string form)))))))))
+				     (lists->string form (caddr form)))
+			     (if (equal? expr #f)
+				 (if (null? (cdddr form))
+				     (if (not (equal? (caddr form) #f)) ; (if #f #f) -> #<unspecified>
+					 (format #t "  ~A (line ~D): ~S is never #t:~A~%"
+						 name line-number (cadr form)
+						 (truncated-list->string form)))
+				     (format #t "  ~A (line ~D): possible simplification:~A~%"
+					     name line-number
+					     (lists->string form (cadddr form))))
+				 (if (and (boolean? (list-ref form 2))
+					  (not (null? (cdddr form)))
+					  (boolean? (list-ref form 3))
+					  (not (eq? (list-ref form 2) (list-ref form 3)))) ; !
+				     (format #t "  ~A (line ~D): possible simplification:~A~%"
+					     name line-number
+					     (lists->string form (if (list-ref form 2)
+								     expr
+								     `(not ,expr))))
+				     (if (and (= len 4)
+					      (equal? (caddr form) (cadddr form)))
+					 (format #t "  ~A (line ~D): if is not needed here:~A~%"
+						 name line-number 
+						 (truncated-list->string form))))))))))))
 	
 	((car cdr)
 	 (if (and *report-minor-stuff*
@@ -2493,9 +2506,9 @@
 				(format #t "  ~A (line ~D): cond clause is messed up: ~A~%"
 					name line-number
 					(truncated-list->string clause))
-				(begin
-				  (if (boolean? (car clause))
-				      (if (not (car clause))
+				(let ((expr (simplify-boolean (car clause) '() '() env)))
+				  (if (boolean? expr)
+				      (if (not expr)
 					  (format #t "  ~A (line ~D): cond clause will never be evaluated:~A~%"
 						  name line-number 
 						  (truncated-list->string clause))
@@ -2874,7 +2887,8 @@
 			 env)
 		       (begin
 			 (check-call name line-number head form env)
-			 (check-special-cases name line-number head form env)
+			 (if (not (env-member? head env))
+			     (check-special-cases name line-number head form env))
 
 			 (if (and *report-minor-stuff*
 				  (not (= line-number last-simplify-numeric-line-number))
@@ -3025,4 +3039,5 @@
 
 	      (close-input-port fp)))))))
 
-;;; TODO: check (null? (member )) etc
+;;; TODO: not nil followed by pair? etc
+;;; TODO: (and (integer? x) (string? x) ...) has to be #f

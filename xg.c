@@ -7437,23 +7437,6 @@ gint allocation)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_menu_item_set_right_justified(XEN menu_item, XEN right_justified)
-{
-  #define H_gtk_menu_item_set_right_justified "void gtk_menu_item_set_right_justified(GtkMenuItem* menu_item, \
-gboolean right_justified)"
-  XEN_ASSERT_TYPE(XEN_GtkMenuItem__P(menu_item), menu_item, 1, "gtk_menu_item_set_right_justified", "GtkMenuItem*");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(right_justified), right_justified, 2, "gtk_menu_item_set_right_justified", "gboolean");
-  gtk_menu_item_set_right_justified(XEN_TO_C_GtkMenuItem_(menu_item), XEN_TO_C_gboolean(right_justified));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_menu_item_get_right_justified(XEN menu_item)
-{
-  #define H_gtk_menu_item_get_right_justified "gboolean gtk_menu_item_get_right_justified(GtkMenuItem* menu_item)"
-  XEN_ASSERT_TYPE(XEN_GtkMenuItem__P(menu_item), menu_item, 1, "gtk_menu_item_get_right_justified", "GtkMenuItem*");
-  return(C_TO_XEN_gboolean(gtk_menu_item_get_right_justified(XEN_TO_C_GtkMenuItem_(menu_item))));
-}
-
 static XEN gxg_gtk_menu_item_set_accel_path(XEN menu_item, XEN accel_path)
 {
   #define H_gtk_menu_item_set_accel_path "void gtk_menu_item_set_accel_path(GtkMenuItem* menu_item, gchar* accel_path)"
@@ -22429,46 +22412,6 @@ GtkWidget* page)"
   return(C_TO_XEN_gchar_(gtk_assistant_get_page_title(XEN_TO_C_GtkAssistant_(assistant), XEN_TO_C_GtkWidget_(page))));
 }
 
-static XEN gxg_gtk_assistant_set_page_header_image(XEN assistant, XEN page, XEN pixbuf)
-{
-  #define H_gtk_assistant_set_page_header_image "void gtk_assistant_set_page_header_image(GtkAssistant* assistant, \
-GtkWidget* page, GdkPixbuf* pixbuf)"
-  XEN_ASSERT_TYPE(XEN_GtkAssistant__P(assistant), assistant, 1, "gtk_assistant_set_page_header_image", "GtkAssistant*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(page), page, 2, "gtk_assistant_set_page_header_image", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 3, "gtk_assistant_set_page_header_image", "GdkPixbuf*");
-  gtk_assistant_set_page_header_image(XEN_TO_C_GtkAssistant_(assistant), XEN_TO_C_GtkWidget_(page), XEN_TO_C_GdkPixbuf_(pixbuf));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_assistant_get_page_header_image(XEN assistant, XEN page)
-{
-  #define H_gtk_assistant_get_page_header_image "GdkPixbuf* gtk_assistant_get_page_header_image(GtkAssistant* assistant, \
-GtkWidget* page)"
-  XEN_ASSERT_TYPE(XEN_GtkAssistant__P(assistant), assistant, 1, "gtk_assistant_get_page_header_image", "GtkAssistant*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(page), page, 2, "gtk_assistant_get_page_header_image", "GtkWidget*");
-  return(C_TO_XEN_GdkPixbuf_(gtk_assistant_get_page_header_image(XEN_TO_C_GtkAssistant_(assistant), XEN_TO_C_GtkWidget_(page))));
-}
-
-static XEN gxg_gtk_assistant_set_page_side_image(XEN assistant, XEN page, XEN pixbuf)
-{
-  #define H_gtk_assistant_set_page_side_image "void gtk_assistant_set_page_side_image(GtkAssistant* assistant, \
-GtkWidget* page, GdkPixbuf* pixbuf)"
-  XEN_ASSERT_TYPE(XEN_GtkAssistant__P(assistant), assistant, 1, "gtk_assistant_set_page_side_image", "GtkAssistant*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(page), page, 2, "gtk_assistant_set_page_side_image", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 3, "gtk_assistant_set_page_side_image", "GdkPixbuf*");
-  gtk_assistant_set_page_side_image(XEN_TO_C_GtkAssistant_(assistant), XEN_TO_C_GtkWidget_(page), XEN_TO_C_GdkPixbuf_(pixbuf));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_assistant_get_page_side_image(XEN assistant, XEN page)
-{
-  #define H_gtk_assistant_get_page_side_image "GdkPixbuf* gtk_assistant_get_page_side_image(GtkAssistant* assistant, \
-GtkWidget* page)"
-  XEN_ASSERT_TYPE(XEN_GtkAssistant__P(assistant), assistant, 1, "gtk_assistant_get_page_side_image", "GtkAssistant*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(page), page, 2, "gtk_assistant_get_page_side_image", "GtkWidget*");
-  return(C_TO_XEN_GdkPixbuf_(gtk_assistant_get_page_side_image(XEN_TO_C_GtkAssistant_(assistant), XEN_TO_C_GtkWidget_(page))));
-}
-
 static XEN gxg_gtk_assistant_set_page_complete(XEN assistant, XEN page, XEN complete)
 {
   #define H_gtk_assistant_set_page_complete "void gtk_assistant_set_page_complete(GtkAssistant* assistant, \
@@ -29613,15 +29556,6 @@ static XEN gxg_gtk_combo_box_get_active_id(XEN combo_box)
   return(C_TO_XEN_gchar_(gtk_combo_box_get_active_id(XEN_TO_C_GtkComboBox_(combo_box))));
 }
 
-static XEN gxg_gtk_combo_box_set_active_id(XEN combo_box, XEN active_id)
-{
-  #define H_gtk_combo_box_set_active_id "void gtk_combo_box_set_active_id(GtkComboBox* combo_box, gchar* active_id)"
-  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_set_active_id", "GtkComboBox*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(active_id), active_id, 2, "gtk_combo_box_set_active_id", "gchar*");
-  gtk_combo_box_set_active_id(XEN_TO_C_GtkComboBox_(combo_box), (const gchar*)XEN_TO_C_gchar_(active_id));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_combo_box_text_insert(XEN combo_box, XEN position, XEN id, XEN text)
 {
   #define H_gtk_combo_box_text_insert "void gtk_combo_box_text_insert(GtkComboBoxText* combo_box, gint position, \
@@ -35925,8 +35859,6 @@ XEN_NARGIFY_1(gxg_gtk_menu_item_deselect_w, gxg_gtk_menu_item_deselect)
 XEN_NARGIFY_1(gxg_gtk_menu_item_activate_w, gxg_gtk_menu_item_activate)
 XEN_NARGIFY_2(gxg_gtk_menu_item_toggle_size_request_w, gxg_gtk_menu_item_toggle_size_request)
 XEN_NARGIFY_2(gxg_gtk_menu_item_toggle_size_allocate_w, gxg_gtk_menu_item_toggle_size_allocate)
-XEN_NARGIFY_2(gxg_gtk_menu_item_set_right_justified_w, gxg_gtk_menu_item_set_right_justified)
-XEN_NARGIFY_1(gxg_gtk_menu_item_get_right_justified_w, gxg_gtk_menu_item_get_right_justified)
 XEN_NARGIFY_2(gxg_gtk_menu_item_set_accel_path_w, gxg_gtk_menu_item_set_accel_path)
 XEN_NARGIFY_2(gxg_gtk_menu_shell_append_w, gxg_gtk_menu_shell_append)
 XEN_NARGIFY_2(gxg_gtk_menu_shell_prepend_w, gxg_gtk_menu_shell_prepend)
@@ -37553,10 +37485,6 @@ XEN_NARGIFY_3(gxg_gtk_assistant_set_page_type_w, gxg_gtk_assistant_set_page_type
 XEN_NARGIFY_2(gxg_gtk_assistant_get_page_type_w, gxg_gtk_assistant_get_page_type)
 XEN_NARGIFY_3(gxg_gtk_assistant_set_page_title_w, gxg_gtk_assistant_set_page_title)
 XEN_NARGIFY_2(gxg_gtk_assistant_get_page_title_w, gxg_gtk_assistant_get_page_title)
-XEN_NARGIFY_3(gxg_gtk_assistant_set_page_header_image_w, gxg_gtk_assistant_set_page_header_image)
-XEN_NARGIFY_2(gxg_gtk_assistant_get_page_header_image_w, gxg_gtk_assistant_get_page_header_image)
-XEN_NARGIFY_3(gxg_gtk_assistant_set_page_side_image_w, gxg_gtk_assistant_set_page_side_image)
-XEN_NARGIFY_2(gxg_gtk_assistant_get_page_side_image_w, gxg_gtk_assistant_get_page_side_image)
 XEN_NARGIFY_3(gxg_gtk_assistant_set_page_complete_w, gxg_gtk_assistant_set_page_complete)
 XEN_NARGIFY_2(gxg_gtk_assistant_get_page_complete_w, gxg_gtk_assistant_get_page_complete)
 XEN_NARGIFY_2(gxg_gtk_assistant_add_action_widget_w, gxg_gtk_assistant_add_action_widget)
@@ -38377,7 +38305,6 @@ XEN_NARGIFY_1(gxg_gtk_border_free_w, gxg_gtk_border_free)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_id_column_w, gxg_gtk_combo_box_get_id_column)
 XEN_NARGIFY_2(gxg_gtk_combo_box_set_id_column_w, gxg_gtk_combo_box_set_id_column)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_active_id_w, gxg_gtk_combo_box_get_active_id)
-XEN_NARGIFY_2(gxg_gtk_combo_box_set_active_id_w, gxg_gtk_combo_box_set_active_id)
 XEN_NARGIFY_4(gxg_gtk_combo_box_text_insert_w, gxg_gtk_combo_box_text_insert)
 XEN_NARGIFY_3(gxg_gtk_combo_box_text_append_w, gxg_gtk_combo_box_text_append)
 XEN_NARGIFY_3(gxg_gtk_combo_box_text_prepend_w, gxg_gtk_combo_box_text_prepend)
@@ -39972,8 +39899,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_menu_item_activate_w gxg_gtk_menu_item_activate
 #define gxg_gtk_menu_item_toggle_size_request_w gxg_gtk_menu_item_toggle_size_request
 #define gxg_gtk_menu_item_toggle_size_allocate_w gxg_gtk_menu_item_toggle_size_allocate
-#define gxg_gtk_menu_item_set_right_justified_w gxg_gtk_menu_item_set_right_justified
-#define gxg_gtk_menu_item_get_right_justified_w gxg_gtk_menu_item_get_right_justified
 #define gxg_gtk_menu_item_set_accel_path_w gxg_gtk_menu_item_set_accel_path
 #define gxg_gtk_menu_shell_append_w gxg_gtk_menu_shell_append
 #define gxg_gtk_menu_shell_prepend_w gxg_gtk_menu_shell_prepend
@@ -41600,10 +41525,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_assistant_get_page_type_w gxg_gtk_assistant_get_page_type
 #define gxg_gtk_assistant_set_page_title_w gxg_gtk_assistant_set_page_title
 #define gxg_gtk_assistant_get_page_title_w gxg_gtk_assistant_get_page_title
-#define gxg_gtk_assistant_set_page_header_image_w gxg_gtk_assistant_set_page_header_image
-#define gxg_gtk_assistant_get_page_header_image_w gxg_gtk_assistant_get_page_header_image
-#define gxg_gtk_assistant_set_page_side_image_w gxg_gtk_assistant_set_page_side_image
-#define gxg_gtk_assistant_get_page_side_image_w gxg_gtk_assistant_get_page_side_image
 #define gxg_gtk_assistant_set_page_complete_w gxg_gtk_assistant_set_page_complete
 #define gxg_gtk_assistant_get_page_complete_w gxg_gtk_assistant_get_page_complete
 #define gxg_gtk_assistant_add_action_widget_w gxg_gtk_assistant_add_action_widget
@@ -42424,7 +42345,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_combo_box_get_id_column_w gxg_gtk_combo_box_get_id_column
 #define gxg_gtk_combo_box_set_id_column_w gxg_gtk_combo_box_set_id_column
 #define gxg_gtk_combo_box_get_active_id_w gxg_gtk_combo_box_get_active_id
-#define gxg_gtk_combo_box_set_active_id_w gxg_gtk_combo_box_set_active_id
 #define gxg_gtk_combo_box_text_insert_w gxg_gtk_combo_box_text_insert
 #define gxg_gtk_combo_box_text_append_w gxg_gtk_combo_box_text_append
 #define gxg_gtk_combo_box_text_prepend_w gxg_gtk_combo_box_text_prepend
@@ -44026,8 +43946,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_menu_item_activate, gxg_gtk_menu_item_activate_w, 1, 0, 0, H_gtk_menu_item_activate);
   XG_DEFINE_PROCEDURE(gtk_menu_item_toggle_size_request, gxg_gtk_menu_item_toggle_size_request_w, 2, 0, 0, H_gtk_menu_item_toggle_size_request);
   XG_DEFINE_PROCEDURE(gtk_menu_item_toggle_size_allocate, gxg_gtk_menu_item_toggle_size_allocate_w, 2, 0, 0, H_gtk_menu_item_toggle_size_allocate);
-  XG_DEFINE_PROCEDURE(gtk_menu_item_set_right_justified, gxg_gtk_menu_item_set_right_justified_w, 2, 0, 0, H_gtk_menu_item_set_right_justified);
-  XG_DEFINE_PROCEDURE(gtk_menu_item_get_right_justified, gxg_gtk_menu_item_get_right_justified_w, 1, 0, 0, H_gtk_menu_item_get_right_justified);
   XG_DEFINE_PROCEDURE(gtk_menu_item_set_accel_path, gxg_gtk_menu_item_set_accel_path_w, 2, 0, 0, H_gtk_menu_item_set_accel_path);
   XG_DEFINE_PROCEDURE(gtk_menu_shell_append, gxg_gtk_menu_shell_append_w, 2, 0, 0, H_gtk_menu_shell_append);
   XG_DEFINE_PROCEDURE(gtk_menu_shell_prepend, gxg_gtk_menu_shell_prepend_w, 2, 0, 0, H_gtk_menu_shell_prepend);
@@ -45654,10 +45572,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_assistant_get_page_type, gxg_gtk_assistant_get_page_type_w, 2, 0, 0, H_gtk_assistant_get_page_type);
   XG_DEFINE_PROCEDURE(gtk_assistant_set_page_title, gxg_gtk_assistant_set_page_title_w, 3, 0, 0, H_gtk_assistant_set_page_title);
   XG_DEFINE_PROCEDURE(gtk_assistant_get_page_title, gxg_gtk_assistant_get_page_title_w, 2, 0, 0, H_gtk_assistant_get_page_title);
-  XG_DEFINE_PROCEDURE(gtk_assistant_set_page_header_image, gxg_gtk_assistant_set_page_header_image_w, 3, 0, 0, H_gtk_assistant_set_page_header_image);
-  XG_DEFINE_PROCEDURE(gtk_assistant_get_page_header_image, gxg_gtk_assistant_get_page_header_image_w, 2, 0, 0, H_gtk_assistant_get_page_header_image);
-  XG_DEFINE_PROCEDURE(gtk_assistant_set_page_side_image, gxg_gtk_assistant_set_page_side_image_w, 3, 0, 0, H_gtk_assistant_set_page_side_image);
-  XG_DEFINE_PROCEDURE(gtk_assistant_get_page_side_image, gxg_gtk_assistant_get_page_side_image_w, 2, 0, 0, H_gtk_assistant_get_page_side_image);
   XG_DEFINE_PROCEDURE(gtk_assistant_set_page_complete, gxg_gtk_assistant_set_page_complete_w, 3, 0, 0, H_gtk_assistant_set_page_complete);
   XG_DEFINE_PROCEDURE(gtk_assistant_get_page_complete, gxg_gtk_assistant_get_page_complete_w, 2, 0, 0, H_gtk_assistant_get_page_complete);
   XG_DEFINE_PROCEDURE(gtk_assistant_add_action_widget, gxg_gtk_assistant_add_action_widget_w, 2, 0, 0, H_gtk_assistant_add_action_widget);
@@ -46478,7 +46392,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_id_column, gxg_gtk_combo_box_get_id_column_w, 1, 0, 0, H_gtk_combo_box_get_id_column);
   XG_DEFINE_PROCEDURE(gtk_combo_box_set_id_column, gxg_gtk_combo_box_set_id_column_w, 2, 0, 0, H_gtk_combo_box_set_id_column);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_active_id, gxg_gtk_combo_box_get_active_id_w, 1, 0, 0, H_gtk_combo_box_get_active_id);
-  XG_DEFINE_PROCEDURE(gtk_combo_box_set_active_id, gxg_gtk_combo_box_set_active_id_w, 2, 0, 0, H_gtk_combo_box_set_active_id);
   XG_DEFINE_PROCEDURE(gtk_combo_box_text_insert, gxg_gtk_combo_box_text_insert_w, 4, 0, 0, H_gtk_combo_box_text_insert);
   XG_DEFINE_PROCEDURE(gtk_combo_box_text_append, gxg_gtk_combo_box_text_append_w, 3, 0, 0, H_gtk_combo_box_text_append);
   XG_DEFINE_PROCEDURE(gtk_combo_box_text_prepend, gxg_gtk_combo_box_text_prepend_w, 3, 0, 0, H_gtk_combo_box_text_prepend);
@@ -49196,7 +49109,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Apr-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("08-May-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -2436,8 +2436,8 @@
 (CFNC "void gtk_menu_item_activate GtkMenuItem* menu_item")
 (CFNC "void gtk_menu_item_toggle_size_request GtkMenuItem* menu_item gint* requisition")
 (CFNC "void gtk_menu_item_toggle_size_allocate GtkMenuItem* menu_item gint allocation")
-(CFNC "void gtk_menu_item_set_right_justified GtkMenuItem* menu_item gboolean right_justified")
-(CFNC "gboolean gtk_menu_item_get_right_justified GtkMenuItem* menu_item")
+;;; 3.1.4 (CFNC "void gtk_menu_item_set_right_justified GtkMenuItem* menu_item gboolean right_justified")
+;;; 3.1.4 (CFNC "gboolean gtk_menu_item_get_right_justified GtkMenuItem* menu_item")
 (CFNC "void gtk_menu_item_set_accel_path GtkMenuItem* menu_item gchar* accel_path")
 (CCAST "GTK_MENU_SHELL(obj)" "GtkMenuShell*")
 (CCHK "GTK_IS_MENU_SHELL(obj)" "GtkMenuShell*")
@@ -5910,10 +5910,10 @@
 (CFNC "GtkAssistantPageType gtk_assistant_get_page_type GtkAssistant* assistant GtkWidget* page")
 (CFNC "void gtk_assistant_set_page_title GtkAssistant* assistant GtkWidget* page gchar* title")
 (CFNC "gchar* gtk_assistant_get_page_title GtkAssistant* assistant GtkWidget* page") ; 'const
-(CFNC "void gtk_assistant_set_page_header_image GtkAssistant* assistant GtkWidget* page GdkPixbuf* pixbuf")
-(CFNC "GdkPixbuf* gtk_assistant_get_page_header_image GtkAssistant* assistant GtkWidget* page")
-(CFNC "void gtk_assistant_set_page_side_image GtkAssistant* assistant GtkWidget* page GdkPixbuf* pixbuf")
-(CFNC "GdkPixbuf* gtk_assistant_get_page_side_image GtkAssistant* assistant GtkWidget* page")
+;;; 3.1.4 (CFNC "void gtk_assistant_set_page_header_image GtkAssistant* assistant GtkWidget* page GdkPixbuf* pixbuf")
+;;; 3.1.4 (CFNC "GdkPixbuf* gtk_assistant_get_page_header_image GtkAssistant* assistant GtkWidget* page")
+;;; 3.1.4 (CFNC "void gtk_assistant_set_page_side_image GtkAssistant* assistant GtkWidget* page GdkPixbuf* pixbuf")
+;;; 3.1.4 (CFNC "GdkPixbuf* gtk_assistant_get_page_side_image GtkAssistant* assistant GtkWidget* page")
 (CFNC "void gtk_assistant_set_page_complete GtkAssistant* assistant GtkWidget* page gboolean complete")
 (CFNC "gboolean gtk_assistant_get_page_complete GtkAssistant* assistant GtkWidget* page")
 (CFNC "void gtk_assistant_add_action_widget GtkAssistant* assistant GtkWidget* child")
@@ -7832,7 +7832,7 @@
 (CFNC-300 "gint gtk_combo_box_get_id_column GtkComboBox* combo_box")
 (CFNC-300 "void gtk_combo_box_set_id_column GtkComboBox* combo_box gint id_column")
 (CFNC-300 "gchar* gtk_combo_box_get_active_id GtkComboBox* combo_box" 'const)
-(CFNC-300 "void gtk_combo_box_set_active_id GtkComboBox* combo_box gchar* active_id" 'const)
+;;; 3.1.4 changed type (CFNC-300 "void gtk_combo_box_set_active_id GtkComboBox* combo_box gchar* active_id" 'const)
 (CFNC-300 "void gtk_combo_box_text_insert GtkComboBoxText* combo_box gint position gchar* id gchar* text" 'const)
 (CFNC-300 "void gtk_combo_box_text_append GtkComboBoxText* combo_box gchar* id gchar* text" 'const)
 (CFNC-300 "void gtk_combo_box_text_prepend GtkComboBoxText* combo_box gchar* id gchar* text" 'const)
@@ -8195,6 +8195,23 @@
 (CFNC-310 "gboolean gtk_expander_get_resize_toplevel GtkExpander* expander")
 ;(CFNC-310 "void gtk_widget_queue_draw_region GtkWidget* widget cairo_region_t* [region]" 'const)
 (CFNC-310 "char *gtk_widget_path_to_string GtkWidgetPath* path" 'const)
+
+
+;;; 3.1.4
+(CFNC-310 "gboolean gtk_button_box_get_child_non_homogeneous GtkButtonBox* widget GtkWidget* child")
+(CFNC-310 "void gtk_button_box_set_child_non_homogeneous GtkButtonBox* widget GtkWidget* child gboolean non_homogeneous")
+(CFNC-310 "void gtk_container_child_notify GtkContainer* container GtkWidget* child gchar* property_name" 'const)
+(CFNC-310 "void gtk_drag_source_set_icon_gicon GtkWidget* widget GIcon* icon")
+(CFNC-310 "void gtk_drag_set_icon_gicon  GdkDragContext *context GIcon* icon gint hot_x gint hot_y")
+
+(CFNC-310 "gboolean gtk_combo_box_set_active_id GtkComboBox* combo_box gchar* active_id" 'const)
+
+;;; lockbutton
+;GtkWidget   *gtk_lock_button_new            (GPermission   *permission);
+;GPermission *gtk_lock_button_get_permission (GtkLockButton *button);
+;void         gtk_lock_button_set_permission (GtkLockButton *button, GPermission   *permission);
+;#define GTK_LOCK_BUTTON(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), GTK_TYPE_LOCK_BUTTON, GtkLockButton))
+;#define GTK_IS_LOCK_BUTTON(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), GTK_TYPE_LOCK_BUTTON))
 
 |#
 

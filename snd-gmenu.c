@@ -762,7 +762,8 @@ GtkWidget *add_menu(void)
   ml[h_menu] = "Help";
   gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), help_menu);
   gtk_widget_show(help_menu);
-  gtk_menu_item_set_right_justified(GTK_MENU_ITEM(help_menu), true);
+  /* this is no longer supported in Gtk -- they say "use gtk_widget_set_hexpand() and gtk_widget_set_halign()" */
+  /* gtk_menu_item_set_right_justified(GTK_MENU_ITEM(help_menu), true); */
 
   help_cascade_menu = gtk_menu_new();
   ml[h_cascade_menu] = NULL;
