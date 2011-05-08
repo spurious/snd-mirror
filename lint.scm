@@ -2169,7 +2169,8 @@
 	       (if (not (symbol? (car arg)))
 		   (format #t "  ~A (line ~D): bad ~A ~A name: ~S~%" name line-number head type (car arg))))
 
-	   (set! undefined-identifiers (remove (car arg) undefined-identifiers))
+	   (if *report-undefined-variables*
+	       (set! undefined-identifiers (remove (car arg) undefined-identifiers)))
 
 	   (if (and (not (cadr arg))
 		    (not (member (car arg) other-identifiers)))
@@ -2903,7 +2904,8 @@
 			   (for-each
 			    (lambda (f)
 			      ;; look for names we don't know about
-			      (if (and (symbol? f)
+			      (if (and *report-undefined-variables*
+				       (symbol? f)
 				       (not (keyword? f))
 				       (not (eq? f name))
 				       (not (eq? f '=>))
@@ -3023,3 +3025,4 @@
 
 	      (close-input-port fp)))))))
 
+;;; TODO: check (null? (member )) etc

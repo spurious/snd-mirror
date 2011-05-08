@@ -492,7 +492,7 @@ typedef struct s7_cell {
     struct {               /* call/cc */
       s7_pointer stack;
       s7_pointer *stack_start, *stack_end, *op_stack;
-      int stack_size, op_stack_top;
+      int stack_size, op_stack_top, op_stack_size;
     } continuation;
     
     struct {               /* call-with-exit */
@@ -549,7 +549,7 @@ struct s7_scheme {
   s7_pointer *stack_start, *stack_end, *stack_resize_trigger;
   
   s7_pointer *op_stack;
-  int op_stack_top;
+  int op_stack_top, op_stack_size;
 
   s7_cell **heap, **free_heap, **free_heap_top, **free_heap_trigger;
   unsigned int heap_size;
@@ -952,6 +952,7 @@ struct s7_scheme {
 #define continuation_stack_top(p)     (continuation_stack_end(p) - continuation_stack_start(p))
 #define continuation_op_stack(p)      (p)->object.continuation.op_stack
 #define continuation_op_loc(p)        (p)->object.continuation.op_stack_top
+#define continuation_op_size(p)       (p)->object.continuation.op_stack_size
 
 #define call_exit_goto_loc(p)         (p)->object.rexit.goto_loc
 #define call_exit_op_loc(p)           (p)->object.rexit.op_loc
@@ -1503,6 +1504,14 @@ static void mark_vector(s7_pointer p, s7_Int top)
 }
 
 
+static void mark_op_stack(s7_scheme *sc)
+{
+  int i;
+  for (i = 0; i < sc->op_stack_top; i++)
+    S7_MARK(sc->op_stack[i]);
+}
+
+
 static void s7_mark_object_1(s7_pointer p)
 {
   switch (type(p))
@@ -1638,7 +1647,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->output_port);
   S7_MARK(sc->error_port);
 
-  /* S7_MARK(sc->TEMP_CELL_1); */
+  S7_MARK(sc->TEMP_CELL_1);
 
   S7_MARK(sc->protected_objects);
   {
@@ -1648,12 +1657,7 @@ static int gc(s7_scheme *sc)
     while (tmps < tmps_top)
       S7_MARK(*tmps++);
   }
-
-  {
-    int i;
-    for (i = 0; i < sc->op_stack_top; i++)
-      S7_MARK(sc->op_stack[i]);
-  }
+  mark_op_stack(sc);
 
   /* free up all unmarked objects */
   old_free_heap_top = sc->free_heap_top;
@@ -2121,21 +2125,43 @@ static unsigned char *permanent_calloc(int bytes)
 
 
 
-/* -------------------------------- stack -------------------------------- */
+/* -------------------------------- stacks -------------------------------- */
+
+#define OP_STACK_INITIAL_SIZE 1024
+#define push_op_stack(Sc, Op) Sc->op_stack[Sc->op_stack_top++] = Op
+#define pop_op_stack(Sc)      Sc->op_stack[--Sc->op_stack_top]
+
+static void initialize_op_stack(s7_scheme *sc)
+{
+  int i;
+  sc->op_stack = (s7_pointer *)malloc(OP_STACK_INITIAL_SIZE * sizeof(s7_pointer));
+  sc->op_stack_size = OP_STACK_INITIAL_SIZE;
+  sc->op_stack_top = 0;
+  for (i = 0; i < OP_STACK_INITIAL_SIZE; i++)
+    sc->op_stack[i] = sc->NIL;
+}
+
+
+static void resize_op_stack(s7_scheme *sc)
+{
+  int i, new_size;
+  new_size = sc->op_stack_size * 2;
+  sc->op_stack = (s7_pointer *)realloc((void *)(sc->op_stack), new_size * sizeof(s7_pointer));
+  for (i = sc->op_stack_size; i < new_size; i++)
+    sc->op_stack[i] = sc->NIL;
+  sc->op_stack_size = new_size;
+}
+
 
 static void stack_reset(s7_scheme *sc) 
 { 
   sc->stack_end = sc->stack_start;
 } 
 
-
 #define stack_code(Stack, Loc)        vector_element(Stack, Loc - 3)
 #define stack_environment(Stack, Loc) vector_element(Stack, Loc - 2)
 #define stack_args(Stack, Loc)        vector_element(Stack, Loc - 1)
 #define stack_op(Stack, Loc)          integer(number(vector_element(Stack, Loc)))
-
-#define push_op_stack(Sc, Op) Sc->op_stack[Sc->op_stack_top++] = Op
-#define pop_op_stack(Sc)      Sc->op_stack[--Sc->op_stack_top]
 
 
 static void pop_stack(s7_scheme *sc) 
@@ -3407,10 +3433,10 @@ static s7_pointer *copy_op_stack(s7_scheme *sc)
 {
   int i;
   s7_pointer *ops;
-  ops = (s7_pointer *)malloc(1024 * sizeof(s7_pointer));
+  ops = (s7_pointer *)malloc(sc->op_stack_size * sizeof(s7_pointer));
   for (i = 0; i < sc->op_stack_top; i++)
     ops[i] = sc->op_stack[i];
-  for (i = sc->op_stack_top; i < 1024; i++)
+  for (i = sc->op_stack_top; i < sc->op_stack_size; i++)
     ops[i] = sc->NIL;
   return(ops);
 }
@@ -3452,6 +3478,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_stack_end(x) = (s7_pointer *)(continuation_stack_start(x) + loc);
   continuation_op_stack(x) = copy_op_stack(sc);
   continuation_op_loc(x) = sc->op_stack_top;
+  continuation_op_size(x) = sc->op_stack_size;
   set_type(x, T_CONTINUATION | T_DONT_COPY | T_PROCEDURE);
   return(x);
 }
@@ -3558,6 +3585,7 @@ static void call_with_current_continuation(s7_scheme *sc)
   {
     int i;
     sc->op_stack_top = continuation_op_loc(sc->code);
+    sc->op_stack_size = continuation_op_size(sc->code);
     for (i = 0; i < sc->op_stack_top; i++)
       sc->op_stack[i] = continuation_op_stack(sc->code)[i];
   }
@@ -23900,8 +23928,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
-      if ((cadr(sc->args) == sc->NIL) || /* no more args -- return #f */
-	  (!is_pair(cadr(sc->args))))    /* (member 3 '(1 2 . 3) =) -- we access caadr below */
+      if (!is_pair(cadr(sc->args)))      /* no more args -- return #f */
 	{
 	  sc->value = sc->F;
 	  goto START;
@@ -24390,6 +24417,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       push_op_stack(sc, sc->value);
+      if (sc->op_stack_top >= sc->op_stack_size)
+	resize_op_stack(sc);
+
       goto EVAL_ARGS_NO_CONS;
 
       /* TODO: all comments in this section are out-of-date! */
@@ -24514,8 +24544,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      cdr(x) = sc->args;
 	      set_type(x, T_PAIR | T_STRUCTURE);
-	      x = safe_reverse_in_place(sc, x); 
-	      sc->args = x;
+	      if (sc->args != sc->NIL)
+		sc->args = safe_reverse_in_place(sc, x); 
+	      else sc->args = x;
 	      /* drop into APPLY */
 	    }
 	}
@@ -24603,7 +24634,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto EVAL_ARGS;
 	  goto START_WITHOUT_POP_STACK;
 
+	  /* sc->args == nil:              len 0
+	   * sc->args == TEMP_CELL_1:      len 1
+	   * cdr(sc->args) == TEMP_CELL_1: len 2 (safe because cdr(nil) is #<unspecified>)
+	   * these are the standard cases.  If we got here from apply, none of this applies.
+	   */
+
+	  /* other common cases: cadr number?/complex?, null?, length,  equal?, eqv? cddr cons
+	   *   list add multiply
+	   *   in snd: abs
+	   */
 	case T_C_EQ_FUNCTION:
+	  if (cdr(sc->args) == sc->TEMP_CELL_1)
+	    {
+	      if (car(sc->args) == cadr(sc->args))
+		sc->value = sc->T;
+	      else sc->value = sc->F;
+	      goto START;
+	    }
+
 	  if ((sc->args == sc->NIL) || (cdr(sc->args) == sc->NIL))
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
@@ -24619,14 +24668,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_C_PAIR_FUNCTION:
-	  if (sc->args == sc->NIL)
-	      return(s7_error(sc, 
-			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
-	  if (cdr(sc->args) != sc->NIL)
-	      return(s7_error(sc, 
-			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+	  if (sc->args == sc->TEMP_CELL_1)
+	    {
+	      if (is_pair(car(sc->args)))
+		sc->value = sc->T;
+	      else sc->value = sc->F;
+	      goto START;
+	    }
+	  if (cdr(sc->args) != sc->NIL) 
+	    return(s7_error(sc, 
+			    sc->WRONG_NUMBER_OF_ARGS, 
+			    make_list_3(sc, (sc->args == sc->NIL) ? sc->NOT_ENOUGH_ARGUMENTS : sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
 	    
 	  if (is_pair(car(sc->args)))
 	    sc->value = sc->T;
@@ -24634,44 +24686,56 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_C_NOT_FUNCTION:
-	  if (sc->args == sc->NIL)
-	      return(s7_error(sc, 
-			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
-	  if (cdr(sc->args) != sc->NIL)
-	      return(s7_error(sc, 
-			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+	  if (sc->args == sc->TEMP_CELL_1)
+	    {
+	      if (is_false(sc, car(sc->args)))
+		sc->value = sc->T;
+	      else sc->value = sc->F;
+	      goto START;
+	    }
 	    
+	  if (cdr(sc->args) != sc->NIL)
+	    return(s7_error(sc, 
+			    sc->WRONG_NUMBER_OF_ARGS, 
+			    make_list_3(sc, (sc->args == sc->NIL) ? sc->NOT_ENOUGH_ARGUMENTS : sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+
 	  if (is_false(sc, car(sc->args)))
 	    sc->value = sc->T;
 	  else sc->value = sc->F;
 	  goto START;
 
 	case T_C_SYMBOL_FUNCTION:
-	  if (sc->args == sc->NIL)
-	      return(s7_error(sc, 
-			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
+	  if (sc->args == sc->TEMP_CELL_1)
+	    {
+	      if (s7_is_symbol(car(sc->args)))
+		sc->value = sc->T;
+	      else sc->value = sc->F;
+	      goto START;
+	    }
+
 	  if (cdr(sc->args) != sc->NIL)
-	      return(s7_error(sc, 
-			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
-	    
+	    return(s7_error(sc, 
+			    sc->WRONG_NUMBER_OF_ARGS, 
+			    make_list_3(sc, (sc->args == sc->NIL) ? sc->NOT_ENOUGH_ARGUMENTS : sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+
 	  if (s7_is_symbol(car(sc->args)))
 	    sc->value = sc->T;
 	  else sc->value = sc->F;
 	  goto START;
 
 	case T_C_CAR_FUNCTION:
-	  if (sc->args == sc->NIL)
-	      return(s7_error(sc, 
-			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
+	  if ((sc->args == sc->TEMP_CELL_1) &&
+	      (is_pair(car(sc->args))))
+	    {
+	      sc->value = caar(sc->args);
+	      goto START;
+	    }
+
 	  if (cdr(sc->args) != sc->NIL)
-	      return(s7_error(sc, 
-			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+	    return(s7_error(sc, 
+			    sc->WRONG_NUMBER_OF_ARGS, 
+			    make_list_3(sc, (sc->args == sc->NIL) ? sc->NOT_ENOUGH_ARGUMENTS : sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+
 	  if (!is_pair(car(sc->args))) 
 	    return(s7_wrong_type_arg_error(sc, "car", 0, car(sc->args), "a pair"));
 
@@ -24679,14 +24743,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_C_CDR_FUNCTION:
-	  if (sc->args == sc->NIL)
-	      return(s7_error(sc, 
-			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
+	  /* here cdr is not considered safe, so TEMP_CELL_1 is not in use. */
+	  if ((cdr(sc->args) == sc->NIL) && /* so arg len is 1 (0 would be #<unspecified>) */
+	      (is_pair(car(sc->args))))
+	    {
+	      sc->value = cdar(sc->args);
+	      goto START;
+	    }
+
 	  if (cdr(sc->args) != sc->NIL)
-	      return(s7_error(sc, 
-			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+	    return(s7_error(sc, 
+			    sc->WRONG_NUMBER_OF_ARGS, 
+			    make_list_3(sc, (sc->args == sc->NIL) ? sc->NOT_ENOUGH_ARGUMENTS : sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+
 	  if (!is_pair(car(sc->args))) 
 	    return(s7_wrong_type_arg_error(sc, "cdr", 0, car(sc->args), "a pair"));
 
@@ -25039,7 +25108,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	car(x) = sc->value;
 	cdr(x) = sc->args;
 	set_type(x, T_PAIR | T_STRUCTURE);
-	sc->args = safe_reverse_in_place(sc, x);
+	if (sc->args != sc->NIL)
+	  sc->args = safe_reverse_in_place(sc, x);
+	else sc->args = x;
 	goto APPLY;
       }
 
@@ -26784,6 +26855,8 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->stack_end = new_sc->stack_start;
   new_sc->stack_size = vector_length(vect);
   new_sc->stack_resize_trigger = (s7_pointer *)(new_sc->stack_start + new_sc->stack_size / 2);
+
+  initialize_op_stack(new_sc);
   
   new_sc->w = new_sc->NIL;
   new_sc->x = new_sc->NIL;
@@ -26845,7 +26918,7 @@ static void mark_s7(s7_scheme *sc)
   S7_MARK(sc->input_port_stack);
   S7_MARK(sc->output_port);
   S7_MARK(sc->error_port);
-  /* TODO: also local op_stack */
+  mark_op_stack(sc);
 }
 
 
@@ -32097,10 +32170,7 @@ s7_scheme *s7_init(void)
   sc->stack_size = INITIAL_STACK_SIZE;
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
 
-  sc->op_stack = (s7_pointer *)malloc(1024 * sizeof(s7_pointer));
-  sc->op_stack_top = 0;
-  for (i = 0; i < 1024; i++)
-    sc->op_stack[i] = sc->NIL;
+  initialize_op_stack(sc);
   
   /* keep the symbol table out of the heap */
   sc->symbol_table = (s7_pointer)calloc(1, sizeof(s7_cell));
@@ -32697,6 +32767,11 @@ s7_scheme *s7_init(void)
   s7_define_constant_function(sc, "{append}",              g_append,                   0, 0, true,  H_append);
   s7_define_constant_function(sc, "{multivector}",         g_qq_multivector,           1, 0, true,  H_qq_multivector);
   s7_define_constant_function(sc, "{list}",                g_qq_list,                  0, 0, true,  H_qq_list);
+  {
+    s7_pointer p;
+    p = s7_symbol_value(sc, make_symbol(sc, "{list}"));
+    set_type(p, (T_C_LST_ARGS_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+  }
 
   s7_define_safe_function(sc, "stacktrace",                g_stacktrace,               0, 2, false, H_stacktrace);
   s7_define_safe_function(sc, "trace",                     g_trace,                    0, 0, true,  H_trace);
