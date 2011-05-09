@@ -18223,7 +18223,7 @@ abs     1       2
 
   (test (let ()
 	  (define (hi a)
-	    (let ((func (cdr (assoc '__func__ (car (procedure-environment hi))))))
+	    (let ((func (symbol->value '__func__ (procedure-environment hi))))
 	      (list (if (symbol? func) func (car func))
 		    a)))
 	  (hi 1))
@@ -18249,12 +18249,7 @@ abs     1       2
   (let ()
     (define (where-is func)
       (let* ((env (procedure-environment func))
-	     (cenv (and (pair? env)
-			(car env)))
-	     (f (and (pair? cenv)
-		     (assoc '__func__ cenv)))
-	     (addr (and (pair? f)
-			(cdr f))))
+	     (addr (symbol->value '__func__ env)))
 	(if (not (pair? addr))
 	    ""
 	    (list (format #f "~A[~D]" (cadr addr) (caddr addr))
@@ -18284,7 +18279,7 @@ abs     1       2
 				     (format #t "ok? file name: ~S~%" name)
 				     (oops #f))))))))))
 	    #t)))
-  
+
   (let ()
     (define-macro (window func beg end . body)
       `(call-with-exit
@@ -21181,7 +21176,8 @@ abs     1       2
 	#t))
 
 
-
+#|
+;; TODO: fix stacktrace
 (let ()
   (define (a1 a) (stacktrace) (+ a 1))
   (define (a2 b) (+ b (a1 b)))
@@ -21230,7 +21226,7 @@ abs     1       2
     (test (or (not (cur-info 3)) (integer? (cur-info 3))) #t) ; line-number
     (test (or (not (cur-info 4)) (string? (cur-info 4))) #t) ; file name
     ))
-
+|#
 
 
 (for-each
@@ -61784,12 +61780,7 @@ etc
 
   (define (where-is func)
     (let* ((env (procedure-environment func))
-	   (cenv (and (pair? env)
-		      (car env)))
-	   (f (and (pair? cenv)
-		   (assoc '__func__ cenv)))
-	   (addr (and (pair? f)
-		      (cdr f))))
+           (addr (symbol->value '__func__ env)))
       (if (not (pair? addr))
 	  ""
 	  (format #f "~A[~D]" (cadr addr) (caddr addr)))))

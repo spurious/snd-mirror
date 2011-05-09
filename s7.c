@@ -424,6 +424,13 @@ typedef struct s7_func_t {
 } s7_func_t;
 
 
+typedef struct {               /* call/cc */
+  s7_pointer stack;
+  s7_pointer *stack_start, *stack_end, *op_stack;
+  int stack_size, op_stack_top, op_stack_size;
+} s7_continuation_t;
+
+
 typedef struct s7_vdims_t {
   int ndims;
   s7_Int *dims, *offsets;
@@ -475,25 +482,16 @@ typedef struct s7_cell {
     s7_func_t *ffptr;
     
     struct {
-      s7_pointer car, cdr, csr;
-      /* this could be made available to callers -- doubly linked lists? nets? 
-       *   I'm told this idea was once called a "hunk" and was considered a disaster.
-       *   Due to the s7_num_t size, there is unused space in several of these union fields,
-       *   so csr currently holds the symbol-access lists.
-       */
+      s7_pointer car, cdr, ecdr;
       int line;
     } cons;
-    
+
     struct {
       int type;
       void *value;
     } fobj;
     
-    struct {               /* call/cc */
-      s7_pointer stack;
-      s7_pointer *stack_start, *stack_end, *op_stack;
-      int stack_size, op_stack_top, op_stack_size;
-    } continuation;
+    s7_continuation_t *continuation;
     
     struct {               /* call-with-exit */
       int goto_loc, op_loc;
@@ -518,9 +516,6 @@ typedef struct s7_cell {
   } object;
 } s7_cell;
 
-/* on 32 bit machines, s7_cell is 28 bytes because vector and s7_num_t are 20 + 8 overhead (flag + hloc)
- * on 64 bit machines, it is 40 (28 for continuation + 8 overhead + 4 pad bytes in the continuation struct)
- */
 
 
 #if HAVE_PTHREADS
@@ -638,8 +633,8 @@ struct s7_scheme {
 
   s7_pointer w, x, y, z;         /* evaluator local vars */
 
-  struct s7_cell _TEMP_CELL, _TEMP_CELL_1;
-  s7_pointer TEMP_CELL, TEMP_CELL_1;
+  struct s7_cell _TEMP_CELL, _TEMP_CELL_1, _TEMP_CELL_2;
+  s7_pointer TEMP_CELL, TEMP_CELL_1, TEMP_CELL_2;
 
   jmp_buf goto_start;
   bool longjmp_ok;
@@ -790,9 +785,7 @@ struct s7_scheme {
 #define symbol_set_accessed(p)        typeflag(p) |= T_SYMBOL_ACCESSED
 /* this marks a symbol globally as one that has at some time had its accessors set. 
  *    since it can be combined with the immutable checks we were already doing, we can
- *    implement the symbol-access stuff at almost no additional cost (the csr field used
- *    for the list was already available, and the only additional run-time cost is that
- *    it needs to be marked during GC -- this adds less .1% total time).
+ *    implement the symbol-access stuff at almost no additional cost.
  */
 
 #define T_STRUCTURE                   (1 << (TYPE_BITS + 19))
@@ -870,8 +863,8 @@ struct s7_scheme {
 #define cdaddr(p)                     cdr(car(cdr(cdr(p))))
 #define pair_line_number(p)           (p)->object.cons.line
 #define port_file_number(p)           (p)->object.port->file_number
-
-#define csr(p)                        ((p)->object.cons.csr)
+#define ecdr(p)                       ((p)->object.cons.ecdr)
+#define csr(p)                        (p)->object.cons.line
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
@@ -945,14 +938,15 @@ struct s7_scheme {
 #define c_macro_required_args(f)      (f)->object.ffptr->required_args
 #define c_macro_all_args(f)           (f)->object.ffptr->all_args
 
-#define continuation_stack(p)         (p)->object.continuation.stack
-#define continuation_stack_end(p)     (p)->object.continuation.stack_end
-#define continuation_stack_start(p)   (p)->object.continuation.stack_start
-#define continuation_stack_size(p)    (p)->object.continuation.stack_size
+#define continuation(p)               (p)->object.continuation
+#define continuation_stack(p)         (p)->object.continuation->stack
+#define continuation_stack_end(p)     (p)->object.continuation->stack_end
+#define continuation_stack_start(p)   (p)->object.continuation->stack_start
+#define continuation_stack_size(p)    (p)->object.continuation->stack_size
 #define continuation_stack_top(p)     (continuation_stack_end(p) - continuation_stack_start(p))
-#define continuation_op_stack(p)      (p)->object.continuation.op_stack
-#define continuation_op_loc(p)        (p)->object.continuation.op_stack_top
-#define continuation_op_size(p)       (p)->object.continuation.op_stack_size
+#define continuation_op_stack(p)      (p)->object.continuation->op_stack
+#define continuation_op_loc(p)        (p)->object.continuation->op_stack_top
+#define continuation_op_size(p)       (p)->object.continuation->op_stack_size
 
 #define call_exit_goto_loc(p)         (p)->object.rexit.goto_loc
 #define call_exit_op_loc(p)           (p)->object.rexit.op_loc
@@ -1461,6 +1455,10 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
       if (hash_table_length(a) > 0)
 	free(hash_table_elements(a));
       break;
+
+    case T_CONTINUATION:
+      free(continuation(a));
+      break;
       
     default:
       break;
@@ -1503,6 +1501,18 @@ static void mark_vector(s7_pointer p, s7_Int top)
     }
 }
 
+static void mark_environment(s7_pointer env)
+{
+  s7_pointer x;
+  for (x = env; is_pair(x); x = cdr(x)) 
+    { 
+      s7_pointer y;
+      S7_MARK(x);
+      for (y = car(x); is_pair(y); y = ecdr(y))
+	S7_MARK(y);
+    }
+}
+
 
 static void mark_op_stack(s7_scheme *sc)
 {
@@ -1522,6 +1532,8 @@ static void s7_mark_object_1(s7_pointer p)
     case T_PAIR:
       S7_MARK(car(p));
       S7_MARK(cdr(p));
+      if (is_environment(p))
+	mark_environment(p);
       break;
 
     case T_VECTOR:
@@ -1648,6 +1660,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->error_port);
 
   S7_MARK(sc->TEMP_CELL_1);
+  S7_MARK(sc->TEMP_CELL_2);
 
   S7_MARK(sc->protected_objects);
   {
@@ -2595,7 +2608,7 @@ static void tick_args(int *data, s7_pointer args)
       s7_pointer x;                      \
       NEW_CELL(Sc, x);                   \
       car(x) = Sc->NIL;                  \
-      cdr(x) = Old_Env;                  \
+      cdr(x) = Old_Env;		         \
       set_type(x, T_PAIR | T_STRUCTURE | T_ENVIRONMENT); \
       New_Env = x;                       \
      } while (0)
@@ -2656,13 +2669,9 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
     }
   else
     {
-      s7_pointer x;
-      NEW_CELL_NO_CHECK(sc, x); 
-      car(x) = slot;
-      cdr(x) = e;
-      set_type(x, T_PAIR | T_STRUCTURE);
-      car(env) = x;
       set_local(variable);
+      ecdr(slot) = e;
+      car(env) = slot;
 
       /* currently any top-level value is in symbol_global_slot
        *   if never a local binding, is_local bit is off, so we go straight to the global binding
@@ -2688,7 +2697,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       */
     }
 
-  return(slot); /* csr(slot) might be used at some point by symbol_access */
+  return(slot);
 } 
 
 
@@ -2709,7 +2718,7 @@ static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable,
 static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
 { 
   /* this is called when it is guaranteed that there is a local environment */
-  s7_pointer x, y;
+  s7_pointer y;
 
   if (is_immutable_or_accessed(variable))
     {
@@ -2723,13 +2732,8 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   car(y) = variable;
   cdr(y) = value;
   set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
-
-  NEW_CELL_NO_CHECK(sc, x);
-  /* car(x) = immutable_cons(sc, variable, value); */
-  car(x) = y;
-  cdr(x) = car(sc->envir);
-  set_type(x, T_PAIR | T_STRUCTURE);
-  car(sc->envir) = x;
+  ecdr(y) = car(sc->envir);
+  car(sc->envir) = y;
   set_local(variable);
 
   return(y);
@@ -2818,7 +2822,6 @@ environment."
   int i, gc_loc = -1;
 
   e = car(args);
-
   if (!is_environment(e))
     {
       if (e == sc->NIL)       /* the empty environment */
@@ -2911,29 +2914,19 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
    */
 
   for (x = env; is_pair(x); x = cdr(x)) 
+    {
     if (car(x) != sc->NIL)
       { 
 	s7_pointer y;
-	/* using csr to hold the last found entity in each frame was much slower!
-	 * using csr for caar makes no difference.
-	 * I also tried using csr as the logand of all the lognots of the hdls (car slot) in the env alist
-	 *   logand(hdl, csr(car(env))) != 0 then means hdl is not in the current env, so we can skip the search.
-	 *   the timings reported by callgrind indicate that this saves almost exactly as much time as it costs!
-	 *   Similarly for max (nil==0 etc).
-	 */
 
-	y = car(x);
-
-	if (s7_is_vector(y))
+	if (s7_is_vector(car(x)))
 	  return(symbol_global_slot(hdl));
 
-	if (caar(y) == hdl)
-	  return(car(y));
-      
-	for (y = cdr(y); is_pair(y); y = cdr(y))
-	  if (caar(y) == hdl)
-	    return(car(y));
+	for (y = car(x); is_pair(y); y = ecdr(y))
+	  if (car(y) == hdl)
+	    return(y);
       }
+    }
   return(sc->NIL); 
 } 
 
@@ -2948,12 +2941,9 @@ static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hd
   if (s7_is_vector(y))
     return(symbol_global_slot(hdl));
 
-  if (caar(y) == hdl)
-    return(car(y));
-      
-  for (y = cdr(y); is_pair(y); y = cdr(y))
-    if (caar(y) == hdl)
-      return(car(y));
+  for (; is_pair(y); y = ecdr(y))
+    if (car(y) == hdl)
+      return(y);
 
   return(sc->NIL); 
 } 
@@ -2962,9 +2952,11 @@ static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hd
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just the global environment? */
 {
   s7_pointer x;
+
   x = find_symbol(sc, sc->envir, sym);
   if (x != sc->NIL)
     return(symbol_value(x));
+
   if (is_keyword(sym))
     return(sym);
   return(sc->UNDEFINED);
@@ -3020,14 +3012,14 @@ static lstar_err_t lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym,
 {
   s7_pointer x;
 
-  for (x = car(sc->envir) /* presumably the arglist */; is_pair(x); x = cdr(x))
-    if (caar(x) == sym)   /* car(x) won't be sc->NIL here even if no args and no locals because we at least have __func__ */
+  for (x = car(sc->envir) /* presumably the arglist */; is_pair(x); x = ecdr(x))
+    if (car(x) == sym)   /* car(x) won't be sc->NIL here even if no args and no locals because we at least have __func__ */
       {
-	/* car(x) is our binding (symbol . value) */
-	if (is_not_local(car(x)))
-	  set_local(car(x)); /* this is a special use of this bit, I think */
+	/* x is our binding (symbol . value) */
+	if (is_not_local(x))
+	  set_local(x); /* this is a special use of this bit, I think */
 	else return(LSTAR_ALREADY_SET);
-	cdar(x) = val;
+	cdr(x) = val;
 	return(LSTAR_OK);
       }
 
@@ -3472,6 +3464,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   loc = s7_stack_top(sc);
 
   NEW_CELL(sc, x);
+  continuation(x) = (s7_continuation_t *)calloc(1, sizeof(s7_continuation_t));
   continuation_stack_size(x) = sc->stack_size;
   continuation_stack(x) = copy_stack(sc, sc->stack, s7_stack_top(sc));
   continuation_stack_start(x) = vector_elements(continuation_stack(x));
@@ -10365,7 +10358,7 @@ static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index
     return(s7_wrong_type_arg_error(sc, "string-ref index,", 2, index, "a non-negative integer"));
   if (ind >= string_length(strng))
     return(s7_out_of_range_error(sc, "string-ref index,", 2, index, "should be less than string length"));
-  
+
   str = string_value(strng);
   return(s7_make_character(sc, ((unsigned char *)str)[ind]));
 }
@@ -12535,7 +12528,6 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_C_OBJECT:
       return(describe_c_object(sc, obj)); /* this allocates already */
 
-#if DEBUGGING
     case T_VECTOR: 
       return(copy_string("#<vector>"));
 
@@ -12543,7 +12535,6 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       if (is_environment(obj))
 	return(copy_string("#<environment>"));
       return(copy_string("#<pair>"));
-#endif
 
     default:
       break;
@@ -12597,7 +12588,6 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	  }
       }
 #endif
-    abort();
     return(buf);
   }
 }
@@ -13520,6 +13510,7 @@ static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b)
   car(y) = b;
   cdr(y) = sc->NIL;
   set_type(y, T_PAIR | T_STRUCTURE);
+
   NEW_CELL_NO_CHECK(sc, x); /* order matters because the GC will see "y" and expect it to have legit car/cdr */
   car(x) = a;
   cdr(x) = y;
@@ -13535,10 +13526,12 @@ static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_poin
   car(z) = c;
   cdr(z) = sc->NIL;
   set_type(z, T_PAIR | T_STRUCTURE);
+
   NEW_CELL_NO_CHECK(sc, y);
   car(y) = b;
   cdr(y) = z;
   set_type(y, T_PAIR | T_STRUCTURE);
+
   NEW_CELL_NO_CHECK(sc, x);
   car(x) = a;
   cdr(x) = y;
@@ -13554,14 +13547,17 @@ static s7_pointer make_list_4(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_poin
   car(zz) = d;
   cdr(zz) = sc->NIL;
   set_type(zz, T_PAIR | T_STRUCTURE);
+
   NEW_CELL_NO_CHECK(sc, z);
   car(z) = c;
   cdr(z) = zz;
   set_type(z, T_PAIR | T_STRUCTURE);
+
   NEW_CELL_NO_CHECK(sc, y);
   car(y) = b;
   cdr(y) = z;
   set_type(y, T_PAIR | T_STRUCTURE);
+
   NEW_CELL_NO_CHECK(sc, x);
   car(x) = a;
   cdr(x) = y;
@@ -13823,8 +13819,8 @@ static s7_pointer g_is_pair(s7_scheme *sc, s7_pointer args)
 
 bool s7_is_list(s7_scheme *sc, s7_pointer p)
 {
-  return((p == sc->NIL) ||
-	 (is_pair(p)));
+  return((is_pair(p)) ||
+	 (p == sc->NIL));
 }
 
 
@@ -13853,7 +13849,7 @@ static bool is_proper_list(s7_scheme *sc, s7_pointer lst)
 
 static s7_pointer g_is_list(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_list "(list? obj) returns #t if obj is a list"
+  #define H_is_list "(list? obj) returns #t if obj is a proper list"
   return(make_boolean(sc, is_proper_list(sc, car(args))));
 }
 
@@ -14008,8 +14004,7 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   s7_Int index;
   s7_pointer p;
 
-  if ((!is_pair(car(args))) &&
-      (car(args) != sc->NIL))
+  if (!s7_is_list(sc, car(args)))
     return(s7_wrong_type_arg_error(sc, "list-tail", 1, car(args), "a list"));
   if (!s7_is_integer(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "list-tail", 2, cadr(args), "an integer"));
@@ -14865,8 +14860,7 @@ void s7_provide(s7_scheme *sc, const char *feature)
 
 static s7_pointer g_features_set(s7_scheme *sc, s7_pointer args)
 {
-  if ((is_pair(cadr(args))) ||
-      (cadr(args) == sc->NIL))
+  if (s7_is_list(sc, cadr(args)))
     return(cadr(args));
   return(sc->ERROR);
 }
@@ -18097,12 +18091,13 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x)
 
 s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
 {
+  
   s7_pointer x;
   x = find_symbol(sc, sc->envir, sym);
   if (x != sc->NIL)
     {
       if (symbol_has_accessor(x))
-	return(csr(x));
+	return(s7_gc_protected_at(sc, csr(x)));
     }
   return(sc->F);
 }
@@ -18111,12 +18106,14 @@ s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs)
 {
   s7_pointer x;
+
   x = find_symbol(sc, sc->envir, symbol);
   if (x == sc->NIL)
     x = add_to_current_environment(sc, symbol, sc->F);
-  csr(x) = funcs;
-  s7_gc_protect(sc, funcs);
+
+  csr(x) = s7_gc_protect(sc, funcs);
   symbol_set_accessed(symbol);
+
   if ((is_pair(funcs)) &&
       (s7_list_length(sc, funcs) >= 3) &&
       ((is_procedure(car(funcs))) ||
@@ -18177,7 +18174,7 @@ static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer 
   if (symbol_has_accessor(x))
     {
       s7_pointer func;
-      func = caddr(csr(x));
+      func = caddr(s7_gc_protected_at(sc, csr(x)));
       if (is_procedure(func))
 	{
 	  int save_x, save_y, save_z;
@@ -18451,8 +18448,7 @@ static s7_pointer g_hook_set_functions(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "hook-functions", 1, hook, "a hook"));
 
   funcs = cadr(args);
-  if ((!is_pair(funcs)) &&
-      (funcs != sc->NIL))
+  if (!s7_is_list(sc, funcs))
     return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a list of functions or '()"));
 
   if (is_pair(funcs))
@@ -18578,8 +18574,7 @@ static s7_pointer g_trace_hook_set(s7_scheme *sc, s7_pointer args)
    */
   s7_pointer funcs;
   funcs = cadr(args);
-  if ((funcs == sc->NIL) ||
-      (is_pair(funcs)))
+  if (s7_is_list(sc, funcs))
     {
       if (internal_hook_arity_ok(sc, sc->trace_hook, funcs))
 	hook_functions(sc->trace_hook) = funcs;
@@ -18602,8 +18597,7 @@ static s7_pointer g_load_hook_set(s7_scheme *sc, s7_pointer args)
    */
   s7_pointer funcs;
   funcs = cadr(args);
-  if ((funcs == sc->NIL) ||
-      (is_pair(funcs)))
+  if (s7_is_list(sc, funcs))
     {
       if (internal_hook_arity_ok(sc, sc->load_hook, funcs))
 	hook_functions(sc->load_hook) = funcs; 
@@ -18626,8 +18620,7 @@ static s7_pointer g_unbound_variable_hook_set(s7_scheme *sc, s7_pointer args)
    */
   s7_pointer funcs;
   funcs = cadr(args);
-  if ((funcs == sc->NIL) ||
-      (is_pair(funcs)))
+  if (s7_is_list(sc, funcs))
     {
       if (internal_hook_arity_ok(sc, sc->unbound_variable_hook, funcs))
 	hook_functions(sc->unbound_variable_hook) = funcs;
@@ -18651,8 +18644,7 @@ static s7_pointer g_error_hook_set(s7_scheme *sc, s7_pointer args)
   s7_pointer funcs;
 
   funcs = cadr(args);
-  if ((funcs == sc->NIL) ||
-      (is_pair(funcs)))
+  if (s7_is_list(sc, funcs))
     {
       if (internal_hook_arity_ok(sc, sc->error_hook, funcs))
 	hook_functions(sc->error_hook) = funcs;
@@ -21088,6 +21080,8 @@ static void improper_arglist_error(s7_scheme *sc)
 
 static void display_frame(s7_scheme *sc, s7_pointer envir, s7_pointer port)
 {
+  fprintf(stderr, "display_frame can't work\n");
+#if 0
   if ((is_pair(envir)) &&
       (is_pair(cdr(envir))))
     {
@@ -21106,7 +21100,7 @@ static void display_frame(s7_scheme *sc, s7_pointer envir, s7_pointer port)
 	   *     ((n . 2)) 
 	   *     ((__func__ idle "t257.scm" 40)) ...)
 	   */
-	  if (caar(op) != sc->__FUNC__)
+	  if (car(op) != sc->__FUNC__)
 	    {
 	      format_to_output(sc, port, "~A ", make_list_1(sc, args));
 	      args = op;
@@ -21143,6 +21137,7 @@ static void display_frame(s7_scheme *sc, s7_pointer envir, s7_pointer port)
           s7_newline(sc, port);
 	}
     }
+#endif
 }
 
 
@@ -21238,8 +21233,7 @@ output is sent to the current-output-port."
 
 s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg)
 {
-  if ((arg == sc->NIL) ||
-      (is_pair(arg)))
+  if (s7_is_list(sc, arg))
     return(g_stacktrace(sc, arg));
   return(g_stacktrace(sc, make_list_1(sc, arg)));
 }
@@ -21595,13 +21589,12 @@ static bool next_for_each(s7_scheme *sc)
 
 static bool is_sequence(s7_scheme *sc, s7_pointer p)
 {
-  return((is_pair(p)) ||
+  return((s7_is_list(sc, p)) ||
 	 (s7_is_vector(p)) ||
 	 (s7_is_string(p)) ||
 	 (s7_is_hash_table(p)) ||
 	 (is_c_object(p)) ||
-	 (is_s_object(p)) ||
-	 (p == sc->NIL));
+	 (is_s_object(p)));
 }
 
 
@@ -23008,6 +23001,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
   /* handle *unbound-variable-hook* */
+
   if (hook_functions(sc->unbound_variable_hook) != sc->NIL)
     {
       int save_x, save_y, save_z, cur_code_loc;
@@ -23258,6 +23252,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		       *    (define* (f (a :b)) a) (f :c) 
 		       * this has become much trickier than I anticipated...
 		       */
+
 		      if ((allow_other_keys) ||
 			  (memq(sc->KEY_ALLOW_OTHER_KEYS, sc->x)))
 			{
@@ -24476,8 +24471,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   bad case is s7_call -- it appears that something gets GC'd if s7_call itself calls
        *   s7_call.  Not actually sure what's going on!  The GC happens just before an *error-hook*
        *   function is called, and it has format access the arg list (as opposed to the individual args).
-       *   This needs some serious testing!  (We hit that divide-by-0 error again here -- it needs to
-       *   be rethought).
        */
 
       {
@@ -24488,6 +24481,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	set_type(x, T_PAIR | T_STRUCTURE);
 	sc->args = x;
       }
+      /* s7test: 20%, lg: 2% of all allocs here */
 
     EVAL_ARGS_NO_CONS:
       /* 1st time, value = op, args = nil, code is args */
@@ -24511,10 +24505,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cdr(sc->code);
 	  if (sc->code != sc->NIL)
 	    {
+	      s7_pointer x;
 	      if (typ == T_SYMBOL)
 		{
 		  /* expand eval_symbol here to speed it up, was sc->value = eval_symbol(sc, car(sc->code)); */
-		  s7_pointer x;
 		  if (is_not_local(car_code))
 		    x = symbol_global_slot(car_code);
 		  else x = find_symbol(sc, sc->envir, car_code);
@@ -24524,14 +24518,64 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      else sc->value = car_code;
 
-	      /* TODO: go one more step here? 
-	       *       if we know this is not a pair (typ above), before going back to cons
-	       *       we can look ahead for cdr(sc->code) == nil, and cadr(sc->code) type not pair
-	       *       in that situation, if a safe function, use two temp cells? and go to apply
-	       *       if not safe, make the list locally and go, so we don't waste too many type checks.
-	       */
+	      if (cdr(sc->code) == sc->NIL)
+		{
+		  s7_pointer y;
+		  car_code = car(sc->code);
+		  typ = type(car_code);
 
-	      goto EVAL_ARGS;
+		  if (typ == T_PAIR)
+		    {
+		      /* s7test 2%, lg: 12% allocs */
+		      NEW_CELL(sc, x); 
+		      car(x) = sc->value;
+		      cdr(x) = sc->args;
+		      set_type(x, T_PAIR | T_STRUCTURE);
+		      sc->args = x;
+
+		      push_stack(sc, opcode(OP_EVAL_ARGS2), sc->args, sc->NIL);
+		      sc->code = car_code;
+		      goto EVAL;
+		    }
+		  
+		  /* save the current arg */
+		  sc->code = pop_op_stack(sc);
+		  if (is_safe_procedure(sc->code))
+		    {
+		      x = sc->TEMP_CELL_2;
+		      y = sc->TEMP_CELL_1;
+		    }
+		  else
+		    {
+		      NEW_CELL(sc, x); 
+		      NEW_CELL_NO_CHECK(sc, y); 
+		    }
+		  car(x) = sc->value;
+		  cdr(x) = sc->args;
+		  set_type(x, T_PAIR | T_STRUCTURE);
+		  sc->args = x;
+		  
+		  /* get the last arg */
+		  if (typ == T_SYMBOL)
+		    {
+		      s7_pointer xx;
+		      if (is_not_local(car_code))
+			xx = symbol_global_slot(car_code);
+		      else xx = find_symbol(sc, sc->envir, car_code);
+		      if (xx != sc->NIL) 
+			car(y) = symbol_value(xx);
+		      else car(y) = eval_symbol_1(sc, car_code);
+		    }
+		  else car(y) = car_code;
+
+		  cdr(y) = sc->args;
+		  set_type(y, T_PAIR | T_STRUCTURE);
+		  if (sc->args != sc->NIL)
+		    sc->args = safe_reverse_in_place(sc, y); 
+		  else sc->args = y;
+		  /* drop into APPLY */
+		}
+	      else goto EVAL_ARGS;
 	    }
 	  else
 	    {
@@ -24552,10 +24596,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      if (typ == T_SYMBOL)
 		{
-		  /* duplicate the code to get rid of several assignments, an if, and a jump
-		   *   this saves 2% overall time in lg.scm -- perhaps about that in s7test.scm
-		   *   but the latter does not repeat reliably.
-		   */
 		  s7_pointer xx;
 		  if (is_not_local(car_code))
 		    xx = symbol_global_slot(car_code);
@@ -24823,8 +24863,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    if (is_pair(car(sc->args)))            /* normally args is ((mac-name ...)) */
 	      {                                    /*   but in a case like (call-with-exit quasiquote), args is (#<goto>) */
-		if ((cdar(sc->args) != sc->NIL) &&
-		    (!is_pair(cdar(sc->args))))    /* (quasiquote . 1) */
+		if (!s7_is_list(sc, cdar(sc->args)))  /* (quasiquote . 1) */
 		  eval_error(sc, "improper list of arguments: ~A", car(sc->args));
 		sc->args = cdar(sc->args);         
 	      }
@@ -24873,6 +24912,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_MACRO:
 	  /* sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); */
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
+	  /* s7test: 6%, lg: 14% allocs */
 
 	BACRO:
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
@@ -24921,7 +24961,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* expand add_to_local_environment(sc, car(sc->x), car(sc->y)); -- (sc variable value) 
 		 *   ugly, but this is the principal call and the "inline" attribute is much slower
 		 */
-		s7_pointer x, y, z;
+		s7_pointer y, z;
 
 		z = car(sc->x);
 		if (is_immutable_or_accessed(z))
@@ -24932,17 +24972,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
 		  }
 
+		/* s7test: 20%, lg: 54% of allocs here */
 		NEW_CELL(sc, y); 
 		car(y) = z;
 		cdr(y) = car(sc->y);
 		set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
+		ecdr(y) = car(sc->envir);
+		car(sc->envir) = y;
 
-		NEW_CELL_NO_CHECK(sc, x);
-		car(x) = y;
-		cdr(x) = car(sc->envir);
-		set_type(x, T_PAIR | T_STRUCTURE);
-
-		car(sc->envir) = x;
 		set_local(z);
 	      }
 #endif
@@ -24988,6 +25025,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		 *   of doing things goes back to CL where the package names were a real
 		 *   annoyance.
 		 */
+
 		return(s7_error(sc, sc->WRONG_TYPE_ARG,
 				make_list_4(sc,
 					    make_protected_string(sc, "~A: unknown key: ~A in ~A"),
@@ -25126,6 +25164,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  x = sc->TEMP_CELL_1;
 	else
 	  {
+	    /* s7test: 8%, lg: .4% of allocs here */
 	    NEW_CELL(sc, x); 
 	  }
 
@@ -25363,15 +25402,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if ((port_filename(sc->input_port)) &&                             /* add (__func__ (name file line)) to current env */
 	      (port_file(sc->input_port) != stdin))
-	    sc->x = immutable_cons(sc, 
-				   sc->__FUNC__, 									       
-				   make_list_3(sc, sc->code,
-					       file_names[port_file_number(sc->input_port)],
-					       s7_make_integer(sc, port_line_number(sc->input_port))));
-	  else sc->x = immutable_cons(sc, sc->__FUNC__, sc->code);           /* fallback on (__func__ name) */
-	  closure_environment(sc->value) = s7_cons_unchecked(sc, 
-						   make_list_1(sc, sc->x),
-						   closure_environment(sc->value));
+	    sc->x = make_list_3(sc, sc->code,
+				file_names[port_file_number(sc->input_port)],
+				s7_make_integer(sc, port_line_number(sc->input_port)));
+	  else sc->x = sc->code;           /* fallback on (__func__ name) */
+	  closure_environment(sc->value) = new_frame_in_env(sc, closure_environment(sc->value));
+
+	  add_to_environment(sc, closure_environment(sc->value), sc->__FUNC__, sc->x);
 	  typeflag(closure_environment(sc->value)) |= T_ENVIRONMENT;
 	}
       else
@@ -25475,8 +25512,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (is_pair(caar(sc->code)))
 	    {
-	      if ((cdar(sc->code) != sc->NIL) &&
-		  (!is_pair(cdar(sc->code))))                                /* (set! ('(1 2) . 0) 1) */
+	      if (!s7_is_list(sc, cdar(sc->code)))                           /* (set! ('(1 2) . 0) 1) */
 		eval_error(sc, "improper list of args to set!: ~A", sc->code);
 	      push_stack(sc, opcode(OP_SET2), cdar(sc->code), cdr(sc->code));
 	      sc->code = caar(sc->code);
@@ -25539,18 +25575,39 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 
 	    case T_VECTOR:
-	      push_op_stack(sc, sc->VECTOR_SET);
 	      /* sc->x is the vector, sc->code is expr without the set! */
 	      /*  args have not been evaluated! */
 	      /* sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
+
+	      push_op_stack(sc, sc->VECTOR_SET);
 	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 	      sc->code = cadar(sc->code);
 	      break;
 	      
 	    case T_STRING:
-	      push_op_stack(sc, sc->STRING_SET);
 	      /* sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
+#if 0
+	      /* this appears to be slower! */
+	      if ((cddr(sc->code) == sc->NIL) &&
+		  (cddar(sc->code) == sc->NIL) &&
+		  (s7_is_integer(cadar(sc->code))) &&
+		  (s7_is_character(cadr(sc->code))))
+		{
+		  s7_Int ind;
+		  char *str;
+		  ind = s7_integer(cadar(sc->code));
+		  if (ind < 0)
+		    return(s7_wrong_type_arg_error(sc, "string-set! index,", 2, cadar(sc->code), "a non-negative integer"));
+		  if (ind >= string_length(sc->x))
+		    return(s7_out_of_range_error(sc, "string-set! index,", 2, cadar(sc->code), "should be less than string length"));
+		  str = string_value(sc->x);
+		  sc->value = cadr(sc->code);
+		  str[ind] = (char)s7_character(sc->value);
+		  goto START;
+		}
+#endif
 	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+	      push_op_stack(sc, sc->STRING_SET);
 	      sc->code = cadar(sc->code);
 	      break;
 
@@ -25610,7 +25667,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (symbol_accessed(sc->code))
 	    {
 	      s7_pointer func;
-	      func = cadr(csr(sc->y));
+	      func = cadr(s7_gc_protected_at(sc, csr(sc->y)));
 	      if (is_procedure(func))
 		{
 		  push_stack(sc, opcode(OP_SET_ACCESS), sc->y, make_list_2(sc, sc->code, sc->value));
@@ -25689,8 +25746,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_pair(cdr(sc->code)))          /* (let () ) */
 	return(eval_error(sc, "let has no body: ~A", sc->code));
 	
-      if ((!is_pair(car(sc->code))) &&      /* (let 1 ...) */
-	  (car(sc->code) != sc->NIL) &&
+      if ((!s7_is_list(sc, car(sc->code))) && /* (let 1 ...) */
 	  (!s7_is_symbol(car(sc->code))))
 	return(eval_error(sc, "let variable list is messed up or missing: ~A", sc->code));
 
@@ -25714,9 +25770,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       if ((s7_is_symbol(car(sc->code))) &&
-	  (((!is_pair(cadr(sc->code))) &&       /* (let hi #t) */
-	    (cadr(sc->code) != sc->NIL)) ||
-	   (cddr(sc->code) == sc->NIL)))        /* (let hi ()) */
+	  ((!s7_is_list(sc, cadr(sc->code))) ||  /* (let hi #t) */
+	   (cddr(sc->code) == sc->NIL)))         /* (let hi ()) */
       	return(eval_error(sc, "named let variable list is messed up or missing: ~A", sc->code));
 
       sc->args = sc->NIL;
@@ -25816,8 +25871,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "let* variable list is messed up: ~A", sc->code));
 
       if ((!is_pair(cdr(sc->code))) ||           /* (let*) */
-	  ((!is_pair(car(sc->code))) &&          /* (let* 1 ...), also there's no named let* */
-	   (car(sc->code) != sc->NIL)))
+	  (!s7_is_list(sc, car(sc->code))))      /* (let* 1 ...), also there's no named let* */
 	{
 	  if (s7_is_symbol(car(sc->code)))
 	    return(eval_error(sc, "there is no named let*: ~A", sc->code));
@@ -25892,8 +25946,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LETREC:
       if ((!is_pair(sc->code)) ||                 /* (letrec . 1) */
 	  (!is_pair(cdr(sc->code))) ||            /* (letrec) */
-	  ((!is_pair(car(sc->code))) &&           /* (letrec 1 ...) */
-	   (car(sc->code) != sc->NIL)))
+	  (!s7_is_list(sc, car(sc->code))))       /* (letrec 1 ...) */
 	return(eval_error(sc, "letrec variable list is messed up: ~A", sc->code));
       
       /* get all local vars and set to #undefined
@@ -26157,8 +26210,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error_with_name(sc, "~A ~A, but no args or body?", sc->x));
 
       sc->y = car(sc->z);            /* the arglist */
-      if ((!is_pair(sc->y)) &&
-	  (sc->y != sc->NIL) &&
+      if ((!s7_is_list(sc, sc->y)) &&
 	  (!s7_is_symbol(sc->y)))
 	return(s7_error(sc, sc->SYNTAX_ERROR,                               /* (defmacro mac "hi" ...) */
 			make_list_3(sc, make_protected_string(sc, "defmacro ~A argument list is ~S?"), sc->x, sc->y)));
@@ -26249,8 +26301,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error_with_name(sc, "~A ~A, but no body?", sc->x));
 
       sc->y = cdar(sc->code);            /* the arglist */
-      if ((!is_pair(sc->y)) &&
-	  (sc->y != sc->NIL) &&
+      if ((!s7_is_list(sc, sc->y)) &&
 	  (!s7_is_symbol(sc->y)))
 	return(s7_error(sc, sc->SYNTAX_ERROR,                                      /* (define-macro (mac . 1) ...) */
 			make_list_3(sc, make_protected_string(sc, "define-macro ~A argument list is ~S?"), sc->x, sc->y)));
@@ -26539,6 +26590,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* sc->args is sc->NIL at first */
       /*    was: sc->args = s7_cons(sc, sc->value, sc->args); */ 
       {
+	/* s7test: 8%, lg: .3% allocs here */
 	s7_pointer x;
 	NEW_CELL(sc, x);
 	car(x) = sc->value;
@@ -32104,6 +32156,7 @@ s7_scheme *s7_init(void)
   sc->ELSE =        &sc->_ELSE;
   sc->TEMP_CELL =   &sc->_TEMP_CELL;
   sc->TEMP_CELL_1 = &sc->_TEMP_CELL_1;
+  sc->TEMP_CELL_2 = &sc->_TEMP_CELL_2;
 
   set_type(sc->NIL, T_NIL | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
@@ -32138,6 +32191,9 @@ s7_scheme *s7_init(void)
   set_type(sc->TEMP_CELL_1, T_PAIR | T_STRUCTURE | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->TEMP_CELL_1) = cdr(sc->TEMP_CELL_1) = sc->NIL;
   car(sc->TEMP_CELL) = sc->TEMP_CELL_1;
+  
+  set_type(sc->TEMP_CELL_2, T_PAIR | T_STRUCTURE | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  car(sc->TEMP_CELL_2) = cdr(sc->TEMP_CELL_2) = sc->NIL;
   
   sc->input_port = sc->NIL;
   sc->input_is_file = false;
@@ -33119,7 +33175,7 @@ the error type and the info passed to the error handler.");
                         	    code)                        \n\
                         	   (else (loop (cdr clauses))))))))");
 
-  /* fprintf(stderr, "size: %d %d\n", (int)sizeof(s7_cell), (int)sizeof(s7_num_t)); */
+  /* fprintf(stderr, "size: %d %d\n", (int)sizeof(s7_cell), (int)sizeof(s7_num_t));  */
 
   initialize_pows();
   save_initial_environment(sc);

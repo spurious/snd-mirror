@@ -3413,7 +3413,7 @@ write a function that tells us where the source is for a function:
 
 <pre>
 (define (where-is func)
-  (let ((addr (cdr (assoc <em class=red>'__func__</em> (car (<em class=red>procedure-environment</em> func))))))
+  (let ((addr (symbol-&gt;value <em class=red>'__func__</em> (<em class=red>procedure-environment</em> func))))
     (if (not (pair? addr))
 	"not found"
 	(format #f "~A is at line ~D of ~A" (car addr) (caddr addr) (cadr addr)))))
@@ -3773,38 +3773,6 @@ where we only feed in a few constants, I bet it segfaults!
 
 <small>
 <blockquote>
-
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<p>
-I think we could build an object system where each object is an environment (a list of alists),
-and each method looks for itself in that environment.
-</p>
-
-<pre>
-(define object (list (list (cons 'afield 1) 
-                           (cons 'amethod (lambda args 
-                                            (+ 1 (apply + args)))))))
-
-(define (amethod obj . args) 
-  (apply (symbol-&gt;value 'amethod obj) args)) ; perhaps pass obj too
-
-&gt; (amethod object 3 4)
-8
-</pre>
-
-<p>A class would be an environment with the various fields and methods predefined.
-</p>
-
-
-<!--
-could we use expansions here? (so set! arg would be "evaluated" at read time etc)
--->
-
-</blockquote>
-</small>
 
 
 </dd>
