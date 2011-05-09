@@ -63429,3 +63429,4 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 |#
 
 
+;;; TODO: gsl 1.15 eigenvector stuff needs check

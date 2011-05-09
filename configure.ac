@@ -240,7 +240,6 @@ AC_CHECK_HEADER(alsa/asoundlib.h,[AC_DEFINE(HAVE_ALSA_ASOUNDLIB_H)])
 
 AC_CHECK_DECLS(hypot,,,[#include <math.h>]) 
 AC_CHECK_DECLS(isnan,,,[#include <math.h>])
-AC_CHECK_DECLS(isinf,,,[#include <math.h>])
 
 AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
@@ -258,14 +257,8 @@ AC_TYPE_OFF_T
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
-AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(unsigned long)
-
 AC_CHECK_SIZEOF(void *)
-# this won't work in version 2.66 (fixed in 2.67)
-# AC_CHECK_SIZEOF(intptr_t)
-# AC_DEFINE_UNQUOTED(SIZEOF_VOID_P, $ac_cv_sizeof_intptr_t)
-
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(int64_t)
 AC_CHECK_SIZEOF(ssize_t)
@@ -1015,7 +1008,6 @@ else
           AC_DEFINE_UNQUOTED(MUS_CAIRO_VERSION,"${cairo_version}")
           fi
 
-	AC_CHECK_LIB(m, gtk_widget_get_has_tooltip, [AC_DEFINE(HAVE_GTK_WIDGET_GET_HAS_TOOLTIP)], ,$GTK_LIBS)
 	# for 2.13.0
 	AC_CHECK_LIB(m, gtk_test_widget_click, [AC_DEFINE(HAVE_GTK_TEST_WIDGET_CLICK)], ,$GTK_LIBS)
 	# for 2.13.6 (uses 2134)
@@ -1164,7 +1156,6 @@ if test "$ac_snd_have_gui" != no ; then
          AC_DEFINE_UNQUOTED(MUS_GAMIN_VERSION,"${gamin_version}")
          FAM_LIB="`$PKG_CONFIG gamin --libs`"
          AC_DEFINE(HAVE_FAM)
-         AC_DEFINE(HAVE_FAM_NO_EXISTS)
          OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gamin"
        else
 	AC_MSG_WARN([need gamin version 0.1.0 or later])

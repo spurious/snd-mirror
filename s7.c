@@ -13715,6 +13715,25 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) /* "safe
       cdr(p) = result;
       result = p;
       p = q;
+
+      /* unroll the loop for speed */
+      if (p == sc->NIL) break;
+      q = cdr(p);
+      cdr(p) = result;
+      result = p;
+      p = q;
+
+      if (p == sc->NIL) break;
+      q = cdr(p);
+      cdr(p) = result;
+      result = p;
+      p = q;
+
+      if (p == sc->NIL) break;
+      q = cdr(p);
+      cdr(p) = result;
+      result = p;
+      p = q;
     }
 
   return(result);
@@ -21644,7 +21663,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  (!(is_macro(sc->code))))
 	{
 	  /* one list arg -- special, but very common case */
-	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), s7_cons(sc, make_list_1(sc, sc->NIL), obj), sc->code);
+	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), s7_cons_unchecked(sc, make_list_1(sc, sc->NIL), obj), sc->code);
 	  return(sc->UNSPECIFIED);
 	}
 
@@ -21673,8 +21692,8 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	      sc->x = s7_cons(sc, sc->NIL, sc->x);          /* we're making a list to be filled in later with the individual args */
 
 	      if (s7_is_hash_table(car(x)))
-		sc->z = s7_cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
-	      else sc->z = s7_cons(sc, car(x), sc->z);
+		sc->z = s7_cons_unchecked(sc, g_make_hash_table_iterator(sc, x), sc->z);
+	      else sc->z = s7_cons_unchecked(sc, car(x), sc->z);
 	    }
 	}
     }
@@ -21855,7 +21874,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  (!(is_macro(sc->code))))
 	{
 	  /* one list arg -- special, but very common case */
-	  push_stack(sc, opcode(OP_MAP_SIMPLE), s7_cons(sc, make_mutable_integer(sc, len), s7_cons(sc, sc->NIL, obj)), sc->code);
+	  push_stack(sc, opcode(OP_MAP_SIMPLE), s7_cons_unchecked(sc, make_mutable_integer(sc, len), s7_cons(sc, sc->NIL, obj)), sc->code);
 	  return(sc->NO_VALUE);
 	}
 
@@ -21881,7 +21900,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      
 	      if (s7_is_hash_table(car(x)))
 		sc->z = s7_cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
-	      else sc->z = s7_cons(sc, car(x), sc->z);
+	      else sc->z = s7_cons_unchecked(sc, car(x), sc->z);
 	    }
 	}
     }
@@ -23342,7 +23361,7 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
       if (is_immutable(tmp))
 	return(eval_error(sc, "do step variable: ~S is immutable", tmp));
       /* symbol-access is dealt with elsewhere */
-      sc->value = s7_cons(sc, add_to_local_environment(sc, tmp, car(sc->y)), sc->value);
+      sc->value = s7_cons_unchecked(sc, add_to_local_environment(sc, tmp, car(sc->y)), sc->value);
     }
   
   /* now we've set up the environment, next set up for the loop */
@@ -23420,7 +23439,7 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
     end_stuff = cadr(sc->code);
     if (end_stuff == sc->NIL)
       sc->args = s7_cons(sc, sc->args, sc->NIL);
-    else sc->args = s7_cons(sc, sc->args, s7_cons(sc, s7_cons(sc, car(end_stuff), sc->F), cdr(end_stuff)));
+    else sc->args = s7_cons_unchecked(sc, sc->args, s7_cons_unchecked(sc, s7_cons(sc, car(end_stuff), sc->F), cdr(end_stuff)));
   }
   sc->code = cddr(sc->code);
   
@@ -23927,22 +23946,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
 
-      cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
-      if (!is_pair(cadr(sc->args)))      /* no more args -- return #f */
+      if (!is_pair(cdadr(sc->args)))     /* no more args -- return #f */
 	{
 	  sc->value = sc->F;
 	  goto START;
 	}
+      cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
 
       if (sc->op == OP_MEMBER_IF1)
 	{
 	  /* circular list check */
-	  caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list (check for circular list) */
-	  if (cadr(sc->args) == caddr(sc->args)) 
+	  if (cadr(sc->args) == cdaddr(sc->args)) 
 	    {
 	      sc->value = sc->F;
 	      goto START;
 	    }
+	  caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list (check for circular list) */
 	  push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
 	}
       else push_stack(sc, opcode(OP_MEMBER_IF1), sc->args, sc->code);
@@ -23962,23 +23981,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
 
-      cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
-      if ((cadr(sc->args) == sc->NIL) || /* no more args -- return #f */
-	  (!is_pair(cadr(sc->args))))    /* (assoc 3 '((1 . 2) . 3) =) */
+      if (!is_pair(cdadr(sc->args)))     /* (assoc 3 '((1 . 2) . 3) =) or nil */
 	{
 	  sc->value = sc->F;
 	  goto START;
 	}
+      cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
 
       if (sc->op == OP_ASSOC_IF1)
 	{
 	  /* circular list check */
-	  caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list */
-	  if (cadr(sc->args) == caddr(sc->args))
+	  if (cadr(sc->args) == cdaddr(sc->args))
 	    {
 	      sc->value = sc->F;
 	      goto START;
 	    }
+	  caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list */
 	  push_stack(sc, opcode(OP_ASSOC_IF), sc->args, sc->code);
 	}
       else push_stack(sc, opcode(OP_ASSOC_IF1), sc->args, sc->code);
@@ -24128,7 +24146,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->envir = new_frame_in_env(sc, sc->envir); 
 	  if (end_stuff == sc->NIL)
 	    sc->args = make_list_1(sc, sc->NIL);
-	  else sc->args = s7_cons(sc, sc->NIL, s7_cons(sc, s7_cons(sc, car(end_stuff), sc->F), cdr(end_stuff)));
+	  else sc->args = s7_cons_unchecked(sc, sc->NIL, s7_cons_unchecked(sc, s7_cons(sc, car(end_stuff), sc->F), cdr(end_stuff)));
 	  sc->code = cddr(sc->code);
 	  goto DO_END1;
 	}
@@ -24409,11 +24427,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   we don't have to delay lookup of the func because arg evaluation order is not specified, so
        *     (let ((func +)) (func (let () (set! func -) 3) 2))
        *   can return 5.
-       *
-       * check for args=nil and jump to apply here costs slightly more than it saves 
-       *
-       * here sc->args is nil, sc->value is the operator (car of list), sc->code is the rest -- the args.
-       * allocating sc->args here rather than below (trading 2 sets for a jump) was much slower
        */
 
       push_op_stack(sc, sc->value);
@@ -24422,9 +24435,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       goto EVAL_ARGS_NO_CONS;
 
-      /* TODO: all comments in this section are out-of-date! */
-      /* TODO: thread op_stack handlers (mark at least) */
-      /* this code can almost certainly be simplified -- it just growed... */
+      /* this code can almost certainly be simplified -- "it just growed..." */
 
                                       /* using while here rather than EVAL_ARGS and a goto made no speed difference */
     EVAL_ARGS:
@@ -24512,10 +24523,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  else sc->value = eval_symbol_1(sc, car_code);
 		}
 	      else sc->value = car_code;
+
+	      /* TODO: go one more step here? 
+	       *       if we know this is not a pair (typ above), before going back to cons
+	       *       we can look ahead for cdr(sc->code) == nil, and cadr(sc->code) type not pair
+	       *       in that situation, if a safe function, use two temp cells? and go to apply
+	       *       if not safe, make the list locally and go, so we don't waste too many type checks.
+	       */
+
 	      goto EVAL_ARGS;
 	    }
 	  else
 	    {
+	      /* here we've reached the last arg (sc->code == nil) 
+	       *   it is not a pair (typ == T_PAIR was caught earlier)
+	       *   if this is a safe function, we're going straight to
+	       *   apply with no complications, so we can use TEMP_CELL_1.
+	       */
 	      s7_pointer x;
 
 	      sc->code = pop_op_stack(sc);
@@ -24610,9 +24634,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    int len;
 	    len = safe_list_length(sc, sc->args);
-	    /* I tried embedding this list length in the safe_reverse_in_place function above, but
-	     *   that did not provide any speed-up.
-	     */
 
 	    if (len < c_function_required_args(sc->code))
 	      return(s7_error(sc, 
@@ -24634,13 +24655,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto EVAL_ARGS;
 	  goto START_WITHOUT_POP_STACK;
 
+
 	  /* sc->args == nil:              len 0
 	   * sc->args == TEMP_CELL_1:      len 1
 	   * cdr(sc->args) == TEMP_CELL_1: len 2 (safe because cdr(nil) is #<unspecified>)
-	   * these are the standard cases.  If we got here from apply, none of this applies.
+	   * these are the standard cases.  If we got here from apply, none of this applies, but 
+	   *   args will not contain TEMP_CELL_1, so we won't get a false positive (apply is not
+	   *   a safe function).
 	   */
 
-	  /* other common cases: cadr number?/complex?, null?, length,  equal?, eqv? cddr cons
+	  /* other common cases: cadr, number?/complex?, null?, length,  equal?, eqv?, cddr, cons
 	   *   list add multiply
 	   *   in snd: abs
 	   */
@@ -25041,10 +25065,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_STRING:                            /* -------- string as applicable object -------- */
- 	  if (sc->args == sc->NIL)
- 	    return(s7_wrong_number_of_args_error(sc, "not enough args for string-ref (via string as applicable object): ~A", sc->args));
 	  if (cdr(sc->args) != sc->NIL)
-	    return(s7_wrong_number_of_args_error(sc, "too many args for string-ref (via string as applicable object): ~A", sc->args));
+	    return(s7_error(sc, 
+			    sc->WRONG_NUMBER_OF_ARGS, 
+			    make_list_3(sc, (sc->args == sc->NIL) ? sc->NOT_ENOUGH_ARGUMENTS : sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
 
 	  sc->value = string_ref_1(sc, sc->code, car(sc->args));
 	  goto START;
@@ -25276,8 +25300,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  sc->x = caar(sc->code);
 	  if (sc->op == OP_DEFINE_STAR)
-	    sc->code = s7_cons(sc, sc->LAMBDA_STAR, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
-	  else sc->code = s7_cons(sc, sc->LAMBDA, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
+	    sc->code = s7_cons_unchecked(sc, sc->LAMBDA_STAR, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
+	  else sc->code = s7_cons_unchecked(sc, sc->LAMBDA, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
 	} 
       else 
 	{
@@ -25345,7 +25369,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					       file_names[port_file_number(sc->input_port)],
 					       s7_make_integer(sc, port_line_number(sc->input_port))));
 	  else sc->x = immutable_cons(sc, sc->__FUNC__, sc->code);           /* fallback on (__func__ name) */
-	  closure_environment(sc->value) = s7_cons(sc, 
+	  closure_environment(sc->value) = s7_cons_unchecked(sc, 
 						   make_list_1(sc, sc->x),
 						   closure_environment(sc->value));
 	  typeflag(closure_environment(sc->value)) |= T_ENVIRONMENT;
@@ -25423,7 +25447,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	}
 
-      sc->code = s7_cons(sc, s7_cons(sc, sc->value, sc->args), sc->code);
+      sc->code = s7_cons_unchecked(sc, s7_cons(sc, sc->value, sc->args), sc->code);
 
 
     case OP_SET:                                                             /* entry for set! */
@@ -25779,7 +25803,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  add_to_local_environment(sc, car(sc->code), sc->x); 
 	  sc->code = cddr(sc->code);
 	  sc->x = sc->NIL;
-	} 
+	}
       else 
 	{
 	  sc->code = cdr(sc->code);
@@ -32708,7 +32732,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "length",                    g_length,                   1, 0, false, H_length);
   s7_define_safe_function(sc, "copy",                      g_copy,                     1, 0, false, H_copy);
   s7_define_safe_function(sc, "fill!",                     g_fill,                     2, 0, false, H_fill);
-  s7_define_function(sc, "reverse",                        g_reverse,                  1, 0, false, H_reverse);
+  s7_define_safe_function(sc, "reverse",                   g_reverse,                  1, 0, false, H_reverse);
   s7_define_unsafe_function(sc, "reverse!",                g_reverse_in_place,         1, 0, false, H_reverse_in_place); /* used by Snd code */
   
 
