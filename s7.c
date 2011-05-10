@@ -1805,7 +1805,7 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 #else
 
   #define NEW_CELL(Sc, Obj) \
-    do { \
+   do {						     \
       if (Sc->free_heap_top > Sc->free_heap_trigger) \
         Obj = (*(--(Sc->free_heap_top)));	     \
       else Obj = new_cell(Sc);                       \
@@ -2637,12 +2637,13 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 { 
   s7_pointer slot, e;
 
-  e = car(env);
+
   slot = immutable_cons(sc, variable, value);
 
-  if (s7_is_vector(e))
+  if (!is_pair(env))
     {
       int loc;
+      e = sc->global_env;
 
       if ((sc->safety == 0) &&
 	  ((is_closure(value)) ||
@@ -2669,6 +2670,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
     }
   else
     {
+      e = car(env);
       set_local(variable);
       ecdr(slot) = e;
       car(env) = slot;
@@ -2757,7 +2759,7 @@ static void save_initial_environment(s7_scheme *sc)
   s7_vector_fill(sc, sc->initial_env, sc->NIL);
   sc->initial_env->hloc = NOT_IN_HEAP;
 
-  ge = car(sc->global_env);
+  ge = sc->global_env;
   len = vector_length(ge);
   lsts = vector_elements(ge);
    
@@ -2912,36 +2914,25 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
    *   The longest searches are in the huge let ca line 12638 (each variable in let has a new frame),
    *   and push/pop in the CLisms section.
    */
-
   for (x = env; is_pair(x); x = cdr(x)) 
     {
-    if (car(x) != sc->NIL)
-      { 
-	s7_pointer y;
-
-	if (s7_is_vector(car(x)))
-	  return(symbol_global_slot(hdl));
-
-	for (y = car(x); is_pair(y); y = ecdr(y))
-	  if (car(y) == hdl)
-	    return(y);
-      }
+      s7_pointer y;
+      for (y = car(x); is_pair(y); y = ecdr(y))
+	if (car(y) == hdl)
+	  return(y);
     }
-  return(sc->NIL); 
+  return(symbol_global_slot(hdl));
 } 
+
 
 
 static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer y;
-
-  y = car(env);
-  if (y == sc->NIL) return(sc->NIL);
-
-  if (s7_is_vector(y))
+  if (env == sc->NIL) 
     return(symbol_global_slot(hdl));
 
-  for (; is_pair(y); y = ecdr(y))
+  for (y = car(env); is_pair(y); y = ecdr(y))
     if (car(y) == hdl)
       return(y);
 
@@ -2978,20 +2969,28 @@ static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
   #define H_symbol_to_value "(symbol->value sym (env (current-environment))) returns the binding of (the value associated with) the \
 symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
 
-  s7_pointer local_env;
+  s7_pointer sym, x, local_env;
 
-  if (!s7_is_symbol(car(args)))
-    return(s7_wrong_type_arg_error(sc, "symbol->value", (cdr(args) == sc->NIL) ? 0 : 1, car(args), "a symbol"));
+  sym = car(args);
+  if (!s7_is_symbol(sym))
+    return(s7_wrong_type_arg_error(sc, "symbol->value", (cdr(args) == sc->NIL) ? 0 : 1, sym, "a symbol"));
 
   if (cdr(args) != sc->NIL)
     {
       if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "symbol->value", 2, cadr(args), "an environment"));
       local_env = cadr(args);
+      if (local_env == sc->global_env)
+	{
+	  x = symbol_global_slot(sym);
+	  if (x != sc->NIL)
+	    return(symbol_value(x));
+	  return(sc->UNDEFINED);
+	}
     }
   else local_env = sc->envir;
 
-  return(s7_symbol_local_value(sc, car(args), local_env));
+  return(s7_symbol_local_value(sc, sym, local_env));
 }
 
 
@@ -3078,7 +3077,7 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
 static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
 {
   #define H_global_environment "(global-environment) returns the current top-level definitions (symbol bindings). \
-It is a list ending with a hash-table."
+It is a hash-table."
   return(sc->global_env);
 }
 
@@ -3108,7 +3107,9 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 #else
   #define H_current_environment "(current-environment) returns the current definitions (symbol bindings)"
 #endif
-  return(sc->envir);
+  if (sc->envir != sc->NIL)
+    return(sc->envir);
+  return(sc->global_env);
 }
 
 
@@ -3150,20 +3151,26 @@ s7_pointer s7_current_environment(s7_scheme *sc)
 static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_defined "(defined? obj (env (current-environment))) returns #t if obj has a binding (a value) in the environment env"
-  s7_pointer x, e;
+  s7_pointer sym, x, e;
 
-  if (!s7_is_symbol(car(args)))
-    return(s7_wrong_type_arg_error(sc, "defined?", (cdr(args) == sc->NIL) ? 0 : 1, car(args), "a symbol"));
+  sym = car(args);
+  if (!s7_is_symbol(sym))
+    return(s7_wrong_type_arg_error(sc, "defined?", (cdr(args) == sc->NIL) ? 0 : 1, sym, "a symbol"));
   
   if (cdr(args) != sc->NIL)
     {
       if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "defined?", 2, cadr(args), "an environment"));
       e = cadr(args);
+      if (e == sc->global_env)
+	{
+	  x = symbol_global_slot(sym);
+	  return(make_boolean(sc, (x != sc->NIL) && (x != sc->UNDEFINED)));
+	}
     }
   else e = sc->envir;
   
-  x = find_symbol(sc, e, car(args));
+  x = find_symbol(sc, e, sym);
   return(make_boolean(sc, (x != sc->NIL) && (x != sc->UNDEFINED)));
 }
 
@@ -3191,7 +3198,7 @@ void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value)
   s7_pointer sym;
 
   sym = make_symbol(sc, name);
-  s7_define(sc, s7_global_environment(sc), sym, value);
+  s7_define(sc, sc->NIL, sym, value);
 }
 
 
@@ -3200,7 +3207,7 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   s7_pointer x, sym;
   
   sym = make_symbol(sc, name);
-  s7_define(sc, s7_global_environment(sc), sym, value);
+  s7_define(sc, sc->NIL, sym, value);
   x = symbol_global_slot(sym);
   set_immutable(car(x));
 }
@@ -11847,7 +11854,8 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   /* it's possible to call this recursively (s7_load is XEN_LOAD_FILE which can be invoked via s7_call)
    *   but in that case, we actually want it to behave like g_load and continue the evaluation upon completion
    */
-  sc->envir = s7_global_environment(sc);
+  sc->envir = sc->NIL;
+  
   
   if (!sc->longjmp_ok)
     {
@@ -11922,7 +11930,7 @@ defaults to the global environment.  To load into the current environment instea
 	return(s7_wrong_type_arg_error(sc, "load", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
-  else sc->envir = s7_global_environment(sc);
+  else sc->envir = sc->NIL;
   
   fname = s7_string(name);
   if ((!fname) || (!(*fname)))                 /* fopen("", "r") returns a file pointer?? */
@@ -12033,7 +12041,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   /* this can be called recursively via s7_call */
 
   old_envir = sc->envir;
-  sc->envir = sc->global_env; /* C call assumes top level, I think.  This is needed in any case
+  sc->envir = sc->NIL; /* C call assumes top level, I think.  This is needed in any case
 			       *   by dlinit -- the init function will be called in some local environment,
 			       *   but the library entities it defines should obviously be top level,
 			       *   as if via load.
@@ -16507,7 +16515,8 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
       (!is_bacro(p)))
     return(s7_wrong_type_arg_error(sc, "procedure-environment", 0, car(args), "a procedure or a macro"));
 
-  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
+  if ((is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p)) &&
+      (closure_environment(p) != sc->NIL))
     return(closure_environment(p));
   return(sc->global_env);
 }
@@ -16517,7 +16526,7 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 {
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  s7_define(sc, s7_global_environment(sc), make_symbol(sc, name), func);
+  s7_define(sc, sc->NIL, make_symbol(sc, name), func);
 }
 
 
@@ -16526,7 +16535,7 @@ static void s7_define_safe_function(s7_scheme *sc, const char *name, s7_function
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   typeflag(func) |= T_SAFE_PROCEDURE;
-  s7_define(sc, s7_global_environment(sc), make_symbol(sc, name), func);
+  s7_define(sc, sc->NIL, make_symbol(sc, name), func);
 }
 
 
@@ -16535,7 +16544,7 @@ static void s7_define_unsafe_function(s7_scheme *sc, const char *name, s7_functi
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   typeflag(func) &= ~(T_SAFE_PROCEDURE);
-  s7_define(sc, s7_global_environment(sc), make_symbol(sc, name), func);
+  s7_define(sc, sc->NIL, make_symbol(sc, name), func);
 }
 
 
@@ -16544,7 +16553,7 @@ static void s7_define_constant_function(s7_scheme *sc, const char *name, s7_func
   s7_pointer func, sym;
   sym = make_symbol(sc, name);
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  s7_define(sc, s7_global_environment(sc), sym, func);
+  s7_define(sc, sc->NIL, sym, func);
   set_immutable(car(symbol_global_slot(sym)));
   {
     s7_pointer p;
@@ -16559,7 +16568,7 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   set_type(func, T_C_MACRO | T_SIMPLE | T_DONT_COPY | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_EVAL_ARGS); /* this used to include T_PROCEDURE */
-  s7_define(sc, s7_global_environment(sc), make_symbol(sc, name), func);
+  s7_define(sc, sc->NIL, make_symbol(sc, name), func);
 }
 
 
@@ -21077,67 +21086,43 @@ static void improper_arglist_error(s7_scheme *sc)
 		       append_in_place(sc, safe_reverse_in_place(sc, sc->args), sc->code)));
 }
 
+#if 0
+static s7_pointer ecdr_to_list(s7_scheme *sc, s7_pointer slot_list)
+{
+  s7_pointer e;
+  sc->x = sc->NIL;
+  e = slot_list;
+  while (e != sc->NIL)
+    {
+      sc->x = s7_cons(sc, e, sc->x);
+      e = ecdr(e);
+    }
+  return(safe_reverse_in_place(sc->x));
+}
+#endif
+
+/* (let ((a 43) (c 123)) (define (hi b) (stacktrace) b) (hi a)) */
 
 static void display_frame(s7_scheme *sc, s7_pointer envir, s7_pointer port)
 {
-  fprintf(stderr, "display_frame can't work\n");
-#if 0
-  if ((is_pair(envir)) &&
-      (is_pair(cdr(envir))))
+  s7_pointer frame;
+  int i;
+  for (i = 0, frame = envir; is_pair(car(frame)) && (i < 4); i++, frame = cdr(frame))
     {
-      s7_pointer args, op;
-      
-      args = car(envir);
-      op = cadr(envir);
-
-      if ((is_pair(op)) &&
-	  (is_pair(car(op))))
+      s7_pointer arg;
+      arg = car(frame);
+      while (arg != sc->NIL)
 	{
-	  s7_pointer lst, sym, proc;
-	  
-	  /* there can be locals (of 'do' for example) preceding a function call here:
-	   *    (((i . 1)) 
-	   *     ((n . 2)) 
-	   *     ((__func__ idle "t257.scm" 40)) ...)
-	   */
-	  if (car(op) != sc->__FUNC__)
+	  if ((car(arg) == sc->__FUNC__) ||
+	      (!s7_is_procedure(cdr(arg))))
 	    {
-	      format_to_output(sc, port, "~A ", make_list_1(sc, args));
-	      args = op;
-	      if (is_pair(cddr(envir)))
-		{
-		  op = caddr(envir);
-		  if ((!is_pair(op)) ||
-		      (!is_pair(car(op))) ||
-		      (caar(op) != sc->__FUNC__))
-		    return;
-		}
-	      else return;
+	      s7_write(sc, arg, port);
+	      s7_write_char(sc, ' ', port);
 	    }
-
-	  lst = car(op);
-	  if (s7_is_symbol(cdr(lst)))
-	    sym = cdr(lst);
-	  else sym = cadr(lst);
-
-	  proc = s7_symbol_local_value(sc, sym, envir);
-	  if (is_procedure(proc))
-	    {
-	      s7_pointer local_env, file_info = sc->F;
-	      local_env = s7_reverse(sc, args);
-	      if (!s7_is_symbol(cdr(lst)))
-		file_info = cddr(lst);
-
-	      format_to_output(sc, port, "(~A~{ ~A~})", make_list_2(sc, sym, local_env));
-	      if (is_pair(file_info))
-		format_to_output(sc, port, "    [~S ~D]", file_info);
-	    }
-          else
-	    format_to_output(sc, port, "(~A~{~^ ~A~})", make_list_2(sc, cdr(lst), s7_reverse(sc, args)));
-          s7_newline(sc, port);
+	  arg = ecdr(arg);
 	}
+      s7_newline(sc, port);    
     }
-#endif
 }
 
 
@@ -21224,6 +21209,8 @@ output is sent to the current-output-port."
   if (stk == sc->F)
     return(s7_wrong_type_arg_error(sc, "stacktrace", 0, args, "a vector, thread object, or continuation"));
   
+  if (sc->envir != stack_environment(stk, top - 1))
+    display_frame(sc, sc->envir, port);
   for (i = top - 1; i > 0; i -= 4)
     display_frame(sc, stack_environment(stk, i), port);
 
@@ -24153,7 +24140,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_DO_INIT:
-      sc->args = s7_cons_unchecked(sc, sc->value, sc->args);    /* code will be last element (first after reverse) */
+      sc->args = s7_cons(sc, sc->value, sc->args);    /* code will be last element (first after reverse) */
       if (is_pair(sc->code))
 	{
 	  /* here sc->code is a list like: ((i 0 (+ i 1)) ...)
@@ -24526,7 +24513,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  if (typ == T_PAIR)
 		    {
-		      /* s7test 2%, lg: 12% allocs */
+		      /* s7test 2%, lg: 17% allocs */
 		      NEW_CELL(sc, x); 
 		      car(x) = sc->value;
 		      cdr(x) = sc->args;
@@ -24912,7 +24899,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_MACRO:
 	  /* sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); */
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
-	  /* s7test: 6%, lg: 14% allocs */
+	  /* s7test: 6%, lg: 19% allocs */
 
 	BACRO:
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
@@ -24972,7 +24959,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
 		  }
 
-		/* s7test: 20%, lg: 54% of allocs here */
+		/* s7test: 9%, lg: 38% of allocs here */
 		NEW_CELL(sc, y); 
 		car(y) = z;
 		cdr(y) = car(sc->y);
@@ -25164,7 +25151,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  x = sc->TEMP_CELL_1;
 	else
 	  {
-	    /* s7test: 8%, lg: .4% of allocs here */
+	    /* s7test: 8%, lg: .5% of allocs here */
 	    NEW_CELL(sc, x); 
 	  }
 
@@ -32280,9 +32267,10 @@ s7_scheme *s7_init(void)
   sc->key_values = sc->NIL;
 #endif
   
-  sc->global_env = make_list_1(sc, s7_make_vector(sc, SYMBOL_TABLE_SIZE));
+  sc->global_env = s7_make_vector(sc, SYMBOL_TABLE_SIZE);
   typeflag(sc->global_env) |= T_ENVIRONMENT;
-  sc->envir = sc->global_env;
+  /* sc->envir = sc->global_env; */
+  sc->envir = sc->NIL;
   
   /* keep the small_ints out of the heap */
   small_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));

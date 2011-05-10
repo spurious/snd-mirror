@@ -11704,6 +11704,8 @@ this prints:
 (test (define-constant pi . 3) 'error)
 (define-constant __do_step_var_check__ 1)
 (test (do ((__do_step_var_check__ 2 3)) (#t #t)) 'error)
+(test (let ((__do_step_var_check__ 2)) 1) 'error)
+(test (let () (set! __do_step_var_check__ 2)) 'error)
 (test (let ((__do_step_var_access_1__ #f))
 	(set! (symbol-access '__do_step_var_access_1__) (list #f #f #f))
 	(do ((__do_step_var_access_1__ 1 2)) (#t __do_step_var_access_1__)))
@@ -20226,7 +20228,7 @@ abs     1       2
 (test (defined? lambda gensym) 'error)
 (test (defined? 'lambda defined?) 'error)
 (test (defined? 'define car) 'error)
-(test (defined? 'abs (augment-environment '())) #f)
+(test (defined? 'abs (augment-environment '())) #t) ; nil = global now
 (test (defined? lambda) 'error)
 (test (defined? 'lambda) #t)
 (test (defined? 'dynamic-wind) #t)
@@ -21176,34 +21178,6 @@ abs     1       2
 	#t))
 
 
-#|
-;; TODO: fix stacktrace
-(let ()
-  (define (a1 a) (stacktrace) (+ a 1))
-  (define (a2 b) (+ b (a1 b)))
-  (define (a3 c) (+ c (a2 c)))
-  (let ((str (with-output-to-string
-	       (lambda ()
-		 (a3 1)))))
-    (let ((str1 "")
-	  (len (- (length str) 1))
-	  (happy #t)
-	  (last-char #\x))
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	(if happy
-	    (set! str1 (string-append str1 (string (string-ref str i)))))
-	(let ((c (string-ref str (+ i 1))))
-	  (if (char=? c #\()
-	      (set! happy #t)
-	      (if (and (char=? last-char #\))
-		       (char-whitespace? c))
-		  (set! happy #f)))
-	  (set! last-char c)))
-      (if (and (not (string=? str1 "(a1 (a . 1))(a2 (b . 1))(a3 (c . 1))"))
-	       (not (string=? str1 "(a1 (a . 1))(a2 (b . 1))(a3 (c . 1))(snd_test_28)")))
-	  (format #t ";stacktrace: ~A from ~A~%" str1 str)))))
-
 (test (stacktrace #(23)) 'error)
 (for-each
  (lambda (arg)
@@ -21226,7 +21200,6 @@ abs     1       2
     (test (or (not (cur-info 3)) (integer? (cur-info 3))) #t) ; line-number
     (test (or (not (cur-info 4)) (string? (cur-info 4))) #t) ; file name
     ))
-|#
 
 
 (for-each
