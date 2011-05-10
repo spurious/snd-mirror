@@ -4972,8 +4972,6 @@
     (if (not (getenv "PATH")) (snd-display #__line__ ";getenv: no PATH?"))
     (if (not (number? (getpid))) (snd-display #__line__ ";getpid: ~A" (getpid)))
     
-    (if (not (list? (global-environment))) (snd-display #__line__ ";global-environment not a list?: ~A" (global-environment)))
-    
     (let ((ip (current-input-port)))
       (let ((tag (catch #t (lambda () (set-current-input-port "hiho!")) (lambda args (car args)))))
 	(if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";set-current-input-port tag: ~A" tag))
@@ -63428,3 +63426,4 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 
 
 ;;; TODO: gsl 1.15 eigenvector stuff needs check
+;;; TODO: check the optimizer ampf bug -- wrong environment?

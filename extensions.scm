@@ -638,11 +638,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;; find all functions, write out each one's number of calls, sorted first by calls, then alphabetically 
 
   (define (where-is func)
-    (let* ((env (procedure-environment func))
-	   (cenv (and (pair? env)
-		      (car env)))
-	   (f (and (pair? cenv)
-		   (assoc '__func__ cenv)))
+    (let* ((f (symbol->value '__func__ (procedure-environment func)))
 	   (addr (and (pair? f)
 		      (cdr f))))
       (if (not (pair? addr))
@@ -665,7 +661,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		     (set! call (+ call 1)))))
 	     lst)))
 
-	(set! calls (sort! calls (lambda (a b) (> (caadr a) (caadr b)))))
+	(set! calls (sort! calls (lambda (a b) (> (cadr a) (cadr b)))))
 	
 	(with-output-to-file file
 	  (lambda ()
@@ -673,4 +669,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		((= i call))
 	      (let ((c (calls i)))
 		(if (not (eq? (car c) 'none))
-		    (format #t "~A:~40T~A~60T~A~%" (car c) (caadr c) (where-is (car c)))))))))))
+		    (format #t "~A:~40T~A~60T~A~%" (car c) (cadr c) (where-is (car c)))))))))))
+
+;;; TODO: check the new profiling stuff
+

@@ -756,11 +756,14 @@ struct s7_scheme {
 #define is_expansion(p)               ((typeflag(p) & T_EXPANSION) != 0)
 /* this marks macros from define-expansion */
 
+#define T_GLOBAL                      (1 << (TYPE_BITS + 16))
+#define is_global(p)                  ((typeflag(p) & T_GLOBAL) != 0)
+#define set_global(p)                 typeflag(p) |= T_GLOBAL
+
 #define T_LOCAL                       (1 << (TYPE_BITS + 14))
 #define is_not_local(p)               ((typeflag(p) & T_LOCAL) == 0)
 #define is_local(p)                   ((typeflag(p) & T_LOCAL) != 0)
-/* #define set_local(p)                  typeflag(p) |= T_LOCAL */
-#define set_local(p)                  typeflag(p) = ((typeflag(p) & ~(T_DONT_EVAL_ARGS)) | T_LOCAL)
+#define set_local(p)                  typeflag(p) = ((typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL)) | T_LOCAL)
 /* this marks a symbol that has been used at some time as a local variable */
 
 #define T_ENVIRONMENT                 (1 << (TYPE_BITS + 15))
@@ -815,10 +818,10 @@ struct s7_scheme {
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
-#define UNUSED_BITS                   0x81004900
+#define UNUSED_BITS                   0x80004900
 
 /* TYPE_BITS could be 6
- * TYPE_BITS + 0, 3, 6, 16 and 23 are currently unused
+ * TYPE_BITS + 0, 3, 6, and 23 are currently unused
  */
 
 
@@ -839,8 +842,9 @@ struct s7_scheme {
 
 #define is_pair(p)                    (type(p) == T_PAIR)
 /* using a bit here, rather than a type number) was much slower */
-#define car(p)                      ((p)->object.cons.car)
-#define cdr(p)                      ((p)->object.cons.cdr)
+#define car(p)                        ((p)->object.cons.car)
+#define cdr(p)                        ((p)->object.cons.cdr)
+#define ecdr(p)                       ((p)->object.cons.ecdr)
 #define caar(p)                       car(car(p))
 #define cadr(p)                       car(cdr(p))
 #define cdar(p)                       cdr(car(p))
@@ -863,7 +867,6 @@ struct s7_scheme {
 #define cdaddr(p)                     cdr(car(cdr(cdr(p))))
 #define pair_line_number(p)           (p)->object.cons.line
 #define port_file_number(p)           (p)->object.port->file_number
-#define ecdr(p)                       ((p)->object.cons.ecdr)
 #define csr(p)                        (p)->object.cons.line
 
 #define string_value(p)               ((p)->object.string.svalue)
@@ -878,7 +881,6 @@ struct s7_scheme {
 #define set_symbol_value(Sym, Val)    cdr(Sym) = (Val)
 #if WITH_PROFILING
   #define symbol_calls(p)             (p)->calls
-  #define symbol_data(p)              (p)->data
 #endif
 #define symbol_global_slot(p)         (car(p))->object.string.global_slot
 
@@ -2538,64 +2540,11 @@ static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_symbol_calls(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_calls "(symbol-calls sym) returns the number of times sym was called (applied)"
-  s7_pointer sym, vect;
-  int i;
 
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "symbol-calls", 0, car(args), "a symbol"));  
   
-  sym = eval_symbol(sc, car(args));
-  vect = s7_make_vector(sc, 100);
-  if (symbol_data(sym))
-    {
-      for (i = 0; i < 100; i++)
-	vector_element(vect, i) = s7_make_integer(sc, symbol_data(sym)[i]);
-    }
-  else
-    {
-      for (i = 0; i < 100; i++)
-	vector_element(vect, i) = small_int(0);
-    }
-  return(make_list_2(sc, s7_make_integer(sc, symbol_calls(sym)), vect));
-}
-
-
-static void tick_args(int *data, s7_pointer args)
-{
-  s7_pointer x;
-  int i, base;
-
-  for (i = 0, base = 0, x = args; (i < 3) && (is_pair(x)); x = cdr(x), i++, base += 32)
-    {
-      int typ;
-
-      typ = type(car(x));
-      if (typ > 27) typ = 27;
-      data[base + typ]++;
-
-      if (typ == T_NUMBER)
-	{
-	  switch (number_type(car(x)))
-	    {
-	    case NUM_INT:
-	      data[base + 28]++;
-	      break;
-
-	    case NUM_RATIO:
-	      data[base + 29]++;
-	      break;
-
-	    case NUM_REAL:
-	    case NUM_REAL2:
-	      data[base + 30]++;
-	      break;
-
-	    default:
-	      data[base + 31]++;
-	      break;
-	    }
-	}
-    }
+  return(s7_make_integer(sc, symbol_calls(eval_symbol(sc, car(args)))));
 }
 #endif
 
@@ -2636,8 +2585,6 @@ static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
 static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
   s7_pointer slot, e;
-
-
   slot = immutable_cons(sc, variable, value);
 
   if (!is_pair(env))
@@ -2663,6 +2610,8 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       loc = symbol_location(variable);
       vector_element(e, loc) = s7_cons_unchecked(sc, slot, vector_element(e, loc));
       symbol_global_slot(variable) = slot;
+      if (!is_local(variable)) /* not sure this matters, or that it can happen */
+	set_global(variable);
 
       /* so if we (define hi "hiho") at the top level,  "hi" hashes to 1746 with symbol table size 2207
        *   s7->symbol_table->object.vector.elements[1746]->object.cons.car->object.cons.car->object.string.global_slot is (hi . \"hiho\")
@@ -2908,11 +2857,10 @@ new environment."
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer x;
-  /* this is a list (of alists, each representing a frame) ending with a vector (the global environment).
-   *   max linear search in s7test: 351! average search len in s7test: 9.  Although this takes about 10%
-   *   the total compute time in s7test.scm, in snd-test it is around 1% -- s7test is a special case.
-   *   The longest searches are in the huge let ca line 12638 (each variable in let has a new frame),
-   *   and push/pop in the CLisms section.
+  /* unrolling these loops is slower 
+   *   I also tried using ecdr as well as car in the outer list to have 2 parallel slot lists,
+   *   using symbol_location to choose.  This saves a lot in that we search half as much here,
+   *   but the simple hashing process and other overhead end up costing even more, so we lose.
    */
   for (x = env; is_pair(x); x = cdr(x)) 
     {
@@ -2923,7 +2871,6 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
     }
   return(symbol_global_slot(hdl));
 } 
-
 
 
 static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
@@ -2957,7 +2904,7 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
   s7_pointer x;
-  x = find_symbol(sc, local_env, sym);
+  x = find_symbol(sc, local_env, sym); /* TODO: does this make any sense? find_local_symbol? */
   if (x != sc->NIL)
     return(symbol_value(x));
   return(s7_symbol_value(sc, sym)); /* try sc->envir */
@@ -23028,12 +22975,17 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 }
 
 
-static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
+static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
 {
-  if ((is_keyword(sym)) ||
-      (is_syntax(sym)))
-    return(sym);
+  s7_pointer x;
 
+  x = find_symbol(sc, sc->envir, sym);
+  if (x != sc->NIL) 
+    return(symbol_value(x));
+
+  if (is_keyword(sym))
+    return(sym);
+    
   if (sym == sc->UNQUOTE)
     return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
 #if WITH_UNQUOTE_SPLICING
@@ -23045,18 +22997,6 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
    */
 
   return(unbound_variable(sc, sym));
-}
-
-
-static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
-{
-  s7_pointer x;
-
-  x = find_symbol(sc, sc->envir, sym);
-  if (x != sc->NIL) 
-    return(symbol_value(x));
-
-  return(eval_symbol_1(sc, sym));
 }
 
 
@@ -23514,6 +23454,81 @@ static void prepare_do_end_test(s7_scheme *sc)
 }
 
 
+/* this is nuts -- I am slavishly following valgrind here, and it thinks
+ *   these copies of this function are a big deal.
+ */
+
+#define FIND_SYMBOL_OR_BUST(Sc) \
+  s7_pointer x;\
+\
+  for (x = env; is_pair(x); x = cdr(x)) \
+    {\
+      s7_pointer y;\
+      for (y = car(x); is_pair(y); y = ecdr(y))\
+	if (car(y) == hdl)\
+	  return(symbol_value(y));\
+    }\
+\
+  x = symbol_global_slot(hdl);\
+  if (x != sc->NIL) return(symbol_value(x));\
+\
+  if (is_keyword(hdl))\
+    return(hdl);\
+  if (hdl == sc->UNQUOTE)\
+    return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));\
+  return(unbound_variable(sc, hdl));
+
+
+static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
+static s7_pointer find_symbol_or_bust_1(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
+static s7_pointer find_symbol_or_bust_2(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
+static s7_pointer find_symbol_or_bust_3(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
+static s7_pointer find_symbol_or_bust_4(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
+
+static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
+{
+  /* used only in the one ridiculous case where valgrind is allergic to find_symbol_or_bust */
+  if ((is_keyword(sym)) ||
+      (is_syntax(sym)))
+    return(sym);
+
+  if (sym == sc->UNQUOTE)
+    return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
+#if WITH_UNQUOTE_SPLICING
+  if (sym == sc->UNQUOTE_SPLICING)
+    return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred without quasiquote"));
+#endif
+
+  /* actually we'll normally get an error from apply. (,@ 1) triggers this error.
+   */
+
+  return(unbound_variable(sc, sym));
+}
+
+
+
+
+
 /* -------------------------------- eval -------------------------------- */
 
 /* all explicit write-* in eval assume current-output-port -- error fallback handling, etc */
@@ -23885,7 +23900,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
 	  if (next_map(sc))
-	    goto APPLY;
+	    goto APPLY_WITHOUT_TRACE;
 	}
       
       sc->value = safe_reverse_in_place(sc, caddr(sc->args));
@@ -23912,7 +23927,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
 	  if (next_for_each(sc)) 
-	    goto APPLY;
+	    goto APPLY_WITHOUT_TRACE;
 	}
       sc->value = sc->UNSPECIFIED;
       goto START;
@@ -23949,7 +23964,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else push_stack(sc, opcode(OP_MEMBER_IF1), sc->args, sc->code);
       cadar(sc->args) = caadr(sc->args);
       sc->args = car(sc->args);
-      goto APPLY;
+      goto APPLY_WITHOUT_TRACE;
 
 
     case OP_ASSOC_IF1:
@@ -23992,7 +24007,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       cadar(sc->args) = caaadr(sc->args);
       sc->args = car(sc->args);
-      goto APPLY;
+      goto APPLY_WITHOUT_TRACE;
 
 
     case OP_HOOK_APPLY:
@@ -24314,14 +24329,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  if (s7_is_symbol(carc))
 	    {
-	      s7_pointer x;
-	      if (is_not_local(carc))
-		x = symbol_global_slot(carc);
-	      else x = find_symbol(sc, sc->envir, carc);
-	      
-	      if (x != sc->NIL) 
-		sc->value = symbol_value(x);
-	      else sc->value = eval_symbol_1(sc, carc);
+	      if (is_global(carc))
+		sc->value = symbol_value(symbol_global_slot(carc));
+	      else sc->value = find_symbol_or_bust(sc, sc->envir, carc);
 	      
 	      sc->code = cdr(sc->code);
 	      sc->args = sc->NIL;
@@ -24357,17 +24367,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (s7_is_symbol(sc->code))
 	    {
-	      /* expand eval_symbol here to speed it up by a lot */
-	      s7_pointer x;
-	      
-	      if (is_not_local(sc->code))
-		x = symbol_global_slot(sc->code);
-	      else x = find_symbol(sc, sc->envir, sc->code);
-	      
-	      if (x != sc->NIL) 
-		sc->value = symbol_value(x);
-	      else sc->value = eval_symbol_1(sc, sc->code);
-	      
+	      if (is_global(sc->code))
+		sc->value = symbol_value(symbol_global_slot(sc->code));
+	      else sc->value = find_symbol_or_bust_1(sc, sc->envir, sc->code); 
+
 	      pop_stack(sc);
 	      if (sc->op != OP_EVAL_ARGS)
 		goto START_WITHOUT_POP_STACK;
@@ -24492,22 +24495,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cdr(sc->code);
 	  if (sc->code != sc->NIL)
 	    {
-	      s7_pointer x;
 	      if (typ == T_SYMBOL)
 		{
-		  /* expand eval_symbol here to speed it up, was sc->value = eval_symbol(sc, car(sc->code)); */
-		  if (is_not_local(car_code))
-		    x = symbol_global_slot(car_code);
-		  else x = find_symbol(sc, sc->envir, car_code);
-		  if (x != sc->NIL) 
-		    sc->value = symbol_value(x);
-		  else sc->value = eval_symbol_1(sc, car_code);
+		  if (is_global(car_code))
+		    sc->value = symbol_value(symbol_global_slot(car_code));
+		  else sc->value = find_symbol_or_bust_2(sc, sc->envir, car_code);
 		}
 	      else sc->value = car_code;
 
 	      if (cdr(sc->code) == sc->NIL)
 		{
-		  s7_pointer y;
+		  s7_pointer x, y;
 		  car_code = car(sc->code);
 		  typ = type(car_code);
 
@@ -24545,13 +24543,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* get the last arg */
 		  if (typ == T_SYMBOL)
 		    {
-		      s7_pointer xx;
-		      if (is_not_local(car_code))
-			xx = symbol_global_slot(car_code);
-		      else xx = find_symbol(sc, sc->envir, car_code);
-		      if (xx != sc->NIL) 
-			car(y) = symbol_value(xx);
-		      else car(y) = eval_symbol_1(sc, car_code);
+		      if (is_global(car_code))
+			car(y) = symbol_value(symbol_global_slot(car_code));
+		      else car(y) = find_symbol_or_bust_3(sc, sc->envir, car_code);
 		    }
 		  else car(y) = car_code;
 
@@ -24583,13 +24577,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      if (typ == T_SYMBOL)
 		{
-		  s7_pointer xx;
-		  if (is_not_local(car_code))
-		    xx = symbol_global_slot(car_code);
-		  else xx = find_symbol(sc, sc->envir, car_code);
-		  if (xx != sc->NIL) 
-		    car(x) = symbol_value(xx);
-		  else car(x) = eval_symbol_1(sc, car_code);
+		  if (is_global(car_code))
+		    car(x) = symbol_value(symbol_global_slot(car_code));
+		  else 
+		    {
+		      /* in this one case, valgrind thinks this code is better -- I bet
+		       *   this is all someone's idea of a joke.
+		       */
+		      s7_pointer xx;
+		      xx = find_symbol(sc, sc->envir, car_code);
+		      if (xx != sc->NIL) 
+			car(x) = symbol_value(xx);
+		      else car(x) = eval_symbol_1(sc, car_code);
+		    }
 		}
 	      else car(x) = car_code;
 
@@ -24624,9 +24624,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 #if WITH_PROFILING
       symbol_calls(sc->code)++;
-      if (!(symbol_data(sc->code)))
-	symbol_data(sc->code) = (int *)calloc(100, sizeof(int));
-      tick_args(symbol_data(sc->code), sc->args);
 #endif
 
       if (*(sc->tracing)) 
@@ -24960,14 +24957,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		/* s7test: 9%, lg: 38% of allocs here */
+		set_local(z);
 		NEW_CELL(sc, y); 
 		car(y) = z;
 		cdr(y) = car(sc->y);
 		set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
 		ecdr(y) = car(sc->envir);
 		car(sc->envir) = y;
-
-		set_local(z);
 	      }
 #endif
 	    }
@@ -25660,7 +25656,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  push_stack(sc, opcode(OP_SET_ACCESS), sc->y, make_list_2(sc, sc->code, sc->value));
 		  sc->args = make_list_2(sc, sc->code, sc->value);
 		  sc->code = func;
-		  goto APPLY;
+		  goto APPLY_WITHOUT_TRACE;
 		}
 	    }
 	  if (is_syntax(symbol_value(sc->y)))
@@ -25828,7 +25824,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (find_local_symbol(sc, sc->envir, caar(sc->x)) != sc->NIL)                               /* (let ((i 0) (i 1)) i) */
 	    return(eval_error(sc, "duplicate identifier in let: ~A", car(sc->x)));
 
-	  add_to_local_environment(sc, caar(sc->x), car(sc->y)); /* expansion here does not help */
+#if HAVE_PTHREADS
+	  add_to_local_environment(sc, caar(sc->x), car(sc->y));
+#else
+	  {
+	    s7_pointer y, z;
+	    
+	    z = caar(sc->x);
+	    if (is_immutable_or_accessed(z))
+	      {
+		if (is_immutable(z))
+		  return(s7_error(sc, sc->WRONG_TYPE_ARG,
+				  make_list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), z)));
+		car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
+	      }
+	    set_local(z);
+	    NEW_CELL(sc, y); 
+	    car(y) = z;
+	    cdr(y) = car(sc->y);
+	    set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
+	    ecdr(y) = car(sc->envir);
+	    car(sc->envir) = y;
+	  }
+#endif
 	}
 
       if (s7_is_symbol(car(sc->code))) 
@@ -26522,7 +26540,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->NIL, sc->code);
 	  sc->args = sc->NIL;
 	  sc->code = dynamic_wind_body(sc->code);
-	  goto APPLY;
+	  goto APPLY_WITHOUT_TRACE;
 	}
       else
 	{
@@ -26532,7 +26550,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->value, sc->code);
 	      sc->args = sc->NIL;
 	      sc->code = dynamic_wind_out(sc->code);
-	      goto APPLY;
+	      goto APPLY_WITHOUT_TRACE;
 	    }
 	  else
 	    {
