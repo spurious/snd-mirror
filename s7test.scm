@@ -18378,6 +18378,14 @@ abs     1       2
   (test (eval-string #t) 'error)
   (test (eval #(+ 1 2)) #(+ 1 2))
 
+  (test (eval '(begin (define __eval_var__ 1) __eval_var__) (global-environment)) 1)
+  (test (let () __eval_var__) 1)
+  (test (eval-string "(begin (define __eval_var1__ 12) __eval_var1__)" (global-environment)) 12)
+  (test (let () __eval_var1__) 12)
+  (test (let () (eval '(begin (define __eval_var2__ 123) __eval_var__) (current-environment)) __eval_var2__) 123)
+  (test (let () __eval_var2__) 'error)
+
+
   (test (apply "hi" 1 ()) #\i)
   (test (eval ("hi" 1)) #\i)
   (test (apply + 1 1 (cons 1 (quote ()))) 3)

@@ -11875,7 +11875,9 @@ defaults to the global environment.  To load into the current environment instea
     {
       if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "load", 2, cadr(args), "an environment"));
-      sc->envir = cadr(args);
+      if (is_pair(cadr(args)))
+	sc->envir = cadr(args);
+      else sc->envir = sc->NIL;
     }
   else sc->envir = sc->NIL;
   
@@ -12040,7 +12042,9 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
     {
       if (!is_environment(cadr(args)))
  	return(s7_wrong_type_arg_error(sc, "eval-string", 2, cadr(args), "an environment"));
-      sc->envir = cadr(args);
+      if (is_pair(cadr(args)))
+	sc->envir = cadr(args);
+      else sc->envir = sc->NIL;
     }
 
 #if DEBUGGING
@@ -21268,7 +21272,9 @@ pass (global-environment):\n\
     {
       if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
-      sc->envir = cadr(args);
+      if (is_pair(cadr(args)))
+	sc->envir = cadr(args);
+      else sc->envir = sc->NIL;
     }
 
   /* this causes stack-overflow -> segfault:
@@ -23499,10 +23505,6 @@ static s7_pointer find_symbol_or_bust_3(s7_scheme *sc, s7_pointer env, s7_pointe
   FIND_SYMBOL_OR_BUST(sc);
 } 
 
-static s7_pointer find_symbol_or_bust_4(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
-{ 
-  FIND_SYMBOL_OR_BUST(sc);
-} 
 
 
 static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
@@ -32287,7 +32289,6 @@ s7_scheme *s7_init(void)
   
   sc->global_env = s7_make_vector(sc, SYMBOL_TABLE_SIZE);
   typeflag(sc->global_env) |= T_ENVIRONMENT;
-  /* sc->envir = sc->global_env; */
   sc->envir = sc->NIL;
   
   /* keep the small_ints out of the heap */
