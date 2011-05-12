@@ -17152,7 +17152,7 @@ static s7_pointer g_run_eval(s7_pointer code, s7_pointer arg, s7_pointer arg1, s
   if (!s7_is_pair(code))
     return(code);
 
-  cl = s7_make_closure(s7, code, xen_nil);
+  cl = s7_make_closure(s7, code, s7_current_environment(s7));
   gc_loc = s7_gc_protect(s7, cl);
 
   pt = make_ptree(8);
@@ -17256,9 +17256,9 @@ to Scheme and is equivalent to (thunk)."
   XEN_ASSERT_TYPE(s7_is_procedure(proc_and_code) && (XEN_REQUIRED_ARGS_OK(proc_and_code, 0)), proc_and_code, 1, S_run, "a thunk");
   
   code = s7_cons(s7, s7_append(s7, s7_cons(s7, s7_make_symbol(s7, "lambda"), 
-				      scheme_nil),
-			     s7_car(proc_and_code)),
-		  s7_cdr(proc_and_code));
+					   scheme_nil),
+			       s7_car(proc_and_code)),
+		 s7_cdr(proc_and_code));
   gc_loc = s7_gc_protect(s7, code);
 
   pt = form_to_ptree(code);

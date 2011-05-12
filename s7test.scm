@@ -16386,6 +16386,14 @@ who says the continuation has to restart the map from the top?
 (test (object->string quasiquote) "quasiquote")
 
 
+;; from Guile mailing list
+(test (let ((v '(\())))
+	(and (pair? v)
+	     (symbol? (car v)) ; \
+	     (null? (cadr v))))
+      #t)
+;; this gets a read-error in Snd because the listener gets confused
+
 #|
 unquote outside qq:
 (',- 1)

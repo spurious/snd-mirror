@@ -26081,7 +26081,7 @@ EDITS: 2
 				   #f ;no change to synthesis
 				   ))
       (set! reader (make-sampler 0))
-      (let* ((len (* 2 (frames ind)))
+      (let* ((len 1000)
 	     (data (make-vct len)))
 	(vct-map! data
 		  (lambda ()
@@ -26103,7 +26103,7 @@ EDITS: 2
 				       0.0)
 				     ))
 	(set! reader (make-sampler 0))
-	(let* ((len (* 2 (frames ind)))
+	(let* ((len 1000)
 	       (data (make-vct len)))
 	  (vct-map! data
 		    (lambda ()
@@ -63398,6 +63398,7 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 
+9-May-11
 203,511,274,923  PROGRAM TOTALS
 27,596,691,437  s7.c:eval [/home/bil/snd-12/snd]
 20,571,966,456  s7.c:eval'2 [/home/bil/snd-12/snd]
