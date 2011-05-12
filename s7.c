@@ -215,11 +215,6 @@
 #endif
 
 
-#ifndef DEBUGGING
-  #define DEBUGGING 0
-#endif
-
-
 
 
 /* -------------------------------------------------------------------------------- */
@@ -440,14 +435,13 @@ typedef struct s7_vdims_t {
 
 /* cell structure */
 typedef struct s7_cell {
-  unsigned int flag;
-#if DEBUGGING
-  unsigned int saved_flag;
-#endif
+  union {
+    unsigned int flag;
+    unsigned char type_field;
+  } tf;
   int hloc;
 #if WITH_PROFILING
   long long int calls;
-  int *data;
 #endif
   union {
     
@@ -700,15 +694,8 @@ struct s7_scheme {
 #define BUILT_IN_TYPES        37
 
 #define TYPE_BITS                     8
-#define T_MASKTYPE                    0xff
-
-#define typeflag(p)                   ((p)->flag)
-#define type(p)                       (typeflag(p) & T_MASKTYPE)
-/* set_type below -- needs to maintain mark setting */
-#if DEBUGGING
-#define saved_typeflag(p)             ((p)->saved_flag)
-#define saved_type(p)                 (saved_typeflag(p) & T_MASKTYPE)
-#endif
+#define typeflag(p)                   ((p)->tf.flag)
+#define type(p)                       ((p)->tf.type_field)
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
@@ -759,6 +746,7 @@ struct s7_scheme {
 #define T_GLOBAL                      (1 << (TYPE_BITS + 16))
 #define is_global(p)                  ((typeflag(p) & T_GLOBAL) != 0)
 #define set_global(p)                 typeflag(p) |= T_GLOBAL
+/* this marks something defined (bound) at the top-level, and never defined locally */
 
 #define T_LOCAL                       (1 << (TYPE_BITS + 14))
 #define is_not_local(p)               ((typeflag(p) & T_LOCAL) == 0)
@@ -820,8 +808,7 @@ struct s7_scheme {
 
 #define UNUSED_BITS                   0x80004900
 
-/* TYPE_BITS could be 6
- * TYPE_BITS + 0, 3, 6, and 23 are currently unused
+/* TYPE_BITS + 0, 3, 6, and 23 are currently unused
  */
 
 
@@ -1459,6 +1446,7 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
       break;
 
     case T_CONTINUATION:
+      if (continuation_op_stack(a)) free(continuation_op_stack(a));
       free(continuation(a));
       break;
       
@@ -1699,9 +1687,6 @@ static int gc(s7_scheme *sc)
 	      {
 		if (is_finalizable(p))
 		  finalize_s7_cell(sc, p); 
-#if DEBUGGING
-		saved_typeflag(p) = typeflag(p);
-#endif		
 		typeflag(p) = 0;  /* (this is needed -- otherwise we try to free some objects twice) */
 		(*fp++) = p;
 	      }
@@ -1709,7 +1694,7 @@ static int gc(s7_scheme *sc)
 	/* by grouping the T_GC_MARK and T_FINALIZABLE bits with the type bits, it's possible
 	 *   to use a switch statement here rather than 3 if's, but that is much slower!
 	 */
-#if (!DEBUGGING)
+
 	/* this looks crazy, but it speeds up the entire GC process by 25%!
 	 *   going from 16 to 32 saves .2% so it may not matter.
 	 */
@@ -1751,7 +1736,6 @@ static int gc(s7_scheme *sc)
 	GC_CALL(p, tp);
 	GC_CALL(p, tp);
 	GC_CALL(p, tp);
-#endif
       }
     sc->free_heap_top = fp;
   }
@@ -2188,7 +2172,6 @@ static void pop_stack(s7_scheme *sc)
   sc->envir = sc->stack_end[1];
   sc->code =  sc->stack_end[0];
 } 
-
 
 static void push_stack(s7_scheme *sc, s7_pointer int_op, s7_pointer args, s7_pointer code)
 { 
@@ -2904,7 +2887,7 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
   s7_pointer x;
-  x = find_symbol(sc, local_env, sym); /* TODO: does this make any sense? find_local_symbol? */
+  x = find_local_symbol(sc, local_env, sym); 
   if (x != sc->NIL)
     return(symbol_value(x));
   return(s7_symbol_value(sc, sym)); /* try sc->envir */
@@ -12026,10 +12009,6 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 }
 
 
-#if DEBUGGING
-  static char *eval_string_string = NULL;
-#endif
-
 static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval_string "(eval-string str (env (current-environment))) returns the result of evaluating the string str as Scheme code"
@@ -12047,10 +12026,6 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
       else sc->envir = sc->NIL;
     }
 
-#if DEBUGGING
-  eval_string_string = (char *)s7_string(car(args));
-#endif
-  
   port = s7_open_input_string(sc, s7_string(car(args)));
   push_input_port(sc, port);
   
@@ -12524,29 +12499,6 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_environment(obj) ?        " environment" : "",
              dont_eval_args(obj) ?        " dont-eval-args" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
-#if DEBUGGING
-    if ((saved_typeflag(obj) != typeflag(obj)) &&
-	(saved_typeflag(obj) > 0) &&
-	(saved_type(obj) < BUILT_IN_TYPES))
-      {
-	char *descr, *new_buf;
-	int old_flag;
-	old_flag = typeflag(obj);
-	typeflag(obj) = saved_typeflag(obj);
-	descr = atom_to_c_string(sc, obj, WITH_ELLIPSES);
-	typeflag(obj) = old_flag;
-	if (descr)
-	  {
-	    int len;
-	    len = strlen(descr) + strlen(buf) + 32;
-	    new_buf = (char *)calloc(len, sizeof(char));
-	    snprintf(new_buf, len, "%s (possibly: %s)", buf, descr);
-	    free(descr);
-	    free(buf);
-	    return(new_buf);
-	  }
-      }
-#endif
     return(buf);
   }
 }
@@ -13717,6 +13669,28 @@ s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
 }
 
 
+static s7_pointer revappend(s7_scheme *sc, s7_pointer a, s7_pointer b) 
+{
+  /* (map (lambda (x) (if (odd? x) (apply values '(1 2 3)) (values))) (list 1 2 3 4)) 
+   *   is a bad case -- we have to copy the incoming list.
+   */
+   
+  s7_pointer p = b, q;
+  
+  if (a != sc->NIL) 
+    {
+      a = copy_list(sc, a); 
+      while (a != sc->NIL) 
+	{
+	  q = cdr(a);
+	  cdr(a) = p;
+	  p = a;
+	  a = q;
+	}
+    }
+  return(p);
+}
+
 static int safe_list_length(s7_scheme *sc, s7_pointer a)
 {
   /* assume that "a" is a proper list */
@@ -14059,7 +14033,6 @@ static s7_pointer g_caar(s7_scheme *sc, s7_pointer args)
 
  return(car(car(lst)));
 }
-
 
 static s7_pointer g_cadr(s7_scheme *sc, s7_pointer args)
 {
@@ -23527,7 +23500,18 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
   return(unbound_variable(sc, sym));
 }
 
-
+#if 0
+static bool just_constants(s7_scheme *sc, s7_pointer args)
+{
+  if (args == sc->NIL)
+    return(true);
+  if ((!is_pair(args)) ||
+      (s7_is_symbol(car(args))) ||
+      (is_pair(car(args))))
+    return(false);
+  return(just_constants(sc, cdr(args)));
+}
+#endif
 
 
 
@@ -23872,7 +23856,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->value != sc->NO_VALUE)
 	{
 	  if (is_multiple_value(sc->value))
-	    cadr(sc->args) = s7_append(sc, safe_reverse_in_place(sc, multiple_value(sc->value)), cadr(sc->args));
+	    cadr(sc->args) = revappend(sc, multiple_value(sc->value), cadr(sc->args));
 	  else cadr(sc->args) = s7_cons(sc, sc->value, cadr(sc->args));
 	}
       if (is_pair(cddr(sc->args)))
@@ -23894,7 +23878,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->value != sc->NO_VALUE)                   /* (map (lambda (x) (values)) (list 1)) */
 	{
 	  if (is_multiple_value(sc->value))            /* (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) */
-	    caddr(sc->args) = s7_append(sc, safe_reverse_in_place(sc, multiple_value(sc->value)), caddr(sc->args));
+	    caddr(sc->args) = revappend(sc, multiple_value(sc->value), caddr(sc->args));
 	  /* not append_in_place here because sc->value has the multiple-values bit set */
 	  else caddr(sc->args) = s7_cons(sc, sc->value, caddr(sc->args));
 	}
@@ -23964,6 +23948,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
 	}
       else push_stack(sc, opcode(OP_MEMBER_IF1), sc->args, sc->code);
+      /* 22% of pushes in lg, 0 in s7test */
       cadar(sc->args) = caadr(sc->args);
       sc->args = car(sc->args);
       goto APPLY_WITHOUT_TRACE;
@@ -24028,6 +24013,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   these are also updated in parallel at the end, so we gather all the incremented values first
        */
       push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
+      /* s7test: 23% of pushes, 5% in lg */
       if (car(sc->args) == sc->NIL)
 	goto START;
       sc->args = car(sc->args);                /* the var data lists */
@@ -24273,6 +24259,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  /* evaluate the body and step vars, etc */
 	  push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
+	  /* s7test: 22% of pushes, 5% in lg */
 	  /* sc->code is ready to go */
 	}
       /* fall through */
@@ -24285,6 +24272,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  opcode_t op;
 	  op = sc->op;
 	  push_stack(sc, opcode(OP_BARRIER), sc->args, sc->code);
+	  /* s7test: 22% of pushes, 5% in lg */
 	  if ((*(sc->begin_hook))(sc))
 	    {
 	      s7_quit(sc);
@@ -24331,6 +24319,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  if (s7_is_symbol(carc))
 	    {
+	      /* checking for 0-arg case here is slower */
 	      if (is_global(carc))
 		sc->value = symbol_value(symbol_global_slot(carc));
 	      else sc->value = find_symbol_or_bust(sc, sc->envir, carc);
@@ -24490,13 +24479,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (cdr(sc->code) == sc->NIL)
 		push_stack(sc, opcode(OP_EVAL_ARGS2), sc->args, sc->NIL);
 	      else push_stack(sc, opcode(OP_EVAL_ARGS1), sc->args, cdr(sc->code));
+	      /* s7test: 15% of pushes, 13% in lg */
 	      sc->code = car_code;
 	      goto EVAL;
 	    }
 
-	  sc->code = cdr(sc->code);
-	  if (sc->code != sc->NIL)
+	  if (cdr(sc->code) != sc->NIL)
 	    {
+	      sc->code = cdr(sc->code);
 	      if (typ == T_SYMBOL)
 		{
 		  if (is_global(car_code))
@@ -24521,6 +24511,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      sc->args = x;
 
 		      push_stack(sc, opcode(OP_EVAL_ARGS2), sc->args, sc->NIL);
+		      /* 17% of pushes in lg, 1% in s7test */
 		      sc->code = car_code;
 		      goto EVAL;
 		    }
@@ -25079,22 +25070,52 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START_WITHOUT_POP_STACK;
 	  }
 
+
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
-	  /* sc->code is the vector, sc->args is the list of dimensions */
+	  /* sc->code is the vector, sc->args is the list of indices 
+	   */
+	  if ((cdr(sc->args) == sc->NIL) &&       /* cdr(nil) -> #<unspecified> internally */
+	      (s7_is_integer(car(sc->args))) &&
+	      (!vector_is_multidimensional(sc->code)))
+	    {
+	      s7_Int index;
+	      index = s7_integer(car(sc->args));
+	      if ((index >= 0) &&
+		  (index < vector_length(sc->code)))
+		{
+		  sc->value = vector_elements(sc->code)[index];
+		  goto START;
+		}
+	    }
+
 	  if (sc->args == sc->NIL)                            /* (#2d((1 2) (3 4))) */
 	    return(s7_wrong_number_of_args_error(sc, "not enough args for vector-ref: ~A", sc->args));
 
 	  sc->value = vector_ref_1(sc, sc->code, sc->args);
 	  goto START;
 
-	case T_STRING:                            /* -------- string as applicable object -------- */
-	  if (cdr(sc->args) != sc->NIL)
-	    return(s7_error(sc, 
-			    sc->WRONG_NUMBER_OF_ARGS, 
-			    make_list_3(sc, (sc->args == sc->NIL) ? sc->NOT_ENOUGH_ARGUMENTS : sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
 
-	  sc->value = string_ref_1(sc, sc->code, car(sc->args));
-	  goto START;
+	case T_STRING:                            /* -------- string as applicable object -------- */
+	  if (cdr(sc->args) == sc->NIL)
+	    {
+	      if (s7_is_integer(car(sc->args)))
+		{
+		  int index;
+		  index = (int)s7_integer(car(sc->args));
+		  if ((index >= 0) &&
+		      (index < string_length(sc->code)))
+		    {
+		      sc->value = s7_make_character(sc, ((unsigned char *)string_value(sc->code))[index]);
+		      goto START;
+		    }
+		}
+	      sc->value = string_ref_1(sc, sc->code, car(sc->args));
+	      goto START;
+	    }
+	  return(s7_error(sc, 
+			  sc->WRONG_NUMBER_OF_ARGS, 
+			  make_list_3(sc, (sc->args == sc->NIL) ? sc->NOT_ENOUGH_ARGUMENTS : sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+
 
 	case T_PAIR:                              /* -------- list as applicable object -------- */
 	  if (is_multiple_value(sc->code))                                  /* ((values 1 2 3) 0) */
@@ -25106,21 +25127,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->x = sc->NIL;
 	      goto APPLY;
 	    }
- 	  if (sc->args == sc->NIL)
- 	    return(s7_wrong_number_of_args_error(sc, "not enough args for list-ref (via list as applicable object): ~A", sc->args));
-
 	  if (cdr(sc->args) == sc->NIL)
 	    sc->value = list_ref_1(sc, sc->code, car(sc->args));            /* (L 1) */
-	  else sc->value = g_list_ref(sc, s7_cons(sc, sc->code, sc->args)); /* (L 1 2) */
+	  else
+	    {
+	      if (sc->args == sc->NIL)
+		return(s7_wrong_number_of_args_error(sc, "not enough args for list-ref (via list as applicable object): ~A", sc->args));
+	      sc->value = g_list_ref(sc, s7_cons(sc, sc->code, sc->args)); /* (L 1 2) */
+	    }
 	  goto START;
 
-	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
- 	  if (sc->args == sc->NIL)
- 	    return(s7_wrong_number_of_args_error(sc, "not enough args for hash-table-ref (via hash table as applicable object): ~A", sc->args));
 
+	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
 	  if (cdr(sc->args) == sc->NIL)
 	    sc->value = s7_hash_table_ref(sc, sc->code, car(sc->args));
-	  else sc->value = g_hash_table_ref(sc, s7_cons(sc, sc->code, sc->args));
+	  else
+	    {
+	      if (sc->args == sc->NIL)
+		return(s7_wrong_number_of_args_error(sc, "not enough args for hash-table-ref (via hash table as applicable object): ~A", sc->args));
+	      sc->value = g_hash_table_ref(sc, s7_cons(sc, sc->code, sc->args));
+	    }
 	  goto START;
 
 	case T_SYNTAX:                            /* -------- syntactic keyword as applicable object -------- */
@@ -25703,7 +25729,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (cdr(cdr_code) != sc->NIL)                    /* (if 1 2 . 3) */
 	      return(eval_error(sc, "if: ~A has improper list?", sc->code));
 	  }
-      
+	
+	/* we could check for non-expression here, and do the jump without push_stack etc,
+	 *   but it turns out this happens infrequently, and the cost of checking outweighs
+	 *   the small gains.
+	 */
 	push_stack(sc, opcode(OP_IF1), sc->NIL, cdr_code);
 	sc->code = car(sc->code);
 	goto EVAL;
@@ -26797,6 +26827,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	default:
 	  /* by far the main case here is TOKEN_LEFT_PAREN, but it doesn't save anything to move it to this level */
 	  push_stack(sc, opcode(OP_READ_LIST), sc->args, sc->NIL);
+	  /* s7test: 1% of pushes, .1% in lg */
 	  sc->value = read_expression(sc);
 	  /* check for op_read_list here and explicit pop_stack are slower */
 	  break;
@@ -32299,14 +32330,14 @@ s7_scheme *s7_init(void)
       s7_pointer p;
 
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
-      p->flag = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+      typeflag(p) = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
       p->hloc = NOT_IN_HEAP;
       number_type(p) = NUM_INT;
       integer(number(p)) = (s7_Int)i;
       small_ints[i] = p;
 
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
-      p->flag = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+      typeflag(p) = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
       p->hloc = NOT_IN_HEAP;
       number_type(p) = NUM_INT;
       integer(number(p)) = (s7_Int)(-i);
@@ -32314,13 +32345,13 @@ s7_scheme *s7_init(void)
     }
 
   real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
-  real_zero->flag = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+  typeflag(real_zero) = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
   real_zero->hloc = NOT_IN_HEAP;
   number_type(real_zero) = NUM_REAL;
   real(number(real_zero)) = (s7_Double)0.0;
 
   real_one = (s7_pointer)calloc(1, sizeof(s7_cell));
-  real_one->flag = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+  typeflag(real_one) = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
   real_one->hloc = NOT_IN_HEAP;
   number_type(real_one) = NUM_REAL;
   real(number(real_one)) = (s7_Double)1.0;
@@ -32331,7 +32362,7 @@ s7_scheme *s7_init(void)
     {
       s7_pointer p;
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
-      p->flag = T_IMMUTABLE | T_CHARACTER | T_SIMPLE | T_DONT_COPY;
+      typeflag(p) = T_IMMUTABLE | T_CHARACTER | T_SIMPLE | T_DONT_COPY;
       p->hloc = NOT_IN_HEAP;
       character(p) = (unsigned char)i;
       chars[i] = p;

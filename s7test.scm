@@ -103,24 +103,6 @@
 (define error-6  1e-6)
 
 (define (number-ok? tst result expected)
-#|
-  (if (or (and (integer? expected)
-	       (not (integer? result)))
-	  (and (rational? expected)
-	       (not (rational? result)))
-	  (and (real? expected)
-	       (not (real? result)))
-	  (and (nan? expected)
-	       (not (nan? result)))
-	  (and (infinite? expected)
-	       (not (infinite? result))))
-      (format #t "~A: ~A got ~A~Abut expected ~A~%" 
-	      (port-line-number) tst result 
-	      (if (and (rational? result) (not (rational? expected)))
-		  (format #f " (~A) " (* 1.0 result))
-		  " ")
-	      expected))
-|#      
   (if (not (eq? result expected))
       (if (or (and (not (number? expected))
 		   (not (eq? result expected)))
@@ -10687,6 +10669,7 @@ this prints:
 (test (equal? + '+) #f)
 (test (eq? '() ()) #t) ; s7 specific
 
+(test (quote) 'error)
 (test (quote . -1) 'error)
 (test (quote 1 1) 'error)
 (test (quote . 1) 'error)
@@ -12149,6 +12132,7 @@ this prints:
 (test (cond ((values -1) =>)) 'error)
 (test (cond (cond (#t 1))) 'error)
 (test (cond 1) 'error)
+(test (cond) 'error)
 (test (cond (1 . 2) (else 3)) 'error)
 (test (cond (#f 2) (else . 4)) 'error)
 (test (cond ((values 1 2) => (lambda (x y) #t))) #t)
@@ -12339,6 +12323,7 @@ this prints:
 (test (case "" (("") 1)) #<unspecified>)
 (test (case abs ((abs) 1)) #<unspecified>)
 
+(test (case) 'error)
 (test (case 1) 'error)
 (test (case 1 . "hi") 'error)
 (test (case 1 ("hi")) 'error)
@@ -13272,6 +13257,7 @@ this prints:
 (test (map (lambda (x) (if #f x (values))) (list 1 2)) '())
 (test (map (lambda (x) (if #f x (begin (values)))) (list 1 2)) '())
 (test (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) '(1 20 3 60))
+(test (map (lambda (x) (if (odd? x) (apply values '(1 2 3)) (values))) (list 1 2 3 4)) '(1 2 3 1 2 3))
 (test (object->string (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4))) "(1 20 3 60)") ; make sure no "values" floats through
 (test (map (lambda (x) (if (odd? x) (values x (* x 20) (cons x (+ x 1))) (values))) (list 1 2 3 4 5 6)) '(1 20 (1 . 2) 3 60 (3 . 4) 5 100 (5 . 6)))
 (test (* 2 (case 1 ((2) (values 3 4)) ((1) (values 5 6)))) 60)
@@ -61755,107 +61741,43 @@ etc
 
 ;;; --------------------------------------------------------------------------------
 
-
 (define* (profile (file "sort.data"))
   ;; find all functions, write out each one's number of calls, sorted first by calls, then alphabetically 
 
   (define (where-is func)
-    (let* ((env (procedure-environment func))
-           (addr (symbol->value '__func__ env)))
+    (let* ((f (symbol->value '__func__ (procedure-environment func)))
+	   (addr (and (pair? f)
+		      (cdr f))))
       (if (not (pair? addr))
 	  ""
-	  (format #f "~A[~D]" (cadr addr) (caddr addr)))))
+	  (format #f "~A[~D]" (car addr) (cadr addr)))))
 
-  (define (vector-max v start end)
-    (let ((m 0))
-      (do ((i start (+ i 1)))
-	  ((= i end) m)
-	(if (> (v i) m)
-	    (set! m (v i))))))
+  (if (provided? 'profiling)
+      (let ((st (symbol-table))
+	    (calls (make-vector 50000 '(none 0)))
+	    (call 0))
+	(do ((i 0 (+ i 1))) 
+	    ((= i (length st)))
+	  (let ((lst (st i)))
+	    (for-each
+	     (lambda (sym)
+	       (if (and (defined? sym) 
+			(procedure? (symbol->value sym)))
+		   (begin
+		     (set! (calls call) (list sym (symbol-calls sym)))
+		     (set! call (+ call 1)))))
+	     lst)))
 
-  (define names (vector 'none 'nil 'string 'num 'sym 'pair 'func 'func* 'cont 'char 'iport 'vect 'mac 'bac 
-			'cobj 'sobj 'goto 'oport 'catch 'dynwind 'hash 'bool 'hook 'cmac 'cptr 'cfunc 'cfunc 'cfunc
-			'int 'ratio 'real 'complex 'any 'any 'any))
+	(set! calls (sort! calls (lambda (a b) (> (cadr a) (cadr b)))))
+	
+	(with-output-to-file file
+	  (lambda ()
+	    (do ((i 0 (+ i 1)))
+		((= i call))
+	      (let ((c (calls i)))
+		(if (not (eq? (car c) 'none))
+		    (format #t "~A:~40T~A~60T~A~%" (car c) (cadr c) (where-is (car c)))))))))))
 
-  (define wanted (vector #f #t #t #t #t #t #f #f #f #t #f #t #f #f
-			#f #f #f #f #f #f #t #t #f #f #f #f #f #f
-			#f #f #f #f #f #f #f #f #f #f #f #f))
-
-  (define (display-arg v start)
-    (let ((untested #f))
-      (format #t "        ")
-      (do ((i start (+ i 1)))
-	  ((= i (+ start 28)))
-	(if (> (v i) 0)
-	    (format #t "~A: ~D " (names (- i start)) (v i))
-	    (if (wanted (- i start))
-		(set! untested #t))))
-      (if (> (v (+ start 3)) 0)
-	  (begin
-	    (format #t "~%            ")
-	    (do ((i (+ start 28) (+ i 1)))
-		((= i (+ start 32)))
-	      (format #t "~A: ~D " (names (- i start)) (v i)))))
-      (if untested
-	  (begin
-	    (format #t "~%            untested: ")
-	    (do ((i start (+ i 1)))
-		((= i (+ start 28)))
-	      (if (and (wanted (- i start))
-		       (= (v i) 0))
-		  (format #t "~A " (names (- i start)))))))
-      (format #t "~%~%")))
-
-  (let ((st (symbol-table))
-	(calls (make-vector 50000 '(none (0 #f))))
-	(call 0))
-    (do ((i 0 (+ i 1))) 
-	((= i (length st)))
-      (let ((lst (st i)))
-	(for-each
-	 (lambda (sym)
-	   (if (and (defined? sym) 
-		    (procedure? (symbol->value sym)))
-	       (begin
-		 (set! (calls call) (list sym (symbol-calls sym)))
-		 (set! call (+ call 1)))))
-	 lst)))
-
-    (set! calls (sort! calls (lambda (a b)
-			       (> (caadr a) (caadr b)))))
-
-    (with-output-to-file file
-      (lambda ()
-	(do ((i 0 (+ i 1)))
-	    ((= i call))
-	  (let* ((c (calls i))
-		 (sym (car c))
-		 (data (cadr c))
-		 (total (car data))
-		 (args (cadr data)))
-	    (if (> total 0)
-		(begin
-		  (format #t "--------------------------------------------------------------------------------~%~A: ~A~40T~A~%" sym total (where-is sym))
-		  (if args
-		      (let* ((arity (procedure-arity (symbol->value sym)))
-			     (top (min 3 (+ (car arity) (cadr arity) (if (caddr arity) 3 0)))))
-			(do ((base 0 (+ base 1)))
-			    ((= base top))
-			  (let ((arg-max (vector-max args (* base 32) (* (+ base 1) 32))))
-			    (if (> arg-max 0)
-				(display-arg args (* base 32)))))))))))
-
-	(format #t "~%~%-------------- not called ------------------------------------------------------------------~%~%")
-	(do ((i 0 (+ i 1)))
-	    ((= i call))
-	  (let* ((c (calls i))
-		 (sym (car c))
-		 (data (cadr c))
-		 (total (car data)))
-	    (if (and (<= total 0)
-		     (not (eq? sym 'none)))
-		(format #t "~A~40T~A~%" sym (where-is sym)))))
-	(format #t "~%~%")))))
 
 (if (provided? 'profiling)
     (profile))

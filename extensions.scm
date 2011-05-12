@@ -643,11 +643,11 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		      (cdr f))))
       (if (not (pair? addr))
 	  ""
-	  (format #f "~A[~D]" (cadr addr) (caddr addr)))))
+	  (format #f "~A[~D]" (car addr) (cadr addr)))))
 
   (if (provided? 'profiling)
       (let ((st (symbol-table))
-	    (calls (make-vector 50000 '(none (0 #f))))
+	    (calls (make-vector 50000 '(none 0)))
 	    (call 0))
 	(do ((i 0 (+ i 1))) 
 	    ((= i (length st)))
@@ -670,6 +670,3 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	      (let ((c (calls i)))
 		(if (not (eq? (car c) 'none))
 		    (format #t "~A:~40T~A~60T~A~%" (car c) (cadr c) (where-is (car c)))))))))))
-
-;;; TODO: check the new profiling stuff
-

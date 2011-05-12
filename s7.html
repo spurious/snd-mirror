@@ -3069,7 +3069,6 @@ floats in the "~X" case.  So in s7,
 "\"hiho\""
 </pre>
 
-
 <small>
 <blockquote>
 
@@ -3770,9 +3769,6 @@ where we only feed in a few constants, I bet it segfaults!
 			     (autotest val '() (+ req opt 1 (if rst 1 0))))))))))
 	 lst)))))
 </pre>
-
-<small>
-<blockquote>
 
 
 </dd>
@@ -4830,82 +4826,8 @@ complex numbers, or fancy list processing, so it is not too hard to write an
 optimizer for them.  In sndlib, that optimizer is called "run".  It is a macro (in modern jargon, a JIT byte compiler)
 that can be wrapped around any piece of Scheme code that you want to speed up.
 If it can't optimize the code, it passes it to the s7 interpreter.  If run is successful,
-you will normally get a speed up by a factor of 10 to 30.  For CLM instruments,
-the result runs close to the speed of the equivalent compiled and optimized
-C code.  Here are my timings for two instruments, bird and fm-violin, each running for 100 seconds.
-I've included sbcl times for comparison.
+you will normally get a speed up by a factor of about 10.
 </p>
-
-<pre>
-          s7 interpreted  s7+run  C (-O2)      sbcl
-bird          9.6          .7       .65         .65
-violin       21.6         1.44     1.28        1.28
-</pre>
-
-<p>
-The sbcl and C compiler cases are the same because
-CLM in sbcl uses a version of the run macro that translates the CL code to C, calls the C compiler
-on that, then loads it as a foreign function, so it is essentially the
-same as the straight C case.  In s7, however, we're running interpreted; there is
-no separate compilation step.  Another comparison: the fft benchmark from the Gabriel
-tests.  In s7 interpreted, it runs 1000 1024 point FFTs in 53 seconds; with "run",
-the same takes 2 seconds.  In Guile 1.9.5 after compilation, it takes 10 seconds.
-So, in general, s7 is not so slow as to be an annoyance.  
-</p>
-
-<!--
-sbcl: (with-sound (:play nil :statistics t) (bird 0 100 440.0 10.0 0.5 '(0 0 1 1) '(0 0 1 1 2 1 3 0)))
-      (with-sound (:play nil :statistics t) (fm-violin 0 100 440.0 .4))
-
-C: in sndlib configure make
-   gcc time-bird.c -o time-bird -O2 -I. libsndlib.a -lasound -lgsl -lgslcblas
-   time time-bird
-
-s7: use the sndlib example in s7.html
-    gcc -o ex1 ex1.c s7.o -lm -I. -O2
-    ex1
-    (load "sndlib-ws.scm")
-    (load "bird.scm")
-    (load "v.scm")
-
-(with-sound (:play #f :statistics #t) (bird 0 100 440.0 10.0 0.5 '(0 0 1 1) '(0 0 1 1 2 1 3 0)))
-(with-sound (:play #f :statistics #t) (fm-violin 0 100 440.0 .4))
-
-
-fft.sch interpreted: 53,  run: 2
-guile 1.9.5 after compilation: 10.5
--->
-
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<small>
-<blockquote>
-
-<p>I can't resist giving another example.  Here's some vector arithmetic:
-</p>
-
-<pre>
-(let* ((size (* 128 1024))
-       (v1 (make-vector size 0.0))
-       (v2 (make-vector size 0.0))
-       (sum 0.0))
-  (<em class=red>run</em>
-   (do ((i 0 (+ i 1)))
-       ((= i size))
-     (set! (v1 i) (- (random 2.0) 1.0))
-     (set! (v2 i) (- (random 2.0) 1.0)))
-   (do ((i 0 (+ i 1)))
-       ((= i size) sum)
-     (set! sum (+ sum (* (v1 i) (v2 i)))))))
-</pre>
-
-<p>With run, this takes .092 seconds on my old machine; without run, it takes 1.94 seconds.
-</p>
-
-</blockquote>
-</small>
 
 </dd>
 <br><br>
