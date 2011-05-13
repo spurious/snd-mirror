@@ -6780,6 +6780,7 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
     free(choices);
   }
 
+  fprintf(stderr, "%d %d is done\n", choice, n);
   return(XEN_FALSE);
 }
 

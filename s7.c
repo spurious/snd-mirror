@@ -450,6 +450,7 @@ typedef struct s7_cell {
       int location;
       char *svalue;
       s7_pointer global_slot; /* for strings that represent symbol names, this is the global slot */
+      unsigned int hash;
     } string;
     
     s7_num_t number;
@@ -697,13 +698,7 @@ struct s7_scheme {
 #define typeflag(p)                   ((p)->tf.flag)
 #define type(p)                       ((p)->tf.type_field)
 
-#define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
-#define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
-#define set_immutable(p)              typeflag(p) |= (T_IMMUTABLE | T_DONT_COPY)
-/* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
- */
-
-#define T_GC_MARK                     (1 << (TYPE_BITS + 4))
+#define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 #define set_mark(p)                   typeflag(p)  |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p)  &= (~T_GC_MARK)
@@ -713,54 +708,60 @@ struct s7_scheme {
  *   moving all the other type bits up out of the way, but this saved very little.
  */
 
-#define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
+#define T_FINALIZABLE                 (1 << (TYPE_BITS + 1))
 #define is_finalizable(p)             ((typeflag(p) & T_FINALIZABLE) != 0)
 /* finalizable means some action may need to be taken when the cell is GC'd */
 
-#define T_SIMPLE                      (1 << (TYPE_BITS + 8))
+#define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
+#define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
+#define set_immutable(p)              typeflag(p) |= (T_IMMUTABLE | T_DONT_COPY)
+/* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
+ */
+
+#define T_SIMPLE                      (1 << (TYPE_BITS + 3))
 #define is_simple(p)                  ((typeflag(p) & T_SIMPLE) != 0)
 /* a simple object has no markable subfields and no special mark actions */
 
-#define T_DONT_COPY                   (1 << (TYPE_BITS + 9))
+#define T_DONT_COPY                   (1 << (TYPE_BITS + 4))
 #define dont_copy(p)                  ((typeflag(p) & T_DONT_COPY) != 0)
 #define dont_copy_cdr(p)              ((typeflag(p) & (T_PROCEDURE | T_ANY_MACRO)) != 0)
 /* dont_copy means the object is not copied when saved in a continuation */
 
-#define T_PROCEDURE                   (1 << (TYPE_BITS + 10))
+#define T_PROCEDURE                   (1 << (TYPE_BITS + 5))
 #define is_procedure(p)               ((typeflag(p) & T_PROCEDURE) != 0)
 /* closure, macro, c_function, procedure-with-setter, settable object, goto or continuation */
 
-#define T_SAFE_PROCEDURE              (1 << (TYPE_BITS + 11))
+#define T_SAFE_PROCEDURE              (1 << (TYPE_BITS + 6))
 #define is_safe_procedure(p)          ((typeflag(p) & T_SAFE_PROCEDURE) != 0)
 /* c_functions that return or modify the arg list directly (no :rest arg in particular) */
 
-#define T_ANY_MACRO                   (1 << (TYPE_BITS + 12))
+#define T_ANY_MACRO                   (1 << (TYPE_BITS + 7))
 #define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
 /* this marks scheme and C-defined macros */
 
-#define T_DONT_EVAL_ARGS              (1 << (TYPE_BITS + 1))
+#define T_DONT_EVAL_ARGS              (1 << (TYPE_BITS + 8))
 #define dont_eval_args(p)             ((typeflag(p) & T_DONT_EVAL_ARGS) != 0)
 
-#define T_EXPANSION                   (1 << (TYPE_BITS + 13))
+#define T_EXPANSION                   (1 << (TYPE_BITS + 9))
 #define is_expansion(p)               ((typeflag(p) & T_EXPANSION) != 0)
 /* this marks macros from define-expansion */
 
-#define T_GLOBAL                      (1 << (TYPE_BITS + 16))
+#define T_GLOBAL                      (1 << (TYPE_BITS + 10))
 #define is_global(p)                  ((typeflag(p) & T_GLOBAL) != 0)
 #define set_global(p)                 typeflag(p) |= T_GLOBAL
 /* this marks something defined (bound) at the top-level, and never defined locally */
 
-#define T_LOCAL                       (1 << (TYPE_BITS + 14))
+#define T_LOCAL                       (1 << (TYPE_BITS + 11))
 #define is_not_local(p)               ((typeflag(p) & T_LOCAL) == 0)
 #define is_local(p)                   ((typeflag(p) & T_LOCAL) != 0)
 #define set_local(p)                  typeflag(p) = ((typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL)) | T_LOCAL)
 /* this marks a symbol that has been used at some time as a local variable */
 
-#define T_ENVIRONMENT                 (1 << (TYPE_BITS + 15))
+#define T_ENVIRONMENT                 (1 << (TYPE_BITS + 12))
 #define is_environment(p)             ((typeflag(p) & T_ENVIRONMENT) != 0)
 /* this marks a pair that is also an environment */
 
-#define T_SYMBOL_HAS_ACCESSOR         (1 << (TYPE_BITS + 18))
+#define T_SYMBOL_HAS_ACCESSOR         (1 << (TYPE_BITS + 13))
 #define symbol_has_accessor(p)        ((typeflag(p) & T_SYMBOL_HAS_ACCESSOR) != 0)
 #define symbol_set_has_accessor(p)    typeflag(p) |= T_SYMBOL_HAS_ACCESSOR
 #define symbol_clear_has_accessor(p)  typeflag(p) &= ~(T_SYMBOL_HAS_ACCESSOR)
@@ -768,7 +769,7 @@ struct s7_scheme {
  *    this is a type bit for the pair (symbol . current-value), not for either the symbol or value themselves 
  */
 
-#define T_SYMBOL_ACCESSED             (1 << (TYPE_BITS + 5))
+#define T_SYMBOL_ACCESSED             (1 << (TYPE_BITS + 14))
 #define symbol_accessed(p)            ((typeflag(p) & T_SYMBOL_ACCESSED) != 0)
 #define is_immutable_or_accessed(p)   ((typeflag(p) & (T_IMMUTABLE | T_SYMBOL_ACCESSED)) != 0)
 #define symbol_set_accessed(p)        typeflag(p) |= T_SYMBOL_ACCESSED
@@ -777,7 +778,7 @@ struct s7_scheme {
  *    implement the symbol-access stuff at almost no additional cost.
  */
 
-#define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 20))
+#define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 15))
 #define is_multiple_value(p)          ((typeflag(p) & T_MULTIPLE_VALUE) != 0)
 #define set_multiple_value(p)         typeflag(p) |= T_MULTIPLE_VALUE
 #define multiple_value(p)             p
@@ -786,22 +787,19 @@ struct s7_scheme {
  *    on only for a very short time.
  */
 
-#define T_PENDING_REMOVAL             (1 << (TYPE_BITS + 21))
+#define T_PENDING_REMOVAL             (1 << (TYPE_BITS + 16))
 #define is_pending_removal(p)         ((typeflag(p) & T_PENDING_REMOVAL) != 0)
 #define set_pending_removal(p)        typeflag(p) |= T_PENDING_REMOVAL
 #define clear_pending_removal(p)      typeflag(p) &= ~(T_PENDING_REMOVAL)
 /* this bit is for circle checks during removal of a global function from the heap
  */
 
-#define T_KEYWORD                     (1 << (TYPE_BITS + 22))
+#define T_KEYWORD                     (1 << (TYPE_BITS + 17))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
-#define UNUSED_BITS                   0x80004900
-
-/* TYPE_BITS + 0, 3, 6, 17, 19, and 23 are currently unused
- */
+#define UNUSED_BITS                   0x7c000100
 
 
 #if HAVE_PTHREADS
@@ -851,18 +849,20 @@ struct s7_scheme {
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
+#define string_hash(p)                ((p)->object.string.hash)
 #define character(p)                  ((p)->object.cvalue)
 
 #define symbol_location(p)            (car(p))->object.string.location
   /* presumably the symbol table size will fit in an int, so this is safe */
 #define symbol_name(p)                string_value(car(p))
 #define symbol_name_length(p)         string_length(car(p))
-#define symbol_value(Sym)             cdr(Sym)
-#define set_symbol_value(Sym, Val)    cdr(Sym) = (Val)
+#define symbol_value(p)               cdr(p)
+#define set_symbol_value(p, Val)      cdr(p) = (Val)
 #if WITH_PROFILING
   #define symbol_calls(p)             (p)->calls
 #endif
 #define symbol_global_slot(p)         (car(p))->object.string.global_slot
+#define symbol_hash(p)                (car(p))->object.string.hash
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_opcode(p)              ((p)->hloc)
@@ -1583,6 +1583,27 @@ static void s7_mark_object_1(s7_pointer p)
 }
 
 
+static void mark_global_env(s7_scheme *sc)
+{
+  s7_pointer ge;
+  s7_pointer *lsts;
+  int i, len;
+  ge = sc->global_env;
+  len = vector_length(ge);
+  lsts = vector_elements(ge);
+
+  set_mark(ge);
+   
+  for (i = 0; i < len; i++)
+    if (is_not_null(lsts[i]))
+      {
+	s7_pointer slot;
+	for (slot = lsts[i]; is_pair(slot); slot = ecdr(slot))
+	  S7_MARK(slot);
+      }
+}
+
+
 void s7_mark_object(s7_pointer p)
 {
   S7_MARK(p);
@@ -1624,7 +1645,8 @@ static int gc(s7_scheme *sc)
 #endif
     }
 
-  S7_MARK(sc->global_env);
+  /* S7_MARK(sc->global_env); */
+  mark_global_env(sc);
   S7_MARK(sc->args);
   S7_MARK(sc->envir);
   S7_MARK(sc->code);
@@ -2205,12 +2227,13 @@ static s7_pointer g_stack_size(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- symbols -------------------------------- */
 
-static int symbol_table_hash(const char *key) 
+static int symbol_table_hash(const char *key, unsigned int *loc) 
 { 
   unsigned int hashed = 0;
   const char *c; 
   for (c = key; *c; c++) 
     hashed = *c + hashed * 37;
+  if (loc) (*loc) = hashed;
   return(hashed % SYMBOL_TABLE_SIZE); 
 
   /* using ints here is much faster, and the symbol table will not be enormous, so it's worth splitting out this case */
@@ -2374,8 +2397,9 @@ static s7_pointer make_symbol(s7_scheme *sc, const char *name)
 {
   s7_pointer x; 
   int location;
+  unsigned int loc = 0;
 
-  location = symbol_table_hash(name); 
+  location = symbol_table_hash(name, &loc); 
   x = symbol_table_find_by_name(sc, name, location); 
   if (is_not_null(x)) 
     return(x); 
@@ -2383,7 +2407,9 @@ static s7_pointer make_symbol(s7_scheme *sc, const char *name)
   if (*(sc->symbol_table_is_locked))
     return(s7_error(sc, sc->ERROR, sc->NIL));
 
-  return(symbol_table_add_by_name_at_location(sc, name, location)); 
+  x = symbol_table_add_by_name_at_location(sc, name, location); 
+  symbol_hash(x) = loc;
+  return(x);
 } 
 
 
@@ -2399,6 +2425,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   char *name;
   int len, location;
   s7_pointer x;
+  unsigned int loc = 0;
   
   len = safe_strlen(prefix) + 32;
   name = (char *)calloc(len, sizeof(char));
@@ -2406,7 +2433,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   for (; (*(sc->gensym_counter)) < S7_LONG_MAX; ) 
     { 
       snprintf(name, len, "{%s}-%ld", prefix, (*(sc->gensym_counter))++); 
-      location = symbol_table_hash(name); 
+      location = symbol_table_hash(name, &loc); 
       x = symbol_table_find_by_name(sc, name, location); 
       if (is_not_null(x))
 	{
@@ -2417,6 +2444,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 	}
       
       x = symbol_table_add_by_name_at_location(sc, name, location); 
+      symbol_hash(x) = loc;
       free(name);
       return(x); 
     } 
@@ -2560,13 +2588,12 @@ static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
-  s7_pointer slot, e;
+  s7_pointer slot;
   slot = immutable_cons(sc, variable, value);
 
   if (!is_pair(env))
     {
       int loc;
-      e = sc->global_env;
 
       if ((sc->safety == 0) &&
 	  ((is_closure(value)) ||
@@ -2584,7 +2611,8 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 #endif
 
       loc = symbol_location(variable);
-      vector_element(e, loc) = s7_cons_unchecked(sc, slot, vector_element(e, loc));
+      ecdr(slot) = vector_element(sc->global_env, loc);
+      vector_element(sc->global_env, loc) = slot;
       symbol_global_slot(variable) = slot;
       if (!is_local(variable)) /* not sure this matters, or that it can happen */
 	set_global(variable);
@@ -2595,9 +2623,8 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
     }
   else
     {
-      e = car(env);
       set_local(variable);
-      ecdr(slot) = e;
+      ecdr(slot) = car(env);
       car(env) = slot;
 
       /* currently any top-level value is in symbol_global_slot
@@ -2669,9 +2696,9 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
 
 static void save_initial_environment(s7_scheme *sc)
 {
-  /* there are ca 270 predefined functions (and another 30 or so other things)
+  /* there are ca 270 predefined functions (and another 30 or so other things): 302 at last count
    */
-  #define INITIAL_ENV_ENTRIES 300
+  #define INITIAL_ENV_ENTRIES 400
   int i, k = 0, len;
   s7_pointer ge;
   s7_pointer *lsts, *inits;
@@ -2692,12 +2719,12 @@ static void save_initial_environment(s7_scheme *sc)
     if (is_not_null(lsts[i]))
       {
 	s7_pointer slot;
-	for (slot = car(lsts[i]); is_pair(slot); slot = cdr(slot))
+	for (slot = lsts[i]; is_pair(slot); slot = ecdr(slot))
 	  if (is_procedure(symbol_value(slot)))
 	    {
 	      inits[k++] = permanent_cons(car(slot), cdr(slot), T_PAIR | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
 	      if (k >= INITIAL_ENV_ENTRIES)
-		break;
+		return;
 	    }
       }
 }
@@ -2899,14 +2926,15 @@ static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
   #define H_symbol_to_value "(symbol->value sym (env (current-environment))) returns the binding of (the value associated with) the \
 symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
 
-  s7_pointer sym, x, local_env;
-
+  s7_pointer sym;
   sym = car(args);
+
   if (!s7_is_symbol(sym))
     return(s7_wrong_type_arg_error(sc, "symbol->value", (is_null(cdr(args))) ? 0 : 1, sym, "a symbol"));
 
   if (is_not_null(cdr(args)))
     {
+      s7_pointer x, local_env;
       if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "symbol->value", 2, cadr(args), "an environment"));
 
@@ -2918,10 +2946,13 @@ symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
 	    return(symbol_value(x));
 	  return(sc->UNDEFINED);
 	}
+      return(s7_symbol_local_value(sc, sym, local_env));
     }
-  else local_env = sc->envir;
+  
+  if (is_global(sym))
+    return(symbol_value(symbol_global_slot(sym)));
 
-  return(s7_symbol_local_value(sc, sym, local_env));
+  return(s7_symbol_value(sc, sym));
 }
 
 
@@ -10128,6 +10159,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
     memcpy((void *)string_value(x), (void *)str, len + 1);
   else string_value(x)[0] = 0;
   string_length(x) = len;
+  string_hash(x) = 0;
   return(x);
 }
 
@@ -10142,6 +10174,7 @@ static s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const cha
     memcpy((void *)string_value(x), (void *)str, len);
   string_value(x)[len] = 0;
   string_length(x) = len;
+  string_hash(x) = 0;
   return(x);
 }
 
@@ -10153,6 +10186,7 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
   set_type(x, T_STRING | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   string_value(x) = str;
   string_length(x) = len;
+  string_hash(x) = 0;
   return(x);
 }
 
@@ -10164,6 +10198,7 @@ static s7_pointer make_protected_string(s7_scheme *sc, const char *str)
   set_type(x, T_STRING | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   string_value(x) = (char *)str;
   string_length(x) = safe_strlen(str);
+  string_hash(x) = 0;
   return(x);
 }
 
@@ -10182,7 +10217,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
       memset((void *)(string_value(x)), fill, len);
     }
   string_value(x)[len] = 0;
-
+  string_hash(x) = 0;
   string_length(x) = len;
   return(x);
 }
@@ -10229,6 +10264,7 @@ s7_pointer s7_make_permanent_string(const char *str)
       string_value(x) = NULL;
       string_length(x) = 0;
     }
+  string_hash(x) = 0;
   return(x);
 }
 
@@ -15775,8 +15811,11 @@ static s7_Int hash_loc(s7_pointer key)
   switch (type(key))
     {
     case T_STRING:
+      if (string_hash(key) != 0)
+	return(string_hash(key));
       for (c = string_value(key); *c; c++) 
 	loc = *c + loc * 37;
+      string_hash(key) = loc;
       return(loc);
 
     case T_NUMBER:
@@ -15799,8 +15838,11 @@ static s7_Int hash_loc(s7_pointer key)
       break;
 
     case T_SYMBOL:
+      if (symbol_hash(key) != 0)
+	return(symbol_hash(key));
       for (c = symbol_name(key); *c; c++) 
 	loc = *c + loc * 37;
+      symbol_hash(key) = loc;
       return(loc);
 
     case T_SYNTAX:
@@ -15823,64 +15865,76 @@ static s7_Int hash_loc(s7_pointer key)
 static s7_pointer hash_table_binding(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   #define HASH_FLOAT_EPSILON 1.0e-12
+  s7_pointer x;
+  s7_Int hash_len, loc;
+  hash_len = hash_table_length(table) - 1;
 
-  if (hash_key_fits(table, key))
+  switch (hash_table_function(table))
     {
-      s7_pointer x;
-      s7_Int hash_len, loc;
-      hash_len = hash_table_length(table) - 1;
-      loc = hash_loc(key) & hash_len;
-
-      switch (hash_table_function(table))
+    case HASH_EMPTY:
+      break;
+      
+    case HASH_INT:
+      if (s7_is_integer(key))
 	{
-	case HASH_EMPTY:
-	  break;
-
-	case HASH_INT:
-	  {
-	    s7_Int keyval;
-	    keyval = s7_integer(key);
-	    for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
-	      if (s7_integer(caar(x)) == keyval)
-		return(car(x));
-	  }
-	  break;
-
-	case HASH_CHAR:
+	  s7_Int keyval;
+	  loc = hash_loc(key) & hash_len;
+	  keyval = s7_integer(key);
+	  for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
+	    if (s7_integer(caar(x)) == keyval)
+	      return(car(x));
+	}
+      break;
+      
+    case HASH_CHAR:
+      if (s7_is_character(key))
+	{
+	  loc = hash_loc(key) & hash_len;
 	  for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
 	    if (character(caar(x)) == character(key))
 	      return(car(x));
-	  break;
-	  
-	case HASH_STRING:
+	}
+      break;
+      
+    case HASH_STRING:
+      if (s7_is_string(key))
+	{
+	  loc = hash_loc(key) & hash_len;
 	  for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
 	    if (strings_are_equal(string_value(caar(x)), string_value(key)))
 	      return(car(x));
-	  break;
-
-	case HASH_SYMBOL:
+	}
+      break;
+      
+    case HASH_SYMBOL:
+      if (s7_is_symbol(key))
+	{
+	  loc = hash_loc(key) & hash_len;
 	  for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
 	    if (caar(x) == key)
 	      return(car(x));
-	  break;
-
-	case HASH_FLOAT:
-	  {
-	    /* give the equality check some room */
-	    s7_Double keyval;
-	    keyval = s7_real(key);
-	    for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
-	      if (fabs(s7_real(caar(x)) - keyval) < HASH_FLOAT_EPSILON)
-		return(car(x));
-	  }
-	  break;
-
-	case HASH_EQUAL:
-	  for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
-	    if (s7_is_equal(sc, caar(x), key))
-	      return(car(x));
-	  break;
 	}
+      break;
+      
+    case HASH_FLOAT:
+      if (s7_is_real(key) && (!s7_is_rational(key)))
+	{
+	  /* give the equality check some room */
+	  s7_Double keyval;
+	  loc = hash_loc(key) & hash_len;
+	  keyval = s7_real(key);
+	  for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
+	    if (fabs(s7_real(caar(x)) - keyval) < HASH_FLOAT_EPSILON)
+	      return(car(x));
+	}
+      break;
+      
+    case HASH_EQUAL:
+      loc = hash_loc(key) & hash_len;
+      for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
+	if (s7_is_equal(sc, caar(x), key))
+	  return(car(x));
+      break;
     }
   return(sc->NIL);
 }
@@ -21530,7 +21584,7 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 Each object can be a list (the normal case), string, vector, hash-table, or any applicable object."
 
   /* (for-each (lambda (n) (format #t "~A " n)) (vct 1.0 2.0 3.0)) */
-  s7_Int i, len; 
+  s7_Int i, len = 0; 
   /* "int" here is unhappy on 64-bit machines, and "long int" is unhappy on 32-bit machines, so try long long int.
    *    string_length is an int.
    */
@@ -21563,21 +21617,13 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
    * the function may not actually be applicable to its sequence elements, but that isn't an error:
    *   (map abs "") -> '()
    */
-  for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
-    if (!is_sequence(sc, car(x)))
-      return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a sequence"));
-
-  sc->y = args;
   obj = cadr(args); 
 
-  len = applicable_length(sc, obj);
-  if (len < 0)
-    return(s7_wrong_type_arg_error(sc, "for-each", 2, obj, "a vector, list, string, hash-table, or applicable object"));
-
-  if (len != 0)
+  if ((is_pair(obj)) &&
+      (is_null(cddr(args))))
     {
-      if ((len != S7_LONG_MAX) &&
-	  (is_pair(obj)) &&
+      len = s7_list_length(sc, obj);
+      if ((len > 0) &&
 	  (is_null(cddr(args))) &&
 	  (!(is_macro(sc->code))))
 	{
@@ -21586,6 +21632,38 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  return(sc->UNSPECIFIED);
 	}
 
+      if (len < 0)
+	len = -len; 
+      else
+	if (len == 0) 
+	  len = S7_LONG_MAX;
+    }
+  else 
+    {
+      for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
+	{
+	  s7_Int nlen;
+	  if (!is_sequence(sc, car(x)))
+	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a sequence"));
+
+	  nlen = applicable_length(sc, car(x));
+	  if (nlen < 0)
+	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a vector, list, string, hash-table, or applicable object"));
+	  if ((i == 2) || (nlen < len))
+	    len = nlen;
+	  if (len == 0) 
+	    {
+	      int k;
+	      for (k = i + 1, x = cdr(x); is_not_null(x); x = cdr(x), k++)
+		if (!is_sequence(sc, car(x)))
+		  return(s7_wrong_type_arg_error(sc, "for-each", k, car(x), "a sequence"));
+	      break;   /* need error check below */
+	    }
+	}
+    }
+
+  if (len != 0)
+    {
       sc->x = make_list_1(sc, sc->NIL);
       if (s7_is_hash_table(obj))
 	sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
@@ -21600,14 +21678,6 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	{
 	  for (i = 3, x = cddr(args); is_not_null(x); x = cdr(x), i++)
 	    {
-	      s7_Int nlen;
-
-	      nlen = applicable_length(sc, car(x));
-	      if (nlen < 0)
-		return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a vector, list, string, hash-table, or applicable object"));
-	      if (nlen < len) len = nlen;
-	      if (len == 0) break;   /* need error check below */
-
 	      sc->x = s7_cons(sc, sc->NIL, sc->x);          /* we're making a list to be filled in later with the individual args */
 
 	      if (s7_is_hash_table(car(x)))
@@ -21616,8 +21686,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	    }
 	}
     }
-
-  if (len == 0) 
+  else /* len == 0 */
     {
       /* here we can't depend on OP_APPLY to do the error check on the 1st arg:
        *   (map 0 '()) -> '()
@@ -21654,6 +21723,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 			make_list_2(sc, make_protected_string(sc, "for-each's arguments are circular lists! ~A"), cdr(args))));
     }
 
+  sc->y = args;
   x = make_mutable_integer(sc, 0);
   sc->args = s7_cons_unchecked(sc, x,                         /* '(counter applicable-len func-args-holder . objects) */
                s7_cons_unchecked(sc, s7_make_integer(sc, len), 
@@ -21781,14 +21851,10 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   sc->y = args;                     /* gc protect */
   obj = cadr(args); 
 
-  len = applicable_length(sc, obj);
-  if (len < 0)
-    return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, hash-table, or applicable object"));
-
-  if (len != 0)
+  if (is_pair(obj))
     {
-      if ((len != S7_LONG_MAX) &&
-	  (is_pair(obj)) &&
+      len = s7_list_length(sc, obj);
+      if ((len > 0) &&
 	  (is_null(cddr(args))) &&
 	  (!(is_macro(sc->code))))
 	{
@@ -21797,6 +21863,20 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  return(sc->NO_VALUE);
 	}
 
+      if (len < 0)
+	len = -len; 
+      else
+	if (len == 0) 
+	  len = S7_LONG_MAX;
+    }
+  else len = applicable_length(sc, obj);
+
+  len = applicable_length(sc, obj);
+  if (len < 0)
+    return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, hash-table, or applicable object"));
+
+  if (len != 0)
+    {
       if (s7_is_hash_table(obj))
 	sc->z = make_list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
       else sc->z = make_list_1(sc, obj);
@@ -22609,14 +22689,19 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 		       */
 		      {
 			int location;
-			location = symbol_table_hash(orig_str); 
+			unsigned int loc = 0;
+			location = symbol_table_hash(orig_str, &loc); 
 			result = symbol_table_find_by_name(sc, orig_str, location); 
 
 			if (is_null(result))
 			  {
 			    if (*(sc->symbol_table_is_locked))
 			      result = sc->F;
-			    else result = symbol_table_add_by_name_at_location(sc, orig_str, location); 
+			    else 
+			      {
+				result = symbol_table_add_by_name_at_location(sc, orig_str, location); 
+				symbol_hash(result) = loc;
+			      }
 			  }
 		      }
 		      break;
@@ -22995,7 +23080,9 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
 static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
 {
   s7_pointer x, syn;
-  x = symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name)); 
+  unsigned int loc = 0;
+  x = symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name, &loc)); 
+  symbol_hash(x) = loc;
 
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   set_type(syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS); 
@@ -25501,7 +25588,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = car(sc->args);
 	  goto EVAL;
 
-	  /* timings: old 3.25, new 2.34 (1.93 direct)
+	  /* timings: old 3.25, new 2.34 (1.93 direct), (12.2): 1.34
 	   *    (time (let ((L '((1 2 3)))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! ((L 0) 1) i)) L))
 	   */
 	}
@@ -25524,17 +25611,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SET:                                                             /* entry for set! */
       if (!is_pair(sc->code))
 	{
-	  if (is_null(sc->code))                                           /* (set!) */
+	  if (is_null(sc->code))                                             /* (set!) */
 	    return(eval_error(sc, "set!: not enough arguments: ~A", sc->code));
 	  return(eval_error(sc, "set!: stray dot? ~A", sc->code));           /* (set! . 1) */
 	}
       if (!is_pair(cdr(sc->code)))                                
 	{
-	  if (is_null(cdr(sc->code)))                                      /* (set! var) */
+	  if (is_null(cdr(sc->code)))                                         /* (set! var) */
 	    return(eval_error(sc, "set!: not enough arguments: ~A", sc->code));
 	  return(eval_error(sc, "set!: stray dot? ~A", sc->code));           /* (set! var . 1) */
 	}
-      if (is_not_null(cddr(sc->code)))                                         /* (set! var 1 2) */
+      if (is_not_null(cddr(sc->code)))                                       /* (set! var 1 2) */
 	return(eval_error(sc, "~A: too many arguments to set!", sc->code));
       
       /* cadr (the value) has not yet been evaluated */
@@ -25619,27 +25706,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 	      
 	    case T_STRING:
-	      /* sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
-#if 0
-	      /* this appears to be slower! */
-	      if ((is_null(cddr(sc->code))) &&
-		  (is_null(cddar(sc->code))) &&
-		  (s7_is_integer(cadar(sc->code))) &&
-		  (s7_is_character(cadr(sc->code))))
-		{
-		  s7_Int ind;
-		  char *str;
-		  ind = s7_integer(cadar(sc->code));
-		  if (ind < 0)
-		    return(s7_wrong_type_arg_error(sc, "string-set! index,", 2, cadar(sc->code), "a non-negative integer"));
-		  if (ind >= string_length(sc->x))
-		    return(s7_out_of_range_error(sc, "string-set! index,", 2, cadar(sc->code), "should be less than string length"));
-		  str = string_value(sc->x);
-		  sc->value = cadr(sc->code);
-		  str[ind] = (char)s7_character(sc->value);
-		  goto START;
-		}
-#endif
+	      /* sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	       *  it is slower to break out the normal case and handle it here.
+	       *
+	       * here only one index makes sense, and it is required, so 
+	       *   (set! ("str") #\a), (set! ("str" . 1) #\a) and (set! ("str" 1 2) #\a)
+	       * are all errors.
+	       * (time (let ((str "123")) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! (str 1) #\1))))
+	       *   (12.3): 0.618
+	       *
+	       * but it costs a lot more to check here and avoid s7_append
+	       */
 	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 	      push_op_stack(sc, sc->STRING_SET);
 	      sc->code = cadar(sc->code);
@@ -25649,7 +25726,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* code: ((lst 1) 32) from (let ((lst '(1 2 3))) (set! (lst 1) 32))
 	       * old form:
 	       *    sc->code = s7_cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
-	       *    old: 2.32, new: 1.77 (1.50 direct)
+	       *    old: 2.32, new: 1.77 (1.50 direct), (12.2): 1.07
 	       *    (time (let ((lst '(1 2 3))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! (lst 1) 32))))
 	       */
 	      push_op_stack(sc, sc->LIST_SET);
@@ -33236,7 +33313,7 @@ the error type and the info passed to the error handler.");
                         	    code)                        \n\
                         	   (else (loop (cdr clauses))))))))");
 
-  /* fprintf(stderr, "size: %d %d\n", (int)sizeof(s7_cell), (int)sizeof(s7_num_t));  */
+  /* fprintf(stderr, "size: %d %d\n", (int)sizeof(s7_cell), (int)sizeof(s7_num_t)); */
 
   initialize_pows();
   save_initial_environment(sc);
