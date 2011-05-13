@@ -447,10 +447,9 @@ typedef struct s7_cell {
     
     struct {
       int length;
-      int location;
-      char *svalue;
-      s7_pointer global_slot; /* for strings that represent symbol names, this is the global slot */
       unsigned int hash;
+      char *svalue;
+      s7_pointer global_slot;
     } string;
     
     s7_num_t number;
@@ -852,8 +851,6 @@ struct s7_scheme {
 #define string_hash(p)                ((p)->object.string.hash)
 #define character(p)                  ((p)->object.cvalue)
 
-#define symbol_location(p)            (car(p))->object.string.location
-  /* presumably the symbol table size will fit in an int, so this is safe */
 #define symbol_name(p)                string_value(car(p))
 #define symbol_name_length(p)         string_length(car(p))
 #define symbol_value(p)               cdr(p)
@@ -870,6 +867,7 @@ struct s7_scheme {
 #define vector_length(p)              ((p)->object.vector.length)
 #define vector_element(p, i)          ((p)->object.vector.elements[i])
 #define vector_elements(p)            (p)->object.vector.elements
+#define vector_fill_pointer(p)        ((p)->object.vector.hash_func)
 
 #define vector_dimension(p, i)        ((p)->object.vector.vextra.dim_info->dims[i])
 #define vector_ndims(p)               ((p)->object.vector.vextra.dim_info->ndims)
@@ -1586,21 +1584,16 @@ static void s7_mark_object_1(s7_pointer p)
 static void mark_global_env(s7_scheme *sc)
 {
   s7_pointer ge;
-  s7_pointer *lsts;
-  int i, len;
+  s7_pointer *tmp, *top;
+
   ge = sc->global_env;
-  len = vector_length(ge);
-  lsts = vector_elements(ge);
+  tmp = vector_elements(ge);
+  top = (s7_pointer *)(tmp + vector_fill_pointer(ge));
 
   set_mark(ge);
-   
-  for (i = 0; i < len; i++)
-    if (is_not_null(lsts[i]))
-      {
-	s7_pointer slot;
-	for (slot = lsts[i]; is_pair(slot); slot = ecdr(slot))
-	  S7_MARK(slot);
-      }
+
+  while (tmp < top)
+    S7_MARK(*tmp++);
 }
 
 
@@ -1645,7 +1638,6 @@ static int gc(s7_scheme *sc)
 #endif
     }
 
-  /* S7_MARK(sc->global_env); */
   mark_global_env(sc);
   S7_MARK(sc->args);
   S7_MARK(sc->envir);
@@ -2261,7 +2253,6 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   
   str = s7_make_permanent_string(name);
   x = permanent_cons(str, sc->NIL, T_SYMBOL | T_SIMPLE | T_DONT_COPY);
-  symbol_location(x) = location;   /* accesses car(x) */
   symbol_global_slot(x) = sc->NIL; /* same */
 
   if ((symbol_name_length(x) > 1) &&                           /* not 0, otherwise : is a keyword */
@@ -2593,7 +2584,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 
   if (!is_pair(env))
     {
-      int loc;
+      s7_pointer ge;
 
       if ((sc->safety == 0) &&
 	  ((is_closure(value)) ||
@@ -2607,12 +2598,16 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 	  pthread_mutex_unlock(&alloc_lock);
 	}
 #else
-	s7_remove_from_heap(sc, closure_source(value));
+      s7_remove_from_heap(sc, closure_source(value));
 #endif
 
-      loc = symbol_location(variable);
-      ecdr(slot) = vector_element(sc->global_env, loc);
-      vector_element(sc->global_env, loc) = slot;
+      ge = sc->global_env;
+      vector_element(ge, vector_fill_pointer(ge)++) = slot;
+      if (vector_fill_pointer(ge) >= vector_length(ge))
+	{
+	  vector_length(ge) *= 2;
+	  vector_elements(ge) = (s7_pointer *)realloc(vector_elements(ge), vector_length(ge) * sizeof(s7_pointer));
+	}
       symbol_global_slot(variable) = slot;
       if (!is_local(variable)) /* not sure this matters, or that it can happen */
 	set_global(variable);
@@ -2712,21 +2707,20 @@ static void save_initial_environment(s7_scheme *sc)
   sc->initial_env->hloc = NOT_IN_HEAP;
 
   ge = sc->global_env;
-  len = vector_length(ge);
+  len = vector_fill_pointer(ge);
   lsts = vector_elements(ge);
    
   for (i = 0; i < len; i++)
-    if (is_not_null(lsts[i]))
-      {
-	s7_pointer slot;
-	for (slot = lsts[i]; is_pair(slot); slot = ecdr(slot))
-	  if (is_procedure(symbol_value(slot)))
-	    {
-	      inits[k++] = permanent_cons(car(slot), cdr(slot), T_PAIR | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
-	      if (k >= INITIAL_ENV_ENTRIES)
-		return;
-	    }
-      }
+    {
+      s7_pointer slot;
+      slot = lsts[i];
+      if (is_procedure(symbol_value(slot)))
+	{
+	  inits[k++] = permanent_cons(car(slot), cdr(slot), T_PAIR | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
+	  if (k >= INITIAL_ENV_ENTRIES)
+	    return;
+	}
+    }
 }
 
 
@@ -2860,11 +2854,16 @@ new environment."
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer x;
-  /* unrolling these loops is slower 
-   *   I also tried using ecdr as well as car in the outer list to have 2 parallel slot lists,
-   *   using symbol_location to choose.  This saves a lot in that we search half as much here,
-   *   but the simple hashing process and other overhead end up costing even more, so we lose.
+  /* unrolling these loops is slower
+   *  also there is room in both the frame for a tag, and in the symbol slot
+   *  for a local value and a tag, and the two can be coordinated to forego
+   *  this linear search in a noticeable percentage of the time, and yet the
+   *  "direct" approach is slower!  The only case that wins is a do-loop,
+   *  where the repeated accesses to the loop counter are sped up by a 
+   *  factor of 3, but overall, it's not a big improvement even in that case.
+   *  I thought this was a sure thing!
    */
+
   for (x = env; is_pair(x); x = cdr(x)) 
     {
       s7_pointer y;
@@ -2907,7 +2906,6 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
   s7_pointer x;
-
   if (is_not_null(local_env))
     for (x = local_env; is_pair(x); x = cdr(x)) 
       {
@@ -2916,7 +2914,6 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
 	  if (car(y) == sym)
 	    return(symbol_value(y));
       }
-
   return(s7_symbol_value(sc, sym)); 
 }
 
@@ -32418,8 +32415,9 @@ s7_scheme *s7_init(void)
   sc->key_values = sc->NIL;
 #endif
   
-  sc->global_env = s7_make_vector(sc, SYMBOL_TABLE_SIZE);
+  sc->global_env = s7_make_vector(sc, 512);
   typeflag(sc->global_env) |= T_ENVIRONMENT;
+  vector_fill_pointer(sc->global_env) = 0;
   sc->envir = sc->NIL;
   
   /* keep the small_ints out of the heap */
