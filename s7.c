@@ -181,7 +181,6 @@
 
 
 
-
 /* ---------------- scheme choices ---------------- */
 
 #ifndef WITH_GMP
@@ -2605,8 +2604,11 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       vector_element(ge, vector_fill_pointer(ge)++) = slot;
       if (vector_fill_pointer(ge) >= vector_length(ge))
 	{
+	  int i;
 	  vector_length(ge) *= 2;
 	  vector_elements(ge) = (s7_pointer *)realloc(vector_elements(ge), vector_length(ge) * sizeof(s7_pointer));
+	  for (i = vector_fill_pointer(ge); i < vector_length(ge); i++)
+	    vector_element(ge, i) = sc->NIL;
 	}
       symbol_global_slot(variable) = slot;
       if (!is_local(variable)) /* not sure this matters, or that it can happen */
@@ -4386,10 +4388,9 @@ static s7_pointer make_mutable_integer(s7_scheme *sc, s7_Int n)
 s7_pointer s7_make_real(s7_scheme *sc, s7_Double n) 
 {
   s7_pointer x;
+
   if (n == 0.0)
     return(real_zero);
-  if (n == 1.0)
-    return(real_one);
 
   NEW_CELL(sc, x);
   set_type(x, T_NUMBER | T_SIMPLE | T_DONT_COPY);
@@ -14738,8 +14739,13 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 	return(s7_wrong_type_arg_error(sc, "member", 2, x, "a list"));
       
       sc->code = eq_func;
+
       /* using a vector here (rather than make_list_3) is slower */
-      sc->args = make_list_3(sc, make_list_2(sc, car(args), car(x)), x, x);
+      /* sc->args = make_list_3(sc, make_list_2(sc, car(args), car(x)), x, x); */
+      sc->args = s7_cons_unchecked(sc, 
+		   s7_cons_unchecked(sc, car(args), s7_cons_unchecked(sc, car(x), sc->NIL)),
+		   s7_cons_unchecked(sc, x, s7_cons(sc, x, sc->NIL)));
+
       sc->value = sc->F;
       push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
 
@@ -24654,6 +24660,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* drop into APPLY */
 		}
 	      else goto EVAL_ARGS;
+	      /* I don't think it's useful to split out the 2-args-from-the-end case here.
+	       *   It happens relatively infrequently in both s7test and lg that the final
+	       *   args are not pairs, so the cost of detecting that case is close to what
+	       *   we gain (say, at best, 3% reduction in GC).
+	       */
 	    }
 	  else
 	    {
@@ -32418,6 +32429,8 @@ s7_scheme *s7_init(void)
   sc->global_env = s7_make_vector(sc, 512);
   typeflag(sc->global_env) |= T_ENVIRONMENT;
   vector_fill_pointer(sc->global_env) = 0;
+  for (i = 0; i < 512; i++)
+    vector_element(sc->global_env, i) = sc->NIL;
   sc->envir = sc->NIL;
   
   /* keep the small_ints out of the heap */

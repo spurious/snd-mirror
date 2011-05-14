@@ -108,33 +108,31 @@
 	  (places ()))
       
       (define (where-is func)
-	(let* ((e (procedure-environment func))
-	       (binding (and (pair? e)
-			     (pair? (car e))
-			     (assoc '__func__ (car e))))
-	       (addr (and (pair? binding)
-			  (cdr binding))))
-	  (if (pair? addr)
-	      (cadr addr)
-	      #f)))
+	(let* ((f (symbol->value '__func__ (procedure-environment func)))
+	       (addr (and (pair? f)
+			  (cdr f))))
+	  (if (not (pair? addr))
+	      #f
+	      (cadr addr))))
       
       (define (apropos-1 alist)
 	(for-each
 	 (lambda (binding)
-	   (let ((symbol (car binding))
-		 (value (cdr binding)))
-	     (if (procedure? value) 
-		 (let ((file (where-is value)))
-		   (if (and file
-			    (not (string=? file "~/.snd_s7"))
-			    (not (string=? file "/home/bil/.snd_s7"))
-			    (not (string=? file "t.scm"))
-			    (not (string=? file "/home/bil/cl/t.scm"))
-			    )
-		       (begin
-			 (set! names (cons (cons symbol file) names))
-			 (if (not (member file places))
-			     (set! places (cons file places)))))))))
+	   (if (pair? binding)
+	       (let ((symbol (car binding))
+		     (value (cdr binding)))
+		 (if (procedure? value) 
+		     (let ((file (where-is value)))
+		       (if (and file
+				(not (string=? file "~/.snd_s7"))
+				(not (string=? file "/home/bil/.snd_s7"))
+				(not (string=? file "t.scm"))
+				(not (string=? file "/home/bil/cl/t.scm"))
+				)
+			   (begin
+			     (set! names (cons (cons symbol file) names))
+			     (if (not (member file places))
+				 (set! places (cons file places))))))))))
 	 alist))
       
       ;; handle the main macros by hand
@@ -197,15 +195,7 @@
 	(list '*clm-search-list* "ws.scm")
 	(list '*definstrument-hook* "ws.scm")))
       
-      (for-each
-       (lambda (frame)
-	 (if (vector? frame)
-	     (let ((len (vector-length frame)))
-	       (do ((i 0 (+ i 1)))
-		   ((= i len))
-		 (apropos-1 (frame i))))
-	     (apropos-1 frame)))
-       (global-environment))
+      (for-each apropos-1 (global-environment))
       
       (let ((name-len (length names))
 	    (file-len (length places)))
