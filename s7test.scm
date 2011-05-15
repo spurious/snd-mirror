@@ -18411,6 +18411,12 @@ abs     1       2
 
   (test (eval if) if)
   (test (eval quote) quote)
+  (test (eval (eval (list define* #(1)))) 'error)
+  (test (eval (eval (list lambda* ()))) 'error)
+  (test (eval (eval (list letrec "hi"))) 'error)
+  (test (eval (eval (cons defmacro 1))) 'error)
+  (test (eval (eval (cons quote "hi"))) 'error)
+  (test (eval (eval (list and "hi"))) "hi")
 
   (test (apply + (+ 1) ()) 1)
   (test (apply #(1) (+) ()) 1)

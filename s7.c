@@ -18901,9 +18901,6 @@ list has infinite length."
   
   s7_pointer lst = car(args);
   
-  if (is_null(lst))
-    return(small_int(0));
-
   switch (type(lst))
     {
     case T_PAIR:
@@ -18917,6 +18914,9 @@ list has infinite length."
 	  return(s7_make_real(sc, INFINITY));
 	return(s7_make_integer(sc, len));
       }
+
+    case T_NIL:
+      return(small_int(0));
 
     case T_VECTOR:
       return(g_vector_length(sc, args));
@@ -19012,8 +19012,6 @@ also accepts a string or vector argument."
       return(sc->NIL);
 
     case T_PAIR:
-      if (is_null(p))
-	return(sc->NIL);
       np = s7_reverse(sc, p);
       if (is_null(np))
 	return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a proper list"));
@@ -21331,6 +21329,7 @@ pass (global-environment):\n\
    */
 
   sc->code = car(args);
+  /* fprintf(stderr, "(eval %s)\n", s7_object_to_c_string(sc, car(args))); */
 
   if (s7_stack_top(sc) < 12)
     push_stack(sc, opcode(OP_BARRIER), sc->NIL, sc->NIL);
@@ -23087,6 +23086,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   set_type(syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS); 
   syntax_opcode(syn) = (int)op;
+  set_symbol_value(syn, syn); /* this saves us an error check in the main eval section */
 
   set_symbol_value(x, syn);
   symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS);
@@ -23574,6 +23574,11 @@ static s7_pointer find_symbol_or_bust_2(s7_scheme *sc, s7_pointer env, s7_pointe
 } 
 
 static s7_pointer find_symbol_or_bust_3(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
+static s7_pointer find_symbol_or_bust_4(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   FIND_SYMBOL_OR_BUST(sc);
 } 
@@ -24408,6 +24413,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_pair(sc->code))
 	{
 	  s7_pointer carc;
+
+	  /* we jump here when we already know sc->code is a pair */
+	EVAL_PAIR:
 	  carc = car(sc->code);
 
 	  if (dont_eval_args(carc)) /* actually is_syntax(symbol_value(car(sc->code))) */
@@ -24509,12 +24517,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->op_stack_top >= sc->op_stack_size)
 	resize_op_stack(sc);
 
-      goto EVAL_ARGS_NO_CONS;
+      goto EVAL_ARGS;
 
       /* this code can almost certainly be simplified -- "it just growed..." */
 
                                       /* using while here rather than EVAL_ARGS and a goto made no speed difference */
-    EVAL_ARGS:
     case OP_EVAL_ARGS1:
 
       /* this is where most of s7's compute time goes */
@@ -24564,12 +24571,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       /* s7test: 20%, lg: 2% of all allocs here */
 
-    EVAL_ARGS_NO_CONS:
+    EVAL_ARGS:
       /* 1st time, value = op, args = nil, code is args */
       if (is_pair(sc->code))  /* evaluate current arg -- must check for pair here, not sc->NIL (improper list as args) */
 	{ 
 	  int typ;
 	  s7_pointer car_code;
+	EVAL_ARGS_PAIR:
 	  car_code = car(sc->code);
 	  typ = type(car_code);
 	  
@@ -24581,7 +24589,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      else push_stack(sc, opcode(OP_EVAL_ARGS1), sc->args, cdr(sc->code));
 	      /* s7test: 15% of pushes, 13% in lg */
 	      sc->code = car_code;
-	      goto EVAL;
+	      goto EVAL_PAIR;
 	    }
 
 	  if (is_pair(cdr(sc->code)))
@@ -24598,10 +24606,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* cdr(sc->code) may not be a pair or nil here! 
 	       *   (eq? #f . 1) -> sc->code is 1
 	       */
-	      /*
-	      if (!is_pair(sc->code))
-		improper_arglist_error(sc);
-	      */
 	      if (is_null(cdr(sc->code)))
 		{
 		  s7_pointer x, y;
@@ -24620,7 +24624,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      push_stack(sc, opcode(OP_EVAL_ARGS2), sc->args, sc->NIL);
 		      /* 17% of pushes in lg, 1% in s7test */
 		      sc->code = car_code;
-		      goto EVAL;
+		      goto EVAL_PAIR;
 		    }
 		  
 		  /* save the current arg */
@@ -24656,7 +24660,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  else sc->args = y;
 		  /* drop into APPLY */
 		}
-	      else goto EVAL_ARGS;
+	      else 
+		{
+		  /* here we know sc->code is a pair */
+		  s7_pointer x;
+		  NEW_CELL(sc, x); 
+		  car(x) = sc->value;
+		  cdr(x) = sc->args;
+		  set_type(x, T_PAIR);
+		  sc->args = x;
+
+		  goto EVAL_ARGS_PAIR;
+		}
 	      /* I don't think it's useful to split out the 2-args-from-the-end case here.
 	       *   It happens relatively infrequently in both s7test and lg that the final
 	       *   args are not pairs, so the cost of detecting that case is close to what
@@ -24781,12 +24796,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_C_ANY_ARGS_FUNCTION:                 /* -------- C-based function that can take any number of arguments -------- */
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
-
-	  pop_stack(sc);
-	  if (sc->op == OP_EVAL_ARGS1)
-	    goto EVAL_ARGS;
-	  goto START_WITHOUT_POP_STACK;
-
+	  goto START;
 
 	  /* sc->args == nil:              len 0
 	   * sc->args == TEMP_CELL_1:      len 1
@@ -25177,14 +25187,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    else return(apply_error(sc, sc->code, sc->args));
 
 	    if (sc->stack_end > sc->stack_start)
-	      {
-		pop_stack(sc);
-		if (sc->op == OP_EVAL_ARGS1)
-		  goto EVAL_ARGS;
-	      }
+	      pop_stack(sc);
 	    goto START_WITHOUT_POP_STACK;
 	  }
-
 
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of indices 
@@ -25264,14 +25269,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  goto START;
 
+
 	case T_SYNTAX:                            /* -------- syntactic keyword as applicable object -------- */
 	  sc->op = (opcode_t)syntax_opcode(sc->code);                       /* (apply begin '((define x 3) (+ x 2))) */
 	  sc->code = sc->args;
 	  goto START_WITHOUT_POP_STACK;
-	  /* this was:
-	   *    sc->code = s7_cons(sc, sc->code, sc->args); goto EVAL;
-	   * but that merely leads to the code above, I think.
-	   */
+
 
 	default:
 	  return(apply_error(sc, sc->code, sc->args));
@@ -25314,6 +25317,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
 
 
+    LAMBDA:
     case OP_LAMBDA: 
       /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
       if ((!is_pair(sc->code)) ||
@@ -25467,6 +25471,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (sc->op == OP_DEFINE_STAR)
 	    sc->code = s7_cons_unchecked(sc, sc->LAMBDA_STAR, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
 	  else sc->code = s7_cons_unchecked(sc, sc->LAMBDA, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
+	  /* TODO: goto LAMBDA */
 	} 
       else 
 	{
@@ -25646,7 +25651,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		eval_error(sc, "improper list of args to set!: ~A", sc->code);
 	      push_stack(sc, opcode(OP_SET2), cdar(sc->code), cdr(sc->code));
 	      sc->code = caar(sc->code);
-	      goto EVAL;
+	      goto EVAL_PAIR;
 	    }
 	  
 	  if (s7_is_symbol(caar(sc->code)))
@@ -25790,7 +25795,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	    }
 	}
-      else  /* thing to be set is not a pair */
+      else
 	{
 	  if (!s7_is_symbol(car(sc->code)))                  /* (set! 12345 1) */
 	    return(eval_error(sc, "set! can't change ~S", car(sc->code)));
@@ -25802,8 +25807,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
-    case OP_SET1:     
-      sc->y = find_symbol(sc, sc->envir, sc->code);
+    case OP_SET1:  
+      if (is_global(sc->code))
+	sc->y = symbol_global_slot(sc->code);
+      else sc->y = find_symbol(sc, sc->envir, sc->code);
       if (is_not_null(sc->y)) 
 	{
 	  if (symbol_accessed(sc->code))
@@ -26227,7 +26234,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (is_multiple_value(sc->value))                             /* (cond ((values 1 2) => +)) */
 		sc->code = s7_cons(sc, cadr(sc->code), multiple_value(sc->value));
 	      else sc->code = make_list_2(sc, cadr(sc->code), make_list_2(sc, sc->QUOTE, sc->value)); 
-	      goto EVAL;
+	      goto EVAL_PAIR;
 	    }
 	  goto BEGIN;
 	}
@@ -26250,26 +26257,43 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = sc->T;
 	  goto START;
 	}
-      if (!is_pair(sc->code))                                        /* (and . 1) */
-	return(eval_error(sc, "and: stray dot?: ~A", sc->code));
-      if (is_not_null(cdr(sc->code)))
-	push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code));
-      sc->code = car(sc->code);
-      goto EVAL;
+      goto AND1;
       
-      
+
+    AND:
     case OP_AND1:
       if ((is_false(sc, sc->value)) ||
 	  (is_null(sc->code)))
 	goto START;
 
-      if (!is_pair(sc->code))                                       /* (and #t . 1) but (and #f . 1) returns #f */
+    AND1:
+      if (!is_pair(sc->code))                                       /* (and . 1) (and #t . 1) but (and #f . 1) returns #f */
 	return(eval_error(sc, "and: stray dot?: ~A", sc->code));
+
+      if (!is_pair(car(sc->code)))
+	{
+	  if (s7_is_symbol(car(sc->code)))
+	    {
+	      if (is_global(car(sc->code)))
+		sc->value = symbol_value(symbol_global_slot(car(sc->code)));
+	      else
+		{
+		  s7_pointer xx;
+		  xx = find_symbol(sc, sc->envir, car(sc->code));
+		  if (type(xx) != T_NIL)
+		    sc->value = symbol_value(xx);
+		  else sc->value = eval_symbol_1(sc, car(sc->code));
+		}
+	    }
+	  else sc->value = car(sc->code);
+	  sc->code = cdr(sc->code);
+	  goto AND;
+	}
 
       if (is_not_null(cdr(sc->code)))
 	push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
-      goto EVAL;
+      goto EVAL_PAIR;
 
       
     case OP_OR:
@@ -26278,26 +26302,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = sc->F;
 	  goto START;
 	}
-      if (!is_pair(sc->code))                                       /* (or . 1) */
-	return(eval_error(sc, "or: stray dot?: ~A", sc->code));
-      if (is_not_null(cdr(sc->code)))
-	push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
-      sc->code = car(sc->code);
-      goto EVAL;
+      goto OR1;
       
       
+    OR:
     case OP_OR1:
       if ((is_true(sc, sc->value)) ||
 	  (is_null(sc->code)))
 	goto START;
 
-      if (!is_pair(sc->code))                                       /* (or #f . 1) but (or #t . 1) returns #t */
+    OR1:
+      if (!is_pair(sc->code))                                       /* (or . 1) (or #f . 1) but (or #t . 1) returns #t */
 	return(eval_error(sc, "or: stray dot?: ~A", sc->code));
+
+      if (!is_pair(car(sc->code)))
+	{
+	  if (s7_is_symbol(car(sc->code)))
+	    {
+	      if (is_global(car(sc->code)))
+		sc->value = symbol_value(symbol_global_slot(car(sc->code)));
+	      else sc->value = find_symbol_or_bust_4(sc, sc->envir, car(sc->code));
+	    }
+	  else sc->value = car(sc->code);
+	  sc->code = cdr(sc->code);
+	  goto OR;
+	}
 
       if (is_not_null(cdr(sc->code)))
 	push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
-      goto EVAL;
+      goto EVAL_PAIR;
 
       /* by going direct without a push_stack on the last one we get "tail recursion",
        *   but if the last arg (also in "and" above) is "values", there is a slight
@@ -26427,7 +26461,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->z = sc->NIL;
       push_stack(sc, opcode(OP_MACRO), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO */
       sc->x = sc->NIL;
-      goto EVAL;
+
+      sc->op = (opcode_t)OP_LAMBDA;
+      sc->code = cdr(sc->code);
+      goto LAMBDA;
 
 
     case OP_EXPANSION:
@@ -26512,7 +26549,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->z = sc->NIL;
       push_stack(sc, opcode(OP_MACRO), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO */
       sc->x = sc->NIL;
-      goto EVAL;
+      sc->op = (opcode_t)OP_LAMBDA;
+      sc->code = cdr(sc->code);
+      goto LAMBDA;
       
       
     case OP_CASE:      /* case, car(sc->code) is the selector */
@@ -26523,10 +26562,33 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_pair(cadr(sc->code)))                                      /* (case 1 1) */
 	return(eval_error(sc, "case clause is not a list? ~A", sc->code));
 
-      push_stack(sc, opcode(OP_CASE1), sc->NIL, cdr(sc->code));
-      sc->code = car(sc->code);
-      goto EVAL;
-      
+      if (!is_pair(car(sc->code)))
+	{
+	  if (s7_is_symbol(car(sc->code)))
+	    {
+#if 0
+	      if (is_global(car(sc->code)))
+		sc->value = symbol_value(symbol_global_slot(car(sc->code)));
+	      else
+#endif
+		{
+		  s7_pointer xx;
+		  xx = find_symbol(sc, sc->envir, car(sc->code));
+		  if (type(xx) != T_NIL)
+		    sc->value = symbol_value(xx);
+		  else sc->value = eval_symbol_1(sc, car(sc->code));
+		}
+	    }
+	  else sc->value = car(sc->code);
+	  sc->code = cdr(sc->code);
+	}
+      else
+	{
+	  push_stack(sc, opcode(OP_CASE1), sc->NIL, cdr(sc->code));
+	  sc->code = car(sc->code);
+	  goto EVAL_PAIR;
+	}
+
       
     case OP_CASE1: 
       for (sc->x = sc->code; is_not_null(sc->x); sc->x = cdr(sc->x)) 
@@ -26608,7 +26670,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(eval_error(sc, "case: '=>' has too many targets: ~A", sc->code));
 
 	      sc->code = make_list_2(sc, cadr(sc->code), make_list_2(sc, sc->QUOTE, sc->value)); 
-	      goto EVAL;
+	      goto EVAL_PAIR;
 	    }
 	  goto BEGIN;
 	}
@@ -27044,7 +27106,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
       else sc->code = make_list_4(sc, sc->APPLY, sc->MULTIVECTOR, sc->args, g_quasiquote_1(sc, sc->value));
       /* sc->args = sc->NIL; */
-      goto EVAL;
+      goto EVAL_PAIR;
 
       
     case OP_READ_UNQUOTE:
