@@ -522,7 +522,7 @@ typedef struct {
 
 
 static s7_pointer *small_ints, *small_negative_ints, *chars;
-static s7_pointer real_zero, real_one; /* -1.0 as constant gains us almost nothing in run time */
+static s7_pointer real_zero; 
 
 struct s7_scheme {  
   token_t tok;
@@ -696,16 +696,6 @@ struct s7_scheme {
 #define typeflag(p)                   ((p)->tf.flag)
 #define type(p)                       ((p)->tf.type_field)
 
-#define T_GC_MARK                     (1 << (TYPE_BITS + 23))
-#define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
-#define set_mark(p)                   typeflag(p)  |= T_GC_MARK
-#define clear_mark(p)                 typeflag(p)  &= (~T_GC_MARK)
-/* making this a separate bool field in the cell struct slightly speeds up the mark function,
- *   but at the cost of 4 (or 8!) bytes per object. Since the speedup was about .3% overall,
- *   the size increase is more important.  I also tried adding a byte in the cell struct, and
- *   moving all the other type bits up out of the way, but this saved very little.
- */
-
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 1))
 #define is_finalizable(p)             ((typeflag(p) & T_FINALIZABLE) != 0)
 /* finalizable means some action may need to be taken when the cell is GC'd */
@@ -795,6 +785,13 @@ struct s7_scheme {
 #define T_KEYWORD                     (1 << (TYPE_BITS + 17))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
+ */
+
+#define T_GC_MARK                     (1 << (TYPE_BITS + 23))
+#define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
+#define set_mark(p)                   typeflag(p)  |= T_GC_MARK
+#define clear_mark(p)                 typeflag(p)  &= (~T_GC_MARK)
+/* using bit 23 for this makes a big difference in the GC
  */
 
 #define UNUSED_BITS                   0x7c000100
@@ -6960,9 +6957,9 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
     return(s7_make_real(sc, tanh(num_to_real(number(x)))));
 
   if (complex_real_part(x) > 350.0)
-    return(real_one);               /* closer than 0.0 which is what ctanh is about to return! */
+    return(s7_make_real(sc, 1.0));               /* closer than 0.0 which is what ctanh is about to return! */
   if (complex_real_part(x) < -350.0)
-    return(s7_make_real(sc, -1.0)); /* closer than -0.0 which is what ctanh is about to return! */
+    return(s7_make_real(sc, -1.0));              /* closer than -0.0 which is what ctanh is about to return! */
 
   return(s7_from_c_complex(sc, ctanh(s7_complex(x))));
 }
@@ -7164,7 +7161,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  /* (expt +nan.0 0) ?? */
 	  if ((number_type(n) == NUM_INT) || (number_type(n) == NUM_RATIO))
 	    return(small_int(1));
-	  return(real_one);
+	  return(s7_make_real(sc, 1.0));
 	}
 
       if (number_type(n) == NUM_INT)
@@ -7237,7 +7234,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 
       if (isnan(x)) return(n);
       if (isnan(y)) return(pw);
-      if (y == 0.0) return(real_one);
+      if (y == 0.0) return(s7_make_real(sc, 1.0));
 
       if ((x > 0.0) ||
 	  ((y - floor(y)) < 1.0e-16))
@@ -25588,12 +25585,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto START_WITHOUT_POP_STACK;
 	    }
 
-	  /* old form:
-	   *    sc->code = s7_cons(sc, sc->LIST_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));  
-	   */
-	  push_op_stack(sc, sc->LIST_SET);
-	  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
-	  sc->code = car(sc->args);
+	  if (sc->args != sc->NIL)
+	    {
+	      push_op_stack(sc, sc->LIST_SET);
+	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
+	      sc->code = car(sc->args);
+	    }
+	  else sc->code = s7_cons(sc, sc->LIST_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));  
 	  goto EVAL;
 
 	  /* timings: old 3.25, new 2.34 (1.93 direct), (12.2): 1.34
@@ -25603,13 +25601,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (s7_is_vector(sc->value))
 	{
-	  /* old form:
-	   *     sc->code = s7_cons(sc, sc->VECTOR_SET, s7_cons(sc, sc->value, s7_append(sc, sc->args, sc->code)));
-	   *     [vector arg (sc->value) doesn't need to be quoted since eval won't treat it as code]
+	  /* (let ((L '#(#(1 2 3) #(4 5 6)))) (set! ((L 1) 0) 32) L)
+	   * bad case when args is nil: (let ((L '#(#(1 2 3) #(4 5 6)))) (set! ((L 1)) 32) L)
 	   */
-	  push_op_stack(sc, sc->VECTOR_SET);
-	  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
-	  sc->code = car(sc->args);
+	  if (sc->args != sc->NIL)
+	    {
+	      push_op_stack(sc, sc->VECTOR_SET);
+	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
+	      sc->code = car(sc->args);
+	    }
+	  else sc->code = s7_cons(sc, sc->VECTOR_SET, s7_cons(sc, sc->value, s7_append(sc, sc->args, sc->code)));
 	  goto EVAL;
 	}
 
@@ -25708,9 +25709,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /*  args have not been evaluated! */
 	      /* sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
 
-	      push_op_stack(sc, sc->VECTOR_SET);
-	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
-	      sc->code = cadar(sc->code);
+	      if (cdar(sc->code) != sc->NIL)
+		{
+		  push_op_stack(sc, sc->VECTOR_SET);
+		  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+		  sc->code = cadar(sc->code);
+		}
+	      else sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
 	      break;
 	      
 	    case T_STRING:
@@ -25719,15 +25724,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *
 	       * here only one index makes sense, and it is required, so 
 	       *   (set! ("str") #\a), (set! ("str" . 1) #\a) and (set! ("str" 1 2) #\a)
-	       * are all errors.
+	       *   are all errors (but see below!).
+	       *
 	       * (time (let ((str "123")) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! (str 1) #\1))))
 	       *   (12.3): 0.618
 	       *
-	       * but it costs a lot more to check here and avoid s7_append
+	       * it costs a lot more to check here and avoid s7_append, but we can't avoid the check!
+	       *   (set! ("hi") 1)
+	       * code comes in as '(("hi") 1), so cdar(code) is nil, cddar is #<unspecified>, cadar is also #<unspecified>, cdr is '(1)
+	       *   so eval gets: improper list of arguments: ("hi" #<unspecified> 1 #<unspecified> . #<unspecified>)
+	       *   because (below) code is #<unspecified> and the append business returns '(1 #<unspecified> . #<unspecified>)
 	       */
-	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
-	      push_op_stack(sc, sc->STRING_SET);
-	      sc->code = cadar(sc->code);
+
+	      if (cdar(sc->code) != sc->NIL)
+		{
+		  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), sc->y = s7_append(sc, cddar(sc->code), cdr(sc->code)));
+		  push_op_stack(sc, sc->STRING_SET);
+		  sc->code = cadar(sc->code);
+		}
+	      else sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
 	      break;
 
 	    case T_PAIR:
@@ -25737,16 +25752,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *    old: 2.32, new: 1.77 (1.50 direct), (12.2): 1.07
 	       *    (time (let ((lst '(1 2 3))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! (lst 1) 32))))
 	       */
-	      push_op_stack(sc, sc->LIST_SET);
-	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
-	      sc->code = cadar(sc->code);
+	      
+	      if (cdar(sc->code) != sc->NIL)
+		{
+		  push_op_stack(sc, sc->LIST_SET);
+		  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+		  sc->code = cadar(sc->code);
+		}
+	      else sc->code = s7_cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
 	      break;
 
 	    case T_HASH_TABLE:
-	      push_op_stack(sc, sc->HASH_TABLE_SET);
-	      /* sc->code = s7_cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
-	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
-	      sc->code = cadar(sc->code);
+	      if (cdar(sc->code) != sc->NIL)
+		{
+		  push_op_stack(sc, sc->HASH_TABLE_SET);
+		  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+		  sc->code = cadar(sc->code);
+		}
+	      else sc->code = s7_cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
 	      break;
 
 
@@ -26084,6 +26107,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_not_null(sc->code))                    /* (let* ((a 1) . b) a) */
 	return(eval_error(sc, "let* var list improper?: ~A", sc->code));
 
+      /* at this point we have a list of frames, each holding one let* variable.
+       *   I tried collapsing that list down to one frame, but the savings was 
+       *   minimal -- it sort of trades a push_stack (to save the original frame)
+       *   and the local list manipulations, against the lookup time in find_symbol,
+       *   but all these times were down in the noise.
+       */
       sc->code = sc->args;
       goto BEGIN;
       
@@ -30024,7 +30053,7 @@ static s7_pointer big_trig(s7_scheme *sc, s7_pointer args,
   if (tan_case == TRIG_TANH_CHECK)
     {
       if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), 350, 1))) > 0)
-	return(real_one);
+	return(s7_make_real(sc, 1.0));
       if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), -350, 1))) < 0)
 	return(s7_make_real(sc, -1.0));
     }
@@ -30161,7 +30190,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	{
 	  if (s7_is_rational(x))
 	    return(small_int(1));
-	  return(real_one);
+	  return(s7_make_real(sc, 1.0));
 	}
 
       if (yval == 1)
@@ -32460,12 +32489,6 @@ s7_scheme *s7_init(void)
   real_zero->hloc = NOT_IN_HEAP;
   number_type(real_zero) = NUM_REAL;
   real(number(real_zero)) = (s7_Double)0.0;
-
-  real_one = (s7_pointer)calloc(1, sizeof(s7_cell));
-  typeflag(real_one) = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
-  real_one->hloc = NOT_IN_HEAP;
-  number_type(real_one) = NUM_REAL;
-  real(number(real_one)) = (s7_Double)1.0;
 
   /* keep the characters out of the heap */
   chars = (s7_pointer *)malloc(NUM_SMALL_INTS * sizeof(s7_pointer));

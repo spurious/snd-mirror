@@ -2496,6 +2496,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let* ((s1 "hi") (s2 s1)) (string-set! s2 1 #\x) s1) "hx")
 (test (let* ((s1 "hi") (s2 (copy s1))) (string-set! s2 1 #\x) s1) "hi")
 
+(test (eq? (car (catch #t (lambda () (set! ("hi") #\a)) (lambda args args))) 'wrong-number-of-args) #t)
+(test (eq? (car (catch #t (lambda () (set! ("hi" 0 0) #\a)) (lambda args args))) 'wrong-number-of-args) #t) ; (vector-set! 1 ...)
+(test (eq? (car (catch #t (lambda () (set! (("hi" 0) 0) #\a)) (lambda args args))) 'syntax-error) #t) ; (set! (1 ...))
 
 
 
@@ -5457,6 +5460,14 @@ zzy" (lambda (p) (eval (read p))))) 32)
       '#(#(#(#(1 2 3) #(4 5 32)) #(#(7 8 9) #(10 11 12))) #(13 14 15)))
 
 
+(test (eq? (car (catch #t (lambda () (set! (#(1)) 2)) (lambda args args))) 'wrong-number-of-args) #t)
+(test (eq? (car (catch #t (lambda () (set! (#(1) 0 0) 2)) (lambda args args))) 'wrong-type-arg) #t) ; (vector-set! 1 ...)
+(test (eq? (car (catch #t (lambda () (set! ((#(1) 0) 0) 2)) (lambda args args))) 'syntax-error) #t) ; (set! (1 ...))
+(test (let ((L '#(#(1 2 3) #(4 5 6)))) (eq? (car (catch #t (lambda () (set! ((L 1)) 32) L) (lambda args args))) 'wrong-number-of-args)) #t)
+(test (let ((L '#(#(1 2 3) #(4 5 6)))) (eq? (car (catch #t (lambda () (set! ((L) 1) 32) L) (lambda args args))) 'wrong-number-of-args)) #t)
+(test (let ((L '#(#(1 2 3) #(4 5 6)))) (eq? (car (catch #t (lambda () (set! ((L)) 32) L) (lambda args args))) 'wrong-number-of-args)) #t)
+(test (let ((L '#(#(1 2 3) #(4 5 6)))) (eq? (car (catch #t (lambda () (set! ((L 1) 2)) L) (lambda args args))) 'syntax-error)) #t)
+
 
 
 ;;; vector-fill!
@@ -7405,51 +7416,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (test (ht '(-1)) '(1))))		    
 
 
-(test (error) 'error)
-(test (let ((x 1))
-	(let ((val (catch #\a
-			  (lambda ()
-			    (set! x 0)
-			    (error #\a "an error")
-			    (set! x 2))
-			  (lambda args
-			    (if (equal? (car args) #\a)
-				(set! x (+ x 3)))
-			    x))))
-	  (= x val 3)))
-      #t)
-(test (let ((x 1))
-	(let ((val (catch 32
-			   (lambda ()
-			     (catch #\a
-				    (lambda ()
-				      (set! x 0)
-				      (error #\a "an error: ~A" (error 32 "another error!"))
-				      (set! x 2))
-				    (lambda args
-				      (if (equal? (car args) #\a)
-					  (set! x (+ x 3)))
-				      x)))
-			   (lambda args 
-			     (if (equal? (car args) 32)
-				 (set! x (+ x 30)))))))
-	  (= x val 30)))
-      #t)
-
-#|
-(let ((old-error-hook (hook-functions *error-hook*))
-      (tag #f)
-      (args #f))
-  (set! (hook-functions *error-hook*)
-	(list (lambda (etag eargs)
-		(set! tag etag)
-		(set! args eargs))))
-  (error 'tag 1 2 3)
-  (test (and (equal? tag 'tag)
-	     (equal? args '(1 2 3))))
-  (set! (hook-functions *error-hook*) old-error-hook))
-|#
-;;; can't include this because it interrupts the load
+(let ((ht (make-hash-table)))
+  (test (eq? (car (catch #t (lambda () (set! (ht) 2)) (lambda args args))) 'wrong-number-of-args) #t)
+  (test (eq? (car (catch #t (lambda () (set! (ht 0 0) 2)) (lambda args args))) 'wrong-number-of-args) #t)
+  (test (eq? (car (catch #t (lambda () (set! ((ht 0) 0) 2)) (lambda args args))) 'syntax-error) #t))
 
 
 
@@ -17362,6 +17332,8 @@ abs     1       2
 (test (catch #t s7-version) 'error)
 (test (catch #t s7-version + +) 'error)
 
+
+
 ;;; error
 
 (test (catch #t (lambda () (error 'oops 1)) (let () (lambda args (caadr args)))) 1)
@@ -17472,6 +17444,55 @@ abs     1       2
 		 (f1 3)))
 	     (lambda args (caadr args)))
       3)
+
+
+(test (error) 'error)
+(test (let ((x 1))
+	(let ((val (catch #\a
+			  (lambda ()
+			    (set! x 0)
+			    (error #\a "an error")
+			    (set! x 2))
+			  (lambda args
+			    (if (equal? (car args) #\a)
+				(set! x (+ x 3)))
+			    x))))
+	  (= x val 3)))
+      #t)
+(test (let ((x 1))
+	(let ((val (catch 32
+			   (lambda ()
+			     (catch #\a
+				    (lambda ()
+				      (set! x 0)
+				      (error #\a "an error: ~A" (error 32 "another error!"))
+				      (set! x 2))
+				    (lambda args
+				      (if (equal? (car args) #\a)
+					  (set! x (+ x 3)))
+				      x)))
+			   (lambda args 
+			     (if (equal? (car args) 32)
+				 (set! x (+ x 30)))))))
+	  (= x val 30)))
+      #t)
+
+#|
+(let ((old-error-hook (hook-functions *error-hook*))
+      (tag #f)
+      (args #f))
+  (set! (hook-functions *error-hook*)
+	(list (lambda (etag eargs)
+		(set! tag etag)
+		(set! args eargs))))
+  (error 'tag 1 2 3)
+  (test (and (equal? tag 'tag)
+	     (equal? args '(1 2 3))))
+  (set! (hook-functions *error-hook*) old-error-hook))
+|#
+;;; can't include this because it interrupts the load
+
+
 
 
 ;;; --------------------------------------------------------------------------------

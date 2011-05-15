@@ -860,11 +860,6 @@ var sndclm_fir_filter_tip = "<code>(fir-filter gen (input 0.0))</code>: next sam
 
 var sndclm_formant_tip = "<code>(formant gen (input 0.0) freq-in-radians)</code>: next sample from resonator generator";
 
-var sndclm_frame_ref_tip = "<code>(frame-ref f chan)</code>: f[chan] (the chan-th sample in frame f";
-
-var sndclm_frame_set_tip = "<code>(frame-set! f chan val)</code>: sets frame f's chan-th sample to val:<br>" +
-                           " f[chan] = val";
-
 var sndclm_frame_times_tip = "<code>(frame* f1 f2 outf)</code>: multiply f1 and f2 (elementwise)<br>" +
                              " returning outf; if outf is not given, a new frame is created.<br>" +
                              " outf[i] = f1[i] * f2[i].";
