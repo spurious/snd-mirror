@@ -613,7 +613,6 @@ struct s7_scheme {
 
   /* these 6 are pointers so that all thread refs are to the same thing */
   bool *gc_off, *gc_stats;            /* gc_off: if true, the GC won't run, gc_stats: if true, print stats during GC */
-  bool *tracing, *trace_all;          /* if tracing, each function on the *trace* list prints its args upon application */
   long *gensym_counter;
   bool *symbol_table_is_locked;       /* this also needs to be global across threads */
 
@@ -1117,7 +1116,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
 static s7_pointer division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg);
 static s7_pointer file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
 static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
+#define cons(Sc, A, B) s7_cons(Sc, A, B)
+static s7_pointer cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static s7_pointer immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
+static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void free_object(s7_pointer a);
 static char *describe_c_object(s7_scheme *sc, s7_pointer a);
 static char *describe_s_object(s7_scheme *sc, s7_pointer a);
@@ -1127,8 +1129,6 @@ static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c);
 static s7_pointer make_list_4(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c, s7_pointer d);
-static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
-static s7_pointer s7_cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
@@ -1150,6 +1150,7 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args);
 static s7_pointer read_error(s7_scheme *sc, const char *errmsg);
 static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj);
 
+static bool tracing, trace_all;
 
 
 
@@ -2556,7 +2557,7 @@ static s7_pointer g_symbol_calls(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env) 
 { 
-  /* return(s7_cons(sc, sc->NIL, old_env)); */
+  /* return(cons(sc, sc->NIL, old_env)); */
   s7_pointer x;
   NEW_CELL(sc, x);
   car(x) = sc->NIL;
@@ -3319,7 +3320,7 @@ static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
 {
   if (is_null(lst))
     return(sc->NIL);
-  return(s7_cons(sc, car(lst), copy_list(sc, cdr(lst))));
+  return(cons(sc, car(lst), copy_list(sc, cdr(lst))));
 }
 
 
@@ -7817,14 +7818,14 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	case NUM_INT:
 	  if ((integer(a) > S7_LONG_MAX) ||
 	      (integer(a) < S7_LONG_MIN))
-	    return(big_add(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
+	    return(big_add(sc, cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
 	  if ((numerator(a) > S7_LONG_MAX) ||
 	      (denominator(a) > S7_LONG_MAX) ||
 	      (numerator(a) < S7_LONG_MIN))
-	    return(big_add(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
+	    return(big_add(sc, cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
 #else
@@ -7952,14 +7953,14 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	case NUM_INT:
 	  if ((integer(a) > S7_LONG_MAX) ||
 	      (integer(a) < S7_LONG_MIN))
-	    return(big_subtract(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
+	    return(big_subtract(sc, cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
 	  if ((numerator(a) > S7_LONG_MAX) ||
 	      (denominator(a) > S7_LONG_MAX) ||
 	      (numerator(a) < S7_LONG_MIN))
-	    return(big_subtract(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
+	    return(big_subtract(sc, cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
 #else
@@ -8089,14 +8090,14 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	case NUM_INT:
 	  if ((integer(a) > S7_LONG_MAX) ||
 	      (integer(a) < S7_LONG_MIN))
-	    return(big_multiply(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
+	    return(big_multiply(sc, cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
 	  if ((numerator(a) > S7_LONG_MAX) ||
 	      (denominator(a) > S7_LONG_MAX) ||
 	      (numerator(a) < S7_LONG_MIN))
-	    return(big_multiply(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
+	    return(big_multiply(sc, cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
 #else
@@ -8114,7 +8115,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 #if WITH_GMP
 	  if ((integer(b) > S7_LONG_MAX) ||
 	      (integer(b) < S7_LONG_MIN))
-	    return(big_multiply(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), old_x)));
+	    return(big_multiply(sc, cons(sc, s7_Int_to_big_integer(sc, integer(a)), old_x)));
 
 	  if (is_null(x))
 	    return(s7_make_integer(sc, integer(a) * integer(b)));
@@ -8256,14 +8257,14 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	case NUM_INT:
 	  if ((integer(a) > S7_LONG_MAX) ||
 	      (integer(a) < S7_LONG_MIN))
-	    return(big_divide(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
+	    return(big_divide(sc, cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
 	  if ((numerator(a) > S7_LONG_MAX) ||
 	      (denominator(a) > S7_LONG_MAX) ||
 	      (numerator(a) < S7_LONG_MIN))
-	    return(big_divide(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
+	    return(big_divide(sc, cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
 #endif
@@ -10793,13 +10794,13 @@ static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
     {
       sc->w = s7_cons (sc, s7_make_character(sc, ((unsigned char)str[0])), sc->NIL);
       for (i = 1; i < len; i++)
-	sc->w = s7_cons_unchecked(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
+	sc->w = cons_unchecked(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
     }
   else
     {
       sc->w = sc->NIL;
       for (i = 0; i < len; i++)
-	sc->w = s7_cons(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
+	sc->w = cons(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
     }
   p = sc->w;
   sc->w = sc->NIL;
@@ -11513,7 +11514,7 @@ void *s7_port_set_data(s7_pointer port, void *stuff)
 
 static void push_input_port(s7_scheme *sc, s7_pointer new_port)
 {
-  sc->input_port_stack = s7_cons(sc, sc->input_port, sc->input_port_stack);
+  sc->input_port_stack = cons(sc, sc->input_port, sc->input_port_stack);
   sc->input_port = new_port;
   sc->input_is_file = (is_file_port(sc->input_port));
 }
@@ -11954,7 +11955,7 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
 
   s7_symbol_set_value(sc, 
 		      load_path,
-		      s7_cons(sc, 
+		      cons(sc, 
 			      s7_make_string(sc, dir), 
 			      s7_symbol_value(sc, load_path)));
   return(s7_load_path(sc));
@@ -13391,7 +13392,7 @@ s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 }
 
 
-static s7_pointer s7_cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b) 
+static s7_pointer cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b) 
 {
   s7_pointer x;
   NEW_CELL_NO_CHECK(sc, x);
@@ -13604,26 +13605,26 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
   if (!is_pair(cdr(a)))
     {
       if (is_not_null(cdr(a)))
-	return(s7_cons(sc, cdr(a), car(a)));
-      return(s7_cons(sc, car(a), sc->NIL)); /* don't return 'a' itself */
+	return(cons(sc, cdr(a), car(a)));
+      return(cons(sc, car(a), sc->NIL)); /* don't return 'a' itself */
     }
 
   sc->w = make_list_1(sc, car(a));
 
   for (x = cdr(a), p = a; is_pair(x); x = cdr(x), p = cdr(p))
     {
-      sc->w = s7_cons(sc, car(x), sc->w);
+      sc->w = cons(sc, car(x), sc->w);
       if (is_pair(cdr(x)))
 	{
 	  x = cdr(x);
-	  sc->w = s7_cons(sc, car(x), sc->w);
+	  sc->w = cons(sc, car(x), sc->w);
 	}
       if (x == p) /* this can take awhile to notice there's a cycle, but what does the caller expect? */
 	break;
     }
 
   if (is_not_null(x))
-    p = s7_cons(sc, x, sc->w);    /* ?? this means that (reverse '(1 2 . 3)) returns '(3 2 1) -- we used to return '() here */
+    p = cons(sc, x, sc->w);    /* ?? this means that (reverse '(1 2 . 3)) returns '(3 2 1) -- we used to return '() here */
   else p = sc->w;
 
   sc->w = sc->NIL;
@@ -13860,14 +13861,14 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 
   if (len < (sc->free_heap_top - sc->free_heap))
     {
-      sc->w = s7_cons(sc, init, sc->NIL);
+      sc->w = cons(sc, init, sc->NIL);
       for (i = 1; i < ilen; i++)
-	sc->w = s7_cons_unchecked(sc, init, sc->w);
+	sc->w = cons_unchecked(sc, init, sc->w);
     }
   else
     {
       for (i = 0; i < ilen; i++)
-	sc->w = s7_cons(sc, init, sc->w);
+	sc->w = cons(sc, init, sc->w);
     }
   p = sc->w;
   sc->w = sc->NIL;
@@ -14471,7 +14472,7 @@ s7_pointer s7_remq(s7_scheme *sc, s7_pointer a, s7_pointer obj)
   sc->w = sc->NIL;
   for ( ; is_pair(a); a = cdr(a))
     if (car(a) != obj)  /* use s7_is_eqv here for remv */
-      sc->w = s7_cons(sc, car(a), sc->w);
+      sc->w = cons(sc, car(a), sc->w);
   p = sc->w;
   sc->w = sc->NIL;
 
@@ -14739,9 +14740,9 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 
       /* using a vector here (rather than make_list_3) is slower */
       /* sc->args = make_list_3(sc, make_list_2(sc, car(args), car(x)), x, x); */
-      sc->args = s7_cons_unchecked(sc, 
-		   s7_cons_unchecked(sc, car(args), s7_cons_unchecked(sc, car(x), sc->NIL)),
-		   s7_cons_unchecked(sc, x, s7_cons(sc, x, sc->NIL)));
+      sc->args = cons_unchecked(sc, 
+		   cons_unchecked(sc, car(args), cons_unchecked(sc, car(x), sc->NIL)),
+		   cons_unchecked(sc, x, cons(sc, x, sc->NIL)));
 
       sc->value = sc->F;
       push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
@@ -14826,7 +14827,7 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
   if (!is_member(car(args), s7_symbol_value(sc, features)))
     s7_symbol_set_value(sc, 
 			features,
-			s7_cons(sc, 
+			cons(sc, 
 				car(args), 
 				s7_symbol_value(sc, features)));
   return(car(args));
@@ -14835,7 +14836,7 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 
 void s7_provide(s7_scheme *sc, const char *feature)
 {
-  g_provide(sc, s7_cons(sc, s7_make_symbol(sc, feature), sc->NIL));
+  g_provide(sc, cons(sc, s7_make_symbol(sc, feature), sc->NIL));
 }
 
 
@@ -14883,7 +14884,7 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 
       while (is_not_null(p))
 	{
-	  x = s7_cons(sc, car(p), x);
+	  x = cons(sc, car(p), x);
 	  p = cdr(p);
 	}
     }
@@ -15102,15 +15103,15 @@ s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 
   if (len < (sc->free_heap_top - sc->free_heap))
     {
-      sc->w = s7_cons(sc, vector_element(vect, len - 1), sc->NIL);
+      sc->w = cons(sc, vector_element(vect, len - 1), sc->NIL);
       for (i = len - 2; i >= 0; i--)
-	sc->w = s7_cons_unchecked(sc, vector_element(vect, i), sc->w);
+	sc->w = cons_unchecked(sc, vector_element(vect, i), sc->w);
     }
   else
     {
       sc->w = sc->NIL;
       for (i = len - 1; i >= 0; i--)
-	sc->w = s7_cons(sc, vector_element(vect, i), sc->w);
+	sc->w = cons(sc, vector_element(vect, i), sc->w);
     }
   p = sc->w;
   sc->w = sc->NIL;
@@ -15330,7 +15331,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 	return(s7_out_of_range_error(sc, "vector-set! index,", 2, cadr(args), "should be between 0 and the vector length"));
 
       if (is_not_null(cdddr(args)))
-	return(g_vector_set(sc, s7_cons(sc, vector_element(vec, index), cddr(args))));
+	return(g_vector_set(sc, cons(sc, vector_element(vec, index), cddr(args))));
 
       val = caddr(args);
     }
@@ -15460,7 +15461,7 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
       int i;
       sc->w = sc->NIL;
       for (i = vector_ndims(x) - 1; i >= 0; i--)
-	sc->w = s7_cons(sc, s7_make_integer(sc, vector_dimension(x, i)), sc->w);
+	sc->w = cons(sc, s7_make_integer(sc, vector_dimension(x, i)), sc->w);
       x = sc->w;
       sc->w = sc->NIL;
       return(x);
@@ -15541,7 +15542,7 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
     {
       sizes[i] = safe_list_length(sc, x);
       total_size *= sizes[i];
-      sc->w = s7_cons(sc, s7_make_integer(sc, sizes[i]), sc->w);
+      sc->w = cons(sc, s7_make_integer(sc, sizes[i]), sc->w);
       x = car(x);
       if ((i < (dims - 1)) && 
 	  (!is_pair(x)))
@@ -16005,7 +16006,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 	    hash_table_function(table) = HASH_EQUAL;
 	}
 
-      hash_table_elements(table)[loc] = s7_cons(sc, s7_cons(sc, key, value), hash_table_elements(table)[loc]);
+      hash_table_elements(table)[loc] = cons(sc, cons(sc, key, value), hash_table_elements(table)[loc]);
     }
   return(value);
 }
@@ -16031,7 +16032,7 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 
   if (is_null(cddr(args)))
     return(s7_hash_table_ref(sc, table, cadr(args)));
-  return(g_hash_table_ref(sc, s7_cons(sc, s7_hash_table_ref(sc, table, cadr(args)), cddr(args))));
+  return(g_hash_table_ref(sc, cons(sc, s7_hash_table_ref(sc, table, cadr(args)), cddr(args))));
 }
 
 
@@ -16088,7 +16089,7 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
 static s7_pointer hash_list_copy(s7_scheme *sc, s7_pointer obj)
 {
   if (is_pair(obj))
-    return(s7_cons(sc, s7_copy(sc, car(obj)), hash_list_copy(sc, cdr(obj))));
+    return(cons(sc, s7_copy(sc, car(obj)), hash_list_copy(sc, cdr(obj))));
   return(obj);
 }
 
@@ -16416,7 +16417,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
   
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     {
-      return(s7_cons(sc, 
+      return(cons(sc, 
 		     append_in_place(sc, 
 				     make_list_2(sc, 
 						 (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
@@ -17350,7 +17351,7 @@ static s7_pointer call_s_object_getter(s7_scheme *sc, s7_pointer a, s7_pointer a
   /* still accessible via for-each */
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
-  return(s7_call(sc, object_types[obj->type].getter_func, s7_cons(sc, obj->value, args))); /* ?? */
+  return(s7_call(sc, object_types[obj->type].getter_func, cons(sc, obj->value, args))); /* ?? */
 }
 
 
@@ -17359,7 +17360,7 @@ static s7_pointer call_s_object_setter(s7_scheme *sc, s7_pointer a, s7_pointer a
   /* still accessible via reverse, for-each */
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
-  return(s7_call(sc, object_types[obj->type].setter_func, s7_cons(sc, obj->value, args))); /* ?? */
+  return(s7_call(sc, object_types[obj->type].setter_func, cons(sc, obj->value, args))); /* ?? */
 }
 
 
@@ -17873,12 +17874,12 @@ static s7_pointer pws_arity(s7_scheme *sc, s7_pointer obj)
   s7_pws_t *f;
   f = (s7_pws_t *)s7_object_value(obj);
 
-  return(s7_cons(sc, s7_make_integer(sc, f->get_req_args),
-	   s7_cons(sc, s7_make_integer(sc, f->get_opt_args),
-	     s7_cons(sc, sc->F,
+  return(cons(sc, s7_make_integer(sc, f->get_req_args),
+	   cons(sc, s7_make_integer(sc, f->get_opt_args),
+	     cons(sc, sc->F,
 	       s7_cons (sc, s7_make_integer(sc, f->set_req_args),
-		 s7_cons(sc, s7_make_integer(sc, f->set_opt_args),
-	           s7_cons(sc, sc->F, sc->NIL)))))));
+		 cons(sc, s7_make_integer(sc, f->set_opt_args),
+	           cons(sc, sc->F, sc->NIL)))))));
 }
 
 
@@ -18413,7 +18414,7 @@ must be compatible with the arity of the first."
     if (!is_function_with_arity(car(x)))
       return(s7_wrong_type_arg_error(sc, "hook", i, car(x), "a function"));
 
-  hook = g_make_hook(sc, s7_cons(sc, s7_procedure_arity(sc, car(args)), sc->NIL));
+  hook = g_make_hook(sc, cons(sc, s7_procedure_arity(sc, car(args)), sc->NIL));
   hook_functions(hook) = args;
   gc_loc = s7_gc_protect(sc, hook);
   
@@ -18583,7 +18584,7 @@ static s7_pointer g_trace_hook_set(s7_scheme *sc, s7_pointer args)
   else
     {
       if (s7_is_procedure(funcs))
-	hook_functions(sc->trace_hook) = s7_cons(sc, funcs, sc->NIL);
+	hook_functions(sc->trace_hook) = cons(sc, funcs, sc->NIL);
       else return(sc->ERROR);
     }
   return(sc->trace_hook); /* kinda pointless... */
@@ -18606,7 +18607,7 @@ static s7_pointer g_load_hook_set(s7_scheme *sc, s7_pointer args)
   else
     {
       if (s7_is_procedure(funcs))
-	hook_functions(sc->load_hook) = s7_cons(sc, funcs, sc->NIL);
+	hook_functions(sc->load_hook) = cons(sc, funcs, sc->NIL);
       else return(sc->ERROR);
     }
   return(sc->load_hook);
@@ -18629,7 +18630,7 @@ static s7_pointer g_unbound_variable_hook_set(s7_scheme *sc, s7_pointer args)
   else
     {
       if (s7_is_procedure(funcs))
-	hook_functions(sc->unbound_variable_hook) = s7_cons(sc, funcs, sc->NIL);
+	hook_functions(sc->unbound_variable_hook) = cons(sc, funcs, sc->NIL);
       else return(sc->ERROR);
     }
   return(sc->unbound_variable_hook);
@@ -18653,7 +18654,7 @@ static s7_pointer g_error_hook_set(s7_scheme *sc, s7_pointer args)
   else
     {
       if (s7_is_procedure(funcs))
-	hook_functions(sc->error_hook) = s7_cons(sc, funcs, sc->NIL);
+	hook_functions(sc->error_hook) = cons(sc, funcs, sc->NIL);
       else return(sc->ERROR);
     }
   return(sc->error_hook);
@@ -18959,7 +18960,7 @@ static s7_pointer list_copy(s7_scheme *sc, s7_pointer x, s7_pointer y, bool step
   if ((!is_pair(x)) ||
        (x == y))
     return(x);
-  return(s7_cons(sc, car(x), list_copy(sc, cdr(x), (step) ? cdr(y) : y, !step)));
+  return(cons(sc, car(x), list_copy(sc, cdr(x), (step) ? cdr(y) : y, !step)));
 }
 
 
@@ -18981,7 +18982,7 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       return(vector_copy(sc, obj)); /* "shallow" copy */
 
     case T_PAIR:
-      return(s7_cons(sc, car(obj), list_copy(sc, cdr(obj), obj, true)));  /* this is the only use of list_copy */
+      return(cons(sc, car(obj), list_copy(sc, cdr(obj), obj, true)));  /* this is the only use of list_copy */
 
     case T_HOOK:
       return(hook_copy(sc, obj));
@@ -19166,7 +19167,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	  {
 	    x = g_hash_table_iterate(sc, iter_loc);
 	    if (is_null(x)) break;
-	    sc->w = s7_cons(sc, x, sc->w);
+	    sc->w = cons(sc, x, sc->w);
 	  }
 
 	x = sc->w;
@@ -19832,8 +19833,8 @@ untrace without arguments to turn this off."
 
   if (is_null(args))
     {
-      (*(sc->trace_all)) = true;
-      (*(sc->tracing)) = true;
+      trace_all = true;
+      tracing = true;
       return(sc->F);
     }
   
@@ -19855,7 +19856,7 @@ untrace without arguments to turn this off."
 	}
     }
 
-  (*(sc->tracing)) = (sc->trace_top > 0);
+  tracing = (sc->trace_top > 0);
   return(sc->T);
 }
 
@@ -19873,11 +19874,11 @@ If untrace is called with no arguments, all functions are removed, turning off a
 
   if (is_null(args))
     {
-      (*(sc->trace_all)) = false;
+      trace_all = false;
       for (i = 0; i < sc->trace_top; i++)
 	sc->trace_list[i] = sc->NIL;
       sc->trace_top = 0;
-      (*(sc->tracing)) = false;
+      tracing = false;
       return(sc->F);
     }
 
@@ -19904,7 +19905,7 @@ If untrace is called with no arguments, all functions are removed, turning off a
       sc->trace_list[j++] = sc->trace_list[i];
   
   sc->trace_top = j;
-  (*(sc->tracing)) = (sc->trace_top > 0);
+  tracing = (sc->trace_top > 0);
   return(sc->T);
 }
 
@@ -19922,7 +19923,7 @@ static void trace_apply(s7_scheme *sc)
   pthread_mutex_lock(&trace_lock);
 #endif
 
-  if (*(sc->trace_all))
+  if (trace_all)
     trace_it = true;
   else
     {
@@ -19982,7 +19983,7 @@ static void trace_apply(s7_scheme *sc)
 	  push_stack(sc, opcode(OP_TRACE_HOOK_QUIT), sc->args, sc->code); /* restore current state after dealing with the trace hook func */
 	  /* we have to turn off tracing while evaluating the trace hook functions
 	   */
-	  (*(sc->tracing)) = false;
+	  tracing = false;
 	  s7_hook_apply(sc, sc->trace_hook, make_list_2(sc, sc->code, sc->args));
 
 	  /* it would be nice if *trace-hook* could return #f to turn off trace printout.
@@ -21083,7 +21084,7 @@ static s7_pointer ecdr_to_list(s7_scheme *sc, s7_pointer slot_list)
   e = slot_list;
   while (is_not_null(e))
     {
-      sc->x = s7_cons(sc, e, sc->x);
+      sc->x = cons(sc, e, sc->x);
       e = ecdr(e);
     }
   return(safe_reverse_in_place(sc->x));
@@ -21253,11 +21254,11 @@ static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
   if (is_null(cdr(d)))
     return(car(d));
   
-  p = s7_cons(sc, car(d), cdr(d));
+  p = cons(sc, car(d), cdr(d));
   q = p;
   while (is_not_null(cdr(cdr(p))))
     {
-      d = s7_cons(sc, car(p), cdr(p));
+      d = cons(sc, car(p), cdr(p));
       if (is_not_null(cdr(cdr(p))))
 	p = cdr(d);
     }
@@ -21287,7 +21288,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
   if (is_any_macro(sc->code))                   /* (apply mac '(3)) -> (apply mac '((mac 3))) */
     {
       push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
-      sc->args = make_list_1(sc, s7_cons(sc, sc->code, sc->args));
+      sc->args = make_list_1(sc, cons(sc, sc->code, sc->args));
     }
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->NIL);
@@ -21618,16 +21619,18 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
    */
   obj = cadr(args); 
 
-  if ((is_pair(obj)) &&
-      (is_null(cddr(args))))
+  if ((is_pair(obj)) &&                                               /* arg is a list */
+      (is_null(cddr(args))))                                          /* only one list arg */
     {
       len = s7_list_length(sc, obj);
-      if ((len > 0) &&
-	  (is_null(cddr(args))) &&
-	  (!(is_macro(sc->code))))
+      if ((len > 0) &&                                                /* a proper list arg */
+	  (type(sc->code) == T_CLOSURE) &&                            /* not lambda* that might get confused about arg names */
+	  (is_pair(closure_args(sc->code))) &&                        /* not a rest arg */
+	  (!is_immutable_or_accessed(car(closure_args(sc->code)))) && /* not a bad arg name! */
+	  (safe_list_length(sc, closure_args(sc->code)) == 1))        /* closure takes just one arg */
 	{
 	  /* one list arg -- special, but very common case */
-	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), s7_cons_unchecked(sc, make_list_1(sc, sc->NIL), obj), sc->code);
+	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), cons_unchecked(sc, make_list_1(sc, sc->NIL), obj), sc->code);
 	  return(sc->UNSPECIFIED);
 	}
 
@@ -21677,11 +21680,11 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	{
 	  for (i = 3, x = cddr(args); is_not_null(x); x = cdr(x), i++)
 	    {
-	      sc->x = s7_cons(sc, sc->NIL, sc->x);          /* we're making a list to be filled in later with the individual args */
+	      sc->x = cons(sc, sc->NIL, sc->x);          /* we're making a list to be filled in later with the individual args */
 
 	      if (s7_is_hash_table(car(x)))
-		sc->z = s7_cons_unchecked(sc, g_make_hash_table_iterator(sc, x), sc->z);
-	      else sc->z = s7_cons_unchecked(sc, car(x), sc->z);
+		sc->z = cons_unchecked(sc, g_make_hash_table_iterator(sc, x), sc->z);
+	      else sc->z = cons_unchecked(sc, car(x), sc->z);
 	    }
 	}
     }
@@ -21724,9 +21727,9 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
   sc->y = args;
   x = make_mutable_integer(sc, 0);
-  sc->args = s7_cons_unchecked(sc, x,                         /* '(counter applicable-len func-args-holder . objects) */
-               s7_cons_unchecked(sc, s7_make_integer(sc, len), 
-                 s7_cons_unchecked(sc, sc->x, 
+  sc->args = cons_unchecked(sc, x,                         /* '(counter applicable-len func-args-holder . objects) */
+               cons_unchecked(sc, s7_make_integer(sc, len), 
+                 cons_unchecked(sc, sc->x, 
                    safe_reverse_in_place(sc, sc->z))));
 
   sc->x = sc->NIL;
@@ -21805,7 +21808,7 @@ static bool next_map(s7_scheme *sc)
 	  break;
 	}
       
-      sc->x = s7_cons(sc, x, sc->x);
+      sc->x = cons(sc, x, sc->x);
     }
 
   if (is_not_null(z))
@@ -21850,6 +21853,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   sc->y = args;                     /* gc protect */
   obj = cadr(args); 
 
+  /* TODO: split the simple case into for-each-style and one that just runs a safe function in place */
   if (is_pair(obj))
     {
       len = s7_list_length(sc, obj);
@@ -21858,7 +21862,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  (!(is_macro(sc->code))))
 	{
 	  /* one list arg -- special, but very common case */
-	  push_stack(sc, opcode(OP_MAP_SIMPLE), s7_cons_unchecked(sc, make_mutable_integer(sc, len), s7_cons(sc, sc->NIL, obj)), sc->code);
+	  push_stack(sc, opcode(OP_MAP_SIMPLE), cons_unchecked(sc, make_mutable_integer(sc, len), cons(sc, sc->NIL, obj)), sc->code);
 	  return(sc->NO_VALUE);
 	}
 
@@ -21897,8 +21901,8 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      if (len == 0) break; /* need error check below */
 	      
 	      if (s7_is_hash_table(car(x)))
-		sc->z = s7_cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
-	      else sc->z = s7_cons_unchecked(sc, car(x), sc->z);
+		sc->z = cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
+	      else sc->z = cons_unchecked(sc, car(x), sc->z);
 	    }
 	}
     }
@@ -21926,9 +21930,9 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     }
 
   x = make_mutable_integer(sc, 0);
-  sc->args = s7_cons_unchecked(sc, x,
-	       s7_cons_unchecked(sc, s7_make_integer(sc, len), 
-		 s7_cons_unchecked(sc, sc->NIL, 
+  sc->args = cons_unchecked(sc, x,
+	       cons_unchecked(sc, s7_make_integer(sc, len), 
+		 cons_unchecked(sc, sc->NIL, 
                    safe_reverse_in_place(sc, sc->z))));
 
   sc->y = sc->NIL;
@@ -21964,7 +21968,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	   *   (all this to avoid consing), clobbers the variable's value.
 	   */
 	  for (x = args; is_not_null(cdr(x)); x = cdr(x))
-	    stack_args(sc->stack, top) = s7_cons(sc, car(x), stack_args(sc->stack, top));
+	    stack_args(sc->stack, top) = cons(sc, car(x), stack_args(sc->stack, top));
 	  return(car(x));
 
 	  /* what about values-assoc which would splice in the value in the alist based on the head of the spliced-into list?
@@ -22049,7 +22053,7 @@ s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
   sc->w = sc->NIL;
   va_start(ap, num_values);
   for (i = 0; i < num_values; i++)
-    sc->w = s7_cons(sc, va_arg(ap, s7_pointer), sc->w);
+    sc->w = cons(sc, va_arg(ap, s7_pointer), sc->w);
   va_end(ap);
 
   p = sc->w;
@@ -22207,7 +22211,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 
     sc->w = sc->NIL;
     for (i = 0; i <= len; i++)
-      sc->w = s7_cons(sc, sc->NIL, sc->w);
+      sc->w = cons(sc, sc->NIL, sc->w);
 
     car(sc->w) = sc->QQ_LIST;
     
@@ -23023,7 +23027,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  /* isolated typo perhaps -- no pair to hold the position info, so make one.
 	   *   sc->cur_code is GC-protected, so this should be safe.
 	   */
-	  cur_code = s7_cons(sc, sym, sc->NIL);     /* the error will say "(sym)" which is not too misleading */
+	  cur_code = cons(sc, sym, sc->NIL);     /* the error will say "(sym)" which is not too misleading */
 	  pair_line_number(cur_code) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
 	}
       cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
@@ -23362,7 +23366,7 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
       if (is_immutable(tmp))
 	return(eval_error(sc, "do step variable: ~S is immutable", tmp));
       /* symbol-access is dealt with elsewhere */
-      sc->value = s7_cons_unchecked(sc, add_to_local_environment(sc, tmp, car(sc->y)), sc->value);
+      sc->value = cons_unchecked(sc, add_to_local_environment(sc, tmp, car(sc->y)), sc->value);
     }
   
   /* now we've set up the environment, next set up for the loop */
@@ -23429,7 +23433,7 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
 		s7_gc_unprotect_at(sc, gc_loc);
 	      }
 	  }
-	sc->args = s7_cons_unchecked(sc, 
+	sc->args = cons_unchecked(sc, 
 			   make_list_4(sc, binding, step_expr, cdar(sc->y), new_expr),
 			   sc->args);
       }
@@ -23439,8 +23443,8 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
     s7_pointer end_stuff;
     end_stuff = cadr(sc->code);
     if (is_null(end_stuff))
-      sc->args = s7_cons(sc, sc->args, sc->NIL);
-    else sc->args = s7_cons_unchecked(sc, sc->args, s7_cons_unchecked(sc, s7_cons(sc, car(end_stuff), sc->F), cdr(end_stuff)));
+      sc->args = cons(sc, sc->args, sc->NIL);
+    else sc->args = cons_unchecked(sc, sc->args, cons_unchecked(sc, cons(sc, car(end_stuff), sc->F), cdr(end_stuff)));
   }
   sc->code = cddr(sc->code);
   
@@ -23962,7 +23966,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (is_multiple_value(sc->value))
 	    cadr(sc->args) = revappend(sc, multiple_value(sc->value), cadr(sc->args));
-	  else cadr(sc->args) = s7_cons(sc, sc->value, cadr(sc->args));
+	  else cadr(sc->args) = cons(sc, sc->value, cadr(sc->args));
 	}
       if (is_pair(cddr(sc->args)))
 	{
@@ -23971,7 +23975,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->x = caddr(sc->args);
 	      cddr(sc->args) = cdddr(sc->args);  /* move down for-each list of args */
 	      push_stack(sc, opcode(OP_MAP_SIMPLE), sc->args, sc->code);
-	      sc->args = s7_cons(sc, sc->x, sc->NIL);  /* we can't optimize out this cons */
+	      sc->args = cons(sc, sc->x, sc->NIL);  /* we can't optimize out this cons */
 	      goto APPLY_WITHOUT_TRACE;
 	    }
 	}
@@ -23985,7 +23989,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_multiple_value(sc->value))            /* (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) */
 	    caddr(sc->args) = revappend(sc, multiple_value(sc->value), caddr(sc->args));
 	  /* not append_in_place here because sc->value has the multiple-values bit set */
-	  else caddr(sc->args) = s7_cons(sc, sc->value, caddr(sc->args));
+	  else caddr(sc->args) = cons(sc, sc->value, caddr(sc->args));
 	}
 
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
@@ -23999,15 +24003,35 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_FOR_EACH_SIMPLE:
-      /* func = sc->code, func takes one arg, args = '((nil) arglist) */
-      /* (for-each (lambda (x) (display x)) (list 1 2 3)) */
+      /* func = sc->code, func takes one arg, args = '((nil) arglist) 
+       *
+       * (for-each (lambda (x) (display x)) (list 1 2 3)) 
+       */
       if (is_pair(cdr(sc->args)))
 	{
+	  s7_pointer y, variable;
 	  caar(sc->args) = cadr(sc->args); /* current func arg */
 	  cdr(sc->args) = cddr(sc->args);  /* move down for-each list of args */
 	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), sc->args, sc->code);
-	  sc->args = car(sc->args);
-	  goto APPLY_WITHOUT_TRACE;
+	  /* sc->args = car(sc->args); */
+	  
+	  /* now call the function directly -- we know it is a T_CLOSURE or T_CLOSURE_STAR
+	   *   and that it can be called with one argument, so there's no need to go to
+	   *   apply.  We checked the function argname in g_for_each, so we don't need
+	   *   that error check either.
+	   */
+
+	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
+	  variable = car(closure_args(sc->code));
+	  NEW_CELL(sc, y);
+	  car(y) = variable;
+	  cdr(y) = caar(sc->args);
+	  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+	  ecdr(y) = car(sc->envir);
+	  car(sc->envir) = y;
+	  set_local(variable);
+	  sc->code = closure_body(sc->code);
+	  goto BEGIN;
 	}
       sc->value = sc->UNSPECIFIED;
       goto START;
@@ -24236,7 +24260,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->envir = new_frame_in_env(sc, sc->envir); 
 	  if (is_null(end_stuff))
 	    sc->args = make_list_1(sc, sc->NIL);
-	  else sc->args = s7_cons_unchecked(sc, sc->NIL, s7_cons_unchecked(sc, s7_cons(sc, car(end_stuff), sc->F), cdr(end_stuff)));
+	  else sc->args = cons_unchecked(sc, sc->NIL, cons_unchecked(sc, cons(sc, car(end_stuff), sc->F), cdr(end_stuff)));
 	  sc->code = cddr(sc->code);
 	  goto DO_END1;
 	}
@@ -24248,7 +24272,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_DO_INIT:
-      sc->args = s7_cons(sc, sc->value, sc->args);    /* code will be last element (first after reverse) */
+      sc->args = cons(sc, sc->value, sc->args);    /* code will be last element (first after reverse) */
       if (is_pair(sc->code))
 	{
 	  /* here sc->code is a list like: ((i 0 (+ i 1)) ...)
@@ -24404,11 +24428,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* fall through */
       
 
-      /* replacing this label with the equivalent sc->op = OP_EVAL and so on is much slower */
     EVAL:
     case OP_EVAL:   
       /* main part of evaluation */
-      /* try to unroll this implicit loop to optimize the most common case of (func...) */
 
       if (is_pair(sc->code))
 	{
@@ -24526,7 +24548,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* this is where most of s7's compute time goes */
       /* expanding the function calls (s7_cons, new_cell, and eval_symbol) in place seems to speed up s7 by a noticeable amount! */
-      /*    before expansion: sc->args = s7_cons(sc, sc->value, sc->args); */
+      /*    before expansion: sc->args = cons(sc, sc->value, sc->args); */
 
       /* I tried using prebuilt never-gc'd arglists here to drastically reduce consing etc, but
        *   they are tricky (the arglist object needs to be in the regular heap so that errors and
@@ -24749,7 +24771,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       symbol_calls(sc->code)++;
 #endif
 
-      if (*(sc->tracing)) 
+      if (tracing) 
 	trace_apply(sc);
 
     APPLY_WITHOUT_TRACE:
@@ -25172,7 +25194,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s_type_t *obj;
 		obj = (s_type_t *)s7_object_value(sc->code);
 		sc->code = object_types[tag].getter_func;
-		sc->args = s7_cons(sc, obj->value, sc->args);
+		sc->args = cons(sc, obj->value, sc->args);
 		goto APPLY;
 	      }
 	    return(apply_error(sc, sc->code, sc->args));
@@ -25253,7 +25275,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if (is_null(sc->args))
 		return(s7_wrong_number_of_args_error(sc, "not enough args for list-ref (via list as applicable object): ~A", sc->args));
-	      sc->value = g_list_ref(sc, s7_cons(sc, sc->code, sc->args)); /* (L 1 2) */
+	      sc->value = g_list_ref(sc, cons(sc, sc->code, sc->args)); /* (L 1 2) */
 	    }
 	  goto START;
 
@@ -25265,7 +25287,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if (is_null(sc->args))
 		return(s7_wrong_number_of_args_error(sc, "not enough args for hash-table-ref (via hash table as applicable object): ~A", sc->args));
-	      sc->value = g_hash_table_ref(sc, s7_cons(sc, sc->code, sc->args));
+	      sc->value = g_hash_table_ref(sc, cons(sc, sc->code, sc->args));
 	    }
 	  goto START;
 
@@ -25306,124 +25328,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto APPLY;
       }
 
-      
-    case OP_EVAL_MACRO:    /* after (scheme-side) macroexpansion, evaluate the resulting expression */
-      /* 
-       * (define-macro (hi a) `(+ ,a 1))
-       * (hi 2)
-       * here with value: (+ 2 1)
-       */
-      sc->code = sc->value;
-      goto EVAL;
-
-
-    LAMBDA:
-    case OP_LAMBDA: 
-      /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
-      if ((!is_pair(sc->code)) ||
-	  (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) or (lambda . 1) */
-	return(eval_error(sc, "lambda: no args or no body? ~A", sc->code));
-
-      if (!s7_is_list(sc, car(sc->code)))
-	{
-	  if (s7_is_constant(car(sc->code)))                       /* (lambda :a ...) */
-	    return(eval_error(sc, "lambda parameter '~S is a constant", car(sc->code))); /* not ~A here, (lambda #\null do) for example */
-
-	  /* we currently accept (lambda i i . i) (lambda quote i)  (lambda : : . #()) (lambda : 1 . "")
-	   *   at this level, but when the lambda form is evaluated, it will trigger an error.
-	   */
-	}
-      else
-	{
-	  for (sc->x = car(sc->code); is_pair(sc->x); sc->x = cdr(sc->x))
-	    {
-	      if (s7_is_constant(car(sc->x)))                      /* (lambda (pi) pi) */
-		return(eval_error(sc, "lambda parameter '~S is a constant", car(sc->x)));
-	      if (symbol_is_in_list(car(sc->x), cdr(sc->x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
-		return(eval_error(sc, "lambda parameter '~S is used twice in the parameter list", car(sc->x)));
-	    }
-	  if ((is_not_null(sc->x)) &&
-	      (s7_is_constant(sc->x)))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
-	    return(eval_error(sc, "lambda :rest parameter '~A is a constant", sc->x));
-	}
-
-      /* sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE); */
-      /* optimize that since it happens a bazillion times */
-
-      NEW_CELL(sc, sc->value);
-      car(sc->value) = sc->code;
-      cdr(sc->value) = sc->envir;
-      set_type(sc->value, T_CLOSURE | T_PROCEDURE | T_DONT_COPY);
-
-      goto START;
-
-
-    case OP_LAMBDA_STAR:
-      if ((!is_pair(sc->code)) ||
-	  (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
-	return(eval_error(sc, "lambda*: no args or no body? ~A", sc->code));
-
-      if (!s7_is_list(sc, car(sc->code)))
-	{
-	  if (s7_is_constant(car(sc->code)))                                  /* (lambda* :a ...) */
-	    return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->code)));
-	}
-      else
-	{ 
-	  for (sc->w = car(sc->code); is_pair(sc->w); sc->w = cdr(sc->w))
-	    {
-	      if (is_pair(car(sc->w)))
-		{
-		  if (s7_is_constant(caar(sc->w)))                            /* (lambda* ((:a 1)) ...) */
-		    return(eval_error(sc, "lambda* parameter '~A is a constant", caar(sc->w)));
-		  if (symbol_is_in_list(caar(sc->w), cdr(sc->w)))             /* (lambda* ((a 1) a) ...) */
-		    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", caar(sc->w)));
-		  if (!is_pair(cdar(sc->w)))                                  /* (lambda* ((a . 0.0)) a) */
-		    {
-		      if (is_null(cdar(sc->w)))                             /* (lambda* ((a)) ...) */
-			return(eval_error(sc, "lambda* parameter default value missing? '~A", car(sc->w)));
-		      return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car(sc->w)));
-		    }
-		  if (is_not_null(cddar(sc->w)))                               /* (lambda* ((a 0.0 "hi")) a) */
-		    return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car(sc->w)));
-		}
-	      else 
-		{
-		  if (car(sc->w) != sc->KEY_REST)
-		    {
-		      if ((s7_is_constant(car(sc->w))) &&
-			  (car(sc->w) != sc->KEY_KEY) &&
-			  (car(sc->w) != sc->KEY_OPTIONAL) &&
-			  (car(sc->w) != sc->KEY_ALLOW_OTHER_KEYS))           /* (lambda* (pi) ...) */
-			return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->w)));
-		      if (symbol_is_in_list(car(sc->w), cdr(sc->w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
-			return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(sc->w)));
-
-		      if ((car(sc->w) == sc->KEY_ALLOW_OTHER_KEYS) &&         /* (lambda* (:allow-other-keys x) x) */
-			  (is_not_null(cdr(sc->w))))
-			eval_error(sc, ":allow-other-keys should be the last parameter: ~A", car(sc->code));
-		    }
-		  else
-		    {
-		      if (!is_pair(cdr(sc->w)))                               /* (lambda* (:rest) ...) */
-			return(eval_error(sc, "lambda* :rest parameter missing? ~A", sc->w));
-		      if (!s7_is_symbol(cadr(sc->w)))                         /* (lambda* (:rest (a 1)) ...) */
-			{
-			  if (!is_pair(cadr(sc->w)))                          /* (lambda* (:rest 1) ...) */
-			    return(eval_error(sc, "lambda* :rest parameter is not a symbol? ~A", sc->w));
-			  return(eval_error(sc, "lambda* :rest parameter can't have a default value. ~A", sc->w));
-			}
-		    }
-		}
-	    }
-	  if ((is_not_null(sc->w)) &&
-	      (s7_is_constant(sc->w)))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
-	    return(eval_error(sc, "lambda* :rest parameter '~A is a constant", sc->w));
-	}
-
-      sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
-      goto START;
-      
       
     case OP_QUOTE:
       if (!is_pair(sc->code))                    /* (quote . -1) */
@@ -25469,9 +25373,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  sc->x = caar(sc->code);
 	  if (sc->op == OP_DEFINE_STAR)
-	    sc->code = s7_cons_unchecked(sc, sc->LAMBDA_STAR, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
-	  else sc->code = s7_cons_unchecked(sc, sc->LAMBDA, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
-	  /* TODO: goto LAMBDA */
+	    sc->code = cons_unchecked(sc, sc->LAMBDA_STAR, cons(sc, cdar(sc->code), cdr(sc->code)));
+	  else sc->code = cons_unchecked(sc, sc->LAMBDA, cons(sc, cdar(sc->code), cdr(sc->code)));
 	} 
       else 
 	{
@@ -25585,7 +25488,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  if (is_multiple_value(sc->value))
 	    {
-	      sc->code = s7_cons(sc, sc->SET, s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code)));
+	      sc->code = cons(sc, sc->SET, s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code)));
 	      sc->op = OP_SET;
 	      goto START_WITHOUT_POP_STACK;
 	    }
@@ -25596,7 +25499,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
 	      sc->code = car(sc->args);
 	    }
-	  else sc->code = s7_cons(sc, sc->LIST_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));  
+	  else sc->code = cons(sc, sc->LIST_SET, cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));  
 	  goto EVAL;
 
 	  /* timings: old 3.25, new 2.34 (1.93 direct), (12.2): 1.34
@@ -25615,11 +25518,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
 	      sc->code = car(sc->args);
 	    }
-	  else sc->code = s7_cons(sc, sc->VECTOR_SET, s7_cons(sc, sc->value, s7_append(sc, sc->args, sc->code)));
+	  else sc->code = cons(sc, sc->VECTOR_SET, cons(sc, sc->value, s7_append(sc, sc->args, sc->code)));
 	  goto EVAL;
 	}
 
-      sc->code = s7_cons_unchecked(sc, s7_cons(sc, sc->value, sc->args), sc->code);
+      sc->code = cons_unchecked(sc, cons(sc, sc->value, sc->args), sc->code);
 
 
     case OP_SET:                                                             /* entry for set! */
@@ -25712,7 +25615,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case T_VECTOR:
 	      /* sc->x is the vector, sc->code is expr without the set! */
 	      /*  args have not been evaluated! */
-	      /* sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
+	      /* sc->code = cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
 
 	      if (cdar(sc->code) != sc->NIL)
 		{
@@ -25720,11 +25623,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 		  sc->code = cadar(sc->code);
 		}
-	      else sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
+	      else sc->code = cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
 	      break;
 	      
 	    case T_STRING:
-	      /* sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      /* sc->code = cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
 	       *  it is slower to break out the normal case and handle it here.
 	       *
 	       * here only one index makes sense, and it is required, so 
@@ -25747,13 +25650,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  push_op_stack(sc, sc->STRING_SET);
 		  sc->code = cadar(sc->code);
 		}
-	      else sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      else sc->code = cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
 	      break;
 
 	    case T_PAIR:
 	      /* code: ((lst 1) 32) from (let ((lst '(1 2 3))) (set! (lst 1) 32))
 	       * old form:
-	       *    sc->code = s7_cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	       *    sc->code = cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
 	       *    old: 2.32, new: 1.77 (1.50 direct), (12.2): 1.07
 	       *    (time (let ((lst '(1 2 3))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! (lst 1) 32))))
 	       */
@@ -25764,7 +25667,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 		  sc->code = cadar(sc->code);
 		}
-	      else sc->code = s7_cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      else sc->code = cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
 	      break;
 
 	    case T_HASH_TABLE:
@@ -25774,7 +25677,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 		  sc->code = cadar(sc->code);
 		}
-	      else sc->code = s7_cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
+	      else sc->code = cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
 	      break;
 
 
@@ -25787,7 +25690,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* perhaps it has a setter */
 	      
 	      if (is_procedure(c_function_setter(sc->x)))
-		sc->code = s7_cons(sc, c_function_setter(sc->x), s7_append(sc, cdar(sc->code), cdr(sc->code)));
+		sc->code = cons(sc, c_function_setter(sc->x), s7_append(sc, cdar(sc->code), cdr(sc->code)));
 	      else return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	      break;
 
@@ -25938,7 +25841,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_LET1:       /* let -- calculate parameters */
-      /* sc->args = s7_cons(sc, sc->value, sc->args); */
+      /* sc->args = cons(sc, sc->value, sc->args); */
       {
 	s7_pointer x;
 	NEW_CELL(sc, x);
@@ -26023,10 +25926,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{    
 	  /* named let */
 	  for (sc->x = cadr(sc->code), sc->args = sc->NIL; is_pair(sc->x); sc->x = cdr(sc->x)) 
-	    sc->args = s7_cons(sc, caar(sc->x), sc->args);
+	    sc->args = cons(sc, caar(sc->x), sc->args);
 	  /* perhaps we could mimic the "do" setp var handling here to avoid the consing */
 	  
-	  sc->x = s7_make_closure(sc, s7_cons(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code)), sc->envir); 
+	  sc->x = s7_make_closure(sc, cons(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code)), sc->envir); 
 	  if (is_not_null(find_local_symbol(sc, sc->envir, car(sc->code))))                              /* (let loop ((i 0) (loop 1)) i) */
 	    return(eval_error(sc, "named let name collides with a let variable: ~A", car(sc->code)));
 
@@ -26157,7 +26060,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_LETREC1:    /* letrec -- calculate parameters */
-      sc->args = s7_cons(sc, sc->value, sc->args);
+      sc->args = cons(sc, sc->value, sc->args);
       if (is_pair(sc->code)) 
 	{ 
 	  if (!is_pair(car(sc->code)))          /* (letrec ((x)) x) -- perhaps this is legal? */
@@ -26171,7 +26074,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  push_stack(sc, opcode(OP_LETREC1), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
-	  /* sc->args = sc->NIL; */
 	  goto EVAL;
 	} 
 
@@ -26200,6 +26102,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = caar(sc->code);
       goto EVAL;
       
+      /* TODO: the COND cases could all check for non-pairs, or did I already try this?
+       */
       
     case OP_COND1:
       if (is_true(sc, sc->value))     /* got a hit (is_true -> not false, so else is true even though it has no value) */
@@ -26232,7 +26136,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       */
 
 	      if (is_multiple_value(sc->value))                             /* (cond ((values 1 2) => +)) */
-		sc->code = s7_cons(sc, cadr(sc->code), multiple_value(sc->value));
+		sc->code = cons(sc, cadr(sc->code), multiple_value(sc->value));
 	      else sc->code = make_list_2(sc, cadr(sc->code), make_list_2(sc, sc->QUOTE, sc->value)); 
 	      goto EVAL_PAIR;
 	    }
@@ -26373,6 +26277,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
 
+    case OP_EVAL_MACRO:    /* after (scheme-side) macroexpansion, evaluate the resulting expression */
+      /* 
+       * (define-macro (hi a) `(+ ,a 1))
+       * (hi 2)
+       * here with value: (+ 2 1)
+       */
+      sc->code = sc->value;
+      goto EVAL;
+
+
     case OP_BACRO:
       /* sc->value is the symbol, sc->x is the binding (the bacro) */
       set_type(sc->x, T_BACRO | T_ANY_MACRO | T_DONT_COPY | T_DONT_EVAL_ARGS);
@@ -26437,19 +26351,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error_with_name(sc, "~A ~A has stray dot?", sc->x));
 
       sc->y = s7_gensym(sc, "defmac");
-      sc->code = s7_cons(sc, 
-			 sc->LAMBDA,
-			 s7_cons(sc, 
-				 make_list_1(sc, sc->y),
-				 make_list_1(sc, 
-					     s7_cons(sc, 
-						     sc->APPLY,
-						     s7_cons(sc, 
-							     s7_cons(sc, 
-								     (sc->op == OP_DEFMACRO_STAR) ? sc->LAMBDA_STAR : sc->LAMBDA,
-								     sc->z),
-							     make_list_1(sc, make_list_2(sc, sc->CDR, sc->y)))))));
-
+      sc->code = cons(sc, 
+		      make_list_1(sc, sc->y),
+		      make_list_1(sc, 
+				  cons(sc, 
+				       sc->APPLY,
+				       cons(sc, 
+					    cons(sc, 
+						 (sc->op == OP_DEFMACRO_STAR) ? sc->LAMBDA_STAR : sc->LAMBDA,
+						 sc->z),
+					    make_list_1(sc, make_list_2(sc, sc->CDR, sc->y))))));
+      
       /* so, (defmacro hi (a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
        *   sc->code: (lambda (defmac-21) 
@@ -26460,10 +26372,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->y = sc->NIL;
       sc->z = sc->NIL;
       push_stack(sc, opcode(OP_MACRO), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO */
-      sc->x = sc->NIL;
-
-      sc->op = (opcode_t)OP_LAMBDA;
-      sc->code = cdr(sc->code);
       goto LAMBDA;
 
 
@@ -26524,22 +26432,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  make_list_3(sc, make_protected_string(sc, "define-macro ~A argument name is not a symbol: ~S"), sc->x, sc->y)));
 
       sc->y = s7_gensym(sc, "defmac");
-      sc->code = s7_cons(sc,
-			 sc->LAMBDA,
-			 s7_cons(sc, 
-				 make_list_1(sc, sc->y),
-				 make_list_1(sc, 
-					     s7_cons(sc, 
-						     sc->APPLY,
-						     s7_cons(sc, 
-							     s7_cons(sc, 
-								     ((sc->op == OP_DEFINE_MACRO_STAR) || 
-								      (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
-								     s7_cons(sc,                /* cdar(sc->code) is the parameter list */
-									     ((sc->op == OP_DEFINE_MACRO_STAR) || 
-									      (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
-									     sc->z)),
-							     make_list_1(sc, make_list_2(sc, sc->CDR, sc->y)))))));
+      sc->code = cons(sc, 
+		      make_list_1(sc, sc->y),
+		      make_list_1(sc, 
+				  cons(sc, 
+				       sc->APPLY,
+				       cons(sc, 
+					    cons(sc, 
+						 ((sc->op == OP_DEFINE_MACRO_STAR) || 
+						  (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
+						 cons(sc,                /* cdar(sc->code) is the parameter list */
+						      ((sc->op == OP_DEFINE_MACRO_STAR) || 
+						       (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
+						      sc->z)),
+					    make_list_1(sc, make_list_2(sc, sc->CDR, sc->y))))));
 
       /* (define-macro (hi a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
@@ -26549,9 +26455,115 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->z = sc->NIL;
       push_stack(sc, opcode(OP_MACRO), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO */
       sc->x = sc->NIL;
-      sc->op = (opcode_t)OP_LAMBDA;
-      sc->code = cdr(sc->code);
-      goto LAMBDA;
+      /* fall into ... */
+      
+      
+    LAMBDA:
+    case OP_LAMBDA: 
+      /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
+      if ((!is_pair(sc->code)) ||
+	  (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) or (lambda . 1) */
+	return(eval_error(sc, "lambda: no args or no body? ~A", sc->code));
+
+      if (!s7_is_list(sc, car(sc->code)))
+	{
+	  if (s7_is_constant(car(sc->code)))                       /* (lambda :a ...) */
+	    return(eval_error(sc, "lambda parameter '~S is a constant", car(sc->code))); /* not ~A here, (lambda #\null do) for example */
+
+	  /* we currently accept (lambda i i . i) (lambda quote i)  (lambda : : . #()) (lambda : 1 . "")
+	   *   at this level, but when the lambda form is evaluated, it will trigger an error.
+	   */
+	}
+      else
+	{
+	  for (sc->x = car(sc->code); is_pair(sc->x); sc->x = cdr(sc->x))
+	    {
+	      if (s7_is_constant(car(sc->x)))                      /* (lambda (pi) pi) */
+		return(eval_error(sc, "lambda parameter '~S is a constant", car(sc->x)));
+	      if (symbol_is_in_list(car(sc->x), cdr(sc->x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
+		return(eval_error(sc, "lambda parameter '~S is used twice in the parameter list", car(sc->x)));
+	    }
+	  if ((is_not_null(sc->x)) &&
+	      (s7_is_constant(sc->x)))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
+	    return(eval_error(sc, "lambda :rest parameter '~A is a constant", sc->x));
+	}
+
+      /* sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE); */
+      /* optimize that since it happens a bazillion times */
+
+      NEW_CELL(sc, sc->value);
+      car(sc->value) = sc->code;
+      cdr(sc->value) = sc->envir;
+      set_type(sc->value, T_CLOSURE | T_PROCEDURE | T_DONT_COPY);
+
+      goto START;
+
+
+    case OP_LAMBDA_STAR:
+      if ((!is_pair(sc->code)) ||
+	  (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
+	return(eval_error(sc, "lambda*: no args or no body? ~A", sc->code));
+
+      if (!s7_is_list(sc, car(sc->code)))
+	{
+	  if (s7_is_constant(car(sc->code)))                                  /* (lambda* :a ...) */
+	    return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->code)));
+	}
+      else
+	{ 
+	  for (sc->w = car(sc->code); is_pair(sc->w); sc->w = cdr(sc->w))
+	    {
+	      if (is_pair(car(sc->w)))
+		{
+		  if (s7_is_constant(caar(sc->w)))                            /* (lambda* ((:a 1)) ...) */
+		    return(eval_error(sc, "lambda* parameter '~A is a constant", caar(sc->w)));
+		  if (symbol_is_in_list(caar(sc->w), cdr(sc->w)))             /* (lambda* ((a 1) a) ...) */
+		    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", caar(sc->w)));
+		  if (!is_pair(cdar(sc->w)))                                  /* (lambda* ((a . 0.0)) a) */
+		    {
+		      if (is_null(cdar(sc->w)))                             /* (lambda* ((a)) ...) */
+			return(eval_error(sc, "lambda* parameter default value missing? '~A", car(sc->w)));
+		      return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car(sc->w)));
+		    }
+		  if (is_not_null(cddar(sc->w)))                               /* (lambda* ((a 0.0 "hi")) a) */
+		    return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car(sc->w)));
+		}
+	      else 
+		{
+		  if (car(sc->w) != sc->KEY_REST)
+		    {
+		      if ((s7_is_constant(car(sc->w))) &&
+			  (car(sc->w) != sc->KEY_KEY) &&
+			  (car(sc->w) != sc->KEY_OPTIONAL) &&
+			  (car(sc->w) != sc->KEY_ALLOW_OTHER_KEYS))           /* (lambda* (pi) ...) */
+			return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->w)));
+		      if (symbol_is_in_list(car(sc->w), cdr(sc->w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
+			return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(sc->w)));
+
+		      if ((car(sc->w) == sc->KEY_ALLOW_OTHER_KEYS) &&         /* (lambda* (:allow-other-keys x) x) */
+			  (is_not_null(cdr(sc->w))))
+			eval_error(sc, ":allow-other-keys should be the last parameter: ~A", car(sc->code));
+		    }
+		  else
+		    {
+		      if (!is_pair(cdr(sc->w)))                               /* (lambda* (:rest) ...) */
+			return(eval_error(sc, "lambda* :rest parameter missing? ~A", sc->w));
+		      if (!s7_is_symbol(cadr(sc->w)))                         /* (lambda* (:rest (a 1)) ...) */
+			{
+			  if (!is_pair(cadr(sc->w)))                          /* (lambda* (:rest 1) ...) */
+			    return(eval_error(sc, "lambda* :rest parameter is not a symbol? ~A", sc->w));
+			  return(eval_error(sc, "lambda* :rest parameter can't have a default value. ~A", sc->w));
+			}
+		    }
+		}
+	    }
+	  if ((is_not_null(sc->w)) &&
+	      (s7_is_constant(sc->w)))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
+	    return(eval_error(sc, "lambda* :rest parameter '~A is a constant", sc->w));
+	}
+
+      sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
+      goto START;
       
       
     case OP_CASE:      /* case, car(sc->code) is the selector */
@@ -26566,11 +26578,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (s7_is_symbol(car(sc->code)))
 	    {
-#if 0
 	      if (is_global(car(sc->code)))
 		sc->value = symbol_value(symbol_global_slot(car(sc->code)));
 	      else
-#endif
 		{
 		  s7_pointer xx;
 		  xx = find_symbol(sc, sc->envir, car(sc->code));
@@ -26698,7 +26708,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_TRACE_HOOK_QUIT:
-      (*(sc->tracing)) = true;                 /* this was turned off before calling the *trace-hook* functions */
+      tracing = true;                 /* this was turned off before calling the *trace-hook* functions */
       goto APPLY_WITHOUT_TRACE;
 
       
@@ -26824,7 +26834,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     READ_LIST:
     case OP_READ_LIST: 
       /* sc->args is sc->NIL at first */
-      /*    was: sc->args = s7_cons(sc, sc->value, sc->args); */ 
+      /*    was: sc->args = cons(sc, sc->value, sc->args); */ 
       {
 	/* s7test: 8%, lg: .3% allocs here */
 	s7_pointer x;
@@ -27105,7 +27115,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->args == small_int(1))
 	sc->code = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
       else sc->code = make_list_4(sc, sc->APPLY, sc->MULTIVECTOR, sc->args, g_quasiquote_1(sc, sc->value));
-      /* sc->args = sc->NIL; */
       goto EVAL_PAIR;
 
       
@@ -27616,7 +27625,7 @@ static s7_pointer set_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
     s7_pointer curval;
     curval = g_assq(sc, make_list_2(sc, obj, sc->key_values));
     if (curval == sc->F)
-      sc->key_values = s7_cons(sc, s7_cons(sc, obj, car(args)), sc->key_values);
+      sc->key_values = cons(sc, cons(sc, obj, car(args)), sc->key_values);
     else cdr(curval) = car(args);
   }
   return(car(args));
@@ -32498,8 +32507,8 @@ s7_scheme *s7_init(void)
   sc->symbol_table->hloc = NOT_IN_HEAP;
   
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
-  sc->tracing = (bool *)calloc(1, sizeof(bool));
-  sc->trace_all = (bool *)calloc(1, sizeof(bool));
+  tracing = false;
+  trace_all = false;
 
   sc->trace_list = (s7_pointer *)calloc(INITIAL_TRACE_LIST_SIZE, sizeof(s7_pointer));
   sc->trace_list_size = INITIAL_TRACE_LIST_SIZE;
