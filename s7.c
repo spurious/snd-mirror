@@ -1499,7 +1499,6 @@ static void mark_op_stack(s7_scheme *sc)
     S7_MARK(sc->op_stack[i]);
 }
 
-
 static void s7_mark_object_1(s7_pointer p)
 {
   switch (type(p))
@@ -14565,8 +14564,31 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
       eq_func = caddr(args);
       if (!is_procedure(eq_func))
 	return(s7_wrong_type_arg_error(sc, "assoc function,", 3, eq_func, "a function"));
+
       if (!args_match(sc, eq_func, 2))
 	return(s7_wrong_type_arg_error(sc, "assoc", 3, eq_func, "a procedure that can take 2 arguments"));
+
+      /* now maybe there's a simple case */
+      if ((is_safe_procedure(eq_func)) &&
+	  ((s7_list_length(sc, cadr(args))) > 0))
+	{
+	  s7_pointer p;
+	  s7_function func;
+
+	  func = c_function_call(eq_func);
+	  sc->z = make_list_2(sc, car(args), sc->F);
+	  for (p = cadr(args); is_pair(p); p = cdr(p))
+	    {
+	      if (is_pair(car(p)))
+		{
+		  cadr(sc->z) = caar(p);
+		  if (is_true(sc, (*func)(sc, sc->z)))
+		    return(car(p));
+		}
+	      else return(s7_wrong_type_arg_error(sc, "assoc", 2, cadr(args), "an a-list")); /* we're assuming caar below so it better exist */
+	    }
+	  return(sc->F);
+	}
 
       x = cadr(args);      
       if (is_null(x)) return(sc->F);
@@ -14728,6 +14750,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
       eq_func = caddr(args);
       if (!is_procedure(eq_func))
 	return(s7_wrong_type_arg_error(sc, "member function,", 3, eq_func, "a function"));
+
       if (!args_match(sc, eq_func, 2))
 	return(s7_wrong_type_arg_error(sc, "member", 3, eq_func, "a procedure that can take 2 arguments"));
 
@@ -14735,6 +14758,35 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
       if (is_null(x)) return(sc->F);
       if (!is_pair(x))
 	return(s7_wrong_type_arg_error(sc, "member", 2, x, "a list"));
+      
+      /* now maybe there's a simple case */
+      if ((is_safe_procedure(eq_func)) &&
+	  ((s7_list_length(sc, x)) > 0))
+	{
+	  s7_pointer p;
+	  s7_function func;
+	  
+	  func = c_function_call(eq_func);
+	  sc->z = make_list_2(sc, car(args), sc->F);
+	  for (p = x; is_pair(p); p = cdr(p))
+	    {
+	      cadr(sc->z) = car(p);
+	      if (is_true(sc, (*func)(sc, sc->z)))
+		return(p);
+	    }
+	  return(sc->F);
+	}
+#if 0
+	  if ((type(eq_func) == T_CLOSURE) &&                             /* not lambda* that might get confused about arg names */
+	      (is_pair(closure_args(eq_func))) &&                         /* not a rest arg */
+	      (safe_list_length(sc, closure_args(eq_func)) == 2) &&       /* closure takes just one arg */
+	      (!is_immutable_or_accessed(car(closure_args(eq_func)))) &&  /* not a bad arg name! */
+	      (!is_immutable_or_accessed(cadr(closure_args(eq_func)))))   /* not a bad 2nd arg name! */
+	    {
+	      push_stack(sc, opcode(OP_MEMBER_IF_SIMPLE), sc->args, sc->code);
+	      
+	    }
+#endif
       
       sc->code = eq_func;
 
@@ -21853,17 +21905,43 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   sc->y = args;                     /* gc protect */
   obj = cadr(args); 
 
-  /* TODO: split the simple case into for-each-style and one that just runs a safe function in place */
-  if (is_pair(obj))
+  /* there are two simple cases here: a safe function can be handled immediately, and a closure
+   *   with one arg called with one list can be handled without all the elaborate run-time checks.
+   */
+
+  if ((is_pair(obj)) &&                                               /* arg is a list */
+      (is_null(cddr(args))))                                          /* only one list arg */
     {
       len = s7_list_length(sc, obj);
-      if ((len > 0) &&
-	  (is_null(cddr(args))) &&
-	  (!(is_macro(sc->code))))
+      if (len > 0)                                                    /* a proper list arg */
 	{
-	  /* one list arg -- special, but very common case */
-	  push_stack(sc, opcode(OP_MAP_SIMPLE), cons_unchecked(sc, make_mutable_integer(sc, len), cons(sc, sc->NIL, obj)), sc->code);
-	  return(sc->NO_VALUE);
+	  if ((type(sc->code) == T_CLOSURE) &&                            /* not lambda* that might get confused about arg names */
+	      (is_pair(closure_args(sc->code))) &&                        /* not a rest arg */
+	      (!is_immutable_or_accessed(car(closure_args(sc->code)))) && /* not a bad arg name! */
+	      (safe_list_length(sc, closure_args(sc->code)) == 1))        /* closure takes just one arg */
+	    {
+	      push_stack(sc, opcode(OP_MAP_SIMPLE), cons_unchecked(sc, make_mutable_integer(sc, len), cons(sc, sc->NIL, obj)), sc->code);
+	      return(sc->NO_VALUE);
+	    }
+
+	  if ((is_safe_procedure(sc->code)) &&
+	      (args_match(sc, sc->code, 1)))
+	    {
+	      s7_pointer p;
+	      s7_function func;
+	      func = c_function_call(sc->code);
+	      sc->x = sc->NIL;
+	      sc->z = cons(sc, sc->F, sc->NIL);
+	      for (p = obj; is_pair(p); p = cdr(p))
+		{
+		  car(sc->z) = car(p);
+		  /* fprintf(stderr, "args: %s\n", s7_object_to_c_string(sc, sc->z)); */
+		  sc->x = cons(sc, (*func)(sc, sc->z), sc->x); /* can we assume a safe function won't return multiple values? */
+		}
+	      p = safe_reverse_in_place(sc, sc->x);
+	      sc->x = sc->NIL;
+	      return(p);
+	    }
 	}
 
       if (len < 0)
@@ -21874,7 +21952,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     }
   else len = applicable_length(sc, obj);
 
-  len = applicable_length(sc, obj);
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, hash-table, or applicable object"));
 
@@ -23623,6 +23700,96 @@ static bool just_constants(s7_scheme *sc, s7_pointer args)
 #endif
 
 
+static s7_pointer check_lambda_args(s7_scheme *sc)
+{
+  if (!s7_is_list(sc, car(sc->code)))
+    {
+      if (s7_is_constant(car(sc->code)))                       /* (lambda :a ...) */
+	return(eval_error(sc, "lambda parameter '~S is a constant", car(sc->code))); /* not ~A here, (lambda #\null do) for example */
+      
+      /* we currently accept (lambda i i . i) (lambda quote i)  (lambda : : . #()) (lambda : 1 . "")
+       *   at this level, but when the lambda form is evaluated, it will trigger an error.
+       */
+    }
+  else
+    {
+      for (sc->x = car(sc->code); is_pair(sc->x); sc->x = cdr(sc->x))
+	{
+	  if (s7_is_constant(car(sc->x)))                      /* (lambda (pi) pi) */
+	    return(eval_error(sc, "lambda parameter '~S is a constant", car(sc->x)));
+	  if (symbol_is_in_list(car(sc->x), cdr(sc->x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
+	    return(eval_error(sc, "lambda parameter '~S is used twice in the parameter list", car(sc->x)));
+	}
+      if ((is_not_null(sc->x)) &&
+	  (s7_is_constant(sc->x)))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
+	return(eval_error(sc, "lambda :rest parameter '~A is a constant", sc->x));
+    }
+  return(sc->F);
+}
+
+
+static s7_pointer check_lambda_star_args(s7_scheme *sc)
+{
+  if (!s7_is_list(sc, car(sc->code)))
+    {
+      if (s7_is_constant(car(sc->code)))                                  /* (lambda* :a ...) */
+	return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->code)));
+    }
+  else
+    { 
+      for (sc->w = car(sc->code); is_pair(sc->w); sc->w = cdr(sc->w))
+	{
+	  if (is_pair(car(sc->w)))
+	    {
+	      if (s7_is_constant(caar(sc->w)))                            /* (lambda* ((:a 1)) ...) */
+		return(eval_error(sc, "lambda* parameter '~A is a constant", caar(sc->w)));
+	      if (symbol_is_in_list(caar(sc->w), cdr(sc->w)))             /* (lambda* ((a 1) a) ...) */
+		return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", caar(sc->w)));
+	      if (!is_pair(cdar(sc->w)))                                  /* (lambda* ((a . 0.0)) a) */
+		{
+		  if (is_null(cdar(sc->w)))                             /* (lambda* ((a)) ...) */
+		    return(eval_error(sc, "lambda* parameter default value missing? '~A", car(sc->w)));
+		  return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car(sc->w)));
+		}
+	      if (is_not_null(cddar(sc->w)))                               /* (lambda* ((a 0.0 "hi")) a) */
+		return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car(sc->w)));
+	    }
+	  else 
+	    {
+	      if (car(sc->w) != sc->KEY_REST)
+		{
+		  if ((s7_is_constant(car(sc->w))) &&
+		      (car(sc->w) != sc->KEY_KEY) &&
+		      (car(sc->w) != sc->KEY_OPTIONAL) &&
+		      (car(sc->w) != sc->KEY_ALLOW_OTHER_KEYS))           /* (lambda* (pi) ...) */
+		    return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->w)));
+		  if (symbol_is_in_list(car(sc->w), cdr(sc->w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
+		    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(sc->w)));
+		  
+		  if ((car(sc->w) == sc->KEY_ALLOW_OTHER_KEYS) &&         /* (lambda* (:allow-other-keys x) x) */
+		      (is_not_null(cdr(sc->w))))
+		    eval_error(sc, ":allow-other-keys should be the last parameter: ~A", car(sc->code));
+		}
+	      else
+		{
+		  if (!is_pair(cdr(sc->w)))                               /* (lambda* (:rest) ...) */
+		    return(eval_error(sc, "lambda* :rest parameter missing? ~A", sc->w));
+		  if (!s7_is_symbol(cadr(sc->w)))                         /* (lambda* (:rest (a 1)) ...) */
+		    {
+		      if (!is_pair(cadr(sc->w)))                          /* (lambda* (:rest 1) ...) */
+			return(eval_error(sc, "lambda* :rest parameter is not a symbol? ~A", sc->w));
+		      return(eval_error(sc, "lambda* :rest parameter can't have a default value. ~A", sc->w));
+		    }
+		}
+	    }
+	}
+      if ((is_not_null(sc->w)) &&
+	  (s7_is_constant(sc->w)))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
+	return(eval_error(sc, "lambda* :rest parameter '~A is a constant", sc->w));
+    }
+  return(sc->F);
+}
+
 
 /* -------------------------------- eval -------------------------------- */
 
@@ -23960,7 +24127,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_MAP_SIMPLE:
-      /* func = sc->code, func takes one arg, args = '((nil) nil arglist) at the start */
+      /* func = sc->code, func takes one arg, args = '((nil) nil arglist) at the start 
+       *   the func is prechecked, as is the list.
+       */
       /* fprintf(stderr, "value: %s, args: %s\n", s7_object_to_c_string(sc, sc->value), s7_object_to_c_string(sc, sc->args)); */
       if (sc->value != sc->NO_VALUE)
 	{
@@ -23972,11 +24141,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if ((--integer(number(car(sc->args)))) >= 0) /* protect against circular arg lists created by the map function! */
 	    {
+	      s7_pointer y, variable;
+
 	      sc->x = caddr(sc->args);
 	      cddr(sc->args) = cdddr(sc->args);  /* move down for-each list of args */
 	      push_stack(sc, opcode(OP_MAP_SIMPLE), sc->args, sc->code);
-	      sc->args = cons(sc, sc->x, sc->NIL);  /* we can't optimize out this cons */
-	      goto APPLY_WITHOUT_TRACE;
+
+	      /* now call the function directly -- we know it is a T_CLOSURE
+	       *   and that it can be called with one argument, so there's no need to go to
+	       *   apply.  We checked the function argname in g_for_each, so we don't need
+	       *   that error check either.
+	       */
+
+	      NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
+	      variable = car(closure_args(sc->code));
+	      sc->code = closure_body(sc->code);
+
+	      NEW_CELL(sc, y);
+	      car(y) = variable;
+	      cdr(y) = sc->x;
+	      set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+	      ecdr(y) = car(sc->envir);
+	      car(sc->envir) = y;
+	      set_local(variable);
+	      goto BEGIN;
 	    }
 	}
       sc->value = safe_reverse_in_place(sc, cadr(sc->args));
@@ -24013,16 +24201,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  caar(sc->args) = cadr(sc->args); /* current func arg */
 	  cdr(sc->args) = cddr(sc->args);  /* move down for-each list of args */
 	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), sc->args, sc->code);
-	  /* sc->args = car(sc->args); */
 	  
-	  /* now call the function directly -- we know it is a T_CLOSURE or T_CLOSURE_STAR
-	   *   and that it can be called with one argument, so there's no need to go to
-	   *   apply.  We checked the function argname in g_for_each, so we don't need
-	   *   that error check either.
-	   */
+	  /* now call the function directly as in map above. */
 
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
 	  variable = car(closure_args(sc->code));
+	  sc->code = closure_body(sc->code);
+
 	  NEW_CELL(sc, y);
 	  car(y) = variable;
 	  cdr(y) = caar(sc->args);
@@ -24030,7 +24215,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  ecdr(y) = car(sc->envir);
 	  car(sc->envir) = y;
 	  set_local(variable);
-	  sc->code = closure_body(sc->code);
 	  goto BEGIN;
 	}
       sc->value = sc->UNSPECIFIED;
@@ -24048,7 +24232,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
 
-    case OP_MEMBER_IF1:
     case OP_MEMBER_IF:
       /* code=func, args=((val (car list)) list list), value=result of comparison
        */
@@ -24064,22 +24247,39 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
       cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
+      push_stack(sc, opcode(OP_MEMBER_IF1), sc->args, sc->code);
+      cadar(sc->args) = caadr(sc->args);
+      sc->args = car(sc->args);
+      goto APPLY_WITHOUT_TRACE;
 
-      if (sc->op == OP_MEMBER_IF1)
+
+    case OP_MEMBER_IF1:
+      if (sc->value != sc->F)            /* previous comparison was not #f -- return list */
 	{
-	  /* circular list check */
-	  if (cadr(sc->args) == cdaddr(sc->args)) 
-	    {
-	      sc->value = sc->F;
-	      goto START;
-	    }
-	  caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list (check for circular list) */
-	  push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
+	  sc->value = cadr(sc->args);
+	  goto START;
 	}
-      else push_stack(sc, opcode(OP_MEMBER_IF1), sc->args, sc->code);
+
+      if (!is_pair(cdadr(sc->args)))     /* no more args -- return #f */
+	{
+	  sc->value = sc->F;
+	  goto START;
+	}
+      cadr(sc->args) = cdadr(sc->args);  /* cdr down arg list */
+
+      /* circular list check */
+      if (cadr(sc->args) == cdaddr(sc->args)) 
+	{
+	  sc->value = sc->F;
+	  goto START;
+	}
+      caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list (check for circular list) */
+
+      push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
       /* 22% of pushes in lg, 0 in s7test */
       cadar(sc->args) = caadr(sc->args);
       sc->args = car(sc->args);
+
       goto APPLY_WITHOUT_TRACE;
 
 
@@ -24401,7 +24601,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  opcode_t op;
 	  op = sc->op;
 	  push_stack(sc, opcode(OP_BARRIER), sc->args, sc->code);
-	  /* s7test: 22% of pushes, 5% in lg */
 	  if ((*(sc->begin_hook))(sc))
 	    {
 	      s7_quit(sc);
@@ -24411,7 +24610,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->op = op; /* for better error handling.  otherwise we get "barrier" as the offending function name in eval_error_with_name */
 	}
 
-      /* sc->args = sc->NIL; */ /* 1-may-11 */
       if (!is_pair(sc->code)) 
 	{
 	  if (is_not_null(sc->code))            /* (begin . 1), (cond (#t . 1)) */
@@ -24422,6 +24620,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       if (type(cdr(sc->code)) != T_NIL)
 	push_stack(sc, opcode(OP_BEGIN), sc->NIL, cdr(sc->code));
+      /* s7test: 22% of pushes, 5% in lg */
       
       sc->code = car(sc->code);
       sc->cur_code = sc->code;               /* in case error occurs, this helps tell us where we are */
@@ -24978,7 +25177,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_C_LST_ARGS_FUNCTION:                 /* -------- {list} -------- */
 	  if (sc->no_values == 0)
 	    sc->value = sc->args;
-	  else sc->value = g_qq_list(sc, sc->args); /* c_function_call(sc->code)(sc, sc->args); */
+	  else sc->value = g_qq_list(sc, sc->args);
 	  goto START;
 
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
@@ -25440,8 +25639,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				file_names[port_file_number(sc->input_port)],
 				s7_make_integer(sc, port_line_number(sc->input_port)));
 	  else sc->x = sc->code;           /* fallback on (__func__ name) */
-	  closure_environment(sc->value) = new_frame_in_env(sc, closure_environment(sc->value));
 
+	  closure_environment(sc->value) = new_frame_in_env(sc, closure_environment(sc->value));
 	  add_to_environment(sc, closure_environment(sc->value), sc->__FUNC__, sc->x);
 	  typeflag(closure_environment(sc->value)) |= T_ENVIRONMENT;
 	}
@@ -25461,7 +25660,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else add_to_current_environment(sc, sc->code, sc->value); 
 
       sc->value = sc->code;
-      sc->x = sc->NIL;
+      /* sc->x = sc->NIL; */
       goto START;
       
       
@@ -25869,7 +26068,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  push_stack(sc, opcode(OP_LET1), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
-	  /* sc->args = sc->NIL; */
 	  goto EVAL;
 	}
 
@@ -26010,7 +26208,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  push_stack(sc, opcode(OP_LET_STAR1), sc->args, sc->code);
 	  sc->code = cadar(sc->code);
-	  /* sc->args = sc->NIL; */
 	  goto EVAL;
 	} 
 
@@ -26465,32 +26662,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) or (lambda . 1) */
 	return(eval_error(sc, "lambda: no args or no body? ~A", sc->code));
 
-      if (!s7_is_list(sc, car(sc->code)))
-	{
-	  if (s7_is_constant(car(sc->code)))                       /* (lambda :a ...) */
-	    return(eval_error(sc, "lambda parameter '~S is a constant", car(sc->code))); /* not ~A here, (lambda #\null do) for example */
-
-	  /* we currently accept (lambda i i . i) (lambda quote i)  (lambda : : . #()) (lambda : 1 . "")
-	   *   at this level, but when the lambda form is evaluated, it will trigger an error.
-	   */
-	}
-      else
-	{
-	  for (sc->x = car(sc->code); is_pair(sc->x); sc->x = cdr(sc->x))
-	    {
-	      if (s7_is_constant(car(sc->x)))                      /* (lambda (pi) pi) */
-		return(eval_error(sc, "lambda parameter '~S is a constant", car(sc->x)));
-	      if (symbol_is_in_list(car(sc->x), cdr(sc->x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
-		return(eval_error(sc, "lambda parameter '~S is used twice in the parameter list", car(sc->x)));
-	    }
-	  if ((is_not_null(sc->x)) &&
-	      (s7_is_constant(sc->x)))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
-	    return(eval_error(sc, "lambda :rest parameter '~A is a constant", sc->x));
-	}
-
+      check_lambda_args(sc);
       /* sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE); */
-      /* optimize that since it happens a bazillion times */
-
       NEW_CELL(sc, sc->value);
       car(sc->value) = sc->code;
       cdr(sc->value) = sc->envir;
@@ -26504,64 +26677,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
 	return(eval_error(sc, "lambda*: no args or no body? ~A", sc->code));
 
-      if (!s7_is_list(sc, car(sc->code)))
-	{
-	  if (s7_is_constant(car(sc->code)))                                  /* (lambda* :a ...) */
-	    return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->code)));
-	}
-      else
-	{ 
-	  for (sc->w = car(sc->code); is_pair(sc->w); sc->w = cdr(sc->w))
-	    {
-	      if (is_pair(car(sc->w)))
-		{
-		  if (s7_is_constant(caar(sc->w)))                            /* (lambda* ((:a 1)) ...) */
-		    return(eval_error(sc, "lambda* parameter '~A is a constant", caar(sc->w)));
-		  if (symbol_is_in_list(caar(sc->w), cdr(sc->w)))             /* (lambda* ((a 1) a) ...) */
-		    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", caar(sc->w)));
-		  if (!is_pair(cdar(sc->w)))                                  /* (lambda* ((a . 0.0)) a) */
-		    {
-		      if (is_null(cdar(sc->w)))                             /* (lambda* ((a)) ...) */
-			return(eval_error(sc, "lambda* parameter default value missing? '~A", car(sc->w)));
-		      return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car(sc->w)));
-		    }
-		  if (is_not_null(cddar(sc->w)))                               /* (lambda* ((a 0.0 "hi")) a) */
-		    return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car(sc->w)));
-		}
-	      else 
-		{
-		  if (car(sc->w) != sc->KEY_REST)
-		    {
-		      if ((s7_is_constant(car(sc->w))) &&
-			  (car(sc->w) != sc->KEY_KEY) &&
-			  (car(sc->w) != sc->KEY_OPTIONAL) &&
-			  (car(sc->w) != sc->KEY_ALLOW_OTHER_KEYS))           /* (lambda* (pi) ...) */
-			return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->w)));
-		      if (symbol_is_in_list(car(sc->w), cdr(sc->w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
-			return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(sc->w)));
-
-		      if ((car(sc->w) == sc->KEY_ALLOW_OTHER_KEYS) &&         /* (lambda* (:allow-other-keys x) x) */
-			  (is_not_null(cdr(sc->w))))
-			eval_error(sc, ":allow-other-keys should be the last parameter: ~A", car(sc->code));
-		    }
-		  else
-		    {
-		      if (!is_pair(cdr(sc->w)))                               /* (lambda* (:rest) ...) */
-			return(eval_error(sc, "lambda* :rest parameter missing? ~A", sc->w));
-		      if (!s7_is_symbol(cadr(sc->w)))                         /* (lambda* (:rest (a 1)) ...) */
-			{
-			  if (!is_pair(cadr(sc->w)))                          /* (lambda* (:rest 1) ...) */
-			    return(eval_error(sc, "lambda* :rest parameter is not a symbol? ~A", sc->w));
-			  return(eval_error(sc, "lambda* :rest parameter can't have a default value. ~A", sc->w));
-			}
-		    }
-		}
-	    }
-	  if ((is_not_null(sc->w)) &&
-	      (s7_is_constant(sc->w)))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
-	    return(eval_error(sc, "lambda* :rest parameter '~A is a constant", sc->w));
-	}
-
+      check_lambda_star_args(sc);
       sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
       goto START;
       
@@ -26812,7 +26928,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_pair(cdr(sc->code)))
 	return(eval_error(sc, "with-environment body is messed up: ~A", sc->code));
       push_stack(sc, opcode(OP_WITH_ENV1), sc->NIL, sc->code);
-      /* sc->args = sc->NIL; */
       sc->code = car(sc->code);                          /* eval env arg */
       goto EVAL;
 
