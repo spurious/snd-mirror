@@ -3039,5 +3039,4 @@
 
 	      (close-input-port fp)))))))
 
-;;; TODO: not nil followed by pair? etc
-;;; TODO: (and (integer? x) (string? x) ...) has to be #f
+;;; also not nil followed by pair? etc, and impossible stuff like (and (integer? x) (string? x) ...) has to be #f

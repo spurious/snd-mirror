@@ -63411,5 +63411,3 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  3,968,358,150  s7.c:gc [/home/bil/snd-12/snd]
 |#
 
-
-;;; TODO: check the optimizer ampf bug -- wrong environment?

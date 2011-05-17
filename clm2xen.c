@@ -5,11 +5,6 @@
  *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
  */
 
-/* SOMEDAY: if s7, use s7_make_function_star (see g_make_oscil below).
- *   The same for cases in snd-dac|region|select|snd
- *   and since it's so easy in s7, are there are others? -- make-sampler but this complicates the documentation
- */
-
 #include <mus-config.h>
 
 #if USE_SND
@@ -1836,7 +1831,6 @@ XEN g_mus_file_name(XEN gen)
 
 /* ---------------- oscil ---------------- */
 
-#if (!HAVE_SCHEME)
 static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_make_oscil "(" S_make_oscil " (frequency *clm-default-frequency*) (initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
@@ -1865,33 +1859,6 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(XEN_FALSE);
 }
-
-#else
-
-static XEN g_make_oscil(XEN frequency, XEN initial_phase)
-{
-  #define H_make_oscil "(" S_make_oscil " (frequency *clm-default-frequency*) (initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
-  mus_any *ge;
-  mus_float_t freq, phase = 0.0;
-
-  if (XEN_FALSE_P(frequency))
-    freq = clm_default_frequency;
-  else 
-    {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(frequency), frequency, XEN_ARG_1, S_make_oscil, "a number");
-      freq = XEN_TO_C_DOUBLE(frequency);
-      if (freq > (0.5 * mus_srate()))
-	XEN_OUT_OF_RANGE_ERROR(S_make_oscil, XEN_ARG_1, frequency, "freq ~A > srate/2?");
-    }
-
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(initial_phase), initial_phase, XEN_ARG_2, S_make_oscil, "a number");
-  phase = XEN_TO_C_DOUBLE(initial_phase);
-
-  ge = mus_make_oscil(freq, phase);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
-  return(XEN_FALSE);
-}
-#endif
 
 
 static XEN g_oscil(XEN os, XEN fm, XEN pm)
@@ -2375,7 +2342,6 @@ static XEN g_ncos_p(XEN obj)
 }
 
 
-#if (!HAVE_SCHEME)
 static XEN g_make_ncos(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_make_ncos "(" S_make_ncos " (frequency *clm-default-frequency*) (n 1)): \
@@ -2411,39 +2377,6 @@ return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosine
   return(XEN_FALSE);
 }
 
-#else
-
-static XEN g_make_ncos(XEN frequency, XEN xn)
-{
-  #define H_make_ncos "(" S_make_ncos " (frequency *clm-default-frequency*) (n 1)): \
-return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosines."
-
-  mus_any *ge;
-  int n = 1;
-  mus_float_t freq;
-
-  if (XEN_FALSE_P(frequency))
-    freq = clm_default_frequency;
-  else
-    {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(frequency), frequency, XEN_ARG_1, S_make_ncos, "a number");
-      freq = XEN_TO_C_DOUBLE(frequency);
-      if (freq > (0.5 * mus_srate()))
-	XEN_OUT_OF_RANGE_ERROR(S_make_ncos, XEN_ARG_1, frequency, "freq ~A > srate/2?");
-    }
-
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(xn), xn, XEN_ARG_2, S_make_ncos, "an integer");
-  n = XEN_TO_C_INT(xn);
-  if (n <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_ncos, XEN_ARG_2, xn, "n: ~A?");
-
-  ge = mus_make_ncos(freq, n);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
-  return(XEN_FALSE);
-}
-
-#endif
-
 
 static XEN g_ncos(XEN obj, XEN fm)
 {
@@ -2468,8 +2401,6 @@ static XEN g_nsin_p(XEN obj)
 			  (mus_nsin_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-
-#if (!HAVE_SCHEME)
 
 static XEN g_make_nsin(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -2505,39 +2436,6 @@ return a new " S_nsin " generator, producing a sum of 'n' equal amplitude sines"
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(XEN_FALSE);
 }
-
-#else
-
-static XEN g_make_nsin(XEN frequency, XEN xn)
-{
-  #define H_make_nsin "(" S_make_nsin " (frequency *clm-default-frequency*) (n 1)): \
-return a new " S_nsin " generator, producing a sum of 'n' equal amplitude sines."
-
-  mus_any *ge;
-  int n = 1;
-  mus_float_t freq;
-
-  if (XEN_FALSE_P(frequency))
-    freq = clm_default_frequency;
-  else
-    {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(frequency), frequency, XEN_ARG_1, S_make_nsin, "a number");
-      freq = XEN_TO_C_DOUBLE(frequency);
-      if (freq > (0.5 * mus_srate()))
-	XEN_OUT_OF_RANGE_ERROR(S_make_nsin, XEN_ARG_1, frequency, "freq ~A > srate/2?");
-    }
-
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(xn), xn, XEN_ARG_2, S_make_nsin, "an integer");
-  n = XEN_TO_C_INT(xn);
-  if (n <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_nsin, XEN_ARG_2, xn, "n: ~A?");
-
-  ge = mus_make_nsin(freq, n);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
-  return(XEN_FALSE);
-}
-
-#endif
 
 
 static XEN g_nsin(XEN obj, XEN fm)
@@ -3254,8 +3152,6 @@ static XEN g_pulse_train_p(XEN obj)
 
 /* ---------------- asymmetric-fm ---------------- */
 
-#if (!HAVE_SCHEME)
-
 static XEN g_make_asymmetric_fm(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
   #define H_make_asymmetric_fm "(" S_make_asymmetric_fm " (frequency *clm-default-frequency*) (initial-phase 0.0) (r 1.0) (ratio 1.0)): \
@@ -3295,41 +3191,6 @@ return a new " S_asymmetric_fm " generator."
   return(XEN_FALSE);
 }
 
-#else
-
-static XEN g_make_asymmetric_fm(XEN frequency, XEN initial_phase, XEN xr, XEN xratio)
-{
-  #define H_make_asymmetric_fm "(" S_make_asymmetric_fm " (frequency *clm-default-frequency*) (initial-phase 0.0) (r 1.0) (ratio 1.0)): \
-return a new " S_asymmetric_fm " generator."
-
-  mus_any *ge;
-  mus_float_t freq, phase = 0.0, r = 1.0, ratio = 1.0;
-
-  if (XEN_FALSE_P(frequency))
-    freq = clm_default_frequency;
-  else
-    {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(frequency), frequency, XEN_ARG_1, S_make_asymmetric_fm, "a number");
-      freq = XEN_TO_C_DOUBLE(frequency);
-      if (freq > (0.5 * mus_srate()))
-	XEN_OUT_OF_RANGE_ERROR(S_make_asymmetric_fm, XEN_ARG_1, frequency, "freq ~A > srate/2?");
-    }
-
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(initial_phase), initial_phase, XEN_ARG_2, S_make_asymmetric_fm, "a number");
-  phase = XEN_TO_C_DOUBLE(initial_phase);
-
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(xr), xr, XEN_ARG_3, S_make_asymmetric_fm, "a number");
-  r = XEN_TO_C_DOUBLE(xr);
-
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(xratio), xr, XEN_ARG_4, S_make_asymmetric_fm, "a number");
-  ratio = XEN_TO_C_DOUBLE(xratio);
-
-  ge = mus_make_asymmetric_fm(freq, phase, r, ratio);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
-  return(XEN_FALSE);
-}
-
-#endif
 
 
 static XEN g_asymmetric_fm(XEN obj, XEN index, XEN fm)
@@ -8201,18 +8062,10 @@ XEN_NARGIFY_1(g_set_clm_default_frequency_w, g_set_clm_default_frequency)
 XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
 XEN_NARGIFY_1(g_mus_frandom_w, g_mus_frandom)
 XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
-
-#if (!HAVE_SCHEME)
 XEN_ARGIFY_4(g_make_oscil_w, g_make_oscil)
 XEN_ARGIFY_4(g_make_ncos_w, g_make_ncos)
 XEN_ARGIFY_4(g_make_nsin_w, g_make_nsin)
 XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
-#else
-XEN_NARGIFY_2(g_make_oscil_w, g_make_oscil)
-XEN_NARGIFY_2(g_make_ncos_w, g_make_ncos)
-XEN_NARGIFY_2(g_make_nsin_w, g_make_nsin)
-XEN_NARGIFY_4(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
-#endif
 
 #else
 #define g_mus_srate_w g_mus_srate
@@ -8995,17 +8848,10 @@ static void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_internal_time_units_per_second, 1, "units used by " S_get_internal_real_time);
 #endif
 
-#if (!HAVE_SCHEME)
   XEN_DEFINE_PROCEDURE(S_make_oscil,          g_make_oscil_w,          0, 4, 0, H_make_oscil);
   XEN_DEFINE_PROCEDURE(S_make_ncos,           g_make_ncos_w,           0, 4, 0, H_make_ncos); 
   XEN_DEFINE_PROCEDURE(S_make_nsin,           g_make_nsin_w,           0, 4, 0, H_make_nsin); 
   XEN_DEFINE_PROCEDURE(S_make_asymmetric_fm,  g_make_asymmetric_fm_w,  0, 8, 0, H_make_asymmetric_fm);
-#else
-  XEN_DEFINE_PROCEDURE_STAR(S_make_oscil,     g_make_oscil_w,         "(frequency #f) (initial-phase 0.0)", H_make_oscil);
-  XEN_DEFINE_PROCEDURE_STAR(S_make_ncos,      g_make_ncos_w,          "(frequency #f) (n 1)",               H_make_ncos); 
-  XEN_DEFINE_PROCEDURE_STAR(S_make_nsin,      g_make_nsin_w,          "(frequency #f) (n 1)",               H_make_nsin); 
-  XEN_DEFINE_PROCEDURE_STAR(S_make_asymmetric_fm,  g_make_asymmetric_fm_w, "(frequency #f) (initial-phase 0.0) (r 1.0) (ratio 1.0)", H_make_asymmetric_fm);
-#endif
 
 
 

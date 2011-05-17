@@ -2859,6 +2859,26 @@ works because string-set! does evaluate its first argument.  <code>((values + 1 
 is 15, as anyone would expect.
 </p>
 
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>I wrote all that and said "nobody needs multiple values!".  So I spent 6 months
+working like a fiend, and I found a real use for multiple values:
+</p>
+
+<pre>
+(define (flatten lst)
+  (define (flatten-1 lst)
+    (if (null? lst)
+	(values)
+	(if (not (pair? lst))
+	    lst
+	    (values (flatten-1 (car lst))
+		    (flatten-1 (cdr lst))))))
+  (map values (list (flatten-1 lst))))
+</pre>
+
 </blockquote>
 </small>
 </dd>

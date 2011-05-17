@@ -170,7 +170,7 @@
 #define INITIAL_PROTECTED_OBJECTS_SIZE 16  
 /* a vector of objects that are (semi-permanently) protected from the GC, grows as needed */
 
-#define GC_TEMPS_SIZE 128
+#define GC_TEMPS_SIZE 256
 /* the number of recent objects that are temporarily gc-protected; 8 works for s7test and snd-test. 
  *    For the FFI, this sets the lag between a call on s7_cons and the first moment when its result
  *    might be vulnerable to the GC. 
@@ -638,6 +638,8 @@ struct s7_scheme {
   s7_pointer key_values;
   int thread_id;
   int *thread_ids;               /* global current top thread_id */
+  s7_pointer *gc_temps;
+  int gc_temps_top;
 #endif
 
   s7_pointer *trace_list;
@@ -741,7 +743,7 @@ struct s7_scheme {
 #define T_LOCAL                       (1 << (TYPE_BITS + 11))
 #define is_not_local(p)               ((typeflag(p) & T_LOCAL) == 0)
 #define is_local(p)                   ((typeflag(p) & T_LOCAL) != 0)
-#define set_local(p)                  typeflag(p) = ((typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL)) | T_LOCAL)
+#define set_local(p)                  typeflag(p) = ((typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC)) | T_LOCAL)
 /* this marks a symbol that has been used at some time as a local variable */
 
 #define T_ENVIRONMENT                 (1 << (TYPE_BITS + 12))
@@ -786,6 +788,9 @@ struct s7_scheme {
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
+#define T_SYNTACTIC                   (1 << (TYPE_BITS + 18))
+#define is_syntactic(p)               ((typeflag(p) & T_SYNTACTIC) != 0)
+
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 #define set_mark(p)                   typeflag(p)  |= T_GC_MARK
@@ -793,7 +798,7 @@ struct s7_scheme {
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x7c000100
+#define UNUSED_BITS                   0x78000100
 
 
 #if HAVE_PTHREADS
@@ -1479,6 +1484,7 @@ static void mark_vector(s7_pointer p, s7_Int top)
     }
 }
 
+
 static void mark_environment(s7_pointer env)
 {
   s7_pointer x;
@@ -1498,6 +1504,7 @@ static void mark_op_stack(s7_scheme *sc)
   for (i = 0; i < sc->op_stack_top; i++)
     S7_MARK(sc->op_stack[i]);
 }
+
 
 static void s7_mark_object_1(s7_pointer p)
 {
@@ -1640,7 +1647,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->code);
   S7_MARK(sc->cur_code);
   mark_vector(sc->stack, s7_stack_top(sc));
-  /* splitting out the stack case saves about 1/2000 total time (we can skip the op etc) */
+  /* splitting out the stack case is slightly slower?! */
   S7_MARK(sc->w);
   S7_MARK(sc->x);
   S7_MARK(sc->y);
@@ -1654,6 +1661,14 @@ static int gc(s7_scheme *sc)
 
   S7_MARK(sc->TEMP_CELL_1);
   S7_MARK(sc->TEMP_CELL_2);
+
+#if HAVE_PTHREADS
+  {
+    int i;
+    for (i = 0; i < GC_TEMPS_SIZE; i++)
+      S7_MARK(sc->gc_temps[i]);
+  }
+#endif
 
   S7_MARK(sc->protected_objects);
   {
@@ -1884,6 +1899,9 @@ static s7_pointer new_cell(s7_scheme *sc)
    *
    * I think this is no longer needed.
    */
+  nsc->gc_temps[nsc->gc_temps_top++] = p;
+  if (nsc->gc_temps_top >= GC_TEMPS_SIZE)
+    nsc->gc_temps_top = 0;
 
   pthread_mutex_unlock(&alloc_lock);
 #endif
@@ -12515,7 +12533,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -12535,6 +12553,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_keyword(obj) ?            " keyword" : "",
 	     is_environment(obj) ?        " environment" : "",
              dont_eval_args(obj) ?        " dont-eval-args" : "",
+	     is_syntactic(obj) ?          " syntactic" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
     return(buf);
   }
@@ -14776,18 +14795,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 	    }
 	  return(sc->F);
 	}
-#if 0
-	  if ((type(eq_func) == T_CLOSURE) &&                             /* not lambda* that might get confused about arg names */
-	      (is_pair(closure_args(eq_func))) &&                         /* not a rest arg */
-	      (safe_list_length(sc, closure_args(eq_func)) == 2) &&       /* closure takes just one arg */
-	      (!is_immutable_or_accessed(car(closure_args(eq_func)))) &&  /* not a bad arg name! */
-	      (!is_immutable_or_accessed(cadr(closure_args(eq_func)))))   /* not a bad 2nd arg name! */
-	    {
-	      push_stack(sc, opcode(OP_MEMBER_IF_SIMPLE), sc->args, sc->code);
-	      
-	    }
-#endif
-      
+
       sc->code = eq_func;
 
       /* using a vector here (rather than make_list_3) is slower */
@@ -15651,6 +15659,22 @@ static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
 
 /* -------- sort! -------- */
 
+#if (!HAVE_PTHREADS)
+static s7_scheme *compare_sc;
+static s7_function compare_func;
+static s7_pointer compare_args;
+
+static int vector_compare(const void *v1, const void *v2)
+{
+  car(compare_args) = (*(s7_pointer *)v1);
+  cadr(compare_args) = (*(s7_pointer *)v2);
+  if (is_true(compare_sc, (*(compare_func))(compare_sc, compare_args)))
+    return(-1);
+  return(1);
+}
+#endif
+
+
 static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 {
   #define H_sort "(sort! list-or-vector less?) sorts a list or vector using the function 'less?' to compare elements.\
@@ -15697,6 +15721,20 @@ If its first argument is a list, the list is copied (despite the '!')."
       if (is_immutable(data))
 	return(s7_wrong_type_arg_error(sc, "sort!", 1, data, "a mutable vector"));
       len = vector_length(data);
+
+#if (!HAVE_PTHREADS)
+      if (is_safe_procedure(lessp))
+	{
+	  int gc_loc;
+	  compare_sc = sc;
+	  compare_func = c_function_call(lessp);
+	  compare_args = make_list_2(sc, sc->F, sc->F);
+	  gc_loc = s7_gc_protect(sc, compare_args);
+	  qsort((void *)s7_vector_elements(data), len, sizeof(s7_pointer), vector_compare);
+	  s7_gc_unprotect_at(sc, gc_loc);
+	  return(data);
+	}
+#endif      
       break;
 
     case T_C_OBJECT:
@@ -15731,10 +15769,8 @@ If its first argument is a list, the list is copied (despite the '!')."
   sc->x = sc->NIL;
   return(sc->F);
   
-  /* if the comparison function waffles, sort! can hang: (sort! '(1 2 3) =)
-   *    but (sort! '(1 2) =) is ok, as is (sort! (list 1/0 1/0 1/0) =)
-   *    given NaNs and infs, it seems no numerical sort is completely safe.
-   * set *safety* to 1 to add a check for this loop.
+  /* if the comparison function waffles, sort! can hang: (sort! '(1 2 3) (lambda (a b) (= a b)))
+   * set *safety* to 1 to add a check for this loop, but the "safe" procedures are direct, so unchecked.
    */
 }
 
@@ -23165,14 +23201,14 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   symbol_hash(x) = loc;
 
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
-  set_type(syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS); 
+  set_type(syn, T_SYNTAX | T_SYNTACTIC | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS); 
   syntax_opcode(syn) = (int)op;
   set_symbol_value(syn, syn); /* this saves us an error check in the main eval section */
 
   set_symbol_value(x, syn);
-  symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS);
+  symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS);
 
-  typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS);
+  typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC);
   return(x);
 }
 
@@ -24149,8 +24185,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      /* now call the function directly -- we know it is a T_CLOSURE
 	       *   and that it can be called with one argument, so there's no need to go to
-	       *   apply.  We checked the function argname in g_for_each, so we don't need
-	       *   that error check either.
+	       *   apply.
 	       */
 
 	      NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
@@ -24639,8 +24674,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	EVAL_PAIR:
 	  carc = car(sc->code);
 
-	  if (dont_eval_args(carc)) /* actually is_syntax(symbol_value(car(sc->code))) */
+	  if (is_syntactic(carc)) /* actually is_syntax(symbol_value(car(sc->code))) */
 	    {
+	      /* this can't simply assume syntax if dont_eval_args: (eval (list quasiquote (list values #t))) will segfault
+	       */
 	      sc->op = (opcode_t)syntax_opcode(symbol_value(carc));
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;
@@ -24664,7 +24701,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (is_pair(sc->code))
 		{
 		  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->args);
-		  if (dont_eval_args(car(sc->code)))
+		  if (is_syntactic(car(sc->code)))
 		    {
 		      sc->op = (opcode_t)syntax_opcode(symbol_value(car(sc->code)));
 		      sc->code = cdr(sc->code);
@@ -25587,7 +25624,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", sc->x));
       if (is_keyword(sc->x))                                                /* (define :hi 1) */
 	return(eval_error_with_name(sc, "~A ~A: keywords are constants", sc->x));
-      if (dont_eval_args(sc->x))                                            /* (define (and a) a) */
+      if (is_syntactic(sc->x))                                              /* (define (and a) a) */
 	return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", sc->x));
 
       /* (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b)))) */
@@ -27264,8 +27301,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 #if HAVE_PTHREADS
 
-/* TODO: in threads we may need to protect more of the free_heap */
-
 static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
 {
   int i;
@@ -27276,6 +27311,10 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc = (s7_scheme *)malloc(sizeof(s7_scheme));
   memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
   
+  new_sc->gc_temps = (s7_pointer *)calloc(GC_TEMPS_SIZE, sizeof(s7_pointer));
+  for (i = 0; i < GC_TEMPS_SIZE; i++) new_sc->gc_temps[i] = sc->NIL;
+  new_sc->gc_temps_top = 0;
+
   /* share the heap, symbol table and global environment, protected objects list, and all the startup stuff (all via the memcpy),
    *   but have separate stacks and eval locals
    */
@@ -27356,6 +27395,8 @@ static void mark_s7(s7_scheme *sc)
   S7_MARK(sc->output_port);
   S7_MARK(sc->error_port);
   mark_op_stack(sc);
+  for (i = 0; i < GC_TEMPS_SIZE; i++)
+    S7_MARK(sc->gc_temps[i]);
 }
 
 
@@ -32490,6 +32531,9 @@ s7_scheme *s7_init(void)
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
 #if HAVE_PTHREADS
   sc->orig_sc = sc;
+  sc->gc_temps = (s7_pointer *)calloc(GC_TEMPS_SIZE, sizeof(s7_pointer));
+  for (i = 0; i < GC_TEMPS_SIZE; i++) sc->gc_temps[i] = sc->NIL;
+  sc->gc_temps_top = 0;
 #endif
   
   sc->gc_off = (bool *)calloc(1, sizeof(bool));
