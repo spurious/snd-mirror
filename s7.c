@@ -215,6 +215,11 @@
 
 
 
+#ifndef S7_DEBUGGING
+  #define S7_DEBUGGING 0
+#endif
+
+
 
 /* -------------------------------------------------------------------------------- */
 
@@ -21383,6 +21388,10 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if S7_DEBUGGING
+  static int do_ctr = 0;
+#endif
+
 static s7_pointer g_eval(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval "(eval code (env (current-environment))) evaluates code in the environment env. 'env' \
@@ -21419,6 +21428,10 @@ pass (global-environment):\n\
 
   sc->code = car(args);
   /* fprintf(stderr, "(eval %s)\n", s7_object_to_c_string(sc, car(args))); */
+
+#if S7_DEBUGGING
+  do_ctr = 0;
+#endif
 
   if (s7_stack_top(sc) < 12)
     push_stack(sc, opcode(OP_BARRIER), sc->NIL, sc->NIL);
@@ -23255,6 +23268,7 @@ static s7_pointer quotify(s7_scheme *sc, s7_pointer pars)
   s7_pointer tmp;
   for (tmp = pars; is_pair(tmp); tmp = cdr(tmp))
     if ((is_pair(car(tmp))) &&
+	(is_pair(cdar(tmp))) &&
 	((is_pair(cadar(tmp))) ||
 	 (s7_is_symbol(cadar(tmp))) ||
 	 (is_syntax(cadar(tmp)))))
@@ -24627,6 +24641,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* sc->code is ready to go */
 	}
       /* fall through */
+#if S7_DEBUGGING
+      do_ctr++;
+      if (do_ctr > 10000)
+	return(eval_error(sc, "do: probable loop: ~A", sc->code));
+#endif
+
 
 
     BEGIN:

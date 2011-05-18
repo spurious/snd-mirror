@@ -400,21 +400,10 @@
 		(format #f "~%        ~A ->~%        ~A" str1 str2)))))
 
 
-    (define (env-member? arg env)
-      ;; is arg in env using car
-      (or (lint-member arg env (lambda (a b) (eq? a (car b))))
-	  (hash-table-ref globals arg)))
-
-
     (define (env-member arg env)
       ;; find data associated with arg in env
-      (let ((lst (lint-member arg env (lambda (a b) 
-					(if (not (pair? b))
-					    (format #t "env-member ~A: ~A ~A in ~A~%" arg a b env))
-					(eq? a (car b))))))
-	(if (pair? lst)
-	    (car lst)
-	    (hash-table-ref globals arg))))
+      (or (assq arg env)
+	  (hash-table-ref globals arg)))
 
 
     (define (side-effect? form env)
@@ -943,7 +932,7 @@
 			   (if (or (and (not (symbol? arg))
 					(not (pair? arg)))
 				   (and (pair? arg)
-					(not (env-member? (car arg) env))
+					(not (env-member (car arg) env))
 					(not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f)))))
 			       #f
 			       (if (and (pair? arg)
@@ -2140,7 +2129,7 @@
 			    (begin
 			      (if (and *report-shadowed-variables*
 				       (not second-pass)
-				       (env-member? (car binding) env))
+				       (env-member (car binding) env))
 				  (format #t "  ~A (line ~D): ~A variable ~A in ~S shadows an earlier declaration~%" 
 					  name line-number head (car binding) binding))
 			      #t))))))))
@@ -2165,8 +2154,8 @@
 	  (do ((cur vars (cdr cur))
 	       (rst (cdr vars) (cdr rst)))
 	      ((null? rst))
-	    (let ((repeat (lint-member (caar cur) rst (lambda (a b) (eq? a (car b))))))
-	      ;; not env-member? here because the same name might be used as a global
+	    (let ((repeat (assq (caar cur) rst)))
+	      ;; not env-member here because the same name might be used as a global
 	      (if repeat
 		  (format #t "  ~A (line ~D): ~A ~A ~A is declared twice~%" name line-number head type (caar cur))))))
 
@@ -2638,7 +2627,7 @@
 				    (null? bindings)))
 			     (if (binding-ok? name line-number head (car bindings) env #f)
 				 (begin
-				   (if (and (not (env-member? (caar bindings) env))
+				   (if (and (not (env-member (caar bindings) env))
 					    (pair? (cadar bindings))
 					    (eq? 'lambda (car (cadar bindings)))
 					    (tree-car-member (caar bindings) (cadar bindings)))
@@ -2858,7 +2847,7 @@
 		      (if (not (pair? decl))
 			  (format #t "   ~A (line ~D): run declare statement is messed up: ~S~%" 
 				  name line-number form)
-			  (if (not (env-member? (car decl) env))
+			  (if (not (env-member (car decl) env))
 			      (format #t "  ~A (line ~D): run declare statement variable name ~A is unknown: ~S~%"
 				      name line-number (car decl) form))))
 		    (cdr form))
@@ -2887,12 +2876,12 @@
 			 env)
 		       (begin
 			 (check-call name line-number head form env)
-			 (if (not (env-member? head env))
+			 (if (not (env-member head env))
 			     (check-special-cases name line-number head form env))
 
 			 (if (and *report-minor-stuff*
 				  (not (= line-number last-simplify-numeric-line-number))
-				  (not (env-member? head env))
+				  (not (env-member head env))
 				  (numeric? head)
 				  (not (null? (cdr form))))
 			     (let ((val (simplify-numerics form env)))
@@ -2923,11 +2912,9 @@
 				       (not (keyword? f))
 				       (not (eq? f name))
 				       (not (eq? f '=>))
-				       (not (env-member? f vars)))
+				       (not (env-member f vars)))
 				  (if (and (not (defined? f))
-					   (not (lint-member f undefined-identifiers 
-							     (lambda (a b) 
-							       (eq? a (car b))))))
+					   (not (assq f undefined-identifiers)))
 				      (set! undefined-identifiers (cons (list f name line-number 
 									      (truncated-list->string form)) 
 									undefined-identifiers))))
@@ -3029,7 +3016,7 @@
 	      (if *report-undefined-variables*
 		  (for-each
 		   (lambda (var)
-		     (if (not (env-member? (car var) vars))
+		     (if (not (env-member (car var) vars))
 			 (format #t "  ~A (line ~D): undefined identifier ~A in:~A~%"
 				 (list-ref var 1)
 				 (list-ref var 2)
