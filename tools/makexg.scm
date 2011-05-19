@@ -1017,7 +1017,7 @@
 	      (begin
 		(set! all-types (cons type all-types))
 		(set! types-22 (cons type types-22))))
-	  (let ((strs (parse-args args '22)))
+	  (let ((strs (parse-args args 22)))
 	    (set! funcs-22 (cons (list name type strs args) funcs-22))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
@@ -1031,7 +1031,7 @@
 	      (begin
 		(set! all-types (cons type all-types))
 		(set! types-213 (cons type types-213))))
-	  (let ((strs (parse-args args '213)))
+	  (let ((strs (parse-args args 213)))
 	    (if spec
 		(set! funcs-213 (cons (list name type strs args spec) funcs-213))
 		(set! funcs-213 (cons (list name type strs args) funcs-213)))
@@ -1047,7 +1047,7 @@
 	      (begin
 		(set! all-types (cons type all-types))
 		(set! types-2134 (cons type types-2134))))
-	  (let ((strs (parse-args args '2134)))
+	  (let ((strs (parse-args args 2134)))
 	    (if spec
 		(set! funcs-2134 (cons (list name type strs args spec) funcs-2134))
 		(set! funcs-2134 (cons (list name type strs args) funcs-2134)))
@@ -1063,7 +1063,7 @@
 	      (begin
 		(set! all-types (cons type all-types))
 		(set! types-2150 (cons type types-2150))))
-	  (let ((strs (parse-args args '2150)))
+	  (let ((strs (parse-args args 2150)))
 	    (if spec
 		(set! funcs-2150 (cons (list name type strs args spec) funcs-2150))
 		(set! funcs-2150 (cons (list name type strs args) funcs-2150)))
@@ -1079,7 +1079,7 @@
 	      (begin
 		(set! all-types (cons type all-types))
 		(set! types-2172 (cons type types-2172))))
-	  (let ((strs (parse-args args '2172)))
+	  (let ((strs (parse-args args 2172)))
 	    (if spec
 		(set! funcs-2172 (cons (list name type strs args spec) funcs-2172))
 		(set! funcs-2172 (cons (list name type strs args) funcs-2172)))
@@ -1095,7 +1095,7 @@
 	      (begin
 		(set! all-types (cons type all-types))
 		(set! types-2173 (cons type types-2173))))
-	  (let ((strs (parse-args args '2173)))
+	  (let ((strs (parse-args args 2173)))
 	    (if spec
 		(set! funcs-2173 (cons (list name type strs args spec) funcs-2173))
 		(set! funcs-2173 (cons (list name type strs args) funcs-2173)))
@@ -1111,7 +1111,7 @@
 	      (begin
 		(set! all-types (cons type all-types))
 		(set! types-2177 (cons type types-2177))))
-	  (let ((strs (parse-args args '2177)))
+	  (let ((strs (parse-args args 2177)))
 	    (if spec
 		(set! funcs-2177 (cons (list name type strs args spec) funcs-2177))
 		(set! funcs-2177 (cons (list name type strs args) funcs-2177)))
@@ -1127,7 +1127,7 @@
 	      (begin
 		(set! all-types (cons type all-types))
 		(set! types-2190 (cons type types-2190))))
-	  (let ((strs (parse-args args '2190)))
+	  (let ((strs (parse-args args 2190)))
 	    (if spec
 		(set! funcs-2190 (cons (list name type strs args spec) funcs-2190))
 		(set! funcs-2190 (cons (list name type strs args) funcs-2190)))
@@ -1144,7 +1144,7 @@
 	  (begin
 	    (set! all-types (cons type all-types))
 	    (set! types-300 (cons type types-300))))
-      (let ((strs (parse-args args '300)))
+      (let ((strs (parse-args args 300)))
 	(if spec
 	    (set! funcs-300 (cons (list name type strs args spec) funcs-300))
 	    (set! funcs-300 (cons (list name type strs args) funcs-300)))

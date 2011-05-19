@@ -1674,8 +1674,8 @@ is a physical model of a flute:
 	(piano-spectra pitch)))
 
     (define (make-piano-ampfun dur)
-      (let* ((releaseAmp (db->linear (* *db-drop-per-second* dur)))
-	     (attackTime (/ (* *piano-attack-duration* 100) dur)))
+      (let ((releaseAmp (db->linear (* *db-drop-per-second* dur)))
+	    (attackTime (/ (* *piano-attack-duration* 100) dur)))
 	(list 0 0 (/ attackTime 4) 1.0 attackTime 1.0 100 releaseAmp)))
     
     ;; This thing sounds pretty good down low, below middle c or so.  

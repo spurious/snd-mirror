@@ -270,7 +270,6 @@
   #include <unistd.h>
 #endif
 #include <limits.h>
-/* #include <float.h> */
 #include <ctype.h>
 #ifndef _MSC_VER
   #include <strings.h>
@@ -566,7 +565,7 @@ struct s7_scheme {
   struct s7_cell _F;
   s7_pointer F;                       /* #f */
   
-  struct s7_cell _EOF_OBJECT;
+  struct s7_cell _EOF_OBJECT;         /* can't use EOF here because it's taken by C or glibc? */
   s7_pointer EOF_OBJECT;              /* #<eof> */
   
   struct s7_cell _UNDEFINED;  
@@ -795,6 +794,7 @@ struct s7_scheme {
 
 #define T_SYNTACTIC                   (1 << (TYPE_BITS + 18))
 #define is_syntactic(p)               ((typeflag(p) & T_SYNTACTIC) != 0)
+/* this marks syntax objects */
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
@@ -820,6 +820,8 @@ struct s7_scheme {
 #else
   #define make_boolean(sc, Val)       ((Val) ? sc->T : sc->F)
 #endif
+
+#define is_unspecified(p)             (p == sc->UNSPECIFIED)
 
 #define is_pair(p)                    (type(p) == T_PAIR)
 #define is_null(p)                    (p == sc->NIL)
@@ -1198,7 +1200,7 @@ s7_pointer s7_unspecified(s7_scheme *sc)
 
 bool s7_is_unspecified(s7_scheme *sc, s7_pointer val)
 {
-  return((val == sc->UNSPECIFIED) || (val == sc->NO_VALUE));
+  return((is_unspecified(val)) || (val == sc->NO_VALUE));
 }
 
 
@@ -12367,7 +12369,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       if (obj == sc->UNDEFINED) 
 	return(copy_string("#<undefined>"));
   
-      if ((obj == sc->UNSPECIFIED) || (obj == sc->NO_VALUE))
+      if ((is_unspecified(obj)) || (obj == sc->NO_VALUE))
 	return(copy_string("#<unspecified>"));
 
       if (obj == sc->ELSE)
@@ -21388,10 +21390,6 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if S7_DEBUGGING
-  static int do_ctr = 0;
-#endif
-
 static s7_pointer g_eval(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval "(eval code (env (current-environment))) evaluates code in the environment env. 'env' \
@@ -21428,10 +21426,6 @@ pass (global-environment):\n\
 
   sc->code = car(args);
   /* fprintf(stderr, "(eval %s)\n", s7_object_to_c_string(sc, car(args))); */
-
-#if S7_DEBUGGING
-  do_ctr = 0;
-#endif
 
   if (s7_stack_top(sc) < 12)
     push_stack(sc, opcode(OP_BARRIER), sc->NIL, sc->NIL);
@@ -24325,7 +24319,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       caddr(sc->args) = cdaddr(sc->args);  /* cdr down the slow list (check for circular list) */
 
       push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
-      /* 22% of pushes in lg, 0 in s7test */
       cadar(sc->args) = caadr(sc->args);
       sc->args = car(sc->args);
 
@@ -24391,7 +24384,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   these are also updated in parallel at the end, so we gather all the incremented values first
        */
       push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
-      /* s7test: 23% of pushes, 5% in lg */
       if (is_null(car(sc->args)))
 	goto START;
       sc->args = car(sc->args);                /* the var data lists */
@@ -24637,16 +24629,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  /* evaluate the body and step vars, etc */
 	  push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
-	  /* s7test: 22% of pushes, 5% in lg */
 	  /* sc->code is ready to go */
 	}
       /* fall through */
-#if S7_DEBUGGING
-      do_ctr++;
-      if (do_ctr > 10000)
-	return(eval_error(sc, "do: probable loop: ~A", sc->code));
-#endif
-
 
 
     BEGIN:
@@ -24675,7 +24660,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       if (type(cdr(sc->code)) != T_NIL)
 	push_stack(sc, opcode(OP_BEGIN), sc->NIL, cdr(sc->code));
-      /* s7test: 22% of pushes, 5% in lg */
       
       sc->code = car(sc->code);
       sc->cur_code = sc->code;               /* in case error occurs, this helps tell us where we are */
@@ -24847,7 +24831,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	set_type(x, T_PAIR);
 	sc->args = x;
       }
-      /* s7test: 20%, lg: 2% of all allocs here */
 
     EVAL_ARGS:
       /* 1st time, value = op, args = nil, code is args */
@@ -24865,7 +24848,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (is_null(cdr(sc->code)))
 		push_stack(sc, opcode(OP_EVAL_ARGS2), sc->args, sc->NIL);
 	      else push_stack(sc, opcode(OP_EVAL_ARGS1), sc->args, cdr(sc->code));
-	      /* s7test: 15% of pushes, 13% in lg */
 	      sc->code = car_code;
 	      goto EVAL_PAIR;
 	    }
@@ -24892,7 +24874,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  if (typ == T_PAIR)
 		    {
-		      /* s7test 2%, lg: 17% allocs */
 		      NEW_CELL(sc, x); 
 		      car(x) = sc->value;
 		      cdr(x) = sc->args;
@@ -24900,7 +24881,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      sc->args = x;
 
 		      push_stack(sc, opcode(OP_EVAL_ARGS2), sc->args, sc->NIL);
-		      /* 17% of pushes in lg, 1% in s7test */
 		      sc->code = car_code;
 		      goto EVAL_PAIR;
 		    }
@@ -25292,7 +25272,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_MACRO:
 	  /* sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); */
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
-	  /* s7test: 6%, lg: 19% allocs */
 
 	BACRO:
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
@@ -25352,7 +25331,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
 		  }
 
-		/* s7test: 9%, lg: 38% of allocs here */
 		set_local(z);
 		NEW_CELL(sc, y); 
 		car(y) = z;
@@ -25571,7 +25549,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  x = sc->TEMP_CELL_1;
 	else
 	  {
-	    /* s7test: 8%, lg: .5% of allocs here */
 	    NEW_CELL(sc, x); 
 	  }
 
@@ -27008,7 +26985,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* sc->args is sc->NIL at first */
       /*    was: sc->args = cons(sc, sc->value, sc->args); */ 
       {
-	/* s7test: 8%, lg: .3% allocs here */
 	s7_pointer x;
 	NEW_CELL(sc, x);
 	car(x) = sc->value;
@@ -27208,7 +27184,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	default:
 	  /* by far the main case here is TOKEN_LEFT_PAREN, but it doesn't save anything to move it to this level */
 	  push_stack(sc, opcode(OP_READ_LIST), sc->args, sc->NIL);
-	  /* s7test: 1% of pushes, .1% in lg */
 	  sc->value = read_expression(sc);
 	  /* check for op_read_list here and explicit pop_stack are slower */
 	  break;

@@ -153,8 +153,8 @@
 
   (define match-sound-files
     (lambda args
-      (let* ((func (car args))
-	     (matches '()))
+      (let ((func (car args))
+	    (matches '()))
 	(for-each
 	 (lambda (file)
 	   (if (func file)
@@ -1078,7 +1078,7 @@
 
       (let ((new-marks (marks snd chn)))
 	(if (> (length new-marks) current-mark-list-length)
-	    (let* ((lst (mark-list snd chn)))
+	    (let ((lst (mark-list snd chn)))
 	      (do ((i current-mark-list-length (+ i 1)))
 		  ((= i (length new-marks)))
 		(let ((tf (XtCreateWidget "field" xmTextFieldWidgetClass lst
@@ -1104,7 +1104,7 @@
 				     (XtSetValues w (list XmNbackground (basic-color))))))))))
 
 	(set! (mark-list-length snd chn) (length new-marks))
-	(let* ((lst (mark-list snd chn)))
+	(let ((lst (mark-list snd chn)))
 	  (call-with-exit
 	   (lambda (quit)
 	     (for-each
@@ -1365,7 +1365,7 @@
 |#
       (define (make-sound-button-pixmap dpy wn data width height)
 	(if (list? (sound-button-peaks data))
-	    (let* ((mins (car (sound-button-peaks data)))
+	    (let ((mins (car (sound-button-peaks data)))
 		   (maxes (cadr (sound-button-peaks data)))
 		   (gc (sound-button-gc data))
 		   ;;(name (sound-button-filename data))
@@ -1675,7 +1675,7 @@
 	       meter-list)))
     (hook-push dac-hook 
 	       (lambda (sdobj)
-		 (let* ((maxes (sound-data-maxamp sdobj)))
+		 (let ((maxes (sound-data-maxamp sdobj)))
 		   (for-each
 		    (lambda (meter)
 		      (if (null? maxes)
@@ -2180,17 +2180,17 @@
 	    (snd-error (format #f "can't allocate ~A" color-name))
 	    (.pixel col)))))
 
-  (let* ((mark-gc ((snd-gcs) 9))
-	 (selected-mark-gc ((snd-gcs) 10))
-	 (dpy (XtDisplay (cadr (main-widgets))))
-	 (original-mark-color (list 'Pixel (logxor (cadr (mark-color)) 
-						   (cadr (graph-color)))))
-	 (original-selected-mark-color (list 'Pixel (logxor (cadr (mark-color)) 
-							    (cadr (selected-graph-color)))))
-	 (new-mark-color (list 'Pixel (logxor (cadr (graph-color)) 
-					      (cadr (get-color new-color)))))
-	 (new-selected-mark-color (list 'Pixel (logxor (cadr (selected-graph-color))
-						       (cadr (get-color new-color))))))
+  (let ((mark-gc ((snd-gcs) 9))
+	(selected-mark-gc ((snd-gcs) 10))
+	(dpy (XtDisplay (cadr (main-widgets))))
+	(original-mark-color (list 'Pixel (logxor (cadr (mark-color)) 
+						  (cadr (graph-color)))))
+	(original-selected-mark-color (list 'Pixel (logxor (cadr (mark-color)) 
+							   (cadr (selected-graph-color)))))
+	(new-mark-color (list 'Pixel (logxor (cadr (graph-color)) 
+					     (cadr (get-color new-color)))))
+	(new-selected-mark-color (list 'Pixel (logxor (cadr (selected-graph-color))
+						      (cadr (get-color new-color))))))
     (if (not (null? (hook-functions draw-mark-hook)))
 	(set! (hook-functions draw-mark-hook) '()))
     (hook-push draw-mark-hook
@@ -2508,9 +2508,9 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 				 (list XmNnotebookChildType XmMAJOR_TAB
 				       XmNbackground        (basic-color)))
 	  (set! variables-pages (cons page-info variables-pages))))
-    (let* ((row-pane (caddr page-info))
-	   (pane (cadr page-info))
-	   (var-label (string-append variable-name ":")))
+    (let ((row-pane (caddr page-info))
+	  (pane (cadr page-info))
+	  (var-label (string-append variable-name ":")))
       (case type
 	((text)
 	 ;; add a horizontal pair: label text
@@ -2738,15 +2738,15 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	(XmStringFree xdismiss)
 	(XmStringFree titlestr)
 
-	(let* ((ratio 1.0)
-	       (old-freq 550.0)
-	       (new-freq 550.0)
-	       (hilbert-order 40)
-	       (ssb-pairs 10)
-	       (bw 50.0)
-	       (ssbs (make-vector 512))
-	       (bands (make-vector 512))
-	       (reader #f))
+	(let ((ratio 1.0)
+	      (old-freq 550.0)
+	      (new-freq 550.0)
+	      (hilbert-order 40)
+	      (ssb-pairs 10)
+	      (bw 50.0)
+	      (ssbs (make-vector 512))
+	      (bands (make-vector 512))
+	      (reader #f))
 
     (letrec ((ssb-expand 
 	      (lambda ()
@@ -2850,8 +2850,8 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 				   (begin
 				     (do ((i 1 (+ i 1)))
 					 ((> i ssb-pairs))
-				       (let* ((aff (* i old-freq))
-					      (bwf (* bw (+ 1.0 (/ i (* 2 ssb-pairs))))))
+				       (let ((aff (* i old-freq))
+					     (bwf (* bw (+ 1.0 (/ i (* 2 ssb-pairs))))))
 					 (set! (ssbs (- i 1)) (make-ssb-am (* i ratio old-freq)))
 					 (set! (bands (- i 1)) (make-bandpass (hz->radians (- aff bwf)) 
 									      (hz->radians (+ aff bwf)) 

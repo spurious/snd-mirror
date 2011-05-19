@@ -126,9 +126,9 @@
       (set! y1nb (+ (* -1 inharmon ynb) ynba1 (* inharmon ya1nb)))
       (set! ya1nb y1nb)
       (set! ynba1 ynb)
-      (set! y1nb (* -1 y1nb))
-      (set! ynn (* -1 ynn))
-      (set! ynbt (* -1 ynbt)))
+      (set! y1nb (- y1nb))
+      (set! ynn (- ynn))
+      (set! ynbt (- ynbt)))
     
     (if (< samp_rperiod 0) (set! samp_rperiod 0))
     (if (> samp_rperiod (- bufsize 1)) (set! samp_rperiod (- bufsize 1)))

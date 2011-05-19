@@ -13460,6 +13460,25 @@ this prints:
   (test (fib 8) 21)
   (test (fib 13) 233))
 
+(let ()
+  (define (flatten lst)
+    (define (flatten-1 lst)
+      (if (null? lst)
+	  (values)
+	  (if (not (pair? lst))
+	      lst
+	      (values (flatten-1 (car lst))
+		      (flatten-1 (cdr lst))))))
+    (map values (list (flatten-1 lst))))
+  (test (flatten '(1 2 3)) '(1 2 3))
+  (test (flatten '()) '())
+  (test (flatten '((1) 2 (3 4) (6 (7)))) '(1 2 3 4 6 7))
+  (test (flatten '(1 ((((2)) 3)))) '(1 2 3))
+  (test (flatten '(1 () 2)) '(1 2))
+  (test (flatten '((1 () 2) ())) '(1 2))
+  (test (flatten '(() 1 ((2 (3)) () 4))) '(1 2 3 4))
+  (test (flatten '((1) 2 ((3 4) 5) ((())) (((6))) 7 8 ())) '(1 2 3 4 5 6 7 8))
+  )
 
 
 
@@ -16445,6 +16464,7 @@ why are these different (read-time `#() ? )
 (test (quasiquote (,1 ,@(quasiquote ,@(list (list 1))))) '(1 1))
 (test `(+ ,(apply values '(1 2))) '(+ 1 2))
 (test `(apply + (unquote '(1 2))) '(apply + (1 2)))
+(test (eval (list (list quasiquote +) -1)) -1)
 
 (test (apply quasiquote '((1 2 3))) '(1 2 3))
 (test (quasiquote (',,= 1)) 'error)

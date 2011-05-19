@@ -661,8 +661,8 @@
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
-       (let* ((md (* index (oscil mod277)))
-	      (frq (env frqf)))
+       (let ((md (* index (oscil mod277)))
+	     (frq (env frqf)))
 	 (outa i (* (env ampf)
 		    .333 (pulsed-env pulsef frq)
 		    (+ (* .78 (polywave poly frq))
@@ -878,8 +878,8 @@
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
-       (let* ((frq (env frqf))
-	      (wha (env intrp)))
+       (let ((frq (env frqf))
+	     (wha (env intrp)))
 	 (if (> (pulse-train pulser) 0.1)
 	     (begin
 	       (mus-reset pulsef)
@@ -921,10 +921,10 @@
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
-       (let* ((frq (+ (env frqf)
-		      (rand-interp vib)
-		      (* index (oscil fm))))
-	      (intrp (env interpf)))
+       (let ((frq (+ (env frqf)
+		     (rand-interp vib)
+		     (* index (oscil fm))))
+	     (intrp (env interpf)))
 	 (outa i (* (env ampf)
 		    (pulsed-env pulsef)
 		    (+ (* (- 1.0 intrp)
@@ -1013,7 +1013,7 @@
 		    (polywave gen (rand-interp rnd))))))))
   
   (let ((last-dur 0.0)
-	(last-call (+ beg1 dur1 (- 0.4))))
+	(last-call (+ beg1 dur1 -0.4)))
     (do ((call-beg beg1 (+ call-beg last-dur 0.3 (random 0.2))))
 	((>= call-beg last-call))
       (set! last-dur (+ .6 (random .25)))
@@ -1079,8 +1079,8 @@
 	   (begin
 	     (set! next-pulse (+ i pulse-samps))
 	     (mus-reset pulsef)))
-       (let* ((frq (+ (env frqf)
-		      (rand-interp rnd))))
+       (let ((frq (+ (env frqf)
+		     (rand-interp rnd))))
 	 (outa i (* (env ampf)
 		    (env pulsef)
 		    (+ (oscil gen1 frq)
@@ -1513,10 +1513,10 @@
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf))))))))
   
-  (let* ((begs (vct 0.0 0.15 0.325 0.47 0.61))
-	 (durs (vct 0.027 0.06 0.065 0.042 0.05))
-	 (amps (vct 0.9 1.0 1.0 0.4 0.1))
-	 (frqs (vct 14800 14020 (* 1/3 14800) 14800 (* 1/2 14800)))
+  (let ((begs (vct 0.0 0.15 0.325 0.47 0.61))
+	(durs (vct 0.027 0.06 0.065 0.042 0.05))
+	(amps (vct 0.9 1.0 1.0 0.4 0.1))
+	(frqs (vct 14800 14020 (* 1/3 14800) 14800 (* 1/2 14800)))
 	 
 	 (ampenvs (vector '(0.000 0.000 0.085 0.906 0.117 1.000 0.328 0.909 0.715 0.464 0.892 0.118 1.000 0.000)
 			  '(0.000 0.000 0.025 1.000 0.056 0.201 0.121 0.848 0.151 0.503 0.217 0.395 0.441 0.556 
@@ -2986,9 +2986,9 @@
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
-       (let* ((pulse (pulse-train pulser))
-	      (frq (+ (env frqf)
-		      (rand-interp rnd))))
+       (let ((pulse (pulse-train pulser))
+	     (frq (+ (env frqf)
+		     (rand-interp rnd))))
 	 (if (> pulse .1)
 	     (begin
 	       (mus-reset pulsef)

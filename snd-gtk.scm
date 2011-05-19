@@ -769,7 +769,7 @@
       (set! meter-list (cons (make-level-meter meters width height) meter-list)))
     (hook-push dac-hook 
 	       (lambda (sdobj)
-		 (let* ((maxes (sound-data-maxamp sdobj)))
+		 (let ((maxes (sound-data-maxamp sdobj)))
 		   (for-each
 		    (lambda (meter)
 		      (if (null? maxes)

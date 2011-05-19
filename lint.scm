@@ -3027,3 +3027,4 @@
 	      (close-input-port fp)))))))
 
 ;;; also not nil followed by pair? etc, and impossible stuff like (and (integer? x) (string? x) ...) has to be #f
+;;; if member with list of symbols, might suggest memq

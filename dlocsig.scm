@@ -278,9 +278,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	    mat))))
   
   (define (invert2x2 mat) ; invert a 2x2 matrix
-    (let* ((m (make-mixer 2))
-	   (det (- (* (mat 0 0) (mat 1 1))
-		   (* (mat 1 0) (mat 0 1)))))
+    (let ((m (make-mixer 2))
+	  (det (- (* (mat 0 0) (mat 1 1))
+		  (* (mat 1 0) (mat 0 1)))))
       (if (<= (abs det) 1e-06)
 	  #f
 	  (begin
@@ -396,8 +396,8 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		  v))
 	 
 	 ;; create the group structures
-	 (groups (let* ((vals '())
-			(id 0))
+	 (groups (let ((vals '())
+		       (id 0))
 		   (for-each 
 		    (lambda (group)
 		      (let* ((size (length group))
@@ -405,7 +405,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 					      (coords n))
 					    group))
 			     (matrix (if (= size 3)
-					 (let* ((m (make-mixer 3)))
+					 (let ((m (make-mixer 3)))
 					   (do ((i 0 (+ 1 i)))
 					       ((= i 3))
 					     (do ((j 0 (+ 1 j)))
@@ -413,7 +413,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 					       (set! (m i j) ((vertices i) j))))
 					   (invert3x3 m))
 					 (if (= size 2)
-					     (let* ((m (make-mixer 2)))
+					     (let ((m (make-mixer 2)))
 					       (do ((i 0 (+ 1 i)))
 						   ((= i 2))
 						 (do ((j 0 (+ 1 j)))
@@ -544,7 +544,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 (define* (get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs))
   "(get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"
-  (let* ((config (if 3d ((cadr configs) channels) ((car configs) channels))))
+  (let ((config (if 3d ((cadr configs) channels) ((car configs) channels))))
     (if (null? config)
 	(error 'mus-error "ERROR: no speaker configuration exists for ~A ~A output channel~A~%~%" 
 	       (if 3d "tridimensional" "bidimensional")
@@ -600,7 +600,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 ;;; Get number of channels needed by ambisonics
 
 (define (ambisonics-channels h-order v-order)
-  (let* ((count 0))
+  (let ((count 0))
     (if (>= h-order 0)
 	(begin
 	  (if (>= h-order 1)
@@ -775,7 +775,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 			   (= (cadr start) (cadr end))
 			   (if path-3d
 			       (= (third start) (third end)) #t)))
-		    (let* ((end (last path (if path-3d 3 2))))
+		    (let ((end (last path (if path-3d 3 2))))
 		      (and (= (car path) (car end))
 			   (= (cadr path) (cadr end))
 			   (if path-3d
@@ -865,7 +865,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
       ;;   '((x0 y0) (x1 y1)...(xn yn))
       ;;      v: relative velocity
       ;;      x, y, z: coordinates of source [missing z's assumed 0.0]
-      (let* ((v '())
+      (let ((v '())
 	     (x '())
 	     (y '())
 	     (z '()))
@@ -1581,7 +1581,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 			  (set! sum (+ sum (distance (- xsf xsi) (- ysf ysi) (- zsf zsi))))
 			  (set! dseg (cons sum dseg))))
 		      
-		      (let* ((df (car dseg)))
+		      (let ((df (car dseg)))
 			(set! dseg (reverse dseg))
 			(let* ((tseg '())
 			       (vf v)
@@ -1609,7 +1609,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	    (set! (path-ry path) xry)
 	    (set! (path-rz path) xrz)
 	    (set! (path-rt path) 
-		  (let* ((tf (times (- (length times) 1)))
+		  (let ((tf (times (- (length times) 1)))
 			 (val '()))
 		    (for-each
 		     (lambda (ti)
@@ -1685,7 +1685,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 			     (zsf (zseg (+ i 1))))
 			(set! sofar (+ sofar (distance (- xsf xsi) (- ysf ysi) (- zsf zsi))))
 			(set! dseg (cons sofar dseg))))
-		    (let* ((df (car dseg)))
+		    (let ((df (car dseg)))
 		      (set! dseg (reverse dseg))
 		      (let* ((tseg '())
 			     (vf v)
@@ -1822,7 +1822,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     ;; (http://www.magic-software.com/)
     
     (define (normalize a b c)
-      (let* ((mag (sqrt (+ (* a a) (* b b) (* c c)))))
+      (let ((mag (sqrt (+ (* a a) (* b b) (* c c)))))
 	(list (/ a mag) (/ b mag) (/ c mag))))
     
     (let* ((vals (normalize x y z))
@@ -2001,7 +2001,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	 (zcoords (path-z path))
 	 (tcoords (path-time path))
 	 (total-distance 
-	  (let* ((sum 0.0)
+	  (let ((sum 0.0)
 		 (len (length xcoords)))
 	    (do ((i 0 (+ 1 i)))
 		((= i len))
@@ -2071,7 +2071,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	(if (or (> ambisonics-h-order 2)
 		(> ambisonics-v-order 2))
 	    (error 'mus-error "ERROR: ambisonics encoding is currently limited to second order components~%"))
-	(let* ((channels (ambisonics-channels ambisonics-h-order ambisonics-v-order)))
+	(let ((channels (ambisonics-channels ambisonics-h-order ambisonics-v-order)))
 	  (if (< (or out-channels (mus-channels *output*)) channels)
 	      (error 'mus-error "ERROR: ambisonics number of channels is wrong, dlocsig needs ~A output channels for h:~A, v:~A order (current number is ~A)~%"
 		     channels ambisonics-h-order ambisonics-v-order (or out-channels (mus-channels *output*)))))))
@@ -2146,7 +2146,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     
     (if (= render-using ambisonics)
 	;; calculate output channel offsets for ambisonics rendering
-	(let* ((offset 3))
+	(let ((offset 3))
 	  ;; the default is at least a horizontal order of 1
 	  (if (>= ambisonics-v-order 1)
 	      (begin
@@ -2403,7 +2403,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		 (gains (cadr vals)))
 	    ;; check that the source is not moving faster than sound
 	    (if (not (= time prev-time))
-		(let* ((speed (/ (- dist prev-dist) (- time prev-time))))
+		(let ((speed (/ (- dist prev-dist) (- time prev-time))))
 		  (if (> speed speed-limit)
 		      (format #t "WARNING: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%~%" x y z time speed))))
 	    (if inside
@@ -2421,12 +2421,12 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		      ;; we have to interpolate a new point that lies on the shared
 		      ;; edge of the adjacent groups so that the speakers opposite
 		      ;; the edge have zero gain when the trajectory switches groups
-		      (let* ((edge (equalp-intersection (group-vertices group)
+		      (let ((edge (equalp-intersection (group-vertices group)
 							(group-vertices prev-group))))
 			(if (= (length edge) 2)
 			    ;; the groups have two shared points (ie: share an edge)
 			    ;; this must be a three speaker groups transition
-			    (let* ((pint (transition-point-3 (car edge) (cadr edge) x y z prev-x prev-y prev-z)))
+			    (let ((pint (transition-point-3 (car edge) (cadr edge) x y z prev-x prev-y prev-z)))
 			      (if pint
 				  (let* ((xi (car pint))
 					 (yi (cadr pint))
@@ -2457,7 +2457,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 			    (if (and (= (length edge) 1) (= (group-size group) 2))
 				;; two two-speaker groups share one point
 				;; z coordinates are silently ignored
-				(let* ((pint (transition-point-2 (car edge) x y prev-x prev-y)))
+				(let ((pint (transition-point-2 (car edge) x y prev-x prev-y)))
 				  (if pint
 				      (let* ((xi (car pint))
 					     (yi (cadr pint))
@@ -2773,7 +2773,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	      ;; ve = moving object
 	      ;; va = (* ve (/ 1 (+ 1 (/ ve c))) (sqrt (- 1 (* (/ ve c) (/ ve c)))))
 	      (if prev-time
-		  (let* ((ratio (/ (- dist prev-dist)
+		  (let ((ratio (/ (- dist prev-dist)
 				   (* duration (- time prev-time) dlocsig-speed-of-sound))))
 		    (set! doppler (cons (/ (+ prev-time time) 2) doppler))
 		    (set! doppler (cons (* (/ 1 (+ 1 ratio)) (sqrt (- 1 (* ratio ratio)))) doppler))))))
@@ -2876,7 +2876,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     ;;   the amplitude envelope as a linear function that does not reflect
     ;;   the chosen power function (1/d^n)
     (define (fminimum-segment-length xa ya za ta xb yb zb tb)
-      (let* ((dist (distance (- xb xa) (- yb ya) (- zb za))))
+      (let ((dist (distance (- xb xa) (- yb ya) (- zb za))))
 	(if (< dist minimum-segment-length)
 	    (intersects-inside-radius xa ya za ta xb yb zb tb)
 	    ;; interpolate a new point half way thorugh the segment

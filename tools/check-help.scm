@@ -7,8 +7,8 @@
        (if (and (symbol? name)
 		(defined? name)
 		(procedure? (symbol->value name)))
-	   (let* ((help (snd-help name))
-		  (arity (procedure-arity (symbol->value name))))
+	   (let ((help (snd-help name))
+		 (arity (procedure-arity (symbol->value name))))
 	     (if (and (string? help)
 		      (char=? (string-ref help 0) #\()
 		      (not (caddr arity))) ; rest args

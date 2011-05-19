@@ -9347,8 +9347,8 @@ EDITS: 5
 		     (not (XtIsManaged ((dialog-widgets) 20)))))
 	    (snd-display #__line__ ";peaks but no help?"))
 	(dismiss-all-dialogs)
-	(let* ((num-transforms 6)
-	       (num-transform-graph-types 3))
+	(let ((num-transforms 6)
+	      (num-transform-graph-types 3))
 	  (set! (transform-graph? index 0) #t)
 	  (set! (transform-size index 0) 64)
 	  (do ((i 0 (+ 1 i)))
@@ -10699,9 +10699,9 @@ EDITS: 5
 	  (revert-sound ind1)
 	  (let ((otime (maxamp-position ind1)))
 	    (set! (sample 1234) .9)
-	    (let* ((ntime (maxamp-position ind1))
-		   (nval (maxamp ind1))
-		   (npos (edit-position ind1 0)))
+	    (let ((ntime (maxamp-position ind1))
+		  (nval (maxamp ind1))
+		  (npos (edit-position ind1 0)))
 	      (if (not (= ntime 1234)) (snd-display #__line__ ";maxamp-position 1234: ~A" ntime))
 	      (let ((ootime (maxamp-position ind1 0 0)))
 		(if (not (= ootime otime)) (snd-display #__line__ ";maxamp-position edpos 0: ~A ~A" otime ootime)))
@@ -60225,7 +60225,7 @@ EDITS: 1
 					       (logior CWBackPixel CWBorderPixel)
 					       attr)))
 		  (XShapeCombineShape dpy newerwin ShapeIntersect 0 0 newwin ShapeSet ShapeClip))
-		(let* ((reg1 (XPolygonRegion (list (XPoint 2 2) (XPoint 10 2) (XPoint 10 10) (XPoint 2 10)) 4 WindingRule)))
+		(let ((reg1 (XPolygonRegion (list (XPoint 2 2) (XPoint 10 2) (XPoint 10 10) (XPoint 2 10)) 4 WindingRule)))
 		  (XShapeCombineRegion dpy newwin ShapeUnion 0 0 reg1 ShapeSet)))))
 	
 	(let ((classes (list xmArrowButtonWidgetClass xmBulletinBoardWidgetClass xmCascadeButtonWidgetClass xmCommandWidgetClass
@@ -60856,7 +60856,7 @@ EDITS: 1
   
   (define* (notch-out-rumble-and-hiss snd chn)
     "(notch-out-rumble-and-hiss s c) applies a bandpass filter with cutoffs at 40 Hz and 3500 Hz"
-    (let* ((cur-srate (exact->inexact (srate snd))))
+    (let ((cur-srate (exact->inexact (srate snd))))
       (filter-sound
        (list 0.0 0.0                    ; get rid of DC
 	     (/ 80.0 cur-srate) 0.0     ; get rid of anything under 40 Hz (1.0=srate/2 here)
@@ -61402,7 +61402,7 @@ EDITS: 1
 	    (if (not (eq? tag 'out-of-range))
 		(snd-display #__line__ ";make-vct -23: ~A" tag)))
 	  
-	  (let* ((v vct-3))
+	  (let ((v vct-3))
 	    (let ((tag
 		   (catch #t
 			  (lambda ()
@@ -62990,7 +62990,7 @@ EDITS: 1
 	  (set! (sample 100 ind 0) .5)
 	  (map-channel (lambda (y)
 			 (if (> y .4)
-			     (let* ((mx 0.0))
+			     (let ((mx 0.0))
 			       (scan-channel (lambda (x)
 					       (set! mx (max mx (abs x)))
 					       #f))

@@ -2,7 +2,7 @@
 #define S7_H
 
 #define S7_VERSION "1.86"
-#define S7_DATE "11-May-11"
+#define S7_DATE "18-May-11"
 
 
 typedef long long int s7_Int;
@@ -37,7 +37,7 @@ typedef double s7_Double;
    *                               "provide" adds a symbol to the list, 
    *                               "provided?" returns #t if its symbol arg is in the list.
    *    *vector-print-length*   how many elements of a vector are printed (initially 8)
-   *    __func__                equivalent to C's __func__.  The symbol of the function currently being defined.
+   *    __func__                equivalent to C's __func__.  Data about the current function.
    *    *load-path*             a list of directory names that "load" searches for Scheme input files (initially '())
    *    *load-hook*             hook called before a file is loaded; takes a function of one arg, the name of the file.
    *    *error-hook*            hook called upon error; takes a function of two args, 
