@@ -12180,8 +12180,8 @@ EDITS: 5
 	    (map-channel (lambda (y) (fir-filter f2 y)))
 	    (let ((data (channel->vct)))
 	      (undo)
-	      (let* ((f1 (make-bandpass (* .12 pi) (* .15 pi) 100))
-		     (f2 (make-bandpass (* .22 pi) (* .25 pi) 100)))
+	      (let ((f1 (make-bandpass (* .12 pi) (* .15 pi) 100))
+		    (f2 (make-bandpass (* .22 pi) (* .25 pi) 100)))
 		(map-channel (lambda (y) (+ (fir-filter f1 y) (fir-filter f2 y))))
 		(let ((data1 (channel->vct)))
 		  (vct-subtract! data data1)
@@ -12386,8 +12386,8 @@ EDITS: 5
 	      (oldopt (optimization)))
 	  
 	  (define (reversed-channel->vct start dur snd chn)
-	    (let* ((data (make-vct dur))
-		   (sf (make-sampler (+ start dur -1) snd chn -1)))
+	    (let ((data (make-vct dur))
+		  (sf (make-sampler (+ start dur -1) snd chn -1)))
 	      (do ((i (+ start dur -1) (- i 1)))
 		  ((< i start))
 		(set! (data i) (read-sample sf)))
@@ -15311,10 +15311,10 @@ EDITS: 2
 	    ((= i 12))
 	  (let ((val (sin (/ (* 2 pi i) 12.0))))
 	    (set! (x1 (+ i (- (/ size 4) 6))) val)))
-	(let* ((gen1 (make-table-lookup 440.0 :wave x1))
-	       (gen2 (make-table-lookup 440.0 :wave x2))
-	       (recompute-samps 30) ;just a quick guess
-	       (data (make-vct dur)))
+	(let ((gen1 (make-table-lookup 440.0 :wave x1))
+	      (gen2 (make-table-lookup 440.0 :wave x2))
+	      (recompute-samps 30) ;just a quick guess
+	      (data (make-vct dur)))
 	  (do ((i 0 (+ 1 i))
 	       (k 0.0)
 	       (kincr (/ 1.0 recompute-samps)))
@@ -15377,8 +15377,8 @@ EDITS: 2
     "(make-dpss-window size w) returns a prolate spheriodal (slepian) window of the given size"
     ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
     ;; output checked using Julius Smith's dpssw.m, although my "w" is different
-    (let* ((mat (make-mixer! n))
-	   (cw (cos (* 2 pi w))))
+    (let ((mat (make-mixer! n))
+	  (cw (cos (* 2 pi w))))
       (do ((i 0 (+ i 1)))
 	  ((= i n))
 	(let ((n2 (- (* 0.5 (- n 1)) i))) 
@@ -15726,8 +15726,8 @@ EDITS: 2
       (revert-sound ind)
       (mix "oboe.snd" 0 0 ind 0 #f)
       (mix "oboe.snd" 0 0 ind 1 #f)
-      (let* ((scl (/ 1.2 (maxamp ind 0)))
-	     (dur (frames ind 0)))
+      (let ((scl (/ 1.2 (maxamp ind 0)))
+	    (dur (frames ind 0)))
 	(do ((i 0 (+ 1 i))) ((= i 2))
 	  (let ((e (make-env (list 0 0 .48 (/ scl 2) .5 scl .52 (/ scl 2) 1.0 0) :length dur)))
 	    (map-channel (lambda (uy) (let ((y (* uy (env e)))) (if (> y 1.0) 1.0 (if (< y -1.0) -1.0 y)))) 0 dur ind i))))
@@ -15757,9 +15757,9 @@ EDITS: 2
 	       (set! freq (+ freq incr))
 	       (* .5 val)))))
 	(map-channel flt)
-	(let* ((mx (maxamp))
-	       (resp (make-vct bins))
-	       (size (round (/ 22050 bins))))
+	(let ((mx (maxamp))
+	      (resp (make-vct bins))
+	      (size (round (/ 22050 bins))))
 	  (do ((i 0 (+ 1 i)))
 	      ((= i bins))
 	    (let ((data (channel->vct (* i size) size)))
@@ -16986,8 +16986,8 @@ EDITS: 2
 	  (vals (vector 1 6 20 6 15 455 3003 6435 5005 1365 105)))
       (do ((i 0 (+ 1 i)))
 	  ((= i 11))
-	(let* ((nval (binomial-direct (vector-ref ns i) (vector-ref ks i)))
-	       (mval (n-choose-k (vector-ref ns i) (vector-ref ks i))))
+	(let ((nval (binomial-direct (vector-ref ns i) (vector-ref ks i)))
+	      (mval (n-choose-k (vector-ref ns i) (vector-ref ks i))))
 	  (if (or (not (= nval (vector-ref vals i)))
 		  (not (= mval (vector-ref vals i))))
 	      (snd-display #__line__ ";binomial(~A ~A): ~A ~A ~A" (vector-ref ns i) (vector-ref ks i) nval mval (vector-ref vals i))))))
@@ -17443,9 +17443,9 @@ EDITS: 2
 	(if (fneq (v 0) 1.0) (snd-display #__line__ ";run r->p not inverted: ~A" v))
 	(if (fneq val (sqrt 2.0)) (snd-display #__line__ ";r->p: ~A" val)))
       
-      (let* ((ind (open-sound "oboe.snd"))
-	     (rl (channel->vct 1200 512))
-	     (im (make-vct 512)))
+      (let ((ind (open-sound "oboe.snd"))
+	    (rl (channel->vct 1200 512))
+	    (im (make-vct 512)))
 	(fft rl im 512)
 	(let ((rl-copy (vct-copy rl))
 	      (im-copy (vct-copy im)))
@@ -18212,7 +18212,7 @@ EDITS: 2
 		    (make-comb 0.7 3 :initial-contents '(1.0 0.0 0.0)) 
 		    (make-comb 0.7 3 :initial-contents '(1.0 1.0 1.0)))
     
-    (let* ((del (make-comb 0.0 5 :max-size 8)))
+    (let ((del (make-comb 0.0 5 :max-size 8)))
       (comb del 1.0)
       (do ((i 0 (+ 1 i))) ((= i 4)) (comb del 0.0))
       (let ((v0 (make-vct 5)))
@@ -18286,7 +18286,7 @@ EDITS: 2
 		    (make-filtered-comb 0.7 3 :initial-contents '(1.0 0.0 0.0) :filter (make-one-zero .5 .5)) 
 		    (make-filtered-comb 0.7 3 :initial-contents '(1.0 1.0 1.0) :filter (make-one-zero .5 .5)))
     
-    (let* ((del (make-filtered-comb 0.0 5 :max-size 8 :filter (make-one-zero .5 .5))))
+    (let ((del (make-filtered-comb 0.0 5 :max-size 8 :filter (make-one-zero .5 .5))))
       (filtered-comb del 1.0)
       (do ((i 0 (+ 1 i))) ((= i 4)) (filtered-comb del 0.0))
       (let ((v0 (make-vct 5)))
@@ -18958,7 +18958,7 @@ EDITS: 2
     (let ((gen (make-oscil 440.0)))
       (do ((i 0 (+ 1 i)))
 	  ((= i 1100))
-	(let* ((val1 (sin (mus-phase gen)))
+	(let ((val1 (sin (mus-phase gen)))
 	       (val2 (gen 0.0)))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";oscil: ~A: ~A ~A" i val1 val2)))))
@@ -18967,8 +18967,8 @@ EDITS: 2
       (do ((i 0 (+ 1 i))
 	   (a 0.0 (+ a (/ (* 2 pi 440.0) 22050.0))))
 	  ((= i 900))
-	(let* ((val1 (cos a))
-	       (val2 (gen 0.0)))
+	(let ((val1 (cos a))
+	      (val2 (gen 0.0)))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";oscil (cos): ~A: ~A ~A" i val1 val2)))))
     
@@ -18977,8 +18977,8 @@ EDITS: 2
       (do ((i 0 (+ 1 i))
 	   (a 0.0 (+ a (/ (* 2 pi 40.0) 22050.0))))
 	  ((= i 1100))
-	(let* ((val1 (sin (sin a)))
-	       (val2 (oscil gen 0.0 (oscil gen1 0.0))))
+	(let ((val1 (sin (sin a)))
+	      (val2 (oscil gen 0.0 (oscil gen1 0.0))))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";oscil pm: ~A: ~A ~A" i val1 val2)))))
     
@@ -18988,9 +18988,9 @@ EDITS: 2
       (do ((i 0 (+ 1 i))
 	   (a 0.0 (+ a (/ (* 2 pi 40.0) 22050.0))))
 	  ((= i 100))
-	(let* ((fm (sin a))
-	       (val1 (sin a1))
-	       (val2 (oscil gen (oscil gen1 0.0))))
+	(let ((fm (sin a))
+	      (val1 (sin a1))
+	      (val2 (oscil gen (oscil gen1 0.0))))
 	  (set! a1 (+ a1 fm))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";oscil fm: ~A: ~A ~A" i val1 val2)))))
@@ -19280,9 +19280,9 @@ EDITS: 2
 	  ((= i 2048))
 	(set! (vct0 i) (asymmetric-fm gen3 1.0 0.0))
 	(set! (vct1 i) (oscil gen4 (* fm1 (oscil gen5)))))
-      (let* ((spectr1 (snd-spectrum vct0 rectangular-window 2048 #t))
-	     (spectr2 (snd-spectrum vct1 rectangular-window 2048 #t))
-	     (happy #t))
+      (let ((spectr1 (snd-spectrum vct0 rectangular-window 2048 #t))
+	    (spectr2 (snd-spectrum vct1 rectangular-window 2048 #t))
+	    (happy #t))
 	(do ((i 1 (+ 1 i)))
 	    ((or (not happy)
 		 (= i 512)))
@@ -19321,7 +19321,7 @@ EDITS: 2
 	  ((= i 2048))
 	(set! (vct0 i) (asymmetric-fm gen3 2.0 0.0))
 	(set! (vct1 i) (asymmetric-fm gen4 2.0 0.0)))
-      (let* ((spectr1 (snd-spectrum vct0 rectangular-window 2048 #t))
+      (let ((spectr1 (snd-spectrum vct0 rectangular-window 2048 #t))
 	     (spectr2 (snd-spectrum vct1 rectangular-window 2048 #t))
 	     (s1-loc 0)
 	     (s2-loc 0))
@@ -20374,9 +20374,9 @@ EDITS: 2
     (let* ((hi (make-frame 1))
 	   (tag (catch #t (lambda () (set! (hi 1) 1.0)) (lambda args (car args)))))
       (if (not (eq? tag 'mus-error)) (snd-display #__line__ ";set! frame-ref 1 of 0: ~A (~A)" tag hi)))
-    (let* ((tag (catch #t (lambda () (make-frame 0)) (lambda args (car args)))))
+    (let ((tag (catch #t (lambda () (make-frame 0)) (lambda args (car args)))))
       (if (not (eq? tag 'out-of-range)) (snd-display #__line__ ";make-frame 0: ~A" tag)))
-    (let* ((tag (catch #t (lambda () (make-mixer 0)) (lambda args (car args)))))
+    (let ((tag (catch #t (lambda () (make-mixer 0)) (lambda args (car args)))))
       (if (not (eq? tag 'out-of-range)) (snd-display #__line__ ";make-mixer 0: ~A" tag)))
     
     (let ((fr1 (make-frame 1 1))
@@ -21147,10 +21147,10 @@ EDITS: 2
 		    (snd-display #__line__ ";dolph-chebyshev window: ~A" gen))))
 	     
 	     (let ((multra (lambda (N gamma xmu)
-			     (let* ((alpha (cosh (/ (acosh (expt 10.0 gamma)) N)))
-				    (freq (/ pi N))
-				    (rl (make-vct N))
-				    (im (make-vct N)))
+			     (let ((alpha (cosh (/ (acosh (expt 10.0 gamma)) N)))
+				   (freq (/ pi N))
+				   (rl (make-vct N))
+				   (im (make-vct N)))
 			       (do ((i 0 (+ 1 i))
 				    (phase 0.0 (+ phase freq)))
 				   ((= i N))
@@ -21906,8 +21906,8 @@ EDITS: 2
       (do ((i 0 (+ 1 i))
 	   (a 0.0 (+ a (/ (* 2 pi 440.0) 22050.0))))
 	  ((= i 1100))
-	(let* ((val1 (sin a))
-	       (val2 (gen 0.0)))
+	(let ((val1 (sin a))
+	      (val2 (gen 0.0)))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";table lookup (1 1): ~A: ~A ~A" i val1 val2)))))
     
@@ -21915,8 +21915,8 @@ EDITS: 2
       (do ((i 0 (+ 1 i))
 	   (a 0.0 (+ a (/ (* 2 pi 4.0) 22050.0))))
 	  ((= i 1100))
-	(let* ((val1 (sin a))
-	       (val2 (gen 0.0)))
+	(let ((val1 (sin a))
+	      (val2 (gen 0.0)))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";table lookup (1 1) 4: ~A: ~A ~A" i val1 val2)))))
     
@@ -21924,8 +21924,8 @@ EDITS: 2
       (do ((i 0 (+ 1 i))
 	   (a 0.0 (+ a (/ (* 2 pi 440.0) 22050.0))))
 	  ((= i 1100))
-	(let* ((val1 (+ (* .75 (sin a)) (* .25 (sin (* 3 a)))))
-	       (val2 (gen 0.0)))
+	(let ((val1 (+ (* .75 (sin a)) (* .25 (sin (* 3 a)))))
+	      (val2 (gen 0.0)))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";table lookup (1 .75 3 .25): ~A: ~A ~A" i val1 val2)))))
     
@@ -21935,9 +21935,9 @@ EDITS: 2
       (do ((i 0 (+ 1 i))
 	   (a 0.0 (+ a (/ (* 2 pi 40.0) 22050.0))))
 	  ((= i 100))
-	(let* ((fm (sin a))
-	       (val1 (sin a1))
-	       (val2 (table-lookup gen (table-lookup gen1 0.0))))
+	(let ((fm (sin a))
+	      (val1 (sin a1))
+	      (val2 (table-lookup gen (table-lookup gen1 0.0))))
 	  (set! a1 (+ a1 fm))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";lookup/lookup fm: ~A: ~A ~A" i val1 val2)))))
@@ -21946,7 +21946,7 @@ EDITS: 2
      (lambda (args)
        (let ((type (car args))
 	     (vals (cadr args)))
-	 (let* ((tbl1 (make-table-lookup :frequency 0.0 :size 4 :type type)))
+	 (let ((tbl1 (make-table-lookup :frequency 0.0 :size 4 :type type)))
 	   (vct-set! (mus-data tbl1) 1 1.0)
 	   (let ((v (make-vct 10)))
 	     (do ((i 0 (+ 1 i)))
@@ -22099,7 +22099,7 @@ EDITS: 2
       (do ((i 0 (+ 1 i))
 	   (a 0.0 (+ a (/ (* 2 pi 40.0) 22050.0))))
 	  ((or (not happy) (= i 400)))
-	(let* ((fm (cos a))
+	(let ((fm (cos a))
 	       (val1 (cos a1))
 	       (val2 (polyshape gen 1.0 (polyshape gen1 1.0))))
 	  (set! a1 (+ a1 fm))
@@ -22110,7 +22110,7 @@ EDITS: 2
     
     (for-each 
      (lambda (amps name)
-       (let* ((n (vct-length amps))
+       (let ((n (vct-length amps))
 	      (angle 0.0)
 	      (incr (hz->radians 1.0))
 	      (happy #t))
@@ -22137,7 +22137,7 @@ EDITS: 2
     
     (for-each 
      (lambda (amps name)
-       (let* ((n (vct-length amps))
+       (let ((n (vct-length amps))
 	      (angle 0.0)
 	      (incr (hz->radians 1.0))
 	      (happy #t))
@@ -22164,7 +22164,7 @@ EDITS: 2
     
     (for-each 
      (lambda (camps samps name)
-       (let* ((n (vct-length camps))
+       (let ((n (vct-length camps))
 	      (angle 0.0)
 	      (incr (hz->radians 1.0))
 	      (happy #t))
@@ -22510,7 +22510,7 @@ EDITS: 2
      (lambda (args)
        (let ((type (car args))
 	     (vals (cadr args)))
-	 (let* ((tbl1 (make-wave-train :frequency 3000.0 :initial-phase (/ (* 2.0 pi .2) 4) :size 4 :type type)))
+	 (let ((tbl1 (make-wave-train :frequency 3000.0 :initial-phase (/ (* 2.0 pi .2) 4) :size 4 :type type)))
 	   (vct-set! (mus-data tbl1) 1 1.0)
 	   (let ((v (make-vct 10)))
 	     (do ((i 0 (+ 1 i)))
@@ -22963,7 +22963,7 @@ EDITS: 2
 	(outc i .03 gen)
 	(outd i .04 gen))
       (mus-close gen))
-    (let* ((gen (make-file->sample "fmv.snd")))
+    (let ((gen (make-file->sample "fmv.snd")))
       (print-and-check gen 
 		       "file->sample"
 		       "file->sample fmv.snd")
@@ -22990,7 +22990,7 @@ EDITS: 2
 	 (outc i .03 gen)
 	 (outd i .04 gen)))
       (mus-close gen))
-    (let* ((gen (make-file->sample "fmv.snd")))
+    (let ((gen (make-file->sample "fmv.snd")))
       (do ((i 0 (+ 1 i)))
 	  ((= i 10))
 	(if (or (fneq (ina i gen) .11)
@@ -23764,8 +23764,8 @@ EDITS: 2
 	  (gen1 (make-rand-interp 10000.0 1.0)))
       (do ((i 0 (+ 1 i)))
 	  ((= i 1000))
-	(let* ((val1 (gen 0.0))
-	       (val2 (gen1 0.0)))
+	(let ((val1 (gen 0.0))
+	      (val2 (gen1 0.0)))
 	  (if (or (> val1 1.0)
 		  (< val1 -1.0))
 	      (snd-display #__line__ ";rand: ~A ~A" val1 gen))
@@ -25254,7 +25254,7 @@ EDITS: 2
 	    (snd-display #__line__ ";gran 3 data: ~A" (channel->vct 0 30)))
 	(undo))
       
-      (let* ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0 :scaler 1.0))
+      (let ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0 :scaler 1.0))
 	     (e (make-env '(0 1 1 0.0) :length 1001)))
 	(map-channel 
 	 (lambda (y) 
@@ -25590,7 +25590,7 @@ EDITS: 2
 	  (undo)
 	  (close-sound ind))))
     
-    (let* ((v0 (make-vct 32))
+    (let ((v0 (make-vct 32))
 	   (v1 (make-vct 256))
 	   (v2 (make-vct 256))
 	   (v01 (make-vct 32))
@@ -25953,8 +25953,8 @@ EDITS: 2
 	  (array->file "fmv.snd" v0 12 22050 1)
 	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k))
 	  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k) 0 len 0 (make-mixer 1 0.5))
-	  (let* ((egen (make-vector 1))
-		 (outv (make-vector 1)))
+	  (let ((egen (make-vector 1))
+		(outv (make-vector 1)))
 	    (set! (outv 0) egen)
 	    (set! (egen 0) (make-env :envelope '(0 0 1 1) :length len))
 	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k) 0 len 0 #f outv)
@@ -25977,9 +25977,9 @@ EDITS: 2
 		(snd-display #__line__ ";~D array->file chans? ~A" k (mus-sound-chans "fmv.snd")))
 	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "2.snd" k))
 	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "2.snd" k) 0 len 0 (make-mixer 2 0.5 0.0 0.0 0.5))
-	    (let* ((egen0 (make-vector 2))
-		   (egen1 (make-vector 2))
-		   (outv (make-vector 2)))
+	    (let ((egen0 (make-vector 2))
+		  (egen1 (make-vector 2))
+		  (outv (make-vector 2)))
 	      (set! (outv 0) egen0)
 	      (set! (outv 1) egen1)
 	      (set! (egen0 0) (make-env :envelope '(0 0 1 1) :length len))
@@ -26050,9 +26050,9 @@ EDITS: 2
 				     (lambda (v)
 					; new editing func changes pitch
 				       (run
-					(let* ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
-					       (D (mus-hop v))
-					       (freqs (phase-vocoder-freqs v)))
+					(let ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
+					      (D (mus-hop v))
+					      (freqs (phase-vocoder-freqs v)))
 					  (do ((k 0 (+ 1 k))
 					       (pscl (/ 1.0 D))
 					       (kscl (/ pi2 N)))
@@ -30369,7 +30369,7 @@ EDITS: 2
 		
 		(do ()
 		    ((= open-ctr 32))
-		  (let* ((len (length open-files)))
+		  (let ((len (length open-files)))
 		    (if (or (= len 0) (> (random 1.0) .5))
 			(let* ((choice (floor (random sf-dir-len)))
 			       (name (string-append sf-dir (sf-dir-files choice)))
@@ -31192,7 +31192,7 @@ EDITS: 2
       )
     (if (not (null? (hook-functions open-raw-sound-hook))) (set! (hook-functions open-raw-sound-hook) '()))
     (hook-push open-raw-sound-hook (lambda (file choices) (list 1 22050 mus-bshort)))
-    (let* ((ind (open-sound "../sf1/addf8.nh")))
+    (let ((ind (open-sound "../sf1/addf8.nh")))
       (play ind :wait #t)
       (set! (hook-functions open-raw-sound-hook) '())
       (if (or (not (= (chans ind) 1))
@@ -32236,7 +32236,7 @@ EDITS: 2
 		    (snd-display #__line__ ";cursor ~A is not ~A (frames: ~A)?" cl curloc (frames curfd 0))
 		    (set! curloc (cursor curfd 0)))))
 	    (if (>= curloc (frames curfd 0)) (set! curloc 0))
-	    (let* ((id (catch #t (lambda () (add-mark curloc curfd)) (lambda args -1))))
+	    (let ((id (catch #t (lambda () (add-mark curloc curfd)) (lambda args -1))))
 	      (if (and (number? id) (not (= id -1)))
 		  (let* ((cl (mark-sample id))
 			 (new-marks (length (marks curfd 0))))
@@ -33100,7 +33100,7 @@ EDITS: 2
 	   (new-reader (make-sampler beg ind 0)))
       (do ((i 0 (+ 1 i)))
 	  ((= i len))
-	(let* ((nv (abs (next-sample new-reader))))
+	(let ((nv (abs (next-sample new-reader))))
 	  (if (> nv newmax) (set! newmax nv))))
       (if (fneq newmax maxval)
 	  (snd-display #__line__ ";scale-selection-to (~D ~D) ~A: ~A?" beg len maxval newmax))
@@ -35511,7 +35511,7 @@ EDITS: 2
 	  (revert-sound oboe))
 	(close-sound oboe)
 	
-	(let* ((ind (new-sound "test.snd" :size 10 :channels 2)))
+	(let ((ind (new-sound "test.snd" :size 10 :channels 2)))
 	  (set! (sample 3 ind 0) .5)
 	  (set! (sample 2 ind 1) -.4)
 	  (save-sound-as "fmv.snd")
@@ -41866,7 +41866,7 @@ EDITS: 1
   
   (define (bes-i1 x)				;I1(x)
     (if (< (abs x) 3.75)
-	(let* ((y (expt (/ x 3.75) 2)))
+	(let ((y (expt (/ x 3.75) 2)))
 	  (* x (+ 0.5
 		  (* y (+ 0.87890594
 			  (* y (+ 0.51498869
@@ -41945,7 +41945,7 @@ EDITS: 1
   
   (define (bes-k0 x)				;K0(x)
     (if (<= x 2.0)
-	(let* ((y (* x (/ x 4.0))))
+	(let ((y (* x (/ x 4.0))))
 	  (+ (* (- (log (/ x 2.0))) (bes-i0 x)) -0.57721566
 	     (* y (+ 0.42278420
 		     (* y (+ 0.23069756
@@ -41953,7 +41953,7 @@ EDITS: 1
 				     (* y (+ 0.262698e-2
 					     (* y (+ 0.10750e-3
 						     (* y 0.74e-5)))))))))))))
-	(let* ((y (/ 2.0 x)))
+	(let ((y (/ 2.0 x)))
 	  (* (/ (exp (- x)) (sqrt x)) 
 	     (+ 1.25331414
 		(* y (+ -0.7832358e-1
@@ -41970,7 +41970,7 @@ EDITS: 1
   
   (define (bes-k1 x)				;K1(x)
     (if (<= x 2.0)
-	(let* ((y (* x (/ x 4.0))))
+	(let ((y (* x (/ x 4.0))))
 	  (+ (* (log (/ x 2)) (bes-i1 x)) 
 	     (* (/ 1.0 x)
 		(+ 1.0
@@ -41980,7 +41980,7 @@ EDITS: 1
 					   (* y (+ -0.1919402e-1
 						   (* y (+ -0.110404e-2
 							   (* y -0.4686e-4)))))))))))))))
-	(let* ((y (/ 2.0 x)))
+	(let ((y (/ 2.0 x)))
 	  (* (/ (exp (- x)) (sqrt x)) 
 	     (+ 1.25331414 
 		(* y (+ 0.23498619
@@ -43760,7 +43760,7 @@ EDITS: 1
 		   (red (make-color-with-catch 1 0 0)))
 	       (if (and (< left 2000)
 			(> right 1000))
-		   (let* ((data (make-graph-data snd chn)))
+		   (let ((data (make-graph-data snd chn)))
 		     (if data
 			 (if (vct? data)                      ;the simple, one-sided graph case
 			     (let* ((samps (- (min right 2000)
@@ -45119,7 +45119,7 @@ EDITS: 1
 		   (snd-display #__line__ ";sync-everything not the same? ~A" current-syncs))
 	       (set! previous-syncs (cons (sync index) previous-syncs)))
 	     (set! total-chans (+ total-chans (chans index)))
-	     (let* ((fd (make-sync-frame-reader 10000)))
+	     (let ((fd (make-sync-frame-reader 10000)))
 	       (if (not (frame-reader? fd)) (snd-display #__line__ ";~A: sync frame-reader?: ~A" file fd))
 	       (if (frame-reader-at-end? fd) (snd-display #__line__ ";~A: sync frame-reader-at-end?: ~A" file fd))
 	       (if (not (= (frame-reader-position fd) 10000)) 
@@ -45168,7 +45168,7 @@ EDITS: 1
 	       (free-frame-reader fd))
 	     (select-all)
 	     
-	     (let* ((fd (make-selection-frame-reader 10000)))
+	     (let ((fd (make-selection-frame-reader 10000)))
 	       (if (not (frame-reader? fd)) (snd-display #__line__ ";~A: selection frame-reader?: ~A" file fd))
 	       (if (frame-reader-at-end? fd) (snd-display #__line__ ";~A: selection frame-reader-at-end?: ~A" file fd))
 	       (if (not (= (frame-reader-position fd) 10000)) 
@@ -45279,7 +45279,7 @@ EDITS: 1
 	(close-sound index0)
 	(close-sound index1))
       
-      (let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "insert-* tests" 10)))
+      (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "insert-* tests" 10)))
 	(map-channel (lambda (y) 1.0) 0 10 ind 0)
 	(insert-vct (make-vct 5 .1) 2)
 	(if (not (= (frames ind) 15)) (snd-display #__line__ ";insert-vct len: ~A" (frames ind)))
@@ -45343,7 +45343,7 @@ EDITS: 1
 		(snd-display #__line__ ";insert-sound-data 2 vals: ~A" vals))))
 	(close-sound ind))
       
-      (let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "insert-* tests" 5)))
+      (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "insert-* tests" 5)))
 	(map-channel (lambda (y) 0.4) 0 5 ind 0)
 	(map-channel (lambda (y) 0.5) 0 5 ind 1)
 	(map-channel (lambda (y) 0.6) 0 5 ind 2)
@@ -45424,7 +45424,7 @@ EDITS: 1
 		  (snd-display #__line__ ";4chn ~A insert-sound-data vals: ~A" chn vals)))))
 	(close-sound ind))
       
-      (let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "mix-frame tests" 5)))
+      (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "mix-frame tests" 5)))
 	(map-channel (lambda (y) 1.0) 0 5 ind 0)
 	
 	(let ((tag (catch #t (lambda () (mix-frame 32)) (lambda args (car args)))))
@@ -45471,7 +45471,7 @@ EDITS: 1
 	  )
 	(close-sound ind))
       
-      (let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "mix-* tests" 5)))
+      (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 4 "mix-* tests" 5)))
 	(map-channel (lambda (y) 0.4) 0 5 ind 0)
 	(map-channel (lambda (y) 0.5) 0 5 ind 1)
 	(map-channel (lambda (y) 0.6) 0 5 ind 2)
@@ -46612,24 +46612,36 @@ EDITS: 1
     (itst '(inexact->exact (ceiling 1.5)) 2)
     (itsta '(lambda (y) (inexact->exact (ceiling y))) 1.5 2)
     
-    (let* ((g0 (make-oscil 440)) (g1 g0) (v (make-vct 1)))
+    (let* ((g0 (make-oscil 440)) 
+	   (g1 g0) 
+	   (v (make-vct 1)))
       (vct-map! v (lambda () (if (eq? g0 g1) 1.0 2.0)))
       (if (fneq (v 0) 1.0) (snd-display #__line__ ";run clm eq?: ~A" v)))
-    (let* ((g0 (make-oscil 440)) (g1 (make-oscil 330.0)) (v (make-vct 1)))
+    (let* ((g0 (make-oscil 440)) 
+	   (g1 (make-oscil 330.0)) 
+	   (v (make-vct 1)))
       (vct-map! v (lambda () (if (eq? g0 g1) 1.0 2.0)))
       (if (fneq (v 0) 2.0) (snd-display #__line__ ";run clm neq?: ~A" v)))
     
-    (let* ((g0 (make-oscil 440)) (g1 g0) (v (make-vct 1)))
+    (let* ((g0 (make-oscil 440)) 
+	   (g1 g0) 
+	   (v (make-vct 1)))
       (vct-map! v (lambda () (if (eqv? g0 g1) 1.0 2.0)))
       (if (fneq (v 0) 1.0) (snd-display #__line__ ";run clm eqv?: ~A" v)))
-    (let* ((g0 (make-oscil 440)) (g1 (make-oscil 330.0)) (v (make-vct 1)))
+    (let* ((g0 (make-oscil 440)) 
+	   (g1 (make-oscil 330.0)) 
+	   (v (make-vct 1)))
       (vct-map! v (lambda () (if (eqv? g0 g1) 1.0 2.0)))
       (if (fneq (v 0) 2.0) (snd-display #__line__ ";run clm neqv?: ~A" v)))
     
-    (let* ((g0 (make-oscil 440)) (g1 g0) (v (make-vct 1)))
+    (let* ((g0 (make-oscil 440)) 
+	   (g1 g0)
+	   (v (make-vct 1)))
       (vct-map! v (lambda () (if (equal? g0 g1) 1.0 2.0)))
       (if (fneq (v 0) 1.0) (snd-display #__line__ ";run clm equal?: ~A" v)))
-    (let* ((g0 (make-oscil 440)) (g1 (make-oscil 330.0)) (v (make-vct 1)))
+    (let* ((g0 (make-oscil 440))
+	   (g1 (make-oscil 330.0))
+	   (v (make-vct 1)))
       (vct-map! v (lambda () (if (equal? g0 g1) 1.0 2.0)))
       (if (fneq (v 0) 2.0) (snd-display #__line__ ";run clm nequal?: ~A" v)))
     
@@ -52894,7 +52906,7 @@ EDITS: 1
 	  (snd-print (format #f "~A: unhappiest: ~A ~A~%" name unhappiestseg unhappiest)))))
   
   (definstrument (defopt-simp beg dur (frequency 440.0) (amplitude 0.1))
-    (let* ((os (make-oscil frequency)))
+    (let ((os (make-oscil frequency)))
       (run 
        (do ((i 0 (+ 1 i))) ((= i dur))
 	 (outa (+ i beg) (* amplitude (oscil os)))))))
@@ -56353,7 +56365,7 @@ EDITS: 1
     (if (ffneq (maxamp snd) 0.5) (snd-display #__line__ ";adj saw max: ~A" (maxamp snd))))
   
   (with-sound (:clipped #f) ; at least run the thing -- not sure how to test this automatically
-	      (let* ((gen (make-pink-noise 12)))
+	      (let ((gen (make-pink-noise 12)))
 		(run (lambda ()
 		       (do ((i 0 (+ 1 i)))
 			   ((= i 44100))
@@ -56807,7 +56819,7 @@ EDITS: 1
      (let ((gen (maker)))
        (if (not (isit gen))
 	   (format #t "~A is not a ~A?" gen name)
-	   (let* ((funcs (methods)))
+	   (let ((funcs (methods)))
 	     (if (null? funcs)
 		 (format #t "~A has no methods?" name)
 		 (for-each
@@ -57576,7 +57588,7 @@ EDITS: 1
 	  (if (not (IsModifierKey (list 'KeySym XK_Shift_L))) (snd-display #__line__ ";IsModifierKey Shift"))
 	  (if (IsModifierKey (list 'KeySym XK_S)) (snd-display #__line__ ";IsModifierKey S"))
 	  
-	  (let* (;(scr (current-screen))
+	  (let (;(scr (current-screen))
 		 (dpy (XtDisplay (cadr (main-widgets))))
 		 (val (XGCValues))
 		 (wn (XtWindow (cadr (main-widgets)))))
@@ -58265,7 +58277,7 @@ EDITS: 1
 					 (XmRenditionRetrieve default-rendition (list XmNfont 0 XmNfontType 0)))))
 	    (if (and default-font-info
 		     (= (default-font-info 3) XmFONT_IS_FONT))
-		(let* ((font (cadr default-font-info))
+		(let ((font (cadr default-font-info))
 		       (dpy (XtDisplay (cadr (main-widgets))))
 		       (data '()))
 		  (for-each (lambda (name atom?)
@@ -58435,7 +58447,7 @@ EDITS: 1
 		    (set! (.foreground gv) (data-color))
 		    (set! (.background gv) (basic-color))
 		    (set! (.function gv) GXcopy)
-		    (let* ((sgc (XtAllocateGC grf1
+		    (let ((sgc (XtAllocateGC grf1
 					      (XDefaultDepth dpy scrn) 
 					      (logior GCForeground GCBackground GCFunction)
 					      gv
@@ -58528,7 +58540,7 @@ EDITS: 1
 						(snd-display #__line__ ";try1: ~A~%" strs)))
 				 (list "try2" (lambda (w e strs)
 						(snd-display #__line__ ";try2: ~A~%" strs)))))
-	  (let* ((tab (XtParseTranslationTable 
+	  (let ((tab (XtParseTranslationTable 
 		       (format #f "Ctrl <Key>osfLeft:  try1()~%Ctrl <Key>osfRight: try2()~%Ctrl <Key>osfUp:  try1(hiho)~%Ctrl <Key>osfDown: try2(down, up)~%")))
 		 (pane (add-main-pane "hiho" xmTextWidgetClass '())))
 	    (XtOverrideTranslations pane tab))
@@ -58696,7 +58708,7 @@ EDITS: 1
 						  XmNlabelPixmap pixmap))
 		      (XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
 		      (XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
-		      (let* ((status (XpmReadFileToXpmImage "bullet.xpm"))
+		      (let ((status (XpmReadFileToXpmImage "bullet.xpm"))
 			     (symb (XpmColorSymbol "Foreground" "green" (basic-color)))
 			     (attr (XpmAttributes)))
 			(if (not (XpmImage? status))
@@ -60882,7 +60894,7 @@ EDITS: 1
 	     (swap-channels ind i ind j)))))))
   
   (define* (rotate-channel (samps 1) snd chn)
-    (let* ((ind (or snd (selected-sound) (car (sounds))))
+    (let ((ind (or snd (selected-sound) (car (sounds))))
 	   (chan (or chn (selected-channel) 0)))
       (let ((reg (make-region 0 (- samps 1) ind chan)))
 	(as-one-edit
@@ -61818,7 +61830,7 @@ EDITS: 1
 			  (set! ctr (+ ctr 1))))
 		      (list mix-name mix-position mix-home mix-speed mix-tag-y))) 
 	  
-	  (let* ((ctr 0)
+	  (let ((ctr 0)
 		 (index (open-sound "oboe.snd"))
 		 (id (mix-sound "oboe.snd" 10)))
 	    (for-each (lambda (n b)

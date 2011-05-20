@@ -14537,6 +14537,14 @@ static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
       x = cdr(x);
       if (!is_pair(x)) return(sc->F);
 
+      if ((is_pair(car(x))) && (obj == caar(x))) return(car(x));
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      if ((is_pair(car(x))) && (obj == caar(x))) return(car(x));
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
       y = cdr(y);
       if (x == y) return(sc->F);
     }
@@ -14701,6 +14709,14 @@ static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
       /* I think (memq 'c '(a b . c)) should return #f because otherwise
        *   (memq '() ...) would return the '() at the end.
        */
+
+      if (obj == car(x)) return(x);
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      if (obj == car(x)) return(x);
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
 
       if (obj == car(x)) return(x);
       x = cdr(x);
@@ -16534,6 +16550,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
   #define H_procedure_source "(procedure-source func) tries to return the definition of func"
   
   p = car(args);
+
   if (s7_is_symbol(p))
     {
       p = s7_symbol_value(sc, p);
@@ -16541,6 +16558,8 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			make_list_2(sc, make_protected_string(sc, "procedure-source arg, '~S, is unbound"), car(args))));
     }
+  if (is_c_function(p))
+    return(sc->NIL);
 
 #if HAVE_PTHREADS
   if (s7_is_thread(p))
@@ -24467,7 +24486,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   so sc->code becomes (+ i 1) in this case 
        */
       sc->code = cadar(sc->args);
-      sc->args = sc->NIL;
+      /* sc->args = sc->NIL; */
       goto EVAL;
       
 
@@ -24540,7 +24559,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  push_stack(sc, opcode(OP_DO_INIT), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
-	  sc->args = sc->NIL;
+	  /* sc->args = sc->NIL; */
 	  goto EVAL;
 	}
 
@@ -24588,7 +24607,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  arg2 = s7_integer(vector_element(sv, 5));
 		else arg2 = s7_integer(cdr(vector_element(sv, 4)));
 		
-		/* it seems innocuous to extend this to other ops like '>', but somehow
+		/* it seems innocuous to extend this to other ops, but somehow
 		 *   that greatly slows down eval_args below!  (A switch statement
 		 *   or a function call is equally bad).
 		 */
@@ -24609,7 +24628,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  push_stack(sc, opcode(OP_DO_END1), sc->args, sc->code);
 	  sc->code = caadr(sc->args);               /* evaluate the end expr */
-	  sc->args = sc->NIL;
+	  /* sc->args = sc->NIL; */
 	  goto EVAL;
 	}
       else sc->value = sc->F;                       /* (do ((...)) () ...) -- no endtest */
@@ -24667,7 +24686,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     EVAL:
     case OP_EVAL:   
-      /* main part of evaluation */
+      /* main part of evaluation 
+       *   at this point, it's sc->code we care about; sc->args is not relevant.
+       */
 
       if (is_pair(sc->code))
 	{
@@ -24877,9 +24898,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      car(x) = sc->value;
 		      cdr(x) = sc->args;
 		      set_type(x, T_PAIR);
-		      sc->args = x;
 
-		      push_stack(sc, opcode(OP_EVAL_ARGS2), sc->args, sc->NIL);
+		      push_stack(sc, opcode(OP_EVAL_ARGS2), x, sc->NIL);
 		      sc->code = car_code;
 		      goto EVAL_PAIR;
 		    }
@@ -24899,7 +24919,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  car(x) = sc->value;
 		  cdr(x) = sc->args;
 		  set_type(x, T_PAIR);
-		  sc->args = x;
 		  
 		  /* get the last arg */
 		  if (typ == T_SYMBOL)
@@ -24910,11 +24929,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		  else car(y) = car_code;
 
-		  cdr(y) = sc->args;
+		  cdr(y) = x;
 		  set_type(y, T_PAIR);
-		  if (is_not_null(sc->args))
-		    sc->args = safe_reverse_in_place(sc, y); 
-		  else sc->args = y;
+		  sc->args = safe_reverse_in_place(sc, y); 
 		  /* drop into APPLY */
 		}
 	      else 
@@ -24976,7 +24993,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      cdr(x) = sc->args;
 	      set_type(x, T_PAIR);
 	      if (type(sc->args) != T_NIL)
-		sc->args = safe_reverse_in_place(sc, x); 
+		sc->args = safe_reverse_in_place(sc, x);
 	      else sc->args = x;
 	      /* drop into APPLY */
 	    }
@@ -26958,6 +26975,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->code));
       if (!is_pair(cdr(sc->code)))
 	return(eval_error(sc, "with-environment body is messed up: ~A", sc->code));
+
       push_stack(sc, opcode(OP_WITH_ENV1), sc->NIL, sc->code);
       sc->code = car(sc->code);                          /* eval env arg */
       goto EVAL;

@@ -13201,6 +13201,9 @@ this prints:
 (test (map (values values #(1 2))) '(1 2))
 (test ((values values) (values 0)) 0)
 (test ((object->string values) (abs 1)) #\a)
+(test (list? (values 1 2 3)) 'error)
+(test (list? (values 1)) #f)
+(test (list? (values (list 1 2 3))) #t)
 
 (test (let ((x 1)) (set! x (values)) x) 'error)
 (test (let ((x 1)) (set! x (values 1 2 3)) x) 'error)

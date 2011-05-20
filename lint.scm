@@ -1903,10 +1903,8 @@
 				     (cdr form))))))))))
 	      ;; not local var
 	      (if (and (symbol? head)
-		       (defined? head)
 		       (procedure? (symbol->value head)))
 		  ;; check arg number
-		  
 		  (let ((arity (procedure-arity (symbol->value head)))
 			(args (lint-length (cdr form))))
 		    
@@ -1944,7 +1942,7 @@
 			(begin
 			  ;; if keywords, check that they are acceptable
 			  ;;    this only applies to lambda*'s that have been previously loaded (lint doesn't create them)
-			  (let ((source (procedure-source head)))
+			  (let ((source (procedure-source (symbol->value head))))
 			    (if (and (pair? source)
 				     (eq? (car source) 'lambda*))
 				(let ((decls (cadr source)))
