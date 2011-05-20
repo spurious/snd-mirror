@@ -9288,6 +9288,7 @@ a2" 3) "132")
 	  (format #t ";format to nested ports after 2nd close, p2: ~S~%" (get-output-string p2)))
       (format p2 "~D" 8)
       (set! res2 (get-output-string p2))
+      (test (get-output-string p1) 'error)
       (close-output-port p2)))
   (if (not (string=? res1 "046"))
       (format #t ";format to nested ports, res1: ~S~%" res1))
@@ -12044,6 +12045,8 @@ this prints:
 (test (cond (lambda ())) ())
 (test (cond . ((1 2) ((3 4)))) 2)
 (test (cond (define #f)) #f)
+(test (let () (cond ((> 2 1) (define x 32) x) (#t 1)) x) 32) ; ? a bit strange
+(test (let ((x 1)) (+ x (cond ((> x 0) (define x 32) x)) x)) 65)
 
 (for-each
  (lambda (arg)
@@ -13461,15 +13464,14 @@ this prints:
   (test (fib 13) 233))
 
 (let ()
-  (define (flatten lst)
+  (define (flatten lst) ; flatten via values and map
     (define (flatten-1 lst)
-      (if (null? lst)
-	  (values)
-	  (if (not (pair? lst))
-	      lst
-	      (values (flatten-1 (car lst))
-		      (flatten-1 (cdr lst))))))
+      (cond ((null? lst) (values))
+	    ((not (pair? lst)) lst)
+	    (#t (values (flatten-1 (car lst))
+			(flatten-1 (cdr lst))))))
     (map values (list (flatten-1 lst))))
+
   (test (flatten '(1 2 3)) '(1 2 3))
   (test (flatten '()) '())
   (test (flatten '((1) 2 (3 4) (6 (7)))) '(1 2 3 4 6 7))
@@ -13478,6 +13480,62 @@ this prints:
   (test (flatten '((1 () 2) ())) '(1 2))
   (test (flatten '(() 1 ((2 (3)) () 4))) '(1 2 3 4))
   (test (flatten '((1) 2 ((3 4) 5) ((())) (((6))) 7 8 ())) '(1 2 3 4 5 6 7 8))
+  (test (flatten '(() 1 () ((2 (1)) 4) (3 2) ())) '(1 2 1 4 3 2))
+  )
+
+(let ()
+  (define (flatten! lst) ; in-place flatten
+    (if (not (pair? lst))
+	lst
+	(let loop ((L lst))
+	  (if (pair? (car L))
+	      (let ((end (cdr L))
+		    (p (car L)))
+		(set! (car L) (car p))
+		(set! (cdr L) (cdr p))
+		(set! (cdr (list-tail L (- (length p) 1))) end)
+		(loop L))
+	      (if (not (null? (cdr L)))
+		  (if (null? (car L))
+		      (begin
+			(set! (car L) (cadr L))
+			(set! (cdr L) (cddr L))
+			(loop L))
+		      (loop (cdr L)))))
+	  (if (equal? lst '(()))
+	      '()
+	      (let ((len (length lst)))
+		(if (null? (car (list-tail lst (- len 1))))
+		    (set! (cdr (list-tail lst (- len 2))) '()))
+		lst)))))
+
+  (test (flatten! '(1 2 3)) '(1 2 3))
+  (test (flatten! '()) '())
+  (test (flatten! '((1) 2 (3 4) (6 (7)))) '(1 2 3 4 6 7))
+  (test (flatten! '(1 ((((2)) 3)))) '(1 2 3))
+  (test (flatten! '(1 () 2)) '(1 2))
+  (test (flatten! '((1 () 2) ())) '(1 2))
+  (test (flatten! '(() 1 ((2 (3)) () 4))) '(1 2 3 4))
+  (test (flatten! '((1) 2 ((3 4) 5) ((())) (((6))) 7 8 ())) '(1 2 3 4 5 6 7 8))
+  (test (flatten! '(() 1 () ((2 (1)) 4) (3 2) ())) '(1 2 1 4 3 2))
+  )
+
+(let ()
+  (define (flatten x) ; standard flatten
+    (cond ((null? x) '())
+          ((not (pair? x)) (list x))
+          (#t (append (flatten (car x))
+		      (flatten (cdr x))))))
+
+  (test (flatten '(1 2 3)) '(1 2 3))
+  (test (flatten '()) '())
+  (test (flatten '((1) 2 (3 4) (6 (7)))) '(1 2 3 4 6 7))
+  (test (flatten '(1 ((((2)) 3)))) '(1 2 3))
+  (test (flatten '(1 () 2)) '(1 2))
+  (test (flatten '((1 () 2) ())) '(1 2))
+  (test (flatten '(() 1 ((2 (3)) () 4))) '(1 2 3 4))
+  (test (flatten '((1) 2 ((3 4) 5) ((())) (((6))) 7 8 ())) '(1 2 3 4 5 6 7 8))
+  (test (flatten '(() 1 () ((2 (1)) 4) (3 2) ())) '(1 2 1 4 3 2))
   )
 
 

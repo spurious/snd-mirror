@@ -2863,21 +2863,63 @@ is 15, as anyone would expect.
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>I wrote all that and said "nobody needs multiple values!".  So I spent 6 months
-working like a fiend, and I found a real use for multiple values:
+<p>I wrote all that and said "nobody needs multiple values!".  In desperation,
 </p>
 
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td>
 <pre>
 (define (flatten lst)
   (define (flatten-1 lst)
-    (if (null? lst)
-	(values)
-	(if (not (pair? lst))
-	    lst
-	    (values (flatten-1 (car lst))
-		    (flatten-1 (cdr lst))))))
+    (cond ((null? lst) (values))
+	  ((not (pair? lst)) lst)
+	  (#t (values (flatten-1 (car lst))
+		      (flatten-1 (cdr lst))))))
   (map values (list (flatten-1 lst))))
 </pre>
+<td width=40></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+(define (boring-flatten x)
+  (cond ((null? x) '())
+        ((not (pair? x)) (list x))
+        (#t (append (boring-flatten (car x))
+		    (boring-flatten (cdr x))))))
+</pre>
+</td>
+</tr>
+</table>
+
+<p>Here's a much more entertaining version:
+</p>
+<pre>
+(define (flatten! lst) ; in-place flatten
+  (let loop ((L lst))
+    (if (pair? (car L))
+	(let ((end (cdr L))
+	      (p (car L)))
+	  (set! (car L) (car p))
+	  (set! (cdr L) (cdr p))
+	  (set! (cdr (list-tail L (- (length p) 1))) end)
+	  (loop L))
+	(if (not (null? (cdr L)))
+	    (if (null? (car L))
+		(begin
+		  (set! (car L) (cadr L))
+		  (set! (cdr L) (cddr L))
+		  (loop L))
+		(loop (cdr L)))))
+    (if (equal? lst '(()))
+	'()
+	(let ((len (length lst)))
+	  (if (null? (car (list-tail lst (- len 1))))
+	      (set! (cdr (list-tail lst (- len 2))) '()))
+	  lst))))
+</pre>
+
 
 </blockquote>
 </small>

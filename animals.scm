@@ -724,8 +724,8 @@
 	     (set! (mus-phase gen3) (* 0.5 pi))
 	     (set! (mus-phase gen4) (* 0.5 pi))))
        
-       (let* ((noise (rand-interp rnd))
-	      (pulse-amp (pulse-amps pulse-ctr)))
+       (let ((noise (rand-interp rnd))
+	     (pulse-amp (pulse-amps pulse-ctr)))
 	 (outa i (* (env ampf)
 		    (env pulsef)
 		    pulse-amp
@@ -1466,8 +1466,8 @@
     (do ((i start (+ i pulse-samps)))
 	((>= i stop))
       (if (>= i next-pulse)
-	  (let* ((pulse-dur (+ .01 (random .003)))
-		 (env-choice (random 3)))
+	  (let ((pulse-dur (+ .01 (random .003)))
+		(env-choice (random 3)))
 	    (set! pulse-ampf (make-env (if (= env-choice 0) env1
 					   (if (= env-choice 1) env2
 					       env3))
@@ -1640,9 +1640,9 @@
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
-       (let* ((pval (oscil gen3))
-	      (noise (rand-interp gargle))
-	      (aval (+ .7 (* .3 (oscil gen5)))))
+       (let ((pval (oscil gen3))
+	     (noise (rand-interp gargle))
+	     (aval (+ .7 (* .3 (oscil gen5)))))
 	 (outa i (* (env ampf)
 		    (+ (* (max pval 0.0)
 			  (+ (* .95 (oscil gen1 noise))
@@ -1676,13 +1676,13 @@
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
-       (let* ((pulse (pulse-train pulser)))
+       (let ((pulse (pulse-train pulser)))
 	 (if (> pulse .1)
 	     (begin
 	       (mus-reset pulsef)
 	       (mus-reset frqf)
 	       (mus-reset indf)))
-	 (let* ((buzz (+ (* (hz->radians 40) (env frqf))
+	 (let ((buzz (+ (* (hz->radians 40) (env frqf))
 			 (* .005 (rand-interp noise)))))
 	   (outa i (* (env ampf)
 		      (env pulsef)
@@ -1723,8 +1723,8 @@
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
-       (let* ((frq (env pulsef))
-	      (md (oscil modulator)))
+       (let ((frq (env pulsef))
+	     (md (oscil modulator)))
 	 (outa i (* (env ampf)
 		    (pulsed-env peep frq)
 		    md md
@@ -1923,7 +1923,7 @@
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
-       (let* ((pulse (pulse-train pulser)))
+       (let ((pulse (pulse-train pulser)))
 	 (if (> pulse .1)
 	     (mus-reset pulsef))
 	 (outa i (* (env ampf)
@@ -3276,7 +3276,7 @@
 ;;; American robin
 
 (definstrument (american-robin beg amp)
-  (let* ((start (seconds->samples beg))
+  (let ((start (seconds->samples beg))
 	 
 	 (ampfs (make-vector 4 #f))
 	 (frqfs (make-vector 4 #f))
@@ -3411,7 +3411,7 @@
 ;;; Hermit thrush
 
 (definstrument (hermit-thrush beg amp)
-  (let* ((start (seconds->samples beg))
+  (let ((start (seconds->samples beg))
 	 
 	 (ampfs (make-vector 3 #f))
 	 (frqf1s (make-vector 3 #f))
@@ -3649,7 +3649,7 @@
      
      (do ((i initial-stop (+ i 1)))
 	 ((= i buzz-stop))
-       (let* ((frq (env buzz-frq)))
+       (let ((frq (env buzz-frq)))
 	 (outa i (* (env buzz-amp)
 		    (table-lookup buzz-ampf frq)
 		    (polywave buzz-gen (table-lookup buzz-frqf frq)))))))))
@@ -3804,9 +3804,9 @@
 ;;; Great-horned owl
 
 (definstrument (great-horned-owl beg amp)
-  (let* ((begs (vct 0.0  0.26 1.42 2.16))
-	 (durs (vct 0.14 0.40 0.43 0.37))
-	 (amps (vct .75 .9 .95 1.0)))
+  (let ((begs (vct 0.0  0.26 1.42 2.16))
+	(durs (vct 0.14 0.40 0.43 0.37))
+	(amps (vct .75 .9 .95 1.0)))
     
     (do ((call 0 (+ 1 call)))
 	((= call 4))
@@ -4058,7 +4058,7 @@
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf))))))))
   
-  (let* ((amps1 (vct .2 .5 .7 .9 1.0 1.0)))
+  (let ((amps1 (vct .2 .5 .7 .9 1.0 1.0)))
     
     (do ((call 0 (+ 1 call)))
 	((= call 6))
@@ -4476,7 +4476,7 @@
 ;;; California Quail
 
 (definstrument (california-quail beg amp)
-  (let* ((durs (vct .075 .23 .16))
+  (let ((durs (vct .075 .23 .16))
 	 (begs (vct 0.0 .21 .58))
 	 (ampfs (make-vector 3 #f))
 	 (frqfs (make-vector 3 #f))
@@ -9260,7 +9260,7 @@
 
 (definstrument (verdin beg amp)
   ;; south 57 18
-  (let* ((begs (vct 0.0 0.28 0.57))
+  (let ((begs (vct 0.0 0.28 0.57))
 	 (durs (vct 0.12 0.15 0.15))
 	 (amps (vct 0.25 0.75 1.0))
 	 (frqs (vector (list 0.000 0.162 0.246 0.168 0.505 0.168 0.867 0.183 0.956 0.198 1.000 0.192)
@@ -10181,7 +10181,7 @@
 		  (oscil gen1 (env frqf)))))))
   
   ;; next 4 notes
-  (let* ((begs (vct 0.31 0.61 0.86 1.11))
+  (let ((begs (vct 0.31 0.61 0.86 1.11))
 	 (durs (vct 0.23 0.19 0.18 0.18))
 	 (amps (vct 0.6  0.95 1.0  0.8))
 	 (ampenv '(0.000 0.000 0.081 0.593 0.118 0.676 0.139 0.952 0.174 1.000 0.198 0.762 0.255 0.701 0.276 0.824 
@@ -10226,7 +10226,7 @@
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf))))))))
   
-  (let* ((begs (vct 0.0  0.25 0.47 0.65 0.79 0.99 1.17 1.33))
+  (let ((begs (vct 0.0  0.25 0.47 0.65 0.79 0.99 1.17 1.33))
          (durs (vct 0.05 0.05 0.06 0.07 0.14 0.14 0.12 0.11))
          (amps (vct 0.04 0.6  0.8  0.80 1.0  0.94 0.92 0.75))
 	 (frqs (vct 6020 6020 13370  13360  13360  13360  13360  13360))

@@ -470,7 +470,6 @@ typedef struct s7_cell {
 	s7_vdims_t *dim_info;
 	int entries;          
 	/* was s7_Int but that costs us 4 bytes per object everywhere in the 32-bit case
-	 *   on 64-bit machines, it could be s7_Int without problem.
 	 */
       } vextra;
       int hash_func;
@@ -483,7 +482,7 @@ typedef struct s7_cell {
       int line;
     } cons;
 
-    struct {
+    struct {               /* c functions */
       int type;
       void *value;
     } fobj;
@@ -3468,7 +3467,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_op_stack(x) = copy_op_stack(sc);
   continuation_op_loc(x) = sc->op_stack_top;
   continuation_op_size(x) = sc->op_stack_size;
-  set_type(x, T_CONTINUATION | T_DONT_COPY | T_PROCEDURE);
+  set_type(x, T_CONTINUATION | T_DONT_COPY | T_FINALIZABLE | T_PROCEDURE);
   return(x);
 }
 
@@ -17193,7 +17192,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   NEW_CELL(sc, x);
   c_object_type(x) = type;
   c_object_value(x) = value;
-  set_type(x, T_C_OBJECT | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_C_OBJECT | T_FINALIZABLE | T_DONT_COPY); /* free_object checks that the free function exists */
   if (object_types[type].apply)
     typeflag(x) |= T_PROCEDURE;
   return(x);
@@ -25828,7 +25827,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       */
 
 	    case T_C_OBJECT:
-	      if (object_set_function(sc->x))
+	      if (object_set_function(sc->x))  /* procedure-with-setter set comes here, I think */
 		{
 		  push_op_stack(sc, sc->OBJECT_SET);
 		  if (is_pair(cdar(sc->code)))
@@ -26326,15 +26325,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       for (sc->x = sc->code; is_pair(sc->x); sc->x = cdr(sc->x))
 	if (!is_pair(car(sc->x)))                                         /* (cond 1) or (cond (#t 1) 3) */
 	  return(eval_error(sc, "every clause in cond must be a list: ~A", car(sc->x)));
-      if (is_not_null(sc->x))                                               /* (cond ((1 2)) . 1) */
+      if (is_not_null(sc->x))                                             /* (cond ((1 2)) . 1) */
 	return(eval_error(sc, "cond: stray dot? ~A", sc->code));
 
       push_stack(sc, opcode(OP_COND1), sc->NIL, sc->code);
       sc->code = caar(sc->code);
       goto EVAL;
       
-      /* TODO: the COND cases could all check for non-pairs, or did I already try this?
-       */
       
     case OP_COND1:
       if (is_true(sc, sc->value))     /* got a hit (is_true -> not false, so else is true even though it has no value) */

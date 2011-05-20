@@ -28,7 +28,7 @@
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
-(define grani-default-base (expt 2 (/ 12)))
+(define grani-default-base (expt 2 1/12))
 
 (define* (exp-envelope env
 		       (base grani-default-base)
@@ -137,7 +137,7 @@
 (define* (semitones-envelope envelope (around 1.0) (error 0.01))
   (exp-envelope envelope
 		:error error
-		:base (expt 2 (/ 12))
+		:base (expt 2 1/12)
 		:cutoff #f
 		:scaler 1
 		:offset 0

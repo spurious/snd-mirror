@@ -8183,8 +8183,7 @@
 #|
 ;;; 3.1.2
 
-(CINT-300 "GTK_SIZE_REQUEST_CONSTANT_SIZE" "GtkSizeRequestMode")
-
+(CINT-310 "GTK_SIZE_REQUEST_CONSTANT_SIZE" "GtkSizeRequestMode")
 (CINT-310 "GDK_RENDERING_MODE_SIMILAR" "GdkRenderingMode")
 (CINT-310 "GDK_RENDERING_MODE_IMAGE" "GdkRenderingMode")
 (CINT-310 "GDK_RENDERING_MODE_RECORDING" "GdkRenderingMode")
@@ -8196,22 +8195,13 @@
 ;(CFNC-310 "void gtk_widget_queue_draw_region GtkWidget* widget cairo_region_t* [region]" 'const)
 (CFNC-310 "char *gtk_widget_path_to_string GtkWidgetPath* path" 'const)
 
-
 ;;; 3.1.4
 (CFNC-310 "gboolean gtk_button_box_get_child_non_homogeneous GtkButtonBox* widget GtkWidget* child")
 (CFNC-310 "void gtk_button_box_set_child_non_homogeneous GtkButtonBox* widget GtkWidget* child gboolean non_homogeneous")
 (CFNC-310 "void gtk_container_child_notify GtkContainer* container GtkWidget* child gchar* property_name" 'const)
 (CFNC-310 "void gtk_drag_source_set_icon_gicon GtkWidget* widget GIcon* icon")
 (CFNC-310 "void gtk_drag_set_icon_gicon  GdkDragContext *context GIcon* icon gint hot_x gint hot_y")
-
 (CFNC-310 "gboolean gtk_combo_box_set_active_id GtkComboBox* combo_box gchar* active_id" 'const)
-
-;;; lockbutton
-;GtkWidget   *gtk_lock_button_new            (GPermission   *permission);
-;GPermission *gtk_lock_button_get_permission (GtkLockButton *button);
-;void         gtk_lock_button_set_permission (GtkLockButton *button, GPermission   *permission);
-;#define GTK_LOCK_BUTTON(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), GTK_TYPE_LOCK_BUTTON, GtkLockButton))
-;#define GTK_IS_LOCK_BUTTON(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), GTK_TYPE_LOCK_BUTTON))
 
 |#
 
@@ -8220,6 +8210,15 @@
 
 ;;; --------------------------------------------------------------------------------
 #|
+
+;;; lockbutton
+(CFNC-310 "GtkWidget* gtk_lock_button_new GPermission* permission")
+(CFNC-310 "GPermission* gtk_lock_button_get_permission GtkLockButton* button")
+(CFNC-310 "void gtk_lock_button_set_permission GtkLockButton* button GPermission* permission")
+(CCAST-310 "GTK_LOCK_BUTTON" "GtkLockButton*")
+(CCHK-310 "GTK_IS_LOCK_BUTTON" "GtkLockButton*")
+
+
 (CCAST-300 "GTK_CSS_PROVIDER" "GtkCssProvider*")
 (CCHK-300 "GTK_IS_CSS_PROVIDER" "GtkCssProvider*")
 (CINT-300 "GTK_CSS_PROVIDER_ERROR_FAILED" "GtkCssProviderError")
