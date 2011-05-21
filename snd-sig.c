@@ -5984,6 +5984,16 @@ typedef struct {
 
 /* -------------------------------------------------------------------------------- */
 
+#define ALL 0
+#define ODD 1
+#define EVEN 2
+#define PRIME 3
+
+#define FFT_MULT 500
+  /* if 64, errors or .005 are common 
+   * if 128, which works in 99% of the cases, errors can be as much as .002
+   */
+
 #define S_fpsap "fpsap"
 
 static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_increment)
@@ -5991,18 +6001,12 @@ static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_in
   #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
-  #define FFT_MULT 128
-  /* if 64, errors or .005 are common */
   #define INCR_DOWN 0.9
   #define INCR_MAX 1.0
   #define INCR_MIN 0.0001
   #define RETRIES 10
   #define RETRY_MULT 2
   #define INIT_TRIES 1000
-  #define ALL 0
-  #define ODD 1
-  #define EVEN 2
-  #define PRIME 3
 
   int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0;
   mus_float_t increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN, overall_min;
@@ -6268,7 +6272,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     increment = XEN_TO_C_DOUBLE(x_increment);
   else increment = 0.06; /* was .03 */
 
-  counts = 100; /* was 50 */
+  counts = 50; /* was 100 */
   orig_incr = increment;
   incr_mult = INCR_DOWN;
   file = "test.data";
@@ -6412,13 +6416,6 @@ static void save_peaks(const char *file, int choice, int n, mus_float_t peak, mu
 
 static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
 {
-
-  #define FFT_MULT 128
-  #define ALL 0
-  #define ODD 1
-  #define EVEN 2
-  #define PRIME 3
-
   int choice, current_choice, n, size, fft_size, hits, big_counter;
   mus_float_t increment = .01, overall_min, current_min;
   mus_float_t *initial_phases = NULL;
