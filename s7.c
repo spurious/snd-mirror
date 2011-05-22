@@ -24908,17 +24908,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = pop_op_stack(sc);
 		  if (is_safe_procedure(sc->code))
 		    {
-		      x = sc->TEMP_CELL_2;
+		      x = sc->TEMP_CELL_2; /* these are already pairs */
 		      y = sc->TEMP_CELL_1;
 		    }
 		  else
 		    {
 		      NEW_CELL(sc, x); 
+		      set_type(x, T_PAIR);
 		      NEW_CELL_NO_CHECK(sc, y); 
+		      set_type(y, T_PAIR);
 		    }
 		  car(x) = sc->value;
 		  cdr(x) = sc->args;
-		  set_type(x, T_PAIR);
 		  
 		  /* get the last arg */
 		  if (typ == T_SYMBOL)
@@ -24930,7 +24931,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  else car(y) = car_code;
 
 		  cdr(y) = x;
-		  set_type(y, T_PAIR);
 		  sc->args = safe_reverse_in_place(sc, y); 
 		  /* drop into APPLY */
 		}
@@ -24970,6 +24970,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      else
 		{
 		  NEW_CELL(sc, x); 
+		  set_type(x, T_PAIR);
 		}
 
 	      if (typ == T_SYMBOL)
@@ -24991,7 +24992,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      else car(x) = car_code;
 
 	      cdr(x) = sc->args;
-	      set_type(x, T_PAIR);
 	      if (type(sc->args) != T_NIL)
 		sc->args = safe_reverse_in_place(sc, x);
 	      else sc->args = x;
@@ -25566,11 +25566,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	else
 	  {
 	    NEW_CELL(sc, x); 
+	    set_type(x, T_PAIR);
 	  }
 
 	car(x) = sc->value;
 	cdr(x) = sc->args;
-	set_type(x, T_PAIR);
 	if (type(sc->args) != T_NIL)
 	  sc->args = safe_reverse_in_place(sc, x);
 	else sc->args = x;
@@ -25688,6 +25688,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->x = make_list_3(sc, sc->code,
 				file_names[port_file_number(sc->input_port)],
 				s7_make_integer(sc, port_line_number(sc->input_port)));
+	  /* TODO: can't this be done once, then simply re-used?
+	   *       and use permanent memory
+	   */
 	  else sc->x = sc->code;           /* fallback on (__func__ name) */
 
 	  closure_environment(sc->value) = new_frame_in_env(sc, closure_environment(sc->value));
@@ -25710,7 +25713,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else add_to_current_environment(sc, sc->code, sc->value); 
 
       sc->value = sc->code;
-      /* sc->x = sc->NIL; */
       goto START;
       
       
@@ -25736,42 +25738,40 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* in all of these cases, we might need to GC protect the temporary lists */
 
 	  if (is_multiple_value(sc->value))
+	    sc->code = cons(sc, sc->SET, s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code))); /* drop into op_SET */
+	  else
 	    {
-	      sc->code = cons(sc, sc->SET, s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code)));
-	      sc->op = OP_SET;
-	      goto START_WITHOUT_POP_STACK;
+	      if (sc->args != sc->NIL)
+		{
+		  push_op_stack(sc, sc->LIST_SET);
+		  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
+		  sc->code = car(sc->args);
+		}
+	      else sc->code = cons(sc, sc->LIST_SET, cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));  
+	      goto EVAL;
 	    }
-
-	  if (sc->args != sc->NIL)
-	    {
-	      push_op_stack(sc, sc->LIST_SET);
-	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
-	      sc->code = car(sc->args);
-	    }
-	  else sc->code = cons(sc, sc->LIST_SET, cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));  
-	  goto EVAL;
-
 	  /* timings: old 3.25, new 2.34 (1.93 direct), (12.2): 1.34
 	   *    (time (let ((L '((1 2 3)))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! ((L 0) 1) i)) L))
 	   */
 	}
-
-      if (s7_is_vector(sc->value))
+      else
 	{
-	  /* (let ((L '#(#(1 2 3) #(4 5 6)))) (set! ((L 1) 0) 32) L)
-	   * bad case when args is nil: (let ((L '#(#(1 2 3) #(4 5 6)))) (set! ((L 1)) 32) L)
-	   */
-	  if (sc->args != sc->NIL)
+	  if (s7_is_vector(sc->value))
 	    {
-	      push_op_stack(sc, sc->VECTOR_SET);
-	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
-	      sc->code = car(sc->args);
+	      /* (let ((L '#(#(1 2 3) #(4 5 6)))) (set! ((L 1) 0) 32) L)
+	       * bad case when args is nil: (let ((L '#(#(1 2 3) #(4 5 6)))) (set! ((L 1)) 32) L)
+	       */
+	      if (sc->args != sc->NIL)
+		{
+		  push_op_stack(sc, sc->VECTOR_SET);
+		  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
+		  sc->code = car(sc->args);
+		}
+	      else sc->code = cons(sc, sc->VECTOR_SET, cons(sc, sc->value, s7_append(sc, sc->args, sc->code)));
+	      goto EVAL;
 	    }
-	  else sc->code = cons(sc, sc->VECTOR_SET, cons(sc, sc->value, s7_append(sc, sc->args, sc->code)));
-	  goto EVAL;
+	  sc->code = cons_unchecked(sc, cons(sc, sc->value, sc->args), sc->code);
 	}
-
-      sc->code = cons_unchecked(sc, cons(sc, sc->value, sc->args), sc->code);
 
 
     case OP_SET:                                                             /* entry for set! */
@@ -26549,7 +26549,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else add_to_current_environment(sc, sc->code, sc->value); 
 
       /* pop back to wherever the macro call was */
-      sc->x = sc->value;
+      sc->x = sc->value; 
       sc->value = sc->code;
       goto START;
       
