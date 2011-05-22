@@ -12519,6 +12519,16 @@ this prints:
 	   ((vector-ref funcs 2))))
       6)
 
+(test (let ((funcs (make-vector 3 #f)))
+	(for-each
+	 (lambda (i)
+	   (vector-set! funcs i (lambda () (+ i 1))))
+	 (list 0 1 2))
+	(+ ((vector-ref funcs 0))
+	   ((vector-ref funcs 1))
+	   ((vector-ref funcs 2))))
+      6)
+
 (test (let ((func #f))
 	(define (func1 x)
 	  (set! func (lambda () (+ x 1))))

@@ -21743,7 +21743,8 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  (safe_list_length(sc, closure_args(sc->code)) == 1))        /* closure takes just one arg */
 	{
 	  /* one list arg -- special, but very common case */
-	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), cons_unchecked(sc, make_list_1(sc, sc->NIL), obj), sc->code);
+	  set_local(car(closure_args(sc->code)));
+	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), obj, sc->code);
 	  return(sc->UNSPECIFIED);
 	}
 
@@ -21981,6 +21982,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      (!is_immutable_or_accessed(car(closure_args(sc->code)))) && /* not a bad arg name! */
 	      (safe_list_length(sc, closure_args(sc->code)) == 1))        /* closure takes just one arg */
 	    {
+	      set_local(car(closure_args(sc->code)));
 	      push_stack(sc, opcode(OP_MAP_SIMPLE), cons_unchecked(sc, make_mutable_integer(sc, len), cons(sc, sc->NIL, obj)), sc->code);
 	      return(sc->NO_VALUE);
 	    }
@@ -23762,6 +23764,18 @@ static bool just_constants(s7_scheme *sc, s7_pointer args)
 #endif
 
 
+static s7_pointer check_define_name(s7_scheme *sc, s7_pointer x)
+{
+  if (!s7_is_symbol(x))                                             /* (define (3 a) a) */
+    return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
+  if (is_keyword(x))                                                /* (define :hi 1) */
+    return(eval_error_with_name(sc, "~A ~A: keywords are constants", x));
+  if (is_syntactic(x))                                              /* (define (and a) a) */
+    return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x));
+  return(x);
+}
+
+
 static s7_pointer check_lambda_args(s7_scheme *sc)
 {
   if (!s7_is_list(sc, car(sc->code)))
@@ -24203,7 +24217,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if ((--integer(number(car(sc->args)))) >= 0) /* protect against circular arg lists created by the map function! */
 	    {
-	      s7_pointer y, variable;
+	      s7_pointer y;
 
 	      sc->x = caddr(sc->args);
 	      cddr(sc->args) = cdddr(sc->args);  /* move down for-each list of args */
@@ -24215,16 +24229,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       */
 
 	      NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
-	      variable = car(closure_args(sc->code));
-	      sc->code = closure_body(sc->code);
-
-	      NEW_CELL(sc, y);
-	      car(y) = variable;
+	      NEW_CELL_NO_CHECK(sc, y);
+	      car(y) = car(closure_args(sc->code));
 	      cdr(y) = sc->x;
 	      set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
 	      ecdr(y) = car(sc->envir);
 	      car(sc->envir) = y;
-	      set_local(variable);
+
+	      sc->code = closure_body(sc->code);
 	      goto BEGIN;
 	    }
 	}
@@ -24252,30 +24264,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_FOR_EACH_SIMPLE:
-      /* func = sc->code, func takes one arg, args = '((nil) arglist) 
+      /* func = sc->code, func takes one arg, args = arglist 
        *
        * (for-each (lambda (x) (display x)) (list 1 2 3)) 
        */
-      if (is_pair(cdr(sc->args)))
+      if (is_pair(sc->args))
 	{
-	  s7_pointer y, variable;
-	  caar(sc->args) = cadr(sc->args); /* current func arg */
-	  cdr(sc->args) = cddr(sc->args);  /* move down for-each list of args */
-	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), sc->args, sc->code);
+	  s7_pointer y;
 	  
-	  /* now call the function directly as in map above. */
+	  /* now call the function directly as in map above. 
+	   *
+	   * it's possible to preset the frame and its entry so that this allocation happens only
+	   *   once per for-each call, but then for-each is like do in that exported args are equivalenced.
+	   *   Since the savings isn't huge, I guess I'll go ahead and allocate every time.
+	   */
 
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
-	  variable = car(closure_args(sc->code));
-	  sc->code = closure_body(sc->code);
-
-	  NEW_CELL(sc, y);
-	  car(y) = variable;
-	  cdr(y) = caar(sc->args);
+	  NEW_CELL_NO_CHECK(sc, y);
+	  car(y) = car(closure_args(sc->code));
+	  cdr(y) = car(sc->args);       /* set function arg value */
 	  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
 	  ecdr(y) = car(sc->envir);
 	  car(sc->envir) = y;
-	  set_local(variable);
+
+	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), cdr(sc->args), sc->code);
+	  sc->code = closure_body(sc->code);
 	  goto BEGIN;
 	}
       sc->value = sc->UNSPECIFIED;
@@ -24654,6 +24667,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     BEGIN:
     case OP_BEGIN:
+      /* sc->args is not used here */
       if (sc->begin_hook)
 	{
 	  opcode_t op;
@@ -25607,44 +25621,49 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_DEFINE_STAR:
     case OP_DEFINE:
-      if (!is_pair(sc->code))
-	return(eval_error_with_name(sc, "~A: nothing to define? ~A", sc->code));   /* (define) */
-
-      if (!is_pair(cdr(sc->code)))
-	return(eval_error_with_name(sc, "~A: no value? ~A", sc->code));            /* (define var) */
-
-      if ((!is_pair(car(sc->code))) &&
-	  (is_not_null(cddr(sc->code))))                                             /* (define var 1 . 2) */
-	return(eval_error_with_name(sc, "~A: more than 1 value? ~A", sc->code));   /* (define var 1 2) */
-
-      /* parameter error checks are handled by lambda/lambda* (see OP_LAMBDA above) */
-      if (is_pair(car(sc->code))) 
-	{
-	  sc->x = caar(sc->code);
-	  if (sc->op == OP_DEFINE_STAR)
-	    sc->code = cons_unchecked(sc, sc->LAMBDA_STAR, cons(sc, cdar(sc->code), cdr(sc->code)));
-	  else sc->code = cons_unchecked(sc, sc->LAMBDA, cons(sc, cdar(sc->code), cdr(sc->code)));
-	} 
-      else 
-	{
-	  if (sc->op == OP_DEFINE_STAR)
-	    return(eval_error(sc, "define* is restricted to functions: (define* ~{~S~^ ~})", sc->code));
-	  sc->x = car(sc->code);
-	  sc->code = cadr(sc->code);
-	}
-
-      if (!s7_is_symbol(sc->x))                                             /* (define (3 a) a) */
-	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", sc->x));
-      if (is_keyword(sc->x))                                                /* (define :hi 1) */
-	return(eval_error_with_name(sc, "~A ~A: keywords are constants", sc->x));
-      if (is_syntactic(sc->x))                                              /* (define (and a) a) */
-	return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", sc->x));
-
-      /* (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b)))) */
-
-      push_stack(sc, opcode(OP_DEFINE1), sc->NIL, sc->x);
-      sc->x = sc->NIL;
-      goto EVAL;
+      {
+	s7_pointer x;
+	if (!is_pair(sc->code))
+	  return(eval_error_with_name(sc, "~A: nothing to define? ~A", sc->code));   /* (define) */
+	
+	if (!is_pair(cdr(sc->code)))
+	  return(eval_error_with_name(sc, "~A: no value? ~A", sc->code));            /* (define var) */
+	
+	if (!is_pair(car(sc->code)))
+	  {
+	    if (is_not_null(cddr(sc->code)))                                           /* (define var 1 . 2) */
+	      return(eval_error_with_name(sc, "~A: more than 1 value? ~A", sc->code)); /* (define var 1 2) */
+	    if (sc->op == OP_DEFINE_STAR)
+	      return(eval_error(sc, "define* is restricted to functions: (define* ~{~S~^ ~})", sc->code));
+	    
+	    push_stack(sc, opcode(OP_DEFINE1), sc->NIL, check_define_name(sc, car(sc->code))); 
+	    sc->code = cadr(sc->code);
+	    /* PERHAPS: this branch doesn't happen much but perhaps we could break out the non-pair stuff here and avoid the push_stack above
+	     */
+	    goto EVAL;                                                                 /* evaluate the value */
+	  }
+	
+	/* a closure */
+	x = caar(sc->code);
+	check_define_name(sc, x);
+	sc->code = cons(sc, cdar(sc->code), cdr(sc->code));
+	
+	if (sc->op == OP_DEFINE_STAR)
+	  {
+	    check_lambda_star_args(sc);
+	    sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
+	  }
+	else
+	  {
+	    check_lambda_args(sc);
+	    NEW_CELL_NO_CHECK(sc, sc->value);
+	    car(sc->value) = sc->code;
+	    cdr(sc->value) = sc->envir;
+	    set_type(sc->value, T_CLOSURE | T_PROCEDURE | T_DONT_COPY);
+	  }
+	sc->code = x;
+	/* fall into ... */
+      }
       
       
     case OP_DEFINE1:
@@ -25683,14 +25702,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((is_closure(sc->value)) || 
 	  (is_closure_star(sc->value)))
 	{
-	  if ((port_filename(sc->input_port)) &&                             /* add (__func__ (name file line)) to current env */
+	  /* we can get here from let: (define (outer a) (let () (define (inner b) (+ a b)) (inner a)))
+	   *   but the port info is not relevant here, so restrict the __func__ list making to top-level
+	   *   cases (via sc->envir == sc->NIL).
+	   */
+	  if ((is_null(sc->envir)) &&
+	      (port_filename(sc->input_port)) &&                             /* add (__func__ (name file line)) to current env */
 	      (port_file(sc->input_port) != stdin))
 	    sc->x = make_list_3(sc, sc->code,
 				file_names[port_file_number(sc->input_port)],
 				s7_make_integer(sc, port_line_number(sc->input_port)));
-	  /* TODO: can't this be done once, then simply re-used?
-	   *       and use permanent memory
-	   */
 	  else sc->x = sc->code;           /* fallback on (__func__ name) */
 
 	  closure_environment(sc->value) = new_frame_in_env(sc, closure_environment(sc->value));
