@@ -11366,6 +11366,33 @@ this prints:
 (test (let ((lst '(1 2 3))) (define-macro* (hi a (b 2)) `(+ 1 ,a (* 2 ,b))) (map hi lst (map hi lst))) '(14 17 20))
 
 
+#|
+;;; this is from the r6rs comment site
+(let ((resume #f)
+       (results '()))
+   (set! results
+         (cons (map (lambda (x)
+                      (call/cc (lambda (k)
+                                 (unless resume (set! resume k))
+                                 0)))
+                    '(#f #f))
+               results ))
+   (display results)(newline)
+   (if resume
+       (let ((resume* resume))
+         (set! resume #f)
+         (resume* 1))))
+
+With a careful implementation of MAP, a new list is returned every
+time, so that the displayed results are
+
+   ((0 0))
+   ((1 0) (0 0))
+   ((1 1) (1 0) (0 0))
+|#
+
+
+
 
 
 ;;; --------------------------------------------------------------------------------

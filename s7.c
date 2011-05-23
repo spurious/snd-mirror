@@ -24752,9 +24752,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      else
 		{
-		  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->args);
 		  sc->value = sc->code;
-		  goto START;
+		  sc->code = sc->args;
+		  sc->args = sc->NIL;
+		  /* drop into OP_EVAL_ARGS */
 		}
 	    }
 	}
@@ -26159,6 +26160,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       NEW_FRAME(sc, sc->envir, sc->envir); 
       for (sc->x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), sc->y = sc->args; is_not_null(sc->y); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	{
+	  s7_pointer y, z;
+
 	  if (!(s7_is_symbol(caar(sc->x))))
 	    return(eval_error(sc, "bad variable ~S in let bindings", car(sc->x)));
 
@@ -26166,29 +26169,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_not_null(find_local_symbol(sc, sc->envir, caar(sc->x))))                               /* (let ((i 0) (i 1)) i) */
 	    return(eval_error(sc, "duplicate identifier in let: ~A", car(sc->x)));
 
-#if HAVE_PTHREADS
-	  add_to_local_environment(sc, caar(sc->x), car(sc->y));
-#else
-	  {
-	    s7_pointer y, z;
-	    
-	    z = caar(sc->x);
-	    if (is_immutable_or_accessed(z))
-	      {
-		if (is_immutable(z))
-		  return(s7_error(sc, sc->WRONG_TYPE_ARG,
-				  make_list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), z)));
-		car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
-	      }
-	    set_local(z);
-	    NEW_CELL(sc, y); 
-	    car(y) = z;
-	    cdr(y) = car(sc->y);
-	    set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
-	    ecdr(y) = car(sc->envir);
-	    car(sc->envir) = y;
-	  }
-#endif
+	  z = caar(sc->x);
+	  if (is_immutable_or_accessed(z))
+	    {
+	      if (is_immutable(z))
+		return(s7_error(sc, sc->WRONG_TYPE_ARG,
+				make_list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), z)));
+	      car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
+	    }
+	  set_local(z);
+	  NEW_CELL(sc, y); 
+	  car(y) = z;
+	  cdr(y) = car(sc->y);
+	  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+	  ecdr(y) = car(sc->envir);
+	  car(sc->envir) = y;
 	}
 
       if (s7_is_symbol(car(sc->code))) 
