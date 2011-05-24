@@ -18,7 +18,7 @@ The configure script has a bunch of arguments:
 
    Extension language:
 
-     --with-s7                 use S7 (the default, a version of Scheme).
+     --with-s7                 use s7 (the default, a version of Scheme).
 
      --with-ruby               use Ruby as the extension language
        --with-ruby-prefix      set location of Ruby

@@ -6695,7 +6695,7 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
 
       for (current_choice = 0; current_choice < size; current_choice++)
 	{
-	  for (counter = 1; counter < 1000; counter++)
+	  for (counter = 1; counter < 100000; counter++)
 	    {
 	      int k, bits, cur;
 	      big_counter++;

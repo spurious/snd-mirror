@@ -91,10 +91,10 @@
 
 /* 
  * Your config file goes here, or just replace that #include line with the defines you need.
- * The compile-time switches involve booleans, threads, complex numbers, multiprecision arithmetic, profiling, and sort!.
+ * The compile-time switches involve booleans, threads, complex numbers, multiprecision arithmetic, and profiling.
  * Currently we assume we have setjmp.h (used by the error handlers).
  *
- * If pthreads are available:
+ * If pthreads are available, and you want to use threads in Scheme:
  *
  *   #define HAVE_PTHREADS 1
  *
@@ -3695,9 +3695,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    make_list_2(sc, make_protected_string(sc, "call/cc procedure, ~A, should take one argument"), car(args))));
 
-  sc->code = car(args);
-  sc->args = make_list_1(sc, s7_make_continuation(sc));
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), make_list_1(sc, s7_make_continuation(sc)), car(args));
   return(sc->NIL);
 }
 
@@ -3705,6 +3703,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_exit "(call-with-exit func) is call/cc without the ability to jump back into a previous computation."
+  s7_pointer x;
   
   /* (call-with-exit (lambda (return) ...)) */
   /* perhaps "call/exit"? */
@@ -3712,11 +3711,9 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   if (!is_procedure(car(args)))                              /* this includes continuations */
     return(s7_wrong_type_arg_error(sc, "call-with-exit", 0, car(args), "a procedure"));
 
-  sc->code = car(args);                                      /* the lambda form */
-  sc->args = make_list_1(sc, make_goto(sc));                 /*   the argument to the lambda (the goto = "return" above) */
-
-  push_stack(sc, opcode(OP_DEACTIVATE_GOTO), car(sc->args), sc->NIL); /* this means call-with-exit is not tail-recursive */
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);      /* apply looks at sc->code to decide what to do (it will see the lambda) */
+  x = make_goto(sc);
+  push_stack(sc, opcode(OP_DEACTIVATE_GOTO), x, sc->NIL); /* this means call-with-exit is not tail-recursive */
+  push_stack(sc, opcode(OP_APPLY), make_list_1(sc, x), car(args));
   
   /* if the lambda body calls the argument as a function, 
    *   it is applied to its arguments, apply notices that it is a goto, and...
@@ -11955,11 +11952,7 @@ defaults to the global environment.  To load into the current environment instea
    */
   
   if (is_not_null(hook_functions(sc->load_hook)))
-    {
-      sc->args = make_list_1(sc, s7_make_string(sc, fname));
-      sc->code = hook_functions(sc->load_hook);
-      push_stack(sc, opcode(OP_HOOK_APPLY), sc->args, sc->code);
-    }
+    push_stack(sc, opcode(OP_HOOK_APPLY), make_list_1(sc, s7_make_string(sc, fname)), hook_functions(sc->load_hook));
 
   return(sc->UNSPECIFIED);
 }
@@ -12102,10 +12095,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
 {
   push_stack(sc, opcode(OP_UNWIND_INPUT), sc->input_port, port);
-  sc->code = cadr(args);
-  sc->args = make_list_1(sc, port);
-
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), make_list_1(sc, port), cadr(args));
   return(sc->F);
 }
 
@@ -12151,10 +12141,7 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
   sc->input_is_file = (is_file_port(sc->input_port));
   
   push_stack(sc, opcode(OP_UNWIND_INPUT), old_input_port, port);
-  sc->code = cadr(args);
-  sc->args = sc->NIL;
-
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), sc->NIL, cadr(args));
   return(sc->F);
 }
 
@@ -13316,10 +13303,7 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
   port = s7_open_output_string(sc);
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), sc->F, port);
   push_stack(sc, opcode(OP_GET_OUTPUT_STRING), sc->F, port);
-
-  sc->code = car(args);
-  sc->args = make_list_1(sc, port);
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), make_list_1(sc, port), car(args));
   return(sc->F);
 }
 
@@ -13340,10 +13324,7 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
   
   port = s7_open_output_file(sc, s7_string(car(args)), "w");
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), sc->F, port);
-
-  sc->code = cadr(args);
-  sc->args = make_list_1(sc, port);
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), make_list_1(sc, port), cadr(args));
   return(sc->F);
 }
 
@@ -13360,10 +13341,7 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
   sc->output_port = s7_open_output_string(sc);
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), old_output_port, sc->output_port);
   push_stack(sc, opcode(OP_GET_OUTPUT_STRING), sc->F, sc->output_port);
-
-  sc->code = car(args);
-  sc->args = sc->NIL;
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), sc->NIL, car(args));
   return(sc->F);
 }
 
@@ -13383,10 +13361,7 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_file(sc, s7_string(car(args)), "w");
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), old_output_port, sc->output_port);
-
-  sc->code = cadr(args);
-  sc->args = sc->NIL;
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), sc->NIL, cadr(args));
   return(sc->F);
 }
 
@@ -14630,13 +14605,10 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
       if (!is_pair(car(x)))
 	return(s7_wrong_type_arg_error(sc, "assoc", 2, x, "an a-list")); /* we're assuming caar below so it better exist */
       
-      sc->code = eq_func;
       sc->args = make_list_3(sc, make_list_2(sc, car(args), caar(x)), x, x);
       sc->value = sc->F;
-      push_stack(sc, opcode(OP_ASSOC_IF), sc->args, sc->code);
-
-      sc->args = car(sc->args);
-      push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+      push_stack(sc, opcode(OP_ASSOC_IF), sc->args, eq_func);
+      push_stack(sc, opcode(OP_APPLY), car(sc->args), eq_func);
       return(sc->UNSPECIFIED);
     }
 
@@ -14818,8 +14790,6 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 	  return(sc->F);
 	}
 
-      sc->code = eq_func;
-
       /* using a vector here (rather than make_list_3) is slower */
       /* sc->args = make_list_3(sc, make_list_2(sc, car(args), car(x)), x, x); */
       sc->args = cons_unchecked(sc, 
@@ -14827,10 +14797,8 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 		   cons_unchecked(sc, x, cons(sc, x, sc->NIL)));
 
       sc->value = sc->F;
-      push_stack(sc, opcode(OP_MEMBER_IF), sc->args, sc->code);
-
-      sc->args = car(sc->args);
-      push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+      push_stack(sc, opcode(OP_MEMBER_IF), sc->args, eq_func);
+      push_stack(sc, opcode(OP_APPLY), car(sc->args), eq_func);
       return(sc->UNSPECIFIED);
     }
 
@@ -17928,6 +17896,7 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   /* this is called as the pws object apply method, not as the actual getter */
   s7_pws_t *f;
+
   f = (s7_pws_t *)s7_object_value(obj);
   if (f->getter != NULL)
     {
@@ -17946,9 +17915,7 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       return((*(f->getter))(sc, args));
     }
 
-  sc->args = args;
-  sc->code = f->scheme_getter;
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), args, f->scheme_getter);
   return(sc->F);
 }
 
@@ -17957,6 +17924,7 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   /* this is the pws set method, not the actual setter */
   s7_pws_t *f;
+
   f = (s7_pws_t *)s7_object_value(obj);
   if (f->setter != NULL)
     {
@@ -17975,9 +17943,7 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       return((*(f->setter))(sc, args));
     }
 
-  sc->args = args;
-  sc->code = f->scheme_setter;
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), args, f->scheme_setter);
   return(sc->F);
 }
 
@@ -18653,11 +18619,7 @@ list to the trailing arguments of hook-apply."
     }
 
   if (is_pair(hook_functions(hook)))
-    {
-      sc->args = hook_args;
-      sc->code = hook_functions(hook);
-      push_stack(sc, opcode(OP_HOOK_APPLY), sc->args, sc->code);
-    }
+    push_stack(sc, opcode(OP_HOOK_APPLY), hook_args, hook_functions(hook));
 
   return(sc->UNSPECIFIED);
 }
@@ -19050,8 +19012,14 @@ list has infinite length."
 	obj = (s_type_t *)s7_object_value(lst);
 	if (object_types[obj->type].length)
 	  {
+	    s7_pointer func;
+
 	    car(args) = obj->value;
-	    push_stack(sc, opcode(OP_APPLY), args, object_types[obj->type].length_func);
+	    func = object_types[obj->type].length_func;
+	    if (is_c_function(func))
+	      return(c_function_call(func)(sc, args));
+	    
+	    push_stack(sc, opcode(OP_APPLY), args, func);
 	    return(sc->UNSPECIFIED);
 	  }
 	return(eval_error(sc, "attempt to get length of ~A?", lst));
@@ -20345,10 +20313,7 @@ each a function of no arguments, guaranteeing that finish is called even if body
   set_type(p, T_DYNAMIC_WIND | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
 
   push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->NIL, p);          /* args will be the saved result, code = s7_dynwind_t obj */
-  
-  sc->args = sc->NIL;
-  sc->code = car(args);
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), sc->NIL, car(args));
   return(sc->F);
 }
 
@@ -20381,17 +20346,13 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   set_type(p, T_CATCH | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
 
   push_stack(sc, opcode(OP_CATCH), sc->NIL, p);
-  sc->args = sc->NIL;
-
-  /* I was hoping to avoid a push_stack here, but no luck.  This might be slightly faster then going to APPLY
+  /* I was hoping to avoid a push_stack here, but no luck.  This might be slightly faster than going to APPLY
    *
    *  sc->code = closure_body(cadr(args));
    *  NEW_FRAME(sc, closure_environment(cadr(args)), sc->envir);
    *  push_stack(sc, opcode(OP_BEGIN), sc->args, sc->code);
    */
-
-  sc->code = cadr(args);
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), sc->NIL, cadr(args));
   return(sc->F);
 }
 
@@ -21332,6 +21293,7 @@ s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg)
 
 
 /* -------------------------------- leftovers -------------------------------- */
+
 
 bool (*s7_begin_hook(s7_scheme *sc))(s7_scheme *sc)
 {
@@ -23728,6 +23690,11 @@ static s7_pointer find_symbol_or_bust_4(s7_scheme *sc, s7_pointer env, s7_pointe
   FIND_SYMBOL_OR_BUST(sc);
 } 
 
+static s7_pointer find_symbol_or_bust_5(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
 
 
 static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
@@ -23762,18 +23729,6 @@ static bool just_constants(s7_scheme *sc, s7_pointer args)
   return(just_constants(sc, cdr(args)));
 }
 #endif
-
-
-static s7_pointer check_define_name(s7_scheme *sc, s7_pointer x)
-{
-  if (!s7_is_symbol(x))                                             /* (define (3 a) a) */
-    return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
-  if (is_keyword(x))                                                /* (define :hi 1) */
-    return(eval_error_with_name(sc, "~A ~A: keywords are constants", x));
-  if (is_syntactic(x))                                              /* (define (and a) a) */
-    return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x));
-  return(x);
-}
 
 
 static s7_pointer check_lambda_args(s7_scheme *sc)
@@ -24499,7 +24454,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   so sc->code becomes (+ i 1) in this case 
        */
       sc->code = cadar(sc->args);
-      /* sc->args = sc->NIL; */
       goto EVAL;
       
 
@@ -24572,7 +24526,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  push_stack(sc, opcode(OP_DO_INIT), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
-	  /* sc->args = sc->NIL; */
 	  goto EVAL;
 	}
 
@@ -24641,7 +24594,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  push_stack(sc, opcode(OP_DO_END1), sc->args, sc->code);
 	  sc->code = caadr(sc->args);               /* evaluate the end expr */
-	  /* sc->args = sc->NIL; */
 	  goto EVAL;
 	}
       else sc->value = sc->F;                       /* (do ((...)) () ...) -- no endtest */
@@ -25338,39 +25290,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  for (sc->x = closure_args(sc->code), sc->y = sc->args; is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	    {
+	      s7_pointer y, z;
 	      if (is_null(sc->y))
 		return(s7_error(sc, 
 				sc->WRONG_NUMBER_OF_ARGS, 
 				make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
-#if HAVE_PTHREADS
-	      add_to_local_environment(sc, car(sc->x), car(sc->y));
-	      /* if the expansion (below) is not thread-safe, neither is this, but at least the trouble stays local to the function */
-#else
 
-	      {
-		/* expand add_to_local_environment(sc, car(sc->x), car(sc->y)); -- (sc variable value) 
-		 *   ugly, but this is the principal call and the "inline" attribute is much slower
-		 */
-		s7_pointer y, z;
-
-		z = car(sc->x);
-		if (is_immutable_or_accessed(z))
-		  {
-		    if (is_immutable(z))
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG,
-				      make_list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), z)));
-		    car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
-		  }
-
-		set_local(z);
-		NEW_CELL(sc, y); 
-		car(y) = z;
-		cdr(y) = car(sc->y);
-		set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
-		ecdr(y) = car(sc->envir);
-		car(sc->envir) = y;
-	      }
-#endif
+	      z = car(sc->x);
+	      if (is_immutable_or_accessed(z))
+		{
+		  if (is_immutable(z))
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG,
+				    make_list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), z)));
+		  car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
+		}
+	      
+	      set_local(z);
+	      NEW_CELL(sc, y); 
+	      car(y) = z;
+	      cdr(y) = car(sc->y);
+	      set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+	      ecdr(y) = car(sc->envir);
+	      car(sc->envir) = y;
 	    }
 	  
 	  if (is_null(sc->x)) 
@@ -25637,35 +25578,60 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (sc->op == OP_DEFINE_STAR)
 	      return(eval_error(sc, "define* is restricted to functions: (define* ~{~S~^ ~})", sc->code));
 	    
-	    push_stack(sc, opcode(OP_DEFINE1), sc->NIL, check_define_name(sc, car(sc->code))); 
+	    x = car(sc->code);
+	    if (!s7_is_symbol(x))                                             /* (define 3 a) */
+	      return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
+	    if (is_keyword(x))                                                /* (define :hi 1) */
+	      return(eval_error_with_name(sc, "~A ~A: keywords are constants", x));
+	    if (is_syntactic(x))                                              /* (define and a) */
+	      return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x));
+	    
 	    sc->code = cadr(sc->code);
-	    /* PERHAPS: this branch doesn't happen much but perhaps we could break out the non-pair stuff here and avoid the push_stack above
-	     */
-	    goto EVAL;                                                                 /* evaluate the value */
-	  }
-	
-	/* a closure */
-	x = caar(sc->code);
-	check_define_name(sc, x);
-	sc->code = cons(sc, cdar(sc->code), cdr(sc->code));
-	
-	if (sc->op == OP_DEFINE_STAR)
-	  {
-	    check_lambda_star_args(sc);
-	    sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
+	    if (is_pair(sc->code))
+	      {
+		push_stack(sc, opcode(OP_DEFINE1), sc->NIL, x);
+		goto EVAL_PAIR;
+	      }
+
+	    if (s7_is_symbol(sc->code))
+	      {
+		if (is_global(sc->code))
+		  sc->value = symbol_value(symbol_global_slot(sc->code));
+		else sc->value = find_symbol_or_bust_5(sc, sc->envir, sc->code);
+	      }
+	    else sc->value = sc->code;
+	    sc->code = x;
+	    /* fall through */
 	  }
 	else
 	  {
-	    check_lambda_args(sc);
-	    NEW_CELL_NO_CHECK(sc, sc->value);
-	    car(sc->value) = sc->code;
-	    cdr(sc->value) = sc->envir;
-	    set_type(sc->value, T_CLOSURE | T_PROCEDURE | T_DONT_COPY);
+	    /* a closure */
+	    x = caar(sc->code);
+	    
+	    if (!s7_is_symbol(x))                                             /* (define (3 a) a) */
+	      return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
+	    if (is_syntactic(x))                                              /* (define (and a) a) */
+	      return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x));
+
+	    sc->code = cons(sc, cdar(sc->code), cdr(sc->code));
+	    
+	    if (sc->op == OP_DEFINE_STAR)
+	      {
+		check_lambda_star_args(sc); /* may affect sc->x et al */
+		sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
+	      }
+	    else
+	      {
+		check_lambda_args(sc);
+		NEW_CELL_NO_CHECK(sc, sc->value);
+		car(sc->value) = sc->code;
+		cdr(sc->value) = sc->envir;
+		set_type(sc->value, T_CLOSURE | T_PROCEDURE | T_DONT_COPY);
+	      }
+	    sc->code = x;
+	    /* fall through */
 	  }
-	sc->code = x;
-	/* fall into ... */
       }
-      
       
     case OP_DEFINE1:
       /* sc->code is the symbol being defined, sc->value is its value
@@ -25714,25 +25680,44 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				file_names[port_file_number(sc->input_port)],
 				s7_make_integer(sc, port_line_number(sc->input_port)));
 	  else sc->x = sc->code;           /* fallback on (__func__ name) */
+	  
+	  /*
+	   * closure_environment(sc->value) = new_frame_in_env(sc, closure_environment(sc->value));
+	   * add_to_environment(sc, closure_environment(sc->value), sc->__FUNC__, sc->x);
+	   * typeflag(closure_environment(sc->value)) |= T_ENVIRONMENT;
+	   */
+	  {
+	    s7_pointer x, y;
+	    NEW_CELL(sc, x);
+	    cdr(x) = closure_environment(sc->value);
+	    set_type(x, T_PAIR | T_ENVIRONMENT);
+	    closure_environment(sc->value) = x;
 
-	  closure_environment(sc->value) = new_frame_in_env(sc, closure_environment(sc->value));
-	  add_to_environment(sc, closure_environment(sc->value), sc->__FUNC__, sc->x);
-	  typeflag(closure_environment(sc->value)) |= T_ENVIRONMENT;
+	    NEW_CELL_NO_CHECK(sc, y);
+	    car(y) = sc->__FUNC__;
+	    cdr(y) = sc->x;
+	    set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+	    ecdr(y) = sc->NIL; /* car(x) */
+	    car(x) = y;
+
+	    add_to_environment(sc, sc->envir, sc->code, sc->value);
+	  }
 	}
       else
 	{
 	  if (s7_is_procedure_with_setter(sc->value))
 	    {
 	      s7_pws_t *f = (s7_pws_t *)s7_object_value(sc->value);
-	      f->name = copy_string(symbol_name(sc->code));
+	      if (!(f->name))
+		f->name = copy_string(symbol_name(sc->code));
 	    }
-	}
 
-      /* add the newly defined thing to the current environment */
-      sc->x = find_local_symbol(sc, sc->envir, sc->code);
-      if (is_not_null(sc->x))
-	set_symbol_value(sc->x, sc->value); 
-      else add_to_current_environment(sc, sc->code, sc->value); 
+	  /* add the newly defined thing to the current environment */
+	  sc->x = find_local_symbol(sc, sc->envir, sc->code);
+	  if (is_not_null(sc->x))
+	    set_symbol_value(sc->x, sc->value); 
+	  else add_to_environment(sc, sc->envir, sc->code, sc->value);
+	}
 
       sc->value = sc->code;
       goto START;
@@ -26562,7 +26547,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->x = find_local_symbol(sc, sc->envir, sc->code); 
       if (is_not_null(sc->x))
 	set_symbol_value(sc->x, sc->value); 
-      else add_to_current_environment(sc, sc->code, sc->value); 
+      else add_to_environment(sc, sc->envir, sc->code, sc->value); /* was current but we've checked immutable already */
 
       /* pop back to wherever the macro call was */
       sc->x = sc->value; 
