@@ -425,7 +425,7 @@ typedef struct s7_func_t {
 typedef struct {               /* call/cc */
   s7_pointer stack;
   s7_pointer *stack_start, *stack_end, *op_stack;
-  int stack_size, op_stack_top, op_stack_size;
+  int stack_size, op_stack_loc, op_stack_size;
 } s7_continuation_t;
 
 
@@ -490,12 +490,12 @@ typedef struct s7_cell {
     s7_continuation_t *continuation;
     
     struct {               /* call-with-exit */
-      int goto_loc, op_loc;
+      int goto_loc, op_stack_loc;
       bool active;
     } rexit;
     
     struct {               /* catch */
-      int goto_loc, op_loc;
+      int goto_loc, op_stack_loc;
       s7_pointer tag;
       s7_pointer handler;
     } rcatch; /* C++ reserves "catch" I guess */
@@ -528,19 +528,19 @@ static s7_pointer *small_ints, *small_negative_ints, *chars;
 static s7_pointer real_zero; 
 
 struct s7_scheme {  
-  token_t tok;
   opcode_t op;
   s7_pointer value;
   s7_pointer args;                    /* arguments of current function */
   s7_pointer code, cur_code;          /* current code */
   s7_pointer envir;                   /* current environment */
+  token_t tok;
 
   s7_pointer stack;                   /* stack is a vector */
   int stack_size;
   s7_pointer *stack_start, *stack_end, *stack_resize_trigger;
   
-  s7_pointer *op_stack;
-  int op_stack_top, op_stack_size;
+  s7_pointer *op_stack, *op_stack_now, *op_stack_end;
+  int op_stack_size;
 
   s7_cell **heap, **free_heap, **free_heap_top, **free_heap_trigger;
   unsigned int heap_size;
@@ -578,6 +578,9 @@ struct s7_scheme {
 
   struct s7_cell _ELSE;
   s7_pointer ELSE;                    /* else */  
+
+  struct s7_cell _GC_NIL;             /* marker for empty slot in gc-protected vector */
+  s7_pointer GC_NIL;
   
   s7_pointer symbol_table;            /* symbol table */
   s7_pointer global_env;              /* global environment */
@@ -931,11 +934,11 @@ struct s7_scheme {
 #define continuation_stack_size(p)    (p)->object.continuation->stack_size
 #define continuation_stack_top(p)     (continuation_stack_end(p) - continuation_stack_start(p))
 #define continuation_op_stack(p)      (p)->object.continuation->op_stack
-#define continuation_op_loc(p)        (p)->object.continuation->op_stack_top
+#define continuation_op_loc(p)        (p)->object.continuation->op_stack_loc
 #define continuation_op_size(p)       (p)->object.continuation->op_stack_size
 
 #define call_exit_goto_loc(p)         (p)->object.rexit.goto_loc
-#define call_exit_op_loc(p)           (p)->object.rexit.op_loc
+#define call_exit_op_loc(p)           (p)->object.rexit.op_stack_loc
 #define call_exit_active(p)           (p)->object.rexit.active
 
 #define s7_stack_top(Sc)              ((Sc)->stack_end - (Sc)->stack_start)
@@ -954,7 +957,7 @@ struct s7_scheme {
 
 #define catch_tag(p)                  (p)->object.rcatch.tag
 #define catch_goto_loc(p)             (p)->object.rcatch.goto_loc
-#define catch_op_loc(p)               (p)->object.rcatch.op_loc
+#define catch_op_loc(p)               (p)->object.rcatch.op_stack_loc
 #define catch_handler(p)              (p)->object.rcatch.handler
 
 enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
@@ -1129,7 +1132,6 @@ static s7_pointer file_error(s7_scheme *sc, const char *caller, const char *desc
 static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
 #define cons(Sc, A, B) s7_cons(Sc, A, B)
 static s7_pointer cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b);
-static s7_pointer immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void free_object(s7_pointer a);
 static char *describe_c_object(s7_scheme *sc, s7_pointer a);
@@ -1268,20 +1270,24 @@ static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
 static pthread_mutex_t protected_objects_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
+#define is_gc_nil(p) ((p) == sc->GC_NIL)
 
 int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 {
-  int i, loc, new_size;
-  
+  int i, loc, size, new_size;
+
 #if HAVE_PTHREADS
   pthread_mutex_lock(&protected_objects_lock);
 #endif
 
-  if (is_null(vector_element(sc->protected_objects, (*(sc->protected_objects_loc)))))
+  loc = (*(sc->protected_objects_loc))++;
+  size = (*(sc->protected_objects_size));
+
+  if (is_gc_nil(vector_element(sc->protected_objects, loc)))
     {
-      vector_element(sc->protected_objects, (*(sc->protected_objects_loc))) = x;
-      loc = (*(sc->protected_objects_loc))++;
-      if ((*(sc->protected_objects_loc)) >= (*(sc->protected_objects_size)))
+      vector_element(sc->protected_objects, loc) = x;
+
+      if ((*(sc->protected_objects_loc)) >= size)
 	(*(sc->protected_objects_loc)) = 0;
       {
 #if HAVE_PTHREADS
@@ -1291,9 +1297,8 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
       }
     }
   
-  loc = (*(sc->protected_objects_size));
-  for (i = 0; i < loc; i++)
-    if (is_null(vector_element(sc->protected_objects, i)))
+  for (i = 0; i < size; i++)
+    if (is_gc_nil(vector_element(sc->protected_objects, i)))
       {
 	vector_element(sc->protected_objects, i) = x;
 #if HAVE_PTHREADS
@@ -1302,20 +1307,19 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 	return(i);
       }
   
-  new_size = 2 * loc;
-
+  new_size = 2 * size;
   vector_elements(sc->protected_objects) = (s7_pointer *)realloc(vector_elements(sc->protected_objects), new_size * sizeof(s7_pointer));
-  for (i = loc; i < new_size; i++)
-    vector_element(sc->protected_objects, i) = sc->NIL;
+  for (i = size; i < new_size; i++)
+    vector_element(sc->protected_objects, i) = sc->GC_NIL;
   vector_length(sc->protected_objects) = new_size;
   (*(sc->protected_objects_size)) = new_size;
 
-  vector_element(sc->protected_objects, loc) = x;
+  vector_element(sc->protected_objects, size) = x;
   
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&protected_objects_lock);
 #endif
-  return(loc);
+  return(size);
 }
 
 
@@ -1330,7 +1334,7 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x)
   for (i = 0; i < (*(sc->protected_objects_size)); i++)
     if (vector_element(sc->protected_objects, i) == x)
       {
-	vector_element(sc->protected_objects, i) = sc->NIL;
+	vector_element(sc->protected_objects, i) = sc->GC_NIL;
 	(*(sc->protected_objects_loc)) = i;
 #if HAVE_PTHREADS
 	pthread_mutex_unlock(&protected_objects_lock);
@@ -1353,10 +1357,9 @@ void s7_gc_unprotect_at(s7_scheme *sc, int loc)
   if ((loc >= 0) &&
       (loc < (*(sc->protected_objects_size))))
     {
-      vector_element(sc->protected_objects, loc) = sc->NIL;
+      vector_element(sc->protected_objects, loc) = sc->GC_NIL;
       (*(sc->protected_objects_loc)) = loc;
     }
-
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&protected_objects_lock);
 #endif
@@ -1379,6 +1382,9 @@ s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&protected_objects_lock);
 #endif
+
+  if (obj == sc->GC_NIL)
+    return(sc->UNSPECIFIED);
 
   return(obj);
 }
@@ -1506,9 +1512,11 @@ static void mark_environment(s7_pointer env)
 
 static void mark_op_stack(s7_scheme *sc)
 {
-  int i;
-  for (i = 0; i < sc->op_stack_top; i++)
-    S7_MARK(sc->op_stack[i]);
+  s7_pointer *p, *tp;
+  tp = sc->op_stack_now;
+  p = sc->op_stack;
+  while (p < tp)
+    S7_MARK(*p++);
 }
 
 
@@ -1602,7 +1610,7 @@ static void mark_global_env(s7_scheme *sc)
   set_mark(ge);
 
   while (tmp < top)
-    S7_MARK(*tmp++);
+    S7_MARK(cdr(*tmp++));
 }
 
 
@@ -2154,15 +2162,16 @@ static unsigned char *permanent_calloc(int bytes)
 /* -------------------------------- stacks -------------------------------- */
 
 #define OP_STACK_INITIAL_SIZE 1024
-#define push_op_stack(Sc, Op) Sc->op_stack[Sc->op_stack_top++] = Op
-#define pop_op_stack(Sc)      Sc->op_stack[--Sc->op_stack_top]
+#define push_op_stack(Sc, Op) (*Sc->op_stack_now++) = Op
+#define pop_op_stack(Sc)      (*(--(Sc->op_stack_now)))
 
 static void initialize_op_stack(s7_scheme *sc)
 {
   int i;
   sc->op_stack = (s7_pointer *)malloc(OP_STACK_INITIAL_SIZE * sizeof(s7_pointer));
   sc->op_stack_size = OP_STACK_INITIAL_SIZE;
-  sc->op_stack_top = 0;
+  sc->op_stack_now = sc->op_stack;
+  sc->op_stack_end = (s7_pointer *)(sc->op_stack + sc->op_stack_size);
   for (i = 0; i < OP_STACK_INITIAL_SIZE; i++)
     sc->op_stack[i] = sc->NIL;
 }
@@ -2170,12 +2179,15 @@ static void initialize_op_stack(s7_scheme *sc)
 
 static void resize_op_stack(s7_scheme *sc)
 {
-  int i, new_size;
+  int i, loc, new_size;
+  loc = (int)(sc->op_stack_now - sc->op_stack);
   new_size = sc->op_stack_size * 2;
   sc->op_stack = (s7_pointer *)realloc((void *)(sc->op_stack), new_size * sizeof(s7_pointer));
   for (i = sc->op_stack_size; i < new_size; i++)
     sc->op_stack[i] = sc->NIL;
   sc->op_stack_size = new_size;
+  sc->op_stack_now = (s7_pointer *)(sc->op_stack + loc);
+  sc->op_stack_end = (s7_pointer *)(sc->op_stack + sc->op_stack_size);
 }
 
 
@@ -2192,7 +2204,9 @@ static void stack_reset(s7_scheme *sc)
 
 static void pop_stack(s7_scheme *sc) 
 { 
-  /* avoid "if..then" here and in push_stack -- these 2 are called a zillion times */
+  /* avoid "if..then" here and in push_stack -- these 2 are called a zillion times 
+   *   using pointer decrements here is much slower
+   */
   sc->stack_end -= 4;
   sc->op =    (opcode_t)integer(number(sc->stack_end[3]));
   sc->args =  sc->stack_end[2];
@@ -2600,7 +2614,6 @@ static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
 static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
   s7_pointer slot;
-  slot = immutable_cons(sc, variable, value);
 
   if (!is_pair(env))
     {
@@ -2622,6 +2635,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 #endif
 
       ge = sc->global_env;
+      slot = permanent_cons(variable, value, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
       vector_element(ge, vector_fill_pointer(ge)++) = slot;
       if (vector_fill_pointer(ge) >= vector_length(ge))
 	{
@@ -2641,9 +2655,13 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
     }
   else
     {
-      set_local(variable);
+      NEW_CELL(sc, slot);
+      car(slot) = variable;
+      cdr(slot) = value;
+      set_type(slot, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
       ecdr(slot) = car(env);
       car(env) = slot;
+      set_local(variable);
 
       /* currently any top-level value is in symbol_global_slot
        *   if never a local binding, is_local bit is off, so we go straight to the global binding
@@ -2653,7 +2671,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
        */
 
       /* I tried adding a unique_local bit for symbols defined locally only once, but
-       *   there's no way to be sure the frame originally holding it is active (it might have been
+       *   we need a way to be sure the frame originally holding it is active (it might have been
        *   GC'd, then reallocated as a frame that is currently active!).  
        * 
        * this will hit the problem:
@@ -2666,6 +2684,8 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
                   (let ((str (format #f "(let ((a 1) (b 2) (c 3) (d 4)) \
                                            (if (defined? 'v~D) (format #t \"v~D is defined? ~~A~~%\" v~D)))" k k k)))
             	    (eval-string str)))))
+      *
+      * there is room for a frame counter, but keeping that costs about as much as we save.
       */
     }
 
@@ -3048,6 +3068,8 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
        *   we better not get an error while evaluating the argument default value!
        */
 
+      /* SOMEDAY: put this in the eval loop */
+
       sc->z = x;
       return(sc->value);
     }
@@ -3410,7 +3432,7 @@ static s7_pointer make_goto(s7_scheme *sc)
   NEW_CELL(sc, x);
   set_type(x, T_GOTO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE);
   call_exit_goto_loc(x) = s7_stack_top(sc);
-  call_exit_op_loc(x) = sc->op_stack_top;
+  call_exit_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   call_exit_active(x) = true;
   return(x);
 }
@@ -3421,10 +3443,8 @@ static s7_pointer *copy_op_stack(s7_scheme *sc)
   int i;
   s7_pointer *ops;
   ops = (s7_pointer *)malloc(sc->op_stack_size * sizeof(s7_pointer));
-  for (i = 0; i < sc->op_stack_top; i++)
+  for (i = 0; i < sc->op_stack_size; i++)
     ops[i] = sc->op_stack[i];
-  for (i = sc->op_stack_top; i < sc->op_stack_size; i++)
-    ops[i] = sc->NIL;
   return(ops);
 }
 
@@ -3464,9 +3484,11 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_stack(x) = copy_stack(sc, sc->stack, s7_stack_top(sc));
   continuation_stack_start(x) = vector_elements(continuation_stack(x));
   continuation_stack_end(x) = (s7_pointer *)(continuation_stack_start(x) + loc);
+
   continuation_op_stack(x) = copy_op_stack(sc);
-  continuation_op_loc(x) = sc->op_stack_top;
+  continuation_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   continuation_op_size(x) = sc->op_stack_size;
+
   set_type(x, T_CONTINUATION | T_DONT_COPY | T_FINALIZABLE | T_PROCEDURE);
   return(x);
 }
@@ -3571,10 +3593,12 @@ static void call_with_current_continuation(s7_scheme *sc)
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
   
   {
-    int i;
-    sc->op_stack_top = continuation_op_loc(sc->code);
+    int i, top;
+    top = continuation_op_loc(sc->code);
+    sc->op_stack_now = (s7_pointer *)(sc->op_stack + top);
     sc->op_stack_size = continuation_op_size(sc->code);
-    for (i = 0; i < sc->op_stack_top; i++)
+    sc->op_stack_end = (s7_pointer *)(sc->op_stack + sc->op_stack_size);
+    for (i = 0; i < top; i++)
       sc->op_stack[i] = continuation_op_stack(sc->code)[i];
   }
 
@@ -3598,7 +3622,7 @@ static void call_with_exit(s7_scheme *sc)
 	     make_list_1(sc, make_protected_string(sc, "call-with-exit escape procedure called outside its block")));
   call_exit_active(sc->code) = false;
   new_stack_top = call_exit_goto_loc(sc->code);
-  sc->op_stack_top = call_exit_op_loc(sc->code);
+  sc->op_stack_now = (s7_pointer *)(sc->op_stack + call_exit_op_loc(sc->code));
 
   /* look for dynamic-wind in the stack section that we are jumping out of */
   for (i = s7_stack_top(sc) - 1; i > new_stack_top; i -= 4)
@@ -11201,8 +11225,8 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   char *content = NULL;
 
   NEW_CELL(sc, port);
-  set_type(port, T_INPUT_PORT | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   port_loc = s7_gc_protect(sc, port);
+  set_type(port, T_INPUT_PORT | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_is_closed(port) = false;
 
@@ -13369,17 +13393,6 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- lists -------------------------------- */
 
-static s7_pointer immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
-{
-  s7_pointer x;
-  NEW_CELL(sc, x); /* might trigger gc, expansion here does not help */
-  car(x) = a;
-  cdr(x) = b;
-  set_type(x, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
-  return(x);
-}
-
-
 s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b) 
 {
   s7_pointer x;
@@ -14752,6 +14765,13 @@ static s7_pointer g_member(s7_scheme *sc, s7_pointer args)
 {
   #define H_member "(member obj list (func #f)) looks for obj in list and returns the list from that point if it is found, otherwise #f. \
 member uses equal?  If 'func' is a function of 2 arguments, it is used for the comparison instead of 'equal?"
+
+  /* PERHAPS: this could be extended to accept sequences:
+   *            (member #\a "123123abnfc" char=?) -> "abnfc"
+   *            (member "abc" "123abc321" string=?) -> "abc321" but there's the string length complication
+   *            (member 1 #(0 1 2) =) ? -- for c_objects (ffi) we would need a substring equivalent
+   *            and what would it do for a hash-table?
+   */
 
   s7_pointer x, y, obj;
 
@@ -17221,20 +17241,17 @@ static s7_pointer object_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 
 #define SAVE_X_Y_Z(X, Y, Z)	     \
   do {                               \
-      X = s7_gc_protect(sc, sc->x);  \
-      Y = s7_gc_protect(sc, sc->y);  \
-      Z = s7_gc_protect(sc, sc->z);  \
-     } while (0)
+    X = ((is_null(sc->x)) ? -1 : s7_gc_protect(sc, sc->x));	\
+    Y = ((is_null(sc->y)) ? -1 : s7_gc_protect(sc, sc->y));	\
+    Z = ((is_null(sc->z)) ? -1 : s7_gc_protect(sc, sc->z));	\
+  } while (0)
 
 #define RESTORE_X_Y_Z(X, Y, Z)                \
   do {                                        \
-      sc->x = s7_gc_protected_at(sc, save_x); \
-      sc->y = s7_gc_protected_at(sc, save_y); \
-      sc->z = s7_gc_protected_at(sc, save_z); \
-      s7_gc_unprotect_at(sc, save_x);         \
-      s7_gc_unprotect_at(sc, save_y);         \
-      s7_gc_unprotect_at(sc, save_z);         \
-      } while (0)
+    if (save_x == -1) sc->x = sc->NIL; else {sc->x = s7_gc_protected_at(sc, save_x); s7_gc_unprotect_at(sc, save_x);} \
+    if (save_y == -1) sc->y = sc->NIL; else {sc->y = s7_gc_protected_at(sc, save_y); s7_gc_unprotect_at(sc, save_y);} \
+    if (save_z == -1) sc->z = sc->NIL; else {sc->z = s7_gc_protected_at(sc, save_z); s7_gc_unprotect_at(sc, save_z);} \
+    } while (0)
 
 
 static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
@@ -17644,7 +17661,7 @@ In each case, the argument is the value of the object, not the object itself."
 
   if (is_not_null(args))
     {
-      int i, args_loc;
+      int i, args_loc = -1, func_loc = -1;
       s7_pointer x;
 
       args_loc = s7_gc_protect(sc, args);
@@ -17668,11 +17685,15 @@ In each case, the argument is the value of the object, not the object itself."
 	      if (i != 5)
 		{
 		  if (!is_procedure(func))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, 
-						make_protected_string(sc, "make-type arg, ~A, should be a function"),
-						func)));
-		  s7_gc_protect(sc, func); /* this ought to be faster in the mark phase than checking every function field of every scheme type(?) */
+		    {
+		      s7_gc_unprotect_at(sc, args_loc);
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				      make_list_2(sc, 
+						  make_protected_string(sc, "make-type arg, ~A, should be a function"),
+						  func)));
+		    }
+		  if (!is_simple(func))
+		    func_loc = s7_gc_protect(sc, func); /* this ought to be faster in the mark phase than checking every function field of every scheme type(?) */
 		  proc_args = s7_procedure_arity(sc, func);
 		  nargs = s7_integer(car(proc_args)) + s7_integer(cadr(proc_args));
 		  rest_arg = (caddr(proc_args) != sc->F);
@@ -17683,8 +17704,12 @@ In each case, the argument is the value of the object, not the object itself."
 		case 0:                 /* print, ((cadr (make-type :print (lambda (a) (format #f "#<typo: ~S>" a)))) "gypo") -> #<typo: "gypo"> */
 		  if ((s7_integer(car(proc_args)) > 1) || 
 		      ((nargs == 0) && (!rest_arg)))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, make_protected_string(sc, "make-type :print procedure, ~A, should take one argument"), func)));
+		    {
+		      s7_gc_unprotect_at(sc, args_loc);
+		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				      make_list_2(sc, make_protected_string(sc, "make-type :print procedure, ~A, should take one argument"), func)));
+		    }
 
 		  object_types[tag].print_func = func;
 		  object_types[tag].print = call_s_object_print;
@@ -17694,26 +17719,35 @@ In each case, the argument is the value of the object, not the object itself."
 		  /* (let ((typo (make-type :equal (lambda (a b) (equal? a b))))) (let ((a ((cadr typo) 123)) (b ((cadr typo) 321))) (equal? a b))) */
 		  if ((s7_integer(car(proc_args)) > 2) || 
 		      ((nargs < 2) && (!rest_arg)))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, make_protected_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
-
+		    {
+		      s7_gc_unprotect_at(sc, args_loc);
+		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				      make_list_2(sc, make_protected_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
+		    }
 		  object_types[tag].equal_func = func;
 		  break;
 
 		case 2:                 /* getter: (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1) -> 2 */
 		  if ((nargs == 0) && (!rest_arg))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, make_protected_string(sc, "make-type :getter procedure, ~A, should take at least one argument"), func)));
-
+		    {
+		      s7_gc_unprotect_at(sc, args_loc);
+		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				      make_list_2(sc, make_protected_string(sc, "make-type :getter procedure, ~A, should take at least one argument"), func)));
+		    }
 		  object_types[tag].getter_func = func;
 		  object_types[tag].apply = call_s_object_getter;
 		  break;
 
 		case 3:                 /* setter: (set! (((cadr (make-type :setter (lambda (a b c) (vector-set! a b c)))) (vector 1 2 3)) 1) 23) */
 		  if ((nargs < 2) && (!rest_arg))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, make_protected_string(sc, "make-type :setter procedure, ~A, should take at least two arguments"), func)));
-
+		    {
+		      s7_gc_unprotect_at(sc, args_loc);
+		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				      make_list_2(sc, make_protected_string(sc, "make-type :setter procedure, ~A, should take at least two arguments"), func)));
+		    }
 		  object_types[tag].setter_func = func;
 		  object_types[tag].set = call_s_object_setter;
 		  break;
@@ -17721,8 +17755,12 @@ In each case, the argument is the value of the object, not the object itself."
 		case 4:                 /* length: (length ((cadr (make-type :length (lambda (a) (vector-length a)))) (vector 1 2 3))) -> 3 */
 		  if ((s7_integer(car(proc_args)) > 1) || 
 		      ((nargs == 0) && (!rest_arg)))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, make_protected_string(sc, "make-type :length procedure, ~A, should take at one argument"), func)));
+		    {
+		      s7_gc_unprotect_at(sc, args_loc);
+		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				      make_list_2(sc, make_protected_string(sc, "make-type :length procedure, ~A, should take at one argument"), func)));
+		    }
 
 		  object_types[tag].length_func = func;
 		  object_types[tag].length = call_s_object_length;
@@ -17730,18 +17768,24 @@ In each case, the argument is the value of the object, not the object itself."
 
 		case 5:                 /* name, ((cadr (make-type :name "hiho")) 123) -> #<hiho 123> */
 		  if (!s7_is_string(func))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, make_protected_string(sc, "make-type :name arg, ~S, should be a string"), func)));
-
+		    {
+		      s7_gc_unprotect_at(sc, args_loc);
+		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				      make_list_2(sc, make_protected_string(sc, "make-type :name arg, ~S, should be a string"), func)));
+		    }
 		  object_types[tag].name = copy_string(s7_string(func));
 		  break;
 
 		case 6:                 /* copy */
 		  if ((s7_integer(car(proc_args)) > 1) || 
 		      ((nargs == 0) && (!rest_arg)))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, make_protected_string(sc, "make-type :copy procedure, ~A, should take at one argument"), func)));
-
+		    {
+		      s7_gc_unprotect_at(sc, args_loc);
+		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				      make_list_2(sc, make_protected_string(sc, "make-type :copy procedure, ~A, should take at one argument"), func)));
+		    }
 		  object_types[tag].copy_func = func;
 		  object_types[tag].copy = call_s_object_copy;
 		  break;
@@ -17749,9 +17793,12 @@ In each case, the argument is the value of the object, not the object itself."
 		case 7:                 /* fill */
 		  if ((s7_integer(car(proc_args)) > 2) || 
 		      ((nargs < 2) && (!rest_arg)))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, make_protected_string(sc, "make-type :fill procedure, ~A, should take at two arguments"), func)));
-
+		    {
+		      s7_gc_unprotect_at(sc, args_loc);
+		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				      make_list_2(sc, make_protected_string(sc, "make-type :fill procedure, ~A, should take at two arguments"), func)));
+		    }
 		  object_types[tag].fill_func = func;
 		  object_types[tag].fill = call_s_object_fill;
 		  break;
@@ -18499,8 +18546,10 @@ must be compatible with the arity of the first."
   
   for (i = 2, x = cdr(args); is_pair(x); x = cdr(x), i++)
     if (!function_arity_ok(sc, hook, car(x)))
-      return(s7_wrong_type_arg_error(sc, "hook", i, car(x), "compatible function"));
-
+      {
+	s7_gc_unprotect_at(sc, gc_loc);
+	return(s7_wrong_type_arg_error(sc, "hook", i, car(x), "compatible function"));
+      }
   s7_gc_unprotect_at(sc, gc_loc);
   return(hook);
 }
@@ -20341,7 +20390,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   NEW_CELL(sc, p);
   catch_tag(p) = car(args);
   catch_goto_loc(p) = s7_stack_top(sc);
-  catch_op_loc(p) = sc->op_stack_top;
+  catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
   catch_handler(p) = caddr(args);
   set_type(p, T_CATCH | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
 
@@ -20365,7 +20414,7 @@ s7_pointer s7_catch_all(s7_scheme *sc, s7_pointer thunk, s7_pointer error_handle
   NEW_CELL(sc, p);
   catch_tag(p) = sc->T;                   /* if we catch everything, the error handling stuff in s7_call is not needed */
   catch_goto_loc(p) = s7_stack_top(sc);
-  catch_op_loc(p) = sc->op_stack_top;
+  catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
   catch_handler(p) = error_handler;
   set_type(p, T_CATCH | T_DONT_COPY);
 
@@ -20667,7 +20716,7 @@ GOT_CATCH:
       sc->args = make_list_2(sc, type, info);
       sc->code = catch_handler(catcher);
       loc = catch_goto_loc(catcher);
-      sc->op_stack_top = catch_op_loc(catcher);
+      sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_op_loc(catcher));
       sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
 
       /* if user (i.e. yers truly!) copies/pastes the preceding lambda () into the
@@ -21623,7 +21672,7 @@ static bool next_for_each(s7_scheme *sc)
 	break;
       }
 
-  if (is_not_null(z))
+  if (zloc != -1)
     s7_gc_unprotect_at(sc, zloc);
 
   integer(number(car(sc->args))) = loc + 1;
@@ -21708,6 +21757,10 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  set_local(car(closure_args(sc->code)));
 	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), obj, sc->code);
 	  return(sc->UNSPECIFIED);
+
+	  /* PERHAPS: this, and map, across a string (say) or other sequence involving
+	   *          only 1 arg could be optimized in the same way. OP_FOR_EACH|MAP_STRING|VECTOR|C/S_OBJECT
+	   */
 	}
 
       if (len < 0)
@@ -24369,9 +24422,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* increment all vars, return to endtest 
        *   these are also updated in parallel at the end, so we gather all the incremented values first
        */
+      
+      /* here we know car(sc->args) is not null */
       push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
-      if (is_null(car(sc->args)))
-	goto START;
       sc->args = car(sc->args);                /* the var data lists */
       sc->code = sc->args;                     /* save the top of the list */
 
@@ -24536,9 +24589,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       prepare_do_step_variables(sc);
 
+
     DO_END1:
       prepare_do_end_test(sc);
       
+
     DO_END:
     case OP_DO_END:
       /* here vars have been init'd or incr'd
@@ -24587,7 +24642,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		/* end test is #f, evaluate body (sc->code is ready to go) */
-		push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
+		if (is_null(car(sc->args)))
+		  push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
+		else push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
 		goto BEGIN;
 	      }
 	  }
@@ -24611,7 +24668,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else
 	{
 	  /* evaluate the body and step vars, etc */
-	  push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
+	  if (is_null(car(sc->args)))
+	    push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
+	  else push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
 	  /* sc->code is ready to go */
 	}
       /* fall through */
@@ -24763,7 +24822,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       push_op_stack(sc, sc->value);
-      if (sc->op_stack_top >= sc->op_stack_size)
+      if (sc->op_stack_now >= sc->op_stack_end)
 	resize_op_stack(sc);
 
       goto EVAL_ARGS;
@@ -24877,6 +24936,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    {
 		      x = sc->TEMP_CELL_2; /* these are already pairs */
 		      y = sc->TEMP_CELL_1;
+
+		      /* this could be extended -- the op_stack could hold the arg list, keeping it
+		       *   out of the heap.  We'd probably break even on the arglist building/marking --
+		       *   could we win enough in the GC to make it worth the code?  (The GC currently
+		       *   takes less than 10% of the total time -- 2% in Snd).
+		       */
 		    }
 		  else
 		    {
@@ -26717,7 +26782,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       car(sc->value) = sc->code;
       cdr(sc->value) = sc->envir;
       set_type(sc->value, T_CLOSURE | T_PROCEDURE | T_DONT_COPY);
-
       goto START;
 
 
@@ -26888,7 +26952,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       stack_reset(sc);
       sc->op = OP_ERROR_QUIT;
-      /* sc->value = sc->UNSPECIFIED; */ /* return the *error-hook* function's value if possible */
       if (sc->longjmp_ok)
 	{
 	  longjmp(sc->goto_start, 1);
@@ -26977,7 +27040,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_pair(cdr(sc->code)))
 	return(eval_error(sc, "with-environment body is messed up: ~A", sc->code));
 
-      push_stack(sc, opcode(OP_WITH_ENV1), sc->NIL, sc->code);
+      push_stack(sc, opcode(OP_WITH_ENV1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);                          /* eval env arg */
       goto EVAL;
 
@@ -26986,8 +27049,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_environment(sc->value))                    /* (with-environment . "hi") */
 	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->value));
 
-      sc->envir = sc->value;                             /* in new env... */
-      sc->code = cdr(sc->code);                          /*   handle body */
+      sc->envir = sc->value;
+      /* body is implicit in stack -- sc->code is ready to go */
       goto BEGIN;
 
 
@@ -32563,6 +32626,7 @@ s7_scheme *s7_init(void)
   sc->read_line_buf_size = 0;
 
   sc->NIL =         &sc->_NIL;
+  sc->GC_NIL =      &sc->_GC_NIL;
   sc->T =           &sc->_T;
   sc->F =           &sc->_F;
   sc->EOF_OBJECT =  &sc->_EOF_OBJECT;
@@ -32576,6 +32640,9 @@ s7_scheme *s7_init(void)
 
   set_type(sc->NIL, T_NIL | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
+  
+  set_type(sc->GC_NIL, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  car(sc->GC_NIL) = cdr(sc->GC_NIL) = sc->UNSPECIFIED;
   
   set_type(sc->T, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->T) = cdr(sc->T) = sc->UNSPECIFIED;
@@ -32657,6 +32724,8 @@ s7_scheme *s7_init(void)
   sc->protected_objects_loc = (int *)malloc(sizeof(int));
   (*(sc->protected_objects_loc)) = 0;
   sc->protected_objects = s7_make_vector(sc, INITIAL_PROTECTED_OBJECTS_SIZE); /* realloc happens to the embedded array, so this pointer is global */
+  for (i = 0; i < INITIAL_PROTECTED_OBJECTS_SIZE; i++)
+    vector_element(sc->protected_objects, i) = sc->GC_NIL;
   set_immutable(sc->protected_objects);
   typeflag(sc->protected_objects) |= T_DONT_COPY;
   
@@ -33612,4 +33681,8 @@ the error type and the info passed to the error handler.");
  *    (let ((lst (list #(1 2) #(3 4)))) (lst 0 1))
  *    ;list-ref argument 1, #(1 2), is vector but should be a pair
  *    ;    (lst 0 1)
+ */
+
+/* 
+ * can do opt use any safe function?
  */
