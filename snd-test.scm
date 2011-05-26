@@ -516,7 +516,8 @@
   "set proc accepts args"
   (let ((arity (if (procedure-with-setter? func)
 		   (cdddr (procedure-arity func))
-		   (procedure-arity func))))
+		   (and (procedure? (procedure-with-setter-setter func))
+			(procedure-arity (procedure-with-setter-setter func))))))
     (and (pair? arity)
 	 (>= args (car arity))
 	 (or (and (pair? (cddr arity))
@@ -23974,7 +23975,7 @@ EDITS: 2
 	  (snd-display #__line__ ";locsig gen2 outn: ~A" (mus-data gen2)))
       (if (not (vequal (mus-data gen200) (vct 0.000 0.000 0.778 0.222)))
 	  (snd-display #__line__ ";locsig gen200 outn: ~A" (mus-data gen200)))
-      (set! (locsig-ref gen 0) .25)
+      (locsig-set! gen 0 .25)
       (if (not (vequal (mus-data gen) (vct 0.250 0.333)))
 	  (snd-display #__line__ ";locsig gen .25 outn: ~A" (mus-data gen)))
       (locsig gen 0 1.0)
@@ -24146,8 +24147,6 @@ EDITS: 2
 	  ((= i 100))
 	(locsig lc i 1.0))
       (if (fneq (locsig-reverb-ref lc 0) .1) (snd-display #__line__ ";locsig reverb ref: ~A?" (locsig-reverb-ref lc 0)))
-      (set! (locsig-reverb-ref lc 0) .3)
-      (if (fneq (locsig-reverb-ref lc 0) .3) (snd-display #__line__ ";set locsig reverb ref: ~A?" (locsig-reverb-ref lc 0)))
       (locsig-reverb-set! lc 0 .2)
       (if (fneq (locsig-reverb-ref lc 0) .2) (snd-display #__line__ ";locsig reverb set: ~A?" (locsig-reverb-ref lc 0)))
       (mus-close gen)
@@ -49387,9 +49386,9 @@ EDITS: 1
 		    (set! d11 (locsig-ref loc 1))
 		    (set! dr1 (locsig-reverb-ref loc 0))
 		    (locsig-set! loc 0 .123)
-		    (set! (locsig-ref loc 1) .23)
+		    (locsig-set! loc 1 .23)
 		    (locsig-reverb-set! loc 0 .23)
-		    (set! (locsig-reverb-ref loc 0) .123)
+		    (locsig-reverb-set! loc 0 .123)
 		    0.0))
       (if (not isloc) (snd-display #__line__ ";run locsig? ~A" isloc))
       (if (fneq d0 .667) (snd-display #__line__ ";run locsig ref 0: ~A" d0))
@@ -61140,13 +61139,12 @@ EDITS: 1
 			 y-position-slider y-zoom-slider sound-data-ref mus-array-print-length mus-float-equal-fudge-factor
 					;mus-data 
 			 mus-feedback mus-feedforward mus-frequency mus-hop
-			 mus-increment mus-length mus-location mus-name mus-phase mus-ramp mus-scaler vct-ref x-axis-label
+			 mus-increment mus-length mus-location mus-name mus-phase mus-ramp mus-scaler x-axis-label
 			 filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width clm-table-size clm-default-frequency mus-offset mus-reset
 			 phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-phase-increments phase-vocoder-phases 
 			 html-dir html-program mus-interp-type widget-position widget-size 
-			 mixer-ref frame-ref locsig-ref locsig-reverb-ref
 			 mus-file-prescaler mus-prescaler mus-clipping mus-file-clipping mus-header-raw-defaults
 			 ))
 	     

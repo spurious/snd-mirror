@@ -2639,6 +2639,13 @@ Of course in real life you'd get the nth Fibonacci number from the formula for i
                (sqrt 5)))))
 </pre>
 
+<p>But the problem remains.  Since the heap is shared, s7 threads are constantly stepping
+on each other's toes.  It takes too long to get an s7 thread running (we have to make a
+stack, for example), and too many points within s7 require locks.
+At this point, I always use multiple s7 interpreters, rather than multiple s7 threads.
+I may remove the within-s7 thread support unless someone finds a real use for it.  
+</p>
+
 </blockquote>
 </small>
 

@@ -475,14 +475,14 @@ typedef struct s7_cell {
       int hash_func;
     } vector;
     
-    s7_func_t *ffptr;
+    s7_func_t *ffptr;      /* C functions, macros */
     
     struct {
       s7_pointer car, cdr, ecdr;
       int line;
     } cons;
 
-    struct {               /* c functions */
+    struct {               /* additional object types (C and Scheme) */
       int type;
       void *value;
     } fobj;
@@ -2287,7 +2287,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   
   str = s7_make_permanent_string(name);
   x = permanent_cons(str, sc->NIL, T_SYMBOL | T_SIMPLE | T_DONT_COPY);
-  symbol_global_slot(x) = sc->NIL; /* same */
+  symbol_global_slot(x) = sc->NIL;
 
   if ((symbol_name_length(x) > 1) &&                           /* not 0, otherwise : is a keyword */
       ((name[0] == ':') ||
@@ -2904,7 +2904,8 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
    *  "direct" approach is slower!  The only case that wins is a do-loop,
    *  where the repeated accesses to the loop counter are sped up by a 
    *  factor of 3, but overall, it's not a big improvement even in that case.
-   *  I thought this was a sure thing!
+   *  I thought this was a sure thing! (The frame tag = object.cons.line costs 12
+   *  in lg, but the real expense is storing the slot/tag values locally and checking them).
    */
 
   for (x = env; is_pair(x); x = cdr(x)) 
@@ -16955,10 +16956,10 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
   
   if (s7_is_procedure_with_setter(x))
     {
-      if (is_not_null(s7_procedure_with_setter_getter(x)))
+      if (is_not_null(s7_procedure_with_setter_getter(sc, x)))
 	return(append_in_place(sc, 
-			       s7_procedure_arity(sc, s7_procedure_with_setter_getter(x)),
-			       s7_procedure_arity(sc, s7_procedure_with_setter_setter(x))));
+			       s7_procedure_arity(sc, s7_procedure_with_setter_getter(sc, x)),
+			       s7_procedure_arity(sc, s7_procedure_with_setter_setter(sc, x))));
 
       return(pws_arity(sc, x));
     }
@@ -17857,6 +17858,35 @@ In each case, the argument is the value of the object, not the object itself."
 
 /* -------- procedure-with-setter -------- */
 
+s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
+					 const char *name,
+					 s7_pointer (*getter)(s7_scheme *sc, s7_pointer args), 
+					 int get_req_args, int get_opt_args,
+					 s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
+					 int set_req_args, int set_opt_args,
+					 const char *documentation)
+{
+  /* on the C side, we merely define the two functions, and set the getter's setter, so there
+   *   is no separate pws object.
+   */
+  s7_pointer get_func, set_func;
+  char *internal_set_name;
+  int len;
+
+  len = 16 + safe_strlen(name);
+  internal_set_name = (char *)calloc(len, sizeof(char));
+  snprintf(internal_set_name, len, "[set-%s]", name);
+
+  get_func = s7_make_function(sc, name, getter, get_req_args, get_opt_args, false, documentation); 
+  s7_define(sc, sc->NIL, make_symbol(sc, name), get_func);
+  set_func = s7_make_function(sc, internal_set_name, setter, set_req_args, set_opt_args, false, documentation); 
+  s7_define(sc, sc->NIL, make_symbol(sc, internal_set_name), set_func);
+  c_function_setter(get_func) = set_func;
+
+  return(get_func);
+}
+  
+
 static int pws_tag;
 
 typedef struct {
@@ -17869,37 +17899,6 @@ typedef struct {
   char *documentation;
   char *name;
 } s7_pws_t;
-
-
-s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
-					 const char *name,
-					 s7_pointer (*getter)(s7_scheme *sc, s7_pointer args), 
-					 int get_req_args, int get_opt_args,
-					 s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
-					 int set_req_args, int set_opt_args,
-					 const char *documentation)
-{
-  s7_pws_t *f;
-  s7_pointer obj;
-  f = (s7_pws_t *)calloc(1, sizeof(s7_pws_t));
-  f->getter = getter;
-  f->get_req_args = get_req_args;
-  f->get_opt_args = get_opt_args;
-  f->setter = setter;
-  f->set_req_args = set_req_args;
-  f->set_opt_args = set_opt_args;
-  if (documentation)
-    f->documentation = copy_string(documentation);
-  else f->documentation = NULL;
-  if (name)
-    f->name = copy_string(name);
-  else f->name = NULL;
-  f->scheme_getter = sc->NIL;
-  f->scheme_setter = sc->NIL;
-  obj = s7_make_object(sc, pws_tag, (void *)f);
-  typeflag(obj) |= T_PROCEDURE;
-  return(obj);
-}
 
 
 static char *pws_print(s7_scheme *sc, void *obj)
@@ -18017,6 +18016,7 @@ occurs as the object of set!."
 
   s7_pointer p, getter, setter, arity;
   s7_pws_t *f;
+  int gc_loc;
   /* the two args should be functions, the setter taking one more arg than the getter */
 
   getter = car(args);
@@ -18026,8 +18026,10 @@ occurs as the object of set!."
   if (!is_procedure(setter))
     return(s7_wrong_type_arg_error(sc, "make-procedure-with-setter setter,", 2, setter, "a procedure"));
 
-  p = s7_make_procedure_with_setter(sc, NULL, NULL, -1, 0, NULL, -1, 0, NULL);
-  f = (s7_pws_t *)s7_object_value(p);
+  f = (s7_pws_t *)calloc(1, sizeof(s7_pws_t));
+  p = s7_make_object(sc, pws_tag, (void *)f);
+  typeflag(p) |= T_PROCEDURE;
+  gc_loc = s7_gc_protect(sc, p);
 
   f->scheme_getter = getter;
   arity = s7_procedure_arity(sc, getter);
@@ -18040,6 +18042,7 @@ occurs as the object of set!."
   if (is_pair(arity))
     f->set_req_args = s7_integer(car(arity));
   
+  s7_gc_unprotect_at(sc, gc_loc);
   return(p);
 }
 
@@ -18051,20 +18054,45 @@ bool s7_is_procedure_with_setter(s7_pointer obj)
 }
 
 
-s7_pointer s7_procedure_with_setter_getter(s7_pointer obj)
+s7_pointer s7_procedure_with_setter_getter(s7_scheme *sc, s7_pointer obj)
 {
-  s7_pws_t *f;
-  f = (s7_pws_t *)s7_object_value(obj);
-  return(f->scheme_getter);
+  if (is_c_function(obj))
+    return(obj);
+
+  if (s7_is_procedure_with_setter(obj))
+    {
+      s7_pws_t *f;
+      f = (s7_pws_t *)s7_object_value(obj);
+      return(f->scheme_getter);
+    }
+  
+  return(sc->NIL);
 }
 
 
-s7_pointer s7_procedure_with_setter_setter(s7_pointer obj)
+s7_pointer s7_procedure_with_setter_setter(s7_scheme *sc, s7_pointer obj)
 {
-  s7_pws_t *f;
-  f = (s7_pws_t *)s7_object_value(obj);
-  return(f->scheme_setter);
+  if (is_c_function(obj))
+    return(c_function_setter(obj));
+
+  if (s7_is_procedure_with_setter(obj))
+    {
+      s7_pws_t *f;
+      f = (s7_pws_t *)s7_object_value(obj);
+      return(f->scheme_setter);
+    }
+
+  return(sc->NIL);
 }
+
+
+static s7_pointer g_procedure_with_setter_setter(s7_scheme *sc, s7_pointer args)
+{
+  #define H_procedure_with_setter_setter "(procedure-with-setter-setter obj) returns the setter associated with obj, or #f"
+  return(s7_procedure_with_setter_setter(sc, car(args)));
+}
+/* TODO: doc/test procedure-with-setter-setter */
+/* TODO: change pws arity to refer just to the getter */
 
 
 static s7_pointer g_is_procedure_with_setter(s7_scheme *sc, s7_pointer args)
@@ -18098,8 +18126,7 @@ static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
 
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc)
 {
-  s7_define_variable(sc, name, 
-    s7_make_procedure_with_setter(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc));
+  s7_make_procedure_with_setter(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc);
 }
 
 
@@ -18133,8 +18160,8 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
       if (c_object_type(x) == pws_tag)
 	{
 	  s7_pws_t *f;
-	  if (is_not_null(s7_procedure_with_setter_getter(x))) /* a scheme function in this case */
-	    return(args_match(sc, s7_procedure_with_setter_getter(x), 2));
+	  if (is_not_null(s7_procedure_with_setter_getter(sc, x))) /* a scheme function in this case */
+	    return(args_match(sc, s7_procedure_with_setter_getter(sc, x), 2));
 
 	  f = (s7_pws_t *)s7_object_value(x);	  
 	  return((f->get_req_args <= args) &&
@@ -18167,8 +18194,8 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x)
       if (c_object_type(x) == pws_tag)
 	{
 	  s7_pws_t *f;
-	  if (is_not_null(s7_procedure_with_setter_getter(x))) /* a scheme function in this case */
-	    return(is_thunk(sc, s7_procedure_with_setter_getter(x)));
+	  if (is_not_null(s7_procedure_with_setter_getter(sc, x))) /* a scheme function in this case */
+	    return(is_thunk(sc, s7_procedure_with_setter_getter(sc, x)));
 
 	  f = (s7_pws_t *)s7_object_value(x);	  
 	  return((f->get_req_args == 0) &&
@@ -26234,6 +26261,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
 	  ecdr(y) = car(sc->envir);
 	  car(sc->envir) = y;
+
+	  /* here ecdr(z)->y? */
 	}
 
       if (s7_is_symbol(car(sc->code))) 
@@ -27071,6 +27100,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	set_type(x, T_PAIR);
 	sc->args = x;
       }
+      /* is this the only place a cell is allocated during the read process? (set ecdr to nil, or perhaps in make_symbol)
+       */
       
       /* sc->tok = token(sc); */
       /* this is 75% of the token calls, so expanding it saves lots of time */
@@ -27217,6 +27248,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      goto APPLY_WITHOUT_TRACE;
 		    }
 		}
+
+	      /* here if is binding, for each such, save car, scan for symbol, ecdr(ref)->car
+	       *   but only if ecdr not already set by previous (inner) binding -- how to insure
+	       *   it is not left over from previous?
+	       */
 	    }
 	  break;
 
@@ -32975,8 +33011,9 @@ s7_scheme *s7_init(void)
   (*(sc->gc_off)) = false;
 
   /* pws first so that make-procedure-with-setter has a type tag */
-  s7_define_safe_function(sc, "make-procedure-with-setter", g_make_procedure_with_setter, 2, 0, false, H_make_procedure_with_setter);
-  s7_define_safe_function(sc, "procedure-with-setter?",     g_is_procedure_with_setter,   1, 0, false, H_is_procedure_with_setter);
+  s7_define_safe_function(sc, "make-procedure-with-setter",   g_make_procedure_with_setter,   2, 0, false, H_make_procedure_with_setter);
+  s7_define_safe_function(sc, "procedure-with-setter?",       g_is_procedure_with_setter,     1, 0, false, H_is_procedure_with_setter);
+  s7_define_safe_function(sc, "procedure-with-setter-setter", g_procedure_with_setter_setter, 1, 0, false, H_procedure_with_setter_setter);
   pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
   
 
@@ -33302,9 +33339,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "hook-apply",                     g_hook_apply,               1, 0, true,  H_hook_apply);
   s7_define_safe_function(sc, "hook-arity",                g_hook_arity,               1, 0, false, H_hook_arity);
   s7_define_safe_function(sc, "hook-documentation",        g_hook_documentation,       1, 0, false, H_hook_documentation);
-  s7_define_variable(sc, "hook-functions", 
-		     s7_make_procedure_with_setter(sc, "hook-functions", g_hook_functions, 1, 0, g_hook_set_functions, 2, 0, H_hook_functions));
-
+  s7_define_function_with_setter(sc, "hook-functions",     g_hook_functions, g_hook_set_functions, 1, 0, H_hook_functions);
 
   s7_define_function(sc, "call/cc",                        g_call_cc,                  1, 0, false, H_call_cc);
   s7_define_function(sc, "call-with-current-continuation", g_call_cc,             1, 0, false, H_call_cc);
@@ -33451,11 +33486,10 @@ the error type and the info passed to the error handler.");
 
 
   /* the next two are for the test suite */
-  s7_define_variable(sc, "-s7-symbol-table-locked?", 
-		     s7_make_procedure_with_setter(sc, "-s7-symbol-table-locked?", 
-						   g_symbol_table_is_locked, 0, 0, 
-						   g_set_symbol_table_is_locked, 1, 0, 
-						   H_symbol_table_is_locked));
+  s7_make_procedure_with_setter(sc, "-s7-symbol-table-locked?", 
+				g_symbol_table_is_locked, 0, 0, 
+				g_set_symbol_table_is_locked, 1, 0, 
+				H_symbol_table_is_locked);
   s7_define_function(sc, "-s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
 
 
@@ -33685,4 +33719,25 @@ the error type and the info passed to the error handler.");
 
 /* 
  * can do opt use any safe function?
+ * if at read time, let has its standard meaning, can we tie in the let vars wherever found?
+ *   others: letrec, let*, lambda pars, do
+ *   every ref to a var being tied to the slot established by new_frame during evaluation
+ *   ecdr->let decl, evalled its ecdr->slot, so set/ref cdr(ecdr(ecdr)) in all cases,
+ *   except local defines.  (the 1st ecdr at read time, the decl ecdr at eval time).
+ */
+
+/* we need an aliased vector type that looks like a vector in scheme
+ *   but actually is an overlay on C floats/doubles/ints/etc
+ *
+ * with this, I can collapse out all the endless array types in Snd/sndlib
+ *   at least in s7-Snd.  mixer -> multidim aliased vector, frame/vct->aliased vector,
+ *   perhaps sound-data->multidim?  Also all the mus-data cases.
+ *
+ * T_REAL|INTEGER|COMPLEX|CHAR|STRING|_VECTOR
+ *   then a package tying all gsl into s7 or fftw etc
+ *
+ * in any case, sound-data-ref in sndlib should not use pws
+ */
+
+/* count frames -- perhaps use a stack here also
  */

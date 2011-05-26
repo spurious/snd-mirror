@@ -8412,11 +8412,11 @@ The "output" argument can be a vct or a sound-data object, as well as a frame-&g
 <p>Locsig can send output to any number of channels.
 If channels &gt; 2, the speakers are assumed to be evenly spaced in
 a circle.
-You can use locsig-set! and locsig-ref to override the placement decisions.
+You can use locsig-set! to override the placement decisions.
 To have full output to both channels,</p>
 <pre>
-(set! (locsig-ref loc 0) 1.0) ; or (<a class=quiet href="#locsig-set!" onmouseout="UnTip()" onmouseover="Tip(sndclm_locsig_set_tip)">locsig-set!</a> loc 0 1.0)
-(set! (locsig-ref loc 1) 1.0)
+(locsig-set! loc 0 1.0) 
+(locsig-set! loc 1 1.0)
 </pre>
 
 <p>Here is an instrument that has envelopes on the distance and degrees, and optionally reverberates a file:
@@ -8441,11 +8441,11 @@ To have full output to both channels,</p>
              (degval (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> deg-env))
 	     (distval (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> dist-env)))
          (set! dist-scaler (/ 1.0 distval))
-         (set! (<em class=red>locsig-ref</em> loc 0) (* (- 1.0 degval) dist-scaler))
+         (locsig-set! loc 0 (* (- 1.0 degval) dist-scaler))
          (if (&gt; (channels <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_output_tip)">*output*</a>) 1)
-             (set! (<em class=red>locsig-ref</em> loc 1) (* degval dist-scaler)))
+             (locsig-set! loc 1 (* degval dist-scaler)))
          (if <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_reverb_tip)">*reverb*</a> 
-             (set! (<em class=red>locsig-reverb-ref</em> loc 0) (* reverb-amount (sqrt dist-scaler))))
+             (locsig-reverb-set! loc 0 (* reverb-amount (sqrt dist-scaler))))
          (<em class=red>locsig</em> loc i rdval))))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:reverb jc-reverb :channels 2) 

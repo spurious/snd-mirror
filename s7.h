@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.86"
-#define S7_DATE "18-May-11"
+#define S7_VERSION "1.87"
+#define S7_DATE "26-May-11"
 
 
 typedef long long int s7_Int;
@@ -570,6 +570,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, in
 void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc);
+  /* this is now the same as s7_make_procedure_with_setter (different args) */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
@@ -593,8 +594,6 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
    *
    *     s7_define_function(sc, "car", g_car, 1, 0, false, "(car obj)");
    *                                          one required arg, no optional arg, no "rest" arg
-   *
-   * s7_define_function_with_setter defined a procedure-with-setter.
    *
    * s7_is_function returns true if its argument is a function defined in this manner.
    * s7_apply_function applies the function (the result of s7_make_function) to the arguments.
@@ -664,8 +663,8 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 					 s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
 					 int set_req_args, int set_opt_args,
 					 const char *documentation);
-s7_pointer s7_procedure_with_setter_setter(s7_pointer obj);
-s7_pointer s7_procedure_with_setter_getter(s7_pointer obj);
+s7_pointer s7_procedure_with_setter_setter(s7_scheme *sc, s7_pointer obj);
+s7_pointer s7_procedure_with_setter_getter(s7_scheme *sc, s7_pointer obj);
 
   /* a procedure_with_setter is an object that can be called either as a normal function,
    *   or as the object of set!  There is an extended example in s7.html.  The 'getter'
@@ -677,8 +676,6 @@ s7_pointer s7_procedure_with_setter_getter(s7_pointer obj);
    *     (set! (dac-x obj) value) sets that field to value
    *   
    * In the set! case, the new value is the last of the args passed to the setter.
-   * s7_make_procedure_with_setter is equivalent to s7_make_function, so to bind it
-   *   to some name, you need to call s7_define_variable.
    */
 
 
@@ -857,6 +854,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 26-May:    added s7_scheme argument to s7_procedure_with_setter_setter and getter.
  * 28-Apr:    s7_help.
  * 5-Apr:     pair-line-number.
  * 23-Mar:    s7_catch_all.

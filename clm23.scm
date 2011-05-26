@@ -2589,11 +2589,11 @@
 	     (degval (env deg-env))
 	     (distval (env dist-env)))
 	 (set! dist-scaler (/ 1.0 distval))
-	 (set! (locsig-ref loc 0) (* (- 1.0 degval) dist-scaler))
+	 (locsig-set! loc 0 (* (- 1.0 degval) dist-scaler))
 	 (if (> (channels *output*) 1)
-	     (set! (locsig-ref loc 1) (* degval dist-scaler)))
+	     (locsig-set! loc 1 (* degval dist-scaler)))
 	 (if *reverb* 
-	     (set! (locsig-reverb-ref loc 0) (* reverb-amount (sqrt dist-scaler))))
+	     (locsig-reverb-set! loc 0 (* reverb-amount (sqrt dist-scaler))))
 	 (locsig loc i rdval))))))
 
 (define (sndclmdoc-simple-dloc beg dur freq amp)
