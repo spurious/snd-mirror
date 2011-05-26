@@ -1861,6 +1861,7 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 }
 
 
+#if (!HAVE_SCHEME)
 static XEN g_oscil(XEN os, XEN fm, XEN pm)
 {
   #define H_oscil "(" S_oscil " gen (fm 0.0) (pm 0.0)): next sample from " S_oscil " gen: val = sin(phase + pm); phase += (freq + fm)"
@@ -1872,6 +1873,45 @@ static XEN g_oscil(XEN os, XEN fm, XEN pm)
 
   return(C_TO_XEN_DOUBLE(mus_oscil(XEN_TO_MUS_ANY(os), fm1, pm1)));
 }
+
+#else
+/* an experiment -- this appears to be about 1/3 faster then g_oscil + argified g_oscil_w
+ */
+
+static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
+{
+  #define H_oscil "(" S_oscil " gen (fm 0.0) (pm 0.0)): next sample from " S_oscil " gen: val = sin(phase + pm); phase += (freq + fm)"
+  s7_pointer obj;
+  obj = s7_car(args);
+  if (s7_object_type(obj) == mus_xen_tag)
+    {
+      mus_any *osc;
+      osc = (mus_any *)(((mus_xen *)s7_object_value(obj))->gen);
+      if (mus_oscil_p(osc))
+	{
+	  if (!s7_is_pair(s7_cdr(args)))
+	    return(s7_make_real(s7, mus_oscil_unmodulated(osc)));
+	  args = s7_cdr(args);
+	  obj = s7_car(args);
+	  if (s7_is_number(obj))
+	    {
+	      double fm;
+	      fm = s7_number_to_real(obj);
+	      if (!s7_is_pair(s7_cdr(args)))
+		return(s7_make_real(s7, mus_oscil_fm(osc, fm)));
+	      args = s7_cdr(args);
+	      obj = s7_car(args);
+	      if (s7_is_number(obj))
+		return(s7_make_real(s7, mus_oscil(osc, fm, s7_number_to_real(obj))));
+	      XEN_ASSERT_TYPE(false, obj, XEN_ARG_3, S_oscil, "a number");
+	    }
+	  XEN_ASSERT_TYPE(false, obj, XEN_ARG_2, S_oscil, "a number");
+	}
+    }
+  XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
+  return(s7_f(s7));
+}
+#endif
 
 
 static XEN g_oscil_p(XEN os) 
@@ -7831,7 +7871,9 @@ XEN_NARGIFY_1(g_mus_order_w, g_mus_order)
 XEN_NARGIFY_1(g_mus_data_w, g_mus_data)
 XEN_NARGIFY_2(g_mus_set_data_w, g_mus_set_data)
 XEN_NARGIFY_1(g_oscil_p_w, g_oscil_p)
+#if (!HAVE_SCHEME)
 XEN_ARGIFY_3(g_oscil_w, g_oscil)
+#endif
 XEN_VARGIFY(g_mus_apply_w, g_mus_apply)
 XEN_VARGIFY(g_make_delay_w, g_make_delay)
 XEN_VARGIFY(g_make_comb_w, g_make_comb)

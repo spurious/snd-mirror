@@ -2588,7 +2588,7 @@ static s7_pointer g_symbol_calls(s7_scheme *sc, s7_pointer args)
       car(x) = Sc->NIL;                  \
       cdr(x) = Old_Env;		         \
       set_type(x, T_PAIR | T_ENVIRONMENT); \
-      New_Env = x;                       \
+      New_Env = x;		   \
      } while (0)
 
 
@@ -3118,14 +3118,14 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer make_closure(s7_scheme *sc, s7_pointer code, s7_pointer environment, int type) 
+static s7_pointer make_closure(s7_scheme *sc, s7_pointer code, int type) 
 {
   /* this is called every time a lambda form is evaluated, or during letrec, etc */
 
   s7_pointer x;
   NEW_CELL(sc, x);
   car(x) = code;
-  cdr(x) = environment;
+  cdr(x) = sc->envir;
   set_type(x, type | T_PROCEDURE | T_DONT_COPY);
   return(x);
 }
@@ -3137,7 +3137,10 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
    *   (define (proc a b) (+ a b)) becomes
    *   make_closure ((a b) (+ a b)) e
    */
-  return(make_closure(sc, c, e, T_CLOSURE));
+  s7_pointer p;
+  p = make_closure(sc, c, T_CLOSURE);
+  cdr(p) = e;
+  return(p);
 }
 
 
@@ -16306,7 +16309,6 @@ returns the next (key . value) pair in the hash-table each time it is called.  W
 				      make_list_2(sc, sc->HASH_TABLE_ITERATE,
 						  make_list_2(sc, sc->QUOTE, 
 							      make_list_3(sc, sc->NIL, car(args), make_mutable_integer(sc, -1))))),
-		      sc->envir,
 		      T_CLOSURE));
 }
 
@@ -17821,7 +17823,6 @@ In each case, the argument is the value of the object, not the object itself."
     car(result) = make_closure(sc, make_list_2(sc, 
 					       make_list_1(sc, sc->S_TYPE_ARG),
 					       make_list_3(sc, sc->S_IS_TYPE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
-			       sc->envir,
 			       T_CLOSURE);
 
     /* make method: (lambda* (arg) (s_type_make tag arg))
@@ -17830,7 +17831,6 @@ In each case, the argument is the value of the object, not the object itself."
     cadr(result) = make_closure(sc, make_list_2(sc, 
 						make_list_1(sc, sc->S_TYPE_ARG),
 						make_list_3(sc, sc->S_TYPE_MAKE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
-				sc->envir,
 				T_CLOSURE_STAR);
 
     /* ref method: (lambda (arg) (s_type_ref arg))
@@ -17839,7 +17839,6 @@ In each case, the argument is the value of the object, not the object itself."
     caddr(result) = make_closure(sc, make_list_2(sc, 
 						 make_list_1(sc, sc->S_TYPE_ARG),
 						 make_list_3(sc, sc->S_TYPE_REF, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
-				 sc->envir,
 				 T_CLOSURE);
     s7_gc_unprotect_at(sc, result_loc);
     return(result);
@@ -25710,7 +25709,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (sc->op == OP_DEFINE_STAR)
 	      {
 		check_lambda_star_args(sc); /* may affect sc->x et al */
-		sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
+		sc->value = make_closure(sc, sc->code, T_CLOSURE_STAR);
 	      }
 	    else
 	      {
@@ -26272,7 +26271,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->args = cons(sc, caar(sc->x), sc->args);
 	  /* perhaps we could mimic the "do" setp var handling here to avoid the consing */
 	  
-	  sc->x = s7_make_closure(sc, cons(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code)), sc->envir); 
+	  sc->x = make_closure(sc, cons(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code)), T_CLOSURE);
 	  if (is_not_null(find_local_symbol(sc, sc->envir, car(sc->code))))                              /* (let loop ((i 0) (loop 1)) i) */
 	    return(eval_error(sc, "named let name collides with a let variable: ~A", car(sc->code)));
 
@@ -26806,7 +26805,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "lambda: no args or no body? ~A", sc->code));
 
       check_lambda_args(sc);
-      /* sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE); */
+      /* sc->value = make_closure(sc, sc->code, T_CLOSURE); */
       NEW_CELL(sc, sc->value);
       car(sc->value) = sc->code;
       cdr(sc->value) = sc->envir;
@@ -26820,7 +26819,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "lambda*: no args or no body? ~A", sc->code));
 
       check_lambda_star_args(sc);
-      sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
+      sc->value = make_closure(sc, sc->code, T_CLOSURE_STAR);
       goto START;
       
       
@@ -33719,11 +33718,6 @@ the error type and the info passed to the error handler.");
 
 /* 
  * can do opt use any safe function?
- * if at read time, let has its standard meaning, can we tie in the let vars wherever found?
- *   others: letrec, let*, lambda pars, do
- *   every ref to a var being tied to the slot established by new_frame during evaluation
- *   ecdr->let decl, evalled its ecdr->slot, so set/ref cdr(ecdr(ecdr)) in all cases,
- *   except local defines.  (the 1st ecdr at read time, the decl ecdr at eval time).
  */
 
 /* we need an aliased vector type that looks like a vector in scheme
@@ -33735,9 +33729,4 @@ the error type and the info passed to the error handler.");
  *
  * T_REAL|INTEGER|COMPLEX|CHAR|STRING|_VECTOR
  *   then a package tying all gsl into s7 or fftw etc
- *
- * in any case, sound-data-ref in sndlib should not use pws
- */
-
-/* count frames -- perhaps use a stack here also
  */

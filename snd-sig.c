@@ -5989,7 +5989,7 @@ typedef struct {
 #define EVEN 2
 #define PRIME 3
 
-#define FFT_MULT 500
+#define FFT_MULT 200
   /* if 64, errors or .005 are common 
    * if 128, which works in 99% of the cases, errors can be as much as .002
    */
@@ -6003,7 +6003,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   #define INCR_DOWN 0.9
   #define INCR_MAX 1.0
-  #define INCR_MIN 0.0001
+  #define INCR_MIN 0.0005
   #define RETRIES 10
   #define RETRY_MULT 2
   #define INIT_TRIES 1000
@@ -6695,7 +6695,7 @@ static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
 
       for (current_choice = 0; current_choice < size; current_choice++)
 	{
-	  for (counter = 1; counter < 100000; counter++)
+	  for (counter = 1; counter < 10000; counter++)
 	    {
 	      int k, bits, cur;
 	      big_counter++;
