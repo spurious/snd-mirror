@@ -1398,7 +1398,7 @@ static XEN call_set_method(XEN gen, XEN value, const char *method_name)
     {
 #if HAVE_SCHEME
       if (s7_is_procedure_with_setter(XEN_CADR(pair)))
-	return(XEN_CALL_2(s7_procedure_with_setter_setter(s7, XEN_CADR(pair)),
+	return(XEN_CALL_2(s7_procedure_setter(s7, XEN_CADR(pair)),
 			  gen, value,
 			  method_name));	  
 #endif
@@ -1427,7 +1427,7 @@ static XEN call_set_method_2(XEN gen, XEN arg, XEN value, const char *method_nam
     {
 #if HAVE_SCHEME
       if (s7_is_procedure_with_setter(XEN_CADR(pair)))
-	return(XEN_CALL_3(s7_procedure_with_setter_setter(s7, XEN_CADR(pair)),
+	return(XEN_CALL_3(s7_procedure_setter(s7, XEN_CADR(pair)),
 			  gen, arg, value,
 			  method_name));	  
 #endif

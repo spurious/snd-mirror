@@ -516,8 +516,8 @@
   "set proc accepts args"
   (let ((arity (if (procedure-with-setter? func)
 		   (cdddr (procedure-arity func))
-		   (and (procedure? (procedure-with-setter-setter func))
-			(procedure-arity (procedure-with-setter-setter func))))))
+		   (and (procedure? (procedure-setter func))
+			(procedure-arity (procedure-setter func))))))
     (and (pair? arity)
 	 (>= args (car arity))
 	 (or (and (pair? (cddr arity))

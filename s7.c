@@ -2214,6 +2214,7 @@ static void pop_stack(s7_scheme *sc)
   sc->code =  sc->stack_end[0];
 } 
 
+
 static void push_stack(s7_scheme *sc, s7_pointer int_op, s7_pointer args, s7_pointer code)
 { 
   sc->stack_end[0] = code;
@@ -10197,7 +10198,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY); /* should this follow the malloc? */
+  set_type(x, T_STRING | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY | T_SAFE_PROCEDURE); /* should this follow the malloc? */
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
     memcpy((void *)string_value(x), (void *)str, len + 1);
@@ -10212,7 +10213,7 @@ static s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const cha
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY); /* should this follow the malloc? */
+  set_type(x, T_STRING | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY | T_SAFE_PROCEDURE); /* should this follow the malloc? */
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
     memcpy((void *)string_value(x), (void *)str, len);
@@ -10227,7 +10228,7 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_STRING | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY | T_SAFE_PROCEDURE);
   string_value(x) = str;
   string_length(x) = len;
   string_hash(x) = 0;
@@ -10239,7 +10240,7 @@ static s7_pointer make_protected_string(s7_scheme *sc, const char *str)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_STRING | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY | T_SAFE_PROCEDURE);
   string_value(x) = (char *)str;
   string_length(x) = safe_strlen(str);
   string_hash(x) = 0;
@@ -14595,6 +14596,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 
       /* now maybe there's a simple case */
       if ((is_safe_procedure(eq_func)) &&
+	  (is_c_function(eq_func)) &&
 	  ((s7_list_length(sc, cadr(args))) > 0))
 	{
 	  s7_pointer p;
@@ -14798,6 +14800,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
       
       /* now maybe there's a simple case */
       if ((is_safe_procedure(eq_func)) &&
+	  (is_c_function(eq_func)) &&
 	  ((s7_list_length(sc, x)) > 0))
 	{
 	  s7_pointer p;
@@ -15016,7 +15019,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
   NEW_CELL(sc, x);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
 
   /* in the multithread case, we can be interrupted here, and a subsequent GC mark sweep can see
    *    this half-allocated vector.  If length>0, and a non-null "elements" field is left over
@@ -15737,7 +15740,8 @@ If its first argument is a list, the list is copied (despite the '!')."
       len = vector_length(data);
 
 #if (!HAVE_PTHREADS)
-      if (is_safe_procedure(lessp))
+      if ((is_safe_procedure(lessp)) &&
+	  (is_c_function(lessp)))
 	{
 	  int gc_loc;
 	  compare_sc = sc;
@@ -15846,7 +15850,7 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
   table = s7_make_vector(sc, size + 1);   /* nil is the default value */
   /* size + 1 can be fooled if we don't catch most-positive-fixnum */
 
-  set_type(table, T_HASH_TABLE | T_FINALIZABLE | T_DONT_COPY);
+  set_type(table, T_HASH_TABLE | T_FINALIZABLE | T_DONT_COPY | T_SAFE_PROCEDURE);
   hash_table_function(table) = HASH_EMPTY;
   hash_table_entries(table) = 0;
 
@@ -16958,10 +16962,10 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
   
   if (s7_is_procedure_with_setter(x))
     {
-      if (is_not_null(s7_procedure_with_setter_getter(sc, x)))
+      if (is_not_null(s7_procedure_getter(sc, x)))
 	return(append_in_place(sc, 
-			       s7_procedure_arity(sc, s7_procedure_with_setter_getter(sc, x)),
-			       s7_procedure_arity(sc, s7_procedure_with_setter_setter(sc, x))));
+			       s7_procedure_arity(sc, s7_procedure_getter(sc, x)),
+			       s7_procedure_arity(sc, s7_procedure_setter(sc, x))));
 
       return(pws_arity(sc, x));
     }
@@ -17204,7 +17208,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   c_object_value(x) = value;
   set_type(x, T_C_OBJECT | T_FINALIZABLE | T_DONT_COPY); /* free_object checks that the free function exists */
   if (object_types[type].apply)
-    typeflag(x) |= T_PROCEDURE;
+    typeflag(x) |= T_PROCEDURE; /* this is not always safe (pws) */
   return(x);
 }
 
@@ -18053,7 +18057,7 @@ bool s7_is_procedure_with_setter(s7_pointer obj)
 }
 
 
-s7_pointer s7_procedure_with_setter_getter(s7_scheme *sc, s7_pointer obj)
+s7_pointer s7_procedure_getter(s7_scheme *sc, s7_pointer obj)
 {
   if (is_c_function(obj))
     return(obj);
@@ -18069,7 +18073,7 @@ s7_pointer s7_procedure_with_setter_getter(s7_scheme *sc, s7_pointer obj)
 }
 
 
-s7_pointer s7_procedure_with_setter_setter(s7_scheme *sc, s7_pointer obj)
+s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
 {
   if (is_c_function(obj))
     return(c_function_setter(obj));
@@ -18085,12 +18089,12 @@ s7_pointer s7_procedure_with_setter_setter(s7_scheme *sc, s7_pointer obj)
 }
 
 
-static s7_pointer g_procedure_with_setter_setter(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
 {
-  #define H_procedure_with_setter_setter "(procedure-with-setter-setter obj) returns the setter associated with obj, or #f"
-  return(s7_procedure_with_setter_setter(sc, car(args)));
+  #define H_procedure_setter "(procedure-setter obj) returns the setter associated with obj, or #f"
+  return(s7_procedure_setter(sc, car(args)));
 }
-/* TODO: doc/test procedure-with-setter-setter */
+/* TODO: doc/test procedure-setter */
 /* TODO: change pws arity to refer just to the getter */
 
 
@@ -18159,8 +18163,8 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
       if (c_object_type(x) == pws_tag)
 	{
 	  s7_pws_t *f;
-	  if (is_not_null(s7_procedure_with_setter_getter(sc, x))) /* a scheme function in this case */
-	    return(args_match(sc, s7_procedure_with_setter_getter(sc, x), 2));
+	  if (is_not_null(s7_procedure_getter(sc, x))) /* a scheme function in this case */
+	    return(args_match(sc, s7_procedure_getter(sc, x), 2));
 
 	  f = (s7_pws_t *)s7_object_value(x);	  
 	  return((f->get_req_args <= args) &&
@@ -18193,8 +18197,8 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x)
       if (c_object_type(x) == pws_tag)
 	{
 	  s7_pws_t *f;
-	  if (is_not_null(s7_procedure_with_setter_getter(sc, x))) /* a scheme function in this case */
-	    return(is_thunk(sc, s7_procedure_with_setter_getter(sc, x)));
+	  if (is_not_null(s7_procedure_getter(sc, x))) /* a scheme function in this case */
+	    return(is_thunk(sc, s7_procedure_getter(sc, x)));
 
 	  f = (s7_pws_t *)s7_object_value(x);	  
 	  return((f->get_req_args == 0) &&
@@ -20420,14 +20424,14 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   catch_handler(p) = caddr(args);
   set_type(p, T_CATCH | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
 
-  push_stack(sc, opcode(OP_CATCH), sc->NIL, p);
+  push_stack(sc, opcode(OP_CATCH), sc->NIL, p);          /* {1} */
   /* I was hoping to avoid a push_stack here, but no luck.  This might be slightly faster than going to APPLY
    *
    *  sc->code = closure_body(cadr(args));
    *  NEW_FRAME(sc, closure_environment(cadr(args)), sc->envir);
    *  push_stack(sc, opcode(OP_BEGIN), sc->args, sc->code);
    */
-  push_stack(sc, opcode(OP_APPLY), sc->NIL, cadr(args));
+  push_stack(sc, opcode(OP_APPLY), sc->NIL, cadr(args)); /* {1} */
   return(sc->F);
 }
 
@@ -21529,7 +21533,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
       return(sc->value);
     }
 
-  push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
+  push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); /* {4} this saves the current evaluation and will eventually finish this (possibly) nested call */
   sc->args = args; 
   sc->code = func; 
 
@@ -21568,7 +21572,7 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
 
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 {
-  #define H_s7_version "(s7-version) returns some string describing the current S7"
+  #define H_s7_version "(s7-version) returns some string describing the current s7"
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
 }
 
@@ -21781,7 +21785,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	{
 	  /* one list arg -- special, but very common case */
 	  set_local(car(closure_args(sc->code)));
-	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), obj, sc->code);
+	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), obj, sc->code); /* [1] */
 	  return(sc->UNSPECIFIED);
 
 	  /* PERHAPS: this, and map, across a string (say) or other sequence involving
@@ -22029,6 +22033,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	    }
 
 	  if ((is_safe_procedure(sc->code)) &&
+	      (is_c_function(sc->code)) &&
 	      (args_match(sc, sc->code, 1)))
 	    {
 	      s7_pointer p;
@@ -23265,6 +23270,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 {
   s7_pointer x, syn;
   unsigned int loc = 0;
+
   x = symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name, &loc)); 
   symbol_hash(x) = loc;
 
@@ -23275,8 +23281,8 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 
   set_symbol_value(x, syn);
   symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS);
-
   typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC);
+
   return(x);
 }
 
@@ -23774,6 +23780,16 @@ static s7_pointer find_symbol_or_bust_5(s7_scheme *sc, s7_pointer env, s7_pointe
   FIND_SYMBOL_OR_BUST(sc);
 } 
 
+static s7_pointer find_symbol_or_bust_6(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
+static s7_pointer find_symbol_or_bust_7(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
 
 
 static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
@@ -23899,6 +23915,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc)
     }
   return(sc->F);
 }
+
 
 
 /* -------------------------------- eval -------------------------------- */
@@ -24321,7 +24338,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  ecdr(y) = car(sc->envir);
 	  car(sc->envir) = y;
 
-	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), cdr(sc->args), sc->code);
+	  push_stack(sc, opcode(OP_FOR_EACH_SIMPLE), cdr(sc->args), sc->code); /* [3] {1} */
 	  sc->code = closure_body(sc->code);
 	  goto BEGIN;
 	}
@@ -24450,7 +24467,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       
       /* here we know car(sc->args) is not null */
-      push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
+      push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);       /* {7} */
       sc->args = car(sc->args);                /* the var data lists */
       sc->code = sc->args;                     /* save the top of the list */
 
@@ -24670,12 +24687,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* end test is #f, evaluate body (sc->code is ready to go) */
 		if (is_null(car(sc->args)))
 		  push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
-		else push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
+		else push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code); /* 1 {4} */
 		goto BEGIN;
 	      }
 	  }
 
-	  push_stack(sc, opcode(OP_DO_END1), sc->args, sc->code);
+	  push_stack(sc, opcode(OP_DO_END1), sc->args, sc->code);  /* {3} */
 	  sc->code = caadr(sc->args);               /* evaluate the end expr */
 	  goto EVAL;
 	}
@@ -24696,7 +24713,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* evaluate the body and step vars, etc */
 	  if (is_null(car(sc->args)))
 	    push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
-	  else push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
+	  else push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code); /* {3} */
 	  /* sc->code is ready to go */
 	}
       /* fall through */
@@ -24728,7 +24745,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       if (type(cdr(sc->code)) != T_NIL)
-	push_stack(sc, opcode(OP_BEGIN), sc->NIL, cdr(sc->code));
+	push_stack(sc, opcode(OP_BEGIN), sc->NIL, cdr(sc->code)); /* 3 [11] {12} */
       
       sc->code = car(sc->code);
       sc->cur_code = sc->code;               /* in case error occurs, this helps tell us where we are */
@@ -24740,7 +24757,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* main part of evaluation 
        *   at this point, it's sc->code we care about; sc->args is not relevant.
        */
-
       if (is_pair(sc->code))
 	{
 	  s7_pointer carc;
@@ -24836,6 +24852,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* (define progn begin)
 	   * (progn (display "hi") (+ 1 23))
 	   */
+	  if (syntax_opcode(sc->value) == -1)                /* ('and #f) */
+	    return(apply_error(sc, sc->value, sc->code));
 	  sc->op = (opcode_t)syntax_opcode(sc->value);
 	  goto START_WITHOUT_POP_STACK;
 	}
@@ -24918,8 +24936,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (typ == T_PAIR)
 	    {
 	      if (is_null(cdr(sc->code)))
-		push_stack(sc, opcode(OP_EVAL_ARGS2), sc->args, sc->NIL);
-	      else push_stack(sc, opcode(OP_EVAL_ARGS1), sc->args, cdr(sc->code));
+		push_stack(sc, opcode(OP_EVAL_ARGS2), sc->args, sc->NIL);           /* 21 [17] {14} */
+	      else push_stack(sc, opcode(OP_EVAL_ARGS1), sc->args, cdr(sc->code));  /* 27 [8] {10} */
 	      sc->code = car_code;
 	      goto EVAL_PAIR;
 	    }
@@ -24951,7 +24969,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      cdr(x) = sc->args;
 		      set_type(x, T_PAIR);
 
-		      push_stack(sc, opcode(OP_EVAL_ARGS2), x, sc->NIL);
+		      push_stack(sc, opcode(OP_EVAL_ARGS2), x, sc->NIL); /* 3 [4] {10} */
 		      sc->code = car_code;
 		      goto EVAL_PAIR;
 		    }
@@ -25001,7 +25019,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  cdr(x) = sc->args;
 		  set_type(x, T_PAIR);
 		  sc->args = x;
-
 		  goto EVAL_ARGS_PAIR;
 		}
 	      /* I don't think it's useful to split out the 2-args-from-the-end case here.
@@ -25037,9 +25054,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(x) = symbol_value(symbol_global_slot(car_code));
 		  else 
 		    {
-		      /* in this one case, valgrind thinks this code is better -- I bet
-		       *   this is all someone's idea of a joke.
-		       */
+		      /* in this one case, valgrind thinks this code is better */
 		      s7_pointer xx;
 		      xx = find_symbol(sc, sc->envir, car_code);
 		      if (type(xx) != T_NIL)
@@ -25048,7 +25063,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		}
 	      else car(x) = car_code;
-
 	      cdr(x) = sc->args;
 	      if (type(sc->args) != T_NIL)
 		sc->args = safe_reverse_in_place(sc, x);
@@ -25947,7 +25961,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  push_op_stack(sc, sc->OBJECT_SET);
 		  if (is_pair(cdar(sc->code)))
 		    {
-		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code))); /* {3} */
 		      sc->code = cadar(sc->code);
 		    }
 		  else /* (set! (window-width) 800) -> ((window-width) 800) so cdar(sc->code) is nil */
@@ -26044,17 +26058,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    default:                                         /* (set! (1 2) 3) */
 	      return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	    }
+	  sc->x = sc->NIL;
+	  goto EVAL;
 	}
       else
 	{
+	  s7_pointer x;
 	  if (!s7_is_symbol(car(sc->code)))                  /* (set! 12345 1) */
 	    return(eval_error(sc, "set! can't change ~S", car(sc->code)));
 	  
-	  push_stack(sc, opcode(OP_SET1), sc->NIL, car(sc->code));
-	  sc->code = cadr(sc->code);
+	  x = cadr(sc->code);
+	  if (is_pair(x))
+	    {
+	      push_stack(sc, opcode(OP_SET1), sc->NIL, car(sc->code)); /* orig [3] {5} */
+	      sc->code = x;
+	      goto EVAL_PAIR;
+	    }
+
+	  if (s7_is_symbol(x))
+	    {
+	      if (is_global(x))
+		sc->value = symbol_value(symbol_global_slot(x));
+	      else sc->value = find_symbol_or_bust_7(sc, sc->envir, x);
+	    }
+	  else sc->value = x;
+	  sc->code = car(sc->code);
 	}
-      sc->x = sc->NIL;
-      goto EVAL;
       
       
     case OP_SET1:  
@@ -26122,7 +26151,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 *   but it turns out this happens infrequently, and the cost of checking outweighs
 	 *   the small gains.
 	 */
-	push_stack(sc, opcode(OP_IF1), sc->NIL, cdr_code);
+	push_stack(sc, opcode(OP_IF1), sc->NIL, cdr_code); /* 6 [20] {10} */
 	sc->code = car(sc->code);
 	goto EVAL;
       }
@@ -26174,19 +26203,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if ((s7_is_symbol(car(sc->code))) &&
 	  ((!s7_is_list(sc, cadr(sc->code))) ||  /* (let hi #t) */
-	   (is_null(cddr(sc->code)))))         /* (let hi ()) */
+	   (is_null(cddr(sc->code)))))           /* (let hi ()) */
       	return(eval_error(sc, "named let variable list is messed up or missing: ~A", sc->code));
 
       sc->args = sc->NIL;
       sc->value = sc->code;
       sc->code = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code);
-      if (is_null(sc->code))                  /* (let () ...):  no bindings, so skip that step */
+      if (is_null(sc->code))                    /* (let () ...):  no bindings, so skip that step */
 	{
 	  sc->code = sc->value;
 	  goto LET2;
 	}
 
       
+    LET1:
     case OP_LET1:       /* let -- calculate parameters */
       /* sc->args = cons(sc, sc->value, sc->args); */
       {
@@ -26200,23 +26230,41 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (is_pair(sc->code)) 
 	{ 
-	  if (!is_pair(car(sc->code)))          /* (let ((x)) ...) or (let ((x 1) . (y 2)) ...) */
-	    return(eval_error(sc, "let variable declaration, but no value?: ~A", car(sc->code)));
+	  s7_pointer x;
+	  x = car(sc->code);
 
-	  if (!(is_pair(cdar(sc->code))))       /* (let ((x . 1))...) */
-	    return(eval_error(sc, "let variable declaration is not a proper list?: ~A", car(sc->code)));
+	  if (!is_pair(x))          /* (let ((x)) ...) or (let ((x 1) . (y 2)) ...) */
+	    return(eval_error(sc, "let variable declaration, but no value?: ~A", x));
 
-	  if (is_not_null(cddar(sc->code)))       /* (let ((x 1 2 3)) ...) */
-	    return(eval_error(sc, "let variable declaration has more than one value?: ~A", car(sc->code)));
+	  if (!(is_pair(cdr(x))))       /* (let ((x . 1))...) */
+	    return(eval_error(sc, "let variable declaration is not a proper list?: ~A", x));
+
+	  if (is_not_null(cddr(x)))       /* (let ((x 1 2 3)) ...) */
+	    return(eval_error(sc, "let variable declaration has more than one value?: ~A", x));
 
 	  /* currently if the extra value involves a read error, we get a kind of panicky-looking message:
 	   *   (let ((x . 2 . 3)) x)
 	   *   ;let variable declaration has more than one value?: (x error error "stray dot?: ...  ((x . 2 . 3)) x) ..")
 	   */
 
-	  push_stack(sc, opcode(OP_LET1), sc->args, cdr(sc->code));
-	  sc->code = cadar(sc->code);
-	  goto EVAL;
+	  x = cadr(x);
+
+	  if (is_pair(x))
+	    {
+	      push_stack(sc, opcode(OP_LET1), sc->args, cdr(sc->code)); /* 2 [6] {5} */
+	      sc->code = x;
+	      goto EVAL_PAIR;
+	    }
+
+	  if (s7_is_symbol(x))
+	    {
+	      if (is_global(x))
+		sc->value = symbol_value(symbol_global_slot(x));
+	      else sc->value = find_symbol_or_bust_6(sc, sc->envir, x);
+	    }
+	  else sc->value = x;
+	  sc->code = cdr(sc->code);
+	  goto LET1;
 	}
 
       /* we accept (let ((:hi 1)) :hi)
@@ -26350,7 +26398,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (!is_pair(cdar(sc->code)))            /* (let* ((a 1) (b . 2)) ...) */
 	    return(eval_error(sc, "let* variable list is messed up? ~A", sc->code));
 
-	  push_stack(sc, opcode(OP_LET_STAR1), sc->args, sc->code);
+	  push_stack(sc, opcode(OP_LET_STAR1), sc->args, sc->code); /* 1 {1} */
 	  sc->code = cadar(sc->code);
 	  goto EVAL;
 	} 
@@ -26534,7 +26582,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       if (is_not_null(cdr(sc->code)))
-	push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code));
+	push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code)); /* 4 [10] */
       sc->code = car(sc->code);
       goto EVAL_PAIR;
 
@@ -26572,7 +26620,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       if (is_not_null(cdr(sc->code)))
-	push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
+	push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code)); /* 5 [9] {1} */
       sc->code = car(sc->code);
       goto EVAL_PAIR;
 
@@ -27297,7 +27345,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	default:
 	  /* by far the main case here is TOKEN_LEFT_PAREN, but it doesn't save anything to move it to this level */
-	  push_stack(sc, opcode(OP_READ_LIST), sc->args, sc->NIL);
+	  push_stack(sc, opcode(OP_READ_LIST), sc->args, sc->NIL); /* 4 [1] */
 	  sc->value = read_expression(sc);
 	  /* check for op_read_list here and explicit pop_stack are slower */
 	  break;
@@ -27397,6 +27445,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     default:
+      /* fprintf(stderr, "unknown operator: %d\n", (int)(sc->op)); */
       return(eval_error(sc, "~A: unknown operator!", s7_make_integer(sc, sc->op))); /* not small_int because it's bogus */
     }
 
@@ -33012,7 +33061,7 @@ s7_scheme *s7_init(void)
   /* pws first so that make-procedure-with-setter has a type tag */
   s7_define_safe_function(sc, "make-procedure-with-setter",   g_make_procedure_with_setter,   2, 0, false, H_make_procedure_with_setter);
   s7_define_safe_function(sc, "procedure-with-setter?",       g_is_procedure_with_setter,     1, 0, false, H_is_procedure_with_setter);
-  s7_define_safe_function(sc, "procedure-with-setter-setter", g_procedure_with_setter_setter, 1, 0, false, H_procedure_with_setter_setter);
+  s7_define_safe_function(sc, "procedure-setter",             g_procedure_setter, 1, 0, false, H_procedure_setter);
   pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
   
 
@@ -33031,7 +33080,7 @@ s7_scheme *s7_init(void)
 #if WITH_PROFILING
   s7_define_safe_function(sc, "symbol-calls",              g_symbol_calls,             1, 0, false, H_symbol_calls);
 #endif
-  s7_define_function_with_setter(sc, "symbol-access", g_symbol_get_access, g_symbol_set_access, 1, 0, H_symbol_access);
+  s7_define_function_with_setter(sc, "symbol-access",      g_symbol_get_access, g_symbol_set_access, 1, 0, H_symbol_access);
   
   s7_define_safe_function(sc, "global-environment",        g_global_environment,       0, 0, false, H_global_environment);
   s7_define_safe_function(sc, "current-environment",       g_current_environment,      0, CURRENT_ENVIRONMENT_OPTARGS, false, H_current_environment);

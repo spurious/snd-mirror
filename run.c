@@ -12048,13 +12048,13 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 	  if (use_getter == USE_GET_METHOD)
 	    {
 	      if (s7_is_procedure_with_setter(scheme_cadr(pair)))
-		result = splice_in_function_body(prog, s7_procedure_with_setter_getter(s7, scheme_cadr(pair)), args, num_args, NULL);
+		result = splice_in_function_body(prog, s7_procedure_getter(s7, scheme_cadr(pair)), args, num_args, NULL);
 	      else result = splice_in_function_body(prog, scheme_cadr(pair), args, num_args, NULL);
 	    }
 	  else
 	    {
 	      if (s7_is_procedure_with_setter(scheme_cadr(pair)))
-		result = splice_in_function_body(prog, s7_procedure_with_setter_setter(s7, scheme_cadr(pair)), args, num_args, NULL);
+		result = splice_in_function_body(prog, s7_procedure_setter(s7, scheme_cadr(pair)), args, num_args, NULL);
 	      else result = splice_in_function_body(prog, scheme_caddr(pair), args, num_args, NULL);
 	    }
 	}

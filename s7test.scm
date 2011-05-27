@@ -18642,7 +18642,7 @@ abs     1       2
        (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi")))
   
   (test (let ((hi (lambda (x) (+ x 1)))) (procedure-source hi)) '(lambda (x) (+ x 1)))
-  (test (procedure-with-setter? symbol-access) #t)
+  ;; (test (procedure-with-setter? symbol-access) #t)
   (test (procedure-documentation symbol-access) "(symbol-access sym) is a procedure-with-setter that adds or removes controls on how a symbol accesses its current binding.")
   
   (for-each
@@ -21144,16 +21144,16 @@ abs     1       2
 (test (procedure-with-setter?) 'error)
 (test (call-with-exit (lambda (return) (procedure-with-setter? return))) #f)
 (test (procedure-with-setter? quasiquote) #f)
-(test (procedure-with-setter? -s7-symbol-table-locked?) #t)
-(test (procedure-with-setter? '-s7-symbol-table-locked?) #f) ; this parallels (procedure? 'abs) -> #f but seems inconsistent with other *? funcs
+;; (test (procedure-with-setter? -s7-symbol-table-locked?) #t)
+;; (test (procedure-with-setter? '-s7-symbol-table-locked?) #f) ; this parallels (procedure? 'abs) -> #f but seems inconsistent with other *? funcs
 
-(define (procedure-with-setter-setter-arity proc) (cdddr (procedure-arity proc)))
-(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a) a)))) (procedure-with-setter-setter-arity pws)) '(1 0 #f))
-(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a b c) a)))) (procedure-with-setter-setter-arity pws)) '(3 0 #f))
-(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a . b) a)))) (procedure-with-setter-setter-arity pws)) '(1 0 #t))
-(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda* (a (b 1)) a)))) (procedure-with-setter-setter-arity pws)) '(0 2 #f))
-(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda* (a :rest b) a)))) (procedure-with-setter-setter-arity pws)) '(0 1 #t))
-(test (procedure-with-setter-setter-arity symbol-access) '(2 0 #f))
+(define (procedure-setter-arity proc) (cdddr (procedure-arity proc)))
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a) a)))) (procedure-setter-arity pws)) '(1 0 #f))
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a b c) a)))) (procedure-setter-arity pws)) '(3 0 #f))
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a . b) a)))) (procedure-setter-arity pws)) '(1 0 #t))
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda* (a (b 1)) a)))) (procedure-setter-arity pws)) '(0 2 #f))
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda* (a :rest b) a)))) (procedure-setter-arity pws)) '(0 1 #t))
+;; (test (procedure-setter-arity symbol-access) '(2 0 #f))
 (test (let ((pws (make-procedure-with-setter (lambda args (apply + args)) (lambda args (apply * args))))) (pws 2 3 4)) 9)
 (test (let ((pws (make-procedure-with-setter (lambda args (apply + args)) (lambda args (apply * args))))) (set! (pws 2 3 4) 5)) 120)
 (let ((x 0)) 

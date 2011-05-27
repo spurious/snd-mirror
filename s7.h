@@ -663,8 +663,8 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 					 s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
 					 int set_req_args, int set_opt_args,
 					 const char *documentation);
-s7_pointer s7_procedure_with_setter_setter(s7_scheme *sc, s7_pointer obj);
-s7_pointer s7_procedure_with_setter_getter(s7_scheme *sc, s7_pointer obj);
+s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj);
+s7_pointer s7_procedure_getter(s7_scheme *sc, s7_pointer obj);
 
   /* a procedure_with_setter is an object that can be called either as a normal function,
    *   or as the object of set!  There is an extended example in s7.html.  The 'getter'
@@ -821,6 +821,9 @@ void s7_mark_object(s7_pointer p);
 #define s7_UNDEFINED(Sc)   s7_undefined(Sc)
 #define s7_UNSPECIFIED(Sc) s7_unspecified(Sc)
 #define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
+
+#define s7_procedure_with_setter_getter(Sc, Obj) s7_procedure_getter(Sc, Obj)
+#define s7_procedure_with_setter_setter(Sc, Obj) s7_procedure_setter(Sc, Obj)
 #endif
 
 /* the following Scheme functions are not currently exported to C:
@@ -854,7 +857,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 26-May:    added s7_scheme argument to s7_procedure_with_setter_setter and getter.
+ * 26-May:    added s7_scheme argument to s7_procedure_setter and getter (old names had "with_setter_").
  * 28-Apr:    s7_help.
  * 5-Apr:     pair-line-number.
  * 23-Mar:    s7_catch_all.
