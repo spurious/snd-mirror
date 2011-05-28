@@ -1035,7 +1035,6 @@ black-and-white-colormap constant *better-colormap*
      #( <'> color-scale 1.0 )
      #( <'> colormap *good-colormap* )
      #( <'> contrast-control-amp 1.0 )
-     #( <'> cursor-follows-play #f )
      #( <'> cursor-location-offset 0 )
      #( <'> cursor-size 15 )
      #( <'> cursor-style cursor-cross )

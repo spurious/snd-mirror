@@ -2592,6 +2592,11 @@
 				 name line-number 
 				 (truncated-list->string form))
 			 (begin
+			   (if (and (not (pair? (cadr form)))
+				    (constant? (cadr form)))
+			       (format #t "  ~A (line ~D): case selector is a constant: ~A~%"
+				       name line-number
+				       (truncated-list->string form)))
 			   (lint-walk name (cadr form) env) ; the selector
 			   (let ((all-keys '())
 				 (ctr 0)

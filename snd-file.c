@@ -2088,7 +2088,7 @@ snd_info *snd_update(snd_info *sp)
   channel_style_t old_channel_style;
   read_only_t read_only;
   bool old_raw;
-  void *sa;
+  axes_data *sa;
   snd_info *nsp = NULL;
   char *filename;
   void *ms;
@@ -2231,7 +2231,7 @@ snd_info *snd_update(snd_info *sp)
 	  (nsp == selected_sound()))
 	select_channel(nsp, old_selected_channel);
 
-      restore_axes_data(nsp, (axes_data *)sa, mus_sound_duration(filename), false);
+      restore_axes_data(nsp, sa, mus_sound_duration(filename), false);
       sound_restore_marks(nsp, ms);
 
       for (i = 0; (i < nsp->nchans) && (i < sp_chans); i++) 
@@ -2259,7 +2259,7 @@ snd_info *snd_update(snd_info *sp)
       free(saved_sp->chans);
       free(saved_sp);
     }
-  sa = (void *)free_axes_data((axes_data *)sa);
+  sa = free_axes_data((axes_data *)sa);
   free(filename);
 
 #if USE_MOTIF

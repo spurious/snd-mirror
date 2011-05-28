@@ -1,24 +1,12 @@
-Snd 12.1
+Snd 12.2:
 
-  added lint.scm, a scheme lint checker.
+  s7 is about 35% faster in most cases.
 
-  added expr.scm, which tries to find a math expression that matches
-     an arbitrary set of data.
+  run is smarter about implicit indexing, so I've cleaned up
+    a lot of the instruments.  
 
-  added with-interrupts.  It defaults to #t, but both XtAppPending and 
-     gtk_events_pending can cause a noticeable slow-down in the computation,
-     so set with-interrupts to #f to turn off the GUI checks.
+  s7_procedure_setter|getter in s7.h.
 
-  added show-full-range to make the y-axis bounds accommodate the sound values.
+checked: gsl 1.15, gtk 3.1.4, sbcl 1.0.48
 
-  added info-popup-hook to specialize the popup menu's info output.
-
-  removed verbose-cursor (use with-verbose-cursor).
-
-  removed the unused "chn" parameter from the pan-mix functions in mix.scm.
-
-checked: gtk 3.0.4|5|6|7|8, 3.1.2, sbcl 1.0.47, mpfr 3.0.1
-
-Thanks!: Mike Scholz.
-
-
+Thanks!: Rick Taube

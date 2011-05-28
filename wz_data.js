@@ -872,8 +872,6 @@ var sndclm_in_any_tip = "<code>(in-any frame chan stream)</code>: input stream s
 
 var sndclm_ina_tip = "<code>(ina frame stream)</code>: input stream sample in channel 0 at frame";
 
-var sndclm_locsig_set_tip = "<code>(locsig-set! gen chan val)</code>: set the locsig generator's channel 'chan' scaler to 'val'";
-
 var sndclm_locsig_tip = "<code>(locsig gen loc val)</code>: add 'val' to the output of locsig at frame 'loc'";
 
 var sndclm_make_comb_tip = "<code>(make-comb :scaler :size :initial-contents (:initial-element 0.0) :max-size (:type mus-interp-linear))</code>:<br>" +
