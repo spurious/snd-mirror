@@ -2,13 +2,13 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sun Mar 06 18:16:26 CET 2011
+\ Changed: Sun May 29 12:20:53 CEST 2011
 
 \ Commentary:
 \
 \ Tested with:
-\   Snd version 11.14 of 7-Mar-11
-\   FTH 1.2.9 (03-Mar-2011)
+\   Snd version 12.2 of 30-May-11
+\   FTH 1.2.9 (07-May-2011)
 
 \
 \ Reads init file ./.sndtest.fs or ~/.sndtest.fs for global variables,
@@ -603,8 +603,11 @@ reset-all-hooks
 
 SIGSEGV lambda: { sig -- }
   stack-reset
-  backtrace
   "" #f snd-test-message
+  *last-exception* if
+    backtrace
+    "" #f snd-test-message
+  then
   $" Segmentation fault (signal no %d)" #( sig ) snd-test-message
   "" #f snd-test-message
   finish-snd-test
@@ -837,6 +840,7 @@ SIGINT lambda: { sig -- }
   #( #( <'> region-graph-style graph-lines )
      #( <'> ask-about-unsaved-edits #f )
      #( <'> show-full-duration #f )
+     #( <'> show-full-range #f )
      #( <'> initial-beg 0.0 )
      #( <'> initial-dur 0.1 )
      #( <'> ask-before-overwrite #f )
@@ -861,7 +865,7 @@ SIGINT lambda: { sig -- }
      #( <'> dot-size 1 )
      #( <'> cursor-size 15 )
      #( <'> cursor-style cursor-cross )
-     #( <'> tracking-cursor-style cursor-cross )
+     #( <'> tracking-cursor-style cursor-line )
      #( <'> enved-base 1.0 )
      #( <'> enved-clip? #t )
      #( <'> enved-filter #t )
@@ -936,6 +940,7 @@ SIGINT lambda: { sig -- }
      #( <'> clm-default-frequency 0.0 )
      #( <'> with-verbose-cursor #f )
      #( <'> with-inset-graph #f )
+     #( <'> with-interrupts #t )
      #( <'> remember-sound-state #f )
      #( <'> with-smpte-label #f )
      #( <'> with-toolbar *with-test-gtk* if #t else #f then )
@@ -1035,6 +1040,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> color-scale 1.0 )
      #( <'> colormap *good-colormap* )
      #( <'> contrast-control-amp 1.0 )
+     #( <'> with-tracking-cursor #f )
      #( <'> cursor-location-offset 0 )
      #( <'> cursor-size 15 )
      #( <'> cursor-style cursor-cross )
@@ -1114,6 +1120,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> show-axes 1 )
      #( <'> show-controls #f )
      #( <'> show-full-duration #f )
+     #( <'> show-full-range #f )
      #( <'> show-grid #f )
      #( <'> show-indices #f )
      #( <'> show-marks #t )
@@ -1136,7 +1143,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> temp-dir "" )
      #( <'> time-graph-type graph-once )
      #( <'> tiny-font tiny-font-string )
-     #( <'> tracking-cursor-style cursor-cross )
+     #( <'> tracking-cursor-style cursor-line )
      #( <'> transform-graph-type graph-once )
      #( <'> transform-normalization normalize-by-channel )
      #( <'> transform-size 512 )
@@ -1150,6 +1157,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> with-tracking-cursor #f )
      #( <'> with-verbose-cursor #f )
      #( <'> with-inset-graph #f )
+     #( <'> with-interrupts #t )
      #( <'> with-smpte-label #f )
      #( <'> with-toolbar *with-test-gtk* if #t else #f then )
      #( <'> with-tooltips #t )
@@ -1596,7 +1604,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> with-tracking-cursor #f #t )
      #( <'> cursor-size 15 30 )
      #( <'> cursor-style cursor-cross cursor-line )
-     #( <'> tracking-cursor-style cursor-cross cursor-line )
+     #( <'> tracking-cursor-style cursor-line cursor-cross )
      #( <'> dac-combines-channels #t #f )
      #( <'> dac-size 256 512 )
      #( <'> minibuffer-history-length 8 16 )
@@ -1661,6 +1669,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> reverb-control-scale-bounds '( 0.0 4.0 ) '( 0.0 0.2 ) )
      #( <'> show-axes 1 0 )
      #( <'> show-full-duration #f #t )
+     #( <'> show-full-range #f #t )
      #( <'> show-indices #f #t )
      #( <'> show-marks #t #f )
      #( <'> show-mix-waveforms #t #f )
@@ -1734,7 +1743,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> zero-pad 0 '( -1 -123 ) )
      #( <'> cursor-style cursor-cross '( -1 ) )
      #( <'> cursor-style cursor-line '( 2 123 ) )
-     #( <'> tracking-cursor-style cursor-cross '( -1 ) )
+     #( <'> tracking-cursor-style cursor-line '( -1 ) )
      #( <'> tracking-cursor-style cursor-line '( 2 123 ) )
      #( <'> transform-graph-type graph-once '( -1 123 ) )
      #( <'> fft-window 6 '( -1 123 ) )
@@ -1861,9 +1870,9 @@ black-and-white-colormap constant *better-colormap*
      'clear-listener 'clear-minibuffer 'clear-sincs 'clip-hook 'clipping 'clm-channel
      'clm-print 'clm-table-size 'clm-default-frequency 'close-hook 'close-sound 'color->list
      'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted 'color-scale 'color?
-     'colormap 'colormap-name 'colormap-ref 'colormap-size 'colormap? 'comb 'comb? 'comment
-     'connes-window 'continue-frame->file 'continue-sample->file 'contrast-control
-     'contrast-control-amp 'contrast-control-bounds
+     'colormap 'colormap-name 'colormap-ref 'colormap-size 'colormap? 'comb 'comb?
+     'combined-data-color 'comment 'connes-window 'continue-frame->file 'continue-sample->file
+     'contrast-control 'contrast-control-amp 'contrast-control-bounds
      'contrast-control? 'contrast-enhancement 'controls->channel 'convolution 'convolve
      'convolve-files 'convolve-selection-with 'convolve-with 'convolve? 'copy-context
      'copy-sampler 'count-matches 'current-edit-position
@@ -1912,7 +1921,7 @@ black-and-white-colormap constant *better-colormap*
      'hann-poisson-window 'hann-window 'header-type 'help-dialog
      'help-hook 'hide-widget 'highlight-color 'html-dir 'html-program
      'hz->radians 'iir-filter 'iir-filter? 'in 'in-any
-     'ina 'inb 'info-dialog 'init-ladspa 'initial-graph-hook
+     'ina 'inb 'info-dialog 'info-popup-hook 'init-ladspa 'initial-graph-hook
      'insert-file-dialog 'insert-region 'insert-sample 'insert-samples 'insert-samples-with-origin
      'insert-selection 'insert-silence 'insert-sound 'just-sounds 'kaiser-window
      'key 'key-binding 'key-press-hook 'keyboard-no-action 'ladspa-activate 'ladspa-cleanup
@@ -2019,7 +2028,7 @@ black-and-white-colormap constant *better-colormap*
      'selection-maxamp 'selection-maxamp-position 'selection-member? 'selection-position
      'selection-srate 'selection? 'short-file-name 'show-all-axes 'show-all-axes-unlabelled
      'show-bare-x-axis 'show-axes 'show-controls 'show-grid 'show-indices
-     'show-full-duration 'initial-beg 'initial-dur 'show-listener
+     'show-full-duration 'show-full-range 'initial-beg 'initial-dur 'show-listener
      'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection 'show-selection-transform
      'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
      'show-y-zero 'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos? 'smooth-channel
@@ -2041,7 +2050,7 @@ black-and-white-colormap constant *better-colormap*
      'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'ncos 'ncos? 'nsin 'nsin?
      'swap-channels 'sync 'sync-style 'sync-none 'sync-all 'sync-by-sound
      'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap 'temp-dir
-     'text-focus-color 'time-graph 'time-graph-hook 'time-graph-style 'time-graph-type
+     'text-focus-color 'time-graph 'time-graph-style 'time-graph-type
      'time-graph? 'tiny-font 'tracking-cursor-style 'transform->vct 'transform-dialog
      'transform-frames 'transform-graph 'transform-graph-style 'transform-graph-type
      'transform-graph? 'transform-normalization 'transform-sample 'transform-size
@@ -2059,9 +2068,9 @@ black-and-white-colormap constant *better-colormap*
      'widget-position 'widget-size 'widget-text 'window-height 'window-width 'window-x
      'window-y 'with-background-processes 'with-file-monitor 'with-gl 'with-mix-tags
      'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 'with-inset-graph
-     'with-pointer-focus 'with-smpte-label 'with-toolbar 'with-tooltips 'with-menu-icons
-     'save-as-dialog-src 'save-as-dialog-auto-comment
-     'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats
+     'with-interrupts 'with-pointer-focus 'with-smpte-label 'with-toolbar 'with-tooltips
+     'with-menu-icons 'save-as-dialog-src 'save-as-dialog-auto-comment 'x->position
+     'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats
      'x-axis-in-measures 'x-axis-in-samples 'x-axis-in-seconds 'x-axis-label 'x-axis-style
      'x-bounds 'x-position-slider 'x-zoom-slider 'xramp-channel 'y->position 'y-axis-label
      'y-bounds 'y-position-slider 'y-zoom-slider 'zero-pad 'zoom-color 'zoom-focus-active
@@ -3161,7 +3170,11 @@ black-and-white-colormap constant *better-colormap*
   else
     10 0 do
       fd sdata 256 mus-audio-read drop
-      sdata 0 v sound-data->vct graph drop
+      *with-test-gtk* unless
+	\ FIXME (segfault)
+        \ screws up, needs investigation
+	sdata 0 v sound-data->vct graph drop
+      then
     loop
     fd mus-audio-close drop
   then
@@ -3250,7 +3263,7 @@ black-and-white-colormap constant *better-colormap*
   snd close-sound drop
   "test.snd" open-sound to snd
   0 10 channel->vct
-  vct( 0.000 1.000 -1.000 1.000 -1.000 -1.000 -1.000 -1.000 -1.000 -1.000 )
+  vct( 0.000 1.000 -1.000 1.000 0.000 0.000 -0.700 0.700 -0.200 0.200 )
   $" unclipped 1" #() snd-test-neq
   snd close-sound drop
   "test.snd" mus-sound-forget drop
@@ -3274,16 +3287,18 @@ black-and-white-colormap constant *better-colormap*
   vct( 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000 )
   $" clipped" #() snd-test-neq
   snd close-sound drop
-  \ 
+  \
   vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
   data vct->sound-data to sdata
   "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd mus-file-clipping { old-clip }
+  snd { old-snd }
   snd #f set-mus-file-clipping drop
   snd 0 9 1 sdata mus-sound-write drop
   snd 40 mus-sound-close-output drop
   "test.snd" open-sound to snd
   0 10 channel->vct
-  vct( 0.000 -1.000 -1.000 1.000 -1.000 -1.000 -1.000 -1.000 -1.000 -1.000 )
+  vct( 0.000 -1.000 -1.000 1.000 0.000 0.000 -0.700 0.700 -0.200 0.200 )
   $" unclipped 2" #() snd-test-neq
   snd close-sound drop
   "test.snd" mus-sound-forget drop
@@ -3295,6 +3310,9 @@ black-and-white-colormap constant *better-colormap*
   snd 0 9 1 sdata mus-sound-write drop
   snd #f set-mus-file-clipping drop
   snd 40 mus-sound-close-output drop
+  snd old-snd equal? if
+    snd old-clip set-mus-file-clipping drop
+  then
   "test.snd" open-sound to snd
   0 10 channel->vct
   vct( 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000 )
@@ -3310,7 +3328,7 @@ black-and-white-colormap constant *better-colormap*
   snd 40 mus-sound-close-output drop
   "test.snd" open-sound to snd
   0 10 channel->vct
-  vct( 0.000 -1.000 -1.000 1.000 -1.000 -1.000 -1.000 -1.000 -1.000 -1.000 )
+  vct( 0.000 -1.000 -1.000 1.000 0.000 0.000 -0.700 0.700 -0.200 0.200 )
   $" unclipped 3" #() snd-test-neq
   snd close-sound drop
   "test.snd" mus-sound-forget drop
@@ -6865,7 +6883,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   then
   ind close-sound drop
   \ x-axis-label (test005)
-  *with-test-nogui* unless
+  *with-test-gui* if
     "oboe.snd" open-sound to ind
     #t set-transform-graph? drop
     #t set-time-graph? drop
@@ -6964,134 +6982,138 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   3 :initial-contents #( 1.0 1.0 1.0 ) make-delay to d3
   d1 d2 d3 test-gen-equal
   \ mix (test009)
-  "hiho.wave" mus-next mus-bshort 22050 1 new-sound { new-index }
-  new-index select-sound drop
-  0 new-index 0 find-mix to res
-  res if $" found non-existent mix: %s?" #( res ) snd-display then
-  "pistol.snd" 100 mix car { mix-id }
-  mix-id mix? unless $" %s not mix?" #( mix-id ) snd-display then
-  view-mixes-dialog drop
-  mix-id mix-position  { pos }
-  mix-id mix-length    { len }
-  mix-id mix-speed     { spd }
-  mix-id mix-home      { home-lst }
-  home-lst 0 array-ref { snd }
-  home-lst 1 array-ref { chn }
-  mix-id mix-amp       { amp }
-  mix-id make-mix-sampler { mr }
-  mr mix-sampler? unless $" %s is not mix-sampler?"  #( mr ) snd-display then
-  mr region-sampler?  if $" mix-sampler: region %s?" #( mr ) snd-display then
-  mr sampler-position to res
-  res 0<> if $" mix sampler-position: %d?" #( res ) snd-display then
-  mr sampler-at-end? if $" mix sampler-at-end: %s?" #( mr ) snd-display then
-  mr sampler-home to res
-  mix-id res object-equal? unless $" mix sampler-home: %d %s?" #( res mr ) snd-display then
-  mr object->string 0 16 string-substring to res
-  res $" #<mix-sampler mi" string<> if
-    $" mix sampler actually got: [%s]?" #( res ) snd-display
-  then
-  1234 integer->mix <'> mix-amp #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'no-such-mix object-equal? unless
-    $" mix-amp bad id: %s" #( res ) snd-display
-  then
-  1234 integer->mix 0.1 <'> set-mix-amp #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'no-such-mix object-equal? unless
-    $" set-mix-amp bad id: %s" #( res ) snd-display
-  then
-  1234 integer->mix #( 0 0 1 1 ) <'> set-mix-amp-env #t nil fth-catch to res
-  stack-reset
-  res 0 array-ref 'no-such-mix object-equal? unless
-    $" set-mix-amp-env bad id: %s" #( res ) snd-display
-  then
-  0.0 0.0 { mx sx }
-  99 0 do
-    i odd? if mr read-mix-sample else mr read-mix-sample then to mx
-    100 i + sample to sx
-    mx sx fneq if $" read-mix-sample: %s %s?" #( mx sx ) snd-display then
-  loop
-  \ Scheme: (mr)
-  \ Ruby:   mr.call
-  \ Forth:  mr #() apply
-  mr #() object-apply to mx
-  199 sample to sx
-  mx sx fneq if $" read-mix-sample 100: %s %s?" #( mx sx ) snd-display then
-  mr free-sampler drop
-  \
-  100 pos <>   if $" mix-position: %d?"     #( pos ) snd-display then
-  41623 len <> if $" mix-length: %d?"       #( len ) snd-display then
-  snd new-index object-equal? unless $" snd mix-home: %s?" #( snd ) snd-display then
-  chn      0<> if $" chn mix-home: %d?"     #( chn ) snd-display then
-  amp 1.0 fneq if $" mix-amp: %s?"          #( amp ) snd-display then
-  spd 1.0 fneq if $" mix-speed: %s?"        #( spd ) snd-display then
-  .stack
-  mix-id <'> play #t nil fth-catch if
-    drop				\ on stack: mix-id
-    $" cannot play mix" #() snd-display
-  else
-    drop				\ on stack: play's return value
-  then
-  mix-id :start 1000 <'> play #t nil fth-catch if
-    stack-reset				\ on stack: mix-id :start 1000
-    $" cannot play mix from 1000" #() snd-display
-  else
-    drop				\ on stack: play's return value
-  then
-  .stack
-  \
-  mix-id 200 set-mix-position drop
-  mix-id 0.5 set-mix-amp drop
-  mix-id 2.0 set-mix-speed drop
-  mix-id #( 0 0 1 1 ) set-mix-amp-env drop
-  mix-id mix-amp-env to res
-  mix-id res set-mix-amp-env drop
-  mix-id mix-amp-env { res1 }
-  res res1 vequal? unless $" set-mix-amp-env to self: %s %s?" #( res res1 ) snd-display then
-  mix-id 20 set-mix-tag-y drop
-  mix-id mix-position to pos
-  mix-id mix-speed    to spd
-  mix-id mix-amp      to amp
-  mix-id mix-tag-y    { my }
-  200 pos <>   if $" set-mix-position: %d?" #( pos ) snd-display then
-  spd 2.0 fneq if $" set-mix-speed: %s?"    #( spd ) snd-display then
-  my  20    <> if $" set-mix-tag-y: %d?"    #( my )  snd-display then
-  amp 0.5 fneq if $" set-mix-amp: %s?"      #( amp ) snd-display then
-  mix-id mix-amp-env to res
-  res #( 0.0 0.0 1.0 1.0 ) array= unless $" set-mix-amp-env: %s?" #( res ) snd-display then
-  \
-  3 0.1 make-vct 100 #f #f #t "" mix-vct drop
-  0 set-cursor drop
-  100 #f #f find-mix { nid }
-  nid mix? false? unless
-    nid mix-position 100 <> if
-      new-index 0 mixes map *key* mix-position end-map { mx-pos }
-      $" 100 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
+  *with-test-gtk* unless
+    \ FIXME (segfaults)
+    \ crashes in set-mix-amp-env
+    "hiho.wave" mus-next mus-bshort 22050 1 new-sound { new-index }
+    new-index select-sound drop
+    0 new-index 0 find-mix to res
+    res if $" found non-existent mix: %s?" #( res ) snd-display then
+    "pistol.snd" 100 mix car { mix-id }
+    mix-id mix? unless $" %s not mix?" #( mix-id ) snd-display then
+    view-mixes-dialog drop
+    mix-id mix-position  { pos }
+    mix-id mix-length    { len }
+    mix-id mix-speed     { spd }
+    mix-id mix-home      { home-lst }
+    home-lst 0 array-ref { snd }
+    home-lst 1 array-ref { chn }
+    mix-id mix-amp       { amp }
+    mix-id make-mix-sampler { mr }
+    mr mix-sampler? unless $" %s is not mix-sampler?"  #( mr ) snd-display then
+    mr region-sampler?  if $" mix-sampler: region %s?" #( mr ) snd-display then
+    mr sampler-position to res
+    res 0<> if $" mix sampler-position: %d?" #( res ) snd-display then
+    mr sampler-at-end? if $" mix sampler-at-end: %s?" #( mr ) snd-display then
+    mr sampler-home to res
+    mix-id res object-equal? unless $" mix sampler-home: %d %s?" #( res mr ) snd-display then
+    mr object->string 0 16 string-substring to res
+    res $" #<mix-sampler mi" string<> if
+      $" mix sampler actually got: [%s]?" #( res ) snd-display
     then
-  else
-    $" 100 find-mix: not a mix %s?" #( nid ) snd-display
-  then
-  200 #f #f find-mix to nid
-  nid mix? false? unless
-    nid mix-position 200 <> if
-      new-index 0 mixes map *key* mix-position end-map { mx-pos }
-      $" 200 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
+    1234 integer->mix <'> mix-amp #t nil fth-catch to res
+    stack-reset
+    res 0 array-ref 'no-such-mix object-equal? unless
+      $" mix-amp bad id: %s" #( res ) snd-display
     then
-  else
-    $" 200 find-mix: not a mix %s?" #( nid ) snd-display
+    1234 integer->mix 0.1 <'> set-mix-amp #t nil fth-catch to res
+    stack-reset
+    res 0 array-ref 'no-such-mix object-equal? unless
+      $" set-mix-amp bad id: %s" #( res ) snd-display
+    then
+    1234 integer->mix #( 0 0 1 1 ) <'> set-mix-amp-env #t nil fth-catch to res
+    stack-reset
+    res 0 array-ref 'no-such-mix object-equal? unless
+      $" set-mix-amp-env bad id: %s" #( res ) snd-display
+    then
+    0.0 0.0 { mx sx }
+    99 0 do
+      i odd? if mr read-mix-sample else mr read-mix-sample then to mx
+      100 i + sample to sx
+      mx sx fneq if $" read-mix-sample: %s %s?" #( mx sx ) snd-display then
+    loop
+    \ Scheme: (mr)
+    \ Ruby:   mr.call
+    \ Forth:  mr #() apply
+    mr #() object-apply to mx
+    199 sample to sx
+    mx sx fneq if $" read-mix-sample 100: %s %s?" #( mx sx ) snd-display then
+    mr free-sampler drop
+    \
+    100 pos <>   if $" mix-position: %d?"     #( pos ) snd-display then
+    41623 len <> if $" mix-length: %d?"       #( len ) snd-display then
+    snd new-index object-equal? unless $" snd mix-home: %s?" #( snd ) snd-display then
+    chn      0<> if $" chn mix-home: %d?"     #( chn ) snd-display then
+    amp 1.0 fneq if $" mix-amp: %s?"          #( amp ) snd-display then
+    spd 1.0 fneq if $" mix-speed: %s?"        #( spd ) snd-display then
+    .stack
+    mix-id <'> play #t nil fth-catch if
+      drop				\ on stack: mix-id
+      $" cannot play mix" #() snd-display
+    else
+      drop				\ on stack: play's return value
+    then
+    mix-id :start 1000 <'> play #t nil fth-catch if
+      stack-reset				\ on stack: mix-id :start 1000
+      $" cannot play mix from 1000" #() snd-display
+    else
+      drop				\ on stack: play's return value
+    then
+    .stack
+    \
+    mix-id 200 set-mix-position drop
+    mix-id 0.5 set-mix-amp drop
+    mix-id 2.0 set-mix-speed drop
+    mix-id #( 0 0 1 1 ) set-mix-amp-env drop
+    mix-id mix-amp-env to res
+    mix-id res set-mix-amp-env drop
+    mix-id mix-amp-env { res1 }
+    res res1 vequal? unless $" set-mix-amp-env to self: %s %s?" #( res res1 ) snd-display then
+    mix-id 20 set-mix-tag-y drop
+    mix-id mix-position to pos
+    mix-id mix-speed    to spd
+    mix-id mix-amp      to amp
+    mix-id mix-tag-y    { my }
+    200 pos <>   if $" set-mix-position: %d?" #( pos ) snd-display then
+    spd 2.0 fneq if $" set-mix-speed: %s?"    #( spd ) snd-display then
+    my  20    <> if $" set-mix-tag-y: %d?"    #( my )  snd-display then
+    amp 0.5 fneq if $" set-mix-amp: %s?"      #( amp ) snd-display then
+    mix-id mix-amp-env to res
+    res #( 0.0 0.0 1.0 1.0 ) array= unless $" set-mix-amp-env: %s?" #( res ) snd-display then
+    \
+    3 0.1 make-vct 100 #f #f #t "" mix-vct drop
+    0 set-cursor drop
+    100 #f #f find-mix { nid }
+    nid mix? false? unless
+      nid mix-position 100 <> if
+	new-index 0 mixes map *key* mix-position end-map { mx-pos }
+	$" 100 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
+      then
+    else
+      $" 100 find-mix: not a mix %s?" #( nid ) snd-display
+    then
+    200 #f #f find-mix to nid
+    nid mix? false? unless
+      nid mix-position 200 <> if
+	new-index 0 mixes map *key* mix-position end-map { mx-pos }
+	$" 200 find-mix: %s %s %s?" #( nid dup mix-position mx-pos ) snd-display
+      then
+    else
+      $" 200 find-mix: not a mix %s?" #( nid ) snd-display
+    then
+    \
+    "oboe.snd" 100 mix car to mix-id
+    40 set-mix-waveform-height drop
+    'hiho mix-id 123 set-mix-property
+    'hiho mix-id mix-property to res
+    res 123 <> if $" mix-property: %s?" #( res ) snd-display then
+    'not-here mix-id mix-property to res
+    res if $" mix-property not-here: %s?" #( res ) snd-display then
+    #f #f update-time-graph drop
+    20 set-mix-waveform-height drop
+    new-index revert-sound drop
+    new-index close-sound drop
   then
-  \
-  "oboe.snd" 100 mix car to mix-id
-  40 set-mix-waveform-height drop
-  'hiho mix-id 123 set-mix-property
-  'hiho mix-id mix-property to res
-  res 123 <> if $" mix-property: %s?" #( res ) snd-display then
-  'not-here mix-id mix-property to res
-  res if $" mix-property not-here: %s?" #( res ) snd-display then
-  #f #f update-time-graph drop
-  20 set-mix-waveform-height drop
-  new-index revert-sound drop
-  new-index close-sound drop
   \ envelopes (lists, vcts, arrays) (test015)
   1.0 vct( 0.0 0.0 2.0 1.0 )           1.0 envelope-interp dup 0.5 fneq if
     $" envelope-interp 0.5: %s?" swap snd-display
@@ -7351,7 +7373,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> as-one-edit <'> ask-before-overwrite <'> audio-input-device
    <'> audio-output-device <'> auto-resize <'> auto-update <'> autocorrelate
    <'> axis-info <'> apply-controls <'> change-samples-with-origin
-   <'> channel-style <'> channels <'> chans <'> close-sound
+   <'> channel-style <'> channels <'> chans <'> close-sound <'> combined-data-color
    <'> comment <'> contrast-control <'> contrast-control-amp <'> contrast-control?
    <'> convolve-selection-with <'> convolve-with <'> channel-properties <'> channel-property
    <'> amp-control-bounds
@@ -7398,7 +7420,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> mix-tag-height <'> mix-tag-width <'> mark-tag-height <'> mark-tag-width
    <'> mix-tag-y <'> mix-vct <'> mix-waveform-height <'> time-graph-style
    <'> lisp-graph-style <'> transform-graph-style <'> read-mix-sample
-   <'> next-sample <'> show-full-duration <'> initial-beg <'> initial-dur
+   <'> next-sample <'> show-full-duration <'> show-full-range <'> initial-beg <'> initial-dur
    <'> transform-normalization <'> open-raw-sound
    <'> open-sound <'> previous-sample <'> peaks <'> player? <'> players
    <'> add-directory-to-view-files-list <'> add-file-to-view-files-list
@@ -7442,7 +7464,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> trap-segfault <'> with-file-monitor <'> optimization
    <'> undo <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
    <'> update-sound <'> clm-table-size <'> with-verbose-cursor <'> view-sound <'> wavelet-type
-   <'> with-inset-graph <'> with-pointer-focus <'> with-smpte-label
+   <'> with-inset-graph <'> with-interrupts <'> with-pointer-focus <'> with-smpte-label
    <'> with-toolbar <'> with-tooltips <'> with-menu-icons
    <'> save-as-dialog-src <'> save-as-dialog-auto-comment
    <'> time-graph? <'>  time-graph-type <'> wavo-hop <'> wavo-trace
@@ -7552,8 +7574,8 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
 
 #( <'> amp-control <'> ask-before-overwrite <'> audio-input-device <'> audio-output-device
    <'> auto-update <'> channel-style <'> sound-file-extensions <'> show-full-duration
-   <'> initial-beg <'> initial-dur <'> contrast-control <'> contrast-control-amp
-   <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
+   <'> show-full-range <'> initial-beg <'> initial-dur <'> contrast-control <'> contrast-control-amp
+   <'> combined-data-color <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
    <'> contrast-control-bounds <'> reverb-control-length-bounds <'> reverb-control-scale-bounds
    <'> cursor-update-interval <'> cursor-location-offset <'> contrast-control?
    <'> auto-update-interval <'> cursor <'> channel-properties <'> channel-property
@@ -7589,10 +7611,10 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> speed-control <'> speed-control-style <'> speed-control-tones <'> squelch-update
    <'> sync <'> sound-properties <'> sound-property <'> temp-dir <'> y-bounds
    <'> transform-type <'> trap-segfault <'> with-file-monitor <'> optimization
-   <'> with-verbose-cursor <'> with-inset-graph <'> with-pointer-focus <'> wavelet-type
-   <'> x-bounds <'> with-smpte-label <'> with-toolbar <'> with-tooltips <'> with-menu-icons
-   <'> save-as-dialog-src <'> save-as-dialog-auto-comment <'> time-graph? <'> wavo-hop
-   <'> wavo-trace <'> with-gl <'> with-mix-tags <'> x-axis-style <'> beats-per-minute
+   <'> with-verbose-cursor <'> with-inset-graph <'> with-interrupts <'> with-pointer-focus
+   <'> wavelet-type <'> x-bounds <'> with-smpte-label <'> with-toolbar <'> with-tooltips
+   <'> with-menu-icons <'> save-as-dialog-src <'> save-as-dialog-auto-comment <'> time-graph?
+   <'> wavo-hop <'> wavo-trace <'> with-gl <'> with-mix-tags <'> x-axis-style <'> beats-per-minute
    <'> zero-pad <'> zoom-focus-style <'> sync-style <'> with-relative-panes <'>  window-x
    <'> window-y <'> window-width <'> window-height <'> beats-per-measure <'> channels
    <'> chans <'> comment <'> data-format <'> data-location <'> data-size <'> edit-position
@@ -8015,19 +8037,17 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   #( <'> count-matches <'> cursor <'> channel-properties <'> channel-property
-     <'> with-tracking-cursor <'> cursor-position <'> cursor-size <'> cursor-style
+     <'> combined-data-color <'> cursor-position <'> cursor-size <'> cursor-style
      <'> tracking-cursor-style <'> delete-sample <'> display-edits <'> dot-size
-     <'> edit-fragment <'> edit-position
-     <'> edit-tree <'> edits <'> fft-window-alpha <'> fft-window-beta
-     <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size <'> transform-graph-type
-     <'> fft-window <'> transform-graph? <'> find-channel <'> graph
-     <'> graph-style <'> lisp-graph? <'> insert-sound
-     <'> time-graph-style <'> lisp-graph-style <'> transform-graph-style <'> left-sample
-     <'> map-chan <'> max-transform-peaks <'> maxamp-position <'> min-dB <'> mix-region
-     <'> transform-normalization <'> peaks <'> reverse-sound
-     <'> revert-sound <'> right-sample <'> sample <'> save-sound <'> save-sound-as
-     <'> scan-chan <'> select-channel <'> show-axes <'> show-transform-peaks
-     <'> show-marks <'> show-mix-waveforms <'> show-y-zero <'> show-grid
+     <'> edit-fragment <'> edit-position <'> edit-tree <'> edits <'> fft-window-alpha
+     <'> fft-window-beta <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size
+     <'> transform-graph-type <'> fft-window <'> transform-graph? <'> find-channel <'> graph
+     <'> graph-style <'> lisp-graph? <'> insert-sound <'> time-graph-style <'> lisp-graph-style
+     <'> transform-graph-style <'> combined-data-color <'> left-sample <'> map-chan
+     <'> max-transform-peaks <'> maxamp-position <'> min-dB <'> mix-region
+     <'> transform-normalization <'> peaks <'> reverse-sound <'> revert-sound <'> right-sample
+     <'> sample <'> save-sound <'> save-sound-as <'> scan-chan <'> select-channel <'> show-axes
+     <'> show-transform-peaks <'> show-marks <'> show-mix-waveforms <'> show-y-zero <'> show-grid
      <'> show-sonogram-cursor <'> spectrum-end <'> spectro-hop <'> spectrum-start
      <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle <'>  grid-density
      <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale <'> squelch-update
@@ -8056,7 +8076,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       then
     then
   end-each
-  #( <'> cursor <'> with-tracking-cursor <'> channel-properties <'> channel-property
+  #( <'> cursor <'> channel-properties <'> channel-property
      <'> cursor-position <'> cursor-size <'> cursor-style <'> tracking-cursor-style
      <'> delete-sample <'> display-edits <'> dot-size <'> edit-fragment
      <'> edit-position <'> edit-tree <'> edits <'> env-sound
@@ -8064,7 +8084,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> transform-size <'> transform-graph-type <'> fft-window <'> transform-graph?
      <'> filter-sound <'> graph-style <'> lisp-graph?
      <'> left-sample <'> time-graph-style <'> lisp-graph-style
-     <'> transform-graph-style <'> max-transform-peaks <'> maxamp
+     <'> transform-graph-style <'> combined-data-color <'> max-transform-peaks <'> maxamp
      <'> maxamp-position <'> min-dB <'> transform-normalization
      <'> redo <'> reverse-sound <'> revert-sound <'> right-sample
      <'> sample <'> save-sound <'> scale-by <'> scale-to
@@ -8256,7 +8276,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   end-each
   #( <'> enved-filter-order <'> enved-filter
      <'> ask-before-overwrite <'> auto-resize <'> auto-update
-     <'> show-full-duration <'> initial-beg <'> initial-dur <'> channel-style
+     <'> show-full-duration <'> show-full-range <'> initial-beg <'> initial-dur <'> channel-style
      <'> dac-combines-channels <'> dac-size <'> clipping
      <'> default-output-chans <'> default-output-data-format <'> default-output-srate
      <'> default-output-header-type
@@ -8272,9 +8292,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> save-state-file <'> selected-channel
      <'> selected-sound <'> selection-creates-region <'> show-controls
      <'> show-indices <'> show-selection-transform <'> sinc-width
-     <'> temp-dir <'> trap-segfault
-     <'> with-file-monitor <'> optimization <'> with-verbose-cursor
-     <'> with-inset-graph <'> with-pointer-focus <'> window-height <'> beats-per-measure
+     <'> temp-dir <'> trap-segfault <'> with-file-monitor <'> optimization
+     <'> with-verbose-cursor <'> with-inset-graph <'> with-interrupts <'> with-pointer-focus
+     <'> window-height <'> beats-per-measure
      <'> with-smpte-label <'> with-toolbar <'> with-tooltips <'> with-menu-icons
      <'> remember-sound-state <'> save-as-dialog-src <'> save-as-dialog-auto-comment
      <'> window-width <'> window-x <'> window-y <'> with-gl
@@ -9141,6 +9161,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   clear-sincs drop
   dismiss-all-dialogs
   gc-run
+  #f set-ask-about-unsaved-edits drop
 ;
 
 : 30-test

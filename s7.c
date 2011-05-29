@@ -317,11 +317,11 @@
 
 typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2,
 	      OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
-	      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2, 
+	      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN1, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2, 
 	      OP_LET, OP_LET1, OP_LET2, OP_LET_STAR, OP_LET_STAR1, 
 	      OP_LETREC, OP_LETREC1, OP_LETREC2, OP_COND, OP_COND1, 
 	      OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR,
-	      OP_MACRO, OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
+	      OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
 	      OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
 	      OP_READ_VECTOR, OP_READ_DONE, 
@@ -331,7 +331,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_AR
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1,
 	      OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
-	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO,
+	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
 	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO, OP_SORT_OBJECT,
 	      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS, OP_HOOK_APPLY, 
 	      OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
@@ -340,10 +340,10 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_AR
 static const char *op_names[OP_MAX_DEFINED] = 
   {"read-internal", "eval", "eval-args", "eval-args", "eval-args",
    "apply", "eval-macro", "lambda", 
-   "quote", "define", "define", "begin", "if", "if", "set!", "set!", "set!", 
+   "quote", "define", "define", "begin", "begin", "if", "if", "set!", "set!", "set!", 
    "let", "let", "let", "let*", "let*", "letrec", "letrec", "letrec", 
-   "cond", "cond", "and", "and", "or", "or", "defmacro", "defmacro*", "macro", 
-   "define-macro", "define-macro*", "define-expansion", "expansion", "case", "case", 
+   "cond", "cond", "and", "and", "or", "or", "defmacro", "defmacro*",
+   "define-macro", "define-macro*", "define-expansion", "case", "case", 
    "read-list", "read-dot", "read-quote", "read-quasiquote", "read-quasiquote-vector", 
    "read-unquote", "read-apply-values", "read-vector", "read-done", 
    "load-return-if-eof", "load-close-and-stop-if-eof", "eval-string", "eval-done", "catch", 
@@ -351,7 +351,7 @@ static const char *op_names[OP_MAX_DEFINED] =
    "do", "do", "do", "define*", "lambda*", 
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
    "trace-hook-quit", "with-environment", "with-environment", "for-each", "for-each", "map", "map",
-   "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
+   "barrier", "deactivate-goto", "define-bacro", "define-bacro*", 
    "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort", "sort",
    "eval-string", "eval-string", "set-access", "hook-apply", 
    "member-if", "assoc-if", "member-if", "assoc-if"
@@ -359,7 +359,7 @@ static const char *op_names[OP_MAX_DEFINED] =
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 98 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 96 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -21540,22 +21540,7 @@ pass (global-environment):\n\
 	sc->envir = cadr(args);
       else sc->envir = sc->NIL;
     }
-
-  /* this causes stack-overflow -> segfault:
-   *    (define-macro* (mac (env (current-environment))) `(display ,env)) (mac)
-   * which is the same as
-   *    (let ((lst (list (list (cons 1  2))))) (set! (cdr (caar lst)) lst) (eval lst))
-   *    (let ((lst (list (cons + 2)))) (set! (cdr (car lst)) lst) (eval lst))
-   * but I can't think of a good way to catch such stuff (or what to do if I do catch it)
-   *
-   *    guile hangs: (let ((lst (list (cons + 2)))) (set-cdr! (car lst) lst) (eval lst (interaction-environment)))
-   *    sbcl and clisp stack overflow: (let ((lst (list (cons 1 2)))) (setf (cdr (car lst)) lst) (eval lst))
-   *
-   * so, I'm not alone...
-   */
-
   sc->code = car(args);
-  /* fprintf(stderr, "(eval %s)\n", s7_object_to_c_string(sc, car(args))); */
 
   if (s7_stack_top(sc) < 12)
     push_stack(sc, opcode(OP_BARRIER), sc->NIL, sc->NIL);
@@ -23897,16 +23882,12 @@ static bool just_constants(s7_scheme *sc, s7_pointer args)
 #endif
 
 
-static s7_pointer check_lambda_args(s7_scheme *sc)
+static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args)
 {
-  if ((!is_pair(sc->code)) ||
-      (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) or (lambda . 1) */
-    return(eval_error(sc, "lambda: no args or no body? ~A", sc->code));
-
-  if (!s7_is_list(sc, car(sc->code)))
+  if (!s7_is_list(sc, args))
     {
-      if (s7_is_constant(car(sc->code)))                       /* (lambda :a ...) */
-	return(eval_error(sc, "lambda parameter '~S is a constant", car(sc->code))); /* not ~A here, (lambda #\null do) for example */
+      if (s7_is_constant(args))                       /* (lambda :a ...) */
+	return(eval_error(sc, "lambda parameter '~S is a constant", args)); /* not ~A here, (lambda #\null do) for example */
       
       /* we currently accept (lambda i i . i) (lambda quote i)  (lambda : : . #()) (lambda : 1 . "")
        *   at this level, but when the lambda form is evaluated, it will trigger an error.
@@ -23915,7 +23896,7 @@ static s7_pointer check_lambda_args(s7_scheme *sc)
   else
     {
       s7_pointer x;
-      for (x = car(sc->code); is_pair(x); x = cdr(x))
+      for (x = args; is_pair(x); x = cdr(x))
 	{
 	  if (s7_is_constant(car(x)))                      /* (lambda (pi) pi) */
 	    return(eval_error(sc, "lambda parameter '~S is a constant", car(x)));
@@ -23926,26 +23907,21 @@ static s7_pointer check_lambda_args(s7_scheme *sc)
 	  (s7_is_constant(x)))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
 	return(eval_error(sc, "lambda :rest parameter '~A is a constant", x));
     }
-  set_checked(sc->code);
   return(sc->F);
 }
 
 
-static s7_pointer check_lambda_star_args(s7_scheme *sc)
+static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args)
 {
-  if ((!is_pair(sc->code)) ||
-      (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
-    return(eval_error(sc, "lambda*: no args or no body? ~A", sc->code));
-
-  if (!s7_is_list(sc, car(sc->code)))
+  if (!s7_is_list(sc, args))
     {
-      if (s7_is_constant(car(sc->code)))                                  /* (lambda* :a ...) */
-	return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->code)));
+      if (s7_is_constant(args))                                  /* (lambda* :a ...) */
+	return(eval_error(sc, "lambda* parameter '~A is a constant", args));
     }
   else
     { 
       s7_pointer w;
-      for (w = car(sc->code); is_pair(w); w = cdr(w))
+      for (w = args; is_pair(w); w = cdr(w))
 	{
 	  if (is_pair(car(w)))
 	    {
@@ -23976,7 +23952,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc)
 		  
 		  if ((car(w) == sc->KEY_ALLOW_OTHER_KEYS) &&         /* (lambda* (:allow-other-keys x) x) */
 		      (is_not_null(cdr(w))))
-		    eval_error(sc, ":allow-other-keys should be the last parameter: ~A", car(sc->code));
+		    eval_error(sc, ":allow-other-keys should be the last parameter: ~A", args);
 		}
 	      else
 		{
@@ -23995,7 +23971,6 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc)
 	  (s7_is_constant(w)))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
 	return(eval_error(sc, "lambda* :rest parameter '~A is a constant", w));
     }
-  set_checked(sc->code);
   return(sc->F);
 }
 
@@ -24874,7 +24849,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  sc->op = op; /* for better error handling.  otherwise we get "barrier" as the offending function name in eval_error_with_name */
 	}
+      /* fall through */
 
+
+    case OP_BEGIN1:
       if (!is_pair(sc->code)) 
 	{
 	  if (is_not_null(sc->code))            /* (begin . 1), (cond (#t . 1)) */
@@ -24884,7 +24862,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       if (type(cdr(sc->code)) != T_NIL)
-	push_stack(sc, opcode(OP_BEGIN), sc->NIL, cdr(sc->code)); /* 3 [11] {12} */
+	push_stack(sc, opcode(OP_BEGIN1), sc->NIL, cdr(sc->code)); /* 3 [11] {12} */
       
       sc->code = car(sc->code);
       sc->cur_code = sc->code;               /* in case error occurs, this helps tell us where we are */
@@ -24902,6 +24880,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  /* we jump here when we already know sc->code is a pair */
 	EVAL_PAIR:
+	      
+	  /* here if it's marked as just constants or that+symbols [no lists of any kind]
+	   *  we could jump to a simpler evaluator: how many of the
+	   *  syntax cases can happen in such a context: 
+	   *      if, quote, begin, or, and, set!, with-environment
+	   *      define lambda lambda* -- defmacro?? (defmacro name args 3) !!
+	   *  but none of these would need to go to eval.
+	   */
 	  carc = car(sc->code);
 
 	  if (is_syntactic(carc)) /* actually is_syntax(symbol_value(car(sc->code))) */
@@ -24919,7 +24905,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (is_global(carc))
 		sc->value = symbol_value(symbol_global_slot(carc));
 	      else sc->value = find_symbol_or_bust(sc, sc->envir, carc);
-	      
+
 	      sc->code = cdr(sc->code);
 	      sc->args = sc->NIL;
 	    }
@@ -25103,6 +25089,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  if (typ == T_PAIR)
 		    {
+		      /* if eval_args3 used temp_cell2, and this is safe, we could use temp_cell1 here, and no check at arg3 for safe 
+		       *   but can we pop the op stack here? or how expensive to check?
+		       */
 		      NEW_CELL(sc, x); 
 		      car(x) = sc->value;
 		      cdr(x) = sc->args;
@@ -25842,6 +25831,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
 		if (is_syntactic(x))                                              /* (define (and a) a) */
 		  return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x));
+		
+		if (sc->op == OP_DEFINE_STAR)
+		  check_lambda_star_args(sc, cdar(sc->code));
+		else check_lambda_args(sc, cdar(sc->code));
 	      }
 	    set_checked(sc->code);
 	  }
@@ -25873,15 +25866,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->code = cons(sc, cdar(sc->code), cdr(sc->code));
 	    
 	    if (sc->op == OP_DEFINE_STAR)
-	      {
-		if (not_yet_checked(sc->code))
-		  check_lambda_star_args(sc); /* may affect sc->x et al */
-		sc->value = make_closure(sc, sc->code, T_CLOSURE_STAR);
-	      }
+	      sc->value = make_closure(sc, sc->code, T_CLOSURE_STAR);
 	    else
 	      {
-		if (not_yet_checked(sc->code))
-		  check_lambda_args(sc);
 		NEW_CELL_NO_CHECK(sc, sc->value);
 		car(sc->value) = sc->code;
 		cdr(sc->value) = sc->envir;
@@ -26547,17 +26534,34 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_STAR1:    /* let* -- calculate parameters */
       if (not_yet_checked(sc->code))
 	{
-	  if (!(s7_is_symbol(caar(sc->code))))
-	    return(eval_error(sc, "bad variable ~S in let* bindings", car(sc->code)));
+	  s7_pointer x;
+	  x = car(sc->code);
+	  if (!(s7_is_symbol(car(x))))     /* (let* ((3 1)) 1) */
+	    return(eval_error(sc, "bad variable ~S in let* bindings", x));
 	  
-	  if (!is_pair(car(sc->code)))          /* (let* ((x)) ...) */
-	    return(eval_error(sc, "let* variable declaration, but no value?: ~A", car(sc->code)));
+	  if (!is_pair(x))                 /* (let* ((x)) ...) */
+	    return(eval_error(sc, "let* variable declaration, but no value?: ~A", x));
 	  
-	  if (!(is_pair(cdar(sc->code))))       /* (let* ((x . 1))...) */
-	    return(eval_error(sc, "let* variable declaration is not a proper list?: ~A", car(sc->code)));
+	  if (!(is_pair(cdr(x))))          /* (let* ((x . 1))...) */
+	    return(eval_error(sc, "let* variable declaration is not a proper list?: ~A", x));
 	  
-	  if (is_not_null(cddar(sc->code)))       /* (let* ((x 1 2 3)) ...) */
-	    return(eval_error(sc, "let* variable declaration has more than one value?: ~A", car(sc->code)));
+	  if (is_not_null(cddr(x)))        /* (let* ((x 1 2 3)) ...) */
+	    return(eval_error(sc, "let* variable declaration has more than one value?: ~A", x));
+
+	  x = cdr(sc->code);
+	  if (is_pair(x)) 
+	    { 
+	      if (!is_pair(car(x)))             /* (let* ((x -1) 2) 3) */
+		return(eval_error(sc, "let* variable/binding is ~S?", car(x)));
+
+	      if (!is_pair(cdar(x)))            /* (let* ((a 1) (b . 2)) ...) */
+		return(eval_error(sc, "let* variable list is messed up? ~A", x));
+	    }
+	  else
+	    {
+	      if (is_not_null(x))               /* (let* ((a 1) . b) a) */
+		return(eval_error(sc, "let* var list improper?: ~A", x));
+	    }
 	  set_checked(sc->code);
 	}
 	  
@@ -26576,19 +26580,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = cdr(sc->code);
       if (is_pair(sc->code)) 
 	{ 
-	  if (!is_pair(car(sc->code)))             /* (let* ((x -1) 2) 3) */
-	    return(eval_error(sc, "let* variable/binding is ~S?", car(sc->code)));
-
-	  if (!is_pair(cdar(sc->code)))            /* (let* ((a 1) (b . 2)) ...) */
-	    return(eval_error(sc, "let* variable list is messed up? ~A", sc->code));
-
 	  push_stack(sc, opcode(OP_LET_STAR1), sc->args, sc->code); /* 1 {1} */
 	  sc->code = cadar(sc->code);
 	  goto EVAL;
 	} 
-
-      if (is_not_null(sc->code))                    /* (let* ((a 1) . b) a) */
-	return(eval_error(sc, "let* var list improper?: ~A", sc->code));
 
       /* at this point we have a list of frames, each holding one let* variable.
        *   I tried collapsing that list down to one frame, but the savings was 
@@ -26861,28 +26856,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
 
 
-    case OP_BACRO:
-      /* sc->value is the symbol, sc->x is the binding (the bacro) */
-      set_type(sc->x, T_BACRO | T_ANY_MACRO | T_DONT_COPY | T_DONT_EVAL_ARGS);
-      goto START;
-
-
-    case OP_MACRO:
-      /* symbol? macro name has already been checked */
-      set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY | T_DONT_EVAL_ARGS);
-
-      /* find name in environment, and define it */
-      sc->x = find_local_symbol(sc, sc->envir, sc->code); 
-      if (is_not_null(sc->x))
-	set_symbol_value(sc->x, sc->value); 
-      else add_to_environment(sc, sc->envir, sc->code, sc->value); /* was current but we've checked immutable already */
-
-      /* pop back to wherever the macro call was */
-      sc->x = sc->value; 
-      sc->value = sc->code;
-      goto START;
-      
-      
     case OP_DEFMACRO:
     case OP_DEFMACRO_STAR:
       /* defmacro(*) could be defined in terms of define-macro(*), but I guess this gives us better error messages */
@@ -26945,26 +26918,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       sc->y = sc->NIL;
       sc->z = sc->NIL;
-      push_stack(sc, opcode(OP_MACRO), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO */
-      goto LAMBDA;
-
-
-    case OP_EXPANSION:
-      /* sc->x is the value (sc->value right now is sc->code, the macro name symbol) */
-      set_type(sc->x, T_MACRO | T_ANY_MACRO | T_EXPANSION | T_DONT_COPY | T_DONT_EVAL_ARGS);
-      set_type(sc->value, type(sc->value) | T_EXPANSION | T_DONT_COPY);
-      goto START;
+      NEW_CELL(sc, sc->value);
+      car(sc->value) = sc->code;
+      cdr(sc->value) = sc->envir;
+      sc->code = sc->x;
+      goto MACRO;
 
 
     case OP_DEFINE_BACRO:
     case OP_DEFINE_BACRO_STAR:
     case OP_DEFINE_EXPANSION:
-      if (sc->op == OP_DEFINE_EXPANSION)
-	push_stack(sc, opcode(OP_EXPANSION), sc->NIL, sc->NIL);
-      else push_stack(sc, opcode(OP_BACRO), sc->NIL, sc->NIL);
-      /* drop into define-macro */
-
-
     case OP_DEFINE_MACRO:
     case OP_DEFINE_MACRO_STAR:
 
@@ -27027,16 +26990,46 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       sc->y = sc->NIL;
       sc->z = sc->NIL;
-      push_stack(sc, opcode(OP_MACRO), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO */
-      sc->x = sc->NIL;
-      /* fall into ... */
+      NEW_CELL(sc, sc->value);
+      car(sc->value) = sc->code;
+      cdr(sc->value) = sc->envir;
+      sc->code = sc->x; 
+
+    MACRO:
+      /* symbol? macro name has already been checked */
+      /* find name in environment, and define it */
+      sc->x = find_local_symbol(sc, sc->envir, sc->code); 
+      if (is_not_null(sc->x))
+	set_symbol_value(sc->x, sc->value); 
+      else add_to_environment(sc, sc->envir, sc->code, sc->value); /* was current but we've checked immutable already */
+
+      if ((sc->op == OP_DEFINE_BACRO) ||
+	  (sc->op == OP_DEFINE_BACRO_STAR))
+	set_type(sc->value, T_BACRO | T_ANY_MACRO | T_DONT_COPY | T_DONT_EVAL_ARGS);
+      else
+	{
+	  if (sc->op == OP_DEFINE_EXPANSION)
+	    {
+	      set_type(sc->value, T_MACRO | T_ANY_MACRO | T_EXPANSION | T_DONT_COPY | T_DONT_EVAL_ARGS);
+	      set_type(sc->code, type(sc->code) | T_EXPANSION | T_DONT_COPY);
+	    }
+	  else set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY | T_DONT_EVAL_ARGS); 
+	}
+
+      sc->value = sc->code;
+      goto START;
       
       
-    LAMBDA:
     case OP_LAMBDA: 
       /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
       if (not_yet_checked(sc->code))
-	check_lambda_args(sc);
+	{
+	  if ((!is_pair(sc->code)) ||
+	      (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) or (lambda . 1) */
+	    return(eval_error(sc, "lambda: no args or no body? ~A", sc->code));
+	  check_lambda_args(sc, car(sc->code));
+	  set_checked(sc->code);
+	}
       /* sc->value = make_closure(sc, sc->code, T_CLOSURE); */
       NEW_CELL(sc, sc->value);
       car(sc->value) = sc->code;
@@ -27047,7 +27040,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_LAMBDA_STAR:
       if (not_yet_checked(sc->code))
-	check_lambda_star_args(sc);
+	{
+	  if ((!is_pair(sc->code)) ||
+	      (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
+	    return(eval_error(sc, "lambda*: no args or no body? ~A", sc->code));
+	  check_lambda_star_args(sc, car(sc->code));
+	  set_checked(sc->code);
+	}
       sc->value = make_closure(sc, sc->code, T_CLOSURE_STAR);
       goto START;
       

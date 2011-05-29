@@ -20458,6 +20458,25 @@ abs     1       2
   (test (environment? (procedure-environment f2)) #t)
   (test (environment? (procedure-environment abs)) #t))
 
+(let ()
+  (apply augment-environment! (current-environment)
+	 (with-environment (initial-environment)
+	   (let ()
+	     (define (lognor n1 n2) (lognot (logior n1 n2)))
+	     (define (logit n1) n1)
+
+	     (map (lambda (binding)
+		    (cons (string->symbol 
+			   (string-append "library:" (symbol->string (car binding))))
+			  (cdr binding)))
+		  (car (environment->list (current-environment)))))))
+  (test (library:lognor 1 2) -4))
+
+(for-each
+ (lambda (arg)
+   (test (environment->list arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
+
 (test (current-environment 1) 'error)
 (test (global-environment 1) 'error)
 (test (initial-environment 1) 'error)

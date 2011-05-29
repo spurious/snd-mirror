@@ -226,6 +226,8 @@ output-comment-hook lambda: <{ str -- s }>
   #t                     set-with-smpte-label        drop
   #t                     set-with-toolbar            drop
   #t                     set-show-full-duration      drop
+  #t                     set-with-verbose-cursor     drop
+  #t                     set-with-tracking-cursor    drop
   #t  			 set-just-sounds             drop
   #t  			 set-enved-wave?             drop
   #t  			 set-show-y-zero             drop
@@ -247,7 +249,6 @@ output-comment-hook lambda: <{ str -- s }>
 
   after-open-hook lambda: <{ snd -- }>
     snd channels 0 ?do snd short-file-name snd i time-graph set-x-axis-label drop loop
-    #t snd set-with-tracking-cursor drop
     channels-combined snd set-channel-style
   ; add-hook!
 

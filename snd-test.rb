@@ -2,16 +2,16 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Feb 18 10:18:34 CET 2005
-# Changed: Sun Mar 06 18:15:59 CET 2011
+# Changed: Sun May 29 12:24:34 CEST 2011
 
 # Commentary:
 #
 # Tested with:
-#   Snd version 11.14 of 7-Mar-11
+#   Snd version 12.2 of 30-May-11
 #   ruby 1.8.0 (2003-08-04)
 #   ruby 1.8.7 (2010-08-16 patchlevel 302)
-#   ruby 1.9.2p0 (2010-08-18 revision 29036)
-#   ruby 1.9.3dev (2011-03-06 trunk 31031)
+#   ruby 1.9.2p136 (2010-12-25 revision 30365)
+#   ruby 1.9.3dev (2011-05-29 trunk 31779)
 
 #
 # Reads init file ./.sndtest.rb or ~/.sndtest.rb for global variables,
@@ -141,7 +141,7 @@ if $with_test_nogui
   undef colormap
   undef set_colormap
 
-  # FIXME
+  # FIXME (INFO)
   # snd-nogui.c defines "in"
   alias call_in in
 
@@ -156,7 +156,7 @@ if $with_test_nogui
                         Proc.new do |bounds, *args| y_bounds_value = bounds end)
 
   #
-  # FIXME
+  # FIXME (INFO)
   #
   # For ruby18 it's important to define Procs with arity 0 in this way:
   #
@@ -218,7 +218,6 @@ require "dsp"
 require "analog-filter"
 require "rgb"
 require "effects"
-require "xm-enved"
 require "draw"
 require "musglyphs"
 
@@ -293,7 +292,7 @@ $test_functions = Array.new
 def main_test
   start_snd_test()
   if false
-    # FIXME
+    # FIXME (INFO)
     # Instead of rand() one can use different command lines:
     # snd -noinit snd-test.rb 3 2 1
     # snd -noinit snd-test.rb 1 3 2
@@ -1225,7 +1224,7 @@ end
 Tiny_font_string = $with_test_motif ? "6x12" : $with_test_gtk ? "Sans 8" : "9x15"
 Tiny_font_set_string = $with_test_motif ? "9x15" : $with_test_gtk ? "Monospace 10" : "6x12"
 
-# FIXME
+# FIXME (INFO)
 #
 # temp_dir
 # save_dir
@@ -1399,6 +1398,7 @@ def test_00
   [[:region_graph_style, Graph_lines],
    [:ask_about_unsaved_edits, false],
    [:show_full_duration, false],
+   [:show_full_range, false],
    [:initial_beg, 0.0],
    [:initial_dur, 0.1],
    [:ask_before_overwrite, false],
@@ -1423,7 +1423,7 @@ def test_00
    [:dot_size, 1],
    [:cursor_size, 15],
    [:cursor_style, Cursor_cross],
-   [:tracking_cursor_style, Cursor_cross],
+   [:tracking_cursor_style, Cursor_line],
    [:enved_base, 1.0],
    [:enved_clip?, true],
    [:enved_filter, true],
@@ -1491,13 +1491,14 @@ def test_00
    [:transform_type, $fourier_transform],
    [:trap_segfault, true],
    [:with_file_monitor, true],
-   # FIXME
+   # FIXME (INFO)
    # Ruby doesn't optimize
    [:optimization, 0],
    [:clm_table_size, 512],
    [:clm_default_frequency, 0.0],
    [:with_verbose_cursor, false],
    [:with_inset_graph, false],
+   [:with_interrupts, true],
    [:remember_sound_state, false],
    [:with_smpte_label, false],
    [:with_toolbar, ($with_test_gtk ? true : false)],
@@ -1599,7 +1600,7 @@ def test_01
    ["contrast_control_amp", contrast_control_amp(), 1.0],
    ["contrast_control_bounds", contrast_control_bounds()[1], 10.0],
    ["contrast_control?", without_errors do contrast_control?() end, :no_such_sound],
-   ["cursor_follows_play", cursor_follows_play(), false],
+   ["with_tracking_cursor", with_tracking_cursor(), false],
    ["cursor_location_offset", cursor_location_offset(), 0],
    ["cursor_size", cursor_size(), 15],
    ["cursor_style", cursor_style(), Cursor_cross],
@@ -1692,6 +1693,7 @@ def test_01
    ["show_axes", show_axes(), 1],
    ["show_controls", show_controls(), false],
    ["show_full_duration", show_full_duration(), false],
+   ["show_full_range", show_full_range(), false],
    ["show_grid", show_grid(), false],
    ["show_indices", show_indices(), false],
    ["show_marks", show_marks(), true],
@@ -1718,7 +1720,7 @@ def test_01
    ["time_graph_type", time_graph_type(), Graph_once],
    ["time_graph?", without_errors do time_graph?() end, :no_such_sound],
    ["tiny_font", tiny_font(), Tiny_font_string],
-   ["tracking_cursor_style", tracking_cursor_style(), Cursor_cross],
+   ["tracking_cursor_style", tracking_cursor_style(), Cursor_line],
    ["transform_graph_type", transform_graph_type(), Graph_once],
    ["transform_graph?", without_errors do transform_graph?() end, :no_such_sound],
    ["transform_normalization", transform_normalization(), Normalize_by_channel],
@@ -1733,6 +1735,7 @@ def test_01
    ["with_tracking_cursor", with_tracking_cursor(), false],
    ["with_verbose_cursor", with_verbose_cursor(), false],
    ["with_inset_graph", with_inset_graph(), false],
+   ["with_interrupts", with_interrupts(), true],
    ["with_smpte_label", with_smpte_label, false],
    ["with_toolbar", with_toolbar,  ($with_test_gtk ? true : false)],
    ["with_tooltips", with_tooltips, true],
@@ -2154,7 +2157,7 @@ def test_03
          [:with_tracking_cursor, false, true],
          [:cursor_size, 15, 30],
          [:cursor_style, Cursor_cross, Cursor_line],
-         [:tracking_cursor_style, Cursor_cross, Cursor_line],
+         [:tracking_cursor_style, Cursor_line, Cursor_cross],
          [:dac_combines_channels, true, false],
          [:dac_size, 256, 512],
          [:minibuffer_history_length, 8, 16],
@@ -2219,6 +2222,7 @@ def test_03
          [:reverb_control_scale_bounds, [0.0, 4.0], [0.0, 0.2]],
          [:show_axes, 1, 0],
          [:show_full_duration, false, true],
+         [:show_full_range, false, true],
          [:show_indices, false, true],
          [:show_marks, true, false],
          [:show_mix_waveforms, true, false],
@@ -2238,7 +2242,7 @@ def test_03
          [:with_verbose_cursor, false, true],
          [:wavelet_type, 0, 1],
          [:time_graph?, false, true],
-         # FIXME see below
+         # FIXME (segfault, see below)
          # [:time_graph_type, Graph_once, Graph_as_wavogram],
          [:wavo_hop, 3, 6],
          [:wavo_trace, 64, 128],
@@ -2254,7 +2258,7 @@ def test_03
     lst += gui_lst
   end
   if $with_test_motif
-    # FIXME
+    # FIXME (GTK segfault)
     # doesn't work with GTK
     # set_time_graph_type(Graph_as_wavogram) ==> segfault
     lst += [[:time_graph_type, Graph_once, Graph_as_wavogram]]
@@ -2277,7 +2281,7 @@ def test_03
    [:color_cutoff, 0.003, [-1.0, 123.123]],
    [:color_scale, 1.0, [-32.0, 2000.0]],
    if $with_test_motif
-     # FIXME
+     # FIXME (GTK segfault)
      # doesn't work with GTK and ruby 1.9.2
      # set_contrast_control(xxx) ==> segfault
      [:contrast_control, 0.0, [-123.123, 123.123]]
@@ -2298,7 +2302,7 @@ def test_03
    [:zero_pad, 0, [-1, -123]],
    [:cursor_style, Cursor_cross, [-1]],
    [:cursor_style, Cursor_line, [2, 123]],
-   [:tracking_cursor_style, Cursor_cross, [-1]],
+   [:tracking_cursor_style, Cursor_line, [-1]],
    [:tracking_cursor_style, Cursor_line, [2, 123]],
    [:transform_graph_type, Graph_once, [-1, 123]],
    [:fft_window, 6, [-1, 123]],
@@ -2387,7 +2391,7 @@ def test_03
   dismiss_all_dialogs
   undefined = []
   kernel_global_variables = Kernel.global_variables
-  # FIXME
+  # FIXME (INFO)
   # from original snd-test.scm list removed or changed:
   #
   # :add_clm_field (run.c)
@@ -2420,8 +2424,8 @@ def test_03
    :clear_listener, :clear_minibuffer, :clear_sincs, :clip_hook, :clipping, :clm_channel,
    :clm_print, :clm_table_size, :clm_default_frequency, :close_hook, :close_sound, :color2list,
    :color_cutoff, :color_orientation_dialog, :color_hook, :color_inverted, :color_scale,
-   :color?, :colormap, :colormap_name, :colormap_ref, :colormap_size, :colormap?, :comb,
-   :comb?, :comment, :connes_window, :continue_frame2file, :continue_sample2file,
+   :color?, :colormap, :colormap_name, :colormap_ref, :colormap_size, :colormap?, :comb, :comb?,
+   :combined_data_color, :comment, :connes_window, :continue_frame2file, :continue_sample2file,
    :contrast_control, :contrast_control_amp, :contrast_control_bounds, :contrast_control?,
    :contrast_enhancement, :controls2channel, :convolution, :convolve, :convolve_files,
    :convolve_selection_with, :convolve_with, :convolve?, :copy_context, :copy_sampler,
@@ -2464,15 +2468,15 @@ def test_03
    :graph_lines, :graph_lollipops, :graph_once, :graph_style, :graphs_horizontal, :grid_density,
    :haar_transform, :hamming_window, :hann_poisson_window, :hann_window, :header_type,
    :help_dialog, :help_hook, :hide_widget, :highlight_color, :html_dir, :html_program,
-   :hz2radians, :iir_filter, :iir_filter?, :in_any, :ina, :inb, :info_dialog, :init_ladspa,
-   :initial_graph_hook, :insert_file_dialog, :insert_region, :insert_sample, :insert_samples,
-   :insert_samples_with_origin, :insert_selection, :insert_silence, :insert_sound, :just_sounds,
-   :kaiser_window, :key, :key_binding, :key_press_hook, :keyboard_no_action, :ladspa_activate,
-   :ladspa_cleanup, :ladspa_connect_port, :ladspa_deactivate, :ladspa_descriptor, :ladspa_dir,
-   :peak_env_dir, :ladspa_instantiate, :ladspa_run, :ladspa_run_adding,
+   :hz2radians, :iir_filter, :iir_filter?, :in_any, :ina, :inb, :info_dialog, :info_popup_hook,
+   :init_ladspa, :initial_graph_hook, :insert_file_dialog, :insert_region, :insert_sample,
+   :insert_samples, :insert_samples_with_origin, :insert_selection, :insert_silence, :insert_sound,
+   :just_sounds, :kaiser_window, :key, :key_binding, :key_press_hook, :keyboard_no_action,
+   :ladspa_activate, :ladspa_cleanup, :ladspa_connect_port, :ladspa_deactivate, :ladspa_descriptor,
+   :ladspa_dir, :peak_env_dir, :ladspa_instantiate, :ladspa_run, :ladspa_run_adding,
    :ladspa_set_run_adding_gain, :left_sample, :linear2db, :lisp_graph, :lisp_graph_hook,
-   :lisp_graph_style, :lisp_graph?, :list2vct, :list_ladspa, :listener_click_hook,
-   :listener_color, :listener_font, :listener_prompt, :listener_selection,
+   :lisp_graph_style, :lisp_graph?, :list2vct, :list_ladspa, :listener_click_hook, :listener_color,
+   :listener_font, :listener_prompt, :listener_selection,
    :listener_text_color, :little_endian?, :locsig, :locsig_ref, :locsig_reverb_ref,
    :locsig_reverb_set!, :locsig_set!, :locsig_type, :locsig?, :log_freq_start, :main_menu,
    :main_widgets, :make_all_pass, :make_asymmetric_fm, :make_moving_average, :make_bezier,
@@ -2569,7 +2573,7 @@ def test_03
    :selection_maxamp, :selection_maxamp_position, :selection_member?, :selection_position,
    :selection_srate, :selection?, :short_file_name, :show_all_axes, :show_all_axes_unlabelled,
    :show_bare_x_axis, :show_axes, :show_controls, :show_grid, :show_indices,
-   :show_full_duration, :initial_beg, :initial_dur, :show_listener,
+   :show_full_duration, :show_full_range, :initial_beg, :initial_dur, :show_listener,
    :show_marks, :show_mix_waveforms, :show_no_axes, :show_selection, :show_selection_transform,
    :show_sonogram_cursor, :show_transform_peaks, :show_widget, :show_x_axis,
    :show_x_axis_unlabelled, :show_y_zero, :sinc_width, :nrxysin, :nrxysin?, :nrxycos,
@@ -2592,7 +2596,7 @@ def test_03
    :stop_dac_hook, :stop_player, :stop_playing, :stop_playing_hook, :stop_playing_selection_hook,
    :ncos, :ncos?, :nsin, :nsin?, :swap_channels, :sync, :sync_style, :sync_none, :sync_all,
    :sync_by_sound, :sync_max, :syncd_marks, :table_lookup,
-   :table_lookup?, :tap, :temp_dir, :text_focus_color, :time_graph, :time_graph_hook,
+   :table_lookup?, :tap, :temp_dir, :text_focus_color, :time_graph,
    :time_graph_style, :time_graph_type, :time_graph?, :tiny_font, :tracking_cursor_style,
    :transform2vct, :transform_dialog, :transform_frames, :transform_graph,
    :transform_graph_style, :transform_graph_type, :transform_graph?, :transform_normalization,
@@ -2611,7 +2615,7 @@ def test_03
    :wavo_hop, :wavo_trace, :welch_window, :widget_position, :widget_size, :widget_text,
    :window_height, :window_width, :window_x, :window_y, :with_background_processes,
    :with_file_monitor, :with_gl, :with_mix_tags, :with_relative_panes, :with_tracking_cursor,
-   :with_verbose_cursor, :with_inset_graph, :with_pointer_focus,
+   :with_verbose_cursor, :with_inset_graph, :with_interrupts, :with_pointer_focus,
    :with_smpte_label, :with_toolbar, :with_tooltips, :with_menu_icons,
    :save_as_dialog_src, :save_as_dialog_auto_comment, :x2position,
    :x_axis_as_clock, :x_axis_as_percentage, :x_axis_in_beats, :x_axis_in_measures,
@@ -2623,7 +2627,7 @@ def test_03
     str = n.to_s
     next if Object.const_defined?("#{str.capitalize}".intern)
     str = "$" + str
-    # FIXME
+    # FIXME (INFO)
     # ruby18 likes a String
     next if kernel_global_variables.member?(str)
     # ruby19 likes a Symbol
@@ -3429,7 +3433,7 @@ def test_04_01
   mus_sound_read(fd, 0, 99, 1, sdata)
   snd_test_neq(sdata[0, 10], 0.1, "mus_sound_write")
   pos = mus_sound_seek_frame(fd, 20)
-  # FIXME
+  # FIXME (INFO)
   # IO.open(fd).pos doesn't work
   # snd_test_neq(IO.open(fd).pos, pos, "1 mus_sound_seek_frame")
   snd_test_neq(frame2byte(fmv5_snd, 20), pos, "2 mus_sound_seek_frame")
@@ -3616,7 +3620,7 @@ def test_04_02
       ndata = SoundData.new(chans, samps)
       chans.times do |chn|
         samps.times do |i|
-          # FIXME
+          # FIXME (INFO)
           # This leads to v0 = 1.0 != v1 = -1.0 at some places:
           # sdata[chn, i] = random(2.0) - 1.0
           sdata[chn, i] = random(1.9999) - 1.0
@@ -3627,7 +3631,7 @@ def test_04_02
       fd = mus_sound_open_input("fmv5.snd")
       mus_sound_read(fd, 0, samps - 1, chans, ndata)
       pos = mus_sound_seek_frame(fd, 100)
-      # FIXME
+      # FIXME (INFO)
       # IO.open(fd).pos doesn't work
       # snd_test_neq(IO.open(fd).pos,
       #              pos,
@@ -3670,20 +3674,19 @@ def test_04_03
   our_dac_buffer_size_in_shorts = 256
   our_chans = 1
   our_chan = 0
-  in_sys = 0
-  in_port = Snd.catch(:mus_error, -1) do
+  inport = Snd.catch(:mus_error, -1) do
     mus_audio_open_input(0, our_srate, our_chans, our_short, our_dac_buffer_size_in_bytes)
   end.first
   data = make_sound_data(our_chans, our_dac_buffer_size_in_shorts)
   vobj = make_vct(our_dac_buffer_size_in_shorts)
-  if in_port == -1
+  if inport == -1
     snd_display("cannot open audio input port!")
   else
     10.times do
-      mus_audio_read(in_port, data, our_dac_buffer_size_in_shorts)
+      mus_audio_read(inport, data, our_dac_buffer_size_in_shorts)
       graph(sound_data2vct(data, our_chan, vobj))
     end
-    mus_audio_close(in_port)
+    mus_audio_close(inport)
   end
   close_sound(ind)
   #
@@ -3781,7 +3784,7 @@ def test_04_03
   close_sound(snd)
   snd = open_sound("test.snd")
   snd_test_neq(channel2vct(0, 10),
-               vct(0.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0),
+               vct(0.0, 1.0, -1.0, 1.0, 0.0, 0.0, -0.7, 0.7, -0.2, 0.2),
                "unclipped 1")
   close_sound(snd)
   mus_sound_forget("test.snd")
@@ -3809,12 +3812,14 @@ def test_04_03
   data = vct(0.0, 1.0, -1.0, 0.9999, 2.0, -2.0, 1.3, -1.3, 1.8, -1.8)
   sdata = vct2sound_data(data)
   snd = mus_sound_open_output("test.snd", 22050, 1, Mus_lshort, Mus_riff, "a comment")
+  old_clip = mus_file_clipping(snd)
+  old_snd = snd
   set_mus_file_clipping(snd, false)
   mus_sound_write(snd, 0, 9, 1, sdata)
   mus_sound_close_output(snd, 40)
   snd = open_sound("test.snd")
   snd_test_neq(channel2vct(0, 10),
-               vct(0.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0),
+               vct(0.0, -1.0, -1.0, 1.0, 0.0, 0.0, -0.7, 0.7, -0.2, 0.2),
                "unclipped 2")
   close_sound(snd)
   mus_sound_forget("test.snd")
@@ -3826,6 +3831,9 @@ def test_04_03
   mus_sound_write(snd, 0, 9, 1, sdata)
   set_mus_file_clipping(snd, false)
   mus_sound_close_output(snd, 40)
+  if snd == old_snd
+    set_mus_file_clipping(snd, old_clip)
+  end
   snd = open_sound("test.snd")
   snd_test_neq(channel2vct(0, 10),
                vct(0.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0),
@@ -3840,7 +3848,7 @@ def test_04_03
   mus_sound_close_output(snd, 40)
   snd = open_sound("test.snd")
   snd_test_neq(channel2vct(0, 10),
-               vct(0.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0),
+               vct(0.0, -1.0, -1.0, 1.0, 0.0, 0.0, -0.7, 0.7, -0.2, 0.2),
                "unclipped 3")
   close_sound(snd)
   mus_sound_forget("test.snd")
@@ -4151,7 +4159,7 @@ def test_04_04
   end
 end
 
-# FIXME
+# FIXME (INFO)
 # with big file
 #
 # with_sound(:output, $bigger_snd, :srate, 44100, :play, false) do
@@ -4913,7 +4921,7 @@ def test_04_08
   close_sound(ind)
   delete_files("test space.snd", "test space.marks")
   #
-  # FIXME
+  # FIXME (INFO)
   # S7 specific tests skipped
   #
 end
@@ -7214,7 +7222,7 @@ def test_05_10
   xz = x_zoom_slider
   yz = y_zoom_slider
   snd_test_neq(snd_completion(" open-so"), " open-sound", "completion (1)")
-  # FIXME
+  # FIXME (INFO)
   # Zoom_focus_right (constant) replaced by zoom_focus_style
   snd_test_neq(snd_completion(" zoom_focus_s"), " zoom_focus_style", "completion (2)")
   play("oboe.snd", :wait, true)
@@ -7240,7 +7248,7 @@ def test_05_10
     snd_display("disk_kspace = %s", k)
   end
   k = disk_kspace("/baddy/hiho")
-  # FIXME
+  # FIXME (INFO)
   # #if !USE_STATFS in snd-file.c
   # disk_kspace returns 1234567
   if k != 1234567 and k != -1
@@ -7280,8 +7288,10 @@ def test_05_10
     snd_test_neq(y_axis_label(), "no amp", "time y_axis_label")
     set_y_axis_label(false, ind)
   end
-  # 
-  graph_data(make_vct(4))
+  #
+  cr = make_cairo(channel_widgets(ind, 0)[0])
+  graph_data(make_vct(4), ind, 0, Copy_context, false, false, Graph_lines, cr)
+  free_cairo(cr)
   update_lisp_graph
   graph(vct(0, 0, 1, 1, 2, 0))
   32.times do
@@ -7303,7 +7313,7 @@ def test_05_10
   data = make_graph_data(ind, 0, 0, 100, 199)
   if vct?(data)
     snd_test_neq(data.length, 100, "make_graph_data 100:199")
-    snd_test_neq(sample(50), data[50], "make_graph_data")
+    snd_test_neq(sample(50), data[50], "make_graph_data 50")
   end
   set_x_bounds([0.0, 0.1])
   update_transform_graph
@@ -7690,8 +7700,10 @@ def test_05_10
     set_cursor_style(lambda do |snd, chn, ax|
                        x, y = cursor_position
                        size = (cursor_size / 2.0).round
-                       draw_line(x - size, y - size, x + size, y + size, snd, chn, Cursor_context)
-                       draw_line(x - size, y + size, x + size, y - size, snd, chn, Cursor_context)
+                       cr = make_cairo(channel_widgets(snd, chn)[0])
+                       draw_line(x - size, y - size, x + size, y + size, snd, chn, Cursor_context, cr)
+                       draw_line(x - size, y + size, x + size, y - size, snd, chn, Cursor_context, cr)
+                       free_cairo(cr)
                      end,
                      ind, 0)
     unless proc?(res = cursor_style(ind, 0))
@@ -8074,7 +8086,7 @@ def test_05_12
   apply_controls(obind)
   fltamp = maxamp(obind)
   fltdur = frames(obind)
-  # FIXME
+  # FIXME (INFO)
   # from command line: => 0.054348257295914 (snd-s7|ruby|forth)
   #     from listener: => less than 0.025
   if (fltamp - 0.02).abs > 0.005
@@ -9094,7 +9106,8 @@ def test_05_20
   old_ssc = show_sonogram_cursor
   old_tgt = transform_graph_type
   set_show_sonogram_cursor(true)
-  set_cursor_follows_play(true)
+  set_with_tracking_cursor(true)
+  snd_test_neq(with_tracking_cursor(), true, "with_tracking_cursor set to true")
   set_transform_graph_type(Graph_as_sonogram)
   play(selected_sound, :wait, true)
   set_transform_graph?(true)
@@ -9828,6 +9841,24 @@ def test_05_25
   old_dur = initial_dur
   old_show = show_full_duration
   $initial_graph_hook.reset_hook!
+  #
+  set_show_full_range(true)
+  ns = open_sound("1a.snd")
+  snd_test_neq(y_bounds(ns, 0), [-1.0, 1.0], "show_full_range 1.0 test")
+  close_sound(ns)
+  with_sound(:output, "test.snd", :clipped, false) do
+    fm_violin_rb(0, 1, 440, 3.5)
+  end
+  ns = open_sound("test.snd")
+  snd_test_neq(y_bounds(ns, 0), [-3.5, 3.5], "show_full_range 3.5 test")
+  with_sound(:output, "test.snd", :clipped, false) do
+    fm_violin_rb(0, 1, 440, 1.5)
+  end
+  update_sound(ns = find_sound("test.snd"))
+  snd_test_neq(y_bounds(ns, 0), [-1.5, 1.5], "show_full_range 1.5 test")
+  close_sound(ns)
+  set_show_full_range(false)
+  #
   set_show_full_duration(true)
   ns = open_sound("1.snd")
   ls = left_sample(ns, 0)
@@ -9890,7 +9921,7 @@ def test_05_25
   close_sound(ns)
   set_sync_style(old_sync)
   #
-  view_sound("obtest.snd")
+  ind = view_sound("obtest.snd")
   delete_samples(0, 1000, ind, 0)
   if integer?((res = Snd.catch do save_sound(ind) end).first)
     snd_display("save_viewed_sound: %s", res)
@@ -10033,7 +10064,7 @@ def test_05_25
     snd_display("scan_again: res %s != req %s?", res, req)
   end
   set_cursor(1000)
-  # FIXME
+  # FIXME (INFO)
   # set_sample(0.5) isn't possible
   set_sample(:undefined, 0.5)
   if fneq(res = sample(1000), 0.5)
@@ -11428,54 +11459,54 @@ def test_07_02(old_colormap_size)
   if (res = colormap_name($rainbow_colormap)) != "rainbow"
     snd_display("rainbow: %s?", res)
   end
-  purple_cmap = add_colormap("purple",
-                             lambda do |size|
-                               r = make_vct(size)
-                               g = make_vct(size)
-                               b = make_vct(size)
-                               er = [0, 60, 60, 116, 128, 252, 192, 252, 256, 60]
-                               eg = [0,  0, 64,   0, 128, 252, 192, 252, 256,  0]
-                               eb = [0, 80,          128, 252, 192,   0, 256, 80]
-                               incr = 256.0 / size
-                               x = 0.0
-                               size.times do |i|
-                                 r[i] = envelope_interp(x, er) / 256.0
-                                 g[i] = envelope_interp(x, eg) / 256.0
-                                 b[i] = envelope_interp(x, eb) / 256.0
-                                 x += incr
-                               end
-                               [r, g, b]
-                             end)
-  sin_cmap = add_colormap("sin",
-                          lambda do |size|
-                            r = make_vct(size)
-                            g = make_vct(size)
-                            b = make_vct(size)
-                            incr = (2.0 * PI) / size
-                            x = 0.0
-                            size.times do |i|
-                              r[i] = sin(1.5 * x).abs
-                              g[i] = sin(3.5 * x).abs
-                              b[i] = sin(2.5 * x).abs
-                              x += incr
-                            end
-                            [r, g, b]
-                          end)
-  another_sin_cmap = add_colormap("another-sin",
-                                  lambda do |size|
-                                    r = make_vct(size)
-                                    g = make_vct(size)
-                                    b = make_vct(size)
-                                    incr = (2.0 * PI) / size
-                                    x = 0.0
-                                    size.times do |i|
-                                      r[i] = sin(2.5 * x).abs
-                                      g[i] = sin(3.5 * x).abs
-                                      b[i] = sin(4.5 * x).abs
-                                      x += incr
-                                    end
-                                    [r, g, b]
-                                  end)
+  add_colormap("purple",
+               lambda do |size|
+                 r = make_vct(size)
+                 g = make_vct(size)
+                 b = make_vct(size)
+                 er = [0, 60, 60, 116, 128, 252, 192, 252, 256, 60]
+                 eg = [0,  0, 64,   0, 128, 252, 192, 252, 256,  0]
+                 eb = [0, 80,          128, 252, 192,   0, 256, 80]
+                 incr = 256.0 / size
+                 x = 0.0
+                 size.times do |i|
+                   r[i] = envelope_interp(x, er) / 256.0
+                   g[i] = envelope_interp(x, eg) / 256.0
+                   b[i] = envelope_interp(x, eb) / 256.0
+                   x += incr
+                 end
+                 [r, g, b]
+               end)
+  add_colormap("sin",
+               lambda do |size|
+                 r = make_vct(size)
+                 g = make_vct(size)
+                 b = make_vct(size)
+                 incr = (2.0 * PI) / size
+                 x = 0.0
+                 size.times do |i|
+                   r[i] = sin(1.5 * x).abs
+                   g[i] = sin(3.5 * x).abs
+                   b[i] = sin(2.5 * x).abs
+                   x += incr
+                 end
+                 [r, g, b]
+               end)
+  add_colormap("another-sin",
+               lambda do |size|
+                 r = make_vct(size)
+                 g = make_vct(size)
+                 b = make_vct(size)
+                 incr = (2.0 * PI) / size
+                 x = 0.0
+                 size.times do |i|
+                   r[i] = sin(2.5 * x).abs
+                   g[i] = sin(3.5 * x).abs
+                   b[i] = sin(4.5 * x).abs
+                   x += incr
+                 end
+                 [r, g, b]
+               end)
   [1024, 256, 2, 512].each do |n|
     set_colormap_size(n)
     10.times do |i|
@@ -12421,7 +12452,7 @@ def poly_roots_tests
   unless vequal(res = poly_roots(vct(2, -1, -2, 1)), [2.0, -1.0, 1.0])
     snd_display("poly_roots 2 -1 -2 1: %s?", res)
   end
-  # FIXME
+  # FIXME (INFO)
   # 0.544 comes first with poly.rb
   if vcneql(res = poly(-1, 1, 1, 1).roots,
             [0.544, Complex(-0.772, 1.115), Complex(-0.772, -1.115)]) and
@@ -12440,7 +12471,7 @@ def poly_roots_tests
       vcneql(res, [Complex(0.397, 0.687), Complex(0.397, -0.687), -0.794])
     snd_display("poly_roots 0.5 0 0 1: %s?", res)
   end
-  # FIXME
+  # FIXME (INFO)
   # reduce added
   # without reduce: 3.0 -1.0 -2.0 -3.0 2.0-1.1555579666323415e-33i 1.0+2.9582283945787943e-31i
   res = (poly(-1, 1) * poly(1, 1) * poly(-2, 1) * poly(2, 1) * poly(-3, 1) * poly(3, 1)).reduce.roots
@@ -12779,12 +12810,6 @@ def frame_equal?(f1, f2)
   else
     false
   end
-end
-
-def make_random_frame(size)
-  fr = make_frame(size)
-  size.times do |chn| frame_set!(fr, chn, 1.0 - random(2.0)) end
-  fr
 end
 
 def make_random_mixer(size)
@@ -15504,194 +15529,96 @@ def test_08_06
   end
   set_mus_srate(old_srate)
   # 
-  gen = make_ppolar(1200.0, 0.1)
-  v0 = make_vct!(10) do |i| two_pole(gen, i.zero? ? 1.0 : 0.0) end
-  unless two_pole?(gen)
-    snd_display("%s not ppolar?", gen)
-  end
-  if gen.order != 2
-    snd_display("ppolar order: %s?", gen.order)
-  end
-  if fneq(gen.a0, 1.0)
-    snd_display("ppolar a0: %s?", gen.a0)
-  end
-  if fneq(gen.b1, -0.188)
-    snd_display("ppolar b1: %s?", gen.b1)
-  end
-  if fneq(gen.b2, 0.01)
-    snd_display("ppolar b2: %s?", gen.b2)
-  end
-  if fneq(v0[0], 1.0) or fneq(v0[1], 0.188)
-    snd_display("ppolar output: %s?", v0)
-  end
-  if fneq(gen.frequency, 1200.0)
-    snd_display("ppolar freq: %s?", gen.frequency)
-  end
-  if fneq(gen.scaler, 0.1)
-    snd_display("ppolar scaler: %s?", gen.scaler)
-  end
-  # 
-  z1 = make_ppolar(600.0, 0.1)
-  z2 = make_ppolar(600.0, 0.1)
-  z3 = make_ppolar(1200.0, 0.1)
-  two_pole(z1, 1.0)
-  two_pole(z2, 1.0)
-  two_pole(z3, 1.0)
-  test_gen_equal(z1, z2, z3)
-  z1 = make_ppolar(:radius, 0.1, :frequency, 600.0)
-  z2 = make_ppolar(:radius, 0.1, :frequency, 600.0)
-  z3 = make_ppolar(:radius, 0.2, :frequency, 1200.0)
-  two_pole(z1, 1.0)
-  two_pole(z2, 1.0)
-  two_pole(z3, 1.0)
-  test_gen_equal(z1, z2, z3)
-  z1 = make_ppolar(600.0, 0.1)
-  z2 = make_ppolar(600.0, 0.1)
-  z3 = make_ppolar(600.0, 0.1)
-  two_pole(z1, 1.0)
-  two_pole(z2, 1.0)
-  two_pole(z3, 0.5)
-  test_gen_equal(z1, z2, z3)
-  # 
   gen = make_two_pole(1200.0, 0.1)
   unless two_pole?(gen)
-    snd_display("%s not 2ppolar?", gen)
+    snd_display("%s not 2-polar?", gen)
   end
   if gen.order != 2
-    snd_display("2ppolar order: %s?", gen.order)
+    snd_display("2-polar order: %s?", gen.order)
   end
   if fneq(gen.a0, 1.0)
-    snd_display("2ppolar a0: %s?", gen.a0)
+    snd_display("2-polar a0: %s?", gen.a0)
   end
   if fneq(gen.b1, -0.188)
-    snd_display("2ppolar b1: %s?", gen.b1)
+    snd_display("2-polar b1: %s?", gen.b1)
   end
   if fneq(gen.b2, 0.01)
-    snd_display("2ppolar b2: %s?", gen.b2)
+    snd_display("2-polar b2: %s?", gen.b2)
   end
   if fneq(gen.frequency, 1200.0)
-    snd_display("2ppolar freq: %s?", gen.frequency)
+    snd_display("2-polar freq: %s?", gen.frequency)
   end
   if fneq(gen.scaler, 0.1)
-    snd_display("2ppolar scaler: %s?", gen.scaler)
+    snd_display("2-polar scaler: %s?", gen.scaler)
   end
   # 
   gen = make_two_pole(:frequency, 1200.0, :radius, 0.1)
   unless two_pole?(gen)
-    snd_display("%s not f2ppolar?", gen)
+    snd_display("%s not f2-polar?", gen)
   end
   if gen.order != 2
-    snd_display("f2ppolar order: %s?", gen.order)
+    snd_display("f2-polar order: %s?", gen.order)
   end
   if fneq(gen.a0, 1.0)
-    snd_display("f2ppolar a0: %s?", gen.a0)
+    snd_display("f2-polar a0: %s?", gen.a0)
   end
   if fneq(gen.b1, -0.188)
-    snd_display("f2ppolar b1: %s?", gen.b1)
+    snd_display("f2-polar b1: %s?", gen.b1)
   end
   if fneq(gen.b2, 0.01)
-    snd_display("f2ppolar b2: %s?", gen.b2)
+    snd_display("f2-polar b2: %s?", gen.b2)
   end
   if fneq(gen.frequency, 1200.0)
-    snd_display("f2ppolar freq: %s?", gen.frequency)
+    snd_display("f2-polar freq: %s?", gen.frequency)
   end
   if fneq(gen.scaler, 0.1)
-    snd_display("f2ppolar scaler: %s?", gen.scaler)
+    snd_display("f2-polar scaler: %s?", gen.scaler)
   end
   # 
-  gen = make_zpolar(:radius, 0.1, :frequency, 1200.0)
-  v0 = make_vct!(10) do |i| two_zero(gen, i.zero? ? 1.0 : 0.0) end
-  unless two_zero?(gen)
-    snd_display("%s not zpolar?", gen)
-  end
-  if gen.order != 2
-    snd_display("zpolar order: %s?", gen.order)
-  end
-  if fneq(gen.a0, 1.0)
-    snd_display("zpolar a0: %s?", gen.a0)
-  end
-  if fneq(gen.a1, -0.188)
-    snd_display("zpolar a1: %s?", gen.a1)
-  end
-  if fneq(gen.a2, 0.01)
-    snd_display("zpolar a2: %s?", gen.a2)
-  end
-  if fneq(v0[0], 1.0) or fneq(v0[1], -0.188)
-    snd_display("zpolar output: %s?", v0)
-  end
-  if fneq(gen.frequency, 1200.0)
-    snd_display("zpolar freq: %s?", gen.frequency)
-  end
-  if fneq(gen.scaler, 0.1)
-    snd_display("zpolar scaler: %s?", gen.scaler)
-  end
- #
-  z1 = make_zpolar(0.1, 600.0)
-  z2 = make_zpolar(0.1, 600.0)
-  z3 = make_zpolar(0.1, 1200.0)
-  two_zero(z1, 1.0)
-  two_zero(z2, 1.0)
-  two_zero(z3, 1.0)
-  test_gen_equal(z1, z2, z3)
-  z1 = make_zpolar(:radius, 0.1, :frequency, 600.0)
-  z2 = make_zpolar(:radius, 0.1, :frequency, 600.0)
-  z3 = make_zpolar(:radius, 0.2, :frequency, 1200.0)
-  two_zero(z1, 1.0)
-  two_zero(z2, 1.0)
-  two_zero(z3, 1.0)
-  test_gen_equal(z1, z2, z3)
-  z1 = make_zpolar(0.1, 600.0)
-  z2 = make_zpolar(0.1, 600.0)
-  z3 = make_zpolar(0.1, 600.0)
-  two_zero(z1, 1.0)
-  two_zero(z2, 1.0)
-  two_zero(z3, 0.5)
-  test_gen_equal(z1, z2, z3)
-   # 
   gen = make_two_zero(1200.0, 0.1)
   unless two_zero?(gen)
-    snd_display("%s not 2zpolar?", gen)
+    snd_display("%s not 2-zp?", gen)
   end
   if gen.order != 2
-    snd_display("2zpolar order: %s?", gen.order)
+    snd_display("2-zp order: %s?", gen.order)
   end
   if fneq(gen.a0, 1.0)
-    snd_display("2zpolar a0: %s?", gen.a0)
+    snd_display("2-zp a0: %s?", gen.a0)
   end
   if fneq(gen.a1, -0.188)
-    snd_display("2zpolar a1: %s?", gen.a1)
+    snd_display("2-zp a1: %s?", gen.a1)
   end
   if fneq(gen.a2, 0.01)
-    snd_display("2zpolar a2: %s?", gen.a2)
+    snd_display("2-zp a2: %s?", gen.a2)
   end
   if fneq(gen.frequency, 1200.0)
-    snd_display("2zpolar freq: %s?", gen.frequency)
+    snd_display("2-zp freq: %s?", gen.frequency)
   end
   if fneq(gen.scaler, 0.1)
-    snd_display("2zpolar scaler: %s?", gen.scaler)
+    snd_display("2-zp scaler: %s?", gen.scaler)
   end
   # 
   gen = make_two_zero(:frequency, 1200.0, :radius, 0.1)
   unless two_zero?(gen)
-    snd_display("%s not f2zpolar?", gen)
+    snd_display("%s not f2-zp?", gen)
   end
   if gen.order != 2
-    snd_display("f2zpolar order: %s?", gen.order)
+    snd_display("f2-zp order: %s?", gen.order)
   end
   if fneq(gen.a0, 1.0)
-    snd_display("f2zpolar a0: %s?", gen.a0)
+    snd_display("f2-zp a0: %s?", gen.a0)
   end
   if fneq(gen.a1, -0.188)
-    snd_display("f2zpolar a1: %s?", gen.a1)
+    snd_display("f2-zp a1: %s?", gen.a1)
   end
   if fneq(gen.a2, 0.01)
-    snd_display("f2zpolar a2: %s?", gen.a2)
+    snd_display("f2-zp a2: %s?", gen.a2)
   end
   if fneq(gen.frequency, 1200.0)
-    snd_display("f2zpolar freq: %s?", gen.frequency)
+    snd_display("f2-zp freq: %s?", gen.frequency)
   end
   if fneq(gen.scaler, 0.1)
-    snd_display("f2zpolar scaler: %s?", gen.scaler)
+    snd_display("f2-zp scaler: %s?", gen.scaler)
   end
   # 
   gen = make_formant(1200.0, 0.9)
@@ -16793,7 +16720,6 @@ end
 def test_08_09
   gen = make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1]))
   gen1 = make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1], make_vct(512)))
-  gen2 = partials2wave([1, 1, 2, 1, 3, 1, 4, 1], false, true)
   gen3 = make_table_lookup
   gen4 = make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1]))
   print_and_check(gen,
@@ -18352,7 +18278,7 @@ def test_08_14
   gen2 = make_locsig(60.0, :channels, 4)
   gen200 = make_locsig(200.0, :channels, 4)
   gen3 = gen1
-  fr0 = locsig(gen, 0, 1.0)
+  locsig(gen, 0, 1.0)
   print_and_check(gen, "locsig", "locsig chans 2, outn: [0.667 0.333], interp: linear")
   unless locsig?(gen)
     snd_display("%s not locsig?", gen)
@@ -18391,17 +18317,17 @@ def test_08_14
   unless vequal(mus_data(gen), vct(0.250, 0.333))
     snd_display("locsig gen 0.25 outn: %s?", mus_data(gen))
   end
-  fr0 = locsig(gen, 0, 1.0)
+  locsig(gen, 0, 1.0)
   locsig_set!(gen, 0, 0.5)
   unless vequal(mus_data(gen), vct(0.500, 0.333))
     snd_display("locsig gen 0.5 outn: %s?", mus_data(gen))
   end
-  fr0 = locsig(gen, 0, 1.0)
+  locsig(gen, 0, 1.0)
   gen = make_locsig(300.0, 2.0, 0.1, :channels, 4)
   unless vequal(mus_data(gen), vct(0.167, 0.000, 0.000, 0.333))
     snd_display("locsig gen 300 outn: %s?", mus_data(gen))
   end
-  fr0 = locsig(gen, 0, 1.0)
+  locsig(gen, 0, 1.0)
   move_locsig(gen1, 90.0, 1.0)
   unless vequal(mus_data(gen1), vct(0.000, 1.000))
     snd_display("locsig gen1 90 outn: %s?", mus_data(gen1))
@@ -19233,7 +19159,7 @@ def test_08_15
                          0
                        end)
   map_channel(lambda do |y| granulate(grn, lambda do |dir| rd.call end) end)
-  if (maxamp / mx) < 3.0 or (mx / maxamp) > 6.0
+  if (maxamp / mx) < 2.9 or (mx / maxamp) > 6.0
     snd_display("gran edit 4* (1): %s %s?", mx, maxamp)
   end
   revert_sound(ind)
@@ -20729,7 +20655,7 @@ def test_08_21
   # 
   pv = make_phase_vocoder(false, 512, 4, (128 * 2.0).to_i, 1.0, false, false, false)
   rd = make_sampler(0)
-  len = (2.0 * frames(ind)).to_i
+  len = 1000
   data = make_vct!(len) do phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end
   set_samples(0, len, data)
   undo_edit(1)
@@ -20748,7 +20674,7 @@ def test_08_21
                             0.0
                           })
   rd = make_sampler(0)
-  len = (2.0 * frames(ind)).to_i
+  len = 1000
   data = make_vct!(len) do phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end
   set_samples(0, len, data)
   undo_edit(1)
@@ -21348,7 +21274,7 @@ def test_08_24
                  "/hiho",
                  [0, 1],
                  1234,
-                 # FIXME
+                 # FIXME (print_vct segfault)
                  # make_vct(3) removed from list because:
                  #   if $all_args is true
                  #   0x08096617 in print_vct (obj=Cannot access memory at address 0xbf003038)
@@ -21390,7 +21316,6 @@ def test_08_24
      :make_one_pole,
      :make_one_zero,
      :make_oscil,
-     :make_ppolar,
      :make_pulse_train,
      :make_rand,
      :make_rand_interp,
@@ -21401,7 +21326,6 @@ def test_08_24
      :make_two_pole,
      :make_two_zero,
      :make_wave_train,
-     :make_zpolar,
      :make_ssb_am].each do |make_func|
       if mus_generator?(gen = Snd.catch do
                           snd_func(make_func, *args)
@@ -21778,7 +21702,7 @@ def test_09_02
   end
   undo_edit(1, ind, 1)
   set_sync(1, ind)
-  tag = mix("test.snd", 0, true).car
+  mix("test.snd", 0, true).car
   samps0 = channel2vct(0, 20, ind, 0)
   samps1 = channel2vct(0, 20, ind, 1)
   v = make_vct(20)
@@ -21794,7 +21718,7 @@ def test_09_02
   end
   undo_edit
   set_cursor(5, ind)
-  tag = mix("test.snd", cursor, true).car
+  mix("test.snd", cursor, true).car
   samps0 = channel2vct(0, 20, ind, 0)
   samps1 = channel2vct(0, 20, ind, 1)
   v = make_vct(20)
@@ -22623,10 +22547,10 @@ def test_10_01
   end
   close_sound(fd)
   fd = open_sound("oboe.snd")
-  m1 = add_mark(1000)
-  m2 = add_mark(2500)
-  m3 = add_mark(frames - 4000)
-  ms = marks(fd, 0)
+  add_mark(1000)
+  add_mark(2500)
+  add_mark(frames - 4000)
+  marks(fd, 0)
   src_sound(-0.5)
   unless (res1 = marks(fd, 0)) == (res2 = marks(fd, 0, 0).reverse)
     snd_display("src rev marks: %s %s?", res1.inspect, res2.inspect)
@@ -23054,9 +22978,9 @@ def test_10_02
   # 
   ind = open_sound("oboe.snd")
   if res = find_mark(12345)
-    snd_display("find_mark when no mark: %s?", res)
+    snd_display("find_mark when no marks: %s?", res)
   end
-  m0 = add_mark(123, ind, 0)
+  add_mark(123, ind, 0)
   delete_sample(0)
   m1 = add_mark(23, ind, 0)
   set_mark_name(m1, "23")
@@ -23089,7 +23013,7 @@ def test_10_02
     snd_display("cannot find 11th mark?")
   end
   if (m12 = find_mark("23", ind, 0, 2))
-    snd_display("found 12th mark: %s %s %s?", m12, mark_sample(m12, 2), mark_name(m12, 2))
+    snd_display("found 12th mark: %s %s %s?", m12, mark_sample(m12, 2), mark_name(m12))
   end
   set_mark_name(m1, false)
   close_sound(ind)
@@ -24007,7 +23931,7 @@ def test_13_00
     "hiho:" + b
   end
   ho = snd_help(:cursor_position)
-  # FIXME
+  # FIXME (INFO)
   # HI has one char more than HO:
   # HI: cursor_postion(:optional, snd, chn):
   # HO: (cursor-postion :optional snd chn):
@@ -25465,7 +25389,7 @@ def test_14
     #
     zz = view_sound("z.snd")
     select_sound(zz)
-    md = mix("4.aiff").car
+    mix("4.aiff").car
     add_mark(0)
     add_mark(1200)
     delete_marks
@@ -25810,10 +25734,8 @@ def test_14
      [:with_tracking_cursor, false, false, true],
      [:cursor_size, false, 15, 25],
      [:cursor_style, false, Cursor_cross, Cursor_line],
-     [:tracking_cursor_style, false, Cursor_cross, Cursor_line],
+     [:tracking_cursor_style, false, Cursor_line, Cursor_cross],
      [:clipping, false, false, true],
-     [:default_output_chans, false, 1, 8],
-     [:default_output_srate, false, 22050, 44100],
      [:dot_size, false, 1, 10],
      [:enved_base, false, 0.01, 100.0],
      [:enved_clip?, false, false, true],
@@ -25841,7 +25763,7 @@ def test_14
      [:filter_control_in_hz, true, false, true],
      [:filter_control_order, true, 2, 400],
      [:filter_control?, true, false, true],
-     [:graph_cursor, false, 0, 35],
+     # [:graph_cursor, false, 0, 35],
      [:time_graph_style, false, 0, 4],
      [:lisp_graph_style, false, 0, 4],
      [:transform_graph_style, false, 0, 4],
@@ -27360,11 +27282,6 @@ def test_15_03
   oboe = open_sound("oboe.snd")
   a4 = open_sound("4.aiff")
   sr = srate(oboe)
-  fr = frames(oboe, 0)
-  typ = header_type(oboe)
-  frm = data_format(oboe)
-  loc = data_location(oboe)
-  com = comment(oboe)
   save_sound_as("test.aif", oboe, Mus_aifc)
   oboe_aif = open_sound("test.aif")
   if (res = header_type(oboe_aif)) != Mus_aifc
@@ -30126,27 +30043,37 @@ end
 
 # ---------------- test 17: dialogs and graphics ----------------
 
-def arrow2right(x, y, size, snd, chn)
+add_help(:arrow2right,
+         "arrow2right(x, y, size, snd, chn, cr)  \
+draw an arrow pointing (from the left) at the point [x, y]")
+
+def arrow2right(x, y, size, snd, chn, cr)
   size2 = size * 2
   fill_polygon([x, y,
                 x - size2, y - size,
                 x - size2, y + size,
                 x, y],
-               snd, chn)
+               snd, chn, Time_graph, cr)
   fill_rectangle(x - 4 * size, (y - 0.4 * size).floor,
                  size2, (0.8 * size).floor,
-                 snd, chn)
+                 snd, chn, Time_graph, false, cr)
 end
 
 def test_17
-  if $with_test_gui
-    $after_graph_hook.add_hook!(get_func_name) do |snd, chn| display_previous_edits(snd, chn) end
+  # FIXME (Cairo segfault)
+  # Assertion failed: (CAIRO_REFERENCE_COUNT_HAS_REFERENCE (&cr->ref_count)), function cairo_destroy, file cairo.c, line 435.
+  # Abort (core dumped)
+  # if $with_test_gui
+  if $with_test_motif
+    $after_graph_hook.add_hook!(get_func_name, &method(:display_previous_edits).to_proc)
     $lisp_graph_hook.add_hook!(get_func_name) do |snd, chn|
       lambda do | |
+        cr = make_cairo(channel_widgets(snd, chn)[0])
         draw_string("hi",
                     x2position(0.5, snd, chn, Lisp_graph),
                     y2position(0.5, snd, chn, Lisp_graph),
-                    snd, chn)
+                    snd, chn, Lisp_graph, cr)
+        free_cairo(cr)
       end
     end
     ind = open_sound("oboe.snd")
@@ -30161,16 +30088,16 @@ def test_17
     draw_bass_clef(100, 100, 100, 0, ind, 0)
     update_time_graph(ind, 0)
     draw_fermata(200, 100, 60, 0, ind, 0)
-    draw_line(100, 100, 200, 200, ind, 0)
-    draw_fermata(200, 100, 60, 0, ind, 0)
-    draw_dot(300, 300, 10, ind, 0)
-    draw_string("hiho", 20, 20, ind, 0)
-    draw_dots([25, 25, 50, 50, 100, 100], 10, ind, 0)
-    arrow2right(100, 50, 10, ind, 0)
-    fill_rectangle(20, 20, 100, 100, ind, 0)
+    cr = make_cairo(channel_widgets(ind, 0)[0])
+    draw_line(100, 100, 200, 200, ind, 0, Time_graph, cr)
+    draw_dot(300, 300, 10, ind, 0, Time_graph, cr)
+    draw_string("hiho", 20, 20, ind, 0, Time_graph, cr)
+    draw_dots([25, 25, 50, 50, 100, 100], 10, ind, 0, Time_graph, cr)
+    arrow2right(100, 50, 10, ind, 0, cr)
+    fill_rectangle(20, 20, 100, 100, ind, 0, Time_graph, false, cr)
+    free_cairo(cr)
     make_bezier(0, 0, 20, 20, 40, 30, 60, 10, 10)
     update_time_graph(ind, 0)
-    fill_rectangle(20, 20, 100, 100, ind, 0, Time_graph, true)
     $after_graph_hook.reset_hook!
     $lisp_graph_hook.reset_hook!
     #
@@ -30528,7 +30455,7 @@ def test_19_00
   set_graph_style(Graph_filled, ind, 0)
   set_transform_graph_type(Graph_as_spectrogram, ind, 0)
   unless $with_test_gtk
-    # FIXME
+    # FIXME (GTK segfault)
     # doesn't work with GTK
     # snd-ruby-xg -noinit snd-test.rb 19 ==> hangs on load("s61.rb") below
     set_time_graph_type(Graph_as_wavogram, ind, 0)
@@ -32422,7 +32349,7 @@ def test_lgamma
     res1 = lgamma(x)
     res2 = gammln(x)
     if array?(res1)
-      # FIXME
+      # FIXME (INFO)
       # Ruby 1.9 returns an array
       res1 = res1[0]
     end
@@ -32547,7 +32474,6 @@ def corr(x, y, n, m)
 end
 
 def cross_correlate_3(rl1, rl2, fftlen)
-  fftlen2 = fftlen / 2
   fftscale = 1.0 / fftlen
   im1 = Vct.new(fftlen)
   im2 = Vct.new(fftlen)
@@ -32555,7 +32481,6 @@ def cross_correlate_3(rl1, rl2, fftlen)
   fft(rl2, im2, 1)
   tmprl = rl1.dup
   tmpim = im1.dup
-  data3 = Vct.new(fftlen)
   tmprl *= rl2
   tmpim *= im2
   im2 *= rl1
@@ -33426,38 +33351,12 @@ def test_20_01
     snd_display("transform_frames of sonogram: %s?", size)
   end
   graph2ps("aaa.eps")
-  if $with_test_gui
-    Snd.catch do
-      unless (ax = axis_info(ind1, 0, Transform_graph))
-        snd_display("axis_info Transform_graph?")
-      end
-      if $with_test_motif
-        cwid = channel_widgets(ind1, 0).first
-        focus_widget(cwid)
-        click_event(cwid, 0, 0, (0.5 * (ax[10] + ax[12])).floor, (0.5 * (ax[11] + ax[13])).floor)
-        force_event
-      end
-    end
-  end
   old_colormap = colormap
   set_colormap(integer2colormap(0))
   update_transform_graph
   set_transform_graph_type(Graph_as_spectrogram, ind1, 0)
   update_transform_graph
   graph2ps("aaa.eps")
-  if $with_test_gui
-    Snd.catch do
-      unless (ax = axis_info(ind1, 0, Transform_graph))
-        snd_display("axis_info Transform_graph?")
-      end
-      if $with_test_motif
-        cwid = channel_widgets(ind1, 0).first
-        focus_widget(cwid)
-        click_event(cwid, 0, 0, (0.5 * (ax[10] + ax[12])).floor, (0.5 * (ax[11] + ax[13])).floor)
-        force_event
-      end
-    end
-  end
   set_colormap(old_colormap)
   close_sound(ind1)
   # 
@@ -33499,7 +33398,7 @@ def test_20_01
   set_fft_log_magnitude(false, ind, 0)
   update_transform_graph
   unless $with_test_gtk
-    # FIXME
+    # FIXME (Cairo segfault)
     # doens't work with GTK
     # Assertion failed: (! surface->finished), function _cairo_surface_begin_modification, file cairo-surface.c, line 385.
     # Abort (core dumped)
@@ -33780,7 +33679,10 @@ def display_samps_in_red(snd, chn)
       offset = [0, 1000 - left].max
       new_data = data.subseq(offset, offset + samps)
       set_foreground_color(red, snd, chn)
-      graph_data(new_data, snd, chn, Copy_context, [1000, left].max, [2000, right].min)
+      cr = make_cairo(channel_widgets(snd, chn)[0])
+      graph_data(new_data,
+                 snd, chn, Copy_context, [1000, left].max, [2000, right].min, Graph_lines, cr)
+      free_cairo(cr)
       set_foreground_color(old_color, snd, chn)
     when Array
       low_data = data[0]
@@ -33794,24 +33696,33 @@ def display_samps_in_red(snd, chn)
       new_low_data = low_data.subseq(left_bin, right_bin)
       new_high_data = high_data.subseq(left_bin, right_bin)
       set_foreground_color(red, snd, chn)
-      graph_data([new_low_data, new_high_data], snd, chn, Copy_context, left_bin, right_bin)
+      cr = make_cairo(channel_widgets(snd, chn)[0])
+      graph_data([new_low_data, new_high_data],
+                 snd, chn, Copy_context, left_bin, right_bin, Graph_lines, cr)
+      free_cairo(cr)
       set_foreground_color(old_color, snd, chn)
     end
   end
+rescue
+  snd_display("draw error in %s", get_func_name)
 end
 
-def show_hiho(snd, chn)
+def show_greeting(snd, chn)
   ls = left_sample(snd, chn)
   rs = right_sample(snd, chn)
   if ls < 1000 and rs > 1000
     pos = x2position(1000.0 / srate(snd), snd, chn)
     old_color = foreground_color(snd, chn)
+    cr = make_cairo(channel_widgets(snd, chn)[0])
     set_foreground_color(make_color_with_catch(0.75, 0.75, 0.75), snd, chn)
-    fill_rectangle(pos, 10, 50, 20, snd, chn)
+    fill_rectangle(pos, 10, 50, 20, snd, chn, Time_graph, false, cr)
     set_foreground_color(make_color_with_catch(1, 0, 0), snd, chn)
-    draw_string("hiho", pos + 5, 24, snd, chn)
+    draw_string("hi!", pos + 5, 24, snd, chn, Time_graph, cr)
     set_foreground_color(old_color, snd, chn)
+    free_cairo(cr)
   end
+rescue
+  snd_display("draw error in %s", get_func_name)
 end
 
 def st_equal?(a, b)
@@ -33977,9 +33888,7 @@ def test_21_00
   display_db(ind1, 0)
   display_samps_in_red(ind1, 0)
   update_time_graph
-  Snd.catch(:all, lambda do |*args| snd_display("show_hiho trouble: %s", args) end) do
-    show_hiho(ind1, 0)
-  end
+  show_greeting(ind1, 0)
   update_time_graph
   color_samples(highlight_color, 0, 100, ind1, 0)
   update_time_graph
@@ -33987,7 +33896,28 @@ def test_21_00
   update_time_graph
   $with_test_motif and show_disk_space(ind1)
   update_time_graph
+  revert_sound(ind1)
+  make_selection(10000, 20000, ind1, 0)
+  if selection?
+    show_selection
+    vals = x_bounds(ind1, 0)
+    if vals.length == 2
+      snd_test_neq(vals[0], 10000.0 / srate(ind1), "show_selection")
+      snd_test_neq(vals[1], 20000.0 / srate(ind1), "show_selection")
+    end
+  else
+    snd_display("make_selection for show failed?")
+  end
+  $graph_hook.add_hook!("test-21-zoom-spectrum", &method(:zoom_spectrum).to_proc)
+  set_transform_graph?(true, ind1, 0)
+  ind3 = open_sound("pistol.snd")
+  overlay_sounds(ind2, ind1, ind3)
+  update_time_graph(ind2, 0)
+  $after_graph_hook.reset_hook!
+  close_sound(ind3)
+  samples_via_colormap(ind1, 0)
   close_sound(ind1)
+  $graph_hook.remove_hook!("test-21-zoom-spectrum")
   close_sound(ind2)
   #
   ind = new_sound("tmp.snd", Mus_next, Mus_bfloat, 22050, 1, :size, 50)
@@ -34280,7 +34210,7 @@ def test_21_00
           [:frames,                  50,                :st_equal?, :st_eql?, true, false],
           [:zero_pad,                1,                 :st_equal?, :st_eql?, true, true],
           [:wavelet_type,            1,                 :st_equal?, :st_eql?, true, true],
-          # FIXME see below
+          # FIXME (segfault, see below)
           # [:time_graph_type,         Graph_as_wavogram, :st_equal?, :st_eql?, true, true],
           [:wavo_hop,                10,                :st_equal?, :st_eql?, true, true],
           [:wavo_trace,              10,                :st_equal?, :st_eql?, true, true],
@@ -34306,7 +34236,7 @@ def test_21_00
           [:show_mix_waveforms,      false,             :st_equal?, :st_eql?, true, true],
           [:with_verbose_cursor,     true,              :st_equal?, :st_eql?, true, true]]
   unless $with_test_gtk
-    # FIXME
+    # FIXME (GTK segfault)
     # doesn't work with GTK
     # set_time_graph_type(Graph_as_wavogram) ==> hangs or even segfaults
     vals += [[:time_graph_type, Graph_as_wavogram, :st_equal?, :st_eql?, true, true]]
@@ -34330,7 +34260,6 @@ def test_21_00
   [[:filter_control_in_dB,         true,                      :st_eql?,   :st_eql?],
    [:filter_control_in_hz,         true,                      :st_eql?,   :st_eql?],
    [:show_controls,                true,                      :st_eql?,   :st_eql?],
-   [:with_tracking_cursor,         true,                      :st_eql?,   :st_eql?],
    [:speed_control_tones,          14,                        :st_equal?, :st_eql?],
    [:speed_control_style,          Speed_control_as_semitone, :st_equal?, :st_eql?],
    [:filter_control_order,         14,                        :st_equal?, :st_eql?],
@@ -34970,7 +34899,7 @@ end
 def test_23_01
   set_mus_srate($clm_srate = 22050)
   set_default_output_srate(22050)
-  with_sound(:srate, 22050) do
+  with_sound(:srate, 22050, :play, false) do
     fm_violin(0, 0.01, 440, 0.1, :noise_amount, 0.0)
     pluck(0.05, 0.01, 330, 0.1, 0.95, 0.95)
     maraca(0.1, 0.1)
@@ -35933,8 +35862,7 @@ def test_23_04
   $clm_array_print_length = old_arrp
   close_sound(ind)
   #
-  # FIXME
-  # bug in ws.rb (with_sound)
+  # FIXME (bug in ws.rb (with_sound))
   ind = find_sound(with_sound do
                      fm_violin(0, 3, 440, 0.1)
                    end.output)
@@ -36025,12 +35953,12 @@ end
 
 Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :sound_file_extensions,
          :sound_file?, :add_to_main_menu, :add_to_menu, :add_transform, :amp_control,
-         :ask_about_unsaved_edits, :as_one_edit, :ask_before_overwrite,
-         :audio_input_device, :audio_output_device, :auto_resize, :auto_update,
-         :autocorrelate, :axis_color, :axis_info, :axis_label_font, :axis_numbers_font,
-         :basic_color, :bind_key, :bomb, :apply_controls, :change_samples_with_origin,
-         :channel_style, :channel_widgets, :channels, :chans, :peaks_font, :bold_peaks_font,
-         :close_sound, :color_cutoff, :color_orientation_dialog, :colormap_ref, :add_colormap,
+         :ask_about_unsaved_edits, :as_one_edit, :ask_before_overwrite, :audio_input_device,
+         :audio_output_device, :auto_resize, :auto_update, :autocorrelate, :axis_color, :axis_info,
+         :axis_label_font, :axis_numbers_font, :basic_color, :bind_key, :bomb, :apply_controls,
+         :change_samples_with_origin, :channel_style, :channel_widgets, :channels, :chans,
+         :peaks_font, :bold_peaks_font, :close_sound, :combined_data_color, :color_cutoff,
+         :color_orientation_dialog, :colormap_ref, :add_colormap,
          :delete_colormap, :colormap_size, :colormap_name, :color_inverted, :color_scale,
          :color2list, :colormap, :color?, :comment, :contrast_control, :contrast_control_amp,
          :channel_properties, :channel_property, :controls2channel, :amp_control_bounds,
@@ -36079,7 +36007,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :mix_tag_width, :mark_tag_height, :mark_tag_width, :mix_tag_y, :mix_vct,
          :mix_waveform_height, :time_graph_style, :lisp_graph_style, :transform_graph_style,
          :read_mix_sample, :next_sample, :read_region_sample,
-         :show_full_duration, :initial_beg, :initial_dur, :transform_normalization,
+         :show_full_duration, :show_full_range, :initial_beg, :initial_dur, :transform_normalization,
          :open_file_dialog_directory, :open_raw_sound, :open_sound, :color_orientation_dialog,
          :previous_sample, :peaks, :player?, :players, :play_arrow_size, :position_color,
          :position2x, :position2y, :add_directory_to_view_files_list, :add_file_to_view_files_list,
@@ -36117,9 +36045,9 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :transform_frames, :transform_type, :trap_segfault, :with_file_monitor,
          :unbind_key, :update_transform_graph, :update_time_graph, :update_lisp_graph,
          :update_sound, :clm_table_size, :with_verbose_cursor, :view_sound, :wavelet_type,
-         :with_inset_graph, :with_pointer_focus, :with_smpte_label, :with_toolbar, :with_tooltips,
-         :with_menu_icons, :save_as_dialog_src, :save_as_dialog_auto_comment,
-         :time_graph?, :time_graph_type, :wavo_hop,
+         :with_inset_graph, :with_interrupts, :with_pointer_focus, :with_smpte_label,
+         :with_toolbar, :with_tooltips, :with_menu_icons, :save_as_dialog_src,
+         :save_as_dialog_auto_comment, :time_graph?, :time_graph_type, :wavo_hop,
          :wavo_trace, :window_height, :window_width, :window_x, :window_y, :with_mix_tags,
          :with_relative_panes, :with_gl, :x_axis_style, :beats_per_measure, :beats_per_minute,
          :x_bounds, :x_position_slider, :x2position, :x_zoom_slider, :mus_header_type2string,
@@ -36196,10 +36124,10 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
 Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_output_device,
              :auto_resize, :sound_file_extensions, :auto_update, :axis_color, :axis_label_font,
              :axis_numbers_font, :channel_style, :peaks_font, :bold_peaks_font,
-             :show_full_duration, :initial_beg, :initial_dur, :color_cutoff,
+             :show_full_duration, :show_full_range, :initial_beg, :initial_dur, :color_cutoff,
              :color_inverted, :color_scale, :contrast_control, :contrast_control_amp,
-             :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
-             :contrast_control_bounds, :reverb_control_length_bounds,
+             :combined_data_color, :amp_control_bounds, :speed_control_bounds,
+             :expand_control_bounds, :contrast_control_bounds, :reverb_control_length_bounds,
              :reverb_control_scale_bounds, :cursor_update_interval, :cursor_location_offset,
              :contrast_control?, :auto_update_interval, :current_font, :cursor, :cursor_color,
              :channel_properties, :channel_property, :with_tracking_cursor, :cursor_size,
@@ -36237,12 +36165,12 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
              :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
              :squelch_update, :sync, :sound_properties, :sound_property, :temp_dir,
              :text_focus_color, :tiny_font, :y_bounds, :transform_type, :trap_segfault,
-             :with_file_monitor, :with_verbose_cursor, :with_inset_graph, :with_pointer_focus,
-             :wavelet_type, :x_bounds, :with_smpte_label, :with_toolbar, :with_tooltips,
-             :with_menu_icons, :save_as_dialog_src, :save_as_dialog_auto_comment,
-             :time_graph?, :wavo_hop, :wavo_trace, :with_gl, :with_mix_tags,
-             :x_axis_style, :beats_per_minute, :zero_pad, :zoom_color, :zoom_focus_style,
-             :sync_style, :with_relative_panes, :window_x, :window_y,
+             :with_file_monitor, :with_verbose_cursor, :with_inset_graph, :with_interrupts,
+             :with_pointer_focus, :wavelet_type, :x_bounds, :with_smpte_label, :with_toolbar,
+             :with_tooltips, :with_menu_icons, :save_as_dialog_src, :save_as_dialog_auto_comment,
+             :time_graph?, :wavo_hop, :wavo_trace, :with_gl, :with_mix_tags, :x_axis_style,
+             :beats_per_minute, :zero_pad, :zoom_color, :zoom_focus_style, :sync_style,
+             :with_relative_panes, :window_x, :window_y,
              :window_width, :window_height, :mix_dialog_mix, :beats_per_measure,
              :channels, :chans, :colormap, :comment, :data_format, :data_location,
              :data_size, :edit_position, :frames, :header_type, :maxamp,
@@ -36251,12 +36179,12 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
              :selection_frames, :selection_member?, :sound_loop_info, :srate, :time_graph_type,
              :x_position_slider, :x_zoom_slider, :y_position_slider, :y_zoom_slider,
              :sound_data_ref, :mus_array_print_length, :mus_float_equal_fudge_factor,
-             :mus_data, :mus_feedback, :mus_feedforward, :mus_frequency, :mus_hop,
-             :mus_increment, :mus_length, :mus_location, :mus_phase, :mus_ramp,
+             :mus_feedback, :mus_feedforward, :mus_frequency, :mus_hop,
+             :mus_increment, :mus_length, :mus_location, :mus_name, :mus_phase, :mus_ramp,
              :mus_scaler, :x_axis_label, :locsig_type, :mus_file_buffer_size,
              :mus_rand_seed, :mus_width, :clm_table_size, :mus_offset, :html_dir,
              :html_program, :widget_position, :widget_size, :mus_file_prescaler,
-             :mus_clipping, :mus_prescaler, :mus_header_raw_defaults, :view_files_amp,
+             :mus_prescaler, :mus_clipping, :mus_header_raw_defaults, :view_files_amp,
              :view_files_speed, :view_files_files, :view_files_selected_files,
              :view_files_speed_style, :view_files_amp_env]
 
@@ -36469,7 +36397,7 @@ def test_28_00
       snd_display("selection %s: %s", n, tag)
     end
   end
-  # FIXME
+  # FIXME (INFO)
   # Array.new(1): *partials_* functions return :bad_type (odd length partials list?)
   # We can't use arrays here like [:Pixel, ...] or [0, 1].
   [sqrt(-1.0)].each do |arg|
@@ -36567,7 +36495,6 @@ def test_28_01
   end
   mus_sound_forget("/bad/baddy")
   [:channel_widgets, :count_matches, :cursor, :channel_properties, :channel_property,
-   :with_tracking_cursor,
    :cursor_position, :cursor_size, :cursor_style, :tracking_cursor_style, :delete_sample,
    :display_edits, :dot_size, :draw_dots, :draw_lines, :edit_fragment, :edit_list2function,
    :edit_position, :edit_tree, :edits, :fft_window_alpha,
@@ -36595,18 +36522,16 @@ def test_28_01
     end
   end
   [:channel_widgets, :count_matches, :cursor, :channel_properties, :channel_property,
-   :cursor_position,
-   :cursor_size, :cursor_style, :tracking_cursor_style, :delete_sample, :display_edits, :dot_size,
-   :draw_dots, :draw_lines, :edit_fragment, :edit_position, :edit_tree, :edits, :fft_window_beta,
-   :fft_window_alpha, :fft_with_phases, :fft_log_frequency, :fft_log_magnitude, :transform_size,
-   :transform_graph_type, :fft_window, :transform_graph?, :find_channel, :graph, :graph_style,
-   :lisp_graph?, :insert_region,
+   :combined_data_color, :cursor_position, :cursor_size, :cursor_style, :tracking_cursor_style,
+   :delete_sample, :display_edits, :dot_size, :draw_dots, :draw_lines, :edit_fragment,
+   :edit_position, :edit_tree, :edits, :fft_window_beta, :fft_window_alpha, :fft_with_phases,
+   :fft_log_frequency, :fft_log_magnitude, :transform_size, :transform_graph_type, :fft_window,
+   :transform_graph?, :find_channel, :graph, :graph_style, :lisp_graph?, :insert_region,
    :insert_sound, :left_sample, :time_graph_style, :lisp_graph_style, :transform_graph_style,
    :make_graph_data, :map_chan, :max_transform_peaks, :maxamp, :maxamp_position, :min_dB,
-   :mix_region, :transform_normalization, :peaks,
-   :position2x, :position2y, :reverse_sound, :right_sample, :sample,
-   :save_sound_as, :scan_chan, :show_axes, :show_transform_peaks, :show_marks,
-   :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end,
+   :mix_region, :transform_normalization, :peaks, :position2x, :position2y, :reverse_sound,
+   :right_sample, :sample, :save_sound_as, :scan_chan, :show_axes, :show_transform_peaks,
+   :show_marks, :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end,
    :spectro_hop, :spectrum_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle,
    :spectro_y_scale, :spectro_z_angle, :spectro_z_scale, :squelch_update, :grid_density,
    :transform_sample, :transform2vct, :transform_frames, :transform_type,
@@ -36618,29 +36543,37 @@ def test_28_01
       snd_display("%s: chn (no chn) procs %s: %s", i, n, tag)
     end
   end
-  [:channel_widgets, :cursor, :with_tracking_cursor, :channel_properties, :channel_property,
-   :cursor_position,
-   :cursor_size, :cursor_style, :tracking_cursor_style, :display_edits, :dot_size,
-   :edit_position, :edit_tree, :edits, :env_sound, :fft_window_beta,
-   :fft_window_alpha, :fft_log_frequency, :fft_with_phases,
-   :fft_log_magnitude, :transform_size, :transform_graph_type, :fft_window, :transform_graph?,
-   :filter_sound, :graph_data, :graph_style, :lisp_graph?, :left_sample,
-   :time_graph_style, :lisp_graph_style, :transform_graph_style, :make_graph_data,
-   :max_transform_peaks, :maxamp, :maxamp_position, :min_dB, :transform_normalization,
-   :reverse_sound, :revert_sound, :right_sample, :save_sound, :scale_by,
-   :scale_to, :show_axes, :show_transform_peaks, :show_marks, :show_mix_waveforms,
-   :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end, :spectro_hop,
-   :spectrum_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
-   :spectro_z_angle, :spectro_z_scale, :squelch_update, :grid_density, :src_sound,
-   :transform2vct, :transform_frames, :transform_type,
-   :update_transform_graph, :update_time_graph, :update_lisp_graph, :update_sound,
-   :wavelet_type, :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :x_bounds,
-   :x_position_slider, :x_zoom_slider, :y_bounds, :y_position_slider, :x_axis_label,
-   :y_axis_label, :y_zoom_slider, :zero_pad].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, integer2sound(1234)) end).first != :no_such_sound
+  idx = open_sound("oboe.snd")
+  [:delete_sample, :edit_fragment, :graph_data, :position2x, :position2y, :redo_edit, :scale_by,
+   :scale_to, :undo_edit, :x2position, :y2position].each_with_index do |n, i|
+    tag = Snd.catch do snd_func(n, 0, idx, 1234) end
+    if tag.first != :no_such_channel
+      snd_display("%s: snd(1 1234) chn procs %s: %s", i, n, tag)
+    end
+  end
+  close_sound(idx)
+  idx = open_sound("oboe.snd")
+  [:channel_widgets, :cursor, :cursor_position, :cursor_size, :cursor_style,
+   :tracking_cursor_style, :display_edits, :dot_size, :edit_position, :edit_tree, :edits,
+   :fft_window_alpha, :fft_window_beta, :fft_log_frequency, :fft_log_magnitude, :fft_with_phases,
+   :transform_size, :transform_graph_type, :fft_window, :transform_graph?, :graph_style,
+   :lisp_graph?, :left_sample, :time_graph_style, :lisp_graph_style, :transform_graph_style,
+   :combined_data_color, :make_graph_data, :max_transform_peaks, :maxamp, :maxamp_position,
+   :min_dB, :transform_normalization, :reverse_sound, :right_sample, :show_axes,
+   :show_transform_peaks, :show_marks, :show_mix_waveforms, :show_y_zero, :show_grid,
+   :show_sonogram_cursor, :grid_density, :spectrum_end, :spectro_hop, :spectrum_start,
+   :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
+   :spectro_z_scale, :squelch_update, :transform2vct, :transform_frames, :transform_type,
+   :update_transform_graph, :update_time_graph, :update_lisp_graph, :wavelet_type, :time_graph?,
+   :time_graph_type, :wavo_hop, :wavo_trace, :x_bounds, :x_position_slider, :x_axis_label,
+   :x_zoom_slider, :y_bounds, :y_position_slider, :y_zoom_slider, :zero_pad,
+   :channel_properties, :channel_property].each_with_index do |n, i|
+    tag = Snd.catch do snd_func(n, idx, 1234) end
+    if tag.first != :no_such_sound and tag.first != :no_such_channel
       snd_display("%s: chn procs %s: %s", i, n, tag)
     end
   end
+  close_sound(idx)
   [:delete_sample, :edit_fragment, :graph_data, :graph_style,
    :position2x, :position2y, :redo_edit, :time_graph_style, :lisp_graph_style,
    :transform_graph_style, :scale_by, :scale_to, :undo_edit, :x2position, :y2position,
@@ -36649,13 +36582,7 @@ def test_28_01
       snd_display("%s: snd(1) chn procs %s: %s", i, n, tag)
     end
   end
-  index = open_sound("oboe.snd")
-  [:delete_sample, :edit_fragment, :graph_data, :position2x, :position2y, :redo_edit,
-   :scale_by, :scale_to, :undo_edit, :x2position, :y2position].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, 0, index, 1234) end).first != :no_such_channel
-      snd_display("%s: snd(1 1234) chn procs %s: %s", i, n, tag)
-    end
-  end
+  idx = open_sound("oboe.snd")
   [:channel_widgets, :cursor, :cursor_position, :cursor_size, :cursor_style, :tracking_cursor_style,
    :display_edits, :dot_size, :edit_position, :edit_tree, :edits, :fft_window_beta,
    :fft_window_alpha, :fft_with_phases,
@@ -36673,7 +36600,7 @@ def test_28_01
    :x_bounds, :x_position_slider, :x_axis_label, :x_zoom_slider, :y_bounds,
    :y_position_slider, :y_zoom_slider, :zero_pad,
    :channel_properties, :channel_property].each_with_index do |n, i|
-    case (tag = Snd.catch do snd_func(n, index, 1234) end).first
+    case (tag = Snd.catch do snd_func(n, idx, 1234) end).first
     when :no_such_sound, :no_such_channel
       next
     else
@@ -36686,8 +36613,8 @@ def test_28_01
    :transform_size, :transform_graph_type, :fft_window, :transform_graph?,
    :graph_style, :lisp_graph?, :left_sample, :make_graph_data,
    :max_transform_peaks, :maxamp, :maxamp_position, :time_graph_style,
-   :lisp_graph_style, :transform_graph_style, :min_dB, :transform_normalization,
-   :reverse_sound, :right_sample, :show_axes, :grid_density,
+   :lisp_graph_style, :transform_graph_style, :combined_data_color, :min_dB,
+   :transform_normalization, :reverse_sound, :right_sample, :show_axes, :grid_density,
    :show_transform_peaks, :show_marks, :show_mix_waveforms, :show_y_zero,
    :show_grid, :show_sonogram_cursor, :spectrum_end, :spectro_hop, :spectrum_start,
    :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
@@ -36696,12 +36623,12 @@ def test_28_01
    :update_lisp_graph, :wavelet_type, :time_graph?, :time_graph_type, :wavo_hop,
    :wavo_trace, :x_bounds, :x_position_slider, :x_zoom_slider, :y_bounds,
    :y_position_slider, :y_zoom_slider, :zero_pad, :x_axis_label].each_with_index do |n, i|
-    tag = Snd.catch do set_snd_func(n, $vct_3, index, 0) end
+    tag = Snd.catch do set_snd_func(n, $vct_3, idx, 0) end
     if tag.first != :wrong_type_arg and tag.first != :no_method_error and tag.first != :name_error
       snd_display("%s: set chn procs %s: %s", i, n, tag)
     end
   end
-  close_sound(index)
+  close_sound(idx)
   [:mix_amp, :mix_amp_env, :mix_length, :mix_name, :mix_position, :mix_home, :mix_speed,
    :mix_tag_y].each_with_index do |n, i|
     if (tag = Snd.catch do snd_func(n, $vct_3) end).first != :wrong_type_arg
@@ -36765,8 +36692,8 @@ def test_28_01
   end
   [:enved_filter_order, :enved_filter, :filter_control_waveform_color,
    :ask_before_overwrite, :auto_resize, :auto_update, :axis_label_font,
-   :axis_numbers_font, :basic_color, :show_full_duration, :initial_beg, :initial_dur,
-   :channel_style, :color_cutoff, :color_inverted, :color_scale, :cursor_color,
+   :axis_numbers_font, :basic_color, :show_full_duration, :show_full_range, :initial_beg,
+   :initial_dur, :channel_style, :color_cutoff, :color_inverted, :color_scale, :cursor_color,
    :dac_combines_channels, :dac_size, :clipping, :data_color,
    :default_output_chans, :default_output_data_format, :default_output_srate,
    :default_output_header_type, :enved_envelope, :enved_base, :enved_clip?,
@@ -36783,8 +36710,8 @@ def test_28_01
    :selection_creates_region, :show_controls, :show_indices,
    :show_listener, :show_selection_transform, :sinc_width, :temp_dir,
    :text_focus_color, :tiny_font, :trap_segfault, :with_file_monitor,
-   :with_verbose_cursor,
-   :with_inset_graph, :with_pointer_focus, :window_height, :beats_per_measure, :with_smpte_label,
+   :with_verbose_cursor, :with_inset_graph, :with_interrupts, :with_pointer_focus,
+   :window_height, :beats_per_measure, :with_smpte_label,
    :with_toolbar, :with_tooltips, :with_menu_icons, :remember_sound_state,
    :save_as_dialog_src, :save_as_dialog_auto_comment, :window_width, :window_x, :window_y, :with_gl,
    :with_mix_tags, :x_axis_style, :beats_per_minute, :zoom_color, :mix_tag_height,
@@ -36955,8 +36882,6 @@ def test_28_02
   check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, Mus_voc, Mus_bshort) end
   check_error_tag(:cannot_save) do save_selection("test.snd", Mus_riff, Mus_bshort) end
   check_error_tag(:cannot_save) do save_selection("test.snd", Mus_voc, Mus_bshort) end
-  check_error_tag(:no_data) do draw_lines([]) end
-  check_error_tag(:bad_length) do draw_lines([1, 2, 3]) end
   check_error_tag(:out_of_range) do src_channel(make_env([0, 0, 1, 1], :length, 11)) end
   check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, 0], :length, 11)) end
   check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, -1], :length, 11)) end
@@ -37623,6 +37548,7 @@ def test_28_03
     clear_sincs
     dismiss_all_dialogs
   end
+  set_ask_about_unsaved_edits(false)
 end
 
 def test_28_04
@@ -37709,7 +37635,7 @@ def test_28
     test_28_01
     test_28_02
   end
-  # FIXME
+  # FIXME (INFO)
   # with snd-gtk test_28_04 should come before test_28_03 because of:
   # (snd-ruby-xg:2371): Gdk-WARNING **: GdkWindow 0x160015b unexpectedly destroyed
   # ...
@@ -37720,7 +37646,7 @@ end
 # ---------------- test all done
 
 def test_30
-  test_04_08
+  test_05_25
 end
 
 main_test
