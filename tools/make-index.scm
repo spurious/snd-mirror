@@ -108,9 +108,7 @@
 	  (places ()))
       
       (define (where-is func)
-	(let* ((f (symbol->value '__func__ (procedure-environment func)))
-	       (addr (and (pair? f)
-			  (cdr f))))
+	(let* ((addr (symbol->value '__func__ (procedure-environment func))))
 	  (if (not (pair? addr))
 	      #f
 	      (cadr addr))))
@@ -121,7 +119,8 @@
 	   (if (pair? binding)
 	       (let ((symbol (car binding))
 		     (value (cdr binding)))
-		 (if (procedure? value) 
+		 (if (and (procedure? value) 
+			  (not (assq symbol names)))
 		     (let ((file (where-is value)))
 		       (if (and file
 				(not (string=? file "~/.snd_s7"))
@@ -195,8 +194,8 @@
 	(list '*clm-search-list* "ws.scm")
 	(list '*definstrument-hook* "ws.scm")))
       
-      (for-each apropos-1 (global-environment))
-      
+      (apropos-1 (reverse (global-environment)))
+
       (let ((name-len (length names))
 	    (file-len (length places)))
 	(do ((i 0 (+ i 1)))

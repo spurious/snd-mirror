@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.87"
-#define S7_DATE "26-May-11"
+#define S7_VERSION "1.88"
+#define S7_DATE "30-May-11"
 
 
 typedef long long int s7_Int;
@@ -462,49 +462,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
 s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer env, s7_pointer bindings);
-
-  /* each environment is a list of the current frames (alists of symbols and values)
-   *   and the global (top-level) definitions, a vector of alists (a hash-table).
-   * Here is an example of "apropos" that accesses both kinds of environment:
-   *
-        (define (apropos name)
-          ;; (apropos "name") prints out a list of all symbols whose name includes "name" as a substring
-
-          (define (substring? subs s) ; from larceny
-            (let* ((start 0)
-	           (ls (string-length s))
-	           (lu (string-length subs))
-	           (limit (- ls lu)))
-              (let loop ((i start))
-	        (cond ((> i limit) #f)
-	              ((do ((j i (+ j 1))
-	        	    (k 0 (+ k 1)))
-	        	   ((or (= k lu)
-	        		(not (char=? (string-ref subs k) (string-ref s j))))
-	        	    (= k lu))) i)
-	              (else (loop (+ i 1)))))))
-
-          (define (apropos-1 alist)
-            (for-each
-             (lambda (binding)
-               (if (substring? name (symbol->string (car binding)))
-	           (format (current-output-port) "~A: ~A~%" 
-	        	   (car binding) 
-	        	   (if (procedure? (cdr binding))
-	        	       (procedure-documentation (cdr binding))
-	        	       (cdr binding)))))
-             alist))
-
-          (for-each
-           (lambda (frame)
-             (if (vector? frame) ; the global environment
-	         (let ((len (vector-length frame)))
-	           (do ((i 0 (+ i 1)))
-	               ((= i len))
-	             (apropos-1 (vector-ref frame i))))
-	         (apropos-1 frame)))
-           (current-environment)))
-   */
+s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env);           /* (environment->list env) */
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
@@ -561,7 +519,7 @@ bool s7_is_constant(s7_pointer p);
    *
    * s7_define_variable is simply s7_define with string->symbol and the global environment.
    * s7_define_constant is s7_define but makes its "definee" immutable.
-   * s7_define is equivalent to define in Scheme, but takes place in the global environment.
+   * s7_define is equivalent to define in Scheme.
    */
 
 bool s7_is_function(s7_pointer p); 
@@ -857,6 +815,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 30-May:    environment->list and s7_environment_to_list since environments are no longer alists internally.
  * 26-May:    added s7_scheme argument to s7_procedure_setter and getter (old names had "with_setter_").
  * 28-Apr:    s7_help.
  * 5-Apr:     pair-line-number.

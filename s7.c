@@ -553,7 +553,7 @@ struct s7_scheme {
    */
   
   s7_pointer protected_objects;       /* a vector of gc-protected objects */
-  int *protected_objects_size, *protected_objects_loc; /* pointers so they're global across threads */
+  int protected_objects_size, protected_objects_loc;
 
   struct s7_cell _NIL;
   s7_pointer NIL;                     /* empty list */
@@ -1286,13 +1286,14 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 
 #if HAVE_PTHREADS
   pthread_mutex_lock(&protected_objects_lock);
+  sc = sc->orig_sc;
 #endif
 
-  loc = (*(sc->protected_objects_loc))++;
-  size = (*(sc->protected_objects_size));
+  loc = sc->protected_objects_loc++;
+  size = sc->protected_objects_size;
 
-  if ((*(sc->protected_objects_loc)) >= size)
-    (*(sc->protected_objects_loc)) = 0;
+  if (sc->protected_objects_loc >= size)
+    sc->protected_objects_loc = 0;
 
   if (is_gc_nil(vector_element(sc->protected_objects, loc)))
     {
@@ -1320,8 +1321,8 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
   for (i = size; i < new_size; i++)
     vector_element(sc->protected_objects, i) = sc->GC_NIL;
   vector_length(sc->protected_objects) = new_size;
-  (*(sc->protected_objects_size)) = new_size;
-  (*(sc->protected_objects_loc)) = size + 1;
+  sc->protected_objects_size = new_size;
+  sc->protected_objects_loc = size + 1;
 
   vector_element(sc->protected_objects, size) = x;
   
@@ -1338,13 +1339,14 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x)
 
 #if HAVE_PTHREADS
   pthread_mutex_lock(&protected_objects_lock);
+  sc = sc->orig_sc;
 #endif
 
-  for (i = 0; i < (*(sc->protected_objects_size)); i++)
+  for (i = 0; i < sc->protected_objects_size; i++)
     if (vector_element(sc->protected_objects, i) == x)
       {
 	vector_element(sc->protected_objects, i) = sc->GC_NIL;
-	(*(sc->protected_objects_loc)) = i;
+	sc->protected_objects_loc = i;
 #if HAVE_PTHREADS
 	pthread_mutex_unlock(&protected_objects_lock);
 #endif
@@ -1361,13 +1363,14 @@ void s7_gc_unprotect_at(s7_scheme *sc, int loc)
 {
 #if HAVE_PTHREADS
   pthread_mutex_lock(&protected_objects_lock);
+  sc = sc->orig_sc;
 #endif
 
   if ((loc >= 0) &&
-      (loc < (*(sc->protected_objects_size))))
+      (loc < sc->protected_objects_size))
     {
       vector_element(sc->protected_objects, loc) = sc->GC_NIL;
-      (*(sc->protected_objects_loc)) = loc;
+      sc->protected_objects_loc = loc;
     }
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&protected_objects_lock);
@@ -1378,14 +1381,15 @@ void s7_gc_unprotect_at(s7_scheme *sc, int loc)
 s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
 {
   s7_pointer obj;
-  obj = sc->UNSPECIFIED;
 
 #if HAVE_PTHREADS
   pthread_mutex_lock(&protected_objects_lock);
+  sc = sc->orig_sc;
 #endif
 
+  obj = sc->UNSPECIFIED;
   if ((loc >= 0) &&
-      (loc < (*(sc->protected_objects_size))))
+      (loc < sc->protected_objects_size))
     obj = vector_element(sc->protected_objects, loc);
 
 #if HAVE_PTHREADS
@@ -2906,6 +2910,58 @@ new environment."
 }
 
 
+s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
+{
+  s7_pointer x;
+  sc->w = sc->NIL;
+  if (env == sc->global_env)
+    {
+      int i;
+      for (i = 0; i < vector_fill_pointer(env); i++)
+	if (is_pair(vector_element(env, i)))
+	  sc->w = cons(sc, vector_element(env, i), sc->w);
+      x = sc->w;
+    }
+  else
+    {
+      for (x = env; is_pair(x); x = cdr(x)) 
+	{
+	  s7_pointer y;
+	  sc->z = sc->NIL;
+	  for (y = car(x); is_pair(y); y = ecdr(y))
+	    sc->z = cons(sc, y, sc->z);
+	  sc->w = cons(sc, safe_reverse_in_place(sc, sc->z), sc->w);
+	}
+  
+      x = safe_reverse_in_place(sc, sc->w);
+      sc->z = sc->NIL;
+    }
+  sc->w = sc->NIL;
+  return(x);
+}
+
+
+static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
+{
+  #define H_environment_to_list "(environment->list env) returns env as a list of lists.  The outer lists \
+represent the frames working from the innermost up, and the inner lists are lists of cons's with each symbol \
+in that frame and its value."
+
+  s7_pointer env;
+
+  env = car(args);
+  if (!is_environment(env))
+    return(s7_wrong_type_arg_error(sc, "environment->list", 0, env, "an environment"));
+
+  return(s7_environment_to_list(sc, env));
+}
+
+
+/* TODO: test env->list, doc the change, test the s7.html examples (C and scheme) --
+ *         do they still work?  Perhaps list->env rather than augment-env?
+ */
+
+
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer x;
@@ -3211,6 +3267,8 @@ bool s7_is_defined(s7_scheme *sc, const char *name)
 void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer value) 
 {
   s7_pointer x;
+
+  if (envir == sc->global_env) envir = sc->NIL; /* for C-side backwards compatibility */
   x = find_local_symbol(sc, envir, symbol);
   if (is_not_null(x)) 
     set_symbol_value(x, value); 
@@ -21478,7 +21536,7 @@ pass (global-environment):\n\
     {
       if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
-      if (is_pair(cadr(args)))
+      if (is_pair(cadr(args)))  /* (global-environment) returns a vector */
 	sc->envir = cadr(args);
       else sc->envir = sc->NIL;
     }
@@ -32886,11 +32944,9 @@ s7_scheme *s7_init(void)
   permanent_heap_top = (unsigned char *)(permanent_heap + PERMANENT_HEAP_SIZE);
   
   /* this has to precede s7_make_* allocations */
-  sc->protected_objects_size = (int *)malloc(sizeof(int));
-  (*(sc->protected_objects_size)) = INITIAL_PROTECTED_OBJECTS_SIZE;
-  sc->protected_objects_loc = (int *)malloc(sizeof(int));
-  (*(sc->protected_objects_loc)) = 0;
-  sc->protected_objects = s7_make_vector(sc, INITIAL_PROTECTED_OBJECTS_SIZE); /* realloc happens to the embedded array, so this pointer is global */
+  sc->protected_objects_size = INITIAL_PROTECTED_OBJECTS_SIZE;
+  sc->protected_objects_loc = 0;
+  sc->protected_objects = s7_make_vector(sc, INITIAL_PROTECTED_OBJECTS_SIZE);
   for (i = 0; i < INITIAL_PROTECTED_OBJECTS_SIZE; i++)
     vector_element(sc->protected_objects, i) = sc->GC_NIL;
   set_immutable(sc->protected_objects);
@@ -33171,6 +33227,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "augment-environment",            g_augment_environment,      1, 0, true,  H_augment_environment);
   s7_define_function(sc, "augment-environment!",           g_augment_environment_direct, 1, 0, true,  H_augment_environment_direct);
   s7_define_safe_function(sc, "environment?",              g_is_environment,           1, 0, false, H_is_environment);
+  s7_define_safe_function(sc, "environment->list",         g_environment_to_list,      1, 0, false, H_environment_to_list);
   s7_define_safe_function(sc, "provided?",                 g_is_provided,              1, 0, false, H_is_provided);
   s7_define_safe_function(sc, "provide",                   g_provide,                  1, 0, false, H_provide);
   s7_define_safe_function(sc, "defined?",                  g_is_defined,               1, 1, false, H_is_defined);

@@ -2936,10 +2936,11 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 	        		(not (char=? (string-ref subs k) (string-ref s j))))\
 	        	    (= k lu))) i)\
 	              (else (loop (+ i 1)))))))\
-          (define (apropos-1 alist)\
+          (define (apropos-1 e)\
             (for-each\
              (lambda (binding)\
-               (if (substring? name (symbol->string (car binding)))\
+               (if (and (pair? binding)\
+                        (substring? name (symbol->string (car binding))))\
                    (let ((str (format #f \"~%~A: ~A\" \
 	        	              (car binding) \
 	        	              (if (procedure? (cdr binding))\
@@ -2948,19 +2949,14 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                      (if (not port)\
                          (snd-print str)\
 	                 (display str port)))))\
-             alist))\
+             e))\
           (if (or (not (string? name))\
                   (= (length name) 0))\
               (error 'wrong-type-arg \"apropos argument should be a non-nil string\")\
-              (for-each\
-               (lambda (frame)\
-                 (if (vector? frame)\
-	             (let ((len (vector-length frame)))\
-	               (do ((i 0 (+ i 1)))\
-	                   ((= i len))\
-	                 (apropos-1 (vector-ref frame i))))\
-	             (apropos-1 frame)))\
-               (current-environment))))");
+              (begin \
+                 (if (not (eq? (current-environment) (global-environment)))\
+                     (for-each apropos-1 (environment->list (current-environment)))) \
+                 (apropos-1 (global-environment)))))");
 
   XEN_EVAL_C_STRING("\
 (define break-ok #f)\

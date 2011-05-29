@@ -1100,27 +1100,7 @@ f
 </pre>
 
 <p>The moral of this story is: if you see a circular list in macroexpand, break
-the loop! Unfortunately, there are insidious hidden loops:
-</p>
-
-<pre>
-(define-macro* (mac (env (current-environment))) 
-  `(display ,env))
-</pre>
-
-<p>looks innocuous, and its expanded source shows no loops, but we should have quoted the
-env reference!  This code is structurally equivalent to
-</p>
-
-<pre>
-(let ((lst (list (cons 1 2)))) 
-  (set! (cdr (car lst)) lst) 
-  (eval lst))
-</pre>
-
-<p>because the 'env' argument is in the current environment and points to it at the same time.
-This (or its CL equivalent) will cause stack overflow in sbcl and clisp, and
-will segfault s7 due to a stack overflow internally.
+the loop! 
 </p>
 
 
@@ -2381,11 +2361,11 @@ It wants you to use: <code>(let ((v #("abc" "def"))) ((v 0) 2))</code>.
 <ul>
 <li>(<a name="makehashtable">make-hash-table</a> (size 512))
 <li>(<a name="hashtable">hash-table</a> ...)
-<li>(hash-table-ref ht key)
-<li>(hash-table-set! ht key value)
-<li>(hash-table? obj)
-<li>(hash-table-size ht)
-<li>(make-hash-table-iterator ht)
+<li>(<a name="hashtableref">hash-table-ref</a> ht key)
+<li>(<a name="hashtableset">hash-table-set!</a> ht key value)
+<li>(<a name="hashtablep">hash-table?</a> obj)
+<li>(<a name="hashtablesize">hash-table-size</a> ht)
+<li>(<a name="hashtableiteratof">make-hash-table-iterator</a> ht)
 </ul>
 
 <p>
@@ -2468,11 +2448,11 @@ make-hash-table-iterator internally).
 <pre>
     (<a name="makehook">make-hook</a> (arity (0 0 #f)) (documentation ""))  ; make a new hook
     (<a name="hook">hook</a> ...)                                       ; make a hook, the args are functions
-    (hook? obj)                                      ; return #t if obj is a hook
+    (<a name="hookp">hook?</a> obj)                                      ; return #t if obj is a hook
     (<a name="hookfunctions">hook-functions</a> hook)                            ; the hook's list of functions
     (<a name="hookarity">hook-arity</a> hook)                                ; the hook's arity list: (required optional rest)
-    (hook-documentation hook)                        ; the hook's documentation string
-    (hook-apply hook ...) and (&lt;hook&gt; ...)           ; run the hook (it is an applicable object)
+    (<a name="hookdocumentation">hook-documentation</a> hook)                        ; the hook's documentation string
+    (<a name="hookapply">hook-apply</a> hook ...) and (&lt;hook&gt; ...)           ; run the hook (it is an applicable object)
 </pre>
 
 <p>A hook holds a list of functions.  When something interesting happens,
@@ -2513,13 +2493,13 @@ the way the hook itself is invoked, so the hook has an arity, hook-arity.
 <pre>
     (<a name="makethread">make-thread</a> thunk (stack-size 300)) ; create a thread running thunk, return id: pthread_create
     (<a name="jointhread">join-thread</a> thread)                 ; wait for thread to finish, return value returned by thunk: pthread_join
-    (thread? obj)                        ; #t if obj is a thread 
+    (<a name="threadp">thread?</a> obj)                        ; #t if obj is a thread 
     (<a name="makelock">make-lock</a>)                          ; mutex allocation and pthread_mutext_init
     (<a name="grablock">grab-lock</a> lock)                     ; pthread_mutex_lock
     (<a name="releaselock">release-lock</a> lock)                  ; pthread_mutex_unlock
-    (lock? obj)                          ; #t if obj is a lock
+    (<a name="lockp">lock?</a> obj)                          ; #t if obj is a lock
     (<a name="makethreadvariable">make-thread-variable</a>)               ; pthread_key_create
-    (thread-variable? obj)               ; #t if obj is a thread-variable (pthread_key)
+    (<a name="threadvariablep">thread-variable?</a> obj)               ; #t if obj is a thread-variable (pthread_key)
 </pre>
 
 <p>
@@ -3553,13 +3533,13 @@ Here's a more useful example; it adds trace and local variable info for debuggin
 		   (list (car source)
 			 (cadr source)
 			 (caddr source)
-			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (car (current-environment))))
+			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (car (environment-&gt;list (current-environment)))))
 		   (cdddr source))
 		  ;; (let(*) vars . body) -&gt; (let vars print-vars . body)
 		  (append 
 		   (list (car source)
 			 (cadr source)
-			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (car (current-environment))))
+			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (car (environment-&gt;list (current-environment)))))
 		   (cddr source)))
 	      (cons (proc-walk (car source))
 		    (proc-walk (cdr source))))
@@ -3572,7 +3552,7 @@ Here's a more useful example; it adds trace and local variable info for debuggin
 	       (let ((,result #&lt;undefined&gt;))
 		 (dynamic-wind
 		     (lambda ()       ; upon entry, show procedure name and args
-		       (format #t "(~A~{ ~A~})~%" ',proc (caddr (current-environment))))
+		       (format #t "(~A~{ ~A~})~%" ',proc (caddr (environment-&gt;list (current-environment)))))
 		     (lambda ()
 		       (set! ,result (,new-body ,@(cadr orig)))
 		       ,result)
@@ -3656,19 +3636,20 @@ Environments are first class objects in s7.
 </p>
 
 <pre>
-  (environment? obj)            #t if obj is an environment
+  (<a name="environmentp">environment?</a> obj)            #t if obj is an environment
   (<a name="globalenvironment">global-environment</a>)          the top-level environment
   (<a name="currentenvironment">current-environment</a>)         the currently visible variables and their values
-  (procedure-environment proc)  the environment at the time when proc was defined
-  (initial-environment)         the current environment, but all built-in functions have their original values
+  (<a name="procedureenvironment">procedure-environment</a> proc)  the environment at the time when proc was defined
+  (<a name="initialenvironment">initial-environment</a>)         the current environment, but all built-in functions have their original values
 
   (<a name="withenvironment">with-environment</a> env . body) evaluate body in the environment env 
 
   (<a name="augmentenvironment">augment-environment</a> env . bindings)   add bindings to env
-  (augment-environment! env . bindings)
-  (symbol-&gt;value sym (env (current-environment)))
-  (defined? sym (env (current-environment)))
-  (symbol-table)
+  (<a name="augmentenvironment!">augment-environment!</a> env . bindings)
+  (<a name="environmenttolist">environment-&gt;list</a> env)       return the environment as a list of lists of (symbol . value) cons's
+  (<a name="symboltovalue">symbol-&gt;value</a> sym (env (current-environment)))
+  (<a name="definedp">defined?</a> sym (env (current-environment)))
+  (<a name="symboltable">symbol-table</a>)
 </pre>
 
 <A NAME="augmentenv"></A>
@@ -3762,7 +3743,7 @@ its bindings are exported into the current environment:
 (apply augment-environment! (current-environment)
   (with-environment (initial-environment)
     (load "any-library.scm" (current-environment))
-    (car (current-environment)))) ; these are the bindings introduced by loading the library
+    (car (environment-&gt;list (current-environment))))) ; these are the bindings introduced by loading the library
 </pre>
 
 <p>To do the same thing, but prepend "library:" to each name:
@@ -3776,7 +3757,7 @@ its bindings are exported into the current environment:
 	   (cons (string-&gt;symbol 
 		  (string-append "library:" (symbol-&gt;string (car binding))))
 		 (cdr binding)))
-	 (car (current-environment)))))
+	 (car (environment-&gt;list (current-environment))))))
 </pre>
 
 <p>That's all there is to it!
@@ -6090,7 +6071,7 @@ int main(int argc, char **argv)
   /* those two symbols are now defined in the new environment */
 
   /* add "lib-exports" to the global environment */
-  s7_define_variable(s7, "lib-exports", s7_car(new_env));
+  s7_define_variable(s7, "lib-exports", s7_car(<em class=red>s7_environment_to_list</em>(s7, new_env)));
 
   if (argc == 2)
     {
@@ -6312,7 +6293,7 @@ static s7_pointer define_closure(s7_scheme *sc, const char *name, s7_pointer fun
    *   ((x . x_value) (f . func)).
    */
   s7_define(sc, 
-	    s7_global_environment(sc),
+	    s7_nil(sc),
 	    s7_make_symbol(sc, name),
 	    <em class=red>s7_make_closure</em>(sc, 
 			    s7_cons(sc, 
@@ -6377,8 +6358,8 @@ int main(int argc, char **argv)
  *   126
  *   &gt; (procedure-source closure-1)
  *   (lambda (y) (f y))
- *   &gt; (procedure-environment closure-1)
- *   (((f . #&lt;closure function&gt;) (x . 32)) #(() () () () () ((caar . caar)) () () ...))
+ *   &gt; (environment-&gt;list (procedure-environment closure-1))
+ *   (((f . #&lt;closure function&gt;) (x . 32)))
  */
 </pre>
 </td></tr></table>
