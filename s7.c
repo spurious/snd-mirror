@@ -315,7 +315,7 @@
   #define NAN (INFINITY / INFINITY)
 #endif
 
-typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2,
+typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2, OP_EVAL_ARGS3, OP_EVAL_ARGS4, OP_EVAL_ARGS5,
 	      OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
 	      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN1, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2, 
 	      OP_LET, OP_LET1, OP_LET2, OP_LET_STAR, OP_LET_STAR1, 
@@ -338,7 +338,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_AR
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
-  {"read-internal", "eval", "eval-args", "eval-args", "eval-args",
+  {"read-internal", "eval", "eval-args", "eval-args", "eval-args", "eval-args", "eval-args", "eval-args",
    "apply", "eval-macro", "lambda", 
    "quote", "define", "define", "begin", "begin", "if", "if", "set!", "set!", "set!", 
    "let", "let", "let", "let*", "let*", "letrec", "letrec", "letrec", 
@@ -359,7 +359,7 @@ static const char *op_names[OP_MAX_DEFINED] =
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 96 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 99 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -630,6 +630,7 @@ struct s7_scheme {
   int read_line_buf_size;
 
   s7_pointer w, x, y, z;         /* evaluator local vars */
+  s7_pointer temp1, temp2;
 
   struct s7_cell _TEMP_CELL, _TEMP_CELL_1, _TEMP_CELL_2;
   s7_pointer TEMP_CELL, TEMP_CELL_1, TEMP_CELL_2;
@@ -736,7 +737,10 @@ struct s7_scheme {
 
 #define T_SAFE_PROCEDURE              (1 << (TYPE_BITS + 6))
 #define is_safe_procedure(p)          ((typeflag(p) & T_SAFE_PROCEDURE) != 0)
-/* c_functions that return or modify the arg list directly (no :rest arg in particular) */
+/* c_functions that do not return or modify the arg list directly (no :rest arg in particular),
+ *    and that can't call apply themselves either directly or via s7_call.
+ *    I think the latter would be safe if they gc_protect the called function.  
+ */
 
 #define T_ANY_MACRO                   (1 << (TYPE_BITS + 7))
 #define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
@@ -1680,6 +1684,9 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->y);
   S7_MARK(sc->z);
   S7_MARK(sc->value);  
+
+  S7_MARK(sc->temp1);
+  S7_MARK(sc->temp2);
 
   S7_MARK(sc->input_port);
   S7_MARK(sc->input_port_stack);
@@ -21562,6 +21569,9 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   if (is_c_function(func))
     return(c_function_call(func)(sc, args));  /* no check for wrong-number-of-args -- is that reasonable? */
 
+  sc->temp1 = func;
+  sc->temp2 = args;
+
   old_longjmp = sc->longjmp_ok;
   memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
 
@@ -22204,6 +22214,8 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  /* the normal case -- splice values into caller's args */
 	case OP_EVAL_ARGS1:
 	case OP_EVAL_ARGS2:
+	case OP_EVAL_ARGS3:
+	case OP_EVAL_ARGS4:
 	  /* it's not safe to simply reverse args and tack the current stacked args onto its (new) end,
 	   *   setting stacked args to cdr of reversed-args and returning car because the list (args)
 	   *   can be some variable's value in a macro expansion via ,@ and reversing it in place
@@ -22212,6 +22224,26 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  for (x = args; is_not_null(cdr(x)); x = cdr(x))
 	    stack_args(sc->stack, top) = cons(sc, car(x), stack_args(sc->stack, top));
 	  return(car(x));
+
+	case OP_EVAL_ARGS5:
+	  /* code = previous arg saved, args = ante-previous args reversed
+	   *   we'll take value->code->args and reverse in args5
+	   *   if one value, return it, else
+	   *      put code onto args, splice as above until there are 2 left
+	   *      set code to 1st and value to last
+	   */
+	  if (is_null(args))
+	    return(sc->UNSPECIFIED);
+
+	  if (is_null(cdr(args)))
+	    return(car(args));
+
+	  stack_args(sc->stack, top) = cons(sc, stack_code(sc->stack, top), stack_args(sc->stack, top));
+	  for (x = args; is_not_null(cddr(x)); x = cdr(x))
+	    stack_args(sc->stack, top) = cons(sc, car(x), stack_args(sc->stack, top));
+	  stack_code(sc->stack, top) = car(x);
+	  return(cadr(x));
+	  
 
 	  /* what about values-assoc which would splice in the value in the alist based on the head of the spliced-into list?
 	   *   this is aimed at objects-as-alists
@@ -23846,6 +23878,11 @@ static s7_pointer find_symbol_or_bust_7(s7_scheme *sc, s7_pointer env, s7_pointe
   FIND_SYMBOL_OR_BUST(sc);
 } 
 
+static s7_pointer find_symbol_or_bust_8(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
 
 
 static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
@@ -24880,14 +24917,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  /* we jump here when we already know sc->code is a pair */
 	EVAL_PAIR:
-	      
-	  /* here if it's marked as just constants or that+symbols [no lists of any kind]
-	   *  we could jump to a simpler evaluator: how many of the
-	   *  syntax cases can happen in such a context: 
-	   *      if, quote, begin, or, and, set!, with-environment
-	   *      define lambda lambda* -- defmacro?? (defmacro name args 3) !!
-	   *  but none of these would need to go to eval.
-	   */
 	  carc = car(sc->code);
 
 	  if (is_syntactic(carc)) /* actually is_syntax(symbol_value(car(sc->code))) */
@@ -24998,46 +25027,112 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* this code can almost certainly be simplified -- "it just growed..." */
 
-                                      /* using while here rather than EVAL_ARGS and a goto made no speed difference */
-    case OP_EVAL_ARGS1:
 
-      /* this is where most of s7's compute time goes */
-      /* expanding the function calls (s7_cons, new_cell, and eval_symbol) in place seems to speed up s7 by a noticeable amount! */
-      /*    before expansion: sc->args = cons(sc, sc->value, sc->args); */
-
-      /* I tried using prebuilt never-gc'd arglists here to drastically reduce consing etc, but
-       *   they are tricky (the arglist object needs to be in the regular heap so that errors and
-       *   call/cc's can hold references to internal objects in the list, but that slows down
-       *   decisions about when a given arglist can be returned to the arglist-heap). We have to
-       *   store the argument in the arglist and update the current location in any case, so
-       *   the savings won't be huge (the entire process involves not more than 1/4 of the total
-       *   compute time), and in my implementation, although gc-ing was greatly reduced, other
-       *   things took more time, and s7 ended up running slightly slower.  So, I think I could
-       *   get a slight speed-up this way, with a few more days of work, but the code would be
-       *   much more complicated.  I prefer simpler code in this case.
-       *
-       * I then tried a "safe function" bit meaning the args could be gc'd immediately after
-       *   the call, setting sc->arg_temp = sc->args here, then returning those
-       *   args to the free list after the function call -- a kind of incremental GC.
-       *   The GC is called less often, but the local free code takes more time than
-       *   we save in the GC, so the only gain is that there are fewer points where
-       *   s7 pauses to call the GC.  The time lost is about 1%.  This was a big
-       *   disappointment!
-       *
-       * Undaunted, I tried a T_GCABLE bit added below, checked in all the numerical ops as they
-       *   traverse their arglists, and if seen, free that object and return it to the heap
-       *   immediately.  This reduces the GC time slightly, but it collides with *trace-hook*
-       *   (which is passed the arglist after the call, but we just GC'd the arglist), and
-       *   with some error checks (divide by 0 gets the now-partly-GC'd arglist).
-       *
-       * Currently I use op_stack for the function, and the last (non-rest) arg can be TEMP_CELL_1
-       *   if the T_SAFE_PROCEDURE bit is set in that function.  A procedure can't be safe if it
-       *   returns its arglist directly, or perhaps passes it to the error handler??  Another
-       *   bad case is s7_call -- it appears that something gets GC'd if s7_call itself calls
-       *   s7_call.  Not actually sure what's going on!  The GC happens just before an *error-hook*
-       *   function is called, and it has format access the arg list (as opposed to the individual args).
+    case OP_EVAL_ARGS5:
+      /* sc->value is the last arg, sc->code is the previous
        */
+      {
+	s7_pointer x, y;
 
+	sc->z = pop_op_stack(sc);
+	if (is_safe_procedure(sc->z))
+	  {
+	    x = sc->TEMP_CELL_1;
+	    y = sc->TEMP_CELL_2;
+	  }
+	else
+	  {
+	    NEW_CELL(sc, x); 
+	    set_type(x, T_PAIR);
+	    NEW_CELL_NO_CHECK(sc, y); 
+	    set_type(y, T_PAIR);
+	  }
+
+	car(x) = sc->code;
+	cdr(x) = sc->args;
+	car(y) = sc->value;
+	cdr(y) = x;
+	sc->args = safe_reverse_in_place(sc, y); 
+	sc->code = sc->z;
+	goto APPLY;
+      }
+
+      
+    case OP_EVAL_ARGS2:
+      /* sc->value is the last arg, [so if is_null(cdr(sc->code) and current is pair, push args2]
+       */
+      {
+	s7_pointer x;
+
+	sc->code = pop_op_stack(sc);
+	if (is_safe_procedure(sc->code))
+	  x = sc->TEMP_CELL_1;
+	else
+	  {
+	    NEW_CELL(sc, x); 
+	    set_type(x, T_PAIR);
+	  }
+
+	car(x) = sc->value;
+	cdr(x) = sc->args;
+	if (type(sc->args) != T_NIL)
+	  sc->args = safe_reverse_in_place(sc, x);
+	else sc->args = x;
+	goto APPLY;
+      }
+
+      
+    case OP_EVAL_ARGS3:
+      /* sc->value is the next-to-last arg, and we know the last arg is not a list
+       */
+      {
+	s7_pointer x, y;
+
+	sc->x = pop_op_stack(sc);
+	if (is_safe_procedure(sc->x))
+	  {
+	    x = sc->TEMP_CELL_1;
+	    y = sc->TEMP_CELL_2;
+	  }
+	else
+	  {
+	    NEW_CELL(sc, x); 
+	    set_type(x, T_PAIR);
+	    NEW_CELL_NO_CHECK(sc, y); 
+	    set_type(y, T_PAIR);
+	  }
+	car(x) = sc->value;
+	cdr(x) = sc->args;
+		  
+	if (type(sc->code) == T_SYMBOL)
+	  {
+	    if (is_global(sc->code))
+	      car(y) = symbol_value(symbol_global_slot(sc->code));
+	    else car(y) = find_symbol_or_bust_8(sc, sc->envir, sc->code);
+	  }
+	else car(y) = sc->code;
+	cdr(y) = x;
+	sc->args = safe_reverse_in_place(sc, y); 
+	sc->code = sc->x;
+	goto APPLY;
+      }
+
+      
+    case OP_EVAL_ARGS4:
+      /* here we know sc->code is a pair, and either cdr(sc->code) is not null or car(sc->code) is a pair 
+       */
+      {
+        s7_pointer x;
+	NEW_CELL(sc, x); 
+	car(x) = sc->value;
+	cdr(x) = sc->args;
+	set_type(x, T_PAIR);
+	sc->args = x;
+	goto EVAL_ARGS_PAIR;
+      }
+
+
+    case OP_EVAL_ARGS1:
       {
         s7_pointer x;
 	NEW_CELL(sc, x); 
@@ -25047,12 +25142,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->args = x;
       }
 
+
     EVAL_ARGS:
       /* 1st time, value = op, args = nil, code is args */
       if (is_pair(sc->code))  /* evaluate current arg -- must check for pair here, not sc->NIL (improper list as args) */
 	{ 
 	  int typ;
 	  s7_pointer car_code;
+
 	EVAL_ARGS_PAIR:
 	  car_code = car(sc->code);
 	  typ = type(car_code);
@@ -25062,11 +25159,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if (is_null(cdr(sc->code)))
 		push_stack(sc, opcode(OP_EVAL_ARGS2), sc->args, sc->NIL);           /* 21 [17] {14} */
-	      else push_stack(sc, opcode(OP_EVAL_ARGS1), sc->args, cdr(sc->code));  /* 27 [8] {10} */
+	      else 
+		{
+		  if ((is_null(cddr(sc->code))) && 
+		      (!is_pair(cadr(sc->code))))
+		    push_stack(sc, opcode(OP_EVAL_ARGS3), sc->args, cadr(sc->code)); 
+		  else push_stack(sc, opcode(OP_EVAL_ARGS4), sc->args, cdr(sc->code));  /* 27 [8] {10} */
+		}
 	      sc->code = car_code;
 	      goto EVAL_PAIR;
 	    }
 
+	  /* car(sc->code) is not a pair */
 	  if (is_pair(cdr(sc->code)))
 	    {
 	      sc->code = cdr(sc->code);
@@ -25077,6 +25181,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  else sc->value = find_symbol_or_bust_2(sc, sc->envir, car_code);
 		}
 	      else sc->value = car_code;
+	      /* sc->value is the current arg's value, sc->code is pointing to the next */
 
 	      /* cdr(sc->code) may not be a pair or nil here! 
 	       *   (eq? #f . 1) -> sc->code is 1
@@ -25084,36 +25189,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (is_null(cdr(sc->code)))
 		{
 		  s7_pointer x, y;
+		  /* we're at the last arg, sc->value is the previous one, not yet saved in the args list */
 		  car_code = car(sc->code);
 		  typ = type(car_code);
 
 		  if (typ == T_PAIR)
 		    {
-		      /* if eval_args3 used temp_cell2, and this is safe, we could use temp_cell1 here, and no check at arg3 for safe 
-		       *   but can we pop the op stack here? or how expensive to check?
-		       */
-		      NEW_CELL(sc, x); 
-		      car(x) = sc->value;
-		      cdr(x) = sc->args;
-		      set_type(x, T_PAIR);
-
-		      push_stack(sc, opcode(OP_EVAL_ARGS2), x, sc->NIL); /* 3 [4] {10} */
+		      push_stack(sc, opcode(OP_EVAL_ARGS5), sc->args, sc->value);
 		      sc->code = car_code;
 		      goto EVAL_PAIR;
 		    }
 		  
-		  /* save the current arg */
+		  /* get the current arg, which is not a list */
 		  sc->code = pop_op_stack(sc);
 		  if (is_safe_procedure(sc->code))
 		    {
 		      x = sc->TEMP_CELL_2; /* these are already pairs */
 		      y = sc->TEMP_CELL_1;
-
-		      /* this could be extended -- the op_stack could hold the arg list, keeping it
-		       *   out of the heap.  We'd probably break even on the arglist building/marking --
-		       *   could we win enough in the GC to make it worth the code?  (The GC currently
-		       *   takes less than 10% of the total time -- 2% in Snd).
-		       */
 		    }
 		  else
 		    {
@@ -25140,7 +25232,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      else 
 		{
-		  /* here we know sc->code is a pair */
+		  /* here we know sc->code is a pair, cdr(sc->code) is not null
+		   *   sc->value is the previous arg's value
+		   */
 		  s7_pointer x;
 		  NEW_CELL(sc, x); 
 		  car(x) = sc->value;
@@ -25149,11 +25243,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->args = x;
 		  goto EVAL_ARGS_PAIR;
 		}
-	      /* I don't think it's useful to split out the 2-args-from-the-end case here.
-	       *   It happens relatively infrequently in both s7test and lg that the final
-	       *   args are not pairs, so the cost of detecting that case is close to what
-	       *   we gain (say, at best, 3% reduction in GC).
-	       */
 	    }
 	  else
 	    {
@@ -25741,30 +25830,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  return(apply_error(sc, sc->code, sc->args));
 	}
       /* ---------------- end OP_APPLY ---------------- */
-
-      
-    case OP_EVAL_ARGS2:
-      /* sc->value is the last arg, mimic that branch (far) above
-       */
-      {
-	s7_pointer x;
-
-	sc->code = pop_op_stack(sc);
-	if (is_safe_procedure(sc->code))
-	  x = sc->TEMP_CELL_1;
-	else
-	  {
-	    NEW_CELL(sc, x); 
-	    set_type(x, T_PAIR);
-	  }
-
-	car(x) = sc->value;
-	cdr(x) = sc->args;
-	if (type(sc->args) != T_NIL)
-	  sc->args = safe_reverse_in_place(sc, x);
-	else sc->args = x;
-	goto APPLY;
-      }
 
       
     case OP_QUOTE:
@@ -26988,6 +27053,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   sc->x: hi
        *   sc->code: (lambda ({defmac}-14) (apply (lambda (a b) ({list} '+ a b)) (cdr {defmac}-14)))
        */
+      
       sc->y = sc->NIL;
       sc->z = sc->NIL;
       NEW_CELL(sc, sc->value);
@@ -32916,6 +32982,10 @@ s7_scheme *s7_init(void)
   sc->x = sc->NIL;
   sc->y = sc->NIL;
   sc->z = sc->NIL;
+
+  sc->temp1 = sc->NIL;
+  sc->temp2 = sc->NIL;
+
   sc->error_exiter = NULL;
   sc->begin_hook = NULL;
   sc->default_rng = NULL;
@@ -33276,15 +33346,15 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "write-byte",                g_write_byte,               1, 1, false, H_write_byte);
   s7_define_safe_function(sc, "read-line",                 g_read_line,                0, 2, false, H_read_line);
   
-  s7_define_safe_function(sc, "call-with-input-string",    g_call_with_input_string,   2, 0, false, H_call_with_input_string);
-  s7_define_safe_function(sc, "call-with-input-file",      g_call_with_input_file,     2, 0, false, H_call_with_input_file);
-  s7_define_safe_function(sc, "with-input-from-string",    g_with_input_from_string,   2, 0, false, H_with_input_from_string);
-  s7_define_safe_function(sc, "with-input-from-file",      g_with_input_from_file,     2, 0, false, H_with_input_from_file);
+  s7_define_function(sc, "call-with-input-string",         g_call_with_input_string,   2, 0, false, H_call_with_input_string);
+  s7_define_function(sc, "call-with-input-file",           g_call_with_input_file,     2, 0, false, H_call_with_input_file);
+  s7_define_function(sc, "with-input-from-string",         g_with_input_from_string,   2, 0, false, H_with_input_from_string);
+  s7_define_function(sc, "with-input-from-file",           g_with_input_from_file,     2, 0, false, H_with_input_from_file);
   
-  s7_define_safe_function(sc, "call-with-output-string",   g_call_with_output_string,  1, 0, false, H_call_with_output_string);
-  s7_define_safe_function(sc, "call-with-output-file",     g_call_with_output_file,    2, 0, false, H_call_with_output_file);
-  s7_define_safe_function(sc, "with-output-to-string",     g_with_output_to_string,    1, 0, false, H_with_output_to_string);
-  s7_define_safe_function(sc, "with-output-to-file",       g_with_output_to_file,      2, 0, false, H_with_output_to_file);
+  s7_define_function(sc, "call-with-output-string",        g_call_with_output_string,  1, 0, false, H_call_with_output_string);
+  s7_define_function(sc, "call-with-output-file",          g_call_with_output_file,    2, 0, false, H_call_with_output_file);
+  s7_define_function(sc, "with-output-to-string",          g_with_output_to_string,    1, 0, false, H_with_output_to_string);
+  s7_define_function(sc, "with-output-to-file",            g_with_output_to_file,      2, 0, false, H_with_output_to_file);
   
   
 #if (!WITH_GMP)
@@ -33479,10 +33549,10 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "cdddar",                    g_cdddar,                   1, 0, false, H_cdddar);
   s7_define_safe_function(sc, "assq",                      g_assq,                     2, 0, false, H_assq);
   s7_define_safe_function(sc, "assv",                      g_assv,                     2, 0, false, H_assv);
-  s7_define_safe_function(sc, "assoc",                     g_assoc,                    2, 1, false, H_assoc);
+  s7_define_function(sc, "assoc",                          g_assoc,                    2, 1, false, H_assoc);
   s7_define_safe_function(sc, "memq",                      g_memq,                     2, 0, false, H_memq);
   s7_define_safe_function(sc, "memv",                      g_memv,                     2, 0, false, H_memv);
-  s7_define_safe_function(sc, "member",                    g_member,                   2, 1, false, H_member);
+  s7_define_function(sc, "member",                         g_member,                   2, 1, false, H_member);
   s7_define_function(sc, "append",                         g_append,                   0, 0, true,  H_append);
   s7_define_function(sc, "list",                           g_list,                     0, 0, true,  H_list);
   s7_define_safe_function(sc, "list-ref",                  g_list_ref,                 2, 0, true,  H_list_ref);
