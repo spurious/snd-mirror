@@ -2996,13 +2996,13 @@
 		(snd-display #__line__ ";saved-as alaw -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";next (alaw)[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
-	  (save-sound-as "test.snd" ob mus-next mus-bdouble)
+	  (save-sound-as "test.snd" ob mus-next mus-ldouble)
 	  (let ((ab (open-sound "test.snd")))
 	    (if (and (provided? 'xm) (provided? 'snd-debug))
 		(XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	    (if (not (= (header-type ab) mus-next)) 
 		(snd-display #__line__ ";save-as dbl next -> ~A?" (mus-header-type-name (header-type ab))))
-	    (if (not (= (data-format ab) mus-bdouble)) 
+	    (if (not (= (data-format ab) mus-ldouble)) 
 		(snd-display #__line__ ";save-as dbl -> ~A?" (mus-data-format-name (data-format ab))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";next (dbl)[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
@@ -63408,17 +63408,16 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 
-24-May-11:
-191,107,884,823  PROGRAM TOTALS
-23,973,418,643  s7.c:eval [/home/bil/snd-12/snd]
-17,377,914,909  s7.c:eval'2 [/home/bil/snd-12/snd]
-16,299,576,264  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
-15,965,140,849  ???:sin [/lib64/libm-2.12.so]
-11,772,630,514  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
- 8,905,248,881  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
- 8,831,946,019  run.c:eval_ptree [/home/bil/snd-12/snd]
- 7,228,138,344  io.c:mus_write_1 [/home/bil/snd-12/snd]
- 3,876,933,950  s7.c:gc [/home/bil/snd-12/snd]
- 2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-12/snd]
+30-May-11:
+187,729,794,441  PROGRAM TOTALS
+23,233,393,404  s7.c:eval [/home/bil/snd-12/snd]
+17,257,012,740  s7.c:eval'2 [/home/bil/snd-12/snd]
+15,962,314,929  ???:sin [/lib64/libm-2.12.so]
+15,670,684,007  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
+11,337,969,754  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
+ 8,908,530,185  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
+ 8,837,213,973  run.c:eval_ptree [/home/bil/snd-12/snd]
+ 7,207,929,329  io.c:mus_write_1 [/home/bil/snd-12/snd]
+ 3,690,213,483  s7.c:gc [/home/bil/snd-12/snd]
 |#
 

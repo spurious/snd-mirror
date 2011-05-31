@@ -485,6 +485,8 @@ typedef struct s7_cell {
     struct {               /* additional object types (C and Scheme) */
       int type;
       void *value;
+      s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
+      s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
     } fobj;
     
     s7_continuation_t *continuation;
@@ -632,8 +634,8 @@ struct s7_scheme {
   s7_pointer w, x, y, z;         /* evaluator local vars */
   s7_pointer temp1, temp2;
 
-  struct s7_cell _TEMP_CELL, _TEMP_CELL_1, _TEMP_CELL_2;
-  s7_pointer TEMP_CELL, TEMP_CELL_1, TEMP_CELL_2;
+  struct s7_cell _TEMP_CELL, _TEMP_CELL_1, _TEMP_CELL_2, _TEMP_CELL_3;
+  s7_pointer TEMP_CELL, TEMP_CELL_1, TEMP_CELL_2, TEMP_CELL_3;
 
   jmp_buf goto_start;
   bool longjmp_ok;
@@ -676,29 +678,28 @@ struct s7_scheme {
 #define T_MACRO               12
 #define T_BACRO               13
 #define T_C_OBJECT            14
-#define T_S_OBJECT            15
-#define T_GOTO                16
-#define T_OUTPUT_PORT         17
-#define T_CATCH               18
-#define T_DYNAMIC_WIND        19
-#define T_HASH_TABLE          20
-#define T_BOOLEAN             21
-#define T_SYNTAX              22
-#define T_HOOK                23
-#define T_C_MACRO             24
-#define T_C_POINTER           25
-#define T_C_FUNCTION          26
-#define T_C_ANY_ARGS_FUNCTION 27
-#define T_C_OPT_ARGS_FUNCTION 28
-#define T_C_RST_ARGS_FUNCTION 29
-#define T_C_LST_ARGS_FUNCTION 30
-#define T_C_EQ_FUNCTION       31
-#define T_C_PAIR_FUNCTION     32
-#define T_C_NOT_FUNCTION      33
-#define T_C_CAR_FUNCTION      34
-#define T_C_CDR_FUNCTION      35
-#define T_C_SYMBOL_FUNCTION   36
-#define BUILT_IN_TYPES        37
+#define T_GOTO                15
+#define T_OUTPUT_PORT         16
+#define T_CATCH               17
+#define T_DYNAMIC_WIND        18
+#define T_HASH_TABLE          19
+#define T_BOOLEAN             20
+#define T_SYNTAX              21
+#define T_HOOK                22
+#define T_C_MACRO             23
+#define T_C_POINTER           24
+#define T_C_FUNCTION          25
+#define T_C_ANY_ARGS_FUNCTION 26
+#define T_C_OPT_ARGS_FUNCTION 27
+#define T_C_RST_ARGS_FUNCTION 28
+#define T_C_LST_ARGS_FUNCTION 29
+#define T_C_EQ_FUNCTION       30
+#define T_C_PAIR_FUNCTION     31
+#define T_C_NOT_FUNCTION      32
+#define T_C_CAR_FUNCTION      33
+#define T_C_CDR_FUNCTION      34
+#define T_C_SYMBOL_FUNCTION   35
+#define BUILT_IN_TYPES        36
 
 #define TYPE_BITS                     8
 #define typeflag(p)                   ((p)->tf.flag)
@@ -979,12 +980,10 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define dynamic_wind_body(p)          (p)->object.winder.body
 
 #define is_c_object(p)                (type(p) == T_C_OBJECT)
-#define c_object_type(p)              (p)->object.fobj.type
-#define c_object_value(p)             (p)->object.fobj.value
-
-#define is_s_object(p)                (type(p) == T_S_OBJECT)
-#define s_object_type(p)              (p)->object.fobj.type
-#define s_object_value(p)             (p)->object.fobj.value
+#define object_type(p)                (p)->object.fobj.type
+#define object_value(p)               (p)->object.fobj.value
+#define object_ref(p)                 (p)->object.fobj.apply
+#define object_set(p)                 (p)->object.fobj.set
 
 #define is_hook(p)                    (type(p) == T_HOOK)
 #define hook_arity(p)                 (p)->object.hook.arity
@@ -1146,8 +1145,7 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
 static s7_pointer cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void free_object(s7_pointer a);
-static char *describe_c_object(s7_scheme *sc, s7_pointer a);
-static char *describe_s_object(s7_scheme *sc, s7_pointer a);
+static char *object_print(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol);
 static bool object_is_applicable(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
@@ -1441,7 +1439,6 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
       break;
       
     case T_C_OBJECT:
-    case T_S_OBJECT:
       free_object(a);
       break;
       
@@ -1576,7 +1573,6 @@ static void s7_mark_object_1(s7_pointer p)
       return;
       
     case T_C_OBJECT:
-    case T_S_OBJECT:
       mark_embedded_objects(p);
       return;
 
@@ -1695,6 +1691,7 @@ static int gc(s7_scheme *sc)
 
   S7_MARK(sc->TEMP_CELL_1);
   S7_MARK(sc->TEMP_CELL_2);
+  S7_MARK(sc->TEMP_CELL_3);
 
 #if HAVE_PTHREADS
   {
@@ -1845,7 +1842,7 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 #else
 
   #define NEW_CELL(Sc, Obj) \
-  do {					     \
+do {  /* if (!(*(Sc->gc_off))) gc(Sc); */	     \
       if (Sc->free_heap_top > Sc->free_heap_trigger) \
         Obj = (*(--(Sc->free_heap_top)));	     \
       else Obj = new_cell(Sc);                       \
@@ -2079,7 +2076,6 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_STRING:
     case T_NUMBER:
     case T_CHARACTER:
-    case T_S_OBJECT:
     case T_C_OBJECT:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
@@ -2964,10 +2960,11 @@ in that frame and its value."
 }
 
 
-/* TODO: test env->list, doc the change, test the s7.html examples (C and scheme) --
- *         do they still work?  Perhaps list->env rather than augment-env?
+/* to speed up the lookups, if find_symbol goes to the global_env, mark as "local-global"
+ *    else frame num from top, then slot number from frame as hloc?  T_VARIABLE
+ *    variable_frame() variable_slot() change car from the symbol ref to this
+ *    variable ref.  
  */
-
 
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
@@ -3511,10 +3508,10 @@ static s7_pointer make_goto(s7_scheme *sc)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_GOTO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE);
   call_exit_goto_loc(x) = s7_stack_top(sc);
   call_exit_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   call_exit_active(x) = true;
+  set_type(x, T_GOTO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE);
   return(x);
 }
 
@@ -3800,7 +3797,9 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    make_list_2(sc, make_protected_string(sc, "call/cc procedure, ~A, should take one argument"), car(args))));
 
-  push_stack(sc, opcode(OP_APPLY), make_list_1(sc, s7_make_continuation(sc)), car(args));
+  sc->w = s7_make_continuation(sc);
+  push_stack(sc, opcode(OP_APPLY), make_list_1(sc, sc->w), car(args));
+  sc->w = sc->NIL;
   return(sc->NIL);
 }
 
@@ -9839,7 +9838,7 @@ Pass this as the second argument to 'random' to get a repeatable random number s
 
 static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer obj)
 {
-  if (c_object_type(obj) == rng_tag)
+  if (object_type(obj) == rng_tag)
     {
       s7_rng_t *r, *new_r;
       r = (s7_rng_t *)s7_object_value(obj);
@@ -9920,7 +9919,7 @@ You can later apply make-random-state to this list to continue a random number s
     {
       obj = car(args);
       if ((!is_c_object(obj)) ||
-	  (c_object_type(obj) != rng_tag))
+	  (object_type(obj) != rng_tag))
 	return(s7_wrong_type_arg_error(sc, "random-state->list,", 1, obj, "a random state as returned by make-random-state"));
 
 	r = (s7_rng_t *)s7_object_value(obj);
@@ -9966,12 +9965,12 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
       if (!is_c_object(state))
 	return(s7_wrong_type_arg_error(sc, "random state,", 2, state, "a random state as returned by make-random-state"));
 
-      if (c_object_type(state) == rng_tag)
+      if (object_type(state) == rng_tag)
 	r = (s7_rng_t *)s7_object_value(state);
       else
 	{
 #if WITH_GMP
-	  if (c_object_type(state) == big_rng_tag)
+	  if (object_type(state) == big_rng_tag)
 	    return(big_random(sc, args));
 #endif
 	  return(s7_wrong_type_arg_error(sc, "random state,", 2, state, "a random state as returned by make-random-state"));
@@ -12611,11 +12610,8 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_DYNAMIC_WIND:                 /* this can't happen */
       return(copy_string("#<dynamic-wind>"));
   
-    case T_S_OBJECT:
-      return(describe_s_object(sc, obj)); /* this allocates already */
-
     case T_C_OBJECT:
-      return(describe_c_object(sc, obj)); /* this allocates already */
+      return(object_print(sc, obj));     /* this allocates already */
 
     case T_VECTOR: 
       return(copy_string("#<vector>"));
@@ -15781,8 +15777,7 @@ If its first argument is a list, the list is copied (despite the '!')."
   if (is_null(data)) return(sc->NIL);
   if ((!is_pair(data)) && 
       (!s7_is_vector(data)) &&
-      (!is_c_object(data)) &&
-      (!is_s_object(data)))
+      (!is_c_object(data)))
     return(s7_wrong_type_arg_error(sc, "sort! data,", 1, data, "a vector, list, or an object from make-type and friends"));
 
   lessp = cadr(args);
@@ -15833,7 +15828,6 @@ If its first argument is a list, the list is copied (despite the '!')."
       break;
 
     case T_C_OBJECT:
-    case T_S_OBJECT:
       {
 	s7_pointer vect;
 	vect = object_to_vector(sc, data);                      /* this can raise an error */
@@ -16474,7 +16468,7 @@ bool s7_is_function(s7_pointer p)
 
 bool s7_is_object(s7_pointer p) 
 { 
-  return((is_c_object(p)) || (is_s_object(p)));
+  return(is_c_object(p));
 }
 
 
@@ -16543,7 +16537,7 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 
 bool s7_is_procedure(s7_pointer x)
 {
-  return(is_procedure(x)); /* this returns "is applicable" so it is true for applicable c|s_objects, macros, etc */
+  return(is_procedure(x)); /* this returns "is applicable" so it is true for applicable c_objects, macros, etc */
 }
 
 
@@ -17113,6 +17107,7 @@ typedef struct {
   char *(*print)(s7_scheme *sc, void *value);
   void (*free)(void *value);
   bool (*equal)(void *val1, void *val2);
+  bool (*scheme_equal)(s7_scheme *sc, void *val1, void *val2);
   void (*gc_mark)(void *val);
   s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
@@ -17120,12 +17115,45 @@ typedef struct {
   s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer print_func, equal_func, getter_func, setter_func, length_func, copy_func, fill_func;
-} s7_c_object_t;
+  /*
+  char *(*scheme_print)(s7_scheme *sc, s7_pointer obj);
+  */
+} s7_object_t;
 
 
-static s7_c_object_t *object_types = NULL;
+static s7_object_t *object_types = NULL;
 static int object_types_size = 0;
 static int num_types = 0;
+
+static char *fallback_print(s7_scheme *sc, void *val) /* obj is object_value(s7_pointer_obj) */
+{
+  return(copy_string("#<unprintable object>"));
+}
+
+static void fallback_free(void *value)
+{
+}
+
+static bool fallback_equal(void *val1, void *val2)
+{
+  return(val1 == val2);
+}
+
+static s7_pointer fallback_ref(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  return(apply_error(sc, obj, args));
+}
+
+static s7_pointer fallback_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  return(eval_error(sc, "attempt to set ~A?", obj));
+}
+
+static s7_pointer fallback_length(s7_scheme *sc, s7_pointer obj)
+{
+  return(eval_error(sc, "attempt to get length of ~A?", obj));
+}
+
 
 int s7_new_type(const char *name, 
 		char *(*print)(s7_scheme *sc, void *value), 
@@ -17142,25 +17170,50 @@ int s7_new_type(const char *name,
       if (object_types_size == 0)
 	{
 	  object_types_size = 8;
-	  object_types = (s7_c_object_t *)calloc(object_types_size, sizeof(s7_c_object_t));
+	  object_types = (s7_object_t *)calloc(object_types_size, sizeof(s7_object_t));
 	}
       else
 	{
 	  object_types_size = tag + 8;
-	  object_types = (s7_c_object_t *)realloc((void *)object_types, object_types_size * sizeof(s7_c_object_t));
+	  object_types = (s7_object_t *)realloc((void *)object_types, object_types_size * sizeof(s7_object_t));
 	}
     }
   object_types[tag].type = tag;
   object_types[tag].name = copy_string(name);
-  object_types[tag].free = free;
-  object_types[tag].print = print;
-  object_types[tag].equal = equal;
+
+  if (free)
+    object_types[tag].free = free;
+  else object_types[tag].free = fallback_free;
+
+  if (print)
+    object_types[tag].print = print;
+  else object_types[tag].print = fallback_print;
+
+  if (equal)
+    object_types[tag].equal = equal;
+  else object_types[tag].equal = fallback_equal;
+
+  object_types[tag].scheme_equal = NULL;
   object_types[tag].gc_mark = gc_mark;
-  object_types[tag].apply = apply;
-  object_types[tag].set = set;
-  object_types[tag].length = NULL;
+
+  if (apply)
+    object_types[tag].apply = apply;
+  else object_types[tag].apply = fallback_ref;
+
+  if (set)
+    object_types[tag].set = set;
+  else object_types[tag].set = fallback_set;
+
+  object_types[tag].length = fallback_length;
   object_types[tag].copy = NULL;
   object_types[tag].fill = NULL;
+  object_types[tag].print_func = NULL;
+  object_types[tag].length_func = NULL;
+  object_types[tag].equal_func = NULL;
+  object_types[tag].getter_func = NULL;
+  object_types[tag].setter_func = NULL;
+  object_types[tag].copy_func = NULL;
+  object_types[tag].fill_func = NULL;
   return(tag);
 }
 
@@ -17178,40 +17231,39 @@ int s7_new_type_x(const char *name,
 {
   int tag;
   tag = s7_new_type(name, print, free, equal, gc_mark, apply, set);
-  object_types[tag].length = length;
+
+  if (length)
+    object_types[tag].length = length;
+  else object_types[tag].length = fallback_length;
+
   object_types[tag].copy = copy;
   object_types[tag].fill = fill;
   return(tag);
 }
 
 
-static char *describe_c_object(s7_scheme *sc, s7_pointer a)
+static char *object_print(s7_scheme *sc, s7_pointer a)
 {
-  int tag;
-  tag = c_object_type(a);
-  if (object_types[tag].print)
-    return((*(object_types[tag].print))(sc, c_object_value(a))); /* assume allocation here (so we'll free the string later) */
-  return(copy_string(object_types[tag].name));
+  return((*(object_types[object_type(a)].print))(sc, object_value(a))); /* assume allocation here (so we'll free the string later) */
 }
 
 
 static void free_object(s7_pointer a)
 {
-  int tag;
-  tag = c_object_type(a);
-  if (object_types[tag].free)
-    (*(object_types[tag].free))(c_object_value(a));
+  (*(object_types[object_type(a)].free))(object_value(a));
 }
 
 
-static bool objects_are_equal(s7_pointer a, s7_pointer b)
+static bool objects_are_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
-  if (c_object_type(a) == c_object_type(b))
+  if (object_type(a) == object_type(b))
     {
       int tag;
-      tag = c_object_type(a);
+      tag = object_type(a);
       if (object_types[tag].equal)
-	return((*(object_types[tag].equal))(c_object_value(a), c_object_value(b)));
+	return((*(object_types[tag].equal))(object_value(a), object_value(b)));
+      if (object_types[tag].scheme_equal)
+	return((*(object_types[tag].scheme_equal))(sc, object_value(a), object_value(b)));
       return(a == b);
     }
   return(false);
@@ -17221,58 +17273,32 @@ static bool objects_are_equal(s7_pointer a, s7_pointer b)
 static void mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's mark func */
 {
   int tag;
-  tag = c_object_type(a);
+  tag = object_type(a);
   if (tag < num_types)
     {
       if (object_types[tag].gc_mark)
-	(*(object_types[tag].gc_mark))(c_object_value(a));
+	(*(object_types[tag].gc_mark))(object_value(a));
     }
 }
 
 
 static bool object_is_applicable(s7_pointer x)
 {
-  return(((is_c_object(x)) || (is_s_object(x))) &&
-	 (object_types[c_object_type(x)].apply));
-}
-
-
-static s7_pointer apply_object(s7_scheme *sc, s7_pointer obj, s7_pointer args)
-{
-  int tag;
-  tag = c_object_type(obj);
-  if (object_types[tag].apply)
-    return((*(object_types[tag].apply))(sc, obj, args));
-
-  return(apply_error(sc, obj, args));
-}
-
-
-#define object_set_function(Obj) object_types[c_object_type(Obj)].set
-
-static s7_pointer object_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
-{
-  int tag;
-  tag = c_object_type(obj);
-  if (object_types[tag].set)
-    return((*(object_types[tag].set))(sc, obj, args));
-
-  return(eval_error(sc, "attempt to set ~A?", obj));
+  return((is_c_object(x)) &&
+	 (object_types[object_type(x)].apply));
 }
 
 
 void *s7_object_value(s7_pointer obj)
 {
-  return(c_object_value(obj));
+  return(object_value(obj));
 }
 
 
 int s7_object_type(s7_pointer obj)
 {
   if (is_c_object(obj))
-    return(c_object_type(obj));
-  if (is_s_object(obj))
-    return(s_object_type(obj));
+    return(object_type(obj));
   return(-1);
 }
 
@@ -17280,46 +17306,42 @@ int s7_object_type(s7_pointer obj)
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
 {
   s7_pointer x;
+
   NEW_CELL(sc, x);
-  c_object_type(x) = type;
-  c_object_value(x) = value;
+  object_type(x) = type;
+  object_value(x) = value;
   set_type(x, T_C_OBJECT | T_FINALIZABLE | T_DONT_COPY); /* free_object checks that the free function exists */
+
   if (object_types[type].apply)
-    typeflag(x) |= T_PROCEDURE; /* this is not always safe (pws) */
+    {
+      object_ref(x) = object_types[type].apply;
+      if (object_ref(x) != fallback_ref)
+	typeflag(x) |= T_PROCEDURE; /* this is not always safe (pws) */
+    }
+  else object_ref(x) = fallback_ref;
+
+  if (object_types[type].set)
+    object_set(x) = object_types[type].set;
+  else object_set(x) = fallback_set;
+
   return(x);
 }
 
 
 static s7_pointer object_length(s7_scheme *sc, s7_pointer obj)
 {
-  int tag;
-  tag = c_object_type(obj);
-  if (object_types[tag].length)
-    return((*(object_types[tag].length))(sc, obj));
-
-  return(eval_error(sc, "attempt to get length of ~A?", obj));
+  return((*(object_types[object_type(obj)].length))(sc, obj));
 }
 
 
 static s7_pointer object_copy(s7_scheme *sc, s7_pointer obj)
 {
   int tag;
-  tag = c_object_type(obj);
+  tag = object_type(obj);
   if (object_types[tag].copy)
     return((*(object_types[tag].copy))(sc, obj));
 
   return(eval_error(sc, "attempt to copy ~A?", obj));
-}
-
-
-static s7_pointer object_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
-{
-  int tag;
-  tag = c_object_type(obj);
-  if (object_types[tag].fill)
-    return((*(object_types[tag].fill))(sc, obj, val));
-
-  return(eval_error(sc, "attempt to fill ~A?", obj));
 }
 
 
@@ -17344,7 +17366,7 @@ static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
    *    it's called only in g_reverse.
    */
   int tag;
-  tag = c_object_type(obj);
+  tag = object_type(obj);
   if ((object_types[tag].copy) &&
       (object_types[tag].length) &&
       (object_types[tag].set) &&
@@ -17355,8 +17377,7 @@ static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
       s7_Int i, j, len;
       int save_x = -1, save_y = -1, save_z = -1;
 
-      if (is_s_object(obj))
-	SAVE_X_Y_Z(save_x, save_y, save_z);
+      SAVE_X_Y_Z(save_x, save_y, save_z);
 
       new_obj = object_copy(sc, obj);
       new_obj_gc_loc = s7_gc_protect(sc, new_obj);
@@ -17378,11 +17399,11 @@ static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
 	  integer(number(car(i_args))) = i;
 	  integer(number(car(j_args))) = j;
 
-	  tmp = apply_object(sc, obj, i_args);         /* tmp = obj[i] */
-	  cadr(i_set_args) = apply_object(sc, obj, j_args);
-	  object_set(sc, new_obj, i_set_args);         /* obj[i] = obj[j] */
+	  tmp = (*(object_ref(obj)))(sc, obj, i_args);         /* tmp = obj[i] */
+	  cadr(i_set_args) = (*(object_ref(obj)))(sc, obj, j_args);
+	  (*(object_set(new_obj)))(sc, new_obj, i_set_args);         /* obj[i] = obj[j] */
 	  cadr(j_set_args) = tmp;
-	  object_set(sc, new_obj, j_set_args);         /* obj[j] = tmp */
+	  (*(object_set(new_obj)))(sc, new_obj, j_set_args);         /* obj[j] = tmp */
 	}
 
       s7_gc_unprotect_at(sc, i_gc_loc);
@@ -17390,8 +17411,7 @@ static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
       s7_gc_unprotect_at(sc, i_set_gc_loc);
       s7_gc_unprotect_at(sc, j_set_gc_loc);
       s7_gc_unprotect_at(sc, new_obj_gc_loc);
-      if (is_s_object(obj))
-	RESTORE_X_Y_Z(save_x, save_y, save_z);
+      RESTORE_X_Y_Z(save_x, save_y, save_z);
 		     
       return(new_obj);
     }
@@ -17403,7 +17423,7 @@ static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
 static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj)
 {
   int tag;
-  tag = c_object_type(obj);
+  tag = object_type(obj);
   if ((object_types[tag].length) &&
       (object_types[tag].set) &&
       (object_types[tag].apply))
@@ -17413,8 +17433,7 @@ static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj)
       s7_Int i, len;
       int save_x = -1, save_y = -1, save_z = -1;
 
-      if (is_s_object(obj))
-	SAVE_X_Y_Z(save_x, save_y, save_z);
+      SAVE_X_Y_Z(save_x, save_y, save_z);
 
       len = s7_integer(object_length(sc, obj));
       vect = make_vector_1(sc, len, NOT_FILLED);
@@ -17426,11 +17445,10 @@ static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj)
       for (i = 0; i < len; i++)
 	{
 	  integer(number(car(i_args))) = i;
-	  vector_element(vect, i) = apply_object(sc, obj, i_args);
+	  vector_element(vect, i) = (*(object_ref(obj)))(sc, obj, i_args);
 	}
 
-      if (is_s_object(obj))
-	RESTORE_X_Y_Z(save_x, save_y, save_z);
+      RESTORE_X_Y_Z(save_x, save_y, save_z);
       s7_gc_unprotect_at(sc, i_gc_loc);
       s7_gc_unprotect_at(sc, vect_gc_loc);
 
@@ -17443,7 +17461,7 @@ static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj)
 static s7_pointer vector_to_object(s7_scheme *sc, s7_pointer vect, s7_pointer obj)
 {
   int tag;
-  tag = c_object_type(obj);
+  tag = object_type(obj);
   if ((object_types[tag].length) &&
       (object_types[tag].set) &&
       (object_types[tag].apply))
@@ -17453,8 +17471,7 @@ static s7_pointer vector_to_object(s7_scheme *sc, s7_pointer vect, s7_pointer ob
       s7_Int i, len;
       int save_x = -1, save_y = -1, save_z = -1;
 
-      if (is_s_object(obj))
-	SAVE_X_Y_Z(save_x, save_y, save_z);
+      SAVE_X_Y_Z(save_x, save_y, save_z);
 
       len = vector_length(vect);
       i_args = make_list_1(sc, make_mutable_integer(sc, 0));
@@ -17466,11 +17483,10 @@ static s7_pointer vector_to_object(s7_scheme *sc, s7_pointer vect, s7_pointer ob
 	{
 	  integer(number(car(i_args))) = i;
 	  cadr(i_set_args) = vector_element(vect, i);
-	  object_set(sc, obj, i_set_args);
+	  (*(object_set(obj)))(sc, obj, i_set_args);
 	}
 
-      if (is_s_object(obj))
-	RESTORE_X_Y_Z(save_x, save_y, save_z);
+      RESTORE_X_Y_Z(save_x, save_y, save_z);
       s7_gc_unprotect_at(sc, i_gc_loc);
       s7_gc_unprotect_at(sc, i_set_gc_loc);
 
@@ -17488,6 +17504,9 @@ typedef struct {
   s7_pointer value;
 } s_type_t;
 
+/* this just holds the type tag locally!  Very bad planning!
+ */
+
 
 static char *call_s_object_print(s7_scheme *sc, void *value)
 {
@@ -17497,34 +17516,25 @@ static char *call_s_object_print(s7_scheme *sc, void *value)
   s_type_t *obj = (s_type_t *)value;
   car(sc->s_function_args) = obj->value;
   return(copy_string((char *)s7_string(s7_call(sc, object_types[obj->type].print_func, sc->s_function_args))));
-
-  /* describe_object assumes the value returned here can be freed */
+  /* object_print assumes the value returned here can be freed */
 }
 
 
-static char *describe_s_object(s7_scheme *sc, s7_pointer a)
+static  bool s_type_equal(s7_scheme *sc, void *a, void *b)
 {
-  int tag;
-  tag = s_object_type(a);
-  if (object_types[tag].print)
-    return((*(object_types[tag].print))(sc, s_object_value(a)));
-  return(copy_string(object_types[tag].name));
-}
-
-
-static bool call_s_object_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
-{
-  s_type_t *obj1, *obj2;
-  if (s_object_type(a) != s_object_type(b))
-    return(false);
-
-  obj1 = (s_type_t *)s7_object_value(a);
-  obj2 = (s_type_t *)s7_object_value(b);
-
-  if (object_types[obj1->type].equal_func != sc->F)
-    return(s7_boolean(sc, s7_call(sc, object_types[obj1->type].equal_func, make_list_2(sc, obj1->value, obj2->value))));
-
+  /* this is the fallback if no equal func is specified */
+  s_type_t *obj1 = (s_type_t *)a;
+  s_type_t *obj2 = (s_type_t *)b;
   return(s7_is_equal(sc, obj1->value, obj2->value));
+}
+
+
+static bool call_s_object_equal(s7_scheme *sc, void *a, void *b)
+{
+  /* we get here if an equal func was specified in make-type */
+  s_type_t *obj1 = (s_type_t *)a;
+  s_type_t *obj2 = (s_type_t *)b;
+  return(s7_boolean(sc, s7_call(sc, object_types[obj1->type].equal_func, make_list_2(sc, obj1->value, obj2->value))));
 }
 
 
@@ -17551,27 +17561,25 @@ static s7_pointer call_s_object_setter(s7_scheme *sc, s7_pointer a, s7_pointer a
 
 static s7_pointer g_internal_object_set(s7_scheme *sc, s7_pointer args)
 {
-  int tag;
-  s_type_t *obj;
-
-  if (is_c_object(car(args)))
-    return(object_set(sc, car(args), cdr(args)));
-
-  tag = s_object_type(car(args));
-  obj = (s_type_t *)s7_object_value(car(args));
-  car(args) = obj->value;                           /* this should be safe -- we cons up this list in OP_SET */
-  push_stack(sc, opcode(OP_APPLY), args, object_types[tag].setter_func);
-  return(sc->UNSPECIFIED);
+  return((*(object_set(car(args))))(sc, car(args), cdr(args)));
 }
 
 
 static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
 {
   s_type_t *obj;
+  s7_pointer result;
+  int save_x = -1, save_y = -1, save_z = -1;
+
   obj = (s_type_t *)s7_object_value(a);
   car(sc->s_function_args) = obj->value;
-  return(s7_call(sc, object_types[obj->type].length_func, sc->s_function_args));
+  SAVE_X_Y_Z(save_x, save_y, save_z);
+  result = s7_call(sc, object_types[obj->type].length_func, sc->s_function_args);
+  RESTORE_X_Y_Z(save_x, save_y, save_z);
+
+  return(result);
 }
+
 
 /* s7_call in this context can lead to segfaults:
  *
@@ -17584,8 +17592,8 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
  *    (call-with-exit (lambda (exit) (copy ((cadr (make-type :copy (lambda (a) (exit 32)))) 1))))
  *      [called in object_reverse and s7_copy, g_copy calls s7_copy]
  *      [hard to fix because hash-tables use s7_copy -- needs at least expansion of g_copy]
- *      [  and in g_copy we'd need another operator OP_MAKE_S_OBJECT maybe, to handle the ]
- *      [  result = make_s_object(sc, new_obj->type, (void *)new_obj) business after the  ]
+ *      [  and in g_copy we'd need another operator OP_S7_MAKE_OBJECT maybe, to handle the ]
+ *      [  result = s7_make_object(sc, new_obj->type, (void *)new_obj) business after the  ]
  *      [  value has been copied.]
  *
  *    (call-with-exit (lambda (exit) (fill! ((cadr (make-type :fill (lambda (a n) (exit 32)))) 1) 0)))
@@ -17602,21 +17610,6 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
  */ 
 
 
-static s7_pointer make_s_object(s7_scheme *sc, int type, void *value)
-{
-  s7_pointer x;
-
-  NEW_CELL(sc, x);
-  s_object_type(x) = type;
-  s_object_value(x) = value;
-  set_type(x, T_S_OBJECT | T_FINALIZABLE | T_DONT_COPY);
-  if (object_types[type].apply)
-    typeflag(x) |= T_PROCEDURE;
-
-  return(x);
-}
-
-
 static s7_pointer call_s_object_copy(s7_scheme *sc, s7_pointer a)
 {
   s_type_t *obj, *new_obj;
@@ -17628,7 +17621,7 @@ static s7_pointer call_s_object_copy(s7_scheme *sc, s7_pointer a)
   new_obj->type = obj->type;
 
   new_obj->value = s7_call(sc, object_types[new_obj->type].copy_func, sc->s_function_args);
-  return(make_s_object(sc, new_obj->type, (void *)new_obj));
+  return(s7_make_object(sc, new_obj->type, (void *)new_obj));
 }
 
 
@@ -17643,7 +17636,7 @@ static s7_pointer call_s_object_fill(s7_scheme *sc, s7_pointer a, s7_pointer val
 
 static char *s_type_print(s7_scheme *sc, void *val)
 {
-  /* describe_object assumes the string is allocated here */
+  /* object_print assumes the string is allocated here */
   s_type_t *obj = (s_type_t *)val;
   char *str, *full_str;
   int len, tag;
@@ -17664,12 +17657,6 @@ static void s_type_free(void *val)
 }
 
 
-static bool s_type_equal(void *val1, void* val2)
-{
-  return(val1 == val2);
-}
-
-
 static void s_type_gc_mark(void *val)
 {
   s_type_t *obj = (s_type_t *)val;
@@ -17679,7 +17666,7 @@ static void s_type_gc_mark(void *val)
 
 static s7_pointer s_is_type(s7_scheme *sc, s7_pointer args)
 {
-  if (is_s_object(cadr(args)))
+  if (is_c_object(cadr(args)))
     {
       s_type_t *obj;
       obj = (s_type_t *)s7_object_value(cadr(args));
@@ -17695,7 +17682,7 @@ static s7_pointer s_type_make(s7_scheme *sc, s7_pointer args)
   obj = (s_type_t *)calloc(1, sizeof(s_type_t));
   obj->type = s7_integer(car(args));
   obj->value = cadr(args);
-  return(make_s_object(sc, obj->type, (void *)obj));
+  return(s7_make_object(sc, obj->type, (void *)obj));
 }
 
 
@@ -17708,7 +17695,7 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
     {
       tag = s7_integer(car(args));
       x = cadr(args);
-      if (is_s_object(x))
+      if (is_c_object(x))
 	{
 	  s_type_t *obj;
 	  obj = (s_type_t *)s7_object_value(x);
@@ -17740,8 +17727,9 @@ In each case, the argument is the value of the object, not the object itself."
 
   int tag;
 
-  tag = s7_new_type("anonymous-type", s_type_print, s_type_free, s_type_equal, s_type_gc_mark, NULL, NULL);
-  object_types[tag].equal_func = sc->F;  /* see call_s_object_equal */
+  tag = s7_new_type("anonymous-type", s_type_print, s_type_free, NULL, s_type_gc_mark, NULL, NULL);
+  object_types[tag].equal = NULL;
+  object_types[tag].scheme_equal = s_type_equal;
 
   if (is_not_null(args))
     {
@@ -17809,7 +17797,9 @@ In each case, the argument is the value of the object, not the object itself."
 		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 				      make_list_2(sc, make_protected_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
 		    }
+		  object_types[tag].equal = NULL;
 		  object_types[tag].equal_func = func;
+		  object_types[tag].scheme_equal = call_s_object_equal;
 		  break;
 
 		case 2:                 /* getter: (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1) -> 2 */
@@ -18131,7 +18121,7 @@ occurs as the object of set!."
 bool s7_is_procedure_with_setter(s7_pointer obj)
 {
   return((is_c_object(obj)) &&
-	 (c_object_type(obj) == pws_tag));
+	 (object_type(obj) == pws_tag));
 }
 
 
@@ -18238,7 +18228,7 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
 	     (safe_list_length(sc, closure_args(x)) >= args));
 
     case T_C_OBJECT:
-      if (c_object_type(x) == pws_tag)
+      if (object_type(x) == pws_tag)
 	{
 	  s7_pws_t *f;
 	  if (is_not_null(s7_procedure_getter(sc, x))) /* a scheme function in this case */
@@ -18249,11 +18239,9 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
 		 ((f->get_req_args + f->get_opt_args) >= args));
 	}
       
-      /* pws is a special case because the direct value is the getter procedure -- I don't think
-       *   T_S_OBJECT object value should be included here???
+      /* pws is a special case because the direct value is the getter procedure 
        *   (let ((p (make-procedure-with-setter < > ))) (procedure? p)) -> #t
        *   (procedure? ((cadr (make-type)) (lambda () 1))) -> #f
-       * other T_C_OBJECTs can't mimic pws because only is is recognized specially by procedure? 
        */
     }
   return(false);
@@ -18272,7 +18260,7 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x)
       return(is_null(caar(x)));
 
     case T_C_OBJECT:
-      if (c_object_type(x) == pws_tag)
+      if (object_type(x) == pws_tag)
 	{
 	  s7_pws_t *f;
 	  if (is_not_null(s7_procedure_getter(sc, x))) /* a scheme function in this case */
@@ -18956,11 +18944,8 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
     case T_STRING:
       return(scheme_strings_are_equal(x, y));
 
-    case T_S_OBJECT:
-      return(call_s_object_equal(sc, x, y));
-
     case T_C_OBJECT:
-      return(objects_are_equal(x, y));
+      return(objects_are_equal(sc, x, y));
 
     case T_CHARACTER:
       return(s7_character(x) == s7_character(y));
@@ -19063,11 +19048,8 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
     case T_STRING:
       return(scheme_strings_are_equal(x, y));
 
-    case T_S_OBJECT:
-      return(call_s_object_equal(sc, x, y));
-
     case T_C_OBJECT:
-      return(objects_are_equal(x, y));
+      return(objects_are_equal(sc, x, y));
 
     case T_CHARACTER:
       return(s7_character(x) == s7_character(y));
@@ -19161,26 +19143,7 @@ list has infinite length."
       return(g_hash_table_size(sc, args));
 
     case T_C_OBJECT:
-      return(object_length(sc, lst));
-
-    case T_S_OBJECT:
-      {
-	s_type_t *obj;
-	obj = (s_type_t *)s7_object_value(lst);
-	if (object_types[obj->type].length)
-	  {
-	    s7_pointer func;
-
-	    car(args) = obj->value;
-	    func = object_types[obj->type].length_func;
-	    if (is_c_function(func))
-	      return(c_function_call(func)(sc, args));
-	    
-	    push_stack(sc, opcode(OP_APPLY), args, func);
-	    return(sc->UNSPECIFIED);
-	  }
-	return(eval_error(sc, "attempt to get length of ~A?", lst));
-      }
+      return(object_length(sc, car(args)));
 
     default:
       return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
@@ -19209,7 +19172,6 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
     case T_STRING:
       return(s7_make_string_with_length(sc, string_value(obj), string_length(obj)));
 
-    case T_S_OBJECT:
     case T_C_OBJECT:
       return(object_copy(sc, obj));
 
@@ -19283,7 +19245,6 @@ also accepts a string or vector argument."
     case T_HASH_TABLE:
       return(hash_table_reverse(sc, p));
 
-    case T_S_OBJECT:
     case T_C_OBJECT:
       return(object_reverse(sc, p));
       break;
@@ -19354,18 +19315,20 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
       return(g_vector_fill(sc, args));
 
     case T_C_OBJECT:
-      return(object_fill(sc, car(args), cadr(args)));
-
-    case T_S_OBJECT:
       {
-	s_type_t *obj;
-	obj = (s_type_t *)s7_object_value(car(args));
-	if (object_types[obj->type].fill)
+	int tag;
+	tag = object_type(car(args));
+	if (object_types[tag].fill_func)
 	  {
+	    s_type_t *obj;
+	    obj = (s_type_t *)s7_object_value(car(args));
 	    car(args) = obj->value;
 	    push_stack(sc, opcode(OP_APPLY), args, object_types[obj->type].fill_func);
 	    return(sc->UNSPECIFIED);
 	  }
+
+	if (object_types[tag].fill)
+	  return((*(object_types[tag].fill))(sc, car(args), cadr(args)));
 	return(eval_error(sc, "attempt to fill ~A?", car(args)));
       }
 
@@ -19418,16 +19381,13 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       return(hook_functions(obj));
 
     case T_C_OBJECT:
-    case T_S_OBJECT:
       {
 	long int i, len; /* the "long" matters on 64-bit machines */
 	s7_pointer x, z, result;
 	int save_x = -1, save_y = -1, save_z = -1, gc_res = -1, gc_z = -1;
 	/* (format #f "~{~A ~}" (vct 1 2 3)) */
 
-	SAVE_X_Y_Z(save_x, save_y, save_z);
 	x = object_length(sc, obj);
-	RESTORE_X_Y_Z(save_x, save_y, save_z);
 	if (s7_is_integer(x))
 	  len = s7_integer(x);
 	else return(sc->F);
@@ -19446,7 +19406,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	  {
 	    car(z) = s7_make_integer(sc, i);
 	    SAVE_X_Y_Z(save_x, save_y, save_z);
-	    car(x) = apply_object(sc, obj, z);
+	    car(x) = (*(object_ref(obj)))(sc, obj, z);
 	    RESTORE_X_Y_Z(save_x, save_y, save_z);
 	  }
 	
@@ -20306,8 +20266,7 @@ static const char *type_name(s7_pointer arg)
     case T_CATCH:        return("catch");
     case T_DYNAMIC_WIND: return("dynamic-wind");
     case T_HASH_TABLE:   return("hash-table");
-    case T_S_OBJECT:     return(object_types[s_object_type(arg)].name);
-    case T_C_OBJECT:     return(object_types[c_object_type(arg)].name);
+    case T_C_OBJECT:     return(object_types[object_type(arg)].name);
     case T_HOOK:         return("hook");
 
     case T_INPUT_PORT:
@@ -21661,17 +21620,12 @@ static s7_Int applicable_length(s7_scheme *sc, s7_pointer obj)
 	return(len);
       }
 
-    case T_S_OBJECT:
     case T_C_OBJECT:
       {
 	/* both map and for-each assume sc->x|y|z are unchanged across this call */
-	int save_x = -1, save_y = -1, save_z = -1;
 	s7_pointer result;
 
-	SAVE_X_Y_Z(save_x, save_y, save_z);
 	result = object_length(sc, obj);
-	RESTORE_X_Y_Z(save_x, save_y, save_z);
-
 	if (s7_is_integer(result))   /* we need to check, else misinterpreting it as an integer can lead to a infinite loop */
 	  return(s7_integer(result));
 	return(-1);
@@ -21717,7 +21671,7 @@ static bool next_for_each(s7_scheme *sc)
 	car(y) = cdar(y);
 	break;
 
-      case T_S_OBJECT: 
+      case T_C_OBJECT: 
 	{
 	  int save_x = -1, save_y = -1, save_z = -1;
 	  if (is_null(z))
@@ -21735,20 +21689,11 @@ static bool next_for_each(s7_scheme *sc)
 	    }
 
 	  SAVE_X_Y_Z(save_x, save_y, save_z);
-	  car(x) = apply_object(sc, car(y), z);
+	  car(x) = (*(object_ref(car(y))))(sc, car(y), z);
 	  RESTORE_X_Y_Z(save_x, save_y, save_z);
 	}
 	break;
 
-      case T_C_OBJECT: 
-	if (is_null(z))
-	  {
-	    z = make_list_1(sc, s7_make_integer(sc, integer(number(car(sc->args))))); /* see above */
-	    zloc = s7_gc_protect(sc, z);
-	  }
-	car(x) = apply_object(sc, car(y), z);
-	break;
-	
       case T_VECTOR:
 	car(x) = vector_element(car(y), loc); 
 	break;
@@ -21793,8 +21738,7 @@ static bool is_sequence(s7_scheme *sc, s7_pointer p)
 	 (s7_is_vector(p)) ||
 	 (s7_is_string(p)) ||
 	 (s7_is_hash_table(p)) ||
-	 (is_c_object(p)) ||
-	 (is_s_object(p)));
+	 (is_c_object(p)));
 }
 
 
@@ -21855,7 +21799,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  return(sc->UNSPECIFIED);
 
 	  /* PERHAPS: this, and map, across a string (say) or other sequence involving
-	   *          only 1 arg could be optimized in the same way. OP_FOR_EACH|MAP_STRING|VECTOR|C/S_OBJECT
+	   *          only 1 arg could be optimized in the same way. OP_FOR_EACH|MAP_STRING|VECTOR|C_OBJECT
 	   */
 	}
 
@@ -21986,7 +21930,7 @@ static bool next_map(s7_scheme *sc)
 	  car(y) = cdar(y);
 	  break;
 	  
-	case T_S_OBJECT:
+	case T_C_OBJECT: 
 	  {
 	    int save_x = -1, save_y = -1, save_z = -1;
 	    if (is_null(z))
@@ -21995,18 +21939,9 @@ static bool next_map(s7_scheme *sc)
 		zloc = s7_gc_protect(sc, z);
 	      }
 	    SAVE_X_Y_Z(save_x, save_y, save_z);
-	    x = apply_object(sc, car(y), z);
+	    x = (*(object_ref(car(y))))(sc, car(y), z);
 	    RESTORE_X_Y_Z(save_x, save_y, save_z);
 	  }
-	  break;
-
-	case T_C_OBJECT: 
-	  if (is_null(z))
-	    {
-	      z = make_list_1(sc, s7_make_integer(sc, integer(number(car(sc->args)))));
-	      zloc = s7_gc_protect(sc, z);
-	    }
-	  x = apply_object(sc, car(y), z);
 	  break;
 	
 	case T_VECTOR:
@@ -24062,6 +23997,7 @@ static s7_pointer check_case(s7_scheme *sc)
 
 
 
+
 /* -------------------------------- eval -------------------------------- */
 
 /* all explicit write-* in eval assume current-output-port -- error fallback handling, etc */
@@ -25037,8 +24973,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->z = pop_op_stack(sc);
 	if (is_safe_procedure(sc->z))
 	  {
-	    x = sc->TEMP_CELL_1;
-	    y = sc->TEMP_CELL_2;
+	    x = sc->TEMP_CELL_2;
+	    y = sc->TEMP_CELL_3;
 	  }
 	else
 	  {
@@ -25066,7 +25002,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	sc->code = pop_op_stack(sc);
 	if (is_safe_procedure(sc->code))
-	  x = sc->TEMP_CELL_1;
+	  x = sc->TEMP_CELL_2;
 	else
 	  {
 	    NEW_CELL(sc, x); 
@@ -25091,8 +25027,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->x = pop_op_stack(sc);
 	if (is_safe_procedure(sc->x))
 	  {
-	    x = sc->TEMP_CELL_1;
-	    y = sc->TEMP_CELL_2;
+	    x = sc->TEMP_CELL_2;
+	    y = sc->TEMP_CELL_3;
 	  }
 	else
 	  {
@@ -25204,8 +25140,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = pop_op_stack(sc);
 		  if (is_safe_procedure(sc->code))
 		    {
-		      x = sc->TEMP_CELL_2; /* these are already pairs */
-		      y = sc->TEMP_CELL_1;
+		      x = sc->TEMP_CELL_3; /* these are already pairs */
+		      y = sc->TEMP_CELL_2;
 		    }
 		  else
 		    {
@@ -25249,7 +25185,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* here we've reached the last arg (sc->code == nil) 
 	       *   it is not a pair (typ == T_PAIR was caught earlier)
 	       *   if this is a safe function, we're going straight to
-	       *   apply with no complications, so we can use TEMP_CELL_1.
+	       *   apply with no complications, so we can use TEMP_CELL_2.
 	       */
 	      s7_pointer x;
 
@@ -25258,7 +25194,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      sc->code = pop_op_stack(sc);
 	      if (is_safe_procedure(sc->code))
-		x = sc->TEMP_CELL_1;
+		x = sc->TEMP_CELL_2;
 	      else
 		{
 		  NEW_CELL(sc, x); 
@@ -25362,10 +25298,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	  /* sc->args == nil:              len 0
-	   * sc->args == TEMP_CELL_1:      len 1
-	   * cdr(sc->args) == TEMP_CELL_1: len 2 (safe because cdr(nil) is #<unspecified>)
+	   * sc->args == TEMP_CELL_2:      len 1
+	   * cdr(sc->args) == TEMP_CELL_2: len 2 (safe because cdr(nil) is #<unspecified>)
 	   * these are the standard cases.  If we got here from apply, none of this applies, but 
-	   *   args will not contain TEMP_CELL_1, so we won't get a false positive (apply is not
+	   *   args will not contain TEMP_CELL_2, so we won't get a false positive (apply is not
 	   *   a safe function).
 	   */
 
@@ -25374,7 +25310,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   in snd: abs
 	   */
 	case T_C_EQ_FUNCTION:
-	  if (cdr(sc->args) == sc->TEMP_CELL_1)
+	  if (cdr(sc->args) == sc->TEMP_CELL_2)
 	    {
 	      if (car(sc->args) == cadr(sc->args))
 		sc->value = sc->T;
@@ -25397,7 +25333,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_C_PAIR_FUNCTION:
-	  if (sc->args == sc->TEMP_CELL_1)
+	  if (sc->args == sc->TEMP_CELL_2)
 	    {
 	      if (is_pair(car(sc->args)))
 		sc->value = sc->T;
@@ -25415,7 +25351,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_C_NOT_FUNCTION:
-	  if (sc->args == sc->TEMP_CELL_1)
+	  if (sc->args == sc->TEMP_CELL_2)
 	    {
 	      if (is_false(sc, car(sc->args)))
 		sc->value = sc->T;
@@ -25434,7 +25370,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_C_SYMBOL_FUNCTION:
-	  if (sc->args == sc->TEMP_CELL_1)
+	  if (sc->args == sc->TEMP_CELL_2)
 	    {
 	      if (s7_is_symbol(car(sc->args)))
 		sc->value = sc->T;
@@ -25453,7 +25389,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_C_CAR_FUNCTION:
-	  if ((sc->args == sc->TEMP_CELL_1) &&
+	  if ((sc->args == sc->TEMP_CELL_2) &&
 	      (is_pair(car(sc->args))))
 	    {
 	      sc->value = caar(sc->args);
@@ -25472,7 +25408,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_C_CDR_FUNCTION:
-	  /* here cdr is not considered safe, so TEMP_CELL_1 is not in use. */
+	  /* here cdr is not considered safe, so TEMP_CELL_2 is not in use. */
 	  if ((is_null(cdr(sc->args))) && /* so arg len is 1 (0 would be #<unspecified>) */
 	      (is_pair(car(sc->args))))
 	    {
@@ -25713,33 +25649,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else sc->value = sc->UNSPECIFIED;
 	  goto START;
 
-	case T_S_OBJECT:                          /* -------- applicable s(cheme) object -------- */
-	  {
-	    int tag;
-	    tag = s_object_type(sc->code);
-	    if (object_types[tag].apply)
-	      {
-		s_type_t *obj;
-		obj = (s_type_t *)s7_object_value(sc->code);
-		sc->code = object_types[tag].getter_func;
-		sc->args = cons(sc, obj->value, sc->args);
-		goto APPLY;
-	      }
-	    return(apply_error(sc, sc->code, sc->args));
-	  }
-	    
-	case T_C_OBJECT:	                  /* -------- applicable c object -------- */
-	  {
-	    int tag;
-	    tag = c_object_type(sc->code);
-	    if (object_types[tag].apply)
-	      sc->value = ((*(object_types[tag].apply))(sc, sc->code, sc->args));
-	    else return(apply_error(sc, sc->code, sc->args));
-
-	    if (sc->stack_end > sc->stack_start)
-	      pop_stack(sc);
-	    goto START_WITHOUT_POP_STACK;
-	  }
+	case T_C_OBJECT:                          /* -------- applicable (new-type) object -------- */
+	  sc->value = (*(object_ref(sc->code)))(sc, sc->code, sc->args);
+	  goto START;
 
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of indices 
@@ -26172,26 +26084,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  switch (type(sc->x))
 	    {
-	    case T_S_OBJECT:
-	      /* it's tricky to split out this case because we haven't evaluated the args yet, so we check in g_internal_object_set.
-	       */
-
 	    case T_C_OBJECT:
-	      if (object_set_function(sc->x))  /* procedure-with-setter set comes here, I think */
+	      push_op_stack(sc, sc->OBJECT_SET);
+	      if (is_pair(cdar(sc->code)))
 		{
-		  push_op_stack(sc, sc->OBJECT_SET);
-		  if (is_pair(cdar(sc->code)))
-		    {
-		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code))); /* {3} */
-		      sc->code = cadar(sc->code);
-		    }
-		  else /* (set! (window-width) 800) -> ((window-width) 800) so cdar(sc->code) is nil */
-		    {
-		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), cddr(sc->code));
-		      sc->code = cadr(sc->code);
-		    }
+		  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code))); /* {3} */
+		  sc->code = cadar(sc->code);
 		}
-	      else return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
+	      else /* (set! (window-width) 800) -> ((window-width) 800) so cdar(sc->code) is nil */
+		{
+		  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_1(sc, sc->x), cddr(sc->code));
+		  sc->code = cadr(sc->code);
+		}
 	      break;
 
 	    case T_VECTOR:
@@ -27909,7 +27813,7 @@ s7_pointer s7_make_thread(s7_scheme *sc, void *(*func)(void *obj), void *func_ob
 bool s7_is_thread(s7_pointer obj)
 {
   return((is_c_object(obj)) && 
-	 (c_object_type(obj) == thread_tag));
+	 (object_type(obj) == thread_tag));
 }
 
 
@@ -27985,7 +27889,7 @@ static bool lock_equal(void *obj1, void *obj2)
 bool s7_is_lock(s7_pointer obj)
 {
   return((is_c_object(obj)) && 
-	 (c_object_type(obj) == lock_tag));
+	 (object_type(obj) == lock_tag));
 }
 
 
@@ -28088,7 +27992,7 @@ static bool key_equal(void *obj1, void *obj2)
 bool s7_is_thread_variable(s7_pointer obj)
 {
   return((is_c_object(obj)) &&
-	 (c_object_type(obj) == key_tag));
+	 (object_type(obj) == key_tag));
 }
 
 
@@ -28189,10 +28093,10 @@ static int big_complex_tag = 0;
 #define S7_BIG_COMPLEX(a) (*((mpc_t *)s7_object_value(a)))
 
 #define IS_BIG(p) ((is_c_object(p)) && \
-		   ((c_object_type(p) == big_integer_tag) || \
-                    (c_object_type(p) == big_ratio_tag) || \
-                    (c_object_type(p) == big_real_tag) || \
-                    (c_object_type(p) == big_complex_tag)))
+		   ((object_type(p) == big_integer_tag) || \
+                    (object_type(p) == big_ratio_tag) || \
+                    (object_type(p) == big_real_tag) || \
+                    (object_type(p) == big_complex_tag)))
 
 
 mpfr_t *s7_big_real(s7_pointer x)
@@ -28230,7 +28134,7 @@ bool s7_is_integer(s7_pointer p)
   return(((type(p) == T_NUMBER) && 
 	  (number_type(p) == NUM_INT)) ||
 	 ((is_c_object(p)) && 
-	  (c_object_type(p) == big_integer_tag)));
+	  (object_type(p) == big_integer_tag)));
 }
 
 
@@ -28239,9 +28143,9 @@ bool s7_is_real(s7_pointer p)
   return(((type(p) == T_NUMBER) && 
 	  (number_type(p) < NUM_COMPLEX)) ||
 	 ((is_c_object(p)) && 
-	  ((c_object_type(p) == big_integer_tag) ||
-	   (c_object_type(p) == big_ratio_tag) ||
-	   (c_object_type(p) == big_real_tag))));
+	  ((object_type(p) == big_integer_tag) ||
+	   (object_type(p) == big_ratio_tag) ||
+	   (object_type(p) == big_real_tag))));
 }
 
 
@@ -28250,8 +28154,8 @@ bool s7_is_rational(s7_pointer p)
   return(((type(p) == T_NUMBER) && 
 	  (number_type(p) <= NUM_RATIO)) ||
 	 ((is_c_object(p)) && 
-	  ((c_object_type(p) == big_integer_tag) ||
-	   (c_object_type(p) == big_ratio_tag))));
+	  ((object_type(p) == big_integer_tag) ||
+	   (object_type(p) == big_ratio_tag))));
 }
 
 
@@ -28260,7 +28164,7 @@ bool s7_is_ratio(s7_pointer p)
   return(((type(p) == T_NUMBER) && 
 	  (number_type(p) == NUM_RATIO)) ||
 	 ((is_c_object(p)) && 
-	   (c_object_type(p) == big_ratio_tag)));
+	   (object_type(p) == big_ratio_tag)));
 }
 
 
@@ -28396,15 +28300,15 @@ static char *print_big_complex(s7_scheme *sc, void *val)
 static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width)
 {
   char *str = NULL;
-  if (c_object_type(p) == big_integer_tag)
+  if (object_type(p) == big_integer_tag)
     str = mpz_get_str(NULL, radix, S7_BIG_INTEGER(p));
   else
     {
-      if (c_object_type(p) == big_ratio_tag)
+      if (object_type(p) == big_ratio_tag)
 	str = mpq_get_str(NULL, radix, S7_BIG_RATIO(p));
       else
 	{
-	  if (c_object_type(p) == big_real_tag)
+	  if (object_type(p) == big_real_tag)
 	    str = mpfr_to_string(S7_BIG_REAL(p), radix);
 	  else str = mpc_to_string(S7_BIG_COMPLEX(p), radix);
 	}
@@ -28483,7 +28387,7 @@ static bool s7_is_one_or_big_one(s7_pointer p)
   if (!IS_BIG(p))
     return(s7_is_one(p));
 
-  if (c_object_type(p) == big_integer_tag)
+  if (object_type(p) == big_integer_tag)
     {
       mpz_t n;
       mpz_init_set_si(n, 1);
@@ -28492,7 +28396,7 @@ static bool s7_is_one_or_big_one(s7_pointer p)
     }
   else
     {
-      if (c_object_type(p) == big_real_tag)
+      if (object_type(p) == big_real_tag)
 	{
 	  mpfr_t n;
 	  mpfr_init_set_d(n, 1.0, GMP_RNDN);
@@ -28910,11 +28814,11 @@ s7_Double s7_number_to_real(s7_pointer x)
 
   if (is_c_object(x))
     {
-      if (c_object_type(x) == big_real_tag)
+      if (object_type(x) == big_real_tag)
 	return((s7_Double)mpfr_get_d(S7_BIG_REAL(x), GMP_RNDN));
-      if (c_object_type(x) == big_integer_tag)
+      if (object_type(x) == big_integer_tag)
 	return((s7_Double)big_integer_to_s7_Int(S7_BIG_INTEGER(x)));
-      if (c_object_type(x) == big_ratio_tag)
+      if (object_type(x) == big_ratio_tag)
 	return((s7_Double)((double)big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(x))) / (double)big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x)))));
     }
 
@@ -28933,11 +28837,11 @@ s7_Int s7_number_to_integer(s7_pointer x)
 {
   if (is_c_object(x))
     {
-      if (c_object_type(x) == big_integer_tag)
+      if (object_type(x) == big_integer_tag)
 	return(big_integer_to_s7_Int(S7_BIG_INTEGER(x)));
-      if (c_object_type(x) == big_real_tag)
+      if (object_type(x) == big_real_tag)
 	return((s7_Int)mpfr_get_d(S7_BIG_REAL(x), GMP_RNDN));
-      if (c_object_type(x) == big_ratio_tag)
+      if (object_type(x) == big_ratio_tag)
 	return((s7_Int)((double)big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(x))) / (double)big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x)))));
     }
 
@@ -28956,9 +28860,9 @@ s7_Int s7_numerator(s7_pointer x)
 {
   if (is_c_object(x))
     {
-      if (c_object_type(x) == big_ratio_tag)
+      if (object_type(x) == big_ratio_tag)
 	return(big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(x))));
-      if (c_object_type(x) == big_integer_tag)
+      if (object_type(x) == big_integer_tag)
 	return(big_integer_to_s7_Int(S7_BIG_INTEGER(x)));
     }
   if (number_type(x) == NUM_RATIO)
@@ -28971,7 +28875,7 @@ s7_Int s7_denominator(s7_pointer x)
 {
   if (is_c_object(x))
     {
-      if (c_object_type(x) != big_ratio_tag)
+      if (object_type(x) != big_ratio_tag)
 	return(1);
       return(big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x))));
     }
@@ -28985,16 +28889,16 @@ s7_Double s7_real_part(s7_pointer x)
 {
   if (is_c_object(x))
     {
-      if (c_object_type(x) == big_complex_tag)
+      if (object_type(x) == big_complex_tag)
 	return((s7_Double)mpfr_get_d(mpc_realref(S7_BIG_COMPLEX(x)), GMP_RNDN));
 
-      if (c_object_type(x) == big_real_tag)
+      if (object_type(x) == big_real_tag)
 	return((s7_Double)mpfr_get_d(S7_BIG_REAL(x), GMP_RNDN));
 
-      if (c_object_type(x) == big_integer_tag)
+      if (object_type(x) == big_integer_tag)
 	return((s7_Double)big_integer_to_s7_Int(S7_BIG_INTEGER(x)));
 
-      if (c_object_type(x) == big_ratio_tag)
+      if (object_type(x) == big_ratio_tag)
 	return((s7_Double)((double)big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(x))) / (double)big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x)))));
     }
   return(num_to_real_part(number(x)));
@@ -29005,7 +28909,7 @@ s7_Double s7_imag_part(s7_pointer x)
 {
   if (is_c_object(x))
     {
-      if (c_object_type(x) == big_complex_tag)
+      if (object_type(x) == big_complex_tag)
 	return((s7_Double)mpfr_get_d(mpc_imagref(S7_BIG_COMPLEX(x)), GMP_RNDN));
       return(0.0);
     }
@@ -29142,7 +29046,7 @@ static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b)
       /* s7_is_real is not finicky enough here -- (eqv? 1.0 1) should return #f */
       if (is_c_object(b))
 	{
-	  if (c_object_type(b) != big_real_tag)
+	  if (object_type(b) != big_real_tag)
 	    return(false);
 	}
       else
@@ -29184,7 +29088,7 @@ static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b)
       /* s7_is_complex is not finicky enough here */
       if (is_c_object(b))
 	{
-	  if (c_object_type(b) != big_complex_tag)
+	  if (object_type(b) != big_complex_tag)
 	    return(false);
 	}
       else
@@ -29442,7 +29346,7 @@ static s7_pointer promote_number_1(s7_scheme *sc, int type, s7_pointer x, bool c
     case T_BIG_RATIO:
       if (is_c_object(x))
 	{
-	  if (c_object_type(x) == big_ratio_tag) 
+	  if (object_type(x) == big_ratio_tag) 
 	    {
 	      if (copy)
 		return(mpq_to_big_ratio(sc, S7_BIG_RATIO(x)));
@@ -29458,13 +29362,13 @@ static s7_pointer promote_number_1(s7_scheme *sc, int type, s7_pointer x, bool c
     case T_BIG_REAL:
       if (is_c_object(x))
 	{
-	  if (c_object_type(x) == big_real_tag) 
+	  if (object_type(x) == big_real_tag) 
 	    {
 	      if (copy)
 		return(mpfr_to_big_real(sc, S7_BIG_REAL(x)));
 	      return(x);
 	    }
-	  if (c_object_type(x) == big_ratio_tag) return(mpq_to_big_real(sc, S7_BIG_RATIO(x)));
+	  if (object_type(x) == big_ratio_tag) return(mpq_to_big_real(sc, S7_BIG_RATIO(x)));
 	  return(mpz_to_big_real(sc, S7_BIG_INTEGER(x)));
 	}
       return(s7_number_to_big_real(sc, x));
@@ -29473,14 +29377,14 @@ static s7_pointer promote_number_1(s7_scheme *sc, int type, s7_pointer x, bool c
     default:
       if (is_c_object(x))
 	{
-	  if (c_object_type(x) == big_complex_tag) 
+	  if (object_type(x) == big_complex_tag) 
 	    {
 	      if (copy)
 		return(mpc_to_big_complex(sc, S7_BIG_COMPLEX(x)));
 	      return(x);
 	    }
-	  if (c_object_type(x) == big_real_tag) return(mpfr_to_big_complex(sc, S7_BIG_REAL(x)));
-	  if (c_object_type(x) == big_ratio_tag) return(mpq_to_big_complex(sc, S7_BIG_RATIO(x)));
+	  if (object_type(x) == big_real_tag) return(mpfr_to_big_complex(sc, S7_BIG_REAL(x)));
+	  if (object_type(x) == big_ratio_tag) return(mpq_to_big_complex(sc, S7_BIG_RATIO(x)));
 	  return(mpz_to_big_complex(sc, S7_BIG_INTEGER(x)));
 	}
       return(s7_number_to_big_complex(sc, x));
@@ -29545,7 +29449,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
       gc_loc = s7_gc_protect(sc, vec);
       vector_fill(sc, vec, sc->NIL); 
 
-      type = c_object_type(obj);
+      type = object_type(obj);
       for (i = 0; i < len; i++) 
 	{
 	  if (type == big_real_tag)
@@ -29640,7 +29544,7 @@ static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
 	{
 	  if (!IS_BIG(p))
 	    return(s7_wrong_type_arg_error(sc, "+", i, p, "a number"));
-	  else result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
+	  else result_type |= SHIFT_BIGNUM_TYPE(object_type(p));
 	}
       else result_type |= number_type(p);
     }
@@ -29694,7 +29598,7 @@ static s7_pointer big_negate(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (is_c_object(p))
     {
-      if (c_object_type(p) == big_integer_tag)
+      if (object_type(p) == big_integer_tag)
 	{
 	  mpz_t *n;
 	  n = (mpz_t *)malloc(sizeof(mpz_t));
@@ -29703,7 +29607,7 @@ static s7_pointer big_negate(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_integer_tag, (void *)n));
 	}
 
-      if (c_object_type(p) == big_ratio_tag)
+      if (object_type(p) == big_ratio_tag)
 	{
 	  mpq_t *n;
 	  n = (mpq_t *)malloc(sizeof(mpq_t));
@@ -29713,7 +29617,7 @@ static s7_pointer big_negate(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_ratio_tag, (void *)n));
 	}
 
-      if (c_object_type(p) == big_real_tag)
+      if (object_type(p) == big_real_tag)
 	{
 	  mpfr_t *n;
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
@@ -29722,7 +29626,7 @@ static s7_pointer big_negate(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_real_tag, (void *)n));
 	}
 
-      if (c_object_type(p) == big_complex_tag)
+      if (object_type(p) == big_complex_tag)
 	{
 	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
@@ -29754,7 +29658,7 @@ static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
 	{
 	  if (!IS_BIG(p))
 	    return(s7_wrong_type_arg_error(sc, "-", i, p, "a number"));
-	  else result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
+	  else result_type |= SHIFT_BIGNUM_TYPE(object_type(p));
 	}
       else result_type |= number_type(p);
     }
@@ -29820,7 +29724,7 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
 	{
 	  if (!IS_BIG(p))
 	    return(s7_wrong_type_arg_error(sc, "*", i, p, "a number"));
-	  else result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
+	  else result_type |= SHIFT_BIGNUM_TYPE(object_type(p));
 	}
       else result_type |= number_type(p);
     }
@@ -29878,7 +29782,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 
   if (is_c_object(p))
     {
-      if (c_object_type(p) == big_integer_tag)
+      if (object_type(p) == big_integer_tag)
 	{
 	  mpq_t *n;
 	  n = (mpq_t *)malloc(sizeof(mpq_t));
@@ -29898,7 +29802,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_ratio_tag, (void *)n));
 	}
 
-      if (c_object_type(p) == big_ratio_tag)
+      if (object_type(p) == big_ratio_tag)
 	{
 	  mpq_t *n;
 	  n = (mpq_t *)malloc(sizeof(mpq_t));
@@ -29919,7 +29823,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_ratio_tag, (void *)n));
 	}
 
-      if (c_object_type(p) == big_real_tag)
+      if (object_type(p) == big_real_tag)
 	{
 	  mpfr_t *n;
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
@@ -29928,7 +29832,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_real_tag, (void *)n));
 	}
 
-      if (c_object_type(p) == big_complex_tag)
+      if (object_type(p) == big_complex_tag)
 	{
 	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
@@ -29962,7 +29866,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
 	{
 	  if (!IS_BIG(p))
 	    return(s7_wrong_type_arg_error(sc, "/", i, p, "a number"));
-	  else result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
+	  else result_type |= SHIFT_BIGNUM_TYPE(object_type(p));
 	}
       else result_type |= number_type(p);
     }
@@ -30047,9 +29951,9 @@ static s7_pointer big_numerator(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (is_c_object(p))
     {
-      if (c_object_type(p) == big_integer_tag)
+      if (object_type(p) == big_integer_tag)
 	return(p);
-      if (c_object_type(p) == big_ratio_tag)
+      if (object_type(p) == big_ratio_tag)
 	return(mpz_to_big_integer(sc, mpq_numref(S7_BIG_RATIO(p))));
     }
   return(g_numerator(sc, args));
@@ -30062,9 +29966,9 @@ static s7_pointer big_denominator(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (is_c_object(p))
     {
-      if (c_object_type(p) == big_integer_tag)
+      if (object_type(p) == big_integer_tag)
 	return(small_int(1));
-      if (c_object_type(p) == big_ratio_tag)
+      if (object_type(p) == big_ratio_tag)
 	return(mpz_to_big_integer(sc, mpq_denref(S7_BIG_RATIO(p))));
     }
   return(g_denominator(sc, args));
@@ -30076,7 +29980,7 @@ static s7_pointer big_is_even(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
   p = car(args);
   if ((is_c_object(p)) &&
-      (c_object_type(p) == big_integer_tag))
+      (object_type(p) == big_integer_tag))
     return(make_boolean(sc, mpz_even_p(S7_BIG_INTEGER(p))));
   return(g_is_even(sc, args));
 }
@@ -30087,7 +29991,7 @@ static s7_pointer big_is_odd(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
   p = car(args);
   if ((is_c_object(p)) &&
-      (c_object_type(p) == big_integer_tag))
+      (object_type(p) == big_integer_tag))
     return(make_boolean(sc, mpz_odd_p(S7_BIG_INTEGER(p))));
   return(g_is_odd(sc, args));
 }
@@ -30099,7 +30003,7 @@ static s7_pointer big_real_part(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (is_c_object(p))
     {
-      if (c_object_type(p) == big_complex_tag)
+      if (object_type(p) == big_complex_tag)
 	{
 	  mpfr_t *n;
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
@@ -30109,9 +30013,9 @@ static s7_pointer big_real_part(s7_scheme *sc, s7_pointer args)
 	}
       else
 	{
-	  if ((c_object_type(p) == big_integer_tag) ||
-	      (c_object_type(p) == big_ratio_tag) ||
-	      (c_object_type(p) == big_real_tag))
+	  if ((object_type(p) == big_integer_tag) ||
+	      (object_type(p) == big_ratio_tag) ||
+	      (object_type(p) == big_real_tag))
 	    return(p);
 	}
     }
@@ -30125,7 +30029,7 @@ static s7_pointer big_imag_part(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (is_c_object(p))
     {
-      if (c_object_type(p) == big_complex_tag)
+      if (object_type(p) == big_complex_tag)
 	{
 	  mpfr_t *n;
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
@@ -30135,9 +30039,9 @@ static s7_pointer big_imag_part(s7_scheme *sc, s7_pointer args)
 	}
       else
 	{
-	  if ((c_object_type(p) == big_integer_tag) ||
-	      (c_object_type(p) == big_ratio_tag) ||
-	      (c_object_type(p) == big_real_tag))
+	  if ((object_type(p) == big_integer_tag) ||
+	      (object_type(p) == big_ratio_tag) ||
+	      (object_type(p) == big_real_tag))
 	    return(small_int(0));
 	}
     }
@@ -30156,7 +30060,7 @@ static s7_pointer big_abs(s7_scheme *sc, s7_pointer args)
 
   p = to_big(sc, p);
   
-  if (c_object_type(p) == big_integer_tag)
+  if (object_type(p) == big_integer_tag)
     {
       mpz_t *n;
       n = (mpz_t *)malloc(sizeof(mpz_t));
@@ -30165,7 +30069,7 @@ static s7_pointer big_abs(s7_scheme *sc, s7_pointer args)
       return(s7_make_object(sc, big_integer_tag, (void *)n));
     }
 
-  if (c_object_type(p) == big_ratio_tag)
+  if (object_type(p) == big_ratio_tag)
     {
       mpq_t *n;
       n = (mpq_t *)malloc(sizeof(mpq_t));
@@ -30196,7 +30100,7 @@ static s7_pointer big_magnitude(s7_scheme *sc, s7_pointer args)
 
   p = to_big(sc, p);
 
-  if (c_object_type(p) == big_complex_tag)
+  if (object_type(p) == big_complex_tag)
     {
       mpfr_t *n;
       n = (mpfr_t *)malloc(sizeof(mpfr_t));
@@ -30220,21 +30124,21 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
 
   p = to_big(sc, p);
 
-  if (c_object_type(p) == big_integer_tag)
+  if (object_type(p) == big_integer_tag)
     {
       if (mpz_cmp_ui(S7_BIG_INTEGER(p), 0) >= 0)
 	return(small_int(0));
       return(big_pi(sc));
     }
   
-  if (c_object_type(p) == big_ratio_tag)
+  if (object_type(p) == big_ratio_tag)
     {
       if (mpq_cmp_ui(S7_BIG_RATIO(p), 0, 1) >= 0)
 	return(small_int(0));
       return(big_pi(sc));
     }
   
-  if (c_object_type(p) == big_real_tag)
+  if (object_type(p) == big_real_tag)
     {
       double x;
       x = mpfr_get_d(S7_BIG_REAL(p), GMP_RNDN);
@@ -30504,7 +30408,7 @@ static s7_pointer big_sqrt(s7_scheme *sc, s7_pointer args)
   p = to_big(sc, p);
     
   /* if big integer, try to return int if perfect square */
-  if (c_object_type(p) == big_integer_tag)
+  if (object_type(p) == big_integer_tag)
     {
       if (mpz_cmp_ui(S7_BIG_INTEGER(p), 0) < 0)
 	p = promote_number(sc, T_BIG_COMPLEX, p);
@@ -30528,7 +30432,7 @@ static s7_pointer big_sqrt(s7_scheme *sc, s7_pointer args)
     }
   
   /* if big ratio, check both num and den for squares */
-  if (c_object_type(p) == big_ratio_tag)
+  if (object_type(p) == big_ratio_tag)
     {
       if (mpq_cmp_ui(S7_BIG_RATIO(p), 0, 1) < 0)
 	p = promote_number(sc, T_BIG_COMPLEX, p);
@@ -30566,7 +30470,7 @@ static s7_pointer big_sqrt(s7_scheme *sc, s7_pointer args)
     }
   
   /* if real and not negative, use mpfr_sqrt */
-  if (c_object_type(p) == big_real_tag)
+  if (object_type(p) == big_real_tag)
     {
       if (mpfr_cmp_ui(S7_BIG_REAL(p), 0) < 0)
 	p = promote_number(sc, T_BIG_COMPLEX, p);
@@ -31207,13 +31111,13 @@ static s7_pointer big_is_zero_1(s7_scheme *sc, s7_pointer p)
 {
   if (is_c_object(p))
     {
-      if (c_object_type(p) == big_integer_tag)
+      if (object_type(p) == big_integer_tag)
 	return(make_boolean(sc, mpz_cmp_ui(S7_BIG_INTEGER(p), 0) == 0));
-      if (c_object_type(p) == big_ratio_tag)
+      if (object_type(p) == big_ratio_tag)
 	return(make_boolean(sc, mpq_cmp_ui(S7_BIG_RATIO(p), 0, 1) == 0));
-      if (c_object_type(p) == big_real_tag)
+      if (object_type(p) == big_real_tag)
 	return(make_boolean(sc, mpfr_zero_p(S7_BIG_REAL(p))));
-      if (c_object_type(p) == big_complex_tag)
+      if (object_type(p) == big_complex_tag)
 	return(make_boolean(sc, mpc_cmp_si_si(S7_BIG_COMPLEX(p), 0, 0) == 0));
     }
 
@@ -31234,13 +31138,13 @@ static bool s7_is_positive(s7_pointer obj)
 {
   if (is_c_object(obj))
     {
-      if (c_object_type(obj) == big_integer_tag)
+      if (object_type(obj) == big_integer_tag)
 	return(mpz_cmp_ui(S7_BIG_INTEGER(obj), 0) > 0);
 
-      if (c_object_type(obj) == big_ratio_tag)
+      if (object_type(obj) == big_ratio_tag)
 	return(mpq_cmp_ui(S7_BIG_RATIO(obj), 0, 1) > 0);
 
-      if (c_object_type(obj) == big_real_tag)
+      if (object_type(obj) == big_real_tag)
 	return(mpfr_cmp_ui(S7_BIG_REAL(obj), 0) > 0);
     }
 
@@ -31268,13 +31172,13 @@ static bool s7_is_negative(s7_pointer obj)
 {
   if (is_c_object(obj))
     {
-      if (c_object_type(obj) == big_integer_tag)
+      if (object_type(obj) == big_integer_tag)
 	return(mpz_cmp_ui(S7_BIG_INTEGER(obj), 0) < 0);
 
-      if (c_object_type(obj) == big_ratio_tag)
+      if (object_type(obj) == big_ratio_tag)
 	return(mpq_cmp_ui(S7_BIG_RATIO(obj), 0, 1) < 0);
 
-      if (c_object_type(obj) == big_real_tag)
+      if (object_type(obj) == big_real_tag)
 	return(mpfr_cmp_ui(S7_BIG_REAL(obj), 0) < 0);
     }
 
@@ -31332,14 +31236,14 @@ static s7_pointer big_is_infinite(s7_scheme *sc, s7_pointer args)
 
   if (is_c_object(x))
     {
-      if ((c_object_type(x) == big_integer_tag) ||
-	  (c_object_type(x) == big_ratio_tag))
+      if ((object_type(x) == big_integer_tag) ||
+	  (object_type(x) == big_ratio_tag))
 	return(sc->F);
 
-      if (c_object_type(x) == big_real_tag)
+      if (object_type(x) == big_real_tag)
 	return(make_boolean(sc, mpfr_inf_p(S7_BIG_REAL(x)) != 0));
       
-      if (c_object_type(x) == big_complex_tag)
+      if (object_type(x) == big_complex_tag)
 	return(make_boolean(sc, 
 			    (mpfr_inf_p(S7_BIG_REAL(big_real_part(sc, args))) != 0) ||
 			    (mpfr_inf_p(S7_BIG_REAL(big_imag_part(sc, args))) != 0)));
@@ -31352,7 +31256,7 @@ static s7_pointer big_is_infinite(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_lognot(s7_scheme *sc, s7_pointer args)
 {
   if ((is_c_object(car(args))) &&
-      (c_object_type(car(args)) == big_integer_tag))
+      (object_type(car(args)) == big_integer_tag))
     {
       mpz_t *n;
       n = (mpz_t *)malloc(sizeof(mpz_t));
@@ -31367,7 +31271,7 @@ static s7_pointer big_lognot(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_integer_length(s7_scheme *sc, s7_pointer args)
 {
   if ((is_c_object(car(args))) &&
-      (c_object_type(car(args)) == big_integer_tag))
+      (object_type(car(args)) == big_integer_tag))
     {
       s7_pointer result;
       mpfr_t n;
@@ -31470,7 +31374,7 @@ static s7_pointer big_bits(s7_scheme *sc, s7_pointer args, const char *name, int
       if (!s7_is_integer(car(x)))
 	return(s7_wrong_type_arg_error(sc, name, i, car(x), "an integer"));  
       if ((is_c_object(car(x))) &&
-	  (c_object_type(car(x)) == big_integer_tag))
+	  (object_type(car(x)) == big_integer_tag))
 	use_bigs = true;
     }
   if (use_bigs)
@@ -31784,7 +31688,7 @@ static s7_pointer big_convert_to_int(s7_scheme *sc, s7_pointer args,
 
   p = to_big(sc, p);
 
-  if (c_object_type(p) == big_ratio_tag)
+  if (object_type(p) == big_ratio_tag)
     {
       /* apparently we have to do the divide by hand */
       mpz_t d;
@@ -31847,10 +31751,10 @@ static s7_pointer big_round(s7_scheme *sc, s7_pointer args)
 
   p = to_big(sc, p);
 
-  if (c_object_type(p) == big_integer_tag)
+  if (object_type(p) == big_integer_tag)
     return(p);
 
-  if (c_object_type(p) == big_ratio_tag)
+  if (object_type(p) == big_ratio_tag)
     {
       int rnd;
       mpz_t *n;
@@ -32051,7 +31955,7 @@ static int big_real_scan_args(s7_scheme *sc, s7_pointer args)
       if (!s7_is_real(p))
 	return(-i);
       if (IS_BIG(p))
-	result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
+	result_type |= SHIFT_BIGNUM_TYPE(object_type(p));
       else result_type |= number_type(p);
     }
   return(result_type);
@@ -32316,7 +32220,7 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
 	{
 	  if (!IS_BIG(p))
 	    return(s7_wrong_type_arg_error(sc, "=", i, p, "a number"));
-	  else result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
+	  else result_type |= SHIFT_BIGNUM_TYPE(object_type(p));
 	}
       else 
 	{
@@ -32609,8 +32513,8 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
     {
       state = cadr(args);
       if ((!is_c_object(state)) ||
-	  ((c_object_type(state) != big_rng_tag) &&
-	   (c_object_type(state) != rng_tag)))
+	  ((object_type(state) != big_rng_tag) &&
+	   (object_type(state) != rng_tag)))
 	return(s7_wrong_type_arg_error(sc, "random state,", 2, state, "a random-state object"));
     }
 
@@ -32619,7 +32523,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 
   if ((is_c_object(num)) ||
       ((is_c_object(state)) &&
-       (c_object_type(state) == big_rng_tag)))
+       (object_type(state) == big_rng_tag)))
     {
       /* bignum case -- provide a state if none was passed,
        *   promote num if bignum state was passed but num is not a bignum
@@ -32647,18 +32551,18 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	{
 	  /* state was passed, check its type */
 
-	  if (c_object_type(state) == rng_tag)
+	  if (object_type(state) == rng_tag)
 	    {
 	      /* here "num" is a bignum, the state was passed, but it is intended for non-bignums */
-	      if (c_object_type(num) == big_real_tag)
+	      if (object_type(num) == big_real_tag)
 		num = s7_make_real(sc, (s7_Double)mpfr_get_d(S7_BIG_REAL(num), GMP_RNDN));
 	      else
 		{
-		  if (c_object_type(num) == big_integer_tag)
+		  if (object_type(num) == big_integer_tag)
 		    num = s7_make_integer(sc, big_integer_to_s7_Int(S7_BIG_INTEGER(num)));
 		  else
 		    {
-		      if (c_object_type(num) == big_ratio_tag)
+		      if (object_type(num) == big_ratio_tag)
 			num = s7_make_ratio(sc, 
 					    big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(num))), 
 					    big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(num))));
@@ -32694,7 +32598,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 
       /* finally both the state and the number are big */
 	    
-      if (c_object_type(num) == big_integer_tag)
+      if (object_type(num) == big_integer_tag)
 	{
 	  mpz_t *n;
 
@@ -32715,7 +32619,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_integer_tag, (void *)n));
 	}
       
-      if (c_object_type(num) == big_ratio_tag)
+      if (object_type(num) == big_ratio_tag)
 	{
 	  mpfr_t *n, *e;
 	  mpfr_t rat;
@@ -32741,7 +32645,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	  return(big_rationalize(sc, make_list_2(sc, s7_make_object(sc, big_real_tag, (void *)n), s7_make_object(sc, big_real_tag, (void *)e))));
 	}
       
-      if (c_object_type(num) == big_real_tag)
+      if (object_type(num) == big_real_tag)
 	{
 	  mpfr_t *n;
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
@@ -32757,7 +32661,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_real_tag, (void *)n));
 	}
       
-      if (c_object_type(num) == big_complex_tag)
+      if (object_type(num) == big_complex_tag)
 	{
 	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
@@ -32927,6 +32831,7 @@ s7_scheme *s7_init(void)
   sc->TEMP_CELL =   &sc->_TEMP_CELL;
   sc->TEMP_CELL_1 = &sc->_TEMP_CELL_1;
   sc->TEMP_CELL_2 = &sc->_TEMP_CELL_2;
+  sc->TEMP_CELL_3 = &sc->_TEMP_CELL_3;
 
   set_type(sc->NIL, T_NIL | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
@@ -32967,6 +32872,9 @@ s7_scheme *s7_init(void)
   
   set_type(sc->TEMP_CELL_2, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->TEMP_CELL_2) = cdr(sc->TEMP_CELL_2) = sc->NIL;
+
+  set_type(sc->TEMP_CELL_3, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  car(sc->TEMP_CELL_3) = cdr(sc->TEMP_CELL_3) = sc->NIL;
   
   sc->input_port = sc->NIL;
   sc->input_is_file = false;
@@ -33993,4 +33901,7 @@ the error type and the info passed to the error handler.");
  *  -- after 1st read, we can run very highly optimized, but we currently have only 4 bits left.
  *  -- eval-type field in cons is not a problem, but can we assume a pair?  Could we also postset
  *     lookup locs? -- outer cons ecdr?
+ */
+
+/* s_type_t should be removed, and pws should be from c types, if it isn't already
  */
