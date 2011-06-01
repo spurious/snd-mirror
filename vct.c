@@ -246,7 +246,22 @@ static bool s7_mus_vct_equalp(void *uv1, void *uv2)
 
 static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
 {
-  return(g_vct_ref(obj, XEN_CAR(args)));
+  vct *v;
+  mus_long_t loc;
+  s7_pointer pos;
+
+  pos = XEN_CAR(args);
+  XEN_ASSERT_TYPE(XEN_INT64_T_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
+
+  v = XEN_TO_VCT(obj);
+  loc = XEN_TO_C_INT64_T(pos);
+
+  if (loc < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
+  if (loc >= v->length)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A too high?");
+
+  return(C_TO_XEN_DOUBLE(v->data[loc]));
 }
 
 static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)

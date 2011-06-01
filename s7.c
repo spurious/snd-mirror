@@ -315,7 +315,8 @@
   #define NAN (INFINITY / INFINITY)
 #endif
 
-typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2, OP_EVAL_ARGS3, OP_EVAL_ARGS4, OP_EVAL_ARGS5,
+typedef enum {OP_READ_INTERNAL, OP_EVAL, 
+	      OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2, OP_EVAL_ARGS3, OP_EVAL_ARGS4, OP_EVAL_ARGS5,
 	      OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
 	      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN1, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2, 
 	      OP_LET, OP_LET1, OP_LET2, OP_LET_STAR, OP_LET_STAR1, 
@@ -708,9 +709,6 @@ struct s7_scheme {
 #define T_CHECKED                     (1 << (TYPE_BITS + 0))
 #define not_yet_checked(p)            ((typeflag(p) & T_CHECKED) == 0)
 #define set_checked(p)                typeflag(p) |= T_CHECKED
-#if 0
-#define set_checked(p) do {typeflag(p) |= T_CHECKED; if (!is_pair(p)) fprintf(stderr, "line %d: set %s\n", __LINE__, s7_object_to_c_string(sc, p));} while (0)
-#endif
 #define clear_checked(p)              typeflag(p) &= ~(T_CHECKED)
 
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 1))
@@ -1842,7 +1840,7 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 #else
 
   #define NEW_CELL(Sc, Obj) \
-do {  /* if (!(*(Sc->gc_off))) gc(Sc); */	     \
+do {  	     \
       if (Sc->free_heap_top > Sc->free_heap_trigger) \
         Obj = (*(--(Sc->free_heap_top)));	     \
       else Obj = new_cell(Sc);                       \
@@ -21467,13 +21465,32 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
     sc->args = sc->NIL;
   else 
     {
-      sc->args = apply_list_star(sc, cdr(args));
+      if (is_safe_procedure(sc->code))
+	{
+	  s7_pointer p, q;
+	  for (q = args, p = cdr(args); is_not_null(cdr(p)); q = p, p = cdr(p));
 
-      if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-			make_list_2(sc, 
-				    make_protected_string(sc, "apply's last argument should be a proper list: ~A"),
-				    args)));
+	  if (!is_proper_list(sc, car(p)))        /* (apply + #f) etc */
+	    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			    make_list_2(sc, 
+					make_protected_string(sc, "apply's last argument should be a proper list: ~A"),
+					args)));
+	  
+	  cdr(q) = car(p);
+	  push_stack(sc, opcode(OP_APPLY), cdr(args), sc->code);
+	  return(sc->NIL);
+	}
+      else
+	{
+	  /* here we have to copy the args */
+	  sc->args = apply_list_star(sc, cdr(args));
+
+	  if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
+	    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			    make_list_2(sc, 
+					make_protected_string(sc, "apply's last argument should be a proper list: ~A"),
+					args)));
+	}
     }
 
   if (is_any_macro(sc->code))                   /* (apply mac '(3)) -> (apply mac '((mac 3))) */
@@ -22178,12 +22195,6 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	    stack_args(sc->stack, top) = cons(sc, car(x), stack_args(sc->stack, top));
 	  stack_code(sc->stack, top) = car(x);
 	  return(cadr(x));
-	  
-
-	  /* what about values-assoc which would splice in the value in the alist based on the head of the spliced-into list?
-	   *   this is aimed at objects-as-alists
-	   *   '((+ . ((obj+ self))) ...)? so (+ ... obj ...) becomes (+ (obj+ obj ...) ...)?
-	   */
 
 	  /* look for errors here rather than glomming up the set! and let code */
 	case OP_SET1:                                             /* (set! var (values 1 2 3)) */
@@ -23549,7 +23560,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 }
 
 
-static s7_pointer initial_add, initial_subtract, initial_equal, initial_lt, initial_gt;
+static s7_pointer initial_add, initial_subtract, initial_equal, initial_lt, initial_gt, initial_le, initial_ge;
 
 static bool is_steppable_integer(s7_pointer p)
 {
@@ -23698,7 +23709,9 @@ static void prepare_do_end_test(s7_scheme *sc)
 	  op = find_symbol(sc, sc->envir, car(end_expr));
 	  if ((symbol_value(op) == initial_equal) ||
 	      (symbol_value(op) == initial_lt) ||
-	      (symbol_value(op) == initial_gt))
+	      (symbol_value(op) == initial_gt) ||
+	      (symbol_value(op) == initial_le) ||
+	      (symbol_value(op) == initial_ge))
 	    {
 	      if (s7_is_symbol(cadr(end_expr)))
 		{
@@ -24764,7 +24777,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		 */
 		if (((vector_element(sv, 0) == initial_equal) && (arg1 == arg2)) ||
 		    ((vector_element(sv, 0) == initial_lt) && (arg1 < arg2)) ||
-		    ((vector_element(sv, 0) == initial_gt) && (arg1 > arg2)))
+		    ((vector_element(sv, 0) == initial_gt) && (arg1 > arg2)) ||
+		    ((vector_element(sv, 0) == initial_le) && (arg1 <= arg2)) ||
+		    ((vector_element(sv, 0) == initial_ge) && (arg1 >= arg2)))
 		  {
 		    /* end test is #t, go to result */
 		    sc->code = cddr(sc->args);                /* result expr (a list -- implicit begin) */
@@ -24835,18 +24850,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       if (type(cdr(sc->code)) != T_NIL)
-	push_stack(sc, opcode(OP_BEGIN1), sc->NIL, cdr(sc->code)); /* 3 [11] {12} */
-      
+	{
+	  /* if there are more expressions following, and this is not a pair, it's a no-op!
+	   *   but it also might be an error, which I suppose we should catch: (begin +> 1) 
+	   */
+	  push_stack(sc, opcode(OP_BEGIN1), sc->NIL, cdr(sc->code)); /* 3 [11] {12} */
+	}
       sc->code = car(sc->code);
       sc->cur_code = sc->code;               /* in case error occurs, this helps tell us where we are */
-      /* fall through */
-      
+
+
 
     EVAL:
     case OP_EVAL:   
       /* main part of evaluation 
        *   at this point, it's sc->code we care about; sc->args is not relevant.
        */
+      /* fprintf(stderr, "    eval: %s\n", s7_object_to_c_string(sc, sc->code)); */
+
       if (is_pair(sc->code))
 	{
 	  s7_pointer carc;
@@ -24923,6 +24944,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_EVAL_ARGS:
+      /* fprintf(stderr, "    args: %s\n", s7_object_to_c_string(sc, sc->code)); */ /* value is op */ 
+
       if (dont_eval_args(sc->value))
 	{
 	  if (is_any_macro(sc->value))
@@ -24973,8 +24996,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->z = pop_op_stack(sc);
 	if (is_safe_procedure(sc->z))
 	  {
-	    x = sc->TEMP_CELL_2;
-	    y = sc->TEMP_CELL_3;
+	    x = sc->TEMP_CELL_3;
+	    y = sc->TEMP_CELL_2;
 	  }
 	else
 	  {
@@ -24989,6 +25012,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	car(y) = sc->value;
 	cdr(y) = x;
 	sc->args = safe_reverse_in_place(sc, y); 
+	/* fprintf(stderr, "args: %s (%d)\n", s7_object_to_c_string(sc, sc->args), car(sc->args) == sc->TEMP_CELL_2); */
 	sc->code = sc->z;
 	goto APPLY;
       }
@@ -25027,8 +25051,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->x = pop_op_stack(sc);
 	if (is_safe_procedure(sc->x))
 	  {
-	    x = sc->TEMP_CELL_2;
-	    y = sc->TEMP_CELL_3;
+	    x = sc->TEMP_CELL_3;
+	    y = sc->TEMP_CELL_2;
 	  }
 	else
 	  {
@@ -25097,7 +25121,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		push_stack(sc, opcode(OP_EVAL_ARGS2), sc->args, sc->NIL);           /* 21 [17] {14} */
 	      else 
 		{
-		  if ((is_null(cddr(sc->code))) && 
+		  if ((is_null(cddr(sc->code))) &&
 		      (!is_pair(cadr(sc->code))))
 		    push_stack(sc, opcode(OP_EVAL_ARGS3), sc->args, cadr(sc->code)); 
 		  else push_stack(sc, opcode(OP_EVAL_ARGS4), sc->args, cdr(sc->code));  /* 27 [8] {10} */
@@ -25220,6 +25244,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (type(sc->args) != T_NIL)
 		sc->args = safe_reverse_in_place(sc, x);
 	      else sc->args = x;
+	      /* fprintf(stderr, "    %s %s (%d)\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->args), (is_safe_procedure(sc->code))); */
 	      /* drop into APPLY */
 	    }
 	}
@@ -33866,6 +33891,8 @@ the error type and the info passed to the error handler.");
   initial_equal =    s7_symbol_value(sc, make_symbol(sc, "="));
   initial_lt =       s7_symbol_value(sc, make_symbol(sc, "<"));
   initial_gt =       s7_symbol_value(sc, make_symbol(sc, ">"));
+  initial_le =       s7_symbol_value(sc, make_symbol(sc, "<="));
+  initial_ge =       s7_symbol_value(sc, make_symbol(sc, ">="));
 
   return(sc);
 }
@@ -33882,10 +33909,6 @@ the error type and the info passed to the error handler.");
  *    ;    (lst 0 1)
  */
 
-/* 
- * can do opt use any safe function?
- */
-
 /* we need an aliased vector type that looks like a vector in scheme
  *   but actually is an overlay on C floats/doubles/ints/etc
  *
@@ -33895,12 +33918,6 @@ the error type and the info passed to the error handler.");
  *
  * T_REAL|INTEGER|COMPLEX|CHAR|STRING|_VECTOR
  *   then a package tying all gsl into s7 or fftw etc
- */
-
-/* eval could set a eval-type field on each expr giving its future path through the evaluator
- *  -- after 1st read, we can run very highly optimized, but we currently have only 4 bits left.
- *  -- eval-type field in cons is not a problem, but can we assume a pair?  Could we also postset
- *     lookup locs? -- outer cons ecdr?
  */
 
 /* s_type_t should be removed, and pws should be from c types, if it isn't already
