@@ -1682,7 +1682,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-cairo-912 dpy thunk)
-  (dpy "#if HAVE_CAIRO_REGION_XOR~%")
+  (dpy "#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA~%")
   (thunk)
   (dpy "#endif~%~%"))
 

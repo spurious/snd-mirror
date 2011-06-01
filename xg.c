@@ -986,7 +986,7 @@ XM_TYPE_PTR_1(cairo_text_cluster_flags_t_, cairo_text_cluster_flags_t*)
 #define C_TO_XEN_cairo_bool_t(Arg) C_TO_XEN_INT(Arg)
 #endif
 
-#if HAVE_CAIRO_REGION_XOR
+#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
 XM_TYPE_PTR(cairo_device_t_, cairo_device_t*)
 XM_TYPE_PTR_1(cairo_rectangle_t_, cairo_rectangle_t*)
 XM_TYPE_PTR_1(double_, double*)
@@ -34003,7 +34003,7 @@ static XEN gxg_cairo_surface_has_show_text_glyphs(XEN surface)
 
 #endif
 
-#if HAVE_CAIRO_REGION_XOR
+#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
 static XEN gxg_cairo_in_clip(XEN cr, XEN x, XEN y)
 {
   #define H_cairo_in_clip "cairo_bool_t cairo_in_clip(cairo_t* cr, double x, double y)"
@@ -38788,7 +38788,7 @@ XEN_ARGIFY_3(gxg_cairo_surface_get_fallback_resolution_w, gxg_cairo_surface_get_
 XEN_NARGIFY_1(gxg_cairo_surface_has_show_text_glyphs_w, gxg_cairo_surface_has_show_text_glyphs)
 #endif
 
-#if HAVE_CAIRO_REGION_XOR
+#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
 XEN_NARGIFY_3(gxg_cairo_in_clip_w, gxg_cairo_in_clip)
 XEN_NARGIFY_1(gxg_cairo_device_reference_w, gxg_cairo_device_reference)
 XEN_NARGIFY_1(gxg_cairo_device_status_w, gxg_cairo_device_status)
@@ -42828,7 +42828,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_cairo_surface_has_show_text_glyphs_w gxg_cairo_surface_has_show_text_glyphs
 #endif
 
-#if HAVE_CAIRO_REGION_XOR
+#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
 #define gxg_cairo_in_clip_w gxg_cairo_in_clip
 #define gxg_cairo_device_reference_w gxg_cairo_device_reference
 #define gxg_cairo_device_status_w gxg_cairo_device_status
@@ -46875,7 +46875,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(cairo_surface_has_show_text_glyphs, gxg_cairo_surface_has_show_text_glyphs_w, 1, 0, 0, H_cairo_surface_has_show_text_glyphs);
 #endif
 
-#if HAVE_CAIRO_REGION_XOR
+#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
   XG_DEFINE_PROCEDURE(cairo_in_clip, gxg_cairo_in_clip_w, 3, 0, 0, H_cairo_in_clip);
   XG_DEFINE_PROCEDURE(cairo_device_reference, gxg_cairo_device_reference_w, 1, 0, 0, H_cairo_device_reference);
   XG_DEFINE_PROCEDURE(cairo_device_status, gxg_cairo_device_status_w, 1, 0, 0, H_cairo_device_status);
@@ -48829,7 +48829,7 @@ static void define_integers(void)
   DEFINE_INTEGER(CAIRO_STATUS_INVALID_WEIGHT);
 #endif
 
-#if HAVE_CAIRO_REGION_XOR
+#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
   DEFINE_INTEGER(CAIRO_STATUS_INVALID_SIZE);
   DEFINE_INTEGER(CAIRO_STATUS_USER_FONT_NOT_IMPLEMENTED);
   DEFINE_INTEGER(CAIRO_STATUS_DEVICE_TYPE_MISMATCH);
@@ -49083,7 +49083,7 @@ static void define_strings(void)
   DEFINE_STRING(GTK_STYLE_CLASS_VERTICAL);
 #endif
 
-#if HAVE_CAIRO_REGION_XOR
+#if HAVE_CAIRO_REGION_XOR && HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
   DEFINE_STRING(CAIRO_MIME_TYPE_JPEG);
   DEFINE_STRING(CAIRO_MIME_TYPE_PNG);
   DEFINE_STRING(CAIRO_MIME_TYPE_JP2);
@@ -49109,7 +49109,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("08-May-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("01-Jun-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

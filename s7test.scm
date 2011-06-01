@@ -828,6 +828,9 @@
 
 (test (symbol?) 'error)
 (test (symbol? 'hi 'ho) 'error)
+(test (symbol? 'hi 3) 'error)
+(test (symbol? 3 3) 'error)
+(test (symbol? 3 'hi) 'error)
 (test (symbol 'hi) 'error) ; symbol takes a string
 
 ;;; "Returns #t if obj is a symbol, otherwise returns #f" (r5|6rs.html)
