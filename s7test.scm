@@ -11685,6 +11685,7 @@ time, so that the displayed results are
 (test (do ((#() 1)) ()) 'error)
 (test (do ((1)) ()) 'error)
 (test (do ((i 1) . #(a 1)) ()) 'error)
+(test (do () ((3 4))) 'error)
 (test (do ((i 1)) '()) '())
 (test (do . (() (#t 1))) 1)
 (test (do () . ((#t 1))) 1)
