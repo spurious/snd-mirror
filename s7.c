@@ -1481,7 +1481,7 @@ static void mark_vector_1(s7_pointer p, s7_Int top)
 {
   s7_pointer *tp, *tend;
 
-  set_mark(p); /* might be called outside s7_mark_object */
+  set_mark(p);
 
   tp = (s7_pointer *)(vector_elements(p));
   if (!tp) return;
@@ -1512,12 +1512,16 @@ static void mark_vector_1(s7_pointer p, s7_Int top)
 static void mark_environment(s7_pointer env)
 {
   s7_pointer x;
-  for (x = env; is_pair(x); x = cdr(x)) 
+  for (x = env; is_pair(x) && (!is_marked(x)); x = cdr(x)) 
     { 
       s7_pointer y;
-      S7_MARK(x);
       for (y = car(x); is_pair(y); y = ecdr(y))
-	S7_MARK(y);
+	if (!is_marked(y)) /* we know it's a pair, and its car is a symbol */
+	  {
+	    set_mark(y);
+	    S7_MARK(cdr(y));
+	  }
+      set_mark(x); /* we handle car above, and cdr in the loop */
     }
 }
 
@@ -1535,11 +1539,14 @@ static void mark_pair(s7_pointer p)
 {
   if (!is_marked(p)) 
     {
-      set_mark(p);
-      S7_MARK(car(p));
-      S7_MARK(cdr(p));
       if (is_environment(p))
 	mark_environment(p);
+      else
+	{
+	  set_mark(p);
+	  S7_MARK(car(p));
+	  S7_MARK(cdr(p));
+	}
     }
 }
 
@@ -1548,20 +1555,32 @@ static void mark_closure(s7_pointer p)
   if (!is_marked(p)) 
     {
       set_mark(p);
-      S7_MARK(car(p));
-      S7_MARK(cdr(p));
+      S7_MARK(closure_source(p));
+      mark_environment(closure_environment(p));
     }
 }
 
-static void mark_closure_star(s7_pointer p)
+#if 0
+/* this is slower than mark_vector_1? */
+static void mark_stack(s7_pointer p, int top)
 {
-  if (!is_marked(p)) 
+  s7_pointer *tp, *tend;
+
+  set_mark(p);
+
+  tp = (s7_pointer *)(vector_elements(p));
+  tend = (s7_pointer *)(tp + top);
+  while (tp < tend) 
     {
-      set_mark(p);
-      S7_MARK(car(p));
-      S7_MARK(cdr(p));
+      S7_MARK(*tp++);
+      mark_environment(*tp++);
+      S7_MARK(*tp++);
+      tp++;
     }
 }
+#else
+#define mark_stack(P, T) mark_vector_1(P, T)
+#endif
 
 static void mark_continuation(s7_pointer p)
 {
@@ -1569,7 +1588,7 @@ static void mark_continuation(s7_pointer p)
     {
       int i;
       set_mark(p);
-      mark_vector_1(continuation_stack(p), continuation_stack_top(p));
+      mark_stack(continuation_stack(p), continuation_stack_top(p));
       for (i = 0; i < continuation_op_loc(p); i++)
 	S7_MARK(continuation_op_stack(p)[i]);
     }
@@ -1594,26 +1613,6 @@ static void mark_vector(s7_pointer p)
 	  S7_MARK(shared_vector(p));
 	}
       mark_vector_1(p, vector_length(p));
-    }
-}
-
-static void mark_macro(s7_pointer p)
-{
-  if (!is_marked(p)) 
-    {
-      set_mark(p);
-      S7_MARK(car(p));
-      S7_MARK(cdr(p));
-    }
-}
-
-static void mark_bacro(s7_pointer p)
-{
-  if (!is_marked(p)) 
-    {
-      set_mark(p);
-      S7_MARK(car(p));
-      S7_MARK(cdr(p));
     }
 }
 
@@ -1674,13 +1673,13 @@ static void init_mark_functions(void)
   mark_function[T_SYMBOL] = mark_noop;
   mark_function[T_PAIR] = mark_pair;
   mark_function[T_CLOSURE] = mark_closure;
-  mark_function[T_CLOSURE_STAR] = mark_closure_star;
+  mark_function[T_CLOSURE_STAR] = mark_closure;
   mark_function[T_CONTINUATION] = mark_continuation;
   mark_function[T_CHARACTER] = mark_noop;
   mark_function[T_INPUT_PORT] = just_mark;
   mark_function[T_VECTOR] = mark_vector;
-  mark_function[T_MACRO] = mark_macro;
-  mark_function[T_BACRO] = mark_bacro;
+  mark_function[T_MACRO] = mark_closure;
+  mark_function[T_BACRO] = mark_closure;
   mark_function[T_C_OBJECT] = mark_c_object;
   mark_function[T_GOTO] = just_mark;
   mark_function[T_OUTPUT_PORT] = just_mark;
@@ -1714,7 +1713,6 @@ static void mark_op_stack(s7_scheme *sc)
   while (p < tp)
     S7_MARK(*p++);
 }
-
 
 
 static void mark_global_env(s7_scheme *sc)
@@ -1761,6 +1759,7 @@ void s7_mark_object(s7_pointer p)
 		(*fp++) = p; \
 	      }}
 
+
 static int gc(s7_scheme *sc)
 {
   s7_cell **old_free_heap_top;
@@ -1776,11 +1775,10 @@ static int gc(s7_scheme *sc)
 
   mark_global_env(sc);
   S7_MARK(sc->args);
-  S7_MARK(sc->envir);
+  mark_environment(sc->envir);
   S7_MARK(sc->code);
   S7_MARK(sc->cur_code);
-  mark_vector_1(sc->stack, s7_stack_top(sc));
-  /* splitting out the stack case is slightly slower?! */
+  mark_stack(sc->stack, s7_stack_top(sc));
   S7_MARK(sc->w);
   S7_MARK(sc->x);
   S7_MARK(sc->y);
@@ -1790,14 +1788,14 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->temp1);
   S7_MARK(sc->temp2);
 
-  S7_MARK(sc->input_port);
+  set_mark(sc->input_port);
   S7_MARK(sc->input_port_stack);
-  S7_MARK(sc->output_port);
-  S7_MARK(sc->error_port);
+  set_mark(sc->output_port);
+  set_mark(sc->error_port);
 
-  S7_MARK(sc->TEMP_CELL_1);
-  S7_MARK(sc->TEMP_CELL_2);
-  S7_MARK(sc->TEMP_CELL_3);
+  mark_pair(sc->TEMP_CELL_1);
+  mark_pair(sc->TEMP_CELL_2);
+  mark_pair(sc->TEMP_CELL_3);
 
 #if HAVE_PTHREADS
   {
@@ -1840,7 +1838,7 @@ static int gc(s7_scheme *sc)
 	  clear_mark(p);
 	else 
 	  {
-	    if (typeflag(p) != 0) /* an already-free object -- the free_heap is usually not empty when we call the GC */
+	    if (typeflag(p) != 0) /* if 0, it's an already-free object -- the free_heap is usually not empty when we call the GC */
 	      {
 		if (is_finalizable(p))
 		  finalize_s7_cell(sc, p); 
@@ -2856,7 +2854,7 @@ static void save_initial_environment(s7_scheme *sc)
   s7_pointer *lsts, *inits;
 
   sc->initial_env = (s7_pointer)calloc(1, sizeof(s7_cell));
-  set_type(sc->initial_env, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
+  set_type(sc->initial_env, T_VECTOR | T_DONT_COPY);
   vector_length(sc->initial_env) = INITIAL_ENV_ENTRIES;
   vector_elements(sc->initial_env) = (s7_pointer *)malloc(INITIAL_ENV_ENTRIES * sizeof(s7_pointer));
   inits = vector_elements(sc->initial_env);
@@ -16479,6 +16477,7 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
 static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
 {
   int i, len;
+
   len = vector_length(table);
   for (i = 0; i < len; i++)
     vector_element(table, i) = sc->NIL;
@@ -23325,7 +23324,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  if (sc->tok == TOKEN_VECTOR) 
 	    {
 	      push_stack(sc, opcode(OP_READ_QUASIQUOTE_VECTOR), sc->w, sc->NIL);
-	      sc->tok= TOKEN_LEFT_PAREN;
+	      sc->tok = TOKEN_LEFT_PAREN; 
 	    } 
 	  else push_stack(sc, opcode(OP_READ_QUASIQUOTE), sc->NIL, sc->NIL);
 	  break;
@@ -24996,6 +24995,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (is_not_null(sc->code))            /* (begin . 1), (cond (#t . 1)) */
 	    return(eval_error_with_name(sc, "~A: unexpected dot or '() at end of body? ~A", sc->code));
+
 	  sc->value = sc->code;
 	  goto START;
 	}
@@ -26423,41 +26423,50 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       set_symbol_value(sc->args, sc->value); 
       goto START;
 
+#if 0
+    case OP_IF2:
+      push_stack(sc, opcode(OP_IF1), sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL;
+#endif
 
     case OP_IF:
-      {
-	if (not_yet_checked(sc->code))
-	  {
-	    s7_pointer cdr_code;
-	    cdr_code = cdr(sc->code);
-
-	    if (!is_pair(sc->code))                               /* (if) or (if . 1) */
-	      return(eval_error(sc, "(if): if needs at least 2 expressions: ~A", sc->code));
-
-	    if (!is_pair(cdr_code))                          /* (if 1) */
-	      return(eval_error(sc, "(if ~A): if needs another clause", car(sc->code)));
+      if (not_yet_checked(sc->code))
+	{
+	  s7_pointer cdr_code;
+	  cdr_code = cdr(sc->code);
+	  
+	  if (!is_pair(sc->code))                               /* (if) or (if . 1) */
+	    return(eval_error(sc, "(if): if needs at least 2 expressions: ~A", sc->code));
+	  
+	  if (!is_pair(cdr_code))                          /* (if 1) */
+	    return(eval_error(sc, "(if ~A): if needs another clause", car(sc->code)));
+	  
+	  if (is_pair(cdr(cdr_code)))
+	    {
+	      if (is_not_null(cddr(cdr_code)))                   /* (if 1 2 3 4) */
+		return(eval_error(sc, "too many clauses for if: ~A", sc->code));
+	    }
+	  else
+	    {
+	      if (is_not_null(cdr(cdr_code)))                    /* (if 1 2 . 3) */
+		return(eval_error(sc, "if: ~A has improper list?", sc->code));
+	    }
+	  set_checked(sc->code);
+	  /* syntax_opcode(sc->code) = (int)OP_IF2;  or car(sc->code) = sc->OP_IF2,
+	   *   actually we need to copy the previous car and set the opcode of its symbol_value
+	   *   but how to get the previous (pre-cdr) sc->code so we can change its car?
+	   *   and in one case, the thing is the value, not the slot.
+	   */
+	}
       
-	    if (is_pair(cdr(cdr_code)))
-	      {
-		if (is_not_null(cddr(cdr_code)))                   /* (if 1 2 3 4) */
-		  return(eval_error(sc, "too many clauses for if: ~A", sc->code));
-	      }
-	    else
-	      {
-		if (is_not_null(cdr(cdr_code)))                    /* (if 1 2 . 3) */
-		  return(eval_error(sc, "if: ~A has improper list?", sc->code));
-	      }
-	    set_checked(sc->code);
-	  }
-	
-	/* we could check for non-expression here, and do the jump without push_stack etc,
-	 *   but it turns out this happens infrequently, and the cost of checking outweighs
-	 *   the small gains.
-	 */
-	push_stack(sc, opcode(OP_IF1), sc->NIL, cdr(sc->code)); /* 6 [20] {10} */
-	sc->code = car(sc->code);
-	goto EVAL;
-      }
+      /* we could check for non-expression here, and do the jump without push_stack etc,
+       *   but it turns out this happens infrequently, and the cost of checking outweighs
+       *   the small gains.
+       */
+      push_stack(sc, opcode(OP_IF1), sc->NIL, cdr(sc->code)); /* 6 [20] {10} */
+      sc->code = car(sc->code);
+      goto EVAL;
       
       
     case OP_IF1:
@@ -33117,7 +33126,7 @@ s7_scheme *s7_init(void)
   
   /* keep the symbol table out of the heap */
   sc->symbol_table = (s7_pointer)calloc(1, sizeof(s7_cell));
-  set_type(sc->symbol_table, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
+  set_type(sc->symbol_table, T_VECTOR | T_DONT_COPY);
   vector_length(sc->symbol_table) = SYMBOL_TABLE_SIZE;
   vector_elements(sc->symbol_table) = (s7_pointer *)malloc(SYMBOL_TABLE_SIZE * sizeof(s7_pointer));
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
