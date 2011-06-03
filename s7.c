@@ -660,6 +660,10 @@ struct s7_scheme {
   int no_values, current_line, s7_call_line, safety;
   const char *current_file, *s7_call_file, *s7_call_name;
 
+  s7_pointer *strings, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables;
+  int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size;
+  int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc;
+
   void *default_rng;
 #if WITH_GMP
   void *default_big_rng;
@@ -713,10 +717,6 @@ struct s7_scheme {
 #define not_yet_checked(p)            ((typeflag(p) & T_CHECKED) == 0)
 #define set_checked(p)                typeflag(p) |= T_CHECKED
 #define clear_checked(p)              typeflag(p) &= ~(T_CHECKED)
-
-#define T_FINALIZABLE                 (1 << (TYPE_BITS + 1))
-#define is_finalizable(p)             ((typeflag(p) & T_FINALIZABLE) != 0)
-/* finalizable means some action may need to be taken when the cell is GC'd */
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
@@ -815,7 +815,7 @@ struct s7_scheme {
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x78000400
+#define UNUSED_BITS                   0x78000600
 
 
 #if HAVE_PTHREADS
@@ -1402,79 +1402,236 @@ s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
 }
 
 
-static void finalize_s7_cell(s7_scheme *sc, s7_pointer a) 
+static void sweep(s7_scheme *sc)
 {
-  /* this plus the T_FINALIZABLE bit is a lot faster than an array of gc function pointers */
-  switch (type(a))
+  int i, j;
+  if (sc->strings_loc > 0)
     {
-    case T_STRING:
-      free(string_value(a)); /* calloc'd in make-*-string */
-      break;
-      
-    case T_INPUT_PORT:
-      if (port_needs_free(a))
+      for (i = 0, j = 0; i < sc->strings_loc; i++)
 	{
-	  if (port_string(a))
-	    {
-	      free(port_string(a));
-	      port_string(a) = NULL;
-	    }
-	  port_needs_free(a) = false;
+	  if (type(sc->strings[i]) == 0)
+	    free(string_value(sc->strings[i]));
+	  else sc->strings[j++] = sc->strings[i];
 	}
-
-      if (port_filename(a))
-	{
-	  free(port_filename(a));
-	  port_filename(a) = NULL;
-	}
-  
-      free(a->object.port);
-      break;
-      
-    case T_OUTPUT_PORT:
-      s7_close_output_port(sc, a);
-      free(a->object.port);
-      break;
-      
-    case T_C_OBJECT:
-      free_object(a);
-      break;
-      
-    case T_VECTOR:
-      if (vector_length(a) > 0)
-	{
-	  if (vector_is_multidimensional(a))
-	    {
-	      if (shared_vector(a) == sc->F)
-		{
-		  free(a->object.vector.vextra.dim_info->dims);
-		  free(a->object.vector.vextra.dim_info->offsets);
-		  free(vector_elements(a));
-		}
-	      free(a->object.vector.vextra.dim_info);
-	    }
-	  else free(vector_elements(a));
-	}
-      break;
-
-    case T_HASH_TABLE:
-      if (hash_table_length(a) > 0)
-	free(hash_table_elements(a));
-      break;
-
-    case T_CONTINUATION:
-      if (continuation_op_stack(a)) free(continuation_op_stack(a));
-      free(continuation(a));
-      break;
-      
-    default:
-      break;
+      sc->strings_loc = j;
     }
+
+  if (sc->c_objects_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->c_objects_loc; i++)
+	{
+	  if (type(sc->c_objects[i]) == 0)
+	    free_object(sc->c_objects[i]);
+	  else sc->c_objects[j++] = sc->c_objects[i];
+	}
+      sc->c_objects_loc = j;
+    }
+
+  if (sc->vectors_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->vectors_loc; i++)
+	{
+	  if (type(sc->vectors[i]) == 0)
+	    {
+	      s7_pointer a;
+	      a = sc->vectors[i];
+	      if (vector_length(a) > 0)
+		{
+		  if (vector_is_multidimensional(a))
+		    {
+		      if (shared_vector(a) == sc->F)
+			{
+			  free(a->object.vector.vextra.dim_info->dims);
+			  free(a->object.vector.vextra.dim_info->offsets);
+			  free(vector_elements(a));
+			}
+		      free(a->object.vector.vextra.dim_info);
+		    }
+		  else 
+		    {
+		      free(vector_elements(a));
+		    }
+		}
+	    }
+	  else sc->vectors[j++] = sc->vectors[i];
+	}
+      sc->vectors_loc = j;
+    }
+
+  if (sc->hash_tables_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->hash_tables_loc; i++)
+	{
+	  if (type(sc->hash_tables[i]) == 0)
+	    {
+	      if (hash_table_length(sc->hash_tables[i]) > 0)
+		free(hash_table_elements(sc->hash_tables[i]));
+	    }
+	  else sc->hash_tables[j++] = sc->hash_tables[i];
+	}
+      sc->hash_tables_loc = j;
+    }
+
+  if (sc->input_ports_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->input_ports_loc; i++)
+	{
+	  if (type(sc->input_ports[i]) == 0)
+	    {
+	      s7_pointer a;
+	      a = sc->input_ports[i];
+	      if (port_needs_free(a))
+		{
+		  if (port_string(a))
+		    {
+		      free(port_string(a));
+		      port_string(a) = NULL;
+		    }
+		  port_needs_free(a) = false;
+		}
+	      
+	      if (port_filename(a))
+		{
+		  free(port_filename(a));
+		  port_filename(a) = NULL;
+		}
+	      
+	      free(a->object.port);
+	      
+	    }
+	  else sc->input_ports[j++] = sc->input_ports[i];
+	}
+      sc->input_ports_loc = j;
+    }
+
+  if (sc->output_ports_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->output_ports_loc; i++)
+	{
+	  if (type(sc->output_ports[i]) == 0)
+	    {
+	      s7_close_output_port(sc, sc->output_ports[i]);
+	      free(sc->output_ports[i]->object.port);
+	    }
+	  else sc->output_ports[j++] = sc->output_ports[i];
+	}
+      sc->output_ports_loc = j;
+    }
+
+  if (sc->continuations_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->continuations_loc; i++)
+	{
+	  if (type(sc->continuations[i]) == 0)
+	    {
+
+	    }
+	  else sc->continuations[j++] = sc->continuations[i];
+	}
+      sc->continuations_loc = j;
+    }
+
+}
+
+static void add_string(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->strings_loc == sc->strings_size)
+    {
+      sc->strings_size *= 2;
+      sc->strings = (s7_pointer *)realloc(sc->strings, sc->strings_size * sizeof(s7_pointer));
+    }
+  sc->strings[sc->strings_loc++] = p;
+}
+
+static void add_c_object(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->c_objects_loc == sc->c_objects_size)
+    {
+      sc->c_objects_size *= 2;
+      sc->c_objects = (s7_pointer *)realloc(sc->c_objects, sc->c_objects_size * sizeof(s7_pointer));
+    }
+  sc->c_objects[sc->c_objects_loc++] = p;
+}
+
+static void add_hash_table(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->hash_tables_loc == sc->hash_tables_size)
+    {
+      sc->hash_tables_size *= 2;
+      sc->hash_tables = (s7_pointer *)realloc(sc->hash_tables, sc->hash_tables_size * sizeof(s7_pointer));
+    }
+  sc->hash_tables[sc->hash_tables_loc++] = p;
+}
+
+static void add_vector(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->vectors_loc == sc->vectors_size)
+    {
+      sc->vectors_size *= 2;
+      sc->vectors = (s7_pointer *)realloc(sc->vectors, sc->vectors_size * sizeof(s7_pointer));
+    }
+  sc->vectors[sc->vectors_loc++] = p;
+}
+
+static void add_input_port(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->input_ports_loc == sc->input_ports_size)
+    {
+      sc->input_ports_size *= 2;
+      sc->input_ports = (s7_pointer *)realloc(sc->input_ports, sc->input_ports_size * sizeof(s7_pointer));
+    }
+  sc->input_ports[sc->input_ports_loc++] = p;
+}
+
+static void add_output_port(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->output_ports_loc == sc->output_ports_size)
+    {
+      sc->output_ports_size *= 2;
+      sc->output_ports = (s7_pointer *)realloc(sc->output_ports, sc->output_ports_size * sizeof(s7_pointer));
+    }
+  sc->output_ports[sc->output_ports_loc++] = p;
+}
+
+static void add_continuation(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->continuations_loc == sc->continuations_size)
+    {
+      sc->continuations_size *= 2;
+      sc->continuations = (s7_pointer *)realloc(sc->continuations, sc->continuations_size * sizeof(s7_pointer));
+    }
+  sc->continuations[sc->continuations_loc++] = p;
+}
+
+
+#define INIT_GC_CACHE_SIZE 512
+static void init_gc_caches(s7_scheme *sc)
+{
+  sc->strings_size = INIT_GC_CACHE_SIZE;
+  sc->strings_loc = 0;
+  sc->strings = (s7_pointer *)malloc(sc->strings_size * sizeof(s7_pointer));
+  sc->vectors_size = INIT_GC_CACHE_SIZE;
+  sc->vectors_loc = 0;
+  sc->vectors = (s7_pointer *)malloc(sc->vectors_size * sizeof(s7_pointer));
+  sc->hash_tables_size = INIT_GC_CACHE_SIZE;
+  sc->hash_tables_loc = 0;
+  sc->hash_tables = (s7_pointer *)malloc(sc->hash_tables_size * sizeof(s7_pointer));
+  sc->input_ports_size = INIT_GC_CACHE_SIZE;
+  sc->input_ports_loc = 0;
+  sc->input_ports = (s7_pointer *)malloc(sc->input_ports_size * sizeof(s7_pointer));
+  sc->output_ports_size = INIT_GC_CACHE_SIZE;
+  sc->output_ports_loc = 0;
+  sc->output_ports = (s7_pointer *)malloc(sc->output_ports_size * sizeof(s7_pointer));
+  sc->continuations_size = INIT_GC_CACHE_SIZE;
+  sc->continuations_loc = 0;
+  sc->continuations = (s7_pointer *)malloc(sc->continuations_size * sizeof(s7_pointer));
+  sc->c_objects_size = INIT_GC_CACHE_SIZE;
+  sc->c_objects_loc = 0;
+  sc->c_objects = (s7_pointer *)malloc(sc->c_objects_size * sizeof(s7_pointer));
 }
 
 
 static void (*mark_function[BUILT_IN_TYPES])(s7_pointer p);
-
 #define S7_MARK(Obj) do {s7_pointer _p_; _p_ = Obj; (*mark_function[type(_p_)])(_p_);} while (0)
 
 static void mark_vector_1(s7_pointer p, s7_Int top)
@@ -1610,6 +1767,7 @@ static void mark_vector(s7_pointer p)
       if ((vector_is_multidimensional(p)) &&
 	  (s7_is_vector(shared_vector(p))))
 	{
+	  set_mark(shared_vector(p));
 	  S7_MARK(shared_vector(p));
 	}
       mark_vector_1(p, vector_length(p));
@@ -1754,7 +1912,6 @@ void s7_mark_object(s7_pointer p)
 	  { \
 	    if (typeflag(p) != 0) \
 	      { \
-		if (is_finalizable(p)) finalize_s7_cell(sc, p); \
 		typeflag(p) = 0;  \
 		(*fp++) = p; \
 	      }}
@@ -1840,16 +1997,10 @@ static int gc(s7_scheme *sc)
 	  {
 	    if (typeflag(p) != 0) /* if 0, it's an already-free object -- the free_heap is usually not empty when we call the GC */
 	      {
-		if (is_finalizable(p))
-		  finalize_s7_cell(sc, p); 
 		typeflag(p) = 0;  /* (this is needed -- otherwise we try to free some objects twice) */
 		(*fp++) = p;
 	      }
 	  }
-	/* by grouping the T_GC_MARK and T_FINALIZABLE bits with the type bits, it's possible
-	 *   to use a switch statement here rather than 3 if's, but that is much slower!
-	 */
-
 	/* this looks crazy, but it speeds up the entire GC process by 25%!
 	 *   going from 16 to 32 saves .2% so it may not matter.
 	 */
@@ -1892,7 +2043,9 @@ static int gc(s7_scheme *sc)
 	GC_CALL(p, tp);
 	GC_CALL(p, tp);
       }
+
     sc->free_heap_top = fp;
+    sweep(sc);
   }
 
   if (*(sc->gc_stats))
@@ -3660,7 +3813,8 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   continuation_op_size(x) = sc->op_stack_size;
 
-  set_type(x, T_CONTINUATION | T_DONT_COPY | T_FINALIZABLE | T_PROCEDURE);
+  set_type(x, T_CONTINUATION | T_DONT_COPY | T_PROCEDURE);
+  add_continuation(sc, x);
   return(x);
 }
 
@@ -10367,13 +10521,14 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_FINALIZABLE | T_DONT_COPY | T_SAFE_PROCEDURE); /* should this follow the malloc? */
+  set_type(x, T_STRING | T_DONT_COPY | T_SAFE_PROCEDURE); /* should this follow the malloc? */
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
     memcpy((void *)string_value(x), (void *)str, len + 1);
   else string_value(x)[0] = 0;
   string_length(x) = len;
   string_hash(x) = 0;
+  add_string(sc, x);
   return(x);
 }
 
@@ -10382,13 +10537,14 @@ static s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const cha
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_FINALIZABLE | T_DONT_COPY | T_SAFE_PROCEDURE); /* should this follow the malloc? */
+  set_type(x, T_STRING | T_DONT_COPY | T_SAFE_PROCEDURE); /* should this follow the malloc? */
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
     memcpy((void *)string_value(x), (void *)str, len);
   string_value(x)[len] = 0;
   string_length(x) = len;
   string_hash(x) = 0;
+  add_string(sc, x);
   return(x);
 }
 
@@ -10397,10 +10553,11 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_FINALIZABLE | T_DONT_COPY | T_SAFE_PROCEDURE);
+  set_type(x, T_STRING | T_DONT_COPY | T_SAFE_PROCEDURE);
   string_value(x) = str;
   string_length(x) = len;
   string_hash(x) = 0;
+  add_string(sc, x);
   return(x);
 }
 
@@ -10421,7 +10578,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_STRING | T_DONT_COPY);
   
   if (fill == 0)
     string_value(x) = (char *)calloc((len + 1), sizeof(char));
@@ -10433,6 +10590,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
   string_value(x)[len] = 0;
   string_hash(x) = 0;
   string_length(x) = len;
+  add_string(sc, x);
   return(x);
 }
 
@@ -11400,7 +11558,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
 
   NEW_CELL(sc, port);
   port_loc = s7_gc_protect(sc, port);
-  set_type(port, T_INPUT_PORT | T_FINALIZABLE | T_DONT_COPY);
+  set_type(port, T_INPUT_PORT | T_DONT_COPY);
   port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_is_closed(port) = false;
 
@@ -11409,6 +11567,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
    */
   port_filename(port) = copy_string(name);
   port_line_number(port) = 1;  /* 1st line is numbered 1 */
+  add_input_port(sc, port);
 
   fseek(fp, 0, SEEK_END);
   size = ftell(fp);
@@ -11577,7 +11736,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
     }
 
   NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_OUTPUT_PORT | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
@@ -11586,6 +11745,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   port_line_number(x) = 1;
   port_file(x) = fp;
   port_needs_free(x) = false;
+  add_output_port(sc, x);
   return(x);
 }
 
@@ -11612,7 +11772,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_INPUT_PORT | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_INPUT_PORT | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = STRING_PORT;
@@ -11623,7 +11783,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   port_filename(x) = NULL;
   port_file_number(x) = -1;
   port_needs_free(x) = false;
-
+  add_input_port(sc, x);
   return(x);
 }
 
@@ -11646,7 +11806,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_OUTPUT_PORT | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = STRING_PORT;
@@ -11655,6 +11815,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   port_string(x) = (char *)calloc(STRING_PORT_INITIAL_LENGTH, sizeof(char));
   port_string_point(x) = 0;
   port_needs_free(x) = true;
+  add_output_port(sc, x);
   return(x);
 }
 
@@ -11691,13 +11852,14 @@ s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_schem
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_INPUT_PORT | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_INPUT_PORT | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
   port_needs_free(x) = false;
   port_input_function(x) = function;
+  add_input_port(sc, x);
   return(x);
 }
 
@@ -11706,13 +11868,14 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_OUTPUT_PORT | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
   port_needs_free(x) = false;
   port_output_function(x) = function;
+  add_output_port(sc, x);
   return(x);
 }
 
@@ -12721,7 +12884,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -12730,7 +12893,6 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_immutable(obj) ?          " immutable" : "",
 	     dont_copy(obj) ?             " dont-copy" : "",
 	     dont_copy_cdr(obj) ?         " dont-copy-cdr" : "",
-	     is_finalizable(obj) ?        " gc-finalize" : "",
 	     is_any_macro(obj) ?          " anymac" : "",
 	     is_expansion(obj) ?          " expansion" : "",
 	     is_local(obj) ?              " local" : "",
@@ -15168,7 +15330,7 @@ bool s7_is_vector(s7_pointer p)
 #define FILLED true
 #define NOT_FILLED false
 
-static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled) 
+static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, bool add_to_cache) 
 {
   s7_pointer x;
   if (len > 134217728)
@@ -15194,7 +15356,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
   NEW_CELL(sc, x);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
+  set_type(x, T_VECTOR | T_DONT_COPY | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
 
   /* in the multithread case, we can be interrupted here, and a subsequent GC mark sweep can see
    *    this half-allocated vector.  If length>0, and a non-null "elements" field is left over
@@ -15213,13 +15375,14 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
     }
 
   x->object.vector.vextra.dim_info = NULL;
+  if (add_to_cache) add_vector(sc, x);
   return(x);
 }
 
 
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len)
 {
-  return(make_vector_1(sc, len, FILLED));
+  return(make_vector_1(sc, len, FILLED, true));
 }
 
 
@@ -15383,7 +15546,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill)
 {
   s7_pointer vect;
-  vect = make_vector_1(sc, len, NOT_FILLED);
+  vect = make_vector_1(sc, len, NOT_FILLED, true);
   s7_vector_fill(sc, vect, fill);
   return(vect);
 }
@@ -15396,7 +15559,7 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
   s7_pointer vec;
   
   len = s7_list_length(sc, args);
-  vec = make_vector_1(sc, len, NOT_FILLED);
+  vec = make_vector_1(sc, len, NOT_FILLED, true);
   if (len > 0)
     {
       s7_pointer x;
@@ -15441,7 +15604,7 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
   NEW_CELL(sc, x);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_VECTOR | T_DONT_COPY);
 
   v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
  
@@ -15453,6 +15616,7 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
 
   vector_length(x) = vector_offset(vect, skip_dims - 1);
   vector_elements(x) = (s7_pointer *)(vector_elements(vect) + index);
+  add_vector(sc, x);
   return(x);
 }
 
@@ -15648,7 +15812,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
   if (is_not_null(cdr(args))) 
     fill = cadr(args);
 
-  vec = make_vector_1(sc, len, NOT_FILLED);
+  vec = make_vector_1(sc, len, NOT_FILLED, true);
   if (len > 0) s7_vector_fill(sc, vec, fill);
 
   if ((is_pair(x)) &&
@@ -15837,7 +16001,7 @@ static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
 
   if (vector_is_multidimensional(old_vect))
     new_vect = g_make_vector(sc, make_list_1(sc, g_vector_dimensions(sc, make_list_1(sc, old_vect))));
-  else new_vect = make_vector_1(sc, len, NOT_FILLED);
+  else new_vect = make_vector_1(sc, len, NOT_FILLED, true);
 
   /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
 
@@ -16197,13 +16361,13 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 	size |= (size >> 32);
     }
 
-  table = s7_make_vector(sc, size + 1);   /* nil is the default value */
+  table = make_vector_1(sc, size + 1, FILLED, false); /* nil is the default value, don't add to vector cache! */
   /* size + 1 can be fooled if we don't catch most-positive-fixnum */
 
-  set_type(table, T_HASH_TABLE | T_FINALIZABLE | T_DONT_COPY | T_SAFE_PROCEDURE);
+  set_type(table, T_HASH_TABLE | T_DONT_COPY | T_SAFE_PROCEDURE);
   hash_table_function(table) = hash_empty;
   hash_table_entries(table) = 0;
-
+  add_hash_table(sc, table);
   return(table);
 }
 
@@ -17461,7 +17625,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   NEW_CELL(sc, x);
   object_type(x) = type;
   object_value(x) = value;
-  set_type(x, T_C_OBJECT | T_FINALIZABLE | T_DONT_COPY); /* free_object checks that the free function exists */
+  set_type(x, T_C_OBJECT | T_DONT_COPY); /* free_object checks that the free function exists */
 
   if (object_types[type].apply)
     {
@@ -17475,6 +17639,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
     object_set(x) = object_types[type].set;
   else object_set(x) = fallback_set;
 
+  add_c_object(sc, x);
   return(x);
 }
 
@@ -17587,7 +17752,7 @@ static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj)
       SAVE_X_Y_Z(save_x, save_y, save_z);
 
       len = s7_integer(object_length(sc, obj));
-      vect = make_vector_1(sc, len, NOT_FILLED);
+      vect = make_vector_1(sc, len, NOT_FILLED, true);
       vect_gc_loc = s7_gc_protect(sc, vect);
 
       i_args = make_list_1(sc, make_mutable_integer(sc, 0));
@@ -19384,7 +19549,7 @@ also accepts a string or vector argument."
 	len = vector_length(p);
 	if (vector_is_multidimensional(p))
 	  np = g_make_vector(sc, make_list_1(sc, g_vector_dimensions(sc, make_list_1(sc, p))));
-	else np = make_vector_1(sc, len, NOT_FILLED);
+	else np = make_vector_1(sc, len, NOT_FILLED, true);
 	if (len > 0)
 	  for (i = 0, j = len - 1; i < len; i++, j--)
 	    vector_element(np, i) = vector_element(p, j);
@@ -32995,6 +33160,7 @@ s7_scheme *s7_init(void)
   (*(sc->gc_off)) = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
   sc->gc_stats = (bool *)calloc(1, sizeof(bool));
   (*(sc->gc_stats)) = false;
+  init_gc_caches(sc);
 
   sc->longjmp_ok = false;
   sc->symbol_table_is_locked = (bool *)calloc(1, sizeof(bool));
