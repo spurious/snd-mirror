@@ -50631,14 +50631,14 @@ EDITS: 1
       (for-each
        (lambda (n)
 	 (set! (optimization) n)
-	 (run (lambda ()
-		(set! unique-float 1.5)
-		(set! unique-int 5)
-		(set! unique-char #\z)
-		(set! unique-string "a new string")
-		(set! unique-boolean #f)
-		(vector-set! unique-float-vector 1 3.0)
-		(vector-set! unique-int-vector 1 6)))
+	 (run 
+	  (set! unique-float 1.5)
+	  (set! unique-int 5)
+	  (set! unique-char #\z)
+	  (set! unique-string "a new string")
+	  (set! unique-boolean #f)
+	  (vector-set! unique-float-vector 1 3.0)
+	  (vector-set! unique-int-vector 1 6))
 	 (if (not (= unique-int 5)) (snd-display #__line__ ";unique-int (~A): ~A" n unique-int))
 	 (if (fneq unique-float 1.5) (snd-display #__line__ ";unique-float (~A): ~A" n unique-float))
 	 (if (not (char=? unique-char #\z)) (snd-display #__line__ ";unique-char (~A): ~A" n unique-char))
@@ -50857,14 +50857,14 @@ EDITS: 1
        (lambda (n)
 	 (let* ((gen (n))
 		(val1 (format #f "~A" gen))
-		(val2 (run (lambda () (format #f "~A" gen)))))
+		(val2 (run (format #f "~A" gen))))
 	   
 	   (if (not (string=? val1 val2))
 	       (snd-display #__line__ ";run format gen: format: ~A, run format: ~A (~A)" val1 val2 gen))))
        make-procs))
     
     (let ((val1 (run-eval '(format #f "~A" (make-all-pass))))
-	  (val2 (run (lambda () (let ((gen (make-all-pass))) (format #f "~A" gen)))))
+	  (val2 (run (let ((gen (make-all-pass))) (format #f "~A" gen))))
 	  (val3 (format #f "~A" (make-all-pass))))
       
       (if (or (not (string=? val1 val2))
@@ -50873,7 +50873,7 @@ EDITS: 1
     
     
     (let ((val1 (run-eval '(format #f "~A" (make-asymmetric-fm ))))
-	  (val2 (run (lambda () (let ((gen (make-asymmetric-fm ))) (format #f "~A" gen)))))
+	  (val2 (run (let ((gen (make-asymmetric-fm ))) (format #f "~A" gen))))
 	  (val3 (format #f "~A" (make-asymmetric-fm ))))
       
       (if (or (not (string=? val1 val2))
@@ -50881,7 +50881,7 @@ EDITS: 1
 	  (snd-display #__line__ ";run-eval format: ~A ~A ~A" val1 val2 val3)))
     
     (let ((val1 (run-eval '(format #f "~A" (make-moving-average))))
-	  (val2 (run (lambda () (let ((gen (make-moving-average))) (format #f "~A" gen)))))
+	  (val2 (run (let ((gen (make-moving-average))) (format #f "~A" gen))))
 	  (val3 (format #f "~A" (make-moving-average))))
       (if (or (not (string=? val1 val2))
 	      (not (string=? val2 val3)))

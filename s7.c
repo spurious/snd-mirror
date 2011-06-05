@@ -220,6 +220,9 @@
 #endif
 
 
+#define WITH_OPTIMIZATION 1
+
+
 
 /* -------------------------------------------------------------------------------- */
 
@@ -489,7 +492,7 @@ typedef struct s7_cell {
     
     struct {
       s7_pointer car, cdr, ecdr;
-      unsigned int line;
+      unsigned int line, data;
     } cons;
 
     struct {               /* additional object types (C and Scheme) */
@@ -883,6 +886,7 @@ struct s7_scheme {
 #define pair_line_number(p)           (p)->object.cons.line
 #define port_file_number(p)           (p)->object.port->file_number
 #define csr(p)                        (p)->object.cons.line
+#define pair_data(p)                  (p)->object.cons.data
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
@@ -8602,7 +8606,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 #endif
 
       if (s7_is_zero(car(x)))
-	return(division_by_zero_error(sc, "/", args));
+	return(division_by_zero_error(sc, "/", car(x)));
       /* to be consistent, I suppose we should search first for NaNs in the divisor list.
        *   (* 0 0/0) is NaN, so (/ 1 0 0/0) should equal (/ 1 0/0) = NaN.  But the whole
        *   thing is ridiculous.
@@ -17001,20 +17005,11 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 }
 
 
-static void s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+void s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   typeflag(func) |= T_SAFE_PROCEDURE;
-  s7_define(sc, sc->NIL, make_symbol(sc, name), func);
-}
-
-
-static void s7_define_unsafe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
-{
-  s7_pointer func;
-  func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  typeflag(func) &= ~(T_SAFE_PROCEDURE);
   s7_define(sc, sc->NIL, make_symbol(sc, name), func);
 }
 
@@ -24158,7 +24153,7 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
   return(unbound_variable(sc, sym));
 }
 
-#if 0
+
 static bool just_constants(s7_scheme *sc, s7_pointer args)
 {
   if (is_null(args))
@@ -24169,7 +24164,107 @@ static bool just_constants(s7_scheme *sc, s7_pointer args)
     return(false);
   return(just_constants(sc, cdr(args)));
 }
-#endif
+
+
+static bool safe_with_constants(s7_scheme *sc, s7_pointer func, s7_pointer args)
+{
+  return((is_safe_procedure(func)) &&
+	 (just_constants(sc, args)));
+}
+
+
+void s7_unoptimize(s7_scheme *sc, s7_pointer code)
+{
+  /* needed by the run macro -- the two optimization processes are not compatible
+   *   my hope is to replace run with local (s7) optimizations
+   */
+  if (is_pair(code))
+    {
+      if ((s7_is_symbol(car(code))) &&
+	  (is_syntax(symbol_value(car(code)))) &&
+	  ((int)syntax_opcode(symbol_value(car(code))) >= OP_IF_UNCHECKED))
+	{
+	  switch ((int)syntax_opcode(symbol_value(car(code))))
+	    {
+	    case OP_IF_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "if");
+	      break;
+	      
+	    case OP_QUOTE_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "quote");
+	      break;
+	      
+	    case OP_LAMBDA_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "lambda");
+	      break;
+	      
+	    case OP_LET_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "let");
+	      break;
+	      
+	    case OP_CASE_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "case");
+	      break;
+	      
+	    case OP_SET_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "set!");
+	      break;
+	      
+	    case OP_LET_STAR_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "let*");
+	      break;
+	      
+	    case OP_LETREC_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "letrec");
+	      break;
+	      
+	    case OP_COND_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "cond");
+	      break;
+	      
+	    case OP_LAMBDA_STAR_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "lambda*");
+	      break;
+	      
+	    case OP_DO_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "do");
+	      break;
+	      
+	    case OP_DEFINE_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "define");
+	      break;
+	      
+	    case OP_DEFINE_STAR_UNCHECKED:
+	      car(code) = s7_make_symbol(sc, "define*");
+	      break;
+	      
+	    default:
+	      break;
+	    }
+	}
+      if (is_pair(car(code))) s7_unoptimize(sc, car(code));
+      if (is_pair(cdr(code))) s7_unoptimize(sc, cdr(code));
+    }
+}
+
+
+static void optimize_body(s7_scheme *sc, s7_pointer body)
+{
+  /* here we are only marking lists that start with a symbol and have no internal pairs
+   *   list length -> pair_data (on the cdr not the car)
+   *   if it looks optimizable, set the car to OP_CONSTANTS or OP_SYMBOLS (created at run-time, named the original proc name)
+   *     original function in the symbol value
+   *   OP_CONSTANTS is syntax in eval, so we jump there, check the func
+   *     if safe and len ok, call it, change op to OP_VALUE -> just return the saved value
+   *     else set it back to original
+   *   OP_SYMBOLS if safe, can use preset arg lists -- set len and so on
+   *    if not safe, reset
+   * reset = jump past the check that got us here -- never recheck!
+   * if no args, OP_JUST_APPLY? 
+   */
+  
+
+}
 
 
 static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args)
@@ -24326,11 +24421,13 @@ static s7_pointer check_case(s7_scheme *sc)
 	    return(eval_error(sc, "case: '=>' has too many targets: ~A", y));
 	}
     }
+#if WITH_OPTIMIZATION
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
       car(ecdr(sc->code)) = sc->CASE_UNCHECKED;
     }
+#endif
 
   return(sc->code);
 }
@@ -24421,12 +24518,14 @@ static s7_pointer check_let(s7_scheme *sc)
   
   if (is_not_null(x))                  /* (let* ((a 1) . b) a) */
     return(eval_error(sc, "let var list improper?: ~A", sc->code));
-  
+
+#if WITH_OPTIMIZATION  
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
       car(ecdr(sc->code)) = sc->LET_UNCHECKED;
     }
+#endif
   return(sc->code);
 }
 
@@ -24486,11 +24585,14 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	    return(eval_error(sc, "let* var list improper?: ~A", x));
 	}
     }
+
+#if WITH_OPTIMIZATION
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
       car(ecdr(sc->code)) = sc->LET_STAR_UNCHECKED;
     }
+#endif
   return(sc->code);
 }
 
@@ -24525,11 +24627,14 @@ static s7_pointer check_letrec(s7_scheme *sc)
       if (is_not_null(cddar(x)))          /* (letrec ((x 1 2 3)) ...) */
 	return(eval_error(sc, "letrec variable declaration has more than one value?: ~A", car(x)));
     }
+
+#if WITH_OPTIMIZATION
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
       car(ecdr(sc->code)) = sc->LETREC_UNCHECKED;
     }
+#endif
   return(sc->code);
 }
 
@@ -24545,11 +24650,13 @@ static s7_pointer check_quote(s7_scheme *sc)
   if (is_not_null(cdr(sc->code)))             /* (quote . (1 2)) or (quote 1 1) */
     return(eval_error(sc, "quote: too many arguments ~A", sc->code));
 
+#if WITH_OPTIMIZATION
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
       car(ecdr(sc->code)) = sc->QUOTE_UNCHECKED;
     }
+#endif
   return(sc->code);
 }
 
@@ -24576,11 +24683,13 @@ static s7_pointer check_if(s7_scheme *sc)
 	return(eval_error(sc, "if: ~A has improper list?", sc->code));
     }
 
+#if WITH_OPTIMIZATION
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
       car(ecdr(sc->code)) = sc->IF_UNCHECKED;
     }
+#endif
   
   return(sc->code);
 }
@@ -24623,6 +24732,7 @@ static s7_pointer check_define(s7_scheme *sc)
       else check_lambda_args(sc, cdar(sc->code));
     }
 
+#if WITH_OPTIMIZATION
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
@@ -24630,6 +24740,8 @@ static s7_pointer check_define(s7_scheme *sc)
 	car(ecdr(sc->code)) = sc->DEFINE_UNCHECKED;
       else car(ecdr(sc->code)) = sc->DEFINE_STAR_UNCHECKED;
     }
+#endif
+
   return(sc->code);
 }
 
@@ -24672,11 +24784,13 @@ static s7_pointer check_set(s7_scheme *sc)
 	return(eval_error(sc, "set! can't change ~S", car(sc->code)));
     }
   
+#if WITH_OPTIMIZATION
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
       car(ecdr(sc->code)) = sc->SET_UNCHECKED;
     }
+#endif
   return(sc->code);
 }
 
@@ -24727,11 +24841,13 @@ static s7_pointer check_do(s7_scheme *sc)
 	return(eval_error(sc, "do: list of variables is improper: ~A", sc->code));
     }
 
+#if WITH_OPTIMIZATION
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
       car(ecdr(sc->code)) = sc->DO_UNCHECKED;
     }
+#endif
   return(sc->code);
 }
       
@@ -24772,13 +24888,6 @@ static s7_pointer check_defmacro(s7_scheme *sc)
   if (!is_pair(cdr(z)))
     return(eval_error_with_name(sc, "~A ~A has stray dot?", x));
   
-#if 0
-  if ((is_overlaid(sc->code)) &&
-      (cdr(ecdr(sc->code)) == sc->code))
-    {
-      car(ecdr(sc->code)) = sc->DEFMACRO_UNCHECKED;
-    }
-#endif
   return(sc->code);
 }
 
@@ -24815,13 +24924,6 @@ static s7_pointer check_define_macro(s7_scheme *sc)
       return(s7_error(sc, sc->SYNTAX_ERROR,                                    /* (define-macro (mac 1) ...) */
 		      make_list_3(sc, make_protected_string(sc, "define-macro ~A argument name is not a symbol: ~S"), x, sc->y)));
   
-#if 0
-  if ((is_overlaid(sc->code)) &&
-      (cdr(ecdr(sc->code)) == sc->code))
-    {
-      car(ecdr(sc->code)) = sc->DEFINE_MACRO_UNCHECKED;
-    }
-#endif
   return(sc->code);
 }
 
@@ -24859,11 +24961,13 @@ static s7_pointer check_cond(s7_scheme *sc)
   if (is_not_null(x))                                             /* (cond ((1 2)) . 1) */
     return(eval_error(sc, "cond: stray dot? ~A", sc->code));
 
+#if WITH_OPTIMIZATION
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
       car(ecdr(sc->code)) = sc->COND_UNCHECKED;
     }
+#endif
   return(sc->code);
 }
 
@@ -27540,11 +27644,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) or (lambda . 1) */
 	return(eval_error(sc, "lambda: no args or no body? ~A", sc->code));
       check_lambda_args(sc, car(sc->code));
+
+#if WITH_OPTIMIZATION
       if ((is_overlaid(sc->code)) &&
 	  (cdr(ecdr(sc->code)) == sc->code))
 	{
 	  car(ecdr(sc->code)) = sc->LAMBDA_UNCHECKED;
 	}
+#endif
 
     case OP_LAMBDA_UNCHECKED:
       /* sc->value = make_closure(sc, sc->code, T_CLOSURE); */
@@ -27560,11 +27667,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
 	return(eval_error(sc, "lambda*: no args or no body? ~A", sc->code));
       check_lambda_star_args(sc, car(sc->code));
+
+#if WITH_OPTIMIZATION
       if ((is_overlaid(sc->code)) &&
 	  (cdr(ecdr(sc->code)) == sc->code))
 	{
 	  car(ecdr(sc->code)) = sc->LAMBDA_STAR_UNCHECKED;
 	}
+#endif
 
     case OP_LAMBDA_STAR_UNCHECKED:
       sc->value = make_closure(sc, sc->code, T_CLOSURE_STAR);
@@ -33875,7 +33985,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "+",                         g_add,                      0, 0, true,  H_add);
   s7_define_safe_function(sc, "-",                         g_subtract,                 1, 0, true,  H_subtract);
   s7_define_safe_function(sc, "*",                         g_multiply,                 0, 0, true,  H_multiply);
-  s7_define_function(sc, "/",                              g_divide,                   1, 0, true,  H_divide);
+  s7_define_safe_function(sc, "/",                         g_divide,                   1, 0, true,  H_divide);
   s7_define_safe_function(sc, "max",                       g_max,                      1, 0, true,  H_max);
   s7_define_safe_function(sc, "min",                       g_min,                      1, 0, true,  H_min);
   s7_define_safe_function(sc, "quotient",                  g_quotient,                 2, 0, false, H_quotient);
@@ -33999,8 +34109,8 @@ s7_scheme *s7_init(void)
      *   has a built-in cdr of the uncopied nominal macro value.
      */
   }
-  s7_define_unsafe_function(sc, "set-car!",                g_set_car,                  2, 0, false, H_set_car);
-  s7_define_unsafe_function(sc, "set-cdr!",                g_set_cdr,                  2, 0, false, H_set_cdr);
+  s7_define_function(sc, "set-car!",                       g_set_car,                  2, 0, false, H_set_car);
+  s7_define_function(sc, "set-cdr!",                       g_set_cdr,                  2, 0, false, H_set_cdr);
   s7_define_safe_function(sc, "caar",                      g_caar,                     1, 0, false, H_caar);
   s7_define_safe_function(sc, "cadr",                      g_cadr,                     1, 0, false, H_cadr);
   s7_define_safe_function(sc, "cdar",                      g_cdar,                     1, 0, false, H_cdar);
@@ -34047,7 +34157,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "copy",                      g_copy,                     1, 0, false, H_copy);
   s7_define_safe_function(sc, "fill!",                     g_fill,                     2, 0, false, H_fill);
   s7_define_safe_function(sc, "reverse",                   g_reverse,                  1, 0, false, H_reverse);
-  s7_define_unsafe_function(sc, "reverse!",                g_reverse_in_place,         1, 0, false, H_reverse_in_place); /* used by Snd code */
+  s7_define_function(sc, "reverse!",                       g_reverse_in_place,         1, 0, false, H_reverse_in_place); /* used by Snd code */
   
 
   s7_define_safe_function(sc, "vector?",                   g_is_vector,                1, 0, false, H_is_vector);
@@ -34060,7 +34170,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "vector-set!",               g_vector_set,               3, 0, true,  H_vector_set);
   s7_define_safe_function(sc, "make-vector",               g_make_vector,              1, 1, false, H_make_vector);
   s7_define_safe_function(sc, "vector-dimensions",         g_vector_dimensions,        1, 0, false, H_vector_dimensions);
-  s7_define_unsafe_function(sc, "sort!",                   g_sort,                     2, 0, false, H_sort);
+  s7_define_function(sc, "sort!",                          g_sort,                     2, 0, false, H_sort);
 
 
   s7_define_function(sc, "hash-table",                     g_hash_table,               0, 0, true,  H_hash_table);

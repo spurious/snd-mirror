@@ -88,7 +88,7 @@
 	  
 	  (if (or minramp-bug maxramp-bug)
 	      (throw 'out-of-range (list expand 
-					 "ramp argument to expsnd must always be "
+					 "ramp argument to expandn must always be "
 					 (if (and minramp-bug maxramp-bug) "between 0.0 and 0.5"
 					     (if minramp-bug "greater than 0.0"
 						 "less than 0.5")))))

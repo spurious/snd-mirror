@@ -10,11 +10,13 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 7
-#define XEN_VERSION "3.7"
+#define XEN_MINOR_VERSION 8
+#define XEN_VERSION "3.8"
 
 /* HISTORY:
  *
+ *  5-Jun-11:  XEN_DEFINE_SAFE_PROCEDURE, an experiment with s7.
+ *  --------
  *  25-Nov:    updates for Ruby 1.9.*.
  *  7-Nov:     XEN_ADD_HOOK.
  *  23-Oct:    use s7_call_with_location, rather than s7_call, for better error reporting.
@@ -423,6 +425,8 @@
       XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
       XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
     } while (0)
+
+#define XEN_DEFINE_SAFE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
 
 #define XEN_CALL_0(Func, Caller)                   xen_rb_funcall_0(Func)
 #define XEN_CALL_1(Func, Arg1, Caller)             rb_funcall(Func, rb_intern("call"), 1, Arg1)
@@ -938,6 +942,8 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
 
+#define XEN_DEFINE_SAFE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
+
 /* === Object === */
 #define XEN_OBJECT_TYPE                 FTH
 #define XEN_MARK_OBJECT_TYPE            void
@@ -1390,6 +1396,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) s7_define_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
+#define XEN_DEFINE_SAFE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) s7_define_safe_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
 #define XEN_DEFINE_PROCEDURE_STAR(Name, Func, Args, Doc)              s7_define_function_star(s7, Name, Func, Args, Doc)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
@@ -1600,6 +1607,8 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   {xen_no_ext_lang_check_args(Get_Name, Get_Func(), Get_Req, Get_Opt, 0); xen_no_ext_lang_check_args(Set_Name, Set_Func(), Set_Req, Set_Opt, 0);}
+
+#define XEN_DEFINE_SAFE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
 
 #define XEN_ARITY(Func) 0
 #define XEN_REQUIRED_ARGS(Func) 0

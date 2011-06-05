@@ -21413,7 +21413,7 @@ abs     1       2
 	 (descr (cadr val))
 	 (cur-info *error-info*))
     (test tag 'division-by-zero)
-    (test descr '("~A: division by zero, ~A" "/" (1 0.0)))
+    (test descr '("~A: division by zero, ~A" "/" 0.0)) ; this changes...
     (test (vector? cur-info) #t)
     (test (> (length cur-info) 5) #t)
     (test tag (cur-info 0))

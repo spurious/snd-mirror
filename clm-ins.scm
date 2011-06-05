@@ -2175,7 +2175,7 @@ is a physical model of a flute:
 	 (valA1 (* vol (granulate exA))))
     (if (or (<= (min-envelope rampdata) 0.0)
 	    (>= (max-envelope rampdata) 0.5))
-	(format #t "ramp argument to expsnd must always be between 0.0 and 0.5: ~A" ramp)
+	(format #t "ramp argument to exp-snd must always be between 0.0 and 0.5: ~A" ramp)
 	(run
 	 (do ((i st (+ i 1)))
 	     ((= i nd))
@@ -2689,7 +2689,7 @@ mjkoskin@sci.fi
 	  
 	  (if (or minramp-bug maxramp-bug)
 	      (throw 'out-of-range (list expand 
-					 "ramp argument to expsnd must always be "
+					 "ramp argument to exp-snd must always be "
 					 (if (and minramp-bug maxramp-bug) "between 0.0 and 0.5"
 					     (if minramp-bug "greater than 0.0"
 						 "less than 0.5")))))

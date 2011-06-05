@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.88"
-#define S7_DATE "30-May-11"
+#define S7_VERSION "1.89"
+#define S7_DATE "5-June-11"
 
 
 typedef long long int s7_Int;
@@ -526,6 +526,7 @@ bool s7_is_function(s7_pointer p);
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 
 void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
+void s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc);
   /* this is now the same as s7_make_procedure_with_setter (different args) */
@@ -811,10 +812,13 @@ void s7_mark_object(s7_pointer p);
  * if you need any of these, let me know.
  */
 
+void s7_unoptimize(s7_scheme *sc, s7_pointer code);
+
 /* --------------------------------------------------------------------------------
  * 
  *        s7 changes
  *
+ * 5-June:    s7_define_safe_function exported.
  * 30-May:    environment->list and s7_environment_to_list since environments are no longer alists internally.
  * 26-May:    added s7_scheme argument to s7_procedure_setter and getter (old names had "with_setter_").
  * 28-Apr:    s7_help.

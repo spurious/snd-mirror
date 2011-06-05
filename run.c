@@ -11996,6 +11996,7 @@ static xen_value *splice_in_function_body(ptree *prog, s7_pointer proc, xen_valu
 {
   s7_pointer func_form;
   func_form = s7_car(s7_procedure_source(s7, proc));
+  s7_unoptimize(s7, func_form);
   /* fprintf(stderr,"splice in %s\n", s7_object_to_c_string(s7, func_form)); */
 
   if ((s7_is_list(s7, func_form)) &&
@@ -13403,6 +13404,7 @@ static xen_value *out_any_function_body(ptree *prog, s7_pointer proc, xen_value 
 {
   s7_pointer func_form;
   func_form = s7_car(s7_procedure_source(s7, proc));
+  s7_unoptimize(s7, func_form);
 
   if ((s7_is_list(s7, func_form)) &&
       (s7_is_symbol(s7_car(func_form))) &&
@@ -16369,6 +16371,7 @@ struct ptree *mus_run_form_to_ptree_1_f(s7_pointer code)
 {
   /* map-channel and simple form of ptree-channel */
   ptree *pt;
+  s7_unoptimize(s7, code);
   pt = form_to_ptree_with_predeclarations(code, 1, R_FLOAT);
   if (pt)
     {
@@ -16384,6 +16387,7 @@ struct ptree *mus_run_form_to_ptree_3_f(s7_pointer code)
 {
   /* ptree-channel, snd-sig.c */
   ptree *pt;
+  s7_unoptimize(s7, code);
   pt = form_to_ptree_with_predeclarations(code, 3, R_FLOAT, R_VCT, R_BOOL);
   if (pt)
     {
@@ -16399,6 +16403,7 @@ struct ptree *mus_run_form_to_ptree_0_f(s7_pointer code)
 {
   /* vct-map! */
   ptree *pt;
+  s7_unoptimize(s7, code);
   pt = form_to_ptree(code);
   if (pt)
     {
@@ -16414,6 +16419,7 @@ struct ptree *mus_run_form_to_ptree_1_b(s7_pointer code)
 {
   /* find */
   ptree *pt;
+  s7_unoptimize(s7, code);
   pt = form_to_ptree_with_predeclarations(code, 1, R_FLOAT);
   if (pt)
     {
@@ -17154,6 +17160,7 @@ static s7_pointer g_run_eval(s7_pointer code, s7_pointer arg, s7_pointer arg1, s
 
   cl = s7_make_closure(s7, code, s7_current_environment(s7));
   gc_loc = s7_gc_protect(s7, cl);
+  s7_unoptimize(s7, code);
 
   pt = make_ptree(8);
   pt->code = cl;
@@ -17255,6 +17262,8 @@ to Scheme and is equivalent to (thunk)."
 
   XEN_ASSERT_TYPE(s7_is_procedure(proc_and_code) && (XEN_REQUIRED_ARGS_OK(proc_and_code, 0)), proc_and_code, 1, S_run, "a thunk");
   
+  s7_unoptimize(s7, s7_car(proc_and_code));
+
   code = s7_cons(s7, s7_append(s7, s7_cons(s7, s7_make_symbol(s7, "lambda"), 
 					   scheme_nil),
 			       s7_car(proc_and_code)),

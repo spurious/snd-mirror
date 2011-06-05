@@ -7,7 +7,7 @@
 
 ;;; definstrument -> define (+ change open paren placement)
 ;;; *srate* -> (mus-srate)
-;;; run loop ... -> run (lambda () (do... + extra end close paren
+;;; run loop ... -> run (do... + extra end close paren
 ;;; aref -> 
 ;;; setf -> set!
 ;;; remove declare (or change order of args and remove ":")
@@ -3043,13 +3043,13 @@
   (with-sound ()
 	      (let ((gen (make-sndclm-expcs :frequency 100 :et 0.1))
 		    (t-env (make-env '(0 .1 1 2) :length 10000)))
-		(run (lambda ()
+		(run 
 		(do ((i 0 (+ i 1)))
 		    ((= i 10000))
 		  (let ((et (env t-env)))
 		    (set! (sndclm-expcs-sinht gen) (* 0.5 (sinh et)))
 		    (set! (sndclm-expcs-cosht gen) (cosh et))
-		    (outa i (sndclm-expcs gen 0.0))))))))
+		    (outa i (sndclm-expcs gen 0.0)))))))
 
   (for-each close-sound (sounds))
   )
