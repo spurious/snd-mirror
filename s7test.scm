@@ -13177,6 +13177,20 @@ time, so that the displayed results are
       131328)
 
 
+(let ((x 32))
+  (define (f1) x)
+  (define x 33)
+  (test (f1) 33))
+    
+(let ()
+  (define (f2 a) (+ a 1))
+  (define (f1 a) (f2 a))
+  (define (f2 a) (- a))
+  (test (f1 12) -12))
+
+
+
+
 
 ;;; --------------------------------------------------------------------------------
 ;;; values
