@@ -341,7 +341,9 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL,
 	      OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
 	      OP_IF_UNCHECKED, OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, OP_SET_UNCHECKED,
 	      OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
-	      OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED,
+	      OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_IF_SYMBOL,
+	      OP_C_THUNK, OP_THUNK,
+	      OP_SAFE_C_C, OP_SAFE_C_S,
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
@@ -364,12 +366,14 @@ static const char *op_names[OP_MAX_DEFINED] =
    "member-if", "assoc-if", "member-if", "assoc-if",
    "if-unchecked", "quote-unchecked", "lambda-unchecked", "let-unchecked", "case-unchecked", "set-unchecked",
    "let*-unchecked", "letrec-unchecked", "cond-unchecked",
-   "lambda*-unchecked", "do-unchecked", "define-unchecked", "define*-unchecked"
+   "lambda*-unchecked", "do-unchecked", "define-unchecked", "define*-unchecked", "if-symbol"
+   "c-thunk", "thunk",
+   "safe-c-c", "safe-c-s",
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 112 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 117 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -616,7 +620,7 @@ struct s7_scheme {
 #if WITH_UNQUOTE_SPLICING
   s7_pointer UNQUOTE_SPLICING;
 #endif
-  s7_pointer IF_UNCHECKED, QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
+  s7_pointer IF_UNCHECKED, IF_SYMBOL, QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_STAR_UNCHECKED;
   
@@ -815,19 +819,39 @@ struct s7_scheme {
 #define is_syntactic(p)               ((typeflag(p) & T_SYNTACTIC) != 0)
 /* this marks syntax objects */
 
-
 #define T_OVERLAY                     (1 << (TYPE_BITS + 16))
 #define set_overlay(p)                typeflag(p)  |= T_OVERLAY
 #define is_overlaid(p)                ((typeflag(p) & T_OVERLAY) != 0)
 /* this marks a cell whose ecdr points to the previous cell in a list (for the optimizer) 
  */
 
+
 #define T_OPTIMIZED                   (1 << (TYPE_BITS + 17))
 #define set_optimized(p)              typeflag(p)  |= T_OPTIMIZED
 #define is_optimized(p)               ((typeflag(p) & T_OPTIMIZED) != 0)
-/* this marks a cell mascarading as something else (for optimizer debugging)
- * this bit is not yet used
- */
+#define clear_optimized(p)            typeflag(p) &= ~(T_OPTIMIZED)
+#define optimize_data(p)              pair_data(p)
+
+#define T_CHECKED                     (1 << (TYPE_BITS + 18))
+#define set_checked(p)                typeflag(p)  |= T_CHECKED
+#define is_checked(p)                 ((typeflag(p) & T_CHECKED) != 0)
+
+
+#if 0
+/*an experiment */
+#define T_NO_SYMBOLS                  (1 << (TYPE_BITS + 19))
+#define set_no_symbols(p)             typeflag(p)  |= T_NO_SYMBOLS
+#define has_no_symbols(p)             ((typeflag(p) & T_NO_SYMBOLS) != 0)
+
+#define T_NO_PAIRS                    (1 << (TYPE_BITS + 20))
+#define set_no_pairs(p)               typeflag(p)  |= T_NO_PAIRS
+#define has_no_pairs(p)               ((typeflag(p) & T_NO_PAIRS) != 0)
+
+#define T_NO_BAD_FUNCS                (1 << (TYPE_BITS + 21))
+#define set_no_bad_funcs(p)           typeflag(p)  |= T_NO_BAD_FUNCS
+#define has_no_bad_funcs(p)           ((typeflag(p) & T_NO_BAD_FUNCS) != 0)
+#endif
+
 
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
@@ -837,7 +861,7 @@ struct s7_scheme {
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x76000000
+#define UNUSED_BITS                   0x77000000
 
 
 #if HAVE_PTHREADS
@@ -12740,6 +12764,28 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	    free(str);
 	    return(symstr);
 	  }
+#if DEBUGGING && WITH_OPTIMIZATION
+	if (is_syntactic(obj))
+	  {
+	    char *symstr;
+	    int len, op;
+	    op = syntax_opcode(cdr(obj));
+	    if (op < OP_MAX_DEFINED)
+	      {
+		len = safe_strlen(str) + safe_strlen(op_names[op]) + 16;
+		symstr = (char *)calloc(len, sizeof(char));
+		snprintf(symstr, len, "[%s -> %s]", str, op_names[op]);
+	      }
+	    else
+	      {
+		len = safe_strlen(str) + 16;
+		symstr = (char *)calloc(len, sizeof(char));
+		snprintf(symstr, len, "[%s -> %d?]", str, op);
+	      }
+	    free(str);
+	    return(symstr);
+	  }
+#endif	
 	return(str);
       }
 
@@ -21907,7 +21953,6 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
   return(result);
 }
 
-
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 {
   #define H_s7_version "(s7-version) returns some string describing the current s7"
@@ -23598,6 +23643,8 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS);
   typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC);
 
+  car(syn) = x;
+
   return(x);
 }
 
@@ -23614,14 +23661,15 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   symbol_hash(x) = loc;
 
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
-  set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS | T_OPTIMIZED); 
+  set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS); 
   syntax_opcode(syn) = (int)op;
-  set_symbol_value(syn, syn); /* this saves us an error check in the main eval section */
+  set_symbol_value(syn, syn); /* cdr(syn), this saves us an error check in the main eval section */
 
-  set_symbol_value(x, syn);
-  symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS | T_OPTIMIZED);
-  typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC | T_OPTIMIZED);
+  set_symbol_value(x, syn);   /* cdr(x) */
+  symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS);
+  typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC);
 
+  car(syn) = s7_make_symbol(sc, name);
   return(x);
 }
 
@@ -24131,6 +24179,23 @@ static s7_pointer find_symbol_or_bust_8(s7_scheme *sc, s7_pointer env, s7_pointe
   FIND_SYMBOL_OR_BUST(sc);
 } 
 
+static s7_pointer find_symbol_or_bust_9(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
+static s7_pointer find_symbol_or_bust_10(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
+static s7_pointer find_symbol_or_bust_11(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  FIND_SYMBOL_OR_BUST(sc);
+} 
+
+
+
 
 
 static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
@@ -24154,24 +24219,24 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
 }
 
 
-static bool just_constants(s7_scheme *sc, s7_pointer args)
-{
-  if (is_null(args))
-    return(true);
-  if ((!is_pair(args)) ||
-      (s7_is_symbol(car(args))) ||
-      (is_pair(car(args))))
-    return(false);
-  return(just_constants(sc, cdr(args)));
-}
+#if WITH_OPTIMIZATION
 
-
-static bool safe_with_constants(s7_scheme *sc, s7_pointer func, s7_pointer args)
-{
-  return((is_safe_procedure(func)) &&
-	 (just_constants(sc, args)));
-}
-
+      /* eq? (et al) of syntax have to know about the internal aliases:
+       *    (define (ho a) (if (> a 2) 3 4))
+       *    :(eq? (caaddr (procedure-source ho)) 'if)
+       *    #t
+       *    :(ho 1)
+       *    4
+       *    :(eq? (caaddr (procedure-source ho)) 'if)
+       *    #f
+       *
+       * but I'm using a==b everywhere, not just in s7_is_eq
+       *   so C code should use s7_unoptimize, and perhaps
+       *   make that available in Scheme?
+       *
+       * TODO: doc/test this
+       * TODO: try other bindings like func args with globals as *args (so they get hit by the optimizer)
+       */
 
 void s7_unoptimize(s7_scheme *sc, s7_pointer code)
 {
@@ -24183,88 +24248,156 @@ void s7_unoptimize(s7_scheme *sc, s7_pointer code)
       if ((s7_is_symbol(car(code))) &&
 	  (is_syntax(symbol_value(car(code)))) &&
 	  ((int)syntax_opcode(symbol_value(car(code))) >= OP_IF_UNCHECKED))
-	{
-	  switch ((int)syntax_opcode(symbol_value(car(code))))
-	    {
-	    case OP_IF_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "if");
-	      break;
-	      
-	    case OP_QUOTE_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "quote");
-	      break;
-	      
-	    case OP_LAMBDA_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "lambda");
-	      break;
-	      
-	    case OP_LET_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "let");
-	      break;
-	      
-	    case OP_CASE_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "case");
-	      break;
-	      
-	    case OP_SET_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "set!");
-	      break;
-	      
-	    case OP_LET_STAR_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "let*");
-	      break;
-	      
-	    case OP_LETREC_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "letrec");
-	      break;
-	      
-	    case OP_COND_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "cond");
-	      break;
-	      
-	    case OP_LAMBDA_STAR_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "lambda*");
-	      break;
-	      
-	    case OP_DO_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "do");
-	      break;
-	      
-	    case OP_DEFINE_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "define");
-	      break;
-	      
-	    case OP_DEFINE_STAR_UNCHECKED:
-	      car(code) = s7_make_symbol(sc, "define*");
-	      break;
-	      
-	    default:
-	      break;
-	    }
-	}
-      if (is_pair(car(code))) s7_unoptimize(sc, car(code));
-      if (is_pair(cdr(code))) s7_unoptimize(sc, cdr(code));
+	car(code) = cadar(code);
+      else s7_unoptimize(sc, car(code));
+      s7_unoptimize(sc, cdr(code));
     }
 }
 
 
-static void optimize_body(s7_scheme *sc, s7_pointer body)
+static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
 {
-  /* here we are only marking lists that start with a symbol and have no internal pairs
-   *   list length -> pair_data (on the cdr not the car)
-   *   if it looks optimizable, set the car to OP_CONSTANTS or OP_SYMBOLS (created at run-time, named the original proc name)
-   *     original function in the symbol value
-   *   OP_CONSTANTS is syntax in eval, so we jump there, check the func
-   *     if safe and len ok, call it, change op to OP_VALUE -> just return the saved value
-   *     else set it back to original
-   *   OP_SYMBOLS if safe, can use preset arg lists -- set len and so on
-   *    if not safe, reset
-   * reset = jump past the check that got us here -- never recheck!
-   * if no args, OP_JUST_APPLY? 
-   */
-  
+  #define H_unoptimize "(unoptimize code) erases all the optimizer info in code"
 
+  if ((s7_is_symbol(car(args))) &&
+      (is_syntax(symbol_value(car(args)))))
+    return(cadar(args));
+
+  s7_unoptimize(sc, car(args));
+  return(car(args));
 }
+
+static bool optimize(s7_scheme *sc, s7_pointer code)
+{
+  s7_pointer x;
+  for (x = code; (is_pair(x)) && (!is_checked(x)); x = cdr(x))
+    {
+      set_checked(x);
+      if (is_pair(car(x)))
+	{
+	  s7_pointer y;
+	  set_checked(car(x));
+	  y = caar(x);
+	  if (s7_is_symbol(y))
+	    {
+	      s7_pointer func;
+
+	      if (is_global(y))
+		func = symbol_value(symbol_global_slot(y));
+	      else 
+		{
+		  func = find_symbol(sc, sc->envir, y);
+		  if (is_not_null(func))
+		    func = symbol_value(func);
+		  else continue;
+		}
+
+	      if (is_procedure(func)) /* TODO: include applicable objects -- is_applicable */
+		{
+		  int pairs = 0, symbols = 0, args = 0;
+		  s7_pointer p;
+	      
+		  for (p = cdar(x); is_pair(p); p = cdr(p), args++)
+		    {
+		      if (is_pair(car(p)))
+			{
+			  pairs++;
+			  if (!is_checked(car(p)))
+			    optimize(sc, car(p));
+			}
+		      else
+			{
+			  if (s7_is_symbol(car(p)))
+			    symbols++;
+			}
+		    }
+
+		  if ((is_null(p)) &&                /* if not null, dotted list of args? */
+		      (args_match(sc, func, args)))  /* we have a legit call, at least syntactically */
+		    {
+		      switch (args)
+			{
+			case 0:                /* c_func, closure*, goto/continuation, {list}?, object eventually */
+			  if (is_c_function(func))
+			    {
+			      set_optimized(car(x));
+			      optimize_data(car(x)) = OP_C_THUNK;
+			      ecdr(car(x)) = func;
+			    }
+			  if ((is_closure(func)) &&
+			      (is_null(closure_args(func))))
+			    /* suboptimal, but just a test -- closure* needs to load up default args.
+			       also a rest arg matches 0 args, but its name needs to be added to the environment
+			     */
+			    {
+			      set_optimized(car(x));
+			      optimize_data(car(x)) = OP_THUNK;
+			      ecdr(car(x)) = func;
+			    }
+			  break;
+
+			case 1:
+			  if (pairs == 0)
+			    {
+			      if (is_c_function(func))
+				{
+				  if (is_safe_procedure(func))
+				    { /* subtract->negate, divide->invert? */
+				      set_optimized(car(x));
+				      if (symbols == 0)
+					optimize_data(car(x)) = OP_SAFE_C_C;
+				      else optimize_data(car(x)) = OP_SAFE_C_S;
+				      ecdr(car(x)) = func;
+				    }
+				}
+			    }
+			  break;
+
+			default:
+			  if (is_c_function(func))
+			    {
+			      if (is_safe_procedure(func))
+				{
+				  if ((pairs == 0) && (symbols == 0))
+				    {
+				      set_optimized(car(x));
+				      optimize_data(car(x)) = OP_SAFE_C_C;
+				      ecdr(car(x)) = func;
+				    }
+				}
+			    }
+			  break;
+			}
+		    }
+		}
+	      else
+		{
+		  s7_pointer p;
+		  for (p = cdar(x); is_pair(p); p = cdr(p))
+		    if ((is_pair(car(p))) &&
+			(!is_checked(car(p))))
+		      optimize(sc, car(p));
+		}
+	    }
+	}
+    }
+  return(false);
+}
+
+
+#else
+
+void s7_unoptimize(s7_scheme *sc, s7_pointer code)
+{
+}
+
+static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
+{
+  #define H_unoptimize "(unoptimize code) erases all the optimizer info in code"
+  return(car(args));
+}
+
+#endif
 
 
 static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args)
@@ -24687,7 +24820,9 @@ static s7_pointer check_if(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
-      car(ecdr(sc->code)) = sc->IF_UNCHECKED;
+      if (s7_is_symbol(car(sc->code)))
+	car(ecdr(sc->code)) = sc->IF_SYMBOL;
+      else car(ecdr(sc->code)) = sc->IF_UNCHECKED;
     }
 #endif
   
@@ -24730,6 +24865,9 @@ static s7_pointer check_define(s7_scheme *sc)
       if (sc->op == OP_DEFINE_STAR)
 	check_lambda_star_args(sc, cdar(sc->code));
       else check_lambda_args(sc, cdar(sc->code));
+#if WITH_OPTIMIZATION
+      optimize(sc, cdr(sc->code));
+#endif
     }
 
 #if WITH_OPTIMIZATION
@@ -24820,6 +24958,7 @@ static s7_pointer check_do(s7_scheme *sc)
 
 	  if (!s7_is_symbol(caar(x)))                     /* (do ((3 2)) ()) */
 	    return(eval_error(sc, "do step variable: ~S is not a symbol?", x));
+
 	  if (is_immutable(caar(x)))                     /* (do ((pi 3 (+ pi 1))) ((= pi 4)) pi) */
 	    return(eval_error(sc, "do step variable: ~S is immutable", x));
 	  
@@ -24974,6 +25113,7 @@ static s7_pointer check_cond(s7_scheme *sc)
 
 
 
+
 /* -------------------------------- eval -------------------------------- */
 
 /* all explicit write-* in eval assume current-output-port -- error fallback handling, etc */
@@ -25083,7 +25223,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->current_file = NULL;
       goto START;
       
-      
+
       /* read and evaluate string expression(s?)
        *    assume caller (C via g_eval_c_string) is dealing with the string port
        */
@@ -25762,7 +25902,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_BEGIN1:
-      if (!is_pair(sc->code)) 
+      if (!is_pair(sc->code))                   /* (begin) -> () */
 	{
 	  if (is_not_null(sc->code))            /* (begin . 1), (cond (#t . 1)) */
 	    return(eval_error_with_name(sc, "~A: unexpected dot or '() at end of body? ~A", sc->code));
@@ -25807,6 +25947,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto START_WITHOUT_POP_STACK;
 	    }
 
+#if WITH_OPTIMIZATION
+	  if (is_optimized(sc->code))
+	    {
+	      /* car is presumed to be a function/macro
+	       *   optimized_data(sc->code) is an opcode if the function value is the same as when we did the optimization
+	       */
+	      if (is_global(carc))
+		sc->value = symbol_value(symbol_global_slot(carc));
+	      else sc->value = find_symbol_or_bust_10(sc, sc->envir, carc);
+	      if (sc->value == ecdr(sc->code))
+		{
+		  sc->args = cdr(sc->code);
+		  sc->op = optimize_data(sc->code);
+		  goto START_WITHOUT_POP_STACK;
+		}
+	      /* else cancel all the optimization info -- someone stepped on our symbol */
+	      clear_optimized(sc->code);
+	      optimize_data(sc->code) = 0;
+	      ecdr(sc->code) = sc->NIL;
+	      /* and fall into the normal evaluator */
+	    }
+#endif
 	  if (s7_is_symbol(carc))
 	    {
 	      /* checking for 0-arg case here is slower */
@@ -26237,6 +26399,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *
        * now (tfe 0 1000) triggers the stack increase.
        */
+
 
       switch (type(sc->code))
 	{
@@ -26707,7 +26870,34 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       /* ---------------- end OP_APPLY ---------------- */
 
+    case OP_SAFE_C_C:
+    case OP_C_THUNK:
+      sc->value = c_function_call(sc->value)(sc, sc->args);
+      goto START;
+
+    case OP_THUNK:
+      NEW_FRAME(sc, closure_environment(sc->value), sc->envir);
+      sc->code = closure_body(sc->value);
+      goto BEGIN;
+
+#if 0
+    case OP_RST_THUNK:
+    case OP_OPT_THUNK:
+    case OP_LST_THUNK:
+    case OP_C_OBJECT_THUNK:
+    case OP_GOTO_THUNK:
+    case OP_CONTINUATION_THUNK:
+#endif
+
+    case OP_SAFE_C_S:
+      if (is_global(car(sc->args)))
+	car(sc->TEMP_CELL_2) = symbol_value(symbol_global_slot(car(sc->args)));
+      else car(sc->TEMP_CELL_2) = find_symbol_or_bust_11(sc, sc->envir, car(sc->args));
+      sc->value = c_function_call(sc->value)(sc, sc->TEMP_CELL_2);
+      goto START;
       
+      
+
     case OP_QUOTE:
       check_quote(sc);
     case OP_QUOTE_UNCHECKED:
@@ -27135,18 +27325,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = car(sc->code);
       goto EVAL;
 
-      /* TODO: this means eq? (et al) of syntax has to know about the internal aliases:
-       *    (define (ho a) (if (> a 2) 3 4))
-       *    :(eq? (caaddr (procedure-source ho)) 'if)
-       *    #t
-       *    :(ho 1)
-       *    4
-       *    :(eq? (caaddr (procedure-source ho)) 'if)
-       *    #f
-       *
-       * but I'm using a==b everywhere, not just in s7_is_eq
-       *   so the perhaps procedure-source should keep/return a copy of the original, unoptimized source
-       */
+      
+    case OP_IF_SYMBOL:
+      if (is_global(car(sc->code)))
+	sc->value = symbol_value(symbol_global_slot(car(sc->code)));
+      else sc->value = find_symbol_or_bust_9(sc, sc->envir, car(sc->code));
+      if (is_true(sc, sc->value))
+	sc->code = cadr(sc->code);
+      else
+	sc->code = caddr(sc->code);
+      goto EVAL;
+
       
     case OP_IF1:
       if (is_true(sc, sc->value))
@@ -27646,6 +27835,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       check_lambda_args(sc, car(sc->code));
 
 #if WITH_OPTIMIZATION
+      optimize(sc, cdr(sc->code));
       if ((is_overlaid(sc->code)) &&
 	  (cdr(ecdr(sc->code)) == sc->code))
 	{
@@ -27669,6 +27859,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       check_lambda_star_args(sc, car(sc->code));
 
 #if WITH_OPTIMIZATION
+      optimize(sc, cdr(sc->code));
       if ((is_overlaid(sc->code)) &&
 	  (cdr(ecdr(sc->code)) == sc->code))
 	{
@@ -33713,18 +33904,19 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);     /* macro expansion in calling environment */
   assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR);
 
-  sc->IF_UNCHECKED = assign_internal_syntax(sc, "if", OP_IF_UNCHECKED);  
-  sc->QUOTE_UNCHECKED = assign_internal_syntax(sc, "quote", OP_QUOTE_UNCHECKED);  
-  sc->LET_UNCHECKED = assign_internal_syntax(sc, "let", OP_LET_UNCHECKED);  
-  sc->LET_STAR_UNCHECKED = assign_internal_syntax(sc, "let*", OP_LET_STAR_UNCHECKED);  
-  sc->LETREC_UNCHECKED = assign_internal_syntax(sc, "letrec", OP_LETREC_UNCHECKED);  
-  sc->SET_UNCHECKED = assign_internal_syntax(sc, "set", OP_SET_UNCHECKED);  
-  sc->CASE_UNCHECKED = assign_internal_syntax(sc, "case", OP_CASE_UNCHECKED);  
-  sc->COND_UNCHECKED = assign_internal_syntax(sc, "cond", OP_COND_UNCHECKED);  
-  sc->DO_UNCHECKED = assign_internal_syntax(sc, "do", OP_DO_UNCHECKED);  
-  sc->LAMBDA_UNCHECKED = assign_internal_syntax(sc, "lambda", OP_LAMBDA_UNCHECKED);  
-  sc->LAMBDA_STAR_UNCHECKED = assign_internal_syntax(sc, "lambda", OP_LAMBDA_STAR_UNCHECKED);  
-  sc->DEFINE_UNCHECKED = assign_internal_syntax(sc, "define", OP_DEFINE_UNCHECKED);  
+  sc->IF_UNCHECKED =          assign_internal_syntax(sc, "if",      OP_IF_UNCHECKED);  
+  sc->IF_SYMBOL =             assign_internal_syntax(sc, "if",      OP_IF_SYMBOL);  
+  sc->QUOTE_UNCHECKED =       assign_internal_syntax(sc, "quote",   OP_QUOTE_UNCHECKED);  
+  sc->LET_UNCHECKED =         assign_internal_syntax(sc, "let",     OP_LET_UNCHECKED);  
+  sc->LET_STAR_UNCHECKED =    assign_internal_syntax(sc, "let*",    OP_LET_STAR_UNCHECKED);  
+  sc->LETREC_UNCHECKED =      assign_internal_syntax(sc, "letrec",  OP_LETREC_UNCHECKED);  
+  sc->SET_UNCHECKED =         assign_internal_syntax(sc, "set!",    OP_SET_UNCHECKED);  
+  sc->CASE_UNCHECKED =        assign_internal_syntax(sc, "case",    OP_CASE_UNCHECKED);  
+  sc->COND_UNCHECKED =        assign_internal_syntax(sc, "cond",    OP_COND_UNCHECKED);  
+  sc->DO_UNCHECKED =          assign_internal_syntax(sc, "do",      OP_DO_UNCHECKED);  
+  sc->LAMBDA_UNCHECKED =      assign_internal_syntax(sc, "lambda",  OP_LAMBDA_UNCHECKED);  
+  sc->LAMBDA_STAR_UNCHECKED = assign_internal_syntax(sc, "lambda",  OP_LAMBDA_STAR_UNCHECKED);  
+  sc->DEFINE_UNCHECKED =      assign_internal_syntax(sc, "define",  OP_DEFINE_UNCHECKED);  
   sc->DEFINE_STAR_UNCHECKED = assign_internal_syntax(sc, "define*", OP_DEFINE_STAR_UNCHECKED);  
 
   sc->LAMBDA = make_symbol(sc, "lambda");
@@ -34230,6 +34422,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "procedure-arity",           g_procedure_arity,          1, 0, false, H_procedure_arity);
   s7_define_safe_function(sc, "procedure-source",          g_procedure_source,         1, 0, false, H_procedure_source);
   s7_define_safe_function(sc, "procedure-environment",     g_procedure_environment,    1, 0, false, H_procedure_environment);
+  s7_define_safe_function(sc, "unoptimize",                g_unoptimize,               1, 0, false, H_unoptimize);
   
   s7_define_safe_function(sc, "not",                       g_not,                      1, 0, false, H_not);
   {

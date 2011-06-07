@@ -435,6 +435,7 @@ s7_pointer s7_procedure_environment(s7_pointer p);                          /* (
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);                 /* (procedure-arity x) -- returns a list (required optional rest?) */
 const char *s7_help(s7_scheme *sc, s7_pointer obj);                         /* (help obj) */
+void s7_unoptimize(s7_scheme *sc, s7_pointer code);                         /* (unoptimize obj) */
 
 bool s7_is_continuation(s7_pointer p);                                      /* (continuation? p) */
 s7_pointer s7_make_continuation(s7_scheme *sc);                             /* call/cc... (see example below) */
@@ -812,13 +813,13 @@ void s7_mark_object(s7_pointer p);
  * if you need any of these, let me know.
  */
 
-void s7_unoptimize(s7_scheme *sc, s7_pointer code);
+
 
 /* --------------------------------------------------------------------------------
  * 
  *        s7 changes
  *
- * 5-June:    s7_define_safe_function exported.
+ * 5-June:    s7_define_safe_function and s7_unoptimize exported; added unoptimize function in scheme.
  * 30-May:    environment->list and s7_environment_to_list since environments are no longer alists internally.
  * 26-May:    added s7_scheme argument to s7_procedure_setter and getter (old names had "with_setter_").
  * 28-Apr:    s7_help.

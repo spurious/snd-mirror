@@ -10589,6 +10589,10 @@ this prints:
 (test (if _no_var_ 1) 'error)
 (test (if (values) (values) (values) 1) 'error)
 (num-test (+ 1 (if #t (values 3 4) (values 5 6)) 2) 10)
+(let ()
+  (define (bad a) (if a 1 2 3))
+  (test (bad #f) 'error)
+  (test (bad #t) 'error))
 
 
 
@@ -62028,6 +62032,7 @@ etc
 (test (if (let ((if 3)) (> 2 if)) 4 5) 5)
 (test (let ('1 ) quote) 1)
 (test (let ((quote 1)) (+ quote 1)) 2)
+(test (do ((do 1)) (#t do)) 1)
 (test (do ((do 1 (+ do do))) ((> do 3) do)) 4)
 (test (do ((do 1 do) (j do do)) (do do)) 1)
 (test (do ((do do do)) (do do)) do)
