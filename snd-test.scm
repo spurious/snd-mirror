@@ -55583,11 +55583,12 @@ EDITS: 1
 	 (snd (find-sound res))
 	 (mxs (marks snd 0)))
     (if (not (= (length mxs) 2))
-	(snd-display #__line__ ";with-marked-sound marks: ~A " mxs))
-    (if (not (string=? (mark-name (car mxs)) "fm-violin 0 0.1"))
-	(snd-display #__line__ ";with-marked-sound name: ~A" (mark-name (car mxs))))
-    (if (fneq (maxamp snd) .1)
-	(snd-display #__line__ ";with-marked-sound maxamp: ~A" (maxamp snd)))
+	(snd-display #__line__ ";with-marked-sound marks: ~A " mxs)
+	(begin
+	  (if (not (string=? (mark-name (car mxs)) "fm-violin 0 0.1"))
+	      (snd-display #__line__ ";with-marked-sound name: ~A" (mark-name (car mxs))))
+	  (if (fneq (maxamp snd) .1)
+	      (snd-display #__line__ ";with-marked-sound maxamp: ~A" (maxamp snd)))))
     (close-sound snd))
   
   (set! (hook-functions mark-click-hook) '())
@@ -63407,16 +63408,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 
-30-May-11:
-187,729,794,441  PROGRAM TOTALS
-23,233,393,404  s7.c:eval [/home/bil/snd-12/snd]
-17,257,012,740  s7.c:eval'2 [/home/bil/snd-12/snd]
-15,962,314,929  ???:sin [/lib64/libm-2.12.so]
-15,670,684,007  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
-11,337,969,754  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
- 8,908,530,185  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
- 8,837,213,973  run.c:eval_ptree [/home/bil/snd-12/snd]
- 7,207,929,329  io.c:mus_write_1 [/home/bil/snd-12/snd]
- 3,690,213,483  s7.c:gc [/home/bil/snd-12/snd]
+7-June-11:
+183,245,863,228  PROGRAM TOTALS
+18,321,397,650  s7.c:eval [/home/bil/snd-12/snd]
+16,250,197,922  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
+15,931,013,887  ???:sin [/lib64/libm-2.12.so]
+13,006,565,574  s7.c:eval'2 [/home/bil/snd-12/snd]
+11,443,123,397  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
+ 8,943,311,637  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
+ 8,719,232,461  run.c:eval_ptree [/home/bil/snd-12/snd]
+ 7,207,805,513  io.c:mus_write_1 [/home/bil/snd-12/snd]
+ 4,178,193,545  clm.c:mus_src [/home/bil/snd-12/snd]
+ 2,976,473,353  s7.c:gc [/home/bil/snd-12/snd]
+ 2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-12/snd]
+ 2,791,155,948  ???:cos [/lib64/libm-2.12.so]
+ 2,702,262,675  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
+ 1,940,436,785  s7.c:safe_c_p_1 [/home/bil/snd-12/snd]
 |#
 

@@ -1337,19 +1337,19 @@ void mus_vct_init(void)
 
   XEN_DEFINE_PROCEDURE(S_make_vct,          g_make_vct_w,      1, 1, 0, H_make_vct);
   XEN_DEFINE_PROCEDURE(S_vct_copy,          g_vct_copy_w,      1, 0, 0, H_vct_copy);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_p,             g_vct_p_w,         1, 0, 0, H_vct_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_p,        g_vct_p_w,         1, 0, 0, H_vct_p);
   XEN_DEFINE_PROCEDURE(S_list_to_vct,       g_list_to_vct_w,   1, 0, 0, H_list_to_vct);
   XEN_DEFINE_PROCEDURE(S_vct_to_list,       g_vct_to_list_w,   1, 0, 0, H_vct_to_list);
   XEN_DEFINE_PROCEDURE(S_vector_to_vct,     g_vector_to_vct_w, 1, 0, 0, H_vector_to_vct);
   XEN_DEFINE_PROCEDURE(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_length,        g_vct_length_w,    1, 0, 0, H_vct_length);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_length,   g_vct_length_w,    1, 0, 0, H_vct_length);
   XEN_DEFINE_PROCEDURE(S_vct_multiplyB,     g_vct_multiply_w,  2, 0, 0, H_vct_multiplyB);
   XEN_DEFINE_PROCEDURE(S_vct_scaleB,        g_vct_scale_w,     2, 0, 0, H_vct_scaleB);
   XEN_DEFINE_PROCEDURE(S_vct_fillB,         g_vct_fill_w,      2, 0, 0, H_vct_fillB);
   XEN_DEFINE_PROCEDURE(S_vct_addB,          g_vct_add_w,       2, 1, 0, H_vct_addB);
   XEN_DEFINE_PROCEDURE(S_vct_subtractB,     g_vct_subtract_w,  2, 0, 0, H_vct_subtractB);
   XEN_DEFINE_PROCEDURE(S_vct_offsetB,       g_vct_offset_w,    2, 0, 0, H_vct_offsetB);
-  XEN_DEFINE_SAFE_PROCEDURE(S_vct_peak,          g_vct_peak_w,      1, 0, 0, H_vct_peak);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_peak,     g_vct_peak_w,      1, 0, 0, H_vct_peak);
   XEN_DEFINE_PROCEDURE(S_vct_moveB,         g_vct_move_w,      3, 1, 0, H_vct_moveB);
   XEN_DEFINE_PROCEDURE(S_vct_subseq,        g_vct_subseq_w,    2, 2, 0, H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,               g_vct_w,           0, 0, 1, H_vct);
