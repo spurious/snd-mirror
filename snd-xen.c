@@ -2715,6 +2715,7 @@ XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
 
 
 /* -------------------------------------------------------------------------------- */
+
 void g_xen_initialize(void)
 {
   add_source_file_extension(XEN_FILE_EXTENSION);
@@ -2755,8 +2756,8 @@ void g_xen_initialize(void)
   gc_protection = XEN_FALSE;
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print);
-  XEN_DEFINE_PROCEDURE("little-endian?", g_little_endian_w, 0, 0, 0, "return " PROC_TRUE " if host is little endian");
+  XEN_DEFINE_SAFE_PROCEDURE(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print);
+  XEN_DEFINE_SAFE_PROCEDURE("little-endian?", g_little_endian_w, 0, 0, 0, "return " PROC_TRUE " if host is little endian");
 
 #if HAVE_SCHEME
   XEN_EVAL_C_STRING("(define fmod modulo)");
@@ -2765,25 +2766,25 @@ void g_xen_initialize(void)
 #endif
 
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
-  XEN_DEFINE_PROCEDURE(S_bes_j0, g_j0_w,     1, 0, 0, H_j0);
-  XEN_DEFINE_PROCEDURE(S_bes_j1, g_j1_w,     1, 0, 0, H_j1);
-  XEN_DEFINE_PROCEDURE(S_bes_jn, g_jn_w,     2, 0, 0, H_jn);
-  XEN_DEFINE_PROCEDURE(S_bes_y0, g_y0_w,     1, 0, 0, H_y0);
-  XEN_DEFINE_PROCEDURE(S_bes_y1, g_y1_w,     1, 0, 0, H_y1);
-  XEN_DEFINE_PROCEDURE(S_bes_yn, g_yn_w,     2, 0, 0, H_yn);
-  XEN_DEFINE_PROCEDURE("erf",    g_erf_w,    1, 0, 0, H_erf);
-  XEN_DEFINE_PROCEDURE("erfc",   g_erfc_w,   1, 0, 0, H_erfc);
-  XEN_DEFINE_PROCEDURE("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bes_j0, g_j0_w,     1, 0, 0, H_j0);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bes_j1, g_j1_w,     1, 0, 0, H_j1);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bes_jn, g_jn_w,     2, 0, 0, H_jn);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bes_y0, g_y0_w,     1, 0, 0, H_y0);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bes_y1, g_y1_w,     1, 0, 0, H_y1);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bes_yn, g_yn_w,     2, 0, 0, H_yn);
+  XEN_DEFINE_SAFE_PROCEDURE("erf",    g_erf_w,    1, 0, 0, H_erf);
+  XEN_DEFINE_SAFE_PROCEDURE("erfc",   g_erfc_w,   1, 0, 0, H_erfc);
+  XEN_DEFINE_SAFE_PROCEDURE("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_bes_i0, g_i0_w,     1, 0, 0, H_i0);
 
 #if HAVE_GSL
-  XEN_DEFINE_PROCEDURE(S_bes_i1, g_i1_w,     1, 0, 0, H_i1);
-  XEN_DEFINE_PROCEDURE(S_bes_in, g_in_w,     2, 0, 0, H_in);
-  XEN_DEFINE_PROCEDURE(S_bes_k0, g_k0_w,     1, 0, 0, H_k0);
-  XEN_DEFINE_PROCEDURE(S_bes_k1, g_k1_w,     1, 0, 0, H_k1);
-  XEN_DEFINE_PROCEDURE(S_bes_kn, g_kn_w,     2, 0, 0, H_kn);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bes_i1, g_i1_w,     1, 0, 0, H_i1);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bes_in, g_in_w,     2, 0, 0, H_in);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bes_k0, g_k0_w,     1, 0, 0, H_k0);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bes_k1, g_k1_w,     1, 0, 0, H_k1);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bes_kn, g_kn_w,     2, 0, 0, H_kn);
 
   XEN_DEFINE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
   XEN_DEFINE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);

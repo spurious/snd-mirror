@@ -6284,16 +6284,16 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_header_type,   g_header_type_w,   H_header_type,   S_setB S_header_type,   g_set_header_type_w,    0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_comment,       g_comment_w,       H_comment,       S_setB S_comment,       g_set_comment_w,        0, 1, 1, 1);
 
-  XEN_DEFINE_PROCEDURE(S_sound_p,               g_sound_p_w,          1, 0, 0, H_sound_p);
-  XEN_DEFINE_PROCEDURE(S_bomb,                  g_bomb_w,             0, 2, 0, H_bomb);
-  XEN_DEFINE_PROCEDURE(S_find_sound,            g_find_sound_w,       1, 1, 0, H_find_sound);
-  XEN_DEFINE_PROCEDURE(S_file_name,             g_file_name_w,        0, 1, 0, H_file_name);
-  XEN_DEFINE_PROCEDURE(S_short_file_name,       g_short_file_name_w,  0, 1, 0, H_short_file_name);
-  XEN_DEFINE_PROCEDURE(S_save_controls,         g_save_controls_w,    0, 1, 0, H_save_controls);
-  XEN_DEFINE_PROCEDURE(S_restore_controls,      g_restore_controls_w, 0, 1, 0, H_restore_controls);
-  XEN_DEFINE_PROCEDURE(S_reset_controls,        g_reset_controls_w,   0, 1, 0, H_reset_controls);
-  XEN_DEFINE_PROCEDURE(S_select_sound,          g_select_sound_w,     1, 0, 0, H_select_sound);
-  XEN_DEFINE_PROCEDURE(S_select_channel,        g_select_channel_w,   0, 1, 0, H_select_channel);
+  XEN_DEFINE_SAFE_PROCEDURE(S_sound_p,               g_sound_p_w,          1, 0, 0, H_sound_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_bomb,                  g_bomb_w,             0, 2, 0, H_bomb);
+  XEN_DEFINE_SAFE_PROCEDURE(S_find_sound,            g_find_sound_w,       1, 1, 0, H_find_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_file_name,             g_file_name_w,        0, 1, 0, H_file_name);
+  XEN_DEFINE_SAFE_PROCEDURE(S_short_file_name,       g_short_file_name_w,  0, 1, 0, H_short_file_name);
+  XEN_DEFINE_SAFE_PROCEDURE(S_save_controls,         g_save_controls_w,    0, 1, 0, H_save_controls);
+  XEN_DEFINE_SAFE_PROCEDURE(S_restore_controls,      g_restore_controls_w, 0, 1, 0, H_restore_controls);
+  XEN_DEFINE_SAFE_PROCEDURE(S_reset_controls,        g_reset_controls_w,   0, 1, 0, H_reset_controls);
+  XEN_DEFINE_SAFE_PROCEDURE(S_select_sound,          g_select_sound_w,     1, 0, 0, H_select_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_select_channel,        g_select_channel_w,   0, 1, 0, H_select_channel);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_sound, g_selected_sound_w, H_selected_sound, 
 				   S_setB S_selected_sound, g_select_sound_w,  0, 0, 1, 0);
@@ -6304,14 +6304,14 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
   XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w,  0, 2, 0, H_finish_progress_report);
   XEN_DEFINE_PROCEDURE(S_progress_report,        g_progress_report_w,         1, 2, 0, H_progress_report);
 
-  XEN_DEFINE_PROCEDURE(S_close_sound,            g_close_sound_w,             0, 1, 0, H_close_sound);
-  XEN_DEFINE_PROCEDURE(S_update_sound,           g_update_sound_w,            0, 1, 0, H_update_sound);
-  XEN_DEFINE_PROCEDURE(S_save_sound,             g_save_sound_w,              0, 1, 0, H_save_sound);
-  XEN_DEFINE_PROCEDURE(S_open_sound,             g_open_sound_w,              1, 0, 0, H_open_sound);
-  XEN_DEFINE_PROCEDURE(S_open_raw_sound,         g_open_raw_sound_w,          0, 0, 1, H_open_raw_sound);
-  XEN_DEFINE_PROCEDURE(S_view_sound,             g_view_sound_w,              1, 0, 0, H_view_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_close_sound,            g_close_sound_w,             0, 1, 0, H_close_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_update_sound,           g_update_sound_w,            0, 1, 0, H_update_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_save_sound,             g_save_sound_w,              0, 1, 0, H_save_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_open_sound,             g_open_sound_w,              1, 0, 0, H_open_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_open_raw_sound,         g_open_raw_sound_w,          0, 0, 1, H_open_raw_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_view_sound,             g_view_sound_w,              1, 0, 0, H_view_sound);
   XEN_DEFINE_PROCEDURE(S_new_sound,              g_new_sound_w,               0, 0, 1, H_new_sound);
-  XEN_DEFINE_PROCEDURE(S_revert_sound,           g_revert_sound_w,            0, 1, 0, H_revert_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_revert_sound,           g_revert_sound_w,            0, 1, 0, H_revert_sound);
   XEN_DEFINE_PROCEDURE(S_save_sound_as,          g_save_sound_as_w,           0, 0, 1, H_save_sound_as);
   XEN_DEFINE_PROCEDURE(S_apply_controls,         g_apply_controls_w,          0, 4, 0, H_apply_controls);
   XEN_DEFINE_PROCEDURE(S_controls_to_channel,    g_controls_to_channel_w,     0, 6, 0, H_controls_to_channel);

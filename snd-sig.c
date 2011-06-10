@@ -6906,10 +6906,10 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_scale_by,                    g_scale_by_w,                    1, 2, 0, H_scale_by);
   XEN_DEFINE_PROCEDURE(S_env_selection,               g_env_selection_w,               1, 1, 0, H_env_selection);
   XEN_DEFINE_PROCEDURE(S_env_sound,                   g_env_sound_w,                   1, 6, 0, H_env_sound);
-  XEN_DEFINE_PROCEDURE(S_fft,                         g_fft_w,                         2, 1, 0, H_fft);
-  XEN_DEFINE_PROCEDURE(S_snd_spectrum,                g_snd_spectrum_w,                1, 6, 0, H_snd_spectrum);
-  XEN_DEFINE_PROCEDURE(S_convolve_with,               g_convolve_with_w,               1, 4, 0, H_convolve_with);
-  XEN_DEFINE_PROCEDURE(S_convolve_selection_with,     g_convolve_selection_with_w,     1, 1, 0, H_convolve_selection_with);
+  XEN_DEFINE_SAFE_PROCEDURE(S_fft,                    g_fft_w,                         2, 1, 0, H_fft);
+  XEN_DEFINE_SAFE_PROCEDURE(S_snd_spectrum,           g_snd_spectrum_w,                1, 6, 0, H_snd_spectrum);
+  XEN_DEFINE_SAFE_PROCEDURE(S_convolve_with,          g_convolve_with_w,               1, 4, 0, H_convolve_with);
+  XEN_DEFINE_SAFE_PROCEDURE(S_convolve_selection_with, g_convolve_selection_with_w,     1, 1, 0, H_convolve_selection_with);
   XEN_DEFINE_PROCEDURE(S_src_sound,                   g_src_sound_w,                   1, 4, 0, H_src_sound);
   XEN_DEFINE_PROCEDURE(S_src_selection,               g_src_selection_w,               1, 1, 0, H_src_selection);
   XEN_DEFINE_PROCEDURE(S_filter_channel,              g_filter_channel_w,              1, 8, 0, H_filter_channel);

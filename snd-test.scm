@@ -56890,7 +56890,7 @@ EDITS: 1
 	((= i 1000))
       (let* ((pm (- 1.0 (random 2.0)))
 	     (val1 (oscil gen1 0.0 pm))
-	     (val2 (run-with-fm-and-pm gen2 0.0 pm)))
+	     (val2 (run-with-fm-and-pm gen2 0.0 pm))) ; generators.scm
 	(if (fneq val1 val2)
 	    (snd-display #__line__ ";run-with-fm-and-pm: ~A ~A" val1 val2)))))
   
