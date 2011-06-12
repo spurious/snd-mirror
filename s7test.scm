@@ -34,24 +34,27 @@
 	 (defined? 'mus-rand-seed))
     (set! (mus-rand-seed) (current-time)))
 
-(define (ok? tst result expected)
-  (if (not (equal? result expected))
-      (format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) tst result expected)))
+(define (ok? otst ola oexp)
+  (let ((result (catch #t ola
+		       (lambda args 
+			 (if (not (eq? oexp 'error)) 
+			     (begin (display args) (newline)))
+			 'error))))
+    (if (not (equal? result oexp))
+	(format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) otst result oexp))))
 
 (defmacro test (tst expected) ;(display tst) (newline)
-  `(let ((result (catch #t 
-			(lambda () ,tst) 
-			(lambda args 
-			  (if (not (eq? ,expected 'error)) 
-			      (begin (display args) (newline)))
-			  'error))))
-     (ok? ',tst result ,expected)))
+  `(ok? ',tst (lambda () ,tst) ,expected))
+
+(define (tok? otst ola)
+  (let* ((data #f)
+	 (result (catch #t ola (lambda args (set! data args) 'error))))
+    (if (or (not result)
+	    (eq? result 'error))
+	(format #t "~A: ~A got ~S ~A~%~%" (port-line-number) otst result (or data "")))))
 
 (defmacro test-t (tst) ;(display tst) (newline)
-  `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
-     (if (or (not result)
-	     (eq? result 'error))
-	 (format #t "~A: ~A got ~S~%~%" (port-line-number) ',tst result))))
+  `(tok? ',tst (lambda () ,tst)))
 
 (defmacro test-e (tst op arg) ;(display tst) (newline)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
@@ -185,9 +188,12 @@
 						      (+ (real-part n) (* 0+i (imag-part n)))))))))))))
 	    (newline) (newline)))))
 
+(define (nok? otst ola oexp)
+  (let ((result (catch #t ola (lambda args 'error))))
+     (number-ok? otst result oexp)))
+
 (defmacro num-test (tst expected) ;(display tst) (newline)
-  `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
-     (number-ok? ',tst result ,expected)))
+  `(nok? ',tst  (lambda () ,tst) ,expected))
 
 (define-macro (num-test-1 proc val tst expected)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
@@ -13633,6 +13639,7 @@ time, so that the displayed results are
 (test (let foo () 1) 1)
 (test (let ((f -)) (let f ((n (f 1))) n)) -1)
 (test (let () 1 2 3 4) 4)
+(test (+ 3 (let () (+ 1 2))) 6)
 
 (test (let ((x 1)) (let ((x 32) (y x)) y)) 1)
 (test (let ((x 1)) (letrec ((y (if #f x 1)) (x 32)) 1)) 1)
@@ -62022,11 +62029,11 @@ etc
 
 ;;; these can slow us down if included in their normal place
 
-(test (define 'quote 'quote) 'error)
+;(test (define 'quote 'quote) 'error)
 (test (define (and a) a) 'error)
 (test (define-constant and 1) 'error)
-(test (define-macro (quote a) quote) 'error)
-(test (define 'hi 1) 'error)
+;(test (define-macro (quote a) quote) 'error)
+;(test (define 'hi 1) 'error)
 (test (let ((if #t)) (or if)) #t)
 (test (let ((if +)) (if 1 2 3)) 6)
 (test (if (let ((if 3)) (> 2 if)) 4 5) 5)
