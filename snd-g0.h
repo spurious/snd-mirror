@@ -31,6 +31,7 @@
 typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
 #define widget_t GtkWidget*
+
 #if (!HAVE_GTK_WIDGET_GET_VISIBLE)
   /* 2.17 -- actually 2.14 also complains but it doesn't provide gtk_widget_get_visible! */
   #define widget_is_active(Wid) GTK_WIDGET_VISIBLE(Wid)
@@ -39,6 +40,28 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #endif
 #define activate_widget(Wid) gtk_widget_show(Wid)
 #define deactivate_widget(Wid) gtk_widget_hide(Wid)
+
+#ifndef GTK_IS_VBOX
+#define GTK_IS_VBOX(Obj) GTK_IS_BOX(Obj)
+#define GTK_IS_HBOX(Obj) GTK_IS_BOX(Obj)
+#define GTK_IS_VPANED(Obj) GTK_IS_PANED(Obj)
+#define GTK_IS_HPANED(Obj) GTK_IS_PANED(Obj)
+#define GTK_IS_VSCALE(Obj) GTK_IS_SCALE(Obj)
+#define GTK_IS_HSCALE(Obj) GTK_IS_SCALE(Obj)
+
+/* TODO: vbox looks like crap because it doesn't change size when its parent does! */
+#define gtk_vbox_new(H, S) gtk_box_new(GTK_ORIENTATION_VERTICAL, S)
+#define gtk_hbox_new(H, S) gtk_box_new(GTK_ORIENTATION_HORIZONTAL, S)
+#define gtk_vscrollbar_new(S) gtk_scrollbar_new(GTK_ORIENTATION_VERTICAL, S)
+#define gtk_hscrollbar_new(S) gtk_scrollbar_new(GTK_ORIENTATION_HORIZONTAL, S)
+#define gtk_vscale_new(S) gtk_scale_new(GTK_ORIENTATION_VERTICAL, S)
+#define gtk_hscale_new(S) gtk_scale_new(GTK_ORIENTATION_HORIZONTAL, S)
+#define gtk_vpaned_new() gtk_paned_new(GTK_ORIENTATION_VERTICAL)
+#define gtk_hpaned_new() gtk_paned_new(GTK_ORIENTATION_HORIZONTAL)
+#define gtk_vseparator_new() gtk_separator_new(GTK_ORIENTATION_VERTICAL)
+#define gtk_hseparator_new() gtk_separator_new(GTK_ORIENTATION_HORIZONTAL)
+#endif
+
 
 #define XEN_WRAP_WIDGET(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
 #define XEN_WRAP_WINDOW(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)

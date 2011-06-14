@@ -1467,10 +1467,10 @@
 ;;; 2.91.6 (CLNG "GDK_TYPE_INTERP_TYPE")
 
 
-(CCAST "GTK_VBOX(obj)" "GtkVBox*")
-(CCHK "GTK_IS_VBOX(obj)" "GtkVBox*")
-;;;;(CFNC "GType gtk_vbox_get_type void")
-(CFNC "GtkWidget* gtk_vbox_new gboolean homogeneous gint spacing")
+;;; 3.1.6 (CCAST "GTK_VBOX(obj)" "GtkVBox*")
+;;; 3.1.6 (CCHK "GTK_IS_VBOX(obj)" "GtkVBox*")
+;;; 3.1.6 ;;;;(CFNC "GType gtk_vbox_get_type void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_vbox_new gboolean homogeneous gint spacing")
 (CCAST "GTK_ACCEL_GROUP(object)" "GtkAccelGroup*")
 (CCHK "GTK_IS_ACCEL_GROUP(object)" "GtkAccelGroup*")
 (CINT "GTK_ACCEL_VISIBLE" "GtkAccelFlags")
@@ -2115,35 +2115,35 @@
 (CFNC "GtkPositionType gtk_handle_box_get_handle_position GtkHandleBox* handle_box")
 (CFNC "void gtk_handle_box_set_snap_edge GtkHandleBox* handle_box GtkPositionType edge")
 (CFNC "GtkPositionType gtk_handle_box_get_snap_edge GtkHandleBox* handle_box")
-(CCAST "GTK_HBUTTON_BOX(obj)" "GtkHButtonBox*")
-(CCHK "GTK_IS_HBUTTON_BOX(obj)" "GtkHButtonBox*")
-;;;;(CFNC "GType gtk_hbutton_box_get_type void")
-(CFNC "GtkWidget* gtk_hbutton_box_new void")
-(CCAST "GTK_HBOX(obj)" "GtkHBox*")
-(CCHK "GTK_IS_HBOX(obj)" "GtkHBox*")
-;;;;(CFNC "GType gtk_hbox_get_type void")
-(CFNC "GtkWidget* gtk_hbox_new gboolean homogeneous gint spacing")
-(CCAST "GTK_HPANED(obj)" "GtkHPaned*")
-(CCHK "GTK_IS_HPANED(obj)" "GtkHPaned*")
-;;;;(CFNC "GType gtk_hpaned_get_type void")
-(CFNC "GtkWidget* gtk_hpaned_new void")
+;;; 3.1.6 (CCAST "GTK_HBUTTON_BOX(obj)" "GtkHButtonBox*")
+;;; 3.1.6 (CCHK "GTK_IS_HBUTTON_BOX(obj)" "GtkHButtonBox*")
+;;; 3.1.6 ;;;;(CFNC "GType gtk_hbutton_box_get_type void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_hbutton_box_new void")
+;;; 3.1.6 (CCAST "GTK_HBOX(obj)" "GtkHBox*")
+;;; 3.1.6 (CCHK "GTK_IS_HBOX(obj)" "GtkHBox*")
+;;; 3.1.6 ;;;;(CFNC "GType gtk_hbox_get_type void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_hbox_new gboolean homogeneous gint spacing")
+;;; 3.1.6 (CCAST "GTK_HPANED(obj)" "GtkHPaned*")
+;;; 3.1.6 (CCHK "GTK_IS_HPANED(obj)" "GtkHPaned*")
+;;; 3.1.6 ;;;;(CFNC "GType gtk_hpaned_get_type void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_hpaned_new void")
 ;;; 2.91.5 (CCAST "GTK_HRULER(obj)" "GtkHRuler*")
 ;;; 2.91.5 (CCHK "GTK_IS_HRULER(obj)" "GtkHRuler*")
 ;;;;(CFNC "GType gtk_hruler_get_type void")
 ;;; 2.91.5 (CFNC "GtkWidget* gtk_hruler_new void")
-(CCAST "GTK_HSCALE(obj)" "GtkHScale*")
-(CCHK "GTK_IS_HSCALE(obj)" "GtkHScale*")
-;;;;(CFNC "GType gtk_hscale_get_type void")
-(CFNC "GtkWidget* gtk_hscale_new GtkAdjustment* @adjustment")
-(CFNC "GtkWidget* gtk_hscale_new_with_range gdouble min gdouble max gdouble step")
-(CCAST "GTK_HSCROLLBAR(obj)" "GtkHScrollbar*")
-(CCHK "GTK_IS_HSCROLLBAR(obj)" "GtkHScrollbar*")
-;;;;(CFNC "GType gtk_hscrollbar_get_type void")
-(CFNC "GtkWidget* gtk_hscrollbar_new GtkAdjustment* @adjustment")
-(CCAST "GTK_HSEPARATOR(obj)" "GtkHSeparator*")
-(CCHK "GTK_IS_HSEPARATOR(obj)" "GtkHSeparator*")
-;;;;(CFNC "GType gtk_hseparator_get_type void")
-(CFNC "GtkWidget* gtk_hseparator_new void")
+;;; 3.1.6 (CCAST "GTK_HSCALE(obj)" "GtkHScale*")
+;;; 3.1.6 (CCHK "GTK_IS_HSCALE(obj)" "GtkHScale*")
+;;; 3.1.6 ;;;;(CFNC "GType gtk_hscale_get_type void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_hscale_new GtkAdjustment* @adjustment")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_hscale_new_with_range gdouble min gdouble max gdouble step")
+;;; 3.1.6 (CCAST "GTK_HSCROLLBAR(obj)" "GtkHScrollbar*")
+;;; 3.1.6 (CCHK "GTK_IS_HSCROLLBAR(obj)" "GtkHScrollbar*")
+;;; 3.1.6 ;;;;(CFNC "GType gtk_hscrollbar_get_type void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_hscrollbar_new GtkAdjustment* @adjustment")
+;;; 3.1.6 (CCAST "GTK_HSEPARATOR(obj)" "GtkHSeparator*")
+;;; 3.1.6 (CCHK "GTK_IS_HSEPARATOR(obj)" "GtkHSeparator*")
+;;; 3.1.6 ;;;;(CFNC "GType gtk_hseparator_get_type void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_hseparator_new void")
 (CCAST "GTK_ICON_FACTORY(object)" "GtkIconFactory*")
 (CCHK "GTK_IS_ICON_FACTORY(object)" "GtkIconFactory*")
 ;;;;(CFNC "GType gtk_icon_factory_get_type void")
@@ -3593,10 +3593,10 @@
 ;(CFNC "GtkFlagValue* gtk_type_flags_get_values GType flags_type")
 ;(CFNC "GtkEnumValue* gtk_type_enum_find_value GType enum_type gchar* value_name")
 ;(CFNC "GtkFlagValue* gtk_type_flags_find_value GType flags_type gchar* value_name")
-(CCAST "GTK_VBUTTON_BOX(obj)" "GtkVButtonBox*")
-(CCHK "GTK_IS_VBUTTON_BOX(obj)" "GtkVButtonBox*")
-;;;;(CFNC "GType gtk_vbutton_box_get_type void")
-(CFNC "GtkWidget* gtk_vbutton_box_new void")
+;;; 3.1.6 (CCAST "GTK_VBUTTON_BOX(obj)" "GtkVButtonBox*")
+;;; 3.1.6 (CCHK "GTK_IS_VBUTTON_BOX(obj)" "GtkVButtonBox*")
+;;; 3.1.6 ;;;;(CFNC "GType gtk_vbutton_box_get_type void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_vbutton_box_new void")
 ;;;; (CINT "GTK_MAJOR_VERSION")
 ;;;; (CINT "GTK_MINOR_VERSION")
 ;;;; (CINT "GTK_MICRO_VERSION")
@@ -3612,27 +3612,27 @@
 ;;; 2.91.2 (CFNC "void gtk_viewport_set_vadjustment GtkViewport* viewport GtkAdjustment* @adjustment")
 (CFNC "void gtk_viewport_set_shadow_type GtkViewport* viewport GtkShadowType type")
 (CFNC "GtkShadowType gtk_viewport_get_shadow_type GtkViewport* viewport")
-(CCAST "GTK_VPANED(obj)" "GtkVPaned*")
-(CCHK "GTK_IS_VPANED(obj)" "GtkVPaned*")
-;;;;(CFNC "GType gtk_vpaned_get_type void")
-(CFNC "GtkWidget* gtk_vpaned_new void")
+;;; 3.1.6 (CCAST "GTK_VPANED(obj)" "GtkVPaned*")
+;;; 3.1.6 (CCHK "GTK_IS_VPANED(obj)" "GtkVPaned*")
+;;; 3.1.6 ;;;;(CFNC "GType gtk_vpaned_get_type void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_vpaned_new void")
 ;;; 2.91.5 (CCAST "GTK_VRULER(obj)" "GtkVRuler*")
 ;;; 2.91.5 (CCHK "GTK_IS_VRULER(obj)" "GtkVRuler*")
 ;;;;(CFNC "GType gtk_vruler_get_type void")
 ;;; 2.91.5 (CFNC "GtkWidget* gtk_vruler_new void")
-(CCAST "GTK_VSCALE(obj)" "GtkVScale*")
-(CCHK "GTK_IS_VSCALE(obj)" "GtkVScale*")
-;;;;(CFNC "GType gtk_vscale_get_type void")
-(CFNC "GtkWidget* gtk_vscale_new GtkAdjustment* @adjustment")
-(CFNC "GtkWidget* gtk_vscale_new_with_range gdouble min gdouble max gdouble step")
-(CCAST "GTK_VSCROLLBAR(obj)" "GtkVScrollbar*")
-(CCHK "GTK_IS_VSCROLLBAR(obj)" "GtkVScrollbar*")
-;;;;(CFNC "GType gtk_vscrollbar_get_type void")
-(CFNC "GtkWidget* gtk_vscrollbar_new GtkAdjustment* @adjustment")
-(CCAST "GTK_VSEPARATOR(obj)" "GtkVSeparator*")
-(CCHK "GTK_IS_VSEPARATOR(obj)" "GtkVSeparator*")
+;;; 3.1.6 (CCAST "GTK_VSCALE(obj)" "GtkVScale*")
+;;; 3.1.6 (CCHK "GTK_IS_VSCALE(obj)" "GtkVScale*")
+;;; 3.1.6 ;;;;(CFNC "GType gtk_vscale_get_type void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_vscale_new GtkAdjustment* @adjustment")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_vscale_new_with_range gdouble min gdouble max gdouble step")
+;;; 3.1.6 (CCAST "GTK_VSCROLLBAR(obj)" "GtkVScrollbar*")
+;;; 3.1.6 (CCHK "GTK_IS_VSCROLLBAR(obj)" "GtkVScrollbar*")
+;;; 3.1.6 ;;;;(CFNC "GType gtk_vscrollbar_get_type void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_vscrollbar_new GtkAdjustment* @adjustment")
+;;; 3.1.6 (CCAST "GTK_VSEPARATOR(obj)" "GtkVSeparator*")
+;;; 3.1.6 (CCHK "GTK_IS_VSEPARATOR(obj)" "GtkVSeparator*")
 ;;;;(CFNC "GType gtk_vseparator_get_type void")
-(CFNC "GtkWidget* gtk_vseparator_new void")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_vseparator_new void")
 
 
 ;;; all out 2.90.3 ?
@@ -4293,7 +4293,7 @@
 ;;; 2.91.6 (CLNG "GTK_TYPE_TREE_VIEW_COLUMN")
 ;;; 2.91.6 (CLNG "GTK_TYPE_TREE_VIEW")
 ;;; 2.91.6 (CLNG "GTK_TYPE_VBUTTON_BOX")
-;;; 2.91.6 (CLNG "GTK_TYPE_VBOX")
+;;; 3.1.6 ;;; 2.91.6 (CLNG "GTK_TYPE_VBOX")
 ;;; 2.91.6 (CLNG "GTK_TYPE_VIEWPORT")
 ;;; 2.91.6 (CLNG "GTK_TYPE_VPANED")
 ;;; 2.91.6 ;;; 2.91.5 (CLNG "GTK_TYPE_VRULER")
@@ -5675,8 +5675,8 @@
 (CFNC "void gtk_menu_bar_set_child_pack_direction GtkMenuBar* menubar GtkPackDirection child_pack_dir")
 (CFNC "gboolean gtk_menu_shell_get_take_focus GtkMenuShell* menu_shell")
 (CFNC "void gtk_menu_shell_set_take_focus GtkMenuShell* menu_shell gboolean take_focus")
-(CFNC "GtkWidget* gtk_scrolled_window_get_hscrollbar GtkScrolledWindow* scrolled_window")
-(CFNC "GtkWidget* gtk_scrolled_window_get_vscrollbar GtkScrolledWindow* scrolled_window")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_scrolled_window_get_hscrollbar GtkScrolledWindow* scrolled_window")
+;;; 3.1.6 (CFNC "GtkWidget* gtk_scrolled_window_get_vscrollbar GtkScrolledWindow* scrolled_window")
 (CFNC "void gtk_size_group_set_ignore_hidden GtkSizeGroup* size_group gboolean ignore_hidden")
 (CFNC "gboolean gtk_size_group_get_ignore_hidden GtkSizeGroup* size_group")
 ;(CFNC "void gtk_stock_set_translate_func gchar* domain GtkTranslateFunc func lambda_data func_info GtkDestroyNotify notify" 'const)
@@ -8202,6 +8202,36 @@
 (CFNC-310 "void gtk_drag_source_set_icon_gicon GtkWidget* widget GIcon* icon")
 (CFNC-310 "void gtk_drag_set_icon_gicon  GdkDragContext *context GIcon* icon gint hot_x gint hot_y")
 (CFNC-310 "gboolean gtk_combo_box_set_active_id GtkComboBox* combo_box gchar* active_id" 'const)
+
+
+;;; 3.1.6
++ char *           gtk_css_provider_to_string      (GtkCssProvider  *provider);
++ 
++ char *        gtk_gradient_to_string      (GtkGradient         *gradient);
++ 
++ char *             gtk_symbolic_color_to_string   (GtkSymbolicColor   *color);
++ 
++ gint                    gtk_tree_view_column_get_x_offset        (GtkTreeViewColumn       *tree_column);
+
++ void        gtk_render_icon        (GtkStyleContext     *context,
++                                     cairo_t             *cr,
++ 				    GdkPixbuf           *pixbuf,
++                                     gdouble              x,
++                                     gdouble              y);
+ 
+also deprecated: all of v|hbox, v|hpaned, v|hscrollbar, v|hbuttonbox, v|hseparator
+
+you're supposed to use gtk_box_new(GTK_ORIENTATION_HORIZONTAL|VERTICAL, spacing) for gtk_vbox_new(???, spacing)
+  and this will be deprecated as well for gtkgrid!
+
+added gtkoverlay
+#define GTK_OVERLAY(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_OVERLAY, GtkOverlay))
+#define GTK_IS_OVERLAY(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_OVERLAY))
+GType      gtk_overlay_get_type    (void) G_GNUC_CONST;
+
+GtkWidget *gtk_overlay_new         (void);
+void       gtk_overlay_add_overlay (GtkOverlay *overlay,
+                                    GtkWidget  *widget);
 
 |#
 

@@ -3698,14 +3698,6 @@ static XEN gxg_gdk_pixbuf_get_option(XEN pixbuf, XEN key)
   return(C_TO_XEN_gchar_(gdk_pixbuf_get_option(XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_gchar_(key))));
 }
 
-static XEN gxg_gtk_vbox_new(XEN homogeneous, XEN spacing)
-{
-  #define H_gtk_vbox_new "GtkWidget* gtk_vbox_new(gboolean homogeneous, gint spacing)"
-  XEN_ASSERT_TYPE(XEN_gboolean_P(homogeneous), homogeneous, 1, "gtk_vbox_new", "gboolean");
-  XEN_ASSERT_TYPE(XEN_gint_P(spacing), spacing, 2, "gtk_vbox_new", "gint");
-  return(C_TO_XEN_GtkWidget_(gtk_vbox_new(XEN_TO_C_gboolean(homogeneous), XEN_TO_C_gint(spacing))));
-}
-
 static XEN gxg_gtk_accel_group_new(void)
 {
   #define H_gtk_accel_group_new "GtkAccelGroup* gtk_accel_group_new( void)"
@@ -5917,56 +5909,6 @@ static XEN gxg_gtk_handle_box_get_snap_edge(XEN handle_box)
   #define H_gtk_handle_box_get_snap_edge "GtkPositionType gtk_handle_box_get_snap_edge(GtkHandleBox* handle_box)"
   XEN_ASSERT_TYPE(XEN_GtkHandleBox__P(handle_box), handle_box, 1, "gtk_handle_box_get_snap_edge", "GtkHandleBox*");
   return(C_TO_XEN_GtkPositionType(gtk_handle_box_get_snap_edge(XEN_TO_C_GtkHandleBox_(handle_box))));
-}
-
-static XEN gxg_gtk_hbutton_box_new(void)
-{
-  #define H_gtk_hbutton_box_new "GtkWidget* gtk_hbutton_box_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_hbutton_box_new()));
-}
-
-static XEN gxg_gtk_hbox_new(XEN homogeneous, XEN spacing)
-{
-  #define H_gtk_hbox_new "GtkWidget* gtk_hbox_new(gboolean homogeneous, gint spacing)"
-  XEN_ASSERT_TYPE(XEN_gboolean_P(homogeneous), homogeneous, 1, "gtk_hbox_new", "gboolean");
-  XEN_ASSERT_TYPE(XEN_gint_P(spacing), spacing, 2, "gtk_hbox_new", "gint");
-  return(C_TO_XEN_GtkWidget_(gtk_hbox_new(XEN_TO_C_gboolean(homogeneous), XEN_TO_C_gint(spacing))));
-}
-
-static XEN gxg_gtk_hpaned_new(void)
-{
-  #define H_gtk_hpaned_new "GtkWidget* gtk_hpaned_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_hpaned_new()));
-}
-
-static XEN gxg_gtk_hscale_new(XEN adjustment)
-{
-  #define H_gtk_hscale_new "GtkWidget* gtk_hscale_new(GtkAdjustment* adjustment)"
-  XEN_ASSERT_TYPE(XEN_GtkAdjustment__P(adjustment) || XEN_FALSE_P(adjustment), adjustment, 1, "gtk_hscale_new", "GtkAdjustment*");
-  return(C_TO_XEN_GtkWidget_(gtk_hscale_new(XEN_TO_C_GtkAdjustment_(adjustment))));
-}
-
-static XEN gxg_gtk_hscale_new_with_range(XEN min, XEN max, XEN step)
-{
-  #define H_gtk_hscale_new_with_range "GtkWidget* gtk_hscale_new_with_range(gdouble min, gdouble max, \
-gdouble step)"
-  XEN_ASSERT_TYPE(XEN_gdouble_P(min), min, 1, "gtk_hscale_new_with_range", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(max), max, 2, "gtk_hscale_new_with_range", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(step), step, 3, "gtk_hscale_new_with_range", "gdouble");
-  return(C_TO_XEN_GtkWidget_(gtk_hscale_new_with_range(XEN_TO_C_gdouble(min), XEN_TO_C_gdouble(max), XEN_TO_C_gdouble(step))));
-}
-
-static XEN gxg_gtk_hscrollbar_new(XEN adjustment)
-{
-  #define H_gtk_hscrollbar_new "GtkWidget* gtk_hscrollbar_new(GtkAdjustment* adjustment)"
-  XEN_ASSERT_TYPE(XEN_GtkAdjustment__P(adjustment) || XEN_FALSE_P(adjustment), adjustment, 1, "gtk_hscrollbar_new", "GtkAdjustment*");
-  return(C_TO_XEN_GtkWidget_(gtk_hscrollbar_new(XEN_TO_C_GtkAdjustment_(adjustment))));
-}
-
-static XEN gxg_gtk_hseparator_new(void)
-{
-  #define H_gtk_hseparator_new "GtkWidget* gtk_hseparator_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_hseparator_new()));
 }
 
 static XEN gxg_gtk_icon_factory_new(void)
@@ -13197,12 +13139,6 @@ GtkTreeViewSearchEqualFunc func, lambda_data func_info, GtkDestroyNotify search_
    }
 }
 
-static XEN gxg_gtk_vbutton_box_new(void)
-{
-  #define H_gtk_vbutton_box_new "GtkWidget* gtk_vbutton_box_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_vbutton_box_new()));
-}
-
 static XEN gxg_gtk_viewport_new(XEN hadjustment, XEN vadjustment)
 {
   #define H_gtk_viewport_new "GtkWidget* gtk_viewport_new(GtkAdjustment* hadjustment, GtkAdjustment* vadjustment)"
@@ -13225,42 +13161,6 @@ static XEN gxg_gtk_viewport_get_shadow_type(XEN viewport)
   #define H_gtk_viewport_get_shadow_type "GtkShadowType gtk_viewport_get_shadow_type(GtkViewport* viewport)"
   XEN_ASSERT_TYPE(XEN_GtkViewport__P(viewport), viewport, 1, "gtk_viewport_get_shadow_type", "GtkViewport*");
   return(C_TO_XEN_GtkShadowType(gtk_viewport_get_shadow_type(XEN_TO_C_GtkViewport_(viewport))));
-}
-
-static XEN gxg_gtk_vpaned_new(void)
-{
-  #define H_gtk_vpaned_new "GtkWidget* gtk_vpaned_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_vpaned_new()));
-}
-
-static XEN gxg_gtk_vscale_new(XEN adjustment)
-{
-  #define H_gtk_vscale_new "GtkWidget* gtk_vscale_new(GtkAdjustment* adjustment)"
-  XEN_ASSERT_TYPE(XEN_GtkAdjustment__P(adjustment) || XEN_FALSE_P(adjustment), adjustment, 1, "gtk_vscale_new", "GtkAdjustment*");
-  return(C_TO_XEN_GtkWidget_(gtk_vscale_new(XEN_TO_C_GtkAdjustment_(adjustment))));
-}
-
-static XEN gxg_gtk_vscale_new_with_range(XEN min, XEN max, XEN step)
-{
-  #define H_gtk_vscale_new_with_range "GtkWidget* gtk_vscale_new_with_range(gdouble min, gdouble max, \
-gdouble step)"
-  XEN_ASSERT_TYPE(XEN_gdouble_P(min), min, 1, "gtk_vscale_new_with_range", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(max), max, 2, "gtk_vscale_new_with_range", "gdouble");
-  XEN_ASSERT_TYPE(XEN_gdouble_P(step), step, 3, "gtk_vscale_new_with_range", "gdouble");
-  return(C_TO_XEN_GtkWidget_(gtk_vscale_new_with_range(XEN_TO_C_gdouble(min), XEN_TO_C_gdouble(max), XEN_TO_C_gdouble(step))));
-}
-
-static XEN gxg_gtk_vscrollbar_new(XEN adjustment)
-{
-  #define H_gtk_vscrollbar_new "GtkWidget* gtk_vscrollbar_new(GtkAdjustment* adjustment)"
-  XEN_ASSERT_TYPE(XEN_GtkAdjustment__P(adjustment) || XEN_FALSE_P(adjustment), adjustment, 1, "gtk_vscrollbar_new", "GtkAdjustment*");
-  return(C_TO_XEN_GtkWidget_(gtk_vscrollbar_new(XEN_TO_C_GtkAdjustment_(adjustment))));
-}
-
-static XEN gxg_gtk_vseparator_new(void)
-{
-  #define H_gtk_vseparator_new "GtkWidget* gtk_vseparator_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_vseparator_new()));
 }
 
 static XEN gxg_gtk_widget_destroy(XEN widget)
@@ -21648,20 +21548,6 @@ gboolean take_focus)"
   XEN_ASSERT_TYPE(XEN_gboolean_P(take_focus), take_focus, 2, "gtk_menu_shell_set_take_focus", "gboolean");
   gtk_menu_shell_set_take_focus(XEN_TO_C_GtkMenuShell_(menu_shell), XEN_TO_C_gboolean(take_focus));
   return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_scrolled_window_get_hscrollbar(XEN scrolled_window)
-{
-  #define H_gtk_scrolled_window_get_hscrollbar "GtkWidget* gtk_scrolled_window_get_hscrollbar(GtkScrolledWindow* scrolled_window)"
-  XEN_ASSERT_TYPE(XEN_GtkScrolledWindow__P(scrolled_window), scrolled_window, 1, "gtk_scrolled_window_get_hscrollbar", "GtkScrolledWindow*");
-  return(C_TO_XEN_GtkWidget_(gtk_scrolled_window_get_hscrollbar(XEN_TO_C_GtkScrolledWindow_(scrolled_window))));
-}
-
-static XEN gxg_gtk_scrolled_window_get_vscrollbar(XEN scrolled_window)
-{
-  #define H_gtk_scrolled_window_get_vscrollbar "GtkWidget* gtk_scrolled_window_get_vscrollbar(GtkScrolledWindow* scrolled_window)"
-  XEN_ASSERT_TYPE(XEN_GtkScrolledWindow__P(scrolled_window), scrolled_window, 1, "gtk_scrolled_window_get_vscrollbar", "GtkScrolledWindow*");
-  return(C_TO_XEN_GtkWidget_(gtk_scrolled_window_get_vscrollbar(XEN_TO_C_GtkScrolledWindow_(scrolled_window))));
 }
 
 static XEN gxg_gtk_size_group_set_ignore_hidden(XEN size_group, XEN ignore_hidden)
@@ -34354,7 +34240,6 @@ static XEN gxg_GDK_WINDOW(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(
 static XEN gxg_GDK_PIXBUF(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbuf_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_PIXBUF_ANIMATION(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbufAnimation_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_PIXBUF_ANIMATION_ITER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbufAnimationIter_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_VBOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVBox_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_ACCEL_GROUP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkAccelGroup_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_ACCEL_LABEL(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkAccelLabel_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_ACCESSIBLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkAccessible_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34387,12 +34272,6 @@ static XEN gxg_GTK_FONT_SELECTION(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN
 static XEN gxg_GTK_FONT_SELECTION_DIALOG(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFontSelectionDialog_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_FRAME(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFrame_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_HANDLE_BOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHandleBox_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_HBUTTON_BOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHButtonBox_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_HBOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHBox_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_HPANED(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHPaned_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_HSCALE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHScale_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_HSCROLLBAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHScrollbar_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_HSEPARATOR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHSeparator_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_ICON_FACTORY(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkIconFactory_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_IMAGE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkImage_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_IMAGE_MENU_ITEM(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkImageMenuItem_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34442,12 +34321,7 @@ static XEN gxg_GTK_TREE_SORTABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_
 static XEN gxg_GTK_TREE_STORE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTreeStore_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_TREE_VIEW_COLUMN(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTreeViewColumn_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_TREE_VIEW(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkTreeView_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_VBUTTON_BOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVButtonBox_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_VIEWPORT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkViewport_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_VPANED(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVPaned_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_VSCALE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVScale_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_VSCROLLBAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVScrollbar_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_VSEPARATOR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVSeparator_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_WIDGET(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_WINDOW(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWindow_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_PANGO_CONTEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoContext_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34566,7 +34440,6 @@ static XEN gxg_GDK_IS_WINDOW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(
 static XEN gxg_GDK_IS_PIXBUF(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_PIXBUF((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_PIXBUF_ANIMATION(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_PIXBUF_ANIMATION((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_PIXBUF_ANIMATION_ITER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_PIXBUF_ANIMATION_ITER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_VBOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VBOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_ACCEL_GROUP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ACCEL_GROUP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_ACCEL_LABEL(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ACCEL_LABEL((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_ACCESSIBLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ACCESSIBLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -34599,12 +34472,6 @@ static XEN gxg_GTK_IS_FONT_SELECTION(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_O
 static XEN gxg_GTK_IS_FONT_SELECTION_DIALOG(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FONT_SELECTION_DIALOG((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_FRAME(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FRAME((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_HANDLE_BOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HANDLE_BOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_HBUTTON_BOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HBUTTON_BOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_HBOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HBOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_HPANED(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HPANED((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_HSCALE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HSCALE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_HSCROLLBAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HSCROLLBAR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_HSEPARATOR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HSEPARATOR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_ICON_FACTORY(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ICON_FACTORY((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_IMAGE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_IMAGE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_IMAGE_MENU_ITEM(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_IMAGE_MENU_ITEM((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -34654,12 +34521,7 @@ static XEN gxg_GTK_IS_TREE_SORTABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OB
 static XEN gxg_GTK_IS_TREE_STORE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TREE_STORE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TREE_VIEW_COLUMN(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TREE_VIEW_COLUMN((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TREE_VIEW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TREE_VIEW((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_VBUTTON_BOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VBUTTON_BOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_VIEWPORT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VIEWPORT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_VPANED(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VPANED((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_VSCALE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VSCALE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_VSCROLLBAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VSCROLLBAR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_VSEPARATOR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_VSEPARATOR((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_WIDGET(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_WIDGET((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_WINDOW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_WINDOW((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_PANGO_IS_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && PANGO_IS_CONTEXT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -35451,7 +35313,6 @@ XEN_NARGIFY_1(gxg_gdk_pixbuf_animation_iter_get_pixbuf_w, gxg_gdk_pixbuf_animati
 XEN_NARGIFY_1(gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame_w, gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame)
 XEN_NARGIFY_2(gxg_gdk_pixbuf_animation_iter_advance_w, gxg_gdk_pixbuf_animation_iter_advance)
 XEN_NARGIFY_2(gxg_gdk_pixbuf_get_option_w, gxg_gdk_pixbuf_get_option)
-XEN_NARGIFY_2(gxg_gtk_vbox_new_w, gxg_gtk_vbox_new)
 XEN_NARGIFY_0(gxg_gtk_accel_group_new_w, gxg_gtk_accel_group_new)
 XEN_NARGIFY_1(gxg_gtk_accel_group_lock_w, gxg_gtk_accel_group_lock)
 XEN_NARGIFY_1(gxg_gtk_accel_group_unlock_w, gxg_gtk_accel_group_unlock)
@@ -35683,13 +35544,6 @@ XEN_NARGIFY_2(gxg_gtk_handle_box_set_handle_position_w, gxg_gtk_handle_box_set_h
 XEN_NARGIFY_1(gxg_gtk_handle_box_get_handle_position_w, gxg_gtk_handle_box_get_handle_position)
 XEN_NARGIFY_2(gxg_gtk_handle_box_set_snap_edge_w, gxg_gtk_handle_box_set_snap_edge)
 XEN_NARGIFY_1(gxg_gtk_handle_box_get_snap_edge_w, gxg_gtk_handle_box_get_snap_edge)
-XEN_NARGIFY_0(gxg_gtk_hbutton_box_new_w, gxg_gtk_hbutton_box_new)
-XEN_NARGIFY_2(gxg_gtk_hbox_new_w, gxg_gtk_hbox_new)
-XEN_NARGIFY_0(gxg_gtk_hpaned_new_w, gxg_gtk_hpaned_new)
-XEN_NARGIFY_1(gxg_gtk_hscale_new_w, gxg_gtk_hscale_new)
-XEN_NARGIFY_3(gxg_gtk_hscale_new_with_range_w, gxg_gtk_hscale_new_with_range)
-XEN_NARGIFY_1(gxg_gtk_hscrollbar_new_w, gxg_gtk_hscrollbar_new)
-XEN_NARGIFY_0(gxg_gtk_hseparator_new_w, gxg_gtk_hseparator_new)
 XEN_NARGIFY_0(gxg_gtk_icon_factory_new_w, gxg_gtk_icon_factory_new)
 XEN_NARGIFY_3(gxg_gtk_icon_factory_add_w, gxg_gtk_icon_factory_add)
 XEN_NARGIFY_2(gxg_gtk_icon_factory_lookup_w, gxg_gtk_icon_factory_lookup)
@@ -36452,15 +36306,9 @@ XEN_NARGIFY_1(gxg_gtk_tree_view_get_search_column_w, gxg_gtk_tree_view_get_searc
 XEN_NARGIFY_2(gxg_gtk_tree_view_set_search_column_w, gxg_gtk_tree_view_set_search_column)
 XEN_NARGIFY_1(gxg_gtk_tree_view_get_search_equal_func_w, gxg_gtk_tree_view_get_search_equal_func)
 XEN_NARGIFY_4(gxg_gtk_tree_view_set_search_equal_func_w, gxg_gtk_tree_view_set_search_equal_func)
-XEN_NARGIFY_0(gxg_gtk_vbutton_box_new_w, gxg_gtk_vbutton_box_new)
 XEN_NARGIFY_2(gxg_gtk_viewport_new_w, gxg_gtk_viewport_new)
 XEN_NARGIFY_2(gxg_gtk_viewport_set_shadow_type_w, gxg_gtk_viewport_set_shadow_type)
 XEN_NARGIFY_1(gxg_gtk_viewport_get_shadow_type_w, gxg_gtk_viewport_get_shadow_type)
-XEN_NARGIFY_0(gxg_gtk_vpaned_new_w, gxg_gtk_vpaned_new)
-XEN_NARGIFY_1(gxg_gtk_vscale_new_w, gxg_gtk_vscale_new)
-XEN_NARGIFY_3(gxg_gtk_vscale_new_with_range_w, gxg_gtk_vscale_new_with_range)
-XEN_NARGIFY_1(gxg_gtk_vscrollbar_new_w, gxg_gtk_vscrollbar_new)
-XEN_NARGIFY_0(gxg_gtk_vseparator_new_w, gxg_gtk_vseparator_new)
 XEN_NARGIFY_1(gxg_gtk_widget_destroy_w, gxg_gtk_widget_destroy)
 XEN_ARGIFY_2(gxg_gtk_widget_destroyed_w, gxg_gtk_widget_destroyed)
 XEN_NARGIFY_1(gxg_gtk_widget_unparent_w, gxg_gtk_widget_unparent)
@@ -37399,8 +37247,6 @@ XEN_NARGIFY_1(gxg_gtk_menu_bar_get_child_pack_direction_w, gxg_gtk_menu_bar_get_
 XEN_NARGIFY_2(gxg_gtk_menu_bar_set_child_pack_direction_w, gxg_gtk_menu_bar_set_child_pack_direction)
 XEN_NARGIFY_1(gxg_gtk_menu_shell_get_take_focus_w, gxg_gtk_menu_shell_get_take_focus)
 XEN_NARGIFY_2(gxg_gtk_menu_shell_set_take_focus_w, gxg_gtk_menu_shell_set_take_focus)
-XEN_NARGIFY_1(gxg_gtk_scrolled_window_get_hscrollbar_w, gxg_gtk_scrolled_window_get_hscrollbar)
-XEN_NARGIFY_1(gxg_gtk_scrolled_window_get_vscrollbar_w, gxg_gtk_scrolled_window_get_vscrollbar)
 XEN_NARGIFY_2(gxg_gtk_size_group_set_ignore_hidden_w, gxg_gtk_size_group_set_ignore_hidden)
 XEN_NARGIFY_1(gxg_gtk_size_group_get_ignore_hidden_w, gxg_gtk_size_group_get_ignore_hidden)
 XEN_NARGIFY_1(gxg_gtk_text_iter_forward_visible_line_w, gxg_gtk_text_iter_forward_visible_line)
@@ -38848,7 +38694,6 @@ XEN_NARGIFY_1(gxg_GDK_WINDOW_w, gxg_GDK_WINDOW)
 XEN_NARGIFY_1(gxg_GDK_PIXBUF_w, gxg_GDK_PIXBUF)
 XEN_NARGIFY_1(gxg_GDK_PIXBUF_ANIMATION_w, gxg_GDK_PIXBUF_ANIMATION)
 XEN_NARGIFY_1(gxg_GDK_PIXBUF_ANIMATION_ITER_w, gxg_GDK_PIXBUF_ANIMATION_ITER)
-XEN_NARGIFY_1(gxg_GTK_VBOX_w, gxg_GTK_VBOX)
 XEN_NARGIFY_1(gxg_GTK_ACCEL_GROUP_w, gxg_GTK_ACCEL_GROUP)
 XEN_NARGIFY_1(gxg_GTK_ACCEL_LABEL_w, gxg_GTK_ACCEL_LABEL)
 XEN_NARGIFY_1(gxg_GTK_ACCESSIBLE_w, gxg_GTK_ACCESSIBLE)
@@ -38881,12 +38726,6 @@ XEN_NARGIFY_1(gxg_GTK_FONT_SELECTION_w, gxg_GTK_FONT_SELECTION)
 XEN_NARGIFY_1(gxg_GTK_FONT_SELECTION_DIALOG_w, gxg_GTK_FONT_SELECTION_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_FRAME_w, gxg_GTK_FRAME)
 XEN_NARGIFY_1(gxg_GTK_HANDLE_BOX_w, gxg_GTK_HANDLE_BOX)
-XEN_NARGIFY_1(gxg_GTK_HBUTTON_BOX_w, gxg_GTK_HBUTTON_BOX)
-XEN_NARGIFY_1(gxg_GTK_HBOX_w, gxg_GTK_HBOX)
-XEN_NARGIFY_1(gxg_GTK_HPANED_w, gxg_GTK_HPANED)
-XEN_NARGIFY_1(gxg_GTK_HSCALE_w, gxg_GTK_HSCALE)
-XEN_NARGIFY_1(gxg_GTK_HSCROLLBAR_w, gxg_GTK_HSCROLLBAR)
-XEN_NARGIFY_1(gxg_GTK_HSEPARATOR_w, gxg_GTK_HSEPARATOR)
 XEN_NARGIFY_1(gxg_GTK_ICON_FACTORY_w, gxg_GTK_ICON_FACTORY)
 XEN_NARGIFY_1(gxg_GTK_IMAGE_w, gxg_GTK_IMAGE)
 XEN_NARGIFY_1(gxg_GTK_IMAGE_MENU_ITEM_w, gxg_GTK_IMAGE_MENU_ITEM)
@@ -38936,12 +38775,7 @@ XEN_NARGIFY_1(gxg_GTK_TREE_SORTABLE_w, gxg_GTK_TREE_SORTABLE)
 XEN_NARGIFY_1(gxg_GTK_TREE_STORE_w, gxg_GTK_TREE_STORE)
 XEN_NARGIFY_1(gxg_GTK_TREE_VIEW_COLUMN_w, gxg_GTK_TREE_VIEW_COLUMN)
 XEN_NARGIFY_1(gxg_GTK_TREE_VIEW_w, gxg_GTK_TREE_VIEW)
-XEN_NARGIFY_1(gxg_GTK_VBUTTON_BOX_w, gxg_GTK_VBUTTON_BOX)
 XEN_NARGIFY_1(gxg_GTK_VIEWPORT_w, gxg_GTK_VIEWPORT)
-XEN_NARGIFY_1(gxg_GTK_VPANED_w, gxg_GTK_VPANED)
-XEN_NARGIFY_1(gxg_GTK_VSCALE_w, gxg_GTK_VSCALE)
-XEN_NARGIFY_1(gxg_GTK_VSCROLLBAR_w, gxg_GTK_VSCROLLBAR)
-XEN_NARGIFY_1(gxg_GTK_VSEPARATOR_w, gxg_GTK_VSEPARATOR)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_w, gxg_GTK_WIDGET)
 XEN_NARGIFY_1(gxg_GTK_WINDOW_w, gxg_GTK_WINDOW)
 XEN_NARGIFY_1(gxg_PANGO_CONTEXT_w, gxg_PANGO_CONTEXT)
@@ -39060,7 +38894,6 @@ XEN_NARGIFY_1(gxg_GDK_IS_WINDOW_w, gxg_GDK_IS_WINDOW)
 XEN_NARGIFY_1(gxg_GDK_IS_PIXBUF_w, gxg_GDK_IS_PIXBUF)
 XEN_NARGIFY_1(gxg_GDK_IS_PIXBUF_ANIMATION_w, gxg_GDK_IS_PIXBUF_ANIMATION)
 XEN_NARGIFY_1(gxg_GDK_IS_PIXBUF_ANIMATION_ITER_w, gxg_GDK_IS_PIXBUF_ANIMATION_ITER)
-XEN_NARGIFY_1(gxg_GTK_IS_VBOX_w, gxg_GTK_IS_VBOX)
 XEN_NARGIFY_1(gxg_GTK_IS_ACCEL_GROUP_w, gxg_GTK_IS_ACCEL_GROUP)
 XEN_NARGIFY_1(gxg_GTK_IS_ACCEL_LABEL_w, gxg_GTK_IS_ACCEL_LABEL)
 XEN_NARGIFY_1(gxg_GTK_IS_ACCESSIBLE_w, gxg_GTK_IS_ACCESSIBLE)
@@ -39093,12 +38926,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_FONT_SELECTION_w, gxg_GTK_IS_FONT_SELECTION)
 XEN_NARGIFY_1(gxg_GTK_IS_FONT_SELECTION_DIALOG_w, gxg_GTK_IS_FONT_SELECTION_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_IS_FRAME_w, gxg_GTK_IS_FRAME)
 XEN_NARGIFY_1(gxg_GTK_IS_HANDLE_BOX_w, gxg_GTK_IS_HANDLE_BOX)
-XEN_NARGIFY_1(gxg_GTK_IS_HBUTTON_BOX_w, gxg_GTK_IS_HBUTTON_BOX)
-XEN_NARGIFY_1(gxg_GTK_IS_HBOX_w, gxg_GTK_IS_HBOX)
-XEN_NARGIFY_1(gxg_GTK_IS_HPANED_w, gxg_GTK_IS_HPANED)
-XEN_NARGIFY_1(gxg_GTK_IS_HSCALE_w, gxg_GTK_IS_HSCALE)
-XEN_NARGIFY_1(gxg_GTK_IS_HSCROLLBAR_w, gxg_GTK_IS_HSCROLLBAR)
-XEN_NARGIFY_1(gxg_GTK_IS_HSEPARATOR_w, gxg_GTK_IS_HSEPARATOR)
 XEN_NARGIFY_1(gxg_GTK_IS_ICON_FACTORY_w, gxg_GTK_IS_ICON_FACTORY)
 XEN_NARGIFY_1(gxg_GTK_IS_IMAGE_w, gxg_GTK_IS_IMAGE)
 XEN_NARGIFY_1(gxg_GTK_IS_IMAGE_MENU_ITEM_w, gxg_GTK_IS_IMAGE_MENU_ITEM)
@@ -39148,12 +38975,7 @@ XEN_NARGIFY_1(gxg_GTK_IS_TREE_SORTABLE_w, gxg_GTK_IS_TREE_SORTABLE)
 XEN_NARGIFY_1(gxg_GTK_IS_TREE_STORE_w, gxg_GTK_IS_TREE_STORE)
 XEN_NARGIFY_1(gxg_GTK_IS_TREE_VIEW_COLUMN_w, gxg_GTK_IS_TREE_VIEW_COLUMN)
 XEN_NARGIFY_1(gxg_GTK_IS_TREE_VIEW_w, gxg_GTK_IS_TREE_VIEW)
-XEN_NARGIFY_1(gxg_GTK_IS_VBUTTON_BOX_w, gxg_GTK_IS_VBUTTON_BOX)
 XEN_NARGIFY_1(gxg_GTK_IS_VIEWPORT_w, gxg_GTK_IS_VIEWPORT)
-XEN_NARGIFY_1(gxg_GTK_IS_VPANED_w, gxg_GTK_IS_VPANED)
-XEN_NARGIFY_1(gxg_GTK_IS_VSCALE_w, gxg_GTK_IS_VSCALE)
-XEN_NARGIFY_1(gxg_GTK_IS_VSCROLLBAR_w, gxg_GTK_IS_VSCROLLBAR)
-XEN_NARGIFY_1(gxg_GTK_IS_VSEPARATOR_w, gxg_GTK_IS_VSEPARATOR)
 XEN_NARGIFY_1(gxg_GTK_IS_WIDGET_w, gxg_GTK_IS_WIDGET)
 XEN_NARGIFY_1(gxg_GTK_IS_WINDOW_w, gxg_GTK_IS_WINDOW)
 XEN_NARGIFY_1(gxg_PANGO_IS_CONTEXT_w, gxg_PANGO_IS_CONTEXT)
@@ -39491,7 +39313,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame_w gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame
 #define gxg_gdk_pixbuf_animation_iter_advance_w gxg_gdk_pixbuf_animation_iter_advance
 #define gxg_gdk_pixbuf_get_option_w gxg_gdk_pixbuf_get_option
-#define gxg_gtk_vbox_new_w gxg_gtk_vbox_new
 #define gxg_gtk_accel_group_new_w gxg_gtk_accel_group_new
 #define gxg_gtk_accel_group_lock_w gxg_gtk_accel_group_lock
 #define gxg_gtk_accel_group_unlock_w gxg_gtk_accel_group_unlock
@@ -39723,13 +39544,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_handle_box_get_handle_position_w gxg_gtk_handle_box_get_handle_position
 #define gxg_gtk_handle_box_set_snap_edge_w gxg_gtk_handle_box_set_snap_edge
 #define gxg_gtk_handle_box_get_snap_edge_w gxg_gtk_handle_box_get_snap_edge
-#define gxg_gtk_hbutton_box_new_w gxg_gtk_hbutton_box_new
-#define gxg_gtk_hbox_new_w gxg_gtk_hbox_new
-#define gxg_gtk_hpaned_new_w gxg_gtk_hpaned_new
-#define gxg_gtk_hscale_new_w gxg_gtk_hscale_new
-#define gxg_gtk_hscale_new_with_range_w gxg_gtk_hscale_new_with_range
-#define gxg_gtk_hscrollbar_new_w gxg_gtk_hscrollbar_new
-#define gxg_gtk_hseparator_new_w gxg_gtk_hseparator_new
 #define gxg_gtk_icon_factory_new_w gxg_gtk_icon_factory_new
 #define gxg_gtk_icon_factory_add_w gxg_gtk_icon_factory_add
 #define gxg_gtk_icon_factory_lookup_w gxg_gtk_icon_factory_lookup
@@ -40492,15 +40306,9 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_tree_view_set_search_column_w gxg_gtk_tree_view_set_search_column
 #define gxg_gtk_tree_view_get_search_equal_func_w gxg_gtk_tree_view_get_search_equal_func
 #define gxg_gtk_tree_view_set_search_equal_func_w gxg_gtk_tree_view_set_search_equal_func
-#define gxg_gtk_vbutton_box_new_w gxg_gtk_vbutton_box_new
 #define gxg_gtk_viewport_new_w gxg_gtk_viewport_new
 #define gxg_gtk_viewport_set_shadow_type_w gxg_gtk_viewport_set_shadow_type
 #define gxg_gtk_viewport_get_shadow_type_w gxg_gtk_viewport_get_shadow_type
-#define gxg_gtk_vpaned_new_w gxg_gtk_vpaned_new
-#define gxg_gtk_vscale_new_w gxg_gtk_vscale_new
-#define gxg_gtk_vscale_new_with_range_w gxg_gtk_vscale_new_with_range
-#define gxg_gtk_vscrollbar_new_w gxg_gtk_vscrollbar_new
-#define gxg_gtk_vseparator_new_w gxg_gtk_vseparator_new
 #define gxg_gtk_widget_destroy_w gxg_gtk_widget_destroy
 #define gxg_gtk_widget_destroyed_w gxg_gtk_widget_destroyed
 #define gxg_gtk_widget_unparent_w gxg_gtk_widget_unparent
@@ -41439,8 +41247,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_menu_bar_set_child_pack_direction_w gxg_gtk_menu_bar_set_child_pack_direction
 #define gxg_gtk_menu_shell_get_take_focus_w gxg_gtk_menu_shell_get_take_focus
 #define gxg_gtk_menu_shell_set_take_focus_w gxg_gtk_menu_shell_set_take_focus
-#define gxg_gtk_scrolled_window_get_hscrollbar_w gxg_gtk_scrolled_window_get_hscrollbar
-#define gxg_gtk_scrolled_window_get_vscrollbar_w gxg_gtk_scrolled_window_get_vscrollbar
 #define gxg_gtk_size_group_set_ignore_hidden_w gxg_gtk_size_group_set_ignore_hidden
 #define gxg_gtk_size_group_get_ignore_hidden_w gxg_gtk_size_group_get_ignore_hidden
 #define gxg_gtk_text_iter_forward_visible_line_w gxg_gtk_text_iter_forward_visible_line
@@ -42888,7 +42694,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GDK_PIXBUF_w gxg_GDK_PIXBUF
 #define gxg_GDK_PIXBUF_ANIMATION_w gxg_GDK_PIXBUF_ANIMATION
 #define gxg_GDK_PIXBUF_ANIMATION_ITER_w gxg_GDK_PIXBUF_ANIMATION_ITER
-#define gxg_GTK_VBOX_w gxg_GTK_VBOX
 #define gxg_GTK_ACCEL_GROUP_w gxg_GTK_ACCEL_GROUP
 #define gxg_GTK_ACCEL_LABEL_w gxg_GTK_ACCEL_LABEL
 #define gxg_GTK_ACCESSIBLE_w gxg_GTK_ACCESSIBLE
@@ -42921,12 +42726,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_FONT_SELECTION_DIALOG_w gxg_GTK_FONT_SELECTION_DIALOG
 #define gxg_GTK_FRAME_w gxg_GTK_FRAME
 #define gxg_GTK_HANDLE_BOX_w gxg_GTK_HANDLE_BOX
-#define gxg_GTK_HBUTTON_BOX_w gxg_GTK_HBUTTON_BOX
-#define gxg_GTK_HBOX_w gxg_GTK_HBOX
-#define gxg_GTK_HPANED_w gxg_GTK_HPANED
-#define gxg_GTK_HSCALE_w gxg_GTK_HSCALE
-#define gxg_GTK_HSCROLLBAR_w gxg_GTK_HSCROLLBAR
-#define gxg_GTK_HSEPARATOR_w gxg_GTK_HSEPARATOR
 #define gxg_GTK_ICON_FACTORY_w gxg_GTK_ICON_FACTORY
 #define gxg_GTK_IMAGE_w gxg_GTK_IMAGE
 #define gxg_GTK_IMAGE_MENU_ITEM_w gxg_GTK_IMAGE_MENU_ITEM
@@ -42976,12 +42775,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_TREE_STORE_w gxg_GTK_TREE_STORE
 #define gxg_GTK_TREE_VIEW_COLUMN_w gxg_GTK_TREE_VIEW_COLUMN
 #define gxg_GTK_TREE_VIEW_w gxg_GTK_TREE_VIEW
-#define gxg_GTK_VBUTTON_BOX_w gxg_GTK_VBUTTON_BOX
 #define gxg_GTK_VIEWPORT_w gxg_GTK_VIEWPORT
-#define gxg_GTK_VPANED_w gxg_GTK_VPANED
-#define gxg_GTK_VSCALE_w gxg_GTK_VSCALE
-#define gxg_GTK_VSCROLLBAR_w gxg_GTK_VSCROLLBAR
-#define gxg_GTK_VSEPARATOR_w gxg_GTK_VSEPARATOR
 #define gxg_GTK_WIDGET_w gxg_GTK_WIDGET
 #define gxg_GTK_WINDOW_w gxg_GTK_WINDOW
 #define gxg_PANGO_CONTEXT_w gxg_PANGO_CONTEXT
@@ -43100,7 +42894,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GDK_IS_PIXBUF_w gxg_GDK_IS_PIXBUF
 #define gxg_GDK_IS_PIXBUF_ANIMATION_w gxg_GDK_IS_PIXBUF_ANIMATION
 #define gxg_GDK_IS_PIXBUF_ANIMATION_ITER_w gxg_GDK_IS_PIXBUF_ANIMATION_ITER
-#define gxg_GTK_IS_VBOX_w gxg_GTK_IS_VBOX
 #define gxg_GTK_IS_ACCEL_GROUP_w gxg_GTK_IS_ACCEL_GROUP
 #define gxg_GTK_IS_ACCEL_LABEL_w gxg_GTK_IS_ACCEL_LABEL
 #define gxg_GTK_IS_ACCESSIBLE_w gxg_GTK_IS_ACCESSIBLE
@@ -43133,12 +42926,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_IS_FONT_SELECTION_DIALOG_w gxg_GTK_IS_FONT_SELECTION_DIALOG
 #define gxg_GTK_IS_FRAME_w gxg_GTK_IS_FRAME
 #define gxg_GTK_IS_HANDLE_BOX_w gxg_GTK_IS_HANDLE_BOX
-#define gxg_GTK_IS_HBUTTON_BOX_w gxg_GTK_IS_HBUTTON_BOX
-#define gxg_GTK_IS_HBOX_w gxg_GTK_IS_HBOX
-#define gxg_GTK_IS_HPANED_w gxg_GTK_IS_HPANED
-#define gxg_GTK_IS_HSCALE_w gxg_GTK_IS_HSCALE
-#define gxg_GTK_IS_HSCROLLBAR_w gxg_GTK_IS_HSCROLLBAR
-#define gxg_GTK_IS_HSEPARATOR_w gxg_GTK_IS_HSEPARATOR
 #define gxg_GTK_IS_ICON_FACTORY_w gxg_GTK_IS_ICON_FACTORY
 #define gxg_GTK_IS_IMAGE_w gxg_GTK_IS_IMAGE
 #define gxg_GTK_IS_IMAGE_MENU_ITEM_w gxg_GTK_IS_IMAGE_MENU_ITEM
@@ -43188,12 +42975,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_IS_TREE_STORE_w gxg_GTK_IS_TREE_STORE
 #define gxg_GTK_IS_TREE_VIEW_COLUMN_w gxg_GTK_IS_TREE_VIEW_COLUMN
 #define gxg_GTK_IS_TREE_VIEW_w gxg_GTK_IS_TREE_VIEW
-#define gxg_GTK_IS_VBUTTON_BOX_w gxg_GTK_IS_VBUTTON_BOX
 #define gxg_GTK_IS_VIEWPORT_w gxg_GTK_IS_VIEWPORT
-#define gxg_GTK_IS_VPANED_w gxg_GTK_IS_VPANED
-#define gxg_GTK_IS_VSCALE_w gxg_GTK_IS_VSCALE
-#define gxg_GTK_IS_VSCROLLBAR_w gxg_GTK_IS_VSCROLLBAR
-#define gxg_GTK_IS_VSEPARATOR_w gxg_GTK_IS_VSEPARATOR
 #define gxg_GTK_IS_WIDGET_w gxg_GTK_IS_WIDGET
 #define gxg_GTK_IS_WINDOW_w gxg_GTK_IS_WINDOW
 #define gxg_PANGO_IS_CONTEXT_w gxg_PANGO_IS_CONTEXT
@@ -43538,7 +43320,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_iter_on_currently_loading_frame, gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame_w, 1, 0, 0, H_gdk_pixbuf_animation_iter_on_currently_loading_frame);
   XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_iter_advance, gxg_gdk_pixbuf_animation_iter_advance_w, 2, 0, 0, H_gdk_pixbuf_animation_iter_advance);
   XG_DEFINE_PROCEDURE(gdk_pixbuf_get_option, gxg_gdk_pixbuf_get_option_w, 2, 0, 0, H_gdk_pixbuf_get_option);
-  XG_DEFINE_PROCEDURE(gtk_vbox_new, gxg_gtk_vbox_new_w, 2, 0, 0, H_gtk_vbox_new);
   XG_DEFINE_PROCEDURE(gtk_accel_group_new, gxg_gtk_accel_group_new_w, 0, 0, 0, H_gtk_accel_group_new);
   XG_DEFINE_PROCEDURE(gtk_accel_group_lock, gxg_gtk_accel_group_lock_w, 1, 0, 0, H_gtk_accel_group_lock);
   XG_DEFINE_PROCEDURE(gtk_accel_group_unlock, gxg_gtk_accel_group_unlock_w, 1, 0, 0, H_gtk_accel_group_unlock);
@@ -43770,13 +43551,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_handle_box_get_handle_position, gxg_gtk_handle_box_get_handle_position_w, 1, 0, 0, H_gtk_handle_box_get_handle_position);
   XG_DEFINE_PROCEDURE(gtk_handle_box_set_snap_edge, gxg_gtk_handle_box_set_snap_edge_w, 2, 0, 0, H_gtk_handle_box_set_snap_edge);
   XG_DEFINE_PROCEDURE(gtk_handle_box_get_snap_edge, gxg_gtk_handle_box_get_snap_edge_w, 1, 0, 0, H_gtk_handle_box_get_snap_edge);
-  XG_DEFINE_PROCEDURE(gtk_hbutton_box_new, gxg_gtk_hbutton_box_new_w, 0, 0, 0, H_gtk_hbutton_box_new);
-  XG_DEFINE_PROCEDURE(gtk_hbox_new, gxg_gtk_hbox_new_w, 2, 0, 0, H_gtk_hbox_new);
-  XG_DEFINE_PROCEDURE(gtk_hpaned_new, gxg_gtk_hpaned_new_w, 0, 0, 0, H_gtk_hpaned_new);
-  XG_DEFINE_PROCEDURE(gtk_hscale_new, gxg_gtk_hscale_new_w, 1, 0, 0, H_gtk_hscale_new);
-  XG_DEFINE_PROCEDURE(gtk_hscale_new_with_range, gxg_gtk_hscale_new_with_range_w, 3, 0, 0, H_gtk_hscale_new_with_range);
-  XG_DEFINE_PROCEDURE(gtk_hscrollbar_new, gxg_gtk_hscrollbar_new_w, 1, 0, 0, H_gtk_hscrollbar_new);
-  XG_DEFINE_PROCEDURE(gtk_hseparator_new, gxg_gtk_hseparator_new_w, 0, 0, 0, H_gtk_hseparator_new);
   XG_DEFINE_PROCEDURE(gtk_icon_factory_new, gxg_gtk_icon_factory_new_w, 0, 0, 0, H_gtk_icon_factory_new);
   XG_DEFINE_PROCEDURE(gtk_icon_factory_add, gxg_gtk_icon_factory_add_w, 3, 0, 0, H_gtk_icon_factory_add);
   XG_DEFINE_PROCEDURE(gtk_icon_factory_lookup, gxg_gtk_icon_factory_lookup_w, 2, 0, 0, H_gtk_icon_factory_lookup);
@@ -44539,15 +44313,9 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_view_set_search_column, gxg_gtk_tree_view_set_search_column_w, 2, 0, 0, H_gtk_tree_view_set_search_column);
   XG_DEFINE_PROCEDURE(gtk_tree_view_get_search_equal_func, gxg_gtk_tree_view_get_search_equal_func_w, 1, 0, 0, H_gtk_tree_view_get_search_equal_func);
   XG_DEFINE_PROCEDURE(gtk_tree_view_set_search_equal_func, gxg_gtk_tree_view_set_search_equal_func_w, 4, 0, 0, H_gtk_tree_view_set_search_equal_func);
-  XG_DEFINE_PROCEDURE(gtk_vbutton_box_new, gxg_gtk_vbutton_box_new_w, 0, 0, 0, H_gtk_vbutton_box_new);
   XG_DEFINE_PROCEDURE(gtk_viewport_new, gxg_gtk_viewport_new_w, 2, 0, 0, H_gtk_viewport_new);
   XG_DEFINE_PROCEDURE(gtk_viewport_set_shadow_type, gxg_gtk_viewport_set_shadow_type_w, 2, 0, 0, H_gtk_viewport_set_shadow_type);
   XG_DEFINE_PROCEDURE(gtk_viewport_get_shadow_type, gxg_gtk_viewport_get_shadow_type_w, 1, 0, 0, H_gtk_viewport_get_shadow_type);
-  XG_DEFINE_PROCEDURE(gtk_vpaned_new, gxg_gtk_vpaned_new_w, 0, 0, 0, H_gtk_vpaned_new);
-  XG_DEFINE_PROCEDURE(gtk_vscale_new, gxg_gtk_vscale_new_w, 1, 0, 0, H_gtk_vscale_new);
-  XG_DEFINE_PROCEDURE(gtk_vscale_new_with_range, gxg_gtk_vscale_new_with_range_w, 3, 0, 0, H_gtk_vscale_new_with_range);
-  XG_DEFINE_PROCEDURE(gtk_vscrollbar_new, gxg_gtk_vscrollbar_new_w, 1, 0, 0, H_gtk_vscrollbar_new);
-  XG_DEFINE_PROCEDURE(gtk_vseparator_new, gxg_gtk_vseparator_new_w, 0, 0, 0, H_gtk_vseparator_new);
   XG_DEFINE_PROCEDURE(gtk_widget_destroy, gxg_gtk_widget_destroy_w, 1, 0, 0, H_gtk_widget_destroy);
   XG_DEFINE_PROCEDURE(gtk_widget_destroyed, gxg_gtk_widget_destroyed_w, 1, 1, 0, H_gtk_widget_destroyed);
   XG_DEFINE_PROCEDURE(gtk_widget_unparent, gxg_gtk_widget_unparent_w, 1, 0, 0, H_gtk_widget_unparent);
@@ -45486,8 +45254,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_menu_bar_set_child_pack_direction, gxg_gtk_menu_bar_set_child_pack_direction_w, 2, 0, 0, H_gtk_menu_bar_set_child_pack_direction);
   XG_DEFINE_PROCEDURE(gtk_menu_shell_get_take_focus, gxg_gtk_menu_shell_get_take_focus_w, 1, 0, 0, H_gtk_menu_shell_get_take_focus);
   XG_DEFINE_PROCEDURE(gtk_menu_shell_set_take_focus, gxg_gtk_menu_shell_set_take_focus_w, 2, 0, 0, H_gtk_menu_shell_set_take_focus);
-  XG_DEFINE_PROCEDURE(gtk_scrolled_window_get_hscrollbar, gxg_gtk_scrolled_window_get_hscrollbar_w, 1, 0, 0, H_gtk_scrolled_window_get_hscrollbar);
-  XG_DEFINE_PROCEDURE(gtk_scrolled_window_get_vscrollbar, gxg_gtk_scrolled_window_get_vscrollbar_w, 1, 0, 0, H_gtk_scrolled_window_get_vscrollbar);
   XG_DEFINE_PROCEDURE(gtk_size_group_set_ignore_hidden, gxg_gtk_size_group_set_ignore_hidden_w, 2, 0, 0, H_gtk_size_group_set_ignore_hidden);
   XG_DEFINE_PROCEDURE(gtk_size_group_get_ignore_hidden, gxg_gtk_size_group_get_ignore_hidden_w, 1, 0, 0, H_gtk_size_group_get_ignore_hidden);
   XG_DEFINE_PROCEDURE(gtk_text_iter_forward_visible_line, gxg_gtk_text_iter_forward_visible_line_w, 1, 0, 0, H_gtk_text_iter_forward_visible_line);
@@ -46926,7 +46692,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GDK_PIXBUF, gxg_GDK_PIXBUF_w, 1, 0, 0, "(GDK_PIXBUF obj) casts obj to GDK_PIXBUF");
   XG_DEFINE_PROCEDURE(GDK_PIXBUF_ANIMATION, gxg_GDK_PIXBUF_ANIMATION_w, 1, 0, 0, "(GDK_PIXBUF_ANIMATION obj) casts obj to GDK_PIXBUF_ANIMATION");
   XG_DEFINE_PROCEDURE(GDK_PIXBUF_ANIMATION_ITER, gxg_GDK_PIXBUF_ANIMATION_ITER_w, 1, 0, 0, "(GDK_PIXBUF_ANIMATION_ITER obj) casts obj to GDK_PIXBUF_ANIMATION_ITER");
-  XG_DEFINE_PROCEDURE(GTK_VBOX, gxg_GTK_VBOX_w, 1, 0, 0, "(GTK_VBOX obj) casts obj to GTK_VBOX");
   XG_DEFINE_PROCEDURE(GTK_ACCEL_GROUP, gxg_GTK_ACCEL_GROUP_w, 1, 0, 0, "(GTK_ACCEL_GROUP obj) casts obj to GTK_ACCEL_GROUP");
   XG_DEFINE_PROCEDURE(GTK_ACCEL_LABEL, gxg_GTK_ACCEL_LABEL_w, 1, 0, 0, "(GTK_ACCEL_LABEL obj) casts obj to GTK_ACCEL_LABEL");
   XG_DEFINE_PROCEDURE(GTK_ACCESSIBLE, gxg_GTK_ACCESSIBLE_w, 1, 0, 0, "(GTK_ACCESSIBLE obj) casts obj to GTK_ACCESSIBLE");
@@ -46959,12 +46724,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_FONT_SELECTION_DIALOG, gxg_GTK_FONT_SELECTION_DIALOG_w, 1, 0, 0, "(GTK_FONT_SELECTION_DIALOG obj) casts obj to GTK_FONT_SELECTION_DIALOG");
   XG_DEFINE_PROCEDURE(GTK_FRAME, gxg_GTK_FRAME_w, 1, 0, 0, "(GTK_FRAME obj) casts obj to GTK_FRAME");
   XG_DEFINE_PROCEDURE(GTK_HANDLE_BOX, gxg_GTK_HANDLE_BOX_w, 1, 0, 0, "(GTK_HANDLE_BOX obj) casts obj to GTK_HANDLE_BOX");
-  XG_DEFINE_PROCEDURE(GTK_HBUTTON_BOX, gxg_GTK_HBUTTON_BOX_w, 1, 0, 0, "(GTK_HBUTTON_BOX obj) casts obj to GTK_HBUTTON_BOX");
-  XG_DEFINE_PROCEDURE(GTK_HBOX, gxg_GTK_HBOX_w, 1, 0, 0, "(GTK_HBOX obj) casts obj to GTK_HBOX");
-  XG_DEFINE_PROCEDURE(GTK_HPANED, gxg_GTK_HPANED_w, 1, 0, 0, "(GTK_HPANED obj) casts obj to GTK_HPANED");
-  XG_DEFINE_PROCEDURE(GTK_HSCALE, gxg_GTK_HSCALE_w, 1, 0, 0, "(GTK_HSCALE obj) casts obj to GTK_HSCALE");
-  XG_DEFINE_PROCEDURE(GTK_HSCROLLBAR, gxg_GTK_HSCROLLBAR_w, 1, 0, 0, "(GTK_HSCROLLBAR obj) casts obj to GTK_HSCROLLBAR");
-  XG_DEFINE_PROCEDURE(GTK_HSEPARATOR, gxg_GTK_HSEPARATOR_w, 1, 0, 0, "(GTK_HSEPARATOR obj) casts obj to GTK_HSEPARATOR");
   XG_DEFINE_PROCEDURE(GTK_ICON_FACTORY, gxg_GTK_ICON_FACTORY_w, 1, 0, 0, "(GTK_ICON_FACTORY obj) casts obj to GTK_ICON_FACTORY");
   XG_DEFINE_PROCEDURE(GTK_IMAGE, gxg_GTK_IMAGE_w, 1, 0, 0, "(GTK_IMAGE obj) casts obj to GTK_IMAGE");
   XG_DEFINE_PROCEDURE(GTK_IMAGE_MENU_ITEM, gxg_GTK_IMAGE_MENU_ITEM_w, 1, 0, 0, "(GTK_IMAGE_MENU_ITEM obj) casts obj to GTK_IMAGE_MENU_ITEM");
@@ -47014,12 +46773,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_TREE_STORE, gxg_GTK_TREE_STORE_w, 1, 0, 0, "(GTK_TREE_STORE obj) casts obj to GTK_TREE_STORE");
   XG_DEFINE_PROCEDURE(GTK_TREE_VIEW_COLUMN, gxg_GTK_TREE_VIEW_COLUMN_w, 1, 0, 0, "(GTK_TREE_VIEW_COLUMN obj) casts obj to GTK_TREE_VIEW_COLUMN");
   XG_DEFINE_PROCEDURE(GTK_TREE_VIEW, gxg_GTK_TREE_VIEW_w, 1, 0, 0, "(GTK_TREE_VIEW obj) casts obj to GTK_TREE_VIEW");
-  XG_DEFINE_PROCEDURE(GTK_VBUTTON_BOX, gxg_GTK_VBUTTON_BOX_w, 1, 0, 0, "(GTK_VBUTTON_BOX obj) casts obj to GTK_VBUTTON_BOX");
   XG_DEFINE_PROCEDURE(GTK_VIEWPORT, gxg_GTK_VIEWPORT_w, 1, 0, 0, "(GTK_VIEWPORT obj) casts obj to GTK_VIEWPORT");
-  XG_DEFINE_PROCEDURE(GTK_VPANED, gxg_GTK_VPANED_w, 1, 0, 0, "(GTK_VPANED obj) casts obj to GTK_VPANED");
-  XG_DEFINE_PROCEDURE(GTK_VSCALE, gxg_GTK_VSCALE_w, 1, 0, 0, "(GTK_VSCALE obj) casts obj to GTK_VSCALE");
-  XG_DEFINE_PROCEDURE(GTK_VSCROLLBAR, gxg_GTK_VSCROLLBAR_w, 1, 0, 0, "(GTK_VSCROLLBAR obj) casts obj to GTK_VSCROLLBAR");
-  XG_DEFINE_PROCEDURE(GTK_VSEPARATOR, gxg_GTK_VSEPARATOR_w, 1, 0, 0, "(GTK_VSEPARATOR obj) casts obj to GTK_VSEPARATOR");
   XG_DEFINE_PROCEDURE(GTK_WIDGET, gxg_GTK_WIDGET_w, 1, 0, 0, "(GTK_WIDGET obj) casts obj to GTK_WIDGET");
   XG_DEFINE_PROCEDURE(GTK_WINDOW, gxg_GTK_WINDOW_w, 1, 0, 0, "(GTK_WINDOW obj) casts obj to GTK_WINDOW");
   XG_DEFINE_PROCEDURE(PANGO_CONTEXT, gxg_PANGO_CONTEXT_w, 1, 0, 0, "(PANGO_CONTEXT obj) casts obj to PANGO_CONTEXT");
@@ -47147,7 +46901,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GDK_IS_PIXBUF, gxg_GDK_IS_PIXBUF_w, 1, 0, 0, "(GDK_IS_PIXBUF obj): " PROC_TRUE " if obj is a GDK_IS_PIXBUF");
   XG_DEFINE_PROCEDURE(GDK_IS_PIXBUF_ANIMATION, gxg_GDK_IS_PIXBUF_ANIMATION_w, 1, 0, 0, "(GDK_IS_PIXBUF_ANIMATION obj): " PROC_TRUE " if obj is a GDK_IS_PIXBUF_ANIMATION");
   XG_DEFINE_PROCEDURE(GDK_IS_PIXBUF_ANIMATION_ITER, gxg_GDK_IS_PIXBUF_ANIMATION_ITER_w, 1, 0, 0, "(GDK_IS_PIXBUF_ANIMATION_ITER obj): " PROC_TRUE " if obj is a GDK_IS_PIXBUF_ANIMATION_ITER");
-  XG_DEFINE_PROCEDURE(GTK_IS_VBOX, gxg_GTK_IS_VBOX_w, 1, 0, 0, "(GTK_IS_VBOX obj): " PROC_TRUE " if obj is a GTK_IS_VBOX");
   XG_DEFINE_PROCEDURE(GTK_IS_ACCEL_GROUP, gxg_GTK_IS_ACCEL_GROUP_w, 1, 0, 0, "(GTK_IS_ACCEL_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_ACCEL_GROUP");
   XG_DEFINE_PROCEDURE(GTK_IS_ACCEL_LABEL, gxg_GTK_IS_ACCEL_LABEL_w, 1, 0, 0, "(GTK_IS_ACCEL_LABEL obj): " PROC_TRUE " if obj is a GTK_IS_ACCEL_LABEL");
   XG_DEFINE_PROCEDURE(GTK_IS_ACCESSIBLE, gxg_GTK_IS_ACCESSIBLE_w, 1, 0, 0, "(GTK_IS_ACCESSIBLE obj): " PROC_TRUE " if obj is a GTK_IS_ACCESSIBLE");
@@ -47180,12 +46933,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_FONT_SELECTION_DIALOG, gxg_GTK_IS_FONT_SELECTION_DIALOG_w, 1, 0, 0, "(GTK_IS_FONT_SELECTION_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_FONT_SELECTION_DIALOG");
   XG_DEFINE_PROCEDURE(GTK_IS_FRAME, gxg_GTK_IS_FRAME_w, 1, 0, 0, "(GTK_IS_FRAME obj): " PROC_TRUE " if obj is a GTK_IS_FRAME");
   XG_DEFINE_PROCEDURE(GTK_IS_HANDLE_BOX, gxg_GTK_IS_HANDLE_BOX_w, 1, 0, 0, "(GTK_IS_HANDLE_BOX obj): " PROC_TRUE " if obj is a GTK_IS_HANDLE_BOX");
-  XG_DEFINE_PROCEDURE(GTK_IS_HBUTTON_BOX, gxg_GTK_IS_HBUTTON_BOX_w, 1, 0, 0, "(GTK_IS_HBUTTON_BOX obj): " PROC_TRUE " if obj is a GTK_IS_HBUTTON_BOX");
-  XG_DEFINE_PROCEDURE(GTK_IS_HBOX, gxg_GTK_IS_HBOX_w, 1, 0, 0, "(GTK_IS_HBOX obj): " PROC_TRUE " if obj is a GTK_IS_HBOX");
-  XG_DEFINE_PROCEDURE(GTK_IS_HPANED, gxg_GTK_IS_HPANED_w, 1, 0, 0, "(GTK_IS_HPANED obj): " PROC_TRUE " if obj is a GTK_IS_HPANED");
-  XG_DEFINE_PROCEDURE(GTK_IS_HSCALE, gxg_GTK_IS_HSCALE_w, 1, 0, 0, "(GTK_IS_HSCALE obj): " PROC_TRUE " if obj is a GTK_IS_HSCALE");
-  XG_DEFINE_PROCEDURE(GTK_IS_HSCROLLBAR, gxg_GTK_IS_HSCROLLBAR_w, 1, 0, 0, "(GTK_IS_HSCROLLBAR obj): " PROC_TRUE " if obj is a GTK_IS_HSCROLLBAR");
-  XG_DEFINE_PROCEDURE(GTK_IS_HSEPARATOR, gxg_GTK_IS_HSEPARATOR_w, 1, 0, 0, "(GTK_IS_HSEPARATOR obj): " PROC_TRUE " if obj is a GTK_IS_HSEPARATOR");
   XG_DEFINE_PROCEDURE(GTK_IS_ICON_FACTORY, gxg_GTK_IS_ICON_FACTORY_w, 1, 0, 0, "(GTK_IS_ICON_FACTORY obj): " PROC_TRUE " if obj is a GTK_IS_ICON_FACTORY");
   XG_DEFINE_PROCEDURE(GTK_IS_IMAGE, gxg_GTK_IS_IMAGE_w, 1, 0, 0, "(GTK_IS_IMAGE obj): " PROC_TRUE " if obj is a GTK_IS_IMAGE");
   XG_DEFINE_PROCEDURE(GTK_IS_IMAGE_MENU_ITEM, gxg_GTK_IS_IMAGE_MENU_ITEM_w, 1, 0, 0, "(GTK_IS_IMAGE_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_IMAGE_MENU_ITEM");
@@ -47235,12 +46982,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_TREE_STORE, gxg_GTK_IS_TREE_STORE_w, 1, 0, 0, "(GTK_IS_TREE_STORE obj): " PROC_TRUE " if obj is a GTK_IS_TREE_STORE");
   XG_DEFINE_PROCEDURE(GTK_IS_TREE_VIEW_COLUMN, gxg_GTK_IS_TREE_VIEW_COLUMN_w, 1, 0, 0, "(GTK_IS_TREE_VIEW_COLUMN obj): " PROC_TRUE " if obj is a GTK_IS_TREE_VIEW_COLUMN");
   XG_DEFINE_PROCEDURE(GTK_IS_TREE_VIEW, gxg_GTK_IS_TREE_VIEW_w, 1, 0, 0, "(GTK_IS_TREE_VIEW obj): " PROC_TRUE " if obj is a GTK_IS_TREE_VIEW");
-  XG_DEFINE_PROCEDURE(GTK_IS_VBUTTON_BOX, gxg_GTK_IS_VBUTTON_BOX_w, 1, 0, 0, "(GTK_IS_VBUTTON_BOX obj): " PROC_TRUE " if obj is a GTK_IS_VBUTTON_BOX");
   XG_DEFINE_PROCEDURE(GTK_IS_VIEWPORT, gxg_GTK_IS_VIEWPORT_w, 1, 0, 0, "(GTK_IS_VIEWPORT obj): " PROC_TRUE " if obj is a GTK_IS_VIEWPORT");
-  XG_DEFINE_PROCEDURE(GTK_IS_VPANED, gxg_GTK_IS_VPANED_w, 1, 0, 0, "(GTK_IS_VPANED obj): " PROC_TRUE " if obj is a GTK_IS_VPANED");
-  XG_DEFINE_PROCEDURE(GTK_IS_VSCALE, gxg_GTK_IS_VSCALE_w, 1, 0, 0, "(GTK_IS_VSCALE obj): " PROC_TRUE " if obj is a GTK_IS_VSCALE");
-  XG_DEFINE_PROCEDURE(GTK_IS_VSCROLLBAR, gxg_GTK_IS_VSCROLLBAR_w, 1, 0, 0, "(GTK_IS_VSCROLLBAR obj): " PROC_TRUE " if obj is a GTK_IS_VSCROLLBAR");
-  XG_DEFINE_PROCEDURE(GTK_IS_VSEPARATOR, gxg_GTK_IS_VSEPARATOR_w, 1, 0, 0, "(GTK_IS_VSEPARATOR obj): " PROC_TRUE " if obj is a GTK_IS_VSEPARATOR");
   XG_DEFINE_PROCEDURE(GTK_IS_WIDGET, gxg_GTK_IS_WIDGET_w, 1, 0, 0, "(GTK_IS_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_WIDGET");
   XG_DEFINE_PROCEDURE(GTK_IS_WINDOW, gxg_GTK_IS_WINDOW_w, 1, 0, 0, "(GTK_IS_WINDOW obj): " PROC_TRUE " if obj is a GTK_IS_WINDOW");
   XG_DEFINE_PROCEDURE(PANGO_IS_CONTEXT, gxg_PANGO_IS_CONTEXT_w, 1, 0, 0, "(PANGO_IS_CONTEXT obj): " PROC_TRUE " if obj is a PANGO_IS_CONTEXT");
@@ -49109,7 +48851,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("01-Jun-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Jun-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
