@@ -2920,7 +2920,8 @@ static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, is_environment(car(args))));
 }
 
-#define SET_FRAME(Sym, Env) symbol_max_frame(Sym) = ((symbol_max_frame(Sym) < frame_tag(Env)) ? frame_tag(Env) : symbol_max_frame(Sym));
+
+#define SET_FRAME(Sym, Env) if (symbol_max_frame(Sym) < frame_tag(Env)) symbol_max_frame(Sym) = frame_tag(Env)
 
 static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
@@ -3212,18 +3213,10 @@ in that frame and its value."
 static s7_pointer find_symbol(s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer x;
-  /* unrolling these loops is slower
-   *  also there is room in both the frame for a tag, and in the symbol slot
-   *  for a local value and a tag, and the two can be coordinated to forego
-   *  this linear search in a noticeable percentage of the time, and yet the
-   *  "direct" approach is slower!  The only case that wins is a do-loop,
-   *  where the repeated accesses to the loop counter are sped up by a 
-   *  factor of 3, but overall, it's not a big improvement even in that case.
-   *  I thought this was a sure thing! (The frame tag = object.cons.line costs 12
-   *  in lg, but the real expense is storing the slot/tag values locally and checking them).
-   */
-
-  for (x = env; is_pair(x); x = cdr(x)) 
+  int tag;
+  tag = symbol_max_frame(hdl);
+  for (x = env; tag < frame_tag(x); x = cdr(x));
+  for (; is_pair(x); x = cdr(x))
     {
       s7_pointer y;
       for (y = car(x); is_pair(y); y = ecdr(y))
@@ -3266,13 +3259,18 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
 {
   s7_pointer x;
   if (is_not_null(local_env))
-    for (x = local_env; is_pair(x); x = cdr(x)) 
-      {
-	s7_pointer y;
-	for (y = car(x); is_pair(y); y = ecdr(y))
-	  if (car(y) == sym)
-	    return(symbol_value(y));
-      }
+    {
+      int tag;
+      tag = symbol_max_frame(sym);
+      for (x = local_env; tag < frame_tag(x); x = cdr(x));
+      for (; is_pair(x); x = cdr(x))
+	{
+	  s7_pointer y;
+	  for (y = car(x); is_pair(y); y = ecdr(y))
+	    if (car(y) == sym)
+	      return(symbol_value(y));
+	}
+    }
   return(s7_symbol_value(sc, sym)); 
 }
 
@@ -23639,7 +23637,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   set_symbol_value(x, syn);
   symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS);
   typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC);
-
+  symbol_max_frame(x) = 0;
   car(syn) = x;
 
   return(x);
@@ -23665,7 +23663,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   set_symbol_value(x, syn);   /* cdr(x) */
   symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS);
   typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC);
-
+  symbol_max_frame(x) = 0;
   car(syn) = s7_make_symbol(sc, name);
   return(x);
 }
@@ -24109,7 +24107,7 @@ static void prepare_do_end_test(s7_scheme *sc)
 
 #define FIND_SYMBOL_OR_BUST(Sc) \
   s7_pointer x; \
-  unsigned int tag; \
+  int tag; \
   tag = symbol_max_frame(hdl);	\
   for (x = Sc->envir; tag < frame_tag(x); x = cdr(x));	\
   for (; is_pair(x); x = cdr(x))	\
@@ -24314,7 +24312,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func)
 	      set_optimized(car(x));
 	      optimize_data(car(x)) = OP_SAFE_C_C;
 	      ecdr(car(x)) = func;
-	      if (is_safe_procedure(car(x)))
+	      if (is_safe_procedure(func))
 		return(true);
 	      set_unsafe(car(x));
 	      return(false);
@@ -24338,7 +24336,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func)
 	  
 	  /* for a defined function, if the body is completely optimizable, and
 	   *   there is no values object or anything that goofs with the stack,
-	   *   can it be declared safe?
+	   *   can it be declared safe? no -- s7_call is a killer.
 	   *
 	   * if all constant args, and func is 1->1, save actual result?
 	   *
@@ -24649,9 +24647,11 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x)
   /* fprintf(stderr, "        opt[%s]\n", s7_object_to_c_string(sc, car(x))); */
 
   /* TODO: general object ref via (v i) 
-   *       member with 3 args: unsafe currently?
+   *       member/assoc with 3 args: unsafe currently?
    *       eq? with quoted symbol (also list-ops member etc)
    *       apply safe-proc to constant, symbol, or safe-expr
+   *       set of safe proc (pws cases), set of sym+safe expr [very often involves access to same var]
+   *       safe proc n-args no pairs, or just safe pairs
    */
 
   if (s7_is_symbol(y))
@@ -27501,6 +27501,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
 		    ecdr(y) = car(sc->envir);
 		    car(sc->envir) = y;
+		    /* SET_FRAME(car(y), sc->envir); */
 		    if (symbol_max_frame(car(y)) < tag) symbol_max_frame(car(y)) = tag;
 		  }
 		
@@ -27523,7 +27524,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
 		    ecdr(y) = car(sc->envir);
 		    car(sc->envir) = y;
-		    if (symbol_max_frame(car(y)) < tag) symbol_max_frame(car(y)) = tag;
+		    SET_FRAME(car(y), sc->envir);
 		  }
 	      }
 	    if (is_null(x)) 
@@ -28597,23 +28598,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     LET2: 
       {
 	s7_pointer x, y;
-	
-	NEW_FRAME(sc, sc->envir, sc->envir); 
+	NEW_FRAME(sc, sc->envir, sc->envir);
 	for (x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), y = sc->args; is_not_null(y); x = cdr(x), y = cdr(y)) 
 	  {
 	    s7_pointer yy, z;
 	    
 	    z = caar(x);
-	    if (symbol_accessed(z))
-	      car(y) = call_symbol_bind(sc, z, car(y));
-	    
 	    NEW_CELL(sc, yy); 
 	    car(yy) = z;
-	    cdr(yy) = car(y);
+	    if (symbol_accessed(z))
+	      cdr(yy) = call_symbol_bind(sc, z, car(y));
+	    else cdr(yy) = car(y);
 	    set_type(yy, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
 	    ecdr(yy) = car(sc->envir);
 	    car(sc->envir) = yy;
 	    SET_FRAME(z, sc->envir);
+	    /* if (symbol_max_frame(z) < tag) symbol_max_frame(z) = tag; */
 	  }
 	
 	if (s7_is_symbol(car(sc->code))) 

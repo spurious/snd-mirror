@@ -6446,8 +6446,8 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
 
   XEN_DEFINE_PROCEDURE(S_channel_amp_envs,         g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
 
-  XEN_DEFINE_PROCEDURE(S_sounds,                   g_sounds_w,                   0, 0, 0, H_sounds);
+  XEN_DEFINE_SAFE_PROCEDURE(S_sounds,                   g_sounds_w,                   0, 0, 0, H_sounds);
 
-  XEN_DEFINE_PROCEDURE(S_integer_to_sound,         g_integer_to_sound_w,         1, 0, 0, H_integer_to_sound);
-  XEN_DEFINE_PROCEDURE(S_sound_to_integer,         g_sound_to_integer_w,         1, 0, 0, H_sound_to_integer);
+  XEN_DEFINE_SAFE_PROCEDURE(S_integer_to_sound,         g_integer_to_sound_w,         1, 0, 0, H_integer_to_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_sound_to_integer,         g_sound_to_integer_w,         1, 0, 0, H_sound_to_integer);
 }
