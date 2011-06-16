@@ -63342,6 +63342,7 @@ EDITS: 1
        lst))))
 |#
 
+;(s7-version)
 (if with-exit (exit))
 
 ;;; ---------------- test the end

@@ -2478,7 +2478,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((ho (make-string 0 #\x))) (string-set! ho 0 #\a) ho) 'error)
 (test (let ((str "hi")) (string-set! (let () str) 1 #\a) str) "ha") ; (also in Guile)
 (test (let ((x 2) (str "hi")) (string-set! (let () (set! x 3) str) 1 #\a) (list x str)) '(3 "ha"))
-(test (let ((str "hi")) (set! ((let () str) 1) #\a) str) "ha")
+(test (let ((str "hi")) (set! ((let () str) 1) #\b) str) "hb")
 (test (let ((str "hi")) (string-set! (let () (string-set! (let () str) 0 #\x) str) 1 #\x) str) "xx")
 (test (let ((str "hi")) (string-set! (let () (set! str "hiho") str) 3 #\x) str) "hihx") ; ! (this works in Guile also)
 
@@ -6921,6 +6921,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (eval lst) 5)
   (test (eval lst) 6))
   
+
 (let ()
   (define fact         ; Reini Urban, http://autocad.xarch.at/lisp/self-mod.lsp.txt
     (let ((old '())
@@ -7016,8 +7017,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
      '(1 2 3))
     (test pos '(5 4 3 2 1 0)))
   )
-  
-  
 
 
 
