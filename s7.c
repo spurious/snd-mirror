@@ -341,12 +341,16 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL,
 	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO, OP_SORT_OBJECT,
 	      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS, OP_HOOK_APPLY, 
 	      OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
-	      OP_IF_UNCHECKED, OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, 
+
+	      OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, 
 	      OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_NORMAL, OP_SET_PAIR,
 	      OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
-	      OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_IF_SYMBOL,
-	      OP_IF2, OP_IF_UNCHECKED2, OP_IF_SYMBOL2, OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS,
-	      OP_IF_E_S_E, OP_IF_E_E_S, OP_IF3, OP_IF4, OP_IF_UNSPECIFIED, OP_CASE_PAIR,
+	      OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED,
+	      OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_CASE_PAIR,
+	      OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_P_X_P, OP_IF_P_X, OP_IF_P_X_X, 
+	      OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, OP_IF_PX, OP_IF_PXX, 
+	      OP_IF_X_P_P, OP_IF_X_P, OP_IF_X_P_X, OP_IF_X_X_P, OP_IF_X_X, OP_IF_X_X_X,
+
 #if WITH_OPTIMIZATION
 	      OP_THUNK, 
 	      OP_SAFE_C_C, OP_SAFE_C_S, OP_SAFE_C_P, OP_SAFE_C_SS, OP_SAFE_C_SC, OP_SAFE_C_CS, OP_SAFE_C_PP, OP_SAFE_C_XP, OP_SAFE_C_PX,
@@ -375,12 +379,11 @@ static const char *op_names[OP_MAX_DEFINED] =
    "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort", "sort",
    "eval-string", "eval-string", "set-access", "hook-apply", 
    "member-if", "assoc-if", "member-if", "assoc-if",
-   "if-unchecked", "quote-unchecked", "lambda-unchecked", "let-unchecked", "case-unchecked", 
+   "quote-unchecked", "lambda-unchecked", "let-unchecked", "case-unchecked", 
    "set-unchecked", "set-symbol-c", "set-symbol-s", "set-normal", "set-pair",
    "let*-unchecked", "letrec-unchecked", "cond-unchecked",
-   "lambda*-unchecked", "do-unchecked", "define-unchecked", "define*-unchecked", "if-symbol",
-   "if", "if-unchecked2", "if-symbol2", "let", "let", "let",
-   "if-e-s-e", "if-e-e-s", "if3", "if4", "if-unspecified", "case-pair",
+   "lambda*-unchecked", "do-unchecked", "define-unchecked", "define*-unchecked",
+   "let", "let", "let", "case-pair",
 #if WITH_OPTIMIZATION
    "thunk", 
    "safe-c-c", "safe-c-s", "safe-c-p", "safe-c-ss", "safe-c-sc", "safe-c-cs", "safe-c-pp", "safe-c-xp", "safe-c-px",
@@ -394,7 +397,7 @@ static const char *op_names[OP_MAX_DEFINED] =
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 152 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 157 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -642,10 +645,11 @@ struct s7_scheme {
 #if WITH_UNQUOTE_SPLICING
   s7_pointer UNQUOTE_SPLICING;
 #endif
-  s7_pointer IF_UNCHECKED, IF_SYMBOL, QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
+  s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, SET_SYMBOL_C, SET_SYMBOL_S, SET_NORMAL, SET_PAIR;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_STAR_UNCHECKED, CASE_PAIR;
-  s7_pointer IF_UNCHECKED2, IF_SYMBOL2, LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, IF_E_S_E, IF_E_E_S, IF_UNSPECIFIED;
+  s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS;
+  s7_pointer IF_P_P_P, IF_P_P, IF_P_P_X, IF_P_X_P, IF_P_X, IF_P_X_X, IF_X_P_P, IF_X_P, IF_X_P_X, IF_X_X_P, IF_X_X, IF_X_X_X;
   
   s7_pointer input_port;              /* current-input-port */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -735,18 +739,19 @@ struct s7_scheme {
 #define T_BOOLEAN             20
 #define T_SYNTAX              21
 #define T_HOOK                22
-#define T_C_MACRO             23
-#define T_C_POINTER           24
-#define T_C_FUNCTION          25
-#define T_C_ANY_ARGS_FUNCTION 26
-#define T_C_OPT_ARGS_FUNCTION 27
-#define T_C_RST_ARGS_FUNCTION 28
-#define T_C_LST_ARGS_FUNCTION 29
-#define T_C_EQ_FUNCTION       30
-#define T_C_PAIR_FUNCTION     31
+#define T_ENVIRONMENT         23
+#define T_C_MACRO             24
+#define T_C_POINTER           25
+#define T_C_FUNCTION          26
+#define T_C_ANY_ARGS_FUNCTION 27
+#define T_C_OPT_ARGS_FUNCTION 28
+#define T_C_RST_ARGS_FUNCTION 29
+#define T_C_LST_ARGS_FUNCTION 30
+#define T_C_EQ_FUNCTION       31
 #define T_C_NOT_FUNCTION      32
 #define T_C_CAR_FUNCTION      33
 #define T_C_CDR_FUNCTION      34
+
 #define BUILT_IN_TYPES        35
 
 #define TYPE_BITS                     8
@@ -792,11 +797,7 @@ struct s7_scheme {
 #define set_local(p)                  typeflag(p) = (typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC))
 /* this marks something defined (bound) at the top-level, and never defined locally */
 
-#define T_ENVIRONMENT                 (1 << (TYPE_BITS + 8))
-#define is_environment(p)             ((typeflag(p) & T_ENVIRONMENT) != 0)
-/* this marks a pair that is also an environment */
-
-#define T_SYMBOL_HAS_ACCESSOR         (1 << (TYPE_BITS + 9))
+#define T_SYMBOL_HAS_ACCESSOR         (1 << (TYPE_BITS + 8))
 #define symbol_has_accessor(p)        ((typeflag(p) & T_SYMBOL_HAS_ACCESSOR) != 0)
 #define symbol_set_has_accessor(p)    typeflag(p) |= T_SYMBOL_HAS_ACCESSOR
 #define symbol_clear_has_accessor(p)  typeflag(p) &= ~(T_SYMBOL_HAS_ACCESSOR)
@@ -804,7 +805,7 @@ struct s7_scheme {
  *    this is a type bit for the pair (symbol . current-value), not for either the symbol or value themselves 
  */
 
-#define T_SYMBOL_ACCESSED             (1 << (TYPE_BITS + 10))
+#define T_SYMBOL_ACCESSED             (1 << (TYPE_BITS + 9))
 #define symbol_accessed(p)            ((typeflag(p) & T_SYMBOL_ACCESSED) != 0)
 #define is_immutable_or_accessed(p)   ((typeflag(p) & (T_IMMUTABLE | T_SYMBOL_ACCESSED)) != 0)
 #define symbol_set_accessed(p)        typeflag(p) |= T_SYMBOL_ACCESSED
@@ -813,7 +814,7 @@ struct s7_scheme {
  *    implement the symbol-access stuff at almost no additional cost.
  */
 
-#define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 11))
+#define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 10))
 #define is_multiple_value(p)          ((typeflag(p) & T_MULTIPLE_VALUE) != 0)
 #define set_multiple_value(p)         typeflag(p) |= T_MULTIPLE_VALUE
 #define multiple_value(p)             p
@@ -822,39 +823,39 @@ struct s7_scheme {
  *    on only for a very short time.
  */
 
-#define T_PENDING_REMOVAL             (1 << (TYPE_BITS + 12))
+#define T_PENDING_REMOVAL             (1 << (TYPE_BITS + 11))
 #define is_pending_removal(p)         ((typeflag(p) & T_PENDING_REMOVAL) != 0)
 #define set_pending_removal(p)        typeflag(p) |= T_PENDING_REMOVAL
 #define clear_pending_removal(p)      typeflag(p) &= ~(T_PENDING_REMOVAL)
 /* this bit is for circle checks during removal of a global function from the heap
  */
 
-#define T_KEYWORD                     (1 << (TYPE_BITS + 13))
+#define T_KEYWORD                     (1 << (TYPE_BITS + 12))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
-#define T_SYNTACTIC                   (1 << (TYPE_BITS + 14))
+#define T_SYNTACTIC                   (1 << (TYPE_BITS + 13))
 #define is_syntactic(p)               ((typeflag(p) & T_SYNTACTIC) != 0)
 /* this marks syntax objects */
 
-#define T_OVERLAY                     (1 << (TYPE_BITS + 15))
+#define T_OVERLAY                     (1 << (TYPE_BITS + 14))
 #define set_overlay(p)                typeflag(p)  |= T_OVERLAY
 #define is_overlaid(p)                ((typeflag(p) & T_OVERLAY) != 0)
 /* this marks a cell whose ecdr points to the previous cell in a list (for the optimizer) 
  */
 
-#define T_OPTIMIZED                   (1 << (TYPE_BITS + 16))
+#define T_OPTIMIZED                   (1 << (TYPE_BITS + 15))
 #define set_optimized(p)              typeflag(p)  |= T_OPTIMIZED
 #define is_optimized(p)               ((typeflag(p) & T_OPTIMIZED) != 0)
 #define clear_optimized(p)            typeflag(p) &= ~(T_OPTIMIZED)
 
-#define T_CHECKED                     (1 << (TYPE_BITS + 17))
+#define T_CHECKED                     (1 << (TYPE_BITS + 16))
 #define set_checked(p)                typeflag(p)  |= T_CHECKED
 #define is_checked(p)                 ((typeflag(p) & T_CHECKED) != 0)
 #define is_not_checked(p)             ((typeflag(p) & T_CHECKED) == 0)
 
-#define T_UNSAFE                      (1 << (TYPE_BITS + 18))
+#define T_UNSAFE                      (1 << (TYPE_BITS + 17))
 #define set_unsafe(p)                 typeflag(p)  |= T_UNSAFE
 #define is_unsafe(p)                  ((typeflag(p) & T_UNSAFE) != 0)
 
@@ -867,7 +868,7 @@ struct s7_scheme {
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x78000000
+#define UNUSED_BITS                   0x7c000000
 
 
 #if HAVE_PTHREADS
@@ -938,6 +939,8 @@ struct s7_scheme {
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_opcode(p)              ((p)->hloc)
+
+#define is_environment(p)             (type(p) == T_ENVIRONMENT)
 
 #define vector_length(p)              ((p)->object.vector.length)
 #define vector_element(p, i)          ((p)->object.vector.elements[i])
@@ -1725,7 +1728,7 @@ static void mark_vector_1(s7_pointer p, s7_Int top)
 static void mark_environment(s7_pointer env)
 {
   s7_pointer x;
-  for (x = env; is_pair(x) && (!is_marked(x)); x = cdr(x)) 
+  for (x = env; is_environment(x) && (!is_marked(x)); x = cdr(x)) 
     { 
       s7_pointer y;
       for (y = car(x); is_pair(y); y = ecdr(y))
@@ -1752,14 +1755,9 @@ static void mark_pair(s7_pointer p)
 {
   if (!is_marked(p)) 
     {
-      if (is_environment(p))
-	mark_environment(p);
-      else
-	{
-	  set_mark(p);
-	  S7_MARK(car(p));
-	  S7_MARK(cdr(p));
-	}
+      set_mark(p);
+      S7_MARK(car(p));
+      S7_MARK(cdr(p));
     }
 }
 
@@ -1902,6 +1900,7 @@ static void init_mark_functions(void)
   mark_function[T_BOOLEAN] = mark_noop;
   mark_function[T_SYNTAX] = mark_noop;
   mark_function[T_HOOK] = mark_hook;
+  mark_function[T_ENVIRONMENT] = mark_environment;
   mark_function[T_C_MACRO] = just_mark;
   mark_function[T_C_POINTER] = just_mark;
   mark_function[T_C_FUNCTION] = just_mark;
@@ -1910,7 +1909,6 @@ static void init_mark_functions(void)
   mark_function[T_C_RST_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_LST_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_EQ_FUNCTION] = just_mark;
-  mark_function[T_C_PAIR_FUNCTION] = just_mark;
   mark_function[T_C_NOT_FUNCTION] = just_mark;
   mark_function[T_C_CAR_FUNCTION] = just_mark;
   mark_function[T_C_CDR_FUNCTION] = just_mark;
@@ -2380,11 +2378,11 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_C_CAR_FUNCTION:
     case T_C_CDR_FUNCTION:
     case T_C_NOT_FUNCTION:
-    case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:
     case T_C_MACRO:
     case T_C_POINTER:
     case T_HOOK:
+    case T_ENVIRONMENT:
       break;
 
     case T_SYMBOL:
@@ -2902,7 +2900,7 @@ static s7_pointer g_symbol_calls(s7_scheme *sc, s7_pointer args)
       frame_tag(x) = frame_tag(Old_Env) + 1;\
       car(x) = Sc->NIL;                  \
       cdr(x) = Old_Env;		         \
-      set_type(x, T_PAIR | T_ENVIRONMENT); \
+      set_type(x, T_ENVIRONMENT); \
       New_Env = x;		   \
      } while (0)
 
@@ -2915,7 +2913,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
   frame_tag(x) = frame_tag(old_env) + 1;
   car(x) = sc->NIL;
   cdr(x) = old_env;
-  set_type(x, T_PAIR | T_ENVIRONMENT);
+  set_type(x, T_ENVIRONMENT);
   return(x);
 } 
 
@@ -2933,7 +2931,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 { 
   s7_pointer slot;
 
-  if (!is_pair(env))
+  if (!is_environment(env))
     {
       s7_pointer ge;
 
@@ -3112,7 +3110,6 @@ environment."
 
   if (gc_loc != -1)
     s7_gc_unprotect_at(sc, gc_loc);
-
   return(e);
 }
 
@@ -3152,6 +3149,14 @@ new environment."
 	}
       else return(s7_wrong_type_arg_error(sc, "augment-environment", 1, e, "an environment"));
     }
+  else
+    {
+      if (e == sc->global_env)
+	{
+	  e = new_frame_in_env(sc, sc->NIL);
+	  gc_loc = s7_gc_protect(sc, e);
+	}
+    }
 
   for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
     if ((!is_pair(car(x))) ||
@@ -3183,7 +3188,7 @@ s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
     }
   else
     {
-      for (x = env; is_pair(x); x = cdr(x)) 
+      for (x = env; is_environment(x); x = cdr(x)) 
 	{
 	  s7_pointer y;
 	  sc->z = sc->NIL;
@@ -3222,7 +3227,7 @@ static s7_pointer find_symbol(s7_pointer env, s7_pointer hdl)
   int tag;
   tag = symbol_max_frame(hdl);
   for (x = env; tag < frame_tag(x); x = cdr(x));
-  for (; is_pair(x); x = cdr(x))
+  for (; is_environment(x); x = cdr(x))
     {
       s7_pointer y;
       for (y = car(x); is_pair(y); y = ecdr(y))
@@ -3236,7 +3241,7 @@ static s7_pointer find_symbol(s7_pointer env, s7_pointer hdl)
 static s7_pointer find_local_symbol(s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer y;
-  if (!is_pair(env))
+  if (!is_environment(env))
     return(symbol_global_slot(hdl));
 
   for (y = car(env); is_pair(y); y = ecdr(y))
@@ -3264,12 +3269,12 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
   s7_pointer x;
-  if (is_not_null(local_env))
+  if (is_environment(local_env))
     {
       int tag;
       tag = symbol_max_frame(sym);
       for (x = local_env; tag < frame_tag(x); x = cdr(x));
-      for (; is_pair(x); x = cdr(x))
+      for (; is_environment(x); x = cdr(x))
 	{
 	  s7_pointer y;
 	  for (y = car(x); is_pair(y); y = ecdr(y))
@@ -3432,7 +3437,8 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 #else
   #define H_current_environment "(current-environment) returns the current definitions (symbol bindings)"
 #endif
-  if (is_not_null(sc->envir))
+
+  if (is_environment(sc->envir))
     return(sc->envir);
   return(sc->global_env);
 }
@@ -6817,26 +6823,16 @@ static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
 static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 {
   #define H_abs "(abs x) returns the absolute value of the real number x"
-  s7_num_t n;
 
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "abs", 0, car(args), "a real"));
+  s7_pointer x;
+  x = car(args);
 
-  n = number(car(args));
-  switch (num_type(n))
-    {
-    case NUM_INT:     
-      /* as in exact->inexact, (abs most-negative-fixnum) is a bother */
-      return(s7_make_integer(sc, s7_Int_abs(integer(n))));
+  if (!s7_is_real(x))
+    return(s7_wrong_type_arg_error(sc, "abs", 0, x, "a real"));
 
-    case NUM_RATIO:   
-      return(s7_make_ratio(sc, s7_Int_abs(numerator(n)), denominator(n)));
-
-    case NUM_REAL2:
-    case NUM_REAL:    
-      return(s7_make_real(sc, s7_Double_abs(real(n))));
-    }
-  return(sc->NIL); /* make compiler happy */
+  if (s7_is_negative(x))
+    return(s7_negate(sc, x));
+  return(x);
 }
 
 
@@ -6844,14 +6840,20 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
 {
   #define H_magnitude "(magnitude z) returns the magnitude of z"
   s7_num_t n;
+  s7_pointer x;
+  x = car(args);
 
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "magnitude", 0, car(args), "a number"));
+  if (!s7_is_number(x))
+    return(s7_wrong_type_arg_error(sc, "magnitude", 0, x, "a number"));
+
+  if (s7_is_real(x))
+    {
+      if (s7_is_negative(x))
+	return(s7_negate(sc, x));
+      return(x);
+    }
 
   n = number(car(args));
-  if (num_type(n) < NUM_COMPLEX)
-    return(g_abs(sc, args));
-  
   return(s7_make_real(sc, hypot(imag_part(n), real_part(n))));
 }
 
@@ -7639,6 +7641,8 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
   s7_Int n = 1, d = 0;
   bool rats = false;
   s7_pointer x;
+
+  /* TODO: here and elsewhere if 1 arg, return it (no alloc) */
 
   for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
     if (!s7_is_rational(car(x)))
@@ -12439,9 +12443,9 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
     {
       if (!is_environment(cadr(args)))
  	return(s7_wrong_type_arg_error(sc, "eval-string", 2, cadr(args), "an environment"));
-      if (is_pair(cadr(args)))
-	sc->envir = cadr(args);
-      else sc->envir = sc->NIL;
+      if (cadr(args) == sc->global_env)
+	sc->envir = sc->NIL;
+      else sc->envir = cadr(args);
     }
 
   port = s7_open_input_string(sc, s7_string(car(args)));
@@ -12862,7 +12866,6 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_C_CAR_FUNCTION:
     case T_C_CDR_FUNCTION:
     case T_C_NOT_FUNCTION:
-    case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:
       return(copy_string(c_function_name(obj)));
 
@@ -12895,9 +12898,10 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_VECTOR: 
       return(copy_string("#<vector>"));
 
+    case T_ENVIRONMENT:
+      return(copy_string("#<environment>"));
+
     case T_PAIR: 
-      if (is_environment(obj))
-	return(copy_string("#<environment>"));
       return(copy_string("#<pair>"));
 
     default:
@@ -12907,7 +12911,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -12915,16 +12919,18 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_marked(obj) ?             " gc-marked" : "",
 	     is_immutable(obj) ?          " immutable" : "",
 	     dont_copy(obj) ?             " dont-copy" : "",
-	     dont_copy_cdr(obj) ?         " dont-copy-cdr" : "",
 	     is_any_macro(obj) ?          " anymac" : "",
 	     is_expansion(obj) ?          " expansion" : "",
 	     symbol_accessed(obj) ?       " accessed" : "",
 	     symbol_has_accessor(obj) ?   " accessor" : "",
 	     is_multiple_value(obj) ?     " values" : "",
 	     is_keyword(obj) ?            " keyword" : "",
-	     is_environment(obj) ?        " environment" : "",
              dont_eval_args(obj) ?        " dont-eval-args" : "",
 	     is_syntactic(obj) ?          " syntactic" : "",
+	     is_overlaid(obj) ?           " overlay" : "",
+	     is_checked(obj) ?            " checked" : "",
+	     is_unsafe(obj) ?             " unsafe" : "",
+	     is_optimized(obj) ?          " optimized" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
     return(buf);
   }
@@ -18549,7 +18555,6 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
     case T_C_CAR_FUNCTION:
     case T_C_CDR_FUNCTION:
     case T_C_NOT_FUNCTION:
-    case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:
       return(((int)c_function_required_args(x) <= args) &&
 	     ((int)c_function_all_args(x) >= args));
@@ -19297,6 +19302,7 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
 
     case T_VECTOR:
     case T_HASH_TABLE:
+    case T_ENVIRONMENT:
     case T_PAIR:
       return(structures_are_equal(sc, x, y, ci));
 
@@ -19405,6 +19411,7 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	return(false);
       /* fall through */
 
+    case T_ENVIRONMENT:
     case T_PAIR:
       {
 	shared_info *ci;
@@ -19523,6 +19530,7 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
     case T_VECTOR:
       return(vector_copy(sc, obj)); /* "shallow" copy */
 
+    case T_ENVIRONMENT:
     case T_PAIR:
       return(cons(sc, car(obj), list_copy(sc, cdr(obj), obj, true)));  /* this is the only use of list_copy */
 
@@ -19759,6 +19767,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
   return(obj);
 }
 
+/* TODO: env -> list */
 
 
 /* -------------------------------- format -------------------------------- */
@@ -20595,7 +20604,6 @@ static const char *type_name(s7_pointer arg)
     case T_C_CAR_FUNCTION:
     case T_C_CDR_FUNCTION:
     case T_C_NOT_FUNCTION:
-    case T_C_PAIR_FUNCTION:
     case T_C_FUNCTION:   return("function");
     case T_C_MACRO:      return("macro");
     case T_C_POINTER:    return("c-pointer");
@@ -20608,6 +20616,7 @@ static const char *type_name(s7_pointer arg)
     case T_HASH_TABLE:   return("hash-table");
     case T_C_OBJECT:     return(object_types[object_type(arg)].name);
     case T_HOOK:         return("hook");
+    case T_ENVIRONMENT:  return("environment");
 
     case T_INPUT_PORT:
       {
@@ -21862,9 +21871,10 @@ pass (global-environment):\n\
     {
       if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
-      if (is_pair(cadr(args)))  /* (global-environment) returns a vector */
-	sc->envir = cadr(args);
-      else sc->envir = sc->NIL;
+
+      if (cadr(args) == sc->global_env)
+	sc->envir = sc->NIL;
+      else sc->envir = cadr(args);
     }
   sc->code = car(args);
 
@@ -24124,14 +24134,51 @@ static void prepare_do_end_test(s7_scheme *sc)
  *   these copies of this function are a big deal.
  */
 
+
+#if WITH_STATS
+static int constants, symbols, optimizes, others, syntaxes, empties;
+static int op_calls[OP_MAX_DEFINED];
+static int args[8];
+static void init_calls(void)
+{
+  int i;
+  constants = 0; symbols = 0; optimizes = 0; others = 0; syntaxes = 0;
+  for (i = 0; i < OP_MAX_DEFINED; i++) op_calls[i] = 0;
+  for (i = 0; i < 8; i++) args[i] = 0;
+}
+static void report_calls(void)
+{
+  int i, loc, max;
+  fprintf(stderr, "syn: %d, opt: %d, other: %d, sym: %d, cons: %d, empties: %d\n", syntaxes, optimizes, others, symbols, constants, empties);
+  fprintf(stderr, "closure args: ");
+  for (i = 0; i < 8; i++) fprintf(stderr, "%d ", args[i]);
+  fprintf(stderr, "\n");
+    
+  while (true)
+    {
+      max = 0;
+      for (i = 0; i < OP_MAX_DEFINED; i++)
+	if (max < op_calls[i])
+	  {
+	    loc = i;
+	    max = op_calls[i];
+	  }
+      if (max == 0) break;
+      fprintf(stderr, "  %s: %d\n", op_names[loc], op_calls[loc]);
+      op_calls[loc] = 0;
+    }
+}
+#endif
+
+
 #define FIND_SYMBOL_OR_BUST(Sc) \
   s7_pointer x; \
   int tag; \
   tag = symbol_max_frame(hdl);\
   for (x = Sc->envir; tag < frame_tag(x); x = cdr(x));	\
-  for (; is_pair(x); x = cdr(x))	\
+  for (; is_environment(x); x = cdr(x))	\
     {\
-      s7_pointer y;\
+      s7_pointer y; \
       for (y = car(x); is_pair(y); y = ecdr(y))	\
 	if (car(y) == hdl)\
 	  return(symbol_value(y));		\
@@ -24154,6 +24201,15 @@ static s7_pointer find_symbol_or_bust_6(s7_scheme *sc, s7_pointer hdl) {FIND_SYM
 static s7_pointer find_symbol_or_bust_7(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_8(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_9(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
+
+
+#define SYMBOL_VALUE(Sym, Finder) ((is_global(Sym)) ? symbol_value(symbol_global_slot(Sym)) : Finder(sc, Sym))
+
+static s7_pointer find_symbol_or_bust_34(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
+static s7_pointer find_symbol_or_bust_37(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
+static s7_pointer find_symbol_or_bust_38(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
+static s7_pointer find_symbol_or_bust_39(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
+static s7_pointer find_symbol_or_bust_40(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 
 
 #if WITH_OPTIMIZATION
@@ -24184,16 +24240,9 @@ static s7_pointer find_symbol_or_bust_30(s7_scheme *sc, s7_pointer hdl) {FIND_SY
 static s7_pointer find_symbol_or_bust_31(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_32(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_33(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
-static s7_pointer find_symbol_or_bust_34(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_35(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_36(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
-static s7_pointer find_symbol_or_bust_37(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
-static s7_pointer find_symbol_or_bust_38(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
-static s7_pointer find_symbol_or_bust_39(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
-static s7_pointer find_symbol_or_bust_40(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 
-
-#define SYMBOL_VALUE(Sym, Finder) ((is_global(Sym)) ? symbol_value(symbol_global_slot(Sym)) : Finder(sc, Sym))
 
       /* eq? (et al) of syntax have to know about the internal aliases:
        *    (define (ho a) (if (> a 2) 3 4))
@@ -24221,7 +24270,7 @@ void s7_unoptimize(s7_scheme *sc, s7_pointer code)
     {
       if ((s7_is_symbol(car(code))) &&
 	  (is_syntax(symbol_value(car(code)))) &&
-	  ((int)syntax_opcode(symbol_value(car(code))) >= OP_IF_UNCHECKED))
+	  ((int)syntax_opcode(symbol_value(car(code))) >= OP_QUOTE_UNCHECKED))
 	car(code) = cadar(code);
       else s7_unoptimize(sc, car(code));
       s7_unoptimize(sc, cdr(code));
@@ -24581,6 +24630,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func)
 		}
 	    }
 	  break;
+	   /* TODO: if assoc/member here, they are safe */
 
 	  
 	case 3:
@@ -24852,6 +24902,7 @@ static bool safe_c_p_1(s7_scheme *sc, s7_pointer expr)
   /* fprintf(stderr, "safe_c_p_1: %s\n", s7_object_to_c_string(sc, expr)); */
 
   /* TODO: here we could have in-place ops such as add 2 ints = sc->value = int + int, and a loop, so fewer procedure calls
+   *   use special constant list like T1_1, and assume callee will check for it if it wants, using car
    */
 
   carc = SYMBOL_VALUE(car(expr), find_symbol_or_bust_10);
@@ -25727,34 +25778,69 @@ static s7_pointer check_if(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
-      if (s7_is_symbol(car(sc->code)))
+      s7_pointer test, t, f;
+
+      test = car(sc->code);
+      t = car(cdr_code);
+      if (is_pair(cdr(cdr_code)))
+	f = cadr(cdr_code);
+      else f = sc->UNSPECIFIED;
+
+
+      if (is_pair(test))
 	{
-	  if (is_pair(cdr(cdr_code)))
-	    car(ecdr(sc->code)) = sc->IF_SYMBOL;        /* (if s e e) */
-	  else car(ecdr(sc->code)) = sc->IF_SYMBOL2;    /* (if s e) */
-	}
-      else 
-	{
-	  if (is_pair(cdr(cdr_code)))
+	  if (is_pair(t))
 	    {
-	      if (s7_is_symbol(car(cdr_code)))         
-		car(ecdr(sc->code)) = sc->IF_E_S_E;     /* (if e s e) */
-	      else
+	      if (is_pair(f))
+		car(ecdr(sc->code)) = sc->IF_P_P_P;
+	      else 
 		{
-		  if (s7_is_symbol(cadr(sc->code)))
-		    car(ecdr(sc->code)) = sc->IF_E_E_S;     /* (if e e s) */
-		  else car(ecdr(sc->code)) = sc->IF_UNCHECKED;     /* (if e e e) */
+		  if (is_null(cdr(cdr_code)))
+		    car(ecdr(sc->code)) = sc->IF_P_P;
+		  else car(ecdr(sc->code)) = sc->IF_P_P_X;
 		}
 	    }
 	  else 
 	    {
-	      if (car(sc->code) == sc->F)
-		car(ecdr(sc->code)) = sc->IF_UNSPECIFIED; /* (if #f e) */
-	      else car(ecdr(sc->code)) = sc->IF_UNCHECKED2; /* (if e e) */
+
+	      if (is_pair(f))
+		car(ecdr(sc->code)) = sc->IF_P_X_P;
+	      else 
+		{
+
+		  if (is_null(cdr(cdr_code)))
+		    car(ecdr(sc->code)) = sc->IF_P_X;
+		  else car(ecdr(sc->code)) = sc->IF_P_X_X;
+		}
 	    }
 	}
+      else /* test is symbol or constant */
+	{
+	  if (is_pair(t))
+	    {
+	      if (is_pair(f))
+		car(ecdr(sc->code)) = sc->IF_X_P_P;
+	      else 
+		{
+		  if (is_null(cdr(cdr_code)))
+		    car(ecdr(sc->code)) = sc->IF_X_P;
+		  else car(ecdr(sc->code)) = sc->IF_X_P_X;
+		}
+	    }
+	  else 
+	    {
+	      if (is_pair(f))
+		car(ecdr(sc->code)) = sc->IF_X_X_P;
+	      else 
+		{
+		  if (is_null(cdr(cdr_code)))
+		    car(ecdr(sc->code)) = sc->IF_X_X;
+		  else car(ecdr(sc->code)) = sc->IF_X_X_X;
+		}
+	    }
+	}
+
     }
-  
   return(sc->code);
 }
 
@@ -26075,42 +26161,6 @@ static s7_pointer check_begin(s7_scheme *sc)
     }
 
   return(sc->code);
-}
-#endif
-
-
-#if WITH_STATS
-static int constants, symbols, optimizes, others, syntaxes;
-static int op_calls[OP_MAX_DEFINED];
-static int args[8];
-static void init_calls(void)
-{
-  int i;
-  constants = 0; symbols = 0; optimizes = 0; others = 0; syntaxes = 0;
-  for (i = 0; i < OP_MAX_DEFINED; i++) op_calls[i] = 0;
-  for (i = 0; i < 8; i++) args[i] = 0;
-}
-static void report_calls(void)
-{
-  int i, loc, max;
-  fprintf(stderr, "syn: %d, opt: %d, other: %d, sym: %d, cons: %d\n", syntaxes, optimizes, others, symbols, constants);
-  fprintf(stderr, "closure args: ");
-  for (i = 0; i < 8; i++) fprintf(stderr, "%d ", args[i]);
-  fprintf(stderr, "\n");
-    
-  while (true)
-    {
-      max = 0;
-      for (i = 0; i < OP_MAX_DEFINED; i++)
-	if (max < op_calls[i])
-	  {
-	    loc = i;
-	    max = op_calls[i];
-	  }
-      if (max == 0) break;
-      fprintf(stderr, "  %s: %d\n", op_names[loc], op_calls[loc]);
-      op_calls[loc] = 0;
-    }
 }
 #endif
 
@@ -26781,7 +26831,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = sc->code;                           /* protect it */
       sc->code = car(sc->code);                       /* the vars */
       
-      
+
+    DO_INIT:
     case OP_DO_INIT:
       sc->args = cons(sc, sc->value, sc->args);    /* code will be last element (first after reverse) */
       if (is_pair(sc->code))
@@ -26793,9 +26844,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *       (do ((i 1) (i 2)) (#t i)) -> 2
 	   *       (do () (1) . "hi") -- this is like (do () (#t #t) (asdf))
 	   */
-	  push_stack(sc, opcode(OP_DO_INIT), sc->args, cdr(sc->code));
-	  sc->code = cadar(sc->code);
-	  goto EVAL;
+	  s7_pointer init;
+	  init = cadar(sc->code);
+	  if (is_pair(init))
+	    {
+	      push_stack(sc, opcode(OP_DO_INIT), sc->args, cdr(sc->code));
+	      sc->code = init;
+	      goto EVAL_PAIR;
+	    }
+	  if (s7_is_symbol(init))
+	    sc->value = SYMBOL_VALUE(init, find_symbol_or_bust_32);
+	  else sc->value = init;
+	  sc->code = cdr(sc->code);
+	  goto DO_INIT;
 	}
 
       /* all the initial values are now in the args list */
@@ -26947,8 +27008,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       /* s7test:   syn: 576975,   opt: 317055,   other: 363680,   sym: 47839,    cons: 23242
+       *           syn: 500417,   opt: 176725,   other: 310392,   sym: 48034,    cons: 21346
        * lg:       syn: 5258378,  opt: 1585465,  other: 944773,   sym: 311741,   cons: 83831
+       *           syn: 3513969,  opt: 191052,   other: 488849,   sym: 248288,   cons: 52724
        * snd-test: syn: 67250986, opt: 35813348, other: 19190448, sym: 9318245,  cons: 8201596
+       *           syn: 61584395, opt: 15347403, other: 16313120, sym: 8304457,  cons: 8096774
        */
 
 #if WITH_STATS
@@ -27317,7 +27381,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  /* get the current arg, which is not a list */
 		  sc->code = pop_op_stack(sc);
-		  if (is_safe_procedure(sc->code))
+		  if (is_safe_procedure(sc->code)) /* this check does not currently pay for itself, I think */
 		    {
 		      x = sc->TEMP_CELL_3; /* these are already pairs */
 		      y = sc->TEMP_CELL_2;
@@ -27509,24 +27573,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
 	    
 	  if (car(sc->args) == cadr(sc->args))
-	    sc->value = sc->T;
-	  else sc->value = sc->F;
-	  goto START;
-
-	case T_C_PAIR_FUNCTION:
-	  if (sc->args == sc->TEMP_CELL_2)
-	    {
-	      if (is_pair(car(sc->args)))
-		sc->value = sc->T;
-	      else sc->value = sc->F;
-	      goto START;
-	    }
-	  if (is_not_null(cdr(sc->args))) 
-	    return(s7_error(sc, 
-			    sc->WRONG_NUMBER_OF_ARGS, 
-			    make_list_3(sc, (is_null(sc->args)) ? sc->NOT_ENOUGH_ARGUMENTS : sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
-	    
-	  if (is_pair(car(sc->args)))
 	    sc->value = sc->T;
 	  else sc->value = sc->F;
 	  goto START;
@@ -27734,6 +27780,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				      sc->WRONG_NUMBER_OF_ARGS, 
 				      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
 		    
+		    /* if we knew that sc->args was entirely formed in eval_args of new cells, we could reuse them here
+		     */
 		    NEW_CELL_NO_CHECK(sc, y); 
 		    car(y) = car(x);
 		    cdr(y) = car(z);
@@ -28389,7 +28437,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   but the port info is not relevant here, so restrict the __func__ list making to top-level
 	   *   cases (via sc->envir == sc->NIL).
 	   */
-	  if ((is_null(sc->envir)) &&
+	  if ((!is_environment(sc->envir)) &&
 	      (port_filename(sc->input_port)) &&                             /* add (__func__ (name file line)) to current env */
 	      (port_file(sc->input_port) != stdin))
 	    sc->x = make_list_3(sc, sc->code,
@@ -28397,17 +28445,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				s7_make_integer(sc, port_line_number(sc->input_port)));
 	  else sc->x = sc->code;           /* fallback on (__func__ name) */
 	  
-	  /*
-	   * closure_environment(sc->value) = new_frame_in_env(sc, closure_environment(sc->value));
-	   * add_to_environment(sc, closure_environment(sc->value), sc->__FUNC__, sc->x);
-	   * typeflag(closure_environment(sc->value)) |= T_ENVIRONMENT;
-	   */
 	  {
 	    s7_pointer x, y;
 	    NEW_CELL(sc, x);
 	    frame_tag(x) = frame_tag(closure_environment(sc->value)) + 1;
 	    cdr(x) = closure_environment(sc->value);
-	    set_type(x, T_PAIR | T_ENVIRONMENT);
+	    set_type(x, T_ENVIRONMENT);
 	    closure_environment(sc->value) = x;
 
 	    NEW_CELL_NO_CHECK(sc, y);
@@ -28458,9 +28501,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
   	 */
 	if (is_pair(cadar(code)))
 	  {
+#if WITH_OPTIMIZATION && (0)
 	    if (safe_c_p_1(sc, cadar(code)))
 	      arg = sc->value;
 	    else goto EVAL; /* untested! */
+#endif
 	  }
 	else
 	  {
@@ -28471,9 +28516,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	
 	if (is_pair(cadr(code)))
 	  {
+#if WITH_OPTIMIZATION && (0)
 	    if (safe_c_p_1(sc, cdar(code)))
 	      value = sc->value;
 	    else goto EVAL; /* untested! */
+#endif
 	  }
 	else
 	  {
@@ -28823,12 +28870,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_IF:
       check_if(sc);
-      
-    case OP_IF_UNCHECKED:
-      /* we could check for non-expression here, and do the jump without push_stack etc,
-       *   but it turns out this happens infrequently, and the cost of checking outweighs
-       *   the small gains.
-       */
       push_stack(sc, opcode(OP_IF1), sc->NIL, cdr(sc->code)); /* 6 [20] {10} */
       sc->code = car(sc->code);
       goto EVAL;
@@ -28839,70 +28880,252 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else sc->code = cadr(sc->code);   /* even pre-optimization, (if #f #f) ==> #<unspecified> because car(sc->NIL) = sc->UNSPECIFIED */
       goto EVAL;
       
-      
-    case OP_IF_UNCHECKED2:
-      push_stack(sc, opcode(OP_IF2), sc->NIL, cadr(sc->code));
-      sc->code = car(sc->code);
-      goto EVAL;
 
-    case OP_IF2:
+      /* now for the optimized cases */
+
+    case OP_IF_P_P_P:
+      push_stack(sc, opcode(OP_IF_PPP), sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL_PAIR;
+
+    case OP_IF_PPP:
       if (is_true(sc, sc->value))
-	goto EVAL;
+	sc->code = car(sc->code);
+      else sc->code = cadr(sc->code);
+      goto EVAL_PAIR;
+	
+
+    case OP_IF_P_P:
+      push_stack(sc, opcode(OP_IF_PP), sc->NIL, cadr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL_PAIR;
+
+    case OP_IF_PP:
+      if (is_true(sc, sc->value))
+	goto EVAL_PAIR;
       sc->value = sc->UNSPECIFIED;
       goto START;
 
-
-    case OP_IF_E_S_E:
-      push_stack(sc, opcode(OP_IF3), sc->NIL, cdr(sc->code));
+      
+    case OP_IF_P_P_X:
+      push_stack(sc, opcode(OP_IF_PPX), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
-      goto EVAL;
-
-    case OP_IF3:
-      if (is_true(sc, sc->value))
-	{
-	  sc->value = SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_37);
-	  goto START;
-	}
-      sc->code = cadr(sc->code);
-      goto EVAL;
-
-
-    case OP_IF_E_E_S:
-      push_stack(sc, opcode(OP_IF4), sc->NIL, cdr(sc->code));
-      sc->code = car(sc->code);
-      goto EVAL;
-
-    case OP_IF4:
+      goto EVAL_PAIR;
+      
+    case OP_IF_PPX:
       if (is_true(sc, sc->value))
 	{
 	  sc->code = car(sc->code);
-	  goto EVAL;
+	  goto EVAL_PAIR;
 	}
-      sc->value = SYMBOL_VALUE(cadr(sc->code), find_symbol_or_bust_9);
+      if (s7_is_symbol(cadr(sc->code)))
+	sc->value = SYMBOL_VALUE(cadr(sc->code), find_symbol_or_bust_38);
+      else sc->value = cadr(sc->code);
       goto START;
 
 
-    case OP_IF_SYMBOL:
-      if (is_true(sc, SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_39)))
-	sc->code = cadr(sc->code);
-      else sc->code = caddr(sc->code);
-      goto EVAL;
-      
-    case OP_IF_SYMBOL2:
-      if (is_true(sc, SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_38)))
+    case OP_IF_P_X_P:
+      push_stack(sc, opcode(OP_IF_PXP), sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL_PAIR;
+
+    case OP_IF_PXP:
+      if (is_true(sc, sc->value))
 	{
-	  sc->code = cadr(sc->code);
-	  goto EVAL;
+	  if (s7_is_symbol(car(sc->code)))
+	    sc->value = SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_38);
+	  else sc->value = car(sc->code);
+	  goto START;
+	}
+      sc->code = cadr(sc->code);
+      goto EVAL_PAIR;
+
+
+    case OP_IF_P_X:
+      push_stack(sc, opcode(OP_IF_PX), sc->NIL, cadr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL_PAIR;
+
+    case OP_IF_PX:
+      if (is_true(sc, sc->value))
+	{
+	  if (s7_is_symbol(sc->code))
+	    sc->value = SYMBOL_VALUE(sc->code, find_symbol_or_bust_9);
+	  else sc->value = sc->code;
+	}
+      else sc->code = sc->UNSPECIFIED;
+      goto START;
+
+
+    case OP_IF_P_X_X:
+      push_stack(sc, opcode(OP_IF_PXX), sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL_PAIR;
+
+    case OP_IF_PXX:
+      if (is_true(sc, sc->value))
+	{
+	  if (s7_is_symbol(car(sc->code)))
+	    sc->value = SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_37);
+	  else sc->value = car(sc->code);
+	}
+      else
+	{
+	  if (s7_is_symbol(cadr(sc->code)))
+	    sc->value = SYMBOL_VALUE(cadr(sc->code), find_symbol_or_bust_37);
+	  else sc->value = cadr(sc->code);
+	}
+      goto START;
+
+      
+    case OP_IF_X_P_P:
+      if (s7_is_symbol(car(sc->code)))
+	{
+	  if (is_true(sc, SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_9)))
+	    sc->code = cadr(sc->code);
+	  else sc->code = caddr(sc->code);
+	}
+      else
+	{
+	  if (is_true(sc, car(sc->code)))
+	    sc->code = cadr(sc->code);
+	  else sc->code = caddr(sc->code);
+	}
+      goto EVAL_PAIR;
+
+
+    case OP_IF_X_P:
+      if (s7_is_symbol(car(sc->code)))
+	{
+	  if (is_true(sc, SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_39)))
+	    {
+	      sc->code = cadr(sc->code);
+	      goto EVAL_PAIR;
+	    }
+	}
+      else
+	{
+	  if (is_true(sc, car(sc->code)))
+	    {
+	      sc->code = cadr(sc->code);
+	      goto EVAL_PAIR;
+	    }
 	}
       sc->value = sc->UNSPECIFIED;
       goto START;
+      
 
-
-    case OP_IF_UNSPECIFIED:
-      sc->value = sc->UNSPECIFIED;
+    case OP_IF_X_P_X:
+      if (s7_is_symbol(car(sc->code)))
+	{
+	  if (is_true(sc, SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_39)))
+	    {
+	      sc->code = cadr(sc->code);
+	      goto EVAL_PAIR;
+	    }
+	}
+      else
+	{
+	  if (is_true(sc, car(sc->code)))
+	    {
+	      sc->code = cadr(sc->code);
+	      goto EVAL_PAIR;
+	    }
+	}
+      if (s7_is_symbol(caddr(sc->code)))
+	sc->value = SYMBOL_VALUE(caddr(sc->code), find_symbol_or_bust_37);
+      else sc->value = caddr(sc->code);
       goto START;
+
+
+    case OP_IF_X_X_P:
+      if (s7_is_symbol(car(sc->code)))
+	{
+	  if (is_true(sc, SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_37)))
+	    {
+	      if (s7_is_symbol(cadr(sc->code)))
+		sc->value = SYMBOL_VALUE(cadr(sc->code), find_symbol_or_bust_37);
+	      else sc->value = cadr(sc->code);
+	      goto START;
+	    }
+	}
+      else
+	{
+	  if (is_true(sc, car(sc->code)))
+	    {
+	      if (s7_is_symbol(cadr(sc->code)))
+		sc->value = SYMBOL_VALUE(cadr(sc->code), find_symbol_or_bust_37);
+	      else sc->value = cadr(sc->code);
+	      goto START;
+	    }
+	}
+      sc->code = caddr(sc->code);
+      goto EVAL_PAIR;
+
+
+    case OP_IF_X_X:
+      sc->value = sc->UNSPECIFIED;
+      if (s7_is_symbol(car(sc->code)))
+	{
+	  if (is_true(sc, SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_39)))
+	    {
+	      if (s7_is_symbol(cadr(sc->code)))
+		sc->value = SYMBOL_VALUE(cadr(sc->code), find_symbol_or_bust_39);
+	      else sc->value = cadr(sc->code);
+	    }
+	}
+      else
+	{
+	  if (is_true(sc, car(sc->code)))
+	    {
+	      if (s7_is_symbol(cadr(sc->code)))
+		sc->value = SYMBOL_VALUE(cadr(sc->code), find_symbol_or_bust_39);
+	      else sc->value = cadr(sc->code);
+	    }
+	}
+      goto START;
+
+
+    case OP_IF_X_X_X:
+      sc->value = sc->UNSPECIFIED;
+      if (s7_is_symbol(car(sc->code)))
+	{
+	  if (is_true(sc, SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_37)))
+	    {
+	      if (s7_is_symbol(cadr(sc->code)))
+		sc->value = SYMBOL_VALUE(cadr(sc->code), find_symbol_or_bust_37);
+	      else sc->value = cadr(sc->code);
+	    }
+	  else
+	    {
+	      if (s7_is_symbol(caddr(sc->code)))
+		sc->value = SYMBOL_VALUE(caddr(sc->code), find_symbol_or_bust_37);
+	      else sc->value = caddr(sc->code);
+	    }
+	}
+      else
+	{
+	  if (is_true(sc, car(sc->code)))
+	    {
+	      if (s7_is_symbol(cadr(sc->code)))
+		sc->value = SYMBOL_VALUE(cadr(sc->code), find_symbol_or_bust_37);
+	      else sc->value = cadr(sc->code);
+	    }
+	  else
+	    {
+	      if (s7_is_symbol(caddr(sc->code)))
+		sc->value = SYMBOL_VALUE(caddr(sc->code), find_symbol_or_bust_37);
+	      else sc->value = caddr(sc->code);
+	    }
+	}
+      goto START;
+
+
+	     
       
-      
+
+      /* -------------------------------- LET -------------------------------- */
+
     case OP_LET_NO_VARS:
       NEW_FRAME(sc, sc->envir, sc->envir); 
       sc->code = cdr(sc->code);            /* ignore the () */
@@ -28944,6 +29167,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_null(sc->code))                    /* (let () ...):  no bindings, so skip that step */
 	{
     	  sc->code = sc->value;
+	  NEW_FRAME(sc, sc->envir, sc->envir);
 	  goto LET2;
 	}
       
@@ -28985,27 +29209,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* TODO: the access and cell_no_check stuff as in lambda
        */
-    LET2: 
       {
 	s7_pointer x, y;
 	NEW_FRAME(sc, sc->envir, sc->envir);
-	for (x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), y = sc->args; is_not_null(y); x = cdr(x), y = cdr(y)) 
+	y = sc->args;
+	for (x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code); is_not_null(y); x = cdr(x)) 
 	  {
-	    s7_pointer yy, z;
-	    
-	    z = caar(x);
-	    NEW_CELL(sc, yy); 
-	    car(yy) = z;
-	    if (symbol_accessed(z))
-	      cdr(yy) = call_symbol_bind(sc, z, car(y));
-	    else cdr(yy) = car(y);
-	    set_type(yy, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
-	    ecdr(yy) = car(sc->envir);
-	    car(sc->envir) = yy;
-	    SET_FRAME(z, sc->envir);
-	    /* if (symbol_max_frame(z) < tag) symbol_max_frame(z) = tag; */
+	    s7_pointer sym, args, val;
+	    /* reuse the value cells as the new frame slots */
+
+	    sym = caar(x);
+	    val = car(y);
+	    args = cdr(y);
+
+	    car(y) = sym;
+	    if (symbol_accessed(sym))
+	      cdr(y) = call_symbol_bind(sc, sym, val);
+	    else cdr(y) = val;
+	    set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+	    ecdr(y) = car(sc->envir);
+	    car(sc->envir) = y;
+	    SET_FRAME(sym, sc->envir);
+	    y = args;
 	  }
-	
+
+      LET2:	
 	if (s7_is_symbol(car(sc->code))) 
 	  {    
 	    /* named let */
@@ -29036,12 +29264,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto BEGIN;
 	}
       push_stack(sc, opcode(OP_LET_STAR1), cdr(sc->code), car(sc->code));
+                                      /* args is the let body, saved for later, code is the list of vars+initial-values */
       sc->code = cadaar(sc->code);
+                                      /* caar(code) = 1st var/val pair, we've checked that all these guys are legit, so cadr of that is the value */
       goto EVAL;
       
       
     case OP_LET_STAR1:    /* let* -- calculate parameters */
-      /* we can't skip this new frame -- we have to imitate a nested let, otherwise
+      /* we can't skip (or reuse) this new frame -- we have to imitate a nested let, otherwise
        *
        *   (let ((f1 (lambda (arg) (+ arg 1))))
        *     (let* ((x 32)
@@ -29052,12 +29282,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       {
 	s7_pointer x, y;
-
 	NEW_CELL(sc, x);
 	frame_tag(x) = frame_tag(sc->envir) + 1;
 	cdr(x) = sc->envir;
 	sc->envir = x;
-	set_type(x, T_PAIR | T_ENVIRONMENT);
+	set_type(x, T_ENVIRONMENT);
 
 	NEW_CELL_NO_CHECK(sc, y);
 	car(y) = caar(sc->code);
@@ -29129,7 +29358,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto BEGIN;
       }
       
-      
+
+      /* -------------------------------- COND -------------------------------- */      
     case OP_COND:
       check_cond(sc);
     case OP_COND_UNCHECKED:
@@ -29174,6 +29404,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
+      /* -------------------------------- AND -------------------------------- */
     case OP_AND:
       if (is_null(sc->code)) 
 	{
@@ -29207,7 +29438,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = car(sc->code);
       goto EVAL_PAIR;
 
-      
+
+      /* -------------------------------- OR -------------------------------- */      
     case OP_OR:
       if (is_null(sc->code)) 
 	{
@@ -35432,7 +35664,7 @@ s7_scheme *s7_init(void)
 #endif
   
   sc->global_env = s7_make_vector(sc, 512);
-  typeflag(sc->global_env) |= T_ENVIRONMENT;
+  type(sc->global_env) = T_ENVIRONMENT;
   vector_fill_pointer(sc->global_env) = 0;
   for (i = 0; i < 512; i++)
     vector_element(sc->global_env, i) = sc->NIL;
@@ -35509,13 +35741,6 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);     /* macro expansion in calling environment */
   assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR);
 
-  sc->IF_UNCHECKED =          assign_internal_syntax(sc, "if",      OP_IF_UNCHECKED);  
-  sc->IF_SYMBOL =             assign_internal_syntax(sc, "if",      OP_IF_SYMBOL);  
-  sc->IF_UNCHECKED2 =         assign_internal_syntax(sc, "if",      OP_IF_UNCHECKED2);  
-  sc->IF_SYMBOL2 =            assign_internal_syntax(sc, "if",      OP_IF_SYMBOL2);  
-  sc->IF_E_S_E =              assign_internal_syntax(sc, "if",      OP_IF_E_S_E);
-  sc->IF_E_E_S =              assign_internal_syntax(sc, "if",      OP_IF_E_E_S);
-  sc->IF_UNSPECIFIED =        assign_internal_syntax(sc, "if",      OP_IF_UNSPECIFIED);
   sc->QUOTE_UNCHECKED =       assign_internal_syntax(sc, "quote",   OP_QUOTE_UNCHECKED);  
   sc->LET_UNCHECKED =         assign_internal_syntax(sc, "let",     OP_LET_UNCHECKED);  
   sc->LET_STAR_UNCHECKED =    assign_internal_syntax(sc, "let*",    OP_LET_STAR_UNCHECKED);  
@@ -35536,6 +35761,19 @@ s7_scheme *s7_init(void)
   sc->DEFINE_STAR_UNCHECKED = assign_internal_syntax(sc, "define*", OP_DEFINE_STAR_UNCHECKED);  
   sc->SET_NORMAL =            assign_internal_syntax(sc, "set!",    OP_SET_NORMAL);
   sc->SET_PAIR =              assign_internal_syntax(sc, "set!",    OP_SET_PAIR);
+
+  sc->IF_P_P_P =              assign_internal_syntax(sc, "if",      OP_IF_P_P_P);
+  sc->IF_P_P =                assign_internal_syntax(sc, "if",      OP_IF_P_P);
+  sc->IF_P_P_X =              assign_internal_syntax(sc, "if",      OP_IF_P_P_X);
+  sc->IF_P_X_P =              assign_internal_syntax(sc, "if",      OP_IF_P_X_P);
+  sc->IF_P_X =                assign_internal_syntax(sc, "if",      OP_IF_P_X);
+  sc->IF_P_X_X =              assign_internal_syntax(sc, "if",      OP_IF_P_X_X);
+  sc->IF_X_P_P =              assign_internal_syntax(sc, "if",      OP_IF_X_P_P);
+  sc->IF_X_P =                assign_internal_syntax(sc, "if",      OP_IF_X_P);
+  sc->IF_X_P_X =              assign_internal_syntax(sc, "if",      OP_IF_X_P_X);
+  sc->IF_X_X_P =              assign_internal_syntax(sc, "if",      OP_IF_X_X_P);
+  sc->IF_X_X =                assign_internal_syntax(sc, "if",      OP_IF_X_X);
+  sc->IF_X_X_X =              assign_internal_syntax(sc, "if",      OP_IF_X_X_X);
 
   sc->LAMBDA = make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= T_DONT_COPY; 
@@ -35894,11 +36132,6 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "null?",                     g_is_null,                  1, 0, false, H_is_null);
   s7_define_safe_function(sc, "list?",                     g_is_list,                  1, 0, false, H_is_list);
   s7_define_safe_function(sc, "pair?",                     g_is_pair,                  1, 0, false, H_is_pair);
-  {
-    s7_pointer p;
-    p = s7_symbol_value(sc, make_symbol(sc, "pair?"));
-    set_type(p, (T_C_PAIR_FUNCTION | T_DONT_COPY | T_PROCEDURE | T_SAFE_PROCEDURE));
-  }
   s7_define_safe_function(sc, "cons",                      g_cons,                     2, 0, false, H_cons);
   s7_define_safe_function(sc, "car",                       g_car,                      1, 0, false, H_car);
   {
@@ -35915,6 +36148,7 @@ s7_scheme *s7_init(void)
      *   has a built-in cdr of the uncopied nominal macro value.
      */
   }
+
   s7_define_function(sc, "set-car!",                       g_set_car,                  2, 0, false, H_set_car);
   s7_define_function(sc, "set-cdr!",                       g_set_cdr,                  2, 0, false, H_set_cdr);
   s7_define_safe_function(sc, "caar",                      g_caar,                     1, 0, false, H_caar);
