@@ -1876,6 +1876,7 @@ static XEN g_oscil(XEN os, XEN fm, XEN pm)
 
 #else
 /* an experiment -- this appears to be about 1/3 faster then g_oscil + argified g_oscil_w
+ *   TODO: can this be automatically extended to all the clm gens a la run?
  */
 
 static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
