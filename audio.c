@@ -2375,7 +2375,7 @@ static int alsa_mus_audio_initialize(void)
 
 static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int size)
 {
-  int card, device, alsa_device;
+  int device, alsa_device;
   snd_pcm_format_t alsa_format;
   snd_pcm_stream_t alsa_stream;
   char *alsa_name;
@@ -2396,7 +2396,7 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
 	      c__FUNCTION__, ur_dev, srate, chans, format, 
 	      mus_data_format_to_string(format), size);
 
-  card = MUS_AUDIO_SYSTEM(ur_dev);
+  /* card = MUS_AUDIO_SYSTEM(ur_dev); */
   device = MUS_AUDIO_DEVICE(ur_dev);
 
   if ((err = to_alsa_device(device, &alsa_device, &alsa_stream)) < 0) 

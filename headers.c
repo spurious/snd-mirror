@@ -5430,8 +5430,8 @@ static int read_sox_header(const char *filename, int fd)
 
 static int read_matlab_5_header(const char *filename, int fd)
 {
-  int i, type, chunksize, loc, size;
-  bool swapped = false;
+  int i, type, loc, size;
+  /* bool swapped = false; */
   comment_start = 0;
   comment_end = 124;
 
@@ -5441,16 +5441,15 @@ static int read_matlab_5_header(const char *filename, int fd)
 	comment_end = i;
 	break;
       }
-
-  if (mus_char_to_lshort((unsigned char *)(hdrbuf + 126)) == 0x494d)
-    swapped = true;
+  
+  /* if (mus_char_to_lshort((unsigned char *)(hdrbuf + 126)) == 0x494d) swapped = true; */
   /* byte swapping not handled yet */
 
   type = mus_char_to_lint((unsigned char *)(hdrbuf + 128));
   if (type != 14)
     return(mus_error(MUS_HEADER_READ_FAILED, "%s: unknown Matlab data format (%d)", filename, type));
 
-  chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 132));
+  /* chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 132)); */
 
   /* now grovel through the array header */
   /*   assume the "flags" are not interesting */

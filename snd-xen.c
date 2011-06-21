@@ -864,7 +864,6 @@ static void string_to_stderr_and_listener(const char *msg, void *ignore)
 static bool snd_load_init_file_1(const char *filename)
 {
   char *expr, *fullname;
-  XEN result;
   bool happy = false;
   fullname = mus_expand_filename(filename);
   if (mus_file_probe(fullname))
@@ -878,7 +877,7 @@ static bool snd_load_init_file_1(const char *filename)
       expr = mus_format("load(%s)", fullname);
 #endif
 
-      result = snd_catch_any(eval_file_wrapper, (void *)fullname, expr);
+      snd_catch_any(eval_file_wrapper, (void *)fullname, expr);
       free(expr);
 
 #if HAVE_RUBY || HAVE_FORTH
@@ -979,7 +978,6 @@ static char *find_source_file(const char *orig);
 void snd_load_file(const char *filename)
 {
   char *str = NULL, *str2 = NULL;
-  XEN result = XEN_TRUE;
 
   str = mus_expand_filename(filename);
   if (!(mus_file_probe(str)))
@@ -996,7 +994,7 @@ void snd_load_file(const char *filename)
     }
 
   str2 = mus_format("(load \"%s\")", filename);   /* currently unused in Forth and Ruby */
-  result = snd_catch_any(eval_file_wrapper, (void *)str, str2);
+  snd_catch_any(eval_file_wrapper, (void *)str, str2);
   if (str) free(str);
   if (str2) free(str2);
 

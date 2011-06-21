@@ -62112,6 +62112,10 @@ etc
 (test ((let ((do or)) do) 1 2) 1)
 
 
+(test (let () (define (hi) (let ((oscil *)) (if (< 3 2) (+ 1 2) (oscil 4 2)))) (hi) (hi)) 8)
+(test (let () (define (hi) (let ((oscil *)) (if (< 3 2) (+ 1 2) (oscil 4 2)))) (hi) (hi) (hi) (hi)) 8)
+(test (let ((x 11)) (define (hi env) (set! x (env 0)) x) (hi '(1 2 3)) (hi '(1 2 3))) 1)
+
 
 (format #t "~%;all done!~%")
 

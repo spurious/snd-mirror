@@ -538,7 +538,7 @@ void listener_return(widget_t w, int last_prompt)
 #if (!USE_NO_GUI)
   /* try to find complete form either enclosing current cursor, or just before it */
   GUI_TEXT_POSITION_TYPE cmd_eot = 0;
-  char *str = NULL, *full_str = NULL, *prompt;
+  char *str = NULL, *full_str = NULL;
   int i, j;
   XEN form = XEN_UNDEFINED;
   GUI_TEXT_POSITION_TYPE end_of_text = 0, start_of_text = 0, last_position = 0, current_position = 0;
@@ -578,7 +578,7 @@ void listener_return(widget_t w, int last_prompt)
     }
 #endif
 
-  prompt = listener_prompt(ss);
+  /* prompt = listener_prompt(ss); */
 
   /* first look for a form just before the current mouse location,
    *   independent of everything (i.e. user may have made changes

@@ -431,9 +431,9 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
   {
     GtkWidget *child;
     child = gtk_bin_get_child(GTK_BIN(r->nm));
-    gtk_widget_override_color(child, GTK_STATE_NORMAL, (GdkRGBA *)(ss->black));
-    gtk_widget_override_color(child, GTK_STATE_PRELIGHT, (GdkRGBA *)(ss->black));
-    gtk_widget_override_color(child, GTK_STATE_SELECTED, (GdkRGBA *)(ss->black));
+    gtk_widget_override_color(child, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->black));
+    gtk_widget_override_color(child, GTK_STATE_FLAG_PRELIGHT, (GdkRGBA *)(ss->black));
+    gtk_widget_override_color(child, GTK_STATE_FLAG_SELECTED, (GdkRGBA *)(ss->black));
   }
 #endif
 

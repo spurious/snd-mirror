@@ -86,9 +86,8 @@ static void listener_completion(int end)
       new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
       if (try_completion)
 	{
-	  int matches = 0;
 	  if (mus_strcmp(old_text, new_text))
-	    matches = get_completion_matches();
+	    get_completion_matches();
 	  sg_text_delete(listener_text, beg, end);
 	  append_listener_text(0, new_text);
 	  goto_window(listener_text);
@@ -104,11 +103,10 @@ static void listener_completion(int end)
 
 static int back_to_start(bool move_cursor)
 {
-  char *full_str = NULL, *prompt;
+  char *full_str = NULL;
   int start_of_text;
   full_str = sg_get_text(listener_text, 0, -1);
   start_of_text = sg_cursor_position(listener_text);
-  prompt = listener_prompt(ss);
   if (start_of_text > 0)
     {
       int i;
@@ -1015,7 +1013,7 @@ void color_listener_text(color_info *pix)
     gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, rgb_to_gdk_color(ss->listener_text_color));
 #else
   if (listener_text) 
-    gtk_widget_override_color(listener_text, GTK_STATE_NORMAL, (GdkRGBA *)(ss->listener_text_color));
+    gtk_widget_override_color(listener_text, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->listener_text_color));
 #endif
 }
 

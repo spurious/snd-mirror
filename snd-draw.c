@@ -825,7 +825,7 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
   check_dialog_widget_table();
 
 #if USE_GTK && HAVE_GTK_3
-  gtk_widget_override_background_color(wid, GTK_STATE_NORMAL, (GdkRGBA *)(ss->basic_color));
+  gtk_widget_override_background_color(wid, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->basic_color)); /* was GTK_STATE_NORMAL which can't be right */
 #endif
 
   if (XEN_FALSE_P(XEN_VECTOR_REF(dialog_widgets, (int)which)))
@@ -1657,12 +1657,12 @@ static void recolor_everything_1(widget_t w, gpointer color)
       if (GTK_IS_CONTAINER(w))
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything_1, color);
 #else
-      gtk_widget_override_background_color(w, GTK_STATE_NORMAL, (GdkRGBA *)color);
+      gtk_widget_override_background_color(w, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)color);
       if (GTK_IS_LABEL(w))
 	{
-	  if (is_dark(color))
-	    gtk_widget_override_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->white));
-	  else gtk_widget_override_color(w, GTK_STATE_NORMAL, (GdkRGBA *)(ss->black));
+	  if (is_dark((color_info *)color))
+	    gtk_widget_override_color(w, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->white));
+	  else gtk_widget_override_color(w, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->black));
 	}
 	
       if (GTK_IS_CONTAINER(w))
