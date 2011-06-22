@@ -62129,6 +62129,9 @@ etc
 (test (let () (define (hi) (let ((oscil >)) (or (< 3 2) (oscil 4 2)))) (hi) (hi)) #t)
 (test (let () (define (hi) (let ((oscil >)) (and (< 2 3) (oscil 4 2)))) (hi) (hi)) #t)
 
+(define (hi) (do ((i 0 (+ i 1))) ((= i 1000000) i) (abs i)))
+(test (hi) 1000000)
+
 (format #t "~%;all done!~%")
 
 

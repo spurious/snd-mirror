@@ -360,7 +360,7 @@ typedef enum {OP_NO_OP, OP_READ_INTERNAL, OP_EVAL,
 	      OP_SAFE_C_SL, OP_SAFE_C_3,
 	      OP_VECTOR_C, OP_STRING_C, OP_C_OBJECT_C, OP_SAFE_C_XXX,
 	      OP_C_C, OP_C_S, OP_C_P, OP_C_CC, OP_C_CS, OP_C_SC, OP_C_SS, OP_C_SL,
-	      OP_SAFE_SET, OP_SAFE_AND, OP_SAFE_OR, OP_SAFE_IF1, OP_SAFE_IF2, OP_SAFE_DO,
+	      OP_SAFE_SET, OP_SAFE_AND, OP_SAFE_OR, OP_SAFE_IF1, OP_SAFE_IF2, OP_SAFE_DO, OP_SAFE_DO1,
 	      OP_SAFE_INCR1, OP_SAFE_INCR2_P, OP_SAFE_INCR2_X, OP_SAFE_INCR3_P, OP_SAFE_INCR3_X, OP_SAFE_INCR2_Q, OP_SAFE_INCR3_Q,
 #endif
 	      OP_MAX_DEFINED} opcode_t;
@@ -401,7 +401,7 @@ static const char *op_names[OP_MAX_DEFINED] =
    "safe-c-sl", "safe-c-3",
    "vector-c", "string-c", "c-object-c", "safe-c-xxx",
    "c-c", "c-s", "c-p", "c-cc", "c-cs", "c-sc", "c-ss", "c-sl",
-   "safe-set", "safe-and", "safe-or", "safe-if1", "safe-if2", "safea-do",
+   "safe-set", "safe-and", "safe-or", "safe-if1", "safe-if2", "safe-do", "safe-do1",
    "safe-incr1", "safe-incr2-p", "safe-incr2-x", "safe-incr3-p", "safe-incr3-x", "safe-incr2-q", "safe-incr3-q",
 #endif
 };
@@ -409,7 +409,7 @@ static const char *op_names[OP_MAX_DEFINED] =
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 183 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 184 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -674,7 +674,7 @@ struct s7_scheme {
   s7_pointer IF_P_P_P, IF_P_P, IF_P_P_X, IF_P_X_P, IF_P_X, IF_P_X_X, IF_X_P_P, IF_X_P, IF_X_P_X, IF_X_X_P, IF_X_X, IF_X_X_X;
 
 #if WITH_OPTIMIZATION
-  s7_pointer SAFE_SET, SAFE_AND, SAFE_OR, SAFE_IF1, SAFE_IF2, SAFE_DO;
+  s7_pointer SAFE_SET, SAFE_AND, SAFE_OR, SAFE_IF1, SAFE_IF2, SAFE_DO, SAFE_DO1;
   s7_pointer SAFE_INCR1, SAFE_INCR2_P, SAFE_INCR2_X, SAFE_INCR3_P, SAFE_INCR3_X, SAFE_INCR2_Q, SAFE_INCR3_Q;
 #endif
   
@@ -16196,7 +16196,7 @@ static int vector_compare(const void *v1, const void *v2)
 
 #if WITH_OPTIMIZATION
 
-static s7_pointer opteval_body(s7_scheme *sc, s7_pointer body)
+static s7_pointer opteval_sort_body(s7_scheme *sc, s7_pointer body)
 {
   s7_pointer p, val = sc->UNSPECIFIED;
   for (p = body; is_pair(p); p = cdr(p))
@@ -16214,7 +16214,7 @@ static int vector_safe_compare(const void *v1, const void *v2)
    */
   cdr(compare_args) = (*(s7_pointer *)v1);
   cdr(ecdr(compare_args)) = (*(s7_pointer *)v2);
-  if (is_true(compare_sc, opteval_body(compare_sc, compare_code)))
+  if (is_true(compare_sc, opteval_sort_body(compare_sc, compare_code)))
     return(-1);
   return(1);
 }
@@ -24251,6 +24251,8 @@ static void report_calls(void)
 
 
 
+#define SYMBOL_VALUE(Sym, Finder) ((is_global(Sym)) ? symbol_value(symbol_global_slot(Sym)) : Finder(sc, Sym))
+
 static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_1(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_2(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
@@ -24261,10 +24263,6 @@ static s7_pointer find_symbol_or_bust_6(s7_scheme *sc, s7_pointer hdl) {FIND_SYM
 static s7_pointer find_symbol_or_bust_7(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_8(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_9(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
-
-
-#define SYMBOL_VALUE(Sym, Finder) ((is_global(Sym)) ? symbol_value(symbol_global_slot(Sym)) : Finder(sc, Sym))
-
 static s7_pointer find_symbol_or_bust_34(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_37(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
 static s7_pointer find_symbol_or_bust_38(s7_scheme *sc, s7_pointer hdl) {FIND_SYMBOL_OR_BUST(sc);} 
@@ -25309,6 +25307,24 @@ static s7_pointer opteval(s7_scheme *sc, s7_pointer expr)
 
     }
   return(sc->NIL);
+}
+
+
+static s7_pointer opteval_body(s7_scheme *sc, s7_pointer body)
+{
+  s7_pointer p, val = sc->UNSPECIFIED;
+  for (p = body; is_pair(p); p = cdr(p))
+    {
+      if (is_pair(car(p)))
+	val = opteval(sc, car(p));
+      else
+	{
+	  if (s7_is_symbol(car(p)))
+	    val = SYMBOL_VALUE(car(p), find_symbol_or_bust_10);
+	  else val = car(p);
+	}
+    }
+  return(val);
 }
 
 static bool clear_optimization(s7_scheme *sc, s7_pointer code)
@@ -26407,16 +26423,12 @@ static s7_pointer check_do(s7_scheme *sc)
 	  /* fprintf(stderr, "body is ok\n"); */
 	      
 	  car(ecdr(sc->code)) = sc->SAFE_DO;
-
 #if 0
-	  /* (do ((i 0 (+ i 1))) ((= i 1)) (display i) (newline)) 
-	   *   this is just an experiment to see how far we can go
-	   */
 	  if ((safe_list_length(sc, vars) == 1) &&
 	      (s7_is_integer(cadr(car(vars)))) &&
-	      (is_safe_for_opteval(caddr(car(vars)))) &&
-	      (is_safe_for_opteval(car(end))) &&
-	      (body_is_safe_for_opteval(body)) &&
+	      (is_safe_for_opteval(sc, caddr(car(vars)))) &&
+	      (is_safe_for_opteval(sc, car(end))) &&
+	      (body_is_safe_for_opteval(sc, body)) &&
 	      (car(caddr(car(vars))) == s7_make_symbol(sc, "+")) &&
 	      (caar(end) == s7_make_symbol(sc, "=")) &&
 	      (s7_is_integer(caddr(caddr(car(vars))))) &&
@@ -26424,44 +26436,11 @@ static s7_pointer check_do(s7_scheme *sc)
 	      (cadr(car(end)) == car(car(vars))) &&
 	      (s7_is_integer(caddr(car(end)))))
 	    {
-	      /* opt as far as possible (do ((i 0 (+ i 1))) ((= i 100)) (display i))
-	       *  get slot for i, set cdr(slot) = 0,
-	       *  get value for display, set up T1 so that its arg is a direct ref to cdr(slot)
-	       *  while (integer(number(cdr(slot))) != 100) {c_function_call(display)(T1); integer(number(cdr(slot))) += 1}
-	       *  and if we have a C opt layer (as for oscil)
-	       *     (*c_func)(integer(number(cdr(slot)))) 
-	       *  so, the only overhead from C is the structure offset to get/set the integer field,
-	       *    and the opteval procedure call.  (The latter needs to be wired down!)
-	       */
-
-	      s7_Int i, start, step, stop;
-	      start = s7_integer(cadr(car(vars)));
-	      step = s7_integer(caddr(caddr(car(vars))));
-	      stop = s7_integer(caddr(car(end)));
-	      NEW_FRAME();
-	      slot = add_slot();
-	      if (safe_list_length(sc, body) > 1)
-		{
-		  for (i = start; i < stop; i += step)
-		    {
-		      integer(number(cdr(slot))) = i;
-		      for (p = body; is_pair(p); p = cdr(p))
-			opteval(sc, car(p));
-		    }
-		}
-	      else
-		{
-		  for (i = start; i < stop; i += step)
-		    {
-		      integer(number(cdr(slot))) = i;
-		      opteval(sc, body);
-		    }
-		}
-	      opteval_body(sc, cdr(end));
+	      car(ecdr(sc->code)) = sc->SAFE_DO1;
+	      return(small_int(1));
 	    }
 #endif
-	
-	  return(sc->NIL);
+	  return(small_int(0));
 	}
     }
 #endif
@@ -27138,6 +27117,75 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* -------------------------------- DO -------------------------------- */
 
 #if WITH_OPTIMIZATION
+
+    SAFE_DO1:
+    case OP_SAFE_DO1:
+      /* (define (hi) (do ((i 0 (+ i 1))) ((= i 1)) (display i) (newline)))
+       *   this is just an experiment to see how far we can go
+       */
+      /* opt as far as possible (do ((i 0 (+ i 1))) ((= i 100)) (display i))
+       *  get slot for i, set cdr(slot) = 0,
+       *  get value for display, set up T1 so that its arg is a direct ref to cdr(slot)
+       *  while (integer(number(cdr(slot))) != 100) {c_function_call(display)(T1); integer(number(cdr(slot))) += 1}
+       *  and if we have a C opt layer (as for oscil)
+       *     (*c_func)(integer(number(cdr(slot)))) 
+       *  so, the only overhead from C is the structure offset to get/set the integer field,
+       *    and the opteval procedure call.  (The latter needs to be wired down!)
+       *
+       * the next code gets us close to the run macro speed:
+       *   timing (callgrind) (do ((i 0 (+ i 1))) ((= i 1000000) i) (abs i))
+       *   run: 42, SAFE_DO1: 61, SAFE_DO: 367, DO: 684
+       *
+       * and we haven't handled the body directly (or its lookups) yet, so in the remaining 61
+       *   46 is in opteval (8 for proc call overhead), g_abs is 13.  
+       *   if we expand opteval by hand (see below), time is 32 (still 13 in g_abs).
+       *   
+       */
+      {
+	s7_pointer vars, end, body, slot;
+	s7_Int i, start, step, stop;
+
+	vars = car(sc->code);
+	end = cadr(sc->code);
+	body = cddr(sc->code);
+
+	start = s7_integer(cadr(car(vars)));
+	step = s7_integer(caddr(caddr(car(vars))));
+	stop = s7_integer(caddr(car(end)));
+
+	sc->envir = new_frame_in_env(sc, sc->envir); 
+	slot = add_slot(sc, caar(vars), make_mutable_integer(sc, start));
+
+	if (safe_list_length(sc, body) > 1)
+	  {
+	    for (i = start; i < stop; i += step)
+	      {
+		s7_pointer p;
+		integer(number(cdr(slot))) = i;
+		for (p = body; is_pair(p); p = cdr(p))
+		  opteval(sc, car(p));
+	      }
+	  }
+	else
+	  {
+	    for (i = start; i < stop; i += step)
+	      {
+		integer(number(cdr(slot))) = i;
+		opteval(sc, car(body));
+#if 0
+		car(sc->T1_1) = cdr(slot);
+		c_function_call(ecdr(car(body)))(sc, sc->T1_1);
+#endif
+	      }
+	    integer(number(cdr(slot))) = i;
+	  }
+	if (is_null(cdr(end)))
+	  sc->value = sc->NIL;
+	else sc->value = opteval_body(sc, cdr(end));
+      }
+      goto START;
+      
+
     SAFE_DO:
     case OP_SAFE_DO:
       /* set up frame, handle vars as in let,
@@ -27190,16 +27238,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		sc->args = cons(sc, x, sc->args);
 		nvars = cons(sc, caar(p), nvars);
-		sc->temp1 = nvars;
+		sc->temp1 = nvars; /* opteval also uses this pointer, so this is very temporary protection */
 	      }
 
 	    /* sc->args = safe_reverse_in_place(sc, sc->args); */
 	  }
 	
 	gc_loc = s7_gc_protect(sc, nvars);
-	/* fprintf(stderr, "nvars: %s, protected at %d\n", DISPLAY(nvars), gc4); */
-	
 	sc->envir = new_frame_in_env(sc, sc->envir); 
+
 	/* build the new environment using the initial values */
 	{ 
 	  s7_pointer x, y;
@@ -27396,8 +27443,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* setup is very similar to let */
       /* sc->code is the stuff after "do" */
 #if WITH_OPTIMIZATION
-      if (check_do(sc) == sc->NIL)
+      if (check_do(sc) == small_int(0))
 	goto SAFE_DO;
+      if (check_do(sc) == small_int(1))
+	goto SAFE_DO1;
 #else
       check_do(sc);
 #endif
@@ -36725,6 +36774,7 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF1 =              assign_internal_syntax(sc, "if",      OP_SAFE_IF1);  
   sc->SAFE_IF2 =              assign_internal_syntax(sc, "if",      OP_SAFE_IF2);  
   sc->SAFE_DO =               assign_internal_syntax(sc, "do",      OP_SAFE_DO);  
+  sc->SAFE_DO1 =              assign_internal_syntax(sc, "do",      OP_SAFE_DO1);  
 #endif
 
   sc->LAMBDA = make_symbol(sc, "lambda");
