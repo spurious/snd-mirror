@@ -4504,7 +4504,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (assoc (list 'a) '(((a)) ((b)) ((c))))  '((a)))
 (test (assoc 5 '((2 3) (5 7) (11 13))) '(5 7))
 (test (assoc 'key '()) #f)
-(test (assoc 'key '(() ())) #f)
+(test (assoc 'key '(() ())) 'error)
 (test (assoc '() '()) #f)
 (test (assoc 1 '((1 (2)) (((3) 4)))) '(1 (2)))
 
@@ -4514,7 +4514,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (assoc '((1 2) .3) 1) 'error)
 (test (assoc ''foo quote) 'error)
 (test (assoc 3 '((a . 3)) abs =) 'error)
-(test (assoc 1 '(1 2 . 3)) #f)
+(test (assoc 1 '(1 2 . 3)) 'error)
 (test (assoc 1 '((1 2) . 3)) '(1 2))
 (test (assoc 1 '((1) (1 3) (1 . 2))) '(1))
 (test (assoc 1 '((1 2 . 3) (1 . 2))) '(1 2 . 3))
@@ -4536,8 +4536,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (assoc 'c '((a . 1) (b . 2) () (c . 3) #f)) '(c . 3))
 (test (assoc 'b '((a . 1) (b . 2) () (c . 3) . 4)) '(b . 2))
 (test (assoc 'c '((a . 1) (b . 2) () (c . 3) . 4)) '(c . 3))
-(test (assoc 'c '(() (a . 1) (b . 2) () (c . 3) (c . 4) . 4)) '(c . 3))
-(test (assoc 'asdf '(() (a . 1) (b . 2) () (c . 3) (c . 4) . 4)) #f)
+(test (assoc 'c '((a . 1) (b . 2) () (c . 3) (c . 4) . 4)) '(c . 3))
+(test (assoc 'asdf '((a . 1) (b . 2) () (c . 3) (c . 4) . 4)) #f)
 (test (assoc "" (list '("a" . 1) '("" . 2) '(#() . 3))) '("" . 2))
 (test (assoc assoc (list (cons abs 1) (cons assoc 2) (cons + 3))) (cons assoc 2))
 
@@ -4869,7 +4869,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	  3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
  (list cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
        caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
-       assq assv assoc memq memv member list-ref list-tail))
+       assq assv memq memv list-ref list-tail))
 
 (for-each
  (lambda (op)
@@ -17360,7 +17360,7 @@ why are these different (read-time `#() ? )
 
 (let ((old-safety *safety*))
   (set! *safety* 1)
-  (test (sort! #(1 2 3) (lambda (a b) (= a b))) 'error)
+  (test (sort! #(1 2 3) (lambda (a b) (and #t (= a b)))) 'error)
   (set! *safety* old-safety))
 
 (if (defined? 'make-vct)
@@ -62114,8 +62114,20 @@ etc
 
 (test (let () (define (hi) (let ((oscil *)) (if (< 3 2) (+ 1 2) (oscil 4 2)))) (hi) (hi)) 8)
 (test (let () (define (hi) (let ((oscil *)) (if (< 3 2) (+ 1 2) (oscil 4 2)))) (hi) (hi) (hi) (hi)) 8)
-(test (let ((x 11)) (define (hi env) (set! x (env 0)) x) (hi '(1 2 3)) (hi '(1 2 3))) 1)
+(test (let ((x 12)) (define (hi env) (set! x (env 0)) x) (hi '(1 2 3)) (hi '(1 2 3))) 1)
+(test (let ((x 12)) (define (hi env) (set! x (+ x (env 0))) x) (hi '(1 2 3)) (hi '(1 2 3))) 14)
+(test (let ((x 12)) (define (hi env) (set! x (+ (env 0) x)) x) (hi '(1 2 3)) (hi '(1 2 3))) 14)
+(test (let ((x 12)) (define (hi env) (set! x (+ x (env 0))) x) (hi '(1 2 3)) (hi '(1 2 3)) (hi '(1 2 3))) 15)
+(test (let ((x 12)) (define (hi env) (set! x (+ (env 0) x)) x) (hi '(1 2 3)) (hi '(1 2 3)) (hi '(1 2 3))) 15)
 
+(test (let ((env +) (x 0)) (define (hi) (do ((i 0 (+ i (env 1 2)))) ((> i (env 4 5)) (env 1 2 3)) (+ x (env 1)))) (hi) (hi)) 6)
+(test (let ((env +) (x 0)) (define (hi) (do ((i 0 (+ i 3))) ((> i (env 4 5)) (env 1 2 3)) (+ x (env 1)))) (hi) (hi)) 6)
+(test (let ((env +) (x 0)) (define (hi) (do ((i 0 (+ i 3))) ((> i (env 4 5)) (env 1 2 3)) (+ x 1))) (hi) (hi)) 6)
+(test (let ((env +) (x 0)) (define (hi) (do ((i 0 (+ i 3))) ((> i 9) (env 1 2 3)) (+ x 1))) (hi) (hi)) 6)
+(test (let ((env +) (x 0)) (define (hi) (do ((i 0 (+ i 3))) ((> i 9) (+ 1 2 3)) (+ x 1))) (hi) (hi)) 6)
+
+(test (let () (define (hi) (let ((oscil >)) (or (< 3 2) (oscil 4 2)))) (hi) (hi)) #t)
+(test (let () (define (hi) (let ((oscil >)) (and (< 2 3) (oscil 4 2)))) (hi) (hi)) #t)
 
 (format #t "~%;all done!~%")
 
