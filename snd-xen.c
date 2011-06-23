@@ -876,27 +876,8 @@ static bool snd_load_init_file_1(const char *filename)
 #if HAVE_RUBY || HAVE_FORTH
       expr = mus_format("load(%s)", fullname);
 #endif
-
       snd_catch_any(eval_file_wrapper, (void *)fullname, expr);
       free(expr);
-
-#if HAVE_RUBY || HAVE_FORTH
-      if (!(XEN_TRUE_P(result)))
-	{
-	  int loc;
-	  char *str;
-	  loc = snd_protect(result);
-	  str = gl_print(result);
-	  if (str)
-	    {
-	      expr = mus_format("%s: %s\n", filename, str);
-	      snd_error_without_format(expr);
-	      free(str);
-	      free(expr);
-	    }
-	  snd_unprotect_at(loc);
-	}
-#endif
     }
 
   if (fullname) free(fullname);
@@ -997,21 +978,6 @@ void snd_load_file(const char *filename)
   snd_catch_any(eval_file_wrapper, (void *)str, str2);
   if (str) free(str);
   if (str2) free(str2);
-
-#if HAVE_RUBY || HAVE_FORTH
-  if (!(XEN_TRUE_P(result)))
-    {
-      int loc;
-      loc = snd_protect(result);
-      str = gl_print(result);
-      if (str)
-	{
-	  snd_error_without_format(str);
-	  free(str);
-	}
-      snd_unprotect_at(loc);
-    }
-#endif
 }
 
 
