@@ -355,6 +355,9 @@ typedef enum {OP_NO_OP, OP_READ_INTERNAL, OP_EVAL,
 
 #if WITH_OPTIMIZATION
 	      OP_SAFE_SET, OP_SAFE_AND, OP_SAFE_AND1, OP_SAFE_OR, OP_SAFE_OR1, OP_SAFE_IF1, OP_SAFE_IF2, OP_SAFE_DO, OP_SAFE_DO1,
+	      OP_SAFE_OR_S, OP_SAFE_AND_S,
+
+	      OP_SAFE_IF1_1, OP_SAFE_IF2_1,
 #endif
 	      OP_MAX_DEFINED} opcode_t;
 
@@ -389,6 +392,8 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
 
 #if WITH_OPTIMIZATION
    "safe-set", "safe-and", "safe-and", "safe-or", "safe-or", "safe-if1", "safe-if2", "safe-do", "safe-do1",
+   "safe-or-s", "safe-and-s",
+   "safe-if", "safe-if",
 #endif
 
    "op-max"
@@ -397,25 +402,21 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
 
 #if WITH_OPTIMIZATION
 enum{OP_THUNK, OP_CLOSURE_S, OP_CLOSURE_C, OP_CLOSURE_SS, OP_CLOSURE_opSq, OP_CLOSURE_opSq_S, OP_CLOSURE_SSS,
-     OP_CLOSURE_S1_opS1Qq,
+     OP_CLOSURE_S1_opS1Qq, OP_CLOSURE_S1_opS1q, OP_CLOSURE_S1_opS1Cq,
      
      OP_SAFE_C_C, OP_SAFE_C_S, OP_SAFE_C_P, OP_SAFE_C_SS, OP_SAFE_C_SC, OP_SAFE_C_CS, OP_SAFE_C_PP, 
      OP_SAFE_C_CP, OP_SAFE_C_SP, OP_SAFE_C_PC, OP_SAFE_C_PS,
      OP_SAFE_C_Q, OP_SAFE_C_SQ, OP_SAFE_C_QS, OP_SAFE_C_QQ, OP_SAFE_C_QC, OP_SAFE_C_CQ,
      OP_SAFE_C_3, OP_SAFE_C_XXX,
-     
-     /* the goal is to get rid of all the "P" cases, using goto in eval, not recursion in opteval,
-      *   mainly because the latter is much slower, but we'll need goto's eventually for tail recursion.
-      *   I hope to remove opteval once the dust settles.
-      *   C_P, C_PP, C_CP, C_SP, C_PC, C_PS
-      */
+
+     /* The "P" cases are placeholders, not actual ops */
      
      OP_SAFE_C_opCq, OP_SAFE_C_opQq, OP_SAFE_C_opSq, OP_SAFE_C_opSSq, OP_SAFE_C_opSCq, OP_SAFE_C_opSQq, 
      OP_SAFE_C_opCSq, OP_SAFE_C_S_opSq, OP_SAFE_C_S_opZq, OP_SAFE_C_op_opSq_q, OP_SAFE_C_op_opSSq_q_C,
      OP_SAFE_C_S_opSCq, OP_SAFE_C_S_opZCq, OP_SAFE_C_S_opCSq, OP_SAFE_C_S_opCZq, 
      OP_SAFE_C_opSq_S, OP_SAFE_C_opZq_S, OP_SAFE_C_opSq_C, OP_SAFE_C_opSq_Q, OP_SAFE_C_opSq_opSq, OP_SAFE_C_opSq_opZq,
      OP_SAFE_C_S_opSSq, OP_SAFE_C_C_opSq, OP_SAFE_C_opS_opZq_q, OP_SAFE_C_opS_opCZq_q,
-     OP_SAFE_C_C_opCSq,
+     OP_SAFE_C_C_opCSq, OP_SAFE_C_opCSq_C,
      
      /* TODO: OP_SAFE_C_op_opSq_Q_q
       *       OP_SAFE_C_opQq_opQq -- what are the separated cases?
@@ -438,7 +439,7 @@ enum{OP_THUNK, OP_CLOSURE_S, OP_CLOSURE_C, OP_CLOSURE_SS, OP_CLOSURE_opSq, OP_CL
 
 static const char *opt_names[OPT_MAX_DEFINED + 1] =
   {"thunk", "closure-s", "closure-c", "closure-ss", "closure-(s)", "closure-(s)-s", "closure-sss",
-   "closure-s1-(s1q)",
+   "closure-s1-(s1q)", "closure-s1-(s1)", "closure-s1-(s1c)",
 
    "safe-c-c", "safe-c-s", "safe-c-p", "safe-c-ss", "safe-c-sc", "safe-c-cs", "safe-c-pp", 
    "safe-c-cp", "safe-c-sp", "safe-c-pc", "safe-c-ps",
@@ -450,7 +451,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
    "safe-c-s-(sc)", "safe-c-s-(zc)", "safe-c-s-(cs)", "safe-c-s-(cz)", 
    "safe-c-(s)-s", "safe-c-(z)-s", "safe-c-(s)-c", "safe-c-(s)-q", "safe-c-(s)-(s)", "safe-c-(s)-(z)",
    "safe-c-s-(ss)", "safe-c-c-(s)", "safe-c-(s-(z))", "safe-c-(s-(cz))",
-   "safe-c-c-(cs)",
+   "safe-c-c-(cs)", "safe-c-(cs)-c",
 
    "vector-c", "string-c", "c-object-c", 
    "c-c", "c-s", "c-q", "c-cc", "c-cs", "c-sc", "c-ss", "c-qs", "c-sq",
@@ -460,7 +461,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 #endif
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 152, max num chars (256), max OPT_MAX_DEFINED = 65 */
+/* this needs to be at least OP_MAX_DEFINED = 158, max num chars (256), max OPT_MAX_DEFINED = 66 */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -722,7 +723,7 @@ struct s7_scheme {
   s7_pointer IF_P_P_P, IF_P_P, IF_P_P_X, IF_P_X_P, IF_P_X, IF_P_X_X, IF_X_P_P, IF_X_P, IF_X_P_X, IF_X_X_P, IF_X_X, IF_X_X_X;
 
 #if WITH_OPTIMIZATION
-  s7_pointer SAFE_SET, SAFE_AND, SAFE_OR, SAFE_IF1, SAFE_IF2, SAFE_DO, SAFE_DO1;
+  s7_pointer SAFE_SET, SAFE_AND, SAFE_OR, SAFE_IF1, SAFE_IF2, SAFE_DO, SAFE_DO1, SAFE_OR_S, SAFE_AND_S;
 #endif
   
   s7_pointer input_port;              /* current-input-port */
@@ -1306,7 +1307,6 @@ static bool tracing, trace_all;
 
 #if WITH_OPTIMIZATION
 static bool optimize(s7_scheme *sc, s7_pointer code);
-static bool body_is_safe_for_opteval(s7_scheme *sc, s7_pointer expr); 
 static bool is_safe_for_opteval(s7_scheme *sc, s7_pointer expr);
 #endif
 
@@ -22067,110 +22067,6 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
 #define WITH_STATS 0
 #if WITH_STATS
 static void report_calls(s7_scheme *sc);
-
-/* 
-lg:
-                p       ps      pc      cp      sp      pp1     pp2    and     or
-closure-ss:    0       0       0       0       0       0       0       3859    5418    
-closure-(s)-s: 0       0       0       0       0       0       0       0       2084    
-safe-c-s:      0       0       0       0       0       291     0       268987  23958   
-safe-c-p:      0       0       0       0       0       0       0       0       10020   
-safe-c-ss:     0       2       744     0       0       13718   0       0       37082   
-safe-c-sc:     0       0       115     0       0       4       4       101     2235    
-safe-c-pp:     13722   0       0       0       0       0       1       0       0       
-safe-c-pc:     224     0       7       0       0       0       0       34      0       
-safe-c-q:      0       0       0       0       0       0       0       16      0       
-safe-c-sq:     0       0       0       0       0       0       0       19731   172     
-safe-c-3:      0       2       0       2       0       0       0       0       0       
-safe-c-xxx:    4948    0       7       0       0       0       0       0       0       
-safe-c-(s):    0       0       57      0       0       1       291     156091  31393   
-safe-c-(ss):   236     0       0       0       0       0       0       33836   0       
-safe-c-(sc):   0       0       0       0       0       0       0       6076    0       
-safe-c-(sq):   0       0       0       0       0       0       0       4947    0       
-safe-c-s-(z):  0       0       2       0       0       0       0       30862   282     
-safe-c-((s)):  0       0       0       0       0       0       0       4570    56565   
-safe-c-s-(cz): 0       0       0       0       0       0       0       0       0       
-safe-c-(z)-s:  264     0       0       0       0       0       0       0       24902   
-safe-c-(s)-c:  9920    0       0       0       31      0       0       29450   0       
-safe-c-(s)-q:  41278   0       0       0       0       0       0       13032   0       
-safe-c-(s)-(s):0       0       0       0       792     0       0       18112   0       
-safe-c-(s)-(z):0       0       0       0       0       0       0       2763    0       
-safe-c-s-(ss): 0       0       0       0       0       0       13718   0       0       
-safe-c-(s-(z)):0       0       0       0       0       0       0       56915   1964    
-c-qs:          0       0       0       0       0       0       0       0       4198    
-
-
-s7test:
-                p       ps      pc      cp      sp      pp1     pp2    and     or
-closure-s:     0       0       0       0       0       0       0       399     0       
-safe-c-c:      0       6080    3857    462     26      537     191     1       1       
-safe-c-s:      0       0       0       0       0       1629    732     39565   1892    
-safe-c-p:      6242    42      532     4015    35      4089    3896    0       0       
-safe-c-ss:     0       1074    21      8090    0       4278    6       93      16141   
-safe-c-sc:     0       20      112     12      0       142     481     1999    1274    
-safe-c-cs:     0       24      115     60      0       29      14      0       0       
-safe-c-pp:     887     1       20      1       1668    1553    4110    0       0       
-safe-c-cp:     4035    0       19      1508    41      22      2084    0       0       
-safe-c-sp:     183     0       0       38      0       58      0       0       0       
-safe-c-pc:     77      24      18      23      78      33      60      7       98      
-safe-c-ps:     5300    1       1       1000    400     0       2       2387    0       
-safe-c-3:      305     0       9       3       0       2       2       0       0       
-safe-c-xxx:    4133    280     5       8       100     13      71      0       0       
-safe-c-(c):    65      0       35      39      2       64      77      0       0       
-safe-c-(s):    0       2       2       2035    101     557     2       1066    0       
-safe-c-(ss):   0       2388    [269]   0       0       14651   1302    0       510     
-safe-c-(sc):   4       1       811     4400    0       0       0       0       0       
-safe-c-s-(z):  0       0       1       0       0       0       0       0       0       
-safe-c-((s)):  471     6       1       0       0       0       5       523     0       
-safe-c-s-(cz): [6049]  0       0       0       0       0       0       0       0       
-safe-c-(z)-s:  229     0       0       0       0       0       0       0       0       
-safe-c-(s)-q:  47      0       0       0       1       0       0       46      0       
-safe-c-(s)-(z):2095    1       0       0       0       2       0       0       0       
-safe-c-c-(s):  1612    0       0       0       0       0       14630   0       0       
-c-ss:          0       0       0       0       0       0       0       0       1188    
-
-  
-snd-test:
-                p       ps      pc      cp      sp      pp1     pp2     and     or
-closure-s:     0       0       0       0       0       0       0       399     0       
-closure-ss:    0       0       0       0       0       0       0       99      14722   
-safe-c-c:      0       10531   14569   22450   4821    782     4174    3       86      
-safe-c-s:      0       0       0       0       0       1997919 1511    50736   51953   
-safe-c-p:      1182    707     2953    15433   4816    9574    18530   413     2384    
-safe-c-ss:     0       331460  20507   36014   0       38682   1362031 431     16551   
-safe-c-sc:     0       1240730 2855    11917   0       3488    7752    4262    2597    
-safe-c-cs:     0       15885   1239695 0       0       6723    10064   0       0       
-safe-c-pp:     16644   5586    2216    399569  292513  19183   38719   76      0       
-safe-c-cp:     27774   1623    1385    22832   3465    1223    16314   0       0       
-safe-c-sp:     18273   593     2239    2938    867335  1284    287680  420     8891    
-safe-c-pc:     2732    33      58      1305    9158    1104    4908    7       0       
-safe-c-ps:     20481   17698   16      1138    17158   134764  136981  2422    50      
-safe-c-3:      28829   2626    124     145     16889   10012   10327   0       0       
-safe-c-xxx:    7551    1741    7441    1050    581     1835    1072    0       0       
-safe-c-(c):    315     0       40      60      3       66      80      0       0       
-safe-c-(s):    0       1987    564     2973    686     573     1095    2927    9889    
-safe-c-(ss):   781     106562  0       1240    38438   28402   408116  3511    510     
-safe-c-(sc):   452     3       838     4466    591     1101    1102    15      0       
-safe-c-(cs):   3075    2429    1       1541    0       1247    1003    0       0       
-safe-c-s-(z):  0       1445    373     1408    35314   16850   2       9956    0       
-safe-c-((s)):  497     6       2       0       0       0       5       523     0       
-safe-c-s-(zc): 837     0       2       588     547     550     80      0       0       
-safe-c-s-(cs): 0       8       0       2242    0       0       0       0       0       
-safe-c-s-(cz): 0       42      3       14434   642     470     0       0       0       
-safe-c-(z)-s:  1327    8       1408    88      24      1963    1671    0       0       
-safe-c-(s)-c:  2954    0       9       2       2087    3       1570    1595    1194    
-safe-c-(s)-q:  445     0       0       0       1       0       0       46      0       
-safe-c-(s)-(s):335     7       3       0       17314   15528   15645   0       22925   
-safe-c-(s)-(z):4264    1       0       300     0       3264    0       0       0       
-safe-c-s-(ss): 4292    99      0       44      762316  44105   96      0       0       
-safe-c-c-(s):  3067    720     0       899     2       2552    15834   0       0       
-safe-c-(s-(z)):0       4       896     259     48      475     710     0       0       
-safe-c-(s-(cz)):6993    0       68      4       0       0       1       0       0       
-safe-c-c-(cs): 3       0       179     17      16596   3356    3       0       0       
-c-ss:          0       0       0       0       0       0       0       0       1188    
-
-*/
-
 #endif
 
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
@@ -24169,22 +24065,19 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 
 #if WITH_STATS
 
-#define NUM_STATS 9
+#define NUM_STATS 6
 int ops[OP_MAX_DEFINED][NUM_STATS];
-int all_ops[OP_MAX_DEFINED];
 static void init_calls(s7_scheme *sc)
 {
   int i, k;
   for (i = 0; i < NUM_STATS; i++)
     for (k = 0; k < OP_MAX_DEFINED; k++)
       ops[k][i] = 0;
-  for (k = 0; k < OP_MAX_DEFINED; k++)
-    all_ops[k] = 0;
 }
 static void report_calls(s7_scheme *sc)
 {
   int i, k, t = 0;
-  fprintf(stderr, "\n%s                     p       ps      pc      cp      sp      pp1     pp2      and      or%s\n\n", BOLD_TEXT, UNBOLD_TEXT);
+  fprintf(stderr, "\n%s                     p      sp      ps      cp      pc      pp%s\n\n", BOLD_TEXT, UNBOLD_TEXT);
   for (i = 0; i < OP_MAX_DEFINED; i++)
     {
       for (k = 0; k < NUM_STATS; k++)
@@ -24210,15 +24103,6 @@ static void report_calls(s7_scheme *sc)
 	  }
     }
   fprintf(stderr, "\n");
-  k = 0;
-  for (i = 0; i < OP_MAX_DEFINED; i++)
-    if (all_ops[i] != 0)
-      {
-	fprintf(stderr, "%s: %d\n", opt_names[i], all_ops[i]);
-	k += all_ops[i];
-      }
-  fprintf(stderr, "total: %d, %d\n", k, t);
-  
 }
 #endif
 
@@ -24531,12 +24415,22 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func)
 
 			  if ((is_optimized(car(body))) &&
 			      (is_null(cdr(body))) &&
-			      (optimize_data(car(body)) == OP_SAFE_C_SQ) &&
-			      (car(args) == cadar(body)))
+			      (car(args) == cadar(body)) &&
+			      (symbols == 1) &&                                 /* i.e. the arg is a symbol -- this should be extended */
+			      ((optimize_data(car(body)) == OP_SAFE_C_SQ) ||
+			       (optimize_data(car(body)) == OP_SAFE_C_S) ||
+			       (optimize_data(car(body)) == OP_SAFE_C_SC)))
 			    {
 			      set_optimized(car(x));
 			      set_unsafe(car(x));
-			      set_optimize_data(car(x), OP_CLOSURE_S1_opS1Qq);
+			      if (optimize_data(car(body)) == OP_SAFE_C_SQ)
+				set_optimize_data(car(x), OP_CLOSURE_S1_opS1Qq);
+			      else 
+				{
+				  if (optimize_data(car(body)) == OP_SAFE_C_S)
+				    set_optimize_data(car(x), OP_CLOSURE_S1_opS1q);
+				  else set_optimize_data(car(x), OP_CLOSURE_S1_opS1Cq);
+				}
 			      ecdr(car(x)) = func;
 
 			      /* TODO: check fneq et al
@@ -24866,9 +24760,11 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func)
 		{
 		  if (is_safe_procedure(func))
 		    {
+#if 0
 		      set_optimized(car(x));
 		      set_optimize_data(car(x), OP_SAFE_C_3);
 		      ecdr(car(x)) = func;
+#endif
 		    }
 		}
 	    }
@@ -25093,11 +24989,12 @@ static opcode_t combine_ops(s7_scheme *sc, opcode_t op1, s7_pointer e1, s7_point
       switch (optimize_data(e2))
 	{
 	case OP_SAFE_C_C: 
-	  return(OP_SAFE_C_opCq);
+	  return(OP_SAFE_C_opCq); /* this includes the multi-arg C_C cases */
 	case OP_SAFE_C_S: 
 	  return(OP_SAFE_C_opSq);
 	case OP_SAFE_C_Q: 
 	  return(OP_SAFE_C_opQq);
+
 	case OP_SAFE_C_SS: 
 	  return(OP_SAFE_C_opSSq);
 	case OP_SAFE_C_SQ: 
@@ -25106,6 +25003,8 @@ static opcode_t combine_ops(s7_scheme *sc, opcode_t op1, s7_pointer e1, s7_point
 	  return(OP_SAFE_C_opSCq);
 	case OP_SAFE_C_CS: 
 	  return(OP_SAFE_C_opCSq);
+	  /* QS CQ CC QQ QC */
+
 	case OP_SAFE_C_S_opZq:
 	  return(OP_SAFE_C_opS_opZq_q);
 	case OP_SAFE_C_S_opCZq:
@@ -25114,10 +25013,14 @@ static opcode_t combine_ops(s7_scheme *sc, opcode_t op1, s7_pointer e1, s7_point
 	  return(OP_SAFE_C_op_opSq_q);
 
 	default:
+#if WITH_STATS
+	  ops[optimize_data(e2)][0]++;
+#endif
 	  break;
 	}
       break;
       
+
     case OP_SAFE_C_SP:
       /* fprintf(stderr, "e1: %s, e2: %s\n", DISPLAY(e1), DISPLAY(e2)); */
       switch (optimize_data(e2))
@@ -25126,6 +25029,7 @@ static opcode_t combine_ops(s7_scheme *sc, opcode_t op1, s7_pointer e1, s7_point
 	  if (cadr(e1) == cadr(e2))
 	    return(OP_SAFE_C_S_opSq);
 	  return(OP_SAFE_C_S_opZq);
+	  /* Q C */
 
 	case OP_SAFE_C_SC:
 	  if (cadr(e1) == cadr(e2))
@@ -25139,11 +25043,15 @@ static opcode_t combine_ops(s7_scheme *sc, opcode_t op1, s7_pointer e1, s7_point
 
 	case OP_SAFE_C_SS:
 	  return(OP_SAFE_C_S_opSSq);
-	    
+
 	default:
+#if WITH_STATS
+	  ops[optimize_data(e2)][1]++;
+#endif
 	  break;
 	}
       break;
+
 
     case OP_SAFE_C_PS:
       /* fprintf(stderr, "e1: %s, e2: %s\n", DISPLAY(e1), DISPLAY(e2));  */
@@ -25153,11 +25061,17 @@ static opcode_t combine_ops(s7_scheme *sc, opcode_t op1, s7_pointer e1, s7_point
 	  if (caddr(e1) == cadr(e2))
 	    return(OP_SAFE_C_opSq_S);
 	  return(OP_SAFE_C_opZq_S);
+	  
+	  /* Q C */
 
 	default:
+#if WITH_STATS
+	  ops[optimize_data(e2)][2]++;
+#endif
 	  break;
 	}
       break;
+
 
     case OP_SAFE_C_PC:
       switch (optimize_data(e2))
@@ -25165,13 +25079,20 @@ static opcode_t combine_ops(s7_scheme *sc, opcode_t op1, s7_pointer e1, s7_point
 	case OP_SAFE_C_S:
 	  /* fprintf(stderr, "return C-(S)-C\n"); */
 	  return(OP_SAFE_C_opSq_C);
+
+	case OP_SAFE_C_CS:
+	  return(OP_SAFE_C_opCSq_C);
 	case OP_SAFE_C_opSSq:
 	  return(OP_SAFE_C_op_opSSq_q_C);
 
 	default:
+#if WITH_STATS
+	  ops[optimize_data(e2)][4]++;
+#endif
 	  break;
 	}
       break;
+
 
     case OP_SAFE_C_CP:
       /* fprintf(stderr, "e1: %s, e2: %s\n", DISPLAY(e1), DISPLAY(e2)); */
@@ -25179,10 +25100,14 @@ static opcode_t combine_ops(s7_scheme *sc, opcode_t op1, s7_pointer e1, s7_point
 	{
 	case OP_SAFE_C_S:
 	  return(OP_SAFE_C_C_opSq);
+
 	case OP_SAFE_C_CS:
 	  return(OP_SAFE_C_C_opCSq);
 
 	default:
+#if WITH_STATS
+	  ops[optimize_data(e2)][3]++;
+#endif
 	  break;
 	}
       break;
@@ -25201,9 +25126,13 @@ static opcode_t combine_ops(s7_scheme *sc, opcode_t op1, s7_pointer e1, s7_point
 	  break;
 
 	default:
+#if WITH_STATS
+	  ops[optimize_data(e2)][5]++;
+#endif
 	  break;
 	}
       break;
+
 
     default:
       break;
@@ -25242,46 +25171,6 @@ static bool is_safe_for_opteval(s7_scheme *sc, s7_pointer expr)
       sc->value = SYMBOL_VALUE(car(expr), find_symbol_or_bust_10);
       return(ecdr(expr) == sc->value);
 
-#if 0
-    case OP_SAFE_C_P:
-    case OP_SAFE_C_PS:
-    case OP_SAFE_C_PC:
-      if (is_safe_for_opteval(sc, cadr(expr)))
-	{
-	  sc->value = SYMBOL_VALUE(car(expr), find_symbol_or_bust_10);
-	  return(ecdr(expr) == sc->value);
-	}
-      break;
-      
-    case OP_SAFE_C_CP:
-    case OP_SAFE_C_SP:
-      if (is_safe_for_opteval(sc, caddr(expr)))
-	{
-	  sc->value = SYMBOL_VALUE(car(expr), find_symbol_or_bust_10);
-	  return(ecdr(expr) == sc->value);
-	}
-      break;
-
-    case OP_SAFE_C_PP:
-      if ((is_safe_for_opteval(sc, cadr(expr))) &&
-	  (is_safe_for_opteval(sc, caddr(expr))))
-	{
-	  sc->value = SYMBOL_VALUE(car(expr), find_symbol_or_bust_10);
-	  return(ecdr(expr) == sc->value);
-	}
-      break;
-
-    case OP_SAFE_C_3:
-      if (((!is_pair(cadr(expr))) || (is_safe_for_opteval(sc, cadr(expr)))) &&
-	  ((!is_pair(caddr(expr))) || (is_safe_for_opteval(sc, caddr(expr)))) &&
-	  ((!is_pair(cadddr(expr))) || (is_safe_for_opteval(sc, cadddr(expr)))))
-	{
-	  sc->value = SYMBOL_VALUE(car(expr), find_symbol_or_bust_10);
-	  return(ecdr(expr) == sc->value);
-	}
-      break;
-#endif
-
     case OP_SAFE_C_opCq:
     case OP_SAFE_C_opQq: 
     case OP_SAFE_C_opSq: 
@@ -25293,11 +25182,7 @@ static bool is_safe_for_opteval(s7_scheme *sc, s7_pointer expr)
     case OP_SAFE_C_opZq_S:
     case OP_SAFE_C_opSq_C:
     case OP_SAFE_C_opSq_Q:
-#if 0
-      fprintf(stderr, "check %s %d %d\n", DISPLAY(cadr(expr)), 
-	      (!is_pair(cadr(expr))),
-	      (is_safe_for_opteval(sc, cadr(expr))));
-#endif
+    case OP_SAFE_C_opCSq_C:
       if ((!is_pair(cadr(expr))) || (is_safe_for_opteval(sc, cadr(expr))))
 	{
 	  sc->value = SYMBOL_VALUE(car(expr), find_symbol_or_bust_10);
@@ -25323,7 +25208,7 @@ static bool is_safe_for_opteval(s7_scheme *sc, s7_pointer expr)
 
     case OP_SAFE_C_op_opSq_q:
     case OP_SAFE_C_op_opSSq_q_C:
-      /* (op (op (op x))) */
+      /* (op (op (op x|x x)) [c]) */
 
       if (((!is_pair(cadr(expr))) || (is_safe_for_opteval(sc, cadr(expr)))) &&              /* (op (op x)) */
 	  ((!is_pair(cadr(cadr(expr)))) || (is_safe_for_opteval(sc, (cadr(cadr(expr)))))))  /* (op x) */
@@ -25363,6 +25248,7 @@ static bool is_safe_for_opteval(s7_scheme *sc, s7_pointer expr)
   return(false);
 }
 
+
 static bool body_is_safe_for_opteval(s7_scheme *sc, s7_pointer body)
 {
   s7_pointer p;
@@ -25372,16 +25258,9 @@ static bool body_is_safe_for_opteval(s7_scheme *sc, s7_pointer body)
   return(true);
 }
 
+
 static bool clear_optimization(s7_scheme *sc, s7_pointer code)
 {
-  /* fprintf(stderr, "clear opt: %s\n", DISPLAY(code)); */
-#if 0
-  if ((s7_is_symbol(car(code))) &&
-      (is_syntax(symbol_value(car(code)))) &&
-      ((int)syntax_opcode(symbol_value(car(code))) >= OP_QUOTE_UNCHECKED))
-    car(code) = cadar(code);
-#endif
-  
   clear_optimized(code);
   set_optimize_data(code, OP_NO_OP);
   ecdr(code) = sc->NIL;
@@ -25394,6 +25273,7 @@ static bool clear_optimization(s7_scheme *sc, s7_pointer code)
 void s7_unoptimize(s7_scheme *sc, s7_pointer code)
 {
 }
+
 
 static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
 {
@@ -25857,9 +25737,28 @@ static s7_pointer check_and(s7_scheme *sc)
       if (all_pairs)
 	{
 #if WITH_OPTIMIZATION
-	  if (body_is_safe_for_opteval(sc, sc->code))
-	    car(ecdr(sc->code)) = sc->SAFE_AND;
-	  else
+  	  if (body_is_safe_for_opteval(sc, sc->code))
+ 	    {
+ 	      p = sc->code;
+ 	      if (optimize_data(car(p)) == OP_SAFE_C_S)
+		{
+		  bool opt = true;
+		  s7_pointer sym;
+		  sym = cadar(p);
+		  for (p = cdr(sc->code); is_pair(p); p = cdr(p))
+		    if ((optimize_data(car(p)) != OP_SAFE_C_S) ||
+			(sym != cadar(p)))
+		      {
+			opt = false;
+			break;
+		      }
+		  if (opt)
+		    car(ecdr(sc->code)) = sc->SAFE_AND_S;
+		  else car(ecdr(sc->code)) = sc->SAFE_AND;
+		}
+	      else car(ecdr(sc->code)) = sc->SAFE_AND;
+ 	    }
+  	  else
 #endif
 	    car(ecdr(sc->code)) = sc->AND_P;
 	}
@@ -25891,9 +25790,28 @@ static s7_pointer check_or(s7_scheme *sc)
       if (all_pairs)
 	{
 #if WITH_OPTIMIZATION
-	  if (body_is_safe_for_opteval(sc, sc->code))
-	      car(ecdr(sc->code)) = sc->SAFE_OR;
-	  else
+  	  if (body_is_safe_for_opteval(sc, sc->code))
+ 	    {
+ 	      p = sc->code;
+ 	      if (optimize_data(car(p)) == OP_SAFE_C_S)
+		{
+		  bool opt = true;
+		  s7_pointer sym;
+		  sym = cadar(p);
+		  for (p = cdr(sc->code); is_pair(p); p = cdr(p))
+		    if ((optimize_data(car(p)) != OP_SAFE_C_S) ||
+			(sym != cadar(p)))
+		      {
+			opt = false;
+			break;
+		      }
+		  if (opt)
+		    car(ecdr(sc->code)) = sc->SAFE_OR_S;
+		  else car(ecdr(sc->code)) = sc->SAFE_OR;
+		}
+	      else car(ecdr(sc->code)) = sc->SAFE_OR;
+ 	    }
+  	  else
 #endif
 	    car(ecdr(sc->code)) = sc->OR_P;
 	}
@@ -25946,12 +25864,25 @@ static s7_pointer check_if(s7_scheme *sc)
 	    {
 	      if (is_pair(f))
 		{
+#if WITH_OPTIMIZATION
+ 		  if ((is_optimized(test)) &&
+  		      (is_optimized(t)) &&
+  		      (is_optimized(f)))
+ 		    car(ecdr(sc->code)) = sc->SAFE_IF2;
+  		  else 
+#endif
 		  car(ecdr(sc->code)) = sc->IF_P_P_P;
 		}
 	      else 
 		{
 		  if (is_null(cdr(cdr_code)))
 		    {
+#if WITH_OPTIMIZATION
+		      if ((is_optimized(test)) &&
+			  (is_optimized(t)))
+			car(ecdr(sc->code)) = sc->SAFE_IF1;
+		      else 
+#endif
 		      car(ecdr(sc->code)) = sc->IF_P_P;
 		    }
 		  else car(ecdr(sc->code)) = sc->IF_P_P_X;
@@ -27211,7 +27142,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  switch (optimize_data(code))
 		    {
 		    case OP_SAFE_C_C:
-		      sc->value = c_function_call(sc->value)(sc, cdr(code));
+		      sc->value = c_function_call(sc->value)(sc, cdr(code)); /* this includes all safe calls where all args are constants */
 		      goto START;
 		      
 		    case OP_THUNK:
@@ -27337,6 +27268,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		       *   2nd is a quoted list in the closure body.
 		       *      (define (hi asd) (eq? asd 'hi)) 
 		       *      (define (ho) (let ((s 'hi)) (hi s)))
+		       * can't we treat caller arg as arbitrary, take that as the "symbol" value?
 		       */
 		      {
 			s7_pointer f;
@@ -27347,7 +27279,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto START;
 		      }
 
-		      /* other cases: CS, (S), S, SS, SC, 
+		    case OP_CLOSURE_S1_opS1Cq:
+		      {
+			s7_pointer f;
+			f = sc->value;
+			car(sc->T2_1) = SYMBOL_VALUE(cadr(code), find_symbol_or_bust_46);
+			car(sc->T2_2) = caddr(car(closure_body(f)));
+			sc->value = c_function_call(ecdr(car(closure_body(f))))(sc, sc->T2_1);
+			goto START;
+		      }
+
+		    case OP_CLOSURE_S1_opS1q:
+		      {
+			s7_pointer f;
+			f = sc->value;
+			car(sc->T1_1) = SYMBOL_VALUE(cadr(code), find_symbol_or_bust_46);
+			sc->value = c_function_call(ecdr(car(closure_body(f))))(sc, sc->T1_1);
+			goto START;
+		      }
+
+		      /* other cases: CS, (S), SS, SC, 
 		       */
 
 		    case OP_VECTOR_C:
@@ -27652,7 +27603,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			{
 			  s7_pointer func;
 			  func = sc->value;
-			  car(sc->T1_1) = c_function_call(ecdr(car(cdr(code))))(sc, cdar(cdr(code)));
+			  car(sc->T1_1) = c_function_call(ecdr(car(cdr(code))))(sc, cdar(cdr(code))); /* OP_SAFE_C_C can involve any number of ops */
 			  sc->value = c_function_call(func)(sc, sc->T1_1);
 			  goto START;
 			}
@@ -27866,6 +27817,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  car(sc->T2_1) = cadr(cadr(args));
 			  car(sc->T2_2) = c_function_call(ecdr(cadr(args)))(sc, sc->T2_1);
 			  car(sc->T2_1) = car(args);
+			  sc->value = c_function_call(func)(sc, sc->T2_1);
+			  goto START;
+			}
+		      break;
+		      
+		    case OP_SAFE_C_opCSq_C:
+		      if (SYMBOL_VALUE(caar(cdr(code)), find_symbol_or_bust_10) == ecdr(car(cdr(code))))
+			{
+			  s7_pointer func, args;
+			  func = sc->value;
+			  args = cdr(code);
+			  
+			  car(sc->T2_2) = SYMBOL_VALUE(caddr(car(args)), find_symbol_or_bust_17);
+			  car(sc->T2_1) = cadr(car(args));
+			  car(sc->T2_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+			  car(sc->T2_2) = cadr(args);
 			  sc->value = c_function_call(func)(sc, sc->T2_1);
 			  goto START;
 			}
@@ -29700,6 +29667,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       goto START;
 
+#if WITH_OPTIMIZATION
+    case OP_SAFE_IF2:
+      push_stack(sc, opcode(OP_SAFE_IF2_1), sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto OPT_EVAL;
+
+    case OP_SAFE_IF2_1:
+      if (is_true(sc, sc->value))
+	sc->code = car(sc->code);
+      else sc->code = cadr(sc->code);
+      goto OPT_EVAL;
+	
+
+    case OP_SAFE_IF1:
+      push_stack(sc, opcode(OP_SAFE_IF1_1), sc->NIL, cadr(sc->code));
+      sc->code = car(sc->code); /* all cs in lg */
+      goto OPT_EVAL;
+
+    case OP_SAFE_IF1_1:
+      if (is_true(sc, sc->value))
+	goto OPT_EVAL;          /* all c-xxx in lg */
+      sc->value = sc->UNSPECIFIED;
+      goto START;
+
+#endif
 
 	     
       
@@ -30061,6 +30053,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	push_stack(sc, opcode(OP_SAFE_AND1), sc->NIL, cdr(sc->code)); 
       sc->code = car(sc->code);
       goto OPT_EVAL;
+
+    case OP_SAFE_AND_S:
+      if (body_is_safe_for_opteval(sc, sc->code))
+	{
+	  s7_pointer code, val;
+	  val = SYMBOL_VALUE(cadar(sc->code), find_symbol_or_bust_46);
+	  for (code = sc->code; is_pair(code); code = cdr(code))
+	    {
+	      car(sc->T1_1) = val;
+	      sc->value = c_function_call(ecdr(car(code)))(sc, sc->T1_1);
+	      if (is_false(sc, sc->value))
+		goto START;
+	    }
+	  goto START;
+	}
+      else
+	{
+	  car(ecdr(sc->code)) = sc->AND_UNCHECKED;
+	  goto AND1;
+	}
+      goto START;
 #endif
 
 
@@ -30112,19 +30125,38 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 #if WITH_OPTIMIZATION
-      /* TODO: how to check for overwrites? */
     case OP_SAFE_OR1:
       if ((is_true(sc, sc->value)) ||
 	  (is_null(sc->code)))
 	goto START;
       /* fall through */
 
-
     case OP_SAFE_OR:
       if (is_not_null(cdr(sc->code)))
 	push_stack(sc, opcode(OP_SAFE_OR1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto OPT_EVAL;
+
+    case OP_SAFE_OR_S:
+      if (body_is_safe_for_opteval(sc, sc->code))
+	{
+	  s7_pointer code, val;
+	  val = SYMBOL_VALUE(cadar(sc->code), find_symbol_or_bust_46);
+	  for (code = sc->code; is_pair(code); code = cdr(code))
+	    {
+	      car(sc->T1_1) = val;
+	      sc->value = c_function_call(ecdr(car(code)))(sc, sc->T1_1);
+	      if (is_true(sc, sc->value))
+		goto START;
+	    }
+	  goto START;
+	}
+      else
+	{
+	  car(ecdr(sc->code)) = sc->OR_UNCHECKED;
+	  goto OR1;
+	}
+      goto START;
 #endif
 
 
@@ -36448,11 +36480,13 @@ s7_scheme *s7_init(void)
 #if WITH_OPTIMIZATION
   sc->SAFE_AND =              assign_internal_syntax(sc, "and",     OP_SAFE_AND);  
   sc->SAFE_OR =               assign_internal_syntax(sc, "or",      OP_SAFE_OR);  
+  sc->SAFE_AND_S =            assign_internal_syntax(sc, "and",     OP_SAFE_AND_S);  
+  sc->SAFE_OR_S =             assign_internal_syntax(sc, "or",      OP_SAFE_OR_S);  
+  sc->SAFE_IF1 =              assign_internal_syntax(sc, "if",      OP_SAFE_IF1);  
+  sc->SAFE_IF2 =              assign_internal_syntax(sc, "if",      OP_SAFE_IF2);  
 
   /* not used */
   sc->SAFE_SET =              assign_internal_syntax(sc, "set!",    OP_SAFE_SET);  
-  sc->SAFE_IF1 =              assign_internal_syntax(sc, "if",      OP_SAFE_IF1);  
-  sc->SAFE_IF2 =              assign_internal_syntax(sc, "if",      OP_SAFE_IF2);  
   sc->SAFE_DO =               assign_internal_syntax(sc, "do",      OP_SAFE_DO);  
   sc->SAFE_DO1 =              assign_internal_syntax(sc, "do",      OP_SAFE_DO1);  
 #endif

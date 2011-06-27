@@ -33,7 +33,7 @@
 ;;;  test the end                               [63362]
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f)
 (define test-at-random 0)
 					;(show-ptree 1)
@@ -63342,7 +63342,7 @@ EDITS: 1
        lst))))
 |#
 
-;(s7-version)
+(s7-version)
 (if with-exit (exit))
 
 ;;; ---------------- test the end
@@ -63409,22 +63409,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 
-14-June-11:
-174,273,523,432  PROGRAM TOTALS
-16,250,168,056  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
-15,927,011,289  ???:sin [/lib64/libm-2.12.so]
-14,908,338,573  s7.c:eval [/home/bil/snd-12/snd]
-11,608,130,681  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
-10,665,685,176  s7.c:eval'2 [/home/bil/snd-12/snd]
- 8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
- 8,717,684,865  run.c:eval_ptree [/home/bil/snd-12/snd]
- 7,208,676,164  io.c:mus_write_1 [/home/bil/snd-12/snd]
- 3,000,219,116  clm.c:mus_src [/home/bil/snd-12/snd]
+27-June-11:
+173,538,820,662  PROGRAM TOTALS
+16,824,299,596  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
+15,926,827,832  ???:sin [/lib64/libm-2.12.so]
+14,759,516,840  s7.c:eval [/home/bil/snd-12/snd]
+11,581,396,354  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
+11,563,355,809  s7.c:eval'2 [/home/bil/snd-12/snd]
+ 8,905,248,881  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
+ 8,719,588,163  run.c:eval_ptree [/home/bil/snd-12/snd]
+ 7,204,606,090  io.c:mus_write_1 [/home/bil/snd-12/snd]
  2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-12/snd]
- 2,865,485,149  s7.c:gc [/home/bil/snd-12/snd]
- 2,748,011,596  ???:cos [/lib64/libm-2.12.so]
- 2,702,310,739  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
- 1,786,538,717  s7.c:safe_c_p_1 [/home/bil/snd-12/snd]
+ 2,744,345,067  ???:cos [/lib64/libm-2.12.so]
+ 2,702,434,139  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
+ 2,687,919,775  s7.c:gc [/home/bil/snd-12/snd]
+ 2,676,977,279  clm.c:mus_src [/home/bil/snd-12/snd]
+ 2,015,899,999  s7.c:g_add [/home/bil/snd-12/snd]
 
 |#
 
