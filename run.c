@@ -106,7 +106,7 @@
  *
  *      test                                                        10.4   (10.7?)   11.4   11.10  12.2  unrun[28-Jun-11]
  *
- * (with-sound () (fm-violin 0 20 440 .1))                          1068     642     561     528    479    3692   7.7
+ * (with-sound () (fm-violin 0 20 440 .1))                          1068     642     561     528    479    3692   7.7 [3472=7.3]
  * (with-sound (:channels 2) (fm-violin 0 20 440 .1 :degree 45))    1228     764     687     570    505    3722   7.4
  * (with-sound (:reverb jc-reverb) (fm-violin 0 20 440 .1))         2577    1455    1335    1153    948    8747   9.2
  * (with-sound (:reverb nrev) (fm-violin 0 20 440 .1))              2983    1812    1685    1503   1203   10443   8.7

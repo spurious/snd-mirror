@@ -6132,7 +6132,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		 ((= i 6) happy)
 	       (if (or (not (pair? (check-shared-vector-after-gc i)))
 		       (not (equal? (check-shared-vector-after-gc i) (cons 3 i))))
-		   (set! haappy #f))))
+		   (set! happy #f))))
 	#t)
   (set! check-shared-vector-after-gc #f)
 
@@ -13869,6 +13869,22 @@ time, so that the displayed results are
 	    (define (g) (set! x 32) (f))
 	    (g))))
       1)
+
+(test (let ((a 1))
+	(let ()
+	  (if (> a 1)
+	      (begin
+		(define a 2)))
+	  a))
+      1)
+
+(test (let ((a 1))
+	(let ()
+	  (if (= a 1)
+	      (begin
+		(define a 2)))
+	  a))
+      2)
 
 (let ((x 123))
   (define (hi b) (+ b x))

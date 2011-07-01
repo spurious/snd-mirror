@@ -941,6 +941,7 @@
 		      
 		      (do ((ctr 0 (+ ctr 1)))
 			  ((= ctr vsize))
+			;; vector-set! etc in other schemes
 			(set! (v ctr) (lint-eval `((lambda ,vars ,form)
 						   ,@(let ((pos -1))
 						       (map (lambda (var)
@@ -3085,6 +3086,6 @@
 				   (list-ref var 0)
 				   (list-ref var 3))))
 		     undefined-identifiers))
-		
+
 		(close-input-port fp))))))))
 
