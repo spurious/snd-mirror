@@ -28423,7 +28423,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    goto OPT_EVAL;
 			    
 			  case T_CLOSURE:
-			    fprintf(stderr, "%s\n", DISPLAY_80(code));
+			    /* fprintf(stderr, "%s\n", DISPLAY_80(code));  */
 			    optimize_data(code) = OP_CLOSURE_S;
 			    ecdr(code) = f;
 			    goto OPT_EVAL;
