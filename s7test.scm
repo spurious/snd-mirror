@@ -62023,53 +62023,8 @@ etc
        funcs func-names))))
 |#
 
-
-
 ;;; --------------------------------------------------------------------------------
 
-(define* (profile (file "sort.data"))
-  ;; find all functions, write out each one's number of calls, sorted first by calls, then alphabetically 
-
-  (define (where-is func)
-    (let* ((f (symbol->value '__func__ (procedure-environment func)))
-	   (addr (and (pair? f)
-		      (cdr f))))
-      (if (not (pair? addr))
-	  ""
-	  (format #f "~A[~D]" (car addr) (cadr addr)))))
-
-  (if (provided? 'profiling)
-      (let ((st (symbol-table))
-	    (calls (make-vector 50000 '(none 0)))
-	    (call 0))
-	(do ((i 0 (+ i 1))) 
-	    ((= i (length st)))
-	  (let ((lst (st i)))
-	    (for-each
-	     (lambda (sym)
-	       (if (and (defined? sym) 
-			(procedure? (symbol->value sym)))
-		   (begin
-		     (set! (calls call) (list sym (symbol-calls sym)))
-		     (set! call (+ call 1)))))
-	     lst)))
-
-	(set! calls (sort! calls (lambda (a b) (> (cadr a) (cadr b)))))
-	
-	(with-output-to-file file
-	  (lambda ()
-	    (do ((i 0 (+ i 1)))
-		((= i call))
-	      (let ((c (calls i)))
-		(if (not (eq? (car c) 'none))
-		    (format #t "~A:~40T~A~60T~A~%" (car c) (cadr c) (where-is (car c)))))))))))
-
-
-(if (provided? 'profiling)
-    (profile))
-
-
-;;; --------------------------------------------------------------------------------
 
 
 ;;; these can slow us down if included in their normal place

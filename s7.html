@@ -3467,8 +3467,8 @@ write a function that tells us where the source is for a function:
 	"not found"
 	(format #f "~A is at line ~D of ~A" (car addr) (caddr addr) (cadr addr)))))
 
-&gt; (where-is profile)
-"profile is at line 1048 of extensions.scm"
+&gt; (where-is enveloped-mix)
+"enveloped-mix is at line 68 of extensions.scm"
 </pre>
 
 
@@ -4904,7 +4904,6 @@ compile-time flags:
     WITH_GMP                       1 if you want multiprecision arithmetic (requires gmp, mpfr, and mpc, default is 0)
     WITH_COMPLEX                   1 if your compiler supports complex numbers
     HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
-    WITH_PROFILING                 1 if you want profiling support (default is 0)
     S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
     HAVE_GETTIMEOFDAY              1 if you want timing info from the GC (default is 0)
     WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 1)

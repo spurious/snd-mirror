@@ -63325,8 +63325,6 @@ EDITS: 1
 
 (if (defined? 'run-report-counts) (run-report-counts))
 
-;; (if profiling (profile)) ; writes to sort.data
-
 #|
 (let ((st (symbol-table)))
   (do ((i 0 (+ i 1))) 
