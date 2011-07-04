@@ -2051,21 +2051,21 @@ void g_init_draw(void)
   XEN_DEFINE_CONSTANT(S_selection_context, CHAN_SELGC, "graphics context to draw in the selection color");
   XEN_DEFINE_CONSTANT(S_mark_context,      CHAN_MGC,   "graphics context for a mark");
 
-  XEN_DEFINE_PROCEDURE(S_draw_line,        g_draw_line_w,      4, 4, 0, H_draw_line);
-  XEN_DEFINE_PROCEDURE(S_draw_dot,         g_draw_dot_w,       2, 5, 0, H_draw_dot);
-  XEN_DEFINE_PROCEDURE(S_draw_lines,       g_draw_lines_w,     1, 4, 0, H_draw_lines); 
-  XEN_DEFINE_PROCEDURE(S_draw_dots,        g_draw_dots_w,      1, 5, 0, H_draw_dots);
-  XEN_DEFINE_PROCEDURE(S_draw_string,      g_draw_string_w,    3, 4, 0, H_draw_string);
-  XEN_DEFINE_PROCEDURE(S_fill_rectangle,   g_fill_rectangle_w, 4, 5, 0, H_fill_rectangle);
-  XEN_DEFINE_PROCEDURE(S_fill_polygon,     g_fill_polygon_w,   1, 4, 0, H_fill_polygon);
-  XEN_DEFINE_PROCEDURE(S_main_widgets,     g_main_widgets_w,   0, 0, 0, H_main_widgets);
-  XEN_DEFINE_PROCEDURE(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0, H_dialog_widgets);
-  XEN_DEFINE_PROCEDURE(S_hide_widget,      g_hide_widget_w,    1, 0, 0, H_hide_widget);
-  XEN_DEFINE_PROCEDURE(S_show_widget,      g_show_widget_w,    1, 0, 0, H_show_widget);
-  XEN_DEFINE_PROCEDURE(S_focus_widget,     g_focus_widget_w,   1, 0, 0, H_focus_widget);
+  XEN_DEFINE_SAFE_PROCEDURE(S_draw_line,        g_draw_line_w,      4, 4, 0, H_draw_line);
+  XEN_DEFINE_SAFE_PROCEDURE(S_draw_dot,         g_draw_dot_w,       2, 5, 0, H_draw_dot);
+  XEN_DEFINE_SAFE_PROCEDURE(S_draw_lines,       g_draw_lines_w,     1, 4, 0, H_draw_lines); 
+  XEN_DEFINE_SAFE_PROCEDURE(S_draw_dots,        g_draw_dots_w,      1, 5, 0, H_draw_dots);
+  XEN_DEFINE_SAFE_PROCEDURE(S_draw_string,      g_draw_string_w,    3, 4, 0, H_draw_string);
+  XEN_DEFINE_SAFE_PROCEDURE(S_fill_rectangle,   g_fill_rectangle_w, 4, 5, 0, H_fill_rectangle);
+  XEN_DEFINE_SAFE_PROCEDURE(S_fill_polygon,     g_fill_polygon_w,   1, 4, 0, H_fill_polygon);
+  XEN_DEFINE_SAFE_PROCEDURE(S_main_widgets,     g_main_widgets_w,   0, 0, 0, H_main_widgets);
+  XEN_DEFINE_SAFE_PROCEDURE(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0, H_dialog_widgets);
+  XEN_DEFINE_SAFE_PROCEDURE(S_hide_widget,      g_hide_widget_w,    1, 0, 0, H_hide_widget);
+  XEN_DEFINE_SAFE_PROCEDURE(S_show_widget,      g_show_widget_w,    1, 0, 0, H_show_widget);
+  XEN_DEFINE_SAFE_PROCEDURE(S_focus_widget,     g_focus_widget_w,   1, 0, 0, H_focus_widget);
 
-  XEN_DEFINE_PROCEDURE(S_make_graph_data,  g_make_graph_data_w, 0, 5, 0, H_make_graph_data);
-  XEN_DEFINE_PROCEDURE(S_graph_data,       g_graph_data_w,     1, 7, 0,  H_graph_data);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_graph_data,  g_make_graph_data_w, 0, 5, 0, H_make_graph_data);
+  XEN_DEFINE_SAFE_PROCEDURE(S_graph_data,       g_graph_data_w,     1, 7, 0,  H_graph_data);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_foreground_color, g_foreground_color_w, H_foreground_color,
 					    S_setB S_foreground_color, g_set_foreground_color_w, g_set_foreground_color_reversed, 0, 3, 1, 3);
@@ -2143,17 +2143,17 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_combined_data_color, g_combined_data_color_w, H_combined_data_color,
 					    S_setB S_combined_data_color, g_set_combined_data_color_w, g_set_combined_data_color_reversed, 2, 0, 3, 0);
 
-  XEN_DEFINE_PROCEDURE(S_color_p,       g_color_p_w,        1, 0, 0, H_color_p);
-  XEN_DEFINE_PROCEDURE(S_make_color,    g_make_color_w,     3, 1, 0, H_make_color);
-  XEN_DEFINE_PROCEDURE(S_color_to_list, g_color_to_list_w,  1, 0, 0, H_color_to_list);
+  XEN_DEFINE_SAFE_PROCEDURE(S_color_p,       g_color_p_w,        1, 0, 0, H_color_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_color,    g_make_color_w,     3, 1, 0, H_make_color);
+  XEN_DEFINE_SAFE_PROCEDURE(S_color_to_list, g_color_to_list_w,  1, 0, 0, H_color_to_list);
 
-  XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);
-  XEN_DEFINE_PROCEDURE(S_snd_gcs,         g_snd_gcs_w,     0, 0, 0,     H_snd_gcs);
-  XEN_DEFINE_PROCEDURE(S_snd_color,       g_snd_color_w,   1, 0, 0,     H_snd_color);
-  XEN_DEFINE_PROCEDURE(S_snd_font,        g_snd_font_w,    1, 0, 0,     H_snd_font);
+  XEN_DEFINE_PROCEDURE(S_make_bezier,        g_make_bezier_w, 0, 0, 1,     H_make_bezier);
+  XEN_DEFINE_SAFE_PROCEDURE(S_snd_gcs,       g_snd_gcs_w,     0, 0, 0,     H_snd_gcs);
+  XEN_DEFINE_SAFE_PROCEDURE(S_snd_color,     g_snd_color_w,   1, 0, 0,     H_snd_color);
+  XEN_DEFINE_SAFE_PROCEDURE(S_snd_font,      g_snd_font_w,    1, 0, 0,     H_snd_font);
 
-  XEN_DEFINE_PROCEDURE(S_make_cairo,      g_make_cairo_w,  1, 0, 0,     H_make_cairo);
-  XEN_DEFINE_PROCEDURE(S_free_cairo,      g_free_cairo_w,  1, 0, 0,     H_free_cairo);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_cairo,    g_make_cairo_w,  1, 0, 0,     H_make_cairo);
+  XEN_DEFINE_SAFE_PROCEDURE(S_free_cairo,    g_free_cairo_w,  1, 0, 0,     H_free_cairo);
 
   #define H_new_widget_hook S_new_widget_hook " (widget): called each time a dialog or \
 a new set of channel or sound widgets is created."

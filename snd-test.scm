@@ -33,7 +33,7 @@
 ;;;  test the end                               [63362]
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 					;(show-ptree 1)

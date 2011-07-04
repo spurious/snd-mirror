@@ -48,7 +48,9 @@
       (define call-with-exit call/cc)
 
       (define (symbol->value sym)
-	(symbol-binding #f sym))
+	(if (defined? sym)
+	    (symbol-binding #f sym)
+	    #f))
 
       (define (procedure-arity f)
 	(procedure-property f 'arity))
@@ -59,6 +61,7 @@
       (define (eval-string . args) #f)
       (define (lint-eval f) (eval f (interaction-environment))) ; set lint-eval to #f if eval is not available
       (define (lint-values) '())
+      (define (constant? obj) #f)
 
       (define (lint-member val lst func)
 	(if (null? lst)
@@ -617,15 +620,15 @@
 		   (or (not e)
 		       (>= (lint-length e) 4)))))) ; it is a local function
       
-      
+      (define (lint-constant? arg)
+	(or (number? arg)
+	    (string? arg)
+	    (null? arg)
+	    (boolean? arg)
+	    (char? arg)))
+
       (define (just-constants? form env)
 	;; can we probably evaluate form given just built-in stuff?
-	(define (lint-constant? arg)
-	  (or (number? arg)
-	      (string? arg)
-	      (null? arg)
-	      (boolean? arg)
-	      (char? arg)))
 	(or (lint-constant? form)
 	    (and (pair? form)
 		 (or (and (hash-table-ref no-side-effect-functions (car form))
@@ -941,8 +944,7 @@
 		      
 		      (do ((ctr 0 (+ ctr 1)))
 			  ((= ctr vsize))
-			;; vector-set! etc in other schemes
-			(set! (v ctr) (lint-eval `((lambda ,vars ,form)
+			(vector-set! v ctr (lint-eval `((lambda ,vars ,form)
 						   ,@(let ((pos -1))
 						       (map (lambda (var)
 							      (set! pos (+ pos 1))
@@ -950,8 +952,8 @@
 								  #f
 								  (nonf pos)))
 							    vars)))))
-			(if (not (member (v ctr) vals))
-			    (set! vals (cons (v ctr) vals))))
+			(if (not (member (vector-ref v ctr) vals))
+			    (set! vals (cons (vector-ref v ctr) vals))))
 		      
 		      (if (= (lint-length vals) 1)
 			  (car vals)

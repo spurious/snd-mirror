@@ -8595,7 +8595,7 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_PROCEDURE(S_mus_xcoeffs, g_mus_xcoeffs_w, 1, 0, 0, H_mus_xcoeffs);
   XEN_DEFINE_PROCEDURE(S_mus_ycoeffs, g_mus_ycoeffs_w, 1, 0, 0, H_mus_ycoeffs);
-  XEN_DEFINE_PROCEDURE(S_oscil_p,     g_oscil_p_w,     1, 0, 0, H_oscil_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_oscil_p,g_oscil_p_w,     1, 0, 0, H_oscil_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_oscil,  g_oscil_w,       1, 2, 0, H_oscil);
   XEN_DEFINE_PROCEDURE(S_mus_apply,   g_mus_apply_w,   0, 0, 1, H_mus_apply);
 
@@ -8806,37 +8806,37 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_file_to_sample_p,        g_file_to_sample_p_w,        1, 0, 0, H_file_to_sample_p);
   XEN_DEFINE_PROCEDURE(S_make_file_to_sample,     g_make_file_to_sample_w,     1, 1, 0, H_make_file_to_sample);
-  XEN_DEFINE_PROCEDURE(S_file_to_sample,          g_file_to_sample_w,          2, 1, 0, H_file_to_sample);
+  XEN_DEFINE_SAFE_PROCEDURE(S_file_to_sample,          g_file_to_sample_w,          2, 1, 0, H_file_to_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_to_frame_p,         g_file_to_frame_p_w,         1, 0, 0, H_file_to_frame_p);
   XEN_DEFINE_PROCEDURE(S_make_file_to_frame,      g_make_file_to_frame_w,      1, 1, 0, H_make_file_to_frame);
-  XEN_DEFINE_PROCEDURE(S_file_to_frame,           g_file_to_frame_w,           2, 1, 0, H_file_to_frame);
+  XEN_DEFINE_SAFE_PROCEDURE(S_file_to_frame,           g_file_to_frame_w,           2, 1, 0, H_file_to_frame);
   XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_file_p,        g_sample_to_file_p_w,        1, 0, 0, H_sample_to_file_p);
   XEN_DEFINE_PROCEDURE(S_make_sample_to_file,     g_make_sample_to_file_w,     1, 4, 0, H_make_sample_to_file);
   XEN_DEFINE_PROCEDURE(S_continue_sample_to_file, g_continue_sample_to_file_w, 1, 0, 0, H_continue_sample_to_file);
   XEN_DEFINE_PROCEDURE(S_continue_frame_to_file,  g_continue_frame_to_file_w,  1, 0, 0, H_continue_frame_to_file);
-  XEN_DEFINE_PROCEDURE(S_sample_to_file,          g_sample_to_file_w,          4, 0, 0, H_sample_to_file);
-  XEN_DEFINE_PROCEDURE(S_sample_to_file_add,      g_sample_to_file_add_w,      2, 0, 0, H_sample_to_file_add);
+  XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_file,          g_sample_to_file_w,          4, 0, 0, H_sample_to_file);
+  XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_file_add,      g_sample_to_file_add_w,      2, 0, 0, H_sample_to_file_add);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_file_p,         g_frame_to_file_p_w,         1, 0, 0, H_frame_to_file_p);
-  XEN_DEFINE_PROCEDURE(S_frame_to_file,           g_frame_to_file_w,           3, 0, 0, H_frame_to_file);
-  XEN_DEFINE_PROCEDURE(S_make_frame_to_file,      g_make_frame_to_file_w,      1, 4, 0, H_make_frame_to_file);
+  XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_file,           g_frame_to_file_w,           3, 0, 0, H_frame_to_file);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_frame_to_file,      g_make_frame_to_file_w,      1, 4, 0, H_make_frame_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_input_p,             g_input_p_w,                 1, 0, 0, H_mus_input_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_output_p,            g_output_p_w,                1, 0, 0, H_mus_output_p);
-  XEN_DEFINE_PROCEDURE(S_in_any,                  g_in_any_w,                  3, 0, 0, H_in_any);
-  XEN_DEFINE_PROCEDURE(S_ina,                     g_ina_w,                     2, 0, 0, H_ina);  
-  XEN_DEFINE_PROCEDURE(S_inb,                     g_inb_w,                     2, 0, 0, H_inb);
-  XEN_DEFINE_PROCEDURE(S_out_any,                 g_out_any_w,                 3, 1, 0, H_out_any);
-  XEN_DEFINE_PROCEDURE(S_outa,                    g_outa_w,                    2, 1, 0, H_outa);
-  XEN_DEFINE_PROCEDURE(S_outb,                    g_outb_w,                    2, 1, 0, H_outb);
-  XEN_DEFINE_PROCEDURE(S_outc,                    g_outc_w,                    2, 1, 0, H_outc);
-  XEN_DEFINE_PROCEDURE(S_outd,                    g_outd_w,                    2, 1, 0, H_outd);
-  XEN_DEFINE_PROCEDURE(S_mus_close,               g_mus_close_w,               1, 0, 0, H_mus_close);
+  XEN_DEFINE_SAFE_PROCEDURE(S_in_any,                  g_in_any_w,                  3, 0, 0, H_in_any);
+  XEN_DEFINE_SAFE_PROCEDURE(S_ina,                     g_ina_w,                     2, 0, 0, H_ina);  
+  XEN_DEFINE_SAFE_PROCEDURE(S_inb,                     g_inb_w,                     2, 0, 0, H_inb);
+  XEN_DEFINE_SAFE_PROCEDURE(S_out_any,                 g_out_any_w,                 3, 1, 0, H_out_any);
+  XEN_DEFINE_SAFE_PROCEDURE(S_outa,                    g_outa_w,                    2, 1, 0, H_outa);
+  XEN_DEFINE_SAFE_PROCEDURE(S_outb,                    g_outb_w,                    2, 1, 0, H_outb);
+  XEN_DEFINE_SAFE_PROCEDURE(S_outc,                    g_outc_w,                    2, 1, 0, H_outc);
+  XEN_DEFINE_SAFE_PROCEDURE(S_outd,                    g_outd_w,                    2, 1, 0, H_outd);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_close,               g_mus_close_w,               1, 0, 0, H_mus_close);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_buffer_size, g_mus_file_buffer_size_w, H_mus_file_buffer_size,
 				   S_setB S_mus_file_buffer_size, g_mus_set_file_buffer_size_w,  0, 0, 1, 0);
 
 
   XEN_DEFINE_SAFE_PROCEDURE(S_readin_p,        g_readin_p_w,        1, 0, 0, H_readin_p);
-  XEN_DEFINE_PROCEDURE(S_readin,          g_readin_w,          1, 0, 0, H_readin);
+  XEN_DEFINE_SAFE_PROCEDURE(S_readin,          g_readin_w,          1, 0, 0, H_readin);
   XEN_DEFINE_PROCEDURE(S_make_readin,     g_make_readin_w,     0, 0, 1, H_make_readin);
   XEN_DEFINE_PROCEDURE(S_mus_channel,     g_mus_channel_w,     1, 0, 0, H_mus_channel);
   XEN_DEFINE_PROCEDURE(S_mus_interp_type, g_mus_interp_type_w, 1, 0, 0, H_mus_interp_type);

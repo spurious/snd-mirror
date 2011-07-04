@@ -2949,6 +2949,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     ;;
     ;; this does not work quite right but the error leads to a longer
     ;; run with zeroed samples at the end so it should be fine
+    ; (format #t "doppler: ~S~%" doppler)
     (set! real-dur (* duration (src-duration (reverse doppler)))) 
     ;; end of the run according to the duration of the note
     ;; (set! end (time->samples duration))

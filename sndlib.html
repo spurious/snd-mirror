@@ -609,7 +609,7 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
   int beg = 0, end, easy_case = 0, npartials, i;
   float *coeffs, *partials;
   float frq_scl, maxdev, logfrq, sqrtfrq, index1, index2, index3, norm;
-  float vib = 0.0, modulation = 0.0, fuzz = 0.0, indfuzz = 1.0, ampfuzz = 1.0;
+  float vib = 0.0, modulation = 0.0, fuzz = 0.0, indfuzz = 1.0;
   mus_any *carrier, *fmosc1, *fmosc2, *fmosc3, *ampf;
   mus_any *indf1, *indf2, *indf3, *fmnoi = NULL, *pervib, *ranvib, *frqf = NULL, *loc;
   beg = start * mus_srate();
@@ -635,7 +635,7 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
       if ((floor(fm2_rat)) &gt; npartials) npartials = floor(fm2_rat);
       if ((floor(fm3_rat)) &gt; npartials) npartials = floor(fm3_rat);
       npartials++;
-      partials = (float *)CALLOC(npartials, sizeof(float));
+      partials = (float *)calloc(npartials, sizeof(float));
       partials[(int)(fm1_rat)] = index1;
       partials[(int)(fm2_rat)] = index2;
       partials[(int)(fm3_rat)] = index3;
@@ -694,13 +694,13 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
       mus_free(fmosc3);
     }
   else
-    FREE(partials);
+    free(partials);
   mus_free(loc);
 }
 
 int main(int argc, char *argv[])
 {
-  mus_any *osc = NULL, *op = NULL;
+  mus_any *op = NULL;
   mus_sound_initialize();	
   op = mus_make_sample_to_file("test.snd", 1, MUS_BSHORT, MUS_NEXT);
   if (op)
