@@ -1241,7 +1241,7 @@ void post_fft_popup_menu(void *e)
   XButtonPressedEvent *event = (XButtonPressedEvent *)e;
   if (!fft_popup_menu)
     {
-      Widget outer_menu, cascade_menu;
+      Widget outer_menu;
       Arg args[20];
       int n;
 
@@ -1257,7 +1257,7 @@ void post_fft_popup_menu(void *e)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNsubMenuId, outer_menu); n++;
-      cascade_menu = XtCreateManagedWidget("Size", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
+      XtCreateManagedWidget("Size", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
 
       add_menu_item(outer_menu, "16",      fft_size_16_callback);
       add_menu_item(outer_menu, "64",      fft_size_64_callback);
@@ -1277,7 +1277,7 @@ void post_fft_popup_menu(void *e)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNsubMenuId, outer_menu); n++;
-      cascade_menu = XtCreateManagedWidget("Window", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
+      XtCreateManagedWidget("Window", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
 
       add_menu_item(outer_menu, "rectangular",     fft_window_rectangular_callback);
       add_menu_item(outer_menu, "hann",            fft_window_hann_callback);
@@ -1308,7 +1308,7 @@ void post_fft_popup_menu(void *e)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNsubMenuId, outer_menu); n++;
-      cascade_menu = XtCreateManagedWidget("Graph type", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
+      XtCreateManagedWidget("Graph type", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
 
       add_menu_item(outer_menu, "one fft",     fft_graph_once_callback);
       add_menu_item(outer_menu, "sonogram",    fft_graph_sonogram_callback);
@@ -1322,7 +1322,7 @@ void post_fft_popup_menu(void *e)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNsubMenuId, outer_menu); n++;
-      cascade_menu = XtCreateManagedWidget("Transform type", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
+      XtCreateManagedWidget("Transform type", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
 
       add_menu_item(outer_menu, "fourier",         fft_type_fourier_callback);
       add_menu_item(outer_menu, "wavelet",         fft_type_wavelet_callback);
@@ -1337,7 +1337,7 @@ void post_fft_popup_menu(void *e)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNsubMenuId, outer_menu); n++;
-      cascade_menu = XtCreateManagedWidget("Colormap", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
+      XtCreateManagedWidget("Colormap", xmCascadeButtonWidgetClass, fft_popup_menu, args, n);
 
       add_menu_item(outer_menu, "gray",    fft_gray_callback);
       add_menu_item(outer_menu, "autumn",  fft_autumn_callback);

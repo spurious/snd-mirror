@@ -2381,7 +2381,6 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
   char *alsa_name;
   int frames, periods;
   int err;
-  unsigned int r;
   snd_pcm_t *handle;
   snd_pcm_hw_params_t *hw_params = NULL;
   snd_pcm_sw_params_t *sw_params = NULL;
@@ -2504,7 +2503,7 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
     unsigned int new_rate;
     new_rate = srate;
     /* r is unsigned int so it can't be negative */
-    r = snd_pcm_hw_params_set_rate_near(handle, hw_params, &new_rate, 0);
+    err = snd_pcm_hw_params_set_rate_near(handle, hw_params, &new_rate, 0);
     if ((new_rate != (unsigned int)srate) && (!alsa_squelch_warning))
       {
 	mus_print("%s: could not set rate to exactly %d, set to %d instead",

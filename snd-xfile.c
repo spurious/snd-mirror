@@ -1114,10 +1114,8 @@ static void watch_filename_change(Widget w, XtPointer context, XtPointer info)
     {
       XmStringTable files;
       Widget file_list;
-      int num_files = 0, i, pos = -1, l, u, text_len;
+      int num_files = 0, i, pos = -1, l, u;
       char *file_list_file = NULL;
-
-      text_len = mus_strlen(filename);
 
       file_list = FSB_BOX(fd->dialog, XmDIALOG_LIST);
       XtVaGetValues(fd->dialog,
@@ -4609,19 +4607,17 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 
 	    case FROM_VIEW_FILES_MIX_DIALOG:
 	      {
-		int err;
 		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
 		redirect_snd_error_to(redirect_vf_post_error, rp->requestor_data);
-		err = vf_mix(vdat);
+		vf_mix(vdat);
 	      }
 	      break;
 
 	    case FROM_VIEW_FILES_INSERT_DIALOG:
 	      {
-		int err;
 		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
 		redirect_snd_error_to(redirect_vf_post_error, rp->requestor_data);
-		err = vf_insert(vdat);
+		vf_insert(vdat);
 	      }
 	      break;
 
@@ -6036,13 +6032,13 @@ static void vf_drawer_button_motion(Widget w, XtPointer context, XEvent *event, 
 {
   view_files_info *vdat = (view_files_info *)context;
   XMotionEvent *ev = (XMotionEvent *)event;
-  mus_float_t pos;
+  /* mus_float_t pos; */
 
 #if HAVE_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
 
-  pos = (mus_float_t)(ev->x) / (mus_float_t)widget_width(w);
+  /* pos = (mus_float_t)(ev->x) / (mus_float_t)widget_width(w); */
   env_editor_button_motion(vdat->spf, ev->x, ev->y, ev->time, vdat->amp_env);
   vf_amp_env_resize(w, context, NULL);
 }
@@ -6052,14 +6048,14 @@ static void vf_drawer_button_press(Widget w, XtPointer context, XEvent *event, B
 {
   view_files_info *vdat = (view_files_info *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
-  mus_float_t pos;
+  /* mus_float_t pos; */
 
 #if HAVE_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif
 
-  pos = (mus_float_t)(ev->x) / (mus_float_t)widget_width(w);
+  /* pos = (mus_float_t)(ev->x) / (mus_float_t)widget_width(w); */
   if (env_editor_button_press(vdat->spf, ev->x, ev->y, ev->time, vdat->amp_env))
     vf_amp_env_resize(w, context, NULL);
 }
@@ -6068,10 +6064,10 @@ static void vf_drawer_button_press(Widget w, XtPointer context, XEvent *event, B
 static void vf_drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   view_files_info *vdat = (view_files_info *)context;
-  XButtonEvent *ev = (XButtonEvent *)event;
-  mus_float_t pos;
+  /* XButtonEvent *ev = (XButtonEvent *)event; */
+  /* mus_float_t pos; */
 
-  pos = (mus_float_t)(ev->x) / (mus_float_t)widget_width(w);
+  /* pos = (mus_float_t)(ev->x) / (mus_float_t)widget_width(w); */
   env_editor_button_release(vdat->spf, vdat->amp_env);
   vf_amp_env_resize(w, context, NULL);
 }
@@ -6129,7 +6125,7 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
       Arg args[20];
       XmString xdismiss, xhelp, titlestr, new_viewer_str, s1, bstr;
       Widget mainform, viewform, leftform, reset_button;
-      Widget left_title_sep, add_label, sep1, sep3, sep4, sep5, sep6, sep7, sort_cascade_menu;
+      Widget left_title_sep, add_label, sep1, sep3, sep4, sep5, sep6, sep7;
 #if (!HAVE_FAM)
       Widget sep2;
 #endif
@@ -6773,7 +6769,7 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
-      sort_cascade_menu = XtCreateManagedWidget("sort", xmCascadeButtonWidgetClass, sbar, args, n);
+      XtCreateManagedWidget("sort", xmCascadeButtonWidgetClass, sbar, args, n);
       
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
@@ -6825,10 +6821,8 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	for (i = 0; i < vdat->sort_items_size; i++)
 	  XtAddCallback(vdat->sort_items[i], XmNactivateCallback, sort_view_files_xen, (XtPointer)vdat);
       }
-      /* XtAddCallback(sort_cascade_menu, XmNcascadingCallback, vf_display_sort_items, (XtPointer)vdat); -- segfaults */
 
       map_over_children(vdat->file_list, set_main_color_of_widget);
-
       set_dialog_widget(VIEW_FILES_DIALOG, vdat->dialog);
 
       if (managed)

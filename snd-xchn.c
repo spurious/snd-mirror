@@ -1492,17 +1492,12 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	    {
 	      if (new_style == CHANNELS_SEPARATE)
 		{
-		  axis_info *ap;
-		  chan_info *pcp;
-
 		  /* height = total space available */
 		  height /= sp->nchans;
 		  for_each_sound_chan_with_int(sp, channel_lock_pane, height);
 		  for_each_sound_chan(sp, channel_open_pane);
 		  for_each_sound_chan(sp, channel_unlock_pane);
 
-		  pcp = sp->chans[0];
-		  ap = pcp->axis;
 		  for (i = 1; i < sp->nchans; i++)
 		    {
 		      Widget *cw;

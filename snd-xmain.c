@@ -319,7 +319,7 @@ static void SetupIcon(Widget shell)
 {
   Display *dpy;
   Window root;
-  int status, scr;
+  int scr;
   Pixmap pix, mask;
   XpmAttributes attributes;
   dpy = XtDisplay(shell);
@@ -328,7 +328,7 @@ static void SetupIcon(Widget shell)
   XtVaGetValues(shell, XmNdepth, &attributes.depth, XmNcolormap, &attributes.colormap, NULL);
   attributes.visual = DefaultVisual(dpy, scr);
   attributes.valuemask = XpmDepth | XpmColormap | XpmVisual;
-  status = XpmCreatePixmapFromData(dpy, root, (char **)snd_icon_bits(), &pix, &mask, &attributes);
+  XpmCreatePixmapFromData(dpy, root, (char **)snd_icon_bits(), &pix, &mask, &attributes);
   if (mask) XFreePixmap(dpy, mask);
   XtVaSetValues(shell, XmNiconPixmap, pix, NULL);
 }
@@ -817,10 +817,9 @@ void snd_doit(int argc, char **argv)
 
       {
 	/* get rid of the useless spinbox */
-	Widget scroll;
 	n = 0;
 	XtSetArg(args[n], XmNnotebookChildType, XmPAGE_SCROLLER); n++;
-	scroll = XtCreateWidget("scroller", xmScrollBarWidgetClass, ss->soundpane, NULL, 0);
+	XtCreateWidget("scroller", xmScrollBarWidgetClass, ss->soundpane, NULL, 0);
       }
       XtManageChild(ss->soundpane);
       XtAddCallback(ss->soundpane, XmNpageChangedCallback, notebook_page_changed_callback, NULL);

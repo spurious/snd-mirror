@@ -1143,7 +1143,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	    {
 	      if (new_style == CHANNELS_SEPARATE)
 		{
-		  chan_info* pcp;
 		  GtkWidget **cw;
 		  /* height[0] = total space available */
 		  height[0] /= sp->nchans;
@@ -1151,7 +1150,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  for_each_sound_chan(sp, channel_open_pane);
 		  /* for (i = 0; i < sp->nchans; i++) reset_mix_graph_parent(sp->chans[i]); */
 
-		  pcp = sp->chans[0];
 		  for (i = 1; i < sp->nchans; i++)
 		    {
 		      chan_info *cp;

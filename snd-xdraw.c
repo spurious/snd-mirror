@@ -196,8 +196,6 @@ void fill_two_sided_polygons(graphics_context *ax, point_t *points, point_t *poi
 void setup_graphics_context(chan_info *cp, graphics_context *ax)
 {
   Widget w;
-  snd_info *sp;
-  sp = cp->sound;
   w = channel_to_widget(cp);
   ax->dp = XtDisplay(w);
   ax->gc = copy_GC(cp);

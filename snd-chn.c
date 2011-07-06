@@ -3093,18 +3093,16 @@ static bool make_spectrogram(chan_info *cp)
   mus_float_t fwidth, fheight, zscl, yval, xval;
   int bins = 0, slice, i, j, xx = 0, yy = 0;
   bool old_with_gl = false;
-  snd_info *sp;
 
   mus_float_t minlx = 0.0, lscale = 0.0, fap_incr = 0.0;
 
   if (chan_fft_in_progress(cp)) return(false);
   si = cp->sonogram_data;
   if ((!si) || (si->scale <= 0.0)) return(false);
-  sp = cp->sound;
 
 #if HAVE_GL
-  if (((sp->nchans == 1) || 
-       (sp->channel_style == CHANNELS_SEPARATE)) &&
+  if (((cp->sound->nchans == 1) || 
+       (cp->sound->channel_style == CHANNELS_SEPARATE)) &&
       (color_map(ss) != BLACK_AND_WHITE_COLORMAP) &&
       (with_gl(ss)))
     return(make_gl_spectrogram(cp));
@@ -6072,7 +6070,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 #if (!USE_NO_GUI)
   if (cp->graph_time_p)
     {
-      int grf_width, width, x_offset, y_offset, grf_height, height, chan_offset, grf_chn = 0;
+      int grf_width, width, x_offset, y_offset, grf_height, height, chan_offset; /* , grf_chn = 0; */
       bool new_peaks;
       inset_graph_info_t *info;
       int64_t frames;
@@ -6095,7 +6093,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	chan_offset += 10;
       y_offset = chan_offset + snd_round(height * 0.5);
 
-      if (cp->sound->channel_style == CHANNELS_SEPARATE) grf_chn = cp->chan;
+      /* if (cp->sound->channel_style == CHANNELS_SEPARATE) grf_chn = cp->chan; */ /* TODO: is this leftover from something? */
       new_peaks = ((cp->axis->cp) && (cp->axis->cp->new_peaks));
       /* new_peaks is set during update_graph if we just finished a new peak-env */
       frames = CURRENT_SAMPLES(cp);
