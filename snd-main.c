@@ -2211,41 +2211,33 @@ static XEN g_snd_version(void)
 
 static XEN g_color_orientation_dialog(XEN managed) 
 {
-  widget_t w;
   #define H_color_orientation_dialog "(" S_color_orientation_dialog " :optional managed): start the Color/Orientation dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_color_orientation_dialog, "a boolean");
-  w = make_color_orientation_dialog(XEN_TO_C_BOOLEAN(managed));
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_color_orientation_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 
 
 static XEN g_transform_dialog(XEN managed) 
 {
-  widget_t w;
   #define H_transform_dialog "(" S_transform_dialog " :optional (managed " PROC_TRUE ")): start the Transforms dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_transform_dialog, "a boolean");
-  w = make_transform_dialog(XEN_TO_C_BOOLEAN(managed));
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_transform_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 
 
 static XEN g_print_dialog(XEN managed, XEN direct_to_printer) 
 {
-  widget_t w;
   #define H_print_dialog "(" S_print_dialog " :optional managed direct): start the File Print dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_print_dialog, "a boolean");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(direct_to_printer), direct_to_printer, XEN_ARG_2, S_print_dialog, "a boolean");
-  w = make_file_print_dialog(!(XEN_FALSE_P(managed)), XEN_TRUE_P(direct_to_printer));
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_file_print_dialog(!(XEN_FALSE_P(managed)), XEN_TRUE_P(direct_to_printer))));
 }
 
 
 static XEN g_preferences_dialog(void)
 {
-  widget_t w;
   #define H_preferences_dialog "(" S_preferences_dialog "): start the Options:Preferences dialog"
-  w = make_preferences_dialog();
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_preferences_dialog()));
 }
 
 

@@ -230,15 +230,16 @@ static void startup_funcs(void)
 {
 #ifndef SND_AS_WIDGET
   Atom wm_delete_window;
+  Display *dpy;
+  Widget shell;
 #endif
   snd_info *sp;
   static int auto_open_ctr = 0;
-  Widget shell;
-  Display *dpy;
+
+#ifndef SND_AS_WIDGET
   shell = ss->mainshell;
   dpy = MAIN_DISPLAY(ss);
 
-#ifndef SND_AS_WIDGET
 #ifndef __alpha__
   add_menu_drop();
 #endif
@@ -538,7 +539,7 @@ void snd_doit(int argc, char **argv)
   Display *dpy;
   Drawable wn;
   Arg args[32];
-  int i, n, err = 0;
+  int i, n;
   Widget menu;
   XGCValues gv;
   char *app_title = NULL;
@@ -546,6 +547,7 @@ void snd_doit(int argc, char **argv)
 #ifdef SND_AS_WIDGET
   ss = snd_main(argc, argv);
 #else
+  int err = 0;
   XtSetLanguageProc(NULL, NULL, NULL);
 #endif
 
@@ -553,6 +555,7 @@ void snd_doit(int argc, char **argv)
   ss->Graph_Cursor = DEFAULT_GRAPH_CURSOR;
 
 #ifndef SND_AS_WIDGET
+
 #ifndef __alpha__
   XtSetArg(args[0], XtNwidth, INITIAL_WINDOW_WIDTH);
   XtSetArg(args[1], XtNheight, INITIAL_WINDOW_HEIGHT);

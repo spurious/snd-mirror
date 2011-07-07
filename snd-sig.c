@@ -3761,9 +3761,9 @@ the current sample, the vct returned by 'init-func', and the current read direct
   chan_info *cp;
   char *caller = NULL;
   mus_long_t beg = 0, dur = 0;
-  bool backup = false;
   int pos;
 #if HAVE_SCHEME
+  bool backup = false;
   bool too_many_ptrees = false;
   struct ptree *pt = NULL;
 #endif
@@ -3799,7 +3799,9 @@ the current sample, the vct returned by 'init-func', and the current read direct
     {
       if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg + dur - cp->edits[pos]->samples, pos, "extend for " S_ptree_channel))) 
 	return(XEN_FALSE);
+#if HAVE_SCHEME
       backup = true;
+#endif
       pos = cp->edit_ctr;
     }
 

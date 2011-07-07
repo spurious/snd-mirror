@@ -541,17 +541,20 @@ void listener_return(widget_t w, int last_prompt)
   char *str = NULL, *full_str = NULL;
   int i, j;
   XEN form = XEN_UNDEFINED;
-  GUI_TEXT_POSITION_TYPE end_of_text = 0, start_of_text = 0, last_position = 0, current_position = 0;
+  GUI_TEXT_POSITION_TYPE last_position = 0, current_position = 0;
 
 #if (!HAVE_RUBY && !HAVE_FORTH)
+  GUI_TEXT_POSITION_TYPE end_of_text = 0, start_of_text = 0;
   int parens;
   GUI_TEXT_POSITION_TYPE new_eot = 0;
 #endif
 
   full_str = GUI_TEXT(w);
   current_position = GUI_TEXT_INSERTION_POSITION(w);
+#if (!HAVE_RUBY && !HAVE_FORTH)
   start_of_text = current_position;
   end_of_text = current_position;
+#endif
   last_position = GUI_TEXT_END(w);
   add_listener_position(last_position);
 

@@ -3801,10 +3801,8 @@ static XEN g_save_mix(XEN m, XEN file)
 
 static XEN g_view_mixes_dialog(void)
 {
-  widget_t w;
   #define H_view_mixes_dialog "(" S_view_mixes_dialog "): start the Mix browser"
-  w = make_mix_dialog();
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_mix_dialog()));
 }
 
 

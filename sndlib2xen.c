@@ -1160,7 +1160,7 @@ to the audio line from sound-data sdata."
     for (i = 0; i < sd->chans; i++)
       for (j = 0; j < sd->length; j++)
 	sdata[i][j] = MUS_DOUBLE_TO_SAMPLE(sd->data[i][j]);
-    mus_file_write_buffer(fmt, 0, frms - 1, sd->chans, sdata, obuf, true);
+    mus_file_write_buffer(fmt, beg, beg + frms - 1, sd->chans, sdata, obuf, true);
     for (i = 0; i < sd->chans; i++)
       free(sdata[i]);
     free(sdata);

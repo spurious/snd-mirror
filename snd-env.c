@@ -1745,9 +1745,7 @@ static XEN g_set_enved_filter_order(XEN val)
 static XEN g_enved_dialog(void) 
 {
   #define H_enved_dialog "(" S_enved_dialog "): start the Envelope Editor"
-  widget_t w;
-  w = create_envelope_editor();
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(create_envelope_editor()));
 }
 
 

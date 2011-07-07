@@ -4916,13 +4916,9 @@ void display_info(snd_info *sp)
 
 static XEN g_view_files_dialog(XEN managed, XEN make_new)
 {
-  widget_t w;
-  bool new_dialog = false;
   #define H_view_files_dialog "(" S_view_files_dialog " :optional managed create-new-dialog): start the View Files dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_view_files_dialog, "a boolean");
-  new_dialog = (XEN_TRUE_P(make_new));
-  w = make_view_files_dialog(XEN_TO_C_BOOLEAN(managed), new_dialog);
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_view_files_dialog(XEN_TO_C_BOOLEAN(managed), XEN_TRUE_P(make_new))));
 }
 
 
@@ -5482,95 +5478,77 @@ static XEN g_disk_kspace(XEN name)
 
 static XEN g_open_file_dialog(XEN managed)
 {
-  widget_t w;
   #define H_open_file_dialog "(" S_open_file_dialog " :optional (managed " PROC_TRUE ")): create the file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_open_file_dialog, "a boolean");
-  w = make_open_file_dialog(FILE_READ_WRITE, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_open_file_dialog(FILE_READ_WRITE, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true)));
 }
 
 
 static XEN g_mix_file_dialog(XEN managed)
 {
-  widget_t w;
   #define H_mix_file_dialog "(" S_mix_file_dialog " :optional (managed " PROC_TRUE ")): create the mix file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_mix_file_dialog, "a boolean");
-  w = make_mix_file_dialog((XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_mix_file_dialog((XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true)));
 }
 
 
 static XEN g_insert_file_dialog(XEN managed)
 {
-  widget_t w;
   #define H_insert_file_dialog "(" S_insert_file_dialog " :optional (managed " PROC_TRUE ")): create the insert file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_insert_file_dialog, "a boolean");
-  w = make_insert_file_dialog((XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_insert_file_dialog((XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true)));
 }
 
 
 static XEN g_edit_header_dialog(XEN snd_n) 
 {
-  widget_t w;
   #define H_edit_header_dialog "(" S_edit_header_dialog " :optional snd): start the Edit Header dialog on sound snd"
   snd_info *sp; 
   sp = get_sp(snd_n);
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_edit_header_dialog, snd_n));
-  w = edit_header(sp);
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(edit_header(sp)));
 }
 
 
 static XEN g_save_selection_dialog(XEN managed)
 {
-  widget_t w;
 #define H_save_selection_dialog "(" S_save_selection_dialog " :optional managed): start the Selection Save-as dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_selection_dialog, "a boolean");
-  w = make_selection_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_selection_save_as_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 
 
 static XEN g_save_region_dialog(XEN managed)
 {
-  widget_t w;
   #define H_save_region_dialog "(" S_save_region_dialog " :optional managed): start the Region Save-as dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_region_dialog, "a boolean");
-  w = make_region_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_region_save_as_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 
 
 static XEN g_save_sound_dialog(XEN managed)
 {
-  widget_t w;
   #define H_save_sound_dialog "(" S_save_sound_dialog " :optional managed): start the File Save-as dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_sound_dialog, "a boolean");
-  w = make_sound_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_sound_save_as_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 
 
 static XEN g_info_dialog(XEN subject, XEN msg)
 {
-  widget_t w;
   #define H_info_dialog "(" S_info_dialog " subject message): start the Info window with subject and message"
   XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_info_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_info_dialog, "a string");
-  w = post_it(XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg));
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(post_it(XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg))));
 }
 
 
 static XEN g_new_sound_dialog(XEN managed)
 {
-  widget_t w;
-#define H_new_sound_dialog "(" S_new_sound_dialog " :optional managed): start the File New sound dialog"
+  #define H_new_sound_dialog "(" S_new_sound_dialog " :optional managed): start the File New sound dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_new_sound_dialog, "a boolean");
-  w = make_new_file_dialog(XEN_TO_C_BOOLEAN(managed));
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(make_new_file_dialog(XEN_TO_C_BOOLEAN(managed))));
 }
 
 

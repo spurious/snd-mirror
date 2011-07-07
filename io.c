@@ -1420,7 +1420,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_s
   char *charbuf = NULL;
   mus_sample_t *buffer;
 
-  if (chans <= 0) return(0);
+  if (chans <= 0) return(MUS_NO_ERROR); /* ?? */
 
   if (!inbuf)
     {
@@ -1871,13 +1871,12 @@ char *mus_expand_filename(const char *filename)
 
 void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
 {
-  int bytes_needed = 0;
   va_list ap;
   va_start(ap, format);
 #if HAVE_VSNPRINTF
-  bytes_needed = vsnprintf(buffer, buffer_len, format, ap);
+  vsnprintf(buffer, buffer_len, format, ap);
 #else
-  bytes_needed = vsprintf(buffer, format, ap);
+  vsprintf(buffer, format, ap);
 #endif
   va_end(ap);
 }

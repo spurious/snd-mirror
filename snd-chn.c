@@ -3251,9 +3251,12 @@ static int make_wavogram(chan_info *cp)
   graphics_context *ax;
   snd_fd *sf = NULL;
   wavogram_state *lw;
-  bool need_new_list = true, need_redraw = true;
+#if USE_MOTIF
+  bool need_redraw = true;
+#endif
 #if HAVE_GL || USE_MOTIF
   bool use_gl = false;
+  bool need_new_list = true;
 #endif
 
   sp = cp->sound;
@@ -3270,6 +3273,7 @@ static int make_wavogram(chan_info *cp)
   lw = cp->last_wavogram;
   if (lw)
     {
+#if HAVE_GL || USE_MOTIF
       need_new_list = (!((lw->hop == wavo_hop(ss)) &&
 			 (lw->trace == wavo_trace(ss)) &&
 			 (lw->losamp == ap->losamp) &&
@@ -3282,6 +3286,7 @@ static int make_wavogram(chan_info *cp)
 			 (lw->inverted == color_inverted(ss)) &&
 			 (lw->scale == color_scale(ss)) &&
 			 (lw->cutoff == color_cutoff(ss))));
+#endif
 #if HAVE_GL
       if (use_gl)
 	{
@@ -3289,12 +3294,14 @@ static int make_wavogram(chan_info *cp)
 	    need_new_list = true;
 	}
 #endif
+#if USE_MOTIF
       need_redraw = (!((lw->x_scale == spectro_x_scale(ss)) &&
 		       (lw->y_scale == spectro_y_scale(ss)) &&
 		       (lw->z_scale == spectro_z_scale(ss)) &&
 		       (lw->x_angle == spectro_x_angle(ss)) &&
 		       (lw->y_angle == spectro_y_angle(ss)) &&
 		       (lw->z_angle == spectro_z_angle(ss))));
+#endif
     }
 
 #if USE_MOTIF
@@ -3332,7 +3339,7 @@ static int make_wavogram(chan_info *cp)
     {
       mus_float_t **samps = NULL;
       int **js = NULL;
-      float x0, x1, y0, y1, x5inc, y5inc;
+      float x0, x1, y0, y1; /* x5inc, y5inc; */
       mus_float_t xinc, yinc;
       rgb_t *rs = NULL, *gs = NULL, *bs = NULL;
       /* each line is wavo_trace samps, there are (height / wave_hop) of these? */
@@ -3395,8 +3402,8 @@ static int make_wavogram(chan_info *cp)
 
       xinc = 2.0 / (mus_float_t)len;
       yinc = 2.0 / (mus_float_t)lines;
-      x5inc = 1.25 * xinc;
-      y5inc = 1.25 * yinc;
+      /* x5inc = 1.25 * xinc; */
+      /* y5inc = 1.25 * yinc; */
       
       rs = color_map_reds(color_map(ss));
       

@@ -12246,6 +12246,22 @@ time, so that the displayed results are
 	  (define (hi a) (+ a 1))))
 	(hi 1))
       1)
+(test (let ()
+	(cond-expand 
+	 ((or s7 guile)
+	  (define (hi a) a))
+	 (else 
+	  (define (hi a) (+ a 1))))
+	(hi 1))
+      1)
+(test (let ()
+	(cond-expand 
+	 ((and s7 dfls-exponents unlikely-feature)
+	  (define (hi a) a))
+	 (else 
+	  (define (hi a) (+ a 1))))
+	(hi 1))
+      2)
 
 
 
@@ -62026,7 +62042,6 @@ etc
 ;;; --------------------------------------------------------------------------------
 
 
-
 ;;; these can slow us down if included in their normal place
 
 ;(test (define 'quote 'quote) 'error)
@@ -62049,9 +62064,13 @@ etc
 (test (let ((=> 3) (cond 4)) (+ => cond)) 7)
 (test (case 1 ((1 2) (let ((case 3)) (+ case 1))) ((3 4) 0)) 4)
 (test (let ((lambda 4)) (+ lambda 1)) 5)
+
+(test (let () (define (hi a) (let ((pair? +)) (pair? a 1))) (hi 2)) 3)
 (test ((lambda (let) (let* ((letrec 1)) (+ letrec let))) 123) 124)
-(test ((lambda (let*) (let ((letrec 1)) (+ letrec let*))) 123) 124)
+;;; TODO: if anteprev moved here, it's confused about pair? args
+
 (test (let ((begin 3)) (+ begin 1)) 4)
+(test ((lambda (let*) (let ((letrec 1)) (+ letrec let*))) 123) 124)
 (test ((lambda (quote) (+ quote 1)) 2) 3)
 (test ((lambda (quote . args) (list quote args)) 1 2 3) '(1 (2 3)))
 (test (let ((do 1) (map 2) (for-each 3) (quote 4)) (+ do map for-each quote)) 10)
@@ -62071,6 +62090,7 @@ etc
 (test (let () (define-macro* (hi (cond 1)) `(+ 1 ,cond)) (hi)) 2)
 (test (let () (define (hi abs) (+ abs 1)) (hi 2)) 3)
 (test (let () (define (hi if) (+ if 1)) (hi 2)) 3)
+
 (test (let () (define* (hi (lambda 1)) (+ lambda 1)) (hi)) 2)
 (test (do ((i 0 0) '(+ 0 1)) ((= i 0) i)) 0) ; guile also! (do ((i 0 0) (quote list (+ 0 1))) ((= i 0) i))?
 (test (let () (define (cond a) a) (cond 1)) 1)
@@ -62081,7 +62101,6 @@ etc
 (test (let () (define (cond a) a) (procedure-arity cond)) '(1 0 #f))
 (test (let () (define-macro (hi a) `(let ((lambda +)) (lambda ,a 1))) (hi 2)) 3)
 (test ((let ((do or)) do) 1 2) 1)
-
 
 (test (let () (define (hi) (let ((oscil *)) (if (< 3 2) (+ 1 2) (oscil 4 2)))) (hi) (hi)) 8)
 (test (let () (define (hi) (let ((oscil *)) (if (< 3 2) (+ 1 2) (oscil 4 2)))) (hi) (hi) (hi) (hi)) 8)
