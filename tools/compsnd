@@ -518,6 +518,17 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
+echo ' ----                --with-optimization=0                                   ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DWITH_OPTIMIZATION=0"
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -noinit --features "'clm 'snd-debug 'snd-motif"
+make allclean
+
+echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-static-xm  editres                              ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm --with-editres --disable-deprecated
