@@ -3868,6 +3868,8 @@ static xen_value *lambda_form(ptree *prog, s7_pointer form, bool separate, xen_v
   char *err = NULL;
   int locals_loc;
 
+  /* fprintf(stderr, "lambda: %d, %s\n", prog->got_lambda, s7_object_to_c_string(s7, form)); */
+
   if (prog->got_lambda)
     {
       /* start a new ptree, walk body, return ptree as R_FUNCTION variable */
@@ -11997,8 +11999,13 @@ static xen_value *splice_in_function_body(ptree *prog, s7_pointer proc, xen_valu
   s7_pointer func_form;
   func_form = s7_car(s7_procedure_source(s7, proc));
   s7_unoptimize(s7, func_form);
-  /* fprintf(stderr,"splice in %s\n", s7_object_to_c_string(s7, func_form)); */
-
+#if 0
+  fprintf(stderr,"splice in %s\n", s7_object_to_c_string(s7, func_form));
+  fprintf(stderr, "list: %d, sym: %d, name: %s\n",
+	  s7_is_list(s7, func_form),
+	  s7_is_symbol(s7_car(func_form)),
+	  s7_symbol_name(s7_car(func_form)));
+#endif
   if ((s7_is_list(s7, func_form)) &&
       (s7_is_symbol(s7_car(func_form))) &&
       (strncmp("lambda", s7_symbol_name(s7_car(func_form)), 6) == 0)) /* might be lambda* */
@@ -17262,6 +17269,8 @@ to Scheme and is equivalent to (thunk)."
 
   XEN_ASSERT_TYPE(s7_is_procedure(proc_and_code) && (XEN_REQUIRED_ARGS_OK(proc_and_code, 0)), proc_and_code, 1, S_run, "a thunk");
   
+  /* fprintf(stderr, "start: %s\n", s7_object_to_c_string(s7, s7_car(proc_and_code))); */
+
   s7_unoptimize(s7, s7_car(proc_and_code));
 
   code = s7_cons(s7, s7_append(s7, s7_cons(s7, s7_make_symbol(s7, "lambda"), 
@@ -17363,7 +17372,7 @@ void mus_init_run(void)
   s7_define_function(s7, "run-eval",      g_run_eval_w,      1, 3, 0, H_run);
 
   s7_eval_c_string(s7, "(define-macro (run . code)        \n\
-                       (if (eq? (caar code) 'lambda)   \n\
+                       (if (and (symbol? (caar code)) (string=? (symbol->string (caar code)) \"lambda\"))   \n\
                           `(__run__ ,@code)            \n\
                           `(__run__ (lambda () ,@code))))");
 

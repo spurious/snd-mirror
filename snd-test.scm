@@ -49315,15 +49315,18 @@ EDITS: 1
     
     
     (let ((mx (run (lambda () (mixer .1 .2 .3 .4)))))
-      (if (fneq (mx 0 0) .1) (snd-display #__line__ ";mixer gen ref (.1): ~A" (mx 0 0)))
-      (if (not (equal? mx (make-mixer 2 .1 .2 .3 .4))) (snd-display #__line__ ";mixer...: ~A" mx))
-      (run (lambda () (set! (mx 0 0) .5)))
-      (if (fneq (mx 0 0) .5) (snd-display #__line__ ";mixer gen set (.5): ~A" (mx 0 0)))
-      (if (not (equal? mx (make-mixer 2 .5 .2 .3 .4))) (snd-display #__line__ ";mixer... (after set): ~A" mx))
-      (if (fneq (mx 1 0) .3) (snd-display #__line__ ";mixer gen ref (.3): ~A" (mx 1 0)))
-      (run (lambda () (set! (mx 0 1) .5)))
-      (if (fneq (mx 0 1) .5) (snd-display #__line__ ";mixer (0 1) gen set (.5): ~A" (mx 0 1)))
-      (if (not (equal? mx (make-mixer 2 .5 .5 .3 .4))) (snd-display #__line__ ";mixer... (after set 1): ~A" mx)))
+      (if (not (mixer? mx))
+	  (snd-display #__line__ ";(run (lambda () (mixer .1 .2 .3 .4))))) -> ~S~%" mx)
+	  (begin
+	    (if (fneq (mx 0 0) .1) (snd-display #__line__ ";mixer gen ref (.1): ~A" (mx 0 0)))
+	    (if (not (equal? mx (make-mixer 2 .1 .2 .3 .4))) (snd-display #__line__ ";mixer...: ~A" mx))
+	    (run (lambda () (set! (mx 0 0) .5)))
+	    (if (fneq (mx 0 0) .5) (snd-display #__line__ ";mixer gen set (.5): ~A" (mx 0 0)))
+	    (if (not (equal? mx (make-mixer 2 .5 .2 .3 .4))) (snd-display #__line__ ";mixer... (after set): ~A" mx))
+	    (if (fneq (mx 1 0) .3) (snd-display #__line__ ";mixer gen ref (.3): ~A" (mx 1 0)))
+	    (run (lambda () (set! (mx 0 1) .5)))
+	    (if (fneq (mx 0 1) .5) (snd-display #__line__ ";mixer (0 1) gen set (.5): ~A" (mx 0 1)))
+	    (if (not (equal? mx (make-mixer 2 .5 .5 .3 .4))) (snd-display #__line__ ";mixer... (after set 1): ~A" mx)))))
     
     (let ((mx (mixer .1)))
       (if (not (equal? mx (make-mixer 1 .1))) (snd-display #__line__ ";mixer .1: ~A" mx))
@@ -63407,22 +63410,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 
-27-June-11:
-173,538,820,662  PROGRAM TOTALS
-16,824,299,596  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
-15,926,827,832  ???:sin [/lib64/libm-2.12.so]
-14,759,516,840  s7.c:eval [/home/bil/snd-12/snd]
-11,581,396,354  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
-11,563,355,809  s7.c:eval'2 [/home/bil/snd-12/snd]
- 8,905,248,881  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
- 8,719,588,163  run.c:eval_ptree [/home/bil/snd-12/snd]
- 7,204,606,090  io.c:mus_write_1 [/home/bil/snd-12/snd]
+8-July-11:
+172,062,075,458  PROGRAM TOTALS
+16,468,701,204  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
+15,929,610,707  ???:sin [/lib64/libm-2.12.so]
+13,200,174,527  s7.c:eval [/home/bil/snd-12/snd]
+11,462,505,169  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
+10,328,943,413  s7.c:eval'2 [/home/bil/snd-12/snd]
+ 8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
+ 8,717,240,527  run.c:eval_ptree [/home/bil/snd-12/snd]
+ 7,207,852,142  io.c:mus_write_1 [/home/bil/snd-12/snd]
+ 3,041,537,672  clm.c:mus_src [/home/bil/snd-12/snd]
  2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-12/snd]
- 2,744,345,067  ???:cos [/lib64/libm-2.12.so]
- 2,702,434,139  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
- 2,687,919,775  s7.c:gc [/home/bil/snd-12/snd]
- 2,676,977,279  clm.c:mus_src [/home/bil/snd-12/snd]
- 2,015,899,999  s7.c:g_add [/home/bil/snd-12/snd]
+ 2,751,115,603  ???:cos [/lib64/libm-2.12.so]
+ 2,700,764,735  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
+ 2,501,689,981  s7.c:gc [/home/bil/snd-12/snd]
 
 |#
 
