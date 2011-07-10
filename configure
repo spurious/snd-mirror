@@ -4430,7 +4430,6 @@ _ACEOF
 fi
 
 # AC_CHECK_LIB(dl,main)
-# I don't think I need libdl in S7, and the other extension languages will call for it if needed
 
 # On IRIX 5.3, sys/types and inttypes.h are conflicting.
 for ac_header in sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
@@ -11105,7 +11104,7 @@ $as_echo "$as_me: WARNING: Snd needs either an extension language (s7, Fth, or R
   fi
 fi
 
-if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_snd_have_gui" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
+if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
   LDFLAGS="$LDFLAGS -ldl"
 fi
 

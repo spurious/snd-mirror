@@ -190,7 +190,6 @@ LIBS=""
 AC_CHECK_LIB(m,main)
 AC_CHECK_LIB(c,main)
 # AC_CHECK_LIB(dl,main)
-# I don't think I need libdl in S7, and the other extension languages will call for it if needed
 
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
 AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h stdint.h fam.h dirent.h)
@@ -2031,7 +2030,7 @@ if test "$ac_snd_have_extension_language" = no ; then
   fi
 fi
 
-if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_snd_have_gui" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
+if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
   LDFLAGS="$LDFLAGS -ldl"
 fi
 
