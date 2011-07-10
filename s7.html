@@ -2626,6 +2626,20 @@ At this point, I always use multiple s7 interpreters, rather than multiple s7 th
 I may remove the within-s7 thread support unless someone finds a real use for it.  
 </p>
 
+<p>from Snd's NEWS file for version 12.3:
+"Unless someone objects violently, I'm going to remove the multithreading
+support from s7.  It has turned out to be less useful than I hoped,
+mainly because s7 threads share the heap and therefore have to coordinate
+all cell allocations.  So it's faster, and simpler to use multiple
+pthreads each running a separate s7 interpreter, rather than one s7
+running multiple s7 threads.  In clm, the contention is for access to
+the output stream, so the gain in speed is not always something to
+brag about.  And begin_hook handles GUI-related problems without
+any threads.  Last but not least, the effort to make the non-threaded
+s7 faster has messed up parts of the threaded version.  Rather than
+waste a lot of time fixing this, I'd rather just flush the stuff."
+</p>
+
 </blockquote>
 </small>
 

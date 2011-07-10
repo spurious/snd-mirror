@@ -119,7 +119,7 @@
 (define (add-sliders dialog sliders)
   ;; sliders is a list of lists, each inner list being (title low initial high callback scale ['log])
   ;; returns list of widgets (for reset callbacks)
-  (let* ((mainform (gtk_vbox_new #f 2))
+  (let* ((mainform (gtk_box_new GTK_ORIENTATION_VERTICAL 2))
 	 (use-hbox (= (length sliders) 1))
 	 (table (if (not use-hbox) (gtk_table_new 2 (length sliders) #f)))
 	 (slider 0))
@@ -141,7 +141,7 @@
 	      (scaler (slider-data 5))
 	      (use-log (and (= (length slider-data) 7)
 			    (eq? (slider-data 6) 'log)))
-	      (hbox (and use-hbox (gtk_hbox_new #f 0)))
+	      (hbox (and use-hbox (gtk_box_new GTK_ORIENTATION_HORIZONTAL 0)))
 	      (label (gtk_label_new 
 		      (if use-hbox
 			  (if use-log 
@@ -153,7 +153,7 @@
 	      (adj (if use-log 
 		       (gtk_adjustment_new (scale-log->linear low initial high) 0 log-scale-ticks 1 10 1)
 		       (gtk_adjustment_new initial low high 0.0 0.0 0.0)))
-	      (scale (gtk_hscale_new (GTK_ADJUSTMENT adj))))
+	      (scale (gtk_scale_new GTK_ORIENTATION_HORIZONTAL (GTK_ADJUSTMENT adj))))
 	 (if use-hbox
 	     (begin
 	       (gtk_box_pack_start (GTK_BOX mainform) hbox #f #f 2)

@@ -369,10 +369,11 @@ enum {OP_NO_OP,
 #define OP_MAX_DEFINED (OP_MAX_DEFINED_1 + 20)
 
 
-/* on a 32-bit machine, define this to be an unsigned int to avoid compiler complaints
- */
-#define opcode_t unsigned long long int
-
+#if ((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4))
+  #define opcode_t unsigned int
+#else
+  #define opcode_t unsigned long long int
+#endif
 
 /* OP_SAFE_P|S|C|Q for any safe procedure that doesn't have its own op,
  * OP_UNSAFE_... 
@@ -3631,7 +3632,7 @@ s7_pointer s7_current_environment(s7_scheme *sc)
 static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_defined "(defined? obj (env (current-environment))) returns #t if obj has a binding (a value) in the environment env"
-  s7_pointer sym, x, e;
+  s7_pointer sym, x;
 
   sym = car(args);
   if (!s7_is_symbol(sym))
@@ -3639,6 +3640,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
   
   if (is_not_null(cdr(args)))
     {
+      s7_pointer e;
       if (!is_environment(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "defined?", 2, cadr(args), "an environment"));
       e = cadr(args);
@@ -3647,12 +3649,14 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 	  x = symbol_global_slot(sym);
 	  return(make_boolean(sc, (is_not_null(x)) && (x != sc->UNDEFINED)));
 	}
+      x = find_local_symbol(sc, e, sym); 
+      if ((is_not_null(x)) && (x != sc->UNDEFINED))
+	return(sc->T);
     }
   else 
     {
       if (is_global(sym))
 	return(sc->T);
-      e = sc->envir;
     }
   
   x = find_symbol(sc, sym); 
@@ -16672,7 +16676,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 	      break;
 	    }
 	}
-      hash_table_elements(table)[loc] = cons(sc, cons(sc, key, value), hash_table_elements(table)[loc]);
+      hash_table_elements(table)[loc] = cons_unchecked(sc, cons(sc, key, value), hash_table_elements(table)[loc]);
     }
   return(value);
 }
@@ -23523,9 +23527,9 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	    {
 	      if (*s == '\\')
 		{
-		  if ((s - start) >= sc->strbuf_size)
+		  if ((unsigned int)(s - start) >= sc->strbuf_size)
 		    resize_strbuf(sc);
-		  for (i = 0; i < (s - start); i++)
+		  for (i = 0; i < (unsigned int)(s - start); i++)
 		    sc->strbuf[i] = port_string(pt)[port_string_point(pt)++];
 		  break;
 		}
@@ -31801,23 +31805,33 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 #if WITH_OPTIMIZATION
-    case OP_NOT+OP_C:
-      sc->value = make_boolean(sc, car(sc->code) == sc->F);
-      goto START;
-    case OP_NOT+OP_Q:
-      sc->value = make_boolean(sc, cadr(car(sc->code)) == sc->F);
-      goto START;
-    case OP_NOT+OP_S:
-      sc->value = make_boolean(sc, ARG_SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_11) == sc->F);
-      goto START;
-    case OP_NOT+OP_P_1:
-      sc->value = make_boolean(sc, sc->value == sc->F);
-      goto START;
-    case OP_NOT+OP_P:
-      push_stack(sc, OP_NOT+OP_P_1, sc->args, sc->code);
-      sc->code = car(sc->code);
+
+#define is_F(Obj) ((Obj) == sc->F)
+
+#define BOOLEAN(Op, Expr)\
+    case Op+OP_C:\
+      sc->value = make_boolean(sc, Expr(car(sc->code)));\
+      goto START;\
+    case Op+OP_Q:\
+      sc->value = make_boolean(sc, Expr(cadr(car(sc->code))));\
+      goto START;\
+    case Op+OP_S:\
+      sc->value = make_boolean(sc, Expr(ARG_SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_11)));\
+      goto START;\
+    case Op+OP_P_1:\
+      sc->value = make_boolean(sc, Expr(sc->value));\
+      goto START;\
+    case Op+OP_P:\
+      push_stack(sc, Op+OP_P_1, sc->args, sc->code);\
+      sc->code = car(sc->code);\
       goto EVAL_PAIR;
 
+      BOOLEAN(OP_NOT, is_F);
+      BOOLEAN(OP_IS_PAIR, is_pair);
+      /* BOOLEAN_NOT(OP_NOT, NOT_IS_PAIR, !is_pair); -- or include this in boolean macro? (and assume the NOT_IS_* offset) */
+      /* another common case is (? (car ...)) */
+#if 0
+      /*
     case OP_IS_PAIR+OP_C:   
       sc->value = make_boolean(sc, is_pair(car(sc->code))); 
       goto START;
@@ -31834,6 +31848,41 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack(sc, OP_IS_PAIR+OP_P_1, sc->args, sc->code); 
       sc->code = car(sc->code);
       goto EVAL_PAIR;
+
+        BOOLEAN(OP_IS_LIST,         s7_is_list)
+	BOOLEAN(OP_IS_SYMBOL,       s7_is_symbol)
+	BOOLEAN(OP_IS_NULL,         is_null)
+	  BOOLEAN(OP_IS_BOOLEAN,      s7_is_boolean)
+	  BOOLEAN(OP_IS_CHAR,         s7_is_character)
+	  BOOLEAN(OP_IS_STRING,       s7_is_string)
+	  BOOLEAN(OP_IS_VECTOR,       s7_is_vector)
+	  BOOLEAN(OP_IS_HASH_TABLE,   s7_is_hash_table)
+	BOOLEAN(OP_IS_ENVIRONMENT,  type(~A) == T_ENVIRONMENT))
+	BOOLEAN(OP_IS_EOF_OBJECT,   ~A == sc->EOF_OBJECT))
+
+	     ;; 'OP_IS_CONSTANT 'OP_IS_DEFINED 'OP_IS_PROVIDED 'OP_IS_KEYWORD 'OP_IS_PROCEDURE_WITH_SETTER
+	     ;; 'OP_IS_INPUT_PORT 'OP_IS_OUTPUT_PORT 'OP_PORT_CLOSED 'OP_CHAR_READY
+
+	     (list 'OP_IS_PROCEDURE    "make_boolean(sc, is_procedure(~A))") ; questionable -- see g_is_procedure
+	     (list 'OP_IS_CONTINUATION "make_boolean(sc, type(~A) == T_CONTINUATION)")
+	     (list 'OP_IS_HOOK         "make_boolean(sc, type(~A) == T_HOOK)")
+
+	     (list 'OP_IS_NUMBER       "make_boolean(sc, type(~A) == T_NUMBER)")
+	     (list 'OP_IS_COMPLEX      "make_boolean(sc, type(~A) == T_NUMBER)")
+
+	     ;; don't repeat Obj! 
+              ((type(Obj) == T_NUMBER) && (number_type(Obj) == NUM_INT))
+	     ;; 'OP_IS_REAL 'OP_IS_RATIONAL 'OP_IS_INTEGER
+	     ;; 'OP_IS_INEXACT 'OP_IS_EXACT
+
+	      ((s7_is_real(Obj)) ? s7_is_negative(Obj) : s7_boolean(s7_wrong_type_arg_error(sc, "negative?", 0, Obj, "a real")))
+	     ;; 'OP_IS_NEGATIVE 'OP_IS_ZERO 'OP_IS_POSITIVE
+	     ;; 'OP_IS_EVEN 'OP_IS_ODD
+	     ;; 'OP_IS_NAN 'OP_IS_INFINITE
+
+             ;; c_function_call(f)(sc, (car(sc->T1_1) = Expr(...), sc->T1_1) ) for the general (safe?) case?
+      */
+#endif
 
       /* TODO: do we need to check is_syntactic for the inner pair?
        *       (let () (define (hi a) (let ((pair? +)) (not (pair? a 1)))) (hi 2)) -- this is ok currently
@@ -31854,7 +31903,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack(sc, OP_NOT+NOT_IS_PAIR+OP_P_1, sc->args, sc->code); 
       sc->code = cadr(car(sc->code));
       goto EVAL_PAIR;
-
       
     case OP_IS_EQ+(OP_C*5)+OP_C:
       sc->value = make_boolean(sc, car(sc->code) == cadr(sc->code));

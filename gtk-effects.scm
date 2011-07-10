@@ -99,8 +99,8 @@
   ;; add a set of 3 radio buttons at the bottom of the main section for choice between sound, selection, between-marks
   ;;   target-callback should take one arg, a symbol: 'sound, 'selection, 'marks, and apply the effect accordingly (upon "DoIt")
   ;;   truncate-callback (if any) takes one arg: boolean representing toggle state (#t = on)
-  (let (;(sep (gtk_hseparator_new))
-	(rc (gtk_hbox_new #f 0)))
+  (let (;(sep (gtk_separator_new GTK_ORIENTATION_HORIZONTAL))
+	(rc (gtk_box_new GTK_ORIENTATION_HORIZONTAL 0)))
     (gtk_box_pack_start (GTK_BOX mainform) rc #f #f 4)
     ;(gtk_box_pack_start (GTK_BOX rc) sep #t #t 4)
     ;(gtk_widget_show sep)
@@ -120,7 +120,7 @@
        (list #t #f #f)))
 
     (if truncate-callback
-	(let ((sep (gtk_hseparator_new))
+	(let ((sep (gtk_separator_new GTK_ORIENTATION_HORIZONTAL))
 	      (button (gtk_check_button_new_with_label "truncate at end")))
 	  (gtk_box_pack_start (GTK_BOX rc) sep #t #t 4)
 	  (gtk_widget_show sep)

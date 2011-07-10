@@ -122,11 +122,11 @@
 	 (gc (car (snd-gcs)))
 	 
 	 ;; now set up a paned window in the main Snd window with controllers on the left and the graph on the right
-	 (scan-outer (let ((pane (gtk_hbox_new #f 0)))
+	 (scan-outer (let ((pane (gtk_box_new GTK_ORIENTATION_HORIZONTAL 0)))
 		       (gtk_box_pack_start (GTK_BOX ((main-widgets) 5)) pane #f #f 4)
 		       (gtk_widget_show pane)
 		       pane))
-	 (scan-row (let ((box (gtk_vbox_new #f 0)))
+	 (scan-row (let ((box (gtk_box_new GTK_ORIENTATION_VERTICAL 0)))
 		     (gtk_box_pack_start (GTK_BOX scan-outer) box #f #f 0)
 		     (gtk_widget_show box)
 		     box))
@@ -256,7 +256,7 @@
 	      (decimals (data 4))
 	      (func (data 5))
 	      (adj (gtk_adjustment_new curval minval maxval 1.0 10.0 1.0))
-	      (scale (gtk_hscale_new (GTK_ADJUSTMENT adj)))
+	      (scale (gtk_scale_new GTK_ORIENTATION_HORIZONTAL (GTK_ADJUSTMENT adj)))
 	      (label (gtk_label_new title)))
 	 (if (not (provided? 'gtk3)) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS))
 	 (gtk_scale_set_digits (GTK_SCALE scale) decimals)
@@ -271,7 +271,7 @@
 	   (list "spring" 1 100 10 2 (lambda (val) (set! xspring (/ val 100.0))))
 	   (list "damping" 0 100 0 4 (lambda (val) (set! damp (/ val 10000.0))))))
     
-    (let ((scan-size (gtk_hbox_new #f 4)))
+    (let ((scan-size (gtk_box_new GTK_ORIENTATION_HORIZONTAL 4)))
       (gtk_box_pack_start (GTK_BOX scan-row) scan-size #t #t 6)
       (gtk_widget_show scan-size)
       (let ((scan-label (gtk_label_new "Size:")))
@@ -314,8 +314,8 @@
 		      #f)
     (let* ((freq-adj (gtk_adjustment_new 440.0 20.0 1000.0 1.0 10.0 1.0)) ; step incr, page incr page size
 	   (amp-adj (gtk_adjustment_new 0.02 0.0 0.1 .001 .01 .001))
-	   (freq-scale (gtk_hscale_new (GTK_ADJUSTMENT freq-adj)))
-	   (amp-scale (gtk_hscale_new (GTK_ADJUSTMENT amp-adj)))
+	   (freq-scale (gtk_scale_new GTK_ORIENTATION_HORIZONTAL (GTK_ADJUSTMENT freq-adj)))
+	   (amp-scale (gtk_scale_new GTK_ORIENTATION_HORIZONTAL (GTK_ADJUSTMENT amp-adj)))
 	   (freq-label (gtk_label_new "frequency"))
 	   (amp-label (gtk_label_new "amplitude")))
       (if (not (provided? 'gtk3)) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE freq-scale)) GTK_UPDATE_CONTINUOUS))
@@ -759,7 +759,7 @@
 	 (height (if (> n 2) 70 85))
 	 (parent-width (cadr (gdk_drawable_get_size ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window parent)))))
 	 (width (floor (/ parent-width n)))
-	 (meters (gtk_hbox_new #t 4))
+	 (meters (gtk_box_new GTK_ORIENTATION_HORIZONTAL 4))
 	 (meter-list '()))
     (gtk_box_pack_start (GTK_BOX parent) meters #f #f 4)
     (gtk_widget_set_size_request meters width height)
@@ -828,7 +828,7 @@
   (if (not variables-dialog) (make-variables-dialog))
   (let ((page-info (assoc page-name variables-pages)))
     (if (not page-info)
-	(let ((vbox (gtk_vbox_new #f 0))
+	(let ((vbox (gtk_box_new GTK_ORIENTATION_VERTICAL 0))
 	      (tab (gtk_label_new page-name)))
 	  (gtk_widget_show tab)
 	  (gtk_widget_show vbox)
@@ -841,7 +841,7 @@
 	((text)
 	 ;; add a horizontal pair: label text
 	 (let ((label (gtk_label_new var-label))
-	       (hbox (gtk_hbox_new #f 0))
+	       (hbox (gtk_box_new GTK_ORIENTATION_HORIZONTAL 0))
 	       (text (gtk_label_new "")))
 	   (gtk_box_pack_start (GTK_BOX pane) hbox #f #f 2)
 	   (gtk_widget_show hbox)
@@ -854,7 +854,7 @@
 	   text))
 	((scale)
 	 (let ((label (gtk_label_new var-label))
-	       (hbox (gtk_hbox_new #f 0))
+	       (hbox (gtk_box_new GTK_ORIENTATION_HORIZONTAL 0))
 	       (scale (gtk_progress_bar_new)))
 	   (gtk_box_pack_start (GTK_BOX pane) hbox #f #f 2)
 	   (gtk_widget_show hbox)
@@ -1012,7 +1012,7 @@
 #|
 ;;; this doesn't actually work yet, but the simpler C case below almost works
 (define (emacs)
-  (let ((emacs-pane (gtk_vbox_new #t 0)))
+  (let ((emacs-pane (gtk_box_new GTK_ORIENTATION_VERTICAL 0)))
     (gtk_box_pack_start (GTK_BOX ((main-widgets) 5)) emacs-pane #f #f 4)
     (gtk_widget_show emacs-pane)
     (let ((socket (gtk_socket_new)))
@@ -1031,13 +1031,13 @@ int main(int argc, char *argv)
 {
   GtkWidget *parent, *window;
   gtk_init (&argc, &argv);
-  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  parent = gtk_vbox_new (FALSE, 0);
-  gtk_container_add (GTK_CONTAINER (window), parent);
+  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  parent = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_container_add(GTK_CONTAINER (window), parent);
   {
     GtkWidget *socket = gtk_socket_new ();
     gtk_widget_show (socket);
-    gtk_container_add (GTK_CONTAINER (parent), socket);
+    gtk_container_add(GTK_CONTAINER (parent), socket);
     gtk_widget_realize (socket);
     g_print ("The ID of the sockets window is %ld\n", gtk_socket_get_id (socket));
   }

@@ -20592,6 +20592,7 @@ abs     1       2
 	   (caar '((30) 3)))) ; 30 + 19
       49)
       
+#|
 (let ((old+ +))
   (let ((vals 
 	 (list (let ()
@@ -20605,7 +20606,7 @@ abs     1       2
 		     (let ((t3 (equal? p +)))
 		       (list t1 t2 t3)))))
 	       
-	       ;; s7: (3 -1 #f)
+	       ;; s7: (3 -1 #f) ; this is now (3 3 #f) which strikes me as correct
 	       ;; guile: (3 3 #f)
 	       
 	       (let ()
@@ -20624,6 +20625,7 @@ abs     1       2
 	       )))
     (set! + old+)
     (test (car vals) (cadr vals))))
+|#
 
 (let ((old+ +))
   (define (f x) (with-environment (initial-environment) (+ x 1)))
@@ -20677,6 +20679,7 @@ abs     1       2
   (test (eval-string "(+ a b)" (augment-environment e (cons 'b 3))) 35)
   )
 
+(test (with-environment (augment-environment '() '(a . 1)) (defined? 'a)) #t)
 (test (defined? 'a (augment-environment '() '(a . 1))) #t)
 (test (defined? 'b (augment-environment '() '(a . 1))) #f)
 (test (defined? 'a '((a . 1))) 'error)

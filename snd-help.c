@@ -3866,21 +3866,26 @@ static const char **refs = NULL, **urls = NULL;
 static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 {
   #define H_help_dialog "(" S_help_dialog " subject message xrefs urls): start the Help window with subject and message"
-  widget_t w;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_LIST_P(xrefs) || XEN_NOT_BOUND_P(xrefs), xrefs, XEN_ARG_3, S_help_dialog, "a list of related references");
   XEN_ASSERT_TYPE(XEN_LIST_P(xurls) || XEN_NOT_BOUND_P(xurls), xurls, XEN_ARG_4, S_help_dialog, "a list of urls");
+
   if (refs) {free(refs); refs = NULL;}
   if (urls) {free(urls); urls = NULL;}
+
   if (XEN_LIST_P(xrefs))
     {
       int i, len;
+
       len = XEN_LIST_LENGTH(xrefs);
       refs = (const char **)calloc(len + 1, sizeof(char *));
+
       for (i = 0; i < len; i++)
 	if (XEN_STRING_P(XEN_LIST_REF(xrefs, i)))
 	  refs[i] = XEN_TO_C_STRING(XEN_LIST_REF(xrefs, i));
+
       if (XEN_LIST_P(xurls))
 	{
 	  int ulen;
@@ -3891,16 +3896,15 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 	    if (XEN_STRING_P(XEN_LIST_REF(xurls, i)))
 	      urls[i] = XEN_TO_C_STRING(XEN_LIST_REF(xurls, i));
 	}
-      w = snd_help_with_xrefs(XEN_TO_C_STRING(subject),
-			      XEN_TO_C_STRING(msg), 
-			      WITH_WORD_WRAP,
-			      refs,
-			      urls);
+      return(XEN_WRAP_WIDGET(snd_help_with_xrefs(XEN_TO_C_STRING(subject),
+						 XEN_TO_C_STRING(msg), 
+						 WITH_WORD_WRAP,
+						 refs,
+						 urls)));
     }
-  else w = snd_help(XEN_TO_C_STRING(subject), 
-		    XEN_TO_C_STRING(msg), 
-		    WITH_WORD_WRAP);
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(snd_help(XEN_TO_C_STRING(subject), 
+				  XEN_TO_C_STRING(msg), 
+				  WITH_WORD_WRAP)));
 }
 
 

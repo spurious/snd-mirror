@@ -492,7 +492,7 @@ Reverb-feedback sets the scaler on the feedback.
 			  (initial (list-ref lst 3))
 			  (func (list-ref lst 4))
 			  (adj (gtk_adjustment_new initial low high .001 .001 .1))
-			  (slider (gtk_hscale_new (GTK_ADJUSTMENT adj)))
+			  (slider (gtk_scale_new GTK_ORIENTATION_HORIZONTAL (GTK_ADJUSTMENT adj)))
 			  (label (gtk_label_new title)))
 		     (if (not (provided? 'gtk3)) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE slider)) GTK_UPDATE_CONTINUOUS))
 		     (gtk_scale_set_digits (GTK_SCALE slider) 3)

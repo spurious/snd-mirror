@@ -773,12 +773,18 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
   mus_long_t frames;
   snd_info *sp;
   file_info *chdr, *hdr;
+#if (!USE_NO_GUI)
   bool ymax_set;
+#endif
 
   sp = cp->sound;
   hdr = sp->hdr;
   frames = hdr->samples / hdr->chans;
+#if (!USE_NO_GUI)
   ymax_set = add_channel_data_1(cp, hdr->srate, frames, graphed);
+#else
+  add_channel_data_1(cp, hdr->srate, frames, graphed);
+#endif
 
   chdr = copy_header(filename, hdr); /* need one separate from snd_info case */
   chn = cp->chan;

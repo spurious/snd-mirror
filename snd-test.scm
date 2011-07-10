@@ -49327,6 +49327,15 @@ EDITS: 1
 	    (run (lambda () (set! (mx 0 1) .5)))
 	    (if (fneq (mx 0 1) .5) (snd-display #__line__ ";mixer (0 1) gen set (.5): ~A" (mx 0 1)))
 	    (if (not (equal? mx (make-mixer 2 .5 .5 .3 .4))) (snd-display #__line__ ";mixer... (after set 1): ~A" mx)))))
+
+    (let ()
+      (define (mxtest) (run (lambda () (mixer .1 .2 .3 .4))))
+      (if (not (mixer? (mxtest)))
+	  (snd-display #__line__ ";mxtest 1 -> ~S~%" mx))
+      (if (not (mixer? (mxtest)))
+	  (snd-display #__line__ ";mxtest 2 -> ~S~%" mx))
+      (if (not (mixer? (mxtest)))
+	  (snd-display #__line__ ";mxtest 3 -> ~S~%" mx)))
     
     (let ((mx (mixer .1)))
       (if (not (equal? mx (make-mixer 1 .1))) (snd-display #__line__ ";mixer .1: ~A" mx))

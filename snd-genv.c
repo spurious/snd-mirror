@@ -232,8 +232,15 @@ static void env_redisplay_1(printing_t printing)
 {
   if (enved_dialog_is_active())
     {
-      if (printing == NOT_PRINTING)
-	ss->cr = MAKE_CAIRO(WIDGET_TO_WINDOW(drawer));	      
+      bool clear_cr = false;
+      if ((printing == NOT_PRINTING) && 
+	  (!(ss->cr)))
+	{
+	  /* we can get here from display_channel_data_with_size with an existing ss->cr */
+	  ss->cr = MAKE_CAIRO(WIDGET_TO_WINDOW(drawer));
+	  clear_cr = true;
+	}
+      if (!(ss->cr)) return;
       
       cairo_push_group(ss->cr);
       cairo_set_source_rgba(ss->cr, gc->bg_color->red, gc->bg_color->green, gc->bg_color->blue, gc->bg_color->alpha);
@@ -272,7 +279,8 @@ static void env_redisplay_1(printing_t printing)
 
       cairo_pop_group_to_source(ss->cr);
       cairo_paint(ss->cr);
-      if (printing == NOT_PRINTING)
+      if ((printing == NOT_PRINTING) &&
+	  (clear_cr))
 	{
 	  FREE_CAIRO(ss->cr);
 	  ss->cr = NULL;
