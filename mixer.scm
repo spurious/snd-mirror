@@ -115,6 +115,8 @@
 (define* (invert-matrix matrix b (zero 1.0e-7))
   "(invert-matrix matrix b (zero 1.0e-7)) inverts 'matrix'"
   ;; translated from Numerical Recipes (gaussj)
+
+  ;(format #t "~%~%invert-matrix n: ~D, ~S, b: ~A, ~S~%" (length matrix) matrix (and b (length b)) b)
   (call-with-exit
    (lambda (return)
      (let* ((n (length matrix))
@@ -128,6 +130,7 @@
 	       (row 0))
 	   (do ((j 0 (+ 1 j)))
 	       ((= j n))
+	     ;(format #t "j: ~A, n: ~A~%" j n)
 	     (if (not (= (pivots j) 1))
 		 (begin
 		   (do ((k 0 (+ 1 k)))
@@ -138,11 +141,13 @@
 			       (begin
 				 (set! col k)
 				 (set! row j)
+				 ;(format #t "k: ~A, row: ~D, col: ~A~%" k row col)
 				 (set! biggest val))))
 			 (if (> (pivots k) 1)
 			     (return #f)))))))
 	   (if (< biggest zero) (return #f)) ; this can be fooled (floats...): (invert-matrix (make-mixer 3 1 2 3 3 2 1 4 5 6))
 	   (set! (pivots col) (+ (pivots col) 1))
+	   ;(format #t "i: ~D, row: ~D, col: ~A~%" i row col)
 	   (if (not (= row col))
 	       (let ((temp (if b (b row) 0.0)))
 		 (if b

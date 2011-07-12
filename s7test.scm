@@ -11527,6 +11527,17 @@ time, so that the displayed results are
   (set! sum (+ sum i_0 i_1 i_2 i_3 i_4 i_5 i_6 i_7 i_8 i_9 i_10 i_11 i_12 i_13 i_14 i_15 i_16 i_17 i_18 i_19 i_20 i_21 i_22 i_23 i_24 i_25 i_26 i_27 i_28 i_29 i_30 i_31 i_32 i_33 i_34 i_35 i_36 i_37 i_38 i_39))))
       35100)
 
+(let () (define (jtest) (let ((j 0)) (do ((i 0 (+ i 1))) ((= i 10) j) (if (= i 3) (set! j i))))) (test (jtest) 3))
+(let () (define (jtest1) (let ((j (vector 0))) (do ((i 0 (+ i 1))) ((= i 10) (j 0)) (if (= i 3) (set! (j 0) i))))) (test (jtest1) 3))
+(let () (define (jtest2) (let ((j (vector 0))) (do ((i 0 (+ i 1))) ((= i 10) (j 0)) (if (= i 3) (vector-set! j 0 i))))) (test (jtest2) 3))
+(let () (define (jtest3) (let ((j (vector 0))) (do ((i 0 (+ i 1))) ((= i 10) (j 0)) (if (= i 3) (set! (vector-ref j 0) i))))) (test (jtest3) 3))
+(let () (define (jtest4) (let ((j (list 0))) (do ((i 0 (+ i 1))) ((= i 10) (j 0)) (if (= i 3) (set! (j 0) i))))) (test (jtest4) 3))
+(let () (define (jtest5) (let ((j (list 0))) (do ((i 0 (+ i 1))) ((= i 10) (j 0)) (if (= i 3) (set! (car j) i))))) (test (jtest5) 3))
+(let () (define (jtest6) (let ((j (list 0))) (do ((i 0 (+ i 1))) ((= i 10) (j 0)) (if (= i 3) (set-car! j i))))) (test (jtest6) 3))
+(let () (define (jtest7) (let ((j (list 0))) (do ((i 0 (+ i 1))) ((= i 10) (j 0)) (if (= i 3) (list-set! j 0 i))))) (test (jtest7) 3))
+(let () (define (jtest8) (let ((j #f)) (do ((i 0 (+ i 1))) ((= i 10) (car j)) (if (= i 3) (set! j (list i)))))) (test (jtest8) 3))
+(let () (define (jtest9) (let ((j #f)) (do ((i 0 (+ i 1))) ((= i 10) (j 0)) (if (= i 3) (set! j (vector i)))))) (test (jtest9) 3))
+
 (test (call-with-exit (lambda (return) (do () () (if #t (return 123))))) 123)
 (test (call-with-exit (lambda (return) (do () (#f) (if #t (return 123))))) 123)
 (test (call-with-exit (lambda (return) (do ((i 0 (+ i 1))) () (if (= i 100) (return 123))))) 123)

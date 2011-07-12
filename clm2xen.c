@@ -8698,7 +8698,7 @@ static void mus_xen_init(void)
 #if HAVE_RUBY
   XEN_DEFINE_PROCEDURE(S_frame_ref,      g_frame_ref_w,  2, 0, 0, H_frame_ref);
 #endif
-  XEN_DEFINE_SAFE_PROCEDURE(S_frame_set,      g_frame_set_w,  3, 0, 0, H_frame_set);
+  XEN_DEFINE_PROCEDURE(S_frame_set,      g_frame_set_w,  3, 0, 0, H_frame_set);
 
 
   XEN_DEFINE_PROCEDURE(S_make_mixer,        g_make_mixer_w,           0, 0, 1, H_make_mixer);
