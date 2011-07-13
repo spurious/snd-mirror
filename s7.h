@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.89"
-#define S7_DATE "5-June-11"
+#define S7_VERSION "1.90"
+#define S7_DATE "14-July-11"
 
 
 typedef long long int s7_Int;
@@ -83,7 +83,7 @@ typedef double s7_Double;
    *    The functions map, for-each, length, reverse, copy, and fill! are generic.
    *
    * I think s7 has built-in support for srfi-0 (cond-expand), srfi-6 (basic string ports), srfi-8 (receive), srfi-17 (generalized-set!), 
-   *   srfi-18 (multithreading), srfi-28 (format, also nearly all of srfi-48), srfi-30 (block comments),
+   *   srfi-28 (format, also nearly all of srfi-48), srfi-30 (block comments),
    *   srfi-88 (keywords), and srfi-89 (define*).  It also supports the functionality of many others
    *   but under a slightly different syntax: srfi-69 (hash-tables), srfi-16 (define*), srfi-25 (multidimensional
    *   arrays).  srfi-98 would be trivial to add, and exists in snd as getenv.
@@ -114,7 +114,7 @@ typedef struct s7_cell *s7_pointer;
 
 s7_scheme *s7_init(void);
 
-  /* s7_scheme is our interpreter (or each thread's interpreter),
+  /* s7_scheme is our interpreter
    * s7_pointer is a Scheme object of any (Scheme) type
    *
    * s7_init creates the interpreter.
@@ -131,8 +131,8 @@ s7_pointer s7_unspecified(s7_scheme *sc);                            /* #<unspec
 bool s7_is_unspecified(s7_scheme *sc, s7_pointer val);               /*     returns true if val is #<unspecified> */
 s7_pointer s7_eof_object(s7_scheme *sc);                             /* #<eof> */
 
-  /* these are the Scheme constants; they do not change in value during a run, and
-   *   are the same across all threads, so they can be safely assigned to C global variables if desired. 
+  /* these are the Scheme constants; they do not change in value during a run,
+   *   so they can be safely assigned to C global variables if desired. 
    */
 
 bool s7_is_valid_pointer(s7_pointer arg);                            /* does 'arg' look like an s7 object? */
@@ -695,60 +695,6 @@ void s7_mark_object(s7_pointer p);
    */
 
 
-#if HAVE_PTHREADS
-  bool s7_is_thread(s7_pointer obj);
-  pthread_t *s7_thread(s7_pointer obj);
-  s7_pointer s7_make_thread(s7_scheme *sc, void *(*func)(void *obj), void *data, bool local);
-  s7_scheme *s7_thread_s7(s7_pointer obj);
-  void *s7_thread_data(s7_pointer obj);
-  bool s7_is_lock(s7_pointer obj);
-  s7_pointer s7_make_lock(s7_scheme *sc);
-  pthread_mutex_t *s7_lock(s7_pointer obj);
-  bool s7_is_thread_variable(s7_pointer obj);
-  s7_pointer s7_thread_variable(s7_scheme *sc, s7_pointer obj);
-
-/* Threads in s7 share the heap and symbol table, but have their own local environment, stack,
- *   and evaluator locals.  The thread_variable functions above refer to thread-local variables
- *   known as "keys" in pthreads.  The "lock" functions refer to mutexes.
- *
- *   s7_make_thread returns a new s7 evaluator (a clone of the main one), running in its own
- *     thread (see s7_thread).  The function running in that thread is 'func',
- *     its user-specified data is 'data' (see s7_thread_data), and 'local' determines whether
- *     the thread's Scheme interpreter is sequestered in its own local environment.  If 'local'
- *     is true, a top-level 'define' in the Scheme code affects only the current thread.
- *
- *   s7_is_thread returns true if its argument is an s7 thread (from s7_make_thread).
- *   s7_thread returns the pthread_t* value that the s7 thread is running in.
- *   s7_thread_data returns the void* pointer that s7_make_thread received as its 'data' argument.
- *   s7_thread_s7 returns the s7 interpreter running in the given s7 thread object.
- *
- *   s7_make_lock returns a new lock (a mutex).
- *   s7_is_lock return true if its argument is an s7 lock.
- *   s7_lock returns the pthread_mutex_t* value held by the s7 lock.
- *
- *   s7_is_thread_variable returns true if its argument is an s7 thread-variable.
- *   s7_thread_variable_value returns the current thread's value for that key (a Scheme object). 
- *   
- *  In Scheme,
- *
- *   (thread? obj)             returns #t if 'obj' is a thread object
- *   (make-thread thunk)       creates a thread that will evaluate 'thunk' (a function with no args)
- *   (join-thread thread)      causes the current thread to wait for 'thread' to finish
- *
- *   (lock? obj)               returns #t if 'obj' is a lock (a mutex in pthread jargon)
- *   (make-lock)               creates a new lock and initializes it (pthread_mutex_init)
- *   (grab-lock lock)          pthread_mutex_lock 
- *   (release-lock lock)       pthread_mutex_unlock
- *
- *   (thread-variable? obj)    returns #t if 'obj' is a key
- *   (make-thread-variable)    returns a new key (pthread_key_create)
- *     thereafter (obj) returns the current thread's value for that key (pthread_getspecific), and
- *                (set! (obj) value) sets its value (pthread_setspecific)
- *
- * see with-threaded-sound in ws.scm or sndlib-ws.scm for an example.
- */
-#endif
-
 #if WITH_GMP
   #include <gmp.h>
   #include <mpfr.h>
@@ -819,6 +765,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 14-Jul:    removed thread and profiling support.
  * 5-June:    s7_define_safe_function and s7_unoptimize exported; added unoptimize function in scheme.
  * 30-May:    environment->list and s7_environment_to_list since environments are no longer alists internally.
  * 26-May:    added s7_scheme argument to s7_procedure_setter and getter (old names had "with_setter_").

@@ -22,10 +22,6 @@
   #endif
 #endif
 
-#if HAVE_PTHREAD_H
-  #include <pthread.h>
-#endif
-
 
 #include "_sndlib.h"
 #include "clm.h"
@@ -9140,9 +9136,6 @@ typedef struct {
 static mus_float_t **sinc_tables = NULL;
 static int *sinc_widths = NULL;
 static int sincs = 0;
-#if HAVE_PTHREADS
-  static mus_lock_t sinc_lock = MUS_LOCK_INITIALIZER;
-#endif
 
 void mus_clear_sinc_tables(void)
 {
@@ -9169,8 +9162,6 @@ static mus_float_t *init_sinc_table(int width)
   for (i = 0; i < sincs; i++)
     if (sinc_widths[i] == width)
       return(sinc_tables[i]);
-
-  MUS_LOCK(&sinc_lock);
 
   if (sincs == 0)
     {
@@ -9211,8 +9202,6 @@ static mus_float_t *init_sinc_table(int width)
   sinc_tables[loc][0] = 1.0;
   for (i = 1, sinc_phase = sinc_freq, win_phase = win_freq; i < padded_size; i++, sinc_phase += sinc_freq, win_phase += win_freq)
     sinc_tables[loc][i] = sin(sinc_phase) * (0.5 + 0.5 * cos(win_phase)) / sinc_phase;
-
-  MUS_UNLOCK(&sinc_lock);
 
   return(sinc_tables[loc]);
 }
@@ -9903,15 +9892,9 @@ static fftw_complex *c_in_data = NULL, *c_out_data = NULL;
 static fftw_plan c_r_plan, c_i_plan;  
 static int last_c_fft_size = 0;   
 
-#if HAVE_PTHREADS
-  static mus_lock_t c_fft_lock = MUS_LOCK_INITIALIZER;
-#endif
-
 static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
 {
   int i;
-
-  MUS_LOCK(&c_fft_lock);
 
   if (n != last_c_fft_size)
     {
@@ -9940,8 +9923,6 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
       rl[i] = creal(c_out_data[i]);
       im[i] = cimag(c_out_data[i]);
     }
-
-  MUS_UNLOCK(&c_fft_lock);
 }
 
 

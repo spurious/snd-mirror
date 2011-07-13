@@ -29,7 +29,7 @@
 (define *clm-default-frequency* 0.0)
 (define *clm-safety*            0)           ; obsolete
 (define *clm-delete-reverb*     #f)          ; should with-sound clean up reverb stream
-(define *clm-threads*           4)
+(define *clm-threads*           4)           ; obsolete, unused
 (define *clm-output-safety*     0)           ; if 1, assume output buffers will not need to be flushed except at the very end
 
 (define *to-snd*                #t)
@@ -99,8 +99,6 @@
 			    (notehook *clm-notehook*)               ; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
 			    (scaled-by #f)
 			    (ignore-output #f)
-			    (thread-output #f)
-			    (thread-reverb #f)
 			    (output-safety *clm-output-safety*))
   "with-sound-helper is the business portion of the with-sound macro"
   (let ((old-srate (mus-srate))
@@ -139,65 +137,47 @@
        (set! (mus-srate) srate))
 
      (lambda ()
-       (if (not thread-output)
+       (if output-to-file
 	   (begin
-	     
-	     (if output-to-file
+	     (if continue-old-file
 		 (begin
-		   (if continue-old-file
-		       (begin
-			 (set! *output* (continue-sample->file output-1))
-			 (set! (mus-srate) (mus-sound-srate output-1)) ; "srate" arg shadows the generic func
-			 (let ((ind (find-sound output-1)))
-			   (if (sound? ind)
-			       (close-sound ind))))
-		       (begin
-			 (if (file-exists? output-1) 
-			     (delete-file output-1))
-			 (set! *output* (make-sample->file output-1 channels data-format header-type comment))))
-		   (if *output*
-		       (set! (mus-safety *output*) output-safety)))
+		   (set! *output* (continue-sample->file output-1))
+		   (set! (mus-srate) (mus-sound-srate output-1)) ; "srate" arg shadows the generic func
+		   (let ((ind (find-sound output-1)))
+		     (if (sound? ind)
+			 (close-sound ind))))
 		 (begin
-		   (if (not continue-old-file)
-		       (if (or (vct? output-1)
-			       (sound-data? output-1)
-			       (vector? output-1))
-			   (fill! output-1 0.0)))
-		   (set! *output* output-1)))
-
-	     (if reverb
-		 (if reverb-to-file
-		     (begin
-		       (if continue-old-file
-			   (set! *reverb* (continue-sample->file reverb-1))
-			   (begin
-			     (if (file-exists? reverb-1) 
-				 (delete-file reverb-1))
-			     (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type))))
-		       (if *reverb*
-			   (set! (mus-safety *reverb*) output-safety)))
-		     (begin
-		       (if (not continue-old-file)
-			   (if (or (vct? reverb-1)
-				   (sound-data? reverb-1)
-				   (vector? reverb-1))
-			       (fill! reverb-1 0.0)))
-		       (set! *reverb* reverb-1)))))
-
-	   ;; else thread-output
+		   (if (file-exists? output-1) 
+		       (delete-file output-1))
+		   (set! *output* (make-sample->file output-1 channels data-format header-type comment))))
+	     (if *output*
+		 (set! (mus-safety *output*) output-safety)))
 	   (begin
-	     (if (file-exists? output-1) 
-		 (delete-file output-1))
-	     (set! (thread-output) (make-sample->file output-1 channels data-format header-type comment))
-	     (set! (mus-safety (thread-output)) output-safety)
-	     (if thread-reverb
-		 (begin
-		   (if (file-exists? reverb-1) 
-		       (delete-file reverb-1))
-		   (set! (thread-reverb) (make-sample->file reverb-1 reverb-channels data-format header-type))
-		   (set! (mus-safety (thread-reverb)) output-safety)))
-	     (set! statistics #f)
-	     ))
+	     (if (not continue-old-file)
+		 (if (or (vct? output-1)
+			 (sound-data? output-1)
+			 (vector? output-1))
+		     (fill! output-1 0.0)))
+	     (set! *output* output-1)))
+       
+       (if reverb
+	   (if reverb-to-file
+	       (begin
+		 (if continue-old-file
+		     (set! *reverb* (continue-sample->file reverb-1))
+		     (begin
+		       (if (file-exists? reverb-1) 
+			   (delete-file reverb-1))
+		       (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type))))
+		 (if *reverb*
+		     (set! (mus-safety *reverb*) output-safety)))
+	       (begin
+		 (if (not continue-old-file)
+		     (if (or (vct? reverb-1)
+			     (sound-data? reverb-1)
+			     (vector? reverb-1))
+			 (fill! reverb-1 0.0)))
+		 (set! *reverb* reverb-1))))
 
        (let ((start (if statistics (get-internal-real-time)))
 	     (flush-reverb #f)
@@ -227,30 +207,24 @@
 	 (if (and reverb 
 		  (not flush-reverb)) ; i.e. not interrupted by error and trying to jump out
 	     (begin
-	       (if thread-reverb
-		   (if (not (= (mus-safety (thread-output)) 1)) (mus-close (thread-reverb)))
-		   (if reverb-to-file
-		       (mus-close *reverb*)))
+	       (if reverb-to-file
+		   (mus-close *reverb*))
 	       (if statistics 
 		   (if (or reverb-to-file
 			   (vct? reverb-1)
 			   (sound-data? reverb-1)
 			   (vector? reverb-1))
 		       (set! revmax (maxamp reverb-1))))
-	       (if (not thread-reverb)
-		   (begin
-		     (if reverb-to-file
-			 (set! *reverb* (make-file->sample reverb-1)))
-		     (apply reverb reverb-data)                                   ; here is the reverb call(!)
-		     (if reverb-to-file
-			 (mus-close *reverb*))
-		     (if (and reverb-to-file *clm-delete-reverb*)
-			 (delete-file reverb-1))))))
+	       (if reverb-to-file
+		   (set! *reverb* (make-file->sample reverb-1)))
+	       (apply reverb reverb-data)                                   ; here is the reverb call(!)
+	       (if reverb-to-file
+		   (mus-close *reverb*))
+	       (if (and reverb-to-file *clm-delete-reverb*)
+		   (delete-file reverb-1))))
 
-	 (if thread-output
-	     (if (not (= (mus-safety (thread-output)) 1)) (mus-close (thread-output)))
-	     (if output-to-file
-		 (mus-close *output*)))
+	 (if output-to-file
+	     (mus-close *output*))
 
 	 (let ((snd-output #f)
 	       (cur-sync #f))
@@ -359,16 +333,12 @@
        (set! (auto-update-interval) old-auto-update-interval)
        (if *reverb*
 	   (begin
-	     (if thread-reverb
-		 (if (not (= (mus-safety (thread-reverb)) 1)) (mus-close (thread-reverb)))
-		 (mus-close *reverb*))
+	     (mus-close *reverb*)
 	     (set! *reverb* old-*reverb*)))
        (if *output*
 	   (begin
-	     (if thread-output
-		 (if (not (= (mus-safety (thread-output)) 1)) (mus-close (thread-output)))
-		 (if (mus-output? *output*)
-		     (mus-close *output*)))
+	     (if (mus-output? *output*)
+		 (mus-close *output*))
 	     (set! *output* old-*output*)))
        (set! (mus-srate) old-srate)))))
 
@@ -387,105 +357,6 @@
        (if (> mx 1.0)
 	 (set! (y-bounds *snd-opened-sound*) (list (- mx) mx))))
      snd))
-
-
-;;; -------- with-threaded-sound --------
-
-(defmacro with-threaded-sound (args . body)
-  (if (and (provided? 'snd-threads)
-	   (not (= (optimization) 0)))
-      (let ((split 
-	     (lambda (l n k)
-	       (define (split-1 s l n i)
-		 (if (null? l)
-		     (reverse s)
-		     (if (= i n)
-			 (split-1 (cons (car l) s) (cdr l) n 1)
-			 (split-1 s (cdr l) n (+ i 1)))))
-	       (split-1 '() l n (- n k))))
-
-	    (remove-output-and-reverb-args
-	     (lambda (lst)
-	       (let ((badarg #f)
-		     (new-args '()))
-		 (for-each 
-		  (lambda (arg)
-		    (if badarg
-			(set! badarg #f)
-			(if (not (member arg (list :output :reverb :revfile :reverb-data :reverb-channels)))
-			    (set! new-args (cons arg new-args))
-			    (set! badarg #t))))
-		  lst)
-		 (reverse new-args)))))
-
-	(let ((lists '()))
-	  (do ((i 0 (+ 1 i)))
-	      ((= i *clm-threads*))
-	    (set! lists (cons (split body *clm-threads* i) lists)))
-
-	  (let ((new-args (remove-output-and-reverb-args args)))
-
-	    `(with-sound-helper 
-	      (lambda ()
-		(let ((threads '())
-		      (thread-output (make-thread-variable))
-		      (thread-reverb (and *reverb* (make-thread-variable)))
-		      (mix-lock (make-lock))
-		      (main-output *output*)
-		      (main-reverb *reverb*))
-
-		  (set! *output* thread-output)
-		  (if thread-reverb (set! *reverb* thread-reverb))
-		  
-		  ,@(map
-		     (lambda (expr)
-		       `(set! threads (cons (make-thread 
-					     (lambda ()
-					       (let* ((reverb-tmp (and *reverb* (snd-tempnam)))
-						      (tmp (with-sound-helper 
-							    (lambda ()
-							      ,@expr
-							      #f)
-							    :thread-output thread-output
-							    :thread-reverb thread-reverb
-							    :output (snd-tempnam)
-							    :revfile reverb-tmp
-							    :to-snd #f
-							    ,@new-args
-							    )))
-						 (grab-lock mix-lock)
-						 (display (format #f "mix ~S [~D]~%" tmp (mus-safety main-output)))
-						 (if (= (mus-safety main-output) 1)
-						     (begin
-						       (sample->file+ main-output (thread-output))
-						       (mus-close (thread-output)))
-						     (mus-mix main-output tmp))
-						 (if *reverb*
-						     (if (= (mus-safety main-output) 1)
-							 (begin
-							   (sample->file+ main-reverb (thread-reverb))
-							   (mus-close (thread-reverb)))
-							 (mus-mix main-reverb reverb-tmp)))
-						 (release-lock mix-lock)
-						 (delete-file tmp))))
-					    threads)))
-		     lists)
-		  
-		  (for-each 
-		   (lambda (thread) 
-		     (join-thread thread))
-		   threads)
-		  
-		  (if main-reverb (set! *reverb* main-reverb))
-		  (set! *output* main-output)))
-	      
-	      ,@args))))
-      
-      `(with-sound-helper
-	(lambda ()
-	  ,@body)
-	,@args)))
-
 
 
 
@@ -1185,7 +1056,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 (define (clm-display-globals)
 
-  (format #f ";CLM globals:~%;  *clm-srate*: ~A (default: ~A, mus-srate: ~A)~%;  *clm-file-name*: ~A~%;  *clm-channels: ~A (default: ~A)~%;  *clm-data-format*: ~A (default: ~A)~%;  *clm-header-type*: ~A (default: ~A)~%;  *clm-reverb-channels*: ~A, *clm-reverb-data*: ~A~%;  *clm-table-size*: ~A~%;  *clm-file-buffer-size*: ~A (~A)~%;  *clm-locsig-type*: ~A~%;  *clm-array-print-length*: ~A (~A)~%;  *clm-notehook*: ~A~%;  *clm-default-frequency*: ~A~%;  *clm-clipped*: ~A, mus-clipping: ~A, mus-prescaler: ~A~%;  *clm-threads*: ~A~%;  *clm-output-safety*: ~A~%~%"
+  (format #f ";CLM globals:~%;  *clm-srate*: ~A (default: ~A, mus-srate: ~A)~%;  *clm-file-name*: ~A~%;  *clm-channels: ~A (default: ~A)~%;  *clm-data-format*: ~A (default: ~A)~%;  *clm-header-type*: ~A (default: ~A)~%;  *clm-reverb-channels*: ~A, *clm-reverb-data*: ~A~%;  *clm-table-size*: ~A~%;  *clm-file-buffer-size*: ~A (~A)~%;  *clm-locsig-type*: ~A~%;  *clm-array-print-length*: ~A (~A)~%;  *clm-notehook*: ~A~%;  *clm-default-frequency*: ~A~%;  *clm-clipped*: ~A, mus-clipping: ~A, mus-prescaler: ~A~%;  *clm-output-safety*: ~A~%~%"
 
 	  *clm-srate* (default-output-srate) (mus-srate)
 	  *clm-file-name*
@@ -1201,48 +1072,9 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	  *clm-default-frequency*
 	  *clm-clipped* (mus-clipping)
 	  (mus-prescaler)
-	  *clm-threads*
 	  *clm-output-safety*))
 
 
-
-
-;;; -------- with-threaded-channels
-
-(define (with-threaded-channels snd func)
-  (let ((chns (channels snd)))
-    (if (and (provided? 'snd-threads)
-	     (> chns 1))
-	
-	(dynamic-wind
-
-	 (lambda ()
-	   (do ((chn 0 (+ 1 chn)))
-	       ((= chn chns))
-	     (set! (squelch-update snd chn) #t)))
-	   
-	 (lambda ()
-	   (let ((threads '()))
-	     (do ((chn 0 (+ 1 chn)))
-		 ((= chn chns))
-	       (let ((lchn chn))
-		 (set! threads (cons (make-thread (lambda () 
-						    (func snd lchn))) 
-				     threads))))
-	     (for-each 
-	      (lambda (expr) 
-		(join-thread expr))
-	      threads)))
-
-	 (lambda ()
-	   (do ((chn 0 (+ 1 chn)))
-	       ((= chn chns))
-	     (set! (squelch-update snd chn) #f))))
-
-	;; else do it without threads
-	(do ((chn 0 (+ 1 chn)))
-	    ((= chn chns))
-	  (func snd chn)))))
 
 
 ;;; -------- *clm-search-list*

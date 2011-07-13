@@ -79,7 +79,6 @@
 #undef FGREP_PROG
 
 #undef HAVE_PTHREAD_H
-#undef HAVE_PTHREADS
 
 #undef SND_PACKAGE
 #undef SND_VERSION

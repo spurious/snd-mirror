@@ -4818,156 +4818,6 @@
       (if (file-exists? "test space.marks")
 	  (delete-file "test space.marks")))
     
-    (if (provided? 'snd-threads)
-	(let ((old-file-buffer-size *clm-file-buffer-size*))
-	  
-	  (let* ((result (with-threaded-sound ()
-					      (outa 0 0.5)
-					      (outa 1 0.25)
-					      (outa 2 0.125)
-					      (outa 3 -0.5)))
-		 (snd (find-sound result)))
-	    (if (not (sound? snd)) 
-		(snd-display #__line__ ";with-threaded-sound 0 no output: ~A ~A" result snd)
-		(let ((samps (channel->vct 0 (frames snd) snd 0)))
-		  (if (not (vequal samps (vct 0.5 0.25 0.125 -0.5)))
-		      (snd-display #__line__ ";with-threaded-sound 0 output: ~A" samps)))))
-	  
-	  (let* ((result (with-threaded-sound ()
-					      (outa 0 0.5)
-					      (outa 1 0.25)
-					      (outa 2 0.125)
-					      (outa 3 -0.5)
-					      (outa 4 -0.25)
-					      (outa 5 -0.125)))
-		 (snd (find-sound result)))
-	    (if (not (sound? snd)) 
-		(snd-display #__line__ ";with-threaded-sound 0a no output: ~A ~A" result snd)
-		(let ((samps (channel->vct 0 (frames snd) snd 0)))
-		  (if (not (vequal samps (vct 0.5 0.25 0.125 -0.5 -0.25 -0.125)))
-		      (snd-display #__line__ ";with-threaded-sound 0a output: ~A" samps)))))
-	  
-	  (let* ((result (with-threaded-sound ()
-					      (outa 0 0.5)
-					      (outa 1 0.25)
-					      (outa 1 -0.5)))
-		 (snd (find-sound result)))
-	    (if (not (sound? snd)) 
-		(snd-display #__line__ ";with-threaded-sound 0b no output: ~A ~A" result snd)
-		(let ((samps (channel->vct 0 (frames snd) snd 0)))
-		  (if (not (vequal samps (vct 0.5 -0.25)))
-		      (snd-display #__line__ ";with-threaded-sound 0b output: ~A" samps)))))
-	  
-	  (let ((samps (make-vct 512)))
-	    (run 
-	     (do ((i 0 (+ 1 i)))
-		 ((= i 512))
-	       (set! (samps i) (- (random 2.0) 1.0))))
-	    (let* ((result (with-threaded-sound (:channels 2)
-						(out-samps 0 0 samps)
-						(out-samps 0 1 samps)))
-		   (snd (find-sound result)))
-	      (if (not (sound? snd)) 
-		  (snd-display #__line__ ";with-threaded-sound 1 no output: ~A ~A" result snd)
-		  (let ((new-samps-0 (channel->vct 0 (frames snd) snd 0))
-			(new-samps-1 (channel->vct 0 (frames snd) snd 1)))
-		    (if (not (vequal samps new-samps-0))
-			(snd-display #__line__ ";with-threaded-sound 1 chan 0 output differs"))
-		    (if (not (vequal samps new-samps-1))
-			(snd-display #__line__ ";with-threaded-sound 1 chan 1 output differs"))))))
-	  
-	  (for-each
-	   (lambda (buflen)
-	     (set! *clm-file-buffer-size* buflen)
-	     (let* ((len 1000000)
-		    (samps (make-vct len)))
-	       (run 
-		(do ((i 0 (+ 1 i)))
-		    ((= i len))
-		  (set! (samps i) (- (random 2.0) 1.0))))
-	       (let* ((result (with-threaded-sound (:channels 2)
-						   (out-samps 0 0 samps)
-						   (out-samps 0 1 samps)))
-		      (snd (find-sound result)))
-		 (if (not (sound? snd)) 
-		     (snd-display #__line__ ";with-threaded-sound 2 (~D) no output: ~A ~A" buflen result snd)
-		     (let ((new-samps-0 (channel->vct 0 (frames snd) snd 0))
-			   (new-samps-1 (channel->vct 0 (frames snd) snd 1)))
-		       (if (not (vequal samps new-samps-0))
-			   (snd-display #__line__ ";with-threaded-sound 2 (~D) chan 0 output differs" buflen))
-		       (if (not (vequal samps new-samps-1))
-			   (snd-display #__line__ ";with-threaded-sound 2 (~D) chan 1 output differs" buflen)))))))
-	   (list 65536 8192 1024 256 1234))
-	  (set! *clm-file-buffer-size* old-file-buffer-size)
-	  (set! (mus-file-buffer-size) old-file-buffer-size)	  
-	  
-	  (let ((samps (make-vct 512)))
-	    (run
-	     (do ((i 0 (+ 1 i)))
-		 ((= i 512))
-	       (vct-set! samps i (- (random 2.0) 1.0))))
-	    (with-threaded-sound (:channels 1 :output "thread-test.snd")
-				 (out-samps 0 0 samps))
-	    (let* ((inp (make-file->sample "thread-test.snd"))
-		   (inres (make-vct 512))
-		   (result (with-threaded-sound ()
-						(do ((i 0 (+ 1 i)))
-						    ((= i 512))
-						  (let ((val (ina i inp)))
-						    (set! (inres i) val)
-						    (outa i val)))))
-		   (snd (find-sound result)))
-	      (if (not (sound? snd)) 
-		  (snd-display #__line__ ";with-threaded-sound 3 no output: ~A ~A" result snd)
-		  (let ((new-samps-0 (channel->vct 0 (frames snd) snd 0)))
-		    (if (not (vequal samps new-samps-0))
-			(snd-display #__line__ ";with-threaded-sound 3 output differs"))
-		    (if (not (vequal samps inres))
-			(snd-display #__line__ ";with-threaded-sound 3 input differs"))))
-	      (close-sound snd)
-	      (set! snd (find-sound "thread-test.snd"))
-	      (if (sound? snd) (close-sound snd))
-	      (delete-file "thread-test.snd")))
-	  
-	  (let ((samps (make-vct 512)))
-	    (run
-	     (do ((i 0 (+ 1 i)))
-		 ((= i 512))
-	       (set! (samps i) (- (random 2.0) 1.0))))
-	    (let* ((result (with-threaded-sound (:channels 1)
-						(out-samps 0 0 samps)
-						(out-samps-invert 0 0 samps)))
-		   (snd (find-sound result)))
-	      (if (not (sound? snd)) 
-		  (snd-display #__line__ ";with-threaded-sound 4 no output: ~A ~A" result snd)
-		  (let ((new-samps-0 (channel->vct 0 (frames snd) snd 0)))
-		    (if (fneq (vct-peak new-samps-0) 0.0)
-			(snd-display #__line__ ";with-threaded-sound 4 chan 1 output differs"))))))
-	  
-	  (for-each
-	   (lambda (buflen)
-	     (set! *clm-file-buffer-size* buflen)
-	     (let* ((len 1000000)
-		    (samps (make-vct len)))
-	       (run
-		(do ((i 0 (+ 1 i)))
-		    ((= i len))
-		  (set! (samps i) (- (random 2.0) 1.0))))
-	       (let* ((result (with-threaded-sound (:channels 1)
-						   (out-samps 0 0 samps)
-						   (out-samps-invert 0 0 samps)))
-		      (snd (find-sound result)))
-		 (if (not (sound? snd)) 
-		     (snd-display #__line__ ";with-threaded-sound 5 (~D) no output: ~A ~A" buflen result snd)
-		     (let ((new-samps-0 (channel->vct 0 (frames snd) snd 0)))
-		       (if (fneq (vct-peak new-samps-0) 0.0)
-			   (snd-display #__line__ ";with-threaded-sound 5 chan 1 output differs")))))))
-	   (list 65536 8192 1024 256 1234))
-	  (set! *clm-file-buffer-size* old-file-buffer-size)
-	  (set! (mus-file-buffer-size) old-file-buffer-size)
-	  (for-each (lambda (snd) (close-sound snd)) (sounds))
-	  ))
-    
     (if (directory? "oboe.snd") (snd-display #__line__ ";directory? oboe.snd!"))
     (if (not (directory? ".")) (snd-display #__line__ ";directory? . #f!"))
     (if (not (getenv "PATH")) (snd-display #__line__ ";getenv: no PATH?"))
@@ -49330,12 +49180,15 @@ EDITS: 1
 
     (let ()
       (define (mxtest) (run (lambda () (mixer .1 .2 .3 .4))))
-      (if (not (mixer? (mxtest)))
-	  (snd-display #__line__ ";mxtest 1 -> ~S~%" mx))
-      (if (not (mixer? (mxtest)))
-	  (snd-display #__line__ ";mxtest 2 -> ~S~%" mx))
-      (if (not (mixer? (mxtest)))
-	  (snd-display #__line__ ";mxtest 3 -> ~S~%" mx)))
+      (let ((mx (mxtest)))
+	(if (not (mixer? mx))
+	    (snd-display #__line__ ";mxtest 1 -> ~S~%" mx)))
+      (let ((mx (mxtest)))
+	(if (not (mixer? mx))
+	    (snd-display #__line__ ";mxtest 2 -> ~S~%" mx)))
+      (let ((mx (mxtest)))
+	(if (not (mixer? mx))
+	    (snd-display #__line__ ";mxtest 3 -> ~S~%" mx))))
     
     (let ((mx (mixer .1)))
       (if (not (equal? mx (make-mixer 1 .1))) (snd-display #__line__ ";mixer .1: ~A" mx))
@@ -52991,13 +52844,10 @@ EDITS: 1
   
   (define (test-ws-errors)
     ;; since we only catch 'mus-error and 'with-sound-interrupt above, any other error
-    ;;   closes *output* and returns to the top-level -- are there languishing threads?
-    ;;   Need a way outside with-sound to see what threads are out there.
+    ;;   closes *output* and returns to the top-level
     
     (define (bad-ins start)
       (set! (playing) #f))
-    
-    (set! *clm-threads* 4)
     
     (let ((prev (find-sound "test.snd")))
       (if (sound? prev)
@@ -53035,93 +52885,6 @@ EDITS: 1
 	      (snd-display #__line__ ";ws error -220 opened test.snd?")
 	      (close-sound prev)))))
     
-    (if (defined? 'all-threads)
-	(let ((current-threads (all-threads)))
-	  (if (not (equal? current-threads (list (current-thread))))
-	      (snd-display #__line__ ";ws error threaded start threads: ~A, current:~A" current-threads (current-thread)))
-	  
-	  (let ((tag (catch #t
-			    (lambda ()
-			      (with-threaded-sound (:output "test.snd")
-						   (fm-violin 0 1 440 .1)
-						   (fm-violin .1 1 660 .1)
-						   (fm-violin .2 1 880 .1)
-						   (fm-violin .3 1 -220 .1)))
-			    (lambda args args))))
-	    
-	    (if (or (not (list? tag))
-		    (not (eq? (car tag) 'wrong-type-arg)))
-		(snd-display #__line__ ";ws-error threaded -220: ~A" tag))
-	    (if (mus-output? *output*)
-		(begin
-		  (snd-display #__line__ ";ws-error threaded -220: *output*: ~A" *output*)
-		  (mus-close *output*)
-		  (set! *output* #f)))
-	    (let ((prev (find-sound "test.snd")))
-	      (if (sound? prev)
-		  (begin
-		    (snd-display #__line__ ";ws error threaded -220 opened test.snd?")
-		    (close-sound prev))))
-	    
-	    (if (not (equal? current-threads (all-threads)))
-		(snd-display #__line__ ";ws error threaded -220 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
-	  
-	  (let ((tag (catch #t
-			    (lambda ()
-			      (with-threaded-sound (:output "test.snd")
-						   (fm-violin .3 1 44220 .1)))
-			    (lambda args args))))
-	    
-	    (if (or (not (list? tag))
-		    (not (eq? (car tag) 'out-of-range)))
-		(snd-display #__line__ ";ws-error threaded -220 1: ~A" tag))
-	    (if (mus-output? *output*)
-		(begin
-		  (snd-display #__line__ ";ws-error threaded -220 1: *output*: ~A" *output*)
-		  (mus-close *output*)
-		  (set! *output* #f)))
-	    (let ((prev (find-sound "test.snd")))
-	      (if (sound? prev)
-		  (begin
-		    (snd-display #__line__ ";ws error threaded -220 1 opened test.snd?")
-		    (close-sound prev))))
-	    
-	    (if (not (equal? current-threads (all-threads)))
-		(snd-display #__line__ ";ws error threaded -220 1 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
-	  
-	  (let ((tag (catch #t
-			    (lambda ()
-			      (with-threaded-sound (:output "test.snd" :reverb jc-reverb)
-						   (fm-violin 0 1 440 .1)
-						   (fm-violin .1 1 660 .1)
-						   (fm-violin .2 1 880 .1)
-						   (fm-violin .2 1 880 .1)
-						   (fm-violin .3 -1 220 .1)))
-			    (lambda args args))))
-	    
-	    (if (or (not (list? tag))
-		    (not (eq? (car tag) 'out-of-range)))
-		(snd-display #__line__ ";ws-error threaded -220 2: ~A" tag))
-	    (if (mus-output? *output*)
-		(begin
-		  (snd-display #__line__ ";ws-error threaded -220 2: *output*: ~A" *output*)
-		  (mus-close *output*)
-		  (set! *output* #f)))
-	    (if (mus-output? *reverb*)
-		(begin
-		  (snd-display #__line__ ";ws-error threaded -220 2: *reverb*: ~A" *reverb*)
-		  (mus-close *reverb*)
-		  (set! *reverb* #f)))
-	    (let ((prev (find-sound "test.snd")))
-	      (if (sound? prev)
-		  (begin
-		    (snd-display #__line__ ";ws error threaded -220 2 opened test.snd?")
-		    (close-sound prev))))
-	    
-	    (if (not (equal? current-threads (all-threads)))
-		(snd-display #__line__ ";ws error threaded -220 2 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
-	  ))
-    
     
     ;; ---------------- catch 'mus-error (handled by with-sound, but no continuation -- appears to exit after cleaning up) ----------------      
     
@@ -53149,36 +52912,6 @@ EDITS: 1
 	    (snd-display #__line__ ";ws error bad env did not open test.snd?")
 	    (close-sound prev))))
     
-    (if (defined? 'all-threads)
-	(let ((current-threads (all-threads)))
-	  (if (not (equal? current-threads (list (current-thread))))
-	      (snd-display #__line__ ";ws error threaded start 1 threads: ~A, current:~A" current-threads (current-thread)))
-	  
-	  (let ((tag (catch #t
-			    (lambda ()
-			      (with-threaded-sound (:output "test.snd")
-						   (fm-violin 0 1 440 .1)
-						   (fm-violin .1 1 660 .1)
-						   (fm-violin .2 1 880 .1)
-						   (fm-violin .3 1 220 .1 :amp-env '(0 0 1 1 .5 1 0 0))))
-			    (lambda args args))))
-	    
-	    (if (or (not (string? tag))
-		    (not (string=? tag "test.snd")))
-		(snd-display #__line__ ";ws-error threaded bad env: ~A" tag))
-	    (if (mus-output? *output*)
-		(begin
-		  (snd-display #__line__ ";ws-error threaded bad env: *output*: ~A" *output*)
-		  (mus-close *output*)
-		  (set! *output* #f)))
-	    (let ((prev (find-sound "test.snd")))
-	      (if (not (sound? prev))
-		  (snd-display #__line__ ";ws error threaded bad env did not open test.snd?")
-		  (close-sound prev)))
-	  
-	    (if (not (equal? current-threads (all-threads)))
-		(snd-display #__line__ ";ws error threaded bad env threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))))
-    
     (if (sound? (find-sound "test.snd"))
 	(close-sound (find-sound "test.snd")))
     (delete-file "test.snd")
@@ -53198,157 +52931,6 @@ EDITS: 1
 				 file))
 			     (list "oboe.snd" "pistol.snd") #t))
 	 (lambda args (display args)))
-  
-  (if (provided? 'snd-threads)
-      (begin
-	
-	;; 1-chan
-	(let* ((snd (open-sound "oboe.snd"))
-	       (len (frames snd)))
-	  (with-threaded-channels snd (lambda (snd chn) (src-channel 2.0 0 #f snd chn)))
-	  (if (> (abs (- (* 2 (frames snd)) len)) 5)
-	      (snd-display #__line__ ";with-threaded-sound oboe src: ~A ~A" (frames) len))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (filter-channel '(0 1 .1 0 1 0) 120 0 #f snd chn)))
-	  (if (> (maxamp snd 0) .1)
-	      (snd-display #__line__ ";with-threaded-channels oboe filter: ~A ~A" (maxamp snd 0) (maxamp snd 0 0)))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (map-channel (lambda (y) (* y 2)) 0 #f snd chn)))
-	  (if (< (maxamp snd 0) .25)
-	      (snd-display #__line__ ";with-threaded-channels oboe map: ~A ~A" (maxamp snd 0) (maxamp snd 0 0)))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (ptree-channel (lambda (y) (* y 2)) 0 #f snd chn)))
-	  (if (< (maxamp snd 0) .25)
-	      (snd-display #__line__ ";with-threaded-channels oboe ptree: ~A ~A" (maxamp snd 0) (maxamp snd 0 0)))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (ptree-channel (lambda (y) (* y 2)) 0 #f snd chn #f #t)))
-	  (if (< (maxamp snd 0) .25)
-	      (snd-display #__line__ ";with-threaded-channels oboe ptree peak: ~A ~A" (maxamp snd 0) (maxamp snd 0 0)))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (ptree-channel (lambda (y data forward) (* y (data 0))) 0 #f snd chn #f #f (lambda (beg dur) (vct 2.0)))))
-	  (if (< (maxamp snd 0) .25)
-	      (snd-display #__line__ ";with-threaded-channels oboe ptree vct: ~A ~A" (maxamp snd 0) (maxamp snd 0 0)))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (reverse-channel 0 #f snd chn)))
-	  (if (not (= (frames snd 0) (frames snd 0 0)))
-	      (snd-display #__line__ ";with-threaded-channels oboe reverse: ~A ~A" (frames snd 0) (frames snd 0 0)))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (src-channel 0.5 0 #f snd chn)))
-	  (if (> (abs (- (* .5 (frames snd)) len)) 5)
-	      (snd-display #__line__ ";with-threaded-sound oboe src 5: ~A ~A" (frames) len))
-	  (revert-sound snd)
-	  (close-sound snd))
-	
-	;; 4-chans
-	(let* ((snd (open-sound "4.aiff"))
-	       (len (frames snd)))
-	  (with-threaded-channels snd (lambda (snd chn) (src-channel 2.0 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 4))
-	    (if (> (abs (- (* 2 (frames snd i)) len)) 5)
-		(snd-display #__line__ ";with-threaded-sound 4 src ~D: ~A ~A" i (frames) len)))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (filter-channel '(0 1 .1 0 1 0) 120 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 4))
-	    (if (> (maxamp snd 0) .1)
-		(snd-display #__line__ ";with-threaded-channels 4.aiff filter ~D: ~A ~A" i (maxamp snd 0) (maxamp snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (map-channel (lambda (y) (* y 2)) 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 4))
-	    (if (< (maxamp snd 0) .25)
-		(snd-display #__line__ ";with-threaded-channels 4.aiff map~D : ~A ~A" i (maxamp snd 0) (maxamp snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (ptree-channel (lambda (y) (* y 2)) 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 4))
-	    (if (< (maxamp snd 0) .25)
-		(snd-display #__line__ ";with-threaded-channels 4.aiff ptree ~D: ~A ~A" i (maxamp snd 0) (maxamp snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (ptree-channel (lambda (y) (* y 2)) 0 #f snd chn #f #t)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 4))
-	    (if (< (maxamp snd 0) .25)
-		(snd-display #__line__ ";with-threaded-channels 4.aiff ptree peak ~D: ~A ~A" i (maxamp snd 0) (maxamp snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (ptree-channel (lambda (y data forward) (* y (data 0))) 0 #f snd chn #f #f (lambda (beg dur) (vct 2.0)))))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 4))
-	    (if (< (maxamp snd 0) .25)
-		(snd-display #__line__ ";with-threaded-channels 4.aiff ptree vct ~D: ~A ~A" i (maxamp snd 0) (maxamp snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (reverse-channel 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 4))
-	    (if (not (= (frames snd 0) (frames snd 0 0)))
-		(snd-display #__line__ ";with-threaded-channels 4.aiff reverse ~D: ~A ~A" i (frames snd 0) (frames snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (src-channel 0.5 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 4))
-	    (if (> (abs (- (* .5 (frames snd)) len)) 5)
-		(snd-display #__line__ ";with-threaded-sound 4.aiff src 5 ~D: ~A ~A" i (frames) len)))
-	  (revert-sound snd)
-	  (close-sound snd))
-	
-	;; 8-chans
-	(let* ((snd (find-sound (with-sound (:channels 8)
-					    (do ((i 0 (+ 1 i)))
-						((= i 8))
-					      (fm-violin 0 1 (* (+ 1 i) 100.0) .3 :degree (* i (/ 360 8)))))))
-	       (len (frames snd)))
-	  (with-threaded-channels snd (lambda (snd chn) (src-channel 2.0 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 8))
-	    (if (> (abs (- (* 2 (frames snd i)) len)) 5)
-		(snd-display #__line__ ";with-threaded-sound 4 src ~D: ~A ~A" i (frames) len)))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (filter-channel '(0 1 .1 0 1 0) 120 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 8))
-	    (if (or (> (maxamp snd 0) .35) ; the other two cases involve higher sounds
-		    (< (maxamp snd 0) .25))
-		(snd-display #__line__ ";with-threaded-channels 8 chan filter ~D: ~A ~A" i (maxamp snd 0) (maxamp snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (map-channel (lambda (y) (* y 2)) 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 8))
-	    (if (< (maxamp snd 0) .25)
-		(snd-display #__line__ ";with-threaded-channels 8 chan map ~D: ~A ~A" i (maxamp snd 0) (maxamp snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (ptree-channel (lambda (y) (* y 2)) 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 8))
-	    (if (< (maxamp snd 0) .25)
-		(snd-display #__line__ ";with-threaded-channels 8 chan ptree ~D: ~A ~A" i (maxamp snd 0) (maxamp snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (ptree-channel (lambda (y) (* y 2)) 0 #f snd chn #f #t)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 8))
-	    (if (< (maxamp snd 0) .25)
-		(snd-display #__line__ ";with-threaded-channels 8 chan ptree peak ~D: ~A ~A" i (maxamp snd 0) (maxamp snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (ptree-channel (lambda (y data forward) (* y (data 0))) 0 #f snd chn #f #f (lambda (beg dur) (vct 2.0)))))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 8))
-	    (if (< (maxamp snd 0) .25)
-		(snd-display #__line__ ";with-threaded-channels 8 chan ptree vct ~D: ~A ~A" i (maxamp snd 0) (maxamp snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (reverse-channel 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 8))
-	    (if (not (= (frames snd 0) (frames snd 0 0)))
-		(snd-display #__line__ ";with-threaded-channels 8 chan reverse ~D: ~A ~A" i (frames snd 0) (frames snd 0 0))))
-	  (revert-sound snd)
-	  (with-threaded-channels snd (lambda (snd chn) (src-channel 0.5 0 #f snd chn)))
-	  (do ((i 0 (+ i 1))) 
-	      ((= i 8))
-	    (if (> (abs (- (* .5 (frames snd)) len)) 5)
-		(snd-display #__line__ ";with-threaded-sound 8 chan src 5 ~D: ~A ~A" i (frames) len)))
-	  (revert-sound snd)
-	  (close-sound snd))
-	))
   
   (set! (optimization) max-optimization)
   (dismiss-all-dialogs)
@@ -63419,21 +63001,20 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 
-8-July-11:
-172,062,075,458  PROGRAM TOTALS
-16,468,701,204  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
-15,929,610,707  ???:sin [/lib64/libm-2.12.so]
-13,200,174,527  s7.c:eval [/home/bil/snd-12/snd]
-11,462,505,169  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
-10,328,943,413  s7.c:eval'2 [/home/bil/snd-12/snd]
+12-July-11:
+170,234,011,932  PROGRAM TOTALS
+16,135,395,762  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
+15,934,982,613  ???:sin [/lib64/libm-2.12.so]
+13,165,978,709  s7.c:eval [/home/bil/snd-12/snd]
+11,397,277,630  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
+10,256,613,196  s7.c:eval'2 [/home/bil/snd-12/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
- 8,717,240,527  run.c:eval_ptree [/home/bil/snd-12/snd]
- 7,207,852,142  io.c:mus_write_1 [/home/bil/snd-12/snd]
- 3,041,537,672  clm.c:mus_src [/home/bil/snd-12/snd]
+ 8,720,816,399  run.c:eval_ptree [/home/bil/snd-12/snd]
+ 7,180,698,655  io.c:mus_write_1 [/home/bil/snd-12/snd]
+ 2,999,561,525  clm.c:mus_src [/home/bil/snd-12/snd]
  2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-12/snd]
- 2,751,115,603  ???:cos [/lib64/libm-2.12.so]
- 2,700,764,735  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
- 2,501,689,981  s7.c:gc [/home/bil/snd-12/snd]
-
+ 2,736,960,594  ???:cos [/lib64/libm-2.12.so]
+ 2,704,275,078  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
+ 2,503,011,648  s7.c:gc [/home/bil/snd-12/snd]
 |#
 

@@ -24,17 +24,11 @@ static int gc_protection_size = 0;
 static int gc_last_cleared = NOT_A_GC_LOC;
 static int gc_last_set = NOT_A_GC_LOC;
 
-#if HAVE_PTHREADS
-  static mus_lock_t gc_lock = MUS_LOCK_INITIALIZER;
-#endif
-
 int snd_protect(XEN obj)
 {
   int i, old_size;
   XEN tmp;
   
-  MUS_LOCK(&gc_lock);
-
   if (gc_protection_size == 0)
     {
       gc_protection_size = 512;
@@ -53,8 +47,6 @@ int snd_protect(XEN obj)
 	  gc_last_set = gc_last_cleared;
 	  gc_last_cleared = NOT_A_GC_LOC;
 
-	  MUS_UNLOCK(&gc_lock);
-
 	  return(gc_last_set);
 	}
 
@@ -64,8 +56,6 @@ int snd_protect(XEN obj)
 	    XEN_VECTOR_SET(gc_protection, i, obj);
 	    gc_last_set = i;
 	    
-	    MUS_UNLOCK(&gc_lock);
-
 	    return(gc_last_set);
 	  }
 
@@ -75,8 +65,6 @@ int snd_protect(XEN obj)
 	    /* here we average 3 checks before a hit, so this isn't as bad as it looks */
 	    XEN_VECTOR_SET(gc_protection, i, obj);
 	    gc_last_set = i;
-
-	    MUS_UNLOCK(&gc_lock);
 
 	    return(gc_last_set);
 	  }
@@ -101,23 +89,17 @@ int snd_protect(XEN obj)
 #endif
       gc_last_set = old_size;
     }
-
-  MUS_UNLOCK(&gc_lock);
   return(gc_last_set);
 }
 
 
 void snd_unprotect_at(int loc)
 {
-  MUS_LOCK(&gc_lock);
-
   if (loc >= 0)
     {
       XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);
       gc_last_cleared = loc;
     }
-
-  MUS_UNLOCK(&gc_lock);
 }
 
 
@@ -3029,10 +3011,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
 #if HAVE_GSL
   XEN_YES_WE_HAVE("gsl");
-#endif
-
-#if HAVE_PTHREADS
-  XEN_YES_WE_HAVE("snd-threads");
 #endif
 
 #if USE_MOTIF

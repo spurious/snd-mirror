@@ -182,9 +182,8 @@ void set_minibuffer_string(snd_info *sp, const char *str, bool update)
   /* there's also a bug in libxcb (fixed, but not propagated yet) that causes a segfault here if more than
    *   one thread is affected by this global X queue flush.
    */
-#if (!HAVE_PTHREADS)
+
   if (update) XmUpdateDisplay(MINIBUFFER_TEXT(sp));
-#endif
 }
 
 
@@ -1536,82 +1535,52 @@ static Pixmap stop_sign = 0;
 void show_lock(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
-    {
-      if (mini_lock)
-	{
-	  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, mini_lock, NULL);
-	}
-      MUS_UNLOCK(sp->stop_sign_lock);
-    }
+  if (mini_lock)
+    XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, mini_lock, NULL);
 }
 
 
 void hide_lock(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
-    {
-      if (mini_lock)
-	{
-	  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
-	}
-      /* these Pixmaps can be null if the colormap is screwed up */
-      MUS_UNLOCK(sp->stop_sign_lock);
-    }
+  if (mini_lock)
+    XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
+  /* these Pixmaps can be null if the colormap is screwed up */
 }
 
 
 static void show_stop_sign(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
-    {
-      if (stop_sign)
-	XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, stop_sign, NULL);
-      MUS_UNLOCK(sp->stop_sign_lock);
-    }
+  if (stop_sign)
+    XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, stop_sign, NULL);
 }
 
 
 static void hide_stop_sign(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
-    {
-      if (blank_pixmap)
-	XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, blank_pixmap, NULL);
-      MUS_UNLOCK(sp->stop_sign_lock);
-    }
+  if (blank_pixmap)
+    XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, blank_pixmap, NULL);
 }
 
 
 void show_bomb(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
-    {
-      if (sp->bomb_ctr >= NUM_BOMBS) 
-	sp->bomb_ctr = 0;
-      if (bombs[sp->bomb_ctr])
-	{
-	  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, bombs[sp->bomb_ctr], NULL);
-	}
-      sp->bomb_ctr++; 
-      MUS_UNLOCK(sp->stop_sign_lock);
-    }
+  if (sp->bomb_ctr >= NUM_BOMBS) 
+    sp->bomb_ctr = 0;
+  if (bombs[sp->bomb_ctr])
+    XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, bombs[sp->bomb_ctr], NULL);
+  sp->bomb_ctr++; 
 }
 
 
 void hide_bomb(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
-    {
-      XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
-      sp->bomb_ctr = 0;
-      MUS_UNLOCK(sp->stop_sign_lock);
-    }
+  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
+  sp->bomb_ctr = 0;
 }
 
 
@@ -2986,15 +2955,11 @@ static XEN reflect_file_close_in_sync(XEN xreason)
 
 void set_sound_pane_file_label(snd_info *sp, const char *str)
 {
-  if (MUS_TRY_LOCK(sp->starred_name_lock) != MUS_ALREADY_LOCKED)
+  if (!(mus_strcmp(sp->name_string, str)))
     {
-      if (!(mus_strcmp(sp->name_string, str)))
-	{
-	  if (sp->name_string) free(sp->name_string);
-	  sp->name_string = mus_strdup(str);
-	  set_button_label(SND_NAME(sp), str); /* this causes an expose event, so it's worth minimizing */
-	}
-      MUS_UNLOCK(sp->starred_name_lock);
+      if (sp->name_string) free(sp->name_string);
+      sp->name_string = mus_strdup(str);
+      set_button_label(SND_NAME(sp), str); /* this causes an expose event, so it's worth minimizing */
     }
 }
 
@@ -3080,8 +3045,6 @@ int control_panel_height(snd_info *sp)
 
 /* -------- PROGRESS REPORT -------- */
 
-/* since threads can be acting on all chans at once, it's probably useful to show a progress bar for each */
-
 void progress_report(chan_info *cp, mus_float_t pct)
 {
   int which;
@@ -3100,9 +3063,7 @@ void progress_report(chan_info *cp, mus_float_t pct)
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, hourglasses[which], NULL);
-#if (!HAVE_PTHREADS)
       XmUpdateDisplay(PROGRESS_ICON(cp));
-#endif
     }
 
   check_for_event();
@@ -3120,10 +3081,7 @@ void finish_progress_report(chan_info *cp)
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, blank_pixmap, NULL);
-
-#if (!HAVE_PTHREADS)
       XmUpdateDisplay(PROGRESS_ICON(cp));
-#endif
       hide_stop_sign(sp);
     }
 }
@@ -3141,9 +3099,7 @@ void start_progress_report(chan_info *cp)
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, hourglasses[0], NULL);
-#if (!HAVE_PTHREADS)
       XmUpdateDisplay(PROGRESS_ICON(cp));
-#endif
       show_stop_sign(sp);
     }
 }

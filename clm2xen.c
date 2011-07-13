@@ -1818,11 +1818,6 @@ XEN g_mus_file_name(XEN gen)
   #define H_mus_file_name "(" S_mus_file_name " gen): file associated with gen, if any"
   if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_file_name));
 
-#if HAVE_SCHEME && HAVE_PTHREADS
-  if (s7_is_thread_variable(gen))
-    gen = s7_thread_variable(s7, gen);
-#endif
-
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_file_name, "a generator");
   return(C_TO_XEN_STRING(mus_file_name(XEN_TO_MUS_ANY(gen))));
 }
@@ -5350,7 +5345,7 @@ static XEN g_env_any(XEN e, XEN func)
 
 static XEN clm_output, clm_reverb; /* *output* and *reverb* at extlang level -- these can be output streams, vct, sound-data objects etc */
 
-#if (HAVE_SCHEME && (!HAVE_PTHREADS))
+#if (HAVE_SCHEME)
 XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(clm_output));}
 XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(clm_reverb));}
 #endif
@@ -5359,27 +5354,6 @@ XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(clm_reverb));}
 XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(S_output));}
 XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(S_reverb));}
 #endif
-
-#if HAVE_SCHEME && HAVE_PTHREADS
-XEN mus_clm_output(void) 
-{
-  XEN obj;
-  obj = XEN_VARIABLE_REF(clm_output);
-  if (s7_is_thread_variable(obj))
-    return(s7_thread_variable(s7, obj));
-  return(obj);
-}
-
-XEN mus_clm_reverb(void) 
-{
-  XEN obj;
-  obj = XEN_VARIABLE_REF(clm_reverb);
-  if (s7_is_thread_variable(obj))
-    return(s7_thread_variable(s7, obj));
-  return(obj);
-}
-#endif
-
 
 static XEN g_input_p(XEN obj) 
 {
@@ -5391,11 +5365,6 @@ static XEN g_input_p(XEN obj)
 static XEN g_output_p(XEN obj) 
 {
   #define H_mus_output_p "(" S_mus_output_p " gen): " PROC_TRUE " if gen is an output generator"
-
-#if HAVE_SCHEME && HAVE_PTHREADS
-  if (s7_is_thread_variable(obj))
-    obj = s7_thread_variable(s7, obj);
-#endif
 
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_output_p(XEN_TO_MUS_ANY(obj)))));
 }
@@ -5419,11 +5388,6 @@ static XEN g_sample_to_file_p(XEN obj)
 {
   #define H_sample_to_file_p "(" S_sample_to_file_p " gen): " PROC_TRUE " if gen is a " S_sample_to_file " generator"
 
-#if HAVE_SCHEME && HAVE_PTHREADS
-  if (s7_is_thread_variable(obj))
-    obj = s7_thread_variable(s7, obj);
-#endif
-
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_sample_to_file_p(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -5431,11 +5395,6 @@ static XEN g_sample_to_file_p(XEN obj)
 static XEN g_frame_to_file_p(XEN obj) 
 {
   #define H_frame_to_file_p "(" S_frame_to_file_p " gen): " PROC_TRUE " if gen is a " S_frame_to_file " generator"
-
-#if HAVE_SCHEME && HAVE_PTHREADS
-  if (s7_is_thread_variable(obj))
-    obj = s7_thread_variable(s7, obj);
-#endif
 
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_frame_to_file_p(XEN_TO_MUS_ANY(obj)))));
 }
@@ -5546,14 +5505,6 @@ static XEN g_out_any_1(const char *caller, XEN frame, int chn, XEN val, XEN outp
   if (XEN_NOT_BOUND_P(outp))
     outp = mus_clm_output();
   
-#if HAVE_SCHEME && HAVE_PTHREADS
-  else
-    {
-      if (s7_is_thread_variable(outp))
-	outp = s7_thread_variable(s7, outp);
-    }
-#endif
-    
   if (MUS_XEN_P(outp))
     {
       XEN_ASSERT_TYPE(mus_output_p(XEN_TO_MUS_ANY(outp)), outp, XEN_ARG_4, caller, "an output generator");
@@ -5645,15 +5596,6 @@ static XEN g_mus_close(XEN ptr)
   if (MUS_XEN_P(ptr))
     return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(ptr))));
 
-#if HAVE_SCHEME && HAVE_PTHREADS
-  if (s7_is_thread_variable(ptr))
-    {
-      if (MUS_XEN_P(s7_thread_variable(s7, ptr)))
-	return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(s7_thread_variable(s7, ptr)))));
-      return(XEN_ZERO);
-    }
-#endif
-
   XEN_ASSERT_TYPE(MUS_VCT_P(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr) || XEN_PROCEDURE_P(ptr) || XEN_VECTOR_P(ptr), 
 		  ptr, XEN_ONLY_ARG, S_mus_close, "an IO gen or its outa equivalent");
   return(XEN_ZERO);
@@ -5694,11 +5636,6 @@ static XEN g_file_to_sample(XEN obj, XEN samp, XEN chan)
 {
   #define H_file_to_sample "(" S_file_to_sample " obj frame chan): sample value in sound file read by 'obj' in channel chan at frame"
   int channel = 0;
-
-#if HAVE_SCHEME && HAVE_PTHREADS
-  if (s7_is_thread_variable(obj))
-    obj = s7_thread_variable(s7, obj);
-#endif
 
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_file_to_sample, "an input generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_file_to_sample, "a number");
@@ -5782,11 +5719,6 @@ static XEN g_sample_to_file(XEN obj, XEN samp, XEN chan, XEN val)
   #define H_sample_to_file "(" S_sample_to_file " obj samp chan val): add val to the output stream \
 handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 
-#if HAVE_SCHEME && HAVE_PTHREADS
-  if (s7_is_thread_variable(obj))
-    obj = s7_thread_variable(s7, obj);
-#endif
-
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_output_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sample_to_file, "an output generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_sample_to_file, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_sample_to_file, "an integer");
@@ -5802,11 +5734,6 @@ handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 static XEN g_sample_to_file_add(XEN obj1, XEN obj2)
 {
   #define H_sample_to_file_add "(" S_sample_to_file_add " obj1 obj2): mixes obj2 (an output generator) into obj1 (also an output generator)"
-
-#if HAVE_SCHEME && HAVE_PTHREADS
-  if (s7_is_thread_variable(obj2))
-    obj2 = s7_thread_variable(s7, obj2);
-#endif
 
   XEN_ASSERT_TYPE((MUS_XEN_P(obj1)) && (mus_output_p(XEN_TO_MUS_ANY(obj1))), obj1, XEN_ARG_1, S_sample_to_file_add, "an output generator");
   XEN_ASSERT_TYPE((MUS_XEN_P(obj2)) && (mus_output_p(XEN_TO_MUS_ANY(obj2))), obj2, XEN_ARG_2, S_sample_to_file_add, "an output generator");
@@ -5915,11 +5842,6 @@ static XEN g_frame_to_file(XEN obj, XEN samp, XEN val)
 {
   #define H_frame_to_file "(" S_frame_to_file " obj samp val): add frame 'val' to the output stream \
 handled by the output generator 'obj' at frame 'samp'"
-
-#if HAVE_SCHEME && HAVE_PTHREADS
-  if (s7_is_thread_variable(obj))
-    obj = s7_thread_variable(s7, obj);
-#endif
 
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_output_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_frame_to_file, "an output generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_frame_to_file, "a number");
@@ -6371,19 +6293,9 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 
   if (XEN_NOT_BOUND_P(keys3))
     keys3 = mus_clm_output();
-#if HAVE_SCHEME && HAVE_PTHREADS
-  else
-    if (s7_is_thread_variable(keys3))
-      keys3 = s7_thread_variable(s7, keys3);
-#endif
 
   if (XEN_NOT_BOUND_P(keys4))
     keys4 = mus_clm_reverb();
-#if HAVE_SCHEME && HAVE_PTHREADS
-  else
-    if (s7_is_thread_variable(keys4))
-      keys4 = s7_thread_variable(s7, keys4);
-#endif
 
   /* try to default output to *output* and reverb to *reverb*, if they're currently set and not closed */
   /*   mus_close is actually mus_close_file = sample_to_file_end = free and nullify obufs so we're hoping dynamic-wind works... */
@@ -6500,11 +6412,6 @@ XEN g_mus_channels(XEN obj)
 
   if (sound_data_p(obj))
     return(C_TO_XEN_INT((XEN_TO_SOUND_DATA(obj))->chans));
-
-#if HAVE_SCHEME && HAVE_PTHREADS
-  if (s7_is_thread_variable(obj))
-    return(C_TO_XEN_INT(mus_channels(XEN_TO_MUS_ANY(s7_thread_variable(s7, obj)))));
-#endif
 
   XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_mus_channels, "an output generator, vct, or sound-data object");
   return(XEN_FALSE); /* make compiler happy */

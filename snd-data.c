@@ -253,17 +253,6 @@ snd_info *make_basic_snd_info(int chans)
 #if USE_NO_GUI
   sp->snd_widgets = false;
 #endif
-#if HAVE_PTHREADS
-  /* multichannel cases can all try to change the "*" in the file name */
-  sp->starred_name_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
-  MUS_LOCK_INIT(sp->starred_name_lock);
-  /* similarly the stop and bomb icons */
-  sp->stop_sign_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
-  MUS_LOCK_INIT(sp->stop_sign_lock);
-  /* edit history list of multichannel file (after explicit open) */
-  sp->edit_history_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
-  MUS_LOCK_INIT(sp->edit_history_lock);
-#endif
   return(sp);
 }
 

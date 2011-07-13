@@ -761,8 +761,6 @@ latter are (configure --help):
 <tr><td></td><td>--with-ladspa</td><td></td><td>include support for LADSPA plugins (in Linux default: yes)</td></tr>
 <tr><td></td><td>--with-shared-sndlib</td><td></td><td>try to load libsndlib.so, rather than building it into Snd (default: no)</td></tr>
 <tr><td></td><td>--disable-deprecated</td><td></td><td>do not include any deprecated stuff from gtk, s7, sndlib, xen, clm, etc</td></tr>
-<tr><td></td><td>--enable-threads</td><td></td><td>include pthreads to take advantage of multiprocessor machines</td></tr>
-<tr><td></td><td>--with-threads</td><td></td><td>include pthreads, same as --enable-threads</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
 
 <tr><td colspan=2 bgcolor="#EEFDEE">Directory choices</td><td></td><td></td></tr>
@@ -819,7 +817,6 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <tr><td>alsa</td><td>ALSA is in use, rather than OSS (--with-alsa)</td></tr>
 <tr><td bgcolor="#f2f4ff">gsl</td><td bgcolor="#f2f4ff">GSL is loaded (--with-gsl)</td></tr>
 <tr><td>gl2ps</td><td>gl2ps is included (--with-gl2ps)</td></tr>
-<tr><td>snd-threads</td><td>multithreading support is included (--enable-threads)</td></tr>
 </table>
 </td></tr>
 </table>
@@ -831,11 +828,6 @@ Depending on how Snd is configured, any of the following symbols may be "provide
     Ruby:    provided? :snd-gtk
     Forth:   "snd-gtk" defined?
 </pre>
-
-<p>Multithreading support is problematic in both Motif and Gtk.  See <a href="s7.html#s7inathread">s7 and threads</a> for
-a brief discussion.  If you use s7 threads, make sure you never call anything that might affect the user interface.
-</p>
-
 <br>
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndenvvars">Environment variables</a></h3></td></tr></table>

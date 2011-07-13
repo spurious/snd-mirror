@@ -60,7 +60,7 @@ I believe it is compatible with r5rs:  you can just ignore all the additions dis
 It has continuations, 
 ratios, complex numbers,
 macros, keywords, hash-tables, 
-threads, multiprecision arithmetic,
+multiprecision arithmetic,
 generalized set!, and so on.
 It does not have syntax-rules or any of
 its friends, and it does not think there is any such thing
@@ -83,7 +83,6 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
   <li><a href="#multidimensionalvectors">multidimensional vectors</a>
   <li><a href="#hashtables">hash tables</a>
   <li><a href="#hooks">hooks</a>
-  <li><a href="#multithreading">multithreading</a>
   <li><a href="#multiplevalues">multiple-values</a>
   <li><a href="#callwithexit1">call-with-exit</a>
   <li><a href="#format1">format</a>
@@ -2478,176 +2477,6 @@ the way the hook itself is invoked, so the hook has an arity, hook-arity.
 <br><br>
 
 
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<A NAME="multithreading"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>threads</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>If s7 is built with HAVE_PTHREADS set, you get multithreading functions.
-</p>
-
-<pre>
-    (<a name="makethread">make-thread</a> thunk (stack-size 300)) ; create a thread running thunk, return id: pthread_create
-    (<a name="jointhread">join-thread</a> thread)                 ; wait for thread to finish, return value returned by thunk: pthread_join
-    (<a name="threadp">thread?</a> obj)                        ; #t if obj is a thread 
-    (<a name="makelock">make-lock</a>)                          ; mutex allocation and pthread_mutext_init
-    (<a name="grablock">grab-lock</a> lock)                     ; pthread_mutex_lock
-    (<a name="releaselock">release-lock</a> lock)                  ; pthread_mutex_unlock
-    (<a name="lockp">lock?</a> obj)                          ; #t if obj is a lock
-    (<a name="makethreadvariable">make-thread-variable</a>)               ; pthread_key_create
-    (<a name="threadvariablep">thread-variable?</a> obj)               ; #t if obj is a thread-variable (pthread_key)
-</pre>
-
-<p>
-Threads in s7 share the heap and symbol table, but have their own local environment, stack,
-and evaluator locals.  I use the term "lock" in place of "mutex", and "thread-variable"
-in place of "pthread_key".  The thread-variable is applicable and settable, so instead
-of pthread_getspecific, just call it: <code>(var)</code>.
-</p>
-
-<pre>
-(let ((a-lock (make-lock))
-      (threads '())
-      (a-thread-variable (make-thread-variable)))
-  (let loop
-      ((i 0))
-    (set! threads (cons (make-thread
-			 (lambda ()
-			   (set! (a-thread-variable) i)
-			   (grab-lock a-lock)
-			   (format #t "thread ~A " (a-thread-variable))
-			   (release-lock a-lock)))
-			threads))
-    (if (&lt; i 8)
-	(loop (+ i 1))))
-  (for-each 
-   (lambda (thread) 
-     (join-thread thread))
-   threads))
-</pre>
-
-<p>join-thread returns the value returned by the function passed to make-thread:
-</p>
-
-<pre>
-&gt; (let ((ctr1 1) 
-        (ctr2 2))
-    (let ((t1 (make-thread (lambda () (* ctr1 2))))
-          (t2 (make-thread (lambda () (* ctr2 3)))))
-      (+ (join-thread t1) 
-         (join-thread t2))))
-8
-</pre>
-
-
-<small>
-<blockquote>
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<pre>
-(define-macro (thread-let bindings . body)
-  ;; just like "let", but each variable is set by running a separate thread
-  `(let (,@(map (lambda (variable&amp;value)
-                  `(,(car variable&amp;value) (make-thread (lambda () ,(cadr variable&amp;value)))))
-                bindings))
-     ,@(map (lambda (variable&amp;value)
-              `(set! ,(car variable&amp;value) (join-thread ,(car variable&amp;value))))
-            bindings)
-     ,@body))
-
-&gt; (thread-let ((x (abs -1)) 
-               (y (* 3 2))) 
-    (+ x y))
-7
-
-&gt; (macroexpand (thread-let ((x (abs -1)) (y (* 3 2))) (+ x y)))
-(let ((x (make-thread (lambda () (abs -1)))) 
-      (y (make-thread (lambda () (* 3 2))))) 
-  (set! x (join-thread x)) 
-  (set! y (join-thread y)) 
-  (+ x y))
-
-
-(define-macro (thread-values . vals)
-  ;; just like "values", but each value is evaluated by a separate thread
-  (let ((gs (map (lambda (var) (gensym)) vals)))
-    `(thread-let (,@(map (lambda (g v) `(,g ,v)) gs vals))
-       (values ,@gs))))
-
-&gt; (+ 1 (thread-values (* 3 2) (abs -1)) 2)
-10
-</pre>
-
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<p>There is some overhead in handling threads, so I usually
-restrict thread use to long computations.  Since the heap is currently
-shared, code like this is problematic:
-</p>
-
-<pre>
-(define (fib n) 
-  (define (fib-1 n)
-    (if (&lt; n 2) 
-	n 
-	(+ (fib-1 (- n 1)) 
-	   (fib-1 (- n 2)))))
-  (apply + 
-    (map join-thread 
-         (list (make-thread (lambda () (fib-1 (- n 1))))
-	       (make-thread (lambda () (fib-1 (- n 2))))))))
-</pre>
-
-<p>Lots of temporaries are being allocated here, causing the s7 internal new-cell lock to be set
-and unset so often that almost 20% of the compute time is wasted.
-Of course in real life you'd get the nth Fibonacci number from the formula for it:
-</p>
-
-<pre>
-(define (fib n)
-  (let ((phi (/ (+ 1 (sqrt 5)) 2)))
-     (floor (/ (- (expt phi n)        ; "floor" to return an integer
-                  (expt (- 1 phi) n)) 
-               (sqrt 5)))))
-</pre>
-
-<p>But the problem remains.  Since the heap is shared, s7 threads are constantly stepping
-on each other's toes.  It takes too long to get an s7 thread running (we have to make a
-stack, for example), and too many points within s7 require locks.
-At this point, I always use multiple s7 interpreters, rather than multiple s7 threads.
-I may remove the within-s7 thread support unless someone finds a real use for it.  
-</p>
-
-<p>from Snd's NEWS file for version 12.3:
-"Unless someone objects violently, I'm going to remove the multithreading
-support from s7.  It has turned out to be less useful than I hoped,
-mainly because s7 threads share the heap and therefore have to coordinate
-all cell allocations.  So it's faster, and simpler to use multiple
-pthreads each running a separate s7 interpreter, rather than one s7
-running multiple s7 threads.  In clm, the contention is for access to
-the output stream, so the gain in speed is not always something to
-brag about.  And begin_hook handles GUI-related problems without
-any threads.  Last but not least, the effort to make the non-threaded
-s7 faster has messed up parts of the threaded version.  Rather than
-waste a lot of time fixing this, I'd rather just flush the stuff."
-</p>
-
-</blockquote>
-</small>
-
-
-</dd>
-<br><br>
-
-
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="multiplevalues"></a>
@@ -3321,7 +3150,7 @@ the error type and whatever other info accompanies it.
 
 <p><a name="stacktrace">stacktrace</a> can be called anytime to see the chain of function calls.  Its optional argument
 can be *error-info* to show the stack at the point of the last error,
-a thread object to show that thread's stack, or a continuation to
+or a continuation to
 show the continuation stack. 
 </p>
 
@@ -3386,7 +3215,7 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 </small>
 -->
 
-<p>The s7-built-in catch tags are 'wrong-type-arg, 'syntax-error, 'read-error, 'thread-error,
+<p>The s7-built-in catch tags are 'wrong-type-arg, 'syntax-error, 'read-error, 
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
 There's a s7 lint checker: lint.scm in the Snd tarball.
 </p>
@@ -4214,7 +4043,6 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p><b>gc</b> calls the garbage collector.  <code>(gc #f)</code> turns off the GC, and <code>(gc #t)</code> turns it on.
-In the multithread case, don't call gc yourself except from the top-level.
 </p>
 
 <!--
@@ -4914,7 +4742,6 @@ compile-time flags:
 
 <pre>
     HAVE_STDBOOL_H                 1 if you have stdbool.h
-    HAVE_PTHREADS                  1 if you want multithreading support (requires pthreads, default is 0)
     WITH_GMP                       1 if you want multiprecision arithmetic (requires gmp, mpfr, and mpc, default is 0)
     WITH_COMPLEX                   1 if your compiler supports complex numbers
     HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
@@ -7721,7 +7548,6 @@ message to the REPL.  Otherwise we handle everything as in the previous REPLs.
 </p>
 
 <p>If the s7 evaluation can't affect the GUI and the GUI can't call s7 itself,
-or if the GUI is thread-safe and you're using s7_threads for the interleaved expressions, 
 then you don't need to use begin_hook.
 </p>
 

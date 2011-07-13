@@ -5244,6 +5244,7 @@ void describe_audio_state_1(void)
 
 #if MUS_JACK
 #define AUDIO_OK 1
+#include <pthread.h>
 #include <jack/jack.h>
 #include <samplerate.h>
 #include <sys/mman.h>

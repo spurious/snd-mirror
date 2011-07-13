@@ -507,16 +507,11 @@ typedef struct {
 
 static tempfile_ctr **tempfiles = NULL;
 static int tempfiles_size = 0;
-#if HAVE_PTHREADS
-  static mus_lock_t temp_file_lock = MUS_LOCK_INITIALIZER;
-#endif
 
 void remember_temp(const char *filename, int chans)
 {
   int i, old_size;
   tempfile_ctr *tmp = NULL;
-
-  MUS_LOCK(&temp_file_lock);
 
   if (tempfiles_size == 0)
     {
@@ -529,10 +524,7 @@ void remember_temp(const char *filename, int chans)
       for (i = 0; i < tempfiles_size; i++)
 	if ((tempfiles[i]) &&
 	    (mus_strcmp(filename, tempfiles[i]->name)))
-	  {
-	    MUS_UNLOCK(&temp_file_lock);
-	    return;
-	  }
+	  return;
 
       for (i = 0; i < tempfiles_size; i++)
 	if (tempfiles[i] == NULL)
@@ -553,8 +545,6 @@ void remember_temp(const char *filename, int chans)
   tmp->name = mus_strdup(filename);
   tmp->chans = chans;
   tmp->ticks = (int *)calloc(chans, sizeof(int));
-
-  MUS_UNLOCK(&temp_file_lock);
 }
 
 

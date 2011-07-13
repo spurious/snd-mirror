@@ -97,7 +97,6 @@
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  *
  * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings (if default types are used in s7)
- *   but does this work in multithread cases?
  */
 
 
@@ -170,9 +169,6 @@
   #include <string.h>
 #endif
 #include <stdarg.h>
-#if HAVE_PTHREAD_H
-  #include <pthread.h>
-#endif
 
 #include "_sndlib.h"
 #include "xen.h"
@@ -360,13 +356,8 @@ static const char *type_name(int id)
   return("unknown");
 }
 
-#if HAVE_PTHREADS
-  static mus_lock_t new_type_lock = MUS_LOCK_INITIALIZER;
-#endif
-
 static int add_new_type(const char *new_type)
 {
-  MUS_LOCK(&new_type_lock);
   if (last_type == (type_names_size - 1))
     {
       int i;
@@ -376,7 +367,6 @@ static int add_new_type(const char *new_type)
     }
   last_type++;
   type_names[last_type] = mus_strdup(new_type);
-  MUS_UNLOCK(&new_type_lock);
 
   return(last_type);
 }

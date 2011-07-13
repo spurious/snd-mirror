@@ -443,9 +443,6 @@ typedef struct snd_info {
   char *name_string;
   fam_info *file_watcher;
   bool writing, bomb_in_progress;
-#if HAVE_PTHREADS
-  mus_lock_t *starred_name_lock, *stop_sign_lock, *edit_history_lock;
-#endif
 } snd_info;
 
 #define SND_SRATE(Sp) (((Sp)->hdr)->srate)

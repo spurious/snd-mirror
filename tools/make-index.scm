@@ -1,4 +1,5 @@
 ;;; make-index.scm translated from index.cl
+;;;   run this -noinit so that loads in ~/.snd_s7 don't confuse matters
 
 ;(set! (hook-functions *load-hook*) (list (lambda (filename) (format #t "loading ~S~%" filename))))
 (set! (hook-functions *unbound-variable-hook*) '())
@@ -146,7 +147,6 @@
 	(list 'with-sound "ws.scm")
 	(list 'with-mixed-sound "ws.scm")
 	(list 'with-full-sound "ws.scm")
-	(list 'with-threaded-sound "ws.scm")
 	(list 'with-temp-sound "ws.scm")
 	(list 'with-marked-sound "ws.scm")
 	(list 'with-simple-sound "ws.scm")
@@ -188,13 +188,12 @@
 	(list '*clm-default-frequency* "ws.scm")
 ;	(list '*clm-safety* "ws.scm")
 	(list '*clm-delete-reverb* "ws.scm")
-	(list '*clm-threads* "ws.scm")
 	(list '*clm-output-safety* "ws.scm")
 	(list '*to-snd* "ws.scm")
 	(list '*clm-search-list* "ws.scm")
 	(list '*definstrument-hook* "ws.scm")))
       
-      (apropos-1 (reverse (global-environment)))
+      (apropos-1 (reverse (environment->list (global-environment))))
 
       (let ((name-len (length names))
 	    (file-len (length places)))
@@ -208,7 +207,7 @@
 	      (if (char=? (place k) #\/)
 		  (set! pos k)))
 	    (if (> pos -1)
-		(set! (places i) (substring place pos)))))
+		(set! (places i) (substring place (+ pos 1))))))
 	
 	(set! places (sort! places string<?))
 	(set! names (sort! names (lambda (a b)

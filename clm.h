@@ -592,6 +592,8 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 14-Jul-11:  removed pthread stuff.
+ * --------
  * 7-Mar-10:   protect in-any and out-any from sample numbers less than 0.
  * --------
  * 14-Oct:     sine-summation, sum-of-sines, sum-of-cosines removed.

@@ -606,30 +606,6 @@ MUS_EXPORT int mus_header_change_data_size(const char *filename, int type, mus_l
 typedef void mus_header_write_hook_t(const char *filename);
 MUS_EXPORT mus_header_write_hook_t *mus_header_write_set_hook(mus_header_write_hook_t *new_hook);
 
-
-#if HAVE_PTHREADS
-  MUS_EXPORT void mus_thread_restore_error_handler(void);
-  MUS_EXPORT mus_error_handler_t *mus_thread_get_previous_error_handler(void);
-
-  typedef pthread_mutex_t mus_lock_t;
-  #define MUS_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
-  #define MUS_ALREADY_LOCKED EBUSY
-  #define MUS_LOCK_DESTROY(Lock) pthread_mutex_destroy(Lock)
-  #define MUS_LOCK_INIT(Lock) pthread_mutex_init(Lock, NULL)
-  #define MUS_LOCK(Lock) pthread_mutex_lock(Lock)
-  #define MUS_TRY_LOCK(Lock) pthread_mutex_trylock(Lock)
-  #define MUS_UNLOCK(Lock) pthread_mutex_unlock(Lock)
-
-#else
-  #define MUS_LOCK(Lock) do {} while(0)
-  #define MUS_TRY_LOCK(Lock) 0
-  #define MUS_UNLOCK(Lock) do {} while(0)
-  typedef int mus_lock_t;
-  #define MUS_LOCK_INITIALIZER 0
-  #define MUS_ALREADY_LOCKED 1
-#endif
-
-
 #ifdef __cplusplus
 }
 #endif

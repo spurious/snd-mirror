@@ -162,77 +162,53 @@ static picture_t *bombs[NUM_BOMBS];
 
 void show_lock(snd_info *sp)
 {
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
+  if (mini_lock)
     {
-      if (mini_lock)
-	{
-	  draw_picture(sp->name_pix_ax, mini_lock, 0, 0, 0, 0, 16, 16);
-	  gtk_widget_show(NAME_PIX(sp));
-	}
-      MUS_UNLOCK(sp->stop_sign_lock);
+      draw_picture(sp->name_pix_ax, mini_lock, 0, 0, 0, 0, 16, 16);
+      gtk_widget_show(NAME_PIX(sp));
     }
 }
 
 
 void hide_lock(snd_info *sp)
 {
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
-    {
-      if (mini_lock)
-	gtk_widget_hide(NAME_PIX(sp));
-      MUS_UNLOCK(sp->stop_sign_lock);
-    }
+  if (mini_lock)
+    gtk_widget_hide(NAME_PIX(sp));
 }
 
 
 static void show_stop_sign(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
-    {
-      if (stop_sign)
-	draw_picture(sp->stop_pix_ax, stop_sign, 0, 0, 0, 0, 16, 16);
-      gtk_widget_show(STOP_PIX(sp));
-      MUS_UNLOCK(sp->stop_sign_lock);
-    }
+  if (stop_sign)
+    draw_picture(sp->stop_pix_ax, stop_sign, 0, 0, 0, 0, 16, 16);
+  gtk_widget_show(STOP_PIX(sp));
 }
 
 
 static void hide_stop_sign(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
-    {
-      gtk_widget_hide(STOP_PIX(sp));
-      MUS_UNLOCK(sp->stop_sign_lock);
-    }
+  gtk_widget_hide(STOP_PIX(sp));
 }
 
 
 void show_bomb(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
-    {
-      if (sp->bomb_ctr >= NUM_BOMBS) 
-	sp->bomb_ctr = 0;
-      draw_picture(sp->name_pix_ax, bombs[sp->bomb_ctr], 0, 0, 0, 0, 16, 16);
-      gtk_widget_show(NAME_PIX(sp));
-      sp->bomb_ctr++; 
-      MUS_UNLOCK(sp->stop_sign_lock);
-    }
+  if (sp->bomb_ctr >= NUM_BOMBS) 
+    sp->bomb_ctr = 0;
+  draw_picture(sp->name_pix_ax, bombs[sp->bomb_ctr], 0, 0, 0, 0, 16, 16);
+  gtk_widget_show(NAME_PIX(sp));
+  sp->bomb_ctr++; 
 }
 
 
 void hide_bomb(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
-    {
-      gtk_widget_hide(NAME_PIX(sp));
-      sp->bomb_ctr = 0;
-      MUS_UNLOCK(sp->stop_sign_lock);
-    }
+  gtk_widget_hide(NAME_PIX(sp));
+  sp->bomb_ctr = 0;
 }
 
 
@@ -2150,16 +2126,12 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
 void set_sound_pane_file_label(snd_info *sp, const char *str)
 {
-  if (MUS_TRY_LOCK(sp->starred_name_lock) != MUS_ALREADY_LOCKED)
+  if ((sp->name_string == NULL) || 
+      (strcmp(sp->name_string, str) != 0))
     {
-      if ((sp->name_string == NULL) || 
-	  (strcmp(sp->name_string, str) != 0))
-	{
-	  if (sp->name_string) free(sp->name_string);
-	  sp->name_string = mus_strdup(str);
-	  set_label(NAME_BUTTON(sp), str);
-	}
-      MUS_UNLOCK(sp->starred_name_lock);
+      if (sp->name_string) free(sp->name_string);
+      sp->name_string = mus_strdup(str);
+      set_label(NAME_BUTTON(sp), str);
     }
 }
 

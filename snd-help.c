@@ -321,9 +321,6 @@ char *version_info(void)
 #else
 	  ", int", snd_itoa(MUS_SAMPLE_BITS), " samples",
 #endif
-#if HAVE_PTHREADS
-	  ", with threads",
-#endif
 	  ")",
 	  (consistent) ? consistent : "",
 	  "\n    CLM ", snd_itoa(MUS_VERSION), ".", 

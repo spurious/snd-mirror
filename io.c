@@ -31,9 +31,6 @@
   #include <string.h>
 #endif
 #include <stdarg.h>
-#if HAVE_PTHREAD_H
-  #include <pthread.h>
-#endif
 
 #ifdef _MSC_VER
   #include <direct.h>
@@ -556,17 +553,10 @@ static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
 
-#if HAVE_PTHREADS
-  static mus_lock_t io_table_lock = MUS_LOCK_INITIALIZER;
-#endif
-
 
 int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, mus_long_t location, int chans, int type)
 {
   int err = MUS_NO_ERROR;
-
-  MUS_LOCK(&io_table_lock);
-
   if (io_fd_size == 0)
     {
       io_fd_size = tfd + IO_FD_ALLOC_SIZE;
@@ -607,9 +597,6 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
       else err = MUS_MEMORY_ALLOCATION_FAILED;
     }
   else err = MUS_MEMORY_ALLOCATION_FAILED;
-
-  MUS_UNLOCK(&io_table_lock);
-
   return(err);
 }
 
@@ -766,9 +753,6 @@ int mus_file_close(int fd)
   int close_result = 0;
 
   if ((io_fds == NULL) || (fd >= io_fd_size) || (fd < 0) || (io_fds[fd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
-
-  MUS_LOCK(&io_table_lock);
-
   fdp = io_fds[fd];
 
 #if USE_SND
@@ -780,8 +764,6 @@ int mus_file_close(int fd)
   if (fdp->name) {free(fdp->name); fdp->name = NULL;}
   free(fdp);
   io_fds[fd] = NULL;
-
-  MUS_UNLOCK(&io_table_lock);
 
   if (close_result < 0)
     return(MUS_CANT_CLOSE_FILE);

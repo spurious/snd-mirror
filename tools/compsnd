@@ -912,39 +912,6 @@ make
 ./snd -noinit --features "'clm 'snd-gtk"
 make allclean
 
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --enable-threads                                       ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --enable-threads --quiet
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-s7 'snd-motif 'snd-threads"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --enable-threads g++                                   ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --enable-threads --quiet CC=g++
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-s7 'snd-threads"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --enable-threads --with-gtk --with-ruby                ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --enable-threads --with-gtk --with-ruby --quiet
-make
-./snd --version
-./snd -noinit --features ":clm, :snd-gtk, :snd_ruby"
-make allclean
-
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --with-portaudio                                       ---- '
 echo ' -------------------------------------------------------------------------------- '
@@ -1022,12 +989,6 @@ echo ' -------------------------------- ex 6 -------------------------------- '
 echo ' -------------------------------------------------------------------------------- '
 gcc -o exs7 exs7.c s7.o -lm -DEX6
 
-make clean
-echo ' -------------------------------------------------------------------------------- '
-echo ' -------------------------------- sndlib threads -------------------------------- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --enable-threads
-make
 make clean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -------------------------------- sndlib ruby -------------------------------- '

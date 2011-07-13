@@ -45,7 +45,7 @@
 /* originally I tried to simplify C GC by using global static strings that were 
  *   freed whenever the associated function was called again, on the assumption
  *   that the preceding value was now unused.  In a multithread context, that
- *   assumption is false, so I can't use code like this:
+ *   assumption is false, so I didn't use code like this:
  *
  *  static char *tmpstr = NULL;
  *

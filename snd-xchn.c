@@ -617,7 +617,6 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
       int k, all_eds = 0, ed, filelen;
       char *title;
 
-      MUS_LOCK(sp->edit_history_lock);
       for (k = 0; k < sp->nchans; k++)
 	{
 	  ncp = sp->chans[k];
@@ -657,7 +656,6 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
       free(edits);
       XmListSelectPos(lst, cp->edhist_base + cp->edit_ctr + 1, false);
       if (from_graph) goto_graph(cp);
-      MUS_UNLOCK(sp->edit_history_lock);
     }
   else
     {

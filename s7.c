@@ -34,7 +34,6 @@
  *          (this makes it easy to extend built-in operators like "+" -- see s7.html for a simple example)
  *        lists, strings, vectors, and hash-tables are (set-)applicable objects
  *        true multiple-values
- *        threads (optional)
  *        multidimensional vectors
  *        hooks (conditions)
  *
@@ -90,12 +89,8 @@
 
 /* 
  * Your config file goes here, or just replace that #include line with the defines you need.
- * The compile-time switches involve booleans, threads, complex numbers, and multiprecision arithmetic.
+ * The compile-time switches involve booleans, complex numbers, and multiprecision arithmetic.
  * Currently we assume we have setjmp.h (used by the error handlers).
- *
- * If pthreads are available, and you want to use threads in Scheme:
- *
- *   #define HAVE_PTHREADS 1
  *
  * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1 and we're not in C++.
  * 
@@ -213,10 +208,7 @@
 
 
 #ifndef WITH_OPTIMIZATION
-#ifndef HAVE_PTHREADS
-  #define HAVE_PTHREADS 0
-#endif
-#define WITH_OPTIMIZATION (!HAVE_PTHREADS)
+#define WITH_OPTIMIZATION 1
   /* this currently speeds s7 up by about a factor of 1/3 (27 -> 19) -- not sure it's worth all the code. 
    */
 #endif
@@ -255,7 +247,6 @@
  *    sundry leftovers
  *    multiple-values, quasiquote
  *    eval
- *    threads
  *    multiprecision arithmetic
  *    initialization
  *
@@ -303,10 +294,6 @@
 #endif
 
 #include <setjmp.h>
-
-#if HAVE_PTHREADS || HAVE_PTHREAD_H
-  #include <pthread.h>
-#endif
 
 #include "s7.h"
 
@@ -721,16 +708,6 @@ typedef struct s7_cell {
 
 
 
-#if HAVE_PTHREADS
-typedef struct {
-  s7_scheme *sc;
-  s7_pointer func;
-  pthread_t *thread;
-  void *data;
-} thred;
-#endif
-
-
 static s7_pointer *small_ints, *small_negative_ints, *chars;
 static s7_pointer real_zero; 
 
@@ -834,10 +811,9 @@ struct s7_scheme {
   s7_pointer unbound_variable_hook;   /* *unbound-variable-hook* hook object */
   s7_pointer error_hook;              /* *error-hook* hook object */
 
-  /* these 6 are pointers so that all thread refs are to the same thing */
-  bool *gc_off, *gc_stats;            /* gc_off: if true, the GC won't run, gc_stats: if true, print stats during GC */
-  unsigned long *gensym_counter;
-  bool *symbol_table_is_locked;       /* this also needs to be global across threads */
+  bool gc_off, gc_stats;              /* gc_off: if true, the GC won't run, gc_stats: if true, print stats during GC */
+  unsigned int gensym_counter;
+  bool symbol_table_is_locked;  
 
   #define INITIAL_STRBUF_SIZE 1024
   unsigned int strbuf_size;
@@ -859,15 +835,6 @@ struct s7_scheme {
   void (*error_exiter)(void);
   bool (*begin_hook)(s7_scheme *sc);
   
-#if HAVE_PTHREADS
-  struct s7_scheme *orig_sc;
-  s7_pointer key_values;
-  int thread_id;
-  int *thread_ids;               /* global current top thread_id */
-  s7_pointer *gc_temps;
-  int gc_temps_top;
-#endif
-
   s7_pointer *trace_list;
   int trace_list_size, trace_top, trace_depth;
   int no_values, current_line, s7_call_line, safety;
@@ -1041,12 +1008,7 @@ struct s7_scheme {
 #define UNUSED_BITS                   0x78000000
 
 
-#if HAVE_PTHREADS
-#define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f))
-/* the gc call can be interrupted, leaving mark bits set -- we better not clear those bits */
-#else
 #define set_type(p, f)                typeflag(p) = f
-#endif
 
 #define is_true(Sc, p)                ((p) != Sc->F)
 #define is_false(Sc, p)               ((p) == Sc->F)
@@ -1522,20 +1484,11 @@ static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- GC -------------------------------- */
 
-#if HAVE_PTHREADS
-static pthread_mutex_t protected_objects_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
 #define is_gc_nil(p) ((p) == sc->GC_NIL)
 
 int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 {
   unsigned int i, loc, size, new_size;
-
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&protected_objects_lock);
-  sc = sc->orig_sc;
-#endif
 
   loc = sc->protected_objects_loc++;
   size = sc->protected_objects_size;
@@ -1546,9 +1499,6 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
   if (is_gc_nil(vector_element(sc->protected_objects, loc)))
     {
       vector_element(sc->protected_objects, loc) = x;
-#if HAVE_PTHREADS
-      pthread_mutex_unlock(&protected_objects_lock);
-#endif
       return(loc);
     }
   
@@ -1557,9 +1507,6 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
       if (is_gc_nil(vector_element(sc->protected_objects, i)))
 	{
 	  vector_element(sc->protected_objects, i) = x;
-#if HAVE_PTHREADS
-	  pthread_mutex_unlock(&protected_objects_lock);
-#endif
 	  return(i);
 	}
     }
@@ -1573,10 +1520,6 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
   sc->protected_objects_loc = size + 1;
 
   vector_element(sc->protected_objects, size) = x;
-  
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&protected_objects_lock);
-#endif
   return(size);
 }
 
@@ -1585,44 +1528,24 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x)
 {
   unsigned int i;
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&protected_objects_lock);
-  sc = sc->orig_sc;
-#endif
-
   for (i = 0; i < sc->protected_objects_size; i++)
     if (vector_element(sc->protected_objects, i) == x)
       {
 	vector_element(sc->protected_objects, i) = sc->GC_NIL;
 	sc->protected_objects_loc = i;
-#if HAVE_PTHREADS
-	pthread_mutex_unlock(&protected_objects_lock);
-#endif
 	return;
       }
-
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&protected_objects_lock);
-#endif
 }
 
 
 void s7_gc_unprotect_at(s7_scheme *sc, int loc)
 {
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&protected_objects_lock);
-  sc = sc->orig_sc;
-#endif
-
   if ((loc >= 0) &&
       (loc < (int)sc->protected_objects_size))
     {
       vector_element(sc->protected_objects, loc) = sc->GC_NIL;
       sc->protected_objects_loc = loc;
     }
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&protected_objects_lock);
-#endif
 }
 
 
@@ -1630,19 +1553,10 @@ s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
 {
   s7_pointer obj;
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&protected_objects_lock);
-  sc = sc->orig_sc;
-#endif
-
   obj = sc->UNSPECIFIED;
   if ((loc >= 0) &&
       (loc < (int)sc->protected_objects_size))
     obj = vector_element(sc->protected_objects, loc);
-
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&protected_objects_lock);
-#endif
 
   if (obj == sc->GC_NIL)
     return(sc->UNSPECIFIED);
@@ -2173,7 +2087,7 @@ static int gc(s7_scheme *sc)
   s7_cell **old_free_heap_top;
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
 
-  if (*(sc->gc_stats))
+  if (sc->gc_stats)
     {
       fprintf(stdout, "gc ");
 #if HAVE_GETTIMEOFDAY && (!_MSC_VER)
@@ -2210,14 +2124,6 @@ static int gc(s7_scheme *sc)
   S7_MARK(car(sc->T3_1));
   S7_MARK(car(sc->T3_2));
   S7_MARK(car(sc->T3_3));
-
-#if HAVE_PTHREADS
-  {
-    int i;
-    for (i = 0; i < GC_TEMPS_SIZE; i++)
-      S7_MARK(sc->gc_temps[i]);
-  }
-#endif
 
   S7_MARK(sc->protected_objects);
   {
@@ -2305,7 +2211,7 @@ static int gc(s7_scheme *sc)
     sweep(sc);
   }
 
-  if (*(sc->gc_stats))
+  if (sc->gc_stats)
     {
 #if HAVE_GETTIMEOFDAY && (!_MSC_VER)
       struct timeval t0;
@@ -2348,17 +2254,10 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 #endif
 
 
-#if HAVE_PTHREADS
-
-  #define NEW_CELL(Sc, Obj) Obj = new_cell(Sc)
-  #define NEW_CELL_NO_CHECK(Sc, Obj) Obj = new_cell(Sc)
-
-#else
-
-  #define NEW_CELL(Sc, Obj) \
-do {  	     \
+#define NEW_CELL(Sc, Obj) \
+  do {  	     \
       if (Sc->free_heap_top > Sc->free_heap_trigger) \
-        { /* if (!(*(Sc->gc_off))) gc(Sc); */ Obj = (*(--(Sc->free_heap_top)));} \
+        { /* if (!(Sc->gc_off)) gc(Sc); */ Obj = (*(--(Sc->free_heap_top)));} \
       else Obj = new_cell(Sc);                       \
     } while (0)
 
@@ -2369,35 +2268,19 @@ do {  	     \
   /* not faster:
     #define NEW_CELL(Sc, Obj) do {Obj = ((Sc->free_heap_top > Sc->free_heap_trigger) ? (*(--(Sc->free_heap_top))) : new_cell(Sc);} while (0)
   */
-#endif
 
 
-#if HAVE_PTHREADS
-static pthread_mutex_t alloc_lock = PTHREAD_MUTEX_INITIALIZER;
-
-static s7_pointer new_cell(s7_scheme *nsc)
-#else
 static s7_pointer new_cell(s7_scheme *sc)
-#endif
 {
   s7_pointer p;
-  
-#if HAVE_PTHREADS
-  s7_scheme *sc;
-  pthread_mutex_lock(&alloc_lock);
-  /* this is not good.  A lot of time can be spent setting this dumb lock.
-   */
-  sc = nsc->orig_sc;
-#endif
 
   if (sc->free_heap_top <= sc->free_heap_trigger)
     {
       /* no free heap */
       unsigned int k, old_size, freed_heap = 0;
       
-      if (!(*(sc->gc_off)))
+      if (!(sc->gc_off))
         freed_heap = gc(sc);
-      /* when threads, the gc function can be interrupted at any point and resumed later -- mark bits need to be preserved during this interruption */
       
       if (freed_heap < sc->heap_size / 4) /* was 1000, setting it to 2 made no difference in run time */
 	{
@@ -2434,14 +2317,6 @@ static s7_pointer new_cell(s7_scheme *sc)
 
   p = (*(--(sc->free_heap_top)));
 
-#if HAVE_PTHREADS
-  nsc->gc_temps[nsc->gc_temps_top++] = p;
-  if (nsc->gc_temps_top >= GC_TEMPS_SIZE)
-    nsc->gc_temps_top = 0;
-
-  pthread_mutex_unlock(&alloc_lock);
-#endif
-
   /* originally I tried to mark each temporary value until I was done with it, but
    *   that way madness lies... By delaying GC of _every_ %$^#%@ pointer, I can dispense
    *   with hundreds of individual protections.  So the free_heap's last GC_TEMPS_SIZE
@@ -2462,25 +2337,18 @@ Evaluation produces a surprising amount of garbage, so don't leave the GC off fo
       if (!s7_is_boolean(car(args)))
 	return(s7_wrong_type_arg_error(sc, "gc", 0, car(args), "#f (turn GC off) or #t (turn it on)"));	
 
-      (*(sc->gc_off)) = (car(args) == sc->F);
-      if (*(sc->gc_off)) return(sc->F);
+      sc->gc_off = (car(args) == sc->F);
+      if (sc->gc_off) return(sc->F);
     }
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&alloc_lock);
-  gc(sc->orig_sc);
-  pthread_mutex_unlock(&alloc_lock);
-#else
   gc(sc);
-#endif
-  
   return(sc->UNSPECIFIED);
 }
 
 
 s7_pointer s7_gc_on(s7_scheme *sc, bool on)
 {
-  (*(sc->gc_off)) = !on;
+  sc->gc_off = !on;
   return(s7_make_boolean(sc, on));
 }
 
@@ -2489,7 +2357,7 @@ static s7_pointer g_gc_stats_set(s7_scheme *sc, s7_pointer args)
 {
   if (s7_is_boolean(cadr(args)))
     {
-      (*(sc->gc_stats)) = (cadr(args) != sc->F);      
+      sc->gc_stats = (cadr(args) != sc->F);      
       return(cadr(args));
     }
   return(sc->ERROR);
@@ -2498,7 +2366,7 @@ static s7_pointer g_gc_stats_set(s7_scheme *sc, s7_pointer args)
 
 void s7_gc_stats(s7_scheme *sc, bool on)
 {
-  (*(sc->gc_stats)) = on;
+  sc->gc_stats = on;
   s7_symbol_set_value(sc, s7_make_symbol(sc, "*gc-stats*"), make_boolean(sc, on));
 }
 
@@ -2795,10 +2663,6 @@ static int symbol_table_hash(const char *key, unsigned int *loc)
 } 
 
 
-#if HAVE_PTHREADS
-static pthread_mutex_t symtab_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
 static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location) 
 { 
   s7_pointer x, str; 
@@ -2813,16 +2677,8 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
        (name[symbol_name_length(x) - 1] == ':')))
     typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&symtab_lock);
-#endif
-
   vector_element(sc->symbol_table, location) = permanent_cons(x, vector_element(sc->symbol_table, location), 
 							      T_PAIR | T_IMMUTABLE | T_DONT_COPY);
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&symtab_lock);
-#endif
-  
   return(x); 
 } 
 
@@ -2830,14 +2686,6 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
 static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int location) 
 { 
   s7_pointer x; 
-  /* in the pthreads case, I don't think any lock is needed here -- we're simply
-   *   scanning the symbol table for a name.  If we had a lock here, it would not solve
-   *   the race condition: thread1 looks for symbol in make_symbol, does not find it,
-   *   gets set to add it, but thread2 which is also looking for symbol, gets the lock and 
-   *   does not find it, thread1 adds it, thread2 adds it.  The look-and-add code in
-   *   make_symbol needs to be atomic -- we can't handle the problem here.  I doubt
-   *   this is actually a problem (two threads loading the same file at the same time?).
-   */
   for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
     { 
       const char *s; 
@@ -2867,23 +2715,10 @@ void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symb
   int i; 
   s7_pointer x; 
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&symtab_lock);
-#endif
-
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
     for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
       if (symbol_func(symbol_name(car(x)), data))
-	{
-#if HAVE_PTHREADS
-	  pthread_mutex_unlock(&symtab_lock);
-#endif
-	  return;
-	}
-
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&symtab_lock);
-#endif
+	return;
 }
 
 
@@ -2892,23 +2727,10 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
   int i; 
   s7_pointer x; 
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&symtab_lock);
-#endif
-
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
     for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
       if (symbol_func(symbol_name(car(x)), cdr(x), data))
-	{
-#if HAVE_PTHREADS
-	  pthread_mutex_unlock(&symtab_lock);
-#endif
-	  return;
-	}
-
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&symtab_lock);
-#endif
+	return;
 }
 
 /* (for-each
@@ -2926,13 +2748,13 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 static s7_pointer g_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_table_is_locked "set (-s7-symbol-table-locked?) to #t to prohibit the creation of any new symbols"
-  return(make_boolean(sc, (*(sc->symbol_table_is_locked))));
+  return(make_boolean(sc, sc->symbol_table_is_locked));
 }
 
 
 static s7_pointer g_set_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
 {
-  (*(sc->symbol_table_is_locked)) = (car(args) != sc->F);
+  sc->symbol_table_is_locked = (car(args) != sc->F);
   return(car(args));
 }
 
@@ -2948,7 +2770,7 @@ static s7_pointer make_symbol(s7_scheme *sc, const char *name)
   if (is_not_null(x)) 
     return(x); 
 
-  if (*(sc->symbol_table_is_locked))
+  if (sc->symbol_table_is_locked)
     return(s7_error(sc, sc->ERROR, sc->NIL));
 
   x = new_symbol(sc, name, location); 
@@ -2974,9 +2796,9 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   len = safe_strlen(prefix) + 32;
   name = (char *)calloc(len, sizeof(char));
   
-  for (; (*(sc->gensym_counter)) < S7_LONG_MAX; ) 
+  for (; sc->gensym_counter < S7_LONG_MAX; ) 
     { 
-      snprintf(name, len, "{%s}-%ld", prefix, (*(sc->gensym_counter))++); 
+      snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++); 
       location = symbol_table_hash(name, &loc); 
       x = symbol_table_find_by_name(sc, name, location); 
       if (is_not_null(x))
@@ -3130,15 +2952,7 @@ static s7_pointer add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_poin
 	   (is_closure_star(value)) ||
 	   (is_macro(value)) ||
 	   (is_bacro(value))))
-#if HAVE_PTHREADS
-	{
-	  pthread_mutex_lock(&alloc_lock);
-	  s7_remove_from_heap(sc, closure_source(value));
-	  pthread_mutex_unlock(&alloc_lock);
-	}
-#else
-      s7_remove_from_heap(sc, closure_source(value));
-#endif
+	s7_remove_from_heap(sc, closure_source(value));
 
       ge = sc->global_env;
       slot = permanent_cons(variable, value, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
@@ -3555,26 +3369,9 @@ It is a hash-table."
  */
 
 
-#if HAVE_PTHREADS
-static s7_pointer thread_environment(s7_scheme *sc, s7_pointer obj);
-#define CURRENT_ENVIRONMENT_OPTARGS 1
-#else
-#define CURRENT_ENVIRONMENT_OPTARGS 0
-#endif
-
 static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 {
-#if HAVE_PTHREADS
-  #define H_current_environment "(current-environment (thread #f)) returns the current definitions (symbol bindings)"
-  if (is_not_null(args))
-    {
-      if (!(s7_is_thread(car(args))))
-	return(s7_wrong_type_arg_error(sc, "current-environment", 0, car(args), "a thread object"));
-      return(thread_environment(sc, car(args)));
-    }
-#else
   #define H_current_environment "(current-environment) returns the current definitions (symbol bindings)"
-#endif
 
   if (is_environment(sc->envir))
     return(sc->envir);
@@ -3926,22 +3723,8 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   s7_pointer x;
   int loc;
 
-  /* if pthreads, the heap vars are actually in the main thread's s7_scheme object, and the gc process needs to be protected */
-#if HAVE_PTHREADS
-  {
-    s7_scheme *orig_sc;
-    orig_sc = sc->orig_sc;
-    if ((int)(orig_sc->free_heap_top - orig_sc->free_heap) < (int)(orig_sc->heap_size / 4))
-      {
-	pthread_mutex_lock(&alloc_lock); /* mimic g_gc */
-	gc(orig_sc);
-	pthread_mutex_unlock(&alloc_lock);
-      }
-  }
-#else
   if ((int)(sc->free_heap_top - sc->free_heap) < (int)(sc->heap_size / 4))
     gc(sc);
-#endif
 
   /* this gc call is needed if there are lots of call/cc's -- by pure bad luck
    *   we can end up hitting the end of the gc free list time after time while
@@ -6175,9 +5958,8 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool *overflow)
 {
   /* strtod follows LANG which is not what we want (only "." is decimal point in Scheme).
-   *   To overcome LANG in strtod would require screwing around with setlocale which never works
-   *   and isn't thread safe.  So we use our own code -- according to valgrind, 
-   *   this function is much faster than strtod.
+   *   To overcome LANG in strtod would require screwing around with setlocale which never works.
+   *   So we use our own code -- according to valgrind, this function is much faster than strtod.
    *
    * comma as decimal point causes ambiguities: `(+ ,1 2) etc
    */
@@ -10266,11 +10048,6 @@ static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer obj)
 }
 
 
-#if HAVE_PTHREADS
-static pthread_mutex_t rng_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-  
-
 static double next_random(s7_rng_t *r)
 {
   /* The multiply-with-carry generator for 32-bit integers: 
@@ -10286,10 +10063,6 @@ static double next_random(s7_rng_t *r)
   unsigned long long int temp;
   #define RAN_MULT 2131995753UL
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&rng_lock);
-#endif
-
   temp = r->ran_seed * RAN_MULT + r->ran_carry;
   r->ran_seed = (temp & 0xffffffffUL);
   r->ran_carry = (temp >> 32);
@@ -10299,11 +10072,6 @@ static double next_random(s7_rng_t *r)
    */
 
   /* (let ((mx 0) (mn 1000)) (do ((i 0 (+ i 1))) ((= i 10000)) (let ((val (random 123))) (set! mx (max mx val)) (set! mn (min mn val)))) (list mn mx)) */
-
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&rng_lock);
-#endif
-
   return(result);
 }
 
@@ -10919,11 +10687,6 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   if (ind >= string_length(x))
     return(s7_out_of_range_error(sc, "string-set! index,", 2, index, "should be less than string length"));
 
-  /* I believe this does not need a lock in the multithread case -- local vars are specific
-   *   to each thread, and it should be obvious to anyone writing such code that a global
-   *   variable needs its lock (caller-supplied) -- it's not s7's job to protect even the
-   *   caller's (scheme) variables.
-   */
   str = string_value(x);
   str[ind] = (char)s7_character(caddr(args));
   return(caddr(args));
@@ -15527,11 +15290,6 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, bool add
   vector_elements(x) = NULL;
   set_type(x, T_VECTOR | T_DONT_COPY | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
 
-  /* in the multithread case, we can be interrupted here, and a subsequent GC mark sweep can see
-   *    this half-allocated vector.  If length>0, and a non-null "elements" field is left over
-   *    from some previous use, the mark_vector function segfaults.  
-   */
-
   if (len > 0)
     {
       vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
@@ -16184,7 +15942,6 @@ static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
 
 /* -------- sort! -------- */
 
-#if (!HAVE_PTHREADS)
 static s7_scheme *compare_sc;
 static s7_function compare_func;
 static s7_pointer compare_args;
@@ -16197,7 +15954,6 @@ static int vector_compare(const void *v1, const void *v2)
     return(-1);
   return(1);
 }
-#endif
 
 
 static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
@@ -16246,7 +16002,6 @@ If its first argument is a list, the list is copied (despite the '!')."
 	return(s7_wrong_type_arg_error(sc, "sort!", 1, data, "a mutable vector"));
       len = vector_length(data);
 
-#if (!HAVE_PTHREADS)
       if ((is_safe_procedure(lessp)) &&
 	  (is_c_function(lessp)))
 	{
@@ -16259,7 +16014,6 @@ If its first argument is a list, the list is copied (despite the '!')."
 	  s7_gc_unprotect_at(sc, gc_loc);
 	  return(data);
 	}
-#endif      
       break;
 
     case T_C_OBJECT:
@@ -17117,15 +16871,6 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
     }
   if (is_c_function(p))
     return(sc->NIL);
-
-#if HAVE_PTHREADS
-  if (s7_is_thread(p))
-    {
-      thred *f;
-      f = (thred *)s7_object_value(p);
-      p = f->func;
-    }
-#endif
 
   if (is_c_macro(p))
     return(s7_wrong_type_arg_error(sc, "procedure-source", 0, p, "a scheme macro"));
@@ -18088,7 +17833,7 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
  *
  *    reverse uses length and copy
  *
- * the *#readers*, *unbound-variable-hook* funcs have the same problem [symbol-bind, thread func?]
+ * the *#readers*, *unbound-variable-hook* funcs have the same problem [symbol-bind]
  *   [reader funcs are s7_call'ed in check_sharp_readers called from make_sharp_constant]
  */ 
 
@@ -20518,10 +20263,6 @@ untrace without arguments to turn this off."
   int i;
   s7_pointer x;
 
-#if HAVE_PTHREADS
-  sc = sc->orig_sc;
-#endif
-
   if (is_null(args))
     {
       trace_all = true;
@@ -20558,10 +20299,6 @@ static s7_pointer g_untrace(s7_scheme *sc, s7_pointer args)
 If untrace is called with no arguments, all functions are removed, turning off all tracing."
   int i, j, ctr;
   s7_pointer x;
-
-#if HAVE_PTHREADS
-  sc = sc->orig_sc;
-#endif
 
   if (is_null(args))
     {
@@ -20601,18 +20338,10 @@ If untrace is called with no arguments, all functions are removed, turning off a
 }
 
 
-#if HAVE_PTHREADS
-  static pthread_mutex_t trace_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
 static void trace_apply(s7_scheme *sc)
 {
   int i;
   bool trace_it = false;
-
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&trace_lock);
-#endif
 
   if (trace_all)
     trace_it = true;
@@ -20648,26 +20377,11 @@ static void trace_apply(s7_scheme *sc)
       free(tmp1);
       free(tmp2);
       
-#if HAVE_PTHREADS
-      if (sc->thread_id != 0) /* main thread */
-	{
-	  char *tmp3;
-	  tmp3 = (char *)calloc(64, sizeof(char));
-	  snprintf(tmp3, 64, " (thread %d)", sc->thread_id);
-	  strcat(str, tmp3);
-	  free(tmp3);
-	}
-#endif
-      
       strcat(str, "\n");
       write_string(sc, str, sc->output_port);
       free(str);
       
       sc->trace_depth++;
-      
-#if HAVE_PTHREADS
-      pthread_mutex_unlock(&trace_lock);
-#endif
  
       if (is_not_null(hook_functions(sc->trace_hook)))
 	{
@@ -20682,9 +20396,6 @@ static void trace_apply(s7_scheme *sc)
 	   */
 	}
     }
-#if HAVE_PTHREADS
-  else pthread_mutex_unlock(&trace_lock);
-#endif
 }
 
 
@@ -20692,10 +20403,6 @@ static void trace_return(s7_scheme *sc)
 {
   int k, len;
   char *str, *tmp;
-
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&trace_lock);
-#endif
 
   tmp = s7_object_to_c_string(sc, sc->value);  
 
@@ -20712,10 +20419,6 @@ static void trace_return(s7_scheme *sc)
 
   sc->trace_depth--;
   if (sc->trace_depth < 0) sc->trace_depth = 0;
-
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&trace_lock);
-#endif
 }
 
 
@@ -21023,10 +20726,6 @@ static s7_pointer *file_names = NULL;
 static int file_names_size = 0;
 static int file_names_top = -1;
 
-#if HAVE_PTHREADS
-static pthread_mutex_t remember_files_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
 #define remembered_line_number(Line) (Line & 0xfffff)
 #define remembered_file_name(Line)   (((Line >> 20) <= file_names_top) ? file_names[Line >> 20] : sc->F)
 /* this gives room for 4000 files each of 1000000 lines */
@@ -21035,9 +20734,6 @@ static pthread_mutex_t remember_files_lock = PTHREAD_MUTEX_INITIALIZER;
 static int remember_file_name(s7_scheme *sc, const char *file)
 {
   int i, old_size = 0;
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&remember_files_lock);
-#endif
 
   file_names_top++;
   if (file_names_top >= file_names_size)
@@ -21057,10 +20753,6 @@ static int remember_file_name(s7_scheme *sc, const char *file)
 	file_names[i] = sc->F;
     }
   file_names[file_names_top] = s7_make_permanent_string(file);
-
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&remember_files_lock);
-#endif
 
   return(file_names_top);
 }
@@ -21144,10 +20836,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   vector_element(sc->error_info, ERROR_CODE_FILE) = ERROR_INFO_DEFAULT;
   vector_element(sc->error_info, ERROR_ENVIRONMENT) = sc->envir;
   s7_gc_on(sc, true);  /* this is in case we were triggered from the sort function -- clumsy! */
-
-  /* currently sc->error_info is shared by all threads, so if two get an error at the same
-   *   time, could we get a confused error message?
-   */
 
   /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
   if (is_pair(sc->cur_code))
@@ -21785,16 +21473,14 @@ static void display_frame(s7_scheme *sc, s7_pointer envir, s7_pointer port)
 
 static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
 {
-  /* 4 cases currently: 
+  /* 3 cases currently: 
    *    if args=nil, show current stack
-   *           =thread obj, show its stack
    *           =vector, assume it is a vector of envs from *error-info*
    *           =continuation, show its stack
    * if trailing arg is a port, it sets where the output goes
    */
   #define H_stacktrace "(stacktrace (obj #f) (port (current-output-port))) displays a stacktrace.  If obj is not \
-given, the current stack is displayed, if obj is a thread object, its stack is displayed, \
-if obj is *error-info*, the stack at the point of the error is displayed, and if obj \
+given, the current stack is displayed, if obj is *error-info*, the stack at the point of the error is displayed, and if obj \
 is a continuation, its stack is displayed.  If the trailing port argument is not given, \
 output is sent to the current-output-port."
 
@@ -21850,21 +21536,9 @@ output is sent to the current-output-port."
 	  top = continuation_stack_top(obj);
 	  stk = continuation_stack(obj);
 	}
-#if HAVE_PTHREADS
-      else
-	{
-	  if (s7_is_thread(obj))
-	    {
-	      thred *f;
-	      f = (thred *)s7_object_value(obj);
-	      top = s7_stack_top(f->sc);
-	      stk = f->sc->stack;
-	    }
-	}
-#endif	    
     }
   if (stk == sc->F)
-    return(s7_wrong_type_arg_error(sc, "stacktrace", 0, args, "a vector, thread object, or continuation"));
+    return(s7_wrong_type_arg_error(sc, "stacktrace", 0, args, "a vector, or continuation"));
   
   if (sc->envir != stack_environment(stk, top - 1))
     display_frame(sc, sc->envir, port);
@@ -21902,12 +21576,6 @@ void s7_set_begin_hook(s7_scheme *sc, bool (*hook)(s7_scheme *sc))
 
 void s7_quit(s7_scheme *sc)
 {
-  /* if s7 is running in a separate thread, gets hung, and a GUI event tries to interrupt it by calling
-   *    s7_quit, there is no guarantee we'll be in a place in the evaluator where pushing OP_EVAL_DONE
-   *    will actually stop s7.  But the odds are better than zero, and if pthread_setcanceltype is
-   *    asynchronous, and the thread is cancelled before calling s7_quit, there's hope.  Anyway, this
-   *    function assumes you've called s7_eval_c_string from C, and you want to interrupt it.
-   */
   sc->longjmp_ok = false;
   pop_input_port(sc);
 
@@ -23421,7 +23089,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 
 			if (is_null(result))
 			  {
-			    if (*(sc->symbol_table_is_locked))
+			    if (sc->symbol_table_is_locked)
 			      result = sc->F;
 			    else 
 			      {
@@ -31107,8 +30775,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* here we know nothing funny is going on in the closure body -- not even set!
 	       *   so the new_frame with the args can be preallocated, and the arg values simply
 	       *   stored in their slots.  We still need to update frame_id etc.
-	       *
-	       * can this work in the multi-thread case? 
 	       */
 
 	      /* sc->args are the arg values, closure_environment is the preallocated env
@@ -33712,503 +33378,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 
-/* -------------------------------- threads -------------------------------- */
-
-#if HAVE_PTHREADS
-
-static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
-{
-  int i;
-  s7_scheme *new_sc;
-
-  /* whoever called us has presumably grabbed alloc_lock for the duration */
-
-  new_sc = (s7_scheme *)malloc(sizeof(s7_scheme));
-  memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
-  
-  new_sc->gc_temps = (s7_pointer *)calloc(GC_TEMPS_SIZE, sizeof(s7_pointer));
-  for (i = 0; i < GC_TEMPS_SIZE; i++) new_sc->gc_temps[i] = sc->NIL;
-  new_sc->gc_temps_top = 0;
-
-  /* share the heap, symbol table and global environment, protected objects list, and all the startup stuff (all via the memcpy),
-   *   but have separate stacks and eval locals
-   */
-  
-  new_sc->longjmp_ok = false;
-  new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
-  new_sc->strbuf = (char *)calloc(new_sc->strbuf_size, sizeof(char));
-
-  new_sc->read_line_buf = NULL;
-  new_sc->read_line_buf_size = 0;
-  
-  new_sc->stack = vect;
-  new_sc->stack_start = vector_elements(vect);
-  new_sc->stack_end = new_sc->stack_start;
-  new_sc->stack_size = vector_length(vect);
-  new_sc->stack_resize_trigger = (s7_pointer *)(new_sc->stack_start + new_sc->stack_size / 2);
-
-  initialize_op_stack(new_sc);
-  
-  new_sc->w = new_sc->NIL;
-  new_sc->x = new_sc->NIL;
-  new_sc->y = new_sc->NIL;
-  new_sc->z = new_sc->NIL;
-  new_sc->code = new_sc->NIL;
-  new_sc->args = new_sc->NIL;
-  new_sc->value = new_sc->NIL;
-  new_sc->cur_code = ERROR_INFO_DEFAULT;
-
-  /* should threads share the current ports and associated stack?
-   * sc->input_port = sc->NIL;
-   * sc->input_port_stack = sc->NIL;
-   */
-
-  new_sc->no_values = 0;
-  new_sc->key_values = sc->NIL;
-
-  (*(sc->thread_ids))++;                   /* in case a spawned thread spawns another, we need this variable to be global to all */
-  new_sc->thread_id = (*(sc->thread_ids)); /* for more readable debugging printout -- main thread is thread 0 */
-
-  new_sc->default_rng = NULL;
-#if WITH_GMP
-  new_sc->default_big_rng = NULL;
-#endif
-
-  return(new_sc);
-}
-
-
-static s7_scheme *close_s7(s7_scheme *sc)
-{
-  free(sc->strbuf);
-  if (sc->read_line_buf) free(sc->read_line_buf);
-  if (sc->default_rng) free(sc->default_rng);
-#if WITH_GMP
-  if (sc->default_big_rng) free(sc->default_big_rng);
-#endif
-  free(sc);
-  return(NULL);
-}
-
-
-static void mark_s7(s7_scheme *sc)
-{
-  int i;
-  S7_MARK(sc->args);
-  S7_MARK(sc->envir);
-  S7_MARK(sc->code);
-  S7_MARK(sc->cur_code);
-  mark_vector_1(sc->stack, s7_stack_top(sc));
-  S7_MARK(sc->value);
-  S7_MARK(sc->w);
-  S7_MARK(sc->x);
-  S7_MARK(sc->y);
-  S7_MARK(sc->z);
-  S7_MARK(sc->key_values);
-  S7_MARK(sc->input_port);
-  S7_MARK(sc->input_port_stack);
-  S7_MARK(sc->output_port);
-  S7_MARK(sc->error_port);
-  mark_op_stack(sc);
-  for (i = 0; i < GC_TEMPS_SIZE; i++)
-    S7_MARK(sc->gc_temps[i]);
-}
-
-
-static int thread_tag = 0;
-
-
-pthread_t *s7_thread(s7_pointer obj)
-{
-  thred *f;
-  f = (thred *)s7_object_value(obj);
-  if (f) return(f->thread);
-  return(NULL);
-}
-
-
-static char *thread_print(s7_scheme *sc, void *obj)
-{
-  char *buf;
-  thred *p = (thred *)obj;
-  buf = (char *)malloc(32 * sizeof(char));
-  snprintf(buf, 32, "#<thread %d>", p->sc->thread_id);
-  return(buf);
-}
-
-
-static void thread_free(void *obj)
-{
-  thred *f = (thred *)obj;
-  if (f)
-    {
-      /* pthread_detach(*(f->thread)); */
-      free(f->thread);
-      f->thread = NULL;
-      f->sc = close_s7(f->sc);
-      free(f);
-    }
-}
-
-
-static void thread_mark(void *val)
-{
-  thred *f = (thred *)val;
-  if ((f) && (f->sc)) /* possibly still in make_thread */
-    {
-      mark_s7(f->sc);
-      S7_MARK(f->func);
-    }
-}
-
-
-static bool thread_equal(void *obj1, void *obj2)
-{
-  return(obj1 == obj2);
-}
-
-
-static void *run_thread_func(void *obj)
-{
-  thred *f;
-  f = (thred *)s7_object_value((s7_pointer)obj);
-  return((void *)s7_call(f->sc, f->func, f->sc->NIL));
-}
-
-
-s7_scheme *s7_thread_s7(s7_pointer obj)
-{
-  thred *f;
-  f = (thred *)s7_object_value(obj);
-  return(f->sc);
-}
-
-
-void *s7_thread_data(s7_pointer obj)
-{
-  thred *f;
-  f = (thred *)s7_object_value(obj);
-  return(f->data);
-}
-
-  
-static s7_pointer s7_make_thread_1(s7_scheme *sc, void *(*func)(void *obj), void *data, s7_pointer scheme_func, bool local, int stack_size)
-{
-  thred *f;
-  s7_pointer obj, vect, frame;
-  int i, floc, vloc, oloc;
-
-  if (local)
-    frame = new_frame_in_env(sc, sc->envir);
-  else frame = sc->envir;
-
-  floc = s7_gc_protect(sc, frame);
-  vect = s7_make_vector(sc, stack_size);
-  set_type(vect, T_STACK);
-  vloc = s7_gc_protect(sc, vect);
-
-  f = (thred *)calloc(1, sizeof(thred));
-  f->func = scheme_func;
-  
-  obj = s7_make_object(sc, thread_tag, (void *)f);
-  oloc = s7_gc_protect(sc, obj);
-  pthread_mutex_lock(&alloc_lock);
-  
-  f->sc = clone_s7(sc, vect);
-  f->sc->envir = frame;
-  f->sc->y = obj;
-  f->thread = (pthread_t *)malloc(sizeof(pthread_t));
-  f->data = data;
-
-  pthread_create(f->thread, NULL, func, (void *)obj);
-
-  pthread_mutex_unlock(&alloc_lock);
-  s7_gc_unprotect_at(sc, floc);
-  s7_gc_unprotect_at(sc, vloc);
-  s7_gc_unprotect_at(sc, oloc);
-
-  return(obj);
-}
-
-
-/* (define hi (make-thread (lambda () (display "hi")))) */
-
-static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
-{
-  #define H_make_thread "(make-thread thunk (initial-stack-size 300)) creates a new thread running thunk"
-  int stack_size = 300;
-
-  if (!is_procedure(car(args)))
-    return(s7_wrong_type_arg_error(sc, "make-thread", (is_null(cdr(args))) ? 0 : 1, car(args), "a thunk"));
-
-  if (is_not_null(cdr(args)))
-    {
-      if (!s7_is_integer(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "make-thread stack-size", 2, cadr(args), "an integer"));
-      stack_size = s7_integer(cadr(args));
-    }
-  
-  return(s7_make_thread_1(sc, run_thread_func, NULL, car(args), true, stack_size));
-}
-
-
-s7_pointer s7_make_thread(s7_scheme *sc, void *(*func)(void *obj), void *func_obj, bool local)
-{
-  return(s7_make_thread_1(sc, func, func_obj, sc->F, local, 300));
-}
-
-
-bool s7_is_thread(s7_pointer obj)
-{
-  return((is_c_object(obj)) && 
-	 (object_type(obj) == thread_tag));
-}
-
-
-static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_thread "(thread? obj) returns #t if obj is a thread object"
-  return(make_boolean(sc, s7_is_thread(car(args))));
-}
-
-
-static s7_pointer g_join_thread(s7_scheme *sc, s7_pointer args)
-{
-  #define H_join_thread "(join-thread thread) causes the current thread to wait for the thread to finish. It \
-returns the value returned by the thread function."
-  thred *f;
-  if (!s7_is_thread(car(args)))
-    return(s7_wrong_type_arg_error(sc, "join-thread", 0, car(args), "a thread"));
-  
-  f = (thred *)s7_object_value(car(args));
-  pthread_join(*(f->thread), NULL);
-  return(f->sc->value);
-}
-
-
-static s7_pointer thread_environment(s7_scheme *sc, s7_pointer obj)
-{
-  thred *f;
-  f = (thred *)s7_object_value(obj);
-  if ((f) && (f->sc) && (f->sc->envir))
-    return(f->sc->envir);
-  return(sc->NIL);
-}
-
-
-
-/* -------- locks -------- */
-
-static int lock_tag = 0;
-
-
-pthread_mutex_t *s7_lock(s7_pointer obj)
-{
-  return((pthread_mutex_t *)s7_object_value(obj));
-}
-
-
-static char *lock_print(s7_scheme *sc, void *obj)
-{
-  char *buf;
-  buf = (char *)malloc(64 * sizeof(char));
-  snprintf(buf, 64, "#<lock %p>", obj);
-  return(buf);
-}
-
-
-static void lock_free(void *obj)
-{
-  pthread_mutex_t *lock = (pthread_mutex_t *)obj;
-  if (lock)
-    {
-      pthread_mutex_destroy(lock);
-      free(lock);
-    }
-}
-
-
-static bool lock_equal(void *obj1, void *obj2)
-{
-  return(obj1 == obj2);
-}
-
-
-bool s7_is_lock(s7_pointer obj)
-{
-  return((is_c_object(obj)) && 
-	 (object_type(obj) == lock_tag));
-}
-
-
-static s7_pointer g_is_lock(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_lock "(lock? obj) returns #t if obj is a lock (mutex) object"
-  return(make_boolean(sc, s7_is_lock(car(args))));
-}
-
-
-s7_pointer s7_make_lock(s7_scheme *sc)
-{
-  pthread_mutex_t *lock;
-  lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-  pthread_mutex_init(lock, NULL);
-  return(s7_make_object(sc, lock_tag, (void *)lock));  
-}
-
-
-static s7_pointer g_make_lock(s7_scheme *sc, s7_pointer args)
-{
-  #define H_make_lock "(make-lock) creates a new lock (mutex variable)"
-  return(s7_make_lock(sc));
-}
-
-
-static s7_pointer g_grab_lock(s7_scheme *sc, s7_pointer args)
-{
-  #define H_grab_lock "(grab-lock lock) stops the current thread until it can grab the lock."
-  if (g_is_lock(sc, args) == sc->F)
-    return(s7_wrong_type_arg_error(sc, "grab-lock", 0, car(args), "a lock (mutex)"));
-
-  return(s7_make_integer(sc, pthread_mutex_lock((pthread_mutex_t *)s7_object_value(car(args)))));
-}
-
-
-static s7_pointer g_release_lock(s7_scheme *sc, s7_pointer args)
-{
-  #define H_release_lock "(release-lock lock) releases the lock"
-  if (g_is_lock(sc, args) == sc->F)
-    return(s7_wrong_type_arg_error(sc, "release-lock", 0, car(args), "a lock (mutex)"));
-
-  return(s7_make_integer(sc, pthread_mutex_unlock((pthread_mutex_t *)s7_object_value(car(args)))));
-}
-
-
-
-/* -------- thread variables (pthread keys) -------- */
-
-static int key_tag = 0;
-
-static void *key_value(s7_pointer obj)
-{
-  pthread_key_t *key; 
-  key = (pthread_key_t *)s7_object_value(obj);
-  return(pthread_getspecific(*key));                  /* returns NULL if never set */
-}
-
-
-static char *key_print(s7_scheme *sc, void *obj)
-{
-  char *buf, *val_str;
-  s7_pointer val;
-  int len;
-
-  val = sc->F;
-  if (obj)
-    {
-      val = (s7_pointer)pthread_getspecific(*((pthread_key_t *)obj));
-      if (!val)
-	val = sc->F;
-    }
-
-  val_str = s7_object_to_c_string(sc, val);
-  len = 64 + safe_strlen(val_str);
-  buf = (char *)malloc(len * sizeof(char));
-  snprintf(buf, len, "#<[thread %d] key: %s>", sc->thread_id, val_str);
-  if (val_str) free(val_str);
-  return(buf);
-}
-
-
-static void key_free(void *obj)
-{
-  pthread_key_t *key = (pthread_key_t *)obj;
-  if (key)
-    {
-      pthread_key_delete(*key);
-      free(key);
-    }
-}
-
-
-static bool key_equal(void *obj1, void *obj2)
-{
-  return(obj1 == obj2);
-}
-
-
-bool s7_is_thread_variable(s7_pointer obj)
-{
-  return((is_c_object(obj)) &&
-	 (object_type(obj) == key_tag));
-}
-
-
-s7_pointer s7_thread_variable(s7_scheme *sc, s7_pointer obj)
-{
-  void *val;
-  val = key_value(obj);
-  if (val)
-    return((s7_pointer)val);
-  return(sc->F);
-}
-
-
-static s7_pointer g_is_thread_variable(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_thread_variable "(thread-variable? obj) returns #t if obj is a thread variable (a pthread key)"
-  return(make_boolean(sc, s7_is_thread_variable(car(args))));
-}
-
-
-static s7_pointer g_make_thread_variable(s7_scheme *sc, s7_pointer args)
-{
-  #define H_make_thread_variable "(make-thread-variable) returns a new thread specific variable (a pthread key)"
-  pthread_key_t *key;
-  int err;
-  key = (pthread_key_t *)malloc(sizeof(pthread_key_t));
-  err = pthread_key_create(key, NULL);
-  if (err == 0)
-    return(s7_make_object(sc, key_tag, (void *)key));  
-  return(s7_error(sc, make_symbol(sc, "thread-error"), 
-		  make_list_1(sc, make_protected_string(sc, "make-thread-variable failed!?"))));
-}
-
-
-static s7_pointer get_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
-{
-  if (is_not_null(args))
-    return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS,
-		    make_list_3(sc, make_protected_string(sc, "thread variable is a function of no arguments: ~A ~A"),	obj, args)));
-  return(s7_thread_variable(sc, obj));
-}
-
-
-static s7_pointer set_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
-{
-  pthread_key_t *key;  
-  key = (pthread_key_t *)s7_object_value(obj);
-  pthread_setspecific(*key, (void *)car(args)); 
-
-  /* to protect from the GC until either the local key value is set again, or the thread is done,
-   *   we store the key's local value in an alist '(obj value)
-   */
-  {
-    s7_pointer curval;
-    curval = g_assq(sc, make_list_2(sc, obj, sc->key_values));
-    if (curval == sc->F)
-      sc->key_values = cons(sc, cons(sc, obj, car(args)), sc->key_values);
-    else cdr(curval) = car(args);
-  }
-  return(car(args));
-}
-
-
-#endif
-
-
-
-
 /* -------------------------------- multiprecision arithmetic -------------------------------- */
 
 #if WITH_GMP
@@ -35423,10 +34592,6 @@ static s7_pointer string_to_either_complex(s7_scheme *sc,
   return(result);
 }
 
-
-/* object_type(bignum) can be anything (in pthreads case, we first set the various thread variable tags)
- *   so we can't assume it's a very small integer.  However, NUM_COMPLEX + higher bits can't be >= 8.
- */
 
 #define SHIFT_BIGNUM_TYPE(type) (1 << (type + NO_NUM_SHIFT))
 
@@ -38752,16 +37917,11 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 
 	  n = (mpz_t *)malloc(sizeof(mpz_t));
 	  mpz_init(*n);
-#if HAVE_PTHREADS
-	  pthread_mutex_lock(&rng_lock);
-#endif
+
 	  mpz_urandomm(*n, r->state, S7_BIG_INTEGER(num));
 	  /* this does not work if num is a negative number -- you get positive results.
 	   *   so check num for sign, and negate result if necessary.
 	   */
-#if HAVE_PTHREADS
-	  pthread_mutex_unlock(&rng_lock);
-#endif
 	  if (big_is_negative(sc, make_list_1(sc, num)) == sc->T)          /* (random most-negative-fixnum) */
 	    return(big_negate(sc, make_list_1(sc, s7_make_object(sc, big_integer_tag, (void *)n))));
 	  return(s7_make_object(sc, big_integer_tag, (void *)n));
@@ -38773,13 +37933,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	  mpfr_t rat;
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
 	  mpfr_init_set_ui(*n, 1, GMP_RNDN);
-#if HAVE_PTHREADS
-	  pthread_mutex_lock(&rng_lock);
-#endif
 	  mpfr_urandomb(*n, r->state);
-#if HAVE_PTHREADS
-	  pthread_mutex_unlock(&rng_lock);
-#endif
 	  mpfr_init_set_q(rat, S7_BIG_RATIO(num), GMP_RNDN);
 	  mpfr_mul(*n, *n, rat, GMP_RNDN);
 
@@ -38798,13 +37952,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	  mpfr_t *n;
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
 	  mpfr_init_set_ui(*n, 1, GMP_RNDN);
-#if HAVE_PTHREADS
-	  pthread_mutex_lock(&rng_lock);
-#endif
 	  mpfr_urandomb(*n, r->state);
-#if HAVE_PTHREADS
-	  pthread_mutex_unlock(&rng_lock);
-#endif
 	  mpfr_mul(*n, *n, S7_BIG_REAL(num), GMP_RNDN);
 	  return(s7_make_object(sc, big_real_tag, (void *)n));
 	}
@@ -38814,13 +37962,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init(*n);
-#if HAVE_PTHREADS
-	  pthread_mutex_lock(&rng_lock);
-#endif
 	  mpc_urandom(*n, r->state);
-#if HAVE_PTHREADS
-	  pthread_mutex_unlock(&rng_lock);
-#endif
 	  mpfr_mul(mpc_realref(*n), mpc_realref(*n), mpc_realref(S7_BIG_COMPLEX(num)), GMP_RNDN);
 	  mpfr_mul(mpc_imagref(*n), mpc_imagref(*n), mpc_imagref(S7_BIG_COMPLEX(num)), GMP_RNDN);
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
@@ -38949,22 +38091,13 @@ s7_scheme *s7_init(void)
 #endif
   
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
-#if HAVE_PTHREADS
-  sc->orig_sc = sc;
-  sc->gc_temps = (s7_pointer *)calloc(GC_TEMPS_SIZE, sizeof(s7_pointer));
-  for (i = 0; i < GC_TEMPS_SIZE; i++) sc->gc_temps[i] = sc->NIL;
-  sc->gc_temps_top = 0;
-#endif
   
-  sc->gc_off = (bool *)calloc(1, sizeof(bool));
-  (*(sc->gc_off)) = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
-  sc->gc_stats = (bool *)calloc(1, sizeof(bool));
-  (*(sc->gc_stats)) = false;
+  sc->gc_off = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
+  sc->gc_stats = false;
   init_gc_caches(sc);
 
   sc->longjmp_ok = false;
-  sc->symbol_table_is_locked = (bool *)calloc(1, sizeof(bool));
-  (*(sc->symbol_table_is_locked)) = false;
+  sc->symbol_table_is_locked = false;
 
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
@@ -39132,7 +38265,7 @@ s7_scheme *s7_init(void)
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
   sc->symbol_table->hloc = NOT_IN_HEAP;
   
-  sc->gensym_counter = (unsigned long *)calloc(1, sizeof(long));
+  sc->gensym_counter = 0;
   tracing = false;
   trace_all = false;
 
@@ -39146,12 +38279,6 @@ s7_scheme *s7_init(void)
   sc->s7_call_name = NULL;
   sc->safety = 0;
 
-#if HAVE_PTHREADS
-  sc->thread_ids = (int *)calloc(1, sizeof(int));
-  sc->thread_id = 0;
-  sc->key_values = sc->NIL;
-#endif
-  
   sc->global_env = s7_make_vector(sc, 512);
   type(sc->global_env) = T_ENVIRONMENT;
   vector_fill_pointer(sc->global_env) = 0;
@@ -39408,7 +38535,7 @@ s7_scheme *s7_init(void)
   sc->TOO_MANY_ARGUMENTS = s7_make_permanent_string("~A: too many arguments: ~A");
   sc->NOT_ENOUGH_ARGUMENTS = s7_make_permanent_string("~A: not enough arguments: ~A");
 
-  (*(sc->gc_off)) = false;
+  sc->gc_off = false;
 
   /* pws first so that make-procedure-with-setter has a type tag */
   s7_define_safe_function(sc, "make-procedure-with-setter",   g_make_procedure_with_setter,   2, 0, false, H_make_procedure_with_setter);
@@ -39427,7 +38554,7 @@ s7_scheme *s7_init(void)
   s7_define_function_with_setter(sc, "symbol-access",      g_symbol_get_access, g_symbol_set_access, 1, 0, H_symbol_access);
   
   s7_define_safe_function(sc, "global-environment",        g_global_environment,       0, 0, false, H_global_environment);
-  s7_define_safe_function(sc, "current-environment",       g_current_environment,      0, CURRENT_ENVIRONMENT_OPTARGS, false, H_current_environment);
+  s7_define_safe_function(sc, "current-environment",       g_current_environment,      0, 0, false, H_current_environment);
   s7_define_constant_function(sc, "initial-environment",   g_initial_environment,   0, 0, false, H_initial_environment);
   s7_define_function(sc, "augment-environment",            g_augment_environment,      1, 0, true,  H_augment_environment);
   s7_define_function(sc, "augment-environment!",           g_augment_environment_direct, 1, 0, true,  H_augment_environment_direct);
@@ -39888,27 +39015,6 @@ the error type and the info passed to the error handler.");
 
 #if WITH_EXTRA_EXPONENT_MARKERS
   s7_provide(sc, "dfls-exponents");
-#endif
-
-
-#if HAVE_PTHREADS
-  thread_tag = s7_new_type("<thread>",          thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
-  lock_tag =   s7_new_type("<lock>",            lock_print,   lock_free,   lock_equal,   NULL,        NULL, NULL);
-  key_tag =    s7_new_type("<thread-variable>", key_print,    key_free,    key_equal,    NULL,        get_key, set_key);
-
-  s7_define_function(sc, "make-thread",             g_make_thread,             1, 1, false, H_make_thread);
-  s7_define_function(sc, "join-thread",             g_join_thread,             1, 0, false, H_join_thread);
-  s7_define_function(sc, "thread?",                 g_is_thread,               1, 0, false, H_is_thread);
-
-  s7_define_function(sc, "make-lock",               g_make_lock,               0, 0, false, H_make_lock); /* "mutex" is ugly (and opaque) jargon */
-  s7_define_function(sc, "grab-lock",               g_grab_lock,               1, 0, false, H_grab_lock);
-  s7_define_function(sc, "release-lock",            g_release_lock,            1, 0, false, H_release_lock);
-  s7_define_function(sc, "lock?",                   g_is_lock,                 1, 0, false, H_is_lock);
-
-  s7_define_function(sc, "make-thread-variable",    g_make_thread_variable,    0, 0, false, H_make_thread_variable);
-  s7_define_function(sc, "thread-variable?",        g_is_thread_variable,      1, 0, false, H_is_thread_variable);
-
-  s7_provide(sc, "threads");
 #endif
 
   sc->VECTOR_SET = s7_symbol_value(sc, make_symbol(sc, "vector-set!"));

@@ -11334,7 +11334,7 @@ with-sound returns its :output argument.
 	  (scaled-to #f)                         ; if a number, scale the output to peak at that amp
 	  (play *clm-play*)                      ; if #t, play the sound automatically
 	  (to-snd *to-snd*)                      ; if #t, open the output file in Snd
-	  (output-safety *clm-output-safety*)    ; see with-threaded-sound below
+	  (output-safety *clm-output-safety*)
 </pre>
 
 <p>The with-sound syntax may look sightly odd; we include the arguments in the first list, then
@@ -11435,7 +11435,6 @@ everything after that is evaluated as a note list.
     (define *reverb*                 #f)
     (define *output*                 #f)
     (define *clm-delete-reverb*      #f)
-    (define *clm-threads*            4)
     (define *clm-output-safety*      0)
 </pre>
 
@@ -11590,7 +11589,7 @@ avoid lists, if possible, and fancy stuff like map or apply, and you should be f
 
 <br>
 
-<p>There are several other versions of with-sound: with-temp-sound, with-threaded-sound, with-mixed-sound, sound-let, clm-load, and the Common Music
+<p>There are several other versions of with-sound: with-temp-sound, with-mixed-sound, sound-let, clm-load, and the Common Music
 handles, init-with-sound and finish-with-sound.
 <a name="withtempsound">with-temp-sound</a> and <a name="sound-let">sound-let</a> set up temporary bindings for embedded with-sounds.
 </p>
@@ -11664,77 +11663,6 @@ with_sound() do
 end
 </pre></td></tr></table>
 
-
-<br>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-threaded-sound</h4></td></tr></table>
-</td></tr></table>
-
-<p><a name="withthreadedsound">with-threaded-sound</a> looks (and, I hope, behaves) exactly like with-sound, but
-the notes in the with-sound body are handled by separate threads.  It is currently restricted to versions of Snd
-running s7.
-</p>
-
-<pre>
-    (with-threaded-sound ()
-      (fm-violin 0 1 440 .1)
-      (fm-violin 0 1 660 .1))
-</pre>
-
-<p>If you start a thread for each note, then join them all at once, the computation slows down a lot due to
-the fact that all the threads are jostling each other trying to write output to the output file,
-so *clm-threads* sets the number of threads running
-through the note list at any one time.  It defaults to 4.  You can speed up
-with-threaded-sound if you set *clm-file-buffer-size* large enough to accommodate
-the entire output, then pass :output-safety 1 to with-threaded-sound.
-You may also have to set <a href="extsnd.html#musmaxmalloc">mus-max-malloc</a> to tell Snd that the huge allocation is intentional.
-</p>
-
-<pre>
-(set! *clm-threads* 8)                     ; we're running on a machine with 8 "cores"
-(set! *clm-file-buffer-size* (* 30 65536)) ; big enough to hold all our output in RAM
-(set! *clm-output-safety* 1)               ; assure CLM that output buffers never get flushed
-(set! (optimization) 6)                    ; make sure "run" is turned on
-
-(with-threaded-sound (:statistics #t :output "thread.snd")
-  (pins 0 20 "oboe.snd" 1.0 1.5 10.0)      ; from clm-ins.scm
-  (pins 1 20 "oboe.snd" 1.0 1.5 10.0)
-  (pins 2 20 "oboe.snd" 1.0 1.5 10.0)
-  (pins 3 20 "oboe.snd" 1.0 1.5 10.0)
-  (pins 4 20 "oboe.snd" 1.0 1.5 10.0)
-  (pins 5 20 "oboe.snd" 1.0 1.5 10.0)
-  (pins 6 20 "oboe.snd" 1.0 1.5 10.0)
-  (pins 7 20 "oboe.snd" 1.0 1.5 10.0))
-</pre>
-
-<p>
-If the notelist is made up of very short notes (so that most the time is in the instrument setup, and
-not in the run macro), there's little gained by using threads; since the threads share one heap, 
-cell allocations become a bottleneck.  I have used with-threaded-sound on 2, 8, and 16 core machines.
-In the best cases, I see speed up factors of more or less n - 1 (14.8 times faster in the 16-core case, for example,
-where the process monitor program shows all 16 cores running at better than 95%).  Now for 32...
-</p>
-
-<br>
-<table border=0 bordercolor="lightgreen" width=20% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width=100% border=0><tr><td bgcolor="#EEFDEE"><h5>with-threaded-channels</h5></td></tr></table>
-</td></tr></table>
-
-<p><a name="withthreadedchannels">with-threaded-channels</a>
-is a related experiment in multithreading.  It applies 'func', a function
-of two arguments (the sound and the channel number), to each channel in the sound 'snd',
-using a separate thread for each call. 
-</p>
-<pre>
-    (with-threaded-channels snd 
-      (lambda (snd chn) 
-        (src-channel 2.0 0 #f snd chn)))
-</pre>
-
-<p>Snd does not always  handle threads with aplomb.  The primary problem is that
-neither Motif nor Gtk is thread-safe, so you have to squelch updates during any
-threaded operation (see with-threaded-channels itself).
-</p>
 
 
 <br>
