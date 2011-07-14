@@ -40,6 +40,7 @@
 			 (if (not (eq? oexp 'error)) 
 			     (begin (display args) (newline)))
 			 'error))))
+    ;(format #t "~A: ~A -> ~A~%" otst result oexp)
     (if (not (equal? result oexp))
 	(format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) otst result oexp))))
 
@@ -219,6 +220,7 @@
 
 
 (define _ht_ (make-hash-table))
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3687,7 +3689,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (lst)
    (if (list? lst)
        (if (not (equal? lst (reverse (reverse lst))))
-	   (format #t ";(reverse (reverse ~A)) -> ~A?~%" (reverse (reverse lst))))))
+	   (format #t ";(reverse (reverse ~A)) -> ~A?~%" lst (reverse (reverse lst))))))
  lists)
 
 (for-each
@@ -11532,6 +11534,10 @@ time, so that the displayed results are
 (let () (define (jtest7) (let ((j (list 0))) (do ((i 0 (+ i 1))) ((= i 10) (j 0)) (if (= i 3) (list-set! j 0 i))))) (test (jtest7) 3))
 (let () (define (jtest8) (let ((j #f)) (do ((i 0 (+ i 1))) ((= i 10) (car j)) (if (= i 3) (set! j (list i)))))) (test (jtest8) 3))
 (let () (define (jtest9) (let ((j #f)) (do ((i 0 (+ i 1))) ((= i 10) (j 0)) (if (= i 3) (set! j (vector i)))))) (test (jtest9) 3))
+(let () (define (jtest10) (let ((j (cons 1 2))) (do ((i 0 (+ i 1))) ((= i 10) j) (if (= i 3) (set-car! j i))))) (test (jtest10) '(3 . 2)))
+(let () (define (jtest11) (let ((j (cons 1 2))) (do ((i 0 (+ i 1))) ((= i 10) j) (if (= i 3) (set! j (cons 0 i)))))) (test (jtest11) '(0 . 3)))
+;; (let ((f #f)) (define (jtest12) (do ((i 0 (+ i 1))) ((= i 10) (f)) (if (= i 3) (set! f (lambda () i))))) (test (jtest12) 3))
+;; this lambda business is a separate issue
 
 (test (call-with-exit (lambda (return) (do () () (if #t (return 123))))) 123)
 (test (call-with-exit (lambda (return) (do () (#f) (if #t (return 123))))) 123)

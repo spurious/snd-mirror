@@ -350,6 +350,9 @@ enum {OP_NO_OP,
       OP_SAFE_IF1_1, OP_SAFE_IF2_1,
 
       OP_IS_PAIR, OP_NOT = OP_IS_PAIR+5, OP_IS_EQ = OP_NOT+25,
+      OP_IS_LIST = OP_IS_EQ+25, OP_IS_SYMBOL = OP_IS_LIST+5, OP_IS_BOOLEAN = OP_IS_SYMBOL+5,
+      OP_IS_VECTOR = OP_IS_BOOLEAN+5, OP_IS_STRING = OP_IS_VECTOR+5, OP_IS_NULL = OP_IS_STRING+5,
+      OP_IS_HASH_TABLE = OP_IS_NULL+5, OP_IS_CHAR = OP_IS_HASH_TABLE+5,
 #endif
       OP_MAX_DEFINED_1};
 
@@ -997,6 +1000,10 @@ struct s7_scheme {
 #define set_safe_closure(p)           typeflag(p)  |= T_SAFE_CLOSURE
 #define is_safe_closure(p)            ((typeflag(p) & T_SAFE_CLOSURE) != 0)
 
+#define T_SETTER                      (1 << (TYPE_BITS + 19))
+#define set_setter(p)                 typeflag(p)  |= T_SETTER
+#define is_setter(p)                  ((typeflag(p) & T_SETTER) != 0)
+
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
@@ -1005,7 +1012,7 @@ struct s7_scheme {
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x78000000
+#define UNUSED_BITS                   0x70000000
 
 
 #define set_type(p, f)                typeflag(p) = f
@@ -2261,7 +2268,7 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
       else Obj = new_cell(Sc);                       \
     } while (0)
 
-  #define NEW_CELL_NO_CHECK(Sc, Obj) do {Obj = (*(--(Sc->free_heap_top)));} while (0)
+#define NEW_CELL_NO_CHECK(Sc, Obj) do {Obj = (*(--(Sc->free_heap_top)));} while (0)
   /* since sc->free_heap_trigger is GC_TRIGGER_SIZE above the free heap base, we don't need
    *   to check it repeatedly after the 1st such check.
    */
@@ -12809,7 +12816,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -12829,6 +12836,8 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_checked(obj) ?            " checked" : "",
 	     is_unsafe(obj) ?             " unsafe" : "",
 	     is_optimized(obj) ?          " optimized" : "",
+	     is_safe_closure(obj) ?       " safe closure" : "",
+	     is_setter(obj) ?             " setter" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
     return(buf);
   }
@@ -24085,9 +24094,10 @@ static void set_function_ops(s7_scheme *sc, const char *name, opcode_t base_op)
     {
       c_function_ops(f)[i] = assign_internal_syntax(sc, name, base_op + i);
       op_to_base[base_op + i] = base_op;
-      opt_names[base_op + i] = name;
+      op_names[base_op + i] = name;
     }
 }
+
 
 static void set_function_2_ops(s7_scheme *sc, const char *name, opcode_t base_op)
 {
@@ -24107,7 +24117,7 @@ static void set_function_2_ops(s7_scheme *sc, const char *name, opcode_t base_op
 	offset = (i * 5) + k;
 	c_function_ops(f)[offset] = assign_internal_syntax(sc, name, base_op + offset);
 	op_to_base[base_op + offset] = base_op;
-	opt_names[base_op + offset] = name;
+	op_names[base_op + offset] = name;
       }
 }
 
@@ -24148,11 +24158,11 @@ static void set_not_function_ops(s7_scheme *sc)
     {
       c_function_ops(f)[i] = assign_internal_syntax(sc, "not", base_op + i);
       op_to_base[base_op + i] = base_op;
-      opt_names[base_op + i] = "not";
+      op_names[base_op + i] = "not";
 
       c_function_ops(f)[i + NOT_IS_PAIR] = assign_internal_syntax(sc, "not", base_op + i + NOT_IS_PAIR);
       op_to_base[base_op + i + NOT_IS_PAIR] = base_op;
-      opt_names[base_op + i + NOT_IS_PAIR] = "not";
+      op_names[base_op + i + NOT_IS_PAIR] = "not";
     }
 }
 
@@ -24160,6 +24170,15 @@ static void set_not_function_ops(s7_scheme *sc)
 static void init_ops(s7_scheme *sc)
 {
   set_function_ops(sc, "pair?", OP_IS_PAIR);
+  set_function_ops(sc, "boolean?", OP_IS_BOOLEAN);
+  set_function_ops(sc, "null?", OP_IS_NULL);
+  set_function_ops(sc, "string?", OP_IS_STRING);
+  set_function_ops(sc, "vector?", OP_IS_VECTOR);
+  set_function_ops(sc, "hash-table?", OP_IS_HASH_TABLE);
+  /* set_function_ops(sc, "list?", OP_IS_LIST); */
+  set_function_ops(sc, "char?", OP_IS_CHAR);
+  set_function_ops(sc, "symbol?", OP_IS_SYMBOL);
+
   set_function_2_ops(sc, "eq?", OP_IS_EQ);
   set_not_function_ops(sc);
 
@@ -26488,6 +26507,7 @@ static s7_pointer check_define(s7_scheme *sc)
       if (sc->op == OP_DEFINE_STAR)
 	check_lambda_star_args(sc, cdar(sc->code));
       else check_lambda_args(sc, cdar(sc->code));
+
 #if WITH_OPTIMIZATION
       optimize(sc, cdr(sc->code), 1, collect_collisions(sc, cdar(sc->code), sc->NIL));
 
@@ -26611,12 +26631,14 @@ static bool step_var_is_safe(s7_scheme *sc, s7_pointer step_var, s7_pointer body
     {
       /* fprintf(stderr, "    %s: pair: %d opt: %d unsafe: %d\n", DISPLAY_80(car(p)), is_pair(car(p)), is_optimized(car(p)), is_unsafe(car(p))); */
       if ((is_pair(car(p))) &&
-	  ((!is_optimized(car(p))) || (is_unsafe(car(p)))))
+	  ((!is_optimized(car(p))) || 
+	   (is_unsafe(car(p))) ||
+	   (is_setter(caar(p)))))
 	{
 	  /* fprintf(stderr, "      syntax: %d\n", is_syntactic(caar(p))); */
 	  if (is_syntactic(caar(p)))
 	    {
-	      /* fprintf(stderr, "      op: %d %s\n", syntax_opcode(caar(p)), op_names[syntax_opcode(caar(p))]); */
+	      /* fprintf(stderr, "      op: %d %s\n", syntax_opcode(caar(p)), op_names[syntax_opcode(caar(p))]);  */
 	      if (syntax_opcode(caar(p)) <= OP_SAFE_SET)
 		{
 		  switch (syntax_opcode(caar(p)))
@@ -26667,10 +26689,15 @@ static bool step_var_is_safe(s7_scheme *sc, s7_pointer step_var, s7_pointer body
 	    }
 	  else
 	    {
-	      s7_pointer x;
-	      for (x = cdar(p); is_pair(x); x = cdr(x))
-		if (car(x) == step_var)
-		  return(false);
+	      if ((is_setter(caar(p))) ||
+		  (!is_global(caar(p))) ||
+		  (!is_safe_procedure(symbol_value(symbol_global_slot(caar(p))))))
+		{
+		  s7_pointer x;
+		  for (x = cdar(p); is_pair(x); x = cdr(x))
+		    if (car(x) == step_var)
+		      return(false);
+		}
 	    }
 	}
     }
@@ -26769,6 +26796,9 @@ static s7_pointer check_do(s7_scheme *sc)
 	 */
       {
 	s7_pointer vars, end, body;
+
+	/* return(sc->code); */
+
 	vars = car(sc->code);
 	end = cadr(sc->code);
 	body = cddr(sc->code);
@@ -26801,7 +26831,7 @@ static s7_pointer check_do(s7_scheme *sc)
 
 		if ((safe_list_length(sc, step_expr) != 3) ||
 		    (!is_global(car(step_expr))) ||
-		    (c_function_call(SYMBOL_VALUE(car(step_expr), find_symbol_or_bust_12)) != g_add))
+		    (c_function_call(symbol_value(symbol_global_slot(car(step_expr)))) != g_add))
 		  return(sc->code);
 
 		/* fprintf(stderr, "[3]");  */
@@ -26838,7 +26868,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			    ((step_var == cadr(end_expr)) || (step_var == caddr(end_expr))) &&
 			    (safe_list_length(sc, end_expr) == 3) &&
 			    (is_global(car(end_expr))) &&
-			    (c_function_call(SYMBOL_VALUE(car(end_expr), find_symbol_or_bust_12)) == g_equal))
+			    (c_function_call(symbol_value(symbol_global_slot(car(end_expr)))) == g_equal))
 			  {
 			    /* end val must be either an int constant, or a symbol whose value is an int that
 			     *   is never set in the body
@@ -31662,6 +31692,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #if WITH_OPTIMIZATION
 
 #define is_F(Obj) ((Obj) == sc->F)
+#define is_list(Obj) (s7_is_list(sc, Obj))
 
 #define BOOLEAN(Op, Expr)\
     case Op+OP_C:\
@@ -31685,35 +31716,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       BOOLEAN(OP_IS_PAIR, is_pair);
       /* BOOLEAN_NOT(OP_NOT, NOT_IS_PAIR, !is_pair); -- or include this in boolean macro? (and assume the NOT_IS_* offset) */
       /* another common case is (? (car ...)) */
+
+      /* BOOLEAN(OP_IS_LIST,         is_list); */
+      BOOLEAN(OP_IS_SYMBOL,       s7_is_symbol);
+      BOOLEAN(OP_IS_NULL,         is_null);
+      BOOLEAN(OP_IS_BOOLEAN,      s7_is_boolean);
+      BOOLEAN(OP_IS_CHAR,         s7_is_character);
+      BOOLEAN(OP_IS_STRING,       s7_is_string);
+      BOOLEAN(OP_IS_VECTOR,       s7_is_vector);
+      BOOLEAN(OP_IS_HASH_TABLE,   s7_is_hash_table);
+
 #if 0
       /*
-    case OP_IS_PAIR+OP_C:   
-      sc->value = make_boolean(sc, is_pair(car(sc->code))); 
-      goto START;
-    case OP_IS_PAIR+OP_Q:   
-      sc->value = make_boolean(sc, is_pair(cadr(car(sc->code))));
-      goto START;
-    case OP_IS_PAIR+OP_S:   
-      sc->value = make_boolean(sc, is_pair(ARG_SYMBOL_VALUE(car(sc->code), find_symbol_or_bust_11))); 
-      goto START;
-    case OP_IS_PAIR+OP_P_1: 
-      sc->value = make_boolean(sc, is_pair(sc->value));                                               
-      goto START;
-    case OP_IS_PAIR+OP_P:   
-      push_stack(sc, OP_IS_PAIR+OP_P_1, sc->args, sc->code); 
-      sc->code = car(sc->code);
-      goto EVAL_PAIR;
-
-        BOOLEAN(OP_IS_LIST,         s7_is_list)
-	BOOLEAN(OP_IS_SYMBOL,       s7_is_symbol)
-	BOOLEAN(OP_IS_NULL,         is_null)
-	  BOOLEAN(OP_IS_BOOLEAN,      s7_is_boolean)
-	  BOOLEAN(OP_IS_CHAR,         s7_is_character)
-	  BOOLEAN(OP_IS_STRING,       s7_is_string)
-	  BOOLEAN(OP_IS_VECTOR,       s7_is_vector)
-	  BOOLEAN(OP_IS_HASH_TABLE,   s7_is_hash_table)
 	BOOLEAN(OP_IS_ENVIRONMENT,  type(~A) == T_ENVIRONMENT))
 	BOOLEAN(OP_IS_EOF_OBJECT,   ~A == sc->EOF_OBJECT))
+
+        BOOLEAN(OP_IS_NUMBER,     s7_is_number);
+        BOOLEAN(OP_IS_COMPLEX,    s7_is_number);
+        BOOLEAN(OP_IS_REAL,       s7_is_real);
+        BOOLEAN(OP_IS_RATIONAL,   s7_is_rational);
+        BOOLEAN(OP_IS_INTEGER,    s7_is_integer);
+	BOOLEAN OP_IS_EXACT,      s7_is_rational);
+	BOOLEAN OP_IS_INEXACT,    !s7_is_rational);
+	BOOLEAN OP_IS_NEGATIVE,   s7_is_negative);
+	BOOLEAN OP_IS_POSITIVE,   s7_is_positive);
+	BOOLEAN OP_IS_ZERO,       s7_is_zero);
 
 	     ;; 'OP_IS_CONSTANT 'OP_IS_DEFINED 'OP_IS_PROVIDED 'OP_IS_KEYWORD 'OP_IS_PROCEDURE_WITH_SETTER
 	     ;; 'OP_IS_INPUT_PORT 'OP_IS_OUTPUT_PORT 'OP_PORT_CLOSED 'OP_CHAR_READY
@@ -31722,20 +31749,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     (list 'OP_IS_CONTINUATION "make_boolean(sc, type(~A) == T_CONTINUATION)")
 	     (list 'OP_IS_HOOK         "make_boolean(sc, type(~A) == T_HOOK)")
 
-	     (list 'OP_IS_NUMBER       "make_boolean(sc, type(~A) == T_NUMBER)")
-	     (list 'OP_IS_COMPLEX      "make_boolean(sc, type(~A) == T_NUMBER)")
 
-	     ;; don't repeat Obj! 
-              ((type(Obj) == T_NUMBER) && (number_type(Obj) == NUM_INT))
-	     ;; 'OP_IS_REAL 'OP_IS_RATIONAL 'OP_IS_INTEGER
-	     ;; 'OP_IS_INEXACT 'OP_IS_EXACT
-
-	      ((s7_is_real(Obj)) ? s7_is_negative(Obj) : s7_boolean(s7_wrong_type_arg_error(sc, "negative?", 0, Obj, "a real")))
-	     ;; 'OP_IS_NEGATIVE 'OP_IS_ZERO 'OP_IS_POSITIVE
-	     ;; 'OP_IS_EVEN 'OP_IS_ODD
+	     ;; 'OP_IS_EVEN 'OP_IS_ODD: (s7_integer(Obj) & 1) == 0));
 	     ;; 'OP_IS_NAN 'OP_IS_INFINITE
 
              ;; c_function_call(f)(sc, (car(sc->T1_1) = Expr(...), sc->T1_1) ) for the general (safe?) case?
+
+	     OP_CAR+OP_Q: sc->value = Expr(cadr(car(sc->code))) where Expr here is ((is_pair(Obj)) ? car(Obj) : error) more or less
       */
 #endif
 
@@ -38466,7 +38486,7 @@ s7_scheme *s7_init(void)
   add_slot_to_environment(sc, sc->NIL, make_symbol(sc, "else"), sc->ELSE);
 
   sc->VECTOR = make_symbol(sc, "vector");
-  typeflag(sc->VECTOR) |= T_DONT_COPY; 
+  typeflag(sc->VECTOR) |= (T_DONT_COPY | T_SETTER); 
   
   sc->MULTIVECTOR = make_symbol(sc, "{multivector}");
   typeflag(sc->MULTIVECTOR) |= T_DONT_COPY; 
@@ -38535,7 +38555,7 @@ s7_scheme *s7_init(void)
   sc->TOO_MANY_ARGUMENTS = s7_make_permanent_string("~A: too many arguments: ~A");
   sc->NOT_ENOUGH_ARGUMENTS = s7_make_permanent_string("~A: not enough arguments: ~A");
 
-  sc->gc_off = false;
+  sc->gc_off= false;
 
   /* pws first so that make-procedure-with-setter has a type tag */
   s7_define_safe_function(sc, "make-procedure-with-setter",   g_make_procedure_with_setter,   2, 0, false, H_make_procedure_with_setter);
@@ -38736,7 +38756,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "make-string",               g_make_string,              1, 1, false, H_make_string);
   s7_define_safe_function(sc, "string-length",             g_string_length,            1, 0, false, H_string_length);
   s7_define_safe_function(sc, "string-ref",                g_string_ref,               2, 0, false, H_string_ref);
-  s7_define_function(sc, "string-set!",                    g_string_set,               3, 0, false, H_string_set);
+  s7_define_safe_function(sc, "string-set!",                g_string_set,               3, 0, false, H_string_set);
   s7_define_safe_function(sc, "string=?",                  g_strings_are_equal,        2, 0, true,  H_strings_are_equal);
   s7_define_safe_function(sc, "string<?",                  g_strings_are_less,         2, 0, true,  H_strings_are_less);
   s7_define_safe_function(sc, "string>?",                  g_strings_are_greater,      2, 0, true,  H_strings_are_greater);
@@ -38806,7 +38826,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "append",                    g_append,                   0, 0, true,  H_append);
   s7_define_function(sc, "list",                           g_list,                     0, 0, true,  H_list);
   s7_define_safe_function(sc, "list-ref",                  g_list_ref,                 2, 0, true,  H_list_ref);
-  s7_define_function(sc, "list-set!",                      g_list_set,                 3, 0, true,  H_list_set);
+  s7_define_safe_function(sc, "list-set!",                 g_list_set,                 3, 0, true,  H_list_set);
   s7_define_function(sc, "list-tail",                      g_list_tail,                2, 0, false, H_list_tail);
   /* perhaps with setter? */
   s7_define_safe_function(sc, "make-list",                 g_make_list,                1, 1, false, H_make_list);
@@ -38822,20 +38842,27 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "vector->list",              g_vector_to_list,           1, 0, false, H_vector_to_list);
   s7_define_safe_function(sc, "list->vector",              g_list_to_vector,           1, 0, false, H_list_to_vector);
   s7_define_safe_function(sc, "vector-fill!",              g_vector_fill,              2, 0, false, H_vector_fill);
-  s7_define_function(sc, "vector",                         g_vector,                   0, 0, true,  H_vector);
+  s7_define_safe_function(sc, "vector",                    g_vector,                   0, 0, true,  H_vector);
+#if WITH_OPTIMIZATION
+  {
+    s7_pointer f;
+    f = s7_symbol_value(sc, sc->VECTOR);
+    set_setter(f); /* for optimized DO's benefit */
+  }
+#endif
   s7_define_safe_function(sc, "vector-length",             g_vector_length,            1, 0, false, H_vector_length);
   s7_define_safe_function(sc, "vector-ref",                g_vector_ref,               2, 0, true,  H_vector_ref);
-  s7_define_function(sc, "vector-set!",                    g_vector_set,               3, 0, true,  H_vector_set);
+  s7_define_safe_function(sc, "vector-set!",               g_vector_set,               3, 0, true,  H_vector_set);
   s7_define_safe_function(sc, "make-vector",               g_make_vector,              1, 1, false, H_make_vector);
   s7_define_safe_function(sc, "vector-dimensions",         g_vector_dimensions,        1, 0, false, H_vector_dimensions);
   s7_define_function(sc, "sort!",                          g_sort,                     2, 0, false, H_sort);
 
 
-  s7_define_function(sc, "hash-table",                     g_hash_table,               0, 0, true,  H_hash_table);
+  s7_define_safe_function(sc, "hash-table",                g_hash_table,               0, 0, true,  H_hash_table);
   s7_define_safe_function(sc, "hash-table?",               g_is_hash_table,            1, 0, false, H_is_hash_table);
   s7_define_safe_function(sc, "make-hash-table",           g_make_hash_table,          0, 1, false, H_make_hash_table);
   s7_define_safe_function(sc, "hash-table-ref",            g_hash_table_ref,           2, 0, true,  H_hash_table_ref);
-  s7_define_function(sc, "hash-table-set!",                g_hash_table_set,           3, 0, false, H_hash_table_set);
+  s7_define_safe_function(sc, "hash-table-set!",           g_hash_table_set,           3, 0, false, H_hash_table_set);
   s7_define_safe_function(sc, "hash-table-size",           g_hash_table_size,          1, 0, false, H_hash_table_size);
   s7_define_safe_function(sc, "make-hash-table-iterator",  g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
 
@@ -39017,20 +39044,31 @@ the error type and the info passed to the error handler.");
   s7_provide(sc, "dfls-exponents");
 #endif
 
-  sc->VECTOR_SET = s7_symbol_value(sc, make_symbol(sc, "vector-set!"));
-  typeflag(sc->VECTOR_SET) |= T_DONT_COPY; 
+  {
+    s7_pointer sym;
+    sc->VECTOR_SET = s7_symbol_value(sc, sym = make_symbol(sc, "vector-set!"));
+    typeflag(sc->VECTOR_SET) |= (T_DONT_COPY | T_SETTER); 
+    set_setter(sym);
+    
+    sc->LIST_SET = s7_symbol_value(sc, sym = make_symbol(sc, "list-set!"));
+    typeflag(sc->LIST_SET) |= (T_DONT_COPY | T_SETTER); 
+    set_setter(sym);
+    
+    sc->HASH_TABLE_SET = s7_symbol_value(sc, sym = make_symbol(sc, "hash-table-set!"));
+    typeflag(sc->HASH_TABLE_SET) |= (T_DONT_COPY | T_SETTER); 
+    set_setter(sym);
 
-  sc->LIST_SET = s7_symbol_value(sc, make_symbol(sc, "list-set!"));
-  typeflag(sc->LIST_SET) |= T_DONT_COPY; 
-
-  sc->HASH_TABLE_SET = s7_symbol_value(sc, make_symbol(sc, "hash-table-set!"));
-  typeflag(sc->HASH_TABLE_SET) |= T_DONT_COPY; 
-
-  sc->HASH_TABLE_ITERATE = s7_make_function(sc, "(hash-table iterate)", g_hash_table_iterate, 1, 0, false, "internal hash-table iteration function");
-  typeflag(sc->HASH_TABLE_ITERATE) |= T_DONT_COPY; 
-
-  sc->STRING_SET = s7_symbol_value(sc, make_symbol(sc, "string-set!"));
-  typeflag(sc->STRING_SET) |= T_DONT_COPY; 
+    sym = make_symbol(sc, "cons");
+    set_setter(sym);
+    sym = s7_symbol_value(sc, sym);
+    set_setter(sym);
+    
+    sc->HASH_TABLE_ITERATE = s7_make_function(sc, "(hash-table iterate)", g_hash_table_iterate, 1, 0, false, "internal hash-table iteration function");
+    typeflag(sc->HASH_TABLE_ITERATE) |= T_DONT_COPY; 
+    
+    sc->STRING_SET = s7_symbol_value(sc, make_symbol(sc, "string-set!"));
+    typeflag(sc->STRING_SET) |= T_DONT_COPY; 
+  }
 
   s7_function_set_setter(sc, "car",                 "set-car!");
   s7_function_set_setter(sc, "cdr",                 "set-cdr!");
