@@ -103,7 +103,7 @@
 /* some timings (I keep losing these stats, so I'll put them here for safekeeping, "*"=not optimizable)
  *     valgrind --tool=callgrind snd ws.scm [etc -- no stats, not to snd, *clm-output-safety*=1]
  *
- *      test                                                        10.4   (10.7?)   11.4   11.10  12.2  unrun[28-Jun-11] [12-Jul]
+ *      test                                           10.4   (10.7?)   11.4   11.10  12.2  unrun[28-Jun-11] [12-Jul]
  *
  * () (fm-violin 0 20 440 .1)                          1068     642     561     528    479    3692   7.7     3248  6.8   [546 in v.c]
  * (:channels 2) (fm-violin 0 20 440 .1 :degree 45)    1228     764     687     570    505    3722   7.4     3325  6.6
