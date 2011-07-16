@@ -13336,6 +13336,10 @@ time, so that the displayed results are
 (test (letrec ((var (values 1 2 3))) var) 'error)
 (test (let ((x ((lambda () (values 1 2))))) x) 'error)
 (test (+ 1 ((lambda () ((lambda () (values 2 3)))))) 6)
+(test (let () (define (hi) (symbol? (values 1 2 3))) (hi)) 'error)
+(test (let () (define (hi) (symbol? (values))) (hi)) #f) ; this is consistent with earlier such cases: (boolean? (values))
+(test (let () (define (hi) (symbol? (values 'a))) (hi)) #t)
+(test (let () (define (hi) (symbol? (values 1))) (hi)) #f)
 
 (test (let ((str "hi")) (string-set! (values str 0 #\x)) str) "xi")
 (test (values if) if)
@@ -20347,7 +20351,6 @@ abs     1       2
 
     ))
 
-   
 #|
 ;;; these tests are problematic -- they might not fail as hoped, or they might generate unwanted troubles
 (let ((bad-ideas "
