@@ -3290,7 +3290,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
 	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
 	(if (not (equal? val1 val2))
-	    (format #t ";(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
+	    (format #t ";(~A ~S) -> ~S, (~A-1): ~S?~%" name lst val1 val2))))
     lists))
  (list 'caar 'cadr 'cdar 'cddr 'caaar 'caadr 'cadar 'cdaar 'caddr 'cdddr 'cdadr 'cddar 
        'caaaar 'caaadr 'caadar 'cadaar 'caaddr 'cadddr 'cadadr 'caddar 'cdaaar 
