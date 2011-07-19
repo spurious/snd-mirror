@@ -10249,21 +10249,6 @@ a2" 3) "132")
 ;;    still sees the full string when it evaluates, not the string that results from
 ;;    the inner call.
 
-(test (let ((name '+))
-	(let ((+ *))	
-	  (eval (list name 2 3))))
-      6)
-(test (let ((name +))
-	(let ((+ *))	
-	  (eval (list name 2 3))))
-      5)
-;; why is this considered confusing?  It has nothing to do with eval!
-
-(test (let ((call/cc (lambda (x)
-		       (let ((c (call/cc x))) c))))
-	(call/cc (lambda (r) (r 1))))
-      1)
-
 
 
 ;;; -------- object->string
@@ -12793,6 +12778,7 @@ time, so that the displayed results are
 
 (let ()
   (define (hi a) (+ a x))
+  ;(format #t "hi: ~S~%" (procedure-source hi))
   (test ((apply let '((x 32)) (list (procedure-source hi))) 12) 44))
 ;; i.e. make a closure from (let ((x 32)) <procedure-source hi>)
 
@@ -61935,6 +61921,21 @@ etc
 
 ;(define (hi) (do ((i 0 (+ i 1))) ((= i 200000) i) (abs i)))
 ;(test (hi) 200000)
+
+(test (let ((name '+))
+	(let ((+ *))	
+	  (eval (list name 2 3))))
+      6)
+(test (let ((name +))
+	(let ((+ *))	
+	  (eval (list name 2 3))))
+      5)
+;; why is this considered confusing?  It has nothing to do with eval!
+
+(test (let ((call/cc (lambda (x)
+		       (let ((c (call/cc x))) c))))
+	(call/cc (lambda (r) (r 1))))
+      1)
 
 (format #t "~%;all done!~%")
 
