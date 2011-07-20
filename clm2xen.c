@@ -1907,6 +1907,43 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
   XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
   return(s7_f(s7));
 }
+
+
+static s7_pointer oscil_1;
+
+static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer obj;
+  obj = s7_car(args);
+  if (s7_object_type(obj) == mus_xen_tag)
+    {
+      mus_any *osc;
+      osc = (mus_any *)(((mus_xen *)s7_object_value(obj))->gen);
+      if (mus_oscil_p(osc))
+	return(s7_make_real(s7, mus_oscil_unmodulated(osc)));
+    }
+  XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
+  return(s7_f(s7));
+}
+
+static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 1)
+    return(oscil_1);
+  return(f);
+}
+
+static void init_choosers(s7_scheme *sc)
+{
+  s7_pointer f;
+
+  /* oscil */
+  f = s7_name_to_value(sc, "oscil");
+  s7_function_set_chooser(f, oscil_chooser);
+
+  oscil_1 = s7_make_function(sc, "oscil", g_oscil_1, 1, 0, false, "experimental oscil optimization");
+  s7_function_set_class(oscil_1, s7_function_class(f));
+}
 #endif
 
 
@@ -8803,6 +8840,9 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_nsin,           g_make_nsin_w,           0, 4, 0, H_make_nsin); 
   XEN_DEFINE_PROCEDURE(S_make_asymmetric_fm,  g_make_asymmetric_fm_w,  0, 8, 0, H_make_asymmetric_fm);
 
+#if HAVE_SCHEME
+  init_choosers(s7);
+#endif
 
 
   /* -------- clm-print (see also snd-xen.c) -------- */

@@ -20577,6 +20577,15 @@ abs     1       2
 (test (let () (set! initial-environment 2)) 'error)
 (test (let ((initial-environment 2)) initial-environment) 'error)
 
+(test (eq? (global-environment) '()) #f)
+(test (eq? (global-environment) (global-environment)) #t)
+(test (eq? (global-environment) (initial-environment)) #f)
+(test (eqv? (global-environment) (global-environment)) #t)
+(test (eqv? (global-environment) (initial-environment)) #f)
+(test (equal? (global-environment) (global-environment)) #t)
+(test (equal? (global-environment) (initial-environment)) #f)
+(test (equal? (current-environment) (initial-environment)) #f)
+
 (test (let () (augment-environment! (initial-environment) (cons 'a 32)) (symbol->value 'a (initial-environment))) #<undefined>)
 (test (let ((caar 123)) (+ caar (with-environment (initial-environment) (caar '((2) 3))))) 125)
 (test (let ()

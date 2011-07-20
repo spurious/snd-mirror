@@ -2849,7 +2849,7 @@
 				   (if tilde-time
 				       (begin
 					 (if (= curlys 0)
-					     (if (and (not (member c '(#\~ #\T #\t #\& #\% #\^ #\newline #\}))) ; ~* consumes an arg
+					     (if (and (not (memq c '(#\~ #\T #\t #\& #\% #\^ #\newline #\}))) ; ~* consumes an arg
 						      (not (call-with-exit
 							    (lambda (return)
 							      (do ((k i (+ k 1)))
@@ -2861,8 +2861,8 @@
 						 (let ((dir (string-ref str i)))
 						   ;; the possibilities are endless, so I'll stick to the simplest
 						   (if (and (not (char-numeric? dir))
-							    (not (member dir '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\, #\{ #\} #\@ #\P #\*
-									       #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p))))
+							    (not (memq dir '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\, #\{ #\} #\@ #\P #\*
+									     #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p))))
 						       (format #t "  ~A (line ~D): unrecognized format directive: ~C in ~S, ~S~%"
 							       name line-number dir str form))
 						   (set! dirs (+ dirs 1)))))
