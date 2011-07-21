@@ -11920,6 +11920,11 @@ time, so that the displayed results are
 (test (set! ('((1 2) 1) () . 1) 1) 'error)
 (test (set! ('(1 1) () . 1) 1) 'error)
 
+(test (let () (define (hi) (let ((x 1000)) (set! x (+ x 1)) x)) (hi) (hi)) 1001)
+(test (let () (define (hi) (let ((x 1000.5)) (set! x (+ x 1)) x)) (hi) (hi)) 1001.5)
+(test (let () (define (hi) (let ((x 3/2)) (set! x (+ x 1)) x)) (hi) (hi)) 5/2)
+(test (let () (define (hi) (let ((x "asdf")) (set! x (+ x 1)) x)) (hi) (hi)) 'error)
+
 
 
 
