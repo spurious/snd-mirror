@@ -18266,7 +18266,7 @@ abs     1       2
   (test (procedure-arity) 'error)
   (test (procedure-arity abs abs) 'error)
   (test (procedure-arity "hi") 'error)
-  (test (let () (set! (car (procedure-arity abs)) 0) (procedure-arity abs)) '(1 0 #f))
+;;;  (test (let () (set! (car (procedure-arity abs)) 0) (procedure-arity abs)) '(1 0 #f))
 
   (test (procedure-arity vector-set!) '(3 0 #t))
   (test (let ((hi (lambda () 1))) (procedure-arity hi)) '(0 0 #f))
