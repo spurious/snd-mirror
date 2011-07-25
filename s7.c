@@ -886,15 +886,16 @@ struct s7_scheme {
 #define T_HOOK                22
 #define T_ENVIRONMENT         23
 #define T_STACK               24
-#define T_C_MACRO             25
-#define T_C_POINTER           26
-#define T_C_FUNCTION          27
-#define T_C_ANY_ARGS_FUNCTION 28
-#define T_C_OPT_ARGS_FUNCTION 29
-#define T_C_RST_ARGS_FUNCTION 30
-#define T_C_LST_ARGS_FUNCTION 31
+#define T_COUNTER             25
+#define T_C_MACRO             26
+#define T_C_POINTER           27
+#define T_C_FUNCTION          28
+#define T_C_ANY_ARGS_FUNCTION 29
+#define T_C_OPT_ARGS_FUNCTION 30
+#define T_C_RST_ARGS_FUNCTION 31
+#define T_C_LST_ARGS_FUNCTION 32
 
-#define BUILT_IN_TYPES        32
+#define BUILT_IN_TYPES        33
 
 #define TYPE_BITS                     8
 #define typeflag(p)                   ((p)->tf.flag)
@@ -2042,6 +2043,7 @@ static void init_mark_functions(void)
   mark_function[T_HOOK] = mark_hook;
   mark_function[T_ENVIRONMENT] = mark_environment;
   mark_function[T_STACK] = mark_stack;
+  mark_function[T_COUNTER] = mark_pair;
   mark_function[T_C_MACRO] = just_mark;
   mark_function[T_C_POINTER] = just_mark;
   mark_function[T_C_FUNCTION] = just_mark;
@@ -2468,6 +2470,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_C_MACRO:
     case T_C_POINTER:
     case T_HOOK:
+    case T_COUNTER:
     case T_ENVIRONMENT:
       break;
 
@@ -2651,19 +2654,20 @@ static s7_pointer g_stack_size(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- symbols -------------------------------- */
 
+#define HASH_MULT 8
+
 static int symbol_table_hash(const char *key, unsigned int *loc) 
 { 
   unsigned int hashed = 0;
   const char *c; 
   for (c = key; *c; c++) 
-    hashed = *c + hashed * 37;
+    hashed = *c + hashed * HASH_MULT;
   if (loc) (*loc) = hashed;
   return(hashed % SYMBOL_TABLE_SIZE); 
 
   /* using ints here is much faster, and the symbol table will not be enormous, so it's worth splitting out this case */
-  /* precomputing the * 37 and so on only saved about 10% compute time -- 1/2260 overall time */
 
-  /* chain lengths (after s7test): 
+  /* chain lengths (after s7test using mult=37): 
    *   all chars: 43 159 329 441 395 349 217 152 69 35 12 4 1 0 0 1          max: 15
    *    4 chars: 572 528 307 183 128 90 50 48 41 35 34 23 21 ...             max: 182!
    *    8 chars: 114 307 404 411 301 197 146 98 77 35 28 18 11 16 ...        max: 79
@@ -2671,6 +2675,18 @@ static int symbol_table_hash(const char *key, unsigned int *loc)
    *
    * currently the hash calculation is ca 8 (s7test) and the find_by_name process 3,
    *   if we use 4 chars, this calc goes to 6/7 but the find calc to 8/9
+   *
+   * the multiplier (8) doesn't matter:
+   *   mult  1: 1744
+   *         2: 1743
+   *         3: 1743
+   *         7: 1744
+   *         8: 1743
+   *        16: 1745
+   *        17: 1746
+   *        32: 1746
+   *        37: 1744
+   *        39: 1744
    */
 } 
 
@@ -8818,6 +8834,99 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if WITH_OPTIMIZATION
+static s7_pointer multiply_2, multiply_i2, multiply_f2;
+
+static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, y;
+  s7_num_t a, b;
+  x = car(args);
+  y = cadr(args);
+  if (!s7_is_number(x))
+    return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
+  if (!s7_is_number(y))
+    return(s7_wrong_type_arg_error(sc, "*", 2, y, "a number"));
+  a = number(x);
+  b = number(y);
+  switch (a.type | b.type)
+    {
+    case NUM_INT: 
+      return(s7_make_integer(sc, integer(a) * integer(b)));
+      break;
+      
+    case NUM_REAL2:
+    case NUM_REAL:
+      return(s7_make_real(sc, num_to_real(a) * num_to_real(b)));
+      break;
+      
+    default:
+      return(g_multiply(sc, args));
+      break;
+    }
+  return(x);
+}
+
+static s7_pointer g_multiply_i2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_num_t a;
+  x = car(args);
+  if (!s7_is_number(x))
+    return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
+  a = number(x);
+  switch (a.type)
+    {
+    case NUM_INT: 
+      return(s7_make_integer(sc, integer(a) * 2));
+      break;
+      
+    case NUM_RATIO:
+      return(s7_make_ratio(sc, numerator(a) * 2, denominator(a)));
+      
+    case NUM_REAL2:
+    case NUM_REAL:
+      return(s7_make_real(sc, num_to_real(a) * 2.0));
+      break;
+      
+    default:
+      return(s7_make_complex(sc, num_to_real_part(a) * 2.0, num_to_imag_part(a) * 2.0));
+      break;
+    }
+  return(x);
+}
+
+static s7_pointer g_multiply_f2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_num_t a;
+  x = car(args);
+  if (!s7_is_number(x))
+    return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
+  a = number(x);
+  switch (a.type)
+    {
+    case NUM_INT: 
+      return(s7_make_real(sc, integer(a) * 2.0));
+      break;
+      
+    case NUM_RATIO:
+      return(s7_make_real(sc, numerator(a) * 2.0 / denominator(a)));
+      
+    case NUM_REAL2:
+    case NUM_REAL:
+      return(s7_make_real(sc, num_to_real(a) * 2.0));
+      break;
+      
+    default:
+      return(s7_make_complex(sc, num_to_real_part(a) * 2.0, num_to_imag_part(a) * 2.0));
+      break;
+    }
+  return(x);
+}
+#endif
+
+
 static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 {
   #define H_divide "(/ x1 ...) divides its first argument by the rest, or inverts the first if there is only one argument"
@@ -8843,10 +8952,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 
   while (true)
     {
-#if WITH_GMP
-      s7_pointer old_x;
-      old_x = x;
-#else
+#if (!WITH_GMP)
       if (!s7_is_number(car(x)))
 	return(s7_wrong_type_arg_error(sc, "/", i, car(x), "a number"));
 #endif
@@ -9681,6 +9787,47 @@ static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
   return(sc->T);
 }
 
+static s7_pointer leq_s_ic;
+static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  s7_num_t a;
+  s7_Int y;
+  
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, "<=", 1, car(args), "a number"));  
+  a = number(car(args));
+  y = s7_integer(cadr(args));
+
+  switch (num_type(a))
+    {
+    case NUM_INT:
+      return(make_boolean(sc, integer(a) <= y));
+      break;
+      
+    case NUM_RATIO:  
+      if ((y >= 0) && (numerator(a) <= 0))
+	return(sc->T);
+      if ((y <= 0) && (numerator(a) > 0))
+	return(sc->F);
+      if ((y < S7_LONG_MAX) && 
+	  (y > S7_LONG_MIN) && 
+	  (denominator(a) < S7_LONG_MAX) && 
+	  (denominator(a) > S7_LONG_MIN))
+	return(make_boolean(sc, (numerator(a) <= (y * denominator(a)))));
+      return(make_boolean(sc, fraction(a) <= y));
+      break;
+      
+    case NUM_REAL2:
+    case NUM_REAL:    
+      return(make_boolean(sc, real(a) <= y));
+      break;
+
+    default:
+      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) <= y)));
+    }
+  return(sc->T);
+}
+
 static s7_pointer greater_s_ic;
 static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -9721,6 +9868,48 @@ static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
     }
   return(sc->T);
 }
+
+static s7_pointer geq_s_ic;
+static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  s7_num_t a;
+  s7_Int y;
+  
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, ">=", 1, car(args), "a number"));  
+  a = number(car(args));
+  y = s7_integer(cadr(args));
+
+  switch (num_type(a))
+    {
+    case NUM_INT:
+      return(make_boolean(sc, integer(a) >= y));
+      break;
+      
+    case NUM_RATIO:  
+      if ((y >= 0) && (numerator(a) < 0))
+	return(sc->F);
+      if ((y <= 0) && (numerator(a) >= 0))
+	return(sc->T);
+      if ((y < S7_LONG_MAX) && 
+	  (y > S7_LONG_MIN) && 
+	  (denominator(a) < S7_LONG_MAX) && 
+	  (denominator(a) > S7_LONG_MIN))
+	return(make_boolean(sc, (numerator(a) >= (y * denominator(a)))));
+      return(make_boolean(sc, fraction(a) >= y));
+      break;
+      
+    case NUM_REAL2:
+    case NUM_REAL:    
+      return(make_boolean(sc, real(a) >= y));
+      break;
+
+    default:
+      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) >= y)));
+    }
+  return(sc->T);
+}
+
 #endif
 
 static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
@@ -11215,7 +11404,8 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, const char *
     }
   
   /* store the contents of the argument strings into the new string */
-  newstr = make_empty_string(sc, len, 0);
+  newstr = make_empty_string(sc, len + 1, 0); /* +1 here because valgrind (in FC16) thinks we occasionally go one past the end */
+  string_length(newstr) = len;
   for (pos = string_value(newstr), x = args; is_not_null(x); pos += string_length(car(x)), x = cdr(x)) 
     memcpy(pos, string_value(car(x)), string_length(car(x)));
   
@@ -12592,38 +12782,70 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
       sc->read_line_buf = (char *)malloc(sc->read_line_buf_size * sizeof(char));
     }
 
-  for (i = 0; ; i++)
+  if (port == sc->standard_input)
     {
-      int c;
-      if (i + 1 >= sc->read_line_buf_size)
-	{
-	  sc->read_line_buf_size *= 2;
-	  sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
-	}
-
-      if (port == sc->standard_input)
-	{
-	  if (fgets(sc->read_line_buf, sc->read_line_buf_size, stdin) != NULL)
-	    return(s7_make_string(sc, sc->read_line_buf)); /* fgets adds the trailing '\0' */
-	  return(s7_make_string_with_length(sc, NULL, 0));
-	}
-      else c = inchar(port);
-
-      if (c == EOF)
-	{
-	  if (i == 0)
-	    return(sc->EOF_OBJECT);
-	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i));
-	}
-
-      sc->read_line_buf[i] = (char)c;
-      if (c == '\n')
-	{
-	  if (!with_eol) i--;
-	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i + 1));
-	}
+      if (fgets(sc->read_line_buf, sc->read_line_buf_size, stdin) != NULL)
+	return(s7_make_string(sc, sc->read_line_buf)); /* fgets adds the trailing '\0' */
+      return(s7_make_string_with_length(sc, NULL, 0));
     }
 
+  if (is_file_port(port))
+    {
+      for (i = 0; ; i++)
+	{
+	  int c;
+	  if (i >= sc->read_line_buf_size)
+	    {
+	      sc->read_line_buf_size *= 2;
+	      sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
+	    }
+	  c = fgetc(port_file(port)); /* not unsigned char! -- could be EOF */
+	  if (c == EOF)
+	    {
+	      if (i == 0)
+		return(sc->EOF_OBJECT);
+	      return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i));
+	    }
+	  sc->read_line_buf[i] = (char)c;
+	  if (c == '\n')
+	    {
+	      port_line_number(port)++;
+	      if (!with_eol) i--;
+	      return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i + 1));
+	    }
+	}
+    }
+  else
+    {
+      for (i = 0; ; i++)
+	{
+	  int c;
+	  if (i >= sc->read_line_buf_size) /* here and above I was using i+1 */
+	    {
+	      sc->read_line_buf_size *= 2;
+	      sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
+	    }
+
+	  if ((!(port_string(port))) ||
+	      (port_string_length(port) <= port_string_point(port)))
+	    c = EOF;
+	  else c = (unsigned char)port_string(port)[port_string_point(port)++];
+
+	  if (c == EOF)
+	    {
+	      if (i == 0)
+		return(sc->EOF_OBJECT);
+	      return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i));
+	    }
+	  sc->read_line_buf[i] = (char)c;
+	  if (c == '\n')
+	    {
+	      port_line_number(port)++;
+	      if (!with_eol) i--;
+	      return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i + 1));
+	    }
+	}
+    }
   return(sc->EOF_OBJECT);
 }
 
@@ -13271,6 +13493,9 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 
     case T_HOOK:
       return(copy_string("#<hook>"));
+
+    case T_COUNTER:
+      return(copy_string("#<counter>"));
 
     case T_NUMBER:
       return(number_to_string_base_10(obj, 0, 14, 'g')); /* 20 digits is excessive in this context */
@@ -16806,7 +17031,7 @@ static s7_Int hash_loc(s7_scheme *sc, s7_pointer key)
       if (string_hash(key) != 0)
 	return(string_hash(key));
       for (c = string_value(key); *c; c++) 
-	loc = *c + loc * 37;
+	loc = *c + loc * HASH_MULT;
       string_hash(key) = loc;
       return(loc);
 
@@ -16903,7 +17128,7 @@ static s7_pointer hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
 	{
 	  const char *c; 
 	  for (c = string_value(key); *c; c++) 
-	    loc = *c + loc * 37;
+	    loc = *c + loc * HASH_MULT;
 	  string_hash(key) = loc;
 	}
       loc &= hash_len;
@@ -19945,6 +20170,7 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
     case T_VECTOR:
     case T_HASH_TABLE:
     case T_ENVIRONMENT:
+    case T_COUNTER:
     case T_PAIR:
       return(structures_are_equal(sc, x, y, ci));
 
@@ -21213,6 +21439,7 @@ static const char *type_name(s7_pointer arg)
     case T_HASH_TABLE:   return("hash-table");
     case T_C_OBJECT:     return(object_types[object_type(arg)].name);
     case T_HOOK:         return("hook");
+    case T_COUNTER:      return("counter");
     case T_ENVIRONMENT:  return("environment");
 
     case T_INPUT_PORT:
@@ -22960,7 +23187,11 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      (!is_immutable_or_accessed(car(closure_args(sc->code)))) && /* not a bad arg name! */
 	      (safe_list_length(sc, closure_args(sc->code)) == 1))        /* closure takes just one arg */
 	    {
-	      push_stack(sc, OP_MAP_SIMPLE, cons_unchecked(sc, make_mutable_integer(sc, len), cons(sc, sc->NIL, obj)), sc->code);
+	      s7_pointer p;
+	      p = cons(sc, sc->NIL, obj);
+	      set_type(p, T_COUNTER);
+	      symbol_id(p) = len;
+	      push_stack(sc, OP_MAP_SIMPLE, p, sc->code);
 	      return(sc->NO_VALUE);
 	    }
 
@@ -24944,6 +25175,21 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 }
 
 
+static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (caddr(expr) == small_int(2))
+	return(multiply_i2);
+      if ((s7_is_real(caddr(expr))) &&
+	  (s7_real(caddr(expr)) == 2.0))
+	return(multiply_f2);
+      return(multiply_2);
+    }
+  return(f);
+}
+
+
 static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 1)
@@ -24970,12 +25216,24 @@ static s7_pointer equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 }
 
 
+#if (!WITH_GMP)
 static s7_pointer less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
     {
       if (s7_is_integer(caddr(expr)))
 	return(less_s_ic);
+    }
+  return(f);
+}
+
+
+static s7_pointer leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_integer(caddr(expr)))
+	return(leq_s_ic);
     }
   return(f);
 }
@@ -24990,6 +25248,18 @@ static s7_pointer greater_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
     }
   return(f);
 }
+
+
+static s7_pointer geq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_integer(caddr(expr)))
+	return(geq_s_ic);
+    }
+  return(f);
+}
+#endif
 
 
 static s7_pointer char_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -25134,6 +25404,19 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(subtract_s1) = c_function_class(f);
   
 
+  /* * */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "*")));
+  c_function_chooser(f) = multiply_chooser;
+
+  multiply_2 = s7_make_function(sc, "*", g_multiply_2, 2, 0, false, "experimental * optimization");
+  c_function_class(multiply_2) = c_function_class(f);
+  multiply_i2 = s7_make_function(sc, "*", g_multiply_i2, 2, 0, false, "experimental * optimization");
+  c_function_class(multiply_i2) = c_function_class(f);
+  multiply_f2 = s7_make_function(sc, "*", g_multiply_f2, 2, 0, false, "experimental * optimization");
+  c_function_class(multiply_f2) = c_function_class(f);
+  /* TODO: (* f (+ g h)) in various forms
+   */
+
   /* = */
   f = symbol_value(symbol_global_slot(make_symbol(sc, "=")));
   c_function_chooser(f) = equal_chooser;
@@ -25141,7 +25424,7 @@ static void init_choosers(s7_scheme *sc)
   equal_s_ic = s7_make_function(sc, "=", g_equal_s_ic, 2, 0, false, "experimental = optimization");
   c_function_class(equal_s_ic) = c_function_class(f);
 
-
+#if (!WITH_GMP)
   /* < */
   f = symbol_value(symbol_global_slot(make_symbol(sc, "<")));
   c_function_chooser(f) = less_chooser;
@@ -25157,6 +25440,21 @@ static void init_choosers(s7_scheme *sc)
   greater_s_ic = s7_make_function(sc, ">", g_greater_s_ic, 2, 0, false, "experimental > optimization");
   c_function_class(greater_s_ic) = c_function_class(f);
 
+  /* <= */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "<=")));
+  c_function_chooser(f) = leq_chooser;
+
+  leq_s_ic = s7_make_function(sc, "<=", g_leq_s_ic, 2, 0, false, "experimental <= optimization");
+  c_function_class(leq_s_ic) = c_function_class(f);
+
+
+  /* >= */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, ">=")));
+  c_function_chooser(f) = geq_chooser;
+
+  geq_s_ic = s7_make_function(sc, ">=", g_geq_s_ic, 2, 0, false, "experimental >= optimization");
+  c_function_class(geq_s_ic) = c_function_class(f);
+#endif
 
   /* char=? */
   f = symbol_value(symbol_global_slot(make_symbol(sc, "char=?")));
@@ -26214,7 +26512,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_pointer e)
 { 
   s7_pointer x;
-  unsigned long long int id;
+  long long int id;
 
   if (memq(hdl, e))
     return(sc->NIL);
@@ -28665,22 +28963,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_MAP_SIMPLE:
-      /* func = sc->code, func takes one arg, args = '((nil) nil arglist) at the start 
+      /* func = sc->code, func takes one arg, args = '(nil arglist) at the start with symbol_id = len
        *   the func is prechecked, as is the list.
        */
-      /* fprintf(stderr, "value: %s, args: %s\n", s7_object_to_c_string(sc, sc->value), s7_object_to_c_string(sc, sc->args)); */
+      /* fprintf(stderr, "%p %lld, value: %s, args: %s\n", sc->args, symbol_id(sc->args), s7_object_to_c_string(sc, sc->value), s7_object_to_c_string(sc, sc->args)); */
       if (sc->value != sc->NO_VALUE)
 	{
 	  if (is_multiple_value(sc->value))
-	    cadr(sc->args) = revappend(sc, multiple_value(sc->value), cadr(sc->args));
-	  else cadr(sc->args) = cons(sc, sc->value, cadr(sc->args));
+	    car(sc->args) = revappend(sc, multiple_value(sc->value), car(sc->args));
+	  else car(sc->args) = cons(sc, sc->value, car(sc->args));
 	}
-      if (is_pair(cddr(sc->args)))
+      if (is_pair(cdr(sc->args)))
 	{
-	  if ((--integer(number(car(sc->args)))) >= 0) /* protect against circular arg lists created by the map function! */
+	  if ((--symbol_id(sc->args)) >= 0) /* protect against circular arg lists created by the map function! */
 	    {
-	      sc->x = caddr(sc->args);
-	      cddr(sc->args) = cdddr(sc->args);  /* move down for-each list of args */
+	      sc->x = cadr(sc->args);
+	      cdr(sc->args) = cddr(sc->args);  /* move down list of args */
 	      push_stack(sc, OP_MAP_SIMPLE, sc->args, sc->code);
 
 	      /* now call the function directly -- we know it is a T_CLOSURE
@@ -28694,7 +28992,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto BEGIN;
 	    }
 	}
-      sc->value = safe_reverse_in_place(sc, cadr(sc->args));
+      sc->value = safe_reverse_in_place(sc, car(sc->args));
       goto START;
       
 
@@ -28731,7 +29029,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   once per for-each call, but then for-each is like do in that exported args are equivalenced.
 	   *   Since the savings isn't huge, I guess I'll go ahead and allocate every time.
 	   */
-
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
 	  ADD_SLOT(sc->envir, car(closure_args(sc->code)), car(sc->args));       /* set function arg value */
 
@@ -33792,12 +34089,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       sc->args = safe_reverse_in_place(sc, sc->args);
       sc->code = car(sc->args); /* restore the original form */
-      sc->args = cdr(sc->args);
 
       {
 	s7_pointer x, y;
-	NEW_FRAME(sc, sc->envir, sc->envir);
-	y = sc->args;
+	/* NEW_FRAME(sc, sc->envir, sc->envir); */
+	/* we can use sc->args as our new frame, but call_symbol_bind might happen, so cdr(sc->args) should be gc protected */
+
+	y = cdr(sc->args);
+	sc->y = y;
+
+	car(sc->args) = sc->NIL;                  
+	cdr(sc->args) = sc->envir;
+	set_type(sc->args, T_ENVIRONMENT); 
+	frame_id(sc->args) = ++frame_number; 
+	sc->envir = sc->args;		   
+	/* sc->args = sc->NIL; */
+
 	for (x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code); is_not_null(y); x = cdr(x)) 
 	  {
 	    s7_pointer sym, args, val;
@@ -33844,6 +34151,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* -------------------------------- LET* -------------------------------- */
 
+      /* named let* to ensure the order of parameter evaluation?
+       */
     case OP_LET_STAR:
       check_let_star(sc);
 
@@ -33908,13 +34217,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else sc->value = x;
 	  goto LET_STAR1;
 	} 
-
-      /* at this point we have a list of frames, each holding one let* variable.
-       *   I tried collapsing that list down to one frame, but the savings was 
-       *   minimal -- it sort of trades a push_stack (to save the original frame)
-       *   and the local list manipulations, against the lookup time in find_symbol,
-       *   but all these times were down in the noise.
-       */
       sc->code = sc->args;
       goto BEGIN;
       
@@ -33925,9 +34227,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       check_letrec(sc);
 
     case OP_LETREC_UNCHECKED:
-      /* get all local vars and set to #undefined
+      /* get all local vars and set to #<undefined>
        * get parallel list of values
-       * eval each member of values list with env still full of #undefined's
+       * eval each member of values list with env still full of #<undefined>'s
        * assign each value to its variable
        * eval body
        *
@@ -33965,7 +34267,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    typeflag(y) = 0;                          /* this was allocated above in the cons, so we can release it now */
 	    (*(sc->free_heap_top++)) = y;
 	  }
-	sc->args = sc->NIL;
+	sc->args = sc->NIL; /* probably unnecessary */
 	sc->code = cdr(sc->code);
 	goto BEGIN;
       }

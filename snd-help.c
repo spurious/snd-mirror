@@ -459,6 +459,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+14-Jul:  removed thread stuff.\n\
+11-Jul:  Snd 12.3. \n\
+30-May:  Snd 12.2.\n\
 24-Apr:  Snd 12.1.\n\
 5-Apr:   lint.scm.\n\
 25-Mar:  show-full-range, info-popup-hook.\n\

@@ -351,6 +351,7 @@ static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback, XEN gpos)
   #define H_add_to_menu "(" S_add_to_menu " menu label func :optional position): adds label to menu (a main menu index), invokes \
 func (a function of no args) when the new menu is activated. Returns the new menu label widget."
 
+#if (!USE_NO_GUI)
   widget_t result;
   char *errmsg = NULL;
 
@@ -378,10 +379,8 @@ func (a function of no args) when the new menu is activated. Returns the new men
 			     (XEN_FALSE_P(label)) ? NULL : XEN_TO_C_STRING(label),
 			     slot,
 			     position);
-#if (!USE_NO_GUI)
       if (result == NULL)
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
-#endif
       if (XEN_PROCEDURE_P(callback)) add_callback(slot, callback);
     }
   else 
@@ -392,6 +391,9 @@ func (a function of no args) when the new menu is activated. Returns the new men
       return(snd_bad_arity_error(S_add_to_menu, errm, callback));
     }
   return(XEN_WRAP_WIDGET(result));
+#else
+  return(XEN_FALSE);
+#endif
 }
 
 

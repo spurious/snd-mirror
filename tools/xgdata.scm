@@ -8233,6 +8233,17 @@ GtkWidget *gtk_overlay_new         (void);
 void       gtk_overlay_add_overlay (GtkOverlay *overlay,
                                     GtkWidget  *widget);
 
+
+;;; 3.1.8: no changes
+
+
+;;; 3.1.10:
+gdouble    gtk_adjustment_get_minimum_increment (GtkAdjustment   *adjustment);
++ void                  gtk_asssistant_remove_page          (GtkAssistant         *assistant,
++                                                            gint                  page_num);
+
+
+
 |#
 
 

@@ -11524,6 +11524,8 @@ time, so that the displayed results are
 ;; (let ((f #f)) (define (jtest12) (do ((i 0 (+ i 1))) ((= i 10) (f)) (if (= i 3) (set! f (lambda () i))))) (test (jtest12) 3))
 ;; this lambda business is a separate issue
 
+(test (let () (define (step-it a) (+ a 1)) (define (hi) (do ((i 0 (step-it i))) ((= i 3) i))) (hi) (hi)) 3)
+
 (test (call-with-exit (lambda (return) (do () () (if #t (return 123))))) 123)
 (test (call-with-exit (lambda (return) (do () (#f) (if #t (return 123))))) 123)
 (test (call-with-exit (lambda (return) (do ((i 0 (+ i 1))) () (if (= i 100) (return 123))))) 123)
