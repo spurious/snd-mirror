@@ -2591,7 +2591,7 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_pointer_focus, g_with_pointer_focus_w, H_with_pointer_focus, 
 				   S_setB S_with_pointer_focus, g_set_with_pointer_focus_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_snd_version,              g_snd_version_w,              0, 0, 0, H_snd_version);
+  XEN_DEFINE_SAFE_PROCEDURE(S_snd_version,         g_snd_version_w,              0, 0, 0, H_snd_version);
   XEN_DEFINE_PROCEDURE(S_color_orientation_dialog, g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog);
   XEN_DEFINE_PROCEDURE(S_transform_dialog,         g_transform_dialog_w,         0, 1, 0, H_transform_dialog);
   XEN_DEFINE_PROCEDURE(S_print_dialog,             g_print_dialog_w,             0, 2, 0, H_print_dialog);

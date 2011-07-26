@@ -2754,12 +2754,12 @@ void g_xen_initialize(void)
 #endif
 
 #if HAVE_SCHEME
-  s7_define_function(s7, "char-position", g_char_position, 2, 1, false, H_char_position);
-  s7_define_function(s7, "string-position", g_string_position, 2, 1, false, H_string_position);
-  s7_define_function(s7, "string-ci-position", g_string_ci_position, 2, 1, false, H_string_ci_position);
-  s7_define_function(s7, "string-vector-position", g_string_vector_position, 2, 1, false, H_string_vector_position);
-  s7_define_function(s7, "string-list-position", g_string_list_position, 2, 1, false, H_string_list_position);
-  s7_define_function(s7, "string-ci-list-position", g_string_ci_list_position, 2, 1, false, H_string_ci_list_position);
+  s7_define_safe_function(s7, "char-position", g_char_position, 2, 1, false, H_char_position);
+  s7_define_safe_function(s7, "string-position", g_string_position, 2, 1, false, H_string_position);
+  s7_define_safe_function(s7, "string-ci-position", g_string_ci_position, 2, 1, false, H_string_ci_position);
+  s7_define_safe_function(s7, "string-vector-position", g_string_vector_position, 2, 1, false, H_string_vector_position);
+  s7_define_safe_function(s7, "string-list-position", g_string_list_position, 2, 1, false, H_string_list_position);
+  s7_define_safe_function(s7, "string-ci-list-position", g_string_ci_list_position, 2, 1, false, H_string_ci_list_position);
 
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-" PROC_FALSE " result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\

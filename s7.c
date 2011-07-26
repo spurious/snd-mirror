@@ -209,7 +209,7 @@
 
 #ifndef WITH_OPTIMIZATION
 #define WITH_OPTIMIZATION 1
-  /* this currently speeds s7 up by about a factor of 1/3 (261 -> 174) -- not sure it's worth all the code. 
+  /* this currently speeds s7 up by about a factor of 1/3 (258 -> 173) -- not sure it's worth all the code. 
    */
 #endif
 
@@ -897,6 +897,9 @@ struct s7_scheme {
 
 #define BUILT_IN_TYPES        33
 
+/* T_STACK and T_COUNTER are internal types, mainly for the GC mark process's benefit
+ */
+
 #define TYPE_BITS                     8
 #define typeflag(p)                   ((p)->tf.flag)
 #define type(p)                       ((p)->tf.type_field)
@@ -1365,7 +1368,6 @@ static bool object_is_applicable(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c);
-static s7_pointer make_list_4(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c, s7_pointer d);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
@@ -11404,7 +11406,7 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, const char *
     }
   
   /* store the contents of the argument strings into the new string */
-  newstr = make_empty_string(sc, len + 1, 0); /* +1 here because valgrind (in FC16) thinks we occasionally go one past the end */
+  newstr = make_empty_string(sc, len + 1, 0); /* +1 here because valgrind (but only in FC15) thinks we occasionally go one past the end */
   string_length(newstr) = len;
   for (pos = string_value(newstr), x = args; is_not_null(x); pos += string_length(car(x)), x = cdr(x)) 
     memcpy(pos, string_value(car(x)), string_length(car(x)));
@@ -16557,6 +16559,27 @@ are the indices, or omit 'vector-ref': (v ...)."
 
   return(vector_ref_1(sc, vec, cdr(args)));
 }
+
+#if WITH_OPTIMIZATION
+static s7_pointer vector_ref_ic; /* , vector_ref_add1; */
+static s7_pointer g_vector_ref_ic(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vec;
+  s7_Int index;
+
+  vec = car(args);
+  if (!s7_is_vector(vec))
+    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, vec, "a vector"));
+  if (vector_is_multidimensional(vec))
+    return(g_vector_ref(sc, args));
+
+  index = s7_integer(cadr(args));
+  if (index >= vector_length(vec))
+    return(s7_out_of_range_error(sc, "vector-ref index,", 2, cadr(args), "should be less than vector length"));
+
+  return(vector_element(vec, index));
+}
+#endif
 
 
 static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
@@ -24681,7 +24704,7 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
 	}
     }
   if (s7_is_symbol(z))                                  /* dotted (last) arg? -- make sure its name exists in the current environment */
-    add_slot(sc, z, sc->NIL);           /* this was sc->F */
+    add_slot(sc, z, sc->NIL); 
   
   /* now get the current args, re-setting args that have explicit values */
   sc->x = closure_args(sc->code);
@@ -24715,8 +24738,6 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
 		  else lambda_star_argument_set_value(sc, car(sc->x), sc->y);
 		  
 		  sc->y = cdr(sc->y);
-		  /* PERHAPS: here and below, if from_eval (and is_safe_proc?), can sc->y be returned to the free_heap?
-		   */
 		  sc->x = cdr(sc->x);
 		  if (car(sc->x) == sc->KEY_ALLOW_OTHER_KEYS)
 		    break;
@@ -25158,6 +25179,18 @@ static s7_pointer not_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 }
 
 
+static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if ((s7_is_integer(caddr(expr))) &&
+	  (s7_integer(caddr(expr)) >= 0))
+	return(vector_ref_ic);
+    }
+  return(f);
+}
+
+
 static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 1)
@@ -25560,9 +25593,18 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "abs")));
   c_function_chooser(f) = abs_chooser;
 #if (!WITH_GMP)
-  abs_sub_ss = s7_make_function(sc, "abs", g_abs_sub_ss, 2, 0, false, "experimental abs(-) optimization");
+  abs_sub_ss = s7_make_function(sc, "abs", g_abs_sub_ss, 2, 0, false, "experimental abs(- a b) optimization");
   c_function_class(abs_sub_ss) = c_function_class(f);
 #endif
+
+
+  /* vector-ref */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "vector-ref")));
+  c_function_chooser(f) = vector_ref_chooser;
+
+  vector_ref_ic = s7_make_function(sc, "vector-ref", g_vector_ref_ic, 2, 0, false, "experimental vector-ref optimization");
+  c_function_class(vector_ref_ic) = c_function_class(f);
+
 
 
   /* not */
@@ -25713,9 +25755,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
   
   /* fprintf(stderr, "null: %d, match: %d\n", is_null(p), args_match(sc, func, args)); */
 
-  /* TODO: can we use set_optimize_data in the closure cases?
-   */
-  
   if ((is_null(p)) &&                /* if not null, dotted list of args? */
       (args_match(sc, func, args)))  /* we have a legit call, at least syntactically */
     {
@@ -25901,6 +25940,10 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		    }
 		}
 	    }
+	  /*
+	  if ((!is_optimized(car(x))) && (pairs > 0) && (bad_pairs == quotes))
+	    fprintf(stderr, "1 case: %s\n", DISPLAY_80(car(x)));
+	  */
 	  break; 
 	  /* TODO: opt do??, tracing checks */
 	  /* TODO: closures of various sorts */
@@ -26124,6 +26167,19 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				    }
 				}
 			    }
+#if 0
+			  else
+			    {
+			      if  (symbols == 1)
+				{
+				  set_optimized(car(x));
+				  if (s7_is_symbol(cadar(x)))
+				    set_optimize_data(car(x), OP_C_SQ);
+				  else set_optimize_data(car(x), OP_C_QS);
+				  ecdr(car(x)) = c_function_chooser(func)(sc, func, args, car(x));
+				}
+			    }
+#endif
 			}
 		    }
 		  else
@@ -26191,6 +26247,10 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		    }
 		}
 	    }
+	  /*
+	  if ((!is_optimized(car(x))) && (pairs > 0) && (bad_pairs == quotes))
+	    fprintf(stderr, "2 case: %s\n", DISPLAY_80(car(x)));
+	  */
 	  break;
 	  
 	  /* -------------------------------------------------------------------------------- */
@@ -26318,6 +26378,11 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		    }
 		}
 	    }
+	  /*
+	  if ((!is_optimized(car(x))) && (pairs > 0) && (bad_pairs == quotes))
+	    fprintf(stderr, "3 case: %s\n", DISPLAY_80(car(x)));
+	  */
+
 	  break;
 	  
 	  /* -------------------------------------------------------------------------------- */
@@ -30322,13 +30387,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = ARG_SYMBOL_VALUE(car(code), find_symbol_or_bust_16);
-		    /* fprintf(stderr, "f: %s\n", DISPLAY(f)); */
+		    /* fprintf(stderr, "unknown c: f: %s\n", DISPLAY(f)); */
 		    
 		    if (args_match(sc, f, 1))
 		      {
 			switch (type(f))
 			  {
 			  case T_VECTOR:
+
+			    /* fprintf(stderr, "use vector: %d %s\n", s7_is_vector(f), DISPLAY_80(code)); */
 			    optimize_data(code) = OP_VECTOR_C;
 			    goto OPT_EVAL;
 			    
@@ -30517,6 +30584,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = ARG_SYMBOL_VALUE(car(code), find_symbol_or_bust_31);
+
+		    /* fprintf(stderr, "unknown S_opSq: %d %s\n", s7_is_vector(f), DISPLAY_80(code)); */
+
 		    if ((is_closure(f)) &&
 			(args_match(sc, f, 2)))
 		      {
@@ -30551,10 +30621,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_VECTOR_C:
 		case HOP_VECTOR_C:
 		  {
+		    /* this is the implicit indexing case (vector-ref is a normal safe op) 
+		     *    (define (hi) (let ((v (vector 1 2 3))) (v 0)))
+		     *    this starts as unknown_c [26608 in optimize_function] -> vector_c
+		     *    but it still reports itself as unsafe, so there are higher levels possible
+		     */
 		    s7_pointer v; 
 		    v = ARG_SYMBOL_VALUE(car(code), find_symbol_or_bust_31);
 		    if (!s7_is_vector(v))
 		      break;
+
+		    /* fprintf(stderr, "vector_c: %d %s\n", s7_is_vector(v), DISPLAY_80(code)); */
 		  
 		    if (!vector_is_multidimensional(v))
 		      {
@@ -32311,7 +32388,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_EVAL_ARGS:
-      /* fprintf(stderr, "    args: %s %s\n", DISPLAY(sc->value), DISPLAY_80(sc->code)); */
+      /* fprintf(stderr, "    op_eval_args: %s %s\n", DISPLAY(sc->value), DISPLAY_80(sc->code)); */
 
       if (dont_eval_args(sc->value))
 	{
@@ -32463,6 +32540,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     EVAL_ARGS:
       /* 1st time, value = op, args = nil, code is args */
+      /* fprintf(stderr, "    eval_args: %s\n", DISPLAY_80(sc->code)); */
+
       if (is_pair(sc->code))  /* evaluate current arg -- must check for pair here, not sc->NIL (improper list as args) */
 	{ 
 	  int typ;
@@ -32932,8 +33011,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  { 
 	    if (sc->stack_end >= sc->stack_resize_trigger)
 	      increase_stack_size(sc);
-
-	    /* TODO: lambda* reuse args if safe */
 
 	    sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
 	    prepare_closure_star(sc);

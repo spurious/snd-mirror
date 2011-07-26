@@ -945,13 +945,13 @@
 		      (do ((ctr 0 (+ ctr 1)))
 			  ((= ctr vsize))
 			(vector-set! v ctr (lint-eval `((lambda ,vars ,form)
-						   ,@(let ((pos -1))
-						       (map (lambda (var)
-							      (set! pos (+ pos 1))
-							      (if (zero? (logand ctr (ash 1 pos)))
-								  #f
-								  (nonf pos)))
-							    vars)))))
+							,@(let ((pos -1))
+							    (map (lambda (var)
+								   (set! pos (+ pos 1))
+								   (if (zero? (logand ctr (ash 1 pos)))
+								       #f
+								       (nonf pos)))
+								 vars)))))
 			(if (not (member (vector-ref v ctr) vals))
 			    (set! vals (cons (vector-ref v ctr) vals))))
 		      
