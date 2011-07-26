@@ -1751,7 +1751,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), MINIBUFFER_LABEL(sp), false, false, 0);
       gtk_widget_show(MINIBUFFER_LABEL(sp));
       
-      MINIBUFFER_TEXT(sp) = snd_entry_new(NAME_HBOX(sp), WITH_DEFAULT_BACKGROUND);
+      MINIBUFFER_TEXT(sp) = snd_entry_new(NAME_HBOX(sp), NULL, WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "key_press_event", minibuffer_key_callback, sp);
       SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "activate", minibuffer_activate_callback, sp);
       SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "enter_notify_event", minibuffer_mouse_enter, sp);
@@ -2008,7 +2008,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       SG_SIGNAL_CONNECT(FILTER_ORDER_TEXT(sp), "leave_notify_event", spin_button_unfocus_callback, NULL);
       gtk_widget_show(FILTER_ORDER_TEXT(sp));
       
-      FILTER_COEFFS_TEXT(sp) = snd_entry_new(FILTER_HBOX(sp), WITH_DEFAULT_BACKGROUND);
+      FILTER_COEFFS_TEXT(sp) = snd_entry_new(FILTER_HBOX(sp), NULL, WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(FILTER_COEFFS_TEXT(sp), "activate", filter_activate_callback, sp);
 
       FILTER_HZ_BUTTON(sp) = gtk_check_button_new_with_label("hz");

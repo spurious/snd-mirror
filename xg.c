@@ -888,6 +888,15 @@ XM_TYPE_PTR_1(GdkScreen__, GdkScreen**)
 #define XEN_GtkStateFlags_P(Arg) XEN_INTEGER_P(Arg)
 #endif
 
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+XM_TYPE_PTR(GtkWidgetPath_, GtkWidgetPath*)
+XM_TYPE_PTR(GtkGradient_, GtkGradient*)
+XM_TYPE_PTR(GtkSymbolicColor_, GtkSymbolicColor*)
+XM_TYPE_PTR(GtkStyleProperties_, GtkStyleProperties*)
+XM_TYPE_PTR(cairo_pattern_t__, cairo_pattern_t**)
+XM_TYPE_PTR(GtkOverlay_, GtkOverlay*)
+#endif
+
 #if (!HAVE_GTK_3)
 XM_TYPE_PTR(GdkColormap_, GdkColormap*)
 #define C_TO_XEN_GdkDragProtocol(Arg) C_TO_XEN_INT(Arg)
@@ -30752,6 +30761,215 @@ GdkRGBA* secondary_cursor)"
 
 #endif
 
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+static XEN gxg_gtk_entry_get_placeholder_text(XEN entry)
+{
+  #define H_gtk_entry_get_placeholder_text "gchar* gtk_entry_get_placeholder_text(GtkEntry* entry)"
+  XEN_ASSERT_TYPE(XEN_GtkEntry__P(entry), entry, 1, "gtk_entry_get_placeholder_text", "GtkEntry*");
+  return(C_TO_XEN_gchar_(gtk_entry_get_placeholder_text(XEN_TO_C_GtkEntry_(entry))));
+}
+
+static XEN gxg_gtk_entry_set_placeholder_text(XEN entry, XEN text)
+{
+  #define H_gtk_entry_set_placeholder_text "void gtk_entry_set_placeholder_text(GtkEntry* entry, gchar* text)"
+  XEN_ASSERT_TYPE(XEN_GtkEntry__P(entry), entry, 1, "gtk_entry_set_placeholder_text", "GtkEntry*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 2, "gtk_entry_set_placeholder_text", "gchar*");
+  gtk_entry_set_placeholder_text(XEN_TO_C_GtkEntry_(entry), (const gchar*)XEN_TO_C_gchar_(text));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_expander_set_resize_toplevel(XEN expander, XEN resize_toplevel)
+{
+  #define H_gtk_expander_set_resize_toplevel "void gtk_expander_set_resize_toplevel(GtkExpander* expander, \
+gboolean resize_toplevel)"
+  XEN_ASSERT_TYPE(XEN_GtkExpander__P(expander), expander, 1, "gtk_expander_set_resize_toplevel", "GtkExpander*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(resize_toplevel), resize_toplevel, 2, "gtk_expander_set_resize_toplevel", "gboolean");
+  gtk_expander_set_resize_toplevel(XEN_TO_C_GtkExpander_(expander), XEN_TO_C_gboolean(resize_toplevel));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_expander_get_resize_toplevel(XEN expander)
+{
+  #define H_gtk_expander_get_resize_toplevel "gboolean gtk_expander_get_resize_toplevel(GtkExpander* expander)"
+  XEN_ASSERT_TYPE(XEN_GtkExpander__P(expander), expander, 1, "gtk_expander_get_resize_toplevel", "GtkExpander*");
+  return(C_TO_XEN_gboolean(gtk_expander_get_resize_toplevel(XEN_TO_C_GtkExpander_(expander))));
+}
+
+static XEN gxg_gtk_widget_path_to_string(XEN path)
+{
+  #define H_gtk_widget_path_to_string "char* gtk_widget_path_to_string(GtkWidgetPath* path)"
+  XEN_ASSERT_TYPE(XEN_GtkWidgetPath__P(path), path, 1, "gtk_widget_path_to_string", "GtkWidgetPath*");
+  return(C_TO_XEN_char_(gtk_widget_path_to_string(XEN_TO_C_GtkWidgetPath_(path))));
+}
+
+static XEN gxg_gtk_button_box_get_child_non_homogeneous(XEN widget, XEN child)
+{
+  #define H_gtk_button_box_get_child_non_homogeneous "gboolean gtk_button_box_get_child_non_homogeneous(GtkButtonBox* widget, \
+GtkWidget* child)"
+  XEN_ASSERT_TYPE(XEN_GtkButtonBox__P(widget), widget, 1, "gtk_button_box_get_child_non_homogeneous", "GtkButtonBox*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(child), child, 2, "gtk_button_box_get_child_non_homogeneous", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_button_box_get_child_non_homogeneous(XEN_TO_C_GtkButtonBox_(widget), XEN_TO_C_GtkWidget_(child))));
+}
+
+static XEN gxg_gtk_button_box_set_child_non_homogeneous(XEN widget, XEN child, XEN non_homogeneous)
+{
+  #define H_gtk_button_box_set_child_non_homogeneous "void gtk_button_box_set_child_non_homogeneous(GtkButtonBox* widget, \
+GtkWidget* child, gboolean non_homogeneous)"
+  XEN_ASSERT_TYPE(XEN_GtkButtonBox__P(widget), widget, 1, "gtk_button_box_set_child_non_homogeneous", "GtkButtonBox*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(child), child, 2, "gtk_button_box_set_child_non_homogeneous", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(non_homogeneous), non_homogeneous, 3, "gtk_button_box_set_child_non_homogeneous", "gboolean");
+  gtk_button_box_set_child_non_homogeneous(XEN_TO_C_GtkButtonBox_(widget), XEN_TO_C_GtkWidget_(child), XEN_TO_C_gboolean(non_homogeneous));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_container_child_notify(XEN container, XEN child, XEN property_name)
+{
+  #define H_gtk_container_child_notify "void gtk_container_child_notify(GtkContainer* container, GtkWidget* child, \
+gchar* property_name)"
+  XEN_ASSERT_TYPE(XEN_GtkContainer__P(container), container, 1, "gtk_container_child_notify", "GtkContainer*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(child), child, 2, "gtk_container_child_notify", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(property_name), property_name, 3, "gtk_container_child_notify", "gchar*");
+  gtk_container_child_notify(XEN_TO_C_GtkContainer_(container), XEN_TO_C_GtkWidget_(child), (const gchar*)XEN_TO_C_gchar_(property_name));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_drag_source_set_icon_gicon(XEN widget, XEN icon)
+{
+  #define H_gtk_drag_source_set_icon_gicon "void gtk_drag_source_set_icon_gicon(GtkWidget* widget, GIcon* icon)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_drag_source_set_icon_gicon", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GIcon__P(icon), icon, 2, "gtk_drag_source_set_icon_gicon", "GIcon*");
+  gtk_drag_source_set_icon_gicon(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GIcon_(icon));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_drag_set_icon_gicon(XEN context, XEN icon, XEN hot_x, XEN hot_y)
+{
+  #define H_gtk_drag_set_icon_gicon "void gtk_drag_set_icon_gicon(GdkDragContext* context, GIcon* icon, \
+gint hot_x, gint hot_y)"
+  XEN_ASSERT_TYPE(XEN_GdkDragContext__P(context), context, 1, "gtk_drag_set_icon_gicon", "GdkDragContext*");
+  XEN_ASSERT_TYPE(XEN_GIcon__P(icon), icon, 2, "gtk_drag_set_icon_gicon", "GIcon*");
+  XEN_ASSERT_TYPE(XEN_gint_P(hot_x), hot_x, 3, "gtk_drag_set_icon_gicon", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(hot_y), hot_y, 4, "gtk_drag_set_icon_gicon", "gint");
+  gtk_drag_set_icon_gicon(XEN_TO_C_GdkDragContext_(context), XEN_TO_C_GIcon_(icon), XEN_TO_C_gint(hot_x), XEN_TO_C_gint(hot_y));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_combo_box_set_active_id(XEN combo_box, XEN active_id)
+{
+  #define H_gtk_combo_box_set_active_id "gboolean gtk_combo_box_set_active_id(GtkComboBox* combo_box, \
+gchar* active_id)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo_box), combo_box, 1, "gtk_combo_box_set_active_id", "GtkComboBox*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(active_id), active_id, 2, "gtk_combo_box_set_active_id", "gchar*");
+  return(C_TO_XEN_gboolean(gtk_combo_box_set_active_id(XEN_TO_C_GtkComboBox_(combo_box), (const gchar*)XEN_TO_C_gchar_(active_id))));
+}
+
+static XEN gxg_gtk_gradient_new_linear(XEN x0, XEN y0, XEN x1, XEN y1)
+{
+  #define H_gtk_gradient_new_linear "GtkGradient* gtk_gradient_new_linear(gdouble x0, gdouble y0, gdouble x1, \
+gdouble y1)"
+  XEN_ASSERT_TYPE(XEN_gdouble_P(x0), x0, 1, "gtk_gradient_new_linear", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(y0), y0, 2, "gtk_gradient_new_linear", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(x1), x1, 3, "gtk_gradient_new_linear", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(y1), y1, 4, "gtk_gradient_new_linear", "gdouble");
+  return(C_TO_XEN_GtkGradient_(gtk_gradient_new_linear(XEN_TO_C_gdouble(x0), XEN_TO_C_gdouble(y0), XEN_TO_C_gdouble(x1), 
+                                                       XEN_TO_C_gdouble(y1))));
+}
+
+static XEN gxg_gtk_gradient_new_radial(XEN x0, XEN y0, XEN radius0, XEN x1, XEN y1, XEN radius1)
+{
+  #define H_gtk_gradient_new_radial "GtkGradient* gtk_gradient_new_radial(gdouble x0, gdouble y0, gdouble radius0, \
+gdouble x1, gdouble y1, gdouble radius1)"
+  XEN_ASSERT_TYPE(XEN_gdouble_P(x0), x0, 1, "gtk_gradient_new_radial", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(y0), y0, 2, "gtk_gradient_new_radial", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(radius0), radius0, 3, "gtk_gradient_new_radial", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(x1), x1, 4, "gtk_gradient_new_radial", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(y1), y1, 5, "gtk_gradient_new_radial", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(radius1), radius1, 6, "gtk_gradient_new_radial", "gdouble");
+  return(C_TO_XEN_GtkGradient_(gtk_gradient_new_radial(XEN_TO_C_gdouble(x0), XEN_TO_C_gdouble(y0), XEN_TO_C_gdouble(radius0), 
+                                                       XEN_TO_C_gdouble(x1), XEN_TO_C_gdouble(y1), XEN_TO_C_gdouble(radius1))));
+}
+
+static XEN gxg_gtk_gradient_add_color_stop(XEN gradient, XEN offset, XEN color)
+{
+  #define H_gtk_gradient_add_color_stop "void gtk_gradient_add_color_stop(GtkGradient* gradient, gdouble offset, \
+GtkSymbolicColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkGradient__P(gradient), gradient, 1, "gtk_gradient_add_color_stop", "GtkGradient*");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(offset), offset, 2, "gtk_gradient_add_color_stop", "gdouble");
+  XEN_ASSERT_TYPE(XEN_GtkSymbolicColor__P(color), color, 3, "gtk_gradient_add_color_stop", "GtkSymbolicColor*");
+  gtk_gradient_add_color_stop(XEN_TO_C_GtkGradient_(gradient), XEN_TO_C_gdouble(offset), XEN_TO_C_GtkSymbolicColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_gradient_ref(XEN gradient)
+{
+  #define H_gtk_gradient_ref "GtkGradient* gtk_gradient_ref(GtkGradient* gradient)"
+  XEN_ASSERT_TYPE(XEN_GtkGradient__P(gradient), gradient, 1, "gtk_gradient_ref", "GtkGradient*");
+  return(C_TO_XEN_GtkGradient_(gtk_gradient_ref(XEN_TO_C_GtkGradient_(gradient))));
+}
+
+static XEN gxg_gtk_gradient_unref(XEN gradient)
+{
+  #define H_gtk_gradient_unref "void gtk_gradient_unref(GtkGradient* gradient)"
+  XEN_ASSERT_TYPE(XEN_GtkGradient__P(gradient), gradient, 1, "gtk_gradient_unref", "GtkGradient*");
+  gtk_gradient_unref(XEN_TO_C_GtkGradient_(gradient));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_gradient_resolve(XEN gradient, XEN props, XEN resolved_gradient)
+{
+  #define H_gtk_gradient_resolve "gboolean gtk_gradient_resolve(GtkGradient* gradient, GtkStyleProperties* props, \
+cairo_pattern_t** resolved_gradient)"
+  XEN_ASSERT_TYPE(XEN_GtkGradient__P(gradient), gradient, 1, "gtk_gradient_resolve", "GtkGradient*");
+  XEN_ASSERT_TYPE(XEN_GtkStyleProperties__P(props), props, 2, "gtk_gradient_resolve", "GtkStyleProperties*");
+  XEN_ASSERT_TYPE(XEN_cairo_pattern_t___P(resolved_gradient), resolved_gradient, 3, "gtk_gradient_resolve", "cairo_pattern_t**");
+  return(C_TO_XEN_gboolean(gtk_gradient_resolve(XEN_TO_C_GtkGradient_(gradient), XEN_TO_C_GtkStyleProperties_(props), XEN_TO_C_cairo_pattern_t__(resolved_gradient))));
+}
+
+static XEN gxg_gtk_gradient_to_string(XEN gradient)
+{
+  #define H_gtk_gradient_to_string "char* gtk_gradient_to_string(GtkGradient* gradient)"
+  XEN_ASSERT_TYPE(XEN_GtkGradient__P(gradient), gradient, 1, "gtk_gradient_to_string", "GtkGradient*");
+  return(C_TO_XEN_char_(gtk_gradient_to_string(XEN_TO_C_GtkGradient_(gradient))));
+}
+
+static XEN gxg_gtk_symbolic_color_to_string(XEN color)
+{
+  #define H_gtk_symbolic_color_to_string "char* gtk_symbolic_color_to_string(GtkSymbolicColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkSymbolicColor__P(color), color, 1, "gtk_symbolic_color_to_string", "GtkSymbolicColor*");
+  return(C_TO_XEN_char_(gtk_symbolic_color_to_string(XEN_TO_C_GtkSymbolicColor_(color))));
+}
+
+static XEN gxg_gtk_tree_view_column_get_x_offset(XEN tree_column)
+{
+  #define H_gtk_tree_view_column_get_x_offset "gint gtk_tree_view_column_get_x_offset(GtkTreeViewColumn* tree_column)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeViewColumn__P(tree_column), tree_column, 1, "gtk_tree_view_column_get_x_offset", "GtkTreeViewColumn*");
+  return(C_TO_XEN_gint(gtk_tree_view_column_get_x_offset(XEN_TO_C_GtkTreeViewColumn_(tree_column))));
+}
+
+static XEN gxg_gtk_overlay_new(void)
+{
+  #define H_gtk_overlay_new "GtkWidget* gtk_overlay_new( void)"
+  return(C_TO_XEN_GtkWidget_(gtk_overlay_new()));
+}
+
+static XEN gxg_gtk_overlay_add_overlay(XEN overlay, XEN widget)
+{
+  #define H_gtk_overlay_add_overlay "void gtk_overlay_add_overlay(GtkOverlay* overlay, GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkOverlay__P(overlay), overlay, 1, "gtk_overlay_add_overlay", "GtkOverlay*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 2, "gtk_overlay_add_overlay", "GtkWidget*");
+  gtk_overlay_add_overlay(XEN_TO_C_GtkOverlay_(overlay), XEN_TO_C_GtkWidget_(widget));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_adjustment_get_minimum_increment(XEN adjustment)
+{
+  #define H_gtk_adjustment_get_minimum_increment "gdouble gtk_adjustment_get_minimum_increment(GtkAdjustment* adjustment)"
+  XEN_ASSERT_TYPE(XEN_GtkAdjustment__P(adjustment), adjustment, 1, "gtk_adjustment_get_minimum_increment", "GtkAdjustment*");
+  return(C_TO_XEN_gdouble(gtk_adjustment_get_minimum_increment(XEN_TO_C_GtkAdjustment_(adjustment))));
+}
+
+#endif
+
 #if (!HAVE_GTK_3)
 static XEN gxg_gdk_colormap_new(XEN visual, XEN allocate)
 {
@@ -34424,6 +34642,10 @@ static XEN gxg_GTK_WINDOW_GROUP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_L
 static XEN gxg_GTK_TOOL_SHELL(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkToolShell_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+static XEN gxg_GTK_OVERLAY(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkOverlay_"), XEN_CADR(obj)) : XEN_FALSE);}
+#endif
+
 #if (!HAVE_GTK_3)
 static XEN gxg_GDK_COLORMAP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColormap_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_DRAWABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDrawable_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34603,6 +34825,10 @@ static XEN gxg_GTK_IS_ACTIVATABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJE
 static XEN gxg_GTK_IS_ORIENTABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ORIENTABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_WINDOW_GROUP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_WINDOW_GROUP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TOOL_SHELL(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOOL_SHELL((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+#endif
+
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+static XEN gxg_GTK_IS_OVERLAY(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_OVERLAY((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
 #if (!HAVE_GTK_3)
@@ -38300,6 +38526,32 @@ XEN_NARGIFY_3(gxg_gtk_widget_override_symbolic_color_w, gxg_gtk_widget_override_
 XEN_NARGIFY_3(gxg_gtk_widget_override_cursor_w, gxg_gtk_widget_override_cursor)
 #endif
 
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+XEN_NARGIFY_1(gxg_gtk_entry_get_placeholder_text_w, gxg_gtk_entry_get_placeholder_text)
+XEN_NARGIFY_2(gxg_gtk_entry_set_placeholder_text_w, gxg_gtk_entry_set_placeholder_text)
+XEN_NARGIFY_2(gxg_gtk_expander_set_resize_toplevel_w, gxg_gtk_expander_set_resize_toplevel)
+XEN_NARGIFY_1(gxg_gtk_expander_get_resize_toplevel_w, gxg_gtk_expander_get_resize_toplevel)
+XEN_NARGIFY_1(gxg_gtk_widget_path_to_string_w, gxg_gtk_widget_path_to_string)
+XEN_NARGIFY_2(gxg_gtk_button_box_get_child_non_homogeneous_w, gxg_gtk_button_box_get_child_non_homogeneous)
+XEN_NARGIFY_3(gxg_gtk_button_box_set_child_non_homogeneous_w, gxg_gtk_button_box_set_child_non_homogeneous)
+XEN_NARGIFY_3(gxg_gtk_container_child_notify_w, gxg_gtk_container_child_notify)
+XEN_NARGIFY_2(gxg_gtk_drag_source_set_icon_gicon_w, gxg_gtk_drag_source_set_icon_gicon)
+XEN_NARGIFY_4(gxg_gtk_drag_set_icon_gicon_w, gxg_gtk_drag_set_icon_gicon)
+XEN_NARGIFY_2(gxg_gtk_combo_box_set_active_id_w, gxg_gtk_combo_box_set_active_id)
+XEN_NARGIFY_4(gxg_gtk_gradient_new_linear_w, gxg_gtk_gradient_new_linear)
+XEN_NARGIFY_6(gxg_gtk_gradient_new_radial_w, gxg_gtk_gradient_new_radial)
+XEN_NARGIFY_3(gxg_gtk_gradient_add_color_stop_w, gxg_gtk_gradient_add_color_stop)
+XEN_NARGIFY_1(gxg_gtk_gradient_ref_w, gxg_gtk_gradient_ref)
+XEN_NARGIFY_1(gxg_gtk_gradient_unref_w, gxg_gtk_gradient_unref)
+XEN_NARGIFY_3(gxg_gtk_gradient_resolve_w, gxg_gtk_gradient_resolve)
+XEN_NARGIFY_1(gxg_gtk_gradient_to_string_w, gxg_gtk_gradient_to_string)
+XEN_NARGIFY_1(gxg_gtk_symbolic_color_to_string_w, gxg_gtk_symbolic_color_to_string)
+XEN_NARGIFY_1(gxg_gtk_tree_view_column_get_x_offset_w, gxg_gtk_tree_view_column_get_x_offset)
+XEN_NARGIFY_0(gxg_gtk_overlay_new_w, gxg_gtk_overlay_new)
+XEN_NARGIFY_2(gxg_gtk_overlay_add_overlay_w, gxg_gtk_overlay_add_overlay)
+XEN_NARGIFY_1(gxg_gtk_adjustment_get_minimum_increment_w, gxg_gtk_adjustment_get_minimum_increment)
+#endif
+
 #if (!HAVE_GTK_3)
 XEN_NARGIFY_2(gxg_gdk_colormap_new_w, gxg_gdk_colormap_new)
 XEN_NARGIFY_0(gxg_gdk_colormap_get_system_w, gxg_gdk_colormap_get_system)
@@ -38878,6 +39130,10 @@ XEN_NARGIFY_1(gxg_GTK_WINDOW_GROUP_w, gxg_GTK_WINDOW_GROUP)
 XEN_NARGIFY_1(gxg_GTK_TOOL_SHELL_w, gxg_GTK_TOOL_SHELL)
 #endif
 
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+XEN_NARGIFY_1(gxg_GTK_OVERLAY_w, gxg_GTK_OVERLAY)
+#endif
+
 #if (!HAVE_GTK_3)
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
 XEN_NARGIFY_1(gxg_GDK_DRAWABLE_w, gxg_GDK_DRAWABLE)
@@ -39057,6 +39313,10 @@ XEN_NARGIFY_1(gxg_GTK_IS_ACTIVATABLE_w, gxg_GTK_IS_ACTIVATABLE)
 XEN_NARGIFY_1(gxg_GTK_IS_ORIENTABLE_w, gxg_GTK_IS_ORIENTABLE)
 XEN_NARGIFY_1(gxg_GTK_IS_WINDOW_GROUP_w, gxg_GTK_IS_WINDOW_GROUP)
 XEN_NARGIFY_1(gxg_GTK_IS_TOOL_SHELL_w, gxg_GTK_IS_TOOL_SHELL)
+#endif
+
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+XEN_NARGIFY_1(gxg_GTK_IS_OVERLAY_w, gxg_GTK_IS_OVERLAY)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -42300,6 +42560,32 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_widget_override_cursor_w gxg_gtk_widget_override_cursor
 #endif
 
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+#define gxg_gtk_entry_get_placeholder_text_w gxg_gtk_entry_get_placeholder_text
+#define gxg_gtk_entry_set_placeholder_text_w gxg_gtk_entry_set_placeholder_text
+#define gxg_gtk_expander_set_resize_toplevel_w gxg_gtk_expander_set_resize_toplevel
+#define gxg_gtk_expander_get_resize_toplevel_w gxg_gtk_expander_get_resize_toplevel
+#define gxg_gtk_widget_path_to_string_w gxg_gtk_widget_path_to_string
+#define gxg_gtk_button_box_get_child_non_homogeneous_w gxg_gtk_button_box_get_child_non_homogeneous
+#define gxg_gtk_button_box_set_child_non_homogeneous_w gxg_gtk_button_box_set_child_non_homogeneous
+#define gxg_gtk_container_child_notify_w gxg_gtk_container_child_notify
+#define gxg_gtk_drag_source_set_icon_gicon_w gxg_gtk_drag_source_set_icon_gicon
+#define gxg_gtk_drag_set_icon_gicon_w gxg_gtk_drag_set_icon_gicon
+#define gxg_gtk_combo_box_set_active_id_w gxg_gtk_combo_box_set_active_id
+#define gxg_gtk_gradient_new_linear_w gxg_gtk_gradient_new_linear
+#define gxg_gtk_gradient_new_radial_w gxg_gtk_gradient_new_radial
+#define gxg_gtk_gradient_add_color_stop_w gxg_gtk_gradient_add_color_stop
+#define gxg_gtk_gradient_ref_w gxg_gtk_gradient_ref
+#define gxg_gtk_gradient_unref_w gxg_gtk_gradient_unref
+#define gxg_gtk_gradient_resolve_w gxg_gtk_gradient_resolve
+#define gxg_gtk_gradient_to_string_w gxg_gtk_gradient_to_string
+#define gxg_gtk_symbolic_color_to_string_w gxg_gtk_symbolic_color_to_string
+#define gxg_gtk_tree_view_column_get_x_offset_w gxg_gtk_tree_view_column_get_x_offset
+#define gxg_gtk_overlay_new_w gxg_gtk_overlay_new
+#define gxg_gtk_overlay_add_overlay_w gxg_gtk_overlay_add_overlay
+#define gxg_gtk_adjustment_get_minimum_increment_w gxg_gtk_adjustment_get_minimum_increment
+#endif
+
 #if (!HAVE_GTK_3)
 #define gxg_gdk_colormap_new_w gxg_gdk_colormap_new
 #define gxg_gdk_colormap_get_system_w gxg_gdk_colormap_get_system
@@ -42878,6 +43164,10 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_TOOL_SHELL_w gxg_GTK_TOOL_SHELL
 #endif
 
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+#define gxg_GTK_OVERLAY_w gxg_GTK_OVERLAY
+#endif
+
 #if (!HAVE_GTK_3)
 #define gxg_GDK_COLORMAP_w gxg_GDK_COLORMAP
 #define gxg_GDK_DRAWABLE_w gxg_GDK_DRAWABLE
@@ -43057,6 +43347,10 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_IS_ORIENTABLE_w gxg_GTK_IS_ORIENTABLE
 #define gxg_GTK_IS_WINDOW_GROUP_w gxg_GTK_IS_WINDOW_GROUP
 #define gxg_GTK_IS_TOOL_SHELL_w gxg_GTK_IS_TOOL_SHELL
+#endif
+
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+#define gxg_GTK_IS_OVERLAY_w gxg_GTK_IS_OVERLAY
 #endif
 
 #if (!HAVE_GTK_3)
@@ -46307,6 +46601,32 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_override_cursor, gxg_gtk_widget_override_cursor_w, 3, 0, 0, H_gtk_widget_override_cursor);
 #endif
 
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+  XG_DEFINE_PROCEDURE(gtk_entry_get_placeholder_text, gxg_gtk_entry_get_placeholder_text_w, 1, 0, 0, H_gtk_entry_get_placeholder_text);
+  XG_DEFINE_PROCEDURE(gtk_entry_set_placeholder_text, gxg_gtk_entry_set_placeholder_text_w, 2, 0, 0, H_gtk_entry_set_placeholder_text);
+  XG_DEFINE_PROCEDURE(gtk_expander_set_resize_toplevel, gxg_gtk_expander_set_resize_toplevel_w, 2, 0, 0, H_gtk_expander_set_resize_toplevel);
+  XG_DEFINE_PROCEDURE(gtk_expander_get_resize_toplevel, gxg_gtk_expander_get_resize_toplevel_w, 1, 0, 0, H_gtk_expander_get_resize_toplevel);
+  XG_DEFINE_PROCEDURE(gtk_widget_path_to_string, gxg_gtk_widget_path_to_string_w, 1, 0, 0, H_gtk_widget_path_to_string);
+  XG_DEFINE_PROCEDURE(gtk_button_box_get_child_non_homogeneous, gxg_gtk_button_box_get_child_non_homogeneous_w, 2, 0, 0, H_gtk_button_box_get_child_non_homogeneous);
+  XG_DEFINE_PROCEDURE(gtk_button_box_set_child_non_homogeneous, gxg_gtk_button_box_set_child_non_homogeneous_w, 3, 0, 0, H_gtk_button_box_set_child_non_homogeneous);
+  XG_DEFINE_PROCEDURE(gtk_container_child_notify, gxg_gtk_container_child_notify_w, 3, 0, 0, H_gtk_container_child_notify);
+  XG_DEFINE_PROCEDURE(gtk_drag_source_set_icon_gicon, gxg_gtk_drag_source_set_icon_gicon_w, 2, 0, 0, H_gtk_drag_source_set_icon_gicon);
+  XG_DEFINE_PROCEDURE(gtk_drag_set_icon_gicon, gxg_gtk_drag_set_icon_gicon_w, 4, 0, 0, H_gtk_drag_set_icon_gicon);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_set_active_id, gxg_gtk_combo_box_set_active_id_w, 2, 0, 0, H_gtk_combo_box_set_active_id);
+  XG_DEFINE_PROCEDURE(gtk_gradient_new_linear, gxg_gtk_gradient_new_linear_w, 4, 0, 0, H_gtk_gradient_new_linear);
+  XG_DEFINE_PROCEDURE(gtk_gradient_new_radial, gxg_gtk_gradient_new_radial_w, 6, 0, 0, H_gtk_gradient_new_radial);
+  XG_DEFINE_PROCEDURE(gtk_gradient_add_color_stop, gxg_gtk_gradient_add_color_stop_w, 3, 0, 0, H_gtk_gradient_add_color_stop);
+  XG_DEFINE_PROCEDURE(gtk_gradient_ref, gxg_gtk_gradient_ref_w, 1, 0, 0, H_gtk_gradient_ref);
+  XG_DEFINE_PROCEDURE(gtk_gradient_unref, gxg_gtk_gradient_unref_w, 1, 0, 0, H_gtk_gradient_unref);
+  XG_DEFINE_PROCEDURE(gtk_gradient_resolve, gxg_gtk_gradient_resolve_w, 3, 0, 0, H_gtk_gradient_resolve);
+  XG_DEFINE_PROCEDURE(gtk_gradient_to_string, gxg_gtk_gradient_to_string_w, 1, 0, 0, H_gtk_gradient_to_string);
+  XG_DEFINE_PROCEDURE(gtk_symbolic_color_to_string, gxg_gtk_symbolic_color_to_string_w, 1, 0, 0, H_gtk_symbolic_color_to_string);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_x_offset, gxg_gtk_tree_view_column_get_x_offset_w, 1, 0, 0, H_gtk_tree_view_column_get_x_offset);
+  XG_DEFINE_PROCEDURE(gtk_overlay_new, gxg_gtk_overlay_new_w, 0, 0, 0, H_gtk_overlay_new);
+  XG_DEFINE_PROCEDURE(gtk_overlay_add_overlay, gxg_gtk_overlay_add_overlay_w, 2, 0, 0, H_gtk_overlay_add_overlay);
+  XG_DEFINE_PROCEDURE(gtk_adjustment_get_minimum_increment, gxg_gtk_adjustment_get_minimum_increment_w, 1, 0, 0, H_gtk_adjustment_get_minimum_increment);
+#endif
+
 #if (!HAVE_GTK_3)
   XG_DEFINE_PROCEDURE(gdk_colormap_new, gxg_gdk_colormap_new_w, 2, 0, 0, H_gdk_colormap_new);
   XG_DEFINE_PROCEDURE(gdk_colormap_get_system, gxg_gdk_colormap_get_system_w, 0, 0, 0, H_gdk_colormap_get_system);
@@ -46876,6 +47196,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_TOOL_SHELL, gxg_GTK_TOOL_SHELL_w, 1, 0, 0, "(GTK_TOOL_SHELL obj) casts obj to GTK_TOOL_SHELL");
 #endif
 
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+  XG_DEFINE_PROCEDURE(GTK_OVERLAY, gxg_GTK_OVERLAY_w, 1, 0, 0, "(GTK_OVERLAY obj) casts obj to GTK_OVERLAY");
+#endif
+
 #if (!HAVE_GTK_3)
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, "(GDK_COLORMAP obj) casts obj to GDK_COLORMAP");
   XG_DEFINE_PROCEDURE(GDK_DRAWABLE, gxg_GDK_DRAWABLE_w, 1, 0, 0, "(GDK_DRAWABLE obj) casts obj to GDK_DRAWABLE");
@@ -47064,6 +47388,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_ORIENTABLE, gxg_GTK_IS_ORIENTABLE_w, 1, 0, 0, "(GTK_IS_ORIENTABLE obj): " PROC_TRUE " if obj is a GTK_IS_ORIENTABLE");
   XG_DEFINE_PROCEDURE(GTK_IS_WINDOW_GROUP, gxg_GTK_IS_WINDOW_GROUP_w, 1, 0, 0, "(GTK_IS_WINDOW_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_WINDOW_GROUP");
   XG_DEFINE_PROCEDURE(GTK_IS_TOOL_SHELL, gxg_GTK_IS_TOOL_SHELL_w, 1, 0, 0, "(GTK_IS_TOOL_SHELL obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_SHELL");
+#endif
+
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+  XG_DEFINE_PROCEDURE(GTK_IS_OVERLAY, gxg_GTK_IS_OVERLAY_w, 1, 0, 0, "(GTK_IS_OVERLAY obj): " PROC_TRUE " if obj is a GTK_IS_OVERLAY");
 #endif
 
 #if (!HAVE_GTK_3)
@@ -48191,6 +48519,10 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_STATE_FLAG_FOCUSED);
 #endif
 
+#if HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT
+  DEFINE_INTEGER(GTK_SIZE_REQUEST_CONSTANT_SIZE);
+#endif
+
 #if (!HAVE_GTK_3)
   DEFINE_INTEGER(GDK_DRAG_PROTO_MOTIF);
   DEFINE_INTEGER(GDK_DRAG_PROTO_XDND);
@@ -48851,7 +49183,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Jun-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Jul-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

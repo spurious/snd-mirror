@@ -991,10 +991,16 @@ else
 	# for 2.19.n
 	AC_CHECK_LIB(m, gtk_widget_get_mapped, [AC_DEFINE(HAVE_GTK_WIDGET_GET_MAPPED)], ,$GTK_LIBS)
 	# for 2.9n.n
+	AC_CHECK_LIB(m, gtk_grid_new, [AC_DEFINE(HAVE_GTK_GRID_NEW)], ,$GTK_LIBS)
+
 	AC_CHECK_LIB(m, gtk_combo_box_new_with_area,
                           [AC_DEFINE(HAVE_GTK_COMBO_BOX_NEW_WITH_AREA)
                            AC_DEFINE(HAVE_GTK_3)
                           ], ,$GTK_LIBS)
+  
+        # for 3.1.10
+        AC_CHECK_LIB(m, gtk_adjustment_get_minimum_increment, [AC_DEFINE(HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT)], ,$GTK_LIBS)
+
 
 	AC_CHECK_LIB(cairo, cairo_glyph_allocate, [AC_DEFINE(HAVE_CAIRO_GLYPH_ALLOCATE)], ,$GTK_LIBS)
 	AC_CHECK_LIB(cairo, cairo_region_xor, [AC_DEFINE(HAVE_CAIRO_REGION_XOR)], ,$GTK_LIBS)

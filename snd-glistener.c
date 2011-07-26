@@ -806,7 +806,7 @@ static void make_bindings(gpointer cls)
 
 static bool bindings_ok = false;
 
-GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_background)
+GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t with_white_background)
 {
   GtkWidget *text;
   GtkSettings *settings;
@@ -814,7 +814,19 @@ GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_backgro
   gtk_editable_set_editable(GTK_EDITABLE(text), true);
   settings = gtk_widget_get_settings(text);
   g_object_set(settings, "gtk-entry-select-on-focus", false, NULL);
+
+#if HAVE_GTK_GRID_NEW
+  if (prev)
+    {
+      g_object_set(text, "margin", 2, NULL);
+      gtk_widget_set_halign(text, GTK_ALIGN_FILL);
+      gtk_widget_set_hexpand(text, true);
+      gtk_grid_attach_next_to(GTK_GRID(container), text, prev, GTK_POS_RIGHT, 1, 1);
+    }
+  else gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
+#else
   gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
+#endif
 
   if (!bindings_ok)
     {

@@ -8401,6 +8401,48 @@ if test "x$ac_cv_lib_m_gtk_widget_get_mapped" = xyes; then :
 fi
 
 	# for 2.9n.n
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_grid_new in -lm" >&5
+$as_echo_n "checking for gtk_grid_new in -lm... " >&6; }
+if ${ac_cv_lib_m_gtk_grid_new+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lm $GTK_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gtk_grid_new ();
+int
+main ()
+{
+return gtk_grid_new ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_m_gtk_grid_new=yes
+else
+  ac_cv_lib_m_gtk_grid_new=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_grid_new" >&5
+$as_echo "$ac_cv_lib_m_gtk_grid_new" >&6; }
+if test "x$ac_cv_lib_m_gtk_grid_new" = xyes; then :
+  $as_echo "#define HAVE_GTK_GRID_NEW 1" >>confdefs.h
+
+fi
+
+
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_combo_box_new_with_area in -lm" >&5
 $as_echo_n "checking for gtk_combo_box_new_with_area in -lm... " >&6; }
 if ${ac_cv_lib_m_gtk_combo_box_new_with_area+:} false; then :
@@ -8444,6 +8486,50 @@ if test "x$ac_cv_lib_m_gtk_combo_box_new_with_area" = xyes; then :
 
 
 fi
+
+
+        # for 3.1.10
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_adjustment_get_minimum_increment in -lm" >&5
+$as_echo_n "checking for gtk_adjustment_get_minimum_increment in -lm... " >&6; }
+if ${ac_cv_lib_m_gtk_adjustment_get_minimum_increment+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lm $GTK_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gtk_adjustment_get_minimum_increment ();
+int
+main ()
+{
+return gtk_adjustment_get_minimum_increment ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_m_gtk_adjustment_get_minimum_increment=yes
+else
+  ac_cv_lib_m_gtk_adjustment_get_minimum_increment=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_adjustment_get_minimum_increment" >&5
+$as_echo "$ac_cv_lib_m_gtk_adjustment_get_minimum_increment" >&6; }
+if test "x$ac_cv_lib_m_gtk_adjustment_get_minimum_increment" = xyes; then :
+  $as_echo "#define HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT 1" >>confdefs.h
+
+fi
+
 
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cairo_glyph_allocate in -lcairo" >&5

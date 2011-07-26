@@ -10980,7 +10980,37 @@ static s7_pointer g_chars_are_equal(s7_scheme *sc, s7_pointer args)
   return(g_char_cmp(sc, args, 0, "char=?", false));
 }	
 
+
+static s7_pointer g_chars_are_less(s7_scheme *sc, s7_pointer args)
+{
+  #define H_chars_are_less "(char<? char ...) returns #t if all the character arguments are increasing"
+  return(g_char_cmp(sc, args, -1, "char<?", false));
+}	
+
+
+static s7_pointer g_chars_are_greater(s7_scheme *sc, s7_pointer args)
+{
+  #define H_chars_are_greater "(char>? char ...) returns #t if all the character arguments are decreasing"
+  return(g_char_cmp(sc, args, 1, "char>?", false));
+}
+
+
+static s7_pointer g_chars_are_geq(s7_scheme *sc, s7_pointer args)
+{
+  #define H_chars_are_geq "(char>=? char ...) returns #t if all the character arguments are equal or decreasing"
+  return(g_char_cmp_not(sc, args, -1, "char>=?", false));
+}	
+
+
+static s7_pointer g_chars_are_leq(s7_scheme *sc, s7_pointer args)
+{
+  #define H_chars_are_leq "(char<=? char ...) returns #t if all the character arguments are equal or increasing"
+  return(g_char_cmp_not(sc, args, 1, "char<=?", false));
+}
+
+
 #if WITH_OPTIMIZATION
+
 static s7_pointer char_equal_s_ic, char_equal_2;
 static s7_pointer g_char_equal_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -10997,16 +11027,8 @@ static s7_pointer g_char_equal_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "char=?", 2, cadr(args), "a character"));
   return(make_boolean(sc, character(car(args)) == character(cadr(args))));
 }
-#endif
 
 
-static s7_pointer g_chars_are_less(s7_scheme *sc, s7_pointer args)
-{
-  #define H_chars_are_less "(char<? char ...) returns #t if all the character arguments are increasing"
-  return(g_char_cmp(sc, args, -1, "char<?", false));
-}	
-
-#if WITH_OPTIMIZATION
 static s7_pointer char_less_s_ic, char_less_2;
 static s7_pointer g_char_less_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -11023,17 +11045,8 @@ static s7_pointer g_char_less_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "char<?", 2, cadr(args), "a character"));
   return(make_boolean(sc, character(car(args)) < character(cadr(args))));
 }
-#endif
 
 
-
-static s7_pointer g_chars_are_greater(s7_scheme *sc, s7_pointer args)
-{
-  #define H_chars_are_greater "(char>? char ...) returns #t if all the character arguments are decreasing"
-  return(g_char_cmp(sc, args, 1, "char>?", false));
-}
-
-#if WITH_OPTIMIZATION
 static s7_pointer char_greater_s_ic, char_greater_2;
 static s7_pointer g_char_greater_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -11050,17 +11063,8 @@ static s7_pointer g_char_greater_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "char>?", 2, cadr(args), "a character"));
   return(make_boolean(sc, character(car(args)) > character(cadr(args))));
 }
-#endif
 
 
-
-static s7_pointer g_chars_are_geq(s7_scheme *sc, s7_pointer args)
-{
-  #define H_chars_are_geq "(char>=? char ...) returns #t if all the character arguments are equal or decreasing"
-  return(g_char_cmp_not(sc, args, -1, "char>=?", false));
-}	
-
-#if WITH_OPTIMIZATION
 static s7_pointer char_geq_s_ic, char_geq_2;
 static s7_pointer g_char_geq_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -11077,17 +11081,8 @@ static s7_pointer g_char_geq_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "char>=?", 2, cadr(args), "a character"));
   return(make_boolean(sc, character(car(args)) >= character(cadr(args))));
 }
-#endif
 
 
-
-static s7_pointer g_chars_are_leq(s7_scheme *sc, s7_pointer args)
-{
-  #define H_chars_are_leq "(char<=? char ...) returns #t if all the character arguments are equal or increasing"
-  return(g_char_cmp_not(sc, args, 1, "char<=?", false));
-}
-
-#if WITH_OPTIMIZATION
 static s7_pointer char_leq_s_ic, char_leq_2;
 static s7_pointer g_char_leq_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -11141,6 +11136,99 @@ static s7_pointer g_chars_are_ci_leq(s7_scheme *sc, s7_pointer args)
   #define H_chars_are_ci_leq "(char-ci<=? char ...) returns #t if all the character arguments are equal or increasing, ignoring case"
   return(g_char_cmp_not(sc, args, 1, "char-ci<=?", true));
 }
+
+
+#if WITH_OPTIMIZATION
+
+static s7_pointer char_ci_equal_s_ic, char_ci_equal_2;
+static s7_pointer g_char_ci_equal_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_character(car(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci=?", 1, car(args), "a character"));
+  return(make_boolean(sc, toupper(character(car(args))) == toupper(character(cadr(args)))));
+}
+
+static s7_pointer g_char_ci_equal_2(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_character(car(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci=?", 1, car(args), "a character"));
+  if (!s7_is_character(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci=?", 2, cadr(args), "a character"));
+  return(make_boolean(sc, toupper(character(car(args))) == toupper(character(cadr(args)))));
+}
+
+
+static s7_pointer char_ci_less_s_ic, char_ci_less_2;
+static s7_pointer g_char_ci_less_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_character(car(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci<?", 1, car(args), "a character"));
+  return(make_boolean(sc, toupper(character(car(args))) < toupper(character(cadr(args)))));
+}
+
+static s7_pointer g_char_ci_less_2(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_character(car(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci<?", 1, car(args), "a character"));
+  if (!s7_is_character(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci<?", 2, cadr(args), "a character"));
+  return(make_boolean(sc, toupper(character(car(args))) < toupper(character(cadr(args)))));
+}
+
+
+static s7_pointer char_ci_greater_s_ic, char_ci_greater_2;
+static s7_pointer g_char_ci_greater_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_character(car(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci>?", 1, car(args), "a character"));
+  return(make_boolean(sc, toupper(character(car(args))) > toupper(character(cadr(args)))));
+}
+
+static s7_pointer g_char_ci_greater_2(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_character(car(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci>?", 1, car(args), "a character"));
+  if (!s7_is_character(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci>?", 2, cadr(args), "a character"));
+  return(make_boolean(sc, toupper(character(car(args))) > toupper(character(cadr(args)))));
+}
+
+
+static s7_pointer char_ci_geq_s_ic, char_ci_geq_2;
+static s7_pointer g_char_ci_geq_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_character(car(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci>=?", 1, car(args), "a character"));
+  return(make_boolean(sc, toupper(character(car(args))) >= toupper(character(cadr(args)))));
+}
+
+static s7_pointer g_char_ci_geq_2(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_character(car(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci>=?", 1, car(args), "a character"));
+  if (!s7_is_character(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci>=?", 2, cadr(args), "a character"));
+  return(make_boolean(sc, toupper(character(car(args))) >= toupper(character(cadr(args)))));
+}
+
+
+static s7_pointer char_ci_leq_s_ic, char_ci_leq_2;
+static s7_pointer g_char_ci_leq_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_character(car(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci<=?", 1, car(args), "a character"));
+  return(make_boolean(sc, toupper(character(car(args))) <= toupper(character(cadr(args)))));
+}
+
+static s7_pointer g_char_ci_leq_2(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_character(car(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci<=?", 1, car(args), "a character"));
+  if (!s7_is_character(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "char-ci<=?", 2, cadr(args), "a character"));
+  return(make_boolean(sc, toupper(character(car(args))) <= toupper(character(cadr(args)))));
+}
+#endif
 
 
 
@@ -11586,7 +11674,35 @@ static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
 }	
 
 
+static s7_pointer g_strings_are_less(s7_scheme *sc, s7_pointer args)
+{
+  #define H_strings_are_less "(string<? str ...) returns #t if all the string arguments are increasing"
+  return(g_string_cmp(sc, args, -1, "string<?"));
+}	
+
+
+static s7_pointer g_strings_are_greater(s7_scheme *sc, s7_pointer args)
+{
+  #define H_strings_are_greater "(string>? str ...) returns #t if all the string arguments are decreasing"
+  return(g_string_cmp(sc, args, 1, "string>?"));
+}	
+
+
+static s7_pointer g_strings_are_geq(s7_scheme *sc, s7_pointer args)
+{
+  #define H_strings_are_geq "(string>=? str ...) returns #t if all the string arguments are equal or decreasing"
+  return(g_string_cmp_not(sc, args, -1, "string>=?"));
+}	
+
+
+static s7_pointer g_strings_are_leq(s7_scheme *sc, s7_pointer args)
+{
+  #define H_strings_are_leq "(string<=? str ...) returns #t if all the string arguments are equal or increasing"
+  return(g_string_cmp_not(sc, args, 1, "string<=?"));
+}	
+
 #if WITH_OPTIMIZATION
+
 static s7_pointer string_equal_s_ic, string_equal_2;
 static s7_pointer g_string_equal_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -11603,16 +11719,8 @@ static s7_pointer g_string_equal_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string=?", 2, cadr(args), "a string"));
   return(make_boolean(sc, scheme_strcmp(car(args), cadr(args)) == 0));
 }
-#endif
 
 
-static s7_pointer g_strings_are_less(s7_scheme *sc, s7_pointer args)
-{
-  #define H_strings_are_less "(string<? str ...) returns #t if all the string arguments are increasing"
-  return(g_string_cmp(sc, args, -1, "string<?"));
-}	
-
-#if WITH_OPTIMIZATION
 static s7_pointer string_less_s_ic, string_less_2;
 static s7_pointer g_string_less_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -11629,16 +11737,8 @@ static s7_pointer g_string_less_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string<?", 2, cadr(args), "a string"));
   return(make_boolean(sc, scheme_strcmp(car(args), cadr(args)) == -1));
 }
-#endif
 
 
-static s7_pointer g_strings_are_greater(s7_scheme *sc, s7_pointer args)
-{
-  #define H_strings_are_greater "(string>? str ...) returns #t if all the string arguments are decreasing"
-  return(g_string_cmp(sc, args, 1, "string>?"));
-}	
-
-#if WITH_OPTIMIZATION
 static s7_pointer string_greater_s_ic, string_greater_2;
 static s7_pointer g_string_greater_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -11655,16 +11755,8 @@ static s7_pointer g_string_greater_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string>?", 2, cadr(args), "a string"));
   return(make_boolean(sc, scheme_strcmp(car(args), cadr(args)) == 1));
 }
-#endif
 
 
-static s7_pointer g_strings_are_geq(s7_scheme *sc, s7_pointer args)
-{
-  #define H_strings_are_geq "(string>=? str ...) returns #t if all the string arguments are equal or decreasing"
-  return(g_string_cmp_not(sc, args, -1, "string>=?"));
-}	
-
-#if WITH_OPTIMIZATION
 static s7_pointer string_geq_s_ic, string_geq_2;
 static s7_pointer g_string_geq_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -11681,16 +11773,8 @@ static s7_pointer g_string_geq_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string>=?", 2, cadr(args), "a string"));
   return(make_boolean(sc, scheme_strcmp(car(args), cadr(args)) != -1));
 }
-#endif
 
 
-static s7_pointer g_strings_are_leq(s7_scheme *sc, s7_pointer args)
-{
-  #define H_strings_are_leq "(string<=? str ...) returns #t if all the string arguments are equal or increasing"
-  return(g_string_cmp_not(sc, args, 1, "string<=?"));
-}	
-
-#if WITH_OPTIMIZATION
 static s7_pointer string_leq_s_ic, string_leq_2;
 static s7_pointer g_string_leq_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -11815,6 +11899,100 @@ static s7_pointer g_strings_are_ci_leq(s7_scheme *sc, s7_pointer args)
   #define H_strings_are_ci_leq "(string-ci<=? str ...) returns #t if all the string arguments are equal or increasing, ignoring case"
   return(g_string_ci_cmp_not(sc, args, 1, "string-ci<=?"));
 }	
+
+
+#if WITH_OPTIMIZATION
+
+static s7_pointer string_ci_equal_s_ic, string_ci_equal_2;
+static s7_pointer g_string_ci_equal_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci=?", 1, car(args), "a string"));
+  return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) == 0));
+}
+
+static s7_pointer g_string_ci_equal_2(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci=?", 1, car(args), "a string"));
+  if (!s7_is_string(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci=?", 2, cadr(args), "a string"));
+  return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) == 0));
+}
+
+
+static s7_pointer string_ci_less_s_ic, string_ci_less_2;
+static s7_pointer g_string_ci_less_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci<?", 1, car(args), "a string"));
+  return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) == -1));
+}
+
+static s7_pointer g_string_ci_less_2(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci<?", 1, car(args), "a string"));
+  if (!s7_is_string(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci<?", 2, cadr(args), "a string"));
+  return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) == -1));
+}
+
+
+static s7_pointer string_ci_greater_s_ic, string_ci_greater_2;
+static s7_pointer g_string_ci_greater_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci>?", 1, car(args), "a string"));
+  return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) == 1));
+}
+
+static s7_pointer g_string_ci_greater_2(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci>?", 1, car(args), "a string"));
+  if (!s7_is_string(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci>?", 2, cadr(args), "a string"));
+  return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) == 1));
+}
+
+
+static s7_pointer string_ci_geq_s_ic, string_ci_geq_2;
+static s7_pointer g_string_ci_geq_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci>=?", 1, car(args), "a string"));
+  return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) != -1));
+}
+
+static s7_pointer g_string_ci_geq_2(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci>=?", 1, car(args), "a string"));
+  if (!s7_is_string(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci>=?", 2, cadr(args), "a string"));
+  return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) != -1));
+}
+
+
+static s7_pointer string_ci_leq_s_ic, string_ci_leq_2;
+static s7_pointer g_string_ci_leq_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci<=?", 1, car(args), "a string"));
+  return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) != 1));
+}
+
+static s7_pointer g_string_ci_leq_2(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci<=?", 1, car(args), "a string"));
+  if (!s7_is_string(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ci<=?", 2, cadr(args), "a string"));
+  return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) != 1));
+}
+#endif
+
 
 
 static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
@@ -22765,17 +22943,9 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
 }
 
 
-#define WITH_STATS 0
-#if WITH_STATS
-static void report_calls(s7_scheme *sc);
-#endif
-
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 {
   #define H_s7_version "(s7-version) returns some string describing the current s7"
-#if WITH_STATS
-  report_calls(sc);
-#endif
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
 }
 
@@ -24864,8 +25034,7 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
 
 
 
-
-
+#if 0
 #define BOLD_TEXT "\033[1m"
 #define UNBOLD_TEXT "\033[22m"
 
@@ -24879,50 +25048,9 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
 #define YELLOW_TEXT "\033[33m"
 
 #define NORMAL_TEXT "\033[0m"
-
-
-#if WITH_STATS
-
-#define NUM_STATS 7
-int ops[OPT_MAX_DEFINED][NUM_STATS];
-
-static void report_calls(s7_scheme *sc)
-{
-  int i;
-  fprintf(stderr, "\n%s                     p      sp      ps      pc      cp      pp%s\n\n", BOLD_TEXT, UNBOLD_TEXT);
-  for (i = 0; i < OP_MAX_DEFINED; i++)
-    {
-      int k;
-      for (k = 0; k < NUM_STATS; k++)
-	if (ops[i][k] != 0)
-	  {
-	    int n, len;
-	    fprintf(stderr, "%s:", opt_names[i]);
-	    len = safe_strlen(opt_names[i]);
-	    for (n = len; n < 20; n++)
-	      fprintf(stderr, " ");
-	    for (n = 0; n < NUM_STATS; n++)
-	      {
-		int m;
-		char str[16];
-		len = snprintf(str, 16, "%d", ops[i][n]);
-		fprintf(stderr, str);
-		for (m = len; m < 8; m++)
-		  fprintf(stderr, " ");
-	      }
-	    fprintf(stderr, "\n");
-	    break;
-	  }
-    }
-  fprintf(stderr, "\n");
-}
-
-static void init_calls(s7_scheme *sc)
-{
-  memset((void *)ops, 0, OPT_MAX_DEFINED * NUM_STATS * sizeof(int));
-}
-
 #endif
+
+
 
 /* even with the frame_id optimization, this is still about 12% of our total computing: 210/1750 in lg
  */
@@ -25351,6 +25479,62 @@ static s7_pointer char_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 }
 
 
+static s7_pointer char_ci_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_character(caddr(expr)))
+	return(char_ci_equal_s_ic);
+      return(char_ci_equal_2);
+    }
+  return(f);
+}
+
+static s7_pointer char_ci_less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_character(caddr(expr)))
+	return(char_ci_less_s_ic);
+      return(char_ci_less_2);
+    }
+  return(f);
+}
+
+static s7_pointer char_ci_greater_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_character(caddr(expr)))
+	return(char_ci_greater_s_ic);
+      return(char_ci_greater_2);
+    }
+  return(f);
+}
+
+static s7_pointer char_ci_geq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_character(caddr(expr)))
+	return(char_ci_geq_s_ic);
+      return(char_ci_geq_2);
+    }
+  return(f);
+}
+
+static s7_pointer char_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_character(caddr(expr)))
+	return(char_ci_leq_s_ic);
+      return(char_ci_leq_2);
+    }
+  return(f);
+}
+
+
 static s7_pointer string_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
@@ -25405,6 +25589,63 @@ static s7_pointer string_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
     }
   return(f);
 }
+
+
+static s7_pointer string_ci_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_string(caddr(expr)))
+	return(string_ci_equal_s_ic);
+      return(string_ci_equal_2);
+    }
+  return(f);
+}
+
+static s7_pointer string_ci_less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_string(caddr(expr)))
+	return(string_ci_less_s_ic);
+      return(string_ci_less_2);
+    }
+  return(f);
+}
+
+static s7_pointer string_ci_greater_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_string(caddr(expr)))
+	return(string_ci_greater_s_ic);
+      return(string_ci_greater_2);
+    }
+  return(f);
+}
+
+static s7_pointer string_ci_geq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_string(caddr(expr)))
+	return(string_ci_geq_s_ic);
+      return(string_ci_geq_2);
+    }
+  return(f);
+}
+
+static s7_pointer string_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if (s7_is_string(caddr(expr)))
+	return(string_ci_leq_s_ic);
+      return(string_ci_leq_2);
+    }
+  return(f);
+}
+
 
 
 static void init_choosers(s7_scheme *sc)
@@ -25539,6 +25780,56 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(char_geq_2) = c_function_class(f);
 
 
+  /* char-ci=? */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "char-ci=?")));
+  c_function_chooser(f) = char_ci_equal_chooser;
+
+  char_ci_equal_s_ic = s7_make_function(sc, "char-ci=?", g_char_ci_equal_s_ic, 2, 0, false, "experimental char-ci=? optimization");
+  c_function_class(char_ci_equal_s_ic) = c_function_class(f);
+  char_ci_equal_2 = s7_make_function(sc, "char-ci=?", g_char_ci_equal_2, 2, 0, false, "experimental char-ci=? optimization");
+  c_function_class(char_ci_equal_2) = c_function_class(f);
+
+
+  /* char-ci>? */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "char-ci>?")));
+  c_function_chooser(f) = char_ci_greater_chooser;
+
+  char_ci_greater_s_ic = s7_make_function(sc, "char-ci>?", g_char_ci_greater_s_ic, 2, 0, false, "experimental char-ci>? optimization");
+  c_function_class(char_ci_greater_s_ic) = c_function_class(f);
+  char_ci_greater_2 = s7_make_function(sc, "char-ci>?", g_char_ci_greater_2, 2, 0, false, "experimental char-ci>? optimization");
+  c_function_class(char_ci_greater_2) = c_function_class(f);
+
+
+  /* char-ci<? */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "char-ci<?")));
+  c_function_chooser(f) = char_ci_less_chooser;
+
+  char_ci_less_s_ic = s7_make_function(sc, "char-ci<?", g_char_ci_less_s_ic, 2, 0, false, "experimental char-ci<? optimization");
+  c_function_class(char_ci_less_s_ic) = c_function_class(f);
+  char_ci_less_2 = s7_make_function(sc, "char-ci<?", g_char_ci_less_2, 2, 0, false, "experimental char-ci<? optimization");
+  c_function_class(char_ci_less_2) = c_function_class(f);
+
+
+  /* char-ci<=? */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "char-ci<=?")));
+  c_function_chooser(f) = char_ci_leq_chooser;
+
+  char_ci_leq_s_ic = s7_make_function(sc, "char-ci<=?", g_char_ci_leq_s_ic, 2, 0, false, "experimental char-ci<=? optimization");
+  c_function_class(char_ci_leq_s_ic) = c_function_class(f);
+  char_ci_leq_2 = s7_make_function(sc, "char-ci<=?", g_char_ci_leq_2, 2, 0, false, "experimental char-ci<=? optimization");
+  c_function_class(char_ci_leq_2) = c_function_class(f);
+
+
+  /* char-ci>=? */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "char-ci>=?")));
+  c_function_chooser(f) = char_ci_geq_chooser;
+
+  char_ci_geq_s_ic = s7_make_function(sc, "char-ci>=?", g_char_ci_geq_s_ic, 2, 0, false, "experimental char-ci>=? optimization");
+  c_function_class(char_ci_geq_s_ic) = c_function_class(f);
+  char_ci_geq_2 = s7_make_function(sc, "char-ci>=?", g_char_ci_geq_2, 2, 0, false, "experimental char-ci>=? optimization");
+  c_function_class(char_ci_geq_2) = c_function_class(f);
+
+
   /* string=? */
   f = symbol_value(symbol_global_slot(make_symbol(sc, "string=?")));
   c_function_chooser(f) = string_equal_chooser;
@@ -25587,6 +25878,56 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(string_geq_s_ic) = c_function_class(f);
   string_geq_2 = s7_make_function(sc, "string>=?", g_string_geq_2, 2, 0, false, "experimental string>=? optimization");
   c_function_class(string_geq_2) = c_function_class(f);
+
+
+  /* string-ci=? */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "string-ci=?")));
+  c_function_chooser(f) = string_ci_equal_chooser;
+
+  string_ci_equal_s_ic = s7_make_function(sc, "string-ci=?", g_string_ci_equal_s_ic, 2, 0, false, "experimental string-ci=? optimization");
+  c_function_class(string_ci_equal_s_ic) = c_function_class(f);
+  string_ci_equal_2 = s7_make_function(sc, "string-ci=?", g_string_ci_equal_2, 2, 0, false, "experimental string-ci=? optimization");
+  c_function_class(string_ci_equal_2) = c_function_class(f);
+
+
+  /* string-ci>? */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "string-ci>?")));
+  c_function_chooser(f) = string_ci_greater_chooser;
+
+  string_ci_greater_s_ic = s7_make_function(sc, "string-ci>?", g_string_ci_greater_s_ic, 2, 0, false, "experimental string-ci>? optimization");
+  c_function_class(string_ci_greater_s_ic) = c_function_class(f);
+  string_ci_greater_2 = s7_make_function(sc, "string-ci>?", g_string_ci_greater_2, 2, 0, false, "experimental string-ci>? optimization");
+  c_function_class(string_ci_greater_2) = c_function_class(f);
+
+
+  /* string-ci<? */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "string-ci<?")));
+  c_function_chooser(f) = string_ci_less_chooser;
+
+  string_ci_less_s_ic = s7_make_function(sc, "string-ci<?", g_string_ci_less_s_ic, 2, 0, false, "experimental string-ci<? optimization");
+  c_function_class(string_ci_less_s_ic) = c_function_class(f);
+  string_ci_less_2 = s7_make_function(sc, "string-ci<?", g_string_ci_less_2, 2, 0, false, "experimental string-ci<? optimization");
+  c_function_class(string_ci_less_2) = c_function_class(f);
+
+
+  /* string-ci<=? */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "string-ci<=?")));
+  c_function_chooser(f) = string_ci_leq_chooser;
+
+  string_ci_leq_s_ic = s7_make_function(sc, "string-ci<=?", g_string_ci_leq_s_ic, 2, 0, false, "experimental string-ci<=? optimization");
+  c_function_class(string_ci_leq_s_ic) = c_function_class(f);
+  string_ci_leq_2 = s7_make_function(sc, "string-ci<=?", g_string_ci_leq_2, 2, 0, false, "experimental string-ci<=? optimization");
+  c_function_class(string_ci_leq_2) = c_function_class(f);
+
+
+  /* string-ci>=? */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "string-ci>=?")));
+  c_function_chooser(f) = string_ci_geq_chooser;
+
+  string_ci_geq_s_ic = s7_make_function(sc, "string-ci>=?", g_string_ci_geq_s_ic, 2, 0, false, "experimental string-ci>=? optimization");
+  c_function_class(string_ci_geq_s_ic) = c_function_class(f);
+  string_ci_geq_2 = s7_make_function(sc, "string-ci>=?", g_string_ci_geq_2, 2, 0, false, "experimental string-ci>=? optimization");
+  c_function_class(string_ci_geq_2) = c_function_class(f);
 
 
   /* abs */
@@ -26880,10 +27221,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 	   */
 
 	default:
-#if WITH_STATS
-	  ops[op2][0]++;
-	  fprintf(stderr, "\nC_P %s: e1: %s, e2: %s\n", opt_names[op2], DISPLAY(e1), DISPLAY(e2));
-#endif
 	  break;
 	}
       break;
@@ -26913,10 +27250,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 	  return(OP_SAFE_C_S_op_opSq_q);
 
 	default:
-#if WITH_STATS
-	  ops[op2][1]++;
-	  fprintf(stderr, "\nC_SP %s: e1: %s, e2: %s\n", opt_names[op2], DISPLAY(e1), DISPLAY(e2));
-#endif
 	  break;
 	}
       break;
@@ -26944,10 +27277,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 	  /* Q */
 
 	default:
-#if WITH_STATS
-	  ops[op2][2]++;
-	  fprintf(stderr, "\nC_PS %s: e1: %s, e2: %s\n", opt_names[op2], DISPLAY(e1), DISPLAY(e2));
-#endif
 	  break;
 	}
       break;
@@ -26978,10 +27307,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 	  return(OP_SAFE_C_op_opSq_q_C);
 
 	default:
-#if WITH_STATS
-	  ops[op2][3]++;
-	  fprintf(stderr, "\nC_PC %s: e1: %s, e2: %s\n", opt_names[op2], DISPLAY(e1), DISPLAY(e2));
-#endif
 	  break;
 	}
       break;
@@ -27007,10 +27332,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 	  return(OP_SAFE_C_C_opSSq);
 
 	default:
-#if WITH_STATS
-	  ops[op2][4]++;
-	  fprintf(stderr, "\nC_CP %s: e1: %s, e2: %s\n", opt_names[op2], DISPLAY(e1), DISPLAY(e2));
-#endif
 	  break;
 	}
       break;
@@ -27055,11 +27376,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 
 	      
 	default:
-#if WITH_STATS
-	  ops[op2][6]++;
-	  ops[optimize_data(e1) & 0xfffe][5]++;
-	  fprintf(stderr, "\nC_PP: e1: %s, e2: %s\n", DISPLAY(e1), DISPLAY(e2)); 
-#endif
 	  break;
 	}
       break;
@@ -31485,7 +31801,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer args;
 		    args = cdr(code);
-		    car(sc->T2_2) = ARG_SYMBOL_VALUE(caddr(car(args)), find_symbol_or_bust_21);
+		    car(sc->T2_2) = ARG_SYMBOL_VALUE(caddr(car(args)), find_symbol_or_bust_64);
 		    car(sc->T2_1) = cadr(car(args));
 		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
@@ -41133,9 +41449,6 @@ the error type and the info passed to the error handler.");
 
   initialize_pows();
   save_initial_environment(sc);
-#if WITH_STATS
-  init_calls(sc);
-#endif  
 
   return(sc);
 }

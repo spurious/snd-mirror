@@ -722,12 +722,12 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(rc), w_id_label, false, false, 4);
       gtk_widget_show(w_id_label);
 
-      w_id = snd_entry_new(rc, WITH_DEFAULT_BACKGROUND);
+      w_id = snd_entry_new(rc, NULL, WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(w_id, "activate", id_activated, NULL);
       SG_SIGNAL_CONNECT(w_id, "leave_notify_event", id_check_callback, NULL);
       SG_SIGNAL_CONNECT(w_id, "key_press_event", id_modify_callback, NULL);
 
-      w_beg = snd_entry_new(rc, WITH_DEFAULT_BACKGROUND);
+      w_beg = snd_entry_new(rc, NULL, WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(w_beg, "activate", beg_activated, NULL);
 
       mix_play = gtk_button_new();

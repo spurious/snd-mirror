@@ -333,7 +333,7 @@ widget_t record_file(void)
       gtk_box_pack_start(GTK_BOX(hbox), output_label, false, false, 2);
       gtk_widget_show(output_label);
       
-      recorder_output = snd_entry_new(hbox, WITH_WHITE_BACKGROUND);
+      recorder_output = snd_entry_new(hbox, NULL, WITH_WHITE_BACKGROUND);
       if (!recorder_filename) recorder_filename = mus_strdup("test.snd");
       gtk_entry_set_text(GTK_ENTRY(recorder_output), recorder_filename);
 

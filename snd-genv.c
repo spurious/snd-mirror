@@ -1123,7 +1123,7 @@ GtkWidget *create_envelope_editor(void)
       gtk_box_pack_start(GTK_BOX(toprow), nameL, false, false, 0);
       gtk_widget_show(nameL);
 
-      textL = snd_entry_new(toprow, WITH_WHITE_BACKGROUND);
+      textL = snd_entry_new(toprow, NULL, WITH_WHITE_BACKGROUND);
       SG_SIGNAL_CONNECT(textL, "activate", text_field_activated, NULL);
 
       brktxtL = gtk_button_new_with_label(BLANK_LABEL);

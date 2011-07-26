@@ -8180,71 +8180,56 @@
 (CFNC-300 "void gtk_widget_override_cursor GtkWidget* widget GdkRGBA* cursor GdkRGBA* secondary_cursor" 'const)
 
 
-#|
+
 ;;; 3.1.2
 
 (CINT-310 "GTK_SIZE_REQUEST_CONSTANT_SIZE" "GtkSizeRequestMode")
-(CINT-310 "GDK_RENDERING_MODE_SIMILAR" "GdkRenderingMode")
-(CINT-310 "GDK_RENDERING_MODE_IMAGE" "GdkRenderingMode")
-(CINT-310 "GDK_RENDERING_MODE_RECORDING" "GdkRenderingMode")
+;(CINT-310 "GDK_RENDERING_MODE_SIMILAR" "GdkRenderingMode")
+;(CINT-310 "GDK_RENDERING_MODE_IMAGE" "GdkRenderingMode")
+;(CINT-310 "GDK_RENDERING_MODE_RECORDING" "GdkRenderingMode")
  
 (CFNC-310 "gchar* gtk_entry_get_placeholder_text GtkEntry* entry" 'const)
 (CFNC-310 "void gtk_entry_set_placeholder_text GtkEntry* entry gchar* text" 'const)
 (CFNC-310 "void gtk_expander_set_resize_toplevel GtkExpander* expander gboolean resize_toplevel")
 (CFNC-310 "gboolean gtk_expander_get_resize_toplevel GtkExpander* expander")
 ;(CFNC-310 "void gtk_widget_queue_draw_region GtkWidget* widget cairo_region_t* [region]" 'const)
-(CFNC-310 "char *gtk_widget_path_to_string GtkWidgetPath* path" 'const)
+(CFNC-310 "char* gtk_widget_path_to_string GtkWidgetPath* path" 'const)
 
 ;;; 3.1.4
 (CFNC-310 "gboolean gtk_button_box_get_child_non_homogeneous GtkButtonBox* widget GtkWidget* child")
 (CFNC-310 "void gtk_button_box_set_child_non_homogeneous GtkButtonBox* widget GtkWidget* child gboolean non_homogeneous")
 (CFNC-310 "void gtk_container_child_notify GtkContainer* container GtkWidget* child gchar* property_name" 'const)
 (CFNC-310 "void gtk_drag_source_set_icon_gicon GtkWidget* widget GIcon* icon")
-(CFNC-310 "void gtk_drag_set_icon_gicon  GdkDragContext *context GIcon* icon gint hot_x gint hot_y")
+(CFNC-310 "void gtk_drag_set_icon_gicon GdkDragContext* context GIcon* icon gint hot_x gint hot_y")
 (CFNC-310 "gboolean gtk_combo_box_set_active_id GtkComboBox* combo_box gchar* active_id" 'const)
 
 
 ;;; 3.1.6
-+ char *           gtk_css_provider_to_string      (GtkCssProvider  *provider);
-+ 
-+ char *        gtk_gradient_to_string      (GtkGradient         *gradient);
-+ 
-+ char *             gtk_symbolic_color_to_string   (GtkSymbolicColor   *color);
-+ 
-+ gint                    gtk_tree_view_column_get_x_offset        (GtkTreeViewColumn       *tree_column);
+;(CFNC-310 "char* gtk_css_provider_to_string GtkCssProvider* provider")
 
-+ void        gtk_render_icon        (GtkStyleContext     *context,
-+                                     cairo_t             *cr,
-+ 				    GdkPixbuf           *pixbuf,
-+                                     gdouble              x,
-+                                     gdouble              y);
- 
-also deprecated: all of v|hbox, v|hpaned, v|hscrollbar, v|hbuttonbox, v|hseparator
+(CFNC-310 "GtkGradient* gtk_gradient_new_linear gdouble x0 gdouble y0 gdouble x1 gdouble y1")
+(CFNC-310 "GtkGradient* gtk_gradient_new_radial gdouble x0 gdouble y0 gdouble radius0 gdouble x1 gdouble y1 gdouble radius1")
+(CFNC-310 "void gtk_gradient_add_color_stop GtkGradient* gradient gdouble offset GtkSymbolicColor* color")
+(CFNC-310 "GtkGradient* gtk_gradient_ref GtkGradient* gradient")
+(CFNC-310 "void gtk_gradient_unref GtkGradient* gradient")
+(CFNC-310 "gboolean gtk_gradient_resolve GtkGradient* gradient GtkStyleProperties* props cairo_pattern_t** resolved_gradient")
 
-you're supposed to use gtk_box_new(GTK_ORIENTATION_HORIZONTAL|VERTICAL, spacing) for gtk_vbox_new(???, spacing)
-  and this will be deprecated as well for gtkgrid!
+(CFNC-310 "char* gtk_gradient_to_string GtkGradient* gradient")
+(CFNC-310 "char* gtk_symbolic_color_to_string GtkSymbolicColor* color")
 
-added gtkoverlay
-#define GTK_OVERLAY(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_OVERLAY, GtkOverlay))
-#define GTK_IS_OVERLAY(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_OVERLAY))
-GType      gtk_overlay_get_type    (void) G_GNUC_CONST;
+(CFNC-310 "gint gtk_tree_view_column_get_x_offset GtkTreeViewColumn* tree_column")
+;(CFNC-310 void gtk_render_icon GtkStyleContext* context cairo_t* cr GdkPixbuf* pixbuf gdouble x gdouble y")
 
-GtkWidget *gtk_overlay_new         (void);
-void       gtk_overlay_add_overlay (GtkOverlay *overlay,
-                                    GtkWidget  *widget);
-
+(CCAST-310 "GTK_OVERLAY" "GtkOverlay*")
+(CCHK-310 "GTK_IS_OVERLAY" "GtkOverlay*")
+(CFNC-310 "GtkWidget* gtk_overlay_new void")
+(CFNC-310 "void gtk_overlay_add_overlay GtkOverlay* overlay GtkWidget* widget")
 
 ;;; 3.1.8: no changes
 
-
 ;;; 3.1.10:
-gdouble    gtk_adjustment_get_minimum_increment (GtkAdjustment   *adjustment);
-+ void                  gtk_asssistant_remove_page          (GtkAssistant         *assistant,
-+                                                            gint                  page_num);
-
-
-
-|#
+(CFNC-310 "gdouble gtk_adjustment_get_minimum_increment GtkAdjustment* adjustment")
+;(CFNC-310 "void gtk_asssistant_remove_page GtkAssistant* assistant gint page_num")
 
 
 
@@ -8369,12 +8354,6 @@ gdouble    gtk_adjustment_get_minimum_increment (GtkAdjustment   *adjustment);
 (CCAST-300 "GTK_STYLE_PROPERTIES" "GtkStyleProperties*")
 (CCHK-300 "GTK_IS_STYLE_PROPERTIES" "GtkStyleProperties*")
 
-(CFNC-300 "GtkGradient* gtk_gradient_new_linear gdouble x0 gdouble y0 gdouble x1 gdouble y1")
-(CFNC-300 "GtkGradient* gtk_gradient_new_radial gdouble x0 gdouble y0 gdouble radius0 gdouble x1 gdouble y1 gdouble radius1")
-(CFNC-300 "void gtk_gradient_add_color_stop GtkGradient* gradient gdouble offset GtkSymbolicColor* color")
-(CFNC-300 "GtkGradient* gtk_gradient_ref GtkGradient* gradient")
-(CFNC-300 "void gtk_gradient_unref GtkGradient* gradient")
-(CFNC-300 "gboolean gtk_gradient_resolve GtkGradient* gradient GtkStyleProperties* props cairo_pattern_t** resolved_gradient")
 ;;; 3.0.0 (CFNC-300 "void gtk_modifier_style_set_background_color GtkModifierStyle* style GtkStateFlags state GdkRGBA* color" 'const)
 ;;; 3.0.0 (CFNC-300 "void gtk_modifier_style_set_color GtkModifierStyle* style GtkStateFlags state GdkRGBA* color" 'const)
 ;;; 3.0.0 (CFNC-300 "void gtk_modifier_style_set_font GtkModifierStyle* style PangoFontDescription* font_desc" 'const)

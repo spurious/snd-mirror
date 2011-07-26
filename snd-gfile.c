@@ -421,7 +421,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     sg_left_justify_label(fs->filter_label);
     gtk_widget_show(fs->filter_label);
 
-    fs->filter_text = snd_entry_new(row, WITH_WHITE_BACKGROUND);
+    fs->filter_text = snd_entry_new(row, NULL, WITH_WHITE_BACKGROUND);
     fsb_filter_set_text_with_directory(fs, "*");
     SG_SIGNAL_CONNECT(fs->filter_text, "activate", fsb_filter_activate, (gpointer)fs);
   }
@@ -467,7 +467,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     sg_left_justify_label(fs->file_label);
     gtk_widget_show(fs->file_label);
 
-    fs->file_text = snd_entry_new(row, WITH_WHITE_BACKGROUND);
+    fs->file_text = snd_entry_new(row, NULL, WITH_WHITE_BACKGROUND);
     gtk_entry_set_text(GTK_ENTRY(fs->file_text), fs->directory_name);
     SG_SIGNAL_CONNECT(fs->file_text, "activate", fsb_file_activate, (gpointer)fs);
   }
@@ -2090,7 +2090,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 	gtk_box_pack_start(GTK_BOX(scbox), src_box, false, false, 0);
 	gtk_widget_show(src_box);
 	
-	fdat->srate_text = snd_entry_new(src_box, WITH_WHITE_BACKGROUND);
+	fdat->srate_text = snd_entry_new(src_box, NULL, WITH_WHITE_BACKGROUND);
 	gtk_entry_set_width_chars(GTK_ENTRY(fdat->srate_text), 8);
 	SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL); /* srate completer */
 	
@@ -2102,7 +2102,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       }
     else
       {
-	fdat->srate_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
+	fdat->srate_text = snd_entry_new(scbox, NULL, WITH_WHITE_BACKGROUND);
 	SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL); /* srate completer */
       }
   }
@@ -2115,7 +2115,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_box_pack_start(GTK_BOX(scbox), chans_label, false, false, 0);
       gtk_widget_show(chans_label);
 
-      fdat->chans_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
+      fdat->chans_text = snd_entry_new(scbox, NULL, WITH_WHITE_BACKGROUND);
       
       if (with_loc == WITH_DATA_LOCATION_FIELD)
 	{
@@ -2124,7 +2124,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 	  gtk_box_pack_start(GTK_BOX(scbox), loclab, false, false, 0);
 	  gtk_widget_show(loclab);
 
-	  fdat->location_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
+	  fdat->location_text = snd_entry_new(scbox, NULL, WITH_WHITE_BACKGROUND);
 	}
     }
 
@@ -2136,7 +2136,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_box_pack_start(GTK_BOX(scbox), samplab, false, false, 0);
       gtk_widget_show(samplab);
 
-      fdat->samples_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
+      fdat->samples_text = snd_entry_new(scbox, NULL, WITH_WHITE_BACKGROUND);
     }
   else
     {
@@ -3698,7 +3698,7 @@ widget_t make_new_file_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(hform), name_label, false, false, 2);
       gtk_widget_show(name_label);
 
-      new_file_text = snd_entry_new(hform, WITH_WHITE_BACKGROUND);
+      new_file_text = snd_entry_new(hform, NULL, WITH_WHITE_BACKGROUND);
 
       newname = output_name(NULL); /* fix later */
       if ((newname) && (*newname))
@@ -5437,7 +5437,7 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_box_pack_start(GTK_BOX(addbox), add_label, false, false, 4);
       gtk_widget_show(add_label);
 
-      vdat->add_text = snd_entry_new(addbox, WITH_WHITE_BACKGROUND);
+      vdat->add_text = snd_entry_new(addbox, NULL, WITH_WHITE_BACKGROUND);
       SG_SIGNAL_CONNECT(vdat->add_text, "activate", view_files_add_files, (gpointer)vdat);
 
 
@@ -5568,7 +5568,7 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(vdat->at_sample_button);
 	SG_SIGNAL_CONNECT(vdat->at_sample_button, "clicked", view_files_at_sample_callback, (gpointer)vdat);
 
-	vdat->at_sample_text = snd_entry_new(lbox4, WITH_WHITE_BACKGROUND);
+	vdat->at_sample_text = snd_entry_new(lbox4, NULL, WITH_WHITE_BACKGROUND);
 	gtk_widget_show(vdat->at_sample_text);
 
 	vdat->at_mark_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), "at mark");
@@ -5577,7 +5577,7 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(vdat->at_mark_button);
 	SG_SIGNAL_CONNECT(vdat->at_mark_button, "clicked", view_files_at_mark_callback, (gpointer)vdat);
 
-	vdat->at_sample_text = snd_entry_new(lbox4, WITH_WHITE_BACKGROUND);
+	vdat->at_sample_text = snd_entry_new(lbox4, NULL, WITH_WHITE_BACKGROUND);
 	gtk_widget_show(vdat->at_sample_text);
 
 	{

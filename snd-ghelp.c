@@ -314,6 +314,8 @@ static void create_help_monolog(void)
   related_items = slist_new_with_title("related topics", DIALOG_CONTENT_AREA(help_dialog), NULL, 0, BOX_PACK);
   related_items->select_callback = help_browse_callback;
 
+#if (!HAVE_GTK_GRID_NEW)
+
   hbox = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(help_dialog)), hbox, false, false, 10); 
   gtk_widget_show(hbox);
@@ -322,7 +324,28 @@ static void create_help_monolog(void)
   gtk_box_pack_start(GTK_BOX(hbox), label, false, false, 0); 
   gtk_widget_show(label);
 
-  search = snd_entry_new(hbox, WITH_WHITE_BACKGROUND);
+  search = snd_entry_new(hbox, NULL, WITH_WHITE_BACKGROUND);
+
+#else
+  {
+    GtkWidget *content_area;
+    content_area = gtk_dialog_get_content_area(GTK_DIALOG(help_dialog));
+
+    hbox = gtk_grid_new();
+    gtk_container_add(GTK_CONTAINER(content_area), hbox);
+    gtk_widget_show(hbox);
+
+    label = gtk_label_new("help topic:");
+    gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(label, false);
+    g_object_set(label, "margin", 10, NULL);
+    gtk_grid_attach(GTK_GRID(hbox), label, 0, 0, 1, 1);
+    gtk_widget_show(label);
+
+    search = snd_entry_new(hbox, label, WITH_WHITE_BACKGROUND);
+  }
+#endif
+
   SG_SIGNAL_CONNECT(search, "activate", search_activated, NULL);
   gtk_widget_show(help_dialog);
   SG_SIGNAL_CONNECT((gpointer)help_dialog, DRAW_SIGNAL, help_expose_callback, NULL);
