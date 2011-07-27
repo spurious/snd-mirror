@@ -2,11 +2,6 @@
 
 /* ---------------- HELP MONOLOG ---------------- */
 
-/* I tried gtkhtml (and XmHTML in 1999), and in both cases decided not to use them.  Both work fine,
- *   but is it that much of a difference to have an html widget in a dialog as opposed to mozilla
- *   running remotely?  And it would require fixing up all the help texts.  
- */
-
 static GtkWidget *help_dialog = NULL;
 
 static void dismiss_help_dialog(GtkWidget *w, gpointer context) 

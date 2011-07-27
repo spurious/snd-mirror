@@ -291,6 +291,7 @@ color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b);
 #if (!HAVE_GTK_3)
   GdkColor *rgb_to_gdk_color(color_t col);
 #endif
+void add_white_button_style(GtkWidget *w);
 
 void recolor_graph(chan_info *cp, bool selected);
 void set_sensitive(GtkWidget *wid, bool val);

@@ -15934,8 +15934,8 @@ who says the continuation has to restart the map from the top?
 (test (call-with-exit (lambda (k) (procedure-documentation k))) "")
 (test (call-with-exit (lambda (k) (procedure-arity k))) '(0 0 #t))
 (test (call-with-exit (lambda (k) (procedure-source k))) '())
-(test (procedure-arity (call-with-exit (lambda (k) (make-procedure-with-setter k k)))) '(0 0 #t 0 0 #t))
-(test (procedure-arity (make-procedure-with-setter vector-ref vector-set!)) '(2 0 #t 3 0 #t))
+(test (procedure-arity (call-with-exit (lambda (k) (make-procedure-with-setter k k)))) '(0 0 #t))
+(test (procedure-arity (make-procedure-with-setter vector-ref vector-set!)) '(2 0 #t))
 (test (let ((pws (make-procedure-with-setter vector-ref vector-set!))) 
 	(let ((pws1 (make-procedure-with-setter pws vector-set!))) 
 	  (let ((v (vector 1 2))) 
@@ -18295,9 +18295,9 @@ abs     1       2
   (test (procedure-arity (lambda* (:key :optional a) a)) '(0 1 #f))
   (test (procedure-arity (lambda* a a)) '(0 0 #t))
   (test (let () (define-macro (hi a) `(+ ,a 1)) (procedure-arity hi)) 'error)
-  (test (procedure-arity (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) '(1 0 #f 2 0 #f))
-  (test (procedure-arity (make-procedure-with-setter (lambda (a . b) a) (lambda (a b) a))) '(1 0 #t 2 0 #f))
-  (test (procedure-arity (make-procedure-with-setter (lambda* (a :optional b) a) (lambda (a b) a))) '(0 2 #f 2 0 #f))
+  (test (procedure-arity (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) '(1 0 #f))
+  (test (procedure-arity (make-procedure-with-setter (lambda (a . b) a) (lambda (a b) a))) '(1 0 #t))
+  (test (procedure-arity (make-procedure-with-setter (lambda* (a :optional b) a) (lambda (a b) a))) '(0 2 #f))
     
   (for-each
    (lambda (arg)
@@ -21061,7 +21061,8 @@ abs     1       2
     (test (pws v 1) 2)
     (set! (pws v 1) 32)
     (test (pws v 1) 32)
-    (test (procedure-arity pws) '(2 0 #t 3 0 #t))))
+    (test (procedure-arity pws) '(2 0 #t))
+    (test (procedure-arity (procedure-setter pws)) '(3 0 #t))))
 
 (for-each
  (lambda (arg)
@@ -21074,7 +21075,7 @@ abs     1       2
 ;; (test (procedure-with-setter? -s7-symbol-table-locked?) #t)
 ;; (test (procedure-with-setter? '-s7-symbol-table-locked?) #f) ; this parallels (procedure? 'abs) -> #f but seems inconsistent with other *? funcs
 
-(define (procedure-setter-arity proc) (cdddr (procedure-arity proc)))
+(define (procedure-setter-arity proc) (procedure-arity (procedure-setter proc)))
 (test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a) a)))) (procedure-setter-arity pws)) '(1 0 #f))
 (test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a b c) a)))) (procedure-setter-arity pws)) '(3 0 #f))
 (test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a . b) a)))) (procedure-setter-arity pws)) '(1 0 #t))

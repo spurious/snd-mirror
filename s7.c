@@ -9521,7 +9521,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 }
 
 #if WITH_OPTIMIZATION
-static s7_pointer equal_s_ic;
+static s7_pointer equal_s_ic, equal_length_ic;
 static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
 {
   s7_num_t a;
@@ -9551,6 +9551,46 @@ static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
       return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) == y)));
     }
   return(sc->T);
+}
+
+
+static s7_pointer object_length(s7_scheme *sc, s7_pointer obj);
+
+static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
+{
+  /* an experiment to avoid s7_make_integer (and telescope opts)
+   *   we get here with car=length expr, cadr=int
+   */
+  s7_Int ilen;
+  s7_pointer val;
+  
+  val = find_symbol_or_bust_65(sc, cadar(args));
+  ilen = s7_integer(cadr(args));
+
+  switch (type(val))
+    {
+    case T_PAIR:
+      return(make_boolean(sc, s7_list_length(sc, val) == ilen));
+
+    case T_NIL:
+      return(make_boolean(sc, ilen == 0));
+
+    case T_VECTOR:
+      return(make_boolean(sc, vector_length(val) == ilen));
+
+    case T_STRING:
+      return(make_boolean(sc, string_length(val) == ilen));
+
+    case T_HASH_TABLE:
+      return(make_boolean(sc, hash_table_length(val) == ilen));
+
+    case T_C_OBJECT:
+      return(make_boolean(sc, s7_integer(object_length(sc, val)) == ilen));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "length", 0, val, "a list, vector, string, or hash-table"));
+    }
+  return(sc->F);
 }
 
 #endif
@@ -18446,10 +18486,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
   if (s7_is_procedure_with_setter(x))
     {
       if (is_not_null(s7_procedure_getter(sc, x)))
-	return(s7_append(sc,    /* not append_in_place here */
-			 s7_procedure_arity(sc, s7_procedure_getter(sc, x)),
-			 s7_procedure_arity(sc, s7_procedure_setter(sc, x))));
-
+	return(s7_procedure_arity(sc, s7_procedure_getter(sc, x)));
       return(pws_arity(sc, x));
     }
 
@@ -19485,10 +19522,7 @@ static s7_pointer pws_arity(s7_scheme *sc, s7_pointer obj)
 
   return(cons(sc, s7_make_integer(sc, f->get_req_args),
 	   cons(sc, s7_make_integer(sc, f->get_opt_args),
-	     cons(sc, sc->F,
-	       cons(sc, s7_make_integer(sc, f->set_req_args),
-		 cons(sc, s7_make_integer(sc, f->set_opt_args),
-	           cons(sc, sc->F, sc->NIL)))))));
+		cons(sc, sc->F, sc->NIL))));
 }
 
 
@@ -19557,7 +19591,7 @@ s7_pointer s7_procedure_getter(s7_scheme *sc, s7_pointer obj)
 
 s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
 {
-  if (is_c_function(obj))
+  if (is_c_function(obj))     /* this includes pws via ffi */
     return(c_function_setter(obj));
 
   if (s7_is_procedure_with_setter(obj))
@@ -19576,8 +19610,6 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
   #define H_procedure_setter "(procedure-setter obj) returns the setter associated with obj, or #f"
   return(s7_procedure_setter(sc, car(args)));
 }
-/* TODO: doc/test procedure-setter */
-/* TODO: change pws arity to refer just to the getter */
 
 
 static s7_pointer g_is_procedure_with_setter(s7_scheme *sc, s7_pointer args)
@@ -20530,9 +20562,10 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
   #define H_length "(length obj) returns the length of obj, which can be a list, vector, string, or hash-table. \
 The length of a dotted list does not include the final cdr, and is returned as a negative number.  A circular \
 list has infinite length."
-  
-  s7_pointer lst = car(args);
-  
+
+  s7_pointer lst;
+  lst = car(args);
+
   switch (type(lst))
     {
     case T_PAIR:
@@ -25052,7 +25085,7 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
 
 
 
-/* even with the frame_id optimization, this is still about 12% of our total computing: 210/1750 in lg
+/* even with the frame_id optimization, this is still about 12% of our total computing: 210/1730 in lg
  */
 #if 1
 
@@ -25246,7 +25279,7 @@ static s7_pointer is_pair_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 /* also not-chooser for all the ? procs, ss case for not equal? etc
  */
 static s7_pointer not_is_pair, not_is_symbol, not_is_null, not_is_list, not_is_number;
-static s7_pointer not_is_boolean, not_is_char, not_is_string;
+static s7_pointer not_is_boolean, not_is_char, not_is_string, not_is_eof;
 
 static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_pair(find_symbol_or_bust_65(sc, cadar(args)))));}
 static s7_pointer g_not_is_null(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_null(find_symbol_or_bust_65(sc, cadar(args)))));}
@@ -25256,51 +25289,61 @@ static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args) {return(make_boo
 static s7_pointer g_not_is_boolean(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_boolean(find_symbol_or_bust_65(sc, cadar(args)))));}
 static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_character(find_symbol_or_bust_65(sc, cadar(args)))));}
 static s7_pointer g_not_is_string(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_string(find_symbol_or_bust_65(sc, cadar(args)))));}
+static s7_pointer g_not_is_eof(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, find_symbol_or_bust_65(sc, cadar(args)) != sc->EOF_OBJECT));}
 
 static s7_pointer not_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((is_optimized(cadr(expr))) &&
-      (optimize_data(cadr(expr)) == HOP_SAFE_C_S))
+      (optimize_data(cadr(expr)) == HOP_SAFE_C_S) &&
+      (is_c_function(ecdr(cadr(expr)))))
     {
-      if (caadr(expr) == s7_make_symbol(sc, "pair?"))
+      s7_function f;
+      f = c_function_call(ecdr(cadr(expr)));
+
+      if (f == g_is_pair)
 	{
 	  optimize_data(expr) = HOP_SAFE_C_C;
 	  return(not_is_pair);
 	}
-      if (caadr(expr) == s7_make_symbol(sc, "null?"))
+      if (f == g_is_null)
 	{
 	  optimize_data(expr) = HOP_SAFE_C_C;
 	  return(not_is_null);
 	}
-      if (caadr(expr) == s7_make_symbol(sc, "symbol?"))
+      if (f == g_is_symbol)
 	{
 	  optimize_data(expr) = HOP_SAFE_C_C;
 	  return(not_is_symbol);
 	}
-      if (caadr(expr) == s7_make_symbol(sc, "list?"))
+      if (f == g_is_list)
 	{
 	  optimize_data(expr) = HOP_SAFE_C_C;
 	  return(not_is_list);
 	}
-      if (caadr(expr) == s7_make_symbol(sc, "number?"))
+      if (f == g_is_number)
 	{
 	  optimize_data(expr) = HOP_SAFE_C_C;
 	  return(not_is_number);
 	}
-      if (caadr(expr) == s7_make_symbol(sc, "char?"))
+      if (f == g_is_char)
 	{
 	  optimize_data(expr) = HOP_SAFE_C_C;
 	  return(not_is_char);
 	}
-      if (caadr(expr) == s7_make_symbol(sc, "boolean?"))
+      if (f == g_is_boolean)
 	{
 	  optimize_data(expr) = HOP_SAFE_C_C;
 	  return(not_is_boolean);
 	}
-      if (caadr(expr) == s7_make_symbol(sc, "string?"))
+      if (f == g_is_string)
 	{
 	  optimize_data(expr) = HOP_SAFE_C_C;
 	  return(not_is_string);
+	}
+      if (f == g_is_eof_object)
+	{
+	  optimize_data(expr) = HOP_SAFE_C_C;
+	  return(not_is_eof);
 	}
     }
   return(f);
@@ -25371,7 +25414,21 @@ static s7_pointer equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
   if (args == 2)
     {
       if (s7_is_integer(caddr(expr)))
-	return(equal_s_ic);
+	{
+	  if ((is_optimized(cadr(expr))) &&
+	      (optimize_data(cadr(expr)) == HOP_SAFE_C_S) &&
+	      (is_c_function(ecdr(cadr(expr)))))
+	    {
+	      s7_function f;
+	      f = c_function_call(ecdr(cadr(expr)));
+	      if (f == g_length)
+		{
+		  optimize_data(expr) = HOP_SAFE_C_C;
+		  return(equal_length_ic);
+		}
+	    }
+	  return(equal_s_ic);
+	}
     }
   return(f);
 }
@@ -25697,6 +25754,8 @@ static void init_choosers(s7_scheme *sc)
 
   equal_s_ic = s7_make_function(sc, "=", g_equal_s_ic, 2, 0, false, "experimental = optimization");
   c_function_class(equal_s_ic) = c_function_class(f);
+  equal_length_ic = s7_make_function(sc, "=", g_equal_length_ic, 2, 0, false, "experimental = optimization");
+  c_function_class(equal_length_ic) = c_function_class(f);
 
 #if (!WITH_GMP)
   /* < */
@@ -25968,6 +26027,8 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(not_is_string) = c_function_class(f);
   not_is_char = s7_make_function(sc, "not", g_not_is_char, 1, 0, false, "experimental not optimization");
   c_function_class(not_is_char) = c_function_class(f);
+  not_is_eof = s7_make_function(sc, "not", g_not_is_eof, 1, 0, false, "experimental not optimization");
+  c_function_class(not_is_eof) = c_function_class(f);
 
 
   /* pair? */
@@ -26950,11 +27011,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 
   /* fprintf(stderr, "optimize_expression %s\n     e: %s\n", DISPLAY(car(x)), DISPLAY(e)); */
 
-  /* TODO: general object ref via (v i) 
-   *       apply safe-proc to constant, symbol, or safe-expr
-   *       set of safe proc (pws cases)
-   */
-
   if (s7_is_symbol(y))
     {
       s7_pointer func;
@@ -27235,7 +27291,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 
 	case OP_SAFE_C_C:
 	  return(OP_SAFE_C_S_opCq);
-	  /* Q */
 
 	case OP_SAFE_C_SC:
 	  return(OP_SAFE_C_S_opSCq);
@@ -27273,8 +27328,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 
 	case OP_SAFE_C_SS:
 	  return(OP_SAFE_C_opSSq_S);
-
-	  /* Q */
 
 	default:
 	  break;
@@ -28493,8 +28546,6 @@ static s7_pointer check_set(s7_scheme *sc)
 
 		  /* (define (hi) (let ((x 1)) (set! x (+ x 1)))) */
 #if WITH_OPTIMIZATION
-		  /* TODO: other common cases: (set! x (cdr x)) (set! (x (cons val x)))
-		   */
 		  if ((!(symbol_accessed(car(sc->code)))) &&
 		      (!is_global(car(sc->code))) &&
 		      (is_optimized(cadr(sc->code))))

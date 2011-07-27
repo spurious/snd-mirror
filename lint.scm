@@ -1912,34 +1912,18 @@
 			(args (lint-length (cdr form))))
 		    
 		    (if (pair? arity)
-			(if (not (procedure-with-setter? (symbol->value head))) ; set! case is confusing here
-			    (if (< args (car arity))
-				(format #t "  ~A (line ~D): ~A needs ~A~D argument~A:~A~%" 
+			(if (< args (car arity))
+			    (format #t "  ~A (line ~D): ~A needs ~A~D argument~A:~A~%" 
+				    name line-number head 
+				    (if (and (= 0 (cadr arity)) (not (caddr arity))) "" "at least ")
+				    (car arity) 
+				    (if (> (car arity) 1) "s" "") 
+				    (truncated-list->string form))
+			    (if (and (not (caddr arity))
+				     (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity))))
+				(format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
 					name line-number head 
-					(if (and (= 0 (cadr arity)) (not (caddr arity))) "" "at least ")
-					(car arity) 
-					(if (> (car arity) 1) "s" "") 
-					(truncated-list->string form))
-				(if (and (not (caddr arity))
-					 (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity))))
-				    (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
-					    name line-number head 
-					    (truncated-list->string form))))
-			    
-			    (let ((req (max (list-ref arity 0) (list-ref arity 3)))
-				  (min-req (min (list-ref arity 0) (list-ref arity 3)))
-				  (opt (max (list-ref arity 1) (list-ref arity 4)))
-				  (rst (or (list-ref arity 2) (list-ref arity 5))))
-			      (if (< args min-req)
-				  (format #t "  ~A (line ~D): ~A needs at least ~D argument~A:~A~%" 
-					  name line-number head 
-					  min-req (if (> min-req 1) "s" "") 
-					  (truncated-list->string form))
-				  (if (and (not rst)
-					   (> (- args (keywords (cdr form))) (+ req opt)))
-				      (format #t "  ~A (line ~D): ~A has too many arguments:~A~%" 
-					      name line-number head 
-					      (truncated-list->string form)))))))
+					(truncated-list->string form)))))
 		    
 		    (if (pair? (cdr form)) ; there are args
 			(begin

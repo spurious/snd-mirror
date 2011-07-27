@@ -976,6 +976,18 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 
 #if HAVE_GTK_3
 static GtkCssProvider *wb_provider;
+void add_white_button_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(wb_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  gtk_widget_set_name(w, "white_button");
+}
+#else
+void add_white_button_style(GtkWidget *w) 
+{
+  gtk_widget_set_name(w, "white_button");
+}
 #endif
 
 static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
@@ -983,7 +995,6 @@ static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
   GtkWidget *item;
 
   item = gtk_button_new_with_label(label);
-  gtk_widget_set_name(item, "white_button");
   slist_set_row(item, row);
   gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_HALF);
   gtk_button_set_alignment(GTK_BUTTON(item), 0.05, 1.0);
@@ -991,18 +1002,8 @@ static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
 
   widget_modify_bg(item, GTK_STATE_NORMAL, ss->white);
   widget_modify_bg(item, GTK_STATE_PRELIGHT, ss->light_blue);
-#if (HAVE_GTK_3)
-  gtk_widget_override_color(item, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->black));
-  gtk_widget_override_color(item, GTK_STATE_FLAG_PRELIGHT, (GdkRGBA *)(ss->red));
-  gtk_widget_override_color(item, GTK_STATE_FLAG_SELECTED, (GdkRGBA *)(ss->black));
+  add_white_button_style(item);
 
-  {
-    GtkStyleContext *c;
-    c = gtk_widget_get_style_context(item);
-    gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(wb_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-  }
-#endif
-    
   SG_SIGNAL_CONNECT(item, "clicked", slist_item_clicked, (gpointer)lst);
   SG_SIGNAL_CONNECT(item, "button_press_event", slist_item_button_pressed, (gpointer)lst);
 
@@ -1313,9 +1314,13 @@ void init_gtk(void)
 {
   wb_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(wb_provider),
-    "#white_button { \n"
+    "GtkButton#white_button { \n"
     "  padding: 0 0;\n"
     "  border-width: 0;\n"
+    "  background-color: #ffffff;\n"
+    "}\n"
+    "GtkButton#white_button:prelight { \n"
+    "  background-color: rgb(202, 225, 255);\n"
     "}\n",
     -1, NULL);
 }
