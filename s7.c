@@ -210,6 +210,8 @@
 #ifndef WITH_OPTIMIZATION
 #define WITH_OPTIMIZATION 1
   /* this currently speeds s7 up by about a factor of 1/3 (258 -> 173) -- not sure it's worth all the code. 
+   *    a lot of the current optimization choices are just experiments.
+   *    the completely unrealistic goal, of course, is to replace the run macro.
    */
 #endif
 
@@ -8621,6 +8623,7 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
   s7_num_t a, b;
+
   x = car(args);
   y = cadr(args);
   if (!s7_is_number(x))
@@ -8629,6 +8632,7 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "-", 2, y, "a number"));
   a = number(x);
   b = number(y);
+
   switch (a.type | b.type)
     {
     case NUM_INT: 
@@ -9910,6 +9914,27 @@ static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
     }
   return(sc->T);
 }
+
+/* (define (hi a b) (> (abs (- a b)) .1)) */
+static s7_pointer greater_abs;
+static s7_pointer g_greater_abs(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, y;
+  s7_Double a;
+
+  x = find_symbol_or_bust_65(sc, cadr(cadr(car(args))));
+  if (!s7_is_real(x))
+    return(s7_wrong_type_arg_error(sc, "-", 1, x, "a real"));
+
+  y = find_symbol_or_bust_65(sc, caddr(cadr(car(args))));
+  if (!s7_is_real(y))
+    return(s7_wrong_type_arg_error(sc, "-", 2, y, "a real"));
+
+  a = s7_number_to_real(x) - s7_number_to_real(y);
+
+  return(make_boolean(sc, s7_Double_abs(a) > s7_real(cadr(args))));
+}
+
 
 static s7_pointer geq_s_ic;
 static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
@@ -25280,6 +25305,7 @@ static s7_pointer is_pair_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
  */
 static s7_pointer not_is_pair, not_is_symbol, not_is_null, not_is_list, not_is_number;
 static s7_pointer not_is_boolean, not_is_char, not_is_string, not_is_eof;
+static s7_pointer not_is_eq_sq, not_is_eq_ss;
 
 static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_pair(find_symbol_or_bust_65(sc, cadar(args)))));}
 static s7_pointer g_not_is_null(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_null(find_symbol_or_bust_65(sc, cadar(args)))));}
@@ -25291,59 +25317,88 @@ static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args) {return(make_boo
 static s7_pointer g_not_is_string(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_string(find_symbol_or_bust_65(sc, cadar(args)))));}
 static s7_pointer g_not_is_eof(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, find_symbol_or_bust_65(sc, cadar(args)) != sc->EOF_OBJECT));}
 
+static s7_pointer g_not_is_eq_sq(s7_scheme *sc, s7_pointer args) 
+{
+  return(make_boolean(sc, find_symbol_or_bust_65(sc, cadr(car(args))) != cadr(caddr(car(args)))));
+}
+
+static s7_pointer g_not_is_eq_ss(s7_scheme *sc, s7_pointer args) 
+{
+  return(make_boolean(sc, find_symbol_or_bust_65(sc, cadr(car(args))) != find_symbol_or_bust_65(sc, caddr(car(args)))));
+}
+
+
 static s7_pointer not_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((is_optimized(cadr(expr))) &&
-      (optimize_data(cadr(expr)) == HOP_SAFE_C_S) &&
-      (is_c_function(ecdr(cadr(expr)))))
+  if (is_optimized(cadr(expr)))
     {
-      s7_function f;
-      f = c_function_call(ecdr(cadr(expr)));
-
-      if (f == g_is_pair)
+      if ((optimize_data(cadr(expr)) == HOP_SAFE_C_S) &&
+	  (is_c_function(ecdr(cadr(expr)))))
 	{
-	  optimize_data(expr) = HOP_SAFE_C_C;
-	  return(not_is_pair);
+	  s7_function f;
+	  f = c_function_call(ecdr(cadr(expr)));
+	  
+	  if (f == g_is_pair)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_pair);
+	    }
+	  if (f == g_is_null)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_null);
+	    }
+	  if (f == g_is_symbol)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_symbol);
+	    }
+	  if (f == g_is_list)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_list);
+	    }
+	  if (f == g_is_number)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_number);
+	    }
+	  if (f == g_is_char)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_char);
+	    }
+	  if (f == g_is_boolean)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_boolean);
+	    }
+	  if (f == g_is_string)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_string);
+	    }
+	  if (f == g_is_eof_object)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_eof);
+	    }
 	}
-      if (f == g_is_null)
+      else
 	{
-	  optimize_data(expr) = HOP_SAFE_C_C;
-	  return(not_is_null);
-	}
-      if (f == g_is_symbol)
-	{
-	  optimize_data(expr) = HOP_SAFE_C_C;
-	  return(not_is_symbol);
-	}
-      if (f == g_is_list)
-	{
-	  optimize_data(expr) = HOP_SAFE_C_C;
-	  return(not_is_list);
-	}
-      if (f == g_is_number)
-	{
-	  optimize_data(expr) = HOP_SAFE_C_C;
-	  return(not_is_number);
-	}
-      if (f == g_is_char)
-	{
-	  optimize_data(expr) = HOP_SAFE_C_C;
-	  return(not_is_char);
-	}
-      if (f == g_is_boolean)
-	{
-	  optimize_data(expr) = HOP_SAFE_C_C;
-	  return(not_is_boolean);
-	}
-      if (f == g_is_string)
-	{
-	  optimize_data(expr) = HOP_SAFE_C_C;
-	  return(not_is_string);
-	}
-      if (f == g_is_eof_object)
-	{
-	  optimize_data(expr) = HOP_SAFE_C_C;
-	  return(not_is_eof);
+	  if (((optimize_data(cadr(expr)) == HOP_SAFE_C_SS) || (optimize_data(cadr(expr)) == HOP_SAFE_C_SQ)) &&
+	      (is_c_function(ecdr(cadr(expr)))))
+	    {
+	      s7_function f;
+	      f = c_function_call(ecdr(cadr(expr)));
+	      if (f == g_is_eq)
+		{
+		  optimize_data(expr) = HOP_SAFE_C_C;
+		  if (is_pair(caddr(cadr(expr))))
+		    return(not_is_eq_sq);
+		  return(not_is_eq_ss);
+		}
+	    }
 	}
     }
   return(f);
@@ -25461,6 +25516,16 @@ static s7_pointer greater_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 {
   if (args == 2)
     {
+      if ((s7_is_real(caddr(expr))) &&
+	  (!s7_is_rational(caddr(expr))) &&
+	  (is_optimized(cadr(expr))) &&
+	  (optimize_data(cadr(expr)) == HOP_SAFE_C_C) &&
+	  (ecdr(cadr(expr)) == abs_sub_ss))
+	{
+	  optimize_data(expr) = HOP_SAFE_C_C;
+	  return(greater_abs);
+	}
+
       if (s7_is_integer(caddr(expr)))
 	return(greater_s_ic);
     }
@@ -25772,6 +25837,8 @@ static void init_choosers(s7_scheme *sc)
 
   greater_s_ic = s7_make_function(sc, ">", g_greater_s_ic, 2, 0, false, "experimental > optimization");
   c_function_class(greater_s_ic) = c_function_class(f);
+  greater_abs = s7_make_function(sc, ">", g_greater_abs, 2, 0, false, "experimental > optimization");
+  c_function_class(greater_abs) = c_function_class(f);
 
   /* <= */
   f = symbol_value(symbol_global_slot(make_symbol(sc, "<=")));
@@ -26029,6 +26096,10 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(not_is_char) = c_function_class(f);
   not_is_eof = s7_make_function(sc, "not", g_not_is_eof, 1, 0, false, "experimental not optimization");
   c_function_class(not_is_eof) = c_function_class(f);
+  not_is_eq_ss = s7_make_function(sc, "not", g_not_is_eq_ss, 1, 0, false, "experimental not optimization");
+  c_function_class(not_is_eq_ss) = c_function_class(f);
+  not_is_eq_sq = s7_make_function(sc, "not", g_not_is_eq_sq, 1, 0, false, "experimental not optimization");
+  c_function_class(not_is_eq_sq) = c_function_class(f);
 
 
   /* pair? */
@@ -29808,7 +29879,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    if (is_not_null(cddar(x)))                /* else no incr expr, so ignore it henceforth */
 	      sc->value = cons_unchecked(sc, 
-					 make_list_3(sc, y, caddar(x), val),
+					 make_list_3(sc, y, caddar(x), val), 
+					 /* the 3rd element (val) is just a place-holder -- this is where we store the new value */
 					 sc->value);
 	    y = args;
 	  }
@@ -34076,12 +34148,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    case T_C_OPT_ARGS_FUNCTION:
 	    case T_C_RST_ARGS_FUNCTION:
-	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 1) 2) lst) */
+	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 0) 2) lst) */
 	    case T_C_FUNCTION:
 	      /* perhaps it has a setter */
 	      
 	      if (is_procedure(c_function_setter(sc->x)))
-		sc->code = cons(sc, c_function_setter(sc->x), s7_append(sc, cdar(sc->code), cdr(sc->code)));
+		{
+		  /* sc->code = cons(sc, c_function_setter(sc->x), s7_append(sc, cdar(sc->code), cdr(sc->code))); */
+		  /* fprintf(stderr, "set: %s %s\n", DISPLAY(sc->x), DISPLAY_80(sc->code)); */
+
+		  push_op_stack(sc, c_function_setter(sc->x));
+		  if (is_pair(cdar(sc->code)))
+		    {
+		      push_stack(sc, OP_EVAL_ARGS1, sc->NIL, s7_append(sc, cddar(sc->code), cdr(sc->code)));
+		      sc->code = cadar(sc->code);
+		    }
+		  else
+		    {
+		      push_stack(sc, OP_EVAL_ARGS1, sc->NIL, cddr(sc->code));
+		      sc->code = cadr(sc->code);
+		    }
+		}
 	      else return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	      break;
 
@@ -34136,7 +34223,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(eval_error(sc, "can't set! ~A", sc->code));
 
 	  set_symbol_value(sc->y, sc->value); 
-	  sc->y = sc->NIL;
+	  /* sc->y = sc->NIL; */
 	  goto START;
 	}
       /* if unbound variable hook here, we need the binding, not the current value */
@@ -35666,7 +35753,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * The tricky part in s7 is that we might have quasiquoted multidimensional vectors:
        */
       if (sc->args == small_int(1))
-	sc->code = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
+	sc->code = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value)); /* qq result will be evaluated (might include {list} etc) */
       else sc->code = make_list_4(sc, sc->APPLY, sc->MULTIVECTOR, sc->args, g_quasiquote_1(sc, sc->value));
       goto EVAL_PAIR;
 
@@ -40849,7 +40936,6 @@ s7_scheme *s7_init(void)
   /* pws first so that make-procedure-with-setter has a type tag */
   s7_define_safe_function(sc, "make-procedure-with-setter",   g_make_procedure_with_setter,   2, 0, false, H_make_procedure_with_setter);
   s7_define_safe_function(sc, "procedure-with-setter?",       g_is_procedure_with_setter,     1, 0, false, H_is_procedure_with_setter);
-  s7_define_safe_function(sc, "procedure-setter",             g_procedure_setter, 1, 0, false, H_procedure_setter);
   pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
   
 
@@ -41165,7 +41251,7 @@ s7_scheme *s7_init(void)
   s7_define_function_with_setter(sc, "hook-functions",     g_hook_functions, g_hook_set_functions, 1, 0, H_hook_functions);
 
   s7_define_function(sc, "call/cc",                        g_call_cc,                  1, 0, false, H_call_cc);
-  s7_define_function(sc, "call-with-current-continuation", g_call_cc,             1, 0, false, H_call_cc);
+  s7_define_function(sc, "call-with-current-continuation", g_call_cc,                  1, 0, false, H_call_cc);
   s7_define_function(sc, "call-with-exit",                 g_call_with_exit,           1, 0, false, H_call_with_exit);
   s7_define_safe_function(sc, "continuation?",             g_is_continuation,          1, 0, false, H_is_continuation);
 
@@ -41205,6 +41291,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "procedure-source",          g_procedure_source,         1, 0, false, H_procedure_source);
   s7_define_safe_function(sc, "procedure-environment",     g_procedure_environment,    1, 0, false, H_procedure_environment);
   s7_define_safe_function(sc, "unoptimize",                g_unoptimize,               1, 0, false, H_unoptimize);
+  s7_define_safe_function(sc, "procedure-setter",          g_procedure_setter,         1, 0, false, H_procedure_setter);
   
   s7_define_safe_function(sc, "not",                       g_not,                      1, 0, false, H_not);
   s7_define_safe_function(sc, "boolean?",                  g_is_boolean,               1, 0, false, H_is_boolean);

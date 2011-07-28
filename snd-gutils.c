@@ -811,6 +811,7 @@ GtkWidget *snd_gtk_dialog_new(void)
 {
   GtkWidget *w;
   w = gtk_dialog_new();
+  add_dialog_style(w);
   g_object_ref(w); 
   return(w);
 }
@@ -975,7 +976,7 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 
 
 #if HAVE_GTK_3
-static GtkCssProvider *wb_provider;
+static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider;
 void add_white_button_style(GtkWidget *w)
 {
   GtkStyleContext *c;
@@ -983,10 +984,34 @@ void add_white_button_style(GtkWidget *w)
   gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(wb_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   gtk_widget_set_name(w, "white_button");
 }
+
+void add_listener_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(listener_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  gtk_widget_set_name(w, "listener_text");
+}
+
+void add_dialog_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(dialog_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
 #else
 void add_white_button_style(GtkWidget *w) 
 {
   gtk_widget_set_name(w, "white_button");
+}
+
+void add_listener_style(GtkWidget *w)
+{
+  gtk_widget_set_name(w, "listener_text");
+}
+
+void add_dialog_style(GtkWidget *w)
+{
 }
 #endif
 
@@ -1307,21 +1332,36 @@ widget \"*.white_button\" style \"white_button\"\n");
 
 #else
 
-/* see gtkcssprovider.c toward the end 
- */
-
 void init_gtk(void)
 {
   wb_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(wb_provider),
     "GtkButton#white_button { \n"
-    "  padding: 0 0;\n"
+    "  padding-top: 0;\n"
+    "  padding-bottom: 0;\n"
     "  border-width: 0;\n"
     "  background-color: #ffffff;\n"
     "}\n"
     "GtkButton#white_button:prelight { \n"
-    "  background-color: rgb(202, 225, 255);\n"
+    "  background-image: -gtk-gradient (linear, left top, right bottom, from(#ffffff), to(rgb(200, 225, 255)));\n"
     "}\n",
     -1, NULL);
+
+  listener_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(listener_provider),
+    "#listener_text { \n"
+    "  background-color: rgb(240, 248, 255);\n"			 
+    "}\n",
+    -1, NULL);
+		
+  dialog_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(dialog_provider),
+    "GtkDialog { \n"
+    "  background-image: -gtk-gradient (linear, left top, right bottom, from(rgb(250, 250, 230)), to(rgb(235, 235, 210)));\n"
+    "}\n",
+    -1, NULL);
+		
+/* TODO: overall background color (gradient?), also how to reflect colors (in prefs as well)
+*/
 }
 #endif

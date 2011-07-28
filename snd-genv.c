@@ -928,6 +928,7 @@ GtkWidget *create_envelope_editor(void)
       GtkWidget *mainform, *helpB, *leftbox, *bottombox, *leftframe, *toprow, *bottomrow;
 
       enved_dialog = gtk_dialog_new();
+      add_dialog_style(enved_dialog);
       SG_SIGNAL_CONNECT(enved_dialog, "delete_event", delete_enved_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(enved_dialog), "Edit Envelope");
       sg_make_resizable(enved_dialog);

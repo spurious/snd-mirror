@@ -972,7 +972,8 @@ static void make_listener_widget(int height)
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
 
       listener_text = make_scrolled_text(frame, true, 0, false); 
-      gtk_widget_set_name(listener_text, "listener_text");
+      /* gtk_widget_set_name(listener_text, "listener_text"); */
+      add_listener_style(listener_text);
 
       make_bindings(GTK_TEXT_VIEW_GET_CLASS(GTK_TEXT_VIEW(listener_text)));
 
