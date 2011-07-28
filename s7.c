@@ -209,7 +209,7 @@
 
 #ifndef WITH_OPTIMIZATION
 #define WITH_OPTIMIZATION 1
-  /* this currently speeds s7 up by about a factor of 1/3 (258 -> 173) -- not sure it's worth all the code. 
+  /* this currently speeds s7 up by about a factor of 1/3 (258 -> 172) -- not sure it's worth all the code. 
    *    a lot of the current optimization choices are just experiments.
    *    the completely unrealistic goal, of course, is to replace the run macro.
    */
@@ -448,7 +448,7 @@ enum{OP_NOT_AN_OP, HOP_NOT_AN_OP,
      OP_SAFE_C_opSSq_S, HOP_SAFE_C_opSSq_S, OP_SAFE_C_opSCq_S, HOP_SAFE_C_opSCq_S, OP_SAFE_C_opCSq_S, HOP_SAFE_C_opCSq_S,
      OP_SAFE_C_op_opSq_q_C, HOP_SAFE_C_op_opSq_q_C, OP_SAFE_C_op_op_opSq_q_q, HOP_SAFE_C_op_op_opSq_q_q, 
      OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, OP_SAFE_C_opQSq, HOP_SAFE_C_opQSq, 
-     OP_SAFE_C_op_opSSq_Cq, HOP_SAFE_C_op_opSSq_Cq, 
+     OP_SAFE_C_op_opSSq_Cq, HOP_SAFE_C_op_opSSq_Cq, OP_SAFE_C_op_opSSq_Sq, HOP_SAFE_C_op_opSSq_Sq, 
      OP_SAFE_C_S_op_opSq_q, HOP_SAFE_C_S_op_opSq_q, OP_SAFE_C_Q_op_opSq_q, HOP_SAFE_C_Q_op_opSq_q, 
      OP_SAFE_C_opXXXq, HOP_SAFE_C_opXXXq, 
      OP_SAFE_C_opSq_op_opSq_q, HOP_SAFE_C_opSq_op_opSq_q,
@@ -6818,6 +6818,10 @@ static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
   return(false);
 }
 
+#if WITH_OPTIMIZATION
+static s7_pointer find_symbol_or_bust_65(s7_scheme *sc, s7_pointer hdl);
+#endif
+
 
 #if (!WITH_GMP)
 static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
@@ -6836,7 +6840,6 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 }
 
 #if WITH_OPTIMIZATION
-static s7_pointer find_symbol_or_bust_65(s7_scheme *sc, s7_pointer hdl);
 static s7_pointer abs_sub_ss;
 static s7_pointer g_abs_sub_ss(s7_scheme *sc, s7_pointer args)
 {
@@ -23148,12 +23151,6 @@ static bool is_sequence(s7_scheme *sc, s7_pointer p)
 }
 
 
-/* PERHAPS: for-each, map, do, sort could (explicitly?) optimize the body/function, and if every
- *   expression in it is optimized, do the entire operation outside the evaluator.
- *
- * also handle member/assoc/sort/do/for-each/map consistently in terms of frames -- like current do
- */
-
 static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   #define H_for_each "(for-each proc object . objects) applies proc to each element of the objects traversed in parallel. \
@@ -25303,7 +25300,7 @@ static s7_pointer is_pair_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 
 /* also not-chooser for all the ? procs, ss case for not equal? etc
  */
-static s7_pointer not_is_pair, not_is_symbol, not_is_null, not_is_list, not_is_number;
+static s7_pointer not_is_pair, not_is_symbol, not_is_null, not_is_list, not_is_number, not_is_real, not_is_rational, not_is_integer;
 static s7_pointer not_is_boolean, not_is_char, not_is_string, not_is_eof;
 static s7_pointer not_is_eq_sq, not_is_eq_ss;
 
@@ -25311,6 +25308,9 @@ static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args) {return(make_boo
 static s7_pointer g_not_is_null(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_null(find_symbol_or_bust_65(sc, cadar(args)))));}
 static s7_pointer g_not_is_symbol(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_symbol(find_symbol_or_bust_65(sc, cadar(args)))));}
 static s7_pointer g_not_is_number(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_number(find_symbol_or_bust_65(sc, cadar(args)))));}
+static s7_pointer g_not_is_real(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_real(find_symbol_or_bust_65(sc, cadar(args)))));}
+static s7_pointer g_not_is_integer(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_integer(find_symbol_or_bust_65(sc, cadar(args)))));}
+static s7_pointer g_not_is_rational(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_rational(find_symbol_or_bust_65(sc, cadar(args)))));}
 static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_proper_list(sc, find_symbol_or_bust_65(sc, cadar(args)))));}
 static s7_pointer g_not_is_boolean(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_boolean(find_symbol_or_bust_65(sc, cadar(args)))));}
 static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_character(find_symbol_or_bust_65(sc, cadar(args)))));}
@@ -25358,10 +25358,25 @@ static s7_pointer not_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	      optimize_data(expr) = HOP_SAFE_C_C;
 	      return(not_is_list);
 	    }
-	  if (f == g_is_number)
+	  if ((f == g_is_number) || (f == g_is_complex))
 	    {
 	      optimize_data(expr) = HOP_SAFE_C_C;
 	      return(not_is_number);
+	    }
+	  if (f == g_is_rational)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_rational);
+	    }
+	  if (f == g_is_real)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_real);
+	    }
+	  if (f == g_is_integer)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(not_is_integer);
 	    }
 	  if (f == g_is_char)
 	    {
@@ -26088,6 +26103,12 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(not_is_symbol) = c_function_class(f);
   not_is_number = s7_make_function(sc, "not", g_not_is_number, 1, 0, false, "experimental not optimization");
   c_function_class(not_is_number) = c_function_class(f);
+  not_is_real = s7_make_function(sc, "not", g_not_is_real, 1, 0, false, "experimental not optimization");
+  c_function_class(not_is_real) = c_function_class(f);
+  not_is_rational = s7_make_function(sc, "not", g_not_is_rational, 1, 0, false, "experimental not optimization");
+  c_function_class(not_is_rational) = c_function_class(f);
+  not_is_integer = s7_make_function(sc, "not", g_not_is_integer, 1, 0, false, "experimental not optimization");
+  c_function_class(not_is_integer) = c_function_class(f);
   not_is_boolean = s7_make_function(sc, "not", g_not_is_boolean, 1, 0, false, "experimental not optimization");
   c_function_class(not_is_boolean) = c_function_class(f);
   not_is_string = s7_make_function(sc, "not", g_not_is_string, 1, 0, false, "experimental not optimization");
@@ -27335,6 +27356,9 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 	case OP_SAFE_C_opSSq_C:
 	  return(OP_SAFE_C_op_opSSq_Cq);
 
+	case OP_SAFE_C_opSSq_S:
+	  return(OP_SAFE_C_op_opSSq_Sq);
+
 	case OP_SAFE_C_opSSq:
 	  return(OP_SAFE_C_op_opSSq_q);
 
@@ -27608,6 +27632,7 @@ static bool is_safe_for_opteval(s7_scheme *sc, s7_pointer expr)
     case OP_SAFE_C_op_opSq_Cq:
     case OP_SAFE_C_op_opSSq_q_C:
     case OP_SAFE_C_op_opSSq_Cq:
+    case OP_SAFE_C_op_opSSq_Sq:
     case OP_SAFE_C_op_opSq_q_C:
       /* (op (op (op x|x x)) [c]) */
 
@@ -29706,13 +29731,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 #endif
 
+    #define DO_VAR_SLOT(P) car(P)
+    #define DO_VAR_NEW_VALUE(P) cddr(P)
+    #define DO_VAR_STEP_EXPR(P) cadr(P)
+
     case OP_DO_STEP:
       /* increment all vars, return to endtest 
        *   these are also updated in parallel at the end, so we gather all the incremented values first
        */
       
       /* here we know car(sc->args) is not null */
-      push_stack(sc, OP_DO_END, sc->args, sc->code);       /* {7} */
+      push_stack(sc, OP_DO_END, sc->args, sc->code);
       sc->args = car(sc->args);                /* the var data lists */
       sc->code = sc->args;                     /* save the top of the list */
 
@@ -29728,7 +29757,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  s7_pointer x;
 	  for (x = sc->code; is_not_null(x); x = cdr(x))
-	    set_symbol_value(caar(x), caddar(x));
+	    set_symbol_value(DO_VAR_SLOT(car(x)), DO_VAR_NEW_VALUE(car(x)));
 
 	  /* some schemes rebind here, rather than reset, but that is expensive,
 	   *    and only matters once in a blue moon (closure over enclosed lambda referring to a do var)
@@ -29776,12 +29805,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* here sc->args is a list like (((i . 0) (+ i 1) 0) ...)
        *   so sc->code becomes (+ i 1) in this case 
        */
-      sc->code = cadar(sc->args);
+      sc->code = DO_VAR_STEP_EXPR(car(sc->args));
       goto EVAL;
       
 
     case OP_DO_STEP2:
-      caddar(sc->args) = sc->value;                           /* save current value */
+      DO_VAR_NEW_VALUE(car(sc->args)) = sc->value;            /* save current value */
       sc->args = cdr(sc->args);                               /* go to next step var */
       goto DO_STEP1;
       
@@ -29845,11 +29874,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* all the initial values are now in the args list */
       {
-	s7_pointer x, y;
+	s7_pointer x, y, z;
 	sc->args = safe_reverse_in_place(sc, sc->args);
 	sc->code = car(sc->args);                       /* saved at the start */
+	z = sc->args;
 	sc->args = cdr(sc->args);                       /* init values */
-	sc->envir = new_frame_in_env(sc, sc->envir); 
+
+	/* sc->envir = new_frame_in_env(sc, sc->envir); */
+	/* sc->args was cons'd above, so it should be safe to reuse it as the new frame */
+	car(z) = sc->NIL;                  
+	cdr(z) = sc->envir;
+	set_type(z, T_ENVIRONMENT); 
+	frame_id(z) = ++frame_number; 
+	sc->envir = z;
 	
 	/* run through sc->code and sc->args adding '( caar(car(code)) . car(args) ) to sc->envir,
 	 *    also reuse the value cells as the new frame slots.
@@ -29878,10 +29915,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    symbol_local_slot(sym) = y;
 
 	    if (is_not_null(cddar(x)))                /* else no incr expr, so ignore it henceforth */
-	      sc->value = cons_unchecked(sc, 
-					 make_list_3(sc, y, caddar(x), val), 
-					 /* the 3rd element (val) is just a place-holder -- this is where we store the new value */
-					 sc->value);
+	      {
+		s7_pointer p;
+		p = cons_unchecked(sc, y, cons(sc, caddar(x), val));
+					              /* val is just a place-holder -- this is where we store the new value */
+		sc->value = cons_unchecked(sc, p, sc->value);
+	      }
 	    y = args;
 	  }
 	
@@ -29989,7 +30028,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *    (+ (begin 3 (values 1 2) 4)), (+ 1 (begin (values 5 6) (values 2 3))) etc
 	   * moving the is_pair check above up to OP_BEGIN and so on is slower.
 	   */
-	  push_stack(sc, OP_BEGIN1, sc->NIL, cdr(sc->code)); /* 3 [11] {12} */
+	  push_stack(sc, OP_BEGIN1, sc->NIL, cdr(sc->code)); 
 	}
       sc->code = car(sc->code);
 
@@ -31551,9 +31590,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_opSq:
 		  {
 		    s7_pointer args;
-		    args = cdr(code);
-		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(car(args)), find_symbol_or_bust_49);
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T1_1);
+		    args = cadr(code);
+		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(args), find_symbol_or_bust_49);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T1_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31570,10 +31609,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_op_opSq_q:
 		  {
 		    s7_pointer args;
-		    args = cdr(code);
-		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(cadr(car(args))), find_symbol_or_bust_47);
-		    car(sc->T1_1) = c_function_call(ecdr(cadr(car(args))))(sc, sc->T1_1);
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T1_1);
+		    args = cadr(code);
+		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(cadr(args)), find_symbol_or_bust_47);
+		    car(sc->T1_1) = c_function_call(ecdr(cadr(args)))(sc, sc->T1_1);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T1_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31667,11 +31706,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_op_op_opSq_q_q:
 		  {
 		    s7_pointer args;
-		    args = cdr(code);
-		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(cadr(cadr(car(args)))), find_symbol_or_bust_47);
-		    car(sc->T1_1) = c_function_call(ecdr(cadr(cadr(car(args)))))(sc, sc->T1_1);
-		    car(sc->T1_1) = c_function_call(ecdr(cadr(car(args))))(sc, sc->T1_1);
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T1_1);
+		    args = cadr(code);
+		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(cadr(cadr(args))), find_symbol_or_bust_47);
+		    car(sc->T1_1) = c_function_call(ecdr(cadr(cadr(args))))(sc, sc->T1_1);
+		    car(sc->T1_1) = c_function_call(ecdr(cadr(args)))(sc, sc->T1_1);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T1_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31688,12 +31727,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_op_opSSq_q:
 		  {
 		    s7_pointer args, val2;
-		    args = cdr(code);
-		    val2 = ARG_SYMBOL_VALUE(caddr(cadr(car(args))), find_symbol_or_bust_47);
-		    car(sc->T2_1) = ARG_SYMBOL_VALUE(cadr(cadr(car(args))), find_symbol_or_bust_47);
+		    args = cadr(code);
+		    val2 = ARG_SYMBOL_VALUE(caddr(cadr(args)), find_symbol_or_bust_47);
+		    car(sc->T2_1) = ARG_SYMBOL_VALUE(cadr(cadr(args)), find_symbol_or_bust_47);
 		    car(sc->T2_2) = val2;
-		    car(sc->T1_1) = c_function_call(ecdr(cadr(car(args))))(sc, sc->T2_1);
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T1_1);
+		    car(sc->T1_1) = c_function_call(ecdr(cadr(args)))(sc, sc->T2_1);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T1_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31710,11 +31749,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_op_opSq_Qq:
 		  {
 		    s7_pointer args;
-		    args = cdr(code);
-		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(cadr(car(args))), find_symbol_or_bust_47);
-		    car(sc->T2_1) = c_function_call(ecdr(cadr(car(args))))(sc, sc->T1_1);
-		    car(sc->T2_2) = cadr(caddr(car(args)));
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+		    args = cadr(code);
+		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(cadr(args)), find_symbol_or_bust_47);
+		    car(sc->T2_1) = c_function_call(ecdr(cadr(args)))(sc, sc->T1_1);
+		    car(sc->T2_2) = cadr(caddr(args));
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31731,12 +31770,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_op_opSq_Sq:
 		  {
 		    s7_pointer args, val2;
-		    args = cdr(code);
-		    val2 = ARG_SYMBOL_VALUE(caddr(car(args)), find_symbol_or_bust_47);
-		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(cadr(car(args))), find_symbol_or_bust_47);
-		    car(sc->T2_1) = c_function_call(ecdr(cadr(car(args))))(sc, sc->T1_1);
+		    args = cadr(code);
+		    val2 = ARG_SYMBOL_VALUE(caddr(args), find_symbol_or_bust_47);
+		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(cadr(args)), find_symbol_or_bust_47);
+		    car(sc->T2_1) = c_function_call(ecdr(cadr(args)))(sc, sc->T1_1);
 		    car(sc->T2_2) = val2;
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31753,11 +31792,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_op_opSq_Cq:
 		  {
 		    s7_pointer args;
-		    args = cdr(code);
-		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(cadr(car(args))), find_symbol_or_bust_47);
-		    car(sc->T2_1) = c_function_call(ecdr(cadr(car(args))))(sc, sc->T1_1);
-		    car(sc->T2_2) = caddr(car(args));
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+		    args = cadr(code);
+		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(cadr(args)), find_symbol_or_bust_47);
+		    car(sc->T2_1) = c_function_call(ecdr(cadr(args)))(sc, sc->T1_1);
+		    car(sc->T2_2) = caddr(args);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31797,13 +31836,37 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_op_opSSq_Cq:
 		  {
 		    s7_pointer args, val1;
-		    args = cdr(code);
-		    val1 = ARG_SYMBOL_VALUE(cadr(cadr(car(args))), find_symbol_or_bust_47);
-		    car(sc->T2_2) = ARG_SYMBOL_VALUE(caddr(cadr(car(args))), find_symbol_or_bust_47);
+		    args = cadr(code);
+		    val1 = ARG_SYMBOL_VALUE(cadr(cadr(args)), find_symbol_or_bust_47);
+		    car(sc->T2_2) = ARG_SYMBOL_VALUE(caddr(cadr(args)), find_symbol_or_bust_47);
 		    car(sc->T2_1) = val1;
-		    car(sc->T2_1) = c_function_call(ecdr(cadr(car(args))))(sc, sc->T2_1);
-		    car(sc->T2_2) = caddr(car(args));
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+		    car(sc->T2_1) = c_function_call(ecdr(cadr(args)))(sc, sc->T2_1);
+		    car(sc->T2_2) = caddr(args);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
+		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
+		    goto START;
+		  }
+
+		  
+		case OP_SAFE_C_op_opSSq_Sq:
+		  if (!c_function_is_ok(sc, code))
+		    break;
+		  if (!c_function_is_ok(sc, cadr(code)))
+		    break;
+		  if (!c_function_is_ok(sc, cadr(cadr(code))))
+		    break;
+		  
+		case HOP_SAFE_C_op_opSSq_Sq:
+		  {
+		    s7_pointer args, val1, val2;
+		    args = cadr(code);
+		    val1 = ARG_SYMBOL_VALUE(cadr(cadr(args)), find_symbol_or_bust_47);
+		    val2 = ARG_SYMBOL_VALUE(caddr(args), find_symbol_or_bust_47);
+		    car(sc->T2_2) = ARG_SYMBOL_VALUE(caddr(cadr(args)), find_symbol_or_bust_47);
+		    car(sc->T2_1) = val1;
+		    car(sc->T2_1) = c_function_call(ecdr(cadr(args)))(sc, sc->T2_1);
+		    car(sc->T2_2) = val2;
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31841,13 +31904,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_opS_opSq_q:
 		  {
 		    s7_pointer args, val1, val2;
-		    args = cdr(code);
-		    val1 = ARG_SYMBOL_VALUE(cadr(car(args)), find_symbol_or_bust_48);
-		    val2 = ARG_SYMBOL_VALUE(cadr(caddr(car(args))), find_symbol_or_bust_44);
+		    args = cadr(code);
+		    val1 = ARG_SYMBOL_VALUE(cadr(args), find_symbol_or_bust_48);
+		    val2 = ARG_SYMBOL_VALUE(cadr(caddr(args)), find_symbol_or_bust_44);
 		    car(sc->T1_1) = val2;
-		    car(sc->T2_2) = c_function_call(ecdr(caddr(car(args))))(sc, sc->T1_1);
+		    car(sc->T2_2) = c_function_call(ecdr(caddr(args)))(sc, sc->T1_1);
 		    car(sc->T2_1) = val1;
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31864,14 +31927,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_opS_opCSq_q:
 		  {
 		    s7_pointer args, val1, val2;
-		    args = cdr(code);
-		    val1 = ARG_SYMBOL_VALUE(cadr(car(args)), find_symbol_or_bust_48);
-		    val2 = ARG_SYMBOL_VALUE(caddr(caddr(car(args))), find_symbol_or_bust_44);
+		    args = cadr(code);
+		    val1 = ARG_SYMBOL_VALUE(cadr(args), find_symbol_or_bust_48);
+		    val2 = ARG_SYMBOL_VALUE(caddr(caddr(args)), find_symbol_or_bust_44);
 		    car(sc->T2_2) = val2;
-		    car(sc->T2_1) = cadr(caddr(car(args)));
-		    car(sc->T2_2) = c_function_call(ecdr(caddr(car(args))))(sc, sc->T2_1);
+		    car(sc->T2_1) = cadr(caddr(args));
+		    car(sc->T2_2) = c_function_call(ecdr(caddr(args)))(sc, sc->T2_1);
 		    car(sc->T2_1) = val1;
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31886,11 +31949,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_opSSq:
 		  {
 		    s7_pointer args, val1;
-		    args = cdr(code);
-		    val1 = ARG_SYMBOL_VALUE(cadr(car(args)), find_symbol_or_bust_11);
-		    car(sc->T2_2) = ARG_SYMBOL_VALUE(caddr(car(args)), find_symbol_or_bust_13);
+		    args = cadr(code);
+		    val1 = ARG_SYMBOL_VALUE(cadr(args), find_symbol_or_bust_11);
+		    car(sc->T2_2) = ARG_SYMBOL_VALUE(caddr(args), find_symbol_or_bust_13);
 		    car(sc->T2_1) = val1;
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31905,10 +31968,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_opSCq:
 		  {
 		    s7_pointer args;
-		    args = cdr(code);
-		    car(sc->T2_1) = ARG_SYMBOL_VALUE(cadr(car(args)), find_symbol_or_bust_14);
-		    car(sc->T2_2) = caddr(car(args));
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+		    args = cadr(code);
+		    car(sc->T2_1) = ARG_SYMBOL_VALUE(cadr(args), find_symbol_or_bust_14);
+		    car(sc->T2_2) = caddr(args);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31923,10 +31986,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_opCSq:
 		  {
 		    s7_pointer args;
-		    args = cdr(code);
-		    car(sc->T2_2) = ARG_SYMBOL_VALUE(caddr(car(args)), find_symbol_or_bust_64);
-		    car(sc->T2_1) = cadr(car(args));
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+		    args = cadr(code);
+		    car(sc->T2_2) = ARG_SYMBOL_VALUE(caddr(args), find_symbol_or_bust_64);
+		    car(sc->T2_1) = cadr(args);
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31941,10 +32004,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_opSQq:
 		  {
 		    s7_pointer args;
-		    args = cdr(code);
-		    car(sc->T2_1) = ARG_SYMBOL_VALUE(cadr(car(args)), find_symbol_or_bust_19);
-		    car(sc->T2_2) = cadr(caddr(car(args))); 
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+		    args = cadr(code);
+		    car(sc->T2_1) = ARG_SYMBOL_VALUE(cadr(args), find_symbol_or_bust_19);
+		    car(sc->T2_2) = cadr(caddr(args)); 
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -31959,10 +32022,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_opQSq:
 		  {
 		    s7_pointer args;
-		    args = cdr(code);
-		    car(sc->T2_2) = ARG_SYMBOL_VALUE(caddr(car(args)), find_symbol_or_bust_19);
-		    car(sc->T2_1) = cadr(cadr(car(args))); 
-		    car(sc->T1_1) = c_function_call(ecdr(car(args)))(sc, sc->T2_1);
+		    args = cadr(code);
+		    car(sc->T2_2) = ARG_SYMBOL_VALUE(caddr(args), find_symbol_or_bust_19);
+		    car(sc->T2_1) = cadr(cadr(args)); 
+		    car(sc->T1_1) = c_function_call(ecdr(args))(sc, sc->T2_1);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		    goto START;
 		  }
@@ -32749,7 +32812,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 #endif
 	  
-	  /* fprintf(stderr, "unopt: %d, %s\n", optimize_data(sc->code), DISPLAY_80(sc->code)); */
+	  /* fprintf(stderr, "unopt: %s\n", DISPLAY_80(sc->code));  */
 	  /* trailers */
 	  {
 	    s7_pointer carc;
@@ -33758,29 +33821,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  obj = s7_symbol_value(sc, caar(code));                     /* this can't be simply symbol_value */
 	else obj = caar(code);                                       /* might be the pws function itself */
 
-  	/* TODO: the expr cases aren't quite working yet, and we ignore (set! (pws) val) 
-  	 */
-	if (is_pair(cadar(code)))
-	  {
-	    arg = sc->NIL; /* TODO: just a placeholder to make gcc happy */
-	  }
-	else
-	  {
-	    if (s7_is_symbol(cadar(code)))
-	      arg = SYMBOL_VALUE(cadar(code), find_symbol_or_bust_34);
-	    else arg = cadar(code);
-	  }
-	
-	if (is_pair(cadr(code)))
-	  {
-	    value = sc->NIL; /* TODO: just a placeholder to make gcc happy */
-	  }
-	else
-	  {
-	    if (s7_is_symbol(cadr(code)))
-	      value = SYMBOL_VALUE(cadr(code), find_symbol_or_bust_34);
-	    else value = cadr(code);
-	  }
+	/* pairs won't happen here in either case -- see check_set */
+	if (s7_is_symbol(cadar(code)))
+	  arg = SYMBOL_VALUE(cadar(code), find_symbol_or_bust_34);
+	else arg = cadar(code);
+
+	if (s7_is_symbol(cadr(code)))
+	  value = SYMBOL_VALUE(cadr(code), find_symbol_or_bust_34);
+	else value = cadr(code);
 	  
 	switch (type(obj))
 	    {
@@ -34179,9 +34227,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	}
 
-#if WITH_OPTIMIZATION && (0)
-    SET_NORMAL:
-#endif
     case OP_SET_NORMAL:
       {
 	s7_pointer x;

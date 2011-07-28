@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: in gtk3, the "srate" display is gray
+ */
+
 /* -------- region browser -------- */
 
 typedef struct {
@@ -418,25 +421,17 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
   gtk_widget_show(r->pl);
 
   r->nm = gtk_button_new_with_label("");
+  widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->white);
+  widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->white);
   sg_left_justify_button(r->nm);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);
+  add_white_button_style(r->nm);
+
   SG_SIGNAL_CONNECT(r->nm, "clicked", name_callback, r);
   SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", regrow_mouse_enter_label, r);
   SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", regrow_mouse_leave_label, r);
-  set_user_data(G_OBJECT(r->nm), (gpointer)r);
-  widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->white);
-  widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->white);
-  
-#if HAVE_GTK_3
-  {
-    GtkWidget *child;
-    child = gtk_bin_get_child(GTK_BIN(r->nm));
-    gtk_widget_override_color(child, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->black));
-    gtk_widget_override_color(child, GTK_STATE_FLAG_PRELIGHT, (GdkRGBA *)(ss->black));
-    gtk_widget_override_color(child, GTK_STATE_FLAG_SELECTED, (GdkRGBA *)(ss->black));
-  }
-#endif
 
+  set_user_data(G_OBJECT(r->nm), (gpointer)r);
   gtk_widget_show(r->nm);
 
   return(r);

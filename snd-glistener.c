@@ -1,5 +1,9 @@
 #include "snd.h"
 
+
+/* TODO: in gtk3, after hide listener, it stays that way
+ */
+
 static GtkWidget *listener_text = NULL;
 static int printout_end = 0;
 

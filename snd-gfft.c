@@ -1,5 +1,9 @@
 /* transform settings dialog */
 
+/* TODO: in gtk3, the bottom of the "type" list is gray 
+ *       and the silly thing gives (vertical) expansion space to the bottom buttons!
+ */
+
 #include "snd.h"
 
 /* when options window expanded vertically, graph gets less than half (empty space in button box) 
