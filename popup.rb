@@ -2,13 +2,16 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Wed Nov 17 22:55:49 CET 2010
+# Changed: Sat Jul 30 18:28:13 CEST 2011
 
 # Commentary:
 #
 # Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 # 
-# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.20.1, Ruby 1.8.0/7, 1.9.2/3.
+# Tested with Snd 12.x
+#             Ruby 1.8.0/7, 1.9.2/4
+#             Motif 2.3.0 X11R6
+#             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
 # $edhist_save_hook:  lambda do |prc| ... end

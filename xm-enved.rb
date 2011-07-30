@@ -2,11 +2,14 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Changed: Wed Nov 17 22:58:35 CET 2010
+# Changed: Sat Jul 30 18:26:23 CEST 2011
 
 # Commentary:
 #
-# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.20.1, Ruby 1.8.0/7, 1.9.2/3.
+# Tested with Snd 12.x
+#             Ruby 1.8.0/7, 1.9.2/4
+#             Motif 2.3.0 X11R6
+#             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 #
 # module Snd_enved
 #  channel_enved(snd, chn)
@@ -872,7 +875,9 @@ if $with_gui
       def redraw
         if is_managed?(@drawer) and @px0 and @py0 > @py1
           size = widget_size(RGTK_WIDGET(@drawer))
-          cairo = Rgdk_cairo_create(RGDK_DRAWABLE(Rgtk_widget_get_window(@drawer)))
+          # FIXME
+          # cairo = Rgdk_cairo_create(RGDK_DRAWABLE(Rgtk_widget_get_window(@drawer)))
+          cairo = make_cairo(@drawer)
           Rcairo_push_group(cairo)
           Rcairo_set_source_rgb(cairo, 1.0, 1.0, 1.0)
           Rcairo_rectangle(cairo, 0, 0, size[0], size[1])
@@ -903,7 +908,8 @@ if $with_gui
           end
           Rcairo_pop_group_to_source(cairo)
           Rcairo_paint(cairo)
-          Rcairo_destroy(cairo)
+          # Rcairo_destroy(cairo)
+          free_cairo(cairo)
         end
       end
     end
@@ -994,7 +1000,7 @@ xe.help                             # this help
         Rgtk_widget_show(@drawer)
         Rgtk_widget_set_name(@drawer, @name)
         Rgtk_widget_set_size_request(@drawer, -1, 200)
-        add_event_handler(@drawer, "expose_event") do |w, e, d|
+        add_event_handler(@drawer, provided?(:gtk3) ? "draw" : "expose_event") do |w, e, d|
           draw_axes_cb
           false
         end
@@ -1036,7 +1042,10 @@ xe.help                             # this help
     end
 
     def draw_axes_cb
-      @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1)
+      cairo = make_cairo(@drawer)
+      @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1,
+                                         X_axis_in_seconds, Show_all_axes, cairo)
+      free_cairo(cairo)
       redraw
     end
 

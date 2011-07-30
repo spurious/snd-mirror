@@ -2,13 +2,16 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sun Feb 20 15:42:45 CET 2011
+# Changed: Sat Jul 30 18:28:51 CEST 2011
 
 # Commentary:
 #
 # Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 #
-# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.20.1, Ruby 1.8.0/7, 1.9.2/3.
+# Tested with Snd 12.x
+#             Ruby 1.8.0/7, 1.9.2/4
+#             Motif 2.3.0 X11R6
+#             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 #
 # module Snd_XM
 #  make_snd_menu(name, args) do ... end
@@ -166,10 +169,10 @@
 
 require "clm"
 
-provided? :snd_motif and (not provided? :xm) and require "libxm.so"
-provided? :snd_gtk   and (not provided? :xg) and require "libxg.so"
+provided?(:snd_motif) and (not provided?(:xm)) and require "libxm.so"
+provided?(:snd_gtk)   and (not provided?(:xg)) and require "libxg.so"
 
-unless provided? :xm or provided? :xg
+unless provided?(:xm) or provided?(:xg)
   Snd.raise(:runtime_error, __FILE__, "file requires --with-motif or --with-gtk \
 and module libxm.so or libxg.so, or --with-static-xm")
 end
@@ -577,7 +580,7 @@ module Snd_Gtk
   # main_widgets[2]
   # seem to be of kind GTK_BOX [ms]
   def add_main_pane(name, motif_class_not_needed = nil, *motif_args_not_needed)
-    pane = Rgtk_hbox_new(false, 0)
+    pane = Rgtk_box_new(RGTK_ORIENTATION_HORIZONTAL, 0)
     unless RGTK_IS_BOX(parent = main_widgets[Notebook_outer_pane])
       parent = main_widgets[Main_pane_shell]
     end
@@ -736,7 +739,7 @@ module Snd_Gtk
       height = n > 2 ? 70 : 85
       window = Rgtk_widget_get_window(parent)
       width = (Rgdk_drawable_get_size(RGDK_DRAWABLE(window)).cadr / Float(n)).floor
-      meters = Rgtk_hbox_new(true, 4)
+      meters = Rgtk_box_new(RGTK_ORIENTATION_HORIZONTAL, 4)
       Rgtk_box_pack_start(RGTK_BOX(parent), meters, false, false, 4)
       Rgtk_widget_set_size_request(meters, width, height)
       Rgtk_widget_show(meters)
@@ -816,10 +819,12 @@ module Snd_Gtk
                else
                  Rgtk_adjustment_new(init, low, high, 0.0, 0.0, 0.0)
                end
-      scl = Rgtk_hscale_new(RGTK_ADJUSTMENT(@scale))
+      scl = Rgtk_scale_new(RGTK_ORIENTATION_HORIZONTAL, RGTK_ADJUSTMENT(@scale))
       sclscl = RGTK_SCALE(scl)
       tbltbl = RGTK_TABLE(tbl)
-      Rgtk_range_set_update_policy(RGTK_RANGE(sclscl), RGTK_UPDATE_CONTINUOUS)
+      unless provided?(:gtk3)
+        Rgtk_range_set_update_policy(RGTK_RANGE(sclscl), RGTK_UPDATE_CONTINUOUS)
+      end
       Rgtk_scale_set_value_pos(sclscl, RGTK_POS_TOP)
       expand_fill = RGTK_EXPAND | RGTK_FILL
       case kind
@@ -950,7 +955,7 @@ module Snd_Gtk
     def add_target(labels = [["entire sound",  :sound,     true],
                              ["selection",     :selection, false],
                              ["between marks", :marks,     false]], &target_cb)
-      rc = Rgtk_hbox_new(false, 0)
+      rc = Rgtk_box_new(RGTK_ORIENTATION_HORIZONTAL, 0)
       Rgtk_box_pack_start(RGTK_BOX(@parent), rc, false, false, 4)
       Rgtk_widget_show(rc)
       group = false

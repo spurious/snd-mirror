@@ -209,7 +209,7 @@
 
 #ifndef WITH_OPTIMIZATION
 #define WITH_OPTIMIZATION 1
-  /* this currently speeds s7 up by about a factor of 1/3 (255 -> 171) -- not sure it's worth all the code. 
+  /* this currently speeds s7 up by about a factor of 1/3 (255 -> 169) -- not sure it's worth all the code. 
    *    a lot of the current optimization choices are just experiments.
    *    the completely unrealistic goal, of course, is to replace the run macro.
    */
@@ -9902,194 +9902,6 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
   return(sc->T);
 }
 
-#if WITH_OPTIMIZATION
-static s7_pointer less_s_ic;
-static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
-{
-  s7_num_t a;
-  s7_Int y;
-  
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "<", 1, car(args), "a number"));  
-  a = number(car(args));
-  y = s7_integer(cadr(args));
-
-  switch (num_type(a))
-    {
-    case NUM_INT:
-      return(make_boolean(sc, integer(a) < y));
-      break;
-      
-    case NUM_RATIO:  
-      if ((y >= 0) && (numerator(a) < 0))
-	return(sc->T);
-      if ((y <= 0) && (numerator(a) > 0))
-	return(sc->F);
-      if ((y < S7_LONG_MAX) && 
-	  (y > S7_LONG_MIN) && 
-	  (denominator(a) < S7_LONG_MAX) && 
-	  (denominator(a) > S7_LONG_MIN))
-	return(make_boolean(sc, (numerator(a) < (y * denominator(a)))));
-      return(make_boolean(sc, fraction(a) < y));
-      break;
-      
-    case NUM_REAL2:
-    case NUM_REAL:    
-      return(make_boolean(sc, real(a) < y));
-      break;
-
-    default:
-      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) < y)));
-    }
-  return(sc->T);
-}
-
-static s7_pointer leq_s_ic;
-static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
-{
-  s7_num_t a;
-  s7_Int y;
-  
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "<=", 1, car(args), "a number"));  
-  a = number(car(args));
-  y = s7_integer(cadr(args));
-
-  switch (num_type(a))
-    {
-    case NUM_INT:
-      return(make_boolean(sc, integer(a) <= y));
-      break;
-      
-    case NUM_RATIO:  
-      if ((y >= 0) && (numerator(a) <= 0))
-	return(sc->T);
-      if ((y <= 0) && (numerator(a) > 0))
-	return(sc->F);
-      if ((y < S7_LONG_MAX) && 
-	  (y > S7_LONG_MIN) && 
-	  (denominator(a) < S7_LONG_MAX) && 
-	  (denominator(a) > S7_LONG_MIN))
-	return(make_boolean(sc, (numerator(a) <= (y * denominator(a)))));
-      return(make_boolean(sc, fraction(a) <= y));
-      break;
-      
-    case NUM_REAL2:
-    case NUM_REAL:    
-      return(make_boolean(sc, real(a) <= y));
-      break;
-
-    default:
-      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) <= y)));
-    }
-  return(sc->T);
-}
-
-static s7_pointer greater_s_ic;
-static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
-{
-  s7_num_t a;
-  s7_Int y;
-  
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, ">", 1, car(args), "a number"));  
-  a = number(car(args));
-  y = s7_integer(cadr(args));
-
-  switch (num_type(a))
-    {
-    case NUM_INT:
-      return(make_boolean(sc, integer(a) > y));
-      break;
-      
-    case NUM_RATIO:  
-      if ((y >= 0) && (numerator(a) < 0))
-	return(sc->F);
-      if ((y <= 0) && (numerator(a) > 0))
-	return(sc->T);
-      if ((y < S7_LONG_MAX) && 
-	  (y > S7_LONG_MIN) && 
-	  (denominator(a) < S7_LONG_MAX) && 
-	  (denominator(a) > S7_LONG_MIN))
-	return(make_boolean(sc, (numerator(a) > (y * denominator(a)))));
-      return(make_boolean(sc, fraction(a) > y));
-      break;
-      
-    case NUM_REAL2:
-    case NUM_REAL:    
-      return(make_boolean(sc, real(a) > y));
-      break;
-
-    default:
-      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) > y)));
-    }
-  return(sc->T);
-}
-
-
-/* (define (hi a b) (> (abs (- a b)) .1)) */
-static s7_pointer greater_abs;
-static s7_pointer g_greater_abs(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer x, y;
-  s7_Double a;
-
-  x = find_symbol_or_bust_65(sc, cadr(cadr(car(args))));
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "-", 1, x, "a real"));
-
-  y = find_symbol_or_bust_65(sc, caddr(cadr(car(args))));
-  if (!s7_is_real(y))
-    return(s7_wrong_type_arg_error(sc, "-", 2, y, "a real"));
-
-  a = s7_number_to_real(x) - s7_number_to_real(y);
-
-  return(make_boolean(sc, s7_Double_abs(a) > s7_real(cadr(args))));
-}
-
-
-static s7_pointer geq_s_ic;
-static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
-{
-  s7_num_t a;
-  s7_Int y;
-  
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, ">=", 1, car(args), "a number"));  
-  a = number(car(args));
-  y = s7_integer(cadr(args));
-
-  switch (num_type(a))
-    {
-    case NUM_INT:
-      return(make_boolean(sc, integer(a) >= y));
-      break;
-      
-    case NUM_RATIO:  
-      if ((y >= 0) && (numerator(a) < 0))
-	return(sc->F);
-      if ((y <= 0) && (numerator(a) >= 0))
-	return(sc->T);
-      if ((y < S7_LONG_MAX) && 
-	  (y > S7_LONG_MIN) && 
-	  (denominator(a) < S7_LONG_MAX) && 
-	  (denominator(a) > S7_LONG_MIN))
-	return(make_boolean(sc, (numerator(a) >= (y * denominator(a)))));
-      return(make_boolean(sc, fraction(a) >= y));
-      break;
-      
-    case NUM_REAL2:
-    case NUM_REAL:    
-      return(make_boolean(sc, real(a) >= y));
-      break;
-
-    default:
-      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) >= y)));
-    }
-  return(sc->T);
-}
-
-#endif
 
 static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 {
@@ -10302,6 +10114,317 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
   #define H_less_or_equal "(<= x1 ...) returns #t if its arguments are in increasing order"
   return(g_greater_1(sc, true, args));  
 }
+
+
+#if WITH_OPTIMIZATION
+static s7_pointer less_s_ic;
+static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  s7_num_t a;
+  s7_Int y;
+  
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, "<", 1, car(args), "a number"));  
+  a = number(car(args));
+  y = s7_integer(cadr(args));
+
+  switch (num_type(a))
+    {
+    case NUM_INT:
+      return(make_boolean(sc, integer(a) < y));
+      break;
+      
+    case NUM_RATIO:  
+      if ((y >= 0) && (numerator(a) < 0))
+	return(sc->T);
+      if ((y <= 0) && (numerator(a) > 0))
+	return(sc->F);
+      if ((y < S7_LONG_MAX) && 
+	  (y > S7_LONG_MIN) && 
+	  (denominator(a) < S7_LONG_MAX) && 
+	  (denominator(a) > S7_LONG_MIN))
+	return(make_boolean(sc, (numerator(a) < (y * denominator(a)))));
+      return(make_boolean(sc, fraction(a) < y));
+      break;
+      
+    case NUM_REAL2:
+    case NUM_REAL:    
+      return(make_boolean(sc, real(a) < y));
+      break;
+
+    default:
+      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) < y)));
+    }
+  return(sc->T);
+}
+
+static s7_pointer less_2;
+static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_num_t a, b;
+
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, "<", 1, car(args), "a real"));
+  if (!s7_is_real(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "<", 2, cadr(args), "a real"));
+
+  a = number(car(args));
+  b = number(cadr(args));
+
+  switch (num_type(a))
+    {
+    case NUM_INT:
+      switch (num_type(b))
+	{
+	case NUM_INT:
+	  return(make_boolean(sc, integer(a) < integer(b)));
+	  break;
+	  
+	case NUM_RATIO: 
+	  return(g_less_1(sc, false, args));
+	  break;
+	  
+	default:
+	  if (isnan(real(b))) return(sc->F);
+	  return(make_boolean(sc, integer(a) < real(b)));
+	  break;
+	}
+      break;
+      
+    case NUM_RATIO:
+      return(g_less_1(sc, false, args));
+      break;
+      
+    default:
+      if (isnan(real(a))) return(sc->F);
+      switch (num_type(b))
+	{
+	case NUM_INT: 
+	  return(make_boolean(sc, real(a) < integer(b)));
+	  break;
+	  
+	case NUM_RATIO:
+	  return(make_boolean(sc, real(a) < fraction(b)));
+	  break;
+	  
+	default:
+	  if (isnan(real(b))) return(sc->F);
+	  return(make_boolean(sc, real(a) < real(b)));
+	  break;
+	}
+      break;
+    }
+
+  return(sc->T);
+}
+
+static s7_pointer leq_s_ic;
+static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  s7_num_t a;
+  s7_Int y;
+  
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, "<=", 1, car(args), "a number"));  
+  a = number(car(args));
+  y = s7_integer(cadr(args));
+
+  switch (num_type(a))
+    {
+    case NUM_INT:
+      return(make_boolean(sc, integer(a) <= y));
+      break;
+      
+    case NUM_RATIO:  
+      if ((y >= 0) && (numerator(a) <= 0))
+	return(sc->T);
+      if ((y <= 0) && (numerator(a) > 0))
+	return(sc->F);
+      if ((y < S7_LONG_MAX) && 
+	  (y > S7_LONG_MIN) && 
+	  (denominator(a) < S7_LONG_MAX) && 
+	  (denominator(a) > S7_LONG_MIN))
+	return(make_boolean(sc, (numerator(a) <= (y * denominator(a)))));
+      return(make_boolean(sc, fraction(a) <= y));
+      break;
+      
+    case NUM_REAL2:
+    case NUM_REAL:    
+      return(make_boolean(sc, real(a) <= y));
+      break;
+
+    default:
+      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) <= y)));
+    }
+  return(sc->T);
+}
+
+static s7_pointer greater_s_ic;
+static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  s7_num_t a;
+  s7_Int y;
+  
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, ">", 1, car(args), "a number"));  
+  a = number(car(args));
+  y = s7_integer(cadr(args));
+
+  switch (num_type(a))
+    {
+    case NUM_INT:
+      return(make_boolean(sc, integer(a) > y));
+      break;
+      
+    case NUM_RATIO:  
+      if ((y >= 0) && (numerator(a) < 0))
+	return(sc->F);
+      if ((y <= 0) && (numerator(a) > 0))
+	return(sc->T);
+      if ((y < S7_LONG_MAX) && 
+	  (y > S7_LONG_MIN) && 
+	  (denominator(a) < S7_LONG_MAX) && 
+	  (denominator(a) > S7_LONG_MIN))
+	return(make_boolean(sc, (numerator(a) > (y * denominator(a)))));
+      return(make_boolean(sc, fraction(a) > y));
+      break;
+      
+    case NUM_REAL2:
+    case NUM_REAL:    
+      return(make_boolean(sc, real(a) > y));
+      break;
+
+    default:
+      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) > y)));
+    }
+  return(sc->T);
+}
+
+
+static s7_pointer greater_2;
+static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_num_t a, b;
+
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, ">", 1, car(args), "a real"));
+  if (!s7_is_real(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, ">", 2, cadr(args), "a real"));
+
+  a = number(car(args));
+  b = number(cadr(args));
+
+  switch (num_type(a))
+    {
+    case NUM_INT:
+      switch (num_type(b))
+	{
+	case NUM_INT:
+	  return(make_boolean(sc, integer(a) > integer(b)));
+	  break;
+	  
+	case NUM_RATIO: 
+	  return(g_greater_1(sc, false, args));
+	  break;
+	  
+	default:
+	  if (isnan(real(b))) return(sc->F);
+	  return(make_boolean(sc, integer(a) > real(b)));
+	  break;
+	}
+      break;
+      
+    case NUM_RATIO:
+      return(g_greater_1(sc, false, args));
+      break;
+      
+    default:
+      if (isnan(real(a))) return(sc->F);
+      switch (num_type(b))
+	{
+	case NUM_INT: 
+	  return(make_boolean(sc, real(a) > integer(b)));
+	  break;
+	  
+	case NUM_RATIO:
+	  return(make_boolean(sc, real(a) > fraction(b)));
+	  break;
+	  
+	default:
+	  if (isnan(real(b))) return(sc->F);
+	  return(make_boolean(sc, real(a) > real(b)));
+	  break;
+	}
+      break;
+    }
+
+  return(sc->T);
+}
+
+
+/* (define (hi a b) (> (abs (- a b)) .1)) */
+static s7_pointer greater_abs;
+static s7_pointer g_greater_abs(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, y;
+  s7_Double a;
+
+  x = find_symbol_or_bust_65(sc, cadr(cadr(car(args))));
+  if (!s7_is_real(x))
+    return(s7_wrong_type_arg_error(sc, "-", 1, x, "a real"));
+
+  y = find_symbol_or_bust_65(sc, caddr(cadr(car(args))));
+  if (!s7_is_real(y))
+    return(s7_wrong_type_arg_error(sc, "-", 2, y, "a real"));
+
+  a = s7_number_to_real(x) - s7_number_to_real(y);
+
+  return(make_boolean(sc, s7_Double_abs(a) > s7_real(cadr(args))));
+}
+
+
+static s7_pointer geq_s_ic;
+static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
+{
+  s7_num_t a;
+  s7_Int y;
+  
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, ">=", 1, car(args), "a number"));  
+  a = number(car(args));
+  y = s7_integer(cadr(args));
+
+  switch (num_type(a))
+    {
+    case NUM_INT:
+      return(make_boolean(sc, integer(a) >= y));
+      break;
+      
+    case NUM_RATIO:  
+      if ((y >= 0) && (numerator(a) < 0))
+	return(sc->F);
+      if ((y <= 0) && (numerator(a) >= 0))
+	return(sc->T);
+      if ((y < S7_LONG_MAX) && 
+	  (y > S7_LONG_MIN) && 
+	  (denominator(a) < S7_LONG_MAX) && 
+	  (denominator(a) > S7_LONG_MIN))
+	return(make_boolean(sc, (numerator(a) >= (y * denominator(a)))));
+      return(make_boolean(sc, fraction(a) >= y));
+      break;
+      
+    case NUM_REAL2:
+    case NUM_REAL:    
+      return(make_boolean(sc, real(a) >= y));
+      break;
+
+    default:
+      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) >= y)));
+    }
+  return(sc->T);
+}
+
+#endif
 #endif
 
 
@@ -16934,6 +17057,29 @@ static s7_pointer g_vector_ref_ic(s7_scheme *sc, s7_pointer args)
 
   return(vector_element(vec, index));
 }
+
+static s7_pointer vector_ref_2;
+static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vec, ind;
+  s7_Int index;
+
+  vec = car(args);
+  if (!s7_is_vector(vec))
+    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, vec, "a vector"));
+  if (vector_is_multidimensional(vec))
+    return(g_vector_ref(sc, args));
+  
+  ind = cadr(args);
+  if (!s7_is_integer(ind))
+    return(s7_wrong_type_arg_error(sc, "vector-ref index,", 2, ind, "an integer"));
+  index = s7_integer(ind);
+  if ((index < 0) ||
+      (index >= vector_length(vec)))
+    return(s7_out_of_range_error(sc, "vector-ref index,", 2, ind, "should be between 0 and the vector length"));
+
+  return(vector_element(vec, index));
+}
 #endif
 
 
@@ -17757,6 +17903,23 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
     return(s7_hash_table_ref(sc, table, cadr(args)));
   return(g_hash_table_ref(sc, cons(sc, s7_hash_table_ref(sc, table, cadr(args)), cddr(args))));
 }
+
+#if WITH_OPTIMIZATION
+static s7_pointer hash_table_ref_2;
+static s7_pointer g_hash_table_ref_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, table;
+  table = car(args);
+  
+  if (!s7_is_hash_table(table))
+    return(s7_wrong_type_arg_error(sc, "hash-table-ref", 1, table, "a hash-table"));
+
+  x = (*hash_table_function(table))(sc, table, cadr(args));
+  if (is_not_null(x))
+    return(cdr(x));
+  return(sc->F);
+}
+#endif
 
 
 static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
@@ -25540,7 +25703,16 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
       if ((s7_is_integer(caddr(expr))) &&
 	  (s7_integer(caddr(expr)) >= 0))
 	return(vector_ref_ic);
+      return(vector_ref_2);
     }
+  return(f);
+}
+
+
+static s7_pointer hash_table_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    return(hash_table_ref_2);
   return(f);
 }
 
@@ -25625,6 +25797,7 @@ static s7_pointer less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
     {
       if (s7_is_integer(caddr(expr)))
 	return(less_s_ic);
+      return(less_2);
     }
   return(f);
 }
@@ -25657,6 +25830,7 @@ static s7_pointer greater_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 
       if (s7_is_integer(caddr(expr)))
 	return(greater_s_ic);
+      return(greater_2);
     }
   return(f);
 }
@@ -25960,6 +26134,8 @@ static void init_choosers(s7_scheme *sc)
 
   less_s_ic = s7_make_function(sc, "<", g_less_s_ic, 2, 0, false, "experimental < optimization");
   c_function_class(less_s_ic) = c_function_class(f);
+  less_2 = s7_make_function(sc, "<", g_less_2, 2, 0, false, "experimental < optimization");
+  c_function_class(less_2) = c_function_class(f);
 
 
   /* > */
@@ -25970,6 +26146,9 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(greater_s_ic) = c_function_class(f);
   greater_abs = s7_make_function(sc, ">", g_greater_abs, 2, 0, false, "experimental > optimization");
   c_function_class(greater_abs) = c_function_class(f);
+  greater_2 = s7_make_function(sc, ">", g_greater_2, 2, 0, false, "experimental > optimization");
+  c_function_class(greater_2) = c_function_class(f);
+
 
   /* <= */
   f = symbol_value(symbol_global_slot(make_symbol(sc, "<=")));
@@ -26202,6 +26381,16 @@ static void init_choosers(s7_scheme *sc)
 
   vector_ref_ic = s7_make_function(sc, "vector-ref", g_vector_ref_ic, 2, 0, false, "experimental vector-ref optimization");
   c_function_class(vector_ref_ic) = c_function_class(f);
+  vector_ref_2 = s7_make_function(sc, "vector-ref", g_vector_ref_2, 2, 0, false, "experimental vector-ref optimization");
+  c_function_class(vector_ref_2) = c_function_class(f);
+
+
+  /* hash-table-ref */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "hash-table-ref")));
+  c_function_chooser(f) = hash_table_ref_chooser;
+
+  hash_table_ref_2 = s7_make_function(sc, "hash-table-ref", g_hash_table_ref_2, 2, 0, false, "experimental hash-table-ref optimization");
+  c_function_class(hash_table_ref_2) = c_function_class(f);
 
 
 

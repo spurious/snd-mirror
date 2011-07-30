@@ -2,13 +2,16 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Wed Jun 22 20:05:53 CEST 2011
+\ Changed: Sat Jul 30 18:31:36 CEST 2011
 
 \ Commentary:
 \
 \ Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 \
-\ Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Fth 1.2.x
+\ Tested with Snd 12.x
+\             Fth 1.2.x
+\             Motif 2.3.0 X11R6
+\             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 \ 
 \ Motif and Gtk:
 \
@@ -152,25 +155,18 @@ previous
   \ main-widgets 2 array-ref
   \ seem to be of type GTK_BOX [ms]
 
-  \ FIXME: Wed Jun 22 19:57:07 CEST 2011 [ms]
-  \ gtk_hbox_new disappeared
-
   : add-main-pane <{ name :optional class-not-needed #f args-not-needed #f -- wid }>
-    nil
+    FGTK_ORIENTATION_HORIZONTAL 0 Fgtk_box_new { pane }
+    main-widgets 5 array-ref { parent }
+    parent FGTK_IS_BOX unless main-widgets 2 array-ref to parent then
+    parent FGTK_IS_BOX unless
+      'x-error $" %s: no GTK_BOX widget found" #( get-func-name ) fth-raise
+    then
+    parent FGTK_BOX pane #f #f 4 Fgtk_box_pack_start drop
+    pane Fgtk_widget_show drop
+    pane name Fgtk_widget_set_name drop
+    pane
   ;
-  
-  \ : add-main-pane <{ name :optional class-not-needed #f args-not-needed #f -- wid }>
-  \   #f 0 Fgtk_hbox_new { pane }
-  \   main-widgets 5 array-ref { parent }
-  \   parent FGTK_IS_BOX unless main-widgets 2 array-ref to parent then
-  \   parent FGTK_IS_BOX unless
-  \     'x-error $" %s: no GTK_BOX widget found" #( get-func-name ) fth-raise
-  \   then
-  \   parent FGTK_BOX pane #f #f 4 Fgtk_box_pack_start drop
-  \   pane Fgtk_widget_show drop
-  \   pane name Fgtk_widget_set_name drop
-  \   pane
-  \ ;
 
   : get-color-pixel ( name -- pix )
     { name }

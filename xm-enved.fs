@@ -3,13 +3,16 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Mon Oct 25 21:47:23 CEST 2010
+\ Changed: Sat Jul 30 18:31:47 CEST 2011
 
 \ Commentary:
 \
 \ Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 \
-\ Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Fth 1.2.x
+\ Tested with Snd 12.x
+\             Fth 1.2.x
+\             Motif 2.3.0 X11R6
+\             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 \
 \ This is an example of an object type written in Forth.
 \
@@ -309,7 +312,7 @@ fth-xenved make-?obj xenved?
     gen xe-py0@ gen xe-py1@ > && if
       gen xe-gcs@ { gc }
       drawer FGTK_WIDGET widget-size { size }
-      drawer Fgtk_widget_get_window ( win ) FGDK_DRAWABLE Fgdk_cairo_create { cairo }
+      drawer make-cairo { cairo }
       cairo Fcairo_push_group drop
       cairo 1.0 1.0 1.0 Fcairo_set_source_rgb drop
       cairo 0 0 size 0 array-ref size 1 array-ref Fcairo_rectangle drop
@@ -350,7 +353,7 @@ fth-xenved make-?obj xenved?
       end-each
       cairo Fcairo_pop_group_to_source drop
       cairo Fcairo_paint drop
-      cairo Fcairo_destroy drop
+      cairo free-cairo drop
     then
   ;
 [then]
@@ -469,15 +472,19 @@ fth-xenved make-?obj xenved?
   ;
 [else]
   : draw-axes-cb <{ w ev gen -- f }>
-    save-stack { stack }
-    gen xe-drawer@
+    gen xe-drawer@ { win }
+    win make-cairo { cairo }
+    win
     gen xe-gcs@
     gen xe-name@
     gen xe-bx0@
     gen xe-bx1@
     gen xe-by0@
-    gen xe-by1@ draw-axes gen draw-axes-set-points
-    stack restore-stack
+    gen xe-by1@
+    x-axis-in-seconds
+    show-all-axes
+    cairo draw-axes gen draw-axes-set-points
+    cairo free-cairo drop
     #f
   ;
 
@@ -520,7 +527,11 @@ fth-xenved make-?obj xenved?
   : init-xenved { gen -- gen }
     gen xe-drawer@ { drawer }
     drawer FGPOINTER
-    "expose_event" drawer FG_OBJECT FG_OBJECT_TYPE Fg_signal_lookup
+    'gtk3 provided? if
+      "draw"
+    else
+      "expose_event"
+    then drawer FG_OBJECT FG_OBJECT_TYPE Fg_signal_lookup
     0
     <'> draw-axes-cb gen #f Fg_cclosure_new
     #f

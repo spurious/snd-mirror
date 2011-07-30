@@ -2,13 +2,16 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Sat Feb 19 17:17:19 CET 2011
+# Changed: Sat Jul 30 18:27:20 CEST 2011
 
 # Commentary:
 #
 # Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 #
-# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.20.1, Ruby 1.8.0/7, 1.9.2/3.
+# Tested with Snd 12.x
+#             Ruby 1.8.0/7, 1.9.2/4
+#             Motif 2.3.0 X11R6
+#             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 #
 # module Effects (see new-effects.scm)
 #  plausible_mark_samples

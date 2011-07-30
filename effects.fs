@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Wed Jun 22 20:06:59 CEST 2011
+\ Changed: Sat Jul 30 18:30:55 CEST 2011
 
 \ Commentary:
 \
@@ -40,7 +40,10 @@
 \
 \ Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 \
-\ Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Fth 1.2.x
+\ Tested with Snd 12.x
+\             Fth 1.2.x
+\             Motif 2.3.0 X11R6
+\             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 \
 \ make-menu                      ( name parent -- gen )
 \ menu-entry                     ( gen prc disp-prc -- )
@@ -1328,107 +1331,109 @@ $" Go Away" constant eff-dismiss-string
     #f
   ;
 
-  \ FIXME: Wed Jun 22 19:57:07 CEST 2011 [ms]
-  \ gtk_vbox_new disappeared
-
-  : add-sliders { dialog sliders -- sliders-array }
-    #()
-  ;
+  'gtk3 provided? [if]
+    <'> noop alias effects-range-set-update-policy ( w -- f )
+  [else]
+    : effects-range-set-update-policy ( w -- f )
+      FGTK_RANGE FGTK_UPDATE_CONTINUOUS Fgtk_range_set_update_policy
+    ;
+  [then]
 
   \ sliders: #( #( label low init high func scale [log] ) ... )
-  \ : add-sliders { dialog sliders -- sliders-array }
-  \   #f 2 Fgtk_vbox_new { mainform }
-  \   sliders length 1 = if
-  \     #f #f
-  \   else
-  \     2 sliders length #f Fgtk_table_new dup FGTK_TABLE
-  \   then { table tabtab }
-  \   0 { slider }
-  \   dialog FGTK_DIALOG Fgtk_dialog_get_content_area FGTK_BOX { box }
-  \   box mainform #f #f 4 Fgtk_box_pack_start drop
-  \   mainform Fgtk_widget_show drop
-  \   table if
-  \     mainform FGTK_BOX table #f #f 4 Fgtk_box_pack_start drop
-  \     tabtab 4 Fgtk_table_set_row_spacings drop
-  \     tabtab 4 Fgtk_table_set_col_spacings drop
-  \     table Fgtk_widget_show drop
-  \   then
-  \   sliders map
-  \     *key* 0 array-ref { title }
-  \     *key* 1 array-ref { low }
-  \     *key* 2 array-ref { init }
-  \     *key* 3 array-ref { high }
-  \     *key* 4 array-ref { func }
-  \     *key* 5 array-ref { scaler }
-  \     *key* length 7 = if
-  \ 	*key* 6 array-ref 'log =
-  \     else
-  \ 	#f
-  \     then { use-log }
-  \     table if #f else #f 0 Fgtk_hbox_new then { hbox }
-  \     table if
-  \ 	use-log if
-  \ 	  $" %s (%.2f)" #( title init )
-  \ 	else
-  \ 	  $" %s" #( title )
-  \ 	then
-  \     else
-  \ 	use-log if
-  \ 	  $" %s: %.2f" #( title init )
-  \ 	else
-  \ 	  $" %s:" #( title )
-  \ 	then
-  \     then string-format Fgtk_label_new { label }
-  \     use-log if
-  \ 	low init high scale-log->linear 0 log-scale-ticks f>s 1 10 1
-  \     else
-  \ 	init low high 0.0 0.0 0.0
-  \     then Fgtk_adjustment_new dup { adj } FGTK_ADJUSTMENT Fgtk_hscale_new { scale }
-  \     table if
-  \ 	tabtab label 0 1 slider dup 1+ FGTK_FILL FGTK_SHRINK or dup 0 0 Fgtk_table_attach drop
-  \     else
-  \ 	mainform FGTK_BOX hbox  #f #f 2 Fgtk_box_pack_start drop
-  \ 	hbox Fgtk_widget_show drop
-  \ 	hbox     FGTK_BOX label #f #f 6 Fgtk_box_pack_start drop
-  \     then
-  \     label Fgtk_widget_show drop
-  \     scale FGTK_SCALE { sclscl }
-  \     sclscl FGTK_RANGE FGTK_UPDATE_CONTINUOUS Fgtk_range_set_update_policy drop
-  \     sclscl use-log if
-  \ 	0
-  \     else
-  \ 	scaler 1000 = if
-  \ 	  3
-  \ 	else
-  \ 	  scaler 100 = if
-  \ 	    2
-  \ 	  else
-  \ 	    scaler 10 = if
-  \ 	      1
-  \ 	    else
-  \ 	      0
-  \ 	    then
-  \ 	  then
-  \ 	then
-  \     then Fgtk_scale_set_digits drop
-  \     sclscl use-log not Fgtk_scale_set_draw_value drop
-  \     table if
-  \ 	tabtab scale 1 2 slider dup 1+ FGTK_FILL FGTK_EXPAND or FGTK_SHRINK or dup 0 0
-  \ 	Fgtk_table_attach drop
-  \ 	slider 1+ to slider
-  \     else
-  \ 	hbox FGTK_BOX scale #t #t 0 Fgtk_box_pack_start drop
-  \     then
-  \     scale Fgtk_widget_show drop
-  \     adj "value_changed"
-  \     use-log if
-  \ 	<'> scale-log-cb #( label title low high func wrap-motif-cb )
-  \     else
-  \ 	func wrap-motif-cb #f
-  \     then Fg_signal_connect drop
-  \     adj
-  \   end-map
-  \ ;
+  : add-sliders { dialog sliders -- sliders-array }
+    FGTK_ORIENTATION_VERTICAL 2 Fgtk_box_new { mainform }
+    sliders length 1 = if
+      #f #f
+    else
+      2 sliders length #f Fgtk_table_new dup FGTK_TABLE
+    then { table tabtab }
+    0 { slider }
+    dialog FGTK_DIALOG Fgtk_dialog_get_content_area FGTK_BOX { box }
+    box mainform #f #f 4 Fgtk_box_pack_start drop
+    mainform Fgtk_widget_show drop
+    table if
+      mainform FGTK_BOX table #f #f 4 Fgtk_box_pack_start drop
+      tabtab 4 Fgtk_table_set_row_spacings drop
+      tabtab 4 Fgtk_table_set_col_spacings drop
+      table Fgtk_widget_show drop
+    then
+    sliders map
+      *key* 0 array-ref { title }
+      *key* 1 array-ref { low }
+      *key* 2 array-ref { init }
+      *key* 3 array-ref { high }
+      *key* 4 array-ref { func }
+      *key* 5 array-ref { scaler }
+      *key* length 7 = if
+  	*key* 6 array-ref 'log =
+      else
+  	#f
+      then { use-log }
+      table if #f else FGTK_ORIENTATION_HORIZONTAL 0 Fgtk_box_new then { hbox }
+      table if
+  	use-log if
+  	  $" %s (%.2f)" #( title init )
+  	else
+  	  $" %s" #( title )
+  	then
+      else
+  	use-log if
+  	  $" %s: %.2f" #( title init )
+  	else
+  	  $" %s:" #( title )
+  	then
+      then string-format Fgtk_label_new { label }
+      use-log if
+  	low init high scale-log->linear 0 log-scale-ticks f>s 1 10 1
+      else
+  	init low high 0.0 0.0 0.0
+      then Fgtk_adjustment_new { adj }
+      FGTK_ORIENTATION_HORIZONTAL adj FGTK_ADJUSTMENT Fgtk_scale_new { scale }
+      table if
+  	tabtab label 0 1 slider dup 1+ FGTK_FILL FGTK_SHRINK or dup 0 0 Fgtk_table_attach drop
+      else
+  	mainform FGTK_BOX hbox  #f #f 2 Fgtk_box_pack_start drop
+  	hbox Fgtk_widget_show drop
+  	hbox     FGTK_BOX label #f #f 6 Fgtk_box_pack_start drop
+      then
+      label Fgtk_widget_show drop
+      scale FGTK_SCALE { sclscl }
+      sclscl effects-range-set-update-policy drop
+      sclscl use-log if
+  	0
+      else
+  	scaler 1000 = if
+  	  3
+  	else
+  	  scaler 100 = if
+  	    2
+  	  else
+  	    scaler 10 = if
+  	      1
+  	    else
+  	      0
+  	    then
+  	  then
+  	then
+      then Fgtk_scale_set_digits drop
+      sclscl use-log not Fgtk_scale_set_draw_value drop
+      table if
+  	tabtab scale 1 2 slider dup 1+ FGTK_FILL FGTK_EXPAND or FGTK_SHRINK or dup 0 0
+  	Fgtk_table_attach drop
+  	slider 1+ to slider
+      else
+  	hbox FGTK_BOX scale #t #t 0 Fgtk_box_pack_start drop
+      then
+      scale Fgtk_widget_show drop
+      adj "value_changed"
+      use-log if
+  	<'> scale-log-cb #( label title low high func wrap-motif-cb )
+      else
+  	func wrap-motif-cb #f
+      then Fg_signal_connect drop
+      adj
+    end-map
+  ;
 
   \ d: #( func type )
   : target-arm-cb <{ w d -- f }>
@@ -1445,44 +1450,37 @@ $" Go Away" constant eff-dismiss-string
     d #( wid ) run-proc
   ;
 
-  \ FIXME: Wed Jun 22 19:57:07 CEST 2011 [ms]
-  \ gtk_hbox_new disappeared
-
   : add-target-main { mainform target-prc truncate-prc -- rc-wid }
-    #()
+    FGTK_ORIENTATION_HORIZONTAL 2 Fgtk_box_new { rc }
+    mainform FGTK_BOX rc #f #f 4 Fgtk_box_pack_start drop
+    rc Fgtk_widget_show drop
+    rc FGTK_BOX { rcbox }
+    #f { group }
+    #( #( $" entire sound"  'sound     #t )
+       #( $" selection"     'selection #f )
+       #( $" between marks" 'marks     #f ) ) each { lst }
+      lst 0 array-ref { name }
+      lst 1 array-ref { typ }
+      lst 2 array-ref { on }
+      group name Fgtk_radio_button_new_with_label { button }
+      button FGTK_RADIO_BUTTON Fgtk_radio_button_get_group to group
+      rcbox button #f #f 4 Fgtk_box_pack_start drop
+      button FGTK_TOGGLE_BUTTON on Fgtk_toggle_button_set_active drop
+      button Fgtk_widget_show drop
+      button "clicked" <'> target-arm-cb #( target-prc typ ) Fg_signal_connect drop
+    end-each
+    truncate-prc if
+      FGTK_ORIENTATION_HORIZONTAL Fgtk_separator_new { sep }
+      rcbox sep #t #t 4 Fgtk_box_pack_start drop
+      sep Fgtk_widget_show drop
+      $" truncate at end" Fgtk_check_button_new_with_label to button
+      rcbox button #t #t 4 Fgtk_box_pack_start drop
+      button FGTK_TOGGLE_BUTTON #t Fgtk_toggle_button_set_active drop
+      button Fgtk_widget_show drop
+      button "clicked" <'> target-truncate-cb truncate-prc Fg_signal_connect drop
+    then
+    rc
   ;
-
-  \ : add-target-main { mainform target-prc truncate-prc -- rc-wid }
-  \   #f 0 Fgtk_hbox_new { rc }
-  \   mainform FGTK_BOX rc #f #f 4 Fgtk_box_pack_start drop
-  \   rc Fgtk_widget_show drop
-  \   rc FGTK_BOX { rcbox }
-  \   #f { group }
-  \   #( #( $" entire sound"  'sound     #t )
-  \      #( $" selection"     'selection #f )
-  \      #( $" between marks" 'marks     #f ) ) each { lst }
-  \     lst 0 array-ref { name }
-  \     lst 1 array-ref { typ }
-  \     lst 2 array-ref { on }
-  \     group name Fgtk_radio_button_new_with_label { button }
-  \     button FGTK_RADIO_BUTTON Fgtk_radio_button_get_group to group
-  \     rcbox button #f #f 4 Fgtk_box_pack_start drop
-  \     button FGTK_TOGGLE_BUTTON on Fgtk_toggle_button_set_active drop
-  \     button Fgtk_widget_show drop
-  \     button "clicked" <'> target-arm-cb #( target-prc typ ) Fg_signal_connect drop
-  \   end-each
-  \   truncate-prc if
-  \     Fgtk_hseparator_new { sep }
-  \     rcbox sep #t #t 4 Fgtk_box_pack_start drop
-  \     sep Fgtk_widget_show drop
-  \     $" truncate at end" Fgtk_check_button_new_with_label to button
-  \     rcbox button #t #t 4 Fgtk_box_pack_start drop
-  \     button FGTK_TOGGLE_BUTTON #t Fgtk_toggle_button_set_active drop
-  \     button Fgtk_widget_show drop
-  \     button "clicked" <'> target-truncate-cb truncate-prc Fg_signal_connect drop
-  \   then
-  \   rc
-  \ ;
 
   : add-target { gen truncate-prc -- }
     gen dialog@ FG_OBJECT "ok-button" Fg_object_get_data FGTK_WIDGET gen target-widget!
