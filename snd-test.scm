@@ -1382,7 +1382,7 @@
       'with-interrupts (with-interrupts) #t
       'with-smpte-label (with-smpte-label) #f
       'with-toolbar (with-toolbar) #f
-      'with-tooltips (with-tooltips) #f
+      'with-tooltips (with-tooltips) #t
       'with-menu-icons (with-menu-icons) #f
       'with-pointer-focus (with-pointer-focus) #f
       'x-axis-style (x-axis-style) 0 
@@ -17091,6 +17091,7 @@ EDITS: 2
     (set! (mus-file-buffer-size) default-file-buffer-size)
     
     (if (and (not (= (mus-array-print-length) 8)) 
+	     (not (= (mus-array-print-length) 12))
 	     (not (= (mus-array-print-length) 32)))
 	(snd-display #__line__ ";mus-array-print-length: ~D?" (mus-array-print-length)))
     (set! (mus-array-print-length) 32)
