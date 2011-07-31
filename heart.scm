@@ -53,7 +53,7 @@
       ((= chan 6))
     (set! (x-axis-style ind chan) x-axis-in-samples)
     (set! (x-axis-label ind chan) "days")
-    (set! (y-bounds ind chan) (list 50 150)))
+    (set! (y-bounds ind chan) (list 65 150)))
 
   ;; print the average readings over the full sequence
   (snd-print (format #f ";average: ~A/~A~%" 
