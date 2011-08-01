@@ -11358,6 +11358,14 @@ this prints:
 (test (let ((lst '(1 2 3))) (define-macro* (hi a (b 2)) `(+ 1 ,a (* 2 ,b))) (map hi lst)) '(6 7 8))
 (test (let ((lst '(1 2 3))) (define-macro* (hi a (b 2)) `(+ 1 ,a (* 2 ,b))) (map hi lst (map hi lst))) '(14 17 20))
 
+(let ()
+  (define (hi)
+    (map (lambda (a) (a 0))
+	 (list (vector 1 2 3)
+	       (string #\a #\b #\c)
+	       (list 'e 'f 'g))))
+  (test (hi) '(1 #\a e)))
+
 
 #|
 ;;; this is from the r6rs comment site
@@ -13658,6 +13666,18 @@ time, so that the displayed results are
   (test (flatten '((1) 2 ((3 4) 5) ((())) (((6))) 7 8 ())) '(1 2 3 4 5 6 7 8))
   (test (flatten '(() 1 () ((2 (1)) 4) (3 2) ())) '(1 2 1 4 3 2))
   )
+
+(test (let () (define (hi a) (+ (abs a) (values 1 2 3))) (hi -4)) 10)
+(let ()
+  (define (hi a)
+    (let ((x 0)
+	  (again #f))
+      (let ((y (+ (abs a) (call/cc (lambda (r) (set! again r) 1)))))
+	(set! x (+ x y))
+	(if (< x 3) (again 1))
+	x)))
+  (test (hi 0) 3))
+
 
 
 
@@ -42374,6 +42394,7 @@ abs     1       2
 (test (>= 1234/11 1234) #f)
 (test (>= 1234/11 1234/11) #t)
 
+(test (>= 0+i 0+i) 'error) ;??
 (test (>= 1 0+i) 'error)
 (test (>= 1 0-i) 'error)
 (test (>= 1 1 2) #f)

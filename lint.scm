@@ -835,17 +835,17 @@
 		     (eq? sym (cdr tree))))))
       
       
-      (define (remove x list) 
-	(cond ((null? list) '()) 
-	      ((eq? (car list) x) (cdr list)) 
-	      (else (cons (car list) 
-			  (remove x (cdr list))))))
+      (define (remove x lst) 
+	(cond ((null? lst) '()) 
+	      ((eq? (car lst) x) (cdr lst)) 
+	      (else (cons (car lst) 
+			  (remove x (cdr lst))))))
       
       
-      (define (remove-all x list) 
-	(cond ((null? list) '()) 
-	      ((equal? (car list) x) (remove-all x (cdr list)))
-	      (else (cons (car list) (remove-all x (cdr list))))))
+      (define (remove-all x lst) 
+	(cond ((null? lst) '()) 
+	      ((equal? (car lst) x) (remove-all x (cdr lst)))
+	      (else (cons (car lst) (remove-all x (cdr lst))))))
       
       
       (define (simplify-boolean in-form true false env)
@@ -871,20 +871,20 @@
 		    (associated-exprs '())
 		    (ctr 0))
 		
-		(define (tree-remove-all x list) 
-		  (cond ((null? list) '()) 
-			((equal? (car list) x) (tree-remove-all x (cdr list)))
-			((pair? (car list)) (cons (tree-remove-all x (car list)) (tree-remove-all x (cdr list))))
-			(else (cons (car list) (tree-remove-all x (cdr list))))))
+		(define (tree-remove-all x lst) 
+		  (cond ((null? lst) '()) 
+			((equal? (car lst) x) (tree-remove-all x (cdr lst)))
+			((pair? (car lst)) (cons (tree-remove-all x (car lst)) (tree-remove-all x (cdr lst))))
+			(else (cons (car lst) (tree-remove-all x (cdr lst))))))
 		
-		(define (canonical-tree list)
-		  (let ((data (assoc list associated-exprs)))
+		(define (canonical-tree lst)
+		  (let ((data (assoc lst associated-exprs)))
 		    (if data
 			(cdr data)
-			(if (pair? list) 
-			    (cons (canonical-tree (car list)) 
-				  (canonical-tree (cdr list))) 
-			    list))))
+			(if (pair? lst) 
+			    (cons (canonical-tree (car lst)) 
+				  (canonical-tree (cdr lst))) 
+			    lst))))
 		
 		(define (cdr-assoc val lst)
 		  (if (not (pair? lst))
