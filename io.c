@@ -1133,8 +1133,16 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		    {
 		    case MUS_BSHORT:      
 #if MUS_LITTLE_ENDIAN && SNDLIB_USE_FLOATS
-		      for (; bufnow <= bufend; jchar += siz_chans) 
-			(*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
+		      if (chans == 1)
+			{
+			  for (; bufnow <= bufend; jchar += 2) 
+			    (*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
+			}
+		      else
+			{
+			  for (; bufnow <= bufend; jchar += siz_chans) 
+			    (*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
+			}
 #else       
 		      for (; bufnow <= bufend; jchar += siz_chans) 
 			(*bufnow++) = MUS_SHORT_TO_SAMPLE(big_endian_short(jchar)); 
@@ -1146,8 +1154,16 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		      for (; bufnow <= bufend; jchar += siz_chans) 
 			(*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
 #else
-		      for (; bufnow <= bufend; jchar += siz_chans) 
-			(*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+		      if (chans == 1)
+			{
+			  for (; bufnow <= bufend; jchar += 2) 
+			    (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+			}
+		      else
+			{
+			  for (; bufnow <= bufend; jchar += siz_chans) 
+			    (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+			}
 #endif
 		      break;
 
