@@ -8734,11 +8734,21 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	  (ED_LOCAL_POSITION(sf->cb) == 0) &&
 	  (ED_LOCAL_END(sf->cb) >= (num - 1)))
 	{
+	  mus_sample_t *dat;
+	  mus_long_t loc, last;
+	  loc = sf->loc;
+	  last = sf->last;
+	  dat = sf->data;
 	  for (j = 0; j < jnum; j++)
 	    {
-	      if (sf->loc > sf->last) 
-		mval = fabs(next_sound(sf)); 
-	      else mval = fabs(sf->data[sf->loc++]);
+	      if (loc > last) 
+		{
+		  mval = fabs(next_sound(sf));          /* sets sf->loc and most other fields */
+		  loc = sf->loc;
+		  last = sf->last;
+		  dat = sf->data;
+		}
+	      else mval = fabs(dat[loc++]);
 	      if (mval > ymax) 
 		{
 		  ymax = mval;
