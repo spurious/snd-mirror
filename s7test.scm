@@ -4762,6 +4762,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (member #\a '(#\b #\A #\c) char=?) #f)
 (test (member #\a '(#\b #\A #\c) char-ci=?) '(#\A #\c))
 (test (member #\a '(#\b #\A #\c) (lambda (a b) (char-ci=? a b))) '(#\A #\c))
+(test (char=? (car (member #\a '(#\b #\a))) #\a) #t)
+(test (char=? (car (member #\a '(#\b #\a) (lambda (a b) (char=? a b)))) #\a) #t)
 (test (member 3 '(1 2 3 4) <) '(4))
 (test (member 3 '((1 2) (3 4)) member) '((3 4)))
 (test (member 3 '(((1 . 2) (4 . 5)) ((3 . 4))) assoc) '(((3 . 4))))
@@ -5593,20 +5595,27 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (call/cc (lambda (return) (map (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
 
 
-(test (vector? (symbol-table)) #t)
-(test (symbol? (((symbol-table) 0) 0)) #t)
-(let ((old-table (symbol-table))
-      (old-list ((symbol-table) 0)))
-  ;; try to clobber it...
-  (vector-fill! (symbol-table) #())
-  (set! ((symbol-table) 0) 1)
-  (test (list? ((symbol-table) 0)) #t)
-  (test (symbol? (((symbol-table) 0) 0)) #t)
-  (test (sort! (symbol-table) <) 'error)
-  (test (equal? old-list ((symbol-table) 0)) #t)
-  (test (vector? (sort! (symbol-table) (lambda (a b) (< (length a) (length b))))) #t)
-  (test (equal? old-list ((symbol-table) 0)) #t))
 
+(test (vector? (symbol-table)) #t)
+(let* ((st (symbol-table))
+       (len (length st))
+       (loc -1))
+  (do ((i 0 (+ i 1)))
+      ((or (>= loc 0) 
+	   (= i len)))
+    (if (pair? (st i))
+	(set! loc i)))
+  (if (>= loc 0)
+      (begin
+	(test (symbol? (((symbol-table) loc) 0)) #t)
+	(let ((old-table (symbol-table))
+	      (old-list ((symbol-table) loc)))
+	  ;; try to clobber it...
+	  (vector-fill! (symbol-table) #())
+	  (set! ((symbol-table) loc) 1)
+	  (test (list? ((symbol-table) loc)) #t)
+	  (test (symbol? (((symbol-table) loc) 0)) #t)
+	  (test (equal? old-list ((symbol-table) loc)) #t)))))
 
 (let ((v (make-vector 3 (vector 1 2))))
   (test (equal? (v 0) (v 1)) #t)
@@ -5894,6 +5903,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (vector-set! v 1 2 3 4) 'error)
   (test (v 1 1 1) 'error)
   (test (set! (v 1 1 1) 1) 'error))
+
+
 
 (let ((v1 (make-vector '(3 2) 0))
       (v2 (make-vector '(2 3) 0))
@@ -17543,6 +17554,7 @@ why are these different (read-time `#() ? )
 (test (catch #t (lambda () (catch "hi" (lambda () (error "hi")) (lambda args 1))) (lambda args 2)) 2) ; guile agrees with this
 (test (let ((str (list 1 2))) (catch #t (lambda () (catch str (lambda () (error str)) (lambda args 1))) (lambda args 2))) 1)
 (test (let ((str "hi")) (catch #t (lambda () (catch str (lambda () (error str)) (lambda args 1))) (lambda args 2))) 2) ; this doesn't make sense
+(test (let () (abs (catch #t (lambda () -1) (lambda args 0)))) 1)
 
 #|
 (for-each 
