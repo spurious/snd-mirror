@@ -1909,7 +1909,7 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer oscil_1;
+static s7_pointer oscil_1, oscil_2;
 
 static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
 {
@@ -1926,11 +1926,41 @@ static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
   return(s7_f(s7));
 }
 
+static s7_pointer g_oscil_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer obj;
+  obj = s7_car(args);
+  if (s7_object_type(obj) == mus_xen_tag)
+    {
+      mus_any *osc;
+      osc = (mus_any *)(((mus_xen *)s7_object_value(obj))->gen);
+      if (mus_oscil_p(osc))
+	{
+	  obj = s7_car(s7_cdr(args));
+	  if (s7_is_real(obj))
+	    return(s7_make_real(s7, mus_oscil_fm(osc, s7_number_to_real(obj))));
+	  XEN_ASSERT_TYPE(false, obj, XEN_ARG_2, S_oscil, "a real number");
+	}
+    }
+  XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
+  return(s7_f(s7));
+}
+
 static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 1)
     return(oscil_1);
+  if (args == 2)
+    return(oscil_2);
   return(f);
+}
+
+static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
+
+static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  /* fprintf(stderr, "clm adder: %s\n", XEN_AS_STRING(expr)); */
+  return((*initial_add_chooser)(sc, f, args, expr));
 }
 
 static void init_choosers(s7_scheme *sc)
@@ -1943,6 +1973,14 @@ static void init_choosers(s7_scheme *sc)
 
   oscil_1 = s7_make_function(sc, "oscil", g_oscil_1, 1, 0, false, "experimental oscil optimization");
   s7_function_set_class(oscil_1, s7_function_class(f));
+  oscil_2 = s7_make_function(sc, "oscil", g_oscil_2, 2, 0, false, "experimental oscil optimization");
+  s7_function_set_class(oscil_2, s7_function_class(f));
+
+  /*
+  f = s7_name_to_value(sc, "+");
+  initial_add_chooser = s7_function_chooser(f);
+  s7_function_set_chooser(f, clm_add_chooser);
+  */
 }
 #endif
 

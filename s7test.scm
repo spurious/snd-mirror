@@ -692,9 +692,8 @@
 ;; so (eq? 3/4 3/4) is #f, (eqv? 3/4 3/4) is #t,
 ;;    (eqv? #(1) #(1)) is #f, (equal? #(1) #(1)) is #t
 ;;    (equal? 3 3.0) is #f, (= 3 3.0) is #t
-;; in s7 (since real_zero and real_one are separate)
+;; in s7 
 ;;    (eq? 0.0 0.0) is #t,
-;;    (eq? 1.0 1.0) is #t,
 ;;    (eq? 2.0 2.0) is #f
 (test (equal? .0 0.) #t)
 (test (equal? 

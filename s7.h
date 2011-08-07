@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.91"
-#define S7_DATE "20-July-11"
+#define S7_VERSION "1.92"
+#define S7_DATE "6-Aug-11"
 
 
 typedef long long int s7_Int;
@@ -532,7 +532,9 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc);
   /* this is now the same as s7_make_procedure_with_setter (different args) */
 
-void s7_function_set_chooser(s7_pointer f,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr));
+
+s7_pointer (*s7_function_chooser(s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
+void s7_function_set_chooser(s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr));
 unsigned int s7_function_class(s7_pointer f);
 void s7_function_set_class(s7_pointer f, unsigned int c);
 
@@ -770,7 +772,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 20-Jul:    added s7_function_class, s7_function_set_class, and s7_function_set_chooser.
+ * 6-Aug:     s7_function_chooser.
+ * 20-Jul:    s7_function_class, s7_function_set_class, and s7_function_set_chooser.
  * 14-Jul:    removed thread and profiling support.
  * 5-June:    s7_define_safe_function and s7_unoptimize exported; added unoptimize function in scheme.
  * 30-May:    environment->list and s7_environment_to_list since environments are no longer alists internally.

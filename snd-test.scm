@@ -30655,37 +30655,37 @@ EDITS: 2
   (define (mdt-test id x time drg) #f)
   
   (reset-almost-all-hooks)
-  
+
   (let ((fd (view-sound "oboe.snd")))
-    (let ((mb #f))
-      (if (not clm_buffer_added)
-	  (set! mb (add-to-main-menu "clm")))
-      
-      (let ((var (catch #t (lambda () (add-to-menu -1 "fm-violin" (lambda () #f))) (lambda args args))))
-	(if (not (eq? (car var) 'no-such-menu))
-	    (snd-display #__line__ ";add-to-menu bad menu: ~A" var)))
-      
-      (let ((tag (catch #t (lambda () (add-to-main-menu "oops" (make-delay 11)))
-			(lambda args (car args)))))
-	(if (not (eq? tag 'bad-arity))
-	    (snd-display #__line__ ";add-to-main-menu non-thunk: ~A" tag)))
-      (let ((tag (catch #t (lambda () (add-to-menu 3 "oops" (make-delay 12)))
-			(lambda args (car args)))))
-	(if (and (not (eq? tag 'bad-arity))
-		 (not (eq? tag 'wrong-type-arg)))
-	    (snd-display #__line__ ";add-to-menu non-thunk: ~A" tag)))
-      
-      (set! (cursor fd) 2000)
-      (set! (transform-graph-type) graph-once)
-      (set! (transform-graph? fd) #t)
-      (if (and with-gui
-	       (not clm_buffer_added))
-	  (begin
-	    (add-to-menu mb "not here" (lambda () (snd-display #__line__ ";oops")))
-	    (remove-from-menu mb "not here")
-	    (add-to-menu 3 "Denoise" (lambda () (report-in-minibuffer "denoise")))))
-      
-      (set! clm_buffer_added #t))
+    (if with-gui
+	(let ((mb #f))
+	  (if (not clm_buffer_added)
+	      (set! mb (add-to-main-menu "clm")))
+	  
+	  (let ((var (catch #t (lambda () (add-to-menu -1 "fm-violin" (lambda () #f))) (lambda args args))))
+	    (if (not (eq? (car var) 'no-such-menu))
+		(snd-display #__line__ ";add-to-menu bad menu: ~A" var)))
+	  
+	  (let ((tag (catch #t (lambda () (add-to-main-menu "oops" (make-delay 11)))
+			    (lambda args (car args)))))
+	    (if (not (eq? tag 'bad-arity))
+		(snd-display #__line__ ";add-to-main-menu non-thunk: ~A" tag)))
+	  (let ((tag (catch #t (lambda () (add-to-menu 3 "oops" (make-delay 12)))
+			    (lambda args (car args)))))
+	    (if (and (not (eq? tag 'bad-arity))
+		     (not (eq? tag 'wrong-type-arg)))
+		(snd-display #__line__ ";add-to-menu non-thunk: ~A" tag)))
+	  
+	  (set! (cursor fd) 2000)
+	  (set! (transform-graph-type) graph-once)
+	  (set! (transform-graph? fd) #t)
+	  (if (not clm_buffer_added)
+	      (begin
+		(add-to-menu mb "not here" (lambda () (snd-display #__line__ ";oops")))
+		(remove-from-menu mb "not here")
+		(add-to-menu 3 "Denoise" (lambda () (report-in-minibuffer "denoise")))))
+	  
+	  (set! clm_buffer_added #t)))
     
     (set! (hook-functions help-hook) '())
     (let ((hi (snd-help 'cursor-position)))
