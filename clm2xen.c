@@ -1886,7 +1886,7 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
       if (mus_oscil_p(osc))
 	{
 	  if (!s7_is_pair(s7_cdr(args)))
-	    return(s7_make_real(s7, mus_oscil_unmodulated(osc)));
+	    return(s7_make_real(sc, mus_oscil_unmodulated(osc)));
 	  args = s7_cdr(args);
 	  obj = s7_car(args);
 	  if (s7_is_number(obj))
@@ -1894,18 +1894,18 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
 	      double fm;
 	      fm = s7_number_to_real(obj);
 	      if (!s7_is_pair(s7_cdr(args)))
-		return(s7_make_real(s7, mus_oscil_fm(osc, fm)));
+		return(s7_make_real(sc, mus_oscil_fm(osc, fm)));
 	      args = s7_cdr(args);
 	      obj = s7_car(args);
 	      if (s7_is_number(obj))
-		return(s7_make_real(s7, mus_oscil(osc, fm, s7_number_to_real(obj))));
+		return(s7_make_real(sc, mus_oscil(osc, fm, s7_number_to_real(obj))));
 	      XEN_ASSERT_TYPE(false, obj, XEN_ARG_3, S_oscil, "a number");
 	    }
 	  XEN_ASSERT_TYPE(false, obj, XEN_ARG_2, S_oscil, "a number");
 	}
     }
   XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
-  return(s7_f(s7));
+  return(s7_f(sc));
 }
 
 
@@ -1920,10 +1920,10 @@ static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
       mus_any *osc;
       osc = (mus_any *)(((mus_xen *)s7_object_value(obj))->gen);
       if (mus_oscil_p(osc))
-	return(s7_make_real(s7, mus_oscil_unmodulated(osc)));
+	return(s7_make_real(sc, mus_oscil_unmodulated(osc)));
     }
   XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
-  return(s7_f(s7));
+  return(s7_f(sc));
 }
 
 static s7_pointer g_oscil_2(s7_scheme *sc, s7_pointer args)
@@ -1938,13 +1938,14 @@ static s7_pointer g_oscil_2(s7_scheme *sc, s7_pointer args)
 	{
 	  obj = s7_car(s7_cdr(args));
 	  if (s7_is_real(obj))
-	    return(s7_make_real(s7, mus_oscil_fm(osc, s7_number_to_real(obj))));
+	    return(s7_make_real(sc, mus_oscil_fm(osc, s7_number_to_real(obj))));
 	  XEN_ASSERT_TYPE(false, obj, XEN_ARG_2, S_oscil, "a real number");
 	}
     }
   XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
-  return(s7_f(s7));
+  return(s7_f(sc));
 }
+
 
 static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
@@ -1955,13 +1956,49 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
   return(f);
 }
 
+
+static s7_pointer env_times_oscil_2;
+static s7_pointer g_env_times_oscil_2(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_f(sc));
+}
+
+
 static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
+
+#define cadr(E) s7_car(s7_cdr(E))
+
+
+static s7_pointer g_env_w(s7_scheme *sc, s7_pointer args);
 
 static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   /* fprintf(stderr, "clm adder: %s\n", XEN_AS_STRING(expr)); */
+
+#if 0
+  if ((args == 2) &&
+      (s7_is_pair(cadr(expr))) &&
+      (s7_function_choice(cadr(expr)) == g_env_w))
+    {
+      /* fprintf(stderr, "possible choice\n"); */
+    }
+#endif
+
   return((*initial_add_chooser)(sc, f, args, expr));
 }
+
+
+static s7_pointer (*initial_multiply_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
+
+static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      
+    }
+  return((*initial_multiply_chooser)(sc, f, args, expr));
+}
+
 
 static void init_choosers(s7_scheme *sc)
 {
@@ -1976,11 +2013,13 @@ static void init_choosers(s7_scheme *sc)
   oscil_2 = s7_make_function(sc, "oscil", g_oscil_2, 2, 0, false, "experimental oscil optimization");
   s7_function_set_class(oscil_2, s7_function_class(f));
 
-  /*
   f = s7_name_to_value(sc, "+");
   initial_add_chooser = s7_function_chooser(f);
   s7_function_set_chooser(f, clm_add_chooser);
-  */
+
+  f = s7_name_to_value(sc, "*");
+  initial_multiply_chooser = s7_function_chooser(f);
+  s7_function_set_chooser(f, clm_multiply_chooser);
 }
 #endif
 
