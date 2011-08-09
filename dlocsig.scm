@@ -84,39 +84,38 @@
 
 (provide 'snd-dlocsig.scm)
 
-(define* (envelope-interp x env base)   ;env is list of x y breakpoint pairs, interpolate at x returning y
-  "(envelope-interp x env (base 1.0)) -> value of env at x; base controls connecting segment 
-type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
-  (cond ((null? env) 0.0)		;no data -- return 0.0
-	((or (<= x (car env))	        ;we're sitting on x val (or if < we blew it)
-	     (null? (cddr env)))	;or we're at the end of the list
-	 (cadr env))		        ;so return current y value
-	((> (caddr env) x)		;x <= next env x axis value
-	 (if (or (= (cadr env) (cadddr env))
+(define* (envelope-interp x e base)   ;e is list of x y breakpoint pairs, interpolate at x returning y
+  "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
+  (cond ((null? e) 0.0)		        ;no data -- return 0.0
+	((or (<= x (car e))	        ;we're sitting on x val (or if < we blew it)
+	     (null? (cddr e)))	        ;or we're at the end of the list
+	 (cadr e))		        ;so return current y value
+	((> (caddr e) x)		;x <= next env x axis value
+	 (if (or (= (cadr e) (cadddr e))
 		 (and base (= base 0.0)))
-	     (cadr env)		;y1=y0, so just return y0 (avoid endless calculations below)
+	     (cadr e)		        ;y1=y0, so just return y0 (avoid endless calculations below)
 	     (if (or (not base) (= base 1.0))
-		 (+ (cadr env)	;y0+(x-x0)*(y1-y0)/(x1-x0)
-		    (* (- x (car env))
-		       (/ (- (cadddr env) (cadr env))
-			  (- (caddr env) (car env)))))
-		 (+ (cadr env) ; this does not exactly match xramp-channel
-		    (* (/ (- (cadddr env) (cadr env))
+		 (+ (cadr e)	        ;y0+(x-x0)*(y1-y0)/(x1-x0)
+		    (* (- x (car e))
+		       (/ (- (cadddr e) (cadr e))
+			  (- (caddr e) (car e)))))
+		 (+ (cadr e) ; this does not exactly match xramp-channel
+		    (* (/ (- (cadddr e) (cadr e))
 			  (- base 1.0))
-		       (- (expt base (/ (- x (car env))
-					(- (caddr env) (car env))))
+		       (- (expt base (/ (- x (car e))
+					(- (caddr e) (car e))))
 			  1.0))))))
-	(else (envelope-interp x (cddr env) base)))) ;go on looking for x segment
+	(else (envelope-interp x (cddr e) base)))) ;go on looking for x segment
 
-(define (x-norm env xmax)
-  "(x-norm env xmax) changes 'env' x axis values so that they run to 'xmax'"
-  (let ((scl (/ xmax (env (- (length env) 2))))
+(define (x-norm e xmax)
+  "(x-norm e xmax) changes 'e' x axis values so that they run to 'xmax'"
+  (let ((scl (/ xmax (e (- (length e) 2))))
 	(val '())
-	(len (length env)))
+	(len (length e)))
     (do ((i 0 (+ i 2)))
 	((>= i len))
-      (set! val (cons (* (env i) scl) val))
-      (set! val (cons (env (+ i 1)) val)))
+      (set! val (cons (* (e i) scl) val))
+      (set! val (cons (e (+ i 1)) val)))
     (reverse val)))
 
 

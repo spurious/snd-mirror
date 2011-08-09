@@ -23,53 +23,52 @@
 
 ;;; -------- envelope-interp
 
-(define* (envelope-interp x env base)   ;env is list of x y breakpoint pairs, interpolate at x returning y
-  "(envelope-interp x env (base 1.0)) -> value of env at x; base controls connecting segment 
-type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
-  (cond ((null? env) 0.0)		;no data -- return 0.0
-	((or (<= x (car env))	        ;we're sitting on x val (or if < we blew it)
-	     (null? (cddr env)))	;or we're at the end of the list
-	 (cadr env))		        ;so return current y value
-	((> (caddr env) x)		;x <= next env x axis value
-	 (if (or (= (cadr env) (cadddr env))
+(define* (envelope-interp x e base)   ;e is list of x y breakpoint pairs, interpolate at x returning y
+  "(envelope-interp x e (base 1.0)) -> value of e at x; base controls connecting segment type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
+  (cond ((null? e) 0.0)		        ;no data -- return 0.0
+	((or (<= x (car e))	        ;we're sitting on x val (or if < we blew it)
+	     (null? (cddr e)))	        ;or we're at the end of the list
+	 (cadr e))		        ;so return current y value
+	((> (caddr e) x)		;x <= next env x axis value
+	 (if (or (= (cadr e) (cadddr e))
 		 (and base (= base 0.0)))
-	     (cadr env)		;y1=y0, so just return y0 (avoid endless calculations below)
+	     (cadr e)		        ;y1=y0, so just return y0 (avoid endless calculations below)
 	     (if (or (not base) (= base 1.0))
-		 (+ (cadr env)	;y0+(x-x0)*(y1-y0)/(x1-x0)
-		    (* (- x (car env))
-		       (/ (- (cadddr env) (cadr env))
-			  (- (caddr env) (car env)))))
-		 (+ (cadr env) ; this does not exactly match xramp-channel
-		    (* (/ (- (cadddr env) (cadr env))
+		 (+ (cadr e)	        ;y0+(x-x0)*(y1-y0)/(x1-x0)
+		    (* (- x (car e))
+		       (/ (- (cadddr e) (cadr e))
+			  (- (caddr e) (car e)))))
+		 (+ (cadr e) ; this does not exactly match xramp-channel
+		    (* (/ (- (cadddr e) (cadr e))
 			  (- base 1.0))
-		       (- (expt base (/ (- x (car env))
-					(- (caddr env) (car env))))
+		       (- (expt base (/ (- x (car e))
+					(- (caddr e) (car e))))
 			  1.0))))))
-	(else (envelope-interp x (cddr env) base)))) ;go on looking for x segment
+	(else (envelope-interp x (cddr e) base)))) ;go on looking for x segment
 
 
 ;;; -------- window-envelope (a kinda brute-force translation from the CL version in env.lisp)
 
-(define (window-envelope beg end env)
-  "(window-envelope beg end env) -> portion of env lying between x axis values beg and 
+(define (window-envelope beg end e)
+  "(window-envelope beg end e) -> portion of e lying between x axis values beg and 
 end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
   (let ((nenv '())
-	(lasty (if env (cadr env) 0.0))
-	(len (length env)))
+	(lasty (if e (cadr e) 0.0))
+	(len (length e)))
     (call-with-exit
      (lambda (return-early)               
        (do ((i 0 (+ i 2)))
 	   ((>= i len))
-	 (let ((x (env i))
-	       (y (env (+ i 1))))
+	 (let ((x (e i))
+	       (y (e (+ i 1))))
 	   (set! lasty y)
 	   (if (null? nenv)
 	       (if (>= x beg)
 		   (begin
-		     (set! nenv (append nenv (list beg (envelope-interp beg env))))
+		     (set! nenv (append nenv (list beg (envelope-interp beg e))))
 		     (if (not (= x beg))
 			 (if (>= x end)
-			     (return-early (append nenv (list end (envelope-interp end env))))
+			     (return-early (append nenv (list end (envelope-interp end e))))
 			     (set! nenv (append nenv (list x y)))))))
 	       (if (<= x end)
 		   (begin
@@ -77,7 +76,7 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 		     (if (= x end)
 			 (return-early nenv)))
 		   (if (> x end)
-		       (return-early (append nenv (list end (envelope-interp end env)))))))))
+		       (return-early (append nenv (list end (envelope-interp end e)))))))))
        (append nenv (list end lasty))))))
 
 
@@ -136,35 +135,35 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 ;;; -------- max-envelope
 
-(define (max-envelope env)
+(define (max-envelope env1)
   "(max-envelope env) -> max y value in env"
   (define (max-envelope-1 e mx)
     (if (null? e)
 	mx
 	(max-envelope-1 (cddr e) (max mx (cadr e)))))
-  (max-envelope-1 (cddr env) (cadr env)))
+  (max-envelope-1 (cddr env1) (cadr env1)))
 
 
 ;;; -------- min-envelope
 
-(define (min-envelope env)
+(define (min-envelope env1)
   "(min-envelope env) -> min y value in env"
   (define (min-envelope-1 e mx)
     (if (null? e)
 	mx
 	(min-envelope-1 (cddr e) (min mx (cadr e)))))
-  (min-envelope-1 (cddr env) (cadr env)))
+  (min-envelope-1 (cddr env1) (cadr env1)))
 
 
 ;;; -------- integrate-envelope
 
-(define (integrate-envelope env)
+(define (integrate-envelope env1)
   "(integrate-envelope env) -> area under env"
   (define (integrate-envelope-1 e sum)
     (if (or (null? e) (null? (cddr e)))
 	sum
 	(integrate-envelope-1 (cddr e) (+ sum (* (+ (cadr e) (cadddr e)) .5 (- (caddr e) (car e)))))))
-  (integrate-envelope-1 env 0.0))
+  (integrate-envelope-1 env1 0.0))
 
 
 ;;; -------- envelope-last-x
@@ -503,20 +502,20 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	    (set! e (cons rms-val e)))))))
 
 
-(define* (normalize-envelope env (new-max 1.0))
+(define* (normalize-envelope env1 (new-max 1.0))
   (define (abs-max-envelope-1 e mx)
     (if (null? e)
 	mx
 	(abs-max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
-  (let ((peak (abs-max-envelope-1 (cddr env) (abs (cadr env)))))
-    (scale-envelope env (/ new-max peak))))
+  (let ((peak (abs-max-envelope-1 (cddr env1) (abs (cadr env1)))))
+    (scale-envelope env1 (/ new-max peak))))
 
 
 ;;; simplify-envelope
 ;;;
 ;;; this is not very good...
 
-(define* (simplify-envelope env (ygrid 10) (xgrid 100))
+(define* (simplify-envelope env1 (ygrid 10) (xgrid 100))
 
   ;; grid = how fine a fluctuation we will allow.
   ;; the smaller the grid, the less likely a given bump will get through
@@ -551,13 +550,13 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 			    :within))))
 	    #f)))
 
-  (if (and env
-	   (> (length env) 4))
-      (let ((new-env (list (cadr env) (car env)))
-	    (ymax (max-envelope env))
-	    (ymin (min-envelope env))
-	    (xmax (env (- (length env) 2)))
-	    (xmin (car env)))
+  (if (and env1
+	   (> (length env1) 4))
+      (let ((new-env (list (cadr env1) (car env1)))
+	    (ymax (max-envelope env1))
+	    (ymin (min-envelope env1))
+	    (xmax (env1 (- (length env1) 2)))
+	    (xmin (car env1)))
 	(if (= ymin ymax)
 	    (list xmin ymin xmax ymax)
 	  (let ((y-scl (/ ygrid (- ymax ymin)))
@@ -567,9 +566,9 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 		(tx #f) (ty #f) 
 		(qtx #f) (qty #f))
 	    (do ((i 0 (+ i 2)))
-		((>= i (length env)))
-	      (let ((ttx (env i))
-		    (tty (env (+ i 1))))
+		((>= i (length env1)))
+	      (let ((ttx (env1 i))
+		    (tty (env1 (+ i 1))))
 		(set! tx (round (* ttx x-scl)))
 		(set! ty (round (* tty y-scl)))
 		(if px
@@ -589,4 +588,4 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	    (set! new-env (cons qtx new-env))
 	    (set! new-env (cons qty new-env))
 	    (reverse new-env))))
-      env))
+      env1))

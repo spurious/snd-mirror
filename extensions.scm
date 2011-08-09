@@ -65,8 +65,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;;
 ;;; there are lots of ways to do this; this version uses functions from Snd, CLM, and Sndlib.
 
-(define (enveloped-mix filename beg env)
-  "(enveloped-mix filename beg env) mixes filename starting at beg with amplitude envelope env. (enveloped-mix \"pistol.snd\" 0 '(0 0 1 1 2 0))"
+(define (enveloped-mix filename beg e)
+  "(enveloped-mix filename beg e) mixes filename starting at beg with amplitude envelope e. (enveloped-mix \"pistol.snd\" 0 '(0 0 1 1 2 0))"
   (let* ((len (frames filename))
 	 (tmp-name (string-append (if (and (string? (temp-dir))
 					   (> (string-length (temp-dir)) 0))
@@ -78,7 +78,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	 (envs (make-vector 1))
 	 (inenvs (make-vector 1)))
     (mus-sound-close-output tmpfil 0)
-    (set! (inenvs 0) (make-env env :length len))
+    (set! (inenvs 0) (make-env e :length len))
     (set! (envs 0) inenvs)
     (mus-mix tmp-name filename 0 len 0 mx envs)
     (mix tmp-name beg)
@@ -239,19 +239,19 @@ a list (file-name-or-sound-object [beg [channel]])."
 
 ;;; -------- any-env-channel
 
-(define* (any-env-channel env func (beg 0) dur snd chn edpos origin)
-  "(any-env-channel env func (beg 0) dur snd chn edpos origin) takes breakpoints in 'env', \
+(define* (any-env-channel e func (beg 0) dur snd chn edpos origin)
+  "(any-env-channel e func (beg 0) dur snd chn edpos origin) takes breakpoints in 'e', \
 connects them with 'func', and applies the result as an amplitude envelope to the given channel"
   ;; handled as a sequence of funcs and scales
-  (if (not (null? env))
-      (let ((pts (/ (length env) 2)))
+  (if (not (null? e))
+      (let ((pts (/ (length e) 2)))
 	(if (= pts 1)
-	    (scale-channel (car env) beg dur snd chn edpos)
+	    (scale-channel (car e) beg dur snd chn edpos)
 	    (let ((x0 0)
 		  (y0 0)
-		  (x1 (car env))
-		  (y1 (cadr env))
-		  (xrange (- (env (- (length env) 2)) (car env)))
+		  (x1 (car e))
+		  (y1 (cadr e))
+		  (xrange (- (e (- (length e) 2)) (car e)))
 		  (ramp-beg beg)
 		  (ramp-dur 0))
 	      (if (not (number? dur)) (set! dur (frames snd chn)))
@@ -262,8 +262,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		     ((= i pts))
 		   (set! x0 x1)
 		   (set! y0 y1)
-		   (set! x1 (env j))
-		   (set! y1 (env (+ 1 j)))
+		   (set! x1 (e j))
+		   (set! y1 (e (+ 1 j)))
 		   (set! ramp-dur (round (* dur (/ (- x1 x0) xrange))))
 		   (if (= y0 y1)
 		       (scale-channel y0 ramp-beg ramp-dur snd chn edpos)
@@ -296,9 +296,9 @@ connects them with 'func', and applies the result as an amplitude envelope to th
    (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
 
-(define* (sine-env-channel env (beg 0) dur snd chn edpos)
-  "(sine-env-channel env (beg 0) dur snd chn edpos) connects env's dots with sinusoids"
-  (any-env-channel env sine-ramp beg dur snd chn edpos (format #f "sine-env-channel '~A ~A ~A" env beg dur)))
+(define* (sine-env-channel e (beg 0) dur snd chn edpos)
+  "(sine-env-channel e (beg 0) dur snd chn edpos) connects e's dots with sinusoids"
+  (any-env-channel e sine-ramp beg dur snd chn edpos (format #f "sine-env-channel '~A ~A ~A" e beg dur)))
 
 ;;; (sine-env-channel '(0 0 1 1 2 -.5 3 1))
 
@@ -334,9 +334,9 @@ connects them with 'func', and applies the result as an amplitude envelope to th
    (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
 
-(define* (blackman4-env-channel env (beg 0) dur snd chn edpos)
-  "(blackman4-env-channel env (beg 0) dur snd chn edpos) uses the blackman4 window to connect the dots in 'env'"
-  (any-env-channel env blackman4-ramp beg dur snd chn edpos (format #f "blackman4-env-channel '~A ~A ~A" env beg dur)))
+(define* (blackman4-env-channel e (beg 0) dur snd chn edpos)
+  "(blackman4-env-channel e (beg 0) dur snd chn edpos) uses the blackman4 window to connect the dots in 'e'"
+  (any-env-channel e blackman4-ramp beg dur snd chn edpos (format #f "blackman4-env-channel '~A ~A ~A" e beg dur)))
 
 ;;; any curve can be used as the connecting line between envelope breakpoints in the
 ;;;   same manner -- set up each ramp to take the current position and increment,
@@ -368,13 +368,13 @@ connects them with 'func', and applies the result as an amplitude envelope to th
    (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))
 
 
-(define* (env-squared-channel env (symmetric #t) (beg 0) dur snd chn edpos)
-  "(env-squared-channel env (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^2 curves"
-  (any-env-channel env 
+(define* (env-squared-channel e (symmetric #t) (beg 0) dur snd chn edpos)
+  "(env-squared-channel e (symmetric #t) (beg 0) dur snd chn edpos) connects e's dots with x^2 curves"
+  (any-env-channel e 
 		   (lambda (r0 r1 b d s c e)
 		     (ramp-squared r0 r1 symmetric b d s c e))
 		   beg dur snd chn edpos
-		   (format #f "env-squared-channel '~A ~A ~A ~A" env symmetric beg dur)))
+		   (format #f "env-squared-channel '~A ~A ~A ~A" e symmetric beg dur)))
 
 ;;; (env-squared-channel '(0 0 1 1 2 -.5 3 1))
 
@@ -404,15 +404,15 @@ connects them with 'func', and applies the result as an amplitude envelope to th
    (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))
 
 
-(define* (env-expt-channel env exponent (symmetric #t) (beg 0) dur snd chn edpos)
-  "(env-expt-channel env exponent (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^exponent curves"
+(define* (env-expt-channel e exponent (symmetric #t) (beg 0) dur snd chn edpos)
+  "(env-expt-channel e exponent (symmetric #t) (beg 0) dur snd chn edpos) connects e's dots with x^exponent curves"
   (if (= exponent 1.0)
-      (env-channel env beg dur snd chn edpos)
-      (any-env-channel env 
+      (env-channel e beg dur snd chn edpos)
+      (any-env-channel e 
 		       (lambda (r0 r1 b d s c e)
 			 (ramp-expt r0 r1 exponent symmetric b d s c e))
 		       beg dur snd chn edpos
-		       (format #f "env-expt-channel '~A ~A ~A ~A ~A" env exponent symmetric beg dur))))
+		       (format #f "env-expt-channel '~A ~A ~A ~A ~A" e exponent symmetric beg dur))))
 
 
 ;;; -------- offset-channel 

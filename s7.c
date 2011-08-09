@@ -972,9 +972,10 @@ struct s7_scheme {
 
 #define T_GLOBAL                      (1 << (TYPE_BITS + 7))
 #define is_global(p)                  ((typeflag(p) & T_GLOBAL) != 0)
+/* this marks something defined (bound) at the top-level, and never defined locally */
 #define set_global(p)                 typeflag(p) |= T_GLOBAL
 #define set_local(p)                  typeflag(p) = (typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC))
-/* this marks something defined (bound) at the top-level, and never defined locally */
+
 
 #define T_SYMBOL_HAS_ACCESSOR         (1 << (TYPE_BITS + 8))
 #define symbol_has_accessor(p)        ((typeflag(p) & T_SYMBOL_HAS_ACCESSOR) != 0)
@@ -29428,6 +29429,10 @@ static s7_pointer check_do(s7_scheme *sc)
       (cdr(ecdr(sc->code)) == sc->code))
     car(ecdr(sc->code)) = sc->DO_UNCHECKED;
 
+  /* TODO: look for easy cases: one step var, step expr is hop-safe-c-c or whatever,
+   *       end expr is equally simple -- lots of current do loop time is in push-stack
+   */
+
   return(sc->code);
 }
       
@@ -33841,6 +33846,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *   stored in their slots.  We still need to update frame_id etc.
 	       */
 
+	      /* TODO: I think this drops the symbol-access check somewhere
+	       */
+
 	      /* sc->args are the arg values, closure_environment is the preallocated env
 	       */
 	      s7_pointer x, z, env;
@@ -35329,7 +35337,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	NEW_CELL_NO_CHECK(sc, y); /*   3 */
 	car(y) = caar(sc->code);
-	cdr(y) = sc->value;
+	if (symbol_accessed(car(y)))
+	  cdr(y) = call_symbol_bind(sc, car(y), sc->value);
+	else cdr(y) = sc->value;
 	set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
 	ecdr(y) = sc->NIL;
 	car(x) = y;
@@ -35381,7 +35391,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer x;
 	for (x = sc->code; is_not_null(x); x = cdr(x))
-	  add_slot(sc, caar(x), sc->UNDEFINED);
+	  add_slot(sc, caar(x), sc->UNDEFINED); /* TODO: what about symbol_accessors here? */
       }
 
       

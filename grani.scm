@@ -30,7 +30,7 @@
 
 (define grani-default-base (expt 2 1/12))
 
-(define* (exp-envelope env
+(define* (exp-envelope env1
 		       (base grani-default-base)
 		       (error 0.01)
 		       (scaler 1)
@@ -75,7 +75,7 @@
 			      ;; yes --> don't need to add nu'ting to the envelope
 			      (values '() '()))))))
       ;; loop for each segment in the envelope
-      (let segs ((en env))
+      (let segs ((en env1))
 	(let* ((x (car en))
 	       (y (exact->inexact (cadr en)))
 	       (nx (caddr en))
@@ -230,12 +230,12 @@
 
 ;;; create a vct from an envelope
 
-(define* (make-gr-env env (length 512))
+(define* (make-gr-env env1 (length 512))
   (let ((env-vct (make-vct length))
 	(length-1 (exact->inexact (- length 1))))
     (do ((i 0 (+ 1 i)))
 	((= i length) env-vct)
-      (set! (env-vct i) (envelope-interp (/ i length-1) env)))))
+      (set! (env-vct i) (envelope-interp (/ i length-1) env1)))))
 
 ;;;-----------------------------------------------------------------------------
 ;;; Grain envelopes
