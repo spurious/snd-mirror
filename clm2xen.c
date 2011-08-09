@@ -1957,32 +1957,84 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 }
 
 
-static s7_pointer env_times_oscil_2;
-static s7_pointer g_env_times_oscil_2(s7_scheme *sc, s7_pointer args)
+static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
+
+#define car(E) s7_car(E)
+#define cdr(E) s7_cdr(E)
+#define cadr(E) car(cdr(E))
+#define caddr(E) car(cdr(cdr(E)))
+#define cadddr(E) car(cdr(cdr(cdr(E))))
+#define cddr(E) cdr(cdr(E))
+#define cadar(E) car(cdr(car(E)))
+
+static s7_pointer g_env_w(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_triangle_wave_w(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_rand_interp_w(s7_scheme *sc, s7_pointer args);
+
+/* (with-sound () (fm-violin 0 .0001 440 .1)) */
+
+static s7_pointer fm_violin_vibrato;
+static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
 {
-  return(s7_f(sc));
+  s7_pointer xe, xe_sym;
+  xe_sym = cadar(args);
+
+#if 0  
+  fprintf(stderr, "sym: %p\n", s7_symbol_extension(xe_sym));
+  s7_symbol_set_extension(xe_sym, (void *)s7_nil(sc));
+  fprintf(stderr, "  sym: %s\n", s7_object_to_c_string(sc, (s7_pointer)s7_symbol_extension(xe_sym)));
+#endif
+
+  xe = s7_symbol_value(sc, xe_sym);
+  if (s7_object_type(xe) == mus_xen_tag)
+    {
+      mus_any *e;
+      e = (mus_any *)(((mus_xen *)s7_object_value(xe))->gen);
+      if (mus_env_p(e))
+	{
+	  s7_pointer xt;
+	  xt = s7_symbol_value(sc, cadr(cadr(args)));
+	  if (s7_object_type(xt) == mus_xen_tag)
+	    {
+	      mus_any *t;
+	      t = (mus_any *)(((mus_xen *)s7_object_value(xt))->gen);
+	      if (mus_triangle_wave_p(t))
+		{
+		  s7_pointer xr;
+		  xr = s7_symbol_value(sc, cadr(caddr(args)));
+		  if (s7_object_type(xr) == mus_xen_tag)
+		    {
+		      mus_any *r;
+		      r = (mus_any *)(((mus_xen *)s7_object_value(xr))->gen);
+		      if (mus_rand_interp_p(r))
+			return(s7_make_real(sc, mus_env(e) * mus_triangle_wave(t, 0.0) * mus_rand_interp(r, 0.0)));			
+		    }
+		  XEN_ASSERT_TYPE(false, xr, XEN_ARG_1, S_rand_interp, "a rand-interp generator");	      
+		}
+	    }
+	  XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_triangle_wave, "a triangle-wave generator");	      
+	}
+    }
+  XEN_ASSERT_TYPE(false, xe, XEN_ARG_1, S_env, "an envelope generator");
+  return(s7_F(sc));
 }
 
 
-static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
-
-#define cadr(E) s7_car(s7_cdr(E))
-
-
-static s7_pointer g_env_w(s7_scheme *sc, s7_pointer args);
-
 static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  /* fprintf(stderr, "clm adder: %s\n", XEN_AS_STRING(expr)); */
-
-#if 0
-  if ((args == 2) &&
+  if ((args == 3) &&
       (s7_is_pair(cadr(expr))) &&
-      (s7_function_choice(cadr(expr)) == g_env_w))
+      (s7_function_choice(cadr(expr)) == g_env_w) &&
+      (s7_is_pair(caddr(expr))) &&
+      (cddr(caddr(expr)) == s7_nil(sc)) &&
+      (s7_function_choice(caddr(expr)) == g_triangle_wave_w) &&
+      (s7_is_pair(cadddr(expr))) &&
+      (cddr(cadddr(expr)) == s7_nil(sc)) &&
+      (s7_function_choice(cadddr(expr)) == g_rand_interp_w))
     {
-      /* fprintf(stderr, "possible choice\n"); */
+      s7_function_choice_set_direct(expr);
+      return(fm_violin_vibrato);
     }
-#endif
 
   return((*initial_add_chooser)(sc, f, args, expr));
 }
@@ -2016,6 +2068,9 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "+");
   initial_add_chooser = s7_function_chooser(f);
   s7_function_set_chooser(f, clm_add_chooser);
+
+  fm_violin_vibrato = s7_make_function(sc, "+", g_fm_violin_vibrato, 3, 0, false, "experimental fm-violin optimization");
+  s7_function_set_class(fm_violin_vibrato, s7_function_class(f));
 
   f = s7_name_to_value(sc, "*");
   initial_multiply_chooser = s7_function_chooser(f);
