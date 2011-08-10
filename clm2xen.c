@@ -1970,6 +1970,8 @@ static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, 
 static s7_pointer g_env_w(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_triangle_wave_w(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_rand_interp_w(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_polywave_w(s7_scheme *sc, s7_pointer args);
+
 
 /* (with-sound () (fm-violin 0 .0001 440 .1)) */
 
@@ -2026,6 +2028,48 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
   return(s7_make_real(sc, mus_env(e) * mus_triangle_wave(t, 0.0) * mus_rand_interp(r, 0.0)));			
 }
 
+static s7_pointer fm_violin_mod;
+static s7_pointer g_fm_violin_mod(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer xe, xe_sym, xt, xt_sym, vib;
+  mus_any *e, *t;
+
+  xe_sym = cadar(args);
+  e = (mus_any *)s7_symbol_extension(xe_sym);
+  if (!e)
+    {
+      xe = s7_symbol_value(sc, xe_sym);
+      if (s7_object_type(xe) == mus_xen_tag)
+	{
+	  e = (mus_any *)(((mus_xen *)s7_object_value(xe))->gen);
+	  s7_symbol_set_extension(xe_sym, (void *)e);
+	}
+      if ((!e) || (!mus_env_p(e)))
+	XEN_ASSERT_TYPE(false, xe, XEN_ARG_1, S_env, "an envelope generator");
+    }
+
+  args = cadr(args);
+  xt_sym = cadr(args);
+  t = (mus_any *)s7_symbol_extension(xt_sym);
+  if (!t)
+    {
+      xt = s7_symbol_value(sc, xt_sym);
+      if (s7_object_type(xt) == mus_xen_tag)
+	{
+	  t = (mus_any *)(((mus_xen *)s7_object_value(xt))->gen);
+	  s7_symbol_set_extension(xt_sym, (void *)t);
+	}
+      if ((!t) || (!mus_polywave_p(t)))
+	XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_polywave, "a polywave generator");
+    }
+
+  vib = s7_symbol_value(sc, caddr(args));
+  if (!s7_is_real(vib))
+    XEN_ASSERT_TYPE(false, caddr(args), XEN_ARG_2, S_polywave, "a real");
+
+  return(s7_make_real(sc, mus_env(e) * mus_polywave(t, s7_number_to_real(vib))));
+}
+
 static s7_pointer clear_extension_list;
 static s7_pointer clear_extension;
 
@@ -2068,10 +2112,24 @@ static s7_pointer (*initial_multiply_chooser)(s7_scheme *sc, s7_pointer f, int a
 
 static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if (args == 2)
+  if ((args == 2) &&
+      (s7_is_pair(cadr(expr))) &&
+      (s7_function_choice(cadr(expr)) == g_env_w) &&
+      (s7_is_symbol(cadr(cadr(expr)))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice(caddr(expr)) == g_polywave_w) &&
+      (s7_is_pair(cdr(caddr(expr)))) &&
+      (s7_is_symbol(cadr(caddr(expr)))) &&
+      (s7_is_pair(cddr(caddr(expr)))) &&
+      (s7_is_symbol(caddr(caddr(expr)))))
     {
-      
+      s7_symbol_set_access(sc, cadr(cadr(expr)), clear_extension_list);
+      s7_symbol_set_access(sc, cadr(caddr(expr)), clear_extension_list);
+
+      s7_function_choice_set_direct(expr);
+      return(fm_violin_mod);
     }
+
   return((*initial_multiply_chooser)(sc, f, args, expr));
 }
 
@@ -2099,6 +2157,9 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "*");
   initial_multiply_chooser = s7_function_chooser(f);
   s7_function_set_chooser(f, clm_multiply_chooser);
+
+  fm_violin_mod = s7_make_function(sc, "*", g_fm_violin_mod, 2, 0, false, "experimental fm-violin optimization");
+  s7_function_set_class(fm_violin_mod, s7_function_class(f));
 
   clear_extension = s7_make_function(sc, "(clear-extension)", g_clear_extension, 2, 0, false, "clear extension");
   s7_gc_protect(sc, clear_extension);

@@ -79,15 +79,7 @@
  *   currently make-rand|-interp distribution arg (an env) can't be a vct
  */
 
-/* complex number support for run
- *            3+4i real-part imag-part make-rectangular make-polar angle magnitude complex? real? declare case
- *            complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
- *                       carg[angle] creal cimag, complex double _Complex_I
- *            all arithmetic needs extra complex checks etc
- *            would be nice to have gens accept/return complex values, but outa? Jn? [as arg=>In]
- *
- * would it simplify variable handling to store everything as xen_value?
- *
+/*
  * this doesn't get optimized yet: (set! ((mus-data gen) 123) .1)
  *   but the ref side does work: (let ((fr (frame .1 .2 .3))) (run (lambda () ((mus-data fr) 0))))
  *   set! needs to look down a level if caar is a list
@@ -95,46 +87,37 @@
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
- *
- * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings (if default types are used in s7)
  */
 
 
 /* some timings (I keep losing these stats, so I'll put them here for safekeeping, "*"=not optimizable)
  *     valgrind --tool=callgrind snd ws.scm [etc -- no stats, not to snd, *clm-output-safety*=1]
  *
- *      test                                           10.4   (10.7?)   11.4   11.10  12.2  unrun[28-Jun-11] [7-Aug]
+ *      test                                           10.4   (10.7?)   11.4   11.10  12.2  unrun[28-Jun-11] [10-Aug]
  *
- * () (fm-violin 0 20 440 .1)                          1068     642     561     528    479    3692   7.7     2739
- * (:channels 2) (fm-violin 0 20 440 .1 :degree 45)    1228     764     687     570    505    3722   7.4     2768
- * (:reverb jc-reverb) (fm-violin 0 20 440 .1)         2577    1455    1335    1153    948    8747   9.2     6891
- * (:reverb nrev) (fm-violin 0 20 440 .1)              2983    1812    1685    1503   1203   10443   8.7     8435
- * () (p 0 3)                                         91020*   3011    2828    2817   1965   43241  22.0    38679
- * () (expandn 0 10 "oboe.snd" 1 :expand 4)            1228     526     464     456    301    3526  11.7     2831
- * (calling-all-animals)                              16359   11684   10306    9841  10529   55207   5.2    47981
- * () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8)           1207     783     660     700    544    5955  10.9     4924
- * (load "popi.scm")                                  11042    6391    5923    4756   4154   34163   8.2    28327
- *
- * ()                                                  1015     641     562     674    363    7089  19.5     6482
- *   (singer 0 .1 
+ * () (fm-violin 0 20 440 .1)                          1068     642     561     528    479    3692   7.7      1739
+ * (:channels 2) (fm-violin 0 20 440 .1 :degree 45)    1228     764     687     570    505    3722   7.4      1769
+ * (:reverb jc-reverb) (fm-violin 0 20 440 .1)         2577    1455    1335    1153    948    8747   9.2      6155
+ * (:reverb nrev) (fm-violin 0 20 440 .1)              2983    1812    1685    1503   1203   10443   8.7      7390
+ * () (p 0 3)                                         91020*   3011    2828    2817   1965   43241  22.0     38721
+ * () (expandn 0 10 "oboe.snd" 1 :expand 4)            1228     526     464     456    301    3526  11.7      2508
+ * (calling-all-animals)                              16359   11684   10306    9841  10529   55207   5.2     42869
+ * () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8)           1207     783     660     700    544    5955  10.9      4941
+ * (load "popi.scm")                                  11042    6391    5923    4756   4154   34163   8.2     21091
+ * () (singer 0 .1                                     1015     641     562     674    363    7089  19.5      6466
  *     (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) 
  *           (list .6 oo.shp test.glt 523.0 .7 .1 .01))))
- *
- * (:channels 2)                                        206     139      93     107     72     240   3.4      221
+ * (:channels 2)                                        206     139      93     107     72     240   3.4       193
  *   (let ((file "oboe.snd")) 
  *     (grani 0 1 .5 "oboe.snd" 
  *       :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))))
- *
- * ()                                                  7120    5069    4064    3996   3560   21380   6.0    15544
- *   (do ((i 0 (+ i 1))) 
+ * () (do ((i 0 (+ i 1)))                              7120    5069    4064    3996   3560   21380   6.0      8962
  *       ((= i 10000)) 
  *     (fm-violin (* i .001) .01 440 .001)))
- *
- * (:channels 2)                                        283     220     158     167    101     286   2.8      237
+ * (:channels 2)                                        283     220     158     167    101     286   2.8       248
  *   (fullmix "pistol.snd" 0 2 0 #f .5)  
  *   (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
- *
- *                         1st case in clm-ins.scm:   12201    1138    1043     968    707    3025   4.3     2477
+ *                         1st case in clm-ins.scm:   12201    1138    1043     968    707    3025   4.3      2518
  */
 
 #include <mus-config.h>

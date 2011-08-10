@@ -339,7 +339,7 @@ enum {OP_NO_OP,
       
 #if WITH_OPTIMIZATION
       OP_SAFE_AND, OP_SAFE_AND1, OP_SAFE_OR, OP_SAFE_OR1, OP_SAFE_IF1, OP_SAFE_IF2,
-      OP_SAFE_OR_S, OP_SAFE_AND_S,
+      OP_SAFE_OR_S, OP_SAFE_AND_S, OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SIMPLE_DO_END,
       OP_SAFE_IF1_1, OP_SAFE_IF2_1,
       OP_SAFE_C_P_1, OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4,
       OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS,
@@ -392,7 +392,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
 
 #if WITH_OPTIMIZATION
    "safe-and", "safe-and", "safe-or", "safe-or", "safe-if1", "safe-if2",
-   "safe-or-s", "safe-and-s",
+   "safe-or-s", "safe-and-s", "simple-do", "simple-do-step", "simple-do-end",
    "safe-if", "safe-if", 
    "safe-c-p-1", "eval-args-p-1", "eval-args-p-2", "eval-args-p-3", "eval-args-p-4",
    "increment-1", "decrement-1", "set-cdr", "set-cons",
@@ -481,7 +481,7 @@ enum{OP_NOT_AN_OP, HOP_NOT_AN_OP,
      OPT_MAX_DEFINED
 };
 
-#if 0
+#if 1
 static const char *opt_names[OPT_MAX_DEFINED + 1] =
   {  
      "op_not_an_op", "hop_not_an_op",
@@ -832,7 +832,7 @@ struct s7_scheme {
 
 #if WITH_OPTIMIZATION
   s7_pointer SAFE_AND, SAFE_OR, SAFE_IF1, SAFE_IF2, SAFE_OR_S, SAFE_AND_S;
-  s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS;
+  s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, SIMPLE_DO;
 #endif
   
   s7_pointer input_port;              /* current-input-port */
@@ -29427,11 +29427,46 @@ static s7_pointer check_do(s7_scheme *sc)
 
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
-    car(ecdr(sc->code)) = sc->DO_UNCHECKED;
+    {
+      car(ecdr(sc->code)) = sc->DO_UNCHECKED;
+#if WITH_OPTIMIZATION
+      {
+	/* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
+	s7_pointer vars, end, body;
+	vars = car(sc->code);
+	end = cadr(sc->code);
+	body = cddr(sc->code);
 
-  /* TODO: look for easy cases: one step var, step expr is hop-safe-c-c or whatever,
-   *       end expr is equally simple -- lots of current do loop time is in push-stack
-   */
+	if ((is_pair(end)) &&
+	    (is_pair(car(body))) &&
+	    (is_pair(vars)) &&
+	    (is_null(cdr(vars))))
+	  {
+	    vars = car(vars);
+	    /* fprintf(stderr, "check step: %s\n", DISPLAY(vars)); */
+
+	    if ((safe_list_length(sc, vars) == 3) &&
+		(!is_pair(cadr(vars))) &&
+		(is_optimized(caddr(vars))) &&
+		(optimize_data(caddr(vars)) == HOP_SAFE_C_SC))
+	      /* step var is (var const (op var const)) */
+	      {
+		end = car(end);
+		/* fprintf(stderr, "check end: %s %d %s\n", DISPLAY(end), is_optimized(end), opt_names[optimize_data(end)]); */
+		if ((is_optimized(end)) &&
+		    ((optimize_data(end) == HOP_SAFE_C_SS) || (optimize_data(end) == HOP_SAFE_C_SC)) &&
+		    (car(vars) == cadr(end)))
+		  /* end var is (op var const) using same var as step */
+		  {
+		    car(ecdr(sc->code)) = sc->SIMPLE_DO;
+		    /* fprintf(stderr, "simple: %s\n", DISPLAY(sc->code)); */
+		    return(sc->NIL);
+		  }
+	      }
+	  }
+      }
+#endif
+    }
 
   return(sc->code);
 }
@@ -30151,6 +30186,54 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* -------------------------------- DO -------------------------------- */
 
+      /* (define (hi a b) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
+    SIMPLE_DO:
+    case OP_SIMPLE_DO:
+      {
+	s7_pointer init, end;
+	sc->envir = new_frame_in_env(sc, sc->envir);
+ 
+	init = cadaar(sc->code);
+	if (s7_is_symbol(init))
+	  sc->value = ARG_SYMBOL_VALUE(init, find_symbol_or_bust_41);
+	else sc->value = init;
+	
+	end = caddr(car(cadr(sc->code)));
+	if (s7_is_symbol(end))
+	  sc->args = cons_unchecked(sc, add_slot(sc, caaar(sc->code), sc->value), find_symbol(sc, end));
+	else sc->args = cons_unchecked(sc, add_slot(sc, caaar(sc->code), sc->value), cons_unchecked(sc, end, end));
+
+	goto SIMPLE_DO_END;
+      }
+
+    case OP_SIMPLE_DO_STEP:
+      {
+	s7_pointer step;
+	step = caddr(caar(sc->code));
+	car(sc->T2_1) = symbol_value(car(sc->args));
+	car(sc->T2_2) = caddr(step);
+	symbol_value(car(sc->args)) = c_function_call(ecdr(step))(sc, sc->T2_1);
+      }
+
+    SIMPLE_DO_END:
+    case OP_SIMPLE_DO_END:
+      {
+	s7_pointer end_test;
+	end_test = car(cadr(sc->code));
+	/* fprintf(stderr, "args: %s\n", DISPLAY(sc->args)); */
+	car(sc->T2_1) = symbol_value(car(sc->args));
+	car(sc->T2_2) = symbol_value(cdr(sc->args));
+	if (is_true(sc, c_function_call(ecdr(end_test))(sc, sc->T2_1)))
+	  {
+	    sc->code = cdr(cadr(sc->code));
+	    goto BEGIN;
+	  }
+	push_stack(sc, OP_SIMPLE_DO_STEP, sc->args, sc->code);
+	sc->code = cddr(sc->code);
+	goto BEGIN;
+      }
+
+
     #define DO_VAR_SLOT(P) ecdr(P)
     #define DO_VAR_NEW_VALUE(P) cdr(P)
     #define DO_VAR_STEP_EXPR(P) car(P)
@@ -30238,7 +30321,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DO: 
       /* setup is very similar to let */
       /* sc->code is the stuff after "do" */
+#if WITH_OPTIMIZATION
+      if (is_null(check_do(sc)))
+	goto SIMPLE_DO;
+#else
       check_do(sc);
+#endif
 
 
     case OP_DO_UNCHECKED:
@@ -30360,7 +30448,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  push_stack(sc, OP_DO_END1, sc->args, sc->code);
 	  sc->code = cadr(sc->args);               /* evaluate the end expr */
-	  /* fprintf(stderr, "end-test: %s\n", DISPLAY_80(sc->code)); */
+	  /* fprintf(stderr, "end-test: %s %d %s\n", DISPLAY_80(sc->code), is_optimized(sc->code), opt_names[optimize_data(sc->code)]); */
 	  goto EVAL;
 	}
       else 
@@ -35391,7 +35479,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer x;
 	for (x = sc->code; is_not_null(x); x = cdr(x))
-	  add_slot(sc, caar(x), sc->UNDEFINED); /* TODO: what about symbol_accessors here? */
+	  add_slot(sc, caar(x), sc->UNDEFINED);
       }
 
       
@@ -35411,7 +35499,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer x, y;
 	for (x = car(sc->code), y = sc->args; is_not_null(y); x = cdr(x), y = cdr(y))
 	  {
-	    s7_symbol_set_value(sc, caar(x), car(y));
+	    s7_pointer slot;
+
+	    slot = find_symbol(sc, caar(x)); /* TODO: kinda dumb! -- see envir for slots */
+	    if (symbol_accessed(car(slot)))
+	      symbol_value(slot) = call_symbol_bind(sc, car(slot), car(y)); /* TODO: test this */
+	    else symbol_value(slot) = car(y);
+
+	    /* s7_symbol_set_value(sc, caar(x), car(y)); */
+
 	    typeflag(y) = 0;                          /* this was allocated above in the cons, so we can release it now */
 	    (*(sc->free_heap_top++)) = y;
 	  }
@@ -41424,6 +41520,7 @@ s7_scheme *s7_init(void)
   sc->DECREMENT_1 =           assign_internal_syntax(sc, "set!",    OP_DECREMENT_1);  
   sc->SET_CDR =               assign_internal_syntax(sc, "set!",    OP_SET_CDR);
   sc->SET_CONS =              assign_internal_syntax(sc, "set!",    OP_SET_CONS);
+  sc->SIMPLE_DO =             assign_internal_syntax(sc, "do",      OP_SIMPLE_DO);
 #endif
 
   sc->LAMBDA = make_symbol(sc, "lambda");
