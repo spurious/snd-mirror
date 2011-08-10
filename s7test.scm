@@ -219,6 +219,8 @@
   (recompose-1 n))
 
 
+(if (symbol-access 'val) (set! (symbol-access 'val) #f)) ; might get here from snd-test
+
 (define _ht_ (make-hash-table))
 
 
@@ -20316,24 +20318,33 @@ abs     1       2
 					(lambda (x y) 'error)))
       (test (set! _x1_ 32) 'error)
       (test (let ((_x1_ 32)) 2) 'error))
+    (set! (symbol-access '_x1_) #f)
     (let ((_x1_ 0))
       (set! (symbol-access '_x1_) (list #f 
 					(lambda (x y) 'error)
 					#f))
       (test (set! _x1_ 32) 'error)
       (test (let ((_x1_ 32)) _x1_) 32))
+    (set! (symbol-access '_x1_) #f)
     (let ((_x1_ 0))
       (set! (symbol-access '_x1_) (list #f 
 					(lambda (x y) 0)
 					(lambda (x y) (* y 2))))
       (test (begin (set! _x1_ 32) _x1_) 0)
       (test (let ((_x1_ 32)) _x1_) 64))
+    (set! (symbol-access '_x1_) #f)
     (let ((_x1_ 0))
       (set! (symbol-access '_x1_) (list #f 
 					(lambda (x y) (symbol->value x))
 					(lambda (x y) (+ 2 (symbol->value x)))))
       (test (begin (set! _x1_ 32) _x1_) 0)
       (test (let ((_x1_ 32)) _x1_) 2))
+
+    (define _x3_ 3)
+    (set! (symbol-access '_x3_) (list #f (lambda (a b) b) (lambda (a b) b)))
+    (test (let ((_x3_ 32)) _x3_) 32)
+    (test (let ((_x3_ 32)) (set! _x3_ 1) _x3_) 1)
+    (test (let ((_x3_ 32)) (letrec ((_x3_ 1)) _x3_)) 1)
 
     (let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) 3)))))
 	  (sum 0))

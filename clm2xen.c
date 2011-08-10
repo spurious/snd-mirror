@@ -1909,56 +1909,6 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer oscil_1, oscil_2;
-
-static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer obj;
-  obj = s7_car(args);
-  if (s7_object_type(obj) == mus_xen_tag)
-    {
-      mus_any *osc;
-      osc = (mus_any *)(((mus_xen *)s7_object_value(obj))->gen);
-      if (mus_oscil_p(osc))
-	return(s7_make_real(sc, mus_oscil_unmodulated(osc)));
-    }
-  XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
-  return(s7_f(sc));
-}
-
-static s7_pointer g_oscil_2(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer obj;
-  obj = s7_car(args);
-  if (s7_object_type(obj) == mus_xen_tag)
-    {
-      mus_any *osc;
-      osc = (mus_any *)(((mus_xen *)s7_object_value(obj))->gen);
-      if (mus_oscil_p(osc))
-	{
-	  obj = s7_car(s7_cdr(args));
-	  if (s7_is_real(obj))
-	    return(s7_make_real(sc, mus_oscil_fm(osc, s7_number_to_real(obj))));
-	  XEN_ASSERT_TYPE(false, obj, XEN_ARG_2, S_oscil, "a real number");
-	}
-    }
-  XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
-  return(s7_f(sc));
-}
-
-
-static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if (args == 1)
-    return(oscil_1);
-  if (args == 2)
-    return(oscil_2);
-  return(f);
-}
-
-
-static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
-
 #define car(E) s7_car(E)
 #define cdr(E) s7_cdr(E)
 #define cadr(E) car(cdr(E))
@@ -1966,6 +1916,87 @@ static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, 
 #define cadddr(E) car(cdr(cdr(cdr(E))))
 #define cddr(E) cdr(cdr(E))
 #define cadar(E) car(cdr(car(E)))
+
+static s7_pointer clear_extension_list;
+static s7_pointer clear_extension;
+
+static s7_pointer g_clear_extension(s7_scheme *sc, s7_pointer args)
+{
+  s7_symbol_set_extension(car(args), NULL);
+  return(cadr(args));
+}
+
+static s7_pointer oscil_1, oscil_2;
+static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer obj;
+  mus_any *o;
+  obj = car(args);
+  o = (mus_any *)s7_symbol_extension(obj);
+  if (!o)
+    {
+      s7_pointer g;
+      g = s7_symbol_value(sc, obj);
+      if (s7_object_type(g) == mus_xen_tag)
+	{
+	  o = (mus_any *)(((mus_xen *)s7_object_value(g))->gen);
+	  s7_symbol_set_extension(obj, (void *)o);
+	}
+      if ((!o) || (!mus_oscil_p(o)))
+	XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil generator");
+    }
+  return(s7_make_real(sc, mus_oscil_unmodulated(o)));
+}
+
+static s7_pointer g_oscil_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer obj;
+  mus_any *o;
+  obj = car(args);
+  o = (mus_any *)s7_symbol_extension(obj);
+  if (!o)
+    {
+      s7_pointer g;
+      g = s7_symbol_value(sc, obj);
+      if (s7_object_type(g) == mus_xen_tag)
+	{
+	  o = (mus_any *)(((mus_xen *)s7_object_value(g))->gen);
+	  s7_symbol_set_extension(obj, (void *)o);
+	}
+      if ((!o) || (!mus_oscil_p(o)))
+	XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil generator");
+    }
+
+  obj = s7_symbol_value(sc, cadr(args));
+  if (!s7_is_real(obj))
+    XEN_ASSERT_TYPE(false, cadr(args), XEN_ARG_2, S_oscil, "a real");
+
+  return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real(obj))));
+}
+
+
+static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_symbol_set_access(sc, cadr(expr), clear_extension_list);
+      s7_function_choice_set_direct(expr);
+      return(oscil_1);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_symbol_set_access(sc, cadr(expr), clear_extension_list);
+      s7_function_choice_set_direct(expr);
+      return(oscil_2);
+    }
+  return(f);
+}
+
+
+static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 
 static s7_pointer g_env_w(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_triangle_wave_w(s7_scheme *sc, s7_pointer args);
@@ -2070,15 +2101,6 @@ static s7_pointer g_fm_violin_mod(s7_scheme *sc, s7_pointer args)
   return(s7_make_real(sc, mus_env(e) * mus_polywave(t, s7_number_to_real(vib))));
 }
 
-static s7_pointer clear_extension_list;
-static s7_pointer clear_extension;
-
-static s7_pointer g_clear_extension(s7_scheme *sc, s7_pointer args)
-{
-  s7_symbol_set_extension(car(args), NULL);
-  return(cadr(args));
-}
-
 /* (with-sound () (fm-violin 0 .0001 440 .1)) */
 
 static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -2167,6 +2189,9 @@ static void init_choosers(s7_scheme *sc)
   s7_gc_protect(sc, clear_extension_list);
 }
 #endif
+
+/* TODO: oscil_2 equivalent throughout, and all the current run special cases -- env * gen etc: run.c l3190 and ca 5500
+ */
 
 
 static XEN g_oscil_p(XEN os) 

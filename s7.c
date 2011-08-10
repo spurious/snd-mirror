@@ -324,7 +324,7 @@ enum {OP_NO_OP,
       OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
       OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO, OP_SORT_OBJECT,
-      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS, OP_HOOK_APPLY, 
+      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_HOOK_APPLY, 
       OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
       
       OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, 
@@ -377,7 +377,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "trace-hook-quit", "with-environment", "with-environment", "for-each", "for-each", "map", "map",
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", 
    "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort", "sort",
-   "eval-string", "eval-string", "set-access", "hook-apply", 
+   "eval-string", "eval-string", "hook-apply", 
    "member-if", "assoc-if", "member-if", "assoc-if",
    "quote-unchecked", "lambda-unchecked", "let-unchecked", "case-unchecked", 
    "set-unchecked", "set-symbol-c", "set-symbol-s", "set-symbol-p", "set-normal", "set-pair",
@@ -481,7 +481,7 @@ enum{OP_NOT_AN_OP, HOP_NOT_AN_OP,
      OPT_MAX_DEFINED
 };
 
-#if 1
+#if 0
 static const char *opt_names[OPT_MAX_DEFINED + 1] =
   {  
      "op_not_an_op", "hop_not_an_op",
@@ -730,6 +730,7 @@ typedef struct s7_cell {
 
 typedef struct {
   s7_cell obj;
+  int accessor;
   void *extension;         /* used by symbols which are permanently allocated (not in the heap) */
 } s7_extended_cell;
 
@@ -976,25 +977,7 @@ struct s7_scheme {
 #define set_global(p)                 typeflag(p) |= T_GLOBAL
 #define set_local(p)                  typeflag(p) = (typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC))
 
-
-#define T_SYMBOL_HAS_ACCESSOR         (1 << (TYPE_BITS + 8))
-#define symbol_has_accessor(p)        ((typeflag(p) & T_SYMBOL_HAS_ACCESSOR) != 0)
-#define symbol_set_has_accessor(p)    typeflag(p) |= T_SYMBOL_HAS_ACCESSOR
-#define symbol_clear_has_accessor(p)  typeflag(p) &= ~(T_SYMBOL_HAS_ACCESSOR)
-/* has_accessor means that at least one of the 3 accessor functions is active on this binding.
- *    this is a type bit for the pair (symbol . current-value), not for either the symbol or value themselves 
- */
-
-#define T_SYMBOL_ACCESSED             (1 << (TYPE_BITS + 9))
-#define symbol_accessed(p)            ((typeflag(p) & T_SYMBOL_ACCESSED) != 0)
-#define is_immutable_or_accessed(p)   ((typeflag(p) & (T_IMMUTABLE | T_SYMBOL_ACCESSED)) != 0)
-#define symbol_set_accessed(p)        typeflag(p) |= T_SYMBOL_ACCESSED
-/* this marks a symbol globally as one that has at some time had its accessors set. 
- *    since it can be combined with the immutable checks we were already doing, we can
- *    implement the symbol-access stuff at almost no additional cost.
- */
-
-#define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 10))
+#define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 8))
 #define is_multiple_value(p)          ((typeflag(p) & T_MULTIPLE_VALUE) != 0)
 #define set_multiple_value(p)         typeflag(p) |= T_MULTIPLE_VALUE
 #define multiple_value(p)             p
@@ -1003,37 +986,37 @@ struct s7_scheme {
  *    on only for a very short time.
  */
 
-#define T_PENDING_REMOVAL             (1 << (TYPE_BITS + 11))
+#define T_PENDING_REMOVAL             (1 << (TYPE_BITS + 9))
 #define is_pending_removal(p)         ((typeflag(p) & T_PENDING_REMOVAL) != 0)
 #define set_pending_removal(p)        typeflag(p) |= T_PENDING_REMOVAL
 #define clear_pending_removal(p)      typeflag(p) &= ~(T_PENDING_REMOVAL)
 /* this bit is for circle checks during removal of a global function from the heap
  */
 
-#define T_KEYWORD                     (1 << (TYPE_BITS + 12))
+#define T_KEYWORD                     (1 << (TYPE_BITS + 10))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
-#define T_SYNTACTIC                   (1 << (TYPE_BITS + 13))
+#define T_SYNTACTIC                   (1 << (TYPE_BITS + 11))
 #define is_syntactic(p)               ((typeflag(p) & T_SYNTACTIC) != 0)
 /* this marks syntax objects */
 
 
-#define T_OVERLAY                     (1 << (TYPE_BITS + 14))
+#define T_OVERLAY                     (1 << (TYPE_BITS + 12))
 #define set_overlay(p)                typeflag(p)  |= T_OVERLAY
 #define is_overlaid(p)                ((typeflag(p) & T_OVERLAY) != 0)
 /* optimizer flag that marks a cell whose ecdr points to the previous cell in a list
  */
 
-#define T_OPTIMIZED                   (1 << (TYPE_BITS + 15))
+#define T_OPTIMIZED                   (1 << (TYPE_BITS + 13))
 #define set_optimized(p)              typeflag(p)  |= T_OPTIMIZED
 #define is_optimized(p)               ((typeflag(p) & T_OPTIMIZED) != 0)
 #define clear_optimized(p)            typeflag(p) &= ~(T_OPTIMIZED)
 /* optimizer flag for an expression that has optimization info
  */
 
-#define T_CHECKED                     (1 << (TYPE_BITS + 16))
+#define T_CHECKED                     (1 << (TYPE_BITS + 14))
 #define set_checked(p)                typeflag(p)  |= T_CHECKED
 #define is_checked(p)                 ((typeflag(p) & T_CHECKED) != 0)
 #define is_not_checked(p)             ((typeflag(p) & T_CHECKED) == 0)
@@ -1041,21 +1024,21 @@ struct s7_scheme {
  *    (trying to avoid circular lists during the optimization scan)
  */
 
-#define T_UNSAFE                      (1 << (TYPE_BITS + 17))
+#define T_UNSAFE                      (1 << (TYPE_BITS + 15))
 #define set_unsafe(p)                 typeflag(p)  |= T_UNSAFE
 #define is_unsafe(p)                  ((typeflag(p) & T_UNSAFE) != 0)
 #define clear_unsafe(p)               typeflag(p)  &= (~T_UNSAFE)
 /* optimizer flag saying "this expression is not completely self-contained.  It might involve the stack, etc"
  */
 
-#define T_SAFE_CLOSURE                (1 << (TYPE_BITS + 18))
+#define T_SAFE_CLOSURE                (1 << (TYPE_BITS + 16))
 #define set_safe_closure(p)           typeflag(p)  |= T_SAFE_CLOSURE
 #define is_safe_closure(p)            ((typeflag(p) & T_SAFE_CLOSURE) != 0)
 #define clear_safe_closure(p)         typeflag(p)  &= (~T_SAFE_CLOSURE)
 /* optimizer flag for a closure body that is completely simple (every expression is safe)
  */
 
-#define T_SETTER                      (1 << (TYPE_BITS + 19))
+#define T_SETTER                      (1 << (TYPE_BITS + 17))
 #define set_setter(p)                 typeflag(p)  |= T_SETTER
 #define is_setter(p)                  ((typeflag(p) & T_SETTER) != 0)
 /* optimizer flag for a procedure that sets some variable (set-car! for example).
@@ -1068,8 +1051,7 @@ struct s7_scheme {
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x70000000
-
+#define UNUSED_BITS                   0x7c000000
 
 #define set_type(p, f)                typeflag(p) = f
 
@@ -1131,7 +1113,6 @@ struct s7_scheme {
 
 #define pair_line_number(p)           (p)->object.cons.line
 #define port_file_number(p)           (p)->object.port->file_number
-#define slot_accessor(p)              (p)->object.cons.line
 #define optimize_data(p)              (p)->object.cons.data
 #define set_optimize_data(P, X)       (P)->object.cons.data = ((X) + hop) /* this unchecking saves about 40 currently (2%) */
 #define clear_optimize_data(P)        optimize_data(P) = 0
@@ -1155,6 +1136,7 @@ struct s7_scheme {
 #define symbol_global_slot(p)         (car(p))->object.string.global_slot
 #define symbol_local_slot(p)          (car(p))->object.string.local_slot
 #define symbol_hash(p)                (car(p))->object.string.hash
+#define symbol_accessor(p)            ((s7_extended_cell *)p)->accessor
 #define symbol_extension(p)           ((s7_extended_cell *)p)->extension
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
@@ -1437,7 +1419,6 @@ static int remember_file_name(s7_scheme *sc, const char *file);
 static const char *type_name(s7_pointer arg);
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
-static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value);
 static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect);
@@ -2743,6 +2724,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
 
   symbol_global_slot(x) = sc->NIL;
   symbol_id(x) = 0;
+  symbol_accessor(x) = -1;
 
   if ((symbol_name_length(x) > 1) &&                           /* not 0, otherwise : is a keyword */
       ((name[0] == ':') ||
@@ -14301,7 +14283,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -14311,8 +14293,6 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     dont_copy(obj) ?             " dont-copy" : "",
 	     is_any_macro(obj) ?          " anymac" : "",
 	     is_expansion(obj) ?          " expansion" : "",
-	     symbol_accessed(obj) ?       " accessed" : "",
-	     symbol_has_accessor(obj) ?   " accessor" : "",
 	     is_multiple_value(obj) ?     " values" : "",
 	     is_keyword(obj) ?            " keyword" : "",
              dont_eval_args(obj) ?        " dont-eval-args" : "",
@@ -18410,6 +18390,10 @@ s7_function s7_function_choice(s7_pointer expr)
 {
   return(NULL);
 }
+
+void s7_function_choice_set_direct(s7_pointer expr)
+{
+}
 #endif
 
 
@@ -20253,37 +20237,25 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x)
 
 s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
 {
-  
-  s7_pointer x;
-  x = find_symbol(sc, sym);
-  if (is_not_null(x))
-    {
-      if (symbol_has_accessor(x))
-	return(s7_gc_protected_at(sc, slot_accessor(x)));
-    }
+  if (symbol_accessor(sym) >= 0)
+    return(s7_gc_protected_at(sc, symbol_accessor(sym)));
   return(sc->F);
 }
 
 
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs)
 {
-  s7_pointer x;
-
-  x = find_symbol(sc, symbol);
-  if (is_null(x))
-    x = add_slot_to_environment(sc, sc->envir, symbol, sc->F);
-
-  slot_accessor(x) = s7_gc_protect(sc, funcs);
-  symbol_set_accessed(symbol);
+  if (symbol_accessor(symbol) >= 0)
+    s7_gc_unprotect_at(sc, symbol_accessor(symbol));
 
   if ((is_pair(funcs)) &&
       (s7_list_length(sc, funcs) >= 3) &&
       ((is_procedure(car(funcs))) ||
        (is_procedure(cadr(funcs))) ||
        (is_procedure(caddr(funcs)))))
-    symbol_set_has_accessor(x);
-  else symbol_clear_has_accessor(x);
-  return(x);
+    symbol_accessor(symbol) = s7_gc_protect(sc, funcs);
+  else symbol_accessor(symbol) = -1;
+  return(funcs);
 }
 
 
@@ -20322,44 +20294,51 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value)
+static s7_pointer call_symbol_accessor(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value, s7_pointer func)
 {
   /* this happens in contexts that are tricky to implement with a clean use of the evaluator stack (as in
-   *   the parallel symbol set case -- see OP_SET_ACCESS), so we need to use s7_call.  But if an uncaught error
+   *   the parallel symbol set case), so we need to use s7_call.  But if an uncaught error
    *   occurs in s7_call, the error handler marches up the stack looking for a catch, unwinding the stack
    *   past the point of the call.  In the worst case, we can segfault because any subsequent pop_stack
    *   (i.e. an unchecked goto START), walks off the start of the stack. 
    */
    
-  s7_pointer x;
-  x = find_symbol(sc, symbol);
-  if (symbol_has_accessor(x))
+  car(sc->T2_1) = symbol;
+  car(sc->T2_2) = new_value;
+
+  if (is_c_function(func))
+    new_value = c_function_call(func)(sc, sc->T2_1);
+  else
     {
-      s7_pointer func;
-      func = caddr(s7_gc_protected_at(sc, slot_accessor(x)));
-      if (is_procedure(func))
-	{
-	  int save_x = -1, save_y = -1, save_z = -1, save_args = -1, save_code = -1;
-
-	  s7_pointer original_value; /* for possible error report below */
-	  original_value = new_value;
-
-	  save_args = s7_gc_protect(sc, sc->args);
-	  save_code = s7_gc_protect(sc, sc->code);
-	  SAVE_X_Y_Z(save_x, save_y, save_z);
-	  new_value = s7_call(sc, func, list_2(sc, symbol, new_value));
-	  RESTORE_X_Y_Z(save_x, save_y, save_z);
-	  sc->args = s7_gc_protected_at(sc, save_args);
-	  s7_gc_unprotect_at(sc, save_args);
-	  sc->code = s7_gc_protected_at(sc, save_code);
-	  s7_gc_unprotect_at(sc, save_code);
-
-	  if (new_value == sc->ERROR)
-	    return(s7_error(sc, sc->ERROR,
-			    list_3(sc, make_protected_string(sc, "can't bind ~S to ~S"), symbol, original_value)));
-
-	}
+      bool old_off;
+      old_off = sc->gc_off;
+      sc->gc_off = true;
+      new_value = s7_call(sc, func, sc->T2_1);
+      sc->gc_off = old_off;
     }
+  if (new_value == sc->ERROR)
+    return(s7_error(sc, sc->ERROR,
+		    list_3(sc, make_protected_string(sc, "can't bind ~S to ~S"), symbol, car(sc->T2_2))));
+  return(new_value);
+}
+
+
+static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value)
+{
+  s7_pointer func;
+  func = caddr(s7_gc_protected_at(sc, symbol_accessor(symbol)));
+  if (is_procedure(func))
+    return(call_symbol_accessor(sc, symbol, new_value, func));
+  return(new_value);
+}
+
+
+static s7_pointer call_symbol_set(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value)
+{
+  s7_pointer func;
+  func = cadr(s7_gc_protected_at(sc, symbol_accessor(symbol)));
+  if (is_procedure(func))
+    return(call_symbol_accessor(sc, symbol, new_value, func));
   return(new_value);
 }
 
@@ -23679,7 +23658,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
       if ((len > 0) &&                                                /* a proper list arg */
 	  (type(sc->code) == T_CLOSURE) &&                            /* not lambda* that might get confused about arg names */
 	  (is_pair(closure_args(sc->code))) &&                        /* not a rest arg */
-	  (!is_immutable_or_accessed(car(closure_args(sc->code)))) && /* not a bad arg name! */
+	  (!is_immutable(car(closure_args(sc->code)))) &&             /* not a bad arg name! TODO: accessor check here? */
 	  (safe_list_length(sc, closure_args(sc->code)) == 1))        /* closure takes just one arg */
 	{
 	  /* one list arg -- special, but very common case */
@@ -23910,10 +23889,10 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       len = s7_list_length(sc, obj);
       if (len > 0)                                                    /* a proper list arg */
 	{
-	  if ((type(sc->code) == T_CLOSURE) &&                            /* not lambda* that might get confused about arg names */
-	      (is_pair(closure_args(sc->code))) &&                        /* not a rest arg */
-	      (!is_immutable_or_accessed(car(closure_args(sc->code)))) && /* not a bad arg name! */
-	      (safe_list_length(sc, closure_args(sc->code)) == 1))        /* closure takes just one arg */
+	  if ((type(sc->code) == T_CLOSURE) &&                        /* not lambda* that might get confused about arg names */
+	      (is_pair(closure_args(sc->code))) &&                    /* not a rest arg */
+	      (!is_immutable(car(closure_args(sc->code)))) &&         /* not a bad arg name! TODO: accessor check here? */
+	      (safe_list_length(sc, closure_args(sc->code)) == 1))    /* closure takes just one arg */
 	    {
 	      s7_pointer p;
 	      p = cons(sc, sc->NIL, obj);
@@ -29313,7 +29292,7 @@ static s7_pointer check_set(s7_scheme *sc)
 
 		  /* (define (hi) (let ((x 1)) (set! x (+ x 1)))) */
 #if WITH_OPTIMIZATION
-		  if ((!(symbol_accessed(car(sc->code)))) &&
+		  if ((symbol_accessor(car(sc->code)) == -1) &&
 		      (!is_global(car(sc->code))) &&
 		      (is_optimized(cadr(sc->code))))
 		    {
@@ -29460,6 +29439,11 @@ static s7_pointer check_do(s7_scheme *sc)
 		  {
 		    car(ecdr(sc->code)) = sc->SIMPLE_DO;
 		    /* fprintf(stderr, "simple: %s\n", DISPLAY(sc->code)); */
+
+		    /* TODO: one even simpler, very common case: step+1 and (= step val)
+		     * TODO: also SIMPLE_DO with CS in either case?
+		     */
+
 		    return(sc->NIL);
 		  }
 	      }
@@ -30186,6 +30170,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* -------------------------------- DO -------------------------------- */
 
+#if WITH_OPTIMIZATION
       /* (define (hi a b) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
     SIMPLE_DO:
     case OP_SIMPLE_DO:
@@ -30232,6 +30217,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = cddr(sc->code);
 	goto BEGIN;
       }
+#endif
 
 
     #define DO_VAR_SLOT(P) ecdr(P)
@@ -30402,7 +30388,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(y) = sym;
 #if 0
 	    /* this currently won't work */
-	    if (symbol_accessed(sym))
+	    if (symbol_accessor(sym) >= 0)
 	      cdr(y) = call_symbol_bind(sc, sym, val);
 	    else cdr(y) = val;
 #endif
@@ -34031,7 +34017,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    args = cdr(z);
 
 		    car(z) = sym;
-		    if (symbol_accessed(sym))
+		    if (symbol_accessor(sym) >= 0)
 		      cdr(z) = call_symbol_bind(sc, sym, val);
 		    else cdr(z) = val;
 		    set_type(z, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
@@ -34086,7 +34072,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					  sc->WRONG_NUMBER_OF_ARGS, 
 					  list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
 			
-			if (symbol_accessed(car(x))) /* immutable args were checked (via s7_is_constant) in check_lambda */
+			if (symbol_accessor(car(x)) >= 0) /* immutable args were checked (via s7_is_constant) in check_lambda */
 			  car(z) = call_symbol_bind(sc, car(x), car(z));
 			
 			add_slot(sc, car(x), car(z)); /* the ADD_SLOT macro uses NEW_CELL_NO_CHECK */
@@ -34316,21 +34302,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* if we're defining a function, add its symbol to the new function's environment under the name __func__ */
 
-      if (is_immutable_or_accessed(sc->code))
+      /* the immutable constant check needs to wait until we have the actual new value because
+       *   we want to ignore the rebinding (not raise an error) if it is the existing value.
+       *   This happens when we reload a file that has a define-constant call.
+       */
+      if (is_immutable(sc->code))                                        /* (define pi 3) or (define (pi a) a) */
 	{
-	  /* the immutable constant check needs to wait until we have the actual new value because
-	   *   we want to ignore the rebinding (not raise an error) if it is the existing value.
-	   *   This happens when we reload a file that has a define-constant call.
-	   */
-	  if (is_immutable(sc->code))                                        /* (define pi 3) or (define (pi a) a) */
-	    {
-	      s7_pointer x;
-	      x = find_symbol(sc, sc->code);
-	      if (!(s7_is_equal(sc, sc->value, cdr(x))))                     /* if value is unchanged, just ignore this definition */
-		return(eval_error_with_name(sc, "~A: ~S is immutable", sc->code));
-	    }
-	  sc->value = call_symbol_bind(sc, sc->code, sc->value);
+	  s7_pointer x;
+	  x = find_symbol(sc, sc->code);
+	  if (!(s7_is_equal(sc, sc->value, cdr(x))))                     /* if value is unchanged, just ignore this definition */
+	    return(eval_error_with_name(sc, "~A: ~S is immutable", sc->code));
 	}
+      if (symbol_accessor(sc->code) >= 0)
+	sc->value = call_symbol_bind(sc, sc->code, sc->value);
 
       if ((is_closure(sc->value)) || 
 	  (is_closure_star(sc->value)))
@@ -34851,47 +34835,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	else sc->value = x;
 	sc->code = car(sc->code);
       }
-      
+
       
     SET1:
     case OP_SET1:  
+      /* if unbound variable hook here, we need the binding, not the current value */
       if (is_global(sc->code))
 	sc->y = symbol_global_slot(sc->code);
       else sc->y = find_symbol(sc, sc->code);
       if (is_not_null(sc->y)) 
 	{
-	  if (symbol_accessed(sc->code))
-	    {
-	      s7_pointer func;
-	      func = cadr(s7_gc_protected_at(sc, slot_accessor(sc->y)));
-	      if (is_procedure(func))
-		{
-		  push_stack(sc, OP_SET_ACCESS, sc->y, list_2(sc, sc->code, sc->value));
-		  sc->args = list_2(sc, sc->code, sc->value);
-		  sc->code = func;
-		  goto APPLY_WITHOUT_TRACE;
-		}
-	    }
+	  if (symbol_accessor(sc->code) >= 0)
+	    sc->value = call_symbol_set(sc, sc->code, sc->value);
+
 	  if (is_syntax(symbol_value(sc->y)))
 	    return(eval_error(sc, "can't set! ~A", sc->code));
 
 	  set_symbol_value(sc->y, sc->value); 
-	  /* sc->y = sc->NIL; */
 	  goto START;
 	}
-      /* if unbound variable hook here, we need the binding, not the current value */
-
       return(eval_error(sc, "set! ~A: unbound variable", sc->code));
 
-      
-    case OP_SET_ACCESS:
-      /* sc->value is the new value from the set access function, sc->code is the symbol and the original value, sc->args is the binding slot
-       */
-      if (sc->value == sc->ERROR)
-	return(s7_error(sc, sc->ERROR,
-			list_3(sc, make_protected_string(sc, "can't set! ~S to ~S"), car(sc->code), cadr(sc->code))));
-      set_symbol_value(sc->args, sc->value); 
-      goto START;
 
       
 
@@ -35333,7 +35297,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  args = cdr(y);
 		  
 		  car(y) = sym;
-		  if (symbol_accessed(sym))
+		  if (symbol_accessor(sym) >= 0)
 		    cdr(y) = call_symbol_bind(sc, sym, val);
 		  else cdr(y) = val;
 		  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
@@ -35365,7 +35329,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  args = cdr(y);
 		  
 		  car(y) = sym;
-		  if (symbol_accessed(sym))
+		  if (symbol_accessor(sym) >= 0)
 		    cdr(y) = call_symbol_bind(sc, sym, val);
 		  else cdr(y) = val;
 		  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
@@ -35425,7 +35389,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	NEW_CELL_NO_CHECK(sc, y); /*   3 */
 	car(y) = caar(sc->code);
-	if (symbol_accessed(car(y)))
+	if (symbol_accessor(car(y)) >= 0)
 	  cdr(y) = call_symbol_bind(sc, car(y), sc->value);
 	else cdr(y) = sc->value;
 	set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
@@ -35502,7 +35466,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer slot;
 
 	    slot = find_symbol(sc, caar(x)); /* TODO: kinda dumb! -- see envir for slots */
-	    if (symbol_accessed(car(slot)))
+	    if (symbol_accessor(car(slot)) >= 0)
 	      symbol_value(slot) = call_symbol_bind(sc, car(slot), car(y)); /* TODO: test this */
 	    else symbol_value(slot) = car(y);
 
@@ -35796,7 +35760,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->x = car(sc->code);
       sc->z = cdr(sc->code);
 
-      if (symbol_accessed(sc->x))
+      if (symbol_accessor(sc->x) >= 0)
 	sc->code = call_symbol_bind(sc, sc->x, sc->code);
 
       sc->y = s7_gensym(sc, "defmac");
@@ -35837,7 +35801,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->x = caar(sc->code);
       sc->z = cdr(sc->code);
 
-      if (symbol_accessed(sc->x))
+      if (symbol_accessor(sc->x) >= 0)
 	sc->code = call_symbol_bind(sc, sc->x, sc->code);
 
       /* (define-macro (hi a) `(+ ,a 1))
