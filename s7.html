@@ -1765,6 +1765,10 @@ cadr
 (1 4 3)
 </pre>
 
+<p>To get the setter from a procedure-with-setter (for procedure-arity for example),
+use procedure-setter.
+</p>
+
 
 <small>
 <blockquote>
@@ -3277,10 +3281,11 @@ traced function call (that is, global to the function, not the function's local 
 </td></tr></table>
 </dt>
 
-<dd><p><a name="proceduresource">procedure-source</a>, procedure-arity, procedure-documentation, and help provide a look into a
+<dd><p><a name="proceduresource">procedure-source</a>, procedure-arity, procedure-setter, procedure-documentation, and help provide a look into a
 Scheme function.
 procedure-documentation returns the documentation string associated with a procedure: the initial string in the
 function's body. procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
+procedure-setter returns the set function associated with a procedure (set-car! with car, for example).
 procedure-source returns the source, as a list, of a procedure. procedure-environment returns
 a procedure's environment.
 </p>
@@ -3421,11 +3426,6 @@ hi
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<p>If procedure-arity is passed
-a procedure-with-setter, it returns 6 values, rather than 3.  The first 3 describe the "getter"
-and the following 3 describe the "setter".  
-</p>
 
 <p>Since define* accepts multiple rest arguments, perhaps procedure-arity should return that number,
 rather than a boolean.  I haven't run into a case where it matters.  Another odd case: 
@@ -4676,6 +4676,25 @@ Here's an idle thought:
 &gt; (+ (f1 1) (f2 1))
 71
 </pre>
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>s7 originally had multithreading support, but I removed it in August, 2011.
+It turned out to be less useful than I hoped,
+mainly because s7 threads shared the heap and therefore had to coordinate
+all cell allocations.  It was faster and simpler to use multiple
+pthreads each running a separate s7 interpreter, rather than one s7
+running multiple s7 threads.  In CLM, there was also contention for access
+to the output stream.  In GUI-related situations, as discussed at length below,
+threads were not useful mainly because the GUI toolkits are not thread safe,
+so we use begin_hook now instead.
+Last but not least, the effort to make the non-threaded
+s7 faster messed up parts of the threaded version.  Rather than
+waste a lot of time fixing this, I chose to flush multithreading.
+</p>
+
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">

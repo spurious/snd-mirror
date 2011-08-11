@@ -731,7 +731,7 @@ typedef struct s7_cell {
 typedef struct {
   s7_cell obj;
   int accessor;
-  void *extension;         /* used by symbols which are permanently allocated (not in the heap) */
+  void *accessor_data;
 } s7_extended_cell;
 
 
@@ -834,6 +834,7 @@ struct s7_scheme {
 #if WITH_OPTIMIZATION
   s7_pointer SAFE_AND, SAFE_OR, SAFE_IF1, SAFE_IF2, SAFE_OR_S, SAFE_AND_S;
   s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, SIMPLE_DO;
+  int safe_do_level;
 #endif
   
   s7_pointer input_port;              /* current-input-port */
@@ -1137,7 +1138,7 @@ struct s7_scheme {
 #define symbol_local_slot(p)          (car(p))->object.string.local_slot
 #define symbol_hash(p)                (car(p))->object.string.hash
 #define symbol_accessor(p)            ((s7_extended_cell *)p)->accessor
-#define symbol_extension(p)           ((s7_extended_cell *)p)->extension
+#define symbol_accessor_data(p)       ((s7_extended_cell *)p)->accessor_data
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_opcode(p)              ((p)->hloc)
@@ -2949,15 +2950,6 @@ static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 }
 
 
-void *s7_symbol_extension(s7_pointer sym)
-{
-  return(symbol_extension(sym));
-}
-
-void s7_symbol_set_extension(s7_pointer sym, void *val)
-{
-  symbol_extension(sym) = val;
-}
 
 
 
@@ -20343,6 +20335,26 @@ static s7_pointer call_symbol_set(s7_scheme *sc, s7_pointer symbol, s7_pointer n
 }
 
 
+void *s7_symbol_accessor_data(s7_pointer sym)
+{
+  return(symbol_accessor_data(sym));
+}
+
+void s7_symbol_set_accessor_data(s7_pointer sym, void *val)
+{
+  symbol_accessor_data(sym) = val;
+}
+
+
+int s7_safe_do_level(s7_scheme *sc)
+{
+#if WITH_OPTIMIZATION
+  return(sc->safe_do_level);
+#else
+  return(0);
+#endif
+}
+
 
 
 /* -------------------------------- hooks -------------------------------- */
@@ -27690,7 +27702,6 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
   op = (opcode_t)syntax_opcode(func);
 
   /* fprintf(stderr, "optimize syntax %s\n     e: %s\n", DISPLAY(p), DISPLAY(e)); */
-
   if (op == OP_QUOTE)
     {
       /* fprintf(stderr, "quote\n"); */
@@ -29442,7 +29453,21 @@ static s7_pointer check_do(s7_scheme *sc)
 
 		    /* TODO: one even simpler, very common case: step+1 and (= step val)
 		     * TODO: also SIMPLE_DO with CS in either case?
+
+		      (s7_is_integer(caddr(caddr(vars)))) && 
+		      (s7_integer(caddr(caddr(vars))) == 1)))
+		      (is_global(car(end))) &&
+		      (c_function_call(symbol_value(symbol_global_slot(car(end)))) == g_equal))
+
+		      but what if end val is not int? or step init val? these can be checked at run time
+
+		      and if optimize_data(car(body)) is HOP_SAFE_C_C and just that expr in body,
+		      the entire loop can be done in-place. like for-each.
+
+		      safe if no shadowing (for clm) and all functions are safe c funcs and
+		      syntax does not involve anything tricky
 		     */
+
 
 		    return(sc->NIL);
 		  }
@@ -29454,6 +29479,23 @@ static s7_pointer check_do(s7_scheme *sc)
 
   return(sc->code);
 }
+
+
+#if WITH_OPTIMIZATION
+static void initialize_safe_do(s7_scheme *sc, s7_pointer tree)
+{
+  if (is_pair(tree))
+    {
+      initialize_safe_do(sc, car(tree));
+      initialize_safe_do(sc, cdr(tree));
+    }
+  else
+    {
+      if (s7_is_symbol(tree))
+	symbol_accessor_data(tree) = NULL;
+    }
+}
+#endif
       
 
 static s7_pointer check_defmacro(s7_scheme *sc)
@@ -35273,7 +35315,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	/* we can use sc->args as our new frame */
 	
 	y = cdr(x);
-	sc->y = y; /* I think this is not needed now (call_symbol_bind protects sc->args itself) */
+	/* sc->y = y; */ /* I think this is not needed now */
 	
 	car(x) = sc->NIL;                  
 	cdr(x) = sc->envir;
@@ -41485,6 +41527,7 @@ s7_scheme *s7_init(void)
   sc->SET_CDR =               assign_internal_syntax(sc, "set!",    OP_SET_CDR);
   sc->SET_CONS =              assign_internal_syntax(sc, "set!",    OP_SET_CONS);
   sc->SIMPLE_DO =             assign_internal_syntax(sc, "do",      OP_SIMPLE_DO);
+  sc->safe_do_level = 0;
 #endif
 
   sc->LAMBDA = make_symbol(sc, "lambda");

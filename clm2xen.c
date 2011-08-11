@@ -1871,7 +1871,7 @@ static XEN g_oscil(XEN os, XEN fm, XEN pm)
 
 #else
 /* an experiment -- this appears to be about 1/3 faster then g_oscil + argified g_oscil_w
- *   TODO: can this be automatically extended to all the clm gens a la run?
+ *   TODO: can this be automatically extended to all the clm gens a la run? -- a few macros and voila!
  */
 
 static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
@@ -1917,22 +1917,16 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
 #define cddr(E) cdr(cdr(E))
 #define cadar(E) car(cdr(car(E)))
 
-static s7_pointer clear_extension_list;
-static s7_pointer clear_extension;
-
-static s7_pointer g_clear_extension(s7_scheme *sc, s7_pointer args)
-{
-  s7_symbol_set_extension(car(args), NULL);
-  return(cadr(args));
-}
-
 static s7_pointer oscil_1, oscil_2;
 static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer obj;
-  mus_any *o;
+  mus_any *o = NULL;
+
   obj = car(args);
-  o = (mus_any *)s7_symbol_extension(obj);
+  if (s7_safe_do_level(sc) > 0)
+    o = (mus_any *)s7_symbol_accessor_data(obj);
+
   if (!o)
     {
       s7_pointer g;
@@ -1940,20 +1934,25 @@ static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
       if (s7_object_type(g) == mus_xen_tag)
 	{
 	  o = (mus_any *)(((mus_xen *)s7_object_value(g))->gen);
-	  s7_symbol_set_extension(obj, (void *)o);
+	  s7_symbol_set_accessor_data(obj, (void *)o);
 	}
       if ((!o) || (!mus_oscil_p(o)))
 	XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil generator");
     }
+
   return(s7_make_real(sc, mus_oscil_unmodulated(o)));
 }
 
 static s7_pointer g_oscil_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer obj;
-  mus_any *o;
+  mus_any *o = NULL;
+
   obj = car(args);
-  o = (mus_any *)s7_symbol_extension(obj);
+
+  if (s7_safe_do_level(sc) > 0)
+    o = (mus_any *)s7_symbol_accessor_data(obj);
+
   if (!o)
     {
       s7_pointer g;
@@ -1961,12 +1960,14 @@ static s7_pointer g_oscil_2(s7_scheme *sc, s7_pointer args)
       if (s7_object_type(g) == mus_xen_tag)
 	{
 	  o = (mus_any *)(((mus_xen *)s7_object_value(g))->gen);
-	  s7_symbol_set_extension(obj, (void *)o);
+	  s7_symbol_set_accessor_data(obj, (void *)o);
 	}
       if ((!o) || (!mus_oscil_p(o)))
 	XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil generator");
     }
 
+  /* TODO: save the slot in this case, rather than the value? 
+   */
   obj = s7_symbol_value(sc, cadr(args));
   if (!s7_is_real(obj))
     XEN_ASSERT_TYPE(false, cadr(args), XEN_ARG_2, S_oscil, "a real");
@@ -1980,7 +1981,6 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
   if ((args == 1) &&
       (s7_is_symbol(cadr(expr))))
     {
-      s7_symbol_set_access(sc, cadr(expr), clear_extension_list);
       s7_function_choice_set_direct(expr);
       return(oscil_1);
     }
@@ -1988,7 +1988,6 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
       (s7_is_symbol(cadr(expr))) &&
       (s7_is_symbol(caddr(expr))))
     {
-      s7_symbol_set_access(sc, cadr(expr), clear_extension_list);
       s7_function_choice_set_direct(expr);
       return(oscil_2);
     }
@@ -2010,17 +2009,19 @@ static s7_pointer fm_violin_vibrato;
 static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer xe, xe_sym, xt, xt_sym, xr, xr_sym;
-  mus_any *e, *t, *r;
+  mus_any *e = NULL, *t = NULL, *r = NULL;
+  bool its_safe;
+  its_safe = (s7_safe_do_level(sc) > 0);
 
   xe_sym = cadar(args);
-  e = (mus_any *)s7_symbol_extension(xe_sym);
+  if (its_safe) e = (mus_any *)s7_symbol_accessor_data(xe_sym);
   if (!e)
     {
       xe = s7_symbol_value(sc, xe_sym);
       if (s7_object_type(xe) == mus_xen_tag)
 	{
 	  e = (mus_any *)(((mus_xen *)s7_object_value(xe))->gen);
-	  s7_symbol_set_extension(xe_sym, (void *)e);
+	  s7_symbol_set_accessor_data(xe_sym, (void *)e);
 	}
       if ((!e) || (!mus_env_p(e)))
 	XEN_ASSERT_TYPE(false, xe, XEN_ARG_1, S_env, "an envelope generator");
@@ -2028,14 +2029,14 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
 
   args = cdr(args);
   xt_sym = cadar(args);
-  t = (mus_any *)s7_symbol_extension(xt_sym);
+  if (its_safe) t = (mus_any *)s7_symbol_accessor_data(xt_sym);
   if (!t)
     {
       xt = s7_symbol_value(sc, xt_sym);
       if (s7_object_type(xt) == mus_xen_tag)
 	{
 	  t = (mus_any *)(((mus_xen *)s7_object_value(xt))->gen);
-	  s7_symbol_set_extension(xt_sym, (void *)t);
+	  s7_symbol_set_accessor_data(xt_sym, (void *)t);
 	}
       if ((!t) || (!mus_triangle_wave_p(t)))
 	XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_triangle_wave, "a triangle-wave generator");
@@ -2043,37 +2044,39 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
 
   args = cdr(args);
   xr_sym = cadar(args);
-  r = (mus_any *)s7_symbol_extension(xr_sym);
+  if(its_safe) r = (mus_any *)s7_symbol_accessor_data(xr_sym);
   if (!r)
     {
       xr = s7_symbol_value(sc, xr_sym);
       if (s7_object_type(xr) == mus_xen_tag)
 	{
 	  r = (mus_any *)(((mus_xen *)s7_object_value(xr))->gen);
-	  s7_symbol_set_extension(xr_sym, (void *)r);
+	  s7_symbol_set_accessor_data(xr_sym, (void *)r);
 	}
       if ((!r) || (!mus_rand_interp_p(r)))
 	XEN_ASSERT_TYPE(false, xr, XEN_ARG_1, S_rand_interp, "a rand-interp generator");
     }
 
-  return(s7_make_real(sc, mus_env(e) * mus_triangle_wave(t, 0.0) * mus_rand_interp(r, 0.0)));			
+  return(s7_make_real(sc, mus_env(e) + mus_triangle_wave(t, 0.0) + mus_rand_interp(r, 0.0)));			
 }
 
 static s7_pointer fm_violin_mod;
 static s7_pointer g_fm_violin_mod(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer xe, xe_sym, xt, xt_sym, vib;
-  mus_any *e, *t;
+  mus_any *e = NULL, *t = NULL;
+  bool its_safe;
+  its_safe = (s7_safe_do_level(sc) > 0);
 
   xe_sym = cadar(args);
-  e = (mus_any *)s7_symbol_extension(xe_sym);
+  if (its_safe) e = (mus_any *)s7_symbol_accessor_data(xe_sym);
   if (!e)
     {
       xe = s7_symbol_value(sc, xe_sym);
       if (s7_object_type(xe) == mus_xen_tag)
 	{
 	  e = (mus_any *)(((mus_xen *)s7_object_value(xe))->gen);
-	  s7_symbol_set_extension(xe_sym, (void *)e);
+	  s7_symbol_set_accessor_data(xe_sym, (void *)e);
 	}
       if ((!e) || (!mus_env_p(e)))
 	XEN_ASSERT_TYPE(false, xe, XEN_ARG_1, S_env, "an envelope generator");
@@ -2081,14 +2084,14 @@ static s7_pointer g_fm_violin_mod(s7_scheme *sc, s7_pointer args)
 
   args = cadr(args);
   xt_sym = cadr(args);
-  t = (mus_any *)s7_symbol_extension(xt_sym);
+  if (its_safe) t = (mus_any *)s7_symbol_accessor_data(xt_sym);
   if (!t)
     {
       xt = s7_symbol_value(sc, xt_sym);
       if (s7_object_type(xt) == mus_xen_tag)
 	{
 	  t = (mus_any *)(((mus_xen *)s7_object_value(xt))->gen);
-	  s7_symbol_set_extension(xt_sym, (void *)t);
+	  s7_symbol_set_accessor_data(xt_sym, (void *)t);
 	}
       if ((!t) || (!mus_polywave_p(t)))
 	XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_polywave, "a polywave generator");
@@ -2102,6 +2105,11 @@ static s7_pointer g_fm_violin_mod(s7_scheme *sc, s7_pointer args)
 }
 
 /* (with-sound () (fm-violin 0 .0001 440 .1)) */
+
+/* TODO: we need to check that we are in a safe op here to avoid the possibility of shadowing
+ *          but we have only the symbol and the code location -- how to guarantee no shadowing?
+ *       it would also be nice to cancel the accessor when done with it
+ */
 
 static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
@@ -2118,14 +2126,9 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       (s7_function_choice(cadddr(expr)) == g_rand_interp_w) &&
       (s7_is_symbol(cadr(cadddr(expr)))))
     {
-      s7_symbol_set_access(sc, cadr(cadr(expr)), clear_extension_list);
-      s7_symbol_set_access(sc, cadr(caddr(expr)), clear_extension_list);
-      s7_symbol_set_access(sc, cadr(cadddr(expr)), clear_extension_list);
-
       s7_function_choice_set_direct(expr);
       return(fm_violin_vibrato);
     }
-
   return((*initial_add_chooser)(sc, f, args, expr));
 }
 
@@ -2145,13 +2148,9 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
       (s7_is_pair(cddr(caddr(expr)))) &&
       (s7_is_symbol(caddr(caddr(expr)))))
     {
-      s7_symbol_set_access(sc, cadr(cadr(expr)), clear_extension_list);
-      s7_symbol_set_access(sc, cadr(caddr(expr)), clear_extension_list);
-
       s7_function_choice_set_direct(expr);
       return(fm_violin_mod);
     }
-
   return((*initial_multiply_chooser)(sc, f, args, expr));
 }
 
@@ -2182,11 +2181,6 @@ static void init_choosers(s7_scheme *sc)
 
   fm_violin_mod = s7_make_function(sc, "*", g_fm_violin_mod, 2, 0, false, "experimental fm-violin optimization");
   s7_function_set_class(fm_violin_mod, s7_function_class(f));
-
-  clear_extension = s7_make_function(sc, "(clear-extension)", g_clear_extension, 2, 0, false, "clear extension");
-  s7_gc_protect(sc, clear_extension);
-  clear_extension_list = s7_cons(sc, s7_f(sc), s7_cons(sc, clear_extension, s7_cons(sc, clear_extension, s7_nil(sc))));
-  s7_gc_protect(sc, clear_extension_list);
 }
 #endif
 

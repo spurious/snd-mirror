@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.92"
-#define S7_DATE "9-Aug-11"
+#define S7_VERSION "1.93"
+#define S7_DATE "12-Aug-11"
 
 
 typedef long long int s7_Int;
@@ -459,6 +459,9 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key);                 /* (
 
 s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs);
+void *s7_symbol_accessor_data(s7_pointer sym);
+void s7_symbol_set_accessor_data(s7_pointer sym, void *val);
+int s7_safe_do_level(s7_scheme *sc);
 
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
@@ -539,8 +542,6 @@ unsigned int s7_function_class(s7_pointer f);
 void s7_function_set_class(s7_pointer f, unsigned int c);
 s7_function s7_function_choice(s7_pointer expr);
 void s7_function_choice_set_direct(s7_pointer expr);
-void *s7_symbol_extension(s7_pointer sym);
-void s7_symbol_set_extension(s7_pointer sym, void *val);
 
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
@@ -776,6 +777,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 11-Aug:    s7_symbol_accessor functions.
  * 9-Aug:     s7_function_chooser, s7_function_choice, s7_function_choice_set_direct.
  * 20-Jul:    s7_function_class, s7_function_set_class, and s7_function_set_chooser.
  * 14-Jul:    removed thread and profiling support.

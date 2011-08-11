@@ -18846,6 +18846,67 @@ EDITS: 2
 	  (set! a1 (+ a1 fm))
 	  (if (fneq val1 val2)
 	      (snd-display #__line__ ";oscil fm: ~A: ~A ~A" i val1 val2)))))
+
+    (let ()
+      (define (oscil-1-1)
+	(let ((osc (make-oscil 440.0)))
+	  (let ((v1 (make-vector 10 0.0))
+		(v2 (make-vector 10 0.0)))
+	    (set! (v1 0) (oscil osc))
+	    (set! (v1 1) (oscil osc))
+	    (let ((osc (make-oscil 440.0)))
+	      (do ((i 0 (+ i 1)))
+		  ((= i 10))
+		(set! (v2 i) (oscil osc))))
+	    (do ((i 2 (+ i 1)))
+		((= i 10))
+	      (set! (v1 i) (oscil osc)))
+	    
+	    (if (not (equal? v1 v2))
+		(snd-display #__line__ ";oscil-1 shadowing test1: ~A ~A" v1 v2)))))
+      
+      (define (oscil-1-2)
+	(define (ho-1 osc v i)
+	  (set! (v i) (oscil osc)))
+	(let ((o1 (make-oscil 440.0))
+	      (o2 (make-oscil 440.0))
+	      (v1 (make-vector 10 0.0))
+	      (v2 (make-vector 10 0.0)))
+	  (ho-1 o1 v1 0)
+	  (ho-1 o1 v1 1)
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (ho-1 o2 v2 i))
+	  (do ((i 2 (+ i 1)))
+	      ((= i 10))
+	    (ho-1 o1 v1 i))
+	  (if (not (equal? v1 v2))
+	      (snd-display #__line__ ";oscil-1 shadowing test2: ~A ~A" v1 v2))))
+
+      (define (oscil-1-3)
+	(define (ho)
+	  (let ((osc (make-oscil 440.0)))
+	    (lambda ()
+	      (oscil osc))))
+	(let ((o1 (ho))
+	      (v1 (make-vector 10 0.0))
+	      (v2 (make-vector 10 0.0)))
+	  (set! (v1 0) (o1))
+	  (set! (v1 1) (o1))
+	  (let ((o2 (ho)))
+	    (do ((i 0 (+ i 1)))
+		((= i 10))
+	      (set! (v2 i) (o2))))
+	  (do ((i 2 (+ i 1)))
+	      ((= i 10))
+	    (set! (v1 i) (o1)))
+	  (if (not (equal? v1 v2))
+	      (snd-display #__line__ ";oscil-1 shadowing test3: ~A ~A" v1 v2))))
+
+      (oscil-1-1)
+      (oscil-1-2)
+      (oscil-1-3))
+
     
     (let ((var (catch #t (lambda () (mus-location (make-oscil))) (lambda args args))))
       (if (not (eq? (car var) 'mus-error))
@@ -62946,7 +63007,7 @@ valgrind --tool=callgrind snd -l snd-test
 callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 
 10-Feb-10 (full snd-test, not just test 23):
-372,028,372,850  PROGRAM TOTALS
+372,028,372,850 
 45,638,227,518  io.c:mus_read_any_1 [/home/bil/snd-11/snd]
 44,386,146,639  s7.c:eval [/home/bil/snd-11/snd]
 26,599,493,642  s7.c:eval'2 [/home/bil/snd-11/snd]
@@ -62958,7 +63019,7 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 10,836,543,187  run.c:eval_ptree [/home/bil/snd-11/snd]
 
 7-Mar-10
-318,148,021,968  PROGRAM TOTALS
+318,148,021,968 
 40,864,919,790  s7.c:eval [/home/bil/snd-s7/snd]
 26,485,168,742  io.c:mus_read_any_1 [/home/bil/snd-s7/snd]
 24,338,113,084  s7.c:eval'2 [/home/bil/snd-s7/snd]
@@ -62970,7 +63031,7 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 8,918,483,945  snd-sig.c:direct_filter [/home/bil/snd-s7/snd]
 
 24-Jul-10
-290,992,535,136  PROGRAM TOTALS
+290,992,535,136 
 41,408,289,112  s7.c:eval [/home/bil/snd-11/snd]
 32,616,883,526  s7.c:eval'2 [/home/bil/snd-11/snd]
 25,031,312,834  snd-edits.c:channel_local_maxamp [/home/bil/snd-11/snd]
@@ -62981,7 +63042,7 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,918,483,905  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 
 15-Oct-10
-265,752,846,149  PROGRAM TOTALS
+265,752,846,149 
 34,814,887,043  s7.c:eval [/home/bil/test-snd/snd]
 26,289,382,435  s7.c:eval'2 [/home/bil/test-snd/snd]
 24,643,766,551  snd-edits.c:channel_local_maxamp [/home/bil/test-snd/snd]
@@ -62992,7 +63053,7 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,918,483,905  snd-sig.c:direct_filter [/home/bil/test-snd/snd]
 
 10-Dec-10 (64-bit)
-224,005,122,781  PROGRAM TOTALS
+224,005,122,781 
 32,349,320,555  s7.c:eval [/home/bil/snd-11/snd]
 24,560,182,751  s7.c:eval'2 [/home/bil/snd-11/snd]
 19,534,468,570  ???:sin [/lib64/libm-2.12.so]
@@ -63002,20 +63063,5 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 
-3-Aug-11:
-165,594,184,593  PROGRAM TOTALS
-15,967,590,452  ???:sin [/lib64/libm-2.12.so]
-15,041,717,128  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
-12,931,435,274  s7.c:eval [/home/bil/snd-12/snd]
- 9,266,480,181  s7.c:eval'2 [/home/bil/snd-12/snd]
- 9,231,372,271  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
- 8,911,537,540  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
- 8,834,140,380  run.c:eval_ptree [/home/bil/snd-12/snd]
- 7,227,369,192  io.c:mus_write_1 [/home/bil/snd-12/snd]
- 2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-12/snd]
- 2,936,636,080  clm.c:mus_src [/home/bil/snd-12/snd]
- 2,764,335,112  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
- 2,751,660,232  ???:cos [/lib64/libm-2.12.so]
- 2,445,593,902  s7.c:gc [/home/bil/snd-12/snd]
 |#
 
