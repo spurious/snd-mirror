@@ -2097,6 +2097,7 @@ static s7_pointer g_fm_violin_mod(s7_scheme *sc, s7_pointer args)
 	XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_polywave, "a polywave generator");
     }
 
+  /* vib is local */
   vib = s7_symbol_value(sc, caddr(args));
   if (!s7_is_real(vib))
     XEN_ASSERT_TYPE(false, caddr(args), XEN_ARG_2, S_polywave, "a real");
@@ -2105,11 +2106,6 @@ static s7_pointer g_fm_violin_mod(s7_scheme *sc, s7_pointer args)
 }
 
 /* (with-sound () (fm-violin 0 .0001 440 .1)) */
-
-/* TODO: we need to check that we are in a safe op here to avoid the possibility of shadowing
- *          but we have only the symbol and the code location -- how to guarantee no shadowing?
- *       it would also be nice to cancel the accessor when done with it
- */
 
 static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {

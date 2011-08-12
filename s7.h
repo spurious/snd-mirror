@@ -462,6 +462,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 void *s7_symbol_accessor_data(s7_pointer sym);
 void s7_symbol_set_accessor_data(s7_pointer sym, void *val);
 int s7_safe_do_level(s7_scheme *sc);
+s7_pointer s7_symbol_slot(s7_scheme *sc, s7_pointer symbol);
 
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */

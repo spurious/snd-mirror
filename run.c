@@ -93,12 +93,12 @@
 /* some timings (I keep losing these stats, so I'll put them here for safekeeping, "*"=not optimizable)
  *     valgrind --tool=callgrind snd ws.scm [etc -- no stats, not to snd, *clm-output-safety*=1]
  *
- *      test                                           10.4   (10.7?)   11.4   11.10  12.2  unrun[28-Jun-11]
+ *      test                                           10.4   (10.7?)   11.4   11.10  12.2  unrun[28-Jun-11] [12-Aug]
  *
- * () (fm-violin 0 20 440 .1)                          1068     642     561     528    479    3692   7.7      
+ * () (fm-violin 0 20 440 .1)                          1068     642     561     528    479    3692   7.7      1684
  * (:channels 2) (fm-violin 0 20 440 .1 :degree 45)    1228     764     687     570    505    3722   7.4      
- * (:reverb jc-reverb) (fm-violin 0 20 440 .1)         2577    1455    1335    1153    948    8747   9.2      
- * (:reverb nrev) (fm-violin 0 20 440 .1)              2983    1812    1685    1503   1203   10443   8.7      
+ * (:reverb jc-reverb) (fm-violin 0 20 440 .1)         2577    1455    1335    1153    948    8747   9.2      6102
+ * (:reverb nrev) (fm-violin 0 20 440 .1)              2983    1812    1685    1503   1203   10443   8.7      7337     
  * () (p 0 3)                                         91020*   3011    2828    2817   1965   43241  22.0     
  * () (expandn 0 10 "oboe.snd" 1 :expand 4)            1228     526     464     456    301    3526  11.7    
  * (calling-all-animals)                              16359   11684   10306    9841  10529   55207   5.2    
