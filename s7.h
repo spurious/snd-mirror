@@ -262,10 +262,43 @@ s7_pointer s7_make_boolean(s7_scheme *sc, bool x);                           /* 
 
 bool s7_is_pair(s7_pointer p);                                               /* (pair? p) */
 s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);               /* (cons a b) */
+
 s7_pointer s7_car(s7_pointer p);                                             /* (car p) */
 s7_pointer s7_cdr(s7_pointer p);                                             /* (cdr p) */
+
 s7_pointer s7_set_car(s7_pointer p, s7_pointer q);                           /* (set-car! p q) */
 s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q);                           /* (set-cdr! p q) */
+
+s7_pointer s7_cadr(s7_pointer p);                                            /* (cadr p) */
+s7_pointer s7_cddr(s7_pointer p);                                            /* (cddr p) */
+s7_pointer s7_cdar(s7_pointer p);                                            /* (cdar p) */
+s7_pointer s7_caar(s7_pointer p);                                            /* (caar p) */
+
+s7_pointer s7_caadr(s7_pointer p);
+s7_pointer s7_caddr(s7_pointer p);
+s7_pointer s7_cadar(s7_pointer p);
+s7_pointer s7_caaar(s7_pointer p);
+s7_pointer s7_cdadr(s7_pointer p);
+s7_pointer s7_cdddr(s7_pointer p);
+s7_pointer s7_cddar(s7_pointer p);
+s7_pointer s7_cdaar(s7_pointer p);
+
+s7_pointer s7_caaadr(s7_pointer p);
+s7_pointer s7_caaddr(s7_pointer p);
+s7_pointer s7_caadar(s7_pointer p);
+s7_pointer s7_caaaar(s7_pointer p);
+s7_pointer s7_cadadr(s7_pointer p);
+s7_pointer s7_cadddr(s7_pointer p);
+s7_pointer s7_caddar(s7_pointer p);
+s7_pointer s7_cadaar(s7_pointer p);
+s7_pointer s7_cdaadr(s7_pointer p);
+s7_pointer s7_cdaddr(s7_pointer p);
+s7_pointer s7_cdadar(s7_pointer p);
+s7_pointer s7_cdaaar(s7_pointer p);
+s7_pointer s7_cddadr(s7_pointer p);
+s7_pointer s7_cddddr(s7_pointer p);
+s7_pointer s7_cdddar(s7_pointer p);
+s7_pointer s7_cddaar(s7_pointer p);
 
 
 bool s7_is_list(s7_scheme *sc, s7_pointer p);                                /* (list? p) -> (or (pair? p) (null? p)) */
@@ -748,10 +781,8 @@ void s7_mark_object(s7_pointer p);
 /* the following Scheme functions are not currently exported to C:
  *
  *    * + - / < <= = > >= abs acos acosh angle ash asin asinh assq assv atan atanh 
- *    augment-environment! caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr 
- *    cadar caddar cadddr caddr cadr call-with-exit call-with-input-file call-with-input-string 
- *    call-with-output-file call-with-output-string catch cdaaar cdaadr cdaar cdadar cdaddr 
- *    cdadr cdar cddaar cddadr cddar cdddar cddddr cdddr cddr ceiling char->integer char-alphabetic? 
+ *    augment-environment! call-with-exit call-with-input-file call-with-input-string 
+ *    call-with-output-file call-with-output-string catch ceiling char->integer char-alphabetic? 
  *    char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? 
  *    char-numeric? char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? 
  *    char=? char>=? char>? copy cos cosh dynamic-wind environment? eof-object? eval even? 
@@ -778,7 +809,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 11-Aug:    s7_symbol_accessor functions.
+ * 11-Aug:    s7_symbol_accessor functions. s7_cxxr.
  * 9-Aug:     s7_function_chooser, s7_function_choice, s7_function_choice_set_direct.
  * 20-Jul:    s7_function_class, s7_function_set_class, and s7_function_set_chooser.
  * 14-Jul:    removed thread and profiling support.

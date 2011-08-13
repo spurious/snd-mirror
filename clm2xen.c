@@ -52,6 +52,10 @@
   #endif
 #endif
 
+#if HAVE_SCHEME
+#define DISPLAY(Expr) s7_object_to_c_string(sc, Expr)
+#endif
+
 #define MAX_ARGLIST_LEN 24
 /* try to accommodate &other-keys essentially */
 
@@ -1909,13 +1913,13 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
 }
 
 
-#define car(E) s7_car(E)
-#define cdr(E) s7_cdr(E)
-#define cadr(E) car(cdr(E))
-#define caddr(E) car(cdr(cdr(E)))
-#define cadddr(E) car(cdr(cdr(cdr(E))))
-#define cddr(E) cdr(cdr(E))
-#define cadar(E) car(cdr(car(E)))
+#define car(E)    s7_car(E)
+#define cdr(E)    s7_cdr(E)
+#define cadr(E)   s7_cadr(E)
+#define caddr(E)  s7_caddr(E)
+#define cadddr(E) s7_cadddr(E)
+#define cddr(E)   s7_cddr(E)
+#define cadar(E)  s7_cadar(E)
 
 static s7_pointer oscil_1, oscil_2;
 static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
@@ -1966,32 +1970,11 @@ static s7_pointer g_oscil_2(s7_scheme *sc, s7_pointer args)
 	XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil generator");
     }
 
-  /* TODO: save the slot in this case, rather than the value? 
-   */
   obj = s7_symbol_value(sc, cadr(args));
   if (!s7_is_real(obj))
     XEN_ASSERT_TYPE(false, cadr(args), XEN_ARG_2, S_oscil, "a real");
 
   return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real(obj))));
-}
-
-
-static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 1) &&
-      (s7_is_symbol(cadr(expr))))
-    {
-      s7_function_choice_set_direct(expr);
-      return(oscil_1);
-    }
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_symbol(caddr(expr))))
-    {
-      s7_function_choice_set_direct(expr);
-      return(oscil_2);
-    }
-  return(f);
 }
 
 
@@ -2097,12 +2080,337 @@ static s7_pointer g_fm_violin_mod(s7_scheme *sc, s7_pointer args)
 	XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_polywave, "a polywave generator");
     }
 
-  /* vib is local */
+  /* vib is local TODO: how to protect the others in a similar case? -- still need the global-to-do-loop bit */
   vib = s7_symbol_value(sc, caddr(args));
   if (!s7_is_real(vib))
     XEN_ASSERT_TYPE(false, caddr(args), XEN_ARG_2, S_polywave, "a real");
 
   return(s7_make_real(sc, mus_env(e) * mus_polywave(t, s7_number_to_real(vib))));
+}
+
+static s7_pointer fm_violin_modulation;
+static s7_pointer g_fm_violin_modulation(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer xe, xe_sym, xt, xt_sym, vib, vargs;
+  mus_any *e = NULL, *t = NULL;
+  bool its_safe;
+  double vibrato;
+  its_safe = (s7_safe_do_level(sc) > 0);
+
+  vargs = cdr(cadr(args)); /* (* ... ) */
+  xe_sym = cadr(car(vargs));
+  if (its_safe) e = (mus_any *)s7_symbol_accessor_data(xe_sym);
+  if (!e)
+    {
+      xe = s7_symbol_value(sc, xe_sym);
+      if (s7_object_type(xe) == mus_xen_tag)
+	{
+	  e = (mus_any *)(((mus_xen *)s7_object_value(xe))->gen);
+	  s7_symbol_set_accessor_data(xe_sym, (void *)e);
+	}
+      if ((!e) || (!mus_env_p(e)))
+	XEN_ASSERT_TYPE(false, xe, XEN_ARG_1, S_env, "an envelope generator");
+    }
+
+  xt_sym = cadr(cadr(vargs));
+  if (its_safe) t = (mus_any *)s7_symbol_accessor_data(xt_sym);
+  if (!t)
+    {
+      xt = s7_symbol_value(sc, xt_sym);
+      if (s7_object_type(xt) == mus_xen_tag)
+	{
+	  t = (mus_any *)(((mus_xen *)s7_object_value(xt))->gen);
+	  s7_symbol_set_accessor_data(xt_sym, (void *)t);
+	}
+      if ((!t) || (!mus_polywave_p(t)))
+	XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_polywave, "a polywave generator");
+    }
+
+  /* vib is local TODO: how to protect the others in a similar case? -- still need the global-to-do-loop bit */
+  vib = s7_symbol_value(sc, car(args));
+  if (!s7_is_real(vib))
+    XEN_ASSERT_TYPE(false, car(args), XEN_ARG_2, S_polywave, "a real");
+  vibrato = s7_number_to_real(vib);
+
+  return(s7_make_real(sc, vibrato + (mus_env(e) * mus_polywave(t, vibrato))));
+}
+
+static s7_pointer fm_violin_with_modulation;
+static s7_pointer g_fm_violin_with_modulation(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer xo, xo_sym, xe, xe_sym, xt, xt_sym, vib, vargs;
+  mus_any *e = NULL, *t = NULL, *o = NULL;
+  bool its_safe;
+  double vibrato;
+  its_safe = (s7_safe_do_level(sc) > 0);
+
+  xo_sym = car(args);
+  if (its_safe) o = (mus_any *)s7_symbol_accessor_data(xo_sym);
+  if (!o)
+    {
+      xo = s7_symbol_value(sc, xo_sym);
+      if (s7_object_type(xo) == mus_xen_tag)
+	{
+	  o = (mus_any *)(((mus_xen *)s7_object_value(xo))->gen);
+	  s7_symbol_set_accessor_data(xo_sym, (void *)o);
+	}
+      if ((!o) || (!mus_oscil_p(o)))
+	XEN_ASSERT_TYPE(false, xo_sym, XEN_ARG_1, S_oscil, "an oscil generator");
+    }
+
+  vargs = cdr(caddr(cadr(args))); /* (* ... ) */
+  xe_sym = cadr(car(vargs));
+  if (its_safe) e = (mus_any *)s7_symbol_accessor_data(xe_sym);
+  if (!e)
+    {
+      xe = s7_symbol_value(sc, xe_sym);
+      if (s7_object_type(xe) == mus_xen_tag)
+	{
+	  e = (mus_any *)(((mus_xen *)s7_object_value(xe))->gen);
+	  s7_symbol_set_accessor_data(xe_sym, (void *)e);
+	}
+      if ((!e) || (!mus_env_p(e)))
+	XEN_ASSERT_TYPE(false, xe, XEN_ARG_1, S_env, "an envelope generator");
+    }
+
+  xt_sym = cadr(cadr(vargs));
+  if (its_safe) t = (mus_any *)s7_symbol_accessor_data(xt_sym);
+  if (!t)
+    {
+      xt = s7_symbol_value(sc, xt_sym);
+      if (s7_object_type(xt) == mus_xen_tag)
+	{
+	  t = (mus_any *)(((mus_xen *)s7_object_value(xt))->gen);
+	  s7_symbol_set_accessor_data(xt_sym, (void *)t);
+	}
+      if ((!t) || (!mus_polywave_p(t)))
+	XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_polywave, "a polywave generator");
+    }
+
+  /* vib is local TODO: how to protect the others in a similar case? -- still need the global-to-do-loop bit */
+  vib = s7_symbol_value(sc, cadr(cadr(args)));
+  /* fprintf(stderr, "vib: %s %s\n", DISPLAY(cadr(cadr(args))), DISPLAY(vib)); */
+  if (!s7_is_real(vib))
+    XEN_ASSERT_TYPE(false, cadr(cadr(args)), XEN_ARG_2, S_polywave, "a real");
+  vibrato = s7_number_to_real(vib);
+
+  return(s7_make_real(sc, mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
+}
+
+static s7_pointer fm_violin_1;
+static s7_pointer g_fm_violin_1(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer xa, xa_sym, xo, xo_sym, xe, xe_sym, xt, xt_sym, vib, vargs;
+  mus_any *e = NULL, *t = NULL, *o = NULL, *a = NULL;
+  bool its_safe;
+  double vibrato;
+  its_safe = (s7_safe_do_level(sc) > 0);
+
+  xa_sym = cadr(car(args));
+  /* fprintf(stderr, "a: %s %s\n", DISPLAY(xa_sym), DISPLAY(args)); */
+  if (its_safe) a = (mus_any *)s7_symbol_accessor_data(xa_sym);
+  if (!a)
+    {
+      xa = s7_symbol_value(sc, xa_sym);
+      if (s7_object_type(xa) == mus_xen_tag)
+	{
+	  a = (mus_any *)(((mus_xen *)s7_object_value(xa))->gen);
+	  s7_symbol_set_accessor_data(xa_sym, (void *)a);
+	}
+      if ((!a) || (!mus_env_p(a)))
+	XEN_ASSERT_TYPE(false, xa, XEN_ARG_1, S_env, "an envelope generator");
+    }
+
+  vargs = cadr(args);
+  xo_sym = cadr(vargs);
+  /* fprintf(stderr, "o: %s\n", DISPLAY(xo_sym)); */
+  if (its_safe) o = (mus_any *)s7_symbol_accessor_data(xo_sym);
+  if (!o)
+    {
+      xo = s7_symbol_value(sc, xo_sym);
+      if (s7_object_type(xo) == mus_xen_tag)
+	{
+	  o = (mus_any *)(((mus_xen *)s7_object_value(xo))->gen);
+	  s7_symbol_set_accessor_data(xo_sym, (void *)o);
+	}
+      if ((!o) || (!mus_oscil_p(o)))
+	XEN_ASSERT_TYPE(false, xo_sym, XEN_ARG_1, S_oscil, "an oscil generator");
+    }
+
+  vargs = cdr(caddr(caddr(vargs)));
+  /* fprintf(stderr, "vargs: %s\n", DISPLAY(vargs)); */
+
+  xe_sym = cadr(car(vargs));
+  /* fprintf(stderr, "e: %s\n", DISPLAY(xe_sym)); */
+  if (its_safe) e = (mus_any *)s7_symbol_accessor_data(xe_sym);
+  if (!e)
+    {
+      xe = s7_symbol_value(sc, xe_sym);
+      if (s7_object_type(xe) == mus_xen_tag)
+	{
+	  e = (mus_any *)(((mus_xen *)s7_object_value(xe))->gen);
+	  s7_symbol_set_accessor_data(xe_sym, (void *)e);
+	}
+      if ((!e) || (!mus_env_p(e)))
+	XEN_ASSERT_TYPE(false, xe, XEN_ARG_1, S_env, "an envelope generator");
+    }
+
+  xt_sym = cadr(cadr(vargs));
+  /* fprintf(stderr, "t: %s\n", DISPLAY(xt_sym)); */
+  if (its_safe) t = (mus_any *)s7_symbol_accessor_data(xt_sym);
+  if (!t)
+    {
+      xt = s7_symbol_value(sc, xt_sym);
+      if (s7_object_type(xt) == mus_xen_tag)
+	{
+	  t = (mus_any *)(((mus_xen *)s7_object_value(xt))->gen);
+	  s7_symbol_set_accessor_data(xt_sym, (void *)t);
+	}
+      if ((!t) || (!mus_polywave_p(t)))
+	XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_polywave, "a polywave generator");
+    }
+
+  /* vib is local TODO: how to protect the others in a similar case? -- still need the global-to-do-loop bit */
+  vib = s7_symbol_value(sc, cadr(caddr(cadr(args))));
+  /* fprintf(stderr, "vib: %s %s\n", DISPLAY(cadr(caddr(cadr(args)))), DISPLAY(vib)); */
+  if (!s7_is_real(vib))
+    XEN_ASSERT_TYPE(false, cadr(caddr(cadr(args))), XEN_ARG_2, S_polywave, "a real");
+  vibrato = s7_number_to_real(vib);
+
+  return(s7_make_real(sc, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
+}
+
+static s7_pointer fm_violin_2;
+static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer loc, loc_sym, xa, xa_sym, xo, xo_sym, xe, xe_sym, xt, xt_sym, vib, vargs, locpos, lp = NULL;
+  mus_any *e = NULL, *t = NULL, *o = NULL, *a = NULL, *lc = NULL;
+  bool its_safe;
+  double vibrato, val;
+  mus_long_t pos;
+  mus_xen *ms = NULL;
+  its_safe = (s7_safe_do_level(sc) > 0);
+
+  loc_sym = car(args);
+  /* fprintf(stderr, "loc: %s %s\n", DISPLAY(loc_sym), DISPLAY(args)); */
+  if (its_safe) lc = (mus_any *)s7_symbol_accessor_data(loc_sym);
+  if (!lc)
+    {
+      loc = s7_symbol_value(sc, loc_sym);
+      if (s7_object_type(loc) == mus_xen_tag)
+	{
+	  lc = (mus_any *)(((mus_xen *)s7_object_value(loc))->gen);
+	  s7_symbol_set_accessor_data(loc_sym, (void *)lc);
+	}
+      if ((!lc) || (!mus_locsig_p(lc)))
+	XEN_ASSERT_TYPE(false, loc, XEN_ARG_1, S_locsig, "a locsig generator");
+    }
+
+  /* TODO: only get here if locsig output is not used -- how to tell?
+   */
+#if 0
+  locpos = s7_symbol_value(sc, cadr(args));
+  /* fprintf(stderr, "locpos: %s %s\n", DISPLAY(cadr(args)), DISPLAY(locpos)); */
+  if (!s7_is_integer(locpos))
+    XEN_ASSERT_TYPE(false, caddr(car(args)), XEN_ARG_2, S_locsig, "an integer");
+  pos = (mus_long_t)s7_integer(locpos);
+#else
+  /* TODO: this is cheating -- get do_local flag */
+  locpos = cadr(args);
+  if (its_safe) lp = (s7_pointer)s7_symbol_accessor_data(locpos);
+  if (!lp)
+    {
+      lp = s7_symbol_slot(sc, locpos);
+      s7_symbol_set_accessor_data(locpos, (void *)lp);
+      if (!s7_is_integer(cdr(lp)))
+	XEN_ASSERT_TYPE(false, locpos, XEN_ARG_2, S_locsig, "an integer");
+    }
+  pos = (mus_long_t)s7_integer(cdr(lp));
+  /* fprintf(stderr, "locpos: %s %s\n", DISPLAY(locpos), DISPLAY(cdr(lp))); */
+#endif
+  
+  vargs = s7_cdaddr(args);
+  xa_sym = s7_cadar(vargs);
+  /* fprintf(stderr, "a: %s %s\n", DISPLAY(xa_sym), DISPLAY(vargs)); */
+  if (its_safe) a = (mus_any *)s7_symbol_accessor_data(xa_sym);
+  if (!a)
+    {
+      xa = s7_symbol_value(sc, xa_sym);
+      if (s7_object_type(xa) == mus_xen_tag)
+	{
+	  a = (mus_any *)(((mus_xen *)s7_object_value(xa))->gen);
+	  s7_symbol_set_accessor_data(xa_sym, (void *)a);
+	}
+      if ((!a) || (!mus_env_p(a)))
+	XEN_ASSERT_TYPE(false, xa, XEN_ARG_1, S_env, "an envelope generator");
+    }
+
+  vargs = s7_cadr(vargs);
+  xo_sym = s7_cadr(vargs);
+  /* fprintf(stderr, "o: %s\n", DISPLAY(xo_sym));  */
+  if (its_safe) o = (mus_any *)s7_symbol_accessor_data(xo_sym);
+  if (!o)
+    {
+      xo = s7_symbol_value(sc, xo_sym);
+      if (s7_object_type(xo) == mus_xen_tag)
+	{
+	  o = (mus_any *)(((mus_xen *)s7_object_value(xo))->gen);
+	  s7_symbol_set_accessor_data(xo_sym, (void *)o);
+	}
+      if ((!o) || (!mus_oscil_p(o)))
+	XEN_ASSERT_TYPE(false, xo_sym, XEN_ARG_1, S_oscil, "an oscil generator");
+    }
+
+  vargs = s7_cdaddr(s7_caddr(vargs));
+  /* fprintf(stderr, "vargs: %s\n", DISPLAY(vargs));  */
+
+  xe_sym = s7_cadr(car(vargs));
+  /* fprintf(stderr, "e: %s\n", DISPLAY(xe_sym));  */
+  if (its_safe) e = (mus_any *)s7_symbol_accessor_data(xe_sym);
+  if (!e)
+    {
+      xe = s7_symbol_value(sc, xe_sym);
+      if (s7_object_type(xe) == mus_xen_tag)
+	{
+	  e = (mus_any *)(((mus_xen *)s7_object_value(xe))->gen);
+	  s7_symbol_set_accessor_data(xe_sym, (void *)e);
+	}
+      if ((!e) || (!mus_env_p(e)))
+	XEN_ASSERT_TYPE(false, xe, XEN_ARG_1, S_env, "an envelope generator");
+    }
+
+  xt_sym = s7_cadadr(vargs);
+  /* fprintf(stderr, "t: %s\n", DISPLAY(xt_sym));  */
+  if (its_safe) t = (mus_any *)s7_symbol_accessor_data(xt_sym);
+  if (!t)
+    {
+      xt = s7_symbol_value(sc, xt_sym);
+      if (s7_object_type(xt) == mus_xen_tag)
+	{
+	  t = (mus_any *)(((mus_xen *)s7_object_value(xt))->gen);
+	  s7_symbol_set_accessor_data(xt_sym, (void *)t);
+	}
+      if ((!t) || (!mus_polywave_p(t)))
+	XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_polywave, "a polywave generator");
+    }
+
+  /* vib is local TODO: how to protect the others in a similar case? -- still need the global-to-do-loop bit */
+  vib = s7_symbol_value(sc, s7_car(s7_cddadr(vargs)));
+  /* fprintf(stderr, "vib: %s %s\n", DISPLAY(caddr(cadr(vargs))), DISPLAY(vib));  */
+  if (!s7_is_real(vib))
+    XEN_ASSERT_TYPE(false, caddr(cadr(vargs)), XEN_ARG_2, S_polywave, "a real");
+  vibrato = s7_number_to_real(vib);
+
+  val = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)));
+  mus_locsig(lc, pos, val);
+
+  /* we can't tell until run-time whether we need this -- perhaps an additional layer of optimization? 
+   */
+  ms = (mus_xen *)mus_environ(lc);
+  if ((ms) && (ms->nvcts == 4)) /* (vct-peak (with-sound (:output (make-vct 1000 0.0)) (fm-violin 0 .01 440 .5))) */
+    mus_locsig_or_move_sound_to_vct_or_sound_data(ms, lc, pos, val, true);
+  
+  return(vib); /* just return something! */
 }
 
 /* (with-sound () (fm-violin 0 .0001 440 .1)) */
@@ -2125,6 +2433,19 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       s7_function_choice_set_direct(expr);
       return(fm_violin_vibrato);
     }
+
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))))
+    {
+      if (s7_function_choice(caddr(expr)) == g_fm_violin_mod)
+	{
+	  /* this must be the (+ vib ...) portion!
+	   */
+	  s7_function_choice_set_direct(expr);
+	  return(fm_violin_modulation);
+	}
+    }
   return((*initial_add_chooser)(sc, f, args, expr));
 }
 
@@ -2137,17 +2458,70 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
       (s7_is_pair(cadr(expr))) &&
       (s7_function_choice(cadr(expr)) == g_env_w) &&
       (s7_is_symbol(cadr(cadr(expr)))) &&
-      (s7_is_pair(caddr(expr))) &&
-      (s7_function_choice(caddr(expr)) == g_polywave_w) &&
-      (s7_is_pair(cdr(caddr(expr)))) &&
-      (s7_is_symbol(cadr(caddr(expr)))) &&
-      (s7_is_pair(cddr(caddr(expr)))) &&
-      (s7_is_symbol(caddr(caddr(expr)))))
+      (s7_is_pair(caddr(expr))))
     {
-      s7_function_choice_set_direct(expr);
-      return(fm_violin_mod);
+      if (s7_function_choice(caddr(expr)) == g_fm_violin_with_modulation)
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(fm_violin_1);
+	}
+
+      if ((s7_function_choice(caddr(expr)) == g_polywave_w) &&
+	  (s7_is_pair(cdr(caddr(expr)))) &&
+	  (s7_is_symbol(cadr(caddr(expr)))) &&
+	  (s7_is_pair(cddr(caddr(expr)))) &&
+	  (s7_is_symbol(caddr(caddr(expr)))))
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(fm_violin_mod);
+	}
+      
     }
   return((*initial_multiply_chooser)(sc, f, args, expr));
+}
+
+
+static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(oscil_1);
+    }
+
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      if (s7_is_symbol(caddr(expr)))
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(oscil_2);
+	}
+      if (s7_is_pair(caddr(expr)))
+	{
+	  if (s7_function_choice(caddr(expr)) == g_fm_violin_modulation)
+	    {
+	      s7_function_choice_set_direct(expr);
+	      return(fm_violin_with_modulation);
+	    }
+	}
+    }
+  return(f);
+}
+
+static s7_pointer locsig_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 3) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))) &&
+      (s7_is_pair(cadr(cddr(expr)))) &&
+      (s7_function_choice(cadr(cddr(expr))) == g_fm_violin_1))
+    {
+      s7_function_choice_set_direct(expr);
+      return(fm_violin_2);
+    }
+  return(f);
 }
 
 
@@ -2163,6 +2537,9 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(oscil_1, s7_function_class(f));
   oscil_2 = s7_make_function(sc, "oscil", g_oscil_2, 2, 0, false, "experimental oscil optimization");
   s7_function_set_class(oscil_2, s7_function_class(f));
+  fm_violin_with_modulation = s7_make_function(sc, "oscil", g_fm_violin_with_modulation, 2, 0, false, "experimental fm-violin optimization");
+  s7_function_set_class(fm_violin_with_modulation, s7_function_class(f));
+
 
   f = s7_name_to_value(sc, "+");
   initial_add_chooser = s7_function_chooser(f);
@@ -2170,13 +2547,25 @@ static void init_choosers(s7_scheme *sc)
 
   fm_violin_vibrato = s7_make_function(sc, "+", g_fm_violin_vibrato, 3, 0, false, "experimental fm-violin optimization");
   s7_function_set_class(fm_violin_vibrato, s7_function_class(f));
+  fm_violin_modulation = s7_make_function(sc, "+", g_fm_violin_modulation, 2, 0, false, "experimental fm-violin optimization");
+  s7_function_set_class(fm_violin_modulation, s7_function_class(f));
+
 
   f = s7_name_to_value(sc, "*");
   initial_multiply_chooser = s7_function_chooser(f);
-  s7_function_set_chooser(f, clm_multiply_chooser);
 
+  s7_function_set_chooser(f, clm_multiply_chooser);
+  fm_violin_1 = s7_make_function(sc, "*", g_fm_violin_1, 2, 0, false, "experimental fm-violin optimization");
+  s7_function_set_class(fm_violin_1, s7_function_class(f));
   fm_violin_mod = s7_make_function(sc, "*", g_fm_violin_mod, 2, 0, false, "experimental fm-violin optimization");
   s7_function_set_class(fm_violin_mod, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "locsig");
+  s7_function_set_chooser(f, locsig_chooser);
+
+  fm_violin_2 = s7_make_function(sc, "locsig", g_fm_violin_2, 3, 0, false, "experimental fm-violin optimization");
+  s7_function_set_class(fm_violin_2, s7_function_class(f));
 }
 #endif
 

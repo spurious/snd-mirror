@@ -1045,6 +1045,11 @@ struct s7_scheme {
 /* optimizer flag for a procedure that sets some variable (set-car! for example).
  */
 
+#define T_DO_LOCAL                    (1 << (TYPE_BITS + 18))
+#define set_do_local(p)               typeflag(p)  |= T_DO_LOCAL
+#define is_do_local(p)                ((typeflag(p) & T_DO_LOCAL) != 0)
+#define clear_do_local(p)             typeflag(p)  &= (~T_DO_LOCAL)
+
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 #define set_mark(p)                   typeflag(p)  |= T_GC_MARK
@@ -1052,7 +1057,7 @@ struct s7_scheme {
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x7c000000
+#define UNUSED_BITS                   0x78000000
 
 #define set_type(p, f)                typeflag(p) = f
 
@@ -1093,6 +1098,15 @@ struct s7_scheme {
 #define caddar(p)                     car(cdr(cdr(car(p))))
 #define cdadar(p)                     cdr(car(cdr(car(p))))
 #define cdaddr(p)                     cdr(car(cdr(cdr(p))))
+
+#define caaaar(p)                     car(car(car(car(p))))
+#define cadadr(p)                     car(cdr(car(cdr(p))))
+#define cdaadr(p)                     cdr(car(car(cdr(p))))
+#define cdaaar(p)                     cdr(car(car(car(p))))
+#define cdddar(p)                     cdr(cdr(cdr(car(p))))
+#define cddadr(p)                     cdr(cdr(car(cdr(p))))
+#define cddaar(p)                     cdr(cdr(car(car(p))))
+
 
 #if defined(__GNUC__)
   #define cons(Sc, A, B)              ({ s7_pointer _x_; \
@@ -15156,22 +15170,46 @@ static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type)
 }
 
 
-bool s7_is_pair(s7_pointer p)     
-{ 
+bool s7_is_pair(s7_pointer p) 
+{
   return(is_pair(p));
 }
 
 
-s7_pointer s7_car(s7_pointer p)           
-{
-  return(car(p));
-}
+s7_pointer s7_car(s7_pointer p) {return(car(p));}
+s7_pointer s7_cdr(s7_pointer p) {return(cdr(p));}
 
+s7_pointer s7_cadr(s7_pointer p) {return(cadr(p));}
+s7_pointer s7_cddr(s7_pointer p) {return(cddr(p));}
+s7_pointer s7_cdar(s7_pointer p) {return(cdar(p));}
+s7_pointer s7_caar(s7_pointer p) {return(caar(p));}
 
-s7_pointer s7_cdr(s7_pointer p)           
-{
-  return(cdr(p));
-}
+s7_pointer s7_caadr(s7_pointer p) {return(caadr(p));}
+s7_pointer s7_caddr(s7_pointer p) {return(caddr(p));}
+s7_pointer s7_cadar(s7_pointer p) {return(cadar(p));}
+s7_pointer s7_caaar(s7_pointer p) {return(caaar(p));}
+s7_pointer s7_cdadr(s7_pointer p) {return(cdadr(p));}
+s7_pointer s7_cdddr(s7_pointer p) {return(cdddr(p));}
+s7_pointer s7_cddar(s7_pointer p) {return(cddar(p));}
+s7_pointer s7_cdaar(s7_pointer p) {return(cdaar(p));}
+
+s7_pointer s7_caaadr(s7_pointer p) {return(caaadr(p));}
+s7_pointer s7_caaddr(s7_pointer p) {return(caaddr(p));}
+s7_pointer s7_caadar(s7_pointer p) {return(caadar(p));}
+s7_pointer s7_caaaar(s7_pointer p) {return(caaaar(p));}
+s7_pointer s7_cadadr(s7_pointer p) {return(cadadr(p));}
+s7_pointer s7_cadddr(s7_pointer p) {return(cadddr(p));}
+s7_pointer s7_caddar(s7_pointer p) {return(caddar(p));}
+s7_pointer s7_cadaar(s7_pointer p) {return(cadaar(p));}
+
+s7_pointer s7_cdaadr(s7_pointer p) {return(cdaadr(p));}
+s7_pointer s7_cdaddr(s7_pointer p) {return(cdaddr(p));}
+s7_pointer s7_cdadar(s7_pointer p) {return(cdadar(p));}
+s7_pointer s7_cdaaar(s7_pointer p) {return(cdaaar(p));}
+s7_pointer s7_cddadr(s7_pointer p) {return(cddadr(p));}
+s7_pointer s7_cddddr(s7_pointer p) {return(cddddr(p));}
+s7_pointer s7_cdddar(s7_pointer p) {return(cdddar(p));}
+s7_pointer s7_cddaar(s7_pointer p) {return(cddaar(p));}
 
 
 s7_pointer s7_set_car(s7_pointer p, s7_pointer q) 
