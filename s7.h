@@ -576,7 +576,7 @@ unsigned int s7_function_class(s7_pointer f);
 void s7_function_set_class(s7_pointer f, unsigned int c);
 s7_function s7_function_choice(s7_pointer expr);
 void s7_function_choice_set_direct(s7_pointer expr);
-
+bool s7_is_do_local(s7_pointer slot);
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
