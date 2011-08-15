@@ -1928,7 +1928,7 @@ static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
   mus_any *o = NULL;
 
   obj = car(args);
-  if (s7_safe_do_level(sc) > 0)
+  if (s7_in_safe_do(sc))
     o = (mus_any *)s7_symbol_accessor_data(obj);
 
   if (!o)
@@ -1938,12 +1938,19 @@ static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
       if (s7_object_type(g) == mus_xen_tag)
 	{
 	  o = (mus_any *)(((mus_xen *)s7_object_value(g))->gen);
-	  s7_symbol_set_accessor_data(obj, (void *)o);
+	  if (s7_is_do_global(sc, g))
+	    s7_symbol_set_accessor_data(obj, (void *)o);
 	}
       if ((!o) || (!mus_oscil_p(o)))
 	XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil generator");
     }
-
+#if 0
+  {
+    double f;
+  fprintf(stderr, "o: %p %s -> %f\n", o, DISPLAY(obj), f = mus_oscil_unmodulated(o));
+  return(s7_make_real(sc, f));
+  }
+#endif
   return(s7_make_real(sc, mus_oscil_unmodulated(o)));
 }
 
@@ -1954,7 +1961,7 @@ static s7_pointer g_oscil_2(s7_scheme *sc, s7_pointer args)
 
   obj = car(args);
 
-  if (s7_safe_do_level(sc) > 0)
+  if (s7_in_safe_do(sc))
     o = (mus_any *)s7_symbol_accessor_data(obj);
 
   if (!o)
@@ -1994,7 +2001,7 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
   s7_pointer xe, xe_sym, xt, xt_sym, xr, xr_sym;
   mus_any *e = NULL, *t = NULL, *r = NULL;
   bool its_safe;
-  its_safe = (s7_safe_do_level(sc) > 0);
+  its_safe = s7_in_safe_do(sc);
 
   xe_sym = cadar(args);
   if (its_safe) e = (mus_any *)s7_symbol_accessor_data(xe_sym);
@@ -2049,7 +2056,7 @@ static s7_pointer g_fm_violin_mod(s7_scheme *sc, s7_pointer args)
   s7_pointer xe, xe_sym, xt, xt_sym, vib;
   mus_any *e = NULL, *t = NULL;
   bool its_safe;
-  its_safe = (s7_safe_do_level(sc) > 0);
+  its_safe = s7_in_safe_do(sc);
 
   xe_sym = cadar(args);
   if (its_safe) e = (mus_any *)s7_symbol_accessor_data(xe_sym);
@@ -2095,7 +2102,7 @@ static s7_pointer g_fm_violin_modulation(s7_scheme *sc, s7_pointer args)
   mus_any *e = NULL, *t = NULL;
   bool its_safe;
   double vibrato;
-  its_safe = (s7_safe_do_level(sc) > 0);
+  its_safe = s7_in_safe_do(sc);
 
   vargs = cdr(cadr(args)); /* (* ... ) */
   xe_sym = cadr(car(vargs));
@@ -2126,7 +2133,6 @@ static s7_pointer g_fm_violin_modulation(s7_scheme *sc, s7_pointer args)
 	XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_polywave, "a polywave generator");
     }
 
-  /* vib is local TODO: how to protect the others in a similar case? -- still need the global-to-do-loop bit */
   vib = s7_symbol_value(sc, car(args));
   if (!s7_is_real(vib))
     XEN_ASSERT_TYPE(false, car(args), XEN_ARG_2, S_polywave, "a real");
@@ -2142,7 +2148,7 @@ static s7_pointer g_fm_violin_with_modulation(s7_scheme *sc, s7_pointer args)
   mus_any *e = NULL, *t = NULL, *o = NULL;
   bool its_safe;
   double vibrato;
-  its_safe = (s7_safe_do_level(sc) > 0);
+  its_safe = s7_in_safe_do(sc);
 
   xo_sym = car(args);
   if (its_safe) o = (mus_any *)s7_symbol_accessor_data(xo_sym);
@@ -2187,7 +2193,6 @@ static s7_pointer g_fm_violin_with_modulation(s7_scheme *sc, s7_pointer args)
 	XEN_ASSERT_TYPE(false, xt, XEN_ARG_1, S_polywave, "a polywave generator");
     }
 
-  /* vib is local TODO: how to protect the others in a similar case? -- still need the global-to-do-loop bit */
   vib = s7_symbol_value(sc, s7_cadadr(args));
   /* fprintf(stderr, "vib: %s %s\n", DISPLAY(cadr(cadr(args))), DISPLAY(vib)); */
   if (!s7_is_real(vib))
@@ -2204,7 +2209,7 @@ static s7_pointer g_fm_violin_1(s7_scheme *sc, s7_pointer args)
   mus_any *e = NULL, *t = NULL, *o = NULL, *a = NULL;
   bool its_safe;
   double vibrato;
-  its_safe = (s7_safe_do_level(sc) > 0);
+  its_safe = s7_in_safe_do(sc);
 
   xa_sym = s7_cadar(args);
   /* fprintf(stderr, "a: %s %s\n", DISPLAY(xa_sym), DISPLAY(args)); */
@@ -2289,13 +2294,13 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
   double vibrato, val;
   mus_long_t pos;
   mus_xen *ms = NULL;
-  its_safe = (s7_safe_do_level(sc) > 0);
+
+  its_safe = s7_in_safe_do(sc);
 
   /* since we don't get here if make-*, or if anything is shadowed, or any jumps etc,
    *   this assumption that the variable is global to the loop is almost safe -- in
    *   CLM contexts it is, I think, since the run macro wouldn't accept let+pointer.
-   *
-   * TODO: figure out how to mark vars in do, or should we clear in let as well as do?
+   * TODO: use s7_is_do_global for complete protection
    */
   loc_sym = car(args);
   /* fprintf(stderr, "loc: %s %s\n", DISPLAY(loc_sym), DISPLAY(args)); */
@@ -2317,7 +2322,7 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
   if (!lp)
     {
       lp = s7_symbol_slot(sc, locpos);
-      if (s7_is_do_local(lp))
+      if (s7_is_do_local(sc, locpos))
 	s7_symbol_set_accessor_data(locpos, (void *)lp);
       if (!s7_is_integer(cdr(lp)))
 	XEN_ASSERT_TYPE(false, locpos, XEN_ARG_2, S_locsig, "an integer");
@@ -2370,6 +2375,13 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
 	{
 	  e = (mus_any *)(((mus_xen *)s7_object_value(xe))->gen);
 	  s7_symbol_set_accessor_data(xe_sym, (void *)e);
+	  /*
+	  if ((its_safe) &&
+	      (mus_env_style(e) == MUS_ENV_LINEAR))
+	    fenv = mus_env_linear;
+	  */
+	  /* to handle this correctly, we need another symbol extension slot for the function */
+	  /*   then we'd have to pick it up each time -- seems simpler to call mus_env! */
 	}
       if ((!e) || (!mus_env_p(e)))
 	XEN_ASSERT_TYPE(false, xe, XEN_ARG_1, S_env, "an envelope generator");
@@ -2397,12 +2409,12 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
   if (!v)
     {
       v = s7_symbol_slot(sc, vib);
-      if (s7_is_do_local(v))
+      if (s7_is_do_local(sc, vib))
 	s7_symbol_set_accessor_data(vib, (void *)v);
-      if (!s7_is_real(cdr(v)))
+      if (!s7_is_real(cdr(v))) /* PERHAPS: and not rational since we use s7_real below */
 	XEN_ASSERT_TYPE(false, vib, XEN_ARG_2, S_polywave, "a real");
     }
-  vibrato = s7_number_to_real(cdr(v));  
+  vibrato = s7_real(cdr(v));  
 
   val = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)));
   mus_locsig(lc, pos, val);
@@ -2417,12 +2429,14 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
 }
 
 /* s7: 706, run: 479, 
- *   run can use optimized locsig_no_rev/linear_env = about 25,
+ *   run can use optimized locsig_no_rev/linear_env = about 25, [actually we can too! see above]
  *       eval_ptree overhead is about 75, but s7 g_fm_violin* overhead is about 175 + say 20 for the do loop
- *       s7_cxxr is aobut 40, gc is 7, make_real is 15
+ *       s7_cxxr is aobut 40, gc is 7, make_real is 15, (mus_* call overhead is about 25)
  *   so the 225 difference will be very hard to whittle down --
  *   I think 50 could be removed but at the cost of a lot of kludgery
  * so: is that good enough?
+ * the sin numbers callgrind reports are completely bogus, but they're the same here,
+ *    the real factor is 1.4 (.188 to .137 in system time, 700 to 480 in callgrind numbers)
  */
 
 /* (with-sound () (fm-violin 0 .0001 440 .1)) */

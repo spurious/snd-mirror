@@ -30223,6 +30223,8 @@ abs     1       2
 (test (real? (string->number "1+0i")) #t)
 (test (real? (make-rectangular 1 0)) #t)
 (test (real? (make-rectangular 0 0)) #t)
+(test (real? (make-rectangular 1 0.0)) #t)
+(test (real? (make-rectangular 0.0 -0.0)) #t)
 (test (real? (make-polar 0 0)) #t)
 (test (real? (make-polar 1 0)) #t)
 (test (real? (angle 1+i)) #t)
@@ -30241,6 +30243,14 @@ abs     1       2
 (test (real? 1+i) #f)
 (test (real? 1e9-0i) #t)
 (test (real? 0+0i) #t)
+(test (real? 1.0+0i) #t)
+(test (real? 1.0+0.0i) #t)
+(test (real? 1+0.0i) #t)
+(test (real? 1-0.0i) #t)
+(test (real? 1+0i) #t)
+(test (real? -0+1e22i) #f)
+(test (real? -0+1e-22i) #f)
+(test (real? 0+1e-322i) #f)
 (test (real? 1+0/0i) #f) ; bignum direct 1+0/0i -> 1.0
 (test (real? 1.0000000000000000000000000000+0.0000000000000000000000000000i) #t)
 (test (real? 1.0+0.0000000000000000000000000000i) #t)
@@ -30298,6 +30308,8 @@ abs     1       2
 (test (rational? nan.0) #f)
 (test (rational? pi) #f)
 (test (rational? 9223372036854775806/9223372036854775807) #t)
+(test (rational? 1+0i) #f) ; ?? 
+(test (rational? 1+0.0i) #f) ; ?? see integer? 
 
 (if with-bignums
     (begin
@@ -30317,6 +30329,7 @@ abs     1       2
 ;;; integer?
 ;;; --------------------------------------------------------------------------------
 
+(test (integer? 0.0) #f)
 (test (integer? 3) #t)
 (test (integer? 1/2) #f)
 (test (integer? 1/1) #t)
@@ -30326,7 +30339,7 @@ abs     1       2
 (test (integer? 1+i) #f)
 (test (integer? most-negative-fixnum) #t)
 (test (integer? 250076005727/500083) #t)
-(test (integer? 1+0i) #f) ; hmmm
+(test (integer? 1+0i) #f) ; hmmm -- guile says #t, but it thinks 1.0 is an integer
 (test (integer? 0/0) #f)
 (test (integer? 1/0) #f)
 (test (integer? #e.1e010) #t)
@@ -30348,6 +30361,7 @@ abs     1       2
 (test (integer? nan.0) #f)
 (test (integer? pi) #f)
 (test (integer? 9223372036854775806/9223372036854775807) #f)
+(test (integer? 1+0.0i) #f)
 
 (if with-bignums
     (begin

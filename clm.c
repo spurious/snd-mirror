@@ -28,9 +28,7 @@
 #include "clm-strings.h"
 
 #define clm_malloc(Num, What)              malloc(Num)
-#define clm_malloc_atomic(Num, What)       malloc(Num)
 #define clm_calloc(Num, Size, What)        calloc(Num, Size)
-#define clm_calloc_atomic(Num, Size, What) calloc(Num, Size)
 #define clm_realloc(Old, NewSize)          realloc(Old, NewSize)
 #define clm_free(Ptr)                      free(Ptr)
 
@@ -195,7 +193,7 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
   int i, lim, k, size = 256;
   if (arr == NULL) 
     {
-      str = (char *)clm_calloc_atomic(4, sizeof(char), "float_array_to_string");
+      str = (char *)clm_calloc(4, sizeof(char), "float_array_to_string");
       sprintf(str, "nil");
       return(str);
     }
@@ -203,8 +201,8 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
   if (lim > size) size = lim;
   if (loc < 0) loc = 0;
 
-  base = (char *)clm_calloc_atomic(size, sizeof(char), "float_array_to_string");
-  str = (char *)clm_calloc_atomic(STR_SIZE, sizeof(char), "float_array_to_string");
+  base = (char *)clm_calloc(size, sizeof(char), "float_array_to_string");
+  str = (char *)clm_calloc(STR_SIZE, sizeof(char), "float_array_to_string");
 
   if (len > 0)
     {
@@ -1180,8 +1178,8 @@ typedef struct {
 
 mus_float_t mus_oscil(mus_any *ptr, mus_float_t fm, mus_float_t pm)
 {
-  mus_float_t result;
   osc *gen = (osc *)ptr;
+  mus_float_t result;
   result = sin(gen->phase + pm);
   gen->phase += (gen->freq + fm);
   return(result);
@@ -1190,8 +1188,8 @@ mus_float_t mus_oscil(mus_any *ptr, mus_float_t fm, mus_float_t pm)
 
 mus_float_t mus_oscil_unmodulated(mus_any *ptr)
 {
-  mus_float_t result;
   osc *gen = (osc *)ptr;
+  mus_float_t result;
   result = sin(gen->phase);
   gen->phase += gen->freq;
   return(result);
@@ -1200,8 +1198,8 @@ mus_float_t mus_oscil_unmodulated(mus_any *ptr)
 
 mus_float_t mus_oscil_fm(mus_any *ptr, mus_float_t fm)
 {
-  mus_float_t result;
   osc *gen = (osc *)ptr;
+  mus_float_t result;
   result = sin(gen->phase);
   gen->phase += (gen->freq + fm);
   return(result);
@@ -1294,7 +1292,7 @@ static mus_any_class OSCIL_CLASS = {
 mus_any *mus_make_oscil(mus_float_t freq, mus_float_t phase)
 {
   osc *gen;
-  gen = (osc *)clm_calloc_atomic(1, sizeof(osc), S_make_oscil);
+  gen = (osc *)clm_calloc(1, sizeof(osc), S_make_oscil);
   gen->core = &OSCIL_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->phase = phase;
@@ -1497,7 +1495,7 @@ static mus_any_class NCOS_CLASS = {
 mus_any *mus_make_ncos(mus_float_t freq, int n)
 {
   cosp *gen;
-  gen = (cosp *)clm_calloc_atomic(1, sizeof(cosp), S_make_ncos);
+  gen = (cosp *)clm_calloc(1, sizeof(cosp), S_make_ncos);
   gen->core = &NCOS_CLASS;
   if (n == 0) n = 1;
   gen->scaler = 1.0 / (mus_float_t)n;
@@ -1814,17 +1812,6 @@ mus_float_t mus_asymmetric_fm(mus_any *ptr, mus_float_t index, mus_float_t fm)
   mus_float_t result;
   double mth;
   mth = gen->ratio * gen->phase;
-
-#if 0
-  {
-    /* sincos is too hard to access, but it would be interesting to check timings (this also occurs in the fft's and polar->rectangular) */
-    /*   my quick tests indicate that sincos is about 25% faster than sin+cos */
-    double cf, sf;
-    sincos(mth, &sf, &cf);
-    result = exp(index * gen->cosr * cf) * sin(gen->phase + index * gen->sinr * sf);
-  }
-#endif
-
   result = exp(index * gen->cosr * (gen->one + cos(mth))) * cos(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 and (+/-)1.0 + cos to normalize amps 6-Sep-07 */
   gen->phase += (gen->freq + fm);
@@ -1888,7 +1875,7 @@ mus_any *mus_make_asymmetric_fm(mus_float_t freq, mus_float_t phase, mus_float_t
    mus_error(MUS_ARG_OUT_OF_RANGE, "r can't be 0.0");
  else
    {
-     gen = (asyfm *)clm_calloc_atomic(1, sizeof(asyfm), S_make_asymmetric_fm);
+     gen = (asyfm *)clm_calloc(1, sizeof(asyfm), S_make_asymmetric_fm);
      gen->core = &ASYMMETRIC_FM_CLASS;
      gen->freq = mus_hz_to_radians(freq);
      gen->phase = phase;
@@ -2065,7 +2052,7 @@ static mus_any_class NRXYSIN_CLASS = {
 mus_any *mus_make_nrxysin(mus_float_t frequency, mus_float_t y_over_x, int n, mus_float_t r)
 {
   nrxy *gen;
-  gen = (nrxy *)clm_calloc_atomic(1, sizeof(nrxy), S_make_nrxysin);
+  gen = (nrxy *)clm_calloc(1, sizeof(nrxy), S_make_nrxysin);
   gen->core = &NRXYSIN_CLASS;
   gen->freq = mus_hz_to_radians(frequency);
   gen->y_over_x = y_over_x;
@@ -2386,7 +2373,7 @@ mus_any *mus_make_table_lookup(mus_float_t freq, mus_float_t phase, mus_float_t 
     }
   else
     {
-      gen->table = (mus_float_t *)clm_calloc_atomic(table_size, sizeof(mus_float_t), "table lookup table");
+      gen->table = (mus_float_t *)clm_calloc(table_size, sizeof(mus_float_t), "table lookup table");
       gen->table_allocated = true;
     }
   return((mus_any *)gen);
@@ -2403,10 +2390,10 @@ mus_float_t *mus_partials_to_polynomial(int npartials, mus_float_t *partials, mu
   mus_long_t *T0, *T1, *Tn;
   double *Cc1;
 
-  T0 = (mus_long_t *)clm_calloc_atomic(npartials + 1, sizeof(mus_long_t), "partials_to_polynomial t0");
-  T1 = (mus_long_t *)clm_calloc_atomic(npartials + 1, sizeof(mus_long_t), "partials_to_polynomial t1");
-  Tn = (mus_long_t *)clm_calloc_atomic(npartials + 1, sizeof(mus_long_t), "partials_to_polynomial tn");
-  Cc1 = (double *)clm_calloc_atomic(npartials + 1, sizeof(double), "partials_to_polynomial cc1");
+  T0 = (mus_long_t *)clm_calloc(npartials + 1, sizeof(mus_long_t), "partials_to_polynomial t0");
+  T1 = (mus_long_t *)clm_calloc(npartials + 1, sizeof(mus_long_t), "partials_to_polynomial t1");
+  Tn = (mus_long_t *)clm_calloc(npartials + 1, sizeof(mus_long_t), "partials_to_polynomial tn");
+  Cc1 = (double *)clm_calloc(npartials + 1, sizeof(double), "partials_to_polynomial cc1");
 
   if (kind == MUS_CHEBYSHEV_FIRST_KIND)
     T0[0] = 1;
@@ -2671,7 +2658,7 @@ static mus_float_t mus_chebyshev_u_sum_with_index(mus_float_t x, mus_float_t ind
 }
 
 
-static mus_float_t poly_TU(mus_any *ptr, mus_float_t fm)
+mus_float_t mus_polywave(mus_any *ptr, mus_float_t fm)
 {
   /* changed to use recursion, rather than polynomial in x, 25-May-08
    *   this algorithm taken from Mason and Handscomb, "Chebyshev Polynomials" p27
@@ -2689,19 +2676,13 @@ static mus_float_t poly_TU(mus_any *ptr, mus_float_t fm)
 }
 
 
-mus_float_t mus_polywave(mus_any *ptr, mus_float_t fm)
-{
-  return(poly_TU(ptr, fm));
-}
- 
-
 mus_float_t mus_polywave_unmodulated(mus_any *ptr)
 {
-  return(poly_TU(ptr, 0.0));
+  return(mus_polywave(ptr, 0.0));
 }
 
 
-static mus_float_t run_polywave(mus_any *ptr, mus_float_t fm, mus_float_t ignored) {return(poly_TU(ptr, fm));}
+static mus_float_t run_polywave(mus_any *ptr, mus_float_t fm, mus_float_t ignored) {return(mus_polywave(ptr, fm));}
 
 
 static char *describe_polywave(mus_any *ptr)
@@ -3058,7 +3039,7 @@ mus_any *mus_make_wave_train(mus_float_t freq, mus_float_t phase, mus_float_t *w
   gen->wave_size = wave_size;
   gen->interp_type = type;
   gen->out_data_size = wave_size + 2;
-  gen->out_data = (mus_float_t *)clm_calloc_atomic(gen->out_data_size, sizeof(mus_float_t), "wave train out data");
+  gen->out_data = (mus_float_t *)clm_calloc(gen->out_data_size, sizeof(mus_float_t), "wave train out data");
   gen->out_pos = gen->out_data_size;
   gen->next_wave_time = 0.0;
   gen->first_time = true;
@@ -3356,7 +3337,7 @@ mus_any *mus_make_delay(int size, mus_float_t *preloaded_line, int line_size, mu
     }
   else 
     {
-      gen->line = (mus_float_t *)clm_calloc_atomic(line_size, sizeof(mus_float_t), "delay line");
+      gen->line = (mus_float_t *)clm_calloc(line_size, sizeof(mus_float_t), "delay line");
       gen->line_allocated = true;
     }
   gen->zloc = line_size - size;
@@ -4026,7 +4007,7 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
 mus_any *mus_make_sawtooth_wave(mus_float_t freq, mus_float_t amp, mus_float_t phase) /* M_PI as initial phase, normally */
 {
   sw *gen;
-  gen = (sw *)clm_calloc_atomic(1, sizeof(sw), S_make_sawtooth_wave);
+  gen = (sw *)clm_calloc(1, sizeof(sw), S_make_sawtooth_wave);
   gen->core = &SAWTOOTH_WAVE_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = (amp / M_PI);
@@ -4107,7 +4088,7 @@ static mus_any_class SQUARE_WAVE_CLASS = {
 mus_any *mus_make_square_wave(mus_float_t freq, mus_float_t amp, mus_float_t phase)
 {
   sw *gen;
-  gen = (sw *)clm_calloc_atomic(1, sizeof(sw), S_make_square_wave);
+  gen = (sw *)clm_calloc(1, sizeof(sw), S_make_square_wave);
   gen->core = &SQUARE_WAVE_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = amp;
@@ -4191,7 +4172,7 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
 mus_any *mus_make_triangle_wave(mus_float_t freq, mus_float_t amp, mus_float_t phase)
 {
   sw *gen;
-  gen = (sw *)clm_calloc_atomic(1, sizeof(sw), S_make_triangle_wave);
+  gen = (sw *)clm_calloc(1, sizeof(sw), S_make_triangle_wave);
   gen->core = &TRIANGLE_WAVE_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = (2.0 * amp / M_PI);
@@ -4271,7 +4252,7 @@ static mus_any_class PULSE_TRAIN_CLASS = {
 mus_any *mus_make_pulse_train(mus_float_t freq, mus_float_t amp, mus_float_t phase) /* TWO_PI initial phase, normally */
 {
   sw *gen;
-  gen = (sw *)clm_calloc_atomic(1, sizeof(sw), S_make_pulse_train);
+  gen = (sw *)clm_calloc(1, sizeof(sw), S_make_pulse_train);
   gen->core = &PULSE_TRAIN_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = amp;
@@ -4710,7 +4691,7 @@ static mus_any_class ONE_ZERO_CLASS = {
 mus_any *mus_make_one_zero(mus_float_t a0, mus_float_t a1)
 {
   smpflt *gen;
-  gen = (smpflt *)clm_calloc_atomic(1, sizeof(smpflt), S_make_one_zero);
+  gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_one_zero);
   gen->core = &ONE_ZERO_CLASS;
   gen->xs[0] = a0;
   gen->xs[1] = a1;
@@ -4763,7 +4744,7 @@ static mus_any_class ONE_POLE_CLASS = {
 mus_any *mus_make_one_pole(mus_float_t a0, mus_float_t b1)
 {
   smpflt *gen;
-  gen = (smpflt *)clm_calloc_atomic(1, sizeof(smpflt), S_make_one_pole);
+  gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_one_pole);
   gen->core = &ONE_POLE_CLASS;
   gen->xs[0] = a0;
   gen->ys[1] = b1;
@@ -4852,7 +4833,7 @@ static mus_any_class TWO_ZERO_CLASS = {
 mus_any *mus_make_two_zero(mus_float_t a0, mus_float_t a1, mus_float_t a2)
 {
   smpflt *gen;
-  gen = (smpflt *)clm_calloc_atomic(1, sizeof(smpflt), S_make_two_zero);
+  gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_two_zero);
   gen->core = &TWO_ZERO_CLASS;
   gen->xs[0] = a0;
   gen->xs[1] = a1;
@@ -4962,7 +4943,7 @@ mus_any *mus_make_two_pole(mus_float_t a0, mus_float_t b1, mus_float_t b2)
 	 else
 	   {
 	     smpflt *gen;
-	     gen = (smpflt *)clm_calloc_atomic(1, sizeof(smpflt), S_make_two_pole);
+	     gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_two_pole);
 	     gen->core = &TWO_POLE_CLASS;
 	     gen->xs[0] = a0;
 	     gen->ys[1] = b1;
@@ -5154,7 +5135,7 @@ static mus_any_class FORMANT_CLASS = {
 mus_any *mus_make_formant(mus_float_t frequency, mus_float_t radius)
 {
   frm *gen;
-  gen = (frm *)clm_calloc_atomic(1, sizeof(frm), S_make_formant);
+  gen = (frm *)clm_calloc(1, sizeof(frm), S_make_formant);
   gen->core = &FORMANT_CLASS;
   mus_set_formant_radius_and_frequency((mus_any *)gen, radius, frequency);
   return((mus_any *)gen);
@@ -5258,7 +5239,7 @@ static mus_any_class FIRMANT_CLASS = {
 mus_any *mus_make_firmant(mus_float_t frequency, mus_float_t radius)
 {
   frm *gen;
-  gen = (frm *)clm_calloc_atomic(1, sizeof(frm), S_make_firmant);
+  gen = (frm *)clm_calloc(1, sizeof(frm), S_make_firmant);
   gen->core = &FIRMANT_CLASS;
   gen->frequency = mus_hz_to_radians(frequency);
   gen->radius = radius;
@@ -5657,7 +5638,7 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, mus
 	gen->state = state;
       else 
 	{
-	  gen->state = (mus_float_t *)clm_calloc_atomic(order, sizeof(mus_float_t), "filter state space");
+	  gen->state = (mus_float_t *)clm_calloc(order, sizeof(mus_float_t), "filter state space");
 	  gen->state_allocated = true;
 	}
       gen->core = cls;
@@ -5699,7 +5680,7 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
   if (n <= 0) return(aa);
   if (aa) 
     a = aa;
-  else a = (mus_float_t *)clm_calloc_atomic(order, sizeof(mus_float_t), "coeff space");
+  else a = (mus_float_t *)clm_calloc(order, sizeof(mus_float_t), "coeff space");
   if (!a) return(NULL);
   if (!(POWER_OF_2_P(order)))
     {
@@ -5893,8 +5874,8 @@ static void dmagify_env(seg *e, mus_float_t *data, int pts, mus_long_t dur, doub
       (data[pts * 2 - 2] != data[0]))
     xscl = (double)(dur - 1) / (double)(data[pts * 2 - 2] - data[0]); /* was dur, 7-Apr-02 */
 
-  e->rates = (double *)clm_calloc_atomic(pts, sizeof(double), "env rates");
-  e->locs = (mus_long_t *)clm_calloc_atomic(pts + 1, sizeof(mus_long_t), "env locs");
+  e->rates = (double *)clm_calloc(pts, sizeof(double), "env rates");
+  e->locs = (mus_long_t *)clm_calloc(pts + 1, sizeof(mus_long_t), "env locs");
 
   for (j = 0, i = 2; i < pts * 2; i += 2, j++)
     {
@@ -5982,7 +5963,7 @@ static mus_float_t *fixup_exp_env(seg *e, mus_float_t *data, int pts, double off
 
   /* fill "result" with x and (offset+scaler*y) */
 
-  result = (mus_float_t *)clm_calloc_atomic(len, sizeof(mus_float_t), "env data");
+  result = (mus_float_t *)clm_calloc(len, sizeof(mus_float_t), "env data");
   result[0] = data[0];
   result[1] = min_y;
 
@@ -6242,7 +6223,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
     e->original_data = odata;
   else
     {      
-      e->original_data  = (mus_float_t *)clm_calloc_atomic(npts * 2, sizeof(mus_float_t), "env original data");
+      e->original_data  = (mus_float_t *)clm_calloc(npts * 2, sizeof(mus_float_t), "env original data");
       e->data_allocated = true;
     }
 
@@ -6483,7 +6464,7 @@ mus_any *mus_make_empty_frame(int chans)
   nf = (mus_frame *)clm_calloc(1, sizeof(mus_frame), S_make_frame);
   nf->core = &FRAME_CLASS;
   nf->chans = chans;
-  nf->vals = (mus_float_t *)clm_calloc_atomic(chans, sizeof(mus_float_t), "frame data");
+  nf->vals = (mus_float_t *)clm_calloc(chans, sizeof(mus_float_t), "frame data");
   nf->data_allocated = true;
   return((mus_any *)nf);
 }
@@ -6791,7 +6772,7 @@ mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data)
   nf = (mus_mixer *)clm_calloc(1, sizeof(mus_mixer), S_make_mixer);
   nf->core = &MIXER_CLASS;
   nf->chans = chans;
-  nf->vals = (mus_float_t **)clm_calloc_atomic(chans, sizeof(mus_float_t *), "mixer data");
+  nf->vals = (mus_float_t **)clm_calloc(chans, sizeof(mus_float_t *), "mixer data");
   for (i = 0; i < chans; i++)
     nf->vals[i] = (mus_float_t *)(data + (i * chans));
   nf->data_allocated = false;
@@ -6808,7 +6789,7 @@ mus_any *mus_make_empty_mixer(int chans)
   nf->chans = chans;
   nf->vals = (mus_float_t **)clm_calloc(chans, sizeof(mus_float_t *), "mixer data");
   for (i = 0; i < chans; i++)
-    nf->vals[i] = (mus_float_t *)clm_calloc_atomic(chans, sizeof(mus_float_t), "mixer data");
+    nf->vals[i] = (mus_float_t *)clm_calloc(chans, sizeof(mus_float_t), "mixer data");
   nf->data_allocated = true;
   return((mus_any *)nf);
 }
@@ -7376,7 +7357,7 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 		{
 		  gen->ibufs = (mus_sample_t **)clm_malloc(gen->chans * sizeof(mus_sample_t *), "input buffers");
 		  for (i = 0; i < gen->chans; i++)
-		    gen->ibufs[i] = (mus_sample_t *)clm_calloc_atomic(gen->file_buffer_size, sizeof(mus_sample_t), "input buffer");
+		    gen->ibufs[i] = (mus_sample_t *)clm_calloc(gen->file_buffer_size, sizeof(mus_sample_t), "input buffer");
 		}
 	      mus_file_seek_frame(fd, gen->data_start);
 	      
@@ -7442,7 +7423,7 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long
       gen->core = &FILE_TO_SAMPLE_CLASS;
       gen->file_buffer_size = buffer_size;
 
-      gen->file_name = (char *)clm_calloc_atomic(strlen(filename) + 1, sizeof(char), S_file_to_sample " filename");
+      gen->file_name = (char *)clm_calloc(strlen(filename) + 1, sizeof(char), S_file_to_sample " filename");
       strcpy(gen->file_name, filename);
       gen->data_end = -1; /* force initial read */
 
@@ -7562,7 +7543,7 @@ mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_lo
       gen->chan = chan;
       gen->file_buffer_size = buffer_size;
       gen->ibufs = (mus_sample_t **)clm_calloc(gen->chans, sizeof(mus_sample_t *), "readin buffers");
-      gen->ibufs[chan] = (mus_sample_t *)clm_calloc_atomic(gen->file_buffer_size, sizeof(mus_sample_t), "readin buffer");
+      gen->ibufs[chan] = (mus_sample_t *)clm_calloc(gen->file_buffer_size, sizeof(mus_sample_t), "readin buffer");
       return((mus_any *)gen);
     }
   return(NULL);
@@ -7831,7 +7812,7 @@ static void flush_buffers(rdout *gen)
       data_format = mus_sound_data_format(gen->file_name);
       current_file_frames = mus_sound_frames(gen->file_name);
 
-      addbufs = (mus_sample_t **)clm_calloc_atomic(gen->chans, sizeof(mus_sample_t *), "output buffers");
+      addbufs = (mus_sample_t **)clm_calloc(gen->chans, sizeof(mus_sample_t *), "output buffers");
 
       {
 	bool allocation_failed = false;
@@ -8079,7 +8060,7 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 	  int i;
 	  gen = (rdout *)clm_calloc(1, sizeof(rdout), "output");
 	  gen->core = &SAMPLE_TO_FILE_CLASS;
-	  gen->file_name = (char *)clm_calloc_atomic(strlen(filename) + 1, sizeof(char), "output filename");
+	  gen->file_name = (char *)clm_calloc(strlen(filename) + 1, sizeof(char), "output filename");
 	  strcpy(gen->file_name, filename);
 	  gen->data_start = 0;
 	  gen->data_end = clm_file_buffer_size - 1;
@@ -8089,7 +8070,7 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 	  gen->output_header_type = out_type;
 	  gen->obufs = (mus_sample_t **)clm_calloc(gen->chans, sizeof(mus_sample_t *), "output buffers");
 	  for (i = 0; i < gen->chans; i++) 
-	    gen->obufs[i] = (mus_sample_t *)clm_calloc_atomic(clm_file_buffer_size, sizeof(mus_sample_t), "output buffer");
+	    gen->obufs[i] = (mus_sample_t *)clm_calloc(clm_file_buffer_size, sizeof(mus_sample_t), "output buffer");
 	  /* clear previous, if any */
 	  if (mus_file_close(fd) != 0)
 	    mus_error(MUS_CANT_CLOSE_FILE, 
@@ -8642,7 +8623,7 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
   if (mus_output_p(output)) 
     gen->outn_writer = output;
   gen->chans = chans;
-  gen->outn = (mus_float_t *)clm_calloc_atomic(gen->chans, sizeof(mus_float_t), "locsig frame");
+  gen->outn = (mus_float_t *)clm_calloc(gen->chans, sizeof(mus_float_t), "locsig frame");
   mus_locsig_fill(gen->outn, gen->chans, degree, dist, type);
 
   if (mus_output_p(revput))
@@ -8650,7 +8631,7 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
   gen->rev_chans = rev_chans;
   if (gen->rev_chans > 0)
     {
-      gen->revn = (mus_float_t *)clm_calloc_atomic(gen->rev_chans, sizeof(mus_float_t), "locsig reverb frame");
+      gen->revn = (mus_float_t *)clm_calloc(gen->rev_chans, sizeof(mus_float_t), "locsig reverb frame");
       gen->revf = (mus_frame *)mus_make_empty_frame(gen->rev_chans);
       mus_locsig_fill(gen->revn, gen->rev_chans, degree, (reverb * sqrt(dist)), type);
     }
@@ -9166,7 +9147,7 @@ static mus_float_t *init_sinc_table(int width)
   if (sincs == 0)
     {
       sinc_tables = (mus_float_t **)clm_calloc(8, sizeof(mus_float_t *), "sinc tables");
-      sinc_widths = (int *)clm_calloc_atomic(8, sizeof(int), "sinc tables");
+      sinc_widths = (int *)clm_calloc(8, sizeof(int), "sinc tables");
       sincs = 8;
       loc = 0;
     }
@@ -9198,7 +9179,7 @@ static mus_float_t *init_sinc_table(int width)
   padded_size = size + 4;
   sinc_freq = M_PI / (mus_float_t)SRC_SINC_DENSITY;
   win_freq = M_PI / (mus_float_t)size;
-  sinc_tables[loc] = (mus_float_t *)clm_calloc_atomic(padded_size, sizeof(mus_float_t), "sinc table");
+  sinc_tables[loc] = (mus_float_t *)clm_calloc(padded_size, sizeof(mus_float_t), "sinc table");
   sinc_tables[loc][0] = 1.0;
   for (i = 1, sinc_phase = sinc_freq, win_phase = win_freq; i < padded_size; i++, sinc_phase += sinc_freq, win_phase += win_freq)
     sinc_tables[loc][i] = sin(sinc_phase) * (0.5 + 0.5 * cos(win_phase)) / sinc_phase;
@@ -9318,7 +9299,7 @@ mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_
 	  srp->width = wid;
 	  srp->lim = 2 * wid;
 	  srp->len = wid * SRC_SINC_DENSITY;
-	  srp->data = (mus_float_t *)clm_calloc_atomic(srp->lim + 1, sizeof(mus_float_t), "src table");
+	  srp->data = (mus_float_t *)clm_calloc(srp->lim + 1, sizeof(mus_float_t), "src table");
 	  srp->sinc_table = init_sinc_table(wid);
 	  if (input)
 	    {
@@ -9701,13 +9682,13 @@ mus_any *mus_make_granulate(mus_float_t (*input)(void *arg, int direction),
    /* added "2 *" 21-Mar-05 and replaced irandom with (grn)mus_irandom below */
   spd->s50 = (int)(jitter * sampling_rate * hop * 0.4);
   spd->out_data_len = outlen;
-  spd->out_data = (mus_float_t *)clm_calloc_atomic(spd->out_data_len, sizeof(mus_float_t), "granulate out data");
+  spd->out_data = (mus_float_t *)clm_calloc(spd->out_data_len, sizeof(mus_float_t), "granulate out data");
   spd->in_data_len = outlen + spd->s20 + 1;
-  spd->in_data = (mus_float_t *)clm_calloc_atomic(spd->in_data_len, sizeof(mus_float_t), "granulate in data");
+  spd->in_data = (mus_float_t *)clm_calloc(spd->in_data_len, sizeof(mus_float_t), "granulate in data");
   spd->rd = input;
   spd->closure = closure;
   spd->edit = edit;
-  spd->grain = (mus_float_t *)clm_calloc_atomic(spd->in_data_len, sizeof(mus_float_t), "granulate grain");
+  spd->grain = (mus_float_t *)clm_calloc(spd->in_data_len, sizeof(mus_float_t), "granulate grain");
   spd->first_samp = true;
   spd->randx = mus_rand_seed(); /* caller can override this via the mus_location method */
   next_random();
@@ -9719,7 +9700,7 @@ void mus_granulate_set_edit_function(mus_any *ptr, int (*edit)(void *closure))
 {
   grn_info *gen = (grn_info *)ptr;
   if (!(gen->grain))
-    gen->grain = (mus_float_t *)clm_calloc_atomic(gen->in_data_len, sizeof(mus_float_t), "granulate grain");
+    gen->grain = (mus_float_t *)clm_calloc(gen->in_data_len, sizeof(mus_float_t), "granulate grain");
   gen->edit = edit;
 }
 
@@ -10693,8 +10674,8 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 	if (beta < 0.2) beta = 0.2;
 	alpha = creal(ccosh(cacosh(pow(10.0, beta)) / (mus_float_t)size));
 
-	rl = (mus_float_t *)clm_calloc_atomic(size, sizeof(mus_float_t), "ifft window buffer");
-	im = (mus_float_t *)clm_calloc_atomic(size, sizeof(mus_float_t), "ifft window buffer");
+	rl = (mus_float_t *)clm_calloc(size, sizeof(mus_float_t), "ifft window buffer");
+	im = (mus_float_t *)clm_calloc(size, sizeof(mus_float_t), "ifft window buffer");
 
 	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
 	  {
@@ -10755,8 +10736,8 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 			     gsl_complex_arccosh_real(pow(10.0, beta)),
 			     (double)(1.0 / (mus_float_t)size))));
 
-	rl = (mus_float_t *)clm_calloc_atomic(size, sizeof(mus_float_t), "ifft window buffer");
-	im = (mus_float_t *)clm_calloc_atomic(size, sizeof(mus_float_t), "ifft window buffer");
+	rl = (mus_float_t *)clm_calloc(size, sizeof(mus_float_t), "ifft window buffer");
+	im = (mus_float_t *)clm_calloc(size, sizeof(mus_float_t), "ifft window buffer");
 
 	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
 	  {
@@ -10826,7 +10807,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 
 mus_float_t *mus_make_fft_window(mus_fft_window_t type, mus_long_t size, mus_float_t beta)
 {
-  return(mus_make_fft_window_with_window(type, size, beta, 0.0, (mus_float_t *)clm_calloc_atomic(size, sizeof(mus_float_t), S_make_fft_window)));
+  return(mus_make_fft_window_with_window(type, size, beta, 0.0, (mus_float_t *)clm_calloc(size, sizeof(mus_float_t), S_make_fft_window)));
 }
 
 
@@ -10909,7 +10890,7 @@ mus_float_t *mus_autocorrelate(mus_float_t *data, mus_long_t n)
 
   n2 = n / 2;
   fscl = 1.0 / (mus_float_t)n;
-  im = (mus_float_t *)clm_calloc_atomic(n, sizeof(mus_float_t), "mus_autocorrelate imaginary data");
+  im = (mus_float_t *)clm_calloc(n, sizeof(mus_float_t), "mus_autocorrelate imaginary data");
 
   mus_fft(data, im, n, 1);
   for (i = 0; i < n; i++)
@@ -10933,8 +10914,8 @@ mus_float_t *mus_correlate(mus_float_t *data1, mus_float_t *data2, mus_long_t n)
   mus_long_t i;
   mus_float_t fscl;
 
-  im1 = (mus_float_t *)clm_calloc_atomic(n, sizeof(mus_float_t), "mus_correlate imaginary data");
-  im2 = (mus_float_t *)clm_calloc_atomic(n, sizeof(mus_float_t), "mus_correlate imaginary data");
+  im1 = (mus_float_t *)clm_calloc(n, sizeof(mus_float_t), "mus_correlate imaginary data");
+  im2 = (mus_float_t *)clm_calloc(n, sizeof(mus_float_t), "mus_correlate imaginary data");
   
   mus_fft(data1, im1, n, 1);
   mus_fft(data2, im2, n, 1);
@@ -10971,8 +10952,8 @@ mus_float_t *mus_cepstrum(mus_float_t *data, mus_long_t n)
   lowest = 0.00000001;
   fscl = 2.0 / (mus_float_t)n;
 
-  rl = (mus_float_t *)clm_malloc_atomic(n * sizeof(mus_float_t), "mus_cepstrum real data");
-  im = (mus_float_t *)clm_calloc_atomic(n, sizeof(mus_float_t), "mus_cepstrum imaginary data");
+  rl = (mus_float_t *)clm_malloc(n * sizeof(mus_float_t), "mus_cepstrum real data");
+  im = (mus_float_t *)clm_calloc(n, sizeof(mus_float_t), "mus_cepstrum imaginary data");
   memcpy((void *)rl, (void *)data, n * sizeof(mus_float_t));
 
   mus_fft(rl, im, n, 1);
@@ -11192,9 +11173,9 @@ mus_any *mus_make_convolve(mus_float_t (*input)(void *arg, int direction), mus_f
   gen->fftsize = fftsize;
   gen->fftsize2 = gen->fftsize / 2;
   gen->ctr = gen->fftsize2;
-  gen->rl1 = (mus_float_t *)clm_calloc_atomic(fftsize, sizeof(mus_float_t), "convolve fft data");
-  gen->rl2 = (mus_float_t *)clm_calloc_atomic(fftsize, sizeof(mus_float_t), "convolve fft data");
-  gen->buf = (mus_float_t *)clm_calloc_atomic(fftsize, sizeof(mus_float_t), "convolve fft data");
+  gen->rl1 = (mus_float_t *)clm_calloc(fftsize, sizeof(mus_float_t), "convolve fft data");
+  gen->rl2 = (mus_float_t *)clm_calloc(fftsize, sizeof(mus_float_t), "convolve fft data");
+  gen->buf = (mus_float_t *)clm_calloc(fftsize, sizeof(mus_float_t), "convolve fft data");
   return((mus_any *)gen);
 }
 
@@ -11223,13 +11204,13 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
   outlen = file1_len + file2_len + 1;
   totallen = outlen * output_chans;
 
-  data1 = (mus_float_t *)clm_calloc_atomic(fftlen, sizeof(mus_float_t), "convolve_files data");
-  data2 = (mus_float_t *)clm_calloc_atomic(fftlen, sizeof(mus_float_t), "convolve_files data");
+  data1 = (mus_float_t *)clm_calloc(fftlen, sizeof(mus_float_t), "convolve_files data");
+  data2 = (mus_float_t *)clm_calloc(fftlen, sizeof(mus_float_t), "convolve_files data");
 
   if (output_chans == 1)
     {
       mus_sample_t *samps;
-      samps = (mus_sample_t *)clm_calloc_atomic(fftlen, sizeof(mus_sample_t), "convolve_files data");
+      samps = (mus_sample_t *)clm_calloc(fftlen, sizeof(mus_sample_t), "convolve_files data");
 
       mus_file_to_array(file1, 0, 0, file1_len, samps); 
       for (i = 0; i < file1_len; i++) data1[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
@@ -11259,8 +11240,8 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
       mus_float_t *outdat = NULL;
       int c1 = 0, c2 = 0, chan;
 
-      samps = (mus_sample_t *)clm_calloc_atomic(totallen, sizeof(mus_sample_t), "convolve_files data");
-      outdat = (mus_float_t *)clm_calloc_atomic(totallen, sizeof(mus_float_t), "convolve_files data");
+      samps = (mus_sample_t *)clm_calloc(totallen, sizeof(mus_sample_t), "convolve_files data");
+      outdat = (mus_float_t *)clm_calloc(totallen, sizeof(mus_float_t), "convolve_files data");
 
       for (chan = 0; chan < output_chans; chan++)
 	{
@@ -11470,12 +11451,12 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   pv->outctr = interp;
   pv->filptr = 0;
   pv->pitch = pitch;
-  pv->ampinc = (mus_float_t *)clm_calloc_atomic(fftsize, sizeof(mus_float_t), "pvoc ampinc");
-  pv->freqs = (mus_float_t *)clm_calloc_atomic(fftsize, sizeof(mus_float_t), "pvoc freqs");
-  pv->amps = (mus_float_t *)clm_calloc_atomic(N2, sizeof(mus_float_t), "pvoc amps");
-  pv->phases = (mus_float_t *)clm_calloc_atomic(N2, sizeof(mus_float_t), "pvoc phases");
-  pv->lastphase = (mus_float_t *)clm_calloc_atomic(N2, sizeof(mus_float_t), "pvoc lastphase");
-  pv->phaseinc = (mus_float_t *)clm_calloc_atomic(N2, sizeof(mus_float_t), "pvoc phaseinc");
+  pv->ampinc = (mus_float_t *)clm_calloc(fftsize, sizeof(mus_float_t), "pvoc ampinc");
+  pv->freqs = (mus_float_t *)clm_calloc(fftsize, sizeof(mus_float_t), "pvoc freqs");
+  pv->amps = (mus_float_t *)clm_calloc(N2, sizeof(mus_float_t), "pvoc amps");
+  pv->phases = (mus_float_t *)clm_calloc(N2, sizeof(mus_float_t), "pvoc phases");
+  pv->lastphase = (mus_float_t *)clm_calloc(N2, sizeof(mus_float_t), "pvoc lastphase");
+  pv->phaseinc = (mus_float_t *)clm_calloc(N2, sizeof(mus_float_t), "pvoc phaseinc");
   pv->in_data = NULL;
   pv->input = input;
   pv->closure = closure;
@@ -11534,7 +11515,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	  mus_clear_array(pv->freqs, pv->N);
 	  if (pv->in_data == NULL)
 	    {
-	      pv->in_data = (mus_float_t *)clm_calloc_atomic(pv->N, sizeof(mus_float_t), "pvoc indata");
+	      pv->in_data = (mus_float_t *)clm_calloc(pv->N, sizeof(mus_float_t), "pvoc indata");
 	      for (i = 0; i < pv->N; i++) pv->in_data[i] = (*pv_input)(pv->closure, 1);
 	    }
 	  else
@@ -11589,7 +11570,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       pv->amps[i] += pv->ampinc[i];
       pv->phaseinc[i] += pv->freqs[i];
       pv->phases[i] += pv->phaseinc[i];
-      sum += (pv->amps[i] * sin(pv->phases[i])); /* this is really expensive in 64-bit systems -- perhaps make a local sin? */
+      sum += (pv->amps[i] * sin(pv->phases[i])); 
     }
   return(sum);
 }
@@ -12004,10 +11985,10 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
       /* highly optimizable cases */
       obufs = (mus_sample_t **)clm_malloc(out_chans * sizeof(mus_sample_t *), "mix output");
       for (i = 0; i < out_chans; i++) 
-	obufs[i] = (mus_sample_t *)clm_calloc_atomic(clm_file_buffer_size, sizeof(mus_sample_t), "mix output buffers");
+	obufs[i] = (mus_sample_t *)clm_calloc(clm_file_buffer_size, sizeof(mus_sample_t), "mix output buffers");
       ibufs = (mus_sample_t **)clm_malloc(in_chans * sizeof(mus_sample_t *), "mix input");
       for (i = 0; i < in_chans; i++) 
-	ibufs[i] = (mus_sample_t *)clm_calloc_atomic(clm_file_buffer_size, sizeof(mus_sample_t), "mix input buffers");
+	ibufs[i] = (mus_sample_t *)clm_calloc(clm_file_buffer_size, sizeof(mus_sample_t), "mix input buffers");
       ifd = mus_sound_open_input(infile);
       mus_file_seek_frame(ifd, in_start);
       mus_file_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);

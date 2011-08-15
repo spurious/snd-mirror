@@ -834,7 +834,8 @@ struct s7_scheme {
 #if WITH_OPTIMIZATION
   s7_pointer SAFE_AND, SAFE_OR, SAFE_IF1, SAFE_IF2, SAFE_OR_S, SAFE_AND_S;
   s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, SIMPLE_DO, DOTIMES, SIMPLE_DOTIMES;
-  int safe_do_level;
+  int safe_do_level, safe_do_ids_size;
+  long long int *safe_do_ids;
 #endif
   
   s7_pointer input_port;              /* current-input-port */
@@ -1045,12 +1046,6 @@ struct s7_scheme {
 /* optimizer flag for a procedure that sets some variable (set-car! for example).
  */
 
-#define T_DO_LOCAL                    (1 << (TYPE_BITS + 18))
-#define set_do_local(p)               typeflag(p)  |= T_DO_LOCAL
-#define is_do_local(p)                ((typeflag(p) & T_DO_LOCAL) != 0)
-#define clear_do_local(p)             typeflag(p)  &= (~T_DO_LOCAL)
-
-
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 #define set_mark(p)                   typeflag(p)  |= T_GC_MARK
@@ -1058,7 +1053,7 @@ struct s7_scheme {
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x78000000
+#define UNUSED_BITS                   0x7c000000
 
 #define set_type(p, f)                typeflag(p) = f
 
@@ -20391,14 +20386,56 @@ void s7_symbol_set_accessor_data(s7_pointer sym, void *val)
 }
 
 
-int s7_safe_do_level(s7_scheme *sc)
-{
 #if WITH_OPTIMIZATION
-  return(sc->safe_do_level);
-#else
-  return(0);
-#endif
+
+bool s7_in_safe_do(s7_scheme *sc)
+{
+  return(sc->safe_do_level > 0);
 }
+
+static void safe_do_set_id(s7_scheme *sc, long long int id)
+{
+  if (sc->safe_do_level >= sc->safe_do_ids_size)
+    {
+      sc->safe_do_ids_size = sc->safe_do_level * 2;
+      sc->safe_do_ids = (long long int *)realloc(sc->safe_do_ids, sc->safe_do_ids_size * sizeof(long long int));
+    }
+  sc->safe_do_ids[sc->safe_do_level] = id;
+}
+
+bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol)
+{
+  return(sc->safe_do_ids[sc->safe_do_level] == symbol_id(symbol));
+}
+
+bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol)
+{
+  return(sc->safe_do_ids[sc->safe_do_level] > symbol_id(symbol));
+}
+
+/* TODO: wouldn't the do-local business work in all do loops?
+ */
+
+
+#else
+
+bool s7_in_safe_do(s7_scheme *sc)
+{
+  return(false);
+}
+
+bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol)
+{
+  return(false);
+}
+
+bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol)
+{
+  return(false);
+}
+
+#endif
+
 
 
 
@@ -29410,11 +29447,6 @@ static s7_pointer check_set(s7_scheme *sc)
 }
 
 
-bool s7_is_do_local(s7_pointer slot)
-{
-  return(is_do_local(slot));
-}
-
 #if WITH_OPTIMIZATION
 static void initialize_safe_do(s7_scheme *sc, s7_pointer tree)
 {
@@ -29635,8 +29667,6 @@ static s7_pointer check_do(s7_scheme *sc)
 	vars = car(sc->code);
 	end = cadr(sc->code);
 
-	/* fprintf(stderr, "check %s\n", DISPLAY_80(sc->code)); */
-
 	if ((is_pair(end)) &&
 	    (is_pair(vars)) &&
 	    (is_null(cdr(vars))))
@@ -29668,8 +29698,6 @@ static s7_pointer check_do(s7_scheme *sc)
 			car(ecdr(sc->code)) = sc->SIMPLE_DO;
 
 			/* TODO: also SIMPLE_DO with CS in either case?
-			 *       and if optimize_data(car(body)) is HOP_SAFE_C_C and just that expr in body
-			 *         the entire loop can be done in-place. like for-each.
 			 */
 
 			/* now look for the very common dotimes case
@@ -29700,6 +29728,11 @@ static s7_pointer check_do(s7_scheme *sc)
 				/* fprintf(stderr, "safe do: %s\n", DISPLAY_80(sc->code)); */
 				car(ecdr(sc->code)) = sc->DOTIMES;
 
+				/* TODO: test oscil_1 in this case
+				 */
+
+				/* TODO: 54981: ;rev with-sound -> sound-data fm-violin maxamp (opt 2): (0.55327807917922 0.55327807917922)
+				 */
 				{
 				  s7_pointer x;
 				  x = cddr(sc->code);
@@ -29720,24 +29753,33 @@ static s7_pointer check_do(s7_scheme *sc)
 				      (syntax_opcode(caar(x)) == OP_LET))
 				    {
 				      x = cddar(x);
-				      /*
+
+#if 0
 				      fprintf(stderr, "cddar: %s\n", DISPLAY_80(x));
-				      */
+				      if (is_pair(car(x)))
+					{
+					  if (is_optimized(car(x)))
+					    fprintf(stderr, "opt: %s\n", opt_names[optimize_data(car(x))]);
+					  else fprintf(stderr, "not opt\n");
+					}
+				      else fprintf(stderr, "not pair\n");
+#endif
+
 				      if ((is_pair(car(x))) &&
 					  (is_optimized(car(x))) &&
 					  (is_null(cdr(x))) &&
 					  (optimize_data(car(x)) == HOP_SAFE_C_C))
 					{
 					  bool happy = true;
-					  /*
-					  fprintf(stderr, "safe let?: %s\n", DISPLAY_80(sc->code));
-					  */
+
+					  /* fprintf(stderr, "safe let?: %s\n", DISPLAY_80(sc->code)); */
+
 					  for (x = cadar(cddr(sc->code)); is_pair(x); x = cdr(x))
 					    {
-					      /* fprintf(stderr, "let var: %s\n", DISPLAY(x)); */
-					      if ((is_pair(cadr(x))) &&
-						  ((!is_optimized(cadr(x))) ||
-						   (optimize_data(cadr(x)) != HOP_SAFE_C_C)))
+					      /* fprintf(stderr, "let var: %s\n", DISPLAY(car(x))); */
+					      if ((!is_pair(cadar(x))) ||
+						  (!is_optimized(cadar(x))) ||
+						  (optimize_data(cadar(x)) != HOP_SAFE_C_C))
 						{
 						  happy = false;
 						  break;
@@ -30488,7 +30530,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     SIMPLE_DOTIMES:
     case OP_SIMPLE_DOTIMES:
-      /* set up as in DOTIMES, pull in all the let vars and set do_local on each slot
+      /* set up as in DOTIMES, pull in all the let vars
        *   run body without any jumps: update and check step,
        *   SAFE_C_C of each let var, SAFE_C_C of body
        *   goto START
@@ -30521,8 +30563,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		denominator(number(symbol_value(sc->args))) = s7_integer(end_val);
 		initialize_safe_do(sc, sc->code);
 		sc->safe_do_level++;
+		safe_do_set_id(sc, frame_id(sc->envir));
 
-		/* add the let vars with do_local but not initialized yet 
+		/* add the let vars but not initialized yet 
 		 */
 		for (let_var = car(cdaddr(sc->code)); is_pair(let_var); let_var = cdr(let_var))
 		  {
@@ -30531,13 +30574,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    fprintf(stderr, "added %s\n", DISPLAY(caar(let_var)));
 #endif
 		  }
-		for (p = car(sc->envir); is_pair(p); p = ecdr(p))
-		  {
-		    set_do_local(p);
-		  }
-		/*
-		set_do_local(sc->args);
-		*/
 		
 	      SIMPLE_DOTIMES_LOOP:
 
@@ -30564,14 +30600,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		numerator(number(symbol_value(sc->args)))++;
 		if (numerator(number(symbol_value(sc->args))) == denominator(number(symbol_value(sc->args))))
 		  {
-		    clear_do_local(sc->args);
-
-		    /* also clear let locals */
-		    for (p = car(sc->envir); is_pair(p); p = ecdr(p))
-		      {
-			set_do_local(p);
-		      }
-
 		    initialize_safe_do(sc, sc->code);
 		    sc->code = cdr(cadr(sc->code));
 		    sc->safe_do_level--;
@@ -30615,9 +30643,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->envir = new_frame_in_env(sc, sc->envir); 
 		sc->args = add_slot(sc, caar(vars), make_mutable_integer(sc, s7_integer(init_val)));
 		denominator(number(symbol_value(sc->args))) = s7_integer(end_val);
-		set_do_local(sc->args);
 		initialize_safe_do(sc, sc->code);
 		sc->safe_do_level++;
+		safe_do_set_id(sc, frame_id(sc->envir));
 		push_stack(sc, OP_DOTIMES_STEP, sc->args, sc->code);
 		sc->code = cddr(sc->code);
 		goto BEGIN;
@@ -30634,7 +30662,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       numerator(number(symbol_value(sc->args)))++;
       if (numerator(number(symbol_value(sc->args))) == denominator(number(symbol_value(sc->args))))
 	{
-	  clear_do_local(sc->args);
 	  initialize_safe_do(sc, sc->code);
 	  sc->code = cdr(cadr(sc->code));
 	  sc->safe_do_level--;
@@ -41967,6 +41994,8 @@ s7_scheme *s7_init(void)
   sc->DOTIMES =               assign_internal_syntax(sc, "do",      OP_DOTIMES);
   sc->SIMPLE_DOTIMES =        assign_internal_syntax(sc, "do",      OP_SIMPLE_DOTIMES);
   sc->safe_do_level = 0;
+  sc->safe_do_ids_size = 8;
+  sc->safe_do_ids = (long long int *)calloc(sc->safe_do_ids_size, sizeof(long long int));
 #endif
 
   sc->LAMBDA = make_symbol(sc, "lambda");

@@ -274,7 +274,7 @@ s7_pointer s7_cddr(s7_pointer p);                                            /* 
 s7_pointer s7_cdar(s7_pointer p);                                            /* (cdar p) */
 s7_pointer s7_caar(s7_pointer p);                                            /* (caar p) */
 
-s7_pointer s7_caadr(s7_pointer p);
+s7_pointer s7_caadr(s7_pointer p);                                           /* etc */
 s7_pointer s7_caddr(s7_pointer p);
 s7_pointer s7_cadar(s7_pointer p);
 s7_pointer s7_caaar(s7_pointer p);
@@ -494,8 +494,8 @@ s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs);
 void *s7_symbol_accessor_data(s7_pointer sym);
 void s7_symbol_set_accessor_data(s7_pointer sym, void *val);
-int s7_safe_do_level(s7_scheme *sc);
 s7_pointer s7_symbol_slot(s7_scheme *sc, s7_pointer symbol);
+  /* these are for optimizations of symbol lookup */
 
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
@@ -576,7 +576,11 @@ unsigned int s7_function_class(s7_pointer f);
 void s7_function_set_class(s7_pointer f, unsigned int c);
 s7_function s7_function_choice(s7_pointer expr);
 void s7_function_choice_set_direct(s7_pointer expr);
-bool s7_is_do_local(s7_pointer slot);
+
+bool s7_in_safe_do(s7_scheme *sc);
+bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol);
+bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol);
+  /* these are for optimization choices */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
@@ -809,7 +813,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 11-Aug:    s7_symbol_accessor functions. s7_cxxr.
+ * 11-Aug:    s7_symbol_accessor functions. s7_cxxxxr.
  * 9-Aug:     s7_function_chooser, s7_function_choice, s7_function_choice_set_direct.
  * 20-Jul:    s7_function_class, s7_function_set_class, and s7_function_set_chooser.
  * 14-Jul:    removed thread and profiling support.

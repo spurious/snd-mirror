@@ -63079,5 +63079,6 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,739,532,101  ???:cos [/lib64/libm-2.12.so]
  2,338,798,577  s7.c:gc [/home/bil/snd-12/snd]
 
+ the sin reading is a callgrind problem
 |#
 
