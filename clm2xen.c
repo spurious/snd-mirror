@@ -2188,7 +2188,7 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 {
   if ((args == 3) &&
       (s7_is_pair(cadr(expr))) &&
-      (s7_function_choice(cadr(expr)) == g_env_w) &&
+      ((s7_function_choice(cadr(expr)) == g_env_w) || (s7_function_choice(cadr(expr)) == g_env_1)) &&
       (s7_is_symbol(cadr(cadr(expr)))) &&
       (s7_is_pair(caddr(expr))) &&
       (cddr(caddr(expr)) == s7_nil(sc)) &&
@@ -2223,7 +2223,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 {
   if ((args == 2) &&
       (s7_is_pair(cadr(expr))) &&
-      (s7_function_choice(cadr(expr)) == g_env_w) &&
+      ((s7_function_choice(cadr(expr)) == g_env_w) || (s7_function_choice(cadr(expr)) == g_env_1)) &&
       (s7_is_symbol(cadr(cadr(expr)))) &&
       (s7_is_pair(caddr(expr))))
     {

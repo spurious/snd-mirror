@@ -120,10 +120,11 @@ static char *version_name = NULL;
 static bool audio_initialized = false;
 
 
-static const char *mus_audio_device_name(int dev)
-{
-  return("default device");
-}
+#if 0
+  static const char *mus_audio_device_name(int dev) {return("default device");}
+#else
+  #define mus_audio_device_name(Dev) "default device"
+#endif
 
 
 static char *audio_strbuf = NULL; /* previous name "strbuf" collides with Mac OSX global! */

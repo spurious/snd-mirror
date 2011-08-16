@@ -63080,5 +63080,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,338,798,577  s7.c:gc [/home/bil/snd-12/snd]
 
  the sin reading is a callgrind problem
+
+16-aug-11:
+162,818,090,120
+15,961,117,690  ???:sin [/lib64/libm-2.12.so]
+14,708,647,979  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
+12,247,707,592  s7.c:eval [/home/bil/snd-12/snd]
+ 9,282,832,361  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
+ 8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
+ 8,835,097,289  run.c:eval_ptree [/home/bil/snd-12/snd]
+ 8,173,361,555  s7.c:eval'2 [/home/bil/snd-12/snd]
+ 7,226,673,561  io.c:mus_write_1 [/home/bil/snd-12/snd]
+ 3,041,174,064  clm.c:mus_src [/home/bil/snd-12/snd]
+ 2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-12/snd]
+ 2,764,949,862  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
+ 2,735,272,788  ???:cos [/lib64/libm-2.12.so]
+ 2,353,419,609  s7.c:gc [/home/bil/snd-12/snd]
+
 |#
 

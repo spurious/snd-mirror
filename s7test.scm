@@ -11830,6 +11830,29 @@ time, so that the displayed results are
 (num-test (do ((i 10 (- 1 i))) ((< i 0) i)) -9)
 (num-test (do ((i 10 (- i 3))) ((< i 0) i)) -2)
 
+;;; check an optimizer bug
+(define _do_call_cc_end_ 1)
+(define (call-cc-do-test)
+  (do ((i 0 (+ i 1)))
+      ((= i _do_call_cc_end_))
+    (let ((ctr 0)) 
+      (call/cc (lambda (exit) 
+		 (if (> 3 2) 
+		     (let () 
+		       (exit ctr) 
+		       (set! ctr 100) ctr) 
+		     #f)))))
+  (do ((i 0 (+ 1 i)))
+      ((= i _do_call_cc_end_))
+    (let ((ctr 0)) 
+      (call/cc (lambda (exit) 
+		 (if (> 3 2) 
+		     (let () 
+		       (exit ctr) 
+		       (set! ctr 100) ctr) 
+		     #f))))))
+(call-cc-do-test)
+
 
 
 

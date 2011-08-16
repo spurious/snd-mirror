@@ -3750,7 +3750,7 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 	nv[i] = ov[i];
       else nv[i] = copy_object(sc, ov[i]);    /* code */
       nv[i + 1] = ov[i + 1];                  /* environment pointer */
-      if (is_pair(ov[i + 2]))                 /* args need not be a list (it can be a port or #f, etc) */
+      if (is_pair(ov[i + 2]))                 /* args need not be a list (it can be a port or #f, etc) -- if it is a list we assume it's a proper list */
 	nv[i + 2] = copy_list(sc, ov[i + 2]); /* args (copy is needed -- see s7test.scm) */
       else nv[i + 2] = ov[i + 2];             /* is this a safe assumption? */
       nv[i + 3] = ov[i + 3];                  /* op (constant int) */
@@ -18391,7 +18391,7 @@ void s7_function_set_chooser(s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *s
 s7_function s7_function_choice(s7_pointer expr)
 {
   if (is_c_function(ecdr(expr)))
-    return(c_function_call(ecdr(expr))); /* TODO: or perhaps the class? */
+    return(c_function_call(ecdr(expr)));
   return(NULL);
 }
 
@@ -20419,10 +20419,6 @@ bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol)
 {
   return(sc->safe_do_ids[sc->safe_do_level] > symbol_id(symbol));
 }
-
-/* TODO: wouldn't the do-local business work in all do loops?
- */
-
 
 #else
 
@@ -29480,8 +29476,68 @@ static void initialize_safe_do(s7_scheme *sc, s7_pointer tree)
 
 
 #define PRINTING 0
+static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer stepper)
+{
+  /* for now, just look for stepper as last element of any list
+   *    any embedded set is handled by do_is_safe, so we don't need to descend into the depths
+   */
+  if ((cadr(expr) == stepper) ||
+      (caddr(expr) == stepper))
+    return(false);
 
-static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_pointer var_list)
+  if (is_pair(caddr(expr)))
+    {
+      s7_pointer p;
+      for (p = caddr(expr); is_pair(cdr(p)); p = cdr(p));
+      if (car(p) == stepper)
+	return(false);
+    }
+  return(true);
+}
+
+/* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (let ((val 1)) (set! val 2) )))
+ * (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (let ((val 3)) (set! val i) )))
+ * (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline))
+ */
+static void optimize_do(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer p;
+  for (p = expr; is_pair(p); p = cdr(p))
+    {
+      if (is_pair(car(p)))
+	{
+	  if ((is_optimized(car(p))) &&
+	      (optimize_data(car(p)) == HOP_SAFE_C_S))
+	    optimize_data(car(p)) = HOP_SAFE_DO_C_S;
+	  else
+	    {
+	      optimize_do(sc, car(p));
+	      optimize_do(sc, cdr(p));
+	    }
+	}
+    }
+}
+
+static void unoptimize_do(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer p;
+  for (p = expr; is_pair(p); p = cdr(p))
+    {
+      if (is_pair(car(p)))
+	{
+	  if ((is_optimized(car(p))) &&
+	      (optimize_data(car(p)) == HOP_SAFE_DO_C_S))
+	    optimize_data(car(p)) = HOP_SAFE_C_S;
+	  else
+	    {
+	      optimize_do(sc, car(p));
+	      optimize_do(sc, cdr(p));
+	    }
+	}
+    }
+}
+
+static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_pointer var_list, bool *has_set)
 {
   /* here any (unsafe?) closure or jumping-op (call/cc) or shadowed variable is trouble
    */
@@ -29535,8 +29591,11 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 				return(false);
 			      var_list = cons(sc, var, var_list);
 			      sc->x = var_list;
+#if PRINTING
+			      fprintf(stderr, "let var expr: %s\n", DISPLAY_80(cadar(vars)));
+#endif
 			      if ((is_pair(cdar(vars))) &&
-				  (!do_is_safe(sc, cadar(vars), stepper, var_list)))
+				  (!do_is_safe(sc, cdar(vars), stepper, var_list, has_set)))
 				{
 #if PRINTING
 				  fprintf(stderr, "unsafe do(6): %s\n", DISPLAY_80(expr)); 
@@ -29545,7 +29604,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 				}
 			    }
 
-			  if (!do_is_safe(sc, (op == OP_DO) ? cdddr(expr) : cddr(expr), stepper, var_list))
+			  if (!do_is_safe(sc, (op == OP_DO) ? cdddr(expr) : cddr(expr), stepper, var_list, has_set))
 			    {
 #if PRINTING
 			      fprintf(stderr, "unsafe do(7): %s\n", DISPLAY_80(expr)); 
@@ -29562,7 +29621,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 			      (op == OP_OR) ||
 			      (op == OP_BEGIN))
 			    {
-			      if (!do_is_safe(sc, cdr(expr), stepper, var_list))
+			      if (!do_is_safe(sc, cdr(expr), stepper, var_list, has_set))
 				{
 #if PRINTING
 				  fprintf(stderr, "unsafe do(5): %s\n", DISPLAY_80(expr));
@@ -29573,12 +29632,31 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 			    }
 			  else
 			    {
-			      /* TODO: OP_SET needs to make sure step var is not involved */
+			      if (!memq(cadr(expr), var_list))
+				{
 #if PRINTING
-			      fprintf(stderr, "unsafe do(2): %s\n", DISPLAY_80(expr));
+				  fprintf(stderr, "%s is global\n", DISPLAY(cadr(expr)));
 #endif
-			      return(false);
-			    }}}}
+				(*has_set) = true;
+				}
+			      if ((!do_is_safe(sc, cddr(expr), stepper, var_list, has_set)) ||
+				  (!safe_stepper(sc, expr, stepper)))
+				{
+#if PRINTING
+				  fprintf(stderr, "unsafe do(set 1): %s\n", DISPLAY_80(expr));
+#endif
+				  return(false);
+				}
+			      else
+				{
+#if PRINTING
+				  fprintf(stderr, "still safe do(set 2): %s\n", DISPLAY_80(expr));
+#endif
+				}
+			    }
+			}
+		    }
+		}
 	      else
 		{
 #if PRINTING
@@ -29586,14 +29664,30 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 #endif
 		  if ((!is_optimized(expr)) ||
 		      (is_unsafe(expr)) ||
-		      (is_setter(car(expr))) ||
-		      (!do_is_safe(sc, cdr(expr), stepper, var_list)))
+		      (!do_is_safe(sc, cdr(expr), stepper, var_list, has_set)))
 		    {
-		      /* TODO: setter func needs to be sure no step var involved */
 #if PRINTING
 		      fprintf(stderr, "unsafe do(0): %s\n", DISPLAY_80(expr)); 
 #endif
 		    return(false);
+		    }
+		  else
+		    {
+		      if (is_setter(car(expr)))
+			{
+			  if (!memq(cadr(expr), var_list))
+			    {
+#if PRINTING
+			      fprintf(stderr, "%s is global\n", DISPLAY(cadr(expr)));
+#endif
+			      (*has_set) = true;
+			    }
+			  if ((!do_is_safe(sc, cddr(expr), stepper, var_list, has_set)) ||
+			      (!safe_stepper(sc, expr, stepper)))
+			    {
+			      return(false);
+			    }
+			}
 		    }
 		}
 	    }
@@ -29698,9 +29792,10 @@ static s7_pointer check_do(s7_scheme *sc)
 		step_expr = caddr(vars);
 
 		if ((is_optimized(step_expr)) &&
-		    (optimize_data(caddr(vars)) == HOP_SAFE_C_SC))
+		    (((optimize_data(step_expr) == HOP_SAFE_C_SC) && (car(vars) == cadr(step_expr))) ||
+		     ((optimize_data(step_expr) == HOP_SAFE_C_CS) && (car(vars) == caddr(step_expr)))))
 		  {
-		    /* step var is (var const|symbol (op var const)) 
+		    /* step var is (var const|symbol (op var const)|(op const var)) 
 		     */
 		    end = car(end);
 
@@ -29713,9 +29808,6 @@ static s7_pointer check_do(s7_scheme *sc)
 			 */
 			car(ecdr(sc->code)) = sc->SIMPLE_DO;
 
-			/* TODO: also SIMPLE_DO with CS in either case?
-			 */
-
 			/* now look for the very common dotimes case
 			 */
 			/*
@@ -29726,8 +29818,10 @@ static s7_pointer check_do(s7_scheme *sc)
 				c_function_call(symbol_value(symbol_global_slot(car(step_expr)))) == g_add,
 				c_function_call(symbol_value(symbol_global_slot(car(end)))) == g_equal);
 			*/
-			if ((s7_is_integer(caddr(step_expr))) &&
-			    (s7_integer(caddr(step_expr)) == 1) &&
+			if ((((s7_is_integer(caddr(step_expr))) &&
+			      (s7_integer(caddr(step_expr)) == 1)) ||
+			     ((s7_is_integer(cadr(step_expr))) &&
+			      (s7_integer(cadr(step_expr)) == 1))) &&
 
 			    /* PERHAPS: check function_class of ecdr here? avoids the symbol lookup 
 			     */
@@ -29739,13 +29833,15 @@ static s7_pointer check_do(s7_scheme *sc)
 			     * now check that there's nothing problematic (shadowed vars, call/cc etc)
 			     *   in the loop itself.
 			     */
-			    if (do_is_safe(sc, cddr(sc->code), car(vars), sc->NIL))
+			    bool has_set = false;
+			    if ((do_is_safe(sc, cddr(sc->code), car(vars), sc->NIL, &has_set)) &&
+				(!has_set))
 			      {
-				/* fprintf(stderr, "safe do: %s\n", DISPLAY_80(sc->code)); */
+				fprintf(stderr, "found safe do: %s\n", DISPLAY_80(sc->code));
 				car(ecdr(sc->code)) = sc->DOTIMES;
 
-				/* TODO: test oscil_1 in this case
-				 */
+				optimize_do(sc, sc->code);
+
 				{
 				  s7_pointer x;
 				  x = cddr(sc->code);
@@ -30666,7 +30762,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	else
 	  {
-	    car(ecdr(sc->code)) = sc->SIMPLE_DO; 
+	    unoptimize_do(sc, sc->code);
+	    car(ecdr(sc->code)) = sc->SIMPLE_DO;
 	    goto SIMPLE_DO;
 	  }
       }
@@ -30699,9 +30796,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	
 	end = caddr(car(cadr(sc->code)));
 	if (s7_is_symbol(end))
-	  sc->args = cons_unchecked(sc, add_slot(sc, caaar(sc->code), sc->value), find_symbol(sc, end));
-	else sc->args = cons_unchecked(sc, add_slot(sc, caaar(sc->code), sc->value), cons_unchecked(sc, end, end));
-
+	  sc->args = list_2(sc, add_slot(sc, caaar(sc->code), sc->value), find_symbol(sc, end));
+	else sc->args = list_2(sc, add_slot(sc, caaar(sc->code), sc->value), cons_unchecked(sc, end, end));
+	/* the list_2 can't be a cons -- if there's a call/cc in the loop, its stack copy 
+	 *   assumes that sc->args is either not a list, or a proper list.
+	 */
 	goto SIMPLE_DO_END;
       }
 
@@ -30709,8 +30808,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer step;
 	step = caddr(caar(sc->code));
-	car(sc->T2_1) = symbol_value(car(sc->args));
-	car(sc->T2_2) = caddr(step);
+	/* fprintf(stderr, "step: %s\n", DISPLAY(step)); */
+	if (s7_is_symbol(cadr(step)))
+	  {
+	    car(sc->T2_1) = symbol_value(car(sc->args));
+	    car(sc->T2_2) = caddr(step);
+	  }
+	else
+	  {
+	    car(sc->T2_2) = symbol_value(car(sc->args));
+	    car(sc->T2_1) = cadr(step);
+	  }
 	symbol_value(car(sc->args)) = c_function_call(ecdr(step))(sc, sc->T2_1);
       }
 
@@ -30720,7 +30828,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	end_test = car(cadr(sc->code));
 	/* fprintf(stderr, "args: %s\n", DISPLAY(sc->args)); */
 	car(sc->T2_1) = symbol_value(car(sc->args));
-	car(sc->T2_2) = symbol_value(cdr(sc->args));
+	car(sc->T2_2) = symbol_value(cadr(sc->args));
 	if (is_true(sc, c_function_call(ecdr(end_test))(sc, sc->T2_1)))
 	  {
 	    sc->code = cdr(cadr(sc->code));
@@ -32329,8 +32437,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   *
 		   * TODO:
 		   *   need safe_simple_do since this is safe even with arbitrary sets and so on
-		   *   need to scan back in optimize_syntax of OP_DO and reset optimize_data (also apply to step exprs)
 		   *   once established, macroize the lookup process
+		   */
+
+		  /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline))
 		   */
 		case OP_SAFE_DO_C_S:
 		  /* this should not happen */
@@ -32338,7 +32448,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 		  
 		case HOP_SAFE_DO_C_S:
-		  /* assume its safe for now (clm2xen checks s7_is_safe_do)
+		  /* assume its safe for now (clm2xen checks s7_in_safe_do, but that's too restrictive here)
 		   */
 		  {
 		    s7_pointer val, sym;
