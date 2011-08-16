@@ -424,7 +424,7 @@ enum{OP_NOT_AN_OP, HOP_NOT_AN_OP,
      OP_SAFE_CLOSURE_S_opSq, HOP_SAFE_CLOSURE_S_opSq, OP_SAFE_CLOSURE_SSS, HOP_SAFE_CLOSURE_SSS,
      OP_SAFE_CLOSURE_ALL_S, HOP_SAFE_CLOSURE_ALL_S, OP_SAFE_CLOSURE_ALL_C, HOP_SAFE_CLOSURE_ALL_C, OP_SAFE_CLOSURE_ALL_G, HOP_SAFE_CLOSURE_ALL_G, 
 
-     OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, 
+     OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, OP_SAFE_DO_C_S, HOP_SAFE_DO_C_S, 
      OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
      OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ, 
      OP_SAFE_C_QC, HOP_SAFE_C_QC, OP_SAFE_C_CQ, HOP_SAFE_C_CQ,
@@ -499,7 +499,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "op_safe_closure_s_opsq", "hop_safe_closure_s_opsq", "op_safe_closure_sss", "hop_safe_closure_sss",
      "op_safe_closure_all_s", "hop_safe_closure_all_s", "op_safe_closure_all_c", "hop_safe_closure_all_c", "op_safe_closure_all_g", "hop_safe_closure_all_g", 
 
-     "op_safe_c_c", "hop_safe_c_c", "op_safe_c_s", "hop_safe_c_s", 
+     "op_safe_c_c", "hop_safe_c_c", "op_safe_c_s", "hop_safe_c_s", "op_safe_do_c_s", "hop_safe_do_c_s", 
      "op_safe_c_ss", "hop_safe_c_ss", "op_safe_c_sc", "hop_safe_c_sc", "op_safe_c_cs", "hop_safe_c_cs", 
      "op_safe_c_q", "hop_safe_c_q", "op_safe_c_sq", "hop_safe_c_sq", "op_safe_c_qs", "hop_safe_c_qs", "op_safe_c_qq", "hop_safe_c_qq", 
      "op_safe_c_qc", "hop_safe_c_qc", "op_safe_c_cq", "hop_safe_c_cq",
@@ -731,7 +731,8 @@ typedef struct s7_cell {
 typedef struct {
   s7_cell obj;
   int accessor;
-  void *accessor_data;
+  void *accessor_data; /* FFI-accessible */
+  void *op_data;       /*   same purpose, but only s7-accessible */
 } s7_extended_cell;
 
 
@@ -1149,6 +1150,7 @@ struct s7_scheme {
 #define symbol_hash(p)                (car(p))->object.string.hash
 #define symbol_accessor(p)            ((s7_extended_cell *)p)->accessor
 #define symbol_accessor_data(p)       ((s7_extended_cell *)p)->accessor_data
+#define symbol_op_data(p)             ((s7_extended_cell *)p)->op_data
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_opcode(p)              ((p)->hloc)
@@ -20408,6 +20410,11 @@ bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol)
   return(sc->safe_do_ids[sc->safe_do_level] == symbol_id(symbol));
 }
 
+bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol)
+{
+  return(sc->safe_do_ids[sc->safe_do_level] >= symbol_id(symbol));
+}
+
 bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol)
 {
   return(sc->safe_do_ids[sc->safe_do_level] > symbol_id(symbol));
@@ -20425,6 +20432,11 @@ bool s7_in_safe_do(s7_scheme *sc)
 }
 
 bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol)
+{
+  return(false);
+}
+
+bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol)
 {
   return(false);
 }
@@ -28362,6 +28374,7 @@ static bool sequence_is_safe_for_opteval(s7_scheme *sc, s7_pointer body)
 	    case OP_SAFE_C_SSS:
 	    case OP_SAFE_C_ALL_S:
 	    case OP_SAFE_C_ALL_G:
+	    case OP_SAFE_DO_C_S:
 	      x = SYMBOL_VALUE(car(expr), find_symbol_or_bust_10);
 	      if (ecdr(expr) != x) return(false);
 	      break;
@@ -29458,7 +29471,10 @@ static void initialize_safe_do(s7_scheme *sc, s7_pointer tree)
   else
     {
       if (s7_is_symbol(tree))
-	symbol_accessor_data(tree) = NULL;
+	{
+	  symbol_accessor_data(tree) = NULL;
+	  symbol_op_data(tree) = NULL;
+	}
     }
 }
 
@@ -29729,9 +29745,6 @@ static s7_pointer check_do(s7_scheme *sc)
 				car(ecdr(sc->code)) = sc->DOTIMES;
 
 				/* TODO: test oscil_1 in this case
-				 */
-
-				/* TODO: 54981: ;rev with-sound -> sound-data fm-violin maxamp (opt 2): (0.55327807917922 0.55327807917922)
 				 */
 				{
 				  s7_pointer x;
@@ -32310,6 +32323,43 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(code), find_symbol_or_bust_21);
 		  sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
 		  goto START;
+
+		  
+		  /* an experiment that extends clm2xen generator lookup
+		   *
+		   * TODO:
+		   *   need safe_simple_do since this is safe even with arbitrary sets and so on
+		   *   need to scan back in optimize_syntax of OP_DO and reset optimize_data (also apply to step exprs)
+		   *   once established, macroize the lookup process
+		   */
+		case OP_SAFE_DO_C_S:
+		  /* this should not happen */
+		  if (!c_function_is_ok(sc, code))
+		    break;
+		  
+		case HOP_SAFE_DO_C_S:
+		  /* assume its safe for now (clm2xen checks s7_is_safe_do)
+		   */
+		  {
+		    s7_pointer val, sym;
+		    sym = cadr(code);
+		    val = (s7_pointer)symbol_op_data(sym);
+		    if (!val)
+		      {
+			val = find_symbol(sc, sym);
+			if (is_null(val)) 
+			  {
+			    car(sc->T1_1) = unbound_variable(sc, sym);
+			    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
+			    goto START;
+			  }
+			if (s7_is_do_local_or_global(sc, sym))
+			  symbol_op_data(sym) = (void *)val;
+		      }
+		    car(sc->T1_1) = symbol_value(val);
+		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
+		    goto START;
+		  }
 
 		  
 		case OP_SAFE_C_QC:

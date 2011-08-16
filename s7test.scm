@@ -31225,6 +31225,9 @@ abs     1       2
 (test (exact? +inf.0) #f)
 (test (exact? -inf.0) #f)
 (test (exact? nan.0) #f)
+(test (exact? (imag-part 1+0i)) #f)
+(test (exact? (imag-part 1+0.0i)) #f)
+(test (exact? (imag-part 1+1i)) #f)
 
 (if with-bignums
     (begin

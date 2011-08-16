@@ -579,6 +579,7 @@ void s7_function_choice_set_direct(s7_pointer expr);
 
 bool s7_in_safe_do(s7_scheme *sc);
 bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol);
+bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol);
 bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol);
   /* these are for optimization choices */
 

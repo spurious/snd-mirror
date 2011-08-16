@@ -54977,7 +54977,7 @@ EDITS: 1
 	(with-sound (:output v1 :reverb jc-reverb)
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9)
 		    (fm-violin 0 .1 440 .1 :degree 0 :reverb-amount 0.9))
-	(if (< (car (sound-data-maxamp v1)) .56) 
+	(if (< (car (sound-data-maxamp v1)) .5) 
 	    (snd-display #__line__ ";rev with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1)))))
     (set! (optimization) oldopt))
   
