@@ -1415,7 +1415,7 @@ var selection_doc_tip = "includes swap-selection-channels, replace-with-selectio
 
 var singer_doc_tip = "This is based on Perry's singer.c and CLM's singer.ins";
 
-var sndold_doc_tip = "These files (snd9.scm to snd11.scm) provide backwards compatibility<br>" +
+var sndold_doc_tip = "These files (snd10.scm to snd12.scm) provide backwards compatibility<br>" +
                    " with earlier versions of Snd.";
 
 var snddiff_doc_tip = "a diff or grep-like function for sounds. It can currently find<br>" +

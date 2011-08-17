@@ -929,8 +929,9 @@
   (gtk_notebook_set_tab_pos (GTK_NOTEBOOK ((main-widgets) 5)) GTK_POS_TOP))
 
 
-
+#|
 ;;; -------- font selector --------
+;;; now (gtk 3.1.12) obsolete.  The new version is font_chooser_dialog.
 
 (define font-selector-dialog #f)
 (define font-selectors '())
@@ -1007,7 +1008,7 @@
 		     (lambda () 
 		       (gtk_widget_show font-selector-dialog)))
 	)))
-
+|#
 
 #|
 ;;; this doesn't actually work yet, but the simpler C case below almost works

@@ -29837,7 +29837,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			    if ((do_is_safe(sc, cddr(sc->code), car(vars), sc->NIL, &has_set)) &&
 				(!has_set))
 			      {
-				fprintf(stderr, "found safe do: %s\n", DISPLAY_80(sc->code));
+				/* fprintf(stderr, "found safe do: %s\n", DISPLAY_80(sc->code)); */
 				car(ecdr(sc->code)) = sc->DOTIMES;
 
 				optimize_do(sc, sc->code);
@@ -30647,7 +30647,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer vars, init_val;
 #if PRINTING
-	fprintf(stderr, "safe: %s\n", DISPLAY(sc->code));
+	fprintf(stderr, "simple_dotimes: %s\n", DISPLAY(sc->code));
 #endif
 	vars = car(sc->code);
 	init_val = cadr(car(vars));
@@ -30729,7 +30729,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer vars, init_val;
 #if PRINTING
-	fprintf(stderr, "safe: %s\n", DISPLAY(sc->code));
+	fprintf(stderr, "dotimes: %s\n", DISPLAY(sc->code));
 #endif
 	vars = car(sc->code);
 	init_val = cadr(car(vars));
@@ -30787,6 +30787,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SIMPLE_DO:
       {
 	s7_pointer init, end;
+#if PRINTING
+	fprintf(stderr, "simple do: %s\n", DISPLAY(sc->code));
+#endif
 	sc->envir = new_frame_in_env(sc, sc->envir);
  
 	init = cadaar(sc->code);
@@ -30943,6 +30946,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_DO_UNCHECKED:
+#if PRINTING
+      fprintf(stderr, "do: %s\n", DISPLAY(sc->code));
+#endif
       if (is_null(car(sc->code)))                           /* (do () ...) -- (let ((i 0)) (do () ((= i 1)) (set! i 1))) */
 	{
 	  sc->envir = new_frame_in_env(sc, sc->envir); 
@@ -42999,5 +43005,7 @@ the error type and the info passed to the error handler.");
 ;; also define* names, named let name
 ;; augment env
 ;; closure arg names
+
+;; TODO: if unmatched |# error message is: |#: unbound variable
 
  */

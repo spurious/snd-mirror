@@ -459,6 +459,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+18-Aug:  removed snd9.scm.\n\
 14-Jul:  removed thread stuff.\n\
 11-Jul:  Snd 12.3. \n\
 30-May:  Snd 12.2.\n\
@@ -466,21 +467,6 @@ void about_snd_help(void)
 5-Apr:   lint.scm.\n\
 25-Mar:  show-full-range, info-popup-hook.\n\
 21-Mar:  with-interrupts.\n\
-18-Mar:  Snd 12.0.\n\
-17-Mar:  removed time-graph-hook; replaced by combined-data-color.\n\
-10-Mar:  space=play or pause, tracking-cursor stuff changed.\n\
-4-Mar:   'src' button in Save-as dialogs to do automatic sampling rate conversion.\n\
-1-Mar:   delete-selection-and-smooth, delete-samples-and-smooth.\n\
-23-Feb:  sync-style variable: sync-none (old default), sync-all, or sync-by-sound (new default).\n\
-         Options:Controls menu item, and Edit:Unselect\n\
-	 show-selection and unselect-all.\n\
-         show-full-duration, initial-beg, initial-dur, ask-about-unsaved-edits.\n\
-         with-toolbar, with-tooltips, remember-sound-state, with-smpte-label.\n\
-         new built-in toolbars, removed toolbar.scm and panic.scm.\n\
-         removed Snd.ad and Snd.gtrc.\n\
-         The built-in popup menus are now context sensitive, and the files popup.scm\n\
-           and gtk-popup.scm have been removed.\n\
-         play-arrow-size\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

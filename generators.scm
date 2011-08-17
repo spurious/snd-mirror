@@ -6157,6 +6157,15 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 	    (format #t ";~D freqs: ~A ~A" i ((moving-spectrum-freqs sv) i) ((phase-vocoder-phase-increments pv) i))))))))
 
 #|
+(define* (sine-bank amps phases size)
+  (let ((len (or size (length amps)))
+	(sum 0.0))
+    (do ((i 0 (+ 1 i)))
+	((= i len))
+      (set! sum (+ sum (* (amps i)
+			  (sin (phases i))))))
+    sum))
+
 (with-sound (:channels 2)
   (let* ((gen (make-moving-spectrum (make-readin "oboe.snd")))
 	 (pv (make-phase-vocoder (make-readin "oboe.snd")))
@@ -6165,7 +6174,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
      (do ((i 0 (+ i 1)))
 	 ((= i samps))
        (moving-spectrum gen)
-       (outa i (sine-bank (moving-spectrum-amps gen) (moving-spectrum-phases gen) 256)) ; size = n/2 as in pv, sine-bank is in snd9.scm
+       (outa i (sine-bank (moving-spectrum-amps gen) (moving-spectrum-phases gen) 256)) ; size = n/2 as in pv
        (outb i (phase-vocoder pv))))))
 
 ; :(channel-distance 0 0 0 1)

@@ -610,7 +610,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
  * 11-Dec:     deprecated the sine-summation, sum-of-cosines, and sum-of-sines generators.
  * 30-Oct:     mus_sample_to_file_add.
  *             mus_describe once again allocates a fresh output string.
- *             finally removed sine-bank (snd9.scm has replacement).
+ *             finally removed sine-bank.
  * 9-Oct:      various thread-related internal changes.
  * 14-Jul:     mus_data_format_zero.
  * 12-Jul:     mus_interp_type_p and mus_fft_window_p for C++'s benefit.

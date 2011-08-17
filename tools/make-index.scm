@@ -14,7 +14,7 @@
 					;(load "snd7.scm")
 (load "snd11.scm")
 					;(load "snd6.scm")
-(load "snd9.scm")
+					;(load "snd9.scm")
 					;(load "snd8.scm")
 (load "snd10.scm")
 (load "analog-filter.scm")	   
@@ -1399,7 +1399,6 @@
 	       (not (string-vector-position (hrefs h) names))
 	       (char-position #\# (hrefs h)))
 	  (format #t "undef'd: ~A (~A: ~A)~%" (hrefs h) (refs h) (lines h))))))
-
 
 
 (html-check '("sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html"

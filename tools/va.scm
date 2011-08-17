@@ -282,7 +282,7 @@
       "snd-test.scm"
       "snd10.scm"
       "snd11.scm"
-      "snd9.scm"
+      "snd12.scm"
       "snddiff.scm"
       "sndlib-ws.scm"
       "sndwarp.scm"

@@ -30126,7 +30126,7 @@ EDITS: 2
 	(define-envelope test-ramp '(0 1 1 0))
 	(if (not (equal? test-ramp '(0 1 1 0))) (snd-display #__line__ ";re-define-envelope test-ramp: ~A" test-ramp))
 	
-	(if (or (provided? 'xm) (provided? 'xg))
+	(if (or (provided? 'xm) (and (provided? 'xg) (defined? 'gtk_box_new)))
 	    (begin
 	      (load "oscope.scm")
 	      ;; oscope exists
@@ -53789,7 +53789,7 @@ EDITS: 1
     (if (not (equal? o2 (list 1 3 4 5))) (snd-display #__line__ ";optkey-4 3: ~A 2" o2)))
   
   (if (and (or (provided? 'snd-motif)
-	       (provided? 'snd-gtk))
+	       (and (provided? 'snd-gtk) (defined? 'gtk_box_new)))
 	   (defined? 'variable-display))
       (let ((wid1 (make-variable-display "do-loop" "i*1" 'text))
 	    (wid2 (make-variable-display "do-loop" "i*2" 'scale '(-1.0 1.0)))

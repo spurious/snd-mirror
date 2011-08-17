@@ -1000,6 +1000,8 @@ else
   
         # for 3.1.10
         AC_CHECK_LIB(m, gtk_adjustment_get_minimum_increment, [AC_DEFINE(HAVE_GTK_ADJUSTMENT_GET_MINIMUM_INCREMENT)], ,$GTK_LIBS)
+        # for 3.1.12
+        AC_CHECK_LIB(m, gtk_font_chooser_new, [AC_DEFINE(HAVE_GTK_FONT_CHOOSER_NEW)], ,$GTK_LIBS)
 
 
 	AC_CHECK_LIB(cairo, cairo_glyph_allocate, [AC_DEFINE(HAVE_CAIRO_GLYPH_ALLOCATE)], ,$GTK_LIBS)
