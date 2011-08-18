@@ -1,28 +1,15 @@
-Snd 12.3
+Snd 12.4.
 
-  removed the profiling option in s7.
+  removed thread support from Snd/s7/sndlib.
+  removed snd9.scm.
 
-  all my time in this version went into trying to make s7 faster. 
-    I believe it is now 3 times as fast as it was in early May.
-
-  Unless someone objects violently, I'm going to remove the multithreading
-    support from s7.  It has turned out to be less useful than I hoped,
-    mainly because s7 threads share the heap and therefore have to coordinate
-    all cell allocations.  So it's faster, and simpler to use multiple
-    pthreads each running a separate s7 interpreter, rather than one s7
-    running multiple s7 threads.  In clm, the contention is for access to
-    the output stream, so the gain in speed is not always something to
-    brag about.  And begin_hook handles GUI-related problems without
-    any threads.  Last but not least, the effort to make the non-threaded
-    s7 faster has messed up parts of the threaded version.  Rather than
-    waste a lot of time fixing this, I'd rather just flush the stuff.
-
-  Due to changes in Gtk, functions like gtk_vbox_new are no longer
-    defined in libxm.  This means that several of the gtk-related
-    scheme files in the Snd tarball now only work in Gtk 3.0 or later.
+  s7 is nearing the point where we can get rid of the run macro.
+  Currently the fm-violin in C takes 400 callgrind units to generate
+  20 seconds of sound, in run it takes 480, and in s7 by itself, 700.
+  In Snd 12.2, s7 took 4896, in Snd 11.10 from last August, 7392.
 
 
-checked: gmp 5.0.2, sbcl 1.0.49, gtk 3.1.6|8 (but it looks like crap),
-         fftw 3.3beta
+checked: sbcl 1.0.50, gtk 3.1.10|12
 
-Thanks!: Mike Scholz, Fernando Lopez-Lezcano, Rick Taube
+Thanks!: Mike Scholz
+

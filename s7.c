@@ -32449,7 +32449,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline))
 		   */
 		case OP_SAFE_DO_C_S:
-		  /* this should not happen */
+		  /* fprintf(stderr, "op check: %s\n", DISPLAY(code)); */
+		  /* this should not happen -- callgrind is confused */
 		  if (!c_function_is_ok(sc, code))
 		    break;
 		  
@@ -32458,11 +32459,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   */
 		  {
 		    s7_pointer val, sym;
+		    /* fprintf(stderr, "hop check: %s\n", DISPLAY(code)); */
 		    sym = cadr(code);
 		    val = (s7_pointer)symbol_op_data(sym);
 		    if (!val)
 		      {
 			val = find_symbol(sc, sym);
+			/* fprintf(stderr, "%s null: %s\n", DISPLAY(sym), DISPLAY(val)); */
 			if (is_null(val)) 
 			  {
 			    car(sc->T1_1) = unbound_variable(sc, sym);
@@ -32470,7 +32473,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    goto START;
 			  }
 			if (s7_is_do_local_or_global(sc, sym))
-			  symbol_op_data(sym) = (void *)val;
+			  {
+			    /* fprintf(stderr, "set op_data\n"); */
+			    symbol_op_data(sym) = (void *)val;
+			  }
 		      }
 		    car(sc->T1_1) = symbol_value(val);
 		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);

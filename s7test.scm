@@ -11853,6 +11853,23 @@ time, so that the displayed results are
 		     #f))))))
 (call-cc-do-test)
 
+;;; more optimizer checks
+(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
+(let () (define (do-test) (do ((i 0 (+ 1 i))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
+(let ((start 0)) (define (do-test) (do ((i start (+ i 1))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
+(let ((start 0) (end 10)) (define (do-test) (do ((i start (+ i 1))) ((= i end)) (display i))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
+(let ((start 0) (end 10)) (define (do-test) (do ((i start (+ i 1))) ((= end i)) (display i))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
+(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((k i)) (display k)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
+(let () (define (do-test) (do ((i 0 (+ i 2))) ((= i 20)) (display (/ i 2)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
+(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((a (+ 1 2))) (display #\0)))) (test (with-output-to-string (lambda () (do-test))) "0000000000"))
+
+(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (set! j i) (display j)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
+(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (display i)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
+(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (set! j 32) (display i)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
+(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (display j)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
+(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 5)) (let ((j (+ i 1))) (let ((i j)) (display (- i 1)))))) (test (with-output-to-string (lambda () (do-test))) "01234"))
+
+
 
 
 
