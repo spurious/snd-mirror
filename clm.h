@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 31
-#define MUS_DATE "7-Mar-10"
+#define MUS_REVISION 32
+#define MUS_DATE "20-Aug-11"
 
 /* isn't mus_env_interp backwards? */
 
@@ -470,7 +470,7 @@ MUS_EXPORT mus_any *mus_make_frame_to_file_with_comment(const char *filename, in
 #define mus_make_frame_to_file(Filename, Chans, OutFormat, OutType) mus_make_frame_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
 MUS_EXPORT mus_any *mus_continue_frame_to_file(const char *filename);
 
-MUS_EXPORT mus_float_t mus_locsig(mus_any *ptr, mus_long_t loc, mus_float_t val);
+MUS_EXPORT void mus_locsig(mus_any *ptr, mus_long_t loc, mus_float_t val);
 MUS_EXPORT mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t reverb, int chans, mus_any *output, int rev_chans, mus_any *revput, mus_interp_t type);
 MUS_EXPORT bool mus_locsig_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_locsig_ref(mus_any *ptr, int chan);
@@ -494,7 +494,7 @@ MUS_EXPORT void mus_locsig_safe_stereo(mus_any *ptr, mus_long_t loc, mus_float_t
 MUS_EXPORT int mus_locsig_channels(mus_any *ptr);
 MUS_EXPORT int mus_locsig_reverb_channels(mus_any *ptr);
 MUS_EXPORT int mus_locsig_safety(mus_any *ptr);
-
+MUS_EXPORT void mus_locsig_function_reset(mus_any *ptr);
 
 MUS_EXPORT bool mus_move_sound_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t val);
@@ -592,6 +592,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 20-Aug:     changed type of mus_locsig to void, added mus_locsig_function_reset.
  * 14-Jul-11:  removed pthread stuff.
  * --------
  * 7-Mar-10:   protect in-any and out-any from sample numbers less than 0.

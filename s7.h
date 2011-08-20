@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.93"
-#define S7_DATE "12-Aug-11"
+#define S7_VERSION "1.94"
+#define S7_DATE "19-Aug-11"
 
 
 typedef long long int s7_Int;
@@ -572,6 +572,8 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
 
 s7_pointer (*s7_function_chooser(s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 void s7_function_set_chooser(s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr));
+void *s7_function_chooser_data(s7_pointer f);
+void s7_function_chooser_set_data(s7_pointer f, void *data);
 unsigned int s7_function_class(s7_pointer f);
 void s7_function_set_class(s7_pointer f, unsigned int c);
 s7_function s7_function_choice(s7_pointer expr);
@@ -814,6 +816,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 19-Aug:    s7_function_chooser_data.
  * 11-Aug:    s7_symbol_accessor functions. s7_cxxxxr.
  * 9-Aug:     s7_function_chooser, s7_function_choice, s7_function_choice_set_direct.
  * 20-Jul:    s7_function_class, s7_function_set_class, and s7_function_set_chooser.

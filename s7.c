@@ -622,6 +622,7 @@ typedef struct s7_func_t {
 #if WITH_OPTIMIZATION
   unsigned int id;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
+  void *chooser_data;
 #endif
 } s7_func_t;
 
@@ -1207,6 +1208,7 @@ struct s7_scheme {
 #if WITH_OPTIMIZATION
 #define c_function_class(f)           (f)->object.ffptr->id
 #define c_function_chooser(f)         (f)->object.ffptr->chooser
+#define c_function_chooser_data(f)    (f)->object.ffptr->chooser_data
 #define c_function_choice(Sc, F, Args, X) (c_function_chooser(F))(Sc, F, Args, X)
 #endif
 
@@ -18388,6 +18390,20 @@ void s7_function_set_chooser(s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *s
   c_function_chooser(fnc) = chooser;
 }
 
+
+void *s7_function_chooser_data(s7_pointer expr)
+{
+  if (is_c_function(ecdr(expr)))
+    return(c_function_chooser_data(ecdr(expr)));
+  return(NULL);
+}
+
+void s7_function_chooser_set_data(s7_pointer f, void *data)
+{
+  c_function_chooser_data(f) = data;
+}
+
+
 s7_function s7_function_choice(s7_pointer expr)
 {
   if (is_c_function(ecdr(expr)))
@@ -18417,6 +18433,15 @@ s7_pointer (*s7_function_chooser(s7_pointer fnc))(s7_scheme *sc, s7_pointer f, i
 }
 
 void s7_function_set_chooser(s7_pointer f,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr))
+{
+}
+
+void *s7_function_chooser_data(s7_pointer f)
+{
+  return(NULL);
+}
+
+void s7_function_chooser_set_data(s7_pointer f, void *data)
 {
 }
 
@@ -18478,6 +18503,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 #if WITH_OPTIMIZATION
   c_function_class(x) = ++f_class;
   c_function_chooser(x) = fallback_chooser;
+  c_function_chooser_data(x) = NULL;
 #endif
 
   return(x);
@@ -25213,6 +25239,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
   /* this always occurs in a context where we're trying anything, so I'll move a couple of those tests here */
   if (is_keyword(sym))
     return(sym);
+
   if (sym == sc->UNQUOTE)
     return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
 #if WITH_UNQUOTE_SPLICING
@@ -25221,6 +25248,9 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 #endif
   /* actually we'll normally get an error from apply. (,@ 1) triggers this error.
    */
+  
+  if (safe_strcmp(symbol_name(sym), "|#") == 0)
+    return(read_error(sc, "unmatched |#"));
 
   if (is_not_null(hook_functions(sc->unbound_variable_hook)))
     {
@@ -27773,6 +27803,24 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		      ecdr(car(x)) = func;
 		      return(false); 
 		    }
+		}
+	    }
+
+	  if ((!is_optimized(car(x))) &&
+	      (bad_pairs == 0) &&
+	      (is_c_function(func)) &&
+	      (is_safe_procedure(func)))
+	    {
+	      /* give caller's optimizer a chance at it */
+	      s7_pointer new_func;
+	      optimize_data(car(x)) = 0;
+	      new_func = c_function_chooser(func)(sc, func, args, car(x));
+	      if (new_func != func)
+		{
+		  set_optimized(car(x));
+		  if (optimize_data(car(x)) == 0)
+		    set_optimize_data(car(x), OP_SAFE_C_C);
+		  ecdr(car(x)) = new_func;
 		}
 	    }
 	  /*
@@ -43004,14 +43052,11 @@ the error type and the info passed to the error handler.");
   (set! _just_int_ 123.123)
   ;; _just_int_ = 123
   ;; (set! _just_int_ "123") 'error
-  (letrec ((_just_int_ 12.41)) _just_int_) ; no access! let let* letrec
+  (letrec ((_just_int_ 12.41)) _just_int_) ; no access! let let* letrec -- 12.41 not 12
   (do ((_just_int_ 1.5 (+ _just_int_ 2.3))) ((>= _just_int_ 10) _just_int_))) ; 10.7!
 
 ;; check all these for errors also
 ;; also define* names, named let name
 ;; augment env
 ;; closure arg names
-
-;; TODO: if unmatched |# error message is: |#: unbound variable
-
  */

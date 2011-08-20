@@ -5746,6 +5746,7 @@ typedef struct {
   mus_float_t *original_data;
   double *rates;
   mus_long_t *locs;
+  mus_float_t (*env_func)(mus_any *g);
 } seg;
 
 /* I used to use exp directly, but:
@@ -5797,28 +5798,21 @@ mus_env_t mus_env_type(mus_any *ptr)
 mus_float_t mus_env(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
+  return((*(gen->env_func))(ptr));
+}
+
+
+static mus_float_t mus_env_step(mus_any *ptr)
+{
+  seg *gen = (seg *)ptr;
   mus_float_t val;
-
   val = gen->current_value;
-
   if (gen->loc >= gen->locs[gen->index])
     {
       gen->index++;
       gen->rate = gen->rates[gen->index];
     }
-
-  if (gen->style == MUS_ENV_LINEAR)
-    gen->current_value += gen->rate; 
-  else
-    {
-      if (gen->style == MUS_ENV_EXPONENTIAL)
-	{
-	  gen->power *= gen->rate;
-	  gen->current_value = gen->offset + (gen->scaler * gen->power);
-	}
-      else gen->current_value = gen->rate; 
-    }
-
+  gen->current_value = gen->rate; 
   gen->loc++;
   return(val);
 }
@@ -6233,6 +6227,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
   if (base == 0.0)
     {
       e->style = MUS_ENV_STEP;
+      e->env_func = mus_env_step;
       dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
     }
   else
@@ -6240,12 +6235,13 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
       if (base == 1.0)
 	{
 	  e->style = MUS_ENV_LINEAR;
+	  e->env_func = mus_env_linear;
 	  dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
 	}
       else
 	{
 	  e->style = MUS_ENV_EXPONENTIAL;
-
+	  e->env_func = mus_env_exponential;
 	  edata = fixup_exp_env(e, brkpts, npts, offset, scaler, base);
 	  if (edata == NULL)
 	    {
@@ -8248,6 +8244,7 @@ typedef struct {
   mus_float_t reverb;
   void *closure;
   int safety;
+  void (*locsig_func)(mus_any *ptr, mus_long_t loc, mus_float_t val);
 } locs;
 
 
@@ -8597,121 +8594,6 @@ static void mus_locsig_fill(mus_float_t *arr, int chans, mus_float_t degree, mus
 }
 
 
-mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t reverb, 
-			 int chans, mus_any *output,      /* direct signal output */
-			 int rev_chans, mus_any *revput,  /* reverb output */
-			 mus_interp_t type)
-{
-  locs *gen;
-  mus_float_t dist;
-  if (chans <= 0)
-    {
-      mus_error(MUS_ARG_OUT_OF_RANGE, "chans: %d", chans);
-      return(NULL);
-    }
-
-  gen = (locs *)clm_calloc(1, sizeof(locs), S_make_locsig);
-  gen->core = &LOCSIG_CLASS;
-  gen->outf = (mus_frame *)mus_make_empty_frame(chans);
-
-  gen->type = type;
-  gen->reverb = reverb;
-  if (distance > 1.0)
-    dist = 1.0 / distance;
-  else dist = 1.0;
-
-  if (mus_output_p(output)) 
-    gen->outn_writer = output;
-  gen->chans = chans;
-  gen->outn = (mus_float_t *)clm_calloc(gen->chans, sizeof(mus_float_t), "locsig frame");
-  mus_locsig_fill(gen->outn, gen->chans, degree, dist, type);
-
-  if (mus_output_p(revput))
-    gen->revn_writer = revput;
-  gen->rev_chans = rev_chans;
-  if (gen->rev_chans > 0)
-    {
-      gen->revn = (mus_float_t *)clm_calloc(gen->rev_chans, sizeof(mus_float_t), "locsig reverb frame");
-      gen->revf = (mus_frame *)mus_make_empty_frame(gen->rev_chans);
-      mus_locsig_fill(gen->revn, gen->rev_chans, degree, (reverb * sqrt(dist)), type);
-    }
-
-  if ((gen->outn_writer) &&
-      (((rdout *)output)->safety == 1))
-    gen->safety = 1;
-
-  return((mus_any *)gen);
-}
-
-
-mus_float_t mus_locsig(mus_any *ptr, mus_long_t loc, mus_float_t val)
-{
-  locs *gen = (locs *)ptr;
-  int i;
-
-  if (gen->safety == 1)
-    {
-      /* assume (since it's locsig) that we're eventually headed for sample->file, and
-       *   (since safety == 1) that everything is ready to go, and the output frames are
-       *   of no interest.
-       */
-      
-      if (gen->outn_writer)
-	{
-	  rdout *writer = (rdout *)(gen->outn_writer);
-	  for (i = 0; i < gen->chans; i++)
-	    writer->obufs[i][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[i]);   
-	  if (loc > writer->out_end) 
-	    writer->out_end = loc;
-	}
-
-      if (gen->revn_writer)
-	{
-	  rdout *writer = (rdout *)(gen->revn_writer);
-	  for (i = 0; i < gen->rev_chans; i++)
-	    writer->obufs[i][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->revn[i]);   
-	  if (loc > writer->out_end) 
-	    writer->out_end = loc;
-	}
-    }
-  else
-    {
-      rdout *writer = (rdout *)(gen->outn_writer);
-      for (i = 0; i < gen->chans; i++)
-	{
-	  (gen->outf)->vals[i] = val * gen->outn[i];
-	  if (writer)
-	    mus_out_any_to_file((mus_any *)writer, loc, i, gen->outf->vals[i]);
-	}
-      writer = (rdout *)(gen->revn_writer);
-      for (i = 0; i < gen->rev_chans; i++)
-	{
-	  (gen->revf)->vals[i] = val * gen->revn[i];
-	  if (writer)
-	    mus_out_any_to_file((mus_any *)writer, loc, i, gen->revf->vals[i]);
-	}
-    }
-  return(val);
-}
-
-
-int mus_locsig_channels(mus_any *ptr)
-{
-  return(((locs *)ptr)->chans);
-}
-
-int mus_locsig_reverb_channels(mus_any *ptr)
-{
-  return(((locs *)ptr)->rev_chans);
-}
-
-
-int mus_locsig_safety(mus_any *ptr)
-{
-  return(((locs *)ptr)->safety);
-}
-
-
 void mus_locsig_mono_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
@@ -8786,6 +8668,198 @@ void mus_locsig_safe_stereo(mus_any *ptr, mus_long_t loc, mus_float_t val)
   writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->revn[0]);   
   if (loc > writer->out_end) 
     writer->out_end = loc;
+}
+
+static void mus_locsig_any(mus_any *ptr, mus_long_t loc, mus_float_t val)
+{
+  int i;
+  locs *gen = (locs *)ptr;
+  rdout *writer = (rdout *)(gen->outn_writer);
+  for (i = 0; i < gen->chans; i++)
+    {
+      (gen->outf)->vals[i] = val * gen->outn[i];
+      if (writer)
+	mus_out_any_to_file((mus_any *)writer, loc, i, gen->outf->vals[i]);
+    }
+  writer = (rdout *)(gen->revn_writer);
+  for (i = 0; i < gen->rev_chans; i++)
+    {
+      (gen->revf)->vals[i] = val * gen->revn[i];
+      if (writer)
+	mus_out_any_to_file((mus_any *)writer, loc, i, gen->revf->vals[i]);
+    }
+}
+
+static void mus_locsig_any_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
+{
+  int i;
+  locs *gen = (locs *)ptr;
+  rdout *writer = (rdout *)(gen->outn_writer);
+  for (i = 0; i < gen->chans; i++)
+    {
+      (gen->outf)->vals[i] = val * gen->outn[i];
+      if (writer)
+	mus_out_any_to_file((mus_any *)writer, loc, i, gen->outf->vals[i]);
+    }
+}
+
+static void mus_locsig_safe_any(mus_any *ptr, mus_long_t loc, mus_float_t val)
+{
+  int i;
+  locs *gen = (locs *)ptr;
+  if (gen->outn_writer)
+    {
+      rdout *writer = (rdout *)(gen->outn_writer);
+      for (i = 0; i < gen->chans; i++)
+	writer->obufs[i][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[i]);   
+      if (loc > writer->out_end) 
+	writer->out_end = loc;
+    }
+
+  if (gen->revn_writer)
+    {
+      rdout *writer = (rdout *)(gen->revn_writer);
+      for (i = 0; i < gen->rev_chans; i++)
+	writer->obufs[i][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->revn[i]);   
+      if (loc > writer->out_end) 
+	writer->out_end = loc;
+    }
+}
+
+static void mus_locsig_safe_any_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
+{
+  int i;
+  locs *gen = (locs *)ptr;
+  if (gen->outn_writer)
+    {
+      rdout *writer = (rdout *)(gen->outn_writer);
+      for (i = 0; i < gen->chans; i++)
+	writer->obufs[i][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[i]);   
+      if (loc > writer->out_end) 
+	writer->out_end = loc;
+    }
+}
+
+
+void mus_locsig_function_reset(mus_any *ptr)
+{
+  locs *gen = (locs *)ptr;
+  gen->locsig_func = mus_locsig_any;
+}
+
+
+mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t reverb, 
+			 int chans, mus_any *output,      /* direct signal output */
+			 int rev_chans, mus_any *revput,  /* reverb output */
+			 mus_interp_t type)
+{
+  locs *gen;
+  mus_float_t dist;
+  if (chans <= 0)
+    {
+      mus_error(MUS_ARG_OUT_OF_RANGE, "chans: %d", chans);
+      return(NULL);
+    }
+
+  gen = (locs *)clm_calloc(1, sizeof(locs), S_make_locsig);
+  gen->core = &LOCSIG_CLASS;
+  gen->outf = (mus_frame *)mus_make_empty_frame(chans);
+
+  gen->type = type;
+  gen->reverb = reverb;
+  if (distance > 1.0)
+    dist = 1.0 / distance;
+  else dist = 1.0;
+
+  if (mus_output_p(output)) 
+    gen->outn_writer = output;
+  gen->chans = chans;
+  gen->outn = (mus_float_t *)clm_calloc(gen->chans, sizeof(mus_float_t), "locsig frame");
+  mus_locsig_fill(gen->outn, gen->chans, degree, dist, type);
+
+  if (mus_output_p(revput))
+    gen->revn_writer = revput;
+  gen->rev_chans = rev_chans;
+  if (gen->rev_chans > 0)
+    {
+      gen->revn = (mus_float_t *)clm_calloc(gen->rev_chans, sizeof(mus_float_t), "locsig reverb frame");
+      gen->revf = (mus_frame *)mus_make_empty_frame(gen->rev_chans);
+      mus_locsig_fill(gen->revn, gen->rev_chans, degree, (reverb * sqrt(dist)), type);
+    }
+
+  if ((gen->outn_writer) &&
+      (((rdout *)output)->safety == 1))
+    gen->safety = 1;
+
+  /* now choose the output function based on safety, chans, and reverb
+   */
+  if (gen->safety == 1)
+    {
+      if (rev_chans > 0) /* TODO:  == 1 here? */
+	{
+	  switch (chans)
+	    {
+	    case 1:  gen->locsig_func = mus_locsig_safe_mono;   break;
+	    case 2:  gen->locsig_func = mus_locsig_safe_stereo; break;
+	    default: gen->locsig_func = mus_locsig_safe_any;    break;
+	    }
+	}
+      else
+	{
+	  switch (chans)
+	    {
+	    case 1:  gen->locsig_func = mus_locsig_safe_mono_no_reverb;   break;
+	    case 2:  gen->locsig_func = mus_locsig_safe_stereo_no_reverb; break;
+	    default: gen->locsig_func = mus_locsig_safe_any_no_reverb;    break;
+	    }
+	}
+    }
+  else
+    {
+      if (rev_chans > 0) /* TODO:  == 1 here? */
+	{
+	  switch (chans)
+	    {
+	    case 1:  gen->locsig_func = mus_locsig_mono;   break;
+	    case 2:  gen->locsig_func = mus_locsig_stereo; break;
+	    default: gen->locsig_func = mus_locsig_any;    break;
+	    }
+	}
+      else
+	{
+	  switch (chans)
+	    {
+	    case 1:  gen->locsig_func = mus_locsig_mono_no_reverb;   break;
+	    case 2:  gen->locsig_func = mus_locsig_stereo_no_reverb; break;
+	    default: gen->locsig_func = mus_locsig_any_no_reverb;    break;
+	    }
+	}
+    }
+
+  return((mus_any *)gen);
+}
+
+void mus_locsig(mus_any *ptr, mus_long_t loc, mus_float_t val)
+{
+  locs *gen = (locs *)ptr;
+  (*(gen->locsig_func))(ptr, loc, val);
+}
+
+
+int mus_locsig_channels(mus_any *ptr)
+{
+  return(((locs *)ptr)->chans);
+}
+
+int mus_locsig_reverb_channels(mus_any *ptr)
+{
+  return(((locs *)ptr)->rev_chans);
+}
+
+
+int mus_locsig_safety(mus_any *ptr)
+{
+  return(((locs *)ptr)->safety);
 }
 
 

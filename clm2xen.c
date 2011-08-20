@@ -1875,7 +1875,6 @@ static XEN g_oscil(XEN os, XEN fm, XEN pm)
 
 #else
 /* an experiment -- this appears to be about 1/3 faster then g_oscil + argified g_oscil_w
- *   TODO: can this be automatically extended to all the clm gens a la run? -- a few macros and voila!
  */
 
 static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
@@ -1911,484 +1910,8 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
   XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
   return(s7_f(sc));
 }
-
-
-#define car(E)    s7_car(E)
-#define cdr(E)    s7_cdr(E)
-#define cadr(E)   s7_cadr(E)
-#define caddr(E)  s7_caddr(E)
-#define cadddr(E) s7_cadddr(E)
-#define cddr(E)   s7_cddr(E)
-#define cadar(E)  s7_cadar(E)
-
-
-#define GET_GENERATOR(Obj, Type, Safe, Val)		\
-  do { s7_pointer _Obj_ = Obj; mus_any *_Val_ = NULL;	\
-       if (Safe) \
-         _Val_ = (mus_any *)s7_symbol_accessor_data(_Obj_); \
-       if (!_Val_) \
-         { \
-           s7_pointer g; \
-           g = s7_symbol_value(sc, _Obj_); \
-           if (s7_object_type(g) == mus_xen_tag)    \
-	     { \
-	       _Val_ = (mus_any *)(((mus_xen *)s7_object_value(g))->gen); \
-	       if (s7_is_do_global(sc, _Obj_)) \
-	         s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
-	     } \
-           if ((!_Val_) || (!mus_ ## Type ## _p(_Val_))) \
-	     XEN_ASSERT_TYPE(false, g, XEN_ARG_1, S_ ## Type, #Type " generator"); \
-         } \
-       Val = _Val_; } while (0)
-
-
-#define GET_REAL(Obj, Caller, Safe, Val)			\
-  do { s7_pointer _Obj_ = Obj; s7_pointer _Val_ = NULL;	\
-       if (Safe) \
-         _Val_ = (s7_pointer)s7_symbol_accessor_data(_Obj_); \
-       if (!_Val_) \
-         { \
-           _Val_ = s7_symbol_slot(sc, _Obj_); \
-           if (s7_is_do_local_or_global(sc, _Obj_)) \
- 	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
-           if (!s7_is_real(cdr(_Val_))) \
-	     XEN_ASSERT_TYPE(false, _Val_, XEN_ARG_2, S_ ## Caller, "a real"); \
-         } \
-       Val = s7_number_to_real(cdr(_Val_)); } while (0)
-
-
-#define GET_INTEGER(Obj, Caller, Safe, Val)			\
-  do { s7_pointer _Obj_ = Obj; s7_pointer _Val_ = NULL;	\
-       if (Safe) \
-         _Val_ = (s7_pointer)s7_symbol_accessor_data(_Obj_); \
-       if (!_Val_) \
-         { \
-           _Val_ = s7_symbol_slot(sc, _Obj_); \
-           if (s7_is_do_local_or_global(sc, _Obj_)) \
- 	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
-           if (!s7_is_integer(cdr(_Val_))) \
-	     XEN_ASSERT_TYPE(false, _Val_, XEN_ARG_2, S_ ## Caller, "an integer"); \
-         } \
-       Val = s7_integer(cdr(_Val_)); } while (0)
-
-
-#if 0
-static s7_pointer oscil_1, oscil_2;
-static s7_pointer g_oscil_1(s7_scheme *sc, s7_pointer args)
-{
-  /* if we were only using gcc, we could use a slightly different macro above and:
-   *    return(s7_make_real(sc, mus_oscil_unmodulated(GET_GENERATOR(car(args), oscil))));
-   * but...
-   */
-  mus_any *o;
-  GET_GENERATOR(car(args), oscil, s7_in_safe_do(sc), o);
-  return(s7_make_real(sc, mus_oscil_unmodulated(o)));
-}
-
-static s7_pointer g_oscil_2(s7_scheme *sc, s7_pointer args)
-{
-  mus_any *o;
-  double fm;
-  bool its_safe;
-  its_safe = s7_in_safe_do(sc);
-  
-  GET_GENERATOR(car(args), oscil, its_safe, o);
-  GET_REAL(cadr(args), oscil, its_safe, fm);
-  return(s7_make_real(sc, mus_oscil_fm(o, fm)));
-}
-#else
-
-#define GEN_1(Type, Func) \
-  static s7_pointer Type ## _1; \
-  static s7_pointer g_ ## Type ## _1(s7_scheme *sc, s7_pointer args) \
-  { \
-    mus_any *_o_;	  \
-    GET_GENERATOR(car(args), Type, s7_in_safe_do(sc), _o_); \
-    return(s7_make_real(sc, Func(_o_))); \
-  }
-
-#define GEN_2(Type, Func) \
-  static s7_pointer Type ## _2; \
-  static s7_pointer g_ ## Type ## _2(s7_scheme *sc, s7_pointer args) \
-  { \
-    mus_any *_o_; \
-    double _fm_; \
-    bool _its_safe_; \
-    _its_safe_ = s7_in_safe_do(sc); \
-   \
-    GET_GENERATOR(car(args), Type, _its_safe_, _o_); \
-    GET_REAL(cadr(args), Type, _its_safe_, _fm_); \
-    return(s7_make_real(sc, Func(_o_, _fm_))); \
-  }
-
-GEN_1(oscil, mus_oscil_unmodulated)
-GEN_2(oscil, mus_oscil_fm)
-GEN_1(env, mus_env)
-
-GEN_2(comb, mus_comb_unmodulated_noz)
-GEN_2(all_pass, mus_all_pass_unmodulated_noz)
-
-/* comb currently not optimized in jcrev because there's a set! (and ina *reverb*?)
- * all-pass not optimized because its arg is an expression
- * why is the _noz necessary here? 
- */
-
-/* TODO: clm changes: locsig output ignored here -- let's remove it everywhere
- *                    function based IO in outa/locsig etc should be removed
- *                    the list-as-generator business needs to be fixed now -- we have make-type in scheme
- */
 #endif
 
-
-/* (with-sound () (fm-violin 0 .0001 440 .1)) */
-
-static s7_pointer fm_violin_vibrato;
-static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
-{
-  mus_any *e = NULL, *t = NULL, *r = NULL;
-  bool its_safe;
-  its_safe = s7_in_safe_do(sc);
-
-  GET_GENERATOR(cadar(args), env, its_safe, e);
-  args = cdr(args);
-  GET_GENERATOR(cadar(args), triangle_wave, its_safe, t);
-  args = cdr(args);
-  GET_GENERATOR(cadar(args), rand_interp, its_safe, r);
-
-  return(s7_make_real(sc, mus_env(e) + mus_triangle_wave(t, 0.0) + mus_rand_interp(r, 0.0)));			
-}
-
-static s7_pointer fm_violin_mod;
-static s7_pointer g_fm_violin_mod(s7_scheme *sc, s7_pointer args)
-{
-  mus_any *e = NULL, *t = NULL;
-  double fm;
-  bool its_safe;
-  its_safe = s7_in_safe_do(sc);
-
-  GET_GENERATOR(cadar(args), env, its_safe, e);
-  args = cadr(args);
-  GET_GENERATOR(cadr(args), polywave, its_safe, t);
-  GET_REAL(caddr(args), polywave, its_safe, fm);
-
-  return(s7_make_real(sc, mus_env(e) * mus_polywave(t, fm)));
-}
-
-static s7_pointer fm_violin_modulation;
-static s7_pointer g_fm_violin_modulation(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer vargs;
-  mus_any *e = NULL, *t = NULL;
-  bool its_safe;
-  double vibrato;
-  its_safe = s7_in_safe_do(sc);
-
-  vargs = cdr(cadr(args)); /* (* ... ) */
-  GET_GENERATOR(s7_cadar(vargs), env, its_safe, e);
-  GET_GENERATOR(s7_cadadr(vargs), polywave, its_safe, t);
-  GET_REAL(car(args), polywave, its_safe, vibrato);
-
-  return(s7_make_real(sc, vibrato + (mus_env(e) * mus_polywave(t, vibrato))));
-}
-
-static s7_pointer fm_violin_with_modulation;
-static s7_pointer g_fm_violin_with_modulation(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer vargs;
-  mus_any *e = NULL, *t = NULL, *o = NULL;
-  bool its_safe;
-  double vibrato;
-  its_safe = s7_in_safe_do(sc);
-
-  GET_GENERATOR(car(args), oscil, its_safe, o);
-  vargs = s7_cdaddr(cadr(args)); /* (* ... ) */
-  GET_GENERATOR(s7_cadar(vargs), env, its_safe, e);
-  GET_GENERATOR(s7_cadadr(vargs), polywave, its_safe, t);
-  GET_REAL(s7_cadadr(args), polywave, its_safe, vibrato);
-
-  return(s7_make_real(sc, mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
-}
-
-static s7_pointer fm_violin_1;
-static s7_pointer g_fm_violin_1(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer vargs;
-  mus_any *e = NULL, *t = NULL, *o = NULL, *a = NULL;
-  bool its_safe;
-  double vibrato;
-  its_safe = s7_in_safe_do(sc);
-
-  GET_GENERATOR(s7_cadar(args), env, its_safe, a);
-  vargs = cadr(args);
-  GET_GENERATOR(cadr(vargs), oscil, its_safe, o);
-  vargs = s7_cdaddr(caddr(vargs));
-  GET_GENERATOR(s7_cadar(vargs), env, its_safe, e);
-  GET_GENERATOR(s7_cadadr(vargs), polywave, its_safe, t);
-  GET_REAL(cadr(caddr(cadr(args))), polywave, its_safe, vibrato);
-
-  return(s7_make_real(sc, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
-}
-
-static s7_pointer fm_violin_2;
-static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer vargs;
-  mus_any *e = NULL, *t = NULL, *o = NULL, *a = NULL, *lc = NULL;
-  bool its_safe;
-  double vibrato, val;
-  mus_long_t pos;
-  mus_xen *ms = NULL;
-
-  its_safe = s7_in_safe_do(sc);
-
-  GET_GENERATOR(car(args), locsig, its_safe, lc);
-  GET_INTEGER(cadr(args), locsig, its_safe, pos);
-  vargs = s7_cdaddr(args);
-  GET_GENERATOR(s7_cadar(vargs), env, its_safe, a);
-  vargs = s7_cadr(vargs);
-  GET_GENERATOR(s7_cadr(vargs), oscil, its_safe, o);
-  vargs = s7_cdaddr(s7_caddr(vargs));
-  GET_GENERATOR(s7_cadar(vargs), env, its_safe, e);
-  vargs = s7_cdadr(vargs);
-  GET_GENERATOR(car(vargs), polywave, its_safe, t);
-  GET_REAL(cadr(vargs), polywave, its_safe, vibrato);
-
-  val = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)));
-  mus_locsig(lc, pos, val);
-
-  /* we can't tell until run-time whether we need this -- perhaps an additional layer of optimization? 
-   */
-  ms = (mus_xen *)mus_locsig_closure(lc);
-  if ((ms) && (ms->nvcts == 4)) /* (vct-peak (with-sound (:output (make-vct 1000 0.0)) (fm-violin 0 .01 440 .5))) */
-    mus_locsig_or_move_sound_to_vct_or_sound_data(ms, lc, pos, val, true);
-  
-  return(args); /* just return something! */
-}
-
-/* s7: 706, run: 479, 
- *   run can use optimized locsig_no_rev/linear_env = about 25, [actually we can too! see above]
- *       eval_ptree overhead is about 75, but s7 g_fm_violin* overhead is about 175 + say 20 for the do loop
- *       s7_cxxr is aobut 40, gc is 7, make_real is 15, (mus_* call overhead is about 25)
- *   so the 225 difference will be very hard to whittle down --
- *   I think 50 could be removed but at the cost of a lot of kludgery
- * so: is that good enough?
- * the sin numbers callgrind reports are completely bogus, but they're the same here,
- *    the real factor is 1.4 (.188 to .137 in system time, 700 to 480 in callgrind numbers)
- */
-
-/* (with-sound () (fm-violin 0 .0001 440 .1)) */
-
-static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
-static s7_pointer g_env_w(s7_scheme *sc, s7_pointer args);
-static s7_pointer g_triangle_wave_w(s7_scheme *sc, s7_pointer args);
-static s7_pointer g_rand_interp_w(s7_scheme *sc, s7_pointer args);
-static s7_pointer g_polywave_w(s7_scheme *sc, s7_pointer args);
-
-static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 3) &&
-      (s7_is_pair(cadr(expr))) &&
-      ((s7_function_choice(cadr(expr)) == g_env_w) || (s7_function_choice(cadr(expr)) == g_env_1)) &&
-      (s7_is_symbol(cadr(cadr(expr)))) &&
-      (s7_is_pair(caddr(expr))) &&
-      (cddr(caddr(expr)) == s7_nil(sc)) &&
-      (s7_function_choice(caddr(expr)) == g_triangle_wave_w) &&
-      (s7_is_symbol(cadr(caddr(expr)))) &&
-      (s7_is_pair(cadddr(expr))) &&
-      (cddr(cadddr(expr)) == s7_nil(sc)) &&
-      (s7_function_choice(cadddr(expr)) == g_rand_interp_w) &&
-      (s7_is_symbol(cadr(cadddr(expr)))))
-    {
-      s7_function_choice_set_direct(expr);
-      return(fm_violin_vibrato);
-    }
-
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_pair(caddr(expr))))
-    {
-      if (s7_function_choice(caddr(expr)) == g_fm_violin_mod)
-	{
-	  s7_function_choice_set_direct(expr);
-	  return(fm_violin_modulation);
-	}
-    }
-  return((*initial_add_chooser)(sc, f, args, expr));
-}
-
-
-static s7_pointer (*initial_multiply_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
-
-static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 2) &&
-      (s7_is_pair(cadr(expr))) &&
-      ((s7_function_choice(cadr(expr)) == g_env_w) || (s7_function_choice(cadr(expr)) == g_env_1)) &&
-      (s7_is_symbol(cadr(cadr(expr)))) &&
-      (s7_is_pair(caddr(expr))))
-    {
-      if (s7_function_choice(caddr(expr)) == g_fm_violin_with_modulation)
-	{
-	  s7_function_choice_set_direct(expr);
-	  return(fm_violin_1);
-	}
-
-      if ((s7_function_choice(caddr(expr)) == g_polywave_w) &&
-	  (s7_is_pair(cdr(caddr(expr)))) &&
-	  (s7_is_symbol(cadr(caddr(expr)))) &&
-	  (s7_is_pair(cddr(caddr(expr)))) &&
-	  (s7_is_symbol(caddr(caddr(expr)))))
-	{
-	  s7_function_choice_set_direct(expr);
-	  return(fm_violin_mod);
-	}
-      
-    }
-  return((*initial_multiply_chooser)(sc, f, args, expr));
-}
-
-
-static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 1) &&
-      (s7_is_symbol(cadr(expr))))
-    {
-      s7_function_choice_set_direct(expr);
-      return(oscil_1);
-    }
-
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))))
-    {
-      if (s7_is_symbol(caddr(expr)))
-	{
-	  s7_function_choice_set_direct(expr);
-	  return(oscil_2);
-	}
-      if (s7_is_pair(caddr(expr)))
-	{
-	  if (s7_function_choice(caddr(expr)) == g_fm_violin_modulation)
-	    {
-	      s7_function_choice_set_direct(expr);
-	      return(fm_violin_with_modulation);
-	    }
-	}
-    }
-  return(f);
-}
-
-static s7_pointer env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 1) &&
-      (s7_is_symbol(cadr(expr))))
-    {
-      s7_function_choice_set_direct(expr);
-      return(env_1);
-    }
-  return(f);
-}
-
-static s7_pointer comb_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_symbol(caddr(expr))))
-    {
-      s7_function_choice_set_direct(expr);
-      return(comb_2);
-    }
-  return(f);
-}
-
-static s7_pointer all_pass_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_symbol(caddr(expr))))
-    {
-      s7_function_choice_set_direct(expr);
-      return(all_pass_2);
-    }
-  return(f);
-}
-
-
-static s7_pointer locsig_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 3) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_symbol(caddr(expr))) &&
-      (s7_is_pair(cadr(cddr(expr)))) &&
-      (s7_function_choice(cadr(cddr(expr))) == g_fm_violin_1))
-    {
-      s7_function_choice_set_direct(expr);
-      return(fm_violin_2);
-    }
-  return(f);
-}
-
-
-static void init_choosers(s7_scheme *sc)
-{
-  s7_pointer f;
-
-  /* oscil */
-  f = s7_name_to_value(sc, "oscil");
-  s7_function_set_chooser(f, oscil_chooser);
-  oscil_1 = s7_make_function(sc, "oscil", g_oscil_1, 1, 0, false, "experimental oscil optimization");
-  s7_function_set_class(oscil_1, s7_function_class(f));
-  oscil_2 = s7_make_function(sc, "oscil", g_oscil_2, 2, 0, false, "experimental oscil optimization");
-  s7_function_set_class(oscil_2, s7_function_class(f));
-  fm_violin_with_modulation = s7_make_function(sc, "oscil", g_fm_violin_with_modulation, 2, 0, false, "experimental fm-violin optimization");
-  s7_function_set_class(fm_violin_with_modulation, s7_function_class(f));
-
-
-  f = s7_name_to_value(sc, "env");
-  s7_function_set_chooser(f, env_chooser);
-  env_1 = s7_make_function(sc, "env", g_env_1, 1, 0, false, "experimental env optimization");
-  s7_function_set_class(env_1, s7_function_class(f));
-
-
-  f = s7_name_to_value(sc, "comb");
-  s7_function_set_chooser(f, comb_chooser);
-  comb_2 = s7_make_function(sc, "comb", g_comb_2, 2, 0, false, "experimental comb optimization");
-  s7_function_set_class(comb_2, s7_function_class(f));
-
-
-  f = s7_name_to_value(sc, "all-pass");
-  s7_function_set_chooser(f, all_pass_chooser);
-  all_pass_2 = s7_make_function(sc, "all-pass", g_all_pass_2, 2, 0, false, "experimental all-pass optimization");
-  s7_function_set_class(all_pass_2, s7_function_class(f));
-  /* (with-sound (:reverb jc-reverb) (fm-violin 0 1 440 .1 :reverb-amount .1)) */
-
-
-  f = s7_name_to_value(sc, "+");
-  initial_add_chooser = s7_function_chooser(f);
-  s7_function_set_chooser(f, clm_add_chooser);
-  fm_violin_vibrato = s7_make_function(sc, "+", g_fm_violin_vibrato, 3, 0, false, "experimental fm-violin optimization");
-  s7_function_set_class(fm_violin_vibrato, s7_function_class(f));
-  fm_violin_modulation = s7_make_function(sc, "+", g_fm_violin_modulation, 2, 0, false, "experimental fm-violin optimization");
-  s7_function_set_class(fm_violin_modulation, s7_function_class(f));
-
-
-  f = s7_name_to_value(sc, "*");
-  initial_multiply_chooser = s7_function_chooser(f);
-  s7_function_set_chooser(f, clm_multiply_chooser);
-  fm_violin_1 = s7_make_function(sc, "*", g_fm_violin_1, 2, 0, false, "experimental fm-violin optimization");
-  s7_function_set_class(fm_violin_1, s7_function_class(f));
-  fm_violin_mod = s7_make_function(sc, "*", g_fm_violin_mod, 2, 0, false, "experimental fm-violin optimization");
-  s7_function_set_class(fm_violin_mod, s7_function_class(f));
-
-
-  f = s7_name_to_value(sc, "locsig");
-  s7_function_set_chooser(f, locsig_chooser);
-  fm_violin_2 = s7_make_function(sc, "locsig", g_fm_violin_2, 3, 0, false, "experimental fm-violin optimization");
-  s7_function_set_class(fm_violin_2, s7_function_class(f));
-}
-#endif
-
-/* TODO: oscil_2 equivalent throughout, and all the current run special cases -- env * gen etc: run.c l3190 and ca 5500
- */
 
 
 static XEN g_oscil_p(XEN os) 
@@ -6683,12 +6206,13 @@ static XEN g_locsig(XEN xobj, XEN xpos, XEN xval)
     XEN_OUT_OF_RANGE_ERROR(S_locsig, XEN_ARG_2, xpos, "must be >= 0");    
   fval = XEN_TO_C_DOUBLE(xval);
   mus_locsig(loc_gen, pos, fval);
+
   /* now check for vct/sound-data special cases */
-  if (ms->nvcts == 4) mus_locsig_or_move_sound_to_vct_or_sound_data(ms, loc_gen, pos, fval, true);
+  if (ms->nvcts == 4) 
+    mus_locsig_or_move_sound_to_vct_or_sound_data(ms, loc_gen, pos, fval, true);
 
   return(xval);  /* changed 30-June-06 to return val rather than a wrapped frame */
 }
-
 
 static mus_interp_t clm_locsig_type = MUS_INTERP_LINEAR;
 
@@ -6870,6 +6394,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	  gn->vcts[G_LOCSIG_OUT] = ov;
 	  gn->vcts[G_LOCSIG_REVOUT] = rv;
 	  mus_set_environ(ge, (void *)gn);
+	  mus_locsig_function_reset((mus_any *)ge);
 	}
 
       gn->gen = ge;
@@ -8796,6 +8321,1202 @@ XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 #define g_mus_frandom_w g_mus_frandom
 #define g_mus_irandom_w g_mus_irandom
 #endif
+
+
+/* -------------------------------- scheme-side (run) optimization -------------------------------- */
+
+#if HAVE_SCHEME
+#define car(E)    s7_car(E)
+#define cdr(E)    s7_cdr(E)
+#define cadr(E)   s7_cadr(E)
+#define caddr(E)  s7_caddr(E)
+#define cadddr(E) s7_cadddr(E)
+#define cddr(E)   s7_cddr(E)
+#define cadar(E)  s7_cadar(E)
+
+
+#define GET_GENERATOR(Obj, Type, Safe, Val)		\
+  do { s7_pointer _Obj_ = Obj; mus_any *_Val_ = NULL;	\
+       if (Safe) \
+         _Val_ = (mus_any *)s7_symbol_accessor_data(_Obj_); \
+       if (!_Val_) \
+         { \
+           s7_pointer g; \
+           g = s7_symbol_value(sc, _Obj_); \
+           if (s7_object_type(g) == mus_xen_tag)    \
+	     { \
+	       _Val_ = (mus_any *)(((mus_xen *)s7_object_value(g))->gen); \
+	       if (s7_is_do_global(sc, _Obj_)) \
+	         s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
+	     } \
+           if ((!_Val_) || (!mus_ ## Type ## _p(_Val_))) \
+	     XEN_ASSERT_TYPE(false, g, XEN_ARG_1, S_ ## Type, #Type " generator"); \
+         } \
+       Val = _Val_; } while (0)
+
+
+#define GET_REAL(Obj, Caller, Safe, Val)			\
+  do { s7_pointer _Obj_ = Obj; s7_pointer _Val_ = NULL;	\
+       if (Safe) \
+         _Val_ = (s7_pointer)s7_symbol_accessor_data(_Obj_); \
+       if (!_Val_) \
+         { \
+           _Val_ = s7_symbol_slot(sc, _Obj_); \
+           if (s7_is_do_local_or_global(sc, _Obj_)) \
+ 	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
+           if (!s7_is_real(cdr(_Val_))) \
+	     XEN_ASSERT_TYPE(false, _Val_, XEN_ARG_2, S_ ## Caller, "a real"); \
+         } \
+       Val = s7_number_to_real(cdr(_Val_)); } while (0)
+
+
+#define GET_INTEGER(Obj, Caller, Safe, Val)			\
+  do { s7_pointer _Obj_ = Obj; s7_pointer _Val_ = NULL;	\
+       if (Safe) \
+         _Val_ = (s7_pointer)s7_symbol_accessor_data(_Obj_); \
+       if (!_Val_) \
+         { \
+           _Val_ = s7_symbol_slot(sc, _Obj_); \
+           if (s7_is_do_local_or_global(sc, _Obj_)) \
+ 	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
+           if (!s7_is_integer(cdr(_Val_))) \
+	     XEN_ASSERT_TYPE(false, _Val_, XEN_ARG_2, S_ ## Caller, "an integer"); \
+         } \
+       Val = s7_integer(cdr(_Val_)); } while (0)
+
+
+
+#define GEN_1(Type, Func) \
+  static s7_pointer Type ## _1; \
+  static s7_pointer g_ ## Type ## _1(s7_scheme *sc, s7_pointer args) \
+  { \
+    mus_any *_o_;	  \
+    GET_GENERATOR(car(args), Type, s7_in_safe_do(sc), _o_); \
+    return(s7_make_real(sc, Func(_o_))); \
+  }
+
+#define GEN_2(Type, Func) \
+  static s7_pointer Type ## _2; \
+  static s7_pointer g_ ## Type ## _2(s7_scheme *sc, s7_pointer args) \
+  { \
+    mus_any *_o_; \
+    double _fm_; \
+    bool _its_safe_; \
+    _its_safe_ = s7_in_safe_do(sc); \
+   \
+    GET_GENERATOR(car(args), Type, _its_safe_, _o_); \
+    GET_REAL(cadr(args), Type, _its_safe_, _fm_); \
+    return(s7_make_real(sc, Func(_o_, _fm_))); \
+  } \
+  static s7_pointer mul_c_ ## Type ## _2; \
+  static s7_pointer g_mul_c_ ## Type ## _2(s7_scheme *sc, s7_pointer args) \
+  { \
+    mus_any *_o_; \
+    double _fm_, _mul_;    \
+    bool _its_safe_; \
+    _its_safe_ = s7_in_safe_do(sc); \
+   \
+    _mul_ = s7_number_to_real(car(args)); \
+    GET_GENERATOR(s7_cadr(s7_cadr(args)), Type, _its_safe_, _o_);	\
+    GET_REAL(s7_caddr(s7_cadr(args)), Type, _its_safe_, _fm_);		\
+    return(s7_make_real(sc, _mul_ * Func(_o_, _fm_))); \
+  } \
+ 
+
+GEN_1(oscil, mus_oscil_unmodulated)
+GEN_2(oscil, mus_oscil_fm)
+
+GEN_1(polywave, mus_polywave_unmodulated)
+GEN_2(polywave, mus_polywave)
+
+GEN_1(env, mus_env)
+
+GEN_2(comb, mus_comb_unmodulated_noz)
+GEN_2(notch, mus_notch_unmodulated_noz)
+GEN_2(all_pass, mus_all_pass_unmodulated_noz)
+GEN_2(delay, mus_delay_unmodulated_noz)
+
+GEN_2(moving_average, mus_moving_average)
+GEN_2(rand, mus_rand)
+GEN_2(rand_interp, mus_rand_interp)
+GEN_2(ncos, mus_ncos)
+GEN_2(nsin, mus_nsin)
+GEN_2(sawtooth_wave, mus_sawtooth_wave)
+GEN_2(pulse_train, mus_pulse_train)
+GEN_2(square_wave, mus_square_wave)
+GEN_2(triangle_wave, mus_triangle_wave)
+GEN_2(nrxysin, mus_nrxysin)
+GEN_2(nrxycos, mus_nrxycos)
+GEN_2(one_zero, mus_one_zero)
+GEN_2(one_pole, mus_one_pole)
+GEN_2(two_zero, mus_two_zero)
+GEN_2(two_pole, mus_two_pole)
+GEN_2(filter, mus_filter)
+GEN_2(fir_filter, mus_fir_filter)
+GEN_2(iir_filter, mus_iir_filter)
+
+GEN_2(formant, mus_formant)
+GEN_2(firmant, mus_firmant)
+
+/*
+GEN3(ssb_am)
+GEN3(asymmetric_fm)
+GEN2_OPT(wave_train)
+GEN2_OPT(table_lookup)
+
+GEN_P(frame)
+GEN_P(mixer)
+GEN_P(file_to_sample)
+GEN_P(sample_to_file)
+GEN_P(file_to_frame)
+GEN_P(frame_to_file)
+GEN_P(locsig)
+GEN_P(move_sound)
+
+GEN_P(input)
+GEN_P(output)
+
+      MUS_SRC, 
+      MUS_GRANULATE,
+      MUS_CONVOLVE,
+      MUS_READIN, 
+      MUS_PHASE_VOCODER,
+      MUS_POLYSHAPE, 
+      MUS_FILTERED_COMB,
+*/
+
+
+/* for the noz part, run seems to be checking that safety==0, but that's always the case, and
+ *   that the gen arg is correct, but we check that too.
+ * perhaps size must be > 0?  -- TODO: make this choice at init time
+ */
+
+/* TODO: clm changes: function based IO in outa/locsig etc should be removed
+ *                    the list-as-generator business needs to be fixed now -- we have make-type in scheme
+ */
+
+/* TODO: add (+|* sym|const (gen g)) and (+|* sym|const (gen g fm)) to GEN1 and GEN2 (and the +*choosers)
+ *       (gen g1 (gen g2 fm)) (+ (gen g1 fm1) (gen g2 fm2)) (* (env e) (gen g fm))
+ * to save endless if..then on every gen type, perhaps add a field to the class that gives (+ sym (gen)) choice and so on
+ * s7_function_chooser_data and _set_data
+ *
+ * then all the standard patterns are automatic, and we only have to write a few popular special cases
+ */
+
+/* ---------------- special cases ---------------- */
+
+/* (with-sound () (fm-violin 0 .0001 440 .1)) */
+
+static s7_pointer fm_violin_vibrato;
+static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *e = NULL, *t = NULL, *r = NULL;
+  bool its_safe;
+  its_safe = s7_in_safe_do(sc);
+
+  GET_GENERATOR(cadar(args), env, its_safe, e);
+  args = cdr(args);
+  GET_GENERATOR(cadar(args), triangle_wave, its_safe, t);
+  args = cdr(args);
+  GET_GENERATOR(cadar(args), rand_interp, its_safe, r);
+
+  return(s7_make_real(sc, mus_env(e) + mus_triangle_wave(t, 0.0) + mus_rand_interp(r, 0.0)));			
+}
+
+static s7_pointer fm_violin_mod;
+static s7_pointer g_fm_violin_mod(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *e = NULL, *t = NULL;
+  double fm;
+  bool its_safe;
+  its_safe = s7_in_safe_do(sc);
+
+  GET_GENERATOR(cadar(args), env, its_safe, e);
+  args = cadr(args);
+  GET_GENERATOR(cadr(args), polywave, its_safe, t);
+  GET_REAL(caddr(args), polywave, its_safe, fm);
+
+  return(s7_make_real(sc, mus_env(e) * mus_polywave(t, fm)));
+}
+
+static s7_pointer fm_violin_modulation;
+static s7_pointer g_fm_violin_modulation(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vargs;
+  mus_any *e = NULL, *t = NULL;
+  bool its_safe;
+  double vibrato;
+  its_safe = s7_in_safe_do(sc);
+
+  vargs = cdr(cadr(args)); /* (* ... ) */
+  GET_GENERATOR(s7_cadar(vargs), env, its_safe, e);
+  GET_GENERATOR(s7_cadadr(vargs), polywave, its_safe, t);
+  GET_REAL(car(args), polywave, its_safe, vibrato);
+
+  return(s7_make_real(sc, vibrato + (mus_env(e) * mus_polywave(t, vibrato))));
+}
+
+static s7_pointer fm_violin_with_modulation;
+static s7_pointer g_fm_violin_with_modulation(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vargs;
+  mus_any *e = NULL, *t = NULL, *o = NULL;
+  bool its_safe;
+  double vibrato;
+  its_safe = s7_in_safe_do(sc);
+
+  GET_GENERATOR(car(args), oscil, its_safe, o);
+  vargs = s7_cdaddr(cadr(args)); /* (* ... ) */
+  GET_GENERATOR(s7_cadar(vargs), env, its_safe, e);
+  GET_GENERATOR(s7_cadadr(vargs), polywave, its_safe, t);
+  GET_REAL(s7_cadadr(args), polywave, its_safe, vibrato);
+
+  return(s7_make_real(sc, mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
+}
+
+static s7_pointer fm_violin_1;
+static s7_pointer g_fm_violin_1(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vargs;
+  mus_any *e = NULL, *t = NULL, *o = NULL, *a = NULL;
+  bool its_safe;
+  double vibrato;
+  its_safe = s7_in_safe_do(sc);
+
+  GET_GENERATOR(s7_cadar(args), env, its_safe, a);
+  vargs = cadr(args);
+  GET_GENERATOR(cadr(vargs), oscil, its_safe, o);
+  vargs = s7_cdaddr(caddr(vargs));
+  GET_GENERATOR(s7_cadar(vargs), env, its_safe, e);
+  GET_GENERATOR(s7_cadadr(vargs), polywave, its_safe, t);
+  GET_REAL(cadr(caddr(cadr(args))), polywave, its_safe, vibrato);
+
+  return(s7_make_real(sc, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
+}
+
+static s7_pointer fm_violin_2;
+static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vargs;
+  mus_any *e = NULL, *t = NULL, *o = NULL, *a = NULL, *lc = NULL;
+  bool its_safe;
+  double vibrato, val;
+  mus_long_t pos;
+  mus_xen *ms = NULL;
+
+  its_safe = s7_in_safe_do(sc);
+
+  GET_GENERATOR(car(args), locsig, its_safe, lc);
+  GET_INTEGER(cadr(args), locsig, its_safe, pos);
+  vargs = s7_cdaddr(args);
+  GET_GENERATOR(s7_cadar(vargs), env, its_safe, a);
+  vargs = s7_cadr(vargs);
+  GET_GENERATOR(s7_cadr(vargs), oscil, its_safe, o);
+  vargs = s7_cdaddr(s7_caddr(vargs));
+  GET_GENERATOR(s7_cadar(vargs), env, its_safe, e);
+  vargs = s7_cdadr(vargs);
+  GET_GENERATOR(car(vargs), polywave, its_safe, t);
+  GET_REAL(cadr(vargs), polywave, its_safe, vibrato);
+
+  val = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)));
+  mus_locsig(lc, pos, val);
+
+  /* we can't tell until run-time whether we need this -- perhaps an additional layer of optimization? 
+   */
+  ms = (mus_xen *)mus_locsig_closure(lc);
+  if ((ms) && (ms->nvcts == 4)) /* (vct-peak (with-sound (:output (make-vct 1000 0.0)) (fm-violin 0 .01 440 .5))) */
+    mus_locsig_or_move_sound_to_vct_or_sound_data(ms, lc, pos, val, true);
+  
+  return(args); /* just return something! */
+}
+
+
+/* (with-sound (:reverb jc-reverb) (outa 0 .1 *reverb*)) */
+static s7_pointer jc_reverb_combs;
+static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vargs;
+  mus_any *c1, *c2, *c3, *c4;
+  double fm;
+  bool its_safe;
+
+  its_safe = s7_in_safe_do(sc);
+
+  GET_REAL(s7_caddar(args), comb, its_safe, fm);
+  GET_GENERATOR(s7_cadar(args), comb, its_safe, c1);
+  vargs = cdr(args);
+  GET_GENERATOR(s7_cadar(vargs), comb, its_safe, c2);
+  vargs = cdr(vargs);
+  GET_GENERATOR(s7_cadar(vargs), comb, its_safe, c3);
+  vargs = cdr(vargs);
+  GET_GENERATOR(s7_cadar(vargs), comb, its_safe, c4);
+  /* fprintf(stderr, "%s: %f %p %p %p %p\n", DISPLAY(args), fm, c1, c2, c3, c4); */
+  return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + mus_comb_unmodulated_noz(c2, fm) + mus_comb_unmodulated_noz(c3, fm) + mus_comb_unmodulated_noz(c4, fm)));
+}
+
+
+static s7_pointer jc_reverb_all_passes;
+static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vargs, rev = NULL, loc;
+  mus_any *a1, *a2, *a3, *reverb;
+  double x;
+  bool its_safe;
+
+  its_safe = s7_in_safe_do(sc);
+  GET_GENERATOR(car(args), all_pass, its_safe, a1);
+  vargs = s7_cdr(args);
+  GET_GENERATOR(cadar(vargs), all_pass, its_safe, a2);
+  vargs = s7_cddar(vargs);
+  GET_GENERATOR(cadar(vargs), all_pass, its_safe, a3);
+  vargs = s7_caddar(vargs);
+
+  /* *reverb* can be all kinds of things (sigh)
+   */
+  loc = cadr(vargs);
+  vargs = caddr(vargs);
+  if (its_safe)						     
+    rev = (s7_pointer)s7_symbol_accessor_data(vargs);
+  if (!rev)
+    { 
+      rev = s7_symbol_value(sc, vargs); 
+      if (s7_is_do_local_or_global(sc, vargs))
+	s7_symbol_set_accessor_data(vargs, (void *)rev); 
+    }
+
+  if (s7_object_type(rev) == mus_xen_tag)
+    {
+      mus_xen *gx;
+      gx = s7_object_value(rev);
+      reverb = (mus_any *)(gx->gen);
+      if (mus_input_p(reverb))
+	{
+	  mus_long_t pos;
+	  GET_INTEGER(loc, ina, its_safe, pos);
+	  x = mus_in_any(pos, 0, reverb);
+	}
+      else XEN_ASSERT_TYPE(false, rev, XEN_ARG_1, S_ina, "an input generator");
+    }
+  else x = s7_real(g_in_any_1(S_ina, s7_symbol_value(sc, loc), 0, rev));
+
+  return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, mus_all_pass_unmodulated_noz(a2, mus_all_pass_unmodulated_noz(a3, x)))));
+}
+
+
+/* s7: 678, run: 479, 
+ *       eval_ptree overhead is about 75, but s7 g_fm_violin* overhead is about 175 + say 20 for the do loop
+ *       s7_cxxr is about 40, gc is 7, make_real is 15, (mus_* call overhead is about 25)
+ *   so the 225 difference will be very hard to whittle down --
+ *   I think 50 could be removed but at the cost of a lot of kludgery
+ * so: is that good enough?
+ * the sin numbers callgrind reports are completely bogus, but they're the same here,
+ *    the real factor is 1.4 (.188 to .137 in system time, 700 to 480 in callgrind numbers)
+ */
+
+/* (with-sound () (fm-violin 0 .0001 440 .1)) */
+
+static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
+
+static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 3) &&
+      (s7_is_pair(cadr(expr))) &&
+      ((s7_function_choice(cadr(expr)) == g_env_w) || (s7_function_choice(cadr(expr)) == g_env_1)) &&
+      (s7_is_symbol(cadr(cadr(expr)))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (cddr(caddr(expr)) == s7_nil(sc)) &&
+      ((s7_function_choice(caddr(expr)) == g_triangle_wave_w) || (s7_function_choice(caddr(expr)) == g_triangle_wave_2)) &&
+      (s7_is_symbol(cadr(caddr(expr)))) &&
+      (s7_is_pair(cadddr(expr))) &&
+      (cddr(cadddr(expr)) == s7_nil(sc)) &&
+      ((s7_function_choice(cadddr(expr)) == g_rand_interp_w) || (s7_function_choice(cadddr(expr)) == g_rand_interp_2)) &&
+      (s7_is_symbol(cadr(cadddr(expr)))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(fm_violin_vibrato);
+    }
+
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))))
+    {
+      if (s7_function_choice(caddr(expr)) == g_fm_violin_mod)
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(fm_violin_modulation);
+	}
+    }
+
+  if (args == 4)
+    {
+      s7_pointer p, fm = NULL;
+      for (p = cdr(expr); s7_is_pair(p); p = cdr(p))
+	if ((!s7_is_pair(car(p))) ||
+	    (!s7_is_symbol(cadar(p))) ||
+	    (!s7_is_symbol(s7_caddar(p))) ||
+	    ((s7_function_choice(car(p)) != g_comb_2) && (s7_function_choice(car(p)) != g_comb_w)))
+	  return(f);
+	else
+	  {
+	    if (!fm) 
+	      fm = s7_caddar(p);
+	    else
+	      {
+		if (fm != s7_caddar(p))
+		  return(f);
+	      }
+	  }
+      s7_function_choice_set_direct(expr);
+      return(jc_reverb_combs);
+    }
+
+  return((*initial_add_chooser)(sc, f, args, expr));
+}
+
+#define MUL_C_GEN 0
+#define NUM_CHOICES 1
+
+static s7_pointer *make_choices(s7_pointer mul_c)
+{
+  s7_pointer *choices;
+  choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));
+  choices[MUL_C_GEN] = mul_c;
+  return(choices);
+}
+
+static s7_pointer (*initial_multiply_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
+
+static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_pair(cadr(expr))) &&
+      ((s7_function_choice(cadr(expr)) == g_env_w) || (s7_function_choice(cadr(expr)) == g_env_1)) &&
+      (s7_is_symbol(cadr(cadr(expr)))) &&
+      (s7_is_pair(caddr(expr))))
+    {
+      if (s7_function_choice(caddr(expr)) == g_fm_violin_with_modulation)
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(fm_violin_1);
+	}
+
+      if (((s7_function_choice(caddr(expr)) == g_polywave_w) || (s7_function_choice(caddr(expr)) == g_polywave_2)) &&
+	  (s7_is_pair(cdr(caddr(expr)))) &&
+	  (s7_is_symbol(cadr(caddr(expr)))) &&
+	  (s7_is_pair(cddr(caddr(expr)))) &&
+	  (s7_is_symbol(caddr(caddr(expr)))))
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(fm_violin_mod);
+	}
+    }
+
+  if ((args == 2) &&
+      (s7_is_real(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))))
+    {
+      /* (* num (gen...))
+       */
+      s7_pointer *choices;
+      choices = (s7_pointer *)s7_function_chooser_data(caddr(expr));
+      if ((choices) && 
+	  (choices[MUL_C_GEN]))
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(choices[MUL_C_GEN]);
+	}
+    }
+
+  return((*initial_multiply_chooser)(sc, f, args, expr));
+}
+
+
+static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(oscil_1);
+    }
+
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      if (s7_is_symbol(caddr(expr)))
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(oscil_2);
+	}
+      if (s7_is_pair(caddr(expr)))
+	{
+	  if (s7_function_choice(caddr(expr)) == g_fm_violin_modulation)
+	    {
+	      s7_function_choice_set_direct(expr);
+	      return(fm_violin_with_modulation);
+	    }
+	}
+    }
+  return(f);
+}
+
+static s7_pointer polywave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(polywave_1);
+    }
+
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      if (s7_is_symbol(caddr(expr)))
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(polywave_2);
+	}
+    }
+  return(f);
+}
+
+static s7_pointer nsin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(nsin_2);
+    }
+  return(f);
+}
+
+static s7_pointer ncos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(ncos_2);
+    }
+  return(f);
+}
+
+static s7_pointer nrxysin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(nrxysin_2);
+    }
+  return(f);
+}
+
+static s7_pointer nrxycos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(nrxycos_2);
+    }
+  return(f);
+}
+
+static s7_pointer env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(env_1);
+    }
+  return(f);
+}
+
+static s7_pointer comb_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(comb_2);
+    }
+  return(f);
+}
+
+static s7_pointer notch_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(notch_2);
+    }
+  return(f);
+}
+
+
+static s7_pointer all_pass_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      if (s7_is_symbol(caddr(expr)))
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(all_pass_2);
+	}
+      if ((s7_is_pair(caddr(expr))) &&
+	  ((s7_function_choice(caddr(expr)) == g_all_pass_w) || (s7_function_choice(caddr(expr)) == g_all_pass_2)) &&
+	  (s7_is_symbol(cadr(caddr(expr)))) &&
+	  (s7_is_pair(caddr(caddr(expr)))) &&
+	  ((s7_function_choice(caddr(caddr(expr))) == g_all_pass_w) || (s7_function_choice(caddr(caddr(expr))) == g_all_pass_2)) &&
+	  (s7_is_symbol(cadr(caddr(caddr(expr))))) &&
+	  (s7_is_pair(caddr(caddr(caddr(expr))))) &&
+	  (s7_function_choice(caddr(caddr(caddr(expr)))) == g_ina_w) &&
+	  (s7_is_symbol(cadr(caddr(caddr(caddr(expr)))))) &&
+	  (caddr(caddr(caddr(caddr(expr)))) == s7_make_symbol(sc, "*reverb*")))
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(jc_reverb_all_passes);
+	}
+    }
+  return(f);
+}
+
+
+static s7_pointer delay_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(delay_2);
+    }
+  return(f);
+}
+
+
+static s7_pointer one_pole_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(one_pole_2);
+    }
+  return(f);
+}
+
+static s7_pointer two_pole_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(two_pole_2);
+    }
+  return(f);
+}
+
+static s7_pointer one_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(one_zero_2);
+    }
+  return(f);
+}
+
+static s7_pointer two_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(two_zero_2);
+    }
+  return(f);
+}
+
+static s7_pointer moving_average_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(moving_average_2);
+    }
+  return(f);
+}
+
+static s7_pointer formant_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(formant_2);
+    }
+  return(f);
+}
+
+static s7_pointer firmant_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(firmant_2);
+    }
+  return(f);
+}
+
+static s7_pointer filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(filter_2);
+    }
+  return(f);
+}
+
+static s7_pointer fir_filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(fir_filter_2);
+    }
+  return(f);
+}
+
+static s7_pointer iir_filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(iir_filter_2);
+    }
+  return(f);
+}
+
+static s7_pointer triangle_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(triangle_wave_2);
+    }
+  return(f);
+}
+
+static s7_pointer sawtooth_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(sawtooth_wave_2);
+    }
+  return(f);
+}
+
+static s7_pointer square_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(square_wave_2);
+    }
+  return(f);
+}
+
+static s7_pointer pulse_train_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(pulse_train_2);
+    }
+  return(f);
+}
+
+
+static s7_pointer rand_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(rand_2);
+    }
+  return(f);
+}
+
+static s7_pointer rand_interp_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(rand_interp_2);
+    }
+  return(f);
+}
+
+
+static s7_pointer locsig_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 3) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))) &&
+      (s7_is_pair(cadr(cddr(expr)))) &&
+      (s7_function_choice(cadr(cddr(expr))) == g_fm_violin_1))
+    {
+      s7_function_choice_set_direct(expr);
+      return(fm_violin_2);
+    }
+  return(f);
+}
+
+
+static void init_choosers(s7_scheme *sc)
+{
+  s7_pointer f;
+
+  /* oscil */
+  f = s7_name_to_value(sc, "oscil");
+  s7_function_set_chooser(f, oscil_chooser);
+  oscil_1 = s7_make_function(sc, "oscil", g_oscil_1, 1, 0, false, "oscil optimization");
+  s7_function_set_class(oscil_1, s7_function_class(f));
+  oscil_2 = s7_make_function(sc, "oscil", g_oscil_2, 2, 0, false, "oscil optimization");
+  s7_function_set_class(oscil_2, s7_function_class(f));
+  fm_violin_with_modulation = s7_make_function(sc, "oscil", g_fm_violin_with_modulation, 2, 0, false, "fm-violin optimization");
+  s7_function_set_class(fm_violin_with_modulation, s7_function_class(f));
+
+
+  /* polywave */
+  f = s7_name_to_value(sc, "polywave");
+  s7_function_set_chooser(f, polywave_chooser);
+  polywave_1 = s7_make_function(sc, "polywave", g_polywave_1, 1, 0, false, "polywave optimization");
+  s7_function_set_class(polywave_1, s7_function_class(f));
+  polywave_2 = s7_make_function(sc, "polywave", g_polywave_2, 2, 0, false, "polywave optimization");
+  s7_function_set_class(polywave_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "nsin");
+  s7_function_set_chooser(f, nsin_chooser);
+  nsin_2 = s7_make_function(sc, "nsin", g_nsin_2, 2, 0, false, "nsin optimization");
+  s7_function_set_class(nsin_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "ncos");
+  s7_function_set_chooser(f, ncos_chooser);
+  ncos_2 = s7_make_function(sc, "ncos", g_ncos_2, 2, 0, false, "ncos optimization");
+  s7_function_set_class(ncos_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "nrxysin");
+  s7_function_set_chooser(f, nrxysin_chooser);
+  nrxysin_2 = s7_make_function(sc, "nrxysin", g_nrxysin_2, 2, 0, false, "nrxysin optimization");
+  s7_function_set_class(nrxysin_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "nrxycos");
+  s7_function_set_chooser(f, nrxycos_chooser);
+  nrxycos_2 = s7_make_function(sc, "nrxycos", g_nrxycos_2, 2, 0, false, "nrxycos optimization");
+  s7_function_set_class(nrxycos_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "env");
+  s7_function_set_chooser(f, env_chooser);
+  env_1 = s7_make_function(sc, "env", g_env_1, 1, 0, false, "env optimization");
+  s7_function_set_class(env_1, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "comb");
+  s7_function_set_chooser(f, comb_chooser);
+  comb_2 = s7_make_function(sc, "comb", g_comb_2, 2, 0, false, "comb optimization");
+  s7_function_set_class(comb_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "notch");
+  s7_function_set_chooser(f, notch_chooser);
+  notch_2 = s7_make_function(sc, "notch", g_notch_2, 2, 0, false, "notch optimization");
+  s7_function_set_class(notch_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "one-pole");
+  s7_function_set_chooser(f, one_pole_chooser);
+  one_pole_2 = s7_make_function(sc, "one-pole", g_one_pole_2, 2, 0, false, "one-pole optimization");
+  s7_function_set_class(one_pole_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "two-pole");
+  s7_function_set_chooser(f, two_pole_chooser);
+  two_pole_2 = s7_make_function(sc, "two-pole", g_two_pole_2, 2, 0, false, "two-pole optimization");
+  s7_function_set_class(two_pole_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "one-zero");
+  s7_function_set_chooser(f, one_zero_chooser);
+  one_zero_2 = s7_make_function(sc, "one-zero", g_one_zero_2, 2, 0, false, "one-zero optimization");
+  s7_function_set_class(one_zero_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "two-zero");
+  s7_function_set_chooser(f, two_zero_chooser);
+  two_zero_2 = s7_make_function(sc, "two-zero", g_two_zero_2, 2, 0, false, "two-zero optimization");
+  s7_function_set_class(two_zero_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "moving-average");
+  s7_function_set_chooser(f, moving_average_chooser);
+  moving_average_2 = s7_make_function(sc, "moving-average", g_moving_average_2, 2, 0, false, "moving-average optimization");
+  s7_function_set_class(moving_average_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "filter");
+  s7_function_set_chooser(f, filter_chooser);
+  filter_2 = s7_make_function(sc, "filter", g_filter_2, 2, 0, false, "filter optimization");
+  s7_function_set_class(filter_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "fir-filter");
+  s7_function_set_chooser(f, fir_filter_chooser);
+  fir_filter_2 = s7_make_function(sc, "fir-filter", g_fir_filter_2, 2, 0, false, "fir-filter optimization");
+  s7_function_set_class(fir_filter_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "iir-filter");
+  s7_function_set_chooser(f, iir_filter_chooser);
+  iir_filter_2 = s7_make_function(sc, "iir-filter", g_iir_filter_2, 2, 0, false, "iir-filter optimization");
+  s7_function_set_class(iir_filter_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "triangle-wave");
+  s7_function_set_chooser(f, triangle_wave_chooser);
+  triangle_wave_2 = s7_make_function(sc, "triangle-wave", g_triangle_wave_2, 2, 0, false, "triangle-wave optimization");
+  s7_function_set_class(triangle_wave_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "sawtooth-wave");
+  s7_function_set_chooser(f, sawtooth_wave_chooser);
+  sawtooth_wave_2 = s7_make_function(sc, "sawtooth-wave", g_sawtooth_wave_2, 2, 0, false, "sawtooth-wave optimization");
+  s7_function_set_class(sawtooth_wave_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "square-wave");
+  s7_function_set_chooser(f, square_wave_chooser);
+  square_wave_2 = s7_make_function(sc, "square-wave", g_square_wave_2, 2, 0, false, "square-wave optimization");
+  s7_function_set_class(square_wave_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "pulse-train");
+  s7_function_set_chooser(f, pulse_train_chooser);
+  pulse_train_2 = s7_make_function(sc, "pulse-train", g_pulse_train_2, 2, 0, false, "pulse-train optimization");
+  s7_function_set_class(pulse_train_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "rand");
+  s7_function_set_chooser(f, rand_chooser);
+  rand_2 = s7_make_function(sc, "rand", g_rand_2, 2, 0, false, "rand optimization");
+  s7_function_set_class(rand_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "rand-interp");
+  s7_function_set_chooser(f, rand_interp_chooser);
+  rand_interp_2 = s7_make_function(sc, "rand-interp", g_rand_interp_2, 2, 0, false, "rand-interp optimization");
+  s7_function_set_class(rand_interp_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "formant");
+  s7_function_set_chooser(f, formant_chooser);
+  formant_2 = s7_make_function(sc, "formant", g_formant_2, 2, 0, false, "formant optimization");
+  s7_function_set_class(formant_2, s7_function_class(f));
+
+  f = s7_name_to_value(sc, "firmant");
+  s7_function_set_chooser(f, firmant_chooser);
+  firmant_2 = s7_make_function(sc, "firmant", g_firmant_2, 2, 0, false, "firmant optimization");
+  s7_function_set_class(firmant_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "all-pass");
+  s7_function_set_chooser(f, all_pass_chooser);
+  all_pass_2 = s7_make_function(sc, "all-pass", g_all_pass_2, 2, 0, false, "all-pass optimization");
+  s7_function_set_class(all_pass_2, s7_function_class(f));
+  jc_reverb_all_passes = s7_make_function(sc, "all-pass", g_jc_reverb_all_passes, 2, 0, false, "all-pass optimization");
+  s7_function_set_class(jc_reverb_all_passes, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "delay");
+  s7_function_set_chooser(f, delay_chooser);
+  delay_2 = s7_make_function(sc, "delay", g_delay_2, 2, 0, false, "delay optimization");
+  s7_function_set_class(delay_2, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "+");
+  initial_add_chooser = s7_function_chooser(f);
+  s7_function_set_chooser(f, clm_add_chooser);
+  fm_violin_vibrato = s7_make_function(sc, "+", g_fm_violin_vibrato, 3, 0, false, "fm-violin optimization");
+  s7_function_set_class(fm_violin_vibrato, s7_function_class(f));
+  fm_violin_modulation = s7_make_function(sc, "+", g_fm_violin_modulation, 2, 0, false, "fm-violin optimization");
+  s7_function_set_class(fm_violin_modulation, s7_function_class(f));
+  jc_reverb_combs = s7_make_function(sc, "+", g_jc_reverb_combs, 2, 0, false, "jc-reverb optimization");
+  s7_function_set_class(jc_reverb_combs, s7_function_class(f));
+
+
+  f = s7_name_to_value(sc, "*");
+  initial_multiply_chooser = s7_function_chooser(f);
+  s7_function_set_chooser(f, clm_multiply_chooser);
+  fm_violin_1 = s7_make_function(sc, "*", g_fm_violin_1, 2, 0, false, "fm-violin optimization");
+  s7_function_set_class(fm_violin_1, s7_function_class(f));
+  fm_violin_mod = s7_make_function(sc, "*", g_fm_violin_mod, 2, 0, false, "fm-violin optimization");
+  s7_function_set_class(fm_violin_mod, s7_function_class(f));
+
+  mul_c_oscil_2 = s7_make_function(sc, "*", g_mul_c_oscil_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_oscil_2, s7_function_class(f));
+  s7_function_chooser_set_data(oscil_2, (void *)make_choices(mul_c_oscil_2));
+
+  /* (define (hi) (let ((o (make-oscil 500.0)) (f 0.1)) (do ((i 0 (+ i 1))) ((= i 3)) (display (* .5 (oscil o f))))))
+   */
+
+  mul_c_polywave_2 = s7_make_function(sc, "*", g_mul_c_polywave_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_polywave_2, s7_function_class(f));
+  s7_function_chooser_set_data(polywave_2, (void *)make_choices(mul_c_polywave_2));
+
+  mul_c_comb_2 = s7_make_function(sc, "*", g_mul_c_comb_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_comb_2, s7_function_class(f));
+  s7_function_chooser_set_data(comb_2, (void *)make_choices(mul_c_comb_2));
+
+  mul_c_notch_2 = s7_make_function(sc, "*", g_mul_c_notch_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_notch_2, s7_function_class(f));
+  s7_function_chooser_set_data(notch_2, (void *)make_choices(mul_c_notch_2));
+
+  mul_c_all_pass_2 = s7_make_function(sc, "*", g_mul_c_all_pass_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_all_pass_2, s7_function_class(f));
+  s7_function_chooser_set_data(all_pass_2, (void *)make_choices(mul_c_all_pass_2));
+
+  mul_c_delay_2 = s7_make_function(sc, "*", g_mul_c_delay_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_delay_2, s7_function_class(f));
+  s7_function_chooser_set_data(delay_2, (void *)make_choices(mul_c_delay_2));
+
+  mul_c_moving_average_2 = s7_make_function(sc, "*", g_mul_c_moving_average_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_moving_average_2, s7_function_class(f));
+  s7_function_chooser_set_data(moving_average_2, (void *)make_choices(mul_c_moving_average_2));
+
+  mul_c_rand_2 = s7_make_function(sc, "*", g_mul_c_rand_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_rand_2, s7_function_class(f));
+  s7_function_chooser_set_data(rand_2, (void *)make_choices(mul_c_rand_2));
+
+  mul_c_rand_interp_2 = s7_make_function(sc, "*", g_mul_c_rand_interp_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_rand_interp_2, s7_function_class(f));
+  s7_function_chooser_set_data(rand_interp_2, (void *)make_choices(mul_c_rand_interp_2));
+
+  mul_c_ncos_2 = s7_make_function(sc, "*", g_mul_c_ncos_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_ncos_2, s7_function_class(f));
+  s7_function_chooser_set_data(ncos_2, (void *)make_choices(mul_c_ncos_2));
+
+  mul_c_nsin_2 = s7_make_function(sc, "*", g_mul_c_nsin_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_nsin_2, s7_function_class(f));
+  s7_function_chooser_set_data(nsin_2, (void *)make_choices(mul_c_nsin_2));
+
+  mul_c_sawtooth_wave_2 = s7_make_function(sc, "*", g_mul_c_sawtooth_wave_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_sawtooth_wave_2, s7_function_class(f));
+  s7_function_chooser_set_data(sawtooth_wave_2, (void *)make_choices(mul_c_sawtooth_wave_2));
+
+  mul_c_pulse_train_2 = s7_make_function(sc, "*", g_mul_c_pulse_train_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_pulse_train_2, s7_function_class(f));
+  s7_function_chooser_set_data(pulse_train_2, (void *)make_choices(mul_c_pulse_train_2));
+
+  mul_c_square_wave_2 = s7_make_function(sc, "*", g_mul_c_square_wave_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_square_wave_2, s7_function_class(f));
+  s7_function_chooser_set_data(square_wave_2, (void *)make_choices(mul_c_square_wave_2));
+
+  mul_c_triangle_wave_2 = s7_make_function(sc, "*", g_mul_c_triangle_wave_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_triangle_wave_2, s7_function_class(f));
+  s7_function_chooser_set_data(triangle_wave_2, (void *)make_choices(mul_c_triangle_wave_2));
+
+  mul_c_nrxysin_2 = s7_make_function(sc, "*", g_mul_c_nrxysin_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_nrxysin_2, s7_function_class(f));
+  s7_function_chooser_set_data(nrxysin_2, (void *)make_choices(mul_c_nrxysin_2));
+
+  mul_c_nrxycos_2 = s7_make_function(sc, "*", g_mul_c_nrxycos_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_nrxycos_2, s7_function_class(f));
+  s7_function_chooser_set_data(nrxycos_2, (void *)make_choices(mul_c_nrxycos_2));
+
+  mul_c_one_zero_2 = s7_make_function(sc, "*", g_mul_c_one_zero_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_one_zero_2, s7_function_class(f));
+  s7_function_chooser_set_data(one_zero_2, (void *)make_choices(mul_c_one_zero_2));
+
+  mul_c_one_pole_2 = s7_make_function(sc, "*", g_mul_c_one_pole_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_one_pole_2, s7_function_class(f));
+  s7_function_chooser_set_data(one_pole_2, (void *)make_choices(mul_c_one_pole_2));
+
+  mul_c_two_zero_2 = s7_make_function(sc, "*", g_mul_c_two_zero_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_two_zero_2, s7_function_class(f));
+  s7_function_chooser_set_data(two_zero_2, (void *)make_choices(mul_c_two_zero_2));
+
+  mul_c_two_pole_2 = s7_make_function(sc, "*", g_mul_c_two_pole_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_two_pole_2, s7_function_class(f));
+  s7_function_chooser_set_data(two_pole_2, (void *)make_choices(mul_c_two_pole_2));
+
+  mul_c_filter_2 = s7_make_function(sc, "*", g_mul_c_filter_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_filter_2, s7_function_class(f));
+  s7_function_chooser_set_data(filter_2, (void *)make_choices(mul_c_filter_2));
+
+  mul_c_fir_filter_2 = s7_make_function(sc, "*", g_mul_c_fir_filter_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_fir_filter_2, s7_function_class(f));
+  s7_function_chooser_set_data(fir_filter_2, (void *)make_choices(mul_c_fir_filter_2));
+
+  mul_c_iir_filter_2 = s7_make_function(sc, "*", g_mul_c_iir_filter_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_iir_filter_2, s7_function_class(f));
+  s7_function_chooser_set_data(iir_filter_2, (void *)make_choices(mul_c_iir_filter_2));
+
+  mul_c_formant_2 = s7_make_function(sc, "*", g_mul_c_formant_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_formant_2, s7_function_class(f));
+  s7_function_chooser_set_data(formant_2, (void *)make_choices(mul_c_formant_2));
+
+  mul_c_firmant_2 = s7_make_function(sc, "*", g_mul_c_firmant_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_c_firmant_2, s7_function_class(f));
+  s7_function_chooser_set_data(firmant_2, (void *)make_choices(mul_c_firmant_2));
+
+
+
+  f = s7_name_to_value(sc, "locsig");
+  s7_function_set_chooser(f, locsig_chooser);
+  fm_violin_2 = s7_make_function(sc, "locsig", g_fm_violin_2, 3, 0, false, "fm-violin optimization");
+  s7_function_set_class(fm_violin_2, s7_function_class(f));
+}
+
+#endif
+/* -------------------------------------------------------------------------------- */
+
 
 
 static void mus_xen_init(void)
