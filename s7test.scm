@@ -11854,20 +11854,26 @@ time, so that the displayed results are
 (call-cc-do-test)
 
 ;;; more optimizer checks
-(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
-(let () (define (do-test) (do ((i 0 (+ 1 i))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
-(let ((start 0)) (define (do-test) (do ((i start (+ i 1))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
-(let ((start 0) (end 10)) (define (do-test) (do ((i start (+ i 1))) ((= i end)) (display i))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
-(let ((start 0) (end 10)) (define (do-test) (do ((i start (+ i 1))) ((= end i)) (display i))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
-(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((k i)) (display k)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
-(let () (define (do-test) (do ((i 0 (+ i 2))) ((= i 20)) (display (/ i 2)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
-(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((a (+ 1 2))) (display #\0)))) (test (with-output-to-string (lambda () (do-test))) "0000000000"))
+(let () (define (do-test-1) (do ((i 0 (+ i 1))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test-1))) "0123456789"))
+(let () (define (do-test-2) (do ((i 0 (+ 1 i))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test-2))) "0123456789"))
+(let ((start 0)) (define (do-test-3) (do ((i start (+ i 1))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test-3))) "0123456789"))
+(let ((start 0) (end 10)) (define (do-test-4) (do ((i start (+ i 1))) ((= i end)) (display i))) (test (with-output-to-string (lambda () (do-test-4))) "0123456789"))
+(let ((start 0) (end 10)) (define (do-test-5) (do ((i start (+ i 1))) ((= end i)) (display i))) (test (with-output-to-string (lambda () (do-test-5))) "0123456789"))
+(let () (define (do-test-6) (do ((i 0 (+ i 1))) ((= i 10)) (let ((k i)) (display k)))) (test (with-output-to-string (lambda () (do-test-6))) "0123456789"))
+(let () (define (do-test-7) (do ((i 0 (+ i 2))) ((= i 20)) (display (/ i 2)))) (test (with-output-to-string (lambda () (do-test-7))) "0123456789"))
+(let () (define (do-test-8) (do ((i 0 (+ i 1))) ((= i 10)) (let ((a (+ 1 2))) (display #\0)))) (test (with-output-to-string (lambda () (do-test-8))) "0000000000"))
 
-(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (set! j i) (display j)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
-(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (display i)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
-(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (set! j 32) (display i)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
-(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (display j)))) (test (with-output-to-string (lambda () (do-test))) "0123456789"))
-(let () (define (do-test) (do ((i 0 (+ i 1))) ((= i 5)) (let ((j (+ i 1))) (let ((i j)) (display (- i 1)))))) (test (with-output-to-string (lambda () (do-test))) "01234"))
+(let () (define (do-test-9) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (set! j i) (display j)))) (test (with-output-to-string (lambda () (do-test-9))) "0123456789"))
+(let () (define (do-test-10) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (display i)))) (test (with-output-to-string (lambda () (do-test-10))) "0123456789"))
+(let () (define (do-test-11) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (set! j 32) (display i)))) (test (with-output-to-string (lambda () (do-test-11))) "0123456789"))
+(let () (define (do-test-12) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (display j)))) (test (with-output-to-string (lambda () (do-test-12))) "0123456789"))
+(let () (define (do-test-13) (do ((i 0 (+ i 1))) ((= i 5)) (let ((j (+ i 1))) (let ((i j)) (display (- i 1)))))) (test (with-output-to-string (lambda () (do-test-13))) "01234"))
+
+(let () (define (do-test-14) (do ((i 0 (+ i 1))) ((= i 10)) (set! i (+ i 1)) (display i))) (test (with-output-to-string (lambda () (do-test-14))) "13579"))
+(let ((lst '())) (define (do-test-15) (do ((i 0 (+ i 1))) ((= i 10)) (set! lst (cons i lst))) lst) (test (do-test-15) '(9 8 7 6 5 4 3 2 1 0)))
+(let ((lst (list 9 8 7 6 5 4 3 2 1 0))) (define (do-test-16) (do ((i 0 (+ i 1))) ((= i 10)) (list-set! lst i i)) lst) (test (do-test-16) '(0 1 2 3 4 5 6 7 8 9)))
+(let ((lst '())) (define (do-test-17) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (set! lst (cons j lst)))) lst) (test (do-test-17) '(9 8 7 6 5 4 3 2 1 0)))
+(let () (define (do-test-18) (do ((i 0 (+ i 1)) (j 0)) ((= i 10) j) (if (= i 3) (set! j i)))) (test (do-test-18) 3))
 
 
 

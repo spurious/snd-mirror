@@ -578,6 +578,7 @@ unsigned int s7_function_class(s7_pointer f);
 void s7_function_set_class(s7_pointer f, unsigned int c);
 s7_function s7_function_choice(s7_pointer expr);
 void s7_function_choice_set_direct(s7_pointer expr);
+void **s7_function_table(s7_scheme *sc, s7_pointer expr, int size);
 
 bool s7_in_safe_do(s7_scheme *sc);
 bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol);

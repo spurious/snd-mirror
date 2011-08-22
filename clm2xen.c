@@ -8334,6 +8334,32 @@ XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 #define cddr(E)   s7_cddr(E)
 #define cadar(E)  s7_cadar(E)
 
+static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
+{
+  s7_pointer g;
+  g = s7_symbol_value(sc, sym);
+  if (s7_object_type(g) == mus_xen_tag)
+    return((mus_any *)(((mus_xen *)s7_object_value(g))->gen));
+  return(NULL);
+}
+
+static s7_pointer get_real(s7_scheme *sc, s7_pointer sym)
+{
+  s7_pointer slot;
+  slot = s7_symbol_slot(sc, sym);
+  if (s7_is_real(cdr(slot)))
+    return(slot);
+  return(NULL);
+}
+
+static s7_pointer get_integer(s7_scheme *sc, s7_pointer sym)
+{
+  s7_pointer slot;
+  slot = s7_symbol_slot(sc, sym);
+  if (s7_is_integer(cdr(slot)))
+    return(slot);
+  return(NULL);
+}
 
 #define GET_GENERATOR(Obj, Type, Safe, Val)		\
   do { s7_pointer _Obj_ = Obj; mus_any *_Val_ = NULL;	\
@@ -8497,9 +8523,8 @@ GEN_P(output)
 
 /* TODO: add (+|* sym|const (gen g)) and (+|* sym|const (gen g fm)) to GEN1 and GEN2 (and the +*choosers)
  *       (gen g1 (gen g2 fm)) (+ (gen g1 fm1) (gen g2 fm2)) (* (env e) (gen g fm))
+ *       (gen g1 (* c s)) is very common in animals
  * to save endless if..then on every gen type, perhaps add a field to the class that gives (+ sym (gen)) choice and so on
- * s7_function_chooser_data and _set_data
- *
  * then all the standard patterns are automatic, and we only have to write a few popular special cases
  */
 
@@ -8514,11 +8539,31 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
   bool its_safe;
   its_safe = s7_in_safe_do(sc);
 
-  GET_GENERATOR(cadar(args), env, its_safe, e);
-  args = cdr(args);
-  GET_GENERATOR(cadar(args), triangle_wave, its_safe, t);
-  args = cdr(args);
-  GET_GENERATOR(cadar(args), rand_interp, its_safe, r);
+  if (its_safe)
+    {
+      void **syms;
+      syms = s7_function_table(sc, args, 3); 
+      if (!(syms[0])) 
+	{
+	  syms[0] = get_generator(sc, cadar(args));
+	  args = cdr(args);
+	  syms[1] = get_generator(sc, cadar(args));
+	  args = cdr(args);
+	  syms[2] = get_generator(sc, cadar(args));
+	}
+      e = (mus_any *)(syms[0]);
+      t = (mus_any *)(syms[1]);
+      r = (mus_any *)(syms[2]);
+    }
+
+  if (!e)
+    {
+      GET_GENERATOR(cadar(args), env, its_safe, e);
+      args = cdr(args);
+      GET_GENERATOR(cadar(args), triangle_wave, its_safe, t);
+      args = cdr(args);
+      GET_GENERATOR(cadar(args), rand_interp, its_safe, r);
+    }
 
   return(s7_make_real(sc, mus_env(e) + mus_triangle_wave(t, 0.0) + mus_rand_interp(r, 0.0)));			
 }
@@ -8606,17 +8651,51 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
 
   its_safe = s7_in_safe_do(sc);
 
-  GET_GENERATOR(car(args), locsig, its_safe, lc);
-  GET_INTEGER(cadr(args), locsig, its_safe, pos);
-  vargs = s7_cdaddr(args);
-  GET_GENERATOR(s7_cadar(vargs), env, its_safe, a);
-  vargs = s7_cadr(vargs);
-  GET_GENERATOR(s7_cadr(vargs), oscil, its_safe, o);
-  vargs = s7_cdaddr(s7_caddr(vargs));
-  GET_GENERATOR(s7_cadar(vargs), env, its_safe, e);
-  vargs = s7_cdadr(vargs);
-  GET_GENERATOR(car(vargs), polywave, its_safe, t);
-  GET_REAL(cadr(vargs), polywave, its_safe, vibrato);
+  if (its_safe)
+    {
+      void **syms;
+      syms = s7_function_table(sc, args, 7); 
+      /* fprintf(stderr, "v2 syms: %p\n", syms); */
+      if (!(syms[0])) 
+	{
+	  /* fprintf(stderr, "---------------- get gens ----------------\n"); */
+	  syms[0] = get_generator(sc, car(args));
+	  syms[1] = get_integer(sc, cadr(args));
+	  vargs = s7_cdaddr(args);
+	  syms[2] = get_generator(sc, s7_cadar(vargs));
+	  vargs = s7_cadr(vargs);
+	  syms[3] = get_generator(sc, s7_cadr(vargs));
+	  vargs = s7_cdaddr(s7_caddr(vargs));
+	  syms[4] = get_generator(sc, s7_cadar(vargs));
+	  vargs = s7_cdadr(vargs);
+	  syms[5] = get_generator(sc, car(vargs));
+	  syms[6] = get_real(sc, cadr(vargs));
+	}
+      lc = (mus_any *)(syms[0]);
+      pos = s7_integer(cdr((s7_pointer)(syms[1])));
+      a = (mus_any *)(syms[2]);
+      o = (mus_any *)(syms[3]);
+      e = (mus_any *)(syms[4]);
+      t = (mus_any *)(syms[5]);
+      vibrato = s7_number_to_real(cdr((s7_pointer)(syms[6])));
+    }
+
+  if (!lc)
+    {
+      GET_GENERATOR(car(args), locsig, its_safe, lc);
+      GET_INTEGER(cadr(args), locsig, its_safe, pos);
+      vargs = s7_cdaddr(args);
+      GET_GENERATOR(s7_cadar(vargs), env, its_safe, a);
+      vargs = s7_cadr(vargs);
+      GET_GENERATOR(s7_cadr(vargs), oscil, its_safe, o);
+      vargs = s7_cdaddr(s7_caddr(vargs));
+      GET_GENERATOR(s7_cadar(vargs), env, its_safe, e);
+      vargs = s7_cdadr(vargs);
+      GET_GENERATOR(car(vargs), polywave, its_safe, t);
+      GET_REAL(cadr(vargs), polywave, its_safe, vibrato);
+    }
+
+  /* fprintf(stderr, "lc: %p\n", lc); */
 
   val = mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)));
   mus_locsig(lc, pos, val);
@@ -8636,40 +8715,88 @@ static s7_pointer jc_reverb_combs;
 static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer vargs;
-  mus_any *c1, *c2, *c3, *c4;
+  mus_any *c1 = NULL, *c2, *c3, *c4;
   double fm;
   bool its_safe;
 
   its_safe = s7_in_safe_do(sc);
 
-  GET_REAL(s7_caddar(args), comb, its_safe, fm);
-  GET_GENERATOR(s7_cadar(args), comb, its_safe, c1);
-  vargs = cdr(args);
-  GET_GENERATOR(s7_cadar(vargs), comb, its_safe, c2);
-  vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, its_safe, c3);
-  vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, its_safe, c4);
-  /* fprintf(stderr, "%s: %f %p %p %p %p\n", DISPLAY(args), fm, c1, c2, c3, c4); */
+  if (its_safe)
+    {
+      void **syms;
+      syms = s7_function_table(sc, args, 4); 
+      if (!(syms[0])) 
+	{
+	  syms[0] = get_generator(sc, s7_cadar(args));
+	  vargs = cdr(args);
+	  syms[1] = get_generator(sc, s7_cadar(vargs));
+	  vargs = cdr(vargs);
+	  syms[2] = get_generator(sc, s7_cadar(vargs));
+	  vargs = cdr(vargs);
+	  syms[3] = get_generator(sc, s7_cadar(vargs));
+	}
+      c1 = (mus_any *)(syms[0]);
+      c2 = (mus_any *)(syms[1]);
+      c3 = (mus_any *)(syms[2]);
+      c4 = (mus_any *)(syms[3]);
+    }
+
+  if (!c1)
+    {
+      GET_GENERATOR(s7_cadar(args), comb, its_safe, c1);
+      vargs = cdr(args);
+      GET_GENERATOR(s7_cadar(vargs), comb, its_safe, c2);
+      vargs = cdr(vargs);
+      GET_GENERATOR(s7_cadar(vargs), comb, its_safe, c3);
+      vargs = cdr(vargs);
+      GET_GENERATOR(s7_cadar(vargs), comb, its_safe, c4);
+    }
+  
+  fm = s7_number_to_real(s7_symbol_value(sc, s7_caddar(args)));
+  /* fprintf(stderr, "fm: %f, %s %s %s\n", fm, DISPLAY(args), DISPLAY(s7_caddar(args)), DISPLAY(s7_symbol_value(sc, s7_caddar(args)))); */
+
   return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + mus_comb_unmodulated_noz(c2, fm) + mus_comb_unmodulated_noz(c3, fm) + mus_comb_unmodulated_noz(c4, fm)));
 }
 
-
+/* (with-sound (:reverb jc-reverb) (outa 0 .1 *reverb*)) */
 static s7_pointer jc_reverb_all_passes;
 static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer vargs, rev = NULL, loc;
-  mus_any *a1, *a2, *a3, *reverb;
+  mus_any *a1 = NULL, *a2, *a3, *reverb;
   double x;
   bool its_safe;
 
   its_safe = s7_in_safe_do(sc);
-  GET_GENERATOR(car(args), all_pass, its_safe, a1);
-  vargs = s7_cdr(args);
-  GET_GENERATOR(cadar(vargs), all_pass, its_safe, a2);
-  vargs = s7_cddar(vargs);
-  GET_GENERATOR(cadar(vargs), all_pass, its_safe, a3);
-  vargs = s7_caddar(vargs);
+
+  if (its_safe)
+    {
+      void **syms;
+      syms = s7_function_table(sc, args, 4); 
+      if (!(syms[0])) 
+	{
+	  syms[0] = get_generator(sc, car(args));
+	  vargs = s7_cdr(args);
+	  syms[1] = get_generator(sc, cadar(vargs));
+	  vargs = s7_cddar(vargs);
+	  syms[2] = get_generator(sc, cadar(vargs));
+	  syms[3] = s7_caddar(vargs);
+	}
+      a1 = (mus_any *)(syms[0]);
+      a2 = (mus_any *)(syms[1]);
+      a3 = (mus_any *)(syms[2]);
+      vargs = (s7_pointer)(syms[3]);
+    }
+  
+  if (!a1)
+    {
+      GET_GENERATOR(car(args), all_pass, its_safe, a1);
+      vargs = s7_cdr(args);
+      GET_GENERATOR(cadar(vargs), all_pass, its_safe, a2);
+      vargs = s7_cddar(vargs);
+      GET_GENERATOR(cadar(vargs), all_pass, its_safe, a3);
+      vargs = s7_caddar(vargs);
+    }
 
   /* *reverb* can be all kinds of things (sigh)
    */
@@ -8687,7 +8814,7 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
   if (s7_object_type(rev) == mus_xen_tag)
     {
       mus_xen *gx;
-      gx = s7_object_value(rev);
+      gx = (mus_xen *)s7_object_value(rev);
       reverb = (mus_any *)(gx->gen);
       if (mus_input_p(reverb))
 	{
@@ -8703,14 +8830,15 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* s7: 678, run: 479, 
- *       eval_ptree overhead is about 75, but s7 g_fm_violin* overhead is about 175 + say 20 for the do loop
- *       s7_cxxr is about 40, gc is 7, make_real is 15, (mus_* call overhead is about 25)
- *   so the 225 difference will be very hard to whittle down --
- *   I think 50 could be removed but at the cost of a lot of kludgery
- * so: is that good enough?
+/* s7: 576, run: 479, C: 370
+ *   the 100 difference is in the actual procedure calls (fm_violin_2 as opposed to polywave_1f_mult etc)
+ *   I think about half of it can be optimized out
+ *
  * the sin numbers callgrind reports are completely bogus, but they're the same here,
- *    the real factor is 1.4 (.188 to .137 in system time, 700 to 480 in callgrind numbers)
+ *    the real factor is 1.2 (576 to 479 in callgrind numbers)
+ */
+
+/* TODO: opt jc rev special cases
  */
 
 /* (with-sound () (fm-violin 0 .0001 440 .1)) */
