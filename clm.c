@@ -4369,6 +4369,26 @@ mus_float_t mus_rand_interp(mus_any *ptr, mus_float_t fm)
   return(gen->output);
 }
 
+mus_float_t mus_rand_interp_unmodulated(mus_any *ptr)
+{
+  noi *gen = (noi *)ptr;
+  gen->output += gen->incr;
+  if (gen->output > gen->base) 
+    gen->output = gen->base;
+  else 
+    {
+      if (gen->output < -gen->base)
+	gen->output = -gen->base;
+    }
+  if (gen->phase >= TWO_PI)
+    {
+      gen->phase = fmod(gen->phase, TWO_PI);
+      gen->incr = (random_any(gen) - gen->output) / (ceil(TWO_PI / gen->freq));
+    }
+  gen->phase += gen->freq;
+  return(gen->output);
+}
+
 
 static mus_float_t run_rand(mus_any *ptr, mus_float_t fm, mus_float_t unused) {return(mus_rand(ptr, fm));}
 static mus_float_t run_rand_interp(mus_any *ptr, mus_float_t fm, mus_float_t unused) {return(mus_rand_interp(ptr, fm));}
@@ -4391,6 +4411,7 @@ static int free_noi(mus_any *ptr) {if (ptr) clm_free(ptr); return(0);}
 
 static mus_float_t noi_freq(mus_any *ptr) {return(mus_radians_to_hz(((noi *)ptr)->freq));}
 static mus_float_t noi_set_freq(mus_any *ptr, mus_float_t val) {((noi *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+static mus_float_t noi_set_freq_pos(mus_any *ptr, mus_float_t val) {if (val < 0.0) val = -val; ((noi *)ptr)->freq = mus_hz_to_radians(val); return(val);}
 
 static mus_float_t noi_increment(mus_any *ptr) {return(((noi *)ptr)->freq);}
 static mus_float_t noi_set_increment(mus_any *ptr, mus_float_t val) {((noi *)ptr)->freq = val; return(val);}
@@ -4464,7 +4485,7 @@ static mus_any_class RAND_INTERP_CLASS = {
   &noi_data, 0, 
   &noi_length, 0,
   &noi_freq,
-  &noi_set_freq,
+  &noi_set_freq_pos,
   &noi_phase,
   &noi_set_phase,
   &noi_scaler,
@@ -4527,6 +4548,7 @@ mus_any *mus_make_rand_interp(mus_float_t freq, mus_float_t base)
   noi *gen;
   gen = (noi *)clm_calloc(1, sizeof(noi), S_make_rand_interp);
   gen->core = &RAND_INTERP_CLASS;
+  if (freq < 0.0) freq = -freq;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = base;
   gen->incr =  mus_random(base) * freq / sampling_rate;

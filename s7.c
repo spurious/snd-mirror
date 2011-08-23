@@ -340,7 +340,7 @@ enum {OP_NO_OP,
 #if WITH_OPTIMIZATION
       OP_SAFE_AND, OP_SAFE_AND1, OP_SAFE_OR, OP_SAFE_OR1, OP_SAFE_IF1, OP_SAFE_IF2,
       OP_SAFE_OR_S, OP_SAFE_AND_S, 
-      OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_DOTIMES, OP_DOTIMES_STEP, OP_SIMPLE_DOTIMES,
+      OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_DOTIMES, OP_DOTIMES_STEP, OP_SIMPLE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP,
       OP_SAFE_IF1_1, OP_SAFE_IF2_1,
       OP_SAFE_C_P_1, OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4,
       OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS,
@@ -394,7 +394,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
 #if WITH_OPTIMIZATION
    "safe-and", "safe-and", "safe-or", "safe-or", "safe-if1", "safe-if2",
    "safe-or-s", "safe-and-s", 
-   "simple-do", "simple-do-step", "dotimes", "dotimes-step", "simple-dotimes",
+   "simple-do", "simple-do-step", "dotimes", "dotimes-step", "simple-dotimes", "safe-do", "safe-do-step",
    "safe-if", "safe-if", 
    "safe-c-p-1", "eval-args-p-1", "eval-args-p-2", "eval-args-p-3", "eval-args-p-4",
    "increment-1", "decrement-1", "set-cdr", "set-cons",
@@ -838,7 +838,7 @@ struct s7_scheme {
 
 #if WITH_OPTIMIZATION
   s7_pointer SAFE_AND, SAFE_OR, SAFE_IF1, SAFE_IF2, SAFE_OR_S, SAFE_AND_S;
-  s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, SIMPLE_DO, DOTIMES, SIMPLE_DOTIMES;
+  s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, SIMPLE_DO, DOTIMES, SIMPLE_DOTIMES, SAFE_DO;
   int safe_do_level, safe_do_ids_size;
   long long int *safe_do_ids;
 #endif
@@ -18441,14 +18441,18 @@ static void clear_table(s7_pointer expr)
 }
 
 /* TODO: get rid of safe_do_level
- *       add error checks in clm2xen fm violin stuff
  *       check here for table_top overflow
  *       how to GC no-longer-accessible function tables?
+ *       find a better name!  function_table does not convey anything
  */
 void **s7_function_table(s7_scheme *sc, s7_pointer expr, int size)
 {
+  /* this is very costly, simply due to function call overhead!
+   *   we need direct access from outside s7.c
+   */
+
   /* fprintf(stderr, "%s: %d\n", DISPLAY_80(expr), optimize_data_index(expr)); */
-  if (optimize_data_index(expr) == 0)
+  if (optimize_data_index(expr) == 0)        /* TODO: shouldn't this be !has_table? */
     {
       if (tables == NULL)
 	{
@@ -22713,7 +22717,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
    *   call its error-handler, else if *error-hook* is bound, call it,
    *   else send out the error info ourselves.
    */
-  sc->no_values = 0;
+  sc->no_values = 0; 
+  sc->safe_do_level = 0; /* TODO: this needs to be done right! */
   catcher = sc->F;
 
   if (sc->s7_call_name)
@@ -29920,14 +29925,15 @@ static s7_pointer check_do(s7_scheme *sc)
 			     *   in the loop itself.
 			     */
 			    bool has_set = false;
-			    if ((do_is_safe(sc, cddr(sc->code), car(vars), sc->NIL, &has_set)) &&
-				(!has_set))
+			    if (do_is_safe(sc, cddr(sc->code), car(vars), sc->NIL, &has_set))
 			      {
-				car(ecdr(sc->code)) = sc->DOTIMES;
+				car(ecdr(sc->code)) = sc->SAFE_DO;
 				optimize_do(sc, sc->code);
-
+				
+				if (!has_set)
 				{
 				  s7_pointer x;
+				  car(ecdr(sc->code)) = sc->DOTIMES;
 				  x = cddr(sc->code);
 
 				  /* what are the most common cases here?
@@ -30836,6 +30842,67 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 
+    SAFE_DO:
+    case OP_SAFE_DO:
+      {
+	/* body is safe, step = +1, end is =, but stepper and end might be set in the body
+	 */
+	s7_pointer init, end, init_val, end_val;
+#if PRINTING
+	fprintf(stderr, "safe do: %s\n", DISPLAY(sc->code));
+#endif
+	init = cadaar(sc->code);
+	if (s7_is_symbol(init))
+	  init_val = ARG_SYMBOL_VALUE(init, find_symbol_or_bust_41);
+	else init_val = init;
+	
+	end = caddr(car(cadr(sc->code)));
+	if (s7_is_symbol(end))
+	  end_val = ARG_SYMBOL_VALUE(end, find_symbol_or_bust_41);
+	else end_val = end;
+
+	if (s7_integer(init_val) == s7_integer(end_val))
+	  {
+	    sc->code = cdr(cadr(sc->code));
+	    goto BEGIN;
+	  }
+
+	sc->envir = new_frame_in_env(sc, sc->envir);
+
+	if (s7_is_symbol(end))
+	  sc->args = list_2(sc, add_slot(sc, caaar(sc->code), init_val), find_symbol(sc, end));
+	else sc->args = list_2(sc, add_slot(sc, caaar(sc->code), init_val), cons_unchecked(sc, end, end));
+	/* the list_2 can't be a cons -- if there's a call/cc in the loop, its stack copy 
+	 *   assumes that sc->args is either not a list, or a proper list.
+	 */
+	
+	initialize_safe_do(sc, sc->code);
+	sc->safe_do_level++;
+	safe_do_set_id(sc, frame_id(sc->envir));
+
+	push_stack(sc, OP_SAFE_DO_STEP, sc->args, sc->code);
+	sc->code = cddr(sc->code);
+	goto BEGIN;
+      }
+
+    case OP_SAFE_DO_STEP:
+      {
+	s7_Int step;
+	step = s7_integer(symbol_value(car(sc->args))) + 1;
+	if (step == s7_integer(symbol_value(cadr(sc->args))))
+	  {
+	    sc->safe_do_level--;
+	    sc->code = cdr(cadr(sc->code));
+	    goto BEGIN;
+	  }
+	symbol_value(car(sc->args)) = s7_make_integer(sc, step);
+	push_stack(sc, OP_SAFE_DO_STEP, sc->args, sc->code);
+	sc->code = cddr(sc->code);
+	goto BEGIN;
+      }
+
+
+
     SIMPLE_DO:
     case OP_SIMPLE_DO:
       {
@@ -30843,7 +30910,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 */
 	s7_pointer init, end;
 #if PRINTING
-	fprintf(stderr, "%ssimple do: %s\n", ((ecdr(sc->code)) && (car(ecdr(sc->code)) == sc->SAFE_SIMPLE_DO)) ? "safe " : "", DISPLAY(sc->code));
+	fprintf(stderr, "simple do: %s\n", DISPLAY(sc->code));
 #endif
 	sc->envir = new_frame_in_env(sc, sc->envir);
 	init = cadaar(sc->code);
@@ -30992,6 +31059,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto SIMPLE_DO;
 	  if (car(ecdr(sc->code)) == sc->SIMPLE_DOTIMES)
 	    goto SIMPLE_DOTIMES;
+	  if (car(ecdr(sc->code)) == sc->SAFE_DO)
+	    goto SAFE_DO;
 	  goto DOTIMES;
 	}
 #else
@@ -32495,13 +32564,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto START;
 
 		  
-		  /* an experiment that extends clm2xen generator lookup
-		   *
-		   * TODO:
-		   *   need safe_simple_do since this is safe even with arbitrary sets and so on
-		   *   once established, macroize the lookup process
-		   */
-
 		  /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline))
 		   */
 		case OP_SAFE_DO_C_S:
@@ -42221,6 +42283,7 @@ s7_scheme *s7_init(void)
   sc->SIMPLE_DO =             assign_internal_syntax(sc, "do",      OP_SIMPLE_DO);
   sc->DOTIMES =               assign_internal_syntax(sc, "do",      OP_DOTIMES);
   sc->SIMPLE_DOTIMES =        assign_internal_syntax(sc, "do",      OP_SIMPLE_DOTIMES);
+  sc->SAFE_DO =               assign_internal_syntax(sc, "do",      OP_SAFE_DO);
   sc->safe_do_level = 0;
   sc->safe_do_ids_size = 8;
   sc->safe_do_ids = (long long int *)calloc(sc->safe_do_ids_size, sizeof(long long int));

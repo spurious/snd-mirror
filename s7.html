@@ -92,7 +92,6 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
   <li><a href="#evalstring">eval</a>
   <li><a href="#IO">string IO</a>
   <li><a href="#miscellanea">miscellanea</a>
-  <li><a href="#s7rundoc">the run macro</a>
   <li><a href="#FFIexamples">FFI examples</a>
   <ul>
       <li><a href="#repl">read-eval-print loop (and emacs)</a>
@@ -4718,30 +4717,6 @@ waste a lot of time fixing this, I chose to flush multithreading.
 
 </dd>
 <br>
-<br><br>
-
-
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<A NAME="s7rundoc"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>the run macro</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>s7 is primarily aimed at computer music, CLM-based sound synthesis in particular.
-A CLM instrument is usually a do-loop running things like oscillators and envelopes
-for zillions of sound samples.  These calculations do not involve recursion, or
-complex numbers, or fancy list processing, so it is not too hard to write an
-optimizer for them.  In sndlib, that optimizer is called "run".  It is a macro (in modern jargon, a JIT byte compiler)
-that can be wrapped around any piece of Scheme code that you want to speed up.
-If it can't optimize the code, it passes it to the s7 interpreter.  If run is successful,
-you will normally get a speed up by a factor of about 10.
-</p>
-
-</dd>
 <br><br>
 
 </dl>
