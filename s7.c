@@ -343,7 +343,7 @@ enum {OP_NO_OP,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_DOTIMES, OP_DOTIMES_STEP, OP_SIMPLE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP,
       OP_SAFE_IF1_1, OP_SAFE_IF2_1,
       OP_SAFE_C_P_1, OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4,
-      OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS,
+      OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS, OP_SET_SAFE_DO,
       OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_SZ_1, OP_SAFE_C_ZS_1,
       OP_SAFE_C_ZXX_1, OP_SAFE_C_XZX_1, OP_SAFE_C_XXZ_1, 
       OP_SAFE_C_ZZX_1, OP_SAFE_C_ZZX_2, OP_SAFE_C_ZXZ_1, OP_SAFE_C_ZXZ_2, OP_SAFE_C_XZZ_1, OP_SAFE_C_XZZ_2, 
@@ -397,7 +397,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "simple-do", "simple-do-step", "dotimes", "dotimes-step", "simple-dotimes", "safe-do", "safe-do-step",
    "safe-if", "safe-if", 
    "safe-c-p-1", "eval-args-p-1", "eval-args-p-2", "eval-args-p-3", "eval-args-p-4",
-   "increment-1", "decrement-1", "set-cdr", "set-cons",
+   "increment-1", "decrement-1", "set-cdr", "set-cons", "set-safe-do",
    "safe-c-zz-1", "safe-c-zz-2",
    "op_safe_c_zxx_1", "op_safe_c_xzx_1", "op_safe_c_xxz_1", 
    "op_safe_c_zzx_1", "op_safe_c_zzx_2", "op_safe_c_zxz_1", "op_safe_c_zxz_2", "op_safe_c_xzz_1", "op_safe_c_xzz_2", 
@@ -838,7 +838,8 @@ struct s7_scheme {
 
 #if WITH_OPTIMIZATION
   s7_pointer SAFE_AND, SAFE_OR, SAFE_IF1, SAFE_IF2, SAFE_OR_S, SAFE_AND_S;
-  s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, SIMPLE_DO, DOTIMES, SIMPLE_DOTIMES, SAFE_DO;
+  s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, SET_SAFE_DO;
+  s7_pointer SIMPLE_DO, DOTIMES, SIMPLE_DOTIMES, SAFE_DO;
   int safe_do_level, safe_do_ids_size;
   long long int *safe_do_ids;
 #endif
@@ -1054,7 +1055,7 @@ struct s7_scheme {
 #define T_HAS_TABLE                   (1 << (TYPE_BITS + 18))
 #define set_has_table(p)              typeflag(p)  |= T_HAS_TABLE
 #define has_table(p)                  ((typeflag(p) & T_HAS_TABLE) != 0)
-/* optimizer flag 
+/* optimizer flag (external function using a function table for variable access)
  */
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
@@ -18435,24 +18436,21 @@ static void clear_table(s7_pointer expr)
 {
   int loc;
   loc = optimize_data_index(expr);
-  /* fprintf(stderr, "clear %d (%d)\n", loc, table_sizes[loc]); */
   if (tables[loc])
     memset((void *)(tables[loc]), 0, table_sizes[loc] * sizeof(void **));
 }
 
 /* TODO: get rid of safe_do_level
- *       check here for table_top overflow
  *       how to GC no-longer-accessible function tables?
- *       find a better name!  function_table does not convey anything
  */
+
 void **s7_function_table(s7_scheme *sc, s7_pointer expr, int size)
 {
-  /* this is very costly, simply due to function call overhead!
-   *   we need direct access from outside s7.c
-   */
+  if (table_top == (unsigned short)65535)
+    return(NULL);
 
-  /* fprintf(stderr, "%s: %d\n", DISPLAY_80(expr), optimize_data_index(expr)); */
-  if (optimize_data_index(expr) == 0)        /* TODO: shouldn't this be !has_table? */
+  /* if (optimize_data_index(expr) == 0) */ 
+  if (!has_table(expr))
     {
       if (tables == NULL)
 	{
@@ -27919,10 +27917,10 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 
   op = (opcode_t)syntax_opcode(func);
 
-  /* fprintf(stderr, "optimize syntax %s\n     e: %s\n", DISPLAY(p), DISPLAY(e)); */
-  if (op == OP_QUOTE)
+  /* fprintf(stderr, "%s optimize syntax %s\n     e: %s\n", op_names[op], DISPLAY(p), DISPLAY(e));  */
+  if ((op == OP_QUOTE) || (op == OP_WITH_ENV))
     {
-      /* fprintf(stderr, "quote\n"); */
+      /* fprintf(stderr, "quote or with-env -> false\n"); */
       return(false);
     }
 
@@ -29630,12 +29628,27 @@ static void optimize_do(s7_scheme *sc, s7_pointer expr)
     {
       if (is_pair(car(p)))
 	{
-	  if (is_optimized(car(p)))
+	  if ((s7_is_symbol(caar(p))) &&
+	      (is_syntactic(caar(p))) &&
+	      ((opcode_t)syntax_opcode(symbol_value(symbol_global_slot(caar(p)))) == OP_SET) &&
+	      (s7_is_symbol(cadar(p))) && /* TODO: and is not immutable etc */
+	      (s7_is_pair(caddar(p))) &&
+	      (is_optimized(caddar(p))) &&
+	      (optimize_data(caddar(p)) == HOP_SAFE_C_C))
 	    {
-	      if (optimize_data(car(p)) == HOP_SAFE_C_S)
-		optimize_data(car(p)) = HOP_SAFE_DO_C_S;
+	      /* (let ((_hi 3)) (define (_ho) (do ((i 0 (+ i 1))) ((= i 3)) (set! _hi (+ 1 2 3 4 5)))) (_ho)) */
+	      /* fprintf(stderr, "safe set in do: %s\n", DISPLAY_80(car(p))); */
+	      caar(p) = sc->SET_SAFE_DO;
 	    }
-	  else optimize_do(sc, car(p));
+	  else
+	    {
+	      if (is_optimized(car(p)))
+		{
+		  if (optimize_data(car(p)) == HOP_SAFE_C_S)
+		    optimize_data(car(p)) = HOP_SAFE_DO_C_S;
+		}
+	      else optimize_do(sc, car(p));
+	    }
 	}
     }
 }
@@ -29731,11 +29744,15 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 			    }
 			  else
 			    {
+			      if (op != OP_SET)
+				return(false);
+
 			      if (!memq(cadr(expr), var_list))
 				{
 #if PRINTING
 				  fprintf(stderr, "      ;set: %s is global\n", DISPLAY(cadr(expr)));
 #endif
+				  /* TODO: should we consider (set! (v i) 0) safe? */
 				  (*has_set) = true;
 				}
 			      if (!do_is_safe(sc, cddr(expr), stepper, var_list, has_set))
@@ -32255,6 +32272,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_UNKNOWN_CC:
 		  {
 		    s7_pointer f;
+		    /* abort(); */
 		    f = ARG_SYMBOL_VALUE(car(code), find_symbol_or_bust_31);
 		    if ((is_closure(f)) &&
 			(args_match(sc, f, 2)))
@@ -32567,17 +32585,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline))
 		   */
 		case OP_SAFE_DO_C_S:
+		  if (sc->safe_do_level <= 0)
+		    abort();
+
 		  /* fprintf(stderr, "op check: %s\n", DISPLAY(code)); */
 		  /* this should not happen -- callgrind is confused */
 		  if (!c_function_is_ok(sc, code))
 		    break;
 		  
 		case HOP_SAFE_DO_C_S:
+		  if (sc->safe_do_level <= 0)
+		    abort();
 		  /* assume its safe for now (clm2xen checks s7_in_safe_do, but that's too restrictive here)
 		   */
 		  {
 		    s7_pointer val, sym;
-		    /* fprintf(stderr, "hop check: %s\n", DISPLAY(code)); */
+		    /* fprintf(stderr, "safe do c_s: %s\n", DISPLAY(code)); */
 		    sym = cadr(code);
 		    val = (s7_pointer)symbol_op_data(sym);
 		    if (!val)
@@ -35363,6 +35386,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack(sc, OP_SET1, sc->NIL, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL_PAIR;
+
+      
+    case OP_SET_SAFE_DO:
+      {
+	/* incoming, sc->code is cdr of the expr starting with set! */
+	s7_pointer val, sym;
+	sym = car(sc->code);
+	val = (s7_pointer)symbol_op_data(sym);
+	if (!val)
+	  {
+	    val = find_symbol(sc, sym);
+	    if (s7_is_do_local_or_global(sc, sym))
+	      symbol_op_data(sym) = (void *)val;
+	  }
+	sym = cadr(sc->code);
+	symbol_value(val) = c_function_call(ecdr(sym))(sc, cdr(sym));
+	/* fprintf(stderr, "%s: set %s to %s\n", DISPLAY_80(sc->code), DISPLAY(car(sc->code)), DISPLAY(symbol_value(val))); */
+	goto START;
+      }
 #endif      
 
     case OP_SET_SYMBOL_C:
@@ -36918,7 +36960,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_environment(sc->value))                    /* (with-environment . "hi") */
 	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->value));
 
-      sc->envir = sc->value;
+      if (sc->value == sc->global_env)
+	{
+	  NEW_FRAME(sc, sc->NIL, sc->envir);             /* otherwise, find_symbol_or_bust can die because it assumes sc->envir is ok */	
+	}
+      else sc->envir = sc->value;
       /* body is implicit in stack -- sc->code is ready to go */
       goto BEGIN;
 
@@ -42280,6 +42326,7 @@ s7_scheme *s7_init(void)
   sc->DECREMENT_1 =           assign_internal_syntax(sc, "set!",    OP_DECREMENT_1);  
   sc->SET_CDR =               assign_internal_syntax(sc, "set!",    OP_SET_CDR);
   sc->SET_CONS =              assign_internal_syntax(sc, "set!",    OP_SET_CONS);
+  sc->SET_SAFE_DO =           assign_internal_syntax(sc, "set!",    OP_SET_SAFE_DO);
   sc->SIMPLE_DO =             assign_internal_syntax(sc, "do",      OP_SIMPLE_DO);
   sc->DOTIMES =               assign_internal_syntax(sc, "do",      OP_DOTIMES);
   sc->SIMPLE_DOTIMES =        assign_internal_syntax(sc, "do",      OP_SIMPLE_DOTIMES);

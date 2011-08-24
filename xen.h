@@ -1083,16 +1083,16 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 #define C_TO_XEN_ULONG_LONG(Arg)                   s7_make_ulong_long(s7, (unsigned long long)Arg) 
 
 #define C_TO_XEN_LONG_LONG(Arg)                    C_TO_XEN_INT64_T(Arg)
-#define XEN_TO_C_LONG_LONG(Arg)                    XEN_TO_C_INT64_T(Arg)
+#define XEN_TO_C_LONG_LONG(Arg)                    s7_integer(Arg)
 
 #define XEN_OFF_T_P(Arg)                           XEN_INTEGER_P(Arg)
 #define XEN_INT64_T_P(Arg)                         XEN_INTEGER_P(Arg)
 #define XEN_TO_C_OFF_T_OR_ELSE(Arg, Def)           XEN_TO_C_INT64_T_OR_ELSE(Arg, Def)
 #define C_TO_XEN_OFF_T(Arg)                        C_TO_XEN_INT(Arg)
-#define XEN_TO_C_OFF_T(Arg)                        XEN_TO_C_INT64_T(Arg)
-#define XEN_TO_C_INT64_T_OR_ELSE(Arg, Def)         ((XEN_INTEGER_P(Arg)) ? XEN_TO_C_INT64_T(Arg) : Def)
+#define XEN_TO_C_OFF_T(Arg)                        s7_integer(Arg)
+#define XEN_TO_C_INT64_T_OR_ELSE(Arg, Def)         ((XEN_INTEGER_P(Arg)) ? s7_integer(Arg) : Def)
 #define C_TO_XEN_INT64_T(Arg)                      C_TO_XEN_INT(Arg)
-#define XEN_TO_C_INT64_T(Arg)                      xen_to_c_int64_t(Arg)
+#define XEN_TO_C_INT64_T(Arg)                      s7_integer(Arg) 
 
 #define XEN_NUMBER_P(Arg)                          s7_is_real(Arg) /* !! throughout xen, we're assuming no complex number! -- s7_is_number(Arg) */
 #define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)

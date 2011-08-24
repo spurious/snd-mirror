@@ -11875,6 +11875,12 @@ time, so that the displayed results are
 (let ((lst '())) (define (do-test-17) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (set! lst (cons j lst)))) lst) (test (do-test-17) '(9 8 7 6 5 4 3 2 1 0)))
 (let () (define (do-test-18) (do ((i 0 (+ i 1)) (j 0)) ((= i 10) j) (if (= i 3) (set! j i)))) (test (do-test-18) 3))
 
+(let ((end 10)) (define (do-test-19) (do ((i 0 (+ i 1))) ((= i end)) (display i))) (test (with-output-to-string (lambda () (do-test-19))) "0123456789"))
+(let ((end 10)) (define (do-test-19A) (do ((i 0 (+ 1 i))) ((= end i)) (display i))) (test (with-output-to-string (lambda () (do-test-19A))) "0123456789"))
+(let ((end 10)) (define (do-test-20) (do ((i 0 (+ i 1))) ((= i end)) (set! end 8) (display i))) (test (with-output-to-string (lambda () (do-test-20))) "01234567"))
+(let ((end 10)) (define (do-test-20A) (do ((i 0 (+ 1 i))) ((= end i)) (set! end 8) (display i))) (test (with-output-to-string (lambda () (do-test-20A))) "01234567"))
+
+(let () (define (do-test-21) (do ((i 0 (+ i 1))) ((= i 3)) (with-environment (global-environment) (+ 1 2)))) (do-test-21))
 
 
 
