@@ -1023,6 +1023,7 @@ struct s7_scheme {
 #define clear_optimized(p)            typeflag(p) &= ~(T_OPTIMIZED)
 /* optimizer flag for an expression that has optimization info
  */
+/* #define set_optimized(p) do {fprintf(stderr, "optimize: %s\n", DISPLAY_80(p)); if (s7_is_integer(car(p))) abort(); typeflag(p)  |= T_OPTIMIZED; } while (0) */
 
 #define T_CHECKED                     (1 << (TYPE_BITS + 14))
 #define set_checked(p)                typeflag(p)  |= T_CHECKED
@@ -1068,6 +1069,9 @@ struct s7_scheme {
 #define UNUSED_BITS                   0x78000000
 
 #define set_type(p, f)                typeflag(p) = f
+/*
+#define set_type(p, f) do {if ((f) == T_PAIR) pair_line_number(p) = __LINE__; typeflag(p) = (f); } while(0)
+*/
 
 #define is_true(Sc, p)                ((p) != Sc->F)
 #define is_false(Sc, p)               ((p) == Sc->F)
@@ -1457,6 +1461,7 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args);
 static s7_pointer read_error(s7_scheme *sc, const char *errmsg);
 static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p);
+static bool is_pws(s7_pointer obj);
 
 static bool tracing, trace_all;
 
@@ -1769,7 +1774,14 @@ static void sweep(s7_scheme *sc)
 	{
 	  if (type(sc->continuations[i]) == 0)
 	    {
-	      free(continuation(sc->continuations[i]));
+	      s7_pointer c;
+	      c = sc->continuations[i];
+	      if (continuation_op_stack(c))
+		{
+		  free(continuation_op_stack(c));
+		  continuation_op_stack(c) = NULL;
+		}
+	      free(continuation(c));
 	    }
 	  else sc->continuations[j++] = sc->continuations[i];
 	}
@@ -2324,9 +2336,11 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 #endif
 
 
+#define GC_CHECK(Sc) if (Sc->free_heap_top <= Sc->free_heap_trigger) try_to_call_gc(Sc)
+
 #define NEW_CELL(Sc, Obj) \
   do {						\
-    if (Sc->free_heap_top <= Sc->free_heap_trigger) try_to_call_gc(sc);	\
+    if (Sc->free_heap_top <= Sc->free_heap_trigger) try_to_call_gc(Sc);	\
     Obj = (*(--(Sc->free_heap_top))); \
     } while (0)
 
@@ -14120,6 +14134,37 @@ static const char *c_closure_name(s7_scheme *sc, s7_pointer closure)
 }
 
 
+static char *describe_type_bits(s7_pointer obj)
+{
+  /* extracted from atom_to_c_string for debugging (gdb printout)
+   */
+  char *buf;
+  buf = (char *)calloc(512, sizeof(char));
+  snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+	   type(obj), 
+	   type_name(obj),
+	   typeflag(obj),
+	   is_procedure(obj) ?          " procedure" : "",
+	   is_marked(obj) ?             " gc-marked" : "",
+	   is_immutable(obj) ?          " immutable" : "",
+	   dont_copy(obj) ?             " dont-copy" : "",
+	   is_any_macro(obj) ?          " anymac" : "",
+	   is_expansion(obj) ?          " expansion" : "",
+	   is_multiple_value(obj) ?     " values" : "",
+	   is_keyword(obj) ?            " keyword" : "",
+	   dont_eval_args(obj) ?        " dont-eval-args" : "",
+	   is_syntactic(obj) ?          " syntactic" : "",
+	   is_overlaid(obj) ?           " overlay" : "",
+	   is_checked(obj) ?            " checked" : "",
+	   is_unsafe(obj) ?             " unsafe" : "",
+	   is_optimized(obj) ?          " optimized" : "",
+	   is_safe_closure(obj) ?       " safe closure" : "",
+	   is_setter(obj) ?             " setter" : "",
+	   has_table(obj) ?             " function-table" : "",
+	   ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
+  return(buf);
+}
+
 #define WITH_ELLIPSES false
 
 static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
@@ -14304,32 +14349,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       break;
     }
 
-  {
-    char *buf;
-    buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
-	     type(obj), 
-	     type_name(obj),
-	     typeflag(obj),
-	     is_procedure(obj) ?          " procedure" : "",
-	     is_marked(obj) ?             " gc-marked" : "",
-	     is_immutable(obj) ?          " immutable" : "",
-	     dont_copy(obj) ?             " dont-copy" : "",
-	     is_any_macro(obj) ?          " anymac" : "",
-	     is_expansion(obj) ?          " expansion" : "",
-	     is_multiple_value(obj) ?     " values" : "",
-	     is_keyword(obj) ?            " keyword" : "",
-             dont_eval_args(obj) ?        " dont-eval-args" : "",
-	     is_syntactic(obj) ?          " syntactic" : "",
-	     is_overlaid(obj) ?           " overlay" : "",
-	     is_checked(obj) ?            " checked" : "",
-	     is_unsafe(obj) ?             " unsafe" : "",
-	     is_optimized(obj) ?          " optimized" : "",
-	     is_safe_closure(obj) ?       " safe closure" : "",
-	     is_setter(obj) ?             " setter" : "",
-	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
-    return(buf);
-  }
+  return(describe_type_bits(obj));
 }
 
 
@@ -18517,7 +18537,7 @@ void s7_function_choice_set_direct(s7_pointer expr)
 {
 }
 
-void *s7_function_table(s7_scheme *sc, s7_pointer expr, int size)
+void **s7_function_table(s7_scheme *sc, s7_pointer expr, int size)
 {
   return(NULL);
 }
@@ -18623,7 +18643,7 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 		      (typ >= T_C_FUNCTION) ||
 		      (typ == T_GOTO) ||
 		      (typ == T_CONTINUATION) ||
-		      (s7_is_procedure_with_setter(x))));
+		      (is_pws(x))));
 }
 
 
@@ -18661,7 +18681,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 		     closure_environment(p)));
     }
   
-  if (s7_is_procedure_with_setter(p))
+  if (is_pws(p))
     return(pws_source(sc, p));
   return(sc->NIL);
 }
@@ -18706,7 +18726,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 			     body));
     }
 
-  if (s7_is_procedure_with_setter(p))
+  if (is_pws(p))
     return(pws_source(sc, p));
   return(sc->NIL);
 }
@@ -18862,7 +18882,7 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
       (s7_is_string(car(closure_body(x)))))
     return(s7_string(car(closure_body(x))));
   
-  if (s7_is_procedure_with_setter(x))
+  if (is_pws(x))
     return(pws_documentation(x));
   
   if ((s7_is_macro(sc, x)) &&
@@ -19087,7 +19107,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
       return(list_3(sc, s7_make_integer(sc, abs(len)), small_int(0), make_boolean(sc, len < 0)));
     }
   
-  if (s7_is_procedure_with_setter(x))
+  if (is_pws(x))
     {
       if (is_not_null(s7_procedure_getter(sc, x)))
 	return(s7_procedure_arity(sc, s7_procedure_getter(sc, x)));
@@ -19990,7 +20010,7 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 					 const char *documentation)
 {
   /* on the C side, we merely define the two functions, and set the getter's setter, so there
-   *   is no separate pws object.
+   *   is no separate pws object.  
    */
   s7_pointer get_func, set_func;
   char *internal_set_name;
@@ -20024,6 +20044,13 @@ typedef struct {
   char *documentation;
   char *name;
 } s7_pws_t;
+
+
+static bool is_pws(s7_pointer obj)
+{
+  return((is_c_object(obj)) &&
+	 (object_type(obj) == pws_tag));
+}
 
 
 static char *pws_print(s7_scheme *sc, void *obj)
@@ -20172,8 +20199,13 @@ occurs as the object of set!."
 
 bool s7_is_procedure_with_setter(s7_pointer obj)
 {
-  return((is_c_object(obj)) &&
-	 (object_type(obj) == pws_tag));
+  /* C-side make-pws does not create an object -- it is a function with a setter, but
+   *   that include car -- should procedure-with-setter be #t of it?
+   * but here in s7 we're using this procedure with the assumption that it is a pws-object 
+   */
+  return((is_pws(obj)) ||
+	 ((is_c_function(obj)) &&
+	  (is_c_function(c_function_setter(obj)))));
 }
 
 
@@ -20182,7 +20214,7 @@ s7_pointer s7_procedure_getter(s7_scheme *sc, s7_pointer obj)
   if (is_c_function(obj))
     return(obj);
 
-  if (s7_is_procedure_with_setter(obj))
+  if (is_pws(obj))
     {
       s7_pws_t *f;
       f = (s7_pws_t *)s7_object_value(obj);
@@ -20198,7 +20230,7 @@ s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
   if (is_c_function(obj))     /* this includes pws via ffi */
     return(c_function_setter(obj));
 
-  if (s7_is_procedure_with_setter(obj))
+  if (is_pws(obj))
     {
       s7_pws_t *f;
       f = (s7_pws_t *)s7_object_value(obj);
@@ -20552,7 +20584,7 @@ static bool is_function_with_arity(s7_pointer x)
   return((typ == T_CLOSURE) || 
 	 (typ == T_CLOSURE_STAR) ||
 	 (typ >= T_C_FUNCTION) ||
-	 (s7_is_procedure_with_setter(x)));
+	 (is_pws(x)));
 }
 
 
@@ -22539,6 +22571,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 
   /* should this check for a tag that can't possibly be eq? to anything that error might throw? (a string for example)
    */
+
   if (!is_thunk(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, "catch", 2, cadr(args), "a thunk"));
   if (!is_procedure(caddr(args)))
@@ -22549,7 +22582,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   catch_goto_loc(p) = s7_stack_top(sc);
   catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
   catch_handler(p) = caddr(args);
-  set_type(p, T_CATCH | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
+  set_type(p, T_CATCH | T_DONT_COPY);
 
   push_stack(sc, OP_CATCH, sc->NIL, p);          /* {1} */
 
@@ -22711,12 +22744,16 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   const char *call_name = NULL, *call_file = NULL;
   int call_line = 0;
 
+  /* null info can mean symbol table is locked so make-symbol uses s7_error to get out */
+
   /* set up *error-info*, look for a catch that matches 'type', if found
    *   call its error-handler, else if *error-hook* is bound, call it,
    *   else send out the error info ourselves.
    */
   sc->no_values = 0; 
+#if WITH_OPTIMIZATION
   sc->safe_do_level = 0; /* TODO: this needs to be done right! */
+#endif
   catcher = sc->F;
 
   if (sc->s7_call_name)
@@ -23051,10 +23088,8 @@ static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args)
     return(s7_error(sc, sc->SYNTAX_ERROR, list_2(sc, make_protected_string(sc, "attempt to apply nil to ~S?"), args)));
   return(s7_error(sc, sc->SYNTAX_ERROR, 
 		  list_4(sc, 
-			      make_protected_string(sc, "attempt to apply the ~A ~S to ~S?"), 
-			      make_protected_string(sc, type_name(obj)),
-			      obj, 
-			      args)));
+			 make_protected_string(sc, "attempt to apply the ~A ~S to ~S?"), 
+			 make_protected_string(sc, type_name(obj)), obj, args)));
 }
 
 
@@ -23068,9 +23103,9 @@ static s7_pointer eval_error_with_name(s7_scheme *sc, const char *errmsg, s7_poi
 {
   return(s7_error(sc, sc->SYNTAX_ERROR, 
 		  list_3(sc, 
-			      make_protected_string(sc, errmsg),
-			      make_protected_string(sc, op_names[(int)(sc->op)]),
-			      obj)));
+			 make_protected_string(sc, errmsg),
+			 make_protected_string(sc, op_names[(int)(sc->op)]),
+			 obj)));
 }
 
 
@@ -27030,7 +27065,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	}
     }
   
-  /* fprintf(stderr, "null: %d, match: %d\n", is_null(p), args_match(sc, func, args)); */
+  /* fprintf(stderr, "%s null: %d, match: %d\n", DISPLAY_80(car(x)), is_null(p), args_match(sc, func, args)); */
 
   if ((is_null(p)) &&                /* if not null, dotted list of args? */
       (args_match(sc, func, args)))  /* we have a legit call, at least syntactically */
@@ -31345,8 +31380,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		case OP_NOT_AN_OP:
 		case HOP_NOT_AN_OP:
-		  fprintf(stderr, "bad op in opt_eval: op %d, is_opt: %d, %s\n",
- 			  optimize_data(code), is_optimized(code), DISPLAY_80(code));
+		  fprintf(stderr, "bad op in opt_eval: op %d, is_opt: %d, %s %s\n",
+ 			  optimize_data(code), is_optimized(code), DISPLAY_80(code), DISPLAY_80(sc->cur_code));
+		  abort();
 		  break;
 		  
 		case OP_THUNK:
@@ -31665,9 +31701,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer x;
 		    NEW_CELL(sc, x);
-		    set_type(x, T_PAIR);
 		    car(x) = cadr(code);
 		    cdr(x) = sc->NIL;
+		    set_type(x, T_PAIR);
 		    sc->args = x;
 		    sc->code = ecdr(code);
 		    sc->from_eval = true;
@@ -31683,9 +31719,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer x;
 		    NEW_CELL(sc, x);
-		    set_type(x, T_PAIR);
 		    car(x) = cadr(cadr(code));
 		    cdr(x) = sc->NIL;
+		    set_type(x, T_PAIR);
 		    sc->args = x;
 		    sc->code = ecdr(code);
 		    sc->from_eval = true;
@@ -31705,9 +31741,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer x, val;
 		    val = ARG_SYMBOL_VALUE(cadr(code), find_symbol_or_bust_50);
 		    NEW_CELL(sc, x);
-		    set_type(x, T_PAIR);
 		    car(x) = val;
 		    cdr(x) = sc->NIL;
+		    set_type(x, T_PAIR);
 		    sc->args = x;
 		    sc->code = ecdr(code);
 		    sc->from_eval = true;
@@ -31729,13 +31765,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    val2 = ARG_SYMBOL_VALUE(cadr(code), find_symbol_or_bust_61);
 
 		    NEW_CELL(sc, y);
-		    set_type(y, T_PAIR);
 		    car(y) = val1;
 		    cdr(y) = sc->NIL;
+		    set_type(y, T_PAIR);
 		    NEW_CELL_NO_CHECK(sc, x);
-		    set_type(x, T_PAIR);
 		    car(x) = val2;
 		    cdr(x) = y;
+		    set_type(x, T_PAIR);
 		    sc->args = x;
 		    sc->code = ecdr(code);
 		    sc->from_eval = true;
@@ -31836,6 +31872,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_CLOSURE_opSq_opSq:
 		  {
 		    s7_pointer x, y, args, val1, val2;
+		    GC_CHECK(sc);
+
 		    args = cdr(code);
 		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(car(args)), find_symbol_or_bust_45);
 		    val1 = c_function_call(ecdr(car(args)))(sc, sc->T1_1);
@@ -31984,6 +32022,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_CLOSURE_opSq:
 		  {
 		    s7_pointer x, val;
+		    GC_CHECK(sc);
 		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(cadr(code)), find_symbol_or_bust_48);
 		    val = c_function_call(ecdr(cadr(code)))(sc, sc->T1_1);
 		    NEW_CELL(sc, x);
@@ -32011,7 +32050,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer x, y, val, val1, args;
 		    args = cdr(code);
-
+		    GC_CHECK(sc);
 		    val1 = ARG_SYMBOL_VALUE(cadr(args), find_symbol_or_bust_47);
 		    car(sc->T1_1) = ARG_SYMBOL_VALUE(cadr(car(args)), find_symbol_or_bust_48);
 		    val = c_function_call(ecdr(car(args)))(sc, sc->T1_1);
@@ -34389,7 +34428,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* sc->value is the next-to-last arg, and we know the last arg is not a list (so values can't mess us up!)
        */
       {
-	s7_pointer x, y;
+	s7_pointer x, y, val;
+
+	if (type(sc->code) == T_SYMBOL)
+	  val = ARG_SYMBOL_VALUE(sc->code, find_symbol_or_bust_8);
+	else val = sc->code;
 
 	sc->x = pop_op_stack(sc);
 	if (is_safe_procedure(sc->x))
@@ -34399,17 +34442,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	else
 	  {
-	    NEW_CELL(sc, x); /* 3 */
+	    NEW_CELL(sc, x); 
 	    set_type(x, T_PAIR);
-	    NEW_CELL_NO_CHECK(sc, y); /* 3 */
+	    NEW_CELL_NO_CHECK(sc, y);
 	    set_type(y, T_PAIR);
 	  }
 	car(x) = sc->value;
 	cdr(x) = sc->args;
-		  
-	if (type(sc->code) == T_SYMBOL)
-	  car(y) = ARG_SYMBOL_VALUE(sc->code, find_symbol_or_bust_8);
-	else car(y) = sc->code;
+	car(y) = val;
 	cdr(y) = x;
 	sc->args = safe_reverse_in_place(sc, y); 
 	sc->code = sc->x;
@@ -34440,7 +34480,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	set_type(x, T_PAIR);
 	sc->args = x;
       }
-
+      
 
     EVAL_ARGS:
       /* 1st time, value = op, args = nil, code is args */
@@ -34462,6 +34502,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		push_stack(sc, OP_EVAL_ARGS2, sc->args, sc->NIL);
 	      else 
 		{
+		  if (!is_pair(cdr(sc->code)))            /* (= 0 '(1 . 2) . 3) */
+		    improper_arglist_error(sc);
+
 		  if ((is_null(cddr(sc->code))) &&
 		      (!is_pair(cadr(sc->code))))
 		    push_stack(sc, OP_EVAL_ARGS3, sc->args, cadr(sc->code)); 
@@ -34485,7 +34528,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       */
 	      if (is_null(cdr(sc->code)))
 		{
-		  s7_pointer x, y;
+		  s7_pointer x, y, val;
 		  /* we're at the last arg, sc->value is the previous one, not yet saved in the args list */
 		  car_code = car(sc->code);
 		  typ = type(car_code);
@@ -34496,6 +34539,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      sc->code = car_code;
 		      goto EVAL_PAIR;
 		    }
+
+		  /* get the last arg */
+		  if (typ == T_SYMBOL)
+		    val = ARG_SYMBOL_VALUE(car_code, find_symbol_or_bust_3);
+		  else val = car_code;
 		  
 		  /* get the current arg, which is not a list */
 		  sc->code = pop_op_stack(sc);
@@ -34513,12 +34561,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		  car(x) = sc->value;
 		  cdr(x) = sc->args;
-		  
-		  /* get the last arg */
-		  if (typ == T_SYMBOL)
-		    car(y) = ARG_SYMBOL_VALUE(car_code, find_symbol_or_bust_3);
-		  else car(y) = car_code;
-
+		  car(y) = val;
 		  cdr(y) = x;
 		  sc->args = safe_reverse_in_place(sc, y); 
 		  /* drop into APPLY */
@@ -34551,17 +34594,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      sc->code = pop_op_stack(sc);
 	      if (is_safe_procedure(sc->code))
-		x = sc->TEMP_CELL_2;
+		{
+		  x = sc->TEMP_CELL_2;
+		  if (typ == T_SYMBOL)
+		    car(x) = ARG_SYMBOL_VALUE(car_code, find_symbol_or_bust_42);
+		  else car(x) = car_code;
+		  cdr(x) = sc->args;
+		}
 	      else
 		{
+		  s7_pointer val;
+		  if (typ == T_SYMBOL)
+		    val = ARG_SYMBOL_VALUE(car_code, find_symbol_or_bust_42); /* this has to precede the set_type below */
+		  else val = car_code;
 		  NEW_CELL(sc, x); 
+		  car(x) = val;
+		  cdr(x) = sc->args;
 		  set_type(x, T_PAIR);
 		}
 
-	      if (typ == T_SYMBOL)
-		car(x) = ARG_SYMBOL_VALUE(car_code, find_symbol_or_bust_42);
-	      else car(x) = car_code;
-	      cdr(x) = sc->args;
 	      if (type(sc->args) != T_NIL)
 		sc->args = safe_reverse_in_place(sc, x);
 	      else sc->args = x;
@@ -35188,7 +35239,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else
 	{
-	  if (s7_is_procedure_with_setter(sc->value))
+	  if (is_pws(sc->value))
 	    {
 	      s7_pws_t *f = (s7_pws_t *)s7_object_value(sc->value);
 	      if (!(f->name))

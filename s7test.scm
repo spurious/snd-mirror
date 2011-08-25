@@ -21166,7 +21166,10 @@ abs     1       2
 (test (procedure-with-setter?) 'error)
 (test (call-with-exit (lambda (return) (procedure-with-setter? return))) #f)
 (test (procedure-with-setter? quasiquote) #f)
-;; (test (procedure-with-setter? -s7-symbol-table-locked?) #t)
+(test (procedure-with-setter? -s7-symbol-table-locked?) #t)
+(test (procedure-arity -s7-symbol-table-locked?) '(0 0 #f))
+(test (procedure-arity (procedure-setter -s7-symbol-table-locked?)) '(1 0 #f))
+
 ;; (test (procedure-with-setter? '-s7-symbol-table-locked?) #f) ; this parallels (procedure? 'abs) -> #f but seems inconsistent with other *? funcs
 
 (define (procedure-setter-arity proc) (procedure-arity (procedure-setter proc)))
@@ -41977,6 +41980,13 @@ abs     1       2
 ;;; non-gmp strangeness: 
 ;;;    (zero? (- (sqrt 2) 5964153172084899/4217293152016490)) -> #t, but
 ;;;    (= (sqrt 2) 5964153172084899/4217293152016490) -> #f
+
+
+(test (= 0 '(1 . 2) . 3) 'error)
+(test (append 0 '(1 . 2) . 3) 'error)
+(test (= 0 ''0  . 0) 'error)
+(test (= . 0) 'error)
+(test (= 0 . (0)) #t)
 
 
 
