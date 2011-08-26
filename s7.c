@@ -340,7 +340,7 @@ enum {OP_NO_OP,
 #if WITH_OPTIMIZATION
       OP_SAFE_AND, OP_SAFE_AND1, OP_SAFE_OR, OP_SAFE_OR1, OP_SAFE_IF1, OP_SAFE_IF2,
       OP_SAFE_OR_S, OP_SAFE_AND_S, 
-      OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_DOTIMES, OP_DOTIMES_STEP, OP_SIMPLE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP,
+      OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_DOTIMES, OP_DOTIMES_STEP, OP_SIMPLE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_DOTIMES_C_C,
       OP_SAFE_IF1_1, OP_SAFE_IF2_1,
       OP_SAFE_C_P_1, OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4,
       OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS, OP_SET_SAFE_DO,
@@ -839,7 +839,7 @@ struct s7_scheme {
 #if WITH_OPTIMIZATION
   s7_pointer SAFE_AND, SAFE_OR, SAFE_IF1, SAFE_IF2, SAFE_OR_S, SAFE_AND_S;
   s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, SET_SAFE_DO;
-  s7_pointer SIMPLE_DO, DOTIMES, SIMPLE_DOTIMES, SAFE_DO;
+  s7_pointer SIMPLE_DO, DOTIMES, SIMPLE_DOTIMES, DOTIMES_C_C, SAFE_DO;
   int safe_do_level, safe_do_ids_size;
   long long int *safe_do_ids;
 #endif
@@ -29787,7 +29787,8 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 #if PRINTING
 				  fprintf(stderr, "      ;set: %s is global\n", DISPLAY(cadr(expr)));
 #endif
-				  /* TODO: should we consider (set! (v i) 0) safe? */
+				  /* TODO: should we consider (set! (v i) 0) safe? 
+				   */
 				  (*has_set) = true;
 				}
 			      if (!do_is_safe(sc, cddr(expr), stepper, var_list, has_set))
@@ -29799,6 +29800,19 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 #endif
 				  return(false);
 				}
+
+			      /* since the step var is not involved, and we're not setting a local var,
+			       *   and the set value is ok, do we need to set has_set at all?
+			       * No.  We also need to ensure the stepper isn't hidden in the set value
+			       *   as in s7test do-test-17.
+			       *
+			       * set in v loses about 100: 15 in make_integer, 80 or so in eval (begin/push-stack etc)
+			       */
+#if 0
+			      if ((s7_is_symbol(cadr(expr))) &&
+				  (is_pair(caddr(expr))))
+				(*has_set) = old_has_set;
+#endif
 			    }
 			}
 		    }
@@ -29981,6 +29995,8 @@ static s7_pointer check_do(s7_scheme *sc)
 			      {
 				car(ecdr(sc->code)) = sc->SAFE_DO;
 				optimize_do(sc, sc->code);
+				/* PERHAPS: safe do with no need to jump?
+				 */
 				
 				if (!has_set)
 				{
@@ -29991,38 +30007,52 @@ static s7_pointer check_do(s7_scheme *sc)
 				  /* what are the most common cases here?
 				   */
 				  
-				  /* TODO: obvious extensions: just SAFE_C_C, or let with no vars etc
-				   */
 				  if ((safe_list_length(sc, x) == 1) &&
-				      (is_pair(car(x))) &&
-				      (is_syntactic(caar(x))) &&
-				      (syntax_opcode(caar(x)) == OP_LET))
+				      (is_pair(car(x))))
 				    {
-				      x = cddar(x);
-				      if ((is_pair(car(x))) &&
-					  (is_optimized(car(x))) &&
-					  (is_null(cdr(x))) &&
+				      if ((is_optimized(car(x))) &&
 					  (optimize_data(car(x)) == HOP_SAFE_C_C))
 					{
-					  bool happy = true;
-
-					  /* fprintf(stderr, "safe let?: %s\n", DISPLAY_80(sc->code)); */
-
-					  for (x = cadar(cddr(sc->code)); is_pair(x); x = cdr(x))
+					  car(ecdr(sc->code)) = sc->DOTIMES_C_C;
+					}
+				      else
+					{
+					  if ((is_syntactic(caar(x))) &&
+					      (syntax_opcode(caar(x)) == OP_LET))
 					    {
-					      /* fprintf(stderr, "let var: %s\n", DISPLAY(car(x))); */
-					      if ((!is_pair(cadar(x))) ||
-						  (!is_optimized(cadar(x))) ||
-						  (optimize_data(cadar(x)) != HOP_SAFE_C_C))
+					      x = cddar(x);
+					      if ((is_pair(car(x))) &&
+						  (is_optimized(car(x))) &&
+						  (is_null(cdr(x))) &&
+						  (optimize_data(car(x)) == HOP_SAFE_C_C))
 						{
-						  happy = false;
-						  break;
+						  bool happy = true;
+						  
+						  /* fprintf(stderr, "safe let?: %s\n", DISPLAY_80(sc->code));  */
+						  
+						  for (x = cadar(cddr(sc->code)); is_pair(x); x = cdr(x))
+						    {
+						      /* fprintf(stderr, "let var: %s\n", DISPLAY(car(x)));  */
+						      if ((!is_pair(cadar(x))) ||
+							  (!is_optimized(cadar(x))) ||
+							  (optimize_data(cadar(x)) != HOP_SAFE_C_C))
+							{
+							  /*
+							  fprintf(stderr, "%d %d %s\n", 
+								  is_pair(cadar(x)),
+								  is_optimized(cadar(x)),
+								  opt_names[optimize_data(cadar(x))]);
+							  */
+							  happy = false;
+							  break;
+							}
+						    }
+						  if (happy)
+						    {
+						      /* fprintf(stderr, "safe: %s\n", DISPLAY_80(sc->code));  */
+						      car(ecdr(sc->code)) = sc->SIMPLE_DOTIMES;
+						    }
 						}
-					    }
-					  if (happy)
-					    {
-					      /* fprintf(stderr, "safe: %s\n", DISPLAY_80(sc->code)); */
-					      car(ecdr(sc->code)) = sc->SIMPLE_DOTIMES;
 					    }
 					}
 				    }
@@ -30770,7 +30800,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   goto START
        */
       {
-	s7_pointer vars, init_val;
+	s7_pointer vars, init_val, func, body, stepper, lets;
 #if PRINTING
 	fprintf(stderr, "simple_dotimes: %s\n", DISPLAY(sc->code));
 #endif
@@ -30801,36 +30831,122 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		/* add the let vars but not initialized yet 
 		 */
-		for (let_var = car(cdaddr(sc->code)); is_pair(let_var); let_var = cdr(let_var))
-		  add_slot(sc, caar(let_var), sc->UNDEFINED);
+		{
+		  int vars = 0;
+		  for (let_var = car(cdaddr(sc->code)); is_pair(let_var); let_var = cdr(let_var), vars++)
+		    add_slot(sc, caar(let_var), sc->UNDEFINED);
 
-		
-	      SIMPLE_DOTIMES_LOOP:
+		  stepper = symbol_value(sc->args);
+		  func = ecdr(caddr(caddr(sc->code)));
+		  body = cdr(caddr(caddr(sc->code)));
+		  lets = car(cdaddr(sc->code));
 
-		/* eval let + body  (cddr(sc->code)) */
-		for (let_var = car(cdaddr(sc->code)); is_pair(let_var); let_var = cdr(let_var))
+		  if (vars != 1)
+		    {
+		    SIMPLE_DOTIMES_LET_LOOP:
+		      
+		      /* eval let + body  (cddr(sc->code)) */
+		      for (let_var = lets; is_pair(let_var); let_var = cdr(let_var))
+			{
+			  p = find_local_symbol(sc, sc->envir, caar(let_var));
+			  cdr(p) = c_function_call(ecdr(cadar(let_var)))(sc, cdadar(let_var));
+			}
+		      
+		      /* (with-sound () (fm-violin 0 .0001 440 .1))
+		       */
+		      c_function_call(func)(sc, body);
+		      numerator(number(stepper))++;
+		      if (numerator(number(stepper)) == denominator(number(stepper)))
+			{
+			  /* initialize_safe_do(sc, sc->code); */
+			  sc->code = cdr(cadr(sc->code));
+			  sc->safe_do_level--;
+			  goto BEGIN;
+			}
+		      goto SIMPLE_DOTIMES_LET_LOOP;
+		    }
+		  else
+		    {
+		      p = car(sc->envir);
+		      let_var = cdadar(lets);
+		      lets = ecdr(cadar(lets));
+
+		    SIMPLE_DOTIMES_LOOP:
+		      cdr(p) = c_function_call(lets)(sc, let_var);
+		      c_function_call(func)(sc, body);
+		      numerator(number(stepper))++;
+		      if (numerator(number(stepper)) == denominator(number(stepper)))
+			{
+			  /* initialize_safe_do(sc, sc->code); */
+			  sc->code = cdr(cadr(sc->code));
+			  sc->safe_do_level--;
+			  goto BEGIN;
+			}
+		      goto SIMPLE_DOTIMES_LOOP;
+		    }
+		}
+	      }
+	  }
+      }
+
+
+      /* ---------------- */
+
+
+
+    DOTIMES_C_C:
+    case OP_DOTIMES_C_C:
+      {
+	s7_pointer vars, init_val, func, body, stepper;
+#if PRINTING
+	fprintf(stderr, "dotimes_c_c: %s\n", DISPLAY(sc->code));
+#endif
+	vars = car(sc->code);
+	init_val = cadr(car(vars));
+	if (s7_is_symbol(init_val))
+	  init_val = ARG_SYMBOL_VALUE(init_val, find_symbol_or_bust_12);
+	if (s7_is_integer(init_val))
+	  {
+	    s7_pointer end_expr, end_val;
+	    end_expr = caadr(sc->code);
+	    end_val = caddr(end_expr);
+	    if (s7_is_symbol(end_val))
+	      end_val = ARG_SYMBOL_VALUE(end_val, find_symbol_or_bust_12);
+	    if (s7_is_integer(end_val))
+	      {
+		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
-		    p = find_local_symbol(sc, sc->envir, caar(let_var));
-		    cdr(p) = c_function_call(ecdr(cadar(let_var)))(sc, cdadar(let_var));
+		    sc->code = cdr(cadr(sc->code));
+		    goto BEGIN;
 		  }
+
+		sc->envir = new_frame_in_env(sc, sc->envir); 
+		sc->args = add_slot(sc, caar(vars), make_mutable_integer(sc, s7_integer(init_val)));
+
+		denominator(number(symbol_value(sc->args))) = s7_integer(end_val);
+		initialize_safe_do(sc, sc->code);
+		sc->safe_do_level++;
+		safe_do_set_id(sc, frame_id(sc->envir));
+
+		func = ecdr(caddr(sc->code));
+		body = cdr(caddr(sc->code));
+		stepper = symbol_value(sc->args);
 		
-		/* (with-sound () (fm-violin 0 .0001 440 .1))
-		 */
-		c_function_call(ecdr(caddr(caddr(sc->code))))(sc, cdr(caddr(caddr(sc->code))));
-		numerator(number(symbol_value(sc->args)))++;
-		if (numerator(number(symbol_value(sc->args))) == denominator(number(symbol_value(sc->args))))
+	      DOTIMES_C_C_LOOP:
+		/* eval body  (cddr(sc->code)) */
+		c_function_call(func)(sc, body);
+		numerator(number(stepper))++;
+		if (numerator(number(stepper)) == denominator(number(stepper)))
 		  {
 		    /* initialize_safe_do(sc, sc->code); */
 		    sc->code = cdr(cadr(sc->code));
 		    sc->safe_do_level--;
 		    goto BEGIN;
 		  }
-		goto SIMPLE_DOTIMES_LOOP;
+		goto DOTIMES_C_C_LOOP;
 	      }
 	  }
       }
-
-
       /* ---------------- */
 
 
@@ -31109,6 +31225,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (car(ecdr(sc->code)) == sc->SIMPLE_DO)
 	    goto SIMPLE_DO;
+	  if (car(ecdr(sc->code)) == sc->DOTIMES_C_C)
+	    goto DOTIMES_C_C;
 	  if (car(ecdr(sc->code)) == sc->SIMPLE_DOTIMES)
 	    goto SIMPLE_DOTIMES;
 	  if (car(ecdr(sc->code)) == sc->SAFE_DO)
@@ -35456,6 +35574,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	/* fprintf(stderr, "%s: set %s to %s\n", DISPLAY_80(sc->code), DISPLAY(car(sc->code)), DISPLAY(symbol_value(val))); */
 	goto START;
       }
+
+      /* TODO: a common case (set! (v i) x) --
+       *       in this case, save the setter?
+       *       if null, choose setter based on type of v
+       *       else (setter v i x)
+       *   and (setter v i ...) can also be handled in place in most cases
+       *   v->data[i] = c_function_call(...) or C|S etc
+       */
 #endif      
 
     case OP_SET_SYMBOL_C:
@@ -42380,6 +42506,7 @@ s7_scheme *s7_init(void)
   sc->SET_SAFE_DO =           assign_internal_syntax(sc, "set!",    OP_SET_SAFE_DO);
   sc->SIMPLE_DO =             assign_internal_syntax(sc, "do",      OP_SIMPLE_DO);
   sc->DOTIMES =               assign_internal_syntax(sc, "do",      OP_DOTIMES);
+  sc->DOTIMES_C_C =           assign_internal_syntax(sc, "do",      OP_DOTIMES_C_C);
   sc->SIMPLE_DOTIMES =        assign_internal_syntax(sc, "do",      OP_SIMPLE_DOTIMES);
   sc->SAFE_DO =               assign_internal_syntax(sc, "do",      OP_SAFE_DO);
   sc->safe_do_level = 0;

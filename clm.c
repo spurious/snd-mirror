@@ -5824,7 +5824,7 @@ mus_float_t mus_env(mus_any *ptr)
 }
 
 
-static mus_float_t mus_env_step(mus_any *ptr)
+mus_float_t mus_env_step(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   mus_float_t val;

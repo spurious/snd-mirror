@@ -400,6 +400,7 @@ MUS_EXPORT mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus
 #define mus_make_env_with_length(Brkpts, Pts, Scaler, Offset, Base, Length) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, (Length) - 1, NULL)
 MUS_EXPORT mus_float_t mus_env_linear(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_env_exponential(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_env_step(mus_any *ptr);
 MUS_EXPORT mus_env_t mus_env_type(mus_any *ptr);
 
 MUS_EXPORT bool mus_frame_p(mus_any *ptr);
