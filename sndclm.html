@@ -427,7 +427,7 @@ are dependent on the sampling rate.  Our first enhancement is to use seconds:
     (with-sound (:srate 44100) (simp 0 1.0 440.0 0.1))
 </pre>
 
-<p>Our next improvement adds the "run" macro to speed up processing by about a factor of 10:
+<p>Our next improvement adds the "run" macro to speed up processing by about a factor of 4:
 </p>
 
 <table border=0 hspace=40><tr><td>
@@ -1665,13 +1665,12 @@ the table-relative phase, returning a squared-off sine-wave:
 (with-sound (:srate 1000000 :channels 2) 
   (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-vct 100)) :type mus-interp-none))
         (sine (make-oscil 100.0)))
-    (run 
        (do ((i 0 (+ 1 i))) 
            ((= i 1000000))
 	 (let ((qsine (table-lookup gen1))
 	       (tsine (oscil sine)))
 	   (outa i qsine)
-	   (outb i (- tsine qsine)))))))
+	   (outb i (- tsine qsine))))))
 
 (set! (selected-graph-color) (make-color 1 1 1))
 (set! (selected-data-color) (make-color 0 0 0))
@@ -1706,13 +1705,12 @@ reduces the original problem by a factor of n * L:
 (with-sound (:srate 1000000 :channels 2) 
   (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-vct 100)) :type mus-interp-linear))
 	(sine (make-oscil 100.0)))
-    (run 
        (do ((i 0 (+ 1 i))) 
 	   ((= i 1000000))
 	 (let ((qsine (table-lookup gen1))
 	       (tsine (oscil sine)))
 	   (outa i qsine)
-	   (outb i (- tsine qsine)))))))
+	   (outb i (- tsine qsine))))))
 
 (set! (x-axis-label 0 0 0) "linear interpolation, table size=100, sine at 100 Hz")
 (set! (x-axis-label 0 1 0) "difference between sine and interpolated sine")
@@ -1761,13 +1759,12 @@ If you're trying to produce a sum of sinusoids, use polywave &mdash; it makes a 
 	 (tbl2 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vct size)) size mus-interp-linear))
 	 (tbl3 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vct size)) size mus-interp-lagrange))
 	 (tbl4 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vct size)) size mus-interp-hermite)))
-    (run 
        (do ((i 0 (+ 1 i)))
 	   ((= i 100000))
 	 (outa i (table-lookup tbl1))
 	 (outb i (table-lookup tbl2))
 	 (out-any i (table-lookup tbl3) 2)
-	 (out-any i (table-lookup tbl4) 3)))))
+	 (out-any i (table-lookup tbl4) 3))))
 
 (with-sound (:channels 5 :clipped #f :statistics #t)
   (let* ((pitch 2.0)
@@ -1780,14 +1777,13 @@ If you're trying to produce a sum of sinusoids, use polywave &mdash; it makes a 
 	 (tbl3 (make-table-lookup pitch 0.0 wave size mus-interp-lagrange))
 	 (tbl4 (make-table-lookup pitch 0.0 wave size mus-interp-hermite))
 	 (tbl5 (make-table-lookup pitch 0.0 wave size mus-interp-all-pass)))
-    (run 
        (do ((i 0 (+ 1 i)))
 	   ((= i 100000))
 	 (outa i (table-lookup tbl1))
 	 (outb i (table-lookup tbl2))
 	 (out-any i (table-lookup tbl3) 2)
 	 (out-any i (table-lookup tbl4) 3)
-	 (out-any i (table-lookup tbl5) 4)))))
+	 (out-any i (table-lookup tbl5) 4))))
 -->
 
 
@@ -3127,10 +3123,9 @@ The peak amplitude should be pi/4, but the Gibbs phenomenon adds .14.
   (let* ((beg (seconds->samples start))
 	 (end (+ beg (seconds->samples dur)))
 	 (osc (make-oscil freq)))
-    (run 
        (do ((i beg (+ 1 i))) 
 	   ((= i end))
-	 (outa i (* amp (oscil osc)))))))
+	 (outa i (* amp (oscil osc))))))
 
 (with-sound (:output "4-sines.snd")
   (sine-wave 0 1 10.0 1.0)
@@ -3730,16 +3725,14 @@ getting waveforms and results like these:
 	            :duration 1.0 :scaler .8))
 	    (index (hz->radians (* 100 3.0)))
 	    (mx 0.0))
-	(run 
 	(do ((i start (+ 1 i)))
 	    ((= i (+ start samps)))
 	  (let ((md (ngencos mod1)))
 	    (outa i (* (env ampf)
                        (oscil car1 (* index norm md))))
 	    (set! mx (max mx (abs md)))
-	    ))))
+	    ))
 	(snd-display ";~A ~A ~A" (cadr arg) (caddr arg) mx)))
-                         
     (list
      (list 0.0 1    1.0    (vct 0))
      (list 2.0 2    0.881 (vct 0 0))
@@ -3748,7 +3741,7 @@ getting waveforms and results like these:
      (list 8.0 16   0.302  (vct 0.432 2.086 2.763 2.344 2.811 3.409 1.836 6.173 3.770 2.339 6.158 1.530 6.132 3.006 4.967 0.859))
      (list 10.0 32  0.266  (vct 6.208 4.197 3.109 1.718 5.050 1.317 4.334 3.778 4.936 0.069 3.025 2.115 5.060 1.286 3.499 5.191 1.822 5.985 4.384 1.394 3.453 2.579 3.031 3.255 3.834 2.621 1.390 0.717 0.409 3.370 6.042 6.052))
      (list 12.0 64  0.2124 (vct 4.913 5.507 5.262 1.926 4.819 3.794 0.355 1.178 4.959 1.012 3.433 2.855 2.191 4.792 3.740 1.865 5.196 1.078 4.139 5.518 3.053 3.958 3.131 6.260 2.157 4.279 2.352 4.314 1.102 5.967 3.551 2.439 5.456 4.833 5.213 3.523 3.263 2.810 0.433 0.639 2.554 3.469 2.682 4.765 0.125 3.824 1.137 6.166 0.019 2.240 4.406 4.734 5.451 6.230 4.943 4.160 3.577 5.086 2.444 0.900 1.952 2.234 4.794 3.424))
-     (list 14.0 128 0.16121 (vct 1.531 4.987 1.847 0.632 6.101 4.309 0.517 1.910 4.921 4.949 6.040 5.611 2.831 5.338 0.891 5.388 0.599 2.677 6.248 5.592 1.977 1.794 3.572 2.638 1.903 3.083 2.412 6.125 3.799 5.619 5.949 1.241 3.044 5.395 5.865 4.846 4.899 2.267 4.537 3.979 1.783 3.826 1.325 5.278 5.799 4.977 2.066 3.029 1.036 4.606 1.691 6.079 4.957 6.138 2.603 1.111 1.335 1.765 5.767 2.730 0.702 1.122 1.628 1.848 0.712 2.338 5.099 6.249 2.009 3.379 1.653 4.831 2.245 1.831 1.113 5.462 5.533 2.944 4.376 4.734 3.285 4.361 1.015 2.100 5.022 3.269 0.796 0.317 5.244 2.613 4.609 3.415 4.454 0.228 2.025 0.216 1.785 3.599 3.207 5.019 3.591 5.138 4.333 3.005 6.208 5.296 0.763 3.741 3.446 3.962 0.204 1.715 4.054 2.402 1.455 1.842 4.637 4.427 0.536 2.700 4.289 3.066 0.574 6.106 1.472 5.793 4.294 2.287))))
+     (list 14.0 128 0.16121 (vct 1.531 4.987 1.847 0.632 6.101 4.309 0.517 1.910 4.921 4.949 6.040 5.611 2.831 5.338 0.891 5.388 0.599 2.677 6.248 5.592 1.977 1.794 3.572 2.638 1.903 3.083 2.412 6.125 3.799 5.619 5.949 1.241 3.044 5.395 5.865 4.846 4.899 2.267 4.537 3.979 1.783 3.826 1.325 5.278 5.799 4.977 2.066 3.029 1.036 4.606 1.691 6.079 4.957 6.138 2.603 1.111 1.335 1.765 5.767 2.730 0.702 1.122 1.628 1.848 0.712 2.338 5.099 6.249 2.009 3.379 1.653 4.831 2.245 1.831 1.113 5.462 5.533 2.944 4.376 4.734 3.285 4.361 1.015 2.100 5.022 3.269 0.796 0.317 5.244 2.613 4.609 3.415 4.454 0.228 2.025 0.216 1.785 3.599 3.207 5.019 3.591 5.138 4.333 3.005 6.208 5.296 0.763 3.741 3.446 3.962 0.204 1.715 4.054 2.402 1.455 1.842 4.637 4.427 0.536 2.700 4.289 3.066 0.574 6.106 1.472 5.793 4.294 2.287)))))
 -->
 
 
@@ -4388,10 +4381,9 @@ lambda: ( -- )
 <!-- sinesummation.png:
 (with-sound (:clipped #f)
   (let ((gen (make-sine-summation 400.0 0.0 5 0.5)))
-    (run 
        (do ((i 0 (+ 1 i)))
 	   ((= i 30000))
-	 (outa i (sine-summation gen 0.0))))))
+	 (outa i (sine-summation gen 0.0)))))
 -->
 
 <!-- Jolley 475 is different [it runs 0 .. n-1 in our terminology, whereas Moorer's runs 0 .. n] -->
@@ -4858,10 +4850,9 @@ make-wave-train-with-env (defined in generators.scm) returns a new wave-train ge
                                                 ((= i 64)) 
                                               (set! (v i) (sum-of-cosines g))) 
                                             v))))
-    (run 
        (do ((i 0 (+ 1 i)))
            ((= i 1000))
-         (outa i (wave-train gen))))))
+         (outa i (wave-train gen)))))
 -->
 
 <p>
@@ -8211,7 +8202,7 @@ lambda: ( -- )
 <p>These are the "generic" input and output functions.
 out-any adds its "data" argument (a sound sample) into the "output" object at sample
 position "loc".  
-The "output" argument can be a vct, a vector, a sound-data object, or a function, as well as the more usual frame-&gt;file object.
+The "output" argument can be a vct, a vector, or a sound-data object, as well as the more usual frame-&gt;file object.
 or any output-capable CLM generator.
 In with-sound, the current output is *output* and the reverb output is *reverb*.
 outa is the same as out-any with a channel of 0.  It is not an error to try to write to a channel that doesn't exist;
@@ -8220,8 +8211,7 @@ the function just returns.
 
 <p>in-any returns the sample at position "loc" in
 "input".  ina is the same as in-any with a channel of 0.
-As in out-any and friends, the "input" argument can be a file-&gt;frame object, a vct, a vector, sound-data object, or a function.
-If "input" is a function, it should take two arguments, the location and the channel number.
+As in out-any and friends, the "input" argument can be a file-&gt;frame object, a vct, a vector, or a sound-data object.
 </p>
 
 <table border=0 hspace=40><tr><td>
@@ -10000,12 +9990,11 @@ of sinusoids and Bessel functions.
 	 (indf (make-env '(0 0 1 1) :duration dur :scaler 10.0 :offset 1))
 	 (ampf (make-env '(0 0 1 1 20 1 21 0) :duration dur))
 	 )
-    (run 
        (do ((i 0 (+ 1 i)))
 	   ((= i samps))
 	 (set! (r2k!cos-k gen) (env indf))
 	 (outa i (* (env ampf)
-		    (r2k!cos gen)))))))
+		    (r2k!cos gen))))))
 
 dark 3 rainbow .001 not inverted
 2048 blackman2
@@ -10570,10 +10559,9 @@ Here is an example that produces abs(oscil):
 #|
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
   (let ((gen (<em class=red>make-abssin</em> 440.0)))
-    (run 
      (do ((i 0 (+ 1 i)))
 	 ((= i 10000))
-       (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>abssin</em> gen)))))))
+       (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>abssin</em> gen))))))
 #|
 </pre>
 </td></tr></table>

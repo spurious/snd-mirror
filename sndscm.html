@@ -7205,7 +7205,6 @@ a function of the initial-phase ("phi" below) is (very nearly):
 <!--
 (with-full-sound (:clipped #f :channels 2 :statistics #t :output "n2a.snd")
   (let ((size 10000))
-  (run 
      (let ((i 0)
 	   (incr (/ (* 2 pi) size)))
       (do ((phi1 0.0 (+ phi1 incr))
@@ -7231,7 +7230,7 @@ a function of the initial-phase ("phi" below) is (very nearly):
 		 (bx (+ ap (* phi1 (/ (- bp ap) pi)))))
 	    (outb i (max (abs (+ (sin ax) (sin (+ (* 2 ax) phi1))))
 			 (abs (+ (sin bx) (sin (+ (* 2 bx) phi1)))))))
-	  (set! i (+ i 1))))))))
+	  (set! i (+ i 1)))))))
 -->
 <p>
 We can reduce the peak difference below .00000002 by using:
@@ -7270,7 +7269,6 @@ now being acos(-(sqrt(2/3))):
 <!--
 (with-full-sound (:clipped #f :channels 2 :statistics #t :output "n2b.snd")
   (let ((size 10000))
-  (run 
      (let ((i 0)
 	   (incr (/ (* 2 pi) size)))
       (do ((phi1 0.0 (+ phi1 incr))
@@ -7296,7 +7294,7 @@ now being acos(-(sqrt(2/3))):
 		 (bx (- ax pi)))                                  ; peak 2 (the two interleave)
 	    (outb i (max (abs (+ (sin ax) (sin (+ (* 3 ax) phi1))))
 			 (abs (+ (sin bx) (sin (+ (* 3 bx) phi1)))))))
-	  (set! i (+ i 1))))))))
+	  (set! i (+ i 1)))))))
 -->
 <p>
 sin(x)+sin(5x+a) becomes a quadratic in cos^2(x), so we can find the peak location as a function
@@ -7317,7 +7315,6 @@ of the initial-phase:
 <!--
 (with-full-sound (:clipped #f :channels 3 :statistics #t :output "n2e.snd")
   (let ((size 10000))
-  (run 
      (let ((i 0)
 	   (incr (/ (* 2 pi) size)))
       (do ((phi1 0.0 (+ phi1 incr))
@@ -7346,7 +7343,7 @@ of the initial-phase:
 			 (abs (+ (sin cx) (sin (+ (* 5 cx) phi1))))
 			 (abs (+ (sin dx) (sin (+ (* 5 dx) phi1)))))))
 	  (outc i loc)
-	  (set! i (+ i 1))))))))
+	  (set! i (+ i 1)))))))
 
 (%i29) -80*x^2+100*x-24;
                                    2
@@ -7555,7 +7552,6 @@ or:
 
 <!--
 (with-sound (:clipped #f :channels 1 :statistics #t :output "n3.snd")
-  (run 
      (let ((i 0)
 	   (incr (/ (* 2 pi) 1000)))
       (do ((phi1 0.0 (+ phi1 incr))
@@ -7577,14 +7573,13 @@ or:
 		      (set! pk (abs val))
 		      (set! tpk val)))))
 	    (outa i tpk)
-	    (set! i (+ i 1))))))))
+	    (set! i (+ i 1)))))))
 
 
 (with-sound (:clipped #f :channels 8 :statistics #t :output "n4.snd")
   (let* ((size 200)
 	 (incr (/ (* 2 pi) size))
 	 (i 0))
-    (run 
        (do ((phi1 0.0 (+ phi1 incr))
 	    (j 0 (+ j 1)))
 	   ((= j size))
@@ -7605,7 +7600,7 @@ or:
 		   (if (> (abs val) pk)
 		       (set! pk (abs val)))))
 	       (out-any i pk m)))
-	   (set! i (+ i 1)))))))
+	   (set! i (+ i 1))))))
 
 (define (gad4)
   (do ((i 0 (+ i 1)))
@@ -7729,7 +7724,6 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 
 <!--
 (with-sound (:clipped #f :channels 64 :statistics #t :output "n5a.snd")
-  (run 
      (let* ((i 0)
 	    (size 400)
 	    (incr (/ (* 2 pi) size))) ; n5=100 here
@@ -7760,7 +7754,7 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 			  (set! pk (abs val))
 			  (set! tpk val)))))
 		(out-any i tpk (+ (* 8 m) p)))))
-	  (set! i (+ i 1)))))))
+	  (set! i (+ i 1))))))
 
 (define (gad5)
   (do ((i 0 (+ i 1))) ((= i 64)) (map-channel (lambda (y) (/ (- (abs y) 2.3) (- 5.0 2.3))) 0 (frames) 0 i))
@@ -7781,7 +7775,6 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 	   (size 100)
 	   (incr (/ (* 2 pi) size)))
       (with-sound (:clipped #f :channels 8 :statistics #t :output outfile)
-        (run 
 	   (let* ((i 0))
 	     (do ((phi1 0.0 (+ phi1 incr))
 		  (j 0 (+ j 1)))
@@ -7807,7 +7800,7 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 			 (if (> (abs val) pk)
 			     (set! pk (abs val)))))
 		     (out-any i pk m)))
-		 (set! i (+ i 1))))))))))
+		 (set! i (+ i 1)))))))))
 
 
 (define (gad6)
@@ -7850,10 +7843,9 @@ we aren't likely to stumble on a function that gives us the initial phases!
     (let* ((beg (seconds-&gt;samples start))
 	   (end (+ beg (seconds-&gt;samples dur)))
 	   (osc (make-oscil freq phase)))
-      (run 
-       (do ((i beg (+ 1 i))) 
-	   ((= i end))
-	 (outa i (oscil osc))))))
+     (do ((i beg (+ 1 i))) 
+	 ((= i end))
+       (outa i (oscil osc)))))
 
   (if (null? (sounds))
       (new-sound))
@@ -11523,10 +11515,9 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (definstrument (ins args)
   (let ...
-    (run                             ; run is optional, but speeds up computation
-      (do ((i start (+ 1 i)))
-          ((= i end))
-        (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i ...)))))
+    (do ((i start (+ 1 i)))
+        ((= i end))
+      (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i ...))))
 </pre></td></tr></table>
 
 <p>definstrument is an extension of define*, so its arguments are handled as optional keyword arguments:
@@ -11558,35 +11549,24 @@ by calling the oscils and whatnot directly in the with-sound body:
 	((= i 12))
       (set! (oscs i) (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> :frequency 0.0)))
     (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:srate 44100)
-      (run                            ; use "run" to speed up computation by about a factor of 10
-       (do ((samp 0 (+ 1 samp)))
-	   ((= samp 300000))
-	 (let ((sum 0.0))
-	   (do ((i 0 (+ 1 i)))
-	       ((= i 12))
-	     (let ((loc (+ x (/ i 12.0))))  ; location of current oscil in overall trajectory
-	       (if (&gt; loc 1.0) (set! loc (- loc 1.0)))
-	       (set! sum (+ sum (* (let ((y (- 4.0 (* 8.0 loc))))
-				     (exp (* -0.5 y y)))  ; Gaussian normal curve as amplitude envelope
-				   (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> (oscs i) 
-					    (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (expt 2.0 (+ 2 (* loc 12.0))))))))))
-                                            ;; (- 1.0 loc) to go down
-	   (set! x (+ x incr))
-	   (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> samp (* .1 sum))))))))
+     (do ((samp 0 (+ 1 samp)))
+         ((= samp 300000))
+       (let ((sum 0.0))
+	 (do ((i 0 (+ 1 i)))
+	     ((= i 12))
+	   (let ((loc (+ x (/ i 12.0))))  ; location of current oscil in overall trajectory
+	     (if (&gt; loc 1.0) (set! loc (- loc 1.0)))
+	     (set! sum (+ sum (* (let ((y (- 4.0 (* 8.0 loc))))
+	                           (exp (* -0.5 y y)))  ; Gaussian normal curve as amplitude envelope
+			         (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> (oscs i) 
+			                (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (expt 2.0 (+ 2 (* loc 12.0))))))))))
+                                        ;; (- 1.0 loc) to go down
+	 (set! x (+ x incr))
+	 (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> samp (* .1 sum)))))))
 </pre></td></tr></table>
 <img src="pix/shepard.png" alt="shepard tone spectrum" vspace=10 hspace=40>
 
-<p>In all these cases, the "run time" portion of the sound computation is wrapped up
-in <code>(run ... )</code>.  <a href="extsnd.html#run">run</a> (the name predates me!),
-tries to optimize its argument using a sort of byte compiler.  When successful, it
-can speed up computation by about a factor of 10.  When unsuccessful, it falls back
-on Scheme, so you always get a sound.  The body of the run can be anything; in this
-document, primarily for historical reasons, all the bodies seem to be do loops, but
-just about any other choice is ok.  See run.c for a list of what's optimizable:
-avoid lists, if possible, and fancy stuff like map or apply, and you should be fine.
-</p>
-
-
+<br>
 <br>
 
 <p>There are several other versions of with-sound: with-temp-sound, with-mixed-sound, sound-let, clm-load, and the Common Music

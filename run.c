@@ -85,8 +85,8 @@
  *   set! needs to look down a level if caar is a list
  *   an example is sample-pvoc3 in clm23.scm: (vct-set! (phase-vocoder-amps sr) k ...)
  *
- * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
- *         there's no warning, but it doesn't handle the closed-over variables correctly
+ * run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
+ *     there's no warning, but it doesn't handle the closed-over variables correctly
  */
 
 
@@ -98,18 +98,16 @@
  * () (fm-violin 0 20 440 .1)                          1068     642     561     528    479    3692   7.7       921   (495 -- 4897 in snd 12.2, 7392 in 11.10, 370 in C)
  * (:channels 2) (fm-violin 0 20 440 .1 :degree 45)    1228     764     687     570    505    3722   7.4       951   (521) 
  * (:reverb jc-reverb) (fm-violin 0 20 440 .1)         2577    1455    1335    1153    948    8747   9.2      5336  (1323)
- * (:reverb nrev) (fm-violin 0 20 440 .1)              2983    1812    1685    1503   1203   10443   8.7      6572  (5894)
+ * (:reverb nrev) (fm-violin 0 20 440 .1)              2983    1812    1685    1503   1203   10443   8.7      6572  (2053)
  * () (p 0 3)                                         91020*   3011    2828    2817   1965   43241  22.0     38751    
  * () (expandn 0 10 "oboe.snd" 1 :expand 4)            1228     526     464     456    301    3526  11.7      2508
- * (calling-all-animals)                              16359   11684   10306    9841  10529   55207   5.2     42210 (38936)
+ * (calling-all-animals)                              16359   11684   10306    9841  10529   55207   5.2     42210 (38723)
  * () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8)           1207     783     660     700    544    5955  10.9      4943
  * (load "popi.scm")                                  11042    6391    5923    4756   4154   34163   8.2     16286  (5646) 
  * () (singer 0 .1                                     1015     641     562     674    363    7089  19.5      6474 
- *     (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) 
- *           (list .6 oo.shp test.glt 523.0 .7 .1 .01))))
+ *     (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) (list .6 oo.shp test.glt 523.0 .7 .1 .01))))
  * (:channels 2)                                        206     139      93     107     72     240   3.4       193
- *   (let ((file "oboe.snd")) (grani 0 1 .5 "oboe.snd" 
- *       :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))))
+ *   (let ((file "oboe.snd")) (grani 0 1 .5 "oboe.snd" :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))))
  * () (do ((i 0 (+ i 1))) ((= i 10000))                7120    5069    4064    3996   3560   21380   6.0      4883  (2737)
  *     (fm-violin (* i .001) .01 440 .001)))
  * (:channels 2)                                        283     220     158     167    101     286   2.8       247   (248)

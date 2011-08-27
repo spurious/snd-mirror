@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Fri Mar 11 16:44:02 CET 2011
+# Changed: Fri Aug 26 18:05:09 CEST 2011
 
 # Commentary:
 #
@@ -1992,7 +1992,7 @@ DB_FLOOR is the level below which data will be ignored")
     fsr = srate(file)
     incrsamps = (fsr / rfreq).floor
     start = (beg * fsr).floor
-    ende = start + (dur ? (dur * fsr).floor : (frames(file) - beg))
+    ende = (start + (dur ? (dur * fsr).floor : (frames(file) - beg))).floor
     fdr = make_vct(fftsize)
     fdi = make_vct(fftsize)
     windows = ((ende - start) / incrsamps).floor + 1

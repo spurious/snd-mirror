@@ -5444,13 +5444,6 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
       /* in any case, sound-data obj looks like a procedure, and we don't want to hit that in the next block. */
     }
 
-  if (XEN_PROCEDURE_P(inp))
-    {
-      if (local_arity_ok(inp, 2))
-	return(XEN_CALL_2(inp, frame, C_TO_XEN_INT(in_chan), caller)); /* follow arg order of in-any */
-      XEN_ASSERT_TYPE(false, inp, XEN_ARG_3, caller, "a procedure of 2 arguments: the sample number and the channel");
-    }
-
   if (XEN_VECTOR_P(inp))
     {
       if (pos < XEN_VECTOR_LENGTH(inp))
@@ -5515,13 +5508,6 @@ static XEN out_any_2(XEN outp, mus_long_t pos, mus_float_t inv, int chn, const c
 	  (pos < sd->length))
 	sd->data[chn][pos] += inv;
       return(val);
-    }
-
-  if (XEN_PROCEDURE_P(outp))
-    {
-      if (local_arity_ok(outp, 3))
-	return(XEN_CALL_3(outp, C_TO_XEN_INT64_T(pos), val, C_TO_XEN_INT(chn), caller)); /* follow arg order of out-any */
-      XEN_ASSERT_TYPE(false, outp, XEN_ARG_4, caller, "a procedure of 3 arguments: the sample number, the sample value, and the channel");
     }
 
   if (XEN_VECTOR_P(outp))
@@ -5602,7 +5588,7 @@ static XEN g_mus_close(XEN ptr)
   if (MUS_XEN_P(ptr))
     return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(ptr))));
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr) || XEN_PROCEDURE_P(ptr) || XEN_VECTOR_P(ptr), 
+  XEN_ASSERT_TYPE(MUS_VCT_P(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr) || XEN_VECTOR_P(ptr), 
 		  ptr, XEN_ONLY_ARG, S_mus_close, "an IO gen or its outa equivalent");
   return(XEN_ZERO);
 }
@@ -6133,20 +6119,6 @@ mus_float_t mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 		for (i = 0; i < sd->chans; i++)
 		  sd->data[i][pos] += mus_frame_ref(outfr, i);
 	    }
-	  else
-	    {
-	      /* if make-locsig gets a function for *output*, the writers are not set, so mus_locsig below is a no-op,
-	       *    so I guess this makes sense...
-	       */
-	      if (XEN_PROCEDURE_P(output))
-		{
-		  XEN_CALL_3(output, 
-			     C_TO_XEN_INT64_T(pos), 
-			     C_TO_XEN_DOUBLE(fval), 
-			     XEN_ZERO, 
-			     (from_locsig) ? S_locsig : S_move_sound);
-		}
-	    }
 	}
     }
   
@@ -6171,17 +6143,6 @@ mus_float_t mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	      if (pos < sd->length)
 		for (i = 0; i < sd->chans; i++)
 		  sd->data[i][pos] += mus_frame_ref(revfr, i);
-	    }
-	  else
-	    {
-	      if (XEN_PROCEDURE_P(reverb))
-		{
-		  XEN_CALL_3(reverb, 
-			     C_TO_XEN_INT64_T(pos), 
-			     C_TO_XEN_DOUBLE(fval), 
-			     XEN_ZERO, 
-			     (from_locsig) ? S_locsig : S_move_sound);
-		}
 	    }
 	}
     }
@@ -6327,12 +6288,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	      if (out_chans < 0) 
 		out_chans = (XEN_TO_SOUND_DATA(ov))->chans;
 	    }
-	  else
-	    {
-	      if (XEN_PROCEDURE_P(keys3)) /* don't combine this with vct case above -- sound-data thinks it is a procedure */
-		ov = keys3;
-	      else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, vct, vector, sound-data object, or a function");
-	    }
+	  else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, vct, vector, or a sound-data object");
 	}
     }
 
@@ -6358,15 +6314,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	      if (rev_chans < 0)
 		rev_chans = (XEN_TO_SOUND_DATA(rv))->chans;
 	    }
-	  else
-	    {
-	      if (XEN_PROCEDURE_P(keys4))
-		{
-		  rv = keys4;
-		  rev_chans = 1;
-		}
-	      else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[4]) || XEN_FALSE_P(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output generator");
-	    }
+	  else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[4]) || XEN_FALSE_P(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output generator");
 	}
     }
 
@@ -6545,10 +6493,9 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
       if ((MUS_VCT_P(outp)) || 
 	  (sound_data_p(outp)) || 
 	  (XEN_FALSE_P(outp)) || 
-	  (XEN_NOT_BOUND_P(outp)) ||
-	  (XEN_PROCEDURE_P(outp)))
+	  (XEN_NOT_BOUND_P(outp)))
 	ov = outp;
-      else XEN_ASSERT_TYPE(false, outp, XEN_ARG_2, S_make_move_sound, "output stream, vct, sound-data object, or function");
+      else XEN_ASSERT_TYPE(false, outp, XEN_ARG_2, S_make_move_sound, "output stream, vct, or a sound-data object");
     }
 
   if (MUS_XEN_P(revp))
@@ -6561,10 +6508,9 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
       if ((MUS_VCT_P(revp)) || 
 	  (sound_data_p(revp)) || 
 	  (XEN_FALSE_P(revp)) || 
-	  (XEN_NOT_BOUND_P(revp)) ||
-	  (XEN_PROCEDURE_P(revp)))
+	  (XEN_NOT_BOUND_P(revp)))
 	rv = revp;
-      else XEN_ASSERT_TYPE(false, revp, XEN_ARG_3, S_make_move_sound, "reverb stream, vct, sound-data object, or function");
+      else XEN_ASSERT_TYPE(false, revp, XEN_ARG_3, S_make_move_sound, "reverb stream, vct, or a sound-data object");
     }
 
   ref = XEN_LIST_REF(dloc_list, 0);
@@ -8444,7 +8390,30 @@ static void *get_generator(s7_scheme *sc, s7_pointer sym)
     GET_GENERATOR(s7_cadr(s7_cadr(args)), Type, _its_safe_, _o_);	\
     GET_REAL(s7_caddr(s7_cadr(args)), Type, _its_safe_, _fm_);		\
     return(s7_make_real(sc, _mul_ * Func(_o_, _fm_))); \
+  } \
+  static s7_pointer env_ ## Type ## _2; \
+  static s7_pointer g_env_ ## Type ## _2(s7_scheme *sc, s7_pointer args) \
+  { \
+    mus_any *_o_, *_e_;  \
+    double _fm_;    \
+    bool _its_safe_; \
+    _its_safe_ = s7_in_safe_do(sc); \
+   \
+    GET_GENERATOR(s7_cadr(car(args)), env, _its_safe_, _e_);		\
+    GET_GENERATOR(s7_cadr(s7_cadr(args)), Type, _its_safe_, _o_);	\
+    GET_REAL(s7_caddr(s7_cadr(args)), Type, _its_safe_, _fm_);		\
+    return(s7_make_real(sc, mus_env(_e_) * Func(_o_, _fm_)));		\
+  } \
+  static s7_pointer direct_ ## Type ## _2; \
+  static s7_pointer g_direct_ ## Type ## _2(s7_scheme *sc, s7_pointer args) \
+  { \
+    mus_any *_o_;	  \
+    double _fm_; \
+    _fm_ = s7_number_to_real(s7_call_direct(sc, cadr(args)));	\
+    GET_GENERATOR(car(args), Type, s7_in_safe_do(sc), _o_); \
+    return(s7_make_real(sc, Func(_o_, _fm_)));		    \
   }
+
  
 
 GEN_1(oscil, mus_oscil_unmodulated)
@@ -8517,8 +8486,7 @@ GEN_P(output)
  * perhaps size must be > 0?  -- TODO: make this choice at init time
  */
 
-/* TODO: clm changes: function based IO in outa/locsig etc should be removed
- *                    the list-as-generator business needs to be fixed now -- we have make-type in scheme
+/* TODO: clm changes: the list-as-generator business needs to be fixed now -- we have make-type in scheme
  */
 
 /* TODO: add (+ sym|const (gen g)) and (+|* sym|const (gen g fm)) to GEN1 and GEN2 (and the +*choosers)
@@ -9024,8 +8992,6 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
   else pos = s7_integer(cdr((s7_pointer)syms[3]));
 
  JC_REV:
-  /* *reverb* can be all kinds of things (sigh) TODO: fix this lookup!
-   */
   rev = cdr(clm_reverb_slot);
   if (s7_object_type(rev) == mus_xen_tag)
     {
@@ -9042,6 +9008,147 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
 }
 
 /* (with-sound (:reverb jc-reverb) (outa 0 .1 *reverb*)) */
+
+
+/* (with-sound (:reverb nrev) (outa 0 .1 *reverb*)) */
+static s7_pointer nrev_combs_fallback(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vargs;
+  mus_any *c1 = NULL, *c2, *c3, *c4, *c5, *c6;
+  double fm;
+
+  GET_GENERATOR(s7_cadar(args), comb, false, c1);
+  vargs = cdr(args);
+  GET_GENERATOR(s7_cadar(vargs), comb, false, c2);
+  vargs = cdr(vargs);
+  GET_GENERATOR(s7_cadar(vargs), comb, false, c3);
+  vargs = cdr(vargs);
+  GET_GENERATOR(s7_cadar(vargs), comb, false, c4);
+  vargs = cdr(vargs);
+  GET_GENERATOR(s7_cadar(vargs), comb, false, c5);
+  vargs = cdr(vargs);
+  GET_GENERATOR(s7_cadar(vargs), comb, false, c6);
+  
+  fm = s7_number_to_real(s7_symbol_value(sc, s7_caddar(args)));
+
+  return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + 
+		          mus_comb_unmodulated_noz(c2, fm) + 
+		          mus_comb_unmodulated_noz(c3, fm) + 
+		          mus_comb_unmodulated_noz(c4, fm) +
+		          mus_comb_unmodulated_noz(c5, fm) +
+		          mus_comb_unmodulated_noz(c6, fm)));
+}
+
+static s7_pointer nrev_combs, saved_nrev_combs_args = NULL;
+static void **saved_nrev_combs_syms = NULL;
+
+static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
+{
+  double fm;
+  s7_pointer sym;
+  void **syms;
+  
+  if (args != saved_nrev_combs_args)
+    {
+      if (s7_in_safe_do(sc))
+	{
+	  saved_nrev_combs_args = args;
+	  saved_nrev_combs_syms = s7_function_table(sc, args, 8); 
+	}
+      else return(nrev_combs_fallback(sc, args));
+    }
+  syms = saved_nrev_combs_syms;
+
+  if (!syms[0])
+    {
+      s7_pointer vargs;
+      syms[0] = get_generator(sc, s7_cadar(args));
+      XEN_ASSERT_TYPE((syms[0]) && (mus_comb_p((mus_any *)syms[0])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+
+      vargs = cdr(args);
+      syms[1] = get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((syms[1]) && (mus_comb_p((mus_any *)syms[1])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+
+      vargs = cdr(vargs);
+      syms[2] = get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((syms[2]) && (mus_comb_p((mus_any *)syms[2])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+
+      vargs = cdr(vargs);
+      syms[3] = get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((syms[3]) && (mus_comb_p((mus_any *)syms[3])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+
+      vargs = cdr(vargs);
+      syms[6] = get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((syms[6]) && (mus_comb_p((mus_any *)syms[6])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+
+      vargs = cdr(vargs);
+      syms[7] = get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((syms[7]) && (mus_comb_p((mus_any *)syms[7])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+
+      sym = s7_caddar(args);
+      if (s7_is_do_local_or_global(sc, sym))
+	{
+	  syms[4] = s7_symbol_slot(sc, sym);
+	  XEN_ASSERT_TYPE(s7_is_real(cdr((s7_pointer)syms[4])), sym, XEN_ARG_2, "comb", "a real");
+	  syms[5] = NULL;
+	}
+      else
+	{
+	  syms[4] = (void *)sym;
+	  syms[5] = (void *)sym;
+	}
+    }
+  
+  if (syms[5])
+    {
+      s7_pointer x;
+      sym = (s7_pointer)syms[4];
+      x = s7_symbol_value(sc, sym);
+      XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "comb", "a real");
+      fm = s7_number_to_real(x);
+    }
+  else fm = s7_number_to_real(cdr((s7_pointer)syms[4]));
+
+  return(s7_make_real(sc, mus_comb_unmodulated_noz((mus_any *)syms[0], fm) + 
+		          mus_comb_unmodulated_noz((mus_any *)syms[1], fm) + 
+		          mus_comb_unmodulated_noz((mus_any *)syms[2], fm) + 
+		          mus_comb_unmodulated_noz((mus_any *)syms[3], fm) +
+		          mus_comb_unmodulated_noz((mus_any *)syms[6], fm) +
+		          mus_comb_unmodulated_noz((mus_any *)syms[7], fm)));
+}
+
+
+
+static s7_pointer ina_reverb_2;
+static s7_pointer g_ina_reverb_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int pos;
+  s7_pointer rev;
+  
+  GET_INTEGER(car(args), ina, s7_in_safe_do(sc), pos);
+
+  rev = cdr(clm_reverb_slot);
+  if (s7_object_type(rev) == mus_xen_tag)
+    {
+      mus_xen *gx;
+      mus_any *reverb;
+      gx = (mus_xen *)s7_object_value(rev);
+      reverb = (mus_any *)(gx->gen);
+      if (mus_input_p(reverb))
+	return(s7_make_real(sc, mus_in_any(pos, 0, reverb)));
+      XEN_ASSERT_TYPE(false, rev, XEN_ARG_1, S_ina, "an input generator");
+    }
+  return(g_in_any_1(S_ina, s7_make_integer(sc, pos), 0, rev));
+}
+
+
+static s7_pointer direct_outa_2;
+static s7_pointer g_direct_outa_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int pos;
+  GET_INTEGER(car(args), outa, s7_in_safe_do(sc), pos);
+  return(out_any_2(cdr(clm_output_slot), pos, s7_number_to_real(s7_call_direct(sc, cadr(args))), 0, "outa", xen_zero));
+}
 
 static s7_pointer outa_mul_s_delay, saved_outa_mul_s_delay_args = NULL;
 static void **saved_outa_mul_s_delay_syms = NULL;
@@ -9242,15 +9349,9 @@ static s7_pointer g_outa_env_polywave_env(s7_scheme *sc, s7_pointer args)
 /* s7: 495, run: 479, C: 370
  * the sin numbers callgrind reports are completely bogus, but they're the same here,
  *    the real factor is 1.2 (576 to 479 in callgrind numbers)
- *
- * main portion of remaining difference: 
- *    mus_env call -- could we get the mus_env_linear func?
- *    s7_make_real, and s7_number_to_real -- can we ascertain that it is not rational and use s7_real? (another function choice)
- *    mus_locsig_closure -- another function choice?
- * these together would get s7 down to 480 I think
  */
 
-/* TODO: opt jc rev special cases, cleanup the fm-violin intermediates
+/* TODO: cleanup the fm-violin intermediates
  */
 
 /* (with-sound () (fm-violin 0 .0001 440 .1)) */
@@ -9310,19 +9411,44 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       return(jc_reverb_combs);
     }
 
+  if (args == 6)
+    {
+      s7_pointer p, fm = NULL;
+      for (p = cdr(expr); s7_is_pair(p); p = cdr(p))
+	if ((!s7_is_pair(car(p))) ||
+	    (!s7_is_symbol(cadar(p))) ||
+	    (!s7_is_symbol(s7_caddar(p))) ||
+	    ((s7_function_choice(car(p)) != g_comb_2) && (s7_function_choice(car(p)) != g_comb_w)))
+	  return(f);
+	else
+	  {
+	    if (!fm) 
+	      fm = s7_caddar(p);
+	    else
+	      {
+		if (fm != s7_caddar(p))
+		  return(f);
+	      }
+	  }
+      s7_function_choice_set_direct(expr);
+      return(nrev_combs);
+    }
+
   return((*initial_add_chooser)(sc, f, args, expr));
 }
 
 #define MUL_C_GEN 0
 #define MUL_S_GEN 1
-#define NUM_CHOICES 2
+#define ENV_GEN 2
+#define NUM_CHOICES 3
 
-static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s)
+static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e)
 {
   s7_pointer *choices;
   choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));
   choices[MUL_C_GEN] = mul_c;
   choices[MUL_S_GEN] = mul_s;
+  choices[ENV_GEN] = e;
   return(choices);
 }
 
@@ -9331,6 +9457,7 @@ static s7_pointer (*initial_multiply_chooser)(s7_scheme *sc, s7_pointer f, int a
 static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   /* fprintf(stderr, "expr: %s\n", DISPLAY(expr)); */
+
   if ((args == 2) &&
       (s7_is_pair(cadr(expr))) &&
       ((s7_function_choice(cadr(expr)) == g_env_w) || (s7_function_choice(cadr(expr)) == g_env_1)) &&
@@ -9343,7 +9470,11 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	  return(fm_violin_1);
 	}
 
-      if (((s7_function_choice(caddr(expr)) == g_polywave_w) || (s7_function_choice(caddr(expr)) == g_polywave_2)) &&
+      /* TODO: replace fm_violin_mod with env_polywave_2 I think
+       */
+      if (((s7_function_choice(caddr(expr)) == g_polywave_w) || 
+	   (s7_function_choice(caddr(expr)) == g_polywave_2) ||
+	   (s7_function_choice(caddr(expr)) == g_direct_polywave_2)) &&
 	  (s7_is_pair(cdr(caddr(expr)))) &&
 	  (s7_is_symbol(cadr(caddr(expr)))) &&
 	  (s7_is_pair(cddr(caddr(expr)))))
@@ -9390,10 +9521,31 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	      return(choices[MUL_S_GEN]);
 	    }
 	}
+      
+      if ((s7_is_pair(cadr(expr))) &&
+	  ((s7_function_choice(cadr(expr)) == g_env_w) || (s7_function_choice(cadr(expr)) == g_env_1)) &&
+	  (s7_is_pair(cdr(caddr(expr)))) &&
+	  (s7_is_symbol(cadr(caddr(expr)))) &&
+	  (s7_is_pair(cddr(caddr(expr)))) &&
+	  (s7_is_symbol(caddr(caddr(expr)))) &&
+	  (s7_is_null(sc, s7_cdddr(caddr(expr)))))
+	{
+	  s7_pointer *choices;
+	  choices = (s7_pointer *)s7_function_chooser_data(caddr(expr));
+	  if ((choices) && 
+	      (choices[ENV_GEN]))
+	    {
+	      s7_function_choice_set_direct(expr);
+	      return(choices[ENV_GEN]);
+	    }
+	}
     }
 
   return((*initial_multiply_chooser)(sc, f, args, expr));
 }
+
+/* (define (hi) (let ((fm .1) (o (make-oscil 440)) (e (make-env (list 0 0 1 1) :duration .01))) (do ((i 0 (+ i 1))) ((= i 100)) (* (env e) (oscil o fm)))))
+ */
 
 
 static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -9420,6 +9572,11 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	      s7_function_choice_set_direct(expr);
 	      return(fm_violin_with_modulation);
 	    }
+	  if (s7_function_choice_is_direct(caddr(expr)))
+	    {
+	      s7_function_choice_set_direct(expr);
+	      return(direct_oscil_2);
+	    }
 	}
     }
   return(f);
@@ -9442,6 +9599,12 @@ static s7_pointer polywave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  s7_function_choice_set_direct(expr);
 	  return(polywave_2);
 	}
+      if ((s7_is_pair(caddr(expr))) &&
+	  (s7_function_choice_is_direct(caddr(expr))))
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(direct_polywave_2);
+	}
     }
   return(f);
 }
@@ -9455,6 +9618,15 @@ static s7_pointer nsin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       s7_function_choice_set_direct(expr);
       return(nsin_2);
     }
+
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_nsin_2);
+    }
   return(f);
 }
 
@@ -9466,6 +9638,14 @@ static s7_pointer ncos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
     {
       s7_function_choice_set_direct(expr);
       return(ncos_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_ncos_2);
     }
   return(f);
 }
@@ -9479,6 +9659,14 @@ static s7_pointer nrxysin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       s7_function_choice_set_direct(expr);
       return(nrxysin_2);
     }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_nrxysin_2);
+    }
   return(f);
 }
 
@@ -9490,6 +9678,14 @@ static s7_pointer nrxycos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
     {
       s7_function_choice_set_direct(expr);
       return(nrxycos_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_nrxycos_2);
     }
   return(f);
 }
@@ -9514,6 +9710,14 @@ static s7_pointer comb_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       s7_function_choice_set_direct(expr);
       return(comb_2);
     }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_comb_2);
+    }
   return(f);
 }
 
@@ -9525,6 +9729,14 @@ static s7_pointer notch_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
     {
       s7_function_choice_set_direct(expr);
       return(notch_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_notch_2);
     }
   return(f);
 }
@@ -9555,6 +9767,14 @@ static s7_pointer all_pass_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  return(jc_reverb_all_passes);
 	}
     }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_all_pass_2);
+    }
   return(f);
 }
 
@@ -9567,6 +9787,14 @@ static s7_pointer delay_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
     {
       s7_function_choice_set_direct(expr);
       return(delay_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_delay_2);
     }
   return(f);
 }
@@ -9581,6 +9809,14 @@ static s7_pointer one_pole_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       s7_function_choice_set_direct(expr);
       return(one_pole_2);
     }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_one_pole_2);
+    }
   return(f);
 }
 
@@ -9592,6 +9828,14 @@ static s7_pointer two_pole_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
     {
       s7_function_choice_set_direct(expr);
       return(two_pole_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_two_pole_2);
     }
   return(f);
 }
@@ -9605,6 +9849,14 @@ static s7_pointer one_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       s7_function_choice_set_direct(expr);
       return(one_zero_2);
     }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_one_zero_2);
+    }
   return(f);
 }
 
@@ -9616,6 +9868,14 @@ static s7_pointer two_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
     {
       s7_function_choice_set_direct(expr);
       return(two_zero_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_two_zero_2);
     }
   return(f);
 }
@@ -9629,6 +9889,14 @@ static s7_pointer moving_average_chooser(s7_scheme *sc, s7_pointer f, int args, 
       s7_function_choice_set_direct(expr);
       return(moving_average_2);
     }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_moving_average_2);
+    }
   return(f);
 }
 
@@ -9640,6 +9908,14 @@ static s7_pointer formant_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
     {
       s7_function_choice_set_direct(expr);
       return(formant_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_formant_2);
     }
   return(f);
 }
@@ -9653,6 +9929,14 @@ static s7_pointer firmant_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       s7_function_choice_set_direct(expr);
       return(firmant_2);
     }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_firmant_2);
+    }
   return(f);
 }
 
@@ -9664,6 +9948,14 @@ static s7_pointer filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
     {
       s7_function_choice_set_direct(expr);
       return(filter_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_filter_2);
     }
   return(f);
 }
@@ -9677,6 +9969,14 @@ static s7_pointer fir_filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
       s7_function_choice_set_direct(expr);
       return(fir_filter_2);
     }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_fir_filter_2);
+    }
   return(f);
 }
 
@@ -9688,6 +9988,14 @@ static s7_pointer iir_filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
     {
       s7_function_choice_set_direct(expr);
       return(iir_filter_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_iir_filter_2);
     }
   return(f);
 }
@@ -9701,6 +10009,14 @@ static s7_pointer triangle_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s
       s7_function_choice_set_direct(expr);
       return(triangle_wave_2);
     }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_triangle_wave_2);
+    }
   return(f);
 }
 
@@ -9712,6 +10028,14 @@ static s7_pointer sawtooth_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s
     {
       s7_function_choice_set_direct(expr);
       return(sawtooth_wave_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_sawtooth_wave_2);
     }
   return(f);
 }
@@ -9725,6 +10049,14 @@ static s7_pointer square_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       s7_function_choice_set_direct(expr);
       return(square_wave_2);
     }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_square_wave_2);
+    }
   return(f);
 }
 
@@ -9736,6 +10068,14 @@ static s7_pointer pulse_train_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
     {
       s7_function_choice_set_direct(expr);
       return(pulse_train_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_pulse_train_2);
     }
   return(f);
 }
@@ -9749,6 +10089,14 @@ static s7_pointer rand_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
     {
       s7_function_choice_set_direct(expr);
       return(rand_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_rand_2);
     }
   return(f);
 }
@@ -9767,6 +10115,14 @@ static s7_pointer rand_interp_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
     {
       s7_function_choice_set_direct(expr);
       return(rand_interp_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(direct_rand_interp_2);
     }
   return(f);
 }
@@ -9793,6 +10149,10 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       if ((s7_is_symbol(cadr(expr))) &&
 	  (s7_is_pair(caddr(expr))))
 	{
+	  /*
+	  fprintf(stderr, "%d %p: %s\n", s7_function_choice_is_direct(caddr(expr)),
+		  s7_function_choice(caddr(expr)), DISPLAY(caddr(expr)));
+	  */
 	  if (s7_function_choice(caddr(expr)) == g_mul_s_delay_2)
 	    {
 	      s7_function_choice_set_direct(expr);
@@ -9803,6 +10163,27 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	      s7_function_choice_set_direct(expr);
 	      return(outa_env_polywave_env);
 	    }
+
+	  if (s7_function_choice_is_direct(caddr(expr)))
+	    {
+	      s7_function_choice_set_direct(expr);
+	      return(direct_outa_2);
+	    }
+	}
+    }
+  return(f);
+}
+
+static s7_pointer ina_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_symbol(caddr(expr))) &&
+	  (caddr(expr) == s7_make_symbol(sc, "*reverb*")))
+	{
+	  s7_function_choice_set_direct(expr);
+	  return(ina_reverb_2);
 	}
     }
   return(f);
@@ -9820,6 +10201,8 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(oscil_1, s7_function_class(f));
   oscil_2 = s7_make_function(sc, "oscil", g_oscil_2, 2, 0, false, "oscil optimization");
   s7_function_set_class(oscil_2, s7_function_class(f));
+  direct_oscil_2 = s7_make_function(sc, "oscil", g_direct_oscil_2, 2, 0, false, "oscil optimization");
+  s7_function_set_class(direct_oscil_2, s7_function_class(f));
   fm_violin_with_modulation = s7_make_function(sc, "oscil", g_fm_violin_with_modulation, 2, 0, false, "fm-violin optimization");
   s7_function_set_class(fm_violin_with_modulation, s7_function_class(f));
 
@@ -9831,28 +10214,38 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(polywave_1, s7_function_class(f));
   polywave_2 = s7_make_function(sc, "polywave", g_polywave_2, 2, 0, false, "polywave optimization");
   s7_function_set_class(polywave_2, s7_function_class(f));
+  direct_polywave_2 = s7_make_function(sc, "polywave", g_direct_polywave_2, 2, 0, false, "polywave optimization");
+  s7_function_set_class(direct_polywave_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "nsin");
   s7_function_set_chooser(f, nsin_chooser);
   nsin_2 = s7_make_function(sc, "nsin", g_nsin_2, 2, 0, false, "nsin optimization");
   s7_function_set_class(nsin_2, s7_function_class(f));
+  direct_nsin_2 = s7_make_function(sc, "nsin", g_direct_nsin_2, 2, 0, false, "nsin optimization");
+  s7_function_set_class(direct_nsin_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "ncos");
   s7_function_set_chooser(f, ncos_chooser);
   ncos_2 = s7_make_function(sc, "ncos", g_ncos_2, 2, 0, false, "ncos optimization");
   s7_function_set_class(ncos_2, s7_function_class(f));
+  direct_ncos_2 = s7_make_function(sc, "ncos", g_direct_ncos_2, 2, 0, false, "ncos optimization");
+  s7_function_set_class(direct_ncos_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "nrxysin");
   s7_function_set_chooser(f, nrxysin_chooser);
   nrxysin_2 = s7_make_function(sc, "nrxysin", g_nrxysin_2, 2, 0, false, "nrxysin optimization");
   s7_function_set_class(nrxysin_2, s7_function_class(f));
+  direct_nrxysin_2 = s7_make_function(sc, "nrxysin", g_direct_nrxysin_2, 2, 0, false, "nrxysin optimization");
+  s7_function_set_class(direct_nrxysin_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "nrxycos");
   s7_function_set_chooser(f, nrxycos_chooser);
   nrxycos_2 = s7_make_function(sc, "nrxycos", g_nrxycos_2, 2, 0, false, "nrxycos optimization");
   s7_function_set_class(nrxycos_2, s7_function_class(f));
+  direct_nrxycos_2 = s7_make_function(sc, "nrxycos", g_direct_nrxycos_2, 2, 0, false, "nrxycos optimization");
+  s7_function_set_class(direct_nrxycos_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "env");
@@ -9865,82 +10258,112 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_chooser(f, comb_chooser);
   comb_2 = s7_make_function(sc, "comb", g_comb_2, 2, 0, false, "comb optimization");
   s7_function_set_class(comb_2, s7_function_class(f));
+  direct_comb_2 = s7_make_function(sc, "comb", g_direct_comb_2, 2, 0, false, "comb optimization");
+  s7_function_set_class(direct_comb_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "notch");
   s7_function_set_chooser(f, notch_chooser);
   notch_2 = s7_make_function(sc, "notch", g_notch_2, 2, 0, false, "notch optimization");
   s7_function_set_class(notch_2, s7_function_class(f));
+  direct_notch_2 = s7_make_function(sc, "notch", g_direct_notch_2, 2, 0, false, "notch optimization");
+  s7_function_set_class(direct_notch_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "one-pole");
   s7_function_set_chooser(f, one_pole_chooser);
   one_pole_2 = s7_make_function(sc, "one-pole", g_one_pole_2, 2, 0, false, "one-pole optimization");
   s7_function_set_class(one_pole_2, s7_function_class(f));
+  direct_one_pole_2 = s7_make_function(sc, "one-pole", g_direct_one_pole_2, 2, 0, false, "one-pole optimization");
+  s7_function_set_class(direct_one_pole_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "two-pole");
   s7_function_set_chooser(f, two_pole_chooser);
   two_pole_2 = s7_make_function(sc, "two-pole", g_two_pole_2, 2, 0, false, "two-pole optimization");
   s7_function_set_class(two_pole_2, s7_function_class(f));
+  direct_two_pole_2 = s7_make_function(sc, "two-pole", g_direct_two_pole_2, 2, 0, false, "two-pole optimization");
+  s7_function_set_class(direct_two_pole_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "one-zero");
   s7_function_set_chooser(f, one_zero_chooser);
   one_zero_2 = s7_make_function(sc, "one-zero", g_one_zero_2, 2, 0, false, "one-zero optimization");
   s7_function_set_class(one_zero_2, s7_function_class(f));
+  direct_one_zero_2 = s7_make_function(sc, "one-zero", g_direct_one_zero_2, 2, 0, false, "one-zero optimization");
+  s7_function_set_class(direct_one_zero_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "two-zero");
   s7_function_set_chooser(f, two_zero_chooser);
   two_zero_2 = s7_make_function(sc, "two-zero", g_two_zero_2, 2, 0, false, "two-zero optimization");
   s7_function_set_class(two_zero_2, s7_function_class(f));
+  direct_two_zero_2 = s7_make_function(sc, "two-zero", g_direct_two_zero_2, 2, 0, false, "two-zero optimization");
+  s7_function_set_class(direct_two_zero_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "moving-average");
   s7_function_set_chooser(f, moving_average_chooser);
   moving_average_2 = s7_make_function(sc, "moving-average", g_moving_average_2, 2, 0, false, "moving-average optimization");
   s7_function_set_class(moving_average_2, s7_function_class(f));
+  direct_moving_average_2 = s7_make_function(sc, "moving-average", g_direct_moving_average_2, 2, 0, false, "moving-average optimization");
+  s7_function_set_class(direct_moving_average_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "filter");
   s7_function_set_chooser(f, filter_chooser);
   filter_2 = s7_make_function(sc, "filter", g_filter_2, 2, 0, false, "filter optimization");
   s7_function_set_class(filter_2, s7_function_class(f));
+  direct_filter_2 = s7_make_function(sc, "filter", g_direct_filter_2, 2, 0, false, "filter optimization");
+  s7_function_set_class(direct_filter_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "fir-filter");
   s7_function_set_chooser(f, fir_filter_chooser);
   fir_filter_2 = s7_make_function(sc, "fir-filter", g_fir_filter_2, 2, 0, false, "fir-filter optimization");
   s7_function_set_class(fir_filter_2, s7_function_class(f));
+  direct_fir_filter_2 = s7_make_function(sc, "fir-filter", g_direct_fir_filter_2, 2, 0, false, "fir-filter optimization");
+  s7_function_set_class(direct_fir_filter_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "iir-filter");
   s7_function_set_chooser(f, iir_filter_chooser);
   iir_filter_2 = s7_make_function(sc, "iir-filter", g_iir_filter_2, 2, 0, false, "iir-filter optimization");
   s7_function_set_class(iir_filter_2, s7_function_class(f));
+  direct_iir_filter_2 = s7_make_function(sc, "iir-filter", g_direct_iir_filter_2, 2, 0, false, "iir-filter optimization");
+  s7_function_set_class(direct_iir_filter_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "triangle-wave");
   s7_function_set_chooser(f, triangle_wave_chooser);
   triangle_wave_2 = s7_make_function(sc, "triangle-wave", g_triangle_wave_2, 2, 0, false, "triangle-wave optimization");
   s7_function_set_class(triangle_wave_2, s7_function_class(f));
+  direct_triangle_wave_2 = s7_make_function(sc, "triangle-wave", g_direct_triangle_wave_2, 2, 0, false, "triangle-wave optimization");
+  s7_function_set_class(direct_triangle_wave_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "sawtooth-wave");
   s7_function_set_chooser(f, sawtooth_wave_chooser);
   sawtooth_wave_2 = s7_make_function(sc, "sawtooth-wave", g_sawtooth_wave_2, 2, 0, false, "sawtooth-wave optimization");
   s7_function_set_class(sawtooth_wave_2, s7_function_class(f));
+  direct_sawtooth_wave_2 = s7_make_function(sc, "sawtooth-wave", g_direct_sawtooth_wave_2, 2, 0, false, "sawtooth-wave optimization");
+  s7_function_set_class(direct_sawtooth_wave_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "square-wave");
   s7_function_set_chooser(f, square_wave_chooser);
   square_wave_2 = s7_make_function(sc, "square-wave", g_square_wave_2, 2, 0, false, "square-wave optimization");
   s7_function_set_class(square_wave_2, s7_function_class(f));
+  direct_square_wave_2 = s7_make_function(sc, "square-wave", g_direct_square_wave_2, 2, 0, false, "square-wave optimization");
+  s7_function_set_class(direct_square_wave_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "pulse-train");
   s7_function_set_chooser(f, pulse_train_chooser);
   pulse_train_2 = s7_make_function(sc, "pulse-train", g_pulse_train_2, 2, 0, false, "pulse-train optimization");
   s7_function_set_class(pulse_train_2, s7_function_class(f));
+  direct_pulse_train_2 = s7_make_function(sc, "pulse-train", g_direct_pulse_train_2, 2, 0, false, "pulse-train optimization");
+  s7_function_set_class(direct_pulse_train_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "rand");
   s7_function_set_chooser(f, rand_chooser);
   rand_2 = s7_make_function(sc, "rand", g_rand_2, 2, 0, false, "rand optimization");
   s7_function_set_class(rand_2, s7_function_class(f));
+  direct_rand_2 = s7_make_function(sc, "rand", g_direct_rand_2, 2, 0, false, "rand optimization");
+  s7_function_set_class(direct_rand_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "rand-interp");
   s7_function_set_chooser(f, rand_interp_chooser);
@@ -9948,23 +10371,31 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(rand_interp_1, s7_function_class(f));
   rand_interp_2 = s7_make_function(sc, "rand-interp", g_rand_interp_2, 2, 0, false, "rand-interp optimization");
   s7_function_set_class(rand_interp_2, s7_function_class(f));
+  direct_rand_interp_2 = s7_make_function(sc, "rand-interp", g_direct_rand_interp_2, 2, 0, false, "rand-interp optimization");
+  s7_function_set_class(direct_rand_interp_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "formant");
   s7_function_set_chooser(f, formant_chooser);
   formant_2 = s7_make_function(sc, "formant", g_formant_2, 2, 0, false, "formant optimization");
   s7_function_set_class(formant_2, s7_function_class(f));
+  direct_formant_2 = s7_make_function(sc, "formant", g_direct_formant_2, 2, 0, false, "formant optimization");
+  s7_function_set_class(direct_formant_2, s7_function_class(f));
 
   f = s7_name_to_value(sc, "firmant");
   s7_function_set_chooser(f, firmant_chooser);
   firmant_2 = s7_make_function(sc, "firmant", g_firmant_2, 2, 0, false, "firmant optimization");
   s7_function_set_class(firmant_2, s7_function_class(f));
+  direct_firmant_2 = s7_make_function(sc, "firmant", g_direct_firmant_2, 2, 0, false, "firmant optimization");
+  s7_function_set_class(direct_firmant_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "all-pass");
   s7_function_set_chooser(f, all_pass_chooser);
   all_pass_2 = s7_make_function(sc, "all-pass", g_all_pass_2, 2, 0, false, "all-pass optimization");
   s7_function_set_class(all_pass_2, s7_function_class(f));
+  direct_all_pass_2 = s7_make_function(sc, "all-pass", g_direct_all_pass_2, 2, 0, false, "all-pass optimization");
+  s7_function_set_class(direct_all_pass_2, s7_function_class(f));
   jc_reverb_all_passes = s7_make_function(sc, "all-pass", g_jc_reverb_all_passes, 2, 0, false, "all-pass optimization");
   s7_function_set_class(jc_reverb_all_passes, s7_function_class(f));
 
@@ -9973,6 +10404,8 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_chooser(f, delay_chooser);
   delay_2 = s7_make_function(sc, "delay", g_delay_2, 2, 0, false, "delay optimization");
   s7_function_set_class(delay_2, s7_function_class(f));
+  direct_delay_2 = s7_make_function(sc, "delay", g_direct_delay_2, 2, 0, false, "delay optimization");
+  s7_function_set_class(direct_delay_2, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "+");
@@ -9984,6 +10417,8 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(fm_violin_modulation, s7_function_class(f));
   jc_reverb_combs = s7_make_function(sc, "+", g_jc_reverb_combs, 2, 0, false, "jc-reverb optimization");
   s7_function_set_class(jc_reverb_combs, s7_function_class(f));
+  nrev_combs = s7_make_function(sc, "+", g_nrev_combs, 2, 0, false, "nrev optimization");
+  s7_function_set_class(nrev_combs, s7_function_class(f));
 
 
   f = s7_name_to_value(sc, "*");
@@ -9999,9 +10434,6 @@ static void init_choosers(s7_scheme *sc)
 
   mul_c_oscil_2 = s7_make_function(sc, "*", g_mul_c_oscil_2, 2, 0, false, "* optimization");
   s7_function_set_class(mul_c_oscil_2, s7_function_class(f));
-
-  mul_s_oscil_2 = s7_make_function(sc, "*", g_mul_s_oscil_2, 2, 0, false, "* optimization");
-  s7_function_set_class(mul_s_oscil_2, s7_function_class(f));
 
   /* (define (hi) (let ((o (make-oscil 500.0)) (f 0.1)) (do ((i 0 (+ i 1))) ((= i 3)) (display (* .5 (oscil o f))))))
    */
@@ -10081,6 +10513,10 @@ static void init_choosers(s7_scheme *sc)
   mul_c_firmant_2 = s7_make_function(sc, "*", g_mul_c_firmant_2, 2, 0, false, "* optimization");
   s7_function_set_class(mul_c_firmant_2, s7_function_class(f));
 
+
+  mul_s_oscil_2 = s7_make_function(sc, "*", g_mul_s_oscil_2, 2, 0, false, "* optimization");
+  s7_function_set_class(mul_s_oscil_2, s7_function_class(f));
+
   mul_s_polywave_2 = s7_make_function(sc, "*", g_mul_s_polywave_2, 2, 0, false, "* optimization");
   s7_function_set_class(mul_s_polywave_2, s7_function_class(f));
 
@@ -10157,32 +10593,111 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(mul_s_firmant_2, s7_function_class(f));
 
 
-  s7_function_chooser_set_data(oscil_2, (void *)make_choices(mul_c_oscil_2, mul_s_oscil_2));
-  s7_function_chooser_set_data(polywave_2, (void *)make_choices(mul_c_polywave_2, mul_s_polywave_2));
-  s7_function_chooser_set_data(comb_2, (void *)make_choices(mul_c_comb_2, mul_s_comb_2));
-  s7_function_chooser_set_data(notch_2, (void *)make_choices(mul_c_notch_2, mul_s_notch_2));
-  s7_function_chooser_set_data(all_pass_2, (void *)make_choices(mul_c_all_pass_2, mul_s_all_pass_2));
-  s7_function_chooser_set_data(delay_2, (void *)make_choices(mul_c_delay_2, mul_s_delay_2));
-  s7_function_chooser_set_data(moving_average_2, (void *)make_choices(mul_c_moving_average_2, mul_s_moving_average_2));
-  s7_function_chooser_set_data(rand_2, (void *)make_choices(mul_c_rand_2, mul_s_rand_2));
-  s7_function_chooser_set_data(rand_interp_2, (void *)make_choices(mul_c_rand_interp_2, mul_s_rand_interp_2));
-  s7_function_chooser_set_data(ncos_2, (void *)make_choices(mul_c_ncos_2, mul_s_ncos_2));
-  s7_function_chooser_set_data(nsin_2, (void *)make_choices(mul_c_nsin_2, mul_s_nsin_2));
-  s7_function_chooser_set_data(sawtooth_wave_2, (void *)make_choices(mul_c_sawtooth_wave_2, mul_s_sawtooth_wave_2));
-  s7_function_chooser_set_data(pulse_train_2, (void *)make_choices(mul_c_pulse_train_2, mul_s_pulse_train_2));
-  s7_function_chooser_set_data(square_wave_2, (void *)make_choices(mul_c_square_wave_2, mul_s_square_wave_2));
-  s7_function_chooser_set_data(triangle_wave_2, (void *)make_choices(mul_c_triangle_wave_2, mul_s_triangle_wave_2));
-  s7_function_chooser_set_data(nrxysin_2, (void *)make_choices(mul_c_nrxysin_2, mul_s_nrxysin_2));
-  s7_function_chooser_set_data(nrxycos_2, (void *)make_choices(mul_c_nrxycos_2, mul_s_nrxycos_2));
-  s7_function_chooser_set_data(one_zero_2, (void *)make_choices(mul_c_one_zero_2, mul_s_one_zero_2));
-  s7_function_chooser_set_data(one_pole_2, (void *)make_choices(mul_c_one_pole_2, mul_s_one_pole_2));
-  s7_function_chooser_set_data(two_zero_2, (void *)make_choices(mul_c_two_zero_2, mul_s_two_zero_2));
-  s7_function_chooser_set_data(two_pole_2, (void *)make_choices(mul_c_two_pole_2, mul_s_two_pole_2));
-  s7_function_chooser_set_data(filter_2, (void *)make_choices(mul_c_filter_2, mul_s_filter_2));
-  s7_function_chooser_set_data(fir_filter_2, (void *)make_choices(mul_c_fir_filter_2, mul_s_fir_filter_2));
-  s7_function_chooser_set_data(iir_filter_2, (void *)make_choices(mul_c_iir_filter_2, mul_s_iir_filter_2));
-  s7_function_chooser_set_data(formant_2, (void *)make_choices(mul_c_formant_2, mul_s_formant_2));
-  s7_function_chooser_set_data(firmant_2, (void *)make_choices(mul_c_firmant_2, mul_s_firmant_2));
+  env_oscil_2 = s7_make_function(sc, "*", g_env_oscil_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_oscil_2, s7_function_class(f));
+
+  env_polywave_2 = s7_make_function(sc, "*", g_env_polywave_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_polywave_2, s7_function_class(f));
+
+  env_comb_2 = s7_make_function(sc, "*", g_env_comb_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_comb_2, s7_function_class(f));
+
+  env_notch_2 = s7_make_function(sc, "*", g_env_notch_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_notch_2, s7_function_class(f));
+
+  env_all_pass_2 = s7_make_function(sc, "*", g_env_all_pass_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_all_pass_2, s7_function_class(f));
+
+  env_delay_2 = s7_make_function(sc, "*", g_env_delay_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_delay_2, s7_function_class(f));
+
+  env_moving_average_2 = s7_make_function(sc, "*", g_env_moving_average_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_moving_average_2, s7_function_class(f));
+
+  env_rand_2 = s7_make_function(sc, "*", g_env_rand_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_rand_2, s7_function_class(f));
+
+  env_rand_interp_2 = s7_make_function(sc, "*", g_env_rand_interp_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_rand_interp_2, s7_function_class(f));
+
+  env_ncos_2 = s7_make_function(sc, "*", g_env_ncos_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_ncos_2, s7_function_class(f));
+
+  env_nsin_2 = s7_make_function(sc, "*", g_env_nsin_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_nsin_2, s7_function_class(f));
+
+  env_sawtooth_wave_2 = s7_make_function(sc, "*", g_env_sawtooth_wave_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_sawtooth_wave_2, s7_function_class(f));
+
+  env_pulse_train_2 = s7_make_function(sc, "*", g_env_pulse_train_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_pulse_train_2, s7_function_class(f));
+
+  env_square_wave_2 = s7_make_function(sc, "*", g_env_square_wave_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_square_wave_2, s7_function_class(f));
+
+  env_triangle_wave_2 = s7_make_function(sc, "*", g_env_triangle_wave_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_triangle_wave_2, s7_function_class(f));
+
+  env_nrxysin_2 = s7_make_function(sc, "*", g_env_nrxysin_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_nrxysin_2, s7_function_class(f));
+
+  env_nrxycos_2 = s7_make_function(sc, "*", g_env_nrxycos_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_nrxycos_2, s7_function_class(f));
+
+  env_one_zero_2 = s7_make_function(sc, "*", g_env_one_zero_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_one_zero_2, s7_function_class(f));
+
+  env_one_pole_2 = s7_make_function(sc, "*", g_env_one_pole_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_one_pole_2, s7_function_class(f));
+
+  env_two_zero_2 = s7_make_function(sc, "*", g_env_two_zero_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_two_zero_2, s7_function_class(f));
+
+  env_two_pole_2 = s7_make_function(sc, "*", g_env_two_pole_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_two_pole_2, s7_function_class(f));
+
+  env_filter_2 = s7_make_function(sc, "*", g_env_filter_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_filter_2, s7_function_class(f));
+
+  env_fir_filter_2 = s7_make_function(sc, "*", g_env_fir_filter_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_fir_filter_2, s7_function_class(f));
+
+  env_iir_filter_2 = s7_make_function(sc, "*", g_env_iir_filter_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_iir_filter_2, s7_function_class(f));
+
+  env_formant_2 = s7_make_function(sc, "*", g_env_formant_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_formant_2, s7_function_class(f));
+
+  env_firmant_2 = s7_make_function(sc, "*", g_env_firmant_2, 2, 0, false, "* optimization");
+  s7_function_set_class(env_firmant_2, s7_function_class(f));
+
+
+  s7_function_chooser_set_data(oscil_2, (void *)make_choices(mul_c_oscil_2, mul_s_oscil_2, env_oscil_2));
+  s7_function_chooser_set_data(polywave_2, (void *)make_choices(mul_c_polywave_2, mul_s_polywave_2, env_polywave_2));
+  s7_function_chooser_set_data(comb_2, (void *)make_choices(mul_c_comb_2, mul_s_comb_2, env_comb_2));
+  s7_function_chooser_set_data(notch_2, (void *)make_choices(mul_c_notch_2, mul_s_notch_2, env_notch_2));
+  s7_function_chooser_set_data(all_pass_2, (void *)make_choices(mul_c_all_pass_2, mul_s_all_pass_2, env_all_pass_2));
+  s7_function_chooser_set_data(delay_2, (void *)make_choices(mul_c_delay_2, mul_s_delay_2, env_delay_2));
+  s7_function_chooser_set_data(moving_average_2, (void *)make_choices(mul_c_moving_average_2, mul_s_moving_average_2, env_moving_average_2));
+  s7_function_chooser_set_data(rand_2, (void *)make_choices(mul_c_rand_2, mul_s_rand_2, env_rand_2));
+  s7_function_chooser_set_data(rand_interp_2, (void *)make_choices(mul_c_rand_interp_2, mul_s_rand_interp_2, env_rand_interp_2));
+  s7_function_chooser_set_data(ncos_2, (void *)make_choices(mul_c_ncos_2, mul_s_ncos_2, env_ncos_2));
+  s7_function_chooser_set_data(nsin_2, (void *)make_choices(mul_c_nsin_2, mul_s_nsin_2, env_nsin_2));
+  s7_function_chooser_set_data(sawtooth_wave_2, (void *)make_choices(mul_c_sawtooth_wave_2, mul_s_sawtooth_wave_2, env_sawtooth_wave_2));
+  s7_function_chooser_set_data(pulse_train_2, (void *)make_choices(mul_c_pulse_train_2, mul_s_pulse_train_2, env_pulse_train_2));
+  s7_function_chooser_set_data(square_wave_2, (void *)make_choices(mul_c_square_wave_2, mul_s_square_wave_2, env_square_wave_2));
+  s7_function_chooser_set_data(triangle_wave_2, (void *)make_choices(mul_c_triangle_wave_2, mul_s_triangle_wave_2, env_triangle_wave_2));
+  s7_function_chooser_set_data(nrxysin_2, (void *)make_choices(mul_c_nrxysin_2, mul_s_nrxysin_2, env_nrxysin_2));
+  s7_function_chooser_set_data(nrxycos_2, (void *)make_choices(mul_c_nrxycos_2, mul_s_nrxycos_2, env_nrxycos_2));
+  s7_function_chooser_set_data(one_zero_2, (void *)make_choices(mul_c_one_zero_2, mul_s_one_zero_2, env_one_zero_2));
+  s7_function_chooser_set_data(one_pole_2, (void *)make_choices(mul_c_one_pole_2, mul_s_one_pole_2, env_one_pole_2));
+  s7_function_chooser_set_data(two_zero_2, (void *)make_choices(mul_c_two_zero_2, mul_s_two_zero_2, env_two_zero_2));
+  s7_function_chooser_set_data(two_pole_2, (void *)make_choices(mul_c_two_pole_2, mul_s_two_pole_2, env_two_pole_2));
+  s7_function_chooser_set_data(filter_2, (void *)make_choices(mul_c_filter_2, mul_s_filter_2, env_filter_2));
+  s7_function_chooser_set_data(fir_filter_2, (void *)make_choices(mul_c_fir_filter_2, mul_s_fir_filter_2, env_fir_filter_2));
+  s7_function_chooser_set_data(iir_filter_2, (void *)make_choices(mul_c_iir_filter_2, mul_s_iir_filter_2, env_iir_filter_2));
+  s7_function_chooser_set_data(formant_2, (void *)make_choices(mul_c_formant_2, mul_s_formant_2, env_formant_2));
+  s7_function_chooser_set_data(firmant_2, (void *)make_choices(mul_c_firmant_2, mul_s_firmant_2, env_firmant_2));
 
 
 
@@ -10198,7 +10713,13 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(outa_mul_s_delay, s7_function_class(f));
   outa_env_polywave_env = s7_make_function(sc, "outa", g_outa_env_polywave_env, 2, 0, false, "outa optimization");
   s7_function_set_class(outa_env_polywave_env, s7_function_class(f));
+  direct_outa_2 = s7_make_function(sc, "outa", g_direct_outa_2, 2, 0, false, "outa optimization");
+  s7_function_set_class(direct_outa_2, s7_function_class(f));
 
+  f = s7_name_to_value(sc, "ina");
+  s7_function_set_chooser(f, ina_chooser);
+  ina_reverb_2 = s7_make_function(sc, "ina", g_ina_reverb_2, 2, 0, false, "ina optimization");
+  s7_function_set_class(ina_reverb_2, s7_function_class(f));
 }
 
 #endif

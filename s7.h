@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.94"
-#define S7_DATE "19-Aug-11"
+#define S7_VERSION "1.95"
+#define S7_DATE "29-Aug-11"
 
 
 typedef long long int s7_Int;
@@ -130,6 +130,7 @@ s7_pointer s7_undefined(s7_scheme *sc);                              /* #<undefi
 s7_pointer s7_unspecified(s7_scheme *sc);                            /* #<unspecified> */
 bool s7_is_unspecified(s7_scheme *sc, s7_pointer val);               /*     returns true if val is #<unspecified> */
 s7_pointer s7_eof_object(s7_scheme *sc);                             /* #<eof> */
+bool s7_is_null(s7_scheme *sc, s7_pointer p);                        /* null? */
 
   /* these are the Scheme constants; they do not change in value during a run,
    *   so they can be safely assigned to C global variables if desired. 
@@ -577,7 +578,9 @@ void s7_function_chooser_set_data(s7_pointer f, void *data);
 unsigned int s7_function_class(s7_pointer f);
 void s7_function_set_class(s7_pointer f, unsigned int c);
 s7_function s7_function_choice(s7_pointer expr);
+bool s7_function_choice_is_direct(s7_pointer expr);
 void s7_function_choice_set_direct(s7_pointer expr);
+s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
 void **s7_function_table(s7_scheme *sc, s7_pointer expr, int size);
 
 bool s7_in_safe_do(s7_scheme *sc);
@@ -798,7 +801,7 @@ void s7_mark_object(s7_pointer p);
  *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
  *    integer-length keyword->symbol lcm list list->string list->vector list-tail log logand 
  *    logior lognot logxor magnitude make-hash-table-iterator make-list make-polar
- *    make-rectangular map max memq memv min modulo nan? negative? not null? odd? port-closed? 
+ *    make-rectangular map max memq memv min modulo nan? negative? not odd? port-closed? 
  *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
  *    sin sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
  *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-length string-ref 
@@ -817,6 +820,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 29-Aug:    more optimization experiments.
  * 19-Aug:    s7_function_chooser_data.
  * 11-Aug:    s7_symbol_accessor functions. s7_cxxxxr.
  * 9-Aug:     s7_function_chooser, s7_function_choice, s7_function_choice_set_direct.
