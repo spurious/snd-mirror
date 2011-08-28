@@ -303,6 +303,7 @@ MUS_EXPORT mus_any *mus_make_rand_interp(mus_float_t freq, mus_float_t base);
 MUS_EXPORT bool mus_rand_interp_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_rand_interp_with_distribution(mus_float_t freq, mus_float_t base, mus_float_t *distribution, int distribution_size);
 MUS_EXPORT mus_float_t mus_rand_interp_unmodulated(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_rand_unmodulated(mus_any *ptr);
 
 MUS_EXPORT mus_float_t mus_asymmetric_fm(mus_any *gen, mus_float_t index, mus_float_t fm);
 MUS_EXPORT mus_float_t mus_asymmetric_fm_unmodulated(mus_any *gen, mus_float_t index);

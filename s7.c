@@ -4816,6 +4816,16 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
 }
 
 
+s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n) 
+{
+  if ((rl != real_zero) &&
+      (number_type(rl) > NUM_RATIO))
+    real(number(rl)) = n;
+  else rl = s7_make_real(sc, n);
+  return(rl);
+}
+
+
 s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b)
 {
   s7_pointer x;
@@ -18445,7 +18455,8 @@ void s7_function_chooser_set_data(s7_pointer f, void *data)
 
 s7_function s7_function_choice(s7_pointer expr)
 {
-  if (is_c_function(ecdr(expr)))
+  if ((ecdr(expr)) &&
+      (is_c_function(ecdr(expr))))
     return(c_function_call(ecdr(expr)));
   return(NULL);
 }

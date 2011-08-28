@@ -16,6 +16,7 @@ typedef double s7_Double;
  */
 
 
+
   /* --------------------------------------------------------------------------------
    * s7 itself is based on the types and functions in this file, so the first place to look for examples
    *   is s7.c.  There are also a few variations on a REPL at the end of s7.html.  s7test.scm
@@ -582,6 +583,7 @@ bool s7_function_choice_is_direct(s7_pointer expr);
 void s7_function_choice_set_direct(s7_pointer expr);
 s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
 void **s7_function_table(s7_scheme *sc, s7_pointer expr, int size);
+s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
 
 bool s7_in_safe_do(s7_scheme *sc);
 bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol);
