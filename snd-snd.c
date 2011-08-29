@@ -2597,47 +2597,53 @@ static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 	}
       else
 	{
-#if (!HAVE_SCHEME)
-	  mus_long_t len = -1, j;
-	  mus_sample_t *data = NULL;
-	  mus_sample_t value;
-	  value = MUS_FLOAT_TO_SAMPLE(valf);	  
-
-	  for (i = 0; i < sp->nchans; i++)
+	  /* this was #if (!HAVE_SCHEME) which makes no sense -- I think it meant (!HAVE_RUN)
+	   *   but that means (fill! <sound>) fails if optimization is off.
+	   */
+	  if (optimization(ss) == 0)
 	    {
-	      cp = sp->chans[i];
-	      if ((!data) || (CURRENT_SAMPLES(cp) != len))
+	      mus_long_t len = -1, j;
+	      mus_sample_t *data = NULL;
+	      mus_sample_t value;
+	      value = MUS_FLOAT_TO_SAMPLE(valf);	  
+	      
+	      for (i = 0; i < sp->nchans; i++)
 		{
-		  len = CURRENT_SAMPLES(cp);
-		  if (data) free(data);
-		  data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
-		  for (j = 0; j < len; j++)
-		    data[j] = value;
+		  cp = sp->chans[i];
+		  if ((!data) || (CURRENT_SAMPLES(cp) != len))
+		    {
+		      len = CURRENT_SAMPLES(cp);
+		      if (data) free(data);
+		      data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
+		      for (j = 0; j < len; j++)
+			data[j] = value;
+		    }
+		  if (change_samples(0, len, data, cp, "fill! sound", cp->edit_ctr))
+		    update_graph(cp);
 		}
-	      if (change_samples(0, len, data, cp, "fill! sound", cp->edit_ctr))
-		update_graph(cp);
+	      free(data);
 	    }
-	  free(data);
-#else
-	  char *expr;
-	  XEN func;
-	  int gc_loc;
-	  
-	  func = s7_eval_c_string(s7, expr = mus_format("(lambda (y) %f)", valf));
-	  gc_loc = s7_gc_protect(s7, func);
-	  free(expr);
-
-	  for (i = 0; i < sp->nchans; i++)
+	  else
 	    {
-	      cp = sp->chans[i];
-	      /* we need a separate ptree for each channel */
-	      ptree_channel(cp, 
-			    mus_run_form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(func)), 
-			    0, CURRENT_SAMPLES(cp), cp->edit_ctr, true, XEN_FALSE, "fill! sound");
+	      char *expr;
+	      XEN func;
+	      int gc_loc;
+	      
+	      func = s7_eval_c_string(s7, expr = mus_format("(lambda (y) %f)", valf));
+	      gc_loc = s7_gc_protect(s7, func);
+	      free(expr);
+	      
+	      for (i = 0; i < sp->nchans; i++)
+		{
+		  cp = sp->chans[i];
+		  /* we need a separate ptree for each channel */
+		  ptree_channel(cp, 
+				mus_run_form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(func)), 
+				0, CURRENT_SAMPLES(cp), cp->edit_ctr, true, XEN_FALSE, "fill! sound");
+		}
+	      
+	      s7_gc_unprotect_at(s7, gc_loc);
 	    }
-	  
-	  s7_gc_unprotect_at(s7, gc_loc);
-#endif
 	}
     }
   return(XEN_FALSE);

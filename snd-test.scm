@@ -26363,7 +26363,7 @@ EDITS: 2
       (if (not (eq? tag 'out-of-range))
 	  (snd-display #__line__ ";outa (sound-data) -1 -> ~A" tag)))
     
-    (let ((v (with-sound () (run (outa -1 .1)))))
+    (let ((v (with-sound () (catch #t (lambda () (run (outa -1 .1))) (lambda args 'error)))))
       (if (file-exists? v)
 	  (begin
 	    (if (> (cadr (mus-sound-maxamp v)) 0.0) 
@@ -26372,9 +26372,9 @@ EDITS: 2
 		(snd-display #__line__ ";outa to file at -1 chans: ~A" (mus-sound-chans v)))
 	    (if (find-sound v) (close-sound (find-sound v)))
 	    (delete-file v))))
-    (let ((v (with-sound (:output (make-vct 10)) (run (outa -1 .1)))))
+    (let ((v (with-sound (:output (make-vct 10)) (catch #t (lambda () (run (outa -1 .1))) (lambda args 'error)))))
       (if (> (vct-peak v) 0.0) (snd-display #__line__ ";outa to vct at -1: ~A" v)))
-    (let ((v (with-sound (:output (make-sound-data 1 10)) (run (outa -1 .1)))))
+    (let ((v (with-sound (:output (make-sound-data 1 10)) (catch #t (lambda () (run (outa -1 .1))) (lambda args 'error)))))
       (if (> (sound-data-peak v) 0.0) (snd-display #__line__ ";outa to sound-data at -1: ~A" v)))
     
     (if (not (= (signum 0) 0)) (snd-display #__line__ ";signum 0: ~A" (signum 0)))

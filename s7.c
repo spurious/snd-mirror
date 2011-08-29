@@ -31125,7 +31125,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 */
 	s7_pointer init, end;
 #if PRINTING
-	fprintf(stderr, "simple do: %s\n", DISPLAY(sc->code));
+	fprintf(stderr, "\nsimple do: %s\n", DISPLAY(sc->code));
 #endif
 	sc->envir = new_frame_in_env(sc, sc->envir);
 	init = cadaar(sc->code);
