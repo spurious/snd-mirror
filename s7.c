@@ -18464,6 +18464,7 @@ s7_function s7_function_choice(s7_pointer expr)
 void s7_function_choice_set_direct(s7_pointer expr)
 {
   optimize_data(expr) = HOP_SAFE_C_C;
+  clear_unsafe(expr);
 }
 
 bool s7_function_choice_is_direct(s7_pointer expr)
@@ -27078,7 +27079,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
  	      if (!opt) 
 		{
 		  bad_pairs++;
-		  /* fprintf(stderr, "    optexp: %s: unsafe: %d, opt: %d\n", DISPLAY_80(car(p)), is_unsafe(car(p)), is_optimized(car(p))); */
+		  /* fprintf(stderr, "    optexp: %s: unsafe: %d, opt: %d\n", DISPLAY_80(car(p)), is_unsafe(car(p)), is_optimized(car(p)));  */
 		  if ((caar(p) == sc->QUOTE) &&
 		      (is_pair(cdar(p))) &&
 		      (is_null(cddar(p))))
@@ -27820,6 +27821,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	    }
 
 	  if (bad_pairs > quotes) return(false);
+
 	  if ((!is_optimized(car(x))) &&
 	      ((pairs == 0) || 
 	       ((pairs == quotes) && 
@@ -27836,10 +27838,15 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		  else
 		    {
 		      set_optimized(car(x));
-		      set_unsafe(car(x));
 		      set_optimize_data(car(x), OP_C_ALL_G);
 		      ecdr(car(x)) = c_function_chooser(func)(sc, func, args, car(x));
-		      return(false); 
+		      if (optimize_data(car(x)) != HOP_SAFE_C_C) /* did chooser fix it up? */
+			{
+			  set_unsafe(car(x));
+			  return(false); 
+			}
+		      else return(true);
+		      /* TODO: check other similar cases */
 		    }
 		}
 	      else
@@ -29825,6 +29832,11 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 			      if (op != OP_SET)
 				return(false);
 
+			      /* TODO: set of pws should assume safe, then somehow bail out at run time?
+			       *   perhaps assume safe if unknown, then add a way to reset the safe do level
+			       *   and clear all saved state.
+			       */
+
 			      if (!memq(cadr(expr), var_list))
 				{
 #if PRINTING
@@ -29984,6 +29996,10 @@ static s7_pointer check_do(s7_scheme *sc)
 	s7_pointer vars, end;
 	vars = car(sc->code);
 	end = cadr(sc->code);
+
+	/* we need a 2nd optimization pass here, or perhaps in the non-safe do loops since
+	 *   some decisions need run-time type info etc.
+	 */
 
 	if ((is_pair(end)) &&
 	    (is_pair(vars)) &&
@@ -31003,7 +31019,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer vars, init_val;
 #if PRINTING
-	fprintf(stderr, "dotimes: %s\n", DISPLAY(sc->code));
+	fprintf(stderr, "\ndotimes: %s\n", DISPLAY(sc->code));
 #endif
 	vars = car(sc->code);
 	init_val = cadr(car(vars));
@@ -32275,7 +32291,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = ARG_SYMBOL_VALUE(car(code), find_symbol_or_bust_58);
-		    /* fprintf(stderr, "f: %s\n", DISPLAY(f)); */
+		    /* fprintf(stderr, "%s, f: %s (%d)\n", DISPLAY(code), DISPLAY(f), s7_in_safe_do(sc)); */
 		    
 		    switch (type(f))
 		      {

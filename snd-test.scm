@@ -62424,7 +62424,8 @@ EDITS: 1
 (if (and full-test
 	 (= test-at-random 0)
 	 (= tests 1)
-	 (file-exists? "oldopt.log"))
+	 (file-exists? "oldopt.log")
+	 (> (optimization) 0))
     (system "diff -w optimizer.log oldopt.log"))
 
 (save-listener "test.output")

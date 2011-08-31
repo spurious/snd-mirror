@@ -8269,6 +8269,17 @@
 (CFNC-312 "void gtk_font_chooser_dialog_set_preview_text GtkFontChooserDialog* fcd gchar* text" 'const)
 
 
+#|
+;;; 3.1.16
+;;; new: gtkcsssection.h
+
+(CFNC-3116 "gboolean gdk_event_get_button GdkEvent* event guint* button")
+(CFNC-3116 "gboolean gdk_event_get_click_count GdkEvent* event guint* click_count")
+(CFNC-3116 "gboolean gdk_event_get_keyval GdkEvent* event guint* keyval")
+(CFNC-3116 "gboolean gdk_event_get_keycode GdkEvent* event guint16* keycode")
+(CFNC-3116 "gboolean gdk_event_get_scroll_direction GdkEvent* event GdkScrollDirection* [direction]")
+(CFNC-3116 "GtkWidget* gtk_grid_get_child_at GtkGrid* grid gint left top")
+|#
 
 
 ;;; --------------------------------------------------------------------------------

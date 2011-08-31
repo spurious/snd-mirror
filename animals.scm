@@ -1606,14 +1606,15 @@
 	 (vib (make-rand-interp 10.0 (hz->radians 10)))
 	 (indf (make-rand-interp 1 .5))
 	 (index2 (hz->radians (* freq 1.0)))
-	 (index3 (hz->radians (* freq 0.5))))
+	 (index3 (hz->radians (* freq 0.5)))
+	 (hfreq (hz->radians freq)))
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
        (let* ((amp1 (env ampf))
 	      (frq (+ (env frqf) (rand-interp vib)))
 	      (pitch (oscil carrier frq))
-	      (index1 (hz->radians (* freq (+ 1.0 (rand-interp indf))))))
+	      (index1 (* hfreq (+ 1.0 (rand-interp indf)))))
 	 (outa i (* amp1
 		    (+ (* 0.6 (oscil modulator1 (+ (* 2 frq) (* index1 pitch))))
 		       (* 0.3 (oscil modulator3 (+ (* 3 frq) (* index3 pitch))))
