@@ -155,6 +155,7 @@ MUS_EXPORT int mus_data_format_zero(int format);
 
 /* -------- generic functions -------- */
 
+MUS_EXPORT int mus_type(mus_any *ptr);
 MUS_EXPORT int mus_free(mus_any *ptr);
 MUS_EXPORT char *mus_describe(mus_any *gen);
 MUS_EXPORT bool mus_equalp(mus_any *g1, mus_any *g2);
@@ -596,6 +597,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 /* Change log.
  *
  * 20-Aug:     changed type of mus_locsig to void, added mus_locsig_function_reset.
+ *             removed function-as-output-location from locsig et al.
  * 14-Jul-11:  removed pthread stuff.
  * --------
  * 7-Mar-10:   protect in-any and out-any from sample numbers less than 0.

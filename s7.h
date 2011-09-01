@@ -579,10 +579,14 @@ void s7_function_chooser_set_data(s7_pointer f, void *data);
 unsigned int s7_function_class(s7_pointer f);
 void s7_function_set_class(s7_pointer f, unsigned int c);
 s7_function s7_function_choice(s7_pointer expr);
+
 bool s7_function_choice_is_direct(s7_pointer expr);
 void s7_function_choice_set_direct(s7_pointer expr);
 s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
-void **s7_function_table(s7_scheme *sc, s7_pointer expr, int size);
+
+void **s7_expression_data(s7_pointer expr);
+void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size);
+
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
 
 bool s7_in_safe_do(s7_scheme *sc);
@@ -809,7 +813,7 @@ void s7_mark_object(s7_pointer p);
  *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-length string-ref 
  *    string-set! string<=? string<? string=? string>=? string>? substring symbol symbol->keyword 
  *    symbol-table tan tanh trace truncate untrace vector vector->list with-input-from-file 
- *    with-input-from-string with-output-to-file with-output-to-string write-byte zero?  
+ *    with-input-from-string with-output-to-file with-output-to-string write-byte zero?
  *
  * and these variables: *safety* *#readers* *error-hook* *unbound-variable-hook* *trace-hook*
  *

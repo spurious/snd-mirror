@@ -220,6 +220,7 @@
 #define S_mus_scaler                 "mus-scaler"
 #define S_mus_set_formant_radius_and_frequency "mus-set-formant-radius-and-frequency"
 #define S_mus_srate                  "mus-srate"
+#define S_mus_type                   "mus-type"
 #define S_mus_width                  "mus-width"
 #define S_mus_xcoeff                 "mus-xcoeff"
 #define S_mus_xcoeffs                "mus-xcoeffs"

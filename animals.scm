@@ -1673,7 +1673,8 @@
 	 (pulsef (make-env '(0 0 1 .1 6 .2 7 0 8 .3 10 1 18 .9 21 .1 23 .3 28 .1 30 0) :duration .06 :base .1))
 	 (pulser (make-pulse-train (/ 1.0 .06)))
 	 (indf (make-env '(0 0 10 0 18 1 23 1 26 0 30 0) :duration .06))
-	 (noise (make-rand-interp 1000)))
+	 (noise (make-rand-interp 1000))
+	 (hz40 (hz->radians 40.0)))
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
@@ -1683,7 +1684,7 @@
 	       (mus-reset pulsef)
 	       (mus-reset frqf)
 	       (mus-reset indf)))
-	 (let ((buzz (+ (* (hz->radians 40) (env frqf))
+	 (let ((buzz (+ (* hz40 (env frqf))
 			 (* .005 (rand-interp noise)))))
 	   (outa i (* (env ampf)
 		      (env pulsef)
@@ -4710,14 +4711,15 @@
 	 
 	 (fr1 (* 2 15 (sin (hz->radians 730))))
 	 (fr2 (* 2 (sin (hz->radians 1090))))
-	 (fr3 (* 2 (sin (hz->radians 2240)))))
+	 (fr3 (* 2 (sin (hz->radians 2240))))
+	 (hz7 (hz->radians 7.0)))
     
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
        (let* ((intrp (env intrpf))
 	      (frq (+ (env frqf)
-		      (* intrp (+ (* (hz->radians 7) (oscil vib))
+		      (* intrp (+ (* hz7 (oscil vib))
 				  (rand-interp rnd)))))
 	      (inp (* (env ampf) 
 		      (+ .9 (rand-interp rnd1))

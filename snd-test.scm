@@ -13875,9 +13875,12 @@ EDITS: 2
       
       (close-sound ind1)
       (revert-sound ind0)
-      (let ((val (sample 1990)))
-	(delay-channel 10)
-	(if (fneq (sample 2000) val) (snd-display #__line__ ";delay-channel: ~A ~A" val (sample 2000))))
+      (let ((old-opt (optimization)))
+	(set! (optimization) 6)
+	(let ((val (sample 1990)))
+	  (delay-channel 10) ; this assume ptree-channel is fully operational
+	  (if (fneq (sample 2000) val) (snd-display #__line__ ";delay-channel: ~A ~A" val (sample 2000))))
+	(set! (optimization) old-opt))
       (close-sound ind0))
     
     (let ((ind (new-sound "test.snd" :size 20)))

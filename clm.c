@@ -320,13 +320,33 @@ static char *int_array_to_string(int *arr, int num_ints, const char *name)
 
 static bool check_gen(mus_any *ptr, const char *name)
 {
-  if (ptr == NULL)
+  if (!ptr)
     {
       mus_error(MUS_NO_GEN, "null generator passed to %s", name);
       return(false);
     }
   return(true);
 }
+
+
+int mus_type(mus_any *ptr)
+{
+  if ((check_gen(ptr, S_mus_type)) &&
+      (ptr->core))
+    return(ptr->core->type);
+  return(-1);
+}
+
+#if 0
+mus_any_class *mus_make_type(const char *name)
+{
+  /* to make a new gen type: cls = mus_make_type("new-gen");
+   *    mus_set_method(cls, method-name, func)
+   * if from xen, func is a wrapper that picks up the ffi-func from mus_environ
+   * mus_make_any(type) then returns a mus_any ptr with its core -> cls? seems redundant
+   */
+}
+#endif
 
 
 const char *mus_name(mus_any *ptr) 
@@ -1222,6 +1242,10 @@ bool mus_oscil_p(mus_any *ptr)
 	 (ptr->core->type == MUS_OSCIL));
 }
 
+/* this could be: bool mus_oscil_p(mus_any *ptr) {return((ptr) && (ptr->core == &OSCIL_CLASS));}
+ *   making the MUS_OSCIL business unnecessary, but that makes it harder to do things like mus-set-name.
+ */
+
 
 static int free_oscil(mus_any *ptr) {if (ptr) clm_free(ptr); return(0);}
 
@@ -1287,6 +1311,7 @@ static mus_any_class OSCIL_CLASS = {
   &oscil_reset,
   0, 0, 0
 };
+
 
 
 mus_any *mus_make_oscil(mus_float_t freq, mus_float_t phase)

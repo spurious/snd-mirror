@@ -18491,42 +18491,43 @@ static void clear_table(s7_pointer expr)
 }
 
 /* TODO: get rid of safe_do_level
- *       how to GC no-longer-accessible function tables?
+ *       GC no-longer-accessible function tables
+ *         [keep a list and check after gc sweep?]
  */
 
-void **s7_function_table(s7_scheme *sc, s7_pointer expr, int size)
+void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size)
 {
-  if (table_top == (unsigned short)65535)
-    return(NULL);
-
-  /* if (optimize_data_index(expr) == 0) */ 
-  if (!has_table(expr))
+  if (tables == NULL)
     {
-      if (tables == NULL)
-	{
-	  tables_size = 8;
-	  tables = (void ***)calloc(tables_size, sizeof(void **));
-	  table_sizes = (int *)calloc(tables_size, sizeof(int));
-	}
-      else
-	{
-	  if (table_top == tables_size)
-	    {
-	      int i;
-	      tables_size += 8;
-	      tables = (void ***)realloc(tables, tables_size * sizeof(void **));
-	      table_sizes = (int *)realloc(table_sizes, tables_size * sizeof(int));
-	      for (i = table_top; i < tables_size; i++) {tables[i] = NULL; table_sizes[i] = 0;}
-	    }
-	}
-      tables[table_top] = (void **)calloc(size, sizeof(void *));
-      table_sizes[table_top] = size;
-      /* fprintf(stderr, "new table at %d\n", table_top); */
-      optimize_data_index(expr) = table_top++;
-      set_has_table(expr);
+      tables_size = 8;
+      tables = (void ***)calloc(tables_size, sizeof(void **));
+      table_sizes = (int *)calloc(tables_size, sizeof(int));
     }
-  /* else fprintf(stderr, "use table at %d\n", optimize_data_index(expr)); */
+  else
+    {
+      if (table_top == tables_size)
+	{
+	  int i;
+	  tables_size += 8;
+	  tables = (void ***)realloc(tables, tables_size * sizeof(void **));
+	  table_sizes = (int *)realloc(table_sizes, tables_size * sizeof(int));
+	  for (i = table_top; i < tables_size; i++) {tables[i] = NULL; table_sizes[i] = 0;}
+	}
+    }
+  tables[table_top] = (void **)calloc(size, sizeof(void *));
+  table_sizes[table_top] = size;
+
+  optimize_data_index(expr) = table_top++;
+  set_has_table(expr);
   return(tables[optimize_data_index(expr)]);
+}
+
+
+void **s7_expression_data(s7_pointer expr)
+{
+  if (has_table(expr))
+    return(tables[optimize_data_index(expr)]);
+  return(NULL);
 }
 
 #else
@@ -18577,7 +18578,12 @@ s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr)
   return(sc->UNSPECIFIED);
 }
 
-void **s7_function_table(s7_scheme *sc, s7_pointer expr, int size)
+void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size)
+{
+  return(NULL);
+}
+
+void **s7_expression_data(s7_pointer expr)
 {
   return(NULL);
 }
@@ -27705,7 +27711,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      (is_c_function(func)) &&
 	      (is_safe_procedure(func)))
 	    {
-	      /* fprintf(stderr, "use z_z\n"); */
+	      /* fprintf(stderr, "use z_z: %s\n", DISPLAY_80(car(x))); */
 	      set_optimized(car(x));
 	      set_optimize_data(car(x), OP_SAFE_C_ZZ);
 	      ecdr(car(x)) = c_function_chooser(func)(sc, func, args, car(x)); /* was func */
@@ -27794,6 +27800,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      (is_c_function(func)) &&
 	      (is_safe_procedure(func)))
 	    {
+	      /* fprintf(stderr, "use zzz: %s\n", DISPLAY_80(car(x))); */
 	      set_optimized(car(x));		  
 	      set_optimize_data(car(x), OP_SAFE_C_ZZZ);
 	      ecdr(car(x)) = c_function_chooser(func)(sc, func, args, car(x));
@@ -29677,6 +29684,10 @@ static void initialize_safe_do(s7_scheme *sc, s7_pointer tree)
     }
 }
 
+/* to back out of a safe do, clear all tables, set safe do level to 0
+ *   add a <0 check wherever we currently safe_do_level--;
+ *   finish current non-safe call somehow -- clearing tables will mess this up.
+ */
 
 #define PRINTING 0
 static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer stepper)
@@ -32491,7 +32502,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_UNKNOWN_CC:
 		  {
 		    s7_pointer f;
-		    /* abort(); */
 		    f = ARG_SYMBOL_VALUE(car(code), find_symbol_or_bust_31);
 		    if ((is_closure(f)) &&
 			(args_match(sc, f, 2)))
@@ -32804,17 +32814,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline))
 		   */
 		case OP_SAFE_DO_C_S:
-		  if (sc->safe_do_level <= 0)
-		    abort();
-
 		  /* fprintf(stderr, "op check: %s\n", DISPLAY(code)); */
 		  /* this should not happen -- callgrind is confused */
 		  if (!c_function_is_ok(sc, code))
 		    break;
 		  
 		case HOP_SAFE_DO_C_S:
-		  if (sc->safe_do_level <= 0)
-		    abort();
 		  /* assume its safe for now (clm2xen checks s7_in_safe_do, but that's too restrictive here)
 		   */
 		  {
@@ -33229,6 +33234,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 
 		case HOP_SAFE_C_ZZZ:
+		  /* fprintf(stderr, "%s\n", DISPLAY_80(sc->code)); */
 		  push_stack(sc, OP_SAFE_C_ZZZ_1, sc->NIL, sc->code);
 		  sc->code = cadr(sc->code);
 		  goto OPT_EVAL;
