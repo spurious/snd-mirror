@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 32
-#define MUS_DATE "20-Aug-11"
+#define MUS_REVISION 33
+#define MUS_DATE "1-Sep-11"
 
 /* isn't mus_env_interp backwards? */
 
@@ -596,6 +596,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 1-Sep:      mus_type.
  * 20-Aug:     changed type of mus_locsig to void, added mus_locsig_function_reset.
  *             removed function-as-output-location from locsig et al.
  * 14-Jul-11:  removed pthread stuff.

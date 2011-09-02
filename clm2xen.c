@@ -8567,11 +8567,16 @@ GEN_2(firmant, mus_firmant)
 GEN_2(wave_train, mus_wave_train)
 GEN_2(table_lookup, mus_table_lookup)
 
+GEN_2(ssb_am, mus_ssb_am_unmodulated)
+GEN_2(asymmetric_fm, mus_asymmetric_fm_unmodulated)
+GEN_2(polyshape, mus_polyshape_unmodulated)
+GEN_2(filtered_comb, mus_filtered_comb_unmodulated)
+
 /*
-GEN3(ssb_am)         ;(ssb-am gen (insig 0.0) (fm 0.0))
-GEN3(asymmetric_fm)  ;(asymmetric-fm gen (index 0.0) (fm 0.0))
-GEN3(polyshape)      ;(polyshape gen (index 1.0) (fm 0.0))
-GEN3(filtered_comb)  ;(filtered-comb gen (val 0.0) (pm 0.0))
+GEN3(ssb_am)         ;(ssb-am gen (insig 0.0) (fm 0.0)), mus_ssb_am_unmodulated
+GEN3(asymmetric_fm)  ;(asymmetric-fm gen (index 0.0) (fm 0.0)), mus_*_no_input(1), unmod(2)
+GEN3(polyshape)      ;(polyshape gen (index 1.0) (fm 0.0)), unmod(2), no_input(1)
+GEN3(filtered_comb)  ;(filtered-comb gen (val 0.0) (pm 0.0)), unmod(1)
 
 GEN3(locsig)         ;(locsig gen loc val)
 GEN3(move-sound)     ;(move-sound gen loc val)
@@ -8601,10 +8606,10 @@ MUS_PHASE_VOCODER,
  *         to associate a xen func with a class field via a wrapper.  We also need
  *         a way to access the current "'tag" (type) for xen level type checks
  *         (oscil? looks at the current mus_any->type and compares it to oscil's).
- * mus-type, mus-make-type(name)
+ * [mus-type -- done], mus-make-type(name)
  * mus-method, mus-set-method
  * mus-make-any [make a bare mus_any class with a settable type and class ptr,
- *   is passed known type, use associated class] use mus_any_class for the C side pointer
+ *   is passed known type, use associated class] use mus_any for the C side pointer
  *   as in clm.c mus_set_name.
  */
 
@@ -11004,6 +11009,91 @@ static s7_pointer rand_interp_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
   return(f);
 }
 
+static s7_pointer polyshape_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(polyshape_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      if (expr_is_clm_gen(caddr(expr))) return(direct_polyshape_2);
+      return(indirect_polyshape_2);
+    }
+  return(f);
+}
+
+static s7_pointer ssb_am_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(ssb_am_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      if (expr_is_clm_gen(caddr(expr))) return(direct_ssb_am_2);
+      return(indirect_ssb_am_2);
+    }
+  return(f);
+}
+
+static s7_pointer asymmetric_fm_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(asymmetric_fm_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      if (expr_is_clm_gen(caddr(expr))) return(direct_asymmetric_fm_2);
+      return(indirect_asymmetric_fm_2);
+    }
+  return(f);
+}
+
+static s7_pointer filtered_comb_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_symbol(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      return(filtered_comb_2);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_function_choice_is_direct(caddr(expr))))
+    {
+      s7_function_choice_set_direct(expr);
+      if (expr_is_clm_gen(caddr(expr))) return(direct_filtered_comb_2);
+      return(indirect_filtered_comb_2);
+    }
+  return(f);
+}
+
+
 static s7_pointer frame_to_frame_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   /*
@@ -11243,6 +11333,10 @@ static void init_choosers(s7_scheme *sc)
   mul_c_iir_filter_2 = clm_make_function(sc, "*", g_mul_c_iir_filter_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_formant_2 = clm_make_function(sc, "*", g_mul_c_formant_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_firmant_2 = clm_make_function(sc, "*", g_mul_c_firmant_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_polyshape_2 = clm_make_function(sc, "*", g_mul_c_polyshape_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_filtered_comb_2 = clm_make_function(sc, "*", g_mul_c_filtered_comb_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_asymmetric_fm_2 = clm_make_function(sc, "*", g_mul_c_asymmetric_fm_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_ssb_am_2 = clm_make_function(sc, "*", g_mul_c_ssb_am_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
 
   mul_s_oscil_2 = clm_make_function_no_choice(sc, "*", g_mul_s_oscil_2, 2, 0, false, "* optimization", gen_class);
   mul_s_oscil_1 = clm_make_function_no_choice(sc, "*", g_mul_s_oscil_1, 1, 0, false, "* optimization", gen_class);
@@ -11288,6 +11382,10 @@ static void init_choosers(s7_scheme *sc)
   mul_s_iir_filter_2 = clm_make_function_no_choice(sc, "*", g_mul_s_iir_filter_2, 2, 0, false, "* optimization", gen_class);
   mul_s_formant_2 = clm_make_function_no_choice(sc, "*", g_mul_s_formant_2, 2, 0, false, "* optimization", gen_class);
   mul_s_firmant_2 = clm_make_function_no_choice(sc, "*", g_mul_s_firmant_2, 2, 0, false, "* optimization", gen_class);
+  mul_s_polyshape_2 = clm_make_function_no_choice(sc, "*", g_mul_s_polyshape_2, 2, 0, false, "* optimization", gen_class);
+  mul_s_ssb_am_2 = clm_make_function_no_choice(sc, "*", g_mul_s_ssb_am_2, 2, 0, false, "* optimization", gen_class);
+  mul_s_filtered_comb_2 = clm_make_function_no_choice(sc, "*", g_mul_s_filtered_comb_2, 2, 0, false, "* optimization", gen_class);
+  mul_s_asymmetric_fm_2 = clm_make_function_no_choice(sc, "*", g_mul_s_asymmetric_fm_2, 2, 0, false, "* optimization", gen_class);
 
   env_oscil_2 = clm_make_function(sc, "*", g_env_oscil_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   env_oscil_1 = clm_make_function(sc, "*", g_env_oscil_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -11333,6 +11431,10 @@ static void init_choosers(s7_scheme *sc)
   env_iir_filter_2 = clm_make_function(sc, "*", g_env_iir_filter_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   env_formant_2 = clm_make_function(sc, "*", g_env_formant_2, 2, 0, false, "* optimization", gen_class,	NULL, NULL, NULL, NULL, NULL, NULL);
   env_firmant_2 = clm_make_function(sc, "*", g_env_firmant_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_polyshape_2 = clm_make_function(sc, "*", g_env_polyshape_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_ssb_am_2 = clm_make_function(sc, "*", g_env_ssb_am_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_asymmetric_fm_2 = clm_make_function(sc, "*", g_env_asymmetric_fm_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_filtered_comb_2 = clm_make_function(sc, "*", g_env_filtered_comb_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
 
 
   f = s7_name_to_value(sc, "+");
@@ -11757,6 +11859,51 @@ static void init_choosers(s7_scheme *sc)
 				     NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_delay_2 = clm_make_function(sc, "delay", g_indirect_delay_2, 2, 0, false, "delay optimization", gen_class,
 				     NULL, NULL, NULL, NULL, NULL, NULL);
+
+
+  f = s7_name_to_value(sc, "polyshape");
+  s7_function_set_chooser(f, polyshape_chooser);
+  gen_class = s7_function_class(f);
+
+  polyshape_2 = clm_make_function(sc, "polyshape", g_polyshape_2, 2, 0, false, "polyshape optimization", gen_class,
+				mul_c_polyshape_2, mul_s_polyshape_2, env_polyshape_2, NULL, NULL, NULL);
+  direct_polyshape_2 = clm_make_function(sc, "polyshape", g_direct_polyshape_2, 2, 0, false, "polyshape optimization", gen_class,
+				       NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_polyshape_2 = clm_make_function(sc, "polyshape", g_indirect_polyshape_2, 2, 0, false, "polyshape optimization", gen_class,
+				       NULL, NULL, NULL, NULL, NULL, NULL);
+
+  f = s7_name_to_value(sc, "ssb-am");
+  s7_function_set_chooser(f, ssb_am_chooser);
+  gen_class = s7_function_class(f);
+
+  ssb_am_2 = clm_make_function(sc, "ssb-am", g_ssb_am_2, 2, 0, false, "ssb-am optimization", gen_class,
+				mul_c_ssb_am_2, mul_s_ssb_am_2, env_ssb_am_2, NULL, NULL, NULL);
+  direct_ssb_am_2 = clm_make_function(sc, "ssb-am", g_direct_ssb_am_2, 2, 0, false, "ssb-am optimization", gen_class,
+				       NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_ssb_am_2 = clm_make_function(sc, "ssb-am", g_indirect_ssb_am_2, 2, 0, false, "ssb-am optimization", gen_class,
+				       NULL, NULL, NULL, NULL, NULL, NULL);
+
+  f = s7_name_to_value(sc, "asymmetric-fm");
+  s7_function_set_chooser(f, asymmetric_fm_chooser);
+  gen_class = s7_function_class(f);
+
+  asymmetric_fm_2 = clm_make_function(sc, "asymmetric-fm", g_asymmetric_fm_2, 2, 0, false, "asymmetric-fm optimization", gen_class,
+				mul_c_asymmetric_fm_2, mul_s_asymmetric_fm_2, env_asymmetric_fm_2, NULL, NULL, NULL);
+  direct_asymmetric_fm_2 = clm_make_function(sc, "asymmetric-fm", g_direct_asymmetric_fm_2, 2, 0, false, "asymmetric-fm optimization", gen_class,
+				       NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_asymmetric_fm_2 = clm_make_function(sc, "asymmetric-fm", g_indirect_asymmetric_fm_2, 2, 0, false, "asymmetric-fm optimization", gen_class,
+				       NULL, NULL, NULL, NULL, NULL, NULL);
+
+  f = s7_name_to_value(sc, "filtered-comb");
+  s7_function_set_chooser(f, filtered_comb_chooser);
+  gen_class = s7_function_class(f);
+
+  filtered_comb_2 = clm_make_function(sc, "filtered-comb", g_filtered_comb_2, 2, 0, false, "filtered-comb optimization", gen_class,
+				mul_c_filtered_comb_2, mul_s_filtered_comb_2, env_filtered_comb_2, NULL, NULL, NULL);
+  direct_filtered_comb_2 = clm_make_function(sc, "filtered-comb", g_direct_filtered_comb_2, 2, 0, false, "filtered-comb optimization", gen_class,
+				       NULL, NULL, NULL, NULL, NULL, NULL);
+  indirect_filtered_comb_2 = clm_make_function(sc, "filtered-comb", g_indirect_filtered_comb_2, 2, 0, false, "filtered-comb optimization", gen_class,
+				       NULL, NULL, NULL, NULL, NULL, NULL);
 
 
   f = s7_name_to_value(sc, "frame->frame");

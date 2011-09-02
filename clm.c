@@ -3101,7 +3101,7 @@ mus_float_t mus_delay_tick(mus_any *ptr, mus_float_t input)
   dly *gen = (dly *)ptr;
   gen->line[gen->loc] = input;
   gen->loc++;
-  if (gen->zdly)
+  if (gen->zdly) /* TODO: surely this decision should be made in make-delay */
     {
       if (gen->loc >= gen->zsize) gen->loc = 0;
       gen->zloc++;
@@ -3173,6 +3173,8 @@ mus_float_t mus_tap(mus_any *ptr, mus_float_t loc)
   if (gen->zdly)
     {
       gen->yn1 = mus_interpolate(gen->type, gen->zloc - loc, gen->line, gen->zsize, gen->yn1);
+      /* TODO: doesn't this mean that loc==0 throughout but max_size set is different from simple loc==0 throughout?
+       */
       return(gen->yn1);
     }
   else

@@ -18526,6 +18526,33 @@ EDITS: 2
 			       0.000 0.000 0.000 0.016 0.094 0.141 0.000 0.000 0.002)))
 	  (snd-display #__line__ ";1filtered-comb (5 .5): ~A" v0)))
     
+    (let ((gen (make-filtered-comb 0.5 5 :max-size 20 :filter (make-one-zero .25 .75)))
+	  (v0 (make-vct 21))
+	  (in1 1.0))
+      (define (mus-filtered-comb g f) (filtered-comb g f))
+      (do ((i 0 (+ 1 i)))
+	  ((= i 21))
+	(set! (v0 i) (mus-filtered-comb gen in1))
+	(set! in1 0.0))
+      (if (not (vequal v0 (vct 0.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 0.125 0.375 
+			       0.000 0.000 0.000 0.016 0.094 0.141 0.000 0.000 0.002)))
+	  (snd-display #__line__ ";1mus-filtered-comb (5 .5): ~A" v0)))
+    
+    (let ((gen (make-filtered-comb 0.5 5 :max-size 20 :filter (make-one-zero .25 .75)))
+	  (v0 (make-vct 21))
+	  (in1 1.0)
+	  (old-opt (optimization)))
+      (set! (optimization) 6)
+      (run
+      (do ((i 0 (+ 1 i)))
+	  ((= i 21))
+	(set! (v0 i) (filtered-comb gen in1))
+	(set! in1 0.0)))
+      (set! (optimization) old-opt)
+      (if (not (vequal v0 (vct 0.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 0.125 0.375 
+			       0.000 0.000 0.000 0.016 0.094 0.141 0.000 0.000 0.002)))
+	  (snd-display #__line__ ";1run-filtered-comb (5 .5): ~A" v0)))
+    
     (let ((gen (make-filtered-comb 0.5 5 :max-size 20 :filter (make-one-zero .5 .5)))
 	  (v0 (make-vct 20))
 	  (in1 1.0))
