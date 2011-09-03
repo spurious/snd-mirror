@@ -8611,6 +8611,8 @@ MUS_PHASE_VOCODER,
  * mus-make-any [make a bare mus_any class with a settable type and class ptr,
  *   is passed known type, use associated class] use mus_any for the C side pointer
  *   as in clm.c mus_set_name.
+ * the class pointer can use XEN_WRAP_C_POINTER and friends
+ * method(cls, name), g? needs type embedded as in s_type case
  */
 
 
@@ -9686,7 +9688,8 @@ static s7_pointer g_indirect_frame_to_file_3(s7_scheme *sc, s7_pointer args)
 /* TODO: cleanup the fm-violin intermediates
  */
 
-/* (with-sound () (fm-violin 0 .0001 440 .1)) */
+
+/* ---------------- */
 
 static s7_pointer mul_direct_2;
 static s7_pointer g_mul_direct_2(s7_scheme *sc, s7_pointer args)
@@ -9761,7 +9764,6 @@ static s7_pointer g_add_c_direct(s7_scheme *sc, s7_pointer args)
   x = s7_call_direct(sc, cadr(args));
   return(s7_remake_real(sc, x, s7_number_to_real(car(args)) + s7_real(x)));
 }
-
 
 static s7_pointer mul_s_direct;
 static s7_pointer g_mul_s_direct(s7_scheme *sc, s7_pointer args)
@@ -9839,6 +9841,27 @@ static s7_pointer g_add_1s_direct(s7_scheme *sc, s7_pointer args)
   return(s7_make_complex(sc, (1.0 - s7_real_part(mul)) + xval, -s7_imag_part(mul)));
 }
 
+static s7_pointer add_cs_direct;
+static s7_pointer g_add_cs_direct(s7_scheme *sc, s7_pointer args)
+{
+  /* (+ (* c s) ...) */
+  s7_pointer x, mul;
+  double xval, cval;
+  bool its_safe;
+
+  its_safe = s7_in_safe_do(sc);
+  GET_NUMBER(caddr(car(args)), "+", its_safe, mul);
+
+  x = s7_call_direct(sc, cadr(args));
+  xval = s7_real(x);
+  cval = s7_number_to_real(cadr(car(args)));
+
+  if (s7_is_real(mul))
+    return(s7_remake_real(sc, x, (cval * s7_number_to_real(mul)) + xval));
+  return(s7_make_complex(sc, (cval * s7_real_part(mul)) + xval, -s7_imag_part(mul) * cval));
+}
+
+/* ---------------- */
 
 
 #define CLM_GEN 0
@@ -9880,6 +9903,7 @@ static bool expr_is_clm_gen(s7_pointer expr)
 
 static s7_pointer env_symbol, all_pass_symbol, ina_symbol, comb_symbol, polywave_symbol, triangle_wave_symbol;
 static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol;
+static s7_pointer multiply_symbol;
 
 static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 
@@ -9988,15 +10012,21 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	}
       
       if ((s7_is_pair(cadr(expr))) &&
-	  (car(cadr(expr)) == subtract_symbol) &&
 	  (s7_list_length(sc, cadr(expr)) == 3) &&
 	  (s7_is_real(cadr(cadr(expr)))) &&
-	  (s7_is_symbol(caddr(cadr(expr)))) &&
-	  (s7_number_to_real(cadr(cadr(expr))) == 1.0))
+	  (s7_is_symbol(caddr(cadr(expr)))))
 	{
-	  /* fprintf(stderr, "\nadd (- 1 s) direct: %s\n\n", DISPLAY_80(expr)); */
-	  s7_function_choice_set_direct(expr);
-	  return(add_1s_direct);
+	  if (car(cadr(expr)) == multiply_symbol)
+	    {
+	      s7_function_choice_set_direct(expr);
+	      return(add_cs_direct);
+	    }
+	  if ((car(cadr(expr)) == subtract_symbol) &&
+	      (s7_number_to_real(cadr(cadr(expr))) == 1.0))
+	    {
+	      s7_function_choice_set_direct(expr);
+	      return(add_1s_direct);
+	    }
 	}
     }
 
@@ -11096,16 +11126,6 @@ static s7_pointer filtered_comb_chooser(s7_scheme *sc, s7_pointer f, int args, s
 
 static s7_pointer frame_to_frame_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  /*
-  fprintf(stderr, "f->frame: %s\n", DISPLAY(expr));
-  */
-
-  /* would it better to implement OP_SAFE_DO_C_SSS?
-   *   by doing it here, we know it has to be int-real-frame and we write to frame
-   * I guess the main reason is that the s7 optimizer thinks frame->frame is unsafe
-   *   because the 2-arg form creates a new frame, so here we can override that?
-   */
-
   if ((args == 3) &&
       (s7_is_symbol(s7_cadr(expr))) &&
       (s7_is_symbol(s7_caddr(expr))) &&
@@ -11115,13 +11135,9 @@ static s7_pointer frame_to_frame_chooser(s7_scheme *sc, s7_pointer f, int args, 
       return(frame_to_frame_sss);
     }
 
-
   /* TODO: (sample->frame s s s)
    *       (sample->file ?)
-   * also possibly (frame-set! s s ...)
-   *               (mixer-set! mx inp outp ...)
-   * 
-   * in snd-test: 17902: ;delay size 0: #<vct[len=5]: 0.000 1.000 0.000 0.000 0.000>
+   * TODO: in snd-test: 17902: ;delay size 0: #<vct[len=5]: 0.000 1.000 0.000 0.000 0.000>
    */
   return(f);
 }
@@ -11148,10 +11164,7 @@ static s7_pointer locsig_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
   return(f);
 }
 
-/* TODO: outa(etc) (* s s)
- *       (* (- 1.0 sym) c_c)
- * check other ina, locsig cases
- * can some of the local special cases be collapsed now?
+/* TODO: outa(etc) (* s s) (+ (* c|s s) ...)
  */
 
 static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -11272,6 +11285,7 @@ static void init_choosers(s7_scheme *sc)
   oscil_symbol = s7_make_symbol(sc, "oscil");
   add_symbol = s7_make_symbol(sc, "+");
   subtract_symbol = s7_make_symbol(sc, "-");
+  multiply_symbol = s7_make_symbol(sc, "*");
   reverb_symbol = s7_make_symbol(sc, "*reverb*");
   output_symbol = s7_make_symbol(sc, "*output*");
 
@@ -11458,6 +11472,7 @@ static void init_choosers(s7_scheme *sc)
 				   NULL, NULL, NULL, NULL, NULL, NULL);
   add_s_direct = clm_make_function_no_choice(sc, "+", g_add_s_direct, 2, 0, false, "+ optimization", gen_class);
   add_1s_direct = clm_make_function_no_choice(sc, "+", g_add_1s_direct, 2, 0, false, "+ optimization", gen_class);
+  add_cs_direct = clm_make_function_no_choice(sc, "+", g_add_cs_direct, 2, 0, false, "+ optimization", gen_class);
 
 
   f = s7_name_to_value(sc, "abs");
@@ -12431,9 +12446,9 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_ssb_am,   g_make_ssb_am_w,   0, 4, 0, H_make_ssb_am); 
   XEN_DEFINE_SAFE_PROCEDURE(S_ssb_am,        g_ssb_am_w,        1, 2, 0, H_ssb_am);
   XEN_DEFINE_SAFE_PROCEDURE(S_ssb_am_p,      g_ssb_am_p_w,      1, 0, 0, H_ssb_am_p);
-  XEN_DEFINE_PROCEDURE("mus-ssb-bank",  g_ssb_bank_w,      4, 0, 0, "an experiment");
+  XEN_DEFINE_SAFE_PROCEDURE("mus-ssb-bank",  g_ssb_bank_w,      4, 0, 0, "an experiment");
 
-  XEN_DEFINE_PROCEDURE(S_mus_generator_p, g_mus_generator_p_w, 1, 0, 0, H_mus_generator_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_generator_p, g_mus_generator_p_w, 1, 0, 0, H_mus_generator_p);
 
   XEN_DEFINE_VARIABLE(S_output, clm_output, XEN_FALSE);
   XEN_DEFINE_VARIABLE(S_reverb, clm_reverb, XEN_FALSE);
