@@ -26529,13 +26529,13 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "+")));
   c_function_chooser(f) = add_chooser;
 
-  add_1 = s7_make_function(sc, "+", g_add_1, 1, 0, false, "experimental + optimization");
+  add_1 = s7_make_function(sc, "+", g_add_1, 1, 0, false, "+ optimization");
   c_function_class(add_1) = c_function_class(f);
-  add_2 = s7_make_function(sc, "+", g_add_2, 2, 0, false, "experimental + optimization");
+  add_2 = s7_make_function(sc, "+", g_add_2, 2, 0, false, "+ optimization");
   c_function_class(add_2) = c_function_class(f);
-  add_1s = s7_make_function(sc, "+", g_add_1s, 2, 0, false, "experimental + optimization");
+  add_1s = s7_make_function(sc, "+", g_add_1s, 2, 0, false, "+ optimization");
   c_function_class(add_1s) = c_function_class(f);
-  add_s1 = s7_make_function(sc, "+", g_add_s1, 2, 0, false, "experimental + optimization");
+  add_s1 = s7_make_function(sc, "+", g_add_s1, 2, 0, false, "+ optimization");
   c_function_class(add_s1) = c_function_class(f);
   
 
@@ -26543,11 +26543,11 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "-")));
   c_function_chooser(f) = subtract_chooser;
 
-  subtract_1 = s7_make_function(sc, "-", g_subtract_1, 1, 0, false, "experimental - optimization");
+  subtract_1 = s7_make_function(sc, "-", g_subtract_1, 1, 0, false, "- optimization");
   c_function_class(subtract_1) = c_function_class(f);
-  subtract_2 = s7_make_function(sc, "-", g_subtract_2, 2, 0, false, "experimental - optimization");
+  subtract_2 = s7_make_function(sc, "-", g_subtract_2, 2, 0, false, "- optimization");
   c_function_class(add_2) = c_function_class(f);
-  subtract_s1 = s7_make_function(sc, "-", g_subtract_s1, 2, 0, false, "experimental - optimization");
+  subtract_s1 = s7_make_function(sc, "-", g_subtract_s1, 2, 0, false, "- optimization");
   c_function_class(subtract_s1) = c_function_class(f);
   
 
@@ -26555,11 +26555,11 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "*")));
   c_function_chooser(f) = multiply_chooser;
 
-  multiply_2 = s7_make_function(sc, "*", g_multiply_2, 2, 0, false, "experimental * optimization");
+  multiply_2 = s7_make_function(sc, "*", g_multiply_2, 2, 0, false, "* optimization");
   c_function_class(multiply_2) = c_function_class(f);
-  multiply_i2 = s7_make_function(sc, "*", g_multiply_i2, 2, 0, false, "experimental * optimization");
+  multiply_i2 = s7_make_function(sc, "*", g_multiply_i2, 2, 0, false, "* optimization");
   c_function_class(multiply_i2) = c_function_class(f);
-  multiply_f2 = s7_make_function(sc, "*", g_multiply_f2, 2, 0, false, "experimental * optimization");
+  multiply_f2 = s7_make_function(sc, "*", g_multiply_f2, 2, 0, false, "* optimization");
   c_function_class(multiply_f2) = c_function_class(f);
 
 
@@ -26567,11 +26567,11 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "=")));
   c_function_chooser(f) = equal_chooser;
 
-  equal_s_ic = s7_make_function(sc, "=", g_equal_s_ic, 2, 0, false, "experimental = optimization");
+  equal_s_ic = s7_make_function(sc, "=", g_equal_s_ic, 2, 0, false, "= optimization");
   c_function_class(equal_s_ic) = c_function_class(f);
-  equal_length_ic = s7_make_function(sc, "=", g_equal_length_ic, 2, 0, false, "experimental = optimization");
+  equal_length_ic = s7_make_function(sc, "=", g_equal_length_ic, 2, 0, false, "= optimization");
   c_function_class(equal_length_ic) = c_function_class(f);
-  equal_2 = s7_make_function(sc, "=", g_equal_2, 2, 0, false, "experimental = optimization");
+  equal_2 = s7_make_function(sc, "=", g_equal_2, 2, 0, false, "= optimization");
   c_function_class(equal_2) = c_function_class(f);
 
 #if (!WITH_GMP)
@@ -26579,9 +26579,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "<")));
   c_function_chooser(f) = less_chooser;
 
-  less_s_ic = s7_make_function(sc, "<", g_less_s_ic, 2, 0, false, "experimental < optimization");
+  less_s_ic = s7_make_function(sc, "<", g_less_s_ic, 2, 0, false, "< optimization");
   c_function_class(less_s_ic) = c_function_class(f);
-  less_2 = s7_make_function(sc, "<", g_less_2, 2, 0, false, "experimental < optimization");
+  less_2 = s7_make_function(sc, "<", g_less_2, 2, 0, false, "< optimization");
   c_function_class(less_2) = c_function_class(f);
 
 
@@ -26589,11 +26589,11 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, ">")));
   c_function_chooser(f) = greater_chooser;
 
-  greater_s_ic = s7_make_function(sc, ">", g_greater_s_ic, 2, 0, false, "experimental > optimization");
+  greater_s_ic = s7_make_function(sc, ">", g_greater_s_ic, 2, 0, false, "> optimization");
   c_function_class(greater_s_ic) = c_function_class(f);
-  greater_abs = s7_make_function(sc, ">", g_greater_abs, 2, 0, false, "experimental > optimization");
+  greater_abs = s7_make_function(sc, ">", g_greater_abs, 2, 0, false, "> optimization");
   c_function_class(greater_abs) = c_function_class(f);
-  greater_2 = s7_make_function(sc, ">", g_greater_2, 2, 0, false, "experimental > optimization");
+  greater_2 = s7_make_function(sc, ">", g_greater_2, 2, 0, false, "> optimization");
   c_function_class(greater_2) = c_function_class(f);
 
 
@@ -26601,9 +26601,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "<=")));
   c_function_chooser(f) = leq_chooser;
 
-  leq_s_ic = s7_make_function(sc, "<=", g_leq_s_ic, 2, 0, false, "experimental <= optimization");
+  leq_s_ic = s7_make_function(sc, "<=", g_leq_s_ic, 2, 0, false, "<= optimization");
   c_function_class(leq_s_ic) = c_function_class(f);
-  leq_2 = s7_make_function(sc, "<=", g_leq_2, 2, 0, false, "experimental <= optimization");
+  leq_2 = s7_make_function(sc, "<=", g_leq_2, 2, 0, false, "<= optimization");
   c_function_class(leq_2) = c_function_class(f);
 
 
@@ -26611,9 +26611,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, ">=")));
   c_function_chooser(f) = geq_chooser;
 
-  geq_s_ic = s7_make_function(sc, ">=", g_geq_s_ic, 2, 0, false, "experimental >= optimization");
+  geq_s_ic = s7_make_function(sc, ">=", g_geq_s_ic, 2, 0, false, ">= optimization");
   c_function_class(geq_s_ic) = c_function_class(f);
-  geq_2 = s7_make_function(sc, ">=", g_geq_2, 2, 0, false, "experimental >= optimization");
+  geq_2 = s7_make_function(sc, ">=", g_geq_2, 2, 0, false, ">= optimization");
   c_function_class(geq_2) = c_function_class(f);
 #endif
 
@@ -26621,9 +26621,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "char=?")));
   c_function_chooser(f) = char_equal_chooser;
 
-  char_equal_s_ic = s7_make_function(sc, "char=?", g_char_equal_s_ic, 2, 0, false, "experimental char=? optimization");
+  char_equal_s_ic = s7_make_function(sc, "char=?", g_char_equal_s_ic, 2, 0, false, "char=? optimization");
   c_function_class(char_equal_s_ic) = c_function_class(f);
-  char_equal_2 = s7_make_function(sc, "char=?", g_char_equal_2, 2, 0, false, "experimental char=? optimization");
+  char_equal_2 = s7_make_function(sc, "char=?", g_char_equal_2, 2, 0, false, "char=? optimization");
   c_function_class(char_equal_2) = c_function_class(f);
 
 
@@ -26631,9 +26631,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "char>?")));
   c_function_chooser(f) = char_greater_chooser;
 
-  char_greater_s_ic = s7_make_function(sc, "char>?", g_char_greater_s_ic, 2, 0, false, "experimental char>? optimization");
+  char_greater_s_ic = s7_make_function(sc, "char>?", g_char_greater_s_ic, 2, 0, false, "char>? optimization");
   c_function_class(char_greater_s_ic) = c_function_class(f);
-  char_greater_2 = s7_make_function(sc, "char>?", g_char_greater_2, 2, 0, false, "experimental char>? optimization");
+  char_greater_2 = s7_make_function(sc, "char>?", g_char_greater_2, 2, 0, false, "char>? optimization");
   c_function_class(char_greater_2) = c_function_class(f);
 
 
@@ -26641,9 +26641,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "char<?")));
   c_function_chooser(f) = char_less_chooser;
 
-  char_less_s_ic = s7_make_function(sc, "char<?", g_char_less_s_ic, 2, 0, false, "experimental char<? optimization");
+  char_less_s_ic = s7_make_function(sc, "char<?", g_char_less_s_ic, 2, 0, false, "char<? optimization");
   c_function_class(char_less_s_ic) = c_function_class(f);
-  char_less_2 = s7_make_function(sc, "char<?", g_char_less_2, 2, 0, false, "experimental char<? optimization");
+  char_less_2 = s7_make_function(sc, "char<?", g_char_less_2, 2, 0, false, "char<? optimization");
   c_function_class(char_less_2) = c_function_class(f);
 
 
@@ -26651,9 +26651,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "char<=?")));
   c_function_chooser(f) = char_leq_chooser;
 
-  char_leq_s_ic = s7_make_function(sc, "char<=?", g_char_leq_s_ic, 2, 0, false, "experimental char<=? optimization");
+  char_leq_s_ic = s7_make_function(sc, "char<=?", g_char_leq_s_ic, 2, 0, false, "char<=? optimization");
   c_function_class(char_leq_s_ic) = c_function_class(f);
-  char_leq_2 = s7_make_function(sc, "char<=?", g_char_leq_2, 2, 0, false, "experimental char<=? optimization");
+  char_leq_2 = s7_make_function(sc, "char<=?", g_char_leq_2, 2, 0, false, "char<=? optimization");
   c_function_class(char_leq_2) = c_function_class(f);
 
 
@@ -26661,9 +26661,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "char>=?")));
   c_function_chooser(f) = char_geq_chooser;
 
-  char_geq_s_ic = s7_make_function(sc, "char>=?", g_char_geq_s_ic, 2, 0, false, "experimental char>=? optimization");
+  char_geq_s_ic = s7_make_function(sc, "char>=?", g_char_geq_s_ic, 2, 0, false, "char>=? optimization");
   c_function_class(char_geq_s_ic) = c_function_class(f);
-  char_geq_2 = s7_make_function(sc, "char>=?", g_char_geq_2, 2, 0, false, "experimental char>=? optimization");
+  char_geq_2 = s7_make_function(sc, "char>=?", g_char_geq_2, 2, 0, false, "char>=? optimization");
   c_function_class(char_geq_2) = c_function_class(f);
 
 
@@ -26671,9 +26671,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "char-ci=?")));
   c_function_chooser(f) = char_ci_equal_chooser;
 
-  char_ci_equal_s_ic = s7_make_function(sc, "char-ci=?", g_char_ci_equal_s_ic, 2, 0, false, "experimental char-ci=? optimization");
+  char_ci_equal_s_ic = s7_make_function(sc, "char-ci=?", g_char_ci_equal_s_ic, 2, 0, false, "char-ci=? optimization");
   c_function_class(char_ci_equal_s_ic) = c_function_class(f);
-  char_ci_equal_2 = s7_make_function(sc, "char-ci=?", g_char_ci_equal_2, 2, 0, false, "experimental char-ci=? optimization");
+  char_ci_equal_2 = s7_make_function(sc, "char-ci=?", g_char_ci_equal_2, 2, 0, false, "char-ci=? optimization");
   c_function_class(char_ci_equal_2) = c_function_class(f);
 
 
@@ -26681,9 +26681,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "char-ci>?")));
   c_function_chooser(f) = char_ci_greater_chooser;
 
-  char_ci_greater_s_ic = s7_make_function(sc, "char-ci>?", g_char_ci_greater_s_ic, 2, 0, false, "experimental char-ci>? optimization");
+  char_ci_greater_s_ic = s7_make_function(sc, "char-ci>?", g_char_ci_greater_s_ic, 2, 0, false, "char-ci>? optimization");
   c_function_class(char_ci_greater_s_ic) = c_function_class(f);
-  char_ci_greater_2 = s7_make_function(sc, "char-ci>?", g_char_ci_greater_2, 2, 0, false, "experimental char-ci>? optimization");
+  char_ci_greater_2 = s7_make_function(sc, "char-ci>?", g_char_ci_greater_2, 2, 0, false, "char-ci>? optimization");
   c_function_class(char_ci_greater_2) = c_function_class(f);
 
 
@@ -26691,9 +26691,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "char-ci<?")));
   c_function_chooser(f) = char_ci_less_chooser;
 
-  char_ci_less_s_ic = s7_make_function(sc, "char-ci<?", g_char_ci_less_s_ic, 2, 0, false, "experimental char-ci<? optimization");
+  char_ci_less_s_ic = s7_make_function(sc, "char-ci<?", g_char_ci_less_s_ic, 2, 0, false, "char-ci<? optimization");
   c_function_class(char_ci_less_s_ic) = c_function_class(f);
-  char_ci_less_2 = s7_make_function(sc, "char-ci<?", g_char_ci_less_2, 2, 0, false, "experimental char-ci<? optimization");
+  char_ci_less_2 = s7_make_function(sc, "char-ci<?", g_char_ci_less_2, 2, 0, false, "char-ci<? optimization");
   c_function_class(char_ci_less_2) = c_function_class(f);
 
 
@@ -26701,9 +26701,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "char-ci<=?")));
   c_function_chooser(f) = char_ci_leq_chooser;
 
-  char_ci_leq_s_ic = s7_make_function(sc, "char-ci<=?", g_char_ci_leq_s_ic, 2, 0, false, "experimental char-ci<=? optimization");
+  char_ci_leq_s_ic = s7_make_function(sc, "char-ci<=?", g_char_ci_leq_s_ic, 2, 0, false, "char-ci<=? optimization");
   c_function_class(char_ci_leq_s_ic) = c_function_class(f);
-  char_ci_leq_2 = s7_make_function(sc, "char-ci<=?", g_char_ci_leq_2, 2, 0, false, "experimental char-ci<=? optimization");
+  char_ci_leq_2 = s7_make_function(sc, "char-ci<=?", g_char_ci_leq_2, 2, 0, false, "char-ci<=? optimization");
   c_function_class(char_ci_leq_2) = c_function_class(f);
 
 
@@ -26711,9 +26711,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "char-ci>=?")));
   c_function_chooser(f) = char_ci_geq_chooser;
 
-  char_ci_geq_s_ic = s7_make_function(sc, "char-ci>=?", g_char_ci_geq_s_ic, 2, 0, false, "experimental char-ci>=? optimization");
+  char_ci_geq_s_ic = s7_make_function(sc, "char-ci>=?", g_char_ci_geq_s_ic, 2, 0, false, "char-ci>=? optimization");
   c_function_class(char_ci_geq_s_ic) = c_function_class(f);
-  char_ci_geq_2 = s7_make_function(sc, "char-ci>=?", g_char_ci_geq_2, 2, 0, false, "experimental char-ci>=? optimization");
+  char_ci_geq_2 = s7_make_function(sc, "char-ci>=?", g_char_ci_geq_2, 2, 0, false, "char-ci>=? optimization");
   c_function_class(char_ci_geq_2) = c_function_class(f);
 
 
@@ -26721,9 +26721,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "string=?")));
   c_function_chooser(f) = string_equal_chooser;
 
-  string_equal_s_ic = s7_make_function(sc, "string=?", g_string_equal_s_ic, 2, 0, false, "experimental string=? optimization");
+  string_equal_s_ic = s7_make_function(sc, "string=?", g_string_equal_s_ic, 2, 0, false, "string=? optimization");
   c_function_class(string_equal_s_ic) = c_function_class(f);
-  string_equal_2 = s7_make_function(sc, "string=?", g_string_equal_2, 2, 0, false, "experimental string=? optimization");
+  string_equal_2 = s7_make_function(sc, "string=?", g_string_equal_2, 2, 0, false, "string=? optimization");
   c_function_class(string_equal_2) = c_function_class(f);
 
 
@@ -26731,9 +26731,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "string>?")));
   c_function_chooser(f) = string_greater_chooser;
 
-  string_greater_s_ic = s7_make_function(sc, "string>?", g_string_greater_s_ic, 2, 0, false, "experimental string>? optimization");
+  string_greater_s_ic = s7_make_function(sc, "string>?", g_string_greater_s_ic, 2, 0, false, "string>? optimization");
   c_function_class(string_greater_s_ic) = c_function_class(f);
-  string_greater_2 = s7_make_function(sc, "string>?", g_string_greater_2, 2, 0, false, "experimental string>? optimization");
+  string_greater_2 = s7_make_function(sc, "string>?", g_string_greater_2, 2, 0, false, "string>? optimization");
   c_function_class(string_greater_2) = c_function_class(f);
 
 
@@ -26741,9 +26741,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "string<?")));
   c_function_chooser(f) = string_less_chooser;
 
-  string_less_s_ic = s7_make_function(sc, "string<?", g_string_less_s_ic, 2, 0, false, "experimental string<? optimization");
+  string_less_s_ic = s7_make_function(sc, "string<?", g_string_less_s_ic, 2, 0, false, "string<? optimization");
   c_function_class(string_less_s_ic) = c_function_class(f);
-  string_less_2 = s7_make_function(sc, "string<?", g_string_less_2, 2, 0, false, "experimental string<? optimization");
+  string_less_2 = s7_make_function(sc, "string<?", g_string_less_2, 2, 0, false, "string<? optimization");
   c_function_class(string_less_2) = c_function_class(f);
 
 
@@ -26751,9 +26751,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "string<=?")));
   c_function_chooser(f) = string_leq_chooser;
 
-  string_leq_s_ic = s7_make_function(sc, "string<=?", g_string_leq_s_ic, 2, 0, false, "experimental string<=? optimization");
+  string_leq_s_ic = s7_make_function(sc, "string<=?", g_string_leq_s_ic, 2, 0, false, "string<=? optimization");
   c_function_class(string_leq_s_ic) = c_function_class(f);
-  string_leq_2 = s7_make_function(sc, "string<=?", g_string_leq_2, 2, 0, false, "experimental string<=? optimization");
+  string_leq_2 = s7_make_function(sc, "string<=?", g_string_leq_2, 2, 0, false, "string<=? optimization");
   c_function_class(string_leq_2) = c_function_class(f);
 
 
@@ -26761,9 +26761,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "string>=?")));
   c_function_chooser(f) = string_geq_chooser;
 
-  string_geq_s_ic = s7_make_function(sc, "string>=?", g_string_geq_s_ic, 2, 0, false, "experimental string>=? optimization");
+  string_geq_s_ic = s7_make_function(sc, "string>=?", g_string_geq_s_ic, 2, 0, false, "string>=? optimization");
   c_function_class(string_geq_s_ic) = c_function_class(f);
-  string_geq_2 = s7_make_function(sc, "string>=?", g_string_geq_2, 2, 0, false, "experimental string>=? optimization");
+  string_geq_2 = s7_make_function(sc, "string>=?", g_string_geq_2, 2, 0, false, "string>=? optimization");
   c_function_class(string_geq_2) = c_function_class(f);
 
 
@@ -26771,9 +26771,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "string-ci=?")));
   c_function_chooser(f) = string_ci_equal_chooser;
 
-  string_ci_equal_s_ic = s7_make_function(sc, "string-ci=?", g_string_ci_equal_s_ic, 2, 0, false, "experimental string-ci=? optimization");
+  string_ci_equal_s_ic = s7_make_function(sc, "string-ci=?", g_string_ci_equal_s_ic, 2, 0, false, "string-ci=? optimization");
   c_function_class(string_ci_equal_s_ic) = c_function_class(f);
-  string_ci_equal_2 = s7_make_function(sc, "string-ci=?", g_string_ci_equal_2, 2, 0, false, "experimental string-ci=? optimization");
+  string_ci_equal_2 = s7_make_function(sc, "string-ci=?", g_string_ci_equal_2, 2, 0, false, "string-ci=? optimization");
   c_function_class(string_ci_equal_2) = c_function_class(f);
 
 
@@ -26781,9 +26781,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "string-ci>?")));
   c_function_chooser(f) = string_ci_greater_chooser;
 
-  string_ci_greater_s_ic = s7_make_function(sc, "string-ci>?", g_string_ci_greater_s_ic, 2, 0, false, "experimental string-ci>? optimization");
+  string_ci_greater_s_ic = s7_make_function(sc, "string-ci>?", g_string_ci_greater_s_ic, 2, 0, false, "string-ci>? optimization");
   c_function_class(string_ci_greater_s_ic) = c_function_class(f);
-  string_ci_greater_2 = s7_make_function(sc, "string-ci>?", g_string_ci_greater_2, 2, 0, false, "experimental string-ci>? optimization");
+  string_ci_greater_2 = s7_make_function(sc, "string-ci>?", g_string_ci_greater_2, 2, 0, false, "string-ci>? optimization");
   c_function_class(string_ci_greater_2) = c_function_class(f);
 
 
@@ -26791,9 +26791,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "string-ci<?")));
   c_function_chooser(f) = string_ci_less_chooser;
 
-  string_ci_less_s_ic = s7_make_function(sc, "string-ci<?", g_string_ci_less_s_ic, 2, 0, false, "experimental string-ci<? optimization");
+  string_ci_less_s_ic = s7_make_function(sc, "string-ci<?", g_string_ci_less_s_ic, 2, 0, false, "string-ci<? optimization");
   c_function_class(string_ci_less_s_ic) = c_function_class(f);
-  string_ci_less_2 = s7_make_function(sc, "string-ci<?", g_string_ci_less_2, 2, 0, false, "experimental string-ci<? optimization");
+  string_ci_less_2 = s7_make_function(sc, "string-ci<?", g_string_ci_less_2, 2, 0, false, "string-ci<? optimization");
   c_function_class(string_ci_less_2) = c_function_class(f);
 
 
@@ -26801,9 +26801,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "string-ci<=?")));
   c_function_chooser(f) = string_ci_leq_chooser;
 
-  string_ci_leq_s_ic = s7_make_function(sc, "string-ci<=?", g_string_ci_leq_s_ic, 2, 0, false, "experimental string-ci<=? optimization");
+  string_ci_leq_s_ic = s7_make_function(sc, "string-ci<=?", g_string_ci_leq_s_ic, 2, 0, false, "string-ci<=? optimization");
   c_function_class(string_ci_leq_s_ic) = c_function_class(f);
-  string_ci_leq_2 = s7_make_function(sc, "string-ci<=?", g_string_ci_leq_2, 2, 0, false, "experimental string-ci<=? optimization");
+  string_ci_leq_2 = s7_make_function(sc, "string-ci<=?", g_string_ci_leq_2, 2, 0, false, "string-ci<=? optimization");
   c_function_class(string_ci_leq_2) = c_function_class(f);
 
 
@@ -26811,9 +26811,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "string-ci>=?")));
   c_function_chooser(f) = string_ci_geq_chooser;
 
-  string_ci_geq_s_ic = s7_make_function(sc, "string-ci>=?", g_string_ci_geq_s_ic, 2, 0, false, "experimental string-ci>=? optimization");
+  string_ci_geq_s_ic = s7_make_function(sc, "string-ci>=?", g_string_ci_geq_s_ic, 2, 0, false, "string-ci>=? optimization");
   c_function_class(string_ci_geq_s_ic) = c_function_class(f);
-  string_ci_geq_2 = s7_make_function(sc, "string-ci>=?", g_string_ci_geq_2, 2, 0, false, "experimental string-ci>=? optimization");
+  string_ci_geq_2 = s7_make_function(sc, "string-ci>=?", g_string_ci_geq_2, 2, 0, false, "string-ci>=? optimization");
   c_function_class(string_ci_geq_2) = c_function_class(f);
 
 
@@ -26821,7 +26821,7 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "abs")));
   c_function_chooser(f) = abs_chooser;
 #if (!WITH_GMP)
-  abs_sub_ss = s7_make_function(sc, "abs", g_abs_sub_ss, 2, 0, false, "experimental abs(- a b) optimization");
+  abs_sub_ss = s7_make_function(sc, "abs", g_abs_sub_ss, 2, 0, false, "abs(- a b) optimization");
   c_function_class(abs_sub_ss) = c_function_class(f);
 #endif
 
@@ -26830,9 +26830,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "vector-ref")));
   c_function_chooser(f) = vector_ref_chooser;
 
-  vector_ref_ic = s7_make_function(sc, "vector-ref", g_vector_ref_ic, 2, 0, false, "experimental vector-ref optimization");
+  vector_ref_ic = s7_make_function(sc, "vector-ref", g_vector_ref_ic, 2, 0, false, "vector-ref optimization");
   c_function_class(vector_ref_ic) = c_function_class(f);
-  vector_ref_2 = s7_make_function(sc, "vector-ref", g_vector_ref_2, 2, 0, false, "experimental vector-ref optimization");
+  vector_ref_2 = s7_make_function(sc, "vector-ref", g_vector_ref_2, 2, 0, false, "vector-ref optimization");
   c_function_class(vector_ref_2) = c_function_class(f);
 
 
@@ -26840,7 +26840,7 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "hash-table-ref")));
   c_function_chooser(f) = hash_table_ref_chooser;
 
-  hash_table_ref_2 = s7_make_function(sc, "hash-table-ref", g_hash_table_ref_2, 2, 0, false, "experimental hash-table-ref optimization");
+  hash_table_ref_2 = s7_make_function(sc, "hash-table-ref", g_hash_table_ref_2, 2, 0, false, "hash-table-ref optimization");
   c_function_class(hash_table_ref_2) = c_function_class(f);
 
 
@@ -26849,33 +26849,33 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "not")));
   c_function_chooser(f) = not_chooser;
 
-  not_is_pair = s7_make_function(sc, "not", g_not_is_pair, 1, 0, false, "experimental not optimization");
+  not_is_pair = s7_make_function(sc, "not", g_not_is_pair, 1, 0, false, "not optimization");
   c_function_class(not_is_pair) = c_function_class(f);
-  not_is_null = s7_make_function(sc, "not", g_not_is_null, 1, 0, false, "experimental not optimization");
+  not_is_null = s7_make_function(sc, "not", g_not_is_null, 1, 0, false, "not optimization");
   c_function_class(not_is_null) = c_function_class(f);
-  not_is_list = s7_make_function(sc, "not", g_not_is_list, 1, 0, false, "experimental not optimization");
+  not_is_list = s7_make_function(sc, "not", g_not_is_list, 1, 0, false, "not optimization");
   c_function_class(not_is_list) = c_function_class(f);
-  not_is_symbol = s7_make_function(sc, "not", g_not_is_symbol, 1, 0, false, "experimental not optimization");
+  not_is_symbol = s7_make_function(sc, "not", g_not_is_symbol, 1, 0, false, "not optimization");
   c_function_class(not_is_symbol) = c_function_class(f);
-  not_is_number = s7_make_function(sc, "not", g_not_is_number, 1, 0, false, "experimental not optimization");
+  not_is_number = s7_make_function(sc, "not", g_not_is_number, 1, 0, false, "not optimization");
   c_function_class(not_is_number) = c_function_class(f);
-  not_is_real = s7_make_function(sc, "not", g_not_is_real, 1, 0, false, "experimental not optimization");
+  not_is_real = s7_make_function(sc, "not", g_not_is_real, 1, 0, false, "not optimization");
   c_function_class(not_is_real) = c_function_class(f);
-  not_is_rational = s7_make_function(sc, "not", g_not_is_rational, 1, 0, false, "experimental not optimization");
+  not_is_rational = s7_make_function(sc, "not", g_not_is_rational, 1, 0, false, "not optimization");
   c_function_class(not_is_rational) = c_function_class(f);
-  not_is_integer = s7_make_function(sc, "not", g_not_is_integer, 1, 0, false, "experimental not optimization");
+  not_is_integer = s7_make_function(sc, "not", g_not_is_integer, 1, 0, false, "not optimization");
   c_function_class(not_is_integer) = c_function_class(f);
-  not_is_boolean = s7_make_function(sc, "not", g_not_is_boolean, 1, 0, false, "experimental not optimization");
+  not_is_boolean = s7_make_function(sc, "not", g_not_is_boolean, 1, 0, false, "not optimization");
   c_function_class(not_is_boolean) = c_function_class(f);
-  not_is_string = s7_make_function(sc, "not", g_not_is_string, 1, 0, false, "experimental not optimization");
+  not_is_string = s7_make_function(sc, "not", g_not_is_string, 1, 0, false, "not optimization");
   c_function_class(not_is_string) = c_function_class(f);
-  not_is_char = s7_make_function(sc, "not", g_not_is_char, 1, 0, false, "experimental not optimization");
+  not_is_char = s7_make_function(sc, "not", g_not_is_char, 1, 0, false, "not optimization");
   c_function_class(not_is_char) = c_function_class(f);
-  not_is_eof = s7_make_function(sc, "not", g_not_is_eof, 1, 0, false, "experimental not optimization");
+  not_is_eof = s7_make_function(sc, "not", g_not_is_eof, 1, 0, false, "not optimization");
   c_function_class(not_is_eof) = c_function_class(f);
-  not_is_eq_ss = s7_make_function(sc, "not", g_not_is_eq_ss, 1, 0, false, "experimental not optimization");
+  not_is_eq_ss = s7_make_function(sc, "not", g_not_is_eq_ss, 1, 0, false, "not optimization");
   c_function_class(not_is_eq_ss) = c_function_class(f);
-  not_is_eq_sq = s7_make_function(sc, "not", g_not_is_eq_sq, 1, 0, false, "experimental not optimization");
+  not_is_eq_sq = s7_make_function(sc, "not", g_not_is_eq_sq, 1, 0, false, "not optimization");
   c_function_class(not_is_eq_sq) = c_function_class(f);
 
 
@@ -26883,9 +26883,9 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "pair?")));
   c_function_chooser(f) = is_pair_chooser;
 
-  is_pair_car = s7_make_function(sc, "pair?", g_is_pair_car, 1, 0, false, "experimental pair? optimization");
+  is_pair_car = s7_make_function(sc, "pair?", g_is_pair_car, 1, 0, false, "pair? optimization");
   c_function_class(is_pair_car) = c_function_class(f);
-  is_pair_cdr = s7_make_function(sc, "pair?", g_is_pair_cdr, 1, 0, false, "experimental pair? optimization");
+  is_pair_cdr = s7_make_function(sc, "pair?", g_is_pair_cdr, 1, 0, false, "pair? optimization");
   c_function_class(is_pair_cdr) = c_function_class(f);
 
 
@@ -26893,7 +26893,7 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "eq?")));
   c_function_chooser(f) = is_eq_chooser;
 
-  is_eq_car = s7_make_function(sc, "eq?", g_is_eq_car, 2, 0, false, "experimental eq? optimization");
+  is_eq_car = s7_make_function(sc, "eq?", g_is_eq_car, 2, 0, false, "eq? optimization");
   c_function_class(is_eq_car) = c_function_class(f);
 
 
@@ -26901,7 +26901,7 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "zero?")));
   c_function_chooser(f) = is_zero_chooser;
 
-  is_zero_logand_s_ash_cs = s7_make_function(sc, "zero?", g_is_zero_logand_s_ash_cs, 1, 0, false, "experimental zero? optimization");
+  is_zero_logand_s_ash_cs = s7_make_function(sc, "zero?", g_is_zero_logand_s_ash_cs, 1, 0, false, "zero? optimization");
   c_function_class(is_zero_logand_s_ash_cs) = c_function_class(f);
 
 
@@ -26909,11 +26909,11 @@ static void init_choosers(s7_scheme *sc)
   f = symbol_value(symbol_global_slot(make_symbol(sc, "memq")));
   c_function_chooser(f) = memq_chooser;
   
-  memq_3 = s7_make_function(sc, "memq", g_memq_3, 2, 0, false, "experimental memq optimization");
+  memq_3 = s7_make_function(sc, "memq", g_memq_3, 2, 0, false, "memq optimization");
   c_function_class(memq_3) = c_function_class(f);
-  memq_4 = s7_make_function(sc, "memq", g_memq_4, 2, 0, false, "experimental memq optimization");
+  memq_4 = s7_make_function(sc, "memq", g_memq_4, 2, 0, false, "memq optimization");
   c_function_class(memq_4) = c_function_class(f);
-  memq_any = s7_make_function(sc, "memq", g_memq_any, 2, 0, false, "experimental memq optimization");
+  memq_any = s7_make_function(sc, "memq", g_memq_any, 2, 0, false, "memq optimization");
   c_function_class(memq_any) = c_function_class(f);
 }
 
@@ -27111,8 +27111,22 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		      ecdr(car(x)) = func;
 		      return(false); 
 		    }
-		  /* we check args_match above, so I guess closure* is the only other useful case here
-		   */
+		  else
+		    {
+		      if (s7_is_vector(func))
+			{
+			  set_optimized(car(x));
+			  if (s7_is_symbol(cadar(x)))
+			    set_optimize_data(car(x), OP_VECTOR_S);
+			  else set_optimize_data(car(x), OP_VECTOR_C);
+			  /* ecdr ignored in this case */
+			  return(true);
+			}
+
+		      /* perhaps also closure*?
+		       */
+
+		    }
 		}
 	    }
 	  
@@ -27181,11 +27195,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			{
 			  if (is_safe_procedure(func))
 			    {
-			      /*
-			      fprintf(stderr, "safe of bad 1: %s\n", DISPLAY_80(car(x)));
-			      if (is_optimized(cadar(x)))
-				fprintf(stderr, "  is opt: %s\n", opt_names[optimize_data(cadar(x))]);
-			      */
+			      /* fprintf(stderr, "safe of bad 1: %s\n", DISPLAY_80(car(x))); */
 			      
 			      if (optimize_data_match(cadar(x), OP_SAFE_CLOSURE_SS))
 				{
@@ -27204,6 +27214,24 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				  ecdr(car(x)) = c_function_chooser(func)(sc, func, args, car(x));
 				  return(false); 
 				}
+#if 0
+			      /* clm2xen wants to try to handle (oscil (oscs i)) and similar cases,
+			       *   even though they might be problematic in general.  If an outside
+			       *   chooser returns anything other than func here, we'll assume
+			       *   it is OP_SAFE_C_C and safe -- live dangerously!
+			       */
+			      ecdr(car(x)) = c_function_chooser(func)(sc, func, args, car(x));
+			      if (ecdr(car(x)) != func)
+				{
+				  set_optimized(car(x));
+				  set_optimize_data(car(x), OP_SAFE_C_C);
+				  return(true);
+				}
+			      /* but... this requires that all the outside choosers know how to handle
+			       *   unsafe args like (values ...)!  
+			       */
+#endif
+			      
 			    }
 			  else
 			    {
@@ -28726,12 +28754,30 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer x)
 	      }
 	      break;
 
-#if 0
 	    case OP_DO:
-	      {
-		
-	      }
-#endif
+	      /* (do (...) (...) ...) */
+	      if (!is_pair(cddr(x)))
+		return(false);
+	      if (!body_is_safe(sc, cdddr(x)))
+		return(false);
+	      if (is_pair(cadr(x)))
+		{
+		  s7_pointer vars;
+		  for (vars = cadr(x); is_pair(vars); vars = cdr(vars))
+		    {
+		      if ((is_pair(cadr(vars))) &&
+			  (!form_is_safe(sc, cadr(vars))))
+			return(false);
+		      if ((is_pair(cddr(vars))) &&
+			  (is_pair(caddr(vars))) &&
+			  (!form_is_safe(sc, caddr(vars))))
+			return(false);
+		    }
+		}
+	      if ((is_pair(caddr(x))) &&
+		  (!body_is_safe(sc, caddr(x))))
+		return(false);
+	      break;
 	      
 	    case OP_SET:
 	      return(false);
@@ -28747,6 +28793,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer x)
 	  (is_unsafe(x)))
 	return(false);
     }
+  /* fprintf(stderr, "safe: %s\n", DISPLAY(x)); */
   return(true);
 }
 
@@ -32543,7 +32590,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			s7_Int index;
 			index = s7_integer(cadr(code));
-			if (index < vector_length(v))
+			if ((index < vector_length(v)) &&
+			    (index >= 0))
 			  {
 			    sc->value = vector_elements(v)[index];
 			    goto START;
@@ -32567,7 +32615,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			s7_Int index;
 			index = s7_integer(ind);
-			if (index < vector_length(v))
+			if ((index < vector_length(v)) &&
+			    (index >= 0))
 			  {
 			    sc->value = vector_elements(v)[index];
 			    goto START;
@@ -32587,7 +32636,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      break;
 
 		    index = s7_integer(cadr(code));
-		    if (index < string_length(s))
+		    if ((index < string_length(s)) &&
+			(index >= 0))
 		      {
 			sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 			goto START;
@@ -32609,7 +32659,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      break;
 
 		    index = s7_integer(ind);
-		    if (index < string_length(s))
+		    if ((index < string_length(s)) &&
+			(index >= 0))
 		      {
 			sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 			goto START;

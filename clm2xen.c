@@ -10268,6 +10268,8 @@ static s7_pointer clm_abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 
 static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  /* fprintf(stderr, "oscil: %s\n", DISPLAY(expr)); */
+
   if ((args == 1) &&
       (s7_is_symbol(cadr(expr))))
     {
