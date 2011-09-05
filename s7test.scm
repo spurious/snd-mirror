@@ -10742,6 +10742,7 @@ this prints:
 (test (let ((sum 0)) (for-each (lambda (a . b) (set! sum (+ sum a))) '(1 2 3)) sum) 6)
 (test (let ((sum 0) (lst (list 1 2 3))) (for-each (lambda (a b c) (set! sum (+ sum a b c))) lst lst lst) sum) 18)
 (test (let ((sum 0) (lst (vector 1 2 3))) (for-each (lambda (a b c) (set! sum (+ sum a b c))) lst lst lst) sum) 18)
+(test (let ((v (vector 1 2 3))) (for-each vector-set! (list v v v) (list 0 1 2) (list 32 33 34)) v) #(32 33 34))
 
 (test (let ((d 0))
 	(for-each (let ((a 0))
@@ -11379,6 +11380,15 @@ this prints:
 	       (string #\a #\b #\c)
 	       (list 'e 'f 'g))))
   (test (hi) '(1 #\a e)))
+
+(let ((ctr -1)) 
+  (apply begin (map (lambda (symbol) 
+		      (set! ctr (+ ctr 1))
+		      (list 'define symbol ctr))
+		    '(_zero_ _one_ _two_)))
+  (+ _zero_ _one_ _two_))
+
+
 
 
 #|
@@ -61516,6 +61526,8 @@ etc....
    ("1+i" 1+1i) ("1-i" 1-1i) 
    ("#e1e1" 10) ("#i1e1+i" 10.0+1.0i)
    ))
+
+;;; some schemes are case insensitive throughout -- they accept 0+I, #X11 etc
 
 (for-each
  (lambda (arg)

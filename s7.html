@@ -1051,8 +1051,8 @@ By the way, bacros solve part of our original problem:
      (#_+ a ,(eval b)))) ; eval rather than symbol-&gt;value so that 'b' can be any expression
 </pre>
 
-<p>Guaranteed hygienic!  
-I'm not sure it's a big improvement over immaculos or gensyms, but it works.
+<p>We could also (for example), <code>(define-constant [+] +)</code> when we
+start, then only use '[+] in our macros.
 </p>
 
 
@@ -4422,6 +4422,14 @@ These symbols are not just a silly optimization of string comparison:
 (let ()
   (define (hi a) (+ a x))
   ((apply let '((x 32)) (list (procedure-source hi))) 12)) ; one function, many closures?
+
+(let ((ctr -1))  ; (enum zero one two) but without using a macro
+  (apply begin 
+    (map (lambda (symbol) 
+           (set! ctr (+ ctr 1)) 
+           (list 'define symbol ctr)) ; e.g. '(define zero 0) 
+         '(zero one two)))
+  (+ zero one two))
 </pre>
 
 <p>If you apply define or define-macro, the returned value is a symbol, so to apply the

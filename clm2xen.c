@@ -8379,6 +8379,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
        Val = s7_integer(cdr(_Val_)); } while (0)
 
 
+/* TODO: add (gen (vector-ref s s) | s | direct) */
 
 #define GEN_1(Type, Func) \
   static s7_pointer Type ## _1; \
@@ -9400,6 +9401,33 @@ static s7_pointer g_indirect_outa_2(s7_scheme *sc, s7_pointer args)
   return(out_any_2(cdr(clm_output_slot), pos, s7_number_to_real(x), 0, "outa", x));
 }
 
+static s7_pointer indirect_outa_sub_2;
+static s7_pointer g_indirect_outa_sub_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int pos;
+  double x, y;
+  bool its_safe;
+  its_safe = s7_in_safe_do(sc);
+  
+  GET_INTEGER(car(args), outa, its_safe, pos);
+  GET_REAL(cadr(cadr(args)), outa, its_safe, x);
+  GET_REAL(caddr(cadr(args)), outa, its_safe, y);
+  return(out_any_2(cdr(clm_output_slot), pos, x - y, 0, "outa", xen_zero));
+}
+
+static s7_pointer indirect_outa_ss;
+static s7_pointer g_indirect_outa_ss(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int pos;
+  double x;
+  bool its_safe;
+  its_safe = s7_in_safe_do(sc);
+  
+  GET_INTEGER(car(args), outa, its_safe, pos);
+  GET_REAL(cadr(args), outa, its_safe, x);
+  return(out_any_2(cdr(clm_output_slot), pos, x, 0, "outa", xen_zero));
+}
+
 static s7_pointer indirect_outa_add_2;
 static s7_pointer g_indirect_outa_add_2(s7_scheme *sc, s7_pointer args)
 {
@@ -9903,7 +9931,7 @@ static bool expr_is_clm_gen(s7_pointer expr)
 
 static s7_pointer env_symbol, all_pass_symbol, ina_symbol, comb_symbol, polywave_symbol, triangle_wave_symbol;
 static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol;
-static s7_pointer multiply_symbol;
+static s7_pointer multiply_symbol, vector_ref_symbol;
 
 static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 
@@ -11166,13 +11194,19 @@ static s7_pointer locsig_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
   return(f);
 }
 
-/* TODO: outa(etc) (* s s) (+ (* c|s s) ...)
- */
 
 static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
     {
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_symbol(caddr(expr))))
+	{
+	  /* fprintf(stderr, "\nouta ss: %s\n", DISPLAY(expr)); */
+	  s7_function_choice_set_direct(expr);
+	  return(indirect_outa_ss);
+	}
+
       if ((s7_is_symbol(cadr(expr))) &&
 	  (s7_is_pair(caddr(expr))))
 	{
@@ -11195,6 +11229,16 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	      s7_function_choice_set_direct(expr);
 	      return(indirect_outa_2);
 	    }
+	  
+	  if ((car(caddr(expr)) == subtract_symbol) &&
+	      (s7_list_length(sc, caddr(expr)) == 3) &&
+	      (s7_is_symbol(cadr(caddr(expr)))) &&
+	      (s7_is_symbol(caddr(caddr(expr)))))
+	    {
+	      /* fprintf(stderr, "\nouta sub: %s\n", DISPLAY(expr)); */
+	      s7_function_choice_set_direct(expr);
+	      return(indirect_outa_sub_2);
+	    }
 	}
       if ((s7_is_pair(cadr(expr))) &&
 	  (car(cadr(expr)) == add_symbol) &&
@@ -11209,6 +11253,7 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	  return(indirect_outa_add_2);
 	}
     }
+  /* fprintf(stderr, "\nouta nope: %s\n", DISPLAY(expr)); */
   return(f);
 }
 
@@ -11278,6 +11323,7 @@ static void init_choosers(s7_scheme *sc)
   unsigned int gen_class;
 
   env_symbol = s7_make_symbol(sc, "env");
+  vector_ref_symbol = s7_make_symbol(sc, "vector-ref");
   all_pass_symbol = s7_make_symbol(sc, "all-pass");
   ina_symbol = s7_make_symbol(sc, "ina");
   comb_symbol = s7_make_symbol(sc, "comb");
@@ -11952,6 +11998,10 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(indirect_outa_2, gen_class);
   indirect_outa_add_2 = s7_make_function(sc, "outa", g_indirect_outa_add_2, 2, 0, false, "outa optimization");
   s7_function_set_class(indirect_outa_add_2, gen_class);
+  indirect_outa_sub_2 = s7_make_function(sc, "outa", g_indirect_outa_sub_2, 2, 0, false, "outa optimization");
+  s7_function_set_class(indirect_outa_sub_2, gen_class);
+  indirect_outa_ss = s7_make_function(sc, "outa", g_indirect_outa_ss, 2, 0, false, "outa optimization");
+  s7_function_set_class(indirect_outa_ss, gen_class);
 
   f = s7_name_to_value(sc, "ina");
   s7_function_set_chooser(f, ina_chooser);
@@ -12461,7 +12511,7 @@ static void mus_xen_init(void)
 #endif
 
 #if HAVE_SCHEME && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!_MSC_VER)
-  XEN_DEFINE_PROCEDURE(S_get_internal_real_time, g_get_internal_real_time_w, 0, 0, 0, H_get_internal_real_time);
+  XEN_DEFINE_SAFE_PROCEDURE(S_get_internal_real_time, g_get_internal_real_time_w, 0, 0, 0, H_get_internal_real_time);
   XEN_DEFINE_CONSTANT(S_internal_time_units_per_second, 1, "units used by " S_get_internal_real_time);
 #endif
 
