@@ -1051,8 +1051,8 @@ By the way, bacros solve part of our original problem:
      (#_+ a ,(eval b)))) ; eval rather than symbol-&gt;value so that 'b' can be any expression
 </pre>
 
-<p>We could also (for example), <code>(define-constant [+] +)</code> when we
-start, then only use '[+] in our macros.
+<p>We could also, for example, <code>(define-constant [+] +)</code> when we
+start, then only use [+] in our macros.  
 </p>
 
 
@@ -2872,10 +2872,10 @@ This is similar to trying to read from a closed input port.
 ~}        end iteration
 ~^        jump out of iteration
 ~*        ignore the current argument
-~A        object-&gt;string as in display
-~S        object-&gt;string as in write
 ~C        print as character
 ~P        insert 's' if current argument is not 1 or 1.0 (use ~@P for "ies" or "y")
+~A        object-&gt;string as in display
+~S        object-&gt;string as in write
 ~B        number-&gt;string in base 2
 ~O        number-&gt;string in base 8
 ~D        number-&gt;string in base 10
@@ -2886,7 +2886,7 @@ This is similar to trying to read from a closed input port.
 ~T        insert spaces (padding)
 </pre>
 
-<p>The last eight take the usual numeric arguments to specify field width and precision.
+<p>The last ten take the usual numeric arguments to specify field width and precision.
 </p>
 <p>
 <code>(format #f ...)</code> simply returns the formatted string; <code>(format #t ...)</code>

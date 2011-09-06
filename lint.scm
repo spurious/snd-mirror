@@ -564,21 +564,7 @@
       ;; --------------------------------------------------------------------------------
       
       (define (truncated-list->string form)
-	;; return form -> string with limits on its length
-	(let* ((str (object->string form))
-	       (len (string-length str)))
-	  (if (< len 40)
-	      (format #f " ~A" str)
-	      (if (<= len 80)
-		  (format #f "~%        ~A" str)
-		  (call-with-exit
-		   (lambda (return)
-		     (do ((i 80 (- i 1)))
-			 ((= i 40) 
-			  (format #f "~%        ~A..." str))
-		       (if (char-whitespace? (string-ref str i))
-			   (return (format #f "~%        ~A..." (substring str 0 (+ i 1))))))))))))
-      
+	(format #f "~%        ~80A" form))
       
       (define (lists->string f1 f2)
 	;; same but 2 strings that may need to be lined up vertically

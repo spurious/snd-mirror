@@ -201,7 +201,7 @@
 #endif
 
 #define DISPLAY(Obj) s7_object_to_c_string(sc, Obj)
-#define DISPLAY_80(Obj) object_to_truncated_string(sc, Obj)
+#define DISPLAY_80(Obj) object_to_truncated_string(sc, Obj, 80)
 
 
 /* -------------------------------------------------------------------------------- */
@@ -1457,7 +1457,7 @@ static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d);
 static bool args_match(s7_scheme *sc, s7_pointer x, int args);
 static s7_pointer read_error(s7_scheme *sc, const char *errmsg);
 static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj);
-static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p);
+static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 static bool is_pws(s7_pointer obj);
 
 static bool tracing, trace_all;
@@ -4428,6 +4428,7 @@ bool s7_is_real(s7_pointer p)
     return(false);
   
   return(number_type(p) < NUM_COMPLEX);
+  /* TODO: and not nan? */
 }
 
 
@@ -4452,6 +4453,7 @@ bool s7_is_ratio(s7_pointer p)
 bool s7_is_complex(s7_pointer p)
 {
   return(s7_is_number(p));
+  /* TODO: and not nan */
 }
 
 #endif 
@@ -10690,6 +10692,8 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
 
 
 #if (!WITH_GMP)
+/* here A Jaffer uses (and (number? n) (not (complex? n))) which seems better than this version
+ */
 static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_nan "(nan? obj) returns #t if obj is a NaN"
@@ -10759,8 +10763,6 @@ static s7_pointer g_is_complex(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_complex "(complex? obj) returns #t if obj is a number"
   return(make_boolean(sc, s7_is_complex(car(args))));
-
-  /* complex? is currently the same as number? */
 }
 
 
@@ -16521,6 +16523,8 @@ static s7_pointer g_memq_4(s7_scheme *sc, s7_pointer args)
   s7_pointer x, obj;
   x = cadr(args);
   obj = car(args);
+  /* using expression_data here for cadr(args) and doing a linear search is slower!
+   */
   while (true)
     {
       if (obj == car(x)) return(x);
@@ -17690,17 +17694,11 @@ If its first argument is a list, the list is copied (despite the '!')."
       if ((is_safe_procedure(lessp)) &&
 	  (is_c_function(lessp)))
 	{
-	  int gc_loc;
 	  compare_sc = sc;
 	  compare_func = c_function_call(lessp);
-	  compare_args = list_2(sc, sc->F, sc->F);
-	  gc_loc = s7_gc_protect(sc, compare_args);
+	  compare_args = sc->T2_1;
 	  qsort((void *)s7_vector_elements(data), len, sizeof(s7_pointer), vector_compare);
-	  s7_gc_unprotect_at(sc, gc_loc);
 	  return(data);
-
-	  /* PERHAPS: other cases might be doable here: if optimized/safe, use sc->T2_1 etc
-	   */
 	}
       break;
 
@@ -20360,17 +20358,17 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
 		 ((f->get_req_args + f->get_opt_args) >= args));
 	}
 
-    case T_PAIR:
-    case T_VECTOR:
-    case T_HASH_TABLE:
     case T_STRING:
-      return(args == 1); /* TODO: this is a stopgap */
-
+    case T_HASH_TABLE:
+      return(args == 1);
       
-      /* pws is a special case because the direct value is the getter procedure 
-       *   (let ((p (make-procedure-with-setter < > ))) (procedure? p)) -> #t
-       *   (procedure? ((cadr (make-type)) (lambda () 1))) -> #f
-       */
+    case T_PAIR:
+      return(true);
+
+    case T_VECTOR:
+      if (vector_is_multidimensional(x))
+	return(args <= vector_ndims(x));
+      return(args == 1);
     }
   return(false);
 }
@@ -21759,6 +21757,8 @@ static bool s7_is_one_or_big_one(s7_pointer p);
 #else
 #define s7_is_one_or_big_one(Num) s7_is_one(Num)
 #endif
+static char *truncate_string(char *form, int len, bool use_write);
+
 
 static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args, s7_pointer *next_arg, int fdepth)
 {
@@ -21877,37 +21877,6 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  fdat->args = cdr(fdat->args);
 		  break;
 		  
-		case 'A': case 'a':                 /* -------- object->string -------- */
-		case 'C': case 'c':
-		case 'S': case 's':
-		  {
-		    shared_info *ci = NULL;
-		    s7_pointer obj;
-
-		    /* slib suggests num arg to ~A and ~S to truncate: ~20A sends only (up to) 20 chars of object->string result,
-		     *   but that could easily(?) be handled with substring and an embedded format arg.
-		     */
-
-		    if (is_null(fdat->args))
-		      return(format_error(sc, "missing argument", str, args, fdat));
-		    i++;
-		    obj = car(fdat->args);
-
-		    if (((str[i] == 'C') || (str[i] == 'c')) &&
-			(!s7_is_character(obj)))
-		      return(format_error(sc, "'C' directive requires a character argument", str, args, fdat));
-
-		    if (has_structure(obj))
-		      ci = make_shared_info(sc, obj);
-		    tmp = object_to_c_string_with_circle_check(sc, obj, (str[i] == 'S') || (str[i] == 's'), WITH_ELLIPSES, ci);
-		    if (ci) free_shared_info(ci);
-
-		    format_append_string(fdat, tmp);
-		    if (tmp) free(tmp);
-		    fdat->args = cdr(fdat->args);
-		  }
-		  break;
-		  
 		case '{':                           /* -------- iteration -------- */
 		  {
 		    int k, curly_len = -1, curly_nesting = 1;
@@ -21987,6 +21956,25 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  
 		case '}':
 		  return(format_error(sc, "unmatched '}'", str, args, fdat));
+
+		case 'C': case 'c':
+		  {
+		    s7_pointer obj;
+		    
+		    if (is_null(fdat->args))
+		      return(format_error(sc, "~C: missing argument", str, args, fdat));
+		    i++;
+		    obj = car(fdat->args);
+		    
+		    if (!s7_is_character(obj))
+		      return(format_error(sc, "'C' directive requires a character argument", str, args, fdat));
+		    
+		    tmp = atom_to_c_string(sc, obj, false);
+		    format_append_string(fdat, tmp);
+		    if (tmp) free(tmp);
+		    fdat->args = cdr(fdat->args);
+		  }
+		  break;
 		  
 		  /* -------- numeric args -------- */
 		case '0': case '1': case '2': case '3': case '4': case '5':
@@ -21998,8 +21986,12 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		case 'F': case 'f':
 		case 'G': case 'g':
 		case 'O': case 'o':
-		case 'T': case 't':
 		case 'X': case 'x':
+
+		case 'A': case 'a': 
+		case 'S': case 's':
+		  
+		case 'T': case 't':
 		  {
 		    int width = -1, precision = -1;
 		    char pad = ' ';
@@ -22024,16 +22016,37 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			    /* is (let ((str "~12,'xD")) (set! (str 5) #\null) (format #f str 1)) an error? */
 			  }
 		      }
-		    if ((str[i] != 'T') && (str[i] != 't'))
-		      {
-			if (is_null(fdat->args))
-			  return(format_error(sc, "missing argument", str, args, fdat));
-			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "numeric argument required", str, args, fdat));
-		      }
 
 		    switch (str[i])
 		      {
+			/* object->string */
+		      case 'A': case 'a':
+		      case 'S': case 's':
+			{
+			  shared_info *ci = NULL;
+			  s7_pointer obj;
+			  
+			  if (is_null(fdat->args))
+			    return(format_error(sc, "missing argument", str, args, fdat));
+			  if (precision != -1)
+			    return(format_error(sc, "extra numeric argument", str, args, fdat));
+
+			  obj = car(fdat->args);
+			  
+			  if (has_structure(obj))
+			    ci = make_shared_info(sc, obj);
+			  tmp = object_to_c_string_with_circle_check(sc, obj, (str[i] == 'S') || (str[i] == 's'), WITH_ELLIPSES, ci);
+			  if (ci) free_shared_info(ci);
+			  
+			  if (width > 0) truncate_string(tmp, width, ((str[i] == 'S') || (str[i] == 's')));
+
+			  format_append_string(fdat, tmp);
+			  if (tmp) free(tmp);
+			  fdat->args = cdr(fdat->args);
+			}
+			break;
+
+
 			/* -------- pad to column -------- */
 			/*   are columns numbered from 1 or 0?  there seems to be disagreement about this directive */
 			/*   does "space over to" mean including? */
@@ -22065,16 +22078,32 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			  }
 			break;
 
+
 			/* -------- numbers -------- */
 		      case 'F': case 'f':
+			if (is_null(fdat->args))
+			  return(format_error(sc, "~F: missing argument", str, args, fdat));
+			if (!(s7_is_number(car(fdat->args))))
+			  return(format_error(sc, "~F: numeric argument required", str, args, fdat));
+
 			format_number(sc, fdat, 10, width, precision, 'f', pad);
 			break;
 
 		      case 'G': case 'g':
+			if (is_null(fdat->args))
+			  return(format_error(sc, "~G: missing argument", str, args, fdat));
+			if (!(s7_is_number(car(fdat->args))))
+			  return(format_error(sc, "~G: numeric argument required", str, args, fdat));
+
 			format_number(sc, fdat, 10, width, precision, 'g', pad);
 			break;
 
 		      case 'E': case 'e':
+			if (is_null(fdat->args))
+			  return(format_error(sc, "~E: missing argument", str, args, fdat));
+			if (!(s7_is_number(car(fdat->args))))
+			  return(format_error(sc, "~E: numeric argument required", str, args, fdat));
+
 			format_number(sc, fdat, 10, width, precision, 'e', pad);
 			break;
 
@@ -22085,22 +22114,44 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			 *   I think I'll use the type of the number to choose the output format.
 			 */
 		      case 'D': case 'd':
+			if (is_null(fdat->args))
+			  return(format_error(sc, "~D: missing argument", str, args, fdat));
+			if (!(s7_is_number(car(fdat->args))))
+			  return(format_error(sc, "~D: numeric argument required", str, args, fdat));
+
 			format_number(sc, fdat, 10, width, precision, 'd', pad);
 			break;
 
 		      case 'O': case 'o':
+			if (is_null(fdat->args))
+			  return(format_error(sc, "~O: missing argument", str, args, fdat));
+			if (!(s7_is_number(car(fdat->args))))
+			  return(format_error(sc, "~O: numeric argument required", str, args, fdat));
+
 			format_number(sc, fdat, 8, width, precision, 'o', pad);
 			break;
 
 		      case 'X': case 'x':
+			if (is_null(fdat->args))
+			  return(format_error(sc, "~X: missing argument", str, args, fdat));
+			if (!(s7_is_number(car(fdat->args))))
+			  return(format_error(sc, "~X: numeric argument required", str, args, fdat));
+
 			format_number(sc, fdat, 16, width, precision, 'x', pad);
 			break;
 
 		      case 'B': case 'b':
+			if (is_null(fdat->args))
+			  return(format_error(sc, "~B: missing argument", str, args, fdat));
+			if (!(s7_is_number(car(fdat->args))))
+			  return(format_error(sc, "~B: numeric argument required", str, args, fdat));
+
 			format_number(sc, fdat, 2, width, precision, 'b', pad);
 			break;
 		      
 		      default:
+			if (width > 0)
+			  return(format_error(sc, "format directive does not take a numeric argument", str, args, fdat));
 			return(format_error(sc, "unimplemented format directive", str, args, fdat));
 		      }
 		  }
@@ -22797,7 +22848,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
    */
   sc->no_values = 0; 
 #if WITH_OPTIMIZATION
-  sc->safe_do_level = 0; /* TODO: this needs to be done right! */
+  sc->safe_do_level = 0; 
   finder = find_symbol_or_bust;
 #endif
   catcher = sc->F;
@@ -23275,30 +23326,53 @@ and applies it to the rest of the arguments."
 }
 
 
-/* PERHAPS: make length a parameter, and use in format, ~40S etc
- */
-static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p)
-{
-  int form_len;
-  char *form;
+/* TODO: in long lists, this should stop when we reach 80 */
 
-  form = s7_object_to_c_string(sc, p); /* TODO: in long lists, this should stop when we reach 80 */
+static char *truncate_string(char *form, int len, bool use_write)
+{
+  int form_len, offset = 4;
   form_len = safe_strlen(form);
-  if (form_len > 80)
+  if (form_len > len)
     {
       int i;
-      for (i = 76; i >= 40; i--)
+      if (use_write) offset = 5;
+      
+      for (i = len - offset; i >= (len / 2); i--)
 	if (is_white_space((int)form[i]))
 	  {
 	    form[i] = '.';
 	    form[i + 1] = '.';
 	    form[i + 2] = '.';
-	    form[i + 3] = '\0';
-	    break;
+	    if (use_write)
+	      {
+		form[i + 3] = '"';
+		form[i + 4] = '\0';
+	      }
+	    else form[i + 3] = '\0';
+	    return(form);
 	  }
+      i = len - offset;
+      if (i >= 0)
+	{
+	  form[i] = '.';
+	  form[i + 1] = '.';
+	  form[i + 2] = '.';
+	  if (use_write)
+	    {
+	      form[i + 3] = '"';
+	      form[i + 4] = '\0';
+	    }
+	  else form[i + 3] = '\0';
+	}
+      else form[len] = '\0';
     }
-
   return(form);
+}
+
+
+static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len)
+{
+  return(truncate_string(s7_object_to_c_string(sc, p), len, false));
 }
 
 
@@ -23342,7 +23416,7 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 		   *   close paren.
 		   */
 
-		  form = object_to_truncated_string(sc, car(p));
+		  form = object_to_truncated_string(sc, car(p), 80);
 		  form_len = safe_strlen(form);
 		  msg_len = form_len + 128;
 		  msg = (char *)calloc(msg_len, sizeof(char));
@@ -27849,7 +27923,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			  return(false); 
 			}
 		      else return(true);
-		      /* TODO: check other similar cases */
+		      /* TODO: check other similar cases [I assume I was thinking of the chooser fixup] */
 		    }
 		}
 	      else
@@ -35772,14 +35846,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack(sc, OP_SET1, sc->NIL, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL_PAIR;
-
-      /* TODO: a common case (set! (v i) x) --
-       *       in this case, save the setter?
-       *       if null, choose setter based on type of v
-       *       else (setter v i x)
-       *   and (setter v i ...) can also be handled in place in most cases
-       *   v->data[i] = c_function_call(...) or C|S etc
-       */
 #endif      
 
     case OP_SET_SYMBOL_C:
@@ -36677,13 +36743,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	for (x = car(sc->code), y = sc->args; is_not_null(y); x = cdr(x), y = cdr(y))
 	  {
 	    s7_pointer slot;
-
-	    slot = find_symbol(sc, caar(x)); /* TODO: kinda dumb! -- see envir for slots */
+	    slot = find_local_symbol(sc, sc->envir, caar(x));
+	    /* symbol_local_slot is not safe here: (letrec ((x 1) (y (let ((x 2)) x))) ...)
+	     */
 	    if (symbol_has_accessor(car(slot)))
-	      symbol_value(slot) = call_symbol_bind(sc, car(slot), car(y)); /* TODO: test this */
+	      symbol_value(slot) = call_symbol_bind(sc, car(slot), car(y));
 	    else symbol_value(slot) = car(y);
-
-	    /* s7_symbol_set_value(sc, caar(x), car(y)); */
 
 	    typeflag(y) = 0;                          /* this was allocated above in the cons, so we can release it now */
 	    (*(sc->free_heap_top++)) = y;

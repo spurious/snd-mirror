@@ -8771,6 +8771,21 @@ a2" 3) "132")
 (test (format #f "asb~{ . ~}asd" '(1 2 3)) 'error)
 (test (format #f "asb~{ hiho~~~}asd" '(1 2 3)) 'error)
 
+(test (format #f "~12C" #\a) 'error)
+(test (format #f "~12P" #\a) 'error)
+(test (format #f "~12*" #\a) 'error)
+(test (format #f "~12%" #\a) 'error)
+(test (format #f "~12^" #\a) 'error)
+(test (format #f "~12{" #\a) 'error)
+(test (format #f "~12,2A" #\a) 'error)
+
+(test (format #f "~12,A" #\a) "a") ; s7 misses padding errors such as (format #f "~12,' A" #\a)
+
+(test (format #f "~12A" "012345678901234567890") "01234567...")
+(test (format #f "~1A" "012345678901234567890") "0")
+(test (format #f "~40A" "012345678901234567890") "012345678901234567890")
+(test (format #f "~12s" "012345678901234567890") "\"012345...\"")
+
 #|
 (do ((i 0 (+ i 1))) ((= i 256)) 
   (let ((chr (integer->char i)))
@@ -14531,6 +14546,17 @@ time, so that the displayed results are
 (test (let ((x 1)) (+ x (begin (set! x 2) x))) 3)
 (test (let ((x 1)) (+ (begin (set! x 2) x) x)) 4)
 (test (let ((x 1)) ((if (= x 1) + -) x (begin (set! x 2) x))) 3) 
+
+(let ()
+  (define-constant _letrec_x_ 32)
+  (test (letrec ((_letrec_x_ 1)) _letrec_x_) 'error))
+(let ()
+  (define-constant _let_x_ 32)
+  (test (let ((_let_x_ 1)) _let_x_) 'error))
+(let ()
+  (define-constant _let*_x_ 32)
+  (test (let* ((_let*_x_ 1)) _let*_x_) 'error))
+
 
 
 
@@ -30249,7 +30275,7 @@ abs     1       2
 (test (complex? 3) #t )
 (test (complex? +inf.0) #t)
 (test (complex? -inf.0) #t)
-(test (complex? nan.0) #t) 
+(test (complex? nan.0) #t) ; this should be #f
 (test (complex? pi) #t)
 
 (for-each
@@ -30302,7 +30328,7 @@ abs     1       2
 (test (real? (real-part (log 0))) #t)
 (test (real? +inf.0) #t)
 (test (real? -inf.0) #t)
-(test (real? nan.0) #t)
+(test (real? nan.0) #t) ; see below
 (test (real? pi) #t)
 (test (real? 0+i) #f)
 (test (real? 1.0-0.1i) #f)
@@ -30345,6 +30371,11 @@ abs     1       2
 (test (real? case) #f)
 (test (real?) 'error)
 (test (real? 1 2) 'error)
+
+(test (real? (real-part (log 0.0))) #t) ; -inf
+(test (real? (/ (real-part (log 0.0)) (real-part (log 0.0)))) #t) ; nan -- I think this should be #f
+(test (real? (real-part (log 0))) #t)
+
 
 
 
@@ -62091,6 +62122,17 @@ etc
 		       (let ((c (call/cc x))) c))))
 	(call/cc (lambda (r) (r 1))))
       1)
+
+(let ()
+  (define-constant [begin] begin)
+  (define-constant [if] if)
+  (define-macro (when expr . body)
+    `([if] ,expr ([begin] ,@body)))
+  (let ((if 32) (begin +)) 
+    (test (when (> 2 1) 1 2 3) 3)
+    (test (when (> 1 2) 3 4 5) #<unspecified>))
+  (test (when (> 2 1) 3) 3))
+
 
 (format #t "~%;all done!~%")
 
