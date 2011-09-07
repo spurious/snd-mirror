@@ -13443,6 +13443,7 @@ time, so that the displayed results are
 (test (+ 1 ((lambda args (apply values args)) 2 3 4)) 10)
 (test (apply begin '(1 2 3)) 3)
 (test (let ((x 1)) ((values set!) x 32) x) 32)
+(let ((x 0)) (test (list (set! x 10)) (call-with-values (lambda () (set! x 10)) list))) ; from r7rs discussion
 
 (test (or (values #t #f) #f) #t)
 (test (or (values #f #f) #f) #f)
@@ -61965,14 +61966,6 @@ etc
 
 
 
-;;; some leftovers placed here to avoid slowing down the rest of the tests unnecessarily
-(test (let ((equal? #f)) (member 3 '(1 2 3))) '(3))
-(test (let ((eqv? #f)) (case 1 ((1) 1))) 1) ; scheme wg
-(test (let ((eqv? equal?)) (case "asd" (("asd") 1) (else 2))) 2)
-(test (let ((eq? #f)) (memq 'a '(a b c))) '(a b c))
-
-
-
 #|
 (let ((funcs (list
 	      make-polar make-rectangular magnitude angle real-part imag-part numerator denominator rationalize abs
@@ -62029,6 +62022,11 @@ etc
 
 
 ;;; these can slow us down if included in their normal place
+
+(test (let ((equal? #f)) (member 3 '(1 2 3))) '(3))
+(test (let ((eqv? #f)) (case 1 ((1) 1))) 1) ; scheme wg
+(test (let ((eqv? equal?)) (case "asd" (("asd") 1) (else 2))) 2)
+(test (let ((eq? #f)) (memq 'a '(a b c))) '(a b c))
 
 ;(test (define 'quote 'quote) 'error)
 (test (define (and a) a) 'error)

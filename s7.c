@@ -4428,7 +4428,6 @@ bool s7_is_real(s7_pointer p)
     return(false);
   
   return(number_type(p) < NUM_COMPLEX);
-  /* TODO: and not nan? */
 }
 
 
@@ -4450,10 +4449,34 @@ bool s7_is_ratio(s7_pointer p)
 }
 
 
+static bool s7_is_nan(s7_pointer x)
+{
+  if (s7_is_number(x))
+    {
+      switch (number_type(x))
+	{
+	case NUM_INT:
+	case NUM_RATIO:
+	  return(false);
+	  
+	case NUM_REAL:
+	case NUM_REAL2:
+	  return(isnan(real(number(x))));
+	  
+	default:
+	  return((isnan(complex_real_part(x))) || (isnan(complex_imag_part(x))));
+	}
+    }
+  return(false);
+}
+
+/* A Jaffer would add !nan here (as opposed to s7_is_number), but currently
+ *   s7 thinks a NaN is a real, and a real is complex.  I assume in SCM (real? +nan.0) is #f.
+ */
+
 bool s7_is_complex(s7_pointer p)
 {
   return(s7_is_number(p));
-  /* TODO: and not nan */
 }
 
 #endif 
@@ -10692,37 +10715,10 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
 
 
 #if (!WITH_GMP)
-/* here A Jaffer uses (and (number? n) (not (complex? n))) which seems better than this version
- */
 static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_nan "(nan? obj) returns #t if obj is a NaN"
-  s7_pointer x;
-
-  x = car(args);
-  if (s7_is_number(x))
-    {
-      switch (number_type(x))
-	{
-	case NUM_INT:
-	case NUM_RATIO:
-	  return(sc->F);
-	  
-	case NUM_REAL:
-	case NUM_REAL2:
-	  return(make_boolean(sc, isnan(real(number(x)))));
-	  
-	default:
-#ifndef _MSC_VER
-	  return(make_boolean(sc, (isnan(complex_real_part(x))) || (isnan(complex_imag_part(x)))));
-#else
-	  if (isnan(complex_real_part(x)) || isnan(complex_imag_part(x)))
-	    return(sc->T);
-	  else return(sc->F);
-#endif
-	}
-    }
-  return(sc->F);
+  return(make_boolean(sc, s7_is_nan(car(args))));
 }
 
 
@@ -19822,10 +19818,10 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
 
       return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		      list_4(sc, 
-				  make_protected_string(sc, "~A type's 'ref' function argument, ~S, is ~A?"),
-				  make_protected_string(sc, object_types[tag].name),
-				  x,
-				  make_protected_string(sc, type_name(x)))));
+			     make_protected_string(sc, "~A type's 'ref' function argument, ~S, is ~A?"),
+			     make_protected_string(sc, object_types[tag].name),
+			     x,
+			     make_protected_string(sc, type_name(x)))));
     }
   return(sc->F); /* someone has completely messed up */
 }
@@ -23326,45 +23322,70 @@ and applies it to the rest of the arguments."
 }
 
 
-/* TODO: in long lists, this should stop when we reach 80 */
-
 static char *truncate_string(char *form, int len, bool use_write)
 {
-  int form_len, offset = 4;
+  int form_len;
   form_len = safe_strlen(form);
-  if (form_len > len)
+  if (use_write)
     {
-      int i;
-      if (use_write) offset = 5;
+      /* I guess we need to protect the outer double quotes in this case */
       
-      for (i = len - offset; i >= (len / 2); i--)
-	if (is_white_space((int)form[i]))
-	  {
-	    form[i] = '.';
-	    form[i + 1] = '.';
-	    form[i + 2] = '.';
-	    if (use_write)
+      if (form_len > len)
+	{
+	  int i;
+	  for (i = len - 5; i >= (len / 2); i--)
+	    if (is_white_space((int)form[i]))
 	      {
+		form[i] = '.';
+		form[i + 1] = '.';
+		form[i + 2] = '.';
 		form[i + 3] = '"';
 		form[i + 4] = '\0';
+		return(form);
 	      }
-	    else form[i + 3] = '\0';
-	    return(form);
-	  }
-      i = len - offset;
-      if (i >= 0)
-	{
-	  form[i] = '.';
-	  form[i + 1] = '.';
-	  form[i + 2] = '.';
-	  if (use_write)
+	  i = len - 5;
+	  if (i > 0)
 	    {
+	      form[i] = '.';
+	      form[i + 1] = '.';
+	      form[i + 2] = '.';
 	      form[i + 3] = '"';
 	      form[i + 4] = '\0';
 	    }
-	  else form[i + 3] = '\0';
+	  else 
+	    {
+	      if (len >= 2)
+		{
+		  form[len - 1] = '"';
+		  form[len] = '\0';
+		}
+	    }
 	}
-      else form[len] = '\0';
+    }
+  else
+    {
+      if (form_len > len)
+	{
+	  int i;
+	  for (i = len - 4; i >= (len / 2); i--)
+	    if (is_white_space((int)form[i]))
+	      {
+		form[i] = '.';
+		form[i + 1] = '.';
+		form[i + 2] = '.';
+		form[i + 3] = '\0';
+		return(form);
+	      }
+	  i = len - 4;
+	  if (i >= 0)
+	    {
+	      form[i] = '.';
+	      form[i + 1] = '.';
+	      form[i + 2] = '.';
+	      form[i + 3] = '\0';
+	    }
+	  else form[len] = '\0';
+	}
     }
   return(form);
 }
@@ -24791,8 +24812,6 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
       return(TOKEN_ATOM);
     }
 
-  /* TODO: is it correct that these can't be commented out via semicolon?
-   */
   /* block comments in either #! ... !# */
   if (c == '!') 
     {
@@ -24812,7 +24831,10 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
     }
 #endif
       
-  /*   or #| ... |# */
+  /* block comments in #| ... |# 
+   *   since we ignore everything until the |#, internal semicolon comments are ignored,
+   *   meaning that ;|# is as effective as |#
+   */
   if (c == '|') 
     {
       char last_char;
@@ -25646,8 +25668,8 @@ static s7_pointer lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, 
 	  {
 	    return(s7_error(sc, sc->WRONG_TYPE_ARG,
 			    list_4(sc,
-					make_protected_string(sc, "~A: parameter set twice, ~A in ~A"),
-					closure_name(sc, sc->code), sc->y, sc->args)));
+				   make_protected_string(sc, "~A: parameter set twice, ~A in ~A"),
+				   closure_name(sc, sc->code), sc->y, sc->args)));
 	  }
 	cdr(x) = val;
 	return(val);
@@ -25853,16 +25875,16 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
 					{
 					  return(s7_error(sc, sc->WRONG_TYPE_ARG,
 							  list_4(sc,
-								      make_protected_string(sc, "~A: parameter set twice, ~A in ~A"),
-								      closure_name(sc, sc->code), sc->y, sc->args)));
+								 make_protected_string(sc, "~A: parameter set twice, ~A in ~A"),
+								 closure_name(sc, sc->code), sc->y, sc->args)));
 					}
 				    }
 				  else
 				    {
 				      return(s7_error(sc, sc->WRONG_TYPE_ARG,
 						      list_4(sc,
-								  make_protected_string(sc, "~A: unknown key: ~A in ~A"),
-								  closure_name(sc, sc->code), sc->y, sc->args)));
+							     make_protected_string(sc, "~A: unknown key: ~A in ~A"),
+							     closure_name(sc, sc->code), sc->y, sc->args)));
 				    }
 				  /* (define* (f a (b :c)) b) (f :b 1 :d) */
 				}
@@ -25870,8 +25892,8 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
 				{
 				  return(s7_error(sc, sc->WRONG_TYPE_ARG,
 						  list_4(sc,
-							      make_protected_string(sc, "~A: unknown key: ~A in ~A"),
-							      closure_name(sc, sc->code), sc->y, sc->args)));
+							 make_protected_string(sc, "~A: unknown key: ~A in ~A"),
+							 closure_name(sc, sc->code), sc->y, sc->args)));
 				}
 			    }
 			}
@@ -27923,7 +27945,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			  return(false); 
 			}
 		      else return(true);
-		      /* TODO: check other similar cases [I assume I was thinking of the chooser fixup] */
 		    }
 		}
 	      else
@@ -28391,8 +28412,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
   int op2;
   op2 = optimize_data(e2) & 0xfffe;
 
-  /* PERHAPS: make this an array, include closure choices here
-   */
   switch (op1)
     {
     case SAFE_C_P:
@@ -29889,7 +29908,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 		      else
 			{
 			  if ((op == OP_IF) ||
-			      (op == OP_COND) || /* TODO: cond and case (and set for vectors et al) need special handling */
+			      (op == OP_COND) || 
 			      (op == OP_CASE) ||
 			      (op == OP_AND) ||
 			      (op == OP_OR) ||
@@ -29914,8 +29933,6 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 #if PRINTING
 				  fprintf(stderr, "      ;set: %s is global\n", DISPLAY(cadr(expr)));
 #endif
-				  /* TODO: should we consider (set! (v i) 0) safe? 
-				   */
 				  (*has_set) = true;
 				}
 			      if (!do_is_safe(sc, cddr(expr), stepper, var_list, has_set))

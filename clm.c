@@ -3341,7 +3341,7 @@ static mus_any_class DELAY_CLASS = {
   0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0, &delay_zdly, 0
+  0, &delay_zdly, 0 /* this is a kludge for run.c */
 };
 
 
@@ -3907,6 +3907,7 @@ mus_any *mus_make_filtered_comb(mus_float_t scaler, int size, mus_float_t *line,
       else return(NULL);
     }
   return(mus_make_comb(scaler, size, line, line_size, type));
+  /* TODO: doesn't this mean mus_run sees a null filter above? */
 }
 
 
