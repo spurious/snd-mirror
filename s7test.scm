@@ -62168,3 +62168,135 @@ in non-gmp,
 
 |#
 
+
+#|
+;;; symbol accessor tests in progress
+(define-macro (define-integer var value)
+  `(begin
+     (define ,var ,value)
+     (set! (symbol-access ',var) 
+	   (list #f
+		 (lambda (symbol new-value)
+		   (if (real? new-value)
+		       (floor new-value)
+		       (error "~A can only take an integer value, not ~S" symbol new-value)))
+		 (lambda (symbol new-value)
+		   (if (real? new-value)
+		       (floor new-value)
+		       (error "~A can only take an integer value, not ~S" symbol new-value)))))
+     ',var))
+
+(define-macro (define-integer-ok var value)
+  `(begin
+     (define ,var ,value)
+     (set! (symbol-access ',var) 
+	   (list #f
+		 (lambda (symbol new-value)
+		   new-value)
+		 (lambda (symbol new-value)
+		   new-value)))
+     ',var))
+
+
+(let ()
+  (define-integer _just_int_ 32)
+  (set! _just_int_ 123.123)
+  (format #t "set! _just_int_ 123.123: ~A~%" _just_int_)
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (set! _just_int_ "123"))
+		    (lambda args 'error))))
+    (format #t "tag: ~A~%" tag))
+
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (define _just_int_ "123"))
+		    (lambda args 'error))))
+    (format #t "tag: ~A~%" tag))
+
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (define (_just_int_ a) "123"))
+		    (lambda args 'error))))
+    (format #t "tag: ~A~%" tag))
+
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (define* (_just_int_ a) "123"))
+		    (lambda args 'error))))
+    (format #t "tag: ~A~%" tag))
+
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (define-macro (_just_int_ a) "123"))
+		    (lambda args 'error))))
+    (format #t "tag: ~A~%" tag))
+
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (defmacro _just_int_ (a) "123"))
+		    (lambda args 'error))))
+    (format #t "tag: ~A~%" tag))
+
+  (format #t "letrec: ~A~%" (letrec ((_just_int_ 12.41)) _just_int_))
+  (format #t "let: ~A~%" (let ((_just_int_ 12.41)) _just_int_))
+  (format #t "let*: ~A~%" (let* ((_just_int_ 12.41)) _just_int_))
+
+  (format #t "do: ~A~%" (do ((_just_int_ 1.5 (+ _just_int_ 2))) ((>= _just_int_ 10) _just_int_))) ; 11
+  (format #t "do: ~A~%" (do ((_just_int_ 1.5 (+ _just_int_ 2.3))) ((>= _just_int_ 10) _just_int_))) ; 10.2 (no step check)
+  )
+
+
+(let () 
+  (define-integer _j_ 32) 
+  (define (hi _j_) _j_) 
+  (format #t "hi(pi): ~A~%" (hi pi)) ; pi
+  (format #t "set: ~A~%" (let () (set! _j_ pi) _j_)) ; 3
+)
+
+(let ()
+  (define-integer-ok _k_ 123)
+  (define (_k_ a) (+ a 1))
+  (format #t "_k_: ~A~%" (_k_ 2))
+  )
+
+
+;; infinite loop!
+(let ((_acc_var1_ 0)
+      (_acc_var2_ 1))
+  (set! (symbol-access '_acc_var1_)
+	(list #f
+	      (lambda (symbol new-value)
+		(set! _acc_var2_ _acc_var1_)
+		new-value)
+	      #f))
+  (set! (symbol-access '_acc_var2_)
+	(list #f
+	      (lambda (symbol new-value)
+		(set! _acc_var1_ _acc_var2_)
+		new-value)
+	      #f))
+  (set! _acc_var1_ 32)
+  _acc_var2_)
+
+
+(let ((_acc_var1_ 0)
+      (_acc_var2_ 1))
+  (set! (symbol-access '_acc_var1_)
+	(list #f
+	      (lambda (symbol new-value)
+		(set! _acc_var2_ _acc_var1_)
+		new-value)
+	      #f))
+  (set! (symbol-access '_acc_var2_)
+	(list #f
+	      (lambda (symbol new-value)
+		new-value)
+	      #f))
+  (format #t "~A ~A -> " _acc_var1_ _acc_var2_)
+  (set! _acc_var1_ 32)
+  (format #t "~A ~A~%" _acc_var1_ _acc_var2_))
+
+
+|#
+

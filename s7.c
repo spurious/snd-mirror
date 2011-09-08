@@ -317,9 +317,10 @@ enum {OP_NO_OP,
       OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
       
       OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, 
-      OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_P, OP_SET_NORMAL, OP_SET_PAIR,
+      OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_P, OP_SET_NORMAL, OP_SET_PAIR, OP_SET_WITH_ACCESSOR,
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
-      OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED,
+      OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, 
+      OP_DEFINE_WITH_ACCESSOR, OP_DEFMACRO_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
       OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_CASE_PAIR,
       OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_P_X_P, OP_IF_P_X, OP_IF_P_X_X, 
       OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, OP_IF_PX, OP_IF_PXX, 
@@ -370,9 +371,10 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "eval-string", "eval-string", "hook-apply", 
    "member-if", "assoc-if", "member-if", "assoc-if",
    "quote-unchecked", "lambda-unchecked", "let-unchecked", "case-unchecked", 
-   "set-unchecked", "set-symbol-c", "set-symbol-s", "set-symbol-p", "set-normal", "set-pair",
+   "set-unchecked", "set-symbol-c", "set-symbol-s", "set-symbol-p", "set-normal", "set-pair", "set-with-accessor",
    "let*-unchecked", "letrec-unchecked", "cond-unchecked",
-   "lambda*-unchecked", "do-unchecked", "define-unchecked", "define*-unchecked",
+   "lambda*-unchecked", "do-unchecked", "define-unchecked", "define*-unchecked", 
+   "define-with-accessor", "defmacro-with-accessor", "define-macro-with-accessor",
    "let", "let", "let", "case-pair",
 
    "if-p-p-p", "if-p-p", "if-p-p-x", "if-p-x-p", "if-p-x", "if-p-x-x", 
@@ -5250,7 +5252,7 @@ static bool s7_is_one(s7_pointer x)
 #define MAX_POW 32
 static double pepow[17][MAX_POW], mepow[17][MAX_POW];
 
-static void initialize_pows(void)
+static void init_pows(void)
 {
   int i, j;
   for (i = 2; i < 17; i++)        /* radix between 2 and 16 */
@@ -20493,51 +20495,72 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer call_symbol_accessor(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value, s7_pointer func)
-{
-  /* this happens in contexts that are tricky to implement with a clean use of the evaluator stack (as in
-   *   the parallel symbol set case), so we need to use s7_call.  But if an uncaught error
-   *   occurs in s7_call, the error handler marches up the stack looking for a catch, unwinding the stack
-   *   past the point of the call.  In the worst case, we can segfault because any subsequent pop_stack
-   *   (i.e. an unchecked goto START), walks off the start of the stack. 
-   */
-   
-  car(sc->T2_1) = symbol;
-  car(sc->T2_2) = new_value;
-
-  if (is_c_function(func))
-    new_value = c_function_call(func)(sc, sc->T2_1);
-  else
-    {
-      bool old_off;
-      old_off = sc->gc_off;
-      sc->gc_off = true;
-      new_value = s7_call(sc, func, sc->T2_1);
-      sc->gc_off = old_off;
-    }
-  if (new_value == sc->ERROR)
-    return(s7_error(sc, sc->ERROR,
-		    list_3(sc, make_protected_string(sc, "can't bind ~S to ~S"), symbol, car(sc->T2_2))));
-  return(new_value);
-}
-
-
 static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value)
 {
   s7_pointer func;
   func = caddr(s7_gc_protected_at(sc, symbol_accessor(symbol)));
   if (is_procedure(func))
-    return(call_symbol_accessor(sc, symbol, new_value, func));
+    {
+      s7_pointer old_value;
+      old_value = new_value;
+
+      /* this happens in contexts that are tricky to implement with a clean use of the evaluator stack (as in
+       *   the parallel symbol set case), so we need to use s7_call.  But if an uncaught error
+       *   occurs in s7_call, the error handler marches up the stack looking for a catch, unwinding the stack
+       *   past the point of the call.  In the worst case, we can segfault because any subsequent pop_stack
+       *   (i.e. an unchecked goto START), walks off the start of the stack. 
+       */
+      
+      /* TODO: the rest of the call_symbol_bind uses need to be embedded in eval
+       */
+      
+      if (is_c_function(func))
+	{
+	  car(sc->T2_1) = symbol;
+	  car(sc->T2_2) = new_value;
+      	  new_value = c_function_call(func)(sc, sc->T2_1);
+	}
+      else
+	{
+	  bool old_off;
+	  old_off = sc->gc_off;
+	  sc->gc_off = true;
+	  new_value = s7_call(sc, func, list_2(sc, symbol, new_value));
+	  sc->gc_off = old_off;
+	}
+      if (new_value == sc->ERROR)
+	return(s7_error(sc, sc->ERROR,
+			list_3(sc, make_protected_string(sc, "can't bind ~S to ~S"), symbol, old_value)));
+    }
   return(new_value);
 }
 
 
-static s7_pointer call_symbol_set(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value)
+static s7_pointer bind_accessed_symbol(s7_scheme *sc, opcode_t op, s7_pointer symbol, s7_pointer new_value)
 {
   s7_pointer func;
-  func = cadr(s7_gc_protected_at(sc, symbol_accessor(symbol)));
+  func = caddr(s7_gc_protected_at(sc, symbol_accessor(symbol)));
   if (is_procedure(func))
-    return(call_symbol_accessor(sc, symbol, new_value, func));
+    {
+      if (is_c_function(func))
+	{
+	  s7_pointer old_value;
+	  old_value = new_value;
+	  car(sc->T2_1) = symbol;
+	  car(sc->T2_2) = new_value;
+	  new_value = c_function_call(func)(sc, sc->T2_1);
+	  if (new_value == sc->ERROR)
+	    return(s7_error(sc, sc->ERROR,
+			    list_3(sc, make_protected_string(sc, "can't bind ~S to ~S"), symbol, old_value)));
+	}
+      else
+	{
+	  sc->args = list_2(sc, symbol, new_value);
+	  push_stack(sc, op, sc->args, sc->code);
+	  sc->code = func;
+	  return(sc->NO_VALUE);
+	}
+    }
   return(new_value);
 }
 
@@ -25718,6 +25741,10 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
        *   calls, error handling assumes we're using the s7 stack, not the C stack.  So,
        *   we better not get an error while evaluating the argument default value!
        */
+      
+      /* the problem is basically the same as the loops involving symbol accessors --
+       *   how to get back and continue after evaluating some expression without endless labels and gotos?
+       */
 
       /* SOMEDAY: put this in the eval loop */
 
@@ -25944,9 +25971,9 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
 /* even with the frame_id optimization, this is still about 12% of our total computing: 210/1730 in lg
  *   but the separate finders no longer buy us much: 1608 vs 1583.
  * by using 1 function here, I can specialize safe do lookups without any overhead --
- *   so it's worth the 1.5% slow down elsewhere.
+ *   so it's worth the 1.5% slow down elsewhere.  Or so it seemed... I am not hitting
+ *   safe do much outside of CLM, and when I do, no big win from the specialized lookup.
  */
-
 
 #define SYMBOL_VALUE(Sc, Sym) ((is_global(Sym)) ? symbol_value(symbol_global_slot(Sym)) : finder(Sc, Sym))
 
@@ -28273,6 +28300,10 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		      if (symbols == 1)
 			set_optimize_data(car(x), OP_UNKNOWN_S);
 		      else set_optimize_data(car(x), OP_UNKNOWN_C);
+		      /* hooboy -- we get here in let bindings...
+		       *
+		       * to save access to the caller, we'd need to pass it as an arg to optimize_expression
+		       */
 		      return(false); 
 		    }
 		  
@@ -29923,11 +29954,6 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 			      if (op != OP_SET)
 				return(false);
 
-			      /* TODO: set of pws should assume safe, then somehow bail out at run time?
-			       *   perhaps assume safe if unknown, then add a way to reset the safe do level
-			       *   and clear all saved state.
-			       */
-
 			      if (!memq(cadr(expr), var_list))
 				{
 #if PRINTING
@@ -31452,13 +31478,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    args = cdr(y);
 	    
 	    car(y) = sym;
-#if 0
-	    /* this currently won't work */
+
 	    if (symbol_has_accessor(sym))
-	      cdr(y) = call_symbol_bind(sc, sym, val);
+	      {
+		s7_pointer old_value;
+		old_value = sc->value;
+		cdr(y) = call_symbol_bind(sc, sym, val); /* this might change sc->value */
+		sc->value = old_value;
+	      }
 	    else cdr(y) = val;
-#endif
-	    cdr(y) = val;
+
+	    /* TODO: what about var access during the step section? 
+	     *
+	     * to embed here, we need x, y, (sc->args? sc->code?), sc->value
+	     *
+	     * label at start of loop plus jump back at end
+	     * if accessor and binder is scheme func
+	     *   push_stack DO_INIT_WITH_ACCESSOR, args=x y value args, code, jumping back to after apply
+	     *   args='(sym val), code=scheme func, goto APPLY
+	     *   DO_INIT_WITH_ACCESSOR checks for 'error and jumps to
+	     * DO_INIT_ACCESS:
+	     *   reset x y code args from saved stuff
+	     *   set cdr(y) from new value
+	     *   restore old sc->value
+	     * [before saving y, set its type?][will a gc clobber anything here?]
+	     */
+
 	    set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
 	    ecdr(y) = car(sc->envir);
 	    car(sc->envir) = y;
@@ -35602,8 +35647,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(eval_error_with_name(sc, "~A: ~S is immutable", sc->code));
 	}
       if (symbol_has_accessor(sc->code))
-	sc->value = call_symbol_bind(sc, sc->code, sc->value);
+	{
+	  sc->value = bind_accessed_symbol(sc, OP_DEFINE_WITH_ACCESSOR, sc->code, sc->value);
+	  if (sc->value == sc->NO_VALUE)
+	    goto APPLY;
+	  /* if all goes well, OP_DEFINE_WITH_ACCESSOR will jump to DEFINE2 */
+	}
 
+    DEFINE2:
       if ((is_closure(sc->value)) || 
 	  (is_closure_star(sc->value)))
 	{
@@ -35673,6 +35724,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       sc->value = sc->code;
       goto START;
+
+
+    case OP_DEFINE_WITH_ACCESSOR:
+      if (sc->value == sc->ERROR) /* backwards compatibility... */
+	return(s7_error(sc, sc->ERROR,
+			list_3(sc, make_protected_string(sc, "can't define ~S to ~S"), car(sc->args), cadr(sc->args))));
+      goto DEFINE2;
+
       
 
       /* -------------------------------- SET! -------------------------------- */
@@ -36142,16 +36201,47 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_not_null(sc->y)) 
 	{
 	  if (symbol_has_accessor(sc->code))
-	    sc->value = call_symbol_set(sc, sc->code, sc->value);
-
-	  if (is_syntax(symbol_value(sc->y)))
-	    return(eval_error(sc, "can't set! ~A", sc->code));
-
+	    {
+	      s7_pointer func;
+	      func = cadr(s7_gc_protected_at(sc, symbol_accessor(sc->code)));
+	      if (is_procedure(func))
+		{
+		  if (is_c_function(func))
+		    {
+		      car(sc->T2_1) = sc->code;
+		      car(sc->T2_2) = sc->value;
+		      sc->value = c_function_call(func)(sc, sc->T2_1);
+		      if (sc->value == sc->ERROR) /* backwards compatibility... */
+			return(s7_error(sc, sc->ERROR,
+					list_3(sc, make_protected_string(sc, "can't set ~S to ~S"), car(sc->T2_1), car(sc->T2_2))));
+		    }
+		  else
+		    {
+		      sc->args = list_2(sc, sc->code, sc->value);
+		      push_stack(sc, OP_SET_WITH_ACCESSOR, sc->args, sc->y); /* op, args, code */
+		      sc->code = func;
+		      goto APPLY;
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (is_syntax(symbol_value(sc->y)))
+		return(eval_error(sc, "can't set! ~A", sc->code));
+	    }
 	  symbol_set_value(sc->y, sc->value); 
 	  goto START;
 	}
       return(eval_error(sc, "set! ~A: unbound variable", sc->code));
 
+
+    case OP_SET_WITH_ACCESSOR:
+      if (sc->value == sc->ERROR) /* backwards compatibility... */
+	return(s7_error(sc, sc->ERROR,
+			list_3(sc, make_protected_string(sc, "can't set ~S to ~S"), car(sc->args), cadr(sc->args))));
+      symbol_set_value(sc->code, sc->value); 
+      goto START;
+      
 
       
 
@@ -37052,12 +37142,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* defmacro(*) could be defined in terms of define-macro(*), but I guess this gives us better error messages */
       check_defmacro(sc);
 
+      if (symbol_has_accessor(car(sc->code)))
+	{
+	  sc->value = bind_accessed_symbol(sc, OP_DEFMACRO_WITH_ACCESSOR, car(sc->code), sc->code);
+	  if (sc->value == sc->NO_VALUE)
+	    goto APPLY;
+	  sc->code = sc->value;
+	}
+
+    DEFMACRO2:
       sc->x = car(sc->code);
       sc->z = cdr(sc->code);
-
-      if (symbol_has_accessor(sc->x))
-	sc->code = call_symbol_bind(sc, sc->x, sc->code);
-
       sc->y = s7_gensym(sc, "defmac");
       sc->code = cons(sc, 
 		      list_1(sc, sc->y),
@@ -37085,6 +37180,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = sc->x;
       goto MACRO;
 
+    case OP_DEFMACRO_WITH_ACCESSOR:
+      if (sc->value == sc->ERROR) /* backwards compatibility... */
+	return(s7_error(sc, sc->ERROR,
+			list_3(sc, make_protected_string(sc, "can't defmacro ~S to ~S"), car(sc->args), cadr(sc->args))));
+      sc->code = sc->value;
+      goto DEFMACRO2;
+
+    case OP_DEFINE_MACRO_WITH_ACCESSOR:
+      if (sc->value == sc->ERROR) /* backwards compatibility... */
+	return(s7_error(sc, sc->ERROR,
+			list_3(sc, make_protected_string(sc, "can't define-macro ~S to ~S"), car(sc->args), cadr(sc->args))));
+      sc->code = sc->value;
+      goto DEFINE_MACRO2;
+
 
     case OP_DEFINE_BACRO:
     case OP_DEFINE_BACRO_STAR:
@@ -37093,15 +37202,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEFINE_MACRO_STAR:
       check_define_macro(sc);
 
-      sc->x = caar(sc->code);
-      sc->z = cdr(sc->code);
-
-      if (symbol_has_accessor(sc->x))
-	sc->code = call_symbol_bind(sc, sc->x, sc->code);
+      if (symbol_has_accessor(caar(sc->code)))
+	{
+	  sc->value = bind_accessed_symbol(sc, OP_DEFINE_MACRO_WITH_ACCESSOR, caar(sc->code), sc->code);
+	  if (sc->value == sc->NO_VALUE)
+	    goto APPLY;
+	  sc->code = sc->value;
+	}
 
       /* (define-macro (hi a) `(+ ,a 1))
        *   in this case we want cadr, not caddr of defmacro
        */
+
+    DEFINE_MACRO2:
+      sc->x = caar(sc->code);
+      sc->z = cdr(sc->code);
 
       sc->y = s7_gensym(sc, "defmac");
       sc->code = cons(sc, 
@@ -42474,6 +42589,7 @@ s7_scheme *s7_init(void)
 #endif
   init_ctables();
   init_mark_functions();
+  init_pows();
   
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
   
@@ -43569,8 +43685,6 @@ the error type and the info passed to the error handler.");
                         	   (else (loop (cdr clauses))))))))");
 
   /* fprintf(stderr, "size: %d %d %d\n", (int)sizeof(s7_cell), (int)sizeof(s7_num_t), (int)sizeof(s7_extended_cell)); */
-
-  initialize_pows();
   save_initial_environment(sc);
 
   return(sc);
@@ -43599,30 +43713,10 @@ the error type and the info passed to the error handler.");
  *   then a package tying all gsl into s7 or fftw etc
  */
 
-/* TODO: the symbol-access stuff is not fully implemented:
-
-    (define-macro (define-integer var value)
-      `(begin
-	 (define ,var ,value)
-	 (set! (symbol-access ',var) 
-	       (list #f
-		     (lambda (symbol new-value)
-		       (if (real? new-value)
-			   (floor new-value)
-			   (error "~A can only take an integer value, not ~S" symbol new-value)))
-		     #f))
-	 ',var))
-
-(let ()
-  (define-integer _just_int_ 32)
-  (set! _just_int_ 123.123)
-  ;; _just_int_ = 123
-  ;; (set! _just_int_ "123") 'error
-  (letrec ((_just_int_ 12.41)) _just_int_) ; no access! let let* letrec -- 12.41 not 12
-  (do ((_just_int_ 1.5 (+ _just_int_ 2.3))) ((>= _just_int_ 10) _just_int_))) ; 10.7!
-
-;; check all these for errors also
-;; also define* names, named let name
-;; augment env
-;; closure arg names
-*/
+/* TODO: the symbol-access stuff is not fully implemented
+ *       t342.scm for tests, augment env, closure arg names, do step?
+ *       what about recursion during this process (i.e. ref to accessed var in accessor)? -- infinite loop possible here!
+ *       [set! case works] TODO: block recursive call on accessor?
+ *
+ * other uses of s7_call: all the object stuff [see note in that section], hook_apply, readers, unbound_variable
+ */

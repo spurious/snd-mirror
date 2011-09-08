@@ -27,10 +27,10 @@
 #include "clm.h"
 #include "clm-strings.h"
 
-#define clm_malloc(Num, What)              malloc(Num)
-#define clm_calloc(Num, Size, What)        calloc(Num, Size)
-#define clm_realloc(Old, NewSize)          realloc(Old, NewSize)
-#define clm_free(Ptr)                      free(Ptr)
+#define clm_malloc(Num, What)       malloc(Num)
+#define clm_calloc(Num, Size, What) calloc(Num, Size)
+#define clm_realloc(Old, NewSize)   realloc(Old, NewSize)
+#define clm_free(Ptr)               free(Ptr)
 
 #if HAVE_GSL
   #include <gsl/gsl_complex.h>
@@ -48,16 +48,6 @@
 #ifndef TWO_PI
   #define TWO_PI (2.0 * M_PI)
 #endif
-
-#if defined(__GNUC__) && (__GNUC__ >= 3)
-  #define MUS_EXPECT __builtin_expect
-#else
-  #define MUS_EXPECT(_expr, _value) (_expr)
-#endif
-
-#define MUS_LIKELY(_expr)  MUS_EXPECT((_expr), 1)
-#define MUS_UNLIKELY(_expr) MUS_EXPECT((_expr), 0)
-
 
 #if (!HAVE_MEMMOVE)
 static void *memmove (char *dest, const char *source, unsigned int length)
@@ -1339,7 +1329,7 @@ typedef struct {
   double scaler, cos5, phase, freq;
 } cosp;
 
-#define DIVISOR_NEAR_ZERO(Den) MUS_UNLIKELY(fabs(Den) < 1.0e-14)
+#define DIVISOR_NEAR_ZERO(Den) (fabs(Den) < 1.0e-14)
 
 mus_float_t mus_ncos(mus_any *ptr, mus_float_t fm)
 {
@@ -3082,7 +3072,7 @@ bool mus_wave_train_p(mus_any *ptr)
 
 
 
-/* ---------------- delay, comb, notch, all-pass, moving-average ---------------- */
+/* ---------------- delay, comb, notch, all-pass, moving-average, filtered-comb ---------------- */
 
 typedef struct {
   mus_any_class *core;
@@ -3101,7 +3091,7 @@ mus_float_t mus_delay_tick(mus_any *ptr, mus_float_t input)
   dly *gen = (dly *)ptr;
   gen->line[gen->loc] = input;
   gen->loc++;
-  if (gen->zdly) /* TODO: surely this decision should be made in make-delay */
+  if (gen->zdly) /* splitting these choices out at make-delay time was not a big improvement */
     {
       if (gen->loc >= gen->zsize) gen->loc = 0;
       gen->zloc++;
@@ -8856,16 +8846,22 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
 
   /* now choose the output function based on safety, chans, and reverb
    */
+  gen->locsig_func = mus_locsig_any;
+
   if (gen->safety == 1)
     {
-      if (rev_chans > 0) /* TODO:  == 1 here? */
+      if (rev_chans > 0)
 	{
-	  switch (chans)
+	  if (rev_chans == 1)
 	    {
-	    case 1:  gen->locsig_func = mus_locsig_safe_mono;   break;
-	    case 2:  gen->locsig_func = mus_locsig_safe_stereo; break;
-	    default: gen->locsig_func = mus_locsig_safe_any;    break;
+	      switch (chans)
+		{
+		case 1:  gen->locsig_func = mus_locsig_safe_mono;   break;
+		case 2:  gen->locsig_func = mus_locsig_safe_stereo; break;
+		default: gen->locsig_func = mus_locsig_safe_any;    break;
+		}
 	    }
+	  else gen->locsig_func = mus_locsig_safe_any;
 	}
       else
 	{
@@ -8879,14 +8875,18 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
     }
   else
     {
-      if (rev_chans > 0) /* TODO:  == 1 here? */
+      if (rev_chans > 0)
 	{
-	  switch (chans)
+	  if (rev_chans == 1)
 	    {
-	    case 1:  gen->locsig_func = mus_locsig_mono;   break;
-	    case 2:  gen->locsig_func = mus_locsig_stereo; break;
-	    default: gen->locsig_func = mus_locsig_any;    break;
+	      switch (chans)
+		{
+		case 1:  gen->locsig_func = mus_locsig_mono;   break;
+		case 2:  gen->locsig_func = mus_locsig_stereo; break;
+		default: gen->locsig_func = mus_locsig_any;    break;
+		}
 	    }
+	  else gen->locsig_func = mus_locsig_any;
 	}
       else
 	{
