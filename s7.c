@@ -95,7 +95,7 @@
  * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1 and we're not in C++.
  * 
  * The *gc-stats* output includes timing info if HAVE_GETTIMEOFDAY.  In this
- *   case we also assume we can load <time.h> and <sys/time.h>.
+ *   case we also assume we can include <time.h> and <sys/time.h>.
  *
  *
  * Complex number support (which is problematic in C++, Solaris, and netBSD)
@@ -200,9 +200,6 @@
    */
 #endif
 
-#define DISPLAY(Obj) s7_object_to_c_string(sc, Obj)
-#define DISPLAY_80(Obj) object_to_truncated_string(sc, Obj, 80)
-
 
 /* -------------------------------------------------------------------------------- */
 
@@ -292,6 +289,11 @@
 #ifndef NAN
   #define NAN (INFINITY / INFINITY)
 #endif
+
+
+#define DISPLAY(Obj) s7_object_to_c_string(sc, Obj)
+#define DISPLAY_80(Obj) object_to_truncated_string(sc, Obj, 80)
+
 
 enum {OP_NO_OP, 
       OP_READ_INTERNAL, OP_EVAL, 
@@ -1128,7 +1130,6 @@ struct s7_scheme {
                                          _x_; })
 #else
   #define cons(Sc, A, B)              s7_cons(Sc, A, B)
-  /* TODO: I think the non-GNUC s7_cons needs GC protection similar to cons above */
 #endif
 
 #define list_1(Sc, A)                 cons(Sc, A, sc->NIL)
@@ -3068,7 +3069,6 @@ static s7_pointer add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_poin
 	}
       symbol_global_slot(variable) = slot;
       symbol_local_slot(variable) = slot;
-      /* fprintf(stderr, "%s: %p\n", symbol_name(variable), slot); */
       set_global(variable);
       symbol_id(variable) = 0;
       /* so if we (define hi "hiho") at the top level,  "hi" hashes to 1746 with symbol table size 2207
@@ -15751,7 +15751,6 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
 
 static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
 {
-  /* fprintf(stderr, "list set: %s\n", s7_object_to_c_string(sc, args)); */
   return(g_list_set_1(sc, car(args), cdr(args), 2));
 }
 
@@ -17317,7 +17316,6 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
   s7_pointer vec, val;
   s7_Int index;
 
-  /* fprintf(stderr, "vector set: %s\n", s7_object_to_c_string(sc, args));   */
   vec = car(args);
   if (!s7_is_vector(vec))
     return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
@@ -18313,9 +18311,9 @@ returns the next (key . value) pair in the hash-table each time it is called.  W
     return(s7_wrong_type_arg_error(sc, "make-hash-table-iterator", 0, car(args), "a hash-table"));
 
   return(make_closure(sc, list_2(sc, sc->NIL,                             /* no args to the new function */
-				      list_2(sc, sc->HASH_TABLE_ITERATE,
-						  list_2(sc, sc->QUOTE, 
-							      list_3(sc, sc->NIL, car(args), make_mutable_integer(sc, -1))))),
+				 list_2(sc, sc->HASH_TABLE_ITERATE,
+					list_2(sc, sc->QUOTE, 
+					       list_3(sc, sc->NIL, car(args), make_mutable_integer(sc, -1))))),
 		      T_CLOSURE));
 }
 
@@ -19717,6 +19715,7 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
  *    (call-with-exit (lambda (exit) (let ((typ (make-type :equal (lambda (a n) (exit 32))))) (equal? ((cadr typ) 1) ((cadr typ) 1)))))
  *      [callable via s7_is_equal and s7_is_equal_ci]
  *      [hard to fix: g_is_equal calls s7_is_equal, but here I think we could split out s_object_equal if equal_func exists]
+ *      [  but that requires a separate copy of s7_is_equal etc]
  *
  *    reverse uses length and copy
  *
@@ -25817,8 +25816,6 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
   while ((is_pair(sc->x)) &&
 	 (is_pair(sc->y)))
     {
-      /* fprintf(stderr, "x: %s, y: %s\n", DISPLAY(sc->x), DISPLAY(sc->y)); */
-
       if ((car(sc->x) == sc->KEY_KEY) ||
 	  (car(sc->x) == sc->KEY_OPTIONAL))
 	sc->x = cdr(sc->x);                         /* everything is :key and :optional, so these are ignored */
@@ -25942,7 +25939,6 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
 
   /* (let () (define* (hi (a 1) :allow-other-keys) a) (hi :a 2 32)) */
   /* (let () (define* (f (a :b)) a) (list (f) (f 1) (f :c) (f :a :c) (f :a 1) (f))) */
-  /* fprintf(stderr, "at end x: %s, y: %s\n", DISPLAY(sc->x), DISPLAY(sc->y)); */
 
   /* check for trailing args with no :rest arg */
   if (is_not_null(sc->y))
@@ -26028,11 +26024,6 @@ static s7_pointer find_safe_do_symbol_or_bust(s7_scheme *sc, s7_pointer sym)
 static s7_pointer abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
 #if (!WITH_GMP)
-  /*
-  fprintf(stderr, "expr: %s\n", DISPLAY_80(cadr(expr)));
-  fprintf(stderr, "opt: %d %d %s\n", is_optimized(cadr(expr)), optimize_data(cadr(expr)), opt_names[optimize_data(cadr(expr))]);
-  fprintf(stderr, "f: %p %p\n", ecdr(cadr(expr)), subtract_2);
-  */
   if ((is_optimized(cadr(expr))) &&
       (optimize_data(cadr(expr)) == HOP_SAFE_C_SS) &&
       (ecdr(cadr(expr)) == subtract_2))
@@ -26307,7 +26298,6 @@ static s7_pointer hash_table_ref_chooser(s7_scheme *sc, s7_pointer f, int args, 
 
 static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  /* fprintf(stderr, "original add chooser: %s\n", DISPLAY_80(expr)); */
   if (args == 1)
     return(add_1);
 
@@ -28488,7 +28478,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
       
 
     case SAFE_C_SP:
-      /* fprintf(stderr, "SP: e1: %s, e2: %s\n", DISPLAY(e1), DISPLAY(e2)); */
       switch (op2)
 	{
 	case OP_SAFE_C_S:
@@ -28507,7 +28496,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 	  return(OP_SAFE_C_S_opSSq);
 
 	default:
-	  /* fprintf(stderr, "use s_z\n"); */
 	  return(OP_SAFE_C_SZ);
 	  break;
 	}
@@ -28522,7 +28510,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 
 
     case SAFE_C_PS:
-      /* fprintf(stderr, "PS: e1: %s, e2: %s\n", DISPLAY(e1), DISPLAY(e2));  */
       switch (op2)
 	{
 	case OP_SAFE_C_C:
@@ -28541,7 +28528,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 	  return(OP_SAFE_C_opSSq_S);
 
 	default:
-	  /* fprintf(stderr, "use z_s\n"); */
 	  return(OP_SAFE_C_ZS);
 	  break;
 	}
@@ -28574,7 +28560,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 
 
     case SAFE_C_CP:
-      /* fprintf(stderr, "e1: %s, e2: %s\n", DISPLAY(e1), DISPLAY(e2)); */
       switch (op2)
 	{
 	case OP_SAFE_C_C:
@@ -28600,7 +28585,6 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 
 
     case SAFE_C_PP:
-      /* fprintf(stderr, "e1: %s, e2: %s\n", DISPLAY(e1), DISPLAY(e2));  */
       switch (op2)
 	{
 	case OP_SAFE_C_S:
@@ -28944,12 +28928,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer x)
 static bool body_is_safe(s7_scheme *sc, s7_pointer body)
 {
   s7_pointer p;
-  /*
-  fprintf(stderr, "safe: %d, body: %s\n", is_safe_closure(body), DISPLAY_80(body));
-  if (is_safe_closure(body))
-    return(true);
-  */
-
   for (p = body; is_pair(p); p = cdr(p))
     {
       if ((is_pair(car(p))) &&
@@ -29620,6 +29598,16 @@ static s7_pointer check_if(s7_scheme *sc)
 }
 
 
+static bool is_safe_arg_list(s7_scheme *sc, s7_pointer lst)
+{
+  s7_pointer p;
+  for (p = lst; is_pair(p); p = cdr(p))
+    if (symbol_has_accessor(car(p)))
+      return(false);
+  return(true);
+}
+
+
 static s7_pointer check_define(s7_scheme *sc)
 {
   s7_pointer x;
@@ -29662,6 +29650,7 @@ static s7_pointer check_define(s7_scheme *sc)
       /* if the body is safe, we can optimize the calling sequence */
       if ((body_is_safe(sc, cdr(sc->code))) &&
 	  (is_proper_list(sc, cdar(sc->code))) &&
+	  (is_safe_arg_list(sc, cdar(sc->code))) &&
 	  (sc->op == OP_DEFINE))
 	{
 	  /* fprintf(stderr, "safe: %s\n", DISPLAY_80(sc->code)); */
@@ -30764,7 +30753,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* func = sc->code, func takes one arg, args = '(nil arglist) at the start with symbol_id = len
        *   the func is prechecked, as is the list.
        */
-      /* fprintf(stderr, "%p %lld, value: %s, args: %s\n", sc->args, symbol_id(sc->args), DISPLAY(sc->value), DISPLAY(sc->args)); */
       if (sc->value != sc->NO_VALUE)
 	{
 	  if (is_multiple_value(sc->value))
@@ -31263,7 +31251,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer step;
 	step = caddr(caar(sc->code));
-	/* fprintf(stderr, "step: %s\n", DISPLAY(step)); */
 	if (s7_is_symbol(cadr(step)))
 	  {
 	    car(sc->T2_1) = symbol_value(car(sc->args));
@@ -31281,7 +31268,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer end_test;
 	end_test = car(cadr(sc->code));
-	/* fprintf(stderr, "args: %s\n", DISPLAY(sc->args)); */
 	car(sc->T2_1) = symbol_value(car(sc->args));
 	car(sc->T2_2) = symbol_value(cadr(sc->args));
 	if (is_true(sc, c_function_call(ecdr(end_test))(sc, sc->T2_1)))
@@ -31494,7 +31480,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     *
 	     * label at start of loop plus jump back at end
 	     * if accessor and binder is scheme func
-	     *   push_stack DO_INIT_WITH_ACCESSOR, args=x y value args, code, jumping back to after apply
+	     *   push_stack DO_INIT_WITH_ACCESSOR, args=x y value args, code, jumping back after apply
 	     *   args='(sym val), code=scheme func, goto APPLY
 	     *   DO_INIT_WITH_ACCESSOR checks for 'error and jumps to
 	     * DO_INIT_ACCESS:
@@ -31544,7 +31530,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  push_stack(sc, OP_DO_END1, sc->args, sc->code);
 	  sc->code = cadr(sc->args);               /* evaluate the end expr */
-	  /* fprintf(stderr, "end-test: %s %d %s\n", DISPLAY_80(sc->code), is_optimized(sc->code), opt_names[optimize_data(sc->code)]); */
 	  goto EVAL;
 	}
       else 
@@ -31567,7 +31552,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   if there isn't an end test, there also isn't a result (they're in the same list)
 	   */
 	  sc->code = cddr(sc->args);                /* result expr (a list -- implicit begin) */
-	  /* fprintf(stderr, "result: %s\n", DISPLAY_80(sc->code)); */
 	  
 	  typeflag(sc->args) = 0;
 	  (*(sc->free_heap_top++)) = sc->args;
@@ -31635,8 +31619,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    push_stack(sc, OP_BEGIN1, sc->NIL, cdr(code)); 
 	  }
 	sc->code = car(code);
-
-	/* fprintf(stderr, "begin: %s\n", DISPLAY_80(sc->code));  */
       }
 
     EVAL:
@@ -32416,6 +32398,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 		      case T_VECTOR:
 			optimize_data(code) = OP_VECTOR_S;
+			/* to back out from here we need backpointers */
 			goto OPT_EVAL;
 			
 		      case T_C_FUNCTION:
@@ -32487,15 +32470,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = finder(sc, car(code));
-		    /* fprintf(stderr, "unknown c: f: %s\n", DISPLAY(f)); */
 		    
 		    if (args_match(sc, f, 1))
 		      {
 			switch (type(f))
 			  {
 			  case T_VECTOR:
-
-			    /* fprintf(stderr, "use vector: %d %s\n", s7_is_vector(f), DISPLAY_80(code)); */
 			    optimize_data(code) = OP_VECTOR_C;
 			    goto OPT_EVAL;
 			    
@@ -32650,7 +32630,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if ((is_closure(f)) &&
 			(args_match(sc, f, 1)))
 		      {
-			/* fprintf(stderr, "opSq: %d %s\n", is_safe_closure(closure_body(f)), DISPLAY_80(code)); */
 			if (is_safe_closure(closure_body(f)))
 			  optimize_data(code) = OP_SAFE_CLOSURE_opSq;
 			else optimize_data(code) = OP_CLOSURE_opSq;
@@ -32684,9 +32663,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = finder(sc, car(code));
-
-		    /* fprintf(stderr, "unknown S_opSq: %d %s\n", s7_is_vector(f), DISPLAY_80(code)); */
-
 		    if ((is_closure(f)) &&
 			(args_match(sc, f, 2)))
 		      {
@@ -32731,8 +32707,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (!s7_is_vector(v))
 		      break;
 
-		    /* fprintf(stderr, "vector_c: %d %s\n", s7_is_vector(v), DISPLAY_80(code)); */
-		  
 		    if (!vector_is_multidimensional(v))
 		      {
 			s7_Int index;
@@ -34595,8 +34569,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* here sc->code is not a pair */
 	  if (s7_is_symbol(sc->code))
 	    {
-	      /* fprintf(stderr, "eval: %s from %s\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->cur_code)); */
-	      
 	      sc->value = finder(sc, sc->code);
 	      pop_stack(sc);
 	      if (sc->op != OP_EVAL_ARGS)
@@ -34606,9 +34578,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else
 	    {
 	      /* sc->code is not a pair or a symbol */
-	      
-	      /* fprintf(stderr, "eval: %s from %s\n", s7_object_to_c_string(sc, code), s7_object_to_c_string(sc, sc->cur_code)); */
-	      
 	      sc->value = sc->code;
 	      goto START;
 	    }
@@ -34620,8 +34589,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_EVAL_ARGS:
-      /* fprintf(stderr, "    op_eval_args: %s %s\n", DISPLAY(sc->value), DISPLAY_80(sc->code)); */
-
       if (dont_eval_args(sc->value))
 	{
 	  if (is_any_macro(sc->value))
@@ -34771,7 +34738,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_EVAL_ARGS_P_4:
 	if (is_not_null(sc->args))
 	  {
-	    /* fprintf(stderr, "value: %s, args: %s, code: %s\n", DISPLAY(sc->value), DISPLAY(sc->args), DISPLAY(sc->code)); */
 	    car(sc->TEMP_CELL_2) = caddr(sc->code);
 	    cdr(sc->TEMP_CELL_2) = sc->TEMP_CELL_3;
 	    car(sc->TEMP_CELL_3) = sc->value;
@@ -34947,7 +34913,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     EVAL_ARGS:
       /* 1st time, value = op, args = nil, code is args */
-      /* fprintf(stderr, "    eval_args: %s\n", DISPLAY_80(sc->code)); */
 
       if (is_pair(sc->code))  /* evaluate current arg -- must check for pair here, not sc->NIL (improper list as args) */
 	{ 
@@ -35079,7 +35044,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (type(sc->args) != T_NIL)
 		sc->args = safe_reverse_in_place(sc, x);
 	      else sc->args = x;
-	      /* fprintf(stderr, "    %s %s (%d)\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->args), (is_safe_procedure(sc->code))); */
 	      /* drop into APPLY */
 	    }
 	}
@@ -35250,10 +35214,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      /* here we know nothing funny is going on in the closure body -- not even set!
 	       *   so the new_frame with the args can be preallocated, and the arg values simply
-	       *   stored in their slots.  We still need to update frame_id etc.
-	       */
-
-	      /* TODO: I think this drops the symbol-access check somewhere
+	       *   stored in their slots.  We still need to update frame_id etc.  Also, we
+	       *   checked earlier that none of the parameter names need access handling.
 	       */
 
 	      /* sc->args are the arg values, closure_environment is the preallocated env
@@ -36139,8 +36101,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (is_procedure(c_function_setter(sc->x)))
 		{
 		  /* sc->code = cons(sc, c_function_setter(sc->x), s7_append(sc, cdar(sc->code), cdr(sc->code))); */
-		  /* fprintf(stderr, "set: %s %s\n", DISPLAY(sc->x), DISPLAY_80(sc->code)); */
-
 		  if (is_pair(cdar(sc->code)))
 		    {
 		      push_op_stack(sc, c_function_setter(sc->x));
@@ -37273,8 +37233,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_LAMBDA: 
       /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
-
-      /* fprintf(stderr, "code: %s\n", DISPLAY_80(sc->code)); */
 
       if ((!is_pair(sc->code)) ||
 	  (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) or (lambda . 1) */
@@ -39058,7 +39016,6 @@ static s7_pointer string_to_either_complex(s7_scheme *sc,
   p_rl = string_to_either_complex_1(sc, q, slash1, ex1, has_dec_point1, radix, &d_rl);
   p_im = string_to_either_complex_1(sc, plus, slash2, ex2, has_dec_point2, radix, &d_im);
   
-  /* fprintf(stderr, "%p %f %p %f\n", p_rl, d_rl, p_im, d_im); */
   if (d_im == 0.0)
     {
       /* 1.0+0.0000000000000000000000000000i */
@@ -43717,6 +43674,7 @@ the error type and the info passed to the error handler.");
  *       t342.scm for tests, augment env, closure arg names, do step?
  *       what about recursion during this process (i.e. ref to accessed var in accessor)? -- infinite loop possible here!
  *       [set! case works] TODO: block recursive call on accessor?
+ *       are optimized calls ok in this regard?
  *
- * other uses of s7_call: all the object stuff [see note in that section], hook_apply, readers, unbound_variable
+ * other uses of s7_call: all the object stuff [see note in that section], readers, unbound_variable
  */

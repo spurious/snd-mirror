@@ -8508,8 +8508,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
   { \
     mus_any *_o_;	  \
     double _fm_; \
-    s7_pointer rl; \
-    _fm_ = s7_number_to_real(rl = s7_call_direct(sc, cadr(args)));	\
+    _fm_ = s7_number_to_real(s7_call_direct(sc, cadr(args)));	\
     GET_GENERATOR(car(args), Type, s7_in_safe_do(sc), _o_); \
     return(s7_make_real(sc, Func(_o_, _fm_)));		    \
   }
@@ -8596,7 +8595,7 @@ MUS_PHASE_VOCODER,
 */
 
 
-/* for the noz part, run seems to be checking that safety==0, but that's always the case, and
+/* for the noz part, run seems to be checking that safety==0 -- this is zdly!
  *   that the gen arg is correct, but we check that too.
  * perhaps size must be > 0?  -- TODO: make this choice at init time
  */

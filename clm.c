@@ -3897,7 +3897,9 @@ mus_any *mus_make_filtered_comb(mus_float_t scaler, int size, mus_float_t *line,
       else return(NULL);
     }
   return(mus_make_comb(scaler, size, line, line_size, type));
-  /* TODO: doesn't this mean mus_run sees a null filter above? */
+  /* TODO: doesn't this mean mus_run sees a null filter above? 
+   *    (let ((gen (make-filtered-comb .4 5))) (filtered-comb gen 1.0)) -> ;filtered-comb argument 1...should be a filtered-comb filter
+   */
 }
 
 
