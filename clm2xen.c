@@ -8597,10 +8597,10 @@ MUS_PHASE_VOCODER,
 
 /* for the noz part, run seems to be checking that safety==0 -- this is zdly!
  *   that the gen arg is correct, but we check that too.
- * perhaps size must be > 0?  -- TODO: make this choice at init time
+ * perhaps size must be > 0?  -- TODO: make this choice at init time (how?)
  */
 
-/* TODO: clm changes: the list-as-generator business needs to be fixed
+/* PERHAPS: clm changes: the list-as-generator business needs to be fixed
  *         see snd_to_sample in snd-edits for an example, defgenerator is in ws.scm
  *         need to export mus_make_class_tag to ffi for the type, then add a way
  *         to associate a xen func with a class field via a wrapper.  We also need
@@ -8613,6 +8613,16 @@ MUS_PHASE_VOCODER,
  *   as in clm.c mus_set_name.
  * the class pointer can use XEN_WRAP_C_POINTER and friends
  * method(cls, name), g? needs type embedded as in s_type case
+ *     (begin (define all names to #f)
+ *        (let ((gen-type mus-make-type gen-name))
+ *          (set! ,(string->symbol (string-append sname "?")) (lambda (obj) (= (mus-type obj) gen-type)))
+ *          ;; but this also needs a mus-any? or generator? check so that mus-type makes sense
+ *          ;; is the -methods list needed?
+ *          (set! (,(string->symbol (string-append "make-" sname)) args as in ws, list as in 2nd (no-method-list) case?
+ *            or would a vector be better now?  (this is the equivalent of the C-side struct for each built-in gen)
+ *          ;; for each field, can this be mapped instead to the new mus_any_class fields?
+ *          ;;   -- no because these are also the local struct fields.
+ * is this an improvement?
  */
 
 
@@ -9712,8 +9722,6 @@ static s7_pointer g_indirect_frame_to_file_3(s7_scheme *sc, s7_pointer args)
  *    the real factor is 1.2 (576 to 479 in callgrind numbers)
  */
 
-/* TODO: cleanup the fm-violin intermediates
- */
 
 
 /* ---------------- */
