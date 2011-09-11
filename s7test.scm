@@ -62131,6 +62131,14 @@ etc
     (test (when (> 1 2) 3 4 5) #<unspecified>))
   (test (when (> 2 1) 3) 3))
 
+(test (let ((car 1) (cdr 2) (list '(1 2 3))) (+ car cdr (cadr list))) 5)
+(test (letrec ((null? (lambda (car cdr) (+ car cdr)))) (null? 1 2)) 3)
+(test (letrec ((append (lambda (car list) (car list)))) (append cadr '(1 2 3))) 2)
+(test (let () (define (hi) (let ((car 1) (cdr 2) (list '(1 2 3))) (+ car cdr (cadr list)))) (hi)) 5)
+(test (let () (define (hi) (letrec ((null? (lambda (car cdr) (+ car cdr)))) (null? 1 2))) (hi)) 3)
+(test (let () (define (hi) (letrec ((append (lambda (car list) (car list)))) (append cadr '(1 2 3)))) (hi)) 2)
+
+
 
 (format #t "~%;all done!~%")
 

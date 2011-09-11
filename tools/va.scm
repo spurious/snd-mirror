@@ -275,7 +275,7 @@
   "rtio.scm"
   "rubber.scm"
   "s7-slib-init.scm"
-  "s7test.scm"
+;  "s7test.scm"
   "selection.scm"
   "singer.scm"
   "snd-gl.scm"
