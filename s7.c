@@ -6959,11 +6959,11 @@ static s7_pointer g_abs_sub_ss(s7_scheme *sc, s7_pointer args)
   s7_pointer x, y;
   s7_num_t a, b;
 
-  x = find_symbol_or_bust(sc, cadr(car(args)));
+  x = finder(sc, cadr(car(args)));
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "-", 1, x, "a real"));
 
-  y = find_symbol_or_bust(sc, caddr(car(args)));
+  y = finder(sc, caddr(car(args)));
   if (!s7_is_real(y))
     return(s7_wrong_type_arg_error(sc, "-", 2, y, "a real"));
 
@@ -9683,7 +9683,7 @@ static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
   s7_Int ilen;
   s7_pointer val;
   
-  val = find_symbol_or_bust(sc, cadar(args));
+  val = finder(sc, cadar(args));
   ilen = s7_integer(cadr(args));
 
   switch (type(val))
@@ -10546,11 +10546,11 @@ static s7_pointer g_greater_abs(s7_scheme *sc, s7_pointer args)
   s7_pointer x, y;
   s7_Double a;
 
-  x = find_symbol_or_bust(sc, cadr(cadr(car(args))));
+  x = finder(sc, cadr(cadr(car(args))));
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "-", 1, x, "a real"));
 
-  y = find_symbol_or_bust(sc, caddr(cadr(car(args))));
+  y = finder(sc, caddr(cadr(car(args))));
   if (!s7_is_real(y))
     return(s7_wrong_type_arg_error(sc, "-", 2, y, "a real"));
 
@@ -10817,6 +10817,34 @@ static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, s7_is_positive(car(args))));
 }
 
+
+#if WITH_OPTIMIZATION
+static s7_pointer is_negative_length;
+static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer val;
+  val = finder(sc, cadar(args));
+
+  switch (type(val))
+    {
+    case T_PAIR:
+      return(make_boolean(sc, s7_list_length(sc, val) < 0));
+
+    case T_VECTOR:
+    case T_NIL:
+    case T_STRING:
+    case T_HASH_TABLE:
+      return(sc->F);
+
+    case T_C_OBJECT:
+      return(make_boolean(sc, s7_integer(object_length(sc, val)) < 0));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "length", 0, val, "a list, vector, string, or hash-table"));
+    }
+  return(sc->F);
+}
+#endif
 
 static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
 {
@@ -20502,9 +20530,6 @@ static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer 
        *   (i.e. an unchecked goto START), walks off the start of the stack. 
        */
       
-      /* TODO: the rest of the call_symbol_bind uses need to be embedded in eval
-       */
-      
       if (is_c_function(func))
 	{
 	  car(sc->T2_1) = symbol;
@@ -25952,7 +25977,7 @@ static s7_pointer is_pair_car, is_pair_cdr;
 static s7_pointer g_is_pair_car(s7_scheme *sc, s7_pointer args) 
 {
   s7_pointer val;
-  val = find_symbol_or_bust(sc, cadar(args));
+  val = finder(sc, cadar(args));
   if (!is_pair(val))
     return(s7_wrong_type_arg_error(sc, "car", 0, val, "a pair"));
   return(make_boolean(sc, is_pair(car(val))));
@@ -25961,7 +25986,7 @@ static s7_pointer g_is_pair_car(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_pair_cdr(s7_scheme *sc, s7_pointer args) 
 {
   s7_pointer val;
-  val = find_symbol_or_bust(sc, cadar(args));
+  val = finder(sc, cadar(args));
   if (!is_pair(val))
     return(s7_wrong_type_arg_error(sc, "cdr", 0, val, "a pair"));
   return(make_boolean(sc, is_pair(cdr(val))));
@@ -26008,10 +26033,10 @@ static s7_pointer is_eq_car;
 static s7_pointer g_is_eq_car(s7_scheme *sc, s7_pointer args) 
 {
   s7_pointer lst, val;
-  lst = find_symbol_or_bust(sc, cadar(args));
+  lst = finder(sc, cadar(args));
   if (!is_pair(lst))
     return(s7_wrong_type_arg_error(sc, "car", 0, lst, "a pair"));
-  val = find_symbol_or_bust(sc, cadr(args));
+  val = finder(sc, cadr(args));
   return(make_boolean(sc, car(lst) == val));
 }
 
@@ -26041,11 +26066,11 @@ static s7_pointer g_is_zero_logand_s_ash_cs(s7_scheme *sc, s7_pointer args)
   s7_Int i1, i2, i3;
   x = cdar(args);
 
-  s1 = find_symbol_or_bust(sc, car(x)); /* car(args) = (logand sym (ash 1 pos)), cadar = sym */
+  s1 = finder(sc, car(x)); /* car(args) = (logand sym (ash 1 pos)), cadar = sym */
   if (!s7_is_integer(s1))
     return(s7_wrong_type_arg_error(sc, "logand", 1, s1, "an integer"));
 
-  s2 = find_symbol_or_bust(sc, caddr(cadr(x)));
+  s2 = finder(sc, caddr(cadr(x)));
   if (!s7_is_integer(s2))
     return(s7_wrong_type_arg_error(sc, "ash", 2, s2, "an integer"));
 
@@ -26086,27 +26111,27 @@ static s7_pointer not_is_pair, not_is_symbol, not_is_null, not_is_list, not_is_n
 static s7_pointer not_is_boolean, not_is_char, not_is_string, not_is_eof;
 static s7_pointer not_is_eq_sq, not_is_eq_ss;
 
-static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_pair(find_symbol_or_bust(sc, cadar(args)))));}
-static s7_pointer g_not_is_null(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_null(find_symbol_or_bust(sc, cadar(args)))));}
-static s7_pointer g_not_is_symbol(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_symbol(find_symbol_or_bust(sc, cadar(args)))));}
-static s7_pointer g_not_is_number(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_number(find_symbol_or_bust(sc, cadar(args)))));}
-static s7_pointer g_not_is_real(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_real(find_symbol_or_bust(sc, cadar(args)))));}
-static s7_pointer g_not_is_integer(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_integer(find_symbol_or_bust(sc, cadar(args)))));}
-static s7_pointer g_not_is_rational(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_rational(find_symbol_or_bust(sc, cadar(args)))));}
-static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_proper_list(sc, find_symbol_or_bust(sc, cadar(args)))));}
-static s7_pointer g_not_is_boolean(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_boolean(find_symbol_or_bust(sc, cadar(args)))));}
-static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_character(find_symbol_or_bust(sc, cadar(args)))));}
-static s7_pointer g_not_is_string(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_string(find_symbol_or_bust(sc, cadar(args)))));}
-static s7_pointer g_not_is_eof(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, find_symbol_or_bust(sc, cadar(args)) != sc->EOF_OBJECT));}
+static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_pair(finder(sc, cadar(args)))));}
+static s7_pointer g_not_is_null(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_null(finder(sc, cadar(args)))));}
+static s7_pointer g_not_is_symbol(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_symbol(finder(sc, cadar(args)))));}
+static s7_pointer g_not_is_number(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_number(finder(sc, cadar(args)))));}
+static s7_pointer g_not_is_real(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_real(finder(sc, cadar(args)))));}
+static s7_pointer g_not_is_integer(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_integer(finder(sc, cadar(args)))));}
+static s7_pointer g_not_is_rational(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_rational(finder(sc, cadar(args)))));}
+static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !is_proper_list(sc, finder(sc, cadar(args)))));}
+static s7_pointer g_not_is_boolean(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_boolean(finder(sc, cadar(args)))));}
+static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_character(finder(sc, cadar(args)))));}
+static s7_pointer g_not_is_string(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, !s7_is_string(finder(sc, cadar(args)))));}
+static s7_pointer g_not_is_eof(s7_scheme *sc, s7_pointer args) {return(make_boolean(sc, finder(sc, cadar(args)) != sc->EOF_OBJECT));}
 
 static s7_pointer g_not_is_eq_sq(s7_scheme *sc, s7_pointer args) 
 {
-  return(make_boolean(sc, find_symbol_or_bust(sc, cadr(car(args))) != cadr(caddr(car(args)))));
+  return(make_boolean(sc, finder(sc, cadr(car(args))) != cadr(caddr(car(args)))));
 }
 
 static s7_pointer g_not_is_eq_ss(s7_scheme *sc, s7_pointer args) 
 {
-  return(make_boolean(sc, find_symbol_or_bust(sc, cadr(car(args))) != find_symbol_or_bust(sc, caddr(car(args)))));
+  return(make_boolean(sc, finder(sc, cadr(car(args))) != finder(sc, caddr(car(args)))));
 }
 
 static s7_pointer not_chooser(s7_scheme *sc, s7_pointer g, int args, s7_pointer expr)
@@ -26373,6 +26398,27 @@ static s7_pointer geq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
       if (s7_is_integer(caddr(expr)))
 	return(geq_s_ic);
       return(geq_2);
+    }
+  return(f);
+}
+
+
+static s7_pointer is_negative_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 1)
+    {
+      if ((is_optimized(cadr(expr))) &&
+	  (optimize_data(cadr(expr)) == HOP_SAFE_C_S) &&
+	  (is_c_function(ecdr(cadr(expr)))))
+	{
+	  s7_function f;
+	  f = c_function_call(ecdr(cadr(expr)));
+	  if (f == g_length)
+	    {
+	      optimize_data(expr) = HOP_SAFE_C_C;
+	      return(is_negative_length);
+	    }
+	}
     }
   return(f);
 }
@@ -26657,7 +26703,16 @@ static void init_choosers(s7_scheme *sc)
   equal_2 = s7_make_function(sc, "=", g_equal_2, 2, 0, false, "= optimization");
   c_function_class(equal_2) = c_function_class(f);
 
+
 #if (!WITH_GMP)
+  /* negative? */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "negative?")));
+  c_function_chooser(f) = is_negative_chooser;
+
+  is_negative_length = s7_make_function(sc, "negative?", g_is_negative_length, 1, 0, false, "negative? optimization");
+  c_function_class(is_negative_length) = c_function_class(f);
+
+
   /* < */
   f = symbol_value(symbol_global_slot(make_symbol(sc, "<")));
   c_function_chooser(f) = less_chooser;
@@ -29585,6 +29640,7 @@ static s7_pointer check_if(s7_scheme *sc)
 }
 
 
+#if WITH_OPTIMIZATION
 static bool is_safe_arg_list(s7_scheme *sc, s7_pointer lst)
 {
   s7_pointer p;
@@ -29594,6 +29650,7 @@ static bool is_safe_arg_list(s7_scheme *sc, s7_pointer lst)
       return(false);
   return(true);
 }
+#endif
 
 
 static s7_pointer check_define(s7_scheme *sc)
@@ -30368,7 +30425,6 @@ static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
 
 #endif
 
-
 static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
 {
   s7_pointer x;	
@@ -30398,10 +30454,6 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
 
 #endif
 
-
-#if 0
-static s7_pointer last_case = NULL, last_case_1 = NULL;
-#endif
 
 
 /* -------------------------------- eval -------------------------------- */
@@ -31465,7 +31517,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    else cdr(y) = val;
 
-	    /* TODO: what about var access during the step section? 
+	    /* PERHAPS: var access checks during the step section? 
 	     *
 	     * to embed here, we need x, y, (sc->args? sc->code?), sc->value
 	     *
@@ -43496,6 +43548,7 @@ s7_scheme *s7_init(void)
   set_global(make_symbol(sc, "length"));
   set_global(make_symbol(sc, "copy"));
 
+  /* -------- *gc-stats* -------- */
   s7_define_variable(sc, "*gc-stats*", sc->F);
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*gc-stats*"), 
 		       list_3(sc, 
@@ -43503,6 +43556,7 @@ s7_scheme *s7_init(void)
 			      s7_make_function(sc, "(set *gc-stats*)", g_gc_stats_set, 2, 0, false, "called if *gc-stats* is set"), 
 			      s7_make_function(sc, "(bind *gc-stats*)", g_gc_stats_set, 2, 0, false, "called if *gc-stats* is bound")));
 
+  /* -------- *features* -------- */
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*features*"), 
 		       list_3(sc, 
@@ -43513,6 +43567,7 @@ s7_scheme *s7_init(void)
 
   /* these hook variables should use s7_define_constant, but we need to be backwards compatible */
 
+  /* -------- *load-hook* -------- */
   sc->load_hook = s7_make_hook(sc, 1, 0, false, "*load-hook* is called when a file is loaded.  Its functions take one argument, the filename.");
   s7_define_variable(sc, "*load-hook*", sc->load_hook);
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*load-hook*"), 
@@ -43522,6 +43577,7 @@ s7_scheme *s7_init(void)
 					       "called if *load-hook* is set"), 
 			      sc->F));
 
+  /* -------- *trace-hook* -------- */
   sc->trace_hook = s7_make_hook(sc, 2, 0, false, 
 				"*trace-hook* customizes tracing.  Its functions take 2 arguments, the function being traced, and its current arguments.");
   s7_define_variable(sc, "*trace-hook*", sc->trace_hook); 
@@ -43532,6 +43588,7 @@ s7_scheme *s7_init(void)
 					       "called if *trace-hook* is set"), 
 			      sc->F));
   
+  /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_make_hook(sc, 1, 0, false, "*unbound-variable-hook* is called when an unbound variable is encountered.  Its functions \
 take 1 argument, the unbound symbol.");
   s7_define_variable(sc, "*unbound-variable-hook*", sc->unbound_variable_hook); 
@@ -43542,6 +43599,7 @@ take 1 argument, the unbound symbol.");
 					       "called if *unbound-variable-hook* is set"), 
 			      sc->F));
   
+  /* -------- *error-hook* -------- */
   sc->error_hook = s7_make_hook(sc, 2, 0, false, "*error-hook* is called when an error is not caught.  Its functions take two arguments, \
 the error type and the info passed to the error handler.");
   s7_define_variable(sc, "*error-hook*", sc->error_hook);
@@ -43552,7 +43610,7 @@ the error type and the info passed to the error handler.");
 					       "called if *error-hook* is set"), 
 			      sc->F));
 
-
+  /* -------- *vector-print-length* -------- */
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
   sc->vector_print_length = symbol_global_slot(make_symbol(sc, "*vector-print-length*"));
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*vector-print-length*"), 
@@ -43562,6 +43620,7 @@ the error type and the info passed to the error handler.");
 					       "called if *vector-print-length* is set"), 
 			      sc->F));
 
+  /* -------- *safety* -------- */
   s7_define_variable(sc, "*safety*", small_int(sc->safety));
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*safety*"), 
 		       list_3(sc, 
@@ -43570,14 +43629,7 @@ the error type and the info passed to the error handler.");
 			      s7_make_function(sc, "(bind *safety*)", g_safety_bind, 2, 0, false, "called if *safety* is bound")));
 
 
-  /* the next two are for the test suite */
-  s7_make_procedure_with_setter(sc, "-s7-symbol-table-locked?", 
-				g_symbol_table_is_locked, 0, 0, 
-				g_set_symbol_table_is_locked, 1, 0, 
-				H_symbol_table_is_locked);
-  s7_define_function(sc, "-s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
-
-
+  /* -------- *load-path* -------- */
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*load-path*"), 
 		       list_3(sc, 
@@ -43585,6 +43637,7 @@ the error type and the info passed to the error handler.");
 			      s7_make_function(sc, "(set *load-path*)", g_load_path_set, 2, 0, false, "called if *load-path* is set"), 
 			      s7_make_function(sc, "(bind *load-path*)", g_load_path_set, 2, 0, false, "called if *load-path* is bound")));
 
+  /* -------- *#readers* -------- */
   s7_define_variable(sc, "*#readers*", sc->NIL);
   sc->sharp_readers = symbol_global_slot(make_symbol(sc, "*#readers*"));
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*#readers*"), 
@@ -43593,8 +43646,18 @@ the error type and the info passed to the error handler.");
 			      s7_make_function(sc, "(set *#readers*)", g_sharp_readers_set, 2, 0, false, "called if *#readers* is set"), 
 			      s7_make_function(sc, "(bind *#readers*)", g_sharp_readers_set, 2, 0, false, "called if *#readers* is bound")));
 
+
+  /* -------- *error-info* -------- */
   sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);
   s7_define_constant(sc, "*error-info*", sc->error_info);
+
+
+  /* the next two are for the test suite */
+  s7_make_procedure_with_setter(sc, "-s7-symbol-table-locked?", 
+				g_symbol_table_is_locked, 0, 0, 
+				g_set_symbol_table_is_locked, 1, 0, 
+				H_symbol_table_is_locked);
+  s7_define_function(sc, "-s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
 
   s7_provide(sc, "s7");
 
@@ -43797,9 +43860,9 @@ the error type and the info passed to the error handler.");
 /* TODO: the symbol-access stuff is not fully implemented
  *       t342.scm for tests, augment env, closure arg names, do step?
  *       what about recursion during this process (i.e. ref to accessed var in accessor)? -- infinite loop possible here!
- *       [set! case works] TODO: block recursive call on accessor?
+ *       PERHAPS: block recursive call on accessor?
  *       are optimized calls ok in this regard?
+ *       all call_symbol_bind uses really should be embedded
  *
  * other uses of s7_call: all the object stuff [see note in that section], readers, unbound_variable
- *       uses of direct eval: dynamic-wind unwind during call/cc exit, read, load, eval-string, some error handling
  */
