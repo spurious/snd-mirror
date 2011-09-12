@@ -10510,7 +10510,6 @@ this prints:
 (test (if if if if) if)
 (test (((if if if) if if) if if 'gad) if)
 (test (if if (if if if) if) if)
-(test (let ((car if)) (car #t 0 1)) 0)
 (test ((car (list if)) #t 0 1) 0)
 (test (symbol->string 'if) "if")
 (test (if (and if (if if if)) if 'gad) if)
@@ -13785,7 +13784,7 @@ time, so that the displayed results are
 (test (let ((x 32)) (let* ((x 3) (y x)) y)) 3)
 (test (let ((x 2) (y 3)) (let ((x 7) (z (+ x y))) (* z x))) 35)
 (test (let ((x 2) (y 3)) (let* ((x 7)  (z (+ x y))) (* z x))) 70)
-(test (letrec ((even? (lambda (n)  (if (zero? n) #t (odd? (- n 1))))) (odd? (lambda (n)  (if (zero? n) #f (even? (- n 1)))))) (even? 88))  #t)
+(test (letrec ((is-even (lambda (n)  (if (zero? n) #t (is-odd (- n 1))))) (is-odd (lambda (n)  (if (zero? n) #f (is-even (- n 1)))))) (is-even 88))  #t)
 (test (let loop ((numbers '(3 -2 1 6 -5)) 
 		 (nonneg '()) 
 		 (neg '())) 
@@ -14097,9 +14096,9 @@ time, so that the displayed results are
 					;
 					;  (format #t "))~%"))
 
-(num-test (let ((a 0) (A 1) (! 2) ($ 3) (% 4) (& 5) (* 6) (/ 7) (| 8) (< 9) (= 10) (> 11) (? 12) (^ 13) (_ 14) (~ 15) (a9 16) (aa 17) (aA 18) (a! 19) (a$ 20) (a% 21) (a& 22) (a* 23) (a+ 24) (a- 25) (a. 26) (a/ 27) (a| 28) (a< 29) (a= 30) (a> 31) (a? 32) (a@ 33) (a^ 34) (a_ 35) (a~ 36) (A9 37) (Aa 38) (AA 39) (A! 40) (A$ 41) (A% 42) (A& 43) (A* 44) (A+ 45) (A- 46) (A. 47) (A/ 48) (A| 49) (A< 50) (A= 51) (A> 52) (A? 53) (A@ 54) (A^ 55) (A_ 56) (A~ 57) (!9 58) (!a 59) (!A 60) (!! 61) (!$ 62) (!% 63) (!& 64) (!* 65) (!+ 66) (!- 67) (!. 68) (!/ 69) (!| 70) (!< 71) (!= 72) (!> 73) (!? 74) (!@ 75) (!^ 76) (!_ 77) (!~ 78) ($9 79) ($a 80) ($A 81) ($! 82) ($$ 83) ($% 84) ($& 85) ($* 86) ($+ 87) ($- 88) ($. 89) ($/ 90) ($| 91) ($< 92) ($= 93) ($> 94) ($? 95) ($@ 96) ($^ 97) ($_ 98) ($~ 99) (%9 100) (%a 101) (%A 102) (%! 103) (%$ 104) (%% 105) (%& 106) (%* 107) (%+ 108) (%- 109) (%. 110) (%/ 111) (%| 112) (%< 113) (%= 114) (%> 115) (%? 116) (%@ 117) (%^ 118) (%_ 119) (%~ 120) (&9 121) (&a 122) (&A 123) (&! 124) (&$ 125) (&% 126) (&& 127) (&* 128) (&+ 129) (&- 130) (&. 131) (&/ 132) (&| 133) (&< 134) (&= 135) (&> 136) (&? 137) (&@ 138) (&^ 139) (&_ 140) (&~ 141) (*9 142) (*a 143) (*A 144) (*! 145) (*$ 146) (*% 147) (*& 148) (** 149) (*+ 150) (*- 151) (*. 152) (*/ 153) (*| 154) (*< 155) (*= 156) (*> 157) (*? 158) (*@ 159) (*^ 160) (*_ 161) (*~ 162) (/9 163) (/a 164) (/A 165) (/! 166) (/$ 167) (/% 168) (/& 169) (/* 170) (/+ 171) (/- 172) (/. 173) (// 174) (/| 175) (/< 176) (/= 177) (/> 178) (/? 179) (/@ 180) (/^ 181) (/_ 182) (/~ 183) (|9 184) (ca 185) (CA 186) (|! 187) (|$ 188) (|% 189) (|& 190) (|* 191) (|+ 192) (|- 193) (|. 194) (|/ 195) (cc 196) (|< 197) (|= 198) (|> 199) (|? 200) (|@ 201) (|^ 202) (|_ 203) (|~ 204) (<9 205) (<a 206) (<A 207) (<! 208) (<$ 209) (<% 210) (<& 211) (<* 212) (<+ 213) (<- 214) (<. 215) (</ 216) (<| 217) (<< 218) (<= 219) (<> 220) (<? 221) (<@ 222) (<^ 223) (<_ 224) (<~ 225) (=9 226) (=a 227) (=A 228) (=! 229) (=$ 230) (=% 231) (=& 232) (=* 233) (=+ 234) (=- 235) (=. 236) (=/ 237) (=| 238) (=< 239) (== 240) (=> 241) (=? 242) (=@ 243) (=^ 244) (=_ 245) (=~ 246) (>9 247) (>a 248) (>A 249) (>! 250) (>$ 251) (>% 252) (>& 253) (>* 254) (>+ 255) (>- 256) (>. 257) (>/ 258) (>| 259) (>< 260) (>= 261) (>> 262) (>? 263) (>@ 264) (>^ 265) (>_ 266) (>~ 267) (?9 268) (?a 269) (?A 270) (?! 271) (?$ 272) (?% 273) (?& 274) (?* 275) (?+ 276) (?- 277) (?. 278) (?/ 279) (?| 280) (?< 281) (?= 282) (?> 283) (?? 284) (?@ 285) (?^ 286) (?_ 287) (?~ 288) (^9 289) (^a 290) (^A 291) (^! 292) (^$ 293) (^% 294) (^& 295) (^* 296) (^+ 297) (^- 298) (^. 299) (^/ 300) (^| 301) (^< 302) (^= 303) (^> 304) (^? 305) (^@ 306) (^^ 307) (^_ 308) (^~ 309) (_9 310) (_a 311) (_A 312) (_! 313) (_$ 314) (_% 315) (_& 316) (_* 317) (_+ 318) (_- 319) (_. 320) (_/ 321) (_| 322) (_< 323) (_= 324) (_> 325) (_? 326) (_@ 327) (_^ 328) (__ 329) (_~ 330) (~9 331) (~a 332) (~A 333) (~! 334) (~$ 335) (~% 336) (~& 337) (~* 338) (~+ 339) (~- 340) (~. 341) (~/ 342) (~| 343) (~< 344) (~= 345) (~> 346) (~? 347) (~@ 348) (~^ 349) (~_ 350) (~~ 351) )
-	    (+ a A ! $ % & * / | < = > ? ^ _ ~ a9 aa aA a! a$ a% a& a* a+ a- a. a/ a| a< a= a> a? a@ a^ a_ a~ A9 Aa AA A! A$ A% A& A* A+ A- A. A/ A| A< A= A> A? A@ A^ A_ A~ !9 !a !A !! !$ !% !& !* !+ !- !. !/ !| !< != !> !? !@ !^ !_ !~ $9 $a $A $! $$ $% $& $* $+ $- $. $/ $| $< $= $> $? $@ $^ $_ $~ %9 %a %A %! %$ %% %& %* %+ %- %. %/ %| %< %= %> %? %@ %^ %_ %~ &9 &a &A &! &$ &% && &* &+ &- &. &/ &| &< &= &> &? &@ &^ &_ &~ *9 *a *A *! *$ *% *& ** *+ *- *. */ *| *< *= *> *? *@ *^ *_ *~ /9 /a /A /! /$ /% /& /* /+ /- /. // /| /< /= /> /? /@ /^ /_ /~ |9 ca CA |! |$ |% |& |* |+ |- |. |/ cc |< |= |> |? |@ |^ |_ |~ <9 <a <A <! <$ <% <& <* <+ <- <. </ <| << <= <> <? <@ <^ <_ <~ =9 =a =A =! =$ =% =& =* =+ =- =. =/ =| =< == => =? =@ =^ =_ =~ >9 >a >A >! >$ >% >& >* >+ >- >. >/ >| >< >= >> >? >@ >^ >_ >~ ?9 ?a ?A ?! ?$ ?% ?& ?* ?+ ?- ?. ?/ ?| ?< ?= ?> ?? ?@ ?^ ?_ ?~ ^9 ^a ^A ^! ^$ ^% ^& ^* ^+ ^- ^. ^/ ^| ^< ^= ^> ^? ^@ ^^ ^_ ^~ _9 _a _A _! _$ _% _& _* _+ _- _. _/ _| _< _= _> _? _@ _^ __ _~ ~9 ~a ~A ~! ~$ ~% ~& ~* ~+ ~- ~. ~/ ~| ~< ~= ~> ~? ~@ ~^ ~_ ~~ ))
-	  61776)
+(num-test (let ((a 0) (A 1) (! 2) ($ 3) (% 4) (& 5) (| 8) (? 12) (^ 13) (_ 14) (~ 15) (a9 16) (aa 17) (aA 18) (a! 19) (a$ 20) (a% 21) (a& 22) (a* 23) (a+ 24) (a- 25) (a. 26) (a/ 27) (a| 28) (a< 29) (a= 30) (a> 31) (a? 32) (a@ 33) (a^ 34) (a_ 35) (a~ 36) (A9 37) (Aa 38) (AA 39) (A! 40) (A$ 41) (A% 42) (A& 43) (A* 44) (A+ 45) (A- 46) (A. 47) (A/ 48) (A| 49) (A< 50) (A= 51) (A> 52) (A? 53) (A@ 54) (A^ 55) (A_ 56) (A~ 57) (!9 58) (!a 59) (!A 60) (!! 61) (!$ 62) (!% 63) (!& 64) (!* 65) (!+ 66) (!- 67) (!. 68) (!/ 69) (!| 70) (!< 71) (!= 72) (!> 73) (!? 74) (!@ 75) (!^ 76) (!_ 77) (!~ 78) ($9 79) ($a 80) ($A 81) ($! 82) ($$ 83) ($% 84) ($& 85) ($* 86) ($+ 87) ($- 88) ($. 89) ($/ 90) ($| 91) ($< 92) ($= 93) ($> 94) ($? 95) ($@ 96) ($^ 97) ($_ 98) ($~ 99) (%9 100) (%a 101) (%A 102) (%! 103) (%$ 104) (%% 105) (%& 106) (%* 107) (%+ 108) (%- 109) (%. 110) (%/ 111) (%| 112) (%< 113) (%= 114) (%> 115) (%? 116) (%@ 117) (%^ 118) (%_ 119) (%~ 120) (&9 121) (&a 122) (&A 123) (&! 124) (&$ 125) (&% 126) (&& 127) (&* 128) (&+ 129) (&- 130) (&. 131) (&/ 132) (&| 133) (&< 134) (&= 135) (&> 136) (&? 137) (&@ 138) (&^ 139) (&_ 140) (&~ 141) (*9 142) (*a 143) (*A 144) (*! 145) (*$ 146) (*% 147) (*& 148) (** 149) (*+ 150) (*- 151) (*. 152) (*/ 153) (*| 154) (*< 155) (*= 156) (*> 157) (*? 158) (*@ 159) (*^ 160) (*_ 161) (*~ 162) (/9 163) (/a 164) (/A 165) (/! 166) (/$ 167) (/% 168) (/& 169) (/* 170) (/+ 171) (/- 172) (/. 173) (// 174) (/| 175) (/< 176) (/= 177) (/> 178) (/? 179) (/@ 180) (/^ 181) (/_ 182) (/~ 183) (|9 184) (ca 185) (CA 186) (|! 187) (|$ 188) (|% 189) (|& 190) (|* 191) (|+ 192) (|- 193) (|. 194) (|/ 195) (cc 196) (|< 197) (|= 198) (|> 199) (|? 200) (|@ 201) (|^ 202) (|_ 203) (|~ 204) (<9 205) (<a 206) (<A 207) (<! 208) (<$ 209) (<% 210) (<& 211) (<* 212) (<+ 213) (<- 214) (<. 215) (</ 216) (<| 217) (<< 218) (<> 220) (<? 221) (<@ 222) (<^ 223) (<_ 224) (<~ 225) (=9 226) (=a 227) (=A 228) (=! 229) (=$ 230) (=% 231) (=& 232) (=* 233) (=+ 234) (=- 235) (=. 236) (=/ 237) (=| 238) (=< 239) (== 240) (=> 241) (=? 242) (=@ 243) (=^ 244) (=_ 245) (=~ 246) (>9 247) (>a 248) (>A 249) (>! 250) (>$ 251) (>% 252) (>& 253) (>* 254) (>+ 255) (>- 256) (>. 257) (>/ 258) (>| 259) (>< 260) (>> 262) (>? 263) (>@ 264) (>^ 265) (>_ 266) (>~ 267) (?9 268) (?a 269) (?A 270) (?! 271) (?$ 272) (?% 273) (?& 274) (?* 275) (?+ 276) (?- 277) (?. 278) (?/ 279) (?| 280) (?< 281) (?= 282) (?> 283) (?? 284) (?@ 285) (?^ 286) (?_ 287) (?~ 288) (^9 289) (^a 290) (^A 291) (^! 292) (^$ 293) (^% 294) (^& 295) (^* 296) (^+ 297) (^- 298) (^. 299) (^/ 300) (^| 301) (^< 302) (^= 303) (^> 304) (^? 305) (^@ 306) (^^ 307) (^_ 308) (^~ 309) (_9 310) (_a 311) (_A 312) (_! 313) (_$ 314) (_% 315) (_& 316) (_* 317) (_+ 318) (_- 319) (_. 320) (_/ 321) (_| 322) (_< 323) (_= 324) (_> 325) (_? 326) (_@ 327) (_^ 328) (__ 329) (_~ 330) (~9 331) (~a 332) (~A 333) (~! 334) (~$ 335) (~% 336) (~& 337) (~* 338) (~+ 339) (~- 340) (~. 341) (~/ 342) (~| 343) (~< 344) (~= 345) (~> 346) (~? 347) (~@ 348) (~^ 349) (~_ 350) (~~ 351) )
+	    (+ a A ! $ % & | ? ^ _ ~ a9 aa aA a! a$ a% a& a* a+ a- a. a/ a| a< a= a> a? a@ a^ a_ a~ A9 Aa AA A! A$ A% A& A* A+ A- A. A/ A| A< A= A> A? A@ A^ A_ A~ !9 !a !A !! !$ !% !& !* !+ !- !. !/ !| !< != !> !? !@ !^ !_ !~ $9 $a $A $! $$ $% $& $* $+ $- $. $/ $| $< $= $> $? $@ $^ $_ $~ %9 %a %A %! %$ %% %& %* %+ %- %. %/ %| %< %= %> %? %@ %^ %_ %~ &9 &a &A &! &$ &% && &* &+ &- &. &/ &| &< &= &> &? &@ &^ &_ &~ *9 *a *A *! *$ *% *& ** *+ *- *. */ *| *< *= *> *? *@ *^ *_ *~ /9 /a /A /! /$ /% /& /* /+ /- /. // /| /< /= /> /? /@ /^ /_ /~ |9 ca CA |! |$ |% |& |* |+ |- |. |/ cc |< |= |> |? |@ |^ |_ |~ <9 <a <A <! <$ <% <& <* <+ <- <. </ <| << <> <? <@ <^ <_ <~ =9 =a =A =! =$ =% =& =* =+ =- =. =/ =| =< == => =? =@ =^ =_ =~ >9 >a >A >! >$ >% >& >* >+ >- >. >/ >| >< >> >? >@ >^ >_ >~ ?9 ?a ?A ?! ?$ ?% ?& ?* ?+ ?- ?. ?/ ?| ?< ?= ?> ?? ?@ ?^ ?_ ?~ ^9 ^a ^A ^! ^$ ^% ^& ^* ^+ ^- ^. ^/ ^| ^< ^= ^> ^? ^@ ^^ ^_ ^~ _9 _a _A _! _$ _% _& _* _+ _- _. _/ _| _< _= _> _? _@ _^ __ _~ ~9 ~a ~A ~! ~$ ~% ~& ~* ~+ ~- ~. ~/ ~| ~< ~= ~> ~? ~@ ~^ ~_ ~~ ))
+	  61253)
 
 (test (let ()(+ (let ((x 0) (y 1) (z 2) )(+ x y (let ((x 3) )(+ x (let ()(+ (let ()
 									      (+ (let ((x 0) (y 1) (z 2) )(+ x y z (let ((x 3) )(+ x (let ((x 4) (y 5) (z 6) )
@@ -14161,7 +14160,6 @@ time, so that the displayed results are
 (test (let func ((a 1)) (define (func a) 2) (func 1)) 2)
 (test (let func ((a 1)) (define func (lambda (a) (func a))) (if (> a 1) (func (- a 1)) 0)) 0)
 (test (let loop ((i 0)) (let loop ((i 0)) (if (< i 1) (loop (+ i 1)))) i) 0)
-(test (let * ((i 0)) (if (< i 1) (* (+ i 1))) i) 0)
 (test (let ((j 123)) (define (f g) (set! j 0) (g 0)) (let loop ((i 1)) (if (> i 0) (f loop))) j) 0)
 (test (procedure? (let loop () loop)) #t)
 (test (let loop1 ((func 0)) (let loop2 ((i 0)) (if (not (procedure? func)) (loop1 loop2)) func)) 0)
@@ -16814,14 +16812,8 @@ why are these different (read-time `#() ? )
 (test (quasiquote #(1)) `#(1))
 
 (test `(+ ,@(map sqrt '(1 4 9)) 2) '(+ 1 2 3 2))
-(test (let ((sqrt (lambda (a) (* a a)))) `(+ ,@(map sqrt '(1 4 9)) 2)) '(+ 1 16 81 2))
 (test `(+ ,(sqrt 9) 4) '(+ 3 4))
-(test (let ((sqrt (lambda (a) (* a a)))) `(+ ,(sqrt 9) 4)) '(+ 81 4))
-(test `(+ ,(let ((sqrt (lambda (a) (* a a)))) (sqrt 9)) 4) '(+ 81 4))
-(test `(+ (let ((sqrt (lambda (a) (* a a)))) ,(sqrt 9)) 4) '(+ (let ((sqrt (lambda (a) (* a a)))) 3) 4))
 (test `(+ ,(apply values (map sqrt '(1 4 9))) 2) '(+ 1 2 3 2))
-(test (let ((sqrt (lambda (a) (* a a)))) `(+ ,(apply values (map sqrt '(1 4 9))) 2)) '(+ 1 16 81 2))
-(test (let ((sqrt (lambda (a) (* a a)))) `(+ (unquote (apply values (map sqrt '(1 4 9)))) 2)) '(+ 1 16 81 2))
 
 
 
@@ -18141,15 +18133,15 @@ abs     1       2
 
   ;; some of these are questionable
   (test ((lambda* ((x (lambda () 1))) (x))) 1)
-  (test ((lambda* ((x x) else) (+ x else)) 1 2) 3)
-  (test (symbol? ((lambda* ((y y)) y))) #t)
-  (test (symbol? ((lambda* ((y y) :key) y))) #t)
+  (test ((lambda* ((x x) else) (+ x else)) 1 2) 'error) ; used to be 3
+  (test (symbol? ((lambda* ((y y)) y))) 'error) ; this used to be #t but now y is undefined
+  (test (symbol? ((lambda* ((y y) :key) y))) 'error) ; same
   (test (procedure-arity (lambda* ((a 1) :allow-other-keys) a)) '(0 1 #f))
   (test (procedure-arity (lambda* (:allow-other-keys) 34)) '(0 0 #f))
   (test ((lambda* (:allow-other-keys) 34) :a 32) 34)
   (test (procedure-arity (lambda* ((a 1) :rest b :allow-other-keys) a)) '(0 1 #t))
-  (test ((lambda* ((y x) =>) (list y =>)) 1 2) '(1 2))
-  (test ((lambda* (=> (y x)) (list y =>)) 1) '(x 1))
+  (test ((lambda* ((y x) =>) (list y =>)) 1 2) 'error) ; used to be '(1 2))
+  (test ((lambda* (=> (y x)) (list y =>)) 1) 'error) ; used to be  '(x 1))
   (test ((lambda* ((y #2D((1 2) (3 4)))) (y 1 0))) 3)
   (test ((lambda* ((y (symbol "#(1 #\\a (3))")) x) -1)) -1)
   (test ((lambda* ((y (symbol "#(1 #\\a (3))")) x) y)) (symbol "#(1 #\\a (3))"))
@@ -18161,10 +18153,9 @@ abs     1       2
   (test ((lambda* (x (y x)) (let ((x 32)) y)) 1) #f)
   (test ((lambda* ((x 1) (y x)) y)) 1)
   (test ((lambda* ((x 1) (y (+ x 1))) y)) 2)
-  (test ((lambda* ((x y) (y x)) y)) 'y)              ; I'd expect unbound variable or something here
+  (test ((lambda* ((x y) (y x)) y)) 'error) ; used to be 'y
   (test (let ((z 2)) ((lambda* ((x z) (y x)) y))) 2) ; hmmm
   (test (keyword? ((lambda* ((x :-)) x))) #t)
-  (test ((lambda* ((- 0)) -) :- 1) 1)
   (test ((apply lambda* (list (list (list (string->symbol "a") 1)) (string->symbol "a"))) (symbol->keyword (string->symbol "a")) 3) 3)
   (test ((lambda* (:allow-other-keys) 1) :a 321) 1)
   (test ((lambda* (:rest (a 1)) a)) 'error)
@@ -19004,22 +18995,6 @@ abs     1       2
   (test (let () (define-bacro* (hiho (a 1)) `(+ ,a 1)) (macro? hiho)) #t)
   (test (let () (define-macro (hiho a) `(+ ,a 1)) (macro? hiho)) #t)
   (test (let () (define-macro* (hiho (a 1)) `(+ ,a 1)) (macro? hiho)) #t)
-
-  (let ()
-    (define-macro (i_ arg)
-      `(with-environment (initial-environment) ,arg))
-
-    (define-bacro* (mac b)
-      `((i_ let) ((a 12)) 
-	((i_ +) a ,(symbol->value b)))) 
-    ;; this assumes the 'b' value is a symbol
-    ;; (let ((a 1)) (mac (* a 2))) is an error
-    ;; use eval, not symbol->value to generalize it
-
-    (test (let ((a 32) 
-		(+ -)) 
-	    (mac a))
-	  44))
 
 #|
   (define-macro (when test . body)
@@ -21765,7 +21740,6 @@ abs     1       2
 (test ((((values append) begin) object->string) car) "car")
 (test ((((((values and) or) append) begin) object->string) car) "car")
 (test (((((((values values) and) or) append) begin) object->string) car) "car")
-(test ((((eval lambda) lcm gcd))) 0)
 (test (((append s7-version)) 0) #\s)
 (test ((values (lambda hi #()))) #())
 (test (((((lambda () (lambda () (lambda () (lambda () 1)))))))) 1)
@@ -21779,7 +21753,6 @@ abs     1       2
 (test (procedure? ((((((lambda (x) (set! x (lambda () x))) (lambda () x))))))) #t)
 (test ((do ((i 0 (+ i 1))) ((= i 1) (lambda () 3)))) 3)
 (test (dynamic-wind s7-version s7-version s7-version) (s7-version))
-(test ((((lambda - -) -) 0) 1) -1)
 (num-test ((list .(log 0)) 1) 0)
 (num-test (((cons .(log 0)) 0) 1) 0.0)
 
@@ -22258,13 +22231,13 @@ abs     1       2
 	      (push (make-binding seq data) bind)
 	      (if (eq? type 'across)
 		  (let ((pos (gensym "v"))
-			(max (gensym "v")))
+			(mx (gensym "v")))
 		    (push (make-binding pos 0) bind)
-		    (push (make-binding max #f) bind)
-		    (push `(set! ,max (vector-length ,seq)) init)
+		    (push (make-binding mx #f) bind)
+		    (push `(set! ,mx (vector-length ,seq)) init)
 		    (push `(set! ,pos (+ 1 ,pos)) step)
 		    (push `(set! ,var (vector-ref ,seq ,pos)) loop)
-		    (push `(>= ,pos ,max) stop))
+		    (push `(>= ,pos ,mx) stop))
 		  (begin
 		    (if incr
 			(if (and (list? incr) (eq? (car incr) 'quote))
@@ -62099,9 +62072,38 @@ etc
 (test (let ((env +) (x 0)) (define (hi) (do ((i 0 (+ i 3))) ((> i (env 4 5)) (env 1 2 3)) (+ x 1))) (hi) (hi)) 6)
 (test (let ((env +) (x 0)) (define (hi) (do ((i 0 (+ i 3))) ((> i 9) (env 1 2 3)) (+ x 1))) (hi) (hi)) 6)
 (test (let ((env +) (x 0)) (define (hi) (do ((i 0 (+ i 3))) ((> i 9) (+ 1 2 3)) (+ x 1))) (hi) (hi)) 6)
+(test (let * ((i 0)) (if (< i 1) (* (+ i 1))) i) 0)
+(test (let ((car if)) (car #t 0 1)) 0)
+
+(test (let ((sqrt (lambda (a) (* a a)))) `(+ ,@(map sqrt '(1 4 9)) 2)) '(+ 1 16 81 2))
+(test (let ((sqrt (lambda (a) (* a a)))) `(+ ,(sqrt 9) 4)) '(+ 81 4))
+(test `(+ ,(let ((sqrt (lambda (a) (* a a)))) (sqrt 9)) 4) '(+ 81 4))
+(test `(+ (let ((sqrt (lambda (a) (* a a)))) ,(sqrt 9)) 4) '(+ (let ((sqrt (lambda (a) (* a a)))) 3) 4))
+(test (let ((sqrt (lambda (a) (* a a)))) `(+ ,(apply values (map sqrt '(1 4 9))) 2)) '(+ 1 16 81 2))
+(test (let ((sqrt (lambda (a) (* a a)))) `(+ (unquote (apply values (map sqrt '(1 4 9)))) 2)) '(+ 1 16 81 2))
+
+(test ((((eval lambda) lcm gcd))) 0)
+(test ((((lambda - -) -) 0) 1) -1)
 
 (test (let () (define (hi) (let ((oscil >)) (or (< 3 2) (oscil 4 2)))) (hi) (hi)) #t)
 (test (let () (define (hi) (let ((oscil >)) (and (< 2 3) (oscil 4 2)))) (hi) (hi)) #t)
+
+(test ((lambda* ((- 0)) -) :- 1) 1)
+  (let ()
+    (define-macro (i_ arg)
+      `(with-environment (initial-environment) ,arg))
+
+    (define-bacro* (mac b)
+      `((i_ let) ((a 12)) 
+	((i_ +) a ,(symbol->value b)))) 
+    ;; this assumes the 'b' value is a symbol
+    ;; (let ((a 1)) (mac (* a 2))) is an error
+    ;; use eval, not symbol->value to generalize it
+
+    (test (let ((a 32) 
+		(+ -)) 
+	    (mac a))
+	  44))
 
 ;(define (hi) (do ((i 0 (+ i 1))) ((= i 200000) i) (abs i)))
 ;(test (hi) 200000)

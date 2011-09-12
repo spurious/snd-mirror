@@ -310,7 +310,7 @@ enum {OP_NO_OP,
       OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
-      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
+      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
       OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1,
       OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
@@ -365,7 +365,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "read-unquote", "read-apply-values", "read-vector", "read-done", 
    "load-return-if-eof", "load-close-and-stop-if-eof", "eval-string", "eval-done", "catch", 
    "dynamic-wind", "define-constant", "define-constant", "do", "do", "do", 
-   "do", "do", "do", "define*", "lambda*", 
+   "do", "do", "do", "define*", "lambda*", "lambda*-default",
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
    "trace-hook-quit", "with-environment", "with-environment", "for-each", "for-each", "map", "map",
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", 
@@ -1321,7 +1321,6 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define integer(n)                    n.value.integer_value
 #define complex_real_part(p)          real_part(number(p))
 #define complex_imag_part(p)          imag_part(number(p))
-
 
 #define S7_LLONG_MAX 9223372036854775807LL
 #define S7_LLONG_MIN (-S7_LLONG_MAX - 1LL)
@@ -14432,11 +14431,6 @@ static bool has_structure(s7_pointer p)
 
 #define INITIAL_SHARED_INFO_SIZE 8
 
-static void free_shared_info(shared_info *ci)
-{
-}
-
-
 static int shared_ref(shared_info *ci, s7_pointer p)
 {
   int i;
@@ -14597,10 +14591,7 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
   ci->top = refs;
 
   if (refs == 0)
-    {
-      free_shared_info(ci);
-      return(NULL);
-    }
+    return(NULL);
   return(ci);
 }
 
@@ -14757,7 +14748,6 @@ static s7_pointer vector_or_hash_table_to_string(s7_scheme *sc, s7_pointer vect)
   shared_info *ci = NULL;
   ci = make_shared_info(sc, vect);
   result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, vect, USE_WRITE, WITH_ELLIPSES, ci));
-  if (ci) free_shared_info(ci);
   return(result);
 }
 
@@ -14891,7 +14881,6 @@ static s7_pointer list_as_string(s7_scheme *sc, s7_pointer lst)
   shared_info *ci;
   ci = make_shared_info(sc, lst);
   result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, lst, USE_WRITE, WITH_ELLIPSES, ci));
-  if (ci) free_shared_info(ci);
   return(result);
 }
 
@@ -14903,7 +14892,6 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
   if (has_structure(obj))
     ci = make_shared_info(sc, obj);
   result = object_to_c_string_with_circle_check(sc, obj, USE_WRITE, WITH_ELLIPSES, ci);
-  if (ci) free_shared_info(ci);
   return(result);
 }
 
@@ -14990,7 +14978,6 @@ static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, boo
     ci = make_shared_info(sc, obj);
   val = object_to_c_string_with_circle_check(sc, obj, use_write, is_file_port(port), ci);
   write_string(sc, val, port);
-  if (ci) free_shared_info(ci);
   if (val) free(val);
 }
 
@@ -21284,7 +21271,6 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	bool result;
 	ci = new_shared_info(sc);
 	result = structures_are_equal(sc, x, y, ci);
-	free_shared_info(ci);
 	return(result);
       }
 
@@ -22059,7 +22045,6 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			  if (has_structure(obj))
 			    ci = make_shared_info(sc, obj);
 			  tmp = object_to_c_string_with_circle_check(sc, obj, (str[i] == 'S') || (str[i] == 's'), WITH_ELLIPSES, ci);
-			  if (ci) free_shared_info(ci);
 			  
 			  if (width > 0) truncate_string(tmp, width, ((str[i] == 'S') || (str[i] == 's')));
 
@@ -25710,62 +25695,7 @@ static s7_pointer lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, 
 }
 
 
-static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer val)
-{
-  /* if val is an expression, it needs to be evaluated in the definition environment
-   *   (let ((c 1)) (define* (a (b (+ c 1))) b) (set! c 2) (a)) -> 3
-   */
-
-  s7_pointer x;
-  if (s7_is_symbol(val))
-    {
-      x = find_symbol(sc, val);
-      if (is_not_null(x)) 
-	return(symbol_value(x));
-    }
-  
-  if (is_pair(val))
-    {
-      if ((car(val) == sc->QUOTE) ||
-	  (car(val) == sc->QUOTE_UNCHECKED))
-	return(cadr(val));
-
-      x = sc->z;
-
-      if (s7_stack_top(sc) < 12)
-	push_stack(sc, OP_BARRIER, sc->args, sc->code); 
-
-      /* If this barrier is omitted, we get a segfault from 
-       *    (call-with-exit (lambda (quit) ((lambda* ((a (quit 32))) a))))
-       * when typed to the listener's prompt (it's ok in other situations).
-       */
-
-      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-      sc->args = sc->NIL;
-      sc->code = val;
-      eval(sc, OP_EVAL);
-
-      /* ideally we'd drop into the evaluator here, not call it as a procedure.  This way
-       *   of getting the value is only safe for a C-side call like s7_read; for s7-internal
-       *   calls, error handling assumes we're using the s7 stack, not the C stack.  So,
-       *   we better not get an error while evaluating the argument default value!
-       */
-      
-      /* the problem is basically the same as the loops involving symbol accessors --
-       *   how to get back and continue after evaluating some expression without endless labels and gotos?
-       */
-
-      /* SOMEDAY: put this in the eval loop */
-
-      sc->z = x;
-      return(sc->value);
-    }
-
-  return(val);
-}
-
-
-static s7_pointer prepare_closure_star(s7_scheme *sc)
+static s7_pointer lambda_star_set_args(s7_scheme *sc)
 {
   /* sc->code is a closure: ((args body) envir)
    * (define* (hi a (b 1)) (+ a b))
@@ -25791,35 +25721,8 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
    */
 
   bool allow_other_keys = false;
-  s7_pointer z;
   
-  /* set all default values */
-  for (z = closure_args(sc->code); is_pair(z); z = cdr(z))
-    {
-      /* bind all the args to something (default value or #f or maybe #undefined) */
-      if (!((car(z) == sc->KEY_KEY) ||
-	    (car(z) == sc->KEY_OPTIONAL) ||
-	    (car(z) == sc->KEY_ALLOW_OTHER_KEYS)))
-	{
-	  if (car(z) == sc->KEY_REST)
-	    {
-	      z = cdr(z);
-	      add_slot(sc, car(z), sc->NIL); /* set :rest arg to sc->NIL, not sc->F */
-	    }
-	  else
-	    {
-	      if (is_pair(car(z)))                           /* (define* (hi (a mus-next)) a) */
-		add_slot(sc, caar(z),                        /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
-			 lambda_star_argument_default_value(sc, cadar(z)));
-	      /* mus-next, for example, needs to be evaluated before binding */
-	      else add_slot(sc, car(z), sc->F);
-	    }
-	}
-    }
-  if (s7_is_symbol(z))                                  /* dotted (last) arg? -- make sure its name exists in the current environment */
-    add_slot(sc, z, sc->NIL); 
-  
-  /* now get the current args, re-setting args that have explicit values */
+  /* get the current args, re-setting args that have explicit values */
   sc->x = closure_args(sc->code);
   sc->y = sc->args; 
   sc->z = sc->NIL;
@@ -25974,7 +25877,7 @@ static s7_pointer prepare_closure_star(s7_scheme *sc)
 
 
 
-/* even with the frame_id optimization, this is still about 12% of our total computing: 210/1730 in lg
+/* even with the frame_id optimization, this is still about 10% of our total computing: 146/1594 in lg
  *   but the separate finders no longer buy us much: 1608 vs 1583.
  * by using 1 function here, I can specialize safe do lookups without any overhead --
  *   so it's worth the 1.5% slow down elsewhere.  Or so it seemed... I am not hitting
@@ -27380,7 +27283,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			{
 			  if (is_safe_procedure(func))
 			    {
-			      /* fprintf(stderr, "safe of bad 1: %s\n", DISPLAY_80(car(x))); */
+			      /* fprintf(stderr, "%s: safe of bad 1: %s\n", opt_names[optimize_data(cadar(x))], DISPLAY_80(car(x))); */
 			      
 			      if (optimize_data_match(cadar(x), OP_SAFE_CLOSURE_SS))
 				{
@@ -27400,6 +27303,12 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				  return(false); 
 				}
 #if 0
+			      if (optimize_data_match(cadar(x), OP_UNKNOWN_S))
+				{
+				  fprintf(stderr, "1 arg, it's unknown\n");
+				}
+
+
 			      /* clm2xen wants to try to handle (oscil (oscs i)) and similar cases,
 			       *   even though they might be problematic in general.  If an outside
 			       *   chooser returns anything other than func here, we'll assume
@@ -31728,7 +31637,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       */
 	    }
 	  
-	  /* sc->code is a pair, car(sc->code) is not syntax */
+	  /* sc->code is a pair, car(sc->code) is not syntactic */
 
 #if WITH_OPTIMIZATION
 	  if (is_optimized(sc->code))
@@ -35495,16 +35404,78 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = closure_body(sc->code);
 	  goto BEGIN;
 	  
+
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
 	  { 
+	    s7_pointer z;
 	    if (sc->stack_end >= sc->stack_resize_trigger)
 	      increase_stack_size(sc);
 
 	    sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
-	    prepare_closure_star(sc);
 
-	    /* evaluate the function body */
-	    sc->code = closure_body(sc->code);
+	    /* get default values, which may involve evaluation 
+	     */
+	    push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code); /* op is just a placeholder (don't use OP_BARRIER here) */
+	    sc->args = closure_args(sc->code);
+
+	  LAMBDA_STAR_DEFAULT:
+	    z = sc->args;
+	    if (is_pair(z))
+	      {
+		/* bind all the args to something (default value or #f or maybe #undefined) */
+		if (!((car(z) == sc->KEY_KEY) ||
+		      (car(z) == sc->KEY_OPTIONAL) ||
+		      (car(z) == sc->KEY_ALLOW_OTHER_KEYS)))
+		  {
+		    if (car(z) == sc->KEY_REST)
+		      {
+			add_slot(sc, cadr(z), sc->NIL);       /* set :rest arg to sc->NIL, not sc->F */
+			sc->args = cdr(sc->args);
+		      }
+		    else
+		      {
+			if (is_pair(car(z)))                 /* (define* (hi (a mus-next)) a) */
+			  {                                  /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
+			    /* if default val is an expression, it needs to be evaluated in the definition environment
+			     *   (let ((c 1)) (define* (a (b (+ c 1))) b) (set! c 2) (a)) -> 3
+			     */
+			    s7_pointer val;
+			    val = cadar(z);
+			    if (s7_is_symbol(val))
+			      add_slot(sc, caar(z), finder(sc, val));
+			    else
+			      {
+				if (is_pair(val))
+				  {
+				    if ((car(val) == sc->QUOTE) ||
+					(car(val) == sc->QUOTE_UNCHECKED))
+				      add_slot(sc, caar(z), cadr(val));
+				    else
+				      {
+					push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code);
+					sc->code = cadar(z);
+					goto EVAL_PAIR;
+				      }
+				  }
+				else add_slot(sc, caar(z), val);
+			      }
+			  }
+			else add_slot(sc, car(z), sc->F);
+		      }
+		  }
+		sc->args = cdr(sc->args);
+		goto LAMBDA_STAR_DEFAULT;
+	      }
+	    else
+	      {
+		if (s7_is_symbol(z))                      /* dotted (last) arg? -- make sure its name exists in the current environment */
+		  add_slot(sc, z, sc->NIL); 
+	      }
+	    /* end of default arg evaluations */
+
+	    pop_stack(sc);                                /* get original args and code back */
+	    lambda_star_set_args(sc);                     /* load up current arg vals */
+	    sc->code = closure_body(sc->code);            /* evaluate the function body */
 	    goto BEGIN;
 	  }
 		
@@ -35620,6 +35591,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  return(apply_error(sc, sc->code, sc->args));
 	}
       /* ---------------- end OP_APPLY ---------------- */
+
+
+    case OP_LAMBDA_STAR_DEFAULT:
+      /* sc->args is the current closure arg list position, sc->value is the default expression's value
+       */
+      add_slot(sc, caar(sc->args), sc->value);
+      sc->args = cdr(sc->args);
+      goto LAMBDA_STAR_DEFAULT;
 
 
     case OP_QUOTE:
@@ -42963,7 +42942,7 @@ s7_scheme *s7_init(void)
   sc->COND_UNCHECKED =        assign_internal_syntax(sc, "cond",    OP_COND_UNCHECKED);  
   sc->DO_UNCHECKED =          assign_internal_syntax(sc, "do",      OP_DO_UNCHECKED);  
   sc->LAMBDA_UNCHECKED =      assign_internal_syntax(sc, "lambda",  OP_LAMBDA_UNCHECKED);  
-  sc->LAMBDA_STAR_UNCHECKED = assign_internal_syntax(sc, "lambda",  OP_LAMBDA_STAR_UNCHECKED);  
+  sc->LAMBDA_STAR_UNCHECKED = assign_internal_syntax(sc, "lambda*", OP_LAMBDA_STAR_UNCHECKED);  
   sc->DEFINE_UNCHECKED =      assign_internal_syntax(sc, "define",  OP_DEFINE_UNCHECKED);  
   sc->DEFINE_STAR_UNCHECKED = assign_internal_syntax(sc, "define*", OP_DEFINE_STAR_UNCHECKED);  
   sc->SET_NORMAL =            assign_internal_syntax(sc, "set!",    OP_SET_NORMAL);
@@ -43822,4 +43801,5 @@ the error type and the info passed to the error handler.");
  *       are optimized calls ok in this regard?
  *
  * other uses of s7_call: all the object stuff [see note in that section], readers, unbound_variable
+ *       uses of direct eval: dynamic-wind unwind during call/cc exit, read, load, eval-string, some error handling
  */
