@@ -8560,6 +8560,22 @@ a2" 3) "132")
 (test (format #f "X~0,TX~0,TX") "XXX")
 (test (format #f "X~,0TX~,0TX") "XXX")
 
+(test (format #f "~0D" 123) "123")
+(test (format #f "~0F" 123.123) "123.123000")
+(test (format #f "~,0D" 123) "123")
+(test (format #f "~,0F" 123.123) "123.0")
+(test (format #f "~,D" 123) "123")
+(test (format #f "~,F" 123.123) "123.123000")
+(test (format #f "~0,D" 123) "123")
+(test (format #f "~0,F" 123.123) "123.123000")
+(test (format #f "~0,0D" 123) "123")
+(test (format #f "~0,0F" 123.123) "123.0")
+(test (format #f "~0,0,D" 123) 'error)
+(test (format #f "~0,0,F" 123.123) 'error)
+
+(test (format #f "~000000000000000000000000000000000000000000003F" 123.123456789) "123.123457")
+(test (format #f "~922337203685477580F" 123.123) 'error)
+
 (test (= (length (substring (format #f "~%~10T.") 1)) (length (format #f "~10T."))) #t)
 (test (= (length (substring (format #f "~%-~10T.~%") 1)) (length (format #f "-~10T.~%"))) #t)
 (test (string=? (format #f "~%|0 1 2|~21T|5  8  3  2|~%~
@@ -8781,10 +8797,221 @@ a2" 3) "132")
 
 (test (format #f "~12,A" #\a) "a") ; s7 misses padding errors such as (format #f "~12,' A" #\a)
 
-(test (format #f "~12A" "012345678901234567890") "01234567...")
+(test (format #f "~12A" "012345678901234567890") "012345678...")
 (test (format #f "~1A" "012345678901234567890") "0")
 (test (format #f "~40A" "012345678901234567890") "012345678901234567890")
-(test (format #f "~12s" "012345678901234567890") "\"012345...\"")
+(test (format #f "~12s" "012345678901234567890") "\"0123456...\"")
+
+#|
+;;; TODO: add some of these format tests
+
+:(let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~A" v))
+"#(1 2 3 4 5 6 7 8 9 10)"
+:(let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10A" v))
+"#(1 2 3..."
+:(let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~20A" v))
+"#(1 2 3 4 5 6 7 8..."
+:(let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~30A" v))
+"#(1 2 3 4 5 6 7 8 9 10)"
+:(let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~-10A" v))
+;format "~-10A" #(1 2 3 4 5 6 7 8 9 10): unimplemented format directive
+:(let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10.0A" v))
+;format "~10.0A" #(1 2 3 4 5 6 7 8 9 10): format directive does not take a numeric argument
+:(let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,0A" v))
+;format "~10,0A" #(1 2 3 4 5 6 7 8 9 10): extra numeric argument
+:(let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,A" v))
+"#(1 2 3..."
+:(let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,,A" v))
+;format "~10,,A" #(1 2 3 4 5 6 7 8 9 10): format directive does not take a numeric argument
+:(let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~,10A" v))
+;format "~,10A" #(1 2 3 4 5 6 7 8 9 10): extra numeric argument
+
+(let ((v (vector 1 2 3 4 5 6 7 8 9 10)))
+  (do ((i 0 (+ i 1)))
+      ((= i 30))
+    (let ((str (string-append "~" (number->string i) "A")))
+      (let ((nstr (format #f str v)))
+	(format *stderr* "~D: ~A: ~D~%" i nstr (length nstr))))))
+
+0: #(1 2 3 4 5 6 7 8 9 10): 23 -- ??
+1: #: 1
+2: #(: 2
+3: ...: 3
+4: #...: 4
+5: #(...: 5
+6: #(1...: 6
+7: #(1...: 6
+8: #(1 2...: 8
+9: #(1 2...: 8
+10: #(1 2 3...: 10
+11: #(1 2 3...: 10
+12: #(1 2 3 4...: 12
+13: #(1 2 3 4...: 12
+14: #(1 2 3 4 5...: 14
+15: #(1 2 3 4 5...: 14
+16: #(1 2 3 4 5 6...: 16
+17: #(1 2 3 4 5 6...: 16
+18: #(1 2 3 4 5 6 7...: 18
+19: #(1 2 3 4 5 6 7...: 18
+20: #(1 2 3 4 5 6 7 8...: 20
+21: #(1 2 3 4 5 6 7 8...: 20
+22: #(1 2 3 4 5 6 7 8 9...: 22
+23: #(1 2 3 4 5 6 7 8 9 10): 23
+24: #(1 2 3 4 5 6 7 8 9 10): 23
+25: #(1 2 3 4 5 6 7 8 9 10): 23
+26: #(1 2 3 4 5 6 7 8 9 10): 23
+27: #(1 2 3 4 5 6 7 8 9 10): 23
+28: #(1 2 3 4 5 6 7 8 9 10): 23
+29: #(1 2 3 4 5 6 7 8 9 10): 23
+
+
+(let ((v (hash-table '(a . 1) '(b . 2) '(c . 3) '(d . 4))))
+  (do ((i 0 (+ i 1)))
+      ((= i 50))
+    (let ((str (string-append "~" (number->string i) "A")))
+      (let ((nstr (format #f str v)))
+	(format *stderr* "~D: ~A: ~D~%" i nstr (length nstr))))))
+
+0: #<hash-table (a . 1) (b . 2) (c . 3) (d . 4)>: 45
+1: #: 1
+2: #<: 2
+3: ...: 3
+4: #...: 4
+5: #<...: 5
+6: #<h...: 6
+7: #<ha...: 7
+8: #<has...: 8
+9: #<hash...: 9
+10: #<hash-...: 10
+11: #<hash-t...: 11
+12: #<hash-ta...: 12
+13: #<hash-tab...: 13
+14: #<hash-tabl...: 14
+15: #<hash-table...: 15
+16: #<hash-table...: 15
+17: #<hash-table...: 15
+18: #<hash-table (a...: 18
+19: #<hash-table (a...: 18
+20: #<hash-table (a ....: 20
+21: #<hash-table (a ....: 20
+22: #<hash-table (a ....: 20
+23: #<hash-table (a . 1)...: 23
+24: #<hash-table (a . 1)...: 23
+25: #<hash-table (a . 1)...: 23
+26: #<hash-table (a . 1) (b...: 26
+27: #<hash-table (a . 1) (b...: 26
+28: #<hash-table (a . 1) (b ....: 28
+29: #<hash-table (a . 1) (b ....: 28
+30: #<hash-table (a . 1) (b ....: 28
+31: #<hash-table (a . 1) (b . 2)...: 31
+32: #<hash-table (a . 1) (b . 2)...: 31
+33: #<hash-table (a . 1) (b . 2)...: 31
+34: #<hash-table (a . 1) (b . 2) (c...: 34
+35: #<hash-table (a . 1) (b . 2) (c...: 34
+36: #<hash-table (a . 1) (b . 2) (c ....: 36
+37: #<hash-table (a . 1) (b . 2) (c ....: 36
+38: #<hash-table (a . 1) (b . 2) (c ....: 36
+39: #<hash-table (a . 1) (b . 2) (c . 3)...: 39
+40: #<hash-table (a . 1) (b . 2) (c . 3)...: 39
+41: #<hash-table (a . 1) (b . 2) (c . 3)...: 39
+42: #<hash-table (a . 1) (b . 2) (c . 3) (d...: 42
+43: #<hash-table (a . 1) (b . 2) (c . 3) (d...: 42
+44: #<hash-table (a . 1) (b . 2) (c . 3) (d ....: 44
+45: #<hash-table (a . 1) (b . 2) (c . 3) (d . 4)>: 45
+46: #<hash-table (a . 1) (b . 2) (c . 3) (d . 4)>: 45
+47: #<hash-table (a . 1) (b . 2) (c . 3) (d . 4)>: 45
+48: #<hash-table (a . 1) (b . 2) (c . 3) (d . 4)>: 45
+49: #<hash-table (a . 1) (b . 2) (c . 3) (d . 4)>: 45
+
+(let ((v (list 1 2 3 4 5 6 7 8 9 10)))
+  (do ((i 0 (+ i 1)))
+      ((= i 24))
+    (let ((str (string-append "~" (number->string i) "A")))
+      (let ((nstr (format #f str v)))
+	(format *stderr* "~D: ~A: ~D~%" i nstr (length nstr))))))
+
+0: (1 2 3 4 5 6 7 8 9 10): 22
+1: (: 1
+2: (1: 2
+3: ...: 3
+4: (...: 4
+5: (1...: 5
+6: (1 ...: 6
+7: (1 2...: 7
+8: (1 2...: 7
+9: (1 2 3...: 9
+10: (1 2 3...: 9
+11: (1 2 3 4...: 11
+12: (1 2 3 4...: 11
+13: (1 2 3 4 5...: 13
+14: (1 2 3 4 5...: 13
+15: (1 2 3 4 5 6...: 15
+16: (1 2 3 4 5 6...: 15
+17: (1 2 3 4 5 6 7...: 17
+18: (1 2 3 4 5 6 7...: 17
+19: (1 2 3 4 5 6 7 8...: 19
+20: (1 2 3 4 5 6 7 8...: 19
+21: (1 2 3 4 5 6 7 8 9...: 21
+22: (1 2 3 4 5 6 7 8 9 10): 22
+23: (1 2 3 4 5 6 7 8 9 10): 22
+
+(let ((v (vct 1 2 3 4 5 6)))
+  (do ((i 0 (+ i 1)))
+      ((= i 50))
+    (let ((str (string-append "~" (number->string i) "A")))
+      (let ((nstr (format #f str v)))
+	(format *stderr* "~D: ~A: ~D~%" i nstr (length nstr))))))
+
+0: #<vct[len=6]: 1.000 2.000 3.000 4.000 5.000 6.000>: 50
+1: #: 1
+2: #<: 2
+3: ...: 3
+4: #...: 4
+5: #<...: 5
+6: #<v...: 6
+7: #<vc...: 7
+8: #<vct...: 8
+9: #<vct[...: 9
+10: #<vct[l...: 10
+11: #<vct[le...: 11
+12: #<vct[len...: 12
+13: #<vct[len=...: 13
+14: #<vct[len=6...: 14
+15: #<vct[len=6]...: 15
+16: #<vct[len=6]:...: 16
+17: #<vct[len=6]:...: 16
+18: #<vct[len=6]:...: 16
+19: #<vct[len=6]:...: 16
+20: #<vct[len=6]:...: 16
+21: #<vct[len=6]:...: 16
+22: #<vct[len=6]: 1.000...: 22
+23: #<vct[len=6]: 1.000...: 22
+24: #<vct[len=6]: 1.000...: 22
+25: #<vct[len=6]: 1.000...: 22
+26: #<vct[len=6]: 1.000...: 22
+27: #<vct[len=6]: 1.000...: 22
+28: #<vct[len=6]: 1.000 2.000...: 28
+29: #<vct[len=6]: 1.000 2.000...: 28
+30: #<vct[len=6]: 1.000 2.000...: 28
+31: #<vct[len=6]: 1.000 2.000...: 28
+32: #<vct[len=6]: 1.000 2.000...: 28
+33: #<vct[len=6]: 1.000 2.000...: 28
+34: #<vct[len=6]: 1.000 2.000 3.000...: 34
+35: #<vct[len=6]: 1.000 2.000 3.000...: 34
+36: #<vct[len=6]: 1.000 2.000 3.000...: 34
+37: #<vct[len=6]: 1.000 2.000 3.000...: 34
+38: #<vct[len=6]: 1.000 2.000 3.000...: 34
+39: #<vct[len=6]: 1.000 2.000 3.000...: 34
+40: #<vct[len=6]: 1.000 2.000 3.000 4.000...: 40
+41: #<vct[len=6]: 1.000 2.000 3.000 4.000...: 40
+42: #<vct[len=6]: 1.000 2.000 3.000 4.000...: 40
+43: #<vct[len=6]: 1.000 2.000 3.000 4.000...: 40
+44: #<vct[len=6]: 1.000 2.000 3.000 4.000...: 40
+45: #<vct[len=6]: 1.000 2.000 3.000 4.000...: 40
+46: #<vct[len=6]: 1.000 2.000 3.000 4.000 5.000...: 46
+47: #<vct[len=6]: 1.000 2.000 3.000 4.000 5.000...: 46
+
+|#
 
 #|
 (do ((i 0 (+ i 1))) ((= i 256)) 
@@ -18130,6 +18357,16 @@ abs     1       2
 
   (test (let () (define* (f (a :b)) a) (list (f) (f 1) (f :c) (f :a :c) (f :a 1) (f))) '(:b 1 :c :c 1 :b))
   (test (let () (define* (f a (b :c)) b) (f :b 1 :d)) 'error)
+  (test ((lambda* (:rest (b 1)) b)) 'error) ; "lambda* :rest parameter can't have a default value." ?
+  (test ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (* b 3)))) c)))) 7)
+  (test ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (* b 3)))) c))) :b 3) 10)
+  (test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (* b 3)))) c))) :b a)) 370)
+  (test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (let ((a -2)) (* b a))))) c))))) -3)
+  (test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ (let ((a -2)) (* b a)) a))) c))))) -3)
+  (test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ (let ((a 0)) (/ b a)) a))) c))))) 'error)
+  (test ((lambda* ((c (call/cc (lambda (return) (return 3))))) c)) 3)
+  (test ((lambda* ((a (do ((i 0 (+ i 1)) (sum 0)) ((= i 3) sum) (set! sum (+ sum i))))) (+ a 100))) 103)
+  (test ((lambda* ((a (do ((i 0 (+ i 1)) (sum 0)) ((= i 3) sum) (set! sum (+ sum i)))) b) (+ a b)) 1 2) 3)
 
   ;; some of these are questionable
   (test ((lambda* ((x (lambda () 1))) (x))) 1)

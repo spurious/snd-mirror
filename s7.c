@@ -871,6 +871,7 @@ struct s7_scheme {
   #define INITIAL_STRBUF_SIZE 1024
   unsigned int strbuf_size;
   char *strbuf;
+  int print_width;
   
   char *read_line_buf;
   unsigned int read_line_buf_size;
@@ -14715,18 +14716,25 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
 	}
     }
 
-  elements = (char **)malloc(len * sizeof(char *));
+  elements = (char **)calloc(len, sizeof(char *));
   for (i = 0; i < len; i++)
     {
       elements[i] = object_to_c_string_with_circle_check(sc, vector_element(vect, i), USE_WRITE, WITH_ELLIPSES, ci);
       bufsize += safe_strlen(elements[i]);
+      
+      if (bufsize > sc->print_width) 
+	{
+	  if ((i + 1) < len) too_long = true;
+	  len = i + 1;
+	  break;
+	}
     }
 
   if (vector_is_multidimensional(vect))
     {
       char c;
 
-      bufsize += (len * 4 * vector_ndims(vect) + 256);
+      bufsize += (len * 4 * vector_ndims(vect) + 16);
       buf = (char *)malloc(bufsize * sizeof(char));
 
       c = '#';
@@ -14737,12 +14745,12 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
       display_multivector(sc, vect, len, 0, 0, vector_ndims(vect), buf, elements, &c);
 
       for (i = 0; i < len; i++)
-	free(elements[i]);
+	if (elements[i]) free(elements[i]);
       free(elements);
       return(buf);
     }
 
-  bufsize += (len * 4 + 256);                   /* might be 2 parens per element + space, so at least len*4 here */
+  bufsize += (len * 4 + 16);                   /* might be 2 parens per element + space, so at least len*4 here */
   buf = (char *)malloc(bufsize * sizeof(char));
 
   sprintf(buf, "#(");
@@ -14766,6 +14774,7 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
   if (too_long)
     strcat(buf, " ...");
   strcat(buf, ")");
+
   return(buf);
 }
 
@@ -14839,12 +14848,19 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
 	  break;
 	}
       bufsize += safe_strlen(elements[i]);
+
+      if (bufsize > sc->print_width) 
+	{
+	  len = i + 1;
+	  x = sc->NIL;
+	  break;
+	}
     }
   
-  bufsize += (256 + len * 2); /* len spaces */
+  bufsize += (16 + len * 2); /* len spaces; was 256 rather than 16, but the extra space is not needed */
   if (ci) bufsize += (ci->top * 16);
   buf = (char *)malloc(bufsize * sizeof(char));
-  
+
   if (((car(lst) == sc->QUOTE) || (car(lst) == sc->QUOTE_UNCHECKED)) &&
       (true_len == 2))                    
     {
@@ -14899,6 +14915,7 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
     if (elements[i])
       free(elements[i]);
   free(elements);
+
   return(buf);
 }
 
@@ -18367,16 +18384,23 @@ static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file
   iterator = g_make_hash_table_iterator(sc, list_1(sc, hash));
   gc_iter = s7_gc_protect(sc, iterator);
   iter_loc = cdadar(closure_body(iterator));
-  elements = (char **)malloc(len * sizeof(char *));
+  elements = (char **)calloc(len, sizeof(char *));
 
   for (i = 0; i < len; i++)
     {
       elements[i] = object_to_c_string_with_circle_check(sc, g_hash_table_iterate(sc, iter_loc), USE_WRITE, WITH_ELLIPSES, ci);
       bufsize += safe_strlen(elements[i]);
+
+      if (bufsize > sc->print_width) 
+	{
+	  if ((i + 1) < len) too_long = true;
+	  len = i + 1;
+	  break;
+	}
     }
   s7_gc_unprotect_at(sc, gc_iter);
 
-  bufsize += (len * 4 + 256);                   /* might be 2 parens per element + space + quote, so at least len*4 here */
+  bufsize += (len * 4 + 32);                   /* might be 2 parens per element + space + quote, so at least len*4 here */
   buf = (char *)malloc(bufsize * sizeof(char));
 
   sprintf(buf, "#<hash-table ");
@@ -18402,6 +18426,7 @@ static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file
   if (too_long)
     strcat(buf, " ...");
   strcat(buf, ">");
+
   return(buf);
 }
 
@@ -22032,7 +22057,12 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		    i++;
 
 		    if (isdigit(str[i]))
-		      width = format_read_integer(sc, &i, str_len, str, args, fdat);
+		      {
+			width = format_read_integer(sc, &i, str_len, str, args, fdat);
+			if ((width < 0) ||  /* sccanf is 32 bit so (format #f "~922337203685477580F" pi) gets a width of -1 or some such number */
+			    (width > MAX_STRING_LENGTH))
+			  return(format_error(sc, "numeric argument too large", str, args, fdat));
+		      }
 
 		    if (str[i] == ',')
 		      {
@@ -22069,9 +22099,21 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			  
 			  if (has_structure(obj))
 			    ci = make_shared_info(sc, obj);
+
+			  if (width > 0)
+			    sc->print_width = width;
+			  else sc->print_width = MAX_STRING_LENGTH;
+
+			  /* what should width=0 do here?
+			   *   (format #f "~0,0F" pi) -> "3.0"
+			   *   (format #f "~0,0D" 123) -> "123"
+			   */
+
 			  tmp = object_to_c_string_with_circle_check(sc, obj, (str[i] == 'S') || (str[i] == 's'), WITH_ELLIPSES, ci);
-			  
-			  if (width > 0) truncate_string(tmp, width, ((str[i] == 'S') || (str[i] == 's')));
+
+			  sc->print_width = MAX_STRING_LENGTH;
+			  if (width > 0)
+			    truncate_string(tmp, width, ((str[i] == 'S') || (str[i] == 's')));
 
 			  format_append_string(fdat, tmp);
 			  if (tmp) free(tmp);
@@ -22106,6 +22148,8 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 				width += (precision * mult);
 			      }
 			    
+			    /* TODO: what if format width is ridiculous?
+			     */
 			    for (j = outstr_len - k; j < width; j++)
 			      format_append_char(fdat, pad);
 			  }
@@ -23362,67 +23406,64 @@ and applies it to the rest of the arguments."
 static char *truncate_string(char *form, int len, bool use_write)
 {
   int form_len;
+
   form_len = safe_strlen(form);
+  if (form_len <= len)
+    return(form);
+
   if (use_write)
     {
       /* I guess we need to protect the outer double quotes in this case */
-      
-      if (form_len > len)
+      int i;
+      for (i = len - 4; i >= (len / 2); i--)
+	if (is_white_space((int)form[i]))
+	  {
+	    form[i] = '.';
+	    form[i + 1] = '.';
+	    form[i + 2] = '.';
+	    form[i + 3] = '"';
+	    form[i + 4] = '\0';
+	    return(form);
+	  }
+      i = len - 4;
+      if (i > 0)
 	{
-	  int i;
-	  for (i = len - 5; i >= (len / 2); i--)
-	    if (is_white_space((int)form[i]))
-	      {
-		form[i] = '.';
-		form[i + 1] = '.';
-		form[i + 2] = '.';
-		form[i + 3] = '"';
-		form[i + 4] = '\0';
-		return(form);
-	      }
-	  i = len - 5;
-	  if (i > 0)
+	  form[i] = '.';
+	  form[i + 1] = '.';
+	  form[i + 2] = '.';
+	  form[i + 3] = '"';
+	  form[i + 4] = '\0';
+	}
+      else 
+	{
+	  if (len >= 2)
 	    {
-	      form[i] = '.';
-	      form[i + 1] = '.';
-	      form[i + 2] = '.';
-	      form[i + 3] = '"';
-	      form[i + 4] = '\0';
-	    }
-	  else 
-	    {
-	      if (len >= 2)
-		{
-		  form[len - 1] = '"';
-		  form[len] = '\0';
-		}
+	      form[len - 1] = '"';
+	      form[len] = '\0';
 	    }
 	}
     }
   else
     {
-      if (form_len > len)
+      int i;
+      for (i = len - 3; i >= (len / 2); i--)
+	if (is_white_space((int)form[i]))
+	  {
+	    form[i] = '.';
+	    form[i + 1] = '.';
+	    form[i + 2] = '.';
+	    form[i + 3] = '\0';
+	    return(form);
+	  }
+      i = len - 3;
+      if (i >= 0)
 	{
-	  int i;
-	  for (i = len - 4; i >= (len / 2); i--)
-	    if (is_white_space((int)form[i]))
-	      {
-		form[i] = '.';
-		form[i + 1] = '.';
-		form[i + 2] = '.';
-		form[i + 3] = '\0';
-		return(form);
-	      }
-	  i = len - 4;
-	  if (i >= 0)
-	    {
-	      form[i] = '.';
-	      form[i + 1] = '.';
-	      form[i + 2] = '.';
-	      form[i + 3] = '\0';
-	    }
-	  else form[len] = '\0';
+	  form[i] = '.';
+	  form[i + 1] = '.';
+	  form[i + 2] = '.';
+	  form[i + 3] = '\0';
 	}
+      else form[len] = '\0';
     }
   return(form);
 }
@@ -42732,6 +42773,7 @@ s7_scheme *s7_init(void)
 
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
+  sc->print_width = MAX_STRING_LENGTH;
   
   sc->read_line_buf = NULL;
   sc->read_line_buf_size = 0;

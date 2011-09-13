@@ -109,7 +109,7 @@
 	  (places ()))
       
       (define (where-is func)
-	(let* ((addr (symbol->value '__func__ (procedure-environment func))))
+	(let ((addr (symbol->value '__func__ (procedure-environment func))))
 	  (if (not (pair? addr))
 	      #f
 	      (cadr addr))))
