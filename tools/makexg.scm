@@ -1777,7 +1777,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-312 dpy thunk)
-  (dpy "#if HAVE_GTK_FONT_CHOOSER_NEW~%")
+  (dpy "#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE~%")
   (thunk)
   (dpy "#endif~%~%"))
 

@@ -4430,6 +4430,12 @@ These symbols are not just a silly optimization of string comparison:
            (list 'define symbol ctr)) ; e.g. '(define zero 0) 
          '(zero one two)))
   (+ zero one two))
+
+(define-macro (progv vars vals . body)
+  `(apply (apply lambda ,vars ',body) ,vals))
+
+&gt; (let ((s '(one two)) (v '(1 2))) (progv s v (+ one two)))
+3
 </pre>
 
 <p>If you apply define or define-macro, the returned value is a symbol, so to apply the

@@ -8251,35 +8251,57 @@
 (CFNC-312 "gboolean gtk_widget_has_visible_focus GtkWidget* widget")
 (CFNC-312 "void gtk_window_set_focus_visible GtkWindow* window gboolean setting")
 (CFNC-312 "gboolean gtk_window_get_focus_visible GtkWindow* window")
-(CFNC-312 "GtkWidget* gtk_font_chooser_new void")
-(CFNC-312 "PangoFontFamily* gtk_font_chooser_get_family GtkFontChooser* fontchooser")
-(CFNC-312 "PangoFontFace* gtk_font_chooser_get_face GtkFontChooser* fontchooser")
-(CFNC-312 "gint gtk_font_chooser_get_size GtkFontChooser* fontchooser")
-(CFNC-312 "gchar* gtk_font_chooser_get_font_name GtkFontChooser* fontchooser")
-(CFNC-312 "gboolean gtk_font_chooser_set_font_name GtkFontChooser* fontchooser gchar* fontname" 'const)
-(CFNC-312 "gchar* gtk_font_chooser_get_preview_text GtkFontChooser* fontchooser" 'const-return)
-(CFNC-312 "void gtk_font_chooser_set_preview_text GtkFontChooser* fontchooser gchar* text" 'const)
-(CFNC-312 "gboolean gtk_font_chooser_get_show_preview_entry GtkFontChooser* fontchooser")
-(CFNC-312 "void gtk_font_chooser_set_show_preview_entry GtkFontChooser* fontchooser gboolean show_preview_entry")
+
+;;; out 3.1.90?
+;;; (CFNC-312 "GtkWidget* gtk_font_chooser_new void")
+;;; (CFNC-312 "PangoFontFamily* gtk_font_chooser_get_family GtkFontChooser* fontchooser")
+;;; (CFNC-312 "PangoFontFace* gtk_font_chooser_get_face GtkFontChooser* fontchooser")
+;;; (CFNC-312 "gint gtk_font_chooser_get_size GtkFontChooser* fontchooser")
+;;; (CFNC-312 "gchar* gtk_font_chooser_get_font_name GtkFontChooser* fontchooser")
+;;; (CFNC-312 "gboolean gtk_font_chooser_set_font_name GtkFontChooser* fontchooser gchar* fontname" 'const)
+;;; (CFNC-312 "gchar* gtk_font_chooser_get_preview_text GtkFontChooser* fontchooser" 'const-return)
+;;; (CFNC-312 "void gtk_font_chooser_set_preview_text GtkFontChooser* fontchooser gchar* text" 'const)
+;;; (CFNC-312 "gboolean gtk_font_chooser_get_show_preview_entry GtkFontChooser* fontchooser")
+;;; (CFNC-312 "void gtk_font_chooser_set_show_preview_entry GtkFontChooser* fontchooser gboolean show_preview_entry")
+;;; (CFNC-312 "GtkWidget* gtk_font_chooser_dialog_get_font_chooser GtkFontChooserDialog* fcd")
+;;; (CFNC-312 "gchar* gtk_font_chooser_dialog_get_font_name GtkFontChooserDialog* fcd")
+;;; (CFNC-312 "gboolean gtk_font_chooser_dialog_set_font_name GtkFontChooserDialog* fcd gchar* fontname" 'const)
+;;; (CFNC-312 "gchar* gtk_font_chooser_dialog_get_preview_text GtkFontChooserDialog* fcd" 'const-return)
+;;; (CFNC-312 "void gtk_font_chooser_dialog_set_preview_text GtkFontChooserDialog* fcd gchar* text" 'const)
+
+
 (CFNC-312 "GtkWidget* gtk_font_chooser_dialog_new gchar* title GtkWindow* window" 'const)
-(CFNC-312 "GtkWidget* gtk_font_chooser_dialog_get_font_chooser GtkFontChooserDialog* fcd")
-(CFNC-312 "gchar* gtk_font_chooser_dialog_get_font_name GtkFontChooserDialog* fcd")
-(CFNC-312 "gboolean gtk_font_chooser_dialog_set_font_name GtkFontChooserDialog* fcd gchar* fontname" 'const)
-(CFNC-312 "gchar* gtk_font_chooser_dialog_get_preview_text GtkFontChooserDialog* fcd" 'const-return)
-(CFNC-312 "void gtk_font_chooser_dialog_set_preview_text GtkFontChooserDialog* fcd gchar* text" 'const)
 
-
-#|
 ;;; 3.1.16|18
 ;;; new: gtkcsssection.h
 
-(CFNC-3116 "gboolean gdk_event_get_button GdkEvent* event guint* button")
-(CFNC-3116 "gboolean gdk_event_get_click_count GdkEvent* event guint* click_count")
-(CFNC-3116 "gboolean gdk_event_get_keyval GdkEvent* event guint* keyval")
-(CFNC-3116 "gboolean gdk_event_get_keycode GdkEvent* event guint16* keycode")
-(CFNC-3116 "gboolean gdk_event_get_scroll_direction GdkEvent* event GdkScrollDirection* [direction]")
-(CFNC-3116 "GtkWidget* gtk_grid_get_child_at GtkGrid* grid gint left top")
-|#
+(CFNC-312 "gboolean gdk_event_get_button GdkEvent* event guint* button")
+(CFNC-312 "gboolean gdk_event_get_click_count GdkEvent* event guint* click_count")
+(CFNC-312 "gboolean gdk_event_get_keyval GdkEvent* event guint* keyval")
+(CFNC-312 "gboolean gdk_event_get_keycode GdkEvent* event guint16* keycode")
+(CFNC-312 "gboolean gdk_event_get_scroll_direction GdkEvent* event GdkScrollDirection* [direction]")
+(CFNC-312 "GtkWidget* gtk_grid_get_child_at GtkGrid* grid gint left gint top")
+
+;;; 3.1.90
+(CCAST-312 "GTK_FONT_CHOOSER_WIDGET" "GtkFontChooserWidget*")
+(CCHK-312 "GTK_IS_FONT_CHOOSER_WIDGET" "GtkFontChooserWidget*")
+
+(CFNC-312 "PangoFontFamily* gtk_font_chooser_get_font_family GtkFontChooser* fontchooser")
+(CFNC-312 "PangoFontFace* gtk_font_chooser_get_font_face GtkFontChooser* fontchooser")
+(CFNC-312 "gint gtk_font_chooser_get_font_size GtkFontChooser* fontchooser")
+(CFNC-312 "PangoFontDescription* gtk_font_chooser_get_font_desc GtkFontChooser* fontchooser")
+(CFNC-312 "void gtk_font_chooser_set_font_desc GtkFontChooser* fontchooser PangoFontDescription* font_desc" 'const)
+(CFNC-312 "gchar* gtk_font_chooser_get_font GtkFontChooser* fontchooser")
+(CFNC-312 "void gtk_font_chooser_set_font GtkFontChooser* fontchooser gchar* fontname" 'const)
+(CFNC-312 "gchar* gtk_font_chooser_get_preview_text GtkFontChooser* fontchooser")
+(CFNC-312 "void gtk_font_chooser_set_preview_text GtkFontChooser* fontchooser gchar* text" 'const)
+(CFNC-312 "gboolean gtk_font_chooser_get_show_preview_entry GtkFontChooser* fontchooser")
+(CFNC-312 "void gtk_font_chooser_set_show_preview_entry GtkFontChooser* fontchooser gboolean show_preview_entry")
+(CFNC-312 "GtkWidget* gtk_font_chooser_widget_new void")
+
+;;; void gtk_font_chooser_set_filter_func GtkFontChooser* fontchooser GtkFontFilterFuncfilter gpointer user_data GDestroyNotify destroy)
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -8604,6 +8626,9 @@
 
 
 ;;; as of 2.91.7, here are the xg-undefined names from gtk *.h
+
+(CFNC-319 "void gtk_app_chooser_button_set_show_default_item GtkAppChooserButton* self gboolean setting")
+(CFNC-319 "gboolean gtk_app_chooser_button_get_show_default_item GtkAppChooserButton* self")
 
 gtkappchooserbutton: GTK_APP_CHOOSER_BUTTON
 gtkappchooserbutton: GTK_IS_APP_CHOOSER_BUTTON

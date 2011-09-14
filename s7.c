@@ -14524,8 +14524,6 @@ static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
   ci->refs[ci->top++] = ref_x;
 }
 
-/* TODO: this can appear to hang if we're trying to print an enormous structure
- */
 
 static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
 {
@@ -22068,7 +22066,11 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		      {
 			i++;
 			if (isdigit(str[i]))
-			  precision = format_read_integer(sc, &i, str_len, str, args, fdat);
+			  {
+			    precision = format_read_integer(sc, &i, str_len, str, args, fdat);
+			    if (precision < 0)
+			      return(format_error(sc, "numeric argument too large", str, args, fdat));
+			  }
 			/* is (format #f "~12,12D" 1) an error?  The precision has no use here. */
 			else
 			  {
@@ -22147,9 +22149,6 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 				if (mult < 1) mult = 1;
 				width += (precision * mult);
 			      }
-			    
-			    /* TODO: what if format width is ridiculous?
-			     */
 			    for (j = outstr_len - k; j < width; j++)
 			      format_append_char(fdat, pad);
 			  }
@@ -26175,6 +26174,16 @@ static s7_pointer g_not_is_eq_ss(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, finder(sc, cadr(car(args))) != finder(sc, caddr(car(args)))));
 }
 
+static s7_pointer not_is_pair_car;
+static s7_pointer g_not_is_pair_car(s7_scheme *sc, s7_pointer args) 
+{
+  s7_pointer val;
+  val = finder(sc, cadr(cadar(args)));
+  if (!is_pair(val))
+    return(s7_wrong_type_arg_error(sc, "car", 0, val, "a pair"));
+  return(make_boolean(sc, !is_pair(car(val))));
+}
+
 static s7_pointer not_chooser(s7_scheme *sc, s7_pointer g, int args, s7_pointer expr)
 {
   if (is_optimized(cadr(expr))) /* cadr(expr) might be a symbol, for example; is_optimized includes is_pair */
@@ -26270,6 +26279,14 @@ static s7_pointer not_chooser(s7_scheme *sc, s7_pointer g, int args, s7_pointer 
 		return(not_is_eq_sq);
 	      return(not_is_eq_ss);
 	    }
+	}
+
+      if ((optimize_data(cadr(expr)) == HOP_SAFE_C_C) &&
+	  (is_c_function(ecdr(cadr(expr)))) &&
+	  (c_function_call(ecdr(cadr(expr))) == g_is_pair_car))
+	{
+	  optimize_data(expr) = HOP_SAFE_C_C;
+	  return(not_is_pair_car);
 	}
 #if 0
       if ((optimize_data(cadr(expr)) == HOP_SAFE_C_SC) &&
@@ -27056,6 +27073,8 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(not_is_eq_ss) = c_function_class(f);
   not_is_eq_sq = s7_make_function(sc, "not", g_not_is_eq_sq, 1, 0, false, "not optimization");
   c_function_class(not_is_eq_sq) = c_function_class(f);
+  not_is_pair_car = s7_make_function(sc, "not", g_not_is_pair_car, 1, 0, false, "notoptimization");
+  c_function_class(not_is_pair_car) = c_function_class(f);
 
 
   /* pair? */
@@ -30468,6 +30487,7 @@ static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
 
 static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
 {
+  /* like finder, but no unbound-variable error */
   s7_pointer x;	
 
   if (frame_id(sc->envir) == symbol_id(hdl))

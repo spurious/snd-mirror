@@ -895,9 +895,9 @@ XM_TYPE_PTR_1(cairo_pattern_t__, cairo_pattern_t**)
 XM_TYPE_PTR_1(GtkOverlay_, GtkOverlay*)
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
+#define C_TO_XEN_GdkScrollDirection(Arg) C_TO_XEN_INT(Arg)
 XM_TYPE_PTR_1(GtkFontChooser_, GtkFontChooser*)
-XM_TYPE_PTR_1(GtkFontChooserDialog_, GtkFontChooserDialog*)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -30805,7 +30805,7 @@ static XEN gxg_gtk_adjustment_get_minimum_increment(XEN adjustment)
 
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
 static XEN gxg_gtk_grid_insert_row(XEN grid, XEN position)
 {
   #define H_gtk_grid_insert_row "void gtk_grid_insert_row(GtkGrid* grid, gint position)"
@@ -30867,54 +30867,127 @@ static XEN gxg_gtk_window_get_focus_visible(XEN window)
   return(C_TO_XEN_gboolean(gtk_window_get_focus_visible(XEN_TO_C_GtkWindow_(window))));
 }
 
-static XEN gxg_gtk_font_chooser_new(void)
+static XEN gxg_gtk_font_chooser_dialog_new(XEN title, XEN window)
 {
-  #define H_gtk_font_chooser_new "GtkWidget* gtk_font_chooser_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_font_chooser_new()));
+  #define H_gtk_font_chooser_dialog_new "GtkWidget* gtk_font_chooser_dialog_new(gchar* title, GtkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(title), title, 1, "gtk_font_chooser_dialog_new", "gchar*");
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 2, "gtk_font_chooser_dialog_new", "GtkWindow*");
+  return(C_TO_XEN_GtkWidget_(gtk_font_chooser_dialog_new((const gchar*)XEN_TO_C_gchar_(title), XEN_TO_C_GtkWindow_(window))));
 }
 
-static XEN gxg_gtk_font_chooser_get_family(XEN fontchooser)
+static XEN gxg_gdk_event_get_button(XEN event, XEN button)
 {
-  #define H_gtk_font_chooser_get_family "PangoFontFamily* gtk_font_chooser_get_family(GtkFontChooser* fontchooser)"
-  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_get_family", "GtkFontChooser*");
-  return(C_TO_XEN_PangoFontFamily_(gtk_font_chooser_get_family(XEN_TO_C_GtkFontChooser_(fontchooser))));
+  #define H_gdk_event_get_button "gboolean gdk_event_get_button(GdkEvent* event, guint* button)"
+  XEN_ASSERT_TYPE(XEN_GdkEvent__P(event), event, 1, "gdk_event_get_button", "GdkEvent*");
+  XEN_ASSERT_TYPE(XEN_guint__P(button), button, 2, "gdk_event_get_button", "guint*");
+  return(C_TO_XEN_gboolean(gdk_event_get_button(XEN_TO_C_GdkEvent_(event), XEN_TO_C_guint_(button))));
 }
 
-static XEN gxg_gtk_font_chooser_get_face(XEN fontchooser)
+static XEN gxg_gdk_event_get_click_count(XEN event, XEN click_count)
 {
-  #define H_gtk_font_chooser_get_face "PangoFontFace* gtk_font_chooser_get_face(GtkFontChooser* fontchooser)"
-  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_get_face", "GtkFontChooser*");
-  return(C_TO_XEN_PangoFontFace_(gtk_font_chooser_get_face(XEN_TO_C_GtkFontChooser_(fontchooser))));
+  #define H_gdk_event_get_click_count "gboolean gdk_event_get_click_count(GdkEvent* event, guint* click_count)"
+  XEN_ASSERT_TYPE(XEN_GdkEvent__P(event), event, 1, "gdk_event_get_click_count", "GdkEvent*");
+  XEN_ASSERT_TYPE(XEN_guint__P(click_count), click_count, 2, "gdk_event_get_click_count", "guint*");
+  return(C_TO_XEN_gboolean(gdk_event_get_click_count(XEN_TO_C_GdkEvent_(event), XEN_TO_C_guint_(click_count))));
 }
 
-static XEN gxg_gtk_font_chooser_get_size(XEN fontchooser)
+static XEN gxg_gdk_event_get_keyval(XEN event, XEN keyval)
 {
-  #define H_gtk_font_chooser_get_size "gint gtk_font_chooser_get_size(GtkFontChooser* fontchooser)"
-  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_get_size", "GtkFontChooser*");
-  return(C_TO_XEN_gint(gtk_font_chooser_get_size(XEN_TO_C_GtkFontChooser_(fontchooser))));
+  #define H_gdk_event_get_keyval "gboolean gdk_event_get_keyval(GdkEvent* event, guint* keyval)"
+  XEN_ASSERT_TYPE(XEN_GdkEvent__P(event), event, 1, "gdk_event_get_keyval", "GdkEvent*");
+  XEN_ASSERT_TYPE(XEN_guint__P(keyval), keyval, 2, "gdk_event_get_keyval", "guint*");
+  return(C_TO_XEN_gboolean(gdk_event_get_keyval(XEN_TO_C_GdkEvent_(event), XEN_TO_C_guint_(keyval))));
 }
 
-static XEN gxg_gtk_font_chooser_get_font_name(XEN fontchooser)
+static XEN gxg_gdk_event_get_keycode(XEN event, XEN keycode)
 {
-  #define H_gtk_font_chooser_get_font_name "gchar* gtk_font_chooser_get_font_name(GtkFontChooser* fontchooser)"
-  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_get_font_name", "GtkFontChooser*");
-  return(C_TO_XEN_gchar_(gtk_font_chooser_get_font_name(XEN_TO_C_GtkFontChooser_(fontchooser))));
+  #define H_gdk_event_get_keycode "gboolean gdk_event_get_keycode(GdkEvent* event, guint16* keycode)"
+  XEN_ASSERT_TYPE(XEN_GdkEvent__P(event), event, 1, "gdk_event_get_keycode", "GdkEvent*");
+  XEN_ASSERT_TYPE(XEN_guint16__P(keycode), keycode, 2, "gdk_event_get_keycode", "guint16*");
+  return(C_TO_XEN_gboolean(gdk_event_get_keycode(XEN_TO_C_GdkEvent_(event), XEN_TO_C_guint16_(keycode))));
 }
 
-static XEN gxg_gtk_font_chooser_set_font_name(XEN fontchooser, XEN fontname)
+static XEN gxg_gdk_event_get_scroll_direction(XEN event, XEN ignore_direction)
 {
-  #define H_gtk_font_chooser_set_font_name "gboolean gtk_font_chooser_set_font_name(GtkFontChooser* fontchooser, \
-gchar* fontname)"
-  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_set_font_name", "GtkFontChooser*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(fontname), fontname, 2, "gtk_font_chooser_set_font_name", "gchar*");
-  return(C_TO_XEN_gboolean(gtk_font_chooser_set_font_name(XEN_TO_C_GtkFontChooser_(fontchooser), (const gchar*)XEN_TO_C_gchar_(fontname))));
+  #define H_gdk_event_get_scroll_direction "gboolean gdk_event_get_scroll_direction(GdkEvent* event, \
+GdkScrollDirection* [direction])"
+  GdkScrollDirection ref_direction;
+  XEN_ASSERT_TYPE(XEN_GdkEvent__P(event), event, 1, "gdk_event_get_scroll_direction", "GdkEvent*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gdk_event_get_scroll_direction(XEN_TO_C_GdkEvent_(event), &ref_direction));
+    return(XEN_LIST_2(result, C_TO_XEN_GdkScrollDirection(ref_direction)));
+   }
+}
+
+static XEN gxg_gtk_grid_get_child_at(XEN grid, XEN left, XEN top)
+{
+  #define H_gtk_grid_get_child_at "GtkWidget* gtk_grid_get_child_at(GtkGrid* grid, gint left, gint top)"
+  XEN_ASSERT_TYPE(XEN_GtkGrid__P(grid), grid, 1, "gtk_grid_get_child_at", "GtkGrid*");
+  XEN_ASSERT_TYPE(XEN_gint_P(left), left, 2, "gtk_grid_get_child_at", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(top), top, 3, "gtk_grid_get_child_at", "gint");
+  return(C_TO_XEN_GtkWidget_(gtk_grid_get_child_at(XEN_TO_C_GtkGrid_(grid), XEN_TO_C_gint(left), XEN_TO_C_gint(top))));
+}
+
+static XEN gxg_gtk_font_chooser_get_font_family(XEN fontchooser)
+{
+  #define H_gtk_font_chooser_get_font_family "PangoFontFamily* gtk_font_chooser_get_font_family(GtkFontChooser* fontchooser)"
+  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_get_font_family", "GtkFontChooser*");
+  return(C_TO_XEN_PangoFontFamily_(gtk_font_chooser_get_font_family(XEN_TO_C_GtkFontChooser_(fontchooser))));
+}
+
+static XEN gxg_gtk_font_chooser_get_font_face(XEN fontchooser)
+{
+  #define H_gtk_font_chooser_get_font_face "PangoFontFace* gtk_font_chooser_get_font_face(GtkFontChooser* fontchooser)"
+  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_get_font_face", "GtkFontChooser*");
+  return(C_TO_XEN_PangoFontFace_(gtk_font_chooser_get_font_face(XEN_TO_C_GtkFontChooser_(fontchooser))));
+}
+
+static XEN gxg_gtk_font_chooser_get_font_size(XEN fontchooser)
+{
+  #define H_gtk_font_chooser_get_font_size "gint gtk_font_chooser_get_font_size(GtkFontChooser* fontchooser)"
+  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_get_font_size", "GtkFontChooser*");
+  return(C_TO_XEN_gint(gtk_font_chooser_get_font_size(XEN_TO_C_GtkFontChooser_(fontchooser))));
+}
+
+static XEN gxg_gtk_font_chooser_get_font_desc(XEN fontchooser)
+{
+  #define H_gtk_font_chooser_get_font_desc "PangoFontDescription* gtk_font_chooser_get_font_desc(GtkFontChooser* fontchooser)"
+  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_get_font_desc", "GtkFontChooser*");
+  return(C_TO_XEN_PangoFontDescription_(gtk_font_chooser_get_font_desc(XEN_TO_C_GtkFontChooser_(fontchooser))));
+}
+
+static XEN gxg_gtk_font_chooser_set_font_desc(XEN fontchooser, XEN font_desc)
+{
+  #define H_gtk_font_chooser_set_font_desc "void gtk_font_chooser_set_font_desc(GtkFontChooser* fontchooser, \
+PangoFontDescription* font_desc)"
+  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_set_font_desc", "GtkFontChooser*");
+  XEN_ASSERT_TYPE(XEN_PangoFontDescription__P(font_desc), font_desc, 2, "gtk_font_chooser_set_font_desc", "PangoFontDescription*");
+  gtk_font_chooser_set_font_desc(XEN_TO_C_GtkFontChooser_(fontchooser), XEN_TO_C_PangoFontDescription_(font_desc));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_font_chooser_get_font(XEN fontchooser)
+{
+  #define H_gtk_font_chooser_get_font "gchar* gtk_font_chooser_get_font(GtkFontChooser* fontchooser)"
+  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_get_font", "GtkFontChooser*");
+  return(C_TO_XEN_gchar_(gtk_font_chooser_get_font(XEN_TO_C_GtkFontChooser_(fontchooser))));
+}
+
+static XEN gxg_gtk_font_chooser_set_font(XEN fontchooser, XEN fontname)
+{
+  #define H_gtk_font_chooser_set_font "void gtk_font_chooser_set_font(GtkFontChooser* fontchooser, gchar* fontname)"
+  XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_set_font", "GtkFontChooser*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(fontname), fontname, 2, "gtk_font_chooser_set_font", "gchar*");
+  gtk_font_chooser_set_font(XEN_TO_C_GtkFontChooser_(fontchooser), (const gchar*)XEN_TO_C_gchar_(fontname));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_font_chooser_get_preview_text(XEN fontchooser)
 {
   #define H_gtk_font_chooser_get_preview_text "gchar* gtk_font_chooser_get_preview_text(GtkFontChooser* fontchooser)"
   XEN_ASSERT_TYPE(XEN_GtkFontChooser__P(fontchooser), fontchooser, 1, "gtk_font_chooser_get_preview_text", "GtkFontChooser*");
-    return(C_TO_XEN_gchar_((gchar*)gtk_font_chooser_get_preview_text(XEN_TO_C_GtkFontChooser_(fontchooser))));
+  return(C_TO_XEN_gchar_(gtk_font_chooser_get_preview_text(XEN_TO_C_GtkFontChooser_(fontchooser))));
 }
 
 static XEN gxg_gtk_font_chooser_set_preview_text(XEN fontchooser, XEN text)
@@ -30944,52 +31017,10 @@ gboolean show_preview_entry)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_font_chooser_dialog_new(XEN title, XEN window)
+static XEN gxg_gtk_font_chooser_widget_new(void)
 {
-  #define H_gtk_font_chooser_dialog_new "GtkWidget* gtk_font_chooser_dialog_new(gchar* title, GtkWindow* window)"
-  XEN_ASSERT_TYPE(XEN_gchar__P(title), title, 1, "gtk_font_chooser_dialog_new", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 2, "gtk_font_chooser_dialog_new", "GtkWindow*");
-  return(C_TO_XEN_GtkWidget_(gtk_font_chooser_dialog_new((const gchar*)XEN_TO_C_gchar_(title), XEN_TO_C_GtkWindow_(window))));
-}
-
-static XEN gxg_gtk_font_chooser_dialog_get_font_chooser(XEN fcd)
-{
-  #define H_gtk_font_chooser_dialog_get_font_chooser "GtkWidget* gtk_font_chooser_dialog_get_font_chooser(GtkFontChooserDialog* fcd)"
-  XEN_ASSERT_TYPE(XEN_GtkFontChooserDialog__P(fcd), fcd, 1, "gtk_font_chooser_dialog_get_font_chooser", "GtkFontChooserDialog*");
-  return(C_TO_XEN_GtkWidget_(gtk_font_chooser_dialog_get_font_chooser(XEN_TO_C_GtkFontChooserDialog_(fcd))));
-}
-
-static XEN gxg_gtk_font_chooser_dialog_get_font_name(XEN fcd)
-{
-  #define H_gtk_font_chooser_dialog_get_font_name "gchar* gtk_font_chooser_dialog_get_font_name(GtkFontChooserDialog* fcd)"
-  XEN_ASSERT_TYPE(XEN_GtkFontChooserDialog__P(fcd), fcd, 1, "gtk_font_chooser_dialog_get_font_name", "GtkFontChooserDialog*");
-  return(C_TO_XEN_gchar_(gtk_font_chooser_dialog_get_font_name(XEN_TO_C_GtkFontChooserDialog_(fcd))));
-}
-
-static XEN gxg_gtk_font_chooser_dialog_set_font_name(XEN fcd, XEN fontname)
-{
-  #define H_gtk_font_chooser_dialog_set_font_name "gboolean gtk_font_chooser_dialog_set_font_name(GtkFontChooserDialog* fcd, \
-gchar* fontname)"
-  XEN_ASSERT_TYPE(XEN_GtkFontChooserDialog__P(fcd), fcd, 1, "gtk_font_chooser_dialog_set_font_name", "GtkFontChooserDialog*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(fontname), fontname, 2, "gtk_font_chooser_dialog_set_font_name", "gchar*");
-  return(C_TO_XEN_gboolean(gtk_font_chooser_dialog_set_font_name(XEN_TO_C_GtkFontChooserDialog_(fcd), (const gchar*)XEN_TO_C_gchar_(fontname))));
-}
-
-static XEN gxg_gtk_font_chooser_dialog_get_preview_text(XEN fcd)
-{
-  #define H_gtk_font_chooser_dialog_get_preview_text "gchar* gtk_font_chooser_dialog_get_preview_text(GtkFontChooserDialog* fcd)"
-  XEN_ASSERT_TYPE(XEN_GtkFontChooserDialog__P(fcd), fcd, 1, "gtk_font_chooser_dialog_get_preview_text", "GtkFontChooserDialog*");
-    return(C_TO_XEN_gchar_((gchar*)gtk_font_chooser_dialog_get_preview_text(XEN_TO_C_GtkFontChooserDialog_(fcd))));
-}
-
-static XEN gxg_gtk_font_chooser_dialog_set_preview_text(XEN fcd, XEN text)
-{
-  #define H_gtk_font_chooser_dialog_set_preview_text "void gtk_font_chooser_dialog_set_preview_text(GtkFontChooserDialog* fcd, \
-gchar* text)"
-  XEN_ASSERT_TYPE(XEN_GtkFontChooserDialog__P(fcd), fcd, 1, "gtk_font_chooser_dialog_set_preview_text", "GtkFontChooserDialog*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 2, "gtk_font_chooser_dialog_set_preview_text", "gchar*");
-  gtk_font_chooser_dialog_set_preview_text(XEN_TO_C_GtkFontChooserDialog_(fcd), (const gchar*)XEN_TO_C_gchar_(text));
-  return(XEN_FALSE);
+  #define H_gtk_font_chooser_widget_new "GtkWidget* gtk_font_chooser_widget_new( void)"
+  return(C_TO_XEN_GtkWidget_(gtk_font_chooser_widget_new()));
 }
 
 #endif
@@ -34761,9 +34792,10 @@ static XEN gxg_GTK_TOOL_SHELL(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIS
 static XEN gxg_GTK_OVERLAY(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkOverlay_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
 static XEN gxg_GTK_FONT_CHOOSER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFontChooser_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_FONT_CHOOSER_DIALOG(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFontChooserDiaalog_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GTK_FONT_CHOOSER_WIDGET(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFontChooserWidget_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
 #if (!HAVE_GTK_3)
@@ -34951,9 +34983,10 @@ static XEN gxg_GTK_IS_TOOL_SHELL(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJEC
 static XEN gxg_GTK_IS_OVERLAY(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_OVERLAY((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
 static XEN gxg_GTK_IS_FONT_CHOOSER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FONT_CHOOSER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_FONT_CHOOSER_DIALOG(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FONT_CHOOSER_DIALOG((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_FONT_CHOOSER_WIDGET(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FONT_CHOOSER_WIDGET((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
 #if (!HAVE_GTK_3)
@@ -38658,7 +38691,7 @@ XEN_NARGIFY_2(gxg_gtk_overlay_add_overlay_w, gxg_gtk_overlay_add_overlay)
 XEN_NARGIFY_1(gxg_gtk_adjustment_get_minimum_increment_w, gxg_gtk_adjustment_get_minimum_increment)
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
 XEN_NARGIFY_2(gxg_gtk_grid_insert_row_w, gxg_gtk_grid_insert_row)
 XEN_NARGIFY_2(gxg_gtk_grid_insert_column_w, gxg_gtk_grid_insert_column)
 XEN_NARGIFY_3(gxg_gtk_grid_insert_next_to_w, gxg_gtk_grid_insert_next_to)
@@ -38666,22 +38699,25 @@ XEN_NARGIFY_2(gxg_gtk_text_iter_assign_w, gxg_gtk_text_iter_assign)
 XEN_NARGIFY_1(gxg_gtk_widget_has_visible_focus_w, gxg_gtk_widget_has_visible_focus)
 XEN_NARGIFY_2(gxg_gtk_window_set_focus_visible_w, gxg_gtk_window_set_focus_visible)
 XEN_NARGIFY_1(gxg_gtk_window_get_focus_visible_w, gxg_gtk_window_get_focus_visible)
-XEN_NARGIFY_0(gxg_gtk_font_chooser_new_w, gxg_gtk_font_chooser_new)
-XEN_NARGIFY_1(gxg_gtk_font_chooser_get_family_w, gxg_gtk_font_chooser_get_family)
-XEN_NARGIFY_1(gxg_gtk_font_chooser_get_face_w, gxg_gtk_font_chooser_get_face)
-XEN_NARGIFY_1(gxg_gtk_font_chooser_get_size_w, gxg_gtk_font_chooser_get_size)
-XEN_NARGIFY_1(gxg_gtk_font_chooser_get_font_name_w, gxg_gtk_font_chooser_get_font_name)
-XEN_NARGIFY_2(gxg_gtk_font_chooser_set_font_name_w, gxg_gtk_font_chooser_set_font_name)
+XEN_NARGIFY_2(gxg_gtk_font_chooser_dialog_new_w, gxg_gtk_font_chooser_dialog_new)
+XEN_NARGIFY_2(gxg_gdk_event_get_button_w, gxg_gdk_event_get_button)
+XEN_NARGIFY_2(gxg_gdk_event_get_click_count_w, gxg_gdk_event_get_click_count)
+XEN_NARGIFY_2(gxg_gdk_event_get_keyval_w, gxg_gdk_event_get_keyval)
+XEN_NARGIFY_2(gxg_gdk_event_get_keycode_w, gxg_gdk_event_get_keycode)
+XEN_ARGIFY_2(gxg_gdk_event_get_scroll_direction_w, gxg_gdk_event_get_scroll_direction)
+XEN_NARGIFY_3(gxg_gtk_grid_get_child_at_w, gxg_gtk_grid_get_child_at)
+XEN_NARGIFY_1(gxg_gtk_font_chooser_get_font_family_w, gxg_gtk_font_chooser_get_font_family)
+XEN_NARGIFY_1(gxg_gtk_font_chooser_get_font_face_w, gxg_gtk_font_chooser_get_font_face)
+XEN_NARGIFY_1(gxg_gtk_font_chooser_get_font_size_w, gxg_gtk_font_chooser_get_font_size)
+XEN_NARGIFY_1(gxg_gtk_font_chooser_get_font_desc_w, gxg_gtk_font_chooser_get_font_desc)
+XEN_NARGIFY_2(gxg_gtk_font_chooser_set_font_desc_w, gxg_gtk_font_chooser_set_font_desc)
+XEN_NARGIFY_1(gxg_gtk_font_chooser_get_font_w, gxg_gtk_font_chooser_get_font)
+XEN_NARGIFY_2(gxg_gtk_font_chooser_set_font_w, gxg_gtk_font_chooser_set_font)
 XEN_NARGIFY_1(gxg_gtk_font_chooser_get_preview_text_w, gxg_gtk_font_chooser_get_preview_text)
 XEN_NARGIFY_2(gxg_gtk_font_chooser_set_preview_text_w, gxg_gtk_font_chooser_set_preview_text)
 XEN_NARGIFY_1(gxg_gtk_font_chooser_get_show_preview_entry_w, gxg_gtk_font_chooser_get_show_preview_entry)
 XEN_NARGIFY_2(gxg_gtk_font_chooser_set_show_preview_entry_w, gxg_gtk_font_chooser_set_show_preview_entry)
-XEN_NARGIFY_2(gxg_gtk_font_chooser_dialog_new_w, gxg_gtk_font_chooser_dialog_new)
-XEN_NARGIFY_1(gxg_gtk_font_chooser_dialog_get_font_chooser_w, gxg_gtk_font_chooser_dialog_get_font_chooser)
-XEN_NARGIFY_1(gxg_gtk_font_chooser_dialog_get_font_name_w, gxg_gtk_font_chooser_dialog_get_font_name)
-XEN_NARGIFY_2(gxg_gtk_font_chooser_dialog_set_font_name_w, gxg_gtk_font_chooser_dialog_set_font_name)
-XEN_NARGIFY_1(gxg_gtk_font_chooser_dialog_get_preview_text_w, gxg_gtk_font_chooser_dialog_get_preview_text)
-XEN_NARGIFY_2(gxg_gtk_font_chooser_dialog_set_preview_text_w, gxg_gtk_font_chooser_dialog_set_preview_text)
+XEN_NARGIFY_0(gxg_gtk_font_chooser_widget_new_w, gxg_gtk_font_chooser_widget_new)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -39274,9 +39310,10 @@ XEN_NARGIFY_1(gxg_GTK_TOOL_SHELL_w, gxg_GTK_TOOL_SHELL)
 XEN_NARGIFY_1(gxg_GTK_OVERLAY_w, gxg_GTK_OVERLAY)
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
 XEN_NARGIFY_1(gxg_GTK_FONT_CHOOSER_w, gxg_GTK_FONT_CHOOSER)
 XEN_NARGIFY_1(gxg_GTK_FONT_CHOOSER_DIALOG_w, gxg_GTK_FONT_CHOOSER_DIALOG)
+XEN_NARGIFY_1(gxg_GTK_FONT_CHOOSER_WIDGET_w, gxg_GTK_FONT_CHOOSER_WIDGET)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -39464,9 +39501,10 @@ XEN_NARGIFY_1(gxg_GTK_IS_TOOL_SHELL_w, gxg_GTK_IS_TOOL_SHELL)
 XEN_NARGIFY_1(gxg_GTK_IS_OVERLAY_w, gxg_GTK_IS_OVERLAY)
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
 XEN_NARGIFY_1(gxg_GTK_IS_FONT_CHOOSER_w, gxg_GTK_IS_FONT_CHOOSER)
 XEN_NARGIFY_1(gxg_GTK_IS_FONT_CHOOSER_DIALOG_w, gxg_GTK_IS_FONT_CHOOSER_DIALOG)
+XEN_NARGIFY_1(gxg_GTK_IS_FONT_CHOOSER_WIDGET_w, gxg_GTK_IS_FONT_CHOOSER_WIDGET)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -42717,7 +42755,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_adjustment_get_minimum_increment_w gxg_gtk_adjustment_get_minimum_increment
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
 #define gxg_gtk_grid_insert_row_w gxg_gtk_grid_insert_row
 #define gxg_gtk_grid_insert_column_w gxg_gtk_grid_insert_column
 #define gxg_gtk_grid_insert_next_to_w gxg_gtk_grid_insert_next_to
@@ -42725,22 +42763,25 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_widget_has_visible_focus_w gxg_gtk_widget_has_visible_focus
 #define gxg_gtk_window_set_focus_visible_w gxg_gtk_window_set_focus_visible
 #define gxg_gtk_window_get_focus_visible_w gxg_gtk_window_get_focus_visible
-#define gxg_gtk_font_chooser_new_w gxg_gtk_font_chooser_new
-#define gxg_gtk_font_chooser_get_family_w gxg_gtk_font_chooser_get_family
-#define gxg_gtk_font_chooser_get_face_w gxg_gtk_font_chooser_get_face
-#define gxg_gtk_font_chooser_get_size_w gxg_gtk_font_chooser_get_size
-#define gxg_gtk_font_chooser_get_font_name_w gxg_gtk_font_chooser_get_font_name
-#define gxg_gtk_font_chooser_set_font_name_w gxg_gtk_font_chooser_set_font_name
+#define gxg_gtk_font_chooser_dialog_new_w gxg_gtk_font_chooser_dialog_new
+#define gxg_gdk_event_get_button_w gxg_gdk_event_get_button
+#define gxg_gdk_event_get_click_count_w gxg_gdk_event_get_click_count
+#define gxg_gdk_event_get_keyval_w gxg_gdk_event_get_keyval
+#define gxg_gdk_event_get_keycode_w gxg_gdk_event_get_keycode
+#define gxg_gdk_event_get_scroll_direction_w gxg_gdk_event_get_scroll_direction
+#define gxg_gtk_grid_get_child_at_w gxg_gtk_grid_get_child_at
+#define gxg_gtk_font_chooser_get_font_family_w gxg_gtk_font_chooser_get_font_family
+#define gxg_gtk_font_chooser_get_font_face_w gxg_gtk_font_chooser_get_font_face
+#define gxg_gtk_font_chooser_get_font_size_w gxg_gtk_font_chooser_get_font_size
+#define gxg_gtk_font_chooser_get_font_desc_w gxg_gtk_font_chooser_get_font_desc
+#define gxg_gtk_font_chooser_set_font_desc_w gxg_gtk_font_chooser_set_font_desc
+#define gxg_gtk_font_chooser_get_font_w gxg_gtk_font_chooser_get_font
+#define gxg_gtk_font_chooser_set_font_w gxg_gtk_font_chooser_set_font
 #define gxg_gtk_font_chooser_get_preview_text_w gxg_gtk_font_chooser_get_preview_text
 #define gxg_gtk_font_chooser_set_preview_text_w gxg_gtk_font_chooser_set_preview_text
 #define gxg_gtk_font_chooser_get_show_preview_entry_w gxg_gtk_font_chooser_get_show_preview_entry
 #define gxg_gtk_font_chooser_set_show_preview_entry_w gxg_gtk_font_chooser_set_show_preview_entry
-#define gxg_gtk_font_chooser_dialog_new_w gxg_gtk_font_chooser_dialog_new
-#define gxg_gtk_font_chooser_dialog_get_font_chooser_w gxg_gtk_font_chooser_dialog_get_font_chooser
-#define gxg_gtk_font_chooser_dialog_get_font_name_w gxg_gtk_font_chooser_dialog_get_font_name
-#define gxg_gtk_font_chooser_dialog_set_font_name_w gxg_gtk_font_chooser_dialog_set_font_name
-#define gxg_gtk_font_chooser_dialog_get_preview_text_w gxg_gtk_font_chooser_dialog_get_preview_text
-#define gxg_gtk_font_chooser_dialog_set_preview_text_w gxg_gtk_font_chooser_dialog_set_preview_text
+#define gxg_gtk_font_chooser_widget_new_w gxg_gtk_font_chooser_widget_new
 #endif
 
 #if (!HAVE_GTK_3)
@@ -43333,9 +43374,10 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_OVERLAY_w gxg_GTK_OVERLAY
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
 #define gxg_GTK_FONT_CHOOSER_w gxg_GTK_FONT_CHOOSER
 #define gxg_GTK_FONT_CHOOSER_DIALOG_w gxg_GTK_FONT_CHOOSER_DIALOG
+#define gxg_GTK_FONT_CHOOSER_WIDGET_w gxg_GTK_FONT_CHOOSER_WIDGET
 #endif
 
 #if (!HAVE_GTK_3)
@@ -43523,9 +43565,10 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_IS_OVERLAY_w gxg_GTK_IS_OVERLAY
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
 #define gxg_GTK_IS_FONT_CHOOSER_w gxg_GTK_IS_FONT_CHOOSER
 #define gxg_GTK_IS_FONT_CHOOSER_DIALOG_w gxg_GTK_IS_FONT_CHOOSER_DIALOG
+#define gxg_GTK_IS_FONT_CHOOSER_WIDGET_w gxg_GTK_IS_FONT_CHOOSER_WIDGET
 #endif
 
 #if (!HAVE_GTK_3)
@@ -46783,7 +46826,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_adjustment_get_minimum_increment, gxg_gtk_adjustment_get_minimum_increment_w, 1, 0, 0, H_gtk_adjustment_get_minimum_increment);
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
   XG_DEFINE_PROCEDURE(gtk_grid_insert_row, gxg_gtk_grid_insert_row_w, 2, 0, 0, H_gtk_grid_insert_row);
   XG_DEFINE_PROCEDURE(gtk_grid_insert_column, gxg_gtk_grid_insert_column_w, 2, 0, 0, H_gtk_grid_insert_column);
   XG_DEFINE_PROCEDURE(gtk_grid_insert_next_to, gxg_gtk_grid_insert_next_to_w, 3, 0, 0, H_gtk_grid_insert_next_to);
@@ -46791,22 +46834,25 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_has_visible_focus, gxg_gtk_widget_has_visible_focus_w, 1, 0, 0, H_gtk_widget_has_visible_focus);
   XG_DEFINE_PROCEDURE(gtk_window_set_focus_visible, gxg_gtk_window_set_focus_visible_w, 2, 0, 0, H_gtk_window_set_focus_visible);
   XG_DEFINE_PROCEDURE(gtk_window_get_focus_visible, gxg_gtk_window_get_focus_visible_w, 1, 0, 0, H_gtk_window_get_focus_visible);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_new, gxg_gtk_font_chooser_new_w, 0, 0, 0, H_gtk_font_chooser_new);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_get_family, gxg_gtk_font_chooser_get_family_w, 1, 0, 0, H_gtk_font_chooser_get_family);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_get_face, gxg_gtk_font_chooser_get_face_w, 1, 0, 0, H_gtk_font_chooser_get_face);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_get_size, gxg_gtk_font_chooser_get_size_w, 1, 0, 0, H_gtk_font_chooser_get_size);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_get_font_name, gxg_gtk_font_chooser_get_font_name_w, 1, 0, 0, H_gtk_font_chooser_get_font_name);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_set_font_name, gxg_gtk_font_chooser_set_font_name_w, 2, 0, 0, H_gtk_font_chooser_set_font_name);
+  XG_DEFINE_PROCEDURE(gtk_font_chooser_dialog_new, gxg_gtk_font_chooser_dialog_new_w, 2, 0, 0, H_gtk_font_chooser_dialog_new);
+  XG_DEFINE_PROCEDURE(gdk_event_get_button, gxg_gdk_event_get_button_w, 2, 0, 0, H_gdk_event_get_button);
+  XG_DEFINE_PROCEDURE(gdk_event_get_click_count, gxg_gdk_event_get_click_count_w, 2, 0, 0, H_gdk_event_get_click_count);
+  XG_DEFINE_PROCEDURE(gdk_event_get_keyval, gxg_gdk_event_get_keyval_w, 2, 0, 0, H_gdk_event_get_keyval);
+  XG_DEFINE_PROCEDURE(gdk_event_get_keycode, gxg_gdk_event_get_keycode_w, 2, 0, 0, H_gdk_event_get_keycode);
+  XG_DEFINE_PROCEDURE(gdk_event_get_scroll_direction, gxg_gdk_event_get_scroll_direction_w, 1, 1, 0, H_gdk_event_get_scroll_direction);
+  XG_DEFINE_PROCEDURE(gtk_grid_get_child_at, gxg_gtk_grid_get_child_at_w, 3, 0, 0, H_gtk_grid_get_child_at);
+  XG_DEFINE_PROCEDURE(gtk_font_chooser_get_font_family, gxg_gtk_font_chooser_get_font_family_w, 1, 0, 0, H_gtk_font_chooser_get_font_family);
+  XG_DEFINE_PROCEDURE(gtk_font_chooser_get_font_face, gxg_gtk_font_chooser_get_font_face_w, 1, 0, 0, H_gtk_font_chooser_get_font_face);
+  XG_DEFINE_PROCEDURE(gtk_font_chooser_get_font_size, gxg_gtk_font_chooser_get_font_size_w, 1, 0, 0, H_gtk_font_chooser_get_font_size);
+  XG_DEFINE_PROCEDURE(gtk_font_chooser_get_font_desc, gxg_gtk_font_chooser_get_font_desc_w, 1, 0, 0, H_gtk_font_chooser_get_font_desc);
+  XG_DEFINE_PROCEDURE(gtk_font_chooser_set_font_desc, gxg_gtk_font_chooser_set_font_desc_w, 2, 0, 0, H_gtk_font_chooser_set_font_desc);
+  XG_DEFINE_PROCEDURE(gtk_font_chooser_get_font, gxg_gtk_font_chooser_get_font_w, 1, 0, 0, H_gtk_font_chooser_get_font);
+  XG_DEFINE_PROCEDURE(gtk_font_chooser_set_font, gxg_gtk_font_chooser_set_font_w, 2, 0, 0, H_gtk_font_chooser_set_font);
   XG_DEFINE_PROCEDURE(gtk_font_chooser_get_preview_text, gxg_gtk_font_chooser_get_preview_text_w, 1, 0, 0, H_gtk_font_chooser_get_preview_text);
   XG_DEFINE_PROCEDURE(gtk_font_chooser_set_preview_text, gxg_gtk_font_chooser_set_preview_text_w, 2, 0, 0, H_gtk_font_chooser_set_preview_text);
   XG_DEFINE_PROCEDURE(gtk_font_chooser_get_show_preview_entry, gxg_gtk_font_chooser_get_show_preview_entry_w, 1, 0, 0, H_gtk_font_chooser_get_show_preview_entry);
   XG_DEFINE_PROCEDURE(gtk_font_chooser_set_show_preview_entry, gxg_gtk_font_chooser_set_show_preview_entry_w, 2, 0, 0, H_gtk_font_chooser_set_show_preview_entry);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_dialog_new, gxg_gtk_font_chooser_dialog_new_w, 2, 0, 0, H_gtk_font_chooser_dialog_new);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_dialog_get_font_chooser, gxg_gtk_font_chooser_dialog_get_font_chooser_w, 1, 0, 0, H_gtk_font_chooser_dialog_get_font_chooser);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_dialog_get_font_name, gxg_gtk_font_chooser_dialog_get_font_name_w, 1, 0, 0, H_gtk_font_chooser_dialog_get_font_name);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_dialog_set_font_name, gxg_gtk_font_chooser_dialog_set_font_name_w, 2, 0, 0, H_gtk_font_chooser_dialog_set_font_name);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_dialog_get_preview_text, gxg_gtk_font_chooser_dialog_get_preview_text_w, 1, 0, 0, H_gtk_font_chooser_dialog_get_preview_text);
-  XG_DEFINE_PROCEDURE(gtk_font_chooser_dialog_set_preview_text, gxg_gtk_font_chooser_dialog_set_preview_text_w, 2, 0, 0, H_gtk_font_chooser_dialog_set_preview_text);
+  XG_DEFINE_PROCEDURE(gtk_font_chooser_widget_new, gxg_gtk_font_chooser_widget_new_w, 0, 0, 0, H_gtk_font_chooser_widget_new);
 #endif
 
 #if (!HAVE_GTK_3)
@@ -47390,9 +47436,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_OVERLAY, gxg_GTK_OVERLAY_w, 1, 0, 0, "(GTK_OVERLAY obj) casts obj to GTK_OVERLAY");
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
   XG_DEFINE_PROCEDURE(GTK_FONT_CHOOSER, gxg_GTK_FONT_CHOOSER_w, 1, 0, 0, "(GTK_FONT_CHOOSER obj) casts obj to GTK_FONT_CHOOSER");
   XG_DEFINE_PROCEDURE(GTK_FONT_CHOOSER_DIALOG, gxg_GTK_FONT_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_FONT_CHOOSER_DIALOG obj) casts obj to GTK_FONT_CHOOSER_DIALOG");
+  XG_DEFINE_PROCEDURE(GTK_FONT_CHOOSER_WIDGET, gxg_GTK_FONT_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_FONT_CHOOSER_WIDGET obj) casts obj to GTK_FONT_CHOOSER_WIDGET");
 #endif
 
 #if (!HAVE_GTK_3)
@@ -47589,9 +47636,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_OVERLAY, gxg_GTK_IS_OVERLAY_w, 1, 0, 0, "(GTK_IS_OVERLAY obj): " PROC_TRUE " if obj is a GTK_IS_OVERLAY");
 #endif
 
-#if HAVE_GTK_FONT_CHOOSER_NEW
+#if HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE
   XG_DEFINE_PROCEDURE(GTK_IS_FONT_CHOOSER, gxg_GTK_IS_FONT_CHOOSER_w, 1, 0, 0, "(GTK_IS_FONT_CHOOSER obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER");
   XG_DEFINE_PROCEDURE(GTK_IS_FONT_CHOOSER_DIALOG, gxg_GTK_IS_FONT_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_IS_FONT_CHOOSER_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER_DIALOG");
+  XG_DEFINE_PROCEDURE(GTK_IS_FONT_CHOOSER_WIDGET, gxg_GTK_IS_FONT_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_IS_FONT_CHOOSER_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER_WIDGET");
 #endif
 
 #if (!HAVE_GTK_3)
@@ -49390,7 +49438,7 @@ void Init_libxg(void)
       #else
         XEN_YES_WE_HAVE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("09-Sep-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("14-Sep-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
