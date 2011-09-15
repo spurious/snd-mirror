@@ -4408,6 +4408,12 @@ These symbols are not just a silly optimization of string comparison:
 
 &gt; (define-macro (symbol-set! var val) ; use apply instead of define-bacro
     `(apply set! ,var (list ,val)))
+
+&gt; (define-macro (progv vars vals . body)
+    `(apply (apply lambda ,vars ',body) ,vals))
+
+&gt; (let ((s '(one two)) (v '(1 2))) (progv s v (+ one two)))
+3
 </pre>
 
 <p>We can snap together program fragments ("look Ma, no macros!"):
@@ -4430,12 +4436,6 @@ These symbols are not just a silly optimization of string comparison:
            (list 'define symbol ctr)) ; e.g. '(define zero 0) 
          '(zero one two)))
   (+ zero one two))
-
-(define-macro (progv vars vals . body)
-  `(apply (apply lambda ,vars ',body) ,vals))
-
-&gt; (let ((s '(one two)) (v '(1 2))) (progv s v (+ one two)))
-3
 </pre>
 
 <p>If you apply define or define-macro, the returned value is a symbol, so to apply the

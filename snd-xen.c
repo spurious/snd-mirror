@@ -2292,13 +2292,13 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_character(s7_car(args)))
     return(s7_wrong_type_arg_error(sc, "char-position", 1, s7_car(args), "a character"));
-  if (!s7_is_string(s7_car(s7_cdr(args))))
-    return(s7_wrong_type_arg_error(sc, "char-position", 2, s7_car(s7_cdr(args)), "a string"));
+  if (!s7_is_string(s7_cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "char-position", 2, s7_cadr(args), "a string"));
 
-  if (s7_is_pair(s7_cdr(s7_cdr(args))))
+  if (s7_is_pair(s7_cddr(args)))
     {
       s7_pointer arg;
-      arg = s7_car(s7_cdr(s7_cdr(args)));
+      arg = s7_cadr(s7_cdr(args));
       if (!s7_is_integer(arg))
 	return(s7_wrong_type_arg_error(sc, "char-position", 3, arg, "an integer"));
 
@@ -2308,7 +2308,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
     }
 
   c = s7_character(s7_car(args));
-  porig = s7_string(s7_car(s7_cdr(args)));
+  porig = s7_string(s7_cadr(args));
 
   if ((!porig) || (start >= mus_strlen(porig)))
     return(s7_f(sc));
@@ -2327,13 +2327,13 @@ static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, c
 
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(sc, name, 1, s7_car(args), "a string"));
-  if (!s7_is_string(s7_car(s7_cdr(args))))
-    return(s7_wrong_type_arg_error(sc, name, 2, s7_car(s7_cdr(args)), "a string"));
+  if (!s7_is_string(s7_cadr(args)))
+    return(s7_wrong_type_arg_error(sc, name, 2, s7_cadr(args), "a string"));
 
-  if (s7_is_pair(s7_cdr(s7_cdr(args))))
+  if (s7_is_pair(s7_cddr(args)))
     {
       s7_pointer arg;
-      arg = s7_car(s7_cdr(s7_cdr(args)));
+      arg = s7_caddr(args);
       if (!s7_is_integer(arg))
 	return(s7_wrong_type_arg_error(sc, name, 3, arg, "an integer"));
 
@@ -2343,7 +2343,7 @@ static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, c
     }
   
   s1 = s7_string(s7_car(args));
-  s2 = s7_string(s7_car(s7_cdr(args)));
+  s2 = s7_string(s7_cadr(args));
   if (start >= mus_strlen(s2))
     return(s7_f(sc));
 
@@ -2395,13 +2395,13 @@ static s7_pointer g_string_vector_position(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(sc, "string-vector-position", 1, s7_car(args), "a string"));
-  if (!s7_is_vector(s7_car(s7_cdr(args))))
-    return(s7_wrong_type_arg_error(sc, "string-vector-position", 2, s7_car(s7_cdr(args)), "a vector"));
+  if (!s7_is_vector(s7_cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "string-vector-position", 2, s7_cadr(args), "a vector"));
 
-  if (s7_is_pair(s7_cdr(s7_cdr(args))))
+  if (s7_is_pair(s7_cddr(args)))
     {
       s7_pointer arg;
-      arg = s7_car(s7_cdr(s7_cdr(args)));
+      arg = s7_caddr(args);
       if (!s7_is_integer(arg))
 	return(s7_wrong_type_arg_error(sc, "string-vector-position", 3, arg, "an integer"));
 
@@ -2411,8 +2411,8 @@ static s7_pointer g_string_vector_position(s7_scheme *sc, s7_pointer args)
     }
   
   s1 = s7_string(s7_car(args));
-  strs = s7_vector_elements(s7_car(s7_cdr(args)));
-  len = s7_vector_length(s7_car(s7_cdr(args)));
+  strs = s7_vector_elements(s7_cadr(args));
+  len = s7_vector_length(s7_cadr(args));
 
   for (i = start; i < len; i++)
     if ((s7_is_string(strs[i])) &&
@@ -2438,10 +2438,10 @@ static s7_pointer g_string_list_position_1(s7_scheme *sc, s7_pointer args, bool 
   if (!s7_is_pair(p))
     return(s7_wrong_type_arg_error(sc, name, 2, p, "a list"));
 
-  if (s7_is_pair(s7_cdr(s7_cdr(args))))
+  if (s7_is_pair(s7_cddr(args)))
     {
       s7_pointer arg;
-      arg = s7_car(s7_cdr(s7_cdr(args)));
+      arg = s7_caddr(args);
       if (!s7_is_integer(arg))
 	return(s7_wrong_type_arg_error(sc, "string-list-position", 3, arg, "an integer"));
 

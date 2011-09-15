@@ -901,7 +901,10 @@ static void display_fft(fft_state *fs)
   if (data == NULL) return;
 
   sp = cp->sound;
-  xlabel = spectro_xlabel(cp);
+  if (fp->xlabel == NULL)
+    xlabel = spectro_xlabel(cp);
+  else xlabel = fp->xlabel;
+  /* this only works until the fft data is remade in some way, then the label reverts to "frequency" */
 
   switch (cp->transform_type)
     {

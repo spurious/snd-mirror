@@ -2164,7 +2164,8 @@
 		       'frame->frame 'frame->list 'frame->sample 'frame-ref 'frame-set!
 		       'frame? 'frames 'free-player
 		       'free-sampler 'gaussian-window 'gc-off 'gc-on
-		       'gl-graph->ps 'glSpectrogram 'goto-listener-end 'granulate 'granulate?
+		       ;'gl-graph->ps 'glSpectrogram 
+		       'goto-listener-end 'granulate 'granulate?
 		       'graph 'graph->ps 'graph-as-sonogram 'graph-as-spectrogram 'graph-as-wavogram
 		       'graph-color 'graph-cursor 'graph-data 'graph-dots 'graph-dots-and-lines
 		       'graph-filled 'graph-hook 'graph-lines 'graph-lollipops 'graph-once
@@ -9096,7 +9097,7 @@ EDITS: 5
 		     (set! (x-axis-label index 0 transform-graph) "hiho")
 		     (update-transform-graph)
 		     (if (not (string=? (x-axis-label index 0 transform-graph) "hiho")) 
-			 (snd-display #__line__ ";set set fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+			 (snd-display #__line__ ";set fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
 		     (set! (x-axis-label index 0 transform-graph) "frequency") ; for later test
 		     
 		     (graph '(0 0 1 1 2 0) "lisp")
@@ -33092,7 +33093,7 @@ EDITS: 2
 	      (key (char->integer #\x) 4 id)
 	      (key (char->integer #\b) 4 id)
 	      (let ((left (left-sample id)))
-		(if (not (= left 0)) (snd-display #__line__ ";u1000: ~A" left)))
+		(if (not (= left 1000)) (snd-display #__line__ ";u1000: ~A" left)))
 	      (prefix-it 0 id)
 	      (key (char->integer #\x) 4 id)
 	      (key (char->integer #\b) 4 id)
