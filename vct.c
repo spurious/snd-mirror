@@ -250,10 +250,10 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
   mus_long_t loc;
   s7_pointer pos;
 
+  v = XEN_TO_VCT(obj);
+
   pos = XEN_CAR(args);
   XEN_ASSERT_TYPE(XEN_INT64_T_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
-
-  v = XEN_TO_VCT(obj);
   loc = XEN_TO_C_INT64_T(pos);
 
   if (loc < 0)

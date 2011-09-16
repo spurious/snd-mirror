@@ -2310,7 +2310,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   c = s7_character(s7_car(args));
   porig = s7_string(s7_cadr(args));
 
-  if ((!porig) || (start >= mus_strlen(porig)))
+  if ((!porig) || (start >= s7_string_length(s7_cadr(args))))
     return(s7_f(sc));
 
   for (p = (const char *)(porig + start); (*p); p++)
@@ -2344,7 +2344,7 @@ static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, c
   
   s1 = s7_string(s7_car(args));
   s2 = s7_string(s7_cadr(args));
-  if (start >= mus_strlen(s2))
+  if (start >= s7_string_length(s7_cadr(args)))
     return(s7_f(sc));
 
   if (!ci)
@@ -2392,6 +2392,8 @@ static s7_pointer g_string_vector_position(s7_scheme *sc, s7_pointer args)
   const char *s1;
   s7_pointer *strs;
   int i, len, start = 0;
+  s7_pointer s1p;
+  unsigned int slen;
 
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(sc, "string-vector-position", 1, s7_car(args), "a string"));
@@ -2409,14 +2411,19 @@ static s7_pointer g_string_vector_position(s7_scheme *sc, s7_pointer args)
       if (start < 0)
 	return(s7_wrong_type_arg_error(sc, "string-vector-position", 3, arg, "a non-negative integer"));
     }
-  
-  s1 = s7_string(s7_car(args));
+
+  s1p = s7_car(args);  
+  s1 = s7_string(s1p);
+  slen = s7_string_length(s1p);
   strs = s7_vector_elements(s7_cadr(args));
   len = s7_vector_length(s7_cadr(args));
 
   for (i = start; i < len; i++)
-    if ((s7_is_string(strs[i])) &&
-	(mus_strcmp(s1, s7_string(strs[i]))))
+    if ((s1p == strs[i]) ||
+	((s7_is_string(strs[i])) &&
+	 (slen == s7_string_length(strs[i])) &&
+	 ((slen == 0) ||
+	  (strcmp(s1, s7_string(strs[i])) == 0))))
       return(s7_make_integer(sc, i));
   
   return(s7_f(sc));

@@ -9521,6 +9521,7 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
 
   if (int_ok)
     {
+      /* moving the "srp->" business out of the loops made no difference */
       xs = (int)(zf * (srp->width_1 - srp->x));
       i = 0;
       if (xs < 0)

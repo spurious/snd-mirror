@@ -977,6 +977,7 @@ struct s7_scheme {
 /* c_functions that do not return or modify the arg list directly (no :rest arg in particular),
  *    and that can't call apply themselves either directly or via s7_call.
  *    I think the latter would be safe if they gc_protect the called function.  
+ * This also includes applicable objects that are known safe (lists, vectors, etc -- equivalent to vector-ref).
  */
 
 #define T_ANY_MACRO                   (1 << (TYPE_BITS + 4))
@@ -1136,7 +1137,7 @@ struct s7_scheme {
                                          NEW_CELL_NO_CHECK(Sc, _x_); \
                                          car(_x_) = A; \
                                          cdr(_x_) = B; \
-                                         set_type(_x_, T_PAIR); \
+                                         set_type(_x_, T_PAIR | T_SAFE_PROCEDURE); \
                                          if (sc->free_heap_top <= sc->free_heap_trigger) {sc->temp3 = _x_; try_to_call_gc(sc); sc->temp3 = sc->NIL;} \
                                          _x_; })
 #else
@@ -1411,11 +1412,6 @@ static char *copy_string(const char *str)
 /* newlib code here was slower -- this should only be used for internal strings -- scheme
  *   strings can have embedded nulls.
  */
-
-#define scheme_strings_are_equal(Str1, Str2) (scheme_strcmp(Str1, Str2) == 0)
-/* here Str1 and Str2 are s7_pointers
- */
-
 
 static int safe_strcmp(const char *s1, const char *s2)
 {
@@ -11959,6 +11955,12 @@ static s7_pointer g_string_length(s7_scheme *sc, s7_pointer args)
 }
 
 
+unsigned int s7_string_length(s7_pointer str)
+{
+  return(string_length(str));
+}
+
+
 static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index)
 {
   char *str;
@@ -12206,16 +12208,81 @@ static s7_pointer g_string_cmp_not(s7_scheme *sc, s7_pointer args, int val, cons
 }
 
 
+static bool scheme_strings_are_equal(s7_pointer x, s7_pointer y)
+{
+  int i;
+  char *xstr, *ystr;
+  unsigned int len;
+
+  if (x == y)
+    return(true);
+
+  len = string_length(x);
+  if (string_length(y) != len) 
+    return(false);
+  if (len == 0)
+    return(true);
+
+  xstr = string_value(x);
+  ystr = string_value(y);
+
+  for (i = 0; i < len; i++)
+    if (xstr[i] != ystr[i])
+      return(false);
+  return(true);
+}
+
+
 static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_equal "(string=? str ...) returns #t if all the string arguments are equal"
 
-  /* C-based check stops at null, but we can have embedded nulls.  We can't
-   *   just look at string-length because we need to check past the nulls.
+  /* C-based check stops at null, but we can have embedded nulls.
    *   (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2))
-   * hence scheme_strcmp above.
    */
-  return(g_string_cmp(sc, args, 0, "string=?"));
+  
+  int i;
+  s7_pointer x, y;
+  unsigned int len;
+  bool happy = true;
+  char *ystr;
+  
+  y = car(args);
+  if (!s7_is_string(y))
+    return(s7_wrong_type_arg_error(sc, "string=?", 1, y, "a string"));
+
+  len = string_length(y);
+  ystr = string_value(y);
+
+  for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x)) 
+    {
+      if (y != car(x))
+	{
+	  if (!s7_is_string(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "string=?", i, car(x), "a string"));
+	  if (happy)
+	    {
+	      if (string_length(car(x)) != len)
+		happy = false;
+	      else
+		{
+		  int i;
+		  char *xstr;
+		  xstr = string_value(car(x));
+		  for (i = 0; i < len; i++)
+		    if (ystr[i] != xstr[i])
+		      {
+			happy = false;
+			break;
+		      }
+		}
+	    }
+	}
+    }
+
+  if (!happy)
+    return(sc->F);
+  return(sc->T);
 }	
 
 
@@ -14195,7 +14262,7 @@ static char *describe_type_bits(s7_pointer obj)
    */
   char *buf;
   buf = (char *)calloc(512, sizeof(char));
-  snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+  snprintf(buf, 512, "<unknown object! type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	   type(obj), 
 	   type_name(obj),
 	   typeflag(obj),
@@ -14214,6 +14281,7 @@ static char *describe_type_bits(s7_pointer obj)
 	   is_unsafe(obj) ?             " unsafe" : "",
 	   is_optimized(obj) ?          " optimized" : "",
 	   is_safe_closure(obj) ?       " safe closure" : "",
+	   is_safe_procedure(obj) ?     " safe procedure" : "",
 	   is_setter(obj) ?             " setter" : "",
 	   has_table(obj) ?             " function-table" : "",
 	   ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
@@ -15230,7 +15298,7 @@ s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
   NEW_CELL(sc, x);
   car(x) = a;
   cdr(x) = b;
-  set_type(x, T_PAIR);
+  set_type(x, T_PAIR | T_SAFE_PROCEDURE);
   return(x);
 }
 
@@ -15241,7 +15309,7 @@ static s7_pointer cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b)
   NEW_CELL_NO_CHECK(sc, x); /* 5 11 8 */
   car(x) = a;
   cdr(x) = b;
-  set_type(x, T_PAIR);
+  set_type(x, T_PAIR | T_SAFE_PROCEDURE);
   return(x);
 }
 
@@ -15860,7 +15928,7 @@ static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
   NEW_CELL(sc, x);
   car(x) = car(args);
   cdr(x) = cadr(args);
-  set_type(x, T_PAIR);
+  set_type(x, T_PAIR | T_SAFE_PROCEDURE);
   return(x);
 }
 
@@ -19479,7 +19547,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
     {
       object_ref(x) = object_types[type].apply;
       if (object_ref(x) != fallback_ref)
-	typeflag(x) |= T_PROCEDURE; /* this is not always safe (pws) */
+	typeflag(x) |= (T_PROCEDURE | T_SAFE_PROCEDURE);
     }
   else object_ref(x) = fallback_ref;
 

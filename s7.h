@@ -318,6 +318,7 @@ const char *s7_string(s7_pointer p);                                         /* 
 s7_pointer s7_make_string(s7_scheme *sc, const char *str);                   /* C string -> Scheme string (str is copied) */
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len);  /* same as s7_make_string, but provides strlen */
 s7_pointer s7_make_permanent_string(const char *str);                        /* make a string that will never be GC'd */
+unsigned int s7_string_length(s7_pointer str);                               /* (string-length str) */
 
 bool s7_is_character(s7_pointer p);                                          /* (character? p) */
 char s7_character(s7_pointer p);                                             /* Scheme character -> C char */
@@ -810,7 +811,7 @@ void s7_mark_object(s7_pointer p);
  *    make-rectangular map max memq memv min modulo nan? negative? not odd? port-closed? 
  *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
  *    sin sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
- *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-length string-ref 
+ *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-ref 
  *    string-set! string<=? string<? string=? string>=? string>? substring symbol symbol->keyword 
  *    symbol-table tan tanh trace truncate untrace vector vector->list with-input-from-file 
  *    with-input-from-string with-output-to-file with-output-to-string write-byte zero?

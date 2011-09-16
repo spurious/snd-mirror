@@ -3603,7 +3603,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 #endif
 	  if (cp->active < CHANNEL_HAS_EDIT_LIST)
 	    {
-	     if (data) {free(data); data = NULL;} 
+	      if (data) {free(data); data = NULL;} 
 	      XEN_ERROR(NO_SUCH_CHANNEL,
 			XEN_LIST_2(C_TO_XEN_STRING("~A: can't edit closed channel!"),
 				   C_TO_XEN_STRING(caller)));
