@@ -451,7 +451,7 @@ enum{OP_NOT_AN_OP, HOP_NOT_AN_OP,
 
      /* these can't be embedded, and have to be the last thing called */
      OP_C_LS, HOP_C_LS, OP_C_L_opSq, HOP_C_L_opSq, OP_C_L, HOP_C_L, OP_C_LL, HOP_C_LL, OP_C_CLL, HOP_C_CLL,
-     OP_C_ALL_G, HOP_C_ALL_G, 
+     OP_C_ALL_G, HOP_C_ALL_G, OP_C_APPLY_L, HOP_C_APPLY_L, OP_C_APPLY_G, HOP_C_APPLY_G,
      OP_C_S_opSq, HOP_C_S_opSq, 
 
      OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, 
@@ -532,7 +532,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "safe_is_pair_s", "h_safe_is_pair_s", "safe_is_symbol_s", "h_safe_is_symbol_s", "safe_not", "h_safe_not",
 
      "c_ls", "h_c_ls", "c_l_opsq", "h_c_l_opsq", "c_l", "h_c_l", "c_ll", "h_c_ll", "c_cll", "h_c_cll",
-     "c_all_g", "h_c_all_g", 
+     "c_all_g", "h_c_all_g", "c_apply_l", "h_c_apply_l", "c_apply_g", "h_c_apply_g",
      "c_s_opsq", "h_c_s_opsq", 
 
      "vector_c", "h_vector_c", "vector_s", "h_vector_s", 
@@ -947,8 +947,9 @@ struct s7_scheme {
 #define T_C_OPT_ARGS_FUNCTION 30
 #define T_C_RST_ARGS_FUNCTION 31
 #define T_C_LST_ARGS_FUNCTION 32
+#define T_C_APPLY_FUNCTION    33
 
-#define BUILT_IN_TYPES        33
+#define BUILT_IN_TYPES        34
 
 /* T_STACK and T_COUNTER are internal types, mainly for the GC mark process's benefit
  */
@@ -2136,6 +2137,7 @@ static void init_mark_functions(void)
   mark_function[T_C_OPT_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_RST_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_LST_ARGS_FUNCTION] = just_mark;
+  mark_function[T_C_APPLY_FUNCTION]    = just_mark;
 }
 
 
@@ -2543,6 +2545,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_C_RST_ARGS_FUNCTION:
     case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
+    case T_C_APPLY_FUNCTION:
     case T_C_FUNCTION:
     case T_C_MACRO:
     case T_C_POINTER:
@@ -4089,7 +4092,9 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 		    list_2(sc, make_protected_string(sc, "call/cc procedure, ~A, should take one argument"), car(args))));
 
   sc->w = s7_make_continuation(sc);
-  push_stack(sc, OP_APPLY, list_1(sc, sc->w), car(args));
+  /* push_stack(sc, OP_APPLY, list_1(sc, sc->w), car(args)); */
+  sc->args = list_1(sc, sc->w);
+  sc->code = car(args);
   sc->w = sc->NIL;
   return(sc->NIL);
 }
@@ -4108,7 +4113,12 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
   x = make_goto(sc);
   push_stack(sc, OP_DEACTIVATE_GOTO, x, sc->NIL); /* this means call-with-exit is not tail-recursive */
-  push_stack(sc, OP_APPLY, cons_unchecked(sc, x, sc->NIL), car(args));
+  /* push_stack(sc, OP_APPLY, cons_unchecked(sc, x, sc->NIL), car(args)); */
+
+  sc->args = cons_unchecked(sc, x, sc->NIL);
+  sc->code = car(args);
+
+  /* fprintf(stderr, "call-with-exit %s %s\n", DISPLAY_80(sc->code), DISPLAY_80(sc->args)); */
   
   /* if the lambda body calls the argument as a function, 
    *   it is applied to its arguments, apply notices that it is a goto, and...
@@ -14430,6 +14440,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_C_RST_ARGS_FUNCTION:
     case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
+    case T_C_APPLY_FUNCTION:
     case T_C_FUNCTION:
       return(copy_string(c_function_name(obj)));
 
@@ -15226,7 +15237,9 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
   port = s7_open_output_string(sc);
   push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
   push_stack(sc, OP_GET_OUTPUT_STRING, sc->F, port);
-  push_stack(sc, OP_APPLY, list_1(sc, port), car(args));
+  /* push_stack(sc, OP_APPLY, list_1(sc, port), car(args)); */
+  sc->args = list_1(sc, port);
+  sc->code = car(args);
   return(sc->F);
 }
 
@@ -15264,7 +15277,9 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
   sc->output_port = s7_open_output_string(sc);
   push_stack(sc, OP_UNWIND_OUTPUT, old_output_port, sc->output_port);
   push_stack(sc, OP_GET_OUTPUT_STRING, sc->F, sc->output_port);
-  push_stack(sc, OP_APPLY, sc->NIL, car(args));
+  /* push_stack(sc, OP_APPLY, sc->NIL, car(args)); */
+  sc->args = sc->NIL;
+  sc->code = car(args);
   return(sc->F);
 }
 
@@ -18959,6 +18974,15 @@ static void s7_define_constant_function(s7_scheme *sc, const char *name, s7_func
 }
 
 
+static void s7_define_apply_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+{
+  s7_pointer p;
+  s7_define_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
+  p = s7_symbol_value(sc, make_symbol(sc, name));
+  set_type(p, T_C_APPLY_FUNCTION | T_DONT_COPY | T_PROCEDURE);
+}
+
+
 void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func;
@@ -19534,6 +19558,8 @@ int s7_object_type(s7_pointer obj)
 }
 
 
+static int pws_tag;
+
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
 {
   s7_pointer x;
@@ -19547,7 +19573,11 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
     {
       object_ref(x) = object_types[type].apply;
       if (object_ref(x) != fallback_ref)
-	typeflag(x) |= (T_PROCEDURE | T_SAFE_PROCEDURE);
+	{
+	  if (type != pws_tag)
+	    typeflag(x) |= (T_PROCEDURE | T_SAFE_PROCEDURE);
+	  else typeflag(x) |= T_PROCEDURE;
+	}
     }
   else object_ref(x) = fallback_ref;
 
@@ -20191,8 +20221,6 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 }
   
 
-static int pws_tag;
-
 typedef struct {
   s7_pointer (*getter)(s7_scheme *sc, s7_pointer args);
   int get_req_args, get_opt_args;
@@ -20450,6 +20478,7 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
     case T_C_LST_ARGS_FUNCTION:
+    case T_C_APPLY_FUNCTION:
     case T_C_FUNCTION:
       return(((int)c_function_required_args(x) <= args) &&
 	     ((int)c_function_all_args(x) >= args));
@@ -22626,6 +22655,7 @@ static const char *type_name(s7_pointer arg)
     case T_C_RST_ARGS_FUNCTION:
     case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
+    case T_C_APPLY_FUNCTION:
     case T_C_FUNCTION:   return("function");
     case T_C_MACRO:      return("macro");
     case T_C_POINTER:    return("c-pointer");
@@ -27253,6 +27283,8 @@ static s7_pointer collect_collisions(s7_scheme *sc, s7_pointer lst, s7_pointer e
   return(sc->w);
 }
 
+#define is_apply_function(f) (type(f) == T_C_APPLY_FUNCTION)
+
 static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int hop, s7_pointer e)
 {
   int pairs = 0, symbols = 0, args = 0, bad_pairs = 0, quotes = 0;
@@ -27374,7 +27406,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		    {
 		      set_optimized(car(x));
 		      set_unsafe(car(x));
-		      set_optimize_data(car(x), OP_C_ALL_G);
+		      if (is_apply_function(func))
+			set_optimize_data(car(x), OP_C_APPLY_G);
+		      else set_optimize_data(car(x), OP_C_ALL_G);
 		      ecdr(car(x)) = c_function_chooser(func)(sc, func, args, car(x));
 		      return(false); 
 		    }
@@ -27527,7 +27561,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				{
 				  set_optimized(car(x));
 				  set_unsafe(car(x));
-				  set_optimize_data(car(x), OP_C_L);
+				  if (is_apply_function(func))
+				    set_optimize_data(car(x), OP_C_APPLY_L);
+				  else set_optimize_data(car(x), OP_C_L);
 				  ecdr(car(x)) = c_function_chooser(func)(sc, func, args, car(x));
 				  return(false);
 				}
@@ -32588,6 +32624,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      case T_C_OPT_ARGS_FUNCTION:
 		      case T_C_RST_ARGS_FUNCTION:
 		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_APPLY_FUNCTION:
 			if ((is_safe_procedure(f)) &&
 			    (c_function_required_args(f) <= 1) &&
 			    (c_function_all_args(f) >= 1))
@@ -32666,6 +32703,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  case T_C_OPT_ARGS_FUNCTION:
 			  case T_C_RST_ARGS_FUNCTION:
 			  case T_C_LST_ARGS_FUNCTION:
+			  case T_C_APPLY_FUNCTION:
 			    if (is_safe_procedure(f))
 			      optimize_data(code) = OP_SAFE_C_C;
 			    else break;
@@ -33755,7 +33793,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->w = sc->NIL;
 		    goto START;
 		  }
-		  
+
+
+		case OP_C_APPLY_G:
+		  if (!c_function_is_ok(sc, code))
+		    break;
+
+		case HOP_C_APPLY_G:
+		  {
+		    s7_pointer args;
+		    args = cdr(code);
+		    if (is_pair(car(args)))
+		      car(sc->T1_1) = cadr(car(args)); /* hunh?? */
+		    else
+		      {
+			if (s7_is_symbol(car(args)))
+			  car(sc->T1_1) = finder(sc, car(args));
+			else car(sc->T1_1) = car(args);
+		      }
+		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
+		    /* fprintf(stderr, "all_g: %s %s\n", DISPLAY_80(sc->code), DISPLAY_80(sc->args)); */
+		    goto APPLY;
+		  }
+
 
 		case OP_SAFE_C_SSS:
 		  if (!c_function_is_ok(sc, code))
@@ -34570,6 +34630,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 
+		case OP_C_APPLY_L:
+		  if (!c_function_is_ok(sc, code))
+		    break;
+		  check_lambda_args(sc, cadr(cadr(code)));
+
+		case HOP_C_APPLY_L:
+		  {
+		    s7_pointer x;
+
+		    NEW_CELL(sc, x);
+		    car(x) = cdr(cadr(code));
+		    cdr(x) = sc->envir;
+		    set_type(x, T_CLOSURE | T_PROCEDURE | T_DONT_COPY);
+
+		    car(sc->T1_1) = x;
+		    sc->value = c_function_call(ecdr(code))(sc, sc->T1_1);
+		    /* fprintf(stderr, "c_l: %s %s\n", DISPLAY_80(sc->code), DISPLAY_80(sc->args)); */
+		    goto APPLY;
+		  }
+
+
 		case OP_C_LL:
 		  if (!c_function_is_ok(sc, code))
 		    break;
@@ -35332,6 +35413,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
 	  goto START;
 
+
+	case T_C_APPLY_FUNCTION: 	             /* -------- C-based function that goes back to apply -------- */
+	  {
+	    unsigned int len;
+	    len = safe_list_length(sc, sc->args);
+
+	    if (len < c_function_required_args(sc->code))
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
+
+	    if (c_function_all_args(sc->code) < len)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+
+	    sc->value = c_function_call(sc->code)(sc, sc->args);
+	    /* fprintf(stderr, "apply: %s %s\n", DISPLAY_80(sc->code), DISPLAY_80(sc->args)); */
+	    goto APPLY;
+	  }
+
+
 	case T_C_OPT_ARGS_FUNCTION:                 /* -------- C-based function that has n optional arguments -------- */
 	  {
 	    unsigned int len;
@@ -36035,6 +36138,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->value = g_hash_table_set(sc, sc->T3_1);
 	      break;
 
+	    case T_C_APPLY_FUNCTION:
 	    case T_C_OPT_ARGS_FUNCTION:
 	    case T_C_RST_ARGS_FUNCTION:
 	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 1) 2) lst) */
@@ -36371,6 +36475,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 
 
+	    case T_C_APPLY_FUNCTION:
 	    case T_C_OPT_ARGS_FUNCTION:
 	    case T_C_RST_ARGS_FUNCTION:
 	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 0) 2) lst) */
@@ -43384,9 +43489,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "with-input-from-string",         g_with_input_from_string,   2, 0, false, H_with_input_from_string);
   s7_define_function(sc, "with-input-from-file",           g_with_input_from_file,     2, 0, false, H_with_input_from_file);
   
-  s7_define_function(sc, "call-with-output-string",        g_call_with_output_string,  1, 0, false, H_call_with_output_string);
+  s7_define_apply_function(sc, "call-with-output-string",  g_call_with_output_string,  1, 0, false, H_call_with_output_string);
   s7_define_function(sc, "call-with-output-file",          g_call_with_output_file,    2, 0, false, H_call_with_output_file);
-  s7_define_function(sc, "with-output-to-string",          g_with_output_to_string,    1, 0, false, H_with_output_to_string);
+  s7_define_apply_function(sc, "with-output-to-string",    g_with_output_to_string,    1, 0, false, H_with_output_to_string);
   s7_define_function(sc, "with-output-to-file",            g_with_output_to_file,      2, 0, false, H_with_output_to_file);
   
   
@@ -43623,15 +43728,16 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "hook-documentation",        g_hook_documentation,       1, 0, false, H_hook_documentation);
   s7_define_function_with_setter(sc, "hook-functions",     g_hook_functions, g_hook_set_functions, 1, 0, H_hook_functions);
 
-  s7_define_function(sc, "call/cc",                        g_call_cc,                  1, 0, false, H_call_cc);
-  s7_define_function(sc, "call-with-current-continuation", g_call_cc,                  1, 0, false, H_call_cc);
-  s7_define_function(sc, "call-with-exit",                 g_call_with_exit,           1, 0, false, H_call_with_exit);
+  s7_define_apply_function(sc, "call/cc",                  g_call_cc,                  1, 0, false, H_call_cc);
+  s7_define_apply_function(sc, "call-with-current-continuation", g_call_cc,            1, 0, false, H_call_cc);
   s7_define_safe_function(sc, "continuation?",             g_is_continuation,          1, 0, false, H_is_continuation);
+  s7_define_apply_function(sc, "call-with-exit",           g_call_with_exit,           1, 0, false, H_call_with_exit);
 
   s7_define_function(sc, "load",                           g_load,                     1, 1, false, H_load);
   s7_define_function(sc, "eval",                           g_eval,                     1, 1, false, H_eval);
   s7_define_function(sc, "eval-string",                    g_eval_string,              1, 1, false, H_eval_string);
   s7_define_function(sc, "apply",                          g_apply,                    1, 0, true,  H_apply);
+
   s7_define_function(sc, "for-each",                       g_for_each,                 2, 0, true,  H_for_each);
   s7_define_function(sc, "map",                            g_map,                      2, 0, true,  H_map);
 
@@ -44002,6 +44108,8 @@ the error type and the info passed to the error handler.");
  *       PERHAPS: block recursive call on accessor?
  *       are optimized calls ok in this regard?
  *       all call_symbol_bind uses really should be embedded
+ *
+ * (set! (procedure-setter abs) ...)?
  *
  * other uses of s7_call: all the object stuff [see note in that section], readers, unbound_variable
  */
