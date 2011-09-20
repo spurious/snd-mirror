@@ -8807,16 +8807,20 @@ a2" 3) "132")
 (test (format #f "~40A" "012345678901234567890") "012345678901234567890")
 (test (format #f "~12s" "012345678901234567890") "\"0123456...\"")
 
-(test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~A" v)) "#(1 2 3 4 5 6 7 8 9 10)")
-(test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10A" v)) "#(1 2 3...")
-(test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~20A" v)) "#(1 2 3 4 5 6 7 8...")
-(test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~30A" v)) "#(1 2 3 4 5 6 7 8 9 10)")
-(test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~-10A" v)) 'error)
-(test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10.0A" v)) 'error)
-(test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,0A" v)) 'error)
-(test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,A" v)) "#(1 2 3...")
-(test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,,A" v)) 'error)
-(test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~,10A" v)) 'error)
+(let ((old-len *vector-print-length*))
+  (set! *vector-print-length* 32)
+  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~A" v)) "#(1 2 3 4 5 6 7 8 9 10)")
+  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10A" v)) "#(1 2 3...")
+  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~20A" v)) "#(1 2 3 4 5 6 7 8...")
+  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~30A" v)) "#(1 2 3 4 5 6 7 8 9 10)")
+  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~-10A" v)) 'error)
+  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10.0A" v)) 'error)
+  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,0A" v)) 'error)
+  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,A" v)) "#(1 2 3...")
+  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,,A" v)) 'error)
+  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~,10A" v)) 'error)
+  (set! *vector-print-length* old-len))
+
 
 (test (let ((v (hash-table '(a . 1) '(b . 2) '(c . 3) '(d . 4)))) (format #f "~20A" v)) "#<hash-table (a ....")
 (test (let ((v (hash-table '(a . 1) '(b . 2) '(c . 3) '(d . 4)))) (format #f "~40A" v)) "#<hash-table (a . 1) (b . 2) (c . 3)...")
@@ -13271,6 +13275,10 @@ time, so that the displayed results are
 (test (let () (define . 1) 1) 'error)
 (test (let () (define func (do () (#t (lambda (y) 2)))) (func 1)) 2)
 (test (let () (define* x 3)) 'error)
+
+(let () (test (if (and (define x 3) (define y 4)) (+ x y)) 7))
+(let () (test (if (not (and (define x 2) (define y 4))) (+ x y) (if (define x 3) x)) 3))
+(let () (test (if (and (define x 2) (not (define y 4))) (+ x y) (- x y)) -2))
 
 ;; y combinator example from some CS website
 (let ()
@@ -60391,16 +60399,16 @@ etc....
       (let ((rad (+ 2 (random 15))))
 	(let ((str (make-number rad)))
 	  (if (not (number? (string->number str rad)))
-	      (format #t ";trouble in string->number ~A ~S: ~A~%"
+	      (format #t ";(1) trouble in string->number ~A ~S: ~A~%"
 		      rad str
 		      (string->number str rad))
 	      (if (not (string? (number->string (string->number str rad) rad)))
-		  (format #t ";trouble in number->string ~A ~S: ~A ~S~%"
+		  (format #t ";(2) trouble in number->string ~A ~S: ~A ~S~%"
 			  rad str
 			  (string->number str rad)
 			  (number->string (string->number str rad) rad))
 		  (if (not (number? (string->number (number->string (string->number str rad) rad) rad)))
-		      (format #t ";trouble in (3) number->string ~A ~S: ~A ~S ~A~%"
+		      (format #t ";(3) trouble in number->string ~A ~S: ~A ~S ~A~%"
 			      rad str
 			      (string->number str rad)
 			      (number->string (string->number str rad) rad)
