@@ -194,7 +194,7 @@
 
 #ifndef WITH_OPTIMIZATION
 #define WITH_OPTIMIZATION 1
-  /* this currently speeds s7 up by about a factor of 1/3 (248 -> 148).
+  /* this currently speeds s7 up by about a factor of 1/3 (248 -> 150).
    *    a lot of the current optimization choices are just experiments (I'll clean up this mess some day).
    *    the completely unrealistic goal, of course, is to replace the run macro.
    */
@@ -313,7 +313,7 @@ enum {OP_NO_OP,
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
       OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
       OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1,
-      OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
+      OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
       OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO, OP_SORT_OBJECT,
       OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_HOOK_APPLY, 
@@ -375,7 +375,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "do", "do-end", "do-end1", "do-step", "do-step2", "do-init",
    "define-star", "lambda-star", "lambda-star-default", "error-quit", "unwind-input", "unwind-output", 
    "trace-return", "error-hook-quit", "trace-hook-quit", "with-env", "with-env1",
-   "for-each", "for-each-simple", "map", "map-simple", "barrier", "deactivate-goto",
+   "for-each", "for-each-simple", "for-each-simpler", "map", "map-simple", "barrier", "deactivate-goto",
    "define-bacro", "define-bacro-star", 
    "get-output-string", "sort", "sort1", "sort2", "sort3", "sort4", "sort-two", "sort-object",
    "eval-string-1", "eval-string-2", "hook-apply", 
@@ -1155,7 +1155,7 @@ struct s7_scheme {
                                          car(_x_) = A; \
                                          cdr(_x_) = B; \
                                          set_type(_x_, T_PAIR | T_SAFE_PROCEDURE); \
-                                         if (sc->free_heap_top <= sc->free_heap_trigger) {sc->temp3 = _x_; try_to_call_gc(sc); sc->temp3 = sc->NIL;} \
+                                         if (Sc->free_heap_top <= Sc->free_heap_trigger) {Sc->temp3 = _x_; try_to_call_gc(Sc); Sc->temp3 = Sc->NIL;} \
                                          _x_; })
 #else
   #define cons(Sc, A, B)              s7_cons(Sc, A, B)
@@ -24305,9 +24305,9 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	       *
 	       *  checking for and (only rarely) using the safe_do machinery here was much slower
 	       */
-	      /* fprintf(stderr, "%s\n", DISPLAY_80(closure_body(sc->code))); */
-
-	      push_stack(sc, OP_FOR_EACH_SIMPLE, obj, sc->code);
+	      if (is_one_liner(closure_body(sc->code)))
+		push_stack(sc, OP_FOR_EACH_SIMPLER, obj, sc->code);
+	      else push_stack(sc, OP_FOR_EACH_SIMPLE, obj, sc->code);
 	      return(sc->UNSPECIFIED);
 
 	      /* PERHAPS: this, and map, across a string (say) or other sequence involving
@@ -27463,6 +27463,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 {
   int pairs = 0, symbols = 0, args = 0, bad_pairs = 0, quotes = 0;
   s7_pointer p;
+
+  if (is_closure(func))  /* can't depend on ecdr here because it might not be global, or might be redefined locally */
+    hop = 0;
   
   /* fprintf(stderr, "    func: %s\n     e: %s\n", DISPLAY_80(car(x)), DISPLAY_80(e)); */
 
@@ -29163,6 +29166,8 @@ static bool sequence_is_safe_for_opteval(s7_scheme *sc, s7_pointer body)
 
 
 #if 1
+/* TODO: extend this via optimize_function
+ */
 static bool is_hop_safe_closure(s7_pointer p)
 {
   int op;
@@ -29887,7 +29892,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 		    {
 		      if (s7_is_symbol(cadaar(sc->code)))
 			car(ecdr(sc->code)) = sc->LET_S;
-		      else car(ecdr(sc->code)) = sc->LET_C; /* TODO: opts here */
+		      else car(ecdr(sc->code)) = sc->LET_C;
 		    }
 		}
 	    }
@@ -31516,8 +31521,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  push_stack(sc, OP_FOR_EACH_SIMPLE, cdr(sc->args), sc->code);
 	  sc->code = closure_body(sc->code);
-	  /* TODO: built-in one-liners here */
 	  goto BEGIN;
+	}
+      sc->value = sc->UNSPECIFIED;
+      goto START;
+
+
+    case OP_FOR_EACH_SIMPLER:
+      if (is_pair(sc->args))
+	{
+	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir); /*  4 */
+	  ADD_SLOT(sc->envir, car(closure_args(sc->code)), car(sc->args)); /*  4 */      /* set function arg value */
+
+	  push_stack(sc, OP_FOR_EACH_SIMPLER, cdr(sc->args), sc->code);
+
+	  /* TODO: map also, and make this check in g_for_each
+	   *   if safe closure, why not go there, or at least preallocate?
+	   */
+	  sc->code = car(closure_body(sc->code));
+	  goto EVAL_PAIR;
 	}
       sc->value = sc->UNSPECIFIED;
       goto START;
@@ -32390,12 +32412,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto BEGIN;
 
 
-		  /* because we allow safe closures to call other safe closures, and
+		  /* if we actually use the HOP_* mechanism with closures (see optimize_function), and
 		   *   we use ecdr below, the nested closure is not looked up again at
 		   *   run-time in the current environment, so
 		   *      (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a)) (f1 12))
 		   *   returns 13, whereas in the unoptimized version of s7 it will return -12.
-		   * is this a bug in either case?
+		   * is this a bug in either case?  what about:
+		   *      (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a b) (- a b)) (f1 12))
+		   * but... we can't use ecdr reliably -- the saved pointer might be to an old version not GC'd etc.
 		   */
 
 		case OP_SAFE_CLOSURE_C:

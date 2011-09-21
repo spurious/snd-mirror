@@ -13415,13 +13415,12 @@ time, so that the displayed results are
   (define x 33)
   (test (f1) 33))
 
-#|    
 (let ()
   (define (f2 a) (+ a 1))
   (define (f1 a) (f2 a))
   (define (f2 a) (- a))
-  (test (f1 12) -12)) ; hmmm -- s7 currently gets 13, and I'm not sure it's wrong
-|#
+  (test (f1 12) -12)) ; hmmm
+
 
 
 
@@ -19131,7 +19130,7 @@ abs     1       2
 
 
   (let ((vals #(0 0)))
-#|
+
     (let ()
       (define (hi a) (+ 1 a))
       (define (use-hi b) (hi b))
@@ -19139,7 +19138,7 @@ abs     1       2
       (define (hi a) (+ 2 a))
       (set! (vals 1) (use-hi 1))
       (test vals #(2 3))) ; hmmm, or possibly #(2 2)...
-|#
+
     (let ()
       (defmacro hi (a) `(+ 1 ,a))
       (define (use-hi b) (hi b))
