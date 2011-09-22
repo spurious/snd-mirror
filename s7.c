@@ -334,7 +334,7 @@ enum {OP_NO_OP,
       
 #if WITH_OPTIMIZATION
       OP_SAFE_AND, OP_SAFE_AND1, OP_SAFE_OR, OP_SAFE_OR1, OP_SAFE_IF1, OP_SAFE_IF2,
-      OP_SAFE_OR_S, OP_SAFER_OR_S, OP_SAFE_AND_S, OP_SAFE_CASE_S,
+      OP_SAFE_OR_S, OP_SAFER_OR_S, OP_SAFE_AND_S, OP_SAFE_CASE_S, OP_SAFE_FOR_EACH,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_DOTIMES, OP_DOTIMES_STEP, OP_SIMPLE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_DOTIMES_C_C,
       OP_SAFE_IF1_1, OP_SAFE_IF2_1, OP_SAFE_IF_P_X_P, OP_SAFE_IF_P_P_P, OP_SAFE_IF_P_X, 
       OP_SAFE_IF_R_P_P, OP_SAFE_IF_R_X_P, OP_SAFE_IF_P_P, OP_SAFE_IF_R_P, OP_SAFE_IF_R_P_X, OP_SAFE_IF_R_Q_P,
@@ -396,7 +396,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    
 #if WITH-OPTIMIZATION
    "safe-and", "safe-and1", "safe-or", "safe-or1", "safe-if1", "safe-if2",
-   "safe-or-s", "safer-or-s", "safe-and-s", "safe-case-s",
+   "safe-or-s", "safer-or-s", "safe-and-s", "safe-case-s", "safe-for-each",
    "simple-do", "simple-do-step", "dotimes", "dotimes-step", "simple-dotimes", "safe-do", "safe-do-step", "dotimes-c-c",
    "safe-if1-1", "safe-if2-1", "safe-if-p-x-p", "safe-if-p-p-p", "safe-if-p-x", 
    "safe-if-r-p-p", "safe-if-r-x-p", "safe-if-p-p", "safe-if-r-p", "safe-if-r-p-x", "safe-if-r-q-p",
@@ -24303,15 +24303,17 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	    {
 	      /* one list arg -- special, but very common case
 	       *
-	       *  checking for and (only rarely) using the safe_do machinery here was much slower
+	       * checking for and (only rarely) using the safe_do machinery here was much slower.
+	       * one-liner here plus separate loop in eval was only slightly faster 
 	       */
-	      if (is_one_liner(closure_body(sc->code)))
-		push_stack(sc, OP_FOR_EACH_SIMPLER, obj, sc->code);
-	      else push_stack(sc, OP_FOR_EACH_SIMPLE, obj, sc->code);
+	      push_stack(sc, OP_FOR_EACH_SIMPLE, obj, sc->code);
 	      return(sc->UNSPECIFIED);
 
 	      /* PERHAPS: this, and map, across a string (say) or other sequence involving
 	       *          only 1 arg could be optimized in the same way. OP_FOR_EACH|MAP_STRING|VECTOR|C_OBJECT
+	       */
+
+	      /* if len is 1 can't we just call apply?
 	       */
 	    }
 
@@ -24435,6 +24437,81 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   push_stack(sc, OP_FOR_EACH, sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
+
+#if WITH_OPTIMIZATION
+/* also call-with-exit/catch/map etc */
+
+static s7_pointer for_each_1;
+static s7_pointer g_for_each_1(s7_scheme *sc, s7_pointer args)
+{
+  /* 1st arg is (lambda (sym) ...) when sym has no complications, only 2 args passed
+   */
+  s7_pointer obj;
+  s7_Int len;
+
+  obj = cadr(args);
+  if (!is_pair(obj))
+    return(g_for_each(sc, args));
+  
+  len = s7_list_length(sc, obj);
+  if (len == 0)                   /* circular list */
+    return(g_for_each(sc, args)); /* this is faster than calling s7_error here -- weird! */
+  
+  push_stack(sc, OP_FOR_EACH_SIMPLE, obj, car(args));
+  return(sc->UNSPECIFIED);
+}
+
+static s7_pointer for_each_2;
+static s7_pointer g_for_each_2(s7_scheme *sc, s7_pointer args)
+{
+  /* 1st arg is (lambda (sym) (...)) when sym has no complications, only 2 args passed
+   */
+  s7_pointer obj;
+  s7_Int len;
+
+  obj = cadr(args);
+  if (!is_pair(obj))
+    return(g_for_each(sc, args));
+  
+  len = s7_list_length(sc, obj);
+  if (len == 0)                   /* circular list */
+    return(g_for_each(sc, args)); /* this is faster than calling s7_error here -- weird! */
+  
+  push_stack(sc, OP_FOR_EACH_SIMPLER, obj, car(args));
+  return(sc->UNSPECIFIED);
+}
+
+static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if ((car(cadr(expr)) == sc->LAMBDA) &&
+	  (is_pair(cadr(cadr(expr)))) &&
+	  (is_null(cdadr(cadr(expr)))) &&
+	  (!is_immutable(car(cadr(cadr(expr))))) &&
+	  (!symbol_has_accessor(car(cadr(cadr(expr))))))
+	{
+	  /*
+	  if (body_is_safe(sc, cddr(cadr(expr))))
+	    fprintf(stderr, "safe: %s\n", DISPLAY_80(cadr(expr)));
+	  */
+	  if ((is_pair(caddr(cadr(expr)))) && 
+	      (is_null(cdddr(cadr(expr)))))
+	    return(for_each_2);
+
+	return(for_each_1); 
+	}
+      /* (define (hi) (for-each (lambda (a) a) (values '(1 2 3) '(3 2 1))))
+       *   currently won't happen because the OP_C_L* cases are restricted here to S and opSq
+       */
+    }
+  return(f);
+}
+
+/* TODO: safe case here (make env direct), map cases, what about safe_closure_1_arg, similarly closure?
+ */
+
+#endif
 
 
 static bool next_map(s7_scheme *sc)
@@ -27292,6 +27369,15 @@ static void init_choosers(s7_scheme *sc)
   abs_sub_ss = s7_make_function(sc, "abs", g_abs_sub_ss, 2, 0, false, "abs(- a b) optimization");
   c_function_class(abs_sub_ss) = c_function_class(f);
 #endif
+
+
+  /* for-each */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "for-each")));
+  c_function_chooser(f) = for_each_chooser;
+  for_each_1 = s7_make_function(sc, "for-each", g_for_each_1, 2, 0, false, "for-each optimization");
+  c_function_class(for_each_1) = c_function_class(f);
+  for_each_2 = s7_make_function(sc, "for-each", g_for_each_2, 2, 0, false, "for-each optimization");
+  c_function_class(for_each_2) = c_function_class(f);
 
 
   /* vector-ref */
@@ -31530,14 +31616,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_FOR_EACH_SIMPLER:
       if (is_pair(sc->args))
 	{
-	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir); /*  4 */
-	  ADD_SLOT(sc->envir, car(closure_args(sc->code)), car(sc->args)); /*  4 */      /* set function arg value */
+	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir); 
+	  ADD_SLOT(sc->envir, car(closure_args(sc->code)), car(sc->args));
 
 	  push_stack(sc, OP_FOR_EACH_SIMPLER, cdr(sc->args), sc->code);
-
-	  /* TODO: map also, and make this check in g_for_each
-	   *   if safe closure, why not go there, or at least preallocate?
-	   */
 	  sc->code = car(closure_body(sc->code));
 	  goto EVAL_PAIR;
 	}
@@ -31556,6 +31638,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
 
+      /* -------------------------------- MEMBER -------------------------------- */
     case OP_MEMBER_IF:
       /* code=func, args=((val (car list)) list list), value=result of comparison
        */
@@ -31606,6 +31689,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto APPLY_WITHOUT_TRACE;
 
 
+      /* -------------------------------- ASSOC -------------------------------- */
     case OP_ASSOC_IF1:
     case OP_ASSOC_IF:
       /* code=func, args=((val (caar list)) list), value=result of comparison
@@ -31649,6 +31733,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto APPLY_WITHOUT_TRACE;
 
 
+      /* -------------------------------- HOOK-APPLY -------------------------------- */
     case OP_HOOK_APPLY:
       /* args = function args, code = function list */
       if (is_not_null(sc->code))
@@ -32289,6 +32374,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *
        *    the other most common goto BEGIN's are OP_LET and the closure branch of OP_APPLY,
        *    but moving OP_LET here was slightly slower even in lg which has few do-loops.
+       *    goto BEGIN2 in these cases (to avoid the error checks below) was much slower, apparently
+       *    because there was one extra goto (to EVAL or EVAL_PAIR).
        */
 
 
@@ -32315,6 +32402,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* fall through */
 
 
+      /* in gcc we can use computed gotos, setting begin_label to this position if
+       *   begin_hook is not in use, thereby avoiding that check above.  This saves
+       *   about 4 in lg -- sort of a toss-up given the added complexity.
+       */
     case OP_BEGIN1:
       /* use of local for sc->code here saves about .5
        */
@@ -37877,6 +37968,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 	if (is_one_liner(sc->code))
 	  {
+	    /* TODO: this should check begin_hook */
 	    sc->code = car(sc->code);
 	    sc->cur_code = sc->code;
 	    goto EVAL_PAIR;
