@@ -18047,16 +18047,15 @@ If its first argument is a list, the list is copied (despite the '!')."
   n = len - 1;
   k = ((int)(n / 2)) + 1;
 
-  sc->x = s7_make_vector(sc, (sc->safety == 0) ? 5 : 7); 
+  sc->x = s7_make_vector(sc, (sc->safety == 0) ? 4 : 6); 
   vector_element(sc->x, 0) = make_mutable_integer(sc, n);
   vector_element(sc->x, 1) = make_mutable_integer(sc, k);
   vector_element(sc->x, 2) = make_mutable_integer(sc, 0);
   vector_element(sc->x, 3) = make_mutable_integer(sc, 0);
-  vector_element(sc->x, 4) = list_2(sc, sc->F, sc->F);
   if (sc->safety != 0)
     {
-      vector_element(sc->x, 5) = make_mutable_integer(sc, 0);
-      vector_element(sc->x, 6) = s7_make_integer(sc, n * n);
+      vector_element(sc->x, 4) = make_mutable_integer(sc, 0);
+      vector_element(sc->x, 5) = s7_make_integer(sc, n * n);
     }
 
   push_stack(sc, OP_SORT, args, sc->x);
@@ -26575,7 +26574,8 @@ static s7_pointer is_eq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 {
   if ((s7_is_symbol(caddr(expr))) &&
       (is_optimized(cadr(expr))) &&
-      (optimize_data(cadr(expr)) == HOP_SAFE_C_S))
+      (optimize_data(cadr(expr)) == HOP_SAFE_C_S) &&
+      (c_function_call(ecdr(cadr(expr))) == g_car))
     {
       optimize_data(expr) = HOP_SAFE_C_C;
       return(is_eq_car);
@@ -26827,7 +26827,8 @@ static s7_pointer hash_table_ref_chooser(s7_scheme *sc, s7_pointer f, int args, 
       if ((s7_is_symbol(cadr(expr))) &&
 	  (is_pair(caddr(expr))) &&
 	  (is_optimized(caddr(expr))) &&
-	  (optimize_data(caddr(expr)) == HOP_SAFE_C_S))
+	  (optimize_data(caddr(expr)) == HOP_SAFE_C_S) &&
+	  (c_function_call(ecdr(caddr(expr))) == g_car))
 	{
 	  optimize_data(expr) = HOP_SAFE_C_C;
 	  return(hash_table_ref_car);
@@ -27942,7 +27943,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		    {
 		      if ((is_closure(func)) &&
 			  (s7_list_length(sc, closure_args(func)) == 1) &&
-			  (is_safe_c_s(cadar(x)))) /* (optimize_data_match(cadar(x), OP_SAFE_C_S))) */
+			  (is_safe_c_s(cadar(x))))
 			{
 			  set_optimized(car(x));
 			  set_unsafe(car(x));
@@ -28174,10 +28175,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			  if ((is_closure(func)) &&
 			      (is_safe_c_s(cadar(x))) &&
 			      (is_safe_c_s(caddar(x))))
-			    /*
-			      (optimize_data_match(cadar(x), OP_SAFE_C_S)) &&
-			      (optimize_data_match(caddar(x), OP_SAFE_C_S)))
-			    */
 			    {
 			      set_optimized(car(x));
 			      set_unsafe(car(x));
@@ -28224,9 +28221,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			      if ((symbols == 1) &&
 				  (s7_is_symbol(cadar(x))) &&
 				  (is_safe_c_s(caddar(x))))
-				  /* (optimize_data_match(caddar(x), OP_SAFE_C_S)) */
 				{
-				  /* fprintf(stderr, "set: %s\n", DISPLAY_80(car(x))); */
 				  set_optimized(car(x));
 				  set_unsafe(car(x));
 				  set_optimize_data(car(x), OP_C_S_opSq);
@@ -28240,8 +28235,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			  if ((is_closure(func)) &&
 			      (s7_list_length(sc, closure_args(func)) == 2))
 			    {
-			      if (/* (optimize_data_match(cadar(x), OP_SAFE_C_S)) && */
-				  (s7_is_symbol(caddar(x))) &&
+			      if ((s7_is_symbol(caddar(x))) &&
 				  (is_safe_c_s(cadar(x))))
 				{
 				  set_optimized(car(x));
@@ -28250,8 +28244,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				  ecdr(car(x)) = func;
 				  return(false); 
 				}
-			      if (/* (optimize_data_match(caddar(x), OP_SAFE_C_S)) && */
-				  (s7_is_symbol(cadar(x))) &&
+			      if ((s7_is_symbol(cadar(x))) &&
 				  (is_safe_c_s(caddar(x))))
 				{
 				  set_optimized(car(x));
@@ -28343,7 +28336,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				    }
 				  if ((pairs == 2) &&
 				      (is_optimized(caddar(x))) &&
-				      /* (optimize_data_match(caddar(x), OP_SAFE_C_S)) */
 				      (is_safe_c_s(caddar(x))))
 				    {
 				      set_optimized(car(x));
@@ -29005,7 +28997,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		  if ((pairs == 1) &&
 		      (len == 1) &&
 		      (is_optimized(cadar(x))) &&
-		      /* (optimize_data_match(cadar(x), OP_SAFE_C_S)) */
 		      (is_safe_c_s(cadar(x))))
 		    {
 		      set_optimized(car(x));
@@ -29020,7 +29011,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		    {
 		      if ((is_pair(cadar(x))) &&
 			  (is_optimized(cadar(x))) &&
-			  /* (optimize_data_match(cadar(x), OP_SAFE_C_S)) */
 			  (is_safe_c_s(cadar(x))))
 			{
 			  set_optimized(car(x));
@@ -29030,7 +29020,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 			}
 		      if ((is_pair(caddar(x))) &&
 			  (is_optimized(caddar(x))) &&
-			  /* (optimize_data_match(caddar(x), OP_SAFE_C_S)) */
 			  (is_safe_c_s(caddar(x))))
 			{
 			  set_optimized(car(x));
@@ -29044,9 +29033,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		  if ((pairs == 2) &&
 		      (len == 2) &&
 		      (is_optimized(cadar(x))) &&
-		      /* (optimize_data_match(cadar(x), OP_SAFE_C_S)) */
 		      (is_optimized(caddar(x))) &&
-		      /* (optimize_data_match(caddar(x), OP_SAFE_C_S)) */
 		      (is_safe_c_s(cadar(x))) &&
 		      (is_safe_c_s(caddar(x))))
 		    {
@@ -30300,7 +30287,7 @@ static s7_pointer check_and(s7_scheme *sc)
 
   if (is_not_null(p))                                    /* (and . 1) (and #t . 1) */
     return(eval_error(sc, "and: stray dot?: ~A", sc->code));
-  
+
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
@@ -31588,11 +31575,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     #define SORT_K integer(number(vector_element(sc->code, 1)))
     #define SORT_J integer(number(vector_element(sc->code, 2)))
     #define SORT_K1 integer(number(vector_element(sc->code, 3)))
-    #define SORT_ARGS vector_element(sc->code, 4)
-    #define SORT_CALLS integer(number(vector_element(sc->code, 5)))
-    #define SORT_STOP integer(number(vector_element(sc->code, 6)))
-    #define SORT_ARG_1 car(SORT_ARGS)
-    #define SORT_ARG_2 cadr(SORT_ARGS)
+    #define SORT_CALLS integer(number(vector_element(sc->code, 4)))
+    #define SORT_STOP integer(number(vector_element(sc->code, 5)))
     #define SORT_DATA(K) vector_element(car(sc->args), K)
     #define SORT_LESSP cadr(sc->args)
 
@@ -31616,13 +31600,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (j < n)
 	  {
 	    push_stack(sc, OP_SORT1, sc->args, sc->code);
-	    SORT_ARG_1 = SORT_DATA(j);
-	    SORT_ARG_2 = SORT_DATA(j + 1);
-
-	    sc->x = SORT_LESSP;
-	    sc->args = SORT_ARGS;
+	    sc->x = SORT_LESSP; /* cadr of sc->args */
+	    sc->args = list_2(sc, SORT_DATA(j), SORT_DATA(j + 1));
 	    sc->code = sc->x;
-	    goto APPLY_WITHOUT_TRACE;
+	    goto APPLY2;
 	  }
 	else sc->value = sc->F;
       }
@@ -31638,13 +31619,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    SORT_J = j;
 	  }
 	push_stack(sc, OP_SORT2, sc->args, sc->code);
-	SORT_ARG_1 = SORT_DATA(k);
-	SORT_ARG_2 =  SORT_DATA(j);
-
 	sc->x = SORT_LESSP;
-	sc->args = SORT_ARGS;
+	sc->args = list_2(sc, SORT_DATA(k), SORT_DATA(j));
 	sc->code = sc->x;
-	goto APPLY_WITHOUT_TRACE;
+	goto APPLY2;
       }
 
     case OP_SORT2:
@@ -34679,7 +34657,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		    sc->temp4 = c_function_call(ecdr(cadr(args)))(sc, cdr(cadr(args)));
 		    if (s7_is_symbol(car(args)))
-		      car(sc->T3_1) = finder(sc, car(args)); /* TODO: why not finder in the XD cases? */
+		      car(sc->T3_1) = finder(sc, car(args));
 		    else car(sc->T3_1) = car(args);
 
 		    car(sc->T3_3) = c_function_call(ecdr(caddr(args)))(sc, cdr(caddr(args)));
@@ -35830,9 +35808,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       */
 	      car(sc->TEMP_CELL_1) = sc->value; /* macro */
 	      cdr(sc->TEMP_CELL_1) = sc->code;  /* args */
-	      sc->args = sc->TEMP_CELL;
+	      sc->args = list_1(sc, sc->TEMP_CELL_1);
 	      sc->code = sc->value;
-	      goto APPLY_WITHOUT_TRACE;
+	      goto APPLY2;                      /* not UNSAFE_CLOSURE because it might be a bacro */
 	    }
 
 	  /* (define progn begin)

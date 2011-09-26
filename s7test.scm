@@ -45,7 +45,7 @@
     (if (not (equal? result oexp))
 	(format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) otst result oexp))))
 
-(defmacro test (tst expected) ;(display tst) (newline)
+(defmacro test (tst expected) ; (display tst) (newline)
   `(ok? ',tst (lambda () ,tst) ,expected))
 
 (define (tok? otst ola)
@@ -401,6 +401,11 @@
 (test (let ((v #())) (eq? v #())) #f)
 (test (let ((v '#())) (eq? v '#())) #f)
 (test (let ((v #())) (eq? v v)) #t)
+
+;;; a ridiculous optimizer typo...
+(test (let ((sym 'a)) (define (hi a) (eq? (cdr a) sym)) (hi '(a a))) #f)
+(test (let ((sym 'a)) (define (hi a) (eq? (cdr a) sym)) (hi '(a . a))) #t)
+(test (let ((sym 'a)) (define (hi a) (eq? (cdr a) sym)) (hi '(a . b))) #f)
 
 
 ;;; eqv?
@@ -7095,6 +7100,27 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (hash-table-set! arg 'key 32) 'error))
  (list "hi" '() -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
+(let ((ht (make-hash-table))
+      (l1 '(x y z))
+      (l2 '(y x z)))
+  (set! (hash-table-ref ht 'x) 123)
+  (define (hi)
+    (hash-table-ref ht (cadr l1))) ; 123
+  (test (hi) #f))
+
+#|
+  (test (let ()
+	  (define (hi)
+	    (hash-table-ref ht (cadr l1))) ; #f
+	  (hi))
+	#f)
+  (test (let ()
+	  (define (hi)
+	    (hash-table-ref ht (cadr l2))) ; 123
+	  (hi))
+	123))
+|#
+
 (let ((hi (make-hash-table 7)))
   (test (object->string hi) "#<hash-table>")
   (set! (hi 1) "1")
@@ -13144,6 +13170,7 @@ time, so that the displayed results are
    (test (apply + lst) 'error))
 
 (test (let ((lst '(1 2 3))) (let ((lst1 (apply list lst))) (set! (car lst1) 21) lst)) '(1 2 3))
+(test (let ((lst '(1 2))) (let ((lst1 (apply cons lst))) (set! (car lst1) 21) lst)) '(1 2))
 (test (let* ((x '(1 2 3)) (y (apply list x))) (eq? x y)) #f) ; this was #t until 26-Sep-11
 
 (test (apply values (values (cons 1 ()))) 1)
