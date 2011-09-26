@@ -27,7 +27,7 @@
 
 ;;; (define pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
 ;;; (set! *safety* 1)
-
+;;; (set! *gc-stats* #t)
 
 ;;; --------------------------------------------------------------------------------
 
@@ -299,7 +299,7 @@
 (test (eq? '()(list)) #t)
 (test (eq? '() (list)) #t)
 (test (eq? (begin) (append)) #t)
-(test (let ((lst (list 1 2 3))) (eq? lst (apply list lst))) #t)
+(test (let ((lst (list 1 2 3))) (eq? lst (apply list lst))) #f) ; changed 26-Sep-11
 
 (test (eq? ''2 '2) #f)
 (test (eq? '2 '2) #t) ; unspecified??
@@ -13081,7 +13081,6 @@ time, so that the displayed results are
 (test (apply make-vector '(1 1)) '#(1))
 (test (apply make-vector '((1) 1)) '#(1))
 (test (let ((f +)) (apply f '(1 2))) 3)
-(test (let* ((x '(1 2 3)) (y (apply list x))) (eq? x y)) #t) ; is this standard? -- no, Guile says #f
 (test (apply min '(1 2 3 5 4 0 9)) 0)
 (test (apply min 1 2 4 3 '(4 0 9)) 0)
 (test (apply vector 1 2 '(3)) '#(1 2 3))
@@ -13143,6 +13142,9 @@ time, so that the displayed results are
 (let ((lst (list 1 2 3)))
    (set! (cdr (cddr lst)) lst)
    (test (apply + lst) 'error))
+
+(test (let ((lst '(1 2 3))) (let ((lst1 (apply list lst))) (set! (car lst1) 21) lst)) '(1 2 3))
+(test (let* ((x '(1 2 3)) (y (apply list x))) (eq? x y)) #f) ; this was #t until 26-Sep-11
 
 (test (apply values (values (cons 1 ()))) 1)
 (test (+ (apply values (values (list 1 2)))) 3)
@@ -13527,6 +13529,7 @@ time, so that the displayed results are
 (test (let () (define (hi) (symbol? (values))) (hi)) #f) ; this is consistent with earlier such cases: (boolean? (values))
 (test (let () (define (hi) (symbol? (values 'a))) (hi)) #t)
 (test (let () (define (hi) (symbol? (values 1))) (hi)) #f)
+(test (let () (define (hi a) (log (values 1 2) a)) (hi 2)) 'error)
 
 (test (let ((str "hi")) (string-set! (values str 0 #\x)) str) "xi")
 (test (values if) if)

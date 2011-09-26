@@ -647,6 +647,47 @@ MOTIF_LIBS =  -L/usr/X11/lib -R/usr/X11/lib  -lSM -lICE -lXft -lXmu -lfontconfig
 process moved the previous X11R6 directory to X11R6 1, which is untypable).
 
 
+
+Here's a note from Brooke Mitchell:
+
+How to install snd on Mac OSX Snow Leopard using homebrew: 
+--have you installed Developer Tools??? 
+
+1) install openmotif osx package 
+(http://www.ist.co.uk/downloads/motif_download.html) 
+open terminal: 
+   export DYLD_LIBRARY_PATH=/usr/OpenMotif/lib 
+
+2) install homebrew: 
+ /usr/bin/ruby -e "$(curl -fsSL https://raw.github.com/gist/323731)" 
+
+3) install dependencies. 
+ brew install libffi 
+(repository link should be fixed, otherwise terminal: 
+    brew edit libffi 
+change line 4:" url'sourceware.org:/pub/libffi/libffi-3.0.9.tar.gz'" 
+
+ brew install --HEAD guile 
+
+then: 
+ brew install fftw 
+...wait 
+
+4) compile the source 
+
+ ./configure \ 
+ --with-static-xm  \ 
+ --with-motif-prefix=/usr/OpenMotif 
+ (--with-ruby  //if you want ruby) 
+
+edit makefile. add to line 19: ORIGINAL_LDFLAGS = /usr/OpenMotif/lib 
+
+make 
+sudo make install 
+
+
+
+
 -------- Ruby 1.9.2 --------
 
 The CFLAGS setting is messed up (not to mention all the directory names).
