@@ -954,10 +954,10 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 #if (!HAVE_ALSA)
 static int oss_formats(int ur_dev, int *val)
 {
-  int fd, formats = 0, sys, dev, ind;
+  int fd, formats = 0, sys, ind;
 
   sys = MUS_AUDIO_SYSTEM(ur_dev);
-  dev = MUS_AUDIO_DEVICE(ur_dev);
+  /* dev = MUS_AUDIO_DEVICE(ur_dev); */
 
   fd = open(dac_name(sys, 0), O_WRONLY, 0);
   if (fd == -1) fd = open(DAC_NAME, O_WRONLY, 0);

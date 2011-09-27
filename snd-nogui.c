@@ -414,8 +414,8 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define " S_x_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))");
   XEN_EVAL_C_STRING("(define " S_y_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))");
   XEN_EVAL_C_STRING("(define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_widget_size " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_widget_position " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
+  XEN_EVAL_C_STRING("(define " S_widget_size " (make-procedure-with-setter (lambda (w) #f) (lambda (w val) val)))");
+  XEN_EVAL_C_STRING("(define " S_widget_position " (make-procedure-with-setter (lambda (w) #f) (lambda (w val) val)))");
 
   XEN_EVAL_C_STRING("(define (" S_make_cairo " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_free_cairo " . args) #f)");
@@ -424,7 +424,7 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define (" S_color_p " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_color_to_list " .args) #f)");
   XEN_EVAL_C_STRING("(define (" S_colormap_p " . args) #f)");
-  XEN_EVAL_C_STRING("(define (" S_current_font ") #f)");
+  XEN_EVAL_C_STRING("(define (" S_current_font " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_dialog_widgets ") #f)");
   XEN_EVAL_C_STRING("(define (" S_graph_data " . args) #f)");
 

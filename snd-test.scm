@@ -11560,7 +11560,7 @@ EDITS: 5
 		(if (and (not (string=? str "no marks"))
 			 (not (string=? str "no such mark")))
 		    (snd-display #__line__ ";C-x c w/o marks: ~A?" str))))
-	  (add-mark 123)
+	  (catch #t (lambda () (add-mark 123)) (lambda args #f))
 	  (key (char->integer #\u) 4)
 	  (key (char->integer #\6) 4)
 	  (key (char->integer #\j) 4)

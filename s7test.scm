@@ -7108,19 +7108,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (hash-table-ref ht (cadr l1))) ; 123
   (test (hi) #f))
 
-#|
-  (test (let ()
-	  (define (hi)
-	    (hash-table-ref ht (cadr l1))) ; #f
-	  (hi))
-	#f)
-  (test (let ()
-	  (define (hi)
-	    (hash-table-ref ht (cadr l2))) ; 123
-	  (hi))
-	123))
-|#
-
 (let ((hi (make-hash-table 7)))
   (test (object->string hi) "#<hash-table>")
   (set! (hi 1) "1")
