@@ -1612,12 +1612,15 @@ static int fill_dac_buffers(int write_ok)
 		}
 
 	      /* check for moving cursor */
-	      sp = dp->sp; /* can be nil if region playing */
+	      sp = dp->sp;                             /* can be nil if region playing */
 	      if ((sp) && 
 		  (ss->tracking) &&
 		  (cursor_change) && 
 		  (dp->chn_fd) &&
 		  (!(dp->chn_fd->at_eof)) &&
+#if (!USE_NO_GUI)
+		  (dp->cp->chan_widgets) &&             /* nil if play_file */
+#endif
 		  (dp->chn_fd->cb))
 		{
 		  mus_long_t loc;

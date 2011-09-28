@@ -357,29 +357,30 @@ enum {OP_NO_OP,
   #define opcode_t unsigned long long int
 #endif
 
-
+/* these names can leak into the repl if (for example) user types set!
+ */
 static const char *op_names[OP_MAX_DEFINED + 1] = 
   {"no-op", 
    "read-internal", "eval", 
    "eval-args", "eval-args1", "eval-args2", "eval-args3", "eval-args4", "eval-args5",
    "apply", "eval-macro", "lambda", "quote", 
-   "define", "define1", "begin", "begin1", "if", "if1", "set", "set1", "set2", 
-   "let", "let1", "let-star", "let-star1", 
+   "define", "define1", "begin", "begin1", "if", "if1", "set!", "set1", "set2", 
+   "let", "let1", "let*", "let-star1", 
    "letrec", "letrec1", "cond", "cond1", 
-   "and", "and1", "or", "or1", "defmacro", "defmacro-star",
-   "define-macro", "define-macro-star", "define-expansion",
+   "and", "and1", "or", "or1", "defmacro", "defmacro*",
+   "define-macro", "define-macro*", "define-expansion",
    "case", "case1", "read-list", "read-dot", "read-quote", 
    "read-quasiquote", "read-quasiquote-vector", "read-unquote", "read-apply-values",
    "read-vector", "read-done", 
    "load-return-if-eof", "load-close-and-pop-if-eof", "eval-string", "eval-done",
    "catch", "dynamic-wind", "define-constant", "define-constant1", 
    "do", "do-end", "do-end1", "do-step", "do-step2", "do-init",
-   "define-star", "lambda-star", "lambda-star-default", "error-quit", "unwind-input", "unwind-output", 
-   "trace-return", "error-hook-quit", "trace-hook-quit", "with-env", "with-env1",
+   "define*", "lambda*", "lambda-star-default", "error-quit", "unwind-input", "unwind-output", 
+   "trace-return", "error-hook-quit", "trace-hook-quit", "with-environment", "with-env1",
    "for-each", "for-each-simple", "for-each-simpler", "map", "map-simple", "barrier", "deactivate-goto",
-   "define-bacro", "define-bacro-star", 
-   "get-output-string", "sort", "sort1", "sort2", "sort3", "sort4", "sort-two", "sort-object",
-   "eval-string-1", "eval-string-2", "hook-apply", 
+   "define-bacro", "define-bacro*", 
+   "get-output-string", "sort!", "sort1", "sort2", "sort3", "sort4", "sort-two", "sort-object",
+   "eval-string", "eval-string-2", "hook-apply", 
    "member-if", "assoc-if", "member-if1", "assoc-if1",
    
    "quote-unchecked", "lambda-unchecked", "let-unchecked", "case-unchecked", 
@@ -14560,8 +14561,9 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       }
 
     case T_MACRO:
-    case T_BACRO:
       return(copy_string("#<macro>"));
+    case T_BACRO:
+      return(copy_string("#<bacro>"));
   
     case T_CLOSURE:
     case T_CLOSURE_STAR:
@@ -20755,7 +20757,7 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
 
     case T_VECTOR:
       if (vector_is_multidimensional(x))
-	return(args <= vector_ndims(x));
+	return(args <= (int)vector_ndims(x));
       return(args == 1);
     }
   return(false);
@@ -22418,7 +22420,8 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			if (isdigit(str[i]))
 			  {
 			    precision = format_read_integer(sc, &i, str_len, str, args, fdat);
-			    if (precision < 0)
+			    if ((precision < 0) ||
+				(precision > MAX_STRING_LENGTH)) /* needed in 32-bit case */
 			      return(format_error(sc, "numeric argument too large", str, args, fdat));
 			  }
 			/* is (format #f "~12,12D" 1) an error?  The precision has no use here. */
@@ -23270,6 +23273,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   s7_pointer catcher;
   const char *call_name = NULL, *call_file = NULL;
   int call_line = 0;
+
+  /* fprintf(stderr, "error: %s %s\n", DISPLAY(type), DISPLAY(info)); */
 
   /* null info can mean symbol table is locked so make-symbol uses s7_error to get out */
 
@@ -27719,37 +27724,6 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(member_num_s) = c_function_class(f);
 }
 
-void s7_unoptimize(s7_scheme *sc, s7_pointer code)
-{
-  /* needed by the run macro -- the two optimization processes are not compatible
-   *   my hope is to replace run with local (s7) optimizations
-   */
-  if (is_pair(code))
-    {
-      if ((s7_is_symbol(car(code))) &&
-	  /* (is_syntax(symbol_value(car(code)))) && */ /* normal ops are now pretending to be syntax */
-	  (is_syntactic(car(code))) &&
-	  (syntax_opcode(symbol_value(car(code))) >= OP_QUOTE_UNCHECKED))
-	car(code) = cadar(code);
-      else s7_unoptimize(sc, car(code));
-      s7_unoptimize(sc, cdr(code));
-    }
-}
-
-
-static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
-{
-  #define H_unoptimize "(unoptimize code) erases all the optimizer info in code"
-
-  if ((s7_is_symbol(car(args))) &&
-      (is_syntax(symbol_value(car(args)))))
-    return(cadar(args));
-
-  s7_unoptimize(sc, car(args));
-  return(car(args));
-}
-
-
 
 static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer e);
 static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2);
@@ -29684,20 +29658,38 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer body)
     }
   return(true);
 }
-#else
+#endif
+
 
 void s7_unoptimize(s7_scheme *sc, s7_pointer code)
 {
+  /* needed by the run macro 
+   */
+  if (is_pair(code))
+    {
+      if ((s7_is_symbol(car(code))) &&
+	  (is_syntactic(car(code))) &&
+	  (syntax_opcode(symbol_value(car(code))) >= OP_QUOTE_UNCHECKED))
+	car(code) = cadar(code);
+      else s7_unoptimize(sc, car(code));
+      s7_unoptimize(sc, cdr(code));
+    }
 }
 
 
 static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
 {
   #define H_unoptimize "(unoptimize code) erases all the optimizer info in code"
+
+  if ((s7_is_symbol(car(args))) &&
+      (is_syntax(symbol_value(car(args)))))
+    return(cadar(args));
+
+  s7_unoptimize(sc, car(args));
   return(car(args));
 }
 
-#endif
+
 
 
 /* ---------------------------------------- error checks ---------------------------------------- */
@@ -37480,10 +37472,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else
 	    {
 	      if (is_syntax(symbol_value(sc->y)))
-		{
-		  /* fprintf(stderr, "cur_code: %s, val: %s\n", DISPLAY(sc->cur_code), DISPLAY(sc->value)); */
-		  return(eval_error(sc, "can't set! ~A", sc->code));
-		}
+		return(eval_error(sc, "can't set! ~A", sc->code));
 	    }
 	  symbol_set_value(sc->y, sc->value); 
 	  goto START;

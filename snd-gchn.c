@@ -507,10 +507,17 @@ static void remake_edit_history(chan_info *cp)
   snd_info *sp;
   int i, eds;
   slist *lst;
+
   if ((!cp) || (cp->active < CHANNEL_HAS_AXES)) return;
   if (cp->squelch_update) return;
   lst = EDIT_HISTORY_LIST(cp);
   if (!lst) return;
+
+#if HAVE_GTK_3
+  /* if you try to update something in a closed pane, goddamn gtk grinds to a halt */
+  if (gtk_paned_get_position(GTK_PANED(cp->chan_widgets[W_main_window])) < 10) return;
+#endif
+
   slist_clear(lst);
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
@@ -592,18 +599,36 @@ void reflect_edit_counter_change(chan_info *cp)
 {
   /* undo/redo/revert -- change which line is highlighted */
   snd_info *sp;
+  slist *lst;
+
   if (cp->squelch_update) return;
   sp = cp->sound;
+
   if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
     {
       chan_info *ncp;
       ncp = sp->chans[0];
-      slist_select(EDIT_HISTORY_LIST(ncp), cp->edit_ctr + cp->edhist_base);
+
+      lst = EDIT_HISTORY_LIST(ncp);
+      if ((!lst) || (!(lst->items))) return;
+
+#if HAVE_GTK_3
+      if (gtk_paned_get_position(GTK_PANED(cp->chan_widgets[W_main_window])) < 10) return;
+#endif
+
+      slist_select(lst, cp->edit_ctr + cp->edhist_base);
     }
   else
     {
-      slist_select(EDIT_HISTORY_LIST(cp), cp->edit_ctr);
-      slist_moveto(EDIT_HISTORY_LIST(cp), cp->edit_ctr);
+      lst = EDIT_HISTORY_LIST(cp);
+      if ((!lst) || (!(lst->items))) return;
+
+#if HAVE_GTK_3
+      if (widget_width(lst->scroller) < 10) return;
+#endif
+
+      slist_select(lst, cp->edit_ctr);
+      slist_moveto(lst, cp->edit_ctr);
       goto_graph(cp);
     }
 }

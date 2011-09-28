@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [588]
-;;;  test 1: defaults                           [1183]
-;;;  test 2: headers                            [1402]
-;;;  test 3: variables                          [1717]
-;;;  test 4: sndlib                             [2349]
-;;;  test 5: simple overall checks              [5080]
-;;;  test 6: vcts                               [14265]
-;;;  test 7: colors                             [14702]
-;;;  test 8: clm                                [15222]
-;;;  test 9: mix                                [26885]
-;;;  test 10: marks                             [29114]
-;;;  test 11: dialogs                           [30081]
-;;;  test 12: extensions                        [30291]
-;;;  test 13: menus, edit lists, hooks, etc     [30557]
-;;;  test 14: all together now                  [32049]
-;;;  test 15: chan-local vars                   [32940]
-;;;  test 16: regularized funcs                 [34742]
-;;;  test 17: dialogs and graphics              [39689]
-;;;  test 18: enved                             [39785]
-;;;  test 19: save and restore                  [39804]
-;;;  test 20: transforms                        [41563]
-;;;  test 21: new stuff                         [43727]
-;;;  test 22: run                               [45782]
-;;;  test 23: with-sound                        [52632]
-;;;  test 25: X/Xt/Xm                           [57023]
-;;;  test 26:                                   [60721]
-;;;  test 27: GL                                [60727]
-;;;  test 28: errors                            [60851]
-;;;  test 29: s7                                [63101]
-;;;  test all done                              [63172]
-;;;  test the end                               [63362]
+;;;  test 0: constants                          [589]
+;;;  test 1: defaults                           [1184]
+;;;  test 2: headers                            [1403]
+;;;  test 3: variables                          [1718]
+;;;  test 4: sndlib                             [2351]
+;;;  test 5: simple overall checks              [4930]
+;;;  test 6: vcts                               [14121]
+;;;  test 7: colors                             [14558]
+;;;  test 8: clm                                [15078]
+;;;  test 9: mix                                [26421]
+;;;  test 10: marks                             [28650]
+;;;  test 11: dialogs                           [29617]
+;;;  test 12: extensions                        [29827]
+;;;  test 13: menus, edit lists, hooks, etc     [30093]
+;;;  test 14: all together now                  [31585]
+;;;  test 15: chan-local vars                   [32476]
+;;;  test 16: regularized funcs                 [34278]
+;;;  test 17: dialogs and graphics              [39225]
+;;;  test 18: enved                             [39321]
+;;;  test 19: save and restore                  [39340]
+;;;  test 20: transforms                        [41099]
+;;;  test 21: new stuff                         [43249]
+;;;  test 22: run                               [45304]
+;;;  test 23: with-sound                        [52181]
+;;;  test 25: X/Xt/Xm                           [56300]
+;;;  test 26:                                   [59993]
+;;;  test 27: GL                                [59999]
+;;;  test 28: errors                            [60123]
+;;;  test 29: s7                                [62367]
+;;;  test all done                              [62438]
+;;;  test the end                               [62628]
 
 (define tests 1)
 (define keep-going #f)
@@ -29642,7 +29642,7 @@ EDITS: 2
 		 (if (not (char=? (s1 i) (s2 j)))
 		     (return #f)))))))))
   
-  (if with-gui
+  (if (and with-gui (not (provided? 'gtk3))) ; gtk3 hangs in mix-file-dialog
       
       (begin
 	
@@ -62168,7 +62168,6 @@ EDITS: 1
 		    (if (file-exists? "reverb.snd") (delete-file "reverb.snd"))))))
 	
 	;; close-sound cases that are nutty...
-	
 	(let ((tag (catch #t
 			  (lambda ()
 			    (let ((ind (open-sound "oboe.snd")))
@@ -62362,7 +62361,6 @@ EDITS: 1
 	(set! cadr-main #f)
 	(set! a-hook #f)
 	(set! vct-5 #f)
-	
 	)))
 
 

@@ -1082,7 +1082,9 @@ void save_regions(FILE *fd)
 	  io_err = copy_file(r->filename, newname);
 	  if (io_err != IO_NO_ERROR)
 	    {
-	      snd_warning("trying to save region %d (%s) in %s: %s", r->id, r->filename, newname, io_error_name(io_err));
+	      snd_warning("trying to save region %d (%s) in %s: %s, %s", 
+			  r->id, r->filename, newname, io_error_name(io_err),
+			  strerror(ss->local_errno));
 	    }
 	  else
 	    {

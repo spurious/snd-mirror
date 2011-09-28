@@ -45,7 +45,7 @@
     (if (not (equal? result oexp))
 	(format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) otst result oexp))))
 
-(defmacro test (tst expected) ; (display tst) (newline)
+(defmacro test (tst expected) ;(display tst) (newline)
   `(ok? ',tst (lambda () ,tst) ,expected))
 
 (define (tok? otst ola)
@@ -8608,9 +8608,9 @@ a2" 3) "132")
 (test (format #f "~0,0,F" 123.123) 'error)
 
 (test (format #f "~000000000000000000000000000000000000000000003F" 123.123456789) "123.123457")
-(test (format #f "~922337203685477580F" 123.123) 'error)
-(test (format #f "~,922337203685477580F" 123.123) 'error)
-(test (format #f "~1,922337203685477580F" 123.123) 'error)
+(test (format #f "~922337203685477580F" 123.123) 'error)   ; numeric argument too large
+(test (format #f "~,922337203685477580F" 123.123) 'error)  
+(test (format #f "~1,922337203685477580F" 123.123) 'error) 
 (test (format #f "~1 ,2F" 123.456789) 'error)
 (test (format #f "~1, 2F" 123.456789) 'error)
 (test (format #f "~1, F" 123.456789) 'error)

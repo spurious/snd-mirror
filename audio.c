@@ -2415,7 +2415,8 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
   alsa_name = (alsa_stream == SND_PCM_STREAM_PLAYBACK) ? alsa_playback_device_name : alsa_capture_device_name;
   if ((err = snd_pcm_open(&handle, alsa_name, alsa_stream, alsa_open_mode)) != 0) 
     {
-      snd_pcm_close(handle);
+      /* snd_pcm_close(handle); */
+      /* this segfaults in some versions of ALSA */
       return(alsa_mus_error(MUS_AUDIO_CANT_OPEN, 
 			    mus_format("open pcm %s (%s) stream %s: %s",
 				       mus_audio_device_name(device), alsa_name, snd_pcm_stream_name(alsa_stream), 
