@@ -37174,6 +37174,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   because open-sound is calling itself safe, but it can call all kinds of hooks and whatnot,
        *   and these can hit errors, setting *error-hook*, fallling into s7_call and so on.
        * surely g_open_sound should not be marked as a safe procedure?  Not sure what to do...
+       * (this is independent of c_function_call: it happens with optimization off, so set below
+       * also needs to be protected, I guess).
        */
       if (sc->code != sc->temp4)
 	sc->code = sc->temp4;

@@ -1,15 +1,13 @@
-Snd 12.4.
+Snd 12.5
 
-  removed thread support from Snd/s7/sndlib.
-  removed snd9.scm.
+This version involves primarily s7 optimizations.  About half the
+  standard clm instruments now run nearly as fast without the run
+  macro as with it.  Progress has been slow...
 
-  s7 is nearing the point where we can get rid of the run macro.
-  Currently the fm-violin in C takes 400 callgrind units to generate
-  20 seconds of sound, in run it takes 480, and in s7 by itself, 700.
-  In Snd 12.2, s7 took 4896, in Snd 11.10 from last August, 7392.
+in clm, the function output option in out* and in* has been removed.
+        added mus-type
 
+checked: sbcl 1.0.51, gtk 3.1.16|18|90|92 3.2.0, ruby 1.9.3
 
-checked: sbcl 1.0.50, gtk 3.1.10|12
-
-Thanks!: Mike Scholz
+Thanks!: Mike Scholz, Brooke Mitchell
 
