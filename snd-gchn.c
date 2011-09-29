@@ -513,10 +513,8 @@ static void remake_edit_history(chan_info *cp)
   lst = EDIT_HISTORY_LIST(cp);
   if (!lst) return;
 
-#if HAVE_GTK_3
   /* if you try to update something in a closed pane, goddamn gtk grinds to a halt */
   if (gtk_paned_get_position(GTK_PANED(cp->chan_widgets[W_main_window])) < 10) return;
-#endif
 
   slist_clear(lst);
   sp = cp->sound;
@@ -611,10 +609,7 @@ void reflect_edit_counter_change(chan_info *cp)
 
       lst = EDIT_HISTORY_LIST(ncp);
       if ((!lst) || (!(lst->items))) return;
-
-#if HAVE_GTK_3
       if (gtk_paned_get_position(GTK_PANED(cp->chan_widgets[W_main_window])) < 10) return;
-#endif
 
       slist_select(lst, cp->edit_ctr + cp->edhist_base);
     }
@@ -622,10 +617,7 @@ void reflect_edit_counter_change(chan_info *cp)
     {
       lst = EDIT_HISTORY_LIST(cp);
       if ((!lst) || (!(lst->items))) return;
-
-#if HAVE_GTK_3
       if (widget_width(lst->scroller) < 10) return;
-#endif
 
       slist_select(lst, cp->edit_ctr);
       slist_moveto(lst, cp->edit_ctr);

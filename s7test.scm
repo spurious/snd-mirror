@@ -16523,6 +16523,14 @@ who says the continuation has to restart the map from the top?
 (test (quasiquote quote) 'quote)
 (test (eval (list quasiquote (list values #t))) (list values #t))
 
+(test (eq? (cadr `(a, b, c,)) 'b,) #t)
+(test (eq? (cadr '(a, b, c,)) 'b,) #t)
+(test (let ((b, 32)) `(a , b, c,)) '(a 32 c,))
+(test (let ((b, 32)) `(a, , b, c,)) '(a, 32 c,))
+(test (equal? (let ((b, 32)) '(a, , b, c,)) '(a, (unquote b,) c,)) #t) ; comma by itself (no symbol) is an error
+(test (equal? (let ((b, 32)) '(a, ,  , b, c,)) '(a, (unquote (unquote b,)) c,)) #t)
+(test (equal? (let ((b 32)) (let ((b, b)) ``(a, ,  , b, c,))) '({list} 'a, 32 'c,)) #t)
+
 ;; from gauche
 (let ((quasi0 99)
       (quasi1 101)

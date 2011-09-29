@@ -37,8 +37,6 @@
 (define all-args #f)
 (define test-at-random 0)
 					;(show-ptree 1)
-;; (define profiling #f)
-
 					;(set! (hook-functions *load-hook*) (list (lambda (name) (format #t "load ~S~%" name))))
 (if (<= tests 0) (set! tests 1))
 

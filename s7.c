@@ -24156,7 +24156,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 
   if (is_any_macro(sc->code))                   /* (apply mac '(3)) -> (apply mac '((mac 3))) */
     {
-      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
+      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
       sc->args = list_1(sc, cons(sc, sc->code, sc->args));
     }
   push_stack(sc, OP_APPLY, sc->args, sc->code);
@@ -24402,9 +24402,12 @@ static bool next_for_each(s7_scheme *sc)
   if (is_macro(sc->code))
     {
       push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
+#if 0
       car(sc->TEMP_CELL_1) = sc->code;
       cdr(sc->TEMP_CELL_1) = sc->args;
       sc->args = sc->TEMP_CELL;
+#endif
+      sc->args = list_1(sc, cons(sc, sc->code, sc->args));
     }
 
   return(true);
@@ -24802,9 +24805,12 @@ static bool next_map(s7_scheme *sc)
        * -> '(2 3 4)
        */
       push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
+#if 0
       car(sc->TEMP_CELL_1) = sc->code;
       cdr(sc->TEMP_CELL_1) = sc->args;
       sc->args = sc->TEMP_CELL;
+#endif
+      sc->args = list_1(sc, cons(sc, sc->code, sc->args));
     }
 
   return(true);
@@ -30182,9 +30188,6 @@ static s7_pointer check_let_star(s7_scheme *sc)
       (cdr(ecdr(sc->code)) == sc->code))
     {
       car(ecdr(sc->code)) = sc->LET_STAR_UNCHECKED;
-
-      /* for 0 or 1 bindings, let* == unnamed let TODO: what about the one-line cases here 
-       */
       if (is_null(car(sc->code)))
 	car(ecdr(sc->code)) = sc->LET_NO_VARS; /* (let* () ...) */
       else 
@@ -30822,7 +30825,7 @@ static s7_pointer check_set(s7_scheme *sc)
 				      else 
 					{
 					  /* fprintf(stderr, "set %s %s\n", opt_names[optimize_data(cadr(sc->code))], DISPLAY_80(cadr(sc->code))); */
-					  if (is_h_safe_c_s(cadr(sc->code))) /* (optimize_data(cadr(sc->code)) == HOP_SAFE_C_S) */
+					  if (is_h_safe_c_s(cadr(sc->code)))
 					    car(ecdr(sc->code)) = sc->SET_SYMBOL_R;
 					  else car(ecdr(sc->code)) = sc->SET_SYMBOL_P;
 					}
@@ -32164,7 +32167,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 	      DOTIMES_C_C_LOOP:
 		/* eval body  (cddr(sc->code)) */
-		c_function_call(func)(sc, body);
+		c_function_call(func)(sc, body); 
 		numerator(number(stepper))++;
 		if (numerator(number(stepper)) == denominator(number(stepper)))
 		  {
@@ -35826,9 +35829,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* 
 	       * pass a list (mac . args) to the macro expander
 	       */
+#if 0
 	      car(sc->TEMP_CELL_1) = sc->value; /* macro */
 	      cdr(sc->TEMP_CELL_1) = sc->code;  /* args */
-	      sc->args = list_1(sc, sc->TEMP_CELL_1);
+#endif
+	      sc->args = list_1(sc, cons(sc, sc->value, sc->code));
 	      sc->code = sc->value;
 	      goto APPLY;                      /* not UNSAFE_CLOSURE because it might be a bacro */
 	    }
@@ -37157,11 +37162,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL_PAIR;
 
     case OP_SET_SYMBOL_R:
+      sc->temp4 = sc->code;
       car(sc->T1_1) = finder(sc, cadr(cadr(sc->code)));
       sc->value = c_function_call(ecdr(cadr(sc->code)))(sc, sc->T1_1);
-      /* TODO: newer R/S cases may need to protect sc->code across finder call
-       *       also R cases are under opt flag?
+      /*
+       * I think this is supposed to be a safe c function (is_h_safe_c_s above), but
+       *   it's possible for the call to change sc->code?  
+       *   in snd-test: 
+       *           (set! snd-output (open-sound output-1)) 
+       *   becomes (set! (hook-functions *error-hook*) '())
+       *   because open-sound is calling itself safe, but it can call all kinds of hooks and whatnot,
+       *   and these can hit errors, setting *error-hook*, fallling into s7_call and so on.
+       * surely g_open_sound should not be marked as a safe procedure?  Not sure what to do...
        */
+      if (sc->code != sc->temp4)
+	sc->code = sc->temp4;
+
       sc->code = car(sc->code);
       goto SET1;
 #endif      
@@ -38079,7 +38095,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
 	  {
 	    car(sc->T1_1) = finder(sc, cadr(cadar(p)));
-	    ADD_SLOT_CHECKED(frame, caar(p), c_function_call(ecdr(cadar(p)))(sc, sc->T1_1));
+	    ADD_SLOT_CHECKED(frame, caar(p), c_function_call(ecdr(cadar(p)))(sc, sc->T1_1)); 
 	  }
 	
 	frame_number++;
@@ -38111,7 +38127,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		else
 		  {
 		    car(sc->T1_1) = finder(sc, cadr(x));
-		    val = c_function_call(ecdr(x))(sc, sc->T1_1);
+		    val = c_function_call(ecdr(x))(sc, sc->T1_1); 
 		  }
 	      }
 	    else

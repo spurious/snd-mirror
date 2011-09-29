@@ -459,15 +459,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+1-Oct:   Snd 12.5.\n\
 19-Aug:  Snd 12.4.\n\
 18-Aug:  removed snd9.scm.\n\
 14-Jul:  removed thread stuff.\n\
-11-Jul:  Snd 12.3. \n\
-30-May:  Snd 12.2.\n\
-24-Apr:  Snd 12.1.\n\
-5-Apr:   lint.scm.\n\
-25-Mar:  show-full-range, info-popup-hook.\n\
-21-Mar:  with-interrupts.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
