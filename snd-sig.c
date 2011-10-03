@@ -3400,7 +3400,9 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		  /* changed here to remove catch 24-Mar-02 */
 #if HAVE_SCHEME
 		  s7_set_car(arg_list, C_TO_XEN_DOUBLE((double)read_sample(sf)));
-		  res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
+		  if (kp == 0)
+		    res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
+		  else res = s7_apply_function(s7, proc, arg_list);
 #else
 		  res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
 #endif
@@ -3546,7 +3548,9 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	    {
 #if HAVE_SCHEME
 	      s7_set_car(arg_list, C_TO_XEN_DOUBLE((double)read_sample(sf)));
-	      res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
+	      if (kp == 0)
+		res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
+	      else res = s7_apply_function(s7, proc, arg_list);
 #else
 	      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
 #endif
@@ -3970,15 +3974,20 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
     int gc_loc;
     arg_list = XEN_LIST_1(XEN_FALSE);
     gc_loc = s7_gc_protect(s7, arg_list);
-#endif
 
   for (kp = 0; kp < num; kp++)
     {
       XEN res;
-#if HAVE_SCHEME
       s7_set_car(arg_list, C_TO_XEN_DOUBLE((double)read_sample(sf)));
-      res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
+      /* 1st time s7_call to catch errors? what about s7_catch_all? 
+       */
+      if (kp == 0)
+	res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
+      else res = s7_apply_function(s7, proc, arg_list);
 #else
+  for (kp = 0; kp < num; kp++)
+    {
+      XEN res;
       res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
 #endif
       /* leak here -- if reader active and error occurs, we jump out without cleanup */

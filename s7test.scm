@@ -4815,6 +4815,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (member 4 '(1 2 3) member) 'error)
 (test (member 4 '((1 2) (3 5) 7) (lambda (a b) (member a (map (lambda (c) (+ c 1)) b)))) '((3 5) 7))
 (test (member 4 '((1 2) (3 5) 7) (lambda (a b) (assoc a (map (lambda (c) (cons (+ c 1) c)) b)))) '((3 5) 7))
+(test (let ((f #f)) (member 'a '(a b c) (lambda (a b) (if (eq? b 'a) (set! f (lambda () b))) (eq? a 123))) (f)) 'a)
+(test (let ((i 0) (f (make-vector 3))) (member 'a '(a b c) (lambda (a b) (vector-set! f i b) (set! i (+ i 1)) (eq? a 123))) f) #(a b c))
 
 (test (member 4 '(1 2 3 4 . 5)) '(4 . 5))
 (test (member 4 '(1 2 3 4 . 5) =) '(4 . 5))
@@ -10791,6 +10793,7 @@ this prints:
 (test (equal? #(1 #(2 3)) '#(1 '#(2 3))) #f)
 (test (equal? #(1) #('1)) #f)
 (test (equal? #(()) #('())) #f)
+(test (equal? cons 'cons) #f)
 
 (test (eqv? #\a (quote #\a)) #t)
 (test (eqv? 1 (quote 1)) #t)
@@ -11015,6 +11018,14 @@ this prints:
 
 (test (let ((L (list 1 2 3 4 5)) (sum 0)) (for-each (lambda (x) (set-cdr! (cddr L) 5) (set! sum (+ sum x))) L) sum) 6)
 ; map (below) has more tests along this line
+(test (let ((f #f)) (for-each (lambda (a) (if (eq? a 'a) (set! f (lambda () a)))) '(a b c)) (f)) 'a)
+(test (let ((i 0) (f (make-vector 3))) (for-each (lambda (b) (vector-set! f i b) (set! i (+ i 1))) '(a b c)) f) #(a b c))
+(test (let ((i 0) (f (make-vector 3)) (lst '(a b c))) (define (hi) (for-each (lambda (b) (vector-set! f i b) (set! i (+ i 1))) lst)) (hi) f) #(a b c))
+(test (let ((i 0) (f (make-vector 3)) (lst '(a b c))) (define (hi) (for-each (lambda (b) (let () (vector-set! f i b) (set! i (+ i 1)))) lst)) (hi) f) #(a b c))
+(test (let ((i 0) (f (make-vector 3)) (lst (list 1 2 3))) (define (hi) (for-each (lambda (b) (vector-set! f i (let ((b (+ b 1))) b)) (set! i (+ i 1))) lst)) (hi) f) #(2 3 4))
+(test (let ((i 0) (f (make-vector 3)) (lst (list 1 2 3))) (define (hi) (for-each (lambda (b) (let ((b (+ b 1))) (vector-set! f i (let ((b (+ b 1))) b)) (set! i (+ i 1)))) lst)) (hi) f) #(3 4 5))
+(test (let ((f #f)) (define (hi) (for-each (lambda (a) (if (eq? a 'a) (set! f (lambda () (let () a))))) '(a b c))) (hi) (f)) 'a)
+(test (let ((lst '((a b c) (1 2 3)))) (define (hi) (for-each (lambda (a) a) (apply values lst))) (hi)) 'error)
 
 (test (for-each ="") #<unspecified>)
 (test (for-each =""=) 'error)
@@ -11666,7 +11677,7 @@ time, so that the displayed results are
 (let () (define (jtest10) (let ((j (cons 1 2))) (do ((i 0 (+ i 1))) ((= i 10) j) (if (= i 3) (set-car! j i))))) (test (jtest10) '(3 . 2)))
 (let () (define (jtest11) (let ((j (cons 1 2))) (do ((i 0 (+ i 1))) ((= i 10) j) (if (= i 3) (set! j (cons 0 i)))))) (test (jtest11) '(0 . 3)))
 ;; (let ((f #f)) (define (jtest12) (do ((i 0 (+ i 1))) ((= i 10) (f)) (if (= i 3) (set! f (lambda () i))))) (test (jtest12) 3))
-;; this lambda business is a separate issue
+;; this lambda business is a separate issue (s7 returns 10 here)
 
 (test (let () (define (step-it a) (+ a 1)) (define (hi) (do ((i 0 (step-it i))) ((= i 3) i))) (hi) (hi)) 3)
 
@@ -13285,6 +13296,9 @@ time, so that the displayed results are
       '(2 2))
 
 (test (procedure? (let () (define (a) a) (a))) #t)
+(let ((oddp (lambda (a) (not (even? a)))))
+   (define (hi a) (and (a 123) (a 321))) 
+   (test (hi oddp) #t))
 
 (test (define) 'error)
 (test (define*) 'error)
@@ -18888,6 +18902,7 @@ abs     1       2
   (test (eval) 'error)
   (test (eval-string "") #f)
   (test (eval ()) ())
+  (test (eval '()) '())
   (test (eval-string "1" () ()) 'error)
   (test (eval () () ()) 'error)
   (test (eval "1") "1")
@@ -18901,6 +18916,15 @@ abs     1       2
   (test (let () (eval '(begin (define __eval_var2__ 123) __eval_var__) (current-environment)) __eval_var2__) 123)
   (test (let () __eval_var2__) 'error)
 
+  ;; from scheme wg
+  (let ((x (list 'cons 1 2))
+	(y (list (list 'quote 'cons) 1 2)))
+    (set-car! x cons) 
+    (set-car! (cdar y) cons)
+    (test (eval x) (eval y)))
+  (test (eval (list 'cons 1 2)) (eval (list cons 1 2)))
+  (let ((f (lambda (a) (+ a 1))))
+    (test (eval (list 'f 2)) (eval (list f 2))))
 
   (test (apply "hi" 1 ()) #\i)
   (test (eval ("hi" 1)) #\i)

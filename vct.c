@@ -696,8 +696,11 @@ v. " vct_map_example " is the same as " vct_fill_example
       }
 
     XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS_OK(proc, 0)), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
-    for (i = 0; i < v->length; i++) 
-      v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc));
+    v->data[0] = XEN_TO_C_DOUBLE(s7_call_with_location(s7, proc, XEN_EMPTY_LIST, c__FUNCTION__, __FILE__, __LINE__));
+    /* s7_call gives us elaborate error checks, but subsequent calls can be direct, I hope
+     */
+    for (i = 1; i < v->length; i++) 
+      v->data[i] = XEN_TO_C_DOUBLE(s7_apply_function(s7, proc, XEN_EMPTY_LIST));
   }
 #else
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS_OK(proc, 0)), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
