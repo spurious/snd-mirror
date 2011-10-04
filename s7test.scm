@@ -10632,6 +10632,7 @@ this prints:
 (test (let ((ctr 0)) (if (let ((ctr 123)) (set! ctr (+ ctr 1)) (= ctr 124)) (let () (set! ctr (+ ctr 100)) ctr) (let () (set! ctr (+ ctr 1000)) ctr)) ctr) 100)
 (test (let () (if #t (define (hi a) a)) (hi 1)) 1)
 (test (let () (if #f (define (hi a) (+ a 1)) (define (hi a) a)) (hi 1)) 1)
+(test (let ((oddp (lambda (a) (not (even? a))))) (define (hi a) (if (a 123) (a 321))) (hi oddp)) #t)
 
 (test (let ((ctr 0)) (call/cc (lambda (exit) (if (> 3 2) (let () (exit ctr) (set! ctr 100) ctr) #f)))) 0)
 (test (let ((ctr 0)) (call/cc (lambda (exit) (if (< 3 2) #f (let () (exit ctr) (set! ctr 100) ctr))))) 0)
@@ -17528,8 +17529,10 @@ why are these different (read-time `#() ? )
 	 (lambda (return)
 	   (do ((i 0 (+ i 1)))
 	       ((= i 999) #t)
-	     (if (<= (v i) (v (+ i 1)))
-		 (return #f))))))
+	     (if (< (v i) (v (+ i 1)))
+		 (begin
+		   (format #t "random vals after sort: ~A ~A~%" (v i) (v (+ i 1)))
+		   (return #f)))))))
       #t)
 
 (test (let ((v '()))
@@ -18204,6 +18207,9 @@ abs     1       2
   (test (let () (define* (hi a . b) b) (hi 1)) '())
   (test (let () (define* (hi a . b) b) (hi :a 1)) '())
   (test (let () (define* (hi a . b) b) (hi)) '())
+  (test (let () (define* (hi a . a) a) (hi)) 'error)
+  (test (let () (define* (hi (a 1) . a) a) (hi)) 'error)
+  (test (let () (define* (hi (a 1) . b) b) (hi 2 3 4)) '(3 4))
   
   (test (let () (define* (hi a :rest b) b) (hi 1 2 3)) '(2 3))
   (test (let () (define* (hi a :rest b) b) (hi :a 1 2 3)) '(2 3))
