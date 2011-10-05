@@ -10127,6 +10127,10 @@ a2" 3) "132")
 	  2) '(1 . 2))
 (test (vector .(1 .(2))) #(1 2))
 (test (vector 0. .(.1)) #(0.0 0.1))
+(test '(a #|foo||# b) '(a b)) ; from bug-guile
+(test '(a #|foo|||# b) '(a b))
+(test '(a #|foo||||# b) '(a b))
+(test '(a #|foo|||||# b) '(a b))
 
 ;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
 (test (char? #\#) #t)
@@ -59686,6 +59690,8 @@ etc....
 (test (number->string -23/34 2) "-10111/100010")
 (test (number->string -23/34 8) "-27/42")
 (test (number->string -23/34 16) "-17/22")
+(test (number->string -1 16) "-1")
+;(test (number->string #xffffffffffffffff 16) "-1") -- is this a bug?  it's correct in 64-bit land
 
 (num-test (string->number "3/4+1/2i") 0.75+0.5i)
 (num-test (string->number "3/4+i") 0.75+i)

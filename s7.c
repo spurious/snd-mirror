@@ -194,7 +194,7 @@
 
 #ifndef WITH_OPTIMIZATION
 #define WITH_OPTIMIZATION 1
-  /* this currently speeds s7 up by about 242 to 146 in callgrind terms.
+  /* this currently speeds s7 up by about 238 to 141 in callgrind terms.
    *    a lot of the current optimization choices are just experiments (I'll clean up this mess some day).
    *    the completely unrealistic goal, of course, is to replace the run macro.
    */
@@ -701,8 +701,6 @@ typedef struct s7_cell {
       union {
 	s7_vdims_t *dim_info;
 	unsigned int entries;          
-	/* was s7_Int but that costs us 4 bytes per object everywhere in the 32-bit case
-	 */
       } vextra;
       s7_pointer (*hash_func)(s7_scheme *sc, s7_pointer table, s7_pointer key);
       unsigned int fill_ptr;
@@ -710,14 +708,14 @@ typedef struct s7_cell {
     
     s7_func_t *ffptr;      /* C functions, macros */
     
-    struct {
+    struct {               /* pairs, environments, etc */
       s7_pointer car, cdr, ecdr, fcdr;
       unsigned int line;
       unsigned short data;
       unsigned short data_index;
     } cons;
 
-    struct {
+    struct {               /* symbols */
       s7_pointer car, cdr, ecdr, local_slot;
       long long int id;
     } sym;
@@ -758,8 +756,8 @@ typedef struct s7_cell {
 typedef struct {
   s7_cell obj;
   int accessor;
-  void *accessor_data; /* FFI-accessible */
-  void *op_data;       /*   same purpose, but only s7-accessible */
+  void *accessor_data;     /* FFI-accessible */
+  void *op_data;           /*   same purpose, but only s7-accessible */
 } s7_extended_cell;
 
 
@@ -997,14 +995,19 @@ struct s7_scheme {
 
 #define T_ANY_MACRO                   (1 << (TYPE_BITS + 4))
 #define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
-/* this marks scheme and C-defined macros */
+/* this marks scheme and C-defined macros 
+ */
 
 #define T_DONT_EVAL_ARGS              (1 << (TYPE_BITS + 5))
 #define dont_eval_args(p)             ((typeflag(p) & T_DONT_EVAL_ARGS) != 0)
+/* this marks things that don't evaluate their arguments
+ */
 
 #define T_EXPANSION                   (1 << (TYPE_BITS + 6))
 #define is_expansion(p)               ((typeflag(p) & T_EXPANSION) != 0)
-/* this marks macros from define-expansion */
+/* this marks macros from define-expansion.  I think I'm using a type bit here, rather than a
+ *   separate type so that the holder can be checked without looking up the symbol value(?)
+ */
 
 #define T_GLOBAL                      (1 << (TYPE_BITS + 7))
 #define is_global(p)                  ((typeflag(p) & T_GLOBAL) != 0)
@@ -1088,7 +1091,7 @@ struct s7_scheme {
 #define T_ONE_LINER                   (1 << (TYPE_BITS + 19))
 #define set_one_liner(p)              typeflag(p) |= T_ONE_LINER
 #define is_one_liner(p)               ((typeflag(p) & T_ONE_LINER) != 0)
-/* implicit begin optimization
+/* implicit begin optimization -- I need to do this differently
  */
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
@@ -1098,6 +1101,7 @@ struct s7_scheme {
 #define T_SIMPLE                      (1 << (TYPE_BITS + 21))
 #define set_simple(p)                 typeflag(p) |= T_SIMPLE
 #define is_simple(p)                  ((typeflag(p) & T_SIMPLE) != 0)
+/* stuff where equal? is eq? */
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
@@ -1197,17 +1201,15 @@ struct s7_scheme {
 #define symbol_value(p)               cdr(p)
 #define symbol_set_value(p, Val)      cdr(p) = (Val)
 #define symbol_global_slot(p)         (car(p))->object.string.global_slot
-/* #define symbol_local_slot(p)          (car(p))->object.string.local_slot */
 #define symbol_local_slot(p)          (p)->object.sym.local_slot
 #define symbol_hash(p)                (car(p))->object.string.hash
 #define symbol_accessor(p)            ((s7_extended_cell *)p)->accessor
-#define symbol_has_accessor(p)        (symbol_accessor(p) >= 0)
+#define symbol_has_accessor(p)        (symbol_accessor(p) != -1)
 #define symbol_accessor_data(p)       ((s7_extended_cell *)p)->accessor_data
 #define symbol_op_data(p)             ((s7_extended_cell *)p)->op_data
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_opcode(p)              ((p)->hloc)
-/* #define syntax_opcode(p) optimize_data(p) */
 
 #define is_environment(p)             (type(p) == T_ENVIRONMENT)
 
@@ -5810,7 +5812,8 @@ static void init_ctables(void)
   exponent_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   slashify_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   char_ok_in_a_name = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
-  white_space = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
+  white_space = (bool *)permanent_calloc((CTABLE_SIZE + 1) * sizeof(bool));
+  white_space++;    /* leave white_space[-1] false for white_space[EOF] */
   
   for (i = 1; i < CTABLE_SIZE; i++)
     char_ok_in_a_name[i] = true;
@@ -5868,11 +5871,10 @@ static void init_ctables(void)
 }
 
 
-static bool is_white_space(int c)
-{
-  /* this is much faster than C's isspace, and does not depend on the current locale */
-  return((c >= 0) && (white_space[c]));
-}
+#define is_white_space(C) white_space[C]
+  /* this is much faster than C's isspace, and does not depend on the current locale.
+   * if c == EOF (-1), it indexes into the empty (0) slot we preallocated below white_space 
+   */
 
 
 static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
@@ -13174,11 +13176,14 @@ static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_close_input_port "(close-input-port port) closes the port"
   s7_pointer pt;
+
   pt = car(args);
   if (!is_input_port(pt))
     return(s7_wrong_type_arg_error(sc, "close-input-port", 0, pt, "an input port"));
+
   if (!is_immutable(pt))
     s7_close_input_port(sc, pt);
+
   return(sc->UNSPECIFIED);
 }
 
@@ -15799,7 +15804,7 @@ static int safe_list_length(s7_scheme *sc, s7_pointer a)
   /* assume that "a" is a proper list */
   int i = 0;
   s7_pointer b;
-  for (b = a; is_not_null(b); i++, b = cdr(b)) {};
+  for (b = a; is_pair(b); i++, b = cdr(b)) {};
   return(i);
 }
 
@@ -18201,7 +18206,7 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
   unsigned int hash_len, loc;
   hash_len = (int)hash_table_length(table) - 1;
   loc = hash_loc(sc, key) & hash_len;
-  for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
+  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
     if (s7_is_equal(sc, caar(x), key))
       return(car(x));
   return(sc->NIL);
@@ -18220,7 +18225,7 @@ static s7_pointer hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
       if (keyval < 0)
 	loc = (-keyval) & hash_len;
       else loc = keyval & hash_len;
-      for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
+      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	if (s7_integer(caar(x)) == keyval)
 	  return(car(x));
     }
@@ -18244,7 +18249,7 @@ static s7_pointer hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
 	  string_hash(key) = loc;
 	}
       loc &= hash_len;
-      for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
+      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	if (strings_are_equal(string_value(caar(x)), string_value(key)))
 	  return(car(x));
     }
@@ -18260,7 +18265,7 @@ static s7_pointer hash_char(s7_scheme *sc, s7_pointer table, s7_pointer key)
       int hash_len, loc;
       hash_len = (int)hash_table_length(table) - 1;
       loc = character(key) & hash_len;
-      for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
+      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	if (character(caar(x)) == character(key))
 	  return(car(x));
     }
@@ -18283,7 +18288,7 @@ static s7_pointer hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
       if (loc < 0) loc = -loc;
       loc &= hash_len;
       keyval = s7_real(key);
-      for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
+      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	if (fabs(s7_real(caar(x)) - keyval) < HASH_FLOAT_EPSILON)
 	  return(car(x));
     }
@@ -18299,7 +18304,7 @@ static s7_pointer hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
       int hash_len, loc;
       hash_len = (int)hash_table_length(table) - 1;
       loc = symbol_hash(key) & hash_len;
-      for (x = hash_table_elements(table)[loc]; is_not_null(x); x = cdr(x))
+      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	if (caar(x) == key)
 	  return(car(x));
     }
@@ -19013,7 +19018,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 	ftype = T_C_RST_ARGS_FUNCTION;
     }
   
-  set_type(x, ftype | T_DONT_COPY | T_PROCEDURE);
+  set_type(x, ftype | T_DONT_COPY | T_PROCEDURE | T_SIMPLE);
 
   c_function(x) = ptr;
   c_function_call(x) = f;
@@ -29883,7 +29888,7 @@ static s7_pointer check_case(s7_scheme *sc)
   if (!is_pair(cadr(sc->code)))                                      /* (case 1 1) */
     return(eval_error(sc, "case clause is not a list? ~A", sc->code));
   
-  for (x = cdr(sc->code); is_not_null(x); x = cdr(x)) 
+  for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
     {
       if ((!is_pair(x)) ||                                        /* (case 1 ((2) 1) . 1) */
 	  (!is_pair(car(x))))
@@ -35804,7 +35809,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 #endif
 	  
-
 	  /* -------------------------------------------------------------------------------- */
 	  /* fprintf(stderr, "unopt: %s\n", DISPLAY_80(sc->code)); */
 	  /* trailers */
@@ -37030,72 +37034,76 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
     DEFINE2:
-      if ((is_closure(sc->value)) || 
-	  (is_closure_star(sc->value)))
-	{
-	  /* we can get here from let: (define (outer a) (let () (define (inner b) (+ a b)) (inner a)))
-	   *   but the port info is not relevant here, so restrict the __func__ list making to top-level
-	   *   cases (via sc->envir == sc->NIL).
-	   */
-	  if ((!is_environment(sc->envir)) &&
-	      (port_filename(sc->input_port)) &&                             /* add (__func__ (name file line)) to current env */
-	      (port_file(sc->input_port) != stdin))
-	    sc->x = list_3(sc, sc->code,
-			   file_names[port_file_number(sc->input_port)],
-			   s7_make_integer(sc, port_line_number(sc->input_port)));
-	  else sc->x = sc->code;           /* fallback on (__func__ name) */
-	  
+      {
+	s7_pointer val;
+	val = sc->value;
+	if ((is_closure(val)) || 
+	    (is_closure_star(val)))
 	  {
-	    s7_pointer x, y;
-
-	    NEW_CELL(sc, x);
-	    frame_id(x) = ++frame_number;
-	    cdr(x) = closure_environment(sc->value);
-	    set_type(x, T_ENVIRONMENT);
-	    closure_environment(sc->value) = x;
-
-	    NEW_CELL_NO_CHECK(sc, y);
-	    car(y) = sc->__FUNC__;
-	    cdr(y) = sc->x;
-	    set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
-	    ecdr(y) = sc->NIL;
-	    car(x) = y;
-	    symbol_id(car(y)) = frame_id(x);
-	    symbol_local_slot(car(y)) = y;
-
-	    if (is_safe_closure(closure_body(sc->value)))
-	      {
-		s7_pointer arg;
-		closure_environment(sc->value) = new_frame_in_env(sc, closure_environment(sc->value));
-		for (arg = closure_args(sc->value); is_pair(arg); arg = cdr(arg))
-		  add_slot_to_environment(sc, closure_environment(sc->value), car(arg), sc->NIL);
-		car(closure_environment(sc->value)) = safe_reverse_in_place_via_ecdr(sc, car(closure_environment(sc->value)));
-	      }
-
-	    /* add the newly defined thing to the current environment */
-	    if (is_environment(sc->envir))
-	      {
-		ADD_SLOT(sc->envir, sc->code, sc->value);
-		set_local(sc->code);
-	      }
-	    else add_slot_to_environment(sc, sc->envir, sc->code, sc->value);
-	  }
-	}
-      else
-	{
-	  if (is_pws(sc->value))
+	    /* we can get here from let: (define (outer a) (let () (define (inner b) (+ a b)) (inner a)))
+	     *   but the port info is not relevant here, so restrict the __func__ list making to top-level
+	     *   cases (via sc->envir == sc->NIL).
+	     */
+	    if ((!is_environment(sc->envir)) &&
+		(port_filename(sc->input_port)) &&                             /* add (__func__ (name file line)) to current env */
+		(port_file(sc->input_port) != stdin))
+	      sc->x = list_3(sc, sc->code,
+			     file_names[port_file_number(sc->input_port)],
+			     s7_make_integer(sc, port_line_number(sc->input_port)));
+	    else sc->x = sc->code;           /* fallback on (__func__ name) */
+	    
 	    {
-	      s7_pws_t *f = (s7_pws_t *)s7_object_value(sc->value);
-	      if (!(f->name))
-		f->name = copy_string(symbol_name(sc->code));
+	      s7_pointer x, y;
+	      
+	      NEW_CELL(sc, x);
+	      frame_id(x) = ++frame_number;
+	      cdr(x) = closure_environment(val);
+	      set_type(x, T_ENVIRONMENT);
+	      closure_environment(val) = x;
+	      
+	      NEW_CELL_NO_CHECK(sc, y);
+	      car(y) = sc->__FUNC__;
+	      cdr(y) = sc->x;
+	      set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+	      ecdr(y) = sc->NIL;
+	      car(x) = y;
+	      symbol_id(car(y)) = frame_id(x);
+	      symbol_local_slot(car(y)) = y;
+	      
+	      if (is_safe_closure(closure_body(val)))
+		{
+		  s7_pointer arg;
+		  closure_environment(val) = new_frame_in_env(sc, closure_environment(val));
+		  for (arg = closure_args(val); is_pair(arg); arg = cdr(arg))
+		    add_slot_to_environment(sc, closure_environment(val), car(arg), sc->NIL);
+		  car(closure_environment(val)) = safe_reverse_in_place_via_ecdr(sc, car(closure_environment(val)));
+		}
+	      
+	      /* add the newly defined thing to the current environment */
+	      if (is_environment(sc->envir))
+		{
+		  ADD_SLOT(sc->envir, sc->code, val);
+		  set_local(sc->code);
+		}
+	      else add_slot_to_environment(sc, sc->envir, sc->code, val);
 	    }
-
-	  /* add the newly defined thing to the current environment */
-	  sc->x = find_local_symbol(sc, sc->envir, sc->code);
-	  if (is_not_null(sc->x))
-	    symbol_set_value(sc->x, sc->value); 
-	  else add_slot_to_environment(sc, sc->envir, sc->code, sc->value);
-	}
+	  }
+	else
+	  {
+	    if (is_pws(val))
+	      {
+		s7_pws_t *f = (s7_pws_t *)s7_object_value(val);
+		if (!(f->name))
+		  f->name = copy_string(symbol_name(sc->code));
+	      }
+	    
+	    /* add the newly defined thing to the current environment */
+	    sc->x = find_local_symbol(sc, sc->envir, sc->code);
+	    if (is_not_null(sc->x))
+	      symbol_set_value(sc->x, val); 
+	    else add_slot_to_environment(sc, sc->envir, sc->code, val);
+	  }
+      }
 
       sc->value = sc->code;
       goto START;
@@ -38303,6 +38311,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = cdr(sc->code);
 	goto BEGIN;
       }
+#endif
 
 
     case OP_LET_ALL_G:
@@ -38344,7 +38353,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = cdr(sc->code);
 	goto BEGIN;
       }
-#endif
 
 
     case OP_NAMED_LET:
@@ -39217,7 +39225,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer x, y;
 	if (is_simple(sc->value))
 	  {
-	    for (x = sc->code; is_not_null(x); x = cdr(x))
+	    for (x = sc->code; is_pair(x); x = cdr(x))
 	      {
 		y = caar(x);
 		if (!is_pair(y))
@@ -39231,7 +39239,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	else
 	  {
-	    for (x = sc->code; is_not_null(x); x = cdr(x)) 
+	    for (x = sc->code; is_pair(x); x = cdr(x)) 
 	      {
 		y = caar(x);
 		if (!is_pair(y))
@@ -39523,10 +39531,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* sc->args can't be null here */
 	  
 	  sc->value = safe_reverse_in_place(sc, sc->args);
+	  pair_line_number(sc->value) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
+	  /* I think sc->input_port can't be nil -- it falls back on stdin now */
 
-	  if (is_not_null(sc->input_port))
-	    pair_line_number(sc->value) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
-	  
 	  /* read-time macro expansion
 	   *
 	   *   (defmacro hi (a) (format #t "hi...") `(+ ,a 1))
@@ -44554,12 +44561,8 @@ s7_scheme *s7_init(void)
   car(sc->T3_3) = sc->NIL;
   cdr(sc->T3_3) = sc->NIL;
 
-  sc->input_port = sc->NIL;
   sc->input_is_file = false;
   sc->input_port_stack = sc->NIL;
-  sc->output_port = sc->NIL;
-  sc->error_port = sc->NIL;
-  
   sc->code = sc->NIL;
   sc->cur_code = ERROR_INFO_DEFAULT;
   sc->args = sc->NIL;
