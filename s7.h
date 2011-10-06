@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.95"
-#define S7_DATE "29-Aug-11"
+#define S7_VERSION "1.96"
+#define S7_DATE "6-Oct-11"
 
 
 typedef long long int s7_Int;
@@ -504,6 +504,7 @@ s7_pointer s7_global_environment(s7_scheme *sc);                            /* (
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
 s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer env, s7_pointer bindings);
 s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env);           /* (environment->list env) */
+bool s7_is_environment(s7_pointer e);
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
@@ -597,7 +598,7 @@ bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol);
   /* these are for optimization choices */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
-s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
+s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer e);
 
 void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 
@@ -827,6 +828,9 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 6-Oct:     changed s7_make_closure args: split the code argument in two (args and body).
+ *               s7_make_closure(... code ...) is now s7_make_closure(... car(code), cdr(code) ...)
+ *            s7_is_environment.
  * 29-Aug:    more optimization experiments.
  * 19-Aug:    s7_function_chooser_data.
  * 11-Aug:    s7_symbol_accessor functions. s7_cxxxxr.

@@ -275,6 +275,13 @@ static void xen_symbol_name_set_value(const char *a, s7_pointer b)
 
 static s7_pointer symbol_to_value(s7_pointer code, s7_pointer sym)
 {
+  /*
+  fprintf(stderr, "look for %s: %s, env: %s, %p\n", 
+	  s7_object_to_c_string(s7, sym), 
+	  s7_object_to_c_string(s7, s7_symbol_local_value(s7, sym, s7_cdr(code))),
+	  s7_object_to_c_string(s7, s7_cdr(code)),
+	  s7_cdr(code));
+  */
   return(s7_symbol_local_value(s7, sym, s7_cdr(code)));
 }
 
@@ -3837,7 +3844,7 @@ static xen_value *lambda_form(ptree *prog, s7_pointer form, bool separate, xen_v
   char *err = NULL;
   int locals_loc;
 
-  /* fprintf(stderr, "lambda: %d, %s\n", prog->got_lambda, s7_object_to_c_string(s7, form)); */
+  /* fprintf(stderr, "lambda: %d, %s, %s\n", prog->got_lambda, s7_object_to_c_string(s7, form), s7_object_to_c_string(s7, local_proc)); */
 
   if (prog->got_lambda)
     {
@@ -3845,6 +3852,7 @@ static xen_value *lambda_form(ptree *prog, s7_pointer form, bool separate, xen_v
       ptree *new_tree;
       int outer_locals;
       new_tree = attach_to_ptree(prog);
+
       new_tree->code = local_proc;
       outer_locals = prog->var_ctr;
       /* inner level default arg type is int(?) */
@@ -11965,15 +11973,21 @@ static xen_value *clean_up(xen_value *result, xen_value **args, int args_size);
 
 static xen_value *splice_in_function_body(ptree *prog, s7_pointer proc, xen_value **args, int num_args, const char *funcname)
 {
-  s7_pointer func_form;
-  func_form = s7_car(s7_procedure_source(s7, proc));
+  s7_pointer pform, func_form;
+
+  pform = s7_procedure_source(s7, proc);
+  if (!s7_is_pair(pform))
+    return(NULL);
+
+  func_form = s7_car(pform);
   s7_unoptimize(s7, func_form);
 #if 0
   fprintf(stderr,"splice in %s\n", s7_object_to_c_string(s7, func_form));
-  fprintf(stderr, "list: %d, sym: %d, name: %s\n",
+  fprintf(stderr, "list: %d, sym: %d, name: %s, env: %s\n",
 	  s7_is_list(s7, func_form),
 	  s7_is_symbol(s7_car(func_form)),
-	  s7_symbol_name(s7_car(func_form)));
+	  s7_symbol_name(s7_car(func_form)),
+	  s7_object_to_c_string(s7, s7_cdr(proc)));
 #endif
   if ((s7_is_list(s7, func_form)) &&
       (s7_is_symbol(s7_car(func_form))) &&
@@ -11984,7 +11998,7 @@ static xen_value *splice_in_function_body(ptree *prog, s7_pointer proc, xen_valu
       xen_value *v;
       old_got_lambda = prog->got_lambda;
       prog->got_lambda = true;
-      v = lambda_form(prog, func_form, true, args, num_args, proc);
+      v = lambda_form(prog, func_form, true, args, num_args, pform);
       prog->got_lambda = old_got_lambda;
       if (v) 
 	{
@@ -13381,8 +13395,9 @@ static xen_value *out_any_2(ptree *prog, xen_value **args, int num_args)
 
 static xen_value *out_any_function_body(ptree *prog, s7_pointer proc, xen_value **args, int num_args, const char *funcname)
 {
-  s7_pointer func_form;
-  func_form = s7_car(s7_procedure_source(s7, proc));
+  s7_pointer func_form, pform;
+  pform = s7_procedure_source(s7, proc);
+  func_form = s7_car(pform);
   s7_unoptimize(s7, func_form);
 
   if ((s7_is_list(s7, func_form)) &&
@@ -13401,7 +13416,7 @@ static xen_value *out_any_function_body(ptree *prog, s7_pointer proc, xen_value 
        *   so we first get the lambda form parsed insisting on a declare (hence the 0 num_args),
        *   then pass in the actual args so that the funcall works.
        */
-      v = lambda_form(prog, func_form, true, args, 0, proc); /* must have "declare" here */
+      v = lambda_form(prog, func_form, true, args, 0, pform); /* must have "declare" here */
       prog->got_lambda = old_got_lambda;
       if (v) 
 	{
@@ -14681,9 +14696,15 @@ static xen_value *integer_to_char_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-static xen_value *declare_1(ptree *prog, s7_pointer form, walk_result_t ignore) {return(make_xen_value(R_UNSPECIFIED, -1, R_VARIABLE));}
+static xen_value *declare_1(ptree *prog, s7_pointer form, walk_result_t ignore) 
+{
+  return(make_xen_value(R_UNSPECIFIED, -1, R_VARIABLE));
+}
 
-static xen_value *lambda_preform(ptree *prog, s7_pointer form, walk_result_t ignore) {return(lambda_form(prog, form, true, NULL, 0, scheme_false));}
+static xen_value *lambda_preform(ptree *prog, s7_pointer form, walk_result_t ignore) 
+{
+  return(lambda_form(prog, form, true, NULL, 0, scheme_false));
+}
 
 
 
@@ -16004,7 +16025,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 	  )
 	{
 	  /* fprintf(stderr, "look for %s\n", s7_object_to_c_string(s7, rtnval)); */
-
+	  
 	  v = splice_in_function_body(prog, rtnval, args, num_args, funcname);
 	  if (v) 
 	    return(clean_up(v, args, num_args));
@@ -16023,7 +16044,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
       if ((s7_is_symbol(form)) &&
 	  (s7_is_constant(form)))
 	{
-	  /* fprintf(stderr, "constant form: %s\n", s7_object_to_c_string(s7, form)); */
+	  /* fprintf(stderr, "constant form: %s, %s\n", s7_object_to_c_string(s7, form), s7_object_to_c_string(s7, s7_cdr(prog->code))); */
 	  form = s7_symbol_local_value(s7, form, s7_cdr(prog->code));
 	}
 
@@ -16265,8 +16286,6 @@ static struct ptree *form_to_ptree_1(s7_pointer code, int decls, int *types)
   if (code == scheme_nil) return(NULL);
 
   form = s7_car(code);
-  /* env is cdr in s7 */
-
   prog = make_ptree(8);
 
   prog->lambda_args = decls;
@@ -17137,7 +17156,9 @@ static s7_pointer g_run_eval(s7_pointer code, s7_pointer arg, s7_pointer arg1, s
   if (!s7_is_pair(code))
     return(code);
 
-  cl = s7_make_closure(s7, code, s7_current_environment(s7));
+  /* cl = s7_make_closure(s7, code, s7_current_environment(s7)); */
+  cl = s7_cons(s7, code, s7_current_environment(s7));
+
   gc_loc = s7_gc_protect(s7, cl);
   s7_unoptimize(s7, code);
 
@@ -17243,12 +17264,13 @@ to Scheme and is equivalent to (thunk)."
   
   /* fprintf(stderr, "start: %s\n", s7_object_to_c_string(s7, s7_car(proc_and_code))); */
 
-  s7_unoptimize(s7, s7_car(proc_and_code));
-
-  code = s7_cons(s7, s7_append(s7, s7_cons(s7, s7_make_symbol(s7, "lambda"), 
-					   scheme_nil),
-			       s7_car(proc_and_code)),
-		 s7_cdr(proc_and_code));
+  s7_unoptimize(s7, s7_cdr(proc_and_code));
+  code = s7_cons(s7, s7_append(s7, 
+			       s7_cons(s7, s7_make_symbol(s7, "lambda"), scheme_nil),
+			       s7_cons(s7, 
+				       s7_car(proc_and_code),
+				       s7_cdr(proc_and_code))),
+		 s7_current_environment(s7));
   gc_loc = s7_gc_protect(s7, code);
 
   pt = form_to_ptree(code);

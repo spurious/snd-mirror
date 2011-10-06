@@ -1300,10 +1300,9 @@ struct s7_scheme {
 
 #define is_closure(p)                 (type(p) == T_CLOSURE)
 #define is_closure_star(p)            (type(p) == T_CLOSURE_STAR)
-#define closure_source(Obj)           car(Obj)
-#define closure_args(Obj)             car(closure_source(Obj))
-#define closure_body(Obj)             cdr(closure_source(Obj))
-#define closure_environment(Obj)      cdr(Obj)
+#define closure_args(Obj)             car(Obj)
+#define closure_body(Obj)             cdr(Obj)
+#define closure_environment(Obj)      ecdr(Obj)
 
 #define catch_tag(p)                  (p)->object.rcatch.tag
 #define catch_goto_loc(p)             (p)->object.rcatch.goto_loc
@@ -2021,7 +2020,8 @@ static void mark_closure(s7_pointer p)
   if (!is_marked(p)) 
     {
       set_mark(p);
-      S7_MARK(closure_source(p));
+      S7_MARK(closure_args(p));
+      S7_MARK(closure_body(p));
       mark_environment(closure_environment(p));
     }
 }
@@ -2634,7 +2634,8 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_CLOSURE_STAR:
     case T_MACRO:
     case T_BACRO:
-      s7_remove_from_heap(sc, closure_source(x));
+      s7_remove_from_heap(sc, closure_args(x));
+      s7_remove_from_heap(sc, closure_body(x));
       break;
 
       /* not sure any of these can exist as code-level constants */
@@ -3187,6 +3188,12 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
      } while (0)
 
 
+bool s7_is_environment(s7_pointer e)
+{
+  return(is_environment(e));
+}
+
+
 static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_environment "(environment? obj) returns #t if obj is an environment."
@@ -3207,7 +3214,10 @@ static void add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer va
 	   (is_closure_star(value)) ||
 	   (is_macro(value)) ||
 	   (is_bacro(value))))
-	s7_remove_from_heap(sc, closure_source(value));
+	{
+	  s7_remove_from_heap(sc, closure_args(value));
+	  s7_remove_from_heap(sc, closure_body(value));
+	}
 
       ge = sc->global_env;
       slot = permanent_cons(variable, value, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
@@ -3614,14 +3624,15 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer make_closure(s7_scheme *sc, s7_pointer code, int type) 
+static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, int type) 
 {
   /* this is called every time a lambda form is evaluated, or during letrec, etc */
 
   s7_pointer x;
   NEW_CELL(sc, x);
-  car(x) = code;
-  cdr(x) = sc->envir;
+  closure_args(x) = args;
+  closure_body(x) = code;
+  closure_environment(x) = sc->envir;
   if (type == T_CLOSURE)
     set_type(x, type | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
   else set_type(x, type | T_PROCEDURE | T_DONT_COPY);
@@ -3629,17 +3640,27 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer code, int type)
 }
 
 
-s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
+s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer e)
 {
   /* c is a list: args code, so 
    *   (define (proc a b) (+ a b)) becomes
    *   make_closure ((a b) (+ a b)) e
    */
   s7_pointer p;
-  p = make_closure(sc, c, T_CLOSURE);
-  cdr(p) = e;
+  p = make_closure(sc, a, c, T_CLOSURE);
+  closure_environment(p) = e;
   return(p);
 }
+
+#define MAKE_CLOSURE(Sc, X, Args, Code, Env)	\
+  do { \
+       NEW_CELL(Sc, X); \
+       closure_args(X) = Args; \
+       closure_body(X) = Code; \
+       closure_environment(X) = Env; \
+       set_type(X, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS); \
+      } while (0)
+
 
 
 s7_pointer s7_global_environment(s7_scheme *sc) 
@@ -18710,13 +18731,16 @@ returns the next (key . value) pair in the hash-table each time it is called.  W
   if (!s7_is_hash_table(car(args)))
     return(s7_wrong_type_arg_error(sc, "make-hash-table-iterator", 0, car(args), "a hash-table"));
 
-  return(make_closure(sc, list_2(sc, sc->NIL,                             /* no args to the new function */
-				 list_2(sc, sc->HASH_TABLE_ITERATE,
+  return(make_closure(sc, 
+		      sc->NIL,                             /* no args to the new function */
+		      list_1(sc, list_2(sc, sc->HASH_TABLE_ITERATE,
 					list_2(sc, sc->QUOTE, 
 					       list_3(sc, sc->NIL, car(args), make_mutable_integer(sc, -1))))),
 		      T_CLOSURE));
 }
 
+
+#define hash_table_iterate_args(H) cdadar(closure_body(H))
 
 static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file, shared_info *ci)
 {
@@ -18745,8 +18769,10 @@ static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file
     }
 
   iterator = g_make_hash_table_iterator(sc, list_1(sc, hash));
+
   gc_iter = s7_gc_protect(sc, iterator);
-  iter_loc = cdadar(closure_body(iterator));
+  iter_loc = hash_table_iterate_args(iterator);
+
   elements = (char **)calloc(len, sizeof(char *));
 
   for (i = 0; i < len; i++)
@@ -19109,8 +19135,6 @@ static s7_pointer pws_arity(s7_scheme *sc, s7_pointer obj);
 
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 {
-  /* make it look like an internal lambda form */
-  
   /* in this context, there's no way to distinguish between:
    *    (procedure-source (let ((b 1)) (lambda (a) (+ a b))))
    * and
@@ -20423,26 +20447,23 @@ In each case, the argument is the value of the object, not the object itself."
     /* ? method: (lambda (arg) (s_is_type tag arg)) 
      *     returns #t if arg is of the new type
      */
-    car(result) = make_closure(sc, list_2(sc, 
-					  list_1(sc, sc->S_TYPE_ARG),
-					  list_3(sc, sc->S_IS_TYPE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
-			       T_CLOSURE);
+    car(result) = make_closure(sc, list_1(sc, sc->S_TYPE_ARG),
+			       list_1(sc, list_3(sc, sc->S_IS_TYPE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
+			           T_CLOSURE);
 
     /* make method: (lambda* (arg) (s_type_make tag arg))
      *   returns an object of the new type with its value specified by arg (defaults to #f)
      */
-    cadr(result) = make_closure(sc, list_2(sc, 
-					   list_1(sc, sc->S_TYPE_ARG),
-					   list_3(sc, sc->S_TYPE_MAKE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
-				T_CLOSURE_STAR);
+    cadr(result) = make_closure(sc, list_1(sc, sc->S_TYPE_ARG),
+				list_1(sc, list_3(sc, sc->S_TYPE_MAKE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
+				    T_CLOSURE_STAR);
 
     /* ref method: (lambda (arg) (s_type_ref arg))
      *   returns the value passed to make above 
      */
-    caddr(result) = make_closure(sc, list_2(sc, 
-					    list_1(sc, sc->S_TYPE_ARG),
-					    list_3(sc, sc->S_TYPE_REF, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
-				 T_CLOSURE);
+    caddr(result) = make_closure(sc, list_1(sc, sc->S_TYPE_ARG),
+				 list_1(sc, list_3(sc, sc->S_TYPE_REF, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
+				     T_CLOSURE);
     s7_gc_unprotect_at(sc, result_loc);
     return(result);
   }
@@ -20797,7 +20818,7 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x)
 
     case T_CLOSURE:
     case T_CLOSURE_STAR:
-      return(is_null(caar(x)));
+      return(is_null(closure_args(x)));
 
     case T_C_OBJECT:
       if (object_type(x) == pws_tag)
@@ -21986,7 +22007,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 
 	iterator = g_make_hash_table_iterator(sc, list_1(sc, obj));
 	gc_iter = s7_gc_protect(sc, iterator);
-	iter_loc = cdadar(closure_body(iterator));
+	iter_loc = hash_table_iterate_args(iterator);
 
 	sc->w = sc->NIL;
 	while (true)
@@ -24424,7 +24445,7 @@ static bool next_for_each(s7_scheme *sc)
 	break;
 
       case T_CLOSURE: /* hash-table via an iterator */
-	car(x) = g_hash_table_iterate(sc, cdadar(closure_body(car(y))));  /* cdadadar? I suppose this accessor could be optimized */
+	car(x) = g_hash_table_iterate(sc, hash_table_iterate_args(car(y)));  /* cdadadar? I suppose this accessor could be optimized */
 	break;
 
       case T_STRING:
@@ -24816,7 +24837,7 @@ static bool next_map(s7_scheme *sc)
 	  break;
 
 	case T_CLOSURE:   /* hash-table via an iterator */
-	  x = g_hash_table_iterate(sc, cdr(cadar(closure_body(car(y)))));
+	  x = g_hash_table_iterate(sc, hash_table_iterate_args(car(y)));
 	  break;
 
 	default: 
@@ -28549,6 +28570,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		      set_unsafe(car(x));
 		      set_optimize_data(car(x), ((is_safe_closure(closure_body(func)) ? OP_SAFE_CLOSURE_SSS : OP_CLOSURE_SSS)));
 		      ecdr(car(x)) = func;
+		      fcdr(car(x)) = cadddr(car(x));
 		      return(false);
 		    }
 		}
@@ -33111,7 +33133,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_CLOSURE_SSS:
 		  {
 		    s7_pointer x, y, z;
-		    z = finder(sc, cadddr(code));
+		    /* z = finder(sc, cadddr(code)); */
+		    z = finder(sc, fcdr(code)); 
 		    y = finder(sc, caddr(code));
 		    x = finder(sc, cadr(code));
 		    car(sc->T3_1) = x;
@@ -33471,7 +33494,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer x, y, z, v1, v2, v3, args;
 		    args = cdr(code);
 
-		    v1 = finder(sc, caddr(args));
+		    /* v1 = finder(sc, caddr(args)); */
+		    v1 = finder(sc, fcdr(code));
 		    v2 = finder(sc, cadr(args));
 		    v3 = finder(sc, car(args));
 		    
@@ -33878,6 +33902,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  optimize_data(code) = OP_SAFE_CLOSURE_SSS;
 			else optimize_data(code) = OP_CLOSURE_SSS;
 			ecdr(code) = f;
+			fcdr(code) = cadddr(code);
 			goto OPT_EVAL;
 		      }
 		  }
@@ -35582,11 +35607,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer x, arg1;
 
-		    NEW_CELL(sc, x);
-		    car(x) = cdr(cadr(code));
-		    cdr(x) = sc->envir;
-		    set_type(x, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
-
+		    MAKE_CLOSURE(sc, x, car(cdadr(code)), cdr(cdadr(code)), sc->envir);
 		    NEW_CELL_NO_CHECK(sc, arg1);
 		    set_type(arg1, T_PAIR);
 		    car(arg1) = x;
@@ -35606,12 +35627,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_CALL_WITH_EXIT:
 		  {
 		    s7_pointer x, go;
-		    go = make_goto(sc);
 
-		    NEW_CELL_NO_CHECK(sc, x);
-		    car(x) = cdr(cadr(code));
-		    cdr(x) = sc->envir;
-		    set_type(x, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
+		    go = make_goto(sc);
+		    MAKE_CLOSURE(sc, x, car(cdadr(code)), cdr(cdadr(code)), sc->envir);
 
 		    push_stack(sc, OP_DEACTIVATE_GOTO, go, code); /* code arg is ignored, but perhaps this is safer in GC? */
 		    sc->code = x;
@@ -35629,15 +35647,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_C_LL:
 		  {
 		    s7_pointer x, y, arg1, arg2;
-		    NEW_CELL(sc, x);
-		    car(x) = cdr(cadr(code));
-		    cdr(x) = sc->envir;
-		    set_type(x, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
 
-		    NEW_CELL_NO_CHECK(sc, y);
-		    car(y) = cdr(caddr(code));
-		    cdr(y) = sc->envir;
-		    set_type(y, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
+		    MAKE_CLOSURE(sc, x, car(cdadr(code)), cdr(cdadr(code)), sc->envir);
+		    MAKE_CLOSURE(sc, y, car(cdaddr(code)), cdr(cdaddr(code)), sc->envir);
 
 		    NEW_CELL_NO_CHECK(sc, arg1);
 		    set_type(arg1, T_PAIR);
@@ -35663,10 +35675,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_C_LS:
 		  {
 		    s7_pointer x, arg1, arg2;
-		    NEW_CELL(sc, x);
-		    car(x) = cdr(cadr(code));
-		    cdr(x) = sc->envir;
-		    set_type(x, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
+
+		    MAKE_CLOSURE(sc, x, car(cdadr(code)), cdr(cdadr(code)), sc->envir);
 
 		    NEW_CELL_NO_CHECK(sc, arg1);
 		    set_type(arg1, T_PAIR);
@@ -35696,10 +35706,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_C_L_opSq:
 		  {
 		    s7_pointer x, arg1, arg2;
-		    NEW_CELL(sc, x);
-		    car(x) = cdr(cadr(code));
-		    cdr(x) = sc->envir;
-		    set_type(x, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
+
+		    MAKE_CLOSURE(sc, x, car(cdadr(code)), cdr(cdadr(code)), sc->envir);
 
 		    NEW_CELL_NO_CHECK(sc, arg1);
 		    set_type(arg1, T_PAIR);
@@ -35730,15 +35738,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_C_CLL:
 		  {
 		    s7_pointer x, y, arg1, arg2, arg3;
-		    NEW_CELL(sc, x);
-		    car(x) = cdr(caddr(code));
-		    cdr(x) = sc->envir;
-		    set_type(x, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
 
-		    NEW_CELL_NO_CHECK(sc, y);
-		    car(y) = cdr(cadddr(code));
-		    cdr(y) = sc->envir;
-		    set_type(y, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
+		    MAKE_CLOSURE(sc, x, car(cdaddr(code)), cdr(cdaddr(code)), sc->envir);
+		    MAKE_CLOSURE(sc, y, car(cdr(cadddr(code))), cdr(cdr(cadddr(code))), sc->envir);
 
 		    NEW_CELL_NO_CHECK(sc, arg1);
 		    set_type(arg1, T_PAIR);
@@ -35775,10 +35777,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (!is_null(cadr(caddr(code))))
 		      return(s7_wrong_type_arg_error(sc, "catch", 2, caddr(code), "a thunk"));
 
-		    NEW_CELL(sc, y);
-		    car(y) = cdr(cadddr(code));
-		    cdr(y) = sc->envir;
-		    set_type(y, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
+		    MAKE_CLOSURE(sc, y, car(cdr(cadddr(code))), cdr(cdr(cadddr(code))), sc->envir);
 
 		    NEW_CELL_NO_CHECK(sc, p);
 		    catch_tag(p) = cadr(code);
@@ -36513,10 +36512,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      s7_pointer x, z, env;
 	      unsigned long long int id;
 
-#if 0
-	    SAFE_CLOSURE:
-	      /* fprintf(stderr, "safe: %s\n", DISPLAY(closure_body(sc->code)));  */
-#endif
 	      id = ++frame_number;
 	      env = closure_environment(sc->code);
 	      frame_id(env) = id;
@@ -36938,12 +36933,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       check_define(sc);
 
     case OP_DEFINE_STAR_UNCHECKED:
-      NEW_CELL(sc, sc->value);
-      car(sc->value) = cons_unchecked(sc, cdar(sc->code), cdr(sc->code));
-      cdr(sc->value) = sc->envir;
-      set_type(sc->value, T_CLOSURE_STAR | T_PROCEDURE | T_DONT_COPY);
-      sc->code = caar(sc->code);
-      goto DEFINE1;
+      {
+	s7_pointer x;
+	NEW_CELL(sc, x);
+	closure_args(x) = cdar(sc->code);
+	closure_body(x) = cdr(sc->code);
+	closure_environment(x) = sc->envir;
+	set_type(x, T_CLOSURE_STAR | T_PROCEDURE | T_DONT_COPY);
+	sc->value = x;
+	sc->code = caar(sc->code);
+	goto DEFINE1;
+      }
 
       
     case OP_DEFINE_CONSTANT1:
@@ -36984,10 +36984,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  s7_pointer x;
 	  /* a closure */
-	  NEW_CELL(sc, x);
-	  car(x) = cons_unchecked(sc, cdar(sc->code), cdr(sc->code));
-	  cdr(x) = sc->envir;
-	  set_type(x, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
+	  MAKE_CLOSURE(sc, x, cdar(sc->code), cdr(sc->code), sc->envir);
 	  sc->value = x;
 	  sc->code = caar(sc->code);
 	  /* fall through */
@@ -38125,7 +38122,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_NAMED_LET_NO_VARS:
       NEW_FRAME(sc, sc->envir, sc->envir); 
       sc->args = sc->NIL;                  /* the let args */
-      sc->x = make_closure(sc, cons(sc, sc->NIL, cddr(sc->code)), T_CLOSURE);
+      sc->x = make_closure(sc, sc->NIL, cddr(sc->code), T_CLOSURE);
       add_slot(sc, car(sc->code), sc->x); 
       sc->code = cddr(sc->code);
       sc->x = sc->NIL;
@@ -38396,7 +38393,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer x;
 		for (x = cadr(sc->code), sc->args = sc->NIL; is_pair(x); x = cdr(x)) 
 		  sc->args = cons(sc, caar(x), sc->args);
-		sc->x = make_closure(sc, cons(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code)), T_CLOSURE);
+		sc->x = make_closure(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code), T_CLOSURE);
 	    
 		add_slot(sc, car(sc->code), sc->x); 
 		sc->code = cddr(sc->code);
@@ -38485,7 +38482,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      for (x = cadr(sc->code), sc->args = sc->NIL; is_pair(x); x = cdr(x)) 
 		sc->args = cons(sc, caar(x), sc->args);
-	      sc->x = make_closure(sc, cons(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code)), T_CLOSURE);
+	      sc->x = make_closure(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code), T_CLOSURE);
 	      
 	      add_slot(sc, car(sc->code), sc->x); 
 	      sc->code = cddr(sc->code);
@@ -38995,30 +38992,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->x = car(sc->code);
       sc->z = cdr(sc->code);
       sc->y = s7_gensym(sc, "defmac");
-      sc->code = cons(sc, 
-		      list_1(sc, sc->y),
-		      list_1(sc, 
-				  cons(sc, 
-				       sc->APPLY,
-				       cons(sc, 
-					    cons(sc, 
-						 (sc->op == OP_DEFMACRO_STAR) ? sc->LAMBDA_STAR : sc->LAMBDA,
-						 sc->z),
-					    list_1(sc, list_2(sc, sc->CDR, sc->y))))));
-      
-      /* so, (defmacro hi (a b) `(+ ,a ,b)) becomes:
+      /* (defmacro hi (a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
-       *   sc->code: (lambda (defmac-21) 
+       *   code: (lambda (defmac-21) 
        *               (apply (lambda (a b) 
        *                        (cons (quote +) (cons a (cons b (quote ()))))) 
        *                      (cdr defmac-21)))
        */
+      NEW_CELL_NO_CHECK(sc, sc->value);
+      closure_args(sc->value) = list_1(sc, sc->y);
+      closure_body(sc->value) = list_1(sc, 
+				       cons(sc, 
+					    sc->APPLY,
+					    cons(sc, 
+						 cons(sc, 
+						      (sc->op == OP_DEFMACRO_STAR) ? sc->LAMBDA_STAR : sc->LAMBDA,
+						      sc->z),
+						 list_1(sc, list_2(sc, sc->CDR, sc->y)))));
+      closure_environment(sc->value) = sc->envir;
+      sc->code = sc->x;
       sc->y = sc->NIL;
       sc->z = sc->NIL;
-      NEW_CELL_NO_CHECK(sc, sc->value);
-      car(sc->value) = sc->code;
-      cdr(sc->value) = sc->envir;
-      sc->code = sc->x;
       goto MACRO;
 
 
@@ -39060,34 +39054,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     DEFINE_MACRO2:
       sc->x = caar(sc->code);
       sc->z = cdr(sc->code);
-
       sc->y = s7_gensym(sc, "defmac");
-      sc->code = cons(sc, 
-		      list_1(sc, sc->y),
-		      list_1(sc, 
-				  cons(sc, 
-				       sc->APPLY,
-				       cons(sc, 
-					    cons(sc, 
-						 ((sc->op == OP_DEFINE_MACRO_STAR) || 
-						  (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
-						 cons(sc,                /* cdar(sc->code) is the parameter list */
-						      ((sc->op == OP_DEFINE_MACRO_STAR) || 
-						       (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
-						      sc->z)),
-					    list_1(sc, list_2(sc, sc->CDR, sc->y))))));
-
       /* (define-macro (hi a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
        *   sc->code: (lambda ({defmac}-14) (apply (lambda (a b) ({list} '+ a b)) (cdr {defmac}-14)))
        */
-      
+      NEW_CELL_NO_CHECK(sc, sc->value);
+      closure_args(sc->value) = list_1(sc, sc->y);
+      closure_body(sc->value) = list_1(sc, 
+					 cons(sc, 
+					      sc->APPLY,
+					      cons(sc, 
+						   cons(sc, 
+							((sc->op == OP_DEFINE_MACRO_STAR) || 
+							 (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
+							cons(sc,                /* cdar(sc->code) is the parameter list */
+							     ((sc->op == OP_DEFINE_MACRO_STAR) || 
+							      (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
+							     sc->z)),
+						   list_1(sc, list_2(sc, sc->CDR, sc->y)))));
+      closure_environment(sc->value) = sc->envir;
+      sc->code = sc->x; 
       sc->y = sc->NIL;
       sc->z = sc->NIL;
-      NEW_CELL_NO_CHECK(sc, sc->value);
-      car(sc->value) = sc->code;
-      cdr(sc->value) = sc->envir;
-      sc->code = sc->x; 
 
     MACRO:
       /* symbol? macro name has already been checked */
@@ -39138,11 +39127,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
     case OP_LAMBDA_UNCHECKED:
-      /* sc->value = make_closure(sc, sc->code, T_CLOSURE); */
-      NEW_CELL(sc, sc->value);
-      car(sc->value) = sc->code;
-      cdr(sc->value) = sc->envir;
-      set_type(sc->value, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
+      MAKE_CLOSURE(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir);
       goto START;
 
 
@@ -39167,7 +39152,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
     case OP_LAMBDA_STAR_UNCHECKED:
-      sc->value = make_closure(sc, sc->code, T_CLOSURE_STAR);
+      sc->value = make_closure(sc, car(sc->code), cdr(sc->code), T_CLOSURE_STAR);
       goto START;
       
 

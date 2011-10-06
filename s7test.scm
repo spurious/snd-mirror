@@ -12510,6 +12510,8 @@ time, so that the displayed results are
 (test (let ((x '(1))) (eval `(case ',x ((,x) 1) (else 0)))) 1)    ; but we can overcome that!
 (test (let ((x #())) (eval `(case ',x ((,x) 1) (else 0)))) 1)
 (test (case ''2 (('2) 1) (else 0)) 0)
+(test (let ((otherwise else)) (case 1 ((0) 123) (otherwise 321))) 321)
+(test (case 1 ((0) 123) (#t 321)) 'error)
 
 (test (case else ((#f) 2) ((#t) 3) ((else) 4) (else 5)) 5)          ; (eqv? 'else else) is #f (Guile says "unbound variable: else")
 (test (case #t ((#f) 2) ((else) 4) (else 5)) 5)                     ; else is a symbol here         

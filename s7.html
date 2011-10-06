@@ -6135,26 +6135,22 @@ static s7_pointer define_closure(s7_scheme *sc, const char *name, s7_pointer fun
   /* make_closure creates a new closure with x_value as the local value of x,
    *   and func as the function.  It defines this in Scheme as "name".  
    *
-   *   s7_make_closure's arguments are the closure code as (&lt;args&gt; &lt;code&gt;), and
-   *   the closure's environment.  For the first part, we'll use '((y) (f y)),
-   *   and for the second, we'll augment the current environment with
-   *   ((x . x_value) (f . func)).
+   *   s7_make_closure's arguments are the closure args and body, and
+   *   the closure's environment.  For the args, we'll use '(y), and
+   *   the body is '(f y));  for the the environment, we'll augment 
+   *   the current environment with '((x . x_value) (f . func)).
    */
   s7_define(sc, 
 	    s7_nil(sc),
 	    s7_make_symbol(sc, name),
 	    <em class=red>s7_make_closure</em>(sc, 
-			    s7_cons(sc, 
-				    s7_cons(sc,            /* closure arg list: '(y) */
-				            s7_make_symbol(sc, "y"), 
-                                            s7_nil(sc)), 
-				    s7_cons(sc,            /* closure code: (f y) */
-					    s7_cons(sc,                              
-						    s7_make_symbol(sc, "f"),
-						    s7_cons(sc, 
-                                                            s7_make_symbol(sc, "y"), 
-                                                            s7_nil(sc))),
-					    s7_nil(sc))),
+			    s7_cons(sc,                         /* arg list: '(y) */
+			            s7_make_symbol(sc, "y"), s7_nil(sc)), 
+			    s7_cons(sc,                         /* body: '(f y) */
+				    s7_cons(sc,                              
+					    s7_make_symbol(sc, "f"),
+					    s7_cons(sc, s7_make_symbol(sc, "y"), s7_nil(sc))),
+				    s7_nil(sc)),
 			    <em class=red>s7_augment_environment</em>(sc, 
 						   s7_current_environment(sc), 
 						   s7_cons(sc, 
