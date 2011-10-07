@@ -160,39 +160,39 @@
 		  (map 
 		   (lambda (op) 
 		     (cons op #t)) 
-		   (list '* '+ '- '/ '< '<= '= '> '>= 
-			 'abs 'acos 'acosh 'and 'angle 'append 'ash 'asin 'asinh 'assoc 'assq 'assv 'atan 'atanh 
-			 'begin 'boolean? 
-			 'caaaar 'caaadr 'caaar 'caadar 'caaddr 'caadr 'caar 'cadaar 'cadadr 'cadar 'caddar 'cadddr 'caddr 'cadr 
-			 'call-with-exit 'car 'case 'catch 'cdaaar 'cdaadr 'cdaar 'cdadar 'cdaddr 'cdadr 'cdar 'cddaar 'cddadr 
-			 'cddar 'cdddar 'cddddr 'cdddr 'cddr 'cdr 'ceiling 'char->integer 'char-alphabetic? 'char-ci<=? 'char-ci<? 
-			 'char-ci=? 'char-ci>=? 'char-ci>? 'char-downcase 'char-lower-case? 'char-numeric? 'char-ready? 'char-upcase 
-			 'char-upper-case? 'char-whitespace? 'char<=? 'char<? 'char=? 'char>=? 'char>? 'char? 'complex? 'cond 
-			 'cons 'constant? 'continuation? 'copy 'cos 'cosh 'current-environment 'current-error-port 'current-input-port 'current-output-port 
-			 'defined? 'denominator 'do 'dynamic-wind 
-			 'eof-object? 'eq? 'equal? 'eqv? 'even? 'exact->inexact 'exact? 'exp 'expt 
-			 'floor 'for-each 
-			 'gcd 'gensym 'global-environment 
-			 'hash-table 'hash-table-ref 'hash-table-size 'hash-table? 'hook 'hook-apply 'hook-arity 'hook-documentation 'hook-functions 'hook? 
-			 'if 'imag-part 'inexact->exact 'inexact? 'infinite? 'initial-environment 'input-port?  'integer->char 'integer-decode-float 
-			 'integer-length 'integer? 
-			 'keyword->symbol 'keyword? 
-			 'lambda 'lcm 'length 'let 'let* 'letrec 'letrec* 'list 'list->string 'list->vector 'list-ref 'list-tail 
-			 'list? 'log 'logand 'logior 'lognot 'logxor 
-			 'macro? 'magnitude 'make-hash-table 'make-hook 'make-keyword 'make-list 'make-polar 'make-procedure-with-setter 
-			 'make-random-state 'make-rectangular 'make-string 'make-type 'make-vector 'map 'max 'member 'memq 'memv 'min 'modulo 
-			 'nan? 'negative? 'not 'null? 'number->string 'number? 'numerator 
-			 'object->string 'odd? 'or 'output-port? 
-			 'pair? 'port-closed? 'port-filename 'port-line-number 'positive? 'procedure-arity 'procedure-documentation 'procedure-environment 
-			 'procedure-source 'procedure-with-setter? 'procedure? 'provided? 
-			 'quasiquote 'quote 'quotient 
-			 'random 'rational? 'rationalize 'real-part 'real? 'remainder 'reverse 'round 
-			 's7-version 'sin 'sinh 'sqrt 'string 'string->list 'string->number 'string->symbol 'string-append 'string-ci<=? 'string-ci<? 
-			 'string-ci=? 'string-ci>=? 'string-ci>? 'string-copy 'string-length 'string-ref 'string<=? 'string<? 'string=? 'string>=? 
-			 'string>? 'string? 'substring 'symbol 'symbol->keyword 'symbol->string 'symbol->value 'symbol? 
-			 'tan 'tanh 'truncate 
-			 'vector 'vector->list 'vector-dimensions 'vector-length 'vector-ref 'vector? 
-			 'zero?))))
+		   '(* + - / < <= = > >= 
+		       abs acos acosh and angle append ash asin asinh assoc assq assv atan atanh 
+		       begin boolean? 
+		       caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr cadr 
+		       call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr 
+		       cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=? char-ci<? 
+		       char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? char-ready? char-upcase 
+		       char-upper-case? char-whitespace? char<=? char<? char=? char>=? char>? char? complex? cond 
+		       cons constant? continuation? copy cos cosh current-environment current-error-port current-input-port current-output-port 
+		       defined? denominator do dynamic-wind 
+		       eof-object? eq? equal? eqv? even? exact->inexact exact? exp expt 
+		       floor for-each 
+		       gcd gensym global-environment 
+		       hash-table hash-table-ref hash-table-size hash-table? hook hook-apply hook-arity hook-documentation hook-functions hook? 
+		       if imag-part inexact->exact inexact? infinite? initial-environment input-port?  integer->char integer-decode-float 
+		       integer-length integer? 
+		       keyword->symbol keyword? 
+		       lambda lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
+		       list? log logand logior lognot logxor 
+		       macro? magnitude make-hash-table make-hook make-keyword make-list make-polar make-procedure-with-setter 
+		       make-random-state make-rectangular make-string make-type make-vector map max member memq memv min modulo 
+		       nan? negative? not null? number->string number? numerator 
+		       object->string odd? or output-port? 
+		       pair? port-closed? port-filename port-line-number positive? procedure-arity procedure-documentation procedure-environment 
+		       procedure-source procedure-with-setter? procedure? provided? 
+		       quasiquote quote quotient 
+		       random rational? rationalize real-part real? remainder reverse round 
+		       s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
+		       string-ci=? string-ci>=? string-ci>? string-copy string-length string-ref string<=? string<? string=? string>=? 
+		       string>? string? substring symbol symbol->keyword symbol->string symbol->value symbol? 
+		       tan tanh truncate 
+		       vector vector->list vector-dimensions vector-length vector-ref vector? 
+		       zero?))))
 	  
 	  (function-types (hash-table 
 			   (cons '* 2) ; if it might be an int, use 2, else 1
