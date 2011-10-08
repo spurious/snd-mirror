@@ -194,7 +194,7 @@
 
 #ifndef WITH_OPTIMIZATION
 #define WITH_OPTIMIZATION 1
-  /* this currently speeds s7 up by about 238 to 141 in callgrind terms.
+  /* this currently speeds s7 up by about 237 to 138 in callgrind terms.
    *    a lot of the current optimization choices are just experiments (I'll clean up this mess some day).
    *    the completely unrealistic goal, of course, is to replace the run macro.
    */
@@ -346,7 +346,7 @@ enum {OP_NO_OP,
       OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_SZ_1, OP_SAFE_C_ZS_1,
       OP_SAFE_C_ZXX_1, OP_SAFE_C_XZX_1, OP_SAFE_C_XXZ_1, 
       OP_SAFE_C_ZZX_1, OP_SAFE_C_ZZX_2, OP_SAFE_C_ZXZ_1, OP_SAFE_C_ZXZ_2, OP_SAFE_C_XZZ_1, OP_SAFE_C_XZZ_2, 
-      OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2, OP_SAFE_C_ZZZ_3, 
+      OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2, OP_SAFE_C_ZZZ_3, OP_SAFE_C_opSq_P_1, 
 #endif
       OP_MAX_DEFINED_1};
 
@@ -411,7 +411,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "safe-c-zz-1", "safe-c-zz-2", "safe-c-sz-1", "safe-c-zs-1",
    "safe-c-zxx-1", "safe-c-xzx-1", "safe-c-xxz-1", 
    "safe-c-zzx-1", "safe-c-zzx-2", "safe-c-zxz-1", "safe-c-zxz-2", "safe-c-xzz-1", "safe-c-xzz-2", 
-   "safe-c-zzz-1", "safe-c-zzz-2", "safe-c-zzz-3", 
+   "safe-c-zzz-1", "safe-c-zzz-2", "safe-c-zzz-3", "safe_c_opsq_p_1",
 #endif
    
    "op-max"
@@ -485,7 +485,8 @@ enum{OP_NOT_AN_OP, HOP_NOT_AN_OP,
      OP_UNKNOWN_S_opSq, HOP_UNKNOWN_S_opSq,
 
      OP_SAFE_C_P, HOP_SAFE_C_P,
-     OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P, OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, 
+     OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P, 
+     OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, 
      OP_SAFE_C_PS, HOP_SAFE_C_PS, OP_SAFE_C_PC, HOP_SAFE_C_PC, 
 
      OP_SAFE_C_Z, HOP_SAFE_C_Z, OP_SAFE_C_ZZ, HOP_SAFE_C_ZZ, OP_SAFE_C_SZ, HOP_SAFE_C_SZ, OP_SAFE_C_ZS, HOP_SAFE_C_ZS, 
@@ -568,7 +569,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "unknown_s_opsq", "h_unknown_s_opsq", 
 
      "safe_c_p", "h_safe_c_p",
-     "safe_c_opsq_p", "h_safe_c_opsq_p", "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", 
+     "safe_c_opsq_p", "h_safe_c_opsq_p", 
+     "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", 
      "safe_c_ps", "h_safe_c_ps", "safe_c_pc", "h_safe_c_pc", 
 
      "safe_c_z", "h_safe_c_z", "safe_c_zz", "h_safe_c_zz", "safe_c_sz", "h_safe_c_sz", "safe_c_zs", "h_safe_c_zs", 
@@ -840,7 +842,7 @@ struct s7_scheme {
   s7_pointer initial_env;             /* original bindings of predefined functions */
   
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND;
-  s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY, QQ_APPEND, MULTIVECTOR;
+  s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY_VALUES, QQ_APPEND, MULTIVECTOR;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer SIMPLE_WRONG_TYPE_ARG_INFO, SIMPLE_OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
@@ -2058,7 +2060,6 @@ static void mark_stack_1(s7_pointer p, s7_Int top)
 }
 
 
-
 static void mark_continuation(s7_pointer p)
 {
   if (!is_marked(p)) 
@@ -3123,13 +3124,13 @@ static unsigned long long int frame_number = 0;
 
 #define NEW_FRAME(Sc, Old_Env, New_Env)  \
   do {                                   \
-      s7_pointer x;                      \
-      NEW_CELL(Sc, x);                   \
-      frame_id(x) = ++frame_number; \
-      car(x) = Sc->NIL;                  \
-      cdr(x) = Old_Env;		         \
-      set_type(x, T_ENVIRONMENT); \
-      New_Env = x;		   \
+      s7_pointer _x_;                      \
+      NEW_CELL(Sc, _x_);                   \
+      frame_id(_x_) = ++frame_number; \
+      car(_x_) = Sc->NIL;                  \
+      cdr(_x_) = Old_Env;		         \
+      set_type(_x_, T_ENVIRONMENT); \
+      New_Env = _x_;		   \
      } while (0)
 
 
@@ -3148,29 +3149,29 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 
 #define ADD_SLOT(Frame, Symbol, Value) \
   do {\
-    s7_pointer slot;\
-    NEW_CELL_NO_CHECK(sc, slot);\
-    car(slot) = Symbol;\
-    cdr(slot) = Value;\
-    set_type(slot, T_PAIR | T_IMMUTABLE | T_DONT_COPY);\
-    ecdr(slot) = car(Frame);\
-    car(Frame) = slot;\
-    symbol_id(car(slot)) = frame_id(Frame);	\
-    symbol_local_slot(car(slot)) = slot;\
+    s7_pointer _slot_;\
+    NEW_CELL_NO_CHECK(sc, _slot_);\
+    car(_slot_) = Symbol;\
+    cdr(_slot_) = Value;\
+    set_type(_slot_, T_PAIR | T_IMMUTABLE | T_DONT_COPY);\
+    ecdr(_slot_) = car(Frame);\
+    car(Frame) = _slot_;\
+    symbol_id(car(_slot_)) = frame_id(Frame);	\
+    symbol_local_slot(car(_slot_)) = _slot_;\
   } while (0)
 
 
 #define ADD_SLOT_CHECKED(Frame, Symbol, Value) \
   do {\
-    s7_pointer slot;\
-    NEW_CELL(sc, slot);\
-    car(slot) = Symbol;\
-    cdr(slot) = Value;\
-    set_type(slot, T_PAIR | T_IMMUTABLE | T_DONT_COPY);\
-    ecdr(slot) = car(Frame);\
-    car(Frame) = slot;\
-    symbol_id(car(slot)) = frame_id(Frame);	\
-    symbol_local_slot(car(slot)) = slot;\
+    s7_pointer _slot_;\
+    NEW_CELL(sc, _slot_);\
+    car(_slot_) = Symbol;\
+    cdr(_slot_) = Value;\
+    set_type(_slot_, T_PAIR | T_IMMUTABLE | T_DONT_COPY);\
+    ecdr(_slot_) = car(Frame);\
+    car(Frame) = _slot_;\
+    symbol_id(car(_slot_)) = frame_id(Frame);	\
+    symbol_local_slot(car(_slot_)) = _slot_;\
   } while (0)
 
 /* no set_local here -- presumably done earlier in check_* 
@@ -3179,20 +3180,20 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 
 #define NEW_FRAME_WITH_SLOT(Sc, Old_Env, New_Env, Symbol, Value) \
   do {                                   \
-      s7_pointer x, slot;			 \
-      NEW_CELL(Sc, x);                   \
-      frame_id(x) = ++frame_number; \
-      cdr(x) = Old_Env;		         \
-      set_type(x, T_ENVIRONMENT); \
-      New_Env = x;		   \
-      NEW_CELL_NO_CHECK(Sc, slot);\
-      car(slot) = Symbol;\
-      cdr(slot) = Value;\
-      set_type(slot, T_PAIR | T_IMMUTABLE | T_DONT_COPY);\
-      ecdr(slot) = sc->NIL;\
-      car(x) = slot;\
-      symbol_id(car(slot)) = frame_number;	\
-      symbol_local_slot(car(slot)) = slot;\
+      s7_pointer _x_, _slot_;			 \
+      NEW_CELL(Sc, _x_);                   \
+      frame_id(_x_) = ++frame_number; \
+      cdr(_x_) = Old_Env;		         \
+      set_type(_x_, T_ENVIRONMENT); \
+      New_Env = _x_;		   \
+      NEW_CELL_NO_CHECK(Sc, _slot_);\
+      car(_slot_) = Symbol;\
+      cdr(_slot_) = Value;\
+      set_type(_slot_, T_PAIR | T_IMMUTABLE | T_DONT_COPY);\
+      ecdr(_slot_) = sc->NIL;\
+      car(_x_) = _slot_;\
+      symbol_id(car(_slot_)) = frame_number;	\
+      symbol_local_slot(car(_slot_)) = _slot_;\
      } while (0)
 
 
@@ -25053,6 +25054,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	case OP_EVAL_ARGS_P_2:
 	case OP_EVAL_ARGS_P_3:
 	case OP_EVAL_ARGS_P_4:
+	case OP_SAFE_C_opSq_P_1:
 #endif
 	  /* it's not safe to simply reverse args and tack the current stacked args onto its (new) end,
 	   *   setting stacked args to cdr of reversed-args and returning car because the list (args)
@@ -25228,6 +25230,29 @@ static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
   return(g_values(sc, args));
 }
 
+
+static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
+{
+  #define H_apply_values "({apply-values} var) applies values to var.  This is an internal function."
+  s7_pointer x;
+
+  if (is_null(args))
+    {
+      sc->no_values++;
+      return(sc->NO_VALUE);
+    }
+  if (is_null(cdr(args)))
+    x = car(args);
+  else x = apply_list_star(sc, args);
+
+  if (!is_proper_list(sc, x))
+    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+		    list_2(sc, 
+			   make_protected_string(sc, "apply's last argument should be a proper list: ~A"),
+			   args)));
+
+  return(g_qq_values(sc, x));
+}
 
 /* (apply values ...) replaces (unquote_splicing ...)
  *
@@ -27251,7 +27276,7 @@ static s7_pointer string_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7
   if (args == 2)
     {
       if (s7_is_string(caddr(expr)))
-	return(string_equal_s_ic);
+	return(string_equal_s_ic); /* TODO: perhaps save constant len in optimize_data_index? (it's a short) */
       return(string_equal_2);
     }
   return(f);
@@ -28157,7 +28182,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		}
 	    }
 	  /*
-	  if ((!is_optimized(car(x))) && (pairs > 0) && (bad_pairs == quotes))
+	  if (!is_optimized(car(x)))
 	    fprintf(stderr, "1 case: %s\n", DISPLAY_80(car(x)));
 	  */
 	  break; 
@@ -28550,6 +28575,45 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      */
 	      return(true);
 	    }
+
+	  if ((!is_optimized(car(x))) &&
+	      (pairs == 2) &&
+	      (is_c_function(func)) &&
+	      (is_safe_procedure(func)))
+	    {
+	      if ((bad_pairs == 1) &&
+		  (is_optimized(cadar(x))) &&
+		  (optimize_data_match(cadar(x), OP_SAFE_C_S)))
+		{
+		  /* unsafe func here won't work unless we check that later and make the new arg list (for {list} etc) */
+		  set_unsafe(car(x));
+		  set_optimized(car(x));
+		  set_optimize_data(car(x), OP_SAFE_C_opSq_P);
+		  set_c_function(car(x), func);
+
+		  /* TODO: why not c_function_chooser here and wherever we're safe?
+		   */
+		  return(false);
+
+		  /* also common C-C and C-P
+		   */
+		}
+	      /*
+	      fprintf(stderr, "%d %s %s %s\n", bad_pairs, 
+		      (is_optimized(cadar(x))) ? opt_names[optimize_data(cadar(x))] : "unopt", 
+		      (is_optimized(caddar(x))) ? opt_names[optimize_data(caddar(x))] : "unopt", 
+		      DISPLAY_80(car(x)));
+	      */
+	      /* both unopt
+	       * both opt! [sp cases etc]
+	       * safe + safe_c_c and safe_c_c?? with one calling itself bad?? (eq? (global-environment) (initial-environment))
+	       * unopt safe_c_c
+	       * unopt safe_c_s
+	       * h_unknown_s_opsq h_unknown_s_opsq (lint)
+	       * h_safe_c_sp h_safe_c_ss (> (- call-args (keywords (cdr form)))?? and the other case
+	       */
+	    }
+
 	  /*
 	  if (!is_optimized(car(x)))
 	    fprintf(stderr, "2 case: %s\n", DISPLAY_80(car(x)));
@@ -35436,6 +35500,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		  
+		case OP_SAFE_C_opSq_P:
+		  if (!c_function_is_ok(sc, code))
+		    break;
+		  if (!c_function_is_ok(sc, cadr(code)))
+		    break;
+		  
+		case HOP_SAFE_C_opSq_P:
+		  {
+		    s7_pointer args;
+		    args = cadr(code);
+		    car(sc->T1_1) = finder(sc, cadr(args));
+		    push_stack(sc, OP_SAFE_C_opSq_P_1, list_1(sc, c_call(args)(sc, sc->T1_1)), sc->code);
+		    sc->code = caddr(code);
+		    goto EVAL_PAIR;
+		  }
+
+		  
 		case OP_SAFE_C_opCq_S:
 		  if (!c_function_is_ok(sc, code))
 		    break;
@@ -35900,13 +35981,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		case HOP_C_CATCH:
 		  {
-		    s7_pointer y, p, z;
+		    s7_pointer y, p, z, args;
 		    /* code is (catch #t (lambda () ....) (lambda args ....)) */
 
-		    if (!is_null(cadr(caddr(code))))
-		      return(s7_wrong_type_arg_error(sc, "catch", 2, caddr(code), "a thunk"));
+		    args = cddr(code);
+		    if (!is_null(cadar(args)))
+		      return(s7_wrong_type_arg_error(sc, "catch", 2, car(args), "a thunk"));
 		    
-		    z = cdr(cadddr(code));
+		    z = cdadr(args);
 		    MAKE_CLOSURE(sc, y, car(z), cdr(z), sc->envir);
 
 		    NEW_CELL_NO_CHECK(sc, p);
@@ -35917,7 +35999,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_type(p, T_CATCH | T_DONT_COPY);
 
 		    push_stack(sc, OP_CATCH, code, p); /* code ignored here, except by GC */
-		    sc->code = cddr(caddr(code));
+		    sc->code = cddar(args);
 		    NEW_FRAME(sc, sc->envir, sc->envir);
 		    goto BEGIN;
 		  }
@@ -36279,6 +36361,46 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       car(sc->T3_2) = pop_op_stack(sc);
       car(sc->T3_3) = sc->value;
       sc->value = c_call(sc->code)(sc, sc->T3_1);
+      goto START;
+
+    case OP_SAFE_C_opSq_P_1:
+      if (is_null(cdr(sc->args))) /* values not called */
+	{
+	  car(sc->T2_2) = sc->value;
+	  car(sc->T2_1) = car(sc->args);
+	  sc->value = c_call(sc->code)(sc, sc->T2_1);
+	}
+      else
+	{
+	  /* here we need an argnum check since values could have appended any number of args
+	   * (let () (define (arg2 a) (let ((b 1)) (set! b (+ a b)) (values b a))) (define (hi c) (expt (abs c) (arg2 2))) (hi 2))
+	   */
+	  unsigned int len;
+	  len = safe_list_length(sc, sc->args); 
+	  /* can values return an improper or circular list?  I don't think so:
+	   *   (values 1 . 2) -> improper arg list error (same with apply values)
+	   */
+
+	  /* fprintf(stderr, "len: %d, args: %d, %s\n", len, c_function_all_args(ecdr(sc->code)), DISPLAY(sc->args)); */
+
+	  /* TODO: (values) here ! 
+	   * :(let () (define (arg2 a) (let ((b 1)) (set! b (+ a b)) (values))) (define (hi c) (expt (abs c) (arg2 2))) (hi 2))
+	   * ;expt power, argument 2, #<unspecified>, is an untyped but should be a number
+	   *
+	   * also:
+	   * :(s7-version (values))
+	   * ;s7-version: too many arguments: (#<unspecified>)
+	   * :(exp (values) 0.0)
+	   *;exp: too many arguments: (#<unspecified> 0.0)
+	   */
+	  if (c_function_all_args(ecdr(sc->code)) < (len + 1)) /* + 1 because we have the last arg waiting */
+	    return(s7_error(sc, 
+			    sc->WRONG_NUMBER_OF_ARGS, 
+			    list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+
+	  sc->args = safe_reverse_in_place(sc, cons(sc, sc->value, sc->args));
+	  sc->value = c_call(sc->code)(sc, sc->args);
+	}
       goto START;
 #endif
       
@@ -37817,11 +37939,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL_PAIR;
 
     case OP_IF_B_P:
-      push_stack(sc, OP_IF_PP, sc->NIL, cadr(sc->code));
-      sc->code = car(sc->code);
-      sc->op = (opcode_t)syntax_opcode(car(sc->code));
-      sc->code = cdr(sc->code);
-      goto START_WITHOUT_POP_STACK;
+      {
+	s7_pointer code;
+	code = sc->code;
+	push_stack(sc, OP_IF_PP, sc->NIL, cadr(code));
+	code = car(code);
+	sc->op = (opcode_t)syntax_opcode(car(code));
+	sc->code = cdr(code);
+	goto START_WITHOUT_POP_STACK;
+      }
 
     case OP_IF_PP:
       if (is_true(sc, sc->value))
@@ -38080,69 +38206,93 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_SAFE_IF_P_X:
-      if (is_true(sc, c_call(car(sc->code))(sc, cdar(sc->code))))
-	{
-	  if (is_symbol(cadr(sc->code)))
-	    sc->value = finder(sc, cadr(sc->code));
-	  else sc->value = cadr(sc->code);
-	}
-      else sc->value = sc->UNSPECIFIED;
-      goto START;
+      {
+	s7_pointer code;
+	code = sc->code;
+	if (is_true(sc, c_call(car(code))(sc, cdar(code))))
+	  {
+	    if (is_symbol(cadr(code)))
+	      sc->value = finder(sc, cadr(code));
+	    else sc->value = cadr(code);
+	  }
+	else sc->value = sc->UNSPECIFIED;
+	goto START;
+      }
 
 
     case OP_SAFE_IF_P_X_P:
-      if (is_true(sc, c_call(car(sc->code))(sc, cdar(sc->code))))
-	{
-	  if (is_symbol(cadr(sc->code)))
-	    sc->value = finder(sc, cadr(sc->code));
-	  else sc->value = cadr(sc->code);
-	  goto START;
-	}
-      sc->code = caddr(sc->code);
-      goto EVAL_PAIR;
+      {
+	s7_pointer code;
+	code = sc->code;
+	if (is_true(sc, c_call(car(code))(sc, cdar(code))))
+	  {
+	    if (is_symbol(cadr(code)))
+	      sc->value = finder(sc, cadr(code));
+	    else sc->value = cadr(code);
+	    goto START;
+	  }
+	sc->code = caddr(code);
+	goto EVAL_PAIR;
+      }
 
 
     case OP_SAFE_IF_P_P:
-      if (is_true(sc, c_call(car(sc->code))(sc, cdar(sc->code))))
-	{
-	  sc->code = cadr(sc->code);
-	  goto EVAL_PAIR;
-	}
-      else sc->value = sc->UNSPECIFIED;
-      goto START;
+      {
+	s7_pointer code;
+	code = sc->code;
+	if (is_true(sc, c_call(car(code))(sc, cdar(code))))
+	  {
+	    sc->code = cadr(code);
+	    goto EVAL_PAIR;
+	  }
+	else sc->value = sc->UNSPECIFIED;
+	goto START;
+      }
 
 
     case OP_SAFE_IF_P_P_P:
-      if (is_true(sc, c_call(car(sc->code))(sc, cdar(sc->code))))
-	sc->code = cadr(sc->code);
-      else sc->code = caddr(sc->code);
-      goto EVAL_PAIR;
+      {
+	s7_pointer code;
+	code = sc->code;
+	if (is_true(sc, c_call(car(code))(sc, cdar(code))))
+	  sc->code = cadr(code);
+	else sc->code = caddr(code);
+	goto EVAL_PAIR;
+      }
 
 
     case OP_SAFE_IF_R_X_P:
-      car(sc->T1_1) = finder(sc, cadar(sc->code));
-      if (is_true(sc, c_call(car(sc->code))(sc, sc->T1_1)))
-	{
-	  if (is_symbol(cadr(sc->code)))
-	    sc->value = finder(sc, cadr(sc->code));
-	  else sc->value = cadr(sc->code);
-	  goto START;
-	}
-      sc->code = caddr(sc->code);
-      goto EVAL_PAIR;
+      {
+	s7_pointer code;
+	code = sc->code;
+	car(sc->T1_1) = finder(sc, cadar(code));
+	if (is_true(sc, c_call(car(code))(sc, sc->T1_1)))
+	  {
+	    if (is_symbol(cadr(code)))
+	      sc->value = finder(sc, cadr(code));
+	    else sc->value = cadr(code);
+	    goto START;
+	  }
+	sc->code = caddr(code);
+	goto EVAL_PAIR;
+      }
 
 
     case OP_SAFE_IF_R_P_X:
-      car(sc->T1_1) = finder(sc, cadar(sc->code));
-      if (is_true(sc, c_call(car(sc->code))(sc, sc->T1_1)))
-	{
-	  sc->code = cadr(sc->code);
-	  goto EVAL_PAIR;
-	}
-      if (is_symbol(caddr(sc->code)))
-	sc->value = finder(sc, caddr(sc->code));
-      else sc->value = caddr(sc->code);
-      goto START;
+      {
+	s7_pointer code;
+	code = sc->code;
+	car(sc->T1_1) = finder(sc, cadar(code));
+	if (is_true(sc, c_call(car(code))(sc, sc->T1_1)))
+	  {
+	    sc->code = cadr(code);
+	    goto EVAL_PAIR;
+	  }
+	if (is_symbol(caddr(code)))
+	  sc->value = finder(sc, caddr(code));
+	else sc->value = caddr(code);
+	goto START;
+      }
 
 
     case OP_SAFE_IF_IS_PAIR_P_X:
@@ -38293,9 +38443,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *
        * if this were known to be safe, it could be preallocated, I think.
        */
-      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), cadaar(sc->code));
-      sc->code = cadr(sc->code);
-      goto OPT_EVAL;
+      {
+	s7_pointer binding;
+	binding = caar(sc->code);
+	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), cadr(binding));
+	sc->code = cadr(sc->code);
+	goto OPT_EVAL;
+      }
 #endif
 
  
@@ -38315,9 +38469,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* one var, init is symbol, incoming sc->code is '(((var sym))...)
        */
       {
-	s7_pointer val;
-	val = finder(sc, cadaar(sc->code));
-	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), val);
+	s7_pointer binding, val;
+	binding = caar(sc->code);
+	val = finder(sc, cadr(binding));
+	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), val);
 	sc->code = cadr(sc->code);
 	goto EVAL_PAIR;
       }
@@ -38427,8 +38582,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
 	  {
-	    car(sc->T1_1) = finder(sc, cadr(cadar(p)));
-	    ADD_SLOT_CHECKED(frame, caar(p), c_call(cadar(p))(sc, sc->T1_1)); 
+	    s7_pointer cp;
+	    cp = cadar(p);
+	    car(sc->T1_1) = finder(sc, cadr(cp));
+	    ADD_SLOT_CHECKED(frame, caar(p), c_call(cp)(sc, sc->T1_1)); 
 	  }
 	
 	frame_number++;
@@ -39842,7 +39999,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_APPLY_VALUES:
-      sc->value = list_2(sc, sc->UNQUOTE, list_3(sc, sc->QQ_APPLY, sc->QQ_VALUES, sc->value));
+      sc->value = list_2(sc, sc->UNQUOTE, list_2(sc, sc->QQ_APPLY_VALUES, sc->value));
       goto START;
       
       
@@ -44963,8 +45120,8 @@ s7_scheme *s7_init(void)
   sc->QQ_LIST = make_symbol(sc, "{list}");
   typeflag(sc->QQ_LIST) |= T_DONT_COPY; 
   
-  sc->QQ_APPLY = make_symbol(sc, "{apply}");
-  typeflag(sc->QQ_APPLY) |= T_DONT_COPY; 
+  sc->QQ_APPLY_VALUES = make_symbol(sc, "{apply} {values}");
+  typeflag(sc->QQ_APPLY_VALUES) |= T_DONT_COPY; 
   
   sc->QQ_APPEND = make_symbol(sc, "{append}");
   typeflag(sc->QQ_APPEND) |= T_DONT_COPY; 
@@ -45389,6 +45546,7 @@ s7_scheme *s7_init(void)
   /* these are internal for quasiquote's use */
   s7_define_constant_function(sc, "{values}",              g_qq_values,                0, 0, true,  H_qq_values);
   s7_define_constant_function(sc, "{apply}",               g_apply,                    1, 0, true,  H_apply);
+  s7_define_constant_function(sc, "{apply} {values}",      g_apply_values,             0, 0, true,  H_apply_values);
   s7_define_constant_function(sc, "{append}",              g_append,                   0, 0, true,  H_append);
   s7_define_constant_function(sc, "{multivector}",         g_qq_multivector,           1, 0, true,  H_qq_multivector);
   s7_define_constant_function(sc, "{list}",                g_qq_list,                  0, 0, true,  H_qq_list);
