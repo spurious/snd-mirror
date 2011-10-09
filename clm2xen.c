@@ -12275,16 +12275,16 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_phase_partials_to_wave, g_phase_partials_to_wave_w, 1, 2, 0, H_phase_partials_to_wave);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_sawtooth_wave,      g_make_sawtooth_wave_w, 0, 6, 0, H_make_sawtooth_wave);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_sawtooth_wave, g_make_sawtooth_wave_w, 0, 6, 0, H_make_sawtooth_wave);
   XEN_DEFINE_SAFE_PROCEDURE(S_sawtooth_wave,      g_sawtooth_wave_w,      1, 1, 0, H_sawtooth_wave);
   XEN_DEFINE_SAFE_PROCEDURE(S_sawtooth_wave_p,    g_sawtooth_wave_p_w,    1, 0, 0, H_sawtooth_wave_p);
-  XEN_DEFINE_PROCEDURE(S_make_triangle_wave,      g_make_triangle_wave_w, 0, 6, 0, H_make_triangle_wave);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_triangle_wave, g_make_triangle_wave_w, 0, 6, 0, H_make_triangle_wave);
   XEN_DEFINE_SAFE_PROCEDURE(S_triangle_wave,      g_triangle_wave_w,      1, 1, 0, H_triangle_wave);
   XEN_DEFINE_SAFE_PROCEDURE(S_triangle_wave_p,    g_triangle_wave_p_w,    1, 0, 0, H_triangle_wave_p);
-  XEN_DEFINE_PROCEDURE(S_make_square_wave,        g_make_square_wave_w,   0, 6, 0, H_make_square_wave);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_square_wave,   g_make_square_wave_w,   0, 6, 0, H_make_square_wave);
   XEN_DEFINE_SAFE_PROCEDURE(S_square_wave,        g_square_wave_w,        1, 1, 0, H_square_wave);
   XEN_DEFINE_SAFE_PROCEDURE(S_square_wave_p,      g_square_wave_p_w,      1, 0, 0, H_square_wave_p);
-  XEN_DEFINE_PROCEDURE(S_make_pulse_train,        g_make_pulse_train_w,   0, 6, 0, H_make_pulse_train);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_pulse_train,   g_make_pulse_train_w,   0, 6, 0, H_make_pulse_train);
   XEN_DEFINE_SAFE_PROCEDURE(S_pulse_train,        g_pulse_train_w,        1, 1, 0, H_pulse_train);
   XEN_DEFINE_SAFE_PROCEDURE(S_pulse_train_p,      g_pulse_train_p_w,      1, 0, 0, H_pulse_train_p);
 
@@ -12293,26 +12293,26 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_asymmetric_fm_p,    g_asymmetric_fm_p_w,    1, 0, 0, H_asymmetric_fm_p);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_one_zero,      g_make_one_zero_w, 0, 4, 0, H_make_one_zero);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_one_zero, g_make_one_zero_w, 0, 4, 0, H_make_one_zero);
   XEN_DEFINE_SAFE_PROCEDURE(S_one_zero,      g_one_zero_w,      1, 1, 0, H_one_zero);
   XEN_DEFINE_SAFE_PROCEDURE(S_one_zero_p,    g_one_zero_p_w,    1, 0, 0, H_one_zero_p);
-  XEN_DEFINE_PROCEDURE(S_make_one_pole,      g_make_one_pole_w, 0, 4, 0, H_make_one_pole);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_one_pole, g_make_one_pole_w, 0, 4, 0, H_make_one_pole);
   XEN_DEFINE_SAFE_PROCEDURE(S_one_pole,      g_one_pole_w,      1, 1, 0, H_one_pole);
   XEN_DEFINE_SAFE_PROCEDURE(S_one_pole_p,    g_one_pole_p_w,    1, 0, 0, H_one_pole_p);
-  XEN_DEFINE_PROCEDURE(S_make_two_zero,      g_make_two_zero_w, 0, 6, 0, H_make_two_zero);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_two_zero, g_make_two_zero_w, 0, 6, 0, H_make_two_zero);
   XEN_DEFINE_SAFE_PROCEDURE(S_two_zero,      g_two_zero_w,      1, 1, 0, H_two_zero);
   XEN_DEFINE_SAFE_PROCEDURE(S_two_zero_p,    g_two_zero_p_w,    1, 0, 0, H_two_zero_p);
-  XEN_DEFINE_PROCEDURE(S_make_two_pole,      g_make_two_pole_w, 0, 6, 0, H_make_two_pole);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_two_pole, g_make_two_pole_w, 0, 6, 0, H_make_two_pole);
   XEN_DEFINE_SAFE_PROCEDURE(S_two_pole,      g_two_pole_w,      1, 1, 0, H_two_pole);
   XEN_DEFINE_SAFE_PROCEDURE(S_two_pole_p,    g_two_pole_p_w,    1, 0, 0, H_two_pole_p);
 
-  XEN_DEFINE_PROCEDURE(S_make_wave_train,      g_make_wave_train_w, 0, 0, 1, H_make_wave_train);
-  XEN_DEFINE_SAFE_PROCEDURE(S_wave_train,      g_wave_train_w,      1, 1, 0, H_wave_train);
-  XEN_DEFINE_SAFE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
+  XEN_DEFINE_PROCEDURE(S_make_wave_train,     g_make_wave_train_w, 0, 0, 1, H_make_wave_train);
+  XEN_DEFINE_SAFE_PROCEDURE(S_wave_train,     g_wave_train_w,      1, 1, 0, H_wave_train);
+  XEN_DEFINE_SAFE_PROCEDURE(S_wave_train_p,   g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
 
-  XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w,            0, 0, 1, H_make_frame);
-  XEN_DEFINE_PROCEDURE(S_make_frame "!", g_make_frame_unchecked_w,  0, 0, 1, H_make_frame);
-  XEN_DEFINE_PROCEDURE(S_frame,          g_frame_w,                 0, 0, 1, H_frame);
+  XEN_DEFINE_PROCEDURE(S_make_frame,          g_make_frame_w,            0, 0, 1, H_make_frame);
+  XEN_DEFINE_PROCEDURE(S_make_frame "!",      g_make_frame_unchecked_w,  0, 0, 1, H_make_frame);
+  XEN_DEFINE_PROCEDURE(S_frame,               g_frame_w,                 0, 0, 1, H_frame);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_p,        g_frame_p_w,        1, 0, 0, H_frame_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_add,      g_frame_add_w,      2, 1, 0, H_frame_add);
@@ -12321,9 +12321,9 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_frame_ref, g_frame_ref_w, H_frame_ref, S_setB S_frame_ref, g_frame_set_w,  2, 0, 3, 0);
 #endif
 #if HAVE_RUBY
-  XEN_DEFINE_PROCEDURE(S_frame_ref,      g_frame_ref_w,  2, 0, 0, H_frame_ref);
+  XEN_DEFINE_PROCEDURE(S_frame_ref,           g_frame_ref_w,  2, 0, 0, H_frame_ref);
 #endif
-  XEN_DEFINE_PROCEDURE(S_frame_set,      g_frame_set_w,  3, 0, 0, H_frame_set);
+  XEN_DEFINE_SAFE_PROCEDURE(S_frame_set,      g_frame_set_w,  3, 0, 0, H_frame_set);
 
 
   XEN_DEFINE_PROCEDURE(S_make_mixer,        g_make_mixer_w,           0, 0, 1, H_make_mixer);
@@ -12332,26 +12332,26 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer_p,      g_mixer_p_w,              1, 0, 0, H_mixer_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer_multiply,    g_mixer_multiply_w,       2, 1, 0, H_mixer_multiply);
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer_add,         g_mixer_add_w,            2, 1, 0, H_mixer_add);
-  XEN_DEFINE_PROCEDURE(S_make_scalar_mixer, g_make_scalar_mixer_w,    2, 0, 0, H_make_scalar_mixer);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_scalar_mixer, g_make_scalar_mixer_w,    2, 0, 0, H_make_scalar_mixer);
 #if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_mixer_set_w,  3, 0, 4, 0);
 #endif
 #if HAVE_RUBY
   XEN_DEFINE_PROCEDURE(S_mixer_ref,         g_mixer_ref_w,         3, 0, 0, H_mixer_ref);
 #endif
-  XEN_DEFINE_PROCEDURE(S_mixer_set,         g_mixer_set_w,         4, 0, 0, H_mixer_set);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mixer_set,    g_mixer_set_w,         4, 0, 0, H_mixer_set);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_sample,   g_frame_to_sample_w,   2, 0, 0, H_frame_to_sample);
-  XEN_DEFINE_PROCEDURE(S_frame_to_list,     g_frame_to_list_w,     1, 0, 0, H_frame_to_list);
-  XEN_DEFINE_PROCEDURE(S_frame_to_frame,    g_frame_to_frame_w,    2, 1, 0, H_frame_to_frame);
-  XEN_DEFINE_PROCEDURE(S_sample_to_frame,   g_sample_to_frame_w,   2, 1, 0, H_sample_to_frame);
+  XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_list,     g_frame_to_list_w,     1, 0, 0, H_frame_to_list);
+  XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_frame,    g_frame_to_frame_w,    2, 1, 0, H_frame_to_frame);
+  XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_frame,   g_sample_to_frame_w,   2, 1, 0, H_sample_to_frame);
 
 
   XEN_DEFINE_SAFE_PROCEDURE(S_formant_bank, g_formant_bank_w, 2, 1, 0, H_formant_bank);
   XEN_DEFINE_SAFE_PROCEDURE(S_formant_p,    g_formant_p_w,    1, 0, 0, H_formant_p);
-  XEN_DEFINE_PROCEDURE(S_make_formant,      g_make_formant_w, 0, 4, 0, H_make_formant);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_formant, g_make_formant_w, 0, 4, 0, H_make_formant);
   XEN_DEFINE_SAFE_PROCEDURE(S_formant,      g_formant_w,      1, 2, 0, H_formant);
   XEN_DEFINE_SAFE_PROCEDURE(S_firmant_p,    g_firmant_p_w,    1, 0, 0, H_firmant_p);
-  XEN_DEFINE_PROCEDURE(S_make_firmant,      g_make_firmant_w, 0, 4, 0, H_make_firmant);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_firmant, g_make_firmant_w, 0, 4, 0, H_make_firmant);
   XEN_DEFINE_SAFE_PROCEDURE(S_firmant,      g_firmant_w,      1, 2, 0, H_firmant);
 
   XEN_DEFINE_PROCEDURE(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
@@ -12377,14 +12377,14 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_nrxycos_p,              g_nrxycos_p_w,              1, 0, 0, H_nrxycos_p);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_filter,          g_make_filter_w,     0, 6, 0, H_make_filter);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_filter,     g_make_filter_w,     0, 6, 0, H_make_filter);
   XEN_DEFINE_SAFE_PROCEDURE(S_filter,          g_filter_w,          2, 0, 0, H_filter);
   XEN_DEFINE_SAFE_PROCEDURE(S_filter_p,        g_filter_p_w,        1, 0, 0, H_filter_p);
-  XEN_DEFINE_PROCEDURE(S_make_fir_coeffs,      g_make_fir_coeffs_w, 2, 0, 0, H_make_fir_coeffs);
-  XEN_DEFINE_PROCEDURE(S_make_fir_filter,      g_make_fir_filter_w, 0, 4, 0, H_make_fir_filter);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_fir_coeffs, g_make_fir_coeffs_w, 2, 0, 0, H_make_fir_coeffs);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_fir_filter, g_make_fir_filter_w, 0, 4, 0, H_make_fir_filter);
   XEN_DEFINE_SAFE_PROCEDURE(S_fir_filter,      g_fir_filter_w,      2, 0, 0, H_fir_filter);
   XEN_DEFINE_SAFE_PROCEDURE(S_fir_filter_p,    g_fir_filter_p_w,    1, 0, 0, H_fir_filter_p);
-  XEN_DEFINE_PROCEDURE(S_make_iir_filter,      g_make_iir_filter_w, 0, 4, 0, H_make_iir_filter);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_iir_filter, g_make_iir_filter_w, 0, 4, 0, H_make_iir_filter);
   XEN_DEFINE_SAFE_PROCEDURE(S_iir_filter,      g_iir_filter_w,      2, 0, 0, H_iir_filter);
   XEN_DEFINE_SAFE_PROCEDURE(S_iir_filter_p,    g_iir_filter_p_w,    1, 0, 0, H_iir_filter_p);
   XEN_DEFINE_PROCEDURE(S_mus_order,            g_mus_order_w,       1, 0, 0, H_mus_order);
@@ -12412,7 +12412,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_locsig_ref,        g_locsig_ref_w,   2, 0, 0, H_locsig_ref);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_locsig_set,        g_locsig_set_w,   3, 0, 0, H_locsig_set);
+  XEN_DEFINE_SAFE_PROCEDURE(S_locsig_set,   g_locsig_set_w,   3, 0, 0, H_locsig_set);
 
 #if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_reverb_ref, g_locsig_reverb_ref_w, H_locsig_reverb_ref, 
@@ -12423,23 +12423,23 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_ref, g_locsig_reverb_ref_w, 2, 0, 0, H_locsig_reverb_ref);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_locsig_reverb_set, g_locsig_reverb_set_w, 3, 0, 0, H_locsig_reverb_set);
+  XEN_DEFINE_SAFE_PROCEDURE(S_locsig_reverb_set, g_locsig_reverb_set_w, 3, 0, 0, H_locsig_reverb_set);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_type, g_locsig_type_w, H_locsig_type, S_setB S_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_move_sound_p,            g_move_sound_p_w,     1, 0, 0, H_move_sound_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_move_sound,                   g_move_sound_w,       3, 0, 0, H_move_sound);
-  XEN_DEFINE_PROCEDURE(S_make_move_sound,              g_make_move_sound_w,  1, 2, 0, H_make_move_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_move_sound,              g_move_sound_w,       3, 0, 0, H_move_sound);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_move_sound,         g_make_move_sound_w,  1, 2, 0, H_make_move_sound);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_file_to_sample_p,        g_file_to_sample_p_w,        1, 0, 0, H_file_to_sample_p);
-  XEN_DEFINE_PROCEDURE(S_make_file_to_sample,          g_make_file_to_sample_w,     1, 1, 0, H_make_file_to_sample);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_file_to_sample,     g_make_file_to_sample_w,     1, 1, 0, H_make_file_to_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_to_sample,          g_file_to_sample_w,          2, 1, 0, H_file_to_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_to_frame_p,         g_file_to_frame_p_w,         1, 0, 0, H_file_to_frame_p);
-  XEN_DEFINE_PROCEDURE(S_make_file_to_frame,           g_make_file_to_frame_w,      1, 1, 0, H_make_file_to_frame);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_file_to_frame,      g_make_file_to_frame_w,      1, 1, 0, H_make_file_to_frame);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_to_frame,           g_file_to_frame_w,           2, 1, 0, H_file_to_frame);
   XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_file_p,        g_sample_to_file_p_w,        1, 0, 0, H_sample_to_file_p);
-  XEN_DEFINE_PROCEDURE(S_make_sample_to_file,          g_make_sample_to_file_w,     1, 4, 0, H_make_sample_to_file);
-  XEN_DEFINE_PROCEDURE(S_continue_sample_to_file,      g_continue_sample_to_file_w, 1, 0, 0, H_continue_sample_to_file);
-  XEN_DEFINE_PROCEDURE(S_continue_frame_to_file,       g_continue_frame_to_file_w,  1, 0, 0, H_continue_frame_to_file);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_sample_to_file,     g_make_sample_to_file_w,     1, 4, 0, H_make_sample_to_file);
+  XEN_DEFINE_SAFE_PROCEDURE(S_continue_sample_to_file, g_continue_sample_to_file_w, 1, 0, 0, H_continue_sample_to_file);
+  XEN_DEFINE_SAFE_PROCEDURE(S_continue_frame_to_file,  g_continue_frame_to_file_w,  1, 0, 0, H_continue_frame_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_file,          g_sample_to_file_w,          4, 0, 0, H_sample_to_file);
   XEN_DEFINE_SAFE_PROCEDURE(S_sample_to_file_add,      g_sample_to_file_add_w,      2, 0, 0, H_sample_to_file_add);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_file_p,         g_frame_to_file_p_w,         1, 0, 0, H_frame_to_file_p);
@@ -12463,16 +12463,16 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_readin_p,        g_readin_p_w,        1, 0, 0, H_readin_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_readin,          g_readin_w,          1, 0, 0, H_readin);
-  XEN_DEFINE_PROCEDURE(S_make_readin,     g_make_readin_w,     0, 0, 1, H_make_readin);
-  XEN_DEFINE_PROCEDURE(S_mus_channel,     g_mus_channel_w,     1, 0, 0, H_mus_channel);
-  XEN_DEFINE_PROCEDURE(S_mus_interp_type, g_mus_interp_type_w, 1, 0, 0, H_mus_interp_type);
+  XEN_DEFINE_PROCEDURE(S_make_readin,          g_make_readin_w,     0, 0, 1, H_make_readin);
+  XEN_DEFINE_PROCEDURE(S_mus_channel,          g_mus_channel_w,     1, 0, 0, H_mus_channel);
+  XEN_DEFINE_PROCEDURE(S_mus_interp_type,      g_mus_interp_type_w, 1, 0, 0, H_mus_interp_type);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_location, g_mus_location_w, H_mus_location, S_setB S_mus_location, g_mus_set_location_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_increment, g_mus_increment_w, H_mus_increment, S_setB S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_granulate_p,    g_granulate_p_w,    1, 0, 0, H_granulate_p);
-  XEN_DEFINE_PROCEDURE(S_granulate,      g_granulate_w,      1, 2, 0, H_granulate);
-  XEN_DEFINE_PROCEDURE(S_make_granulate, g_make_granulate_w, 0, 0, 1, H_make_granulate);
+  XEN_DEFINE_PROCEDURE(S_granulate,           g_granulate_w,      1, 2, 0, H_granulate);
+  XEN_DEFINE_PROCEDURE(S_make_granulate,      g_make_granulate_w, 0, 0, 1, H_make_granulate);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_ramp, g_mus_ramp_w, H_mus_ramp,
 				   S_setB S_mus_ramp, g_mus_set_ramp_w,  1, 0, 2, 0);
@@ -12480,16 +12480,16 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_clear_sincs, g_mus_clear_sincs_w, 0, 0, 0, "clears out any sinc tables");
   XEN_DEFINE_SAFE_PROCEDURE(S_src_p,       g_src_p_w,       1, 0, 0, H_src_p);
-  XEN_DEFINE_PROCEDURE(S_src,         g_src_w,         1, 2, 0, H_src);
-  XEN_DEFINE_PROCEDURE(S_make_src,    g_make_src_w,    0, 6, 0, H_make_src);
+  XEN_DEFINE_PROCEDURE(S_src,              g_src_w,         1, 2, 0, H_src);
+  XEN_DEFINE_PROCEDURE(S_make_src,         g_make_src_w,    0, 6, 0, H_make_src);
 
 
   XEN_DEFINE_SAFE_PROCEDURE(S_convolve_p,     g_convolve_p_w,     1, 0, 0, H_convolve_p);
-  XEN_DEFINE_PROCEDURE(S_convolve,       g_convolve_w,       1, 1, 0, H_convolve_gen);
-  XEN_DEFINE_PROCEDURE(S_make_convolve,  g_make_convolve_w,  0, 0, 1, H_make_convolve);
+  XEN_DEFINE_PROCEDURE(S_convolve,            g_convolve_w,       1, 1, 0, H_convolve_gen);
+  XEN_DEFINE_PROCEDURE(S_make_convolve,       g_make_convolve_w,  0, 0, 1, H_make_convolve);
   XEN_DEFINE_SAFE_PROCEDURE(S_convolve_files, g_convolve_files_w, 2, 2, 0, H_convolve_files);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_p,                  g_phase_vocoder_p_w,                1, 0, 0, H_phase_vocoder_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_p,             g_phase_vocoder_p_w,                1, 0, 0, H_phase_vocoder_p);
   XEN_DEFINE_PROCEDURE(S_phase_vocoder,                    g_phase_vocoder_w,                  1, 4, 0, H_phase_vocoder);
   XEN_DEFINE_PROCEDURE(S_make_phase_vocoder,               g_make_phase_vocoder_w,             0, 0, 1, H_make_phase_vocoder);
   XEN_DEFINE_PROCEDURE(S_phase_vocoder_amp_increments,     g_phase_vocoder_amp_increments_w,   1, 0, 0, H_phase_vocoder_amp_increments);
@@ -12502,7 +12502,7 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_mix, g_mus_mix_w, 2, 5, 0, H_mus_mix);
 
-  XEN_DEFINE_PROCEDURE(S_make_ssb_am,   g_make_ssb_am_w,   0, 4, 0, H_make_ssb_am); 
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_ssb_am,   g_make_ssb_am_w,   0, 4, 0, H_make_ssb_am); 
   XEN_DEFINE_SAFE_PROCEDURE(S_ssb_am,        g_ssb_am_w,        1, 2, 0, H_ssb_am);
   XEN_DEFINE_SAFE_PROCEDURE(S_ssb_am_p,      g_ssb_am_p_w,      1, 0, 0, H_ssb_am_p);
   XEN_DEFINE_SAFE_PROCEDURE("mus-ssb-bank",  g_ssb_bank_w,      4, 0, 0, "an experiment");
@@ -12522,10 +12522,10 @@ static void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_internal_time_units_per_second, 1, "units used by " S_get_internal_real_time);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_make_oscil,          g_make_oscil_w,          0, 4, 0, H_make_oscil);
-  XEN_DEFINE_PROCEDURE(S_make_ncos,           g_make_ncos_w,           0, 4, 0, H_make_ncos); 
-  XEN_DEFINE_PROCEDURE(S_make_nsin,           g_make_nsin_w,           0, 4, 0, H_make_nsin); 
-  XEN_DEFINE_PROCEDURE(S_make_asymmetric_fm,  g_make_asymmetric_fm_w,  0, 8, 0, H_make_asymmetric_fm);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_oscil,          g_make_oscil_w,          0, 4, 0, H_make_oscil);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_ncos,           g_make_ncos_w,           0, 4, 0, H_make_ncos); 
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_nsin,           g_make_nsin_w,           0, 4, 0, H_make_nsin); 
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_asymmetric_fm,  g_make_asymmetric_fm_w,  0, 8, 0, H_make_asymmetric_fm);
 
 #if HAVE_SCHEME
   init_choosers(s7);

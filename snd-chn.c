@@ -9903,19 +9903,19 @@ void g_init_chn(void)
 {
   cp_edpos = XEN_UNDEFINED;
 
-  XEN_DEFINE_PROCEDURE(S_variable_graph_p,        g_variable_graph_p_w,       1, 0, 0, H_variable_graph_p);
-  XEN_DEFINE_PROCEDURE(S_make_variable_graph,     g_make_variable_graph_w,    1, 3, 0, H_make_variable_graph);
-  XEN_DEFINE_PROCEDURE(S_channel_data,            g_channel_data_w,           0, 2, 0, H_channel_data);
+  XEN_DEFINE_SAFE_PROCEDURE(S_variable_graph_p,        g_variable_graph_p_w,       1, 0, 0, H_variable_graph_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_variable_graph,     g_make_variable_graph_w,    1, 3, 0, H_make_variable_graph);
+  XEN_DEFINE_SAFE_PROCEDURE(S_channel_data,            g_channel_data_w,           0, 2, 0, H_channel_data);
 
-  XEN_DEFINE_PROCEDURE(S_graph,                   g_graph_w,                  1, 9, 0, H_graph);
-  XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w,                  0, 2, 0, H_edits);
-  XEN_DEFINE_PROCEDURE(S_peaks,                   g_peaks_w,                  0, 3, 0, H_peaks);
-  XEN_DEFINE_PROCEDURE(S_edit_hook,               g_edit_hook_w,              0, 2, 0, H_edit_hook);
-  XEN_DEFINE_PROCEDURE(S_after_edit_hook,         g_after_edit_hook_w,        0, 2, 0, H_after_edit_hook);
-  XEN_DEFINE_PROCEDURE(S_undo_hook,               g_undo_hook_w,              0, 2, 0, H_undo_hook);
-  XEN_DEFINE_PROCEDURE(S_update_time_graph,       g_update_time_graph_w,      0, 2, 0, H_update_time_graph);
-  XEN_DEFINE_PROCEDURE(S_update_lisp_graph,       g_update_lisp_graph_w,      0, 2, 0, H_update_lisp_graph);
-  XEN_DEFINE_PROCEDURE(S_update_transform_graph,  g_update_transform_graph_w, 0, 2, 0, H_update_transform_graph);
+  XEN_DEFINE_SAFE_PROCEDURE(S_graph,                   g_graph_w,                  1, 9, 0, H_graph);
+  XEN_DEFINE_SAFE_PROCEDURE(S_edits,                   g_edits_w,                  0, 2, 0, H_edits);
+  XEN_DEFINE_SAFE_PROCEDURE(S_peaks,                   g_peaks_w,                  0, 3, 0, H_peaks);
+  XEN_DEFINE_SAFE_PROCEDURE(S_edit_hook,               g_edit_hook_w,              0, 2, 0, H_edit_hook);
+  XEN_DEFINE_SAFE_PROCEDURE(S_after_edit_hook,         g_after_edit_hook_w,        0, 2, 0, H_after_edit_hook);
+  XEN_DEFINE_SAFE_PROCEDURE(S_undo_hook,               g_undo_hook_w,              0, 2, 0, H_undo_hook);
+  XEN_DEFINE_SAFE_PROCEDURE(S_update_time_graph,       g_update_time_graph_w,      0, 2, 0, H_update_time_graph);
+  XEN_DEFINE_SAFE_PROCEDURE(S_update_lisp_graph,       g_update_lisp_graph_w,      0, 2, 0, H_update_lisp_graph);
+  XEN_DEFINE_SAFE_PROCEDURE(S_update_transform_graph,  g_update_transform_graph_w, 0, 2, 0, H_update_transform_graph);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_position_slider, g_ap_sx_w, H_x_position_slider,
 					    S_setB S_x_position_slider, g_set_ap_sx_w, g_set_ap_sx_reversed, 0, 2, 1, 2);
@@ -9935,8 +9935,8 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_maxamp, g_maxamp_w, H_maxamp,
 					    S_setB S_maxamp, g_set_maxamp_w, g_set_maxamp_reversed, 0, 3, 1, 2);
   
-  XEN_DEFINE_PROCEDURE(S_maxamp_position,   g_maxamp_position_w, 0, 3, 0,   H_maxamp_position);
-  XEN_DEFINE_PROCEDURE(S_cursor_position,   g_cursor_position_w, 0, 2, 0,   H_cursor_position);
+  XEN_DEFINE_SAFE_PROCEDURE(S_maxamp_position,   g_maxamp_position_w, 0, 3, 0,   H_maxamp_position);
+  XEN_DEFINE_SAFE_PROCEDURE(S_cursor_position,   g_cursor_position_w, 0, 2, 0,   H_cursor_position);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_edit_position, g_edit_position_w, H_edit_position,
 					    S_setB S_edit_position, g_set_edit_position_w, g_set_edit_position_reversed, 0, 2, 1, 2);
@@ -10207,7 +10207,7 @@ void g_init_chn(void)
 				   S_setB S_sync_style, g_set_sync_style_w,  0, 0, 1, 0);
 
 #if HAVE_GL
-  XEN_DEFINE_PROCEDURE(S_glSpectrogram, g_gl_spectrogram_w, 9, 0, 0, H_glSpectrogram);
+  XEN_DEFINE_SAFE_PROCEDURE(S_glSpectrogram, g_gl_spectrogram_w, 9, 0, 0, H_glSpectrogram);
 #endif
 
   #define H_after_transform_hook S_after_transform_hook " (snd chn scaler): called just after a spectrum is calculated."

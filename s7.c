@@ -28181,7 +28181,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		  return(false);
 		}
 	    }
-	  /*
+	  /* -- left now are unsafe callers -- arg might be a symbol or constant or quoted thing -- should these be optimized?
 	  if (!is_optimized(car(x)))
 	    fprintf(stderr, "1 case: %s\n", DISPLAY_80(car(x)));
 	  */
@@ -28604,8 +28604,8 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		      (is_optimized(caddar(x))) ? opt_names[optimize_data(caddar(x))] : "unopt", 
 		      DISPLAY_80(car(x)));
 	      */
-	      /* both unopt
-	       * both opt! [sp cases etc]
+	      /* both unopt [PP]
+	       * both opt! [sp cases etc] but might be unsafe -- need unsafe-Z = N? PN NP NN PP
 	       * safe + safe_c_c and safe_c_c?? with one calling itself bad?? (eq? (global-environment) (initial-environment))
 	       * unopt safe_c_c
 	       * unopt safe_c_s
@@ -36402,6 +36402,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_call(sc->code)(sc, sc->args);
 	}
       goto START;
+
+      /* TODO: safe_c_pp zp pz (zz exists)
+       */
 #endif
       
     case OP_EVAL_ARGS3:
