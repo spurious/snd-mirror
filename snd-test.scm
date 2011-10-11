@@ -52994,7 +52994,7 @@ EDITS: 1
 			5 .98 6 .53 7 .16 8 .33 9 .62 10 .12 12 .14 14 .86
 			16 .12 23 .14 24 .17))
 	  (tenordr '(.3 .04 1 .81 2 .27 3 .2 4 .21 5 .18 6 .35 7 .03 8 .07 9 .02 10 .025 11 .035)))
-      (with-sound (:reverb nrev)
+      (with-sound (:reverb nrev :play #f)
 		  (drone  .000  4.000  115.000  (* .25 .500) solid bassdr2  .100  .500
 			  .030  45.000 1  .010 10)
 		  (drone  .000  4.000  229.000  (* .25 .500) solid tenordr  .100  .500
@@ -53049,10 +53049,6 @@ EDITS: 1
 		  (canter  3.940  .260 459  (* .25 .700)  45.000 1  .050 ampf ranf skwf
 			   .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 			   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )))
-    
-    (let ((ind (find-sound "test.snd")))
-      (play ind :wait #t)
-      (close-sound ind))
     
     (with-sound (:srate 22050 :play #f) 
 		(fm-violin 0 .01 440 .1 :noise-amount 0.0)
@@ -53150,9 +53146,6 @@ EDITS: 1
 		  (fm-voice 0 1 300 .8 3 1 ampf ampf ampf ampf ampf ampf ampf 1 0 0 .25 1 .01 0 ampf .01))
 		(graphEq "oboe.snd")
 		)
-    (let ((ind (find-sound "test.snd")))
-      (play ind :wait #t)
-      (close-sound ind))
     
     (with-sound (:play #f) (defopt-simp 0 10000) (defopt-simp 10000 10000 550.0 0.1) (defopt-simp 20000 10000 :amplitude .2))
     (with-sound (:channels 2 :reverb-channels 2 :reverb jcrev2 :play #f) (floc-simp 0 1))
