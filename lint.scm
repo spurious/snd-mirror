@@ -924,7 +924,7 @@
 			 (do ((i cur (+ i 1)))
 			     ((not (tree-member i form))
 			      (set! cur (+ i 1))
-			      (set! (nonf ctr) i)
+			      (vector-set! nonf ctr i)
 			      (set! ctr (+ ctr 1)))))
 		       vars)
 		      
@@ -936,7 +936,7 @@
 								   (set! pos (+ pos 1))
 								   (if (zero? (logand ctr (ash 1 pos)))
 								       #f
-								       (nonf pos)))
+								       (vector-ref nonf pos)))
 								 vars)))))
 			(if (not (member (vector-ref v ctr) vals))
 			    (set! vals (cons (vector-ref v ctr) vals))))

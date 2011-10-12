@@ -320,6 +320,7 @@
 (test (let ((f (lambda () (cons 1 (string #\H))))) (eq? (f) (f))) #f)
 (test (eq? *stdin* *stdin*) #t)
 (test (eq? *stdout* *stderr*) #f)
+(test (eq? else else) #t)
 
 (display ";this should display #t: ")
 (begin #| ; |# (display #t))
@@ -448,8 +449,11 @@
 (test (let () (define (make-adder x) (lambda (y) (+ x y))) (eqv? (make-adder 1) (make-adder 1))) #f)
 (test (eqv? 9/2 9/2) #t)
 (test (eqv? quote quote) #t)
+(test (eqv? () ()) #t)
+(test (eqv? () '()) #t)
+(test (eqv? "" "") #f)
 (test (eqv? "hi" "hi") #f) ; unspecified 
-(test (eqv? #() #()) #f)   ; unspecified
+(test (eqv? #() #()) #f)   ; unspecified, but in s7 (eqv? () ()) is #t -- inconsistent? (eqv? "" "") is #f
 
 (let ((c1 (let ((x 32))
 	    (lambda () x)))
@@ -497,6 +501,7 @@
 (test (eqv? '() '()) #t)
 (test (eqv? '() (list)) #t)
 (test (eqv? '(()) '(())) #f)
+(test (eqv? (list 'abs 'cons) '(abs cons)) #f)
 
 (let ((things (vector #t #f #\space '() "" 0 1 3/4 1+i 1.5 '(1 .2) '#() (vector) (vector 1) (list 1) 'f 't #\t)))
   (do ((i 0 (+ i 1)))
@@ -518,7 +523,6 @@
 (test (eqv? ''#\a '#\a) #f)
 (test (eqv? '#\a #\a) #t)
 (test (eqv? 'car car) #f)
-(test (eqv? '() ()) #t)
 (test (eqv? ''() '()) #f)
 (test (eqv? '#f #f) #t)
 (test (eqv? '#f '#f) #t)
@@ -531,6 +535,7 @@
 (test (let () (define-macro (hi a) `(+ 1 ,a)) (eqv? hi hi)) #t)
 (test (let () (define (hi a) (+ 1 a)) (eqv? hi hi)) #t)
 (test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (eqv? x x)) #t)
+(test (eqv? else else) #t)
 
 (if with-bignums
     (begin
@@ -624,6 +629,7 @@
 (test (equal? ``"" '"") #t)
 (test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (x) x)))) (equal? pws pws)) #t)
 (test (equal? if :if) #f)
+(test (equal? (list 'abs 'cons) '(abs cons)) #t)
 
 (test (equal? most-positive-fixnum most-positive-fixnum) #t)
 (test (equal? most-positive-fixnum most-negative-fixnum) #f)
@@ -12573,6 +12579,9 @@ time, so that the displayed results are
 (test (case #<eof> ((#<eof>) 1)) 1)
 (test (case #\newline ((#\newline) 1)) 1)
 (test (case 'c (else => (lambda (x) (symbol? x)))) #t)
+(test (case 1.0 ((1e0) 3) ((1.0) 4) (else 5)) 3)
+(test (case 1.0 ((#i1) 2) ((1e0) 3) ((1.0) 4) (else 5)) 2)
+(test (case 1 ((#i1) 2) ((1e0) 3) ((1.0) 4) (else 5)) 5)
 
 ; case use eqv? -- why not case-equal?
 (test (case "" (("") 1)) #<unspecified>)
@@ -12624,6 +12633,11 @@ time, so that the displayed results are
 (test (case . (1 ((2) 3) ((1) 2))) 2)
 (test (case 1 (#(1 2) 3)) 'error)
 (test (case 1 #((1 2) 3)) 'error)
+(test (case 1 ((2) 3) () ((1) 2)) 'error)
+(test (case 1 ((2) 3) (1 2) ((1) 2)) 'error)
+(test (case 1 ((2) 3) (1 . 2) ((1) 2)) 'error)
+(test (case 1 ((2) 3) (1) ((1) 2)) 'error)
+(test (case 1 ((2) 3) ((1)) ((1) 2)) 'error)
 
 (test (case 'case ((case) 1) ((cond) 3)) 1)
 (test (case 101 ((0 1 2) 200) ((3 4 5 6) 600) ((7) 700) ((8) 800) ((9 10 11 12 13) 1300) ((14 15 16) 1600) ((17 18 19 20) 2000) ((21 22 23 24 25) 2500) ((26 27 28 29) 2900) ((30 31 32) 3200) ((33 34 35) 3500) ((36 37 38 39) 3900) ((40) 4000) ((41 42) 4200) ((43) 4300) ((44 45 46) 4600) ((47 48 49 50 51) 5100) ((52 53 54) 5400) ((55) 5500) ((56 57) 5700) ((58 59 60) 6000) ((61 62) 6200) ((63 64 65) 6500) ((66 67 68 69) 6900) ((70 71 72 73) 7300) ((74 75 76 77) 7700) ((78 79 80) 8000) ((81) 8100) ((82 83) 8300) ((84 85 86 87) 8700) ((88 89 90 91 92) 9200) ((93 94 95) 9500) ((96 97 98) 9800) ((99) 9900) ((100 101 102) 10200) ((103 104 105 106 107) 10700) ((108 109) 10900) ((110 111) 11100) ((112 113 114 115) 11500) ((116) 11600) ((117) 11700) ((118) 11800) ((119 120) 12000) ((121 122 123 124 125) 12500) ((126 127) 12700) ((128) 12800) ((129 130) 13000) ((131 132) 13200) ((133 134 135 136) 13600) ((137 138) 13800)) 10200)

@@ -30998,7 +30998,7 @@ EDITS: 2
 	
 	(set! (expand-control? ind) #t)
 	(set! (reverb-control? ind) #t)
-	(play ind :wait #t)
+	;(play ind :wait #t)
 	(set! (reverb-control? ind) #f)
 	(set! (expand-control? ind) #f)
 	
@@ -31021,7 +31021,7 @@ EDITS: 2
 		     (set! (reverb-control-lowpass) .02)
 		     (set! (reverb-control-feedback) .02)))
 	
-	(play ind :wait #t)
+	;(play ind :wait #t)
 	(set! (hook-functions play-hook) '())
 	
 	(hook-push start-playing-hook (lambda (sp) #t))
