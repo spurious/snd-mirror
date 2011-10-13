@@ -262,8 +262,8 @@
 ;;; make-index 
 
 (define (alphanumeric? c) (or (char-alphabetic? c) (char-numeric? c)))
-(defmacro incf (sym) `(let () (set! ,sym (+ ,sym 1)) ,sym))
-(defmacro decf (sym) `(let () (set! ,sym (- ,sym 1)) ,sym))
+(define-expansion (incf sym) `(set! ,sym (+ ,sym 1)))
+(define-expansion (decf sym) `(set! ,sym (- ,sym 1)))
 (defmacro when (test . forms) `(if ,test (begin ,@forms)))
 (defmacro push (val sym) `(let () (set! ,sym (cons ,val ,sym)) ,sym))
 (defmacro pop (sym) (let ((v (gensym))) `(let ((,v (car ,sym))) (set! ,sym (cdr ,sym)) ,v)))
@@ -1238,7 +1238,6 @@
 										 (set! commands (remove closer commands :count 1))
 										 (if (not warned)
 										     (begin
-										       
 										       (if (and (string-ci=? closer "table")
 												(not (string-ci-list-position "table" commands)))
 											   (begin
@@ -1407,6 +1406,9 @@
 
 (make-index-1 '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "fm.html" "quick.html" "s7.html")
 	      "test.html" 5 '("AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") #t #t)
+
+
+(s7-version)
 
 (exit)
 

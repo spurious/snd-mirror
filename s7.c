@@ -194,7 +194,7 @@
 
 #ifndef WITH_OPTIMIZATION
 #define WITH_OPTIMIZATION 1
-  /* this currently speeds s7 up by about 237 to 138 in callgrind terms.
+  /* this currently speeds s7 up by about 237 to 136 in callgrind terms.
    *    a lot of the current optimization choices are just experiments (I'll clean up this mess some day).
    *    the completely unrealistic goal, of course, is to replace the run macro.
    */
@@ -991,7 +991,9 @@ struct s7_scheme {
 
 #define T_PROCEDURE                   (1 << (TYPE_BITS + 2))
 #define is_procedure(p)               ((typeflag(p) & T_PROCEDURE) != 0)
-/* closure, c_function, procedure-with-setter, settable object, goto or continuation */
+/* closure, c_function, procedure-with-setter, settable object, goto or continuation 
+ *   perhaps this should be T_APPLICABLE?
+ */
 
 #define T_SAFE_PROCEDURE              (1 << (TYPE_BITS + 3))
 #define is_safe_procedure(p)          ((typeflag(p) & T_SAFE_PROCEDURE) != 0)
@@ -1012,9 +1014,9 @@ struct s7_scheme {
  */
 
 #define T_EXPANSION                   (1 << (TYPE_BITS + 6))
-#define is_expansion(p)               ((typeflag(p) & T_EXPANSION) != 0)
-/* this marks macros from define-expansion.  I think I'm using a type bit here, rather than a
- *   separate type so that the holder can be checked without looking up the symbol value(?)
+#define EXPANSION_TYPE                (T_EXPANSION | T_SYMBOL | T_DONT_COPY)
+#define is_expansion(p)               (typeflag(p) == EXPANSION_TYPE)
+/* this marks the symbol associated with a run-time macro and distinguishes the value from an ordinary macro
  */
 
 #define T_GLOBAL                      (1 << (TYPE_BITS + 7))
@@ -1046,8 +1048,9 @@ struct s7_scheme {
 
 #define T_SYNTACTIC                   (1 << (TYPE_BITS + 11))
 #define is_syntactic(p)               ((typeflag(p) & T_SYNTACTIC) != 0)
-/* this marks syntax objects */
-
+#define SYNTACTIC_TYPE                (T_SYMBOL | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC)
+/* this marks symbols that represent syntax objects 
+ */
 
 #define T_OVERLAY                     (1 << (TYPE_BITS + 12))
 #define set_overlay(p)                typeflag(p)  |= T_OVERLAY
@@ -1105,14 +1108,18 @@ struct s7_scheme {
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define set_copy_args(p)              typeflag(p) |= T_COPY_ARGS
 #define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
+/* this marks something that might mess with its argument list
+ */
 
 #define T_SIMPLE                      (1 << (TYPE_BITS + 21))
 #define set_simple(p)                 typeflag(p) |= T_SIMPLE
 #define is_simple(p)                  ((typeflag(p) & T_SIMPLE) != 0)
-/* stuff where equal? is eq? */
+/* stuff where equal? is eq? 
+ */
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
+/* #define is_marked(p)               (typeflag(p) >= T_GC_MARK) */ /* exactly the same speed? */ 
 #define set_mark(p)                   typeflag(p)  |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p)  &= (~T_GC_MARK)
 /* using bit 23 for this makes a big difference in the GC
@@ -2130,7 +2137,11 @@ static void mark_dynamic_wind(s7_pointer p)
 static void mark_hash_table(s7_pointer p)
 {
   if (!is_marked(p))
-    mark_vector_1(p, hash_table_length(p));
+    {
+      if (hash_table_entries(p) == 0)
+	set_mark(p);
+      else mark_vector_1(p, hash_table_length(p));
+    }
 }
 
 static void mark_hook(s7_pointer p)
@@ -2638,6 +2649,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_SYMBOL:
     case T_SYNTAX:
       /* here hloc is usually NOT_IN_HEAP, but in the syntax case can be the syntax op code */
+      clear_pending_removal(x);
       return;
 
     case T_CLOSURE:
@@ -14468,13 +14480,14 @@ static char *describe_type_bits(s7_pointer obj)
    */
   char *buf;
   buf = (char *)calloc(512, sizeof(char));
-  snprintf(buf, 512, "<unknown object! type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
 	   type_name(obj),
 	   typeflag(obj),
 	   is_procedure(obj) ?          " procedure" : "",
 	   is_marked(obj) ?             " gc-marked" : "",
 	   is_immutable(obj) ?          " immutable" : "",
+	   is_global(obj) ?             " global" : "",
 	   dont_copy(obj) ?             " dont-copy" : "",
 	   is_any_macro(obj) ?          " anymac" : "",
 	   is_expansion(obj) ?          " expansion" : "",
@@ -14491,7 +14504,9 @@ static char *describe_type_bits(s7_pointer obj)
 	   is_setter(obj) ?             " setter" : "",
 	   has_table(obj) ?             " function-table" : "",
 	   is_one_liner(obj) ?          " one-liner" : "",
+	   is_simple(obj) ?             " simple" : "",
 	   needs_copied_args(obj) ?     " copy args" : "",
+	   is_pending_removal(obj) ?    " removed" : "",
 	   ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
   return(buf);
 }
@@ -14680,8 +14695,16 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     default:
       break;
     }
-
-  return(describe_type_bits(obj));
+  {
+    char *str, *tmp;
+    int len;
+    tmp = describe_type_bits(obj);
+    len = 32 + safe_strlen(tmp);
+    str = (char *)malloc(len * sizeof(char));
+    snprintf(str, len, "<unknown object! %s>", tmp);
+    free(tmp);
+    return(str);
+  }
 }
 
 
@@ -18337,7 +18360,7 @@ static s7_pointer hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 
 
 #define DEFAULT_HASH_TABLE_SIZE 511
-/* this may be too big -- 127 seems slightly faster in lint.  Perhaps we need *hash-table-default-size*?
+/* this may be too big -- smaller is faster in lint (even 31).  Perhaps we need *hash-table-default-size*?
  */
 
 
@@ -26181,7 +26204,8 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 
   symbol_set_value(x, syn);
   symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS | T_SIMPLE);
-  typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC);
+  /* typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC); */
+  typeflag(x) = SYNTACTIC_TYPE;
   symbol_id(x) = 0;
   car(syn) = x;
   syntax_opcode(x) = op;
@@ -26216,7 +26240,8 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
 
   symbol_set_value(x, syn);   /* cdr(x) */
   symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS | T_SIMPLE);
-  typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC);
+  /* typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC); */
+  typeflag(x) = SYNTACTIC_TYPE;
   symbol_id(x) = 0;
   car(syn) = s7_make_symbol(sc, name);
   syntax_opcode(x) = op;
@@ -32921,7 +32946,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = sc->NIL;
 	  goto START;
 	}
-      
+
       if (type(cdr(sc->code)) != T_NIL)
 	{
 	  /* if there are more expressions following, and this is not a pair, it's a no-op!
@@ -32953,12 +32978,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* we jump here when we already know sc->code is a pair */
 
 	EVAL_PAIR:
-
 	  /* fprintf(stderr, "    eval_pair: %s\n", DISPLAY_80(sc->code)); */
-	  if (is_syntactic(car(sc->code))) 
+
+	  if (typeflag(car(sc->code)) == SYNTACTIC_TYPE) /* this is much faster than checking is_synactic */
 	    {
-	      /* this can't simply assume syntax if dont_eval_args: (eval (list quasiquote (list values #t))) will segfault
-	       */
 	      sc->op = (opcode_t)syntax_opcode(car(sc->code));
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;
@@ -32974,8 +32997,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    OPT_EVAL:
 	      code = sc->code;
-
-	      /* fprintf(stderr, "    opt_eval: %s: %s\n", opt_names[optimize_data(code)], DISPLAY_80(sc->code)); */
 
 	      switch (optimize_data(code))
 		{
@@ -33005,8 +33026,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  NEW_FRAME(sc, closure_environment(ecdr(code)), sc->envir);
 		  sc->code = closure_body(ecdr(code));
 		  goto BEGIN;
-
-
+		  
+		  
 		  /* if we actually use the HOP_* mechanism with closures (see optimize_function), and
 		   *   we use ecdr below, the nested closure is not looked up again at
 		   *   run-time in the current environment, so
@@ -33016,7 +33037,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   *      (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a b) (- a b)) (f1 12))
 		   * but... we can't use ecdr reliably -- the saved pointer might be to an old version not GC'd etc.
 		   */
-
+		  
 		case OP_SAFE_CLOSURE_C:
 		  if (!function_is_ok(code))
 		    {
@@ -33027,8 +33048,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_CLOSURE_C:
 		  car(sc->T1_1) = cadr(code);
 		  goto SAFE_CLOSURE_ONE;
-
-
+		  
+		  
 		case OP_SAFE_CLOSURE_Q:
 		  if (!function_is_ok(code))
 		    break;
@@ -33036,27 +33057,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_CLOSURE_Q:
 		  car(sc->T1_1) = cadr(cadr(code));
 		  goto SAFE_CLOSURE_ONE;
-
-
+		  
+		  
 		case OP_SAFE_CLOSURE_S:
 		  if (!function_is_ok(code))
 		    {
 		      optimize_data(code) = OP_UNKNOWN_S;
 		      goto OPT_EVAL;
 		    }
-
+		  
 		case HOP_SAFE_CLOSURE_S:
 		  car(sc->T1_1) = finder(sc, cadr(code));
 		  goto SAFE_CLOSURE_ONE;
-
-
+		  
+		  
 		case OP_SAFE_CLOSURE_S_1:
 		  if (!function_is_ok(code))
 		    {
 		      optimize_data(code) = OP_UNKNOWN_S;
 		      goto OPT_EVAL;
 		    }
-
+		  
 		case HOP_SAFE_CLOSURE_S_1:
 		  {
 		    s7_pointer env, x;
@@ -33071,8 +33092,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->cur_code = sc->code;
 		    goto EVAL_PAIR;
 		  }
-
-
+		  
+		  
 		case OP_SAFE_CLOSURE_opSq:
 		  if (!function_is_ok(code))
 		    {
@@ -33081,13 +33102,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		  if (!indirect_c_function_is_ok(sc, cadr(code)))
 		    break;
-
+		  
 		case HOP_SAFE_CLOSURE_opSq:
-		    car(sc->T1_1) = finder(sc, cadr(cadr(code)));
-		    car(sc->T1_1) = c_call(cadr(code))(sc, sc->T1_1);
-		    goto SAFE_CLOSURE_ONE;
-
-
+		  car(sc->T1_1) = finder(sc, cadr(cadr(code)));
+		  car(sc->T1_1) = c_call(cadr(code))(sc, sc->T1_1);
+		  /* goto SAFE_CLOSURE_ONE; */
+		  
+		  
+		SAFE_CLOSURE_ONE:
+		  {
+		    s7_pointer env, x;
+		    env = closure_environment(ecdr(sc->code));
+		    frame_id(env) = ++frame_number;
+		    x = car(env);
+		    cdr(x) = car(sc->T1_1);
+		    symbol_id(car(x)) = frame_number;
+		    symbol_local_slot(car(x)) = x;
+		    sc->envir = env;
+		    sc->code = closure_body(ecdr(sc->code));
+		    goto BEGIN;
+		  }
+		  
+		  
 		case OP_SAFE_CLOSURE_SS:
 		  if (!function_is_ok(code))
 		    {
@@ -33102,10 +33138,42 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->T2_1) = finder(sc, cadr(code));
 		    car(sc->T2_2) = val;
 		    sc->code = ecdr(code);
-		    goto SAFE_CLOSURE_TWO;
+		    /* goto SAFE_CLOSURE_TWO; */
 		  }
 		  
-
+		  
+		SAFE_CLOSURE_TWO:
+		  {
+		    s7_pointer env, x;
+		    unsigned long long int id;
+		    
+		    id = ++frame_number;
+		    env = closure_environment(sc->code);
+		    frame_id(env) = id;
+		    
+		    x = car(env);
+		    cdr(x) = car(sc->T2_1);
+		    symbol_id(car(x)) = id;
+		    symbol_local_slot(car(x)) = x; /* this is not redundant */
+		    
+		    x = ecdr(x);
+		    cdr(x) = car(sc->T2_2);
+		    symbol_id(car(x)) = id;
+		    symbol_local_slot(car(x)) = x; 
+		    
+		    sc->envir = env;
+		    sc->code = closure_body(sc->code);
+		    
+		    if (is_one_liner(sc->code))
+		      {
+			sc->code = car(sc->code);
+			sc->cur_code = sc->code;
+			goto EVAL_PAIR;
+		      }
+		    goto BEGIN;
+		  }
+		  
+		  
 		case OP_SAFE_CLOSURE_SC:
 		  if (!function_is_ok(code))
 		    {
@@ -33119,7 +33187,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = ecdr(code);
 		  goto SAFE_CLOSURE_TWO;
 		  
-
+		  
 		case OP_SAFE_CLOSURE_CS:
 		  if (!function_is_ok(code))
 		    {
@@ -33133,7 +33201,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = ecdr(code);
 		  goto SAFE_CLOSURE_TWO;
 		  
-
+		  
 		case OP_SAFE_CLOSURE_CC:
 		  if (!function_is_ok(code))
 		    {
@@ -33147,7 +33215,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = ecdr(code);
 		  goto SAFE_CLOSURE_TWO;
 		  
-
+		  
 		case OP_SAFE_CLOSURE_opSq_opSq:
 		  if (!function_is_ok(code))
 		    {
@@ -33163,18 +33231,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer args;
 		    args = cdr(code);
-
+		    
 		    car(sc->T1_1) = finder(sc, cadr(car(args)));
 		    sc->temp4 = c_call(car(args))(sc, sc->T1_1);
 		    car(sc->T1_1) = finder(sc, cadr(cadr(args)));
-
+		    
 		    car(sc->T2_2) = c_call(cadr(args))(sc, sc->T1_1);
 		    car(sc->T2_1) = sc->temp4;
 		    sc->code = ecdr(code);
 		    goto SAFE_CLOSURE_TWO;
 		  }
-
-
+		  
+		  
 		case OP_SAFE_CLOSURE_SSS:
 		  if (!function_is_ok(code))
 		    {
@@ -33193,10 +33261,38 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->T3_3) = z;
 		    sc->args = sc->T3_1;
 		    sc->code = ecdr(code);
-		    goto SAFE_CLOSURE;
+		    /* goto SAFE_CLOSURE; */
 		  }
-
-
+		  
+		  
+		SAFE_CLOSURE:
+		  {
+		    s7_pointer env, x, z;
+		    unsigned long long int id;
+		    
+		    id = ++frame_number;
+		    env = closure_environment(sc->code);
+		    frame_id(env) = id;
+		    
+		    for (x = car(env), z = sc->args; is_pair(x); x = ecdr(x), z = cdr(z))
+		      {
+			cdr(x) = car(z);
+			symbol_id(car(x)) = id;
+			symbol_local_slot(car(x)) = x;
+		      }
+		    sc->envir = env;
+		    sc->code = closure_body(sc->code);
+		    
+		    if (is_one_liner(sc->code))
+		      {
+			sc->code = car(sc->code);
+			sc->cur_code = sc->code;
+			goto EVAL_PAIR;
+		      }
+		    goto BEGIN;
+		  }
+		  
+		  
 		case OP_SAFE_CLOSURE_ALL_S:
 		  if (!function_is_ok(code))
 		    break;
@@ -33234,7 +33330,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer args, arg, val;
 		    args = cdr(code);
 		    arg = car(args);
-
+		    
 		    /* first one is to trigger GC if needed */
 		    if (is_pair(arg))
 		      val = cadr(arg);
@@ -33258,14 +33354,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			sc->w = cons_unchecked(sc, val, sc->w);
 		      }
-
+		    
 		    sc->args = safe_reverse_in_place(sc, sc->w);
 		    sc->w = sc->NIL;
 		    sc->code = ecdr(code);
 		    goto SAFE_CLOSURE;
 		  }
-
-
+		  
+		  
 		case OP_SAFE_CLOSURE_opSq_S:
 		  if (!function_is_ok(code))
 		    {
@@ -33340,8 +33436,61 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		case HOP_CLOSURE_S:
 		  car(sc->T1_1) = finder(sc, cadr(code));
-		  goto UNSAFE_CLOSURE_ONE;
+		  /* goto UNSAFE_CLOSURE_ONE; */
 		  
+		UNSAFE_CLOSURE_ONE:
+		  {
+		    s7_pointer frame, slot, args, sym, val;
+		    
+		    if (sc->stack_end >= sc->stack_resize_trigger)
+		      increase_stack_size(sc);
+		    
+		    sc->code = ecdr(sc->code);
+		    args = closure_args(sc->code);
+		    if (is_pair(args))
+		      {
+			sym = car(args);
+			val = car(sc->T1_1);
+		      }
+		    else
+		      {
+			sym = args;
+			val = list_1(sc, car(sc->T1_1));
+		      }
+		    
+		    NEW_CELL(sc, frame);                   
+		    frame_id(frame) = ++frame_number; 
+		    cdr(frame) = closure_environment(sc->code);
+		    set_type(frame, T_ENVIRONMENT); 
+		    sc->envir = frame;
+		    
+		    NEW_CELL_NO_CHECK(sc, slot);
+		    car(slot) = sym;
+		    symbol_id(car(slot)) = frame_number;	
+		    symbol_local_slot(car(slot)) = slot;
+		    if (symbol_has_accessor(sym))
+		      cdr(slot) = call_symbol_bind(sc, sym, val);
+		    else cdr(slot) = val;
+		    set_type(slot, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+		    ecdr(slot) = sc->NIL;
+		    car(frame) = slot;
+		    
+		    if (!is_null(cdr(args)))
+		      add_slot(sc, cdr(args), sc->NIL);
+		    /* here we have a closure with a required arg and a rest arg, and we're called
+		     *   with one arg, so the rest arg is nil.
+		     */
+		    
+		    sc->code = closure_body(sc->code);
+		    if (is_one_liner(sc->code))
+		      {
+			sc->code = car(sc->code);
+			sc->cur_code = sc->code;
+			goto EVAL_PAIR;
+		      }
+		    goto BEGIN;
+		  }
+
 
 		case OP_CLOSURE_SS:
 		  if (!function_is_ok(code))
@@ -33353,7 +33502,86 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_CLOSURE_SS:
 		  car(sc->T2_1) = finder(sc, cadr(code));
 		  car(sc->T2_2) = finder(sc, fcdr(code));
-		  goto UNSAFE_CLOSURE_TWO;
+		  /* goto UNSAFE_CLOSURE_TWO; */
+
+		UNSAFE_CLOSURE_TWO:
+		  {
+		    s7_pointer frame, slot1, slot2, args, sym, val;
+		    
+		    if (sc->stack_end >= sc->stack_resize_trigger)
+		      increase_stack_size(sc);
+		    
+		    sc->code = ecdr(sc->code);
+		    args = closure_args(sc->code);
+		    if (is_pair(args))
+		      {
+			sym = car(args);
+			val = car(sc->T2_1);
+		      }
+		    else
+		      {
+			sym = args;
+			val = list_2(sc, car(sc->T2_1), car(sc->T2_2));
+		      }
+		    
+		    NEW_CELL(sc, frame);                   
+		    frame_id(frame) = ++frame_number; 
+		    cdr(frame) = closure_environment(sc->code);
+		    set_type(frame, T_ENVIRONMENT); 
+		    sc->envir = frame;
+		    
+		    NEW_CELL_NO_CHECK(sc, slot1);
+		    car(slot1) = sym;
+		    symbol_id(car(slot1)) = frame_number;	
+		    symbol_local_slot(car(slot1)) = slot1;
+		    if (symbol_has_accessor(sym))
+		      cdr(slot1) = call_symbol_bind(sc, sym, val);
+		    else cdr(slot1) = val;
+		    set_type(slot1, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+		    car(frame) = slot1;
+		    
+		    if (is_pair(args))
+		      {
+			args = cdr(args);
+			if (is_pair(args))
+			  {
+			    sym = car(args);
+			    val = car(sc->T2_2);
+			  }
+			else
+			  {
+			    sym = args;
+			    val = list_1(sc, car(sc->T2_2));
+			  }
+			
+			NEW_CELL_NO_CHECK(sc, slot2);
+			car(slot2) = sym;
+			symbol_id(car(slot2)) = frame_number;	
+			symbol_local_slot(car(slot2)) = slot2;
+			if (symbol_has_accessor(sym))
+			  cdr(slot2) = call_symbol_bind(sc, sym, val);
+			else cdr(slot2) = val;
+			set_type(slot2, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+			ecdr(slot2) = sc->NIL;
+			ecdr(slot1) = slot2;
+			
+			if (!is_null(cdr(args)))
+			  add_slot(sc, cdr(args), sc->NIL);
+			/* here we have a closure with two required args and a rest arg, and we're called
+			 *   with two args, so the rest arg is nil.
+			 */
+		      }
+		    else ecdr(slot1) = sc->NIL;
+		    
+		    sc->code = closure_body(sc->code);
+		    if (is_one_liner(sc->code))
+		      {
+			sc->code = car(sc->code);
+			sc->cur_code = sc->code;
+			goto EVAL_PAIR;
+		      }
+		    goto BEGIN;
+		  }
 
 
 		case OP_CLOSURE_SC:
@@ -33450,10 +33678,54 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    cdr(x) = y;
 		    sc->args = x;
 		    sc->code = ecdr(code);
-		    goto UNSAFE_CLOSURE;
+		    /* goto UNSAFE_CLOSURE; */
 		  }
 
 
+		UNSAFE_CLOSURE:
+		  if (sc->stack_end >= sc->stack_resize_trigger)
+		    increase_stack_size(sc);
+		  
+		  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
+		  {
+		    s7_pointer x, z, e;
+		    unsigned long long int id;
+		    
+		    e = sc->envir;
+		    id = frame_id(e);
+		    
+		    for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
+		      {
+			s7_pointer sym, args, val;
+			
+			sym = car(x);
+			val = car(z);
+			args = cdr(z);
+			
+			car(z) = sym;
+			symbol_id(sym) = id;
+			symbol_local_slot(sym) = z;
+			if (symbol_has_accessor(sym))
+			  cdr(z) = call_symbol_bind(sc, sym, val);
+			else cdr(z) = val;
+			set_type(z, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+			ecdr(z) = car(e);
+			car(e) = z;
+			z = args;
+		      }
+		    if (!is_null(x)) 
+		      add_slot(sc, x, z); /* the rest arg */
+		  }
+		  sc->code = closure_body(sc->code);
+		  if (is_one_liner(sc->code))
+		    {
+		      sc->code = car(sc->code);
+		      sc->cur_code = sc->code;
+		      goto EVAL_PAIR;
+		    }
+		  goto BEGIN;
+		  
+		  
 		case OP_CLOSURE_ALL_S:
 		  if (!function_is_ok(code))
 		    break;
@@ -35843,7 +36115,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_symbol(carc))
 	      {
 		/* car is a symbol, sc->code a list */
-		sc->value = SYMBOL_VALUE(sc, carc);
+		sc->value = SYMBOL_VALUE(sc, carc); /* not finder here -- nearly 2/3's of these are globals */
+		/*
+		if ((is_c_function(sc->value)) &&
+		    (is_safe_procedure(sc->value)))
+		  fprintf(stderr, "unopt safe: %s\n", DISPLAY(sc->code));
+		*/
 		sc->code = cdr(sc->code);
 		sc->args = sc->NIL;
 		/* drop into eval args
@@ -36612,71 +36889,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto EVAL_PAIR;
 		}
 	      goto BEGIN;
-
-	      
-	      /* come here if we know args match */
-	    SAFE_CLOSURE:
-	      id = ++frame_number;
-	      env = closure_environment(sc->code);
-	      frame_id(env) = id;
-
-	      for (x = car(env), z = sc->args; is_pair(x); x = ecdr(x), z = cdr(z))
-		{
-		  cdr(x) = car(z);
-		  symbol_id(car(x)) = id;
-		  symbol_local_slot(car(x)) = x;
-		}
-	      sc->envir = env;
-	      sc->code = closure_body(sc->code);
-
-	      if (is_one_liner(sc->code))
-		{
-		  sc->code = car(sc->code);
-		  sc->cur_code = sc->code;
-		  goto EVAL_PAIR;
-		}
-	      goto BEGIN;
-
-	      
-	      /* one arg cases are handled directly in the optimize switch statement */
-	      
-	    SAFE_CLOSURE_ONE:
-	      env = closure_environment(ecdr(sc->code));
-	      frame_id(env) = ++frame_number;
-	      x = car(env);
-	      cdr(x) = car(sc->T1_1);
-	      symbol_id(car(x)) = frame_number;
-	      symbol_local_slot(car(x)) = x;
-	      sc->envir = env;
-	      sc->code = closure_body(ecdr(sc->code));
-	      goto BEGIN;
-
-
-	    SAFE_CLOSURE_TWO:
-	      id = ++frame_number;
-	      env = closure_environment(sc->code);
-	      frame_id(env) = id;
-
-	      x = car(env);
-	      cdr(x) = car(sc->T2_1);
-	      symbol_id(car(x)) = id;
-	      symbol_local_slot(car(x)) = x; /* this is not redundant */
-
-	      x = ecdr(x);
-	      cdr(x) = car(sc->T2_2);
-	      symbol_id(car(x)) = id;
-	      symbol_local_slot(car(x)) = x; 
-
-	      sc->envir = env;
-	      sc->code = closure_body(sc->code);
-
-	      if (is_one_liner(sc->code))
-		{
-		  sc->code = car(sc->code);
-		  sc->cur_code = sc->code;
-		  goto EVAL_PAIR;
-		}
-	      goto BEGIN;
 	    }
 #endif
 
@@ -36774,186 +36986,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL_PAIR;
 	    }
 	  goto BEGIN;
-	  
 
-#if WITH_OPTIMIZATION
-	  /* come here if we know args match and we have a closure (not a bacro) */
-	UNSAFE_CLOSURE:
-	  if (sc->stack_end >= sc->stack_resize_trigger)
-	    increase_stack_size(sc);
-
-	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
-	  {
-	    s7_pointer x, z, e;
-	    unsigned long long int id;
-
-	    e = sc->envir;
-	    id = frame_id(e);
-	    
-	    for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
-	      {
-		s7_pointer sym, args, val;
-		
-		sym = car(x);
-		val = car(z);
-		args = cdr(z);
-		
-		car(z) = sym;
-		symbol_id(sym) = id;
-		symbol_local_slot(sym) = z;
-		if (symbol_has_accessor(sym))
-		  cdr(z) = call_symbol_bind(sc, sym, val);
-		else cdr(z) = val;
-		set_type(z, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
-		ecdr(z) = car(e);
-		car(e) = z;
-		z = args;
-	      }
-	    if (!is_null(x)) 
-	      add_slot(sc, x, z); /* the rest arg */
-	  }
-	  sc->code = closure_body(sc->code);
-	  if (is_one_liner(sc->code))
-	    {
-	      sc->code = car(sc->code);
-	      sc->cur_code = sc->code;
-	      goto EVAL_PAIR;
-	    }
-	  goto BEGIN;
-
-
-	UNSAFE_CLOSURE_ONE:
-	  {
-	    s7_pointer frame, slot, args, sym, val;
-
-	    if (sc->stack_end >= sc->stack_resize_trigger)
-	      increase_stack_size(sc);
-
-	    sc->code = ecdr(sc->code);
-	    args = closure_args(sc->code);
-	    if (is_pair(args))
-	      {
-		sym = car(args);
-		val = car(sc->T1_1);
-	      }
-	    else
-	      {
-		sym = args;
-		val = list_1(sc, car(sc->T1_1));
-	      }
-
-	    NEW_CELL(sc, frame);                   
-	    frame_id(frame) = ++frame_number; 
-	    cdr(frame) = closure_environment(sc->code);
-	    set_type(frame, T_ENVIRONMENT); 
-	    sc->envir = frame;
-
-	    NEW_CELL_NO_CHECK(sc, slot);
-	    car(slot) = sym;
-	    symbol_id(car(slot)) = frame_number;	
-	    symbol_local_slot(car(slot)) = slot;
-	    if (symbol_has_accessor(sym))
-	      cdr(slot) = call_symbol_bind(sc, sym, val);
-	    else cdr(slot) = val;
-	    set_type(slot, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
-	    ecdr(slot) = sc->NIL;
-	    car(frame) = slot;
-
-	    if (!is_null(cdr(args)))
-	      add_slot(sc, cdr(args), sc->NIL);
-	    /* here we have a closure with a required arg and a rest arg, and we're called
-	     *   with one arg, so the rest arg is nil.
-	     */
-
-	    sc->code = closure_body(sc->code);
-	    if (is_one_liner(sc->code))
-	      {
-		sc->code = car(sc->code);
-		sc->cur_code = sc->code;
-		goto EVAL_PAIR;
-	      }
-	    goto BEGIN;
-	  }
-
-	UNSAFE_CLOSURE_TWO:
-	  {
-	    s7_pointer frame, slot1, slot2, args, sym, val;
-
-	    if (sc->stack_end >= sc->stack_resize_trigger)
-	      increase_stack_size(sc);
-
-	    sc->code = ecdr(sc->code);
-	    args = closure_args(sc->code);
-	    if (is_pair(args))
-	      {
-		sym = car(args);
-		val = car(sc->T2_1);
-	      }
-	    else
-	      {
-		sym = args;
-		val = list_2(sc, car(sc->T2_1), car(sc->T2_2));
-	      }
-
-	    NEW_CELL(sc, frame);                   
-	    frame_id(frame) = ++frame_number; 
-	    cdr(frame) = closure_environment(sc->code);
-	    set_type(frame, T_ENVIRONMENT); 
-	    sc->envir = frame;
-		   
-	    NEW_CELL_NO_CHECK(sc, slot1);
-	    car(slot1) = sym;
-	    symbol_id(car(slot1)) = frame_number;	
-	    symbol_local_slot(car(slot1)) = slot1;
-	    if (symbol_has_accessor(sym))
-	      cdr(slot1) = call_symbol_bind(sc, sym, val);
-	    else cdr(slot1) = val;
-	    set_type(slot1, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
-	    car(frame) = slot1;
-
-	    if (is_pair(args))
-	      {
-		args = cdr(args);
-		if (is_pair(args))
-		  {
-		    sym = car(args);
-		    val = car(sc->T2_2);
-		  }
-		else
-		  {
-		    sym = args;
-		    val = list_1(sc, car(sc->T2_2));
-		  }
-		
-		NEW_CELL_NO_CHECK(sc, slot2);
-		car(slot2) = sym;
-		symbol_id(car(slot2)) = frame_number;	
-		symbol_local_slot(car(slot2)) = slot2;
-		if (symbol_has_accessor(sym))
-		  cdr(slot2) = call_symbol_bind(sc, sym, val);
-		else cdr(slot2) = val;
-		set_type(slot2, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
-		ecdr(slot2) = sc->NIL;
-		ecdr(slot1) = slot2;
-		
-		if (!is_null(cdr(args)))
-		  add_slot(sc, cdr(args), sc->NIL);
-		/* here we have a closure with two required args and a rest arg, and we're called
-		 *   with two args, so the rest arg is nil.
-		 */
-	      }
-	    else ecdr(slot1) = sc->NIL;
-
-	    sc->code = closure_body(sc->code);
-	    if (is_one_liner(sc->code))
-	      {
-		sc->code = car(sc->code);
-		sc->cur_code = sc->code;
-		goto EVAL_PAIR;
-	      }
-	    goto BEGIN;
-	  }
-#endif	  
 
 
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
@@ -37795,7 +37828,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  (!is_pair(cadr(sc->code))))
 			{
 			  if (is_symbol(cadr(sc->code)))
-			    car(sc->T1_1) = SYMBOL_VALUE(sc, cadr(sc->code));
+			    car(sc->T1_1) = finder(sc, cadr(sc->code));
 			  else car(sc->T1_1) = cadr(sc->code);
 			  sc->args = sc->T1_1;
 			  sc->code = c_function_setter(sc->x);
@@ -38079,7 +38112,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_IF_X_X_P:
       if (is_symbol(car(sc->code)))
 	{
-	  if (is_true(sc, SYMBOL_VALUE(sc, car(sc->code))))
+	  if (is_true(sc, finder(sc, car(sc->code))))
 	    {
 	      if (is_symbol(cadr(sc->code)))
 		sc->value = finder(sc, cadr(sc->code));
@@ -39362,7 +39395,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (sc->op == OP_DEFINE_EXPANSION)
 	    {
 	      set_type(sc->value, T_MACRO | T_ANY_MACRO | T_EXPANSION | T_DONT_COPY | T_DONT_EVAL_ARGS | T_COPY_ARGS);
-	      set_type(sc->code, type(sc->code) | T_EXPANSION | T_DONT_COPY);
+	      set_type(sc->code, EXPANSION_TYPE);
 	    }
 	  else set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
 	}
@@ -39822,9 +39855,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   (procedure-source ho) -> (lambda (b) (+ 1 (+ b 1)))
 	   */
 	  
-	  if (is_expansion(car(sc->value)))
+	  if (is_expansion(car(sc->value)))                                  /* was checking the T_EXPANSION bit (car(sc->value) is a symbol) */
 	    {
 	      int loc;
+
 	      loc = s7_stack_top(sc) - 1;
 	      if ((loc >= 3) &&
 		  (stack_op(sc->stack, loc) != OP_READ_QUOTE) &&             /* '(hi 1) for example */
