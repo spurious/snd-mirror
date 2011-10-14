@@ -264,9 +264,9 @@
 (define (alphanumeric? c) (or (char-alphabetic? c) (char-numeric? c)))
 (define-expansion (incf sym) `(set! ,sym (+ ,sym 1)))
 (define-expansion (decf sym) `(set! ,sym (- ,sym 1)))
-(defmacro when (test . forms) `(if ,test (begin ,@forms)))
-(defmacro push (val sym) `(let () (set! ,sym (cons ,val ,sym)) ,sym))
-(defmacro pop (sym) (let ((v (gensym))) `(let ((,v (car ,sym))) (set! ,sym (cdr ,sym)) ,v)))
+(define-expansion (when test . forms) `(if ,test (begin ,@forms)))
+(define-expansion (push val sym) `(set! ,sym (cons ,val ,sym)))
+(define-expansion (pop sym) (let ((v (gensym))) `(let ((,v (car ,sym))) (set! ,sym (cdr ,sym)) ,v)))
 
 (define (find-if pred l)
   (cond ((null? l) #f)
