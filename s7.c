@@ -302,7 +302,7 @@ enum {OP_NO_OP,
       OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
       OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN1, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2, 
       OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, 
-      OP_LETREC, OP_LETREC1, OP_COND, OP_COND1, 
+      OP_LETREC, OP_LETREC1, OP_COND, OP_COND1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
       OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR,
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
       OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
@@ -369,7 +369,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "apply", "eval-macro", "lambda", "quote", 
    "define", "define1", "begin", "begin1", "if", "if1", "set!", "set1", "set2", 
    "let", "let1", "let*", "let-star1", 
-   "letrec", "letrec1", "cond", "cond1", 
+   "letrec", "letrec1", "cond", "cond1", "cond-simple", "cond1-simple",
    "and", "and1", "or", "or1", "defmacro", "defmacro*",
    "define-macro", "define-macro*", "define-expansion",
    "case", "case1", "read-list", "read-dot", "read-quote", 
@@ -647,7 +647,12 @@ typedef struct s7_port_t {
   /* a version of string ports using a pointer to the current location and a pointer to the end
    *   (rather than an integer for both, indexing from the base string) was not faster.
    */
-  s7_pointer orig_str;             /* GC protection for string port string */
+  s7_pointer orig_str;                                             /* GC protection for string port string */
+  int (*read_character)(s7_scheme *sc, s7_pointer port);           /* function to read a character */
+  void (*write_character)(s7_scheme *sc, int c, s7_pointer port);  /* function to write a character */
+  token_t (*read_semicolon)(s7_scheme *sc, s7_pointer port);       /* internal skip-to-semicolon reader */
+  int (*read_white_space)(s7_scheme *sc, s7_pointer port);         /* internal skip white space reader */
+  s7_pointer (*read_name)(s7_scheme *sc, s7_pointer pt, bool atom_case);
 } s7_port_t;
 
 
@@ -858,7 +863,7 @@ struct s7_scheme {
   s7_pointer S_IS_TYPE, S_TYPE_MAKE, S_TYPE_REF, S_TYPE_ARG;
   s7_pointer s_function_args;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
-  s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED;
+  s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_R, SET_NORMAL, SET_PAIR;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_STAR_UNCHECKED, CASE_S, CASE_SIMPLE, CASE_SIMPLER;
   s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_Q, LET_ALL_G, LET_C_P, LET_S_P;
@@ -883,7 +888,6 @@ struct s7_scheme {
   s7_pointer output_port;             /* current-output-port */
   s7_pointer error_port;              /* current-error-port */
   s7_pointer error_info;              /* the vector bound to *error-info* */
-  bool input_is_file;
   s7_pointer standard_input, standard_output, standard_error;
 
   s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
@@ -983,12 +987,10 @@ struct s7_scheme {
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 0))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
-#define set_immutable(p)              typeflag(p) |= (T_IMMUTABLE | T_DONT_COPY)
+#define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
 /* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
  */
-
-#define T_DONT_COPY                   (1 << (TYPE_BITS + 1))
-#define dont_copy(p)                  ((typeflag(p) & T_DONT_COPY) != 0)
+#define dont_copy(p)                  ((!is_pair(p)) || (is_immutable(p)))
 #define dont_copy_cdr(p)              ((typeflag(p) & (T_PROCEDURE | T_ANY_MACRO)) != 0)
 /* dont_copy means the object is not copied when saved in a continuation */
 
@@ -1017,7 +1019,7 @@ struct s7_scheme {
  */
 
 #define T_EXPANSION                   (1 << (TYPE_BITS + 6))
-#define EXPANSION_TYPE                (T_EXPANSION | T_SYMBOL | T_DONT_COPY)
+#define EXPANSION_TYPE                (T_EXPANSION | T_SYMBOL)
 #define is_expansion(p)               (typeflag(p) == EXPANSION_TYPE)
 /* this marks the symbol associated with a run-time macro and distinguishes the value from an ordinary macro
  */
@@ -1051,7 +1053,7 @@ struct s7_scheme {
 
 #define T_SYNTACTIC                   (1 << (TYPE_BITS + 11))
 #define is_syntactic(p)               ((typeflag(p) & T_SYNTACTIC) != 0)
-#define SYNTACTIC_TYPE                (T_SYMBOL | T_SIMPLE | T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC)
+#define SYNTACTIC_TYPE                (T_SYMBOL | T_SIMPLE | T_DONT_EVAL_ARGS | T_SYNTACTIC)
 /* this marks symbols that represent syntax objects 
  */
 
@@ -1128,7 +1130,7 @@ struct s7_scheme {
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x40000000
+#define UNUSED_BITS                   0x40000200
 
 #define set_type(p, f)                typeflag(p) = f
 
@@ -1267,6 +1269,11 @@ struct s7_scheme {
 #define port_input_function(p)        (p)->object.port->input_function
 #define port_data(p)                  (p)->object.port->data
 #define port_original_input_string(p) (p)->object.port->orig_str
+#define port_read_character(p)        (p)->object.port->read_character
+#define port_write_character(p)       (p)->object.port->write_character
+#define port_read_semicolon(p)        (p)->object.port->read_semicolon
+#define port_read_white_space(p)      (p)->object.port->read_white_space
+#define port_read_name(p)             (p)->object.port->read_name
 
 #define is_c_function(f)              (type(f) >= T_C_FUNCTION)
 #define c_function(f)                 (f)->object.ffptr
@@ -1520,6 +1527,7 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg);
 static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 static bool is_pws(s7_pointer obj);
+static token_t token(s7_scheme *sc);
 
 static bool tracing, trace_all;
 
@@ -2896,13 +2904,11 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
   s7_pointer x, str; 
   
   str = s7_make_permanent_string(name);
-
-  /* x = permanent_cons(str, sc->NIL, T_SYMBOL | T_DONT_COPY); */
   x = (s7_cell *)permanent_calloc(sizeof(s7_extended_cell));
   x->hloc = NOT_IN_HEAP;
   car(x) = str;
   cdr(x) = sc->NIL;
-  set_type(x, T_SYMBOL | T_DONT_COPY | T_SIMPLE);
+  set_type(x, T_SYMBOL | T_SIMPLE);
 
   symbol_global_slot(x) = sc->NIL;
   symbol_id(x) = 0;
@@ -2914,7 +2920,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
     typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
 
   vector_element(sc->symbol_table, location) = permanent_cons(x, vector_element(sc->symbol_table, location), 
-							      T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+							      T_PAIR | T_IMMUTABLE);
   return(x); 
 } 
 
@@ -3171,7 +3177,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
     symbol_id(car(_slot_)) = frame_id(Frame);	\
     symbol_local_slot(car(_slot_)) = _slot_;\
     cdr(_slot_) = Value;\
-    set_type(_slot_, T_PAIR | T_IMMUTABLE | T_DONT_COPY);\
+    set_type(_slot_, T_PAIR | T_IMMUTABLE);\
     ecdr(_slot_) = car(Frame);\
     car(Frame) = _slot_;\
   } while (0)
@@ -3193,7 +3199,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
       symbol_id(car(_slot_)) = frame_number;	\
       symbol_local_slot(car(_slot_)) = _slot_;\
       cdr(_slot_) = Value;\
-      set_type(_slot_, T_PAIR | T_IMMUTABLE | T_DONT_COPY);\
+      set_type(_slot_, T_PAIR | T_IMMUTABLE);\
       ecdr(_slot_) = sc->NIL;\
       car(_x_) = _slot_;\
      } while (0)
@@ -3231,7 +3237,7 @@ static void add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer va
 	}
 
       ge = sc->global_env;
-      slot = permanent_cons(variable, value, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+      slot = permanent_cons(variable, value, T_PAIR | T_IMMUTABLE);
       vector_element(ge, vector_fill_pointer(ge)++) = slot;
       if (vector_fill_pointer(ge) >= vector_length(ge))
 	{
@@ -3256,7 +3262,7 @@ static void add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer va
       NEW_CELL(sc, slot);
       car(slot) = variable;
       cdr(slot) = value;
-      set_type(slot, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+      set_type(slot, T_PAIR | T_IMMUTABLE);
       ecdr(slot) = car(env);
       car(env) = slot;
       symbol_id(variable) = frame_id(env);
@@ -3277,7 +3283,7 @@ static s7_pointer add_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value)
   NEW_CELL(sc, y);
   car(y) = variable;
   cdr(y) = value;
-  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+  set_type(y, T_PAIR | T_IMMUTABLE);
   ecdr(y) = car(sc->envir);
   car(sc->envir) = y;
   set_local(variable);
@@ -3297,7 +3303,7 @@ static void save_initial_environment(s7_scheme *sc)
   s7_pointer *lsts, *inits;
 
   sc->initial_env = (s7_pointer)calloc(1, sizeof(s7_cell));
-  set_type(sc->initial_env, T_VECTOR | T_DONT_COPY);
+  set_type(sc->initial_env, T_VECTOR);
   vector_length(sc->initial_env) = INITIAL_ENV_ENTRIES;
   vector_elements(sc->initial_env) = (s7_pointer *)malloc(INITIAL_ENV_ENTRIES * sizeof(s7_pointer));
   inits = vector_elements(sc->initial_env);
@@ -3314,7 +3320,7 @@ static void save_initial_environment(s7_scheme *sc)
       slot = lsts[i];
       if (is_procedure(symbol_value(slot)))
 	{
-	  inits[k++] = permanent_cons(car(slot), cdr(slot), T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+	  inits[k++] = permanent_cons(car(slot), cdr(slot), T_PAIR | T_IMMUTABLE);
 	  if (k >= INITIAL_ENV_ENTRIES)
 	    return;
 	}
@@ -3653,8 +3659,8 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
   closure_body(x) = code;
   closure_environment(x) = sc->envir;
   if (type == T_CLOSURE)
-    set_type(x, type | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS);
-  else set_type(x, type | T_PROCEDURE | T_DONT_COPY);
+    set_type(x, type | T_PROCEDURE | T_COPY_ARGS);
+  else set_type(x, type | T_PROCEDURE);
   return(x);
 }
 
@@ -3677,7 +3683,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
        closure_args(X) = Args; \
        closure_body(X) = Code; \
        closure_environment(X) = Env; \
-       set_type(X, T_CLOSURE | T_PROCEDURE | T_DONT_COPY | T_COPY_ARGS); \
+       set_type(X, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); \
       } while (0)
 
 
@@ -3800,7 +3806,7 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   name = (char *)malloc((safe_strlen(key) + 2) * sizeof(char));
   sprintf(name, ":%s", key);                     /* prepend ":" */
   sym = make_symbol(sc, name);
-  typeflag(sym) |= (T_IMMUTABLE | T_DONT_COPY); 
+  typeflag(sym) |= (T_IMMUTABLE); 
   free(name);
   
   add_slot_to_environment(sc, sc->NIL, sym, sym); /* make it global, not in the local env! */
@@ -3879,7 +3885,7 @@ s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_C_POINTER | T_DONT_COPY);
+  set_type(x, T_C_POINTER);
   raw_pointer(x) = ptr;
   return(x);
 }
@@ -3919,6 +3925,8 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer nobj;
   int nloc;
+
+  if (!is_pair(obj)) fprintf(stderr, "copy %s ", DISPLAY(obj));
 
   NEW_CELL(sc, nobj);
   nloc = nobj->hloc;
@@ -3980,7 +3988,7 @@ static s7_pointer make_goto(s7_scheme *sc)
   call_exit_goto_loc(x) = s7_stack_top(sc);
   call_exit_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   call_exit_active(x) = true;
-  set_type(x, T_GOTO | T_DONT_COPY | T_PROCEDURE);
+  set_type(x, T_GOTO | T_PROCEDURE);
   return(x);
 }
 
@@ -4022,7 +4030,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   continuation_op_size(x) = sc->op_stack_size;
 
-  set_type(x, T_CONTINUATION | T_DONT_COPY | T_PROCEDURE);
+  set_type(x, T_CONTINUATION | T_PROCEDURE);
   add_continuation(sc, x);
   return(x);
 }
@@ -4213,7 +4221,6 @@ static void call_with_exit(s7_scheme *sc)
 	case OP_UNWIND_INPUT:
 	  s7_close_input_port(sc, stack_code(sc->stack, i)); /* "code" = port that we opened */
 	  sc->input_port = stack_args(sc->stack, i);         /* "args" = port that we shadowed */
-	  sc->input_is_file = (is_file_port(sc->input_port));
 	  break;
 
 	default:
@@ -4976,7 +4983,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
     }
 
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_DONT_COPY);
+  set_type(x, T_NUMBER);
   number_type(x) = NUM_INT;
   integer(number(x)) = n;
 
@@ -4988,7 +4995,7 @@ static s7_pointer make_mutable_integer(s7_scheme *sc, s7_Int n)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_DONT_COPY);
+  set_type(x, T_NUMBER);
   number_type(x) = NUM_INT;
   integer(number(x)) = n;
   return(x);
@@ -4999,7 +5006,7 @@ static s7_pointer make_permanent_integer(s7_Int i)
 {
   s7_pointer p;
   p = (s7_pointer)calloc(1, sizeof(s7_cell));
-  typeflag(p) = T_IMMUTABLE | T_NUMBER | T_DONT_COPY;
+  typeflag(p) = T_IMMUTABLE | T_NUMBER;
   p->hloc = NOT_IN_HEAP;
   number_type(p) = NUM_INT;
   integer(number(p)) = i;
@@ -5015,7 +5022,7 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
     return(real_zero);
 
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_DONT_COPY);
+  set_type(x, T_NUMBER);
   number_type(x) = NUM_REAL;
   real(number(x)) = n;
   
@@ -5037,7 +5044,7 @@ s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_DONT_COPY);
+  set_type(x, T_NUMBER);
   if (b == 0.0)
     {
       number_type(x) = NUM_REAL;
@@ -5105,7 +5112,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
     return(s7_make_integer(sc, a));
   
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_DONT_COPY);
+  set_type(x, T_NUMBER);
   number_type(x) = NUM_RATIO;
   numerator(number(x)) = a;
   denominator(number(x)) = b;
@@ -5335,8 +5342,8 @@ static s7_pointer s7_invert(s7_scheme *sc, s7_pointer p)      /* s7_ to be consi
     default:
       {
 	s7_Double r2, i2, den;
-	r2 = num_to_real_part(a);
-	i2 = num_to_imag_part(a);
+	r2 = real_part(a);
+	i2 = imag_part(a);
 	den = (r2 * r2 + i2 * i2);
 	return(s7_make_complex(sc, r2 / den, -i2 / den));
       }
@@ -7435,14 +7442,32 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
 {
   #define H_sin "(sin z) returns sin(z)"
   s7_pointer x;
+  s7_num_t a;
 
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "sin", 0, x, "a number"));
-  if (x == small_int(0)) return(x);                                 /* (sin 0) -> 0 */
 
-  if (s7_is_real(x))
-    return(s7_make_real(sc, sin(num_to_real(number(x)))));
+  a = number(x);
+  switch (a.type)
+    {
+    case NUM_INT:
+      if (x == small_int(0)) return(x);                                 /* (sin 0) -> 0 */
+      return(s7_make_real(sc, sin((s7_Double)integer(a))));
+      
+    case NUM_RATIO:
+      return(s7_make_real(sc, sin(fraction(a))));
+
+    case NUM_REAL:
+    case NUM_REAL2:
+      return(s7_make_real(sc, sin(real(a))));
+
+    default:
+      return(s7_from_c_complex(sc, csin(real_part(a) + (imag_part(a) * _Complex_I))));
+    }
+
+  /* TODO: cos etc don't use num_to_real
+   */
 
   /* sin is totally inaccurate over about 1e18.  There's a way to get true results,
    *   but it involves fancy "range reduction" techniques. 
@@ -7454,8 +7479,6 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
    * (remainder 1e22 (* 2 pi)) -> 1.0057952155665e+22 !!
    *   it should be 5.263007914620499494429139986095833592117E0
    */
-
-  return(s7_from_c_complex(sc, csin(s7_complex(x))));
 }
 
 
@@ -7463,15 +7486,29 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
 {
   #define H_cos "(cos z) returns cos(z)"
   s7_pointer x;
+  s7_num_t a;
 
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "cos", 0, x, "a number"));
-  if (x == small_int(0)) return(small_int(1));                     /* (cos 0) -> 1 */
 
-  if (s7_is_real(x))
-    return(s7_make_real(sc, cos(num_to_real(number(x)))));
-  return(s7_from_c_complex(sc, ccos(s7_complex(x))));
+  a = number(x);
+  switch (a.type)
+    {
+    case NUM_INT:
+      if (x == small_int(0)) return(small_int(1));                     /* (cos 0) -> 1 */
+      return(s7_make_real(sc, cos((s7_Double)integer(a))));
+      
+    case NUM_RATIO:
+      return(s7_make_real(sc, cos(fraction(a))));
+
+    case NUM_REAL:
+    case NUM_REAL2:
+      return(s7_make_real(sc, cos(real(a))));
+
+    default:
+      return(s7_from_c_complex(sc, ccos(real_part(a) + (imag_part(a) * _Complex_I))));
+    }
 }
 
 
@@ -8669,35 +8706,65 @@ static s7_pointer g_add_1(s7_scheme *sc, s7_pointer args)
   return(car(args));
 }
 
+/* TODO: sub2 and mul2 with nested switch */
+
 static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
   s7_num_t a, b;
+
   x = car(args);
-  y = cadr(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "+", 1, x, "a number"));
+
+  y = cadr(args);
   if (!s7_is_number(y))
     return(s7_wrong_type_arg_error(sc, "+", 2, y, "a number"));
+
   a = number(x);
   b = number(y);
-  switch (a.type | b.type)
+  switch (a.type)
     {
     case NUM_INT: 
-      return(s7_make_integer(sc, integer(a) + integer(b)));
-      break;
+      switch (b.type)
+	{
+	case NUM_INT:   return(s7_make_integer(sc, integer(a) + integer(b)));
+	case NUM_RATIO: return(g_add(sc, args));
+	case NUM_REAL:
+	case NUM_REAL2: return(s7_make_real(sc, integer(a) + real(b)));
+	default:        return(s7_make_complex(sc, integer(a) + real_part(b), imag_part(b)));
+	}
       
     case NUM_RATIO:
-      return(g_add(sc, args));
+      switch (b.type)
+	{
+	case NUM_INT:
+	case NUM_RATIO:  return(g_add(sc, args));
+	case NUM_REAL:
+	case NUM_REAL2:  return(s7_make_real(sc, fraction(a) + real(b)));
+	default:         return(s7_make_complex(sc, fraction(a) + real_part(b), imag_part(b)));
+	}
       
     case NUM_REAL2:
     case NUM_REAL:
-      return(s7_make_real(sc, num_to_real(a) + num_to_real(b)));
-      break;
-      
+      switch (b.type)
+	{
+	case NUM_INT:   return(s7_make_real(sc, real(a) + integer(b)));
+	case NUM_RATIO: return(s7_make_real(sc, real(a) + fraction(b)));
+	case NUM_REAL:
+	case NUM_REAL2: return(s7_make_real(sc, real(a) + real(b)));
+	default:        return(s7_make_complex(sc, real(a) + real_part(b), imag_part(b)));
+	}
+
     default:
-      return(s7_make_complex(sc, num_to_real_part(a) + num_to_real_part(b), num_to_imag_part(a) + num_to_imag_part(b)));
-      break;
+      switch (b.type)
+	{
+	case NUM_INT:   return(s7_make_complex(sc, real_part(a) + integer(b), imag_part(a)));
+	case NUM_RATIO: return(s7_make_complex(sc, real_part(a) + fraction(b), imag_part(a)));
+	case NUM_REAL:
+	case NUM_REAL2: return(s7_make_complex(sc, real_part(a) + real(b), imag_part(a)));
+	default:        return(s7_make_complex(sc, real_part(a) + real_part(b), imag_part(a) + imag_part(b)));
+	}
     }
   return(x);
 }
@@ -8706,9 +8773,11 @@ static s7_pointer g_add_s1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
   s7_num_t a;
+
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "+", 1, x, "a number"));
+
   a = number(x);
   switch (a.type)
     {
@@ -8721,11 +8790,11 @@ static s7_pointer g_add_s1(s7_scheme *sc, s7_pointer args)
       
     case NUM_REAL2:
     case NUM_REAL:
-      return(s7_make_real(sc, num_to_real(a) + 1.0));
+      return(s7_make_real(sc, real(a) + 1.0));
       break;
       
     default:
-      return(s7_make_complex(sc, num_to_real_part(a) + 1.0, num_to_imag_part(a)));
+      return(s7_make_complex(sc, real_part(a) + 1.0, imag_part(a)));
       break;
     }
   return(x);
@@ -8735,9 +8804,11 @@ static s7_pointer g_add_1s(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
   s7_num_t a;
+
   x = cadr(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "+", 2, x, "a number"));
+
   a = number(x);
   switch (a.type)
     {
@@ -8750,11 +8821,11 @@ static s7_pointer g_add_1s(s7_scheme *sc, s7_pointer args)
       
     case NUM_REAL2:
     case NUM_REAL:
-      return(s7_make_real(sc, num_to_real(a) + 1.0));
+      return(s7_make_real(sc, real(a) + 1.0));
       break;
       
     default:
-      return(s7_make_complex(sc, num_to_real_part(a) + 1.0, num_to_imag_part(a)));
+      return(s7_make_complex(sc, real_part(a) + 1.0, imag_part(a)));
       break;
     }
   return(x);
@@ -8913,34 +8984,61 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
   s7_num_t a, b;
 
   x = car(args);
-  y = cadr(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "-", 1, x, "a number"));
+
+  y = cadr(args);
   if (!s7_is_number(y))
     return(s7_wrong_type_arg_error(sc, "-", 2, y, "a number"));
+
   a = number(x);
   b = number(y);
-
-  switch (a.type | b.type)
+  switch (a.type)
     {
     case NUM_INT: 
-      return(s7_make_integer(sc, integer(a) - integer(b)));
-      break;
+      switch (b.type)
+	{
+	case NUM_INT:   return(s7_make_integer(sc, integer(a) - integer(b)));
+	case NUM_RATIO: return(g_subtract(sc, args));
+	case NUM_REAL:
+	case NUM_REAL2: return(s7_make_real(sc, integer(a) - real(b)));
+	default:        return(s7_make_complex(sc, integer(a) - real_part(b), -imag_part(b)));
+	}
       
     case NUM_RATIO:
-      return(subtract_ratios(sc, a, b));
+      switch (b.type)
+	{
+	case NUM_INT:
+	case NUM_RATIO:  return(g_subtract(sc, args));
+	case NUM_REAL:
+	case NUM_REAL2:  return(s7_make_real(sc, fraction(a) - real(b)));
+	default:         return(s7_make_complex(sc, fraction(a) - real_part(b), -imag_part(b)));
+	}
       
     case NUM_REAL2:
     case NUM_REAL:
-      return(s7_make_real(sc, num_to_real(a) - num_to_real(b)));
-      break;
-      
+      switch (b.type)
+	{
+	case NUM_INT:   return(s7_make_real(sc, real(a) - integer(b)));
+	case NUM_RATIO: return(s7_make_real(sc, real(a) - fraction(b)));
+	case NUM_REAL:
+	case NUM_REAL2: return(s7_make_real(sc, real(a) - real(b)));
+	default:        return(s7_make_complex(sc, real(a) - real_part(b), -imag_part(b)));
+	}
+
     default:
-      return(s7_make_complex(sc, num_to_real_part(a) - num_to_real_part(b), num_to_imag_part(a) - num_to_imag_part(b)));
-      break;
+      switch (b.type)
+	{
+	case NUM_INT:   return(s7_make_complex(sc, real_part(a) - integer(b), imag_part(a)));
+	case NUM_RATIO: return(s7_make_complex(sc, real_part(a) - fraction(b), imag_part(a)));
+	case NUM_REAL:
+	case NUM_REAL2: return(s7_make_complex(sc, real_part(a) - real(b), imag_part(a)));
+	default:        return(s7_make_complex(sc, real_part(a) - real_part(b), imag_part(a) - imag_part(b)));
+	}
     }
   return(x);
 }
+
 
 static s7_pointer g_subtract_s1(s7_scheme *sc, s7_pointer args)
 {
@@ -8963,11 +9061,11 @@ static s7_pointer g_subtract_s1(s7_scheme *sc, s7_pointer args)
       
     case NUM_REAL2:
     case NUM_REAL:
-      return(s7_make_real(sc, num_to_real(a) - 1.0));
+      return(s7_make_real(sc, real(a) - 1.0));
       break;
       
     default:
-      return(s7_make_complex(sc, num_to_real_part(a) - 1.0, num_to_imag_part(a)));
+      return(s7_make_complex(sc, real_part(a) - 1.0, imag_part(a)));
       break;
     }
   return(x);
@@ -9135,39 +9233,81 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
   s7_num_t a, b;
+
   x = car(args);
-  y = cadr(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
+
+  y = cadr(args);
   if (!s7_is_number(y))
     return(s7_wrong_type_arg_error(sc, "*", 2, y, "a number"));
+
   a = number(x);
   b = number(y);
-  switch (a.type | b.type)
+  switch (a.type)
     {
     case NUM_INT: 
-      return(s7_make_integer(sc, integer(a) * integer(b)));
-      break;
+      switch (b.type)
+	{
+	case NUM_INT:   return(s7_make_integer(sc, integer(a) * integer(b)));
+	case NUM_RATIO: return(g_multiply(sc, args));
+	case NUM_REAL:
+	case NUM_REAL2: return(s7_make_real(sc, integer(a) * real(b)));
+	default:        return(s7_make_complex(sc, integer(a) * real_part(b), integer(a) * imag_part(b)));
+	}
+      
+    case NUM_RATIO:
+      switch (b.type)
+	{
+	case NUM_INT:
+	case NUM_RATIO:  return(g_multiply(sc, args));
+	case NUM_REAL:
+	case NUM_REAL2:  return(s7_make_real(sc, fraction(a) * real(b)));
+	default:         return(s7_make_complex(sc, fraction(a) * real_part(b), fraction(a) * imag_part(b)));
+	}
       
     case NUM_REAL2:
     case NUM_REAL:
-      return(s7_make_real(sc, num_to_real(a) * num_to_real(b)));
-      break;
-      
+      switch (b.type)
+	{
+	case NUM_INT:   return(s7_make_real(sc, real(a) * integer(b)));
+	case NUM_RATIO: return(s7_make_real(sc, real(a) * fraction(b)));
+	case NUM_REAL:
+	case NUM_REAL2: return(s7_make_real(sc, real(a) * real(b)));
+	default:        return(s7_make_complex(sc, real(a) * real_part(b), real(a) * imag_part(b)));
+	}
+
     default:
-      return(g_multiply(sc, args));
-      break;
+      switch (b.type)
+	{
+	case NUM_INT:   return(s7_make_complex(sc, real_part(a) * integer(b), imag_part(a) * integer(b)));
+	case NUM_RATIO: return(s7_make_complex(sc, real_part(a) * fraction(b), imag_part(a) * fraction(b)));
+	case NUM_REAL:
+	case NUM_REAL2: return(s7_make_complex(sc, real_part(a) * real(b), imag_part(a) * real(b)));
+	default:
+	  {
+	    s7_Double r1, r2, i1, i2;
+	    r1 = real_part(a);
+	    r2 = real_part(b);
+	    i1 = imag_part(a);
+	    i2 = imag_part(b);
+	    return(s7_make_complex(sc, r1 * r2 - i1 * i2, r1 * i2 + r2 * i1));
+	  }
+	}
     }
   return(x);
 }
+
 
 static s7_pointer g_multiply_i2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
   s7_num_t a;
+
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
+
   a = number(x);
   switch (a.type)
     {
@@ -9180,11 +9320,11 @@ static s7_pointer g_multiply_i2(s7_scheme *sc, s7_pointer args)
       
     case NUM_REAL2:
     case NUM_REAL:
-      return(s7_make_real(sc, num_to_real(a) * 2.0));
+      return(s7_make_real(sc, real(a) * 2.0));
       break;
       
     default:
-      return(s7_make_complex(sc, num_to_real_part(a) * 2.0, num_to_imag_part(a) * 2.0));
+      return(s7_make_complex(sc, real_part(a) * 2.0, imag_part(a) * 2.0));
       break;
     }
   return(x);
@@ -9194,9 +9334,11 @@ static s7_pointer g_multiply_f2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
   s7_num_t a;
+
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
+
   a = number(x);
   switch (a.type)
     {
@@ -9209,11 +9351,11 @@ static s7_pointer g_multiply_f2(s7_scheme *sc, s7_pointer args)
       
     case NUM_REAL2:
     case NUM_REAL:
-      return(s7_make_real(sc, num_to_real(a) * 2.0));
+      return(s7_make_real(sc, real(a) * 2.0));
       break;
       
     default:
-      return(s7_make_complex(sc, num_to_real_part(a) * 2.0, num_to_imag_part(a) * 2.0));
+      return(s7_make_complex(sc, real_part(a) * 2.0, imag_part(a) * 2.0));
       break;
     }
   return(x);
@@ -11131,7 +11273,7 @@ s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_DONT_COPY);
+  set_type(x, T_NUMBER);
   
   number_type(x) = NUM_INT;
   number(x).value.ul_value = n;
@@ -11155,7 +11297,7 @@ s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_DONT_COPY);
+  set_type(x, T_NUMBER);
   
   number_type(x) = NUM_INT;
   number(x).value.ull_value = n;
@@ -11990,7 +12132,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_DONT_COPY | T_SAFE_PROCEDURE); /* should this follow the malloc? */
+  set_type(x, T_STRING | T_SAFE_PROCEDURE); /* should this follow the malloc? */
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
     memcpy((void *)string_value(x), (void *)str, len + 1);
@@ -12006,7 +12148,7 @@ static s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const cha
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_DONT_COPY | T_SAFE_PROCEDURE); /* should this follow the malloc? */
+  set_type(x, T_STRING | T_SAFE_PROCEDURE); /* should this follow the malloc? */
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
     memcpy((void *)string_value(x), (void *)str, len);
@@ -12022,7 +12164,7 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_DONT_COPY | T_SAFE_PROCEDURE);
+  set_type(x, T_STRING | T_SAFE_PROCEDURE);
   string_value(x) = str;
   string_length(x) = len;
   string_hash(x) = 0;
@@ -12035,7 +12177,7 @@ static s7_pointer make_protected_string(s7_scheme *sc, const char *str)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_IMMUTABLE | T_DONT_COPY | T_SAFE_PROCEDURE);
+  set_type(x, T_STRING | T_IMMUTABLE | T_SAFE_PROCEDURE);
   string_value(x) = (char *)str;
   string_length(x) = safe_strlen(str);
   string_hash(x) = 0;
@@ -12047,7 +12189,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_DONT_COPY);
+  set_type(x, T_STRING);
   
   if (fill == 0)
     string_value(x) = (char *)calloc((len + 1), sizeof(char));
@@ -12093,7 +12235,7 @@ s7_pointer s7_make_permanent_string(const char *str)
   s7_pointer x;
   x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
-  set_type(x, T_STRING | T_IMMUTABLE | T_DONT_COPY);
+  set_type(x, T_STRING | T_IMMUTABLE);
   if (str)
     {
       string_length(x) = safe_strlen(str);
@@ -13060,7 +13202,6 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
       (!port_is_closed(port)))
     sc->input_port = port;
   else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 0, port, "an open input port"));
-  sc->input_is_file = (is_file_port(sc->input_port));
 
   return(old_port);
 }
@@ -13071,7 +13212,6 @@ s7_pointer s7_set_current_input_port(s7_scheme *sc, s7_pointer port)
   s7_pointer old_port;
   old_port = sc->input_port;
   sc->input_port = port;
-  sc->input_is_file = (is_file_port(sc->input_port));
   return(old_port);
 }
 
@@ -13275,6 +13415,318 @@ static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* read character functions */
+
+static int file_read_char(s7_scheme *sc, s7_pointer port)
+{
+  return(fgetc(port_file(port)));
+}
+
+
+static int function_read_char(s7_scheme *sc, s7_pointer port)
+{
+  return(character((*(port_input_function(port)))(sc, S7_READ_CHAR, port)));
+}
+
+
+static int string_read_char(s7_scheme *sc, s7_pointer port)
+{
+  if ((!(port_string(port))) ||
+      (port_string_length(port) <= port_string_point(port)))
+    return(EOF);
+  return((unsigned char)port_string(port)[port_string_point(port)++]);
+}
+
+
+static int output_read_char(s7_scheme *sc, s7_pointer port)
+{
+  s7_wrong_type_arg_error(sc, "read-char", 0, port, "an input port");
+  return(0);
+}
+
+
+/* write character functions */
+
+static void string_write_char(s7_scheme *sc, int c, s7_pointer pt)
+{
+  if (port_string_point(pt) >= port_string_length(pt))
+    {
+      int loc;
+      loc = port_string_length(pt);
+      port_string_length(pt) *= 2;
+      port_string(pt) = (char *)realloc(port_string(pt), port_string_length(pt) * sizeof(char));
+      memset((void *)(port_string(pt) + loc), 0, loc);
+    }
+  port_string(pt)[port_string_point(pt)++] = c;
+}
+
+static void stdout_write_char(s7_scheme *sc, int c, s7_pointer port)
+{
+  fputc(c, stdout);
+}
+
+static void stderr_write_char(s7_scheme *sc, int c, s7_pointer port)
+{
+  fputc(c, stderr);
+}
+
+static void function_write_char(s7_scheme *sc, int c, s7_pointer port)
+{
+  (*(port_output_function(port)))(sc, c, port);
+}
+
+static void file_write_char(s7_scheme *sc, int c, s7_pointer port)
+{
+  if (fputc(c, port_file(port)) == EOF)
+    fprintf(stderr, "write to %s: %s\n", port_filename(port), strerror(errno));
+}
+
+static void input_write_char(s7_scheme *sc, int c, s7_pointer port)
+{
+  s7_wrong_type_arg_error(sc, "write-char", 0, port, "an output port");
+}
+
+
+/* skip to semicolon readers */
+
+static token_t file_read_semicolon(s7_scheme *sc, s7_pointer pt)
+{
+  int c;
+  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
+  port_line_number(pt)++;
+  if (c == EOF)
+    return(TOKEN_EOF);
+  return(token(sc));
+}
+
+
+static token_t string_read_semicolon(s7_scheme *sc, s7_pointer pt)
+{
+  int c;
+  char *orig_str, *str;      
+  str = (char *)(port_string(pt) + port_string_point(pt));
+  orig_str = str;
+  do {c = *str++;} while ((c != '\n') && (c != 0));
+  port_string_point(pt) += (str - orig_str);
+  port_line_number(pt)++;
+  if (c == 0)
+    return(TOKEN_EOF);
+  return(token(sc));
+}
+
+
+/* white space readers */
+
+static int file_read_white_space(s7_scheme *sc, s7_pointer port)
+{
+  int c;
+  while (is_white_space(c = fgetc(port_file(port))))
+    if (c == '\n')
+      port_line_number(port)++;
+  return(c);
+}
+
+static int string_read_white_space(s7_scheme *sc, s7_pointer pt)
+{
+  char *orig_str, *str;
+  unsigned char c1;
+
+  str = (char *)(port_string(pt) + port_string_point(pt));
+  if (!(*str)) return(EOF);
+
+  /* we can't depend on the extra 0 of padding at the end of an input string port --
+   *   eval_string and others take the given string without copying or padding.
+   */
+  orig_str = str;
+  while (white_space[c1 = (unsigned char)(*str++)]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
+    if (c1 == '\n')
+      port_line_number(pt)++;
+  
+  if (c1 == 0)
+    {
+      port_string_point(pt) += (str - orig_str - 1);
+      return(EOF);
+    }
+  port_string_point(pt) += (str - orig_str);
+  return((int)c1);
+}
+
+
+/* name (alphanumeric token) readers */
+
+static void resize_strbuf(s7_scheme *sc)
+{
+  unsigned int i, old_size;
+  old_size = sc->strbuf_size;
+  sc->strbuf_size *= 2;
+  sc->strbuf = (char *)realloc(sc->strbuf, sc->strbuf_size * sizeof(char));
+  for (i = old_size; i < sc->strbuf_size; i++) sc->strbuf[i] = '\0';
+}
+
+
+static s7_pointer file_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
+{
+  int c;
+  unsigned i = 1;
+  /* sc->strbuf[0] has the 1st char of the string we're reading */
+
+  do {
+    c = fgetc(port_file(pt)); /* might return EOF */
+    if (c == '\n')
+      port_line_number(pt)++;
+    
+    sc->strbuf[i++] = c;
+    if (i >= sc->strbuf_size)
+      resize_strbuf(sc);
+  } while ((c != EOF) && (char_ok_in_a_name[c]));
+  
+  if ((i == 2) && 
+      (sc->strbuf[0] == '\\'))
+    sc->strbuf[2] = '\0';
+  else 
+    {
+      if (c != EOF)
+	{
+	  if (c == '\n')
+	    port_line_number(pt)--;
+	  ungetc(c, port_file(pt));
+	}
+      sc->strbuf[i - 1] = '\0';
+    }
+
+  if (atom_case)
+    return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK));
+
+  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
+}
+
+
+#define WITH_SHARP false
+#define NO_SHARP true
+
+static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
+{
+  /* sc->strbuf[0] has the 1st char of the string we're reading */
+
+  unsigned int k = 0;
+  char *orig_str, *str;
+  
+  orig_str = (char *)(port_string(pt) + port_string_point(pt) - 1);
+  str = (char *)(orig_str + 1);
+  
+  while (char_ok_in_a_name[(unsigned char)(*str)]) {str++;}
+  k = str - orig_str;
+  port_string_point(pt) += k;
+  
+  if ((!atom_case) &&             /* there's a bizarre special case here \ with the next char #\null: (eval-string "(list \\\x00 1)") */
+      (k == 1) && 
+      (*orig_str == '\\'))         
+    {
+      /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
+      sc->strbuf[1] = orig_str[1];
+      sc->strbuf[2] = '\0';
+      return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
+    }
+  else 
+    {
+      if (port_needs_free(pt)) 
+	{
+	  /* port_string was allocated (and read from a file) so we can mess with it directly */
+	  s7_pointer result;
+	  char endc;
+	  
+	  endc = orig_str[k];
+	  orig_str[k] = '\0';
+	  
+	  if (atom_case)
+	    {
+	      switch (*orig_str)
+		{
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+		case '.': case '+': case '-':
+		  result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK);
+		  break;
+		  
+		case '#':
+		  result = make_sharp_constant(sc, (char *)(orig_str + 1), UNNESTED_SHARP, BASE_10);
+		  break;
+		  
+		default:
+		  /* result = make_symbol(sc, orig_str); 
+		   *    expanded for speed
+		   */
+		  {
+		    int location;
+		    s7_pointer x; 
+		    unsigned int loc = 0;
+		    const char *c; 
+		    
+		    /* expanding these two calls saves a lot of time */
+		    /* location = symbol_table_hash(orig_str, &loc); */
+		    /* result = symbol_table_find_by_name(sc, orig_str, location); */
+		    
+		    for (c = orig_str; *c; c++) 
+		      loc = *c + loc * HASH_MULT;
+		    location = loc % SYMBOL_TABLE_SIZE; 
+		    
+		    result = sc->NIL;
+		    for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
+		      { 
+			const char *s; 
+			s = symbol_name(car(x)); 
+			if (/* (s) &&  */ /* I don't think a symbol can have a null name */
+			    (s[0] == orig_str[0]) &&
+			    (strings_are_equal(orig_str, s)))
+			  {
+			    result = car(x);
+			    break;
+			  }
+		      }
+		    
+		    if (is_null(result))
+		      {
+			if (sc->symbol_table_is_locked)
+			  result = sc->F;
+			else 
+			  {
+			    result = new_symbol(sc, orig_str, location); 
+			    symbol_hash(result) = loc;
+			  }
+		      }
+		  }
+		  break;
+		}
+	    }
+	  else result = make_sharp_constant(sc, orig_str, UNNESTED_SHARP, BASE_10);
+	  
+	  orig_str[k] = endc;
+	  if (*str != 0) port_string_point(pt)--;
+	  /* skipping the null has one minor consequence:
+	   *    (let ((str "(+ 1 2 3)")) (set! (str 2) #\null) (eval-string str)) ; "(+\x001 2 3)" -> 6
+	   *    (let ((str "(+ 1 2 3)")) (set! (str 3) #\null) (eval-string str)) ; "(+ \x00 2 3)" -> missing paren error
+	   */
+	  return(result);
+	}
+      
+      /* eval_c_string string is a constant so we can't set and unset the token's end char */
+      if ((k + 1) >= sc->strbuf_size)
+	resize_strbuf(sc);
+      
+      memcpy((void *)(sc->strbuf), (void *)orig_str, k);
+      if (*str != 0) port_string_point(pt)--;
+      sc->strbuf[k] = '\0';
+    }
+
+  if (atom_case)
+    return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK));
+
+  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
+}
+
+
+
+
 static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_size, const char *caller)
 {
   s7_pointer port;
@@ -13284,10 +13736,11 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
 
   NEW_CELL(sc, port);
   port_loc = s7_gc_protect(sc, port);
-  set_type(port, T_INPUT_PORT | T_DONT_COPY);
+  set_type(port, T_INPUT_PORT);
   port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_is_closed(port) = false;
   port_original_input_string(port) = sc->NIL;
+  port_write_character(port) = input_write_char;
 
   /* if we're constantly opening files, and each open saves the file name in permanent
    *   memory, we gradually core-up.  
@@ -13323,12 +13776,20 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
       port_string_length(port) = size;
       port_string_point(port) = 0;
       port_needs_free(port) = true;
+      port_read_character(port) = string_read_char;
+      port_read_semicolon(port) = string_read_semicolon;
+      port_read_white_space(port) = string_read_white_space;
+      port_read_name(port) = string_read_name;
     }
   else
     {
       port_file(port) = fp;
       port_type(port) = FILE_PORT;
       port_needs_free(port) = false;
+      port_read_character(port) = file_read_char;
+      port_read_semicolon(port) = file_read_semicolon;
+      port_read_white_space(port) = file_read_white_space;
+      port_read_name(port) = file_read_name;
     }
 
   s7_gc_unprotect_at(sc, port_loc);
@@ -13394,7 +13855,7 @@ static void make_standard_ports(s7_scheme *sc)
   /* standard output */
   x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
-  set_type(x, T_OUTPUT_PORT | T_IMMUTABLE | T_DONT_COPY);
+  set_type(x, T_OUTPUT_PORT | T_IMMUTABLE);
   x->object.port = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
@@ -13403,12 +13864,14 @@ static void make_standard_ports(s7_scheme *sc)
   port_line_number(x) = 0;
   port_file(x) = stdout;
   port_needs_free(x) = false;
+  port_read_character(x) = output_read_char;
+  port_write_character(x) = stdout_write_char;
   sc->standard_output = x;
 
   /* standard error */
   x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
-  set_type(x, T_OUTPUT_PORT | T_IMMUTABLE | T_DONT_COPY);
+  set_type(x, T_OUTPUT_PORT | T_IMMUTABLE);
   x->object.port = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
@@ -13417,12 +13880,14 @@ static void make_standard_ports(s7_scheme *sc)
   port_line_number(x) = 0;
   port_file(x) = stderr;
   port_needs_free(x) = false;
+  port_read_character(x) = output_read_char;
+  port_write_character(x) = stderr_write_char;
   sc->standard_error = x;
 
   /* standard input */
   x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
-  set_type(x, T_INPUT_PORT | T_IMMUTABLE | T_DONT_COPY);
+  set_type(x, T_INPUT_PORT | T_IMMUTABLE);
   x->object.port = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
@@ -13432,6 +13897,11 @@ static void make_standard_ports(s7_scheme *sc)
   port_line_number(x) = 0;
   port_file(x) = stdin;
   port_needs_free(x) = false;
+  port_read_character(x) = file_read_char;
+  port_read_semicolon(x) = file_read_semicolon;
+  port_read_white_space(x) = file_read_white_space;
+  port_read_name(x) = file_read_name;
+  port_write_character(x) = input_write_char;
   sc->standard_input = x;
 
   s7_define_constant(sc, "*stdin*", sc->standard_input);
@@ -13464,7 +13934,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
     }
 
   NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT | T_DONT_COPY);
+  set_type(x, T_OUTPUT_PORT);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
@@ -13473,6 +13943,8 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   port_line_number(x) = 1;
   port_file(x) = fp;
   port_needs_free(x) = false;
+  port_read_character(x) = output_read_char;
+  port_write_character(x) = file_write_char;
   add_output_port(sc, x);
   return(x);
 }
@@ -13500,7 +13972,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_INPUT_PORT | T_DONT_COPY);
+  set_type(x, T_INPUT_PORT);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = STRING_PORT;
@@ -13512,6 +13984,11 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   port_filename(x) = NULL;
   port_file_number(x) = -1;
   port_needs_free(x) = false;
+  port_read_character(x) = string_read_char;
+  port_read_semicolon(x) = string_read_semicolon;
+  port_read_white_space(x) = string_read_white_space;
+  port_read_name(x) = string_read_name;
+  port_write_character(x) = input_write_char;
   add_input_port(sc, x);
   return(x);
 }
@@ -13535,7 +14012,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT | T_DONT_COPY);
+  set_type(x, T_OUTPUT_PORT);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = STRING_PORT;
@@ -13544,6 +14021,8 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   port_string(x) = (char *)calloc(STRING_PORT_INITIAL_LENGTH, sizeof(char));
   port_string_point(x) = 0;
   port_needs_free(x) = true;
+  port_read_character(x) = output_read_char;
+  port_write_character(x) = string_write_char;
   add_output_port(sc, x);
   return(x);
 }
@@ -13581,7 +14060,7 @@ s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_schem
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_INPUT_PORT | T_DONT_COPY);
+  set_type(x, T_INPUT_PORT);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FUNCTION_PORT;
@@ -13589,6 +14068,8 @@ s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_schem
   port_original_input_string(x) = sc->NIL;
   port_needs_free(x) = false;
   port_input_function(x) = function;
+  port_read_character(x) = function_read_char;
+  port_write_character(x) = input_write_char;
   add_input_port(sc, x);
   return(x);
 }
@@ -13598,13 +14079,15 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT | T_DONT_COPY);
+  set_type(x, T_OUTPUT_PORT);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
   port_needs_free(x) = false;
   port_output_function(x) = function;
+  port_read_character(x) = output_read_char;
+  port_write_character(x) = function_write_char;
   add_output_port(sc, x);
   return(x);
 }
@@ -13627,7 +14110,6 @@ static void push_input_port(s7_scheme *sc, s7_pointer new_port)
 {
   sc->input_port_stack = cons(sc, sc->input_port, sc->input_port_stack);
   sc->input_port = new_port;
-  sc->input_is_file = (is_file_port(sc->input_port));
 }
 
 
@@ -13644,7 +14126,6 @@ static void pop_input_port(s7_scheme *sc)
       sc->input_port_stack = cdr(sc->input_port_stack);
     }
   else sc->input_port = sc->standard_input;
-  sc->input_is_file = (is_file_port(sc->input_port));
 }
 
 
@@ -13683,40 +14164,24 @@ static void backchar(char c, s7_pointer pt)
 }
 
 
-static int s7_read_char_1(s7_scheme *sc, s7_pointer port, s7_read_t read_choice)
-{
-  int c;              /* needs to be an int so EOF=-1, but not 255 */
-
-  if (is_function_port(port))
-    return(character((*(port_input_function(port)))(sc, read_choice, port)));
-
-  if (is_file_port(port))
-    c = fgetc(port_file(port)); /* not unsigned char! -- could be EOF */
-  else 
-    {
-      if ((!(port_string(port))) ||
-	  (port_string_length(port) <= port_string_point(port)))
-	return(EOF);
-      c = (unsigned char)port_string(port)[port_string_point(port)++];
-    }
-
-  if ((read_choice == S7_PEEK_CHAR) && (c != EOF))
-    backchar(c, port);
-  return(c);
-}
-
-
 int s7_read_char(s7_scheme *sc, s7_pointer port)
 {
-  return(s7_read_char_1(sc, port, S7_READ_CHAR));
+  /* needs to be int return value so EOF=-1, but not 255 */
+  return(port_read_character(port)(sc, port));
 }
 
 
 int s7_peek_char(s7_scheme *sc, s7_pointer port)
 {
-  return(s7_read_char_1(sc, port, S7_PEEK_CHAR));
+  int c;              /* needs to be an int so EOF=-1, but not 255 */
+  c = port_read_character(port)(sc, port);
+  if (c != EOF)
+    backchar(c, port);
+  return(c);
 }
 
+/* TODO: add opts for read/write/peek? char line byte? [currently function_read_char is called if peek]
+ */
 
 static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
 {
@@ -13732,7 +14197,10 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
   if (port_is_closed(port))
     return(s7_wrong_type_arg_error(sc, (peek) ? "peek-char" : "read-char", 0, port, "an open input port"));
       
-  c = s7_read_char_1(sc, port, (peek) ? S7_PEEK_CHAR : S7_READ_CHAR);
+  if (peek)
+    c = s7_peek_char(sc, port);
+  else c = s7_read_char(sc, port);
+
   if (c == EOF)
     return(sc->EOF_OBJECT); 
 
@@ -14273,7 +14741,6 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
   s7_pointer old_input_port;
   old_input_port = sc->input_port;
   sc->input_port = port;
-  sc->input_is_file = is_file_port(sc->input_port);
   port_original_input_string(port) = car(args);
   
   push_stack(sc, OP_UNWIND_INPUT, old_input_port, port);
@@ -14314,53 +14781,17 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
 }
 
 
-
-static void char_to_string_port(char c, s7_pointer pt)
+void s7_write_char(s7_scheme *sc, int c, s7_pointer pt) 
 {
-  if (port_string_point(pt) >= port_string_length(pt))
-    {
-      int loc;
-      loc = port_string_length(pt);
-      port_string_length(pt) *= 2;
-      port_string(pt) = (char *)realloc(port_string(pt), port_string_length(pt) * sizeof(char));
-      memset((void *)(port_string(pt) + loc), 0, loc);
-    }
-  port_string(pt)[port_string_point(pt)++] = c;
-}
-
-
-static void write_char(s7_scheme *sc, int c, s7_pointer pt) 
-{
-  if (pt == sc->standard_error)
-    fputc(c, stderr);
-  else
-    {
-      if (pt == sc->standard_output)
-	fputc(c, stdout);
-      else
-	{
-	  if (port_is_closed(pt))
-	    return;
-	  if (is_file_port(pt))
-	    {
-	      if (fputc(c, port_file(pt)) == EOF)
-		fprintf(stderr, "write to %s: %s\n", port_filename(pt), strerror(errno));
-	    }
-	  else 
-	    {
-	      if (is_string_port(pt))
-		char_to_string_port(c, pt);
-	      else (*(port_output_function(pt)))(sc, c, pt);
-	    }
-	}
-    }
+  port_write_character(pt)(sc, c, pt);
 }
 
 
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt) 
 {
+  /* TODO: using port_write_character here is slower, so we need a write_string function in the port
+   */
   if (!s) return;
-  
   if (pt == sc->standard_error)
     fputs(s, stderr);
   else
@@ -14382,7 +14813,7 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 	      if (is_string_port(pt))
 		{
 		  for (; *s; s++)
-		    char_to_string_port(*s, pt);
+		    string_write_char(sc, *s, pt);
 		}
 	      else 
 		{
@@ -15269,7 +15700,7 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 
 void s7_newline(s7_scheme *sc, s7_pointer port)
 {
-  write_char(sc, '\n', port);
+  s7_write_char(sc, '\n', port);
 }
 
 
@@ -15290,12 +15721,6 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
   
   s7_newline(sc, port);
   return(sc->UNSPECIFIED);
-}
-
-
-void s7_write_char(s7_scheme *sc, int c, s7_pointer port)
-{
-  write_char(sc, c, port);
 }
 
 
@@ -15387,6 +15812,7 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_byte "(read-byte (port (current-input-port))): reads a byte from the input port"
   s7_pointer port;
+  int c;
   
   if (is_not_null(args))
     port = car(args);
@@ -15397,24 +15823,10 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
   if (port_is_closed(port))
     return(s7_wrong_type_arg_error(sc, "read-byte", 0, port, "an open input port"));
 
-  if (is_string_port(port))
-    {
-      if ((!(port_string(port))) ||
-	  (port_string_length(port) <= port_string_point(port)))
-	return(sc->EOF_OBJECT);
-      return(small_int((int)((unsigned char)(port_string(port)[port_string_point(port)++]))));
-    }
-
-  if (is_file_port(port))
-    {
-      int c;
-      c = fgetc(port_file(port));
-      if (c == EOF)
-	return(sc->EOF_OBJECT);
-      return(small_int((unsigned char)c)); 
-    }
-
-  return((*(port_input_function(port)))(sc, S7_READ_BYTE, port));
+  c = port_read_character(port)(sc, port);
+  if (c == EOF)
+    return(sc->EOF_OBJECT);
+  return(small_int(c));
 }
 
 
@@ -17356,7 +17768,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, bool add
   NEW_CELL(sc, x);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, T_VECTOR | T_DONT_COPY | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
+  set_type(x, T_VECTOR | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
 
   if (len > 0)
     {
@@ -17600,7 +18012,7 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
   NEW_CELL(sc, x);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, T_VECTOR | T_DONT_COPY);
+  set_type(x, T_VECTOR);
 
   v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
  
@@ -18387,7 +18799,7 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
   table = make_vector_1(sc, size + 1, FILLED, false); /* nil is the default value, don't add to vector cache! */
   /* size + 1 can be fooled if we don't catch most-positive-fixnum */
 
-  set_type(table, T_HASH_TABLE | T_DONT_COPY | T_SAFE_PROCEDURE);
+  set_type(table, T_HASH_TABLE | T_SAFE_PROCEDURE);
   hash_table_function(table) = hash_empty;
   hash_table_entries(table) = 0;
   add_hash_table(sc, table);
@@ -19073,7 +19485,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 	ftype = T_C_RST_ARGS_FUNCTION;
     }
   
-  set_type(x, ftype | T_DONT_COPY | T_PROCEDURE | T_SIMPLE);
+  set_type(x, ftype | T_PROCEDURE | T_SIMPLE);
 
   c_function(x) = ptr;
   c_function_call(x) = f;
@@ -19307,7 +19719,7 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 {
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  set_type(func, T_C_MACRO | T_DONT_COPY | T_ANY_MACRO | T_DONT_EVAL_ARGS); /* this used to include T_PROCEDURE */
+  set_type(func, T_C_MACRO | T_ANY_MACRO | T_DONT_EVAL_ARGS); /* this used to include T_PROCEDURE */
   s7_define(sc, sc->NIL, make_symbol(sc, name), func);
 }
 
@@ -19560,9 +19972,9 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 	    permanent_cons(make_permanent_integer(c_function_required_args(x)),
  	      permanent_cons(make_permanent_integer(c_function_optional_args(x)),
   	        permanent_cons(make_boolean(sc, c_function_has_rest_arg(x)), sc->NIL,
-			       T_PAIR | T_IMMUTABLE | T_DONT_COPY),
-			     T_PAIR | T_IMMUTABLE | T_DONT_COPY),
-			   T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+			       T_PAIR | T_IMMUTABLE),
+			     T_PAIR | T_IMMUTABLE),
+			   T_PAIR | T_IMMUTABLE);
 	}
       return(c_function_arity_list(x));
     }
@@ -19887,7 +20299,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   NEW_CELL(sc, x);
   object_type(x) = type;
   object_value(x) = value;
-  set_type(x, T_C_OBJECT | T_DONT_COPY); /* free_object checks that the free function exists */
+  set_type(x, T_C_OBJECT); /* free_object checks that the free function exists */
 
   if (object_types[type].apply)
     {
@@ -21188,7 +21600,7 @@ s7_pointer s7_make_hook(s7_scheme *sc, int required_args, int optional_args, boo
 			 make_boolean(sc, rest_arg));
   hook_functions(x) = sc->NIL;
   hook_documentation(x) = s7_make_string(sc, documentation);
-  set_type(x, T_HOOK | T_DONT_COPY); /* not sure about this */
+  set_type(x, T_HOOK); /* not sure about this */
   return(x);
 }
 
@@ -21291,7 +21703,7 @@ with the hook arity.  'doc' is a documentation string."
 
   hook_functions(x) = sc->NIL;
 
-  set_type(x, T_HOOK | T_DONT_COPY);
+  set_type(x, T_HOOK);
   return(x);
 }
 
@@ -23149,7 +23561,7 @@ each a function of no arguments, guaranteeing that finish is called even if body
   dynamic_wind_body(p) = cadr(args);
   dynamic_wind_out(p) = caddr(args);
   dynamic_wind_state(p) = DWIND_INIT;
-  set_type(p, T_DYNAMIC_WIND | T_DONT_COPY);            /* atom -> don't mark car/cdr, don't copy */
+  set_type(p, T_DYNAMIC_WIND);            /* atom -> don't mark car/cdr, don't copy */
 
   push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, p);          /* args will be the saved result, code = s7_dynwind_t obj */
   push_stack(sc, OP_APPLY, sc->NIL, car(args));
@@ -23183,7 +23595,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   catch_goto_loc(p) = s7_stack_top(sc);
   catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
   catch_handler(p) = caddr(args);
-  set_type(p, T_CATCH | T_DONT_COPY);
+  set_type(p, T_CATCH);
 
   push_stack(sc, OP_CATCH, args, p);          /* args ignored but maybe safer for GC? */
 
@@ -23208,7 +23620,7 @@ s7_pointer s7_catch_all(s7_scheme *sc, s7_pointer thunk, s7_pointer error_handle
   catch_goto_loc(p) = s7_stack_top(sc);
   catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
   catch_handler(p) = error_handler;
-  set_type(p, T_CATCH | T_DONT_COPY);
+  set_type(p, T_CATCH);
 
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
   push_stack(sc, OP_CATCH, sc->NIL, p);
@@ -23229,7 +23641,7 @@ static s7_pointer s7_apply_function_with_catch(s7_scheme *sc, s7_pointer func, s
   catch_goto_loc(p) = s7_stack_top(sc);
   catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
   catch_handler(p) = error_handler;
-  set_type(p, T_CATCH | T_DONT_COPY);
+  set_type(p, T_CATCH);
 
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
   push_stack(sc, OP_CATCH, sc->NIL, p);
@@ -23467,7 +23879,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	case OP_UNWIND_INPUT:
 	  s7_close_input_port(sc, stack_code(sc->stack, i)); /* "code" = port that we opened */
 	  sc->input_port = stack_args(sc->stack, i);         /* "args" = port that we shadowed */
-	  sc->input_is_file = (is_file_port(sc->input_port));
 	  break;
 
 	case OP_READ_DONE:        /* perhaps an error during (read) */
@@ -25421,8 +25832,6 @@ static void back_up_stack(s7_scheme *sc)
 }
 
 
-static token_t token(s7_scheme *sc);
-
 static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 {
   int c;
@@ -25526,30 +25935,6 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 }    
 
 
-static token_t read_semicolon(s7_scheme *sc, s7_pointer pt)
-{
-  int c;
-  if (sc->input_is_file)
-    {
-      do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
-      port_line_number(pt)++;
-      if (c == EOF)
-	return(TOKEN_EOF);
-    }
-  else 
-    {
-      char *orig_str, *str;      
-      str = (char *)(port_string(pt) + port_string_point(pt));
-      orig_str = str;
-      do {c = *str++;} while ((c != '\n') && (c != 0));
-      port_string_point(pt) += (str - orig_str);
-      port_line_number(pt)++;
-      if (c == 0)
-	return(TOKEN_EOF);
-    }
-  return(token(sc));
-}
-
 
 static token_t read_comma(s7_scheme *sc, s7_pointer pt)
 {
@@ -25614,37 +25999,7 @@ static token_t token(s7_scheme *sc)
   s7_pointer pt;
 
   pt = sc->input_port;
-  if (sc->input_is_file)
-    {
-      while (is_white_space(c = fgetc(port_file(pt))))
-	if (c == '\n')
-	  port_line_number(pt)++;
-      if (c == EOF) 
-	return(TOKEN_EOF);
-    }
-  else 
-    {
-      char *orig_str, *str;
-      unsigned char c1;
-
-      str = (char *)(port_string(pt) + port_string_point(pt));
-      if (!(*str)) return(TOKEN_EOF);
-
-      /* we can't depend on the extra 0 of padding at the end of an input string port --
-       *   eval_string and others take the given string without copying or padding.
-       */
-      orig_str = str;
-      while (white_space[c1 = (unsigned char)(*str++)]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
-	if (c1 == '\n')
-	  port_line_number(pt)++;
-      if (c1 == 0)
-	{
-	  port_string_point(pt) += (str - orig_str - 1);
-	  return(TOKEN_EOF);
-	}
-      port_string_point(pt) += (str - orig_str);
-      c = c1;
-    }
+  c = port_read_white_space(pt)(sc, pt);
 
   switch (c) 
     {
@@ -25661,7 +26016,7 @@ static token_t token(s7_scheme *sc)
       return(TOKEN_QUOTE);
       
     case ';':
-      return(read_semicolon(sc, pt));
+      return(port_read_semicolon(pt)(sc, pt));
 
     case '"':
       return(TOKEN_DOUBLE_QUOTE);
@@ -25675,181 +26030,15 @@ static token_t token(s7_scheme *sc)
     case '#':
       return(read_sharp(sc, pt));
 
+    case EOF:
+      return(TOKEN_EOF);
+
     default: 
-      sc->strbuf[0] = c; /* every TOKEN_ATOM return goes to read_delimited_string, so we save a backchar/inchar shuffle by starting the read here */
+      sc->strbuf[0] = c; /* every TOKEN_ATOM return goes to port_read_name, so we save a backchar/inchar shuffle by starting the read here */
       return(TOKEN_ATOM);
     }
 }
 
-
-static void resize_strbuf(s7_scheme *sc)
-{
-  unsigned int i, old_size;
-  old_size = sc->strbuf_size;
-  sc->strbuf_size *= 2;
-  sc->strbuf = (char *)realloc(sc->strbuf, sc->strbuf_size * sizeof(char));
-  for (i = old_size; i < sc->strbuf_size; i++) sc->strbuf[i] = '\0';
-}
-
-
-#define WITH_SHARP false
-#define NO_SHARP true
-
-static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
-{
-  s7_pointer pt;
-
-  pt = sc->input_port;
-  /* sc->strbuf[0] has the 1st char of the string we're reading */
-
-  if (sc->input_is_file)
-    {
-      int c;
-      unsigned i = 1;
-      do
-	{
-	  c = fgetc(port_file(pt)); /* might return EOF */
-	  if (c == '\n')
-	    port_line_number(pt)++;
-
-	  sc->strbuf[i++] = c;
-	  if (i >= sc->strbuf_size)
-	    resize_strbuf(sc);
-	}
-      while ((c != EOF) && (char_ok_in_a_name[c]));
-
-      if ((i == 2) && 
-	  (sc->strbuf[0] == '\\'))
-	sc->strbuf[2] = '\0';
-      else 
-	{
-	  if (c != EOF)
-	    {
-	      if (c == '\n')
-		port_line_number(pt)--;
-	      ungetc(c, port_file(pt));
-	    }
-	  sc->strbuf[i - 1] = '\0';
-	}
-    }
-  else
-    {
-      unsigned int k = 0;
-      char *orig_str, *str;
-
-      orig_str = (char *)(port_string(pt) + port_string_point(pt) - 1);
-      str = (char *)(orig_str + 1);
-
-      while (char_ok_in_a_name[(unsigned char)(*str)]) {str++;}
-      k = str - orig_str;
-      port_string_point(pt) += k;
-      
-      if ((!atom_case) &&             /* there's a bizarre special case here \ with the next char #\null: (eval-string "(list \\\x00 1)") */
-	  (k == 1) && 
-	  (*orig_str == '\\'))         
-	{
-	  /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
-	  sc->strbuf[1] = orig_str[1];
-	  sc->strbuf[2] = '\0';
-	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
-	}
-      else 
-	{
-	  if (port_needs_free(pt)) 
-	    {
-	      /* port_string was allocated (and read from a file) so we can mess with it directly */
-	      s7_pointer result;
-	      char endc;
-	      
-	      endc = orig_str[k];
-	      orig_str[k] = '\0';
-
-	      if (atom_case)
-		{
-		  switch (*orig_str)
-		    {
-		    case '0': case '1': case '2': case '3': case '4':
-		    case '5': case '6': case '7': case '8': case '9':
-		    case '.': case '+': case '-':
-		      result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK);
-		      break;
-		      
-		    case '#':
-		      result = make_sharp_constant(sc, (char *)(orig_str + 1), UNNESTED_SHARP, BASE_10);
-		      break;
-		      
-		    default:
-		      /* result = make_symbol(sc, orig_str); 
-		       *    expanded for speed
-		       */
-		      {
-			int location;
-			s7_pointer x; 
-			unsigned int loc = 0;
-			const char *c; 
-
-			/* expanding these two calls saves a lot of time */
-			/* location = symbol_table_hash(orig_str, &loc); */
-			/* result = symbol_table_find_by_name(sc, orig_str, location); */
-
-			for (c = orig_str; *c; c++) 
-			  loc = *c + loc * HASH_MULT;
-			location = loc % SYMBOL_TABLE_SIZE; 
-
-			result = sc->NIL;
-			for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
-			  { 
-			    const char *s; 
-			    s = symbol_name(car(x)); 
-			    if (/* (s) &&  */ /* I don't think a symbol can have a null name */
-				(s[0] == orig_str[0]) &&
-				(strings_are_equal(orig_str, s)))
-			      {
-				result = car(x);
-				break;
-			      }
-			  }
-
-			if (is_null(result))
-			  {
-			    if (sc->symbol_table_is_locked)
-			      result = sc->F;
-			    else 
-			      {
-				result = new_symbol(sc, orig_str, location); 
-				symbol_hash(result) = loc;
-			      }
-			  }
-		      }
-		      break;
-		    }
-		}
-	      else result = make_sharp_constant(sc, orig_str, UNNESTED_SHARP, BASE_10);
-	      
-	      orig_str[k] = endc;
-	      if (*str != 0) port_string_point(pt)--;
-	      /* skipping the null has one minor consequence:
-	       *    (let ((str "(+ 1 2 3)")) (set! (str 2) #\null) (eval-string str)) ; "(+\x001 2 3)" -> 6
-	       *    (let ((str "(+ 1 2 3)")) (set! (str 3) #\null) (eval-string str)) ; "(+ \x00 2 3)" -> missing paren error
-	       */
-	      return(result);
-	    }
-	  
-	  /* eval_c_string string is a constant so we can't set and unset the token's end char */
-	  if ((k + 1) >= sc->strbuf_size)
-	    resize_strbuf(sc);
-	  
-	  memcpy((void *)(sc->strbuf), (void *)orig_str, k);
-	  if (*str != 0) port_string_point(pt)--;
-	  sc->strbuf[k] = '\0';
-	}
-    }
-
-  if (atom_case)
-    return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK));
-
-  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
-}
 
 
 #define NOT_AN_X_CHAR -1
@@ -25890,7 +26079,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
   unsigned int i = 0;
   int c;
 
-  if (!(sc->input_is_file))
+  if (is_string_port(pt))
     {
       /* try the most common case first */
       char *s, *start, *end;
@@ -25929,14 +26118,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
   while (true)
     {
       /* splitting this check out and duplicating the loop was slower?!? */
-      if (sc->input_is_file)
-	c = fgetc(port_file(pt)); /* not unsigned char! -- could be EOF */
-      else 
-	{
-	  if (port_string_length(pt) <= port_string_point(pt))
-	    return(sc->F);
-	  c = (unsigned char)port_string(pt)[port_string_point(pt)++];
-	}
+      c = port_read_character(pt)(sc, pt);
 
       switch (c)
 	{
@@ -26080,7 +26262,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  break;
 	  
 	case TOKEN_ATOM:
-	  return(read_delimited_string(sc, NO_SHARP));
+	  return(port_read_name(sc->input_port)(sc, sc->input_port, NO_SHARP));
 	  /* If reading list (from lparen), this will finally get us to op_read_list */
 	  
 	case TOKEN_DOUBLE_QUOTE:
@@ -26094,7 +26276,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  return(sc->value);
 	  
 	case TOKEN_SHARP_CONST:
-	  sc->value = read_delimited_string(sc, WITH_SHARP);
+	  sc->value = port_read_name(sc->input_port)(sc, sc->input_port, WITH_SHARP);
 
 	  /* here we need the following character and form 
 	   *   strbuf[0] == '#', false above = # case, not an atom
@@ -26201,13 +26383,12 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   symbol_hash(x) = loc;
 
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
-  set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS | T_SIMPLE); 
+  set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS | T_SIMPLE); 
   syntax_opcode(syn) = op;
   symbol_set_value(syn, syn); /* this saves us an error check in the main eval section */
 
   symbol_set_value(x, syn);
-  symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS | T_SIMPLE);
-  /* typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC); */
+  symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS | T_SIMPLE);
   typeflag(x) = SYNTACTIC_TYPE;
   symbol_id(x) = 0;
   car(syn) = x;
@@ -26223,12 +26404,12 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
 
   str = s7_make_permanent_string(name);
 
-  /* x = permanent_cons(str, sc->NIL, T_SYMBOL | T_DONT_COPY); */
+  /* x = permanent_cons(str, sc->NIL, T_SYMBOL); */
   x = (s7_cell *)permanent_calloc(sizeof(s7_extended_cell));
   x->hloc = NOT_IN_HEAP;
   car(x) = str;
   cdr(x) = sc->NIL;
-  set_type(x, T_SYMBOL | T_DONT_COPY | T_SIMPLE);
+  set_type(x, T_SYMBOL | T_SIMPLE);
 
   symbol_global_slot(x) = sc->NIL;
   symbol_table_hash(name, &loc); 
@@ -26237,13 +26418,12 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   symbol_accessor(x) = -1;
 
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
-  set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS | T_SIMPLE); 
+  set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS | T_SIMPLE); 
   syntax_opcode(syn) = op;
   symbol_set_value(syn, syn); /* cdr(syn), this saves us an error check in the main eval section */
 
   symbol_set_value(x, syn);   /* cdr(x) */
-  symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_COPY | T_DONT_EVAL_ARGS | T_SIMPLE);
-  /* typeflag(x) |= (T_DONT_COPY | T_DONT_EVAL_ARGS | T_SYNTACTIC); */
+  symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS | T_SIMPLE);
   typeflag(x) = SYNTACTIC_TYPE;
   symbol_id(x) = 0;
   car(syn) = s7_make_symbol(sc, name);
@@ -28144,12 +28324,10 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				{
 				  fprintf(stderr, "1 arg, it's unknown\n");
 				}
-
-
 			      /* clm2xen wants to try to handle (oscil (oscs i)) and similar cases,
 			       *   even though they might be problematic in general.  If an outside
 			       *   chooser returns anything other than func here, we'll assume
-			       *   it is OP_SAFE_C_C and safe -- live dangerously!
+			       *   it is OP_SAFE_C_C and safe.
 			       */
 			      set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
 			      if (ecdr(car(x)) != func)
@@ -30922,7 +31100,10 @@ static s7_pointer check_if(s7_scheme *sc)
 		      else
 			{
 			  if (is_h_safe_c_s(test))
-			    car(ecdr(sc->code)) = sc->SAFE_IF_R_X_P;
+			    {
+			      car(ecdr(sc->code)) = sc->SAFE_IF_R_X_P;
+			      fcdr(sc->code) = cadr(test);
+			    }
 			  else car(ecdr(sc->code)) = sc->IF_P_X_P;
 			}
 		    }
@@ -31722,6 +31903,7 @@ static s7_pointer check_define_macro(s7_scheme *sc)
 
 static s7_pointer check_cond(s7_scheme *sc)
 {
+  bool has_feed_to = false;
   s7_pointer x;
   if (!is_pair(sc->code))                                             /* (cond) or (cond . 1) */
     return(eval_error(sc, "cond, but no body: ~A", sc->code));
@@ -31737,6 +31919,7 @@ static s7_pointer check_cond(s7_scheme *sc)
 	  if ((cadr(y) == sc->FEED_TO) &&
 	      (s7_symbol_value(sc, sc->FEED_TO) == sc->UNDEFINED))
 	    {
+	      has_feed_to = true;
 	      if (!is_pair(cddr(y)))                                  /* (cond (#t =>)) or (cond (#t => . 1)) */
 		return(eval_error(sc, "cond: '=>' target missing?  ~A", x));
 	      if (is_pair(cdddr(y)))                                  /* (cond (1 => + abs)) */
@@ -31756,7 +31939,9 @@ static s7_pointer check_cond(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
-      car(ecdr(sc->code)) = sc->COND_UNCHECKED;
+      if (has_feed_to)
+	car(ecdr(sc->code)) = sc->COND_UNCHECKED;
+      else car(ecdr(sc->code)) = sc->COND_SIMPLE;
     }
   return(sc->code);
 }
@@ -32952,7 +33137,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     * [before saving y, set its type?][will a gc clobber anything here?]
 	     */
 
-	    set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+	    set_type(y, T_PAIR | T_IMMUTABLE);
 	    ecdr(y) = car(sc->envir);
 	    car(sc->envir) = y;
 	    symbol_id(sym) = frame_id(sc->envir);
@@ -33621,7 +33806,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (symbol_has_accessor(sym))
 		      cdr(slot) = call_symbol_bind(sc, sym, val);
 		    else cdr(slot) = val;
-		    set_type(slot, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+		    set_type(slot, T_PAIR | T_IMMUTABLE);
 		    ecdr(slot) = sc->NIL;
 		    car(frame) = slot;
 		    
@@ -33687,7 +33872,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (symbol_has_accessor(sym))
 		      cdr(slot1) = call_symbol_bind(sc, sym, val);
 		    else cdr(slot1) = val;
-		    set_type(slot1, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+		    set_type(slot1, T_PAIR | T_IMMUTABLE);
 		    car(frame) = slot1;
 		    
 		    if (is_pair(args))
@@ -33711,7 +33896,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if (symbol_has_accessor(sym))
 			  cdr(slot2) = call_symbol_bind(sc, sym, val);
 			else cdr(slot2) = val;
-			set_type(slot2, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+			set_type(slot2, T_PAIR | T_IMMUTABLE);
 			ecdr(slot2) = sc->NIL;
 			ecdr(slot1) = slot2;
 			
@@ -33858,7 +34043,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if (symbol_has_accessor(sym))
 			  cdr(z) = call_symbol_bind(sc, sym, val);
 			else cdr(z) = val;
-			set_type(z, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+			set_type(z, T_PAIR | T_IMMUTABLE);
 			ecdr(z) = car(e);
 			car(e) = z;
 			z = args;
@@ -36278,7 +36463,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    catch_goto_loc(p) = s7_stack_top(sc);
 		    catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
 		    catch_handler(p) = y;
-		    set_type(p, T_CATCH | T_DONT_COPY);
+		    set_type(p, T_CATCH);
 
 		    push_stack(sc, OP_CATCH, code, p); /* code ignored here, except by GC */
 		    sc->code = cddar(args);
@@ -37164,7 +37349,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (symbol_has_accessor(sym))
 		  cdr(z) = call_symbol_bind(sc, sym, val);
 		else cdr(z) = val;
-		set_type(z, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+		set_type(z, T_PAIR | T_IMMUTABLE);
 		ecdr(z) = car(e);
 		car(e) = z;
 		z = args;
@@ -37413,7 +37598,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	closure_args(x) = cdar(sc->code);
 	closure_body(x) = cdr(sc->code);
 	closure_environment(x) = sc->envir;
-	set_type(x, T_CLOSURE_STAR | T_PROCEDURE | T_DONT_COPY);
+	set_type(x, T_CLOSURE_STAR | T_PROCEDURE);
 	sc->value = x;
 	sc->code = caar(sc->code);
 	goto DEFINE1;
@@ -37537,7 +37722,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      symbol_id(car(y)) = frame_id(x);
 	      symbol_local_slot(car(y)) = y;
 	      cdr(y) = sc->x;
-	      set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+	      set_type(y, T_PAIR | T_IMMUTABLE);
 	      ecdr(y) = sc->NIL;
 	      car(x) = y;
 	      
@@ -38489,7 +38674,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer code;
 	code = sc->code;
-	car(sc->T1_1) = finder(sc, cadar(code));
+	car(sc->T1_1) = finder(sc, fcdr(code));
 	if (is_true(sc, c_call(car(code))(sc, sc->T1_1)))
 	  {
 	    if (is_symbol(cadr(code)))
@@ -39011,7 +39196,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (symbol_has_accessor(sym))
 		    cdr(y) = call_symbol_bind(sc, sym, val);
 		  else cdr(y) = val;
-		  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+		  set_type(y, T_PAIR | T_IMMUTABLE);
 		  ecdr(y) = car(sc->envir);
 		  car(sc->envir) = y;
 		  symbol_id(sym) = frame_id(sc->envir);
@@ -39051,7 +39236,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (symbol_has_accessor(sym))
 		    cdr(y) = call_symbol_bind(sc, sym, val);
 		  else cdr(y) = val;
-		  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+		  set_type(y, T_PAIR | T_IMMUTABLE);
 		  ecdr(y) = car(e);
 		  car(e) = y;
 		  
@@ -39118,7 +39303,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (symbol_has_accessor(car(y)))
 	  cdr(y) = call_symbol_bind(sc, car(y), sc->value);
 	else cdr(y) = sc->value;
-	set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+	set_type(y, T_PAIR | T_IMMUTABLE);
 	ecdr(y) = sc->NIL;
 	car(x) = y;
       }
@@ -39252,6 +39437,38 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
+    case OP_COND_SIMPLE:
+      push_stack(sc, OP_COND1_SIMPLE, sc->NIL, sc->code);
+      sc->code = caar(sc->code);
+      goto EVAL;
+      
+      
+    case OP_COND1_SIMPLE:
+      if (is_true(sc, sc->value))     /* got a hit (is_true -> not false, so else is true even though it has no value) */
+	{
+	  sc->code = cdar(sc->code);
+	  if (is_null(sc->code))
+	    {
+	      if (is_multiple_value(sc->value))                             /* (+ 1 (cond ((values 2 3)))) */
+		sc->value = splice_in_values(sc, multiple_value(sc->value));
+	      /* no result clause, so return test, (cond (#t)) -> #t, (cond ((+ 1 2))) -> 3 */
+	      goto START;
+	    }
+	  goto BEGIN; /* PERHAPS: split */
+	}
+      sc->code = cdr(sc->code);
+      if (is_null(sc->code))
+	{
+	  sc->value = sc->NIL;
+	  goto START;
+	} 
+      push_stack(sc, OP_COND1_SIMPLE, sc->NIL, sc->code);
+      sc->code = caar(sc->code);
+      goto EVAL;
+      
+      
+
+
       /* -------------------------------- AND -------------------------------- */
     case OP_AND:
       check_and(sc);
@@ -39628,15 +39845,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if ((sc->op == OP_DEFINE_BACRO) ||
 	  (sc->op == OP_DEFINE_BACRO_STAR))
-	set_type(sc->value, T_BACRO | T_ANY_MACRO | T_DONT_COPY | T_DONT_EVAL_ARGS | T_COPY_ARGS);
+	set_type(sc->value, T_BACRO | T_ANY_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS);
       else
 	{
 	  if (sc->op == OP_DEFINE_EXPANSION)
 	    {
-	      set_type(sc->value, T_MACRO | T_ANY_MACRO | T_EXPANSION | T_DONT_COPY | T_DONT_EVAL_ARGS | T_COPY_ARGS);
+	      set_type(sc->value, T_MACRO | T_ANY_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS);
 	      set_type(sc->code, EXPANSION_TYPE);
 	    }
-	  else set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
+	  else set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
 	}
 
       sc->value = sc->code;
@@ -39930,10 +40147,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if ((is_input_port(sc->args)) &&
 	  (!port_is_closed(sc->args)))
-	{
-	  sc->input_port = sc->args;
-	  sc->input_is_file = (is_file_port(sc->input_port));
-	}
+	sc->input_port = sc->args;
+
       if (is_multiple_value(sc->value)) 
 	sc->value = splice_in_values(sc, multiple_value(sc->value));
       goto START;
@@ -40015,35 +40230,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer pt;
 
 	pt = sc->input_port;
-	if (sc->input_is_file)
-	  {
-	    while (is_white_space(c = fgetc(port_file(pt))))
-	      if (c == '\n')
-		port_line_number(pt)++;
-	    if (c == EOF) 
-	      return(missing_close_paren_error(sc));
-	  }
-	else 
-	  {
-	    char *orig_str, *str;
-	    unsigned char c1;
-
-	    str = (char *)(port_string(pt) + port_string_point(pt));
-	    if (!(*str)) 
-	      return(missing_close_paren_error(sc));
-
-	    orig_str = str;
-	    while (white_space[c1 = (unsigned char)(*str++)]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
-	      if (c1 == '\n')
-		port_line_number(pt)++;
-	    if (c1 == 0)
-	      {
-		port_string_point(pt) += (str - orig_str - 1);
-		return(missing_close_paren_error(sc));
-	      }
-	    port_string_point(pt) += (str - orig_str);
-	    c = c1;
-	  }
+	c = port_read_white_space(pt)(sc, pt);
 
 	switch (c) 
 	  {
@@ -40068,7 +40255,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START;
 	    
 	  case ';':
-	    sc->tok = read_semicolon(sc, pt);
+	    sc->tok = port_read_semicolon(pt)(sc, pt);
 	    break;
 	    
 	  case '"':
@@ -40095,11 +40282,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  case '#':
 	    sc->tok = read_sharp(sc, pt);
 	    break;
+
+	  case EOF:
+	    return(missing_close_paren_error(sc));
 	    
 	  default: 
 	    sc->strbuf[0] = c; 
 	    /* sc->tok = TOKEN_ATOM; */
-	    sc->value = read_delimited_string(sc, NO_SHARP);
+	    sc->value = port_read_name(pt)(sc, pt, NO_SHARP);
 	    goto READ_LIST;
 	  }
       }
@@ -40179,12 +40369,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  return(missing_close_paren_error(sc));
 
 	case TOKEN_ATOM:
-	  sc->value = read_delimited_string(sc, NO_SHARP);
+	  sc->value = port_read_name(sc->input_port)(sc, sc->input_port, NO_SHARP);
 	  goto READ_LIST;
 	  break;
 
 	case TOKEN_SHARP_CONST:
-	  sc->value = read_delimited_string(sc, WITH_SHARP);
+	  sc->value = port_read_name(sc->input_port)(sc, sc->input_port, WITH_SHARP);
 	  if (is_null(sc->value))
 	    return(read_error(sc, "undefined # expression"));
 	  if (sc->value == sc->NO_VALUE)
@@ -45069,62 +45259,62 @@ s7_scheme *s7_init(void)
   sc->TEMP_CELL_2 = &sc->_TEMP_CELL_2;
   sc->TEMP_CELL_3 = &sc->_TEMP_CELL_3;
 
-  set_type(sc->NIL, T_NIL | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY | T_SIMPLE);
+  set_type(sc->NIL, T_NIL | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   frame_id(sc->NIL) = -1;
   
-  set_type(sc->GC_NIL, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY | T_SIMPLE);
+  set_type(sc->GC_NIL, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->GC_NIL) = cdr(sc->GC_NIL) = sc->UNSPECIFIED;
   
-  set_type(sc->T, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY | T_SIMPLE);
+  set_type(sc->T, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->T) = cdr(sc->T) = sc->UNSPECIFIED;
   
-  set_type(sc->F, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY | T_SIMPLE);
+  set_type(sc->F, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->F) = cdr(sc->F) = sc->UNSPECIFIED;
   
-  set_type(sc->EOF_OBJECT, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY | T_SIMPLE);
+  set_type(sc->EOF_OBJECT, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->EOF_OBJECT) = cdr(sc->EOF_OBJECT) = sc->UNSPECIFIED;
   
-  set_type(sc->UNSPECIFIED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY | T_SIMPLE);
+  set_type(sc->UNSPECIFIED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
   
-  set_type(sc->UNDEFINED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY | T_SIMPLE);
+  set_type(sc->UNDEFINED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
   
-  set_type(sc->NO_VALUE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY | T_SIMPLE);
+  set_type(sc->NO_VALUE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->NO_VALUE) = cdr(sc->NO_VALUE) = sc->UNSPECIFIED;
 
-  set_type(sc->ELSE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY | T_SIMPLE);
+  set_type(sc->ELSE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->ELSE) = cdr(sc->ELSE) = sc->UNSPECIFIED;
   /* "else" is added to the global environment below -- can't do it here
    *    because the symbol table and environment don't exist yet.
    */
 
-  set_type(sc->TEMP_CELL, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY);
+  set_type(sc->TEMP_CELL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   cdr(sc->TEMP_CELL) = sc->NIL;
 
-  set_type(sc->TEMP_CELL_1, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY);
+  set_type(sc->TEMP_CELL_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->TEMP_CELL_1) = cdr(sc->TEMP_CELL_1) = sc->NIL;
   car(sc->TEMP_CELL) = sc->TEMP_CELL_1;
   
-  set_type(sc->TEMP_CELL_2, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY);
+  set_type(sc->TEMP_CELL_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->TEMP_CELL_2) = cdr(sc->TEMP_CELL_2) = sc->NIL;
 
-  set_type(sc->TEMP_CELL_3, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY);
+  set_type(sc->TEMP_CELL_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->TEMP_CELL_3) = cdr(sc->TEMP_CELL_3) = sc->NIL;
 
   sc->T1_1 = &sc->_T1_1;
-  set_type(sc->T1_1, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY);
+  set_type(sc->T1_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T1_1) = sc->NIL;
   cdr(sc->T1_1) = sc->NIL;
 
   sc->T2_1 = &sc->_T2_1;
   sc->T2_2 = &sc->_T2_2;
 
-  set_type(sc->T2_1, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY);
+  set_type(sc->T2_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T2_1) = sc->NIL;
   cdr(sc->T2_1) = sc->T2_2;
-  set_type(sc->T2_2, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY);
+  set_type(sc->T2_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T2_2) = sc->NIL;
   cdr(sc->T2_2) = sc->NIL;
 
@@ -45132,17 +45322,16 @@ s7_scheme *s7_init(void)
   sc->T3_2 = &sc->_T3_2;
   sc->T3_3 = &sc->_T3_3;
 
-  set_type(sc->T3_1, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY);
+  set_type(sc->T3_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T3_1) = sc->NIL;
   cdr(sc->T3_1) = sc->T3_2;
-  set_type(sc->T3_2, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY);
+  set_type(sc->T3_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T3_2) = sc->NIL;
   cdr(sc->T3_2) = sc->T3_3;
-  set_type(sc->T3_3, T_PAIR | T_GC_MARK | T_IMMUTABLE | T_DONT_COPY);
+  set_type(sc->T3_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T3_3) = sc->NIL;
   cdr(sc->T3_3) = sc->NIL;
 
-  sc->input_is_file = false;
   sc->input_port_stack = sc->NIL;
   sc->code = sc->NIL;
   sc->cur_code = ERROR_INFO_DEFAULT;
@@ -45192,7 +45381,6 @@ s7_scheme *s7_init(void)
   for (i = 0; i < INITIAL_PROTECTED_OBJECTS_SIZE; i++)
     vector_element(sc->protected_objects, i) = sc->GC_NIL;
   set_immutable(sc->protected_objects);
-  typeflag(sc->protected_objects) |= T_DONT_COPY;
   
   sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
   sc->stack_start = vector_elements(sc->stack);
@@ -45205,7 +45393,7 @@ s7_scheme *s7_init(void)
   
   /* keep the symbol table out of the heap */
   sc->symbol_table = (s7_pointer)calloc(1, sizeof(s7_cell));
-  set_type(sc->symbol_table, T_VECTOR | T_DONT_COPY);
+  set_type(sc->symbol_table, T_VECTOR);
   vector_length(sc->symbol_table) = SYMBOL_TABLE_SIZE;
   vector_elements(sc->symbol_table) = (s7_pointer *)malloc(SYMBOL_TABLE_SIZE * sizeof(s7_pointer));
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
@@ -45245,7 +45433,7 @@ s7_scheme *s7_init(void)
     }
 
   real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
-  typeflag(real_zero) = T_IMMUTABLE | T_NUMBER | T_DONT_COPY;
+  typeflag(real_zero) = T_IMMUTABLE | T_NUMBER;
   real_zero->hloc = NOT_IN_HEAP;
   number_type(real_zero) = NUM_REAL;
   real(number(real_zero)) = (s7_Double)0.0;
@@ -45256,7 +45444,7 @@ s7_scheme *s7_init(void)
     {
       s7_pointer p;
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
-      typeflag(p) = T_IMMUTABLE | T_CHARACTER | T_DONT_COPY | T_SIMPLE;
+      typeflag(p) = T_IMMUTABLE | T_CHARACTER | T_SIMPLE;
       p->hloc = NOT_IN_HEAP;
       character(p) = (unsigned char)i;
       chars[i] = p;
@@ -45320,6 +45508,7 @@ s7_scheme *s7_init(void)
   sc->CASE_SIMPLE =           assign_internal_syntax(sc, "case",    OP_CASE_SIMPLE);  
   sc->CASE_SIMPLER =          assign_internal_syntax(sc, "case",    OP_CASE_SIMPLER);  
   sc->COND_UNCHECKED =        assign_internal_syntax(sc, "cond",    OP_COND_UNCHECKED);  
+  sc->COND_SIMPLE =           assign_internal_syntax(sc, "cond",    OP_COND_SIMPLE);  
   sc->DO_UNCHECKED =          assign_internal_syntax(sc, "do",      OP_DO_UNCHECKED);  
   sc->LAMBDA_UNCHECKED =      assign_internal_syntax(sc, "lambda",  OP_LAMBDA_UNCHECKED);  
   sc->LAMBDA_STAR_UNCHECKED = assign_internal_syntax(sc, "lambda*", OP_LAMBDA_STAR_UNCHECKED);  
@@ -45392,77 +45581,43 @@ s7_scheme *s7_init(void)
   sc->safe_do_ids = (long long int *)calloc(sc->safe_do_ids_size, sizeof(long long int));
 #endif
 
-  sc->LAMBDA = make_symbol(sc, "lambda");
-  typeflag(sc->LAMBDA) |= T_DONT_COPY; 
-  
+  sc->LAMBDA =      make_symbol(sc, "lambda");
   sc->LAMBDA_STAR = make_symbol(sc, "lambda*");
-  typeflag(sc->LAMBDA_STAR) |= T_DONT_COPY; 
-
-  sc->QUOTE = make_symbol(sc, "quote");
-  typeflag(sc->QUOTE) |= T_DONT_COPY; 
-  
-  sc->UNQUOTE = make_symbol(sc, "unquote");
-  typeflag(sc->UNQUOTE) |= T_DONT_COPY;                /* should this include T_IMMUTABLE? (define-macro ,a ...) redefines unquote! */
-  
+  sc->QUOTE =       make_symbol(sc, "quote");
+  sc->UNQUOTE =     make_symbol(sc, "unquote");
   sc->MACROEXPAND = make_symbol(sc, "macroexpand");
-  typeflag(sc->MACROEXPAND) |= T_DONT_COPY; 
-  
-  sc->FEED_TO = make_symbol(sc, "=>");
-  typeflag(sc->FEED_TO) |= T_DONT_COPY; 
-  
+  sc->FEED_TO =     make_symbol(sc, "=>");
+  sc->APPLY =       make_symbol(sc, "apply");
+  sc->CDR =         make_symbol(sc, "cdr");
+  sc->SET =         make_symbol(sc, "set!");
+
   #define s_is_type_name "[?]"                         /* these were "(?)" etc, but the procedure-source needs to be usable */
   sc->S_IS_TYPE = make_symbol(sc, s_is_type_name);
-  typeflag(sc->S_IS_TYPE) |= T_DONT_COPY; 
 
   #define s_type_make_name "[make]"
   sc->S_TYPE_MAKE = make_symbol(sc, s_type_make_name);
-  typeflag(sc->S_TYPE_MAKE) |= T_DONT_COPY; 
 
   #define s_type_ref_name "[ref]"
   sc->S_TYPE_REF = make_symbol(sc, s_type_ref_name);
-  typeflag(sc->S_TYPE_REF) |= T_DONT_COPY; 
 
   #define s_type_arg_name "[arg]"
   sc->S_TYPE_ARG = make_symbol(sc, s_type_arg_name);
-  typeflag(sc->S_TYPE_ARG) |= T_DONT_COPY;
 
-  sc->APPLY = make_symbol(sc, "apply");
-  typeflag(sc->APPLY) |= T_DONT_COPY; 
-  
-  sc->QQ_VALUES = make_symbol(sc, "{values}");
-  typeflag(sc->QQ_VALUES) |= T_DONT_COPY; 
-  
-  sc->QQ_LIST = make_symbol(sc, "{list}");
-  typeflag(sc->QQ_LIST) |= T_DONT_COPY; 
-  
+  sc->QQ_VALUES =       make_symbol(sc, "{values}");
+  sc->QQ_LIST =         make_symbol(sc, "{list}");
   sc->QQ_APPLY_VALUES = make_symbol(sc, "{apply} {values}");
-  typeflag(sc->QQ_APPLY_VALUES) |= T_DONT_COPY; 
-  
-  sc->QQ_APPEND = make_symbol(sc, "{append}");
-  typeflag(sc->QQ_APPEND) |= T_DONT_COPY; 
+  sc->QQ_APPEND =       make_symbol(sc, "{append}");
+  sc->MULTIVECTOR =     make_symbol(sc, "{multivector}");
 
-  sc->CDR = make_symbol(sc, "cdr");
-  typeflag(sc->CDR) |= T_DONT_COPY; 
-  
   add_slot_to_environment(sc, sc->NIL, make_symbol(sc, "else"), sc->ELSE);
 
   sc->VECTOR = make_symbol(sc, "vector");
-  typeflag(sc->VECTOR) |= (T_DONT_COPY | T_SETTER); 
+  typeflag(sc->VECTOR) |= T_SETTER; 
   
-  sc->MULTIVECTOR = make_symbol(sc, "{multivector}");
-  typeflag(sc->MULTIVECTOR) |= T_DONT_COPY; 
-  
-  sc->ERROR = make_symbol(sc, "error");
-  typeflag(sc->ERROR) |= T_DONT_COPY; 
-
-  sc->READ_ERROR = make_symbol(sc, "read-error");
-  typeflag(sc->READ_ERROR) |= T_DONT_COPY; 
-
-  sc->SYNTAX_ERROR = make_symbol(sc, "syntax-error");
-  typeflag(sc->SYNTAX_ERROR) |= T_DONT_COPY; 
-
+  sc->ERROR =          make_symbol(sc, "error");
+  sc->READ_ERROR =     make_symbol(sc, "read-error");
+  sc->SYNTAX_ERROR =   make_symbol(sc, "syntax-error");
   sc->WRONG_TYPE_ARG = make_symbol(sc, "wrong-type-arg");
-  typeflag(sc->WRONG_TYPE_ARG) |= T_DONT_COPY; 
 
   sc->WRONG_TYPE_ARG_INFO = sc->NIL;
   for (i = 0; i < 7; i++)
@@ -45475,14 +45630,8 @@ s7_scheme *s7_init(void)
   car(sc->SIMPLE_WRONG_TYPE_ARG_INFO) = s7_make_permanent_string("~A argument, ~S, is a~A ~A but should be ~A");
 
   sc->WRONG_NUMBER_OF_ARGS = make_symbol(sc, "wrong-number-of-args");
-  typeflag(sc->WRONG_NUMBER_OF_ARGS) |= T_DONT_COPY; 
-
   sc->FORMAT_ERROR = make_symbol(sc, "format-error");
-  typeflag(sc->FORMAT_ERROR) |= T_DONT_COPY; 
-
   sc->OUT_OF_RANGE = make_symbol(sc, "out-of-range");
-  typeflag(sc->OUT_OF_RANGE) |= T_DONT_COPY; 
-
   sc->OUT_OF_RANGE_INFO = sc->NIL;
   for (i = 0; i < 5; i++)
     sc->OUT_OF_RANGE_INFO = permanent_cons(sc->F, sc->OUT_OF_RANGE_INFO, T_PAIR);
@@ -45493,23 +45642,12 @@ s7_scheme *s7_init(void)
     sc->SIMPLE_OUT_OF_RANGE_INFO = permanent_cons(sc->F, sc->SIMPLE_OUT_OF_RANGE_INFO, T_PAIR);
   car(sc->SIMPLE_OUT_OF_RANGE_INFO) = s7_make_permanent_string("~A argument, ~S, is out of range (~A)");
 
-  sc->KEY_KEY = s7_make_keyword(sc, "key");
-  typeflag(sc->KEY_KEY) |= T_DONT_COPY; 
-  
-  sc->KEY_OPTIONAL = s7_make_keyword(sc, "optional");
-  typeflag(sc->KEY_OPTIONAL) |= T_DONT_COPY; 
-  
+  sc->KEY_KEY =              s7_make_keyword(sc, "key");
+  sc->KEY_OPTIONAL =         s7_make_keyword(sc, "optional");
   sc->KEY_ALLOW_OTHER_KEYS = s7_make_keyword(sc, "allow-other-keys");
-  typeflag(sc->KEY_ALLOW_OTHER_KEYS) |= T_DONT_COPY; 
-  
-  sc->KEY_REST = s7_make_keyword(sc, "rest");
-  typeflag(sc->KEY_REST) |= T_DONT_COPY; 
+  sc->KEY_REST =             s7_make_keyword(sc, "rest");
 
   sc->__FUNC__ = make_symbol(sc, "__func__");
-  typeflag(sc->__FUNC__) |= (T_DONT_COPY); 
-
-  sc->SET = make_symbol(sc, "set!");
-  typeflag(sc->SET) |= T_DONT_COPY; 
 
   sc->s_function_args = permanent_cons(sc->F, sc->NIL, T_PAIR);
 
@@ -45868,7 +46006,7 @@ s7_scheme *s7_init(void)
   {
     s7_pointer p;
     p = s7_symbol_value(sc, make_symbol(sc, "{list}"));
-    set_type(p, (T_C_LST_ARGS_FUNCTION | T_DONT_COPY | T_PROCEDURE | T_COPY_ARGS));
+    set_type(p, (T_C_LST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
   }
 
   s7_define_safe_function(sc, "stacktrace",                g_stacktrace,               0, 2, false, H_stacktrace);
@@ -45896,7 +46034,6 @@ s7_scheme *s7_init(void)
   #define object_set_name "(generalized set!)"
   s7_define_function(sc, object_set_name,                  g_internal_object_set,      1, 0, true,  "internal object setter redirection");
   sc->OBJECT_SET = s7_symbol_value(sc, make_symbol(sc, object_set_name));
-  typeflag(sc->OBJECT_SET) |= T_DONT_COPY; 
 
   s7_define_function(sc, s_is_type_name,                   s_is_type,                  2, 0, false, "internal object type check");
   s7_define_function(sc, s_type_make_name,                 s_type_make,                2, 0, false, "internal object creation");
@@ -46026,15 +46163,15 @@ the error type and the info passed to the error handler.");
   {
     s7_pointer sym;
     sc->VECTOR_SET = s7_symbol_value(sc, sym = make_symbol(sc, "vector-set!"));
-    typeflag(sc->VECTOR_SET) |= (T_DONT_COPY | T_SETTER); 
+    typeflag(sc->VECTOR_SET) |= T_SETTER; 
     set_setter(sym);
     
     sc->LIST_SET = s7_symbol_value(sc, sym = make_symbol(sc, "list-set!"));
-    typeflag(sc->LIST_SET) |= (T_DONT_COPY | T_SETTER); 
+    typeflag(sc->LIST_SET) |= T_SETTER; 
     set_setter(sym);
     
     sc->HASH_TABLE_SET = s7_symbol_value(sc, sym = make_symbol(sc, "hash-table-set!"));
-    typeflag(sc->HASH_TABLE_SET) |= (T_DONT_COPY | T_SETTER); 
+    typeflag(sc->HASH_TABLE_SET) |= T_SETTER; 
     set_setter(sym);
 
     sym = make_symbol(sc, "cons");
@@ -46043,10 +46180,7 @@ the error type and the info passed to the error handler.");
     set_setter(sym);
     
     sc->HASH_TABLE_ITERATE = s7_make_function(sc, "(hash-table iterate)", g_hash_table_iterate, 1, 0, false, "internal hash-table iteration function");
-    typeflag(sc->HASH_TABLE_ITERATE) |= T_DONT_COPY; 
-    
     sc->STRING_SET = s7_symbol_value(sc, make_symbol(sc, "string-set!"));
-    typeflag(sc->STRING_SET) |= T_DONT_COPY; 
   }
 
   s7_function_set_setter(sc, "car",                 "set-car!");
