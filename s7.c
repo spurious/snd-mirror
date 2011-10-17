@@ -151,10 +151,12 @@
 /* names are hashed into the symbol table (a vector) and collisions are chained as lists. 
  */
 
-#define INITIAL_STACK_SIZE 2048         
+#define INITIAL_STACK_SIZE 512
 /* the stack grows as needed, each frame takes 4 entries, this is its initial size.
  *   this needs to be big enough to handle the eval_c_string's at startup (ca 100) 
  *   In s7test.scm, the maximum stack size is ca 440.  In snd-test.scm, it's ca 200.
+ *   This number matters only because call/cc copies the stack, which requires filling
+ *   the unused portion of the new stack, which requires memcpy of #<unspecified>'s.
  */
 
 #define INITIAL_PROTECTED_OBJECTS_SIZE 16  
@@ -985,12 +987,13 @@ struct s7_scheme {
 #define typeflag(p)                   ((p)->tf.flag)
 #define type(p)                       ((p)->tf.type_field)
 
+#define NOT_IN_HEAP -1
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 0))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
 /* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
  */
-#define dont_copy(p)                  ((!is_pair(p)) || (is_immutable(p)))
+#define dont_copy(p)                  ((!is_pair(p)) || (is_immutable(p)) || (p->hloc == NOT_IN_HEAP))
 #define dont_copy_cdr(p)              ((typeflag(p) & (T_PROCEDURE | T_ANY_MACRO)) != 0)
 /* dont_copy means the object is not copied when saved in a continuation */
 
@@ -2585,8 +2588,6 @@ static s7_pointer g_safety_bind(s7_scheme *sc, s7_pointer args)
 }
 
 
-#define NOT_IN_HEAP -1
-
 void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 {
   int loc;
@@ -2702,7 +2703,10 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       break;
     }
 
+  /* TODO: if a pair, set immutable? */
+
   clear_pending_removal(x);
+
   loc = x->hloc;
   if (loc != NOT_IN_HEAP)
     {
@@ -3926,8 +3930,6 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   s7_pointer nobj;
   int nloc;
 
-  if (!is_pair(obj)) fprintf(stderr, "copy %s ", DISPLAY(obj));
-
   NEW_CELL(sc, nobj);
   nloc = nobj->hloc;
   memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
@@ -3949,11 +3951,20 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 {
-  int i;
+  int i, len;
   s7_pointer new_v;
   s7_pointer *nv, *ov;
 
-  new_v = s7_make_vector(sc, vector_length(old_v));
+  /* stacks can grow temporarily, so sc->stack_size grows, but we don't normally need all that
+   *   leftover space here, so choose the original stack size if it's smaller.
+   */
+
+  len = vector_length(old_v);
+  if ((top < INITIAL_STACK_SIZE / 2) &&
+      (len > INITIAL_STACK_SIZE * 2))
+    len = INITIAL_STACK_SIZE;
+
+  new_v = s7_make_vector(sc, len);
   set_type(new_v, T_STACK);
   /* we can't leave the upper stuff simply malloc-garbage because we're sure to call the GC.
    *   We also can't just copy the vector since that seems to confuse the gc mark process.
@@ -4008,7 +4019,6 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
 {
   s7_pointer x;
   int loc;
-
   if ((int)(sc->free_heap_top - sc->free_heap) < (int)(sc->heap_size / 4))
     gc(sc);
 
@@ -4021,8 +4031,8 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
 
   NEW_CELL(sc, x);
   continuation(x) = (s7_continuation_t *)calloc(1, sizeof(s7_continuation_t));
-  continuation_stack_size(x) = sc->stack_size;
   continuation_stack(x) = copy_stack(sc, sc->stack, s7_stack_top(sc));
+  continuation_stack_size(x) = vector_length(continuation_stack(x));   /* copy_stack can return a smaller stack than the current one */
   continuation_stack_start(x) = vector_elements(continuation_stack(x));
   continuation_stack_end(x) = (s7_pointer *)(continuation_stack_start(x) + loc);
 
@@ -13799,7 +13809,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
 
 static s7_pointer make_input_file(s7_scheme *sc, const char *name, FILE *fp)
 {
-  #define MAX_SIZE_FOR_STRING_PORT 1000000
+  #define MAX_SIZE_FOR_STRING_PORT 5000000
   return(read_file(sc, fp, name, MAX_SIZE_FOR_STRING_PORT, "open"));
 }
 
@@ -14914,7 +14924,7 @@ static char *describe_type_bits(s7_pointer obj)
    */
   char *buf;
   buf = (char *)calloc(512, sizeof(char));
-  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
 	   type_name(obj),
 	   typeflag(obj),
@@ -14922,7 +14932,6 @@ static char *describe_type_bits(s7_pointer obj)
 	   is_marked(obj) ?             " gc-marked" : "",
 	   is_immutable(obj) ?          " immutable" : "",
 	   is_global(obj) ?             " global" : "",
-	   dont_copy(obj) ?             " dont-copy" : "",
 	   is_any_macro(obj) ?          " anymac" : "",
 	   is_expansion(obj) ?          " expansion" : "",
 	   is_multiple_value(obj) ?     " values" : "",
@@ -18208,6 +18217,57 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 }
 
 
+#if WITH_OPTIMIZATION
+static s7_pointer vector_set_ic;
+static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vec;
+  s7_Int index;
+
+  vec = car(args);
+  if (!s7_is_vector(vec))
+    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
+  if (vector_is_multidimensional(vec))
+    return(g_vector_set(sc, args));
+
+  index = s7_integer(cadr(args));
+  if (index >= vector_length(vec))
+    return(s7_out_of_range_error(sc, "vector-set! index,", 2, cadr(args), "should be less than vector length"));
+
+  vector_element(vec, index) = caddr(args);
+  return(caddr(args));
+}
+
+static s7_pointer vector_set_3;
+static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vec, ind;
+  s7_Int index;
+
+  vec = car(args);
+  if (!s7_is_vector(vec))
+    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
+  if (vector_is_multidimensional(vec))
+    return(g_vector_set(sc, args));
+  
+  ind = cadr(args);
+  if (!s7_is_integer(ind))
+    return(s7_wrong_type_arg_error(sc, "vector-set! index,", 2, ind, "an integer"));
+  index = s7_integer(ind);
+  if ((index < 0) ||
+      (index >= vector_length(vec)))
+    return(s7_out_of_range_error(sc, "vector-set! index,", 2, ind, "should be between 0 and the vector length"));
+
+  vector_element(vec, index) = caddr(args);
+  return(caddr(args));
+}
+
+/* TODO: vector_set_s_ic_g vector_set_sss vector_set_3, vector_set_s_s_vector_ref_s_s or the equivalent (shared v)
+ */
+#endif
+
+
+
 #define MAX_VECTOR_DIMENSIONS 512
 
 static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
@@ -18447,7 +18507,6 @@ static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
 {
   s7_Int len;
   s7_pointer new_vect;
-
   len = vector_length(old_vect);
 
   if (vector_is_multidimensional(old_vect))
@@ -27152,6 +27211,19 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 }
 
 
+static s7_pointer vector_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 3)
+    {
+      if ((s7_is_integer(caddr(expr))) &&
+	  (s7_integer(caddr(expr)) >= 0))
+	return(vector_set_ic);
+      return(vector_set_3);
+    }
+  return(f);
+}
+
+
 static s7_pointer hash_table_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
@@ -27911,6 +27983,16 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(vector_ref_ic) = c_function_class(f);
   vector_ref_2 = s7_make_function(sc, "vector-ref", g_vector_ref_2, 2, 0, false, "vector-ref optimization");
   c_function_class(vector_ref_2) = c_function_class(f);
+
+
+  /* vector-set! */
+  f = symbol_value(symbol_global_slot(make_symbol(sc, "vector-set!")));
+  c_function_chooser(f) = vector_set_chooser;
+
+  vector_set_ic = s7_make_function(sc, "vector-set!", g_vector_set_ic, 3, 0, false, "vector-set! optimization");
+  c_function_class(vector_set_ic) = c_function_class(f);
+  vector_set_3 = s7_make_function(sc, "vector-set!", g_vector_set_3, 3, 0, false, "vector-set! optimization");
+  c_function_class(vector_set_3) = c_function_class(f);
 
 
   /* hash-table-ref */
@@ -37472,6 +37554,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = car(sc->code);
 	      if (needs_copied_args(sc->code))
 		sc->args = copy_list(sc, sc->args);
+	      /* this copy is needed, unfortunately, but could it be done before the push, then skip the copy in OP_HOOK_APPLY? */
 	      goto APPLY;
 	    }
 	  else sc->value = sc->UNSPECIFIED;
