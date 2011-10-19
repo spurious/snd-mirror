@@ -6014,10 +6014,10 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   #define INCR_DOWN 0.9
   #define INCR_MAX 1.0
-  #define INCR_MIN 0.0005
+  #define INCR_MIN 0.00005
   #define RETRIES 10
   #define RETRY_MULT 2
-  #define INIT_TRIES 1000
+  #define INIT_TRIES 5000
 
   int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0;
   mus_float_t increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN, overall_min;
@@ -6283,7 +6283,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     increment = XEN_TO_C_DOUBLE(x_increment);
   else increment = 0.06; /* was .03 */
 
-  counts = 50; /* was 100 */
+  counts = 100; /* was 100, then 50 */
   orig_incr = increment;
   incr_mult = INCR_DOWN;
   file = "test.data";

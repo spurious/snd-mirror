@@ -222,7 +222,7 @@
 	       (lambda (return)
 		 (do ((i 0 (+ i 1)))
 		     ((= i file-len) (format #t "oops! ~A~%" name) 0)
-		   (if (string=? name (places i))
+		   (if (string=? name (list-ref places i))
 		       (return i))))))
 	    
 	    (format p "#define AUTOLOAD_FILES ~D~%~%" file-len)
@@ -1339,7 +1339,7 @@
 				     (set! (names name) (string-append file "#" (checked-substring dline 0 (- epos 1))))
 				     (do ((i 0 (+ i 1)))
 					 ((= i name))
-				       (if (string=? (names i) (names name))
+				       (if (string=? (vector-ref names i) (vector-ref names name))
 					   (format #t "~A[~D]: ambiguous name: ~A~%" file linectr (names i))))
 				     (incf name)
 				     (set! dline (checked-substring dline epos))
