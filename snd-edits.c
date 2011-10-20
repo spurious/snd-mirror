@@ -4905,7 +4905,7 @@ static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list
   new_state->beg = beg;
   new_state->len = num;
 #if HAVE_FORTH
-  new_state->origin = mus_format(MUS_LD " %lld %s drop", beg, num, S_delete_samples);
+  new_state->origin = mus_format("%lld %lld %s drop", beg, num, S_delete_samples);
 #else
 #if HAVE_RUBY
   {

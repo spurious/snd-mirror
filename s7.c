@@ -703,7 +703,6 @@ typedef struct s7_cell {
       unsigned int length;
       unsigned int hash;
       char *svalue;
-      s7_pointer global_slot;
     } string;
     
     s7_num_t number;
@@ -735,8 +734,9 @@ typedef struct s7_cell {
     } cons;
 
     struct {               /* symbols */
-      s7_pointer car, cdr, ecdr, local_slot;
+      s7_pointer name, global_slot, local_slot;
       long long int id;
+      /* there's room here for 8 bytes */
     } sym;
 
     struct {               /* additional object types (C and Scheme) */
@@ -1221,13 +1221,14 @@ struct s7_scheme {
 #define character(p)                  ((p)->object.cvalue)
 
 #define is_symbol(p)                  (type(p) == T_SYMBOL)
-#define symbol_name(p)                string_value(car(p))
-#define symbol_name_length(p)         string_length(car(p))
-#define symbol_value(p)               cdr(p)
-#define symbol_set_value(p, Val)      cdr(p) = (Val)
-#define symbol_global_slot(p)         (car(p))->object.string.global_slot
+#define symbol_name_cell(p)           (p)->object.sym.name
+#define symbol_name(p)                string_value(symbol_name_cell(p))
+#define symbol_name_length(p)         string_length(symbol_name_cell(p))
+#define symbol_value(p)               cdr(p)                            /* actually slot value -- p better not be a symbol here! */
+#define symbol_set_value(p, Val)      cdr(p) = (Val)                    /* here also, p is a slot */
+#define symbol_global_slot(p)         (p)->object.sym.global_slot
 #define symbol_local_slot(p)          (p)->object.sym.local_slot
-#define symbol_hash(p)                (car(p))->object.string.hash
+#define symbol_hash(p)                (symbol_name_cell(p))->object.string.hash
 #define symbol_accessor(p)            ((s7_extended_cell *)p)->accessor
 #define symbol_has_accessor(p)        (symbol_accessor(p) != -1)
 #define symbol_accessor_data(p)       ((s7_extended_cell *)p)->accessor_data
@@ -2909,11 +2910,10 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
   str = s7_make_permanent_string(name);
   x = (s7_cell *)permanent_calloc(sizeof(s7_extended_cell));
   x->hloc = NOT_IN_HEAP;
-  car(x) = str;
-  cdr(x) = sc->NIL;
+  symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL | T_SIMPLE);
-
   symbol_global_slot(x) = sc->NIL;
+  symbol_local_slot(x) = sc->NIL;
   symbol_id(x) = 0;
   symbol_accessor(x) = -1;
 
@@ -24423,6 +24423,8 @@ static bool too_many_arguments(s7_scheme *sc, s7_pointer proc, int len)
 }
 
 
+#define SYMBOL_VALUE(Sc, Sym) ((is_global(Sym)) ? symbol_value(symbol_global_slot(Sym)) : finder(Sc, Sym))
+
 static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 {
   s7_pointer p;
@@ -24438,8 +24440,8 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 	      len = s7_list_length(sc, car(p));
 	      if (((s7_is_eq(caar(p), s7_make_symbol(sc, "if"))) &&
 		   (len > 4)) ||
-		  ((s7_is_procedure(symbol_value(caar(p)))) &&
-		   (too_many_arguments(sc, symbol_value(caar(p)), len))) ||
+		  ((s7_is_procedure(SYMBOL_VALUE(sc, caar(p)))) &&
+		   (too_many_arguments(sc, SYMBOL_VALUE(sc, caar(p)), len))) ||
 		  ((s7_is_eq(caar(p), s7_make_symbol(sc, "define"))) &&
 		   (is_pair(cdr(p))) &&
 		   (is_symbol(cadr(p))) &&
@@ -26460,13 +26462,12 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS | T_SIMPLE); 
   syntax_opcode(syn) = op;
-  symbol_set_value(syn, syn); /* this saves us an error check in the main eval section */
-
-  symbol_set_value(x, syn);
+  cdr(syn) = syn; /* this saves us an error check in the main eval section */
+  car(syn) = x;
   symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS | T_SIMPLE);
+
   typeflag(x) = SYNTACTIC_TYPE;
   symbol_id(x) = 0;
-  car(syn) = x;
   syntax_opcode(x) = op;
   return(x);
 }
@@ -26479,14 +26480,13 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
 
   str = s7_make_permanent_string(name);
 
-  /* x = permanent_cons(str, sc->NIL, T_SYMBOL); */
   x = (s7_cell *)permanent_calloc(sizeof(s7_extended_cell));
   x->hloc = NOT_IN_HEAP;
-  car(x) = str;
-  cdr(x) = sc->NIL;
+  symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL | T_SIMPLE);
 
   symbol_global_slot(x) = sc->NIL;
+  symbol_local_slot(x) = sc->NIL;
   symbol_table_hash(name, &loc); 
   symbol_hash(x) = loc;
   symbol_id(x) = 0;
@@ -26495,13 +26495,12 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS | T_SIMPLE); 
   syntax_opcode(syn) = op;
-  symbol_set_value(syn, syn); /* cdr(syn), this saves us an error check in the main eval section */
-
-  symbol_set_value(x, syn);   /* cdr(x) */
+  cdr(syn) = syn; 
+  car(syn) = s7_make_symbol(sc, name);
   symbol_global_slot(x) = permanent_cons(x, syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS | T_SIMPLE);
+
   typeflag(x) = SYNTACTIC_TYPE;
   symbol_id(x) = 0;
-  car(syn) = s7_make_symbol(sc, name);
   syntax_opcode(x) = op;
   return(x);
 }
@@ -26788,8 +26787,6 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
  *   so it's worth the 1.5% slow down elsewhere.  Or so it seemed... I am not hitting
  *   safe do much outside of CLM, and when I do, no big win from the specialized lookup.
  */
-
-#define SYMBOL_VALUE(Sc, Sym) ((is_global(Sym)) ? symbol_value(symbol_global_slot(Sym)) : finder(Sc, Sym))
 
 
 static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl) 
@@ -30243,10 +30240,9 @@ void s7_unoptimize(s7_scheme *sc, s7_pointer code)
    */
   if (is_pair(code))
     {
-      if ((is_symbol(car(code))) &&
-	  (is_syntactic(car(code))) &&
-	  (syntax_opcode(symbol_value(car(code))) >= OP_QUOTE_UNCHECKED))
-	car(code) = cadar(code);
+      if ((typeflag(car(code)) == SYNTACTIC_TYPE) &&
+	  (syntax_opcode(car(code)) >= OP_QUOTE_UNCHECKED))
+	car(code) = cadr(symbol_global_slot(car(code)));
       else s7_unoptimize(sc, car(code));
       s7_unoptimize(sc, cdr(code));
     }
@@ -30257,9 +30253,8 @@ static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
 {
   #define H_unoptimize "(unoptimize code) erases all the optimizer info in code"
 
-  if ((is_symbol(car(args))) &&
-      (is_syntax(symbol_value(car(args)))))
-    return(cadar(args));
+  if (typeflag(car(args)) == SYNTACTIC_TYPE)
+    return(cadr(symbol_global_slot(car(args))));
 
   s7_unoptimize(sc, car(args));
   return(car(args));
@@ -32143,7 +32138,37 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
   return(sc->UNDEFINED);
 }
 
+#if (!defined(__GNUC__))
 #define function_is_ok(Code) (fs(sc, car(Code)) == ecdr(Code))
+#else
+static bool function_is_ok_1(s7_scheme *sc, s7_pointer p, s7_pointer val)
+{
+  if ((is_closure(val)) && (is_closure(ecdr(p))))
+    {
+      if (closure_body(val) == closure_body(ecdr(p)))
+	{
+	  ecdr(p) = val;
+	  /* fprintf(stderr, "%s is the same\n", DISPLAY_80(p)); */
+	  return(true);
+	}
+      if ((is_pair(closure_args(val))) && 
+	  (is_pair(closure_args(ecdr(p)))) &&
+	  (safe_list_length(sc, closure_args(val)) == safe_list_length(sc, closure_args(ecdr(p)))))
+	{
+	  if ((optimize_data(p) < OP_SAFE_THUNK) ||
+	      (!is_safe_closure(closure_body(ecdr(p)))))
+	    {
+	      ecdr(p) = val;
+	      /* fprintf(stderr, "%s is ok\n", DISPLAY_80(p)); */
+	      return(true);
+	    }
+	}
+    }
+  return(false);
+}
+#define function_is_ok(Code) ({ s7_pointer _val_; _val_ = fs(sc, car(Code)); ((_val_ == ecdr(Code)) || (function_is_ok_1(sc, Code, _val_))); })
+#endif
+
 #endif
 
 
@@ -33026,7 +33051,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->code = cdr(cadr(sc->code));
 	    goto BEGIN;
 	  }
-	symbol_value(car(sc->args)) = s7_make_integer(sc, step);
+	symbol_set_value(car(sc->args), s7_make_integer(sc, step));
 	push_stack(sc, OP_SAFE_DO_STEP, sc->args, sc->code);
 	sc->code = cddr(sc->code);
 	goto BEGIN;
@@ -33073,7 +33098,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(sc->T2_2) = symbol_value(car(sc->args));
 	    car(sc->T2_1) = cadr(step);
 	  }
-	symbol_value(car(sc->args)) = c_call(step)(sc, sc->T2_1);
+	symbol_set_value(car(sc->args), c_call(step)(sc, sc->T2_1));
       }
 
     SIMPLE_DO_END:
@@ -33967,8 +33992,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    
 		    NEW_CELL_NO_CHECK(sc, slot);
 		    car(slot) = sym;
-		    symbol_id(car(slot)) = frame_number;	
-		    symbol_local_slot(car(slot)) = slot;
+		    symbol_id(sym) = frame_number;	
+		    symbol_local_slot(sym) = slot;
 		    if (symbol_has_accessor(sym))
 		      cdr(slot) = call_symbol_bind(sc, sym, val);
 		    else cdr(slot) = val;
@@ -34034,8 +34059,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    
 		    NEW_CELL_NO_CHECK(sc, slot1);
 		    car(slot1) = sym;
-		    symbol_id(car(slot1)) = frame_number;	
-		    symbol_local_slot(car(slot1)) = slot1;
+		    symbol_id(sym) = frame_number;	
+		    symbol_local_slot(sym) = slot1;
 		    if (symbol_has_accessor(sym))
 		      cdr(slot1) = call_symbol_bind(sc, sym, val);
 		    else cdr(slot1) = val;
@@ -34058,8 +34083,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			
 			NEW_CELL_NO_CHECK(sc, slot2);
 			car(slot2) = sym;
-			symbol_id(car(slot2)) = frame_number;	
-			symbol_local_slot(car(slot2)) = slot2;
+			symbol_id(sym) = frame_number;	
+			symbol_local_slot(sym) = slot2;
 			if (symbol_has_accessor(sym))
 			  cdr(slot2) = call_symbol_bind(sc, sym, val);
 			else cdr(slot2) = val;
@@ -39560,8 +39585,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    /* symbol_local_slot is not safe here: (letrec ((x 1) (y (let ((x 2)) x))) ...)
 	     */
 	    if (symbol_has_accessor(car(slot)))
-	      symbol_value(slot) = call_symbol_bind(sc, car(slot), car(y));
-	    else symbol_value(slot) = car(y);
+	      symbol_set_value(slot, call_symbol_bind(sc, car(slot), car(y)));
+	    else symbol_set_value(slot, car(y));
 
 	    typeflag(y) = 0;                          /* this was allocated above in the cons, so we can release it now */
 	    (*(sc->free_heap_top++)) = y;
