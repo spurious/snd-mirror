@@ -6086,7 +6086,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
       int grf_width, width, x_offset, y_offset, grf_height, height, chan_offset; /* , grf_chn = 0; */
       bool new_peaks;
       inset_graph_info_t *info;
-      int64_t frames;
+      mus_long_t frames;
 
       if (!(cp->inset_graph))
 	{
@@ -6420,12 +6420,12 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_EDIT_CTR:                return(C_TO_XEN_INT(cp->edit_ctr));                               break;
 	    case CP_GRAPH_TRANSFORM_P:       return(C_TO_XEN_BOOLEAN(cp->graph_transform_p));                  break;
 	    case CP_GRAPH_TIME_P:            return(C_TO_XEN_BOOLEAN(cp->graph_time_p));                       break;
-	    case CP_CURSOR:                  return(C_TO_XEN_INT64_T(CURSOR(cp)));                             break;
-	    case CP_EDPOS_CURSOR:            return(C_TO_XEN_INT64_T(cp->edits[to_c_edit_position(cp, cp_edpos, S_cursor, 3)]->cursor)); break;
-	    case CP_FRAMES:                  return(C_TO_XEN_INT64_T(CURRENT_SAMPLES(cp)));                    break;
+	    case CP_CURSOR:                  return(C_TO_XEN_LONG_LONG(CURSOR(cp)));                             break;
+	    case CP_EDPOS_CURSOR:            return(C_TO_XEN_LONG_LONG(cp->edits[to_c_edit_position(cp, cp_edpos, S_cursor, 3)]->cursor)); break;
+	    case CP_FRAMES:                  return(C_TO_XEN_LONG_LONG(CURRENT_SAMPLES(cp)));                    break;
 	    case CP_GRAPH_LISP_P:            return(C_TO_XEN_BOOLEAN(cp->graph_lisp_p));                       break;
-	    case CP_AP_LOSAMP:               if (cp->axis) return(C_TO_XEN_INT64_T(cp->axis->losamp));         break;
-	    case CP_AP_HISAMP:               if (cp->axis) return(C_TO_XEN_INT64_T(cp->axis->hisamp));         break;
+	    case CP_AP_LOSAMP:               if (cp->axis) return(C_TO_XEN_LONG_LONG(cp->axis->losamp));         break;
+	    case CP_AP_HISAMP:               if (cp->axis) return(C_TO_XEN_LONG_LONG(cp->axis->hisamp));         break;
 	    case CP_SQUELCH_UPDATE:          return(C_TO_XEN_BOOLEAN(cp->squelch_update));                     break;
 	    case CP_CURSOR_SIZE:             return(C_TO_XEN_INT(cp->cursor_size));                            break;
 
@@ -6485,7 +6485,7 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_FFT_LOG_MAGNITUDE:       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));                    break;
 	    case CP_FFT_WITH_PHASES:         return(C_TO_XEN_BOOLEAN(cp->fft_with_phases));                      break;
 	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                              break;
-	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_INT64_T(cp->transform_size));                       break;
+	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_LONG_LONG(cp->transform_size));                       break;
 	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));              break;
 	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT((int)(cp->fft_window)));                        break;
 	    case CP_TRANSFORM_TYPE:          return(C_INT_TO_XEN_TRANSFORM(cp->transform_type));                 break;
@@ -6499,7 +6499,7 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_SHOW_AXES:               return(C_TO_XEN_INT((int)(cp->show_axes)));                         break;
 	    case CP_GRAPHS_HORIZONTAL:       return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));                    break;
 	    case CP_CURSOR_POSITION:         return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy)));     break;
-	    case CP_EDPOS_FRAMES:            return(C_TO_XEN_INT64_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
+	    case CP_EDPOS_FRAMES:            return(C_TO_XEN_LONG_LONG(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
 
 	    case CP_UPDATE_TIME:
 	      /* any display-oriented background process must 1st be run to completion
@@ -6561,8 +6561,8 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_BEATS_PER_MEASURE: return(C_TO_XEN_INT(cp->beats_per_measure));        break;
 	    case CP_MAXAMP:           return(C_TO_XEN_DOUBLE(channel_maxamp(cp, AT_CURRENT_EDIT_POSITION))); break;
 	    case CP_EDPOS_MAXAMP:     return(C_TO_XEN_DOUBLE(channel_maxamp(cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
-	    case CP_MAXAMP_POSITION:  return(C_TO_XEN_INT64_T(channel_maxamp_position(cp, AT_CURRENT_EDIT_POSITION))); break;
-	    case CP_EDPOS_MAXAMP_POSITION: return(C_TO_XEN_INT64_T(channel_maxamp_position(cp, to_c_edit_position(cp, cp_edpos, S_maxamp_position, 3)))); break;
+	    case CP_MAXAMP_POSITION:  return(C_TO_XEN_LONG_LONG(channel_maxamp_position(cp, AT_CURRENT_EDIT_POSITION))); break;
+	    case CP_EDPOS_MAXAMP_POSITION: return(C_TO_XEN_LONG_LONG(channel_maxamp_position(cp, to_c_edit_position(cp, cp_edpos, S_maxamp_position, 3)))); break;
 	    }
 	}
     }
@@ -6582,7 +6582,7 @@ static int g_imin(int mn, XEN val, int def)
 static int g_omin(mus_long_t mn, XEN val, mus_long_t def)
 {
   mus_long_t nval;
-  nval = XEN_TO_C_INT64_T_OR_ELSE(val, def);
+  nval = XEN_TO_C_LONG_LONG_OR_ELSE(val, def);
   if (nval >= mn) return(nval);
   return(mn);
 }
@@ -6672,7 +6672,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
     case CP_CURSOR:
       {
 	mus_long_t samp;
-	samp = XEN_TO_C_INT64_T_OR_ELSE(on, 0);
+	samp = XEN_TO_C_LONG_LONG_OR_ELSE(on, 0);
 	if (samp < 0)
 	  {
 	    cp->cursor_on = false;
@@ -6683,7 +6683,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
 	    cp->cursor_on = true; 
 	    cursor_moveto(cp, samp);
 	  }
-	return(C_TO_XEN_INT64_T(samp));
+	return(C_TO_XEN_LONG_LONG(samp));
       }
       break;
 
@@ -6692,7 +6692,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
 	int pos;
 	mus_long_t samp;
 	pos = to_c_edit_position(cp, cp_edpos, caller, 3);
-	samp = XEN_TO_C_INT64_T_OR_ELSE(on, 0);
+	samp = XEN_TO_C_LONG_LONG_OR_ELSE(on, 0);
 	if (samp < 0)
 	  {
 	    cp->cursor_on = false;
@@ -6707,7 +6707,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
 	      }
 	    else cp->edits[pos]->cursor = samp;
 	  }
-	return(C_TO_XEN_INT64_T(samp));
+	return(C_TO_XEN_LONG_LONG(samp));
       }
       break;
 
@@ -6891,7 +6891,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
     case CP_TRANSFORM_SIZE:
       cp->transform_size = g_omin(1, on, DEFAULT_TRANSFORM_SIZE); 
       calculate_fft(cp);
-      return(C_TO_XEN_INT64_T(cp->transform_size));
+      return(C_TO_XEN_LONG_LONG(cp->transform_size));
       break;
 
     case CP_TRANSFORM_GRAPH_TYPE: 
@@ -6974,7 +6974,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
 	  bool need_update = true;
 	  /* if less than current, delete, else zero pad */
 	  curlen = CURRENT_SAMPLES(cp);
-	  newlen = XEN_TO_C_INT64_T_OR_ELSE(on, curlen);
+	  newlen = XEN_TO_C_LONG_LONG_OR_ELSE(on, curlen);
 	  if (newlen < 0)
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_frames, 1, on, "frames (~A) < 0?");
 	  if (curlen > newlen)
@@ -7201,7 +7201,7 @@ static XEN g_cursor(XEN snd, XEN chn_n, XEN edpos)
 
 static XEN g_set_cursor(XEN on, XEN snd, XEN chn_n, XEN edpos) 
 {
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(on) || XEN_NOT_BOUND_P(on), on, XEN_ARG_1, S_setB S_cursor, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(on) || XEN_NOT_BOUND_P(on), on, XEN_ARG_1, S_setB S_cursor, "an integer");
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
@@ -7357,10 +7357,10 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
 	return(g_mus_length(snd));
 
       if (sound_data_p(snd))                     /* sound-data-length */
-	return(C_TO_XEN_INT64_T((XEN_TO_SOUND_DATA(snd))->length));
+	return(C_TO_XEN_LONG_LONG((XEN_TO_SOUND_DATA(snd))->length));
 
       if (MUS_VCT_P(snd))                        /* vct-length */
-	return(C_TO_XEN_INT64_T((XEN_TO_VCT(snd))->length));
+	return(C_TO_XEN_LONG_LONG((XEN_TO_VCT(snd))->length));
 
       if (XEN_MIX_P(snd))                        /* mix-length */
 	return(g_mix_length(snd));
@@ -7372,7 +7372,7 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
 	{
 	  snd_info *sp;
 	  sp = get_player_sound(snd);
-	  return(C_TO_XEN_INT64_T(CURRENT_SAMPLES(sp->chans[0])));
+	  return(C_TO_XEN_LONG_LONG(CURRENT_SAMPLES(sp->chans[0])));
 	}
     }
 
@@ -8370,15 +8370,15 @@ static XEN g_transform_size(XEN snd, XEN chn)
   #define H_transform_size "(" S_transform_size " :optional snd chn): current fft size (512)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_SIZE, S_transform_size));
-  return(C_TO_XEN_INT64_T(transform_size(ss)));
+  return(C_TO_XEN_LONG_LONG(transform_size(ss)));
 }
 
 static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
 {
   mus_long_t len;
 
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
-  len = XEN_TO_C_INT64_T(val);
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
+  len = XEN_TO_C_LONG_LONG(val);
   if (len <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_size, 1, val, "size ~A, but must be > 0");
   if (!(POWER_OF_2_P(len)))
@@ -8387,7 +8387,7 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_SIZE, S_setB S_transform_size));
   set_transform_size(len);
-  return(C_TO_XEN_INT64_T(transform_size(ss)));
+  return(C_TO_XEN_LONG_LONG(transform_size(ss)));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_transform_size_reversed, g_set_transform_size)
@@ -9008,7 +9008,7 @@ static XEN g_left_sample(XEN snd, XEN chn_n)
 
 static XEN g_set_left_sample(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(on) || XEN_NOT_BOUND_P(on), on, XEN_ARG_1, S_setB S_left_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(on) || XEN_NOT_BOUND_P(on), on, XEN_ARG_1, S_setB S_left_sample, "an integer");
   return(channel_set(snd, chn_n, on, CP_AP_LOSAMP, S_setB S_left_sample));
 }
 
@@ -9024,7 +9024,7 @@ static XEN g_right_sample(XEN snd, XEN chn_n)
 
 static XEN g_set_right_sample(XEN on, XEN snd, XEN chn_n) 
 {
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(on) || XEN_NOT_BOUND_P(on), on, XEN_ARG_1, S_setB S_right_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(on) || XEN_NOT_BOUND_P(on), on, XEN_ARG_1, S_setB S_right_sample, "an integer");
   return(channel_set(snd, chn_n, on, CP_AP_HISAMP, S_setB S_right_sample));
 }
 

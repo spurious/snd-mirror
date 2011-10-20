@@ -253,8 +253,8 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
   v = XEN_TO_VCT(obj);
 
   pos = XEN_CAR(args);
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
-  loc = XEN_TO_C_INT64_T(pos);
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
+  loc = XEN_TO_C_LONG_LONG(pos);
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
@@ -384,10 +384,10 @@ static XEN g_make_vct(XEN len, XEN filler)
 initial-element: \n  " vct_make_example
 
   mus_long_t size;
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(len), len, XEN_ARG_1, S_make_vct, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(len), len, XEN_ARG_1, S_make_vct, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(filler) || XEN_NOT_BOUND_P(filler), filler, XEN_ARG_2, S_make_vct, "a number");
 
-  size = XEN_TO_C_INT64_T(len);
+  size = XEN_TO_C_LONG_LONG(len);
   if (size < 0) 
     XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A < 0?");
 
@@ -430,13 +430,13 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
   mus_long_t i, j, ni, nj;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_moveB, "a vct");
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(newi), newi, XEN_ARG_2, S_vct_moveB, "an integer");
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(oldi), oldi, XEN_ARG_3, S_vct_moveB, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(newi), newi, XEN_ARG_2, S_vct_moveB, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(oldi), oldi, XEN_ARG_3, S_vct_moveB, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(backwards), backwards, XEN_ARG_4, S_vct_moveB, "a boolean");
 
   v = XEN_TO_VCT(obj);
-  ni = XEN_TO_C_INT64_T(newi);
-  nj = XEN_TO_C_INT64_T(oldi);
+  ni = XEN_TO_C_LONG_LONG(newi);
+  nj = XEN_TO_C_LONG_LONG(oldi);
 
   if ((XEN_BOOLEAN_P(backwards)) && 
       (XEN_NOT_FALSE_P(backwards)))
@@ -467,7 +467,7 @@ static XEN g_vct_length(XEN obj)
   vct *v;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_length, "a vct");
   v = XEN_TO_VCT(obj);
-  return(C_TO_XEN_INT64_T(v->length));
+  return(C_TO_XEN_LONG_LONG(v->length));
 }
 
 
@@ -478,10 +478,10 @@ static XEN g_vct_ref(XEN obj, XEN pos)
   mus_long_t loc;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_ref, "a vct");
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
 
   v = XEN_TO_VCT(obj);
-  loc = XEN_TO_C_INT64_T(pos);
+  loc = XEN_TO_C_LONG_LONG(pos);
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
@@ -499,11 +499,11 @@ static XEN g_vct_set(XEN obj, XEN pos, XEN val)
   mus_long_t loc;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_setB, "a vct");
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(pos), pos, XEN_ARG_2, S_vct_setB, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(pos), pos, XEN_ARG_2, S_vct_setB, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real number");
 
   v = XEN_TO_VCT(obj);
-  loc = XEN_TO_C_INT64_T(pos);
+  loc = XEN_TO_C_LONG_LONG(pos);
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A < 0?"); 
@@ -540,16 +540,16 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_addB, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(obj2), obj2, XEN_ARG_2, S_vct_addB, "a vct");
-  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(offs), offs, XEN_ARG_3, S_vct_addB, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(offs), offs, XEN_ARG_3, S_vct_addB, "an integer");
 
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
   if (lim == 0) return(obj1);
 
-  if (XEN_INT64_T_P(offs))
+  if (XEN_LONG_LONG_P(offs))
     {
-      j = XEN_TO_C_INT64_T(offs);
+      j = XEN_TO_C_LONG_LONG(offs);
       if (j < 0) 
 	XEN_OUT_OF_RANGE_ERROR(S_vct_addB, 3, offs, "offset ~A < 0?");
 
@@ -748,19 +748,19 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   mus_long_t i, old_len, new_len, j, istart, iend;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ARG_1, S_vct_subseq, "a vct");
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(start), start, XEN_ARG_2, S_vct_subseq, "an integer");
-  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(end), end, XEN_ARG_3, S_vct_subseq, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(start), start, XEN_ARG_2, S_vct_subseq, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(end), end, XEN_ARG_3, S_vct_subseq, "an integer");
 
-  istart = XEN_TO_C_INT64_T(start);
+  istart = XEN_TO_C_LONG_LONG(start);
   if (istart < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 2, start, "start ~A < 0?");
 
   vold = XEN_TO_VCT(vobj);
   old_len = vold->length;
 
-  if (XEN_INT64_T_P(end))
+  if (XEN_LONG_LONG_P(end))
     {
-      iend = XEN_TO_C_INT64_T(end);
+      iend = XEN_TO_C_LONG_LONG(end);
       if (iend < istart)
 	XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 3, end, "end ~A < start?");
       if (iend > old_len)
@@ -920,11 +920,11 @@ static XEN g_vct_reverse(XEN vobj, XEN size)
   mus_long_t i, j, len = -1;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ARG_1, S_vct_to_vector, "a vct");
-  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(size), size, XEN_ARG_2, S_vct_to_vector, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(size), size, XEN_ARG_2, S_vct_to_vector, "an integer");
 
   v = XEN_TO_VCT(vobj);
-  if (XEN_INT64_T_P(size))
-    len = XEN_TO_C_INT64_T(size);
+  if (XEN_LONG_LONG_P(size))
+    len = XEN_TO_C_LONG_LONG(size);
   if ((len <= 0) || (len > v->length))
     len = v->length;
   if (len == 1) return(vobj);
@@ -1062,8 +1062,8 @@ static XEN g_rb_make_vct(int argc, XEN *argv, XEN self)
   mus_long_t size;
   XEN len, filler;
   rb_scan_args(argc, argv, "11", &len, &filler);
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(len), len, XEN_ONLY_ARG, "Vct.new", "an integer");
-  size = XEN_TO_C_INT64_T(len);
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(len), len, XEN_ONLY_ARG, "Vct.new", "an integer");
+  size = XEN_TO_C_LONG_LONG(len);
   if (size <= 0) 
     XEN_OUT_OF_RANGE_ERROR("Vct.new", 1, len, "len <= 0?");
   if (XEN_NUMBER_P(filler))

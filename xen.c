@@ -131,7 +131,7 @@ XEN c_to_xen_off_t(off_t val)
 
 int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback)
 {
-  if (XEN_INT64_T_P(obj))
+  if (XEN_LONG_LONG_P(obj))
     return(XEN_TO_C_LONG_LONG(obj));
   else
     if (XEN_NUMBER_P(obj))

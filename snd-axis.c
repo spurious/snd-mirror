@@ -626,7 +626,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   height = ap->height;
   ap->graph_active = ((width > 4) || (height > 10));
   include_grid = ((ap->cp) && (with_grid));
-  
+
   if ((axes == SHOW_NO_AXES) || (width < 40) || (height < 40) || (ap->xmax == 0.0))
     {
       /* leave it set up for bare graph */
@@ -726,7 +726,6 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   
   curx = left_border_width;
   cury = height - bottom_border_width;
-  
   use_tiny_font = ((width < 250) || (height < 140));
   
   x_number_height = number_height((use_tiny_font) ? TINY_FONT(ss) : AXIS_NUMBERS_FONT(ss));
@@ -1561,8 +1560,8 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap_id), ap_id, XEN_ARG_3, S_axis_info, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ap_id, S_axis_info);
   if (ap == NULL) return(XEN_EMPTY_LIST);
-  return(XEN_CONS(C_TO_XEN_INT64_T(ap->losamp),
-	  XEN_CONS(C_TO_XEN_INT64_T(ap->hisamp),
+  return(XEN_CONS(C_TO_XEN_LONG_LONG(ap->losamp),
+	  XEN_CONS(C_TO_XEN_LONG_LONG(ap->hisamp),
 	   XEN_CONS(C_TO_XEN_DOUBLE(ap->x0),
 	    XEN_CONS(C_TO_XEN_DOUBLE(ap->y0),
 	     XEN_CONS(C_TO_XEN_DOUBLE(ap->x1),
@@ -1749,21 +1748,27 @@ static XEN g_x_axis_label(XEN snd, XEN chn, XEN ax)
 {
   #define H_x_axis_label "(" S_x_axis_label " :optional snd chn (ax " S_time_graph ")): current x axis label"
   axis_info *ap;
+
   ASSERT_CHANNEL(S_x_axis_label, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
+
   return(C_TO_XEN_STRING(ap->xlabel));
 }
+
 
 static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 {
   axis_info *ap;
+
   ASSERT_CHANNEL(S_setB S_x_axis_label, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_1, S_setB S_x_axis_label, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
   if (ap->xlabel) free(ap->xlabel);
   if (ap->default_xlabel) free(ap->default_xlabel);
+
   if (XEN_FALSE_P(label))
     {
       ap->xlabel = NULL;
@@ -1776,6 +1781,7 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 	set_fft_info_xlabel(ap->cp, ap->xlabel);
       ap->default_xlabel = mus_strdup(ap->xlabel);
     }
+
   update_graph(ap->cp);
   return(label);
 }
@@ -1787,9 +1793,11 @@ static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
 {
   #define H_y_axis_label "(" S_y_axis_label " :optional snd chn (ax " S_time_graph ")): current y axis label"
   axis_info *ap;
+
   ASSERT_CHANNEL(S_y_axis_label, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_y_axis_label);
+
   return(C_TO_XEN_STRING(ap->ylabel));
 }
 

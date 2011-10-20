@@ -1096,8 +1096,8 @@ void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
 	{
 	  /* probably faster to copy locally than protect from GC */
 	  vlo = mus_vct_copy(XEN_TO_VCT(XEN_CALL_2(init_func,
-						   C_TO_XEN_INT64_T(0),
-						   C_TO_XEN_INT64_T(new_ep->peak_env_size),
+						   C_TO_XEN_LONG_LONG(0),
+						   C_TO_XEN_LONG_LONG(new_ep->peak_env_size),
 						   S_ptree_channel " init func")));
 	  vhi = mus_vct_copy(vlo);
 	}
@@ -1187,8 +1187,8 @@ void peak_env_ptree_selection(chan_info *cp, struct ptree *pt, mus_long_t beg, m
 		      if (!inited)
 			{
 			  vlo = mus_vct_copy(XEN_TO_VCT(XEN_CALL_2(init_func,
-								   C_TO_XEN_INT64_T((mus_long_t)((mus_float_t)(cursamp - beg) / (mus_float_t)(num))),
-								   C_TO_XEN_INT64_T((mus_long_t)(num / new_ep->samps_per_bin)),
+								   C_TO_XEN_LONG_LONG((mus_long_t)((mus_float_t)(cursamp - beg) / (mus_float_t)(num))),
+								   C_TO_XEN_LONG_LONG((mus_long_t)(num / new_ep->samps_per_bin)),
 								   S_ptree_channel " init func")));
 			  vhi = mus_vct_copy(vlo);
 			  inited = true;
@@ -2872,8 +2872,8 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
     case SP_SRATE:               return(C_TO_XEN_INT(sp->hdr->srate));                                              break;
     case SP_DATA_FORMAT:         return(C_TO_XEN_INT(sp->hdr->format));                                             break;
     case SP_HEADER_TYPE:         return(C_TO_XEN_INT(sp->hdr->type));                                               break;
-    case SP_DATA_LOCATION:       return(C_TO_XEN_INT64_T(sp->hdr->data_location));                                  break;
-    case SP_DATA_SIZE:           return(C_TO_XEN_INT64_T(mus_samples_to_bytes(sp->hdr->format, sp->hdr->samples))); break;
+    case SP_DATA_LOCATION:       return(C_TO_XEN_LONG_LONG(sp->hdr->data_location));                                  break;
+    case SP_DATA_SIZE:           return(C_TO_XEN_LONG_LONG(mus_samples_to_bytes(sp->hdr->format, sp->hdr->samples))); break;
     case SP_SAVE_CONTROLS:       if (HAS_WIDGETS(sp)) save_controls(sp);                                            break;
     case SP_RESTORE_CONTROLS:    if (HAS_WIDGETS(sp)) restore_controls(sp);                                         break;
     case SP_RESET_CONTROLS:      if (HAS_WIDGETS(sp)) reset_controls(sp);                                           break;
@@ -3224,7 +3224,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  mus_long_t loc;
-	  loc = XEN_TO_C_INT64_T(val);
+	  loc = XEN_TO_C_LONG_LONG(val);
 	  if (loc >= 0)
 	    {
 	      mus_sound_set_data_location(sp->filename, loc);
@@ -3238,7 +3238,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  mus_long_t size;
-	  size = XEN_TO_C_INT64_T(val);
+	  size = XEN_TO_C_LONG_LONG(val);
 	  if (size >= 0)
 	    {
 	      mus_sound_set_samples(sp->filename, mus_bytes_to_samples(sp->hdr->format, size));
@@ -5239,8 +5239,8 @@ where each inner list entry can also be " PROC_FALSE "."
 
   XEN_ASSERT_TYPE(XEN_LIST_P(settings), settings, XEN_ARG_1, S_controls_to_channel, "a list");
   ASSERT_CHANNEL(S_controls_to_channel, snd, chn, 4);
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(beg) || XEN_FALSE_P(beg) || XEN_NOT_BOUND_P(beg), beg, XEN_ARG_2, S_controls_to_channel, "an integer");
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(dur) || XEN_FALSE_P(dur) || XEN_NOT_BOUND_P(dur), dur, XEN_ARG_3, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(beg) || XEN_FALSE_P(beg) || XEN_NOT_BOUND_P(beg), beg, XEN_ARG_2, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(dur) || XEN_FALSE_P(dur) || XEN_NOT_BOUND_P(dur), dur, XEN_ARG_3, S_controls_to_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_7, S_controls_to_channel, "a string");
 
   sp = get_sp(snd); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
@@ -5255,8 +5255,8 @@ where each inner list entry can also be " PROC_FALSE "."
 	  XEN_ERROR(XEN_ERROR_TYPE("cannot-apply-controls"),
 		    XEN_LIST_1(C_TO_XEN_STRING(S_controls_to_channel ": already applying controls")));
 	}
-      if (XEN_INT64_T_P(beg)) apply_beg = XEN_TO_C_INT64_T(beg); else apply_beg = 0;
-      if (XEN_INT64_T_P(dur)) apply_dur = XEN_TO_C_INT64_T(dur); else apply_dur = 0;
+      if (XEN_LONG_LONG_P(beg)) apply_beg = XEN_TO_C_LONG_LONG(beg); else apply_beg = 0;
+      if (XEN_LONG_LONG_P(dur)) apply_dur = XEN_TO_C_LONG_LONG(dur); else apply_dur = 0;
       cp = get_cp(snd, chn, S_controls_to_channel);
       old_selected_channel = sp->selected_channel;
       sp->selected_channel = cp->chan;
@@ -5413,8 +5413,8 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
 		    XEN_LIST_1(C_TO_XEN_STRING(S_apply_controls ": already applying controls")));
 	}
 
-      if (XEN_INT64_T_P(beg)) apply_beg = XEN_TO_C_INT64_T(beg); else apply_beg = 0;
-      if (XEN_INT64_T_P(dur)) apply_dur = XEN_TO_C_INT64_T(dur); else apply_dur = 0;
+      if (XEN_LONG_LONG_P(beg)) apply_beg = XEN_TO_C_LONG_LONG(beg); else apply_beg = 0;
+      if (XEN_LONG_LONG_P(dur)) apply_dur = XEN_TO_C_LONG_LONG(dur); else apply_dur = 0;
       cur_choice = (snd_apply_t)XEN_TO_C_INT_OR_ELSE(choice, (int)APPLY_TO_SOUND);
 
       if (cur_choice > APPLY_TO_SELECTION)

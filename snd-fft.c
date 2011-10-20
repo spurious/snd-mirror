@@ -795,7 +795,7 @@ static void apply_fft(fft_state *fs)
 					  C_TO_XEN_INT(cp->chan)),
 			       S_before_transform_hook);
 	  if (XEN_NUMBER_P(res))
-	    ind0 = XEN_TO_C_INT64_T_OR_ELSE(res, 0) + fs->beg;
+	    ind0 = XEN_TO_C_LONG_LONG_OR_ELSE(res, 0) + fs->beg;
 	  else ind0 = cp->axis->losamp + fs->beg;
 	}
       else
@@ -856,7 +856,7 @@ static void apply_fft(fft_state *fs)
 	sfd = g_c_make_sampler(sf);
 	sf_loc = snd_protect(sfd);
 	res = XEN_CALL_2(added_transform_proc(cp->transform_type), 
-			 C_TO_XEN_INT64_T(data_len), 
+			 C_TO_XEN_LONG_LONG(data_len), 
 			 sfd,
 			 "added transform func");
 	gc_loc = snd_protect(res);
@@ -1954,8 +1954,8 @@ and otherwise return a list (spectrum-cutoff time-slices fft-bins)"
   si = cp->sonogram_data;
 
   if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(cp->spectrum_end),
-			    C_TO_XEN_INT64_T(si->active_slices),
-			    C_TO_XEN_INT64_T(si->target_bins)));
+			    C_TO_XEN_LONG_LONG(si->active_slices),
+			    C_TO_XEN_LONG_LONG(si->target_bins)));
   return(XEN_ZERO);
 }
 
@@ -1967,8 +1967,8 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 
   chan_info *cp;
 
-  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(bin), bin, XEN_ARG_1, S_transform_sample, "an integer");
-  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(slice), slice, XEN_ARG_2, S_transform_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(bin), bin, XEN_ARG_1, S_transform_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_IF_BOUND_P(slice), slice, XEN_ARG_2, S_transform_sample, "an integer");
 
   ASSERT_CHANNEL(S_transform_sample, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_transform_sample);
@@ -1981,7 +1981,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
       if (fp)
 	{
 	  mus_long_t fbin;
-	  fbin = XEN_TO_C_INT64_T_OR_ELSE(bin, 0);
+	  fbin = XEN_TO_C_LONG_LONG_OR_ELSE(bin, 0);
 
 	  if (fbin < fp->current_size)
 	    {
@@ -1992,7 +1992,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 		  mus_long_t fslice;
 		  sono_info *si;
 
-		  fslice = XEN_TO_C_INT64_T_OR_ELSE(slice, 0);
+		  fslice = XEN_TO_C_LONG_LONG_OR_ELSE(slice, 0);
 		  si = cp->sonogram_data;
 
 		  if ((si) && 

@@ -91,7 +91,7 @@ mus_long_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int a
 mus_long_t beg_to_sample(XEN beg, const char *caller)
 {
   mus_long_t start;
-  start = XEN_TO_C_INT64_T_OR_ELSE(beg, 0);
+  start = XEN_TO_C_LONG_LONG_OR_ELSE(beg, 0);
   if (start < 0) 
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_3(C_TO_XEN_STRING("~A: no such sample: ~A"),
@@ -104,7 +104,7 @@ mus_long_t beg_to_sample(XEN beg, const char *caller)
 mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int argn, const char *caller)
 {
   mus_long_t samps;
-  samps = XEN_TO_C_INT64_T_OR_ELSE(dur, cp->edits[edpos]->samples - beg);
+  samps = XEN_TO_C_LONG_LONG_OR_ELSE(dur, cp->edits[edpos]->samples - beg);
   if (samps < 0)
     XEN_WRONG_TYPE_ARG_ERROR(caller, argn, dur, "a positive integer");
   return(samps);
@@ -114,7 +114,7 @@ mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int
 static mus_long_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller)
 {
   mus_long_t last;
-  last = XEN_TO_C_INT64_T_OR_ELSE(end, cp->edits[edpos]->samples - 1);
+  last = XEN_TO_C_LONG_LONG_OR_ELSE(end, cp->edits[edpos]->samples - 1);
   if (last < 0) 
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_3(C_TO_XEN_STRING("~A: no such sample: ~A"),
@@ -3665,13 +3665,13 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, mus
     {
       if (XEN_REQUIRED_ARGS_OK(init_func, 3))
 	v = XEN_CALL_3(init_func,
-		       C_TO_XEN_INT64_T(0),
-		       C_TO_XEN_INT64_T(num),
+		       C_TO_XEN_LONG_LONG(0),
+		       C_TO_XEN_LONG_LONG(num),
 		       XEN_TRUE,             /* reading forward */
 		       origin);
       else v = XEN_CALL_2(init_func,
-			  C_TO_XEN_INT64_T(0),
-			  C_TO_XEN_INT64_T(num),
+			  C_TO_XEN_LONG_LONG(0),
+			  C_TO_XEN_LONG_LONG(num),
 			  origin);
       loc = snd_protect(v);
     }
@@ -3951,7 +3951,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		  {
 		    sf = free_snd_fd(sf);
 		    mus_run_free_ptree(pt);
-		    return(C_TO_XEN_INT64_T(kp + beg));
+		    return(C_TO_XEN_LONG_LONG(kp + beg));
 		  }
 	      }
 	  sf = free_snd_fd(sf);
@@ -4005,7 +4005,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 #if HAVE_SCHEME
 	      s7_gc_unprotect_at(s7, gc_loc);
 #endif
-	      return(C_TO_XEN_INT64_T(kp + beg));
+	      return(C_TO_XEN_LONG_LONG(kp + beg));
 	    }
 	}
       if (reporting) 
@@ -4309,7 +4309,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
 
   pos = to_c_edit_position(cp, edpos, S_delete_samples_and_smooth, 5);
   samp = beg_to_sample(samp_n, S_delete_samples_and_smooth);
-  len = XEN_TO_C_INT64_T_OR_ELSE(samps, 0);
+  len = XEN_TO_C_LONG_LONG_OR_ELSE(samps, 0);
   if (len <= 0) return(XEN_FALSE);
 
   cut_and_smooth_1(cp, samp, samp + len - 1, false, pos);
@@ -4403,11 +4403,11 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
 
   cp = get_cp(snd, chn, S_insert_silence);
   if (!cp) return(XEN_FALSE);
-  start = XEN_TO_C_INT64_T(beg);
+  start = XEN_TO_C_LONG_LONG(beg);
   if (start < 0) XEN_ERROR(NO_SUCH_SAMPLE,
 			   XEN_LIST_2(C_TO_XEN_STRING(S_insert_silence ": no such sample: ~A"),
 				      beg));
-  len = XEN_TO_C_INT64_T(num);
+  len = XEN_TO_C_LONG_LONG(num);
   if (len <= 0) return(XEN_FALSE);
 
   cursor_insert(cp, start, len);
@@ -4431,7 +4431,7 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   if (!cp) return(XEN_FALSE);
   bg = beg_to_sample(beg, S_pad_channel);
   pos = to_c_edit_position(cp, edpos, S_pad_channel, 5);
-  len = XEN_TO_C_INT64_T_OR_ELSE(num, cp->edits[pos]->samples - bg);
+  len = XEN_TO_C_LONG_LONG_OR_ELSE(num, cp->edits[pos]->samples - bg);
 
   if ((len > 0) &&
       (extend_with_zeros(cp, bg, len, pos, S_pad_channel)))
@@ -4482,7 +4482,7 @@ swap the indicated channels"
       mus_long_t dur0, dur1, beg0 = 0, num;
 
       if (XEN_NUMBER_P(beg)) 
-	beg0 = XEN_TO_C_INT64_T(beg);
+	beg0 = XEN_TO_C_LONG_LONG(beg);
 
       pos0 = to_c_edit_position(cp0, edpos0, S_swap_channels, 7);
       pos1 = to_c_edit_position(cp1, edpos1, S_swap_channels, 8);
@@ -4491,7 +4491,7 @@ swap the indicated channels"
       dur1 = cp1->edits[pos1]->samples;
 
       if (XEN_NUMBER_P(dur)) 
-	num = XEN_TO_C_INT64_T(dur);
+	num = XEN_TO_C_LONG_LONG(dur);
       else
 	{
 	  if (dur0 > dur1) 
@@ -4709,7 +4709,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   egen = XEN_TO_MUS_ANY(gen);
   if (XEN_STRING_P(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_clm_channel);
 
-  errmsg = clm_channel(cp, egen, beg, dur, pos, XEN_TO_C_INT64_T_OR_ELSE(overlap, 0), caller);
+  errmsg = clm_channel(cp, egen, beg, dur, pos, XEN_TO_C_LONG_LONG_OR_ELSE(overlap, 0), caller);
 
   free(caller);
   if (errmsg)

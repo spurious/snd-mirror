@@ -2772,7 +2772,7 @@ static XEN s7_xen_player_length(s7_scheme *sc, XEN player)
   int index;
   index = XEN_PLAYER_TO_C_INT(player);
   cp = players[index]->chans[player_chans[index]];
-  return(C_TO_XEN_INT64_T(CURRENT_SAMPLES(cp)));
+  return(C_TO_XEN_LONG_LONG(CURRENT_SAMPLES(cp)));
 }
 #endif
 
@@ -3191,7 +3191,7 @@ channel number in the sound that contains the channel being played."
   dp = add_channel_to_play_list(cp,
 				sp, /* this is not cp->sound! */
 				beg_to_sample(start, S_add_player),
-				XEN_TO_C_INT64_T_OR_ELSE(end, NO_END_SPECIFIED),
+				XEN_TO_C_LONG_LONG_OR_ELSE(end, NO_END_SPECIFIED),
 				pos,
 				ochan);
   if (dp == NULL) return(XEN_FALSE);
@@ -3277,7 +3277,7 @@ static XEN g_player_p(XEN obj)
 }
 
 
-/* player-position? -- need quick way from index to dp to its sampler, then C_TO_XEN_INT64_T(current_location(fd)) */
+/* player-position? -- need quick way from index to dp to its sampler, then C_TO_XEN_LONG_LONG(current_location(fd)) */
 
 static XEN g_players(void)
 {

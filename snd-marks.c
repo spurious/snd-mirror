@@ -2131,7 +2131,7 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
   switch (fld)
     {
     case MARK_SAMPLE: 
-      return(C_TO_XEN_INT64_T(m->samp)); 
+      return(C_TO_XEN_LONG_LONG(m->samp)); 
       break;
 
     case MARK_SYNC:   
@@ -2166,7 +2166,7 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
     {
     case MARK_SAMPLE: 
       m->samp = mus_oclamp(0, 
-			   XEN_TO_C_INT64_T_OR_ELSE(val, 0),
+			   XEN_TO_C_LONG_LONG_OR_ELSE(val, 0),
 			   CURRENT_SAMPLES(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       run_mark_hook(cp[0], m->id, MARK_MOVE);
@@ -2214,7 +2214,7 @@ static XEN g_mark_sample(XEN mark_n, XEN pos_n)
 static XEN g_set_mark_sample(XEN mark_n, XEN samp_n) 
 {
   XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_sample, "a mark");
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_setB S_mark_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_setB S_mark_sample, "an integer");
   return(mark_set(mark_n, samp_n, MARK_SAMPLE, S_setB S_mark_sample));
 }
 
@@ -2288,7 +2288,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
       const char *name = NULL;
       if (XEN_STRING_P(samp_n))
 	name = XEN_TO_C_STRING(samp_n);
-      else samp = XEN_TO_C_INT64_T_OR_ELSE(samp_n, 0);
+      else samp = XEN_TO_C_LONG_LONG_OR_ELSE(samp_n, 0);
       if (name)
 	{
 	  for (i = 0; i <= cp->edits[pos]->mark_ctr; i++) 
@@ -2317,7 +2317,7 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool
   int msync = 0;
   const char *mname = NULL;
 
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name) || XEN_FALSE_P(name), name, XEN_ARG_4, S_add_mark, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sync), sync, XEN_ARG_5, S_add_mark, "an integer");
   ASSERT_CHANNEL(S_add_mark, snd, chn_n, 2);
@@ -2325,7 +2325,7 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool
   cp = get_cp(snd, chn_n, S_add_mark);
   if (!cp) return(XEN_FALSE);
 
-  loc = XEN_TO_C_INT64_T_OR_ELSE(samp_n, 0);
+  loc = XEN_TO_C_LONG_LONG_OR_ELSE(samp_n, 0);
 
   if ((!check_sample) &&
       (loc >= CURRENT_SAMPLES(cp)))

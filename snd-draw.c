@@ -691,8 +691,8 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
 
   return(make_graph_data(cp,
 			 to_c_edit_position(cp, edpos, S_make_graph_data, 3),
-			 XEN_TO_C_INT64_T_OR_ELSE(lo, -1),
-			 XEN_TO_C_INT64_T_OR_ELSE(hi, -1)));
+			 XEN_TO_C_LONG_LONG_OR_ELSE(lo, -1),
+			 XEN_TO_C_LONG_LONG_OR_ELSE(hi, -1)));
 }
 
 
@@ -718,8 +718,8 @@ data in the recipient's graph between points low and high in the drawing mode gr
 		  MUS_VCT_P(data), 
 		  data, XEN_ARG_1, S_graph_data, "a list of 2 vcts or vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(ax), ax, XEN_ARG_4, S_graph_data, "an integer");
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(lo) || XEN_FALSE_P(lo) || XEN_NOT_BOUND_P(lo), lo, XEN_ARG_5, S_graph_data, "a sample number");
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(hi) || XEN_FALSE_P(hi) || XEN_NOT_BOUND_P(hi), hi, XEN_ARG_6, S_graph_data, "a sample number");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(lo) || XEN_FALSE_P(lo) || XEN_NOT_BOUND_P(lo), lo, XEN_ARG_5, S_graph_data, "a sample number");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(hi) || XEN_FALSE_P(hi) || XEN_NOT_BOUND_P(hi), hi, XEN_ARG_6, S_graph_data, "a sample number");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(style), style, XEN_ARG_7, S_graph_data, "an integer");
 
   if (XEN_LIST_P(data))
@@ -730,8 +730,8 @@ data in the recipient's graph between points low and high in the drawing mode gr
   else v0 = xen_to_vct(data);
 
   draw_graph_data(cp, 
-		  XEN_TO_C_INT64_T_OR_ELSE(lo, -1),
-		  XEN_TO_C_INT64_T_OR_ELSE(hi, -1),
+		  XEN_TO_C_LONG_LONG_OR_ELSE(lo, -1),
+		  XEN_TO_C_LONG_LONG_OR_ELSE(hi, -1),
 		  v0->length,
 		  v0->data,
 		  (v1) ? (v1->data) : NULL,

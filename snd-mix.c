@@ -2337,7 +2337,7 @@ void finish_moving_mix_tag(int mix_id, int x)
   if (XEN_HOOKED(mix_release_hook))
     res = run_progn_hook(mix_release_hook,
 			 XEN_LIST_2(new_xen_mix(mix_id),
-				    C_TO_XEN_INT64_T(pos - mix_position_from_id(mix_id))),
+				    C_TO_XEN_LONG_LONG(pos - mix_position_from_id(mix_id))),
 			 S_mix_release_hook);
 
   if (!(XEN_TRUE_P(res)))
@@ -2715,7 +2715,7 @@ XEN g_mix_length(XEN n)
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, XEN_ONLY_ARG, S_mix_length, "a mix");
   id = XEN_MIX_TO_C_INT(n);
   if (mix_is_active(id))
-    return(C_TO_XEN_INT64_T(mix_length_from_id(id)));
+    return(C_TO_XEN_LONG_LONG(mix_length_from_id(id)));
   return(snd_no_such_mix_error(S_mix_length, n));
 }
 
@@ -2727,7 +2727,7 @@ static XEN g_mix_position(XEN n)
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, XEN_ONLY_ARG, S_mix_position, "a mix");
   id = XEN_MIX_TO_C_INT(n);
   if (mix_is_active(id))
-    return(C_TO_XEN_INT64_T(mix_position_from_id(id)));
+    return(C_TO_XEN_LONG_LONG(mix_position_from_id(id)));
   return(snd_no_such_mix_error(S_mix_position, n));
 }
 
@@ -2737,7 +2737,7 @@ static XEN g_set_mix_position(XEN n, XEN pos)
   int id;
   mus_long_t beg;
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, XEN_ARG_1, S_setB S_mix_position, "a mix");
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(pos), pos, XEN_ARG_2, S_setB S_mix_position, "an integer");
+  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(pos), pos, XEN_ARG_2, S_setB S_mix_position, "an integer");
 
   id = XEN_MIX_TO_C_INT(n);
   if (!(mix_is_active(id)))
@@ -3355,8 +3355,8 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   cp = get_cp(snd_n, chn_n, S_mix);
   if (!cp) return(XEN_FALSE);
 
-  if (XEN_INT64_T_P(chn_samp_n))
-    beg = XEN_TO_C_INT64_T(chn_samp_n);
+  if (XEN_LONG_LONG_P(chn_samp_n))
+    beg = XEN_TO_C_LONG_LONG(chn_samp_n);
 
   chans = mus_sound_chans(name);
   if (chans <= 0)
@@ -3629,7 +3629,7 @@ XEN g_copy_mix_sampler(XEN obj)
   mix_fd *mf;
   mf = XEN_TO_MIX_SAMPLER(obj);
   return(g_make_mix_sampler(new_xen_mix(mf->md->id),
-				  C_TO_XEN_INT64_T(current_location(mf->sf))));
+				  C_TO_XEN_LONG_LONG(current_location(mf->sf))));
 }
 
 
@@ -3661,7 +3661,7 @@ XEN g_mix_sampler_position(XEN obj)
   mix_fd *mf;
   mf = XEN_TO_MIX_SAMPLER(obj);
   if (mix_sampler_at_end_p(mf)) return(XEN_ZERO);
-  return(C_TO_XEN_INT64_T(current_location(mf->sf)));
+  return(C_TO_XEN_LONG_LONG(current_location(mf->sf)));
 }
 
 

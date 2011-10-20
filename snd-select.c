@@ -1441,14 +1441,14 @@ static XEN g_selection_position(XEN snd, XEN chn)
   if (selection_is_active())
     {
       if (XEN_NOT_BOUND_P(snd))
-	return(C_TO_XEN_INT64_T(selection_beg(NULL)));
+	return(C_TO_XEN_LONG_LONG(selection_beg(NULL)));
       else
 	{
 	  chan_info *cp;
 	  ASSERT_CHANNEL(S_selection_position, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_position);
 	  if (!cp) return(XEN_FALSE);
-	  return(C_TO_XEN_INT64_T(selection_beg(cp)));
+	  return(C_TO_XEN_LONG_LONG(selection_beg(cp)));
 	}
     }
   return(snd_no_active_selection_error(S_selection_position));
@@ -1501,14 +1501,14 @@ XEN g_selection_frames(XEN snd, XEN chn)
   if (selection_is_active())
     {
       if (XEN_NOT_BOUND_P(snd))
-	return(C_TO_XEN_INT64_T(selection_len()));
+	return(C_TO_XEN_LONG_LONG(selection_len()));
       else
 	{
 	  chan_info *cp;
 	  ASSERT_CHANNEL(S_selection_frames, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_frames);
 	  if (!cp) return(XEN_FALSE);
-	  return(C_TO_XEN_INT64_T(cp_selection_len(cp, NULL)));
+	  return(C_TO_XEN_LONG_LONG(cp_selection_len(cp, NULL)));
 	}
     }
   return(snd_no_active_selection_error(S_selection_frames));
@@ -1521,7 +1521,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
   mus_long_t len;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_1, S_setB S_selection_frames, "a number");
-  len = XEN_TO_C_INT64_T_OR_ELSE(samps, 0);
+  len = XEN_TO_C_LONG_LONG_OR_ELSE(samps, 0);
   if (len <= 0)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_selection_frames, XEN_ARG_1, samps, "a positive integer");
   if (XEN_NOT_BOUND_P(snd))
@@ -1765,7 +1765,7 @@ static XEN g_selection_maxamp_position(XEN snd, XEN chn)
   ASSERT_CHANNEL(S_selection_maxamp_position, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_maxamp_position);
   if (!cp) return(XEN_FALSE);
-  return(C_TO_XEN_INT64_T(selection_maxamp_position(cp)));
+  return(C_TO_XEN_LONG_LONG(selection_maxamp_position(cp)));
 }
 
 

@@ -10,11 +10,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 8
-#define XEN_VERSION "3.8"
+#define XEN_MINOR_VERSION 9
+#define XEN_VERSION "3.9"
 
 /* HISTORY:
  *
+ *  20-Oct:    XEN_LONG_LONG_P.
  *  5-Jun-11:  XEN_DEFINE_SAFE_PROCEDURE, an experiment with s7.
  *  --------
  *  25-Nov:    updates for Ruby 1.9.*.
@@ -1717,6 +1718,10 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
   #define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
   #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
 #endif
+
+#define XEN_LONG_LONG_P(Arg) XEN_INT64_T_P(Arg)
+#define XEN_LONG_LONG_IF_BOUND_P(Arg) XEN_INT64_T_IF_BOUND_P(Arg)
+#define XEN_TO_C_LONG_LONG_OR_ELSE(Arg, Def) XEN_TO_C_INT64_T_OR_ELSE(Arg, Def)
 
 #define XEN_ONLY_ARG 1
 

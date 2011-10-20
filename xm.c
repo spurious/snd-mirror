@@ -10,6 +10,7 @@
 
 /* HISTORY: 
  *
+ *   20-Oct:    changed INT64_T to LONG_LONG.
  *   20-Mar-11: X/Xpm/Motif are assumed now.
  *   --------
  *   23-Dec:    removed XmPrint/libXp support.
@@ -2081,9 +2082,9 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_STRING(value)));
 	  /* these are bare pointers -- we can't assume they can be "unwrapped" in xen jargon */
 	  else if (XEN_LIST_P(value))
-	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_INT64_T(XEN_CADR(value))));  /* all tagged types */
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_LONG_LONG(XEN_CADR(value))));  /* all tagged types */
 	  else 
-	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_INT64_T(value)));
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_LONG_LONG(value)));
 	  break;
 	}
     }
@@ -15641,10 +15642,10 @@ new source of events, which is usually file input but can also be file output."
   gc_loc = xm_protect(descr);
   id = XtAppAddInput(XEN_TO_C_XtAppContext(arg1), 
 		     XEN_TO_C_INT(arg2), 
-#if (SIZEOF_INT64_T != SIZEOF_VOID_P)
+#if (SIZEOF_LONG_LONG != SIZEOF_VOID_P)
 		     (XtPointer)((int)XEN_TO_C_ULONG(arg3)),
 #else
-		     (XtPointer)XEN_TO_C_INT64_T(arg3),
+		     (XtPointer)XEN_TO_C_LONG_LONG(arg3),
 #endif
 		     gxm_XtInputCallbackProc, 
 		     (XtPointer)descr);

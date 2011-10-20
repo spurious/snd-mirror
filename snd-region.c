@@ -1519,7 +1519,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   r->rsp = NULL;
   r->editor_copy = NULL;
   r->editor_name = NULL;
-  r->frames = XEN_TO_C_INT64_T(len);
+  r->frames = XEN_TO_C_LONG_LONG(len);
   r->srate = XEN_TO_C_INT(srate);
   r->name = mus_strdup(XEN_TO_C_STRING(name));
   r->start = mus_strdup(XEN_TO_C_STRING(start));
@@ -1608,13 +1608,13 @@ XEN g_region_frames(XEN n, XEN chan)
     return(snd_no_such_region_error(S_region_frames, n));
 
   if (XEN_NOT_BOUND_P(chan))
-    return(C_TO_XEN_INT64_T(region_len(rg)));
+    return(C_TO_XEN_LONG_LONG(region_len(rg)));
   chn = XEN_TO_C_INT(chan);
   if ((chn < 0) || (chn >= region_chans(rg)))
     return(snd_no_such_channel_error(S_region_frames, XEN_LIST_1(n), chan));
 
   r = id_to_region(rg);
-  return(C_TO_XEN_INT64_T(r->lens[chn] + 1));
+  return(C_TO_XEN_LONG_LONG(r->lens[chn] + 1));
 }
 
 
@@ -1636,7 +1636,7 @@ static XEN g_region_position(XEN n, XEN chan)
     return(snd_no_such_channel_error(S_region_position, XEN_LIST_1(n), chan));
 
   r = id_to_region(rg);
-  return(C_TO_XEN_INT64_T(r->begs[chn]));
+  return(C_TO_XEN_LONG_LONG(r->begs[chn]));
 }
 
 
@@ -1654,7 +1654,7 @@ static XEN region_get(region_field_t field, XEN n, const char *caller)
     case REGION_SRATE:  return(C_TO_XEN_INT(region_srate(rg)));                                      break;
     case REGION_CHANS:  return(C_TO_XEN_INT(region_chans(rg)));                                      break;
     case REGION_MAXAMP: return(C_TO_XEN_DOUBLE(region_maxamp(rg)));                                  break;
-    case REGION_MAXAMP_POSITION: return(C_TO_XEN_INT64_T(region_maxamp_position(rg)));               break;
+    case REGION_MAXAMP_POSITION: return(C_TO_XEN_LONG_LONG(region_maxamp_position(rg)));               break;
     case REGION_FORGET: delete_region_and_update_browser(region_id_to_list_position(rg)); return(n); break;
     case REGION_HOME:
       {
@@ -1662,8 +1662,8 @@ static XEN region_get(region_field_t field, XEN n, const char *caller)
 	r = id_to_region(rg);
 	if (r)
 	  return(XEN_LIST_3(C_TO_XEN_STRING(r->name), 
-			    C_TO_XEN_INT64_T(r->begs[0]), 
-			    C_TO_XEN_INT64_T(r->lens[0]))); 
+			    C_TO_XEN_LONG_LONG(r->begs[0]), 
+			    C_TO_XEN_LONG_LONG(r->lens[0]))); 
       }
       break;
     default: break;
@@ -1999,7 +1999,7 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   if ((chn < 0) || (chn >= region_chans(reg)))
     return(snd_no_such_channel_error(S_region_to_vct, XEN_LIST_1(reg_n), chn_n));
 
-  len = XEN_TO_C_INT64_T_OR_ELSE(num, 0);
+  len = XEN_TO_C_LONG_LONG_OR_ELSE(num, 0);
   if (len < 0)
     XEN_OUT_OF_RANGE_ERROR(S_region_to_vct, 2, num, "length ~A < 0?");
   if ((len == 0) || (len > region_len(reg)))
