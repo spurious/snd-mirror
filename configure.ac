@@ -38,7 +38,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --without-audio       stub out all audio
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
-#   --with-doubles        use doubles throughout (default=yes)
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --enable-snd-debug    include Snd internal debugging stuff
@@ -88,7 +87,6 @@ AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
 AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Linux only])
-AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
 AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 		  use PulseAudio, default=no])
 AC_ARG_WITH(portaudio,   [  --with-portaudio 		  use portaudio, default=no])
@@ -111,7 +109,7 @@ AC_ARG_WITH(audio,       [  --without-audio       don't include any audio functi
 # -------- internal sample data type --------
 
 # sample-width only applies to the int case (ignored if float)
-LOCAL_SNDLIB_BITS="24"
+LOCAL_SNDLIB_BITS="0"
 AC_ARG_WITH(sample-width,
 	[  --with-sample-width=N   use N bits of samples],
 	[AC_MSG_RESULT(Using $with_sample_width bit samples)
@@ -123,20 +121,8 @@ AC_ARG_WITH(sample-width,
 
 if test "$with_float_samples" != no ; then
   AC_DEFINE(SNDLIB_USE_FLOATS, 1)
-  if test "$with_doubles" != no ; then
-    LOCAL_SNDLIB_BITS="8"
-  else
-    LOCAL_SNDLIB_BITS="4"
-  fi
 else
   AC_DEFINE(SNDLIB_USE_FLOATS, 0)
-fi
-
-if test "$with_doubles" != no ; then
-  AC_DEFINE(mus_float_t, double)
-  AC_DEFINE(WITH_DOUBLES)
-else
-  AC_DEFINE(mus_float_t, float)
 fi
 
 if test "$with_static_xg" = yes ; then

@@ -152,7 +152,7 @@ char *mus_vct_to_string(vct *v)
 
   buf = (char *)calloc((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
 
-  sprintf(buf, "#<vct[len=" MUS_LD "]", v->length);
+  sprintf(buf, "#<vct[len=%lld" "]", v->length);
   if ((len > 0) && (v->data != NULL))
     {
       int i;

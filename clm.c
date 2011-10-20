@@ -2117,9 +2117,7 @@ mus_float_t mus_nrxycos(mus_any *ptr, mus_float_t fm)
   divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cos(y)));
   if (DIVISOR_NEAR_ZERO(divisor))
     return(1.0);
-  /* this can happen if --with-doubles and r>0.9999999 or thereabouts;
-   *   it also happens in x86-64 linux with r=.999999 (with floats), divisor ca 1.0e-12
-   *     in this case, using --with-doubles fixes it
+  /* this can happen if r>0.9999999 or thereabouts;
    */
 
   return((cos(x) - 
@@ -2927,7 +2925,7 @@ static char *describe_wt(mus_any *ptr)
 {
   char *describe_buffer;
   describe_buffer = (char *)clm_malloc(DESCRIBE_BUFFER_SIZE, "describe buffer");
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, size: " MUS_LD ", interp: %s",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, size: %lld, interp: %s",
 	       mus_name(ptr),
 	       mus_frequency(ptr), 
 	       mus_phase(ptr), 
@@ -6076,7 +6074,7 @@ static char *describe_env(mus_any *ptr)
   seg *e = (seg *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)clm_malloc(DESCRIBE_BUFFER_SIZE, "describe buffer");
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s, pass: " MUS_LD " (dur: " MUS_LD "), index: %d, scaler: %.4f, offset: %.4f, data: %s",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s, pass: %lld (dur: %lld), index: %d, scaler: %.4f, offset: %.4f, data: %s",
 	       mus_name(ptr),
 	       ((e->style == MUS_ENV_LINEAR) ? "linear" : ((e->style == MUS_ENV_EXPONENTIAL) ? "exponential" : "step")),
 	       e->loc, 
@@ -7484,7 +7482,7 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long
 
       gen->file_end = mus_sound_frames(gen->file_name);
       if (gen->file_end < 0) 
-	mus_error(MUS_NO_LENGTH, "%s frames: " MUS_LD, filename, gen->file_end);
+	mus_error(MUS_NO_LENGTH, "%s frames: %lld", filename, gen->file_end);
 
       return((mus_any *)gen);
     }
@@ -7516,7 +7514,7 @@ static char *describe_readin(mus_any *ptr)
   rdin *gen = (rdin *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)clm_malloc(DESCRIBE_BUFFER_SIZE, "describe buffer");
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s[chan %d], loc: " MUS_LD ", dir: %d", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s[chan %d], loc: %lld, dir: %d", 
 	       mus_name(ptr),
 	       gen->file_name, gen->chan, gen->loc, gen->dir);
   return(describe_buffer);
@@ -7910,7 +7908,7 @@ static void flush_buffers(rdout *gen)
 	    mus_sound_close_input(fd);
 	    old_file_buffer_size = clm_file_buffer_size;
 	    clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (" MUS_LD ") is too large: we can't allocate the output buffers!", old_file_buffer_size);
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (%lld) is too large: we can't allocate the output buffers!", old_file_buffer_size);
 	    return;
 	  }
       }
@@ -7925,7 +7923,7 @@ static void flush_buffers(rdout *gen)
        */
       if (frames_to_add >= clm_file_buffer_size) 
 	{
-	  mus_print("clm-file-buffer-size changed? " MUS_LD " <= " MUS_LD " (start: " MUS_LD ", end: " MUS_LD ", " MUS_LD ")",
+	  mus_print("clm-file-buffer-size changed? %lld <= %lld (start: %lld, end: %lld, %lld)",
 		    clm_file_buffer_size, frames_to_add, gen->data_start, gen->data_end, gen->out_end);
 
 	  frames_to_add = clm_file_buffer_size - 1;
@@ -8986,7 +8984,7 @@ static char *describe_move_sound(mus_any *ptr)
   char *allstr = NULL;
   int len;
 
-  starts = mus_format("%s start: " MUS_LD ", end: " MUS_LD ", out chans %d, rev chans: %d",
+  starts = mus_format("%s start: %lld, end: %lld, out chans %d, rev chans: %d",
 		      mus_name(ptr),
 		      gen->start, 
 		      gen->end, 
@@ -11184,7 +11182,7 @@ static char *describe_convolve(mus_any *ptr)
   conv *gen = (conv *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)clm_malloc(DESCRIBE_BUFFER_SIZE, "describe buffer");
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: " MUS_LD, 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %lld", 
 	       mus_name(ptr),
 	       gen->fftsize);
   return(describe_buffer);

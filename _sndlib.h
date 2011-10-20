@@ -26,6 +26,10 @@
 #endif
 #endif
 
+#ifndef mus_float_t
+#define mus_float_t double
+#define mus_long_t long long int
+#endif
 
 #if HAVE_WINDOZE
   /* I got these from gmp.h */
@@ -38,16 +42,6 @@
   #define MUS_EXPORT
 #endif
 
-
-#if (SIZEOF_INT64_T == SIZEOF_LONG)
-  #define MUS_LD "%ld"
-#else
-  #if (SIZEOF_INT64_T == SIZEOF_LONG_LONG)
-    #define MUS_LD "%lld"
-  #else
-    #define MUS_LD "%d"
-  #endif
-#endif
 
 #if (SIZEOF_SSIZE_T == SIZEOF_INT) && (!HAVE_OSX)
   #define SSIZE_TD "%d"
@@ -84,21 +78,13 @@
 #ifndef MUS_OUT_FORMAT
   #if WORDS_BIGENDIAN
     #if SNDLIB_USE_FLOATS
-      #if WITH_DOUBLES
         #define MUS_OUT_FORMAT MUS_BDOUBLE
-      #else
-        #define MUS_OUT_FORMAT MUS_BFLOAT
-      #endif
     #else
         #define MUS_OUT_FORMAT MUS_BINT
     #endif
   #else
     #if SNDLIB_USE_FLOATS
-      #if WITH_DOUBLES
         #define MUS_OUT_FORMAT MUS_LDOUBLE
-      #else
-        #define MUS_OUT_FORMAT MUS_LFLOAT
-      #endif
     #else
         #define MUS_OUT_FORMAT MUS_LINT
     #endif

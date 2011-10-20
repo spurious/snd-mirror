@@ -747,7 +747,6 @@ with_motif
 with_static_motif
 with_editres
 with_ladspa
-with_doubles
 with_float_samples
 with_pulseaudio
 with_portaudio
@@ -1431,7 +1430,6 @@ Optional Packages:
   --with-static-motif	  use libXm.a to build Snd
   --with-editres	  include editres in xm
   --with-ladspa  	  include support for LADSPA plugins, Linux only
-  --with-doubles	  use doubles throughout
   --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
   --with-pulseaudio 		  use PulseAudio, default=no
   --with-portaudio 		  use portaudio, default=no
@@ -4011,7 +4009,6 @@ _ACEOF
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --without-audio       stub out all audio
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
-#   --with-doubles        use doubles throughout (default=yes)
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --enable-snd-debug    include Snd internal debugging stuff
@@ -4142,12 +4139,6 @@ if test "${with_ladspa+set}" = set; then :
 fi
 
 
-# Check whether --with-doubles was given.
-if test "${with_doubles+set}" = set; then :
-  withval=$with_doubles;
-fi
-
-
 # Check whether --with-float-samples was given.
 if test "${with_float_samples+set}" = set; then :
   withval=$with_float_samples;
@@ -4229,7 +4220,7 @@ fi
 # -------- internal sample data type --------
 
 # sample-width only applies to the int case (ignored if float)
-LOCAL_SNDLIB_BITS="24"
+LOCAL_SNDLIB_BITS="0"
 
 # Check whether --with-sample-width was given.
 if test "${with_sample_width+set}" = set; then :
@@ -4251,23 +4242,8 @@ fi
 if test "$with_float_samples" != no ; then
   $as_echo "#define SNDLIB_USE_FLOATS 1" >>confdefs.h
 
-  if test "$with_doubles" != no ; then
-    LOCAL_SNDLIB_BITS="8"
-  else
-    LOCAL_SNDLIB_BITS="4"
-  fi
 else
   $as_echo "#define SNDLIB_USE_FLOATS 0" >>confdefs.h
-
-fi
-
-if test "$with_doubles" != no ; then
-  $as_echo "#define mus_float_t double" >>confdefs.h
-
-  $as_echo "#define WITH_DOUBLES 1" >>confdefs.h
-
-else
-  $as_echo "#define mus_float_t float" >>confdefs.h
 
 fi
 

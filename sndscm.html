@@ -313,8 +313,8 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
 and Elliptic filters in lowpass, highpass, bandpass, and bandstop versions.  Each of the lowpass and highpass
 "make" functions returns a filter generator, whereas the bandstop and bandpass make functions
 return a function of one argument, the current input (the filter generators are built-in in these cases).
-The filter order should be an even number; very high orders can cause numerical disaster!  If you
-want to push these guys, be sure to build Snd with the --with-doubles configuration switch.  The
+The filter order should be an even number; very high orders can cause numerical disaster!
+The
 elliptic filters depend on GSL, so you'll also need GSL (Snd's configure script includes it by default, if possible).
 </p>
 <pre>

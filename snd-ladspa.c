@@ -1172,7 +1172,6 @@ static XEN g_ladspa_set_run_adding_gain(XEN desc, XEN ptr, XEN gain)
   return(XEN_FALSE);
 }
 
-#if WITH_DOUBLES
 static float *double_to_float(mus_float_t *data, int data_size)
 {
   float *ldata;
@@ -1182,7 +1181,6 @@ static float *double_to_float(mus_float_t *data, int data_size)
     ldata[i] = (float)(data[i]);
   return(ldata);
 }
-#endif
 
 
 #define S_ladspa_connect_port "ladspa-connect-port"
@@ -1201,12 +1199,7 @@ static XEN g_ladspa_connect_port(XEN desc, XEN ptr, XEN port, XEN data)
   if (descriptor->connect_port) 
     descriptor->connect_port(XEN_TO_C_Ladspa_Handle(ptr),
 			     XEN_TO_C_ULONG(port),
-#if (!WITH_DOUBLES)
-			     samples->data
-			     /* if --with-doubles, samples->data is a double array */
-#else
 			     double_to_float(samples->data, samples->length)
-#endif
 			     );
   return(XEN_FALSE);
 }

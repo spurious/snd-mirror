@@ -14,7 +14,7 @@ static void mus_long_t_to_textfield(widget_t w, mus_long_t val)
 {
   char *str;
   str = (char *)calloc(32, sizeof(char));
-  mus_snprintf(str, 32, MUS_LD, val);
+  mus_snprintf(str, 32, "%lld", val);
   SET_TEXT(w, str);
   free(str);
 }

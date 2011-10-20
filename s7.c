@@ -196,7 +196,7 @@
 
 #ifndef WITH_OPTIMIZATION
 #define WITH_OPTIMIZATION 1
-  /* this currently speeds s7 up by about 237 to 134 in callgrind terms.
+  /* this currently speeds s7 up by about 237 to 132 in callgrind terms.
    *    a lot of the current optimization choices are just experiments (I'll clean up this mess some day).
    *    the completely unrealistic goal, of course, is to replace the run macro.
    */
@@ -14207,7 +14207,7 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
       
   if (peek)
     c = s7_peek_char(sc, port);
-  else c = s7_read_char(sc, port);
+  else c = port_read_character(port)(sc, port);
 
   if (c == EOF)
     return(sc->EOF_OBJECT); 
@@ -28265,7 +28265,10 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
       (!args_match(sc, func, args)))
     fprintf(stderr, "%s null: %d, match: %d\n", DISPLAY_80(car(x)), is_null(p), args_match(sc, func, args));
   */
-  /* TODO: args_match is confused by scheme-side pws */
+  /* TODO: args_match is confused by scheme-side pws -- we need is_pws (for scheme-side pws) -- c-side is safe c function already,
+   *          then check the getter or setter depending on the context, then branches in the optimizer.
+   *          Most of these are just list-ref or vector-ref.
+   */
 
   if ((is_null(p)) &&                /* if not null, dotted list of args? */
       (args_match(sc, func, args)))  /* we have a legit call, at least syntactically */
@@ -28277,7 +28280,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
       switch (args)
 	{
 	  /* -------------------------------------------------------------------------------- */
-	case 0:                /* closure* */
+	case 0: 
 	  if (is_c_function(func))
 	    {
 	      set_optimized(car(x));
@@ -28289,10 +28292,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      return(false);
 	    }
 	  if ((is_closure(func)) &&
-	      (is_null(closure_args(func))))
-	    /* suboptimal, but just a test -- closure* needs to load up default args.
-	       also a rest arg matches 0 args, but its name needs to be added to the environment
-	    */
+	      (is_null(closure_args(func)))) /* no rest arg funny business */
 	    {
 	      set_optimized(car(x));
 	      set_unsafe(car(x));
@@ -28598,37 +28598,20 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		      set_optimized(car(x));
 		      set_unsafe(car(x));
 		      if (symbols == 2)
-			{
-			  if (is_safe_closure(closure_body(func)))
-			    optimize_data(car(x)) = OP_SAFE_CLOSURE_SS; /* not HOP here */
-			  else optimize_data(car(x)) = OP_CLOSURE_SS;
-			}
+			set_optimize_data(car(x), ((is_safe_closure(closure_body(func)) ? OP_SAFE_CLOSURE_SS : OP_CLOSURE_SS)));
 		      else
 			{
 			  if (symbols == 0)
-			    {
-			      if (is_safe_closure(closure_body(func)))
-				optimize_data(car(x)) = OP_SAFE_CLOSURE_CC;
-			      else optimize_data(car(x)) = OP_CLOSURE_CC;
-			    }
+			    set_optimize_data(car(x), ((is_safe_closure(closure_body(func)) ? OP_SAFE_CLOSURE_CC : OP_CLOSURE_CC)));
 			  else
 			    {
 			      if (is_symbol(cadar(x)))
-				{
-				  if (is_safe_closure(closure_body(func)))
-				    optimize_data(car(x)) = OP_SAFE_CLOSURE_SC;
-				  else optimize_data(car(x)) = OP_CLOSURE_SC;
-				}
-			      else 
-				{
-				  if (is_safe_closure(closure_body(func)))
-				    optimize_data(car(x)) = OP_SAFE_CLOSURE_CS;
-				  else optimize_data(car(x)) = OP_CLOSURE_CS;
-				}
+				set_optimize_data(car(x), ((is_safe_closure(closure_body(func)) ? OP_SAFE_CLOSURE_SC : OP_CLOSURE_SC)));
+			      else set_optimize_data(car(x), ((is_safe_closure(closure_body(func)) ? OP_SAFE_CLOSURE_CS : OP_CLOSURE_CS)));
 			    }
 			}
 		      ecdr(car(x)) = func;
-		      fcdr(car(x)) = (s7_pointer)(symbol_id(caar(x)));
+		      fcdr(car(x)) = caddar(x);
 		      return(false);
 		    }
 		}
@@ -33628,50 +33611,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 
-		  /* the optimizer chooses OP_* here to try to avoid a symbol value lookup on every call.
-		   *   ecdr is preset to the closure, fcdr to the symbol_id at optimization time.
-		   *   If the symbol_id still matches fcdr at call time, then it has not been redefined
-		   *   so symbol_local_slot still is the current value.  So we can check that its value
-		   *   matches ecdr to see that we still have the optimization-time value.  If so,
-		   *   we use it.  If not, we have to back out completely because, for example, what
-		   *   was a closure at optimization time might now be a vector without changing the
-		   *   call on it, so we set optimize_data to UNKNOWNN_SS, jump into that code
-		   *   where we check the current value.  If it is still a closure, we use the HOP_*
-		   *   version from then on.  It checks the value on every call, so it is slower.
-		   *   after the UNKNOWN_SS check, fcdr is caddr or whatever to speep up access.
-		   */
+		case OP_SAFE_CLOSURE_SS:
+		  if (!function_is_ok(code))
+		    {
+		      optimize_data(code) = OP_UNKNOWN_SS;
+		      goto OPT_EVAL;
+		    }
+		  
 		case HOP_SAFE_CLOSURE_SS:
 		  {
 		    s7_pointer val;
-		    if (!function_is_ok(code))
-		      {
-			optimize_data(code) = OP_UNKNOWN_SS;
-			goto OPT_EVAL;
-		      }
 		    val = finder(sc, fcdr(code));
-		    car(sc->T2_1) = finder(sc, cadr(code));
-		    car(sc->T2_2) = val;
-		    sc->args = sc->T2_1;
-		    sc->code = ecdr(code);
-		    goto SAFE_CLOSURE_TWO;
-		  }
-		  
-		case OP_SAFE_CLOSURE_SS:
-		  {
-		    s7_pointer val;
-		    if ((fcdr(code) != (s7_pointer)(symbol_id(car(code)))) ||
-			(ecdr(code) != symbol_value(symbol_local_slot(car(code)))))
-		      {
-			optimize_data(code) = OP_UNKNOWN_SS;
-			goto OPT_EVAL;
-		      }
-		    val = finder(sc, caddr(code));
 		    car(sc->T2_1) = finder(sc, cadr(code));
 		    car(sc->T2_2) = val;
 		    sc->code = ecdr(code);
 		    /* goto SAFE_CLOSURE_TWO; */
 		  }
-		  
 		  
 		SAFE_CLOSURE_TWO:
 		  {
@@ -33706,80 +33661,46 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_SC:
-		  if ((fcdr(code) != (s7_pointer)(symbol_id(car(code)))) ||
-		      (ecdr(code) != symbol_value(symbol_local_slot(car(code)))))
-		    {
-		      optimize_data(code) = OP_UNKNOWN_SC;
-		      goto OPT_EVAL;
-		    }
-		  car(sc->T2_1) = finder(sc, cadr(code));
-		  car(sc->T2_2) = caddr(code);
-		  sc->code = ecdr(code);
-		  goto SAFE_CLOSURE_TWO;
-
-
-		case HOP_SAFE_CLOSURE_SC:
 		  if (!function_is_ok(code))
 		    {
 		      optimize_data(code) = OP_UNKNOWN_SC;
 		      goto OPT_EVAL;
 		    }
+		  
+		case HOP_SAFE_CLOSURE_SC:
 		  car(sc->T2_1) = finder(sc, cadr(code));
 		  car(sc->T2_2) = fcdr(code);
 		  sc->code = ecdr(code);
 		  goto SAFE_CLOSURE_TWO;
-
-
+		  
+		  
 		case OP_SAFE_CLOSURE_CS:
-		  if ((fcdr(code) != (s7_pointer)(symbol_id(car(code)))) ||
-		      (ecdr(code) != symbol_value(symbol_local_slot(car(code)))))
-		    {
-		      optimize_data(code) = OP_UNKNOWN_CS;
-		      goto OPT_EVAL;
-		    }
-		  car(sc->T2_2) = finder(sc, caddr(code));
-		  car(sc->T2_1) = cadr(code);
-		  sc->code = ecdr(code);
-		  goto SAFE_CLOSURE_TWO;
-
-
-		case HOP_SAFE_CLOSURE_CS:
 		  if (!function_is_ok(code))
 		    {
 		      optimize_data(code) = OP_UNKNOWN_CS;
 		      goto OPT_EVAL;
 		    }
+		  
+		case HOP_SAFE_CLOSURE_CS:
 		  car(sc->T2_2) = finder(sc, fcdr(code));
 		  car(sc->T2_1) = cadr(code);
 		  sc->code = ecdr(code);
 		  goto SAFE_CLOSURE_TWO;
-
+		  
 		  
 		case OP_SAFE_CLOSURE_CC:
-		  if ((fcdr(code) != (s7_pointer)(symbol_id(car(code)))) ||
-		      (ecdr(code) != symbol_value(symbol_local_slot(car(code)))))
-		    {
-		      optimize_data(code) = OP_UNKNOWN_CS;
-		      goto OPT_EVAL;
-		    }
-		  car(sc->T2_1) = cadr(code);
-		  car(sc->T2_2) = caddr(code);
-		  sc->code = ecdr(code);
-		  goto SAFE_CLOSURE_TWO;
-
-
-		case HOP_SAFE_CLOSURE_CC:
 		  if (!function_is_ok(code))
 		    {
 		      optimize_data(code) = OP_UNKNOWN_CC;
 		      goto OPT_EVAL;
 		    }
+		  
+		case HOP_SAFE_CLOSURE_CC:
 		  car(sc->T2_1) = cadr(code);
 		  car(sc->T2_2) = fcdr(code);
 		  sc->code = ecdr(code);
 		  goto SAFE_CLOSURE_TWO;
 		  
-
 		  
 		case OP_SAFE_CLOSURE_opSq_opSq:
 		  if (!function_is_ok(code))
@@ -34072,28 +33993,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 
-		  /* see OP_SAFE_CLOSURE_SS for commentary */
-
-		case HOP_CLOSURE_SS:
+		case OP_CLOSURE_SS:
 		  if (!function_is_ok(code))
 		    {
 		      optimize_data(code) = OP_UNKNOWN_SS;
 		      goto OPT_EVAL;
 		    }
+		  
+		case HOP_CLOSURE_SS:
 		  car(sc->T2_1) = finder(sc, cadr(code));
 		  car(sc->T2_2) = finder(sc, fcdr(code));
-		  goto UNSAFE_CLOSURE_TWO;
-
-
-		case OP_CLOSURE_SS:
-		  if ((fcdr(code) != (s7_pointer)(symbol_id(car(code)))) ||
-		      (ecdr(code) != symbol_value(symbol_local_slot(car(code)))))
-		    {
-		      optimize_data(code) = OP_UNKNOWN_SS;
-		      goto OPT_EVAL;
-		    }
-		  car(sc->T2_1) = finder(sc, cadr(code));
-		  car(sc->T2_2) = finder(sc, caddr(code));
 		  /* goto UNSAFE_CLOSURE_TWO; */
 
 
@@ -34177,74 +34086,44 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 
-		case HOP_CLOSURE_SC:
+		case OP_CLOSURE_SC:
 		  if (!function_is_ok(code))
 		    {
 		      optimize_data(code) = OP_UNKNOWN_SC;
 		      goto OPT_EVAL;
 		    }
+		  
+		case HOP_CLOSURE_SC:
 		  car(sc->T2_1) = finder(sc, cadr(code));
 		  car(sc->T2_2) = fcdr(code);
 		  goto UNSAFE_CLOSURE_TWO;
 		  
 
-		case OP_CLOSURE_SC:
-		  if ((fcdr(code) != (s7_pointer)(symbol_id(car(code)))) ||
-		      (ecdr(code) != symbol_value(symbol_local_slot(car(code)))))
-		    {
-		      optimize_data(code) = OP_UNKNOWN_SC;
-		      goto OPT_EVAL;
-		    }
-		  car(sc->T2_1) = finder(sc, cadr(code));
-		  car(sc->T2_2) = caddr(code);
-		  goto UNSAFE_CLOSURE_TWO;
-
-
-		case HOP_CLOSURE_CS:
+		case OP_CLOSURE_CS:
 		  if (!function_is_ok(code))
 		    {
 		      optimize_data(code) = OP_UNKNOWN_CS;
 		      goto OPT_EVAL;
 		    }
+		  
+		case HOP_CLOSURE_CS:
 		  car(sc->T2_1) = cadr(code);
 		  car(sc->T2_2) = finder(sc, fcdr(code));
 		  goto UNSAFE_CLOSURE_TWO;
 		  
 
-		case OP_CLOSURE_CS:
-		  if ((fcdr(code) != (s7_pointer)(symbol_id(car(code)))) ||
-		      (ecdr(code) != symbol_value(symbol_local_slot(car(code)))))
-		    {
-		      optimize_data(code) = OP_UNKNOWN_CS;
-		      goto OPT_EVAL;
-		    }
-		  car(sc->T2_1) = cadr(code);
-		  car(sc->T2_2) = finder(sc, caddr(code));
-		  goto UNSAFE_CLOSURE_TWO;
-
-
-		case HOP_CLOSURE_CC:
+		case OP_CLOSURE_CC:
 		  if (!function_is_ok(code))
 		    {
 		      optimize_data(code) = OP_UNKNOWN_CC;
 		      goto OPT_EVAL;
 		    }
+		  
+		case HOP_CLOSURE_CC:
 		  car(sc->T2_1) = cadr(code);
 		  car(sc->T2_2) = fcdr(code);
 		  goto UNSAFE_CLOSURE_TWO;
 		  
-
-		case OP_CLOSURE_CC:
-		  if ((fcdr(code) != (s7_pointer)(symbol_id(car(code)))) ||
-		      (ecdr(code) != symbol_value(symbol_local_slot(car(code)))))
-		    {
-		      optimize_data(code) = OP_UNKNOWN_CC;
-		      goto OPT_EVAL;
-		    }
-		  car(sc->T2_1) = cadr(code);
-		  car(sc->T2_2) = caddr(code);
-		  goto UNSAFE_CLOSURE_TWO;
-
 
 		case OP_CLOSURE_opSq_opSq:
 		  if (!function_is_ok(code))
@@ -34641,13 +34520,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = finder(sc, car(code));
-
 		    if ((is_closure(f)) &&
 			(args_match(sc, f, 2)))
 		      {
 			if (is_safe_closure(closure_body(f)))
-			  optimize_data(code) = HOP_SAFE_CLOSURE_SS;
-			else optimize_data(code) = HOP_CLOSURE_SS;
+			  optimize_data(code) = OP_SAFE_CLOSURE_SS;
+			else optimize_data(code) = OP_CLOSURE_SS;
 			ecdr(code) = f;
 			fcdr(code) = caddr(code);
 			goto OPT_EVAL;
@@ -34665,8 +34543,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			(args_match(sc, f, 2)))
 		      {
 			if (is_safe_closure(closure_body(f)))
-			  optimize_data(code) = HOP_SAFE_CLOSURE_SC;
-			else optimize_data(code) = HOP_CLOSURE_SC;
+			  optimize_data(code) = OP_SAFE_CLOSURE_SC;
+			else optimize_data(code) = OP_CLOSURE_SC;
 			ecdr(code) = f;
 			fcdr(code) = caddr(code);
 			goto OPT_EVAL;
@@ -34684,8 +34562,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			(args_match(sc, f, 2)))
 		      {
 			if (is_safe_closure(closure_body(f)))
-			  optimize_data(code) = HOP_SAFE_CLOSURE_CS;
-			else optimize_data(code) = HOP_CLOSURE_CS;
+			  optimize_data(code) = OP_SAFE_CLOSURE_CS;
+			else optimize_data(code) = OP_CLOSURE_CS;
 			ecdr(code) = f;
 			fcdr(code) = caddr(code);
 			goto OPT_EVAL;
@@ -34703,8 +34581,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			(args_match(sc, f, 2)))
 		      {
 			if (is_safe_closure(closure_body(f)))
-			  optimize_data(code) = HOP_SAFE_CLOSURE_CC;
-			else optimize_data(code) = HOP_CLOSURE_CC;
+			  optimize_data(code) = OP_SAFE_CLOSURE_CC;
+			else optimize_data(code) = OP_CLOSURE_CC;
 			ecdr(code) = f;
 			fcdr(code) = caddr(code);
 			goto OPT_EVAL;

@@ -330,27 +330,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                 --with-doubles                                       ----  '
+echo ' ----                  -- int samples                      ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --with-doubles
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -noinit --features "'clm 'snd-s7"
-
-echo ' '
-make allclean
-rm -f snd
-rm -f config.cache
-rm -f makefile
-rm -f mus-config.h
-rm -f sndinfo
-
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                  --with-doubles  but int samples                      ----  '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --with-doubles --without-float-samples
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples
 make
 echo ' '
 echo ' '

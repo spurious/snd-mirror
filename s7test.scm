@@ -13493,6 +13493,26 @@ time, so that the displayed results are
   (define (f2 a) (- a))
   (test (f1 12) -12)) ; hmmm
 
+(let ()
+  (define (c-2)
+    (let ((v (vector 1 2 3)))
+      (define (c-1 a b) (+ (vector-ref a 0) (* b 32)))
+      (let ((c (c-1 v 1)))
+	(test c 33)
+	(set! c-1 vector-ref))
+      (let ((d (c-1 v 1)))
+	(test d 2))))
+  (c-2))
+
+(let ()
+  (define (c-2)
+    (let ((v (vector 1 2 3)))
+      (let ()
+	(define (c-1 a b) (+ (vector-ref a 0) (* b 32)))
+	(let ((c (c-1 v 1)))
+	  (set! c-1 vector-ref)))
+      (test (c-1 v 1) 'error)))
+  (c-2))
 
 
 

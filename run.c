@@ -724,14 +724,8 @@ XEN mus_run_ptree_code(struct ptree *pt)
   return(pt->form);
 }
 
-
-#if (SIZEOF_INT64_T == SIZEOF_LONG)
-  #define INT_PT  "i%d(%ld)"
-  #define INT_STR "%ld"
-#else
-  #define INT_PT  "i%d(%lld)"
-  #define INT_STR "%lld"
-#endif
+#define INT_PT  "i%d(%lld)"
+#define INT_STR "%lld"
 #define B2S(Arg) ((Arg) ? "#t" : "#f")
 #define GO_PT   "cont%d(continuation)"
 
@@ -8143,7 +8137,7 @@ static char *vect_to_string(vect *v, int type)
 
 	    case R_VCT_VECTOR:	  
 	      if (v->data.vcts[i])
-		mus_snprintf(flt, VECT_STRING_SIZE, " #<vct[len=" MUS_LD "]>", (v->data.vcts[i])->length);
+		mus_snprintf(flt, VECT_STRING_SIZE, " #<vct[len=%lld]>", (v->data.vcts[i])->length);
 	      else mus_snprintf(flt, VECT_STRING_SIZE, " %s", "#f");
 	      break;
 

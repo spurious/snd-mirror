@@ -2534,7 +2534,7 @@ to add up to something in the vicinity of 0.0 or 1.0.
 If we're using 32-bit floats, the first sign of trouble comes when the order is around 26.
 If you look at some of the coefficients, you'll see numbers like -129026688.000 (in the 32 bit case), which
 should be -129026680.721 &mdash;  we have run out of bits in the mantissa!
-Even if we build Snd --with-doubles, 
+With doubles
 we can only push the order up to around 46. 
 polywave, on the other hand, builds up the sum of sines from the underlying recursion, which is only slightly
 slower than using the polynomial, and it is not bothered by these numerical problems.

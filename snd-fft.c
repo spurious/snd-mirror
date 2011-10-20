@@ -1442,7 +1442,7 @@ static bool memory_available_p(mus_long_t slices, mus_long_t bins)
 	  if (check_alloc[i] == NULL)
 	    {
 	      int j;
-	      snd_warning("can't allocate enough memory to run this set of FFTS: " MUS_LD " bytes needed", bytes_needed);
+	      snd_warning("can't allocate enough memory to run this set of FFTS: %lld bytes needed", bytes_needed);
 	      for (j = 0; j < i; j++)
 		free(check_alloc[j]);
 	      return(false);
@@ -1793,7 +1793,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 	  (pbuffer == NULL) || (pbuffer[0] == NULL) ||
 	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL))
 	{
-	  snd_error("not enough memory for convolve of %s (filter size: "MUS_LD ", fft size: " MUS_LD ")", 
+	  snd_error("not enough memory for convolve of %s (filter size: %lld, fft size: %lld)", 
 		    fname, filtersize, fftsize);
 	}
       else

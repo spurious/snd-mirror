@@ -7,12 +7,12 @@
 
 
 /* these are picked up during configuration */
-
 #undef SNDLIB_USE_FLOATS
 #undef MUS_SAMPLE_BITS
-#undef mus_float_t
-#ifndef mus_long_t
-  #define mus_long_t int64_t
+
+#ifndef mus_float_t
+#define mus_float_t double
+#define mus_long_t long long int
 #endif
 
 #include <stdio.h>
@@ -77,21 +77,13 @@
 #ifndef MUS_OUT_FORMAT
   #if WORDS_BIGENDIAN
     #if SNDLIB_USE_FLOATS
-      #if WITH_DOUBLES
         #define MUS_OUT_FORMAT MUS_BDOUBLE
-      #else
-        #define MUS_OUT_FORMAT MUS_BFLOAT
-      #endif
     #else
         #define MUS_OUT_FORMAT MUS_BINT
     #endif
   #else
     #if SNDLIB_USE_FLOATS
-      #if WITH_DOUBLES
         #define MUS_OUT_FORMAT MUS_LDOUBLE
-      #else
-        #define MUS_OUT_FORMAT MUS_LFLOAT
-      #endif
     #else
         #define MUS_OUT_FORMAT MUS_LINT
     #endif

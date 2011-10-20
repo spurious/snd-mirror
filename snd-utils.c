@@ -268,7 +268,7 @@ disk_space_t disk_space_p(mus_long_t bytes, const char *filename)
   kneeded = bytes >> 10;
   if (kfree < kneeded)
     {
-      snd_error("not enough space left on disk: only "MUS_LD " kbytes available", kfree);
+      snd_error("not enough space left on disk: only %lld kbytes available", kfree);
       return(NOT_ENOUGH_DISK_SPACE);
     }
   return(DISK_SPACE_OK);

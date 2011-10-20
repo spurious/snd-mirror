@@ -4844,7 +4844,7 @@ static XEN g_make_nrxy(bool sin_case, const char *caller, XEN arglist)
       if ((r >= 1.0) ||
 	  (r <= -1.0))
 	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[3], keys[3], "r (sideband amp ratio): ~A?");
-      /* if not --with-doubles, this actually maxes out around .99999999 because mus_optkey_to_float (apparently) rounds up */
+      /* if not with doubles, this actually maxes out around .99999999 because mus_optkey_to_float (apparently) rounds up */
     }
   if (sin_case)
     ge = mus_make_nrxysin(freq, ratio, n, r);

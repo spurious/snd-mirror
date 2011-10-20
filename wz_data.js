@@ -1288,8 +1288,7 @@ var index_html_tip = "overall index";
 
 var analog_filter_doc_tip = "These are the traditional IIR filters, any type, any even order<br>" +
                             "(Butterworth, Chebyshev, Inverse Chebyshev, Bessel, and Elliptic)<br>" +
-                            "The elliptic function filters need GSL, and all of these work better<br>" +
-                            "if you build Snd --with-doubles.";
+                            "The elliptic function filters need GSL.";
 
 var animals_doc_tip = "synthesis of birds, frogs, and insects";
 

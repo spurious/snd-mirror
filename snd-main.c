@@ -283,7 +283,7 @@ static bool b_ok = false;
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(%s)\n", TO_PROC_NAME(name), val);}
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(\"%s\")\n", TO_PROC_NAME(name), val);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "set_%s(%d)\n", TO_PROC_NAME(name), val);}
-static void pss_sod(FILE *fd, const char *name, mus_long_t val)   {fprintf(fd, "set_%s(" MUS_LD ")\n", TO_PROC_NAME(name), val);}
+static void pss_sod(FILE *fd, const char *name, mus_long_t val)   {fprintf(fd, "set_%s(%lld)\n", TO_PROC_NAME(name), val);}
 static void pss_sf(FILE *fd, const char *name, mus_float_t val) {fprintf(fd, "set_%s(%.4f)\n", TO_PROC_NAME(name), val);}
 
 static void pss_sl(FILE *fd, const char *name, mus_float_t val1, mus_float_t val2) 
@@ -306,7 +306,7 @@ static void pcp_sd(FILE *fd, const char *name, int val, int chan)
   {fprintf(fd, "%sset_%s(%d, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
 
 static void pcp_sod(FILE *fd, const char *name, mus_long_t val, int chan)   
-  {fprintf(fd, "%sset_%s(" MUS_LD ", sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+  {fprintf(fd, "%sset_%s(%lld, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
 
 static void pcp_sf(FILE *fd, const char *name, mus_float_t val, int chan) 
   {fprintf(fd, "%sset_%s(%.4f, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
@@ -320,7 +320,7 @@ static void pcp_sl(FILE *fd, const char *name, mus_float_t val1, mus_float_t val
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%s set-%s drop\n", val, name);}
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "\"%s\" set-%s drop\n", val, name);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%d set-%s drop\n", val, name);}
-static void pss_sod(FILE *fd, const char *name, mus_long_t val)   {fprintf(fd, MUS_LD " set-%s drop\n", val, name);}
+static void pss_sod(FILE *fd, const char *name, mus_long_t val)   {fprintf(fd, "%lld set-%s drop\n", val, name);}
 static void pss_sf(FILE *fd, const char *name, mus_float_t val) {fprintf(fd, "%.4f set-%s drop\n", val, name);}
 static void pss_sl(FILE *fd, const char *name, mus_float_t val1, mus_float_t val2) 
 {fprintf(fd, "%s'( %f %f ) set-%s drop\n", white_space, val1, val2, name);}
@@ -342,7 +342,7 @@ static void pcp_sd(FILE *fd, const char *name, int val, int chan)
   {fprintf(fd, "%s%d sfile %d set-%s drop\n", white_space, val, chan, name);}
 
 static void pcp_sod(FILE *fd, const char *name, mus_long_t val, int chan)   
-  {fprintf(fd, "%s" MUS_LD " sfile %d set-%s drop\n", white_space, val, chan, name);}
+  {fprintf(fd, "%s%lld sfile %d set-%s drop\n", white_space, val, chan, name);}
 
 static void pcp_sf(FILE *fd, const char *name, mus_float_t val, int chan) 
   {fprintf(fd, "%s%.4f sfile %d set-%s drop\n", white_space, val, chan, name);}
@@ -356,7 +356,7 @@ static void pcp_sl(FILE *fd, const char *name, mus_float_t val1, mus_float_t val
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) \"%s\")\n", name, val);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "(set! (%s) %d)\n", name, val);}
-static void pss_sod(FILE *fd, const char *name, mus_long_t val)   {fprintf(fd, "(set! (%s) " MUS_LD ")\n", name, val);}
+static void pss_sod(FILE *fd, const char *name, mus_long_t val)   {fprintf(fd, "(set! (%s) %lld)\n", name, val);}
 static void pss_sf(FILE *fd, const char *name, mus_float_t val) {fprintf(fd, "(set! (%s) %.4f)\n", name, val);}
 static void pss_sl(FILE *fd, const char *name, mus_float_t val1, mus_float_t val2) {fprintf(fd, "(set! (%s) (list %f %f))\n", name, val1, val2);}
 
@@ -382,7 +382,7 @@ static void pcp_sd(FILE *fd, const char *name, int val, int chan)
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) %d)\n", white_space, name, chan, val);}
 
 static void pcp_sod(FILE *fd, const char *name, mus_long_t val, int chan)   
-  {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) " MUS_LD ")\n", white_space, name, chan, val);}
+  {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) %lld)\n", white_space, name, chan, val);}
 
 static void pcp_sf(FILE *fd, const char *name, mus_float_t val, int chan) 
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) %.4f)\n", white_space, name, chan, val);}
@@ -684,7 +684,7 @@ void global_fft_state(void)
   char *buf;
   snd_help_append("\n\nCurrent FFT defaults:\n\n");
   buf = (char *)calloc(1024, sizeof(char));
-  mus_snprintf(buf, 1024, "fft size: " MUS_LD "\n    type: %s\n    window: %s (alpha: %.3f, beta: %.3f)\n",
+  mus_snprintf(buf, 1024, "fft size: %lld\n    type: %s\n    window: %s (alpha: %.3f, beta: %.3f)\n",
 	       transform_size(ss), 
 	       TO_VAR_NAME(transform_program_name(transform_type(ss))),
 	       TO_VAR_NAME(mus_fft_window_xen_name(fft_window(ss))),

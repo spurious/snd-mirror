@@ -15335,7 +15335,7 @@ EDITS: 2
 	  (snd-display #__line__ ";predict sines: ~A" vals)))
     (let ((vals (lpc-predict (make-sines 32) 32 (lpc-coeffs (make-sines 32) 32 16) 16 8)))
       (if (and (not (vequal vals (vct 0.000 0.379 0.684 0.876 0.961 0.987 1.006 1.046)))
-	       (not (vequal vals (vct 0.000 0.379 0.685 0.876 0.961 0.985 0.998 1.029)))) ; if --with-doubles
+	       (not (vequal vals (vct 0.000 0.379 0.685 0.876 0.961 0.985 0.998 1.029))))
 	  (snd-display #__line__ ";predict sines 1: ~A" vals)))
     (let ((vals (lpc-predict (make-sines 32) 32 (lpc-coeffs (make-sines 32) 32 30) 30 4)))
       (if (and (not (vequal vals (vct 0.000 0.379 0.685 0.878)))
@@ -62682,21 +62682,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 
-15-Oct-11:
-158,060,844,540
-15,966,187,135  ???:sin [/lib64/libm-2.12.so]
-15,068,696,911  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
-10,300,058,885  s7.c:eval [/home/bil/snd-12/snd]
- 9,326,234,974  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
- 8,904,503,760  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
- 8,829,215,499  run.c:eval_ptree [/home/bil/snd-12/snd]
- 7,227,147,782  io.c:mus_write_1 [/home/bil/snd-12/snd]
- 6,437,052,687  s7.c:eval'2 [/home/bil/snd-12/snd]
+19-Oct-11:
+157,767,560,680
+15,963,482,321  ???:sin [/lib64/libm-2.12.so]
+15,282,626,391  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
+10,366,603,378  s7.c:eval [/home/bil/snd-12/snd]
+ 9,395,802,772  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
+ 8,904,504,267  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
+ 8,831,391,241  run.c:eval_ptree [/home/bil/snd-12/snd]
+ 7,220,780,172  io.c:mus_write_1 [/home/bil/snd-12/snd]
+ 6,401,528,077  s7.c:eval'2 [/home/bil/snd-12/snd]
  2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-12/snd]
- 2,764,464,491  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
- 2,737,814,118  ???:cos [/lib64/libm-2.12.so]
- 2,648,384,287  clm.c:mus_src [/home/bil/snd-12/snd]
- 2,182,661,218  s7.c:gc [/home/bil/snd-12/snd]
- 2,173,232,304  s7.c:find_symbol_or_bust [/home/bil/snd-12/snd]
+ 2,765,680,944  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
+ 2,745,410,190  ???:cos [/lib64/libm-2.12.so]
+ 2,647,093,041  clm.c:mus_src [/home/bil/snd-12/snd]
+ 2,187,184,814  s7.c:find_symbol_or_bust [/home/bil/snd-12/snd]
+ 2,178,594,168  s7.c:gc [/home/bil/snd-12/snd]
 |#
 

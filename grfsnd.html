@@ -748,7 +748,6 @@ latter are (configure --help):
 <tr><td colspan=2></td><td></td><td></td></tr>
 
 <tr><td colspan=2 bgcolor="#EEFDEE">Numerical choices</td><td></td><td></td></tr>
-<tr><td></td><td>--with-doubles</td><td></td><td>use doubles throughout (default: yes)</td></tr>
 <tr><td></td><td>--with-float-samples</td><td></td><td>use floats or doubles as the internal sample representation (default: yes)</td></tr>
 <tr><td></td><td>--with-sample-width=N</td><td></td><td>if not float samples, use N bits for ints (default: 24, must be between 16 and 31)</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
@@ -2085,12 +2084,6 @@ data directly to the DAC:
      (<a class=quiet href="extsnd.html#musaudioclose" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioclose_tip)">mus-audio-close</a> audio-port)
      (ladspa-cleanup descriptor handle)))))
 </pre></td></tr></table>
-<p>
-One slight "gotcha"
-in this area: the Snd configuration switch --with-doubles causes "vcts" to
-be arrays of doubles, but Ladspa plugins expect to see arrays of floats.
-This is a problem only if you're calling ladpsa-connect-port yourself.
-</p>
 <br>
 
 <!-- INDEX sndandalsa:Alsa -->

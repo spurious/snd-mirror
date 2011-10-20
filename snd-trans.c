@@ -50,7 +50,7 @@ static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, cons
   if (kfree < (bytes >> 10))
     { 
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   "only " MUS_LD " bytes left on device (we need " SSIZE_TD " bytes)",
+		   "only %lld" " bytes left on device (we need " SSIZE_TD " bytes)",
 		   kfree << 10, bytes);
       return(MUS_ERROR);
     }
