@@ -1035,6 +1035,7 @@ struct s7_scheme {
 #define set_global(p)                 typeflag(p) |= T_GLOBAL
 #define set_local(p)                  typeflag(p) = (typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC))
 
+
 #define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 8))
 #define is_multiple_value(p)          ((typeflag(p) & T_MULTIPLE_VALUE) != 0)
 #define set_multiple_value(p)         typeflag(p) |= T_MULTIPLE_VALUE
@@ -13683,9 +13684,11 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 		      { 
 			const char *s; 
 			s = symbol_name(car(x)); 
-			if (/* (s) &&  */ /* I don't think a symbol can have a null name */
-			    (s[0] == orig_str[0]) &&
+			if ((s[0] == orig_str[0]) &&
 			    (strings_are_equal(orig_str, s)))
+			  /* the string lengths here are k (for orig_str) and symbol_name_length(car(x)),
+			   *   but checking that these are equal before calling strcmp is slower?!?
+			   */
 			  {
 			    result = car(x);
 			    break;
@@ -29882,12 +29885,16 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 
 
 #if defined(__GNUC__)
-  #define c_function_is_ok(Sc, X) ({ s7_pointer _p_; \
-                                     _p_ = SYMBOL_VALUE(Sc, car(X));			 \
-                                    ((_p_ == ecdr(X)) || \
-                                     ((is_c_function(_p_)) && \
-                                      (c_function_class(_p_) == c_function_class(ecdr(X))))); })
+
+#define c_function_is_ok(Sc, X) ({ s7_pointer _p_, _X_; \
+                                   _X_ = X;	\
+                                    _p_ = SYMBOL_VALUE(Sc, car(_X_));			 \
+                                   ((_p_ == ecdr(_X_)) || \
+                                    ((is_c_function(_p_)) && \
+                                     (c_function_class(_p_) == c_function_class(ecdr(_X_))))); })
+
 #else
+
 static bool c_function_is_ok(s7_scheme *sc, s7_pointer x) 
 {
   s7_pointer p;
@@ -29896,6 +29903,7 @@ static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
 	 ((is_c_function(p)) &&
 	  (c_function_class(p) == c_function_class(ecdr(x)))));
 }
+
 #endif
 
 #define indirect_c_function_is_ok(Sc, X) (((optimize_data(X) & 0x1) != 0) || (c_function_is_ok(Sc, X)))
@@ -32112,6 +32120,8 @@ static s7_pointer check_cond(s7_scheme *sc)
 
 #if WITH_OPTIMIZATION
 
+#if (!defined(__GNUC__))
+
 static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
 {
   /* like finder, but no unbound-variable error */
@@ -32138,9 +32148,33 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
   return(sc->UNDEFINED);
 }
 
-#if (!defined(__GNUC__))
 #define function_is_ok(Code) (fs(sc, car(Code)) == ecdr(Code))
+
 #else
+
+static s7_pointer fs_1(s7_scheme *sc, s7_pointer hdl)
+{
+  /* like finder, but no unbound-variable error */
+  s7_pointer x;	
+
+  for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = cdr(x));
+
+  if (frame_id(x) == symbol_id(hdl))
+    return(symbol_value(symbol_local_slot(hdl)));	
+
+  for (; is_environment(x); x = cdr(x))
+    {
+      s7_pointer y; 
+      for (y = car(x); is_pair(y); y = ecdr(y))	
+	if (car(y) == hdl)
+	  return(symbol_value(y)); 
+    }
+  x = symbol_global_slot(hdl);	
+  if (is_not_null(x)) 
+    return(symbol_value(x)); 
+  return(sc->UNDEFINED);
+}
+
 static bool function_is_ok_1(s7_scheme *sc, s7_pointer p, s7_pointer val)
 {
   if ((is_closure(val)) && (is_closure(ecdr(p))))
@@ -32148,7 +32182,6 @@ static bool function_is_ok_1(s7_scheme *sc, s7_pointer p, s7_pointer val)
       if (closure_body(val) == closure_body(ecdr(p)))
 	{
 	  ecdr(p) = val;
-	  /* fprintf(stderr, "%s is the same\n", DISPLAY_80(p)); */
 	  return(true);
 	}
       if ((is_pair(closure_args(val))) && 
@@ -32159,16 +32192,24 @@ static bool function_is_ok_1(s7_scheme *sc, s7_pointer p, s7_pointer val)
 	      (!is_safe_closure(closure_body(ecdr(p)))))
 	    {
 	      ecdr(p) = val;
-	      /* fprintf(stderr, "%s is ok\n", DISPLAY_80(p)); */
 	      return(true);
 	    }
 	}
     }
   return(false);
 }
-#define function_is_ok(Code) ({ s7_pointer _val_; _val_ = fs(sc, car(Code)); ((_val_ == ecdr(Code)) || (function_is_ok_1(sc, Code, _val_))); })
-#endif
 
+#define function_is_ok(Code) \
+  ({ s7_pointer _code_; \
+     _code_ = Code; \
+     (((frame_id(sc->envir) == symbol_id(car(_code_)))  && \
+       (symbol_value(symbol_local_slot(car(_code_))) == ecdr(_code_))) || \
+      ({ s7_pointer _val_; \
+         _val_ = fs_1(sc, car(_code_)); \
+         ((_val_ == ecdr(_code_)) || \
+          (function_is_ok_1(sc, _code_, _val_))); })); })
+
+#endif
 #endif
 
 
@@ -33955,7 +33996,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_CLOSURE_S:
 		  if (!function_is_ok(code))
 		    {
-		      /* fprintf(stderr, "%d, %s: unknown_s\n", __LINE__, DISPLAY_80(code)); */
 		      optimize_data(code) = OP_UNKNOWN_S;
 		      goto OPT_EVAL;
 		    }
@@ -33966,7 +34006,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		UNSAFE_CLOSURE_ONE:
 		  {
-		    s7_pointer frame, slot, args, sym, val;
+		    s7_pointer frame, slot, args, sym, val, rest;
 		    
 		    if (sc->stack_end >= sc->stack_resize_trigger)
 		      increase_stack_size(sc);
@@ -33977,11 +34017,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			sym = car(args);
 			val = car(sc->T1_1);
+			rest = cdr(args);
 		      }
 		    else
 		      {
 			sym = args;
 			val = list_1(sc, car(sc->T1_1));
+			rest = sc->NIL;
 		      }
 		    
 		    NEW_CELL(sc, frame);                   
@@ -34001,8 +34043,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    ecdr(slot) = sc->NIL;
 		    car(frame) = slot;
 		    
-		    if (!is_null(cdr(args)))
-		      add_slot(sc, cdr(args), sc->NIL);
+		    if (!is_null(rest))
+		      add_slot(sc, rest, sc->NIL);
 		    /* here we have a closure with a required arg and a rest arg, and we're called
 		     *   with one arg, so the rest arg is nil.
 		     */
@@ -34033,7 +34075,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		UNSAFE_CLOSURE_TWO:
 		  {
-		    s7_pointer frame, slot1, slot2, args, sym, val;
+		    s7_pointer frame, slot1, slot2, args, sym, val, rest;
 		    
 		    if (sc->stack_end >= sc->stack_resize_trigger)
 		      increase_stack_size(sc);
@@ -34074,11 +34116,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    sym = car(args);
 			    val = car(sc->T2_2);
+			    rest = cdr(args);
 			  }
 			else
 			  {
 			    sym = args;
 			    val = list_1(sc, car(sc->T2_2));
+			    rest = sc->NIL;
 			  }
 			
 			NEW_CELL_NO_CHECK(sc, slot2);
@@ -34092,8 +34136,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			ecdr(slot2) = sc->NIL;
 			ecdr(slot1) = slot2;
 			
-			if (!is_null(cdr(args)))
-			  add_slot(sc, cdr(args), sc->NIL);
+			if (!is_null(rest))
+			  add_slot(sc, rest, sc->NIL);
 			/* here we have a closure with two required args and a rest arg, and we're called
 			 *   with two args, so the rest arg is nil.
 			 */
@@ -40169,9 +40213,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
-#if WITH_OPTIMIZATION
     CASE1:
-#endif
     case OP_CASE1: 
       {
 	s7_pointer x, y;
