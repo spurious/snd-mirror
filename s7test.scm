@@ -13487,11 +13487,24 @@ time, so that the displayed results are
   (define x 33)
   (test (f1) 33))
 
+#|
 (let ()
   (define (f2 a) (+ a 1))
   (define (f1 a) (f2 a))
   (define (f2 a) (- a))
   (test (f1 12) -12)) ; hmmm
+;; I can't decide about this -- shouldn't it be consistent with the global case?
+(let ()
+  (define (f2 a) (+ a 2))
+  (define (f1 a) (f2 a))
+  (define (f2 a) (- a 2))
+  (format #t "f1: ~A~%" (f1 12)))
+
+(let ()
+  (define (f1 a) (+ a 2))
+  (define + *)
+  (format #t "f1: ~A~%" (f1 12)))
+|#
 
 (let ()
   (define (c-2)
@@ -19249,13 +19262,15 @@ abs     1       2
 
   (let ((vals #(0 0)))
 
+#|
     (let ()
       (define (hi a) (+ 1 a))
       (define (use-hi b) (hi b))
       (set! (vals 0) (use-hi 1))
       (define (hi a) (+ 2 a))
       (set! (vals 1) (use-hi 1))
-      (test vals #(2 3))) ; hmmm, or possibly #(2 2)...
+      (test vals #(2 3))) ; hmmm, or possibly #(2 2)... see comment above (line 13494 or thereabouts)
+|#
 
     (let ()
       (defmacro hi (a) `(+ 1 ,a))

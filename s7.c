@@ -28217,6 +28217,12 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 
   if (is_closure(func))  /* can't depend on ecdr here because it might not be global, or might be redefined locally */
     hop = 0;
+  /* this choice is at least consistent with the unoptimized case, and the ecdr(code) value is not
+   *   GC'd without our noticing it.  But it means that the top-level functions behave differently
+   *   from these closures, and that consistency costs a lot -- the symbol value lookups are 3% of
+   *   the total computing in lg.scm.  If we go with accepting the hop value as is, we have to 
+   *   gc protect the current value somehow -- where to put it?
+   */
 
   /* fprintf(stderr, "    func: %s\n     e: %s\n", DISPLAY_80(car(x)), DISPLAY_80(e)); */
 
