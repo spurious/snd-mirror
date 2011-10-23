@@ -20864,6 +20864,7 @@ abs     1       2
 ;;; current-environment
 ;;; augment-environment
 ;;; with-environment
+;;; environment->list
 
 (for-each
  (lambda (arg)
@@ -20883,6 +20884,7 @@ abs     1       2
   (define (hi a) (+ a 1))
   (define* (ho (a 1)) (+ a 1))
   (test (environment? (procedure-environment hi)) #t)
+  (test (null? (environment->list (procedure-environment hi))) #f)
   (test (environment? (procedure-environment ho)) #t)
   (test (environment? (procedure-environment f1)) #t)
   (test (environment? (procedure-environment f2)) #t)
@@ -20901,6 +20903,9 @@ abs     1       2
 			  (cdr binding)))
 		  (car (environment->list (current-environment)))))))
   (test (library:lognor 1 2) -4))
+
+
+(test (null? (environment->list (global-environment))) #f)
 
 (for-each
  (lambda (arg)
