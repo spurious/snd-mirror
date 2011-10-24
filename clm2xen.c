@@ -5361,8 +5361,8 @@ static XEN clm_output, clm_reverb; /* *output* and *reverb* at extlang level -- 
 
 #if (HAVE_SCHEME)
 static XEN clm_output_slot = NULL, clm_reverb_slot = NULL;
-XEN mus_clm_output(void) {return(s7_cdr(clm_output_slot));}
-XEN mus_clm_reverb(void) {return(s7_cdr(clm_reverb_slot));}
+XEN mus_clm_output(void) {return(s7_symbol_slot_value(s7, clm_output_slot));}
+XEN mus_clm_reverb(void) {return(s7_symbol_slot_value(s7, clm_reverb_slot));}
 #endif
 
 #if (!HAVE_SCHEME)
@@ -8294,6 +8294,7 @@ XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 #define cadddr(E) s7_cadddr(E)
 #define cddr(E)   s7_cddr(E)
 #define cadar(E)  s7_cadar(E)
+#define slot_value(E) s7_symbol_slot_value(s7, E)
 
 static mus_float_t mus_nsin_unmodulated(mus_any *p) {return(mus_nsin(p, 0.0));}
 static mus_float_t mus_ncos_unmodulated(mus_any *p) {return(mus_ncos(p, 0.0));}
@@ -8343,10 +8344,10 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
            _Val_ = s7_symbol_slot(sc, _Obj_); \
            if (s7_is_do_local_or_global(sc, _Obj_)) \
  	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
-           if (!s7_is_number(cdr(_Val_))) \
+           if (!s7_is_number(slot_value(_Val_))) \
 	     XEN_ASSERT_TYPE(false, _Val_, XEN_ARG_2, Caller, "a number"); \
          } \
-       Val = cdr(_Val_); } while (0)
+       Val = slot_value(_Val_); } while (0)
 
 
 #define GET_REAL(Obj, Caller, Safe, Val)			\
@@ -8358,10 +8359,10 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
            _Val_ = s7_symbol_slot(sc, _Obj_); \
            if (s7_is_do_local_or_global(sc, _Obj_)) \
  	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
-           if (!s7_is_real(cdr(_Val_))) \
+           if (!s7_is_real(slot_value(_Val_))) \
 	     XEN_ASSERT_TYPE(false, _Val_, XEN_ARG_2, S_ ## Caller, "a real"); \
          } \
-       Val = s7_number_to_real(cdr(_Val_)); } while (0)
+       Val = s7_number_to_real(slot_value(_Val_)); } while (0)
 
 
 #define GET_INTEGER(Obj, Caller, Safe, Val)			\
@@ -8373,10 +8374,10 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
            _Val_ = s7_symbol_slot(sc, _Obj_); \
            if (s7_is_do_local_or_global(sc, _Obj_)) \
  	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
-           if (!s7_is_integer(cdr(_Val_))) \
+           if (!s7_is_integer(slot_value(_Val_))) \
 	     XEN_ASSERT_TYPE(false, _Val_, XEN_ARG_2, S_ ## Caller, "an integer"); \
          } \
-       Val = s7_integer(cdr(_Val_)); } while (0)
+       Val = s7_integer(slot_value(_Val_)); } while (0)
 
 
 /* TODO: add (gen (vector-ref s s) | s | direct) */
@@ -8921,7 +8922,7 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
       if (s7_is_do_local_or_global(sc, sym))
 	{
 	  syms[1] = s7_symbol_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_is_integer(cdr((s7_pointer)syms[1])), sym, XEN_ARG_2, "locsig", "an integer");
+	  XEN_ASSERT_TYPE(s7_is_integer(slot_value((s7_pointer)syms[1])), sym, XEN_ARG_2, "locsig", "an integer");
 	  syms[2] = NULL;
 	}
       else
@@ -8950,7 +8951,7 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
       if (s7_is_do_local_or_global(sc, sym))
 	{
 	  syms[7] = s7_symbol_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_is_real(cdr((s7_pointer)syms[7])), sym, XEN_ARG_2, "polywave", "a real");
+	  XEN_ASSERT_TYPE(s7_is_real(slot_value((s7_pointer)syms[7])), sym, XEN_ARG_2, "polywave", "a real");
 	  syms[8] = NULL;
 	}
       else
@@ -8971,7 +8972,7 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
       XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_2, "locsig", "an integer");
       pos = s7_integer(x);
     }
-  else pos = s7_integer(cdr((s7_pointer)syms[1]));
+  else pos = s7_integer(slot_value((s7_pointer)syms[1]));
 
   if (syms[8])
     {
@@ -8981,7 +8982,7 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
       XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "polywave", "a real");
       vibrato = s7_number_to_real(x);
     }
-  else vibrato = s7_number_to_real(cdr((s7_pointer)syms[7]));
+  else vibrato = s7_number_to_real(slot_value((s7_pointer)syms[7]));
 
   val = mus_env((mus_any *)syms[3]) * mus_oscil_fm((mus_any *)syms[4], 
 						   vibrato + (mus_env((mus_any *)syms[5]) * mus_polywave((mus_any *)syms[6], vibrato)));
@@ -9097,7 +9098,7 @@ static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
       if (s7_is_do_local_or_global(sc, sym))
 	{
 	  syms[4] = s7_symbol_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_is_real(cdr((s7_pointer)syms[4])), sym, XEN_ARG_2, "comb", "a real");
+	  XEN_ASSERT_TYPE(s7_is_real(slot_value((s7_pointer)syms[4])), sym, XEN_ARG_2, "comb", "a real");
 	  syms[5] = NULL;
 	}
       else
@@ -9115,7 +9116,7 @@ static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
       XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "comb", "a real");
       fm = s7_number_to_real(x);
     }
-  else fm = s7_number_to_real(cdr((s7_pointer)syms[4]));
+  else fm = s7_number_to_real(slot_value((s7_pointer)syms[4]));
 
   return(s7_make_real(sc, mus_comb_unmodulated_noz((mus_any *)syms[0], fm) + 
 		          mus_comb_unmodulated_noz((mus_any *)syms[1], fm) + 
@@ -9172,7 +9173,7 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
       if (s7_is_do_local_or_global(sc, sym))
 	{
 	  syms[3] = s7_symbol_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_is_integer(cdr((s7_pointer)syms[3])), sym, XEN_ARG_1, "ina", "an integer");
+	  XEN_ASSERT_TYPE(s7_is_integer(slot_value((s7_pointer)syms[3])), sym, XEN_ARG_1, "ina", "an integer");
 	  syms[4] = NULL;
 	}
       else
@@ -9194,10 +9195,10 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
       XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_1, "ina", "an integer");
       pos = s7_integer(x);
     }
-  else pos = s7_integer(cdr((s7_pointer)syms[3]));
+  else pos = s7_integer(slot_value((s7_pointer)syms[3]));
 
  JC_REV:
-  rev = cdr(clm_reverb_slot);
+  rev = slot_value(clm_reverb_slot);
   if (s7_object_type(rev) == mus_xen_tag)
     {
       mus_xen *gx;
@@ -9290,7 +9291,7 @@ static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
       if (s7_is_do_local_or_global(sc, sym))
 	{
 	  syms[4] = s7_symbol_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_is_real(cdr((s7_pointer)syms[4])), sym, XEN_ARG_2, "comb", "a real");
+	  XEN_ASSERT_TYPE(s7_is_real(slot_value((s7_pointer)syms[4])), sym, XEN_ARG_2, "comb", "a real");
 	  syms[5] = NULL;
 	}
       else
@@ -9308,7 +9309,7 @@ static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
       XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "comb", "a real");
       fm = s7_number_to_real(x);
     }
-  else fm = s7_number_to_real(cdr((s7_pointer)syms[4]));
+  else fm = s7_number_to_real(slot_value((s7_pointer)syms[4]));
 
   return(s7_make_real(sc, mus_comb_unmodulated_noz((mus_any *)syms[0], fm) + 
 		          mus_comb_unmodulated_noz((mus_any *)syms[1], fm) + 
@@ -9328,7 +9329,7 @@ static s7_pointer g_ina_reverb_2(s7_scheme *sc, s7_pointer args)
   
   GET_INTEGER(car(args), ina, s7_in_safe_do(sc), pos);
 
-  rev = cdr(clm_reverb_slot);
+  rev = slot_value(clm_reverb_slot);
   if (s7_object_type(rev) == mus_xen_tag)
     {
       mus_xen *gx;
@@ -9360,15 +9361,15 @@ static s7_pointer g_mul_s_ina_reverb_2(s7_scheme *sc, s7_pointer args)
       scl_ptr = s7_symbol_slot(sc, sym);
       if (s7_is_do_local_or_global(sc, sym))
 	s7_symbol_set_accessor_data(sym, (void *)scl_ptr);
-      if (!s7_is_real(cdr(scl_ptr)))
+      if (!s7_is_real(slot_value(scl_ptr)))
 	XEN_ASSERT_TYPE(false, scl_ptr, XEN_ARG_1, "*", "a real");
     }
-  scl = s7_number_to_real(cdr(scl_ptr));
+  scl = s7_number_to_real(slot_value(scl_ptr));
 
   args = s7_cdadr(args);
   GET_INTEGER(car(args), ina, its_safe, pos);
 
-  rev = cdr(clm_reverb_slot);
+  rev = slot_value(clm_reverb_slot);
   if (s7_object_type(rev) == mus_xen_tag)
     {
       mus_xen *gx;
@@ -9407,7 +9408,7 @@ static s7_pointer g_indirect_outa_2(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   GET_INTEGER(car(args), outa, s7_in_safe_do(sc), pos);
   x = s7_call_direct(sc, cadr(args));
-  return(out_any_2(cdr(clm_output_slot), pos, s7_number_to_real(x), 0, "outa", x));
+  return(out_any_2(slot_value(clm_output_slot), pos, s7_number_to_real(x), 0, "outa", x));
 }
 
 static s7_pointer indirect_outa_sub_2;
@@ -9421,7 +9422,7 @@ static s7_pointer g_indirect_outa_sub_2(s7_scheme *sc, s7_pointer args)
   GET_INTEGER(car(args), outa, its_safe, pos);
   GET_REAL(cadr(cadr(args)), outa, its_safe, x);
   GET_REAL(caddr(cadr(args)), outa, its_safe, y);
-  return(out_any_2(cdr(clm_output_slot), pos, x - y, 0, "outa", xen_zero));
+  return(out_any_2(slot_value(clm_output_slot), pos, x - y, 0, "outa", xen_zero));
 }
 
 static s7_pointer indirect_outa_ss;
@@ -9434,7 +9435,7 @@ static s7_pointer g_indirect_outa_ss(s7_scheme *sc, s7_pointer args)
   
   GET_INTEGER(car(args), outa, its_safe, pos);
   GET_REAL(cadr(args), outa, its_safe, x);
-  return(out_any_2(cdr(clm_output_slot), pos, x, 0, "outa", xen_zero));
+  return(out_any_2(slot_value(clm_output_slot), pos, x, 0, "outa", xen_zero));
 }
 
 static s7_pointer indirect_outa_add_2;
@@ -9448,7 +9449,7 @@ static s7_pointer g_indirect_outa_add_2(s7_scheme *sc, s7_pointer args)
   GET_INTEGER(cadr(car(args)), outa, its_safe, pos1);
   GET_INTEGER(caddr(car(args)), outa, its_safe, pos2);
   x = s7_call_direct(sc, cadr(args));
-  return(out_any_2(cdr(clm_output_slot), pos1 + pos2, s7_number_to_real(x), 0, "outa", x));
+  return(out_any_2(slot_value(clm_output_slot), pos1 + pos2, s7_number_to_real(x), 0, "outa", x));
 }
 
 
@@ -9487,7 +9488,7 @@ static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
       if (s7_is_do_local_or_global(sc, sym))
 	{
 	  syms[0] = (void *)s7_symbol_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_is_integer(cdr((s7_pointer)syms[0])), sym, XEN_ARG_1, "outa", "an integer");
+	  XEN_ASSERT_TYPE(s7_is_integer(slot_value((s7_pointer)syms[0])), sym, XEN_ARG_1, "outa", "an integer");
 	  syms[1] = NULL;
 	}
       else
@@ -9501,7 +9502,7 @@ static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
       if (s7_is_do_local_or_global(sc, sym))
 	{
 	  syms[2] = (void *)s7_symbol_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_is_real(cdr((s7_pointer)syms[2])), sym, XEN_ARG_1, "*", "a real");
+	  XEN_ASSERT_TYPE(s7_is_real(slot_value((s7_pointer)syms[2])), sym, XEN_ARG_1, "*", "a real");
 	  syms[3] = NULL;
 	}
       else
@@ -9518,7 +9519,7 @@ static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
       if (s7_is_do_local_or_global(sc, sym))
 	{
 	  syms[5] = s7_symbol_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_is_real(cdr((s7_pointer)syms[5])), sym, XEN_ARG_2, "delay", "a real");
+	  XEN_ASSERT_TYPE(s7_is_real(slot_value((s7_pointer)syms[5])), sym, XEN_ARG_2, "delay", "a real");
 	  syms[6] = NULL;
 	}
       else
@@ -9536,7 +9537,7 @@ static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
       XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_1, "outa", "an integer");
       pos = s7_integer(x);
     }
-  else pos = s7_integer(cdr((s7_pointer)syms[0]));
+  else pos = s7_integer(slot_value((s7_pointer)syms[0]));
 
   if (syms[3])
     {
@@ -9546,7 +9547,7 @@ static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
       XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "*", "a real");
       scl = s7_number_to_real(x);
     }
-  else scl = s7_number_to_real(cdr((s7_pointer)syms[2]));
+  else scl = s7_number_to_real(slot_value((s7_pointer)syms[2]));
 
   if (syms[6])
     {
@@ -9556,9 +9557,9 @@ static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
       XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "delay", "a real");
       inval = s7_number_to_real(x);
     }
-  else inval = s7_number_to_real(cdr((s7_pointer)syms[5]));
+  else inval = s7_number_to_real(slot_value((s7_pointer)syms[5]));
 
-  return(out_any_2(cdr(clm_output_slot), pos, scl * mus_delay_unmodulated_noz((mus_any *)syms[4], inval), 0, "outa", xen_zero));
+  return(out_any_2(slot_value(clm_output_slot), pos, scl * mus_delay_unmodulated_noz((mus_any *)syms[4], inval), 0, "outa", xen_zero));
 }
 
 
@@ -9597,7 +9598,7 @@ static s7_pointer g_outa_env_polywave_env(s7_scheme *sc, s7_pointer args)
       if (s7_is_do_local_or_global(sc, sym))
 	{
 	  syms[0] = (void *)s7_symbol_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_is_integer(cdr((s7_pointer)syms[0])), sym, XEN_ARG_1, "outa", "an integer");
+	  XEN_ASSERT_TYPE(s7_is_integer(slot_value((s7_pointer)syms[0])), sym, XEN_ARG_1, "outa", "an integer");
 	  syms[1] = NULL;
 	}
       else
@@ -9630,9 +9631,9 @@ static s7_pointer g_outa_env_polywave_env(s7_scheme *sc, s7_pointer args)
       XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_1, "outa", "an integer");
       pos = s7_integer(x);
     }
-  else pos = s7_integer(cdr((s7_pointer)syms[0]));
+  else pos = s7_integer(slot_value((s7_pointer)syms[0]));
 
-  return(out_any_2(cdr(clm_output_slot), pos, mus_env((mus_any *)syms[2]) * mus_polywave((mus_any *)syms[3], mus_env((mus_any *)syms[4])), 0, "outa", xen_zero));
+  return(out_any_2(slot_value(clm_output_slot), pos, mus_env((mus_any *)syms[2]) * mus_polywave((mus_any *)syms[3], mus_env((mus_any *)syms[4])), 0, "outa", xen_zero));
 }
 
 static s7_pointer frame_to_frame_sss;
@@ -9710,7 +9711,7 @@ static s7_pointer g_indirect_frame_to_file_3(s7_scheme *sc, s7_pointer args)
 
   GET_INTEGER(cadr(args), frame_to_file, s7_in_safe_do(sc), pos);
   data = s7_call_direct(sc, caddr(args));
-  mus_frame_to_file(XEN_TO_MUS_ANY(cdr(clm_output_slot)), pos, (mus_any *)(((mus_xen *)s7_object_value(data))->gen));
+  mus_frame_to_file(XEN_TO_MUS_ANY(slot_value(clm_output_slot)), pos, (mus_any *)(((mus_xen *)s7_object_value(data))->gen));
   return(data);
 }
 

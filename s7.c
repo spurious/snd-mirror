@@ -736,7 +736,6 @@ typedef struct s7_cell {
     struct {               /* symbols */
       s7_pointer name, global_slot, local_slot;
       long long int id;
-      /* there's room here for 8 bytes */
     } sym;
 
     struct {               /* slots (bindings) */
@@ -745,6 +744,7 @@ typedef struct s7_cell {
 
     struct {               /* environments (frames) */
       s7_pointer slots, nxt;
+      long long int id;
     } envr;
 
     struct {               /* counter (internal) */
@@ -1225,12 +1225,10 @@ struct s7_scheme {
 #define optimize_data_match(P, Q)     ((optimize_data(P) & 0xfffe) == Q)
 #define optimize_data_index(p)        (p)->object.cons.data_index
 
-#define frame_id(p)                   (p)->object.sym.id
 #define symbol_id(p)                  (p)->object.sym.id
 /* we need 64-bits here, I think, since we don't want this thing to wrap around, and frames are created at a great rate 
  *    callgrind says this is faster than an unsigned int!
  */
-
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
 #define string_hash(p)                ((p)->object.string.hash)
@@ -1240,13 +1238,14 @@ struct s7_scheme {
 #define symbol_name_cell(p)           (p)->object.sym.name
 #define symbol_name(p)                string_value(symbol_name_cell(p))
 #define symbol_name_length(p)         string_length(symbol_name_cell(p))
-#define symbol_global_slot(p)         (p)->object.sym.global_slot
-#define symbol_local_slot(p)          (p)->object.sym.local_slot
 #define symbol_hash(p)                (symbol_name_cell(p))->object.string.hash
 #define symbol_accessor(p)            ((s7_extended_cell *)p)->accessor
 #define symbol_has_accessor(p)        (symbol_accessor(p) != -1)
 #define symbol_accessor_data(p)       ((s7_extended_cell *)p)->accessor_data
 #define symbol_op_data(p)             ((s7_extended_cell *)p)->op_data
+
+#define global_slot(p)                (p)->object.sym.global_slot
+#define local_slot(p)                 (p)->object.sym.local_slot
 
 #define is_slot(p)                    (type(p) == T_SLOT)
 #define slot_value(p)                 (p)->object.slt.val
@@ -1257,6 +1256,7 @@ struct s7_scheme {
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_opcode(p)              ((p)->hloc)
 
+#define frame_id(p)                   (p)->object.envr.id
 #define is_environment(p)             (type(p) == T_ENVIRONMENT)
 #define environment_slots(p)          (p)->object.envr.slots
 #define next_environment(p)           (p)->object.envr.nxt
@@ -2956,8 +2956,8 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
   x->hloc = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL | T_SIMPLE);
-  symbol_global_slot(x) = sc->NIL;
-  symbol_local_slot(x) = sc->NIL;
+  global_slot(x) = sc->NIL;
+  local_slot(x) = sc->NIL;
   symbol_id(x) = 0;
   symbol_accessor(x) = -1;
 
@@ -3222,7 +3222,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
     NEW_CELL_NO_CHECK(sc, _slot_);\
     slot_symbol(_slot_) = Symbol;\
     symbol_id(slot_symbol(_slot_)) = frame_id(Frame);	\
-    symbol_local_slot(slot_symbol(_slot_)) = _slot_;\
+    local_slot(slot_symbol(_slot_)) = _slot_;\
     slot_value(_slot_) = Value;\
     set_type(_slot_, T_SLOT | T_IMMUTABLE);\
     next_slot(_slot_) = environment_slots(Frame);\
@@ -3244,7 +3244,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
       NEW_CELL_NO_CHECK(Sc, _slot_);\
       slot_symbol(_slot_) = Symbol;\
       symbol_id(slot_symbol(_slot_)) = frame_number;	\
-      symbol_local_slot(slot_symbol(_slot_)) = _slot_;\
+      local_slot(slot_symbol(_slot_)) = _slot_;\
       slot_value(_slot_) = Value;\
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
@@ -3306,8 +3306,8 @@ static void add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer va
 	  for (i = vector_fill_pointer(ge); i < vector_length(ge); i++)
 	    vector_element(ge, i) = sc->NIL;
 	}
-      symbol_global_slot(variable) = slot;
-      symbol_local_slot(variable) = slot;
+      global_slot(variable) = slot;
+      local_slot(variable) = slot;
       set_global(variable);
       symbol_id(variable) = 0;
       /* so if we (define hi "hiho") at the top level,  "hi" hashes to 1746 with symbol table size 2207
@@ -3325,7 +3325,7 @@ static void add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer va
       next_slot(slot) = environment_slots(env);
       environment_slots(env) = slot;
       symbol_id(variable) = frame_id(env);
-      symbol_local_slot(variable) = slot;
+      local_slot(variable) = slot;
     }
 
   /* there are about the same number of frames as local variables -- this
@@ -3347,7 +3347,7 @@ static s7_pointer add_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value)
   environment_slots(sc->envir) = y;
   set_local(variable);
   symbol_id(variable) = frame_id(sc->envir);
-  symbol_local_slot(variable) = y;
+  local_slot(variable) = y;
   return(y);
 } 
 
@@ -3409,7 +3409,7 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
 
   for (i = 0; (i < INITIAL_ENV_ENTRIES) && (is_slot(inits[i])); i++)
     if ((!is_global(slot_symbol(inits[i]))) ||                                             /* it's shadowed locally */
-	(slot_value(inits[i]) != slot_value(symbol_global_slot(slot_symbol(inits[i])))))   /* it's not shadowed, but has been changed globally */
+	(slot_value(inits[i]) != slot_value(global_slot(slot_symbol(inits[i])))))   /* it's not shadowed, but has been changed globally */
       add_slot_to_environment(sc, sc->w, slot_symbol(inits[i]), slot_value(inits[i]));
                          
   /* if (set! + -) then + needs to be overridden, but the local bit isn't set,
@@ -3577,7 +3577,7 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer hdl)
   for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
 
   if (frame_id(x) == symbol_id(hdl))
-    return(symbol_local_slot(hdl));	
+    return(local_slot(hdl));	
 
   for (; is_environment(x); x = next_environment(x))
     {
@@ -3587,7 +3587,7 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer hdl)
 	  return(y); 
     }
 
-  return(symbol_global_slot(hdl));
+  return(global_slot(hdl));
 } 
 
 
@@ -3597,12 +3597,18 @@ s7_pointer s7_symbol_slot(s7_scheme *sc, s7_pointer symbol)
 }
 
 
+s7_pointer s7_symbol_slot_value(s7_scheme *sc, s7_pointer slot)
+{
+  return(slot_value(slot));
+}
+
+
 static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer y;
 
   if (!is_environment(env))
-    return(symbol_global_slot(hdl));
+    return(global_slot(hdl));
 
   for (y = environment_slots(env); is_slot(y); y = next_slot(y))
     if (slot_symbol(y) == hdl)
@@ -3663,7 +3669,7 @@ symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
       local_env = cadr(args);
       if (local_env == sc->global_env)
 	{
-	  x = symbol_global_slot(sym);
+	  x = global_slot(sym);
 	  if (is_not_null(x))
 	    return(slot_value(x));
 	  return(sc->UNDEFINED);
@@ -3672,7 +3678,7 @@ symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
     }
   
   if (is_global(sym))
-    return(slot_value(symbol_global_slot(sym)));
+    return(slot_value(global_slot(sym)));
 
   return(s7_symbol_value(sc, sym));
 }
@@ -3780,7 +3786,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       e = cadr(args);
       if (e == sc->global_env)
 	{
-	  x = symbol_global_slot(sym);
+	  x = global_slot(sym);
 	  return(make_boolean(sc, (is_not_null(x)) && (x != sc->UNDEFINED)));
 	}
       x = find_local_symbol(sc, e, sym); 
@@ -3833,7 +3839,7 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   
   sym = make_symbol(sc, name);
   s7_define(sc, sc->NIL, sym, value);
-  x = symbol_global_slot(sym);
+  x = global_slot(sym);
   set_immutable(slot_symbol(x));
 }
 
@@ -19862,7 +19868,7 @@ static void s7_define_constant_function(s7_scheme *sc, const char *name, s7_func
   sym = make_symbol(sc, name);
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   s7_define(sc, sc->NIL, sym, func);
-  set_immutable(slot_symbol(symbol_global_slot(sym)));
+  set_immutable(slot_symbol(global_slot(sym)));
   {
     s7_pointer p;
     p = s7_symbol_value(sc, make_symbol(sc, name));
@@ -21925,18 +21931,21 @@ static s7_pointer g_hook_set_functions(s7_scheme *sc, s7_pointer args)
   if (is_pair(funcs))
     {
       s7_pointer x, y;
-      for (x = funcs, y = funcs; is_pair(x); x = cdr(x), y = cdr(y))
+      bool cdr_y = false;
+      for (x = funcs, y = funcs; is_pair(x); x = cdr(x))
 	{
 	  if (!is_function_with_arity(car(x)))
 	    return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a list of functions"));
 	  if (!function_arity_ok(sc, hook, car(x)))
 	    return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a list of functions of the correct arity"));
-	  if (is_pair(y)) 
+
+	  if (cdr_y)
 	    {
-	      y = cdr(y);
 	      if (x == y)
 		return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a proper (non-circular) list of functions"));
+	      y = cdr(y);
 	    }
+	  cdr_y = !cdr_y;
 	}
       if (is_not_null(x))
 	return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a proper list of functions"));
@@ -24507,7 +24516,7 @@ static bool too_many_arguments(s7_scheme *sc, s7_pointer proc, int len)
 }
 
 
-#define SYMBOL_TO_VALUE(Sc, Sym) ((is_global(Sym)) ? slot_value(symbol_global_slot(Sym)) : finder(Sc, Sym))
+#define SYMBOL_TO_VALUE(Sc, Sym) ((is_global(Sym)) ? slot_value(global_slot(Sym)) : finder(Sc, Sym))
 
 static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 {
@@ -26556,7 +26565,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   syntax_opcode(syn) = op;
   cdr(syn) = syn; /* this saves us an error check in the main eval section */
   car(syn) = x;
-  symbol_global_slot(x) = permanent_slot(x, syn);
+  global_slot(x) = permanent_slot(x, syn);
 
   typeflag(x) = SYNTACTIC_TYPE;
   symbol_id(x) = 0;
@@ -26577,8 +26586,8 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL | T_SIMPLE);
 
-  symbol_global_slot(x) = sc->NIL;
-  symbol_local_slot(x) = sc->NIL;
+  global_slot(x) = sc->NIL;
+  local_slot(x) = sc->NIL;
   symbol_table_hash(name, &loc); 
   symbol_hash(x) = loc;
   symbol_id(x) = 0;
@@ -26589,7 +26598,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   syntax_opcode(syn) = op;
   cdr(syn) = syn; 
   car(syn) = s7_make_symbol(sc, name);
-  symbol_global_slot(x) = permanent_slot(x, syn);
+  global_slot(x) = permanent_slot(x, syn);
 
   typeflag(x) = SYNTACTIC_TYPE;
   symbol_id(x) = 0;
@@ -26886,12 +26895,12 @@ static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl)
   s7_pointer x;
 
   if (frame_id(sc->envir) == symbol_id(hdl))
-    return(slot_value(symbol_local_slot(hdl)));
+    return(slot_value(local_slot(hdl)));
 
   for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
 
   if (frame_id(x) == symbol_id(hdl))
-    return(slot_value(symbol_local_slot(hdl)));
+    return(slot_value(local_slot(hdl)));
 
   for (; is_environment(x); x = next_environment(x))
     {
@@ -26901,7 +26910,7 @@ static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl)
 	  return(slot_value(y));
     }
 
-  x = symbol_global_slot(hdl);
+  x = global_slot(hdl);
   if (is_not_null(x)) return(slot_value(x));
 
   return(unbound_variable(sc, hdl));
@@ -27797,7 +27806,7 @@ static void init_choosers(s7_scheme *sc)
   s7_pointer f;
 
   /* + */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "+")));
+  f = slot_value(global_slot(make_symbol(sc, "+")));
   c_function_chooser(f) = add_chooser;
 
   add_1 = s7_make_function(sc, "+", g_add_1, 1, 0, false, "+ optimization");
@@ -27811,7 +27820,7 @@ static void init_choosers(s7_scheme *sc)
   
 
   /* - */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "-")));
+  f = slot_value(global_slot(make_symbol(sc, "-")));
   c_function_chooser(f) = subtract_chooser;
 
   subtract_1 = s7_make_function(sc, "-", g_subtract_1, 1, 0, false, "- optimization");
@@ -27823,7 +27832,7 @@ static void init_choosers(s7_scheme *sc)
   
 
   /* * */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "*")));
+  f = slot_value(global_slot(make_symbol(sc, "*")));
   c_function_chooser(f) = multiply_chooser;
 
   multiply_2 = s7_make_function(sc, "*", g_multiply_2, 2, 0, false, "* optimization");
@@ -27835,7 +27844,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* = */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "=")));
+  f = slot_value(global_slot(make_symbol(sc, "=")));
   c_function_chooser(f) = equal_chooser;
 
   equal_s_ic = s7_make_function(sc, "=", g_equal_s_ic, 2, 0, false, "= optimization");
@@ -27848,7 +27857,7 @@ static void init_choosers(s7_scheme *sc)
 
 #if (!WITH_GMP)
   /* negative? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "negative?")));
+  f = slot_value(global_slot(make_symbol(sc, "negative?")));
   c_function_chooser(f) = is_negative_chooser;
 
   is_negative_length = s7_make_function(sc, "negative?", g_is_negative_length, 1, 0, false, "negative? optimization");
@@ -27856,7 +27865,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* < */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "<")));
+  f = slot_value(global_slot(make_symbol(sc, "<")));
   c_function_chooser(f) = less_chooser;
 
   less_s_ic = s7_make_function(sc, "<", g_less_s_ic, 2, 0, false, "< optimization");
@@ -27868,7 +27877,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* > */
-  f = slot_value(symbol_global_slot(make_symbol(sc, ">")));
+  f = slot_value(global_slot(make_symbol(sc, ">")));
   c_function_chooser(f) = greater_chooser;
 
   greater_s_ic = s7_make_function(sc, ">", g_greater_s_ic, 2, 0, false, "> optimization");
@@ -27880,7 +27889,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* <= */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "<=")));
+  f = slot_value(global_slot(make_symbol(sc, "<=")));
   c_function_chooser(f) = leq_chooser;
 
   leq_s_ic = s7_make_function(sc, "<=", g_leq_s_ic, 2, 0, false, "<= optimization");
@@ -27890,7 +27899,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* >= */
-  f = slot_value(symbol_global_slot(make_symbol(sc, ">=")));
+  f = slot_value(global_slot(make_symbol(sc, ">=")));
   c_function_chooser(f) = geq_chooser;
 
   geq_s_ic = s7_make_function(sc, ">=", g_geq_s_ic, 2, 0, false, ">= optimization");
@@ -27902,7 +27911,7 @@ static void init_choosers(s7_scheme *sc)
 #endif
 
   /* char=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "char=?")));
+  f = slot_value(global_slot(make_symbol(sc, "char=?")));
   c_function_chooser(f) = char_equal_chooser;
 
   char_equal_s_ic = s7_make_function(sc, "char=?", g_char_equal_s_ic, 2, 0, false, "char=? optimization");
@@ -27912,7 +27921,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* char>? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "char>?")));
+  f = slot_value(global_slot(make_symbol(sc, "char>?")));
   c_function_chooser(f) = char_greater_chooser;
 
   char_greater_s_ic = s7_make_function(sc, "char>?", g_char_greater_s_ic, 2, 0, false, "char>? optimization");
@@ -27922,7 +27931,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* char<? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "char<?")));
+  f = slot_value(global_slot(make_symbol(sc, "char<?")));
   c_function_chooser(f) = char_less_chooser;
 
   char_less_s_ic = s7_make_function(sc, "char<?", g_char_less_s_ic, 2, 0, false, "char<? optimization");
@@ -27932,7 +27941,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* char<=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "char<=?")));
+  f = slot_value(global_slot(make_symbol(sc, "char<=?")));
   c_function_chooser(f) = char_leq_chooser;
 
   char_leq_s_ic = s7_make_function(sc, "char<=?", g_char_leq_s_ic, 2, 0, false, "char<=? optimization");
@@ -27942,7 +27951,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* char>=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "char>=?")));
+  f = slot_value(global_slot(make_symbol(sc, "char>=?")));
   c_function_chooser(f) = char_geq_chooser;
 
   char_geq_s_ic = s7_make_function(sc, "char>=?", g_char_geq_s_ic, 2, 0, false, "char>=? optimization");
@@ -27952,7 +27961,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* char-ci=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "char-ci=?")));
+  f = slot_value(global_slot(make_symbol(sc, "char-ci=?")));
   c_function_chooser(f) = char_ci_equal_chooser;
 
   char_ci_equal_s_ic = s7_make_function(sc, "char-ci=?", g_char_ci_equal_s_ic, 2, 0, false, "char-ci=? optimization");
@@ -27962,7 +27971,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* char-ci>? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "char-ci>?")));
+  f = slot_value(global_slot(make_symbol(sc, "char-ci>?")));
   c_function_chooser(f) = char_ci_greater_chooser;
 
   char_ci_greater_s_ic = s7_make_function(sc, "char-ci>?", g_char_ci_greater_s_ic, 2, 0, false, "char-ci>? optimization");
@@ -27972,7 +27981,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* char-ci<? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "char-ci<?")));
+  f = slot_value(global_slot(make_symbol(sc, "char-ci<?")));
   c_function_chooser(f) = char_ci_less_chooser;
 
   char_ci_less_s_ic = s7_make_function(sc, "char-ci<?", g_char_ci_less_s_ic, 2, 0, false, "char-ci<? optimization");
@@ -27982,7 +27991,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* char-ci<=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "char-ci<=?")));
+  f = slot_value(global_slot(make_symbol(sc, "char-ci<=?")));
   c_function_chooser(f) = char_ci_leq_chooser;
 
   char_ci_leq_s_ic = s7_make_function(sc, "char-ci<=?", g_char_ci_leq_s_ic, 2, 0, false, "char-ci<=? optimization");
@@ -27992,7 +28001,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* char-ci>=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "char-ci>=?")));
+  f = slot_value(global_slot(make_symbol(sc, "char-ci>=?")));
   c_function_chooser(f) = char_ci_geq_chooser;
 
   char_ci_geq_s_ic = s7_make_function(sc, "char-ci>=?", g_char_ci_geq_s_ic, 2, 0, false, "char-ci>=? optimization");
@@ -28002,7 +28011,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* string=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "string=?")));
+  f = slot_value(global_slot(make_symbol(sc, "string=?")));
   c_function_chooser(f) = string_equal_chooser;
 
   string_equal_s_ic = s7_make_function(sc, "string=?", g_string_equal_s_ic, 2, 0, false, "string=? optimization");
@@ -28012,7 +28021,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* string>? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "string>?")));
+  f = slot_value(global_slot(make_symbol(sc, "string>?")));
   c_function_chooser(f) = string_greater_chooser;
 
   string_greater_s_ic = s7_make_function(sc, "string>?", g_string_greater_s_ic, 2, 0, false, "string>? optimization");
@@ -28022,7 +28031,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* string<? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "string<?")));
+  f = slot_value(global_slot(make_symbol(sc, "string<?")));
   c_function_chooser(f) = string_less_chooser;
 
   string_less_s_ic = s7_make_function(sc, "string<?", g_string_less_s_ic, 2, 0, false, "string<? optimization");
@@ -28032,7 +28041,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* string<=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "string<=?")));
+  f = slot_value(global_slot(make_symbol(sc, "string<=?")));
   c_function_chooser(f) = string_leq_chooser;
 
   string_leq_s_ic = s7_make_function(sc, "string<=?", g_string_leq_s_ic, 2, 0, false, "string<=? optimization");
@@ -28042,7 +28051,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* string>=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "string>=?")));
+  f = slot_value(global_slot(make_symbol(sc, "string>=?")));
   c_function_chooser(f) = string_geq_chooser;
 
   string_geq_s_ic = s7_make_function(sc, "string>=?", g_string_geq_s_ic, 2, 0, false, "string>=? optimization");
@@ -28052,7 +28061,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* string-ci=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "string-ci=?")));
+  f = slot_value(global_slot(make_symbol(sc, "string-ci=?")));
   c_function_chooser(f) = string_ci_equal_chooser;
 
   string_ci_equal_s_ic = s7_make_function(sc, "string-ci=?", g_string_ci_equal_s_ic, 2, 0, false, "string-ci=? optimization");
@@ -28062,7 +28071,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* string-ci>? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "string-ci>?")));
+  f = slot_value(global_slot(make_symbol(sc, "string-ci>?")));
   c_function_chooser(f) = string_ci_greater_chooser;
 
   string_ci_greater_s_ic = s7_make_function(sc, "string-ci>?", g_string_ci_greater_s_ic, 2, 0, false, "string-ci>? optimization");
@@ -28072,7 +28081,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* string-ci<? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "string-ci<?")));
+  f = slot_value(global_slot(make_symbol(sc, "string-ci<?")));
   c_function_chooser(f) = string_ci_less_chooser;
 
   string_ci_less_s_ic = s7_make_function(sc, "string-ci<?", g_string_ci_less_s_ic, 2, 0, false, "string-ci<? optimization");
@@ -28082,7 +28091,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* string-ci<=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "string-ci<=?")));
+  f = slot_value(global_slot(make_symbol(sc, "string-ci<=?")));
   c_function_chooser(f) = string_ci_leq_chooser;
 
   string_ci_leq_s_ic = s7_make_function(sc, "string-ci<=?", g_string_ci_leq_s_ic, 2, 0, false, "string-ci<=? optimization");
@@ -28092,7 +28101,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* string-ci>=? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "string-ci>=?")));
+  f = slot_value(global_slot(make_symbol(sc, "string-ci>=?")));
   c_function_chooser(f) = string_ci_geq_chooser;
 
   string_ci_geq_s_ic = s7_make_function(sc, "string-ci>=?", g_string_ci_geq_s_ic, 2, 0, false, "string-ci>=? optimization");
@@ -28102,7 +28111,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* abs */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "abs")));
+  f = slot_value(global_slot(make_symbol(sc, "abs")));
   c_function_chooser(f) = abs_chooser;
 #if (!WITH_GMP)
   abs_sub_ss = s7_make_function(sc, "abs", g_abs_sub_ss, 2, 0, false, "abs(- a b) optimization");
@@ -28111,7 +28120,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* for-each */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "for-each")));
+  f = slot_value(global_slot(make_symbol(sc, "for-each")));
   c_function_chooser(f) = for_each_chooser;
   for_each_1 = s7_make_function(sc, "for-each", g_for_each_1, 2, 0, false, "for-each optimization");
   c_function_class(for_each_1) = c_function_class(f);
@@ -28122,7 +28131,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* vector-ref */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "vector-ref")));
+  f = slot_value(global_slot(make_symbol(sc, "vector-ref")));
   c_function_chooser(f) = vector_ref_chooser;
 
   vector_ref_ic = s7_make_function(sc, "vector-ref", g_vector_ref_ic, 2, 0, false, "vector-ref optimization");
@@ -28132,7 +28141,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* vector-set! */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "vector-set!")));
+  f = slot_value(global_slot(make_symbol(sc, "vector-set!")));
   c_function_chooser(f) = vector_set_chooser;
 
   vector_set_ic = s7_make_function(sc, "vector-set!", g_vector_set_ic, 3, 0, false, "vector-set! optimization");
@@ -28142,7 +28151,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* hash-table-ref */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "hash-table-ref")));
+  f = slot_value(global_slot(make_symbol(sc, "hash-table-ref")));
   c_function_chooser(f) = hash_table_ref_chooser;
 
   hash_table_ref_2 = s7_make_function(sc, "hash-table-ref", g_hash_table_ref_2, 2, 0, false, "hash-table-ref optimization");
@@ -28154,7 +28163,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* not */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "not")));
+  f = slot_value(global_slot(make_symbol(sc, "not")));
   c_function_chooser(f) = not_chooser;
 
   not_is_pair = s7_make_function(sc, "not", g_not_is_pair, 1, 0, false, "not optimization");
@@ -28194,7 +28203,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* pair? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "pair?")));
+  f = slot_value(global_slot(make_symbol(sc, "pair?")));
   c_function_chooser(f) = is_pair_chooser;
 
   is_pair_car = s7_make_function(sc, "pair?", g_is_pair_car, 1, 0, false, "pair? optimization");
@@ -28204,7 +28213,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* null? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "null?")));
+  f = slot_value(global_slot(make_symbol(sc, "null?")));
   c_function_chooser(f) = is_null_chooser;
 
   is_null_cdr = s7_make_function(sc, "null?", g_is_null_cdr, 1, 0, false, "null? optimization");
@@ -28212,12 +28221,12 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* symbol? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "symbol?")));
+  f = slot_value(global_slot(make_symbol(sc, "symbol?")));
   c_function_chooser(f) = is_symbol_chooser;
 
 
   /* eq? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "eq?")));
+  f = slot_value(global_slot(make_symbol(sc, "eq?")));
   c_function_chooser(f) = is_eq_chooser;
 
   is_eq_car = s7_make_function(sc, "eq?", g_is_eq_car, 2, 0, false, "eq? optimization");
@@ -28229,7 +28238,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* zero? */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "zero?")));
+  f = slot_value(global_slot(make_symbol(sc, "zero?")));
   c_function_chooser(f) = is_zero_chooser;
 
   is_zero_logand_s_ash_cs = s7_make_function(sc, "zero?", g_is_zero_logand_s_ash_cs, 1, 0, false, "zero? optimization");
@@ -28237,7 +28246,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* memq */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "memq")));
+  f = slot_value(global_slot(make_symbol(sc, "memq")));
   c_function_chooser(f) = memq_chooser;
   
   memq_3 = s7_make_function(sc, "memq", g_memq_3, 2, 0, false, "memq optimization");
@@ -28249,7 +28258,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* member */
-  f = slot_value(symbol_global_slot(make_symbol(sc, "member")));
+  f = slot_value(global_slot(make_symbol(sc, "member")));
   c_function_chooser(f) = member_chooser;
   
   member_ss = s7_make_function(sc, "member", g_member_ss, 2, 0, false, "member optimization");
@@ -28273,13 +28282,13 @@ static s7_pointer collect_collisions(s7_scheme *sc, s7_pointer lst, s7_pointer e
   for (p = lst; is_pair(p); p = cdr(p))
     {
       if ((is_symbol(car(p))) &&
-	  (symbol_global_slot(car(p)) != sc->NIL))
+	  (global_slot(car(p)) != sc->NIL))
 	sc->w = cons(sc, car(p), sc->w);
       else
 	{
 	  if ((is_pair(car(p))) &&
 	      (is_symbol(caar(p))) &&
-	      (symbol_global_slot(caar(p)) != sc->NIL))
+	      (global_slot(caar(p)) != sc->NIL))
 	    sc->w = cons(sc, caar(p), sc->w);
 	}
     }
@@ -29458,7 +29467,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       /* fprintf(stderr, "let\n"); */
       if (is_symbol(cadr(p)))
 	{
-	  if (symbol_global_slot(cadr(p)) != sc->NIL)
+	  if (global_slot(cadr(p)) != sc->NIL)
 	    sc->w = cons(sc, cadr(p), sc->w);
 	  sc->w = collect_collisions(sc, caddr(p), sc->w);
 	}
@@ -29484,7 +29493,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 	      /* fprintf(stderr, "define: %s\n", DISPLAY_80(p)); */
 	      if (is_symbol(cadr(p)))
 		{
-		  if (symbol_global_slot(cadr(p)) != sc->NIL)
+		  if (global_slot(cadr(p)) != sc->NIL)
 		    sc->w = cons(sc, cadr(p), sc->w);
 		}
 	      else sc->w = collect_collisions(sc, cadr(p), sc->w);
@@ -29498,7 +29507,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 	      if (op == OP_SET)
 		{
 		  if ((is_symbol(cadr(p))) &&
-		      (symbol_global_slot(cadr(p)) != sc->NIL))
+		      (global_slot(cadr(p)) != sc->NIL))
 		    sc->w = cons(sc, cadr(p), sc->w);
 		}
 	      else
@@ -29534,7 +29543,7 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_po
     return(sc->NIL);
 
   if (is_global(hdl))
-    return(symbol_global_slot(hdl));
+    return(global_slot(hdl));
 
   id = symbol_id(hdl);
   for (x = sc->envir; id < frame_id(x); x = next_environment(x));
@@ -29542,7 +29551,7 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_po
     {
       s7_pointer y;
       if (frame_id(x) == id)
-	return(symbol_local_slot(hdl));
+	return(local_slot(hdl));
 
       for (y = environment_slots(x); is_slot(y); y = next_slot(y))
 	if (slot_symbol(y) == hdl)
@@ -29566,7 +29575,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
       
       /* fprintf(stderr, "%s syntax %s %d\n", DISPLAY(y), describe_type_bits(y), ((y == sc->QUOTE) || (y == sc->QUOTE_UNCHECKED))); */
       if (is_syntactic(y))
-	return(optimize_syntax(sc, x, slot_value(symbol_global_slot(y)), hop, e));
+	return(optimize_syntax(sc, x, slot_value(global_slot(y)), hop, e));
 
       func = find_uncomplicated_symbol(sc, y, e);
       if (is_not_null(func))
@@ -30360,7 +30369,7 @@ void s7_unoptimize(s7_scheme *sc, s7_pointer code)
     {
       if ((typeflag(car(code)) == SYNTACTIC_TYPE) &&
 	  (syntax_opcode(car(code)) >= OP_QUOTE_UNCHECKED))
-	car(code) = cadr(symbol_global_slot(car(code)));
+	car(code) = car(slot_value(global_slot(car(code))));
       else s7_unoptimize(sc, car(code));
       s7_unoptimize(sc, cdr(code));
     }
@@ -30372,7 +30381,7 @@ static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
   #define H_unoptimize "(unoptimize code) erases all the optimizer info in code"
 
   if (typeflag(car(args)) == SYNTACTIC_TYPE)
-    return(cadr(symbol_global_slot(car(args))));
+    return(car(slot_value(global_slot(car(args)))));
 
   s7_unoptimize(sc, car(args));
   return(car(args));
@@ -31609,60 +31618,59 @@ static s7_pointer check_set(s7_scheme *sc)
 		       */
 		      
 		      /* (define (hi) (let ((x 1)) (set! x (+ x 1)))) */
+		      car(ecdr(sc->code)) = sc->SET_SYMBOL_P;
 #if WITH_OPTIMIZATION
 		      if ((!symbol_has_accessor(car(sc->code))) &&
 			  (!is_global(car(sc->code))) &&
-			  (is_optimized(cadr(sc->code))))
+			  (is_optimized(cadr(sc->code))) &&
+			  (is_not_null(cdr(cadr(sc->code)))))               /* (set! x (y)) */
 			{
-			  if ((caddr(cadr(sc->code)) == small_int(1)) &&
-			      (cadr(cadr(sc->code)) == car(sc->code)))
+			  if (is_not_null(cddr(cadr(sc->code))))
 			    {
-			      if (ecdr(cadr(sc->code)) == add_s1)
-				car(ecdr(sc->code)) = sc->INCREMENT_1;
-			      else 
+			      if ((caddr(cadr(sc->code)) == small_int(1)) &&
+				  (cadr(cadr(sc->code)) == car(sc->code)))
 				{
-				  if (ecdr(cadr(sc->code)) == subtract_s1)
-				    car(ecdr(sc->code)) = sc->DECREMENT_1;
+				  if (ecdr(cadr(sc->code)) == add_s1)
+				    car(ecdr(sc->code)) = sc->INCREMENT_1;
+				  else 
+				    {
+				      if (ecdr(cadr(sc->code)) == subtract_s1)
+					car(ecdr(sc->code)) = sc->DECREMENT_1;
+				    }
 				}
-			    }
-			  else
-			    {
-			      if ((cadr(cadr(sc->code)) == small_int(1)) &&
-				  (caddr(cadr(sc->code)) == car(sc->code)) &&
-				  (ecdr(cadr(sc->code)) == add_1s))
-				car(ecdr(sc->code)) = sc->INCREMENT_1;
 			      else
 				{
-				  if ((car(sc->code) == cadr(cadr(sc->code))) &&
-				      (caadr(sc->code) == sc->CDR))
-				    car(ecdr(sc->code)) = sc->SET_CDR;
+				  if ((cadr(cadr(sc->code)) == small_int(1)) &&
+				      (caddr(cadr(sc->code)) == car(sc->code)) &&
+				      (ecdr(cadr(sc->code)) == add_1s))
+				    car(ecdr(sc->code)) = sc->INCREMENT_1;
 				  else
 				    {
 				      if ((car(sc->code) == caddr(cadr(sc->code))) &&
 					  (is_symbol(cadr(cadr(sc->code)))) &&
 					  (caadr(sc->code) == s7_make_symbol(sc, "cons")))
 					car(ecdr(sc->code)) = sc->SET_CONS;
-				      else 
-					{
-					  /* fprintf(stderr, "set %s %s\n", opt_names[optimize_data(cadr(sc->code))], DISPLAY_80(cadr(sc->code))); */
-					  if (is_h_safe_c_s(cadr(sc->code)))
-					    car(ecdr(sc->code)) = sc->SET_SYMBOL_R;
-					  else car(ecdr(sc->code)) = sc->SET_SYMBOL_P;
-					}
 				    }
 				}
 			    }
+			  else
+			    {
+			      if ((car(sc->code) == cadr(cadr(sc->code))) &&
+				  (caadr(sc->code) == sc->CDR))
+				car(ecdr(sc->code)) = sc->SET_CDR;
+			      else
+				{
+				  if (is_h_safe_c_s(cadr(sc->code)))
+				    car(ecdr(sc->code)) = sc->SET_SYMBOL_R;
+				}
+			    }
 			}
-		      else car(ecdr(sc->code)) = sc->SET_SYMBOL_P;
-#else
-		      car(ecdr(sc->code)) = sc->SET_SYMBOL_P;
 #endif
 		    }
 		}
 	    }
 	}
     }
-
   return(sc->code);
 }
 
@@ -31760,7 +31768,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer stepper, s7_po
 		{
 		  opcode_t op;
 		  s7_pointer func;
-		  func = slot_value(symbol_global_slot(x));
+		  func = slot_value(global_slot(x));
 		  op = (opcode_t)syntax_opcode(func);
 		  if (op != OP_QUOTE)
 		    {
@@ -32015,8 +32023,8 @@ static s7_pointer check_do(s7_scheme *sc)
 
 			    /* PERHAPS: check function_class of ecdr here? avoids the symbol lookup 
 			     */
-			    (c_function_call(slot_value(symbol_global_slot(car(step_expr)))) == g_add) &&
-			    (c_function_call(slot_value(symbol_global_slot(car(end)))) == g_equal))
+			    (c_function_call(slot_value(global_slot(car(step_expr)))) == g_add) &&
+			    (c_function_call(slot_value(global_slot(car(end)))) == g_equal))
 			  {
 			    /* we're stepping by +1 and going to =
 			     *   the final integer check has to wait until run time (symbol value dependent)
@@ -32238,12 +32246,12 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
   s7_pointer x;	
 
   if (frame_id(sc->envir) == symbol_id(hdl))
-    return(slot_value(symbol_local_slot(hdl)));
+    return(slot_value(local_slot(hdl)));
 
   for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
 
   if (frame_id(x) == symbol_id(hdl))
-    return(slot_value(symbol_local_slot(hdl)));	
+    return(slot_value(local_slot(hdl)));	
 
   for (; is_environment(x); x = next_environment(x))
     {
@@ -32252,7 +32260,7 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
 	if (slot_symbol(y) == hdl)
 	  return(slot_value(y)); 
     }
-  x = symbol_global_slot(hdl);	
+  x = global_slot(hdl);	
   if (is_not_null(x)) 
     return(slot_value(x)); 
   return(sc->UNDEFINED);
@@ -32270,7 +32278,7 @@ static s7_pointer fs_1(s7_scheme *sc, s7_pointer hdl)
   for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
 
   if (frame_id(x) == symbol_id(hdl))
-    return(slot_value(symbol_local_slot(hdl)));	
+    return(slot_value(local_slot(hdl)));	
 
   for (; is_environment(x); x = next_environment(x))
     {
@@ -32279,7 +32287,7 @@ static s7_pointer fs_1(s7_scheme *sc, s7_pointer hdl)
 	if (slot_symbol(y) == hdl)
 	  return(slot_value(y)); 
     }
-  x = symbol_global_slot(hdl);	
+  x = global_slot(hdl);	
   if (is_not_null(x)) 
     return(slot_value(x)); 
   return(sc->UNDEFINED);
@@ -32313,7 +32321,7 @@ static bool function_is_ok_1(s7_scheme *sc, s7_pointer p, s7_pointer val)
   ({ s7_pointer _code_; \
      _code_ = Code; \
      (((frame_id(sc->envir) == symbol_id(car(_code_)))  && \
-       (slot_value(symbol_local_slot(car(_code_))) == ecdr(_code_))) || \
+       (slot_value(local_slot(car(_code_))) == ecdr(_code_))) || \
       ({ s7_pointer _val_; \
          _val_ = fs_1(sc, car(_code_)); \
          ((_val_ == ecdr(_code_)) || \
@@ -32807,7 +32815,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  x = environment_slots(env);
 	  slot_value(x) = arg;
 	  symbol_id(slot_symbol(x)) = id;
-	  symbol_local_slot(slot_symbol(x)) = x;
+	  local_slot(slot_symbol(x)) = x;
 	  sc->envir = env;
 	  sc->code = closure_body(sc->code);
 	  goto BEGIN;
@@ -33492,7 +33500,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    next_slot(y) = environment_slots(sc->envir);
 	    environment_slots(sc->envir) = y;
 	    symbol_id(sym) = frame_id(sc->envir);
-	    symbol_local_slot(sym) = y;
+	    local_slot(sym) = y;
 
 	    if (is_not_null(cddar(x)))                /* else no incr expr, so ignore it henceforth */
 	      {
@@ -33757,7 +33765,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    x = environment_slots(env);
 		    slot_value(x) = finder(sc, cadr(code));
 		    symbol_id(slot_symbol(x)) = frame_number;
-		    symbol_local_slot(slot_symbol(x)) = x;
+		    local_slot(slot_symbol(x)) = x;
 		    sc->envir = env;
 		    sc->code = car(closure_body(ecdr(code)));
 		    sc->cur_code = sc->code;
@@ -33788,7 +33796,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    x = environment_slots(env);
 		    slot_value(x) = car(sc->T1_1);
 		    symbol_id(slot_symbol(x)) = frame_number;
-		    symbol_local_slot(slot_symbol(x)) = x;
+		    local_slot(slot_symbol(x)) = x;
 		    sc->envir = env;
 		    sc->code = closure_body(ecdr(sc->code));
 		    goto BEGIN;
@@ -33824,12 +33832,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    x = environment_slots(env);
 		    slot_value(x) = car(sc->T2_1);
 		    symbol_id(slot_symbol(x)) = id;
-		    symbol_local_slot(slot_symbol(x)) = x; /* this is not redundant */
+		    local_slot(slot_symbol(x)) = x; /* this is not redundant */
 		    
 		    x = next_slot(x);
 		    slot_value(x) = car(sc->T2_2);
 		    symbol_id(slot_symbol(x)) = id;
-		    symbol_local_slot(slot_symbol(x)) = x; 
+		    local_slot(slot_symbol(x)) = x; 
 		    
 		    sc->envir = env;
 		    sc->code = closure_body(sc->code);
@@ -33948,7 +33956,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			slot_value(x) = car(z);
 			symbol_id(slot_symbol(x)) = id;
-			symbol_local_slot(slot_symbol(x)) = x;
+			local_slot(slot_symbol(x)) = x;
 		      }
 		    sc->envir = env;
 		    sc->code = closure_body(sc->code);
@@ -34153,7 +34161,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    NEW_CELL_NO_CHECK(sc, slot);
 		    slot_symbol(slot) = sym;
 		    symbol_id(sym) = frame_number;	
-		    symbol_local_slot(sym) = slot;
+		    local_slot(sym) = slot;
 		    if (symbol_has_accessor(sym))
 		      slot_value(slot) = call_symbol_bind(sc, sym, val);
 		    else slot_value(slot) = val;
@@ -34220,7 +34228,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    NEW_CELL_NO_CHECK(sc, slot1);
 		    slot_symbol(slot1) = sym;
 		    symbol_id(sym) = frame_number;	
-		    symbol_local_slot(sym) = slot1;
+		    local_slot(sym) = slot1;
 		    if (symbol_has_accessor(sym))
 		      slot_value(slot1) = call_symbol_bind(sc, sym, val);
 		    else slot_value(slot1) = val;
@@ -34246,7 +34254,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			NEW_CELL_NO_CHECK(sc, slot2);
 			slot_symbol(slot2) = sym;
 			symbol_id(sym) = frame_number;	
-			symbol_local_slot(sym) = slot2;
+			local_slot(sym) = slot2;
 			if (symbol_has_accessor(sym))
 			  slot_value(slot2) = call_symbol_bind(sc, sym, val);
 			else slot_value(slot2) = val;
@@ -34393,7 +34401,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			
 			slot_symbol(z) = sym;
 			symbol_id(sym) = id;
-			symbol_local_slot(sym) = z;
+			local_slot(sym) = z;
 			if (symbol_has_accessor(sym))
 			  slot_value(z) = call_symbol_bind(sc, sym, val);
 			else slot_value(z) = val;
@@ -37628,7 +37636,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
 		  slot_value(x) = car(z);
 		  symbol_id(slot_symbol(x)) = id;
-		  symbol_local_slot(slot_symbol(x)) = x;
+		  local_slot(slot_symbol(x)) = x;
 		}
 
 	      if ((is_null(x)) &&
@@ -37716,7 +37724,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		slot_symbol(z) = sym;
 		symbol_id(sym) = id;
-		symbol_local_slot(sym) = z;
+		local_slot(sym) = z;
 		if (symbol_has_accessor(sym))
 		  slot_value(z) = call_symbol_bind(sc, sym, val);
 		else slot_value(z) = val;
@@ -38097,7 +38105,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      NEW_CELL_NO_CHECK(sc, y);
 	      slot_symbol(y) = sc->__FUNC__;
 	      symbol_id(slot_symbol(y)) = frame_id(x);
-	      symbol_local_slot(slot_symbol(y)) = y;
+	      local_slot(slot_symbol(y)) = y;
 	      slot_value(y) = sc->x;
 	      set_type(y, T_SLOT | T_IMMUTABLE);
 	      next_slot(y) = sc->NIL;
@@ -38635,7 +38643,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SET1:  
       /* if unbound variable hook here, we need the binding, not the current value */
       if (is_global(sc->code))
-	sc->y = symbol_global_slot(sc->code);
+	sc->y = global_slot(sc->code);
       else sc->y = find_symbol(sc, sc->code);
       if (is_slot(sc->y)) 
 	{
@@ -39582,7 +39590,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  next_slot(y) = environment_slots(sc->envir);
 		  environment_slots(sc->envir) = y;
 		  symbol_id(sym) = frame_id(sc->envir);
-		  symbol_local_slot(sym) = y;
+		  local_slot(sym) = y;
 		  
 		  y = args;
 		}
@@ -39614,7 +39622,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  slot_symbol(y) = sym;
 		  symbol_id(sym) = id;
-		  symbol_local_slot(sym) = y;
+		  local_slot(sym) = y;
 		  if (symbol_has_accessor(sym))
 		    slot_value(y) = call_symbol_bind(sc, sym, val);
 		  else slot_value(y) = val;
@@ -39678,7 +39686,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	NEW_CELL_NO_CHECK(sc, y); 
 	slot_symbol(y) = caar(sc->code);
 	symbol_id(slot_symbol(y)) = frame_id(x);
-	symbol_local_slot(slot_symbol(y)) = y;
+	local_slot(slot_symbol(y)) = y;
 	if (symbol_has_accessor(slot_symbol(y)))
 	  slot_value(y) = call_symbol_bind(sc, slot_symbol(y), sc->value);
 	else slot_value(y) = sc->value;
@@ -39755,7 +39763,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer slot;
 	    slot = find_local_symbol(sc, sc->envir, caar(x));
-	    /* symbol_local_slot is not safe here: (letrec ((x 1) (y (let ((x 2)) x))) ...)
+	    /* local_slot is not safe here: (letrec ((x 1) (y (let ((x 2)) x))) ...)
 	     */
 	    if (symbol_has_accessor(slot_symbol(slot)))
 	      slot_set_value(slot, call_symbol_bind(sc, slot_symbol(slot), car(y)));
@@ -46487,7 +46495,7 @@ the error type and the info passed to the error handler.");
 
   /* -------- *vector-print-length* -------- */
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
-  sc->vector_print_length = symbol_global_slot(make_symbol(sc, "*vector-print-length*"));
+  sc->vector_print_length = global_slot(make_symbol(sc, "*vector-print-length*"));
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*vector-print-length*"), 
 		       list_3(sc, 
 			      sc->F, 
@@ -46514,7 +46522,7 @@ the error type and the info passed to the error handler.");
 
   /* -------- *#readers* -------- */
   s7_define_variable(sc, "*#readers*", sc->NIL);
-  sc->sharp_readers = symbol_global_slot(make_symbol(sc, "*#readers*"));
+  sc->sharp_readers = global_slot(make_symbol(sc, "*#readers*"));
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*#readers*"), 
 		       list_3(sc, 
 			      sc->F, 

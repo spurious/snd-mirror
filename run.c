@@ -4392,6 +4392,7 @@ static xen_value *case_form(ptree *prog, s7_pointer form, walk_result_t need_res
     {
       /* ignore keys for now */
       locations[i] = prog->triple_ctr;
+      if (!s7_is_pair(s7_car(body))) goto CASE_ERROR;
       v = walk_sequence(prog, scheme_cdar(body), need_result, "case");
       if (v == NULL) goto CASE_ERROR;
       if (need_result != DONT_NEED_RESULT)

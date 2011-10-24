@@ -497,7 +497,10 @@ s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs);
 void *s7_symbol_accessor_data(s7_pointer sym);
 void s7_symbol_set_accessor_data(s7_pointer sym, void *val);
+
+  /* these two may go away -- purely experimental */
 s7_pointer s7_symbol_slot(s7_scheme *sc, s7_pointer symbol);
+s7_pointer s7_symbol_slot_value(s7_scheme *sc, s7_pointer slot);
   /* these are for optimizations of symbol lookup */
 
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
