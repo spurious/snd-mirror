@@ -2319,6 +2319,13 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
+static unsigned char uppers[256];
+static void init_uppers(void)
+{
+  int i;
+  for (i = 0; i < 256; i++)
+    uppers[i] = toupper((unsigned char)i);
+}
 
 static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, const char *name)
 {
@@ -2362,7 +2369,7 @@ static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, c
       for (p2 = (const char *)(s2 + start); (*p2); p2++)
 	{
 	  const char *ptemp;
-	  for (p1 = s1, ptemp = p2; (*p1) && (*ptemp) && (toupper((int)(*p1)) == toupper((int)(*ptemp))); p1++, ptemp++);
+	  for (p1 = s1, ptemp = p2; (*p1) && (*ptemp) && (uppers[(int)(*p1)] == uppers[(int)(*ptemp)]); p1++, ptemp++);
 	  if (!(*p1))
 	    return(s7_make_integer(sc, p2 - s2));
 	}
@@ -2675,6 +2682,7 @@ void g_xen_initialize(void)
   add_source_file_extension("cl");
   add_source_file_extension("lisp");
   add_source_file_extension("init");  /* for slib */
+  init_uppers();
 #endif
 #if HAVE_FORTH
   add_source_file_extension("fth");

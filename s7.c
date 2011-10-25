@@ -314,7 +314,7 @@ enum {OP_NO_OP,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
       OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1,
+      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_EXPANSION,
       OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
 
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
@@ -382,7 +382,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "catch", "dynamic-wind", "define-constant", "define-constant", 
    "do", "do", "do", "do", "do", "do",
    "define*", "lambda*", "lambda*", "error-quit", "unwind-input", "unwind-output", 
-   "trace-return", "error-hook-quit", "trace-hook-quit", "with-environment", "with-environment",
+   "trace-return", "error-hook-quit", "trace-hook-quit", "with-environment", "with-environment", "define-expansion",
    "for-each", "for-each", "for-each", "map", "map", "barrier", "deactivate-goto",
    "define-bacro", "define-bacro*", 
    "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!",
@@ -701,7 +701,7 @@ typedef struct s7_cell {
     
     struct { 
       unsigned int length;
-      unsigned int hash;
+      unsigned int hash;  
       char *svalue;
     } string;
     
@@ -749,7 +749,7 @@ typedef struct s7_cell {
 
     struct {               /* counter (internal) */
       s7_pointer result, list;
-      long long int val;
+      long long int val, len;
     } ctr;
 
     struct {               /* additional object types (C and Scheme) */
@@ -996,7 +996,7 @@ struct s7_scheme {
 
 #define BUILT_IN_TYPES        34
 
-/* T_STACK, T_SLOT, and T_COUNTER are internal types, mainly for the GC mark process's benefit
+/* T_STACK, T_SLOT, and T_COUNTER are internal (stacks, bindings, map circular list checks)
  */
 
 #define TYPE_BITS                     8
@@ -1381,9 +1381,11 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 #define raw_pointer(p)                (p)->object.c_pointer
 
+#define is_counter(p)                 (type(p) == T_COUNTER)
 #define counter_result(p)             (p)->object.ctr.result
 #define counter_list(p)               (p)->object.ctr.list
 #define counter_count(p)              (p)->object.ctr.val
+#define counter_length(p)             (p)->object.ctr.len
 
 
 #define NUM_INT      0
@@ -3981,12 +3983,26 @@ static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
  */
 
 
-static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
+static s7_pointer copy_arg_list(s7_scheme *sc, s7_pointer lst)
 {
-  /* the non-recursive version of this was only slightly faster */
+  /* lst may be dotted, but not circular */
   if (is_null(lst))
     return(sc->NIL);
-  return(cons(sc, car(lst), copy_list(sc, cdr(lst))));
+  if (is_pair(cdr(lst)))
+    return(cons(sc, car(lst), copy_arg_list(sc, cdr(lst))));
+  return(cons(sc, car(lst), cdr(lst)));
+}
+
+
+static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
+{
+  s7_pointer nobj;
+  NEW_CELL(sc, nobj);
+  counter_result(nobj) = counter_result(obj);
+  counter_list(nobj) = counter_list(obj);
+  counter_count(nobj) = counter_count(obj);
+  counter_length(nobj) = counter_length(obj);
+  return(nobj);
 }
 
 
@@ -4000,8 +4016,6 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
   nobj->hloc = nloc;
   
-  /* TODO: what about a counter here? */
-
   /* nobj is safe here because the gc is off */
   if (dont_copy(car(obj)))
     car(nobj) = car(obj);
@@ -4043,14 +4057,23 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 
   for (i = 0; i < top; i += 4)
     {
+      s7_pointer p;
       if (dont_copy(ov[i]))
 	nv[i] = ov[i];
       else nv[i] = copy_object(sc, ov[i]);    /* code */
+
       nv[i + 1] = ov[i + 1];                  /* environment pointer */
-      if (is_pair(ov[i + 2]))                 /* args need not be a list (it can be a port or #f, etc) -- if it is a list we assume it's a proper list */
-	nv[i + 2] = copy_list(sc, ov[i + 2]); /* args (copy is needed -- see s7test.scm) */
-      else nv[i + 2] = ov[i + 2];             /* is this a safe assumption? */
       nv[i + 3] = ov[i + 3];                  /* op (constant int) */
+
+      p = ov[i + 2];
+      if (is_pair(p))                         /* args need not be a list (it can be a port or #f, etc) */
+	nv[i + 2] = copy_arg_list(sc, p);     /* args (copy is needed -- see s7test.scm) */
+      else
+	{
+	  if (is_counter(p))                  /* these can only occur in this context */
+	    nv[i + 2] = copy_counter(sc, p);
+	  else nv[i + 2] = p;                 /* is this a safe assumption? */
+	}
     }
   
   s7_gc_on(sc, true);
@@ -8905,6 +8928,9 @@ static s7_pointer g_add_1s(s7_scheme *sc, s7_pointer args)
 }
 
 /* (let () (define (hi a) (+ a 1)) ((apply let '((x 32)) (list (procedure-source hi))) 12))
+ */
+/* other standard cases (fft-related): (+|- (vector-ref ...) s) -- actually (vector-set! v i (+|- (vector-ref v i) s))
+ *                                     (+|- (* s (vector-ref ...)) (* s (vector-ref ...)))
  */
 #endif
 
@@ -16334,6 +16360,15 @@ s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
 }
 
 
+static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
+{
+  /* the non-recursive version of this was only slightly faster */
+  if (is_null(lst))
+    return(sc->NIL);
+  return(cons(sc, car(lst), copy_list(sc, cdr(lst))));
+}
+
+
 static s7_pointer revappend(s7_scheme *sc, s7_pointer a, s7_pointer b) 
 {
   /* (map (lambda (x) (if (odd? x) (apply values '(1 2 3)) (values))) (list 1 2 3 4)) 
@@ -17570,7 +17605,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 	}
 
       /* sc->value = sc->F; */
-      y = cons(sc, args, sc->NIL);
+      y = cons(sc, args, sc->NIL); /* this could probably be handled with a counter cell (cdr here is unused) */
       ecdr(y) = x;
       fcdr(y) = x;
       push_stack(sc, OP_MEMBER_IF, y, eq_func);
@@ -18346,6 +18381,10 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
   vector_element(vec, index) = caddr(args);
   return(caddr(args));
 }
+
+/* other standard cases (fft-related): (+|- (vector-ref ...) s) -- actually (vector-set! v i (+|- (vector-ref v i) s))
+ *                                     (+|- (* s (vector-ref ...)) (* s (vector-ref ...)))
+ */
 
 /* TODO: vector_set_s_ic_g vector_set_sss vector_set_s_s_vector_ref_s_s or the equivalent (shared v)
  */
@@ -25003,14 +25042,14 @@ static s7_Int applicable_length(s7_scheme *sc, s7_pointer obj)
 
 static bool next_for_each(s7_scheme *sc)
 {
-  /* func = sc->code, func-args = cadr(sc->args), counter = car(sc->args), len = denominator(number(car(sc->args))), object(s) = cddr(sc->args) */
   s7_pointer x, y, z, vargs, fargs;
   int loc, zloc = -1;
 
   z = sc->NIL;
-  vargs = cddr(sc->args);
-  fargs = cadr(sc->args);
-  loc = s7_integer(car(sc->args));
+
+  vargs = counter_list(sc->args);
+  fargs = counter_result(sc->args);
+  loc = counter_count(sc->args);
 
   /* for-each func ... -- each trailing sequence arg contributes one arg to the current call on func, 
    *   so in the next loop, gather one arg from each sequence.
@@ -25031,9 +25070,9 @@ static bool next_for_each(s7_scheme *sc)
 	    {
 	      z = list_1(sc, s7_make_integer(sc, loc));
 
-	      /* we can't use car(sc->args) directly here -- it is a mutable integer, incremented below,
-	       *   but the object application (the getter function) might return the index!
-	       *   Then, we pre-increment, and the for-each application sees the incremented value.
+	      /* we can't use car(sc->args) directly here -- it is a counter.
+	       *   the object application (the getter function) might return the index.
+	       *   Then, if we pre-increment, and the for-each application sees the incremented value.
 	       *
                *    (let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) 4))))) (sum 0))
                *      (for-each (lambda (a b) (set! sum (+ sum a b))) ctr ctr) sum)
@@ -25069,7 +25108,7 @@ static bool next_for_each(s7_scheme *sc)
   if (zloc != -1)
     s7_gc_unprotect_at(sc, zloc);
 
-  integer(number(car(sc->args))) = loc + 1;
+  counter_count(sc->args) = loc + 1;
   push_stack(sc, OP_FOR_EACH, sc->args, sc->code);
   sc->args = fargs;
 
@@ -25081,7 +25120,6 @@ static bool next_for_each(s7_scheme *sc)
       cdr(sc->TEMP_CELL_1) = sc->args;
       sc->args = sc->TEMP_CELL;
     }
-
   return(true);
 }
 
@@ -25094,6 +25132,20 @@ static bool is_sequence(s7_scheme *sc, s7_pointer p)
 	 (s7_is_hash_table(p)) ||
 	 (is_c_object(p)));
 }
+
+
+static s7_pointer make_counter(s7_scheme *sc, s7_pointer result, s7_pointer lst, long long int count, long long int length)
+{
+  s7_pointer x;
+  NEW_CELL(sc, x);
+  counter_result(x) = result;
+  counter_list(x) = lst;
+  counter_count(x) = count;
+  counter_length(x) = length;
+  set_type(x, T_COUNTER);
+  return(x);
+}
+
 
 #if WITH_OPTIMIZATION
 static void initialize_safe_do(s7_scheme *sc, s7_pointer tree);
@@ -25278,17 +25330,17 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
     }
 
   sc->y = args;
-  x = make_mutable_integer(sc, 0);
-  denominator(number(x)) = len;
-  sc->args = cons_unchecked(sc, x,                         /* '(counter applicable-len func-args-holder . objects) */
-               cons_unchecked(sc, sc->x, 
-                 safe_reverse_in_place(sc, sc->z)));
+  sc->args = make_counter(sc, sc->x, safe_reverse_in_place(sc, sc->z), 0, len);
+  /* counter_result: func-arglist, counter_list: objects, counter_count: current count, counter_length: applicable length */
+
   sc->x = sc->NIL;
   sc->y = sc->NIL;
   sc->z = sc->NIL;
+
   push_stack(sc, OP_FOR_EACH, sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
+
 
 #if WITH_OPTIMIZATION
 /* also call-with-exit/catch/map etc */
@@ -25399,13 +25451,12 @@ static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 
 static bool next_map(s7_scheme *sc)
 {
-  /* func = sc->code, results so far = cadr(sc->args), counter = car(sc->args), len = denominator(number(car(sc->args))), object(s) = cddr(sc->args) */
   s7_pointer y, z, vargs;
   int loc, zloc = -1;
 
   z = sc->NIL;
-  vargs = cddr(sc->args);
-  loc = s7_integer(car(sc->args));
+  vargs = counter_list(sc->args);
+  loc = counter_count(sc->args);
   sc->x = sc->NIL;                     /* can't use preset args list here (as in for-each): (map list '(a b c)) */
 
   for (y = vargs; is_not_null(y); y = cdr(y))
@@ -25463,7 +25514,7 @@ static bool next_map(s7_scheme *sc)
     s7_gc_unprotect_at(sc, zloc);
   sc->x = safe_reverse_in_place(sc, sc->x);
 
-  integer(number(car(sc->args))) = loc + 1;
+  counter_count(sc->args) = loc + 1;
   push_stack(sc, OP_MAP, sc->args, sc->code);
   sc->args = sc->x;
   sc->x = sc->NIL;
@@ -25482,18 +25533,6 @@ static bool next_map(s7_scheme *sc)
     }
 
   return(true);
-}
-
-
-static s7_pointer make_counter(s7_scheme *sc, s7_pointer result, s7_pointer lst, long long int count)
-{
-  s7_pointer x;
-  NEW_CELL(sc, x);
-  counter_result(x) = result;
-  counter_list(x) = lst;
-  counter_count(x) = count;
-  set_type(x, T_COUNTER);
-  return(x);
 }
 
 
@@ -25525,7 +25564,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      (!symbol_has_accessor(car(closure_args(sc->code)))) &&  /* not wrapped in an accessor */
 	      (safe_list_length(sc, closure_args(sc->code)) == 1))    /* closure takes just one arg */
 	    {
-	      push_stack(sc, OP_MAP_SIMPLE, make_counter(sc, sc->NIL, obj, len), sc->code);
+	      push_stack(sc, OP_MAP_SIMPLE, make_counter(sc, sc->NIL, obj, len, 0), sc->code);
 	      return(sc->NO_VALUE);
 	    }
 
@@ -25616,12 +25655,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 			list_2(sc, make_protected_string(sc, "map's arguments are circular lists! ~A"), cdr(args))));
     }
 
-  x = make_mutable_integer(sc, 0);
-  denominator(number(x)) = len;
-  sc->args = cons_unchecked(sc, x,
-	       cons_unchecked(sc, sc->NIL, 
-                 safe_reverse_in_place(sc, sc->z)));
-
+  sc->args = make_counter(sc, sc->NIL, safe_reverse_in_place(sc, sc->z), 0, len);
   sc->y = sc->NIL;
   sc->z = sc->NIL;
   if (next_map(sc))
@@ -28322,7 +28356,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
    *   gc protect the current value somehow -- where to put it?
    */
 
-  /* fprintf(stderr, "    func: %s\n     e: %s\n", DISPLAY_80(car(x)), DISPLAY_80(e)); */
+  /* fprintf(stderr, "    func: %s, e: %s\n", DISPLAY_80(car(x)), DISPLAY_80(e));  */
 
   for (p = cdar(x); is_pair(p); p = cdr(p), args++)
     {
@@ -28473,10 +28507,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			    set_optimize_data(car(x), OP_VECTOR_S);
 			  else set_optimize_data(car(x), OP_VECTOR_C);
 			  ecdr(car(x)) = func;
-			  /* ecdr ignored in this case -- PERHAPS: set e/fcdr and include these in the h_safe_c_s business
-			   *   but a vector op can be combined into (for example) C_ZZ, and the ZZ code checks whether
-			   *   ecdr is a c_function (actually it assumes that it is and segfaults)
-			   */
 			  return(true);
 			}
 
@@ -28691,7 +28721,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		      set_optimized(car(x));
 		      set_unsafe(car(x));
 		      set_optimize_data(car(x), OP_C_ALL_G);
-		      set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
+		      set_c_function(car(x), c_function_chooser(func)(sc, func, 2, car(x)));
 		      return(false); 
 		    }
 		}
@@ -29113,7 +29143,8 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	  
 	  /*
 	    also g_member/assoc with safe closure 3rd arg is safe
-
+	  */
+	  /*
 	  if (!is_optimized(car(x)))
 	    fprintf(stderr, "2 case: %s\n", DISPLAY_80(car(x)));
 	  */
@@ -29446,20 +29477,17 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
   opcode_t op;
 
   p = car(x);
-  if ((!is_pair(cdr(p))) ||
-      (!is_pair(cddr(p))))			
+
+  /* fprintf(stderr, "optimize syntax %s\n     e: %s\n", DISPLAY(p), DISPLAY(e)); */
+
+  if (!is_pair(cdr(p))) /* cddr(p) might be null if, for example, (begin (let ...)) */
     return(false);
 
   op = (opcode_t)syntax_opcode(func);
 
-  /* fprintf(stderr, "%s optimize syntax %s\n     e: %s\n", op_names[op], DISPLAY(p), DISPLAY(e)); */
-
   if ((op == OP_QUOTE) || 
       (op == OP_WITH_ENV))
-    {
-      /* fprintf(stderr, "quote or with-env -> false\n"); */
-      return(false);
-    }
+    return(false);
 
   sc->w = e;
   if (op == OP_LET)
@@ -29564,16 +29592,17 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_po
 static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer e)
 {
   s7_pointer y;
+
   set_checked(car(x));
   y = caar(x);
 
-  /* fprintf(stderr, "optimize_expression %s\n     e: %s\n", DISPLAY(car(x)), DISPLAY(e)); */
+  /* fprintf(stderr, "[%p]\noptimize_expression %s\n     e: %s\n", car(x), DISPLAY(car(x)), DISPLAY(e));  */
 
   if (is_symbol(y))
     {
       s7_pointer func;
       
-      /* fprintf(stderr, "%s syntax %s %d\n", DISPLAY(y), describe_type_bits(y), ((y == sc->QUOTE) || (y == sc->QUOTE_UNCHECKED))); */
+      /* fprintf(stderr, "%s syntax %s %d\n", DISPLAY(y), describe_type_bits(y), ((y == sc->QUOTE) || (y == sc->QUOTE_UNCHECKED)));  */
       if (is_syntactic(y))
 	return(optimize_syntax(sc, x, slot_value(global_slot(y)), hop, e));
 
@@ -29582,7 +29611,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 	func = slot_value(func);
       else func = sc->F;
 
-      if (is_syntax(func))
+      if (is_syntactic(func))
 	return(optimize_syntax(sc, x, func, hop, e));
 
       /* we miss implicit indexing here because at this time, the data are not set */
@@ -29596,7 +29625,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 	  /* else it's something like a let variable binding: (sqrtfreq (sqrt frequency)) */
 	  s7_pointer p;
 	  int len = 0, pairs = 0, symbols = 0;
-	  /* fprintf(stderr, "check out %s\n", s7_object_to_c_string(sc, cdar(x)));  */
 	  for (p = cdar(x); is_pair(p); p = cdr(p), len++)
 	    {
 	      if (is_pair(car(p)))
@@ -29735,7 +29763,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
       /* (define (hi a) (case 1 ((1) (if (> a 2) a 2)))) */
 
       s7_pointer p;
-      /* fprintf(stderr, "    check out %s\n", s7_object_to_c_string(sc, cdar(x))); */
       for (p = car(x); is_pair(p); p = cdr(p))
 	{
 	  if (is_pair(car(p)))
@@ -29760,7 +29787,6 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 
   for (x = code; is_pair(x) && (!is_checked(x)); x = cdr(x))
     {
-      /* fprintf(stderr, "optimize %s: %d %d\n", DISPLAY(x), is_checked(x), is_optimized(x));  */
       set_checked(x);
       if (is_pair(car(x)))
 	{
@@ -32331,6 +32357,25 @@ static bool function_is_ok_1(s7_scheme *sc, s7_pointer p, s7_pointer val)
 #endif
 
 
+static void expand_code(s7_scheme *sc, s7_pointer p)
+{
+  s7_pointer x;
+  if ((is_symbol(car(p))) &&
+      (is_pair(cdr(p))))
+    {
+      ecdr(cdr(p)) = p;
+      set_overlay(cdr(p));
+    }
+  else
+    {
+      if (is_pair(car(p)))
+	expand_code(sc, car(p));
+    }
+  for (x = cdr(p); is_pair(x); x = cdr(x))
+    if (is_pair(car(x)))
+      expand_code(sc, car(x));
+}
+
 
 /* -------------------------------- eval -------------------------------- */
 
@@ -32697,24 +32742,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	  }
 	sc->value = safe_reverse_in_place(sc, counter_result(args));
-	
 	typeflag(args) = 0;
 	(*(sc->free_heap_top++)) = args;
 	sc->args = sc->NIL;
-	
 	goto START;
       }
+
 
     case OP_MAP:
       if (sc->value != sc->NO_VALUE)                   /* (map (lambda (x) (values)) (list 1)) */
 	{
 	  if (is_multiple_value(sc->value))            /* (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) */
-	    cadr(sc->args) = revappend(sc, multiple_value(sc->value), cadr(sc->args));
+	    counter_result(sc->args) = revappend(sc, multiple_value(sc->value), counter_result(sc->args));
 	  /* not append_in_place here because sc->value has the multiple-values bit set */
-	  else cadr(sc->args) = cons(sc, sc->value, cadr(sc->args));
+	  else counter_result(sc->args) = cons(sc, sc->value, counter_result(sc->args));
 	}
 
-      if (s7_integer(car(sc->args)) < denominator(number(car(sc->args))))
+      if (counter_count(sc->args) < counter_length(sc->args))
 	{
 	  if (next_map(sc))
 	    {
@@ -32723,8 +32767,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto APPLY;
 	    }
 	}
-      
-      sc->value = safe_reverse_in_place(sc, cadr(sc->args));
+      sc->value = safe_reverse_in_place(sc, counter_result(sc->args));
+      typeflag(sc->args) = 0;
+      (*(sc->free_heap_top++)) = sc->args;
+      sc->args = sc->NIL;
       goto START;
 
       
@@ -32781,8 +32827,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_FOR_EACH:
-      /* func = sc->code, func-args = cadr(sc->args), counter = car(sc->args), len = denonimator(number(car(sc->args))), object(s) = cddr(sc->args) */
-      if (s7_integer(car(sc->args)) < denominator(number(car(sc->args))))
+      if (counter_count(sc->args) < counter_length(sc->args))
 	{
 	  if (next_for_each(sc)) 
 	    {
@@ -32792,6 +32837,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       sc->value = sc->UNSPECIFIED;
+      typeflag(sc->args) = 0;
+      (*(sc->free_heap_top++)) = sc->args;
+      sc->args = sc->NIL;
       goto START;
 
 
@@ -33187,11 +33235,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->envir = new_frame_in_env(sc, sc->envir);
 
 	if (is_symbol(end))
-	  sc->args = list_2(sc, add_slot(sc, caaar(sc->code), init_val), find_symbol(sc, end));
-	else sc->args = list_2(sc, add_slot(sc, caaar(sc->code), init_val), cons_unchecked(sc, end, end));
-	/* the list_2 can't be a cons -- if there's a call/cc in the loop, its stack copy 
-	 *   assumes that sc->args is either not a list, or a proper list.
-	 */
+	  sc->args = cons(sc, add_slot(sc, caaar(sc->code), init_val), find_symbol(sc, end));
+	else sc->args = cons(sc, add_slot(sc, caaar(sc->code), init_val), cons_unchecked(sc, end, end));
 	
 	initialize_safe_do(sc, sc->code);
 
@@ -33204,7 +33249,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_Int step;
 	step = s7_integer(slot_value(car(sc->args))) + 1;
-	if (step == s7_integer(slot_value(cadr(sc->args))))
+	if (step == s7_integer(slot_value(cdr(sc->args))))
 	  {
 	    finalize_safe_do(sc);
 	    sc->code = cdr(cadr(sc->code));
@@ -33235,7 +33280,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	
 	end = caddr(car(cadr(sc->code)));
 	if (is_symbol(end))
-	  sc->args = list_2(sc, add_slot(sc, caaar(sc->code), sc->value), find_symbol(sc, end));
+	  sc->args = cons_unchecked(sc, add_slot(sc, caaar(sc->code), sc->value), find_symbol(sc, end));
 	else 
 	  {
 	    s7_pointer slot;
@@ -33243,11 +33288,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    slot_symbol(slot) = end;
 	    slot_value(slot) = end;
 	    set_type(slot, T_SLOT | T_IMMUTABLE);
-	    sc->args = list_2(sc, add_slot(sc, caaar(sc->code), sc->value), slot);
+	    sc->args = cons_unchecked(sc, add_slot(sc, caaar(sc->code), sc->value), slot);
 	  }
-	/* the list_2 can't be a cons -- if there's a call/cc in the loop, its stack copy 
-	 *   assumes that sc->args is either not a list, or a proper list.
-	 */
 	goto SIMPLE_DO_END;
       }
 
@@ -33273,7 +33315,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer end_test;
 	end_test = car(cadr(sc->code));
 	car(sc->T2_1) = slot_value(car(sc->args));
-	car(sc->T2_2) = slot_value(cadr(sc->args));
+	car(sc->T2_2) = slot_value(cdr(sc->args));
 	if (is_true(sc, c_call(end_test)(sc, sc->T2_1)))
 	  {
 	    sc->code = cdr(cadr(sc->code));
@@ -36867,7 +36909,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 	  
 	  /* -------------------------------------------------------------------------------- */
-	  /* fprintf(stderr, "unopt: %s\n", DISPLAY_80(sc->code)); */
+	  /*
+	   fprintf(stderr, "unopt: %s\n", DISPLAY_80(sc->code)); 
+	  */
 	  /* trailers */
 	  {
 	    s7_pointer carc;
@@ -37527,6 +37571,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* drop into ... */
 
 	case T_C_ANY_ARGS_FUNCTION:                 /* -------- C-based function that can take any number of arguments -------- */
+	  /*
+	    if (strcmp(DISPLAY(sc->code), "string-position") == 0)
+	      fprintf(stderr, "(%s %s) %s %d\n", DISPLAY(sc->code), DISPLAY(sc->args), DISPLAY(sc->cur_code), is_optimized(sc->cur_code));
+	  */
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
 	  goto START;
 
@@ -40597,6 +40645,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
 
 
+    case OP_EXPANSION:
+      /* after the expander has finished, we need to add some annotations
+       */
+      expand_code(sc, sc->value);
+      /* fprintf(stderr, "value: %s\n", DISPLAY(sc->value)); */
+      goto START;
+
+
     READ_LIST:
     case OP_READ_LIST: 
       /* sc->args is sc->NIL at first */
@@ -40738,6 +40794,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  x = slot_value(find_symbol(sc, car(sc->value)));
 		  sc->args = list_1(sc, sc->value); 
 		  sc->code = x;
+		  push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
 		  goto APPLY;
 		}
 	    }
