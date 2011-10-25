@@ -805,7 +805,7 @@ typedef struct {
   s7_pointer args;
 } format_data;
 
-static s7_pointer *small_ints, *small_negative_ints, *chars;
+static s7_pointer *small_ints, *chars;
 static s7_pointer real_zero; 
 
 struct s7_scheme {  
@@ -5075,13 +5075,9 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
 {
   s7_pointer x;
 
-  if (n < NUM_SMALL_INTS)
-    {
-      if (n >= 0)
-	return(small_ints[n]);
-      if (n > (-NUM_SMALL_INTS))
-	return(small_negative_ints[-n]);
-    }
+  /* ((n >= 0) && (n < NUM_SMALL_INTS)) */
+  if ((n & ~(NUM_SMALL_INTS - 1)) == 0)
+     return(small_ints[n]);
 
   NEW_CELL(sc, x);
   set_type(x, T_NUMBER);
@@ -8409,9 +8405,8 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 	if (isinf(z))
 	  return(s7_out_of_range_error(sc, "floor", 0, x, "argument is infinite"));
 
-	/* I used to check for a big real arg here and throw and error, but that
-	 *   can't work in general (see s7test), and gives the programmer a false
-	 *   sense of security.
+	/* I used to check for a big real arg here and throw an error, but that
+	 *   can't work in general (see s7test).
 	 */
 	return(s7_make_integer(sc, (s7_Int)floor(real(number(x))))); 
       }
@@ -11537,7 +11532,7 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
   if (arg2 < -s7_int_bits)
     {
       if (arg1 < 0)                      /* (ash -31 -100) */
-	return(small_negative_ints[1]);
+	return(s7_make_integer(sc, -1));
       return(small_int(0));
     }
 
@@ -11820,12 +11815,27 @@ static s7_pointer g_integer_to_char(s7_scheme *sc, s7_pointer args)
 }
 
 
+static unsigned char uppers[256], lowers[256];
+static void init_uppers(void)
+{
+  int i;
+  for (i = 0; i < 256; i++)
+    {
+      uppers[i] = (unsigned char)toupper(i);
+      lowers[i] = (unsigned char)tolower(i);
+    }
+  /* setlocale can change these choices, but I think if we avoid both toupper and tolower after
+   *   this initialization, we'll at least be internally consistent (what about isupper and islower? see s7test.scm)
+   */
+}
+
 static s7_pointer g_char_upcase(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_upcase "(char-upcase c) converts the character c to upper case"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-upcase", 0, car(args), "a character"));
-  return(s7_make_character(sc, (unsigned char)toupper(character(car(args)))));
+
+  return(s7_make_character(sc, uppers[character(car(args))]));
 }
 
 
@@ -11834,7 +11844,7 @@ static s7_pointer g_char_downcase(s7_scheme *sc, s7_pointer args)
   #define H_char_downcase "(char-downcase c) converts the character c to lower case"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-downcase", 0, car(args), "a character"));
-  return(s7_make_character(sc, (unsigned char)tolower(character(car(args)))));
+  return(s7_make_character(sc, lowers[character(car(args))]));
 }
 
 
@@ -11913,7 +11923,7 @@ char s7_character(s7_pointer p)
 static int charcmp(unsigned char c1, unsigned char c2, bool ci)
 {
   if (ci)
-    return(charcmp(toupper(c1), toupper(c2), false)); 
+    return(charcmp(uppers[c1], uppers[c2], false)); 
   /* not tolower here -- the single case is apparently supposed to be upper case
    *   this matters in a case like (char-ci<? #\_ #\e) which Guile and Gauche say is #f
    *   although (char<? #\_ #\e) is #t -- the spec does not say how to interpret this!
@@ -12139,7 +12149,7 @@ static s7_pointer g_char_ci_equal_s_ic(s7_scheme *sc, s7_pointer args)
 {
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-ci=?", 1, car(args), "a character"));
-  return(make_boolean(sc, toupper(character(car(args))) == toupper(character(cadr(args)))));
+  return(make_boolean(sc, uppers[character(car(args))] == uppers[character(cadr(args))]));
 }
 
 static s7_pointer g_char_ci_equal_2(s7_scheme *sc, s7_pointer args)
@@ -12148,7 +12158,7 @@ static s7_pointer g_char_ci_equal_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "char-ci=?", 1, car(args), "a character"));
   if (!s7_is_character(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "char-ci=?", 2, cadr(args), "a character"));
-  return(make_boolean(sc, toupper(character(car(args))) == toupper(character(cadr(args)))));
+  return(make_boolean(sc, uppers[character(car(args))] == uppers[character(cadr(args))]));
 }
 
 
@@ -12157,7 +12167,7 @@ static s7_pointer g_char_ci_less_s_ic(s7_scheme *sc, s7_pointer args)
 {
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-ci<?", 1, car(args), "a character"));
-  return(make_boolean(sc, toupper(character(car(args))) < toupper(character(cadr(args)))));
+  return(make_boolean(sc, uppers[character(car(args))] < uppers[character(cadr(args))]));
 }
 
 static s7_pointer g_char_ci_less_2(s7_scheme *sc, s7_pointer args)
@@ -12166,7 +12176,7 @@ static s7_pointer g_char_ci_less_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "char-ci<?", 1, car(args), "a character"));
   if (!s7_is_character(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "char-ci<?", 2, cadr(args), "a character"));
-  return(make_boolean(sc, toupper(character(car(args))) < toupper(character(cadr(args)))));
+  return(make_boolean(sc, uppers[character(car(args))] < uppers[character(cadr(args))]));
 }
 
 
@@ -12175,7 +12185,7 @@ static s7_pointer g_char_ci_greater_s_ic(s7_scheme *sc, s7_pointer args)
 {
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-ci>?", 1, car(args), "a character"));
-  return(make_boolean(sc, toupper(character(car(args))) > toupper(character(cadr(args)))));
+  return(make_boolean(sc, uppers[character(car(args))] > uppers[character(cadr(args))]));
 }
 
 static s7_pointer g_char_ci_greater_2(s7_scheme *sc, s7_pointer args)
@@ -12184,7 +12194,7 @@ static s7_pointer g_char_ci_greater_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "char-ci>?", 1, car(args), "a character"));
   if (!s7_is_character(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "char-ci>?", 2, cadr(args), "a character"));
-  return(make_boolean(sc, toupper(character(car(args))) > toupper(character(cadr(args)))));
+  return(make_boolean(sc, uppers[character(car(args))] > uppers[character(cadr(args))]));
 }
 
 
@@ -12193,7 +12203,7 @@ static s7_pointer g_char_ci_geq_s_ic(s7_scheme *sc, s7_pointer args)
 {
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-ci>=?", 1, car(args), "a character"));
-  return(make_boolean(sc, toupper(character(car(args))) >= toupper(character(cadr(args)))));
+  return(make_boolean(sc, uppers[character(car(args))] >= uppers[character(cadr(args))]));
 }
 
 static s7_pointer g_char_ci_geq_2(s7_scheme *sc, s7_pointer args)
@@ -12202,7 +12212,7 @@ static s7_pointer g_char_ci_geq_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "char-ci>=?", 1, car(args), "a character"));
   if (!s7_is_character(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "char-ci>=?", 2, cadr(args), "a character"));
-  return(make_boolean(sc, toupper(character(car(args))) >= toupper(character(cadr(args)))));
+  return(make_boolean(sc, uppers[character(car(args))] >= uppers[character(cadr(args))]));
 }
 
 
@@ -12211,7 +12221,7 @@ static s7_pointer g_char_ci_leq_s_ic(s7_scheme *sc, s7_pointer args)
 {
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-ci<=?", 1, car(args), "a character"));
-  return(make_boolean(sc, toupper(character(car(args))) <= toupper(character(cadr(args)))));
+  return(make_boolean(sc, uppers[character(car(args))] <= uppers[character(cadr(args))]));
 }
 
 static s7_pointer g_char_ci_leq_2(s7_scheme *sc, s7_pointer args)
@@ -12220,7 +12230,7 @@ static s7_pointer g_char_ci_leq_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "char-ci<=?", 1, car(args), "a character"));
   if (!s7_is_character(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "char-ci<=?", 2, cadr(args), "a character"));
-  return(make_boolean(sc, toupper(character(car(args))) <= toupper(character(cadr(args)))));
+  return(make_boolean(sc, uppers[character(car(args))] <= uppers[character(cadr(args))]));
 }
 #endif
 
@@ -12876,11 +12886,11 @@ static int scheme_strcasecmp(s7_pointer s1, s7_pointer s2)
   str2 = string_value(s2);
 
   for (i = 0; i < len; i++)
-    if (toupper((unsigned char)(str1[i])) < toupper((unsigned char)(str2[i])))
+    if (uppers[(int)str1[i]] < uppers[(int)str2[i]])
       return(-1);
     else
       {
-	if (toupper((unsigned char)(str1[i])) > toupper((unsigned char)(str2[i])))
+	if (uppers[(int)str1[i]] > uppers[(int)str2[i]])
 	  return(1);
       }
 
@@ -20287,6 +20297,7 @@ static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
 
 
 
+
 /* -------------------------------- new types -------------------------------- */
 
 typedef struct {
@@ -21397,6 +21408,51 @@ static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc)
 {
   s7_make_procedure_with_setter(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc);
+}
+
+
+const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
+{
+  switch (type(proc))
+    {
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      return(c_closure_name(sc, proc));
+  
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
+    case T_C_LST_ARGS_FUNCTION:
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_FUNCTION:
+      return(c_function_name(proc));
+
+    case T_C_MACRO:
+      return(c_macro_name(proc));
+
+    case T_SYMBOL:
+      return(s7_procedure_name(sc, finder(sc, proc)));
+
+    case T_C_OBJECT:
+      if (object_type(proc) == pws_tag)
+	{
+	  s7_pws_t *f;
+	  f = (s7_pws_t *)object_value(proc);
+	  return(f->name);
+	}
+
+      /* T_MACRO et all don't have an easily accessible name -- I suppose we could
+       *   search the current environment?
+       */
+    }
+  return(NULL);
+}
+
+
+static s7_pointer g_procedure_name(s7_scheme *sc, s7_pointer args)
+{
+  /* TODO: add s7test tests for procedure-name */
+  #define H_procedure_name "(procedure-name proc) returns the name of the procedure or closure proc, if it can be found."
+  return(s7_make_string(sc, s7_procedure_name(sc, car(args))));
 }
 
 
@@ -32357,7 +32413,7 @@ static bool function_is_ok_1(s7_scheme *sc, s7_pointer p, s7_pointer val)
 #endif
 
 
-static void expand_code(s7_scheme *sc, s7_pointer p)
+static void annotate_expansion(s7_scheme *sc, s7_pointer p)
 {
   s7_pointer x;
   if ((is_symbol(car(p))) &&
@@ -32369,11 +32425,11 @@ static void expand_code(s7_scheme *sc, s7_pointer p)
   else
     {
       if (is_pair(car(p)))
-	expand_code(sc, car(p));
+	annotate_expansion(sc, car(p));
     }
   for (x = cdr(p); is_pair(x); x = cdr(x))
     if (is_pair(car(x)))
-      expand_code(sc, car(x));
+      annotate_expansion(sc, car(x));
 }
 
 
@@ -37572,7 +37628,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_C_ANY_ARGS_FUNCTION:                 /* -------- C-based function that can take any number of arguments -------- */
 	  /*
-	    if (strcmp(DISPLAY(sc->code), "string-position") == 0)
+	    if (strcmp(DISPLAY(sc->code), "+") == 0)
 	      fprintf(stderr, "(%s %s) %s %d\n", DISPLAY(sc->code), DISPLAY(sc->args), DISPLAY(sc->cur_code), is_optimized(sc->cur_code));
 	  */
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
@@ -40648,8 +40704,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_EXPANSION:
       /* after the expander has finished, we need to add some annotations
        */
-      expand_code(sc, sc->value);
-      /* fprintf(stderr, "value: %s\n", DISPLAY(sc->value)); */
+      annotate_expansion(sc, sc->value);
       goto START;
 
 
@@ -44228,7 +44283,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 	      /* here if p0 is negative, we need to return -1 */
 	      if (p0_compared_to_zero == 1)
 		return(small_int(0));
-	      return(small_negative_ints[1]);
+	      return(s7_make_integer(sc, -1));
 	    }
 	  shift = mpz_get_si(S7_BIG_INTEGER(p1));
 	}
@@ -44239,7 +44294,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 	    {
 	      if (p0_compared_to_zero == 1)
 		return(small_int(0));
-	      return(small_negative_ints[1]);
+	      return(s7_make_integer(sc, -1));
 	    }
 	}
 
@@ -44290,7 +44345,7 @@ static s7_pointer big_bits(s7_scheme *sc, s7_pointer args, const char *name, int
 static s7_pointer big_logand(s7_scheme *sc, s7_pointer args)
 {
   if (is_null(args))
-    return(small_negative_ints[1]);
+    return(s7_make_integer(sc, -1));
   return(big_bits(sc, args, "logand", -1, g_logand, mpz_and));
 }
 
@@ -45672,6 +45727,7 @@ s7_scheme *s7_init(void)
   init_ctables();
   init_mark_functions();
   init_pows();
+  init_uppers();
 
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
   
@@ -45869,12 +45925,8 @@ s7_scheme *s7_init(void)
   
   /* keep the small_ints out of the heap */
   small_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));
-  small_negative_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));
   for (i = 0; i <= NUM_SMALL_INTS; i++) 
-    {
-      small_ints[i] = make_permanent_integer((s7_Int)i);
-      small_negative_ints[i] = make_permanent_integer((s7_Int)(-i));
-    }
+    small_ints[i] = make_permanent_integer((s7_Int)i);
 
   real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
   typeflag(real_zero) = T_IMMUTABLE | T_NUMBER;
@@ -46467,6 +46519,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "procedure-environment",     g_procedure_environment,    1, 0, false, H_procedure_environment);
   s7_define_safe_function(sc, "unoptimize",                g_unoptimize,               1, 0, false, H_unoptimize);
   s7_define_safe_function(sc, "procedure-setter",          g_procedure_setter,         1, 0, false, H_procedure_setter);
+  s7_define_safe_function(sc, "procedure-name",            g_procedure_name,           1, 0, false, H_procedure_name);
   
   s7_define_safe_function(sc, "not",                       g_not,                      1, 0, false, H_not);
   s7_define_safe_function(sc, "boolean?",                  g_is_boolean,               1, 0, false, H_is_boolean);

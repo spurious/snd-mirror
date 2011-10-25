@@ -1285,6 +1285,15 @@
        (let* ((ch (integer->char i))
 	      (chu (char-upcase ch))
 	      (chd (char-downcase ch)))
+
+	 (if (and (not (char=? ch chu))
+		  (not (char-upper-case? chu)))
+	     (format #t ";(char-upper-case? (char-upcase ~C)) is #f~%" ch))
+
+	 (if (and (not (char=? ch chd))
+		  (not (char-lower-case? chd)))
+	     (format #t ";(char-lower-case? (char-downcase ~C)) is #f~%" ch))
+
 	 (if (or (and (not (char=? ch chu))
 		      (not (char=? ch (char-downcase chu))))
 		 (and (not (char=? ch chd))
@@ -1313,8 +1322,6 @@
 	     (set! unhappy (cons (format #f "~C: ~C ~C (~D)~%" ch chu chd i) unhappy)))))
      unhappy)
    '())
-  
-
   
   (for-each
    (lambda (op)
@@ -2117,7 +2124,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (string-ci<? "NX7" "-;h>P" "DMhk3Bg") #f)
 (test (string-ci<? "+\\mZl" "bE7\\e(HaW5CDXbPi@U_" "B_") #t)
 
-(test (string-ci<? (string (integer->char #xf0)) (string (integer->char #x70))) #f) 
+(if (char-ci<? (integer->char #xf0) (integer->char #x70))
+    (test (string-ci<? (string (integer->char #xf0)) (string (integer->char #x70))) #t))
 
 (test (string-ci<? "foo" "fo" 1.0) 'error)
 (test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #t)

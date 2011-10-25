@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.96"
-#define S7_DATE "6-Oct-11"
+#define S7_VERSION "1.97"
+#define S7_DATE "26-Oct-11"
 
 
 typedef long long int s7_Int;
@@ -470,6 +470,8 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);                /* (
 s7_pointer s7_procedure_environment(s7_pointer p);                          /* (procedure-environment x) */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);                 /* (procedure-arity x) -- returns a list (required optional rest?) */
+const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc);              /* (procedure-name x) -- don't free the string! */
+
 const char *s7_help(s7_scheme *sc, s7_pointer obj);                         /* (help obj) */
 void s7_unoptimize(s7_scheme *sc, s7_pointer code);                         /* (unoptimize obj) */
 
@@ -831,6 +833,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 26-Oct:    s7_procedure_name.
  * 6-Oct:     changed s7_make_closure args: split the code argument in two (args and body).
  *               s7_make_closure(... code ...) is now s7_make_closure(... car(code), cdr(code) ...)
  *            s7_is_environment.
